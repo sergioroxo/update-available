@@ -156,7 +156,7 @@ const PREFER = [
  * This read `…|restart|…|pause|…` — bare substrings — and the piece names two
  * of its own controls with those words:
  *
- *   · `pause_yes` / `pause_name` / `pause_notnow` — THE CAREFUL PAUSE, Era 4's
+ *   · `pause_yes` / `pause_notnow` — THE CAREFUL PAUSE, Era 4's
  *     last real choice. The walker refused all three for an entire run, so it
  *     could never take the pause, never reach the ball behind it, and never see
  *     the glitch, the device returning, the Restart card or the Close. Review

@@ -98,9 +98,9 @@
     },
     {
      "id": "u2c",
-     "text": "It faces the bed and not the door. Most people point the good ones outward. I think that means it's for you and not for visitors, which is the better reason to keep a photograph.",
+     "text": "It faces the bed and not the door. Most people point the good ones outward. I think that means it's for you and not for visitors.",
      "audio": "l_u2c.mp3",
-     "hold": 8.8,
+     "hold": 6.6,
      "label": {
       "object": "FRAME",
       "text": "one photograph · inward",
@@ -135,9 +135,9 @@
     },
     {
      "id": "u3c",
-     "text": "Or you're keeping it as it is. People do frame them. Shall I file it as a keepsake?",
+     "text": "Or you're keeping it as it is. Shall I file it as a keepsake?",
      "audio": "l_u3c.mp3",
-     "hold": 5.8,
+     "hold": 4.4,
      "label": {
       "object": "OUTERWEAR · cotton blend",
       "text": "condition: keepsake?",

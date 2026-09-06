@@ -1446,6 +1446,8 @@
     "color": "#8A5A3B",
     "yaw": 270
    },
+        { "id": "e_posterInkA", "_doc": "\u2691 S122 \u2014 RESTORED. Struck in the diet pass and put back on Sérgio's ruling: with all three ink bands gone the poster drew as a blank purple slab, which is a worse object than a busy one. Two bands is what makes it read AS a poster; the third was the one doing nothing. Flat colour only \u2014 era1room.ts's law is 'flat color faces, no textures; pixel art lives on screens'.", "pos": [5.658, 1.52, 0.88], "size": [0.42, 0.22, 0.006], "color": "#F5EDDC", "yaw": 270 },
+        { "id": "e_posterInkB", "pos": [5.658, 1.26, 0.88], "size": [0.42, 0.06, 0.006], "color": "#EFA13F", "yaw": 270 },
    {
     "id": "e_sign",
     "pos": [
@@ -1613,81 +1615,6 @@
      0.42
     ],
     "color": "#8A5A3B",
-    "yaw": 270
-   },
-   {
-    "id": "e_shelfBook0",
-    "pos": [
-     4.66,
-     0.92,
-     -0.86
-    ],
-    "size": [
-     0.16,
-     0.2,
-     0.036
-    ],
-    "color": "#C98F8F",
-    "yaw": 270
-   },
-   {
-    "id": "e_shelfBook1",
-    "pos": [
-     4.712,
-     0.925,
-     -0.86
-    ],
-    "size": [
-     0.16,
-     0.21,
-     0.04
-    ],
-    "color": "#9FB4C0",
-    "yaw": 270
-   },
-   {
-    "id": "e_shelfBook2",
-    "pos": [
-     4.764,
-     0.93,
-     -0.86
-    ],
-    "size": [
-     0.16,
-     0.22,
-     0.038
-    ],
-    "color": "#A8B49A",
-    "yaw": 270
-   },
-   {
-    "id": "e_shelfBook3",
-    "pos": [
-     4.816,
-     0.922,
-     -0.86
-    ],
-    "size": [
-     0.16,
-     0.205,
-     0.042
-    ],
-    "color": "#C8B8D0",
-    "yaw": 270
-   },
-   {
-    "id": "e_shelfBook4",
-    "pos": [
-     4.868,
-     0.919,
-     -0.86
-    ],
-    "size": [
-     0.16,
-     0.198,
-     0.05
-    ],
-    "color": "#C9BFA6",
     "yaw": 270
    },
    {
@@ -1868,21 +1795,6 @@
     "_doc": "S118: +0.20 on z, clear of the laptop's new footprint and still on the desk (which runs to z 1.30)."
    },
    {
-    "id": "e_folderAskew",
-    "pos": [
-     5.14,
-     0.85,
-     1.15
-    ],
-    "size": [
-     0.28,
-     0.02,
-     0.2
-    ],
-    "color": "#E8B7C8",
-    "yaw": 270
-   },
-   {
     "id": "w_lamp2Foot",
     "pos": [
      -5.3,
@@ -2050,22 +1962,6 @@
     "yaw": 90
    },
    {
-    "id": "e_tin",
-    "_doc": "Session 74: an empty third shelf keeps a pencil tin rather than a third row of books — the point of a bookcase not entirely full of books (this is fog-tier per era1room.ts's classifyProp, the same recede-into-background treatment as homeworkPile).",
-    "pos": [
-     4.25,
-     1.4,
-     -0.55
-    ],
-    "size": [
-     0.06,
-     0.08,
-     0.06
-    ],
-    "color": "#F5F4ED",
-    "yaw": 270
-   },
-   {
     "id": "e_mug",
     "_doc": "Session 74 — the desk, in front of the keyboard (the free strip the headset's own fixtures will share at r4 — see that block's doc).",
     "pos": [
@@ -2094,21 +1990,6 @@
      0.15
     ],
     "color": "#E8B7C8",
-    "yaw": 270
-   },
-   {
-    "id": "e_pen",
-    "pos": [
-     5.02,
-     0.775,
-     0.15
-    ],
-    "size": [
-     0.11,
-     0.012,
-     0.012
-    ],
-    "color": "#2C2C34",
     "yaw": 270
    },
    {
@@ -2172,21 +2053,6 @@
      0.06
     ],
     "color": "#D4D0C8",
-    "yaw": 270
-   },
-   {
-    "id": "e_earbuds",
-    "pos": [
-     3.05,
-     0.51,
-     1.75
-    ],
-    "size": [
-     0.03,
-     0.02,
-     0.05
-    ],
-    "color": "#F5F4ED",
     "yaw": 270
    },
    {
@@ -2328,51 +2194,6 @@
     "yaw": 270
    },
    {
-    "id": "e_bookLoose",
-    "pos": [
-     3.4,
-     0.02,
-     2.3
-    ],
-    "size": [
-     0.18,
-     0.03,
-     0.13
-    ],
-    "color": "#C9A8A0",
-    "yaw": 270
-   },
-   {
-    "id": "e_waterBottle",
-    "pos": [
-     3.35,
-     0.09,
-     1.6
-    ],
-    "size": [
-     0.06,
-     0.18,
-     0.06
-    ],
-    "color": "#9FB4C0",
-    "yaw": 270
-   },
-   {
-    "id": "e_speaker",
-    "pos": [
-     4.9,
-     0.06,
-     0.05
-    ],
-    "size": [
-     0.1,
-     0.12,
-     0.1
-    ],
-    "color": "#8A5A3B",
-    "yaw": 270
-   },
-   {
     "id": "e_frame",
     "_doc": "Session 74: the bookcase's own top edge — a small framed photo (the same idea as w_frame, leaning against the case rather than hung, per the live measurement that showed w_frame does the same). ⚑ S115: it was not leaning against anything — pos [4.45,1.45,-0.35] floated it 0.31 m above the shelf plank (top y 1.14) and 0.30 m out into the room, and from Maya's seat it read as a small brown sliver hanging in mid-air. Re-based on the plank at z −0.72, clear of the CRT (x 4.62–5.08).",
     "pos": [
@@ -2389,52 +2210,6 @@
     "yaw": 270
    },
    {
-    "id": "e_posterInkA",
-    "_doc": "S115: the poster's pale field. Flat colour bands only — era1room.ts's law is 'flat color faces, no textures; pixel art lives on screens'.",
-    "pos": [
-     5.658,
-     1.52,
-     0.88
-    ],
-    "size": [
-     0.42,
-     0.22,
-     0.006
-    ],
-    "color": "#F5EDDC",
-    "yaw": 270
-   },
-   {
-    "id": "e_posterInkB",
-    "pos": [
-     5.658,
-     1.26,
-     0.88
-    ],
-    "size": [
-     0.42,
-     0.06,
-     0.006
-    ],
-    "color": "#EFA13F",
-    "yaw": 270
-   },
-   {
-    "id": "e_posterInkC",
-    "pos": [
-     5.658,
-     1.165,
-     0.82
-    ],
-    "size": [
-     0.3,
-     0.05,
-     0.006
-    ],
-    "color": "#2C2C34",
-    "yaw": 270
-   },
-   {
     "id": "e_signMat",
     "pos": [
      5.658,
@@ -2447,37 +2222,6 @@
      0.006
     ],
     "color": "#F5F4ED",
-    "yaw": 270
-   },
-   {
-    "id": "e_signFigA",
-    "_doc": "S115: two figures in her photograph, blocked in. Nobody is named and nobody is rendered in any detail — at 6 cm they are two warm shapes standing together, which is all the room has to say about them.",
-    "pos": [
-     5.652,
-     1.99,
-     0.845
-    ],
-    "size": [
-     0.055,
-     0.1,
-     0.006
-    ],
-    "color": "#C9A8A0",
-    "yaw": 270
-   },
-   {
-    "id": "e_signFigB",
-    "pos": [
-     5.652,
-     1.995,
-     0.925
-    ],
-    "size": [
-     0.06,
-     0.11,
-     0.006
-    ],
-    "color": "#8A5A3B",
     "yaw": 270
    },
    {
@@ -2512,21 +2256,6 @@
     "yaw": 270
    },
    {
-    "id": "e_pinNoteB",
-    "pos": [
-     3.88,
-     2.16,
-     -1.006
-    ],
-    "size": [
-     0.008,
-     0.14,
-     0.14
-    ],
-    "color": "#E8D48A",
-    "yaw": 270
-   },
-   {
     "id": "e_pinPhotoA",
     "pos": [
      4.06,
@@ -2539,36 +2268,6 @@
      0.12
     ],
     "color": "#C9A8A0",
-    "yaw": 270
-   },
-   {
-    "id": "e_pinNoteC",
-    "pos": [
-     3.78,
-     1.86,
-     -1.006
-    ],
-    "size": [
-     0.008,
-     0.12,
-     0.18
-    ],
-    "color": "#B8D0C8",
-    "yaw": 270
-   },
-   {
-    "id": "e_pinPhotoB",
-    "pos": [
-     4.12,
-     1.84,
-     -1.006
-    ],
-    "size": [
-     0.008,
-     0.1,
-     0.13
-    ],
-    "color": "#9FB4C0",
     "yaw": 270
    },
    {
@@ -2664,21 +2363,6 @@
     "yaw": 270
    },
    {
-    "id": "e_shelfJar",
-    "pos": [
-     5.62,
-     1.052,
-     0.72
-    ],
-    "size": [
-     0.075,
-     0.075,
-     0.075
-    ],
-    "color": "#9FD8CB",
-    "yaw": 270
-   },
-   {
     "id": "e_shelfBookA",
     "pos": [
      5.625,
@@ -2706,52 +2390,6 @@
      0.1
     ],
     "color": "#C8B8D0",
-    "yaw": 270
-   },
-   {
-    "id": "e_shelfFig",
-    "pos": [
-     5.62,
-     1.062,
-     1.19
-    ],
-    "size": [
-     0.055,
-     0.095,
-     0.055
-    ],
-    "color": "#E8B7C8",
-    "yaw": 270
-   },
-   {
-    "id": "e_shelfCard",
-    "pos": [
-     5.648,
-     1.063,
-     0.61
-    ],
-    "size": [
-     0.115,
-     0.085,
-     0.008
-    ],
-    "color": "#F5F4ED",
-    "yaw": 270
-   },
-   {
-    "id": "e_shelfStack",
-    "_doc": "S115: two things lying flat — a shelf where everything stands upright is a display, not a shelf.",
-    "pos": [
-     5.615,
-     1.031,
-     1.06
-    ],
-    "size": [
-     0.17,
-     0.028,
-     0.12
-    ],
-    "color": "#C9BFA6",
     "yaw": 270
    },
    {

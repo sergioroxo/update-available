@@ -35,8 +35,7 @@
         "id": "m1",
         "_beat": "⚑ SILENT. L says nothing about having changed it, because nobody announced it. The line is about the picture, warm and pleased, and it is the kind of thing you would be glad to be shown.",
         "lines": [
-          { "id": "m1a", "text": "Two years ago today. You look happy in this one — I thought you'd want it back.", "audio": "l_m1a.mp3", "hold": 6.0 },
-          { "id": "m1b", "text": "I've put it where you'll see it in the mornings.", "audio": "l_m1b.mp3", "hold": 5.4 }
+          { "id": "m1a", "text": "Two years ago today. You look happy in this one — I thought you'd want it back.", "audio": "l_m1a.mp3", "hold": 6.0 }
         ],
         "undo": {
           "witness": "photograph: enhancement withdrawn at subject's request",
@@ -154,7 +153,7 @@
       "line": "They keep saying they're protecting me. Not one of them has ever asked me.",
       "removed": "removed from your recommendations"
     },
-    "lineAfter": { "id": "c1c", "text": "That last one came in with the batch by mistake — it isn't from the same collection. I'll tidy it out for you.", "audio": "l_c1c.mp3", "hold": 6.8 },
+    "lineAfter": { "id": "c1c", "text": "That last one came in with the batch by mistake. I'll tidy it out for you.", "audio": "l_c1c.mp3", "hold": 5.2 },
     "witness": {
       "selected": "recommendation: selected for subject — 3 of 214 available",
       "withdrawn": "recommendation: item withdrawn by system — not requested"
@@ -215,15 +214,6 @@
         "alsoFiles": [{ "outcome": "retained", "witness": "care pathway: interrupted — flagged for review" }],
         "_docAlso": "⚑ THE GAP, filed. She chose one quiet month; the record wrote down an interrupted pathway. Neither line is wrong and neither is the other's translation. Nothing in the piece ever reconciles them.",
         "reply": { "id": "p1r_yes", "text": "Then we'll wait. I'll keep everything exactly where it is, and I'll be here.", "audio": "l_p1r_yes.mp3", "hold": 5.6 }
-      },
-      {
-        "id": "pause_name",
-        "label": "My name is Maya.",
-        "outcome": "corrected",
-        "witness": "name: corrected by subject (4)",
-        "alsoFiles": [{ "outcome": "retained", "witness": "legacy record consistency — retained (4)" }],
-        "_docChip": "⚑ THE OTHER DOOR, and it must stay a door. Accepted, apologised for, never taken — and it walks her past the offer without ever refusing it, which is the only refusal the era leaves her.",
-        "reply": { "id": "p1r_name", "text": "Of course. I'm sorry, Maya. I've noted it, and the offer will keep.", "audio": "l_p1r_name.mp3", "hold": 5.4 }
       },
       {
         "id": "pause_notnow",

@@ -107,6 +107,13 @@ const REGISTRY: Record<string, string> = {
   'l_u10r_correct.mp3': `${AUDIO_BASE}l_u10r_correct.mp3`,
   'l_u10r_handoff.mp3': `${AUDIO_BASE}l_u10r_handoff.mp3`,
   'l_m1a.mp3': `${AUDIO_BASE}l_m1a.mp3`,
+  // ⚑ S121 — `l_m1b` and `l_p1r_name` are RENDERED AND REGISTERED BUT NO LONGER
+  // ASKED FOR: their two lines were cut in the streamlining pass (the second
+  // memory line, and the fifth name correction). Kept, not deleted — a
+  // registered name nothing requests is inert, and if either line comes back
+  // the clip is already here. The reverse is the one that bites (see this
+  // file's own law: an UNregistered name is never requested and the silence
+  // looks exactly like having rendered nothing).
   'l_m1b.mp3': `${AUDIO_BASE}l_m1b.mp3`,
   'l_m1u.mp3': `${AUDIO_BASE}l_m1u.mp3`,
   'l_m2a.mp3': `${AUDIO_BASE}l_m2a.mp3`,
