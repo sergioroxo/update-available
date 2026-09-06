@@ -280,3 +280,42 @@ they were switched off by accident.
 
 **Draw calls across the session, at the E4 turn:** 201 → 140 (S108's batching) → 139 → 133 (Vera's
 computer) → **125** (the two rooms' diet). At Maya's seat: 77 → **51**. The entrance seat: 57 → **40**.
+
+
+---
+
+# ⚑ §8 · NEXT SESSION'S JOB — Era 4's storytelling, and what is too much
+*Sérgio, 2026-09-06: "Review Era-4's storytelling next session, tell me what's too much." Written down
+now so it starts from a brief instead of from memory.*
+
+**The ask is editorial, not technical.** He has not played E4 yet — it was broken until this week — so
+this is a first read of the era as WRITTEN, against the question *what is doing too much work.*
+
+**What to read, in the order a player meets it:**
+1. `data/dialog/s4_space.json` — the laptop's three lines, the arrival.
+2. `data/dialog/s4_l.json` — L's ten units, including the friction beat (u5) and the shrinking chips
+   (u7→u9). This is the bulk of the era and the likeliest place for "too much".
+3. `data/dialog/s4_offers.json` — the fifteen offer lines and the two undos.
+4. `data/dialog/s4_ball.json` — the ball's 46 captions, the categories, the landing.
+5. `data/strings/close_network.json` — the four panels (photographed 2026-09-06, sent).
+
+**The specific questions to answer, not a general critique:**
+- ⚑ **Where does the era SAY the thing it has already shown?** L is designed to charm and the danger is
+  that a line explains the charm instead of performing it.
+- **Is the friction beat (u5) still earning its length**, now that the misfile it used to sit beside is
+  gone (§3b)?
+- **The ball is 3½ minutes with no controls.** Its captions are load-bearing for accessibility (S79),
+  but 46 is a lot of sentences for a beat whose argument is *look*.
+- **The offers**: fifteen lines and two undos. How many are the same joke?
+- **Panel 4 (`now · RESURGENCE`) still carries `status: documentary`** and its own status was on his
+  list — check whether every claim on it is KB-backed, since the other three are historical and this
+  one is about the present.
+
+⚑ **What NOT to do:** rewrite anything in this pass. The output is a list of cuts with reasons, for him
+to rule on. His standing note from 2026-09-05 applies to writing as much as to props — *"better to
+have few but specific elements than many and just not making sense."*
+
+**Also still open:** the ball's two recordings (`ball_room_bed.mp3`, `ball_room_landing.mp3`), which he
+is trying himself. They are the only thing holding `AUDIO_BASELINE` at 2, they may not be synthesized
+(`_docVoice`), and the brief is unusually exact: *loud, structured, attentive — the beat, the calls,
+the applause on the landing — and NOT laughter, chatter or generic warmth.*
