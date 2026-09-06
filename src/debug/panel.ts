@@ -192,7 +192,6 @@ const OS_BEATS: BeatRow[] = [
   { label: 'S4R.2 · the room rewrites (L captions her things)', id: 'e4Captions' },
   { label: '⚑ the captions RUN OUT (wrong, wrong, an offer, then nothing)', id: 'e4Unplaced' },
   { label: '⚑⚑ THE DEADNAME · first instance (it lands as paperwork)', id: 'e4Deadname' },
-  { label: 'S4R.4 · the friction pattern (the stream always opens)', id: 'e4Friction' },
   { label: '⚑⚑ THE DEADNAME · second instance (warmer, and worse)', id: 'e4Deadname2' },
   { label: 'S4R.5 · the chips begin to thin (one greyed)', id: 'e4Shrink' },
   { label: '↳ shrink 2 · the ones you were using grey', id: 'e4Shrink2' },
@@ -213,6 +212,9 @@ const OS_BEATS: BeatRow[] = [
   { label: 'the wall · four offers put up for her (⚑ read the fine print)', id: 'e4Wall' },
   { label: '⚑ the curation · what was chosen, and what was taken away', id: 'e4Curation' },
   { label: '⚑ the careful pause (two doors, and it waits forever)', id: 'e4Pause' },
+  // ⚑ S120 (P4) — moved here from L's units. It is the LAST thing the apparatus
+  // asks, and "Opening it now" is the ball arriving.
+  { label: '⚑⚑ the friction beat · one reflection, then the stream opens', id: 'e4Friction' },
   { label: '↳ skip its lines and sit on its chips', id: 'e4PauseChips' },
   { heading: 'E4 · ⚑ TRANSCENDANCE — the ball (S79). NO SCREEN: it is in the room' },
   // ⚑ S79. `e4Ball` is the LINEAR ENTRY and it is the break itself: the careful

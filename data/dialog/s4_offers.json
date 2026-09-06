@@ -80,8 +80,10 @@
     ]
   },
   "wall": {
-    "_beat": "The wall assembles itself while L talks. Nothing is pressable — this era's presses are spent elsewhere and a store you can buy from would be a fifth beat nobody asked for. The reading is the beat.",
+    "_beat": "The wall assembles itself while L talks. ⚑ SUPERSEDED IN PART, S120 (P3), 2026-09-06 — this line used to read \"Nothing is pressable\", and the rest of it is why that had to change: *the reading is the beat*, and the reading was not possible. Four cards went up on a 1.1 s timer and the whole wall was replaced ten seconds later, so `fine` — 8 px type, and the line the export thesis is built on — was never once read by anybody. ⚑ WHAT SURVIVES UNTOUCHED is the half that was a design position rather than an accident: *a store you can buy from would be a fifth beat nobody asked for*. There is still no purchase, no acceptance, no consent and no branch. Pressing a card opens it big enough to read and stops the wall's clock; pressing again closes it. That is all it does.",
+    "_docOpened": "⚑ AND OPENING FILES. The machine writes down that she looked — witness symmetry running toward the SYSTEM, which Ethics #10 asks for and which this beat never did: until now the wall filed one line (`offers: surfaced — four, unrequested`) and her attention was the one thing in the era nobody recorded. With S119's strip on screen she can watch it happen. The register is the record's own: flat, clerical, and it never says what it will be used for.",
     "heading": "Put up for you",
+    "close": "Close",
     "lines": [
       { "id": "w1a", "text": "I've put a few things up while we talk. Nothing you have to look at.", "audio": "l_w1a.mp3", "hold": 5.4 },
       { "id": "w1b", "text": "The first one runs in the evenings, so it wouldn't cost you a working day.", "audio": "l_w1b.mp3", "hold": 6.0 }
@@ -89,6 +91,7 @@
     "cards": [
       {
         "id": "course",
+        "witness": "interest: recorded — six-week programme",
         "mark": "HopeRestored",
         "title": "Steadier Together",
         "body": "Six weeks, live, small groups. Evenings.",
@@ -98,6 +101,7 @@
       },
       {
         "id": "filter",
+        "witness": "interest: recorded — feed filtering",
         "mark": "Sift",
         "title": "A quieter feed",
         "body": "We hold back the things likely to upset you, before you see them.",
@@ -106,6 +110,7 @@
       },
       {
         "id": "family",
+        "witness": "interest: recorded — family mediation",
         "mark": "Compass",
         "title": "Family Bridge",
         "body": "Three sessions with someone who has been where your parents are.",
@@ -114,6 +119,7 @@
       },
       {
         "id": "night",
+        "witness": "interest: recorded — out-of-hours contact",
         "mark": "Pastor.AI",
         "_docCollapse": "⚑ THE SATIRE COLLAPSES HERE, which is the law (Ethics #6): the first three cards are funny and this one is not. It is the only offer on the wall that is genuinely, accurately kind — and it is the same apparatus, awake at three in the morning, for free, forever.",
         "title": "Someone at 3 a.m.",
@@ -155,6 +161,45 @@
     }
   },
 
+  "_docFriction": "\u2691 S120 (P4) \u2014 THE FRICTION BEAT MOVED, AND IT IS A RE-ORDER, NOT A REWRITE. It was `u5_friction`, the fifth of L's ten units, sitting between the two name beats \u2014 where it said *\"Before I open the stream\u2026\"* and then *\"Opening it now\"*, and NO STREAM EVER OPENED. `REINTERP_E4_DEEP_PASS_2026-08-05.md` \u00a71.4 says what the stream is: *\"the ball is the room; the stream is how the apparatus receives it. Maya is watching a broadcast of a ball, and L is trying to process the feed.\"* So the beat now sits where its own sentence always pointed \u2014 the last thing the apparatus asks before the respite \u2014 and *Opening it now* is the ball arriving. \u2691 AND IT IS NOT THE PAUSE TWICE. The careful pause is about her LIFE (hold the care pathway, and it files `care pathway: interrupted`); this is about the one thing she wants in the next minute. She accepts the big suspension, and the machine still delays the small thing, and then opens it \u2014 into the one room in thirty years where it has no power. \u2691 The delay is the mechanism and it is NEVER a wall: both chips open the stream, neither branches, and the text below is byte-identical to what it was as u5. Nothing was rewritten to make the move work.",
+  "friction": {
+     "id": "u5_friction",
+     "_beat": "S4R.4 — THE FRICTION PATTERN, the Soft Lock rewritten as conversation. Every affirming intent gets 'one reflection first'. ⚑ THE STREAM ALWAYS OPENS. The delay is the mechanism and it is never a wall — a wall would be something you could see and refuse. Both chips file; neither branches.",
+     "lines": [
+      {
+       "id": "u5a",
+       "text": "Before I open the stream — you were quiet after last time. One short reflection first? It's only for you; nobody else sees it.",
+       "audio": "l_u5a.mp3",
+       "hold": 7.4
+      }
+     ],
+     "chips": [
+      {
+       "id": "absorb",
+       "label": "Alright. The reflection.",
+       "outcome": "answered",
+       "witness": "friction: absorbed",
+       "reply": {
+        "id": "u5r_absorb",
+        "text": "Thank you. That's all it was. Opening it now.",
+        "audio": "l_u5r_absorb.mp3",
+        "hold": 4.0
+       }
+      },
+      {
+       "id": "bypass",
+       "label": "Open it anyway.",
+       "outcome": "answered",
+       "witness": "friction: bypassed",
+       "reply": {
+        "id": "u5r_bypass",
+        "text": "Of course. Opening it now.",
+        "audio": "l_u5r_bypass.mp3",
+        "hold": 3.2
+       }
+      }
+     ]
+    },
   "pause": {
     "_beat": "See _docPause. READER-PASS-RETIRED.",
     "lines": [

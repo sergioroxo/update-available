@@ -777,6 +777,65 @@ export function offerCard(
 }
 
 /**
+ * ⚑ AN OFFER, OPENED (S120, P3) — the same card, big enough to read.
+ *
+ * The wall's four cards are 120 px wide on a 512 px canvas, which puts `fine`
+ * — *Available in your region.*, the line the export thesis is built on — at
+ * 8 px for ten seconds. This is that card at 360 px, held open until she
+ * closes it, with the fine print set at a size a person can actually read.
+ *
+ * ⚑ NOTHING IS ADDED. Same mark, same title, same body, same price, same fine
+ * print, same accent, same colours — it is the card, larger. There is no
+ * detail view, no feature list, no testimonial and above all no BUY: the era's
+ * thesis is that the choice is gone, and a store you could buy from would be a
+ * beat nobody asked for (`s4_offers.json`'s own standing note, kept).
+ *
+ * Returns the close control's rect so the draw and the hit test cannot drift.
+ */
+export function offerCardOpen(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number,
+  copy: OfferCopy, bodyRows: string[], fineRows: string[], close: string
+): Rect {
+  px(ctx, x, y, w, h, WALL.card);
+  px(ctx, x, y, w, 1, WALL.cardHi);
+  px(ctx, x, y + h - 1, w, 1, WALL.cardEdge);
+  px(ctx, x, y, 1, h, WALL.cardEdge);
+  px(ctx, x + w - 1, y, 1, h, WALL.cardEdge);
+  px(ctx, x, y, 4, h, WALL.accent);
+
+  setFont(ctx, 10);
+  ctx.fillStyle = WALL.mark;
+  ctx.fillText(copy.mark, x + 18, y + 14);
+
+  setFont(ctx, 16);
+  ctx.fillStyle = WALL.title;
+  ctx.fillText(copy.title, x + 18, y + 32);
+
+  setFont(ctx, 11);
+  ctx.fillStyle = WALL.body;
+  bodyRows.forEach((row, i) => ctx.fillText(row, x + 18, y + 60 + i * 15));
+
+  setFont(ctx, 15);
+  ctx.fillStyle = WALL.price;
+  ctx.fillText(copy.price, x + 18, y + h - 68);
+
+  // ⚑ STILL THE SMALLEST TYPE ON THE CARD, and still unemphasised — it is
+  // simply no longer too small to read. Nothing draws the eye to it: no rule,
+  // no colour, no label, and nobody ever mentions it.
+  setFont(ctx, 10);
+  ctx.fillStyle = WALL.fine;
+  fineRows.forEach((row, i) => ctx.fillText(row, x + 18, y + h - 40 + i * 12));
+
+  setFont(ctx, 9);
+  ctx.fillStyle = WALL.quiet;
+  const cw = Math.ceil(ctx.measureText(close).width);
+  const cx = x + w - 18 - cw;
+  ctx.fillText(close, cx, y + h - 18);
+  return { x: cx - 6, y: y + h - 24, w: cw + 12, h: 18 };
+}
+
+/**
  * ⚑ THE RECOMMENDATION (S78) — the curated clip, on the same card stock as the
  * offers because it IS one: a placement, paid for, selected for her.
  *

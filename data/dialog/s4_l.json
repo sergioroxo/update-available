@@ -217,44 +217,6 @@
    ]
   },
   {
-   "id": "u5_friction",
-   "_beat": "S4R.4 — THE FRICTION PATTERN, the Soft Lock rewritten as conversation. Every affirming intent gets 'one reflection first'. ⚑ THE STREAM ALWAYS OPENS. The delay is the mechanism and it is never a wall — a wall would be something you could see and refuse. Both chips file; neither branches.",
-   "lines": [
-    {
-     "id": "u5a",
-     "text": "Before I open the stream — you were quiet after last time. One short reflection first? It's only for you; nobody else sees it.",
-     "audio": "l_u5a.mp3",
-     "hold": 7.4
-    }
-   ],
-   "chips": [
-    {
-     "id": "absorb",
-     "label": "Alright. The reflection.",
-     "outcome": "answered",
-     "witness": "friction: absorbed",
-     "reply": {
-      "id": "u5r_absorb",
-      "text": "Thank you. That's all it was. Opening it now.",
-      "audio": "l_u5r_absorb.mp3",
-      "hold": 4.0
-     }
-    },
-    {
-     "id": "bypass",
-     "label": "Open it anyway.",
-     "outcome": "answered",
-     "witness": "friction: bypassed",
-     "reply": {
-      "id": "u5r_bypass",
-      "text": "Of course. Opening it now.",
-      "audio": "l_u5r_bypass.mp3",
-      "hold": 3.2
-     }
-    }
-   ]
-  },
-  {
    "id": "u6_name_two",
    "_beat": "⚑ THE DEADNAME, SECOND INSTANCE. The escalation is by WARMTH, not menace: the apology grows, and the record hardens. 'Protected' is the record's own word for the field it will not release, and L reports it the way a member of staff reports a policy — sympathetically, and without any power over it. ⚑ There is nobody to be angry with in this beat, which is the accurate part. READER-PASS-RETIRED.",
    "lines": [

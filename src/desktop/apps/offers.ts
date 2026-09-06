@@ -70,7 +70,7 @@
  * name is silently never requested — no console error, no 404, silent captions.
  */
 import {
-  WALL, captionBand, chip, counterCard, cyclorama, eraPanels, filingStrip, glitchBands, mediaCard, memoryCard, offerCard, photograph, type Rect
+  WALL, captionBand, chip, counterCard, cyclorama, eraPanels, filingStrip, glitchBands, mediaCard, memoryCard, offerCard, offerCardOpen, photograph, type Rect
 } from '../theme/era4';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { e4Filings, ledger } from '../../state/ledger';
@@ -118,11 +118,14 @@ const COUNTER = { x: 20, y: 232, w: 306, h: 48 } as const;
  *  auto-advances like every other memory beat: after 3½ minutes of the ball,
  *  holding the player on a card until they press would be the worst possible
  *  place in the piece to start demanding presses. */
-const BEAT_SECONDS = { m1: 14.4, m2: 14.6, wall: 14.0, curation: 25.0, ballshots: 16.0, pause: Infinity } as const;
+const BEAT_SECONDS = { m1: 14.4, m2: 14.6, wall: 14.0, curation: 25.0, ballshots: 16.0, friction: Infinity, pause: Infinity } as const;
 /** the curation's own schedule, in seconds from the top of the beat */
 const CUR = { excerpt0: 2.0, excerptGap: 3.2, counter: 13.0, after: 16.0, fade: 17.6, fadeStep: 0.5 } as const;
 /** the wall goes up one card at a time while L is still talking */
 const WALL_GAP = 1.1;
+/** ⚑ S120 (P3) — the opened card. 360 px on a 512 px canvas, sitting above the
+ *  caption band, which is where every other single object in this era is put. */
+const OPEN = { y: 30, w: 360, h: 196 } as const;
 
 /** the finale's movements, in seconds. Long enough to be an image and short
  *  enough that it is a hand-off rather than an ending. */
@@ -144,7 +147,7 @@ interface OChip {
 
 type Stage =
   | 'idle' | 'm1' | 'm2' | 'wall' | 'curation' | 'pause'
-  | 'held' | 'glitch' | 'cyclorama' | 'panels' | 'done' | 'ballshots';
+  | 'held' | 'glitch' | 'cyclorama' | 'panels' | 'done' | 'ballshots' | 'friction';
 
 type LedgerOutcome = 'surfaced' | 'undone' | 'answered' | 'corrected' | 'retained' | 'withdrawn' | 'handed';
 
@@ -154,6 +157,9 @@ const MEMS = script.memories.beats as unknown as Array<{
   id: string; lines: OLine[]; undo: { witness: string; reply: OLine }; witness: string;
 }>;
 const PAUSE_CHIPS = script.pause.chips as unknown as OChip[];
+/** ⚑ S120 (P4) — the friction beat's own two chips. Both open the stream and
+ *  neither branches: the delay is the mechanism and it is never a wall. */
+const FRICTION = script.friction as unknown as { lines: OLine[]; chips: OChip[] };
 const AFTER_BALL = script.afterBall as unknown as {
   title: string; control: string; unavailable: string; lines: OLine[];
 };
@@ -195,6 +201,11 @@ export class E4Offers {
   /** ⚑ one-way, and it is the only state this beat has: once she has asked, the
    *  control reports instead of offering. There is nothing to toggle back to. */
   private ballShotPressed = false;
+  /** ⚑ S120 (P3) — which offer card is open, if any. While one is, the wall's
+   *  own clock STOPS: the beat cannot take a card away while she is reading it,
+   *  which was the whole reason the fine print had never been read. */
+  private openCard: number | null = null;
+  private openedFiled = new Set<string>();
   private wallUp = 0;
   private excerpts = 0;
   private counterShown = false;
@@ -221,7 +232,19 @@ export class E4Offers {
   // ── the clock ────────────────────────────────────────────────────────────
   update(dt: number): void {
     if (this.stage === 'idle' || this.stage === 'done' || this.stage === 'held') return;
-    this.stageT += dt;
+    // ⚑ S120 (P3) — an open card holds THE WALL, and only the wall.
+    //
+    // ⚑ THIS LINE HUNG THE PIECE ONCE ALREADY, and the way it did is worth
+    // keeping: the first version froze `stageT` in EVERY stage. A card left
+    // open on the wall therefore stayed open through the pause, the friction
+    // beat and the ball, and `ballshots` — which advances on its clock and on
+    // nothing else — never timed out. The walk stalled in Era 4 and the piece
+    // had no ending. Trap 0 exactly: a fix opening the hole it is closing.
+    //
+    // The wall is the one beat with a clock that needs holding, because it is
+    // the one beat that asks her to read something. Everywhere else the freeze
+    // was never wanted and was only ever a way to lose the ending.
+    if (this.openCard === null || this.stage !== 'wall') this.stageT += dt;
 
     if (this.stage === 'glitch' || this.stage === 'cyclorama' || this.stage === 'panels') {
       this.finaleClock();
@@ -251,7 +274,7 @@ export class E4Offers {
     // ⚑ THE CAREFUL PAUSE is the one beat that does not run on a clock: once its
     // lines have run it opens its chips and waits, for as long as the player
     // wants, with no timer of any kind (the file header, law 6).
-    if (this.stage === 'pause') { this.settlePause(); return; }
+    if (this.stage === 'pause' || this.stage === 'friction') { this.settleChips(); return; }
     const span = BEAT_SECONDS[this.stage as keyof typeof BEAT_SECONDS] ?? 0;
     // a beat never hands on mid-sentence, however long the sentence ran
     if (this.stageT >= span && !this.cur && this.queue.length === 0) this.advanceStage();
@@ -259,7 +282,7 @@ export class E4Offers {
 
   /** the pause's chip window: opened when its lines run out, closed by a press,
    *  and the press's reply is what actually hands the beat on. */
-  private settlePause(): void {
+  private settleChips(): void {
     if (this.cur || this.queue.length > 0) return;
     if (this.pendingAdvance) { this.pendingAdvance = false; this.advanceStage(); return; }
     this.waiting = true;
@@ -312,6 +335,10 @@ export class E4Offers {
   private enterStage(s: Stage): void {
     this.stage = s;
     this.stageT = 0;
+    // ⚑ and no card outlives the beat it was opened on. Belt and braces beside
+    // the clock fix above, and correct on its own terms: an offer she opened on
+    // the wall is not still in front of her face during the ball.
+    this.openCard = null;
     this.lineT = 0;
     this.cur = null;
     this.spoke = false;
@@ -321,7 +348,18 @@ export class E4Offers {
     switch (s) {
       case 'm1': this.queue = [...MEMS[0].lines]; break;
       case 'm2': this.queue = [...MEMS[1].lines]; break;
-      case 'ballshots': this.queue = [...AFTER_BALL.lines]; break;
+      case 'ballshots':
+        this.queue = [...AFTER_BALL.lines];
+        // ⚑ AND THE WALL COMES DOWN, for the only time in the era. Its own note
+        // says nobody takes it down — but that is about the CONVERSATION, and
+        // the conversation is over: the ball has happened, and what is on
+        // screen now is one photograph the machine cannot read. Selling behind
+        // it would be the era arguing with itself. ⚑ Caught because the review
+        // render was taken from a debug jump, which sets `wallUp` to 0, so the
+        // shot did not show what a played run would have shown.
+        this.wallUp = 0;
+        break;
+      case 'friction': this.queue = [...FRICTION.lines]; break;
       case 'wall': this.queue = [...(script.wall.lines as unknown as OLine[])]; break;
       case 'curation':
         this.queue = [...(script.curation.lines as unknown as OLine[])];
@@ -358,6 +396,12 @@ export class E4Offers {
         this.enterStage('pause');
         return;
       case 'pause':
+        // ⚑ S120 (P4) — the careful pause no longer opens the ball directly.
+        // One beat sits between them now, and it is the one whose own sentence
+        // has always described what comes next.
+        this.enterStage('friction');
+        return;
+      case 'friction':
         this.takeTheBreak();
         return;
       case 'ballshots':
@@ -460,6 +504,7 @@ export class E4Offers {
     // one thing that replaces it while it plays — a feed shows you one thing at
     // a time — and the wall is back underneath the careful pause.
     if (this.wallUp > 0 && this.stage !== 'curation') this.drawWall(ctx, W);
+    if (this.openCard !== null) this.drawOpenCard(ctx, W);
     if (this.stage === 'm1' || this.stage === 'm2') this.drawMemory(ctx);
     if (this.stage === 'ballshots') this.drawBallShot(ctx);
     if (this.stage === 'curation') this.drawCuration(ctx);
@@ -476,8 +521,14 @@ export class E4Offers {
     // being FILED ABOUT HER and she is looking straight at it.
     if (this.stage === 'm1' || this.stage === 'm2' || this.stage === 'ballshots') {
       filingStrip(ctx, FILED.x, FILED.y, FILED.w, FILED_HEADING, e4Filings(FILED.rows));
-    } else if (this.stage === 'pause') {
+    } else if (this.stage === 'pause' || this.stage === 'friction') {
       filingStrip(ctx, FILED.x, FILED.pauseY, FILED.w, FILED_HEADING, e4Filings(FILED.pauseRows));
+    } else if (this.openCard !== null) {
+      // ⚑ S120 (P3) — while a card is open the wall behind it is covered from
+      // y 30 to 226, so the file fits in its usual band underneath. It has to
+      // be here: opening a card FILES, and the line it writes should appear
+      // under the thing she opened, in the same second, with nothing said.
+      filingStrip(ctx, FILED.x, FILED.y, FILED.w, FILED_HEADING, e4Filings(FILED.rows));
     }
 
     const rows = this.captionRows(ctx);
@@ -485,7 +536,9 @@ export class E4Offers {
     const bandH = rows.length > 0 ? 16 + rows.length * 14 + 8 : 0;
     const bandTop = rows.length > 0 ? H - bandH - 10 : H - 10;
 
-    if (this.stage === 'pause' && this.waiting) this.drawChips(ctx, bandTop);
+    if ((this.stage === 'pause' || this.stage === 'friction') && this.waiting) {
+      this.drawChips(ctx, bandTop);
+    }
   }
 
   private captionRows(ctx: CanvasRenderingContext2D): string[] {
@@ -561,6 +614,24 @@ export class E4Offers {
     }
   }
 
+  /**
+   * ⚑ THE CARD, OPEN (S120, P3). Centred over the wall it came from, held until
+   * she closes it. `OPEN` is deliberately close to the memory card's geometry —
+   * this era shows her one thing at a time and always in the middle.
+   */
+  private drawOpenCard(ctx: CanvasRenderingContext2D, W: number): void {
+    const c = script.wall.cards[this.openCard as number];
+    if (!c) return;
+    const w = OPEN.w;
+    const x = Math.round((W - w) / 2);
+    setFont(ctx, 11);
+    const body = wrapText(ctx, c.body, w - 36).slice(0, 3);
+    setFont(ctx, 10);
+    const fine = wrapText(ctx, c.fine, w - 36).slice(0, 2);
+    const r = offerCardOpen(ctx, x, OPEN.y, w, OPEN.h, c, body, fine, script.wall.close);
+    this.hits.push({ ...r, id: 'card-close' });
+  }
+
   private drawWall(ctx: CanvasRenderingContext2D, W: number): void {
     const cards = script.wall.cards;
     const total = cards.length * CARD.w + (cards.length - 1) * CARD.gap;
@@ -571,7 +642,14 @@ export class E4Offers {
     cards.slice(0, this.wallUp).forEach((c, i) => {
       setFont(ctx, 9);
       const rows = wrapText(ctx, c.body, CARD.w - 20).slice(0, 4);
-      offerCard(ctx, x0 + i * (CARD.w + CARD.gap), CARD.y, CARD.w, CARD.h, c, rows);
+      const cx = x0 + i * (CARD.w + CARD.gap);
+      offerCard(ctx, cx, CARD.y, CARD.w, CARD.h, c, rows);
+      // ⚑ S120 (P3) — the whole card is the target, not a corner of it. There
+      // is no affordance drawn on it and there must not be: an offer that
+      // advertises its own openability is a different, louder object.
+      if (this.openCard === null) {
+        this.hits.push({ x: cx, y: CARD.y, w: CARD.w, h: CARD.h, id: `card${i}` });
+      }
     });
   }
 
@@ -593,9 +671,17 @@ export class E4Offers {
       c.counter.meta, crows, c.counter.removed, this.counterFade);
   }
 
+  /** the chip set of whichever stage is waiting — the careful pause's three, or
+   *  the friction beat's two. ⚑ One place, so the draw and the hit test cannot
+   *  drift apart the way `kit.ts`'s did. */
+  private get liveChips(): OChip[] {
+    return this.stage === 'friction' ? FRICTION.chips : PAUSE_CHIPS;
+  }
+
   private drawChips(ctx: CanvasRenderingContext2D, bandTop: number): void {
-    let y = bandTop - 10 - PAUSE_CHIPS.length * (CHIP.h + CHIP.gap);
-    for (const c of PAUSE_CHIPS) {
+    const set = this.liveChips;
+    let y = bandTop - 10 - set.length * (CHIP.h + CHIP.gap);
+    for (const c of set) {
       chip(ctx, CHIP.x, y, CHIP.w, CHIP.h, c.label, { live: c.gone !== true });
       if (c.gone !== true) this.hits.push({ x: CHIP.x, y, w: CHIP.w, h: CHIP.h, id: c.id });
       y += CHIP.h + CHIP.gap;
@@ -611,7 +697,9 @@ export class E4Offers {
     // ⚑ the ball's photograph takes the press and does nothing with it — see
     // `ballShotPressed`. It is not a refusal and it is not a bug.
     if (hit.id === 'ballshot') { this.pressBallShot(); return true; }
-    const c = PAUSE_CHIPS.find(k => k.id === hit.id);
+    if (hit.id === 'card-close') { this.openCard = null; this.version++; return true; }
+    if (hit.id.startsWith('card')) { this.openOffer(Number(hit.id.slice(4))); return true; }
+    const c = this.liveChips.find(k => k.id === hit.id);
     if (!c || c.gone === true) return false;
     this.pressChip(c);
     return true;
@@ -636,6 +724,28 @@ export class E4Offers {
    * flattest register, exactly as §2 specified. **L does not speak here** —
    * a line would be the piece explaining its own best beat.
    */
+  /**
+   * ⚑ OPENING IS NOT ACCEPTING — there is no purchase, no consent and no branch
+   * here, and there never will be. What it does is FILE: the machine writes
+   * down that she looked, which is witness symmetry running toward the system
+   * (Ethics #10) and which this beat never did. Her attention was the one thing
+   * in the era nobody recorded.
+   *
+   * ⚑ ONCE PER CARD. Opening the same card five times is a person reading it
+   * five times, not five separate interests, and filing it five times would be
+   * a lie about what she did — the same rule `flip()` obeys.
+   */
+  private openOffer(i: number): void {
+    const c = script.wall.cards[i] as { id: string; witness?: string } | undefined;
+    if (!c) return;
+    this.openCard = i;
+    if (c.witness && !this.openedFiled.has(c.id)) {
+      this.openedFiled.add(c.id);
+      this.file(c.id, 'surfaced', c.witness);
+    }
+    this.version++;
+  }
+
   private pressBallShot(): void {
     if (this.ballShotPressed) return;
     this.ballShotPressed = true;
@@ -692,12 +802,14 @@ export class E4Offers {
   debugJumpTo(stage: string): void {
     const s = stage as Stage;
     if (s === 'held' || s === 'idle') return;
-    this.wallUp = s === 'curation' || s === 'pause' ? script.wall.cards.length : 0;
+    this.wallUp = s === 'curation' || s === 'pause' || s === 'friction' ? script.wall.cards.length : 0;
     this.finaleStep = 0;
     this.pendingAdvance = false;
     this.enhanced = [true, true];
     this.undone = [false, false];
     this.ballShotPressed = false;
+    this.openCard = null;
+    this.openedFiled.clear();
     this.enterStage(s);
   }
 
@@ -720,7 +832,7 @@ export class E4Offers {
 
   /** review: skip the careful pause's lines and sit on its chips */
   debugToChips(): void {
-    if (this.stage !== 'pause') this.debugJumpTo('pause');
+    if (this.stage !== 'pause' && this.stage !== 'friction') this.debugJumpTo('pause');
     this.queue = [];
     this.cur = null;
     this.waiting = true;

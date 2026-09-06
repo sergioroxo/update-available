@@ -2648,7 +2648,10 @@ export class DesktopOS {
       case 'e4Captions': this.e4Voice('u2_room'); break;
       case 'e4Unplaced': this.e4Voice('u3_unplaced'); break;
       case 'e4Deadname': this.e4Voice('u4_name_one'); break;
-      case 'e4Friction': this.e4Voice('u5_friction'); break;
+      // ⚑ S120 (P4) — the friction beat is no longer one of L's units: it is the
+      // last thing the apparatus asks before the ball, and it lives in the
+      // offers now. Same text, same chips, same audio names.
+      case 'e4Friction': this.e4Offer('friction'); break;
       case 'e4Deadname2': this.e4Voice('u6_name_two'); break;
       case 'e4Shrink': this.e4Voice('u7_shrink_one'); break;
       case 'e4Shrink2': this.e4Voice('u8_shrink_two'); break;
