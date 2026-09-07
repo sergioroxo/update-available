@@ -186,7 +186,7 @@ const PLACEMENT = {
     //   columns, so the rake arrives in the ray test for free, and the local
     //   Z basis stays predominantly -Y (0.139, -0.990, 0), which is what
     //   Session 38's `v = 0.5 + lz/hWorld` calibration depends on.
-    euler: { x: 82, y: 270, z: 0 } // faces the chair, raked back like the glass
+    euler: { x: 82, y: 90, z: 0 } // faces the chair, raked back like the glass
   },
   /**
    * ⚑ ROOM 3's VISOR (S76) — the seam S74 left, taken up.
@@ -332,19 +332,26 @@ const PLACEMENT = {
    *  fault S98 paid four passes for on the laptop lid: hittable, advancing the
    *  beat, and invisible. */
   monitor: {
-    pos: { x: 5.435, y: 1.05, z: 0.70 },
+    /** ⚑ x 5.25, and it was found by drawing a magenta field through this very
+     *  callback and moving the plane until it appeared. At 5.435 nothing
+     *  rendered: the placeholder body box was 0.54 m THICK ALONG X (the size
+     *  array is [x, y, z] and the yaw turns the mesh, not the array), so the
+     *  screen sat inside a half-metre slab — enabled, correctly oriented,
+     *  texture bound, uploading, invisible. S98's lesson on a new prop. The box
+     *  is gone and the plane sits where it demonstrably draws. */
+    pos: { x: 5.33, y: 1.00, z: 0.70 },
     /** ⚑ 4:3, because the CANVAS is 4:3 (512x384, `ERA1_CANVAS`) and a plane of
      *  any other ratio stretches it. Every screen in this piece is 4:3 for the
      *  same reason; a 2026 panel would really be wider, and that is a trade this
      *  world has been making since 1997. */
-    size: { w: 0.500, h: 0.375 },
+    size: { w: 0.400, h: 0.300 },
     /** ⚑ x 82, NOT 0. This file's own workstation — Room 2's monitor, facing
      *  its chair — is `{ x: 82, y: 90 }`, and the 82 is the rake: a panel
      *  standing up, tipped back 8°. x 0 lays the plane flat and it renders
      *  edge-on as a bright line across the desk, which is exactly what the
      *  first pass drew. y is 270 rather than 90 because Room 3 is the EAST
      *  room: its seat looks along +x, so the screen has to face -x. */
-    euler: { x: 82, y: 90, z: 0 }
+    euler: { x: 82, y: 270, z: 0 }
   },
   phone: {
     // y verified in-browser (Session 37): the nightstand's REAL model AABB

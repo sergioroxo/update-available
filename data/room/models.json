@@ -2,6 +2,17 @@
  "_doc": "Model manifest for the asset pipeline (src/room/assets.ts; docs/ASSET_PIPELINE.md). Each entry maps a `model` key (used by props in era1.json / reinterp_deltas.json) to a GLB file in assets/models/. EMPTY by design right now — with no entries, every prop renders as its colored box (current look, nothing breaks). Drop CC0 low-poly GLBs into public/assets/models/ (served at /assets/models/), list them here, and add `\"model\": \"<key>\"` to the matching props to swap boxes → real meshes. Palette law holds: models are recolored FLAT in code, no textures. Kit + licenses tracked in assets/LICENSES.md.",
  "models": [
   {
+   "key": "monitor",
+   "_doc": "\u2691 S126 — Era 4's docked monitor. Poly Pizza, 'Monitor' by Zsky, CC-BY 3.0 — the FIRST CC-BY model in this build, so it carries an attribution obligation the CC0 kit does not: rows in assets/LICENSES.md AND docs/reinterp/ATTRIBUTIONS.md, and a place on the non-diegetic credits surface when that is built (D6, 2026-07-10). \u2691 MEASURED FROM THE MESH, not eyeballed off a render: native AABB 0.0091 x 0.0028 x 0.0069, and the model is Z-UP — its smallest axis is Y, which is depth — so it needs a -90 x-rotation to stand in this Y-up scene. It carries a material named `Screen1Monitor1` spanning x \u00b10.004, z 0..0.005 at constant y: that is the screen face, and the canvas plane is derived from it rather than guessed. \u2691 AND `scale` HERE IS A MULTIPLIER ON A FITTED MODEL, NOT METRES PER NATIVE UNIT \u2014 the kit's own entries (bed 1.9, desk [2.4,1.9,2.3]) are the tell. Reading it as metres and writing 60 rendered a monitor several metres across, filling the frame. 1 is the base fit; tune from a render.",
+   "file": "monitorFlat.glb",
+   "tilt": [-90, 0, 0],
+   "scale": 1,
+   "yaw": 0,
+   "cx": 0,
+   "cz": 0,
+   "baseY": 0
+  },
+  {
    "key": "bed",
    "file": "bedSingle.glb",
    "scale": 1.9,

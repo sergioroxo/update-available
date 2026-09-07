@@ -706,66 +706,68 @@ export const CHROME = {
   page: '#F3EAD8'
 } as const;
 
-export const TAB = { h: 15, w: 62, gap: 2, x: 4, y: 3 } as const;
-export const ADDR = { h: 14, y: 20, x: 6 } as const;
+export const TAB = { h: 20, w: 74, gap: 3, x: 6, y: 5 } as const;
+export const ADDR = { h: 18, y: 28, x: 8 } as const;
 
 /**
- * The tab strip and the address bar. Returns one rect per tab so the draw and
- * the hit test cannot drift apart — the lesson `kit.ts` paid for and
- * `memoryCard` has obeyed since.
+ * The tab strip and the omnibox. Returns one rect per tab so the draw and the
+ * hit test cannot drift apart — the lesson `kit.ts` paid for.
+ *
+ * ⚑ S126 — RE-CUT FOR 2026, on Sérgio's note: *"I dont mind the Chrome browser
+ * style, i just feel it needed more similarities to be understandable as 2026,
+ * not less… I like the already open tabs, like this was running on a chromebook
+ * and web-based."* So the tabs STAY — they are the beat, five she left and a
+ * sixth that came back — and what changed is the finish: taller tabs with a
+ * favicon dot each, a rounded omnibox that floats in its bar rather than
+ * filling it, a profile dot at the right, and air between everything. **More
+ * browser and more current, not less.**
  */
 export function browserChrome(
   ctx: CanvasRenderingContext2D, W: number,
   tabs: { title: string }[], live: number, address: string, showCursor: boolean
 ): Rect[] {
-  px(ctx, 0, 0, W, ADDR.y + ADDR.h + 4, CHROME.bar);
+  const barH = ADDR.y + ADDR.h + 7;
+  px(ctx, 0, 0, W, barH, CHROME.bar);
   const rects: Rect[] = [];
-  setFont(ctx, 8);
-  // ⚑ TABS SHRINK TO FIT, the way a real browser's do — and this is not
-  // cosmetic. The first pass used a fixed 62 px and six tabs did not fit on a
-  // 320 px lid, so the strip silently stopped at four: the fifth and SIXTH
-  // never drew, and the sixth is the beat — the tab she did not leave open.
-  // A row that quietly drops its own payload is exactly the fault class this
-  // project keeps paying for, and it was found by looking at a render.
+  // ⚑ tabs shrink to fit, the way a real browser's do. A fixed width silently
+  // dropped the last two on a narrow screen — and the sixth is the beat.
   const tw = Math.min(TAB.w, Math.floor((W - TAB.x * 2 - (tabs.length - 1) * TAB.gap) / Math.max(1, tabs.length)));
   for (let i = 0; i < tabs.length; i++) {
     const x = TAB.x + i * (tw + TAB.gap);
     const on = i === live;
-    px(ctx, x, TAB.y, tw, TAB.h, on ? CHROME.tabLive : CHROME.tab);
-    px(ctx, x, TAB.y, tw, 1, on ? CHROME.tabLive : CHROME.barLo);
-    if (!on) px(ctx, x, TAB.y + TAB.h - 1, tw, 1, CHROME.barLo);
+    // a 2026 tab: a soft-cornered slab, the live one lifted out of the bar
+    px(ctx, x + 1, TAB.y, tw - 2, TAB.h, on ? CHROME.tabLive : CHROME.tab);
+    px(ctx, x, TAB.y + 1, tw, TAB.h - 1, on ? CHROME.tabLive : CHROME.tab);
+    if (on) px(ctx, x, TAB.y + TAB.h - 2, tw, 2, CHROME.tabLive);
+    // the favicon: one dot, the thing every tab in the world has
+    px(ctx, x + 7, TAB.y + 7, 5, 5, on ? CHROME.tabInkLive : CHROME.hint);
+    setFont(ctx, 8);
     ctx.fillStyle = on ? CHROME.tabInkLive : CHROME.tabInk;
-    // a tab title is CLIPPED, never wrapped and never shortened in the data —
-    // the copy is Sérgio's to rewrite and the painter must survive a long one.
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 4, TAB.y, tw - 8, TAB.h); ctx.clip();
-    ctx.fillText(tabs[i].title, x + 5, TAB.y + 4);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 16, TAB.y, tw - 22, TAB.h); ctx.clip();
+    ctx.fillText(tabs[i].title, x + 16, TAB.y + 6);
     ctx.restore();
     rects.push({ x, y: TAB.y, w: tw, h: TAB.h });
   }
-  // the address bar
-  px(ctx, ADDR.x, ADDR.y, W - ADDR.x * 2, ADDR.h, CHROME.field);
-  px(ctx, ADDR.x, ADDR.y, W - ADDR.x * 2, 1, CHROME.fieldEdge);
-  px(ctx, ADDR.x, ADDR.y + ADDR.h - 1, W - ADDR.x * 2, 1, CHROME.fieldEdge);
+  // the omnibox — a rounded well floating in the bar, not a box filling it
+  const ax = ADDR.x + 4, aw = W - ADDR.x * 2 - 30;
+  px(ctx, ax + 2, ADDR.y, aw - 4, ADDR.h, CHROME.field);
+  px(ctx, ax, ADDR.y + 2, aw, ADDR.h - 4, CHROME.field);
   setFont(ctx, 9);
   ctx.fillStyle = CHROME.hint;
-  ctx.fillText('\u25CF', ADDR.x + 6, ADDR.y + 4);      // the lock, as a dot at this size
+  ctx.fillText('\u25CF', ax + 8, ADDR.y + 6);       // the lock, a dot at this size
+  setFont(ctx, 10);
   ctx.fillStyle = address ? CHROME.ink : CHROME.hint;
-  ctx.fillText(address, ADDR.x + 16, ADDR.y + 4);
+  ctx.fillText(address, ax + 20, ADDR.y + 5);
   if (showCursor) {
     const w = Math.ceil(ctx.measureText(address).width);
-    px(ctx, ADDR.x + 17 + w, ADDR.y + 3, 1, 9, CHROME.ink);
+    px(ctx, ax + 21 + w, ADDR.y + 4, 1, 10, CHROME.ink);
   }
+  // the profile dot every signed-in browser wears, top right, saying nothing
+  px(ctx, W - 20, ADDR.y + 3, 12, 12, CHROME.barLo);
+  px(ctx, W - 18, ADDR.y + 5, 8, 8, CHROME.hint);
   return rects;
 }
 
-/**
- * ⚑ THE RESTORE — the era's boot, and the whole of it.
- *
- * `k` runs 0 → 1. One line, centred, on the page ground; the tabs come back
- * one at a time underneath it as it completes. There is no logo, no progress
- * bar and no version number: 2026 does not think it is starting anything, and
- * a splash would be the 2003 boot wearing a 2026 coat.
- */
 export function restoring(
   ctx: CanvasRenderingContext2D, W: number, H: number,
   line: string, k: number

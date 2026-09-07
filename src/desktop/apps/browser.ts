@@ -133,21 +133,25 @@ export class E4Browser {
    */
   private drawSearch(ctx: CanvasRenderingContext2D, W: number): void {
     const rows = script.search.completions as string[];
-    const top = ADDR.y + ADDR.h + 4;
+    const top = ADDR.y + ADDR.h + 11;
     // ⚑ the panel hugs the completions instead of filling the lid. A dropdown
     //   is the size of what is in it; a full-height box with four lines at the
     //   top of it is a page, and this is not a page — it is the thing that
     //   appeared under the address bar while she was still typing.
-    const h = 20 + rows.length * 14 + 6;
+    const h = 22 + rows.length * 16 + 8;
     px(ctx, ADDR.x, top, W - ADDR.x * 2, h, CHROME.field);
     px(ctx, ADDR.x, top + h - 1, W - ADDR.x * 2, 1, CHROME.fieldEdge);
     setFont(ctx, 8);
     ctx.fillStyle = CHROME.hint;
-    ctx.fillText(script.tabs[0].mark, ADDR.x + 8, top + 5);
-    setFont(ctx, 10);
+    ctx.fillText(script.tabs[0].mark, ADDR.x + 14, top + 6);
+    setFont(ctx, 11);
     for (let i = 0; i < rows.length; i++) {
+      // ⚑ a magnifier dot per row, the way a suggestion list carries one. No
+      //   highlight on the fourth: the one she probably meant is last and
+      //   nothing points at it.
+      px(ctx, ADDR.x + 14, top + 18 + i * 16, 4, 4, CHROME.hint);
       ctx.fillStyle = CHROME.ink;
-      ctx.fillText(rows[i], ADDR.x + 8, top + 19 + i * 14);
+      ctx.fillText(rows[i], ADDR.x + 24, top + 15 + i * 16);
     }
   }
 

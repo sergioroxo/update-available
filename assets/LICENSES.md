@@ -11,6 +11,7 @@ mix art styles between rooms).
 
 | Model key | File | Source | License | Attribution needed | Notes |
 |---|---|---|---|---|---|
+| monitor | monitorFlat.glb | Poly Pizza — "Monitor" by Zsky (https://poly.pizza/m/Qyw8JFtZF0) | CC-BY 3.0 | **YES** | Era 4's docked monitor. ⚑ FIRST CC-BY MODEL in the build — credited in docs/reinterp/ATTRIBUTIONS.md and owed a place on the credits surface. Geometry only; recolored flat in code per the no-textures law. |
 | bed | bedSingle.glb | Kenney Furniture Kit | CC0 | no | recolored flat per room |
 | desk | desk.glb | Kenney Furniture Kit | CC0 | no | |
 | chair | chairDesk.glb | Kenney Furniture Kit | CC0 | no | |
