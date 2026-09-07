@@ -37,6 +37,26 @@ That converts the project's hardest input constraint into the era's sharpest obj
 
 ---
 
+# 2b · ⚑ THE BOOT STAYS — Sérgio's catch, and it is the last term in a series
+> *"the boot up is important to keep the narrative of because we are in the current era it doesnt need?"*
+
+**He is right and the draft above was wrong to say "no boot."** The boots are a through-line and
+they already argue something across thirty years:
+
+| | what booting is | what it says |
+|---|---|---|
+| **1997** | a machine starting, and you wait | you are a guest of this thing |
+| **2003** | Restorify's 23.7 s CD-ROM splash over the full jingle, not skippable (S116) | it announces itself |
+| **2016** | a wordmark and a turning ring, because a 2016 machine is never off (S116) | it never sleeps |
+| **2026** | ⚑ **"Restoring your session…"** | **it was never off, and it kept your place** |
+
+⚑ **So E4's boot is not an absence — it is the boot modern machines actually have.** Nothing boots
+any more; things RESTORE. One line, two seconds, and it states E's whole thesis before a tab is
+opened: you are arriving in the middle of something that has been going on without you.
+
+**And it is the first piece of residue.** The session comes back with the tabs she left — plus one
+she did not leave. Nothing points at it.
+
 # 3 · THE FIVE SURFACES
 One laptop, one browser, five tabs **already open when the era begins.** No boot, no onboarding, no
 "Hi Maya." The machine is mid-session and so is the relationship.
@@ -92,12 +112,47 @@ Each undo works. The footer reads something like *we'll keep an eye on this.*
 *give Maya evidence of relationship to the ball* — and it is one line of data. Unmuting it is the
 one press in the era that opens something rather than closing it.
 
-The stream is there. L mentions, helpfully, that it is better in the headset. **She puts it on.**
-The headset is now **one sequence, not the container** — the last rung of *see → classify → preserve
-→ improve → intervene*: the thing that has spent a year inferring her finally asks for her
-perception.
+## 4.0 · ⚑ THE HEADSET IS THE CONTROL INSTRUMENT — Sérgio, 2026-09-07, and it fixes a thin spot
+> *"I would assume that when maya puts the headset because it would be used for control (sogice VR)
+> but image gets interrupted and creates the narrative for the ball live stream or the ball?"*
 
-**The ball plays exactly as built.** 3½ minutes, no controls, the stillness law intact.
+**The first half is a straight improvement on the draft above**, where the headset was merely a
+better way to watch a stream — which is no reason for a headset at all. As the control instrument it
+becomes the last rung of *see → classify → preserve → improve → **intervene***: the thing that has
+spent a year inferring her finally asks for her perception.
+
+⚑ **BUT IT MUST NOT BE LABELLED.** A VR that announces itself as corrective is a **less** frightening
+object than a kind one, and it is not what the sources show: neither real system says *we will change
+you* — they say information, support, *balance*. GPT's warning about the careful pause is the same
+warning here: *"dramatically it risks being too obviously villainous."* And the Sunroom's retired
+note carries the rule that outlives it — **the apparatus's space has to be genuinely pleasant or the
+trap is not a trap.**
+
+**So: it is a guided reflection.** The thing L has been proposing all era in one sentence — *one
+short reflection first* — finally given a room. Calm, warm, therapeutic, first-person, and its
+CONTENT is the correction: it walks her back through her own record, in her own images, and asks her
+to consider. ⚑ **That is SOGICE VR, and it never once says so.**
+
+## 4.0b · ⚑ AND THE BALL DOES NOT BREAK IN — THE THING ON TOP OF IT STOPS
+The second half of his note needs one turn to be safe, because the register law is absolute:
+*respite is never a trap and is never revealed as fake; the system targets AROUND it, never through
+it* — and canon already fixes the direction of the failure (`REINTERP_E4_DEEP_PASS` §1.4:
+**"The stutter is L's, not the ball's. The ball never falters. Never glitch the performers."**).
+
+So the ball is **not summoned by an interruption.** It is already running, on the other side of the
+mute she lifted, and it does not need her or the machine. What happens is:
+
+1. She is in the reflection. It is going well. It is kind.
+2. The stream is there underneath, and the apparatus keeps **holding it out** — a content notice, an
+   age gate, *we've hidden this for you*, a **recommended instead** panel over the top of it.
+3. ⚑ **The reflection is what fails.** The correction cannot run over material it cannot reduce; the
+   overlay keeps re-writing itself and stalls.
+4. The ball is simply what is left when the thing on top of it stops.
+
+⚑ **The apparatus is interrupted. The ball is not.** That is his idea, kept whole, with the failure
+pointed at the only object allowed to carry it.
+
+**Then the ball plays exactly as built.** 3½ minutes, no controls, the stillness law intact.
 
 ## 4.1 · ⚑ AND `NO CATEGORY FOUND` IS RETIRED
 Three readers have now independently rejected it: this repo's own provenance pass (2026-08-06,
@@ -131,7 +186,7 @@ computer stops. The world does not.**
 
 | | |
 |---|---|
-| **DELETED** | L's ten units (`s4_l.json`) — replaced by the transcript · the Sunroom home environment as a *place she inhabits* · the live wall + curation + pause beats · `ballshots` as a separate stage · `NO CATEGORY FOUND` and `no enhancement available` |
+| **DELETED** | L's ten units (`s4_l.json`) — replaced by the transcript · ⚑ **the Sunroom — retired by Sérgio 2026-09-07**, plates kept at `docs/reinterp/plates/SUNROOM_retired_2026-09-07/`; its flatness argument and its *pleasantness* both survive into the guided reflection (§4.0) · the live wall + curation + pause beats · `ballshots` as a separate stage · `NO CATEGORY FOUND` and `no enhancement available` |
 | **KEPT WHOLE** | the ball (391 lines, untouched) · the glitch · the Close's arrival-as-update · the filing strip (S119) · the photograph painter and the free flip (P1) · the hoodie's three guesses · the four offer marks and their fine print |
 | **REUSED** | `memoryCard`, `offerCard`, `offerCardOpen`, `mediaCard`, `filingStrip`, `chip`, `captionBand`, `labelField` — the browser is assembled from painters that already exist |
 | **NEW CODE** | browser chrome (tab strip + address bar) · a scrolling transcript view · the account page · the care list. Four surfaces, all card-and-list grammar this file already speaks |
@@ -169,8 +224,8 @@ is the strongest unbuilt beat available.
 1. **Does Era 4 open mid-relationship or at first contact?** Everything above follows from the first.
 2. **Do those two real systems enter the Dossier?** They are real named organisations, which
    CLAUDE.md permits only where the KB documents them. Research is mine; the citation is his.
-3. Whether the headset shrinking to one sequence is acceptable, given how much work went into the
-   Sunroom.
+3. ~~Whether the headset shrinking to one sequence is acceptable~~ — ⚑ **RULED 2026-09-07.** The
+   Sunroom is retired (plates kept) and the headset is the control instrument, unlabelled: §4.0.
 
 # 8 · ⚑ THE ONE THING THAT WOULD MAKE THIS FAIL
 **If the player cannot form a vivid sense of Maya from the residue, it is a forensic UI exercise
