@@ -2593,7 +2593,7 @@
     "pos": [
      5.24,
      0.75,
-     0.86
+     1.08
     ],
     "size": [
      0.25,
@@ -2604,7 +2604,7 @@
     "model": "laptop",
     "yaw": 180
    },
-        { "id": "e_monitor", "_doc": "⚑ S126 — THE DOCKED MONITOR, and Era 4 finally has one. Poly Pizza, 'Monitor' by Zsky, CC-BY 3.0 (assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md). It sits dead ahead of the r3 seat; the laptop docks beside it and the headset is out to one side, which is the arrangement Sérgio asked for on 2026-09-07: *'the laptop connected to a monitor, because we need a bigger area of interaction… push the headset more to the side.'* ⚑ The SCREEN is not this prop — it is the canvas plane in era3Devices PLACEMENT.monitor, derived from the model's own `Screen1Monitor1` material rather than guessed, and sitting proud of the glass so it can never end up inside the cabinet (S98's lesson, and S124 re-learned it on a placeholder box).", "pos": [5.42, 0.75, 0.70], "size": [0.17, 0.42, 0.55], "color": "#3A3A44", "yaw": 270, "model": "monitor" },
+        { "id": "e_monitor", "_doc": "⚑ S126 — THE DOCKED MONITOR, and Era 4 finally has one. Poly Pizza, 'Monitor' by Zsky, CC-BY 3.0 (assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md). It sits dead ahead of the r3 seat; the laptop docks beside it and the headset is out to one side, which is the arrangement Sérgio asked for on 2026-09-07: *'the laptop connected to a monitor, because we need a bigger area of interaction… push the headset more to the side.'* ⚑ The SCREEN is not this prop — it is the canvas plane in era3Devices PLACEMENT.monitor, derived from the model's own `Screen1Monitor1` material rather than guessed, and sitting proud of the glass so it can never end up inside the cabinet (S98's lesson, and S124 re-learned it on a placeholder box).", "pos": [5.42, 0.87, 0.70], "size": [0.14, 0.36, 0.48], "color": "#3A3A44", "yaw": 270, "model": "monitor" },
    {
     "id": "e_headsetStand",
     "_doc": "S118: the stand the code has been describing for months. Desk top 0.75 to 0.90, and the headset's own base sits on it. A charging stand is what a 2026 headset lives on when it is not on your face — and it is the only reason 'closer to the player' and 'inside the frame' can both be true at once.",

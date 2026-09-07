@@ -321,7 +321,17 @@ const PLACEMENT = {
      *      through the screen.
      *  ⚑ So the relocation is a real job — model, plane and stand together,
      *  re-measured from the seat — and not a one-line z edit. Left at 0.86. */
-    pos: { x: 5.3348, y: 0.8700, z: 0.86 },
+    /**
+     * ⚑ S127 — z 0.86 → 1.08, MEASURED. With the monitor in, the two planes
+     * were sharing desk: the monitor's own AABB runs z 0.50–0.90 and the lid's
+     * ran 0.71–1.01, so a third of the laptop sat behind the screen and read as
+     * buried. The desk is 1.4 m along z (−0.09 to 1.31), so there is room; this
+     * clears the monitor by 0.03 and still lands inside the top.
+     * ⚑ Keep in step with `e_laptop` in data/room/reinterp_deltas.json — the
+     * plane and its mesh are one object, which S123 learned by tearing them
+     * apart and watching the browser float off the lid.
+     */
+    pos: { x: 5.3348, y: 0.8700, z: 1.08 },
     size: { w: 0.300, h: 0.188 },
     euler: { x: 84.6, y: 270, z: 0 }
   },
@@ -339,12 +349,12 @@ const PLACEMENT = {
      *  screen sat inside a half-metre slab — enabled, correctly oriented,
      *  texture bound, uploading, invisible. S98's lesson on a new prop. The box
      *  is gone and the plane sits where it demonstrably draws. */
-    pos: { x: 5.33, y: 1.00, z: 0.70 },
+    pos: { x: 5.315, y: 1.005, z: 0.70 },
     /** ⚑ 4:3, because the CANVAS is 4:3 (512x384, `ERA1_CANVAS`) and a plane of
      *  any other ratio stretches it. Every screen in this piece is 4:3 for the
      *  same reason; a 2026 panel would really be wider, and that is a trade this
      *  world has been making since 1997. */
-    size: { w: 0.400, h: 0.300 },
+    size: { w: 0.432, h: 0.324 },
     /** ⚑ x 82, NOT 0. This file's own workstation — Room 2's monitor, facing
      *  its chair — is `{ x: 82, y: 90 }`, and the 82 is the rake: a panel
      *  standing up, tipped back 8°. x 0 lays the plane flat and it renders

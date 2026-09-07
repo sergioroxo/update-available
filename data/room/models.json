@@ -3,14 +3,13 @@
  "models": [
   {
    "key": "monitor",
-   "_doc": "\u2691 S126 — Era 4's docked monitor. Poly Pizza, 'Monitor' by Zsky, CC-BY 3.0 — the FIRST CC-BY model in this build, so it carries an attribution obligation the CC0 kit does not: rows in assets/LICENSES.md AND docs/reinterp/ATTRIBUTIONS.md, and a place on the non-diegetic credits surface when that is built (D6, 2026-07-10). \u2691 MEASURED FROM THE MESH, not eyeballed off a render: native AABB 0.0091 x 0.0028 x 0.0069, and the model is Z-UP — its smallest axis is Y, which is depth — so it needs a -90 x-rotation to stand in this Y-up scene. It carries a material named `Screen1Monitor1` spanning x \u00b10.004, z 0..0.005 at constant y: that is the screen face, and the canvas plane is derived from it rather than guessed. \u2691 AND `scale` HERE IS A MULTIPLIER ON A FITTED MODEL, NOT METRES PER NATIVE UNIT \u2014 the kit's own entries (bed 1.9, desk [2.4,1.9,2.3]) are the tell. Reading it as metres and writing 60 rendered a monitor several metres across, filling the frame. 1 is the base fit; tune from a render.",
+   "_doc": "\u2691 S126 — Era 4's docked monitor. Poly Pizza, 'Monitor' by Zsky, CC-BY 3.0 — the FIRST CC-BY model in this build, so it carries an attribution obligation the CC0 kit does not: rows in assets/LICENSES.md AND docs/reinterp/ATTRIBUTIONS.md, and a place on the non-diegetic credits surface when that is built (D6, 2026-07-10). \u2691 MEASURED FROM THE MESH, not eyeballed off a render: native AABB 0.0091 x 0.0028 x 0.0069, \u2691 AND IT IS Y-UP AFTER ALL. I read the native AABB (0.0091 x 0.0028 x 0.0069) as Z-up because Y was the smallest axis, added `tilt: [-90,0,0]`, and the placed mesh then measured 0.69 m DEEP along x — lying on its back, reaching past the desk's back edge at 5.59 and into the wall. Measured in the room, not reasoned about: no tilt. It carries a material named `Screen1Monitor1` spanning x \u00b10.004, z 0..0.005 at constant y: that is the screen face, and the canvas plane is derived from it rather than guessed. \u2691 AND `scale` HERE IS A MULTIPLIER ON A FITTED MODEL, NOT METRES PER NATIVE UNIT \u2014 the kit's own entries (bed 1.9, desk [2.4,1.9,2.3]) are the tell. Reading it as metres and writing 60 rendered a monitor several metres across, filling the frame. 1 is the base fit and rendered 0.28 x 0.69 x 0.90 m — a monitor almost a metre wide, overlapping the laptop. 0.62 brings it to roughly 0.17 x 0.43 x 0.56. \u2691 AND `baseY` IS IN NATIVE UNITS: the model's origin sits inside it (native min y = -0.0016), so with baseY 0 it sank 0.20 m into the desk. -0.0016 stands it on the top.",
    "file": "monitorFlat.glb",
-   "tilt": [-90, 0, 0],
-   "scale": 1,
+   "scale": 0.62,
    "yaw": 0,
    "cx": 0,
    "cz": 0,
-   "baseY": 0
+   "baseY": -0.0016
   },
   {
    "key": "bed",
