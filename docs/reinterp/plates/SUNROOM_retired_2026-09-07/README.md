@@ -1,3 +1,5 @@
+STATUS: live
+
 # THE SUNROOM — the record of it, kept
 
 Sérgio retired the home environment on 2026-09-07: *"It is fine by me to not
