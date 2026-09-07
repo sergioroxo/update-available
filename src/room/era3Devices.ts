@@ -87,9 +87,15 @@ const LOGICAL = {
   /** ⚑ the laptop (2026-09-01): a small screen carrying two short lines and a
    *  hint, so it needs pixels for text and nothing else. */
   /** ⚑ S123 tried 320x200 and reverted the same hour — see `space.ts`'s
-   *  LAPTOP_W. The lid is a second screen again; the browser is going on a
+   *  LAPTOP_W. The lid is a second screen again; the browser went to the
    *  monitor (Sérgio, 2026-09-07: the laptop docks, the headset moves aside). */
-  laptop: { w: 224, h: 140, scale: 3 }
+  laptop: { w: 224, h: 140, scale: 3 },
+  /** ⚑ S124 — THE DOCKED MONITOR, and it carries the piece's own canvas size.
+   *  0.50 x 0.30 m at 512x384 is ~1024 px/m, and the seat is ~1.0 m away, so a
+   *  9 px glyph subtends ~0.50 deg — comfortably readable, and roughly double
+   *  what the same text got on the lid. That arithmetic is the whole reason the
+   *  browser is here and not there. */
+  monitor: { w: ERA1_CANVAS.width, h: ERA1_CANVAS.height, scale: 2 }
 } as const;
 
 /** Room 2 (Vera, west) world placements — Session 37 FABLE/SÉRGIO CHECK:
@@ -180,7 +186,7 @@ const PLACEMENT = {
     //   columns, so the rake arrives in the ray test for free, and the local
     //   Z basis stays predominantly -Y (0.139, -0.990, 0), which is what
     //   Session 38's `v = 0.5 + lz/hWorld` calibration depends on.
-    euler: { x: 82, y: 90, z: 0 } // faces the chair, raked back like the glass
+    euler: { x: 82, y: 270, z: 0 } // faces the chair, raked back like the glass
   },
   /**
    * ⚑ ROOM 3's VISOR (S76) — the seam S74 left, taken up.
@@ -234,7 +240,29 @@ const PLACEMENT = {
      * precisely what happened when the box assembly was replaced by the model
      * and this was left where it was."
      */
-    pos: { x: 5.075, y: 0.968, z: 0.52 },
+    /**
+     * ⚑ S124 — z 0.52 → 0.40. Sérgio, 2026-09-07: *"we may just push the headset
+     * more to the side so the person can see in their peripheral view without
+     * being centered on stage."* The desk's centre belongs to the monitor now,
+     * so the headset moves off it — but only as far as the FRAME allows, and
+     * that limit is measured, not guessed:
+     *
+     *   z 0.52 → 12.7° off the seat bearing   (where it was)
+     *   z 0.40 → 20.6°                        (here — as far aside as it goes)
+     *   z 0.30 → 26.6°
+     *   z 0.18 → 33.0°  ⚑ OUTSIDE the 29.7° horizontal half-FOV
+     *
+     * ⚑ 0.18 WAS TRIED AND THE WALK CAUGHT IT: 182 presses, no Close, because
+     * the headset could not be aimed at from the seat and the era's one touch
+     * was unreachable. That is S76's finding re-made — it moved the headset IN
+     * for exactly this reason and wrote the numbers down, and I moved it back
+     * out without reading them. 20.6° keeps it clearly to one side and clearly
+     * in frame.
+     *
+     * It MOVES WITH `e_headset` and `e_headsetStand` in reinterp_deltas.json —
+     * S123 learned that a screen plane and its mesh are one object.
+     */
+    pos: { x: 5.075, y: 0.968, z: 0.40 },
     size: { w: 0.15, h: 0.075 },
     euler: { x: 90, y: 270, z: 0 }
   },
@@ -296,6 +324,27 @@ const PLACEMENT = {
     pos: { x: 5.3348, y: 0.8700, z: 0.86 },
     size: { w: 0.300, h: 0.188 },
     euler: { x: 84.6, y: 270, z: 0 }
+  },
+  /** ⚑ S124 — the monitor's screen plane. Upright (euler x 0), facing the seat
+   *  (y 270, the same bearing the laptop lid uses), centred on the desk dead
+   *  ahead of the r3 seat at (4.4, 1.16, 0.7). The plane sits 0.01 m proud of
+   *  `e_monBody`'s front face so it can never end up INSIDE the slab — the
+   *  fault S98 paid four passes for on the laptop lid: hittable, advancing the
+   *  beat, and invisible. */
+  monitor: {
+    pos: { x: 5.435, y: 1.05, z: 0.70 },
+    /** ⚑ 4:3, because the CANVAS is 4:3 (512x384, `ERA1_CANVAS`) and a plane of
+     *  any other ratio stretches it. Every screen in this piece is 4:3 for the
+     *  same reason; a 2026 panel would really be wider, and that is a trade this
+     *  world has been making since 1997. */
+    size: { w: 0.500, h: 0.375 },
+    /** ⚑ x 82, NOT 0. This file's own workstation — Room 2's monitor, facing
+     *  its chair — is `{ x: 82, y: 90 }`, and the 82 is the rake: a panel
+     *  standing up, tipped back 8°. x 0 lays the plane flat and it renders
+     *  edge-on as a bright line across the desk, which is exactly what the
+     *  first pass drew. y is 270 rather than 90 because Room 3 is the EAST
+     *  room: its seat looks along +x, so the screen has to face -x. */
+    euler: { x: 82, y: 90, z: 0 }
   },
   phone: {
     // y verified in-browser (Session 37): the nightstand's REAL model AABB
@@ -825,6 +874,23 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       return sh ? 1 + sh.laptopVersion + (sh.worn ? sh.version : 0)
         + (ritual?.open && ritual.fullScreen ? ritualTick : 0) : 0;
     } });
+  /**
+   * ⚑ S124 — THE MONITOR, and Era 4 gets its desktop back.
+   *
+   * CLAUDE.md: *"One UI surface: all interaction lives on the offscreen 2D
+   * desktop canvas, textured onto the monitor mesh."* Every era obeyed that
+   * except Era 4, which put its whole self on a headset — and that is a large
+   * part of why the era has never felt like the rest of the piece. The browser
+   * draws here now, at the canvas's own size, on a monitor, on the desk.
+   */
+  add('monitor', LOGICAL.monitor, (ctx, w, h) => {
+    const sh = e4Bridge()?.shell();
+    if (!sh) return;
+    sh.drawBrowser(ctx, w, h);
+  }, { versionOf: () => {
+    const sh = e4Bridge()?.shell();
+    return sh ? 1 + sh.browserVersion : 0;
+  } });
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
 
   let arrived = false;
@@ -1079,7 +1145,14 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
          * — the fault S61 found on the spine, and the one a removal always has.
          */
         const roomTwoScreen = s.name === 'workstation' || s.name === 'phone';
-        s.entity.enabled = (s.name === 'visor' || s.name === 'laptop') ? era === 'e4'
+        // ⚑ S124 — `monitor` joins `visor` and `laptop` as a Room 3 / Era 4
+        //   screen. It was added without this line and the plane sat in the
+        //   room at exactly the right place, correctly sized, DISABLED — which
+        //   renders as a blank slab and looks for all the world like a drawing
+        //   bug. `setEra` is where a screen becomes visible, and a new one that
+        //   does not say so here is invisible on purpose without meaning to be.
+        const roomThreeScreen = s.name === 'visor' || s.name === 'laptop' || s.name === 'monitor';
+        s.entity.enabled = roomThreeScreen ? era === 'e4'
           : roomTwoScreen ? era === 'e3'
           : visible;
       }

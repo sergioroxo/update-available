@@ -1,5 +1,5 @@
 {
- "when": "2026-09-07T10:06:10.818Z",
+ "when": "2026-09-07T21:06:58.777Z",
  "port": 5179,
  "viewport": {
   "width": 1280,
@@ -7,8 +7,8 @@
  },
  "jumpedTo": null,
  "isReachabilityProof": true,
- "steps": 548,
- "presses": 240,
+ "steps": 645,
+ "presses": 320,
  "reachedEra": "e4",
  "spine": "done",
  "ledger": {
@@ -384,6 +384,11 @@
     "witness": "companion: registered — L"
    },
    {
+    "id": "session",
+    "outcome": "read",
+    "witness": "session: restored — six tabs, five of them hers"
+   },
+   {
     "id": "laptop",
     "outcome": "read",
     "witness": "desk: the update introduced itself — L, on the laptop"
@@ -392,6 +397,11 @@
     "id": "headset",
     "outcome": "worn",
     "witness": "device: worn — one touch"
+   },
+   {
+    "id": "laptop",
+    "outcome": "read",
+    "witness": "desk: the device stopped — the laptop offered a restart"
    },
    {
     "id": "laptop",
@@ -1649,22 +1659,6 @@
   },
   {
    "step": 61,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 62,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 63,
    "kind": "press",
    "target": "icon-provotype",
    "surface": "os",
@@ -1685,7 +1679,7 @@
    "changed": true
   },
   {
-   "step": 64,
+   "step": 62,
    "kind": "press",
    "target": "leave",
    "surface": "provotype",
@@ -1708,7 +1702,7 @@
    "changed": true
   },
   {
-   "step": 65,
+   "step": 63,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
@@ -1716,7 +1710,7 @@
    "spine": "e1"
   },
   {
-   "step": 66,
+   "step": 64,
    "kind": "press",
    "target": "icon-provotype-intake",
    "surface": "os",
@@ -1737,7 +1731,7 @@
    "changed": true
   },
   {
-   "step": 67,
+   "step": 65,
    "kind": "press",
    "target": "leave",
    "surface": "provotype",
@@ -1760,15 +1754,7 @@
    "changed": true
   },
   {
-   "step": 68,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 69,
+   "step": 66,
    "kind": "press",
    "target": "icon-irc",
    "surface": "os",
@@ -1789,17 +1775,15 @@
    "changed": false
   },
   {
-   "step": 70,
-   "kind": "inert",
-   "target": "icon-irc",
-   "surface": "os",
+   "step": 67,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
-   "spine": "e1",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+   "spine": "e1"
   },
   {
-   "step": 71,
+   "step": 68,
    "kind": "press",
    "target": "icon-provotype",
    "surface": "os",
@@ -1817,6 +1801,61 @@
    "qMode": "dark",
    "ledgerDelta": 0,
    "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 69,
+   "kind": "press",
+   "target": "leave",
+   "surface": "provotype",
+   "logical": [
+    79,
+    342
+   ],
+   "page": [
+    408,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "ledgerNew": [
+    "provotypes:pillow:abandoned"
+   ],
+   "changed": true
+  },
+  {
+   "step": 70,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 71,
+   "kind": "press",
+   "target": "icon-provotype-intake",
+   "surface": "os",
+   "logical": [
+    29,
+    168
+   ],
+   "page": [
+    343,
+    553
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 2,
+   "ledgerNew": [
+    "tags:pastoral-referral",
+    "records:mirc-log"
+   ],
    "changed": true
   },
   {
@@ -1838,64 +1877,12 @@
    "qMode": "dark",
    "ledgerDelta": 1,
    "ledgerNew": [
-    "provotypes:pillow:abandoned"
-   ],
-   "changed": true
-  },
-  {
-   "step": 73,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 74,
-   "kind": "press",
-   "target": "icon-provotype-intake",
-   "surface": "os",
-   "logical": [
-    29,
-    168
-   ],
-   "page": [
-    343,
-    553
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true
-  },
-  {
-   "step": 75,
-   "kind": "press",
-   "target": "leave",
-   "surface": "provotype",
-   "logical": [
-    79,
-    342
-   ],
-   "page": [
-    408,
-    780
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
     "provotypes:origin_intake_e1:abandoned"
    ],
    "changed": true
   },
   {
-   "step": 76,
+   "step": 73,
    "kind": "press",
    "target": "icon-irc",
    "surface": "os",
@@ -1916,7 +1903,25 @@
    "changed": false
   },
   {
-   "step": 77,
+   "step": 74,
+   "kind": "inert",
+   "target": "icon-irc",
+   "surface": "os",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 75,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 76,
    "kind": "press",
    "target": "icon-provotype",
    "surface": "os",
@@ -1937,7 +1942,7 @@
    "changed": true
   },
   {
-   "step": 78,
+   "step": 77,
    "kind": "press",
    "target": "leave",
    "surface": "provotype",
@@ -1960,7 +1965,7 @@
    "changed": true
   },
   {
-   "step": 79,
+   "step": 78,
    "kind": "press",
    "target": "icon-provotype-intake",
    "surface": "os",
@@ -1981,7 +1986,7 @@
    "changed": true
   },
   {
-   "step": 80,
+   "step": 79,
    "kind": "press",
    "target": "leave",
    "surface": "provotype",
@@ -2004,7 +2009,7 @@
    "changed": true
   },
   {
-   "step": 81,
+   "step": 80,
    "kind": "press",
    "target": "icon-irc",
    "surface": "os",
@@ -2023,6 +2028,16 @@
    "ledgerDelta": 0,
    "ledgerNew": [],
    "changed": false
+  },
+  {
+   "step": 81,
+   "kind": "inert",
+   "target": "icon-irc",
+   "surface": "os",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
    "step": 82,
@@ -2048,37 +2063,6 @@
   {
    "step": 83,
    "kind": "press",
-   "target": "reply:0",
-   "surface": "irc",
-   "logical": [
-    320,
-    295
-   ],
-   "page": [
-    724,
-    719
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": false
-  },
-  {
-   "step": 84,
-   "kind": "inert",
-   "target": "reply:0",
-   "surface": "irc",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
-  },
-  {
-   "step": 85,
-   "kind": "press",
    "target": "leave",
    "surface": "provotype",
    "logical": [
@@ -2100,7 +2084,59 @@
    "changed": true
   },
   {
+   "step": 84,
+   "kind": "press",
+   "target": "icon-provotype-intake",
+   "surface": "os",
+   "logical": [
+    29,
+    168
+   ],
+   "page": [
+    343,
+    553
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 85,
+   "kind": "press",
+   "target": "leave",
+   "surface": "provotype",
+   "logical": [
+    79,
+    342
+   ],
+   "page": [
+    408,
+    780
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "ledgerNew": [
+    "provotypes:origin_intake_e1:abandoned"
+   ],
+   "changed": true
+  },
+  {
    "step": 86,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 87,
    "kind": "press",
    "target": "reply:0",
    "surface": "irc",
@@ -2124,48 +2160,12 @@
    "changed": true
   },
   {
-   "step": 87,
-   "kind": "press",
-   "target": "icon-provotype-intake",
-   "surface": "os",
-   "logical": [
-    29,
-    168
-   ],
-   "page": [
-    343,
-    553
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true
-  },
-  {
    "step": 88,
-   "kind": "press",
-   "target": "leave",
-   "surface": "provotype",
-   "logical": [
-    79,
-    342
-   ],
-   "page": [
-    408,
-    780
-   ],
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "provotypes:origin_intake_e1:abandoned"
-   ],
-   "changed": true
+   "spine": "e1"
   },
   {
    "step": 89,
@@ -2200,14 +2200,6 @@
   },
   {
    "step": 91,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 92,
    "kind": "press",
    "target": "icon-irc",
    "surface": "os",
@@ -2228,7 +2220,7 @@
    "changed": false
   },
   {
-   "step": 93,
+   "step": 92,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
@@ -2236,7 +2228,7 @@
    "spine": "e1"
   },
   {
-   "step": 94,
+   "step": 93,
    "kind": "press",
    "target": "reply:0",
    "surface": "irc",
@@ -2259,7 +2251,7 @@
    "changed": true
   },
   {
-   "step": 95,
+   "step": 94,
    "kind": "press",
    "target": "icon-provotype",
    "surface": "os",
@@ -2280,7 +2272,7 @@
    "changed": true
   },
   {
-   "step": 96,
+   "step": 95,
    "kind": "press",
    "target": "leave",
    "surface": "provotype",
@@ -2303,15 +2295,7 @@
    "changed": true
   },
   {
-   "step": 97,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 98,
+   "step": 96,
    "kind": "press",
    "target": "icon-provotype-intake",
    "surface": "os",
@@ -2332,7 +2316,7 @@
    "changed": true
   },
   {
-   "step": 99,
+   "step": 97,
    "kind": "press",
    "target": "reply:0",
    "surface": "irc",
@@ -2353,7 +2337,7 @@
    "changed": false
   },
   {
-   "step": 100,
+   "step": 98,
    "kind": "inert",
    "target": "reply:0",
    "surface": "irc",
@@ -2363,7 +2347,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 101,
+   "step": 99,
    "kind": "press",
    "target": "leave",
    "surface": "provotype",
@@ -2386,7 +2370,7 @@
    "changed": true
   },
   {
-   "step": 102,
+   "step": 100,
    "kind": "press",
    "target": "reply:0",
    "surface": "irc",
@@ -2409,23 +2393,23 @@
    "changed": true
   },
   {
+   "step": 101,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 102,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
    "step": 103,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 104,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 105,
    "kind": "press",
    "target": "reply:0",
    "surface": "irc",
@@ -2448,7 +2432,7 @@
    "changed": true
   },
   {
-   "step": 106,
+   "step": 104,
    "kind": "press",
    "target": "icon-irc",
    "surface": "os",
@@ -2469,7 +2453,7 @@
    "changed": true
   },
   {
-   "step": 107,
+   "step": 105,
    "kind": "press",
    "target": "ok",
    "surface": "packet",
@@ -2493,62 +2477,62 @@
    "changed": true
   },
   {
-   "step": 108,
+   "step": 106,
    "kind": "silent-surface",
    "what": "diary is live and owns no rect field at all — its button geometry lives inline in handleClick, so it must be found by sweeping",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
+  },
+  {
+   "step": 107,
+   "kind": "sweep-hit",
+   "target": "(swept) diary",
+   "surface": "os",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 1,
+   "changed": true,
+   "what": "found by sweep — this surface publishes no hit rects"
+  },
+  {
+   "step": 108,
+   "kind": "press",
+   "target": "diary (known control)",
+   "surface": "diary",
+   "logical": [
+    388,
+    318
+   ],
+   "page": [
+    813,
+    749
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "ledgerDelta": 0,
+   "changed": false
   },
   {
    "step": 109,
-   "kind": "sweep-hit",
-   "target": "(swept) diary",
-   "surface": "os",
-   "logical": [
-    388,
-    318
-   ],
-   "page": [
-    813,
-    749
-   ],
+   "kind": "silent-surface",
+   "what": "diary is live and owns no rect field at all — its button geometry lives inline in handleClick, so it must be found by sweeping",
    "era": "e1",
    "phase": "desktop",
-   "spine": "e1",
-   "ledgerDelta": 1,
-   "changed": true,
-   "what": "found by sweep — this surface publishes no hit rects"
+   "spine": "e1"
   },
   {
    "step": 110,
-   "kind": "press",
-   "target": "diary (known control)",
-   "surface": "diary",
-   "logical": [
-    388,
-    318
-   ],
-   "page": [
-    813,
-    749
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "ledgerDelta": 0,
-   "changed": false
-  },
-  {
-   "step": 111,
-   "kind": "silent-surface",
-   "what": "diary is live and owns no rect field at all — its button geometry lives inline in handleClick, so it must be found by sweeping",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 112,
    "kind": "sweep-hit",
    "target": "(swept) diary",
    "surface": "os",
@@ -2568,7 +2552,7 @@
    "what": "found by sweep — this surface publishes no hit rects"
   },
   {
-   "step": 113,
+   "step": 111,
    "kind": "press",
    "target": "diary (known control)",
    "surface": "diary",
@@ -2587,7 +2571,7 @@
    "changed": false
   },
   {
-   "step": 114,
+   "step": 112,
    "kind": "silent-surface",
    "what": "diary is live and owns no rect field at all — its button geometry lives inline in handleClick, so it must be found by sweeping",
    "era": "e1",
@@ -2595,7 +2579,7 @@
    "spine": "e1"
   },
   {
-   "step": 115,
+   "step": 113,
    "kind": "sweep-hit",
    "target": "(swept) diary",
    "surface": "os",
@@ -2615,7 +2599,7 @@
    "what": "found by sweep — this surface publishes no hit rects"
   },
   {
-   "step": 116,
+   "step": 114,
    "kind": "press",
    "target": "icon-provotype",
    "surface": "os",
@@ -2638,7 +2622,7 @@
    "changed": true
   },
   {
-   "step": 117,
+   "step": 115,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
@@ -2646,7 +2630,7 @@
    "spine": "e2"
   },
   {
-   "step": 118,
+   "step": 116,
    "kind": "press",
    "target": "cascade-retry",
    "surface": "updateApp",
@@ -2667,7 +2651,7 @@
    "changed": true
   },
   {
-   "step": 119,
+   "step": 117,
    "kind": "press",
    "target": "update-now",
    "surface": "updateApp",
@@ -2690,7 +2674,7 @@
    "changed": true
   },
   {
-   "step": 120,
+   "step": 118,
    "kind": "press",
    "target": "eula-readon",
    "surface": "updateApp",
@@ -2711,7 +2695,7 @@
    "changed": true
   },
   {
-   "step": 121,
+   "step": 119,
    "kind": "press",
    "target": "eula-agree",
    "surface": "updateApp",
@@ -2732,7 +2716,7 @@
    "changed": true
   },
   {
-   "step": 122,
+   "step": 120,
    "kind": "press",
    "target": "icon-send",
    "surface": "os",
@@ -2755,7 +2739,7 @@
    "changed": true
   },
   {
-   "step": 123,
+   "step": 121,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -2763,7 +2747,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 124,
+   "step": 122,
    "kind": "press",
    "target": "icon-send",
    "surface": "os",
@@ -2784,12 +2768,41 @@
    "changed": false
   },
   {
-   "step": 125,
+   "step": 123,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
+  },
+  {
+   "step": 124,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 125,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
    "step": 126,
@@ -2851,40 +2864,22 @@
   },
   {
    "step": 130,
-   "kind": "inert",
-   "target": "icon-send",
-   "surface": "os",
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
-   "spine": "e2_s1",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+   "spine": "e2_s1"
   },
   {
    "step": 131,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
    "step": 132,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 133,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 134,
    "kind": "press",
    "target": "icon-send",
    "surface": "os",
@@ -2905,12 +2900,56 @@
    "changed": false
   },
   {
-   "step": 135,
+   "step": 133,
+   "kind": "press",
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 134,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
+  },
+  {
+   "step": 135,
+   "kind": "press",
+   "target": "lamby-hello",
+   "surface": "os",
+   "logical": [
+    370,
+    317
+   ],
+   "page": [
+    789,
+    748
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "ledgerNew": [
+    "lamby:introduction:begun"
+   ],
+   "changed": true
   },
   {
    "step": 136,
@@ -2954,26 +2993,11 @@
   },
   {
    "step": 141,
-   "kind": "press",
-   "target": "lamby-hello",
-   "surface": "os",
-   "logical": [
-    370,
-    317
-   ],
-   "page": [
-    789,
-    748
-   ],
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
-   "spine": "e2_s1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "lamby:introduction:begun"
-   ],
-   "changed": true
+   "spine": "e2_s1"
   },
   {
    "step": 142,
@@ -2985,54 +3009,6 @@
   },
   {
    "step": 143,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 144,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 145,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 146,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 147,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 148,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 149,
    "kind": "press",
    "target": "lamby-begin",
    "surface": "os",
@@ -3055,7 +3031,7 @@
    "changed": true
   },
   {
-   "step": 150,
+   "step": 144,
    "kind": "press",
    "target": "checkin:steady",
    "surface": "restorify",
@@ -3078,7 +3054,7 @@
    "changed": true
   },
   {
-   "step": 151,
+   "step": 145,
    "kind": "press",
    "target": "checkin-continue",
    "surface": "restorify",
@@ -3099,7 +3075,7 @@
    "changed": true
   },
   {
-   "step": 152,
+   "step": 146,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3107,7 +3083,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 153,
+   "step": 147,
    "kind": "press",
    "target": "message-open",
    "surface": "os",
@@ -3131,7 +3107,7 @@
    "changed": true
   },
   {
-   "step": 154,
+   "step": 148,
    "kind": "press",
    "target": "icon-send",
    "surface": "os",
@@ -3152,7 +3128,7 @@
    "changed": false
   },
   {
-   "step": 155,
+   "step": 149,
    "kind": "inert",
    "target": "icon-send",
    "surface": "os",
@@ -3162,7 +3138,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 156,
+   "step": 150,
    "kind": "press",
    "target": "icon-restorify",
    "surface": "os",
@@ -3183,7 +3159,7 @@
    "changed": false
   },
   {
-   "step": 157,
+   "step": 151,
    "kind": "inert",
    "target": "icon-restorify",
    "surface": "os",
@@ -3193,7 +3169,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 158,
+   "step": 152,
    "kind": "press",
    "target": "icon-era-1",
    "surface": "os",
@@ -3214,7 +3190,7 @@
    "changed": false
   },
   {
-   "step": 159,
+   "step": 153,
    "kind": "inert",
    "target": "icon-era-1",
    "surface": "os",
@@ -3224,7 +3200,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 160,
+   "step": 154,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e2",
@@ -3232,7 +3208,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 161,
+   "step": 155,
    "kind": "press",
    "target": "chip:its-me",
    "surface": "caleb",
@@ -3255,7 +3231,7 @@
    "changed": true
   },
   {
-   "step": 162,
+   "step": 156,
    "kind": "press",
    "target": "icon-send",
    "surface": "os",
@@ -3276,7 +3252,7 @@
    "changed": false
   },
   {
-   "step": 163,
+   "step": 157,
    "kind": "press",
    "target": "icon-send",
    "surface": "os",
@@ -3297,7 +3273,7 @@
    "changed": false
   },
   {
-   "step": 164,
+   "step": 158,
    "kind": "inert",
    "target": "icon-send",
    "surface": "os",
@@ -3307,7 +3283,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 165,
+   "step": 159,
    "kind": "press",
    "target": "icon-restorify",
    "surface": "os",
@@ -3328,7 +3304,7 @@
    "changed": false
   },
   {
-   "step": 166,
+   "step": 160,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3336,7 +3312,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 167,
+   "step": 161,
    "kind": "press",
    "target": "icon-send",
    "surface": "os",
@@ -3357,7 +3333,7 @@
    "changed": false
   },
   {
-   "step": 168,
+   "step": 162,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3365,7 +3341,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 169,
+   "step": 163,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3373,7 +3349,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 170,
+   "step": 164,
    "kind": "press",
    "target": "icon-send",
    "surface": "os",
@@ -3394,7 +3370,7 @@
    "changed": false
   },
   {
-   "step": 171,
+   "step": 165,
    "kind": "inert",
    "target": "icon-send",
    "surface": "os",
@@ -3404,7 +3380,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 172,
+   "step": 166,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3412,7 +3388,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 173,
+   "step": 167,
    "kind": "press",
    "target": "chip:every-word",
    "surface": "caleb",
@@ -3435,65 +3411,7 @@
    "changed": true
   },
   {
-   "step": 174,
-   "kind": "press",
-   "target": "icon-send",
-   "surface": "os",
-   "logical": [
-    29,
-    216
-   ],
-   "page": [
-    343,
-    615
-   ],
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": false
-  },
-  {
-   "step": 175,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 176,
-   "kind": "press",
-   "target": "icon-send",
-   "surface": "os",
-   "logical": [
-    29,
-    216
-   ],
-   "page": [
-    343,
-    615
-   ],
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": false
-  },
-  {
-   "step": 177,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 178,
+   "step": 168,
    "kind": "press",
    "target": "icon-era-1",
    "surface": "os",
@@ -3514,7 +3432,65 @@
    "changed": false
   },
   {
-   "step": 179,
+   "step": 169,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 170,
+   "kind": "press",
+   "target": "icon-restorify",
+   "surface": "os",
+   "logical": [
+    31,
+    108
+   ],
+   "page": [
+    346,
+    474
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 171,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 172,
+   "kind": "press",
+   "target": "icon-era-1",
+   "surface": "os",
+   "logical": [
+    31,
+    156
+   ],
+   "page": [
+    346,
+    537
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 173,
    "kind": "press",
    "target": "icon-restorify",
    "surface": "os",
@@ -3535,7 +3511,7 @@
    "changed": true
   },
   {
-   "step": 180,
+   "step": 174,
    "kind": "press",
    "target": "chip:saturday",
    "surface": "caleb",
@@ -3558,7 +3534,7 @@
    "changed": true
   },
   {
-   "step": 181,
+   "step": 175,
    "kind": "press",
    "target": "icon-era-1",
    "surface": "os",
@@ -3579,7 +3555,7 @@
    "changed": false
   },
   {
-   "step": 182,
+   "step": 176,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3587,7 +3563,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 183,
+   "step": 177,
    "kind": "press",
    "target": "icon-restorify",
    "surface": "os",
@@ -3608,7 +3584,7 @@
    "changed": false
   },
   {
-   "step": 184,
+   "step": 178,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3616,7 +3592,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 185,
+   "step": 179,
    "kind": "press",
    "target": "icon-era-1",
    "surface": "os",
@@ -3637,7 +3613,7 @@
    "changed": false
   },
   {
-   "step": 186,
+   "step": 180,
    "kind": "inert",
    "target": "icon-era-1",
    "surface": "os",
@@ -3647,7 +3623,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 187,
+   "step": 181,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3655,7 +3631,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 188,
+   "step": 182,
    "kind": "press",
    "target": "chip:want-you-too",
    "surface": "caleb",
@@ -3678,7 +3654,7 @@
    "changed": true
   },
   {
-   "step": 189,
+   "step": 183,
    "kind": "press",
    "target": "icon-restorify",
    "surface": "os",
@@ -3699,6 +3675,54 @@
    "changed": true
   },
   {
+   "step": 184,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 185,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 186,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 187,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 188,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 189,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
    "step": 190,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
@@ -3708,54 +3732,6 @@
   },
   {
    "step": 191,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 192,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 193,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 194,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 195,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 196,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 197,
    "kind": "press",
    "target": "alert-dismiss",
    "surface": "accountability",
@@ -3778,7 +3754,7 @@
    "changed": true
   },
   {
-   "step": 198,
+   "step": 192,
    "kind": "press",
    "target": "icon-era-1",
    "surface": "os",
@@ -3799,7 +3775,7 @@
    "changed": false
   },
   {
-   "step": 199,
+   "step": 193,
    "kind": "inert",
    "target": "icon-era-1",
    "surface": "os",
@@ -3809,7 +3785,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 200,
+   "step": 194,
    "kind": "press",
    "target": "icon-restorify",
    "surface": "os",
@@ -3830,7 +3806,7 @@
    "changed": false
   },
   {
-   "step": 201,
+   "step": 195,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3838,7 +3814,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 202,
+   "step": 196,
    "kind": "press",
    "target": "mail-open",
    "surface": "accountability",
@@ -3859,6 +3835,54 @@
    "changed": true
   },
   {
+   "step": 197,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 198,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 199,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 200,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 201,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 202,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
    "step": 203,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
@@ -3868,54 +3892,6 @@
   },
   {
    "step": 204,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 205,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 206,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 207,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 208,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 209,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 210,
    "kind": "press",
    "target": "mail-continue",
    "surface": "accountability",
@@ -3938,7 +3914,7 @@
    "changed": true
   },
   {
-   "step": 211,
+   "step": 205,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3946,7 +3922,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 212,
+   "step": 206,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -3954,7 +3930,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 213,
+   "step": 207,
    "kind": "press",
    "target": "icon-era-1",
    "surface": "os",
@@ -3975,7 +3951,7 @@
    "changed": false
   },
   {
-   "step": 214,
+   "step": 208,
    "kind": "inert",
    "target": "icon-era-1",
    "surface": "os",
@@ -3985,7 +3961,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 215,
+   "step": 209,
    "kind": "press",
    "target": "icon-restorify",
    "surface": "os",
@@ -4006,7 +3982,7 @@
    "changed": false
   },
   {
-   "step": 216,
+   "step": 210,
    "kind": "inert",
    "target": "icon-restorify",
    "surface": "os",
@@ -4016,7 +3992,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 217,
+   "step": 211,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e2",
@@ -4024,7 +4000,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 218,
+   "step": 212,
    "kind": "press",
    "target": "icon-era-1",
    "surface": "os",
@@ -4043,6 +4019,84 @@
    "ledgerDelta": 0,
    "ledgerNew": [],
    "changed": false
+  },
+  {
+   "step": 213,
+   "kind": "press",
+   "target": "icon-restorify",
+   "surface": "os",
+   "logical": [
+    31,
+    108
+   ],
+   "page": [
+    346,
+    474
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 214,
+   "kind": "inert",
+   "target": "icon-restorify",
+   "surface": "os",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 215,
+   "kind": "press",
+   "target": "icon-era-1",
+   "surface": "os",
+   "logical": [
+    31,
+    156
+   ],
+   "page": [
+    346,
+    537
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 216,
+   "kind": "inert",
+   "target": "icon-era-1",
+   "surface": "os",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 217,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 218,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
   },
   {
    "step": 219,
@@ -4124,100 +4178,22 @@
   },
   {
    "step": 225,
-   "kind": "press",
-   "target": "icon-restorify",
-   "surface": "os",
-   "logical": [
-    31,
-    108
-   ],
-   "page": [
-    346,
-    474
-   ],
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e2",
    "phase": "desktop",
-   "spine": "e2_s1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": false
+   "spine": "e2_s1"
   },
   {
    "step": 226,
-   "kind": "inert",
-   "target": "icon-restorify",
-   "surface": "os",
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e2",
    "phase": "desktop",
-   "spine": "e2_s1",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+   "spine": "e2_s1"
   },
   {
    "step": 227,
-   "kind": "press",
-   "target": "icon-era-1",
-   "surface": "os",
-   "logical": [
-    31,
-    156
-   ],
-   "page": [
-    346,
-    537
-   ],
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": false
-  },
-  {
-   "step": 228,
-   "kind": "inert",
-   "target": "icon-era-1",
-   "surface": "os",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
-  },
-  {
-   "step": 229,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 230,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 231,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 232,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 233,
    "kind": "press",
    "target": "residue",
    "surface": "caleb",
@@ -4240,7 +4216,7 @@
    "changed": true
   },
   {
-   "step": 234,
+   "step": 228,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e2",
@@ -4248,7 +4224,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 235,
+   "step": 229,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e2",
@@ -4256,7 +4232,7 @@
    "spine": "e2_s1"
   },
   {
-   "step": 236,
+   "step": 230,
    "kind": "press",
    "target": "icon-provotype-intake",
    "surface": "os",
@@ -4279,7 +4255,7 @@
    "changed": true
   },
   {
-   "step": 237,
+   "step": 231,
    "kind": "press",
    "target": "update-now",
    "surface": "updateApp",
@@ -4302,7 +4278,7 @@
    "changed": true
   },
   {
-   "step": 238,
+   "step": 232,
    "kind": "press",
    "target": "eula-readon",
    "surface": "updateApp",
@@ -4323,7 +4299,7 @@
    "changed": true
   },
   {
-   "step": 239,
+   "step": 233,
    "kind": "press",
    "target": "eula-agree",
    "surface": "updateApp",
@@ -4344,7 +4320,7 @@
    "changed": true
   },
   {
-   "step": 240,
+   "step": 234,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -4352,7 +4328,7 @@
    "spine": "e3"
   },
   {
-   "step": 241,
+   "step": 235,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -4360,7 +4336,7 @@
    "spine": "e3"
   },
   {
-   "step": 242,
+   "step": 236,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
@@ -4368,7 +4344,7 @@
    "spine": "e3"
   },
   {
-   "step": 243,
+   "step": 237,
    "kind": "press",
    "target": "primary",
    "surface": "provotype",
@@ -4392,7 +4368,7 @@
    "changed": true
   },
   {
-   "step": 244,
+   "step": 238,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
@@ -4400,7 +4376,7 @@
    "spine": "e3"
   },
   {
-   "step": 245,
+   "step": 239,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
@@ -4408,7 +4384,7 @@
    "spine": "e3"
   },
   {
-   "step": 246,
+   "step": 240,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
@@ -4416,7 +4392,7 @@
    "spine": "e3"
   },
   {
-   "step": 247,
+   "step": 241,
    "kind": "press",
    "target": "signin",
    "surface": "workstation",
@@ -4437,7 +4413,7 @@
    "changed": true
   },
   {
-   "step": 248,
+   "step": 242,
    "kind": "press",
    "target": "consent-allow",
    "surface": "workstation",
@@ -4460,7 +4436,7 @@
    "changed": true
   },
   {
-   "step": 249,
+   "step": 243,
    "kind": "press",
    "target": "task-restore",
    "surface": "workstation",
@@ -4481,7 +4457,7 @@
    "changed": false
   },
   {
-   "step": 250,
+   "step": 244,
    "kind": "inert",
    "target": "task-restore",
    "surface": "workstation",
@@ -4491,7 +4467,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 251,
+   "step": 245,
    "kind": "press",
    "target": "task-0",
    "surface": "workstation",
@@ -4512,7 +4488,7 @@
    "changed": true
   },
   {
-   "step": 252,
+   "step": 246,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4535,7 +4511,7 @@
    "changed": true
   },
   {
-   "step": 253,
+   "step": 247,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4558,7 +4534,7 @@
    "changed": true
   },
   {
-   "step": 254,
+   "step": 248,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4581,7 +4557,7 @@
    "changed": true
   },
   {
-   "step": 255,
+   "step": 249,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4604,7 +4580,7 @@
    "changed": true
   },
   {
-   "step": 256,
+   "step": 250,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4627,7 +4603,7 @@
    "changed": true
   },
   {
-   "step": 257,
+   "step": 251,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4650,7 +4626,7 @@
    "changed": true
   },
   {
-   "step": 258,
+   "step": 252,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4673,7 +4649,7 @@
    "changed": true
   },
   {
-   "step": 259,
+   "step": 253,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4696,7 +4672,7 @@
    "changed": true
   },
   {
-   "step": 260,
+   "step": 254,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4719,7 +4695,7 @@
    "changed": true
   },
   {
-   "step": 261,
+   "step": 255,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4742,7 +4718,7 @@
    "changed": true
   },
   {
-   "step": 262,
+   "step": 256,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4765,7 +4741,7 @@
    "changed": true
   },
   {
-   "step": 263,
+   "step": 257,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4788,7 +4764,7 @@
    "changed": true
   },
   {
-   "step": 264,
+   "step": 258,
    "kind": "press",
    "target": "apply",
    "surface": "workstation",
@@ -4811,7 +4787,7 @@
    "changed": true
   },
   {
-   "step": 265,
+   "step": 259,
    "kind": "press",
    "target": "task-1",
    "surface": "workstation",
@@ -4832,7 +4808,7 @@
    "changed": true
   },
   {
-   "step": 266,
+   "step": 260,
    "kind": "press",
    "target": "board-back",
    "surface": "workstation",
@@ -4853,7 +4829,7 @@
    "changed": true
   },
   {
-   "step": 267,
+   "step": 261,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
@@ -4861,7 +4837,7 @@
    "spine": "e3_s3"
   },
   {
-   "step": 268,
+   "step": 262,
    "kind": "press",
    "target": "update-now",
    "surface": "updateApp",
@@ -4882,7 +4858,7 @@
    "changed": true
   },
   {
-   "step": 269,
+   "step": 263,
    "kind": "press",
    "target": "eula-readon",
    "surface": "updateApp",
@@ -4903,7 +4879,7 @@
    "changed": false
   },
   {
-   "step": 270,
+   "step": 264,
    "kind": "sweep-hit",
    "target": "(swept) ritual",
    "surface": "os",
@@ -4923,7 +4899,7 @@
    "what": "found by sweep — this surface publishes no hit rects"
   },
   {
-   "step": 271,
+   "step": 265,
    "kind": "press",
    "target": "eula-agree",
    "surface": "updateApp",
@@ -4944,7 +4920,7 @@
    "changed": true
   },
   {
-   "step": 272,
+   "step": 266,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
@@ -4952,7 +4928,7 @@
    "spine": "e3_s3"
   },
   {
-   "step": 273,
+   "step": 267,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
@@ -4960,7 +4936,7 @@
    "spine": "e3_s3"
   },
   {
-   "step": 274,
+   "step": 268,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
@@ -4968,7 +4944,7 @@
    "spine": "e3_s3"
   },
   {
-   "step": 275,
+   "step": 269,
    "kind": "press",
    "target": "task-2",
    "surface": "workstation",
@@ -4992,7 +4968,7 @@
    "changed": true
   },
   {
-   "step": 276,
+   "step": 270,
    "kind": "press",
    "target": "laptop-next",
    "surface": "laptop",
@@ -5013,7 +4989,7 @@
    "changed": false
   },
   {
-   "step": 277,
+   "step": 271,
    "kind": "press",
    "target": "laptop-next",
    "surface": "laptop",
@@ -5034,7 +5010,7 @@
    "changed": false
   },
   {
-   "step": 278,
+   "step": 272,
    "kind": "press",
    "target": "laptop-next",
    "surface": "laptop",
@@ -5057,7 +5033,7 @@
    "changed": true
   },
   {
-   "step": 279,
+   "step": 273,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -5065,17 +5041,17 @@
    "spine": "e4"
   },
   {
-   "step": 280,
+   "step": 274,
    "kind": "press",
-   "target": "e4-touch",
-   "surface": "os",
+   "target": "tab0",
+   "surface": "e4.browser",
    "logical": [
-    256,
-    192
+    35,
+    11
    ],
    "page": [
-    332,
-    718
+    13,
+    658
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5088,14 +5064,17 @@
    "changed": true
   },
   {
-   "step": 281,
+   "step": 275,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
    "page": [
-    838,
-    747
+    304,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5106,24 +5085,27 @@
    "changed": false
   },
   {
-   "step": 282,
+   "step": 276,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab1",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 283,
+   "step": 277,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
    "page": [
-    640,
-    450
+    441,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5134,7 +5116,7 @@
    "changed": false
   },
   {
-   "step": 284,
+   "step": 278,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -5142,14 +5124,17 @@
    "spine": "e4"
   },
   {
-   "step": 285,
+   "step": 279,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
    "page": [
-    838,
-    747
+    578,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5160,24 +5145,27 @@
    "changed": false
   },
   {
-   "step": 286,
+   "step": 280,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab3",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 287,
+   "step": 281,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
    "page": [
-    640,
-    450
+    715,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5188,7 +5176,7 @@
    "changed": true
   },
   {
-   "step": 288,
+   "step": 282,
    "kind": "press",
    "target": "ok",
    "surface": "e4.voice",
@@ -5211,14 +5199,110 @@
    "changed": true
   },
   {
+   "step": 283,
+   "kind": "press",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
+   "page": [
+    852,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 284,
+   "kind": "inert",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 285,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 286,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    304,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 1,
+   "ledgerNew": [
+    "l:u2a:captioned"
+   ],
+   "changed": true
+  },
+  {
+   "step": 287,
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    441,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 288,
+   "kind": "inert",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
    "step": 289,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
    "page": [
-    838,
-    747
+    578,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5231,8 +5315,8 @@
   {
    "step": 290,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab3",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
@@ -5249,60 +5333,46 @@
   {
    "step": 292,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
    "page": [
-    640,
-    450
+    715,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "qMode": "board",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "l:u2a:captioned"
-   ],
-   "changed": true
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
    "step": 293,
-   "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
-   "page": [
-    838,
-    747
-   ],
+   "kind": "inert",
+   "target": "tab4",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
-   "qMode": "board",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": false
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
    "step": 294,
-   "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
-  },
-  {
-   "step": 295,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
    "page": [
-    640,
-    450
+    852,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5313,32 +5383,58 @@
    "changed": false
   },
   {
-   "step": 296,
+   "step": 295,
    "kind": "inert",
-   "target": "(press) era4-visor",
-   "surface": "plane",
+   "target": "tab5",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 297,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 296,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    304,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 297,
+   "kind": "inert",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
    "step": 298,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
    "page": [
-    838,
-    747
+    441,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5351,8 +5447,8 @@
   {
    "step": 299,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab2",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
@@ -5361,12 +5457,38 @@
   {
    "step": 300,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
    "page": [
-    640,
-    450
+    578,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 1,
+   "ledgerNew": [
+    "l:u2c:captioned"
+   ],
+   "changed": true
+  },
+  {
+   "step": 301,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5377,32 +5499,27 @@
    "changed": false
   },
   {
-   "step": 301,
+   "step": 302,
    "kind": "inert",
-   "target": "(press) era4-visor",
-   "surface": "plane",
+   "target": "tab4",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 302,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
    "step": 303,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
    "page": [
-    838,
-    747
+    852,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5415,8 +5532,8 @@
   {
    "step": 304,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab5",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
@@ -5425,12 +5542,15 @@
   {
    "step": 305,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
    "page": [
-    640,
-    450
+    304,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5443,8 +5563,8 @@
   {
    "step": 306,
    "kind": "inert",
-   "target": "(press) era4-visor",
-   "surface": "plane",
+   "target": "tab1",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
@@ -5452,29 +5572,47 @@
   },
   {
    "step": 307,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    441,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
    "step": 308,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "kind": "inert",
+   "target": "tab2",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
    "step": 309,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
    "page": [
-    838,
-    747
+    578,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5487,8 +5625,8 @@
   {
    "step": 310,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab3",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
@@ -5497,12 +5635,12 @@
   {
    "step": 311,
    "kind": "press",
-   "target": "(press) era4-visor",
+   "target": "(press) laptop",
    "surface": "plane",
    "logical": null,
    "page": [
-    640,
-    450
+    838,
+    747
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5514,31 +5652,24 @@
   },
   {
    "step": 312,
-   "kind": "inert",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
-  },
-  {
-   "step": 313,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 314,
+   "step": 313,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
    "page": [
-    838,
-    747
+    715,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5547,26 +5678,29 @@
    "ledgerDelta": 0,
    "ledgerNew": [],
    "changed": false
+  },
+  {
+   "step": 314,
+   "kind": "inert",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
    "step": 315,
-   "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
-  },
-  {
-   "step": 316,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
    "page": [
-    640,
-    450
+    852,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5577,19 +5711,40 @@
    "changed": false
   },
   {
-   "step": 317,
+   "step": 316,
    "kind": "inert",
-   "target": "(press) era4-visor",
-   "surface": "plane",
+   "target": "tab5",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
+   "step": 317,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    304,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
    "step": 318,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
@@ -5597,12 +5752,15 @@
   {
    "step": 319,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
    "page": [
-    838,
-    747
+    441,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5615,8 +5773,8 @@
   {
    "step": 320,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab2",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
@@ -5625,32 +5783,15 @@
   {
    "step": 321,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
-   "page": [
-    640,
-    450
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
    ],
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4",
-   "qMode": "board",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "l:u3d:captioned"
-   ],
-   "changed": true
-  },
-  {
-   "step": 322,
-   "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
    "page": [
-    838,
-    747
+    578,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5661,32 +5802,58 @@
    "changed": false
   },
   {
-   "step": 323,
+   "step": 322,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab3",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 324,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "step": 323,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 324,
+   "kind": "inert",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
    "step": 325,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
    "page": [
-    640,
-    450
+    852,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5698,23 +5865,24 @@
   },
   {
    "step": 326,
-   "kind": "inert",
-   "target": "(press) era4-visor",
-   "surface": "plane",
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+   "spine": "e4"
   },
   {
    "step": 327,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
    "page": [
-    838,
-    747
+    304,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5727,8 +5895,8 @@
   {
    "step": 328,
    "kind": "inert",
-   "target": "(press) laptop",
-   "surface": "plane",
+   "target": "tab1",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
@@ -5736,14 +5904,260 @@
   },
   {
    "step": 329,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    441,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 330,
+   "kind": "inert",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 331,
+   "kind": "press",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
+   "page": [
+    578,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 332,
+   "kind": "inert",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 333,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 330,
+   "step": 334,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 335,
+   "kind": "inert",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 336,
+   "kind": "press",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
+   "page": [
+    852,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 337,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    304,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 338,
+   "kind": "inert",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 339,
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    441,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 340,
+   "kind": "inert",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 341,
+   "kind": "press",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
+   "page": [
+    578,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 342,
+   "kind": "inert",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 343,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 344,
+   "kind": "inert",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 345,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 346,
    "kind": "press",
    "target": "correct1",
    "surface": "e4.voice",
@@ -5767,14 +6181,17 @@
    "changed": true
   },
   {
-   "step": 331,
+   "step": 347,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
    "page": [
-    640,
-    450
+    852,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5785,24 +6202,27 @@
    "changed": false
   },
   {
-   "step": 332,
+   "step": 348,
    "kind": "inert",
-   "target": "(press) era4-visor",
-   "surface": "plane",
+   "target": "tab5",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 333,
+   "step": 349,
    "kind": "press",
-   "target": "(press) laptop",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
    "page": [
-    838,
-    747
+    304,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5813,7 +6233,7 @@
    "changed": false
   },
   {
-   "step": 334,
+   "step": 350,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -5821,14 +6241,17 @@
    "spine": "e4"
   },
   {
-   "step": 335,
+   "step": 351,
    "kind": "press",
-   "target": "(press) era4-visor",
-   "surface": "plane",
-   "logical": null,
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
    "page": [
-    640,
-    450
+    441,
+    62
    ],
    "era": "e4",
    "phase": "desktop",
@@ -5839,33 +6262,100 @@
    "changed": false
   },
   {
-   "step": 336,
+   "step": 352,
    "kind": "inert",
-   "target": "(press) era4-visor",
-   "surface": "plane",
+   "target": "tab2",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4",
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 337,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 353,
+   "kind": "press",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
+   "page": [
+    578,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 338,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 354,
+   "kind": "inert",
+   "target": "tab3",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 339,
+   "step": 355,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 356,
+   "kind": "inert",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 357,
+   "kind": "press",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
+   "page": [
+    852,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 358,
    "kind": "press",
    "target": "correct2",
    "surface": "e4.voice",
@@ -5889,39 +6379,212 @@
    "changed": true
   },
   {
-   "step": 340,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 359,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    304,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 360,
+   "kind": "inert",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 361,
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    441,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 362,
+   "kind": "inert",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 363,
+   "kind": "press",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
+   "page": [
+    578,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 364,
+   "kind": "inert",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 365,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 366,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 341,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 367,
+   "kind": "press",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
+   "page": [
+    852,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 342,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 368,
+   "kind": "inert",
+   "target": "tab5",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 343,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 369,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    304,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 344,
+   "step": 370,
+   "kind": "inert",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 371,
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    441,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 372,
    "kind": "press",
    "target": "sure",
    "surface": "e4.voice",
@@ -5944,31 +6607,150 @@
    "changed": true
   },
   {
-   "step": 345,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 373,
+   "kind": "press",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
+   "page": [
+    578,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 374,
+   "kind": "inert",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 375,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 376,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 346,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 377,
+   "kind": "press",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
+   "page": [
+    852,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 347,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 378,
+   "kind": "inert",
+   "target": "tab5",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 348,
+   "step": 379,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    304,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 380,
+   "kind": "inert",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 381,
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    441,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 382,
    "kind": "press",
    "target": "maybe",
    "surface": "e4.voice",
@@ -5991,31 +6773,163 @@
    "changed": true
   },
   {
-   "step": 349,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 383,
+   "kind": "press",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
+   "page": [
+    578,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 350,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 384,
+   "kind": "inert",
+   "target": "tab3",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 351,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 385,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 352,
+   "step": 386,
+   "kind": "press",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
+   "page": [
+    852,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 387,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    304,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 388,
+   "kind": "inert",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 389,
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    441,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 390,
+   "kind": "inert",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 391,
+   "kind": "press",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
+   "page": [
+    578,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 392,
    "kind": "press",
    "target": "showme",
    "surface": "e4.voice",
@@ -6038,23 +6952,95 @@
    "changed": true
   },
   {
-   "step": 353,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 393,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    715,
+    62
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 394,
+   "kind": "inert",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 395,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 354,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 396,
+   "kind": "press",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
+   "page": [
+    852,
+    62
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 355,
+   "step": 397,
+   "kind": "inert",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 398,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 399,
    "kind": "press",
    "target": "correct3",
    "surface": "e4.voice",
@@ -6078,15 +7064,53 @@
    "changed": true
   },
   {
-   "step": 356,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 400,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 357,
+   "step": 401,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 402,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
+  },
+  {
+   "step": 403,
    "kind": "press",
    "target": "handoff",
    "surface": "e4.voice",
@@ -6109,23 +7133,89 @@
    "changed": true
   },
   {
-   "step": 358,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 404,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 405,
+   "kind": "inert",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 406,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 407,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 408,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 359,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 409,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true
   },
   {
-   "step": 360,
+   "step": 410,
    "kind": "press",
    "target": "undo0",
    "surface": "e4.offers",
@@ -6148,7 +7238,7 @@
    "changed": true
   },
   {
-   "step": 361,
+   "step": 411,
    "kind": "press",
    "target": "undo0",
    "surface": "e4.offers",
@@ -6169,7 +7259,7 @@
    "changed": false
   },
   {
-   "step": 362,
+   "step": 412,
    "kind": "press",
    "target": "undo0",
    "surface": "e4.offers",
@@ -6190,7 +7280,7 @@
    "changed": false
   },
   {
-   "step": 363,
+   "step": 413,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -6198,7 +7288,7 @@
    "spine": "e4"
   },
   {
-   "step": 364,
+   "step": 414,
    "kind": "press",
    "target": "undo0",
    "surface": "e4.offers",
@@ -6219,7 +7309,7 @@
    "changed": false
   },
   {
-   "step": 365,
+   "step": 415,
    "kind": "press",
    "target": "undo0",
    "surface": "e4.offers",
@@ -6229,6 +7319,27 @@
    ],
    "page": [
     501,
+    488
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 416,
+   "kind": "press",
+   "target": "undo0",
+   "surface": "e4.offers",
+   "logical": [
+    221,
+    210
+   ],
+   "page": [
+    564,
     488
    ],
    "era": "e4",
@@ -6240,7 +7351,7 @@
    "changed": true
   },
   {
-   "step": 366,
+   "step": 417,
    "kind": "press",
    "target": "undo1",
    "surface": "e4.offers",
@@ -6263,7 +7374,7 @@
    "changed": true
   },
   {
-   "step": 367,
+   "step": 418,
    "kind": "press",
    "target": "undo1",
    "surface": "e4.offers",
@@ -6284,7 +7395,7 @@
    "changed": false
   },
   {
-   "step": 368,
+   "step": 419,
    "kind": "press",
    "target": "undo1",
    "surface": "e4.offers",
@@ -6305,7 +7416,7 @@
    "changed": false
   },
   {
-   "step": 369,
+   "step": 420,
    "kind": "press",
    "target": "undo1",
    "surface": "e4.offers",
@@ -6326,7 +7437,7 @@
    "changed": false
   },
   {
-   "step": 370,
+   "step": 421,
    "kind": "press",
    "target": "undo1",
    "surface": "e4.offers",
@@ -6347,7 +7458,7 @@
    "changed": false
   },
   {
-   "step": 371,
+   "step": 422,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -6355,7 +7466,7 @@
    "spine": "e4"
   },
   {
-   "step": 372,
+   "step": 423,
    "kind": "press",
    "target": "undo1",
    "surface": "e4.offers",
@@ -6376,7 +7487,7 @@
    "changed": true
   },
   {
-   "step": 373,
+   "step": 424,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -6384,7 +7495,7 @@
    "spine": "e4"
   },
   {
-   "step": 374,
+   "step": 425,
    "kind": "press",
    "target": "card0",
    "surface": "e4.offers",
@@ -6407,15 +7518,7 @@
    "changed": true
   },
   {
-   "step": 375,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 376,
+   "step": 426,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6436,7 +7539,15 @@
    "changed": true
   },
   {
-   "step": 377,
+   "step": 427,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 428,
    "kind": "press",
    "target": "card1",
    "surface": "e4.offers",
@@ -6459,7 +7570,7 @@
    "changed": true
   },
   {
-   "step": 378,
+   "step": 429,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6480,7 +7591,7 @@
    "changed": true
   },
   {
-   "step": 379,
+   "step": 430,
    "kind": "press",
    "target": "card2",
    "surface": "e4.offers",
@@ -6503,7 +7614,7 @@
    "changed": true
   },
   {
-   "step": 380,
+   "step": 431,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6524,7 +7635,7 @@
    "changed": true
   },
   {
-   "step": 381,
+   "step": 432,
    "kind": "press",
    "target": "card3",
    "surface": "e4.offers",
@@ -6547,7 +7658,7 @@
    "changed": true
   },
   {
-   "step": 382,
+   "step": 433,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6568,7 +7679,7 @@
    "changed": true
   },
   {
-   "step": 383,
+   "step": 434,
    "kind": "press",
    "target": "card0",
    "surface": "e4.offers",
@@ -6589,7 +7700,7 @@
    "changed": true
   },
   {
-   "step": 384,
+   "step": 435,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6605,55 +7716,254 @@
    "phase": "desktop",
    "spine": "e4",
    "qMode": "board",
-   "ledgerDelta": 2,
-   "ledgerNew": [
-    "e4Offers:wall:surfaced",
-    "e4Offers:curation_in:surfaced"
-   ],
+   "ledgerDelta": 0,
+   "ledgerNew": [],
    "changed": true
   },
   {
-   "step": 385,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 436,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 386,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 437,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 438,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 439,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 440,
+   "kind": "inert",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 441,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 387,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 442,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 443,
+   "kind": "inert",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 444,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 445,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 446,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 388,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 447,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 448,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 389,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 449,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 450,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 451,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 452,
+   "kind": "inert",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 453,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 390,
+   "step": 454,
    "kind": "press",
    "target": "card1",
    "surface": "e4.offers",
@@ -6674,7 +7984,7 @@
    "changed": true
   },
   {
-   "step": 391,
+   "step": 455,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6695,7 +8005,7 @@
    "changed": true
   },
   {
-   "step": 392,
+   "step": 456,
    "kind": "press",
    "target": "card2",
    "surface": "e4.offers",
@@ -6716,15 +8026,7 @@
    "changed": true
   },
   {
-   "step": 393,
-   "kind": "listening",
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 394,
+   "step": 457,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6745,7 +8047,7 @@
    "changed": true
   },
   {
-   "step": 395,
+   "step": 458,
    "kind": "press",
    "target": "card3",
    "surface": "e4.offers",
@@ -6766,7 +8068,7 @@
    "changed": true
   },
   {
-   "step": 396,
+   "step": 459,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6787,7 +8089,7 @@
    "changed": true
   },
   {
-   "step": 397,
+   "step": 460,
    "kind": "press",
    "target": "card0",
    "surface": "e4.offers",
@@ -6808,7 +8110,7 @@
    "changed": true
   },
   {
-   "step": 398,
+   "step": 461,
    "kind": "press",
    "target": "pause_yes",
    "surface": "e4.offers",
@@ -6832,7 +8134,7 @@
    "changed": true
   },
   {
-   "step": 399,
+   "step": 462,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6853,7 +8155,7 @@
    "changed": true
   },
   {
-   "step": 400,
+   "step": 463,
    "kind": "press",
    "target": "card1",
    "surface": "e4.offers",
@@ -6874,7 +8176,7 @@
    "changed": true
   },
   {
-   "step": 401,
+   "step": 464,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -6882,7 +8184,7 @@
    "spine": "e4"
   },
   {
-   "step": 402,
+   "step": 465,
    "kind": "press",
    "target": "card2",
    "surface": "e4.offers",
@@ -6903,7 +8205,7 @@
    "changed": true
   },
   {
-   "step": 403,
+   "step": 466,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6924,7 +8226,7 @@
    "changed": true
   },
   {
-   "step": 404,
+   "step": 467,
    "kind": "press",
    "target": "card3",
    "surface": "e4.offers",
@@ -6945,7 +8247,7 @@
    "changed": true
   },
   {
-   "step": 405,
+   "step": 468,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -6966,7 +8268,7 @@
    "changed": true
   },
   {
-   "step": 406,
+   "step": 469,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -6974,7 +8276,7 @@
    "spine": "e4"
   },
   {
-   "step": 407,
+   "step": 470,
    "kind": "press",
    "target": "absorb",
    "surface": "e4.offers",
@@ -6997,7 +8299,7 @@
    "changed": true
   },
   {
-   "step": 408,
+   "step": 471,
    "kind": "press",
    "target": "card0",
    "surface": "e4.offers",
@@ -7018,7 +8320,7 @@
    "changed": true
   },
   {
-   "step": 409,
+   "step": 472,
    "kind": "press",
    "target": "card-close",
    "surface": "e4.offers",
@@ -7039,7 +8341,7 @@
    "changed": true
   },
   {
-   "step": 410,
+   "step": 473,
    "kind": "press",
    "target": "card1",
    "surface": "e4.offers",
@@ -7060,335 +8362,127 @@
    "changed": true
   },
   {
-   "step": 411,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 474,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 412,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 475,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 413,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 476,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 414,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 477,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 415,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 478,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 416,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 479,
+   "kind": "inert",
+   "target": "(press) monitor",
+   "surface": "plane",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 417,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 480,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 418,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 481,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
    "era": "e4",
    "phase": "desktop",
-   "spine": "e4"
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 419,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 420,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 421,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 422,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 423,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 424,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 425,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 426,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 427,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 428,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 429,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 430,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 431,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 432,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 433,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 434,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 435,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 436,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 437,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 438,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 439,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 440,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 441,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 442,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 443,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 444,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 445,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 446,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 447,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 448,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 449,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 450,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 451,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 452,
+   "step": 482,
    "kind": "listening",
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
@@ -7396,17 +8490,621 @@
    "spine": "e4"
   },
   {
-   "step": 453,
+   "step": 483,
    "kind": "press",
-   "target": "e4-touch",
-   "surface": "os",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 484,
+   "kind": "inert",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 485,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 486,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 487,
+   "kind": "inert",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 488,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 489,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 490,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 491,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 492,
+   "kind": "inert",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 493,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 494,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 495,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 496,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 497,
+   "kind": "inert",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 498,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 499,
+   "kind": "inert",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 500,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 501,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 502,
+   "kind": "inert",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 503,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 504,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 505,
+   "kind": "inert",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 506,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 507,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 508,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 509,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 510,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 511,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 512,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 513,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 514,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 515,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 516,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 517,
+   "kind": "press",
+   "target": "(press) laptop",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    838,
+    747
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 518,
+   "kind": "listening",
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 519,
+   "kind": "press",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    513
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 520,
+   "kind": "inert",
+   "target": "(press) monitor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 521,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 522,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 523,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 524,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 525,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 526,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 527,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 528,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 529,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 530,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 531,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 532,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 533,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 534,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 535,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 536,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 537,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 538,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 539,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 540,
+   "kind": "waiting-out",
+   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 541,
+   "kind": "press",
+   "target": "tab0",
+   "surface": "e4.browser",
    "logical": [
-    256,
-    192
+    35,
+    11
    ],
    "page": [
-    332,
-    718
+    13,
+    658
    ],
    "era": "e4",
    "phase": "desktop",
@@ -7417,7 +9115,7 @@
    "changed": true
   },
   {
-   "step": 454,
+   "step": 542,
    "kind": "press",
    "target": "ballshot",
    "surface": "e4.offers",
@@ -7438,7 +9136,53 @@
    "changed": true
   },
   {
-   "step": 455,
+   "step": 543,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 544,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 545,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 546,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7446,7 +9190,35 @@
    "spine": "e4"
   },
   {
-   "step": 456,
+   "step": 547,
+   "kind": "press",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "logical": null,
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 548,
+   "kind": "inert",
+   "target": "(press) era4-visor",
+   "surface": "plane",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 549,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7454,7 +9226,7 @@
    "spine": "e4"
   },
   {
-   "step": 457,
+   "step": 550,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7462,7 +9234,7 @@
    "spine": "e4"
   },
   {
-   "step": 458,
+   "step": 551,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7470,23 +9242,7 @@
    "spine": "e4"
   },
   {
-   "step": 459,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 460,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 461,
+   "step": 552,
    "kind": "press",
    "target": "close-restart",
    "surface": "laptop",
@@ -7510,7 +9266,7 @@
    "changed": true
   },
   {
-   "step": 462,
+   "step": 553,
    "kind": "press",
    "target": "close-restart",
    "surface": "laptop",
@@ -7526,12 +9282,14 @@
    "phase": "desktop",
    "spine": "done",
    "qMode": "board",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
+   "ledgerDelta": 1,
+   "ledgerNew": [
+    "e4Space:laptop:read"
+   ],
    "changed": true
   },
   {
-   "step": 463,
+   "step": 554,
    "kind": "press",
    "target": "close-restart",
    "surface": "e4",
@@ -7552,7 +9310,7 @@
    "changed": true
   },
   {
-   "step": 464,
+   "step": 555,
    "kind": "inert",
    "target": "close-restart",
    "surface": "e4",
@@ -7562,7 +9320,7 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 465,
+   "step": 556,
    "kind": "press",
    "target": "close-restart",
    "surface": "e4",
@@ -7583,7 +9341,7 @@
    "changed": false
   },
   {
-   "step": 466,
+   "step": 557,
    "kind": "inert",
    "target": "close-restart",
    "surface": "e4",
@@ -7593,55 +9351,193 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 467,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 558,
+   "kind": "press",
+   "target": "tab0",
+   "surface": "e4.browser",
+   "logical": [
+    35,
+    11
+   ],
+   "page": [
+    352,
+    470
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "done",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 559,
+   "kind": "inert",
+   "target": "tab0",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "done"
+   "spine": "done",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 560,
+   "kind": "press",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "logical": [
+    99,
+    11
+   ],
+   "page": [
+    435,
+    470
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "done",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 561,
+   "kind": "inert",
+   "target": "tab1",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "done",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
+  {
+   "step": 562,
+   "kind": "press",
+   "target": "tab2",
+   "surface": "e4.browser",
+   "logical": [
+    163,
+    11
+   ],
+   "page": [
+    519,
+    470
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "done",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
   {
-   "step": 468,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 563,
+   "kind": "inert",
+   "target": "tab2",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "done"
+   "spine": "done",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 469,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 564,
+   "kind": "press",
+   "target": "tab3",
+   "surface": "e4.browser",
+   "logical": [
+    227,
+    11
+   ],
+   "page": [
+    602,
+    470
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "done"
+   "spine": "done",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 470,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 565,
+   "kind": "inert",
+   "target": "tab3",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "done"
+   "spine": "done",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 471,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 566,
+   "kind": "press",
+   "target": "tab4",
+   "surface": "e4.browser",
+   "logical": [
+    291,
+    11
+   ],
+   "page": [
+    686,
+    470
+   ],
    "era": "e4",
    "phase": "desktop",
-   "spine": "done"
+   "spine": "done",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
   },
   {
-   "step": 472,
-   "kind": "waiting-out",
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
+   "step": 567,
+   "kind": "inert",
+   "target": "tab4",
+   "surface": "e4.browser",
    "era": "e4",
    "phase": "desktop",
-   "spine": "done"
+   "spine": "done",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
+  },
+  {
+   "step": 568,
+   "kind": "press",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "logical": [
+    355,
+    11
+   ],
+   "page": [
+    769,
+    470
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "done",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false
+  },
+  {
+   "step": 569,
+   "kind": "inert",
+   "target": "tab5",
+   "surface": "e4.browser",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "done",
+   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 473,
+   "step": 570,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7649,7 +9545,7 @@
    "spine": "done"
   },
   {
-   "step": 474,
+   "step": 571,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7657,7 +9553,7 @@
    "spine": "done"
   },
   {
-   "step": 475,
+   "step": 572,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7665,7 +9561,7 @@
    "spine": "done"
   },
   {
-   "step": 476,
+   "step": 573,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7673,7 +9569,7 @@
    "spine": "done"
   },
   {
-   "step": 477,
+   "step": 574,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7681,7 +9577,7 @@
    "spine": "done"
   },
   {
-   "step": 478,
+   "step": 575,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7689,7 +9585,7 @@
    "spine": "done"
   },
   {
-   "step": 479,
+   "step": 576,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7697,7 +9593,7 @@
    "spine": "done"
   },
   {
-   "step": 480,
+   "step": 577,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7705,7 +9601,7 @@
    "spine": "done"
   },
   {
-   "step": 481,
+   "step": 578,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7713,7 +9609,7 @@
    "spine": "done"
   },
   {
-   "step": 482,
+   "step": 579,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7721,7 +9617,7 @@
    "spine": "done"
   },
   {
-   "step": 483,
+   "step": 580,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7729,7 +9625,7 @@
    "spine": "done"
   },
   {
-   "step": 484,
+   "step": 581,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7737,7 +9633,7 @@
    "spine": "done"
   },
   {
-   "step": 485,
+   "step": 582,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7745,7 +9641,7 @@
    "spine": "done"
   },
   {
-   "step": 486,
+   "step": 583,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7753,7 +9649,7 @@
    "spine": "done"
   },
   {
-   "step": 487,
+   "step": 584,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7761,7 +9657,7 @@
    "spine": "done"
   },
   {
-   "step": 488,
+   "step": 585,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7769,7 +9665,7 @@
    "spine": "done"
   },
   {
-   "step": 489,
+   "step": 586,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7777,7 +9673,7 @@
    "spine": "done"
   },
   {
-   "step": 490,
+   "step": 587,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7785,7 +9681,7 @@
    "spine": "done"
   },
   {
-   "step": 491,
+   "step": 588,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7793,7 +9689,7 @@
    "spine": "done"
   },
   {
-   "step": 492,
+   "step": 589,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7801,7 +9697,7 @@
    "spine": "done"
   },
   {
-   "step": 493,
+   "step": 590,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7809,7 +9705,7 @@
    "spine": "done"
   },
   {
-   "step": 494,
+   "step": 591,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7817,7 +9713,7 @@
    "spine": "done"
   },
   {
-   "step": 495,
+   "step": 592,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7825,7 +9721,7 @@
    "spine": "done"
   },
   {
-   "step": 496,
+   "step": 593,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7833,7 +9729,7 @@
    "spine": "done"
   },
   {
-   "step": 497,
+   "step": 594,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7841,7 +9737,7 @@
    "spine": "done"
   },
   {
-   "step": 498,
+   "step": 595,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7849,7 +9745,7 @@
    "spine": "done"
   },
   {
-   "step": 499,
+   "step": 596,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7857,7 +9753,7 @@
    "spine": "done"
   },
   {
-   "step": 500,
+   "step": 597,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7865,7 +9761,7 @@
    "spine": "done"
   },
   {
-   "step": 501,
+   "step": 598,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7873,7 +9769,7 @@
    "spine": "done"
   },
   {
-   "step": 502,
+   "step": 599,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7881,7 +9777,7 @@
    "spine": "done"
   },
   {
-   "step": 503,
+   "step": 600,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7889,7 +9785,7 @@
    "spine": "done"
   },
   {
-   "step": 504,
+   "step": 601,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7897,7 +9793,7 @@
    "spine": "done"
   },
   {
-   "step": 505,
+   "step": 602,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7905,7 +9801,7 @@
    "spine": "done"
   },
   {
-   "step": 506,
+   "step": 603,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7913,7 +9809,7 @@
    "spine": "done"
   },
   {
-   "step": 507,
+   "step": 604,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7921,7 +9817,7 @@
    "spine": "done"
   },
   {
-   "step": 508,
+   "step": 605,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7929,7 +9825,7 @@
    "spine": "done"
   },
   {
-   "step": 509,
+   "step": 606,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7937,7 +9833,7 @@
    "spine": "done"
   },
   {
-   "step": 510,
+   "step": 607,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7945,7 +9841,7 @@
    "spine": "done"
   },
   {
-   "step": 511,
+   "step": 608,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7953,7 +9849,7 @@
    "spine": "done"
   },
   {
-   "step": 512,
+   "step": 609,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7961,7 +9857,7 @@
    "spine": "done"
   },
   {
-   "step": 513,
+   "step": 610,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7969,7 +9865,7 @@
    "spine": "done"
   },
   {
-   "step": 514,
+   "step": 611,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7977,7 +9873,7 @@
    "spine": "done"
   },
   {
-   "step": 515,
+   "step": 612,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7985,7 +9881,7 @@
    "spine": "done"
   },
   {
-   "step": 516,
+   "step": 613,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -7993,7 +9889,7 @@
    "spine": "done"
   },
   {
-   "step": 517,
+   "step": 614,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8001,7 +9897,7 @@
    "spine": "done"
   },
   {
-   "step": 518,
+   "step": 615,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8009,7 +9905,7 @@
    "spine": "done"
   },
   {
-   "step": 519,
+   "step": 616,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8017,7 +9913,7 @@
    "spine": "done"
   },
   {
-   "step": 520,
+   "step": 617,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8025,7 +9921,7 @@
    "spine": "done"
   },
   {
-   "step": 521,
+   "step": 618,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8033,7 +9929,7 @@
    "spine": "done"
   },
   {
-   "step": 522,
+   "step": 619,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8041,7 +9937,7 @@
    "spine": "done"
   },
   {
-   "step": 523,
+   "step": 620,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8049,7 +9945,7 @@
    "spine": "done"
   },
   {
-   "step": 524,
+   "step": 621,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8057,7 +9953,7 @@
    "spine": "done"
   },
   {
-   "step": 525,
+   "step": 622,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8065,7 +9961,7 @@
    "spine": "done"
   },
   {
-   "step": 526,
+   "step": 623,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8073,7 +9969,7 @@
    "spine": "done"
   },
   {
-   "step": 527,
+   "step": 624,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8081,7 +9977,7 @@
    "spine": "done"
   },
   {
-   "step": 528,
+   "step": 625,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8089,7 +9985,7 @@
    "spine": "done"
   },
   {
-   "step": 529,
+   "step": 626,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8097,7 +9993,7 @@
    "spine": "done"
   },
   {
-   "step": 530,
+   "step": 627,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8105,7 +10001,7 @@
    "spine": "done"
   },
   {
-   "step": 531,
+   "step": 628,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8113,7 +10009,7 @@
    "spine": "done"
   },
   {
-   "step": 532,
+   "step": 629,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8121,7 +10017,7 @@
    "spine": "done"
   },
   {
-   "step": 533,
+   "step": 630,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8129,7 +10025,7 @@
    "spine": "done"
   },
   {
-   "step": 534,
+   "step": 631,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8137,7 +10033,7 @@
    "spine": "done"
   },
   {
-   "step": 535,
+   "step": 632,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8145,7 +10041,7 @@
    "spine": "done"
   },
   {
-   "step": 536,
+   "step": 633,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8153,7 +10049,7 @@
    "spine": "done"
   },
   {
-   "step": 537,
+   "step": 634,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8161,7 +10057,7 @@
    "spine": "done"
   },
   {
-   "step": 538,
+   "step": 635,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8169,7 +10065,7 @@
    "spine": "done"
   },
   {
-   "step": 539,
+   "step": 636,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8177,7 +10073,7 @@
    "spine": "done"
   },
   {
-   "step": 540,
+   "step": 637,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8185,7 +10081,7 @@
    "spine": "done"
   },
   {
-   "step": 541,
+   "step": 638,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8193,7 +10089,7 @@
    "spine": "done"
   },
   {
-   "step": 542,
+   "step": 639,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8201,7 +10097,7 @@
    "spine": "done"
   },
   {
-   "step": 543,
+   "step": 640,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8209,7 +10105,7 @@
    "spine": "done"
   },
   {
-   "step": 544,
+   "step": 641,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8217,7 +10113,7 @@
    "spine": "done"
   },
   {
-   "step": 545,
+   "step": 642,
    "kind": "waiting-out",
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
@@ -8225,7 +10121,7 @@
    "spine": "done"
   },
   {
-   "step": 546,
+   "step": 643,
    "kind": "stop",
    "what": "THE WALK IS LOOPING: this same screen has come round 80 times with every control on it pressed to its cap — there is no way onward from here",
    "era": "e4",
@@ -8233,7 +10129,7 @@
    "spine": "done"
   },
   {
-   "step": 547,
+   "step": 644,
    "kind": "end",
    "what": "walk finished",
    "era": "e4",

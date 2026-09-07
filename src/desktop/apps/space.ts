@@ -279,7 +279,7 @@ export class E4Shell {
   get handedOffToClose(): boolean { return this.handedOff; }
 
   update(dt: number): void {
-    if (this.browserOwnsLid) this.browser.update(dt);
+    this.browser.update(dt);
     this.t += dt;
     const step = Math.floor(((this.t % PULSE_SECONDS) / PULSE_SECONDS) * PULSE_STEPS);
     if (step !== this.pulseStep) { this.pulseStep = step; this.version++; }
@@ -396,8 +396,18 @@ export class E4Shell {
     return this.laptopV + (this.browserOwnsLid ? this.browser.version : 0);
   }
 
-  /** ⚑ review only, until the monitor exists. Never true in play. */
+  /** ⚑ S123's interim flag — the browser briefly lived on the lid. It does not
+   *  any more (S124 gave it the monitor); kept only so the old review route
+   *  still lands somewhere rather than silently doing nothing. */
   browserOwnsLid = false;
+
+  /** ⚑ S124 — the monitor's own surface and its own version. */
+  drawBrowser(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.browser.draw(ctx, W, H);
+  }
+  get browserVersion(): number { return this.browser.version; }
+  /** the monitor is a real screen in the room, so its presses are real presses */
+  pressBrowser(x: number, y: number): boolean { return this.browser.handleClick(x, y); }
 
   /** ⚑ ONE LINE AT A TIME, ON PRESS. Chips are the headset's grammar and the era
    *  spends three presses in total, so the laptop reads like every other notice

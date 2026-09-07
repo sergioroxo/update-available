@@ -236,3 +236,51 @@ prompt** — the search she abandoned, the reply she didn't pick, the request sh
 photograph she never saved, the contact she is about to unmute. ⚑ **The residue has to be hers as
 often as it is the machine's**, or the era becomes a portrait of the apparatus again — which is
 exactly the fault `THE_CLOSE_NEXT_2026-09-06.md` found in the ending.
+
+---
+
+# 9 · ⚑ S124 — THE MONITOR IS IN, AND ONE FAULT IS OPEN
+*Built 2026-09-07. Walked click-only after it: **320 presses, `spine: done`.***
+
+**In and verified:** the monitor (stand, neck, panel) on the desk dead ahead of Maya's seat, with a
+screen plane at `(5.435, 1.05, 0.70)`, 0.500 × 0.375 m, upright, facing her. The laptop keeps 224×140
+and its Close-mirror job. ⚑ **Era 4 has a desktop again** — it was the only era without one, in a
+piece called PC Simulator.
+
+**⚑ THE HEADSET'S "TO THE SIDE" HAS A MEASURED LIMIT**, and the walk enforced it:
+
+| z | ° off the seat bearing | |
+|---|---|---|
+| 0.52 | 12.7° | where it was |
+| **0.40** | **20.6°** | **here** |
+| 0.30 | 26.6° | marginal |
+| 0.18 | 33.0° | ⚑ outside the 29.7° half-FOV — **182 presses, no Close** |
+
+That is S76's finding re-made: it moved the headset IN for this exact reason and wrote the numbers in
+the file being edited. They were not read.
+
+## 9.1 · THE OPEN FAULT — the GPU texture, not the canvas
+The monitor renders a flat cream rectangle. **What has been ruled out, each by observation:**
+- the browser's drawing — ✅ the canvas dumped straight off `window.__era3Devices().monitor` holds
+  the full browser: chrome, six tabs, address bar, completions;
+- the entity — ✅ enabled, correct world position and scale, has a render component;
+- the era gate — ✅ fixed (a new screen that does not name itself in `setEra` is invisible without
+  meaning to be, and renders exactly like a drawing bug);
+- the version path — ✅ forced to change every frame; no difference;
+- the facing — ✅ **`y: 270` is correct.** At `y: 90` the plane is culled and `e_monBody`'s dark face
+  shows through, which proves the plane at 270 IS being drawn — and drawn cream;
+- the upload sites — ✅ both read; the non-external branch does `clearRect` → `draw` → `dirty` →
+  `upload` with no gate.
+
+⚑ **So the canvas updates and the GPU copy does not.** The next session starts at
+`screenTexture.ts`'s `tex.setSource` / `upload` for a 1024×768 canvas-backed texture — the monitor is
+the first non-external screen at `ERA1_CANVAS` size, and every other one is smaller.
+
+## 9.2 · Layout — Sérgio's correction, recorded
+> *"I dont mind the Chrome browser style, i just feel it needed more similarities to be understandable
+> as 2026, not less… I like the already open tabs, like this was running on a chromebook and
+> web-based."*
+
+⚑ **This overturns §3's sidebar proposal.** The tabs stay — they are the beat (she left five, a sixth
+came back). What changes is the finish: rounded tabs with favicon dots, a pill omnibox, a profile dot,
+more air. **More browser and more current, not less.**
