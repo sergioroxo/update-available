@@ -2623,6 +2623,21 @@ export class DesktopOS {
       // ever moved the room — that is the panel's era jump, which calls
       // app.ts's morph and lands you in Maya's seat); they set what the era's
       // one surface is showing.
+      // ⚑ S123 — the browser: the era's boot and its chrome. `e4Browser` is the
+      // LINEAR ENTRY (it is what the era opens on); `e4BrowserSearch` lands on
+      // the search tab directly, which is the surface that carries the era's
+      // one piece of pure evidence.
+      case 'e4Browser':
+        this.setPhase('desktop'); this.setDesktopEra('e4');
+        this.e4 = new E4Shell();
+        // ⚑ review only: the browser takes the lid for this jump and never in
+        //   play. Its real home is the monitor Sérgio ruled on 2026-09-07.
+        if (this.e4) this.e4.browserOwnsLid = true;
+        break;
+      case 'e4BrowserSearch':
+        this.debugJump('e4Browser');
+        this.e4?.browser.debugJumpTo('search');
+        break;
       case 'e4Standby':
         this.setPhase('desktop');
         this.setDesktopEra('e4');

@@ -86,6 +86,9 @@ const LOGICAL = {
   visor: { w: ERA1_CANVAS.width, h: ERA1_CANVAS.height, scale: 1 },
   /** ⚑ the laptop (2026-09-01): a small screen carrying two short lines and a
    *  hint, so it needs pixels for text and nothing else. */
+  /** ⚑ S123 tried 320x200 and reverted the same hour — see `space.ts`'s
+   *  LAPTOP_W. The lid is a second screen again; the browser is going on a
+   *  monitor (Sérgio, 2026-09-07: the laptop docks, the headset moves aside). */
   laptop: { w: 224, h: 140, scale: 3 }
 } as const;
 
@@ -271,9 +274,25 @@ const PLACEMENT = {
    * beat, and invisible.
    */
   laptop: {
-    /** ⚑ 2026-09-04 (S118): z 0.61 → 0.86, the same +0.25 `e_laptop` took when it
-     *  gave the desk's sweet spot to the headset. x and y are untouched, so the
-     *  mesh-measured slab above still describes this plane exactly. */
+    /** ⚑ 2026-09-04 (S118): z 0.61 → 0.86, giving the desk's sweet spot to the
+     *  headset — on the stated grounds that *"the laptop is read ONCE, at the
+     *  very start of the era, for three short lines, and then L moves to the
+     *  visor and it is never used again."*
+     *  ⚑ S123 TRIED TO PUT IT BACK (0.86 → 0.61) AND REVERTED THE SAME HOUR.
+     *  The reasoning for the move is sound — under E+B the laptop IS the era
+     *  and the headset is one late sequence, so the sweet spot belongs to the
+     *  surface the player reads. The EXECUTION was wrong twice over, and a
+     *  render showed both inside a minute:
+     *    · S118 moved the MODEL (`e_laptop`) and this PLANE together. Moving
+     *      only the plane tore the browser off the lid — the canvas floated in
+     *      front of the desk while the laptop mesh stayed where it was. This
+     *      file's own note says why: the plane is mesh-measured, so the two are
+     *      one object and neither may move alone.
+     *    · And 0.61 is now the HEADSET's spot (S118 gave it away deliberately).
+     *      Putting the laptop back without moving the stand puts the headset
+     *      through the screen.
+     *  ⚑ So the relocation is a real job — model, plane and stand together,
+     *  re-measured from the seat — and not a one-line z edit. Left at 0.86. */
     pos: { x: 5.3348, y: 0.8700, z: 0.86 },
     size: { w: 0.300, h: 0.188 },
     euler: { x: 84.6, y: 270, z: 0 }

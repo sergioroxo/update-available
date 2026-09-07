@@ -61,6 +61,7 @@
  * nothing else to press here, and adding a "continue" would break the rule.
  */
 import { homeEnvironment, standby, visorField, visorEdge, glitchBands, ERA4, PLACE } from '../theme/era4';
+import { E4Browser } from './browser';
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import space from '../../../data/dialog/s4_space.json';
@@ -151,6 +152,16 @@ function wrapLaptop(ctx: CanvasRenderingContext2D, text: string, max: number): s
 /** the laptop screen's logical size — kept in step with `LOGICAL.laptop` in
  *  era3Devices.ts, which is where the canvas is actually made */
 const LAPTOP_BAR = 13;
+/**
+ * ⚑ S123 TRIED 224x140 → 320x200 AND PUT IT BACK THE SAME HOUR. The lid was
+ * going to carry Era 4's browser, and then Sérgio ruled the better shape:
+ * a laptop DOCKED TO A MONITOR, so the browser gets a real surface and the
+ * headset moves to the periphery. The lid is a second screen again, and its
+ * size is load-bearing for something else: `drawCloseMirror` scales the OS
+ * canvas onto it, and the walk's ritual sweep only knows three planes
+ * (Era 1's monitor, `era4-visor`, `era3-device-workstation`) — none of them
+ * this one. Resizing it lost the Close.
+ */
 const LAPTOP_W = 224;
 const LAPTOP_H = 140;
 
@@ -268,6 +279,7 @@ export class E4Shell {
   get handedOffToClose(): boolean { return this.handedOff; }
 
   update(dt: number): void {
+    if (this.browserOwnsLid) this.browser.update(dt);
     this.t += dt;
     const step = Math.floor(((this.t % PULSE_SECONDS) / PULSE_SECONDS) * PULSE_STEPS);
     if (step !== this.pulseStep) { this.pulseStep = step; this.version++; }
@@ -376,7 +388,16 @@ export class E4Shell {
   }
 
   /** the laptop's own version, so its screen re-uploads only when its line moves */
-  get laptopVersion(): number { return this.laptopV; }
+  get laptopVersion(): number {
+    // ⚑ the browser's version only joins the lid's while it is actually on the
+    //   lid. Adding it unconditionally re-uploaded the canvas twice a second
+    //   forever, because the cursor blinks even after the browser has stood
+    //   down — S105's dirty-only discipline broken by a getter.
+    return this.laptopV + (this.browserOwnsLid ? this.browser.version : 0);
+  }
+
+  /** ⚑ review only, until the monitor exists. Never true in play. */
+  browserOwnsLid = false;
 
   /** ⚑ ONE LINE AT A TIME, ON PRESS. Chips are the headset's grammar and the era
    *  spends three presses in total, so the laptop reads like every other notice
@@ -394,6 +415,17 @@ export class E4Shell {
       return;
     }
     if (this.stageNow !== 'laptop') return;
+    // ⚑ S123 — while the browser owns the lid, a press is a TAB, not the next
+    //   line. The laptop beat has not begun yet and must not be advanced by
+    //   somebody reading a browser.
+    // ⚑ a proximity press arrives with no coordinates (the room can press this
+    //   prop without aiming at a rectangle — S104's lesson). With none, the
+    //   browser cannot resolve a tab, so the press is simply eaten: reading is
+    //   not a beat that advances on being touched.
+    if (this.browserOwnsLid) {
+      if (x !== undefined && y !== undefined) this.browser.handleClick(x, y);
+      return;
+    }
     this.laptopLine += 1;
     this.laptopV++;
     this.version++;
@@ -451,7 +483,26 @@ export class E4Shell {
     ctx.fillText(right, W - rw - 6, 3);
   }
 
+  /** ⚑ S123 — the browser. It owns the lid from the era's first frame until the
+   *  laptop beat takes over, and it is where E+B puts the whole era. */
+  readonly browser = new E4Browser();
+
   drawLaptop(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    // ⚑ S123 — THE BROWSER IS BUILT AND IT DOES NOT LIVE HERE.
+    //   It owned the lid for one session and cost the piece its ending: the
+    //   walk reached `e4_armed` and stalled, because the lid is also where the
+    //   Close's ritual is mirrored and the walker's sweep does not know that
+    //   plane. Reverted rather than debugged, on the standing rule that the
+    //   piece stays playable end to end — and because the lid was never the
+    //   right home. Sérgio, 2026-09-07: the laptop docks to a MONITOR, the
+    //   browser goes there, and the headset moves to the periphery.
+    //   ⚑ `?debug=1`'s `e4Browser` routes still reach it, so the boot and the
+    //   chrome are reviewable while the monitor is built.
+    if (this.browserOwnsLid) {
+      this.laptopHits = [];
+      this.browser.draw(ctx, W, H);
+      return;
+    }
     px(ctx, 0, 0, W, H, ERA4.field);
     this.laptopHits = [];
     if (this.handedOff) {

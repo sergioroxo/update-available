@@ -180,6 +180,11 @@ const OS_BEATS: BeatRow[] = [
   // …and the era's own two states. Neither moves the room: use the E4 era jump
   // first to land in Maya's seat, then these to set what the visor is showing.
   { label: 'E4 · the headset, waiting (standby — one touch to wear)', id: 'e4Standby' },
+  // ⚑ S123 — the fourth boot. 1997 you wait for it, 2003 it announces itself,
+  // 2016 it never sleeps, 2026 it RESTORES: it was never off and it kept your
+  // place. Six tabs come back and the last one is not hers.
+  { label: '⚑⚑ the browser · "Restoring your session" (REVIEW ONLY — not in play)', id: 'e4Browser' },
+  { label: '↳ the search she did not finish — four completions, three of them out', id: 'e4BrowserSearch' },
   { label: 'E4 · ⚑ THE PLACE (worn — then turn, and see what happens)', id: 'e4Place' },
 
   { heading: 'E4 · L — the voice, and the room rewrites (S77)' },

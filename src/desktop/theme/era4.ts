@@ -674,6 +674,114 @@ export function photograph(
   px(ctx, x + w, y - 1, 1, h + 2, ERA4.photoFrame);
 }
 
+/**
+ * ⚑ THE BROWSER — S123, and it is the era's primary surface from here on.
+ *
+ * `ERA4_E_PLUS_B_BUILD_2026-09-07.md`: Era 4 moves onto the laptop, because the
+ * documented 2026 apparatus is a browser and because this piece is called PC
+ * Simulator and Era 4 was the only era that had left the computer.
+ *
+ * ⚑ IT MUST READ AS A BROWSER AT A GLANCE AND NEVER AS A GAME UI. A tab strip,
+ * an address bar, and nothing else. No bookmarks bar, no extensions, no profile
+ * avatar, no hamburger — every affordance that is not load-bearing is a thing a
+ * player will press, be refused by, and stop trusting the surface over.
+ *
+ * COLOURS: the browser is warm paper (the `WALL` block — the same stock the
+ * offer cards are cut from), not the visor's cold field. That is deliberate and
+ * it is the era's argument in a palette: this is her own machine, in her own
+ * room, and it is pleasant. The apparatus does not arrive looking like a
+ * threat, in 2026 or anywhere else in this piece.
+ */
+export const CHROME = {
+  bar: '#E6D2BC',        // the strip the tabs sit in — PLACE.wall
+  barLo: '#CFC4AA',
+  tab: '#F3EAD8',        // a tab at rest
+  tabLive: '#F5F4ED',    // the one in front
+  tabInk: '#8A5A3B',
+  tabInkLive: '#74492F',
+  field: '#F5F4ED',      // the address bar's own well
+  fieldEdge: '#CFC4AA',
+  ink: '#74492F',
+  hint: '#B5A98C',
+  page: '#F3EAD8'
+} as const;
+
+export const TAB = { h: 15, w: 62, gap: 2, x: 4, y: 3 } as const;
+export const ADDR = { h: 14, y: 20, x: 6 } as const;
+
+/**
+ * The tab strip and the address bar. Returns one rect per tab so the draw and
+ * the hit test cannot drift apart — the lesson `kit.ts` paid for and
+ * `memoryCard` has obeyed since.
+ */
+export function browserChrome(
+  ctx: CanvasRenderingContext2D, W: number,
+  tabs: { title: string }[], live: number, address: string, showCursor: boolean
+): Rect[] {
+  px(ctx, 0, 0, W, ADDR.y + ADDR.h + 4, CHROME.bar);
+  const rects: Rect[] = [];
+  setFont(ctx, 8);
+  // ⚑ TABS SHRINK TO FIT, the way a real browser's do — and this is not
+  // cosmetic. The first pass used a fixed 62 px and six tabs did not fit on a
+  // 320 px lid, so the strip silently stopped at four: the fifth and SIXTH
+  // never drew, and the sixth is the beat — the tab she did not leave open.
+  // A row that quietly drops its own payload is exactly the fault class this
+  // project keeps paying for, and it was found by looking at a render.
+  const tw = Math.min(TAB.w, Math.floor((W - TAB.x * 2 - (tabs.length - 1) * TAB.gap) / Math.max(1, tabs.length)));
+  for (let i = 0; i < tabs.length; i++) {
+    const x = TAB.x + i * (tw + TAB.gap);
+    const on = i === live;
+    px(ctx, x, TAB.y, tw, TAB.h, on ? CHROME.tabLive : CHROME.tab);
+    px(ctx, x, TAB.y, tw, 1, on ? CHROME.tabLive : CHROME.barLo);
+    if (!on) px(ctx, x, TAB.y + TAB.h - 1, tw, 1, CHROME.barLo);
+    ctx.fillStyle = on ? CHROME.tabInkLive : CHROME.tabInk;
+    // a tab title is CLIPPED, never wrapped and never shortened in the data —
+    // the copy is Sérgio's to rewrite and the painter must survive a long one.
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 4, TAB.y, tw - 8, TAB.h); ctx.clip();
+    ctx.fillText(tabs[i].title, x + 5, TAB.y + 4);
+    ctx.restore();
+    rects.push({ x, y: TAB.y, w: tw, h: TAB.h });
+  }
+  // the address bar
+  px(ctx, ADDR.x, ADDR.y, W - ADDR.x * 2, ADDR.h, CHROME.field);
+  px(ctx, ADDR.x, ADDR.y, W - ADDR.x * 2, 1, CHROME.fieldEdge);
+  px(ctx, ADDR.x, ADDR.y + ADDR.h - 1, W - ADDR.x * 2, 1, CHROME.fieldEdge);
+  setFont(ctx, 9);
+  ctx.fillStyle = CHROME.hint;
+  ctx.fillText('\u25CF', ADDR.x + 6, ADDR.y + 4);      // the lock, as a dot at this size
+  ctx.fillStyle = address ? CHROME.ink : CHROME.hint;
+  ctx.fillText(address, ADDR.x + 16, ADDR.y + 4);
+  if (showCursor) {
+    const w = Math.ceil(ctx.measureText(address).width);
+    px(ctx, ADDR.x + 17 + w, ADDR.y + 3, 1, 9, CHROME.ink);
+  }
+  return rects;
+}
+
+/**
+ * ⚑ THE RESTORE — the era's boot, and the whole of it.
+ *
+ * `k` runs 0 → 1. One line, centred, on the page ground; the tabs come back
+ * one at a time underneath it as it completes. There is no logo, no progress
+ * bar and no version number: 2026 does not think it is starting anything, and
+ * a splash would be the 2003 boot wearing a 2026 coat.
+ */
+export function restoring(
+  ctx: CanvasRenderingContext2D, W: number, H: number,
+  line: string, k: number
+): void {
+  px(ctx, 0, 0, W, H, CHROME.page);
+  setFont(ctx, 11);
+  ctx.fillStyle = CHROME.hint;
+  const w = Math.ceil(ctx.measureText(line).width);
+  ctx.fillText(line, Math.round((W - w) / 2), Math.round(H / 2) - 12);
+  // three dots, one at a time, and then it is simply over
+  const dots = Math.min(3, Math.floor(k * 4));
+  for (let i = 0; i < dots; i++) {
+    px(ctx, Math.round(W / 2) - 8 + i * 7, Math.round(H / 2) + 6, 3, 3, CHROME.hint);
+  }
+}
+
 export interface Rect { x: number; y: number; w: number; h: number }
 
 /**
