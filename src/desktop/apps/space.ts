@@ -166,9 +166,24 @@ const LAPTOP_W = 224;
 const LAPTOP_H = 140;
 
 export class E4Shell {
-  private stageNow: Stage = 'laptop';
+  /** ⚑ S130 — the era opens with the device READY, not with L on the laptop. */
+  private stageNow: Stage = 'closed';
   /** which of the laptop's lines is showing; past the last one, L is done there */
-  private laptopLine = 0;
+  /**
+   * ⚑ S130 — STARTS AT 3, WHICH IS "ALREADY READ".
+   *
+   * The era used to open on the laptop with three of L's lines and three
+   * presses: *"Hi Maya. I'm L. I came with the update."* That is now a
+   * CONTINUITY ERROR as well as a redundancy — the browser's transcript says L
+   * arrived fourteen months ago, so it cannot also be introducing itself today.
+   * The lines stay in `s4_space.json` (they are good, and they are the record
+   * of what the era used to be) and nothing plays them.
+   *
+   * The era opens instead on what is already on the desk: the browser on the
+   * monitor, the file on the laptop, and the headset waiting. Nothing has to be
+   * pressed to begin, and nothing has to be read at all.
+   */
+  private laptopLine = 3;
   private laptopV = 0;
   private t = 0;
   private pulseStep = 0;
@@ -307,6 +322,12 @@ export class E4Shell {
     // has actually finished speaking, so the visor never carries two caption
     // bands at once. Nothing is announced in between: L says it will only put
     // up the ones it thinks she would want, and then it does.
+    // ⚑ S130 — `voice.finished` is still the gate and it is true from the start
+    //   now that the conversation is retired: the voice never begins, so it is
+    //   never mid-sentence, and the offers open on the frame after the device
+    //   goes on. The condition is kept rather than deleted because the offers
+    //   must still never open over a caption band, and if L's voice ever comes
+    //   back to this era for any reason this is the line that protects it.
     if (this.offersPending && this.voice.finished && !this.offers.live) {
       this.offersPending = false;
       this.offers.begin();
@@ -623,9 +644,38 @@ export class E4Shell {
       this.wornFiled = true;
       ledger.e4Space.push({ id: 'headset', outcome: 'worn', witness: space.witness.worn });
     }
-    // ⚑ and L is already talking. No greeting screen, no onboarding, no
-    // application to open: the OS IS the assistant from here on.
-    this.voice.begin();
+    /**
+     * ⚑ S130 — L'S TEN UNITS ARE RETIRED, AND WEARING THE DEVICE NOW OPENS THE
+     * OFFERS DIRECTLY.
+     *
+     * The conversation used to start here: `voice.begin()`, ten units, and
+     * u10's second chip handed over to the offers. All of it is gone, replaced
+     * by the browser's `chat` tab — fourteen months of the same relationship,
+     * read backwards, with the menu her replies were chosen from still under
+     * them. That is not a summary of the units; it is the thing the units were
+     * dramatising, stated as evidence instead of performed live.
+     *
+     * ⚑ WHAT EACH UNIT BECAME, so none of it is quietly lost:
+     *   u1  L introduces itself      → the transcript's first entry, dated
+     *   u2  it captions her things   → RETIRED (see the note below)
+     *   u3  the hoodie, three guesses→ `record`: one line item, held for review
+     *   u4  the name, first          → the transcript, 11 months ago
+     *   u6  the name, second         → the transcript, 4 months ago
+     *   u7–u9 the chips shrink       → the transcript's menus: 3, 3, 2, 2, 1
+     *   u10 the return, and handoff  → the transcript's last entry, and THIS
+     *
+     * ⚑ THE ONE REAL LOSS IS u2 — L captioning her footwear, her sketchbook and
+     * her photograph out loud, unasked. It has no home in a browser and it is
+     * not worth inventing one: it was the weakest of the three caption beats
+     * (its own review found it explaining its own observation) and the hoodie,
+     * which is the beat that matters, survives. Recorded as a deliberate cut,
+     * not an oversight.
+     *
+     * ⚑ AND L STILL SPEAKS. It speaks in the past, in the transcript, and it
+     * speaks in the sell — the offers' own lines are untouched. What is gone is
+     * the middle, and the middle is now hers to read or not.
+     */
+    this.offersPending = true;
   }
 
   /**

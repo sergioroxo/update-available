@@ -162,7 +162,20 @@ export class LVoice {
    * caption band on the same strip of the visor, so starting them on the press
    * would put two speakers on screen at once. `E4Shell` waits for this instead.
    */
-  get finished(): boolean { return this.phase === 'done'; }
+  /**
+   * ⚑ S130 — AND A CONVERSATION THAT NEVER BEGAN COUNTS AS FINISHED.
+   *
+   * This used to be `phase === 'done'` alone, which was right while L's ten
+   * units opened the era. They are retired now (`space.ts putOn`), so the voice
+   * is never started — and under the old test it was therefore never finished
+   * either, so the offers' gate (`offersPending && voice.finished`) would have
+   * held closed forever and the era would have ended at the headset with
+   * nothing after it. Caught by reading the gate rather than by a walk.
+   *
+   * The gate's real question was always "is L mid-sentence?", and the answer
+   * for a voice that never spoke is no.
+   */
+  get finished(): boolean { return !this.started || this.phase === 'done'; }
 
   // ── the clock ────────────────────────────────────────────────────────────
   update(dt: number): void {
