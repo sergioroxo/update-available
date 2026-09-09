@@ -42,9 +42,21 @@ const TABS = script.tabs as unknown as Tab[];
 
 /** under four seconds. E2's splash is 23.7 because 2003 made you watch it. */
 const RESTORE_SECONDS = 2.4;
-/** the tabs come back one at a time as the restore completes — the last one
- *  lands after the others and nothing marks it. */
+/** the tabs come back one at a time as the restore completes. */
 const TAB_GAP = 0.22;
+/**
+ * ⚑ AND THE SIXTH ARRIVES LATE — S129, and it is the whole of what the restore
+ * has to say. Five tabs come back at an even beat, because they are one set:
+ * the session she left. Then a pause the length of three of those beats, and a
+ * sixth lands on its own.
+ *
+ * Nothing marks it, nothing points at it, and no line anywhere mentions it
+ * again. It is simply not part of the rhythm the other five established, which
+ * is the only way this surface can say *she did not open this one* without
+ * saying it. ⚑ At an even gap it read as a set of six; the beat is the whole
+ * difference between a session and an intrusion.
+ */
+const EXTRA_GAP = TAB_GAP * 3;
 const CURSOR_BLINK = 0.53;
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -92,7 +104,7 @@ export class E4Browser {
     if (this.phase === 'restoring') {
       // ⚑ the whole boot is a clock and a line. Nothing is pressable during it,
       // and nothing can be skipped — the same ruling E2's splash got.
-      if (this.t >= RESTORE_SECONDS + TABS.length * TAB_GAP) {
+      if (this.t >= RESTORE_SECONDS + (TABS.length - 1) * TAB_GAP + EXTRA_GAP) {
         this.phase = 'open';
         this.t = 0;
         this.file();
@@ -115,7 +127,13 @@ export class E4Browser {
   /** how many tabs have come back — during the restore this counts up. */
   private tabsBack(): number {
     if (this.phase === 'open') return TABS.length;
-    return Math.max(0, Math.min(TABS.length, Math.floor((this.t - RESTORE_SECONDS) / TAB_GAP) + 1));
+    const since = this.t - RESTORE_SECONDS;
+    if (since < 0) return 0;
+    const n = Math.floor(since / TAB_GAP) + 1;
+    // ⚑ the first five are the session; the sixth is not, and it waits.
+    if (n < TABS.length) return Math.min(TABS.length - 1, n);
+    const held = (TABS.length - 1) * TAB_GAP + EXTRA_GAP;
+    return since >= held ? TABS.length : TABS.length - 1;
   }
 
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
