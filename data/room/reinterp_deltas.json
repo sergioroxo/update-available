@@ -2503,8 +2503,31 @@
    "modemLed",
    "tennisRacketModel",
    "movingBox1",
-   "movingBox2"
-  ],
+   "movingBox2",
+    "e_flagA",
+    "e_flagB",
+    "e_flagC",
+    "e_flagD",
+    "e_flagE",
+    "e_allyBadge",
+    "e_allyStripeA",
+    "e_allyStripeB",
+    "e_poster",
+    "e_posterFrame",
+    "e_posterInkA",
+    "e_posterInkB",
+    "e_sign",
+    "e_signFrame",
+    "e_signMat",
+    "e_pinboard",
+    "e_pinNoteA",
+    "e_pinPhotoA",
+    "e_frame",
+    "e_shelfPlank2",
+    "e_shelfBookA",
+    "e_shelfBookB",
+    "e_wallShelf"
+   ],
   "add": [
    {
     "id": "e_phoneBody",
@@ -2622,6 +2645,6 @@
     "yaw": 270
    }
   ],
-  "_docE4Emptying": "⚑ 2026-09-05 — VERA'S COMPUTER LEAVES WITH HER ERA. Sérgio: *\"since we no longer can go to the other rooms, maybe we can remove the computers from the room 1 and 2 when we are at ERA-4, is that an option?\"* It is, and HALF OF IT WAS ALREADY TRUE: this same remove list has taken Daniel's CRT and keyboard out at r4 since the fold was written — Room 1's computer has been gone at E4 all along and nobody noticed, because nobody had measured what was left. Room 2's workstation had not gone anywhere. It does now, with its keyboard and mouse; `era3Devices.setEra` stops enabling the workstation and phone SCREENS at e4 in the same move, or a lit plane would be left hanging where the monitor used to be — which is exactly the fault S61 found on the spine and the one a removal always has. ⚑ This is the first, smallest increment of the emptied-rooms idea (NEXT_ROOM_PASS §5/§6): the rooms the piece has left stop being fully dressed. It is worth measuring against §6's table — Room 2's contents are 27 of the turn's 139 and Room 1's are 78. ⚑ EXTENDED 2026-09-05: *\"When we are at Era-4 there is no need to see the tower of Daniel desktop and the disk drive, or even the tenis racket and the moving boxes are still here.\"* So the r4 fold now also takes `tower`, `towerFloppySlot`, `modem`, `modemLed`, `tennisRacketModel` and `movingBox1/2`. ⚑ The boxes are the interesting one and he is right about them too: they arrive at r3 to say the room was PACKED, and a packed room does not still have its boxes in it ten years later — leaving them was me keeping a beat past the moment it finished. What stays in 2026 is the shape of a room and a light nobody turned off."
+  "_docE4Emptying": "⚑ 2026-09-05 — VERA'S COMPUTER LEAVES WITH HER ERA. Sérgio: *\"since we no longer can go to the other rooms, maybe we can remove the computers from the room 1 and 2 when we are at ERA-4, is that an option?\"* It is, and HALF OF IT WAS ALREADY TRUE: this same remove list has taken Daniel's CRT and keyboard out at r4 since the fold was written — Room 1's computer has been gone at E4 all along and nobody noticed, because nobody had measured what was left. Room 2's workstation had not gone anywhere. It does now, with its keyboard and mouse; `era3Devices.setEra` stops enabling the workstation and phone SCREENS at e4 in the same move, or a lit plane would be left hanging where the monitor used to be — which is exactly the fault S61 found on the spine and the one a removal always has. ⚑ This is the first, smallest increment of the emptied-rooms idea (NEXT_ROOM_PASS §5/§6): the rooms the piece has left stop being fully dressed. It is worth measuring against §6's table — Room 2's contents are 27 of the turn's 139 and Room 1's are 78. ⚑ EXTENDED 2026-09-05: *\"When we are at Era-4 there is no need to see the tower of Daniel desktop and the disk drive, or even the tenis racket and the moving boxes are still here.\"* So the r4 fold now also takes `tower`, `towerFloppySlot`, `modem`, `modemLed`, `tennisRacketModel` and `movingBox1/2`. ⚑ The boxes are the interesting one and he is right about them too: they arrive at r3 to say the room was PACKED, and a packed room does not still have its boxes in it ten years later — leaving them was me keeping a beat past the moment it finished. What stays in 2026 is the shape of a room and a light nobody turned off. ⚑ 2026-09-11 — ROOM 3 STRIPPED OF ITS BOXES. Sérgio, on his first sit-through of the deployed build: *\"there are blocks of stuff around us non-descriptive and useless\"* — and it was Room 3: the flag as five unreadable planks (his open question #6, answered by seeing it), the ally badge, the poster and sign (the purple slab, the navy block, the brown bar and the white slab behind the monitor), the pinboard and its two rectangles, a 0.11 m frame, the bare second shelf plank, two book-boxes on a wall shelf. Twenty-three props, every one an untextured cuboid with a name only the data can read. What stays is the furniture (all GLB), the window and curtains, the kept CRT on its one plank, and the things the story points at — the hoodie, the folders, the sketchbook, the mug, the plant, the headset kit. Every id is one line to restore."
  }
 }
