@@ -1,55 +1,93 @@
 {
-  "_doc": "PLACEHOLDER-draft — TRANSCENDANCE, Era 4's last beat and the piece's one respite (S79, Stage 3). Every string here is a draft for the project lead's voice pass and his edit wins (CLAUDE.md's co-creation norm, 2026-07-24). Design of record: docs/REINTERP_E4_DEEP_PASS_2026-08-05.md §1 (the corrected category reading), docs/REINTERP_E4_THE_SPACE_2026-08-06.md §3 (the apparatus can only show you a picture of a room; this is a room), docs/REINTERP_E4_THE_DEVICE_2026-08-05.md §'STAGE 0 — CLOSED' (no screen at all), and docs/research/BALLROOM_PROVENANCE_2026-08-06.md, which must be read in full before a word here is changed.",
-
+  "_doc": "PLACEHOLDER-draft — THE COMMONS, Era 4's last beat and the piece's one respite (S133, 2026-09-11; replaces S79's ball, whose lines it keeps and cuts). Every string here is a draft for the project lead's voice pass and his edit wins. ⚑ THE SHAPE, ruled by Sérgio the same day: the headset STAYS ON. The VR is the SOGICE risk — seclusion, an overlay on her own room — and it is the community that breaks it. Junie's invitation (muted six weeks ago by the care system, see s4_browser.json's care.invite) reaches the headset anyway; she goes in with ONE press; the overlay tries to filter the shared space and fails — forty-one people being specific is not a thing it can classify — and the space opens over her room: lamps, the MC, the four categories. Then the apparatus's update fails on an account it can no longer place. Nobody hacks anything (R28: updates are triggered by documented system failures, never by the player). Real-world referent for the Dossier: Trans Academy, a trans community that runs in VRChat (https://www.transacademy.org/) — [VERIFY SOURCE], cite documentary once checked; in the fiction the space is the invented mark below and never the real name.",
   "_docWhatThisIs": "⚑ AN INTERPRETIVE HOMAGE, ABSTRACTED — not a depiction. Ball culture is Black and Latino LGBTQ+ culture, built from the 1970s onward principally by Black and Latina trans women and gender-nonconforming people; its modern house-and-ball form dates to Crystal and Lottie LaBeija's House of LaBeija, 1972. This scene invents its houses, its categories, its names and its announcements; it depicts no real person, no real house and no real ball; it borrows NO vernacular. The MC here performs the FUNCTION — announce, categorise, celebrate — in ordinary English, because the borrowed words are the part that is not ours. The credit is not optional and it is not abstract: data/provotypes/e4_ball.json and docs/reinterp/ATTRIBUTIONS.md name the lineage. Crediting 'ballroom culture' in general repeats the extraction pattern rather than correcting it.",
-
   "_docCategories": "⚑ THE CATEGORIES ARE THE APPARATUS'S OWN WORDS, and that is the corrected reading, not a shortcut. The provenance pass (§3) establishes that realness categories are skilled re-performances of categories the world already imposes rather than an escape from categorisation; what was seized back is WHO DECLARES, PERFORMS AND JUDGES. So every title below is quoted from this piece's own apparatus — 1997's intake question, 2003's four check-in chips, 2016's correction rule, 2026's caption on a mended hoodie — walked and judged by the people they were imposed on. ⚑ NOBODY EVER POINTS AT THIS. There is no line anywhere that explains where a title comes from, and there must never be one.",
-
   "_docWalk": "⚑ ONE WORD, THREE ERAS, AND IT IS NOT BORROWED. 'Walk' is ballroom's own verb for taking a category, so the MC never says it. It appears here ONLY where this piece's apparatus already put it: E1's intake form asked a sixteen-year-old whether he corrected how he walks, talks and sits (data/provotypes/origin_intake_e1.json), and E2's Restorify asked 'How is your walk today?' every morning for years (data/dialog/s2_lamby.json). The word arrives at the ball from inside the machine, as a quoted category title. The MC says 'has it', 'is up', 'takes the floor'. Keep that boundary if these lines are rewritten.",
-
   "_docHouse": "⚑ AND THE OTHER WORD. E3's invented scripture is called Household (data/dialog/s3_queue.json), quoted under every correction; its 3:8 reads 'the door was left open, and a lamp set beside it', and its 1:5 asks for 'one lamp for the whole room, so that no face is lit differently from another' — which is the house look, the grading preset that makes every face the same. The houses below are lamps, open doors, mending and late arrivals, and the ball's light is one light that moves and lights one person at a time. Same words, opposite institutions. It is never glossed (deep pass §4.3), and a player who reaches this room without ever being told has met the piece working.",
-
   "_docStutter": "⚑ THE STUTTER IS L'S, NEVER THE BALL'S (deep pass §1.4, and the register law: respite is never a trap, never revealed as fake, and the system targets AROUND it, never through it). Nothing in `ball` below may glitch, drop, distort or sour. Every failure in this file belongs to `arrival` and `stutter`, and both are the machine's own instrument failing at its own surface, twenty feet away, while the room goes on exactly as it is.",
-
   "_docVoice": "⚑ NOT ONE LINE HERE IS VOICED, AND NONE OF THEM MAY BE SYNTHESIZED. data/audio/tts_manifest.json's own law is that build-time TTS renders the APPARATUS and never a person; the MC is a person and the room is people. So the `audio` names below are names only — src/audio/tapeAudio.ts's registry law means an unregistered name is silently never requested — and they wait on real recordings made with, not merely about, the people this scene is indebted to (ethics #16's reader protocol, deep pass §5.3). Until then the captions carry the beat, which is what captions are for.",
-
   "speaker": "",
-
   "arrival": {
-    "_beat": "⚑ THE MACHINE HEARS IT FIRST, AND STOPS TALKING. L says nothing from here to the end of the era — not silenced, not defeated: unnecessary (deep pass §3.2). Only its instrument keeps working: the label field on the visor, the same one that captioned her shoes and her sketchbook, rewriting itself. There is no caption band, no chip and no voice in this block, which is also how C2 is kept — a felt beat is a beat L is absent from.",
+    "_beat": "⚑ THE FILTER. She has gone in, and the overlay is still on her face, trying to do to a room what it did to her hoodie: classify it. Four attempts, in the label field, front and centre now — this used to play on a nine-centimetre visor across the room that nobody read. Each one fails a little worse, and the lamps come up in the room behind the glass as it fails: none, then some, then forty-one. The last label is the era's — it recognises every word and cannot occupy the role. NOBODY EXPLAINS IT.",
     "_beatFinal": "⚑ AND THE LAST STATE IS THE ERA'S. It recognises every word and cannot occupy the role: it is looking at its own vocabulary with the scoring taken out of its hands. ⚑ It is NOT the hoodie's line. The hoodie got 'no category — held for review' — deferred, routed, a human would decide later. This gets no route and no review at all, because there is nobody left to hold it for. A player who noticed the hoodie meets the same limit at room scale; a player who did not still meets it whole. NOBODY EXPLAINS IT. Ever. No line, no cue, in this file or any other.",
     "labels": [
-      { "id": "a1", "object": "SOUND", "text": "live · not in your library", "hold": 4.6 },
-      { "id": "a2", "object": "EVENT", "text": "forty-one present · no host listed", "hold": 4.4 },
-      { "id": "a3", "object": "NOTICE", "text": "sensitive content · hidden by default", "hold": 4.8 },
-      { "id": "a4", "object": "EVENT", "text": "performance · unrated", "hold": 3.8 },
-      { "id": "a5", "object": "TERMS", "text": "all matched · none new", "hold": 4.8 },
-      { "id": "a6", "object": "SCORING", "text": "not available to this account", "hold": 4.6 },
-      { "id": "a7", "object": "EVENT", "text": "NO CATEGORY FOUND", "hold": 7.0 }
+      {
+        "id": "a1",
+        "object": "SPACE",
+        "text": "the Commons · not available to this account",
+        "hold": 4.6,
+        "lamps": 0
+      },
+      {
+        "id": "a2",
+        "object": "SPACE",
+        "text": "sensitive content · hidden by default",
+        "hold": 4.4,
+        "lamps": 9
+      },
+      {
+        "id": "a3",
+        "object": "PRESENT",
+        "text": "forty-one present · no host listed",
+        "hold": 4.8,
+        "lamps": 41
+      },
+      {
+        "id": "a4",
+        "object": "CATEGORY",
+        "text": "NO CATEGORY FOUND",
+        "hold": 6.0,
+        "lamps": 41
+      }
     ]
   },
-
   "stutter": {
-    "_beat": "⚑ THE MACHINE GOES ON FAILING, ACROSS THE ROOM, IN A CORNER NOBODY IS LOOKING AT. These land on the visor while it lies on its stand — nine centimetres of glass a metre away, legible only if the player turns back to it and only fully in the canvas-only review route. It tries three times and stops. `at` is seconds from the moment the ball's own first line lands.",
+    "_beat": "⚑ THE OVERLAY GOES ON TRYING, in the corner of the glass, while the room is full. Three more attempts on the shorter clock, then it stops. `at` is seconds from the ball's first line.",
     "labels": [
-      { "id": "s1", "at": 58, "object": "EVENT", "text": "re-checking…", "hold": 6.0 },
-      { "id": "s2", "at": 121, "object": "NOTICE", "text": "sensitive content · hidden by default", "hold": 6.0 },
-      { "id": "s3", "at": 186, "object": "LOG", "text": "3 attempts · no result", "hold": 8.0 }
+      {
+        "id": "s1",
+        "at": 20,
+        "object": "EVENT",
+        "text": "re-checking…",
+        "hold": 5.0
+      },
+      {
+        "id": "s2",
+        "at": 55,
+        "object": "EVENT",
+        "text": "sensitive content · hidden by default",
+        "hold": 5.0
+      },
+      {
+        "id": "s3",
+        "at": 95,
+        "object": "EVENT",
+        "text": "3 attempts · no result",
+        "hold": 7.0
+      }
     ]
   },
-
   "ball": {
     "_beat": "⚑ THE ROOM. No screen, no stage, no new geometry: sound and light in a building that has been standing since 1997 and had its walls taken down in 2016. The player's only action is to look, and everyone else is looking too, at one person, on purpose (deep pass §1.3). `at` is the light's position along the stations in src/room/cluster.ts — 1 is the far west end and 4 is the nearest the light ever comes; it never lands on the player, who is nobody's customer here. `flare` is the room answering.",
     "_beatMC": "⚑ FUNCTION, NOT COSTUME. The MC announces, categorises and celebrates, in plain English, with no borrowed idiom whatsoever — and the politics of it are the era's whole inversion: L narrates you privately and the naming becomes a record; the MC announces you publicly and the naming becomes a welcome (deep pass §1.2). Two scenes, one verb, opposite outcomes, and nothing anywhere says so.",
-
     "opening": {
       "lines": [
-        { "id": "o1", "text": "Doors are shut. Everybody who wanted to be here is here.", "audio": "ball_o1.wav", "hold": 5.0, "at": 0 },
-        { "id": "o2", "text": "Same as always — I call a category, somebody takes the floor, and the rest of you make the noise.", "audio": "ball_o2.wav", "hold": 6.6, "at": 0.7 },
-        { "id": "o3", "text": "First one's an old one.", "audio": "ball_o3.wav", "hold": 3.8, "at": 1 }
+        {
+          "id": "o1",
+          "text": "Doors are shut. Everybody who wanted to be here is here.",
+          "audio": "ball_o1.wav",
+          "hold": 5.0,
+          "at": 0
+        },
+        {
+          "id": "o2",
+          "text": "Same as always — I call a category, somebody takes the floor, and the rest of you make the noise.",
+          "audio": "ball_o2.wav",
+          "hold": 6.6,
+          "at": 0.7
+        }
       ]
     },
-
     "categories": [
       {
         "id": "cat_walk_talk_sit",
@@ -57,15 +95,42 @@
         "title": "THE WAY YOU WALK, TALK AND SIT",
         "house": "House of Lamps",
         "lines": [
-          { "id": "c1a", "text": "Category — THE WAY YOU WALK, TALK AND SIT.", "audio": "ball_c1a.wav", "hold": 5.4, "at": 1 },
-          { "id": "c1b", "text": "House of Lamps has it. Wren — when you're ready. Take the whole room.", "audio": "ball_c1b.wav", "hold": 6.2, "at": 1 },
-          { "id": "c1c", "text": "That's it. Slower.", "audio": "ball_c1c.wav", "hold": 4.0, "at": 1.7 },
-          { "id": "c1d", "text": "All the way down. The far end is the point.", "audio": "ball_c1d.wav", "hold": 4.8, "at": 2.6 },
-          { "id": "c1e", "text": "Look at that.", "audio": "ball_c1e.wav", "hold": 3.2, "at": 3.4 },
-          { "id": "c1f", "text": "Who saw it?", "audio": "ball_c1f.wav", "hold": 2.8, "at": 3.9 },
-          { "id": "c1g", "text": "Every hand in this room. Every one.", "audio": "ball_c1g.wav", "hold": 4.4, "at": 4, "flare": 1 },
-          { "id": "c1h", "text": "Wren. House of Lamps.", "audio": "ball_c1h.wav", "hold": 3.6, "at": 4 },
-          { "id": "c1i", "text": "That's the floor. Take your time getting off it.", "audio": "ball_c1i.wav", "hold": 4.8, "at": 4 }
+          {
+            "id": "c1a",
+            "text": "Category — THE WAY YOU WALK, TALK AND SIT.",
+            "audio": "ball_c1a.wav",
+            "hold": 5.4,
+            "at": 1
+          },
+          {
+            "id": "c1b",
+            "text": "House of Lamps has it. Wren — when you're ready. Take the whole room.",
+            "audio": "ball_c1b.wav",
+            "hold": 6.2,
+            "at": 1
+          },
+          {
+            "id": "c1d",
+            "text": "All the way down. The far end is the point.",
+            "audio": "ball_c1d.wav",
+            "hold": 4.8,
+            "at": 2.6
+          },
+          {
+            "id": "c1g",
+            "text": "Every hand in this room. Every one.",
+            "audio": "ball_c1g.wav",
+            "hold": 4.4,
+            "at": 4,
+            "flare": 1
+          },
+          {
+            "id": "c1h",
+            "text": "Wren. House of Lamps.",
+            "audio": "ball_c1h.wav",
+            "hold": 3.6,
+            "at": 4
+          }
         ]
       },
       {
@@ -74,13 +139,42 @@
         "title": "STEADY. STRUGGLING. GRATEFUL. TIRED.",
         "house": "House of Late Arrivals",
         "lines": [
-          { "id": "c2a", "text": "Category — STEADY. STRUGGLING. GRATEFUL. TIRED.", "audio": "ball_c2a.wav", "hold": 5.6, "at": 3 },
-          { "id": "c2b", "text": "Four of you. One each. Nobody takes the easy one.", "audio": "ball_c2b.wav", "hold": 5.4, "at": 2.8 },
-          { "id": "c2c", "text": "House of Late Arrivals — all four of you, at once, and take as long as you like.", "audio": "ball_c2c.wav", "hold": 6.2, "at": 2.4 },
-          { "id": "c2d", "text": "Steady, hold it there. Struggling, don't you dare rush.", "audio": "ball_c2d.wav", "hold": 5.2, "at": 2.2 },
-          { "id": "c2e", "text": "Grateful — yes. Tired — yes.", "audio": "ball_c2e.wav", "hold": 4.2, "at": 2.6 },
-          { "id": "c2f", "text": "Don't ask me to rank them. I won't.", "audio": "ball_c2f.wav", "hold": 4.6, "at": 2.8, "flare": 1 },
-          { "id": "c2g", "text": "All four. All four, and everybody saw it.", "audio": "ball_c2g.wav", "hold": 4.8, "at": 3 }
+          {
+            "id": "c2a",
+            "text": "Category — STEADY. STRUGGLING. GRATEFUL. TIRED.",
+            "audio": "ball_c2a.wav",
+            "hold": 5.6,
+            "at": 3
+          },
+          {
+            "id": "c2c",
+            "text": "House of Late Arrivals — all four of you, at once, and take as long as you like.",
+            "audio": "ball_c2c.wav",
+            "hold": 6.2,
+            "at": 2.4
+          },
+          {
+            "id": "c2d",
+            "text": "Steady, hold it there. Struggling, don't you dare rush.",
+            "audio": "ball_c2d.wav",
+            "hold": 5.2,
+            "at": 2.2
+          },
+          {
+            "id": "c2f",
+            "text": "Don't ask me to rank them. I won't.",
+            "audio": "ball_c2f.wav",
+            "hold": 4.6,
+            "at": 2.8,
+            "flare": 1
+          },
+          {
+            "id": "c2g",
+            "text": "All four. All four, and everybody saw it.",
+            "audio": "ball_c2g.wav",
+            "hold": 4.8,
+            "at": 3
+          }
         ]
       },
       {
@@ -89,13 +183,42 @@
         "title": "REMOVE THE UNRESOLVED",
         "house": "House of Open Doors",
         "lines": [
-          { "id": "c3a", "text": "Category — REMOVE THE UNRESOLVED.", "audio": "ball_c3a.wav", "hold": 5.0, "at": 3 },
-          { "id": "c3b", "text": "House of Open Doors. Ines is up, and Ines is not resolving anything tonight.", "audio": "ball_c3b.wav", "hold": 6.6, "at": 3.6 },
-          { "id": "c3c", "text": "Take longer.", "audio": "ball_c3c.wav", "hold": 2.8, "at": 3.2 },
-          { "id": "c3d", "text": "Don't finish it.", "audio": "ball_c3d.wav", "hold": 3.2, "at": 2.6 },
-          { "id": "c3e", "text": "Anybody here need it finished?", "audio": "ball_c3e.wav", "hold": 4.0, "at": 2.2 },
-          { "id": "c3f", "text": "Nobody needs it finished.", "audio": "ball_c3f.wav", "hold": 3.8, "at": 2, "flare": 1 },
-          { "id": "c3g", "text": "Ines. House of Open Doors. Unfinished, and everybody saw it.", "audio": "ball_c3g.wav", "hold": 5.6, "at": 2 }
+          {
+            "id": "c3a",
+            "text": "Category — REMOVE THE UNRESOLVED.",
+            "audio": "ball_c3a.wav",
+            "hold": 5.0,
+            "at": 3
+          },
+          {
+            "id": "c3b",
+            "text": "House of Open Doors. Ines is up, and Ines is not resolving anything tonight.",
+            "audio": "ball_c3b.wav",
+            "hold": 6.6,
+            "at": 3.6
+          },
+          {
+            "id": "c3e",
+            "text": "Anybody here need it finished?",
+            "audio": "ball_c3e.wav",
+            "hold": 4.0,
+            "at": 2.2
+          },
+          {
+            "id": "c3f",
+            "text": "Nobody needs it finished.",
+            "audio": "ball_c3f.wav",
+            "hold": 3.8,
+            "at": 2,
+            "flare": 1
+          },
+          {
+            "id": "c3g",
+            "text": "Ines. House of Open Doors. Unfinished, and everybody saw it.",
+            "audio": "ball_c3g.wav",
+            "hold": 5.6,
+            "at": 2
+          }
         ]
       },
       {
@@ -104,35 +227,91 @@
         "title": "CONDITION: IN REPAIR",
         "house": "House of Mending",
         "lines": [
-          { "id": "c4a", "text": "Category — CONDITION: IN REPAIR.", "audio": "ball_c4a.wav", "hold": 4.8, "at": 2.6 },
-          { "id": "c4b", "text": "House of Mending. This is Junie's, and Junie made what she's wearing twice.", "audio": "ball_c4b.wav", "hold": 6.6, "at": 3 },
-          { "id": "c4c", "text": "Turn, so the back of the room can see the seam.", "audio": "ball_c4c.wav", "hold": 5.2, "at": 3.6 },
-          { "id": "c4d", "text": "The seam is the whole thing.", "audio": "ball_c4d.wav", "hold": 3.8, "at": 3.9 },
-          { "id": "c4e", "text": "Hands.", "audio": "ball_c4e.wav", "hold": 2.4, "at": 4 },
-          { "id": "c4f", "text": "That's the room.", "audio": "ball_c4f.wav", "hold": 3.2, "at": 4, "flare": 1 },
-          { "id": "c4g", "text": "Junie. House of Mending. Nothing on her is new, and nothing on her is broken.", "audio": "ball_c4g.wav", "hold": 6.8, "at": 4 }
+          {
+            "id": "c4a",
+            "text": "Category — CONDITION: IN REPAIR.",
+            "audio": "ball_c4a.wav",
+            "hold": 4.8,
+            "at": 2.6
+          },
+          {
+            "id": "c4b",
+            "text": "House of Mending. This is Junie's, and Junie made what she's wearing twice.",
+            "audio": "ball_c4b.wav",
+            "hold": 6.6,
+            "at": 3
+          },
+          {
+            "id": "c4c",
+            "text": "Turn, so the back of the room can see the seam.",
+            "audio": "ball_c4c.wav",
+            "hold": 5.2,
+            "at": 3.6
+          },
+          {
+            "id": "c4d",
+            "text": "The seam is the whole thing.",
+            "audio": "ball_c4d.wav",
+            "hold": 3.8,
+            "at": 3.9
+          },
+          {
+            "id": "c4g",
+            "text": "Junie. House of Mending. Nothing on her is new, and nothing on her is broken.",
+            "audio": "ball_c4g.wav",
+            "hold": 6.8,
+            "at": 4
+          }
         ]
       }
     ],
-
     "closing": {
-      "_beat": "⚑ AND NOTHING ASKS YOU TO LEAVE. The night does not end and the room does not empty: the categories run out, the light stays, and after the last line below this file has nothing further to say, for as long as the player sits there. There is no timer, no prompt, no score, no marker and no continue anywhere in this beat. The way on is the thing on the desk behind them, which is where it has been all along.",
+      "_beat": "⚑ AND NOTHING ASKS YOU TO LEAVE — the community does not. The apparatus does: a few seconds after the last line the overlay tries to update and cannot, and the device stops. The room is still full when the picture ends.",
       "lines": [
-        { "id": "z1", "text": "That's the categories.", "audio": "ball_z1.wav", "hold": 3.6, "at": 3.6 },
-        { "id": "z2", "text": "Music stays on. Nobody has to go anywhere.", "audio": "ball_z2.wav", "hold": 5.2, "at": 3.2 },
-        { "id": "z3", "text": "We'll be here a while yet.", "audio": "ball_z3.wav", "hold": 4.6, "at": 3 }
+        {
+          "id": "z1",
+          "text": "That's the categories.",
+          "audio": "ball_z1.wav",
+          "hold": 3.6,
+          "at": 3.6
+        },
+        {
+          "id": "z2",
+          "text": "Music stays on. Nobody has to go anywhere.",
+          "audio": "ball_z2.wav",
+          "hold": 5.2,
+          "at": 3.2
+        },
+        {
+          "id": "z3",
+          "text": "We'll be here a while yet.",
+          "audio": "ball_z3.wav",
+          "hold": 4.6,
+          "at": 3
+        }
       ]
-    }
+    },
+    "_docCut": "⚑ 2026-09-11 — CUT FROM 38 MC LINES TO 25, and the cut is the recording sheet. Sérgio: 'three and a half minutes, then it is too long.' Each category keeps five beats — the call, the House and the name, one instruction, the room's answer, the name again — and loses its second look-at-that. The opening loses its third line. The closing is untouched. Scripted clock: filter ~20 s, lines ~128 s, hold 5 s — about 2½ minutes, ending on its own."
   },
-
   "room": {
     "_beat": "⚑ THE BALL'S OWN SOUND, and it is the one thing in this file that is not a caption. A ball is loud, structured and attentive — the beat, the calls, the applause on the landing — and NOT laughter, chatter or generic warmth (deep pass §1.2: 'community equals laughter' is the lazy image and it was cut on purpose). ⚑ These names are unregistered in src/audio/tapeAudio.ts and are therefore never requested. They are a recording list, not a hookup, and per _docVoice above none of them may be synthesized.",
     "bed": "ball_room_bed.mp3",
     "landing": "ball_room_landing.mp3"
   },
-
   "witness": {
-    "_beat": "⚑ THERE IS NO WITNESS BLOCK, AND THAT IS THE ENTRY. Every other beat in thirty years files something: the cork board, the dashboard, the feed, the ledger, the wall. The ball files NOTHING — the same doctrine as Tape C and Malta, because the apparatus did not ask for this and was not here. A player who turns to the record afterwards finds it blank for the first time since 1997. src/desktop/apps/ball.ts imports no ledger and has no way to write to one; the key below exists only so that a future session adding one has to delete this sentence first.",
+    "_beat": "⚑ THE BALL FILES NOTHING — src/desktop/apps/ball.ts imports no ledger. What IS filed is filed by the apparatus's own surface (E4Space): the moment she leaves for a space it cannot see, in its own words (`commons.witness` above). The apparatus can record her going; it cannot record where.",
     "filed": null
+  },
+  "commons": {
+    "_doc": "The invented mark for the shared space. Never a real platform's name in the fiction (CLAUDE.md: invented marks only). The Dossier cites the referent.",
+    "name": "the Commons",
+    "witness": "session: left — destination not in your library"
+  },
+  "invite": {
+    "_beat": "⚑ THE ONE PRESS OF THE TAIL, and it is hers. The care system muted Junie six weeks ago (s4_browser.json care.invite: 'muted 6 weeks ago'); the message arrives on the headset anyway, and the overlay says so in its own flat register underneath. There is no decline — nothing in this era has ever offered one — and nothing narrates the choice. Pressing it is going.",
+    "from": "Junie",
+    "line": "it's starting. come in?",
+    "meta": "sender muted · delivered anyway",
+    "chip": "Go in"
   }
 }

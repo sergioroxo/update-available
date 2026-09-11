@@ -231,7 +231,8 @@ const OS_BEATS: BeatRow[] = [
   // building; the visor is on its stand showing standby and the occasional
   // failed caption. Under `?flat=1` there is no room, so these buttons show the
   // captions and the machine only — which is the era's own argument, not a bug.
-  { label: '⚑⚑ THE BALL (play from here — the break, then the room)', id: 'e4Ball' },
+  { label: '⚑⚑ THE COMMONS — Junie\'s invitation (play from here: Go in, the filter, the room)', id: 'e4Invite' },
+  { label: '↳ the filter (she has gone in; the overlay tries to classify the room)', id: 'e4Ball' },
   { label: '↳ ⚑ NO CATEGORY FOUND (the machine\'s last output, alone)', id: 'e4NoCategory' },
   { label: '↳ the device comes off — the light, and the turn works', id: 'e4BallOpen' },
   { label: '↳ category 1 · THE WAY YOU WALK, TALK AND SIT (1997)', id: 'e4BallCat1' },

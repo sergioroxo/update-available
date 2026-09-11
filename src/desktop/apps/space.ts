@@ -60,11 +60,12 @@
  * spends the update's one "I Agree" and the ONE TOUCH on the headset. There is
  * nothing else to press here, and adding a "continue" would break the rule.
  */
-import { homeEnvironment, standby, visorField, visorEdge, glitchBands, ERA4, PLACE } from '../theme/era4';
+import { homeEnvironment, visorField, visorEdge, glitchBands, ERA4, PLACE } from '../theme/era4';
 import { E4Browser } from './browser';
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import space from '../../../data/dialog/s4_space.json';
+import ballScript from '../../../data/dialog/s4_ball.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
 import { E4Ball } from './ball';
@@ -251,11 +252,21 @@ export class E4Shell {
     // `held` — the finale does not follow the careful pause any more; the ball
     // does, and the finale waits for `resumeAfterBreak()`. The chain is
     // unchanged either side of it, exactly as S78 designed the seam.
-    this.offers.onBreak = () => { this.ball.begin(); return true; };
-    // the device leaves her face. Nothing narrates it, and nothing needs to:
-    // the picture ends and the room is there. ⚑ The turn works from here.
+    // ⚑ S133 — THE BREAK IS AN INVITATION NOW, not an arrival. The offers hold,
+    // the visor shows Junie's card, and nothing moves until she presses Go in.
+    this.offers.onBreak = () => { this.ball.invite(); return true; };
+    // ⚑ and the press is FILED, by this surface and not by the ball: the
+    // apparatus can record her leaving; it cannot record where. (Law 4 of
+    // ball.ts holds — that file still imports no ledger.)
+    this.ball.onJoin = () => {
+      ledger.e4Space.push({ id: 'commons', outcome: 'joined', witness: ballScript.commons.witness });
+    };
+    // ⚑ S133 — THE DEVICE STAYS ON (Sérgio: "Stay-on!"). The overlay drops and
+    // the shared space opens over her room; `pinned` keeps the visor on her
+    // face through the whole beat, and the turn works because the lamps are
+    // everywhere, not because the picture is gone.
     this.ball.onDeviceOff = () => { this.stageNow = 'ball'; this.version++; };
-    // …and she puts it back on, which is the only way the ball ends.
+    // …and it ends on its own: the apparatus fails next.
     this.ball.onOver = () => { this.putOn(); this.offers.resumeAfterBreak(); };
   }
 
@@ -264,7 +275,9 @@ export class E4Shell {
   /** ⚑ still ON HER FACE, worn or failing. The room pins the visor plane to the
    *  camera while this is true, so the glitch plays where the picture was and
    *  the device eases back to the desk only once it is over. */
-  get pinned(): boolean { return this.stageNow === 'worn' || this.stageNow === 'glitch'; }
+  get pinned(): boolean {
+    return this.stageNow === 'worn' || this.stageNow === 'glitch' || this.stageNow === 'ball';
+  }
 
   /**
    * ⚑ THE DEVICE IS ASKING TO BE PICKED UP (S103b), and until now nobody could
@@ -746,6 +759,7 @@ export class E4Shell {
      * one is not. Nobody takes it off — it stops.
      */
     this.stageNow = 'closed';
+    this.ball.clearLamps();   // the era is over; the lamps go with the picture
     this.laptopV++;
     this.version++;
   }
@@ -806,13 +820,16 @@ export class E4Shell {
     // affordance and its availability arrive together, and until then there is
     // nothing in the room that wants anything.
     if (this.stageNow === 'ball') {
-      if (this.ball.returnable) {
-        const pulse = Math.abs(this.pulseStep / (PULSE_STEPS - 1) - 0.5) * 2;
-        standby(ctx, W, H, pulse, space.standbyLabel);
-      } else {
-        visorField(ctx, W, H);
-      }
+      /**
+       * ⚑ S133 — THE GLASS IS CLEAR. The device is on her face and the shared
+       * space is the room she can see through it: nothing is drawn here but
+       * the overlay's own occasional failures (the stutter) and the visor's
+       * edge. The old branch painted a dark field and a standby prompt onto a
+       * headset on a stand; there is no stand in this beat any more.
+       */
+      ctx.clearRect(0, 0, W, H);
       this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
+      visorEdge(ctx, W, H);
       return;
     }
     // the era has not begun until L has finished on the laptop: the device is
@@ -919,8 +936,11 @@ export class E4Shell {
     // began the era. A press before that is consumed and does nothing, so a
     // stray click cannot cut the piece's only respite short — and nothing
     // announces the difference, because nothing in this era ever does.
-    if (this.stageNow === 'ball') return this.ball.handleClick();
+    if (this.stageNow === 'ball') return this.ball.handleClick(x, y);
     if (this.worn) {
+      // ⚑ S133: while the invitation is up it owns the press — one chip, or
+      //   nothing, consumed either way, exactly as L's chips were.
+      if (this.ball.invited) return this.ball.handleClick(x, y);
       // ⚑ the offers get first refusal, because by the time they are on screen L
       // has finished and its chips are gone. Two of the era's three presses land
       // here — the memories undo and the careful pause — and everything else on

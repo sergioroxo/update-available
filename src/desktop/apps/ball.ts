@@ -1,4 +1,35 @@
 /**
+ * ⚑ THE COMMONS (S133, 2026-09-11) — the ball, rebuilt so that a person can see
+ * it, and so that she goes to it. Sérgio, on S79's version after his first
+ * sit-through: *"The Ball makes no sense to not be visual… so it is just
+ * sounds? … I don't like the ball honestly. If it's not visible, not relevant
+ * here."* And his idea for what it should be, which is better than what was
+ * built: *"it is through support and community that help makes you 'fail' the
+ * conversion… we could integrate the ball as part of the event that she goes
+ * inside of… the system starts glitching due to community demands for
+ * representation and quality and that makes the ball become visible."*
+ *
+ * SO, THE SHAPE (his ruling: the headset STAYS ON):
+ *  · The VR is the SOGICE risk — an overlay on her own room. Already built.
+ *  · Junie's invitation, muted six weeks ago by the care system, reaches the
+ *    headset anyway. ONE press: she goes in. Nothing narrates the choice.
+ *  · The overlay tries to classify the shared space and fails, four labels,
+ *    front and centre on the glass — and as it fails, forty-one lamps come up
+ *    in the open building behind the glass (`src/room/commonsLamps.ts`).
+ *    Forty-one people being specific is not a thing it can classify.
+ *  · The MC calls the four categories over the room she can see.
+ *  · A few seconds after the last line the apparatus tries to update and
+ *    cannot. The device stops. That is the title, delivered by structure.
+ *
+ * ⚑ WHAT CHANGED IN THE LAWS BELOW, stated rather than smoothed over. Law 1
+ * ("there is no screen") is re-argued: the invitation and the filter ARE on the
+ * glass, in front of her face, because the risk and the rescue are the same
+ * object, and a failure nobody can see is not a failure. Law 2 ("the device
+ * leaves her face") is reversed: it stays on, and the shared space opens over
+ * her room — which is the mixed-reality reading Sérgio asked for on 09-07. Laws
+ * 3–7 stand exactly as written. The original header follows, kept as the
+ * record of what this was.
+ *
  * ⚑ TRANSCENDANCE — the ball (S79, Era 4 Stage 3). The last thing in the era,
  * and the only thing in it that is not work.
  * Lines and copy: `data/dialog/s4_ball.json` (read its `_doc` blocks before
@@ -60,8 +91,10 @@
  * light with no captions. That is the same gap E1's tape captions already have
  * and it is an A11 item; it is not fixed here and it is not claimed to be.
  */
-import { labelField, BALL } from '../theme/era4';
+import { labelField, chip, BALL, ERA4 } from '../theme/era4';
+import { px, setFont } from '../theme/chrome';
 import { setBallLight } from '../../room/cluster';
+import { setCommonsLamps } from '../../room/commonsLamps';
 import { playOnce, roomBed } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_ball.json';
 
@@ -73,17 +106,24 @@ const OFF_SECONDS = 2.6;
 const ARRIVAL_LEVEL = 0.28;
 const BALL_LEVEL = 1;
 /** after the last line: the room does not empty and the light does not drop
- *  away. It settles, and it stays there for as long as anybody wants. */
+ *  away. It settles — and a few seconds later the APPARATUS ends the beat, not
+ *  the player: the overlay tries to update and cannot (S133). */
 const AFTER_LEVEL = 0.74;
 const AFTER_STATION = 3;
+/** how long the full room holds after the closing before the apparatus fails */
+const AFTER_SECONDS = 5.0;
+/** the invitation card, on the worn visor's 512 x 384 canvas */
+const INVITE = { x: 126, y: 118, w: 260, h: 118 } as const;
+const JOIN = { x: INVITE.x + 12, y: INVITE.y + INVITE.h - 40, w: 96, h: 26 } as const;
 /** the caption's head start on a clip — the same safety measure `lVoice.ts` and
  *  `offers.ts` keep, for the same reason, and NOT a pacing choice. */
 const CAPTION_LEAD = 0.5;
 
 interface BLine { id: string; text: string; audio?: string; hold: number; at?: number; flare?: number }
-interface BLabel { id: string; object: string; text: string; hold: number; at?: number }
+interface BLabel { id: string; object: string; text: string; hold: number; at?: number; lamps?: number }
 
-type Phase = 'idle' | 'arrival' | 'off' | 'ball' | 'after' | 'done';
+type Phase = 'idle' | 'invited' | 'arrival' | 'off' | 'ball' | 'after' | 'done';
+interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 const ARRIVAL = script.arrival.labels as unknown as BLabel[];
 const STUTTER = script.stutter.labels as unknown as BLabel[];
@@ -103,11 +143,15 @@ export class E4Ball {
    *  the room re-uploads that texture only when it actually changed. */
   version = 0;
 
-  /** ⚑ the device leaves her face. `E4Shell` drops out of `worn` on this, and
-   *  the room's own easing takes the plane back to the stand. */
+  /** ⚑ S133: the overlay drops. The device STAYS ON; `E4Shell` moves to its
+   *  `ball` stage (still pinned to the face) and the room shows through. */
   onDeviceOff?: () => void;
-  /** the player put it back on. Hands the era to its finale — see `close()`. */
+  /** the beat is over — the apparatus fails next. Hands the era to its finale. */
   onOver?: () => void;
+  /** she pressed Go in. The shell files it; this file never touches a ledger. */
+  onJoin?: () => void;
+  /** the one control this surface ever publishes: the invitation's chip */
+  hits: Hit[] = [];
 
   private phase: Phase = 'idle';
   private t = 0;
@@ -125,6 +169,7 @@ export class E4Ball {
   private caption: HTMLDivElement | null = null;
 
   get live(): boolean { return this.phase !== 'idle' && this.phase !== 'done'; }
+  get invited(): boolean { return this.phase === 'invited'; }
   get phaseId(): string { return this.phase; }
   /** true from the moment the device comes off — `E4Shell` reads it to decide
    *  whether the visor is on a face or on a stand. */
@@ -144,8 +189,24 @@ export class E4Ball {
    * talking. The place is still up. And something comes in from the other side
    * of the building, which has been open since 2016.
    */
-  begin(): void {
+  /**
+   * ⚑ THE INVITATION (S133). `E4Offers.onBreak` lands here now instead of on
+   * `begin()`: the offers hold, and the visor shows one card — Junie, muted six
+   * weeks ago, delivered anyway — with one chip. Nothing else is pressable and
+   * nothing announces it. Going is hers.
+   */
+  invite(): void {
     if (this.phase !== 'idle') return;
+    this.phase = 'invited';
+    this.hits = [{ ...JOIN, id: 'commons-join' }];
+    this.version++;
+    // the room is already audible through the wall while she decides
+    roomBed.set(script.room.bed, 4.0);
+  }
+
+  begin(): void {
+    if (this.phase !== 'idle' && this.phase !== 'invited') return;
+    this.hits = [];
     this.phase = 'arrival';
     this.labels = [...ARRIVAL];
     this.nextLabel();
@@ -169,16 +230,18 @@ export class E4Ball {
      * (`_docVoice`, `_docNoBall`) is untouched and must stay untouched.
      */
     roomBed.set(script.room.bed, 4.0);
+    setCommonsLamps(this.label?.lamps ?? 0);
   }
 
   update(dt: number): void {
     if (this.phase === 'idle' || this.phase === 'done') return;
     this.t += dt;
 
+    if (this.phase === 'invited') return;   // waiting on her, indefinitely
     if (this.phase === 'arrival') {
       this.labelT += dt;
       if (this.label && this.labelT >= this.label.hold) {
-        if (this.labels.length > 0) this.nextLabel();
+        if (this.labels.length > 0) { this.nextLabel(); setCommonsLamps(this.label?.lamps ?? 0); }
         else { this.phase = 'off'; this.t = 0; }
       }
       return;
@@ -206,7 +269,15 @@ export class E4Ball {
     this.ballT += dt;
     this.stutterClock(dt);
 
-    if (this.phase === 'after') return;     // ⚑ and here it simply stays
+    if (this.phase === 'after') {
+      // ⚑ S133: the room stays; the APPARATUS does not. A few seconds after the
+      //   last line the overlay tries to update, and the era's finale takes it
+      //   from there — L returning to material it cannot process, the glitch,
+      //   the device stopping. Nobody presses anything; nothing asks her to.
+      this.afterT += dt;
+      if (this.afterT >= AFTER_SECONDS) this.close();
+      return;
+    }
     this.lineClock(dt);
   }
 
@@ -224,11 +295,13 @@ export class E4Ball {
     this.cur = null;
     this.showCaption('');
     this.phase = 'after';
+    this.afterT = 0;
     this.light(AFTER_LEVEL, AFTER_STATION, 0);
-    this.version++;                          // the standby is legible again
+    this.version++;
   }
 
   private lineT = 0;
+  private afterT = 0;
 
   private nextLine(): void {
     this.cur = this.queue.shift() ?? null;
@@ -284,15 +357,34 @@ export class E4Ball {
     this.phase = 'done';
     this.cur = null;
     this.label = null;
+    this.hits = [];
     this.showCaption('');
     this.removeCaption();
     setBallLight(null);
+    // ⚑ the lamps stay lit through the finale: the room is still full when the
+    //   picture ends. They go with the era, in `E4Shell.finishHandOff`.
     this.version++;
     this.onOver?.();
   }
 
-  /** the press, consumed always and acted on only in `after` (see `returnable`) */
-  handleClick(): boolean {
+  /** every lamp goes out — the era is over, not the community */
+  clearLamps(): void { setCommonsLamps(0); }
+
+  /**
+   * The press. With coordinates and the invitation up, it is the chip or
+   * nothing; consumed always. In `after` a press still ends the beat early,
+   * exactly as before, so a player who wants to leave can.
+   */
+  handleClick(x?: number, y?: number): boolean {
+    if (this.phase === 'invited') {
+      if (x === undefined || y === undefined) return true;
+      const h = this.hits[0];
+      if (h && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) {
+        this.onJoin?.();
+        this.begin();
+      }
+      return true;
+    }
     if (!this.returnable) return true;
     this.close();
     return true;
@@ -307,8 +399,41 @@ export class E4Ball {
    * legible only if the player turns back to look at it.
    */
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, x: number, y: number, w: number): void {
+    if (this.phase === 'invited') {
+      /**
+       * ⚑ THE CARD. The apparatus's own panel grammar (`labelField`'s bracket),
+       * because the message arrives THROUGH the apparatus — and its second
+       * line is the apparatus admitting the mute did not hold. The chip is the
+       * headset's grammar, the same as L's answers were. No decline exists.
+       */
+      const inv = script.invite;
+      px(ctx, INVITE.x, INVITE.y, INVITE.w, INVITE.h, ERA4.panel);
+      px(ctx, INVITE.x, INVITE.y, INVITE.w, 1, ERA4.ruleHi);
+      px(ctx, INVITE.x, INVITE.y + INVITE.h - 1, INVITE.w, 1, ERA4.rule);
+      px(ctx, INVITE.x, INVITE.y, 1, INVITE.h, ERA4.rule);
+      px(ctx, INVITE.x + INVITE.w - 1, INVITE.y, 1, INVITE.h, ERA4.rule);
+      setFont(ctx, 9);
+      ctx.fillStyle = ERA4.meta;
+      ctx.fillText(script.commons.name, INVITE.x + 12, INVITE.y + 10);
+      setFont(ctx, 11);
+      ctx.fillStyle = ERA4.text;
+      ctx.fillText(inv.from + ' — ' + inv.line, INVITE.x + 12, INVITE.y + 30);
+      setFont(ctx, 9);
+      ctx.fillStyle = ERA4.dim;
+      ctx.fillText(inv.meta, INVITE.x + 12, INVITE.y + 50);
+      chip(ctx, JOIN.x, JOIN.y, JOIN.w, JOIN.h, inv.chip, { live: true });
+      return;
+    }
     if (!this.label) return;
-    void W; void H;
+    if (this.phase === 'arrival' || this.phase === 'off') {
+      // ⚑ FRONT AND CENTRE, and wide: this is the filter failing, on the glass
+      //   she is looking through. It used to sit in the corner of a nine-
+      //   centimetre visor across the room, where nobody ever read it.
+      const fw = Math.round(W * 0.62);
+      labelField(ctx, Math.round((W - fw) / 2), Math.round(H * 0.42), fw, this.label.object, this.label.text);
+      return;
+    }
+    // the stutter: the overlay still trying, small, in its old corner
     labelField(ctx, x, y, w, this.label.object, this.label.text);
   }
 
@@ -353,20 +478,23 @@ export class E4Ball {
    * have now shipped beats the project lead could not reach and concluded
    * content was missing when it wasn't.
    */
-  debugJumpTo(where: 'arrival' | 'noCategory' | 'ball' | 'category' | 'after', index = 0): void {
+  debugJumpTo(where: 'invited' | 'arrival' | 'noCategory' | 'ball' | 'category' | 'after', index = 0): void {
     this.removeCaption();
     this.phase = 'idle';
     this.stutterNext = 0;
     this.ballT = 0;
+    if (where === 'invited') { this.invite(); return; }
     this.begin();
     if (where === 'arrival') return;
     if (where === 'noCategory') {
       this.labels = [];
       this.label = ARRIVAL[ARRIVAL.length - 1];
       this.labelT = 0;
+      setCommonsLamps(this.label.lamps ?? 0);
       this.version++;
       return;
     }
+    setCommonsLamps(41);
     // everything below is past the point where the device comes off
     this.label = null;
     this.onDeviceOff?.();

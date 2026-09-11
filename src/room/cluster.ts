@@ -30,6 +30,7 @@ import type { CeilingWitness } from './ceilingWitness';
 // ⚑ S79: the ball borrows two colours and adds no palette of its own — the
 // colour law's one home is the theme, and both of these are era1.json's own.
 import { BALL } from '../desktop/theme/era4';
+import { mountCommonsLamps } from './commonsLamps';
 
 export type EraKey = 'e1' | 'e2' | 'e3' | 'e4';
 export type ClusterState = 'sealed' | 'dim' | 'open';
@@ -576,6 +577,9 @@ export function buildClusterShell(
   // arc that is busy losing to the cold everywhere else. Both idle at 0. ──
   const ballAttention = mkLight('light-ballAttention', BALL_STATIONS[3], BALL.attention, 6.5);
   const ballRoom = mkLight('light-ballRoom', [-1.0, 2.3, 0.9], BALL.room, 12.0);
+  // ⚑ S133 — and the community itself, visible: forty-one lamps in the open
+  // building, one procedural mesh, driven by `setCommonsLamps` from ball.ts.
+  const commonsLamps = mountCommonsLamps(app, root);
 
   // ── the O7 light-leak seams: thin pale strips at the base of the walls —
   // the first admission that there is anything beyond them ──
@@ -1040,6 +1044,7 @@ export function buildClusterShell(
       // whatever the era's light is doing rather than replacing it, so a
       // crossfade and a ball can run in the same frame without a fight.
       updateBall(dt);
+      commonsLamps.update(dt);
     }
   };
 }

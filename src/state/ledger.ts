@@ -195,7 +195,7 @@ export interface Ledger {
   /** ⚑ `read` added 2026-09-01 with the laptop: Era 4 now opens on her own
    *  machine and is SENT from it to the headset, so the first thing the record
    *  files in this era is having read what the update said, not having worn it. */
-  e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned' | 'read'; witness: string }[];
+  e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned' | 'read' | 'joined'; witness: string }[];
   /**
    * ⚑ L, ERA 4's CONVERSATION (Session 77 — `data/dialog/s4_l.json`,
    * `src/desktop/apps/lVoice.ts`). Witness-symmetric in both directions, which

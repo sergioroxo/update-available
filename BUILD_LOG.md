@@ -954,3 +954,28 @@ E2 3.7 · E3 1.8 · **E4 5.3 (5.4 minimum)** — four of Era 4's five minutes co
 last real choice. "Look with your device" retreats into the game menu once the gyro is
 live (Sérgio's ruling), so no chrome sits over the canvas during play; the browser's
 cursor stops blinking — and re-uploading — once the device is worn. Both walks green.
+
+## 2026-09-12 — S133 · The Commons: the ball rebuilt so a person can see it, and so she goes to it
+
+Sérgio, after his first sit-through of a deployed build in weeks: *"The Ball makes no
+sense to not be visual… I don't like the ball honestly. If it's not visible, not relevant
+here."* And his idea instead: *"it is through support and community that help makes you
+'fail' the conversion… the system starts glitching due to community demands for
+representation and quality and that makes the ball become visible."* Ruled the same
+day: **the headset stays on.**
+
+Built and tried: the offers hold on **Junie's invitation** — muted six weeks ago by the
+care system, delivered anyway — with one chip, *Go in*, her one press in the tail and
+filed by the apparatus as `commons: joined — session: left — destination not in your
+library`. The overlay tries to classify the space in four labels, front and centre on the
+glass, and **forty-one lamps** come up in the open building as it fails — one procedural
+mesh, one draw call, the piece's own motif taken back from *Lantern*. The overlay drops
+(`NO CATEGORY FOUND`), the glass clears, the room she can see through it is the room the
+MC is calling — 25 lines now, not 38, five per category — and five seconds after the last
+line the apparatus tries to update and cannot. Nobody hacks anything (R28). Trans Academy
+(VRChat) is the Dossier's referent, `[VERIFY SOURCE]` until checked; *the Commons* is the
+mark in the fiction.
+
+Also this session: the browser fits the glass (widescreen canvas, flat plane, on the real
+front face — three plates); Room 3 stripped of twenty-three boxes; the deploy that had
+been sitting unpushed since 25 August pushed, 83 commits.

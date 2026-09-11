@@ -2702,6 +2702,7 @@ export class DesktopOS {
       // there, with nothing to press until the categories are over.
       // ⚑ The ROOM's light follows these; the visor does not, because the ball
       // is not on the visor and never will be.
+      case 'e4Invite': this.e4BallJump('invited'); break;   // S133: Junie's card, Go in
       case 'e4Ball': this.e4BallJump('arrival'); break;
       case 'e4NoCategory': this.e4BallJump('noCategory'); break;
       case 'e4BallOpen': this.e4BallJump('ball'); break;
@@ -2741,7 +2742,7 @@ export class DesktopOS {
    * `resumeAfterBreak()`, so a review jump that skipped the hold would end the
    * ball into nothing and the era's finale would never play. Never in play.
    */
-  private e4BallJump(where: 'arrival' | 'noCategory' | 'ball' | 'category' | 'after', index = 0): void {
+  private e4BallJump(where: 'invited' | 'arrival' | 'noCategory' | 'ball' | 'category' | 'after', index = 0): void {
     this.debugJump('e4Place');
     this.e4?.voice.debugFinish();
     this.e4?.offers.debugHoldForBreak();
