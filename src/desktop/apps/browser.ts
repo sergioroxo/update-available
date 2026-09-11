@@ -84,6 +84,10 @@ export class E4Browser {
   private t = 0;
   private live = 0;
   private hits: Hit[] = [];
+  /** ⚑ see `draw`: false while the device is on her face, and then this surface
+   *  publishes nothing, because nothing here can be pressed. */
+  private pressable = true;
+  private publish(h: Hit): void { if (this.pressable) this.hits.push(h); }
   private filed = false;
   /** the record's change request: it works, it files, and nothing moves. */
   private requested = false;
@@ -136,8 +140,25 @@ export class E4Browser {
     return since >= held ? TABS.length : TABS.length - 1;
   }
 
-  draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+  /**
+   * ⚑ `pressable` — A SCREEN BEHIND YOUR HEAD DOES NOT PUBLISH CONTROLS
+   * (2026-09-11). The monitor goes on drawing this browser after the device is
+   * on her face, which is right — the desk does not stop existing — but the
+   * room routes every press to the picture in front of her eyes from that
+   * moment on (`era3Devices`'s monitor branch is gated on `stage === 'closed'`).
+   * Left publishing, the six tabs became six controls advertised as live and
+   * silently swallowed: the walk pressed them 45 times over, judged each inert,
+   * and starved the offers of the presses they were waiting for until the run
+   * died in front of an era that was working.
+   *
+   * That is this project's oldest defect class, and the walker has a name for
+   * exactly this shape — "advertised as reachable while being physically
+   * unreachable… the same class as a button drawn where nothing can press it".
+   * The surface is the only thing that knows, so the surface says so.
+   */
+  draw(ctx: CanvasRenderingContext2D, W: number, H: number, pressable = true): void {
     this.hits = [];
+    this.pressable = pressable;
     const back = this.tabsBack();
 
     if (this.phase === 'restoring' && back <= 0) {
@@ -150,7 +171,7 @@ export class E4Browser {
     const addr = this.phase === 'open' ? script.search.typed : '';
     const blink = this.phase === 'open' && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
     const rects = browserChrome(ctx, W, shown, this.live, addr, blink);
-    rects.forEach((r, i) => this.hits.push({ ...r, id: `tab${i}` }));
+    rects.forEach((r, i) => this.publish({ ...r, id: `tab${i}` }));
 
     if (this.phase !== 'open') {
       // still coming back: the page under the chrome is empty and stays empty
@@ -327,7 +348,7 @@ export class E4Browser {
     px(ctx, ADDR.x + 14, y, bw, 16, this.requested ? CHROME.bar : CHROME.tabLive);
     ctx.fillStyle = this.requested ? CHROME.hint : CHROME.ink;
     ctx.fillText(label, ADDR.x + 24, y + 3);
-    if (!this.requested) this.hits.push({ x: ADDR.x + 14, y, w: bw, h: 16, id: 'record-request' });
+    if (!this.requested) this.publish({ x: ADDR.x + 14, y, w: bw, h: 16, id: 'record-request' });
     setFont(ctx, 8);
     ctx.fillStyle = CHROME.hint;
     ctx.fillText(body.record.priorRequest, ADDR.x + 14, y + 22);
@@ -357,7 +378,7 @@ export class E4Browser {
         px(ctx, bx, y - 2, w, 14, CHROME.tabLive);
         ctx.fillStyle = CHROME.ink;
         ctx.fillText(it.undo, bx + 7, y + 1);
-        this.hits.push({ x: bx, y: y - 2, w, h: 14, id: `care${i}` });
+        this.publish({ x: bx, y: y - 2, w, h: 14, id: `care${i}` });
       }
       y += 30;
     });
@@ -421,7 +442,7 @@ export class E4Browser {
     px(ctx, ADDR.x + 14, y + 6, w, 15, CHROME.tabLive);
     ctx.fillStyle = CHROME.ink;
     ctx.fillText(label, ADDR.x + 22, y + 10);
-    this.hits.push({ x: ADDR.x + 14, y: y + 6, w, h: 15, id: 'photo-flip' });
+    this.publish({ x: ADDR.x + 14, y: y + 6, w, h: 15, id: 'photo-flip' });
   }
 
   handleClick(x: number, y: number): boolean {

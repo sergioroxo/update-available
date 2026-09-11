@@ -262,7 +262,37 @@ const PLACEMENT = {
      * It MOVES WITH `e_headset` and `e_headsetStand` in reinterp_deltas.json —
      * S123 learned that a screen plane and its mesh are one object.
      */
-    pos: { x: 5.075, y: 0.968, z: 0.40 },
+    /**
+     * ⚑ 2026-09-11 — z 0.40 → 0.10, AND THE LIMIT ABOVE WAS NEVER THE FRAME'S.
+     * The table in the note above stops at 20.6° with "as far aside as it goes",
+     * and the reason given is that z 0.18 was tried and "the walk caught it: 182
+     * presses, no Close". That was true and it was not a fact about the piece.
+     * `tools/walk.mjs` projected controls only from the authored bearing, so
+     * anything outside the half-FOV read as unreachable — and the FOV audit in
+     * `edebea7` had already swept 36 bearings × 6 pitches across all four eras
+     * and found nothing a player could not reach BY TURNING. The instrument was
+     * the constraint, and the headset had been pulled back into the frame to
+     * suit it. The walker turns its head now (see that file's TURN block), so
+     * the constraint is gone and Sérgio's instruction can actually be carried
+     * out: *"push the headset more to the side so the person can see in their
+     * peripheral view without being centered on stage"* — and, on the tool
+     * bending the work: *"if you hard setting forcing you that just remove it."*
+     *
+     *   z 0.40 → 20.6° off the seat bearing   (inside the frame: not peripheral)
+     *   z 0.18 → 33.0°                        (3.3° outside — still at the chrome's corner)
+     *   z 0.10 → 36.9°                        (here: clearly aside, a real glance)
+     *   z 0.02 → 40.4°                        (as far as the desk goes)
+     *
+     * ⚑ 36.9°, NOT 33.0°, and the difference is S117's whole lesson. A control
+     * sitting a few degrees past the frame edge is still in the corner when you
+     * turn to it, and the corner is where the frame keeps its chrome — one
+     * button landing on top of it is how this era lost its only touch once
+     * already. Out is out. A pure translation of −0.30 on z, so every
+     * measurement in the notes above (5 mm proud of the model's face, the size,
+     * the euler) is preserved exactly, and `e_headset`, `e_headsetStand` and
+     * `e_glasses` move with it.
+     */
+    pos: { x: 5.075, y: 0.968, z: 0.10 },
     size: { w: 0.15, h: 0.075 },
     euler: { x: 90, y: 270, z: 0 }
   },
@@ -1215,7 +1245,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       }
     },
     handleWorkstationPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
-      const test = (name: 'workstation' | 'phone' | 'laptop'): { x: number; y: number } | null => {
+      const test = (name: 'workstation' | 'phone' | 'laptop' | 'monitor'): { x: number; y: number } | null => {
         const s = screens.find(sc => sc.name === name);
         if (!s || !s.entity.enabled) return null;
         const place = PLACEMENT[name];
@@ -1282,6 +1312,40 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
        */
       if (shell && shell.stage === 'ball') {
         if (rayNear(ray, PLACEMENT.visor.pos, 0.22)) { shell.wear(); return true; }
+      }
+      /**
+       * ⚑ 2026-09-11 — THE MONITOR TAKES PRESSES, AND UNTIL TODAY IT DID NOT.
+       *
+       * S126 put the browser on a docked monitor and `19150de` made its six tabs
+       * "the playable content" of the era. Nothing ever routed a press to that
+       * plane: `test()` knew the workstation, the phone and the laptop, and
+       * `E4Space.pressBrowser` — written for exactly this call — had **no callers
+       * at all**. The entire playable middle of Era 4 was decorative.
+       *
+       * ⚑ AND EVERY CHECK WAS GREEN, which is the part worth keeping. The walk
+       * "pressed" the tabs for four days: `tools/walk.mjs` aims a rect published
+       * on the OS canvas at whichever plane is showing it, tried the VISOR first
+       * in `e4`, and a press on the visor while the device is off the face means
+       * `wear()`. So the era's opening press filed `headset:worn` instead of
+       * opening a tab, every later tab press was swallowed by the worn picture
+       * and filed nothing, and the piece's own ledger ended a full traversal with
+       * `session:read, headset:worn, laptop:read` and NOT ONE TAB. The ledger had
+       * been saying so all along. This is `content-that-cannot-be-met` again —
+       * the checks prove a file exists, never that a player can reach it.
+       *
+       * Found the day `walk.mjs` learned to turn its head: with the headset moved
+       * properly aside, the visor stopped being the thing in front of the camera
+       * and the browser's rects had nowhere honest to land.
+       *
+       * ⚑ A PRESS ON THE GLASS IS CONSUMED EVEN WHEN IT HITS NO TAB — the same
+       * law the worn visor follows. Without that, a press on empty monitor falls
+       * through to the headset sphere below and PUTS THE DEVICE ON, which is the
+       * one thing this stage must not do by accident: the browser is what she is
+       * reading, and wearing is what ends it.
+       */
+      if (shell && shell.stage === 'closed') {
+        const onMonitor = test('monitor');
+        if (onMonitor) { shell.pressBrowser(onMonitor.x, onMonitor.y); return true; }
       }
       if (visor?.entity.enabled && shell && !shell.worn) {
         const onVisor = hitPlane(

@@ -36,6 +36,12 @@
  *    inverse of `era3Devices.ts`'s `hitPlane()`, including its empirically
  *    calibrated `v = 0.5 + lz/h` sign. Guessing page pixels is how earlier
  *    attempts "pressed" invisible dialogs for six steps and reported nothing.
+ *  · **It turns its head.** The only bodily ask in this piece is the turn, and
+ *    until 2026-09-11 this tool could not make it: it stared at the authored
+ *    bearing and called everything off-axis unreachable. It now looks round with
+ *    the arrow keys — the same 6°-per-press look-in-place a player has, never
+ *    `__camFree` — before it writes anything off, and undoes a turn that found
+ *    nothing. See the TURN block below for what the old rigid neck cost.
  *  · **It is autonomous, not scripted.** A scripted path only finds the faults
  *    you already expected. This one reads the live state each step and chooses,
  *    so it walks into content nobody remembered was there.
@@ -331,6 +337,7 @@ async function main() {
     const os = window.__os;
     const app = window.__app;
     const q = window.__graceQueue ? window.__graceQueue() : null;
+    const pose = window.__camPose ? window.__camPose() : null;
     const root = app.root;
     let cam = null;
     root.forEach((e) => { if (e.camera && e.enabled) cam = e; });
@@ -341,7 +348,20 @@ async function main() {
     // second is a hole in this tool — and a log that conflates them is worth
     // nothing. Every rejection carries its reason from here on.
     let lastWhy = '';
+    /**
+     * ⚑ THE WORLD POINT IS KEPT EVEN WHEN THE PROJECTION FAILS (2026-09-11).
+     * Until now a control that landed outside the frame was recorded as a
+     * reason and nothing else — "off-screen at 1442,310" — which is a
+     * description of where the CAMERA happens to be pointing, not a fact about
+     * the piece. The player's answer to that sentence is to turn their head,
+     * and the walker had no way to say it. Keeping the world point means every
+     * rejection can also carry HOW FAR ROUND the thing is, and a turn of 20° to
+     * something in your own room is then plainly different from 150° to a
+     * machine in a room you left.
+     */
+    let lastWorld = null;
     const toPage = (wx, wy, wz) => {
+      lastWorld = [wx, wy, wz];
       const p = cam.camera.worldToScreen(new Vec3(wx, wy, wz));
       if (p.z <= 0) { lastWhy = 'behind the camera'; return null; }
       if (p.x < 4 || p.y < 4 || p.x > VW - 4 || p.y > VH - 4) {
@@ -378,6 +398,7 @@ async function main() {
     /** the exact inverse of era3Devices.ts's hitPlane(), for any oriented plane */
     const onPlane = (entName, lx, ly, LW, LH) => {
       const ent = root.findByName(entName);
+      lastWorld = null;   // an early exit below must not leave a stale point
       if (!ent) { lastWhy = 'no entity ' + entName; return null; }
       let n = ent;
       while (n) { if (!n.enabled) { lastWhy = entName + ' is disabled'; return null; } n = n.parent; }
@@ -418,14 +439,83 @@ const LAP = { w: 224, h: 140 };
      */
     const osPoint = (lx, ly) => {
       const monitor = () => onMonitor(lx, ly, OS.w, OS.h);
+      /**
+       * ⚑ ROOM 3's DOCKED MONITOR — the fourth screen, and this chain did not
+       * know it existed (2026-09-11). S126 put Era 4's browser on it and
+       * `19150de` made its six tabs the playable content of the era; this list
+       * still read [visor, workstation, Room 1's monitor], so every tab rect was
+       * aimed at the HEADSET'S FACE — where a press means `wear()`. The era's
+       * opening press therefore filed `headset:worn` instead of opening a tab,
+       * and four days of walks called that a browser being read.
+       *
+       * This is the note three comments above this one, come true a second time:
+       * "do not keep a hand-written copy of the architecture… it would go stale
+       * the first time somebody adds a screen." Somebody added a screen.
+       */
+      const desk = () => onPlane('era3-device-monitor', lx, ly, OS.w, OS.h);
       const visor = () => onPlane('era4-visor', lx, ly, OS.w, OS.h);
       const workstation = () => onPlane('era3-device-workstation',
         lx + RITUAL.x, ly + RITUAL.y, WS.w, WS.h);
-      const order = os.desktopEra === 'e4' ? [visor, workstation, monitor]
+      /**
+       * ⚑ AND IN e4 THE ORDER FOLLOWS THE DEVICE. Off the face, the browser is
+       * on the desk and the desk is what she presses; on the face, the picture
+       * IS the frame and everything goes to it. Asking the visor first either
+       * way is how the browser stage was skipped entirely.
+       */
+      const worn = !!(os.e4 && os.e4.worn);
+      const order = os.desktopEra === 'e4'
+        ? (worn ? [visor, desk, workstation, monitor] : [desk, visor, workstation, monitor])
         : os.desktopEra === 'e3' ? [workstation, visor, monitor]
         : [monitor, workstation, visor];
-      for (const f of order) { const p = f(); if (p) return p; }
+      /**
+       * ⚑ AND IT REPORTS THE FIRST SURFACE'S POSITION, NOT THE LAST ONE TRIED.
+       * The chain asks the era's own screen first and falls back through the
+       * others, so on a miss `lastWorld` would otherwise hold Room 1's monitor
+       * — two rooms behind you — and a walker turning toward it would spin away
+       * from the era it is in to face a dead machine. The era's own screen is
+       * the one worth turning to.
+       */
+      let firstWorld = null, firstWhy = '';
+      for (const f of order) {
+        lastWorld = null;
+        const p = f();
+        if (p) return p;
+        if (!firstWorld && lastWorld) { firstWorld = lastWorld; firstWhy = lastWhy; }
+      }
+      if (firstWorld) { lastWorld = firstWorld; lastWhy = firstWhy; }
       return null;
+    };
+
+    /**
+     * ⚑ HOW FAR ROUND IS IT? — the number that lets the walker turn its head.
+     *
+     * The piece's own camera convention is `setLocalEulerAngles(pitch, yaw, 0)`
+     * on the rig, so forward is `(-sin yaw, sin pitch, -cos yaw)`; the yaw that
+     * faces a world point is therefore `atan2(-dx, -dz)` and the pitch is the
+     * elevation of the same vector. The pose to measure against is the SUM of
+     * the authored facing and the player's own look — `__camPose` reports those
+     * two separately on purpose (S85: folding a hand-drag into the curve's pose
+     * would make the comfort audit report a wrist as leg velocity), and for
+     * this question the sum is what the eyes are actually doing.
+     *
+     * `dist` comes back too, because it is how "behind me, in the room I left"
+     * is told from "behind me, on this desk".
+     */
+    const turnTo = (w) => {
+      if (!w || !pose) return null;
+      const c = cam.getPosition();
+      const dx = w[0] - c.x, dy = w[1] - c.y, dz = w[2] - c.z;
+      const flat = Math.hypot(dx, dz);
+      const R = 180 / Math.PI;
+      const wantYaw = Math.atan2(-dx, -dz) * R;
+      const wantPitch = Math.atan2(dy, flat) * R;
+      const nowYaw = pose.yaw + (pose.lookYaw || 0);
+      const nowPitch = pose.pitch + (pose.lookPitch || 0);
+      return {
+        yaw: Math.round((((wantYaw - nowYaw) + 540) % 360 - 180) * 10) / 10,
+        pitch: Math.round((wantPitch - nowPitch) * 10) / 10,
+        dist: Math.round(Math.hypot(flat, dy) * 100) / 100
+      };
     };
 
     const targets = [];
@@ -433,7 +523,9 @@ const LAP = { w: 224, h: 140 };
     const add = (id, surface, r, pt) => {
       const logical = [Math.round(r.x + r.w / 2), Math.round(r.y + r.h / 2)];
       if (pt) targets.push({ id, surface, logical, pt });
-      else dropped.push({ id, surface, logical, why: lastWhy || 'unprojectable' });
+      else dropped.push({
+        id, surface, logical, why: lastWhy || 'unprojectable', turn: turnTo(lastWorld)
+      });
     };
 
     /**
@@ -593,7 +685,20 @@ const LAP = { w: 224, h: 140 };
       if (surfaced.has(key) || surfaced.has('workstation:' + key)) return;
       const c = e.getPosition();
       const pt = toPage(c.x, c.y, c.z);
+      /**
+       * ⚑ AND A PLANE THAT CANNOT BE AIMED AT IS NOW A FINDING, NOT A SILENCE.
+       * This branch used to drop the press on the floor when the projection
+       * failed, so Era 4's headset — a machine you press, with no control on it
+       * — simply ceased to exist the moment it sat off-axis. That silence is
+       * the whole reason the headset was pulled back to 20.6° off the seat
+       * bearing instead of into the periphery Sérgio asked for: the tool could
+       * not see it there, and the piece was bent to fit the tool.
+       */
       if (pt) targets.push({ id: '(press) ' + key, surface: 'plane', logical: null, pt });
+      else dropped.push({
+        id: '(press) ' + key, surface: 'plane', logical: null,
+        why: lastWhy || 'unprojectable', turn: turnTo(lastWorld)
+      });
     });
 
     // floor markers — the only non-scripted way to change seats
@@ -711,7 +816,6 @@ const LAP = { w: 224, h: 140 };
             : (e && e.id ? e.id + (e.outcome ? ':' + e.outcome : '') : '#' + i))));
       }
     }
-    const pose = window.__camPose ? window.__camPose() : null;
 
     return {
       phase: os.phase, era: os.desktopEra,
@@ -720,7 +824,7 @@ const LAP = { w: 224, h: 140 };
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
-      screenHash, domText, audio, surfaces, silent, quiet, roomDesync,
+      screenHash, domText, audio, surfaces, silent, quiet, roomDesync, pose,
       targets, dropped, moves, ledCount, ledList, ledger: led
     };
   }, { VW: VIEW.width, VH: VIEW.height });
@@ -782,6 +886,166 @@ const LAP = { w: 224, h: 140 };
       ledgerNew: ledgerNew(before, after),
       changed: moved(before, after)
     });
+    return after;
+  };
+
+  /**
+   * ⚑ TURN YOUR HEAD (2026-09-11) — and it is embarrassing that this took until
+   * now, because the turn is THE BODILY ASK OF THIS PIECE. "No locomotion ever
+   * — the only bodily ask is the turn", says CLAUDE.md; R28 says "rotation IS
+   * the exploration". Every version of this walker until this one sat rigidly
+   * facing the authored bearing and reported anything off-axis as unreachable.
+   *
+   * ⚑ WHAT THAT COST, and it is not hypothetical. Era 4's headset was supposed
+   * to sit in the periphery — Sérgio, twice: "push the headset more to the side
+   * so the person can see in their peripheral view without being centered on
+   * stage". It sits at 20.6° off the seat bearing instead, because that is as
+   * far out as this tool could still see it, and the field-of-view audit in
+   * `edebea7` had ALREADY proved a player reaches everything by turning (36
+   * bearings x 6 pitches, all four eras, nothing blocked). So the piece was bent
+   * to fit the instrument. His standing instruction covers exactly this: "if you
+   * hard setting forcing you that just remove it".
+   *
+   * ⚑ IT TURNS THE WAY A PLAYER TURNS. `app.ts`'s reinterp key block moves the
+   * view 6° of yaw per ArrowLeft/Right and 5° of pitch per ArrowUp/Down —
+   * look-in-place only, never a seat change ("the ONLY way to change seats is
+   * requestMove (markers) or a scripted beat"). A drag would do the same job
+   * through `lookOffYaw`, at 0.16°/px, and was rejected for one reason: the
+   * press law resolves a tap on RELEASE behind a 10 px threshold, so a drag
+   * that ends short is a CLICK, and a look-around that occasionally presses
+   * whatever it lands on is not an instrument. Keys cannot be mistaken for a
+   * tap. Both are real player input; neither is a debug write. `__camFree`
+   * exists and would have been one line — it is the same crutch as `debugJump`
+   * and is not used here for the same reason.
+   *
+   * ⚑ AND IT ONLY TURNS TO THINGS THAT ARE PLAUSIBLY IN THIS ROOM. The three
+   * rooms are one space that ages, so a machine two eras back is still in the
+   * scene, still publishing rects, and still perfectly "turnable to" at 150°.
+   * Facing it would spin the walk out of the era it is in. The cap is what
+   * separates a glance at your own desk from turning your back on the piece.
+   */
+  const TURN_YAW_MAX = 80;      // beyond this you are facing another room
+  const TURN_PITCH_MAX = 45;    // app.ts clamps the view itself at 55
+  const YAW_STEP = 6;           // app.ts: ArrowLeft/Right move camYaw by 6°
+  const PITCH_STEP = 5;         // app.ts: ArrowUp/Down move camPitch by 5°
+  /** set false the first time the keys demonstrably do not move the view */
+  let headWorks = true;
+  /** one turn per (coarse state, control) — cleared by any genuine advance */
+  const turnedFor = new Set();
+  /** every turn taken, for the report */
+  const turns = [];
+  /**
+   * ⚑ LOOK, THEN TOUCH. A turn that found its target must be followed by a
+   * PRESS, not by another turn — and the first version of this was not, because
+   * the trigger it uses ("twelve presses that changed nothing") is still true on
+   * the very next step. Measured: the walker turned 41.6° to face the headset,
+   * reported it in frame, and swung 42° straight back to the monitor without
+   * ever touching it, then read the same tabs until the run died. One step of
+   * grace is all it needs: having turned, try what is now in front of you.
+   */
+  let justTurned = false;
+
+  const tapKey = async (k, n) => {
+    for (let i = 0; i < n; i++) { await page.keyboard.press(k); await wait(45); }
+  };
+  const turnBy = async (yawSteps, pitchSteps) => {
+    if (yawSteps) await tapKey(yawSteps > 0 ? 'ArrowLeft' : 'ArrowRight', Math.abs(yawSteps));
+    if (pitchSteps) await tapKey(pitchSteps > 0 ? 'ArrowUp' : 'ArrowDown', Math.abs(pitchSteps));
+    await wait(420);
+  };
+
+  /**
+   * ⚑ WHICH WAY DO YOU LOOK FIRST? The smallest turn. A person facing a screen
+   * and finding nothing on it glances to the nearest thing, not to the most
+   * interesting one — and in Era 4 that ordering is exactly right: the headset
+   * on this desk beats the workstation behind you by fifty degrees.
+   */
+  const turnable = (st, sig) => (st.dropped || [])
+    .filter((d) => d.turn && !FORBIDDEN.test(d.id) &&
+      Math.abs(d.turn.yaw) <= TURN_YAW_MAX &&
+      Math.abs(d.turn.pitch) <= TURN_PITCH_MAX &&
+      (pressed.get(keyOf(sig, d)) || 0) < PRESS_CAP)
+    .sort((a, b) =>
+      (Math.abs(a.turn.yaw) + Math.abs(a.turn.pitch)) -
+      (Math.abs(b.turn.yaw) + Math.abs(b.turn.pitch)))[0] || null;
+
+  const facing = (st) => (st.pose ? st.pose.yaw + (st.pose.lookYaw || 0) : null);
+  const elevation = (st) => (st.pose ? st.pose.pitch + (st.pose.lookPitch || 0) : null);
+  const wrap = (d) => ((d + 540) % 360) - 180;
+
+  /**
+   * ⚑ UNDO BY MEASURING, NOT BY COUNTING BACK. The obvious undo — press the
+   * opposite arrow the same number of times — is wrong, and one probe run
+   * proved it: a press landing while a camera curve is in flight spends itself
+   * cancelling the curve (`nudgeCamera`) instead of turning, so three lefts can
+   * be two lefts, and three rights then leave the view 6° short of where it
+   * started. The walk guards on `driven` so this should not arise, but a neck
+   * that drifts a little on every glance is exactly the kind of slow lie this
+   * file exists to refuse. Read the pose, work out the difference, close it.
+   */
+  const restoreLook = async (yawWas, pitchWas) => {
+    for (let round = 0; round < 3; round++) {
+      const st = await page.evaluate(() => window.__camPose ? window.__camPose() : null);
+      if (!st) return;
+      const dy = Math.round(wrap(yawWas - (st.yaw + (st.lookYaw || 0))) / YAW_STEP);
+      const dp = Math.round((pitchWas - (st.pitch + (st.lookPitch || 0))) / PITCH_STEP);
+      if (!dy && !dp) return;
+      await turnBy(dy, dp);
+    }
+  };
+
+  /**
+   * ⚑ A TURN THAT FINDS NOTHING IS UNDONE. Otherwise the walk drifts: each
+   * fruitless glance leaves the view a little further round, and forty steps
+   * later the walker is reading a wall and the report blames the piece. Turn,
+   * look, and if it was not there, turn back — which is also what a person does.
+   */
+  const turnHead = async (want, before) => {
+    let yawSteps = Math.round(want.turn.yaw / YAW_STEP);
+    let pitchSteps = Math.round(want.turn.pitch / PITCH_STEP);
+    // already facing it — so the rejection was frame chrome sitting on top, and
+    // the answer is to move the projection out from under it, not to stand still
+    if (!yawSteps && !pitchSteps) yawSteps = want.turn.yaw >= 0 ? 1 : -1;
+
+    const was = facing(before);
+    const wasPitch = elevation(before);
+    await turnBy(yawSteps, pitchSteps);
+    let after = await probe();
+    const now = facing(after);
+
+    if (was !== null && now !== null &&
+        Math.abs(wrap(now - was)) < 0.5) {
+      /**
+       * ⚑ THE KEYS DID NOT REACH THE PIECE, and that is a finding about this
+       * tool, reported as one rather than quietly producing a walk that looks
+       * like a walk. app.ts gates the arrow block on `options.reinterp`, on the
+       * game menu being shut and on the OS not being paused; a curve in flight
+       * also owns the pose. Say so once and stop trying.
+       */
+      headWorks = false;
+      note('turn-refused', {
+        target: want.id, surface: want.surface, era: after.era, phase: after.phase,
+        what: 'pressed ' + Math.abs(yawSteps) + ' arrow key(s) and the view did not move — ' +
+          'the look keys are not reaching the piece (paused? game menu open? a camera ' +
+          'curve in flight?). No further turns will be attempted this run.'
+      });
+      return after;
+    }
+
+    const got = after.targets.some((t) => t.surface === want.surface && t.id === want.id);
+    turns.push({
+      id: want.id, surface: want.surface, era: before.era, phase: before.phase,
+      yaw: want.turn.yaw, pitch: want.turn.pitch, dist: want.turn.dist,
+      was: want.why, got
+    });
+    note(got ? 'turn' : 'turn-miss', {
+      target: want.id, surface: want.surface, era: after.era, phase: after.phase,
+      spine: after.spine,
+      what: (got ? 'turned ' : 'turned ') + want.turn.yaw + '° yaw / ' + want.turn.pitch +
+        '° pitch toward `' + want.id + '` (' + want.turn.dist + ' m, was "' + want.why + '")' +
+        (got ? ' — it is in frame now' : ' — still not in frame; turning back')
+    });
+    if (!got) { await restoreLook(was, wasPitch); after = await probe(); }
     return after;
   };
 
@@ -1229,6 +1493,48 @@ const LAP = { w: 224, h: 140 };
     if (s.silent.length) continue;
 
     /**
+     * ⚑ BEFORE CONCLUDING THERE IS NOTHING HERE, LOOK ROUND. This sits ahead of
+     * the waiting-out branch on purpose: a screen whose every control has been
+     * pressed to its cap is exactly the moment a person lifts their eyes off it,
+     * and the old walker instead sat through its whole stall budget staring at a
+     * spent screen — 160 of them in Era 4 — and then filed STUCK with the thing
+     * it needed listed under "published but unreachable". The turn is tried
+     * ONCE per control per coarse state, so a room with nothing in it cannot
+     * become a merry-go-round; any real advance forgives that, like the press
+     * caps, because the situation has genuinely changed.
+     */
+    if (!justTurned && headWorks && !s.driven) {
+      /**
+       * ⚑ "NOTHING HERE" INCLUDES "NOTHING NEW HERE", and Era 4 is why (the same
+       * afternoon the monitor became pressable). A spent screen is the obvious
+       * case; the one that actually stranded the walk is a screen that stays
+       * pressable for ever. The browser has six tabs and an endless supply of
+       * presses, so `pick` always returned something, the turn was never
+       * considered, and the walker read the same five tabs round and round until
+       * `GOING NOWHERE` fired at 45 presses — with the headset, and the whole
+       * rest of the era, 37° to its left the entire time.
+       *
+       * A person who has read what is in front of them looks up. `sinceProgress`
+       * is exactly that reading: presses that moved neither the era, the phase,
+       * the spine, the queue nor the ledger. Twelve of them is well inside the
+       * 45-press backstop, so the glance happens while there is still a walk left
+       * to save — and `turnedFor` still allows only one turn per control per
+       * coarse state, so this cannot become a swivel.
+       */
+      const nothingHere = spent(s, sig) || sinceProgress >= 12 ||
+        !pick(s.targets, sig, seen, false);
+      const want = nothingHere ? turnable(s, sig) : null;
+      if (want && !turnedFor.has(keyOf(sig, want))) {
+        turnedFor.add(keyOf(sig, want));
+        s = await turnHead(want, s);
+        // only a turn that FOUND something earns the grace step; a miss has
+        // already been undone, so the walk should carry straight on
+        justTurned = s.targets.some((t) => t.surface === want.surface && t.id === want.id);
+        continue;
+      }
+    }
+
+    /**
      * ⚑ WHEN THE SCREEN IS SPENT, WAIT — DO NOT KEEP PRESSING.
      * Era 2's desktop offers three optional icons and nothing else, while what
      * actually moves the era is Lamby's conduction, WHICH ARRIVES ON ITS OWN.
@@ -1283,6 +1589,16 @@ const LAP = { w: 224, h: 140 };
     talkWaits = 0;
 
     let t = pick(s.targets, sig, seen, dismissWanted);
+    /**
+     * ⚑ THE GRACE LASTS UNTIL A CHOICE IS MADE, NOT UNTIL THE NEXT ITERATION —
+     * and the difference is a whole failed run. Cleared at the top of the loop,
+     * it was spent by the `listening` hold that fires whenever the screen is
+     * still drawing itself, which in this era is every time the address bar's
+     * cursor blinks. So the walker turned to the headset, held for 900 ms to
+     * watch a caret, and turned away again without ever touching it. The grace
+     * ends here, where the walker actually gets to choose something.
+     */
+    justTurned = false;
     dismissWanted = false;
     if (t) {
       stalls = 0;
@@ -1331,9 +1647,26 @@ const LAP = { w: 224, h: 140 };
       // ⚑ a real advance forgives every fruitless-press counter: the situation
       //   has genuinely changed, so nothing learned before it still applies.
       //   Deliberately NOT the ledger — see advanceOf.
-      if (advanceOf(s) !== wasAdvance) pressed.clear();
+      if (advanceOf(s) !== wasAdvance) { pressed.clear(); turnedFor.clear(); }
       const p = progressOf(s);
-      if (p !== progress) { progress = p; sinceProgress = 0; } else sinceProgress += 1;
+      /**
+       * ⚑ A TURN IS FORGIVEN BY THE LEDGER, WHERE A PRESS IS NOT, and the
+       * asymmetry is deliberate. `advanceOf` deliberately excludes the ledger
+       * because the provotypes file a tag every time round and a press-cap that
+       * trusted it could be farmed forever. Nothing can farm a TURN — it presses
+       * nothing and files nothing — so the de-duplicator may safely use the
+       * coarser "has anything at all happened" test.
+       *
+       * It has to. Era 4 sits at `e4|desktop|e4|board` from the update to the
+       * Close, so under `advanceOf` alone the walker got ONE turn toward the
+       * headset for the whole era — and the ball's hand-back is a second press
+       * on that same headset, 41.6° away, with nothing else on screen. Measured:
+       * `(press) era4-visor` published and off-screen for 155 consecutive steps
+       * while the walk waited out a spent screen and then declared itself
+       * looping, one turn short of the ending.
+       */
+      if (p !== progress) { progress = p; sinceProgress = 0; turnedFor.clear(); }
+      else sinceProgress += 1;
       if (sinceProgress >= 45) {
         note('stop', {
           what: 'GOING NOWHERE: 45 presses without the era, phase, spine, queue mode or ' +
@@ -1468,7 +1801,7 @@ const LAP = { w: 224, h: 140 };
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
     jumpedTo: JUMP || null,
     isReachabilityProof: !JUMP,
-    steps: log.length, presses: presses.length,
+    steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,
     ledger: final.ledger, console: noise, log
   }, null, 1));
@@ -1508,10 +1841,26 @@ const LAP = { w: 224, h: 140 };
       ? final.ledList.map((e) => '- `' + e + '`').join('\n')
       : '- empty',
     '',
+    '## THE HEAD TURNS', '',
+    '*This walker turns, with the arrow keys — the same 6°-of-yaw look-in-place a player has, never',
+    '`__camFree`. So a control off the seat bearing is no longer reported as unreachable without',
+    'the walker first doing the one thing this piece asks of a body. A turn that found nothing is',
+    'undone, so the view never drifts.*', '',
+    turns.length
+      ? ['| toward | surface | turn | distance | was rejected as | found it |',
+         '|---|---|---|---|---|---|',
+         ...turns.map((t) => '| `' + t.id + '` | ' + t.surface + ' | ' +
+           t.yaw + '° yaw, ' + t.pitch + '° pitch | ' + t.dist + ' m | ' + t.was + ' | ' +
+           (t.got ? '**yes**' : 'no') + ' |')].join('\n')
+      : '- none were needed: nothing was ever rejected for being off-axis',
+    '',
     '## ⚑ PUBLISHED BUT UNREACHABLE — what could not be aimed at, and why', '',
     '*A control the piece registers and the walker cannot reach from the seat. This is not the',
     'tool failing to find it: the rect was found, projected, and landed outside the frame or',
-    'behind the camera. Every line here is a control a PLAYER in this pose cannot press either.*', '',
+    'behind the camera. ⚑ Since 2026-09-11 it is also not the tool failing to LOOK at it: anything',
+    'within ' + TURN_YAW_MAX + '° of the facing is turned toward before it is written off, so a line here means a',
+    'player could not press it either by staring OR by turning. A control beyond that cap is in',
+    'another room, and appearing here is expected rather than wrong.*', '',
     ...(unaimed.size === 0 ? ['- none.'] :
       [...unaimed.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30)
         .map(([k, n]) => '- `' + k + '` — ' + n + ' step(s)')),

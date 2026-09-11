@@ -926,3 +926,20 @@ untouched. Restorify's mark designed and drawn in code: a house with one lit win
 E3's 28 s of dead air at the arrival became an idle — a wordmark and a turning ring — on
 the argument that a 2016 machine is never off, and the arrival gained review routes it had
 never had.
+
+## 2026-09-11 — S131 · The walker turns its head, and Era 4's tabs turn out to have been unpressable
+
+`tools/walk.mjs` looks round now — arrow keys, 6° a press, the same look-in-place a player has;
+never `__camFree`. A rejected projection carries how far round the thing is; a turn that finds
+nothing is undone by measuring; a turn that finds something gets a grace step to press it; the
+de-duplicator is forgiven by the ledger. Cap 80°, because a dead machine two eras back is still
+"turnable to". The headset moved to **36.9° off the seat bearing** — off-screen from the seat —
+and the walk still ends: 282 presses, `spine: done`, four load-bearing turns.
+
+⚑ And the first thing the turning head found was that **Era 4's six tabs had never been
+pressable by anyone**: `pressBrowser` and `handOverLid` had no callers, `test()` had no monitor
+branch, and every walk since S126 was green because the walker aimed the tabs at the headset's
+face, where a press means `wear()`. The ledger had said so all along — `session:read,
+headset:worn, laptop:read`, not one tab. Fixed: the monitor takes presses while the device is on
+the stand; the browser publishes nothing once it is worn. Era 4: 52% → 37% of the traversal.
+`docs/reinterp/ERA4_REACHABLE_2026-09-11.md`.

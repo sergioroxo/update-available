@@ -424,7 +424,11 @@ export class E4Shell {
 
   /** ⚑ S124 — the monitor's own surface and its own version. */
   drawBrowser(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.browser.draw(ctx, W, H);
+    // ⚑ the browser is pressable only while the device is still on the stand —
+    //   from the moment it is worn the room sends every press to the picture in
+    //   front of her face, so publishing tab rects here would advertise six
+    //   controls nothing can reach. See `E4Browser.draw`'s note.
+    this.browser.draw(ctx, W, H, this.stageNow === 'closed');
   }
   get browserVersion(): number { return this.browser.version; }
   /** the monitor is a real screen in the room, so its presses are real presses */
