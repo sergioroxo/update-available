@@ -210,6 +210,11 @@ export function mountGameMenu(): GameMenu {
       if (gameMenuBus.recentreView) {
         row(copy.recentre, () => { gameMenuBus.recentreView?.(); gameMenuBus.close(); });
       }
+      // ⚑ 2026-09-11: the gyro's OFF switch, here and not on the canvas — see
+      // gameMenuBus.stopMotion. Present only while device-look is live.
+      if (gameMenuBus.stopMotion) {
+        row(copy.motionDisable, () => { gameMenuBus.stopMotion?.(); gameMenuBus.close(); });
+      }
       // S84 — frame-level display control. iPad Safari exposes the standard
       // API; iPhone Safari may not. Absence is a fact, so the row is omitted
       // rather than presented as a dead promise. Add to Home Screen remains

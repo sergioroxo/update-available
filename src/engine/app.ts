@@ -2240,7 +2240,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     };
     motionBtn.textContent = label[motionState];
     motionBtn.title = motionState === 'idle' ? copy.motionEnableHint : label[motionState];
-    motionBtn.style.display = motionState === 'unsupported' ? 'none' : 'block';
+    /**
+     * ⚑ 2026-09-11 — ONCE LIVE, THE BUTTON LEAVES THE CANVAS. It exists for
+     * the one press iOS demands before it will grant orientation; after that it
+     * was staying on screen as a toggle for the whole piece, the only persistent
+     * chrome over the room, and the walk found Era 4's first tab underneath it.
+     * "Stop device look" is a menu row now (gameMenuBus.stopMotion), beside
+     * Recentre. Sérgio's ruling, same day.
+     */
+    motionBtn.style.display = (motionState === 'unsupported' || motionState === 'live') ? 'none' : 'block';
+    gameMenuBus.stopMotion = motionState === 'live' ? () => stopMotion('off') : null;
     // ⚑ S86: NO `translateX(-50%)` HERE ANY MORE. This line used to re-centre
     // the button on every repaint, which is how it kept landing back on top of
     // the caption strip; with the button now anchored at left:14px it would

@@ -117,7 +117,13 @@ export class E4Browser {
       return;
     }
     // the address bar's cursor is the only thing that moves on a settled page
-    if (Math.floor(this.t / CURSOR_BLINK) !== Math.floor((this.t - dt) / CURSOR_BLINK)) {
+    // ⚑ …and it stops moving the moment the device is on her face. The blink
+    //   is a version bump, the version is a texture upload, and a monitor that
+    //   nobody can press was re-uploading twice a second for the whole of the
+    //   offers and the ball — an upload for nothing, and 900 ms of "the screen
+    //   is still drawing itself" for the walker every time (2026-09-11).
+    if (this.pressable &&
+        Math.floor(this.t / CURSOR_BLINK) !== Math.floor((this.t - dt) / CURSOR_BLINK)) {
       this.version++;
     }
   }
@@ -169,7 +175,7 @@ export class E4Browser {
     px(ctx, 0, 0, W, H, CHROME.page);
     const shown = TABS.slice(0, back);
     const addr = this.phase === 'open' ? script.search.typed : '';
-    const blink = this.phase === 'open' && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
+    const blink = this.phase === 'open' && this.pressable && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
     const rects = browserChrome(ctx, W, shown, this.live, addr, blink);
     rects.forEach((r, i) => this.publish({ ...r, id: `tab${i}` }));
 

@@ -943,3 +943,14 @@ face, where a press means `wear()`. The ledger had said so all along — `sessio
 headset:worn, laptop:read`, not one tab. Fixed: the monitor takes presses while the device is on
 the stand; the browser publishes nothing once it is worn. Era 4: 52% → 37% of the traversal.
 `docs/reinterp/ERA4_REACHABLE_2026-09-11.md`.
+
+## 2026-09-11 — S132 · Minutes per era, the minimum path, and the gyro button leaves the canvas
+
+The walk reports **minutes per era** now (the complaint was always about time, and the
+ball has no presses in it), with the tool's own settles shown and subtracted and the era's
+clock stopped at `spine: done`. `--min-tabs 2` walks Sérgio's minimum player — "opens two,
+then wears" — and writes to a `_MIN2` file. Measured, piece time to the Close: E1 2.3 ·
+E2 3.7 · E3 1.8 · **E4 5.3 (5.4 minimum)** — four of Era 4's five minutes come after her
+last real choice. "Look with your device" retreats into the game menu once the gyro is
+live (Sérgio's ruling), so no chrome sits over the canvas during play; the browser's
+cursor stops blinking — and re-uploading — once the device is worn. Both walks green.

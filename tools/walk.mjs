@@ -87,6 +87,24 @@ const PORT = Number(flag('port', 3000));
  */
 const JUMP = flag('jump', '');
 /**
+ * ⚑ `--min-tabs N` — THE MINIMUM PATH, defined narrowly enough to mean something
+ * (2026-09-11). Sérgio has said three times that Era 4 takes too long, and every
+ * number this tool gave him measured an EXHAUSTIVE traversal: the walker reads
+ * every tab, presses every card, and its step count for the era therefore says
+ * nothing about the optional path that was built. His answer to "what does the
+ * minimum player do with the six tabs" was: **opens two, then wears.**
+ *
+ * So this mode does exactly that and nothing else: in Era 4's browser stage the
+ * walker opens the first N tabs the row offers after the live one — `chat`, then
+ * `record`, in ladder order — and then treats the browser as finished, which
+ * sends it to the headset. Every other era is walked as before, so the numbers
+ * stay comparable era to era. It is NOT a "skip everything optional" mode; the
+ * tool cannot know structurally what is optional, and pretending it could would
+ * be a policy measuring itself. The report is written to a `_MIN<N>` filename so
+ * it can never be mistaken for the exhaustive walk.
+ */
+const MIN_TABS = flag('min-tabs', '') === '' ? null : Number(flag('min-tabs', ''));
+/**
  * ⚑ A REVIEW ROUTE THAT LIES IS WORSE THAN NO REVIEW ROUTE (A-5.2).
  * `--jump update3` arms the u3 ritual through `__os.debugJump`, and the OS half
  * works: the notice, the terms and the install all play on Room 1's monitor and
@@ -295,7 +313,7 @@ async function main() {
 
   const log = [];
   const note = (kind, detail) => {
-    log.push({ step: log.length, kind, ...detail });
+    log.push({ step: log.length, kind, t: Date.now(), ...detail });
     const d = detail.target ?? detail.what ?? '';
     console.log(
       `${String(log.length).padStart(3)} ${kind.padEnd(10)} ${String(d).slice(0, 40).padEnd(40)} ` +
@@ -1138,8 +1156,21 @@ const LAP = { w: 224, h: 140 };
    * unpressable beat runs.
    */
   const pick = (targets, sig, seen, dismissFirst) => {
-    const live = targets.filter((t) =>
+    let live = targets.filter((t) =>
       t.surface !== 'prop' && !FORBIDDEN.test(t.id) && !capped(sig, t));
+    /**
+     * ⚑ THE TAB BUDGET (see MIN_TABS). Counted from the LEDGER, not from this
+     * tool's own memory of what it pressed — `e4Space:tab:*` is filed once per
+     * tab opened, which is the piece's own definition of "read". Once the budget
+     * is met the browser's controls stop being candidates, the screen reads as
+     * finished, and the ordinary machinery (nothing here → look round → the
+     * headset) does the rest. A player who has read two tabs does not keep
+     * pressing the browser; they put the device on.
+     */
+    if (MIN_TABS !== null && lastState && lastState.era === 'e4') {
+      const read = lastState.ledList.filter((e) => e.indexOf('e4Space:tab:') === 0).length;
+      if (read >= MIN_TABS) live = live.filter((t) => t.surface !== 'e4.browser');
+    }
     // a bare plane is a last-resort press: prefer any real control that exists
     if (!live.length) return null;
     /**
@@ -1253,6 +1284,8 @@ const LAP = { w: 224, h: 140 };
 
   // ── the walk ──
   let s = await probe();
+  /** the probe `pick` is being asked about — for the tab budget only */
+  let lastState = s;
   note('seated', { era: s.era, phase: s.phase, spine: s.spine, what: s.targets.length + ' live controls' });
   let stalls = 0;
   /** the last state in which the piece was seen to MOVE — see the loop detector */
@@ -1408,6 +1441,7 @@ const LAP = { w: 224, h: 140 };
     desyncRuns = 0;
 
     const sig = stableOf(s);
+    lastState = s;
     /**
      * ⚑ A BEAT THAT IS DELIBERATELY DOING NOTHING IS NOT A DEAD END (S103b).
      *
@@ -1785,7 +1819,7 @@ const LAP = { w: 224, h: 140 };
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    + (JUMP ? '_JUMPED_' + JUMP : '');
+    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '');
   const presses = log.filter((l) => l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move');
   const dead = presses.filter((p) => p.changed === false);
   const silentFound = [...new Set(log.filter((l) => l.kind === 'silent-surface')
@@ -1806,9 +1840,70 @@ const LAP = { w: 224, h: 140 };
     ledger: final.ledger, console: noise, log
   }, null, 1));
 
+  /**
+   * ⚑ MINUTES PER ERA, because that is the complaint. "Era 4 takes too long" is
+   * about TIME, and until now this report led with presses — a count of
+   * interaction, which the ball (three and a half minutes, no presses) does not
+   * even appear in. Wall-clock is read off the log's own timestamps, per era.
+   *
+   * ⚑ AND THE TOOL'S OWN TIME IS SHOWN, NOT HIDDEN. Every press settles for
+   * 1.2 s, every listening hold is 0.9 s, a turn ~0.5 s per arrow — none of
+   * which a player pays. The overhead column is that sum; the piece column is
+   * wall minus overhead. It is an estimate: the settle also covers time the
+   * piece genuinely spends animating, so the piece column errs LOW. The ranking
+   * between eras is robust to that; the absolute minutes are not, and nobody
+   * should quote them to a second.
+   *
+   * ⚑ WAITING IS NOT OVERHEAD. The first version of this counted `waiting-out`
+   * and `idle` as tool time and subtracted them — which subtracted THE BALL,
+   * because the walker waits precisely when the piece is running a clock of
+   * its own. Era 4 came out at 2.9 minutes, shorter than Era 2. It is 5.3. The
+   * walker waits because a player would be waiting; that time is the piece's.
+   *
+   * ⚑ AND AN ERA'S CLOCK STOPS AT `spine: done`. After the Close the walker
+   * sits through eighty rounds of a spent screen before it declares itself
+   * looping — nearly seven minutes that belong to the tool's stopping rule,
+   * not to the work. Nothing after the last spine step is counted.
+   */
+  const OVERHEAD = { press: 1.2, 'sweep-hit': 0.28, move: 1.2, listening: 0.9,
+    turn: 0.5, 'turn-miss': 1.0 };
+  const eras = [];
+  let ended = false;
+  for (const l of log) {
+    if (!l.era || ended) continue;
+    if (l.spine === 'done') ended = true;   // this line counts; nothing after it
+    let e = eras[eras.length - 1];
+    if (!e || e.era !== l.era) { e = { era: l.era, from: l.t, to: l.t, presses: 0, steps: 0, overhead: 0 }; eras.push(e); }
+    e.to = l.t; e.steps += 1;
+    if (l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move') e.presses += 1;
+    e.overhead += OVERHEAD[l.kind] || 0;
+  }
+  const mm = (sec) => (sec / 60).toFixed(1);
+  const eraTable = eras.length ? [
+    '| era | wall | tool overhead | ≈ piece | presses | steps |',
+    '|---|---|---|---|---|---|',
+    ...eras.map((e) => {
+      const wall = (e.to - e.from) / 1000;
+      return '| `' + e.era + '` | ' + mm(wall) + ' min | ' + mm(e.overhead) + ' min | **' +
+        mm(Math.max(0, wall - e.overhead)) + ' min** | ' + e.presses + ' | ' + e.steps + ' |';
+    })
+  ] : ['- no era boundaries recorded'];
+
   const md = [
     'STATUS: live', '',
     '# THE WALK — ' + stamp, '',
+    ...(MIN_TABS !== null ? [
+      '> ⚑ **MINIMUM-PATH RUN (`--min-tabs ' + MIN_TABS + '`).** In Era 4\'s browser stage the walker opened',
+      '> the first ' + MIN_TABS + ' tab' + (MIN_TABS === 1 ? '' : 's') + ' the row offered and then left for the headset — Sérgio\'s definition of the',
+      '> minimum player, 2026-09-11: *"opens two, then wears."* Every other era is walked exhaustively,',
+      '> as always, so the eras stay comparable. Read beside the same day\'s exhaustive walk.', ''
+    ] : []),
+    '## MINUTES PER ERA', '',
+    '*Wall-clock from the log\'s own timestamps, each era counted to its last step and the piece',
+    'counted to `spine: done`. The tool\'s press settles and holds are summed and shown; the piece',
+    'column is wall minus that, and it errs low. Time the walker spent WAITING is the piece\'s — it',
+    'waits when a player would. Trust the ranking, not the seconds.*', '',
+    ...eraTable, '',
     JUMP
       ? '> ⚑ **DIAGNOSTIC RUN, NOT A REACHABILITY PROOF.** This walk began with\n' +
         '> `debugJump("' + JUMP + '")` and therefore says NOTHING about whether a player can\n' +

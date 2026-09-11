@@ -43,6 +43,22 @@ class GameMenuBus {
    */
   recentreView: (() => void) | null = null;
 
+  /**
+   * ⚑ 2026-09-11 — "STOP DEVICE LOOK" LIVES HERE, NOT ON THE CANVAS. The
+   * "Look with your device" button has to be a real on-screen press (iOS will
+   * not grant orientation without one), but once the gyro is live it used to
+   * STAY on the canvas as a toggle for the whole piece — the only persistent
+   * chrome over the room, and any control the player turned toward could end
+   * up under it. The walk caught Era 4's first tab under it at (185,72); S117
+   * was the same shape a year of the piece earlier. Sérgio's ruling: it
+   * retreats into the menu, beside Recentre, which is the other look-mode-3
+   * control and already lives here for the same reason.
+   *
+   * Offered by the engine only while motion is live; the menu draws no row
+   * when it is null. Frame voice, invisible to the record.
+   */
+  stopMotion: (() => void) | null = null;
+
   get isOpen(): boolean {
     return this._open;
   }
