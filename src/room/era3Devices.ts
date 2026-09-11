@@ -95,7 +95,15 @@ const LOGICAL = {
    *  9 px glyph subtends ~0.50 deg — comfortably readable, and roughly double
    *  what the same text got on the lid. That arithmetic is the whole reason the
    *  browser is here and not there. */
-  monitor: { w: ERA1_CANVAS.width, h: ERA1_CANVAS.height, scale: 2 }
+  /** ⚑ 710 x 384, NOT 512 x 384 (2026-09-11). The Zsky monitor's glass —
+   *  material `Screen1Monitor1`, read off the GLB's own accessors — is
+   *  0.00865 x 0.00468 native, i.e. 1.85 : 1, a widescreen. A 4:3 canvas on
+   *  that plane either stretches 39% or hangs off the glass; the first build
+   *  chose the second and Sérgio's first sit-through caught it in one sentence
+   *  ("the screen still doesn't fit with the OS"). The canvas takes the glass's
+   *  ratio; the browser draws parametrically in W and H, so nothing else moves.
+   *  ⚑ `tools/walk.mjs`'s `MON` must match. */
+  monitor: { w: 710, h: 384, scale: 2 }
 } as const;
 
 /** Room 2 (Vera, west) world placements — Session 37 FABLE/SÉRGIO CHECK:
@@ -379,19 +387,37 @@ const PLACEMENT = {
      *  screen sat inside a half-metre slab — enabled, correctly oriented,
      *  texture bound, uploading, invisible. S98's lesson on a new prop. The box
      *  is gone and the plane sits where it demonstrably draws. */
-    pos: { x: 5.315, y: 1.005, z: 0.70 },
-    /** ⚑ 4:3, because the CANVAS is 4:3 (512x384, `ERA1_CANVAS`) and a plane of
-     *  any other ratio stretches it. Every screen in this piece is 4:3 for the
-     *  same reason; a 2026 panel would really be wider, and that is a trade this
-     *  world has been making since 1997. */
-    size: { w: 0.432, h: 0.324 },
+    /**
+     * ⚑ 2026-09-11 — FITTED TO THE GLASS, MEASURED, not to the canvas. The note
+     * this replaces argued "4:3 because the canvas is 4:3" and put a 0.432 x
+     * 0.324 plane on a 0.533 x 0.288 screen: the page hung 3 cm below the glass
+     * and over the stand, narrower than the bezel, and Sérgio saw it in his first
+     * minute. From the GLB: the screen material spans native x ±0.00432,
+     * z 0.00007..0.00475, and the model's base is at native z −0.00198; at the
+     * placed scale (61.6 native→world) that is 0.533 wide, 0.288 tall, with its
+     * centre 0.270 m above the desk top at 0.75 → y 1.020. The canvas now has
+     * the same ratio (LOGICAL.monitor), so nothing stretches.
+     */
+    /** ⚑ x 5.395, not 5.315. That number was found by pushing a magenta field
+     *  out of a PLACEHOLDER BOX that was 0.54 m thick (S124) — the box is gone,
+     *  the GLB's front face is at ~5.40, and a plane 8 cm proud of the glass at
+     *  0.9 m projects 9% larger than the cabinet it is supposed to sit in.
+     *  Measured on the plate, 2026-09-11: the page overhung the body by 7 px a
+     *  side when the screen material is 1.4 cm INSIDE it. 5 mm proud. */
+    pos: { x: 5.395, y: 1.020, z: 0.70 },
+    size: { w: 0.533, h: 0.288 },
     /** ⚑ x 82, NOT 0. This file's own workstation — Room 2's monitor, facing
      *  its chair — is `{ x: 82, y: 90 }`, and the 82 is the rake: a panel
      *  standing up, tipped back 8°. x 0 lays the plane flat and it renders
      *  edge-on as a bright line across the desk, which is exactly what the
      *  first pass drew. y is 270 rather than 90 because Room 3 is the EAST
-     *  room: its seat looks along +x, so the screen has to face -x. */
-    euler: { x: 82, y: 270, z: 0 }
+     *  room: its seat looks along +x, so the screen has to face -x.
+     *  ⚑ 2026-09-11: x 90, not 82. The rake was inherited from Room 2's panel;
+     *  the Zsky model stands upright (its manifest carries no tilt), so an 8°
+     *  rake put the plane's bottom edge 2 cm proud of the glass and its top
+     *  edge 2 cm inside the cabinet — visible as the page's lower corners
+     *  overhanging the body. A plane on a flat screen is flat. */
+    euler: { x: 90, y: 270, z: 0 }
   },
   phone: {
     // y verified in-browser (Session 37): the nightstand's REAL model AABB

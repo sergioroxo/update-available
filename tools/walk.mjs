@@ -439,6 +439,8 @@ async function main() {
     );
 
     const OS = { w: 512, h: 384 };
+    /** ⚑ Room 3's docked monitor is widescreen — LOGICAL.monitor in era3Devices.ts */
+    const MON = { w: 710, h: 384 };
     const WS = { w: 676, h: 390 };
     const PH = { w: 180, h: 360 };
 /** ⚑ Era 4's laptop lid, kept in step with LOGICAL.laptop in era3Devices.ts */
@@ -470,7 +472,7 @@ const LAP = { w: 224, h: 140 };
        * "do not keep a hand-written copy of the architecture… it would go stale
        * the first time somebody adds a screen." Somebody added a screen.
        */
-      const desk = () => onPlane('era3-device-monitor', lx, ly, OS.w, OS.h);
+      const desk = () => onPlane('era3-device-monitor', lx, ly, MON.w, MON.h);
       const visor = () => onPlane('era4-visor', lx, ly, OS.w, OS.h);
       const workstation = () => onPlane('era3-device-workstation',
         lx + RITUAL.x, ly + RITUAL.y, WS.w, WS.h);
