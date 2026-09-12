@@ -18,6 +18,9 @@ import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
+import { onCommonsRoom, setCommonsWorld } from '../room/cluster';
+import { WORLD as COMMONS_WORLD } from '../room/commonsWorld';
+const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
@@ -3456,6 +3459,38 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let closeRoomPending: string[] | null = null;
 
   /**
+   * ⚑ THE BUILDING GOES WHILE SHE IS IN THE COMMONS (2026-09-12). Sérgio: the
+   * VR "should be in Virtual space, that breaks with reality." So when the
+   * world comes on, every entity that is the room — the three rooms' shell,
+   * the ceiling, the device screens she was reading — is switched off, and the
+   * sky goes to the hall's; when the update fails and the device stops, they
+   * come back exactly as they were. The visor stays (it is on her face) and
+   * the stream stays (it is the hall's screen). Same list the Close uses,
+   * kept in one place.
+   */
+  const ROOM_ENTITIES = [
+    'era1-room', 'fluid-niche', 'cluster-shell', 'ceiling-witness',
+    'desktop-screen', 'witness-screen',
+    'era3-device-workstation', 'era3-device-tablet', 'era3-device-phone',
+    'era3-device-laptop', 'era3-device-monitor'
+  ];   // ⚑ not 'movement-nodes': the hall has its own markers (nodes.json `commons`)
+  let roomClearColor: pc.Color | null = null;
+  onCommonsRoom((hidden) => {
+    for (const id of ROOM_ENTITIES) {
+      const e = app.root.findByName(id);
+      if (e instanceof pc.Entity) e.enabled = !hidden;
+    }
+    // ⚑ the hall's markers on, the rooms' off — and leaving the world puts her
+    //   back in Maya's seat, wherever in the hall she had blinked to
+    movementNodes?.setCommons(hidden);
+    if (!hidden && seatNodeId && seatNodeId.startsWith('commons-')) performSeatCut('r3-desk');
+    if (camera.camera) {
+      if (hidden) { roomClearColor = camera.camera.clearColor.clone(); camera.camera.clearColor = new pc.Color().fromString(WORLD_SKY); }
+      else if (roomClearColor) camera.camera.clearColor = roomClearColor;
+    }
+  });
+
+  /**
    * ⚑ THE CLOSE IS A JOURNEY NOW, NOT A CUT (2026-09-12). Sérgio, after his
    * first sit-through of a deployed build in weeks: *"the close must be so so
    * much slower, because we should be travelled back to Daniel's room and
@@ -3570,6 +3605,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
      * stars are up there: you have to see them ON a ceiling for them to become
      * anything.
      */
+    // ⚑ if the Close is asked for while the world is still up, the world goes
+    //   first and the room comes back for the journey out of it
+    setCommonsWorld(false);
     closeRoomPending = [
       'era1-room',
       'fluid-niche',

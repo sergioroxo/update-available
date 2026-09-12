@@ -31,6 +31,8 @@ import type { CeilingWitness } from './ceilingWitness';
 // colour law's one home is the theme, and both of these are era1.json's own.
 import { BALL } from '../desktop/theme/era4';
 import { mountCommonsLamps } from './commonsLamps';
+import { mountCommonsFigures } from './commonsFigures';
+import { mountCommonsWorld, WORLD, type CommonsWorld } from './commonsWorld';
 
 export type EraKey = 'e1' | 'e2' | 'e3' | 'e4';
 export type ClusterState = 'sealed' | 'dim' | 'open';
@@ -195,6 +197,16 @@ const BALL_ROOM_I = 0.85;
 const BALL_AMBIENT = [0.16, 0.13, 0.09];
 
 let ballHook: ((s: BallLightState | null) => void) | null = null;
+let worldRef: CommonsWorld | null = null;
+let roomHook: ((hidden: boolean) => void) | null = null;
+/** app.ts registers this: it switches the building off and on around the world */
+export function onCommonsRoom(fn: (hidden: boolean) => void): void { roomHook = fn; }
+/** the Commons world on: the room goes, the hall arrives. Off: the room returns. */
+export function setCommonsWorld(on: boolean): void {
+  if (!worldRef || worldRef.on === on) return;
+  worldRef.setOn(on);
+  roomHook?.(on);
+}
 /** `null` ends the beat and takes the light back down over BALL_FADE_SECONDS */
 export function setBallLight(s: BallLightState | null): void {
   ballHook?.(s);
@@ -579,7 +591,16 @@ export function buildClusterShell(
   const ballRoom = mkLight('light-ballRoom', [-1.0, 2.3, 0.9], BALL.room, 12.0);
   // ⚑ S133 — and the community itself, visible: forty-one lamps in the open
   // building, one procedural mesh, driven by `setCommonsLamps` from ball.ts.
-  const commonsLamps = mountCommonsLamps(app, root);
+  /**
+   * ⚑ 2026-09-12 — THE COMMONS IS A WORLD, not an overlay. The crowd and the
+   * lamps hang under it, so they exist only while it does; and it hangs under
+   * app.root, not under this shell, because the shell (the three rooms) is
+   * switched OFF while she is there. See commonsWorld.ts.
+   */
+  const commonsWorld = mountCommonsWorld(app);
+  const commonsLamps = mountCommonsLamps(app, commonsWorld.entity);
+  const commonsFigures = mountCommonsFigures(app, commonsWorld.entity);
+  worldRef = commonsWorld;
 
   // ── the O7 light-leak seams: thin pale strips at the base of the walls —
   // the first admission that there is anything beyond them ──
@@ -817,6 +838,13 @@ export function buildClusterShell(
   /** the attention's world position, lerped between the two stations it is
    *  between — a person crossing a floor, not a light jumping between marks. */
   function stationAt(f: number): pc.Vec3 {
+    if (worldRef?.on) {
+      // ⚑ in the world the stations are the stage, end to end: 1 is stage
+      //   left, 4 stage right, and the attention walks along it
+      const k = Math.max(0, Math.min(1, (f - 1) / 3));
+      const S = WORLD.stage;
+      return ballPos.set(S.x - 0.4, S.h + 1.6, S.z - S.w * 0.42 + S.w * 0.84 * k);
+    }
     const n = BALL_STATIONS.length;
     const c = Math.max(0, Math.min(n - 1, f));
     const i = Math.min(n - 2, Math.floor(c));
@@ -1045,6 +1073,8 @@ export function buildClusterShell(
       // crossfade and a ball can run in the same frame without a fight.
       updateBall(dt);
       commonsLamps.update(dt);
+      commonsFigures.update(dt);
+      commonsWorld.update(dt);
     }
   };
 }

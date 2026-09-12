@@ -60,7 +60,7 @@
  * spends the update's one "I Agree" and the ONE TOUCH on the headset. There is
  * nothing else to press here, and adding a "continue" would break the rule.
  */
-import { homeEnvironment, visorField, visorEdge, glitchBands, ERA4, PLACE } from '../theme/era4';
+import { visorField, visorEdge, glitchBands, ERA4 } from '../theme/era4';
 import { E4Browser } from './browser';
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
@@ -190,6 +190,8 @@ export class E4Shell {
   private pulseStep = 0;
   /** −1…+1, quantised to LOOK_STEPS — how far the picture has leaned */
   private look = 0;
+  /** the head's lean, −1..1 — read by the review probe now that nothing draws it */
+  get lookK(): number { return this.look; }
   private lookStep = 0;
   private turnFiled = false;
   private handedOff = false;
@@ -205,7 +207,11 @@ export class E4Shell {
   readonly offers = new E4Offers();
   private offersVersion = 0;
   /** L's last chip fired its hand-off; the offers begin when L stops talking */
+  /** the offers' old gate — retired 2026-09-12, kept so the seam is legible */
   private offersPending = false;
+  get offersRetired(): boolean { return !this.offersPending; }
+  /** seconds since the device went on — the correction session's clock */
+  private sessionT = 0;
   /** ⚑ S79 — THE BALL. Made with the shell for the same reason the two above
    *  are (a `?debug=1` jump must reach it before the device is even worn), and
    *  started only by `E4Offers.onBreak` — the seam S78 left named and empty. */
@@ -267,7 +273,11 @@ export class E4Shell {
     // everywhere, not because the picture is gone.
     this.ball.onDeviceOff = () => { this.stageNow = 'ball'; this.version++; };
     // …and it ends on its own: the apparatus fails next.
-    this.ball.onOver = () => { this.putOn(); this.offers.resumeAfterBreak(); };
+    // ⚑ 2026-09-12 — the Commons over → the update fails. No offers' finale
+    //   between them any more: the glass glitches where the room was, the
+    //   device stops, and the laptop holds the Close. "She wasn't supposed to
+    //   see it."
+    this.ball.onOver = () => { this.stageNow = 'worn'; this.version++; this.handOff(); };
   }
 
   get stage(): Stage { return this.stageNow; }
@@ -341,9 +351,14 @@ export class E4Shell {
     //   goes on. The condition is kept rather than deleted because the offers
     //   must still never open over a caption band, and if L's voice ever comes
     //   back to this era for any reason this is the line that protects it.
-    if (this.offersPending && this.voice.finished && !this.offers.live) {
-      this.offersPending = false;
-      this.offers.begin();
+    // ⚑ 2026-09-12 — THE SESSION THAT NEVER BEGINS. The device is on, the
+    //   agent's environment is on the glass, its bar is filling — and at
+    //   `session.seconds` what arrives is not the session but Junie's card.
+    if (this.stageNow === 'worn' && !this.ball.live) {
+      const before = this.sessionT;
+      this.sessionT += dt;
+      if (Math.floor(before * 4) !== Math.floor(this.sessionT * 4)) this.version++;
+      if (this.sessionT >= space.sessionSeconds) this.ball.invite();
     }
     this.offers.update(dt);
     if (this.offers.version !== this.offersVersion) {
@@ -676,6 +691,7 @@ export class E4Shell {
   debugStopDevice(): void {
     if (this.handedOff) return;
     this.ball.close();
+    this.ball.leaveWorld();
     this.handedOff = true;
     this.stageNow = 'closed';
     this.laptopV++;
@@ -736,7 +752,9 @@ export class E4Shell {
      * speaks in the sell — the offers' own lines are untouched. What is gone is
      * the middle, and the middle is now hers to read or not.
      */
-    this.offersPending = true;
+    // ⚑ 2026-09-12: the offers do not open any more. The correction session
+    //   runs on `sessionT`, and Junie's card arrives when it is up.
+    this.sessionT = 0;
   }
 
   /**
@@ -806,6 +824,8 @@ export class E4Shell {
     this.ball.clearLamps();   // the era is over; the lamps go with the picture
     this.laptopV++;
     this.version++;
+    // ⚑ 2026-09-12: and the world goes with the device — the room comes back
+    this.ball.leaveWorld();
   }
 
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
@@ -840,8 +860,9 @@ export class E4Shell {
      */
     if (this.stageNow === 'glitch') {
       const k = Math.max(0, Math.min(1, (this.glitchStep + 1) / GLITCH_STEPS));
-      if (this.offers.ownsField) this.offers.draw(ctx, W, H);
-      else homeEnvironment(ctx, W, H, this.look);
+      // ⚑ 2026-09-12: the glitch tears the CLEAR GLASS — the room she was not
+      //   supposed to see is still there behind the bands as the picture fails
+      ctx.clearRect(0, 0, W, H);
       glitchBands(ctx, W, H, k);
       // the light leaving, in the field's own colour — a picture stopping, not
       // a screen breaking
@@ -928,38 +949,27 @@ export class E4Shell {
     // ⚑ THE FINALE TAKES THE FIELD. Everywhere else the offers draw OVER the
     // picture of a room, exactly as L's captions do; from the cyclorama on there
     // is no room left to draw under them, which is the point of that image.
-    if (this.offers.ownsField) { this.offers.draw(ctx, W, H); return; }
-    homeEnvironment(ctx, W, H, this.look);
-    // The environment's own name, the size a headset prints it. ⚑ `arranged for
-    // you` is the ENTIRE addressing this session carries — the faintest sense
-    // that the place is aimed at somebody. The ads, the store and the "for you"
-    // wall are S78's.
-    //
-    // ⚑ MOVED TOP-LEFT BY S77, and it is a composition fix rather than a change
-    // of mind. S76 printed it bottom-left, which was right in a place where
-    // nothing else spoke; L's caption band now lives along the bottom edge for
-    // most of the era and the tag was simply underneath it, invisible. Top-left
-    // also gives the surface an honest hierarchy: the environment's name and
-    // the system's label field along the top, the voice and your answers along
-    // the bottom.
-    setFont(ctx, 10);
-    ctx.fillStyle = PLACE.ink;
-    ctx.fillText(space.tag, 16, 16);
-    setFont(ctx, 8);
-    ctx.fillStyle = PLACE.floorLo;
-    ctx.fillText(space.tagSub, 16, 30);
-    px(ctx, 16, 41, 34, 1, PLACE.ink);
-    // ⚑ L draws INSIDE the visor's edge, not outside it: the caption band, the
-    // chips and the label field are things the device is showing her, so the
-    // vignette closes over them exactly as it closes over the room.
-    this.voice.draw(ctx, W, H);
-    // ⚑ and S78's offers over the same picture, in the same grammar: the cards
-    // are things the place is showing her, so they sit inside the visor's edge
-    // exactly as the captions do.
-    this.offers.draw(ctx, W, H);
-    // ⚑ S79's arrival: the machine hears the ball and starts labelling it, in
-    // its own label field, while L itself says nothing at all from here to the
-    // end of the era. This is the last thing this surface ever shows her.
+    /**
+     * ⚑ 2026-09-12 — THE CORRECTION SESSION, and the offers are gone from here.
+     * Sérgio: "cut the offers entirely — we are taken to a correction system,
+     * but Junie's invitation inside of the VR world takes us to a place we
+     * didn't know." So the glass shows the agent's own environment (`E4Ball.
+     * drawSession`), and over it, when it comes, the card; then the filter,
+     * front and centre, as the space is entered. The Sunroom, its tag, L's
+     * caption band and the wall of offers no longer draw — the code stays,
+     * nothing calls it.
+     */
+    // ⚑ and it DISSOLVES as the filter fails: each label the overlay cannot
+    //   make stick takes a share of the environment with it, and the room she
+    //   was not supposed to see comes through the glass a step at a time
+    const k = this.ball.environmentK;
+    ctx.clearRect(0, 0, W, H);
+    if (k > 0) {
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = k;
+      this.ball.drawSession(ctx, W, H, this.sessionT);
+      ctx.globalAlpha = was;
+    }
     this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
     visorEdge(ctx, W, H);
   }

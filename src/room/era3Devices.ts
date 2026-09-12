@@ -38,6 +38,7 @@ import * as pc from 'playcanvas';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { ledger } from '../state/ledger';
 import { setEra3Lift, type EraKey } from './cluster';
+import { WORLD as COMMONS } from './commonsWorld';
 import { ClearCommentsApp } from '../desktop/apps/clearComments';
 import { PodcastOrderApp } from '../desktop/apps/podcastOrder';
 import { StoryCutTask } from '../desktop/apps/storyCut';
@@ -84,6 +85,9 @@ const LOGICAL = {
    *  logical size. Same canvas, same FILTER_NEAREST, same `?flat=1`: only the
    *  mount point changed, from a monitor to a thing on your face. */
   visor: { w: ERA1_CANVAS.width, h: ERA1_CANVAS.height, scale: 1 },
+  /** ⚑ 2026-09-12 — THE STREAM: `transjesus.str`, a window hung in the space
+   *  above the desk while the Commons is on. 16:9, drawn by `E4Ball.drawStream`. */
+  stream: { w: 352, h: 198, scale: 2 },   // scale 2: it repaints 12x a second now
   /** ⚑ the laptop (2026-09-01): a small screen carrying two short lines and a
    *  hint, so it needs pixels for text and nothing else. */
   /** ⚑ S123 tried 320x200 and reverted the same hour — see `space.ts`'s
@@ -211,6 +215,23 @@ const PLACEMENT = {
    * 88 × 66 mm, inside that face — and faces −X (euler y 270, the mirror of the
    * workstation's 90). Measured off the authored box, not eyeballed.
    */
+  /**
+   * ⚑ THE STREAM WINDOW (2026-09-12). Sérgio: "where is the livestream of
+   * TransJesus, or the ball playing, or the VRChat" — and his ruling: figures
+   * in the room AND a livestream window. The ball is BEHIND the seat; this
+   * window hangs in the MR view above the monitor, facing her, so a player
+   * who has not turned sees the room she is in being streamed from behind her
+   * — and turns. 0.80 x 0.45 m at 1.78 m up on the desk wall, the same
+   * facing as the monitor (y 270, −x).
+   */
+  stream: {
+    /** ⚑ measured: at y 1.78 the window sat 26°–38° above the eye against a
+     *  21° half-frame — out of the picture from the seat. y 1.40 / 0.64 × 0.36
+     *  puts it at 2°–22°, just over the monitor's top edge, on the wall. */
+    pos: { x: 5.60, y: 1.36, z: 0.70 },
+    size: { w: 0.56, h: 0.315 },
+    euler: { x: 90, y: 270, z: 0 }
+  },
   visor: {
     /** ⚑ z 0.30, not 0.05 (2026-08-06). S76 measured the headset at 33.9° off
      *  the seat bearing against a 29.7° horizontal half-FOV — i.e. the era's
@@ -937,8 +958,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       sh.drawLaptop(ctx, w, h);
       return;
     }
-    const src = e4Bridge()?.canvas();
-    if (sh.worn && src) { sh.drawLaptopMirror(ctx, w, h, src); return; }
+    // ⚑ 2026-09-12: the lid does not mirror the headset any more (Sérgio: "the
+    //   laptop doesn't make sense being mirrored"). It is L's console — and
+    //   while the device is on her face it says only that a session is running.
     sh.drawLaptop(ctx, w, h);
   },
     { versionOf: () => {
@@ -970,6 +992,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     return sh ? 1 + sh.browserVersion : 0;
   } });
   add('phone', LOGICAL.phone, (ctx, w, h) => graceQueueLite.drawPhone(ctx, w, h), { versionOf: () => graceQueueLite.phoneVersion });
+  // ⚑ 2026-09-12 — the stream: drawn by the ball, on while the Commons is on
+  add('stream', LOGICAL.stream, (ctx, w, h) => {
+    const sh = e4Bridge()?.shell();
+    if (sh) sh.ball.drawStream(ctx, w, h);
+  }, { versionOf: () => e4Bridge()?.shell()?.ball.streamVersion ?? 0 });
 
   let arrived = false;
   let eraNow: EraKey = 'e1';
@@ -1168,6 +1195,17 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.entity.enabled = !!sh && !sh.handedOffToClose
             && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
         }
+        if (s.name === 'stream') {
+          const sh = e4Bridge()?.shell();
+          s.entity.enabled = eraNow === 'e4' && !!sh && sh.ball.streaming;
+          // ⚑ 2026-09-12: in the world the stream is the hall's screen — the
+          //   width of a wall behind the stage — and not a window over the desk
+          if (s.entity.enabled) {
+            const W = COMMONS.screen;
+            s.entity.setLocalPosition(W.x, W.y, W.z);
+            s.entity.setLocalScale(W.w, 1, W.h);   // the plane's scale IS its size (makeScreenEntity)
+          }
+        }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
             s.lastVersion = s.versionOf();
             s.dirty = true;
@@ -1192,6 +1230,17 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           const sh = e4Bridge()?.shell();
           s.entity.enabled = !!sh && !sh.handedOffToClose
             && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
+        }
+        if (s.name === 'stream') {
+          const sh = e4Bridge()?.shell();
+          s.entity.enabled = eraNow === 'e4' && !!sh && sh.ball.streaming;
+          // ⚑ 2026-09-12: in the world the stream is the hall's screen — the
+          //   width of a wall behind the stage — and not a window over the desk
+          if (s.entity.enabled) {
+            const W = COMMONS.screen;
+            s.entity.setLocalPosition(W.x, W.y, W.z);
+            s.entity.setLocalScale(W.w, 1, W.h);   // the plane's scale IS its size (makeScreenEntity)
+          }
         }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();
@@ -1230,7 +1279,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         //   bug. `setEra` is where a screen becomes visible, and a new one that
         //   does not say so here is invisible on purpose without meaning to be.
         const roomThreeScreen = s.name === 'visor' || s.name === 'laptop' || s.name === 'monitor';
-        s.entity.enabled = roomThreeScreen ? era === 'e4'
+        s.entity.enabled = s.name === 'stream' ? false : roomThreeScreen ? era === 'e4'
           : roomTwoScreen ? era === 'e3'
           : visible;
       }

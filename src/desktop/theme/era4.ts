@@ -1278,6 +1278,9 @@ export const BALL = {
 // pixel-drawn (integer positions, banded corners — no anti-aliased rounding).
 // Nothing in this kit is pressable by itself; the pages decide what publishes.
 // ═══════════════════════════════════════════════════════════════════════════
+/** ⚑ the Commons hall's sky (commonsWorld.ts) — the one colour the world adds */
+export const COMMONS_SKY = '#141826';
+
 export const WEB = {
   bg: '#ECE8DF',        // the app's ground — a shade cooler than the cards
   card: '#FBFAF6',
@@ -1429,4 +1432,133 @@ export function compareSplit(
   tag(labelA, x + 6);
   const bw = Math.ceil(ctx.measureText(labelB).width) + 12;
   tag(labelB, x + w - 6 - bw);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⚑ THE STREAM AS VIDEO (2026-09-12). Sérgio: "The TransJesus livestream needs
+// to actually move and be more dynamic and fun, I've seen your ability to make
+// videos so I know you can do it." So it is a broadcast: shots that CUT every
+// few seconds — wide, close on the walker, the crowd, the lights — a walker
+// who walks, a crowd that moves on the beat and throws its hands up on a
+// landing, coloured sweeps crossing the frame, hearts rising, a lower-third
+// that slides in with the category. Everything faceless, everything invented,
+// nothing sampled. Drawn from `t` so it can be redrawn at any rate.
+// ═══════════════════════════════════════════════════════════════════════════
+export type StreamShot = 'wide' | 'walker' | 'crowd' | 'lights';
+export const STREAM_BPM = 122;
+
+/** which shot is on at time t — a cut every 3–5 s, in a fixed sequence */
+export function streamShot(t: number): StreamShot {
+  const seq: StreamShot[] = ['wide', 'walker', 'crowd', 'wide', 'lights', 'walker', 'crowd', 'wide'];
+  const lens = [4.5, 3.5, 3.0, 4.0, 3.0, 4.0, 3.0, 5.0];
+  const total = lens.reduce((a, b) => a + b, 0);
+  let u = t % total;
+  for (let i = 0; i < seq.length; i++) { if (u < lens[i]) return seq[i]; u -= lens[i]; }
+  return 'wide';
+}
+
+/** a faceless figure, standing, from the hips up or whole */
+function streamFigure(ctx: CanvasRenderingContext2D, x: number, yFloor: number, s: number, cloth: string, armsUp: boolean, lean: number): void {
+  const bw = Math.round(8 * s), bh = Math.round(22 * s), hs = Math.round(6 * s);
+  px(ctx, x - Math.round(bw / 2) + lean, yFloor - bh, bw, bh, cloth);
+  px(ctx, x - Math.round(hs / 2) + lean * 2, yFloor - bh - hs - Math.round(2 * s), hs, hs, ERA4.photoSkinHi);
+  px(ctx, x - Math.round(hs / 2) + lean * 2 - 1, yFloor - bh - hs - Math.round(4 * s), hs + 2, Math.round(3 * s), ERA4.photoHair);
+  if (armsUp) {
+    px(ctx, x - Math.round(bw / 2) - Math.round(3 * s) + lean, yFloor - bh - Math.round(8 * s), Math.round(3 * s), Math.round(10 * s), cloth);
+    px(ctx, x + Math.round(bw / 2) + lean, yFloor - bh - Math.round(8 * s), Math.round(3 * s), Math.round(10 * s), cloth);
+  } else {
+    px(ctx, x - Math.round(bw / 2) - Math.round(3 * s) + lean, yFloor - bh + Math.round(2 * s), Math.round(3 * s), Math.round(10 * s), cloth);
+    px(ctx, x + Math.round(bw / 2) + lean, yFloor - bh + Math.round(2 * s), Math.round(3 * s), Math.round(10 * s), cloth);
+  }
+}
+
+export function streamScene(
+  ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
+  t: number, shot: StreamShot, landing: number
+): void {
+  const beat = (t * STREAM_BPM) / 60;
+  const pulse = 1 - (beat % 1);                 // 1 on the beat, decaying
+  const bob = Math.round(Math.sin(beat * Math.PI) * 2);
+  ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  const horizon = y + Math.round(h * 0.66);
+  px(ctx, x, y, w, h, PLACE.ink);
+  px(ctx, x, y, w, Math.round(h * 0.16), ERA4.photoFrame);
+  px(ctx, x, horizon, w, h, PLACE.floorLo);
+  // the dance floor: tiles catching the light
+  for (let i = 0; i < 10; i++) {
+    const tx = x + Math.round((i / 10) * w), tw = Math.round(w / 10) - 1;
+    const lit = ((i + Math.floor(beat)) % 3) === 0;
+    ctx.save(); ctx.globalAlpha = lit ? 0.35 + 0.25 * pulse : 0.12;
+    px(ctx, tx, horizon, tw, h, [PLACE.rugHi, PLACE.textileHi, ERA4.l][i % 3]);
+    ctx.restore();
+  }
+  // the sweeps: two coloured bands crossing the frame
+  const sweep = (k: number, hex: string, speed: number, width: number): void => {
+    const sx = x + Math.round(((Math.sin(t * speed + k) + 1) / 2) * (w + width)) - width;
+    ctx.save(); ctx.globalAlpha = 0.16 + 0.1 * pulse;
+    px(ctx, sx, y, width, h, hex);
+    ctx.restore();
+  };
+  sweep(0, PLACE.textileHi, 0.9, Math.round(w * 0.14));
+  sweep(2, ERA4.l, 0.6, Math.round(w * 0.1));
+  sweep(4, PLACE.sunHi, 1.3, Math.round(w * 0.06));
+
+  const cloths = [PLACE.textileHi, PLACE.sunHi, ERA4.l, PLACE.book, PLACE.bookAlt, PLACE.textile, PLACE.sky];
+  const walkerX = x + Math.round(w * (0.5 + 0.32 * Math.sin(t * 0.55)));
+  if (shot === 'wide') {
+    // the crowd along the back, bobbing; the walker on the floor
+    for (let i = 0; i < 16; i++) {
+      const cx = x + 6 + Math.round((i / 16) * (w - 12)) + ((i * 7) % 5);
+      const s = 0.9 + ((i * 13) % 4) * 0.08;
+      streamFigure(ctx, cx, horizon + Math.round(4 * s) + (i % 2 ? bob : -bob), s, cloths[i % cloths.length], landing > 0.3 && i % 3 !== 1, 0);
+    }
+    // the pool of light and the walker in it
+    ctx.save(); ctx.globalAlpha = 0.45;
+    px(ctx, walkerX - Math.round(w * 0.12), horizon + 2, Math.round(w * 0.24), h, PLACE.rugHi);
+    ctx.restore();
+    streamFigure(ctx, walkerX, y + h - 6, 1.7, PLACE.textileHi, false, Math.round(Math.sin(t * 3) * 2));
+  } else if (shot === 'walker') {
+    // close: the walker large, mid-frame, walking; the crowd a blur behind
+    for (let i = 0; i < 9; i++) {
+      const cx = x + 10 + Math.round((i / 9) * (w - 20));
+      ctx.save(); ctx.globalAlpha = 0.35;
+      streamFigure(ctx, cx, horizon + 8 + (i % 2 ? bob : -bob), 1.3, cloths[(i + 2) % cloths.length], landing > 0.3, 0);
+      ctx.restore();
+    }
+    const stride = Math.round(Math.sin(t * 3.2) * 3);
+    streamFigure(ctx, x + Math.round(w * 0.5) + Math.round(Math.sin(t * 0.8) * w * 0.12), y + h + 6, 3.4, PLACE.textileHi, false, stride);
+    ctx.save(); ctx.globalAlpha = 0.25 + 0.2 * pulse;
+    px(ctx, x, y, w, Math.round(h * 0.3), PLACE.sunHi);
+    ctx.restore();
+  } else if (shot === 'crowd') {
+    // the room, from the floor: three rows, hands up on a landing
+    for (let r = 0; r < 3; r++) {
+      const s = 1.0 + r * 0.45;
+      const n = 12 - r * 2;
+      for (let i = 0; i < n; i++) {
+        const cx = x + Math.round(((i + 0.5 + (r % 2) * 0.5) / n) * w);
+        const up = landing > 0.3 || (Math.sin(beat * 0.5 + i) > 0.6);
+        streamFigure(ctx, cx, y + Math.round(h * (0.55 + r * 0.17)) + (i % 2 ? bob : -bob), s, cloths[(i * 3 + r) % cloths.length], up, 0);
+      }
+    }
+  } else {
+    // the lights: the rig over the stage, three colours, and the walker below, small
+    ctx.save(); ctx.globalAlpha = 0.5;
+    for (let i = 0; i < 3; i++) {
+      const hex = [PLACE.textileHi, ERA4.l, PLACE.sunHi][i];
+      const bx = x + Math.round(((Math.sin(t * (0.7 + i * 0.2) + i) + 1) / 2) * (w - 30)) + 15;
+      px(ctx, bx - 3, y + 6, 6, 6, hex);
+      // the beam
+      ctx.beginPath(); ctx.moveTo(bx, y + 10); ctx.lineTo(bx - 40, y + h); ctx.lineTo(bx + 40, y + h); ctx.closePath();
+      ctx.fillStyle = hex; ctx.fill();
+    }
+    ctx.restore();
+    px(ctx, x, y + 4, w, 3, ERA4.panelEdge);
+    streamFigure(ctx, walkerX, y + h - 4, 1.3, PLACE.textileHi, landing > 0.3, Math.round(Math.sin(t * 3) * 2));
+  }
+  // grain, always
+  ctx.save(); ctx.globalAlpha = 0.08;
+  for (let i = 0; i < 70; i++) px(ctx, x + ((i * 37 + Math.floor(t * 10)) % w), y + ((i * 53) % h), 1, 1, ERA4.textHi);
+  ctx.restore();
+  ctx.restore();
 }

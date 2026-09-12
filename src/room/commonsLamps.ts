@@ -28,19 +28,18 @@
  * had; nothing here invents a colour (check-spec's palette ratchet, 33/33).
  */
 import * as pc from 'playcanvas';
-import { BALL } from '../desktop/theme/era4';
+import { BALL, PLACE, ERA4 } from '../desktop/theme/era4';
 
 const LAMP_COUNT = 41;
 /** half-size of a lamp: a small held thing, not a piece of furniture */
-const LAMP_HALF = 0.03;
+const LAMP_HALF = 0.018;   // ⚑ 0.03 read as yellow blocks a metre from the seat (2026-09-12)
 const LAMP_ASPECT = 1.4;
 /** where a hidden lamp waits — under the building, out of every frustum */
 const SUNK_Y = -40;
 /** seconds for the whole set to reach full brightness once the first one is up */
 const RISE_SECONDS = 1.6;
-/** the seat they must not crowd: the E4 seat at (4.4, 0.7), and the desk wall */
+/** the seat they must not crowd: the E4 seat at (4.4, 0.7) */
 const SEAT = { x: 4.4, z: 0.7, clear: 1.35 };
-const DESK_WALL_X = 4.95;
 
 /** seeded, so the crowd stands where it stood last time — a review can
  *  photograph it twice and compare */
@@ -76,20 +75,18 @@ export function mountCommonsLamps(app: pc.Application, parent: pc.Entity): { upd
   // a lamp is in frame only while |dz| ≤ ~0.5·dx, i.e. over the desk, above and
   // either side of the monitor (its glass tops out at y 1.165). Hand height
   // there is 1.3–1.6: people standing at the edge of the picture.
-  while (spots.length < 6) {
-    const dx = 0.9 + rng() * 0.25;                       // back by the wall
-    const side = rng() < 0.5 ? -1 : 1;
-    const x = SEAT.x + dx;
-    const z = SEAT.z + side * (0.36 + rng() * 0.16);   // beside the monitor
-    const y = 1.0 + rng() * 0.3;
-    spots.push([x, y, z]);
-  }
+  /**
+   * ⚑ 2026-09-12 — STRING LIGHTS ACROSS THE HALL. The Commons is a world now
+   * (commonsWorld.ts): four strings of lamps hang across it at the ceiling
+   * line, between the columns, front to back — the first six over her own
+   * head so the room visibly begins where she is, the rest toward the stage.
+   */
+  const strings = [4.0, 5.6, 7.2, 2.4];
   while (spots.length < LAMP_COUNT) {
-    const x = -6.0 + rng() * 10.0;
-    const z = -0.6 + rng() * 3.4;
-    const y = 0.95 + rng() * 0.6;
-    if (x > DESK_WALL_X - 0.9) continue;
-    if (Math.hypot(x - SEAT.x, z - SEAT.z) < SEAT.clear) continue;
+    const n = spots.length;
+    const x = strings[n % strings.length] + (rng() - 0.5) * 0.3;
+    const z = SEAT.z - 3.4 + (Math.floor(n / strings.length) / Math.ceil(LAMP_COUNT / strings.length)) * 7.0 + (rng() - 0.5) * 0.4;
+    const y = 2.85 + rng() * 0.35;
     spots.push([x, y, z]);
   }
 
@@ -119,10 +116,20 @@ export function mountCommonsLamps(app: pc.Application, parent: pc.Entity): { upd
   };
   build(0);
 
+  // ⚑ 2026-09-12: string lights in three colours — the lamp's own gold, the
+  //   pink and the teal the hall is lit in — carried as vertex colours
+  const LAMP_COLORS = [BALL.attention, PLACE.textileHi, ERA4.l].map((h) => new pc.Color().fromString(h));
+  const lampColors: number[] = [];
+  for (let n = 0; n < LAMP_COUNT; n++) {
+    const c = LAMP_COLORS[n % 3];
+    for (let i = 0; i < 8; i++) lampColors.push(c.r, c.g, c.b, 1);
+  }
+  mesh.setColors(lampColors);
   const mat = new pc.StandardMaterial();
   mat.useLighting = false;
   mat.diffuse = new pc.Color(0, 0, 0);
-  mat.emissive = new pc.Color().fromString(BALL.attention);
+  mat.emissive = new pc.Color(1, 1, 1);
+  mat.emissiveVertexColor = true;
   mat.blendType = pc.BLEND_NORMAL;
   mat.opacity = 0;
   mat.update();

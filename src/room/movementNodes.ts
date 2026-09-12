@@ -17,10 +17,13 @@
 import * as pc from 'playcanvas';
 import nodesData from '../../data/room/nodes.json';
 import { ERA1 } from '../desktop/theme/era1';
+import { BALL } from '../desktop/theme/era4';
 import type { EraKey } from './cluster';
 
 export interface MovementNode {
   id: string;
+  /** ⚑ a place in the Commons hall — offered only while the world is on */
+  commons?: boolean;
   /** the ROOM-level seat this node's jump lands "at" for `available()`'s
    *  current-seat gating (never offer a marker for where you already are).
    *  Base room seats (r1-desk/r2-desk/r3-desk) use the real seatPose() yaws
@@ -62,6 +65,8 @@ export interface MovementNodes {
    *  a one-frame gap between a scripted move starting and refresh() catching
    *  up). A click must hit BOTH the offered list AND the live disc. */
   isVisible(id: string): boolean;
+  /** ⚑ 2026-09-12: the world is on — offer the hall's places, hide the rooms' */
+  setCommons(on: boolean): void;
 }
 
 const MARKER_DIAMETER = 0.44; // 0.22m radius disc — small, quiet
@@ -88,12 +93,22 @@ export function buildMovementNodes(app: pc.Application): MovementNodes {
   mat.depthWrite = false;
   mat.update();
 
+  // ⚑ the hall's markers wear the ball's own colour, so they read as the
+  //   world's and not the building's
+  const commonsMat = new pc.StandardMaterial();
+  commonsMat.diffuse = hex(BALL.attention);
+  commonsMat.emissive = hex(BALL.attention);
+  commonsMat.opacity = 0.7;
+  commonsMat.blendType = pc.BLEND_NORMAL;
+  commonsMat.depthWrite = false;
+  commonsMat.update();
+  let commonsOn = false;
   const entities = new Map<string, pc.Entity>();
   for (const n of nodes) {
     const e = new pc.Entity(`node-${n.id}`);
     e.addComponent('render', { type: 'cylinder' });
     if (e.render) {
-      e.render.material = mat;
+      e.render.material = n.commons ? commonsMat : mat;
       e.render.castShadows = false; // Quest law: no realtime shadows
     }
     e.setLocalPosition(n.marker[0], n.marker[1], n.marker[2]);
@@ -104,7 +119,8 @@ export function buildMovementNodes(app: pc.Application): MovementNodes {
   }
 
   function available(era: EraKey, currentYaw: number): MovementNode[] {
-    return nodes.filter(n => n.eras.includes(era) && n.seatYaw !== currentYaw);
+    if (commonsOn) return nodes.filter(n => n.commons && n.seatYaw !== currentYaw);
+    return nodes.filter(n => !n.commons && n.eras.includes(era) && n.seatYaw !== currentYaw);
   }
 
   return {
@@ -115,6 +131,7 @@ export function buildMovementNodes(app: pc.Application): MovementNodes {
       const shown = suppressed ? new Set<string>() : new Set(available(era, currentYaw).map(n => n.id));
       for (const [id, e] of entities) e.enabled = shown.has(id);
     },
-    isVisible: (id) => entities.get(id)?.enabled ?? false
+    isVisible: (id) => entities.get(id)?.enabled ?? false,
+    setCommons: (on) => { commonsOn = on; }
   };
 }

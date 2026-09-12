@@ -91,10 +91,14 @@
  * light with no captions. That is the same gap E1's tape captions already have
  * and it is an A11 item; it is not fixed here and it is not claimed to be.
  */
-import { labelField, chip, BALL, ERA4 } from '../theme/era4';
-import { px, setFont } from '../theme/chrome';
-import { setBallLight } from '../../room/cluster';
+import {
+  labelField, BALL, ERA4, PLACE, WEB, photograph, roundRect, pill, avatar, webButton, visorEdge,
+  streamScene, streamShot
+} from '../theme/era4';
+import { px, setFont, wrapText } from '../theme/chrome';
+import { setBallLight, setCommonsWorld } from '../../room/cluster';
 import { setCommonsLamps } from '../../room/commonsLamps';
+import { setCommonsFigures } from '../../room/commonsFigures';
 import { playOnce, roomBed } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_ball.json';
 
@@ -113,8 +117,8 @@ const AFTER_STATION = 3;
 /** how long the full room holds after the closing before the apparatus fails */
 const AFTER_SECONDS = 5.0;
 /** the invitation card, on the worn visor's 512 x 384 canvas */
-const INVITE = { x: 126, y: 118, w: 260, h: 118 } as const;
-const JOIN = { x: INVITE.x + 12, y: INVITE.y + INVITE.h - 40, w: 96, h: 26 } as const;
+const INVITE = { x: 116, y: 104, w: 280, h: 150 } as const;
+const JOIN = { x: INVITE.x + 14, y: INVITE.y + INVITE.h - 34, w: 96, h: 22 } as const;
 /** the caption's head start on a clip — the same safety measure `lVoice.ts` and
  *  `offers.ts` keep, for the same reason, and NOT a pacing choice. */
 const CAPTION_LEAD = 0.5;
@@ -169,6 +173,34 @@ export class E4Ball {
   private caption: HTMLDivElement | null = null;
 
   get live(): boolean { return this.phase !== 'idle' && this.phase !== 'done'; }
+  /** how much of the agent's environment is still on the glass: 1 before she
+   *  goes in, falling label by label as the filter fails, 0 once the room is
+   *  hers. The session does not end — it is seen through. */
+  get environmentK(): number {
+    if (this.phase === 'idle' || this.phase === 'invited') return 1;
+    if (this.phase === 'arrival') {
+      const total = ARRIVAL.length;
+      const left = this.labels.length + (this.label ? 1 : 0);
+      return Math.max(0.08, (left - 1) / total);
+    }
+    return 0;
+  }
+  /** the stream window is on while the room is: from the glass clearing to the end */
+  get streaming(): boolean { return this.phase === 'ball' || this.phase === 'after'; }
+  /** the stream is VIDEO: it repaints twelve times a second while it is on */
+  get streamVersion(): number { return this.streaming ? 1 + Math.floor(this.ballT * 12) : 0; }
+  /** 0..1, decaying — the room answering a landing (the line's `flare`) */
+  private landingK = 0;
+  private lineSeq = 0;
+  /** the ball clock at the moment the current line began — the lower third's slide */
+  private lineAt = 0;
+  /** the category the MC is calling right now, for the stream's own title */
+  private get categoryTitle(): string {
+    const cats = script.ball.categories as unknown as { title: string; lines: BLine[] }[];
+    const id = this.cur?.id ?? '';
+    for (const c of cats) if (c.lines.some(l => l.id === id)) return c.title;
+    return '';
+  }
   get invited(): boolean { return this.phase === 'invited'; }
   get phaseId(): string { return this.phase; }
   /** true from the moment the device comes off — `E4Shell` reads it to decide
@@ -232,6 +264,11 @@ export class E4Ball {
     roomBed.set(script.room.bed, 4.0);
     setCommonsLamps(this.label?.lamps ?? 0);
   }
+  /** the lamps and the people arrive together — the people from nine lamps on */
+  private crowd(n: number): void {
+    setCommonsLamps(n);
+    setCommonsFigures(n >= 9);
+  }
 
   update(dt: number): void {
     if (this.phase === 'idle' || this.phase === 'done') return;
@@ -241,7 +278,7 @@ export class E4Ball {
     if (this.phase === 'arrival') {
       this.labelT += dt;
       if (this.label && this.labelT >= this.label.hold) {
-        if (this.labels.length > 0) { this.nextLabel(); setCommonsLamps(this.label?.lamps ?? 0); }
+        if (this.labels.length > 0) { this.nextLabel(); this.crowd(this.label?.lamps ?? 0); }
         else { this.phase = 'off'; this.t = 0; }
       }
       return;
@@ -256,6 +293,10 @@ export class E4Ball {
         this.version++;
         this.onDeviceOff?.();
         this.phase = 'ball';
+        // ⚑ 2026-09-12 — THE ROOM GOES. She is somewhere else now: the hall,
+        //   the stage, the screen, the crowd (commonsWorld.ts). The building
+        //   comes back when the device stops.
+        setCommonsWorld(true);
         this.ballT = 0;
         // ⚑ THE WALL COMES DOWN with the device. The same recording, unfiltered:
         //   she is not hearing it from somewhere else any more.
@@ -267,6 +308,7 @@ export class E4Ball {
     }
 
     this.ballT += dt;
+    this.landingK = Math.max(0, this.landingK - dt / 2.4);
     this.stutterClock(dt);
 
     if (this.phase === 'after') {
@@ -304,7 +346,10 @@ export class E4Ball {
   private afterT = 0;
 
   private nextLine(): void {
+    this.lineSeq++;
     this.cur = this.queue.shift() ?? null;
+    if (this.cur?.flare) this.landingK = 1;
+    this.lineAt = this.ballT;
     this.lineT = 0;
     this.spoke = false;
     if (!this.cur) return;
@@ -368,7 +413,9 @@ export class E4Ball {
   }
 
   /** every lamp goes out — the era is over, not the community */
-  clearLamps(): void { setCommonsLamps(0); }
+  clearLamps(): void { setCommonsLamps(0); setCommonsFigures(false); }
+  /** the device has stopped: the hall goes and the room she was in comes back */
+  leaveWorld(): void { setCommonsWorld(false); this.clearLamps(); }
 
   /**
    * The press. With coordinates and the invitation up, it is the chip or
@@ -401,27 +448,28 @@ export class E4Ball {
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, x: number, y: number, w: number): void {
     if (this.phase === 'invited') {
       /**
-       * ⚑ THE CARD. The apparatus's own panel grammar (`labelField`'s bracket),
-       * because the message arrives THROUGH the apparatus — and its second
-       * line is the apparatus admitting the mute did not hold. The chip is the
-       * headset's grammar, the same as L's answers were. No decline exists.
+       * ⚑ THE CARD — a notification, the way a message arrives on a device in
+       * 2026: a light card on the dark glass, the sender's avatar, the line,
+       * and the apparatus's own admission underneath that the mute did not
+       * hold. One pill. No decline exists, and nothing narrates the choice.
        */
       const inv = script.invite;
-      px(ctx, INVITE.x, INVITE.y, INVITE.w, INVITE.h, ERA4.panel);
-      px(ctx, INVITE.x, INVITE.y, INVITE.w, 1, ERA4.ruleHi);
-      px(ctx, INVITE.x, INVITE.y + INVITE.h - 1, INVITE.w, 1, ERA4.rule);
-      px(ctx, INVITE.x, INVITE.y, 1, INVITE.h, ERA4.rule);
-      px(ctx, INVITE.x + INVITE.w - 1, INVITE.y, 1, INVITE.h, ERA4.rule);
-      setFont(ctx, 9);
-      ctx.fillStyle = ERA4.meta;
-      ctx.fillText(script.commons.name, INVITE.x + 12, INVITE.y + 10);
+      roundRect(ctx, INVITE.x, INVITE.y + 2, INVITE.w, INVITE.h, 10, ERA4.panelEdge);
+      roundRect(ctx, INVITE.x, INVITE.y, INVITE.w, INVITE.h, 10, WEB.card);
+      avatar(ctx, INVITE.x + 14, INVITE.y + 14, 26, WEB.primary, inv.from.slice(0, 1));
+      setFont(ctx, 8);
+      ctx.fillStyle = WEB.muted;
+      ctx.fillText(script.commons.name + '  ·  now', INVITE.x + 50, INVITE.y + 12);
       setFont(ctx, 11);
-      ctx.fillStyle = ERA4.text;
-      ctx.fillText(inv.from + ' — ' + inv.line, INVITE.x + 12, INVITE.y + 30);
-      setFont(ctx, 9);
-      ctx.fillStyle = ERA4.dim;
-      ctx.fillText(inv.meta, INVITE.x + 12, INVITE.y + 50);
-      chip(ctx, JOIN.x, JOIN.y, JOIN.w, JOIN.h, inv.chip, { live: true });
+      ctx.fillStyle = WEB.ink;
+      ctx.fillText(inv.from, INVITE.x + 50, INVITE.y + 24);
+      setFont(ctx, 12);
+      let y = INVITE.y + 48;
+      for (const row of wrapText(ctx, inv.line, INVITE.w - 28)) { ctx.fillText(row, INVITE.x + 14, y); y += 16; }
+      setFont(ctx, 8);
+      ctx.fillStyle = WEB.muted;
+      ctx.fillText(inv.meta, INVITE.x + 14, INVITE.y + INVITE.h - 48);
+      webButton(ctx, JOIN.x, JOIN.y, inv.chip, 'primary', JOIN.w);
       return;
     }
     if (!this.label) return;
@@ -435,6 +483,106 @@ export class E4Ball {
     }
     // the stutter: the overlay still trying, small, in its old corner
     labelField(ctx, x, y, w, this.label.object, this.label.text);
+  }
+
+  /**
+   * ⚑ THE CORRECTION SESSION — what the glass shows from the moment the
+   * device goes on until Junie's card. The agent's own environment: a calm
+   * field, a horizon, the photograph it restored framed on the wall, its mark,
+   * one line, and a "preparing" bar that never completes. It is the program's
+   * fifth step, and it never begins; what begins is the card.
+   */
+  drawSession(ctx: CanvasRenderingContext2D, W: number, H: number, t: number): void {
+    const S = script.session;
+    px(ctx, 0, 0, W, H, ERA4.field);
+    // a horizon and a floor: the environment is a room the size of the glass
+    px(ctx, 0, Math.round(H * 0.58), W, H, ERA4.panel);
+    px(ctx, 0, Math.round(H * 0.58), W, 1, ERA4.ruleHi);
+    // the photograph, framed on the wall — the one it made
+    const pw = 150, ph = 93, fx = Math.round(W * 0.16), fy = Math.round(H * 0.22);
+    px(ctx, fx - 6, fy - 6, pw + 12, ph + 12, ERA4.panelHi);
+    photograph(ctx, fx, fy, pw, ph, true, 3);
+    // the mark and the line
+    avatar(ctx, Math.round(W * 0.56), fy, 24, WEB.primary, 'S');
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA4.meta;
+    ctx.fillText(S.mark + '  ·  ' + S.title, Math.round(W * 0.56) + 32, fy + 2);
+    setFont(ctx, 12);
+    ctx.fillStyle = ERA4.textHi;
+    let y = fy + 36;
+    for (const row of wrapText(ctx, S.line, Math.round(W * 0.38))) { ctx.fillText(row, Math.round(W * 0.56), y); y += 17; }
+    // preparing: a bar that fills slowly and is not going to get there
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA4.dim;
+    ctx.fillText(S.preparing, Math.round(W * 0.56), y + 8);
+    const bw = Math.round(W * 0.34);
+    pill(ctx, Math.round(W * 0.56), y + 22, bw, 5, ERA4.rule);
+    pill(ctx, Math.round(W * 0.56), y + 22, Math.round(bw * Math.min(0.82, t / (S.seconds * 1.3))), 5, ERA4.lDim);
+    visorEdge(ctx, W, H);
+  }
+
+  /**
+   * ⚑ THE STREAM — `transjesus.str`, drawn on the window above the desk. The
+   * picture is the piece's own photograph of a ball (variant 2 — the crowd in
+   * silhouette, one person with the floor), under a title bar with the LIVE
+   * dot and the count, the category the MC is calling as its caption, and a
+   * chat column of nobody's words. No voice, ever.
+   */
+  drawStream(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const ST = script.stream;
+    px(ctx, 0, 0, W, H, ERA4.field);
+    if (!this.streaming) return;
+    const t = this.ballT;
+    const cw = 96, pw = W - cw - 4, ph = H - 18 - 4;
+    // the picture: a broadcast that cuts between shots
+    streamScene(ctx, 2, 20, pw, ph, t, streamShot(t), this.landingK);
+    // the title bar: LIVE blinking, the mark, the count ticking
+    px(ctx, 0, 0, W, 18, ERA4.panel);
+    if (Math.floor(t * 1.5) % 2 === 0) px(ctx, 8, 6, 6, 6, WEB.danger);
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA4.textHi;
+    ctx.fillText(ST.live, 18, 5);
+    ctx.fillStyle = ERA4.text;
+    ctx.fillText(ST.mark, 46, 5);
+    const watching = (38 + Math.floor((Math.sin(t * 0.21) + 1) * 4.5)) + ' watching';
+    ctx.fillStyle = ERA4.dim;
+    ctx.fillText(watching, W - 8 - Math.ceil(ctx.measureText(watching).width), 5);
+    // the lower third: the category, sliding in when it changes
+    const title = this.categoryTitle;
+    if (title) {
+      const since = this.ballT - this.lineAt;
+      const k = Math.min(1, since / 0.5);
+      setFont(ctx, 8);
+      const tw = Math.ceil(ctx.measureText(title).width) + Math.ceil(ctx.measureText(ST.categoryPrefix).width) + 30;
+      const lx = 8 - Math.round((1 - k) * (tw + 20));
+      roundRect(ctx, lx, H - 24, tw, 16, 3, ERA4.panel);
+      px(ctx, lx, H - 24, 3, 16, PLACE.textileHi);
+      ctx.fillStyle = ERA4.meta;
+      ctx.fillText(ST.categoryPrefix, lx + 8, H - 20);
+      ctx.fillStyle = ERA4.textHi;
+      ctx.fillText(title, lx + 8 + Math.ceil(ctx.measureText(ST.categoryPrefix).width) + 8, H - 20);
+    }
+    // the chat column: lines arriving, hearts rising
+    px(ctx, W - cw - 2, 18, cw + 2, H - 18, ERA4.panel);
+    setFont(ctx, 8);
+    const chat = ST.chat as string[];
+    const n = Math.floor(t * 0.9);
+    const slide = Math.round((t * 0.9 % 1) * 17);
+    ctx.save(); ctx.beginPath(); ctx.rect(W - cw, 18, cw, H - 18); ctx.clip();
+    for (let k = 0; k < 10; k++) {
+      const m = chat[(n + k) % chat.length];
+      ctx.fillStyle = k === 9 ? ERA4.textHi : k > 6 ? ERA4.text : ERA4.dim;
+      ctx.fillText(m, W - cw + 4, 26 + k * 17 - slide);
+    }
+    ctx.restore();
+    for (let k = 0; k < 6; k++) {
+      const life = ((t * 0.7 + k * 0.37) % 1);
+      const hx = W - 18 - ((k * 11) % 20), hy = H - 10 - Math.round(life * (H - 40));
+      ctx.save(); ctx.globalAlpha = (1 - life) * (this.landingK > 0.2 ? 1 : 0.5);
+      ctx.fillStyle = PLACE.textileHi;
+      ctx.fillText('♥', hx, hy);
+      ctx.restore();
+    }
   }
 
   // ── the subtitle (frame chrome — see the file header) ─────────────────────
@@ -490,11 +638,12 @@ export class E4Ball {
       this.labels = [];
       this.label = ARRIVAL[ARRIVAL.length - 1];
       this.labelT = 0;
-      setCommonsLamps(this.label.lamps ?? 0);
+      this.crowd(this.label.lamps ?? 0);
       this.version++;
       return;
     }
-    setCommonsLamps(41);
+    this.crowd(41);
+    setCommonsWorld(true);
     // everything below is past the point where the device comes off
     this.label = null;
     this.onDeviceOff?.();
