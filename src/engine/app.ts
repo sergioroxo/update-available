@@ -24,6 +24,7 @@ const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
+import { mountCloseMonitor, type CloseMonitor } from '../room/closeMonitor';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
@@ -47,6 +48,8 @@ const SCREEN = { w: 0.4, h: 0.3, x: 0, y: 1.08, z: 0 };
 const WITNESS = { w: 1.6, h: 1.2, x: 0, y: 1.5, z: 3.4 };
 /** seated eye position at the desk */
 const EYE = { x: 0, y: 1.16, z: 0.7 };
+/** the rooms' own sky — what the Close lerps away from, and what leaving it restores */
+const ROOM_SKY = new pc.Color(0.05, 0.04, 0.03);
 /** the power button on the CRT (S1.0 power-on beat — the SHIPPED build's own
  *  gesture, `os.isOff`; reinterp never enters that phase, and its own optional
  *  early power-press is retired, decision doc §3) */
@@ -521,7 +524,7 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
 
   const camera = new pc.Entity('camera');
   camera.addComponent('camera', {
-    clearColor: new pc.Color(0.05, 0.04, 0.03),
+    clearColor: ROOM_SKY.clone(),
     fov: 42,
     nearClip: 0.05
   });
@@ -642,6 +645,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let ceiling: CeilingWitness | null = null;
   let cluster: ClusterShell | null = null;
   let cloud: PointCloud | null = null;
+  let closeMonitor: CloseMonitor | null = null;
   let sendRt: SendRuntime | null = null;
   let movementNodes: MovementNodes | null = null;
   // R28-2b: the tape system's pure logic (src/narrative/tapes.ts, mirrors
@@ -661,6 +665,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
 
     cloud = buildPointCloud(app);
+    // ⚑ 2026-09-12: Daniel's monitor, lit in the Close — wired below, once
+    //   `jumpToEraSettled` and the room lists exist (`leaveClose`)
+    closeMonitor = mountCloseMonitor(app);
     // the SEND seam (master script §4). HISTORICAL WRONG CLAIM: "no beat fires
     // it". S82 corrected that by inspection: the spine offers s1/s2 on E2's
     // ordinary path; s3/s4 remain inaccessible on Daniel's black E3 CRT. The
@@ -2697,6 +2704,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // (clicking a marker on the floor, nowhere near the screen).
       const p = toDesktop(e);
       if (p) { // the monitor is the UI; everywhere else is the room
+        // ⚑ 2026-09-12: in the Close the same glass is Daniel's Restart card
+        if (closeMonitor?.on) { closeMonitor.press(p.x, p.y); return; }
         os.handleClick(p.x, p.y);
         return;
       }
@@ -3043,10 +3052,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (relocLeg && !camMove) advanceRelocation();
       // ⚑ the Close's four legs hand over the same way; `hold` is the one
       //   without a camera move, so it runs on its own small clock
-      if (closeStage === 'hold') {
+      if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled') {
         closeHoldT += dt;
-        if (closeHoldT >= CLOSE_HOLD_SECONDS) advanceClose();
+        const cap = closeStage === 'lead' ? CLOSE_LEAD_SECONDS
+          : closeStage === 'hold' ? CLOSE_HOLD_SECONDS : CLOSE_MONITOR_AFTER_SECONDS;
+        if (closeHoldT >= cap) advanceClose();
       } else if (closeStage && !camMove) advanceClose();
+      // ⚑ the sky is LERPED, never cut (2026-09-12, "the light transition from
+      //   the room to the dark and then blue should be smoother")
+      if (skyLerp && camera.camera) {
+        skyLerp.t = Math.min(1, skyLerp.t + dt / skyLerp.seconds);
+        const k = skyLerp.t * skyLerp.t * (3 - 2 * skyLerp.t);
+        camera.camera.clearColor = new pc.Color(
+          skyLerp.from.r + (skyLerp.to.r - skyLerp.from.r) * k,
+          skyLerp.from.g + (skyLerp.to.g - skyLerp.from.g) * k,
+          skyLerp.from.b + (skyLerp.to.b - skyLerp.from.b) * k
+        );
+        if (skyLerp.t >= 1) skyLerp = null;
+      }
+      closeMonitor?.update(dt);
       // ⚑ S85: a driven leg has ended and nothing took it over, so a look taken
       // during it becomes simply the look you are holding. (A landing never
       // reaches here with an offset — endDescent/seatCut clear it — and a
@@ -3457,6 +3481,30 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  `enterClose`. These are the ids waiting to go, and the cloud's own opening
    *  is the clock. */
   let closeRoomPending: string[] | null = null;
+  /** everything the Close switches off (and `leaveClose` switches back on) */
+  const CLOSE_ROOM_ENTITIES = [
+    'era1-room',
+    'fluid-niche',
+    'cluster-shell',
+    'ceiling-witness',
+    'desktop-screen',
+    'witness-screen',
+    'movement-nodes',
+    'era3-device-workstation',
+    'era3-device-tablet',
+    'era3-device-phone',
+    // ⚑ AND ERA 4's TWO SURFACES (S101). They were missing, and the laptop's
+    //   lid is enabled for the whole of `e4` — so the era that ACTUALLY
+    //   reaches this function left a lit screen plane hanging in the
+    //   constellation after the room around it had gone. The visor's
+    //   per-frame gate already switches it off at the hand-off; naming it
+    //   here too means the Close does not depend on that gate still running.
+    'era3-device-laptop',
+    'era4-visor',
+    // ⚑ 2026-09-12: and the docked monitor. Added in S126, never added here;
+    //   Sérgio saw the browser floating in the constellation.
+    'era3-device-monitor'
+  ];
 
   /**
    * ⚑ THE BUILDING GOES WHILE SHE IS IN THE COMMONS (2026-09-12). Sérgio: the
@@ -3513,18 +3561,59 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * The review route (`?close=1`, the panel's button) begins at Daniel's seat
    * already, so `travel` is skipped when there is nowhere to travel from.
    */
-  type CloseStage = 'travel' | 'lookUp' | 'hold' | 'open' | null;
+  /**
+   * ⚑ AND SLOWER, AND SMOOTHER, AND WITH A WAY OUT (2026-09-12, Phase D).
+   * Sérgio, on the journey above: *"The stars cannot go down while you are
+   * still playing; it has to be with the glitch, and it has to be much slower…
+   * the light transition from the room to the dark and then blue should be
+   * smoother… Love the slow turning around."* So:
+   *   lead    · nothing moves for CLOSE_LEAD_SECONDS — the device has just
+   *             stopped, the room is back, the laptop reads the title. She is
+   *             given the beat to read it before she is taken anywhere.
+   *   hold    · the `close` rig is no longer a snap: it CROSSFADES over
+   *             CLOSE_LIGHTS_SECONDS (night falling on Daniel's room while she
+   *             looks at the ceiling), then the stars alone for the rest.
+   *   open    · the sky LERPS from the room's dark to the constellation's
+   *             night-blue over the whole opening (see `skyLerp`), and the
+   *             cloud's own `openSeconds` is 14 to match.
+   *   settled · the gaze is down, the panels are round her; after
+   *             CLOSE_MONITOR_AFTER_SECONDS Daniel's monitor lights in front
+   *             of her with the Restart card (`closeMonitor.ts`).
+   * The Close is entered from the glitch now (`E4Shell.finishHandOff`), not
+   * from a press on the laptop.
+   */
+  type CloseStage = 'lead' | 'travel' | 'lookUp' | 'hold' | 'open' | 'settled' | null;
   let closeStage: CloseStage = null;
   let closeHoldT = 0;
-  const CLOSE_TRAVEL_SECONDS = 24;
-  const CLOSE_LOOKUP_SECONDS = 16;
-  const CLOSE_HOLD_SECONDS = 4;
-  const CLOSE_OPEN_SECONDS = 14;
+  const CLOSE_LEAD_SECONDS = 6;
+  const CLOSE_TRAVEL_SECONDS = 26;
+  const CLOSE_LOOKUP_SECONDS = 18;
+  const CLOSE_LIGHTS_SECONDS = 8;
+  const CLOSE_HOLD_SECONDS = 13;
+  const CLOSE_OPEN_SECONDS = 16;
+  const CLOSE_MONITOR_AFTER_SECONDS = 20;
   const CLOSE_STARS_PITCH = 72;
   const CLOSE_SKY_PITCH = 10;
+  const CLOSE_MONITOR_PITCH = -6;
+  const CLOSE_MONITOR_TILT_SECONDS = 8;
+  let skyLerp: { from: pc.Color; to: pc.Color; t: number; seconds: number } | null = null;
 
   function advanceClose(): void {
     if (!cluster || !cloud) { closeStage = null; return; }
+    if (closeStage === 'lead') {
+      const dx = camPos.x - EYE.x, dz = camPos.z - EYE.z;
+      if (Math.hypot(dx, dz) > 0.5) {
+        closeStage = 'travel';
+        // the bezier control point sits over the partition between the rooms,
+        // raised: the path bows up-and-over, the same stroke every relocation in
+        // the piece takes, and she sees the building once more on the way out
+        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 },
+          CLOSE_TRAVEL_SECONDS, true, { x: (camPos.x + EYE.x) / 2, y: 2.15, z: EYE.z });
+        return;
+      }
+      // already in Daniel's room: begin with the eyes rising
+      closeStage = 'travel';
+    }
     if (closeStage === 'travel') {
       closeStage = 'lookUp';
       startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_STARS_PITCH, yaw: 0 },
@@ -3535,21 +3624,58 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ the lights go out ON the stars, not before the eyes start rising —
       //   measured: with the rig applied at the start of lookUp the whole rise
       //   was through a black room, and a ceiling you cannot see is not a
-      //   ceiling. She looks up in Daniel's lit room; then it is night.
+      //   ceiling. She looks up in Daniel's lit room; then it is night — and
+      //   night FALLS (an 8 s crossfade), it is not switched.
       closeStage = 'hold'; closeHoldT = 0;
-      cluster.applyRig('close', false);
+      cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
       return;
     }
     if (closeStage === 'hold') {
       closeStage = 'open';
-      // Round 18: never black — the constellation sits in a night-blue sky
-      if (camera.camera) camera.camera.clearColor = closeBackdropColor();
+      // Round 18: never black — the constellation sits in a night-blue sky;
+      // 2026-09-12: and it gets there over the opening, not on a frame
+      if (camera.camera) {
+        skyLerp = { from: camera.camera.clearColor.clone(), to: closeBackdropColor(), t: 0, seconds: CLOSE_OPEN_SECONDS };
+      }
       cloud.show();
       startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_SKY_PITCH, yaw: 0 },
         CLOSE_OPEN_SECONDS, true);
       return;
     }
-    if (closeStage === 'open') closeStage = null;
+    if (closeStage === 'open') { closeStage = 'settled'; closeHoldT = 0; return; }
+    if (closeStage === 'settled') {
+      closeStage = null;
+      // ⚑ the monitor lights, and the gaze comes down to it — conducted, slow,
+      //   the last move in the piece. Measured: at 0.7 m the CRT's glass spans
+      //   −18° to +6° of the eye line, so the card's last row was under the
+      //   frame at the sky pitch; at −6° the whole glass is in it.
+      closeMonitor?.show();
+      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_MONITOR_PITCH, yaw: 0 },
+        CLOSE_MONITOR_TILT_SECONDS, true);
+    }
+  }
+
+  /**
+   * ⚑ LEAVING THE CLOSE — the Restart card's era buttons. The sky goes, the
+   * monitor goes, every room entity the Close switched off comes back, the
+   * room's own sky colour returns, and the settled jump does the rest exactly
+   * as `?era=` does. *Start again* is `location.reload()`: the piece stores
+   * nothing, so a reload IS the restart — nothing to wipe, nothing kept.
+   */
+  function leaveClose(era: EraKey): void {
+    if (!cluster || !cloud) return;
+    cloud.hide();
+    closeMonitor?.hide();
+    closeStage = null;
+    skyLerp = null;
+    camMove = null;
+    for (const id of CLOSE_ROOM_ENTITIES) {
+      const e = app.root.findByName(id);
+      if (e instanceof pc.Entity) e.enabled = true;
+    }
+    closeRoomPending = null;
+    if (camera.camera) camera.camera.clearColor = ROOM_SKY.clone();
+    jumpToEraSettled(era);
   }
 
   /**
@@ -3608,48 +3734,22 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ if the Close is asked for while the world is still up, the world goes
     //   first and the room comes back for the journey out of it
     setCommonsWorld(false);
-    closeRoomPending = [
-      'era1-room',
-      'fluid-niche',
-      'cluster-shell',
-      'ceiling-witness',
-      'desktop-screen',
-      'witness-screen',
-      'movement-nodes',
-      'era3-device-workstation',
-      'era3-device-tablet',
-      'era3-device-phone',
-      // ⚑ AND ERA 4's TWO SURFACES (S101). They were missing, and the laptop's
-      //   lid is enabled for the whole of `e4` — so the era that ACTUALLY
-      //   reaches this function left a lit screen plane hanging in the
-      //   constellation after the room around it had gone. The visor's
-      //   per-frame gate already switches it off at the hand-off; naming it
-      //   here too means the Close does not depend on that gate still running.
-      'era3-device-laptop',
-      'era4-visor',
-      // ⚑ 2026-09-12: and the docked monitor. Added in S126, never added here;
-      //   Sérgio saw the browser floating in the constellation.
-      'era3-device-monitor'
-    ];
+    closeRoomPending = CLOSE_ROOM_ENTITIES.slice();
     clearLookOffset();
     camMove = null;
     tween = null;
     // the device has stopped by the time the Close is asked for in play; a
     // review that starts mid-era must not carry a worn visor into the journey
     os.e4?.debugStopDevice();
-    const dx = camPos.x - EYE.x, dz = camPos.z - EYE.z;
-    if (Math.hypot(dx, dz) > 0.5) {
-      closeStage = 'travel';
-      // the bezier control point sits over the partition between the rooms,
-      // raised: the path bows up-and-over, the same stroke every relocation in
-      // the piece takes, and she sees the building once more on the way out
-      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 },
-        CLOSE_TRAVEL_SECONDS, true, { x: (camPos.x + EYE.x) / 2, y: 2.15, z: EYE.z });
-    } else {
-      // already in Daniel's room: begin with the eyes rising
-      closeStage = 'travel';
-      advanceClose();
-    }
+    // ⚑ 2026-09-12: the journey begins with a still beat, not a move
+    closeStage = 'lead'; closeHoldT = 0;
+  }
+
+  if (closeMonitor) {
+    closeMonitor.onEra = (era) => leaveClose(era);
+    closeMonitor.onAgain = () => { window.location.reload(); };
+    // read-only probe, like __os: the walk aims at the card's rects through it
+    (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;
   }
 
   if (options.reinterp) {

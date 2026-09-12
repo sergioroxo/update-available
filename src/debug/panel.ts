@@ -406,7 +406,7 @@ const E4_REVIEW: Array<[string, string]> = [
   ['3 · the careful pause', 'e4Pause'],
   ['4 · the Commons — Junie\'s invitation, Go in', 'e4Invite'],
   ['5 · the update fails — the glitch', 'e4Glitch'],
-  ['6 · the device stops — the laptop, Restart', 'closeUpdate']
+  ['6 · the device stops — the update fails, the Close begins', 'closeUpdate']
 ];
 
 const ERAS: Array<['e1' | 'e2' | 'e3' | 'e4', string]> = [

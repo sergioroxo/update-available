@@ -129,7 +129,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       if (f.onStage) {
         // the one with the floor: a slow walk along the stage and back
         x = STAGE.x - 0.3 + Math.cos(t * 0.17) * 0.3;
-        z = STAGE.z + Math.sin(t * 0.25) * 1.0;   // a slow walk, a metre either way
+        z = STAGE.z + Math.sin(t * 0.25) * 0.6;   // a slow walk — ⚑ 0.6 m either way, not 1.0: from the 'by the stage' marker she walked out of frame
       }
       const base = (f.onStage ? STAGE.y + STAGE.h : 0.02) + rise;
       // half-sizes: a body 0.62 of the height and the width given; a head a

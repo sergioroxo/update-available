@@ -417,8 +417,10 @@ export interface ClusterShell {
    *  for the undriven path (?descent=0, review jumps): everything happens at
    *  once, exactly as it did before the relocation existed. */
   morphToEra(era: EraKey, animate: boolean, plan?: RelocationPlan | null): void;
-  /** apply a named rig directly (the Close uses 'close') */
-  applyRig(name: string, animate: boolean): void;
+  /** apply a named rig directly (the Close uses 'close'). `seconds` lengthens
+   *  the crossfade for the one place it must read as night falling, not as a
+   *  rig change (the Close's `hold`). */
+  applyRig(name: string, animate: boolean, seconds?: number): void;
   /** S61: land the current transition NOW, wherever it had got to — the
    *  relocation's skip (any input, per the comfort law) needs the space
    *  finished as well as the camera seated, or the player is left in a
@@ -725,11 +727,11 @@ export function buildClusterShell(
   /** true only between Malta and the next authored rig change — see liftE3() */
   let e3Lifted = false;
 
-  function applyRig(name: string, animate: boolean): void {
+  function applyRig(name: string, animate: boolean, seconds?: number): void {
     if (name === '_note') return;
     const rig = (clusterData.rigs as unknown as Record<string, Rig | undefined>)[name];
     if (!rig) return;
-    rigFadeSeconds = RIG_FADE_SECONDS;
+    rigFadeSeconds = seconds ?? RIG_FADE_SECONDS;
     e3Lifted = false; // any authored rig change ends the beat — see liftE3()
     fadeToRig(rig, animate);
   }

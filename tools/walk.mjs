@@ -195,7 +195,7 @@ const PREFER = [
  * menu's; `pause_yes` is the era's, and the difference between them is the
  * difference between quitting the piece and playing it.
  */
-const FORBIDDEN = /^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$/i;
+const FORBIDDEN = /^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-/i;
 
 /** ⚑ see the launch below — order: --chrome, the environment, the platform */
 function resolveChrome() {
@@ -693,6 +693,20 @@ const LAP = { w: 224, h: 140 };
     const lapRects = e4 && Array.isArray(e4.laptopHits) ? e4.laptopHits : [];
     for (const r of lapRects) {
       add(r.id, 'laptop', r, onPlane('era3-device-laptop', r.x + r.w / 2, r.y + r.h / 2, LAP.w, LAP.h));
+    }
+    /**
+     * ⚑ DANIEL'S MONITOR IN THE CLOSE (2026-09-12, Phase D). The Restart card
+     * on the 1997 CRT, lit after the constellation settles: its rects are
+     * published on `__closeMonitor.hits` and the glass is Room 1's own screen
+     * pose (`onMonitor`). They are listed so the map shows the piece's last
+     * surface as aimable — and they are FORBIDDEN to press: `close-again`
+     * reloads the page and the era buttons leave the Close, and the walk's
+     * job ends at `spine: done`, not at starting the piece over.
+     */
+    const cm = window.__closeMonitor;
+    const cmRects = cm && cm.on && Array.isArray(cm.hits) ? cm.hits : [];
+    for (const r of cmRects) {
+      add(r.id, 'close-monitor', r, onMonitor(r.x + r.w / 2, r.y + r.h / 2, OS.w, OS.h));
     }
 
     const surfaced = new Set(targets.map((t) => t.surface));

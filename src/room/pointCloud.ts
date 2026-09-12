@@ -118,6 +118,10 @@ function segmentDistToOrigin(a: number[], b: number[]): number {
 export interface PointCloud {
   /** fade the constellation in (the room's own fade-out is the caller's rig) */
   show(): void;
+  /** ⚑ 2026-09-12: the Close can be LEFT now (Daniel's monitor's era buttons) —
+   *  the sky goes on one frame and the ceiling's stickers come back, so a
+   *  return to a room finds the room as it was */
+  hide(): void;
   readonly visible: boolean;
   /** 0→1 as the ceiling's stars open out into the sky */
   readonly open: number;
@@ -149,11 +153,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     if (r > P.panel.radius + 0.15) return true;      // behind the card: fine
     if (Math.abs(y - P.panel.y) > P.panel.h * 0.85) return true; // above or below it
     const th = Math.atan2(x, -z);
+    const halfSpan = Math.atan2(P.panel.w / 2, P.panel.radius) + 0.05;   // the card's own half-angle, plus a hand
     for (const b of panelBearings) {
       let d = th - b;
       while (d > Math.PI) d -= Math.PI * 2;
       while (d < -Math.PI) d += Math.PI * 2;
-      if (Math.abs(d) < 0.30) return false;          // ~17° either side of the card
+      if (Math.abs(d) < halfSpan) return false;       // either side of the card
     }
     return true;
   }
@@ -246,18 +251,18 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     const m = group.length;
     group.forEach((idx, j) => {
       const t = m > 1 ? j / (m - 1) - 0.5 : 0;
-      const th = ((bearings[era - 1] ?? 0) + t * P.arcSpreadDeg) * Math.PI / 180;
-      // ⚑ THE ANCHORS HANG UNDER THEIR PANEL, never across it. Two rows, the
-      //   outer end of the arc dropping further, so a card reads as a card with
-      //   its citations beneath it rather than as text with stars through it.
-      const lift = -(0.07 + 0.10 * (j % 2) + 0.09 * Math.abs(t) * 2);
+      // ⚑ THE ANCHORS HANG BESIDE THEIR PANEL (2026-09-12), to its right and
+      //   a little below its foot — see cluster.json `_docCluster`. Two rows,
+      //   scattered, so a cluster reads as a cluster and not as a line.
+      const th = ((bearings[era - 1] ?? 0) + P.clusterOffsetDeg + t * P.arcSpreadDeg) * Math.PI / 180;
+      const y = P.clusterY + (j % 2 ? -0.5 : 0.5) * P.clusterYSpread * (0.6 + rng() * 0.4);
       const jitter = 1 + (rng() - 0.5) * P.apparatusRadiusJitter;
       const r = P.apparatusRadius * jitter;
       // ⚑ bearing 0 is AHEAD of the seat: PlayCanvas looks down -Z, and the
       //   Close seats the camera at yaw 0, so era 1 is the first thing there.
       apparatusNodes[idx] = [
         r * Math.sin(th),
-        r * lift,
+        y,
         -r * Math.cos(th),
         1
       ];
@@ -505,11 +510,36 @@ export function buildPointCloud(app: pc.Application): PointCloud {
    * labels get (grayscale emissive × the texture, opacity ramped by the fade).
    * ──
    */
-  type Panel = { era: number; years: string; title: string; lines: string[] };
+  type Panel = { era: number; years: string; title: string; text: string; status: string; image?: string };
   const panels = ((network as { panels?: Panel[] }).panels ?? []).slice(0, 4);
   const panelMat = new pc.StandardMaterial();
-  const CELL_W = 1024;
-  const CELL_H = 512;
+  /**
+   * ⚑ 2026-09-12 (Phase D): the card carries the era's ROOM now. Sérgio: *"You
+   * see the 4 panels around you that have the explanation and image of the
+   * Era."* Each cell is the plate on the left (baked by
+   * `tools/bake-close-plates.mjs` to `public/assets/close/era{N}.jpg`, drawn
+   * into the atlas as it arrives — asset load, not runtime network), one
+   * paragraph on the right in a reading face, and the panel's dossier status
+   * in the corner. The card is wider for it (`cluster.json` panel.w 2.2 m) and
+   * the atlas cell 1536 × 768. The text is set once, at build; the picture is
+   * composited in when its bytes arrive and the texture re-uploaded ONCE.
+   */
+  const CELL_W = 1536;
+  const CELL_H = 768;
+  const PLATE = { x: 40, y: 40, w: 600, h: 688 };
+  const TEXT_X = PLATE.x + PLATE.w + 48;
+  const TEXT_W = CELL_W - TEXT_X - 44;
+  const READING_FACE = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  const wrap = (c: CanvasRenderingContext2D, text: string, maxW: number): string[] => {
+    const out: string[] = [];
+    let line = '';
+    for (const w of text.split(' ')) {
+      const t = line ? line + ' ' + w : w;
+      if (c.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t;
+    }
+    if (line) out.push(line);
+    return out;
+  };
   if (panels.length > 0) {
     const pcan = document.createElement('canvas');
     pcan.width = CELL_W;
@@ -521,21 +551,27 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       panels.forEach((panel, i) => {
         const y0 = i * CELL_H;
         // the plate: the sky's own colour, thickened — a card, not a window
-        pc2.globalAlpha = 0.62;
+        pc2.globalAlpha = 0.72;
         pc2.fillStyle = P.backdrop;
         pc2.fillRect(0, y0 + 8, CELL_W, CELL_H - 16);
         pc2.globalAlpha = 1;
         // one rule along the top, in the web's own blue
         pc2.fillStyle = P.link;
         pc2.fillRect(0, y0 + 8, CELL_W, 5);
-        pc2.font = 'bold 62px monospace';
+        // where the picture goes: a dark well until it arrives
+        pc2.fillStyle = P.backdrop;
+        pc2.fillRect(PLATE.x, y0 + PLATE.y, PLATE.w, PLATE.h);
+        pc2.font = 'bold 54px monospace';
         pc2.fillStyle = P.labelColor;
-        pc2.fillText(`${panel.years}  ·  ${panel.title}`, 44, y0 + 88);
-        pc2.font = '38px monospace';
+        pc2.fillText(`${panel.years}  ·  ${panel.title}`, TEXT_X, y0 + 96);
+        pc2.font = `34px ${READING_FACE}`;
         pc2.fillStyle = (P.warm as string[])[2];
-        panel.lines.slice(0, 5).forEach((line, li) => {
-          pc2.fillText(line, 44, y0 + 190 + li * 66, CELL_W - 88);
-        });
+        const rows = wrap(pc2, panel.text, TEXT_W);
+        rows.forEach((row, li) => pc2.fillText(row, TEXT_X, y0 + 168 + li * 44));
+        // the dossier status, small, where a card keeps its stamp
+        pc2.font = '26px monospace';
+        pc2.fillStyle = P.link;
+        pc2.fillText(panel.status, TEXT_X, y0 + CELL_H - 50);
       });
       const ptex = new pc.Texture(app.graphicsDevice, {
         width: pcan.width, height: pcan.height, format: pc.PIXELFORMAT_RGBA8, mipmaps: false,
@@ -543,6 +579,25 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         addressU: pc.ADDRESS_CLAMP_TO_EDGE, addressV: pc.ADDRESS_CLAMP_TO_EDGE
       });
       ptex.setSource(pcan);
+      // the room plates, composited in as they load — one re-upload each
+      panels.forEach((panel, i) => {
+        if (!panel.image) return;
+        const img = new Image();
+        img.onload = (): void => {
+          const y0 = i * CELL_H;
+          // cover-fit the picture into its well
+          const s = Math.max(PLATE.w / img.width, PLATE.h / img.height);
+          const dw = img.width * s, dh = img.height * s;
+          pc2.save();
+          pc2.beginPath();
+          pc2.rect(PLATE.x, y0 + PLATE.y, PLATE.w, PLATE.h);
+          pc2.clip();
+          pc2.drawImage(img, PLATE.x + (PLATE.w - dw) / 2, y0 + PLATE.y + (PLATE.h - dh) / 2, dw, dh);
+          pc2.restore();
+          ptex.upload();
+        };
+        img.src = panel.image;
+      });
       panelMat.useLighting = false;
       panelMat.diffuse = new pc.Color(0, 0, 0);
       panelMat.emissive = new pc.Color(0, 0, 0);
@@ -759,6 +814,15 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       openK = 0;
       applyOpen();
       updateBillboards();
+    },
+    hide(): void {
+      visible = false;
+      root.enabled = false;
+      openK = 0;
+      level = 0;
+      applyFade();
+      ceilingMat.opacity = CEIL.opacity;
+      ceilingMat.update();
     },
     /** how far the sky has opened, 0→1 — the room holds until this is well under
      *  way, so the stars are still ON a ceiling when they start to move */

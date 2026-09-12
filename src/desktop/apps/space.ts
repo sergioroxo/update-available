@@ -66,6 +66,7 @@ import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import space from '../../../data/dialog/s4_space.json';
 import ballScript from '../../../data/dialog/s4_ball.json';
+import updates from '../../../data/strings/updates.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
 import { E4Ball } from './ball';
@@ -107,8 +108,11 @@ const LABEL = { x: 262, y: 44, w: 234 } as const;
  * Quantised like every other moving thing on this surface, so a failing picture
  * costs twelve texture uploads and not one per frame.
  */
-const GLITCH_SECONDS = 1.2;
-const GLITCH_STEPS = 12;
+/** ⚑ 2026-09-12: 1.2 s → 3.2 s. Sérgio: the Close "has to be with the glitch,
+ *  and it has to be much slower." The tear is the last thing she sees on the
+ *  glass, and at 1.2 s it was a flicker between the world and the desk. */
+const GLITCH_SECONDS = 3.2;
+const GLITCH_STEPS = 16;
 
 /**
  * ⚑ `ball` IS THE THIRD STAGE, ADDED BY S79, and it is not a cosmetic state:
@@ -163,8 +167,8 @@ const LAPTOP_BAR = 13;
  * (Era 1's monitor, `era4-visor`, `era3-device-workstation`) — none of them
  * this one. Resizing it lost the Close.
  */
-const LAPTOP_W = 224;
-const LAPTOP_H = 140;
+export const LAPTOP_W = 224;
+export const LAPTOP_H = 140;
 
 export class E4Shell {
   /** ⚑ S130 — the era opens with the device READY, not with L on the laptop. */
@@ -414,7 +418,7 @@ export class E4Shell {
 
   /** where the restart sits on the laptop's canvas; one place, so the draw and
    *  the hit test cannot drift apart the way `kit.ts`'s did */
-  private closeButtonRect(W: number, H: number): { x: number; y: number; w: number; h: number } {
+  closeButtonRect(W: number, H: number): { x: number; y: number; w: number; h: number } {
     // ⚑ sized to the LABEL, not to a guess. The first pass hardcoded 104 px for a
     //   string that did not fit it, and the text ran off the end of its own button.
     const w = 78; const h = 16;
@@ -478,14 +482,9 @@ export class E4Shell {
    *  desk is lit from then on. */
   pressLaptop(x?: number, y?: number): void {
     // ⚑ after the hand-off the laptop is the CLOSE's surface, not L's
-    if (this.handedOff) {
-      if (x === undefined || y === undefined) return;
-      const r = this.closeButtonRect(LAPTOP_W, LAPTOP_H);
-      if (x < r.x || x > r.x + r.w || y < r.y - 4 || y > r.y + r.h) return;
-      ledger.e4Space.push({ id: 'laptop', outcome: 'read', witness: space.corrupt.witness });
-      this.onCloseRequest?.();
-      return;
-    }
+    // ⚑ after the hand-off the laptop reports and offers nothing: the Close has
+    //   already begun (`finishHandOff`). A press here is a press on a report.
+    if (this.handedOff) return;
     if (this.stageNow !== 'laptop') return;
     // ⚑ S123 — while the browser owns the lid, a press is a TAB, not the next
     //   line. The laptop beat has not begun yet and must not be advanced by
@@ -580,31 +579,25 @@ export class E4Shell {
     px(ctx, 0, 0, W, H, ERA4.field);
     this.laptopHits = [];
     if (this.handedOff) {
+      /**
+       * ⚑ THE MACHINE'S REPORT OF ITS OWN DEFEAT (2026-09-12). The `Restart`
+       * card that sat here is gone from the path (the Close begins with the
+       * glitch — `finishHandOff`); what the lid says now is the title, in the
+       * words `data/strings/updates.json`'s close ritual has always carried on
+       * its dark beat — a beat that played on the visor, which by then is on
+       * its stand with its glass off. So the sentence moves to the one screen
+       * still lit on the desk, and stays there until the room goes. Nothing on
+       * it is pressable. The `closeButtonRect` code is kept, unused.
+       */
       this.laptopBar(ctx, W, space.corrupt.sub);
-      setFont(ctx, 11);
+      setFont(ctx, 14);
       ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(space.corrupt.line, 12, LAPTOP_BAR + 5);
-      // ⚑ 8 px, not 9, and tighter rows: everything on this card has to clear
-      //   the button above, which has to clear the frame's own bottom edge.
-      setFont(ctx, 8);
+      let ny = LAPTOP_BAR + 22;
+      for (const row of wrapLaptop(ctx, updates.close.restarting, W - 24)) { ctx.fillText(row, 12, ny); ny += 18; }
+      setFont(ctx, 9);
       ctx.fillStyle = ERA4.dim;
-      let ny = LAPTOP_BAR + 20;
-      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 24)) { ctx.fillText(row, 12, ny); ny += 10; }
-      // ⚑ THE ASK, IN THE CLOSE UPDATE'S OWN WORDS, on a card — a notice on her
-      //   machine with a single thing to press, exactly like the four before it.
-      const r = this.closeButtonRect(W, H);
-      px(ctx, 8, r.y - 6, W - 16, r.h + 12, ERA4.panel);
-      px(ctx, 8, r.y - 6, W - 16, 1, ERA4.rule);
-      setFont(ctx, 10);
-      ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(space.corrupt.ask, 14, r.y + 3);
-      px(ctx, r.x, r.y, r.w, r.h, ERA4.field);
-      px(ctx, r.x, r.y, r.w, 1, ERA4.l);
-      const tw = ctx.measureText(space.corrupt.button).width;
-      ctx.fillText(space.corrupt.button, r.x + Math.round((r.w - tw) / 2), r.y + 4);
-      // ⚑ registered where it is DRAWN, from the same rect the hit test uses, so
-      //   the two cannot drift apart the way kit.ts's did.
-      this.laptopHits.push({ ...r, id: 'close-restart' });
+      ny += 6;
+      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 24)) { ctx.fillText(row, 12, ny); ny += 12; }
       return;
     }
     const done = this.laptopLine >= space.laptop.lines.length;
@@ -826,6 +819,18 @@ export class E4Shell {
     this.version++;
     // ⚑ 2026-09-12: and the world goes with the device — the room comes back
     this.ball.leaveWorld();
+    /**
+     * ⚑ AND THE CLOSE BEGINS HERE, NOT ON A PRESS (2026-09-12). Sérgio: *"The
+     * stars cannot go down while you are still playing; it has to be with the
+     * glitch."* The laptop used to carry a `Restart` card after this and the
+     * Close waited on it — one more press, on a machine that had just failed
+     * her. Now the device stopping IS the failure being reported: the same
+     * update door as the four before it (`os.ts` arms `close` and accepts it on
+     * the spot), and the laptop says the one sentence the machine has left.
+     * Nobody presses anything; the journey to Daniel's room starts by itself.
+     */
+    ledger.e4Space.push({ id: 'laptop', outcome: 'read', witness: space.corrupt.witness });
+    this.onCloseRequest?.();
   }
 
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {

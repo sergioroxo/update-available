@@ -319,7 +319,7 @@
   "labelColor": "#E8C9A0",
   "labelHeight": 0.058,
   "_docTheOpening": "⚑ S101 — THE STARS ON THE CEILING BECOME THE NETWORK (Sérgio, 2026-09-02). The constellation no longer cuts in at full size: it starts as the small dense patch of glow-stars over the seat — `ceiling`, below, which is a real merged mesh sitting on the room's ceiling for the whole piece — and opens out around the player over `openSeconds`. Nothing is spawned and nothing is swapped: it is ONE root, lerped from the ceiling anchor at a small uniform scale to the sky's own centre at full size, so the stars a child put up are literally the nodes the network is made of. Uniform scale on purpose — the labels are quads on this root and a squashed axis would squash the text.",
-  "openSeconds": 9.0,
+  "openSeconds": 14.0,
   "_docOpenSeconds": "⚑ 2026-09-12: 2.8 → 9.0. The Close is a journey now (app.ts enterClose): the eyes are on the stickers for four seconds before this starts, so the opening has to be slow enough to be SEEN leaving the ceiling — at 2.8 s it was a cut with a blur on it.",
   "ceilingAnchor": [
    0,
@@ -342,14 +342,18 @@
    180,
    270
   ],
-  "arcSpreadDeg": 41,
+  "arcSpreadDeg": 26,
+  "_docCluster": "⚑ 2026-09-12 (Phase D): each era's anchors hang BESIDE its panel now, not under it — Sérgio: 'next to it is the cluster with the connected stars with the data used.' `clusterOffsetDeg` is how far round from the panel's bearing the arc is centred (to the right, in reading order: panel, its cluster, the next panel); `clusterY` its centre height and `clusterYSpread` its scatter, both metres relative to the seat's eye — BELOW the card's bottom edge on purpose, so the three hand-over links between eras (straight chords) pass under the next card rather than across its text.",
+  "clusterOffsetDeg": 37,
+  "clusterY": -0.40,
+  "clusterYSpread": 0.34,
   "frameCapRadius": 0.62,
   "panel": {
-   "_doc": "The four information panels, one per era, hanging over each era's own arc — one atlas, one mesh, one draw call. They face the centre and do NOT billboard: the panel is where it is, and you turn to read it. Sizes are metres at `radius` from the seat; a 1.62 m card at 2.95 m is about 31° of the frame, which is a page held at reading distance.",
+   "_doc": "The four information panels, one per era, hanging over each era's own arc — one atlas, one mesh, one draw call. They face the centre and do NOT billboard: the panel is where it is, and you turn to read it. Sizes are metres at `radius` from the seat; a 2.2 m card at 3.05 m is about 40° of the frame — wide, because since 2026-09-12 it carries the era's room plate on its left and a paragraph on its right (pointCloud.ts).",
    "radius": 3.05,
    "y": 0.46,
-   "w": 1.62,
-   "h": 0.81
+   "w": 2.2,
+   "h": 1.1
   },
   "driftDegPerSec": 0.9,
   "fadeSeconds": 2.2
