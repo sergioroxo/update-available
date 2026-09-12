@@ -689,6 +689,7 @@ const LAP = { w: 224, h: 140 };
      * handed over. Same shape as the workstation's own rects, same helper.
      */
     const e4 = os && os.e4;
+    const program = !!(e4 && e4.browser && e4.browser.programMode && e4.browser.programMode !== 'free');
     const lapRects = e4 && Array.isArray(e4.laptopHits) ? e4.laptopHits : [];
     for (const r of lapRects) {
       add(r.id, 'laptop', r, onPlane('era3-device-laptop', r.x + r.w / 2, r.y + r.h / 2, LAP.w, LAP.h));
@@ -844,7 +845,7 @@ const LAP = { w: 224, h: 140 };
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
-      screenHash, domText, audio, surfaces, silent, quiet, roomDesync, pose,
+      screenHash, domText, audio, surfaces, silent, quiet, roomDesync, pose, program,
       targets, dropped, moves, ledCount, ledList, ledger: led
     };
   }, { VW: VIEW.width, VH: VIEW.height });
@@ -1169,7 +1170,10 @@ const LAP = { w: 224, h: 140 };
      * headset) does the rest. A player who has read two tabs does not keep
      * pressing the browser; they put the device on.
      */
-    if (MIN_TABS !== null && lastState && lastState.era === 'e4') {
+    // ⚑ 2026-09-12: the tabs are steps on rails now (ERA4_OVERHAUL §2); the
+    //   budget only ever applied to the optional browser, so it stands down
+    //   once the program has begun
+    if (MIN_TABS !== null && lastState && lastState.era === 'e4' && !lastState.program) {
       const read = lastState.ledList.filter((e) => e.indexOf('e4Space:tab:') === 0).length;
       if (read >= MIN_TABS) live = live.filter((t) => t.surface !== 'e4.browser');
     }

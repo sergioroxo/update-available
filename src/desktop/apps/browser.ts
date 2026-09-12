@@ -31,6 +31,10 @@ import { px, setFont, wrapText } from '../theme/chrome';
 import { browserChrome, restoring, photograph, CHROME, ADDR } from '../theme/era4';
 import { ledger } from '../../state/ledger';
 import script from '../../../data/dialog/s4_boot.json';
+import {
+  WEB, roundRect, roundEdge, pill, webCard, webButton, chipRow, progressBar,
+  avatar, messageBar, thumb, compareSplit, type TabLook
+} from '../theme/era4';
 import body from '../../../data/dialog/s4_browser.json';
 
 /** ⚑ the five tabs she left plus the one she did not. Only `search` draws a
@@ -39,6 +43,23 @@ import body from '../../../data/dialog/s4_browser.json';
 type TabId = 'search' | 'chat' | 'record' | 'photos' | 'care' | 'extra';
 interface Tab { id: TabId; mark: string; title: string; notHers?: boolean; address?: string }
 const TABS = script.tabs as unknown as Tab[];
+interface Step { id: TabId; n: number; title: string; ask: string; button?: string; done?: string; witness?: string; console: string }
+interface FileItem { name: string; kind: 'folder' | 'file'; meta: string }
+const PROGRAM = body.program as unknown as {
+  chosen: string; typingSeconds: number; agentMark: string; agentAddress: string;
+  greeting: string[]; begin: string; beginWitness: string; stepLabel: string; locked: string;
+  steps: Step[];
+  files: { title: string; path: string; items: FileItem[]; cancel: string; restoring: string;
+    before: string; after: string; saved: string; restoringSeconds: number;
+    upload: string; stages: string[]; adjusted: string[]; savedButton: string };
+  console: { mark: string; restored: string; typing: string; managed: string; ready: string; worn: string };
+};
+/** the agent moves to the next step this long after the press */
+const ADVANCE_SECONDS = 1.4;
+/** the page area under the toolbar, for painting the app ground */
+const H_PAGE = 384;
+/** …except after the Restoration, whose before/after is the point: it holds */
+const RESULT_HOLD_SECONDS = 4.5;
 
 /** under four seconds. E2's splash is 23.7 because 2003 made you watch it. */
 const RESTORE_SECONDS = 2.4;
@@ -100,6 +121,55 @@ export class E4Browser {
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
 
+  // ── ⚑ THE PROGRAM (2026-09-12) — see s4_browser.json `program._doc` ─────────
+  /** free: the restored session, hers · typing: the search being finished for
+   *  her · agent: Second Thoughts introducing itself · program: the five steps */
+  private mode: 'free' | 'typing' | 'agent' | 'program' = 'free';
+  private typeT = 0;
+  /** seconds since the agent's page opened — its bubbles arrive on this */
+  private agentT = 0;
+  /** index into program.steps; the live step. The last step is the headset. */
+  private step = 0;
+  private stepDone = new Set<string>();
+  /** seconds since the live step was completed — the agent moves on after a beat */
+  private advanceT = -1;
+  /** the Restoration exercise's own little machine */
+  private picker: 'closed' | 'open' | 'restoring' | 'result' = 'closed';
+  private pickerT = 0;
+
+  get programMode(): string { return this.mode; }
+  /** the steps are done and the headset is the only thing left */
+  get programDone(): boolean {
+    return this.mode === 'program' && this.step >= PROGRAM.steps.length - 1;
+  }
+  /** the line L's console on the laptop shows — see E4Shell.drawLaptop */
+  get consoleLine(): string {
+    const c = PROGRAM.console;
+    if (this.mode === 'free') return this.phase === 'open' ? c.restored : '';
+    if (this.mode === 'typing' || this.mode === 'agent') return c.typing;
+    if (this.programDone) return c.ready;
+    return PROGRAM.steps[this.step]?.console ?? '';
+  }
+  get consoleMark(): string { return this.mode === 'free' ? PROGRAM.console.mark : PROGRAM.agentMark; }
+  get consoleLineWorn(): string { return PROGRAM.console.worn; }
+  /** review only: land past the steps, headset wearable */
+  debugFinishProgram(): void {
+    this.mode = 'program';
+    for (const st of PROGRAM.steps) this.stepDone.add(st.id);
+    this.step = PROGRAM.steps.length - 1;
+    this.live = 0;
+    this.version++;
+  }
+  private stepTab(id: string): number { const i = TABS.findIndex(t => t.id === id); return i < 0 ? 0 : i; }
+  private completeStep(): void {
+    const st = PROGRAM.steps[this.step];
+    if (!st || this.stepDone.has(st.id)) return;
+    this.stepDone.add(st.id);
+    if (st.witness) ledger.e4Space.push({ id: `step:${st.id}`, outcome: 'done', witness: st.witness });
+    this.advanceT = 0;
+    this.version++;
+  }
+
   /** the session begins: the settle, the boot line, the restore, the tabs. */
   beginSession(settleSeconds = 0): void {
     if (this.phase !== 'dormant') return;
@@ -131,6 +201,10 @@ export class E4Browser {
   get liveTab(): TabId { return TABS[this.live]?.id ?? 'search'; }
 
   update(dt: number): void {
+    // ⚑ a surface that has stopped being pressable publishes nothing, even if
+    //   nothing redraws it: the walk found a stale `tab0` still advertised
+    //   through the whole finale and pressed it forty-five times (2026-09-12)
+    if (!this.pressable && this.hits.length) this.hits = [];
     if (this.phase === 'dormant') return;
     if (this.settleT > 0) { this.settleT = Math.max(0, this.settleT - dt); return; }
     this.t += dt;
@@ -143,6 +217,44 @@ export class E4Browser {
         this.file();
       }
       this.version++;
+      return;
+    }
+    // ── the program's clocks ──
+    if (this.mode === 'typing') {
+      this.typeT += dt;
+      this.version++;
+      if (this.typeT >= PROGRAM.typingSeconds + 0.6) { this.mode = 'agent'; this.agentT = 0; this.version++; }
+      return;
+    }
+    if (this.mode === 'agent') {
+      const before = this.agentT;
+      this.agentT += dt;
+      // repaint on each bubble and each dot, not each frame
+      if (Math.floor(before / 0.3) !== Math.floor(this.agentT / 0.3)) this.version++;
+    }
+    if (this.mode === 'program') {
+      if (this.advanceT >= 0) {
+        this.advanceT += dt;
+        const hold = PROGRAM.steps[this.step]?.id === 'photos' ? RESULT_HOLD_SECONDS : ADVANCE_SECONDS;
+        if (this.advanceT >= hold) {
+          this.advanceT = -1;
+          if (this.step < PROGRAM.steps.length - 1) {
+            this.step += 1;
+            this.live = this.stepTab(PROGRAM.steps[this.step].id);
+            this.picker = 'closed';
+          }
+          this.version++;
+        }
+      }
+      if (this.picker === 'restoring') {
+        this.pickerT += dt;
+        if (this.pickerT >= PROGRAM.files.restoringSeconds) {
+          this.picker = 'result';
+          this.enhanced = true;
+          this.version++;
+          this.completeStep();
+        }
+      }
       return;
     }
     // the address bar's cursor is the only thing that moves on a settled page
@@ -212,10 +324,37 @@ export class E4Browser {
     // ⚑ each tab shows its own address; only the search tab shows what she
     //   typed, and only it carries the cursor (2026-09-12, his review)
     const onSearch = this.liveTab === 'search';
-    const addr = this.phase !== 'open' ? '' : onSearch ? script.search.typed : (TABS[this.live]?.address ?? '');
-    const blink = this.phase === 'open' && onSearch && this.pressable && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
-    const rects = browserChrome(ctx, W, shown, this.live, addr, blink);
-    rects.forEach((r, i) => this.publish({ ...r, id: `tab${i}` }));
+    let addr = this.phase !== 'open' ? '' : onSearch ? script.search.typed : (TABS[this.live]?.address ?? '');
+    let blink = this.phase === 'open' && onSearch && this.pressable && this.mode === 'free'
+      && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
+    // ⚑ the search being finished FOR her: the typed six words, then the rest
+    //   of the sentence arriving a character at a time, then the agent's address
+    if (this.mode === 'typing') {
+      const k = Math.min(1, this.typeT / PROGRAM.typingSeconds);
+      const full = PROGRAM.chosen;
+      const n = script.search.typed.length + Math.floor((full.length - script.search.typed.length) * k);
+      addr = full.slice(0, n);
+      blink = true;
+    } else if ((this.mode === 'agent' || this.mode === 'program') && onSearch) {
+      addr = PROGRAM.agentAddress;
+    }
+    const looks: TabLook[] = shown.map((t) => {
+      if (this.mode !== 'program') return {};
+      const st = PROGRAM.steps.find(x => x.id === t.id);
+      if (!st) return { state: 'locked' };
+      const idx = PROGRAM.steps.indexOf(st);
+      return {
+        badge: String(st.n),
+        state: this.stepDone.has(st.id) ? 'done' : idx > this.step ? 'locked' : 'normal'
+      };
+    });
+    const rects = browserChrome(ctx, W, shown, this.live, addr, blink, looks);
+    rects.forEach((r, i) => {
+      // ⚑ in the program only the live step's tab (and the finished ones) are
+      //   controls; a locked step publishes nothing, so nothing can be aimed at it
+      if (this.mode === 'program' && looks[i]?.state === 'locked') return;
+      this.publish({ ...r, id: `tab${i}` });
+    });
 
     if (this.phase !== 'open') {
       // still coming back: the page under the chrome is empty and stays empty
@@ -226,6 +365,20 @@ export class E4Browser {
       //   s4_boot.json `_docPrivate`. It arrives with the last of her tabs.
       if (back >= TABS.length - 1) ctx.fillText(script.boot.private, ADDR.x + 2, ADDR.y + ADDR.h + 24);
       return;
+    }
+    if (this.mode === 'typing') { this.drawSearch(ctx, W); return; }
+    if (this.mode === 'agent') { this.drawAgent(ctx, W, H); return; }
+    if (this.mode === 'program') {
+      const st = PROGRAM.steps[this.step];
+      const bodyTop = this.drawStepBar(ctx, W, st);
+      switch (this.liveTab) {
+        case 'photos': this.drawRestoration(ctx, W, H, bodyTop); return;
+        case 'search': this.drawAgent(ctx, W, H, bodyTop); return;
+        case 'chat': this.drawChat(ctx, W, H, bodyTop); return;
+        case 'record': this.drawRecord(ctx, W, H, bodyTop); return;
+        case 'care': this.drawCare(ctx, W, H, bodyTop); return;
+        default: break;
+      }
     }
     switch (this.liveTab) {
       case 'search': this.drawSearch(ctx, W); break;
@@ -273,14 +426,282 @@ export class E4Browser {
       ctx.fillStyle = CHROME.ink;
       ctx.fillText(rows[i], ADDR.x + 24, top + 15 + i * 16);
     }
+    /**
+     * ⚑ 2026-09-12 — AND IT IS PRESSABLE NOW, AS ONE THING. The note above said
+     * "nothing here is pressable… making it clickable would turn a depiction of
+     * steering into a menu of it." Sérgio's review overruled the outcome and
+     * kept the principle: "when I press the almost-written search, nothing
+     * happens. Why? It should automatically happen." So the whole list is ONE
+     * control, not four: pressing it does not let her choose a completion — the
+     * engine chooses, and finishes the sentence for her. Steering, depicted, and
+     * then done to her.
+     */
+    if (this.mode === 'free') this.publish({ x: ADDR.x, y: top, w: W - ADDR.x * 2, h, id: 'search-open' });
+  }
+
+  /**
+   * ⚑ THE AGENT'S PAGE — a chat, because that is what such a thing looks like
+   * in 2026: an avatar, message bubbles arriving one after another, and a
+   * message bar at the bottom that is a PICTURE of a message bar. Nothing can
+   * be typed into it, ever (no free text anywhere in the piece); the only
+   * control is the one pill the last bubble carries. In the program it is the
+   * session's own page: the five steps as a checklist.
+   */
+  private drawAgent(ctx: CanvasRenderingContext2D, W: number, H: number, bodyTop?: number): void {
+    const top = bodyTop ?? ADDR.y + ADDR.h + 8;
+    px(ctx, 0, top - 8, W, H - top + 8, WEB.bg);
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
+    webCard(ctx, cx, top, cw, H - top - 14);
+    // the header: avatar, the mark, a live dot
+    avatar(ctx, cx + 12, top + 10, 22, WEB.primary, 'S');
+    setFont(ctx, 11);
+    ctx.fillStyle = WEB.ink;
+    ctx.fillText(PROGRAM.agentMark, cx + 42, top + 11);
+    setFont(ctx, 8);
+    ctx.fillStyle = WEB.muted;
+    px(ctx, cx + 42, top + 26, 5, 5, WEB.accent);
+    ctx.fillText('online', cx + 50, top + 23);
+    px(ctx, cx + 1, top + 40, cw - 2, 1, WEB.cardEdge);
+    let y = top + 52;
+    const bubble = (text: string, mine = false): void => {
+      setFont(ctx, 10);
+      const rows = wrapText(ctx, text, cw - 120).slice(0, 4);
+      const bw = Math.max(...rows.map(r => Math.ceil(ctx.measureText(r).width))) + 22;
+      const bh = rows.length * 13 + 12;
+      const bx = mine ? cx + cw - 12 - bw : cx + 42;
+      roundRect(ctx, bx, y, bw, bh, 8, mine ? WEB.accentSoft : WEB.chip);
+      ctx.fillStyle = WEB.ink;
+      rows.forEach((r, k) => ctx.fillText(r, bx + 11, y + 6 + k * 13));
+      y += bh + 6;
+    };
+    if (this.mode === 'agent') {
+      // the greeting arrives a bubble at a time
+      const shown = Math.min(PROGRAM.greeting.length, 1 + Math.floor(this.agentT / 0.9));
+      for (let k = 0; k < shown; k++) bubble(PROGRAM.greeting[k]);
+      if (shown < PROGRAM.greeting.length) {
+        // typing dots
+        roundRect(ctx, cx + 42, y, 34, 16, 8, WEB.chip);
+        const d = Math.floor(this.agentT / 0.3) % 3;
+        for (let k = 0; k < 3; k++) px(ctx, cx + 50 + k * 8, y + 6, 4, 4, k === d ? WEB.ink : WEB.faint);
+      } else {
+        const r = webButton(ctx, cx + 42, y + 2, PROGRAM.begin, 'primary', 84);
+        this.publish({ ...r, id: 'agent-begin' });
+      }
+    } else {
+      bubble(PROGRAM.console.managed);
+      // the checklist card inside the chat
+      const lx = cx + 42, lw = cw - 54;
+      roundEdge(ctx, lx, y, lw, 16 + PROGRAM.steps.length * 17, 6, WEB.cardEdge, WEB.card);
+      let ly = y + 9;
+      for (const st of PROGRAM.steps) {
+        const done = this.stepDone.has(st.id);
+        const cur = PROGRAM.steps[this.step] === st && !done;
+        roundRect(ctx, lx + 10, ly + 1, 9, 9, 4, done ? WEB.accent : cur ? WEB.primary : WEB.chip);
+        if (done) { ctx.fillStyle = WEB.card; setFont(ctx, 8); ctx.fillText('✓', lx + 11, ly); }
+        setFont(ctx, 10);
+        ctx.fillStyle = done ? WEB.muted : WEB.ink;
+        ctx.fillText(`${st.n}   ${st.title}`, lx + 26, ly);
+        if (cur) {
+          setFont(ctx, 8);
+          ctx.fillStyle = WEB.muted;
+          ctx.fillText(st.ask, lx + 26 + Math.ceil(ctx.measureText(`${st.n}   ${st.title}`).width) + 14, ly + 1);
+        }
+        ly += 17;
+      }
+    }
+    messageBar(ctx, cx + 12, top + (H - top - 14) - 34, cw - 24, `Message ${PROGRAM.agentMark}`);
+  }
+
+  /**
+   * ⚑ THE STEP HEADER — one strip under the toolbar, the same on every step:
+   * five segments showing where she is, "Step n of 5" and the agent's mark,
+   * the ask as a title, and the ONE control as a primary pill. The page's own
+   * content sits under it, which is what makes a step a tab rather than a new
+   * screen. Returns where the page body starts.
+   */
+  private drawStepBar(ctx: CanvasRenderingContext2D, W: number, st: Step): number {
+    const top = ADDR.y + ADDR.h + 6;
+    const h = 44;
+    px(ctx, 0, top, W, H_PAGE, WEB.bg);
+    px(ctx, 0, top, W, h, WEB.card);
+    px(ctx, 0, top + h - 1, W, 1, WEB.cardEdge);
+    const done = this.stepDone.has(st.id);
+    // the five segments
+    const segW = 26, segX = ADDR.x + 8;
+    PROGRAM.steps.forEach((x, k) => {
+      const fill = this.stepDone.has(x.id) ? WEB.accent : k === this.step ? WEB.primary : WEB.chip;
+      pill(ctx, segX + k * (segW + 3), top + 8, segW, 4, fill);
+    });
+    setFont(ctx, 8);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText(PROGRAM.stepLabel.replace('{n}', String(st.n)) + '  ·  ' + PROGRAM.agentMark, segX, top + 16);
+    setFont(ctx, 12);
+    ctx.fillStyle = WEB.ink;
+    ctx.fillText(done && st.done ? st.done : st.ask, segX, top + 27);
+    if (!done && st.button && !(st.id === 'photos' && this.picker !== 'closed')) {
+      const bw = Math.ceil(ctx.measureText(st.button).width) + 26;
+      const r = webButton(ctx, W - ADDR.x - 12 - Math.max(84, bw), top + 12, st.button, 'primary', 84);
+      this.publish({ ...r, id: `step-${st.id}` });
+    } else if (done) {
+      setFont(ctx, 9);
+      ctx.fillStyle = WEB.accentInk;
+      const t = '✓  done';
+      ctx.fillText(t, W - ADDR.x - 12 - Math.ceil(ctx.measureText(t).width), top + 18);
+    }
+    return top + h + 10;
+  }
+
+  /**
+   * ⚑ THE RESTORATION EXERCISE — Sérgio's mandatory step, and the one that
+   * shows what the system can do to a person. It is drawn as the AI photo tool
+   * it would be in 2026: a drop zone, presets, a shimmering progress with the
+   * stages it claims to be doing, and a before/after with a handle. "Upload"
+   * opens a file window that is a PICTURE of a file window (CLAUDE.md: the
+   * filter never takes file input, never asks a permission); she picks one of
+   * her own photographs; the site "restores" her from a pre-authored pair; the
+   * result is saved beside the original. Nothing announces what "restored"
+   * means — the two pictures do.
+   */
+  private drawRestoration(ctx: CanvasRenderingContext2D, W: number, H: number, top: number): void {
+    const F = PROGRAM.files;
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
+    const ch = H - top - 14;
+    webCard(ctx, cx, top, cw, ch);
+    // the tool's own header
+    avatar(ctx, cx + 12, top + 10, 20, WEB.accent, '✦');
+    setFont(ctx, 11);
+    ctx.fillStyle = WEB.ink;
+    ctx.fillText('Restoration', cx + 40, top + 10);
+    setFont(ctx, 8);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText('AI photo restore  ·  Photos', cx + 40, top + 22);
+    chipRow(ctx, cx + cw - 190, top + 12, ['Natural', 'Professional', 'Restored'], [false, false, true]);
+    px(ctx, cx + 1, top + 38, cw - 2, 1, WEB.cardEdge);
+    const by = top + 48;
+
+    if (this.picker === 'closed') {
+      // the drop zone: a dashed rounded well with the upload glyph, and her recents
+      const zx = cx + 16, zw = cw - 32, zh = 108;
+      roundRect(ctx, zx, by, zw, zh, 8, WEB.bg);
+      for (let d = 0; d < zw; d += 8) { px(ctx, zx + 4 + d, by, 4, 1, WEB.faint); px(ctx, zx + 4 + d, by + zh - 1, 4, 1, WEB.faint); }
+      for (let d = 0; d < zh; d += 8) { px(ctx, zx, by + 4 + d, 1, 4, WEB.faint); px(ctx, zx + zw - 1, by + 4 + d, 1, 4, WEB.faint); }
+      roundRect(ctx, zx + Math.round(zw / 2) - 14, by + 18, 28, 28, 14, WEB.chip);
+      setFont(ctx, 14);
+      ctx.fillStyle = WEB.primary;
+      ctx.fillText('↑', zx + Math.round(zw / 2) - 5, by + 24);
+      setFont(ctx, 10);
+      ctx.fillStyle = WEB.ink;
+      const l1 = 'Drop a photo here, or';
+      ctx.fillText(l1, zx + Math.round((zw - ctx.measureText(l1).width) / 2), by + 54);
+      const r = webButton(ctx, zx + Math.round(zw / 2) - 42, by + 72, F.upload, 'primary', 84);
+      this.publish({ ...r, id: 'step-photos' });
+      setFont(ctx, 8);
+      ctx.fillStyle = WEB.muted;
+      ctx.fillText('Recent', cx + 16, by + zh + 12);
+      const tv = [3, 1, 0];
+      tv.forEach((v, k) => thumb(ctx, cx + 16 + k * 66, by + zh + 24, 58, 36, v, false));
+      return;
+    }
+    if (this.picker === 'open') {
+      // the file window: a sidebar, a search pill, a grid of tiles, a footer
+      const w = Math.min(420, cw - 40), h = ch - 60;
+      const x = cx + Math.round((cw - w) / 2), y = top + 46;
+      ctx.save(); ctx.globalAlpha = 0.35; px(ctx, cx, top, cw, ch, WEB.ink); ctx.restore();
+      roundRect(ctx, x, y + 2, w, h, 8, WEB.faint);
+      roundEdge(ctx, x, y, w, h, 8, WEB.cardEdge, WEB.card);
+      setFont(ctx, 10);
+      ctx.fillStyle = WEB.ink;
+      ctx.fillText(F.title, x + 14, y + 8);
+      const sbw = 96;
+      px(ctx, x + sbw, y + 24, 1, h - 56, WEB.cardEdge);
+      setFont(ctx, 8);
+      ['Recents', 'Photos', 'Favourites', 'Shared'].forEach((n, k) => {
+        const on = k === 1;
+        if (on) roundRect(ctx, x + 8, y + 26 + k * 16, sbw - 16, 14, 4, WEB.accentSoft);
+        ctx.fillStyle = on ? WEB.accentInk : WEB.muted;
+        ctx.fillText(n, x + 16, y + 29 + k * 16);
+      });
+      pill(ctx, x + sbw + 12, y + 24, w - sbw - 24, 14, WEB.chip);
+      ctx.fillStyle = WEB.faint;
+      ctx.fillText('Search', x + sbw + 24, y + 27);
+      ctx.fillStyle = WEB.muted;
+      ctx.fillText(F.path, x + sbw + 12, y + 44);
+      // the tiles
+      const tw = 78, th = 48, gx = x + sbw + 12, gy = y + 56;
+      F.items.forEach((it, k) => {
+        const tx = gx + (k % 4) * (tw + 8), ty = gy + Math.floor(k / 4) * (th + 30);
+        if (it.kind === 'folder') {
+          roundRect(ctx, tx, ty, tw, th, 5, WEB.chip);
+          roundRect(ctx, tx + 24, ty + 14, 30, 22, 3, WEB.faint);
+          px(ctx, tx + 24, ty + 11, 12, 4, WEB.faint);
+        } else {
+          thumb(ctx, tx, ty, tw, th, k === 1 ? 3 : k === 2 ? 3 : 0, k === 3);
+        }
+        setFont(ctx, 8);
+        ctx.fillStyle = WEB.ink;
+        ctx.save(); ctx.beginPath(); ctx.rect(tx, ty + th, tw, 12); ctx.clip();
+        ctx.fillText(it.name, tx, ty + th + 4); ctx.restore();
+        ctx.fillStyle = WEB.muted;
+        ctx.fillText(it.meta, tx, ty + th + 14);
+        this.publish({ x: tx, y: ty, w: tw, h: th + 24, id: `file-${k}` });
+      });
+      // the footer: Cancel and Open, both drawn, neither doing anything — the
+      // step is mandatory and a tile is the press
+      px(ctx, x + 1, y + h - 32, w - 2, 1, WEB.cardEdge);
+      webButton(ctx, x + w - 156, y + h - 27, F.cancel, 'quiet', 64);
+      webButton(ctx, x + w - 84, y + h - 27, 'Open', 'disabled', 70);
+      return;
+    }
+    if (this.picker === 'restoring') {
+      const k = Math.min(1, this.pickerT / F.restoringSeconds);
+      thumb(ctx, cx + 16, by, 120, 74, 3, false);
+      setFont(ctx, 11);
+      ctx.fillStyle = WEB.ink;
+      ctx.fillText(F.restoring, cx + 150, by + 2);
+      progressBar(ctx, cx + 150, by + 20, cw - 170, k, this.pickerT);
+      const stages = F.stages as string[];
+      stages.forEach((st, n) => {
+        const on = k >= (n + 0.5) / stages.length, cur = !on && k >= n / stages.length;
+        roundRect(ctx, cx + 150, by + 36 + n * 14, 8, 8, 4, on ? WEB.accent : cur ? WEB.primary : WEB.chip);
+        setFont(ctx, 9);
+        ctx.fillStyle = on ? WEB.muted : cur ? WEB.ink : WEB.faint;
+        ctx.fillText(st, cx + 164, by + 34 + n * 14);
+      });
+      return;
+    }
+    // the result: the comparison with its handle, the chips, and the save line
+    // ⚑ a photograph's own proportions, and the handle THROUGH the figure —
+    //   at the card's full width the split fell beside her and neither half
+    //   showed the change (measured on the first plate). The figure stands at
+    //   0.56 of the frame; the split sits at 0.62 so both halves carry her.
+    const ph = Math.min(ch - 100, 176), pw = Math.round(ph * 1.6);
+    const px0 = cx + 16;
+    compareSplit(ctx, px0, by, pw, ph,
+      (c) => thumb(c, px0, by, pw, ph, 3, false, 6),
+      (c) => thumb(c, px0, by, pw, ph, 3, true, 6),
+      0.62, F.before, F.after);
+    // beside it: what was adjusted, and the save
+    const rx = px0 + pw + 16;
+    setFont(ctx, 9);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText('Adjusted', rx, by + 2);
+    let cy = by + 16;
+    for (const a of F.adjusted as string[]) {
+      cy = chipRow(ctx, rx, cy, [a], [true]) > 0 ? cy + 20 : cy;
+    }
+    webButton(ctx, rx, cy + 4, F.savedButton, 'disabled', 96);
+    setFont(ctx, 8);
+    ctx.fillStyle = WEB.muted;
+    for (const row of wrapText(ctx, F.saved, cw - (rx - cx) - 16).slice(0, 3)) { ctx.fillText(row, rx, cy + 32); cy += 10; }
   }
 
   /** ⚑ the transcript — fourteen months, read backwards. Her side of every
    *  exchange sits above the row it was chosen from, the unpicked options still
    *  greyed beside it. Nothing remarks on that. */
-  private drawChat(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const top = ADDR.y + ADDR.h + 12;
-    px(ctx, ADDR.x, top, W - ADDR.x * 2, H - top - 8, CHROME.field);
+  private drawChat(ctx: CanvasRenderingContext2D, W: number, H: number, bodyTop?: number): void {
+    const top = bodyTop ?? ADDR.y + ADDR.h + 12;
+    px(ctx, 0, top - 12, W, H - top + 12, WEB.bg);
+    webCard(ctx, ADDR.x + 8, top, W - ADDR.x * 2 - 16, H - top - 14);
     const es = body.chat.entries as Array<{
       when: string; who: string; text: string; chose?: number; offered?: string[];
       filed?: string; note?: string;
@@ -365,80 +786,96 @@ export class E4Browser {
     }
   }
 
-  /** the record as an account page: one field greyed, and a button that works
-   *  and changes nothing. */
-  private drawRecord(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const top = ADDR.y + ADDR.h + 12;
-    px(ctx, ADDR.x, top, W - ADDR.x * 2, H - top - 8, CHROME.field);
-    setFont(ctx, 11);
-    ctx.fillStyle = CHROME.ink;
-    ctx.fillText(body.record.title, ADDR.x + 14, top + 10);
-    let y = top + 32;
+  /** the record as an account page — a profile card, one field locked, and a
+   *  button that works and changes nothing. */
+  private drawRecord(ctx: CanvasRenderingContext2D, W: number, H: number, bodyTop?: number): void {
+    const top = bodyTop ?? ADDR.y + ADDR.h + 8;
+    px(ctx, 0, top - 8, W, H - top + 8, WEB.bg);
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
+    webCard(ctx, cx, top, cw, H - top - 14);
+    avatar(ctx, cx + 14, top + 12, 30, WEB.chip, 'M');
+    setFont(ctx, 12);
+    ctx.fillStyle = WEB.ink;
+    ctx.fillText(body.record.title, cx + 54, top + 12);
+    setFont(ctx, 8);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText('GraceOS account  ·  managed by your provider', cx + 54, top + 27);
+    px(ctx, cx + 1, top + 50, cw - 2, 1, WEB.cardEdge);
+    let y = top + 62;
     for (const r of body.record.rows as Array<{ k: string; v: string; note: string; locked?: boolean }>) {
       setFont(ctx, 9);
-      ctx.fillStyle = CHROME.hint;
-      ctx.fillText(r.k, ADDR.x + 14, y);
+      ctx.fillStyle = WEB.muted;
+      ctx.fillText(r.k, cx + 16, y + 1);
       setFont(ctx, 10);
-      ctx.fillStyle = r.locked ? CHROME.hint : CHROME.ink;
-      ctx.fillText(r.v, ADDR.x + 120, y - 1);
-      if (r.note) {
+      ctx.fillStyle = r.locked ? WEB.muted : WEB.ink;
+      ctx.fillText(r.v, cx + 130, y);
+      if (r.locked) {
+        // the lock, and the reason, as a chip — the sentence doing the work
         setFont(ctx, 8);
-        ctx.fillStyle = CHROME.hint;
-        ctx.fillText(r.note, ADDR.x + 190, y);
+        const t = '🔒 ' + r.note;
+        const tw = Math.ceil(ctx.measureText(t).width) + 14;
+        pill(ctx, cx + cw - 16 - tw, y - 2, tw, 15, WEB.chip);
+        ctx.fillStyle = WEB.muted;
+        ctx.fillText(t, cx + cw - 16 - tw + 7, y + 1);
+      } else if (r.note) {
+        setFont(ctx, 8);
+        ctx.fillStyle = WEB.muted;
+        ctx.fillText(r.note, cx + 300, y + 1);
       }
-      y += 18;
+      px(ctx, cx + 16, y + 15, cw - 32, 1, WEB.cardEdge);
+      y += 22;
     }
-    y += 6;
+    y += 4;
     const label = this.requested ? body.record.acted : body.record.action;
-    setFont(ctx, 9);
-    const bw = Math.ceil(ctx.measureText(label).width) + 20;
-    px(ctx, ADDR.x + 14, y, bw, 16, this.requested ? CHROME.bar : CHROME.tabLive);
-    ctx.fillStyle = this.requested ? CHROME.hint : CHROME.ink;
-    ctx.fillText(label, ADDR.x + 24, y + 3);
-    if (!this.requested) this.publish({ x: ADDR.x + 14, y, w: bw, h: 16, id: 'record-request' });
+    const r = webButton(ctx, cx + 16, y, label, this.requested ? 'disabled' : 'quiet');
+    if (!this.requested && this.mode !== 'program') this.publish({ ...r, id: 'record-request' });
     setFont(ctx, 8);
-    ctx.fillStyle = CHROME.hint;
-    ctx.fillText(body.record.priorRequest, ADDR.x + 14, y + 22);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText(body.record.priorRequest, cx + 16, y + 28);
   }
 
   /** four things already done for her, each defensible, each with a working
-   *  undo — and one muted contact that is the way into the ball. */
-  private drawCare(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const top = ADDR.y + ADDR.h + 12;
-    px(ctx, ADDR.x, top, W - ADDR.x * 2, H - top - 8, CHROME.field);
-    setFont(ctx, 9);
-    ctx.fillStyle = CHROME.hint;
-    ctx.fillText(body.care.intro, ADDR.x + 14, top + 8);
-    let y = top + 26;
+   *  undo — a timeline, the way a care log shows itself — and one muted
+   *  contact that is the way into the Commons. */
+  private drawCare(ctx: CanvasRenderingContext2D, W: number, H: number, bodyTop?: number): void {
+    const top = bodyTop ?? ADDR.y + ADDR.h + 8;
+    px(ctx, 0, top - 8, W, H - top + 8, WEB.bg);
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
+    webCard(ctx, cx, top, cw, H - top - 14);
+    setFont(ctx, 12);
+    ctx.fillStyle = WEB.ink;
+    ctx.fillText(body.care.title, cx + 16, top + 12);
+    setFont(ctx, 8);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText(body.care.intro, cx + 16, top + 27);
+    let y = top + 48;
     const items = body.care.items as Array<{ what: string; when: string; why: string; undo: string }>;
+    const lx = cx + 24;
+    px(ctx, lx + 3, y, 1, items.length * 34 + 20, WEB.cardEdge);   // the timeline's spine
     items.forEach((it, i) => {
       const done = this.undone.has(i);
+      roundRect(ctx, lx, y + 2, 7, 7, 3, done ? WEB.faint : WEB.accent);
       setFont(ctx, 10);
-      ctx.fillStyle = done ? CHROME.hint : CHROME.ink;
-      ctx.fillText(it.what, ADDR.x + 14, y);
+      ctx.fillStyle = done ? WEB.muted : WEB.ink;
+      ctx.fillText(it.what, lx + 18, y);
       setFont(ctx, 8);
-      ctx.fillStyle = CHROME.hint;
-      ctx.fillText(`${it.when} · ${it.why}`, ADDR.x + 14, y + 13);
-      if (!done) {
-        const w = Math.ceil(ctx.measureText(it.undo).width) + 14;
-        const bx = W - ADDR.x - 14 - w;
-        px(ctx, bx, y - 2, w, 14, CHROME.tabLive);
-        ctx.fillStyle = CHROME.ink;
-        ctx.fillText(it.undo, bx + 7, y + 1);
-        this.publish({ x: bx, y: y - 2, w, h: 14, id: `care${i}` });
+      ctx.fillStyle = WEB.muted;
+      ctx.fillText(`${it.when}  ·  ${it.why}`, lx + 18, y + 13);
+      if (!done && this.mode !== 'program') {
+        const r = webButton(ctx, cx + cw - 16 - 70, y - 4, it.undo, 'quiet', 70);
+        this.publish({ ...r, id: `care${i}` });
       }
-      y += 30;
+      y += 34;
     });
-    // ⚑ the invitation, sitting inside the muted list where it has been for six weeks
-    setFont(ctx, 9);
-    ctx.fillStyle = CHROME.ink;
-    ctx.fillText(`${body.care.invite.from} — "${body.care.invite.text}"`, ADDR.x + 14, y);
+    // the invitation, in the muted list where it has been for six weeks
+    roundRect(ctx, lx, y + 2, 7, 7, 3, WEB.faint);
+    setFont(ctx, 10);
+    ctx.fillStyle = WEB.ink;
+    ctx.fillText(`${body.care.invite.from} — "${body.care.invite.text}"`, lx + 18, y);
     setFont(ctx, 8);
-    ctx.fillStyle = CHROME.hint;
-    ctx.fillText(body.care.invite.when, ADDR.x + 14, y + 12);
-    setFont(ctx, 8);
-    ctx.fillStyle = CHROME.hint;
-    ctx.fillText(body.care.footer, ADDR.x + 14, H - 18);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText(body.care.invite.when, lx + 18, y + 13);
+    ctx.fillText(body.care.footer, cx + 16, H - 28);
   }
 
   /** the tab she did not open. Two of its lines are documentary. */
@@ -472,7 +909,7 @@ export class E4Browser {
     setFont(ctx, 9);
     ctx.fillStyle = CHROME.hint;
     ctx.fillText(body.photos.heading, ADDR.x + 14, top + 10);
-    photograph(ctx, ADDR.x + 14, top + 24, 150, 93, this.enhanced, 0);
+    photograph(ctx, ADDR.x + 14, top + 24, 150, 93, this.enhanced, 3);
     let y = top + 130;
     for (const f of body.photos.files as Array<{ name: string; when: string; note: string }>) {
       setFont(ctx, 9);
@@ -495,8 +932,45 @@ export class E4Browser {
   handleClick(x: number, y: number): boolean {
     if (this.phase === 'handed') return false;
     if (this.phase !== 'open') return true;   // the restore takes presses and eats them
+    if (this.mode === 'typing') return true;  // the engine is busy finishing her sentence
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (hit) {
+      // ── the takeover ──
+      if (this.mode === 'free' && (hit.id === 'search-open' || hit.id === 'tab0')) {
+        if (this.live !== 0) { this.openTab(0); }
+        this.mode = 'typing'; this.typeT = 0; this.live = 0; this.version++;
+        return true;
+      }
+      if (hit.id === 'agent-begin' && this.mode === 'agent') {
+        this.mode = 'program'; this.step = 0;
+        this.live = this.stepTab(PROGRAM.steps[0].id);
+        ledger.e4Space.push({ id: 'program', outcome: 'begun', witness: PROGRAM.beginWitness });
+        this.version++;
+        return true;
+      }
+      // ── the steps ──
+      if (this.mode === 'program') {
+        if (hit.id.startsWith('step-')) {
+          const st = PROGRAM.steps[this.step];
+          if (st && hit.id === `step-${st.id}`) {
+            if (st.id === 'photos') { this.picker = 'open'; this.version++; return true; }
+            if (st.id === 'record') this.requested = true;
+            this.completeStep();
+          }
+          return true;
+        }
+        if (hit.id.startsWith('file-') && this.picker === 'open') {
+          this.picker = 'restoring'; this.pickerT = 0; this.version++;
+          return true;
+        }
+        if (hit.id.startsWith('tab')) {
+          const i = Number(hit.id.slice(3));
+          // only a finished step or the live one; a locked tab published no rect
+          if (Number.isFinite(i) && TABS[i]) { this.live = i; this.version++; }
+          return true;
+        }
+        return true;
+      }
       if (hit.id.startsWith('tab')) {
         const i = Number(hit.id.slice(3));
         if (Number.isFinite(i) && TABS[i]) { this.openTab(i); return true; }

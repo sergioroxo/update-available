@@ -645,6 +645,39 @@ export function photograph(
   // the figure — a shape, no face, ever
   const fx = x + Math.round(w * (variant === 1 ? 0.42 : 0.56)) + skew;
   const fy = y + Math.round(h * (variant === 1 ? 0.30 : 0.22)) + tilt;
+  if (variant === 3) {
+    /**
+     * ⚑ THE RESTORATION PAIR (2026-09-12) — Sérgio: "the website makes you look
+     * 'cisgender'." So this variant is not a lighting pass; it is the figure
+     * rewritten to a template. HERS: hair to the shoulders, the top she wears in
+     * the room (PLACE.textileHi), two earrings. RESTORED: the hair cropped to a
+     * cap, the top in the library's grey, the earrings gone, the head a pixel
+     * wider each side. Still no face — the change is done to everything but the
+     * face, which is exactly what such a thing does. The window and the found
+     * light are the same as variant 0, so the two read as one photograph.
+     */
+    const sc = Math.max(1, Math.round(w / 150));
+    const hw = 14 * sc, hh = 14 * sc;
+    if (enhanced) {
+      px(ctx, fx - sc, fy, hw + 2 * sc, hh, skin);                      // head, squared
+      px(ctx, fx - 3 * sc, fy - 3 * sc, hw + 6 * sc, 6 * sc, ERA4.photoHair); // a cap of hair
+      px(ctx, fx - 5 * sc, fy + hh + sc, hw + 10 * sc, h - (fy - y) - hh - sc, ERA4.photoCloth);
+    } else {
+      px(ctx, fx - 6 * sc, fy - 3 * sc, hw + 12 * sc, 6 * sc, ERA4.photoHair); // hair, wide
+      px(ctx, fx - 6 * sc, fy, 4 * sc, hh + 14 * sc, ERA4.photoHair);          // …to the shoulders
+      px(ctx, fx + hw + 2 * sc, fy, 4 * sc, hh + 14 * sc, ERA4.photoHair);
+      px(ctx, fx, fy, hw, hh, skin);                                       // head
+      px(ctx, fx - sc, fy + 8 * sc, sc, 2 * sc, PLACE.sun);                // earrings
+      px(ctx, fx + hw, fy + 8 * sc, sc, 2 * sc, PLACE.sun);
+      px(ctx, fx - 4 * sc, fy + hh + sc, hw + 8 * sc, h - (fy - y) - hh - sc, PLACE.textileHi);
+    }
+    ctx.restore();
+    px(ctx, x - 1, y - 1, w + 2, 1, ERA4.photoFrame);
+    px(ctx, x - 1, y + h, w + 2, 1, ERA4.photoFrame);
+    px(ctx, x - 1, y - 1, 1, h + 2, ERA4.photoFrame);
+    px(ctx, x + w, y - 1, 1, h + 2, ERA4.photoFrame);
+    return;
+  }
   px(ctx, fx, fy, 14, 14, skin);                 // head
   px(ctx, fx - 2, fy - 3, 18, 6, ERA4.photoHair);
   px(ctx, fx - 4, fy + 15, 22, h - (fy - y) - 15, cloth); // shoulders down
@@ -703,11 +736,26 @@ export const CHROME = {
   fieldEdge: '#CFC4AA',
   ink: '#74492F',
   hint: '#B5A98C',
-  page: '#F3EAD8'
+  page: '#F3EAD8',
+  // ⚑ 2026-09-12 — THE PROGRAM'S OWN THREE. Sérgio: "the styling isn't very
+  // much Chrome like" and "the tabs serve no narrative purpose" — the second
+  // is answered by the steps, the first by the strip below. These are the
+  // toolbar's greys, a locked step's wash, and the one accent the agent wears.
+  toolbar: '#F5F4ED',    // the toolbar the live tab merges into (Chrome's white)
+  locked: '#D9CDB6',     // a step not yet reached: washed, unpressable
+  accent: '#5DCAA5',     // ERA4.lDim — the agent's mark, and a step that is done
+  button: '#74492F',     // a filled control, the one thing on the page that asks
+  buttonInk: '#F5F4ED'
 } as const;
 
-export const TAB = { h: 20, w: 74, gap: 3, x: 6, y: 5 } as const;
-export const ADDR = { h: 18, y: 28, x: 8 } as const;
+/** ⚑ 2026-09-12 — taller strip, a real toolbar row under it. TAB.h 20 → 24
+ *  so the favicon and the step number both fit; ADDR moves down with it. */
+export const TAB = { h: 24, w: 96, gap: 2, x: 8, y: 6 } as const;
+export const ADDR = { h: 22, y: 34, x: 8 } as const;
+
+/** what a tab is, in the program: `locked` cannot be pressed, `done` is
+ *  finished, `live` is the one in front; a `badge` is the step's number */
+export interface TabLook { state?: 'normal' | 'locked' | 'done'; badge?: string }
 
 /**
  * The tab strip and the omnibox. Returns one rect per tab so the draw and the
@@ -724,47 +772,113 @@ export const ADDR = { h: 18, y: 28, x: 8 } as const;
  */
 export function browserChrome(
   ctx: CanvasRenderingContext2D, W: number,
-  tabs: { title: string }[], live: number, address: string, showCursor: boolean
+  tabs: { title: string }[], live: number, address: string, showCursor: boolean,
+  looks: TabLook[] = []
 ): Rect[] {
-  const barH = ADDR.y + ADDR.h + 7;
-  px(ctx, 0, 0, W, barH, CHROME.bar);
+  /**
+   * ⚑ 2026-09-12 — RE-CUT AGAIN, and this time against the thing itself.
+   * Sérgio, on the deployed build: "the styling isn't very much Chrome like."
+   * What a 2026 browser actually has, read off one: a tab strip on a darker
+   * band, the live tab a rounded shape in the TOOLBAR'S colour so the two read
+   * as one surface; a `+` after the last tab; a toolbar row with back, forward
+   * and reload at the left, a pill-shaped omnibox in the middle with a lock,
+   * and at the right a star, an extensions square, a profile circle and the
+   * three dots. Every one of those is drawn now, in the era's own palette, and
+   * NONE of them is pressable — the only controls on this surface are the tabs
+   * and the page.
+   *
+   * ⚑ AND THE TABS CARRY THE PROGRAM. `looks[i]` says whether a tab is a step
+   * that is locked (washed, no ink), done (a filled dot), or open, and what
+   * number it wears. Nothing else on the strip changes; a step is a tab.
+   */
+  const stripH = TAB.y + TAB.h;
+  const barH = ADDR.y + ADDR.h + 6;
+  px(ctx, 0, 0, W, stripH, CHROME.bar);
+  px(ctx, 0, stripH, W, barH - stripH, CHROME.toolbar);
+  px(ctx, 0, barH - 1, W, 1, CHROME.fieldEdge);
   const rects: Rect[] = [];
-  // ⚑ tabs shrink to fit, the way a real browser's do. A fixed width silently
-  // dropped the last two on a narrow screen — and the sixth is the beat.
-  const tw = Math.min(TAB.w, Math.floor((W - TAB.x * 2 - (tabs.length - 1) * TAB.gap) / Math.max(1, tabs.length)));
+  const tw = Math.min(TAB.w, Math.floor((W - TAB.x * 2 - 28 - (tabs.length - 1) * TAB.gap) / Math.max(1, tabs.length)));
   for (let i = 0; i < tabs.length; i++) {
     const x = TAB.x + i * (tw + TAB.gap);
+    const look = looks[i] ?? {};
     const on = i === live;
-    // a 2026 tab: a soft-cornered slab, the live one lifted out of the bar
-    px(ctx, x + 1, TAB.y, tw - 2, TAB.h, on ? CHROME.tabLive : CHROME.tab);
-    px(ctx, x, TAB.y + 1, tw, TAB.h - 1, on ? CHROME.tabLive : CHROME.tab);
-    if (on) px(ctx, x, TAB.y + TAB.h - 2, tw, 2, CHROME.tabLive);
-    // the favicon: one dot, the thing every tab in the world has
-    px(ctx, x + 7, TAB.y + 7, 5, 5, on ? CHROME.tabInkLive : CHROME.hint);
+    const locked = look.state === 'locked';
+    const fill = on ? CHROME.toolbar : locked ? CHROME.locked : CHROME.tab;
+    // a rounded tab: the slab, then the two top corners knocked off, and the
+    // live one poured into the toolbar with no seam under it
+    px(ctx, x + 2, TAB.y, tw - 4, TAB.h, fill);
+    px(ctx, x + 1, TAB.y + 1, tw - 2, TAB.h - 1, fill);
+    px(ctx, x, TAB.y + 3, tw, TAB.h - 3, fill);
+    if (on) px(ctx, x, TAB.y + TAB.h - 1, tw, 2, CHROME.toolbar);
+    // the favicon — a dot, or the step's own state
+    const ink = on ? CHROME.tabInkLive : locked ? CHROME.barLo : CHROME.tabInk;
+    if (look.state === 'done') {
+      px(ctx, x + 8, TAB.y + 8, 7, 7, CHROME.accent);
+    } else {
+      px(ctx, x + 9, TAB.y + 9, 5, 5, locked ? CHROME.barLo : on ? CHROME.tabInkLive : CHROME.hint);
+    }
     setFont(ctx, 8);
-    ctx.fillStyle = on ? CHROME.tabInkLive : CHROME.tabInk;
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 16, TAB.y, tw - 22, TAB.h); ctx.clip();
-    ctx.fillText(tabs[i].title, x + 16, TAB.y + 6);
+    ctx.fillStyle = ink;
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 19, TAB.y, tw - (look.badge ? 34 : 26), TAB.h); ctx.clip();
+    ctx.fillText(tabs[i].title, x + 19, TAB.y + 8);
     ctx.restore();
+    if (look.badge) {
+      // the step number, right-aligned in the tab, the size of a badge
+      setFont(ctx, 8);
+      const bw = Math.ceil(ctx.measureText(look.badge).width) + 6;
+      px(ctx, x + tw - bw - 5, TAB.y + 7, bw, 11, look.state === 'done' ? CHROME.accent : locked ? CHROME.barLo : CHROME.tabInkLive);
+      ctx.fillStyle = look.state === 'locked' ? CHROME.locked : CHROME.buttonInk;
+      ctx.fillText(look.badge, x + tw - bw - 2, TAB.y + 8);
+    } else if (on) {
+      // the close cross every live tab has
+      setFont(ctx, 8);
+      ctx.fillStyle = CHROME.hint;
+      ctx.fillText('\u00D7', x + tw - 12, TAB.y + 8);
+    }
     rects.push({ x, y: TAB.y, w: tw, h: TAB.h });
   }
-  // the omnibox — a rounded well floating in the bar, not a box filling it
-  const ax = ADDR.x + 4, aw = W - ADDR.x * 2 - 30;
-  px(ctx, ax + 2, ADDR.y, aw - 4, ADDR.h, CHROME.field);
-  px(ctx, ax, ADDR.y + 2, aw, ADDR.h - 4, CHROME.field);
+  // the + after the last tab
+  setFont(ctx, 10);
+  ctx.fillStyle = CHROME.tabInk;
+  ctx.fillText('+', TAB.x + tabs.length * (tw + TAB.gap) + 6, TAB.y + 6);
+
+  // ── the toolbar row: ‹ › ↻  [ ● address            ☆ ]  ▣ ◯ ⋮ ──
+  const ty = ADDR.y + 6;
+  setFont(ctx, 11);
+  ctx.fillStyle = CHROME.hint;
+  ctx.fillText('\u2039', ADDR.x + 4, ty - 1);
+  ctx.fillText('\u203A', ADDR.x + 18, ty - 1);
+  ctx.fillText('\u21BB', ADDR.x + 32, ty - 1);
+  const ax = ADDR.x + 50, aw = W - ax - 64;
+  // the omnibox: a pill — the slab, then its ends rounded a pixel at a time
+  px(ctx, ax + 3, ADDR.y, aw - 6, ADDR.h, CHROME.field);
+  px(ctx, ax + 1, ADDR.y + 2, aw - 2, ADDR.h - 4, CHROME.field);
+  px(ctx, ax, ADDR.y + 5, aw, ADDR.h - 10, CHROME.field);
+  px(ctx, ax + 3, ADDR.y, aw - 6, 1, CHROME.fieldEdge);
+  px(ctx, ax + 3, ADDR.y + ADDR.h - 1, aw - 6, 1, CHROME.fieldEdge);
   setFont(ctx, 9);
   ctx.fillStyle = CHROME.hint;
-  ctx.fillText('\u25CF', ax + 8, ADDR.y + 6);       // the lock, a dot at this size
+  ctx.fillText('\u25CF', ax + 10, ADDR.y + 7);            // the lock, a dot at this size
   setFont(ctx, 10);
   ctx.fillStyle = address ? CHROME.ink : CHROME.hint;
-  ctx.fillText(address, ax + 20, ADDR.y + 5);
+  ctx.save(); ctx.beginPath(); ctx.rect(ax + 22, ADDR.y, aw - 44, ADDR.h); ctx.clip();
+  ctx.fillText(address, ax + 22, ADDR.y + 6);
   if (showCursor) {
     const w = Math.ceil(ctx.measureText(address).width);
-    px(ctx, ax + 21 + w, ADDR.y + 4, 1, 10, CHROME.ink);
+    px(ctx, ax + 23 + w, ADDR.y + 5, 1, 12, CHROME.ink);
   }
-  // the profile dot every signed-in browser wears, top right, saying nothing
-  px(ctx, W - 20, ADDR.y + 3, 12, 12, CHROME.barLo);
-  px(ctx, W - 18, ADDR.y + 5, 8, 8, CHROME.hint);
+  ctx.restore();
+  setFont(ctx, 9);
+  ctx.fillStyle = CHROME.hint;
+  ctx.fillText('\u2606', ax + aw - 16, ADDR.y + 6);       // the bookmark star
+  // right of the pill: extensions, profile, menu — three things, none of them pressable
+  px(ctx, W - 54, ADDR.y + 5, 12, 12, CHROME.fieldEdge);
+  px(ctx, W - 51, ADDR.y + 8, 6, 6, CHROME.toolbar);
+  px(ctx, W - 36, ADDR.y + 4, 14, 14, CHROME.barLo);
+  px(ctx, W - 34, ADDR.y + 6, 10, 10, CHROME.hint);
+  px(ctx, W - 14, ADDR.y + 6, 2, 2, CHROME.tabInk);
+  px(ctx, W - 14, ADDR.y + 10, 2, 2, CHROME.tabInk);
+  px(ctx, W - 14, ADDR.y + 14, 2, 2, CHROME.tabInk);
   return rects;
 }
 
@@ -1151,3 +1265,168 @@ export const BALL = {
   captionInk: ERA4.textHi,
   captionField: 'rgba(10,10,14,0.78)'
 } as const;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⚑ THE 2026 WEB KIT (2026-09-12). Sérgio, on the first Restoration plates:
+// "this is looking too barebones for the time of now in design language." He
+// is right — the pages were text on a field, a form from 2009. What a 2026 web
+// app is made of, read off the things themselves: an app background a shade
+// cooler than the cards on it; cards with soft corners and a hairline edge;
+// one filled primary button, pill-shaped; chips; a progress bar that shimmers;
+// a before/after with a draggable handle; thumbnails with rounded corners; an
+// avatar circle; a disabled message bar. All of it here, in the era's palette,
+// pixel-drawn (integer positions, banded corners — no anti-aliased rounding).
+// Nothing in this kit is pressable by itself; the pages decide what publishes.
+// ═══════════════════════════════════════════════════════════════════════════
+export const WEB = {
+  bg: '#ECE8DF',        // the app's ground — a shade cooler than the cards
+  card: '#FBFAF6',
+  cardEdge: '#DED8CA',
+  ink: '#3B2E25',       // near-black, warm
+  muted: '#8B8578',
+  faint: '#C9C2B2',
+  accent: '#5DCAA5',    // ERA4.lDim — the agent's colour
+  accentSoft: '#DDF2EA',
+  accentInk: '#1E3B33',
+  primary: '#2F6F5E',   // the one filled control on a page
+  primaryInk: '#FBFAF6',
+  chip: '#E8E3D6',
+  chipOn: '#DDF2EA',
+  shimmer: '#FFFFFF',
+  danger: '#B5503A'     // never used for anything but a status dot
+} as const;
+
+/** a rectangle with corners knocked off in bands — the kit's only curve */
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, fill: string): void {
+  r = Math.max(0, Math.min(r, Math.floor(Math.min(w, h) / 2)));
+  if (r <= 1) { px(ctx, x, y, w, h, fill); return; }
+  px(ctx, x + r, y, w - 2 * r, h, fill);
+  // the bands: each row of the corner is inset by how far it is from the edge
+  for (let i = 0; i < r; i++) {
+    const inset = r - Math.round(Math.sqrt(r * r - (r - i - 0.5) * (r - i - 0.5)));
+    px(ctx, x + inset, y + i, w - 2 * inset, 1, fill);
+    px(ctx, x + inset, y + h - 1 - i, w - 2 * inset, 1, fill);
+  }
+  px(ctx, x, y + r, w, h - 2 * r, fill);
+}
+/** a rounded outline, one pixel, the same bands */
+export function roundEdge(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, edge: string, fill: string): void {
+  roundRect(ctx, x, y, w, h, r, edge);
+  roundRect(ctx, x + 1, y + 1, w - 2, h - 2, Math.max(0, r - 1), fill);
+}
+export function pill(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string): void {
+  roundRect(ctx, x, y, w, h, Math.floor(h / 2), fill);
+}
+/** a card on the app ground */
+export function webCard(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  roundRect(ctx, x, y + 1, w, h, 6, WEB.faint);          // a soft shadow line under it
+  roundEdge(ctx, x, y, w, h, 6, WEB.cardEdge, WEB.card);
+}
+/** the one filled button, or its quiet sibling. Returns its rect. */
+export function webButton(
+  ctx: CanvasRenderingContext2D, x: number, y: number, label: string,
+  kind: 'primary' | 'quiet' | 'disabled' = 'primary', minW = 0
+): Rect {
+  setFont(ctx, 10);
+  const w = Math.max(minW, Math.ceil(ctx.measureText(label).width) + 26);
+  const h = 22;
+  if (kind === 'primary') pill(ctx, x, y, w, h, WEB.primary);
+  else if (kind === 'quiet') { pill(ctx, x, y, w, h, WEB.cardEdge); pill(ctx, x + 1, y + 1, w - 2, h - 2, WEB.card); }
+  else pill(ctx, x, y, w, h, WEB.chip);
+  ctx.fillStyle = kind === 'primary' ? WEB.primaryInk : kind === 'quiet' ? WEB.ink : WEB.muted;
+  ctx.fillText(label, x + Math.round((w - Math.ceil(ctx.measureText(label).width)) / 2), y + 6);
+  return { x, y, w, h };
+}
+/** a row of chips; `on` marks the lit ones */
+export function chipRow(ctx: CanvasRenderingContext2D, x: number, y: number, labels: string[], on: boolean[] = []): number {
+  setFont(ctx, 8);
+  let cx = x;
+  labels.forEach((l, i) => {
+    const w = Math.ceil(ctx.measureText(l).width) + 16;
+    pill(ctx, cx, y, w, 16, on[i] ? WEB.chipOn : WEB.chip);
+    if (on[i]) px(ctx, cx + 6, y + 6, 4, 4, WEB.accent);
+    ctx.fillStyle = on[i] ? WEB.accentInk : WEB.muted;
+    ctx.fillText(l, cx + (on[i] ? 13 : 8), y + 4);
+    cx += w + 5;
+  });
+  return cx;
+}
+/** a progress bar with the shimmer every 2026 progress bar has */
+export function progressBar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, k: number, t: number): void {
+  pill(ctx, x, y, w, 6, WEB.chip);
+  const fw = Math.round(w * Math.max(0, Math.min(1, k)));
+  if (fw > 6) pill(ctx, x, y, fw, 6, WEB.accent);
+  // the shimmer: a pale band travelling the filled part
+  if (fw > 20) {
+    const sx = x + Math.round(((t * 90) % (fw + 30)) - 30);
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 3, y, fw - 6, 6); ctx.clip();
+    ctx.globalAlpha = 0.45;
+    px(ctx, sx, y, 14, 6, WEB.shimmer);
+    ctx.restore();
+  }
+}
+/** the avatar circle an assistant wears */
+export function avatar(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, fill: string, mark: string): void {
+  roundRect(ctx, x, y, d, d, Math.floor(d / 2), fill);
+  setFont(ctx, Math.max(8, Math.round(d * 0.5)));
+  ctx.fillStyle = WEB.card;
+  const w = Math.ceil(ctx.measureText(mark).width);
+  ctx.fillText(mark, x + Math.round((d - w) / 2), y + Math.round(d * 0.24));
+}
+/** a message bar that cannot be typed into — a picture of an input, disabled */
+export function messageBar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, placeholder: string): void {
+  pill(ctx, x, y, w, 24, WEB.cardEdge);
+  pill(ctx, x + 1, y + 1, w - 2, 22, WEB.card);
+  setFont(ctx, 9);
+  ctx.fillStyle = WEB.faint;
+  ctx.fillText(placeholder, x + 12, y + 7);
+  roundRect(ctx, x + w - 22, y + 4, 16, 16, 8, WEB.chip);
+  ctx.fillStyle = WEB.faint;
+  ctx.fillText('↑', x + w - 17, y + 7);
+}
+/** a photograph as a thumbnail with rounded corners */
+export function thumb(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, variant: number, enhanced: boolean, r = 5): void {
+  ctx.save();
+  // clip to a rounded shape by drawing the mask bands as a clip path
+  ctx.beginPath();
+  ctx.rect(x, y + r, w, h - 2 * r);
+  ctx.rect(x + r, y, w - 2 * r, h);
+  for (let i = 0; i < r; i++) {
+    const inset = r - Math.round(Math.sqrt(r * r - (r - i - 0.5) * (r - i - 0.5)));
+    ctx.rect(x + inset, y + i, w - 2 * inset, 1);
+    ctx.rect(x + inset, y + h - 1 - i, w - 2 * inset, 1);
+  }
+  ctx.clip();
+  photograph(ctx, x, y, w, h, enhanced, variant);
+  ctx.restore();
+}
+/**
+ * before / after with the handle every comparison widget has. `k` is where the
+ * split sits, 0..1 from the left; the left of it is A, the right is B.
+ */
+export function compareSplit(
+  ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
+  drawA: (cx: CanvasRenderingContext2D) => void, drawB: (cx: CanvasRenderingContext2D) => void,
+  k: number, labelA: string, labelB: string
+): void {
+  const sx = x + Math.round(w * k);
+  ctx.save(); ctx.beginPath(); ctx.rect(x, y, sx - x, h); ctx.clip(); drawA(ctx); ctx.restore();
+  ctx.save(); ctx.beginPath(); ctx.rect(sx, y, x + w - sx, h); ctx.clip(); drawB(ctx); ctx.restore();
+  // the divider and its handle
+  px(ctx, sx - 1, y, 2, h, WEB.card);
+  roundRect(ctx, sx - 9, y + Math.round(h / 2) - 9, 18, 18, 9, WEB.card);
+  roundRect(ctx, sx - 8, y + Math.round(h / 2) - 8, 16, 16, 8, WEB.primary);
+  setFont(ctx, 8);
+  ctx.fillStyle = WEB.primaryInk;
+  ctx.fillText('‹›', sx - 6, y + Math.round(h / 2) - 4);
+  // the labels, as small pills in the corners
+  const tag = (t: string, tx: number): void => {
+    const tw = Math.ceil(ctx.measureText(t).width) + 12;
+    pill(ctx, tx, y + 6, tw, 14, WEB.ink);
+    ctx.fillStyle = WEB.card;
+    ctx.fillText(t, tx + 6, y + 9);
+  };
+  tag(labelA, x + 6);
+  const bw = Math.ceil(ctx.measureText(labelB).width) + 12;
+  tag(labelB, x + w - 6 - bw);
+}

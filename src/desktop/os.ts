@@ -2631,9 +2631,8 @@ export class DesktopOS {
         this.setPhase('desktop'); this.setDesktopEra('e4');
         this.e4 = new E4Shell();
         this.e4.beginSession(0.6);
-        // ⚑ review only: the browser takes the lid for this jump and never in
-        //   play. Its real home is the monitor Sérgio ruled on 2026-09-07.
-        if (this.e4) this.e4.browserOwnsLid = true;
+        // ⚑ 2026-09-12: the browser has its real home (the monitor) and the lid
+        //   is L's console; the review route no longer borrows the lid.
         break;
       case 'e4BrowserSearch':
         this.debugJump('e4Browser');

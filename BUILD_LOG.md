@@ -1006,3 +1006,18 @@ body"). Era 4's monitor no longer floats in the Close. The folders box came off 
 hoodie block off the chair; the laptop turned 24° toward the seat with its plane. And the two room
 recordings landed — his generations, to the prompt in ERA4_DRAFTS_2026-09-12.md — registered and
 credited; AUDIO_BASELINE 2 → 0, nothing referenced is missing any more. Walked: 281 presses, spine done.
+
+## 2026-09-12 — S136 · Phase B: the program — the tabs are steps, the search takes over, the photo tool restores her
+
+ERA4_OVERHAUL §2 beats 2–5, his rulings: pure rails. Pressing the unfinished search finishes the
+sentence FOR her ("how do i tell my doctor i want to stop") and the page becomes Second Thoughts —
+the tab that arrived by itself was the agent's all along — a chat with an avatar, bubbles arriving
+with typing dots, a message bar that is a picture of one, and Begin. The tabs become five numbered
+steps that unlock in order, one press each; the laptop is L's console and then the agent's, saying
+what to do next; the headset is not a door until step five. The Restoration exercise is drawn as
+the AI photo tool it would be: drop zone, preset chips, a file window that is a PICTURE of one
+(sidebar, search, thumbnails — CLAUDE.md's invariant holds), the stages it claims to be doing under a
+shimmering progress bar, and a before/after with the handle cutting through her — hair to the
+shoulders and her top on the left, the cropped, greyed, squared version on the right. A 2026 web kit
+lives in the theme now (cards, pills, chips, progress, avatar, compare); Record is a profile card,
+Care a timeline. Chrome re-cut against the thing itself. Walked: 280 presses, spine done.

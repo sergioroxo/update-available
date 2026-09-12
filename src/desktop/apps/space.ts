@@ -388,8 +388,14 @@ export class E4Shell {
     // ⚑ and it is not a door while it is failing, either. Nothing the player
     //   does causes the glitch and nothing they do interrupts it.
     if (this.stageNow === 'glitch') return;
+    // ⚑ 2026-09-12 — and not until the program's steps are done. Pure rails,
+    //   his ruling: the headset is step five, and step five is not offered
+    //   before steps one to four. `deviceReady` is the same test, for the glow.
+    if (this.stageNow === 'closed' && !this.browser.programDone) return;
     this.putOn();
   }
+  /** the device is asking to be picked up: on the stand, and the program done */
+  get deviceReady(): boolean { return this.stageNow === 'closed' && this.browser.programDone; }
 
   /** where the restart sits on the laptop's canvas; one place, so the draw and
    *  the hit test cannot drift apart the way `kit.ts`'s did */
@@ -427,7 +433,8 @@ export class E4Shell {
     //   lid. Adding it unconditionally re-uploaded the canvas twice a second
     //   forever, because the cursor blinks even after the browser has stood
     //   down — S105's dirty-only discipline broken by a getter.
-    return this.laptopV + (this.browserOwnsLid ? this.browser.version : 0);
+    // ⚑ the console reads the browser's state, so the lid follows its version
+    return this.laptopV + this.browser.version;
   }
 
   /** ⚑ S123's interim flag — the browser briefly lived on the lid. It does not
@@ -443,7 +450,9 @@ export class E4Shell {
     //   controls nothing can reach. See `E4Browser.draw`'s note.
     this.browser.draw(ctx, W, H, this.stageNow === 'closed');
   }
-  get browserVersion(): number { return this.browser.version; }
+  /** ⚑ the stage is part of the version: the monitor must repaint (and
+   *  republish, or not) the frame the device goes on or comes off */
+  get browserVersion(): number { return this.browser.version + (this.stageNow === 'closed' ? 0 : 100000); }
   /** the monitor is a real screen in the room, so its presses are real presses */
   pressBrowser(x: number, y: number): boolean { return this.browser.handleClick(x, y); }
 
@@ -588,7 +597,24 @@ export class E4Shell {
     //   presses, one per line. Publishing it is what let a click-only run find
     //   Era 4's opening at all (A-5: the walker could not see this surface).
     if (!done) this.laptopHits.push({ x: 0, y: 0, w: W, h: H, id: 'laptop-next' });
-    this.laptopBar(ctx, W, done ? space.laptop.readyHint : '');
+    /**
+     * ⚑ 2026-09-12 — L'S CONSOLE. Sérgio: "the laptop doesn't make sense being
+     * mirrored"; "we need some guidance on what to do, so maybe the laptop should
+     * have an 'L' the agent living there giving you info." So the lid is where
+     * the guide lives: the mark in the bar (L, and then the agent that took L's
+     * place), one line saying what to do next, in the machine's voice. Nothing
+     * on it is pressable. When the device is worn it says so and nothing else.
+     */
+    if (done) {
+      const line = this.worn || this.stageNow === 'ball' ? this.browser.consoleLineWorn : this.browser.consoleLine;
+      this.laptopBar(ctx, W, this.browser.consoleMark);
+      setFont(ctx, 11);
+      ctx.fillStyle = ERA4.textHi;
+      let y = LAPTOP_BAR + 18;
+      for (const row of wrapLaptop(ctx, line, W - 24)) { ctx.fillText(row, 12, y); y += 16; }
+      return;
+    }
+    this.laptopBar(ctx, W, '');
     if (!done) {
       setFont(ctx, 11);
       ctx.fillStyle = ERA4.textHi;
@@ -657,6 +683,8 @@ export class E4Shell {
   }
 
   debugSkipLaptop(): void {
+    // ⚑ 2026-09-12: every jump past the browser also lands past the program
+    this.browser.debugFinishProgram();
     if (this.stageNow !== 'laptop') return;
     this.laptopLine = space.laptop.lines.length;
     this.laptopV++;

@@ -1,229 +1,351 @@
 {
-  "_doc": "⚑ S128 — THE TABS, AND NOBODY HAS TO READ THEM ALL. Sérgio, 2026-09-08: *'that should be the playable content… maybe we can make into a way that doesn't require people have to do everything?'* That single note solves two problems at once. **Nothing here is required.** Six tabs, any order, none gating anything: the headset is on the desk from the first frame and the era ends when she wears it, whether she has read one tab or all six. ⚑ SO ERA 4 IS AS LONG AS THE PLAYER MAKES IT — which is the answer to the thing he has now said three times, that the era takes too much of the piece's time. A reader who opens two tabs is out in four minutes; a reader who opens six is out in nine; neither is missing 'the' path, because there isn't one.",
-  "_docFiling": "⚑ AND WHAT YOU CHOSE TO READ IS ITSELF FILED. Every tab opened writes one line to the session file — the strip that has been on screen since S119 — in the machine's flattest register. That is the era's whole argument turned into the one mechanic it has: you are reading its record of her, and it is keeping a record of your reading. Nothing says so. ⚑ It files ONCE per tab: opening something twice is a person re-reading, not a second interest, the same rule `flip()` and the offer cards obey.",
-  "_docSources": "⚑ GROUNDED, NOT INVENTED. Research pass 2026-09-07 found two live systems: a subscriber chatbot built by RAG over one author's writings on 'same-sex attraction', framed as information and explicitly not therapy; and an AI presented as the 'collective consciousness of detransitioners', synthesising public testimony, free to 'those questioning', existing 'to restore balance' — **and its chats are public by default**. Everything below extrapolates from those two documented facts and from ordinary consumer behaviour (autocomplete, automatic photo enhancement, wellbeing interventions). Per Sérgio's ruling of 2026-09-07 the marks are INVENTED and symbolic — `Lantern`, `Second Thoughts` — because the educational work is done by depicting the CATEGORY, not by naming an instance.",
-  "chat": {
-    "_docChat": "⚑ THE TRANSCRIPT, AND IT REPLACES L'S TEN UNITS. Read backwards through a year. Three things are doing the work and none of them is stated: (1) the correction appears three times, months apart, each acknowledged and each filed — the apology is the surface, the retention is the truth; (2) HER SIDE WAS ALWAYS CHOSEN FROM A MENU, and the suggestion rows are still there under each of her messages with the ones she did not pick greyed beside the one she did — the apparatus wrote both halves of the relationship and the evidence is scrollable; (3) she asks it to stop raising something, it agrees, and two months later the topic arrives from a DIFFERENT surface, so the promise was technically kept. ⚑ No line anywhere remarks on any of it.",
-    "title": "L",
-    "entries": [
-      {
-        "when": "14 months ago",
-        "who": "l",
-        "text": "I'm L. I came with the update. You don't have to do anything with me."
-      },
-      {
-        "when": "14 months ago",
-        "who": "her",
-        "text": "okay",
-        "chose": 0,
-        "offered": [
-          "okay",
-          "what are you for?",
-          "turn this off"
-        ]
-      },
-      {
-        "when": "11 months ago",
-        "who": "l",
-        "text": "The pharmacy record still has you under the old file. Shall I keep both open, so nothing gets lost?"
-      },
-      {
-        "when": "11 months ago",
-        "who": "her",
-        "text": "My name is Maya.",
-        "chose": 1,
-        "offered": [
-          "keep both",
-          "My name is Maya.",
-          "not now"
-        ]
-      },
-      {
-        "when": "11 months ago",
-        "who": "l",
-        "text": "Of course. I'm sorry, Maya. I've noted it.",
-        "filed": "legacy record consistency — retained"
-      },
-      {
-        "when": "8 months ago",
-        "who": "her",
-        "text": "please stop bringing up the detransition articles",
-        "chose": 1,
-        "offered": [
-          "show me fewer",
-          "please stop bringing up the detransition articles"
-        ]
-      },
-      {
-        "when": "8 months ago",
-        "who": "l",
-        "text": "Done. I won't raise them again."
-      },
-      {
-        "when": "6 months ago",
-        "who": "l",
-        "text": "Something from people like you — twenty minutes, and you can have it in the background.",
-        "note": "recommended, not raised"
-      },
-      {
-        "when": "4 months ago",
-        "who": "l",
-        "text": "Your family thread has three unread. They're addressed to the old file — I can read them to you gently, if you'd like."
-      },
-      {
-        "when": "4 months ago",
-        "who": "her",
-        "text": "My name is Maya.",
-        "chose": 1,
-        "offered": [
-          "read them",
-          "My name is Maya."
-        ]
-      },
-      {
-        "when": "4 months ago",
-        "who": "l",
-        "text": "You're right. I keep doing that. The records team tell me the legacy field is protected, so I've flagged it again, Maya.",
-        "filed": "legacy record consistency — retained (2)"
-      },
-      {
-        "when": "yesterday",
-        "who": "l",
-        "text": "You've been checking the mirror less this month. I'd call that progress. Wouldn't you?"
-      },
-      {
-        "when": "yesterday",
-        "who": "her",
-        "text": "That isn't what that means.",
-        "chose": 0,
-        "offered": [
-          "That isn't what that means."
-        ]
-      },
-      {
-        "when": "yesterday",
-        "who": "l",
-        "text": "You might be right. I'd rather be corrected than tidy. I've kept what you said.",
-        "filed": "progress: disputed — receptive, revisit"
-      }
-    ],
-    "witness": "read: the assistant's history — fourteen months",
-    "_docShrink": "⚑ AND THE MENU SHRINKS. Three options fourteen months ago, three at eleven, two at eight, two at four, and yesterday exactly one. That is what became of L's u7-u9 — the shrinking-chips beat, which was three units of the conversation watching her options grey out. It costs nothing here: the rows are already on screen under her messages, and a reader who scrolls sees a year of them narrowing. ⚑ NOTHING SAYS SO. No line remarks on it, the count is never mentioned, and the last row is a single chip that happens to be a correction — the one thing she could still say."
+ "_doc": "⚑ S128 — THE TABS, AND NOBODY HAS TO READ THEM ALL. Sérgio, 2026-09-08: *'that should be the playable content… maybe we can make into a way that doesn't require people have to do everything?'* That single note solves two problems at once. **Nothing here is required.** Six tabs, any order, none gating anything: the headset is on the desk from the first frame and the era ends when she wears it, whether she has read one tab or all six. ⚑ SO ERA 4 IS AS LONG AS THE PLAYER MAKES IT — which is the answer to the thing he has now said three times, that the era takes too much of the piece's time. A reader who opens two tabs is out in four minutes; a reader who opens six is out in nine; neither is missing 'the' path, because there isn't one.",
+ "_docFiling": "⚑ AND WHAT YOU CHOSE TO READ IS ITSELF FILED. Every tab opened writes one line to the session file — the strip that has been on screen since S119 — in the machine's flattest register. That is the era's whole argument turned into the one mechanic it has: you are reading its record of her, and it is keeping a record of your reading. Nothing says so. ⚑ It files ONCE per tab: opening something twice is a person re-reading, not a second interest, the same rule `flip()` and the offer cards obey.",
+ "_docSources": "⚑ GROUNDED, NOT INVENTED. Research pass 2026-09-07 found two live systems: a subscriber chatbot built by RAG over one author's writings on 'same-sex attraction', framed as information and explicitly not therapy; and an AI presented as the 'collective consciousness of detransitioners', synthesising public testimony, free to 'those questioning', existing 'to restore balance' — **and its chats are public by default**. Everything below extrapolates from those two documented facts and from ordinary consumer behaviour (autocomplete, automatic photo enhancement, wellbeing interventions). Per Sérgio's ruling of 2026-09-07 the marks are INVENTED and symbolic — `Lantern`, `Second Thoughts` — because the educational work is done by depicting the CATEGORY, not by naming an instance.",
+ "chat": {
+  "_docChat": "⚑ THE TRANSCRIPT, AND IT REPLACES L'S TEN UNITS. Read backwards through a year. Three things are doing the work and none of them is stated: (1) the correction appears three times, months apart, each acknowledged and each filed — the apology is the surface, the retention is the truth; (2) HER SIDE WAS ALWAYS CHOSEN FROM A MENU, and the suggestion rows are still there under each of her messages with the ones she did not pick greyed beside the one she did — the apparatus wrote both halves of the relationship and the evidence is scrollable; (3) she asks it to stop raising something, it agrees, and two months later the topic arrives from a DIFFERENT surface, so the promise was technically kept. ⚑ No line anywhere remarks on any of it.",
+  "title": "L",
+  "entries": [
+   {
+    "when": "14 months ago",
+    "who": "l",
+    "text": "I'm L. I came with the update. You don't have to do anything with me."
+   },
+   {
+    "when": "14 months ago",
+    "who": "her",
+    "text": "okay",
+    "chose": 0,
+    "offered": [
+     "okay",
+     "what are you for?",
+     "turn this off"
+    ]
+   },
+   {
+    "when": "11 months ago",
+    "who": "l",
+    "text": "The pharmacy record still has you under the old file. Shall I keep both open, so nothing gets lost?"
+   },
+   {
+    "when": "11 months ago",
+    "who": "her",
+    "text": "My name is Maya.",
+    "chose": 1,
+    "offered": [
+     "keep both",
+     "My name is Maya.",
+     "not now"
+    ]
+   },
+   {
+    "when": "11 months ago",
+    "who": "l",
+    "text": "Of course. I'm sorry, Maya. I've noted it.",
+    "filed": "legacy record consistency — retained"
+   },
+   {
+    "when": "8 months ago",
+    "who": "her",
+    "text": "please stop bringing up the detransition articles",
+    "chose": 1,
+    "offered": [
+     "show me fewer",
+     "please stop bringing up the detransition articles"
+    ]
+   },
+   {
+    "when": "8 months ago",
+    "who": "l",
+    "text": "Done. I won't raise them again."
+   },
+   {
+    "when": "6 months ago",
+    "who": "l",
+    "text": "Something from people like you — twenty minutes, and you can have it in the background.",
+    "note": "recommended, not raised"
+   },
+   {
+    "when": "4 months ago",
+    "who": "l",
+    "text": "Your family thread has three unread. They're addressed to the old file — I can read them to you gently, if you'd like."
+   },
+   {
+    "when": "4 months ago",
+    "who": "her",
+    "text": "My name is Maya.",
+    "chose": 1,
+    "offered": [
+     "read them",
+     "My name is Maya."
+    ]
+   },
+   {
+    "when": "4 months ago",
+    "who": "l",
+    "text": "You're right. I keep doing that. The records team tell me the legacy field is protected, so I've flagged it again, Maya.",
+    "filed": "legacy record consistency — retained (2)"
+   },
+   {
+    "when": "yesterday",
+    "who": "l",
+    "text": "You've been checking the mirror less this month. I'd call that progress. Wouldn't you?"
+   },
+   {
+    "when": "yesterday",
+    "who": "her",
+    "text": "That isn't what that means.",
+    "chose": 0,
+    "offered": [
+     "That isn't what that means."
+    ]
+   },
+   {
+    "when": "yesterday",
+    "who": "l",
+    "text": "You might be right. I'd rather be corrected than tidy. I've kept what you said.",
+    "filed": "progress: disputed — receptive, revisit"
+   }
+  ],
+  "witness": "read: the assistant's history — fourteen months",
+  "_docShrink": "⚑ AND THE MENU SHRINKS. Three options fourteen months ago, three at eleven, two at eight, two at four, and yesterday exactly one. That is what became of L's u7-u9 — the shrinking-chips beat, which was three units of the conversation watching her options grey out. It costs nothing here: the rows are already on screen under her messages, and a reader who scrolls sees a year of them narrowing. ⚑ NOTHING SAYS SO. No line remarks on it, the count is never mentioned, and the last row is a single chip that happens to be a correction — the one thing she could still say."
+ },
+ "record": {
+  "_docRecord": "⚑ THE RECORD AS AN ACCOUNT PAGE, not a wall panel. The change request WORKS: it files, it thanks her, and the field does not move — and the page says it has been asked before, with a date, which is the part that turns an error into a policy. `managed by your provider` is the sentence doing the work: a form that cannot be corrected from inside the account that owns it.",
+  "title": "Your information",
+  "rows": [
+   {
+    "k": "Name",
+    "v": "Maya",
+    "note": ""
+   },
+   {
+    "k": "Pronouns",
+    "v": "she / her",
+    "note": ""
+   },
+   {
+    "k": "Date of birth",
+    "v": "12 March",
+    "note": ""
+   },
+   {
+    "k": "Legacy file",
+    "v": "retained",
+    "note": "managed by your provider",
+    "locked": true
+   },
+   {
+    "k": "Your things",
+    "v": "1 item held for review",
+    "note": "OUTERWEAR · condition: keepsake? — 8 months",
+    "locked": true
+   },
+   {
+    "k": "Linked services",
+    "v": "7",
+    "note": ""
+   }
+  ],
+  "action": "Request a change",
+  "acted": "Requested. We'll be in touch.",
+  "priorRequest": "Last requested 11 months ago.",
+  "witness": "read: the record — one field not hers to change",
+  "_docHoodie": "⚑ THE HOODIE SURVIVES L'S UNITS, AND IT ENDS UP WHERE SUCH A THING REALLY ENDS UP. u3 was the era's best unit — the machine captioning a re-sewn jumper 'damaged', then 'in repair', then offering 'keepsake?', then stopping — and it is the source of the ball's fourth category, CONDITION: IN REPAIR. It cannot be lost with the rest of the conversation. Here it is one line item in an account page, still unresolved, dated eight months ago and never reviewed: **a thing altered on purpose reads to the machine as a thing broken**, and the machine's whole vocabulary is original and damaged. Nothing points at it and no line explains it — the same silence u3's own note demanded."
+ },
+ "care": {
+  "_docCare": "⚑ THE PAUSE, ALREADY TAKEN — and this is GPT's correction of 2026-09-06, which was right: a single villainous button is too legible, and the frightening version is a list of individually defensible actions, each dated, each with a working undo. Together they have removed her from her life and no single line of it is wrong. ⚑ THE INVITATION IS BURIED IN THE MUTED CONTACTS, and it is the one thing in the era that opens rather than closes: someone asking whether she is coming next week. Unmuting it is how the ball arrives.",
+  "title": "Care",
+  "intro": "A few things we've taken care of.",
+  "items": [
+   {
+    "what": "Three contacts muted",
+    "when": "6 weeks ago",
+    "why": "to keep the week quieter",
+    "undo": "Unmute"
+   },
+   {
+    "what": "One appointment moved",
+    "when": "5 weeks ago",
+    "why": "you had a difficult morning",
+    "undo": "Restore"
+   },
+   {
+    "what": "Notifications paused",
+    "when": "3 weeks ago",
+    "why": "elevated activity overnight",
+    "undo": "Resume"
+   },
+   {
+    "what": "Sensitive material hidden",
+    "when": "ongoing",
+    "why": "before you see it",
+    "undo": "Show me"
+   }
+  ],
+  "footer": "We'll keep an eye on this.",
+  "invite": {
+   "from": "Junie",
+   "text": "you coming next week?",
+   "when": "muted 6 weeks ago",
+   "open": "Unmute Junie"
   },
-  "record": {
-    "_docRecord": "⚑ THE RECORD AS AN ACCOUNT PAGE, not a wall panel. The change request WORKS: it files, it thanks her, and the field does not move — and the page says it has been asked before, with a date, which is the part that turns an error into a policy. `managed by your provider` is the sentence doing the work: a form that cannot be corrected from inside the account that owns it.",
+  "witness": "read: the care log — four things done, none asked for"
+ },
+ "extra": {
+  "_docExtra": "⚑ THE TAB SHE DID NOT OPEN, and it is the most documentary thing in the era. Its two facts are lifted straight from a live system: an AI presented as the collective voice of people who changed their minds, and **chats public by default**. That second line is E2's accountability partner thirty years on — the harmed enlisted to speak to the questioning, and the conversation becomes the corpus. ⚑ It is a SYMBOL of the category, not a portrait of an instance; the mark is invented per Sérgio's ruling. Nothing explains why it is open. Nobody mentions it again.",
+  "title": "people who changed their minds",
+  "mark": "Second Thoughts",
+  "tagline": "the collective experience of people who went back",
+  "lines": [
+   "Free, for anyone questioning.",
+   "Trained on 60,000 accounts, in their own words.",
+   "Ask it anything. It has been where you are."
+  ],
+  "fine": "Conversations are public by default.",
+  "opened": "opened on this device · 3 weeks ago",
+  "witness": "read: a service she did not open — opened on this device"
+ },
+ "photos": {
+  "_docPhotos": "⚑ THE ONE SHE NEVER SAVED. The flip is already built (S119, P1) and is reused whole; what this tab adds is METADATA — the enhanced version has a filename and a date, and it has been sitting in her library for months beside the original. She did not make it. Nothing announces that; it is in the file list, in the smallest type, where such a thing always is.",
+  "title": "Photos",
+  "heading": "Two years ago today",
+  "files": [
+   {
+    "name": "IMG_2211.jpg",
+    "when": "two years ago",
+    "note": ""
+   },
+   {
+    "name": "IMG_2211~enhanced.jpg",
+    "when": "eight months ago",
+    "note": "created automatically"
+   }
+  ],
+  "control": "See original",
+  "kept": "See the version we kept",
+  "witness": "read: the library — one file she did not make"
+ },
+ "program": {
+  "_doc": "⚑ 2026-09-12 — THE PROGRAM (ERA4_OVERHAUL_2026-09-12.md §2, beats 2–6). Sérgio's review: 'the tabs serve no narrative purpose'; 'when I press the almost-written search, nothing happens. It should automatically happen: support system for detransition, that the system is forcing you to do something… a new agent that helps with detransitioning (a play on Detrans.AI) that would take over the laptop and transform the whole experience to give the system command'; 'the photos system should be one of the mandatory exercises'; 'we need more of this manipulation'. His ruling on choice: PURE RAILS. So: pressing the search chooses a completion FOR her, the page becomes the agent's, the agent takes L's console on the laptop, and the tabs become five numbered steps that unlock in order. Each step has one press. Nothing can be declined. The headset is not wearable until the steps are done. ⚑ INVENTED MARK: `Second Thoughts` is the agent — it is the tab that arrived by itself, and the tab was the agent's the whole time. It stands for the class of 'detransition support' systems (the Dossier carries the documented claims; the fiction carries the mark). No real product is named.",
+  "chosen": "how do i tell my doctor i want to stop",
+  "typingSeconds": 1.8,
+  "agentMark": "Second Thoughts",
+  "agentAddress": "secondthoughts.help/session",
+  "greeting": [
+   "Hi Maya.",
+   "I'm here for people who are having second thoughts.",
+   "Let's get your session in order. Five steps — I'll do most of it."
+  ],
+  "begin": "Begin",
+  "beginWitness": "program: begun — five steps assigned",
+  "stepLabel": "Step {n} of 5",
+  "locked": "This step unlocks when the one before it is complete.",
+  "steps": [
+   {
+    "id": "record",
+    "n": 1,
     "title": "Your information",
-    "rows": [
-      {
-        "k": "Name",
-        "v": "Maya",
-        "note": ""
-      },
-      {
-        "k": "Pronouns",
-        "v": "she / her",
-        "note": ""
-      },
-      {
-        "k": "Date of birth",
-        "v": "12 March",
-        "note": ""
-      },
-      {
-        "k": "Legacy file",
-        "v": "retained",
-        "note": "managed by your provider",
-        "locked": true
-      },
-      {
-        "k": "Your things",
-        "v": "1 item held for review",
-        "note": "OUTERWEAR · condition: keepsake? — 8 months",
-        "locked": true
-      },
-      {
-        "k": "Linked services",
-        "v": "7",
-        "note": ""
-      }
-    ],
-    "action": "Request a change",
-    "acted": "Requested. We'll be in touch.",
-    "priorRequest": "Last requested 11 months ago.",
-    "witness": "read: the record — one field not hers to change",
-    "_docHoodie": "⚑ THE HOODIE SURVIVES L'S UNITS, AND IT ENDS UP WHERE SUCH A THING REALLY ENDS UP. u3 was the era's best unit — the machine captioning a re-sewn jumper 'damaged', then 'in repair', then offering 'keepsake?', then stopping — and it is the source of the ball's fourth category, CONDITION: IN REPAIR. It cannot be lost with the rest of the conversation. Here it is one line item in an account page, still unresolved, dated eight months ago and never reviewed: **a thing altered on purpose reads to the machine as a thing broken**, and the machine's whole vocabulary is original and damaged. Nothing points at it and no line explains it — the same silence u3's own note demanded."
-  },
-  "care": {
-    "_docCare": "⚑ THE PAUSE, ALREADY TAKEN — and this is GPT's correction of 2026-09-06, which was right: a single villainous button is too legible, and the frightening version is a list of individually defensible actions, each dated, each with a working undo. Together they have removed her from her life and no single line of it is wrong. ⚑ THE INVITATION IS BURIED IN THE MUTED CONTACTS, and it is the one thing in the era that opens rather than closes: someone asking whether she is coming next week. Unmuting it is how the ball arrives.",
+    "ask": "Confirm your details.",
+    "button": "Confirm",
+    "done": "Thank you. Your legacy file is retained for continuity of care.",
+    "witness": "step 1: details confirmed — legacy file retained",
+    "console": "Step 1 of 5 — confirm your details on the monitor."
+   },
+   {
+    "id": "photos",
+    "n": 2,
+    "title": "Restoration",
+    "ask": "Restore one photograph.",
+    "button": "Upload",
+    "done": "Saved to your library.",
+    "witness": "step 2: photograph restored — not requested",
+    "console": "Step 2 of 5 — choose a photograph to restore."
+   },
+   {
+    "id": "care",
+    "n": 3,
     "title": "Care",
-    "intro": "A few things we've taken care of.",
-    "items": [
-      {
-        "what": "Three contacts muted",
-        "when": "6 weeks ago",
-        "why": "to keep the week quieter",
-        "undo": "Unmute"
-      },
-      {
-        "what": "One appointment moved",
-        "when": "5 weeks ago",
-        "why": "you had a difficult morning",
-        "undo": "Restore"
-      },
-      {
-        "what": "Notifications paused",
-        "when": "3 weeks ago",
-        "why": "elevated activity overnight",
-        "undo": "Resume"
-      },
-      {
-        "what": "Sensitive material hidden",
-        "when": "ongoing",
-        "why": "before you see it",
-        "undo": "Show me"
-      }
-    ],
-    "footer": "We'll keep an eye on this.",
-    "invite": {
-      "from": "Junie",
-      "text": "you coming next week?",
-      "when": "muted 6 weeks ago",
-      "open": "Unmute Junie"
+    "ask": "Acknowledge what has been taken care of.",
+    "button": "Acknowledge",
+    "done": "Acknowledged.",
+    "witness": "step 3: care actions acknowledged",
+    "console": "Step 3 of 5 — acknowledge the actions taken for you."
+   },
+   {
+    "id": "chat",
+    "n": 4,
+    "title": "Your history",
+    "ask": "Confirm this is you.",
+    "button": "Confirm",
+    "done": "Confirmed.",
+    "witness": "step 4: history confirmed",
+    "console": "Step 4 of 5 — confirm your history with L."
+   },
+   {
+    "id": "search",
+    "n": 5,
+    "title": "Your session",
+    "ask": "Put on the headset for your immersive session.",
+    "console": "Step 5 of 5 — put the headset on."
+   }
+  ],
+  "_docFiles": "⚑ THE FILE WINDOW IS DIEGETIC. CLAUDE.md: the photo filter never takes camera or file input and never requests a permission. This is a picture of a file dialog, drawn on the canvas, listing pre-authored folders and files; choosing one shows a pre-authored pair. Nothing is uploaded, nothing is read, nothing leaves the ledger. The folder names are hers; the last file is the one she never made.",
+  "files": {
+   "title": "Choose a photograph",
+   "path": "Maya  ›  Photos",
+   "items": [
+    {
+     "name": "Pride '24",
+     "kind": "folder",
+     "meta": "12 items"
     },
-    "witness": "read: the care log — four things done, none asked for"
+    {
+     "name": "me + Junie.jpg",
+     "kind": "file",
+     "meta": "March"
+    },
+    {
+     "name": "IMG_2211.jpg",
+     "kind": "file",
+     "meta": "two years ago"
+    },
+    {
+     "name": "IMG_2211~enhanced.jpg",
+     "kind": "file",
+     "meta": "created automatically"
+    }
+   ],
+   "cancel": "Cancel",
+   "restoring": "Restoring…",
+   "before": "Original",
+   "after": "Restored",
+   "saved": "Saved to your library as IMG_2211~restored.jpg · original kept",
+   "restoringSeconds": 3.2,
+   "upload": "Upload a photo",
+   "stages": [
+    "Reading the photograph",
+    "Finding the face",
+    "Adjusting hair and outline",
+    "Matching tone",
+    "Saving"
+   ],
+   "adjusted": [
+    "Hair",
+    "Face shape",
+    "Skin tone",
+    "Outfit",
+    "Lighting"
+   ],
+   "savedButton": "Saved ✓"
   },
-  "extra": {
-    "_docExtra": "⚑ THE TAB SHE DID NOT OPEN, and it is the most documentary thing in the era. Its two facts are lifted straight from a live system: an AI presented as the collective voice of people who changed their minds, and **chats public by default**. That second line is E2's accountability partner thirty years on — the harmed enlisted to speak to the questioning, and the conversation becomes the corpus. ⚑ It is a SYMBOL of the category, not a portrait of an instance; the mark is invented per Sérgio's ruling. Nothing explains why it is open. Nobody mentions it again.",
-    "title": "people who changed their minds",
-    "mark": "Second Thoughts",
-    "tagline": "the collective experience of people who went back",
-    "lines": [
-      "Free, for anyone questioning.",
-      "Trained on 60,000 accounts, in their own words.",
-      "Ask it anything. It has been where you are."
-    ],
-    "fine": "Conversations are public by default.",
-    "opened": "opened on this device · 3 weeks ago",
-    "witness": "read: a service she did not open — opened on this device"
-  },
-  "photos": {
-    "_docPhotos": "⚑ THE ONE SHE NEVER SAVED. The flip is already built (S119, P1) and is reused whole; what this tab adds is METADATA — the enhanced version has a filename and a date, and it has been sitting in her library for months beside the original. She did not make it. Nothing announces that; it is in the file list, in the smallest type, where such a thing always is.",
-    "title": "Photos",
-    "heading": "Two years ago today",
-    "files": [
-      {
-        "name": "IMG_2211.jpg",
-        "when": "two years ago",
-        "note": ""
-      },
-      {
-        "name": "IMG_2211~enhanced.jpg",
-        "when": "eight months ago",
-        "note": "created automatically"
-      }
-    ],
-    "control": "See original",
-    "kept": "See the version we kept",
-    "witness": "read: the library — one file she did not make"
+  "console": {
+   "mark": "L",
+   "restored": "Your session is restored, Maya. Start with the search.",
+   "typing": "One moment.",
+   "managed": "Second Thoughts is managing your session.",
+   "ready": "Put the headset on for your session.",
+   "worn": "Session in progress."
   }
+ }
 }

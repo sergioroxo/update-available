@@ -1166,7 +1166,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (s.name === 'visor' && eraNow === 'e4') {
           const sh = e4Bridge()?.shell();
           s.entity.enabled = !!sh && !sh.handedOffToClose
-            && (sh.pinned || sh.stage === 'closed' || sh.deviceReturnable);
+            && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
         }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
             s.lastVersion = s.versionOf();
@@ -1191,7 +1191,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (s.name === 'visor' && eraNow === 'e4') {
           const sh = e4Bridge()?.shell();
           s.entity.enabled = !!sh && !sh.handedOffToClose
-            && (sh.pinned || sh.stage === 'closed' || sh.deviceReturnable);
+            && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
         }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
           s.lastVersion = s.versionOf();
