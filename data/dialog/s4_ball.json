@@ -294,7 +294,7 @@
     "_docCut": "⚑ 2026-09-11 — CUT FROM 38 MC LINES TO 25, and the cut is the recording sheet. Sérgio: 'three and a half minutes, then it is too long.' Each category keeps five beats — the call, the House and the name, one instruction, the room's answer, the name again — and loses its second look-at-that. The opening loses its third line. The closing is untouched. Scripted clock: filter ~20 s, lines ~128 s, hold 5 s — about 2½ minutes, ending on its own."
   },
   "room": {
-    "_beat": "⚑ THE BALL'S OWN SOUND, and it is the one thing in this file that is not a caption. A ball is loud, structured and attentive — the beat, the calls, the applause on the landing — and NOT laughter, chatter or generic warmth (deep pass §1.2: 'community equals laughter' is the lazy image and it was cut on purpose). ⚑ These names are unregistered in src/audio/tapeAudio.ts and are therefore never requested. They are a recording list, not a hookup, and per _docVoice above none of them may be synthesized.",
+    "_beat": "⚑ THE BALL'S OWN SOUND, and it is the one thing in this file that is not a caption. A ball is loud, structured and attentive — the beat, the calls, the applause on the landing — and NOT laughter, chatter or generic warmth (deep pass §1.2: 'community equals laughter' is the lazy image and it was cut on purpose). ⚑ 2026-09-12: BOTH DELIVERED AND REGISTERED — Sérgio's own generations ('Community Hall House Jam' → landing, 'Through the Wall' → bed), instrumental, no voice, no lyrics, in src/audio/tapeAudio.ts and assets/LICENSES.md. The room is audible for the first time. _docVoice still stands: nothing else in this file may be synthesized.",
     "bed": "ball_room_bed.mp3",
     "landing": "ball_room_landing.mp3"
   },

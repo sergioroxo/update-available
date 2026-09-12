@@ -177,6 +177,19 @@ const REGISTRY: Record<string, string> = {
   'bed_2003.mp3': `${AUDIO_BASE}bed_2003.mp3`,
   'bed_2016.mp3': `${AUDIO_BASE}bed_2016.mp3`,
   'bed_2026.mp3': `${AUDIO_BASE}bed_2026.mp3`,
+  /**
+   * ⚑ THE ROOM, DELIVERED (2026-09-12). `s4_ball.json`'s `room` block has named
+   * these two files since S79 and they were the only two the piece referenced
+   * and did not have — the thing holding check-spec's AUDIO_BASELINE at 2.
+   * Sérgio's own generations, same day, to the prompt in
+   * `docs/reinterp/ERA4_DRAFTS_2026-09-12.md` §3: "Community Hall House Jam"
+   * (the landing — the room from inside, 122 BPM, no melody, no voice) and
+   * "Through the Wall" (the same groove through a closed door). Instrumental
+   * both: no voice, no lyrics, nothing of anybody's ball. Provenance in
+   * assets/LICENSES.md.
+   */
+  'ball_room_landing.mp3': `${AUDIO_BASE}ball_room_landing.mp3`,
+  'ball_room_bed.mp3': `${AUDIO_BASE}ball_room_bed.mp3`,
   'passage_building.mp3': `${AUDIO_BASE}passage_building.mp3`,
   /**
    * ⚑ SÉRGIO'S OWN SOURCING PASS (2026-09-02) — first tranche, 13 of 60.

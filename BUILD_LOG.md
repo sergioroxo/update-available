@@ -993,3 +993,16 @@ week the Era 4 buttons set the desktop to 2026 in Daniel's 1997 room — "useles
 buttons take the settled jump instead of the adjacent-only transition path, and a REVIEW ·
 ERA 4 section at the top gives him the seven beats in order, in plain words. Walked
 click-only: 285 presses, spine done.
+
+## 2026-09-12 — S135 · Phase A of the overhaul: the browser works in his hands, and the room is audible
+
+Sérgio's review of the deployed build (docs/reinterp/ERA4_OVERHAUL_2026-09-12.md §1). A miss-press
+on the monitor no longer hands the browser over — that was "everything broke": every second press
+drew "Restoring your session" for ever. Each tab has its own address; the search keeps the cursor.
+The boot is in the played path — "L — booting up for you, Maya." then "Restoring your session" —
+timed to the E3→E4 landing plus three seconds to settle, and "1 tab from a private window —
+restored" with the last of her tabs (his detrans-documentary note: incognito, "why do I hate my
+body"). Era 4's monitor no longer floats in the Close. The folders box came off the laptop and the
+hoodie block off the chair; the laptop turned 24° toward the seat with its plane. And the two room
+recordings landed — his generations, to the prompt in ERA4_DRAFTS_2026-09-12.md — registered and
+credited; AUDIO_BASELINE 2 → 0, nothing referenced is missing any more. Walked: 281 presses, spine done.

@@ -534,6 +534,8 @@ export class E4Shell {
   /** ⚑ S123 — the browser. It owns the lid from the era's first frame until the
    *  laptop beat takes over, and it is where E+B puts the whole era. */
   readonly browser = new E4Browser();
+  /** the flight has landed: the settle, then the boot, then the session */
+  beginSession(settleSeconds = 0): void { this.browser.beginSession(settleSeconds); }
 
   drawLaptop(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     // ⚑ S123 — THE BROWSER IS BUILT AND IT DOES NOT LIVE HERE.

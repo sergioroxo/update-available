@@ -369,9 +369,14 @@ const PLACEMENT = {
      * plane and its mesh are one object, which S123 learned by tearing them
      * apart and watching the browser float off the lid.
      */
-    pos: { x: 5.3348, y: 0.8700, z: 1.08 },
+    /** ⚑ 2026-09-12 — TURNED 24° TOWARD THE SEAT with its prop (`e_laptop` yaw
+     *  180 → 156). Sérgio: "the laptop should be rotated to make sure the screen
+     *  is not blocked out". The plane's offset from the prop's centre
+     *  (+0.0948 on x) is rotated by the same −24° about the prop's own axis:
+     *  (0.0948·cos24, 0.0948·sin24) = (+0.0866, +0.0386). Same rake, same size. */
+    pos: { x: 5.3266, y: 0.8700, z: 1.1186 },
     size: { w: 0.300, h: 0.188 },
-    euler: { x: 84.6, y: 270, z: 0 }
+    euler: { x: 84.6, y: 246, z: 0 }
   },
   /** ⚑ S124 — the monitor's screen plane. Upright (euler x 0), facing the seat
    *  (y 270, the same bearing the laptop lid uses), centred on the desk dead

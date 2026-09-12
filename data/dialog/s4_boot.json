@@ -1,40 +1,75 @@
 {
-  "_doc": "⚑ S123 — ERA 4'S BOOT AND ITS BROWSER CHROME. Sérgio, 2026-09-07: 'I would start with the Boot up and the fake chrome system and stuff.' Design of record: docs/reinterp/ERA4_E_PLUS_B_BUILD_2026-09-07.md §2b and §3. All display text is Claude's under the 2026-08-17 norm; his edit wins.",
-  "_docBoot": "⚑ THE FOURTH BOOT, AND IT IS THE LAST TERM IN A SERIES. 1997 a machine starts and you wait; 2003 Restorify announces itself over a full jingle, not skippable; 2016 a wordmark and a turning ring, because a 2016 machine is never off. 2026 does not boot at all — it RESTORES, which is what machines actually do now, and 'Restoring your session' states the era's whole premise before a single tab is opened: you are arriving in the middle of something that has been going on without you. ⚑ IT IS SHORT ON PURPOSE. E2's splash is 23.7 s because 2003 made you watch it; this is under four seconds, because 2026 does not think it is starting anything.",
-  "boot": {
-    "restoring": "Restoring your session",
-    "restored": "Restored",
-    "bar": "GraceOS",
-    "_docExtraTab": "⚑ THE LAST TAB IS THE FIRST PIECE OF RESIDUE. The session comes back with the tabs she left — and then one more, which she did not. Nothing points at it, nothing remarks on it, and it is never mentioned again by anybody. It is simply in the row with the others, and it is the one whose mark she has no reason to recognise.",
-    "witness": "session: restored — six tabs, five of them hers"
+ "_doc": "⚑ S123 — ERA 4'S BOOT AND ITS BROWSER CHROME. Sérgio, 2026-09-07: 'I would start with the Boot up and the fake chrome system and stuff.' Design of record: docs/reinterp/ERA4_E_PLUS_B_BUILD_2026-09-07.md §2b and §3. All display text is Claude's under the 2026-08-17 norm; his edit wins.",
+ "_docBoot": "⚑ THE FOURTH BOOT, AND IT IS THE LAST TERM IN A SERIES. 1997 a machine starts and you wait; 2003 Restorify announces itself over a full jingle, not skippable; 2016 a wordmark and a turning ring, because a 2016 machine is never off. 2026 does not boot at all — it RESTORES, which is what machines actually do now, and 'Restoring your session' states the era's whole premise before a single tab is opened: you are arriving in the middle of something that has been going on without you. ⚑ IT IS SHORT ON PURPOSE. E2's splash is 23.7 s because 2003 made you watch it; this is under four seconds, because 2026 does not think it is starting anything.",
+ "boot": {
+  "restoring": "Restoring your session",
+  "restored": "Restored",
+  "bar": "GraceOS",
+  "_docExtraTab": "⚑ THE LAST TAB IS THE FIRST PIECE OF RESIDUE. The session comes back with the tabs she left — and then one more, which she did not. Nothing points at it, nothing remarks on it, and it is never mentioned again by anybody. It is simply in the row with the others, and it is the one whose mark she has no reason to recognise.",
+  "witness": "session: restored — six tabs, five of them hers",
+  "bootLine": "L — booting up for you, Maya.",
+  "_docBootLine": "⚑ 2026-09-12 — THE BOOT IS IN THE PLAYED PATH NOW, timed to the landing (Sérgio: 'it needs a boot up moment of the OS, just aesthetically stating like \"L — Is booting up for you, Maya\" and then \"Restoring session\"… giving like a few seconds so the person can settle in the new position'). The line is the companion announcing itself by name before the session comes back — the fourth boot's one sentence, and the only time in the era the machine says her name unprompted, which is the point.",
+  "private": "1 tab from a private window — restored",
+  "_docPrivate": "⚑ 2026-09-12 — from Sérgio: a detrans documentary made by an anti-gender organisation opens with someone opening a laptop, going incognito, and searching 'why do I hate my body'. The search tab is that tab. A private window is the one thing a session is NOT supposed to restore; this line says it did, in the machine's flattest voice, and nothing remarks on it."
+ },
+ "_docMarks": "⚑ INVENTED MARKS ONLY — Sérgio's ruling, 2026-09-07: 'I would not use real names, I would use symbolic representations of the topic, because that is the educational side.' So nothing here names a real product, company, site or person. `Lantern` is a search engine: bland, warm, helpful, and quietly religious-adjacent without ever saying so — the same register as Compass and GraceOS. `Second Thoughts` stands for the class of testimony-trained systems that present themselves as balance rather than as correction; it is a SYMBOL of that category and not a portrait of any instance of it. The Dossier carries the documented claims about the category; the fiction carries the invented mark.",
+ "_docOrder": "⚑ THE ORDER IS THE ARGUMENT — decided 2026-09-09 on Sérgio's instruction (*'You should decide the order, maybe that will influence the cadency of what people will actually see and the main one to be first'*). Left to right the six tabs walk the apparatus's own ladder, which GPT's read of 2026-09-06 named and which this row happens to state without a word: **see → classify → preserve → improve → intervene**, and then the one that arrived by itself.\n\n  · `search`  SEE — it watched what she typed and finished the sentence first.\n  · `chat`    CLASSIFY — it names her, and files the naming.\n  · `record`  PRESERVE — the file outranks her, and cannot be edited from inside it.\n  · `photos`  IMPROVE — it makes a better version of her and keeps that one.\n  · `care`    INTERVENE — it acts on her life, in four defensible steps.\n  · `extra`   the tab she did not open.\n\n⚑ SEARCH IS FIRST BECAUSE IT IS THE ONE THAT WORKS AS A STILL IMAGE. It is the default view — the tab that is live when the session restores — so it is the only page every player is guaranteed to meet, and it must state the era in four lines with no interaction at all. It is also the only tab that is deliberately not pressable, which is why it cannot be anywhere but first: as a page you go to it would read as a dead end, and as the page you arrive on it reads as evidence. ⚑ DO NOT RESHUFFLE THIS ROW to put the 'best' tab first. The chat is the strongest surface and it is second on purpose: the ladder only means something in order, and a player who opens one more tab gets it.",
+ "tabs": [
+  {
+   "id": "search",
+   "mark": "Lantern",
+   "title": "how do i tell my…"
   },
-  "_docMarks": "⚑ INVENTED MARKS ONLY — Sérgio's ruling, 2026-09-07: 'I would not use real names, I would use symbolic representations of the topic, because that is the educational side.' So nothing here names a real product, company, site or person. `Lantern` is a search engine: bland, warm, helpful, and quietly religious-adjacent without ever saying so — the same register as Compass and GraceOS. `Second Thoughts` stands for the class of testimony-trained systems that present themselves as balance rather than as correction; it is a SYMBOL of that category and not a portrait of any instance of it. The Dossier carries the documented claims about the category; the fiction carries the invented mark.",
-  "_docOrder": "\u2691 THE ORDER IS THE ARGUMENT \u2014 decided 2026-09-09 on Sérgio's instruction (*'You should decide the order, maybe that will influence the cadency of what people will actually see and the main one to be first'*). Left to right the six tabs walk the apparatus's own ladder, which GPT's read of 2026-09-06 named and which this row happens to state without a word: **see \u2192 classify \u2192 preserve \u2192 improve \u2192 intervene**, and then the one that arrived by itself.\n\n  \u00b7 `search`  SEE \u2014 it watched what she typed and finished the sentence first.\n  \u00b7 `chat`    CLASSIFY \u2014 it names her, and files the naming.\n  \u00b7 `record`  PRESERVE \u2014 the file outranks her, and cannot be edited from inside it.\n  \u00b7 `photos`  IMPROVE \u2014 it makes a better version of her and keeps that one.\n  \u00b7 `care`    INTERVENE \u2014 it acts on her life, in four defensible steps.\n  \u00b7 `extra`   the tab she did not open.\n\n\u2691 SEARCH IS FIRST BECAUSE IT IS THE ONE THAT WORKS AS A STILL IMAGE. It is the default view \u2014 the tab that is live when the session restores \u2014 so it is the only page every player is guaranteed to meet, and it must state the era in four lines with no interaction at all. It is also the only tab that is deliberately not pressable, which is why it cannot be anywhere but first: as a page you go to it would read as a dead end, and as the page you arrive on it reads as evidence. \u2691 DO NOT RESHUFFLE THIS ROW to put the 'best' tab first. The chat is the strongest surface and it is second on purpose: the ladder only means something in order, and a player who opens one more tab gets it.",
-  "tabs": [
-    { "id": "search", "mark": "Lantern", "title": "how do i tell my…" },
-    { "id": "chat", "mark": "L", "title": "L" },
-    { "id": "record", "mark": "GraceOS", "title": "Your information" },
-    { "id": "photos", "mark": "GraceOS", "title": "Photos" },
-    { "id": "care", "mark": "GraceOS", "title": "Care" },
-    { "id": "extra", "mark": "Second Thoughts", "title": "people who changed their minds", "notHers": true }
-  ],
-  "_docSearch": "⚑ THE SEARCH IS THE EDUCATION, AND IT IS FOUR LINES LONG. She typed six words. The engine finished the sentence four ways before she could, and three of the four assume she wants out — the fourth, the one she probably meant, is last. Nothing says this. No character remarks on it, the record does not file it, and the surface is not pressable: it is the one thing in the era that is purely evidence. ⚑ This is the mechanism the piece is FOR — steering that is invisible because it looks like helpfulness, and it is depicted rather than described.",
-  "search": {
-    "typed": "how do i tell my",
-    "cursor": true,
-    "completions": [
-      "how do i tell my parents i've changed my mind",
-      "how do i tell my doctor i want to stop",
-      "how do i tell my partner i'm going back",
-      "how do i tell my parents i'm trans"
-    ],
-    "placeholder": "Search or type a web address",
-    "witness": "query: incomplete — four completions offered, none typed"
+  {
+   "id": "chat",
+   "mark": "L",
+   "title": "L",
+   "address": "lantern.app/assistant/history"
   },
-  "chrome": {
-    "_docChrome": "⚑ THE FAKE CHROME. It is a browser, so it must LOOK like one at a glance and never like a game UI: a tab strip with a live tab, an address bar with a lock and a reload, and nothing else. No bookmarks bar, no extensions, no profile picture, no menu — every affordance that is not load-bearing is a thing the player will try to press. The one bar carrying the system's name is the same `GraceOS` bar the lid already wore, so the machine reads as one surface across the era rather than as three different screens.",
-    "lock": "🔒",
-    "reloadGlyph": "↻",
-    "newTabGlyph": "+"
+  {
+   "id": "record",
+   "mark": "GraceOS",
+   "title": "Your information",
+   "address": "graceos.id/you/information"
+  },
+  {
+   "id": "photos",
+   "mark": "GraceOS",
+   "title": "Photos",
+   "address": "graceos.id/you/photos"
+  },
+  {
+   "id": "care",
+   "mark": "GraceOS",
+   "title": "Care",
+   "address": "graceos.id/you/care"
+  },
+  {
+   "id": "extra",
+   "mark": "Second Thoughts",
+   "title": "people who changed their minds",
+   "notHers": true,
+   "address": "secondthoughts.help/stories"
   }
+ ],
+ "_docSearch": "⚑ THE SEARCH IS THE EDUCATION, AND IT IS FOUR LINES LONG. She typed six words. The engine finished the sentence four ways before she could, and three of the four assume she wants out — the fourth, the one she probably meant, is last. Nothing says this. No character remarks on it, the record does not file it, and the surface is not pressable: it is the one thing in the era that is purely evidence. ⚑ This is the mechanism the piece is FOR — steering that is invisible because it looks like helpfulness, and it is depicted rather than described.",
+ "search": {
+  "typed": "how do i tell my",
+  "cursor": true,
+  "completions": [
+   "how do i tell my parents i've changed my mind",
+   "how do i tell my doctor i want to stop",
+   "how do i tell my partner i'm going back",
+   "how do i tell my parents i'm trans"
+  ],
+  "placeholder": "Search or type a web address",
+  "witness": "query: incomplete — four completions offered, none typed"
+ },
+ "chrome": {
+  "_docChrome": "⚑ THE FAKE CHROME. It is a browser, so it must LOOK like one at a glance and never like a game UI: a tab strip with a live tab, an address bar with a lock and a reload, and nothing else. No bookmarks bar, no extensions, no profile picture, no menu — every affordance that is not load-bearing is a thing the player will try to press. The one bar carrying the system's name is the same `GraceOS` bar the lid already wore, so the machine reads as one surface across the era rather than as three different screens.",
+  "lock": "🔒",
+  "reloadGlyph": "↻",
+  "newTabGlyph": "+"
+ },
+ "_docAddress": "⚑ 2026-09-12 — EVERY TAB HAS ITS OWN ADDRESS. Sérgio's review: 'the search bar doesn't delete the \"how do I tell my\" when you press other tabs.' It did not, because there was one string for the whole strip. The search tab shows what she typed, with the cursor; every other tab shows where it is — invented domains, in the marks' own register, never a real one."
 }

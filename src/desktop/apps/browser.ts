@@ -37,11 +37,19 @@ import body from '../../../data/dialog/s4_browser.json';
  *  page in S123; the rest are the next sessions' work and are deliberately
  *  declared here so the chrome is honest about what the era will contain. */
 type TabId = 'search' | 'chat' | 'record' | 'photos' | 'care' | 'extra';
-interface Tab { id: TabId; mark: string; title: string; notHers?: boolean }
+interface Tab { id: TabId; mark: string; title: string; notHers?: boolean; address?: string }
 const TABS = script.tabs as unknown as Tab[];
 
 /** under four seconds. E2's splash is 23.7 because 2003 made you watch it. */
 const RESTORE_SECONDS = 2.4;
+/**
+ * ⚑ THE BOOT LINE, BEFORE THE RESTORE (2026-09-12). Sérgio: "it needs a boot
+ * up moment of the OS, just aesthetically stating like 'L — Is booting up for
+ * you, Maya' and then 'Restoring session'… giving like a few seconds so the
+ * person can settle in the new position." The companion names itself and names
+ * her, alone on the page, and only then does the session come back.
+ */
+const BOOT_SECONDS = 2.6;
 /** the tabs come back one at a time as the restore completes. */
 const TAB_GAP = 0.22;
 /**
@@ -80,7 +88,26 @@ export interface Hit { x: number; y: number; w: number; h: number; id: string }
  */
 
 export class E4Browser {
-  private phase: 'restoring' | 'open' | 'handed' = 'restoring';
+  /**
+   * ⚑ `dormant` FIRST (2026-09-12). The shell — and this browser with it — is
+   * built at the update ritual's restart, MID-FLIGHT, so a clock that starts
+   * at construction has finished restoring before the camera lands: the boot
+   * that d50f88a built was never once in the played path. The page stays dark
+   * until `beginSession()` is called — by app.ts's `endRelocation` on the real
+   * E3→E4 leg, with the settle delay, and by the review jumps at once.
+   */
+  private phase: 'dormant' | 'restoring' | 'open' | 'handed' = 'dormant';
+  /** seconds still to wait before the boot line — the settle after landing */
+  private settleT = 0;
+
+  /** the session begins: the settle, the boot line, the restore, the tabs. */
+  beginSession(settleSeconds = 0): void {
+    if (this.phase !== 'dormant') return;
+    this.settleT = settleSeconds;
+    this.t = 0;
+    this.phase = 'restoring';
+    this.version++;
+  }
   private t = 0;
   private live = 0;
   private hits: Hit[] = [];
@@ -104,11 +131,13 @@ export class E4Browser {
   get liveTab(): TabId { return TABS[this.live]?.id ?? 'search'; }
 
   update(dt: number): void {
+    if (this.phase === 'dormant') return;
+    if (this.settleT > 0) { this.settleT = Math.max(0, this.settleT - dt); return; }
     this.t += dt;
     if (this.phase === 'restoring') {
       // ⚑ the whole boot is a clock and a line. Nothing is pressable during it,
       // and nothing can be skipped — the same ruling E2's splash got.
-      if (this.t >= RESTORE_SECONDS + (TABS.length - 1) * TAB_GAP + EXTRA_GAP) {
+      if (this.t >= BOOT_SECONDS + RESTORE_SECONDS + (TABS.length - 1) * TAB_GAP + EXTRA_GAP) {
         this.phase = 'open';
         this.t = 0;
         this.file();
@@ -137,7 +166,7 @@ export class E4Browser {
   /** how many tabs have come back — during the restore this counts up. */
   private tabsBack(): number {
     if (this.phase === 'open') return TABS.length;
-    const since = this.t - RESTORE_SECONDS;
+    const since = this.t - BOOT_SECONDS - RESTORE_SECONDS;
     if (since < 0) return 0;
     const n = Math.floor(since / TAB_GAP) + 1;
     // ⚑ the first five are the session; the sixth is not, and it waits.
@@ -167,15 +196,24 @@ export class E4Browser {
     this.pressable = pressable;
     const back = this.tabsBack();
 
+    if (this.phase === 'dormant' || this.settleT > 0) {
+      // the machine is simply off until the session begins
+      px(ctx, 0, 0, W, H, CHROME.page);
+      return;
+    }
     if (this.phase === 'restoring' && back <= 0) {
-      restoring(ctx, W, H, script.boot.restoring, this.t / RESTORE_SECONDS);
+      if (this.t < BOOT_SECONDS) restoring(ctx, W, H, script.boot.bootLine, 0);
+      else restoring(ctx, W, H, script.boot.restoring, (this.t - BOOT_SECONDS) / RESTORE_SECONDS);
       return;
     }
 
     px(ctx, 0, 0, W, H, CHROME.page);
     const shown = TABS.slice(0, back);
-    const addr = this.phase === 'open' ? script.search.typed : '';
-    const blink = this.phase === 'open' && this.pressable && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
+    // ⚑ each tab shows its own address; only the search tab shows what she
+    //   typed, and only it carries the cursor (2026-09-12, his review)
+    const onSearch = this.liveTab === 'search';
+    const addr = this.phase !== 'open' ? '' : onSearch ? script.search.typed : (TABS[this.live]?.address ?? '');
+    const blink = this.phase === 'open' && onSearch && this.pressable && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
     const rects = browserChrome(ctx, W, shown, this.live, addr, blink);
     rects.forEach((r, i) => this.publish({ ...r, id: `tab${i}` }));
 
@@ -184,6 +222,9 @@ export class E4Browser {
       setFont(ctx, 9);
       ctx.fillStyle = CHROME.hint;
       ctx.fillText(script.boot.restoring, ADDR.x + 2, ADDR.y + ADDR.h + 12);
+      // ⚑ and the one line the machine should not be able to say — see
+      //   s4_boot.json `_docPrivate`. It arrives with the last of her tabs.
+      if (back >= TABS.length - 1) ctx.fillText(script.boot.private, ADDR.x + 2, ADDR.y + ADDR.h + 24);
       return;
     }
     switch (this.liveTab) {
@@ -482,9 +523,16 @@ export class E4Browser {
       }
       if (hit.id === 'photo-flip') { this.enhanced = !this.enhanced; this.version++; return true; }
     }
-    this.phase = 'handed';
-    this.version++;
-    return false;
+    /**
+     * ⚑ A MISS IS A MISS (2026-09-12). This used to hand the browser over —
+     * `phase = 'handed'` — on any press that hit no rect, and from then on the
+     * page drew "Restoring your session" for ever. On the monitor, with real
+     * fingers, that is every second press: Sérgio's review read "I pressed L
+     * Chat and it broke down… I pressed the photo and it broke down", and
+     * nothing had broken — the browser had quietly ended itself. A press on
+     * empty page does nothing, which is what a browser does.
+     */
+    return true;
   }
 
   /**
@@ -514,6 +562,7 @@ export class E4Browser {
 
   /** review only: land on a tab, or on the settled browser. */
   debugJumpTo(where: string): void {
+    this.settleT = 0;
     this.phase = 'open';
     this.t = 0;
     this.filed = true;

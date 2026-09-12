@@ -701,7 +701,7 @@ if (unreachedCount > UNREACHED_BASELINE) {
 // rather than as work nobody has started. **This baseline goes back to 0 the day
 // that file lands** — it is the only number in this file that is expected to
 // fall, and if it is still 2 in a month, the ball is still silent.
-const AUDIO_BASELINE = 2;
+const AUDIO_BASELINE = 0;
 let audioMissing = 0, audioRefs = 0;
 {
   const refs = new Set();

@@ -1784,6 +1784,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // start without the boot up on the computer"). E3's arrival only — E1→E2
     // and E3→E4 have no device boot of their own to hold back.
     if (key === 'e2-e3') era3Devices?.beginArrival();
+    // ⚑ 2026-09-12 — and E4's does now: the monitor boots once the camera is in
+    //   the seat, after a few seconds to settle (Sérgio's review). The shell was
+    //   built mid-flight; its clock starts here.
+    if (key === 'e3-e4') os.e4?.beginSession(3.0);
   }
   /** put the camera in a room's seat, now. The landing half of a relocation,
    *  and the whole of it under ?descent=0. */
@@ -3532,6 +3536,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S2R.0/S2R.1 arrival narrative (silence → Lamby) — same spirit as
     // skipping O1/O3 at boot.
     os.setDesktopEra(era, true);
+    // a review jump is already seated: the session begins after a short beat
+    if (era === 'e4') os.e4?.beginSession(0.6);
     // lighting: morphToEra applies that era's rig (data/room/cluster.json),
     // which owns lighting from E2 on.
     cluster.morphToEra(era, false); // the era's open cluster + rig, settled
@@ -3582,7 +3588,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   per-frame gate already switches it off at the hand-off; naming it
       //   here too means the Close does not depend on that gate still running.
       'era3-device-laptop',
-      'era4-visor'
+      'era4-visor',
+      // ⚑ 2026-09-12: and the docked monitor. Added in S126, never added here;
+      //   Sérgio saw the browser floating in the constellation.
+      'era3-device-monitor'
     ];
     clearLookOffset();
     camMove = null;
