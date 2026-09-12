@@ -1021,3 +1021,19 @@ shimmering progress bar, and a before/after with the handle cutting through her 
 shoulders and her top on the left, the cropped, greyed, squared version on the right. A 2026 web kit
 lives in the theme now (cards, pills, chips, progress, avatar, compare); Record is a profile card,
 Care a timeline. Chrome re-cut against the thing itself. Walked: 280 presses, spine done.
+
+## 2026-09-12 — S137 · Phase C walked; Phase D: the Close begins with the glitch, and ends on Daniel's monitor
+
+Phase C (the Commons as a VRChat-like world — hall, crowd, coloured sweeps, three markers, the
+TransJesus stream as video) walked green from the entrance: 204 presses, `spine: done`, through
+`commons-join` → the visor → the ball → the glitch. Pushed. Then his spec for the Close, all of it:
+the device stopping IS the request (`finishHandOff` arms the `close` update; the laptop's Restart card
+leaves the path and the lid reads *Your update has failed.*); the journey is slower and smooth — a
+6 s lead, 26 s over the partition, 18 s up to the stickers, night FALLING over 8 s instead of a snap,
+the sky lerping from the room's dark to the constellation's blue across a 16 s opening; the four
+panels are 2.2 m cards carrying the era's own room (plates baked from the rooms by
+`tools/bake-close-plates.mjs` into `public/assets/close/`), one paragraph in a reading face, and the
+dossier status, with each era's cluster beside its card; and the Restart is Daniel's 1997 CRT lit in
+the dark 20 s after the sky settles — the room's own boxes rebuilt as a second monitor
+(`closeMonitor.ts`), the card in ERA1's type (`close_restart.json`): four rooms to go back to, *Start
+again*. The gaze comes down to it, conducted. Leaving the Close puts the room back and jumps settled.

@@ -467,11 +467,15 @@ export class E4Shell {
     //   from the moment it is worn the room sends every press to the picture in
     //   front of her face, so publishing tab rects here would advertise six
     //   controls nothing can reach. See `E4Browser.draw`'s note.
-    this.browser.draw(ctx, W, H, this.stageNow === 'closed');
+    // ⚑ 2026-09-13: and not once the device has stopped — the walk pressed four
+    //   tabs during the Close's lead, on a browser the era had already left.
+    this.browser.draw(ctx, W, H, this.stageNow === 'closed' && !this.handedOff);
   }
   /** ⚑ the stage is part of the version: the monitor must repaint (and
    *  republish, or not) the frame the device goes on or comes off */
-  get browserVersion(): number { return this.browser.version + (this.stageNow === 'closed' ? 0 : 100000); }
+  get browserVersion(): number {
+    return this.browser.version + (this.stageNow === 'closed' && !this.handedOff ? 0 : 100000);
+  }
   /** the monitor is a real screen in the room, so its presses are real presses */
   pressBrowser(x: number, y: number): boolean { return this.browser.handleClick(x, y); }
 
