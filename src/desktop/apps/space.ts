@@ -640,6 +640,20 @@ export class E4Shell {
    * means: it files exactly what pressing through the three lines files, so a
    * jumped review and a played one leave the same record.
    */
+  /** ⚑ review only (2026-09-12): the device has stopped and the laptop holds
+   *  the Close — the state the era is in when `enterClose` fires in play. The
+   *  panel's Close button calls this first so a review that starts mid-era does
+   *  not carry a worn visor into the journey back to Daniel's room. In play it
+   *  is a no-op: `finishHandOff` has already run. */
+  debugStopDevice(): void {
+    if (this.handedOff) return;
+    this.ball.close();
+    this.handedOff = true;
+    this.stageNow = 'closed';
+    this.laptopV++;
+    this.version++;
+  }
+
   debugSkipLaptop(): void {
     if (this.stageNow !== 'laptop') return;
     this.laptopLine = space.laptop.lines.length;

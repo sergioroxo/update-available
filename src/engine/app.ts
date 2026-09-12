@@ -3034,6 +3034,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (descentActive && !camMove) endDescent();
       // …and the relocation's legs hand over to each other the same way
       if (relocLeg && !camMove) advanceRelocation();
+      // ⚑ the Close's four legs hand over the same way; `hold` is the one
+      //   without a camera move, so it runs on its own small clock
+      if (closeStage === 'hold') {
+        closeHoldT += dt;
+        if (closeHoldT >= CLOSE_HOLD_SECONDS) advanceClose();
+      } else if (closeStage && !camMove) advanceClose();
       // ⚑ S85: a driven leg has ended and nothing took it over, so a look taken
       // during it becomes simply the look you are holding. (A landing never
       // reaches here with an offset — endDescent/seatCut clear it — and a
@@ -3445,9 +3451,109 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  is the clock. */
   let closeRoomPending: string[] | null = null;
 
+  /**
+   * ⚑ THE CLOSE IS A JOURNEY NOW, NOT A CUT (2026-09-12). Sérgio, after his
+   * first sit-through of a deployed build in weeks: *"the close must be so so
+   * much slower, because we should be travelled back to Daniel's room and
+   * pointed to the stars on the ceiling and through that morph into the panels
+   * of the cyclorama that explain the experience."* Until now `enterClose` did
+   * `camPos.set(EYE)` — a teleport from Maya's seat to Daniel's on one frame,
+   * pitch 6, and the constellation cut in around the player. The stars were up
+   * there for the whole piece (S101) and the ending never once looked at them.
+   *
+   * Four legs, each a conducted camera move, each timed to the comfort law
+   * (0.43 m/s, 9.1 °/s — smootherstep's PEAK is 1.875× the mean, so the
+   * durations below are set against the peak, not the average):
+   *   travel  · from wherever she is back to Daniel's seat, over the partition
+   *             (~5 m of arc in 24 s), the room still lit — she is leaving it
+   *   lookUp  · the eyes rise 72° to the ceiling over 16 s, the room still lit
+   *   hold    · the rig goes to `close` — the lights out, the stickers the only
+   *             thing left lit — and four seconds on the stars, as in 1997
+   *   open    · the constellation opens out of that patch (openSeconds is the
+   *             clock) while the gaze comes back down into the sky it makes
+   * The review route (`?close=1`, the panel's button) begins at Daniel's seat
+   * already, so `travel` is skipped when there is nowhere to travel from.
+   */
+  type CloseStage = 'travel' | 'lookUp' | 'hold' | 'open' | null;
+  let closeStage: CloseStage = null;
+  let closeHoldT = 0;
+  const CLOSE_TRAVEL_SECONDS = 24;
+  const CLOSE_LOOKUP_SECONDS = 16;
+  const CLOSE_HOLD_SECONDS = 4;
+  const CLOSE_OPEN_SECONDS = 14;
+  const CLOSE_STARS_PITCH = 72;
+  const CLOSE_SKY_PITCH = 10;
+
+  function advanceClose(): void {
+    if (!cluster || !cloud) { closeStage = null; return; }
+    if (closeStage === 'travel') {
+      closeStage = 'lookUp';
+      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_STARS_PITCH, yaw: 0 },
+        CLOSE_LOOKUP_SECONDS, true);
+      return;
+    }
+    if (closeStage === 'lookUp') {
+      // ⚑ the lights go out ON the stars, not before the eyes start rising —
+      //   measured: with the rig applied at the start of lookUp the whole rise
+      //   was through a black room, and a ceiling you cannot see is not a
+      //   ceiling. She looks up in Daniel's lit room; then it is night.
+      closeStage = 'hold'; closeHoldT = 0;
+      cluster.applyRig('close', false);
+      return;
+    }
+    if (closeStage === 'hold') {
+      closeStage = 'open';
+      // Round 18: never black — the constellation sits in a night-blue sky
+      if (camera.camera) camera.camera.clearColor = closeBackdropColor();
+      cloud.show();
+      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_SKY_PITCH, yaw: 0 },
+        CLOSE_OPEN_SECONDS, true);
+      return;
+    }
+    if (closeStage === 'open') closeStage = null;
+  }
+
+  /**
+   * ⚑ THE SETTLED ERA JUMP — one function, because it was two copies (2026-09-12).
+   * This is what `?era=` has always done: the desktop, the room, the device
+   * screens, the seat and the conductor, all at that era's SETTLED state, on
+   * one frame. The debug panel's era buttons did something else — they went
+   * through `os.onEraShift`, the real transition path, which only knows how to
+   * relocate between ADJACENT eras: from a fresh load, E3 and E4 found no plan,
+   * moved nothing, and left Sérgio in Daniel's room with the desktop insisting
+   * it was 2026. Every Era 4 beat button then landed on a headset two rooms
+   * away. His verdict, after a week of that: "the debug panel is useless." He
+   * was right. The panel calls THIS now, and calls it on its own before any
+   * beat that belongs to another era.
+   */
+  function jumpToEraSettled(era: EraKey): void {
+    if (!cluster) return;
+    // `settled`: a review jump wants the room's SETTLED state, not the
+    // S2R.0/S2R.1 arrival narrative (silence → Lamby) — same spirit as
+    // skipping O1/O3 at boot.
+    os.setDesktopEra(era, true);
+    // lighting: morphToEra applies that era's rig (data/room/cluster.json),
+    // which owns lighting from E2 on.
+    cluster.morphToEra(era, false); // the era's open cluster + rig, settled
+    // Session 37: review jumps era-gate the device screens too. S61: and
+    // `settled` skips the arrival (dark → boot → install).
+    era3Devices?.setEra(era, true);
+    // seated at the era's home room (E4 boots already turned — the TURN)
+    seatYaw = cluster.homeYaw;
+    const sp = seatPose(seatYaw);
+    camMove = null;
+    tween = null;
+    clearLookOffset();
+    camPos.set(sp.x, sp.y, sp.z);
+    camPitch = sp.pitch;
+    camYaw = sp.yaw;
+    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+    spine?.onEra(era); // S58: seed the conductor to match the jump
+  }
+
   function enterClose(): void {
-    if (!cluster || !cloud || cloud.visible) return;
-    cluster.applyRig('close', false);
+    if (!cluster || !cloud || cloud.visible || closeStage) return;
     /**
      * ⚑ AND THE ROOM STAYS FOR A BEAT (S101). The rig snaps the lights out on
      * this frame, so what is left is a dark room with the glow-stars over the
@@ -3478,13 +3584,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       'era3-device-laptop',
       'era4-visor'
     ];
-    // Round 18: never black — the constellation sits in a night-blue sky
-    if (camera.camera) camera.camera.clearColor = closeBackdropColor();
-    cloud.show();
-    camPos.set(EYE.x, EYE.y, EYE.z);
-    camPitch = 6;
-    camYaw = 0;
-    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    clearLookOffset();
+    camMove = null;
+    tween = null;
+    // the device has stopped by the time the Close is asked for in play; a
+    // review that starts mid-era must not carry a worn visor into the journey
+    os.e4?.debugStopDevice();
+    const dx = camPos.x - EYE.x, dz = camPos.z - EYE.z;
+    if (Math.hypot(dx, dz) > 0.5) {
+      closeStage = 'travel';
+      // the bezier control point sits over the partition between the rooms,
+      // raised: the path bows up-and-over, the same stroke every relocation in
+      // the piece takes, and she sees the building once more on the way out
+      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 },
+        CLOSE_TRAVEL_SECONDS, true, { x: (camPos.x + EYE.x) / 2, y: 2.15, z: EYE.z });
+    } else {
+      // already in Daniel's room: begin with the eyes rising
+      closeStage = 'travel';
+      advanceClose();
+    }
   }
 
   if (options.reinterp) {
@@ -3493,26 +3611,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (options.close && cluster && cloud) {
       enterClose();
     } else if (options.era && cluster) {
-      // `settled`: a review jump wants the room's SETTLED state, not the
-      // S2R.0/S2R.1 arrival narrative (silence → Lamby) — same spirit as
-      // skipping O1/O3 below.
-      os.setDesktopEra(options.era, true);
-      // lighting: cluster.morphToEra(options.era, false) below applies that
-      // era's rig (data/room/cluster.json), which owns lighting from E2 on.
-      cluster.morphToEra(options.era, false); // the era's open cluster + rig, settled
-      // Session 37: review jumps era-gate the device screens too. S61: and
-      // `settled` skips the arrival (dark → boot → install), matching
-      // os.setDesktopEra(options.era, true) two lines above.
-      era3Devices?.setEra(options.era, true);
+      jumpToEraSettled(options.era);
       if (options.facet && niche) niche.setFacet(options.facet); // override wins
-      // boot SEATED at the era's home room (E4 boots already turned — the TURN)
-      seatYaw = cluster.homeYaw;
-      const sp = seatPose(seatYaw);
-      camPos.set(sp.x, sp.y, sp.z);
-      camPitch = sp.pitch;
-      camYaw = sp.yaw;
-      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
-      spine?.onEra(options.era); // S58: seed the conductor to match the jump
     } else if ((options.reveal || options.morphDemo) && cluster) {
       applyLightsOn();          // E1 lit state…
       cluster.reveal();         // …already past the first filing (O7)
@@ -3564,7 +3664,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // fire, E1 state retires on schedule). Without it the panel's era jump
       // desynchronised the spine from the room, which read as a locked build
       // (docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md ROOT CAUSE #1).
-      onEra: (era) => os.onEraShift?.(era),
+      // ⚑ 2026-09-12: the SETTLED jump (see jumpToEraSettled), not onEraShift —
+      //   the transition path only relocates between adjacent eras and left
+      //   every non-adjacent jump standing in Room 1.
+      onEra: (era) => jumpToEraSettled(era),
+      roomEra: () => cluster?.era ?? 'e1',
       // dev camera jump (?debug=1 only): window.__camProbe(yaw, pitch) teleports
       // to that facing's SEAT pose — how review screenshots are taken
       onCamProbe: (yaw, pitch) => {

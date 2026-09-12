@@ -319,7 +319,8 @@
   "labelColor": "#E8C9A0",
   "labelHeight": 0.058,
   "_docTheOpening": "⚑ S101 — THE STARS ON THE CEILING BECOME THE NETWORK (Sérgio, 2026-09-02). The constellation no longer cuts in at full size: it starts as the small dense patch of glow-stars over the seat — `ceiling`, below, which is a real merged mesh sitting on the room's ceiling for the whole piece — and opens out around the player over `openSeconds`. Nothing is spawned and nothing is swapped: it is ONE root, lerped from the ceiling anchor at a small uniform scale to the sky's own centre at full size, so the stars a child put up are literally the nodes the network is made of. Uniform scale on purpose — the labels are quads on this root and a squashed axis would squash the text.",
-  "openSeconds": 2.8,
+  "openSeconds": 9.0,
+  "_docOpenSeconds": "⚑ 2026-09-12: 2.8 → 9.0. The Close is a journey now (app.ts enterClose): the eyes are on the stickers for four seconds before this starts, so the opening has to be slow enough to be SEEN leaving the ceiling — at 2.8 s it was a cut with a blur on it.",
   "ceilingAnchor": [
    0,
    2.62,

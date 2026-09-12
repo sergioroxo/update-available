@@ -47,6 +47,9 @@ interface DebugOpts {
   /** The live renderer: required for a non-black WebGL canvas readback. */
   app?: pc.Application;
   onEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
+  /** ⚑ 2026-09-12: which era the ROOM is at — so a beat button can bring the
+   *  room to its era before it presses the OS. See `eraOfBeat`. */
+  roomEra?: () => 'e1' | 'e2' | 'e3' | 'e4';
   /** S67 THE BUILDING: replay one era relocation from its own starting seat */
   onRelocate?: (from: 'e1' | 'e2' | 'e3' | 'e4', to: 'e1' | 'e2' | 'e3' | 'e4') => void;
   onReveal?: () => void;
@@ -372,6 +375,40 @@ const OS_ENTRY_IDS = new Set([
 ]);
 
 /** eras with the room + identity + year they now lead (Round 24 model) */
+/**
+ * ⚑ WHICH ERA A BEAT BELONGS TO, so the room can be brought there first
+ * (2026-09-12). Every OS beat jump sets the DESKTOP and none of them ever moved
+ * the ROOM — os.ts's own comment on the E4 buttons says so, and tells the
+ * reviewer to press the era button first. Sérgio never did, because nobody
+ * reads a comment inside a button, and for a week every Era 4 button put the
+ * desktop at 2026 while he sat in Daniel's 1997 room looking at a monitor that
+ * had gone dark. "The debug panel is useless." A button that needs another
+ * button pressed first is not a button. Derived from the id, with `null` for
+ * anything that should leave the room alone.
+ */
+function eraOfBeat(id: string): 'e1' | 'e2' | 'e3' | 'e4' | null {
+  if (/^e4|^closeUpdate$/.test(id)) return 'e4';
+  if (/^update4$|^grace|^q[A-Z]/.test(id)) return 'e3';
+  if (/^e2|^caleb|^netvision|^update3$|^u3Dispersal$/.test(id)) return 'e2';
+  if (/^send-/.test(id)) return null;
+  return 'e1';
+}
+
+/**
+ * ⚑ THE SHORT LIST FOR SÉRGIO (2026-09-12). Seventy-five buttons is a tool for
+ * the people who built the beats; a person reviewing the era wants six. These
+ * are Era 4's beats in the order a player meets them, in plain words, each one
+ * landing in Room 3 with the desktop and the device in the right state.
+ */
+const E4_REVIEW: Array<[string, string]> = [
+  ['1 · the browser — six tabs on the monitor', 'e4Browser'],
+  ['2 · headset on — the offers begin', 'e4Offers'],
+  ['3 · the careful pause', 'e4Pause'],
+  ['4 · the Commons — Junie\'s invitation, Go in', 'e4Invite'],
+  ['5 · the update fails — the glitch', 'e4Glitch'],
+  ['6 · the device stops — the laptop, Restart', 'closeUpdate']
+];
+
 const ERAS: Array<['e1' | 'e2' | 'e3' | 'e4', string]> = [
   ['e1', 'E1 1997 · Room 1 (gay teen)'],
   ['e2', 'E2 2003 · Room 1 adult'],
@@ -671,8 +708,27 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   });
   modeBtn.style.cssText += ';color:#ffd48f;flex:1';
 
+  /** press an OS beat with the ROOM brought to its era first — see eraOfBeat */
+  const jumpBeat = (id: string): void => {
+    const era = eraOfBeat(id);
+    if (era && opts.onEra && opts.roomEra && opts.roomEra() !== era) opts.onEra(era);
+    os.debugJump(id);
+  };
+
+  // ── ⚑ REVIEW ERA 4 — the six beats, in order, in plain words (2026-09-12) ──
+  const review = section('REVIEW · ERA 4', 'six beats, in order — each lands you in Room 3', true);
+  const rnote = document.createElement('div');
+  rnote.style.cssText = 'color:#7f8aa3;font-size:9px;line-height:1.4;margin:0 0 3px';
+  rnote.textContent = 'Each button brings the room, the desktop and the device to that beat. Then look around.';
+  review.appendChild(rnote);
+  for (const [label, id] of E4_REVIEW) mkBtn(review, label, () => jumpBeat(id), '⏵ ENTRY');
+  if (opts.onClose) mkBtn(review, '7 · the Close — back to Daniel\'s room, up to the stars', () => {
+    if (opts.onEra && opts.roomEra && opts.roomEra() !== 'e4') opts.onEra('e4');
+    opts.onClose?.();
+  }, '⏵ ENTRY');
+
   // ── NAVIGATE: time, room and witness — the spatial spine, close at hand. ──
-  const navigate = section('NAVIGATE', 'time · room · witness', true);
+  const navigate = section('NAVIGATE', 'time · room · witness', false);
   if (opts.onEra || opts.onReveal || opts.onClose) {
     heading(navigate, 'TIME — the rooms age');
     if (opts.onReveal) mkBtn(navigate, 'O7 · first-filing reveal', opts.onReveal, 'JUMP');
@@ -800,7 +856,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
       continue;
     }
     if (excluded.has(row.id)) continue; // documented exclusion wins if ever double-listed
-    if (beats) mkBtn(beats, row.label, () => os.debugJump(row.id),
+    if (beats) mkBtn(beats, row.label, () => jumpBeat(row.id),
       OS_ENTRY_IDS.has(row.id) ? '⏵ ENTRY' : 'JUMP');
   }
 

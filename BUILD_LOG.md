@@ -979,3 +979,17 @@ mark in the fiction.
 Also this session: the browser fits the glass (widescreen canvas, flat plane, on the real
 front face — three plates); Room 3 stripped of twenty-three boxes; the deploy that had
 been sitting unpushed since 25 August pushed, 83 commits.
+
+## 2026-09-12 — S134 · The Close is a journey, and the debug panel lands where it says
+
+Sérgio: "the close must be so so much slower, because we should be travelled back to
+Daniel's room and pointed to the stars on the ceiling and through that morph into the
+panels of the cyclorama." Built as four conducted legs timed to the comfort law's PEAK:
+travel back over the partition (24 s, the room lit), the eyes rise 72° to the ceiling
+(16 s, still lit), the lights go out on the stickers (4 s), the sky opens out of that patch
+(9 s, was 2.8) while the gaze comes down into the panels. It was a one-frame teleport at
+pitch 6. And the debug panel: every beat button brings the ROOM to its era first (for a
+week the Era 4 buttons set the desktop to 2026 in Daniel's 1997 room — "useless"), the era
+buttons take the settled jump instead of the adjacent-only transition path, and a REVIEW ·
+ERA 4 section at the top gives him the seven beats in order, in plain words. Walked
+click-only: 285 presses, spine done.
