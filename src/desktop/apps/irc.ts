@@ -329,6 +329,10 @@ export class IrcApp {
     const chRows = this.rows(ctx, this.channel, c.w - listW - 12,
       (f) => (f === ledger.name ? ERA1.tooltip : ERA1.ok), ERA1.silver, caretOn).slice(-22);
     this.renderRows(ctx, chRows, c.x + 4, c.y + 4);
+    // ⚑ a tray that is not live publishes NOTHING — the first cut left the
+    //   channel's rect standing after his line was said, and the walk pressed
+    //   the phantom eight times, spending the cap the escalation needed
+    if (!this.chanAwaitingReply && !this.escAwaitingReply) this.replyRects = [];
     if (this.chanAwaitingReply && !this.dmOpen) {
       // S142: his one line, in the channel's own type area — the same grammar as the DM's
       const rect = { x: c.x, y: c.y + c.h - 20, w: c.w - listW, h: 18, id: 'reply:0' };
