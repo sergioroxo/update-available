@@ -26,13 +26,18 @@ const VIEWPORT = { width: 1280, height: 860 };
 
 /** one pose per era: a step behind the era's seat, a little above it, looking
  *  slightly down — the room, with its instrument in it */
+/** ⚑ 2026-09-13: TWO METRES back, not one — the first plates from a step behind
+ *  the seat were the instrument filling the frame; the one Sérgio pointed at
+ *  (a fluke of an early frame) showed the bed, the chair, the desk: the ROOM.
+ *  Each pose is inside its room's own floor, 2.4 m behind its seat, a little up. */
 const PLATES = {
-  1: { x: 0.0, y: 1.42, z: 1.85, pitch: -7, yaw: 0 },
-  2: { x: 0.0, y: 1.42, z: 1.85, pitch: -7, yaw: 0 },
-  3: null,   // Room 2: taken from its own seat, read at runtime (`r2`)
-  4: null    // Room 3: taken from its own seat, read at runtime (`r3`)
+  1: { x: 0.0, y: 1.55, z: 2.7, pitch: -9, yaw: 0 },
+  2: { x: 0.0, y: 1.55, z: 2.7, pitch: -9, yaw: 0 },
+  3: null,   // Room 2: from its own seat, read at runtime (`r2`)
+  4: null    // Room 3: from its own seat, read at runtime (`r3`)
 };
 const SEAT_FOR = { 3: 'r2', 4: 'r3' };
+const BACK = 2.4;
 
 function resolveChrome() {
   const explicit = flag('chrome') ?? process.env.CHROME ?? process.env.CHROME_PATH ?? process.env.PUPPETEER_EXECUTABLE_PATH;
@@ -74,10 +79,16 @@ async function main() {
       const seat = poses.seats[SEAT_FOR[era]];
       // a step back along the seat's own bearing, a little up, a little down
       const yawR = seat.yaw * Math.PI / 180;
-      pose = { x: seat.x + Math.sin(yawR) * 0.9, y: seat.y + 0.26, z: seat.z + Math.cos(yawR) * 0.9, pitch: -7, yaw: seat.yaw };
+      pose = { x: seat.x + Math.sin(yawR) * BACK, y: seat.y + 0.39, z: seat.z + Math.cos(yawR) * BACK, pitch: -9, yaw: seat.yaw };
     }
-    await page.evaluate((a) => window.__camFree(a[0], a[1], a[2], a[3], a[4]), [pose.x, pose.y, pose.z, pose.pitch, pose.yaw]);
-    await wait(900);
+    // ⚑ placed twice: the entrance's own settling can re-seat the camera a
+    //   beat after the first call, and a plate from the seat is not the room
+    for (let k = 0; k < 3; k++) {
+      await page.evaluate((a) => window.__camFree(a[0], a[1], a[2], a[3], a[4]), [pose.x, pose.y, pose.z, pose.pitch, pose.yaw]);
+      await wait(1200);
+    }
+    const got = await page.evaluate(() => window.__camPose());
+    if (Math.abs(got.x - pose.x) > 0.05 || Math.abs(got.z - pose.z) > 0.05) console.log(`  ⚠ camera did not hold the pose: ${JSON.stringify([got.x, got.y, got.z, got.pitch, got.yaw])}`);
     // 8:7 crop from the centre: the atlas cell the panel gives the picture
     const cw = 980, ch = 860;
     const file = path.join(OUT, `era${era}.jpg`);

@@ -185,7 +185,9 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       // the glass comes up like a CRT warming: the body catches its light
       glassMat.emissive.set(k, k, k);
       glassMat.update();
-      bodyMat.emissive.set(0.10 * k, 0.09 * k, 0.08 * k);
+      // ⚑ 2026-09-13, Sérgio: "make the CRT body a bit lighter" — 0.10 read as a
+      //   silhouette; this is the beige catching its own glass
+      bodyMat.emissive.set(0.34 * k, 0.31 * k, 0.27 * k);
       bodyMat.update();
     },
     press(x: number, y: number): boolean {

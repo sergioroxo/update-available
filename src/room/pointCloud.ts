@@ -148,19 +148,37 @@ export function buildPointCloud(app: pc.Application): PointCloud {
    */
   const panelBearings = ((network as { panels?: { era: number }[] }).panels ?? [])
     .map((pn) => ((P.eraBearingDeg as number[])[pn.era - 1] ?? 0) * Math.PI / 180);
-  function clearOfPanels(x: number, y: number, z: number): boolean {
+  /** ⚑ 2026-09-13: the test is ANGULAR now — what the seat sees, not where the
+   *  node is. A card is a rectangle of azimuth × elevation from the origin
+   *  (its half-width and its top and bottom edges at `radius`), and anything
+   *  inside that rectangle at ANY distance stands in front of the text or
+   *  shows through it (the person mesh is one mesh, sorted from its centre,
+   *  so depth does not save the card). Used for nodes and, sampled, for links. */
+  const CARD_AZ = Math.atan2(P.panel.w / 2, P.panel.radius) + 0.04;
+  const CARD_EL_LO = Math.atan2(P.panel.y - P.panel.h / 2, P.panel.radius) - 0.03;
+  const CARD_EL_HI = Math.atan2(P.panel.y + P.panel.h / 2, P.panel.radius) + 0.03;
+  function inCardView(x: number, y: number, z: number): boolean {
     const r = Math.sqrt(x * x + z * z);
-    if (r > P.panel.radius + 0.15) return true;      // behind the card: fine
-    if (Math.abs(y - P.panel.y) > P.panel.h * 0.85) return true; // above or below it
+    const el = Math.atan2(y, r);
+    if (el < CARD_EL_LO || el > CARD_EL_HI) return false;
     const th = Math.atan2(x, -z);
-    const halfSpan = Math.atan2(P.panel.w / 2, P.panel.radius) + 0.05;   // the card's own half-angle, plus a hand
     for (const b of panelBearings) {
       let d = th - b;
       while (d > Math.PI) d -= Math.PI * 2;
       while (d < -Math.PI) d += Math.PI * 2;
-      if (Math.abs(d) < halfSpan) return false;       // either side of the card
+      if (Math.abs(d) < CARD_AZ) return true;
     }
-    return true;
+    return false;
+  }
+  function clearOfPanels(x: number, y: number, z: number): boolean {
+    const r = Math.sqrt(x * x + z * z);
+    // ⚑ 2026-09-13: and nothing LOW AND NEAR — Daniel's monitor lights on the
+    //   desk in front of the seat at the end (closeMonitor.ts), and the cloud
+    //   drifts, so a fixed box would rotate away: a cylinder under the eye line
+    //   within 1.25 m is kept empty in every direction. Sérgio saw a star
+    //   standing in the Restart card.
+    if (r < 1.25 && y < 0.25) return false;
+    return !inCardView(x, y, z);
   }
 
   const personNodes: number[][] = [];
@@ -168,7 +186,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     // sum of 3 uniforms ≈ gaussian; core hugs the center — but a clear bubble
     // stays around the seated player so no node looms against the near clip
     let x = 0, y = 0, z = 0;
-    for (let tries = 0; tries < 8; tries++) {
+    for (let tries = 0; tries < 64; tries++) {   // ⚑ 64, not 8: with the cones AND the desk's cylinder kept clear, eight tries left ~2% of nodes wherever the eighth landed
       const r = P.innerClear + (P.coreRadius - P.innerClear) * ((rng() + rng() + rng()) / 3);
       const th = rng() * Math.PI * 2;
       const ph = Math.acos(2 * rng() - 1);
@@ -186,7 +204,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   }
   for (let i = 0; i < P.satelliteCount; i++) {
     let x = 0, y = 0, z = 0;
-    for (let tries = 0; tries < 8; tries++) {
+    for (let tries = 0; tries < 64; tries++) {   // ⚑ 64, not 8: with the cones AND the desk's cylinder kept clear, eight tries left ~2% of nodes wherever the eighth landed
       const r = P.coreRadius + (P.outerRadius - P.coreRadius) * Math.pow(rng(), 0.6);
       const th = rng() * Math.PI * 2;
       const ph = Math.acos(2 * rng() - 1);
@@ -287,6 +305,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
     if (d < 1e-4) return;
     if (segmentDistToOrigin(a, b) < P.innerClear * 0.85) return; // never through the player
+    // ⚑ 2026-09-13: and never ACROSS a card, from the seat's point of view —
+    //   the frame's hand-down to an era swept across the card beside it
+    for (let k = 0; k <= 16; k++) {
+      const t = k / 16;
+      if (inCardView(a[0] + dx * t, a[1] + dy * t, a[2] + dz * t)) return;
+    }
     const ta = surface(apparatusHalf, a) / d, tb = 1 - surface(apparatusHalf, b) / d;
     if (tb <= ta) return;
     apparatusLinkPositions.push(
@@ -551,7 +575,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       panels.forEach((panel, i) => {
         const y0 = i * CELL_H;
         // the plate: the sky's own colour, thickened — a card, not a window
-        pc2.globalAlpha = 0.72;
+        pc2.globalAlpha = 0.9;
         pc2.fillStyle = P.backdrop;
         pc2.fillRect(0, y0 + 8, CELL_W, CELL_H - 16);
         pc2.globalAlpha = 1;
@@ -564,10 +588,19 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         pc2.font = 'bold 54px monospace';
         pc2.fillStyle = P.labelColor;
         pc2.fillText(`${panel.years}  ·  ${panel.title}`, TEXT_X, y0 + 96);
-        pc2.font = `34px ${READING_FACE}`;
+        // ⚑ the paragraph FITS its column (2026-09-13, Sérgio: "the text on top of
+        //   the speculative"): the size steps down until the rows clear the stamp
+        const TOP = 168, BOTTOM = CELL_H - 96;
+        let size = 34;
+        let rows: string[] = [];
+        for (; size >= 24; size -= 2) {
+          pc2.font = `${size}px ${READING_FACE}`;
+          rows = wrap(pc2, panel.text, TEXT_W);
+          if (TOP + rows.length * Math.round(size * 1.3) <= BOTTOM) break;
+        }
+        const lineH = Math.round(size * 1.3);
         pc2.fillStyle = (P.warm as string[])[2];
-        const rows = wrap(pc2, panel.text, TEXT_W);
-        rows.forEach((row, li) => pc2.fillText(row, TEXT_X, y0 + 168 + li * 44));
+        rows.forEach((row, li) => pc2.fillText(row, TEXT_X, y0 + TOP + li * lineH));
         // the dossier status, small, where a card keeps its stamp
         pc2.font = '26px monospace';
         pc2.fillStyle = P.link;

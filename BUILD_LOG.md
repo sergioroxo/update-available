@@ -1037,3 +1037,14 @@ dossier status, with each era's cluster beside its card; and the Restart is Dani
 the dark 20 s after the sky settles — the room's own boxes rebuilt as a second monitor
 (`closeMonitor.ts`), the card in ERA1's type (`close_restart.json`): four rooms to go back to, *Start
 again*. The gaze comes down to it, conducted. Leaving the Close puts the room back and jumps settled.
+
+## 2026-09-13 — S138 · His first look at the Close: lighter CRT, the paragraph fits, nothing stands in a card, Room 3's last boxes go
+
+Three notes on two frames. The card's body was a silhouette → the beige catches its glass. Era 4's
+paragraph ran over its own `speculative` stamp → the reading size steps down until the rows clear it.
+"Some collision of elements" → the sky's clearance is angular now (what the seat SEES): no person node
+and no link chord inside any card's rectangle of azimuth × elevation at any distance, and nothing low
+within 1.25 m where Daniel's monitor lights; placement tries 8 → 64 so a rejected node is actually
+re-rolled. "Too many elements on Era-4 with boxes that aren't there" → every primitive-box dressing prop
+in Room 3 struck at r4, the box lamp with them (its light stays as a wash); the plates re-baked from 2.4 m
+behind each seat so the card shows the room, and the baker now holds its pose before shooting.
