@@ -252,12 +252,11 @@ const REGISTRY: Record<string, string> = {
   'floppy_1997.mp3': `${AUDIO_BASE}floppy_1997.mp3`,         // the Starter Kit going in, the drive reading
   'install_work.mp3': `${AUDIO_BASE}install_work.mp3`,       // every update: the machine working — loops
   'restart_dark.mp3': `${AUDIO_BASE}restart_dark.mp3`,       // every update: Restarting…
-  // ⚑ S143 — THE SONG CALEB SENDS (s2_caleb.json `c05s`) is NOT registered yet.
-  //   The beat exists in the data and is filtered out of the thread while this
-  //   name is absent here (`isAudioAvailable`). When Sérgio's track lands in
-  //   public/assets/audio/ (drafts doc §4 — instrumental, no voice), add:
-  //   'caleb_last_night_2003.mp3': `${AUDIO_BASE}caleb_last_night_2003.mp3`
-  //   and the line, the song and the cut switch on together.
+  // ⚑ S143 — THE SONG CALEB SENDS (s2_caleb.json `c05s`). A synthesized STAND-IN
+  //   (tools/make_tones.sh: four chords, a drum machine, tape hiss — no voice)
+  //   until Sérgio's generation replaces the file under the same name (drafts
+  //   doc §4). Registered, so the line, the song and the cut are all live.
+  'caleb_last_night_2003.mp3': `${AUDIO_BASE}caleb_last_night_2003.mp3`
 };
 
 const HISS_FILE = 'tape-hiss.mp3';

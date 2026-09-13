@@ -1,16 +1,30 @@
 {
-  "_doc": "⚑ THE RESTART CARD — on Daniel's 1997 monitor, lit inside the Close (Sérgio, 2026-09-12: 'We need a way to enter the restart as you option… think of a better idea' → ruled: Daniel's monitor in the Close). Drawn in ERA1's own palette and type because it is that machine speaking, thirty years on, and it is the frame's voice — functional, undecorated. Text is Claude's under the 2026-08-17 norm (docs/reinterp/ERA4_DRAFTS_2026-09-12.md §1); Sérgio's edit wins. `kept` is the one sentence that is TRUE of the piece and FALSE of every apparatus in it — CLAUDE.md's no-storage invariant, said out loud once. No thanks-for-playing, no credits: credits stay in the game menu.",
-  "mark": "LambyOS",
-  "years": "1997 — 2026",
-  "title": "Restart as you are.",
-  "kept": "Nothing you did here was kept by anyone but you.",
-  "choose": "Go back to a room, or start the machine again.",
-  "eras": [
-    { "era": "e1", "label": "1997 · Daniel" },
-    { "era": "e2", "label": "2003 · Daniel" },
-    { "era": "e3", "label": "2016 · Vera" },
-    { "era": "e4", "label": "2026 · Maya" }
-  ],
-  "again": "Start again",
-  "witness": "the machine offered its restart; nothing was kept"
+ "_doc": "⚑ THE RESTART CARD — on Daniel's 1997 monitor, lit inside the Close (Sérgio, 2026-09-12: 'We need a way to enter the restart as you option… think of a better idea' → ruled: Daniel's monitor in the Close). Drawn in ERA1's own palette and type because it is that machine speaking, thirty years on, and it is the frame's voice — functional, undecorated. Text is Claude's under the 2026-08-17 norm (docs/reinterp/ERA4_DRAFTS_2026-09-12.md §1); Sérgio's edit wins. `kept` is the one sentence that is TRUE of the piece and FALSE of every apparatus in it — CLAUDE.md's no-storage invariant, said out loud once. No thanks-for-playing, no credits: credits stay in the game menu.",
+ "mark": "LambyOS",
+ "years": "1997 — 2026",
+ "title": "Restart as you are.",
+ "kept": "Nothing you did here was kept by anyone but you.",
+ "choose": "Go back to a room, or start the machine again.",
+ "eras": [
+  {
+   "era": "e1",
+   "label": "1997 · Daniel"
+  },
+  {
+   "era": "e2",
+   "label": "2003 · Daniel"
+  },
+  {
+   "era": "e3",
+   "label": "2016 · Vera"
+  },
+  {
+   "era": "e4",
+   "label": "2026 · Maya"
+  }
+ ],
+ "again": "Start again",
+ "witness": "the machine offered its restart; nothing was kept",
+ "makers": "Made at the University of Bergen (SurvivingSOGICE) with Claude. Credits & sources: the menu.",
+ "_docMakers": "⚑ S143: the one-line disclosure on the last screen — frame voice, small, under the buttons. The long form is the MAKERS paragraph in the Credits view (docs/reinterp/ATTRIBUTIONS.md)."
 }

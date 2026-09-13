@@ -276,3 +276,30 @@ q -f lavfi -i "sine=f=100:d=1.2" -f lavfi -i "anoisesrc=d=0.03:c=brown:a=0.8" \
 
 q -i "$OUT/dialup_1997.wav" -af "atrim=0:7.4,afade=t=out:st=6.9:d=0.5" "$OUT/dialup_1997.tmp.wav" && mv "$OUT/dialup_1997.tmp.wav" "$OUT/dialup_1997.wav"
 level dialup_1997 -24; level key_1997 -22; level irc_1997 -22; level floppy_1997 -26; level install_work -32; level restart_dark -26
+
+# ── ⚑ S143 · THE SONG CALEB SENDS — a STAND-IN, until Sérgio's generation lands.
+# s2_caleb.json `c05s`. A 2003 bedroom keyboard: four chords a bar each at 78 BPM
+# (C · Am · F · G), sine triads under a slow tremolo, a kick and a hat from noise,
+# tape hiss and one wobble; ~25 s, loop-safe. INSTRUMENTAL — no voice, ever.
+# Replace the file, keep the name; the beat does not change.
+BEAT=0.769   # 60/78
+BAR=$(python3 -c "print(4*$BEAT)")
+chord() { # $1 f1 $2 f2 $3 f3 → one bar
+  q -f lavfi -i "sine=f=$1:d=$BAR" -f lavfi -i "sine=f=$2:d=$BAR" -f lavfi -i "sine=f=$3:d=$BAR" \
+    -filter_complex "[0][1][2]amix=inputs=3:normalize=0,volume=0.16,tremolo=f=5.2:d=0.25,lowpass=f=2400,afade=t=in:st=0:d=0.05,afade=t=out:st=$(python3 -c "print($BAR-0.12)"):d=0.12" "$OUT/_c_$4.wav"
+}
+chord 261.63 329.63 392.00 1   # C
+chord 220.00 261.63 329.63 2   # Am
+chord 174.61 220.00 261.63 3   # F
+chord 196.00 246.94 293.66 4   # G
+q -i "$OUT/_c_1.wav" -i "$OUT/_c_2.wav" -i "$OUT/_c_3.wav" -i "$OUT/_c_4.wav" -filter_complex "[0][1][2][3]concat=n=4:v=0:a=1" "$OUT/_prog.wav"
+q -i "$OUT/_prog.wav" -i "$OUT/_prog.wav" -filter_complex "[0][1]concat=n=2:v=0:a=1" "$OUT/_keys.wav"
+LEN=$(python3 -c "print(8*$BAR)")
+# the drum machine: a kick on 1 and 3, a hat on every beat, from the same recipe as the ticks above
+q -f lavfi -i "sine=f=55:d=$LEN" -f lavfi -i "anoisesrc=d=$LEN:c=white:a=0.5" \
+  -filter_complex "[0]aeval='val(0)*gt(sin(2*PI*t/(2*$BEAT)+PI/2),0.985)*2':c=same,lowpass=f=160,volume=0.7[k];
+    [1]highpass=f=6000,aeval='val(0)*gt(sin(2*PI*t/$BEAT+PI/2),0.992)':c=same,volume=0.12[h];[k][h]amix=inputs=2:normalize=0" "$OUT/_drums.wav"
+q -i "$OUT/_keys.wav" -i "$OUT/_drums.wav" -f lavfi -i "anoisesrc=d=$LEN:c=pink:a=0.3" \
+  -filter_complex "[2]highpass=f=2000,volume=0.05[hiss];[0][1][hiss]amix=inputs=3:normalize=0,vibrato=f=0.4:d=0.02,lowpass=f=4200,highpass=f=90" "$OUT/caleb_last_night_2003.wav"
+rm -f "$OUT"/_c_*.wav "$OUT/_prog.wav" "$OUT/_keys.wav" "$OUT/_drums.wav"
+level caleb_last_night_2003 -26

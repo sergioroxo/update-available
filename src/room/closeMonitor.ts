@@ -161,6 +161,11 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     const atw = ctx.measureText(card.again).width;
     ctx.fillText(card.again, Math.round(ax + (aw - atw) / 2), ay + 8);
     hits.push({ x: ax, y: ay, w: aw, h: ah, id: 'close-again' });
+    // S143: the makers, in one line, small — the frame's voice on the last screen
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA1.grey;
+    const mw = ctx.measureText(card.makers).width;
+    ctx.fillText(card.makers, Math.round((W - mw) / 2), H - 30);
     tex.upload();
   }
 

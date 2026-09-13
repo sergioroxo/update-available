@@ -70,3 +70,18 @@ Dossier card at `data/provotypes/e4_ball.json`.*
 (pause/game menu → "credits/attributions", per CLAUDE.md's REINTERP
 AMENDMENTS §4) needs to actually render this table before ship. Until then,
 this file is the authoritative attribution record.
+
+## ⚑ MAKERS — how this was made, said in the piece (added S143, 2026-09-14)
+
+*The IDN special-issue framing (Digital Creativity) asks that the AI/human co-authorship be
+disclosed prominently rather than buried. The Close's overhead cluster names the project's own
+documents; this block is the plain sentence, generated into `attributions.json` as an `influences`
+paragraph (the same undecorated credits view) and echoed in one line on the Restart card — the
+frame's voice, on the 1997 machine, at the end.*
+
+> **MAKERS.** YOUR UPDATE HAS FAILED was directed by Sérgio Roxo (SurvivingSOGICE, University of
+> Bergen, Center for Digital Narrative) and written and built in collaboration with Claude
+> (Anthropic): the code, the rooms, the sounds and most of the display text are the model's work
+> under the director's brief, review and ethics rulings; every real-world claim rests on the
+> project's own research and dossier sources. No real person's name, likeness or testimony appears
+> in the fiction. Nothing you did here was recorded by anyone.
