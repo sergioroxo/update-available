@@ -1092,6 +1092,17 @@ const LAP = { w: 224, h: 140 };
   /** where a swept surface's button turned out to be, so it is found once */
   const known = new Map();
   const sweep = async (before, why) => {
+    /**
+     * ⚑ NEVER SWEEP DANIEL'S GLASS IN THE CLOSE (2026-09-13). The sweep is
+     * blind — a grid of presses on the OS canvas's plane — and in the Close
+     * that plane carries the Restart card, whose buttons are FORBIDDEN by id
+     * for exactly the reason a blind grid cannot honour: `Start again`
+     * reloads the page. One walk died that way at step 385, seconds from its
+     * own green. The card publishes every control it has, so there is nothing
+     * hidden there to find.
+     */
+    const closeOn = await page.evaluate(() => !!(window.__closeMonitor && window.__closeMonitor.on));
+    if (closeOn) { note('sweep-skip', { what: 'the Close: the glass is the Restart card, every control published, nothing to sweep' }); return before; }
     const pts = await page.evaluate(({ VW, VH }) => {
       const root = window.__app.root;
       let cam = null; root.forEach((e) => { if (e.camera && e.enabled) cam = e; });
