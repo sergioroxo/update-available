@@ -120,6 +120,7 @@ import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
 import maiden from '../../data/dialog/s3_maiden.json';
+import { playOnce } from '../audio/tapeAudio';
 
 /** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
  *  the type moved to `desktop/apps/comments.ts` when that module took over the
@@ -617,6 +618,7 @@ export class GraceQueueLite {
    *  press that starts the shift" — what changed is where the shift starts.) */
   beginList(): void {
     if (this.mode !== 'signin') return;
+    playOnce('login_2016.mp3');   // S141: Vera signs in
     this.mode = this.consent ? 'board' : 'consent';
     if (this.mode === 'board') this.seenBoard = true;
     this.bump();
@@ -765,6 +767,7 @@ export class GraceQueueLite {
     const sub = this.submission();
     const item = this.current();
     if (this.mode !== 'list' || !sub || !item) return;
+    playOnce('tick_task.mp3');   // S141: APPLY and SKIP share ONE tick — the record files both
     this.decisions.set(item.id, outcome);
     this.lambLines = null; // the beat is over the moment she uses either verb
     ledger.graceQueue.push({
@@ -808,6 +811,7 @@ export class GraceQueueLite {
   armMalta(): void {
     if (this.maltaArrived) return;
     this.maltaArrived = true;
+    playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the nightstand
     this.phone.arm();
     this.phoneV++;
   }
@@ -819,6 +823,7 @@ export class GraceQueueLite {
     this.maltaOpen = true;
     this.caretT = 0;
     this.caretOn = true;
+    playOnce('ting_2016.mp3');   // S141: she picks it up — the era's polished ting, for once not the platform's
     if (!this.liftFired) this.liftT = 0;
     this.phoneV++;
   }

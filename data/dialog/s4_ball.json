@@ -76,14 +76,12 @@
     {
      "id": "o1",
      "text": "Doors are shut. Everybody who wanted to be here is here.",
-     "audio": "ball_o1.wav",
      "hold": 5.0,
      "at": 0
     },
     {
      "id": "o2",
      "text": "Same as always — I call a category, somebody takes the floor, and the rest of you make the noise.",
-     "audio": "ball_o2.wav",
      "hold": 6.6,
      "at": 0.7
     }
@@ -99,28 +97,24 @@
      {
       "id": "c1a",
       "text": "Category — THE WAY YOU WALK, TALK AND SIT.",
-      "audio": "ball_c1a.wav",
       "hold": 5.4,
       "at": 1
      },
      {
       "id": "c1b",
       "text": "House of Lamps has it. Wren — when you're ready. Take the whole room.",
-      "audio": "ball_c1b.wav",
       "hold": 6.2,
       "at": 1
      },
      {
       "id": "c1d",
       "text": "All the way down. The far end is the point.",
-      "audio": "ball_c1d.wav",
       "hold": 4.8,
       "at": 2.6
      },
      {
       "id": "c1g",
       "text": "Every hand in this room. Every one.",
-      "audio": "ball_c1g.wav",
       "hold": 4.4,
       "at": 4,
       "flare": 1
@@ -128,7 +122,6 @@
      {
       "id": "c1h",
       "text": "Wren. House of Lamps.",
-      "audio": "ball_c1h.wav",
       "hold": 3.6,
       "at": 4
      }
@@ -143,28 +136,24 @@
      {
       "id": "c2a",
       "text": "Category — STEADY. STRUGGLING. GRATEFUL. TIRED.",
-      "audio": "ball_c2a.wav",
       "hold": 5.6,
       "at": 3
      },
      {
       "id": "c2c",
       "text": "House of Late Arrivals — all four of you, at once, and take as long as you like.",
-      "audio": "ball_c2c.wav",
       "hold": 6.2,
       "at": 2.4
      },
      {
       "id": "c2d",
       "text": "Steady, hold it there. Struggling, don't you dare rush.",
-      "audio": "ball_c2d.wav",
       "hold": 5.2,
       "at": 2.2
      },
      {
       "id": "c2f",
       "text": "Don't ask me to rank them. I won't.",
-      "audio": "ball_c2f.wav",
       "hold": 4.6,
       "at": 2.8,
       "flare": 1
@@ -172,7 +161,6 @@
      {
       "id": "c2g",
       "text": "All four. All four, and everybody saw it.",
-      "audio": "ball_c2g.wav",
       "hold": 4.8,
       "at": 3
      }
@@ -187,28 +175,24 @@
      {
       "id": "c3a",
       "text": "Category — REMOVE THE UNRESOLVED.",
-      "audio": "ball_c3a.wav",
       "hold": 5.0,
       "at": 3
      },
      {
       "id": "c3b",
       "text": "House of Open Doors. Ines is up, and Ines is not resolving anything tonight.",
-      "audio": "ball_c3b.wav",
       "hold": 6.6,
       "at": 3.6
      },
      {
       "id": "c3e",
       "text": "Anybody here need it finished?",
-      "audio": "ball_c3e.wav",
       "hold": 4.0,
       "at": 2.2
      },
      {
       "id": "c3f",
       "text": "Nobody needs it finished.",
-      "audio": "ball_c3f.wav",
       "hold": 3.8,
       "at": 2,
       "flare": 1
@@ -216,7 +200,6 @@
      {
       "id": "c3g",
       "text": "Ines. House of Open Doors. Unfinished, and everybody saw it.",
-      "audio": "ball_c3g.wav",
       "hold": 5.6,
       "at": 2
      }
@@ -231,35 +214,30 @@
      {
       "id": "c4a",
       "text": "Category — CONDITION: IN REPAIR.",
-      "audio": "ball_c4a.wav",
       "hold": 4.8,
       "at": 2.6
      },
      {
       "id": "c4b",
       "text": "House of Mending. This is Junie's, and Junie made what she's wearing twice.",
-      "audio": "ball_c4b.wav",
       "hold": 6.6,
       "at": 3
      },
      {
       "id": "c4c",
       "text": "Turn, so the back of the room can see the seam.",
-      "audio": "ball_c4c.wav",
       "hold": 5.2,
       "at": 3.6
      },
      {
       "id": "c4d",
       "text": "The seam is the whole thing.",
-      "audio": "ball_c4d.wav",
       "hold": 3.8,
       "at": 3.9
      },
      {
       "id": "c4g",
       "text": "Junie. House of Mending. Nothing on her is new, and nothing on her is broken.",
-      "audio": "ball_c4g.wav",
       "hold": 6.8,
       "at": 4
      }
@@ -272,27 +250,25 @@
     {
      "id": "z1",
      "text": "That's the categories.",
-     "audio": "ball_z1.wav",
      "hold": 3.6,
      "at": 3.6
     },
     {
      "id": "z2",
      "text": "Music stays on. Nobody has to go anywhere.",
-     "audio": "ball_z2.wav",
      "hold": 5.2,
      "at": 3.2
     },
     {
      "id": "z3",
      "text": "We'll be here a while yet.",
-     "audio": "ball_z3.wav",
      "hold": 4.6,
      "at": 3
     }
    ]
   },
-  "_docCut": "⚑ 2026-09-11 — CUT FROM 38 MC LINES TO 25, and the cut is the recording sheet. Sérgio: 'three and a half minutes, then it is too long.' Each category keeps five beats — the call, the House and the name, one instruction, the room's answer, the name again — and loses its second look-at-that. The opening loses its third line. The closing is untouched. Scripted clock: filter ~20 s, lines ~128 s, hold 5 s — about 2½ minutes, ending on its own."
+  "_docCut": "⚑ 2026-09-11 — CUT FROM 38 MC LINES TO 25, and the cut is the recording sheet. Sérgio: 'three and a half minutes, then it is too long.' Each category keeps five beats — the call, the House and the name, one instruction, the room's answer, the name again — and loses its second look-at-that. The opening loses its third line. The closing is untouched. Scripted clock: filter ~20 s, lines ~128 s, hold 5 s — about 2½ minutes, ending on its own.",
+  "_docNoAudio": "⚑ S141: the `audio` fields (25 `ball_*.wav` never rendered) are gone from every line — Sérgio, 2026-09-12: 'TransJesus doesn't have voice.' The MC's lines are captions; the room's sound is the two recordings in `room`."
  },
  "room": {
   "_beat": "⚑ THE BALL'S OWN SOUND, and it is the one thing in this file that is not a caption. A ball is loud, structured and attentive — the beat, the calls, the applause on the landing — and NOT laughter, chatter or generic warmth (deep pass §1.2: 'community equals laughter' is the lazy image and it was cut on purpose). ⚑ 2026-09-12: BOTH DELIVERED AND REGISTERED — Sérgio's own generations ('Community Hall House Jam' → landing, 'Through the Wall' → bed), instrumental, no voice, no lyrics, in src/audio/tapeAudio.ts and assets/LICENSES.md. The room is audible for the first time. _docVoice still stands: nothing else in this file may be synthesized.",

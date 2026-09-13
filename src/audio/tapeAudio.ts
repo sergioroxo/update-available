@@ -244,7 +244,14 @@ const REGISTRY: Record<string, string> = {
   'terminate_2026.mp3': `${AUDIO_BASE}terminate_2026.mp3`,   // SESSION TERMINATED
   'static_2026.mp3': `${AUDIO_BASE}static_2026.mp3`,         // the bands on both screens
   'power_down_2026.mp3': `${AUDIO_BASE}power_down_2026.mp3`, // both screens off
-  'close_sky_bed.mp3': `${AUDIO_BASE}close_sky_bed.mp3`      // the Close's sky, under everything
+  'close_sky_bed.mp3': `${AUDIO_BASE}close_sky_bed.mp3`,     // the Close's sky, under everything
+  // ⚑ S141 — ERAS 1–3 AND THE UPDATES (tools/make_tones.sh, same section)
+  'dialup_1997.mp3': `${AUDIO_BASE}dialup_1997.mp3`,         // the IRC connecting — the era's sound, finally
+  'key_1997.mp3': `${AUDIO_BASE}key_1997.mp3`,               // a 1997 press: the PC speaker's click
+  'irc_1997.mp3': `${AUDIO_BASE}irc_1997.mp3`,               // a line arriving in the channel
+  'floppy_1997.mp3': `${AUDIO_BASE}floppy_1997.mp3`,         // the Starter Kit going in, the drive reading
+  'install_work.mp3': `${AUDIO_BASE}install_work.mp3`,       // every update: the machine working — loops
+  'restart_dark.mp3': `${AUDIO_BASE}restart_dark.mp3`        // every update: Restarting…
 };
 
 const HISS_FILE = 'tape-hiss.mp3';

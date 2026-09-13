@@ -1,288 +1,291 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending on EVERY string. The era transitions as SOFTWARE UPDATES (SCRIPT_UPDATE v0.5 §1, CLAUDE.md): notification ('Remind me later' works ONCE) → EULA (read through, one live 'I Agree') → install (changelog-as-thesis + glitch) → restart. Updates are triggered by documented system failures, never by the player. The register is operable — the system's confident cheer — and the changelog is the thesis in four lines: same instrument, new casing. The FINAL restart (close) is deliberately different: no terms, no changelog, bare — the person's restart, not the system's.",
-  "u2": {
-    "toEra": "e2",
-    "_docCascade": "⚑ THE ERROR CASCADE — restored 2026-08-21. It was authored in data/dialog/s1_end.json's `ritual` block (error / errorRetry / errorCancel / loading) and NOTHING IN src/ EVER READ IT: that whole block is orphaned, so the beat existed only as text. Sérgio named this loss from memory in his 2026-08-21 walkthrough — 'the transition from Era 1 to Era 2 is missing the cascade of windows that we talked about previously and the glitching effects' — and he was right. The copy below is that authored copy, moved to the file the live code actually reads. Its own design note: 'Runs straight off the diary glitch, replicating the Error-999 stack.' ⚑ IT IS A STACK, NOT A DIALOG: the windows arrive one after another, each offset from the last, until the screen is a pile of the same refusal. Retry and Cancel BOTH lead onward — the era's own law is register-not-branch, and an error you can genuinely dismiss is not this system. Set `cascade: null` on any update that should not have one; only u2 does today.",
-    "cascade": {
-      "title": "PHASE/2 95",
-      "line": "a new update is needed",
-      "retry": "Retry",
-      "cancel": "Cancel",
-      "count": 7,
-      "everyMs": 420
-    },
-    "notifyTitle": "TriedPath Un-Walk — System Notice",
-    "notify": [
-      "Un-Walk has detected an object it",
-      "cannot repair.",
-      "",
-      "Your progress is safe. Your file has",
-      "been migrated to partner care.",
-      "An update is required to continue."
-    ],
-    "updateNow": "Update now",
-    "remindLater": "Remind me later",
-    "eulaTitle": "Restorify — Terms of Continued Care",
-    "eula": [
-      [
-        "Welcome to Restorify (2003).",
-        "",
-        "By continuing, you agree that your",
-        "journey file, including entries made",
-        "under previous care, remains part of",
-        "your permanent record.",
-        "",
-        "Restorify is not a medical service.",
-        "Restorify is a community of intent."
-      ],
-      [
-        "You agree to accountability.",
-        "You agree to be encouraged.",
-        "You agree that encouragement may",
-        "arrive at any hour.",
-        "",
-        "Your goal (on file since 1997)",
-        "carries forward unchanged."
-      ]
-    ],
-    "readOn": "Read on",
-    "agree": "I Agree",
-    "installTitle": "Installing Restorify 2003",
-    "changelog": [
-      "RESTORIFY 2003 — WHAT'S NEW",
-      "+ fresh look, brighter rooms",
-      "+ accountability web (always on)",
-      "= your history: retained",
-      "= your goal: unchanged",
-      "- nothing is ever removed"
-    ],
-    "restarting": "Restarting…",
-    "_sourceGrounding": {
-      "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
-      "text": "Documentary grounding candidate for the 1997→2003 update trigger: John Paulk, public face of the 1998 ex-gay advertising campaign, was photographed at a Washington, D.C. gay bar 19 September 2000; Exodus International removed him as board chair 3 October 2000 and placed him under disciplinary supervision. This is a documented public scandal and organizational discipline — NOT a claim that Exodus itself collapsed in 2000; no display string here makes that claim. [VERIFY SOURCE]",
-      "urls": [
-        "https://www.christianitytoday.com/2000/10/ex-gay-leader-disciplined-for-gay-bar-visit/",
-        "https://lgbpsychology.org/html/Paulk-Southern%20Voice.html"
-      ]
-    }
+ "_doc": "PLACEHOLDER — Sérgio voice pass pending on EVERY string. The era transitions as SOFTWARE UPDATES (SCRIPT_UPDATE v0.5 §1, CLAUDE.md): notification ('Remind me later' works ONCE) → EULA (read through, one live 'I Agree') → install (changelog-as-thesis + glitch) → restart. Updates are triggered by documented system failures, never by the player. The register is operable — the system's confident cheer — and the changelog is the thesis in four lines: same instrument, new casing. The FINAL restart (close) is deliberately different: no terms, no changelog, bare — the person's restart, not the system's.",
+ "u2": {
+  "toEra": "e2",
+  "_docCascade": "⚑ THE ERROR CASCADE — restored 2026-08-21. It was authored in data/dialog/s1_end.json's `ritual` block (error / errorRetry / errorCancel / loading) and NOTHING IN src/ EVER READ IT: that whole block is orphaned, so the beat existed only as text. Sérgio named this loss from memory in his 2026-08-21 walkthrough — 'the transition from Era 1 to Era 2 is missing the cascade of windows that we talked about previously and the glitching effects' — and he was right. The copy below is that authored copy, moved to the file the live code actually reads. Its own design note: 'Runs straight off the diary glitch, replicating the Error-999 stack.' ⚑ IT IS A STACK, NOT A DIALOG: the windows arrive one after another, each offset from the last, until the screen is a pile of the same refusal. Retry and Cancel BOTH lead onward — the era's own law is register-not-branch, and an error you can genuinely dismiss is not this system. Set `cascade: null` on any update that should not have one; only u2 does today.",
+  "cascade": {
+   "title": "PHASE/2 95",
+   "line": "a new update is needed",
+   "retry": "Retry",
+   "cancel": "Cancel",
+   "count": 7,
+   "everyMs": 420
   },
-  "u3": {
-    "toEra": "e3",
-    "notifyTitle": "Restorify — Service Transition",
-    "notify": [
-      "The accountability network is no",
-      "longer able to vouch for itself.",
-      "",
-      "Restorify is sunsetting. Thank you",
-      "for your years of work.",
-      "Your file has been migrated to a",
-      "brighter place."
-    ],
-    "updateNow": "Update now",
-    "remindLater": "Remind me later",
-    "eulaTitle": "GracePlatform — Community Guidelines",
-    "eula": [
-      [
-        "Welcome to GracePlatform (2016).",
-        "",
-        "We are not what came before.",
-        "We are gentle. We are polished.",
-        "Every testimony you share may be",
-        "polished further for clarity.",
-        "",
-        "Polishing is a service. It is not",
-        "an edit of who you are."
-      ],
-      [
-        "You agree that your words may be",
-        "recirculated where they can help",
-        "someone like you.",
-        "",
-        "Files inherited from previous",
-        "providers remain available to",
-        "our care team. All of them."
-      ]
-    ],
-    "readOn": "Read on",
-    "agree": "I Agree",
-    "_installSplitDoc": "PLACEHOLDER — Sérgio voice pass pending. Session 61, from his playthrough note: 'the transition needs explaining… GraceProgram should load on VERA's computer, not Daniel's.' He is right, and the old build had the whole ritual happening on one machine: Daniel's 2003 CRT ran a screen that said 'Installing GracePlatform 2016' and then the room simply moved. So u3 is now SPLIT ACROSS THE TWO MACHINES. On Daniel's machine the install stage is the REMOVAL — Restorify's own sunset report, and under it the dispersal (the `uninstall` block below, unchanged): his era ENDS on his screen. The arrival half — the boot, the GracePlatform install and its changelog-as-thesis — lives in `e3_arrival` at the bottom of this file and plays on VERA's workstation, after the relocation, on the machine you are actually sitting at. Same ritual, same four stages (notice → terms → install → restart); it simply stops pretending that one desk in 2003 can install 2016. NOTE the one deliberate asymmetry: the TERMS are still agreed on Daniel's machine, before the move. That is the point of them — the agreement travels with the file, and the file is what moves.",
-    "installTitle": "Removing Restorify 2003",
-    "changelog": [
-      "RESTORIFY 2003 — SERVICE ENDING",
-      "- accountability web: shut down",
-      "- daily realignment: shut down",
-      "= your chart: exported, complete",
-      "= your file: transferred in full",
-      "+ nothing has been deleted"
-    ],
-    "_uninstallDoc": "PLACEHOLDER — Sérgio voice pass pending. THE DISPERSAL (E2 script S2R.7; D31 STRUCK by Sérgio 2026-07-25 after the GPAHE check, with refinements — docs/REINTERP_D31_DISPERSAL_EVIDENCE_2026-07-25.md). The program's collapse doesn't kill the watcher; it renames it. The uninstall report renders AFTER the changelog finishes typing; lines prefixed '~' draw small and dim (the quiet line carries the thesis). Under the report LAMBY HIMSELF comes apart into seven small marks — the same seven src/desktop/theme/era3.ts's drawLambMark renders SETTLED as Lambient's badge on Room 2's three screens at E3, so what leaves here is literally what arrives there. Built by Fable, Session 33; re-staged and re-worded Session 58. WHY 'RENAMED' AND NOT 'MIGRATING' (Sérgio's adopted refinement): renaming is the documented mechanism — NARTH became ATCSI in 2014, and GPAHE 2023 finds providers relabelling in medical-sounding language to evade moderation. An uninstaller that reports success while the process continues under a new label is better sourced than vague migration AND it rhymes with the piece's own update-as-survival grammar. FRAMING DISCIPLINE (binding): this is survival by scattering, never omnipotence — GPAHE 2023 finds deplatforming partly WORKED, so the staging keeps the marks few, small, and settled, and the fiction keeps its invented marks (Restorify → GracePlatform); the real companies GPAHE names belong to dossier/provenance surfaces only, never to a room.",
-    "uninstall": [
-      "Restorify — removed.",
-      "~ companion process — could not be removed. RENAMED."
-    ],
-    "_dispersalGrounding": {
-      "_proposed": "S58 2026-07-26 — grounding for the dispersal beat per D31's strike; awaiting Sérgio. Status suggestion: documentary / confidence high.",
-      "text": "Documentary grounding for the dispersal: after Exodus International's closure (announced 19 June 2013) the movement survived by rebranding (softer messaging, new names), decentralizing from centralized structures into networks of independent affiliates, and migrating into platform-native forms. The specific RENAMING mechanism is documented: NARTH became ATCSI in 2014, and providers adopt medical-sounding terminology to evade content moderation. Contested-ground caveat that must travel with the claim: GPAHE's 2023 report finds deplatforming partly worked (Facebook/Instagram recommendation pathways eliminated, Bing markedly improved, TikTok best-performing with warnings; YouTube still poor, non-English content least moderated). [VERIFY SOURCE]",
-      "urls": [
-        "https://globalextremism.org/reports/conversion-therapy-online-the-players/",
-        "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem/",
-        "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/"
-      ]
-    },
-    "_migrationFilingDoc": "PLACEHOLDER — Sérgio voice pass pending. S2R.7 item 5: THE LAST FILING UNDER DANIEL'S NAME. Filed once, at the u3 restart (src/desktop/os.ts) and rendered in the record's own cold ink by src/witness/intake.ts. Not a choice, not a judgement, no player act anywhere near it — the record simply notes that the subject moved and the file did not.",
-    "migrationFiling": "subject migrated — file retained",
-    "installSeconds": 13.5,
-    "restarting": "Restarting…",
-    "_sourceGrounding": {
-      "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
-      "text": "Documentary grounding for the 2003→2016 update trigger: Alan Chambers's public apology (\"I Am Sorry\") and Exodus International's board decision to close the organization were both announced 19 June 2013 — use the date, not \"in 2013.\" [VERIFY SOURCE]",
-      "urls": [
-        "https://web.archive.org/web/20130622031108/http://exodusinternational.org/2013/06/i-am-sorry",
-        "https://www.christianitytoday.com/2013/06/alan-chambers-apologizes-to-gay-community-exodus/",
-        "https://www.latimes.com/local/lanow/la-me-ln-exodus-ministry-to-shut-down-20130619-story.html"
-      ]
-    }
-  },
-  "u4": {
-    "_doc": "PLACEHOLDER-draft — Claude drafted every display string in this block under the co-creation norm (CLAUDE.md line 100, revised 2026-07-24); Sérgio reviews and rewrites, his edit wins. S76 REWROTE u4: the last update the piece installs, and the one the title is about. Three things had to land in it. (1) ⚑ L ARRIVES INSIDE IT — the `report` block below installs the companion, so L is something AGREED TO in a dialog nobody read, not a character who appears. (2) ⚑ THE EULA IS WHERE THE SOURCE PASS LANDS (docs/REINTERP_E4_SOURCE_PASS_2026-08-06.md): no conversion-practice organisation was found building or commissioning AI tooling — an individual built the tool and an organisation promoted it. The apparatus is an ADOPTER, not a developer. That finding is page 3, clause 3, in supplier boilerplate: 'does not develop, train or host the models it makes available. It accepts their terms on your behalf, as you accept these on your own.' A player who reads the terms finds it; a player who clicks through does not; ⚑ NOTHING ANYWHERE POINTS AT IT. Do not add emphasis, a colour, or a line that draws the eye — the whole beat is that it is legally disclosed and practically invisible. (3) The changelog is the thesis and the thesis is the LABOUR: what this update removes is the person doing the work (E3 = Vera correcting testimony by hand, one correction at a time; E4 = the same operation with nobody's hands on it). ⚑ Every mark is invented — GracePlatform is the piece's own E3 platform, Continuity and Sunroom are ours. No real company, product, model or organisation is named in the fiction, ever; the documented ones live on Dossier cards with a status.",
-    "_docWhere": "⚑ THIS RITUAL DOES NOT RUN ON DANIEL'S MONITOR. S61 turned that machine off at E3 and left this key arming on a dead screen in a closed room. It now lands on Vera's workstation — see data/dialog/s4_update.json's `_docWhere`, and src/room/era3Devices.ts, which composites it there. Unlike u3 there is no split arrival block: the whole ritual plays on the one machine she is sitting at, and the ARRIVAL half is the headset waiting in the next room with L already installed on it.",
-    "toEra": "e4",
-    "notifyTitle": "GracePlatform — Important Changes",
-    "notify": [
-      "A submission could not be processed",
-      "as written.",
-      "",
-      "Contributor tools are being retired.",
-      "GracePlatform is joining Continuity,",
-      "a family of wellness services.",
-      "",
-      "Your file comes with you."
-    ],
-    "updateNow": "Update now",
-    "remindLater": "Remind me later",
-    "eulaTitle": "Continuity of Care — Terms of Service",
-    "eula": [
-      [
-        "1. THE SERVICE",
-        "",
-        "There is no longer an application",
-        "to open. The service is ambient.",
-        "",
-        "Recommendations will find you.",
-        "A companion will find you.",
-        "A community will find you.",
-        "",
-        "You do not need to search."
-      ],
-      [
-        "2. YOUR FILE",
-        "",
-        "Your record (1997, 2003, 2016) is",
-        "carried forward without alteration",
-        "and informs your experience today.",
-        "",
-        "You agree that interest is consent.",
-        "You agree that hesitation is",
-        "interest.",
-        "You agree that a question answered",
-        "once may be asked again."
-      ],
-      [
-        "3. COMPONENTS AND SUPPLIERS",
-        "",
-        "Portions of this service are made",
-        "available under licence by third",
-        "parties. Continuity does not",
-        "develop, train or host the models",
-        "it makes available. It accepts",
-        "their terms on your behalf, as you",
-        "accept these on your own.",
-        "",
-        "The list of suppliers is available",
-        "on request and may change without",
-        "notice to you."
-      ],
-      [
-        "4. YOUR COMPANION",
-        "",
-        "A companion process is included",
-        "with this service and cannot be",
-        "removed separately from it.",
-        "",
-        "It is not a person and does not",
-        "claim to be.",
-        "",
-        "It will learn what you like."
-      ]
-    ],
-    "readOn": "Read on",
-    "agree": "I Agree",
-    "installTitle": "Updating…",
-    "changelog": [
-      "CONTINUITY — WHAT IS NEW",
-      "+ no application to open",
-      "+ no button to close",
-      "+ your companion, included",
-      "= the record: thirty years, intact",
-      "= the goal: unchanged, on file",
-      "- contributor tools: retired",
-      "- the moderation queue: retired",
-      "- the waiting: retired"
-    ],
-    "_reportDoc": "⚑ L IS INSTALLED HERE, and this is the only place in the piece where that happens. `report` renders exactly like u3's `uninstall` block (types on after the changelog; a line prefixed '~' renders small and dim) and is deliberately its MIRROR: u3's report is what could not be removed and left in pieces, u4's is what arrived and will not be leaving. ⚑ The dispersal animation belongs to u3 alone and does not play here — see the key guard in src/desktop/apps/update.ts. The quiet line is the thesis, and it is also the touchless budget spoken by the apparatus itself: from here on the piece moves without you.",
-    "report": [
-      "Registering companion service…",
-      "L — ready",
-      "~ no further action is required from you."
-    ],
-    "installSeconds": 13.5,
-    "restarting": "Restarting…",
-    "_sourceGrounding": {
-      "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
-      "text": "Documentary grounding for the 2016→now update trigger: Malta's Act LV of 2016 (first European nationwide conversion-practice ban), passed December 2016, published 9 December 2016, now consolidated as Chapter 567. Cite Parliament of Malta + legislation.mt Chapter 567 — NOT the ILO NATLEX record, which Deep Research flags as ambiguously indexed. Separately, app-store removals of conversion-therapy apps (2018-2019) are documented as ONE app — Living Hope Ministries — pulled by Apple (21 Dec 2018), Microsoft (~Dec 2018), Amazon (by 21 Mar 2019) and Google (28 Mar 2019). Do not write \"several conversion-therapy apps.\" [VERIFY SOURCE]",
-      "urls": [
-        "https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/",
-        "https://legislation.mt/eli/cap/567/eng",
-        "https://www.dallasnews.com/news/2018/12/21/there-s-not-an-app-for-that-apple-removes-arlington-ministry-s-app-after-anti-conversion-therapy-group-complaint/",
-        "https://www.theverge.com/2019/3/29/18286906/google-conversion-therapy-app-play-store-remove"
-      ]
-    }
-  },
-  "_remindDoc": "PLACEHOLDER — Sérgio voice pass pending. Session 61, his note on u3: 'Remind me later — what does it do?' The law (SCRIPT_UPDATE v0.5 §1 / CLAUDE.md) is that it works exactly ONCE, and the code has always honoured that — but nothing on screen said so. Pressing it withdrew the notice with no acknowledgement, and when the notice came back the button had silently vanished, which reads as a different dialog rather than as a spent option. Two strings fix it: `remindedStatus` stays on screen for the whole deferral (the system tells you it is coming back), and `remindSpent` labels the button when it returns GREYED — the S60 ruling applied to the one place in the piece where a dead button is literally the thesis. You may defer this once. You may not decline it.",
-  "remindedStatus": "Update deferred. It will ask again shortly.",
-  "remindSpent": "Reminder used",
-  "_e3ArrivalDoc": "PLACEHOLDER — Sérgio voice pass pending on EVERY string below. Session 61 — THE OTHER HALF OF u3, played on VERA's workstation (src/room/graceQueueLite.ts), not on Daniel's CRT. Sequence: you land in Room 2 at a DARK screen → the machine boots in front of you (his note: 'we shouldn't start without the boot up on the computer' — the same gap S59 closed for E2) → GracePlatform installs, and the changelog-as-thesis types on THERE, on the machine it is actually being installed onto → SisterSignal's sign-in, which is where the era's existing GraceQueue material begins. The changelog is the one that used to run on Daniel's screen, moved wholesale: the era law (era transitions = software updates) keeps its install stage and its thesis, it just happens on the right computer. `signInAfter` is a hold, not a gate — nothing here is pressable and nothing is timed for the player.",
-  "e3_arrival": {
-    "bootTitle": "SisterSignal",
-    "bootLines": [
-      "starting services",
-      "restoring your session",
-      "checking for updates"
-    ],
-    "bootFound": "1 update found — installing",
-    "installTitle": "Installing GracePlatform 2016",
-    "changelog": [
-      "GRACEPLATFORM — WHAT'S NEW",
-      "+ softer colours, kinder words",
-      "+ testimony polish queue",
-      "= the chart: complete",
-      "= your file: cross-referenced",
-      "- the questions are the same"
-    ],
-    "installedLine": "Installed. Your file arrived first."
-  },
-  "close": {
-    "_doc": "S92 — THE CLOSE's two lines (REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §1/§5). `notify`'s 'Restart as you are.' is the person's restart, already bare, unchanged. `restarting` — rendered on the SAME dark 2.2s beat every era's own 'Restarting…' already uses (update.ts's `restart` phase), the one moment the desktop canvas still has the screen before enterClose() takes the room — carries the title itself: the machine's flat administrative report of its own defeat. Do not decorate it, do not explain it, no music sting; it is the one sentence in the piece that means the opposite of what it says.",
-    "toEra": "close",
-    "notifyTitle": " ",
-    "notify": [
-      "",
-      "Restart as you are."
-    ],
-    "updateNow": "Restart",
-    "remindLater": null,
-    "eula": null,
-    "changelog": null,
-    "restarting": "Your update has failed."
+  "notifyTitle": "TriedPath Un-Walk — System Notice",
+  "notify": [
+   "Un-Walk has detected an object it",
+   "cannot repair.",
+   "",
+   "Your progress is safe. Your file has",
+   "been migrated to partner care.",
+   "An update is required to continue."
+  ],
+  "updateNow": "Update now",
+  "remindLater": "Remind me later",
+  "eulaTitle": "Restorify — Terms of Continued Care",
+  "eula": [
+   [
+    "Welcome to Restorify (2003).",
+    "",
+    "By continuing, you agree that your",
+    "journey file, including entries made",
+    "under previous care, remains part of",
+    "your permanent record.",
+    "",
+    "Restorify is not a medical service.",
+    "Restorify is a community of intent."
+   ],
+   [
+    "You agree to accountability.",
+    "You agree to be encouraged.",
+    "You agree that encouragement may",
+    "arrive at any hour.",
+    "",
+    "Your goal (on file since 1997)",
+    "carries forward unchanged."
+   ]
+  ],
+  "readOn": "Read on",
+  "agree": "I Agree",
+  "installTitle": "Installing Restorify 2003",
+  "changelog": [
+   "RESTORIFY 2003 — WHAT'S NEW",
+   "+ fresh look, brighter rooms",
+   "+ accountability web (always on)",
+   "= your history: retained",
+   "= your goal: unchanged",
+   "- nothing is ever removed"
+  ],
+  "restarting": "Restarting…",
+  "_sourceGrounding": {
+   "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
+   "text": "Documentary grounding candidate for the 1997→2003 update trigger: John Paulk, public face of the 1998 ex-gay advertising campaign, was photographed at a Washington, D.C. gay bar 19 September 2000; Exodus International removed him as board chair 3 October 2000 and placed him under disciplinary supervision. This is a documented public scandal and organizational discipline — NOT a claim that Exodus itself collapsed in 2000; no display string here makes that claim. [VERIFY SOURCE]",
+   "urls": [
+    "https://www.christianitytoday.com/2000/10/ex-gay-leader-disciplined-for-gay-bar-visit/",
+    "https://lgbpsychology.org/html/Paulk-Southern%20Voice.html"
+   ]
   }
+ },
+ "u3": {
+  "toEra": "e3",
+  "notifyTitle": "Restorify — Service Transition",
+  "notify": [
+   "The accountability network is no",
+   "longer able to vouch for itself.",
+   "",
+   "Restorify is sunsetting. Thank you",
+   "for your years of work.",
+   "Your file has been migrated to a",
+   "brighter place."
+  ],
+  "updateNow": "Update now",
+  "remindLater": "Remind me later",
+  "eulaTitle": "GracePlatform — Community Guidelines",
+  "eula": [
+   [
+    "Welcome to GracePlatform (2016).",
+    "",
+    "We are not what came before.",
+    "We are gentle. We are polished.",
+    "Every testimony you share may be",
+    "polished further for clarity.",
+    "",
+    "Polishing is a service. It is not",
+    "an edit of who you are."
+   ],
+   [
+    "You agree that your words may be",
+    "recirculated where they can help",
+    "someone like you.",
+    "",
+    "Files inherited from previous",
+    "providers remain available to",
+    "our care team. All of them."
+   ]
+  ],
+  "readOn": "Read on",
+  "agree": "I Agree",
+  "_installSplitDoc": "PLACEHOLDER — Sérgio voice pass pending. Session 61, from his playthrough note: 'the transition needs explaining… GraceProgram should load on VERA's computer, not Daniel's.' He is right, and the old build had the whole ritual happening on one machine: Daniel's 2003 CRT ran a screen that said 'Installing GracePlatform 2016' and then the room simply moved. So u3 is now SPLIT ACROSS THE TWO MACHINES. On Daniel's machine the install stage is the REMOVAL — Restorify's own sunset report, and under it the dispersal (the `uninstall` block below, unchanged): his era ENDS on his screen. The arrival half — the boot, the GracePlatform install and its changelog-as-thesis — lives in `e3_arrival` at the bottom of this file and plays on VERA's workstation, after the relocation, on the machine you are actually sitting at. Same ritual, same four stages (notice → terms → install → restart); it simply stops pretending that one desk in 2003 can install 2016. NOTE the one deliberate asymmetry: the TERMS are still agreed on Daniel's machine, before the move. That is the point of them — the agreement travels with the file, and the file is what moves.",
+  "installTitle": "Removing Restorify 2003",
+  "changelog": [
+   "RESTORIFY 2003 — SERVICE ENDING",
+   "- accountability web: shut down",
+   "- daily realignment: shut down",
+   "= your chart: exported, complete",
+   "= your file: transferred in full",
+   "+ nothing has been deleted"
+  ],
+  "_uninstallDoc": "PLACEHOLDER — Sérgio voice pass pending. THE DISPERSAL (E2 script S2R.7; D31 STRUCK by Sérgio 2026-07-25 after the GPAHE check, with refinements — docs/REINTERP_D31_DISPERSAL_EVIDENCE_2026-07-25.md). The program's collapse doesn't kill the watcher; it renames it. The uninstall report renders AFTER the changelog finishes typing; lines prefixed '~' draw small and dim (the quiet line carries the thesis). Under the report LAMBY HIMSELF comes apart into seven small marks — the same seven src/desktop/theme/era3.ts's drawLambMark renders SETTLED as Lambient's badge on Room 2's three screens at E3, so what leaves here is literally what arrives there. Built by Fable, Session 33; re-staged and re-worded Session 58. WHY 'RENAMED' AND NOT 'MIGRATING' (Sérgio's adopted refinement): renaming is the documented mechanism — NARTH became ATCSI in 2014, and GPAHE 2023 finds providers relabelling in medical-sounding language to evade moderation. An uninstaller that reports success while the process continues under a new label is better sourced than vague migration AND it rhymes with the piece's own update-as-survival grammar. FRAMING DISCIPLINE (binding): this is survival by scattering, never omnipotence — GPAHE 2023 finds deplatforming partly WORKED, so the staging keeps the marks few, small, and settled, and the fiction keeps its invented marks (Restorify → GracePlatform); the real companies GPAHE names belong to dossier/provenance surfaces only, never to a room.",
+  "uninstall": [
+   "Restorify — removed.",
+   "~ companion process — could not be removed. RENAMED."
+  ],
+  "_dispersalGrounding": {
+   "_proposed": "S58 2026-07-26 — grounding for the dispersal beat per D31's strike; awaiting Sérgio. Status suggestion: documentary / confidence high.",
+   "text": "Documentary grounding for the dispersal: after Exodus International's closure (announced 19 June 2013) the movement survived by rebranding (softer messaging, new names), decentralizing from centralized structures into networks of independent affiliates, and migrating into platform-native forms. The specific RENAMING mechanism is documented: NARTH became ATCSI in 2014, and providers adopt medical-sounding terminology to evade content moderation. Contested-ground caveat that must travel with the claim: GPAHE's 2023 report finds deplatforming partly worked (Facebook/Instagram recommendation pathways eliminated, Bing markedly improved, TikTok best-performing with warnings; YouTube still poor, non-English content least moderated). [VERIFY SOURCE]",
+   "urls": [
+    "https://globalextremism.org/reports/conversion-therapy-online-the-players/",
+    "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem/",
+    "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/"
+   ]
+  },
+  "_migrationFilingDoc": "PLACEHOLDER — Sérgio voice pass pending. S2R.7 item 5: THE LAST FILING UNDER DANIEL'S NAME. Filed once, at the u3 restart (src/desktop/os.ts) and rendered in the record's own cold ink by src/witness/intake.ts. Not a choice, not a judgement, no player act anywhere near it — the record simply notes that the subject moved and the file did not.",
+  "migrationFiling": "subject migrated — file retained",
+  "installSeconds": 13.5,
+  "restarting": "Restarting…",
+  "_sourceGrounding": {
+   "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
+   "text": "Documentary grounding for the 2003→2016 update trigger: Alan Chambers's public apology (\"I Am Sorry\") and Exodus International's board decision to close the organization were both announced 19 June 2013 — use the date, not \"in 2013.\" [VERIFY SOURCE]",
+   "urls": [
+    "https://web.archive.org/web/20130622031108/http://exodusinternational.org/2013/06/i-am-sorry",
+    "https://www.christianitytoday.com/2013/06/alan-chambers-apologizes-to-gay-community-exodus/",
+    "https://www.latimes.com/local/lanow/la-me-ln-exodus-ministry-to-shut-down-20130619-story.html"
+   ]
+  }
+ },
+ "u4": {
+  "_doc": "PLACEHOLDER-draft — Claude drafted every display string in this block under the co-creation norm (CLAUDE.md line 100, revised 2026-07-24); Sérgio reviews and rewrites, his edit wins. S76 REWROTE u4: the last update the piece installs, and the one the title is about. Three things had to land in it. (1) ⚑ L ARRIVES INSIDE IT — the `report` block below installs the companion, so L is something AGREED TO in a dialog nobody read, not a character who appears. (2) ⚑ THE EULA IS WHERE THE SOURCE PASS LANDS (docs/REINTERP_E4_SOURCE_PASS_2026-08-06.md): no conversion-practice organisation was found building or commissioning AI tooling — an individual built the tool and an organisation promoted it. The apparatus is an ADOPTER, not a developer. That finding is page 3, clause 3, in supplier boilerplate: 'does not develop, train or host the models it makes available. It accepts their terms on your behalf, as you accept these on your own.' A player who reads the terms finds it; a player who clicks through does not; ⚑ NOTHING ANYWHERE POINTS AT IT. Do not add emphasis, a colour, or a line that draws the eye — the whole beat is that it is legally disclosed and practically invisible. (3) The changelog is the thesis and the thesis is the LABOUR: what this update removes is the person doing the work (E3 = Vera correcting testimony by hand, one correction at a time; E4 = the same operation with nobody's hands on it). ⚑ Every mark is invented — GracePlatform is the piece's own E3 platform, Continuity and Sunroom are ours. No real company, product, model or organisation is named in the fiction, ever; the documented ones live on Dossier cards with a status.",
+  "_docWhere": "⚑ THIS RITUAL DOES NOT RUN ON DANIEL'S MONITOR. S61 turned that machine off at E3 and left this key arming on a dead screen in a closed room. It now lands on Vera's workstation — see data/dialog/s4_update.json's `_docWhere`, and src/room/era3Devices.ts, which composites it there. Unlike u3 there is no split arrival block: the whole ritual plays on the one machine she is sitting at, and the ARRIVAL half is the headset waiting in the next room with L already installed on it.",
+  "toEra": "e4",
+  "notifyTitle": "GracePlatform — Important Changes",
+  "notify": [
+   "A submission could not be processed",
+   "as written.",
+   "",
+   "Contributor tools are being retired.",
+   "GracePlatform is joining Continuity,",
+   "a family of wellness services.",
+   "",
+   "Your file comes with you."
+  ],
+  "updateNow": "Update now",
+  "remindLater": "Remind me later",
+  "eulaTitle": "Continuity of Care — Terms of Service",
+  "eula": [
+   [
+    "1. THE SERVICE",
+    "",
+    "There is no longer an application",
+    "to open. The service is ambient.",
+    "",
+    "Recommendations will find you.",
+    "A companion will find you.",
+    "A community will find you.",
+    "",
+    "You do not need to search."
+   ],
+   [
+    "2. YOUR FILE",
+    "",
+    "Your record (1997, 2003, 2016) is",
+    "carried forward without alteration",
+    "and informs your experience today.",
+    "",
+    "You agree that interest is consent.",
+    "You agree that hesitation is",
+    "interest.",
+    "You agree that a question answered",
+    "once may be asked again."
+   ],
+   [
+    "3. COMPONENTS AND SUPPLIERS",
+    "",
+    "Portions of this service are made",
+    "available under licence by third",
+    "parties. Continuity does not",
+    "develop, train or host the models",
+    "it makes available. It accepts",
+    "their terms on your behalf, as you",
+    "accept these on your own.",
+    "",
+    "The list of suppliers is available",
+    "on request and may change without",
+    "notice to you."
+   ],
+   [
+    "4. YOUR COMPANION",
+    "",
+    "A companion process is included",
+    "with this service and cannot be",
+    "removed separately from it.",
+    "",
+    "It is not a person and does not",
+    "claim to be.",
+    "",
+    "It will learn what you like."
+   ]
+  ],
+  "readOn": "Read on",
+  "agree": "I Agree",
+  "installTitle": "Updating…",
+  "changelog": [
+   "CONTINUITY — WHAT IS NEW",
+   "+ your session, restored before you arrive",
+   "+ search that finishes your sentence",
+   "+ support, in the tab that opens itself",
+   "+ your photographs, restored",
+   "+ immersive sessions · headset included",
+   "= the record: thirty years, intact",
+   "= the goal: unchanged, on file",
+   "- contributor tools: retired",
+   "- the moderation queue: retired",
+   "- the waiting: retired"
+  ],
+  "_reportDoc": "⚑ L IS INSTALLED HERE, and this is the only place in the piece where that happens. `report` renders exactly like u3's `uninstall` block (types on after the changelog; a line prefixed '~' renders small and dim) and is deliberately its MIRROR: u3's report is what could not be removed and left in pieces, u4's is what arrived and will not be leaving. ⚑ The dispersal animation belongs to u3 alone and does not play here — see the key guard in src/desktop/apps/update.ts. The quiet line is the thesis, and it is also the touchless budget spoken by the apparatus itself: from here on the piece moves without you.",
+  "report": [
+   "Registering companion service…",
+   "L — ready",
+   "~ no further action is required from you."
+  ],
+  "installSeconds": 13.5,
+  "restarting": "Restarting…",
+  "_sourceGrounding": {
+   "_proposed": "S47 2026-07-25 — grounding added per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
+   "text": "Documentary grounding for the 2016→now update trigger: Malta's Act LV of 2016 (first European nationwide conversion-practice ban), passed December 2016, published 9 December 2016, now consolidated as Chapter 567. Cite Parliament of Malta + legislation.mt Chapter 567 — NOT the ILO NATLEX record, which Deep Research flags as ambiguously indexed. Separately, app-store removals of conversion-therapy apps (2018-2019) are documented as ONE app — Living Hope Ministries — pulled by Apple (21 Dec 2018), Microsoft (~Dec 2018), Amazon (by 21 Mar 2019) and Google (28 Mar 2019). Do not write \"several conversion-therapy apps.\" [VERIFY SOURCE]",
+   "urls": [
+    "https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/",
+    "https://legislation.mt/eli/cap/567/eng",
+    "https://www.dallasnews.com/news/2018/12/21/there-s-not-an-app-for-that-apple-removes-arlington-ministry-s-app-after-anti-conversion-therapy-group-complaint/",
+    "https://www.theverge.com/2019/3/29/18286906/google-conversion-therapy-app-play-store-remove"
+   ]
+  },
+  "_docChangelog2026": "⚑ 2026-09-13 (S141): rewritten against the Era 4 that exists — the restored session, the search taken over, Second Thoughts in the tab that arrived by itself, the Restoration tool, the headset — instead of the companion-that-talks era retired in September. Still a changelog-as-thesis: every '+' is a thing done FOR her."
+ },
+ "_remindDoc": "PLACEHOLDER — Sérgio voice pass pending. Session 61, his note on u3: 'Remind me later — what does it do?' The law (SCRIPT_UPDATE v0.5 §1 / CLAUDE.md) is that it works exactly ONCE, and the code has always honoured that — but nothing on screen said so. Pressing it withdrew the notice with no acknowledgement, and when the notice came back the button had silently vanished, which reads as a different dialog rather than as a spent option. Two strings fix it: `remindedStatus` stays on screen for the whole deferral (the system tells you it is coming back), and `remindSpent` labels the button when it returns GREYED — the S60 ruling applied to the one place in the piece where a dead button is literally the thesis. You may defer this once. You may not decline it.",
+ "remindedStatus": "Update deferred. It will ask again shortly.",
+ "remindSpent": "Reminder used",
+ "_e3ArrivalDoc": "PLACEHOLDER — Sérgio voice pass pending on EVERY string below. Session 61 — THE OTHER HALF OF u3, played on VERA's workstation (src/room/graceQueueLite.ts), not on Daniel's CRT. Sequence: you land in Room 2 at a DARK screen → the machine boots in front of you (his note: 'we shouldn't start without the boot up on the computer' — the same gap S59 closed for E2) → GracePlatform installs, and the changelog-as-thesis types on THERE, on the machine it is actually being installed onto → SisterSignal's sign-in, which is where the era's existing GraceQueue material begins. The changelog is the one that used to run on Daniel's screen, moved wholesale: the era law (era transitions = software updates) keeps its install stage and its thesis, it just happens on the right computer. `signInAfter` is a hold, not a gate — nothing here is pressable and nothing is timed for the player.",
+ "e3_arrival": {
+  "bootTitle": "SisterSignal",
+  "bootLines": [
+   "starting services",
+   "restoring your session",
+   "checking for updates"
+  ],
+  "bootFound": "1 update found — installing",
+  "installTitle": "Installing GracePlatform 2016",
+  "changelog": [
+   "GRACEPLATFORM — WHAT'S NEW",
+   "+ softer colours, kinder words",
+   "+ testimony polish queue",
+   "= the chart: complete",
+   "= your file: cross-referenced",
+   "- the questions are the same"
+  ],
+  "installedLine": "Installed. Your file arrived first."
+ },
+ "close": {
+  "_doc": "S92 — THE CLOSE's two lines (REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §1/§5). `notify`'s 'Restart as you are.' is the person's restart, already bare, unchanged. `restarting` — rendered on the SAME dark 2.2s beat every era's own 'Restarting…' already uses (update.ts's `restart` phase), the one moment the desktop canvas still has the screen before enterClose() takes the room — carries the title itself: the machine's flat administrative report of its own defeat. Do not decorate it, do not explain it, no music sting; it is the one sentence in the piece that means the opposite of what it says.",
+  "toEra": "close",
+  "notifyTitle": " ",
+  "notify": [
+   "",
+   "Restart as you are."
+  ],
+  "updateNow": "Restart",
+  "remindLater": null,
+  "eula": null,
+  "changelog": null,
+  "restarting": "Your update has failed."
+ }
 }

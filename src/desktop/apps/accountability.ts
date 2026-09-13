@@ -42,6 +42,7 @@ import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import { drawLambyChar, type LambyMood } from './lambyChar';
 import caleb from '../../../data/dialog/s2_caleb.json';
+import { playOnce } from '../../audio/tapeAudio';
 
 const calebPacing = caleb.pacing;
 
@@ -603,8 +604,8 @@ export class AccountabilityApp {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit) return;
     switch (hit.id) {
-      case 'alert-ok': this.closeAlert(false); break;
-      case 'alert-dismiss': this.closeAlert(true); break;
+      case 'alert-ok': playOnce('ui_press.mp3'); this.closeAlert(false); break;
+      case 'alert-dismiss': playOnce('ui_press.mp3'); this.closeAlert(true); break;
       case 'mail-open': this.mail = 'letter'; this.glitchT = 0; this.dirty = true; break;
       case 'mail-read':
         // a toggle, so the row can always be told the truth about itself

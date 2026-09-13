@@ -33,6 +33,8 @@ class TypeStream {
   private hold = 0;
   constructor(private readonly holdAfter: number, private readonly cps: number) {}
 
+  /** S141: a line has begun to type — the app plays the channel's blip */
+  onStart?: () => void;
   queueLine(l: Line): void { this.queue.push(l); }
   /** a line the player typed appears whole — they already wrote it */
   pushWhole(l: Line): void { this.done.push(l); }
@@ -57,6 +59,7 @@ class TypeStream {
       this.cur = this.queue.shift()!;
       this.shown = 0;
       changed = true;
+      this.onStart?.();
     }
     return changed;
   }
@@ -69,6 +72,8 @@ export class IrcApp {
 
   private channel = new TypeStream(HOLD_CHANNEL, CPS_CHANNEL);
   private dm = new TypeStream(HOLD_DM, CPS_DM);
+  /** S141: a line arriving in either stream — os.ts wires the sound */
+  set onLine(fn: () => void) { this.channel.onStart = fn; this.dm.onStart = fn; }
   private t = 0;
   private ambientFed = false;
   private dmReadyAt = Infinity; // set once the room's ambient chatter settles

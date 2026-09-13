@@ -31,6 +31,7 @@ import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import caleb from '../../../data/dialog/s2_caleb.json';
+import { playOnce } from '../../audio/tapeAudio';
 
 interface Chip { id: string; label: string; say: string; ledgerTag: string }
 interface ThreadStep { id: string; from?: string; text?: string; chips?: Chip[]; commit?: boolean }
@@ -154,6 +155,7 @@ class TypeStream {
     if (this.hold > 0) { this.hold -= dt; return false; }
     if (this.queue.length > 0) {
       this.cur = this.queue.shift() ?? null;
+        playOnce('notify_2003.mp3');   // S141: a line arrives — the messenger's ping
       this.shown = 0;
       return true;
     }

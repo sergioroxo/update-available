@@ -36,6 +36,7 @@
 import { px, setFont } from '../theme/chrome';
 import { ERA3, FLOPPY } from '../theme/era3';
 import g from '../../../data/dialog/s3_floppysheep.json';
+import { playOnce } from '../../audio/tapeAudio';
 
 const FENCES = g.fences as { gap: number; h: number }[];
 
@@ -127,8 +128,8 @@ export class FloppySheep {
       return true;
     }
     if (this.mode === 'idle') { this.mode = 'run'; }
-    if (this.y <= 0) { this.vy = HOP_V; this.flapped = false; }
-    else if (!this.flapped) { this.vy = FLAP_V; this.flapped = true; }
+    if (this.y <= 0) { this.vy = HOP_V; this.flapped = false; playOnce('click_floppysheep.mp3'); }
+    else if (!this.flapped) { this.vy = FLAP_V; this.flapped = true; playOnce('click_floppysheep.mp3'); }
     this.version++;
     return true;
   }
@@ -174,7 +175,7 @@ export class FloppySheep {
       const by1 = GROUND_Y - this.y;   // her feet; the fence is solid from the ground up
       for (const f of this.fences) {
         if (f.x > bx1 || f.x + FENCE_W < bx0) continue;
-        if (by1 > GROUND_Y - f.h) { this.mode = 'over'; this.overT = 0; this.version++; break; }
+        if (by1 > GROUND_Y - f.h) { this.mode = 'over'; playOnce('fail_floppysheep.mp3'); this.overT = 0; this.version++; break; }
       }
     } else if (this.mode === 'over') {
       this.overT += step;

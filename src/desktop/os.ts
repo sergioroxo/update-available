@@ -356,6 +356,7 @@ export class DesktopOS {
     if (!this.reinterp || this.phase !== 'r_dark') return;
     ledger.name = opening.o3_prefilled_name; // "they already know your name"
     this.setPhase('r_boot');
+    playOnce('boot_1997_machine.mp3');   // S141: on disk since S102, never played
   }
 
   /** S1.0 power-on beat: the machine waits dark until the player acts */
@@ -372,12 +373,15 @@ export class DesktopOS {
     if (this.phase !== 'desktop' || this.kit) return;
     this.kit = new KitApp();
     this.toast = null;
+    playOnce('floppy_1997.mp3');   // S141: the disk goes in, the drive reads it
     if (!ledger.records.includes('kit-inserted')) ledger.records.push('kit-inserted');
     this.onKitInserted?.();
     this.kit.onConnect = () => {
       // S1.4 — the kit's last step is the channel it chose for you
       if (!ledger.records.includes('went-online')) ledger.records.push('went-online');
+      playOnce('dialup_1997.mp3');   // S141: the era's sound — the channel is dialled
       this.irc = new IrcApp();
+      this.irc.onLine = () => playOnce('irc_1997.mp3');
       this.irc.onHooked = () => {
         this.toast = { text: strings.desktop.logToast, t: 6 };
         this.hasUnseenWitness = true; // the cold side begins to creep in
@@ -838,6 +842,7 @@ export class DesktopOS {
     if (this.accountability) return;
     const alert = new AccountabilityApp();
     this.accountability = alert;
+    playOnce('alert_2003.mp3');   // S141: the messenger's chime, lower — care and surveillance share a voice
     if (this.caleb) alert.setChatRect(this.caleb.windowRect);
     alert.onRedactionStart = () => this.caleb?.beginRedaction();
     alert.onAlertDone = (dismissed) => {
@@ -1432,6 +1437,7 @@ export class DesktopOS {
       if (this.e2Stage === 'lambyBoot' && this.e2StageT > LAMBY_BOOT_HOLD) {
         // ⚑ and here he is, for the first time in the piece
         this.e2Stage = 'lambyIntro';
+        playOnce('chime_2003.mp3');   // S141: the machine has a sound card now, and it is pleased about it — Lamby arrives on it
         this.e2StageT = 0;
         this.lambyPoseT = 0;
         this.dirty = true;

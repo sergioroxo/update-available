@@ -14,6 +14,7 @@ import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import end from '../../../data/dialog/s1_end.json';
+import { playOnce } from '../../audio/tapeAudio';
 
 type DiaryPhase = 'prompt' | 'writing' | 'committed' | 'flagged' | 'deleting' | 'resist' | 'reassert' | 'breakout';
 
@@ -110,6 +111,7 @@ export class DiaryApp {
       if (this.attempts >= 2) {
         // second hold: the deletion fails for good — the person's glitch
         this.phase = 'breakout'; this.breakT = 0;
+        playOnce('glitch_e2.mp3');   // S141: the words flood back — the era's collapse, heard
         if (!ledger.records.includes('deletion-failed')) ledger.records.push('deletion-failed');
         this.onBreakout?.();   // the screen split fires as the truth wins
       } else {

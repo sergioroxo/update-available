@@ -231,3 +231,48 @@ level type_2026 -30;      level agent_2026 -24;    level step_done_2026 -26; lev
 level wear_2026 -26;      level session_breath -34; level playback_hiss -36; level card_junie -23
 level filter_deny -22;    level reconnect_2026 -26; level terminate_2026 -20; level static_2026 -26
 level power_down_2026 -24
+
+# ── ⚑ ERAS 1–3 AND THE UPDATES (2026-09-13, S141) — the sounds the piece was missing ──
+# 1997 · DIAL-UP. The era's defining sound, never made: a dial tone, eleven
+# DTMF digits, the modem's answer tone and the handshake's noise, 7 s. Ours —
+# a real V.90 negotiation is a copyrighted recording on every site that hosts one.
+q -f lavfi -i "sine=f=350:d=0.8" -f lavfi -i "sine=f=440:d=0.8" \
+  -f lavfi -i "sine=f=697:d=0.09" -f lavfi -i "sine=f=1209:d=0.09" \
+  -f lavfi -i "sine=f=770:d=0.09" -f lavfi -i "sine=f=1336:d=0.09" \
+  -f lavfi -i "sine=f=852:d=0.09" -f lavfi -i "sine=f=1477:d=0.09" \
+  -f lavfi -i "sine=f=941:d=0.09" -f lavfi -i "sine=f=1209:d=0.09" \
+  -f lavfi -i "sine=f=2100:d=1.1" -f lavfi -i "anoisesrc=d=2.6:c=white:a=0.5" \
+  -filter_complex "[0][1]amix=inputs=2:normalize=0,volume=0.5[dial];
+    [2][3]amix=inputs=2:normalize=0[d1];[4][5]amix=inputs=2:normalize=0[d2];[6][7]amix=inputs=2:normalize=0[d3];[8][9]amix=inputs=2:normalize=0[d4];
+    [d1][d2][d3][d4][d1][d3][d2][d4][d3][d1][d2]concat=n=11:v=0:a=1,volume=0.5[digits];
+    [10]volume=0.35,afade=t=in:st=0:d=0.05,afade=t=out:st=1.0:d=0.1[ans];
+    [11]bandpass=f=1400:w=1800,aeval='val(0)*(0.6+0.4*gt(sin(2*PI*t*17+sin(t*40)*4),0))':c=same,volume=0.5,afade=t=out:st=2.1:d=0.5[hs];
+    [dial][digits][ans][hs]concat=n=4:v=0:a=1,lowpass=f=3400,highpass=f=300" \
+  "$OUT/dialup_1997.wav"
+
+# 1997 · a key, a press: the PC speaker's click — square, 12 ms.
+q -f lavfi -i "sine=f=1000:d=0.012" -af "aeval='sgn(val(0))*0.3':c=same,afade=t=out:st=0.006:d=0.006" "$OUT/key_1997.wav"
+
+# 1997 · IRC — a line arriving: one square blip, the speaker's only voice.
+q -f lavfi -i "sine=f=1318.51:d=0.07" -af "aeval='sgn(val(0))*0.22':c=same,afade=t=out:st=0.04:d=0.03,lowpass=f=6000" "$OUT/irc_1997.wav"
+
+# 1997 · the floppy going in and the drive reading it: a click, the motor, two seeks.
+q -f lavfi -i "anoisesrc=d=0.05:c=brown:a=0.9" -f lavfi -i "sine=f=300:d=2.2" -f lavfi -i "anoisesrc=d=2.2:c=pink:a=0.4" \
+  -filter_complex "[0]lowpass=f=1200,volume=0.6[click];[1]volume=0.05,tremolo=f=60:d=0.5,afade=t=in:st=0:d=0.1,afade=t=out:st=1.8:d=0.4[motor];
+    [2]bandpass=f=2200:w=900,aeval='val(0)*(gt(sin(2*PI*t*1.4+1),0.6)+gt(sin(2*PI*t*9.5),0.9)*0.7)':c=same,volume=0.3,afade=t=out:st=1.8:d=0.4[seek];
+    [motor][seek]amix=inputs=2:normalize=0[drive];[click][drive]concat=n=2:v=0:a=1" \
+  "$OUT/floppy_1997.wav"
+
+# EVERY UPDATE · installing: the machine working — a 4 s loopable churn, era-neutral,
+# filtered noise with a slow pulse. Under the changelog as it types itself.
+q -f lavfi -i "anoisesrc=d=4:c=pink:a=0.6" -af "lowpass=f=1600,equalizer=f=250:t=q:w=1.5:g=8,tremolo=f=2.5:d=0.4,volume=0.25" "$OUT/install_work.wav"
+
+# EVERY UPDATE · "Restarting…": the screen going dark — a soft power cycle, the
+# hum dropping, and a single low tick as the machine comes back. Not a thud:
+# an update restarts you, it does not hit you.
+q -f lavfi -i "sine=f=100:d=1.2" -f lavfi -i "anoisesrc=d=0.03:c=brown:a=0.8" \
+  -filter_complex "[0]volume=0.18,afade=t=out:st=0.1:d=1.1,lowpass=f=300[h];[1]lowpass=f=900,adelay=1500|1500,volume=0.4[t];[h][t]amix=inputs=2:normalize=0" \
+  "$OUT/restart_dark.wav"
+
+q -i "$OUT/dialup_1997.wav" -af "atrim=0:7.4,afade=t=out:st=6.9:d=0.5" "$OUT/dialup_1997.tmp.wav" && mv "$OUT/dialup_1997.tmp.wav" "$OUT/dialup_1997.wav"
+level dialup_1997 -24; level key_1997 -22; level irc_1997 -22; level floppy_1997 -26; level install_work -32; level restart_dark -26

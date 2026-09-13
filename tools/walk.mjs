@@ -282,14 +282,21 @@ async function main() {
     const w = window;
     const Native = w.Audio;
     if (!Native) return;
-    const state = { started: 0, live: [] };
+    const state = { started: 0, live: [], names: [] };
     const Wrapped = function (...args) {
       const el = new Native(...args);
       // bounded: finished elements are dropped, so a long run cannot grow this
       if (state.live.length > 240) state.live = state.live.filter((a) => !a.paused && !a.ended);
       state.live.push(el);
       const play = el.play.bind(el);
-      el.play = function (...a) { state.started += 1; return play(...a); };
+      // ⚑ S141: and WHICH clip, in order — the sound ledger the report prints,
+      //   so "is X wired?" is answered by the walk and not by grep
+      el.play = function (...a) {
+        state.started += 1;
+        const name = String(el.src || el.currentSrc || '').split('/').pop();
+        if (name && (state.names.length === 0 || state.names[state.names.length - 1] !== name || state.started % 8 === 0)) state.names.push(name);
+        return play(...a);
+      };
       return el;
     };
     Wrapped.prototype = Native.prototype;
@@ -299,7 +306,8 @@ async function main() {
       return {
         started: state.started,
         playing: live.length,
-        now: live.map((a) => String(a.currentSrc || '').split('/').pop()).join(',')
+        now: live.map((a) => String(a.currentSrc || '').split('/').pop()).join(','),
+        names: state.names.slice()
       };
     };
   });
@@ -1967,6 +1975,12 @@ const LAP = { w: 224, h: 140 };
       ? final.ledList.map((e) => '- `' + e + '`').join('\n')
       : '- empty',
     '',
+    '## WHAT WAS HEARD, IN ORDER', '',
+    '⚑ S141 — every clip `play()`ed during the walk, in order (repeats collapsed). A cue that is on',
+    'disk and registered but absent here is not wired; a beat with no cue near it is silent.', '',
+    (final.audio && final.audio.names && final.audio.names.length
+      ? final.audio.names.map((n, i) => `${i + 1}. \`${n}\``).join('\n')
+      : '_nothing was played_'), '',
     '## THE HEAD TURNS', '',
     '*This walker turns, with the arrow keys — the same 6°-of-yaw look-in-place a player has, never',
     '`__camFree`. So a control off the seat bearing is no longer reported as unreachable without',

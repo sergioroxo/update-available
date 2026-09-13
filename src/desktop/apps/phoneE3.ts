@@ -43,6 +43,7 @@ import { drawFloppyIcon } from './floppysheep';
 import { ledger } from '../../state/ledger';
 import m from '../../../data/dialog/s3_maiden.json';
 import d from '../../../data/strings/era3_devices.json';
+import { playOnce } from '../../audio/tapeAudio';
 
 type Msg = { from: string; time: string; text?: string; kind?: string };
 type Rect = { x: number; y: number; w: number; h: number; id: string };
@@ -117,6 +118,7 @@ export class PhoneE3 {
     while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
       this.cascadeT -= CASCADE_STEP;
       this.cascadeN++;
+      playOnce('phone_msg_2016.mp3');   // S141: one per message, 0.45 s apart
       this.bump();
     }
     if (this.cascadeN >= CASCADE.length) {

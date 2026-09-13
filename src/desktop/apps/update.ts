@@ -18,6 +18,7 @@ import * as ui from '../theme/chrome';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
 import { drawLambyChar } from './lambyChar';
+import { playOnce, playLoop, stopClip } from '../../audio/tapeAudio';
 
 export type UpdateKey = 'u2' | 'u3' | 'u4' | 'close';
 type UpdatePhase = 'cascade' | 'notify' | 'reminded' | 'eula' | 'install' | 'restart';
@@ -78,6 +79,10 @@ const REMIND_SPENT: string = (updates as unknown as { remindSpent: string }).rem
 
 const REMIND_SECONDS = 40;   // PLACEHOLDER pacing — the one deferral the system allows
 const INSTALL_SECONDS = 7.5; // changelog types on + the glitch window
+/** S141: the notice's chime is the era the update ARRIVES IN (`key` → the era it leaves) */
+const NOTIFY_CHIME: Record<UpdateKey, string | null> = {
+  u2: 'err_ding_1997.mp3', u3: 'chime_2003.mp3', u4: 'ting_2016.mp3', close: null
+};
 const RESTART_SECONDS = 2.2; // dark beat before the world changes
 
 /**
@@ -165,6 +170,14 @@ export class UpdateApp {
     this.s = (updates as unknown as Record<string, UpdateStrings>)[key];
     this.ledgerEntry = { toEra: ERA_NUM[this.s.toEra] ?? 0, remindLaterCount: 0, eulaScrollPct: 0 };
     ledger.updates.push(this.ledgerEntry);
+    // ⚑ S141 — THE RITUAL IS HEARD. The piece's central metaphor happens four
+    //   times and made no sound. The notice arrives with the ERA's own chime
+    //   (the u2 notice is 1997's error ding; u3's is 2003's soundcard chime;
+    //   u4's is 2016's polished ting; the Close's is nothing — it is felt), the
+    //   cascade's windows each ding as they pile, the install churns under the
+    //   changelog, and Restarting… is a soft power cycle. Every sound is the
+    //   piece's own (tools/make_tones.sh).
+    if (!this.s.cascade) playOnce(NOTIFY_CHIME[key]);
     // ⚑ an update that declares a cascade opens on the pile of errors; every
     //   other one opens on its notice, exactly as before.
     if (this.s.cascade) this.phase = 'cascade';
@@ -214,16 +227,20 @@ export class UpdateApp {
     const casc = this.s.cascade;
     if (this.phase === 'cascade' && casc) {
       const due = Math.min(casc.count, Math.floor((this.t * 1000) / casc.everyMs) + 1);
+      if (due > this.cascadeShown) playOnce('err_cascade_1997.mp3');   // S141: one ding per window — they pile
       this.cascadeShown = due;
     }
     if (this.phase === 'reminded' && this.t >= REMIND_SECONDS) {
       this.phase = 'notify'; // it returns — and this time there is no later
       this.t = 0;
+      playOnce(NOTIFY_CHIME[this.key]);   // S141: the same chime, again — there is no later
       this.onWindowClosed?.(); // R28-2c: the gathering window closes here
     }
     if (this.phase === 'install' && this.t >= (this.s.installSeconds ?? INSTALL_SECONDS)) {
       this.phase = 'restart';
       this.t = 0;
+      stopClip(this.churn); this.churn = null;
+      playOnce('restart_dark.mp3');   // S141: Restarting…
     }
     if (this.phase === 'restart' && this.t >= RESTART_SECONDS && !this.completed) {
       this.completed = true;
@@ -250,10 +267,13 @@ export class UpdateApp {
     if (this.phase === 'notify') this.beginInstall();
   }
 
+  private churn: HTMLAudioElement | null = null;
   private beginInstall(): void {
     // the bare final restart has no changelog — straight to the dark beat
     this.phase = this.s.changelog ? 'install' : 'restart';
     this.t = 0;
+    if (this.s.changelog) this.churn = playLoop('install_work.mp3');   // S141: the machine working under the changelog
+    else playOnce('restart_dark.mp3');
     this.onInstallBegin?.(this.s.toEra); // ⚑ S86 — the ascent starts on THIS press
   }
 
@@ -602,6 +622,7 @@ export class UpdateApp {
       return;
     }
     if (this.phase === 'notify') {
+      if (id === 'update-now' || id === 'remind-later') playOnce('ui_press.mp3');
       switch (id) {
         case 'update-now':
           // R28-2c: "Update now" pressed while remind-later was NEVER used
@@ -624,6 +645,7 @@ export class UpdateApp {
 
     if (this.phase === 'eula' && this.s.eula) {
       if (id === 'eula-readon') {
+        playOnce('key_1997.mp3');   // S141: a page turned — the speaker's click, in every era (it is the machine's)
         this.page += 1;
         this.ledgerEntry.eulaScrollPct = Math.round(((this.page + 1) / this.s.eula.length) * 100);
         this.dirty = true;
