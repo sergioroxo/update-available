@@ -61,7 +61,7 @@
  * nothing else to press here, and adding a "continue" would break the rule.
  */
 import { visorField, visorEdge, glitchBands, ERA4 } from '../theme/era4';
-import { E4Browser } from './browser';
+import { E4Browser, FAIL } from './browser';
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import space from '../../../data/dialog/s4_space.json';
@@ -112,6 +112,7 @@ const LABEL = { x: 262, y: 44, w: 234 } as const;
  *  and it has to be much slower." The tear is the last thing she sees on the
  *  glass, and at 1.2 s it was a flicker between the world and the desk. */
 const GLITCH_SECONDS = 3.2;
+
 const GLITCH_STEPS = 16;
 
 /**
@@ -373,6 +374,11 @@ export class E4Shell {
     // It draws almost nothing (the machine's own failures, on a stand across
     // the room), so this bumps the visor's version a handful of times in three
     // minutes — the light and the sound are not on this surface at all.
+    if (this.failT >= 0 && this.failT < FAIL.off + 0.5) {
+      const b4 = this.failT;
+      this.failT += dt;
+      if (Math.floor(b4 * 12) !== Math.floor(this.failT * 12)) { this.laptopV++; this.version++; }
+    }
     this.ball.update(dt);
     if (this.ball.version !== this.ballVersion) {
       this.ballVersion = this.ball.version;
@@ -593,6 +599,7 @@ export class E4Shell {
        * still lit on the desk, and stays there until the room goes. Nothing on
        * it is pressable. The `closeButtonRect` code is kept, unused.
        */
+      if (this.failT >= FAIL.off) { px(ctx, 0, 0, W, H, ERA4.field); return; }   // off
       this.laptopBar(ctx, W, space.corrupt.sub);
       // ⚑ 2026-09-13: LARGE, and in the top half — only the lid's top ~51% is
       //   in the seat's frame (S107), and at 14 px the title was a whisper
@@ -603,6 +610,15 @@ export class E4Shell {
       setFont(ctx, 9);
       ctx.fillStyle = ERA4.dim;
       for (const row of wrapLaptop(ctx, space.corrupt.note, W - 20)) { ctx.fillText(row, 10, ny); ny += 12; }
+      if (this.failT >= FAIL.bands) {
+        // the bands tear it, and the light goes out of it
+        const k = Math.min(1, (this.failT - FAIL.bands) / (FAIL.off - FAIL.bands));
+        glitchBands(ctx, W, H, k);
+        const was = ctx.globalAlpha;
+        ctx.globalAlpha = k * k;
+        px(ctx, 0, 0, W, H, ERA4.field);
+        ctx.globalAlpha = was;
+      }
       return;
     }
     const done = this.laptopLine >= space.laptop.lines.length;
@@ -804,6 +820,11 @@ export class E4Shell {
   }
 
   /** the far side of the glitch: the device stops, and the laptop takes over */
+  /** ⚑ 2026-09-13: seconds since the device stopped — the failure SPREADS to
+   *  both screens on the desk (the laptop here, the browser in `E4Browser`):
+   *  the sentence, then the bands, then off. See `FAIL`. */
+  private failT = -1;
+  get failSeconds(): number { return this.failT; }
   private finishHandOff(): void {
     if (this.handedOff) return;
     this.handedOff = true;
@@ -822,6 +843,7 @@ export class E4Shell {
     this.ball.clearLamps();   // the era is over; the lamps go with the picture
     this.laptopV++;
     this.version++;
+    this.failT = 0;
     // ⚑ 2026-09-12: and the world goes with the device — the room comes back
     this.ball.leaveWorld();
     // ⚑ 2026-09-13: and the monitor learns it — the agent's page cannot be reached
@@ -906,7 +928,7 @@ export class E4Shell {
        */
       ctx.clearRect(0, 0, W, H);
       this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
-      visorEdge(ctx, W, H);
+      visorEdge(ctx, W, H, 0.35);
       return;
     }
     // the era has not begun until L has finished on the laptop: the device is
@@ -983,7 +1005,7 @@ export class E4Shell {
       ctx.globalAlpha = was;
     }
     this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
-    visorEdge(ctx, W, H);
+    visorEdge(ctx, W, H, this.ball.live ? 0.35 + 0.65 * k : 1);
   }
 
   /**

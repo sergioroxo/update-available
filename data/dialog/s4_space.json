@@ -33,6 +33,6 @@
   "ask": "Restart as you are.",
   "_docWords": "⛑ THE CLOSE'S OWN WORDS, not new ones. `ask` and `button` are lifted from data/strings/updates.json's `close` block (notify[1] and updateNow) so the card on the laptop speaks with the same voice as the update it arms — and because the first pass invented 'Restart as you are' as a BUTTON label, which both duplicated the message and ran off the end of the button."
  },
- "sessionSeconds": 9.0,
- "_docSessionSeconds": "⚑ 2026-09-12: how long the correction session's screen holds before Junie's card. The offers used to open here; they are retired (Sérgio: 'cut the offers entirely'). The screen itself is s4_ball.json `session`."
+ "sessionSeconds": 24.0,
+ "_docSessionSeconds": "⚑ 2026-09-13: 9 → 24. The session begins (grounding at 9, the recorded voice at 17) and Junie's card cuts it at 24."
 }

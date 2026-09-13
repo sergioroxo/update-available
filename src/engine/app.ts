@@ -3585,7 +3585,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   type CloseStage = 'lead' | 'travel' | 'lookUp' | 'hold' | 'open' | 'settled' | null;
   let closeStage: CloseStage = null;
   let closeHoldT = 0;
-  const CLOSE_LEAD_SECONDS = 6;
+  const CLOSE_LEAD_SECONDS = 7;   // ⚑ 2026-09-13: the desk's two screens die at FAIL.off (8.5 s after the device stops); the update's 2.2 s + this = the travel begins over dead screens
   const CLOSE_TRAVEL_SECONDS = 26;
   const CLOSE_LOOKUP_SECONDS = 18;
   const CLOSE_LIGHTS_SECONDS = 8;

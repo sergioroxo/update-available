@@ -13,22 +13,22 @@
   "labels": [
    {
     "id": "a1",
-    "object": "SPACE",
-    "text": "the Commons · not available to this account",
+    "object": "LINK",
+    "text": "commons.world · not available to this account",
     "hold": 4.6,
     "lamps": 0
    },
    {
     "id": "a2",
-    "object": "SPACE",
-    "text": "sensitive content · hidden by default",
+    "object": "SENDER",
+    "text": "blocking Junie · failed · delivered anyway",
     "hold": 4.4,
     "lamps": 9
    },
    {
     "id": "a3",
-    "object": "PRESENT",
-    "text": "forty-one present · no host listed",
+    "object": "RISK",
+    "text": "SOCIAL CONTAGION · HIGH · restoring your environment…",
     "hold": 4.8,
     "lamps": 41
    },
@@ -39,7 +39,8 @@
     "hold": 6.0,
     "lamps": 41
    }
-  ]
+  ],
+  "_docStruggle": "⚑ 2026-09-13 — THE STRUGGLE. Sérgio: 'we can have it corrupted, with some difficulty getting to see the Commons appearing… the amount of Pride and religious love from TransJesus breaks through.' The hall is switched on the moment the link is pressed, BEHIND the agent's environment; the labels are the system fighting it (blocking the sender, naming the risk in its own vocabulary), the glass clears in flashes that get longer, and the stream's words and hearts bleed onto the glass label by label until the room wins. environmentK is the fight's score."
  },
  "stutter": {
   "_beat": "⚑ THE OVERLAY GOES ON TRYING, in the corner of the glass, while the room is full. Three more attempts on the shorter clock, then it stops. `at` is seconds from the ball's first line.",
@@ -311,8 +312,11 @@
   "_beat": "⚑ THE ONE PRESS OF THE TAIL, and it is hers. The care system muted Junie six weeks ago (s4_browser.json care.invite: 'muted 6 weeks ago'); the message arrives on the headset anyway, and the overlay says so in its own flat register underneath. There is no decline — nothing in this era has ever offered one — and nothing narrates the choice. Pressing it is going.",
   "from": "Junie",
   "line": "it's starting. come in?",
-  "meta": "sender muted · delivered anyway",
-  "chip": "Go in"
+  "meta": "sender muted  ·  delivered anyway",
+  "chip": "Open link",
+  "link": "commons.world/tonight",
+  "note": "this one gets past the filter. don't let it finish you.",
+  "_docLink": "⚑ 2026-09-13 (Sérgio: 'Junie sends us a link that hacks the system, states that to us, so it clearly corrupts the previous conversion in VR'). The card carries a LINK and says what it is for. Pressing it is going; what it does to the session is the arrival — the filter fighting the room (s4_ball.json `arrival._docStruggle`)."
  },
  "session": {
   "_beat": "⚑ 2026-09-12 — THE CORRECTION SESSION, and it replaces the offers (Sérgio's ruling: 'cut the offers entirely — we are taken to a correction system'). One screen on the glass: the agent's own environment, the photograph it restored framed on the wall, and a line that says the session is about to begin. It never does. What begins instead is Junie's card.",
@@ -340,7 +344,22 @@
   ],
   "planTitle": "Today's session",
   "environment": "Environment  ·  A quiet room",
-  "_docPlan": "⚑ 2026-09-13: the lower half of the glass was empty for nine seconds — a bar and nothing. The plan arrives item by item, so the session is visibly ABOUT to begin: three things the system has decided she will do, the third of which it wrote for her. None of it begins; Junie's card does. A viewer should feel the programme closing over her before the door opens."
+  "_docPlan": "⚑ 2026-09-13: the lower half of the glass was empty for nine seconds — a bar and nothing. The plan arrives item by item, so the session is visibly ABOUT to begin: three things the system has decided she will do, the third of which it wrote for her. None of it begins; Junie's card does. A viewer should feel the programme closing over her before the door opens.",
+  "grounding": {
+   "title": "Grounding  ·  1 of 3",
+   "in": "breathe in",
+   "out": "breathe out",
+   "note": "a quiet room  ·  the environment is holding"
+  },
+  "recorded": {
+   "title": "Someone who went back  ·  2 of 3",
+   "mark": "recorded  ·  verified by Second Thoughts",
+   "lines": [
+    "I just wanted things to be simple again.",
+    "Nobody made me. I was helped."
+   ]
+  },
+  "_docBegins": "⚑ 2026-09-13 (Sérgio: 'we should be able to start some elements of the conversion in VR session, it could be more specific'). The session BEGINS now: at 9 s item 1 runs — a breathing ring, in and out, in the agent's calm — and at 17 s item 2, a 'recorded' testimonial the system vouches for itself: two flat sentences, invented, nobody's words, the apparatus's own genre (perpetrator self-presentation; it must collapse, and it does — Junie's card cuts it off at `sessionSeconds`). No voice."
  },
  "stream": {
   "_beat": "⚑ 2026-09-12 — THE STREAM: `transjesus.str`, one of the piece's own invented marks (CLAUDE.md), hung as a window in the space above the desk while the Commons is on. It shows the room that is happening BEHIND her — the same crowd, the same floor, the category the MC is calling — so a player who has not turned sees it streamed and turns. No voice on it, ever (Sérgio, 2026-09-12: 'TransJesus doesn't have voice'). The chat column is generic cheers, nobody's words, no names.",
@@ -361,6 +380,32 @@
    "we see you",
    "!!"
   ],
-  "categoryPrefix": "CATEGORY"
+  "categoryPrefix": "CATEGORY",
+  "event": "House of Lamps  ·  tonight",
+  "categoryOf": "CATEGORY {n} OF {m}",
+  "host": "hosted by transjesus",
+  "_docPanel": "⚑ 2026-09-13 (Sérgio: 'more clear info on the panel of the livestream'): the title bar names the event and the host; the lower third names the category by number and title, large; the chat is set larger."
+ },
+ "system": {
+  "_doc": "⚑ 2026-09-13 — PEER PRESSURE. Sérgio: 'my fear with the Commons is that it resolves itself very quickly and easily… maybe it's the system that tries to overtake it but shuts down due to Peer Pressure (a play on social contagion and the importance of community).' So while the ball runs the agent comes back for her: twice, a card on the glass — reconnecting, restoring the environment — and each time the room's count pushes its bar back down and the connection is refused. The third time it does not try: it terminates the session and names its reason in its own ideology. That is the shutdown; the glitch follows; the failure spreads to both screens on the desk.",
+  "intrusions": [
+   {
+    "at": 42,
+    "hold": 8.0
+   },
+   {
+    "at": 108,
+    "hold": 8.0
+   }
+  ],
+  "mark": "Second Thoughts",
+  "reconnecting": "Reconnecting…",
+  "restoring": "Restoring your environment",
+  "present": "{n} present",
+  "refused": "connection refused · room full",
+  "terminated": "SESSION TERMINATED",
+  "reason": "reason: social contagion",
+  "terminatedNote": "Second Thoughts has ended this session for your safety.",
+  "terminateSeconds": 5.0
  }
 }

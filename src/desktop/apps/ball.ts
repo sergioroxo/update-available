@@ -114,10 +114,10 @@ const BALL_LEVEL = 1;
  *  the player: the overlay tries to update and cannot (S133). */
 const AFTER_LEVEL = 0.74;
 const AFTER_STATION = 3;
-/** how long the full room holds after the closing before the apparatus fails */
-const AFTER_SECONDS = 5.0;
+/** how long the full room holds after the closing before the apparatus fails —
+ *  ⚑ 2026-09-13: now `system.terminateSeconds` in s4_ball.json (the shutdown is named) */
 /** the invitation card, on the worn visor's 512 x 384 canvas */
-const INVITE = { x: 116, y: 104, w: 280, h: 150 } as const;
+const INVITE = { x: 108, y: 92, w: 296, h: 184 } as const;   // ⚑ 2026-09-13: taller — it carries a link and what it is for
 const JOIN = { x: INVITE.x + 14, y: INVITE.y + INVITE.h - 34, w: 96, h: 22 } as const;
 /** the caption's head start on a clip — the same safety measure `lVoice.ts` and
  *  `offers.ts` keep, for the same reason, and NOT a pacing choice. */
@@ -130,6 +130,10 @@ type Phase = 'idle' | 'invited' | 'arrival' | 'off' | 'ball' | 'after' | 'done';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 const ARRIVAL = script.arrival.labels as unknown as BLabel[];
+const SYSTEM = script.system as unknown as {
+  intrusions: { at: number; hold: number }[]; mark: string; reconnecting: string; restoring: string;
+  present: string; refused: string; terminated: string; reason: string; terminatedNote: string; terminateSeconds: number;
+};
 const STUTTER = script.stutter.labels as unknown as BLabel[];
 
 /** opening → the four categories → the closing, flattened once at module load:
@@ -179,11 +183,31 @@ export class E4Ball {
   get environmentK(): number {
     if (this.phase === 'idle' || this.phase === 'invited') return 1;
     if (this.phase === 'arrival') {
+      /**
+       * ⚑ THE FIGHT'S SCORE (2026-09-13, `arrival._docStruggle`). The base falls
+       * a step per label, as before; over it the glass CLEARS IN FLASHES that
+       * come faster and hold longer with each label — the room breaking
+       * through — and snaps back as the system restores its environment. By
+       * the last label the flashes are most of the time.
+       */
       const total = ARRIVAL.length;
       const left = this.labels.length + (this.label ? 1 : 0);
-      return Math.max(0.08, (left - 1) / total);
+      const stage = total - left;                       // 0 on the first label
+      const base = Math.max(0.08, (left - 1) / total);
+      const period = Math.max(0.7, 2.4 - stage * 0.5);
+      const open = 0.25 + stage * 0.28;                 // how much of each period is clear
+      const ph = (this.labelT % period) / period;
+      const flash = ph < open ? 1 : 0;
+      return flash ? Math.min(base, 0.1) : Math.min(1, base + 0.18);
     }
     return 0;
+  }
+  /** 0..1 — how much of the room's own voice (its words, its hearts) is on the glass during the arrival */
+  get breakthroughK(): number {
+    if (this.phase !== 'arrival') return 0;
+    const total = ARRIVAL.length;
+    const left = this.labels.length + (this.label ? 1 : 0);
+    return Math.min(1, (total - left) / (total - 1));
   }
   /** the stream window is on while the room is: from the glass clearing to the end */
   get streaming(): boolean { return this.phase === 'ball' || this.phase === 'after'; }
@@ -242,6 +266,10 @@ export class E4Ball {
     this.phase = 'arrival';
     this.labels = [...ARRIVAL];
     this.nextLabel();
+    // ⚑ 2026-09-13: the hall is THERE from the press — behind the agent's
+    //   environment, seen through it in flashes as the filter fights (see
+    //   `environmentK`). It used to arrive only when the device came off.
+    setCommonsWorld(true);
     // the room begins to warm behind the picture, low, while the machine works
     this.light(ARRIVAL_LEVEL, 1, 0);
     /**
@@ -276,7 +304,9 @@ export class E4Ball {
 
     if (this.phase === 'invited') return;   // waiting on her, indefinitely
     if (this.phase === 'arrival') {
+      const b4 = this.labelT;
       this.labelT += dt;
+      if (Math.floor(b4 * 10) !== Math.floor(this.labelT * 10)) this.version++;   // the flashes are drawn, so they are uploaded
       if (this.label && this.labelT >= this.label.hold) {
         if (this.labels.length > 0) { this.nextLabel(); this.crowd(this.label?.lamps ?? 0); }
         else { this.phase = 'off'; this.t = 0; }
@@ -310,14 +340,19 @@ export class E4Ball {
     this.ballT += dt;
     this.landingK = Math.max(0, this.landingK - dt / 2.4);
     this.stutterClock(dt);
+    this.intrusionClock(dt);
 
     if (this.phase === 'after') {
       // ⚑ S133: the room stays; the APPARATUS does not. A few seconds after the
       //   last line the overlay tries to update, and the era's finale takes it
       //   from there — L returning to material it cannot process, the glitch,
       //   the device stopping. Nobody presses anything; nothing asks her to.
+      // ⚑ 2026-09-13: and the "update" is a TERMINATION, named — the system
+      //   gives up the room and says why in its own words (`system.terminated`).
+      const b4 = this.afterT;
       this.afterT += dt;
-      if (this.afterT >= AFTER_SECONDS) this.close();
+      if (Math.floor(b4 * 8) !== Math.floor(this.afterT * 8)) this.version++;
+      if (this.afterT >= SYSTEM.terminateSeconds) this.close();
       return;
     }
     this.lineClock(dt);
@@ -362,6 +397,38 @@ export class E4Ball {
     this.labelT = 0;
     this.version++;
   }
+
+  /**
+   * ⚑ PEER PRESSURE (2026-09-13, `system._doc`). Twice during the ball the
+   * agent comes back for her: a card on the glass — reconnecting, restoring
+   * the environment — with a bar that climbs and is pushed back down by the
+   * room's own count until the connection is refused. Nothing is pressable;
+   * nothing narrates it. The third time it terminates (see `after`).
+   */
+  private intrusionIdx = 0;
+  private intrusionT = -1;   // <0: none running
+  private intrusionClock(dt: number): void {
+    if (this.phase !== 'ball') return;
+    if (this.intrusionT < 0) {
+      const next = SYSTEM.intrusions[this.intrusionIdx];
+      if (next && this.ballT >= next.at) { this.intrusionT = 0; this.version++; }
+      return;
+    }
+    const b4 = this.intrusionT;
+    this.intrusionT += dt;
+    if (Math.floor(b4 * 8) !== Math.floor(this.intrusionT * 8)) this.version++;
+    const cur = SYSTEM.intrusions[this.intrusionIdx];
+    if (cur && this.intrusionT >= cur.hold) { this.intrusionT = -1; this.intrusionIdx++; this.version++; }
+  }
+  /** the intrusion's bar: climbs for the first half, is pushed back for the second */
+  private intrusionBar(t: number, hold: number): number {
+    const half = hold * 0.55;
+    if (t < half) return Math.min(0.78, (t / half) * 0.78);
+    const back = (t - half) / (hold - half);
+    return Math.max(0, 0.78 * (1 - back * back));
+  }
+  /** the room's count while the system is on the glass — it goes UP */
+  private presentCount(t: number): number { return 41 + Math.floor(t * 1.8); }
 
   /** the machine goes on trying, on its stand, three times, and then stops. */
   private stutterClock(dt: number): void {
@@ -467,12 +534,30 @@ export class E4Ball {
       setFont(ctx, 12);
       let y = INVITE.y + 48;
       for (const row of wrapText(ctx, inv.line, INVITE.w - 28)) { ctx.fillText(row, INVITE.x + 14, y); y += 16; }
+      // ⚑ 2026-09-13: THE LINK, and what it is for — see invite._docLink
+      setFont(ctx, 10);
+      const lw = Math.ceil(ctx.measureText(inv.link).width) + 22;
+      roundRect(ctx, INVITE.x + 14, y + 2, lw, 18, 9, WEB.accentSoft);
+      ctx.fillStyle = WEB.accentInk;
+      ctx.fillText(inv.link, INVITE.x + 25, y + 6);
+      px(ctx, INVITE.x + 25, y + 16, lw - 22, 1, WEB.accentInk);
+      y += 26;
+      setFont(ctx, 9);
+      ctx.fillStyle = WEB.ink;
+      for (const row of wrapText(ctx, inv.note, INVITE.w - 28)) { ctx.fillText(row, INVITE.x + 14, y); y += 12; }
       setFont(ctx, 8);
       ctx.fillStyle = WEB.muted;
       ctx.fillText(inv.meta, INVITE.x + 14, INVITE.y + INVITE.h - 48);
       webButton(ctx, JOIN.x, JOIN.y, inv.chip, 'primary', JOIN.w);
       return;
     }
+    // ⚑ the system on the glass during the ball: the intrusions, and the termination
+    if (this.phase === 'ball' && this.intrusionT >= 0) {
+      const cur = SYSTEM.intrusions[this.intrusionIdx];
+      if (cur) this.drawIntrusion(ctx, W, H, this.intrusionT, cur.hold);
+    }
+    if (this.phase === 'after') this.drawTermination(ctx, W, H, this.afterT);
+    if (this.phase === 'arrival') this.drawBreakthrough(ctx, W, H);
     if (!this.label) return;
     if (this.phase === 'arrival' || this.phase === 'off') {
       // ⚑ FRONT AND CENTRE, and wide: this is the filter failing, on the glass
@@ -484,6 +569,87 @@ export class E4Ball {
     }
     // the stutter: the overlay still trying, small, in its old corner
     labelField(ctx, x, y, w, this.label.object, this.label.text);
+  }
+
+  /** ⚑ the room's own words and hearts bleeding onto the glass as the filter
+   *  loses (2026-09-13) — the stream's chat, nobody's words, at the edges, more
+   *  of them and brighter with every label the system fails to make stick */
+  private drawBreakthrough(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const k = this.breakthroughK;
+    if (k <= 0) return;
+    const chat = script.stream.chat as string[];
+    const n = Math.round(2 + k * 10);
+    const t = this.t;
+    const was = ctx.globalAlpha;
+    for (let i = 0; i < n; i++) {
+      const seed = i * 7919 + 13;
+      const x = ((seed * 31) % 1000) / 1000;
+      const y0 = ((seed * 17) % 1000) / 1000;
+      const rise = ((t * (0.05 + (i % 3) * 0.02)) + y0) % 1;
+      const px0 = Math.round(20 + x * (W - 60));
+      const py0 = Math.round(H - 30 - rise * (H - 60));
+      const word = chat[(i * 5) % chat.length];
+      ctx.globalAlpha = was * Math.min(1, k * 0.9 + 0.1) * (0.35 + 0.65 * (1 - rise));
+      setFont(ctx, word.length <= 2 ? 16 : 11);
+      ctx.fillStyle = i % 4 === 0 ? PLACE.textileHi : i % 4 === 1 ? PLACE.sunHi : i % 4 === 2 ? ERA4.l : ERA4.textHi;
+      ctx.fillText(word, px0, py0);
+    }
+    ctx.globalAlpha = was;
+  }
+
+  /** the agent back on the glass: a card, a bar that climbs and is pushed back, the room's count going up */
+  private drawIntrusion(ctx: CanvasRenderingContext2D, W: number, H: number, t: number, hold: number): void {
+    const fade = Math.min(1, t / 0.6, (hold - t) / 0.8);
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = was * Math.max(0, fade);
+    const cw = 268, ch = 96, cx = Math.round((W - cw) / 2), cy = Math.round(H * 0.30);
+    roundRect(ctx, cx, cy + 2, cw, ch, 10, ERA4.panelEdge);
+    roundRect(ctx, cx, cy, cw, ch, 10, ERA4.panel);
+    avatar(ctx, cx + 12, cy + 12, 22, WEB.primary, 'S');
+    setFont(ctx, 10);
+    ctx.fillStyle = ERA4.textHi;
+    ctx.fillText(SYSTEM.mark, cx + 42, cy + 12);
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA4.dim;
+    ctx.fillText(SYSTEM.reconnecting, cx + 42, cy + 24);
+    const bar = this.intrusionBar(t, hold);
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA4.meta;
+    ctx.fillText(SYSTEM.restoring, cx + 12, cy + 46);
+    pill(ctx, cx + 12, cy + 60, cw - 24, 5, ERA4.rule);
+    pill(ctx, cx + 12, cy + 60, Math.round((cw - 24) * bar), 5, ERA4.lDim);
+    // the room pushing back: its count, going up, in the room's colour
+    const present = SYSTEM.present.replace('{n}', String(this.presentCount(t)));
+    setFont(ctx, 9);
+    ctx.fillStyle = PLACE.textileHi;
+    const pw = Math.ceil(ctx.measureText(present).width);
+    ctx.fillText(present, cx + cw - 12 - pw, cy + 72);
+    if (t > hold * 0.55) {
+      ctx.fillStyle = ERA4.dim;
+      ctx.fillText(SYSTEM.refused, cx + 12, cy + 72);
+    }
+    ctx.globalAlpha = was;
+  }
+
+  /** the shutdown, named in the system's own ideology — the beat before the glitch */
+  private drawTermination(ctx: CanvasRenderingContext2D, W: number, H: number, t: number): void {
+    const k = Math.min(1, t / 0.5);
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = was * k;
+    const cw = 300, ch = 92, cx = Math.round((W - cw) / 2), cy = Math.round(H * 0.34);
+    roundRect(ctx, cx, cy + 2, cw, ch, 10, ERA4.panelEdge);
+    roundRect(ctx, cx, cy, cw, ch, 10, ERA4.field);
+    px(ctx, cx, cy, cw, 3, ERA4.l);
+    setFont(ctx, 14);
+    ctx.fillStyle = ERA4.textHi;
+    ctx.fillText(SYSTEM.terminated, cx + 16, cy + 16);
+    setFont(ctx, 10);
+    ctx.fillStyle = ERA4.l;
+    ctx.fillText(SYSTEM.reason, cx + 16, cy + 40);
+    setFont(ctx, 8);
+    ctx.fillStyle = ERA4.dim;
+    for (const row of wrapText(ctx, SYSTEM.terminatedNote, cw - 32)) { ctx.fillText(row, cx + 16, cy + 62); }
+    ctx.globalAlpha = was;
   }
 
   /**
@@ -508,17 +674,63 @@ export class E4Ball {
     setFont(ctx, 9);
     ctx.fillStyle = ERA4.meta;
     ctx.fillText(S.mark + '  ·  ' + S.title, Math.round(W * 0.56) + 32, fy + 2);
-    setFont(ctx, 12);
-    ctx.fillStyle = ERA4.textHi;
-    let y = fy + 36;
-    for (const row of wrapText(ctx, S.line, Math.round(W * 0.38))) { ctx.fillText(row, Math.round(W * 0.56), y); y += 17; }
-    // preparing: a bar that fills slowly and is not going to get there
-    setFont(ctx, 9);
-    ctx.fillStyle = ERA4.dim;
-    ctx.fillText(S.preparing, Math.round(W * 0.56), y + 8);
-    const bw = Math.round(W * 0.34);
-    pill(ctx, Math.round(W * 0.56), y + 22, bw, 5, ERA4.rule);
-    pill(ctx, Math.round(W * 0.56), y + 22, Math.round(bw * Math.min(0.82, t / (S.seconds * 1.3))), 5, ERA4.lDim);
+    const SB = S as unknown as { grounding: { title: string; in: string; out: string; note: string };
+      recorded: { title: string; mark: string; lines: string[] } };
+    const item = t < S.seconds ? 0 : t < S.seconds + 8 ? 1 : 2;   // ⚑ 2026-09-13: the session BEGINS (session._docBegins)
+    const tx = Math.round(W * 0.56);
+    if (item === 0) {
+      setFont(ctx, 12);
+      ctx.fillStyle = ERA4.textHi;
+      let y = fy + 36;
+      for (const row of wrapText(ctx, S.line, Math.round(W * 0.38))) { ctx.fillText(row, tx, y); y += 17; }
+      // preparing: a bar that fills slowly and is not going to get there
+      setFont(ctx, 9);
+      ctx.fillStyle = ERA4.dim;
+      ctx.fillText(S.preparing, tx, y + 8);
+      const bw = Math.round(W * 0.34);
+      pill(ctx, tx, y + 22, bw, 5, ERA4.rule);
+      pill(ctx, tx, y + 22, Math.round(bw * Math.min(0.82, t / (S.seconds * 1.3))), 5, ERA4.lDim);
+    } else if (item === 1) {
+      // grounding: a ring that breathes, four seconds in, four out
+      const gt = t - S.seconds;
+      const phase = (gt % 8) / 8;
+      const k = phase < 0.5 ? phase * 2 : 2 - phase * 2;
+      const r = Math.round(14 + k * 14);
+      const rx = tx + 60, ry = fy + 78;   // under the title, with the ring's full breath clear of it
+      setFont(ctx, 9);
+      ctx.fillStyle = ERA4.meta;
+      ctx.fillText(SB.grounding.title, tx, fy + 34);
+      for (let i = 3; i >= 1; i--) {
+        const was = ctx.globalAlpha;
+        ctx.globalAlpha = was * (0.18 + 0.22 * (4 - i) / 3);
+        roundRect(ctx, rx - r * i / 3, ry - r * i / 3, r * 2 * i / 3, r * 2 * i / 3, r * i / 3, ERA4.l);
+        ctx.globalAlpha = was;
+      }
+      setFont(ctx, 12);
+      ctx.fillStyle = ERA4.textHi;
+      ctx.fillText(phase < 0.5 ? SB.grounding.in : SB.grounding.out, rx + 44, ry - 6);
+      setFont(ctx, 8);
+      ctx.fillStyle = ERA4.dim;
+      ctx.fillText(SB.grounding.note, tx, ry + 38);
+    } else {
+      // the recorded voice: the system's own genre, two flat sentences it vouches for
+      const rt = t - S.seconds - 8;
+      setFont(ctx, 9);
+      ctx.fillStyle = ERA4.meta;
+      ctx.fillText(SB.recorded.title, tx, fy + 34);
+      const line = SB.recorded.lines[Math.min(SB.recorded.lines.length - 1, Math.floor(rt / 4))];
+      setFont(ctx, 12);
+      ctx.fillStyle = ERA4.textHi;
+      let y = fy + 52;
+      for (const row of wrapText(ctx, '“' + line + '”', Math.round(W * 0.38))) { ctx.fillText(row, tx, y); y += 17; }
+      // a play bar, running
+      const bw = Math.round(W * 0.34);
+      pill(ctx, tx, y + 10, bw, 4, ERA4.rule);
+      pill(ctx, tx, y + 10, Math.round(bw * Math.min(1, rt / 9)), 4, ERA4.l);
+      setFont(ctx, 8);
+      ctx.fillStyle = ERA4.dim;
+      ctx.fillText(SB.recorded.mark, tx, y + 20);
+    }
     // ⚑ 2026-09-13: the plan, arriving item by item on the environment's floor —
     //   what the session was going to be. See s4_ball.json `_docPlan`.
     const floor = Math.round(H * 0.58);
@@ -535,8 +747,9 @@ export class E4Ball {
     plan.plan.forEach((it, k) => {
       if (k >= shown) return;
       const ry = floor + 30 + k * 30;
-      roundRect(ctx, px0, ry, pw0, 26, 5, ERA4.panelHi);
-      avatar(ctx, px0 + 8, ry + 5, 16, ERA4.lDim, it.n);
+      const running = k === item - 1;
+      roundRect(ctx, px0, ry, pw0, 26, 5, running ? ERA4.rule : ERA4.panelHi);
+      avatar(ctx, px0 + 8, ry + 5, 16, running ? ERA4.l : k < item - 1 ? WEB.accent : ERA4.lDim, k < item - 1 ? '✓' : it.n);
       setFont(ctx, 10);
       ctx.fillStyle = ERA4.textHi;
       ctx.fillText(it.title, px0 + 32, ry + 4);
@@ -559,46 +772,62 @@ export class E4Ball {
     px(ctx, 0, 0, W, H, ERA4.field);
     if (!this.streaming) return;
     const t = this.ballT;
-    const cw = 96, pw = W - cw - 4, ph = H - 18 - 4;
+    // ⚑ 2026-09-13 (`stream._docPanel`): a taller title bar naming the event
+    //   and the host, the category large in the lower third, the chat larger
+    const TB = 24;
+    const cw = 104, pw = W - cw - 4, ph = H - TB - 4;
     // the picture: a broadcast that cuts between shots
-    streamScene(ctx, 2, 20, pw, ph, t, streamShot(t), this.landingK);
-    // the title bar: LIVE blinking, the mark, the count ticking
-    px(ctx, 0, 0, W, 18, ERA4.panel);
-    if (Math.floor(t * 1.5) % 2 === 0) px(ctx, 8, 6, 6, 6, WEB.danger);
-    setFont(ctx, 8);
+    streamScene(ctx, 2, TB + 2, pw, ph, t, streamShot(t), this.landingK);
+    // the title bar: LIVE blinking, the mark, the event, the count ticking
+    px(ctx, 0, 0, W, TB, ERA4.panel);
+    if (Math.floor(t * 1.5) % 2 === 0) px(ctx, 8, 9, 6, 6, WEB.danger);
+    setFont(ctx, 9);
     ctx.fillStyle = ERA4.textHi;
-    ctx.fillText(ST.live, 18, 5);
+    ctx.fillText(ST.live, 18, 4);
     ctx.fillStyle = ERA4.text;
-    ctx.fillText(ST.mark, 46, 5);
-    const watching = (38 + Math.floor((Math.sin(t * 0.21) + 1) * 4.5)) + ' watching';
+    ctx.fillText(ST.mark, 48, 4);
+    setFont(ctx, 8);
+    ctx.fillStyle = PLACE.textileHi;
+    ctx.fillText(ST.event, 18, 14);
     ctx.fillStyle = ERA4.dim;
-    ctx.fillText(watching, W - 8 - Math.ceil(ctx.measureText(watching).width), 5);
-    // the lower third: the category, sliding in when it changes
+    ctx.fillText(ST.host, 18 + Math.ceil(ctx.measureText(ST.event).width) + 10, 14);
+    const watching = (38 + Math.floor((Math.sin(t * 0.21) + 1) * 4.5)) + ' watching';
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA4.textHi;
+    ctx.fillText(watching, W - 8 - Math.ceil(ctx.measureText(watching).width), 8);
+    // the lower third: the category, by number and title, sliding in when it changes
     const title = this.categoryTitle;
     if (title) {
+      const cats = script.ball.categories as unknown as { title: string }[];
+      const idx = cats.findIndex((c) => c.title === title);
+      const of = ST.categoryOf.replace('{n}', String(idx + 1)).replace('{m}', String(cats.length));
       const since = this.ballT - this.lineAt;
       const k = Math.min(1, since / 0.5);
-      setFont(ctx, 8);
-      const tw = Math.ceil(ctx.measureText(title).width) + Math.ceil(ctx.measureText(ST.categoryPrefix).width) + 30;
+      setFont(ctx, 11);
+      const tw = Math.min(pw - 16, Math.ceil(ctx.measureText(title).width) + 24);
       const lx = 8 - Math.round((1 - k) * (tw + 20));
-      roundRect(ctx, lx, H - 24, tw, 16, 3, ERA4.panel);
-      px(ctx, lx, H - 24, 3, 16, PLACE.textileHi);
-      ctx.fillStyle = ERA4.meta;
-      ctx.fillText(ST.categoryPrefix, lx + 8, H - 20);
+      roundRect(ctx, lx, H - 40, tw, 32, 3, ERA4.panel);
+      px(ctx, lx, H - 40, 4, 32, PLACE.textileHi);
+      setFont(ctx, 8);
+      ctx.fillStyle = PLACE.sunHi;
+      ctx.fillText(of, lx + 12, H - 36);
+      setFont(ctx, 11);
       ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(title, lx + 8 + Math.ceil(ctx.measureText(ST.categoryPrefix).width) + 8, H - 20);
+      ctx.save(); ctx.beginPath(); ctx.rect(lx, H - 40, tw, 32); ctx.clip();
+      ctx.fillText(title, lx + 12, H - 24);
+      ctx.restore();
     }
     // the chat column: lines arriving, hearts rising
-    px(ctx, W - cw - 2, 18, cw + 2, H - 18, ERA4.panel);
-    setFont(ctx, 8);
+    px(ctx, W - cw - 2, TB, cw + 2, H - TB, ERA4.panel);
+    setFont(ctx, 9);
     const chat = ST.chat as string[];
     const n = Math.floor(t * 0.9);
-    const slide = Math.round((t * 0.9 % 1) * 17);
-    ctx.save(); ctx.beginPath(); ctx.rect(W - cw, 18, cw, H - 18); ctx.clip();
+    const slide = Math.round((t * 0.9 % 1) * 18);
+    ctx.save(); ctx.beginPath(); ctx.rect(W - cw, TB, cw, H - TB); ctx.clip();
     for (let k = 0; k < 10; k++) {
       const m = chat[(n + k) % chat.length];
       ctx.fillStyle = k === 9 ? ERA4.textHi : k > 6 ? ERA4.text : ERA4.dim;
-      ctx.fillText(m, W - cw + 4, 26 + k * 17 - slide);
+      ctx.fillText(m, W - cw + 6, TB + 8 + k * 18 - slide);
     }
     ctx.restore();
     for (let k = 0; k < 6; k++) {

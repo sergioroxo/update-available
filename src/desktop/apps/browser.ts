@@ -28,7 +28,8 @@
  * not instances; the Dossier carries what is documented about the category.
  */
 import { px, setFont, wrapText } from '../theme/chrome';
-import { browserChrome, restoring, photograph, CHROME, ADDR } from '../theme/era4';
+import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 } from '../theme/era4';
+import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
 import script from '../../../data/dialog/s4_boot.json';
 import {
@@ -61,6 +62,10 @@ const PROGRAM = body.program as unknown as {
 const ADVANCE_SECONDS = 1.4;
 /** the page area under the toolbar, for painting the app ground */
 const H_PAGE = 384;
+/** ⚑ the failure on the desk's two screens, in seconds from the device stopping:
+ *  the sentence holds, then the bands tear it, then both are off — and the Close's
+ *  travel begins over dead screens (app.ts CLOSE_LEAD_SECONDS is set to match). */
+export const FAIL = { bands: 5.5, off: 8.5 } as const;
 /** …except after the Restoration, whose before/after is the point: it holds */
 const RESULT_HOLD_SECONDS = 4.5;
 
@@ -211,6 +216,15 @@ export class E4Browser {
     //   through the whole finale and pressed it forty-five times (2026-09-12)
     if (!this.pressable && this.hits.length) this.hits = [];
     if (this.phase === 'dormant') return;
+    if (this.phase === 'failed') {
+      // ⚑ 2026-09-13: the failure spreads — the sentence, the bands, then off
+      if (this.failT < FAIL.off + 0.5) {
+        const b4 = this.failT;
+        this.failT += dt;
+        if (Math.floor(b4 * 12) !== Math.floor(this.failT * 12)) this.version++;
+      }
+      return;
+    }
     if (this.settleT > 0) { this.settleT = Math.max(0, this.settleT - dt); return; }
     this.t += dt;
     if (this.phase === 'restoring') {
@@ -765,6 +779,7 @@ export class E4Browser {
    */
   private drawFailed(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const FD = PROGRAM.failed;
+    if (this.failT >= FAIL.off) { px(ctx, 0, 0, W, H, ERA4.field); return; }   // off
     const top = ADDR.y + ADDR.h + 6;
     px(ctx, 0, top, W, H_PAGE, WEB.bg);
     // the step bar, as it was, with the last segment failed
@@ -796,17 +811,27 @@ export class E4Browser {
     roundEdge(ctx, cx + 44, cy + 62, 34, 26, 4, WEB.faint, WEB.bg);
     px(ctx, cx + 52, cy + 70, 18, 2, WEB.faint);
     px(ctx, cx + 52, cy + 76, 12, 2, WEB.faint);
-    setFont(ctx, 13);
+    // ⚑ the sentence — the same one the laptop carries (updates.json close.restarting):
+    //   "the message spreads on both monitors" (Sérgio, 2026-09-13)
+    setFont(ctx, 16);
     ctx.fillStyle = WEB.ink;
-    ctx.fillText(FD.title, cx + 44, cy + 100);
+    ctx.fillText(updates.close.restarting, cx + 44, cy + 98);
     setFont(ctx, 9);
     ctx.fillStyle = WEB.muted;
-    ctx.fillText(FD.line, cx + 44, cy + 122);
+    ctx.fillText(FD.title + '  ·  ' + FD.line, cx + 44, cy + 124);
     setFont(ctx, 9);
     ctx.fillStyle = WEB.ink;
     let yy = cy + 144;
     for (const row of wrapText(ctx, FD.detail, cw - 88).slice(0, 3)) { ctx.fillText(row, cx + 44, yy); yy += 12; }
     webButton(ctx, cx + 44, yy + 8, 'Reload', 'disabled', 72);
+    if (this.failT >= FAIL.bands) {
+      const k = Math.min(1, (this.failT - FAIL.bands) / (FAIL.off - FAIL.bands));
+      glitchBands(ctx, W, H, k);
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = k * k;
+      px(ctx, 0, 0, W, H, ERA4.field);
+      ctx.globalAlpha = was;
+    }
   }
 
   /** ⚑ the transcript — fourteen months, read backwards. Her side of every
@@ -1157,7 +1182,8 @@ export class E4Browser {
   handOverLid(): void { this.phase = 'handed'; this.version++; }
   /** ⚑ 2026-09-13: the device has stopped — the agent's page cannot be reached
    *  any more, and the monitor says so (see `body.failed`). */
-  fail(): void { if (this.phase !== 'failed') { this.phase = 'failed'; this.version++; } }
+  fail(): void { if (this.phase !== 'failed') { this.phase = 'failed'; this.failT = 0; this.version++; } }
+  private failT = 0;
 
   /** review only: land on a tab, or on the settled browser. */
   debugJumpTo(where: string): void {

@@ -80,7 +80,13 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
   type Prop = { id: string; pos: number[]; size: number[]; color?: string };
   const props = (layout.props as Prop[]).filter((p) => BODY_IDS.includes(p.id));
   const pos: number[] = [], idx: number[] = [], col: number[] = [];
-  for (const p of props) pushBox(pos, idx, col, p.pos, p.size, new pc.Color().fromString(p.color ?? ERA1.silver));
+  for (const p of props) {
+    // ⚑ 2026-09-13, Sérgio: "the monitor and the table aren't that visible… make
+    //   the table smaller" — the desk is only the piece under the machine now
+    //   (0.9 × 0.5 m), not the whole 1.5 m top that filled the frame's foot
+    const size = p.id === 'deskTop' ? [0.9, p.size[1], 0.5] : p.size;
+    pushBox(pos, idx, col, p.pos, size, new pc.Color().fromString(p.color ?? ERA1.silver));
+  }
   const mesh = new pc.Mesh(app.graphicsDevice);
   mesh.setPositions(pos);
   mesh.setIndices(idx);
@@ -187,7 +193,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       glassMat.update();
       // ⚑ 2026-09-13, Sérgio: "make the CRT body a bit lighter" — 0.10 read as a
       //   silhouette; this is the beige catching its own glass
-      bodyMat.emissive.set(0.34 * k, 0.31 * k, 0.27 * k);
+      bodyMat.emissive.set(0.52 * k, 0.48 * k, 0.42 * k);   // and lighter again (2026-09-13)
       bodyMat.update();
     },
     press(x: number, y: number): boolean {

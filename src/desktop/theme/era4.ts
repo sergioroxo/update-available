@@ -262,11 +262,13 @@ export function homeEnvironment(
  * also the honest seam: in the room, the picture is a rectangle mounted to your
  * head, and the rectangle has edges even when the place inside it does not.
  */
-export function visorEdge(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+export function visorEdge(ctx: CanvasRenderingContext2D, W: number, H: number, strength = 1): void {
   const bands: [number, number][] = [[14, 0.10], [8, 0.20], [4, 0.34], [2, 0.55]];
   ctx.save();
   for (const [inset, alpha] of bands) {
-    ctx.globalAlpha = alpha;
+    // ⚑ `strength` < 1 in the Commons (2026-09-13, Sérgio: "reduce the opacity
+    //   of the visor dark border so it is more immersive")
+    ctx.globalAlpha = alpha * strength;
     px(ctx, 0, 0, W, inset, ERA4.field);
     px(ctx, 0, H - inset, W, inset, ERA4.field);
     px(ctx, 0, 0, inset, H, ERA4.field);
@@ -663,25 +665,43 @@ export function photograph(
      * the way a phone's portrait does — head a fifth of the width, shoulders
      * to the bottom edge — so the two halves read at a glance.
      */
-    const hw = Math.round(w * 0.22), hh = Math.round(h * 0.30);
+    const hw = Math.round(w * 0.24), hh = Math.round(h * 0.34);
     const px0 = x + Math.round(w * 0.5 - hw / 2) + (enhanced ? 0 : skew);
-    const py0 = y + Math.round(h * 0.16) + (enhanced ? 0 : tilt);
+    const py0 = y + Math.round(h * 0.14) + (enhanced ? 0 : tilt);
     const u = Math.max(2, Math.round(w / 60));   // the unit: hair, earrings, edges
     const shoulders = py0 + hh + u;
+    /**
+     * ⚑ 2026-09-13, Sérgio: "more clear fake photographs… hard to distinguish
+     * the details due to their style." So: a plain, lighter wall behind her
+     * (the window moved off to the side), every shape with a one-unit EDGE in
+     * the frame's dark so head, hair and shoulders separate at thumbnail size,
+     * a neck, sloped shoulders, and the hair drawn with volume. Still no face.
+     */
+    const edge = ERA4.photoFrame;
+    const rect = (rx: number, ry: number, rw: number, rh: number, fill: string): void => {
+      px(ctx, rx - u / 2, ry - u / 2, rw + u, rh + u, edge);
+      px(ctx, rx, ry, rw, rh, fill);
+    };
+    // the wall behind her, plain and light, so she is the picture
+    px(ctx, x + Math.round(w * 0.28), y, Math.round(w * 0.72), h, enhanced ? ERA4.photoWallHi : ERA4.photoWall);
+    const bodyW = hw + 12 * u, bodyX = px0 + Math.round(hw / 2) - Math.round(bodyW / 2);
     if (enhanced) {
-      px(ctx, px0 - u, py0, hw + 2 * u, hh, skin);                        // head, squared, a unit wider each side
-      px(ctx, px0 - 2 * u, py0 - 2 * u, hw + 4 * u, 3 * u, ERA4.photoHair); // a cap of hair
-      px(ctx, px0 - 5 * u, shoulders, hw + 10 * u, y + h - shoulders, ERA4.photoCloth);   // the library's grey
-      px(ctx, px0 + Math.round(hw / 2) - u, shoulders, 2 * u, 3 * u, skin);   // the neck
+      rect(bodyX, shoulders + 2 * u, bodyW, y + h - shoulders, ERA4.photoCloth);          // the library's grey
+      px(ctx, bodyX + 3 * u, shoulders, bodyW - 6 * u, 3 * u, ERA4.photoCloth);              // the slope of the shoulders
+      rect(px0 + Math.round(hw / 2) - 2 * u, shoulders - u, 4 * u, 4 * u, skin);             // the neck
+      rect(px0 - u, py0, hw + 2 * u, hh, skin);                                              // head, squared, a unit wider each side
+      rect(px0 - 2 * u, py0 - 2 * u, hw + 4 * u, 4 * u, ERA4.photoHair);                    // a cap of hair
     } else {
-      px(ctx, px0 - 4 * u, py0 - 2 * u, hw + 8 * u, 4 * u, ERA4.photoHair);   // hair, wide
-      px(ctx, px0 - 4 * u, py0, 3 * u, hh + 6 * u, ERA4.photoHair);           // …to the shoulders
-      px(ctx, px0 + hw + u, py0, 3 * u, hh + 6 * u, ERA4.photoHair);
-      px(ctx, px0, py0, hw, hh, skin);                                       // head
-      px(ctx, px0 - u, py0 + Math.round(hh * 0.55), u, 2 * u, PLACE.sun);      // earrings
-      px(ctx, px0 + hw, py0 + Math.round(hh * 0.55), u, 2 * u, PLACE.sun);
-      px(ctx, px0 + Math.round(hw / 2) - u, shoulders, 2 * u, 3 * u, skin);   // the neck
-      px(ctx, px0 - 4 * u, shoulders + 2 * u, hw + 8 * u, y + h - shoulders, PLACE.textileHi);   // the top she wears
+      rect(px0 - 5 * u, py0 - u, hw + 10 * u, hh + 9 * u, ERA4.photoHair);                  // hair, wide, to the shoulders
+      rect(bodyX, shoulders + 2 * u, bodyW, y + h - shoulders, PLACE.textileHi);            // the top she wears
+      px(ctx, bodyX + 3 * u, shoulders, bodyW - 6 * u, 3 * u, PLACE.textileHi);
+      px(ctx, px0 - 5 * u, py0 + 3 * u, 4 * u, hh + 5 * u, ERA4.photoHair);                  // the hair in front of the shoulders
+      px(ctx, px0 + hw + u, py0 + 3 * u, 4 * u, hh + 5 * u, ERA4.photoHair);
+      rect(px0 + Math.round(hw / 2) - 2 * u, shoulders - u, 4 * u, 4 * u, skin);             // the neck
+      rect(px0, py0, hw, hh, skin);                                                          // head
+      px(ctx, px0 - 2 * u, py0 - u, hw + 4 * u, 3 * u, ERA4.photoHair);                     // the hairline over the brow
+      px(ctx, px0 - 2 * u, py0 + Math.round(hh * 0.55), u, 3 * u, PLACE.sunHi);              // earrings
+      px(ctx, px0 + hw + u, py0 + Math.round(hh * 0.55), u, 3 * u, PLACE.sunHi);
     }
     ctx.restore();
     px(ctx, x - 1, y - 1, w + 2, 1, ERA4.photoFrame);

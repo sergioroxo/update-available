@@ -145,10 +145,14 @@ async function main() {
   await page.evaluate(() => window.__os.e4.wear());
   await wait(1500);
   await shot('worn-session', 'the correction session on the glass');
+  await wait(6500);
+  await shot('worn-session-plan', 'the plan, arrived');
+  await wait(5000);
+  await shot('worn-session-grounding', 'item 1 running: grounding');
+  await wait(8000);
+  await shot('worn-session-recorded', 'item 2: the recorded voice');
   await wait(4500);
-  await shot('worn-session-2', 'the session, later');
-  await wait(4500);
-  await shot('worn-invite', "Junie's card");
+  await shot('worn-invite', "Junie's card — the link");
   const joined = await page.evaluate(() => {
     const b = window.__os.e4.ball; const h = (b.hits || [])[0];
     if (!h) return false;
@@ -156,8 +160,12 @@ async function main() {
     return true;
   });
   console.log(`  press commons-join → ${joined}`);
-  await wait(2500);
-  await shot('worn-dissolving', 'the environment dissolving, label by label');
+  await wait(2000);
+  await shot('struggle-1', 'the filter fighting the room: the link blocked');
+  await wait(5000);
+  await shot('struggle-2', 'the sender blocked, the room flashing through');
+  await wait(5000);
+  await shot('struggle-3', 'social contagion · high — the room mostly through');
   await wait(6000);
   await shot('world-arrival', 'the Commons: the seat, facing the stage');
   await cam(4.4, 1.16, 0.7, 0, 300);
@@ -181,19 +189,30 @@ async function main() {
   await cam(...SEAT);
   await wait(9000);
   await shot('ball-later', 'the ball, later');
+  // the first intrusion is at 42 s of the ball; wait for it
+  await wait(24000);
+  await shot('ball-intrusion', 'the system back on the glass — reconnecting, pushed back');
+  await wait(4500);
+  await shot('ball-intrusion-refused', 'connection refused · room full');
 
-  // ── 6 · the glitch and the Close ──
+  // ── 6 · the termination, the glitch and the Close ──
   await page.evaluate(() => window.__os.e4.ball.debugJumpTo('after'));
-  await wait(9000);
+  await wait(1500);
+  await shot('terminated', 'SESSION TERMINATED · reason: social contagion');
+  await wait(6000);
   await shot('glitch', 'the update fails');
   await wait(4000);
   await shot('device-stopped', 'the device stops; the room comes back');
-  await wait(4000);
+  await wait(2500);
   await shot('laptop-failed', 'the laptop: Your update has failed.');
   await cam(...CLOSE);
-  await shot('look-browser-failed', "the agent's page, unreachable");
+  await shot('look-browser-failed', "the agent's page: Your update has failed.");
   await cam(...SEAT);
-  await wait(14000);
+  await wait(3500);
+  await shot('screens-glitching', 'both screens tearing');
+  await wait(3000);
+  await shot('screens-off', 'both screens off — the travel begins');
+  await wait(8000);
   await shot('close-travel', 'travelling back to Daniel\'s room');
   await wait(16000);
   await shot('close-lookup', 'the eyes rising');
