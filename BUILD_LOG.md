@@ -1076,3 +1076,16 @@ recording — from the second label of the fight, not from the device coming off
 testimonial plays as a recording with nobody in it. The Close gets the building's passage bed on the
 way out, a sky bed as night falls, and the 1997 POST beep when Daniel's monitor lights. Proven in order
 with an Audio wrapper (34 cues from the search to the passage). Registered; loops via `playLoop/stopClip`.
+
+## 2026-09-13 — S141 · Eras 1–3 and the four updates are heard; the walk keeps a sound ledger
+
+The audit after the second act's pass: eighteen finished cues from S102 (the 1997 boot, the error ding
+and cascade, the 2003 chime/ping/alert, the E2 collapse, the 2016 login/ting/tick, the phone's ping
+and cascade, FloppySheep) were registered and never played by anything, and the update ritual — the
+piece's central metaphor — made no sound in any era. All wired now, at the beats the ingest manifest
+named for them. Six new, synthesized under make_tones.sh's doctrine: the DIAL-UP (dial tone, DTMF,
+answer tone, handshake — ours) when the Starter Kit connects the channel, the speaker's click, the
+channel's blip per IRC line, the floppy going in, the install churn, and Restarting… as a soft power
+cycle; each notice arrives on the era's own chime. Narrative: the u4 changelog rewritten for the Era 4
+that exists; the MC's 25 never-rendered audio refs removed (no voice). `walk.mjs` now prints WHAT WAS
+HEARD, IN ORDER — 55+ clips from the 1997 boot to the Close's sky — so wiring is proven by the walk.
