@@ -516,6 +516,17 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
   });
   app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
   app.setCanvasResolution(pc.RESOLUTION_AUTO);
+  /**
+   * ⚑ RENDER AT THE DEVICE'S PIXELS (2026-09-13). Sérgio, on the tablet: "the
+   * text throughout the experience is pixelated." The engine caps its pixel
+   * ratio at 1 by default, so a 2× or 3× screen — every phone and tablet, and
+   * most laptops — was drawing at CSS pixels and stretching the result: every
+   * screen texture's crisp `FILTER_NEAREST` pixels became smeared ones. Capped
+   * at 2 (a 3× phone at 2× is already sharp, and 3× is nine times the fill of
+   * 1×); immersive XR renders into its own framebuffer and ignores this.
+   */
+  app.graphicsDevice.maxPixelRatio = Math.min(2, window.devicePixelRatio || 1);
+  app.resizeCanvas();
   window.addEventListener('resize', () => app.resizeCanvas());
 
   const cameraRig = new pc.Entity('camera-rig');
