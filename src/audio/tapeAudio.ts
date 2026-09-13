@@ -227,7 +227,24 @@ const REGISTRY: Record<string, string> = {
   'ui_press.mp3': `${AUDIO_BASE}ui_press.mp3`,
   'ui_refuse.mp3': `${AUDIO_BASE}ui_refuse.mp3`,
   'l_arrives_2026.mp3': `${AUDIO_BASE}l_arrives_2026.mp3`,
-  'glitch_e4_end.mp3': `${AUDIO_BASE}glitch_e4_end.mp3`
+  'glitch_e4_end.mp3': `${AUDIO_BASE}glitch_e4_end.mp3`,
+  // ⚑ 2026-09-13 — THE SECOND ACT'S SOUNDS (tools/make_tones.sh, "ERA 4, THE
+  //   SECOND ACT"): synthesized, ours, no voice. The system's register is
+  //   sines that resolve; the room's is warmer and a third apart.
+  'type_2026.mp3': `${AUDIO_BASE}type_2026.mp3`,             // the search finished for her
+  'agent_2026.mp3': `${AUDIO_BASE}agent_2026.mp3`,           // Second Thoughts online
+  'step_done_2026.mp3': `${AUDIO_BASE}step_done_2026.mp3`,   // a step ticked for her
+  'restore_2026.mp3': `${AUDIO_BASE}restore_2026.mp3`,       // the Restoration working
+  'wear_2026.mp3': `${AUDIO_BASE}wear_2026.mp3`,             // the device going on
+  'session_breath.mp3': `${AUDIO_BASE}session_breath.mp3`,   // grounding — loops
+  'playback_hiss.mp3': `${AUDIO_BASE}playback_hiss.mp3`,     // a recording with nobody in it
+  'card_junie.mp3': `${AUDIO_BASE}card_junie.mp3`,           // the room's register
+  'filter_deny.mp3': `${AUDIO_BASE}filter_deny.mp3`,         // each label the filter fails
+  'reconnect_2026.mp3': `${AUDIO_BASE}reconnect_2026.mp3`,   // the intrusion — loops until refused
+  'terminate_2026.mp3': `${AUDIO_BASE}terminate_2026.mp3`,   // SESSION TERMINATED
+  'static_2026.mp3': `${AUDIO_BASE}static_2026.mp3`,         // the bands on both screens
+  'power_down_2026.mp3': `${AUDIO_BASE}power_down_2026.mp3`, // both screens off
+  'close_sky_bed.mp3': `${AUDIO_BASE}close_sky_bed.mp3`      // the Close's sky, under everything
 };
 
 const HISS_FILE = 'tape-hiss.mp3';
@@ -529,6 +546,21 @@ export function playOnce(name: string | null | undefined): HTMLAudioElement | nu
  */
 const liveOneShots = new Set<HTMLAudioElement>();
 let oneShotsMuted = false;
+
+/** ⚑ 2026-09-13: a one-shot that LOOPS until its owner stops it — the session's
+ *  breathing, the intrusion's reconnect. Same registry law, same mute set. */
+export function playLoop(name: string | null | undefined): HTMLAudioElement | null {
+  const a = playOnce(name);
+  if (a) a.loop = true;
+  return a;
+}
+/** stop a loop (or any one-shot) cleanly; safe on null */
+export function stopClip(a: HTMLAudioElement | null): void {
+  if (!a) return;
+  a.loop = false;
+  a.pause();
+  liveOneShots.delete(a);
+}
 
 export function setOneShotsMuted(muted: boolean): void {
   oneShotsMuted = muted;

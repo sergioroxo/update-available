@@ -28,6 +28,7 @@
  * not instances; the Dossier carries what is documented about the category.
  */
 import { px, setFont, wrapText } from '../theme/chrome';
+import { playOnce } from '../../audio/tapeAudio';
 import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 } from '../theme/era4';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
@@ -172,6 +173,7 @@ export class E4Browser {
   }
   private stepTab(id: string): number { const i = TABS.findIndex(t => t.id === id); return i < 0 ? 0 : i; }
   private completeStep(): void {
+    playOnce('step_done_2026.mp3');
     const st = PROGRAM.steps[this.step];
     if (!st || this.stepDone.has(st.id)) return;
     this.stepDone.add(st.id);
@@ -222,6 +224,10 @@ export class E4Browser {
         const b4 = this.failT;
         this.failT += dt;
         if (Math.floor(b4 * 12) !== Math.floor(this.failT * 12)) this.version++;
+        // ⚑ the sounds of two screens dying are played ONCE, from here (the
+        //   laptop's clock in space.ts is the same clock; one source, no doubling)
+        if (b4 < FAIL.bands && this.failT >= FAIL.bands) playOnce('static_2026.mp3');
+        if (b4 < FAIL.off && this.failT >= FAIL.off) playOnce('power_down_2026.mp3');
       }
       return;
     }
@@ -242,7 +248,7 @@ export class E4Browser {
     if (this.mode === 'typing') {
       this.typeT += dt;
       this.version++;
-      if (this.typeT >= PROGRAM.typingSeconds + 0.6) { this.mode = 'agent'; this.agentT = 0; this.version++; }
+      if (this.typeT >= PROGRAM.typingSeconds + 0.6) { this.mode = 'agent'; this.agentT = 0; this.version++; playOnce('agent_2026.mp3'); }
       return;
     }
     if (this.mode === 'agent') {
@@ -1079,6 +1085,7 @@ export class E4Browser {
       if (this.mode === 'free' && (hit.id === 'search-open' || hit.id === 'tab0')) {
         if (this.live !== 0) { this.openTab(0); }
         this.mode = 'typing'; this.typeT = 0; this.live = 0; this.version++;
+        playOnce('ui_press.mp3'); playOnce('type_2026.mp3');
         return true;
       }
       if (hit.id === 'agent-begin' && this.mode === 'agent') {
@@ -1107,6 +1114,7 @@ export class E4Browser {
           if (it && it.kind === 'folder') { this.picker = 'folder'; this.version++; return true; }
           this.chosenFile = it ? it.name.replace(/\.jpg$/i, '') : 'IMG_2211';
           this.picker = 'restoring'; this.pickerT = 0; this.version++;
+          playOnce('ui_press.mp3'); playOnce('restore_2026.mp3');
           return true;
         }
         if (hit.id === 'file-back' && this.picker === 'folder') { this.picker = 'open'; this.version++; return true; }

@@ -29,7 +29,7 @@ import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
-import { TapeAudioBus, roomBed, setOneShotsMuted } from '../audio/tapeAudio';
+import { TapeAudioBus, roomBed, setOneShotsMuted, playOnce } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity, screenUploads } from './screenTexture';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
@@ -3620,6 +3620,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const dx = camPos.x - EYE.x, dz = camPos.z - EYE.z;
       if (Math.hypot(dx, dz) > 0.5) {
         closeStage = 'travel';
+        roomBed.set(PASSAGE_BED, 4.0);   // 2026-09-13: the building's own sound, once more, on the way out
         // the bezier control point sits over the partition between the rooms,
         // raised: the path bows up-and-over, the same stroke every relocation in
         // the piece takes, and she sees the building once more on the way out
@@ -3644,6 +3645,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   night FALLS (an 8 s crossfade), it is not switched.
       closeStage = 'hold'; closeHoldT = 0;
       cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
+      roomBed.set('close_sky_bed.mp3', CLOSE_LIGHTS_SECONDS);   // night falls in the ear too: a place with no walls
       return;
     }
     if (closeStage === 'hold') {
@@ -3666,6 +3668,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   −18° to +6° of the eye line, so the card's last row was under the
       //   frame at the sky pitch; at −6° the whole glass is in it.
       closeMonitor?.show();
+      playOnce('post_beep_1997.mp3');   // the 1997 machine, starting up again
       startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_MONITOR_PITCH, yaw: 0 },
         CLOSE_MONITOR_TILT_SECONDS, true);
     }

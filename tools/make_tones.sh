@@ -133,3 +133,101 @@ for f in "$OUT"/post_beep_1997.wav "$OUT"/err_ding_1997.wav "$OUT"/chime_2003.wa
          "$OUT"/bed_*.wav "$OUT"/passage_building.wav; do
   printf '   %-28s %6ss\n' "$(basename "$f")" "$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f" | cut -c1-5)"
 done
+
+# ── ⚑ ERA 4, THE SECOND ACT (2026-09-13) — the sounds of a system being refused ──
+# Sérgio: "have you already added all the sound design?" No: the whole second
+# act (the session, Junie's link, the fight for the glass, the intrusions, the
+# termination, the screens dying, the Close) played silent. Same doctrine as
+# above — synthesized, ours, auditable; no voice anywhere (TransJesus has none,
+# the "recorded" testimonial plays as a recording with the voice missing).
+# Two registers, and the ear must tell them apart before any line does:
+#   THE SYSTEM — sines, clean, green: chimes that resolve, tones that insist
+#   THE ROOM   — warmer, rounder, a third apart: Junie's card, the crowd's push
+
+# 2026 · the search being finished FOR her: soft key ticks, 6 s, uneven.
+q -f lavfi -i "anoisesrc=d=6:c=pink:a=0.6" \
+  -af "highpass=f=1200,lowpass=f=4200,aeval='val(0)*(gt(sin(2*PI*t*7.3+sin(t*3.1)*2),0.93)*1+gt(sin(2*PI*t*11.1),0.985)*0.6)':c=same,volume=0.9,afade=t=out:st=5.5:d=0.5" \
+  "$OUT/type_2026.wav"
+
+# 2026 · the agent comes online: three rising sines, resolved — pleased with itself.
+q -f lavfi -i "sine=f=523.25:d=0.11" -f lavfi -i "sine=f=659.25:d=0.11" -f lavfi -i "sine=f=783.99:d=0.5" \
+  -filter_complex "[0][1][2]concat=n=3:v=0:a=1,volume=0.22,lowpass=f=6500,afade=t=out:st=0.4:d=0.32,aecho=0.9:0.3:90:0.18" \
+  "$OUT/agent_2026.wav"
+
+# 2026 · a step done: one short resolving pair. The tick of a box being ticked for you.
+q -f lavfi -i "sine=f=987.77:d=0.06" -f lavfi -i "sine=f=1318.51:d=0.22" \
+  -filter_complex "[0][1]concat=n=2:v=0:a=1,volume=0.18,lowpass=f=7000,afade=t=out:st=0.1:d=0.18" \
+  "$OUT/step_done_2026.wav"
+
+# 2026 · the Restoration working: 3.2 s of a process — filtered noise with a slow
+# rising resonance, the sound of something being computed on her face.
+q -f lavfi -i "anoisesrc=d=3.2:c=pink:a=0.7" \
+  -af "lowpass=f=2400,equalizer=f=400:t=q:w=1.5:g=9,tremolo=f=9:d=0.35,afade=t=in:st=0:d=0.3,afade=t=out:st=2.7:d=0.5,volume=0.28" \
+  "$OUT/restore_2026.wav"
+
+# 2026 · the device going on: the seal — a short brown-noise swell and the room
+# closing off, then the ready tone's pair an octave down, inside.
+q -f lavfi -i "anoisesrc=d=0.9:c=brown:a=0.8" -f lavfi -i "sine=f=261.63:d=0.5" -f lavfi -i "sine=f=392:d=0.7" \
+  -filter_complex "[0]lowpass=f=600,afade=t=in:st=0:d=0.3,afade=t=out:st=0.4:d=0.5,volume=0.5[n];[1][2]concat=n=2:v=0:a=1,adelay=500|500,volume=0.14,lowpass=f=3000,afade=t=out:st=0.9:d=0.3[t];[n][t]amix=inputs=2:normalize=0" \
+  "$OUT/wear_2026.wav"
+
+# 2026 · grounding: the breathing ring. 8 s, in for four, out for four — a sine
+# swell and filtered air, loopable. The calm the system sells.
+q -f lavfi -i "sine=f=196:d=8" -f lavfi -i "anoisesrc=d=8:c=pink:a=0.5" \
+  -filter_complex "[0]volume=0.16,tremolo=f=0.125:d=0.95[s];[1]lowpass=f=900,volume=0.12,tremolo=f=0.125:d=0.95[a];[s][a]amix=inputs=2:normalize=0,lowpass=f=1800" \
+  "$OUT/session_breath.wav"
+
+# 2026 · the "recorded" voice: a recording PLAYING, with nobody in it. Tape floor,
+# a room's hum, the odd mouth-click-shaped tick — the voice itself is refused.
+q -f lavfi -i "anoisesrc=d=12:c=pink:a=0.35" \
+  -af "highpass=f=180,lowpass=f=3400,equalizer=f=110:t=q:w=1.2:g=6,volume=0.5,aeval='val(0)*(1+gt(sin(2*PI*t*0.9+sin(t*1.7)),0.995)*4)':c=same,afade=t=in:st=0:d=0.4,afade=t=out:st=11.4:d=0.6,volume=0.35" \
+  "$OUT/playback_hiss.wav"
+
+# 2026 · JUNIE'S CARD — the room's register: two warm notes a third apart,
+# rounder than anything the system plays, with a little air behind them.
+q -f lavfi -i "sine=f=440:d=0.16" -f lavfi -i "sine=f=554.37:d=0.6" -f lavfi -i "anoisesrc=d=0.76:c=pink:a=0.3" \
+  -filter_complex "[0][1]concat=n=2:v=0:a=1,volume=0.2,lowpass=f=3800,afade=t=out:st=0.45:d=0.3,aecho=0.85:0.4:70:0.22[t];[2]lowpass=f=1200,afade=t=out:st=0.2:d=0.5,volume=0.06[a];[t][a]amix=inputs=2:normalize=0" \
+  "$OUT/card_junie.wav"
+
+# 2026 · the filter refusing: a low, flat deny — one buzzing tone, cut short.
+q -f lavfi -i "sine=f=146.83:d=0.42" -f lavfi -i "sine=f=155.56:d=0.42" \
+  -filter_complex "[0][1]amix=inputs=2:normalize=0,volume=0.34,lowpass=f=2500,afade=t=in:st=0:d=0.01,afade=t=out:st=0.3:d=0.12" \
+  "$OUT/filter_deny.wav"
+
+# 2026 · reconnecting: three rising sines that never resolve, repeating — 2.4 s,
+# loopable; the system insisting. Stopped by the room (ui_refuse), never by her.
+q -f lavfi -i "sine=f=523.25:d=0.14" -f lavfi -i "sine=f=622.25:d=0.14" -f lavfi -i "sine=f=739.99:d=0.32" -f lavfi -i "anullsrc=d=1.8:r=44100:cl=mono" \
+  -filter_complex "[0][1][2][3]concat=n=4:v=0:a=1,volume=0.16,lowpass=f=6000,aecho=0.8:0.3:110:0.15" \
+  "$OUT/reconnect_2026.wav"
+
+# 2026 · SESSION TERMINATED: a hard descending pair and a cut — the one sound in
+# the era with an edge on it. Tone dial +1, not +2: a stop, not an alarm.
+q -f lavfi -i "sine=f=659.25:d=0.18" -f lavfi -i "sine=f=311.13:d=0.7" \
+  -filter_complex "[0][1]concat=n=2:v=0:a=1,volume=0.3,lowpass=f=5000,afade=t=out:st=0.6:d=0.28" \
+  "$OUT/terminate_2026.wav"
+
+# 2026 · the bands tearing two screens: 3 s of filtered static that stutters.
+q -f lavfi -i "anoisesrc=d=3:c=white:a=0.5" \
+  -af "bandpass=f=1800:w=1400,aeval='val(0)*(gt(sin(2*PI*t*13+sin(t*23)*3),0.2)*1)':c=same,afade=t=out:st=2.4:d=0.6,volume=0.22" \
+  "$OUT/static_2026.wav"
+
+# 2026 · both screens going off: a low thunk and the hum dropping out.
+q -f lavfi -i "anoisesrc=d=0.18:c=brown:a=0.9" -f lavfi -i "sine=f=120:d=1.4" \
+  -filter_complex "[0]lowpass=f=500,afade=t=out:st=0.03:d=0.15,volume=0.6[k];[1]volume=0.2,afade=t=out:st=0.2:d=1.2,lowpass=f=400[h];[k][h]amix=inputs=2:normalize=0" \
+  "$OUT/power_down_2026.wav"
+
+# THE CLOSE · the sky. 60 s, seamless, quieter than any room: a sub and a filtered
+# breath — the sound of a place with no walls.
+bed close_sky_bed.wav "lowpass=f=420,equalizer=f=48:t=q:w=1:g=12,equalizer=f=96:t=q:w=2:g=5,tremolo=f=0.1:d=0.12,volume=0.8"
+
+# ── LEVEL THE SECOND ACT to the family's targets (one-shots -20..-26 dBFS RMS,
+# the session's two loops -34 under the room bed), measured, not guessed.
+level() { # $1 stem  $2 target mean dB
+  local mean; mean=$(ffmpeg -i "$OUT/$1.wav" -af volumedetect -f null - 2>&1 | sed -n 's/.*mean_volume: \(-*[0-9.]*\) dB.*/\1/p')
+  local gain; gain=$(python3 -c "print(round($2 - ($mean), 1))")
+  q -i "$OUT/$1.wav" -af "volume=${gain}dB,alimiter=limit=0.7" "$OUT/$1.tmp.wav" && mv "$OUT/$1.tmp.wav" "$OUT/$1.wav"
+}
+level type_2026 -30;      level agent_2026 -24;    level step_done_2026 -26; level restore_2026 -28
+level wear_2026 -26;      level session_breath -34; level playback_hiss -36; level card_junie -23
+level filter_deny -22;    level reconnect_2026 -26; level terminate_2026 -20; level static_2026 -26
+level power_down_2026 -24

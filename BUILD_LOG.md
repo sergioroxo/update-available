@@ -1062,3 +1062,17 @@ and the room's count pushes it off; the end is SESSION TERMINATED · reason: soc
 then *Your update has failed.* on the laptop AND the monitor, both tearing, both off, and the travel
 begins over dead screens. Portraits with edges; the stream panel names the category; the visor's edge at
 a third in the Commons; the Close's CRT lighter on a smaller desk. Walked: 201 presses, spine done.
+
+## 2026-09-13 — S140 · The second act is heard: fourteen synthesized cues, two registers, no voice
+
+Sérgio: "have you already added all the sound design?" — no; the session, the link, the fight for the
+glass, the intrusions, the termination, the screens dying and the Close all played silent (and
+`ready_e4`, `set_down_e4`, `glitch_e4_end` were on disk and never played). `tools/make_tones.sh` gained
+an ERA 4 section under its own doctrine — synthesized, ours, levelled to the family's targets — in two
+registers the ear separates before any line does: THE SYSTEM (sines that resolve, tones that insist:
+typing, agent online, step done, restoring, wear, the breathing ring, reconnecting, terminated, static,
+power-down) and THE ROOM (warmer, a third apart: Junie's card; and the wall coming down — the landing
+recording — from the second label of the fight, not from the device coming off). The "recorded"
+testimonial plays as a recording with nobody in it. The Close gets the building's passage bed on the
+way out, a sky bed as night falls, and the 1997 POST beep when Daniel's monitor lights. Proven in order
+with an Audio wrapper (34 cues from the search to the passage). Registered; loops via `playLoop/stopClip`.

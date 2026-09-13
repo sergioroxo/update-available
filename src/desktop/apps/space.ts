@@ -64,6 +64,7 @@ import { visorField, visorEdge, glitchBands, ERA4 } from '../theme/era4';
 import { E4Browser, FAIL } from './browser';
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
+import { playOnce, playLoop, stopClip } from '../../audio/tapeAudio';
 import space from '../../../data/dialog/s4_space.json';
 import ballScript from '../../../data/dialog/s4_ball.json';
 import updates from '../../../data/strings/updates.json';
@@ -217,6 +218,8 @@ export class E4Shell {
   get offersRetired(): boolean { return !this.offersPending; }
   /** seconds since the device went on — the correction session's clock */
   private sessionT = 0;
+  private breath: HTMLAudioElement | null = null;
+  private hiss: HTMLAudioElement | null = null;
   /** ⚑ S79 — THE BALL. Made with the shell for the same reason the two above
    *  are (a `?debug=1` jump must reach it before the device is even worn), and
    *  started only by `E4Offers.onBreak` — the seam S78 left named and empty. */
@@ -363,7 +366,15 @@ export class E4Shell {
       const before = this.sessionT;
       this.sessionT += dt;
       if (Math.floor(before * 4) !== Math.floor(this.sessionT * 4)) this.version++;
-      if (this.sessionT >= space.sessionSeconds) this.ball.invite();
+      // ⚑ 2026-09-13: the session is HEARD — grounding breathes (a loop), the
+      //   "recording" plays with nobody in it, and both stop when the card lands
+      const S = ballScript.session as { seconds: number };
+      if (before < S.seconds && this.sessionT >= S.seconds) this.breath = playLoop('session_breath.mp3');
+      if (before < S.seconds + 8 && this.sessionT >= S.seconds + 8) { stopClip(this.breath); this.breath = null; this.hiss = playOnce('playback_hiss.mp3'); }
+      if (this.sessionT >= space.sessionSeconds) {
+        stopClip(this.breath); this.breath = null; stopClip(this.hiss); this.hiss = null;
+        this.ball.invite();
+      }
     }
     this.offers.update(dt);
     if (this.offers.version !== this.offersVersion) {
@@ -379,6 +390,7 @@ export class E4Shell {
       this.failT += dt;
       if (Math.floor(b4 * 12) !== Math.floor(this.failT * 12)) { this.laptopV++; this.version++; }
     }
+    if (!this.readyHeard && this.deviceReady && !this.handedOff) { this.readyHeard = true; playOnce('ready_e4.mp3'); }
     this.ball.update(dt);
     if (this.ball.version !== this.ballVersion) {
       this.ballVersion = this.ball.version;
@@ -421,6 +433,7 @@ export class E4Shell {
   }
   /** the device is asking to be picked up: on the stand, and the program done */
   get deviceReady(): boolean { return this.stageNow === 'closed' && this.browser.programDone; }
+  private readyHeard = false;
 
   /** where the restart sits on the laptop's canvas; one place, so the draw and
    *  the hit test cannot drift apart the way `kit.ts`'s did */
@@ -725,6 +738,7 @@ export class E4Shell {
   }
 
   private putOn(): void {
+    playOnce('wear_2026.mp3');
     if (this.stageNow === 'worn') return;
     this.stageNow = 'worn';
     this.t = 0;
@@ -814,6 +828,7 @@ export class E4Shell {
      * while the place comes apart, and only then does `worn` drop.
      */
     this.stageNow = 'glitch';
+    playOnce('glitch_e4_end.mp3');
     this.glitchT = 0;
     this.glitchStep = -1;
     this.version++;
@@ -847,6 +862,7 @@ export class E4Shell {
     this.laptopV++;
     this.version++;
     this.failT = 0;
+    playOnce('set_down_e4.mp3');   // the desk, not the device: it stops
     // ⚑ 2026-09-12: and the world goes with the device — the room comes back
     this.ball.leaveWorld();
     // ⚑ 2026-09-13: and the monitor learns it — the agent's page cannot be reached

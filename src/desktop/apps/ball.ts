@@ -99,7 +99,7 @@ import { px, setFont, wrapText } from '../theme/chrome';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
 import { setCommonsLamps } from '../../room/commonsLamps';
 import { setCommonsFigures } from '../../room/commonsFigures';
-import { playOnce, roomBed } from '../../audio/tapeAudio';
+import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_ball.json';
 
 /** how long the machine's last failure sits on screen before the device comes
@@ -257,6 +257,7 @@ export class E4Ball {
     this.phase = 'invited';
     this.hits = [{ ...JOIN, id: 'commons-join' }];
     this.version++;
+    playOnce('card_junie.mp3');   // the room's register, not the system's
     // the room is already audible through the wall while she decides
     roomBed.set(script.room.bed, 4.0);
   }
@@ -266,6 +267,7 @@ export class E4Ball {
     this.hits = [];
     this.phase = 'arrival';
     this.labels = [...ARRIVAL];
+    playOnce('ui_press.mp3');
     this.nextLabel();
     // ⚑ 2026-09-13: the hall is THERE from the press — behind the agent's
     //   environment, seen through it in flashes as the filter fights (see
@@ -374,6 +376,8 @@ export class E4Ball {
     this.showCaption('');
     this.phase = 'after';
     this.afterT = 0;
+    stopClip(this.reconnect); this.reconnect = null;
+    playOnce('terminate_2026.mp3');
     this.light(AFTER_LEVEL, AFTER_STATION, 0);
     this.version++;
   }
@@ -397,6 +401,13 @@ export class E4Ball {
     this.label = this.labels.shift() ?? null;
     this.labelT = 0;
     this.version++;
+    if (this.phase === 'arrival' && this.label) {
+      playOnce('filter_deny.mp3');   // each label the filter fails
+      // ⚑ THE WALL COMES DOWN DURING THE FIGHT (2026-09-13): from the second
+      //   label the room is heard unfiltered — the landing recording, not the
+      //   bed through a wall — while the glass is still flashing
+      if (this.label.id === 'a2') roomBed.set(script.room.landing, 3.5);
+    }
   }
 
   /**
@@ -416,7 +427,7 @@ export class E4Ball {
     if (this.phase !== 'ball') return;
     if (this.intrusionT < 0) {
       const next = SYSTEM.intrusions[this.intrusionIdx];
-      if (next && this.ballT >= next.at) { this.intrusionT = 0; this.version++; }
+      if (next && this.ballT >= next.at) { this.intrusionT = 0; this.version++; this.reconnect = playLoop('reconnect_2026.mp3'); }
       return;
     }
     const b4 = this.intrusionT;
@@ -427,10 +438,16 @@ export class E4Ball {
     // ⚑ `needsHer` (system._docNeedsHer): the bar HOLDS at the top until she is
     //   in the crowd; from that moment it falls over three seconds and the
     //   card closes. Never moved: it holds through `hold` and is refused anyway.
-    if (cur.needsHer && this.herAt < 0 && this.inCrowd && this.intrusionT > 2.0) { this.herAt = this.intrusionT; this.version++; }
+    if (cur.needsHer && this.herAt < 0 && this.inCrowd && this.intrusionT > 2.0) { this.herAt = this.intrusionT; this.version++; this.refuse(); }
+    // the clock's own refusal (the first intrusion, or the second never answered)
+    const refuseAt = cur.needsHer ? cur.hold - 3 : 2.6;
+    if (b4 < refuseAt && this.intrusionT >= refuseAt && this.herAt < 0) this.refuse();
     const done = cur.needsHer && this.herAt >= 0 ? this.intrusionT >= this.herAt + 4.5 : this.intrusionT >= cur.hold;
-    if (done) { this.intrusionT = -1; this.intrusionIdx++; this.herAt = -1; this.version++; }
+    if (done) { this.intrusionT = -1; this.intrusionIdx++; this.herAt = -1; this.version++; stopClip(this.reconnect); this.reconnect = null; }
   }
+  private reconnect: HTMLAudioElement | null = null;
+  /** the room refuses the connection: the loop stops, the refusal sounds */
+  private refuse(): void { stopClip(this.reconnect); this.reconnect = null; playOnce('ui_refuse.mp3'); }
   /** the intrusion's bar: climbs, then is pushed back — by the clock, or by her */
   private intrusionBar(t: number, cur: { hold: number; needsHer?: boolean }): number {
     const rise = 2.6;
@@ -950,7 +967,7 @@ export class E4Ball {
       this.queue = [];
       this.cur = null;
       this.showCaption('');
-      this.phase = 'after';
+      this.phase = 'after'; playOnce('terminate_2026.mp3');
       this.light(AFTER_LEVEL, AFTER_STATION, 0);
       this.version++;
       return;
