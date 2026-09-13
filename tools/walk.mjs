@@ -1434,8 +1434,18 @@ const LAP = { w: 224, h: 140 };
    */
   const unaimed = new Map();
   const inertKey = (sig, t) => sig + '\u0000' + t.surface + ':' + t.id;
+  /**
+   * ⚑ AN EXIT IS NEVER CAPPED (S142). `leave` closes a provotype; it is the way
+   * OUT of a window, not a way forward, and capping it trapped the walk inside
+   * the pillow while Rob typed his third line under it — the channel had just
+   * grown nine lines (the room talks to Daniel now) and the walker spent that
+   * minute opening and leaving the two provotypes until `leave` hit PRESS_CAP,
+   * then opened one more and could not close it. Stuck, with the escalation's
+   * reply tray live under the window.
+   */
+  const EXIT = /^leave$|^back$|^close$/i;
   const capped = (sig, t) =>
-    (pressed.get(keyOf(sig, t)) || 0) >= PRESS_CAP || inertMarks.has(inertKey(sig, t));
+    !EXIT.test(t.id) && ((pressed.get(keyOf(sig, t)) || 0) >= PRESS_CAP || inertMarks.has(inertKey(sig, t)));
   /** every live control here has been pressed to its cap: the screen is spent */
   const spent = (st, sig) => {
     const live = st.targets.filter((t) => t.surface !== 'prop' && !FORBIDDEN.test(t.id));
