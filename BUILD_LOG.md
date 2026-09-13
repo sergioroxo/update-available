@@ -1048,3 +1048,17 @@ within 1.25 m where Daniel's monitor lights; placement tries 8 → 64 so a rejec
 re-rolled. "Too many elements on Era-4 with boxes that aren't there" → every primitive-box dressing prop
 in Room 3 struck at r4, the box lamp with them (its light stays as a wash); the plates re-baked from 2.4 m
 behind each seat so the card shows the room, and the baker now holds its pose before shooting.
+
+## 2026-09-13 — S139 · Era 4 toured and rebuilt as a viewer: the session begins, Junie's link, the fight for the glass, peer pressure, the shutdown on both screens
+
+`tools/tour-e4.mjs` plays the era headless through the player's surfaces and photographs every beat;
+`ERA4_TOUR_2026-09-13.md` lists what the first pass caught (tab titles, a folder that "restored" itself,
+an unreadable Restoration pair, a monitor still asking for the headset after the device had stopped)
+and what changed. Then his brief: the correction session RUNS (grounding, a "recorded" voice the system
+vouches for) until Junie's card cuts it with a link that says what it is for; the arrival is a fight —
+the hall behind the glass from the press, seen in flashes that lengthen as the system's labels fail and
+the stream's words bleed through; twice during the ball the agent comes back to restore the environment
+and the room's count pushes it off; the end is SESSION TERMINATED · reason: social contagion; the glitch;
+then *Your update has failed.* on the laptop AND the monitor, both tearing, both off, and the travel
+begins over dead screens. Portraits with edges; the stream panel names the category; the visor's edge at
+a third in the Commons; the Close's CRT lighter on a smaller desk. Walked: 201 presses, spine done.
