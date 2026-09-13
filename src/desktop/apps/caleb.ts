@@ -31,14 +31,18 @@ import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import caleb from '../../../data/dialog/s2_caleb.json';
-import { playOnce } from '../../audio/tapeAudio';
+import { playOnce, isAudioAvailable, stopClip } from '../../audio/tapeAudio';
 
 interface Chip { id: string; label: string; say: string; ledgerTag: string }
-interface ThreadStep { id: string; from?: string; text?: string; chips?: Chip[]; commit?: boolean }
+interface ThreadStep { id: string; from?: string; text?: string; chips?: Chip[]; commit?: boolean;
+  /** S143: a file he sends — plays low once the line has typed; the block cuts it */
+  audio?: string; requiresAudio?: boolean }
 interface Msg { from: 'them' | 'you'; text: string }
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
-const THREAD = caleb.thread as unknown as ThreadStep[];
+// ⚑ S143: a step that needs a file it does not have is not in the thread —
+//   the song he sends exists only when the track is registered and on disk
+const THREAD = (caleb.thread as unknown as ThreadStep[]).filter((s) => !s.requiresAudio || isAudioAvailable(s.audio));
 
 // ── PACING — ALL OF IT LIVES IN data/dialog/s2_caleb.json's `pacing` BLOCK ──
 // Session 48 moved every timing constant out of here so Sérgio can tune the
@@ -260,6 +264,9 @@ export class CalebThreadApp {
     this.stream.onLine = (text) => {
       this.msgs.push({ from: 'them', text });
       if (this.phase === 'returning') this.returnLineCount++;
+      // S143: the file he sent has arrived — it plays, low, under what follows
+      const st = THREAD[this.step];
+      if (st && st.text === text && st.audio) { this.song = playOnce(st.audio); if (this.song) this.song.volume = 0.55; }
       this.dirty = true;
     };
     this.file('opened', 'intervened', caleb.witness.contactOpened);
@@ -285,7 +292,11 @@ export class CalebThreadApp {
 
   // ── the beat seams os.ts drives ────────────────────────────────────────
   /** S2R.3B — the apparatus starts blacking the conversation out */
+  /** S143: the song Caleb sent, while it plays; the block stops it */
+  private song: HTMLAudioElement | null = null;
   beginRedaction(): void {
+    // ⚑ the apparatus silences the one thing that was theirs — no fade: a cut
+    stopClip(this.song); this.song = null;
     if (this.redaction.running || this.redaction.sealed) return;
     this.redaction.start(Math.max(this.renderedRows, 1), 1);
     this.file('redaction', 'intervened', caleb.witness.redacted);

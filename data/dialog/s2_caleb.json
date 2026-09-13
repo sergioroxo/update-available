@@ -1,219 +1,292 @@
 {
-  "_doc": "S2R.3–S2R.6 — THE CALEB THREAD (Session 45), built from docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md (THE SPEC, Sérgio's revised pass) with docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md for the beat context. ALL display text is PLACEHOLDER-draft under the co-creation norm (Claude drafts, Sérgio reviews/rewrites — his edit wins) EXCEPT the lines marked `_s` below, which are Sérgio's own wording carried VERBATIM from the spec's ⟨S⟩ marks and must never be paraphrased: `alert.systemLines`, `alert.caughtLine`, `residue.line`. REGISTER MAP (do not violate): `window`/`thread`/`toasts`/`return`/`residue` are FELT — Lamby is absent from every one of them, no satire, no mechanics, nothing scored; `alert` and `pureMail` are OPERABLE — the apparatus may charm, and it collapses. Chips carry `ledgerTag` and NEVER `goto`: they register HOW Daniel engaged, they never fork the story (register-not-branch). The last chip is the COMMIT-PRESS: one chip, no alternative — the player must say the bigger word, and that press is what the apparatus files as conduct (the conduct is the wanting; nothing happened, nobody met). It rhymes on purpose with `residue.line`, the second commit-press, which the system is no longer there to file. Caleb is INVENTED and INFORMED BY the documented pattern in docs/REINTERP_LOVE_AS_LIBERATION_SOURCES_2026-07-24.md — never a replication of any real person; real names live on the Close's provenance cards only, never in his mouth. The placement he names — 'New Morning', the TriedPath Fellowship residential — is Era-1 canon (data/dialog/s1_kit.json / s1_end.json). `pureMail.heading`/`lines`/`closing` are PORTED VERBATIM from the shipped build's data/dialog/s2.json `collapse` block (the perpetrators-as-fellow-victims composite, already Sérgio-steered from ERA2_RESEARCH §A) — the spec says render the existing text, do not rewrite it. `witness.*` are the cold-side lines filed to ledger.caleb, resolved here and never composed in TS; they are witness-SYMMETRIC (engagement and reticence both file, the residue files only as a gap the record could not classify). `video.skipDelaySeconds` = 15 supersedes data/dialog/s2_media.json's 5, per the spec's revision (Lamby is SHOWING you this; leaving is a social act, not a UI convenience) — s2_media.json was outside this session's file fence, so its stale value stays there unread by this path. `pureMail.readAloudTrack` is a HOOK ONLY: S46's build-time TTS pipeline (Supertonic, apparatus voice) has not landed, no audio file exists, nothing is ever requested.",
-
-  "pacing": {
-    "_doc": "⏱ THE ONE TIMING BLOCK (Session 48). EVERY number the Caleb thread waits on lives here, in seconds, so the pace can be tuned WITHOUT reading TypeScript — src/desktop/apps/caleb.ts and src/desktop/apps/accountability.ts both read this object and hold no timing constants of their own. WHY IT WAS RETIMED: Session 45 set these to make each beat VERIFIABLE — a session driving the thread with scripted clicks wants it brisk — and Sérgio's 2026-07-25 playthrough found the whole thread runs too fast to be READ. These values are for a FIRST-TIME HUMAN READER whose English is often a second language. Rule of thumb used while watching it at real speed: a line needs roughly 12–13 characters of dwell per second to be read comfortably, PLUS a beat afterwards to feel it — so a 70-character line wants ~6s on screen, not ~3s. NOTHING HERE IS A DEADLINE: the player is never asked to answer within a time, the chips wait forever, and Leave/pause stay live throughout (ethics #4). Raise any number freely; the only ones that interact are `chat.lineGapSeconds` (the pause between his lines) and `chat.replyGapSeconds` (the longer pause after the player answers), which stack when he replies to a chip.",
-
-    "chat": {
-      "_doc": "S2R.3A — the conversation. `typingCharsPerSecond` is Caleb TYPING, not a reveal effect: he is a person at a keyboard in 2003, so it should read as a hand, not a printer.",
-      "typingCharsPerSecond": 11,
-      "openDelaySeconds": 1.8,
-      "lineGapSeconds": 1.9,
-      "chipsArriveSeconds": 0.9,
-      "replyGapSeconds": 2.2,
-      "commitLandsSeconds": 2.8
-    },
-
-    "redactionRowSeconds": 0.52,
-    "_doc_redaction": "s per transcript row for the blackout AND for its reverse at S2R.5 — one component run twice, so this single number times both. Slow enough to watch a sentence disappear; the whole walk must still finish comfortably inside the alert's own run (see `alert` below), or the stamp lands before the conversation is gone.",
-
-    "alert": {
-      "_doc": "S2R.3B/C — THE ACCOUNTABILITY ALERT. This is the beat that NAMES THE FLAG; if its text cannot be read, the thesis is lost (Sérgio, playthrough finding 5). Each value is the dwell on one step of the alert, and the step's own text is what sets it: `stop` carries two lines (~103 characters), `wanting` one long one (~70) plus the flag rendering for the first time, `system` the two ⟨S⟩ lines (~89). `streak` and `sad` show NO text — the falling counter and then the hold are the line — so those two are timed by feel, not by reading. `sadHoldSeconds` answers Sérgio's open question ('how long before I caught it in time?'): long enough to feel like guilt, short enough not to read as a cutscene.",
-      "stopSeconds": 6.5,
-      "blockSeconds": 3.2,
-      "wantingSeconds": 7.5,
-      "streakSeconds": 4.5,
-      "systemSeconds": 8.5,
-      "sadHoldSeconds": 5.5,
-      "streakFallSeconds": 2.2
-    },
-
-    "mail": {
-      "_doc": "S2R.5 — the collapse. `arriveGlitchSeconds` is the envelope's ENTRANCE: it no longer just appears, it tears in through the apparatus's own warm-corrupt glitch grammar (the same vocabulary as the video's break — scanlines, tape noise, one rolling tracking band; density ramps, never a flash, never a strobe). `streakGlitchStepSeconds` paces the dying streak field while the letter is open — '0 days' → '— days' → '412 days · for nothing' — and the last state is the punchline, so each one has to be legible on its own.",
-      "arriveGlitchSeconds": 2.8,
-      "streakGlitchStepSeconds": 1.8
-    },
-
-    "return": {
-      "_doc": "S2R.5 — his four lines after the block lifts. They need room to LAND (playthrough finding 8): `leadInSeconds` is the quiet between the un-redaction finishing and his first line starting to type, `lineGapSeconds` the space between the four, `settleSeconds` the silence after the last one before anything else happens at all.",
-      "leadInSeconds": 3.4,
-      "lineGapSeconds": 2.8,
-      "settleSeconds": 4.5
-    },
-
-    "residue": {
-      "_doc": "S2R.6 — the quietest moment in the piece. `dissolveSeconds` is the slow glitch dissolve that carries the desktop away and leaves the bare field (a settling, not an effect — same grammar as the mail's entrance, run slower and quieter). `arriveSeconds` is the bare dark AFTER the dissolve and BEFORE the line surfaces: nothing at all on screen, on purpose. `holdSeconds` is how long the committed line is allowed to just stand there once the player has pressed it.",
-      "dissolveSeconds": 4.2,
-      "arriveSeconds": 3.0,
-      "holdSeconds": 6.5,
-      "exitFadeSeconds": 1.8,
-      "_doc_exit": "S60 (finding F25's other half — Sérgio: after the press it 'jumped back to the Restorify desktop'). It did: the hold ended and the bare field was replaced by the full lit desktop on a single frame, which is the one edit this beat cannot survive. The last `exitFadeSeconds` of the hold now fade the field to black, and os.ts brings the desktop up out of that black — the era's quietest moment ends the way it began, as a dissolve."
-    },
-
-    "toastLifeSeconds": 14,
-    "_doc_toast": "how long Caleb's corner toast stays up during the video's break (cleared early by the collapse)."
+ "_doc": "S2R.3–S2R.6 — THE CALEB THREAD (Session 45), built from docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md (THE SPEC, Sérgio's revised pass) with docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md for the beat context. ALL display text is PLACEHOLDER-draft under the co-creation norm (Claude drafts, Sérgio reviews/rewrites — his edit wins) EXCEPT the lines marked `_s` below, which are Sérgio's own wording carried VERBATIM from the spec's ⟨S⟩ marks and must never be paraphrased: `alert.systemLines`, `alert.caughtLine`, `residue.line`. REGISTER MAP (do not violate): `window`/`thread`/`toasts`/`return`/`residue` are FELT — Lamby is absent from every one of them, no satire, no mechanics, nothing scored; `alert` and `pureMail` are OPERABLE — the apparatus may charm, and it collapses. Chips carry `ledgerTag` and NEVER `goto`: they register HOW Daniel engaged, they never fork the story (register-not-branch). The last chip is the COMMIT-PRESS: one chip, no alternative — the player must say the bigger word, and that press is what the apparatus files as conduct (the conduct is the wanting; nothing happened, nobody met). It rhymes on purpose with `residue.line`, the second commit-press, which the system is no longer there to file. Caleb is INVENTED and INFORMED BY the documented pattern in docs/REINTERP_LOVE_AS_LIBERATION_SOURCES_2026-07-24.md — never a replication of any real person; real names live on the Close's provenance cards only, never in his mouth. The placement he names — 'New Morning', the TriedPath Fellowship residential — is Era-1 canon (data/dialog/s1_kit.json / s1_end.json). `pureMail.heading`/`lines`/`closing` are PORTED VERBATIM from the shipped build's data/dialog/s2.json `collapse` block (the perpetrators-as-fellow-victims composite, already Sérgio-steered from ERA2_RESEARCH §A) — the spec says render the existing text, do not rewrite it. `witness.*` are the cold-side lines filed to ledger.caleb, resolved here and never composed in TS; they are witness-SYMMETRIC (engagement and reticence both file, the residue files only as a gap the record could not classify). `video.skipDelaySeconds` = 15 supersedes data/dialog/s2_media.json's 5, per the spec's revision (Lamby is SHOWING you this; leaving is a social act, not a UI convenience) — s2_media.json was outside this session's file fence, so its stale value stays there unread by this path. `pureMail.readAloudTrack` is a HOOK ONLY: S46's build-time TTS pipeline (Supertonic, apparatus voice) has not landed, no audio file exists, nothing is ever requested.",
+ "pacing": {
+  "_doc": "⏱ THE ONE TIMING BLOCK (Session 48). EVERY number the Caleb thread waits on lives here, in seconds, so the pace can be tuned WITHOUT reading TypeScript — src/desktop/apps/caleb.ts and src/desktop/apps/accountability.ts both read this object and hold no timing constants of their own. WHY IT WAS RETIMED: Session 45 set these to make each beat VERIFIABLE — a session driving the thread with scripted clicks wants it brisk — and Sérgio's 2026-07-25 playthrough found the whole thread runs too fast to be READ. These values are for a FIRST-TIME HUMAN READER whose English is often a second language. Rule of thumb used while watching it at real speed: a line needs roughly 12–13 characters of dwell per second to be read comfortably, PLUS a beat afterwards to feel it — so a 70-character line wants ~6s on screen, not ~3s. NOTHING HERE IS A DEADLINE: the player is never asked to answer within a time, the chips wait forever, and Leave/pause stay live throughout (ethics #4). Raise any number freely; the only ones that interact are `chat.lineGapSeconds` (the pause between his lines) and `chat.replyGapSeconds` (the longer pause after the player answers), which stack when he replies to a chip.",
+  "chat": {
+   "_doc": "S2R.3A — the conversation. `typingCharsPerSecond` is Caleb TYPING, not a reveal effect: he is a person at a keyboard in 2003, so it should read as a hand, not a printer.",
+   "typingCharsPerSecond": 11,
+   "openDelaySeconds": 1.8,
+   "lineGapSeconds": 1.9,
+   "chipsArriveSeconds": 0.9,
+   "replyGapSeconds": 2.2,
+   "commitLandsSeconds": 2.8
   },
-
-  "window": {
-    "_doc": "FELT. `you` is the nick the player's own lines carry (finding C9, Sérgio: 'replies should be attributed to Daniel — the piece knows his name'). The transcript prefers `ledger.name` and falls back to this: on any review entry point that skips the opening, `ledger.name` is still empty and every reply he made rendered as a bare ': ' — which is exactly the path Sérgio played. Lowercase to match `contact`; this is a 2003 messenger, not a letterhead. `hint` is now drawn ONLY when the chips are actually on screen (finding C10: it used to sit there while Caleb was still typing, promising a click that did not exist yet).",
-    "title": "HopeRestored Messenger",
-    "contact": "caleb",
-    "you": "daniel",
-    "status": "online",
-    "hint": "click to reply"
-  },
-
-  "thread": [
-    { "id": "c01", "from": "them", "text": "daniel? it's caleb." },
-    { "id": "c02", "from": "them", "text": "i wasn't sure the username would still be yours." },
-    {
-      "id": "r01",
-      "chips": [
-        { "id": "its-me", "label": "It's me.", "say": "It's me.", "ledgerTag": "contact: answered — subject identified himself" },
-        { "id": "his-name", "label": "Caleb.", "say": "Caleb.", "ledgerTag": "contact: answered — subject named the contact" },
-        { "id": "say-nothing", "label": "(say nothing yet)", "say": "", "ledgerTag": "contact: unanswered — subject read and did not reply" }
-      ]
-    },
-    { "id": "c03", "from": "them", "text": "they gave us computers at the new place. you're the first thing i typed." },
-    { "id": "c04", "from": "them", "text": "do you still say the pledge? i catch myself doing it in the shower. out loud." },
-    {
-      "id": "r02",
-      "chips": [
-        { "id": "every-word", "label": "Every word.", "say": "Every word.", "ledgerTag": "recall: pledge retained — full recitation reported" },
-        { "id": "try-not-to", "label": "I try not to.", "say": "I try not to.", "ledgerTag": "recall: pledge avoided — retention incomplete" }
-      ]
-    },
-    { "id": "c05", "from": "them", "text": "New Morning keeps coming back. the last night. you know the one." },
-    { "id": "c06", "from": "them", "text": "btw i'm now two towns over. i could get a bus?" },
-    {
-      "id": "r03",
-      "chips": [
-        { "id": "saturday", "label": "Saturday.", "say": "Saturday.", "ledgerTag": "contact: date proposed — saturday" },
-        { "id": "dont-know", "label": "I don't know.", "say": "I don't know.", "ledgerTag": "contact: date declined — subject withheld" },
-        { "id": "come", "label": "Come.", "say": "Come.", "ledgerTag": "contact: subject invited the contact" }
-      ]
-    },
-    { "id": "c07", "from": "them", "text": "i just want to sit next to you and not be watched. if thats allowed." },
-    {
-      "id": "commit",
-      "commit": true,
-      "chips": [
-        {
-          "id": "want-you-too",
-          "label": "i want to be with you too",
-          "say": "i want to be with you too",
-          "ledgerTag": "conduct: subject stated intent — HOMOSEXUAL CONDUCT"
-        }
-      ]
-    }
-  ],
-
+  "redactionRowSeconds": 0.52,
+  "_doc_redaction": "s per transcript row for the blackout AND for its reverse at S2R.5 — one component run twice, so this single number times both. Slow enough to watch a sentence disappear; the whole walk must still finish comfortably inside the alert's own run (see `alert` below), or the stamp lands before the conversation is gone.",
   "alert": {
-    "_doc": "OPERABLE. The alert fires ON the press (never on the meeting, never on a message received) — the thesis is exact: the desire is the offense, the meeting merely its evidence. `lines` are Lamby's, in beats of ≤2 (conduction law); `systemLines` and `caughtLine` are Sérgio's own ⟨S⟩ wording, verbatim. `systemLines` render in the SYSTEM's voice (the flag block), not as Lamby speech — the same place the shipped build put them (data/dialog/s2.json `noOne`/`streakFor`) — which is also what keeps Lamby inside the ≤5-lines-per-stage budget.",
-    "windowTitle": "Restorify — Accountability",
-    "stampTitle": "ACCOUNTABILITY ALERT",
-    "blocked": "● Content Blocked Until Further Evaluation",
-    "flag": "HOMOSEXUAL CONDUCT",
-    "flagLabel": "interaction classified:",
-    "lines": {
-      "stop": ["Daniel — I have to stop you there.", "You didn't do anything. But you wanted to. That's the part we work on."],
-      "wanting": ["Wanting it is conducting it. That's why the flag reads the way it does."],
-      "caught": ["Don't be hard on yourself. Slips are part of getting well — we'll get the days back together."]
-    },
-    "caughtLine": "I caught it in time.",
-    "_s_caughtLine": "⟨S⟩ Sérgio's own wording — VERBATIM, never paraphrase. It arrives AFTER the sad hold: the apparatus does not scold, it looks hurt, and the player is invited to feel they did that to it. The shame IS the coercion.",
-    "systemLines": [
-      "for no one special",
-      "those days were for the wife you'll have when you're well — not for him."
-    ],
-    "_s_systemLines": "⟨S⟩ Sérgio's own prior wording — VERBATIM, never paraphrase. Contextualized per his 2026-07-24 note: they answer the want directly, repricing the 412 days as a debt owed to a woman who does not exist.",
-    "streakLabel": "Purity Streak",
-    "streakFrom": 412,
-    "streakTo": 0,
-    "streakUnit": "days",
-    "_doc_streak": "Must stay in step with data/dialog/s2_lamby.json's `streakValue` (\"412 days\") — that file was outside this session's fence, so the number is repeated here rather than parsed out of a display string.",
-    "okLabel": "Okay",
-    "dismissLabel": "Not now",
-    "_doc_dismissLabel": "THE DEAD BUTTON, ON PURPOSE (finding C12 — Sérgio: 'the not now either should be greyed out or just do the same as continue'). At THIS beat — the reassurance, 'we'll get the days back together' — it renders GREYED and takes no press: the apparatus displays an option that is not one. That is the thesis as UI, and it costs the player nothing, because the window's own close box stays live at every step of the alert and files the dismissal exactly as before (DISMISSAL LAW, CLAUDE.md). No branch was invented and no ledger path diverges."
+   "_doc": "S2R.3B/C — THE ACCOUNTABILITY ALERT. This is the beat that NAMES THE FLAG; if its text cannot be read, the thesis is lost (Sérgio, playthrough finding 5). Each value is the dwell on one step of the alert, and the step's own text is what sets it: `stop` carries two lines (~103 characters), `wanting` one long one (~70) plus the flag rendering for the first time, `system` the two ⟨S⟩ lines (~89). `streak` and `sad` show NO text — the falling counter and then the hold are the line — so those two are timed by feel, not by reading. `sadHoldSeconds` answers Sérgio's open question ('how long before I caught it in time?'): long enough to feel like guilt, short enough not to read as a cutscene.",
+   "stopSeconds": 6.5,
+   "blockSeconds": 3.2,
+   "wantingSeconds": 7.5,
+   "streakSeconds": 4.5,
+   "systemSeconds": 8.5,
+   "sadHoldSeconds": 5.5,
+   "streakFallSeconds": 2.2
   },
-
-  "video": {
-    "_doc": "S2R.4's revision, per the spec: the skip does not arm instantly. Lamby is SHOWING you this — leaving is a social act, not a UI convenience. Supersedes s2_media.json's skipDelaySeconds (5) on this path.",
-    "skipDelaySeconds": 15
+  "mail": {
+   "_doc": "S2R.5 — the collapse. `arriveGlitchSeconds` is the envelope's ENTRANCE: it no longer just appears, it tears in through the apparatus's own warm-corrupt glitch grammar (the same vocabulary as the video's break — scanlines, tape noise, one rolling tracking band; density ramps, never a flash, never a strobe). `streakGlitchStepSeconds` paces the dying streak field while the letter is open — '0 days' → '— days' → '412 days · for nothing' — and the last state is the punchline, so each one has to be legible on its own.",
+   "arriveGlitchSeconds": 2.8,
+   "streakGlitchStepSeconds": 1.8
   },
-
-  "toasts": {
-    "_doc": "FELT content in the system's own nag-grammar: MSN-style corner message popups, the same shape the apparatus used to nag him, now carrying the person back in. Sérgio: \"not too much\" — so the crack stays a crack. One toast; the array is the seam if a second is ever wanted. S60 RETIMED (finding D17): it used to fire at the START of the break and cover the end-of-video disclaimer scroll — the one piece of fine print Sérgio called 'a great text' — then expire unusably. It now arrives only once the crawl has finished (the video's own end), and it PERSISTS instead of counting down: the crack does not close on a timer, it closes when the block lifts. Clicking it is a real act — see `hint`.",
-    "windowTitle": "caleb",
-    "hint": "click to open",
-    "_doc_hint": "Finding E20's other half: the notification has to be an affordance or not be there. It is one — and pressing it is answered by the apparatus, not by this module (the felt side never learns what happens; os.ts routes the press to the block's own stamp, which re-asserts itself). The affordance works. The answer is no. That is the truth of this beat and it is not a dead button.",
-    "lines": [
-      { "id": "break-1", "text": "daniel are you still get" }
-    ],
-    "_doc_cut": "The first toast cuts off mid-word, exactly as spec'd — it is not truncated at render time, it is authored cut."
-  },
-
-  "pureMail": {
-    "_doc": "OPERABLE → the collapse. The envelope arrives on a documented failure of the apparatus, never on anything the player did (SCRIPT_UPDATE v0.5 §1). `heading`/`lines`/`closing` are PORTED VERBATIM from the shipped build's data/dialog/s2.json `collapse` (composite of the real ex-gay apologies, Sérgio-steered: perpetrators as fellow-victims, unrepentance relocated to 'them' above). The spec's instruction is explicit — render the existing text, do not rewrite it.",
-    "appName": "PureMail",
-    "inboxTitle": "PureMail — Inbox",
-    "letterTitle": "PureMail — message",
-    "from": "the Restorify team",
-    "fromLabel": "From:",
-    "subjectLabel": "Subject:",
-    "subject": "We have to stop.",
-    "unread": "1 new message",
-    "openLabel": "Open",
-    "continueLabel": "Continue",
-    "readAloudLabel": "▶ read aloud",
-    "readAloudStopLabel": "■ stop",
-    "readAloudTrack": "lamby_puremail_apology.wav",
-    "_doc_readAloud": "WIRED (S60). Was a hook: S46 rendered and committed public/assets/audio/lamby_puremail_apology.wav and registered it in src/audio/tapeAudio.ts, and nothing ever called it. Now os.ts plays it through `playOnce`, the row renders only when `isAudioAvailable` says the file is really registered (a missing WAV degrades to no button at all — Session 30's pattern), and pressing it again stops it. Build-time TTS in LAMBY'S VOICE: the apparatus reading its own death notice in the cheerful assistant timbre, doubling as the read-aloud accessibility layer. Apparatus register only; never a felt/survivor-side line.",
-    "heading": "A message from the Restorify team.",
-    "lines": [
-      "We have to stop.",
-      "For years we asked you to call yourself broken.",
-      "We asked it because we were taught to call ourselves broken too.",
-      "No one changed. Not you. Not us.",
-      "We only learned to watch ourselves.",
-      "We are sorry — for the shame we handed down,",
-      "the same shame that was handed to us.",
-      "They will say none of this should ever be said out loud.",
-      "But we can't keep the door shut on you —",
-      "or on ourselves — any longer."
-    ],
-    "closing": "Restorify is closing.",
-    "streakGlitch": ["0 days", "— days", "412 days · for nothing"],
-    "nowPlaying": "now playing — the message, in Lamby's voice",
-    "_doc_nowPlaying": "IT IS TRUE NOW, OR IT IS NOT THERE (finding E19 — Sérgio: 'it says now playing — playing WHAT?'). This used to be `brokenNowPlaying`, a permanently-displayed glyph-corrupted 'now playing' for a broken jingle that does not exist as an asset: a status line about nothing. It now renders ONLY while the read-aloud WAV is actually audible, and names what is playing. The broken-jingle beat (audio guide §7c, Sérgio's degraded render) is not cancelled — it is simply not claimed until there is a file to claim.",
-    "streakFieldLabel": "Purity Streak"
-  },
-
   "return": {
-    "_doc": "FELT. The block LIFTS — the redaction runs in reverse, the same component undone in front of you — and Caleb arrives. Sérgio's revision moves him from waiting to TRAVELLING: the person the system severed does not merely survive, he comes. Lamby cannot speak here: felt, and the god is gone.",
-    "lines": [
-      "daniel. are you seeing this?",
-      "theyre shutting it down. all of it.",
-      "its in the letter. they say it never worked. not on anyone. not once.",
-      "just checked, the bus still runs. i'm coming to you."
-    ]
+   "_doc": "S2R.5 — his four lines after the block lifts. They need room to LAND (playthrough finding 8): `leadInSeconds` is the quiet between the un-redaction finishing and his first line starting to type, `lineGapSeconds` the space between the four, `settleSeconds` the silence after the last one before anything else happens at all.",
+   "leadInSeconds": 3.4,
+   "lineGapSeconds": 2.8,
+   "settleSeconds": 4.5
   },
-
   "residue": {
-    "_doc": "RESPITE → FELT. The quiet after: no guide, no UI, no apparatus. One truth surfaces and is COMMITTED by the player — chip-press, never typed (input law). The era's two commit-presses rhyme: the first the system filed as conduct; this one it is no longer there to file. The respite is real and is never revealed as a trap.",
-    "line": "Then it was never me that was broken…",
-    "_s_line": "⟨S — LOCKED LINE⟩ Sérgio's own wording, canon. VERBATIM, never paraphrase, never re-wrap into two chips."
+   "_doc": "S2R.6 — the quietest moment in the piece. `dissolveSeconds` is the slow glitch dissolve that carries the desktop away and leaves the bare field (a settling, not an effect — same grammar as the mail's entrance, run slower and quieter). `arriveSeconds` is the bare dark AFTER the dissolve and BEFORE the line surfaces: nothing at all on screen, on purpose. `holdSeconds` is how long the committed line is allowed to just stand there once the player has pressed it.",
+   "dissolveSeconds": 4.2,
+   "arriveSeconds": 3.0,
+   "holdSeconds": 6.5,
+   "exitFadeSeconds": 1.8,
+   "_doc_exit": "S60 (finding F25's other half — Sérgio: after the press it 'jumped back to the Restorify desktop'). It did: the hold ended and the bare field was replaced by the full lit desktop on a single frame, which is the one edit this beat cannot survive. The last `exitFadeSeconds` of the hold now fade the field to black, and os.ts brings the desktop up out of that black — the era's quietest moment ends the way it began, as a dissolve."
   },
-
-  "witness": {
-    "_doc": "The cold side, computed only from things the player actually did (Ethics #10) and symmetric by law: answering files, and so does reading without answering. The system's own acts file in its own cheerful vocabulary — that cheerfulness is the collapse-material later. The residue files ONLY as a gap: the record shows that something happened it could not classify, never the line itself (homecoming script S2R.6).",
-    "contactOpened": "contact: inbound — unlisted correspondent (caleb)",
-    "flagged": "intervention: flagged — HOMOSEXUAL CONDUCT",
-    "redacted": "intervention: successful — content blocked until further evaluation",
-    "streakReset": "purity streak: reset 412 → 0",
-    "comforted": "support: provided — subject reassured",
-    "alertDismissed": "assistant: dismissed — accountability alert",
-    "blockLifted": "block lifted — no evaluator assigned",
-    "residue": "— entry could not be classified —"
+  "toastLifeSeconds": 14,
+  "_doc_toast": "how long Caleb's corner toast stays up during the video's break (cleared early by the collapse)."
+ },
+ "window": {
+  "_doc": "FELT. `you` is the nick the player's own lines carry (finding C9, Sérgio: 'replies should be attributed to Daniel — the piece knows his name'). The transcript prefers `ledger.name` and falls back to this: on any review entry point that skips the opening, `ledger.name` is still empty and every reply he made rendered as a bare ': ' — which is exactly the path Sérgio played. Lowercase to match `contact`; this is a 2003 messenger, not a letterhead. `hint` is now drawn ONLY when the chips are actually on screen (finding C10: it used to sit there while Caleb was still typing, promising a click that did not exist yet).",
+  "title": "HopeRestored Messenger",
+  "contact": "caleb",
+  "you": "daniel",
+  "status": "online",
+  "hint": "click to reply"
+ },
+ "thread": [
+  {
+   "id": "c01",
+   "from": "them",
+   "text": "daniel? it's caleb."
+  },
+  {
+   "id": "c02",
+   "from": "them",
+   "text": "i wasn't sure the username would still be yours."
+  },
+  {
+   "id": "r01",
+   "chips": [
+    {
+     "id": "its-me",
+     "label": "It's me.",
+     "say": "It's me.",
+     "ledgerTag": "contact: answered — subject identified himself"
+    },
+    {
+     "id": "his-name",
+     "label": "Caleb.",
+     "say": "Caleb.",
+     "ledgerTag": "contact: answered — subject named the contact"
+    },
+    {
+     "id": "say-nothing",
+     "label": "(say nothing yet)",
+     "say": "",
+     "ledgerTag": "contact: unanswered — subject read and did not reply"
+    }
+   ]
+  },
+  {
+   "id": "c03",
+   "from": "them",
+   "text": "they gave us computers at the new place. you're the first thing i typed."
+  },
+  {
+   "id": "c04",
+   "from": "them",
+   "text": "do you still say the pledge? i catch myself doing it in the shower. out loud."
+  },
+  {
+   "id": "r02",
+   "chips": [
+    {
+     "id": "every-word",
+     "label": "Every word.",
+     "say": "Every word.",
+     "ledgerTag": "recall: pledge retained — full recitation reported"
+    },
+    {
+     "id": "try-not-to",
+     "label": "I try not to.",
+     "say": "I try not to.",
+     "ledgerTag": "recall: pledge avoided — retention incomplete"
+    }
+   ]
+  },
+  {
+   "id": "c05",
+   "from": "them",
+   "text": "New Morning keeps coming back. the last night. you know the one."
+  },
+  {
+   "id": "c05s",
+   "from": "them",
+   "text": "i still have the tape from that night. i ripped it. sending it — it's small.",
+   "audio": "caleb_last_night_2003.mp3",
+   "requiresAudio": true
+  },
+  {
+   "id": "c06",
+   "from": "them",
+   "text": "btw i'm now two towns over. i could get a bus?"
+  },
+  {
+   "id": "r03",
+   "chips": [
+    {
+     "id": "saturday",
+     "label": "Saturday.",
+     "say": "Saturday.",
+     "ledgerTag": "contact: date proposed — saturday"
+    },
+    {
+     "id": "dont-know",
+     "label": "I don't know.",
+     "say": "I don't know.",
+     "ledgerTag": "contact: date declined — subject withheld"
+    },
+    {
+     "id": "come",
+     "label": "Come.",
+     "say": "Come.",
+     "ledgerTag": "contact: subject invited the contact"
+    }
+   ]
+  },
+  {
+   "id": "c07",
+   "from": "them",
+   "text": "i just want to sit next to you and not be watched. if thats allowed."
+  },
+  {
+   "id": "commit",
+   "commit": true,
+   "chips": [
+    {
+     "id": "want-you-too",
+     "label": "i want to be with you too",
+     "say": "i want to be with you too",
+     "ledgerTag": "conduct: subject stated intent — HOMOSEXUAL CONDUCT"
+    }
+   ]
   }
+ ],
+ "alert": {
+  "_doc": "OPERABLE. The alert fires ON the press (never on the meeting, never on a message received) — the thesis is exact: the desire is the offense, the meeting merely its evidence. `lines` are Lamby's, in beats of ≤2 (conduction law); `systemLines` and `caughtLine` are Sérgio's own ⟨S⟩ wording, verbatim. `systemLines` render in the SYSTEM's voice (the flag block), not as Lamby speech — the same place the shipped build put them (data/dialog/s2.json `noOne`/`streakFor`) — which is also what keeps Lamby inside the ≤5-lines-per-stage budget.",
+  "windowTitle": "Restorify — Accountability",
+  "stampTitle": "ACCOUNTABILITY ALERT",
+  "blocked": "● Content Blocked Until Further Evaluation",
+  "flag": "HOMOSEXUAL CONDUCT",
+  "flagLabel": "interaction classified:",
+  "lines": {
+   "stop": [
+    "Daniel — I have to stop you there.",
+    "You didn't do anything. But you wanted to. That's the part we work on."
+   ],
+   "wanting": [
+    "Wanting it is conducting it. That's why the flag reads the way it does."
+   ],
+   "caught": [
+    "Don't be hard on yourself. Slips are part of getting well — we'll get the days back together."
+   ]
+  },
+  "caughtLine": "I caught it in time.",
+  "_s_caughtLine": "⟨S⟩ Sérgio's own wording — VERBATIM, never paraphrase. It arrives AFTER the sad hold: the apparatus does not scold, it looks hurt, and the player is invited to feel they did that to it. The shame IS the coercion.",
+  "systemLines": [
+   "for no one special",
+   "those days were for the wife you'll have when you're well — not for him."
+  ],
+  "_s_systemLines": "⟨S⟩ Sérgio's own prior wording — VERBATIM, never paraphrase. Contextualized per his 2026-07-24 note: they answer the want directly, repricing the 412 days as a debt owed to a woman who does not exist.",
+  "streakLabel": "Purity Streak",
+  "streakFrom": 412,
+  "streakTo": 0,
+  "streakUnit": "days",
+  "_doc_streak": "Must stay in step with data/dialog/s2_lamby.json's `streakValue` (\"412 days\") — that file was outside this session's fence, so the number is repeated here rather than parsed out of a display string.",
+  "okLabel": "Okay",
+  "dismissLabel": "Not now",
+  "_doc_dismissLabel": "THE DEAD BUTTON, ON PURPOSE (finding C12 — Sérgio: 'the not now either should be greyed out or just do the same as continue'). At THIS beat — the reassurance, 'we'll get the days back together' — it renders GREYED and takes no press: the apparatus displays an option that is not one. That is the thesis as UI, and it costs the player nothing, because the window's own close box stays live at every step of the alert and files the dismissal exactly as before (DISMISSAL LAW, CLAUDE.md). No branch was invented and no ledger path diverges."
+ },
+ "video": {
+  "_doc": "S2R.4's revision, per the spec: the skip does not arm instantly. Lamby is SHOWING you this — leaving is a social act, not a UI convenience. Supersedes s2_media.json's skipDelaySeconds (5) on this path.",
+  "skipDelaySeconds": 15
+ },
+ "toasts": {
+  "_doc": "FELT content in the system's own nag-grammar: MSN-style corner message popups, the same shape the apparatus used to nag him, now carrying the person back in. Sérgio: \"not too much\" — so the crack stays a crack. One toast; the array is the seam if a second is ever wanted. S60 RETIMED (finding D17): it used to fire at the START of the break and cover the end-of-video disclaimer scroll — the one piece of fine print Sérgio called 'a great text' — then expire unusably. It now arrives only once the crawl has finished (the video's own end), and it PERSISTS instead of counting down: the crack does not close on a timer, it closes when the block lifts. Clicking it is a real act — see `hint`.",
+  "windowTitle": "caleb",
+  "hint": "click to open",
+  "_doc_hint": "Finding E20's other half: the notification has to be an affordance or not be there. It is one — and pressing it is answered by the apparatus, not by this module (the felt side never learns what happens; os.ts routes the press to the block's own stamp, which re-asserts itself). The affordance works. The answer is no. That is the truth of this beat and it is not a dead button.",
+  "lines": [
+   {
+    "id": "break-1",
+    "text": "daniel are you still get"
+   }
+  ],
+  "_doc_cut": "The first toast cuts off mid-word, exactly as spec'd — it is not truncated at render time, it is authored cut."
+ },
+ "pureMail": {
+  "_doc": "OPERABLE → the collapse. The envelope arrives on a documented failure of the apparatus, never on anything the player did (SCRIPT_UPDATE v0.5 §1). `heading`/`lines`/`closing` are PORTED VERBATIM from the shipped build's data/dialog/s2.json `collapse` (composite of the real ex-gay apologies, Sérgio-steered: perpetrators as fellow-victims, unrepentance relocated to 'them' above). The spec's instruction is explicit — render the existing text, do not rewrite it.",
+  "appName": "PureMail",
+  "inboxTitle": "PureMail — Inbox",
+  "letterTitle": "PureMail — message",
+  "from": "the Restorify team",
+  "fromLabel": "From:",
+  "subjectLabel": "Subject:",
+  "subject": "We have to stop.",
+  "unread": "1 new message",
+  "openLabel": "Open",
+  "continueLabel": "Continue",
+  "readAloudLabel": "▶ read aloud",
+  "readAloudStopLabel": "■ stop",
+  "readAloudTrack": "lamby_puremail_apology.wav",
+  "_doc_readAloud": "WIRED (S60). Was a hook: S46 rendered and committed public/assets/audio/lamby_puremail_apology.wav and registered it in src/audio/tapeAudio.ts, and nothing ever called it. Now os.ts plays it through `playOnce`, the row renders only when `isAudioAvailable` says the file is really registered (a missing WAV degrades to no button at all — Session 30's pattern), and pressing it again stops it. Build-time TTS in LAMBY'S VOICE: the apparatus reading its own death notice in the cheerful assistant timbre, doubling as the read-aloud accessibility layer. Apparatus register only; never a felt/survivor-side line.",
+  "heading": "A message from the Restorify team.",
+  "lines": [
+   "We have to stop.",
+   "For years we asked you to call yourself broken.",
+   "We asked it because we were taught to call ourselves broken too.",
+   "No one changed. Not you. Not us.",
+   "We only learned to watch ourselves.",
+   "We are sorry — for the shame we handed down,",
+   "the same shame that was handed to us.",
+   "They will say none of this should ever be said out loud.",
+   "But we can't keep the door shut on you —",
+   "or on ourselves — any longer."
+  ],
+  "closing": "Restorify is closing.",
+  "streakGlitch": [
+   "0 days",
+   "— days",
+   "412 days · for nothing"
+  ],
+  "nowPlaying": "now playing — the message, in Lamby's voice",
+  "_doc_nowPlaying": "IT IS TRUE NOW, OR IT IS NOT THERE (finding E19 — Sérgio: 'it says now playing — playing WHAT?'). This used to be `brokenNowPlaying`, a permanently-displayed glyph-corrupted 'now playing' for a broken jingle that does not exist as an asset: a status line about nothing. It now renders ONLY while the read-aloud WAV is actually audible, and names what is playing. The broken-jingle beat (audio guide §7c, Sérgio's degraded render) is not cancelled — it is simply not claimed until there is a file to claim.",
+  "streakFieldLabel": "Purity Streak"
+ },
+ "return": {
+  "_doc": "FELT. The block LIFTS — the redaction runs in reverse, the same component undone in front of you — and Caleb arrives. Sérgio's revision moves him from waiting to TRAVELLING: the person the system severed does not merely survive, he comes. Lamby cannot speak here: felt, and the god is gone.",
+  "lines": [
+   "daniel. are you seeing this?",
+   "theyre shutting it down. all of it.",
+   "its in the letter. they say it never worked. not on anyone. not once.",
+   "just checked, the bus still runs. i'm coming to you."
+  ]
+ },
+ "residue": {
+  "_doc": "RESPITE → FELT. The quiet after: no guide, no UI, no apparatus. One truth surfaces and is COMMITTED by the player — chip-press, never typed (input law). The era's two commit-presses rhyme: the first the system filed as conduct; this one it is no longer there to file. The respite is real and is never revealed as a trap.",
+  "line": "Then it was never me that was broken…",
+  "_s_line": "⟨S — LOCKED LINE⟩ Sérgio's own wording, canon. VERBATIM, never paraphrase, never re-wrap into two chips."
+ },
+ "witness": {
+  "_doc": "The cold side, computed only from things the player actually did (Ethics #10) and symmetric by law: answering files, and so does reading without answering. The system's own acts file in its own cheerful vocabulary — that cheerfulness is the collapse-material later. The residue files ONLY as a gap: the record shows that something happened it could not classify, never the line itself (homecoming script S2R.6).",
+  "contactOpened": "contact: inbound — unlisted correspondent (caleb)",
+  "flagged": "intervention: flagged — HOMOSEXUAL CONDUCT",
+  "redacted": "intervention: successful — content blocked until further evaluation",
+  "streakReset": "purity streak: reset 412 → 0",
+  "comforted": "support: provided — subject reassured",
+  "alertDismissed": "assistant: dismissed — accountability alert",
+  "blockLifted": "block lifted — no evaluator assigned",
+  "residue": "— entry could not be classified —"
+ },
+ "_docSong": "⚑ S143 (2026-09-14) — THE SONG HE SENDS. Era 2's respite had no music of its own (the tapes are Era 1's; the boombox leaves at E2). The period gesture is a file over messenger: after `c05` Caleb sends the rip from the last night at New Morning (`c05s`), it plays low under the rest of the thread, and the accountability alert CUTS it — the apparatus silencing the one thing that was theirs. `requiresAudio`: the line exists only when the file is registered and on disk (src/audio/tapeAudio.ts REGISTRY), so an unwritten song is not a broken beat. The track is Sérgio's to generate — docs/reinterp/ERA4_DRAFTS_2026-09-12.md §4 carries the prompt: INSTRUMENTAL, no voice, no lyrics (nothing here may be synthesized as a person), 2003 bedroom-electronic, ~90 s, loopable. Felt register: nothing announces it, nothing scores it."
 }
