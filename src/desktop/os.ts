@@ -8,6 +8,7 @@
  */
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
+import { setFaceEra } from './theme/fonts';
 import { IrcApp } from './apps/irc';
 import { KitApp } from './apps/kit';
 import { PacketApp } from './apps/packet';
@@ -566,6 +567,7 @@ export class DesktopOS {
     this.clearExternalSendHits();
     const entering = this.desktopEra !== era;
     this.desktopEra = era;
+    setFaceEra(era);   // 2026-09-13: the era's face (theme/fonts.ts)
     this.retireEra1Windows();
     // ⚑ E4 HAS NO DESKTOP (docs/REINTERP_E4_THE_SPACE_2026-08-06.md §6). E1, E2
     // and E3 all had one — icons, a taskbar, a thing you opened. This era

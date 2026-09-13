@@ -3,6 +3,7 @@
  * pixel-integer rects from the ERA1 palette only.
  */
 import { ERA1 } from './era1';
+import { fontFor } from './fonts';
 
 export function px(
   ctx: CanvasRenderingContext2D,
@@ -12,8 +13,11 @@ export function px(
   ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
 }
 
+/** ⚑ 2026-09-13: the face is the ERA's (theme/fonts.ts) — bold under 13 px in
+ *  1997/2003, the way a bitmap UI had no thin strokes; `os.setDesktopEra`
+ *  sets which era is drawing. Every text site in the piece goes through here. */
 export function setFont(ctx: CanvasRenderingContext2D, size = 12): void {
-  ctx.font = `${size}px monospace`;
+  ctx.font = fontFor(size);
   ctx.textBaseline = 'top';
 }
 
