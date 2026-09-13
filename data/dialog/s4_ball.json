@@ -356,8 +356,10 @@
    "mark": "recorded  ·  verified by Second Thoughts",
    "lines": [
     "I just wanted things to be simple again.",
-    "Nobody made me. I was helped."
-   ]
+    "Nobody made me. I was helped.",
+    "I'd tell anyone in my position: the discomfort passes. You just have to—"
+   ],
+   "_docThird": "⚑ 2026-09-13: the third sentence is the one Junie's card arrives on — mid-word, on the dash. The genre collapses where it is about to give its instruction."
   },
   "_docBegins": "⚑ 2026-09-13 (Sérgio: 'we should be able to start some elements of the conversion in VR session, it could be more specific'). The session BEGINS now: at 9 s item 1 runs — a breathing ring, in and out, in the agent's calm — and at 17 s item 2, a 'recorded' testimonial the system vouches for itself: two flat sentences, invented, nobody's words, the apparatus's own genre (perpetrator self-presentation; it must collapse, and it does — Junie's card cuts it off at `sessionSeconds`). No voice."
  },
@@ -394,8 +396,9 @@
     "hold": 8.0
    },
    {
-    "at": 108,
-    "hold": 8.0
+    "at": 96,
+    "hold": 14.0,
+    "needsHer": true
    }
   ],
   "mark": "Second Thoughts",
@@ -406,6 +409,10 @@
   "terminated": "SESSION TERMINATED",
   "reason": "reason: social contagion",
   "terminatedNote": "Second Thoughts has ended this session for your safety.",
-  "terminateSeconds": 5.0
+  "terminateSeconds": 5.0,
+  "holding": "holding…",
+  "inCrowd": "{n} present  ·  you",
+  "_docNeedsHer": "⚑ 2026-09-13 — THE SECOND REFUSAL IS HERS. The second intrusion does not lose on its own: its bar holds at the top until she has stepped into the crowd (the 'in the crowd' marker, commons-crowd — the room's one movement, a blink), and the count that refuses the connection then includes her ('47 present · you'). If she never moves, it holds through its whole `hold` and refuses anyway — nothing is gated on her, but the win is hers to take. A hint on the glass says where.",
+  "hint": "the room is asking you to stand with it"
  }
 }

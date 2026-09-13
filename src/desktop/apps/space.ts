@@ -820,6 +820,9 @@ export class E4Shell {
   }
 
   /** the far side of the glitch: the device stops, and the laptop takes over */
+  /** ⚑ 2026-09-13: where she is standing in the hall — the room tells the shell
+   *  on every seat cut (`app.ts`), and the ball reads it for the second refusal */
+  setSeat(nodeId: string | null): void { this.ball.inCrowd = nodeId === 'commons-crowd'; }
   /** ⚑ 2026-09-13: seconds since the device stopped — the failure SPREADS to
    *  both screens on the desk (the laptop here, the browser in `E4Browser`):
    *  the sentence, then the bands, then off. See `FAIL`. */

@@ -65,7 +65,7 @@
   {
    "id": "commons-crowd",
    "commons": true,
-   "seatYaw": 300,
+   "seatYaw": 227,
    "label": "in the crowd",
    "marker": [
     5.8,
@@ -77,9 +77,11 @@
     "y": 1.16,
     "z": -1.7,
     "pitch": -2,
-    "yaw": 300
+    "yaw": 227
    },
-   "eras": []
+   "eras": [],
+   "yaw": 227,
+   "_doc": "⚑ 2026-09-13: yaw 300 → 227 — from (5.8, −1.7) 300° looked at a column and away from the stage; 227° is the bearing OF the stage, with the crowd between."
   },
   {
    "id": "commons-screen",

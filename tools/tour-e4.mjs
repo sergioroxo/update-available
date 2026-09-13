@@ -71,10 +71,11 @@ async function main() {
       const e4 = window.__os.e4;
       return {
         stage: e4.stageNow, browser: e4.browser.phase, mode: e4.browser.programMode, step: e4.browser.step,
-        ball: e4.ball.phase, world: !!(window.__commonsFigures), pose: window.__camPose()
+        ball: e4.ball.phase, world: !!(window.__commonsFigures), pose: window.__camPose(),
+        upd: window.__os.updateApp ? window.__os.updateApp.phase : '-', spine: window.__spine ? JSON.stringify(window.__spine()).slice(0, 60) : '-'
       };
     });
-    const line = `${file}  ${note}  · stage ${st.stage} · browser ${st.browser}/${st.mode} · ball ${st.ball} · pitch ${st.pose.pitch.toFixed(0)} yaw ${st.pose.yaw.toFixed(0)}`;
+    const line = `${file}  ${note}  · stage ${st.stage} · browser ${st.browser}/${st.mode} · ball ${st.ball} · pitch ${st.pose.pitch.toFixed(0)} yaw ${st.pose.yaw.toFixed(0)} · upd ${st.upd} · spine ${st.spine}`;
     log.push(line); console.log(line);
   };
   const press = async (id) => {
@@ -152,7 +153,10 @@ async function main() {
   await wait(8000);
   await shot('worn-session-recorded', 'item 2: the recorded voice');
   await wait(4500);
-  await shot('worn-invite', "Junie's card — the link");
+  await shot('worn-session-recorded-3', 'the third sentence, about to give its instruction');
+  await page.waitForFunction(() => window.__os.e4.ball.invited, { timeout: 30000 });
+  await wait(600);
+  await shot('worn-invite', "Junie's card — the link, on the dash");
   const joined = await page.evaluate(() => {
     const b = window.__os.e4.ball; const h = (b.hits || [])[0];
     if (!h) return false;
@@ -194,6 +198,14 @@ async function main() {
   await shot('ball-intrusion', 'the system back on the glass — reconnecting, pushed back');
   await wait(4500);
   await shot('ball-intrusion-refused', 'connection refused · room full');
+  // the second intrusion (96 s) HOLDS until she stands in the crowd
+  await wait(48000);
+  await shot('ball-intrusion-2-holding', 'the second: holding — the hint on the glass');
+  await page.evaluate(() => window.__requestMove('commons-crowd'));
+  await wait(4200);
+  await shot('ball-intrusion-2-hers', 'she is in the crowd: "47 present · you" — refused');
+  await page.evaluate(() => window.__requestMove('commons-stage'));
+  await wait(3000);
 
   // ── 6 · the termination, the glitch and the Close ──
   await page.evaluate(() => window.__os.e4.ball.debugJumpTo('after'));
@@ -205,11 +217,8 @@ async function main() {
   await shot('device-stopped', 'the device stops; the room comes back');
   await wait(2500);
   await shot('laptop-failed', 'the laptop: Your update has failed.');
-  await cam(...CLOSE);
-  await shot('look-browser-failed', "the agent's page: Your update has failed.");
-  await cam(...SEAT);
-  await wait(3500);
-  await shot('screens-glitching', 'both screens tearing');
+  await wait(1800);
+  await shot('screens-glitching', 'the conducted look: both screens tearing');
   await wait(3000);
   await shot('screens-off', 'both screens off — the travel begins');
   await wait(8000);

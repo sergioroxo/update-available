@@ -572,17 +572,7 @@ export class DesktopOS {
     // arrives as a device that is already on and already waiting, so the shell
     // takes the whole surface and no chrome is drawn around it ever again.
     if (era === 'e4') {
-      if (!this.e4) {
-        this.e4 = new E4Shell();
-        // ⚑ THE CLOSE ARRIVES AS AN UPDATE, on her own machine (Sérgio, 2026-09-01).
-        //   The laptop's one button asks for it, and it is armed through exactly the
-        //   same door the other four updates use — nothing bespoke about the ending.
-        // ⚑ S101 — and it is accepted on the spot: the laptop's card IS the
-        //   close ritual's notice (see `UpdateApp.acceptNow`), so arming it and
-        //   then drawing a second, near-identical notice on a disabled visor
-        //   would be one press too many on a surface nobody can see.
-        this.e4.onCloseRequest = () => { this.armUpdate('close'); this.updateApp?.acceptNow(); };
-      }
+      if (!this.e4) this.e4 = this.newE4Shell();
       // A `?era=4` REVIEW JUMP never plays the opening, so this canvas can
       // still be sitting in `r_dark` — which was harmless while E3/E4 drew a
       // dead monitor and is not harmless now that the visor is textured with
@@ -2629,7 +2619,7 @@ export class DesktopOS {
       // one piece of pure evidence.
       case 'e4Browser':
         this.setPhase('desktop'); this.setDesktopEra('e4');
-        this.e4 = new E4Shell();
+        this.e4 = this.newE4Shell();
         this.e4.beginSession(0.6);
         // ⚑ 2026-09-12: the browser has its real home (the monitor) and the lid
         //   is L's console; the review route no longer borrows the lid.
@@ -2641,7 +2631,7 @@ export class DesktopOS {
       case 'e4Standby':
         this.setPhase('desktop');
         this.setDesktopEra('e4');
-        this.e4 = new E4Shell(); // back to the device untouched, for re-review
+        this.e4 = this.newE4Shell(); // back to the device untouched, for re-review
         break;
       case 'e4Place':
         this.setPhase('desktop');
@@ -2729,6 +2719,22 @@ export class DesktopOS {
 
   /** ⚑ S78 review helper: the device on, L silent (the offers only run once the
    *  conversation is over), and the offers landed on one beat. Never in play. */
+  /**
+   * ⚑ THE CLOSE ARRIVES AS AN UPDATE, on her own machine (Sérgio, 2026-09-01).
+   *   It is armed through exactly the same door the other four updates use —
+   *   nothing bespoke about the ending — and accepted on the spot (S101).
+   * ⚑ 2026-09-13: ONE constructor, because the review routes (`e4Browser`,
+   *   `e4Standby`) built their own shells WITHOUT this hook, so an Era 4 begun
+   *   from the panel's first button ran to the termination and then nothing:
+   *   the device stopped, both screens died, and the Close never came. Found
+   *   by the tour (tools/tour-e4.mjs), which starts from that button.
+   */
+  private newE4Shell(): E4Shell {
+    const sh = new E4Shell();
+    sh.onCloseRequest = () => { this.armUpdate('close'); this.updateApp?.acceptNow(); };
+    return sh;
+  }
+
   private e4Offer(stage: string): void {
     this.debugJump('e4Place');
     this.e4?.voice.debugFinish();

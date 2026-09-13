@@ -1804,6 +1804,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function seatCut(yaw: number): void {
     seatYaw = yaw;
     seatNodeId = null; // a base room seat: seatPose(yaw) IS its authored pose
+    os.e4?.setSeat(null);
     clearLookOffset(); // S85: an authored pose, so nothing rides in on top of it
     const sp = seatPose(yaw);
     camPos.set(sp.x, sp.y, sp.z);
@@ -1875,6 +1876,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // Room 1's facing. Same root cause S70/S71 kept finding: a global yaw
     // standing in for a place.
     seatNodeId = nodeId;
+    os.e4?.setSeat(nodeId);   // 2026-09-13: the ball's second refusal is hers if she is in the crowd
     // Session 37 (E3-i): an intra-room device seat (the tablet/phone) carries
     // its own exact camera pose — seatPose(seatYaw) is only a fallback for
     // the three base room seats, which have no `pose` of their own.
@@ -3601,6 +3603,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function advanceClose(): void {
     if (!cluster || !cloud) { closeStage = null; return; }
     if (closeStage === 'lead') {
+      // ⚑ 2026-09-13: the look BACK from the laptop — see `enterClose`; the
+      //   camera is mid-turn when the lead ends, so the travel begins from
+      //   wherever the look has got to (startCamMove reads camPos/camYaw)
       const dx = camPos.x - EYE.x, dz = camPos.z - EYE.z;
       if (Math.hypot(dx, dz) > 0.5) {
         closeStage = 'travel';
@@ -3741,8 +3746,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // the device has stopped by the time the Close is asked for in play; a
     // review that starts mid-era must not carry a worn visor into the journey
     os.e4?.debugStopDevice();
-    // ⚑ 2026-09-12: the journey begins with a still beat, not a move
+    // ⚑ 2026-09-12: the journey begins with a still beat, not a move.
+    // ⚑ 2026-09-13: not quite still — Sérgio: "the message spreads on both
+    //   monitors and they glitch out until they turn off". The seat faces the
+    //   monitor and the laptop is at the frame's edge, so the spread was being
+    //   FOUND, not watched. A conducted look: 3 s to the laptop as the bands
+    //   begin (FAIL.bands = 5.5 s after the device stops; this fires ~2.2 s
+    //   after that, at the update's end), held while both die, then the
+    //   travel takes over from wherever the eyes are. Comfort law: 30° in 3 s.
     closeStage = 'lead'; closeHoldT = 0;
+    if (Math.hypot(camPos.x - EYE.x, camPos.z - EYE.z) > 0.5) {
+      const toLaptop = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: -8, yaw: camYaw - 30 };
+      startCamMove(toLaptop, 3.0, true);
+    }
   }
 
   if (closeMonitor) {

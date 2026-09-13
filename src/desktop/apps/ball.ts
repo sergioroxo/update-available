@@ -131,8 +131,9 @@ interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 const ARRIVAL = script.arrival.labels as unknown as BLabel[];
 const SYSTEM = script.system as unknown as {
-  intrusions: { at: number; hold: number }[]; mark: string; reconnecting: string; restoring: string;
+  intrusions: { at: number; hold: number; needsHer?: boolean }[]; mark: string; reconnecting: string; restoring: string;
   present: string; refused: string; terminated: string; reason: string; terminatedNote: string; terminateSeconds: number;
+  holding: string; inCrowd: string; hint: string;
 };
 const STUTTER = script.stutter.labels as unknown as BLabel[];
 
@@ -407,6 +408,10 @@ export class E4Ball {
    */
   private intrusionIdx = 0;
   private intrusionT = -1;   // <0: none running
+  /** she is standing in the crowd (the `commons-crowd` marker) — `E4Shell` tells this */
+  inCrowd = false;
+  /** the ball clock at which she stepped in during a `needsHer` intrusion, so the bar falls from THEN */
+  private herAt = -1;
   private intrusionClock(dt: number): void {
     if (this.phase !== 'ball') return;
     if (this.intrusionT < 0) {
@@ -418,14 +423,34 @@ export class E4Ball {
     this.intrusionT += dt;
     if (Math.floor(b4 * 8) !== Math.floor(this.intrusionT * 8)) this.version++;
     const cur = SYSTEM.intrusions[this.intrusionIdx];
-    if (cur && this.intrusionT >= cur.hold) { this.intrusionT = -1; this.intrusionIdx++; this.version++; }
+    if (!cur) return;
+    // ⚑ `needsHer` (system._docNeedsHer): the bar HOLDS at the top until she is
+    //   in the crowd; from that moment it falls over three seconds and the
+    //   card closes. Never moved: it holds through `hold` and is refused anyway.
+    if (cur.needsHer && this.herAt < 0 && this.inCrowd && this.intrusionT > 2.0) { this.herAt = this.intrusionT; this.version++; }
+    const done = cur.needsHer && this.herAt >= 0 ? this.intrusionT >= this.herAt + 4.5 : this.intrusionT >= cur.hold;
+    if (done) { this.intrusionT = -1; this.intrusionIdx++; this.herAt = -1; this.version++; }
   }
-  /** the intrusion's bar: climbs for the first half, is pushed back for the second */
-  private intrusionBar(t: number, hold: number): number {
-    const half = hold * 0.55;
-    if (t < half) return Math.min(0.78, (t / half) * 0.78);
-    const back = (t - half) / (hold - half);
-    return Math.max(0, 0.78 * (1 - back * back));
+  /** the intrusion's bar: climbs, then is pushed back — by the clock, or by her */
+  private intrusionBar(t: number, cur: { hold: number; needsHer?: boolean }): number {
+    const rise = 2.6;
+    if (t < rise) return Math.min(0.86, (t / rise) * 0.86);
+    if (cur.needsHer) {
+      if (this.herAt < 0) {
+        // holding at the top, and creeping — the clock alone lets it go only at the very end
+        const late = Math.max(0, (t - cur.hold + 3) / 3);
+        return late > 0 ? 0.86 * (1 - late * late) : Math.min(0.96, 0.86 + (t - rise) * 0.012);
+      }
+      const back = Math.min(1, (t - this.herAt) / 3.0);
+      return Math.max(0, 0.9 * (1 - back * back));
+    }
+    const back = (t - rise) / (cur.hold - rise);
+    return Math.max(0, 0.86 * (1 - back * back));
+  }
+  /** the second refusal is not yet hers: the hint belongs on the glass */
+  get wantsHer(): boolean {
+    const cur = SYSTEM.intrusions[this.intrusionIdx];
+    return this.phase === 'ball' && this.intrusionT > 2.0 && !!cur?.needsHer && this.herAt < 0 && !this.inCrowd;
   }
   /** the room's count while the system is on the glass — it goes UP */
   private presentCount(t: number): number { return 41 + Math.floor(t * 1.8); }
@@ -554,7 +579,7 @@ export class E4Ball {
     // ⚑ the system on the glass during the ball: the intrusions, and the termination
     if (this.phase === 'ball' && this.intrusionT >= 0) {
       const cur = SYSTEM.intrusions[this.intrusionIdx];
-      if (cur) this.drawIntrusion(ctx, W, H, this.intrusionT, cur.hold);
+      if (cur) this.drawIntrusion(ctx, W, H, this.intrusionT, cur);
     }
     if (this.phase === 'after') this.drawTermination(ctx, W, H, this.afterT);
     if (this.phase === 'arrival') this.drawBreakthrough(ctx, W, H);
@@ -598,8 +623,9 @@ export class E4Ball {
   }
 
   /** the agent back on the glass: a card, a bar that climbs and is pushed back, the room's count going up */
-  private drawIntrusion(ctx: CanvasRenderingContext2D, W: number, H: number, t: number, hold: number): void {
-    const fade = Math.min(1, t / 0.6, (hold - t) / 0.8);
+  private drawIntrusion(ctx: CanvasRenderingContext2D, W: number, H: number, t: number, cur: { hold: number; needsHer?: boolean }): void {
+    const end = cur.needsHer && this.herAt >= 0 ? this.herAt + 4.5 : cur.hold;
+    const fade = Math.min(1, t / 0.6, (end - t) / 0.8);
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * Math.max(0, fade);
     const cw = 268, ch = 96, cx = Math.round((W - cw) / 2), cy = Math.round(H * 0.30);
@@ -612,23 +638,34 @@ export class E4Ball {
     setFont(ctx, 8);
     ctx.fillStyle = ERA4.dim;
     ctx.fillText(SYSTEM.reconnecting, cx + 42, cy + 24);
-    const bar = this.intrusionBar(t, hold);
+    const bar = this.intrusionBar(t, cur);
+    const holding = cur.needsHer && this.herAt < 0 && t > 2.6;
+    const pushed = cur.needsHer ? this.herAt >= 0 : t > 2.6;
     setFont(ctx, 9);
     ctx.fillStyle = ERA4.meta;
-    ctx.fillText(SYSTEM.restoring, cx + 12, cy + 46);
+    ctx.fillText(holding ? SYSTEM.restoring + '  ·  ' + SYSTEM.holding : SYSTEM.restoring, cx + 12, cy + 46);
     pill(ctx, cx + 12, cy + 60, cw - 24, 5, ERA4.rule);
-    pill(ctx, cx + 12, cy + 60, Math.round((cw - 24) * bar), 5, ERA4.lDim);
-    // the room pushing back: its count, going up, in the room's colour
-    const present = SYSTEM.present.replace('{n}', String(this.presentCount(t)));
+    pill(ctx, cx + 12, cy + 60, Math.round((cw - 24) * bar), 5, holding ? ERA4.l : ERA4.lDim);
+    // the room pushing back: its count, going up, in the room's colour — and
+    // once she is standing in it, the count says so
+    const n = this.presentCount(t);
+    const present = (cur.needsHer && this.herAt >= 0 ? SYSTEM.inCrowd : SYSTEM.present).replace('{n}', String(n + (this.herAt >= 0 ? 1 : 0)));
     setFont(ctx, 9);
     ctx.fillStyle = PLACE.textileHi;
     const pw = Math.ceil(ctx.measureText(present).width);
     ctx.fillText(present, cx + cw - 12 - pw, cy + 72);
-    if (t > hold * 0.55) {
+    if (pushed && bar < 0.6) {
       ctx.fillStyle = ERA4.dim;
       ctx.fillText(SYSTEM.refused, cx + 12, cy + 72);
     }
     ctx.globalAlpha = was;
+    // the hint, under the card, in the room's colour: where the win is
+    if (this.wantsHer) {
+      setFont(ctx, 9);
+      ctx.fillStyle = PLACE.textileHi;
+      const hw = Math.ceil(ctx.measureText(SYSTEM.hint).width);
+      ctx.fillText(SYSTEM.hint, Math.round((W - hw) / 2), cy + ch + 10);
+    }
   }
 
   /** the shutdown, named in the system's own ideology — the beat before the glitch */
@@ -718,7 +755,7 @@ export class E4Ball {
       setFont(ctx, 9);
       ctx.fillStyle = ERA4.meta;
       ctx.fillText(SB.recorded.title, tx, fy + 34);
-      const line = SB.recorded.lines[Math.min(SB.recorded.lines.length - 1, Math.floor(rt / 4))];
+      const line = SB.recorded.lines[Math.min(SB.recorded.lines.length - 1, Math.floor(rt / 3.4))];   // three, and the card lands on the third's dash
       setFont(ctx, 12);
       ctx.fillStyle = ERA4.textHi;
       let y = fy + 52;
@@ -726,7 +763,7 @@ export class E4Ball {
       // a play bar, running
       const bw = Math.round(W * 0.34);
       pill(ctx, tx, y + 10, bw, 4, ERA4.rule);
-      pill(ctx, tx, y + 10, Math.round(bw * Math.min(1, rt / 9)), 4, ERA4.l);
+      pill(ctx, tx, y + 10, Math.round(bw * Math.min(1, rt / 11)), 4, ERA4.l);
       setFont(ctx, 8);
       ctx.fillStyle = ERA4.dim;
       ctx.fillText(SB.recorded.mark, tx, y + 20);
