@@ -77,9 +77,11 @@ this file is the authoritative attribution record.
 disclosed prominently rather than buried. The Close's overhead cluster names the project's own
 documents; this block is the plain sentence, generated into `attributions.json` as an `influences`
 paragraph (the same undecorated credits view) and echoed in one line on the Restart card — the
-frame's voice, on the 1997 machine, at the end.*
+frame's voice, on the 1997 machine, at the end. ⚑ The director's own name is not in the display text:
+check-spec's authoring-marker guard flags it wherever it appears in data/, and naming himself is his
+call — add it here and allow it in tools/check-spec.mjs together.*
 
-> **MAKERS.** YOUR UPDATE HAS FAILED was directed by Sérgio Roxo (SurvivingSOGICE, University of
+> **MAKERS.** YOUR UPDATE HAS FAILED was directed by the SurvivingSOGICE project (University of
 > Bergen, Center for Digital Narrative) and written and built in collaboration with Claude
 > (Anthropic): the code, the rooms, the sounds and most of the display text are the model's work
 > under the director's brief, review and ethics rulings; every real-world claim rests on the
