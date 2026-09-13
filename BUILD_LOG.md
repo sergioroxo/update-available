@@ -1101,3 +1101,13 @@ forbids resolving her and her row already renders both corrections unendorsed; w
 Close's 2016 panel ('an item in her queue is about her' — there is none): corrected to Malta, the law
 arriving in the group chat. Two walker faults found on the way (an exit press capped; a stale tray rect
 pressed eight times) and one of them was the piece's. Walked: 212 presses, spine done.
+
+## 2026-09-14 — S143 · Era 2's respite has its own music; the makers are said in the piece
+
+The song Caleb sends: after "the last night. you know the one." he sends the rip over messenger, it
+plays low under the rest of the thread, and the accountability alert cuts it — the apparatus silencing
+the one thing that was theirs. Live with a synthesized stand-in (four chords, a drum machine at 78, tape
+hiss; no voice) until Sérgio's generation replaces the file under the same name (drafts doc §4). The
+walk hears it at position 21. MAKERS: a paragraph in the Credits view, generated from ATTRIBUTIONS.md,
+and one line on the Restart card — the collaboration disclosed at the end, in the frame's voice; the
+director's name kept out of display text by the marker guard (his call to add). Walked: 202 presses.
