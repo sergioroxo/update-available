@@ -98,7 +98,7 @@
    "era": 4
   }
  ],
- "_panelsDoc": "⚑ FOUR PANELS, ONE PER ERA, and they are the only prose in the Close. Rewritten 2026-09-12 (Sérgio: \"think as someone who doesn't know the whole project, and needs a more clean and guided way to understand the content… too segmented\"; and: \"We don't have the proof to say that, we just are using information we found\"). One flowing paragraph per era — who, what the machine did, why it matters — every general claim phrased as what the sources document, never as history; the last panel names itself speculative. `status` is the dossier law's own vocabulary (CLAUDE.md) and applies to the panel's claims as a whole. Each panel hangs beside its era's room plate (public/assets/close/era{N}.jpg, baked by tools/bake-close-plates.mjs) with the era's data cluster to its right. ⚑ They do NOT carry the title beat or `Restart as you are.` — those are the update's and the Restart card's.",
+ "_panelsDoc": "⚑ FOUR PANELS, ONE PER ERA, and they are the only prose in the Close. Rewritten 2026-09-12 (Sérgio: \"think as someone who doesn't know the whole project, and needs a more clean and guided way to understand the content… too segmented\"; and: \"We don't have the proof to say that, we just are using information we found\"). One flowing paragraph per era — who, what the machine did, why it matters — every general claim phrased as what the sources document, never as history; the last panel names itself speculative. `status` is the dossier law's own vocabulary (CLAUDE.md) and applies to the panel's claims as a whole. Each panel hangs beside its era's room plate (public/assets/close/era{N}.jpg, baked by tools/bake-close-plates.mjs) with the era's data cluster to its right. ⚑ They do NOT carry the title beat or `Restart as you are.` — those are the update's and the Restart card's. ⚑ S142: the 2016 panel said 'one day an item in her queue is about her' — the piece has no such item; its break is MALTA (s3_maiden.json), the law arriving in the group chat. Corrected to what the piece does.",
  "panels": [
   {
    "era": 1,
@@ -120,7 +120,7 @@
    "era": 3,
    "years": "2016",
    "title": "GOVERN",
-   "text": "Vera works from her room, correcting other people’s writing for a platform, one rule at a time: remove anything unresolved, add the scripture. She is paid per correction. One day an item in her queue is about her. Content rules and moderation work were among the tools these networks used to reach people at scale. In this room nobody is treated; the writing is edited.",
+   "text": "Vera works from her room, correcting other people’s writing for a platform, one rule at a time: remove anything unresolved, add the scripture. She is paid per correction. One afternoon the group chat on her phone is about a law: Malta has just made what she does an offence, unanimously. Nobody in the room says anything. Content rules and moderation work were among the tools these networks used to reach people at scale. In this room nobody is treated; the writing is edited.",
    "status": "contested",
    "image": "assets/close/era3.jpg"
   },

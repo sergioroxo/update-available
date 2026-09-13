@@ -86,6 +86,16 @@ export class IrcApp {
   // Rob types a line, you reply with the line you're given (the narrowed voice),
   // Rob continues. The reply only sets the witness label, never the outcome. The
   // reply box renders OUTSIDE the chat window so it never covers the transcript.
+  /**
+   * ⚑ S142 — THE CHANNEL TALKS TO HIM. The room notices him after its fourth
+   * line (`welcome`), he answers with the one line he is given — the channel's
+   * own reply tray, the same press-only grammar as the DM's — and the room
+   * answers back (`afterReply`), Lume pointing him at Rob. The DM that follows
+   * quotes the channel. See s1_irc.json `_doc`.
+   */
+  private welcomed = false;
+  private chanAwaitingReply = false;
+  private chanReplied = false;
   private escalating = false;
   private escTurn = -1;            // index of the current exchange
   private escRobPending = false;   // Rob's line for this turn is still typing
@@ -117,12 +127,23 @@ export class IrcApp {
       for (const l of dialog.ambient) this.channel.queueLine(l);
     }
     if (this.channel.update(dt)) this.dirty = true;
+    // the room notices him once its own talk has run out
+    if (this.ambientFed && !this.welcomed && this.channel.idle && this.channel.done.length >= dialog.ambient.length) {
+      this.welcomed = true;
+      this.channel.queueLine({ from: dialog.welcome.from, text: this.fill(dialog.welcome.text) });
+    }
+    // …and once the welcome has finished typing, his one line is offered
+    if (this.welcomed && !this.chanReplied && !this.chanAwaitingReply && this.channel.idle
+        && this.channel.done.length >= dialog.ambient.length + 1) {
+      this.chanAwaitingReply = true;
+      this.dirty = true;
+    }
 
     // once the room has finished talking (the x-files line is the last ambient),
     // and after a short quiet, Rob's DM is allowed to open — never before, so it
     // cannot cover a live conversation
-    if (this.ambientFed && this.dmReadyAt === Infinity
-        && this.channel.idle && this.channel.done.length >= dialog.ambient.length) {
+    if (this.chanReplied && this.dmReadyAt === Infinity
+        && this.channel.idle && this.channel.done.length >= dialog.ambient.length + 2 + dialog.afterReply.length) {
       this.dmReadyAt = this.t + DM_AFTER_AMBIENT;
     }
     if (!this.dmFed && this.t >= this.dmReadyAt) {
@@ -159,6 +180,11 @@ export class IrcApp {
   debugHook(): void {
     this.ambientFed = true;
     for (const l of dialog.ambient) this.channel.pushWhole(l);
+    // S142: the review jump lands AFTER the channel has talked to him
+    this.welcomed = true; this.chanReplied = true;
+    this.channel.pushWhole({ from: dialog.welcome.from, text: this.fill(dialog.welcome.text) });
+    this.channel.pushWhole({ from: ledger.name, text: dialog.channelReply.text });
+    for (const l of dialog.afterReply) this.channel.pushWhole({ from: l.from, text: this.fill(l.text) });
     this.dmFed = true;
     this.dmOpen = true;
     this.focus = 'dm';
@@ -196,6 +222,17 @@ export class IrcApp {
     this.dm.queueLine({ from: 'MentorRob', text: this.fill(turns[this.escTurn].rob) });
     this.escRobPending = true;
     this.escAwaitingReply = false;
+  }
+
+  /** his first words in the channel: the line he is given, and the room answers */
+  private sayInChannel(): void {
+    if (!this.chanAwaitingReply) return;
+    this.chanAwaitingReply = false;
+    this.chanReplied = true;
+    this.channel.pushWhole({ from: ledger.name, text: dialog.channelReply.text });
+    ledger.records.push(`channel-reply:${dialog.channelReply.witness}`);
+    for (const l of dialog.afterReply) this.channel.queueLine({ from: l.from, text: this.fill(l.text) });
+    this.dirty = true;
   }
 
   /** the player says the line they were given — it changes only the label */
@@ -292,6 +329,15 @@ export class IrcApp {
     const chRows = this.rows(ctx, this.channel, c.w - listW - 12,
       (f) => (f === ledger.name ? ERA1.tooltip : ERA1.ok), ERA1.silver, caretOn).slice(-22);
     this.renderRows(ctx, chRows, c.x + 4, c.y + 4);
+    if (this.chanAwaitingReply && !this.dmOpen) {
+      // S142: his one line, in the channel's own type area — the same grammar as the DM's
+      const rect = { x: c.x, y: c.y + c.h - 20, w: c.w - listW, h: 18, id: 'reply:0' };
+      this.replyRects = [rect];
+      ui.setFont(ctx, 10);
+      ui.button(ctx, rect.x, rect.y, rect.w, rect.h, '', { hover: false });
+      ctx.fillStyle = ERA1.navy;
+      ctx.fillText(dialog.channelReply.text, rect.x + 8, rect.y + 5);
+    }
 
     if (this.dmOpen) {
       const d = ui.windowFrame(ctx, 170, 140, 300, 170, dialog.dmTitle, this.focus === 'dm');
@@ -334,6 +380,10 @@ export class IrcApp {
     if (this.escAwaitingReply) {
       const idx = this.replyRects.findIndex(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
       if (idx >= 0) { this.chooseReply(idx); return; }
+    }
+    if (this.chanAwaitingReply) {
+      const idx = this.replyRects.findIndex(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
+      if (idx >= 0) { this.sayInChannel(); return; }
     }
     if (this.dmOpen && x >= 170 && x <= 470 && y >= 140 && y <= 310) this.focus = 'dm';
     else if (x >= 14 && x <= 414 && y >= 30 && y <= 320) this.focus = 'channel';
