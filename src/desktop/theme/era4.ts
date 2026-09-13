@@ -656,20 +656,32 @@ export function photograph(
      * face, which is exactly what such a thing does. The window and the found
      * light are the same as variant 0, so the two read as one photograph.
      */
-    const sc = Math.max(1, Math.round(w / 150));
-    const hw = 14 * sc, hh = 14 * sc;
+    /**
+     * ⚑ 2026-09-13: A PORTRAIT, not a room with a person in it. On the first
+     * plates the figure was 28 px in a 176 px frame and the handle cut beside
+     * her; the change the tool makes was invisible. Now she fills the frame
+     * the way a phone's portrait does — head a fifth of the width, shoulders
+     * to the bottom edge — so the two halves read at a glance.
+     */
+    const hw = Math.round(w * 0.22), hh = Math.round(h * 0.30);
+    const px0 = x + Math.round(w * 0.5 - hw / 2) + (enhanced ? 0 : skew);
+    const py0 = y + Math.round(h * 0.16) + (enhanced ? 0 : tilt);
+    const u = Math.max(2, Math.round(w / 60));   // the unit: hair, earrings, edges
+    const shoulders = py0 + hh + u;
     if (enhanced) {
-      px(ctx, fx - sc, fy, hw + 2 * sc, hh, skin);                      // head, squared
-      px(ctx, fx - 3 * sc, fy - 3 * sc, hw + 6 * sc, 6 * sc, ERA4.photoHair); // a cap of hair
-      px(ctx, fx - 5 * sc, fy + hh + sc, hw + 10 * sc, h - (fy - y) - hh - sc, ERA4.photoCloth);
+      px(ctx, px0 - u, py0, hw + 2 * u, hh, skin);                        // head, squared, a unit wider each side
+      px(ctx, px0 - 2 * u, py0 - 2 * u, hw + 4 * u, 3 * u, ERA4.photoHair); // a cap of hair
+      px(ctx, px0 - 5 * u, shoulders, hw + 10 * u, y + h - shoulders, ERA4.photoCloth);   // the library's grey
+      px(ctx, px0 + Math.round(hw / 2) - u, shoulders, 2 * u, 3 * u, skin);   // the neck
     } else {
-      px(ctx, fx - 6 * sc, fy - 3 * sc, hw + 12 * sc, 6 * sc, ERA4.photoHair); // hair, wide
-      px(ctx, fx - 6 * sc, fy, 4 * sc, hh + 14 * sc, ERA4.photoHair);          // …to the shoulders
-      px(ctx, fx + hw + 2 * sc, fy, 4 * sc, hh + 14 * sc, ERA4.photoHair);
-      px(ctx, fx, fy, hw, hh, skin);                                       // head
-      px(ctx, fx - sc, fy + 8 * sc, sc, 2 * sc, PLACE.sun);                // earrings
-      px(ctx, fx + hw, fy + 8 * sc, sc, 2 * sc, PLACE.sun);
-      px(ctx, fx - 4 * sc, fy + hh + sc, hw + 8 * sc, h - (fy - y) - hh - sc, PLACE.textileHi);
+      px(ctx, px0 - 4 * u, py0 - 2 * u, hw + 8 * u, 4 * u, ERA4.photoHair);   // hair, wide
+      px(ctx, px0 - 4 * u, py0, 3 * u, hh + 6 * u, ERA4.photoHair);           // …to the shoulders
+      px(ctx, px0 + hw + u, py0, 3 * u, hh + 6 * u, ERA4.photoHair);
+      px(ctx, px0, py0, hw, hh, skin);                                       // head
+      px(ctx, px0 - u, py0 + Math.round(hh * 0.55), u, 2 * u, PLACE.sun);      // earrings
+      px(ctx, px0 + hw, py0 + Math.round(hh * 0.55), u, 2 * u, PLACE.sun);
+      px(ctx, px0 + Math.round(hw / 2) - u, shoulders, 2 * u, 3 * u, skin);   // the neck
+      px(ctx, px0 - 4 * u, shoulders + 2 * u, hw + 8 * u, y + h - shoulders, PLACE.textileHi);   // the top she wears
     }
     ctx.restore();
     px(ctx, x - 1, y - 1, w + 2, 1, ERA4.photoFrame);
@@ -819,7 +831,7 @@ export function browserChrome(
     }
     setFont(ctx, 8);
     ctx.fillStyle = ink;
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 19, TAB.y, tw - (look.badge ? 34 : 26), TAB.h); ctx.clip();
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 19, TAB.y, tw - (look.badge ? 42 : 26), TAB.h); ctx.clip();   // the title stops a breath before the badge
     ctx.fillText(tabs[i].title, x + 19, TAB.y + 8);
     ctx.restore();
     if (look.badge) {

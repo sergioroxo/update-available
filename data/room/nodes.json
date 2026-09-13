@@ -49,12 +49,12 @@
    "seatYaw": 271,
    "label": "by the stage",
    "marker": [
-    6.6,
+    7.6,
     0.03,
     0.7
    ],
    "pose": {
-    "x": 6.6,
+    "x": 7.6,
     "y": 1.16,
     "z": 0.7,
     "pitch": -2,
@@ -87,12 +87,12 @@
    "seatYaw": 205,
    "label": "by the screen",
    "marker": [
-    9.2,
+    10.2,
     0.03,
     3.6
    ],
    "pose": {
-    "x": 9.2,
+    "x": 10.2,
     "y": 1.16,
     "z": 3.6,
     "pitch": -3,

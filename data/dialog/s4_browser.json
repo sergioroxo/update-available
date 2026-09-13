@@ -320,7 +320,7 @@
    "restoring": "Restoring…",
    "before": "Original",
    "after": "Restored",
-   "saved": "Saved to your library as IMG_2211~restored.jpg · original kept",
+   "saved": "Saved to your library as {name}~restored.jpg · original kept",
    "restoringSeconds": 3.2,
    "upload": "Upload a photo",
    "stages": [
@@ -337,7 +337,26 @@
     "Outfit",
     "Lighting"
    ],
-   "savedButton": "Saved ✓"
+   "savedButton": "Saved ✓",
+   "folderItems": [
+    {
+     "name": "the walk.jpg",
+     "kind": "file",
+     "meta": "June, Pride"
+    },
+    {
+     "name": "junie's sign.jpg",
+     "kind": "file",
+     "meta": "June"
+    },
+    {
+     "name": "me, after.jpg",
+     "kind": "file",
+     "meta": "June"
+    }
+   ],
+   "_docFolder": "⚑ 2026-09-13: the folder OPENS. Sérgio's spec was 'pick trans-themed folder → the website makes you look cisgender'; pressing Pride '24 used to restore the folder itself. Now it shows these three, and the photograph she chooses is the one the tool rewrites — the save line names it (`saved` takes {name}).",
+   "back": "‹ Photos"
   },
   "console": {
    "mark": "L",
@@ -346,6 +365,14 @@
    "managed": "Second Thoughts is managing your session.",
    "ready": "Put the headset on for your session.",
    "worn": "Session in progress."
+  },
+  "failed": {
+   "_doc": "⚑ 2026-09-13: THE PAGE AFTER THE FAILURE. The device stops, the room comes back, and the monitor still showed step five asking her to put the headset on — the browser did not know. It knows now: the agent's page cannot be reached, the step is marked failed, and the machine's flat words say why in the only register it has. Nothing here is pressable.",
+   "status": "offline",
+   "title": "This site can't be reached",
+   "line": "secondthoughts.help took too long to respond.",
+   "detail": "Your session could not be continued. Second Thoughts has ended the session on your behalf.",
+   "step": "Session ended by the host."
   }
  }
 }

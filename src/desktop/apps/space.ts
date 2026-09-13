@@ -594,14 +594,15 @@ export class E4Shell {
        * it is pressable. The `closeButtonRect` code is kept, unused.
        */
       this.laptopBar(ctx, W, space.corrupt.sub);
-      setFont(ctx, 14);
+      // ⚑ 2026-09-13: LARGE, and in the top half — only the lid's top ~51% is
+      //   in the seat's frame (S107), and at 14 px the title was a whisper
+      setFont(ctx, 20);
       ctx.fillStyle = ERA4.textHi;
-      let ny = LAPTOP_BAR + 22;
-      for (const row of wrapLaptop(ctx, updates.close.restarting, W - 24)) { ctx.fillText(row, 12, ny); ny += 18; }
+      let ny = LAPTOP_BAR + 14;
+      for (const row of wrapLaptop(ctx, updates.close.restarting, W - 20)) { ctx.fillText(row, 10, ny); ny += 24; }
       setFont(ctx, 9);
       ctx.fillStyle = ERA4.dim;
-      ny += 6;
-      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 24)) { ctx.fillText(row, 12, ny); ny += 12; }
+      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 20)) { ctx.fillText(row, 10, ny); ny += 12; }
       return;
     }
     const done = this.laptopLine >= space.laptop.lines.length;
@@ -823,6 +824,8 @@ export class E4Shell {
     this.version++;
     // ⚑ 2026-09-12: and the world goes with the device — the room comes back
     this.ball.leaveWorld();
+    // ⚑ 2026-09-13: and the monitor learns it — the agent's page cannot be reached
+    this.browser.fail();
     /**
      * ⚑ AND THE CLOSE BEGINS HERE, NOT ON A PRESS (2026-09-12). Sérgio: *"The
      * stars cannot go down while you are still playing; it has to be with the

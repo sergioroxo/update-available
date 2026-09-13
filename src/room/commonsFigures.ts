@@ -30,7 +30,7 @@ import * as pc from 'playcanvas';
 import { PLACE, ERA4 } from '../desktop/theme/era4';
 import { WORLD } from './commonsWorld';
 
-const FIGURES = 14;
+const FIGURES = 22;   // ⚑ 2026-09-13: 14 → 22, and placed where the seat can SEE them (below)
 const SUNK_Y = -40;
 const RISE_SECONDS = 2.2;
 const SEAT = { x: 4.4, z: 0.7, clear: 1.3 };
@@ -69,20 +69,24 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   // two beside her, a stride and a half away either side, so she is IN the
   // crowd — ⚑ at half a metre a person fills the frame (measured); at 1.4 m
   // they are a person standing next to you
-  for (const [x, z] of [[4.8, -1.5], [4.7, 2.9]] as const) {
+  for (const [x, z] of [[4.9, -1.7], [4.8, 3.1]] as const) {
     figures.push({
       x, z, h: 1.55 + rng() * 0.25, w: 0.26 + rng() * 0.08, phase: rng() * 6.28,
       body: cloth[1 + Math.floor(rng() * (cloth.length - 1))], onStage: false
     });
   }
-  // the rest between her and the stage, and a few behind her, uneven on purpose
+  // the rest between her and the stage, and a few behind her, uneven on purpose.
+  // ⚑ 2026-09-13: measured from the seat — the frame at 2 m ahead is ±1.15 m,
+  //   at 3.5 m ±2 m; the first cut spread the crowd over ±3.2 m and the seat
+  //   saw nobody but the walker. Now they stand within the frame's band, either
+  //   side of a gap down the middle, the way a crowd faces a stage.
   while (figures.length < FIGURES) {
     const behind = figures.length >= FIGURES - 3;
-    const x = behind ? SEAT.x - 1.6 - rng() * 1.6 : SEAT.x + 1.5 + rng() * 2.0;
-    const z = STAGE.z + (rng() - 0.5) * 6.4;
-    if (Math.hypot(x - SEAT.x, z - SEAT.z) < 1.8) continue;
-    // a gap down the middle so she can see the stage between the people in front
-    if (!behind && Math.abs(z - STAGE.z) < 0.6) continue;
+    const x = behind ? SEAT.x - 1.6 - rng() * 1.6 : SEAT.x + 2.6 + rng() * 1.4;   // ⚑ never nearer than 2.6 m: at 1.4 a figure was a wall, at 2.2 a door
+    const side = rng() < 0.5 ? -1 : 1;
+    const reach = 0.55 + (x - SEAT.x) * 0.5;   // the frame's half-width at that distance
+    const z = behind ? STAGE.z + (rng() - 0.5) * 4.0 : STAGE.z + side * (0.55 + rng() * reach);
+    if (Math.hypot(x - SEAT.x, z - SEAT.z) < 1.5) continue;
     if (x > STAGE.x - STAGE.d / 2 - 0.4) continue;
     figures.push({
       x, z, h: 1.5 + rng() * 0.32, w: 0.24 + rng() * 0.1, phase: rng() * 6.28,
@@ -154,8 +158,10 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   mat.diffuse = new pc.Color(1, 1, 1);
   mat.diffuseVertexColor = true;
   mat.specular = new pc.Color(0, 0, 0);
-  // a little self-light so the dark cloths are not silhouettes under a warm rig
-  mat.emissive = new pc.Color(0.16, 0.14, 0.13);
+  // ⚑ 2026-09-13: self-light in the cloth's OWN colour (emissiveVertexColor),
+  //   not a grey — under the gold stage light every figure had gone tan
+  mat.emissiveVertexColor = true;
+  mat.emissive = new pc.Color(0.42, 0.42, 0.42);
   mat.update();
   const ent = new pc.Entity('commons-figures');
   ent.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)] });

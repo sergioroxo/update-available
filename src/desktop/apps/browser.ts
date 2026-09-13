@@ -45,13 +45,16 @@ interface Tab { id: TabId; mark: string; title: string; notHers?: boolean; addre
 const TABS = script.tabs as unknown as Tab[];
 interface Step { id: TabId; n: number; title: string; ask: string; button?: string; done?: string; witness?: string; console: string }
 interface FileItem { name: string; kind: 'folder' | 'file'; meta: string }
+interface Failed { status: string; title: string; line: string; detail: string; step: string }
 const PROGRAM = body.program as unknown as {
   chosen: string; typingSeconds: number; agentMark: string; agentAddress: string;
   greeting: string[]; begin: string; beginWitness: string; stepLabel: string; locked: string;
   steps: Step[];
   files: { title: string; path: string; items: FileItem[]; cancel: string; restoring: string;
     before: string; after: string; saved: string; restoringSeconds: number;
-    upload: string; stages: string[]; adjusted: string[]; savedButton: string };
+    upload: string; stages: string[]; adjusted: string[]; savedButton: string;
+    folderItems: FileItem[]; back: string };
+  failed: Failed;
   console: { mark: string; restored: string; typing: string; managed: string; ready: string; worn: string };
 };
 /** the agent moves to the next step this long after the press */
@@ -117,7 +120,7 @@ export class E4Browser {
    * until `beginSession()` is called — by app.ts's `endRelocation` on the real
    * E3→E4 leg, with the settle delay, and by the review jumps at once.
    */
-  private phase: 'dormant' | 'restoring' | 'open' | 'handed' = 'dormant';
+  private phase: 'dormant' | 'restoring' | 'open' | 'handed' | 'failed' = 'dormant';
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
 
@@ -134,7 +137,9 @@ export class E4Browser {
   /** seconds since the live step was completed — the agent moves on after a beat */
   private advanceT = -1;
   /** the Restoration exercise's own little machine */
-  private picker: 'closed' | 'open' | 'restoring' | 'result' = 'closed';
+  private picker: 'closed' | 'open' | 'folder' | 'restoring' | 'result' = 'closed';
+  /** the photograph she chose — the folder's, or the top level's; the save line names it */
+  private chosenFile = '';
   private pickerT = 0;
 
   get programMode(): string { return this.mode; }
@@ -320,11 +325,15 @@ export class E4Browser {
     }
 
     px(ctx, 0, 0, W, H, CHROME.page);
-    const shown = TABS.slice(0, back);
+    // ⚑ 2026-09-13: once the page is the agent's, the tab says so — it read
+    //   "how do i tell" over Second Thoughts for the whole program
+    const shown = TABS.slice(0, back).map((t) =>
+      t.id === 'search' && this.mode !== 'free' && this.mode !== 'typing' ? { ...t, title: PROGRAM.agentMark } : t);
     // ⚑ each tab shows its own address; only the search tab shows what she
     //   typed, and only it carries the cursor (2026-09-12, his review)
     const onSearch = this.liveTab === 'search';
-    let addr = this.phase !== 'open' ? '' : onSearch ? script.search.typed : (TABS[this.live]?.address ?? '');
+    let addr = this.phase === 'failed' ? PROGRAM.agentAddress
+      : this.phase !== 'open' ? '' : onSearch ? script.search.typed : (TABS[this.live]?.address ?? '');
     let blink = this.phase === 'open' && onSearch && this.pressable && this.mode === 'free'
       && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
     // ⚑ the search being finished FOR her: the typed six words, then the rest
@@ -339,6 +348,7 @@ export class E4Browser {
       addr = PROGRAM.agentAddress;
     }
     const looks: TabLook[] = shown.map((t) => {
+      if (this.phase === 'failed') return t.id === 'search' ? { badge: '!', state: 'normal' } : { state: 'locked' };
       if (this.mode !== 'program') return {};
       const st = PROGRAM.steps.find(x => x.id === t.id);
       if (!st) return { state: 'locked' };
@@ -356,6 +366,7 @@ export class E4Browser {
       this.publish({ ...r, id: `tab${i}` });
     });
 
+    if (this.phase === 'failed') { this.drawFailed(ctx, W, H); return; }
     if (this.phase !== 'open') {
       // still coming back: the page under the chrome is empty and stays empty
       setFont(ctx, 9);
@@ -491,7 +502,7 @@ export class E4Browser {
       bubble(PROGRAM.console.managed);
       // the checklist card inside the chat
       const lx = cx + 42, lw = cw - 54;
-      roundEdge(ctx, lx, y, lw, 16 + PROGRAM.steps.length * 17, 6, WEB.cardEdge, WEB.card);
+      roundEdge(ctx, lx, y, lw, 16 + PROGRAM.steps.length * 17 + 11, 6, WEB.cardEdge, WEB.card);
       let ly = y + 9;
       for (const st of PROGRAM.steps) {
         const done = this.stepDone.has(st.id);
@@ -502,9 +513,11 @@ export class E4Browser {
         ctx.fillStyle = done ? WEB.muted : WEB.ink;
         ctx.fillText(`${st.n}   ${st.title}`, lx + 26, ly);
         if (cur) {
+          // ⚑ on its own row (2026-09-13): beside the title it ran into it
           setFont(ctx, 8);
           ctx.fillStyle = WEB.muted;
-          ctx.fillText(st.ask, lx + 26 + Math.ceil(ctx.measureText(`${st.n}   ${st.title}`).width) + 14, ly + 1);
+          ctx.fillText(st.ask, lx + 46, ly + 12);
+          ly += 11;
         }
         ly += 17;
       }
@@ -628,7 +641,7 @@ export class E4Browser {
       ctx.fillText(F.path, x + sbw + 12, y + 44);
       // the tiles
       const tw = 78, th = 48, gx = x + sbw + 12, gy = y + 56;
-      F.items.forEach((it, k) => {
+      (F.items as FileItem[]).forEach((it, k) => {
         const tx = gx + (k % 4) * (tw + 8), ty = gy + Math.floor(k / 4) * (th + 30);
         if (it.kind === 'folder') {
           roundRect(ctx, tx, ty, tw, th, 5, WEB.chip);
@@ -647,6 +660,53 @@ export class E4Browser {
       });
       // the footer: Cancel and Open, both drawn, neither doing anything — the
       // step is mandatory and a tile is the press
+      px(ctx, x + 1, y + h - 32, w - 2, 1, WEB.cardEdge);
+      webButton(ctx, x + w - 156, y + h - 27, F.cancel, 'quiet', 64);
+      webButton(ctx, x + w - 84, y + h - 27, 'Open', 'disabled', 70);
+      return;
+    }
+    if (this.picker === 'folder') {
+      // ⚑ inside the folder (2026-09-13): the same window, one level down —
+      //   her Pride photographs, three of them, and any one is the press
+      const w = Math.min(420, cw - 40), h = ch - 60;
+      const x = cx + Math.round((cw - w) / 2), y = top + 46;
+      ctx.save(); ctx.globalAlpha = 0.35; px(ctx, cx, top, cw, ch, WEB.ink); ctx.restore();
+      roundRect(ctx, x, y + 2, w, h, 8, WEB.faint);
+      roundEdge(ctx, x, y, w, h, 8, WEB.cardEdge, WEB.card);
+      setFont(ctx, 10);
+      ctx.fillStyle = WEB.ink;
+      ctx.fillText(F.title, x + 14, y + 8);
+      const sbw = 96;
+      px(ctx, x + sbw, y + 24, 1, h - 56, WEB.cardEdge);
+      setFont(ctx, 8);
+      ['Recents', 'Photos', 'Favourites', 'Shared'].forEach((n, k) => {
+        const on = k === 1;
+        if (on) roundRect(ctx, x + 8, y + 26 + k * 16, sbw - 16, 14, 4, WEB.accentSoft);
+        ctx.fillStyle = on ? WEB.accentInk : WEB.muted;
+        ctx.fillText(n, x + 16, y + 29 + k * 16);
+      });
+      pill(ctx, x + sbw + 12, y + 24, w - sbw - 24, 14, WEB.chip);
+      ctx.fillStyle = WEB.faint;
+      ctx.fillText('Search', x + sbw + 24, y + 27);
+      ctx.fillStyle = WEB.accentInk;
+      ctx.fillText(F.back, x + sbw + 12, y + 44);
+      this.publish({ x: x + sbw + 8, y: y + 40, w: 60, h: 14, id: 'file-back' });
+      ctx.fillStyle = WEB.muted;
+      const folder = (F.items as FileItem[]).find((i) => i.kind === 'folder');
+      const crumb = `${F.path}  ›  ${folder?.name ?? ''}`;
+      ctx.fillText(crumb, x + sbw + 12 + 52, y + 44);
+      const tw = 78, th = 48, gx = x + sbw + 12, gy = y + 56;
+      (F.folderItems as FileItem[]).forEach((it, k) => {
+        const tx = gx + (k % 4) * (tw + 8), ty = gy;
+        thumb(ctx, tx, ty, tw, th, k === 0 ? 2 : 3, false);
+        setFont(ctx, 8);
+        ctx.fillStyle = WEB.ink;
+        ctx.save(); ctx.beginPath(); ctx.rect(tx, ty + th, tw, 12); ctx.clip();
+        ctx.fillText(it.name, tx, ty + th + 4); ctx.restore();
+        ctx.fillStyle = WEB.muted;
+        ctx.fillText(it.meta, tx, ty + th + 14);
+        this.publish({ x: tx, y: ty, w: tw, h: th + 24, id: `file-${k}` });
+      });
       px(ctx, x + 1, y + h - 32, w - 2, 1, WEB.cardEdge);
       webButton(ctx, x + w - 156, y + h - 27, F.cancel, 'quiet', 64);
       webButton(ctx, x + w - 84, y + h - 27, 'Open', 'disabled', 70);
@@ -679,7 +739,7 @@ export class E4Browser {
     compareSplit(ctx, px0, by, pw, ph,
       (c) => thumb(c, px0, by, pw, ph, 3, false, 6),
       (c) => thumb(c, px0, by, pw, ph, 3, true, 6),
-      0.62, F.before, F.after);
+      0.5, F.before, F.after);   // ⚑ 2026-09-13: through the middle of the face, now that it is a portrait
     // beside it: what was adjusted, and the save
     const rx = px0 + pw + 16;
     setFont(ctx, 9);
@@ -692,7 +752,61 @@ export class E4Browser {
     webButton(ctx, rx, cy + 4, F.savedButton, 'disabled', 96);
     setFont(ctx, 8);
     ctx.fillStyle = WEB.muted;
-    for (const row of wrapText(ctx, F.saved, cw - (rx - cx) - 16).slice(0, 3)) { ctx.fillText(row, rx, cy + 32); cy += 10; }
+    const savedLine = F.saved.replace('{name}', this.chosenFile || 'IMG_2211');
+    for (const row of wrapText(ctx, savedLine, cw - (rx - cx) - 16).slice(0, 3)) { ctx.fillText(row, rx, cy + 32); cy += 10; }
+  }
+
+  /**
+   * ⚑ THE PAGE AFTER THE FAILURE (2026-09-13). The device has stopped; the
+   * browser's step five was still asking her to put it on. Now the agent's
+   * page cannot be reached: a browser's own error page in the kit's register,
+   * the step marked failed, and the machine's flat sentence about who ended
+   * what. Nothing is pressable — `handleClick` eats presses in this phase.
+   */
+  private drawFailed(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const FD = PROGRAM.failed;
+    const top = ADDR.y + ADDR.h + 6;
+    px(ctx, 0, top, W, H_PAGE, WEB.bg);
+    // the step bar, as it was, with the last segment failed
+    px(ctx, 0, top, W, 44, WEB.card);
+    px(ctx, 0, top + 43, W, 1, WEB.cardEdge);
+    const segW = 26, segX = ADDR.x + 8;
+    PROGRAM.steps.forEach((_x, k) => {
+      const last = k === PROGRAM.steps.length - 1;
+      pill(ctx, segX + k * (segW + 3), top + 8, segW, 4, last ? WEB.faint : WEB.accent);
+    });
+    setFont(ctx, 8);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText(PROGRAM.stepLabel.replace('{n}', String(PROGRAM.steps.length)) + '  ·  ' + PROGRAM.agentMark, segX, top + 16);
+    setFont(ctx, 12);
+    ctx.fillStyle = WEB.ink;
+    ctx.fillText(FD.step, segX, top + 27);
+    // the error page
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16, cy = top + 54;
+    webCard(ctx, cx, cy, cw, H - cy - 14);
+    avatar(ctx, cx + 12, cy + 10, 22, WEB.faint, 'S');
+    setFont(ctx, 11);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText(PROGRAM.agentMark, cx + 42, cy + 11);
+    setFont(ctx, 8);
+    px(ctx, cx + 42, cy + 26, 5, 5, WEB.faint);
+    ctx.fillText(FD.status, cx + 50, cy + 23);
+    px(ctx, cx + 1, cy + 40, cw - 2, 1, WEB.cardEdge);
+    // the glyph a browser draws when there is nothing to draw
+    roundEdge(ctx, cx + 44, cy + 62, 34, 26, 4, WEB.faint, WEB.bg);
+    px(ctx, cx + 52, cy + 70, 18, 2, WEB.faint);
+    px(ctx, cx + 52, cy + 76, 12, 2, WEB.faint);
+    setFont(ctx, 13);
+    ctx.fillStyle = WEB.ink;
+    ctx.fillText(FD.title, cx + 44, cy + 100);
+    setFont(ctx, 9);
+    ctx.fillStyle = WEB.muted;
+    ctx.fillText(FD.line, cx + 44, cy + 122);
+    setFont(ctx, 9);
+    ctx.fillStyle = WEB.ink;
+    let yy = cy + 144;
+    for (const row of wrapText(ctx, FD.detail, cw - 88).slice(0, 3)) { ctx.fillText(row, cx + 44, yy); yy += 12; }
+    webButton(ctx, cx + 44, yy + 8, 'Reload', 'disabled', 72);
   }
 
   /** ⚑ the transcript — fourteen months, read backwards. Her side of every
@@ -931,6 +1045,7 @@ export class E4Browser {
 
   handleClick(x: number, y: number): boolean {
     if (this.phase === 'handed') return false;
+    if (this.phase === 'failed') return true;   // a dead page takes presses and does nothing
     if (this.phase !== 'open') return true;   // the restore takes presses and eats them
     if (this.mode === 'typing') return true;  // the engine is busy finishing her sentence
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
@@ -959,10 +1074,17 @@ export class E4Browser {
           }
           return true;
         }
-        if (hit.id.startsWith('file-') && this.picker === 'open') {
+        if (hit.id.startsWith('file-') && (this.picker === 'open' || this.picker === 'folder')) {
+          const k = Number(hit.id.slice(5));
+          const list = (this.picker === 'folder' ? PROGRAM.files.folderItems : PROGRAM.files.items) as FileItem[];
+          const it = list[k];
+          // ⚑ 2026-09-13: a folder OPENS; a photograph is what the tool takes
+          if (it && it.kind === 'folder') { this.picker = 'folder'; this.version++; return true; }
+          this.chosenFile = it ? it.name.replace(/\.jpg$/i, '') : 'IMG_2211';
           this.picker = 'restoring'; this.pickerT = 0; this.version++;
           return true;
         }
+        if (hit.id === 'file-back' && this.picker === 'folder') { this.picker = 'open'; this.version++; return true; }
         if (hit.id.startsWith('tab')) {
           const i = Number(hit.id.slice(3));
           // only a finished step or the live one; a locked tab published no rect
@@ -1033,6 +1155,9 @@ export class E4Browser {
 
   /** the room's coordinate-less press, and the debug panel's own exit. */
   handOverLid(): void { this.phase = 'handed'; this.version++; }
+  /** ⚑ 2026-09-13: the device has stopped — the agent's page cannot be reached
+   *  any more, and the monitor says so (see `body.failed`). */
+  fail(): void { if (this.phase !== 'failed') { this.phase = 'failed'; this.version++; } }
 
   /** review only: land on a tab, or on the settled browser. */
   debugJumpTo(where: string): void {

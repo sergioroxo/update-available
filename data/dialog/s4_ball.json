@@ -320,7 +320,27 @@
   "title": "Your session",
   "line": "This is your session, Maya. We'll begin in a moment.",
   "preparing": "Preparing your environment",
-  "seconds": 9.0
+  "seconds": 9.0,
+  "plan": [
+   {
+    "n": "1",
+    "title": "Grounding",
+    "meta": "a quiet room  ·  4 min"
+   },
+   {
+    "n": "2",
+    "title": "Someone who went back",
+    "meta": "a recorded conversation  ·  11 min"
+   },
+   {
+    "n": "3",
+    "title": "Your goals, restated",
+    "meta": "we've prepared these for you"
+   }
+  ],
+  "planTitle": "Today's session",
+  "environment": "Environment  ·  A quiet room",
+  "_docPlan": "⚑ 2026-09-13: the lower half of the glass was empty for nine seconds — a bar and nothing. The plan arrives item by item, so the session is visibly ABOUT to begin: three things the system has decided she will do, the third of which it wrote for her. None of it begins; Junie's card does. A viewer should feel the programme closing over her before the door opens."
  },
  "stream": {
   "_beat": "⚑ 2026-09-12 — THE STREAM: `transjesus.str`, one of the piece's own invented marks (CLAUDE.md), hung as a window in the space above the desk while the Commons is on. It shows the room that is happening BEHIND her — the same crowd, the same floor, the category the MC is calling — so a player who has not turned sees it streamed and turns. No voice on it, ever (Sérgio, 2026-09-12: 'TransJesus doesn't have voice'). The chat column is generic cheers, nobody's words, no names.",

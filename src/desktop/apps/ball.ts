@@ -456,7 +456,8 @@ export class E4Ball {
       const inv = script.invite;
       roundRect(ctx, INVITE.x, INVITE.y + 2, INVITE.w, INVITE.h, 10, ERA4.panelEdge);
       roundRect(ctx, INVITE.x, INVITE.y, INVITE.w, INVITE.h, 10, WEB.card);
-      avatar(ctx, INVITE.x + 14, INVITE.y + 14, 26, WEB.primary, inv.from.slice(0, 1));
+      // ⚑ 2026-09-13: Junie is not the agent — her mark is the room's pink, not the system's green
+      avatar(ctx, INVITE.x + 14, INVITE.y + 14, 26, PLACE.textileHi, inv.from.slice(0, 1));
       setFont(ctx, 8);
       ctx.fillStyle = WEB.muted;
       ctx.fillText(script.commons.name + '  ·  now', INVITE.x + 50, INVITE.y + 12);
@@ -518,6 +519,31 @@ export class E4Ball {
     const bw = Math.round(W * 0.34);
     pill(ctx, Math.round(W * 0.56), y + 22, bw, 5, ERA4.rule);
     pill(ctx, Math.round(W * 0.56), y + 22, Math.round(bw * Math.min(0.82, t / (S.seconds * 1.3))), 5, ERA4.lDim);
+    // ⚑ 2026-09-13: the plan, arriving item by item on the environment's floor —
+    //   what the session was going to be. See s4_ball.json `_docPlan`.
+    const floor = Math.round(H * 0.58);
+    const plan = (S as unknown as { plan: { n: string; title: string; meta: string }[]; planTitle: string; environment: string });
+    const px0 = Math.round(W * 0.16), pw0 = Math.round(W * 0.68);
+    setFont(ctx, 9);
+    ctx.fillStyle = ERA4.meta;
+    ctx.fillText(plan.planTitle, px0, floor + 12);
+    const envW = Math.ceil(ctx.measureText(plan.environment).width) + 16;
+    pill(ctx, px0 + pw0 - envW, floor + 10, envW, 13, ERA4.panelHi);
+    ctx.fillStyle = ERA4.dim;
+    ctx.fillText(plan.environment, px0 + pw0 - envW + 8, floor + 12);
+    const shown = Math.min(plan.plan.length, Math.floor(t / 2.2));
+    plan.plan.forEach((it, k) => {
+      if (k >= shown) return;
+      const ry = floor + 30 + k * 30;
+      roundRect(ctx, px0, ry, pw0, 26, 5, ERA4.panelHi);
+      avatar(ctx, px0 + 8, ry + 5, 16, ERA4.lDim, it.n);
+      setFont(ctx, 10);
+      ctx.fillStyle = ERA4.textHi;
+      ctx.fillText(it.title, px0 + 32, ry + 4);
+      setFont(ctx, 8);
+      ctx.fillStyle = ERA4.dim;
+      ctx.fillText(it.meta, px0 + 32, ry + 15);
+    });
     visorEdge(ctx, W, H);
   }
 
