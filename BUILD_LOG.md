@@ -1089,3 +1089,15 @@ channel's blip per IRC line, the floppy going in, the install churn, and Restart
 cycle; each notice arrives on the era's own chime. Narrative: the u4 changelog rewritten for the Era 4
 that exists; the MC's 25 never-rendered audio refs removed (no voice). `walk.mjs` now prints WHAT WAS
 HEARD, IN ORDER — 55+ clips from the 1997 boot to the Close's sky — so wiring is proven by the walk.
+
+## 2026-09-13 — S142 · The channel talks to Daniel; the 2016 panel corrected to Malta
+
+Era 1's IRC was the only place a person talked TO Daniel and it never did: eleven ambient lines, then
+Rob's DM. Now the room notices him after its fourth line (Lume, by name), he answers with the one line
+he is given — the channel's own press-only tray, the DM's grammar — and the room answers back; it is
+Lume, the kindest voice in it, who points him at Rob; Rob's DM opens by name and quotes the channel.
+The kindness is real and it is the routing (s1_irc.json `_doc`). Noa: no beat — the file's ethics gate
+forbids resolving her and her row already renders both corrections unendorsed; what was wrong was the
+Close's 2016 panel ('an item in her queue is about her' — there is none): corrected to Malta, the law
+arriving in the group chat. Two walker faults found on the way (an exit press capped; a stale tray rect
+pressed eight times) and one of them was the piece's. Walked: 212 presses, spine done.
