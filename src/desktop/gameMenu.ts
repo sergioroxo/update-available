@@ -47,6 +47,9 @@ import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import copy from '../../data/strings/gameMenu.json';
 import attributions from '../../data/strings/attributions.json';
+import { entriesByEra, practiceOf, type RecordEra } from '../witness/record';
+import originIntake from '../../data/provotypes/origin_intake_e1.json';
+import pillowCard from '../../data/provotypes/pillow.json';
 // ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
 // (6 sourced entries + the credit paragraph) and `data/provotypes/e4_offers.json`
 // (4 sourced entries) were never imported anywhere — each appeared exactly once,
@@ -70,7 +73,7 @@ import e4Offers from '../../data/provotypes/e4_offers.json';
 // wiring below is what makes the card real rather than filed.
 import e3Day from '../../data/provotypes/e3_theday.json';
 
-type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'restartConfirm';
+type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'restartConfirm' | 'yourFile';
 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
@@ -194,8 +197,52 @@ export function mountGameMenu(): GameMenu {
     backRow('credits');
   }
 
+  /**
+   * ⚑ S144 — YOUR FILE: the map of interaction, read in the frame. Every entry
+   * the ledger holds, by era, in order; under each, the PRACTICE it belongs to
+   * (data/dossier/practices.json), its dossier status, and the sourced card it
+   * points at — a pointer into the provotypes' existing cards, never a new
+   * claim. See docs/reinterp/THE_RECORD_PLAN_2026-09-15.md.
+   */
+  const SOURCE_FILES: Record<string, { debrief: { sources: { status: string; text: string }[] } }> = {
+    origin_intake_e1: originIntake as unknown as { debrief: { sources: { status: string; text: string }[] } },
+    pillow: pillowCard as unknown as { debrief: { sources: { status: string; text: string }[] } },
+    e3_theday: e3Day as unknown as { debrief: { sources: { status: string; text: string }[] } },
+    e4_ball: e4Ball as unknown as { debrief: { sources: { status: string; text: string }[] } },
+    e4_offers: e4Offers as unknown as { debrief: { sources: { status: string; text: string }[] } }
+  };
+  function yourFileView(): void {
+    heading(copy.yourFileTitle);
+    paragraph(copy.yourFileIntro);
+    const by = entriesByEra();
+    const all = (['e1', 'e2', 'e3', 'e4'] as RecordEra[]).flatMap((e) => by[e]);
+    if (all.length === 0) { paragraph(copy.yourFileEmpty); backRow(); return; }
+    paragraph(copy.yourFileCount.replace('{n}', String(all.length)).replace('{f}', String(all.filter((e) => e.flagged).length)));
+    for (const era of ['e1', 'e2', 'e3', 'e4'] as RecordEra[]) {
+      const entries = by[era];
+      if (entries.length === 0) continue;
+      heading((copy.yourFileEras as Record<string, string>)[era]);
+      // one block per practice, in order of first appearance — the entries under it
+      const seen: string[] = [];
+      for (const e of entries) if (!seen.includes(e.kind)) seen.push(e.kind);
+      for (const kind of seen) {
+        const pr = practiceOf(kind);
+        const mine = entries.filter((e) => e.kind === kind);
+        paragraph(`${pr ? pr.title.toUpperCase() : kind.toUpperCase()} — ${pr ? pr.did : ''}`);
+        for (const e of mine) paragraph(`  · ${e.witness}${e.flagged ? `  [${copy.yourFileFlag}]` : ''}`);
+        if (pr) {
+          const src = pr.source ? SOURCE_FILES[pr.source.file]?.debrief.sources[pr.source.index] : null;
+          paragraph(`  ${copy.yourFilePractice}: ${pr.status}${src ? ` — ${copy.yourFileSource}: ${src.text}` : ` — ${copy.yourFileNoSource}`}`);
+        }
+      }
+    }
+    row(copy.yourFileSourcesRow, () => { view = 'credits'; render(); });
+    backRow();
+  }
+
   function render(): void {
     clear();
+    if (view === 'yourFile') { yourFileView(); return; }
     if (view === 'main') {
       heading(copy.title);
       row(copy.resume, () => gameMenuBus.close(), true);
@@ -245,6 +292,7 @@ export function mountGameMenu(): GameMenu {
         () => { ledger.view.unvoicedName = !ledger.view.unvoicedName; render(); }
       );
       paragraph(copy.unvoicedNameNote);
+      row(copy.yourFile, () => { view = 'yourFile'; render(); });
       row(copy.restart, () => { view = 'restartConfirm'; render(); });
       row(copy.controls, () => { view = 'controls'; render(); });
       row(copy.credits, () => { view = 'credits'; render(); });

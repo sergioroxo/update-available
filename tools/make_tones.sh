@@ -303,3 +303,11 @@ q -i "$OUT/_keys.wav" -i "$OUT/_drums.wav" -f lavfi -i "anoisesrc=d=$LEN:c=pink:
   -filter_complex "[2]highpass=f=2000,volume=0.05[hiss];[0][1][hiss]amix=inputs=3:normalize=0,vibrato=f=0.4:d=0.02,lowpass=f=4200,highpass=f=90" "$OUT/caleb_last_night_2003.wav"
 rm -f "$OUT"/_c_*.wav "$OUT/_prog.wav" "$OUT/_keys.wav" "$OUT/_drums.wav"
 level caleb_last_night_2003 -26
+
+# ── ⚑ S144 · THE STAMP — a filing, heard. One short cold thock, a relay closing
+# and a rubber stamp's fall in the same 90 ms: the witness side answering an act.
+# The same sound in every era, because the file never changed.
+q -f lavfi -i "anoisesrc=d=0.09:c=brown:a=0.9" -f lavfi -i "sine=f=180:d=0.09" \
+  -filter_complex "[0]lowpass=f=700,afade=t=out:st=0.01:d=0.08,volume=0.6[k];[1]volume=0.25,afade=t=out:st=0.0:d=0.09[t];[k][t]amix=inputs=2:normalize=0" \
+  "$OUT/stamp_witness.wav"
+level stamp_witness -24

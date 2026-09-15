@@ -25,6 +25,7 @@ import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type 
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { mountCloseMonitor, type CloseMonitor } from '../room/closeMonitor';
+import { recordCount } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
@@ -923,6 +924,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   } as CSSStyleDeclaration);
   document.body.appendChild(coldCreep);
   let coldPhase = 0;
+  /** S144: the record's size last frame — the pulse fires on growth */
+  let recordSeen = -1;
 
   // DIARY.TXT breakout: a soft, warm full-frame wash when the system fails to
   // delete the person's words. No strobe; it decays over the diary hold, then
@@ -3264,6 +3267,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onCrossed(facingBack);
     }
 
+    /**
+     * ⚑ S144 — THE WITNESS PULSE. Every filing is heard and seen: when the
+     * record grows, the stamp sounds and the wall's newest row lights. The
+     * player learns in Era 1 that the wall answers what they do, before they
+     * are ever told — which is the only reason to turn round and read it.
+     * (docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §3F)
+     */
+    {
+      const n = recordCount();
+      if (recordSeen < 0) recordSeen = n;
+      else if (n > recordSeen) { recordSeen = n; playOnce('stamp_witness.mp3'); witness.pulse(); }
+    }
     // cold creep: pulse the witness side into the edges while it goes unseen
     if (os.hasUnseenWitness && !facingBack) {
       coldPhase += dt;

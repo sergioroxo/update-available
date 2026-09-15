@@ -1,4 +1,4 @@
-STATUS: draft
+STATUS: superseded-by docs/reinterp/EXHIBITION_TEXT_v6_2026-09-14.md
 
 # YOUR UPDATE HAS FAILED — exhibition text
 *2026-09-14. Claude's draft under the 2026-08-17 norm; Sérgio's edit wins. Three lengths: the wall

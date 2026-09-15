@@ -19,6 +19,8 @@ const PANEL = RECORD.panel;
 const FIELD = RECORD.field;
 const LINE = RECORD.line;
 const HARDEN_SECONDS = 2.2;
+/** S144: how long a fresh filing stays lit on the record */
+const PULSE_SECONDS = 1.6;
 
 interface OpeningProfileSnapshot {
   active: boolean;
@@ -95,6 +97,10 @@ export class WitnessCanvas {
     };
   }
 
+  /** ⚑ S144: a filing landed — the record re-hardens for a beat (the pulse) */
+  pulse(): void { this.pulseT = 0; this.dirty = true; }
+  private pulseT = 9;
+
   setOpeningProfile(profile: OpeningProfileSnapshot): void {
     const wasFiled = this.openingProfile.filed;
     this.openingProfile = {
@@ -143,6 +149,11 @@ export class WitnessCanvas {
     if (this.hardenT < HARDEN_SECONDS) {
       this.hardenT = Math.min(HARDEN_SECONDS, this.hardenT + dt);
       this.dirty = true; // the wake: bands land over 2.2 s and the line warms through
+    }
+    if (this.pulseT < PULSE_SECONDS) {   // S144: a filing landed — the newest row lights, then settles
+      const b4 = this.pulseT;
+      this.pulseT += dt;
+      if (Math.floor(b4 * 8) !== Math.floor(this.pulseT * 8)) this.dirty = true;
     }
     const profileLines = this.profileRecaptionLines();
     // The witness lineage's warm→cold arc, as of the opening decision
@@ -472,7 +483,10 @@ export class WitnessCanvas {
       // recent filings (the CLASSIFICATION field still carries the profile).
       const shown = [...pinned, ...lines.slice(-(7 - pinned.length))];
       shown.forEach((l, i) => {
-        ctx.fillStyle = l.color;
+        // S144: the row that just landed is lit for a beat — the wall answering
+        const fresh = i === shown.length - 1 && this.pulseT < PULSE_SECONDS;
+        if (fresh) px(ctx, 24, 274 + i * 12, W - 48, 12, RECORD.pulseOn);
+        ctx.fillStyle = fresh ? RECORD.cardLine : l.color;
         ctx.fillText(l.text, 28, 276 + i * 12);
       });
     }

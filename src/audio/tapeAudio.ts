@@ -256,7 +256,9 @@ const REGISTRY: Record<string, string> = {
   //   (tools/make_tones.sh: four chords, a drum machine, tape hiss — no voice)
   //   until Sérgio's generation replaces the file under the same name (drafts
   //   doc §4). Registered, so the line, the song and the cut are all live.
-  'caleb_last_night_2003.mp3': `${AUDIO_BASE}caleb_last_night_2003.mp3`
+  'caleb_last_night_2003.mp3': `${AUDIO_BASE}caleb_last_night_2003.mp3`,
+  // ⚑ S144 — the stamp: a filing, heard (app.ts watches the record grow)
+  'stamp_witness.mp3': `${AUDIO_BASE}stamp_witness.mp3`
 };
 
 const HISS_FILE = 'tape-hiss.mp3';

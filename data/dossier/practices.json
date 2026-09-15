@@ -1,0 +1,197 @@
+{
+  "_doc": "⚑ THE PRACTICES (S144, 2026-09-15 — docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §3B). One card per thing the apparatus DOES to the player across the four eras. Each card is what the Dossier's 'Your file' view shows under a ledger entry: what the system did (`did`, one line, the frame's flat voice), the dossier status — the CLAUDE.md vocabulary: documentary / contested / speculative — and `source`: a POINTER into a sourced card that already exists in data/provotypes/*.json (`{file, index}`), never a new claim. A practice with no pointer says so (`source: null`) and is `speculative` by construction. `kinds` are the ledger kinds src/witness/record.ts derives; several kinds may share one practice. Nothing here is display text in the FICTION — it is read only by the game menu, which is the frame.",
+  "practices": {
+    "profile": {
+      "title": "The questionnaire",
+      "did": "asked you to describe yourself, then filed the answers as a case",
+      "status": "documentary",
+      "source": {
+        "file": "origin_intake_e1",
+        "index": 0
+      }
+    },
+    "kit": {
+      "title": "The Starter Kit",
+      "did": "gave you software that had already decided what you needed",
+      "status": "documentary",
+      "source": {
+        "file": "origin_intake_e1",
+        "index": 2
+      }
+    },
+    "channel": {
+      "title": "The channel, and the log",
+      "did": "routed you to people like you, and kept the transcript",
+      "status": "documentary",
+      "source": {
+        "file": "origin_intake_e1",
+        "index": 1
+      }
+    },
+    "referral": {
+      "title": "Referral by contact",
+      "did": "sent a friend to you by name; the friend was the network",
+      "status": "documentary",
+      "source": {
+        "file": "origin_intake_e1",
+        "index": 1
+      }
+    },
+    "placement": {
+      "title": "The placement",
+      "did": "arranged a residential programme with your family, then told you",
+      "status": "documentary",
+      "source": {
+        "file": "origin_intake_e1",
+        "index": 3
+      }
+    },
+    "provotype": {
+      "title": "The exercise",
+      "did": "gave you a task that could only end one way, and scored the attempt",
+      "status": "documentary",
+      "source": {
+        "file": "pillow",
+        "index": 0
+      }
+    },
+    "diary": {
+      "title": "The diary",
+      "did": "read what you wrote to yourself, and tried to delete it",
+      "status": "contested",
+      "source": {
+        "file": "e3_theday",
+        "index": 7
+      }
+    },
+    "tapes": {
+      "title": "The tapes",
+      "did": "logged what you listened to, and for how long",
+      "status": "speculative",
+      "source": null
+    },
+    "belongings": {
+      "title": "What you were allowed to take",
+      "did": "asked what you would keep, and filed the choice",
+      "status": "speculative",
+      "source": null
+    },
+    "checkin": {
+      "title": "The daily check-in",
+      "did": "asked how you were, every morning, and kept the answer",
+      "status": "documentary",
+      "source": {
+        "file": "e3_theday",
+        "index": 1
+      }
+    },
+    "assistant": {
+      "title": "The assistant",
+      "did": "guided you, and filed whether you let it",
+      "status": "documentary",
+      "source": {
+        "file": "e3_theday",
+        "index": 7
+      }
+    },
+    "media": {
+      "title": "Media as instruction",
+      "did": "showed you a programme and recorded whether you watched it through",
+      "status": "documentary",
+      "source": {
+        "file": "origin_intake_e1",
+        "index": 1
+      }
+    },
+    "contact": {
+      "title": "Contact monitoring",
+      "did": "saw a message from outside before you did, and intervened",
+      "status": "documentary",
+      "source": {
+        "file": "e3_theday",
+        "index": 6
+      }
+    },
+    "update": {
+      "title": "The update",
+      "did": "changed what the machine was, and kept your file across the change",
+      "status": "documentary",
+      "source": {
+        "file": "e4_offers",
+        "index": 1
+      }
+    },
+    "arrival": {
+      "title": "The migration",
+      "did": "moved your file to a new service without asking you",
+      "status": "documentary",
+      "source": {
+        "file": "e4_offers",
+        "index": 1
+      }
+    },
+    "queue": {
+      "title": "The correction queue",
+      "did": "paid you per correction to edit other people's accounts of themselves",
+      "status": "documentary",
+      "source": {
+        "file": "e3_theday",
+        "index": 4
+      }
+    },
+    "moderation": {
+      "title": "Moderation",
+      "did": "had you answer families in the platform's voice",
+      "status": "documentary",
+      "source": {
+        "file": "e3_theday",
+        "index": 8
+      }
+    },
+    "session": {
+      "title": "The restored session",
+      "did": "finished your search for you and opened a support agent",
+      "status": "documentary",
+      "source": {
+        "file": "e4_offers",
+        "index": 3
+      }
+    },
+    "record": {
+      "title": "The retained record",
+      "did": "kept your old file 'for continuity of care'",
+      "status": "documentary",
+      "source": {
+        "file": "e3_theday",
+        "index": 6
+      }
+    },
+    "photos": {
+      "title": "The Restoration tool",
+      "did": "restored a photograph of you to someone else",
+      "status": "speculative",
+      "source": {
+        "file": "e4_offers",
+        "index": 0
+      }
+    },
+    "headset": {
+      "title": "The immersive session",
+      "did": "put you in a room it had built, and lost you to one it had not",
+      "status": "speculative",
+      "source": {
+        "file": "e4_ball",
+        "index": 4
+      }
+    },
+    "termination": {
+      "title": "The termination",
+      "did": "ended the session for your safety, and named the reason",
+      "status": "speculative",
+      "source": {
+        "file": "e4_offers",
+        "index": 2
+      }
+    }
+  }
+}

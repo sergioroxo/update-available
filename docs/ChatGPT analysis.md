@@ -1,5 +1,5 @@
-https://chatgpt.com/share/6a2d62d4-a928-83eb-af00-6e02501c784a
 STATUS: history-only
+https://chatgpt.com/share/6a2d62d4-a928-83eb-af00-6e02501c784a
 ## Core argument
 
 The best-supported reading is **not** that lesbians were absent from conversion practices, but that the ex-gay movement made **gay male sexuality the public emblem of “homosexual sin/addiction”**, while women’s same-sex desire was often treated through **gender discipline**: failed femininity, “female masculinity,” emotional dependency, trauma, and restoration to heterosexual womanhood. That asymmetry is well evidenced in scholarship on Exodus/Love in Action and ex-gay discourse, but **actual participation numbers by gender are much less well documented**, especially outside the U.S.
