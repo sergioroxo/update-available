@@ -1111,3 +1111,18 @@ hiss; no voice) until Sérgio's generation replaces the file under the same name
 walk hears it at position 21. MAKERS: a paragraph in the Credits view, generated from ATTRIBUTIONS.md,
 and one line on the Restart card — the collaboration disclosed at the end, in the frame's voice; the
 director's name kept out of display text by the marker guard (his call to add). Walked: 202 presses.
+
+## 2026-09-15 — S144 · THE RECORD: one file, four faces, one reading
+
+Sérgio: "aren't we missing the whole system of Witness?" The audit (THE_RECORD_PLAN_2026-09-15.md
+§1): the piece files everything and shows almost none of it; the wall record stops at 2016 exactly
+when the eras become about records; the sources hide behind the two least-visited doors. Built, all
+seven parts: `witness/record.ts` (one view over the ledger — era, act, filing, flag, practice);
+`data/dossier/practices.json` (22 practices, status + a pointer into the existing sourced cards);
+the Dossier's YOUR FILE view in the menu (the map of interaction per era, the practice under each
+entry — frame voice, opened by choice); the witness pulse (a stamp heard and the wall's newest row lit
+on every filing — 61 stamps in the walk); the 2016 face (YOUR RECORD, a seventh tile: Vera's profile
+with the imported 1997–2003 history, read-only); the 2026 face (the Legacy file opens as a page of
+the thirty years); the Close's panels carrying the player's own lines (IN THIS ROOM, YOU); and the
+wall redesigned as a map (count, flagged first, the file's purpose in its own voice). Walked: 206
+presses, spine done; the walk pressed the legacy toggle and filed `legacy: read` on the rails.
