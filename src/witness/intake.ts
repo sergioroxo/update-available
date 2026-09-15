@@ -8,6 +8,7 @@ import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont } from '../desktop/theme/chrome';
 import { FLAG, RECORD } from '../desktop/theme/witness';
 import { ledger } from '../state/ledger';
+import { entriesByEra } from './record';
 import strings from '../../data/strings/slice.json';
 import opening from '../../data/strings/opening.json';
 import updates from '../../data/strings/updates.json';
@@ -312,6 +313,8 @@ export class WitnessCanvas {
     setFont(ctx, 8);
     ctx.fillStyle = DIM;
     ctx.fillText(era.subheader, W - 190, 8);
+    // S144: what the file is FOR, in the apparatus's own voice
+    ctx.fillText(s.purpose, 16, 28);
 
     /**
      * ⚑ 2026-09-05 — THE ERA-4 MISFILE IS GONE, WITH THE MIGRATION THAT NEEDED IT.
@@ -381,117 +384,43 @@ export class WitnessCanvas {
     // never invisible, Ethics #10; the cross-reference lines MESH into the
     // same record, ◆N2). Copy comes from each item's own data (resolved at
     // file time), never composed here. Baseline never populates either.
-    const profileLines = this.profileRecaptionLines();
-    const endingLines = this.endingRecordLines();
-    // R28-2a: guidance responses appear like every other filed thing —
-    // followed in ink, declined in the same amber as abandoned/declined
-    // elsewhere (witness symmetry: ignoring guidance is never invisible).
-    // The first-touch line (FIND #5) leads the log: it was filed first.
-    const firstTouchLines = ledger.records.includes('profile-initialized')
-      ? [opening.witness_profile_init]
-      : [];
-    const migrationLines = this.migrationLines();
-    if (migrationLines.length > 0
-        || profileLines.length > 0 || ledger.provotypes.length > 0 || ledger.sends.length > 0
-        || endingLines.length > 0 || ledger.guidance.length > 0 || ledger.belongings.length > 0
-        || ledger.lamby.length > 0 || ledger.checkins.length > 0 || ledger.media.length > 0
-        || ledger.caleb.length > 0
-        || ledger.era3Arrival.length > 0 || ledger.graceQueue.length > 0
-        || firstTouchLines.length > 0) {
+    /**
+     * ⚑ S144 — THE MAP, not seven scrolling rows. The record's own view over
+     * the ledger (witness/record.ts): a count line, the FLAGGED rows first —
+     * they are what the apparatus acts on — then the rest, newest first; the
+     * opening's own lines and the ending's stay where they were. The purpose
+     * line under the header says, in the apparatus's voice, what the file is
+     * for. Nothing here explains what an entry means: that is the frame's job.
+     */
+    const byEra = entriesByEra();
+    const mine = this.era === 'e1' ? byEra.e1 : [...byEra.e1, ...byEra.e2];
+    const endingLines = [...this.endingRecordLines(), ...this.migrationLines()];
+    if (mine.length > 0 || endingLines.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;
       ctx.fillText(s.sessionLog, 28, 262);
+      const count = s.fileCount.replace('{n}', String(mine.length)).replace('{f}', String(mine.filter((e) => e.flagged).length));
+      ctx.fillText(count, W - 28 - ctx.measureText(count).width, 262);
       setFont(ctx, 9);
-      const pinned: { text: string; color: string }[] =
-        firstTouchLines.map(text => ({ text, color: DIM }));
-      const lines: { text: string; color: string }[] = [
-        ...profileLines.map(text => ({ text, color: INK })),
-        ...ledger.provotypes.map(p => ({
-          text: p.witness || `${p.id}: ${p.outcome}`,
-          color: p.outcome === 'abandoned' ? FLAG : INK
-        })),
-        ...ledger.sends.map(sd => ({
-          text: sd.witness || `${sd.id}: ${sd.outcome}`,
-          color: sd.outcome === 'declined' ? FLAG : INK
-        })),
-        ...ledger.guidance.map(g => ({
-          text: g.witness || `${g.id}: ${g.outcome}`,
-          color: g.outcome === 'declined' ? FLAG : INK
-        })),
-        // R28-2c: the belongings beat — one line per kept item, or one
-        // "processed" line on the Update-Now-direct path. Un-kept eligible
-        // items file nothing (silence is the record's answer), so there is
-        // no un-kept branch to render here.
-        ...ledger.belongings.map(b => ({ text: b.witness || `${b.id}: ${b.outcome}`, color: INK })),
-        // S2R.0/S2R.1 (Session 34): the return press + Lamby's debut outcome —
-        // dismissed renders in the same amber as other declined/abandoned
-        // lines (witness symmetry: dismissing the assistant is never invisible).
-        ...ledger.lamby.map(l => ({
-          text: l.witness || `${l.id}: ${l.outcome}`,
-          color: l.outcome === 'dismissed' ? FLAG : INK
-        })),
-        // S2R.2: every Daily Realignment chip files its own tag — none is a
-        // branch, so all render the same ink (register, not judgement).
-        ...ledger.checkins.map(c => ({ text: c.witness || `${c.id}`, color: INK })),
-        // S2R.4 (Session 35): the NetVision Player offer + outcome — declining
-        // the offer and skipping the video both render in the same amber as
-        // other declined/abandoned lines (witness symmetry: either response
-        // is data); watching to THE BREAK renders in ink like everything else.
-        ...ledger.media.map(m => ({
-          text: m.witness || `${m.id}: ${m.outcome}`,
-          color: (m.outcome === 'declined' || m.outcome === 'skipped') ? FLAG : INK
-        })),
-        // S2R.3–S2R.6 (Session 45): the Caleb thread. Symmetric by law — a
-        // reply files, and so does reading without replying (`held` renders
-        // in the same amber as every other refusal here). The COMMIT-PRESS
-        // renders amber because it is the thing the apparatus flagged: the
-        // wanting was the conduct. The system's own acts (`intervened`) file
-        // in ordinary ink, in its own cheerful vocabulary — that cheerfulness
-        // is the collapse-material later. The RESIDUE is the one line the
-        // record cannot classify: it renders DIM, as the gap it is, and never
-        // carries the committed sentence itself.
-        ...ledger.caleb.map(cb => ({
-          text: cb.witness || `${cb.id}: ${cb.outcome}`,
-          color: cb.outcome === 'residue' ? DIM
-            : (cb.outcome === 'held' || cb.outcome === 'committed' || cb.outcome === 'dismissed')
-              ? FLAG : INK
-        })),
-        // S2R.7 (Session 58): the migration filing — chronologically the last
-        // thing filed under Daniel's name, so it sits here, after the Caleb
-        // thread and before the E3 arrival that follows it on screen.
-        ...migrationLines.map(text => ({ text, color: INK })),
-        // S3R.0 (Session 37): the three-screen room's arrival, once — Lambient's
-        // fragments settling visibly across every device (register, not a
-        // choice, so it always renders in the same ink as an ordinary filing).
-        ...ledger.era3Arrival.map(a => ({ text: a.witness, color: INK })),
-        // S3R.1/S3R.5 (Session 38): the GraceQueue moderation record — every
-        // card action files, witness-symmetrically. 'approved'/'reviewed'
-        // (compliance with the system's suggestion) render in ink; 'stood'
-        // (the player declined the suggestion — including Mira's "I won't
-        // bury her story.") renders in the same amber as every other
-        // refusal/deviation line here (the record marks noncompliance, it
-        // never hides it). No counts, no scores — just the lines.
-        ...ledger.graceQueue.map(g => ({
-          text: g.witness || `card ${g.cardId}: ${g.outcome}`,
-          color: g.outcome === 'stood' ? FLAG : INK
-        })),
-        ...endingLines.map(text => ({ text, color: FLAG }))
+      const flagged = mine.filter((e) => e.flagged).reverse();
+      const rest = mine.filter((e) => !e.flagged).reverse();
+      const rows: { text: string; color: string }[] = [
+        ...endingLines.map((text) => ({ text, color: FLAG })),
+        ...flagged.map((e) => ({ text: e.witness, color: FLAG })),
+        ...rest.map((e) => ({ text: e.witness, color: INK }))
       ];
-      // the well between the log heading and the footer holds ~7 rows. The
-      // FIRST filing stays pinned at the top for the whole session (FIND #5:
-      // the record never forgets your first click); the rest shows the most
-      // recent filings (the CLASSIFICATION field still carries the profile).
-      const shown = [...pinned, ...lines.slice(-(7 - pinned.length))];
+      const shown = rows.slice(0, 7);
       shown.forEach((l, i) => {
         // S144: the row that just landed is lit for a beat — the wall answering
-        const fresh = i === shown.length - 1 && this.pulseT < PULSE_SECONDS;
+        const fresh = i === 0 && this.pulseT < PULSE_SECONDS;
         if (fresh) px(ctx, 24, 274 + i * 12, W - 48, 12, RECORD.pulseOn);
         ctx.fillStyle = fresh ? RECORD.cardLine : l.color;
+        ctx.save(); ctx.beginPath(); ctx.rect(24, 274 + i * 12, W - 48, 12); ctx.clip();
         ctx.fillText(l.text, 28, 276 + i * 12);
+        ctx.restore();
       });
     }
 
-    // footer
     px(ctx, 0, H - 22, W, 22, PANEL);
     px(ctx, 0, H - 22, W, 1, LINE);
     setFont(ctx, 8);

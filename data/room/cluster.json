@@ -355,6 +355,8 @@
    "w": 2.2,
    "h": 1.1
   },
+  "panelMineLabel": "IN THIS ROOM, YOU",
+  "_docPanelMine": "⚑ S144: the label over the player's own lines on each era's panel at the Close (THE_RECORD_PLAN §3E) — two or three of the entries the record holds for that era, in the web's blue. Every player reads a different Close.",
   "driftDegPerSec": 0.9,
   "fadeSeconds": 2.2
  }

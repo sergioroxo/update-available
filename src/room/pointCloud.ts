@@ -118,6 +118,8 @@ function segmentDistToOrigin(a: number[], b: number[]): number {
 export interface PointCloud {
   /** fade the constellation in (the room's own fade-out is the caller's rig) */
   show(): void;
+  /** ⚑ S144: the player's own lines on each era's panel, set as the Close begins */
+  setPlayerLines(linesByEra: Record<number, string[]>): void;
   /** ⚑ 2026-09-12: the Close can be LEFT now (Daniel's monitor's era buttons) —
    *  the sky goes on one frame and the ceiling's stickers come back, so a
    *  return to a room finds the room as it was */
@@ -537,6 +539,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   type Panel = { era: number; years: string; title: string; text: string; status: string; image?: string };
   const panels = ((network as { panels?: Panel[] }).panels ?? []).slice(0, 4);
   const panelMat = new pc.StandardMaterial();
+  let panelRedraw: ((linesByEra: Record<number, string[]>) => void) | null = null;
   /**
    * ⚑ 2026-09-12 (Phase D): the card carries the era's ROOM now. Sérgio: *"You
    * see the 4 panels around you that have the explanation and image of the
@@ -572,9 +575,57 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     if (pc2) {
       pc2.clearRect(0, 0, pcan.width, pcan.height);
       pc2.textBaseline = 'middle';
-      panels.forEach((panel, i) => {
+      /**
+       * ⚑ S144 — THE TEXT COLUMN IS REDRAWABLE, because at the Close it carries
+       * YOUR OWN LINES: under each era's paragraph, two or three of the entries
+       * the player actually filed in that room (THE_RECORD_PLAN §3E). Every
+       * player reads a different Close. `drawText` is called once now with no
+       * lines, and again from `setPlayerLines` when the Close begins.
+       */
+      const drawText = (panel: Panel, i: number, mine: string[]): void => {
         const y0 = i * CELL_H;
         // the plate: the sky's own colour, thickened — a card, not a window
+        pc2.clearRect(TEXT_X - 24, y0 + 14, CELL_W - (TEXT_X - 24), CELL_H - 22);
+        pc2.globalAlpha = 0.9;
+        pc2.fillStyle = P.backdrop;
+        pc2.fillRect(TEXT_X - 24, y0 + 14, CELL_W - (TEXT_X - 24), CELL_H - 22);
+        pc2.globalAlpha = 1;
+        pc2.font = 'bold 54px monospace';
+        pc2.fillStyle = P.labelColor;
+        pc2.fillText(`${panel.years}  ·  ${panel.title}`, TEXT_X, y0 + 96);
+        // ⚑ the paragraph FITS its column (2026-09-13, Sérgio: "the text on top of
+        //   the speculative"): the size steps down until the rows clear the stamp —
+        //   and, at the Close, the player's own lines under it
+        const mineH = mine.length ? 34 + mine.length * 30 : 0;
+        const TOP = 168, BOTTOM = CELL_H - 96 - mineH;
+        let size = 34;
+        let rows: string[] = [];
+        for (; size >= 22; size -= 2) {
+          pc2.font = `${size}px ${READING_FACE}`;
+          rows = wrap(pc2, panel.text, TEXT_W);
+          if (TOP + rows.length * Math.round(size * 1.3) <= BOTTOM) break;
+        }
+        const lineH = Math.round(size * 1.3);
+        pc2.fillStyle = (P.warm as string[])[2];
+        rows.forEach((row, li) => pc2.fillText(row, TEXT_X, y0 + TOP + li * lineH));
+        if (mine.length) {
+          // your file, in this room: the record's own cold lines, in the web's blue
+          let my = TOP + rows.length * lineH + 30;
+          pc2.font = '22px monospace';
+          pc2.fillStyle = P.link;
+          pc2.fillText(P.panelMineLabel, TEXT_X, my);
+          my += 30;
+          pc2.font = `24px ${READING_FACE}`;
+          pc2.fillStyle = P.labelColor;
+          for (const m of mine) { pc2.fillText('· ' + wrap(pc2, m, TEXT_W - 30)[0], TEXT_X, my); my += 30; }
+        }
+        // the dossier status, small, where a card keeps its stamp
+        pc2.font = '26px monospace';
+        pc2.fillStyle = P.link;
+        pc2.fillText(panel.status, TEXT_X, y0 + CELL_H - 50);
+      };
+      panels.forEach((panel, i) => {
+        const y0 = i * CELL_H;
         pc2.globalAlpha = 0.9;
         pc2.fillStyle = P.backdrop;
         pc2.fillRect(0, y0 + 8, CELL_W, CELL_H - 16);
@@ -585,27 +636,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         // where the picture goes: a dark well until it arrives
         pc2.fillStyle = P.backdrop;
         pc2.fillRect(PLATE.x, y0 + PLATE.y, PLATE.w, PLATE.h);
-        pc2.font = 'bold 54px monospace';
-        pc2.fillStyle = P.labelColor;
-        pc2.fillText(`${panel.years}  ·  ${panel.title}`, TEXT_X, y0 + 96);
-        // ⚑ the paragraph FITS its column (2026-09-13, Sérgio: "the text on top of
-        //   the speculative"): the size steps down until the rows clear the stamp
-        const TOP = 168, BOTTOM = CELL_H - 96;
-        let size = 34;
-        let rows: string[] = [];
-        for (; size >= 24; size -= 2) {
-          pc2.font = `${size}px ${READING_FACE}`;
-          rows = wrap(pc2, panel.text, TEXT_W);
-          if (TOP + rows.length * Math.round(size * 1.3) <= BOTTOM) break;
-        }
-        const lineH = Math.round(size * 1.3);
-        pc2.fillStyle = (P.warm as string[])[2];
-        rows.forEach((row, li) => pc2.fillText(row, TEXT_X, y0 + TOP + li * lineH));
-        // the dossier status, small, where a card keeps its stamp
-        pc2.font = '26px monospace';
-        pc2.fillStyle = P.link;
-        pc2.fillText(panel.status, TEXT_X, y0 + CELL_H - 50);
+        drawText(panel, i, []);
       });
+      panelRedraw = (linesByEra) => {
+        panels.forEach((panel, i) => drawText(panel, i, linesByEra[panel.era] ?? []));
+        ptex.upload();
+      };
       const ptex = new pc.Texture(app.graphicsDevice, {
         width: pcan.width, height: pcan.height, format: pc.PIXELFORMAT_RGBA8, mipmaps: false,
         minFilter: pc.FILTER_LINEAR, magFilter: pc.FILTER_LINEAR,
@@ -848,6 +884,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       applyOpen();
       updateBillboards();
     },
+    setPlayerLines(linesByEra: Record<number, string[]>): void { panelRedraw?.(linesByEra); },
     hide(): void {
       visible = false;
       root.enabled = false;

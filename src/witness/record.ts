@@ -18,6 +18,8 @@
  */
 import { ledger } from '../state/ledger';
 import practicesData from '../../data/dossier/practices.json';
+import slice from '../../data/strings/slice.json';
+import opening from '../../data/strings/opening.json';
 
 export type RecordEra = 'e1' | 'e2' | 'e3' | 'e4';
 export type Status = 'documentary' | 'contested' | 'speculative';
@@ -68,9 +70,12 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
 }
 
 /** the witness line for an era-1 `records` id — the ledger stores only the id */
+const RECORD_LINES = (slice as unknown as { witness: { recordLines: Record<string, string> } }).witness.recordLines;
 function recordWitness(id: string): string {
+  if (id === 'profile-initialized') return (opening as unknown as { witness_profile_init: string }).witness_profile_init;
   const i = id.indexOf(':');
-  return i > 0 ? id.slice(i + 1) : id.replace(/-/g, ' ');
+  if (i > 0) return id.slice(i + 1);
+  return RECORD_LINES[id] ?? id.replace(/-/g, ' ');
 }
 
 const FLAG_OUTCOMES = new Set(['abandoned', 'declined', 'dismissed', 'skipped', 'stood', 'held', 'committed', 'stoppedMidway', 'kept']);
@@ -91,7 +96,7 @@ export function recordEntries(): RecordEntry[] {
   for (const t of ledger.tapes) push('e1', 'tapes', t.id, t.outcome, t.witness);
   // ── 2003 ──
   for (const b of ledger.belongings) push('e2', 'belongings', b.id, b.outcome, b.witness);
-  for (const l of ledger.lamby) push('e2', 'assistant', l.id, l.outcome, l.witness);
+  for (const l of ledger.lamby) push(l.id.startsWith('e3') ? 'e3' : 'e2', 'assistant', l.id, l.outcome, l.witness);   // Lambient's consent files here too
   for (const c of ledger.checkins) push(c.id.startsWith('e3') ? 'e3' : 'e2', c.id.startsWith('e3') ? 'contact' : 'checkin', c.id, 'answered', c.witness, false);
   for (const m of ledger.media) push('e2', 'media', m.id, m.outcome, m.witness);
   for (const cb of ledger.caleb) push('e2', 'contact', cb.id, cb.outcome, cb.witness);
@@ -102,7 +107,7 @@ export function recordEntries(): RecordEntry[] {
   // ── 2026 ──
   for (const e of ledger.e4Space) {
     const kind = e.id === 'update' || e.id === 'companion' ? 'update'
-      : e.id === 'record' || e.id === 'step:record' ? 'record'
+      : e.id === 'record' || e.id === 'step:record' || e.id === 'legacy' ? 'record'
         : e.id === 'step:photos' || e.id === 'photos' ? 'photos'
           : e.id === 'program' || e.id === 'session' || e.id.startsWith('step:') || e.id.startsWith('tab:') || e.id.startsWith('care') ? 'session'
             : e.id === 'headset' || e.id === 'commons' || e.id === 'turn' ? 'headset'

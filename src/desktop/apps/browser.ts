@@ -29,6 +29,7 @@
  */
 import { px, setFont, wrapText } from '../theme/chrome';
 import { playOnce } from '../../audio/tapeAudio';
+import { entriesByEra } from '../../witness/record';
 import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 } from '../theme/era4';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
@@ -946,6 +947,39 @@ export class E4Browser {
     ctx.fillStyle = WEB.muted;
     ctx.fillText('GraceOS account  ·  managed by your provider', cx + 54, top + 27);
     px(ctx, cx + 1, top + 50, cw - 2, 1, WEB.cardEdge);
+    const LG = body.record.legacy;
+    if (this.legacyOpen) {
+      // ⚑ S144 — THE LEGACY FILE, as a page of its own inside the card: the
+      //   thirty years as 'events', oldest first, the 1997 intake's own wording
+      //   as the first row. One press back to the fields.
+      const by = entriesByEra();
+      const rows = [...by.e1, ...by.e2, ...by.e3];
+      let ly = top + 62;
+      setFont(ctx, 10); ctx.fillStyle = WEB.ink;
+      ctx.fillText(LG.heading, cx + 16, ly);
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+      ctx.fillText(LG.sub.replace('{n}', String(rows.length)), cx + 16 + 130, ly + 2);
+      ly += 16;
+      px(ctx, cx + 16, ly, cw - 32, 1, WEB.cardEdge);
+      ly += 8;
+      const bottom = top + (H - top - 14) - 44;
+      const fit = Math.max(0, Math.floor((bottom - ly) / 13));
+      const shown = rows.slice(0, fit);
+      setFont(ctx, 8);
+      if (shown.length === 0) { ctx.fillStyle = WEB.muted; ctx.fillText(LG.empty, cx + 16, ly); }
+      for (const e of shown) {
+        ctx.fillStyle = WEB.muted;
+        ctx.fillText((LG.eras as Record<string, string>)[e.era] ?? '', cx + 16, ly);
+        ctx.fillStyle = e.flagged ? WEB.accentInk : WEB.ink;
+        ctx.save(); ctx.beginPath(); ctx.rect(cx + 52, ly - 2, cw - 68, 13); ctx.clip();
+        ctx.fillText(e.witness, cx + 52, ly);
+        ctx.restore();
+        ly += 13;
+      }
+      const lr = webButton(ctx, cx + 16, top + (H - top - 14) - 36, LG.close, 'quiet');
+      this.publish({ ...lr, id: 'legacy-toggle' });
+      return;
+    }
     let y = top + 62;
     for (const r of body.record.rows as Array<{ k: string; v: string; note: string; locked?: boolean }>) {
       setFont(ctx, 9);
@@ -977,7 +1011,11 @@ export class E4Browser {
     setFont(ctx, 8);
     ctx.fillStyle = WEB.muted;
     ctx.fillText(body.record.priorRequest, cx + 16, y + 28);
+    // ⚑ S144 — THE LEGACY FILE: a press beside the request; the thirty years open in place
+    const lr = webButton(ctx, cx + 16 + r.w + 10, y, LG.open, 'quiet');
+    this.publish({ ...lr, id: 'legacy-toggle' });
   }
+  private legacyOpen = false;
 
   /** four things already done for her, each defensible, each with a working
    *  undo — a timeline, the way a care log shows itself — and one muted
@@ -1124,6 +1162,13 @@ export class E4Browser {
           if (Number.isFinite(i) && TABS[i]) { this.live = i; this.version++; }
           return true;
         }
+        if (hit.id === 'legacy-toggle') {   // S144: readable on the rails too — it is a page, not a step
+          this.legacyOpen = !this.legacyOpen; this.version++;
+          if (this.legacyOpen && !ledger.e4Space.some((e) => e.id === 'legacy')) {
+            ledger.e4Space.push({ id: 'legacy', outcome: 'read', witness: body.record.legacy.witness });
+          }
+          return true;
+        }
         return true;
       }
       if (hit.id.startsWith('tab')) {
@@ -1151,6 +1196,13 @@ export class E4Browser {
         }
       }
       if (hit.id === 'photo-flip') { this.enhanced = !this.enhanced; this.version++; return true; }
+      if (hit.id === 'legacy-toggle') {
+        this.legacyOpen = !this.legacyOpen; this.version++;
+        if (this.legacyOpen && !ledger.e4Space.some((e) => e.id === 'legacy')) {
+          ledger.e4Space.push({ id: 'legacy', outcome: 'read', witness: body.record.legacy.witness });
+        }
+        return true;
+      }
     }
     /**
      * ⚑ A MISS IS A MISS (2026-09-12). This used to hand the browser over —

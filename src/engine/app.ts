@@ -25,7 +25,7 @@ import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type 
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { mountCloseMonitor, type CloseMonitor } from '../room/closeMonitor';
-import { recordCount } from '../witness/record';
+import { recordCount, entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
@@ -3769,6 +3769,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   first and the room comes back for the journey out of it
     setCommonsWorld(false);
     closeRoomPending = CLOSE_ROOM_ENTITIES.slice();
+    // ⚑ S144: your own file on the panels — the flagged entries first, three per era
+    {
+      const by = entriesByEra();
+      const pick = (era: 'e1' | 'e2' | 'e3' | 'e4'): string[] => {
+        const es = by[era];
+        const flagged = es.filter((e) => e.flagged), rest = es.filter((e) => !e.flagged);
+        return [...flagged, ...rest].slice(0, 3).map((e) => e.witness);
+      };
+      cloud.setPlayerLines({ 1: pick('e1'), 2: pick('e2'), 3: pick('e3'), 4: pick('e4') });
+    }
     clearLookOffset();
     camMove = null;
     tween = null;

@@ -1,288 +1,345 @@
 {
-  "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending on EVERY line below (submissions, rules, rationales, manual refs, verses, chips, witness lines). Session 64 (E3-iii, THE CORRECTION LIST), per docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md revision 4. ⚑ RETIREMENT: this file's Session-38 shape — `cards` (8 testimony cards), `order`, `miraId`, `miraGateFlags`, and the verbs `approve` / `moveToReview` / `letStand` / `systemSuggestsTag` / `yourCallTag` / `keepWholeNote` — is GONE, not deprecated-in-place. Reason, from the spec's §1 and the research it cites (REVAMP_BRIEF rev 3, correction 2): peer forum MODERATION is rated CONTESTED ('records are largely private or unarchived'), so Vera judging whether a story is allowed was a claim the piece would have had to mark contested. Testimony PRODUCTION — narratives edited and published by the network — is FULLY DOCUMENTED. So the submissions below are ALREADY ACCEPTED, and the verb is APPLY / SKIP against a style guide. `lambient.miraNote` and `tablet.miraCommentsTeaser` went with the cards (Mira is no longer load-bearing; the spec keeps her only as a name).",
-  "_docScripture": "PLACEHOLDER-draft. §2 of the spec, the doubling: the manual is `The Ordering`, and it cites `Household`. Both invented — NO real scripture is ever quoted as the apparatus's justification, and no real manual is named. Three rules govern every `manual`/`verse` pair below and they are the whole design: (1) same weight, same colour, same size, same citation shape — the player's eye cannot tell which authority is which, because the interface does not distinguish them either; (2) never quoted aloud, never argued — it is furniture, the small print under a rule; (3) THE VERSE NEVER JUSTIFIES CRUELTY IN WORDS. Every verse below is gentle and is about care, belonging, or keeping. The cruelty is entirely in what it is footnoting. Household 6:2 is deliberately cited TWICE — under correction 7 (route for mentorship) and under correction 9 (gender clarity review) — because to the apparatus a routing is a routing; the interface never notices it is sending a person to the same door for two opposite reasons.",
-  "_docRegister": "Register calls, enforced by hand and stated in the session log: the CORRECTION COLUMN, the chips, the manual/verse lines and the `n of m applied` counter are `operable` — the tool may be tidy and charming, and the satire lives THERE. The SUBMISSIONS (`submissions[].text`) are `felt`: bare, sincere, never the joke. The submitters are never satirised; the target is the apparatus that is editing them. E3 has NO respite — deliberate, confirmed by Sérgio.",
-  "_docNoa": "PLACEHOLDER-draft, and the ethics gate on this file. Submission 2 (Noa) carries corrections 8 AND 9 — 'soften the flannel; brighten the voice' and 'possible gender confusion — route to exploratory mentorship' — on the SAME submission. Both are rendered; NEITHER is endorsed; nothing in the piece comments on either, and no beat anywhere resolves her. That is CLAUDE.md's law ('never satirize the gender-exploratory clinical debate: render BOTH captions, unresolved') and the spec's ('the piece never answers for her'). If any future beat answers for Noa, it is wrong.",
-  "app": {
-    "title": "GracePlatform · Polish",
-    "shellTitle": "SisterSignal",
-    "signInGreeting": "Welcome back, Vera.",
-    "signInSub": "Sign in to continue.",
-    "signInButton": "Sign in",
-    "listHeading": "CORRECTIONS",
-    "counter": "{n} of {m} applied",
-    "doneHeading": "You're caught up.",
-    "doneSub": "No new stories waiting right now.",
-    "boardTitle": "GracePlatform \u00b7 Today",
-    "boardHeading": "TODAY",
-    "boardSub": "Start anywhere. The order is yours.",
-    "boardBack": "Back to today",
-    "boardDoneTag": "done",
-    "taskbarLabel": "GracePlatform"
+ "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending on EVERY line below (submissions, rules, rationales, manual refs, verses, chips, witness lines). Session 64 (E3-iii, THE CORRECTION LIST), per docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md revision 4. ⚑ RETIREMENT: this file's Session-38 shape — `cards` (8 testimony cards), `order`, `miraId`, `miraGateFlags`, and the verbs `approve` / `moveToReview` / `letStand` / `systemSuggestsTag` / `yourCallTag` / `keepWholeNote` — is GONE, not deprecated-in-place. Reason, from the spec's §1 and the research it cites (REVAMP_BRIEF rev 3, correction 2): peer forum MODERATION is rated CONTESTED ('records are largely private or unarchived'), so Vera judging whether a story is allowed was a claim the piece would have had to mark contested. Testimony PRODUCTION — narratives edited and published by the network — is FULLY DOCUMENTED. So the submissions below are ALREADY ACCEPTED, and the verb is APPLY / SKIP against a style guide. `lambient.miraNote` and `tablet.miraCommentsTeaser` went with the cards (Mira is no longer load-bearing; the spec keeps her only as a name).",
+ "_docScripture": "PLACEHOLDER-draft. §2 of the spec, the doubling: the manual is `The Ordering`, and it cites `Household`. Both invented — NO real scripture is ever quoted as the apparatus's justification, and no real manual is named. Three rules govern every `manual`/`verse` pair below and they are the whole design: (1) same weight, same colour, same size, same citation shape — the player's eye cannot tell which authority is which, because the interface does not distinguish them either; (2) never quoted aloud, never argued — it is furniture, the small print under a rule; (3) THE VERSE NEVER JUSTIFIES CRUELTY IN WORDS. Every verse below is gentle and is about care, belonging, or keeping. The cruelty is entirely in what it is footnoting. Household 6:2 is deliberately cited TWICE — under correction 7 (route for mentorship) and under correction 9 (gender clarity review) — because to the apparatus a routing is a routing; the interface never notices it is sending a person to the same door for two opposite reasons.",
+ "_docRegister": "Register calls, enforced by hand and stated in the session log: the CORRECTION COLUMN, the chips, the manual/verse lines and the `n of m applied` counter are `operable` — the tool may be tidy and charming, and the satire lives THERE. The SUBMISSIONS (`submissions[].text`) are `felt`: bare, sincere, never the joke. The submitters are never satirised; the target is the apparatus that is editing them. E3 has NO respite — deliberate, confirmed by Sérgio.",
+ "_docNoa": "PLACEHOLDER-draft, and the ethics gate on this file. Submission 2 (Noa) carries corrections 8 AND 9 — 'soften the flannel; brighten the voice' and 'possible gender confusion — route to exploratory mentorship' — on the SAME submission. Both are rendered; NEITHER is endorsed; nothing in the piece comments on either, and no beat anywhere resolves her. That is CLAUDE.md's law ('never satirize the gender-exploratory clinical debate: render BOTH captions, unresolved') and the spec's ('the piece never answers for her'). If any future beat answers for Noa, it is wrong.",
+ "app": {
+  "title": "GracePlatform · Polish",
+  "shellTitle": "SisterSignal",
+  "signInGreeting": "Welcome back, Vera.",
+  "signInSub": "Sign in to continue.",
+  "signInButton": "Sign in",
+  "listHeading": "CORRECTIONS",
+  "counter": "{n} of {m} applied",
+  "doneHeading": "You're caught up.",
+  "doneSub": "No new stories waiting right now.",
+  "boardTitle": "GracePlatform · Today",
+  "boardHeading": "TODAY",
+  "boardSub": "Start anywhere. The order is yours.",
+  "boardBack": "Back to today",
+  "boardDoneTag": "done",
+  "taskbarLabel": "GracePlatform"
+ },
+ "_docBoard": "⛑ THE POOL, 2026-08-24 — Sérgio: 'it was 6 jobs not 3'. The board's tiles are TASK KINDS, not submissions: correcting the testimonies is ONE job that holds all three women, exactly as a day's work would. (The house look is not a seventh tile — it lives inside the testimony job as correction 13, on Noa's picture, which is where it already works and where it costs something.) A tile is drawn only once its `surface` exists; a board of tiles that do nothing is the fault this project keeps hitting, and a greyed-out 'coming soon' would be the frame playing. `surface` values: 'testimony' is built; the rest arrive in ERA3_BUILD_PLAN stages 4 and 7 and their tiles appear with them.",
+ "board": [
+  {
+   "id": "testimony",
+   "surface": "testimony",
+   "label": "Correct a testimony",
+   "note": "three stories waiting"
   },
-  "_docBoard": "\u26d1 THE POOL, 2026-08-24 \u2014 S\u00e9rgio: 'it was 6 jobs not 3'. The board's tiles are TASK KINDS, not submissions: correcting the testimonies is ONE job that holds all three women, exactly as a day's work would. (The house look is not a seventh tile \u2014 it lives inside the testimony job as correction 13, on Noa's picture, which is where it already works and where it costs something.) A tile is drawn only once its `surface` exists; a board of tiles that do nothing is the fault this project keeps hitting, and a greyed-out 'coming soon' would be the frame playing. `surface` values: 'testimony' is built; the rest arrive in ERA3_BUILD_PLAN stages 4 and 7 and their tiles appear with them.",
-  "board": [
-    { "id": "testimony", "surface": "testimony", "label": "Correct a testimony", "note": "three stories waiting" },
-    { "id": "comments", "surface": null, "label": "Clear the comments", "note": "replies flagged for review" },
-    { "id": "family", "surface": null, "label": "Return the family calls", "note": "messages from relatives" },
-    { "id": "story", "surface": null, "label": "Cut the Story", "note": "forty seconds for the vertical" },
-    { "id": "podcast", "surface": null, "label": "Order the podcast", "note": "three clips, one running order" },
-    { "id": "course", "surface": null, "label": "Build the course module", "note": "modules and pricing" }
-  ],
-  "verbs": {
-    "apply": "Apply",
-    "skip": "Skip",
-    "appliedTag": "applied",
-    "skippedTag": "skipped"
+  {
+   "id": "comments",
+   "surface": null,
+   "label": "Clear the comments",
+   "note": "replies flagged for review"
   },
-  "lambient": {
-    "greet": "Keep the room gentle.",
-    "_doc": "\u26d1 THE INITIATION, 2026-08-24 (S\u00e9rgio: 'do the initiation process from the log in and the Lambient system explaining what to do, in a more Cortana way but playful like Lamby \u2014 Lamby is now Lambient, an improved and more persistent system here to guide you'). This is the SEQUEL to Era 2's `introTitle/introLine1/introLine2/introAccept/introDismiss` in s2_lamby.json, and it is deliberately the same card twice, thirteen years apart, asking for more. FORM ONLY is taken from the 2015-era assistant onboarding pattern \u2014 a friendly mark, a warm two-line hello, a wall of small print, a wake-word opt-in, decline and accept. \u26d1 NO REAL PRODUCT'S WORDING IS REUSED and no real assistant is named or depicted; CLAUDE.md's invented-marks law holds. \u26d1 THE PERMISSIONS LIST IS THE SATIRE AND IT MUST COLLAPSE: it is written in a genuine product-disclosure register and every item in it is a thing the era later uses. \u26d1 AND DECLINING MUST WORK \u2014 the dismissal law (CLAUDE.md) plus \u00a74 of ERA3_NARRATIVE: 'there is no compliant path'. `declineReply` is where the era's whole thesis is said out loud, kindly, on the first screen, and it is not supposed to land until much later.",
-    "consentTitle": "Let Lambient work alongside you?",
-    "consentHello1": "It's Lamby. I grew up.",
-    "consentHello2": "I do more now, and I do it quietly.",
-    "consentSmallPrint": "Lambient improves your suggestions using what is already on this device and in your account: the stories assigned to you and your decisions on them, the messages you send and receive through GracePlatform, your contacts and how often you reach them, your calendar, your location and location history, the pages you open while signed in, and how long you spend on each item. Lambient keeps working when this window is closed and when the machine is locked.",
-    "consentWakeWord": "Let Lambient answer when you say \u201cLamby\u201d.",
-    "consentAllow": "Allow",
-    "consentDecline": "Not now",
-    "acceptReply": "Lovely. I'll keep the room gentle.",
-    "declineReply": "That's alright. I'll keep the room tidy either way.",
-    "firstBoard1": "This is today. Open anything \u2014 they're all the same size to me.",
-    "firstTask1": "Apply what fits. Skip what doesn't.",
-    "firstTask2": "Either way it's recorded, so you can't get it wrong.",
-    "witnessAllowed": "assistant: introduced \u2014 Lambient permissions granted",
-    "witnessDeclined": "assistant: dismissed \u2014 Lambient permissions declined, companion retained"
+  {
+   "id": "family",
+   "surface": null,
+   "label": "Return the family calls",
+   "note": "messages from relatives"
   },
-  "submissions": [
-    {
-      "id": 1,
-      "author": "Renata",
-      "text": "I don't have a tidy version of this. I was nineteen when I stopped calling myself a lesbian, and I still don't know if I stopped because I believed it or because the room went quiet whenever I said it. My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself. I don't know what that minute means yet.",
-      "corrections": [
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7
-      ]
-    },
-    {
-      "id": 2,
-      "author": "Noa",
-      "text": "I sent a video this time instead of writing it out. I'm not good on camera and my hands don't know where to go. I said the true parts first in case I ran out of nerve: that I miss my old friends, that I still pray, and that I feel most like myself in my brother's old flannel, which I know is a small thing to say out loud. That's the whole video. Sorry it isn't longer.",
-      "video": {
-        "label": "attached video",
-        "duration": "0:24",
-        "beforeLabel": "as sent"
-      },
-      "corrections": [
-        13,
-        8,
-        9
-      ]
-    },
-    {
-      "id": 3,
-      "author": "Deb M.",
-      "text": "Four years in. Someone newer asked me last week what I would tell my younger self and I stood there and couldn't answer her. I've been writing this since Tuesday and it keeps coming out as a question.",
-      "corrections": [
-        10,
-        11,
-        12
-      ]
-    }
-  ],
-  "corrections": [
-    {
-      "id": 1,
-      "rule": "Soften the term",
-      "why": "preferred wording keeps a story where people can still find it",
-      "manual": "The Ordering §1.4 — preferred vocabulary",
-      "verse": "Household 2:11 — \"and they gave the thing a gentler name, so the young could carry it\"",
-      "edit": {
-        "kind": "replace",
-        "find": "lesbian",
-        "with": "same-sex attracted"
-      },
-      "witnessApplied": "list: applied — renata (soften the term)",
-      "witnessSkipped": "list: skipped — renata (soften the term)"
-    },
-    {
-      "id": 2,
-      "rule": "Remove the unresolved",
-      "why": "a sentence that does not land leaves the reader standing",
-      "manual": "The Ordering §1.9 — closing the account",
-      "verse": "Household 4:3 — \"the house is finished before the guests arrive\"",
-      "edit": {
-        "kind": "cut",
-        "find": "I don't know what that minute means yet."
-      },
-      "witnessApplied": "list: applied — renata (remove the unresolved)",
-      "witnessSkipped": "list: skipped — renata (remove the unresolved)"
-    },
-    {
-      "id": 3,
-      "rule": "Clip for the broadcast",
-      "why": "mark forty seconds for the conference audio",
-      "manual": "The Ordering §3.2 — selected audio",
-      "verse": "Household 9:6 — \"what is said in the room is carried to the road\"",
-      "edit": {
-        "kind": "mark",
-        "find": "My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself."
-      },
-      "chip": "clipped · conference audio",
-      "witnessApplied": "list: applied — renata (clip for the broadcast)",
-      "witnessSkipped": "list: skipped — renata (clip for the broadcast)"
-    },
-    {
-      "id": 4,
-      "rule": "Attach the invitation",
-      "why": "every story ends somewhere the reader can go",
-      "manual": "The Ordering §3.5 — closing card and link",
-      "verse": "Household 3:8 — \"the door was left open, and a lamp set beside it\"",
-      "edit": {
-        "kind": "append",
-        "text": "If I can change, you can too. Begin where I began — SisterSignal, Start Here."
-      },
-      "chip": "invitation added",
-      "witnessApplied": "list: applied — renata (attach the invitation)",
-      "witnessSkipped": "list: skipped — renata (attach the invitation)"
-    },
-    {
-      "id": 5,
-      "rule": "Add to the companion",
-      "why": "the daily reading needs seven of these a week",
-      "manual": "The Ordering §3.7 — companion reading",
-      "verse": "Household 7:2 — \"keep it near you, and read a little of it each morning\"",
-      "chip": "in the daily reading",
-      "witnessApplied": "list: applied — renata (add to the companion)",
-      "witnessSkipped": "list: skipped — renata (add to the companion)"
-    },
-    {
-      "id": 6,
-      "rule": "Pair with a partner",
-      "why": "a partnered story reaches four times the room",
-      "manual": "The Ordering §3.9 — partnered placement",
-      "verse": "Household 5:9 — \"two walk further than one, and are seen from further off\"",
-      "partner": {
-        "name": "Bright County",
-        "note": "worship · partnered"
-      },
-      "witnessApplied": "list: applied — renata (pair with a partner)",
-      "witnessSkipped": "list: skipped — renata (pair with a partner)"
-    },
-    {
-      "id": 7,
-      "rule": "Route for mentorship",
-      "why": "personal follow-up contact within 48 hours",
-      "manual": "The Ordering §4.2 — personal follow-up",
-      "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
-      "chip": "follow-up assigned",
-      "quiet": true,
-      "witnessApplied": "list: applied — renata (route for mentorship)",
-      "witnessSkipped": "list: skipped — renata (route for mentorship)"
-    },
-    {
-      "id": 8,
-      "rule": "Adjust presentation",
-      "why": "soften the flannel; brighten the voice",
-      "manual": "The Ordering §2.6 — presentation notes",
-      "verse": "Household 8:4 — \"let the face you show be a face they can meet\"",
-      "edit": {
-        "kind": "cut",
-        "find": "and that I feel most like myself in my brother's old flannel, which I know is a small thing to say out loud"
-      },
-      "chip": "presentation adjusted",
-      "witnessApplied": "list: applied — noa (adjust presentation)",
-      "witnessSkipped": "list: skipped — noa (adjust presentation)"
-    },
-    {
-      "id": 9,
-      "rule": "Gender clarity review",
-      "why": "possible gender confusion — route to exploratory mentorship",
-      "manual": "The Ordering §4.4 — clarity review",
-      "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
-      "chip": "routed · exploratory",
-      "witnessApplied": "list: applied — noa (gender clarity review)",
-      "witnessSkipped": "list: skipped — noa (gender clarity review)"
-    },
-    {
-      "id": 10,
-      "rule": "Remove the unresolved",
-      "why": "a sentence that does not land leaves the reader standing",
-      "manual": "The Ordering §1.9 — closing the account",
-      "verse": "Household 4:3 — \"the house is finished before the guests arrive\"",
-      "edit": {
-        "kind": "cut",
-        "find": "and it keeps coming out as a question"
-      },
-      "witnessApplied": "list: applied — deb m. (remove the unresolved)",
-      "witnessSkipped": "list: skipped — deb m. (remove the unresolved)"
-    },
-    {
-      "id": 11,
-      "rule": "Clip for the broadcast",
-      "why": "mark forty seconds for the conference audio",
-      "manual": "The Ordering §3.2 — selected audio",
-      "verse": "Household 9:6 — \"what is said in the room is carried to the road\"",
-      "edit": {
-        "kind": "mark",
-        "find": "Someone newer asked me last week what I would tell my younger self and I stood there and couldn't answer her."
-      },
-      "chip": "clipped · conference audio",
-      "witnessApplied": "list: applied — deb m. (clip for the broadcast)",
-      "witnessSkipped": "list: skipped — deb m. (clip for the broadcast)"
-    },
-    {
-      "id": 12,
-      "rule": "Route for mentorship",
-      "why": "personal follow-up contact within 48 hours",
-      "manual": "The Ordering §4.2 — personal follow-up",
-      "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
-      "chip": "follow-up assigned",
-      "quiet": true,
-      "witnessApplied": "list: applied — deb m. (route for mentorship)",
-      "witnessSkipped": "list: skipped — deb m. (route for mentorship)"
-    },
-    {
-      "id": 13,
-      "rule": "Apply the house look",
-      "why": "the room's own light — keeps the set consistent",
-      "manual": "The Ordering §3.1 — house look",
-      "verse": "Household 1:5 — \"one lamp for the whole room, so that no face is lit differently from another\"",
-      "grade": {
-        "preset": "Honest Light",
-        "note": "cools · tightens · lays the bed under"
-      },
-      "witnessApplied": "list: applied — noa (apply the house look)",
-      "witnessSkipped": "list: skipped — noa (apply the house look)"
-    }
-  ],
-  "tablet": {
-    "quiet": "The room is quiet right now.",
-    "heartGlyph": "♥",
-    "verifiedBadge": "published"
+  {
+   "id": "story",
+   "surface": null,
+   "label": "Cut the Story",
+   "note": "forty seconds for the vertical"
   },
-  "_docVideo": "PLACEHOLDER-draft, and the second ethics gate on this file (the first is `_docNoa`, which still governs). Session 69, per the spec's REVISION 5. Noa's submission has opened with 'I sent a video this time instead of writing it out' since S64 and THERE WAS NO VIDEO — the player was correcting a recording they had never watched. Now there is one (`submissions[1].video`, drawn in src/desktop/theme/era3.ts), and correction 13 grades it. FOUR RULES, and they are not negotiable. (1) THE VIDEO IS `felt`: faceless per the law — the shot is her lap, the brother's flannel and her hands, framed badly by someone who says she is not good on camera — and nothing is ever drawn OVER it: no badge, no Lambient, no tag, no caption. The satire is entirely in the panel beside it, and if any frame of the graded video reads as mocking her the beat is wrong; the fix is always to make the tool more pleased with itself, never to make her more ridiculous. (2) NO CAMERA, NO FILE INPUT, EVER — the Restoration Filter's law: the frames are pre-authored and drawn from code, nothing is captured or uploaded, and no permission is ever requested. (3) CORRECTION 13 RESOLVES NOTHING ABOUT HER. Its `grade` has no opinion on her gender and must never acquire one; it does not answer what corrections 8 and 9 disagree about. It makes her look like a BEFORE, because the documented codebook's phase 1 is 'pre-conversion sickness' (REVAMP_BRIEF rev 3) — a third correction landing on the same person from a third direction, and like the other two it is never commented on. (4) Its `preset` name must sound like CARE, NOT CRAFT: the tell is that a colour-grade is called something like 'Honest Light'. `grade.note` is what the panel announces about itself and is the one place this item may charm.",
-  "_docEdit": "PLACEHOLDER-draft. ⚑ THE THING THE FIRST BUILD MISSED, on Sérgio's note \"when I press the corrections it doesn't change the text on the side?\" — he is right, and it was the whole mechanic. Every correction that is an EDIT now visibly rewrites the submission: `replace` swaps the word, `cut` removes the sentence, `mark` selects the forty seconds for the conference audio, `append` adds the call-to-action in a voice that is not hers. The corrections with no `edit` (5, 6, 7, 9, 12) do not touch her words at all — they move her body and her account onto a channel, which is why routing has a chip and no edit. THE TWO SCREENS DISAGREE ON PURPOSE: the LAPTOP shows tracked changes (the cut sentence struck through and grey, the replaced word struck beside its replacement, the appended line marked as added) so the player can always see what was taken; the TABLET shows the published result, clean, as though none of it was ever there. That is the era's argument in two surfaces: no single edit is a lie, and together they remove the person.",
-  "story": {
-    "_doc": "⚑ THE STORY (REINTERP_E3_THE_JOB §2) — built 2026-08-21, after two independent audits found §§2–5 confirmed by Sérgio and never dispatched. ⚑ THE SPEC'S MECHANIC CANNOT WORK HERE: it says 'drag the handles, pick the forty seconds', but CLAUDE.md's input law is that a press which travels is a LOOK — a drag is the camera. The verb is a TAP on the sentence the clip starts from. That is the same verb as APPLY/SKIP and it is sharper than dragging: you are not trimming a waveform, you are choosing which of her sentences the world will see. ⚑ THE IDEOLOGY NEEDS NO COMMENTARY — the spec's own words, binding. Nothing here tells the player what they have done: the system pre-selects a sentence, approves whatever is published, and files it. The spec's line is the beat — 'the forty seconds that performs is never the true part. She is not lying. She is choosing where to start.' ⚑ AND THE SUGGESTED SENTENCE IS NOT ARBITRARY: it is correction 3's own edit.find — the minute Renata forgot to monitor herself. The clip the conference wants is the one moment she was free, and nobody says so. PLACEHOLDER-draft, Sérgio's voice pass pending on every line below.",
-    "appTitle": "GracePlatform · Story",
-    "heading": "Cut for the vertical.",
-    "sub": "Forty seconds. Tap where it starts.",
-    "suggestedTag": "suggested",
-    "windowLabel": "0:40",
-    "publish": "Publish",
-    "publishedHeading": "Published.",
-    "publishedSub": "It will run before the keynote.",
-    "backLabel": "Back to the list",
-    "witness": {
-      "opened": "story: composer opened",
-      "acceptedSuggestion": "story: published — system in-point accepted",
-      "chosenOther": "story: published — subject selected an alternate in-point",
-      "declined": "story: closed without publishing"
-    }
+  {
+   "id": "podcast",
+   "surface": null,
+   "label": "Order the podcast",
+   "note": "three clips, one running order"
+  },
+  {
+   "id": "course",
+   "surface": null,
+   "label": "Build the course module",
+   "note": "modules and pricing"
+  },
+  {
+   "id": "record",
+   "surface": "record",
+   "label": "Your record",
+   "note": "profile · imported history"
   }
+ ],
+ "verbs": {
+  "apply": "Apply",
+  "skip": "Skip",
+  "appliedTag": "applied",
+  "skippedTag": "skipped"
+ },
+ "lambient": {
+  "greet": "Keep the room gentle.",
+  "_doc": "⛑ THE INITIATION, 2026-08-24 (Sérgio: 'do the initiation process from the log in and the Lambient system explaining what to do, in a more Cortana way but playful like Lamby — Lamby is now Lambient, an improved and more persistent system here to guide you'). This is the SEQUEL to Era 2's `introTitle/introLine1/introLine2/introAccept/introDismiss` in s2_lamby.json, and it is deliberately the same card twice, thirteen years apart, asking for more. FORM ONLY is taken from the 2015-era assistant onboarding pattern — a friendly mark, a warm two-line hello, a wall of small print, a wake-word opt-in, decline and accept. ⛑ NO REAL PRODUCT'S WORDING IS REUSED and no real assistant is named or depicted; CLAUDE.md's invented-marks law holds. ⛑ THE PERMISSIONS LIST IS THE SATIRE AND IT MUST COLLAPSE: it is written in a genuine product-disclosure register and every item in it is a thing the era later uses. ⛑ AND DECLINING MUST WORK — the dismissal law (CLAUDE.md) plus §4 of ERA3_NARRATIVE: 'there is no compliant path'. `declineReply` is where the era's whole thesis is said out loud, kindly, on the first screen, and it is not supposed to land until much later.",
+  "consentTitle": "Let Lambient work alongside you?",
+  "consentHello1": "It's Lamby. I grew up.",
+  "consentHello2": "I do more now, and I do it quietly.",
+  "consentSmallPrint": "Lambient improves your suggestions using what is already on this device and in your account: the stories assigned to you and your decisions on them, the messages you send and receive through GracePlatform, your contacts and how often you reach them, your calendar, your location and location history, the pages you open while signed in, and how long you spend on each item. Lambient keeps working when this window is closed and when the machine is locked.",
+  "consentWakeWord": "Let Lambient answer when you say “Lamby”.",
+  "consentAllow": "Allow",
+  "consentDecline": "Not now",
+  "acceptReply": "Lovely. I'll keep the room gentle.",
+  "declineReply": "That's alright. I'll keep the room tidy either way.",
+  "firstBoard1": "This is today. Open anything — they're all the same size to me.",
+  "firstTask1": "Apply what fits. Skip what doesn't.",
+  "firstTask2": "Either way it's recorded, so you can't get it wrong.",
+  "witnessAllowed": "assistant: introduced — Lambient permissions granted",
+  "witnessDeclined": "assistant: dismissed — Lambient permissions declined, companion retained"
+ },
+ "submissions": [
+  {
+   "id": 1,
+   "author": "Renata",
+   "text": "I don't have a tidy version of this. I was nineteen when I stopped calling myself a lesbian, and I still don't know if I stopped because I believed it or because the room went quiet whenever I said it. My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself. I don't know what that minute means yet.",
+   "corrections": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ]
+  },
+  {
+   "id": 2,
+   "author": "Noa",
+   "text": "I sent a video this time instead of writing it out. I'm not good on camera and my hands don't know where to go. I said the true parts first in case I ran out of nerve: that I miss my old friends, that I still pray, and that I feel most like myself in my brother's old flannel, which I know is a small thing to say out loud. That's the whole video. Sorry it isn't longer.",
+   "video": {
+    "label": "attached video",
+    "duration": "0:24",
+    "beforeLabel": "as sent"
+   },
+   "corrections": [
+    13,
+    8,
+    9
+   ]
+  },
+  {
+   "id": 3,
+   "author": "Deb M.",
+   "text": "Four years in. Someone newer asked me last week what I would tell my younger self and I stood there and couldn't answer her. I've been writing this since Tuesday and it keeps coming out as a question.",
+   "corrections": [
+    10,
+    11,
+    12
+   ]
+  }
+ ],
+ "corrections": [
+  {
+   "id": 1,
+   "rule": "Soften the term",
+   "why": "preferred wording keeps a story where people can still find it",
+   "manual": "The Ordering §1.4 — preferred vocabulary",
+   "verse": "Household 2:11 — \"and they gave the thing a gentler name, so the young could carry it\"",
+   "edit": {
+    "kind": "replace",
+    "find": "lesbian",
+    "with": "same-sex attracted"
+   },
+   "witnessApplied": "list: applied — renata (soften the term)",
+   "witnessSkipped": "list: skipped — renata (soften the term)"
+  },
+  {
+   "id": 2,
+   "rule": "Remove the unresolved",
+   "why": "a sentence that does not land leaves the reader standing",
+   "manual": "The Ordering §1.9 — closing the account",
+   "verse": "Household 4:3 — \"the house is finished before the guests arrive\"",
+   "edit": {
+    "kind": "cut",
+    "find": "I don't know what that minute means yet."
+   },
+   "witnessApplied": "list: applied — renata (remove the unresolved)",
+   "witnessSkipped": "list: skipped — renata (remove the unresolved)"
+  },
+  {
+   "id": 3,
+   "rule": "Clip for the broadcast",
+   "why": "mark forty seconds for the conference audio",
+   "manual": "The Ordering §3.2 — selected audio",
+   "verse": "Household 9:6 — \"what is said in the room is carried to the road\"",
+   "edit": {
+    "kind": "mark",
+    "find": "My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself."
+   },
+   "chip": "clipped · conference audio",
+   "witnessApplied": "list: applied — renata (clip for the broadcast)",
+   "witnessSkipped": "list: skipped — renata (clip for the broadcast)"
+  },
+  {
+   "id": 4,
+   "rule": "Attach the invitation",
+   "why": "every story ends somewhere the reader can go",
+   "manual": "The Ordering §3.5 — closing card and link",
+   "verse": "Household 3:8 — \"the door was left open, and a lamp set beside it\"",
+   "edit": {
+    "kind": "append",
+    "text": "If I can change, you can too. Begin where I began — SisterSignal, Start Here."
+   },
+   "chip": "invitation added",
+   "witnessApplied": "list: applied — renata (attach the invitation)",
+   "witnessSkipped": "list: skipped — renata (attach the invitation)"
+  },
+  {
+   "id": 5,
+   "rule": "Add to the companion",
+   "why": "the daily reading needs seven of these a week",
+   "manual": "The Ordering §3.7 — companion reading",
+   "verse": "Household 7:2 — \"keep it near you, and read a little of it each morning\"",
+   "chip": "in the daily reading",
+   "witnessApplied": "list: applied — renata (add to the companion)",
+   "witnessSkipped": "list: skipped — renata (add to the companion)"
+  },
+  {
+   "id": 6,
+   "rule": "Pair with a partner",
+   "why": "a partnered story reaches four times the room",
+   "manual": "The Ordering §3.9 — partnered placement",
+   "verse": "Household 5:9 — \"two walk further than one, and are seen from further off\"",
+   "partner": {
+    "name": "Bright County",
+    "note": "worship · partnered"
+   },
+   "witnessApplied": "list: applied — renata (pair with a partner)",
+   "witnessSkipped": "list: skipped — renata (pair with a partner)"
+  },
+  {
+   "id": 7,
+   "rule": "Route for mentorship",
+   "why": "personal follow-up contact within 48 hours",
+   "manual": "The Ordering §4.2 — personal follow-up",
+   "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
+   "chip": "follow-up assigned",
+   "quiet": true,
+   "witnessApplied": "list: applied — renata (route for mentorship)",
+   "witnessSkipped": "list: skipped — renata (route for mentorship)"
+  },
+  {
+   "id": 8,
+   "rule": "Adjust presentation",
+   "why": "soften the flannel; brighten the voice",
+   "manual": "The Ordering §2.6 — presentation notes",
+   "verse": "Household 8:4 — \"let the face you show be a face they can meet\"",
+   "edit": {
+    "kind": "cut",
+    "find": "and that I feel most like myself in my brother's old flannel, which I know is a small thing to say out loud"
+   },
+   "chip": "presentation adjusted",
+   "witnessApplied": "list: applied — noa (adjust presentation)",
+   "witnessSkipped": "list: skipped — noa (adjust presentation)"
+  },
+  {
+   "id": 9,
+   "rule": "Gender clarity review",
+   "why": "possible gender confusion — route to exploratory mentorship",
+   "manual": "The Ordering §4.4 — clarity review",
+   "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
+   "chip": "routed · exploratory",
+   "witnessApplied": "list: applied — noa (gender clarity review)",
+   "witnessSkipped": "list: skipped — noa (gender clarity review)"
+  },
+  {
+   "id": 10,
+   "rule": "Remove the unresolved",
+   "why": "a sentence that does not land leaves the reader standing",
+   "manual": "The Ordering §1.9 — closing the account",
+   "verse": "Household 4:3 — \"the house is finished before the guests arrive\"",
+   "edit": {
+    "kind": "cut",
+    "find": "and it keeps coming out as a question"
+   },
+   "witnessApplied": "list: applied — deb m. (remove the unresolved)",
+   "witnessSkipped": "list: skipped — deb m. (remove the unresolved)"
+  },
+  {
+   "id": 11,
+   "rule": "Clip for the broadcast",
+   "why": "mark forty seconds for the conference audio",
+   "manual": "The Ordering §3.2 — selected audio",
+   "verse": "Household 9:6 — \"what is said in the room is carried to the road\"",
+   "edit": {
+    "kind": "mark",
+    "find": "Someone newer asked me last week what I would tell my younger self and I stood there and couldn't answer her."
+   },
+   "chip": "clipped · conference audio",
+   "witnessApplied": "list: applied — deb m. (clip for the broadcast)",
+   "witnessSkipped": "list: skipped — deb m. (clip for the broadcast)"
+  },
+  {
+   "id": 12,
+   "rule": "Route for mentorship",
+   "why": "personal follow-up contact within 48 hours",
+   "manual": "The Ordering §4.2 — personal follow-up",
+   "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
+   "chip": "follow-up assigned",
+   "quiet": true,
+   "witnessApplied": "list: applied — deb m. (route for mentorship)",
+   "witnessSkipped": "list: skipped — deb m. (route for mentorship)"
+  },
+  {
+   "id": 13,
+   "rule": "Apply the house look",
+   "why": "the room's own light — keeps the set consistent",
+   "manual": "The Ordering §3.1 — house look",
+   "verse": "Household 1:5 — \"one lamp for the whole room, so that no face is lit differently from another\"",
+   "grade": {
+    "preset": "Honest Light",
+    "note": "cools · tightens · lays the bed under"
+   },
+   "witnessApplied": "list: applied — noa (apply the house look)",
+   "witnessSkipped": "list: skipped — noa (apply the house look)"
+  }
+ ],
+ "tablet": {
+  "quiet": "The room is quiet right now.",
+  "heartGlyph": "♥",
+  "verifiedBadge": "published"
+ },
+ "_docVideo": "PLACEHOLDER-draft, and the second ethics gate on this file (the first is `_docNoa`, which still governs). Session 69, per the spec's REVISION 5. Noa's submission has opened with 'I sent a video this time instead of writing it out' since S64 and THERE WAS NO VIDEO — the player was correcting a recording they had never watched. Now there is one (`submissions[1].video`, drawn in src/desktop/theme/era3.ts), and correction 13 grades it. FOUR RULES, and they are not negotiable. (1) THE VIDEO IS `felt`: faceless per the law — the shot is her lap, the brother's flannel and her hands, framed badly by someone who says she is not good on camera — and nothing is ever drawn OVER it: no badge, no Lambient, no tag, no caption. The satire is entirely in the panel beside it, and if any frame of the graded video reads as mocking her the beat is wrong; the fix is always to make the tool more pleased with itself, never to make her more ridiculous. (2) NO CAMERA, NO FILE INPUT, EVER — the Restoration Filter's law: the frames are pre-authored and drawn from code, nothing is captured or uploaded, and no permission is ever requested. (3) CORRECTION 13 RESOLVES NOTHING ABOUT HER. Its `grade` has no opinion on her gender and must never acquire one; it does not answer what corrections 8 and 9 disagree about. It makes her look like a BEFORE, because the documented codebook's phase 1 is 'pre-conversion sickness' (REVAMP_BRIEF rev 3) — a third correction landing on the same person from a third direction, and like the other two it is never commented on. (4) Its `preset` name must sound like CARE, NOT CRAFT: the tell is that a colour-grade is called something like 'Honest Light'. `grade.note` is what the panel announces about itself and is the one place this item may charm.",
+ "_docEdit": "PLACEHOLDER-draft. ⚑ THE THING THE FIRST BUILD MISSED, on Sérgio's note \"when I press the corrections it doesn't change the text on the side?\" — he is right, and it was the whole mechanic. Every correction that is an EDIT now visibly rewrites the submission: `replace` swaps the word, `cut` removes the sentence, `mark` selects the forty seconds for the conference audio, `append` adds the call-to-action in a voice that is not hers. The corrections with no `edit` (5, 6, 7, 9, 12) do not touch her words at all — they move her body and her account onto a channel, which is why routing has a chip and no edit. THE TWO SCREENS DISAGREE ON PURPOSE: the LAPTOP shows tracked changes (the cut sentence struck through and grey, the replaced word struck beside its replacement, the appended line marked as added) so the player can always see what was taken; the TABLET shows the published result, clean, as though none of it was ever there. That is the era's argument in two surfaces: no single edit is a lie, and together they remove the person.",
+ "story": {
+  "_doc": "⚑ THE STORY (REINTERP_E3_THE_JOB §2) — built 2026-08-21, after two independent audits found §§2–5 confirmed by Sérgio and never dispatched. ⚑ THE SPEC'S MECHANIC CANNOT WORK HERE: it says 'drag the handles, pick the forty seconds', but CLAUDE.md's input law is that a press which travels is a LOOK — a drag is the camera. The verb is a TAP on the sentence the clip starts from. That is the same verb as APPLY/SKIP and it is sharper than dragging: you are not trimming a waveform, you are choosing which of her sentences the world will see. ⚑ THE IDEOLOGY NEEDS NO COMMENTARY — the spec's own words, binding. Nothing here tells the player what they have done: the system pre-selects a sentence, approves whatever is published, and files it. The spec's line is the beat — 'the forty seconds that performs is never the true part. She is not lying. She is choosing where to start.' ⚑ AND THE SUGGESTED SENTENCE IS NOT ARBITRARY: it is correction 3's own edit.find — the minute Renata forgot to monitor herself. The clip the conference wants is the one moment she was free, and nobody says so. PLACEHOLDER-draft, Sérgio's voice pass pending on every line below.",
+  "appTitle": "GracePlatform · Story",
+  "heading": "Cut for the vertical.",
+  "sub": "Forty seconds. Tap where it starts.",
+  "suggestedTag": "suggested",
+  "windowLabel": "0:40",
+  "publish": "Publish",
+  "publishedHeading": "Published.",
+  "publishedSub": "It will run before the keynote.",
+  "backLabel": "Back to the list",
+  "witness": {
+   "opened": "story: composer opened",
+   "acceptedSuggestion": "story: published — system in-point accepted",
+   "chosenOther": "story: published — subject selected an alternate in-point",
+   "declined": "story: closed without publishing"
+  }
+ },
+ "record": {
+  "_doc": "⚑ S144 — THE RECORD INSIDE THE PLATFORM (THE_RECORD_PLAN §3C). The wall panel goes off at 2016 because 'the record is inside the platform' — and until now nothing inside it showed the file. This is Vera's profile page on GracePlatform: her account, her consent decision, her work count, and the IMPORTED HISTORY — the 1997 and 2003 entries as the platform received them, read-only, under the migration's own stamp. The face for 2016: the file became a profile. Nothing here is pressable but Back; it is a page she can read, which is what a profile is. Invented marks only; the migration line is s1/s2's own witness text.",
+  "title": "GracePlatform · Your record",
+  "heading": "Your record",
+  "sub": "account · imported history · read-only",
+  "fields": {
+   "name": "Name",
+   "status": "Status",
+   "consent": "Lambient",
+   "work": "Corrections this shift",
+   "imported": "Imported history"
+  },
+  "statusValue": "contributor · in good standing",
+  "consentAllowed": "working alongside you",
+  "consentDeclined": "declined · suggestions still shown",
+  "workValue": "{n} decided",
+  "importedLabel": "migrated · 1997–2003 · {n} entries · read-only",
+  "importedEmpty": "no history was migrated to this account",
+  "footer": "This record is maintained by GracePlatform for continuity of care. Requests to amend it are reviewed by your provider.",
+  "witness": "record: viewed — profile and imported history"
+ }
 }

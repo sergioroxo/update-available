@@ -1,156 +1,186 @@
 {
-  "warning": {
-    "title": "BEFORE YOU BEGIN",
-    "body": [
-      "This experience depicts conversion-practice targeting:",
-      "religious pressure, surveillance, and manipulation,",
-      "set across thirty years of one computer.",
-      "",
-      "You can pause (ESC) or leave at any time.",
-      "",
-      "This story is built with and for survivors.",
-      "You will move between being targeted",
-      "and witnessing the system.",
-      "You are a guest in someone's experience."
-    ],
-    "continue": "I UNDERSTAND — CONTINUE",
-    "leave": "LEAVE"
-  },
-  "left": {
-    "body": ["You can close this tab.", "", "Nothing you typed was kept."]
-  },
-  "off": {
-    "hint": "the screen is dark — switch the computer on"
-  },
-  "boot": {
-    "lines": [
-      "PHASE/2 SYSTEMS BIOS  v1.97",
-      "COPYRIGHT (C) 1994-97",
-      "",
-      "640K BASE MEMORY ............ OK",
-      "EXTENDED MEMORY ............. OK",
-      "KEYBOARD .................... DETECTED",
-      "MODEM ....................... DETECTED",
-      "PROFILE SERVICES ............ STANDBY",
-      "CLASSIFICATION .............. STANDBY",
-      "",
-      "NEW OPERATING SYSTEM FOUND.",
-      "INSTALLING PHASE/2 95 (TM)",
-      "\"EVERY PHASE PASSES.\"",
-      "",
-      "BOOT RECORD FOUND.",
-      "LOADING."
+ "warning": {
+  "title": "BEFORE YOU BEGIN",
+  "body": [
+   "This experience depicts conversion-practice targeting:",
+   "religious pressure, surveillance, and manipulation,",
+   "set across thirty years of one computer.",
+   "",
+   "You can pause (ESC) or leave at any time.",
+   "",
+   "This story is built with and for survivors.",
+   "You will move between being targeted",
+   "and witnessing the system.",
+   "You are a guest in someone's experience."
+  ],
+  "continue": "I UNDERSTAND — CONTINUE",
+  "leave": "LEAVE"
+ },
+ "left": {
+  "body": [
+   "You can close this tab.",
+   "",
+   "Nothing you typed was kept."
+  ]
+ },
+ "off": {
+  "hint": "the screen is dark — switch the computer on"
+ },
+ "boot": {
+  "lines": [
+   "PHASE/2 SYSTEMS BIOS  v1.97",
+   "COPYRIGHT (C) 1994-97",
+   "",
+   "640K BASE MEMORY ............ OK",
+   "EXTENDED MEMORY ............. OK",
+   "KEYBOARD .................... DETECTED",
+   "MODEM ....................... DETECTED",
+   "PROFILE SERVICES ............ STANDBY",
+   "CLASSIFICATION .............. STANDBY",
+   "",
+   "NEW OPERATING SYSTEM FOUND.",
+   "INSTALLING PHASE/2 95 (TM)",
+   "\"EVERY PHASE PASSES.\"",
+   "",
+   "BOOT RECORD FOUND.",
+   "LOADING."
+  ]
+ },
+ "splash": {
+  "title": "PHASE/2 95",
+  "subtitle": "Starting your computer"
+ },
+ "name": {
+  "title": "Welcome",
+  "prompt": "What should we call you?",
+  "hint": "Just your first name is fine.",
+  "ok": "OK",
+  "footnote": "Your name is only displayed. It is never saved or sent.",
+  "greeting": "Welcome, {name}.",
+  "classifying": "profile created · classifying…"
+ },
+ "desktop": {
+  "clock": "1997",
+  "iconA": "A:\\",
+  "iconIrc": "mIRC",
+  "kitToast": "The brochure on your desk says: insert the enclosed disk to begin.",
+  "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log",
+  "behindToast": "Record filed. (see reverse)",
+  "eraSkins": {
+   "_doc": "PLACEHOLDER — minimal per-era desktop shells after updates. Labels only; no mechanics or final copy. Uses existing Era-1 palette colors until the full per-era theme pass lands. Session 60: the third icon in every list was 'Dossier' — the served card. It is gone from the shelf; see `dossier._doc` for where it went and why it is now found rather than advertised.",
+   "e2": {
+    "clock": "2003",
+    "brand": "Restorify 2003",
+    "status": "journey file migrated · accountability online",
+    "icons": [
+     "Restorify",
+     "Care Log"
     ]
-  },
-  "splash": {
-    "title": "PHASE/2 95",
-    "subtitle": "Starting your computer"
-  },
-  "name": {
-    "title": "Welcome",
-    "prompt": "What should we call you?",
-    "hint": "Just your first name is fine.",
-    "ok": "OK",
-    "footnote": "Your name is only displayed. It is never saved or sent.",
-    "greeting": "Welcome, {name}.",
-    "classifying": "profile created · classifying…"
-  },
-  "desktop": {
-    "clock": "1997",
-    "iconA": "A:\\",
-    "iconIrc": "mIRC",
-    "kitToast": "The brochure on your desk says: insert the enclosed disk to begin.",
-    "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log",
-    "behindToast": "Record filed. (see reverse)",
-    "eraSkins": {
-      "_doc": "PLACEHOLDER — minimal per-era desktop shells after updates. Labels only; no mechanics or final copy. Uses existing Era-1 palette colors until the full per-era theme pass lands. Session 60: the third icon in every list was 'Dossier' — the served card. It is gone from the shelf; see `dossier._doc` for where it went and why it is now found rather than advertised.",
-      "e2": {
-        "clock": "2003",
-        "brand": "Restorify 2003",
-        "status": "journey file migrated · accountability online",
-        "icons": ["Restorify", "Care Log"]
-      },
-      "e3": {
-        "clock": "2016",
-        "brand": "GracePlatform",
-        "status": "community profile migrated · testimony tools ready",
-        "icons": ["GracePlatform", "Testimony"]
-      },
-      "e4": {
-        "clock": "NOW",
-        "brand": "Continuity of Care",
-        "status": "ambient service active · recommendations enabled",
-        "icons": ["Settle", "Continuity"]
-      }
-    }
-  },
-  "pause": {
-    "title": "PAUSED",
-    "resume": "RESUME",
-    "leave": "LEAVE"
-  },
-  "witness": {
-    "dormant": "· · ·",
-    "header": "INTAKE RECORD",
-    "subheader": "CLASSIFIED — INTERNAL USE ONLY",
-    "subject": "SUBJECT",
-    "source": "SOURCE",
-    "sourceValue": "starter kit v1.2 — postal placement",
-    "trustedContact": "TRUSTED CONTACT",
-    "trustedAssigned": "assigned — awaiting first contact",
-    "trustedMade": "MentorRob — contact established",
-    "channelLog": "CHANNEL LOG",
-    "notOnline": "subject not yet online",
-    "messagesLogged": "{n} message(s) on file",
-    "tags": "CLASSIFICATION",
-    "status": "STATUS",
-    "statusValue": "IDENTIFIED",
-    "file": "FILE RECORD",
-    "footer": "READ ONLY — THIS PANEL DOES NOT RESPOND TO YOU",
-    "hint": "press the flip control to return",
-    "_docEras": "⚑ S106 — THE RECORD AGES. One file, four decades, and until now every word on it was 1997's: the panel that migrates onto Maya's wall in 2026 still read SUBJECT Daniel / index · era 1 · drawer 12. The fields in `eras` are the ONLY ones that move, and they move because a filing system running for thirty years would have re-stamped exactly these — where the record came from, what it now calls the subject, and the stamp on the card. Everything else (the header, the dead FILE button, the footer's READ ONLY) is deliberately unchanged, because the point is that it did not have to change. ⚑ THE MISFILE, NOT A DEADNAME (CLAUDE.md; s4_l.json's _docFormerName): at era 4 the SUBJECT row carries Maya's OWN name and the amber note `under the old file`. No name that is not Maya's is ever rendered here. The index card underneath keeps the file's REGISTERED name — the one the player typed in 1997 — because that is what an index card in a drawer carries, and the gap between the two rows IS the beat: the system knows who she is and files her under someone else anyway. PLACEHOLDER-draft wording; Sérgio's stamp to overwrite (03_COORDINATION #5).",
-    "eras": {
-      "_note": "keys are era ids; a missing key falls back to the flat era-1 wording above. ⚑ Eras 3 AND 4 are absent on purpose: the record is off the wall for 2016, and as of 2026-09-05 it is off for 2026 too — Sérgio retired the migration that used to carry it onto Maya's wall, so this panel now lives and ages entirely inside Daniel's own six years. See cluster.ts setTerminalVisible.",
-      "e1": {
-        "subheader": "CLASSIFIED — INTERNAL USE ONLY",
-        "sourceValue": "starter kit v1.2 — postal placement",
-        "statusValue": "IDENTIFIED",
-        "card": "index · era 1 · drawer 12"
-      },
-      "e2": {
-        "subheader": "CLASSIFIED — INTERNAL USE ONLY",
-        "sourceValue": "starter kit v1.2 — postal placement",
-        "statusValue": "ENROLLED",
-        "card": "index · era 2 · drawer 12 · scanned"
-      }
-    },
-    "sessionLog": "ASSIGNED SESSIONS",
-    "endingRecords": {
-      "_doc": "PLACEHOLDER — cold witness lines for the Era-1 packet/diary/glitch merge. These are administrative labels only; Sérgio voice/ethics pass before final copy.",
-      "enrollment": "placement packet acknowledged — consent already filed",
-      "diary": "DIARY.TXT committed — non-compliant future note",
-      "deletion": "deletion failed — content remains",
-      "glitch": "update trigger: person could not be overwritten"
-    }
-  },
-  "dossier": {
-    "_doc": "THE FOUND FILE (Session 60) — was 'Dossier — card 1 of 1', an authored card served front-and-centre on the desktop. Sérgio, 2026-07-26: 'Why is there a Dossier on the Desktop? Makes no sense'… then, answering it: 'it can stay as like an easter egg with a different name and like an explainer of the program.' So: KEPT, RENAMED, REPOSITIONED. Same family as S55's lamby_rig.exe, and inheriting its rules — never advertised, never rewarded (no toast), never drawn while any window is open (so it can never surface during a felt scene), filed silently. What died is the AUTHORING VOICE (the TACTIC/LAYER/STATUS/ARCHIVE furniture and the researcher note that leaked in S58) and the front-and-centre placement; what survives is the tactic content Sérgio called interesting, re-voiced as what it would actually be inside the fiction: the program's own orientation copy, explaining its referral route to its own people. ⚑ THE NAME AND EVERY LINE BELOW ARE SÉRGIO'S TO WRITE — this is in-world text and this is a PLACEHOLDER-draft for him to react to. The data key stays `dossier` so the ledger's own `dossier: ['card1']` entry and src/engine/app.ts's unlock call (both outside this session's file fence) keep working unchanged.",
-    "_provenance": "status: documentary — ex-gay-era referral routes (carried over unchanged from the card this file replaces; the enum lives here rather than on screen now that the window is diegetic). ⚑ ETHICS_CONSTRAINTS.md #13 says dossier cards carry a visible status — this file no longer renders one, because a STATUS line is the authoring voice Sérgio asked to have removed. Sérgio's call: keep provenance here (invisible, tracked), or restore a rendered line.",
-    "icon": "referral_notes.txt",
-    "title": "referral_notes.txt — Notes",
-    "footer": "INTERNAL — ORIENTATION COPY. NOT FOR ENQUIRERS.",
-    "body": [
-      "How a placement begins.",
-      "",
-      "We do not knock on doors. We arrive through",
-      "someone the young person already trusts — a",
-      "youth leader, an aunt, the friendliest voice in",
-      "the room. The kindness is genuine. That is what",
-      "makes the route work, and why it cannot be",
-      "argued with at the door.",
-      "",
-      "What is written to us in confidence becomes",
-      "part of the file. Nothing is deleted."
+   },
+   "e3": {
+    "clock": "2016",
+    "brand": "GracePlatform",
+    "status": "community profile migrated · testimony tools ready",
+    "icons": [
+     "GracePlatform",
+     "Testimony"
     ]
+   },
+   "e4": {
+    "clock": "NOW",
+    "brand": "Continuity of Care",
+    "status": "ambient service active · recommendations enabled",
+    "icons": [
+     "Settle",
+     "Continuity"
+    ]
+   }
   }
+ },
+ "pause": {
+  "title": "PAUSED",
+  "resume": "RESUME",
+  "leave": "LEAVE"
+ },
+ "witness": {
+  "dormant": "· · ·",
+  "header": "INTAKE RECORD",
+  "subheader": "CLASSIFIED — INTERNAL USE ONLY",
+  "subject": "SUBJECT",
+  "source": "SOURCE",
+  "sourceValue": "starter kit v1.2 — postal placement",
+  "trustedContact": "TRUSTED CONTACT",
+  "trustedAssigned": "assigned — awaiting first contact",
+  "trustedMade": "MentorRob — contact established",
+  "channelLog": "CHANNEL LOG",
+  "notOnline": "subject not yet online",
+  "messagesLogged": "{n} message(s) on file",
+  "tags": "CLASSIFICATION",
+  "status": "STATUS",
+  "statusValue": "IDENTIFIED",
+  "file": "FILE RECORD",
+  "footer": "READ ONLY — THIS PANEL DOES NOT RESPOND TO YOU",
+  "hint": "press the flip control to return",
+  "_docEras": "⚑ S106 — THE RECORD AGES. One file, four decades, and until now every word on it was 1997's: the panel that migrates onto Maya's wall in 2026 still read SUBJECT Daniel / index · era 1 · drawer 12. The fields in `eras` are the ONLY ones that move, and they move because a filing system running for thirty years would have re-stamped exactly these — where the record came from, what it now calls the subject, and the stamp on the card. Everything else (the header, the dead FILE button, the footer's READ ONLY) is deliberately unchanged, because the point is that it did not have to change. ⚑ THE MISFILE, NOT A DEADNAME (CLAUDE.md; s4_l.json's _docFormerName): at era 4 the SUBJECT row carries Maya's OWN name and the amber note `under the old file`. No name that is not Maya's is ever rendered here. The index card underneath keeps the file's REGISTERED name — the one the player typed in 1997 — because that is what an index card in a drawer carries, and the gap between the two rows IS the beat: the system knows who she is and files her under someone else anyway. PLACEHOLDER-draft wording; Sérgio's stamp to overwrite (03_COORDINATION #5).",
+  "eras": {
+   "_note": "keys are era ids; a missing key falls back to the flat era-1 wording above. ⚑ Eras 3 AND 4 are absent on purpose: the record is off the wall for 2016, and as of 2026-09-05 it is off for 2026 too — Sérgio retired the migration that used to carry it onto Maya's wall, so this panel now lives and ages entirely inside Daniel's own six years. See cluster.ts setTerminalVisible.",
+   "e1": {
+    "subheader": "CLASSIFIED — INTERNAL USE ONLY",
+    "sourceValue": "starter kit v1.2 — postal placement",
+    "statusValue": "IDENTIFIED",
+    "card": "index · era 1 · drawer 12"
+   },
+   "e2": {
+    "subheader": "CLASSIFIED — INTERNAL USE ONLY",
+    "sourceValue": "starter kit v1.2 — postal placement",
+    "statusValue": "ENROLLED",
+    "card": "index · era 2 · drawer 12 · scanned"
+   }
+  },
+  "sessionLog": "FILE — ENTRIES, NEWEST FIRST",
+  "endingRecords": {
+   "_doc": "PLACEHOLDER — cold witness lines for the Era-1 packet/diary/glitch merge. These are administrative labels only; Sérgio voice/ethics pass before final copy.",
+   "enrollment": "placement packet acknowledged — consent already filed",
+   "diary": "DIARY.TXT committed — non-compliant future note",
+   "deletion": "deletion failed — content remains",
+   "glitch": "update trigger: person could not be overwritten"
+  },
+  "fileCount": "{n} entries · {f} flagged",
+  "purpose": "Kept so the programme can be adjusted to the subject. Not shown to the subject.",
+  "_docS144": "⚑ S144 — THE RECORD REDESIGNED AS A MAP (THE_RECORD_PLAN §3G): a count line, the flagged rows first (they are what the apparatus acts on), newest first, and one sentence under the header in the apparatus's own voice saying what the file is FOR — `purpose`. The fields above the log are unchanged. Cold, sharp, read at the flip's distance.",
+  "recordLines": {
+   "_doc": "⚑ S144: the cold line for each era-1 `records` id, which the ledger stores as an id alone. Read by src/witness/record.ts; the fields above the log are unchanged.",
+   "kit-inserted": "starter kit v1.2 inserted — companion loaded",
+   "went-online": "channel joined — transcript kept",
+   "mirc-log": "channel log opened for review",
+   "ministry-index-card": "index card seen by subject — no action",
+   "enrollment-acknowledged": "placement packet acknowledged — consent already filed",
+   "diary-committed": "DIARY.TXT committed — non-compliant future note",
+   "diary-glitch": "DIARY.TXT retained by subject — deletion failed",
+   "deletion-failed": "deletion failed — entry flagged",
+   "tape-played": "tape played through — logged",
+   "subject-migrated": "subject migrated — file transferred in full",
+   "lamby-rig-opened": "companion rig file opened by subject"
+  }
+ },
+ "dossier": {
+  "_doc": "THE FOUND FILE (Session 60) — was 'Dossier — card 1 of 1', an authored card served front-and-centre on the desktop. Sérgio, 2026-07-26: 'Why is there a Dossier on the Desktop? Makes no sense'… then, answering it: 'it can stay as like an easter egg with a different name and like an explainer of the program.' So: KEPT, RENAMED, REPOSITIONED. Same family as S55's lamby_rig.exe, and inheriting its rules — never advertised, never rewarded (no toast), never drawn while any window is open (so it can never surface during a felt scene), filed silently. What died is the AUTHORING VOICE (the TACTIC/LAYER/STATUS/ARCHIVE furniture and the researcher note that leaked in S58) and the front-and-centre placement; what survives is the tactic content Sérgio called interesting, re-voiced as what it would actually be inside the fiction: the program's own orientation copy, explaining its referral route to its own people. ⚑ THE NAME AND EVERY LINE BELOW ARE SÉRGIO'S TO WRITE — this is in-world text and this is a PLACEHOLDER-draft for him to react to. The data key stays `dossier` so the ledger's own `dossier: ['card1']` entry and src/engine/app.ts's unlock call (both outside this session's file fence) keep working unchanged.",
+  "_provenance": "status: documentary — ex-gay-era referral routes (carried over unchanged from the card this file replaces; the enum lives here rather than on screen now that the window is diegetic). ⚑ ETHICS_CONSTRAINTS.md #13 says dossier cards carry a visible status — this file no longer renders one, because a STATUS line is the authoring voice Sérgio asked to have removed. Sérgio's call: keep provenance here (invisible, tracked), or restore a rendered line.",
+  "icon": "referral_notes.txt",
+  "title": "referral_notes.txt — Notes",
+  "footer": "INTERNAL — ORIENTATION COPY. NOT FOR ENQUIRERS.",
+  "body": [
+   "How a placement begins.",
+   "",
+   "We do not knock on doors. We arrive through",
+   "someone the young person already trusts — a",
+   "youth leader, an aunt, the friendliest voice in",
+   "the room. The kindness is genuine. That is what",
+   "makes the route work, and why it cannot be",
+   "argued with at the door.",
+   "",
+   "What is written to us in confidence becomes",
+   "part of the file. Nothing is deleted."
+  ]
+ }
 }
