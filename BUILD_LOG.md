@@ -1150,3 +1150,16 @@ Also: the `{name}` token replaced once (Lume's welcome named him raw — tour-e1
 CHANNEL LOG counted off the ledger (it said 0 under "spoke in channel"), `?era=2|3` review jumps land
 in the desktop phase (the return press filed nothing), the board's tile pictures clipped to their wells.
 Numbers: `QUEST_E4_2026-09-16.md`. Walked three times, last after every change: 209 presses, spine done.
+
+## 2026-09-16 — S146 · THE MAP AS A MAP, and the last screen counts the file
+Sérgio: "show me the results of the map and build more of the things missing." The menu's map is
+five columns now (one per era and the Close): the beats down each as marks, the era you are in under
+the bright rule with *you are here*, `n of m done`, eras ahead showing only their length; an era's
+heading or its *What it did here — n entries* opens the era's file under its beats (practice · did ·
+status, then every entry). A beat the piece has moved past reads as done (a review jump into 2016
+showed the migration as current under three ticks). The type came up (12/11 px) for the tablet. The
+tour photographs the map and the helper (`map-`, `helper-` frames; `#reinterp-helper`). The
+Restart card says the file's size above "nothing kept" (`close_restart.json filed`). The Close's
+panels keep the paragraph at ≥28 px — the player's lines yield first (`__closePanelSizes`). A filing
+restarts the helper's stillness clock. The map's phone direction corrected (it is on the desk).
+Walked twice: 205 presses, spine done.

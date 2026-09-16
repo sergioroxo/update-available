@@ -26,5 +26,7 @@
  "again": "Start again",
  "witness": "the machine offered its restart; nothing was kept",
  "makers": "Made at the University of Bergen (SurvivingSOGICE) with Claude. Credits & sources: the menu.",
- "_docMakers": "⚑ S143: the one-line disclosure on the last screen — frame voice, small, under the buttons. The long form is the MAKERS paragraph in the Credits view (docs/reinterp/ATTRIBUTIONS.md)."
+ "_docMakers": "⚑ S143: the one-line disclosure on the last screen — frame voice, small, under the buttons. The long form is the MAKERS paragraph in the Credits view (docs/reinterp/ATTRIBUTIONS.md).",
+ "filed": "{n} entries were filed under four names, {f} of them flagged.",
+ "_docFiled": "⚑ S146 — the one number the whole Witness system was building to, on the last screen, in the frame's flat voice: the file's size, read off the ledger at the moment the card lights (src/witness/record.ts). It sits above `kept`, so the two sentences are read together: this many entries; none kept."
 }

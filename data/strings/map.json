@@ -191,7 +191,7 @@
           "label": "The phone",
           "done": "phoneAnswered",
           "hint": "The phone has a message. Or keep working — it will find you.",
-          "where": "the phone, on the nightstand"
+          "where": "the phone on the desk — look down, a little to your left"
         },
         {
           "id": "cascade",
@@ -199,7 +199,7 @@
           "done": "cascadeSeen",
           "quiet": true,
           "hint": "Keep working. The phone will answer.",
-          "where": "the phone"
+          "where": "the phone on the desk"
         },
         {
           "id": "update",
@@ -269,5 +269,8 @@
       ]
     }
   ],
-  "aheadCount": "{n} beats ahead"
+  "aheadCount": "{n} beats ahead",
+  "progress": "{d} of {n} done",
+  "fileOpen": "What it did here — {n} entries ▸",
+  "fileClose": "What it did here — {n} entries ▾"
 }

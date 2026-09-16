@@ -49,6 +49,7 @@ import copy from '../../data/strings/gameMenu.json';
 import attributions from '../../data/strings/attributions.json';
 import { entriesByEra, practiceOf, type RecordEra } from '../witness/record';
 import mapCopy from '../../data/strings/map.json';
+import { FRAME } from './theme/chrome';
 import originIntake from '../../data/provotypes/origin_intake_e1.json';
 import pillowCard from '../../data/provotypes/pillow.json';
 // ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
@@ -249,37 +250,90 @@ export function mountGameMenu(): GameMenu {
    * (data/dossier/practices.json — no new claims), and the way to the file.
    * Frame voice: it explains, because the frame never plays. Nothing files.
    */
+  /** the era a player has opened on the map (its file, under the beats) — menu state, never filed */
+  const mapOpen = new Set<string>();
   function mapView(): void {
     heading(mapCopy.title);
     const src = gameMenuBus.mapSource;
     if (!src) { paragraph(mapCopy.soFarEmpty); backRow(); return; }
     const st = src();
+    const by = entriesByEra();
     if (st.current) {
       paragraph(`${mapCopy.nextLabel}: ${st.current.beat.hint}${st.current.beat.where ? `  (${st.current.beat.where})` : ''}`);
     }
+    // ⚑ S146 — THE MAP AS A MAP: five columns across, one per era and the
+    //   Close, the beats down each as a line of marks; the era you are in has
+    //   the bright rule and "you are here". Eras not yet reached show only
+    //   their length (the shape of the piece, never its surprises). An era's
+    //   heading is a press: it opens that era's file under its beats — what
+    //   the software did there, its dossier status, and every entry filed.
+    //   Still frame voice: plain type, plain rules, nothing moves.
+    const grid = document.createElement('div');
+    Object.assign(grid.style, { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px', margin: '4px 0 14px' } as CSSStyleDeclaration);
+    panel.appendChild(grid);
     let ahead = false;
+    const line = (parent: HTMLElement, text: string, color: string, size = '12px'): HTMLDivElement => {
+      const d = document.createElement('div');
+      Object.assign(d.style, { font: `${size} "Courier New", monospace`, color, lineHeight: '1.5', whiteSpace: 'normal' } as CSSStyleDeclaration);
+      d.textContent = text;
+      parent.appendChild(d);
+      return d;
+    };
     for (const era of st.eras) {
-      heading(`${era.label}${era.here ? `  — ${mapCopy.hereLabel}` : ''}`);
-      // ⚑ an era not yet reached shows its LENGTH, not its beats: the map gives
-      //   the shape of the piece, never its surprises (the frame explains what
-      //   has happened and what is asked now; it does not narrate what is coming)
-      if (ahead) { paragraph(era.id === 'close' ? mapCopy.aheadLabel : mapCopy.aheadCount.replace('{n}', String(era.beats.length))); continue; }
+      const col = document.createElement('div');
+      Object.assign(col.style, {
+        borderTop: `2px solid ${era.here ? FRAME.bright : FRAME.rule}`, padding: '8px 4px 6px',
+        opacity: ahead && !era.here ? '0.55' : '1'
+      } as CSSStyleDeclaration);
+      grid.appendChild(col);
+      const isAhead = ahead;
       if (era.here) ahead = true;
+      const head = document.createElement('button');
+      head.textContent = era.label;
+      Object.assign(head.style, {
+        display: 'block', width: '100%', textAlign: 'left', font: '13px "Courier New", monospace', fontWeight: '700',
+        color: era.here ? FRAME.bright : FRAME.text, background: 'transparent', border: 'none', padding: '0 0 6px', cursor: isAhead ? 'default' : 'pointer'
+      } as CSSStyleDeclaration);
+      col.appendChild(head);
+      if (era.here) line(col, mapCopy.hereLabel, FRAME.bright, '10px');
+      if (isAhead) { line(col, era.id === 'close' ? mapCopy.aheadLabel : mapCopy.aheadCount.replace('{n}', String(era.beats.length)), FRAME.faint); continue; }
+      const done = era.beats.filter((b) => b.state === 'done').length;
       for (const b of era.beats) {
-        const mark = b.state === 'done' ? '✓' : b.state === 'current' ? '▸' : '·';
-        paragraph(`${mark} ${b.beat.label}${b.beat.optional && b.state !== 'done' ? `  (${mapCopy.optionalMark})` : ''}`);
+        const mark = b.state === 'done' ? '✓' : b.state === 'current' ? '▸' : b.beat.optional ? '○' : '·';
+        const color = b.state === 'current' ? FRAME.bright : b.state === 'done' ? FRAME.dim : FRAME.faint;
+        line(col, `${mark} ${b.beat.label}${b.beat.optional && b.state !== 'done' ? ` (${mapCopy.optionalMark})` : ''}`, color);
       }
-      if (era.id !== 'close') {
-        paragraph(`${mapCopy.soFarLabel}: ${era.soFar.length ? era.soFar.map((p) => `${p.did} [${p.status}]`).join('; ') : mapCopy.soFarEmpty}.`);
+      if (era.id === 'close') continue;
+      line(col, mapCopy.progress.replace('{d}', String(done)).replace('{n}', String(era.beats.length)), FRAME.faint, '10px');
+      // the era's file, under its beats, on a press
+      const open = mapOpen.has(era.id);
+      const fileBtn = document.createElement('button');
+      fileBtn.textContent = (open ? mapCopy.fileClose : mapCopy.fileOpen).replace('{n}', String(era.entries));
+      Object.assign(fileBtn.style, {
+        display: 'block', width: '100%', textAlign: 'left', font: '11px "Courier New", monospace', color: FRAME.text,
+        background: 'transparent', border: `1px solid ${FRAME.edge}`, padding: '5px 6px', margin: '8px 0 0', cursor: 'pointer', borderRadius: '2px'
+      } as CSSStyleDeclaration);
+      const toggle = (): void => { if (mapOpen.has(era.id)) mapOpen.delete(era.id); else mapOpen.add(era.id); render(); };
+      fileBtn.addEventListener('click', toggle);
+      head.addEventListener('click', toggle);
+      col.appendChild(fileBtn);
+      if (open) {
+        const entries = by[era.id as RecordEra];
+        if (!era.soFar.length) line(col, mapCopy.soFarEmpty, FRAME.faint, '10px');
+        for (const p of era.soFar) {
+          line(col, `${p.title.toUpperCase()} — ${p.did} [${p.status}]`, FRAME.dim, '11px').style.marginTop = '8px';
+          for (const e of entries.filter((x) => practiceOf(x.kind)?.title === p.title))
+            line(col, `  · ${e.witness}${e.flagged ? ` [${copy.yourFileFlag}]` : ''}`, e.flagged ? FRAME.text : FRAME.faint, '11px');
+        }
       }
     }
     row(mapCopy.readFile, () => { view = 'yourFile'; render(); });
     row(copy.resume, () => { gameMenuBus.close(); gameMenuBus.showHint?.(); }, true);
     backRow();
   }
-
   function render(): void {
     clear();
+    panel.style.width = view === 'map' ? 'min(860px, 94vw)' : 'min(420px, 90vw)';
     if (view === 'yourFile') { yourFileView(); return; }
     if (view === 'map') { mapView(); return; }
     if (view === 'main') {

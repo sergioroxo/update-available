@@ -3293,6 +3293,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S145 — one observer for every face (witness/pulse.ts): the stamp plays
     //   there, the wall is told, and the 2016 chip / 2026 badge read `pulse.k()`.
     witnessPulse.tick(dt);
+    // S146 — a filing is the piece moving: the helper's stillness clock restarts on it
+    if (witnessPulse.k() > 0.98) helper?.activity();
     // cold creep: pulse the witness side into the edges while it goes unseen
     if (os.hasUnseenWitness && !facingBack) {
       coldPhase += dt;

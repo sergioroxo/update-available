@@ -118,5 +118,12 @@ export function inputField(
  */
 export const FRAME = {
   glass: 'rgba(10,10,14,0.78)',
-  ink: '#cdd3df'
+  ink: '#cdd3df',
+  // the game menu's own greys (S146: the map's columns import them instead of repeating them)
+  bright: '#f2f4f8',
+  text: '#dfe3ea',
+  dim: '#b7bcc6',
+  faint: '#8a8f9a',
+  rule: '#383840',
+  edge: '#303038'
 } as const;

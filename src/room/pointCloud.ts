@@ -596,23 +596,33 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         // ⚑ the paragraph FITS its column (2026-09-13, Sérgio: "the text on top of
         //   the speculative"): the size steps down until the rows clear the stamp —
         //   and, at the Close, the player's own lines under it
-        const mineH = mine.length ? 34 + mine.length * 30 : 0;
-        const TOP = 168, BOTTOM = CELL_H - 96 - mineH;
-        let size = 34;
-        let rows: string[] = [];
-        for (; size >= 22; size -= 2) {
-          pc2.font = `${size}px ${READING_FACE}`;
-          rows = wrap(pc2, panel.text, TEXT_W);
-          if (TOP + rows.length * Math.round(size * 1.3) <= BOTTOM) break;
-        }
+        // ⚑ S146 — the paragraph keeps 28 px (≈19 headset px at 3.05 m, measured
+        //   by tools/quest-e4.mjs) before the player's own lines take space:
+        //   the 2026 panel with three lines fell to 26 px. The lines yield first —
+        //   three, then two, then one — and only then does the paragraph shrink.
+        const TOP = 168;
+        const fit = (n: number): { size: number; rows: string[] } => {
+          const bottom = CELL_H - 96 - (n ? 34 + n * 30 : 0);
+          let size = 34; let rows: string[] = [];
+          for (; size >= 22; size -= 2) {
+            pc2.font = `${size}px ${READING_FACE}`;
+            rows = wrap(pc2, panel.text, TEXT_W);
+            if (TOP + rows.length * Math.round(size * 1.3) <= bottom) break;
+          }
+          return { size, rows };
+        };
+        let lines = mine;
+        let best = fit(lines.length);
+        while (best.size < 28 && lines.length > 1) { lines = lines.slice(0, lines.length - 1); best = fit(lines.length); }
+        const { size, rows } = best;
         const lineH = Math.round(size * 1.3);
         // ⚑ S145 — the size the fit landed on, published for tools/quest-e4.mjs:
         //   at 3.05 m a 22 px line is ~15 headset px, the floor of legibility
         (window as unknown as { __closePanelSizes: Record<number, { size: number; rows: number; mine: number }> }).__closePanelSizes ??= {};
-        (window as unknown as { __closePanelSizes: Record<number, { size: number; rows: number; mine: number }> }).__closePanelSizes[i] = { size, rows: rows.length, mine: mine.length };
+        (window as unknown as { __closePanelSizes: Record<number, { size: number; rows: number; mine: number }> }).__closePanelSizes[i] = { size, rows: rows.length, mine: lines.length };
         pc2.fillStyle = (P.warm as string[])[2];
         rows.forEach((row, li) => pc2.fillText(row, TEXT_X, y0 + TOP + li * lineH));
-        if (mine.length) {
+        if (lines.length) {
           // your file, in this room: the record's own cold lines, in the web's blue
           let my = TOP + rows.length * lineH + 30;
           pc2.font = '22px monospace';
@@ -621,7 +631,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
           my += 30;
           pc2.font = `24px ${READING_FACE}`;
           pc2.fillStyle = P.labelColor;
-          for (const m of mine) { pc2.fillText('· ' + wrap(pc2, m, TEXT_W - 30)[0], TEXT_X, my); my += 30; }
+          for (const m of lines) { pc2.fillText('· ' + wrap(pc2, m, TEXT_W - 30)[0], TEXT_X, my); my += 30; }
         }
         // the dossier status, small, where a card keeps its stamp
         pc2.font = '26px monospace';

@@ -127,8 +127,14 @@ export function mapState(os: DesktopOS): MapState {
     const eraIdx = ORDER.indexOf(era.id);
     const here = era.id === now;
     let currentFound = false;
-    const beats = era.beats.map((beat) => {
-      const done = cond(beat.done, os);
+    // ⚑ a beat the piece has moved PAST reads as done, whatever its own condition
+    //   says: the map is a map of where you are, not an audit. (A review jump
+    //   into 2016 never files the migration; the first tour showed it as the
+    //   current beat under three ticked ones.)
+    const doneFlags = era.beats.map((beat) => cond(beat.done, os));
+    const lastDone = doneFlags.lastIndexOf(true);
+    const beats = era.beats.map((beat, idx) => {
+      const done = doneFlags[idx] || idx < lastDone;
       let state: BeatState;
       if (done) state = 'done';
       else if (eraIdx < nowIdx) state = 'done';           // an era left behind is over, whatever was skipped

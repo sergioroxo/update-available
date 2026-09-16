@@ -87,7 +87,9 @@ async function main() {
     .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Log in')); if (b) b.click(); });
   await page.waitForFunction(() => window.__os && window.__camFree && window.__poses, { timeout: 40000 });
-  await page.addStyleTag({ content: 'body > *:not(canvas) { display: none !important; }' });
+  // the frame's chrome is hidden for the fiction's frames and shown for the frame's own
+  const hideChrome = await page.addStyleTag({ content: 'body > *:not(canvas):not(#reinterp-game-menu):not(#reinterp-helper) { display: none !important; } #reinterp-menu-glyph { display: none !important; }' });
+  void hideChrome;
 
   let n = 0;
   const log = [];
@@ -105,6 +107,24 @@ async function main() {
     log.push(line); console.log(line);
   };
   const warn = (s) => { log.push(`  ⚠ ${s}`); console.log(`  ⚠ ${s}`); };
+  /** THE MAP, photographed: open the menu, its first row, optionally an era's file; then resume */
+  const mapShot = async (name, note = '', openEra = null) => {
+    await page.evaluate(() => document.getElementById('reinterp-menu-glyph').click());
+    await wait(400);
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#reinterp-game-menu button')].find((x) => x.textContent.startsWith('Where you are')); if (b) b.click(); });
+    await wait(400);
+    if (openEra) await page.evaluate((era) => { const b = [...document.querySelectorAll('#reinterp-game-menu button')].find((x) => x.textContent.startsWith(era)); if (b) b.click(); }, openEra);
+    await wait(400);
+    await shot(name, note);
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#reinterp-game-menu button')].find((x) => x.textContent === 'Resume'); if (b) b.click(); });
+    await wait(600);
+  };
+  /** THE HELPER, photographed: leave the piece alone for its idle time */
+  const helperShot = async (name, note = '') => {
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#reinterp-game-menu button')]; void b; });
+    await wait(42000);
+    await shot(name, note);
+  };
 
   /** find a rect by id across the OS graph and the workstation's, press it
    *  through the surface that owns it, once it appears (polled) */
@@ -216,6 +236,9 @@ async function main() {
     await wait(5000);
     await pressWhen('icon-irc', 15000); await wait(1500); await shot('look-irc', 'the channel, joined');
     await pressWhen('reply:0', 60000); await wait(2500); await shot('look-irc-spoke', 'his one line, the room answering');
+    await mapShot('map-e1', 'THE MAP, from the menu: 1997 in progress, the other eras ahead');
+    await mapShot('map-e1-file', "the era's file opened under its beats", '1997');
+    await helperShot('helper-e1', 'THE HELPER: forty seconds of stillness, the current hint in frame chrome');
     await atSeat('r1'); await shot('seat-desk', 'the seat frame');
     await flip('r1'); await wait(1200); await shot('flip-wall', 'the turn: the wall behind you');
     await cam(-0.86, 1.43, 1.75, 0, 180); await shot('look-wall-record', 'the record, close (the panel sits at x −0.86, cluster.json witnessTerminal)');
@@ -267,6 +290,7 @@ async function main() {
     await pressWhen('mail-open', 60000); await wait(2000); await shot('look-mail', 'the mail');
     await pressWhen('mail-continue', 60000); await wait(2500); await shot('look-restored', 'restored');
     await pressWhen('residue', 120000); await wait(2500); await shot('look-residue', 'what is left');
+    await mapShot('map-e2', 'THE MAP at the end of 2003');
     await atSeat('r1'); await shot('seat-after', 'the seat frame after');
     await update('e2');
   }
@@ -282,6 +306,8 @@ async function main() {
     await pressAll('apply', 4, 900); await shot('look-applied', 'four corrections applied — the chip counting');
     await pressWhen('record-chip', 10000); await wait(1200); await shot('look-record', 'Your record, from the chip: today\'s rows, then the imported history');
     await pressWhen('board-back', 10000); await wait(800); await shot('look-back-to-job', 'Back — to the job she had open');
+    await mapShot('map-e3', 'THE MAP at 2016: two eras done, 2016 in progress');
+    await mapShot('map-e3-file', "2016's file opened", '2016');
     await pressAll('apply', 12, 700); await pressWhen('board-back', 10000); await wait(1000); await shot('look-board-after', 'the board, one tile greyed');
     const phone = (await ids()).filter((s) => s.startsWith('ws.phone'));
     if (phone.length) { await atSeat('r2'); await shot('seat-phone', `the phone has ${phone.length} control(s): ${phone.slice(0, 4).join(' ')}`); }

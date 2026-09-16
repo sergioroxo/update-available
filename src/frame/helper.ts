@@ -42,6 +42,7 @@ export function mountHelper(opts: {
   enabled: () => boolean;
 }): Helper {
   const el = document.createElement('div');
+  el.id = 'reinterp-helper';
   Object.assign(el.style, {
     position: 'fixed', left: '50%', bottom: '14%', transform: 'translateX(-50%)',
     zIndex: '9', background: FRAME.glass, color: FRAME.ink,

@@ -26,6 +26,7 @@
  * Frame voice: functional, undecorated. No music, no thanks, no credits.
  */
 import * as pc from 'playcanvas';
+import { recordEntries } from '../witness/record';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont, bevel } from '../desktop/theme/chrome';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
@@ -135,10 +136,13 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     ctx.fillStyle = ERA1.white;
     ctx.fillText(card.title, 24, 74);
     setFont(ctx, 12);
+    // S146 — the file's size, then the sentence that answers it
+    const all = recordEntries();
     ctx.fillStyle = ERA1.silver;
-    ctx.fillText(card.kept, 24, 122);
+    ctx.fillText(card.filed.replace('{n}', String(all.length)).replace('{f}', String(all.filter((e) => e.flagged).length)), 24, 106);
+    ctx.fillText(card.kept, 24, 124);
     ctx.fillStyle = ERA1.grey;
-    ctx.fillText(card.choose, 24, 142);
+    ctx.fillText(card.choose, 24, 144);
     // four rooms — one row, sized to the longest label
     const bw = 108, bh = 26, gap = 10;
     const x0 = Math.round((W - (bw * 4 + gap * 3)) / 2);
