@@ -11,7 +11,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 (W-nn, the first play — items not re-raised on 09-17 but still open), `REVIEW_R1_2026-09-02.md`.
 
 ## Priority 0 — THE PROGRESSION LAW (the rule under most of the list)
-`PROGRESSION_LAW_2026-09-17.md`: inside an era everything on the desk is a sandbox (openable any time, never blocking); the era's exit is a GATE named by the map's beats; the update fires only when the gate is met AND nothing is open. Generalises R3-82 to all four eras; R3-13, R3-40, R3-73, R3-98 are its first cases.
+`NARRATIVE_FLOW_2026-09-17.md` is the flow of record (MAIN · ○ OPEN · VOICE · GATE · GLITCH per era; the map must match it). `PROGRESSION_LAW_2026-09-17.md`: inside an era everything on the desk is a sandbox (openable any time, never blocking); the era's exit is a GATE named by the map's beats; the update fires only when the gate is met AND nothing is open. Generalises R3-82 to all four eras; R3-13, R3-40, R3-73, R3-98 are its first cases.
 
 ## Priority 1 — premise bugs and outright bugs
 | id | item | status |
