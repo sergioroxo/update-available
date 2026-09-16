@@ -30,6 +30,8 @@ export interface Helper {
   tick(dt: number): void;
   /** the player did something — hide, and restart the idle clock */
   activity(): void;
+  /** the line on screen right now, or null — the headset's plate draws the same line (xrFrame) */
+  text(): string | null;
   destroy(): void;
 }
 
@@ -101,6 +103,7 @@ export function mountHelper(opts: {
       if (!shown && idle >= H.idleSeconds) show(h);
     },
     activity: onActivity,
+    text(): string | null { return shown ? el.textContent : null; },
     destroy(): void {
       window.removeEventListener('pointerdown', onPointer, true);
       window.removeEventListener('pointermove', onPointer, true);

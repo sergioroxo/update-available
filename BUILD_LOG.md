@@ -1163,3 +1163,16 @@ Restart card says the file's size above "nothing kept" (`close_restart.json file
 panels keep the paragraph at ≥28 px — the player's lines yield first (`__closePanelSizes`). A filing
 restarts the helper's stillness clock. The map's phone direction corrected (it is on the desk).
 Walked twice: 205 presses, spine done.
+
+## 2026-09-16 — S147 · THE HEADSET CAN PRESS; THE FRAME HAS AN XR FACE
+Found on the way to the frame's XR face: the immersive build had NO input at all — every hit test
+began from a mouse event, and `requestMove`'s comment had promised "tomorrow's Quest trigger" since
+R28. `src/frame/xrInput.ts`: the trigger's `select` sends the controller's ray through the one tap
+resolution (`resolveTapRay`, the refactor of `resolveTap` onto rays — mouse and controller now share
+every hit test, guard and order); the grip's `squeezestart` toggles the game menu through the bus;
+a wand per hand; gaze sources ignored outright. `src/frame/xrFrame.ts`: the menu (Resume · Where you
+are · Controls · Restart · Leave), the map's five columns and the helper's line as planes 0.62 m in
+front of the head, drawn over the room, with a ring where the ray lands — one texture pipeline, one
+bus, frame voice. `gameMenu.json` carries the headset's controls lines; the pre-fiction panel says
+"squeeze the grip". Verified in the desktop review only (`__xrFrame`); the in-headset pass and its
+checklist: `HEADSET_NOTE_2026-09-16.md`. Walked.

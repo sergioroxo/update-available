@@ -60,5 +60,14 @@
  "yourFileSource": "read",
  "yourFileNoSource": "no source — this beat is the piece's own",
  "yourFileSourcesRow": "All sources, by era",
- "_docYourFile": "⚑ S144 — THE DOSSIER'S READING (docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §2–3B). Frame voice: the game menu is the one place the piece may explain itself, because the frame never plays and a player who opens it is reading, not being played to. `yourFileEras` are the frame's names for the four people, plain."
+ "_docYourFile": "⚑ S144 — THE DOSSIER'S READING (docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §2–3B). Frame voice: the game menu is the one place the piece may explain itself, because the frame never plays and a player who opens it is reading, not being played to. `yourFileEras` are the frame's names for the four people, plain.",
+ "xrHow": "Point and pull the trigger to choose. Squeeze the grip to close this.",
+ "controlsHeadsetLines": [
+  "Turn your head to look around the room. You never walk.",
+  "Point with the controller and pull the trigger to press what it points at.",
+  "Point at a marker on the floor and pull the trigger to move there.",
+  "Squeeze the grip to open or close this menu.",
+  "Nothing here is timed. Take it off whenever you want."
+ ],
+ "_docXr": "⚑ S147 — the frame's XR face (src/frame/xrFrame.ts): `xrHow` is the one line under the menu's rows in the headset; `controlsHeadsetLines` is the Controls view there. Frame voice, plain."
 }

@@ -11,7 +11,7 @@
 import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 import { WitnessCanvas } from '../witness/intake';
-import { ledger } from '../state/ledger';
+import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { buildEra1Room } from '../room/era1room';
@@ -44,6 +44,9 @@ import menuStrings from '../../data/strings/gameMenu.json';
 import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { mountHelper, type Helper } from '../frame/helper';
+import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
+import { mountXrInput, type XrInput } from '../frame/xrInput';
+import { FRAME } from '../desktop/theme/chrome';
 
 const FLIP_SECONDS = 0.9;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
@@ -613,6 +616,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     app.resizeCanvas();
   };
   xr?.on('end', restoreDesktopCamera);
+  xr?.on('end', () => { xrFrame?.setHint(null); xrFrame?.close(); });
 
   // This must remain before the first await in this async function: WebXR
   // accepts requestSession only inside ENTER VR's original click stack.
@@ -797,6 +801,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // performs; the engine moves the space; the spine decides when. ──
   let spine: Spine | null = null;
   let helper: Helper | null = null;
+  let xrFrame: XrFrame | null = null;
+  let xrInput: XrInput | null = null;
   if (options.reinterp === true) {
     // S58: review params (?era=/?close=/?reveal=/?morphDemo=) used to skip
     // spine creation entirely via a `reviewMode` gate — the conductor stayed
@@ -821,6 +827,39 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       hint: () => nextHint(os),
       enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy()
     });
+    // ⚑ S147 — THE HEADSET'S INPUT AND THE FRAME'S XR FACE (frame/xrInput.ts,
+    //   frame/xrFrame.ts). The trigger is the tap and goes through the same
+    //   `resolveTapRay` a mouse tap does; the grip is Esc, through the same
+    //   bus; the menu, the map and the helper's line hang on planes in front
+    //   of the head while the session is immersive. Driven moves swallow the
+    //   trigger exactly as they swallow a pointer (S86).
+    xrFrame = mountXrFrame(app, camera, {
+      onLeave: () => os.leaveNow(),
+      onRestart: () => { wipeLedger(); window.location.reload(); }
+    });
+    xrInput = mountXrInput(app, {
+      onSelect: (ray) => { if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },
+      onMenuSelect: (ray) => { xrFrame?.press(ray); },
+      onSqueeze: () => gameMenuBus.toggle(),
+      menuOpen: () => gameMenuBus.isOpen,
+      wandColor: new pc.Color().fromString(FRAME.ink)
+    });
+    gameMenuBus.onChange((isOpen) => {
+      if (!xr?.active) return;
+      if (isOpen) xrFrame?.open(); else xrFrame?.close();
+    });
+    if (new URLSearchParams(window.location.search).get('debug') === '1') {
+      // the desktop review of the headset's frame: hang the plane in front of the
+      // desktop camera and press it with a world ray (no headset in the sandbox)
+      (window as { __xrFrame?: unknown }).__xrFrame = {
+        open: () => { gameMenuBus.open(); xrFrame?.open(); },
+        close: () => { xrFrame?.close(); gameMenuBus.close(); },
+        press: (p0: number[], p1: number[]) => xrFrame?.press({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) }),
+        point: (p0: number[], p1: number[]) => xrFrame?.tick({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) }),
+        hint: (t: string | null) => xrFrame?.setHint(t),
+        hit: (p0: number[], p1: number[]) => xrFrame?.debugHit({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) })
+      };
+    }
     os.onEraShift = (era) => {
       // ⚑ the spine's onClose still owns the constellation — it is TOLD now
       //   (S101), rather than left to notice on its own clock 22 s later that a
@@ -2491,7 +2530,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
 
   // ── input routing ──
-  function screenRay(e: MouseEvent): { p0: pc.Vec3; p1: pc.Vec3 } | null {
+  /** a press, as the segment it travels: from the eye (or the controller) into the room */
+  type Ray = { p0: pc.Vec3; p1: pc.Vec3 };
+  function screenRay(e: MouseEvent): Ray | null {
     if (!camera.camera) return null;
     const rect = canvasEl.getBoundingClientRect();
     const sx = ((e.clientX - rect.left) / rect.width) * canvasEl.clientWidth;
@@ -2505,7 +2546,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** screen px → desktop canvas logical px (the monitor plane at z=0) */
   function toDesktop(e: MouseEvent): { x: number; y: number } | null {
     const ray = screenRay(e);
-    if (!ray) return null;
+    return ray ? toDesktopR(ray) : null;
+  }
+  /** ⚑ S147 — the same test on a RAY, so a controller's select (xrInput) and a
+   *  mouse tap resolve through one path. Every hit test below has this shape. */
+  function toDesktopR(ray: Ray): { x: number; y: number } | null {
     const dz = ray.p1.z - ray.p0.z;
     if (Math.abs(dz) < 1e-6) return null;
     const t = (SCREEN.z - ray.p0.z) / dz;
@@ -2521,7 +2566,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   function rayHitsPoint(e: MouseEvent, p: { x: number; y: number; z: number }, radius: number): boolean {
     const ray = screenRay(e);
-    if (!ray) return false;
+    return ray ? rayHitsPointR(ray, p, radius) : false;
+  }
+  function rayHitsPointR(ray: Ray, p: { x: number; y: number; z: number }, radius: number): boolean {
     const dx = ray.p1.x - ray.p0.x;
     const dy = ray.p1.y - ray.p0.y;
     const dz = ray.p1.z - ray.p0.z;
@@ -2653,8 +2700,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   /** the interaction resolution — everything that used to run on pointerdown */
   function resolveTap(e: PointerEvent): void {
+    const ray = screenRay(e);
+    if (ray) resolveTapRay(ray);
+  }
+  /** ⚑ S147 — one resolution for every press: the mouse's tap (above) and the
+   *  controller's select (xrInput.ts) both arrive here as a ray. */
+  function resolveTapRay(ray: Ray): void {
     {
-      if (os.isOff && rayHitsPoint(e, POWER_BTN, 0.08)) { // the era's first gesture
+      if (os.isOff && rayHitsPointR(ray, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
         return;
       }
@@ -2663,11 +2716,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   used. Guarded on `inDesktop` so it never fires over a window or a
       //   felt scene, and on `reinterp` because the provotypes are ours.
       if (options.reinterp && os.inDesktop && os.desktopIdleForProps?.() &&
-          rayHitsPoint(e, RACKET_HIT, 0.34)) {
+          rayHitsPointR(ray, RACKET_HIT, 0.34)) {
         os.openPillowFromRoom?.();
         return;
       }
-      if (os.inDesktop && !os.kit && rayHitsPoint(e, KIT_FLOPPY, 0.13)) {
+      if (os.inDesktop && !os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) {
         os.insertKit(); // S1.2 — you put the disk in yourself
         return;
       }
@@ -2688,7 +2741,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const offered = belongings.offered; // one set per click, not per prop
         for (const [id, hit] of Object.entries(BELONGINGS_HIT)) {
           if (!offered.has(id)) continue;
-          if (rayHitsPoint(e, hit.p, hit.r)) {
+          if (rayHitsPointR(ray, hit.p, hit.r)) {
             belongings.toggle(id);
             kept = true;
             break;
@@ -2706,7 +2759,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         let tapeHandled = false;
         for (const id of Object.keys(TAPE_SHELF) as TapeId[]) {
           if (tapes.inserted === id) continue;
-          if (rayHitsPoint(e, TAPE_SHELF[id], TAPE_HIT_RADIUS)) {
+          if (rayHitsPointR(ray, TAPE_SHELF[id], TAPE_HIT_RADIUS)) {
             tapes.insert(id);
             syncTapeProps();
             syncTapeAudio();
@@ -2715,7 +2768,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           }
         }
         if (tapeHandled) return;
-        if (rayHitsPoint(e, BOOMBOX_HIT, BOOMBOX_HIT_RADIUS)) {
+        if (rayHitsPointR(ray, BOOMBOX_HIT, BOOMBOX_HIT_RADIUS)) {
           tapes.togglePlay();
           // ⚑ S86: STOP IS NOW AN EJECT (tapes.ts), so this press changes which
           // props exist and must re-sync them HERE. The loop watcher below is
@@ -2733,7 +2786,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // nothing/interacting). toDesktop() only matches the narrow monitor
       // plane, so this reorder costs nothing on the far more common case
       // (clicking a marker on the floor, nowhere near the screen).
-      const p = toDesktop(e);
+      const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
         // ⚑ 2026-09-12: in the Close the same glass is Daniel's Restart card
         if (closeMonitor?.on) { closeMonitor.press(p.x, p.y); return; }
@@ -2749,10 +2802,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // assumes) and returns false (never consumed) when the ray misses the
       // plane or the screen isn't visible this era, so this never steals a
       // click meant for a movement marker on the floor.
-      if (era3Devices) {
-        const ray = screenRay(e);
-        if (ray && era3Devices.handleWorkstationPointer(ray)) return;
-      }
+      if (era3Devices && era3Devices.handleWorkstationPointer(ray)) return;
       // R28-1: click-to-move, NEVER gaze-to-move — this pointerdown ray/hit
       // test is the ONLY thing that can arm a marker; looking at one (however
       // long) never does. Only test markers actually being offered right now
@@ -2762,7 +2812,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (movementNodes && cluster && !scriptedBusy()) {
         for (const n of movementNodes.available(cluster.era, seatYaw)) {
           if (!movementNodes.isVisible(n.id)) continue;
-          if (rayHitsPoint(e, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) {
+          if (rayHitsPointR(ray, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) {
             requestMove(n.id);
             return;
           }
@@ -3039,6 +3089,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // resuming just continues on the next real frame's ordinary small dt —
     // no accumulated-time jump, since we never buffer a skipped delta; the
     // engine's own dt is computed per-tick regardless of what we do with it).
+    // S147 — the headset's frame ticks even while the menu holds the piece: the
+    //   wands follow the hands and the plane's cursor follows the ray
+    xrInput?.tick();
+    if (xrFrame?.isOpen) xrFrame.tick(xrInput?.ray() ?? null);
+    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(helper?.text() ?? null);
     if (options.reinterp && gameMenuBus.isOpen) return;
     if (tween !== null) {
       const dir = Math.sign(tween - camYaw);
