@@ -606,6 +606,10 @@ export function buildPointCloud(app: pc.Application): PointCloud {
           if (TOP + rows.length * Math.round(size * 1.3) <= BOTTOM) break;
         }
         const lineH = Math.round(size * 1.3);
+        // ⚑ S145 — the size the fit landed on, published for tools/quest-e4.mjs:
+        //   at 3.05 m a 22 px line is ~15 headset px, the floor of legibility
+        (window as unknown as { __closePanelSizes: Record<number, { size: number; rows: number; mine: number }> }).__closePanelSizes ??= {};
+        (window as unknown as { __closePanelSizes: Record<number, { size: number; rows: number; mine: number }> }).__closePanelSizes[i] = { size, rows: rows.length, mine: mine.length };
         pc2.fillStyle = (P.warm as string[])[2];
         rows.forEach((row, li) => pc2.fillText(row, TEXT_X, y0 + TOP + li * lineH));
         if (mine.length) {

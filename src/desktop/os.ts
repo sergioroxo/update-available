@@ -364,6 +364,11 @@ export class DesktopOS {
     return this.phase === 'off';
   }
 
+  /** S145 — the player has left (the menu's Leave); the frame's helper stays down */
+  get hasLeft(): boolean {
+    return this.phase === 'left';
+  }
+
   powerOn(): void {
     if (this.phase === 'off') this.setPhase('boot');
   }
@@ -588,6 +593,13 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
+    // ⚑ S145 — A `?era=2|3` REVIEW JUMP never plays the opening either, so this
+    //   canvas can still be sitting in `r_dark` — and `handleClick` routes the
+    //   E2 arrival (the return press, the greeting's chips) only from `desktop`.
+    //   `tools/tour.mjs --era 2` pressed the dark glass for ninety seconds and
+    //   filed nothing. Same fix Era 4's branch above has carried since S76; in
+    //   play the phase is already `desktop` and this changes nothing.
+    if (this.phase !== 'desktop') this.setPhase('desktop');
     if (era === 'e2' && entering) {
       // S2R.0c: THE SILENCE — nothing speaks, not even the era-status toast.
       // The monitor holds only the S2R.0 waiting-screen line until pressed.

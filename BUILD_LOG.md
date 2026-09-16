@@ -1126,3 +1126,27 @@ with the imported 1997–2003 history, read-only); the 2026 face (the Legacy fil
 the thirty years); the Close's panels carrying the player's own lines (IN THIS ROOM, YOU); and the
 wall redesigned as a map (count, flagged first, the file's purpose in its own voice). Walked: 206
 presses, spine done; the walk pressed the legacy toggle and filed `legacy: read` on the rails.
+
+## 2026-09-16 — S145 · QUEST NUMBERS, THE WITNESS SYSTEM, A TOUR FOR ERAS 1–3
+`tools/quest-e4.mjs` — Era 4 driven through the player's surfaces and RECORDED, not photographed:
+robust draw-call peak per beat (worst 41 on the Close's travel, the Commons world 5–7, every beat
+under 75), every driven leg differentiated against the comfort law (the conducted look at the
+termination measured 15.0 °/s sustained — "30° in 3 s" had a smootherstep crest half again over
+9.1 — now 5.5 s, 8.2 °/s), the visor's edge as a luminance profile, the Close's panels as headset
+pixels per line (34 px ≈ 23, 22 px ≈ 15 — the fit step's floor) with the size each panel actually
+landed on (`__closePanelSizes`). THE WITNESS SYSTEM (`THE_WITNESS_SYSTEM_PLAN_2026-09-16.md`): THE
+MAP (`data/strings/map.json` + `witness/map.ts`) — four eras of beats with conditions in code and
+plain hints in data, the menu's first row *Where you are — and what is next* (done / here / ahead,
+eras not yet reached show only their length, under each era the practices met with status); THE
+HELPER (`frame/helper.ts`) — the map's current hint in moveHint's idiom after 40 s of stillness or
+on resuming from the map, hidden by any press, never on a `quiet` beat, never filed; ONE PULSE
+(`witness/pulse.ts`) — the stamp and every lit face from one observer; THE RECORD ON THE DEVICE —
+2016's taskbar chip *Your record · N* (live count, lit on growth, opens the profile from anywhere,
+Back returns to the job) with the profile showing today's rows above the imported history; 2026's
+record tab with the file's count as its badge and a favicon that lights on filing, the Legacy page
+listing this session first. `tools/tour.mjs --era 1|2|3` — the Era 4 tour's instrument for the
+three eras before it, pressing controls WHEN THEY APPEAR. `FRAME` ink named in theme/chrome.ts.
+Also: the `{name}` token replaced once (Lume's welcome named him raw — tour-e1 frame), the wall's
+CHANNEL LOG counted off the ledger (it said 0 under "spoke in channel"), `?era=2|3` review jumps land
+in the desktop phase (the return press filed nothing), the board's tile pictures clipped to their wells.
+Numbers: `QUEST_E4_2026-09-16.md`. Walked three times, last after every change: 209 presses, spine done.

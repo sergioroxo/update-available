@@ -121,6 +121,7 @@ import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
 import maiden from '../../data/dialog/s3_maiden.json';
 import { playOnce } from '../audio/tapeAudio';
+import { pulse as witnessPulse } from '../witness/pulse';
 
 /** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
  *  the type moved to `desktop/apps/comments.ts` when that module took over the
@@ -362,6 +363,11 @@ export class GraceQueueLite {
    *  written after 2026-08-24 arrives through `mountTask` instead. */
   private readonly surfaces = new Map<string, TaskSurface>();
   private openSurface: TaskSurface | null = null;
+  /** ⚑ S145 — where the record chip was pressed FROM, so Back returns there
+   *  (the board, or the job she had open) instead of always to the board */
+  private chipReturn: { mode: Mode; surface: TaskSurface | null } | null = null;
+  /** the chip's lit step as last drawn — the redraw clock moves only when it changes */
+  private chipStep = 0;
   private consent: 'allowed' | 'declined' | null = null;
   private wakeWord = false;
   private seenBoard = false;
@@ -430,6 +436,10 @@ export class GraceQueueLite {
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
     this.phone.tick(dt); // ⚑ the cascade's own clock, and the only one on the phone
+    // ⚑ S145 — the record chip lights on every filing (witness/pulse.ts): the
+    //   one texture upload this costs is quantised to the pulse's own steps
+    const step = Math.ceil(witnessPulse.k() * 6);
+    if (step !== this.chipStep) { this.chipStep = step; this.bump(); }
     // ⚑ and when it has been outnumbered, Lambient says the thing about the
     //   board. Once, on the frame the phone reports `broken`.
     if (this.phone.broken && !this.afterSaid) {
@@ -723,6 +733,7 @@ export class GraceQueueLite {
     const t = this.tasks()[index];
     if (!t) return;
     const mounted = this.surfaces.get(t.id);
+    this.chipReturn = null;
     if (mounted) {
       this.openSurface = mounted;
       this.mode = 'list';
@@ -752,6 +763,14 @@ export class GraceQueueLite {
     // ⚑ the job is told it was put down BEFORE it is dropped, so it can file a
     //   leaving the way it files a finishing. See TaskSurface.onLeave.
     this.openSurface?.onLeave?.();
+    // ⚑ S145 — the record was opened from the chip: Back is to where she was
+    if (this.chipReturn) {
+      const r = this.chipReturn; this.chipReturn = null;
+      this.openSurface = r.surface;
+      this.mode = r.mode;
+      this.bump();
+      return;
+    }
     this.openSurface = null;
     this.mode = this.completedCount() >= this.tasks().length ? 'done' : 'board';
     this.bump();
@@ -1184,7 +1203,16 @@ export class GraceQueueLite {
     const LABELS = 44;
     const thumbH = Math.max(24, h - LABELS);
     const mounted = this.surfaces.get(t.id);
-    if (mounted) mounted.thumb(ctx, x + padX, y + 8, w - padX * 2, thumbH - 12);
+    // ⚑ S145 — the picture is CLIPPED to its well. With seven tiles on three rows
+    //   the well is 24 px tall and three jobs' thumbs (comments, family calls,
+    //   the record) drew their second line straight through the job's name —
+    //   tour-e3 frame 03. A picture that ends at its edge is the tile's law
+    //   already ("clipped to the tile"); this applies it to the picture.
+    if (mounted) {
+      ctx.save(); ctx.beginPath(); ctx.rect(x + padX, y + 8, w - padX * 2, thumbH - 12); ctx.clip();
+      mounted.thumb(ctx, x + padX, y + 8, w - padX * 2, thumbH - 12);
+      ctx.restore();
+    }
     else if (t.surface === 'testimony') this.drawStackThumb(ctx, x + padX, y + 8, w - padX * 2, thumbH - 12);
 
     ctx.save();
@@ -1321,6 +1349,34 @@ export class GraceQueueLite {
     setFont(ctx, 11); ctx.fillStyle = ERA3.white;
     ctx.fillText(q.app.taskbarLabel, bx + 10, ty + 9);
     this.rects.push({ x: bx, y: ty + 4, w: bw, h: bh - 8, id: 'task-restore' });
+    // ⚑ S145 — THE RECORD ON THE DEVICE (THE_WITNESS_SYSTEM_PLAN §3D). From the
+    //   moment she is signed in, the taskbar carries the file: its count, live,
+    //   and lit for a moment each time it grows. The 2016 face of the wall's
+    //   pulse — the thing counting is the thing she is working inside. Pressable
+    //   from every signed-in screen; Back returns to wherever she was.
+    if (this.mode === 'dark' || this.mode === 'boot' || this.mode === 'install' || this.mode === 'signin') return;
+    const k = witnessPulse.k();
+    const label = q.app.recordChip.replace('{n}', String(witnessPulse.count()));
+    setFont(ctx, 11);
+    const cw = Math.ceil(ctx.measureText(label).width) + 20;
+    const cx = bx + bw + 8;
+    px(ctx, cx, ty + 4, cw, bh - 8, k > 0 ? ERA3.accent : ERA3.taskBot);
+    px(ctx, cx, ty + 4, cw, 1, k > 0 ? ERA3.accentHi : ERA3.tray);
+    ctx.fillStyle = k > 0 ? ERA3.white : ERA3.grey;
+    ctx.fillText(label, cx + 10, ty + 9);
+    if (this.mode !== 'consent' && this.surfaces.has('record')) this.rects.push({ x: cx, y: ty + 4, w: cw, h: bh - 8, id: 'record-chip' });
+  }
+
+  /** ⚑ S145 — the chip pressed: the record opens over whatever is up, and
+   *  remembers it. A no-op while the record itself is open. */
+  private openRecordFromChip(): void {
+    const rec = this.surfaces.get('record');
+    if (!rec || this.openSurface === rec) return;
+    if (this.mode !== 'board' && this.mode !== 'done' && this.mode !== 'list') return;
+    this.chipReturn = { mode: this.mode, surface: this.openSurface };
+    this.openSurface = rec;
+    this.mode = 'list';
+    this.bump();
   }
 
   /**
@@ -1680,6 +1736,7 @@ export class GraceQueueLite {
     if (r.id === 'consent-allow') { this.decideConsent(true); return; }
     if (r.id === 'consent-decline') { this.decideConsent(false); return; }
     if (r.id === 'board-back') { this.backToBoard(); return; }
+    if (r.id === 'record-chip') { this.openRecordFromChip(); return; }
     if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }
     if (this.openSurface && this.openSurface.press(r.id)) { this.bump(); return; }
     if (r.id === 'apply') { this.apply(); return; }

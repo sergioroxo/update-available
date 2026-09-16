@@ -157,14 +157,17 @@
    "open": "View legacy file",
    "close": "Hide legacy file",
    "heading": "Legacy file · events",
-   "sub": "{n} events · 1997 – 2016 · retained for continuity of care",
+   "sub": "{n} events · 1997 – 2026 · retained for continuity of care",
    "empty": "no events on file",
    "eras": {
     "e1": "1997",
     "e2": "2003",
-    "e3": "2016"
+    "e3": "2016",
+    "e4": "2026"
    },
-   "witness": "read: the legacy file — thirty years, retained"
+   "witness": "read: the legacy file — thirty years, retained",
+   "thisSession": "this session · {n}",
+   "_docBadge": "⚑ S145 (THE_WITNESS_SYSTEM_PLAN §3E): the Your information tab carries the file's count as its badge outside the program (inside it the badge is the step number) and its favicon lights on every filing; the legacy page lists 2026's own rows first, under `thisSession`. A sign, not a control — nothing new is pressable on the rails."
   }
  },
  "care": {

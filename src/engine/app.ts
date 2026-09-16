@@ -25,7 +25,7 @@ import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type 
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
 import { mountCloseMonitor, type CloseMonitor } from '../room/closeMonitor';
-import { recordCount, entriesByEra } from '../witness/record';
+import { entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
@@ -41,6 +41,9 @@ import reinterpStrings from '../../data/strings/reinterp.json';
  *  menu's string file because the recentre row beside it does too — one file
  *  for the frame voice, none of it on the monitor texture. */
 import menuStrings from '../../data/strings/gameMenu.json';
+import { mapState, nextHint } from '../witness/map';
+import { pulse as witnessPulse } from '../witness/pulse';
+import { mountHelper, type Helper } from '../frame/helper';
 
 const FLIP_SECONDS = 0.9;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
@@ -793,6 +796,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // failures, send summonses, the bare final restart → the Close. The OS
   // performs; the engine moves the space; the spine decides when. ──
   let spine: Spine | null = null;
+  let helper: Helper | null = null;
   if (options.reinterp === true) {
     // S58: review params (?era=/?close=/?reveal=/?morphDemo=) used to skip
     // spine creation entirely via a `reviewMode` gate — the conductor stayed
@@ -805,6 +809,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // drives the same conductor a linear playthrough does, instead of
     // silently lacking one.
     spine = createSpine(os, { onClose: () => enterClose() });
+    // ⚑ S145 — THE MAP and THE HELPER (docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md
+    //   §3B–C). The menu reads the map through the bus once an OS exists; the
+    //   helper is frame chrome that shows the map's current hint when the
+    //   player has stalled. Neither files. The helper is off while the machine
+    //   waits dark (the off-hint owns that beat), while the OS is paused, and
+    //   while the menu is open.
+    gameMenuBus.mapSource = () => mapState(os);
+    witnessPulse.onGrow = () => witness.pulse();
+    helper = mountHelper({
+      hint: () => nextHint(os),
+      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy()
+    });
     os.onEraShift = (era) => {
       // ⚑ the spine's onClose still owns the constellation — it is TOLD now
       //   (S101), rather than left to notice on its own clock 22 s later that a
@@ -925,7 +941,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   document.body.appendChild(coldCreep);
   let coldPhase = 0;
   /** S144: the record's size last frame — the pulse fires on growth */
-  let recordSeen = -1;
 
   // DIARY.TXT breakout: a soft, warm full-frame wash when the system fails to
   // delete the person's words. No strobe; it decays over the diary hold, then
@@ -3134,6 +3149,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         closeRoomPending = null;
       }
       spine?.update(dt);
+      helper?.tick(dt);
 
       // R28-1 movement prototype: the blink timer + marker visibility. The
       // cut happens at the BOTTOM of the 'out' fade (screen is fully black),
@@ -3274,11 +3290,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
      * are ever told — which is the only reason to turn round and read it.
      * (docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §3F)
      */
-    {
-      const n = recordCount();
-      if (recordSeen < 0) recordSeen = n;
-      else if (n > recordSeen) { recordSeen = n; playOnce('stamp_witness.mp3'); witness.pulse(); }
-    }
+    // ⚑ S145 — one observer for every face (witness/pulse.ts): the stamp plays
+    //   there, the wall is told, and the 2016 chip / 2026 badge read `pulse.k()`.
+    witnessPulse.tick(dt);
     // cold creep: pulse the witness side into the edges while it goes unseen
     if (os.hasUnseenWitness && !facingBack) {
       coldPhase += dt;
@@ -3792,11 +3806,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   FOUND, not watched. A conducted look: 3 s to the laptop as the bands
     //   begin (FAIL.bands = 5.5 s after the device stops; this fires ~2.2 s
     //   after that, at the update's end), held while both die, then the
-    //   travel takes over from wherever the eyes are. Comfort law: 30° in 3 s.
+    //   travel takes over from wherever the eyes are.
+    // ⚑ S145 — MEASURED, not assumed: tools/quest-e4.mjs differentiated this
+    //   leg at 15.0 °/s sustained — a smootherstep's peak is 1.5× its mean, so
+    //   "30° in 3 s" was 10 °/s mean and 15 at the crest, over the 9.1 °/s law
+    //   by half again. 5.5 s puts the crest at 8.2 °/s and the eyes still land
+    //   on the laptop before its screen goes off (FAIL.off = 8.5 s after the
+    //   device stops; this fires ~2.2 s after that).
     closeStage = 'lead'; closeHoldT = 0;
     if (Math.hypot(camPos.x - EYE.x, camPos.z - EYE.z) > 0.5) {
       const toLaptop = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: -8, yaw: camYaw - 30 };
-      startCamMove(toLaptop, 3.0, true);
+      startCamMove(toLaptop, 5.5, true);
     }
   }
 

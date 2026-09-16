@@ -48,6 +48,7 @@ import { gameMenuBus } from '../state/gameMenuBus';
 import copy from '../../data/strings/gameMenu.json';
 import attributions from '../../data/strings/attributions.json';
 import { entriesByEra, practiceOf, type RecordEra } from '../witness/record';
+import mapCopy from '../../data/strings/map.json';
 import originIntake from '../../data/provotypes/origin_intake_e1.json';
 import pillowCard from '../../data/provotypes/pillow.json';
 // ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
@@ -73,7 +74,7 @@ import e4Offers from '../../data/provotypes/e4_offers.json';
 // wiring below is what makes the card real rather than filed.
 import e3Day from '../../data/provotypes/e3_theday.json';
 
-type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'restartConfirm' | 'yourFile';
+type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'restartConfirm' | 'yourFile' | 'map';
 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
@@ -240,12 +241,53 @@ export function mountGameMenu(): GameMenu {
     backRow();
   }
 
+  /**
+   * ⚑ S145 — THE MAP: where you are, what has happened, what is next
+   * (docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md §3B). Four eras and
+   * the Close, each beat marked done / here / ahead; the current beat's plain
+   * hint at the top; under each era, the practices the record shows for it
+   * (data/dossier/practices.json — no new claims), and the way to the file.
+   * Frame voice: it explains, because the frame never plays. Nothing files.
+   */
+  function mapView(): void {
+    heading(mapCopy.title);
+    const src = gameMenuBus.mapSource;
+    if (!src) { paragraph(mapCopy.soFarEmpty); backRow(); return; }
+    const st = src();
+    if (st.current) {
+      paragraph(`${mapCopy.nextLabel}: ${st.current.beat.hint}${st.current.beat.where ? `  (${st.current.beat.where})` : ''}`);
+    }
+    let ahead = false;
+    for (const era of st.eras) {
+      heading(`${era.label}${era.here ? `  — ${mapCopy.hereLabel}` : ''}`);
+      // ⚑ an era not yet reached shows its LENGTH, not its beats: the map gives
+      //   the shape of the piece, never its surprises (the frame explains what
+      //   has happened and what is asked now; it does not narrate what is coming)
+      if (ahead) { paragraph(era.id === 'close' ? mapCopy.aheadLabel : mapCopy.aheadCount.replace('{n}', String(era.beats.length))); continue; }
+      if (era.here) ahead = true;
+      for (const b of era.beats) {
+        const mark = b.state === 'done' ? '✓' : b.state === 'current' ? '▸' : '·';
+        paragraph(`${mark} ${b.beat.label}${b.beat.optional && b.state !== 'done' ? `  (${mapCopy.optionalMark})` : ''}`);
+      }
+      if (era.id !== 'close') {
+        paragraph(`${mapCopy.soFarLabel}: ${era.soFar.length ? era.soFar.map((p) => `${p.did} [${p.status}]`).join('; ') : mapCopy.soFarEmpty}.`);
+      }
+    }
+    row(mapCopy.readFile, () => { view = 'yourFile'; render(); });
+    row(copy.resume, () => { gameMenuBus.close(); gameMenuBus.showHint?.(); }, true);
+    backRow();
+  }
+
   function render(): void {
     clear();
     if (view === 'yourFile') { yourFileView(); return; }
+    if (view === 'map') { mapView(); return; }
     if (view === 'main') {
       heading(copy.title);
       row(copy.resume, () => gameMenuBus.close(), true);
+      // ⚑ S145 — the map is the first thing after Resume: it is the row a lost
+      //   player opened the menu for (THE_WITNESS_SYSTEM_PLAN §3B)
+      if (gameMenuBus.mapSource) row(mapCopy.row, () => { view = 'map'; render(); });
       // ⚑ S80 — RECENTRE, and it belongs here rather than in the fiction for
       // the same reason the caption chrome does: it is the frame telling the
       // player where the room's front is. Only drawn when an engine with a

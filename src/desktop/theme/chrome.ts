@@ -108,3 +108,15 @@ export function inputField(
     px(ctx, x + 5 + cw, y + 3, 2, h - 6, ERA1.black);
   }
 }
+
+/**
+ * ⚑ S145 — THE FRAME'S OWN INK. The non-diegetic chrome (moveHint, the tape
+ * caption, the game menu, the helper) has used the same two values by hand
+ * since R28 — a near-black glass and a cool grey ink — and the palette ratchet
+ * counts every copy. Named once here so a new piece of frame chrome imports
+ * them rather than inventing a shade. Frame voice: functional, undecorated.
+ */
+export const FRAME = {
+  glass: 'rgba(10,10,14,0.78)',
+  ink: '#cdd3df'
+} as const;

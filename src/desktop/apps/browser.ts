@@ -30,6 +30,7 @@
 import { px, setFont, wrapText } from '../theme/chrome';
 import { playOnce } from '../../audio/tapeAudio';
 import { entriesByEra } from '../../witness/record';
+import { pulse as witnessPulse } from '../../witness/pulse';
 import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 } from '../theme/era4';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
@@ -212,6 +213,8 @@ export class E4Browser {
 
   get stageId(): string { return this.phase; }
   get liveTab(): TabId { return TABS[this.live]?.id ?? 'search'; }
+  /** S145 — the map asks whether the session has come back (the wake beat) */
+  get isOpen(): boolean { return this.phase === 'open' || this.phase === 'handed' || this.phase === 'failed'; }
 
   update(dt: number): void {
     // ⚑ a surface that has stopped being pressable publishes nothing, even if
@@ -219,6 +222,9 @@ export class E4Browser {
     //   through the whole finale and pressed it forty-five times (2026-09-12)
     if (!this.pressable && this.hits.length) this.hits = [];
     if (this.phase === 'dormant') return;
+    // S145 — the record tab's lamp: one upload per pulse step, not per frame
+    const lamp = Math.ceil(witnessPulse.k() * 6);
+    if (lamp !== this.lampStep) { this.lampStep = lamp; this.version++; }
     if (this.phase === 'failed') {
       // ⚑ 2026-09-13: the failure spreads — the sentence, the bands, then off
       if (this.failT < FAIL.off + 0.5) {
@@ -368,15 +374,20 @@ export class E4Browser {
     } else if ((this.mode === 'agent' || this.mode === 'program') && onSearch) {
       addr = PROGRAM.agentAddress;
     }
+    // ⚑ S145 — THE RECORD ON THE DEVICE, 2026 (THE_WITNESS_SYSTEM_PLAN §3E):
+    //   the record tab's favicon lights on every filing (witness/pulse.ts) and,
+    //   outside the program, its badge is the file's count. A sign, not a control.
+    const lit = witnessPulse.k() > 0;
     const looks: TabLook[] = shown.map((t) => {
       if (this.phase === 'failed') return t.id === 'search' ? { badge: '!', state: 'normal' } : { state: 'locked' };
-      if (this.mode !== 'program') return {};
+      if (this.mode !== 'program') return t.id === 'record' ? { badge: String(witnessPulse.count()), lit } : {};
       const st = PROGRAM.steps.find(x => x.id === t.id);
       if (!st) return { state: 'locked' };
       const idx = PROGRAM.steps.indexOf(st);
       return {
         badge: String(st.n),
-        state: this.stepDone.has(st.id) ? 'done' : idx > this.step ? 'locked' : 'normal'
+        state: this.stepDone.has(st.id) ? 'done' : idx > this.step ? 'locked' : 'normal',
+        lit: t.id === 'record' && lit
       };
     });
     const rects = browserChrome(ctx, W, shown, this.live, addr, blink, looks);
@@ -953,12 +964,13 @@ export class E4Browser {
       //   thirty years as 'events', oldest first, the 1997 intake's own wording
       //   as the first row. One press back to the fields.
       const by = entriesByEra();
-      const rows = [...by.e1, ...by.e2, ...by.e3];
+      // S145 — this session's own rows first (newest at the top), then the thirty years
+      const rows = [...by.e4.slice().reverse(), ...by.e1, ...by.e2, ...by.e3];
       let ly = top + 62;
       setFont(ctx, 10); ctx.fillStyle = WEB.ink;
       ctx.fillText(LG.heading, cx + 16, ly);
       setFont(ctx, 8); ctx.fillStyle = WEB.muted;
-      ctx.fillText(LG.sub.replace('{n}', String(rows.length)), cx + 16 + 130, ly + 2);
+      ctx.fillText(`${LG.thisSession.replace('{n}', String(by.e4.length))}  ·  ${LG.sub.replace('{n}', String(rows.length))}`, cx + 16 + 130, ly + 2);
       ly += 16;
       px(ctx, cx + 16, ly, cw - 32, 1, WEB.cardEdge);
       ly += 8;
@@ -1016,6 +1028,7 @@ export class E4Browser {
     this.publish({ ...lr, id: 'legacy-toggle' });
   }
   private legacyOpen = false;
+  private lampStep = 0;
 
   /** four things already done for her, each defensible, each with a working
    *  undo — a timeline, the way a care log shows itself — and one muted

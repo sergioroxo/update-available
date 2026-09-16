@@ -116,7 +116,10 @@ export class IrcApp {
   onEscalationDone?: () => void;
 
   private fill(text: string): string {
-    return text.replace('{name}', ledger.name);
+    // ⚑ S145 — EVERY token, not the first: Lume's welcome (S142) names him twice
+    //   ("oh hey — {name} just joined. hi {name} :)") and the tour photographed
+    //   the second one raw on the channel
+    return text.split('{name}').join(ledger.name);
   }
 
   update(dt: number): void {
@@ -248,10 +251,15 @@ export class IrcApp {
 
   get escalationActive(): boolean { return this.escalating; }
 
-  // The channel is lurk-only and the DM is press-only — there is no free typing
-  // anywhere (Sérgio: no keyboard dependency in VR). You are watched; you reply
-  // with the words you are given. The witness still files you as a silent lurker.
-  get userMessageCount(): number { return 0; }
+  // The DM is press-only and, since S142, so is the channel — there is no free
+  // typing anywhere (Sérgio: no keyboard dependency in VR). You are watched; you
+  // reply with the words you are given, and the record counts them.
+  // ⚑ S145 — this returned 0 while the wall said "first message — spoke in
+  //   channel" three rows below "0 message(s) on file" (tour-e1 frame 13): the
+  //   sharp side contradicting itself. Counted off the ledger, where the lines are.
+  get userMessageCount(): number {
+    return ledger.records.filter((r) => r.startsWith('channel-reply:') || r.startsWith('escalation-reply:')).length;
+  }
 
   // ── drawing ────────────────────────────────────────────────────────────
   /** greedy word-wrap to a pixel width */

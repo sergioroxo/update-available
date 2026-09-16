@@ -15,6 +15,8 @@
  * happens in src/desktop/gameMenu.ts, which imports wipeLedger directly; this
  * bus itself stays pure UI-visibility state.)
  */
+import type { MapState } from '../witness/map';
+
 export type GameMenuListener = (open: boolean) => void;
 
 class GameMenuBus {
@@ -58,6 +60,21 @@ class GameMenuBus {
    * when it is null. Frame voice, invisible to the record.
    */
   stopMotion: (() => void) | null = null;
+
+  /**
+   * ⚑ S145 — THE MAP's source (docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md
+   * §3B). The menu mounts before either engine has an OS, and the map needs
+   * one (the era, and Era 4's browser state); the engine hands a reader over
+   * once the OS exists, the same idiom as `recentreView`. `import type` only —
+   * the type is erased and this bus still imports nothing at runtime.
+   * Reading the map is reading; it files nothing.
+   */
+  mapSource: (() => MapState) | null = null;
+
+  /** the idle helper's "show the current hint now" — set by the helper when
+   *  it mounts; the menu calls it when the player resumes from the map, so
+   *  the line they just read is on screen when the room comes back */
+  showHint: (() => void) | null = null;
 
   get isOpen(): boolean {
     return this._open;

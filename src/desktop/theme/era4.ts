@@ -787,7 +787,8 @@ export const ADDR = { h: 22, y: 34, x: 8 } as const;
 
 /** what a tab is, in the program: `locked` cannot be pressed, `done` is
  *  finished, `live` is the one in front; a `badge` is the step's number */
-export interface TabLook { state?: 'normal' | 'locked' | 'done'; badge?: string }
+/** `lit`: S145 — the favicon burns accent for a moment (the record tab, on every filing) */
+export interface TabLook { state?: 'normal' | 'locked' | 'done'; badge?: string; lit?: boolean }
 
 /**
  * The tab strip and the omnibox. Returns one rect per tab so the draw and the
@@ -844,7 +845,7 @@ export function browserChrome(
     if (on) px(ctx, x, TAB.y + TAB.h - 1, tw, 2, CHROME.toolbar);
     // the favicon — a dot, or the step's own state
     const ink = on ? CHROME.tabInkLive : locked ? CHROME.barLo : CHROME.tabInk;
-    if (look.state === 'done') {
+    if (look.state === 'done' || look.lit) {
       px(ctx, x + 8, TAB.y + 8, 7, 7, CHROME.accent);
     } else {
       px(ctx, x + 9, TAB.y + 9, 5, 5, locked ? CHROME.barLo : on ? CHROME.tabInkLive : CHROME.hint);

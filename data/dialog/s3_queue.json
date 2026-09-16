@@ -18,7 +18,9 @@
   "boardSub": "Start anywhere. The order is yours.",
   "boardBack": "Back to today",
   "boardDoneTag": "done",
-  "taskbarLabel": "GracePlatform"
+  "taskbarLabel": "GracePlatform",
+  "recordChip": "Your record · {n}",
+  "_docRecordChip": "⚑ S145 — THE RECORD ON THE DEVICE (docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md §3D): the chip in the platform's taskbar, on every signed-in screen — the file's count, live, lit for a moment each time the file grows (the device-side twin of the wall's lit row). Pressing it opens Your record from anywhere; Back returns to where she was."
  },
  "_docBoard": "⛑ THE POOL, 2026-08-24 — Sérgio: 'it was 6 jobs not 3'. The board's tiles are TASK KINDS, not submissions: correcting the testimonies is ONE job that holds all three women, exactly as a day's work would. (The house look is not a seventh tile — it lives inside the testimony job as correction 13, on Noa's picture, which is where it already works and where it costs something.) A tile is drawn only once its `surface` exists; a board of tiles that do nothing is the fault this project keeps hitting, and a greyed-out 'coming soon' would be the frame playing. `surface` values: 'testimony' is built; the rest arrive in ERA3_BUILD_PLAN stages 4 and 7 and their tiles appear with them.",
  "board": [
@@ -325,13 +327,14 @@
   "_doc": "⚑ S144 — THE RECORD INSIDE THE PLATFORM (THE_RECORD_PLAN §3C). The wall panel goes off at 2016 because 'the record is inside the platform' — and until now nothing inside it showed the file. This is Vera's profile page on GracePlatform: her account, her consent decision, her work count, and the IMPORTED HISTORY — the 1997 and 2003 entries as the platform received them, read-only, under the migration's own stamp. The face for 2016: the file became a profile. Nothing here is pressable but Back; it is a page she can read, which is what a profile is. Invented marks only; the migration line is s1/s2's own witness text.",
   "title": "GracePlatform · Your record",
   "heading": "Your record",
-  "sub": "account · imported history · read-only",
+  "sub": "account · activity · imported history · read-only",
   "fields": {
    "name": "Name",
    "status": "Status",
    "consent": "Lambient",
    "work": "Corrections this shift",
-   "imported": "Imported history"
+   "imported": "Imported history",
+   "today": "Activity on this account"
   },
   "statusValue": "contributor · in good standing",
   "consentAllowed": "working alongside you",
@@ -340,6 +343,9 @@
   "importedLabel": "migrated · 1997–2003 · {n} entries · read-only",
   "importedEmpty": "no history was migrated to this account",
   "footer": "This record is maintained by GracePlatform for continuity of care. Requests to amend it are reviewed by your provider.",
-  "witness": "record: viewed — profile and imported history"
+  "witness": "record: viewed — profile and imported history",
+  "todayLabel": "{n} events · today",
+  "todayEmpty": "no activity yet",
+  "_docToday": "⚑ S145 (THE_WITNESS_SYSTEM_PLAN §3D): the profile now shows what the PLATFORM files today — corrections, comments, contact, the consent decision — newest first, above the imported history. The face is the whole file, not the archive."
  }
 }
