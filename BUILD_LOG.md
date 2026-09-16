@@ -1176,3 +1176,16 @@ front of the head, drawn over the room, with a ring where the ray lands — one 
 bus, frame voice. `gameMenu.json` carries the headset's controls lines; the pre-fiction panel says
 "squeeze the grip". Verified in the desktop review only (`__xrFrame`); the in-headset pass and its
 checklist: `HEADSET_NOTE_2026-09-16.md`. Walked.
+
+## 2026-09-17 — S148 · HIS THIRD SIT-THROUGH, ANSWERED POINT BY POINT; THE REGISTER
+Sérgio played it through with sound and sent 113 notes — and the verdict that the build log was
+recording what was built while nothing held what was OWED: twenty-one of his items date from
+2026-08-21 and were still open (the monkey, the duck, the racket, the cassette caption, "Press to
+keep it", PureMail before Caleb, "Not now", the intake panel, the lyrics, the network image).
+`REVIEW_ROUND_3_2026-09-17.md` replies to every point with an id, a status and — where he was
+repeating himself — the date he first said it. `OPEN_ITEMS.md` is the one register from here: every
+session opens on it, every entry here names the ids it closes, nothing is called done without the id
+moving. Two premise bugs lead the order: **Maya is not Daniel** (S144's "one file" imported Daniel's
+entries into Vera's profile and Maya's legacy file — his ruling stands, each person's file holds its
+own era), and **Era 3 ends before the phone is read** (the update arms over an open job). Nothing
+built this session; the answer is the register. Closes nothing.
