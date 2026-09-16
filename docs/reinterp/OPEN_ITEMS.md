@@ -138,8 +138,22 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-112 | The drift pauses while a panel is looked at or pressed | OPEN |
 | R3-109 | Daniel's computer visible from the start of the Close? | ASK |
 
+## From the audit of every message he sent (`LOST_ASKS_AUDIT_2026-09-17.md`, Sonnet, all 672 read)
+| id | item | first said | status |
+|---|---|---|---|
+| L-01 | The GRAYING: the guide sends you to find the apparatus's objects; each find grays a queer prop in the room (refusal-symmetric). `paths.json e1.b06_graying: built false`; zero code | 2026-07-02 | OPEN · lost 11 weeks |
+| L-02 | FESTIVAL cut vs FULL cut, both real, selectable, from one source — for his article | 2026-07-02 | OPEN · lost (paths.json is dead metadata) |
+| L-03 | Era 3's trans-masculine "borderland" connection (Round-20, locked 2026-07-05): the s3/s4 sends are still hard-gated off (`os.ts allowVisit`) — the one RULING the build contradicts | 2026-07-03 | OPEN · contradicts a ruling |
+| L-04 | The Close's MAKERS as an in-world cluster/panels — the stars becoming the network of the data used to make the piece, four panels on the AI–human loop (his IDN disclosure) — built instead as a Credits paragraph + one line | 2026-07-24, again 2026-09-02 | OPEN · lost-partial |
+| L-05 | TTS read-aloud as a standing accessibility principle for every long in-world text (kit, diary, tapes, testimonies) — built for two instances only | 2026-07-24 | OPEN · lost-partial |
+| L-06 | The E1→E2 full-frame SYSTEM glitch: `os.onGlitch('system')` has no caller (the error-dialog cascade before the notice does exist — tour-e1 frame 24) | 2026-08-21 §H | OPEN · lost-partial |
+| L-07 | The Close's "version history" receipt (every update stacked, each FAILED) and "the one uninstalled update" ending — still canon in MASTER_PLAN_v2, retired by no document; the Restart card replaced it without a decision | 2026-07 | DESIGN · his (keep the card, or bring the receipt back onto it) |
+| L-08 | Rooms you have left go bare vs stay full — erasure or hope — as a choice | 2026-09-05 | UNSURE · his |
+| L-09 | The idle wipe: CLAUDE.md says the ledger is wiped on exit/IDLE/refusal; no idle timer exists in src/ (only Leave and beforeunload wipe). Exhibition hardware runs unattended | invariant | OPEN · bug |
+
 ## Asks (his)
 - R3-01 the logo file · R3-12 which "pause" button (a frame) · R3-07 the books: slabs or gone · W-L1 which mini-game first ·
+  L-07 the Close's ending: the Restart card, the version-history receipt, or both · L-08 bare rooms as a choice, yes/no ·
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
