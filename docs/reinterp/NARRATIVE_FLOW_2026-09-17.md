@@ -1,7 +1,7 @@
 STATUS: live
 
 # NARRATIVE FLOW — the main line, the sandbox, the gates, and who tells you
-*2026-09-17. Sérgio: "we have a narrative people can follow, but there is also space for people to
+*2026-09-17. ⚑ Confirmed by Sérgio the same day: (1) pray comes BEFORE connect — as written; (2) 2026 as a conversation with L (five turns with chips) is what he meant. Sérgio: "we have a narrative people can follow, but there is also space for people to
 explore — that is why the map exists. But this needs to be informed to the user: that is why we have
 the message on screen, Lamby, Lambient and L guiding you. We should not expect the user to understand
 the environment right away." He sent a diagram (a five-era flow with main quest · action · optional ·
