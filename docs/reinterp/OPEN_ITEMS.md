@@ -10,6 +10,9 @@ is removed, ever — closed ids stay, struck through, with the session that clos
 Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTHROUGH_2026-08-21.md`
 (W-nn, the first play — items not re-raised on 09-17 but still open), `REVIEW_R1_2026-09-02.md`.
 
+## Priority 0 — THE PROGRESSION LAW (the rule under most of the list)
+`PROGRESSION_LAW_2026-09-17.md`: inside an era everything on the desk is a sandbox (openable any time, never blocking); the era's exit is a GATE named by the map's beats; the update fires only when the gate is met AND nothing is open. Generalises R3-82 to all four eras; R3-13, R3-40, R3-73, R3-98 are its first cases.
+
 ## Priority 1 — premise bugs and outright bugs
 | id | item | status |
 |---|---|---|
@@ -49,8 +52,9 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-28 | DM scrollback; faster typing | OPEN |
 | R3-38 | The racket: glow + guide line (W: 08-21 §D) | OPEN · repeat |
 | R3-40 | Deferral: the IRC closes; the belongings window reads as a thing to do | OPEN |
-| R3-24 | Dial-up on the black screen with a connection panel (needs his image; W: 08-21 §H) | OPEN · ask |
+| R3-24 | Dial-up on the black screen with a connection panel — his references FOUND: `References images/to enter online.png` (Internet Setup Wizard) and `for IRC connection.png` (Make New Connection) (W: 08-21 §H) | OPEN |
 | W-E1 | The floppy / the tapes glow so they can be found (08-21 §E) | OPEN |
+| W-L1 | **Lamby's 1997 app**: today the rig file is "like a tamagotchi"; his design `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` (Root Cause Digger, Purity Maze, Straight & Narrow Crossing…) was never referenced in the repo — pick one for 1997 and build it as the kit's game | DESIGN · his pick |
 | W-E2 | Windows minimise, not just X (08-21 §E) | OPEN |
 
 ## Priority 3 — sound redo, one pass with his ear
@@ -120,7 +124,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-01 | The pre-fiction panel: ERA1 look, the logo, three cards, the text | DESIGN · ask (logo) |
 | R3-06 | Helper idle 40 → 20 s | OPEN |
 | R3-09 | Desktop icon grid with drawn pixel icons | OPEN |
-| R3-15 | The wake gets a screen (BIOS line, memory count) | OPEN · ask |
+| R3-15 | **Un-Walk = the Starter Kit programme (UNWALK.EXE)**, "a box with white background, empty, black and white font" → the Win95 WIZARD look from his reference `References images/for the Era-1 programs.png` (left picture panel, text, Back/Next/Cancel) — one design with R3-16/19 | OPEN |
 | R3-29 | Map wording: "the placement letter" | OPEN |
 | R3-30 / 31 | The unvoiced-name setting in plain words; menu design | OPEN |
 | R3-33 | "See behind you"; the flip button glows when the wall holds something unseen | OPEN |
@@ -135,8 +139,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-109 | Daniel's computer visible from the start of the Close? | ASK |
 
 ## Asks (his)
-- R3-01 the logo file · R3-12 which "pause" button (a frame) · R3-15 confirm "Un-Wak" = the wake ·
-  R3-24 the Internet Setup Wizard image into `Assests/` · R3-07 the books: slabs or gone ·
+- R3-01 the logo file · R3-12 which "pause" button (a frame) · R3-07 the books: slabs or gone · W-L1 which mini-game first ·
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
