@@ -1,12 +1,15 @@
 /**
- * ⚑ YOUR RECORD — the file inside the platform (S144, 2026-09-15).
+ * ⚑ YOUR RECORD — the file inside the platform (S144, 2026-09-15; HERS ONLY
+ * since S149, 2026-09-19).
  *
  * docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §3C. The Intake Record on Room
  * 1's wall switches off at 2016 because the record has moved INTO the
  * platform — and until now nothing inside the platform showed it. This is the
- * 2016 face of the same file: GracePlatform's profile page for Vera, with the
- * imported history — every 1997 and 2003 entry the ledger holds, as the
- * platform received them, read-only, under the migration's stamp.
+ * 2016 face: GracePlatform's profile page for Vera — her account and what the
+ * platform filed on her today. ⚑ S144 imported Daniel's 1997–2003 entries
+ * here as "migrated history"; that was the one-file premise and it broke
+ * Sérgio's ruling that MAYA (and Vera) ARE NOT DANIEL (OPEN_ITEMS R3-95).
+ * Each person's file holds their own era. The thirty years are the Close's.
  *
  * A job on the board like any other (`TaskSurface`), so the walk can reach it
  * and the board grows the way it always has. It has no work in it: opening it
@@ -25,9 +28,9 @@ import q from '../../../data/dialog/s3_queue.json';
 
 const R = (q as unknown as { record: {
   title: string; heading: string; sub: string;
-  fields: { name: string; status: string; consent: string; work: string; imported: string; today: string };
+  fields: { name: string; status: string; consent: string; work: string; today: string };
   statusValue: string; consentAllowed: string; consentDeclined: string; workValue: string;
-  importedLabel: string; importedEmpty: string; todayLabel: string; todayEmpty: string; footer: string; witness: string;
+  todayLabel: string; todayEmpty: string; footer: string; witness: string;
 } }).record;
 
 export class YourRecordApp implements TaskSurface {
@@ -56,16 +59,11 @@ export class YourRecordApp implements TaskSurface {
       setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
       ctx.fillText(R.statusValue, x + 8 + av + 8, y + 19);
     }
-    const n = this.imported().length;
+    const n = entriesByEra().e3.length;
     if (h >= 50) {
       ctx.fillStyle = this.viewed ? ERA3.grey : ERA3.accent;
-      ctx.fillText(R.importedLabel.replace('{n}', String(n)), x + 10, y + h - 16);
+      ctx.fillText(R.todayLabel.replace('{n}', String(n)), x + 10, y + h - 16);
     }
-  }
-
-  private imported(): { witness: string; era: string }[] {
-    const by = entriesByEra();
-    return [...by.e1, ...by.e2].map((e) => ({ witness: e.witness, era: e.era === 'e1' ? '1997' : '2003' }));
   }
 
   draw(ctx: CanvasRenderingContext2D, area: TaskArea, hit: (r: TaskHit) => void): void {
@@ -95,42 +93,29 @@ export class YourRecordApp implements TaskSurface {
     row(R.fields.status, R.statusValue);
     row(R.fields.consent, ledger.lamby.some((l) => l.id === 'e3_lambient_consent' && l.outcome === 'dismissed') ? R.consentDeclined : R.consentAllowed);
     row(R.fields.work, R.workValue.replace('{n}', String(ledger.graceQueue.length)));
-    // ⚑ S145 — what the platform files TODAY, newest first, then the imported
-    //   history: the whole file, in the platform's own flat register
+    // ⚑ S149 — what the platform files TODAY, newest first: hers, and only hers
     y += 6;
     const bottom = area.y + area.h - 30;
     const rowH = 13;
     const today = entriesByEra().e3.slice().reverse();
-    const imp = this.imported().slice().reverse();
-    const section = (label: string, value: string): void => {
-      setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
-      ctx.fillText(label.toUpperCase(), x, y);
-      ctx.fillStyle = ERA3.accent;
-      ctx.fillText(value, x + 150, y);
-      y += 16;
-      px(ctx, x, y, w, 1, ERA3.glassEdge);
-      y += 6;
-    };
-    const rows = (list: { witness: string; era: string; flagged?: boolean }[], max: number): void => {
-      setFont(ctx, 9);
-      for (const e of list.slice(0, max)) {
-        ctx.fillStyle = ERA3.grey;
-        ctx.fillText(e.era, x, y);
-        ctx.fillStyle = e.flagged ? ERA3.accent : ERA3.greyDk;
-        ctx.save(); ctx.beginPath(); ctx.rect(x + 40, y - 2, w - 40, rowH); ctx.clip();
-        ctx.fillText(e.witness, x + 40, y);
-        ctx.restore();
-        y += rowH;
-      }
-    };
-    section(R.fields.today, today.length ? R.todayLabel.replace('{n}', String(today.length)) : R.todayEmpty);
-    // today takes up to half of what is left (the second section's header costs two rows); the archive the rest
-    const left = Math.max(0, Math.floor((bottom - y) / rowH) - 2);
-    const todayMax = Math.min(today.length, Math.max(0, imp.length ? Math.ceil(left / 2) : left));   // an empty archive cedes its half
-    rows(today.map((e) => ({ witness: e.witness, era: '2016', flagged: e.flagged })), todayMax);
-    y += 4;
-    section(R.fields.imported, imp.length ? R.importedLabel.replace('{n}', String(imp.length)) : R.importedEmpty);
-    rows(imp, Math.max(0, Math.floor((bottom - y) / rowH)));
+    setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+    ctx.fillText(R.fields.today.toUpperCase(), x, y);
+    ctx.fillStyle = ERA3.accent;
+    ctx.fillText(today.length ? R.todayLabel.replace('{n}', String(today.length)) : R.todayEmpty, x + 150, y);
+    y += 16;
+    px(ctx, x, y, w, 1, ERA3.glassEdge);
+    y += 6;
+    const fit = Math.max(0, Math.floor((bottom - y) / rowH));
+    setFont(ctx, 9);
+    for (const e of today.slice(0, fit)) {
+      ctx.fillStyle = ERA3.grey;
+      ctx.fillText('2016', x, y);
+      ctx.fillStyle = e.flagged ? ERA3.accent : ERA3.greyDk;
+      ctx.save(); ctx.beginPath(); ctx.rect(x + 40, y - 2, w - 40, rowH); ctx.clip();
+      ctx.fillText(e.witness, x + 40, y);
+      ctx.restore();
+      y += rowH;
+    }
     // the footer: continuity of care, in the platform's words
     setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
     const foot = wrapText(ctx, R.footer, w);

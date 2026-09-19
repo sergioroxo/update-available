@@ -52,6 +52,7 @@ const BEFORE = m.before as Msg[];
 const MALTA_ONE = m.maltaOne as Msg[];
 const MALTA_TWO = m.maltaTwo as Msg[];
 const CASCADE = m.cascade as Msg[];
+const LINK_VOTE = m.linkVote as { masthead: string; headline: string; standfirst: string; tapHint: string };
 const BACKLOG = m.backlog as { from: string; time: string; text: string }[];
 const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
 const HOME = m.home as unknown as Record<string, string>;
@@ -108,6 +109,9 @@ export class PhoneE3 {
     if (this.stage === 'first' && !this.carded) { this.showCard('ignored'); return; }
     if (this.stage === 'voted' && !this.carded) { this.showCard('ignored'); }
   }
+
+  /** S149 — a card is on the glass (the era's exit waits for it to be dismissed) */
+  get cardOpen(): boolean { return this.card !== null; }
 
   /** the era asks: is it finished? Used to arm the update that ends Era 3. */
   get broken(): boolean { return this.stage === 'after'; }
@@ -380,7 +384,7 @@ export class PhoneE3 {
 
   private msgHeight(ctx: CanvasRenderingContext2D, msg: Msg, W: number): number {
     if (msg.from === 'system') { phoneFont(ctx, 9); return 16; }
-    if (msg.kind === 'link') return 52;
+    if (msg.kind === 'link' || msg.kind === 'link2') return 52;
     phoneFont(ctx, 11);
     return 14 + phoneWrap(ctx, msg.text ?? '', W - 74).length * 14;
   }
@@ -398,7 +402,7 @@ export class PhoneE3 {
     }
     const bx = 30;
     if (showWho) avatar(ctx, 6, y + 2, 20, msg.from);
-    if (msg.kind === 'link') { this.drawLinkCard(ctx, bx, y, W - bx - 14, msg); return; }
+    if (msg.kind === 'link' || msg.kind === 'link2') { this.drawLinkCard(ctx, bx, y, W - bx - 14, msg); return; }
     phoneFont(ctx, 11);
     const lines = phoneWrap(ctx, msg.text ?? '', W - 74);
     let widest = 0;
@@ -421,18 +425,20 @@ export class PhoneE3 {
   private drawLinkCard(
     ctx: CanvasRenderingContext2D, x: number, y: number, w: number, msg: Msg
   ): void {
+    // S149 — two cards: the bill (`link`), then the vote's result (`link2`), each
+    //   its own press: the stage moves on a card's dismissal, and the second
+    //   card could not be opened by pressing the first again.
+    const link = msg.kind === 'link2' ? LINK_VOTE : m.link;
     roundRect(ctx, x, y, w, 48, 9, PHONE.surface);
     roundRect(ctx, x + 6, y + 6, 36, 36, 5, PHONE.tileLive);
     phoneFont(ctx, 8);
     ctx.fillStyle = PHONE.dim;
-    ctx.fillText(m.link.masthead, x + 48, y + 7);
+    ctx.fillText(link.masthead, x + 48, y + 7);
     phoneFont(ctx, 10, 600);
     ctx.fillStyle = PHONE.ink;
-    phoneWrap(ctx, m.link.headline, w - 56).slice(0, 2)
+    phoneWrap(ctx, link.headline, w - 56).slice(0, 2)
       .forEach((ln, i) => ctx.fillText(ln, x + 48, y + 19 + i * 12));
-    if (msg.kind === 'link' || msg.from === 'Bea') {
-      this.rects.push({ x, y, w, h: 48, id: 'link' });
-    }
+    this.rects.push({ x, y, w, h: 48, id: msg.kind === 'link2' ? 'link2' : 'link' });
   }
 
   /** ⚑ read-only, and it files NOTHING. §6's design law: the piece never makes
@@ -529,7 +535,7 @@ export class PhoneE3 {
         this.bump(); return true;
       case 'back': this.screen = 'home'; this.bump(); return true;
       case 'dismiss': this.dismissCard(); return true;
-      case 'link': this.openLink(); return true;
+      case 'link': case 'link2': this.openLink(); return true;
       // ⚑ the stream has no verb. Pressing it is consumed and does nothing,
       //   which is truer than making it play: nobody asked her to watch it.
       case 'stream': return true;

@@ -176,6 +176,9 @@ export class ProvotypeApp {
     } else {
       c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, title, true);
       ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+      // S149 — the frame's X is drawn and was never a control (Sérgio, 09-17 R3-11:
+      //   "the X button doesn't work"); it does what Leave does
+      if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'leave' });
     }
 
     const bodyTop = c.y + 8;

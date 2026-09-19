@@ -960,17 +960,17 @@ export class E4Browser {
     px(ctx, cx + 1, top + 50, cw - 2, 1, WEB.cardEdge);
     const LG = body.record.legacy;
     if (this.legacyOpen) {
-      // ⚑ S144 — THE LEGACY FILE, as a page of its own inside the card: the
-      //   thirty years as 'events', oldest first, the 1997 intake's own wording
-      //   as the first row. One press back to the fields.
-      const by = entriesByEra();
-      // S145 — this session's own rows first (newest at the top), then the thirty years
-      const rows = [...by.e4.slice().reverse(), ...by.e1, ...by.e2, ...by.e3];
+      // ⚑ S149 — HER FILE, as a page of its own inside the card: Maya's own
+      //   events, newest first, as the 2026 product keeps them. S144 listed the
+      //   thirty years here (Daniel's and Vera's entries under her name); that
+      //   broke the ruling that Maya is not Daniel (OPEN_ITEMS R3-95). The
+      //   thirty years are the Close's. One press back to the fields.
+      const rows = entriesByEra().e4.slice().reverse();
       let ly = top + 62;
       setFont(ctx, 10); ctx.fillStyle = WEB.ink;
       ctx.fillText(LG.heading, cx + 16, ly);
       setFont(ctx, 8); ctx.fillStyle = WEB.muted;
-      ctx.fillText(`${LG.thisSession.replace('{n}', String(by.e4.length))}  ·  ${LG.sub.replace('{n}', String(rows.length))}`, cx + 16 + 130, ly + 2);
+      ctx.fillText(LG.sub.replace('{n}', String(rows.length)), cx + 16 + 130, ly + 2);
       ly += 16;
       px(ctx, cx + 16, ly, cw - 32, 1, WEB.cardEdge);
       ly += 8;
@@ -1165,7 +1165,7 @@ export class E4Browser {
           if (it && it.kind === 'folder') { this.picker = 'folder'; this.version++; return true; }
           this.chosenFile = it ? it.name.replace(/\.jpg$/i, '') : 'IMG_2211';
           this.picker = 'restoring'; this.pickerT = 0; this.version++;
-          playOnce('ui_press.mp3'); playOnce('restore_2026.mp3');
+          playOnce('ui_press.mp3');   // S149: `restore_2026` dropped (R3-97) — the notification is enough
           return true;
         }
         if (hit.id === 'file-back' && this.picker === 'folder') { this.picker = 'open'; this.version++; return true; }

@@ -172,7 +172,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const PREFER = [
   /understand|continue|^ok$|^okay$|next|read.?on|agree|proceed|begin|start$|enter|hello|open|insert|play/i,
   /apply|send|confirm|done|finish|accept|update.?now|sign.?in|signin|allow|unlock/i,
-  /^task-|^tile-|^consent|^board|^group$|^inbox$|^link$|^notification$/i
+  /^task-|^tile-|^consent|^board|^group$|^inbox$|^link\d*$|^notification$/i   // S149: `link2`, the vote's card (a fresh id ranked under a spent `task-` for 270 presses)
 ];
 /**
  * ⚑ ANCHORED, AND THE TWO WORDS THAT WERE NOT COST THE WHOLE TAIL (S103).
@@ -927,7 +927,11 @@ const LAP = { w: 224, h: 140 };
       era: after.era, phase: after.phase, spine: after.spine, qMode: after.qMode,
       ledgerDelta: after.ledCount - before.ledCount,
       ledgerNew: ledgerNew(before, after),
-      changed: moved(before, after)
+      changed: moved(before, after),
+      // S149 — what the walker could aim at AFTER this press (the JSON log only): the
+      //   question "why was X never pressed" was unanswerable without it
+      live: (after.targets || []).map((t) => t.surface + ':' + t.id).slice(0, 40),
+      unreachable: (after.dropped || []).map((d) => d.surface + ':' + d.id + ' — ' + d.why).slice(0, 12)
     });
     return after;
   };

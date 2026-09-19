@@ -187,9 +187,12 @@ export class DiaryApp {
     if (this.phase === 'resist') {
       ui.setFont(ctx, 9);
       ctx.fillStyle = ERA1.warnDark;
-      ctx.fillText(this.attempts >= 1 ? end.diary.held : end.diary.retrying, c.x + 10, c.y + c.h - 24);
+      const heldLine = this.attempts >= 1 ? end.diary.held : end.diary.retrying;
+      ctx.fillText(heldLine, c.x + 10, c.y + c.h - 24);
+      // S149 — the hint sits on the same line, after the sentence: under the bar it
+      //   was cut off by the red rule (Sérgio, 08-21 §H and 09-17 R3-37)
       ctx.fillStyle = ERA1.greyDark;
-      if (this.blink()) ctx.fillText(end.diary.keepHint, c.x + 10, c.y + c.h - 12);
+      if (this.blink()) ctx.fillText(end.diary.keepHint, c.x + 10 + Math.ceil(ctx.measureText(heldLine).width) + 10, c.y + c.h - 24);
       const bw = c.w - 20; const bx = c.x + 10; const by = c.y + c.h - 6;
       ui.px(ctx, bx, by, bw, 4, ERA1.beige);
       ui.px(ctx, bx, by, Math.round(bw * this.erase), 4, ERA1.warn);   // the jammed erase

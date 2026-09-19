@@ -201,8 +201,9 @@
    "cx": 0,
    "cz": 0,
    "baseY": 0,
+   "_docTilt": "⚑ S149: [15,0,0] — the handset STANDS on its dock now, leaning 15° back toward the seat (was [90,0,0], flat on the desk; see era3Devices PLACEMENT.phone and reinterp_deltas w_phoneStand).",
    "tilt": [
-    90,
+    15,
     0,
     0
    ]

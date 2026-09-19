@@ -703,6 +703,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // data/room/nodes.json) share this module's DEVICE_SEAT_POSES as their
     // authored source.
     era3Devices = buildEra3Devices(app);
+    // S149 — the held phone comes to where she is looking (R3-76): the seat's pose plus the drag
+    era3Devices.setLookProvider(() => ({ pitch: camPitch + lookOffPitch, yaw: camYaw + lookOffYaw }));
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
   // doc §1, Sérgio: "I would've liked the cork board to actually work, but
@@ -737,6 +739,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // projection dance — mirrors __os's own established convention exactly.
     (window as { __graceQueue?: () => unknown }).__graceQueue = () =>
       era3Devices ? era3Devices.debugQueue() : null;
+    (window as { __deviceDraws?: () => unknown }).__deviceDraws = () => era3Devices ? era3Devices.debugDraws() : null;
     // S61 FREE-CAMERA probe (?debug=1 only, write-only review aid — the
     // companion to __camProbe, which can only land on the three SEAT poses).
     // Room 2's seat sits 0.57 m from the workstation, so every prop-dressing review
@@ -2878,6 +2881,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   };
   canvasEl.addEventListener('pointerdown', startFirstBed);
   document.addEventListener('pointerdown', startFirstBed);
+  // S149 — and it starts NOW: the Log in press that built this app is the gesture
+  //   the browser needs (Sérgio, 09-17 R3-04: "the sound of the room only starts
+  //   with the movement"). The listeners above stay as the fallback for a review
+  //   page that arrived without one.
+  if (options.reinterp === true) startFirstBed();
 
   canvasEl.addEventListener('pointerdown', (e) => {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });

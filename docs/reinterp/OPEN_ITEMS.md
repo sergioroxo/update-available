@@ -16,21 +16,21 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 ## Priority 1 — premise bugs and outright bugs
 | id | item | status |
 |---|---|---|
-| R3-95 | Maya is not Daniel: Vera's profile and Maya's legacy file must hold their OWN era's rows only | OPEN |
-| R3-73/80 | Era 3 must not end before the phone is picked up and the group seen; no update over an open job | OPEN |
-| R3-04 | Room bed starts at Log in, not at the landing | OPEN |
-| R3-05 | The monkey faces the wall (W: 08-21 §D) | OPEN · repeat |
-| R3-11 | Family Form: the X does nothing | OPEN |
-| R3-18 | "Companion cassette insert" caption — remove (W: 08-21 §E) | OPEN · repeat |
-| R3-37 | "Press to keep it" cut off (W: 08-21 §H) | OPEN · repeat |
+| R3-95 | ~~Maya is not Daniel: Vera's profile and Maya's legacy file must hold their OWN era's rows only~~ | DONE — S149 · Vera 2016 rows only; Maya her 2026 rows only (`yourRecord.ts`, `browser.ts`); walked |
+| R3-73/80 | ~~Era 3 must not end before the phone is picked up and the group seen; no update over an open job~~ | DONE — S149 · the era ends on the cascade SEEN on the phone and nothing open; the spine no longer arms it; walked through the phone (238 presses) |
+| R3-04 | ~~Room bed starts at Log in, not at the landing~~ | DONE — S149 · `startFirstBed()` at build (the Log in press is the gesture) |
+| R3-05 | ~~The monkey faces the wall (W: 08-21 §D)~~ | DONE — S149 · `yaw: 180` on teddyBox, checked by eye |
+| R3-11 | ~~Family Form: the X does nothing~~ | DONE — S149 · the frame's X → leave |
+| R3-18 | ~~"Companion cassette insert" caption — remove (W: 08-21 §E)~~ | DONE — S149 · caption removed |
+| R3-37 | ~~"Press to keep it" cut off (W: 08-21 §H)~~ | DONE — S149 · beside the sentence |
 | R3-47 | No conducted look on landing (comfort law; cybersickness) | OPEN |
-| R3-67 | Phone screen plane larger than its model; phone lost behind props | OPEN |
-| R3-76 | The held phone follows the head's yaw, not the seat's | OPEN |
+| R3-67 | ~~Phone screen plane larger than its model; phone lost behind props~~ | DONE — S149 · on a 16 cm dock, leaning 15°, in frame from the seat (measured); the walk found it |
+| R3-76 | ~~The held phone follows the head's yaw, not the seat's~~ | DONE — S149 · the held pose follows the look |
 | R3-77 | The phone's unlock has no drawn button | OPEN |
-| R3-79 | The chat does not play once opened; phone text pixelated | OPEN |
+| R3-79 | ~~The chat does not play once opened; phone text pixelated~~ | DONE — S149 · root cause: no `link` message existed, the card could never open — the bill card and the vote card are in the thread; pixels: still open → R3-100 |
 | R3-98 | The photos step auto-advances to care | OPEN |
 | R3-100 | E3/E4 screen text pixelated (surface render scale) | OPEN |
-| R3-103 | The session bed keeps playing under Junie's card | OPEN |
+| R3-103 | ~~The session bed keeps playing under Junie's card~~ | DONE — S149 · the room bed fades as the session starts |
 | R3-113 | Restart card → Maya: no relocation, black screen | OPEN |
 | R3-114 | The 1997 Close panel draws "IN THIS ROOM, YOU" twice with 2026's lines | OPEN |
 | R3-49 | Restorify "Not now" does nothing; window still 1997 (W: 08-21 §I) | OPEN · repeat |
@@ -65,13 +65,13 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-14 | Floppy drive sound | OPEN |
 | R3-25 | IRC tick: soft, only his lines + the DM | OPEN |
 | R3-36 | Diary: typing, flag, erase | OPEN |
-| R3-39 | Error ding lower | OPEN |
+| R3-39 | ~~Error ding lower~~ | DONE — S149 · u2 ding at 0.45 |
 | R3-43 / 63 | Passage sound: low wind, no whoosh | OPEN |
 | R3-48 / 64 | Boot cues 2003 / 2016; boot music quieter | OPEN |
 | R3-68 | 2016 platform bed + Lambient chime | OPEN |
 | R3-85 | The update's install/restart cues | OPEN |
 | R3-88 | `type_2026` soft | OPEN |
-| R3-97 | Drop `restore_2026` | OPEN |
+| R3-97 | ~~Drop `restore_2026`~~ | DONE — S149 · dropped |
 | R3-102 | The session's recording introduced, hiss cue reconsidered | OPEN |
 | R3-110 | A Close score | OPEN |
 | W-G1 | Lamby needs a sound ("how Clippy sounded") (08-21 §G) | OPEN |
@@ -99,10 +99,10 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-66 | Lambient "Not now" sticker; one clock for phone + workstation | OPEN |
 | R3-70 | Corrections per story 7 → 3 | OPEN |
 | R3-71 | Noa's video: a real player, labelled | OPEN |
-| R3-72 | The phone on a stand | OPEN |
+| R3-72 | ~~The phone on a stand~~ | DONE — S149 · the dock (`w_phoneStand`) |
 | R3-74 | "Back to today" at the bottom of a finished job | OPEN |
 | R3-78 | Phone home screen: Messages, the platform, FloppySheep | OPEN |
-| R3-81 | A line to look at the phone; you can put it down | OPEN |
+| R3-81 | ~~A line to look at the phone; you can put it down~~ | DONE — S149 · Lambient: "Your phone's lit…" / "…you can always put it down." |
 | R3-82 | Era 3 beats gate on the previous being seen | OPEN |
 
 ## Priority 6 — Era 4's program as a conversation with L
@@ -122,10 +122,10 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | id | item | status |
 |---|---|---|
 | R3-01 | The pre-fiction panel: ERA1 look, the logo, three cards, the text | DESIGN · ask (logo) |
-| R3-06 | Helper idle 40 → 20 s | OPEN |
+| R3-06 | ~~Helper idle 40 → 20 s~~ | DONE — S149 · 20 s |
 | R3-09 | Desktop icon grid with drawn pixel icons | OPEN |
 | R3-15 | **Un-Walk = the Starter Kit programme (UNWALK.EXE)**, "a box with white background, empty, black and white font" → the Win95 WIZARD look from his reference `References images/for the Era-1 programs.png` (left picture panel, text, Back/Next/Cancel) — one design with R3-16/19 | OPEN |
-| R3-29 | Map wording: "the placement letter" | OPEN |
+| R3-29 | ~~Map wording: "the placement letter"~~ | DONE — S149 · "the placement letter" |
 | R3-30 / 31 | The unvoiced-name setting in plain words; menu design | OPEN |
 | R3-33 | "See behind you"; the flip button glows when the wall holds something unseen | OPEN |
 | W-F1 | Leave: an interim safe space with a way back (08-21 §F); in-fiction "leave" renamed "Go back" | DESIGN |
@@ -157,4 +157,4 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
-*(none yet — this file starts today)*
+- S149 (2026-09-19): R3-95, R3-73/80, R3-04, R3-05, R3-06, R3-11, R3-18, R3-29, R3-37, R3-39, R3-67, R3-72, R3-76, R3-79 (the chat), R3-81, R3-97, R3-103 — walked, 238 presses, spine done, Era 3 ended through the phone.

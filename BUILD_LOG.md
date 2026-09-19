@@ -1189,3 +1189,24 @@ moving. Two premise bugs lead the order: **Maya is not Daniel** (S144's "one fil
 entries into Vera's profile and Maya's legacy file — his ruling stands, each person's file holds its
 own era), and **Era 3 ends before the phone is read** (the update arms over an open job). Nothing
 built this session; the answer is the register. Closes nothing.
+
+## 2026-09-19 — S149 · THE TWO PREMISE BUGS, AND ERA 3 ENDS THROUGH THE PHONE
+**Maya is not Daniel** (closes R3-95): Vera's profile holds 2016's rows only; Maya's "Legacy file"
+is "Your file" and holds her 2026 rows only — S144's one-file premise undone in both faces; the
+thirty years are the Close's. **Era 3 ends on the phone** (closes R3-73/80): the era's exit is the
+cascade SEEN on the phone and nothing open (no job, no held phone, no card), with six clear seconds
+counted — the work count is no trigger any more and the spine no longer arms Era 3's update at all
+(`era3Devices.tick` is the one conductor). Found on the way, the real root of "I opened the chat and
+nothing happened" (closes the chat half of R3-79): no message in Bea's thread was of `kind: link`, so
+the article card was never drawn, the card could never open, and the era could never end via the
+phone — the bill's card and the vote's card (`link2`) are in the thread now. The phone stands on a
+16 cm dock, leaning 15°, in frame from the seat at pitch 0 (closes R3-67, R3-72); the held phone
+comes to where she is looking (closes R3-76); Lambient says the phone is lit and can be put down
+(closes R3-81); putting the phone down no longer eats the press. Small bugs: the monkey faces the room
+(R3-05), the cassette caption gone (R3-18), "press to keep it" beside the sentence (R3-37), the Family
+Form's X leaves (R3-11), the room bed starts at Log in (R3-04), the helper at 20 s (R3-06), "the
+placement letter" (R3-29), the 1997 ding lower (R3-39), `restore_2026` dropped (R3-97), the room bed
+fades as the session starts (R3-103). Walker: `link\d*` ranked with `link`; the JSON log now carries
+the live targets after each press. Walked: 238 presses, spine done, Era 3 ended through the phone
+(`WALK_2026-09-19.md`). **closes R3-04, R3-05, R3-06, R3-11, R3-18, R3-29, R3-37, R3-39, R3-67,
+R3-72, R3-73/80, R3-76, R3-79 (chat), R3-81, R3-95, R3-97, R3-103.**

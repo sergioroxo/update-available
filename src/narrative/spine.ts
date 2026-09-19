@@ -210,8 +210,12 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
         // group outnumbering Lambient's block — and the trigger is read from
         // the ledger, where the piece already records what happened, rather
         // than from a second copy of the state kept in here.
+        // ⚑ S149 — THE SPINE NO LONGER ARMS ERA 3's UPDATE. The room does
+        //   (era3Devices.tick): the cascade seen AND nothing open, then a beat of
+        //   quiet. Two arming sites meant the phone's gate could be jumped from
+        //   here; one conductor for the era's end. `cascadeSeen` stays as the
+        //   read this file documents, and `onEra('e4')` still moves the step.
         case 'e3':
-          if (cascadeSeen()) { arm('u4', 'e4'); break; }
           if (t >= SEND_DELAY && correctionsDone() >= 2) offer('s3', 'e3_s3');
           break;
         // ⚑ the two send legs are LEFT INTACT and unreachable-by-default rather
@@ -219,12 +223,10 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
         //   work if a review drives them, and the cascade check above runs
         //   first from `e3` regardless. Removing them is a separate decision.
         case 'e3_s3':
-          if (cascadeSeen()) { arm('u4', 'e4'); break; }
           if (sendResolved('s3') && t >= SEND_GAP && correctionsDone() >= 5) offer('s4', 'e3_s4');
           break;
         case 'e3_s4':
-          if (cascadeSeen()) { arm('u4', 'e4'); break; }
-          if (sendResolved('s4') && t >= UPDATE_GAP) arm('u4', 'e4');
+          void cascadeSeen;   // the era's end is the room's (S149) — see case 'e3'
           break;
 
         case 'e4':

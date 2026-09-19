@@ -1794,18 +1794,33 @@
     "id": "w_phoneDevice",
     "model": "phone",
     "pos": [
-     -5.1,
-     0.75,
-     0.95
+     -5.0,
+     0.916,
+     0.97
     ],
     "size": [
      0.071,
-     0.01,
-     0.152
+     0.152,
+     0.03
     ],
     "yaw": 90,
     "color": "#15151F",
-    "_doc": "⛑ MOVED AGAIN, 2026-08-24, and this time to be REACHABLE: from (-5.02, 1.16) to (-5.10, 0.95). Measured from the workstation seat, the phone's screen projected to (-230, 1214) on a 1280x900 viewport — off the left edge AND below the bottom — and looking down never recovered it, because at z 1.16 it sat 36.5° off the view axis against a 29.7° horizontal half-FOV. THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE. It is now 19.7° off axis and enters the frame from a -10° look. ⛑ KEEP THIS IN STEP with era3Devices' PLACEMENT.phone — the prop and its screen have now been separated twice, and both times Sérgio found it before a check did. ⚑ ERA 3'S PHONE — one mesh, ON THE DESK, 2026-08-21. It was a parts-built box on the nightstand at (-2.42, 0.51, -0.72). ⚑ The move is the era's thesis in a coordinate: the tablet lived across the room and was reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, both at arm's length — which is what makes ignoring it a real CHOICE rather than a walk she declines to take. Its two hand-built parts (body + earpiece) are gone; the mesh carries them. ⚑ A note for the next prop added here: I first declared a SECOND w_phoneDevice rather than editing this one, and a duplicate id does not error — the later declaration silently wins and the earlier becomes invisible. Check for the id first."
+    "_doc": "⚑ S149 — ON A STAND (OPEN_ITEMS R3-67/72): base at y 0.916 = the dock's top; leaning 15° back (models.json phone tilt), facing the seat (yaw 90). In frame from the r2 seat at pitch 0, measured live. Keep in step with era3Devices PLACEMENT.phone. ⛑ MOVED AGAIN, 2026-08-24, and this time to be REACHABLE: from (-5.02, 1.16) to (-5.10, 0.95). Measured from the workstation seat, the phone's screen projected to (-230, 1214) on a 1280x900 viewport — off the left edge AND below the bottom — and looking down never recovered it, because at z 1.16 it sat 36.5° off the view axis against a 29.7° horizontal half-FOV. THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE. It is now 19.7° off axis and enters the frame from a -10° look. ⛑ KEEP THIS IN STEP with era3Devices' PLACEMENT.phone — the prop and its screen have now been separated twice, and both times Sérgio found it before a check did. ⚑ ERA 3'S PHONE — one mesh, ON THE DESK, 2026-08-21. It was a parts-built box on the nightstand at (-2.42, 0.51, -0.72). ⚑ The move is the era's thesis in a coordinate: the tablet lived across the room and was reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, both at arm's length — which is what makes ignoring it a real CHOICE rather than a walk she declines to take. Its two hand-built parts (body + earpiece) are gone; the mesh carries them. ⚑ A note for the next prop added here: I first declared a SECOND w_phoneDevice rather than editing this one, and a duplicate id does not error — the later declaration silently wins and the earlier becomes invisible. Check for the id first."
+   },
+   {
+    "id": "w_phoneStand",
+    "pos": [
+     -5.0,
+     0.836,
+     0.97
+    ],
+    "size": [
+     0.09,
+     0.16,
+     0.05
+    ],
+    "color": "#15151F",
+    "_doc": "⚑ S149 — the phone's dock (OPEN_ITEMS R3-72, Sérgio: 'maybe the phone needs to be on a stand'): a 16 cm charging stand on the desk's front-left, the phone's own dark hex. The phone stands on its top (y 0.916)."
    },
    {
     "id": "e_folders",

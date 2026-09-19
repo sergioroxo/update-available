@@ -826,13 +826,23 @@ export class GraceQueueLite {
   }
 
   // ── the break ────────────────────────────────────────────────────────────
-  /** the phone lights on the nightstand. Nothing on the workstation reacts. */
+  /** the phone lights on the desk. ⚑ S149: and Lambient says so, once — the era's
+   *  voice for the beat (NARRATIVE_FLOW 2016 #6, R3-81): the phone is the way the
+   *  era ends now, so the player must be told it exists and that it can be put down. */
   armMalta(): void {
     if (this.maltaArrived) return;
     this.maltaArrived = true;
-    playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the nightstand
+    playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk
     this.phone.arm();
+    this.lambLines = [LAMBIENT.phone1, LAMBIENT.phone2];
     this.phoneV++;
+    this.bump();
+  }
+
+  /** ⚑ S149 — "nothing is open": a job on the workstation, or a card on the phone's
+   *  glass. The era's exit (era3Devices.tick) waits on this. */
+  get busy(): boolean {
+    return this.mode === 'list' || this.phone.cardOpen;
   }
 
   /** she picks it up. Two lines, and then — a beat later — the light. */

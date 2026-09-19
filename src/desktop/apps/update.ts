@@ -177,7 +177,10 @@ export class UpdateApp {
     //   cascade's windows each ding as they pile, the install churns under the
     //   changelog, and Restarting… is a soft power cycle. Every sound is the
     //   piece's own (tools/make_tones.sh).
-    if (!this.s.cascade) playOnce(NOTIFY_CHIME[key]);
+    if (!this.s.cascade) {
+      const a = playOnce(NOTIFY_CHIME[key]);
+      if (a && key === 'u2') a.volume = 0.45;   // S149: the 1997 ding, lower (R3-39)
+    }
     // ⚑ an update that declares a cascade opens on the pile of errors; every
     //   other one opens on its notice, exactly as before.
     if (this.s.cascade) this.phase = 'cascade';

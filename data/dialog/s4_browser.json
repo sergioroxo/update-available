@@ -130,7 +130,7 @@
     "note": ""
    },
    {
-    "k": "Legacy file",
+    "k": "Your file",
     "v": "retained",
     "note": "managed by your provider",
     "locked": true
@@ -153,21 +153,17 @@
   "witness": "read: the record — one field not hers to change",
   "_docHoodie": "⚑ THE HOODIE SURVIVES L'S UNITS, AND IT ENDS UP WHERE SUCH A THING REALLY ENDS UP. u3 was the era's best unit — the machine captioning a re-sewn jumper 'damaged', then 'in repair', then offering 'keepsake?', then stopping — and it is the source of the ball's fourth category, CONDITION: IN REPAIR. It cannot be lost with the rest of the conversation. Here it is one line item in an account page, still unresolved, dated eight months ago and never reviewed: **a thing altered on purpose reads to the machine as a thing broken**, and the machine's whole vocabulary is original and damaged. Nothing points at it and no line explains it — the same silence u3's own note demanded.",
   "legacy": {
-   "_doc": "⚑ S144 — THE LEGACY FILE OPENS (THE_RECORD_PLAN §3D). The chip `retained · managed by your provider` is a press now: the record page shows the thirty years under it, as a 2026 product would — a timeline of 'events', oldest first, the 1997 intake card's own wording as the first row. Pressing it files `legacy: opened` and changes nothing else — it is a page, and she can read her file the way the platform reads it. Nothing here is editable; the request button still 'works' as it did.",
-   "open": "View legacy file",
-   "close": "Hide legacy file",
-   "heading": "Legacy file · events",
-   "sub": "{n} events · 1997 – 2026 · retained for continuity of care",
+   "_doc": "⚑ S149 — HER FILE, HERS ONLY. S144 opened this as 'the thirty years under it — the 1997 intake card's own wording as the first row'; that was the one-file premise and it broke Sérgio's ruling (2026-09-05, 2026-09-17: 'WE SHOULD NOT BE SEEING DANIEL STUFF — MAYA IS NOT DANIEL', OPEN_ITEMS R3-95). The page is Maya's record as the 2026 product keeps it: her own events, newest first, retained 'for continuity of care'. The thirty years live in the Close and the frame's map. Pressing it files `legacy: read` and changes nothing else.",
+   "open": "View your file",
+   "close": "Hide your file",
+   "heading": "Your file · events",
+   "sub": "{n} events · 2026 · retained for continuity of care",
    "empty": "no events on file",
    "eras": {
-    "e1": "1997",
-    "e2": "2003",
-    "e3": "2016",
     "e4": "2026"
    },
-   "witness": "read: the legacy file — thirty years, retained",
-   "thisSession": "this session · {n}",
-   "_docBadge": "⚑ S145 (THE_WITNESS_SYSTEM_PLAN §3E): the Your information tab carries the file's count as its badge outside the program (inside it the badge is the step number) and its favicon lights on every filing; the legacy page lists 2026's own rows first, under `thisSession`. A sign, not a control — nothing new is pressable on the rails."
+   "witness": "read: her file — retained",
+   "_docBadge": "⚑ S145: the Your information tab carries the file's count as its badge outside the program and its favicon lights on every filing. A sign, not a control."
   }
  },
  "care": {

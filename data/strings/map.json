@@ -13,7 +13,7 @@
   "closeLabel": "The Close",
   "closeHint": "Look up. Then read the four panels, and the screen on the desk.",
   "helper": {
-    "idleSeconds": 40,
+    "idleSeconds": 20,
     "prefix": "Next:",
     "dismissHint": "(any press hides this)"
   },
@@ -67,9 +67,9 @@
         },
         {
           "id": "packet",
-          "label": "The placement packet",
+          "label": "The placement letter",
           "done": "packetAcked",
-          "hint": "Open the packet that has arrived and acknowledge it.",
+          "hint": "A letter has arrived on the screen — read it and press Ok.",
           "where": "the monitor"
         },
         {
@@ -190,7 +190,7 @@
           "id": "phone",
           "label": "The phone",
           "done": "phoneAnswered",
-          "hint": "The phone has a message. Or keep working — it will find you.",
+          "hint": "Pick up the phone — it has a message. Unlock it and open the thread.",
           "where": "the phone on the desk — look down, a little to your left"
         },
         {
@@ -198,7 +198,7 @@
           "label": "The group",
           "done": "cascadeSeen",
           "quiet": true,
-          "hint": "Keep working. The phone will answer.",
+          "hint": "Open the link on the phone. The group answers.",
           "where": "the phone on the desk"
         },
         {

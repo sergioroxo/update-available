@@ -89,7 +89,10 @@
   "firstTask1": "Apply what fits. Skip what doesn't.",
   "firstTask2": "Either way it's recorded, so you can't get it wrong.",
   "witnessAllowed": "assistant: introduced — Lambient permissions granted",
-  "witnessDeclined": "assistant: dismissed — Lambient permissions declined, companion retained"
+  "witnessDeclined": "assistant: dismissed — Lambient permissions declined, companion retained",
+  "phone1": "Your phone's lit — someone's writing to you.",
+  "phone2": "Pick it up when you like. You can always put it down.",
+  "_docPhone": "⚑ S149 (NARRATIVE_FLOW 2016 #6; OPEN_ITEMS R3-81): the era's voice for the phone beat, once, when the phone lights. The phone is the way 2016 ends now — the update never arms before the group has been seen there — so the player is told it exists and that it can be put down. ≤2 lines, the R28 cap."
  },
  "submissions": [
   {
@@ -324,28 +327,24 @@
   }
  },
  "record": {
-  "_doc": "⚑ S144 — THE RECORD INSIDE THE PLATFORM (THE_RECORD_PLAN §3C). The wall panel goes off at 2016 because 'the record is inside the platform' — and until now nothing inside it showed the file. This is Vera's profile page on GracePlatform: her account, her consent decision, her work count, and the IMPORTED HISTORY — the 1997 and 2003 entries as the platform received them, read-only, under the migration's own stamp. The face for 2016: the file became a profile. Nothing here is pressable but Back; it is a page she can read, which is what a profile is. Invented marks only; the migration line is s1/s2's own witness text.",
+  "_doc": "⚑ S149 — THE RECORD INSIDE THE PLATFORM, HERS ONLY. S144 built this as 'the imported history — the 1997 and 2003 entries as the platform received them', which was S144's one-file premise; Sérgio's ruling (2026-09-05, again 2026-09-17: 'MAYA IS NOT DANIEL') is that each person's file holds their own era. Vera's profile is Vera's: her account, her consent decision, her work count, and what the platform filed on her TODAY. The thirty years live in the Close and the frame's map, never in the fiction's files. Nothing here is pressable but Back.",
   "title": "GracePlatform · Your record",
   "heading": "Your record",
-  "sub": "account · activity · imported history · read-only",
+  "sub": "account · activity · read-only",
   "fields": {
    "name": "Name",
    "status": "Status",
    "consent": "Lambient",
    "work": "Corrections this shift",
-   "imported": "Imported history",
    "today": "Activity on this account"
   },
   "statusValue": "contributor · in good standing",
   "consentAllowed": "working alongside you",
   "consentDeclined": "declined · suggestions still shown",
   "workValue": "{n} decided",
-  "importedLabel": "migrated · 1997–2003 · {n} entries · read-only",
-  "importedEmpty": "no history was migrated to this account",
   "footer": "This record is maintained by GracePlatform for continuity of care. Requests to amend it are reviewed by your provider.",
-  "witness": "record: viewed — profile and imported history",
+  "witness": "record: viewed — profile and activity",
   "todayLabel": "{n} events · today",
-  "todayEmpty": "no activity yet",
-  "_docToday": "⚑ S145 (THE_WITNESS_SYSTEM_PLAN §3D): the profile now shows what the PLATFORM files today — corrections, comments, contact, the consent decision — newest first, above the imported history. The face is the whole file, not the archive."
+  "todayEmpty": "no activity yet"
  }
 }

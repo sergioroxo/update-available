@@ -473,14 +473,21 @@ const PLACEMENT = {
     //   of looking could reach it. ⚑ Now at z 0.95 / x -5.10: 19.7° off axis,
     //   comfortably inside, and 28.5° down — which a modest downward look
     //   covers, the way you look down at a phone on a desk.
-    pos: { x: -5.10, y: 0.756, z: 0.95 },
+    // ⚑ S149 — ON A STAND, UPRIGHT, IN FRAME (OPEN_ITEMS R3-67/72). Lying flat at
+    //   desk height it projected BELOW the frame from the seat at pitch 0 (the
+    //   walk: "off-screen at 221,1127"; Sérgio: "the phone is lost behind stuff")
+    //   and the era's ending waited on a thing nobody could see. It stands on a
+    //   16 cm dock now (`w_phoneStand`, reinterp_deltas r2), leaning back 15°,
+    //   facing the seat: centre y 0.989 = dock top 0.916 + 0.076·cos15°. (12 cm
+    //   left the thread's second card 48 px under the walker's frame.) Measured
+    //   live from the r2 seat at pitch 0: the whole screen is in frame, bottom
+    //   left, clear of the monitor's face. The prop (`w_phoneDevice`) stands on
+    //   the same dock with the same lean — keep the two in step, as ever.
+    pos: { x: -4.992, y: 0.989, z: 0.97 },   // 16 cm dock: base 0.916 + 0.076·cos15°
     size: { w: 0.071, h: 0.152 },
-    // ⚑ FLAT, screen up — the plane primitive already faces +Y, so x 0 is the
-    //   lying-down pose the old comment claimed while the euler said otherwise
-    //   (x 90 stood it upright like the monitor). It is not READABLE lying flat
-    //   at a grazing angle and it is not supposed to be: it is a phone on a
-    //   desk. Pressing it brings it to the hand, which is where it is read.
-    euler: { x: 0, y: 90, z: 0 }
+    // the plane primitive faces +Y; (70, 90, 0) stands it up facing +x (the seat)
+    // leaning 20° back — `plane.up` measured live as (+0.94, +0.34, 0)
+    euler: { x: 75, y: 90, z: 0 }
   }
 } as const;
 
@@ -606,9 +613,10 @@ const RITUAL_OFFSET = {
 const CORRECTION_IDS = new Set((queue.corrections as { id: number }[]).map(c => c.id));
 const TOTAL_CORRECTIONS = (queue.submissions as { corrections: number[] }[])
   .reduce((n, s) => n + s.corrections.filter(id => CORRECTION_IDS.has(id)).length, 0);
-/** s of ordinary quiet after the last correction before the notice — long
- *  enough that it plainly is not a response to the player's press. */
+/** s of ordinary quiet, with the gate met and nothing open, before the notice —
+ *  long enough that it plainly is not a response to the player's press. */
 const FINAL_GAP = 6;
+void TOTAL_CORRECTIONS;   // S149: no longer the era's trigger (see tick); kept for the review probes
 
 /** ⚑ THE ONE TOUCH: how far in front of the eye the picture hangs once the
  *  device is on, and how big it is there. At the camera's 42° vertical FOV a
@@ -652,6 +660,8 @@ export interface Era3Devices {
   noteSeat(seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
   /** the phone is lifted off the desk right now */
   readonly phoneInHand: boolean;
+  /** S149 — the engine lends its current look so the held phone comes to the eyes (R3-76) */
+  setLookProvider(fn: () => { pitch: number; yaw: number }): void;
   holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
   /** screen px → world ray (from app.ts's own screenRay()) → the workstation
    *  plane's logical canvas coords, generalized for ANY plane orientation
@@ -670,6 +680,8 @@ export interface Era3Devices {
    *  instance, so a review can drive/inspect the queue in logical workstation-
    *  canvas coordinates without the world→screen projection dance. */
   debugQueue(): GraceQueueLite;
+  /** S149 — redraw counts per screen, for the review */
+  debugDraws(): Record<string, number>;
 }
 
 /** general ray↔plane hit test for a `makeScreenEntity` plane (which spans
@@ -783,6 +795,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    *  press on it means "pick it up" or "use it". Nothing else in the era
    *  branches on it, and putting it down is always available. */
   let phoneHeld = false;
+  /** S149 — how many times each screen was redrawn (`?debug=1` probe) */
+  const drawCounts: Record<string, number> = {};
+  /** S149 — the engine's current look (yaw/pitch incl. the drag), for the held pose */
+  let lookNow: (() => { pitch: number; yaw: number }) | null = null;
   let lastSeat: { x: number; y: number; z: number; pitch: number; yaw: number } | null = null;
   // ⚑ THE LIFT's one wire: the workstation's break reaches the ROOM's light through
   // cluster.ts's module-level hook, because app.ts (which owns both halves) is
@@ -1141,12 +1157,27 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     tick(dt: number): void {
       // S76: the last update's own frames — see `drawWorkstation`
       if (e4Bridge()?.update()?.open) ritualTick++;
-      // ⚑ E3 ENDS WHEN THE WORK DOES. Counted off the record, not off any
-      // screen's private state: every correction decided, then a beat of quiet,
-      // then the platform announces its own end. See TOTAL_CORRECTIONS above.
-      if (eraNow === 'e3' && !finalArmed && ledger.graceQueue.length >= TOTAL_CORRECTIONS) {
-        finalT = finalT < 0 ? 0 : finalT + dt;
-        if (finalT >= FINAL_GAP) { finalArmed = true; e4Bridge()?.armFinal(); }
+      // ⚑ S149 — E3 ENDS WHEN THE GROUP HAS BEEN SEEN, AND NOTHING IS OPEN.
+      //   It used to end when the WORK did (`ledger.graceQueue.length >=
+      //   TOTAL_CORRECTIONS`), whatever the phone was doing — Sérgio, 2026-09-17:
+      //   "an Update now pop-up appeared? I still haven't touched the phone… the
+      //   phone doesn't let me do anything and the computer is forcing me to
+      //   update — all wrong." (OPEN_ITEMS R3-73/80.) PROGRESSION_LAW §2.4–5: the
+      //   gate is the era's last MAIN beat — the cascade, on the phone, seen —
+      //   and the glitch fires only when the gate is met AND nothing is open:
+      //   no job on the workstation, no phone in the hand, no card on its glass.
+      //   FINAL_GAP is a beat of quiet counted only while it is clear — the
+      //   count PAUSES while something is open and resumes when it is put down
+      //   (it does not reset: a player who keeps opening jobs still ends the
+      //   era, on the first clear moment after six clear seconds in all). The
+      //   work count is no longer a trigger at all.
+      if (eraNow === 'e3' && !finalArmed) {
+        const gate = ledger.checkins.some((c) => c.id === 'e3_cascade');
+        const clear = !phoneHeld && !graceQueueLite.busy;
+        if (gate && clear) {
+          finalT = finalT < 0 ? 0 : finalT + dt;
+          if (finalT >= FINAL_GAP) { finalArmed = true; e4Bridge()?.armFinal(); }
+        }
       }
       driveVisor(dt);
       // S61: the arrival (dark → boot → install → sign-in) is the only thing
@@ -1250,6 +1281,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           // the callback this screen was registered with — see `draw` on Screen
           if (s.draw) s.draw(s.ctx, s.logical.w, s.logical.h);
           s.dirty = true;
+          drawCounts[s.name] = (drawCounts[s.name] ?? 0) + 1;   // S149: a review probe (debugDraws)
         }
         if (s.dirty) { s.tex.upload(); s.dirty = false; }
       }
@@ -1311,13 +1343,22 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
      *  RESTING prop and keep the object out of two places at once. app.ts did
      *  this on seat cuts already; the press path needs the same guard. */
     get phoneInHand(): boolean { return phoneHeld; },
+    setLookProvider(fn: () => { pitch: number; yaw: number }): void { lookNow = fn; },
     holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void {
       lastSeat = seat;
       phoneHeld = which === 'phone';
+      // ⚑ S149 — THE HELD PHONE COMES TO WHERE SHE IS LOOKING, not to the seat's
+      //   authored bearing (the monitor). Sérgio, 2026-09-17: "when I touch the
+      //   phone, the screen should be locked to where the viewer is looking, like
+      //   swivelling on the chair with the phone on my face, not fixed to the
+      //   monitor." (OPEN_ITEMS R3-76.) The engine lends its current look through
+      //   `lookNow`; without it (a review shell) the seat's pose is used as before.
+      const look = lookNow ? lookNow() : null;
+      const at = look ? { ...seat, pitch: Math.max(-30, Math.min(10, look.pitch)), yaw: look.yaw } : seat;
       for (const s of screens) {
         if (s.name === 'workstation') continue; // the workstation is already at reading distance
         if (s.name === which) {
-          const hp = heldPoseFor(s.name, seat);
+          const hp = heldPoseFor(s.name, at);
           s.heldPos = hp.pos;
           s.heldEuler = hp.euler;
           s.holdTo = 1;
@@ -1457,8 +1498,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       if (phoneHeld && lastSeat) {
         const held = test('phone');
         if (held) return graceQueueLite.handlePhoneClick(held.x, held.y);
+        // ⚑ S149 — putting the phone down does NOT eat the press. It used to
+        //   return here, so a press on the workstation with the phone in hand did
+        //   nothing but lower the phone, and the next press had to be repeated —
+        //   the walk pressed Sign in once with the phone up and gave the era up
+        //   as stuck (the phone stands in frame now, so it is picked up early).
+        //   A person who reaches past the phone to the screen means the screen.
         this.holdDevice(null, lastSeat);
-        return true;
       }
 
       // ⚑ THE LAST UPDATE, on Vera's workstation. System-modal over that screen only
@@ -1515,6 +1561,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     },
     debugQueue(): GraceQueueLite {
       return graceQueueLite;
-    }
+    },
+    debugDraws(): Record<string, number> { return { ...drawCounts }; }
   };
 }

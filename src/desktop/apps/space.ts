@@ -64,7 +64,7 @@ import { visorField, visorEdge, glitchBands, ERA4 } from '../theme/era4';
 import { E4Browser, FAIL } from './browser';
 import { setFont, px } from '../theme/chrome';
 import { ledger } from '../../state/ledger';
-import { playOnce, playLoop, stopClip } from '../../audio/tapeAudio';
+import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import space from '../../../data/dialog/s4_space.json';
 import ballScript from '../../../data/dialog/s4_ball.json';
 import updates from '../../../data/strings/updates.json';
@@ -369,7 +369,8 @@ export class E4Shell {
       // ⚑ 2026-09-13: the session is HEARD — grounding breathes (a loop), the
       //   "recording" plays with nobody in it, and both stop when the card lands
       const S = ballScript.session as { seconds: number };
-      if (before < S.seconds && this.sessionT >= S.seconds) this.breath = playLoop('session_breath.mp3');
+      // S149 — the session is the only sound on the glass: the room's bed goes as it begins (R3-103)
+      if (before < S.seconds && this.sessionT >= S.seconds) { roomBed.set(null, 3.0); this.breath = playLoop('session_breath.mp3'); }
       if (before < S.seconds + 8 && this.sessionT >= S.seconds + 8) { stopClip(this.breath); this.breath = null; this.hiss = playOnce('playback_hiss.mp3'); }
       if (this.sessionT >= space.sessionSeconds) {
         stopClip(this.breath); this.breath = null; stopClip(this.hiss); this.hiss = null;

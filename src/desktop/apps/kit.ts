@@ -119,10 +119,8 @@ export class KitApp {
     }
 
     const p = kit.pages[this.page];
-    // the cassette insert indicator — dim, constant, period-true; no audio yet
-    ui.setFont(ctx, 8);
-    ctx.fillStyle = ERA1.olive;
-    ctx.fillText(kit.midiNote, c.x + c.w - 150, c.y + 4);
+    // (S149: the "companion cassette insert" caption is gone — Sérgio, 08-21 §E and
+    //  09-17 R3-18: "what is this? still here". The tape page names the tape.)
     // page title
     ui.setFont(ctx, 13);
     ctx.fillStyle = ERA1.navy;
