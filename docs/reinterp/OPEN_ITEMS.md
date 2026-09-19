@@ -23,20 +23,20 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-11 | ~~Family Form: the X does nothing~~ | DONE — S149 · the frame's X → leave |
 | R3-18 | ~~"Companion cassette insert" caption — remove (W: 08-21 §E)~~ | DONE — S149 · caption removed |
 | R3-37 | ~~"Press to keep it" cut off (W: 08-21 §H)~~ | DONE — S149 · beside the sentence |
-| R3-47 | No conducted look on landing (comfort law; cybersickness) | OPEN |
+| R3-47 | ~~No conducted look on landing (comfort law; cybersickness)~~ | DONE — S150 · the landing keeps the look (`seatCut(seat, true)`) |
 | R3-67 | ~~Phone screen plane larger than its model; phone lost behind props~~ | DONE — S149 · on a 16 cm dock, leaning 15°, in frame from the seat (measured); the walk found it |
 | R3-76 | ~~The held phone follows the head's yaw, not the seat's~~ | DONE — S149 · the held pose follows the look |
-| R3-77 | The phone's unlock has no drawn button | OPEN |
+| R3-77 | ~~The phone's unlock has no drawn button~~ | DONE — S150 · an Unlock pill on the lock screen |
 | R3-79 | ~~The chat does not play once opened; phone text pixelated~~ | DONE — S149 · root cause: no `link` message existed, the card could never open — the bill card and the vote card are in the thread; pixels: still open → R3-100 |
-| R3-98 | The photos step auto-advances to care | OPEN |
-| R3-100 | E3/E4 screen text pixelated (surface render scale) | OPEN |
+| R3-98 | ~~The photos step auto-advances to care~~ | DONE — S150 · every step waits for Continue; no clock |
+| R3-100 | ~~E3/E4 screen text pixelated (surface render scale)~~ | DONE — S150 · monitor and phone surfaces at ×3 |
 | R3-103 | ~~The session bed keeps playing under Junie's card~~ | DONE — S149 · the room bed fades as the session starts |
-| R3-113 | Restart card → Maya: no relocation, black screen | OPEN |
-| R3-114 | The 1997 Close panel draws "IN THIS ROOM, YOU" twice with 2026's lines | OPEN |
-| R3-49 | Restorify "Not now" does nothing; window still 1997 (W: 08-21 §I) | OPEN · repeat |
-| R3-55 | Caleb pop-up AND PureMail both appear; PureMail before the thread (W: 08-21 §I) | OPEN · repeat |
-| R3-69 | The "source file" icon appears out of nowhere (W: 08-21 §C) | OPEN · repeat |
-| R3-96a | Restored photo drawn out of its area | OPEN |
+| R3-113 | ~~Restart card → Maya: no relocation, black screen~~ | DONE — S150 · a fresh shell on return; the spine reopens; verified by hand (Maya → the room, then the Close again) |
+| R3-114 | ~~The 1997 Close panel draws "IN THIS ROOM, YOU" twice with 2026's lines~~ | DONE — S150 · `y0 +` — every era's lines were drawn into the first cell; reproduced and fixed |
+| R3-49 | ~~Restorify "Not now" does nothing; window still 1997 (W: 08-21 §I)~~ | DONE — S150 · Not now → the system's toast says where Restorify went (the 2003 look stays under R3-41/50/51) |
+| R3-55 | ~~Caleb pop-up AND PureMail both appear; PureMail before the thread (W: 08-21 §I)~~ | DONE — S150 · one line and the dot, no card; PureMail only after the commit |
+| R3-69 | ~~The "source file" icon appears out of nowhere (W: 08-21 §C)~~ | DONE — S150 · no summons in 2016 (the send data stays for L-03) |
+| R3-96a | ~~Restored photo drawn out of its area~~ | DONE — S150 · the comparison is width-bound inside the card |
 
 ## Priority 2 — Era 1 conducted (one design: the First Steps as the spine)
 | id | item | status |
@@ -157,4 +157,5 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
+- S150 (2026-09-19): R3-47, R3-49, R3-55, R3-69, R3-77, R3-79 (pixels), R3-96a, R3-98, R3-100, R3-113, R3-114 — walked, 223 presses, spine done.
 - S149 (2026-09-19): R3-95, R3-73/80, R3-04, R3-05, R3-06, R3-11, R3-18, R3-29, R3-37, R3-39, R3-67, R3-72, R3-76, R3-79 (the chat), R3-81, R3-97, R3-103 — walked, 238 presses, spine done, Era 3 ended through the phone.

@@ -1007,9 +1007,13 @@ const LAP = { w: 224, h: 140 };
    * interesting one — and in Era 4 that ordering is exactly right: the headset
    * on this desk beats the workstation behind you by fifty degrees.
    */
+  // ⚑ S150 — with NOTHING aimable at all, the cap is the whole circle: a summons
+  //   accepted (`send-go`) dollies the view to another room's bearing and leaves
+  //   the monitor 90°+ behind, which is exactly when a person turns right round.
+  //   The 80° cap still holds whenever something is in front of the walker.
   const turnable = (st, sig) => (st.dropped || [])
     .filter((d) => d.turn && !FORBIDDEN.test(d.id) &&
-      Math.abs(d.turn.yaw) <= TURN_YAW_MAX &&
+      Math.abs(d.turn.yaw) <= ((st.targets || []).length ? TURN_YAW_MAX : 180) &&
       Math.abs(d.turn.pitch) <= TURN_PITCH_MAX &&
       (pressed.get(keyOf(sig, d)) || 0) < PRESS_CAP)
     .sort((a, b) =>

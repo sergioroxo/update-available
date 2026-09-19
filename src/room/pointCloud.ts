@@ -624,7 +624,10 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         rows.forEach((row, li) => pc2.fillText(row, TEXT_X, y0 + TOP + li * lineH));
         if (lines.length) {
           // your file, in this room: the record's own cold lines, in the web's blue
-          let my = TOP + rows.length * lineH + 30;
+          // ⚑ S150 — `y0 +`: without it every era's lines were drawn into the FIRST
+          //   cell, so the 1997 panel carried 2026's lines twice over and the
+          //   others carried none (Sérgio's Close frame, 09-17; OPEN_ITEMS R3-114)
+          let my = y0 + TOP + rows.length * lineH + 30;
           pc2.font = '22px monospace';
           pc2.fillStyle = P.link;
           pc2.fillText(P.panelMineLabel, TEXT_X, my);

@@ -1859,7 +1859,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     relocPlan = null;
     camMove = null;
     cluster?.settleNow(); // the space finishes wherever the cascade had got to
-    seatCut(seat);
+    // ⚑ S150 — THE LANDING KEEPS YOUR LOOK (OPEN_ITEMS R3-47). The cut used to
+    //   commit the seat's authored pose and clear the drag that rode the flight,
+    //   so a player looking to the side was snapped to the screen on arrival —
+    //   Sérgio, 08-21 ("it shouldn't force me to be — it jumps very awkwardly")
+    //   and 09-17 ("if the person is looking to the side it should not force the
+    //   person to look ahead… in VR it would create cybersickness"). The seat's
+    //   POSITION is committed; the look is folded in and kept. The screen waits.
+    seatCut(seat, true);
     // ⚑ and only NOW does Vera's workstation start: the era's machine boots in
     // front of you, in the seat, the way E1's did (Sérgio: "we shouldn't
     // start without the boot up on the computer"). E3's arrival only — E1→E2
@@ -1872,15 +1879,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
   /** put the camera in a room's seat, now. The landing half of a relocation,
    *  and the whole of it under ?descent=0. */
-  function seatCut(yaw: number): void {
+  function seatCut(yaw: number, keepLook = false): void {
     seatYaw = yaw;
     seatNodeId = null; // a base room seat: seatPose(yaw) IS its authored pose
     os.e4?.setSeat(null);
-    clearLookOffset(); // S85: an authored pose, so nothing rides in on top of it
+    // S85: an authored pose, so nothing rides in on top of it — except at a
+    // landing (S150, `keepLook`), where the look the player did during the
+    // flight is folded into the seat's pose instead of being thrown away
+    const rideYaw = keepLook ? lookOffYaw : 0;
+    const ridePitch = keepLook ? lookOffPitch : 0;
+    clearLookOffset();
     const sp = seatPose(yaw);
     camPos.set(sp.x, sp.y, sp.z);
-    camPitch = sp.pitch;
-    camYaw = sp.yaw;
+    camPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, sp.pitch + ridePitch));
+    camYaw = sp.yaw + rideYaw;
     cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
   }
@@ -3789,6 +3801,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeRoomPending = null;
     if (camera.camera) camera.camera.clearColor = ROOM_SKY.clone();
     jumpToEraSettled(era);
+    spine?.reopen(era);   // S150: the piece may end again from here (R3-113)
   }
 
   /**
@@ -3810,8 +3823,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S2R.0/S2R.1 arrival narrative (silence → Lamby) — same spirit as
     // skipping O1/O3 at boot.
     os.setDesktopEra(era, true);
-    // a review jump is already seated: the session begins after a short beat
-    if (era === 'e4') os.e4?.beginSession(0.6);
+    // a review jump is already seated: the session begins after a short beat.
+    // ⚑ S150 — and after the Close the shell is a stopped device: rebuild it
+    //   first, or the room comes back to a black glass (R3-113)
+    if (era === 'e4') { os.resetE4ForReturn(); os.e4?.beginSession(0.6); }
     // lighting: morphToEra applies that era's rig (data/room/cluster.json),
     // which owns lighting from E2 on.
     cluster.morphToEra(era, false); // the era's open cluster + rig, settled

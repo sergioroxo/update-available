@@ -199,13 +199,20 @@ export class PhoneE3 {
     const dw = ctx.measureText(d.phone.lockDate).width;
     ctx.fillText(d.phone.lockDate, Math.round((W - dw) / 2), 100);
 
+    // ⚑ S150 — A DRAWN UNLOCK (OPEN_ITEMS R3-77). The press area was there and
+    //   nothing showed it (Sérgio: "I need a button to unlock the screen"): a
+    //   pill at the bottom of the glass, the phone's own surface on its own
+    //   wallpaper, with the hint inside it. Same rect, now a thing you can see.
+    const unlockPill = (): void => {
+      phoneFont(ctx, 10, 600);
+      const uw = Math.ceil(ctx.measureText(UNLOCK_HINT).width) + 28;
+      const ux = Math.round((W - uw) / 2), uy = H - 40;
+      roundRect(ctx, ux, uy, uw, 26, 13, PHONE.surface);
+      ctx.fillStyle = PHONE.ink;
+      ctx.fillText(UNLOCK_HINT, ux + 14, uy + 8);
+    };
     if (this.stage === 'quiet') {
-      phoneFont(ctx, 10);
-      ctx.fillStyle = PHONE.surface;
-      ctx.globalAlpha = 0.75;
-      const uw = ctx.measureText(UNLOCK_HINT).width;
-      ctx.fillText(UNLOCK_HINT, Math.round((W - uw) / 2), H - 26);
-      ctx.globalAlpha = 1;
+      unlockPill();
       this.rects.push({ x: 0, y: 130, w: W, h: H - 130, id: 'unlock' });
       return;
     }
@@ -226,6 +233,7 @@ export class PhoneE3 {
     phoneFont(ctx, 11);
     ctx.fillStyle = PHONE.ink;
     lines.slice(0, 3).forEach((ln, k) => ctx.fillText(ln, nx + 10, ny + 28 + k * 14));
+    unlockPill();
     this.rects.push({ x: nx, y: ny, w: nw, h: nh, id: 'notification' });
     this.rects.push({ x: 0, y: ny + nh, w: W, h: H - ny - nh, id: 'unlock' });
   }

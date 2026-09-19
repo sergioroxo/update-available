@@ -80,7 +80,7 @@ const LOGICAL = {
   //   notification and became the place the era ends — a group thread, an
   //   inbox and a cascade — and a 140 px column cannot carry a conversation.
   //   Same physical prop, same plane, more pixels on it.
-  phone: { w: 180, h: 360, scale: 2 },
+  phone: { w: 180, h: 360, scale: 3 },   // S150: ×3 — the held phone fills the view and its type was pixelated (R3-79/100)
   /** ⚑ THE VISOR (S76) draws no canvas of its own — it is textured with
    *  `DesktopOS.canvas`, the piece's one UI surface, at that canvas's own
    *  logical size. Same canvas, same FILTER_NEAREST, same `?flat=1`: only the
@@ -108,7 +108,11 @@ const LOGICAL = {
    *  ("the screen still doesn't fit with the OS"). The canvas takes the glass's
    *  ratio; the browser draws parametrically in W and H, so nothing else moves.
    *  ⚑ `tools/walk.mjs`'s `MON` must match. */
-  monitor: { w: 710, h: 384, scale: 2 }
+  // ⚑ S150 — ×3 (was ×2): the docked monitor fills the frame from Room 3's seat
+  //   and 1420 px across 2000+ px of view was visibly upscaled with FILTER_NEAREST
+  //   (Sérgio, 09-17: "the text upscaling is pixelated again" — R3-100). 2130×1152
+  //   per upload, on dirty only.
+  monitor: { w: 710, h: 384, scale: 3 }
 } as const;
 
 /** Room 2 (Vera, west) world placements — Session 37 FABLE/SÉRGIO CHECK:

@@ -52,7 +52,7 @@ interface FileItem { name: string; kind: 'folder' | 'file'; meta: string }
 interface Failed { status: string; title: string; line: string; detail: string; step: string }
 const PROGRAM = body.program as unknown as {
   chosen: string; typingSeconds: number; agentMark: string; agentAddress: string;
-  greeting: string[]; begin: string; beginWitness: string; stepLabel: string; locked: string;
+  greeting: string[]; begin: string; beginWitness: string; stepLabel: string; locked: string; next: string;
   steps: Step[];
   files: { title: string; path: string; items: FileItem[]; cancel: string; restoring: string;
     before: string; after: string; saved: string; restoringSeconds: number;
@@ -70,7 +70,8 @@ const H_PAGE = 384;
  *  travel begins over dead screens (app.ts CLOSE_LEAD_SECONDS is set to match). */
 export const FAIL = { bands: 5.5, off: 8.5 } as const;
 /** …except after the Restoration, whose before/after is the point: it holds */
-const RESULT_HOLD_SECONDS = 4.5;
+const RESULT_HOLD_SECONDS = 4.5;   // S150: no longer an advance — kept for the tour's timing notes
+void RESULT_HOLD_SECONDS;
 
 /** under four seconds. E2's splash is 23.7 because 2003 made you watch it. */
 const RESTORE_SECONDS = 2.4;
@@ -265,16 +266,12 @@ export class E4Browser {
       if (Math.floor(before / 0.3) !== Math.floor(this.agentT / 0.3)) this.version++;
     }
     if (this.mode === 'program') {
+      // ⚑ S150 — the clock only advances the LAST step (the program's own end);
+      //   every other step waits for Continue (`step-next`, drawStepBar). R3-98.
       if (this.advanceT >= 0) {
         this.advanceT += dt;
-        const hold = PROGRAM.steps[this.step]?.id === 'photos' ? RESULT_HOLD_SECONDS : ADVANCE_SECONDS;
-        if (this.advanceT >= hold) {
+        if (this.advanceT >= ADVANCE_SECONDS) {
           this.advanceT = -1;
-          if (this.step < PROGRAM.steps.length - 1) {
-            this.step += 1;
-            this.live = this.stepTab(PROGRAM.steps[this.step].id);
-            this.picker = 'closed';
-          }
           this.version++;
         }
       }
@@ -588,10 +585,22 @@ export class E4Browser {
       const r = webButton(ctx, W - ADDR.x - 12 - Math.max(84, bw), top + 12, st.button, 'primary', 84);
       this.publish({ ...r, id: `step-${st.id}` });
     } else if (done) {
-      setFont(ctx, 9);
-      ctx.fillStyle = WEB.accentInk;
-      const t = '✓  done';
-      ctx.fillText(t, W - ADDR.x - 12 - Math.ceil(ctx.measureText(t).width), top + 18);
+      // ⚑ S150 — THE STEP WAITS FOR HER (OPEN_ITEMS R3-98). It used to advance on
+      //   a clock (1.4 s; 4.5 s after the photograph) and the result vanished
+      //   under the next step before it was understood. The done line says what
+      //   L did; Continue is the only way on — the last step has none, the
+      //   program's end takes over.
+      if (this.step < PROGRAM.steps.length - 1) {
+        setFont(ctx, 10);
+        const bw = Math.ceil(ctx.measureText(PROGRAM.next).width) + 26;
+        const r = webButton(ctx, W - ADDR.x - 12 - Math.max(84, bw), top + 12, PROGRAM.next, 'primary', 84);
+        this.publish({ ...r, id: 'step-next' });
+      } else {
+        setFont(ctx, 9);
+        ctx.fillStyle = WEB.accentInk;
+        const t = '✓  done';
+        ctx.fillText(t, W - ADDR.x - 12 - Math.ceil(ctx.measureText(t).width), top + 18);
+      }
     }
     return top + h + 10;
   }
@@ -766,7 +775,12 @@ export class E4Browser {
     //   at the card's full width the split fell beside her and neither half
     //   showed the change (measured on the first plate). The figure stands at
     //   0.56 of the frame; the split sits at 0.62 so both halves carry her.
-    const ph = Math.min(ch - 100, 176), pw = Math.round(ph * 1.6);
+    // ⚑ S150 — the comparison stays INSIDE the card (OPEN_ITEMS R3-96a, Sérgio:
+    //   "image is out of the area"): width-bound as well as height-bound, with
+    //   the Adjusted column's 150 px kept beside it
+    let ph = Math.min(ch - 100, 176), pw = Math.round(ph * 1.6);
+    const maxW = cw - 32 - 150;
+    if (pw > maxW) { pw = maxW; ph = Math.round(pw / 1.6); }
     const px0 = cx + 16;
     compareSplit(ctx, px0, by, pw, ph,
       (c) => thumb(c, px0, by, pw, ph, 3, false, 6),
@@ -1148,6 +1162,17 @@ export class E4Browser {
       }
       // ── the steps ──
       if (this.mode === 'program') {
+        if (hit.id === 'step-next') {
+          // S150 — her press moves the program on, never a clock (R3-98)
+          if (this.step < PROGRAM.steps.length - 1 && this.stepDone.has(PROGRAM.steps[this.step].id)) {
+            this.step += 1;
+            this.live = this.stepTab(PROGRAM.steps[this.step].id);
+            this.picker = 'closed';
+            playOnce('ui_press.mp3');
+            this.version++;
+          }
+          return true;
+        }
         if (hit.id.startsWith('step-')) {
           const st = PROGRAM.steps[this.step];
           if (st && hit.id === `step-${st.id}`) {

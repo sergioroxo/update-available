@@ -386,6 +386,8 @@
    "line": "secondthoughts.help took too long to respond.",
    "detail": "Your session could not be continued. Second Thoughts has ended the session on your behalf.",
    "step": "Session ended by the host."
-  }
+  },
+  "next": "Continue",
+  "_docNext": "⚑ S150 (OPEN_ITEMS R3-98; PROGRESSION_LAW §2.3): no step advances on a clock. When a step is done its line says what L did and this button is the only way on — the photograph's result stays on screen until she presses it (Sérgio: 'where does this image go, why? Did we jump to care?')."
  }
 }

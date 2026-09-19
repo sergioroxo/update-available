@@ -121,8 +121,8 @@ async function main() {
 
   // ── 3 · the steps ──
   await press('step-record'); await wait(1200);
-  await shot('look-record-done', 'the record, confirmed');
-  await wait(5200);
+  await shot('look-record-done', 'the record, confirmed — and Continue (S150: no step advances on a clock)');
+  await press('step-next'); await wait(1500);
   await shot('look-photos', 'the Restoration tool');
   await press('step-photos'); await wait(1000);
   await shot('look-photos-picker', 'the file window (a picture of one)');
@@ -131,12 +131,14 @@ async function main() {
   await press('file-1'); await wait(1500);
   await shot('look-photos-restoring', 'restoring…');
   await wait(2600);
-  await shot('look-photos-result', 'before / after');
-  await wait(5600);
+  await shot('look-photos-result', 'before / after — it stays until Continue');
+  await press('step-next'); await wait(1500);
   await shot('look-care', 'care');
-  await press('step-care'); await wait(6000);
+  await press('step-care'); await wait(2500);
+  await press('step-next'); await wait(1500);
   await shot('look-chat', 'the chat');
-  await press('step-chat'); await wait(6000);
+  await press('step-chat'); await wait(2500);
+  await press('step-next'); await wait(1500);
   await shot('look-search-step', 'the last step');
   await press('step-search'); await wait(3000);
   await cam(...SEAT);

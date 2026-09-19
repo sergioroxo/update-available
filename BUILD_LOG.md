@@ -1210,3 +1210,20 @@ fades as the session starts (R3-103). Walker: `link\d*` ranked with `link`; the 
 the live targets after each press. Walked: 238 presses, spine done, Era 3 ended through the phone
 (`WALK_2026-09-19.md`). **closes R3-04, R3-05, R3-06, R3-11, R3-18, R3-29, R3-37, R3-39, R3-67,
 R3-72, R3-73/80, R3-76, R3-79 (chat), R3-81, R3-95, R3-97, R3-103.**
+
+## 2026-09-19 — S150 · THE REST OF PRIORITY 1
+The landing keeps the player's look — the seat's position is committed, the drag that rode the
+flight is folded in, nothing snaps to the screen (closes R3-47). An Unlock pill on the phone's
+lock screen (R3-77). No step of L's program advances on a clock: the done line says what L did and
+Continue is the only way on — the photograph's result stays until pressed (R3-98; the Era 4 tour and
+quest tools press it). The docked monitor and the phone draw at ×3 (R3-100, and R3-79's pixels).
+Returning from the Close to an era rebuilds Era 4's shell and reopens the spine, so the piece can end
+again — verified by hand: Maya → the room restoring → the Close (R3-113). The Close's own lines
+were all drawn into the FIRST panel's cell (`my = TOP + …` without `y0`): reproduced on the 1997
+panel with 2026's lines twice over, one character (R3-114). Not now at Restorify says where the
+program went (R3-49; the 2003 look stays under Priority 4). The Caleb announcement is one line and
+the Messenger's dot, no card over the desktop (R3-55). No summons in 2016 — the s3 "Source file" icon
+is gone; the send data stays for L-03 (R3-69). The restored photograph's comparison is width-bound
+inside its card (R3-96a). Walker: with nothing aimable it may turn right round (the accepted summons
+dollies the view away from the monitor). Walked: 223 presses, spine done. **closes R3-47, R3-49,
+R3-55, R3-69, R3-77, R3-79, R3-96a, R3-98, R3-100, R3-113, R3-114.**

@@ -1,82 +1,111 @@
 {
-  "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending, EVERY display string below. R28-2d-i/ii (Session 34, docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md S2R.0-S2R.2): the E2 arrival — the return press, Lamby's debut, and the Restorify check-in shell (streak + Daily Realignment). `witness.*` values are the cold-side lines filed to ledger.lamby/ledger.checkins; resolved here, never composed in TS. R28-2d-iv (Session 35): `videoOffer*` — Lamby offers the New You Program video after the alert beat. SESSION 60 (docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md §A + Sérgio's own words, 'there is no boot up sequence for the new version of LambyOS… we need to be presented to Lamby'): the arrival now has FOUR beats where it had two — `osBoot*` (the updated machine boots and says so, with its jingle), `intro*` (Lamby presents HIMSELF — his debut, the whole point of the era's guidance lineage), `program*` (he presents RESTORIFY, so the two stop reading as competing systems and he has a job on arrival), then the check-in. Two conduction beats of exactly two lines each = 4 assistant lines across the arrival, inside both the ≤2-per-beat law (CLAUDE.md R28 amendment 2) and the ≤5-per-stage cap. Dismissal works at BOTH beats and files at both. `checkinResponses` answer the walk card (it used to resolve into nothing); `message*` is the notice that a message has arrived, so opening the Messenger is motivated rather than guessed at — the notice is Lamby's, the Messenger window it opens is felt and he is never inside it.",
-  "returnLine1": "Welcome back, Daniel.",
-  "returnLine2": "Press to continue with reboot.",
-
-  "_osBootDoc": "S2R.0b — THE BOOT. E1 boots with a BIOS crawl and a LambyOS crawl; the E2 version change used to pass unmarked (finding A2). The machine has been UPDATED and the boot is where it says so: a version line that names what it replaced, the profile coming back out of storage, and the companion process starting for the first time. `osBootTrack` is the jingle hook — no asset is committed yet, and src/audio/tapeAudio.ts's registry law means an unregistered name is simply never requested (no 404, no console error). Drop the file in public/assets/audio/, add one line to that registry, and the boot sings. \u26d1 2026-09-04, S\u00e9rgio: the hook now names `chase_the_clouds.mp3` \u2014 the FULL 30.77 s jingle, his own file, already in the repo and already registered. `lambyos_2003_boot.mp3` was a 6.5 s cut of it and he rejected all three cuts (\"None of them, the 6 second doesnt fit\"): the boot is not a startup sting, it is a CD-ROM splash, and a cut has no phrases left for the animation to land on. The 6.5 s file stays on disk \u2014 re-cutting is cheap and a short version is useful for review \u2014 but nothing points at it.",
-  "osBootLines": [
-    "LambyOS 2003",
-    "build 5.1.2 — replaces 4.0.7 (1997)",
-    "",
-    "USER PROFILE ............ RESTORED",
-    "JOURNEY FILE ............ MIGRATED",
-    "ACCOUNTABILITY SERVICES . ONLINE",
-    "COMPANION PROCESS ....... STARTING",
-    "",
-    "RESTORIFY IS NOW PART OF THIS COMPUTER."
-  ],
-  "osBootFooter": "Your file was kept while you were away.",
-  "osBootTrack": "chase_the_clouds.mp3",
-  "installingLine": "Restorify — finishing installation…",
-
-  "introTitle": "Restorify",
-  "introLine1": "Hello, Daniel. I'm Lamby.",
-  "introLine2": "I came with the update. I'll be with you from now on.",
-  "introAccept": "Hello",
-  "introDismiss": "Not now",
-
-  "programTitle": "Restorify",
-  "programLine1": "This is Restorify — your program. I look after it for you.",
-  "programLine2": "Shall we begin your Daily Realignment?",
-  "programBegin": "Begin",
-  "programDismiss": "Not now",
-
-  "witness": {
-    "returnPressed": "return: pressed — the reboot completed",
-    "lambyIntroduced": "assistant: introduced — companion process accepted",
-    "lambyIntroDismissed": "assistant: dismissed — introduction",
-    "lambyBegun": "assistant: begun — first greeting",
-    "lambyDismissed": "assistant: dismissed — first greeting",
-    "messageOpened": "message: opened — on notice",
-    "messageDeferred": "message: deferred — notice dismissed"
+ "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending, EVERY display string below. R28-2d-i/ii (Session 34, docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md S2R.0-S2R.2): the E2 arrival — the return press, Lamby's debut, and the Restorify check-in shell (streak + Daily Realignment). `witness.*` values are the cold-side lines filed to ledger.lamby/ledger.checkins; resolved here, never composed in TS. R28-2d-iv (Session 35): `videoOffer*` — Lamby offers the New You Program video after the alert beat. SESSION 60 (docs/REINTERP_PLAYTHROUGH_E2_2026-07-26.md §A + Sérgio's own words, 'there is no boot up sequence for the new version of LambyOS… we need to be presented to Lamby'): the arrival now has FOUR beats where it had two — `osBoot*` (the updated machine boots and says so, with its jingle), `intro*` (Lamby presents HIMSELF — his debut, the whole point of the era's guidance lineage), `program*` (he presents RESTORIFY, so the two stop reading as competing systems and he has a job on arrival), then the check-in. Two conduction beats of exactly two lines each = 4 assistant lines across the arrival, inside both the ≤2-per-beat law (CLAUDE.md R28 amendment 2) and the ≤5-per-stage cap. Dismissal works at BOTH beats and files at both. `checkinResponses` answer the walk card (it used to resolve into nothing); `message*` is the notice that a message has arrived, so opening the Messenger is motivated rather than guessed at — the notice is Lamby's, the Messenger window it opens is felt and he is never inside it.",
+ "returnLine1": "Welcome back, Daniel.",
+ "returnLine2": "Press to continue with reboot.",
+ "_osBootDoc": "S2R.0b — THE BOOT. E1 boots with a BIOS crawl and a LambyOS crawl; the E2 version change used to pass unmarked (finding A2). The machine has been UPDATED and the boot is where it says so: a version line that names what it replaced, the profile coming back out of storage, and the companion process starting for the first time. `osBootTrack` is the jingle hook — no asset is committed yet, and src/audio/tapeAudio.ts's registry law means an unregistered name is simply never requested (no 404, no console error). Drop the file in public/assets/audio/, add one line to that registry, and the boot sings. ⛑ 2026-09-04, Sérgio: the hook now names `chase_the_clouds.mp3` — the FULL 30.77 s jingle, his own file, already in the repo and already registered. `lambyos_2003_boot.mp3` was a 6.5 s cut of it and he rejected all three cuts (\"None of them, the 6 second doesnt fit\"): the boot is not a startup sting, it is a CD-ROM splash, and a cut has no phrases left for the animation to land on. The 6.5 s file stays on disk — re-cutting is cheap and a short version is useful for review — but nothing points at it.",
+ "osBootLines": [
+  "LambyOS 2003",
+  "build 5.1.2 — replaces 4.0.7 (1997)",
+  "",
+  "USER PROFILE ............ RESTORED",
+  "JOURNEY FILE ............ MIGRATED",
+  "ACCOUNTABILITY SERVICES . ONLINE",
+  "COMPANION PROCESS ....... STARTING",
+  "",
+  "RESTORIFY IS NOW PART OF THIS COMPUTER."
+ ],
+ "osBootFooter": "Your file was kept while you were away.",
+ "osBootTrack": "chase_the_clouds.mp3",
+ "installingLine": "Restorify — finishing installation…",
+ "introTitle": "Restorify",
+ "introLine1": "Hello, Daniel. I'm Lamby.",
+ "introLine2": "I came with the update. I'll be with you from now on.",
+ "introAccept": "Hello",
+ "introDismiss": "Not now",
+ "programTitle": "Restorify",
+ "programLine1": "This is Restorify — your program. I look after it for you.",
+ "programLine2": "Shall we begin your Daily Realignment?",
+ "programBegin": "Begin",
+ "programDismiss": "Not now",
+ "witness": {
+  "returnPressed": "return: pressed — the reboot completed",
+  "lambyIntroduced": "assistant: introduced — companion process accepted",
+  "lambyIntroDismissed": "assistant: dismissed — introduction",
+  "lambyBegun": "assistant: begun — first greeting",
+  "lambyDismissed": "assistant: dismissed — first greeting",
+  "messageOpened": "message: opened — on notice",
+  "messageDeferred": "message: deferred — notice dismissed"
+ },
+ "videoOfferWindowTitle": "Restorify",
+ "videoOfferLine1": "Don't be discouraged, Daniel.",
+ "videoOfferLine2": "I found something that helped others like you.",
+ "videoOfferWatch": "Watch",
+ "videoOfferNotNow": "Not now",
+ "videoOfferDeclined": "media: offer declined — not now",
+ "restorifyIcon": "Restorify",
+ "restorifyTitle": "Restorify — Daily Realignment",
+ "streakLabel": "Purity Streak",
+ "streakValue": "412 days",
+ "streakNote": "includes supervised period",
+ "checkinPrompt": "How is your walk today?",
+ "checkinFiledNote": "recorded.",
+ "checkinChips": [
+  {
+   "id": "steady",
+   "label": "Steady",
+   "witness": "check-in: steady"
   },
-
-  "videoOfferWindowTitle": "Restorify",
-  "videoOfferLine1": "Don't be discouraged, Daniel.",
-  "videoOfferLine2": "I found something that helped others like you.",
-  "videoOfferWatch": "Watch",
-  "videoOfferNotNow": "Not now",
-  "videoOfferDeclined": "media: offer declined — not now",
-
-  "restorifyIcon": "Restorify",
-  "restorifyTitle": "Restorify — Daily Realignment",
-  "streakLabel": "Purity Streak",
-  "streakValue": "412 days",
-  "streakNote": "includes supervised period",
-  "checkinPrompt": "How is your walk today?",
-  "checkinFiledNote": "recorded.",
-  "checkinChips": [
-    { "id": "steady", "label": "Steady", "witness": "check-in: steady" },
-    { "id": "struggling", "label": "Struggling", "witness": "check-in: struggling" },
-    { "id": "grateful", "label": "Grateful", "witness": "check-in: grateful" },
-    { "id": "tired", "label": "Tired", "witness": "check-in: tired" }
-  ],
-  "_checkinResponseDoc": "Finding B7: 'how was your walk resolves into nothing — the card vanishes and jumps to the Messenger with nothing said.' Every answer is still ACCEPTED and still only REGISTERS (never branches — master plan §5b): the four replies differ in wording, not in consequence, which is exactly the register the differing witness tags already file. The response is the program's own voice (operable — it may glitter), not Lamby's, so it carries no assistant line count.",
-  "checkinResponses": [
-    { "id": "steady", "line1": "Steady is where we want you.", "line2": "Filed. Your streak is safe today." },
-    { "id": "struggling", "line1": "Thank you for your honesty.", "line2": "Struggle is part of the walk. It is on your file." },
-    { "id": "grateful", "line1": "Gratitude is measurable progress.", "line2": "Filed. Keep it up, Daniel." },
-    { "id": "tired", "line1": "Rest is permitted, within reason.", "line2": "Filed. We will check again tomorrow." }
-  ],
-  "checkinResponseHeading": "Today's realignment",
-  "checkinContinue": "Continue",
-  "closeLabel": "Close",
-
-  "_messageDoc": "Finding B8: 'no notification that a message arrived — Lamby should tell you, so opening the Messenger is motivated.' One conduction beat, two lines, and BOTH answers work: Open takes you there; Not now files and leaves the Messenger sitting on the desktop with its unread mark — the era does not chase (S2R.1's dismissal law), it waits. Lamby is never drawn inside the Messenger itself (that window is felt).",
-  "messageTitle": "Restorify",
-  "messageLine1": "A message came in while we were talking.",
-  "messageLine2": "It's in your Messenger. Shall I open it?",
-  "messageOpen": "Open",
-  "messageNotNow": "Not now",
-  "messengerIcon": "Messenger"
+  {
+   "id": "struggling",
+   "label": "Struggling",
+   "witness": "check-in: struggling"
+  },
+  {
+   "id": "grateful",
+   "label": "Grateful",
+   "witness": "check-in: grateful"
+  },
+  {
+   "id": "tired",
+   "label": "Tired",
+   "witness": "check-in: tired"
+  }
+ ],
+ "_checkinResponseDoc": "Finding B7: 'how was your walk resolves into nothing — the card vanishes and jumps to the Messenger with nothing said.' Every answer is still ACCEPTED and still only REGISTERS (never branches — master plan §5b): the four replies differ in wording, not in consequence, which is exactly the register the differing witness tags already file. The response is the program's own voice (operable — it may glitter), not Lamby's, so it carries no assistant line count.",
+ "checkinResponses": [
+  {
+   "id": "steady",
+   "line1": "Steady is where we want you.",
+   "line2": "Filed. Your streak is safe today."
+  },
+  {
+   "id": "struggling",
+   "line1": "Thank you for your honesty.",
+   "line2": "Struggle is part of the walk. It is on your file."
+  },
+  {
+   "id": "grateful",
+   "line1": "Gratitude is measurable progress.",
+   "line2": "Filed. Keep it up, Daniel."
+  },
+  {
+   "id": "tired",
+   "line1": "Rest is permitted, within reason.",
+   "line2": "Filed. We will check again tomorrow."
+  }
+ ],
+ "checkinResponseHeading": "Today's realignment",
+ "checkinContinue": "Continue",
+ "closeLabel": "Close",
+ "_messageDoc": "Finding B8: 'no notification that a message arrived — Lamby should tell you, so opening the Messenger is motivated.' One conduction beat, two lines, and BOTH answers work: Open takes you there; Not now files and leaves the Messenger sitting on the desktop with its unread mark — the era does not chase (S2R.1's dismissal law), it waits. Lamby is never drawn inside the Messenger itself (that window is felt).",
+ "messageTitle": "Restorify",
+ "messageLine1": "A message came in while we were talking.",
+ "messageLine2": "It's in your Messenger. Shall I open it?",
+ "messageOpen": "Open",
+ "messageNotNow": "Not now",
+ "messengerIcon": "Messenger",
+ "dismissedToast": "Restorify — Daily Realignment is on the desktop when you want it.",
+ "_docDismissedToast": "⚑ S150 (OPEN_ITEMS R3-49, Sérgio: 'what does the Not now button do?'): the dismissal always worked and filed, and nothing on screen said so. This is the SYSTEM's status-well toast after Not now — not Lamby (a dismissed conductor does not keep talking); it names where the program went. The window's 2003 look is Priority 4 (R3-41/50/51).",
+ "messageToast": "A message came in while we were talking — it's in your Messenger.",
+ "_docMessageToast": "⚑ S150 (OPEN_ITEMS R3-55, Sérgio 08-21 and 09-17: 'there is no need for the pop-up of Caleb'): the announcement is ONE line in the status well and the Messenger's dot — no card over the desktop. Lamby's voice, one beat, then quiet; the door stays open (the dot) and the era waits. `messageTitle/Line1/Line2/Open/NotNow` are kept for the record and unused."
 }

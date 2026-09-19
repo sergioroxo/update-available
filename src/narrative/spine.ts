@@ -60,6 +60,10 @@ export interface Spine {
   update(dt: number): void;
   /** the engine reports era arrivals (after driveMorph) so timers restart */
   onEra(era: string): void;
+  /** ⚑ S150 — the Close was LEFT (the Restart card's era buttons): the piece may
+   *  end again from the room it went back to. Without this the `closed` guard
+   *  below swallowed the second ending — the spine sat at `e4` for ever (R3-113). */
+  reopen(era: string): void;
   readonly step: SpineStep;
 }
 
@@ -90,6 +94,12 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
 
   return {
     get step(): SpineStep { return step; },
+
+    reopen(era: string): void {
+      closed = false;
+      step = era === 'e2' ? 'e2' : era === 'e3' ? 'e3' : era === 'e4' ? 'e4' : 'e1';
+      t = 0;
+    },
 
     onEra(era: string): void {
       /**
@@ -215,8 +225,15 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
         //   quiet. Two arming sites meant the phone's gate could be jumped from
         //   here; one conductor for the era's end. `cascadeSeen` stays as the
         //   read this file documents, and `onEra('e4')` still moves the step.
+        // ⚑ S150 — NO SUMMONS IN 2016 (OPEN_ITEMS R3-69). The s3 offer put a
+        //   "Source file" icon on the workstation after two corrections, over the
+        //   text she was reading (Sérgio 08-21 §C, again 09-17: "appears out of
+        //   nowhere"), for a send ERA3_BUILD_PLAN §0 retired and `os.ts` hard-gates
+        //   off. The era's beats are the board and the phone (NARRATIVE_FLOW). The
+        //   send data stays for L-03 (the trans-masc borderland), which is a design
+        //   of its own, not this icon.
         case 'e3':
-          if (t >= SEND_DELAY && correctionsDone() >= 2) offer('s3', 'e3_s3');
+          void correctionsDone;
           break;
         // ⚑ the two send legs are LEFT INTACT and unreachable-by-default rather
         //   than deleted: they are the shipped build's own beats, they still

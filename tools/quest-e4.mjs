@@ -190,12 +190,12 @@ async function main() {
   await press('search-open'); await wait(7500);
   await press('agent-begin'); await wait(1200);
   await beat('desk · the five steps');
-  await press('step-record'); await wait(6400);
+  await press('step-record'); await wait(2000); await press('step-next'); await wait(1500);   // S150: Continue, not a clock
   await press('step-photos'); await wait(1000);
   await press('file-0'); await wait(900);
-  await press('file-1'); await wait(9700);
-  await press('step-care'); await wait(6000);
-  await press('step-chat'); await wait(7500);
+  await press('file-1'); await wait(6000); await press('step-next'); await wait(1500);
+  await press('step-care'); await wait(2500); await press('step-next'); await wait(1500);
+  await press('step-chat'); await wait(2500); await press('step-next'); await wait(1500);
   await press('step-search'); await wait(3000);
 
   // ── 2 · the visor ──

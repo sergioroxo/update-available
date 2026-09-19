@@ -773,7 +773,10 @@ export class DesktopOS {
     if (!this.messagePending || this.messageNoticeShown) return;
     if (this.caleb) return; // the person's window is already open: nothing to announce
     this.messageNoticeShown = true;
-    this.messageNoticeOpen = true;
+    // ⚑ S150 — ONE LINE AND THE DOT, no card (OPEN_ITEMS R3-55). The pop-up sat
+    //   over the desktop beside PureMail's envelope and the two read as one
+    //   choice; the Messenger's unread mark is the door, Lamby names it once.
+    this.toast = { text: lambyStrings.messageToast, t: 8 };
     this.lambyPoseT = 0;
     this.dirty = true;
   }
@@ -1058,6 +1061,8 @@ export class DesktopOS {
     ledger.assistant.dismissals += 1;
     this.e2Stage = 'active';
     this.e2StageT = 0;
+    // S150 — the system says where the program went (R3-49); Lamby stays quiet
+    this.toast = { text: lambyStrings.dismissedToast, t: 7 };
     this.dirty = true;
   }
 
@@ -2749,6 +2754,17 @@ export class DesktopOS {
    *   the device stopped, both screens died, and the Close never came. Found
    *   by the tour (tools/tour-e4.mjs), which starts from that button.
    */
+  /** ⚑ S150 — the Close's era buttons lead back to a ROOM (OPEN_ITEMS R3-113):
+   *  Era 4's shell after the Close is a stopped device with a failed browser and
+   *  cannot be re-entered (`beginSession` is a no-op past `dormant`), which is
+   *  the black screen Sérgio pressed Maya into. A fresh shell, the device
+   *  untouched, as the review's own `e4Standby` jump makes it. */
+  resetE4ForReturn(): void {
+    if (this.desktopEra !== 'e4') return;
+    this.e4 = this.newE4Shell();
+    this.dirty = true;
+  }
+
   private newE4Shell(): E4Shell {
     const sh = new E4Shell();
     sh.onCloseRequest = () => { this.armUpdate('close'); this.updateApp?.acceptNow(); };
