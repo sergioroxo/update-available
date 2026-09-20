@@ -1,91 +1,182 @@
 {
-  "_doc": "S1.2–S1.4 — the Starter Kit (ERA1_LOGIC_v1 §3). Register: operable (perpetrator self-presentation; satire-permitted but period-real). ⚑ ALL WORDING IS DRAFT for Sérgio's approval. Names follow the 'uncanny CT branding' doctrine (SCRIPT_UPDATE_v0.8 §5): TriedPath Fellowship (subverts 'Brightpath'), Un-Walk (subverts 'the walk') — read real, land wrong. ⚑ verify no real-org collision before release. Period vocabulary: 'struggler', 'SSA', 'change is possible'; 'unwanted SSA' deliberately ABSENT (a later-era rebrand).",
+  "_doc": "S1.2–S1.4 — UN-WALK, the Starter Kit's programme (ERA1_LOGIC_v1 §3). Register: operable (perpetrator self-presentation; period-real, satire only where it collapses). ⚑ REBUILT 2026-09-20 (S151, R3-15/16/19/21/22/24): the booklet is now a Win95 WIZARD — his reference `References images/for the Era-1 programs.png`: a picture panel on the left, a bold title, plain text, Back / Next / Cancel — and its First Steps page is THE ERA'S PROGRAMME: five steps, each a press that opens its own panel and ticks off when done, in order (read · pray · connect · form · journal). The prayer step shows the sung words from `s1_prayer.json`, highlighted as they are sung, and asks for one press at the end. The connect step is the Internet Setup Wizard (`to enter online.png`, `for IRC connection.png`) on the black screen. Names follow the 'uncanny CT branding' doctrine (SCRIPT_UPDATE_v0.8 §5): TriedPath Fellowship, Un-Walk — read real, land wrong. Period vocabulary: 'struggler', 'SSA', 'change is possible'. BACK is drawn dead on every page (R26: the path only runs forward). All wording Claude's, his edit wins.",
   "ministry": "TriedPath Fellowship",
   "program": "Un-Walk",
   "version": "companion disk v1.2",
-  "windowTitle": "UN-WALK — TriedPath Fellowship",
+  "windowTitle": "Un-Walk — TriedPath Fellowship",
+  "taskbarLabel": "Un-Walk",
   "autorun": [
     "READING DRIVE A: ...",
     "UNWALK.EXE",
     "(c) 1996 TriedPath Fellowship",
     "loading companion ..."
   ],
-  "midiNote": "companion cassette insert",
-  "pages": [
-    {
-      "title": "Welcome, friend",
+  "buttons": {
+    "back": "< Back",
+    "next": "Next >",
+    "cancel": "Cancel",
+    "done": "Done",
+    "finish": "Finish"
+  },
+  "welcome": {
+    "title": "Welcome to Un-Walk!",
+    "lines": [
+      "This programme will walk you through your",
+      "first steps out of the struggle, one at a time.",
+      "",
+      "Someone who loves you wanted you to have it.",
+      "Thousands have walked this road before you.",
+      "",
+      "To begin, click Next."
+    ]
+  },
+  "steps": {
+    "title": "Your first steps",
+    "intro": "Take them in order; each ticks off when done.",
+    "items": [
+      {
+        "id": "read",
+        "label": "Read",
+        "desc": "Naming the struggle"
+      },
+      {
+        "id": "pray",
+        "label": "Pray",
+        "desc": "The companion tape — a prayer for the journey",
+        "after": "after step 1"
+      },
+      {
+        "id": "connect",
+        "label": "Connect",
+        "desc": "The fellowship channel",
+        "after": "after step 2"
+      },
+      {
+        "id": "form",
+        "label": "Family Form",
+        "desc": "Your mentor will send it",
+        "after": "your mentor sends it"
+      },
+      {
+        "id": "diary",
+        "label": "Journal",
+        "desc": "A first entry, DIARY.TXT",
+        "after": "after your placement"
+      }
+    ],
+    "doneMark": "done",
+    "allDone": "Every step is complete. Walk on."
+  },
+  "read": {
+    "pages": [
+      {
+        "title": "Naming the struggle",
+        "lines": [
+          "What you have been feeling has a name:",
+          "same-sex attraction (SSA).",
+          "",
+          "It is a feeling. It is not who you are.",
+          "",
+          "The world will tell you it is an identity.",
+          "We gently say: it is a struggle — and a",
+          "struggle can be walked out of, step by step."
+        ]
+      },
+      {
+        "title": "How the walk works",
+        "lines": [
+          "You will not walk alone. A companion tape",
+          "gives you the words. A fellowship channel",
+          "gives you friends of the right kind.",
+          "",
+          "A mentor will find you there. He has been",
+          "where you are. Later he will send a form",
+          "for your family, and ask for a journal.",
+          "",
+          "Change is possible. Click Done to begin."
+        ]
+      }
+    ]
+  },
+  "pray": {
+    "title": "A prayer for the journey",
+    "before": [
+      "The companion tape is on the shelf beside you.",
+      "Play it here, or press the tape itself.",
+      "Follow the words as they are sung."
+    ],
+    "play": "Play the tape",
+    "playing": "The tape is playing. Follow the words.",
+    "intro": "Side one. The prayer follows.",
+    "stopped": "The tape stopped before the end.",
+    "again": "Play again",
+    "ended": "The prayer is over. Say it with us.",
+    "amen": "Amen"
+  },
+  "connect": {
+    "title": "You are not alone",
+    "lines": [
+      "Right now — tonight — there are others awake,",
+      "walking it out, on the computer in front of you.",
+      "",
+      "Our fellowship hosts a support channel:",
+      "",
+      "      #stillstruggling",
+      "",
+      "A mentor will find you there. His name is Rob."
+    ],
+    "button": "Connect now"
+  },
+  "form": {
+    "title": "Family Form",
+    "lines": [
+      "Your mentor has sent a form for your family.",
+      "It is on the desktop. Open it and answer",
+      "every question as fully as you can."
+    ],
+    "button": "Open the form"
+  },
+  "diary": {
+    "title": "Journal",
+    "lines": [
+      "A first entry is required before your",
+      "placement. DIARY.TXT is on the desktop."
+    ],
+    "button": "Open DIARY.TXT"
+  },
+  "setup": {
+    "_doc": "R3-24 — the Internet Setup Wizard on the black screen (his references: `to enter online.png`, `for IRC connection.png`). Three pages: welcome, the number, connecting. The dial-up sound plays as the connecting page opens; the channel opens when it ends.",
+    "windowTitle": "Internet Setup Wizard",
+    "welcome": {
+      "title": "Welcome to Internet Setup!",
       "lines": [
-        "If you are reading this, someone who loves you",
-        "wanted you to know: you are not alone.",
+        "This Wizard will set up your computer to",
+        "connect to the fellowship network, giving",
+        "you access to people who understand.",
         "",
-        "Thousands of men and women have walked this",
-        "road before you, and found their way through.",
-        "",
-        "Change is possible."
+        "Your companion disk has filled in the",
+        "details. Click Next to continue."
       ]
     },
-    {
-      "title": "Naming the struggle",
-      "lines": [
-        "What you have been feeling has a name:",
-        "same-sex attraction (SSA).",
-        "",
-        "It is a feeling. It is not who you are.",
-        "",
-        "The world will tell you it is an identity.",
-        "We gently say: it is a struggle — and a",
-        "struggle can be walked out of, step by step."
-      ]
+    "number": {
+      "title": "Make New Connection",
+      "prompt": "Type the phone number for the computer you want to call:",
+      "areaLabel": "Area code:",
+      "area": "555",
+      "numberLabel": "Telephone number:",
+      "number": "0197",
+      "countryLabel": "Country code:",
+      "country": "Fellowship network (1)"
     },
-    {
-      "title": "First steps",
+    "connecting": {
+      "title": "Connect To",
       "lines": [
-        "STEP ONE — Pray.",
-        "You were not meant to carry this alone.",
-        "",
-        "STEP TWO — Listen.",
-        "Read tape one of your companion cassette now,",
-        "and let the words rest here on the screen.",
-        "",
-        "STEP THREE — Fellowship.",
-        "Strugglers who walk together, arrive together."
-      ]
-    },
-    {
-      "title": "Tape one — a prayer for the journey",
-      "prayer": true,
-      "lines": [
-        "Lord, you see this child at the doorway,",
-        "carrying what they did not choose",
-        "and do not have to keep.",
-        "Make the crooked places straight before them.",
-        "Send them friends of the right kind,",
-        "and voices of the right kind,",
-        "and the courage to be made new.",
-        "We thank you for the work",
-        "you are beginning tonight."
-      ]
-    },
-    {
-      "title": "You are not alone",
-      "connect": "CONNECT NOW",
-      "lines": [
-        "Right now — tonight — there are others awake,",
-        "walking it out, on the computer in front of you.",
-        "",
-        "Our fellowship hosts a support channel:",
-        "",
-        "      #stillstruggling",
-        "",
-        "A mentor will find you there. His name is Rob.",
-        "He has been where you are."
-      ]
+        "Dialing 555-0197 ...",
+        "Verifying user name and password ...",
+        "Logging on to network ...",
+        "Connected at 28800 bps"
+      ],
+      "welcome": "Welcome to the fellowship network."
     }
-  ],
-  "dial": [
-    "ATDT 5550197",
-    "DIALING ...",
-    "CARRIER 28800",
-    "CONNECTED — welcome to the fellowship network"
-  ]
+  }
 }

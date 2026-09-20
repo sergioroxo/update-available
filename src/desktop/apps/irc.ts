@@ -170,6 +170,10 @@ export class IrcApp {
     if (this.escalating && this.escRobPending && this.dm.idle) {
       this.escRobPending = false;
       this.escAwaitingReply = true;
+      // S151 / R3-13: a turn may file a record the moment Rob has SAID it — "i
+      // spoke with your mother" is what makes the Family Form exist (os.ts)
+      const rec = (end.escalation.turns[this.escTurn] as { record?: string }).record;
+      if (rec && !ledger.records.includes(rec)) ledger.records.push(rec);
       this.dirty = true;
     }
     // a beat after the final reply, hand off to the placement packet
@@ -250,6 +254,13 @@ export class IrcApp {
   }
 
   get escalationActive(): boolean { return this.escalating; }
+  /** S151 — a window is drawn over this one: its tray is not pressable, so it
+   *  publishes nothing (os.ts calls this after the windows are drawn). The
+   *  walker kept aiming at a reply under the restored wizard and spent the
+   *  reply's press cap on inert presses — a published rect must be a real one. */
+  covered(): void { this.replyRects = []; }
+  /** S151 — a reply tray is live: the player is being talked to (the guide's soft lines wait) */
+  get awaitingReply(): boolean { return this.chanAwaitingReply || this.escAwaitingReply; }
 
   // The DM is press-only and, since S142, so is the channel — there is no free
   // typing anywhere (Sérgio: no keyboard dependency in VR). You are watched; you

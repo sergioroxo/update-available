@@ -29,6 +29,7 @@ const REGISTRY: Record<string, string> = {
   // — SYSTEM audio stays clean, HUMAN/TAPE audio never runs undegraded).
   'family_design_solutions_tape97.mp3': `${AUDIO_BASE}family_design_solutions_tape97.mp3`, // Tape C track 1 (mixtape)
   'fold_my_hands_tape97.mp3': `${AUDIO_BASE}fold_my_hands_tape97.mp3`, // Tape A's prayer segment
+  'unwalk_loop_1997.mp3': `${AUDIO_BASE}unwalk_loop_1997.mp3`, // S151 · the Un-Walk's programme loop (tools/make_hymn.py)
   // Tape B — SWAPPABLE CANDIDATE (Sérgio is producing alternate versions of
   // the broadcast jingle). Swap by generating a new degraded/wrapped file
   // with tools/degrade_audio.sh, adding ONE line here, and pointing

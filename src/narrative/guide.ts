@@ -33,6 +33,10 @@ export interface SideMessage {
   expire?: string;
   text: string;
   emphasis?: string;
+  /** S151 — steps aside, unfiled, when any other line becomes due; returns in
+   *  the next quiet gap. For the sandbox's hints (the racket) and for a line
+   *  the main line must be able to talk over (the form). */
+  soft?: boolean;
   witness: { followed: string; declined: string };
 }
 
@@ -47,13 +51,23 @@ type Condition = (os: DesktopOS) => boolean;
 const CONDITIONS: Record<string, Condition> = {
   desktopIdle: (os) => os.inDesktop && os.era === 'e1' && !os.kit,
   kitInserted: () => ledger.records.includes('kit-inserted'),
-  kitReading: (os) => os.kit?.reading === true,
-  kitAdvanced: (os) =>
-    (os.kit ? os.kit.pageIndex > 0 : false) || ledger.records.includes('went-online'),
-  kitPrayerPage: (os) => os.kit?.onPrayerPage === true,
-  kitConnectPage: (os) => os.kit?.onConnectPage === true,
+  kitReading: (os) => os.kit?.reading === true && !os.kit.hasRead,
+  // S151 — the wizard's steps (kit.ts): read · pray · connect
+  kitRead: (os) => os.kit?.hasRead === true || ledger.records.includes('kit-read'),
+  prayStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'pray',
+  prayerSaid: () => ledger.records.includes('prayer-said'),
+  connectStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'connect',
   kitConnecting: (os) => os.kit?.dialing === true || ledger.records.includes('went-online'),
   tapePlayed: () => ledger.records.includes('tape-played'),
+  // R3-13 — the Family Form exists once Rob has said it
+  formAvailable: (os) => os.formAvailable && !os.provotype,
+  formOpened: (os) => os.provotype?.id === 'origin_intake_e1'
+    || ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
+  // R3-38 — the racket's line fills the quiet: the disk is in, no window is up
+  roomQuiet: (os) => ledger.records.includes('kit-inserted') && os.kit?.open !== true
+    && !os.provotype && !os.packet?.open && !os.diary?.open && !os.updateArmed
+    && !(os.irc?.open && os.irc.awaitingReply),
+  pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
   packetOpen: (os) => os.packet?.open === true,
   packetAcked: () => ledger.records.includes('enrollment-acknowledged'),
   diaryOpen: (os) => os.diary?.open === true,
@@ -106,6 +120,12 @@ export class GuideThread {
       if (this.cond(this.active.done)) this.retire(this.active, 'followed');
       else if (this.active.expire && this.cond(this.active.expire)) {
         this.retire(this.active, 'declined');
+      } else if (this.active.soft) {
+        // a soft line yields to any other line that is now due — no filing: it
+        // was not declined, it was talked over, and it will come back
+        const due = this.messages.find((m) => m !== this.active && !this.retired.has(m.id)
+          && !this.cond(m.done) && this.cond(m.trigger));
+        if (due) this.active = due;
       }
     }
     if (!this.active) {

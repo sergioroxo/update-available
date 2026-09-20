@@ -31,16 +31,30 @@
         },
         {
           "id": "kit",
-          "label": "The Starter Kit",
+          "label": "The disk",
           "done": "kitInserted",
-          "hint": "Open the disk — the A: icon on the desktop.",
+          "hint": "Open the disk — the A: icon on the desktop, or the disk on the desk.",
           "where": "the monitor"
         },
         {
           "id": "read",
-          "label": "The booklet, and going online",
+          "label": "Un-Walk, the programme",
+          "done": "kitRead",
+          "hint": "Read the programme: step 1 on its First Steps page, then Done.",
+          "where": "the monitor"
+        },
+        {
+          "id": "pray",
+          "label": "The prayer",
+          "done": "prayerSaid",
+          "hint": "Step 2: play the companion tape and follow the words to the end.",
+          "where": "the monitor"
+        },
+        {
+          "id": "connect",
+          "label": "Going online",
           "done": "wentOnline",
-          "hint": "Read the booklet to its last page, then connect.",
+          "hint": "Step 3: connect — the Internet Setup Wizard dials the fellowship.",
           "where": "the monitor"
         },
         {
@@ -73,11 +87,26 @@
           "where": "the monitor"
         },
         {
+          "id": "form",
+          "label": "The Family Form",
+          "done": "formDone",
+          "hint": "Your mentor's form is on the desktop now. Open it.",
+          "where": "the monitor"
+        },
+        {
           "id": "diary",
           "label": "DIARY.TXT",
           "done": "diaryDone",
           "hint": "Open DIARY.TXT and write.",
           "where": "the monitor"
+        },
+        {
+          "id": "racket",
+          "label": "The racket on the wall",
+          "done": "pillowDone",
+          "optional": true,
+          "hint": "The racket on the wall opens the first exercise. Press it.",
+          "where": "the wall to your right"
         },
         {
           "id": "update",

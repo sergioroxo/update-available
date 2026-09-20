@@ -30,7 +30,7 @@ import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
-import { TapeAudioBus, roomBed, setOneShotsMuted, playOnce } from '../audio/tapeAudio';
+import { TapeAudioBus, roomBed, setOneShotsMuted, playOnce, playLoop, stopClip } from '../audio/tapeAudio';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity, screenUploads } from './screenTexture';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
@@ -2610,6 +2610,29 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     if (cluster && cluster.state === 'sealed') cluster.reveal();
   };
+  // S151 — the Un-Walk's pray step reaches the boombox: pressing "Play the tape"
+  // on the wizard is the same act as pressing Tape A on the shelf (R3-22), and
+  // the wizard reads the deck each frame to highlight the words as they are sung.
+  os.onPlayTape = () => {
+    if (!tapes) return;
+    if (tapes.inserted === 'tapeA') { if (!tapes.isPlaying) tapes.togglePlay(); }
+    else tapes.insert('tapeA');
+    syncTapeProps();
+    syncTapeAudio();
+  };
+  os.tapeProbe = () => {
+    const snap = tapes ? tapes.snapshot() : null;
+    return snap ? { inserted: snap.inserted, playing: snap.playing, elapsed: snap.elapsed }
+      : { inserted: null, playing: false, elapsed: 0 };
+  };
+  // R3-17 — the programme's own music: a soundcard hymn loop while the wizard is
+  // up, yielding to the tape (one voice at a time) and to the menu (Esc/pause).
+  let kitLoop: HTMLAudioElement | null = null;
+  function syncKitLoop(): void {
+    const want = os.inDesktop && os.era === 'e1' && os.kit?.open === true && !os.paused && !(tapes?.isPlaying);
+    if (want && !kitLoop) { kitLoop = playLoop('unwalk_loop_1997.mp3'); if (kitLoop) kitLoop.volume = 0.45; }
+    else if (!want && kitLoop) { stopClip(kitLoop); kitLoop = null; }
+  }
 
   /**
    * ⚑ S80 — TAP vs DRAG, and it is the whole reason this session exists.
@@ -3275,6 +3298,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // R28-2b: the tape system's own clock (a tape playing back IS a clock,
       // unlike the guide thread's pure condition polling) — os.paused freezes
       // it exactly like it freezes everything else (Esc/pause law).
+      syncKitLoop();
       if (tapes) {
         tapes.update(dt, os.paused);
         syncTapeAudio();

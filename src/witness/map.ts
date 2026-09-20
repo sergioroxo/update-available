@@ -69,7 +69,12 @@ const CONDITIONS: Record<string, Condition> = {
   // ── 1997 ──
   profileFiled: () => has('profile-initialized'),
   kitInserted: () => has('kit-inserted'),
+  // S151 — the Un-Walk's steps
+  kitRead: () => has('kit-read'),
+  prayerSaid: () => has('prayer-said'),
   wentOnline: () => has('went-online'),
+  formDone: () => ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
+  pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
   spokeInChannel: () => ledger.records.some((r) => r.startsWith('channel-reply:')),
   wallSeen: () => has('ministry-index-card'),
   repliedToContact: () => ledger.records.some((r) => r.startsWith('escalation-reply:')),
@@ -132,7 +137,9 @@ export function mapState(os: DesktopOS): MapState {
     //   into 2016 never files the migration; the first tour showed it as the
     //   current beat under three ticked ones.)
     const doneFlags = era.beats.map((beat) => cond(beat.done, os));
-    const lastDone = doneFlags.lastIndexOf(true);
+    // ⚑ S151 — only a MAIN beat moves the line: a ○ sandbox beat done early (the
+    //   racket, listed after the diary) must not read the whole era as past
+    const lastDone = doneFlags.reduce((last, d, i) => (d && !era.beats[i].optional ? i : last), -1);
     const beats = era.beats.map((beat, idx) => {
       const done = doneFlags[idx] || idx < lastDone;
       let state: BeatState;

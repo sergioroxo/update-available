@@ -366,6 +366,9 @@ export class ProvotypeApp {
    * swung well would make the practice feel good, and the practice is the
    * subject. It moves the way an instruction manual moves.
    */
+  /** which provotype this is — the guide thread reads it (S151) */
+  get id(): string { return this.data.id; }
+
   get roomPose(): 'lift' | 'exhale' | 'strike' | null {
     if (!this.hasAnim) return null;
     const st = this.data.states[this.stateIndex];

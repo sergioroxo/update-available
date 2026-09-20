@@ -1227,3 +1227,34 @@ is gone; the send data stays for L-03 (R3-69). The restored photograph's compari
 inside its card (R3-96a). Walker: with nothing aimable it may turn right round (the accepted summons
 dollies the view away from the monitor). Walked: 223 presses, spine done. **closes R3-47, R3-49,
 R3-55, R3-69, R3-77, R3-79, R3-96a, R3-98, R3-100, R3-113, R3-114.**
+
+## 2026-09-20 — S151 · ERA 1 CONDUCTED, BATCH A: UN-WALK IS THE PROGRAMME
+The Starter Kit is a Win95 WIZARD now — his reference `for the Era-1 programs.png`: a picture
+panel on the left (the machine, a line of footprints, a door ajar), a bold title, plain text,
+Back / Next / Cancel (closes R3-15; R3-16's "enclosed booklet" wording is gone from the guide, and
+the booklet look is superseded by his wizard ask). Its First Steps page is THE ERA'S PROGRAMME
+(closes R3-19): five steps in order — read · pray · connect · Family Form · journal — each a press
+that opens its own panel and ticks off; a locked step says what it waits on. **Pray** plays the
+companion tape (from the wizard or from the shelf — the same act, `os.onPlayTape`) and shows the
+SUNG words from his Whisper transcript, highlighted as they are sung, one press at the end — Amen
+(closes R3-21/22; text authored, timings Whisper's: `tools/prayer-words.mjs` → `s1_prayer.json`,
+147/147 words aligned). **Connect** is the Internet Setup Wizard on the black screen — Welcome,
+Make New Connection (the number the disk filled in), Connect To with the modem's lights — and the
+dial-up recording plays as the connecting page opens, not after (closes R3-24). A soundcard hymn
+loop plays while the wizard is up and yields to the tape and the menu — `tools/make_hymn.py`,
+deterministic, 32 s seamless, `unwalk_loop_1997.mp3` (closes R3-17; R3-53's 2003 file stays open).
+The Family Form exists only once Rob has SAID "i spoke with your mother" — the turn files
+`rob-spoke-mother`; the desktop icon, the wizard's fourth step and a new guide line ("a form has
+been sent to you") all read it (closes R3-13). Cancel MINIMISES the wizard to a taskbar button
+and the A:\ icon brings it back with its state (W-E2 for this window). Guide thread: lines follow
+the steps; `soft` lines (the form, the racket — "the racket on the wall — the first exercise",
+R3-38's line; its glow is Batch B) step aside for any due line and return in the next gap. Map:
+the disk · the programme · the prayer · going online · … · the Family Form · the racket (○); a
+○ beat done early no longer reads the whole era as past. Tour: `tools/tour.mjs --era 1` walks the
+wizard (frames 07–18). Walked three times: the first hit the tool's 900-step budget on L's fifth
+step (a clock, as before — Era 1 is 4 min longer now); the second stuck in Era 1 because the
+walker aimed at the channel's reply tray UNDER the restored wizard until the reply's press cap was
+spent — a published rect must be a pressable one, so a tray under any window now publishes nothing
+(`irc.covered()`); the third, at `--max 1500`: 256 presses, spine done, the Close reached
+(`WALK_2026-09-20.md`; Era 1 ≈ 6.6 min of piece, the prayer is 2.6 of them). **closes R3-13,
+R3-15, R3-16, R3-17, R3-19, R3-21/22, R3-24.**

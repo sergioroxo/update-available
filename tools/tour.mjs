@@ -231,10 +231,19 @@ async function main() {
     await pressWhen('r-continue'); await wait(2500); await shot('look-recap', 'the recap — the profile read back');
     await pressWhen('r-enter'); await wait(2000);
     await shot('look-desktop', 'the 1997 desktop: A:, the guide\'s first line in the status well');
-    await pressWhen('icon-a'); await wait(1500); await shot('look-kit', 'the Starter Kit');
-    await pressAll('next', 6, 1600); await shot('look-kit-last', 'the last page / connecting');
-    await wait(5000);
-    await pressWhen('icon-irc', 15000); await wait(1500); await shot('look-irc', 'the channel, joined');
+    // S151 — UN-WALK is a wizard whose First Steps page is the era's programme (R3-15/16/19)
+    await pressWhen('icon-a'); await wait(3500); await shot('look-kit', 'UN-WALK: the wizard\'s welcome — picture panel, title, Back / Next / Cancel');
+    await pressWhen('next'); await wait(600); await shot('look-kit-steps', 'the First Steps: five presses, in order; the first live');
+    await pressWhen('step:read'); await wait(600); await shot('look-kit-read', 'step 1, read: the programme\'s text');
+    await pressWhen('next'); await pressWhen('done'); await wait(600); await shot('look-kit-steps-1', 'read ticked; pray live; the well names the tape');
+    await pressWhen('step:pray'); await wait(600); await shot('look-kit-pray', 'step 2, pray: the tape, from here or the shelf');
+    await pressWhen('play'); await wait(32000); await shot('look-kit-pray-words', 'the words as they are sung (R3-21/22), the current one lit');
+    await pressWhen('amen', 170000); await wait(600); await shot('look-kit-steps-2', 'two done; connect live');
+    await pressWhen('step:connect'); await wait(500); await shot('look-kit-connect', 'step 3, connect');
+    await pressWhen('connect'); await wait(800); await shot('look-setup', 'the Internet Setup Wizard, on the black screen (R3-24)');
+    await pressWhen('setup-next'); await wait(600); await shot('look-setup-number', 'Make New Connection: the number the disk filled in');
+    await pressWhen('setup-next'); await wait(3200); await shot('look-setup-dialing', 'dialing — the modem, the lines, the sound');
+    await wait(7000); await shot('look-irc', 'the channel, joined; Un-Walk waits in the taskbar');
     await pressWhen('reply:0', 60000); await wait(2500); await shot('look-irc-spoke', 'his one line, the room answering');
     await mapShot('map-e1', 'THE MAP, from the menu: 1997 in progress, the other eras ahead');
     await mapShot('map-e1-file', "the era's file opened under its beats", '1997');
@@ -250,6 +259,9 @@ async function main() {
     await pressWhen('reply:0', 120000); await wait(1500); await shot('look-dm', 'the private message: the first reply');
     for (let i = 0; i < 5; i++) { if (!await pressWhen('reply:0', 60000)) break; }
     await shot('look-dm-end', 'the thread\'s end');
+    // R3-13: the Family Form exists only now — Rob has spoken with his mother
+    await pressWhen('taskbar-kit', 5000); await wait(800); await shot('look-kit-steps-4', 'the programme after the channel: connect ticked, the Family Form live (R3-13)');
+    await pressWhen('cancel', 3000);
     await pressWhen('ok', 120000); await wait(800); await shot('look-packet', 'the placement packet, acknowledged');
     // the diary: one press writes the line; the system flags and erases it; each time it stops
     // ('resist') the player's press holds the truth — the second hold is the glitch

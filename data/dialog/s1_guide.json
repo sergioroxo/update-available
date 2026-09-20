@@ -1,7 +1,10 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2a (docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md §2): Era 1's impersonal side-message guide thread — the pre-Lamby conductor. Register law: terse imperative, never 'I', never praise, the apparatus's own status voice (operable). One active message max; it retires on compliance and the next eligible one surfaces; no queue, no checklist, no progress. Rendered in the Era-1 taskbar status well (src/desktop/os.ts), NOT the non-diegetic DOM chrome movementHint uses. Fields: `trigger`/`done`/`expire` are CONDITION KEYS resolved by the registry in src/narrative/guide.ts (content lives here, conditions in code); `emphasis` names a prop-emphasis set the engine lifts while the message is active (floppy = the kit disk; boombox = the tape player AND all three shelf tapes, since the hint names both and only the player used to light; belongings = every eligible object in the gathering window, added 2026-08-21 after Sérgio found them clickable-but-unlit — 'no glow around like a pressable area feedback'; pillow = the tennis racket, which is that provotype's own instrument and had no room presence at all). ⚑ check-spec C11 now fails the build if an emphasis names a prop no room state contains, or if a message names an emphasis the engine cannot resolve — both have silently happened before; `witness.followed`/`witness.declined` are the cold-side lines filed to ledger.guidance BOTH ways (witness symmetry, ERA_MINING FIND #4 — there is no response that isn't data; declined copy must stay quiet, not scolding). The `tape` message's done key (tapePlayed) has no in-build source until R28-2b ships the tape system — by design it can only expire (filed as skipped) this build. The final `update` entry is the Lamby seed (spec §2: E2's debut lands as this promised 'improvement'); its `done` key is `updateEngaged` (R28-2c), not a bare era check — it retires the instant the player engages the T1 notice AT ALL (Update-now OR Remind-later), so 'belongings' can take the guide's one-active-message slot during the gathering window; the direct Update-Now path is unchanged (still waits for the actual era shift, since remind was never used). The new `belongings` entry (R28-2c, §4) is the T1 gathering-window prompt: trigger fires when 'Remind me later' opens the window (src/narrative/belongings.ts), done/expire read the FINAL kept-state at window-close (gathered at all vs declined to gather) — the per-item `kept: <label>` lines are filed separately (data/room/belongings.json), not through this message. RETIRED 2026-07-24 (Session 44, docs/REINTERP_OPENING_DECISION_2026-07-24.md): the `look` and `interact` entries S40 added at the head of this array are GONE, with the pre-boot window and the optional power-press they described. Entry is now the interim log-in panel (which teaches look/point/click for BOTH headset and computer, before anything starts) followed by the room waking on its own — no verb is taught by an in-room side-message any more, and nothing is asked of the player before the desktop. Every remaining entry in this array obeys the trigger/done registry convention above without exception. Historical note: the retired `interact` press was itself only OPTIONAL (Sérgio, 2026-07-24, resolving a conflict with D22's closed auto-boot decision and D38's E2 'Daniel presses power himself' thesis) — the decision doc's auto-boot removes even that, so D22 and D38 are now clean.",
+  "_doc": "S151 (2026-09-20, Priority 2 — Era 1 conducted): the thread now follows the Un-Walk wizard's steps (src/desktop/apps/kit.ts): `kit` → read the programme (R3-16: no more 'enclosed booklet'), `tape` → the pray step, `channel` → the connect step, and two new lines — `form` (R3-13: only once Rob has 'spoken with your mother') and `racket` (R3-38: the room's first exercise, named at last). `soft: true` marks a line that steps aside, unfiled, when any other line becomes due, and returns in the next quiet gap — the sandbox's hints must never block the main line's. Priority = array order. ⚑ Everything below this sentence is the older doc, still true where it does not contradict this. PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2a (docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md §2): Era 1's impersonal side-message guide thread — the pre-Lamby conductor. Register law: terse imperative, never 'I', never praise, the apparatus's own status voice (operable). One active message max; it retires on compliance and the next eligible one surfaces; no queue, no checklist, no progress. Rendered in the Era-1 taskbar status well (src/desktop/os.ts), NOT the non-diegetic DOM chrome movementHint uses. Fields: `trigger`/`done`/`expire` are CONDITION KEYS resolved by the registry in src/narrative/guide.ts (content lives here, conditions in code); `emphasis` names a prop-emphasis set the engine lifts while the message is active (floppy = the kit disk; boombox = the tape player AND all three shelf tapes, since the hint names both and only the player used to light; belongings = every eligible object in the gathering window, added 2026-08-21 after Sérgio found them clickable-but-unlit — 'no glow around like a pressable area feedback'; pillow = the tennis racket, which is that provotype's own instrument and had no room presence at all). ⚑ check-spec C11 now fails the build if an emphasis names a prop no room state contains, or if a message names an emphasis the engine cannot resolve — both have silently happened before; `witness.followed`/`witness.declined` are the cold-side lines filed to ledger.guidance BOTH ways (witness symmetry, ERA_MINING FIND #4 — there is no response that isn't data; declined copy must stay quiet, not scolding). The `tape` message's done key (tapePlayed) has no in-build source until R28-2b ships the tape system — by design it can only expire (filed as skipped) this build. The final `update` entry is the Lamby seed (spec §2: E2's debut lands as this promised 'improvement'); its `done` key is `updateEngaged` (R28-2c), not a bare era check — it retires the instant the player engages the T1 notice AT ALL (Update-now OR Remind-later), so 'belongings' can take the guide's one-active-message slot during the gathering window; the direct Update-Now path is unchanged (still waits for the actual era shift, since remind was never used). The new `belongings` entry (R28-2c, §4) is the T1 gathering-window prompt: trigger fires when 'Remind me later' opens the window (src/narrative/belongings.ts), done/expire read the FINAL kept-state at window-close (gathered at all vs declined to gather) — the per-item `kept: <label>` lines are filed separately (data/room/belongings.json), not through this message. RETIRED 2026-07-24 (Session 44, docs/REINTERP_OPENING_DECISION_2026-07-24.md): the `look` and `interact` entries S40 added at the head of this array are GONE, with the pre-boot window and the optional power-press they described. Entry is now the interim log-in panel (which teaches look/point/click for BOTH headset and computer, before anything starts) followed by the room waking on its own — no verb is taught by an in-room side-message any more, and nothing is asked of the player before the desktop. Every remaining entry in this array obeys the trigger/done registry convention above without exception. Historical note: the retired `interact` press was itself only OPTIONAL (Sérgio, 2026-07-24, resolving a conflict with D22's closed auto-boot decision and D38's E2 'Daniel presses power himself' thesis) — the decision doc's auto-boot removes even that, so D22 and D38 are now clean.",
   "beat": "e1.guide",
-  "cuts": ["festival", "full"],
+  "cuts": [
+    "festival",
+    "full"
+  ],
   "sideMessages": [
     {
       "id": "floppy",
@@ -17,8 +20,8 @@
     {
       "id": "kit",
       "trigger": "kitReading",
-      "done": "kitAdvanced",
-      "text": "read the enclosed booklet.",
+      "done": "kitRead",
+      "text": "read the programme.",
       "witness": {
         "followed": "guidance: booklet — followed",
         "declined": "guidance: booklet — no response"
@@ -26,10 +29,10 @@
     },
     {
       "id": "tape",
-      "trigger": "kitPrayerPage",
-      "done": "tapePlayed",
-      "expire": "kitConnectPage",
-      "text": "a companion tape is included. the player is on the shelf.",
+      "trigger": "prayStep",
+      "done": "prayerSaid",
+      "expire": "kitConnecting",
+      "text": "play the companion tape. the player is on the shelf.",
       "emphasis": "boombox",
       "witness": {
         "followed": "guidance: tape — played",
@@ -38,7 +41,7 @@
     },
     {
       "id": "channel",
-      "trigger": "kitConnectPage",
+      "trigger": "connectStep",
       "done": "kitConnecting",
       "text": "connect to the fellowship channel.",
       "witness": {
@@ -47,10 +50,22 @@
       }
     },
     {
+      "id": "form",
+      "soft": true,
+      "trigger": "formAvailable",
+      "done": "formOpened",
+      "expire": "eraShifted",
+      "text": "a form has been sent to you. it is on the desktop.",
+      "witness": {
+        "followed": "guidance: family form — followed",
+        "declined": "guidance: family form — no response"
+      }
+    },
+    {
       "id": "packet",
       "trigger": "packetOpen",
       "done": "packetAcked",
-      "text": "acknowledge the placement packet.",
+      "text": "acknowledge the placement letter.",
       "witness": {
         "followed": "guidance: packet — followed",
         "declined": "guidance: packet — no response"
@@ -86,6 +101,19 @@
       "witness": {
         "followed": "belongings: gathered",
         "declined": "belongings: did not gather"
+      }
+    },
+    {
+      "id": "racket",
+      "soft": true,
+      "emphasis": "pillow",
+      "trigger": "roomQuiet",
+      "done": "pillowDone",
+      "expire": "eraShifted",
+      "text": "the racket on the wall — the first exercise.",
+      "witness": {
+        "followed": "guidance: racket — followed",
+        "declined": "guidance: racket — no response"
       }
     }
   ]

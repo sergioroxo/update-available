@@ -311,3 +311,12 @@ q -f lavfi -i "anoisesrc=d=0.09:c=brown:a=0.9" -f lavfi -i "sine=f=180:d=0.09" \
   -filter_complex "[0]lowpass=f=700,afade=t=out:st=0.01:d=0.08,volume=0.6[k];[1]volume=0.25,afade=t=out:st=0.0:d=0.09[t];[k][t]amix=inputs=2:normalize=0" \
   "$OUT/stamp_witness.wav"
 level stamp_witness -24
+
+# ── ⚑ S151 · THE UN-WALK PROGRAMME LOOP (R3-17, 2026-09-20) ──────────────────
+# Sérgio: "this needs a song of the programmes of the time to fill the void." A
+# soundcard organ playing a hymn's accompaniment with nobody singing, 32 s,
+# seamless — synthesized in tools/make_hymn.py (deterministic, stdlib only).
+python3 tools/make_hymn.py "$OUT/unwalk_loop_1997.wav"
+q -i "$OUT/unwalk_loop_1997.wav" -af "lowpass=f=3200,highpass=f=70" "$OUT/unwalk_loop_1997.tmp.wav" && mv "$OUT/unwalk_loop_1997.tmp.wav" "$OUT/unwalk_loop_1997.wav"
+level unwalk_loop_1997 -27
+q -i "$OUT/unwalk_loop_1997.wav" -ac 1 -ar 44100 -codec:a libmp3lame -b:a 96k "$PUB/unwalk_loop_1997.mp3"

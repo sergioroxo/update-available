@@ -11,6 +11,7 @@ import * as ui from './theme/chrome';
 import { setFaceEra } from './theme/fonts';
 import { IrcApp } from './apps/irc';
 import { KitApp } from './apps/kit';
+import kitStrings from '../../data/dialog/s1_kit.json';
 import { PacketApp } from './apps/packet';
 import { DiaryApp } from './apps/diary';
 import { ProvotypeApp, type Provotype } from './apps/provotype';
@@ -278,6 +279,10 @@ export class DesktopOS {
   onLeave?: () => void;
   /** engine listens: hide the physical floppy once it is in the drive */
   onKitInserted?: () => void;
+  /** S151 — the Un-Walk's pray step presses play on Tape A (app.ts owns the boombox) */
+  onPlayTape?: () => void;
+  /** S151 — what the boombox is doing, for the prayer's words (app.ts) */
+  tapeProbe?: () => { inserted: string | null; playing: boolean; elapsed: number };
   /** engine listens: mirror O3's live selections onto the rear cork/record plane */
   onOpeningProfileChange?: (snapshot: OpeningProfileSnapshot) => void;
   /** engine listens: a soft full-frame glitch — warm for the person's breakout */
@@ -359,6 +364,13 @@ export class DesktopOS {
     playOnce('boot_1997_machine.mp3');   // S141: on disk since S102, never played
   }
 
+  /** R3-13 — the Family Form exists once Rob has said "i spoke with your mother"
+   *  (irc.ts files the turn's `record`); read by the desktop icon, the wizard's
+   *  fourth step and the guide's `form` message */
+  get formAvailable(): boolean {
+    return ledger.records.includes('rob-spoke-mother');
+  }
+
   /** S1.0 power-on beat: the machine waits dark until the player acts */
   get isOff(): boolean {
     return this.phase === 'off';
@@ -375,16 +387,27 @@ export class DesktopOS {
 
   /** S1.2 — the disk goes in (3D floppy click, or the A:\ icon) */
   insertKit(): void {
-    if (this.phase !== 'desktop' || this.kit) return;
+    if (this.phase !== 'desktop') return;
+    // S151: the wizard keeps its state — the A:\ icon and the taskbar button
+    // bring it back where it was (W-E2 for this window; Cancel minimises)
+    if (this.kit) { this.kit.restore(); this.dirty = true; return; }
     this.kit = new KitApp();
     this.toast = null;
     playOnce('floppy_1997.mp3');   // S141: the disk goes in, the drive reads it
     if (!ledger.records.includes('kit-inserted')) ledger.records.push('kit-inserted');
     this.onKitInserted?.();
+    // S151 — the programme's steps reach into the room and the desktop
+    this.kit.onPlayTape = () => this.onPlayTape?.();
+    this.kit.tapeProbe = () => this.tapeProbe?.() ?? { inserted: null, playing: false, elapsed: 0 };
+    this.kit.formAvailable = () => this.formAvailable;
+    this.kit.diaryAvailable = () => this.diary !== null || ledger.records.includes('enrollment-acknowledged');
+    this.kit.onOpenForm = () => this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
+    this.kit.onOpenDiary = () => { if (!this.diary) this.openDiary(); };
+    // R3-24: the dial-up is heard as the connecting page opens, not after it
+    this.kit.onDial = () => playOnce('dialup_1997.mp3');
     this.kit.onConnect = () => {
       // S1.4 — the kit's last step is the channel it chose for you
       if (!ledger.records.includes('went-online')) ledger.records.push('went-online');
-      playOnce('dialup_1997.mp3');   // S141: the era's sound — the channel is dialled
       this.irc = new IrcApp();
       this.irc.onLine = () => playOnce('irc_1997.mp3');
       this.irc.onHooked = () => {
@@ -1772,12 +1795,17 @@ export class DesktopOS {
 
     if (this.desktopEra === 'e1') {
       // icons — the channel only exists once the kit has routed you there
-      if (!this.kit) this.drawIcon(10, 8, strings.desktop.iconA, true, 'icon-a');
-      if (this.irc) this.drawIcon(10, 8, strings.desktop.iconIrc, true, 'icon-irc');
+      // S151: the disk stays on the desktop; once inserted it brings the wizard back
+      if (!this.kit?.open) this.drawIcon(10, 8, strings.desktop.iconA, true, 'icon-a');
+      if (this.irc && !this.irc.open) this.drawIcon(10, 56, strings.desktop.iconIrc, true, 'icon-irc');
       // reinterpretation-only: the provotype launchers (the invitation is inside each)
       if (this.reinterp && !this.provotype) {
         this.drawIcon(10, 104, reinterpStrings.launcherIcon, true, 'icon-provotype');
-        this.drawIcon(10, 152, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
+        // ⚑ R3-13 (Sérgio: "the companion form comes after Mom talked with Rob —
+        //   I shouldn't be able to play it now"): the Family Form exists on this
+        //   desktop only once Rob's "i spoke with your mother" has been said.
+        //   The ledger IS the if-this-then-this — no storage, the line is filed.
+        if (this.formAvailable) this.drawIcon(10, 152, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
       }
       // S55 — lamby_rig.exe: an unremarked file, never advertised, drawn only
       // on the otherwise-bare E1 desktop (see e1DesktopIdle's doc comment for
@@ -1845,13 +1873,18 @@ export class DesktopOS {
       this.drawIcon(12, 236, lambyStrings.messengerIcon, true, 'icon-messenger', true);
     }
     // windows
-    if (this.kit?.open) this.kit.draw(ctx);
+    // S151 — the wizard minimises itself when the channel opens, and comes back
+    // only by a press (the A:\ icon, the taskbar): a window brought back is on top
     if (this.irc?.open) this.irc.draw(ctx, this.caretOn());
+    if (this.kit?.open) this.kit.draw(ctx);
     if (this.packet?.open) this.packet.draw(ctx);
     if (this.diary?.open) this.diary.draw(ctx);
     if (this.dossierOpen) this.drawDossier(W, H);
     if (this.provotype?.open) this.provotype.draw(ctx);
     if (this.lambyRigFile?.open) this.lambyRigFile.draw(ctx);
+    // ⚑ a tray under another window is not pressable and publishes nothing
+    if (this.irc?.open && (this.kit?.open || this.packet?.open || this.diary?.open || this.dossierOpen
+        || this.provotype?.open || this.lambyRigFile?.open)) this.irc.covered();
     if (this.restorify?.open) this.restorify.draw(ctx);
     // the summons is a DESKTOP object, so it belongs under the windows. It was
     // drawn after them, and a real playthrough caught it: the s1 "Route sheet"
@@ -1891,12 +1924,25 @@ export class DesktopOS {
     // It lives in the taskbar's sunken status well, one terse line at a time,
     // Era 1 only (Lamby conducts from E2). Not clickable, never a popup.
     if (this.reinterp && this.desktopEra === 'e1') {
-      ui.bevel(ctx, 58, H - 19, W - 108, 16, false);
+      // S151 — the running programme has a taskbar button, the way a window did:
+      // pressed in while it is up, raised while it waits (W-E2, this window)
+      let wellX = 58;
+      if (this.kit && this.phase === 'desktop') {
+        const bw = 64;
+        ui.button(ctx, 58, H - 19, bw, 16, '', {});
+        if (this.kit.open) ui.bevel(ctx, 58, H - 19, bw, 16, false);
+        ui.setFont(ctx, 9);
+        ctx.fillStyle = ERA1.black;
+        ctx.fillText(kitStrings.taskbarLabel, 66, H - 16);
+        this.hits.push({ x: 58, y: H - 19, w: bw, h: 16, id: 'taskbar-kit' });
+        wellX = 58 + bw + 4;
+      }
+      ui.bevel(ctx, wellX, H - 19, W - 50 - wellX, 16, false);
       const guideLine = this.guide?.activeText;
       if (guideLine) {
         ui.setFont(ctx, 9);
         ctx.fillStyle = ERA1.greyDark;
-        ctx.fillText(guideLine, 64, H - 16);
+        ctx.fillText(guideLine, wellX + 6, H - 16);
       }
     }
     // THE BREAK's residue (S2R.4), now a REAL AFFORDANCE (S60, finding E20 —
@@ -2891,6 +2937,9 @@ export class DesktopOS {
         case 'leave': this.leave(); break;
         case 'ok': this.confirmName(); break;
         case 'icon-a': this.insertKit(); break;
+        case 'taskbar-kit':
+          if (this.kit) { if (this.kit.open) this.kit.open = false; else this.kit.restore(); }
+          break;
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
         case 'icon-found-file': this.dossierOpen = true; break;
         case 'found-file-close': this.dossierOpen = false; break;

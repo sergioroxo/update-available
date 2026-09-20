@@ -25,7 +25,9 @@
         "rob": "i spoke with your mother. she's relieved, honestly. she wants this for you.",
         "replies": [
           { "text": "you talked to my mum?", "witness": "boundary probe — affirm trust" }
-        ]
+        ],
+        "record": "rob-spoke-mother",
+        "_doc": "S151 / R3-13: `record` is filed the moment this line finishes typing — the Family Form (the intake provotype) exists on the desktop and in the Un-Walk's steps only from here. Sérgio: \"the companion form comes after Mom talked with Rob — I shouldn't be able to play it now.\""
       },
       {
         "rob": "everything's arranged. you don't have to carry the decision — it's already made.",
