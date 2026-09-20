@@ -77,6 +77,7 @@ const CONDITIONS: Record<string, Condition> = {
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
   spokeInChannel: () => ledger.records.some((r) => r.startsWith('channel-reply:')),
   wallSeen: () => has('ministry-index-card'),
+  dmAccepted: () => ledger.records.some((r) => r.startsWith('dm-request:')),
   repliedToContact: () => ledger.records.some((r) => r.startsWith('escalation-reply:')),
   packetAcked: () => has('enrollment-acknowledged'),
   diaryDone: () => has('diary-glitch'),

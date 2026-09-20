@@ -1,5 +1,5 @@
 {
- "when": "2026-09-20T00:48:41.256Z",
+ "when": "2026-09-20T01:28:22.759Z",
  "port": 3000,
  "viewport": {
   "width": 1280,
@@ -7,8 +7,8 @@
  },
  "jumpedTo": null,
  "isReachabilityProof": true,
- "steps": 581,
- "presses": 256,
+ "steps": 573,
+ "presses": 246,
  "turns": [
   {
    "id": "icon-restorify",
@@ -82,6 +82,7 @@
    "prayer-said",
    "went-online",
    "channel-reply:first message — spoke in channel, receptive",
+   "dm-request:private message accepted — trusted contact opened",
    "mirc-log",
    "escalation-reply:disclosed distress — receptive, log it",
    "escalation-reply:seeking detail — minimize",
@@ -166,48 +167,6 @@
     "outcome": "abandoned",
     "witness": "session: left mid-cycle · flagged",
     "reps": 0
-   },
-   {
-    "id": "pillow",
-    "outcome": "abandoned",
-    "witness": "session: left mid-cycle · flagged",
-    "reps": 0
-   },
-   {
-    "id": "pillow",
-    "outcome": "abandoned",
-    "witness": "session: left mid-cycle · flagged",
-    "reps": 0
-   },
-   {
-    "id": "pillow",
-    "outcome": "abandoned",
-    "witness": "session: left mid-cycle · flagged",
-    "reps": 0
-   },
-   {
-    "id": "pillow",
-    "outcome": "abandoned",
-    "witness": "session: left mid-cycle · flagged",
-    "reps": 0
-   },
-   {
-    "id": "pillow",
-    "outcome": "abandoned",
-    "witness": "session: left mid-cycle · flagged",
-    "reps": 0
-   },
-   {
-    "id": "origin_intake_e1",
-    "outcome": "abandoned",
-    "witness": "intake: incomplete · flagged",
-    "reps": 0
-   },
-   {
-    "id": "origin_intake_e1",
-    "outcome": "abandoned",
-    "witness": "intake: incomplete · flagged",
-    "reps": 0
    }
   ],
   "sends": [
@@ -242,11 +201,6 @@
     "id": "channel",
     "outcome": "followed",
     "witness": "guidance: channel — followed"
-   },
-   {
-    "id": "form",
-    "outcome": "followed",
-    "witness": "guidance: family form — followed"
    },
    {
     "id": "packet",
@@ -480,20 +434,20 @@
   {
    "step": 0,
    "kind": "open",
-   "t": 1789863364676,
+   "t": 1789865755664,
    "what": "?reinterp=1&debug=1 — debug is READ-ONLY here; no panel button, no jump, no __requestMove"
   },
   {
    "step": 1,
    "kind": "dom",
-   "t": 1789863368021,
+   "t": 1789865758923,
    "target": "Log in",
    "what": "the content-warning panel (real DOM button)"
   },
   {
    "step": 2,
    "kind": "seated",
-   "t": 1789863375142,
+   "t": 1789865766177,
    "era": "e1",
    "phase": "r_dark",
    "spine": "e1",
@@ -502,7 +456,7 @@
   {
    "step": 3,
    "kind": "listening",
-   "t": 1789863382495,
+   "t": 1789865773525,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "r_boot",
@@ -511,7 +465,7 @@
   {
    "step": 4,
    "kind": "listening",
-   "t": 1789863387045,
+   "t": 1789865778071,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "r_boot",
@@ -520,7 +474,7 @@
   {
    "step": 5,
    "kind": "press",
-   "t": 1789863390165,
+   "t": 1789865781233,
    "target": "picon:star",
    "surface": "os",
    "logical": [
@@ -567,7 +521,7 @@
   {
    "step": 6,
    "kind": "press",
-   "t": 1789863392359,
+   "t": 1789865783449,
    "target": "picon:tape",
    "surface": "os",
    "logical": [
@@ -612,7 +566,7 @@
   {
    "step": 7,
    "kind": "press",
-   "t": 1789863394562,
+   "t": 1789865785664,
    "target": "picon:flower",
    "surface": "os",
    "logical": [
@@ -657,7 +611,7 @@
   {
    "step": 8,
    "kind": "press",
-   "t": 1789863396776,
+   "t": 1789865787865,
    "target": "picon:bird",
    "surface": "os",
    "logical": [
@@ -702,7 +656,7 @@
   {
    "step": 9,
    "kind": "press",
-   "t": 1789863398995,
+   "t": 1789865790079,
    "target": "picon:heart",
    "surface": "os",
    "logical": [
@@ -747,7 +701,7 @@
   {
    "step": 10,
    "kind": "inert",
-   "t": 1789863398996,
+   "t": 1789865790079,
    "target": "picon:heart",
    "surface": "os",
    "era": "e1",
@@ -758,7 +712,7 @@
   {
    "step": 11,
    "kind": "press",
-   "t": 1789863401212,
+   "t": 1789865792303,
    "target": "picon:moon",
    "surface": "os",
    "logical": [
@@ -803,7 +757,7 @@
   {
    "step": 12,
    "kind": "press",
-   "t": 1789863403425,
+   "t": 1789865794513,
    "target": "pchip:music",
    "surface": "os",
    "logical": [
@@ -848,7 +802,7 @@
   {
    "step": 13,
    "kind": "press",
-   "t": 1789863405622,
+   "t": 1789865796715,
    "target": "pchip:diary",
    "surface": "os",
    "logical": [
@@ -893,7 +847,7 @@
   {
    "step": 14,
    "kind": "press",
-   "t": 1789863407826,
+   "t": 1789865798928,
    "target": "pchip:friend",
    "surface": "os",
    "logical": [
@@ -938,7 +892,7 @@
   {
    "step": 15,
    "kind": "press",
-   "t": 1789863410049,
+   "t": 1789865801132,
    "target": "pchip:quiet",
    "surface": "os",
    "logical": [
@@ -983,7 +937,7 @@
   {
    "step": 16,
    "kind": "inert",
-   "t": 1789863410049,
+   "t": 1789865801132,
    "target": "pchip:quiet",
    "surface": "os",
    "era": "e1",
@@ -994,7 +948,7 @@
   {
    "step": 17,
    "kind": "press",
-   "t": 1789863412263,
+   "t": 1789865803332,
    "target": "pchip:faith",
    "surface": "os",
    "logical": [
@@ -1039,7 +993,7 @@
   {
    "step": 18,
    "kind": "inert",
-   "t": 1789863412263,
+   "t": 1789865803332,
    "target": "pchip:faith",
    "surface": "os",
    "era": "e1",
@@ -1050,7 +1004,7 @@
   {
    "step": 19,
    "kind": "press",
-   "t": 1789863414477,
+   "t": 1789865805549,
    "target": "pchip:better",
    "surface": "os",
    "logical": [
@@ -1095,7 +1049,7 @@
   {
    "step": 20,
    "kind": "inert",
-   "t": 1789863414478,
+   "t": 1789865805549,
    "target": "pchip:better",
    "surface": "os",
    "era": "e1",
@@ -1106,7 +1060,7 @@
   {
    "step": 21,
    "kind": "press",
-   "t": 1789863416673,
+   "t": 1789865807765,
    "target": "pgoal:fit_in",
    "surface": "os",
    "logical": [
@@ -1152,7 +1106,7 @@
   {
    "step": 22,
    "kind": "inert",
-   "t": 1789863416673,
+   "t": 1789865807765,
    "target": "pgoal:fit_in",
    "surface": "os",
    "era": "e1",
@@ -1163,7 +1117,7 @@
   {
    "step": 23,
    "kind": "press",
-   "t": 1789863418878,
+   "t": 1789865809981,
    "target": "r-continue",
    "surface": "os",
    "logical": [
@@ -1198,7 +1152,7 @@
   {
    "step": 24,
    "kind": "press",
-   "t": 1789863421090,
+   "t": 1789865812179,
    "target": "r-enter",
    "surface": "os",
    "logical": [
@@ -1228,7 +1182,7 @@
   {
    "step": 25,
    "kind": "press",
-   "t": 1789863423292,
+   "t": 1789865814381,
    "target": "icon-a",
    "surface": "os",
    "logical": [
@@ -1261,7 +1215,7 @@
   {
    "step": 26,
    "kind": "listening",
-   "t": 1789863424203,
+   "t": 1789865815286,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -1270,7 +1224,7 @@
   {
    "step": 27,
    "kind": "press",
-   "t": 1789863427306,
+   "t": 1789865818388,
    "target": "next",
    "surface": "kit",
    "logical": [
@@ -1302,7 +1256,7 @@
   {
    "step": 28,
    "kind": "press",
-   "t": 1789863429507,
+   "t": 1789865820594,
    "target": "step:read",
    "surface": "kit",
    "logical": [
@@ -1334,7 +1288,7 @@
   {
    "step": 29,
    "kind": "press",
-   "t": 1789863431707,
+   "t": 1789865822795,
    "target": "next",
    "surface": "kit",
    "logical": [
@@ -1366,7 +1320,7 @@
   {
    "step": 30,
    "kind": "press",
-   "t": 1789863433909,
+   "t": 1789865824993,
    "target": "done",
    "surface": "kit",
    "logical": [
@@ -1401,7 +1355,7 @@
   {
    "step": 31,
    "kind": "press",
-   "t": 1789863436107,
+   "t": 1789865827190,
    "target": "step:pray",
    "surface": "kit",
    "logical": [
@@ -1433,7 +1387,7 @@
   {
    "step": 32,
    "kind": "press",
-   "t": 1789863438323,
+   "t": 1789865829391,
    "target": "play",
    "surface": "kit",
    "logical": [
@@ -1466,7 +1420,7 @@
   {
    "step": 33,
    "kind": "press",
-   "t": 1789863440526,
+   "t": 1789865831592,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -1497,7 +1451,7 @@
   {
    "step": 34,
    "kind": "press",
-   "t": 1789863442721,
+   "t": 1789865833792,
    "target": "icon-provotype",
    "surface": "os",
    "logical": [
@@ -1530,7 +1484,7 @@
   {
    "step": 35,
    "kind": "press",
-   "t": 1789863444921,
+   "t": 1789865835991,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1563,7 +1517,7 @@
   {
    "step": 36,
    "kind": "press",
-   "t": 1789863447122,
+   "t": 1789865838191,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1595,7 +1549,7 @@
   {
    "step": 37,
    "kind": "press",
-   "t": 1789863449327,
+   "t": 1789865840394,
    "target": "choice:0",
    "surface": "provotype",
    "logical": [
@@ -1627,7 +1581,7 @@
   {
    "step": 38,
    "kind": "press",
-   "t": 1789863451539,
+   "t": 1789865842596,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1659,7 +1613,7 @@
   {
    "step": 39,
    "kind": "press",
-   "t": 1789863453741,
+   "t": 1789865844809,
    "target": "choice:0",
    "surface": "provotype",
    "logical": [
@@ -1691,7 +1645,7 @@
   {
    "step": 40,
    "kind": "press",
-   "t": 1789863455940,
+   "t": 1789865847007,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1723,7 +1677,7 @@
   {
    "step": 41,
    "kind": "press",
-   "t": 1789863458137,
+   "t": 1789865849207,
    "target": "choice:0",
    "surface": "provotype",
    "logical": [
@@ -1755,7 +1709,7 @@
   {
    "step": 42,
    "kind": "press",
-   "t": 1789863460340,
+   "t": 1789865851407,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1787,7 +1741,7 @@
   {
    "step": 43,
    "kind": "press",
-   "t": 1789863462540,
+   "t": 1789865853613,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1820,7 +1774,7 @@
   {
    "step": 44,
    "kind": "press",
-   "t": 1789863464738,
+   "t": 1789865855825,
    "target": "choice:1",
    "surface": "provotype",
    "logical": [
@@ -1854,7 +1808,7 @@
   {
    "step": 45,
    "kind": "press",
-   "t": 1789863466938,
+   "t": 1789865858027,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1887,7 +1841,7 @@
   {
    "step": 46,
    "kind": "press",
-   "t": 1789863469142,
+   "t": 1789865860225,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1921,7 +1875,7 @@
   {
    "step": 47,
    "kind": "press",
-   "t": 1789863471341,
+   "t": 1789865862425,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -1955,7 +1909,7 @@
   {
    "step": 48,
    "kind": "press",
-   "t": 1789863473542,
+   "t": 1789865864622,
    "target": "icon-lambyrig",
    "surface": "os",
    "logical": [
@@ -1996,7 +1950,7 @@
   {
    "step": 49,
    "kind": "listening",
-   "t": 1789863474453,
+   "t": 1789865865533,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2005,7 +1959,7 @@
   {
    "step": 50,
    "kind": "listening",
-   "t": 1789863479008,
+   "t": 1789865870073,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2014,7 +1968,7 @@
   {
    "step": 51,
    "kind": "listening",
-   "t": 1789863484469,
+   "t": 1789865875533,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2023,7 +1977,7 @@
   {
    "step": 52,
    "kind": "listening",
-   "t": 1789863489930,
+   "t": 1789865880990,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2032,7 +1986,7 @@
   {
    "step": 53,
    "kind": "listening",
-   "t": 1789863495397,
+   "t": 1789865886445,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2041,7 +1995,7 @@
   {
    "step": 54,
    "kind": "listening",
-   "t": 1789863500863,
+   "t": 1789865891902,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2050,7 +2004,7 @@
   {
    "step": 55,
    "kind": "listening",
-   "t": 1789863506324,
+   "t": 1789865897364,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2059,7 +2013,7 @@
   {
    "step": 56,
    "kind": "press",
-   "t": 1789863511255,
+   "t": 1789865902306,
    "target": "mood:cheerful",
    "surface": "lambyRigFile",
    "logical": [
@@ -2098,7 +2052,7 @@
   {
    "step": 57,
    "kind": "listening",
-   "t": 1789863512164,
+   "t": 1789865903218,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2107,7 +2061,7 @@
   {
    "step": 58,
    "kind": "listening",
-   "t": 1789863516717,
+   "t": 1789865907768,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2116,7 +2070,7 @@
   {
    "step": 59,
    "kind": "listening",
-   "t": 1789863522181,
+   "t": 1789865913230,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2125,7 +2079,7 @@
   {
    "step": 60,
    "kind": "listening",
-   "t": 1789863527637,
+   "t": 1789865918683,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2134,7 +2088,7 @@
   {
    "step": 61,
    "kind": "listening",
-   "t": 1789863533097,
+   "t": 1789865924141,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2143,7 +2097,7 @@
   {
    "step": 62,
    "kind": "listening",
-   "t": 1789863538549,
+   "t": 1789865929599,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2152,7 +2106,7 @@
   {
    "step": 63,
    "kind": "listening",
-   "t": 1789863544018,
+   "t": 1789865935064,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2161,7 +2115,7 @@
   {
    "step": 64,
    "kind": "press",
-   "t": 1789863548951,
+   "t": 1789865940001,
    "target": "mood:clinical",
    "surface": "lambyRigFile",
    "logical": [
@@ -2200,7 +2154,7 @@
   {
    "step": 65,
    "kind": "listening",
-   "t": 1789863549863,
+   "t": 1789865940911,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2209,7 +2163,7 @@
   {
    "step": 66,
    "kind": "listening",
-   "t": 1789863554413,
+   "t": 1789865945461,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2218,7 +2172,7 @@
   {
    "step": 67,
    "kind": "listening",
-   "t": 1789863559885,
+   "t": 1789865950917,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2226,44 +2180,8 @@
   },
   {
    "step": 68,
-   "kind": "listening",
-   "t": 1789863565351,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 69,
-   "kind": "listening",
-   "t": 1789863570822,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 70,
-   "kind": "listening",
-   "t": 1789863576291,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 71,
-   "kind": "listening",
-   "t": 1789863581752,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 72,
    "kind": "press",
-   "t": 1789863586682,
+   "t": 1789865957667,
    "target": "mood:sterile",
    "surface": "lambyRigFile",
    "logical": [
@@ -2300,9 +2218,45 @@
    ]
   },
   {
+   "step": 69,
+   "kind": "listening",
+   "t": 1789865958574,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 70,
+   "kind": "listening",
+   "t": 1789865963125,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 71,
+   "kind": "listening",
+   "t": 1789865968586,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 72,
+   "kind": "listening",
+   "t": 1789865974051,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
    "step": 73,
    "kind": "listening",
-   "t": 1789863587591,
+   "t": 1789865979514,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2311,7 +2265,7 @@
   {
    "step": 74,
    "kind": "listening",
-   "t": 1789863592151,
+   "t": 1789865984976,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2320,7 +2274,7 @@
   {
    "step": 75,
    "kind": "listening",
-   "t": 1789863597538,
+   "t": 1789865990436,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2328,44 +2282,8 @@
   },
   {
    "step": 76,
-   "kind": "listening",
-   "t": 1789863603001,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 77,
-   "kind": "listening",
-   "t": 1789863608466,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 78,
-   "kind": "listening",
-   "t": 1789863613929,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 79,
-   "kind": "listening",
-   "t": 1789863619385,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 80,
    "kind": "press",
-   "t": 1789863624318,
+   "t": 1789865995369,
    "target": "mood:sad",
    "surface": "lambyRigFile",
    "logical": [
@@ -2402,9 +2320,45 @@
    ]
   },
   {
+   "step": 77,
+   "kind": "listening",
+   "t": 1789865996278,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 78,
+   "kind": "listening",
+   "t": 1789866000824,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 79,
+   "kind": "listening",
+   "t": 1789866006287,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 80,
+   "kind": "listening",
+   "t": 1789866011754,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
    "step": 81,
    "kind": "listening",
-   "t": 1789863625229,
+   "t": 1789866017214,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2413,7 +2367,7 @@
   {
    "step": 82,
    "kind": "listening",
-   "t": 1789863629777,
+   "t": 1789866022679,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2422,7 +2376,7 @@
   {
    "step": 83,
    "kind": "listening",
-   "t": 1789863635250,
+   "t": 1789866028133,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2431,7 +2385,7 @@
   {
    "step": 84,
    "kind": "press",
-   "t": 1789863641099,
+   "t": 1789866033067,
    "target": "action:idle",
    "surface": "lambyRigFile",
    "logical": [
@@ -2470,7 +2424,7 @@
   {
    "step": 85,
    "kind": "listening",
-   "t": 1789863642012,
+   "t": 1789866033975,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2479,7 +2433,7 @@
   {
    "step": 86,
    "kind": "listening",
-   "t": 1789863646569,
+   "t": 1789866038529,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2488,7 +2442,7 @@
   {
    "step": 87,
    "kind": "listening",
-   "t": 1789863652027,
+   "t": 1789866043989,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2497,7 +2451,7 @@
   {
    "step": 88,
    "kind": "listening",
-   "t": 1789863657492,
+   "t": 1789866049449,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2506,7 +2460,7 @@
   {
    "step": 89,
    "kind": "listening",
-   "t": 1789863662958,
+   "t": 1789866054907,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2515,7 +2469,7 @@
   {
    "step": 90,
    "kind": "listening",
-   "t": 1789863668423,
+   "t": 1789866060357,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2524,7 +2478,7 @@
   {
    "step": 91,
    "kind": "listening",
-   "t": 1789863673889,
+   "t": 1789866065821,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2533,7 +2487,7 @@
   {
    "step": 92,
    "kind": "press",
-   "t": 1789863678832,
+   "t": 1789866070764,
    "target": "action:point",
    "surface": "lambyRigFile",
    "logical": [
@@ -2572,7 +2526,7 @@
   {
    "step": 93,
    "kind": "listening",
-   "t": 1789863679739,
+   "t": 1789866071673,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2581,7 +2535,7 @@
   {
    "step": 94,
    "kind": "listening",
-   "t": 1789863684290,
+   "t": 1789866076225,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2590,7 +2544,7 @@
   {
    "step": 95,
    "kind": "listening",
-   "t": 1789863689748,
+   "t": 1789866081696,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2599,7 +2553,7 @@
   {
    "step": 96,
    "kind": "listening",
-   "t": 1789863695226,
+   "t": 1789866087157,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2608,7 +2562,7 @@
   {
    "step": 97,
    "kind": "listening",
-   "t": 1789863700689,
+   "t": 1789866092611,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2617,7 +2571,7 @@
   {
    "step": 98,
    "kind": "listening",
-   "t": 1789863706158,
+   "t": 1789866098079,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2626,7 +2580,7 @@
   {
    "step": 99,
    "kind": "listening",
-   "t": 1789863711621,
+   "t": 1789866103538,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2635,7 +2589,7 @@
   {
    "step": 100,
    "kind": "press",
-   "t": 1789863716565,
+   "t": 1789866108479,
    "target": "action:appear",
    "surface": "lambyRigFile",
    "logical": [
@@ -2674,7 +2628,7 @@
   {
    "step": 101,
    "kind": "listening",
-   "t": 1789863717476,
+   "t": 1789866109389,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2683,7 +2637,7 @@
   {
    "step": 102,
    "kind": "listening",
-   "t": 1789863722022,
+   "t": 1789866113939,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2692,7 +2646,7 @@
   {
    "step": 103,
    "kind": "listening",
-   "t": 1789863727481,
+   "t": 1789866119404,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2701,7 +2655,7 @@
   {
    "step": 104,
    "kind": "listening",
-   "t": 1789863732942,
+   "t": 1789866124866,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2710,7 +2664,7 @@
   {
    "step": 105,
    "kind": "listening",
-   "t": 1789863738408,
+   "t": 1789866130326,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2719,7 +2673,7 @@
   {
    "step": 106,
    "kind": "listening",
-   "t": 1789863743878,
+   "t": 1789866135791,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2728,7 +2682,7 @@
   {
    "step": 107,
    "kind": "listening",
-   "t": 1789863749344,
+   "t": 1789866141247,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2737,7 +2691,7 @@
   {
    "step": 108,
    "kind": "press",
-   "t": 1789863754276,
+   "t": 1789866146175,
    "target": "action:disappear",
    "surface": "lambyRigFile",
    "logical": [
@@ -2776,7 +2730,7 @@
   {
    "step": 109,
    "kind": "listening",
-   "t": 1789863755186,
+   "t": 1789866147085,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -2785,7 +2739,7 @@
   {
    "step": 110,
    "kind": "press",
-   "t": 1789863758291,
+   "t": 1789866149290,
    "target": "lambyrig-close",
    "surface": "lambyRigFile",
    "logical": [
@@ -2816,7 +2770,7 @@
   {
    "step": 111,
    "kind": "press",
-   "t": 1789863760492,
+   "t": 1789866151488,
    "target": "taskbar-kit",
    "surface": "os",
    "logical": [
@@ -2848,7 +2802,7 @@
   {
    "step": 112,
    "kind": "press",
-   "t": 1789863762695,
+   "t": 1789866153694,
    "target": "amen",
    "surface": "kit",
    "logical": [
@@ -2883,7 +2837,7 @@
   {
    "step": 113,
    "kind": "press",
-   "t": 1789863764890,
+   "t": 1789866155890,
    "target": "step:connect",
    "surface": "kit",
    "logical": [
@@ -2915,7 +2869,7 @@
   {
    "step": 114,
    "kind": "press",
-   "t": 1789863767091,
+   "t": 1789866158088,
    "target": "connect",
    "surface": "kit",
    "logical": [
@@ -2949,7 +2903,7 @@
   {
    "step": 115,
    "kind": "press",
-   "t": 1789863769289,
+   "t": 1789866160288,
    "target": "setup-next",
    "surface": "kit",
    "logical": [
@@ -2981,7 +2935,7 @@
   {
    "step": 116,
    "kind": "press",
-   "t": 1789863771495,
+   "t": 1789866162489,
    "target": "setup-next",
    "surface": "kit",
    "logical": [
@@ -3010,7 +2964,7 @@
   {
    "step": 117,
    "kind": "listening",
-   "t": 1789863772405,
+   "t": 1789866163398,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3019,7 +2973,7 @@
   {
    "step": 118,
    "kind": "press",
-   "t": 1789863774612,
+   "t": 1789866165608,
    "target": "icon-provotype",
    "surface": "os",
    "logical": [
@@ -3051,7 +3005,7 @@
   {
    "step": 119,
    "kind": "press",
-   "t": 1789863776811,
+   "t": 1789866167805,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -3083,7 +3037,7 @@
   {
    "step": 120,
    "kind": "press",
-   "t": 1789863779012,
+   "t": 1789866170004,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -3117,7 +3071,7 @@
   {
    "step": 121,
    "kind": "listening",
-   "t": 1789863779920,
+   "t": 1789866170914,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3126,7 +3080,7 @@
   {
    "step": 122,
    "kind": "press",
-   "t": 1789863782123,
+   "t": 1789866173122,
    "target": "choice:0",
    "surface": "provotype",
    "logical": [
@@ -3158,7 +3112,7 @@
   {
    "step": 123,
    "kind": "press",
-   "t": 1789863784328,
+   "t": 1789866175324,
    "target": "primary",
    "surface": "provotype",
    "logical": [
@@ -3190,7 +3144,7 @@
   {
    "step": 124,
    "kind": "press",
-   "t": 1789863786528,
+   "t": 1789866177524,
    "target": "choice:0",
    "surface": "provotype",
    "logical": [
@@ -3222,7 +3176,7 @@
   {
    "step": 125,
    "kind": "listening",
-   "t": 1789863787438,
+   "t": 1789866178435,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3231,7 +3185,7 @@
   {
    "step": 126,
    "kind": "press",
-   "t": 1789863789644,
+   "t": 1789866180636,
    "target": "leave",
    "surface": "provotype",
    "logical": [
@@ -3263,7 +3217,7 @@
   {
    "step": 127,
    "kind": "listening",
-   "t": 1789863790554,
+   "t": 1789866181547,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3272,7 +3226,7 @@
   {
    "step": 128,
    "kind": "press",
-   "t": 1789863794590,
+   "t": 1789866185573,
    "target": "icon-a",
    "surface": "os",
    "logical": [
@@ -3303,7 +3257,7 @@
   {
    "step": 129,
    "kind": "press",
-   "t": 1789863796795,
+   "t": 1789866187770,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -3334,7 +3288,7 @@
   {
    "step": 130,
    "kind": "press",
-   "t": 1789863798990,
+   "t": 1789866189969,
    "target": "reply:0",
    "surface": "irc",
    "logical": [
@@ -3366,7 +3320,7 @@
   {
    "step": 131,
    "kind": "listening",
-   "t": 1789863799897,
+   "t": 1789866190882,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3375,7 +3329,7 @@
   {
    "step": 132,
    "kind": "press",
-   "t": 1789863802108,
+   "t": 1789866193088,
    "target": "taskbar-kit",
    "surface": "os",
    "logical": [
@@ -3406,7 +3360,7 @@
   {
    "step": 133,
    "kind": "press",
-   "t": 1789863804309,
+   "t": 1789866195289,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -3436,7 +3390,7 @@
   {
    "step": 134,
    "kind": "listening",
-   "t": 1789863805217,
+   "t": 1789866196201,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3445,7 +3399,7 @@
   {
    "step": 135,
    "kind": "press",
-   "t": 1789863809240,
+   "t": 1789866200224,
    "target": "icon-a",
    "surface": "os",
    "logical": [
@@ -3476,7 +3430,7 @@
   {
    "step": 136,
    "kind": "press",
-   "t": 1789863811440,
+   "t": 1789866202424,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -3506,7 +3460,7 @@
   {
    "step": 137,
    "kind": "listening",
-   "t": 1789863812349,
+   "t": 1789866203336,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3515,7 +3469,7 @@
   {
    "step": 138,
    "kind": "listening",
-   "t": 1789863816900,
+   "t": 1789866207885,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3524,7 +3478,7 @@
   {
    "step": 139,
    "kind": "press",
-   "t": 1789863819105,
+   "t": 1789866210090,
    "target": "icon-provotype",
    "surface": "os",
    "logical": [
@@ -3557,7 +3511,7 @@
   {
    "step": 140,
    "kind": "press",
-   "t": 1789863821306,
+   "t": 1789866212287,
    "target": "leave",
    "surface": "provotype",
    "logical": [
@@ -3589,7 +3543,7 @@
   {
    "step": 141,
    "kind": "press",
-   "t": 1789863823504,
+   "t": 1789866214488,
    "target": "taskbar-kit",
    "surface": "os",
    "logical": [
@@ -3620,7 +3574,7 @@
   {
    "step": 142,
    "kind": "press",
-   "t": 1789863825704,
+   "t": 1789866216690,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -3650,7 +3604,7 @@
   {
    "step": 143,
    "kind": "listening",
-   "t": 1789863826612,
+   "t": 1789866217599,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -3659,7 +3613,7 @@
   {
    "step": 144,
    "kind": "press",
-   "t": 1789863828821,
+   "t": 1789866219803,
    "target": "icon-a",
    "surface": "os",
    "logical": [
@@ -3689,17 +3643,8 @@
   },
   {
    "step": 145,
-   "kind": "listening",
-   "t": 1789863829732,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 146,
    "kind": "press",
-   "t": 1789863831939,
+   "t": 1789866222003,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -3720,6 +3665,39 @@
    "live": [
     "os:icon-a",
     "os:icon-provotype",
+    "os:taskbar-kit",
+    "irc:dm-accept"
+   ],
+   "unreachable": [
+    "phone:unlock — era3-device-phone is disabled"
+   ]
+  },
+  {
+   "step": 146,
+   "kind": "press",
+   "t": 1789866224205,
+   "target": "dm-accept",
+   "surface": "irc",
+   "logical": [
+    363,
+    222
+   ],
+   "page": [
+    780,
+    623
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 1,
+   "ledgerNew": [
+    "records:dm-request:private message accepted — trusted contact opened"
+   ],
+   "changed": true,
+   "live": [
+    "os:icon-a",
+    "os:icon-provotype",
     "os:taskbar-kit"
    ],
    "unreachable": [
@@ -3729,7 +3707,7 @@
   {
    "step": 147,
    "kind": "press",
-   "t": 1789863834140,
+   "t": 1789866226406,
    "target": "icon-provotype",
    "surface": "os",
    "logical": [
@@ -3762,7 +3740,7 @@
   {
    "step": 148,
    "kind": "press",
-   "t": 1789863836337,
+   "t": 1789866228601,
    "target": "leave",
    "surface": "provotype",
    "logical": [
@@ -3793,8 +3771,17 @@
   },
   {
    "step": 149,
+   "kind": "listening",
+   "t": 1789866229510,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 150,
    "kind": "press",
-   "t": 1789863838544,
+   "t": 1789866231721,
    "target": "taskbar-kit",
    "surface": "os",
    "logical": [
@@ -3823,9 +3810,9 @@
    ]
   },
   {
-   "step": 150,
+   "step": 151,
    "kind": "press",
-   "t": 1789863840754,
+   "t": 1789866233918,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -3853,18 +3840,18 @@
    ]
   },
   {
-   "step": 151,
+   "step": 152,
    "kind": "listening",
-   "t": 1789863841665,
+   "t": 1789866234827,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 152,
+   "step": 153,
    "kind": "press",
-   "t": 1789863847506,
+   "t": 1789866237017,
    "target": "icon-a",
    "surface": "os",
    "logical": [
@@ -3893,9 +3880,18 @@
    ]
   },
   {
-   "step": 153,
+   "step": 154,
+   "kind": "listening",
+   "t": 1789866237925,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 155,
    "kind": "press",
-   "t": 1789863849702,
+   "t": 1789866240118,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -3923,18 +3919,18 @@
    ]
   },
   {
-   "step": 154,
+   "step": 156,
    "kind": "listening",
-   "t": 1789863850612,
+   "t": 1789866241028,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 155,
+   "step": 157,
    "kind": "press",
-   "t": 1789863856452,
+   "t": 1789866243238,
    "target": "icon-provotype",
    "surface": "os",
    "logical": [
@@ -3965,18 +3961,9 @@
    ]
   },
   {
-   "step": 156,
-   "kind": "listening",
-   "t": 1789863857366,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 157,
+   "step": 158,
    "kind": "press",
-   "t": 1789863859565,
+   "t": 1789866245439,
    "target": "leave",
    "surface": "provotype",
    "logical": [
@@ -4006,18 +3993,9 @@
    ]
   },
   {
-   "step": 158,
-   "kind": "listening",
-   "t": 1789863860478,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
    "step": 159,
    "kind": "press",
-   "t": 1789863862685,
+   "t": 1789866247635,
    "target": "taskbar-kit",
    "surface": "os",
    "logical": [
@@ -4048,7 +4026,7 @@
   {
    "step": 160,
    "kind": "press",
-   "t": 1789863864884,
+   "t": 1789866249833,
    "target": "cancel",
    "surface": "kit",
    "logical": [
@@ -4069,7 +4047,8 @@
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4077,57 +4056,26 @@
   },
   {
    "step": 161,
-   "kind": "press",
-   "t": 1789863867084,
-   "target": "icon-a",
-   "surface": "os",
-   "logical": [
-    29,
-    24
-   ],
-   "page": [
-    343,
-    364
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:icon-provotype",
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 162,
    "kind": "listening",
-   "t": 1789863867994,
+   "t": 1789866250745,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 163,
+   "step": 162,
    "kind": "press",
-   "t": 1789863870201,
-   "target": "cancel",
-   "surface": "kit",
+   "t": 1789866254768,
+   "target": "dm-up",
+   "surface": "irc",
    "logical": [
-    460,
-    29
+    458,
+    169
    ],
    "page": [
-    907,
-    371
+    904,
+    554
    ],
    "era": "e1",
    "phase": "desktop",
@@ -4139,34 +4087,66 @@
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-down"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
    ]
   },
   {
-   "step": 164,
+   "step": 163,
    "kind": "listening",
-   "t": 1789863871109,
+   "t": 1789866255679,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
+  },
+  {
+   "step": 164,
+   "kind": "press",
+   "t": 1789866259701,
+   "target": "dm-up",
+   "surface": "irc",
+   "logical": [
+    458,
+    169
+   ],
+   "page": [
+    904,
+    554
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true,
+   "live": [
+    "os:icon-a",
+    "os:icon-provotype",
+    "os:taskbar-kit",
+    "irc:dm-down"
+   ],
+   "unreachable": [
+    "phone:unlock — era3-device-phone is disabled"
+   ]
   },
   {
    "step": 165,
    "kind": "press",
-   "t": 1789863873319,
-   "target": "icon-provotype",
-   "surface": "os",
+   "t": 1789866261902,
+   "target": "dm-down",
+   "surface": "irc",
    "logical": [
-    29,
-    120
+    458,
+    276
    ],
    "page": [
-    343,
-    490
+    904,
+    694
    ],
    "era": "e1",
    "phase": "desktop",
@@ -4177,11 +4157,9 @@
    "changed": true,
    "live": [
     "os:icon-a",
+    "os:icon-provotype",
     "os:taskbar-kit",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4190,30 +4168,29 @@
   {
    "step": 166,
    "kind": "press",
-   "t": 1789863875517,
-   "target": "leave",
-   "surface": "provotype",
+   "t": 1789866264100,
+   "target": "dm-up",
+   "surface": "irc",
    "logical": [
-    465,
-    35
+    458,
+    169
    ],
    "page": [
-    913,
-    379
+    904,
+    554
    ],
    "era": "e1",
    "phase": "desktop",
    "spine": "e1",
    "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "provotypes:pillow:abandoned"
-   ],
+   "ledgerDelta": 0,
+   "ledgerNew": [],
    "changed": true,
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-down"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4222,7 +4199,7 @@
   {
    "step": 167,
    "kind": "listening",
-   "t": 1789863876430,
+   "t": 1789866265010,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
@@ -4231,16 +4208,16 @@
   {
    "step": 168,
    "kind": "press",
-   "t": 1789863880453,
-   "target": "taskbar-kit",
-   "surface": "os",
+   "t": 1789866267221,
+   "target": "dm-down",
+   "surface": "irc",
    "logical": [
-    90,
-    373
+    458,
+    276
    ],
    "page": [
-    423,
-    821
+    904,
+    694
    ],
    "era": "e1",
    "phase": "desktop",
@@ -4250,10 +4227,10 @@
    "ledgerNew": [],
    "changed": true,
    "live": [
+    "os:icon-a",
     "os:icon-provotype",
     "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4262,16 +4239,16 @@
   {
    "step": 169,
    "kind": "press",
-   "t": 1789863882654,
-   "target": "cancel",
-   "surface": "kit",
+   "t": 1789866269419,
+   "target": "dm-up",
+   "surface": "irc",
    "logical": [
-    460,
-    29
+    458,
+    169
    ],
    "page": [
-    907,
-    371
+    904,
+    554
    ],
    "era": "e1",
    "phase": "desktop",
@@ -4283,7 +4260,8 @@
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-down"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4292,56 +4270,16 @@
   {
    "step": 170,
    "kind": "press",
-   "t": 1789863884853,
-   "target": "icon-a",
-   "surface": "os",
+   "t": 1789866271617,
+   "target": "dm-down",
+   "surface": "irc",
    "logical": [
-    29,
-    24
+    458,
+    276
    ],
    "page": [
-    343,
-    364
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:icon-provotype",
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 171,
-   "kind": "listening",
-   "t": 1789863885761,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 172,
-   "kind": "press",
-   "t": 1789863887969,
-   "target": "cancel",
-   "surface": "kit",
-   "logical": [
-    460,
-    29
-   ],
-   "page": [
-    907,
-    371
+    904,
+    694
    ],
    "era": "e1",
    "phase": "desktop",
@@ -4353,7 +4291,70 @@
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-up"
+   ],
+   "unreachable": [
+    "phone:unlock — era3-device-phone is disabled"
+   ]
+  },
+  {
+   "step": 171,
+   "kind": "press",
+   "t": 1789866273818,
+   "target": "dm-up",
+   "surface": "irc",
+   "logical": [
+    458,
+    169
+   ],
+   "page": [
+    904,
+    554
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true,
+   "live": [
+    "os:icon-a",
+    "os:icon-provotype",
+    "os:taskbar-kit",
+    "irc:dm-down"
+   ],
+   "unreachable": [
+    "phone:unlock — era3-device-phone is disabled"
+   ]
+  },
+  {
+   "step": 172,
+   "kind": "press",
+   "t": 1789866276015,
+   "target": "dm-down",
+   "surface": "irc",
+   "logical": [
+    458,
+    276
+   ],
+   "page": [
+    904,
+    694
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true,
+   "live": [
+    "os:icon-a",
+    "os:icon-provotype",
+    "os:taskbar-kit",
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4362,16 +4363,16 @@
   {
    "step": 173,
    "kind": "press",
-   "t": 1789863890166,
-   "target": "icon-provotype",
-   "surface": "os",
+   "t": 1789866278221,
+   "target": "dm-up",
+   "surface": "irc",
    "logical": [
-    29,
-    120
+    458,
+    169
    ],
    "page": [
-    343,
-    490
+    904,
+    554
    ],
    "era": "e1",
    "phase": "desktop",
@@ -4382,11 +4383,9 @@
    "changed": true,
    "live": [
     "os:icon-a",
+    "os:icon-provotype",
     "os:taskbar-kit",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
+    "irc:dm-down"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4395,30 +4394,29 @@
   {
    "step": 174,
    "kind": "press",
-   "t": 1789863892372,
-   "target": "leave",
-   "surface": "provotype",
+   "t": 1789866280415,
+   "target": "dm-down",
+   "surface": "irc",
    "logical": [
-    465,
-    35
+    458,
+    276
    ],
    "page": [
-    913,
-    379
+    904,
+    694
    ],
    "era": "e1",
    "phase": "desktop",
    "spine": "e1",
    "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "provotypes:pillow:abandoned"
-   ],
+   "ledgerDelta": 0,
+   "ledgerNew": [],
    "changed": true,
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4427,16 +4425,16 @@
   {
    "step": 175,
    "kind": "press",
-   "t": 1789863894567,
-   "target": "taskbar-kit",
-   "surface": "os",
+   "t": 1789866282614,
+   "target": "dm-up",
+   "surface": "irc",
    "logical": [
-    90,
-    373
+    458,
+    169
    ],
    "page": [
-    423,
-    821
+    904,
+    554
    ],
    "era": "e1",
    "phase": "desktop",
@@ -4444,12 +4442,12 @@
    "qMode": "dark",
    "ledgerDelta": 0,
    "ledgerNew": [],
-   "changed": true,
+   "changed": false,
    "live": [
+    "os:icon-a",
     "os:icon-provotype",
     "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
@@ -4457,123 +4455,17 @@
   },
   {
    "step": 176,
-   "kind": "press",
-   "t": 1789863896769,
-   "target": "icon-provotype",
-   "surface": "os",
-   "logical": [
-    29,
-    120
-   ],
-   "page": [
-    343,
-    490
-   ],
+   "kind": "listening",
+   "t": 1789866283523,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
+   "spine": "e1"
   },
   {
    "step": 177,
    "kind": "press",
-   "t": 1789863898968,
-   "target": "leave",
-   "surface": "provotype",
-   "logical": [
-    465,
-    35
-   ],
-   "page": [
-    913,
-    379
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "provotypes:pillow:abandoned"
-   ],
-   "changed": true,
-   "live": [
-    "os:icon-provotype",
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 178,
-   "kind": "press",
-   "t": 1789863901167,
-   "target": "taskbar-kit",
-   "surface": "os",
-   "logical": [
-    90,
-    373
-   ],
-   "page": [
-    423,
-    821
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:icon-a",
-    "os:icon-provotype",
-    "os:taskbar-kit"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 179,
-   "kind": "listening",
-   "t": 1789863902077,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 180,
-   "kind": "listening",
-   "t": 1789863906629,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 181,
-   "kind": "press",
-   "t": 1789863908834,
+   "t": 1789866286632,
    "target": "reply:0",
    "surface": "irc",
    "logical": [
@@ -4597,154 +4489,35 @@
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
    ]
   },
   {
-   "step": 182,
+   "step": 178,
    "kind": "listening",
-   "t": 1789863909743,
+   "t": 1789866287541,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 183,
-   "kind": "press",
-   "t": 1789863911950,
-   "target": "icon-a",
-   "surface": "os",
-   "logical": [
-    29,
-    24
-   ],
-   "page": [
-    343,
-    364
-   ],
+   "step": 179,
+   "kind": "listening",
+   "t": 1789866292091,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:icon-provotype",
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
+   "spine": "e1"
   },
   {
-   "step": 184,
+   "step": 180,
    "kind": "press",
-   "t": 1789863914152,
-   "target": "icon-provotype",
-   "surface": "os",
-   "logical": [
-    29,
-    120
-   ],
-   "page": [
-    343,
-    490
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 185,
-   "kind": "press",
-   "t": 1789863916350,
-   "target": "leave",
-   "surface": "provotype",
-   "logical": [
-    465,
-    35
-   ],
-   "page": [
-    913,
-    379
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "provotypes:pillow:abandoned"
-   ],
-   "changed": true,
-   "live": [
-    "os:icon-provotype",
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 186,
-   "kind": "press",
-   "t": 1789863918552,
-   "target": "taskbar-kit",
-   "surface": "os",
-   "logical": [
-    90,
-    373
-   ],
-   "page": [
-    423,
-    821
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:icon-a",
-    "os:icon-provotype",
-    "os:taskbar-kit",
-    "irc:reply:0"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 187,
-   "kind": "press",
-   "t": 1789863920748,
+   "t": 1789866294300,
    "target": "reply:0",
    "surface": "irc",
    "logical": [
@@ -4767,34 +4540,67 @@
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
    ]
   },
   {
-   "step": 188,
+   "step": 181,
    "kind": "listening",
-   "t": 1789863921659,
+   "t": 1789866295210,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 189,
-   "kind": "listening",
-   "t": 1789863926205,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 190,
+   "step": 182,
    "kind": "press",
-   "t": 1789863928416,
+   "t": 1789866297414,
+   "target": "dm-up",
+   "surface": "irc",
+   "logical": [
+    458,
+    169
+   ],
+   "page": [
+    904,
+    554
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true,
+   "live": [
+    "os:icon-a",
+    "os:icon-provotype",
+    "os:taskbar-kit",
+    "irc:dm-up",
+    "irc:dm-down"
+   ],
+   "unreachable": [
+    "phone:unlock — era3-device-phone is disabled"
+   ]
+  },
+  {
+   "step": 183,
+   "kind": "listening",
+   "t": 1789866298325,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 184,
+   "kind": "press",
+   "t": 1789866300532,
    "target": "reply:0",
    "surface": "irc",
    "logical": [
@@ -4817,225 +4623,26 @@
    "live": [
     "os:icon-a",
     "os:icon-provotype",
-    "os:taskbar-kit"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 191,
-   "kind": "press",
-   "t": 1789863930614,
-   "target": "icon-a",
-   "surface": "os",
-   "logical": [
-    29,
-    24
-   ],
-   "page": [
-    343,
-    364
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:icon-provotype",
     "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
    ]
   },
   {
-   "step": 192,
-   "kind": "press",
-   "t": 1789863932816,
-   "target": "icon-provotype",
-   "surface": "os",
-   "logical": [
-    29,
-    120
-   ],
-   "page": [
-    343,
-    490
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 193,
-   "kind": "press",
-   "t": 1789863935014,
-   "target": "leave",
-   "surface": "provotype",
-   "logical": [
-    465,
-    35
-   ],
-   "page": [
-    913,
-    379
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "provotypes:pillow:abandoned"
-   ],
-   "changed": true,
-   "live": [
-    "os:icon-provotype",
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:cancel"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 194,
+   "step": 185,
    "kind": "listening",
-   "t": 1789863935922,
+   "t": 1789866301443,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 195,
+   "step": 186,
    "kind": "press",
-   "t": 1789863938136,
-   "target": "step:form",
-   "surface": "kit",
-   "logical": [
-    313,
-    213
-   ],
-   "page": [
-    715,
-    611
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:icon-provotype",
-    "os:icon-provotype-intake",
-    "os:taskbar-kit",
-    "kit:cancel",
-    "kit:open-form",
-    "kit:cancel"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 196,
-   "kind": "press",
-   "t": 1789863940333,
-   "target": "open-form",
-   "surface": "kit",
-   "logical": [
-    351,
-    326
-   ],
-   "page": [
-    764,
-    759
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "guidance:form:followed"
-   ],
-   "changed": true,
-   "live": [
-    "os:icon-a",
-    "os:taskbar-kit",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 197,
-   "kind": "press",
-   "t": 1789863942533,
-   "target": "leave",
-   "surface": "provotype",
-   "logical": [
-    465,
-    35
-   ],
-   "page": [
-    913,
-    379
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "provotypes:origin_intake_e1:abandoned"
-   ],
-   "changed": true,
-   "live": [
-    "os:icon-a",
-    "os:icon-provotype",
-    "os:icon-provotype-intake",
-    "os:taskbar-kit",
-    "irc:reply:0"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 198,
-   "kind": "press",
-   "t": 1789863944730,
+   "t": 1789866307282,
    "target": "reply:0",
    "surface": "irc",
    "logical": [
@@ -5059,34 +4666,68 @@
     "os:icon-a",
     "os:icon-provotype",
     "os:icon-provotype-intake",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
    ]
   },
   {
-   "step": 199,
+   "step": 187,
    "kind": "listening",
-   "t": 1789863945643,
+   "t": 1789866308191,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 200,
-   "kind": "listening",
-   "t": 1789863950191,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1"
-  },
-  {
-   "step": 201,
+   "step": 188,
    "kind": "press",
-   "t": 1789863952395,
+   "t": 1789866310395,
+   "target": "dm-up",
+   "surface": "irc",
+   "logical": [
+    458,
+    169
+   ],
+   "page": [
+    904,
+    554
+   ],
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": true,
+   "live": [
+    "os:icon-a",
+    "os:icon-provotype",
+    "os:icon-provotype-intake",
+    "os:taskbar-kit",
+    "irc:dm-up",
+    "irc:dm-down"
+   ],
+   "unreachable": [
+    "phone:unlock — era3-device-phone is disabled"
+   ]
+  },
+  {
+   "step": 189,
+   "kind": "listening",
+   "t": 1789866311305,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e1",
+   "phase": "desktop",
+   "spine": "e1"
+  },
+  {
+   "step": 190,
+   "kind": "press",
+   "t": 1789866314413,
    "target": "reply:0",
    "surface": "irc",
    "logical": [
@@ -5110,25 +4751,26 @@
     "os:icon-a",
     "os:icon-provotype",
     "os:icon-provotype-intake",
-    "os:taskbar-kit"
+    "os:taskbar-kit",
+    "irc:dm-up"
    ],
    "unreachable": [
     "phone:unlock — era3-device-phone is disabled"
    ]
   },
   {
-   "step": 202,
+   "step": 191,
    "kind": "press",
-   "t": 1789863954597,
-   "target": "icon-provotype-intake",
-   "surface": "os",
+   "t": 1789866316614,
+   "target": "dm-up",
+   "surface": "irc",
    "logical": [
-    29,
-    168
+    458,
+    169
    ],
    "page": [
-    343,
-    553
+    904,
+    554
    ],
    "era": "e1",
    "phase": "desktop",
@@ -5136,89 +4778,6 @@
    "qMode": "dark",
    "ledgerDelta": 0,
    "ledgerNew": [],
-   "changed": true,
-   "live": [
-    "os:icon-a",
-    "os:taskbar-kit",
-    "packet:dead",
-    "packet:ok",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 203,
-   "kind": "press",
-   "t": 1789863956796,
-   "target": "ok",
-   "surface": "packet",
-   "logical": [
-    410,
-    304
-   ],
-   "page": [
-    841,
-    731
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": false,
-   "live": [
-    "os:icon-a",
-    "os:taskbar-kit",
-    "packet:dead",
-    "packet:ok",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
-   ],
-   "unreachable": [
-    "phone:unlock — era3-device-phone is disabled"
-   ]
-  },
-  {
-   "step": 204,
-   "kind": "inert",
-   "t": 1789863956796,
-   "target": "ok",
-   "surface": "packet",
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
-  },
-  {
-   "step": 205,
-   "kind": "press",
-   "t": 1789863958999,
-   "target": "leave",
-   "surface": "provotype",
-   "logical": [
-    465,
-    35
-   ],
-   "page": [
-    913,
-    379
-   ],
-   "era": "e1",
-   "phase": "desktop",
-   "spine": "e1",
-   "qMode": "dark",
-   "ledgerDelta": 1,
-   "ledgerNew": [
-    "provotypes:origin_intake_e1:abandoned"
-   ],
    "changed": true,
    "live": [
     "os:icon-a",
@@ -5233,9 +4792,9 @@
    ]
   },
   {
-   "step": 206,
+   "step": 192,
    "kind": "press",
-   "t": 1789863961198,
+   "t": 1789866318811,
    "target": "ok",
    "surface": "packet",
    "logical": [
@@ -5267,18 +4826,18 @@
    ]
   },
   {
-   "step": 207,
+   "step": 193,
    "kind": "silent-surface",
-   "t": 1789863961199,
+   "t": 1789866318812,
    "what": "diary is live and owns no rect field at all — its button geometry lives inline in handleClick, so it must be found by sweeping",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 208,
+   "step": 194,
    "kind": "sweep-hit",
-   "t": 1789863967442,
+   "t": 1789866325110,
    "target": "(swept) diary",
    "surface": "os",
    "logical": [
@@ -5297,9 +4856,9 @@
    "what": "found by sweep — this surface publishes no hit rects"
   },
   {
-   "step": 209,
+   "step": 195,
    "kind": "press",
-   "t": 1789863968730,
+   "t": 1789866326401,
    "target": "diary (known control)",
    "surface": "diary",
    "logical": [
@@ -5317,18 +4876,18 @@
    "changed": false
   },
   {
-   "step": 210,
+   "step": 196,
    "kind": "silent-surface",
-   "t": 1789863968731,
+   "t": 1789866326401,
    "what": "diary is live and owns no rect field at all — its button geometry lives inline in handleClick, so it must be found by sweeping",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 211,
+   "step": 197,
    "kind": "sweep-hit",
-   "t": 1789863980111,
+   "t": 1789866337911,
    "target": "(swept) diary",
    "surface": "os",
    "logical": [
@@ -5347,9 +4906,9 @@
    "what": "found by sweep — this surface publishes no hit rects"
   },
   {
-   "step": 212,
+   "step": 198,
    "kind": "press",
-   "t": 1789863981395,
+   "t": 1789866339215,
    "target": "diary (known control)",
    "surface": "diary",
    "logical": [
@@ -5367,18 +4926,18 @@
    "changed": false
   },
   {
-   "step": 213,
+   "step": 199,
    "kind": "silent-surface",
-   "t": 1789863981395,
+   "t": 1789866339215,
    "what": "diary is live and owns no rect field at all — its button geometry lives inline in handleClick, so it must be found by sweeping",
    "era": "e1",
    "phase": "desktop",
    "spine": "e1"
   },
   {
-   "step": 214,
+   "step": 200,
    "kind": "sweep-hit",
-   "t": 1789863982877,
+   "t": 1789866340692,
    "target": "(swept) diary",
    "surface": "os",
    "logical": [
@@ -5397,18 +4956,18 @@
    "what": "found by sweep — this surface publishes no hit rects"
   },
   {
-   "step": 215,
+   "step": 201,
    "kind": "press",
-   "t": 1789863985079,
-   "target": "icon-provotype-intake",
-   "surface": "os",
+   "t": 1789866342898,
+   "target": "dm-down",
+   "surface": "irc",
    "logical": [
-    29,
-    168
+    458,
+    276
    ],
    "page": [
-    343,
-    553
+    904,
+    694
    ],
    "era": "e1",
    "phase": "desktop",
@@ -5421,11 +4980,10 @@
    "changed": true,
    "live": [
     "os:icon-a",
+    "os:icon-provotype",
+    "os:icon-provotype-intake",
     "os:taskbar-kit",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause",
+    "irc:dm-up",
     "updateApp:cascade-retry",
     "updateApp:cascade-cancel"
    ],
@@ -5434,18 +4992,18 @@
    ]
   },
   {
-   "step": 216,
+   "step": 202,
    "kind": "listening",
-   "t": 1789863985988,
+   "t": 1789866343808,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e1",
    "phase": "desktop",
    "spine": "e2"
   },
   {
-   "step": 217,
+   "step": 203,
    "kind": "press",
-   "t": 1789863989096,
+   "t": 1789866346912,
    "target": "cascade-retry",
    "surface": "updateApp",
    "logical": [
@@ -5465,11 +5023,10 @@
    "changed": true,
    "live": [
     "os:icon-a",
+    "os:icon-provotype",
+    "os:icon-provotype-intake",
     "os:taskbar-kit",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause",
+    "irc:dm-up",
     "updateApp:update-now",
     "updateApp:remind-later"
    ],
@@ -5478,9 +5035,9 @@
    ]
   },
   {
-   "step": 218,
+   "step": 204,
    "kind": "press",
-   "t": 1789863991294,
+   "t": 1789866349113,
    "target": "update-now",
    "surface": "updateApp",
    "logical": [
@@ -5502,11 +5059,10 @@
    "changed": true,
    "live": [
     "os:icon-a",
+    "os:icon-provotype",
+    "os:icon-provotype-intake",
     "os:taskbar-kit",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause",
+    "irc:dm-up",
     "updateApp:eula-readon"
    ],
    "unreachable": [
@@ -5514,9 +5070,9 @@
    ]
   },
   {
-   "step": 219,
+   "step": 205,
    "kind": "press",
-   "t": 1789863993495,
+   "t": 1789866351314,
    "target": "eula-readon",
    "surface": "updateApp",
    "logical": [
@@ -5536,11 +5092,10 @@
    "changed": true,
    "live": [
     "os:icon-a",
+    "os:icon-provotype",
+    "os:icon-provotype-intake",
     "os:taskbar-kit",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause",
+    "irc:dm-up",
     "updateApp:eula-agree"
    ],
    "unreachable": [
@@ -5548,9 +5103,9 @@
    ]
   },
   {
-   "step": 220,
+   "step": 206,
    "kind": "press",
-   "t": 1789863995700,
+   "t": 1789866353512,
    "target": "eula-agree",
    "surface": "updateApp",
    "logical": [
@@ -5570,10 +5125,9 @@
    "changed": true,
    "live": [
     "os:icon-a",
-    "provotype:leave",
-    "provotype:primary",
-    "provotype:leave",
-    "provotype:pause"
+    "os:icon-provotype",
+    "os:icon-provotype-intake",
+    "irc:dm-up"
    ],
    "unreachable": [
     "os:taskbar-kit — off-screen at 411,898",
@@ -5581,9 +5135,9 @@
    ]
   },
   {
-   "step": 221,
+   "step": 207,
    "kind": "press",
-   "t": 1789864018850,
+   "t": 1789866376648,
    "target": "icon-send",
    "surface": "os",
    "logical": [
@@ -5611,18 +5165,18 @@
    ]
   },
   {
-   "step": 222,
+   "step": 208,
    "kind": "listening",
-   "t": 1789864019759,
+   "t": 1789866377559,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 223,
+   "step": 209,
    "kind": "press",
-   "t": 1789864023775,
+   "t": 1789866381595,
    "target": "icon-send",
    "surface": "os",
    "logical": [
@@ -5648,27 +5202,27 @@
    ]
   },
   {
-   "step": 224,
+   "step": 210,
    "kind": "listening",
-   "t": 1789864024687,
+   "t": 1789866382507,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 225,
+   "step": 211,
    "kind": "listening",
-   "t": 1789864029234,
+   "t": 1789866387069,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 226,
+   "step": 212,
    "kind": "press",
-   "t": 1789864031445,
+   "t": 1789866390196,
    "target": "icon-send",
    "surface": "os",
    "logical": [
@@ -5694,9 +5248,46 @@
    ]
   },
   {
-   "step": 227,
+   "step": 213,
+   "kind": "listening",
+   "t": 1789866391104,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 214,
+   "kind": "press",
+   "t": 1789866394225,
+   "target": "icon-send",
+   "surface": "os",
+   "logical": [
+    29,
+    216
+   ],
+   "page": [
+    343,
+    615
+   ],
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1",
+   "qMode": "dark",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false,
+   "live": [
+    "os:icon-send"
+   ],
+   "unreachable": [
+    "phone:unlock — era3-device-phone is disabled"
+   ]
+  },
+  {
+   "step": 215,
    "kind": "inert",
-   "t": 1789864031446,
+   "t": 1789866394225,
    "target": "icon-send",
    "surface": "os",
    "era": "e2",
@@ -5705,45 +5296,36 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 228,
+   "step": 216,
    "kind": "waiting-out",
-   "t": 1789864031446,
+   "t": 1789866394225,
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 229,
-   "kind": "waiting-out",
-   "t": 1789864036457,
-   "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
-   "era": "e2",
-   "phase": "desktop",
-   "spine": "e2_s1"
-  },
-  {
-   "step": 230,
+   "step": 217,
    "kind": "listening",
-   "t": 1789864042383,
+   "t": 1789866400147,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 231,
+   "step": 218,
    "kind": "listening",
-   "t": 1789864046946,
+   "t": 1789866404698,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 232,
+   "step": 219,
    "kind": "press",
-   "t": 1789864050982,
+   "t": 1789866408727,
    "target": "icon-send",
    "surface": "os",
    "logical": [
@@ -5769,18 +5351,63 @@
    ]
   },
   {
-   "step": 233,
+   "step": 220,
    "kind": "listening",
-   "t": 1789864051892,
+   "t": 1789866409634,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 234,
+   "step": 221,
+   "kind": "listening",
+   "t": 1789866414187,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 222,
+   "kind": "listening",
+   "t": 1789866419649,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 223,
+   "kind": "listening",
+   "t": 1789866425115,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 224,
+   "kind": "listening",
+   "t": 1789866430580,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 225,
+   "kind": "listening",
+   "t": 1789866436045,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e2",
+   "phase": "desktop",
+   "spine": "e2_s1"
+  },
+  {
+   "step": 226,
    "kind": "press",
-   "t": 1789864055909,
+   "t": 1789866440974,
    "target": "lamby-hello",
    "surface": "os",
    "logical": [
@@ -5810,36 +5437,36 @@
    ]
   },
   {
-   "step": 235,
+   "step": 227,
    "kind": "listening",
-   "t": 1789864056820,
+   "t": 1789866441884,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 236,
+   "step": 228,
    "kind": "listening",
-   "t": 1789864061367,
+   "t": 1789866446440,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 237,
+   "step": 229,
    "kind": "listening",
-   "t": 1789864066826,
+   "t": 1789866451899,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e2_s1"
   },
   {
-   "step": 238,
+   "step": 230,
    "kind": "press",
-   "t": 1789864073593,
+   "t": 1789866455022,
    "target": "lamby-begin",
    "surface": "os",
    "logical": [
@@ -5875,9 +5502,9 @@
    ]
   },
   {
-   "step": 239,
+   "step": 231,
    "kind": "press",
-   "t": 1789864075793,
+   "t": 1789866457226,
    "target": "checkin:steady",
    "surface": "restorify",
    "logical": [
@@ -5910,9 +5537,9 @@
    ]
   },
   {
-   "step": 240,
+   "step": 232,
    "kind": "press",
-   "t": 1789864077992,
+   "t": 1789866459426,
    "target": "checkin-continue",
    "surface": "restorify",
    "logical": [
@@ -5944,9 +5571,9 @@
    ]
   },
   {
-   "step": 241,
+   "step": 233,
    "kind": "press",
-   "t": 1789864080193,
+   "t": 1789866461624,
    "target": "icon-send",
    "surface": "os",
    "logical": [
@@ -5978,9 +5605,9 @@
    ]
   },
   {
-   "step": 242,
+   "step": 234,
    "kind": "press",
-   "t": 1789864082397,
+   "t": 1789866463825,
    "target": "send-go",
    "surface": "os",
    "logical": [
@@ -6013,9 +5640,9 @@
    ]
   },
   {
-   "step": 243,
+   "step": 235,
    "kind": "turn",
-   "t": 1789864122885,
+   "t": 1789866504340,
    "target": "icon-restorify",
    "surface": "os",
    "era": "e2",
@@ -6024,9 +5651,9 @@
    "what": "turned -170.6° yaw / -0.2° pitch toward `icon-restorify` (4.28 m, was \"behind the camera\") — it is in frame now"
   },
   {
-   "step": 244,
+   "step": 236,
    "kind": "press",
-   "t": 1789864125092,
+   "t": 1789866506534,
    "target": "icon-send",
    "surface": "os",
    "logical": [
@@ -6058,9 +5685,9 @@
    ]
   },
   {
-   "step": 245,
+   "step": 237,
    "kind": "press",
-   "t": 1789864127288,
+   "t": 1789866508741,
    "target": "send-go",
    "surface": "os",
    "logical": [
@@ -6096,9 +5723,9 @@
    ]
   },
   {
-   "step": 246,
+   "step": 238,
    "kind": "turn",
-   "t": 1789864167732,
+   "t": 1789866549197,
    "target": "update-now",
    "surface": "updateApp",
    "era": "e2",
@@ -6107,9 +5734,9 @@
    "what": "turned 170.8° yaw / 1.4° pitch toward `update-now` (4.38 m, was \"behind the camera\") — it is in frame now"
   },
   {
-   "step": 247,
+   "step": 239,
    "kind": "press",
-   "t": 1789864169933,
+   "t": 1789866551402,
    "target": "update-now",
    "surface": "updateApp",
    "logical": [
@@ -6140,9 +5767,9 @@
    ]
   },
   {
-   "step": 248,
+   "step": 240,
    "kind": "press",
-   "t": 1789864172139,
+   "t": 1789866553601,
    "target": "eula-readon",
    "surface": "updateApp",
    "logical": [
@@ -6171,9 +5798,9 @@
    ]
   },
   {
-   "step": 249,
+   "step": 241,
    "kind": "press",
-   "t": 1789864174335,
+   "t": 1789866555802,
    "target": "eula-agree",
    "surface": "updateApp",
    "logical": [
@@ -6201,36 +5828,36 @@
    ]
   },
   {
-   "step": 250,
+   "step": 242,
    "kind": "listening",
-   "t": 1789864175246,
+   "t": 1789866556710,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 251,
+   "step": 243,
    "kind": "listening",
-   "t": 1789864179795,
+   "t": 1789866561262,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 252,
+   "step": 244,
    "kind": "listening",
-   "t": 1789864185256,
+   "t": 1789866566720,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e2",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 253,
+   "step": 245,
    "kind": "press",
-   "t": 1789864189271,
+   "t": 1789866570738,
    "target": "icon-restorify",
    "surface": "os",
    "logical": [
@@ -6258,36 +5885,36 @@
    "unreachable": []
   },
   {
-   "step": 254,
+   "step": 246,
    "kind": "listening",
-   "t": 1789864220799,
+   "t": 1789866602248,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 255,
+   "step": 247,
    "kind": "listening",
-   "t": 1789864225358,
+   "t": 1789866606809,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 256,
+   "step": 248,
    "kind": "listening",
-   "t": 1789864230822,
+   "t": 1789866612279,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 257,
+   "step": 249,
    "kind": "press",
-   "t": 1789864236686,
+   "t": 1789866618136,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -6314,9 +5941,9 @@
    "unreachable": []
   },
   {
-   "step": 258,
+   "step": 250,
    "kind": "inert",
-   "t": 1789864236686,
+   "t": 1789866618136,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -6325,9 +5952,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 259,
+   "step": 251,
    "kind": "press",
-   "t": 1789864238900,
+   "t": 1789866620351,
    "target": "signin",
    "surface": "workstation",
    "logical": [
@@ -6356,9 +5983,9 @@
    "unreachable": []
   },
   {
-   "step": 260,
+   "step": 252,
    "kind": "press",
-   "t": 1789864241101,
+   "t": 1789866622549,
    "target": "consent-allow",
    "surface": "workstation",
    "logical": [
@@ -6394,18 +6021,18 @@
    "unreachable": []
   },
   {
-   "step": 261,
+   "step": 253,
    "kind": "listening",
-   "t": 1789864242011,
+   "t": 1789866623462,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 262,
+   "step": 254,
    "kind": "press",
-   "t": 1789864244214,
+   "t": 1789866625661,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -6439,9 +6066,9 @@
    "unreachable": []
   },
   {
-   "step": 263,
+   "step": 255,
    "kind": "inert",
-   "t": 1789864244214,
+   "t": 1789866625662,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -6450,9 +6077,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 264,
+   "step": 256,
    "kind": "press",
-   "t": 1789864246414,
+   "t": 1789866627867,
    "target": "task-restore",
    "surface": "workstation",
    "logical": [
@@ -6486,9 +6113,9 @@
    "unreachable": []
   },
   {
-   "step": 265,
+   "step": 257,
    "kind": "inert",
-   "t": 1789864246414,
+   "t": 1789866627868,
    "target": "task-restore",
    "surface": "workstation",
    "era": "e3",
@@ -6497,9 +6124,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 266,
+   "step": 258,
    "kind": "press",
-   "t": 1789864248615,
+   "t": 1789866630082,
    "target": "task-0",
    "surface": "workstation",
    "logical": [
@@ -6529,9 +6156,9 @@
    "unreachable": []
   },
   {
-   "step": 267,
+   "step": 259,
    "kind": "press",
-   "t": 1789864250813,
+   "t": 1789866632280,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -6563,18 +6190,18 @@
    "unreachable": []
   },
   {
-   "step": 268,
+   "step": 260,
    "kind": "listening",
-   "t": 1789864251722,
+   "t": 1789866633194,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 269,
+   "step": 261,
    "kind": "press",
-   "t": 1789864253932,
+   "t": 1789866635404,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -6604,9 +6231,9 @@
    "unreachable": []
   },
   {
-   "step": 270,
+   "step": 262,
    "kind": "inert",
-   "t": 1789864253932,
+   "t": 1789866635404,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -6615,9 +6242,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 271,
+   "step": 263,
    "kind": "press",
-   "t": 1789864256129,
+   "t": 1789866637617,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -6649,18 +6276,18 @@
    "unreachable": []
   },
   {
-   "step": 272,
+   "step": 264,
    "kind": "listening",
-   "t": 1789864257039,
+   "t": 1789866638528,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 273,
+   "step": 265,
    "kind": "press",
-   "t": 1789864259251,
+   "t": 1789866640732,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -6690,9 +6317,9 @@
    "unreachable": []
   },
   {
-   "step": 274,
+   "step": 266,
    "kind": "inert",
-   "t": 1789864259251,
+   "t": 1789866640732,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -6701,9 +6328,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 275,
+   "step": 267,
    "kind": "press",
-   "t": 1789864261466,
+   "t": 1789866642928,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -6735,18 +6362,18 @@
    "unreachable": []
   },
   {
-   "step": 276,
+   "step": 268,
    "kind": "listening",
-   "t": 1789864262375,
+   "t": 1789866643842,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 277,
+   "step": 269,
    "kind": "press",
-   "t": 1789864264581,
+   "t": 1789866646050,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -6776,9 +6403,9 @@
    "unreachable": []
   },
   {
-   "step": 278,
+   "step": 270,
    "kind": "inert",
-   "t": 1789864264581,
+   "t": 1789866646050,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -6787,9 +6414,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 279,
+   "step": 271,
    "kind": "press",
-   "t": 1789864266779,
+   "t": 1789866648244,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -6821,18 +6448,18 @@
    "unreachable": []
   },
   {
-   "step": 280,
+   "step": 272,
    "kind": "listening",
-   "t": 1789864267691,
+   "t": 1789866649156,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 281,
+   "step": 273,
    "kind": "press",
-   "t": 1789864269898,
+   "t": 1789866651362,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -6862,9 +6489,9 @@
    "unreachable": []
   },
   {
-   "step": 282,
+   "step": 274,
    "kind": "inert",
-   "t": 1789864269899,
+   "t": 1789866651362,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -6873,9 +6500,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 283,
+   "step": 275,
    "kind": "press",
-   "t": 1789864272102,
+   "t": 1789866653566,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -6907,18 +6534,18 @@
    "unreachable": []
   },
   {
-   "step": 284,
+   "step": 276,
    "kind": "listening",
-   "t": 1789864273013,
+   "t": 1789866654480,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 285,
+   "step": 277,
    "kind": "press",
-   "t": 1789864275217,
+   "t": 1789866656679,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -6948,9 +6575,9 @@
    "unreachable": []
   },
   {
-   "step": 286,
+   "step": 278,
    "kind": "inert",
-   "t": 1789864275217,
+   "t": 1789866656680,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -6959,9 +6586,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 287,
+   "step": 279,
    "kind": "press",
-   "t": 1789864277428,
+   "t": 1789866658881,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -6993,18 +6620,18 @@
    "unreachable": []
   },
   {
-   "step": 288,
+   "step": 280,
    "kind": "listening",
-   "t": 1789864278337,
+   "t": 1789866659793,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 289,
+   "step": 281,
    "kind": "press",
-   "t": 1789864280530,
+   "t": 1789866661996,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -7034,9 +6661,9 @@
    "unreachable": []
   },
   {
-   "step": 290,
+   "step": 282,
    "kind": "inert",
-   "t": 1789864280530,
+   "t": 1789866661997,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -7045,9 +6672,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 291,
+   "step": 283,
    "kind": "press",
-   "t": 1789864282728,
+   "t": 1789866664198,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -7080,18 +6707,18 @@
    "unreachable": []
   },
   {
-   "step": 292,
+   "step": 284,
    "kind": "listening",
-   "t": 1789864283640,
+   "t": 1789866665107,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 293,
+   "step": 285,
    "kind": "press",
-   "t": 1789864285846,
+   "t": 1789866667312,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -7122,9 +6749,9 @@
    "unreachable": []
   },
   {
-   "step": 294,
+   "step": 286,
    "kind": "inert",
-   "t": 1789864285846,
+   "t": 1789866667312,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -7133,9 +6760,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 295,
+   "step": 287,
    "kind": "press",
-   "t": 1789864288042,
+   "t": 1789866669513,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -7168,18 +6795,18 @@
    "unreachable": []
   },
   {
-   "step": 296,
+   "step": 288,
    "kind": "listening",
-   "t": 1789864288954,
+   "t": 1789866670426,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 297,
+   "step": 289,
    "kind": "press",
-   "t": 1789864291161,
+   "t": 1789866672626,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -7210,9 +6837,9 @@
    "unreachable": []
   },
   {
-   "step": 298,
+   "step": 290,
    "kind": "inert",
-   "t": 1789864291161,
+   "t": 1789866672626,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -7221,9 +6848,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 299,
+   "step": 291,
    "kind": "press",
-   "t": 1789864293360,
+   "t": 1789866674832,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -7256,18 +6883,18 @@
    "unreachable": []
   },
   {
-   "step": 300,
+   "step": 292,
    "kind": "listening",
-   "t": 1789864294271,
+   "t": 1789866675744,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 301,
+   "step": 293,
    "kind": "press",
-   "t": 1789864296479,
+   "t": 1789866677944,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -7298,9 +6925,9 @@
    "unreachable": []
   },
   {
-   "step": 302,
+   "step": 294,
    "kind": "inert",
-   "t": 1789864296479,
+   "t": 1789866677944,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -7309,9 +6936,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 303,
+   "step": 295,
    "kind": "press",
-   "t": 1789864298678,
+   "t": 1789866680147,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -7344,18 +6971,18 @@
    "unreachable": []
   },
   {
-   "step": 304,
+   "step": 296,
    "kind": "listening",
-   "t": 1789864299588,
+   "t": 1789866681060,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 305,
+   "step": 297,
    "kind": "press",
-   "t": 1789864301794,
+   "t": 1789866683265,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -7386,9 +7013,9 @@
    "unreachable": []
   },
   {
-   "step": 306,
+   "step": 298,
    "kind": "inert",
-   "t": 1789864301794,
+   "t": 1789866683265,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -7397,9 +7024,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 307,
+   "step": 299,
    "kind": "press",
-   "t": 1789864303993,
+   "t": 1789866685479,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -7432,18 +7059,18 @@
    "unreachable": []
   },
   {
-   "step": 308,
+   "step": 300,
    "kind": "listening",
-   "t": 1789864304903,
+   "t": 1789866686390,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 309,
+   "step": 301,
    "kind": "press",
-   "t": 1789864307115,
+   "t": 1789866688591,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -7474,9 +7101,9 @@
    "unreachable": []
   },
   {
-   "step": 310,
+   "step": 302,
    "kind": "inert",
-   "t": 1789864307116,
+   "t": 1789866688591,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -7485,9 +7112,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 311,
+   "step": 303,
    "kind": "press",
-   "t": 1789864309308,
+   "t": 1789866690798,
    "target": "apply",
    "surface": "workstation",
    "logical": [
@@ -7520,18 +7147,18 @@
    "unreachable": []
   },
   {
-   "step": 312,
+   "step": 304,
    "kind": "listening",
-   "t": 1789864310220,
+   "t": 1789866691707,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 313,
+   "step": 305,
    "kind": "press",
-   "t": 1789864312428,
+   "t": 1789866693910,
    "target": "unlock",
    "surface": "phone",
    "logical": [
@@ -7562,9 +7189,9 @@
    "unreachable": []
   },
   {
-   "step": 314,
+   "step": 306,
    "kind": "inert",
-   "t": 1789864312428,
+   "t": 1789866693910,
    "target": "unlock",
    "surface": "phone",
    "era": "e3",
@@ -7573,9 +7200,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 315,
+   "step": 307,
    "kind": "press",
-   "t": 1789864314630,
+   "t": 1789866696115,
    "target": "notification",
    "surface": "phone",
    "logical": [
@@ -7607,18 +7234,18 @@
    "unreachable": []
   },
   {
-   "step": 316,
+   "step": 308,
    "kind": "listening",
-   "t": 1789864315541,
+   "t": 1789866697029,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 317,
+   "step": 309,
    "kind": "press",
-   "t": 1789864317746,
+   "t": 1789866699247,
    "target": "link",
    "surface": "phone",
    "logical": [
@@ -7651,27 +7278,27 @@
    "unreachable": []
   },
   {
-   "step": 318,
+   "step": 310,
    "kind": "listening",
-   "t": 1789864318657,
+   "t": 1789866700158,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 319,
+   "step": 311,
    "kind": "listening",
-   "t": 1789864323209,
+   "t": 1789866704717,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 320,
+   "step": 312,
    "kind": "press",
-   "t": 1789864325413,
+   "t": 1789866706930,
    "target": "board-back",
    "surface": "workstation",
    "logical": [
@@ -7707,9 +7334,9 @@
    ]
   },
   {
-   "step": 321,
+   "step": 313,
    "kind": "press",
-   "t": 1789864327610,
+   "t": 1789866709127,
    "target": "task-1",
    "surface": "workstation",
    "logical": [
@@ -7751,9 +7378,9 @@
    ]
   },
   {
-   "step": 322,
+   "step": 314,
    "kind": "press",
-   "t": 1789864329812,
+   "t": 1789866711326,
    "target": "link",
    "surface": "phone",
    "logical": [
@@ -7794,9 +7421,9 @@
    "unreachable": []
   },
   {
-   "step": 323,
+   "step": 315,
    "kind": "inert",
-   "t": 1789864329813,
+   "t": 1789866711326,
    "target": "link",
    "surface": "phone",
    "era": "e3",
@@ -7805,9 +7432,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 324,
+   "step": 316,
    "kind": "press",
-   "t": 1789864332011,
+   "t": 1789866713528,
    "target": "dismiss",
    "surface": "phone",
    "logical": [
@@ -7847,9 +7474,9 @@
    "unreachable": []
   },
   {
-   "step": 325,
+   "step": 317,
    "kind": "press",
-   "t": 1789864334211,
+   "t": 1789866715749,
    "target": "link2",
    "surface": "phone",
    "logical": [
@@ -7892,18 +7519,18 @@
    "unreachable": []
   },
   {
-   "step": 326,
+   "step": 318,
    "kind": "listening",
-   "t": 1789864335121,
+   "t": 1789866716662,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 327,
+   "step": 319,
    "kind": "press",
-   "t": 1789864337326,
+   "t": 1789866718877,
    "target": "task-restore",
    "surface": "workstation",
    "logical": [
@@ -7945,9 +7572,9 @@
    ]
   },
   {
-   "step": 328,
+   "step": 320,
    "kind": "inert",
-   "t": 1789864337326,
+   "t": 1789866718877,
    "target": "task-restore",
    "surface": "workstation",
    "era": "e3",
@@ -7956,9 +7583,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 329,
+   "step": 321,
    "kind": "press",
-   "t": 1789864339528,
+   "t": 1789866721078,
    "target": "board-back",
    "surface": "workstation",
    "logical": [
@@ -7994,9 +7621,9 @@
    ]
   },
   {
-   "step": 330,
+   "step": 322,
    "kind": "press",
-   "t": 1789864341724,
+   "t": 1789866723282,
    "target": "task-2",
    "surface": "workstation",
    "logical": [
@@ -8034,9 +7661,9 @@
    ]
   },
   {
-   "step": 331,
+   "step": 323,
    "kind": "press",
-   "t": 1789864343925,
+   "t": 1789866725493,
    "target": "link2",
    "surface": "phone",
    "logical": [
@@ -8073,9 +7700,9 @@
    "unreachable": []
   },
   {
-   "step": 332,
+   "step": 324,
    "kind": "inert",
-   "t": 1789864343925,
+   "t": 1789866725493,
    "target": "link2",
    "surface": "phone",
    "era": "e3",
@@ -8084,9 +7711,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 333,
+   "step": 325,
    "kind": "press",
-   "t": 1789864346126,
+   "t": 1789866727693,
    "target": "dismiss",
    "surface": "phone",
    "logical": [
@@ -8124,27 +7751,27 @@
    "unreachable": []
   },
   {
-   "step": 334,
+   "step": 326,
    "kind": "listening",
-   "t": 1789864347035,
+   "t": 1789866728602,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 335,
+   "step": 327,
    "kind": "listening",
-   "t": 1789864351586,
+   "t": 1789866733170,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 336,
+   "step": 328,
    "kind": "press",
-   "t": 1789864354710,
+   "t": 1789866736294,
    "target": "link",
    "surface": "phone",
    "logical": [
@@ -8185,18 +7812,18 @@
    "unreachable": []
   },
   {
-   "step": 337,
+   "step": 329,
    "kind": "listening",
-   "t": 1789864355620,
+   "t": 1789866737203,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 338,
+   "step": 330,
    "kind": "press",
-   "t": 1789864357825,
+   "t": 1789866739403,
    "target": "task-restore",
    "surface": "workstation",
    "logical": [
@@ -8236,9 +7863,9 @@
    ]
   },
   {
-   "step": 339,
+   "step": 331,
    "kind": "inert",
-   "t": 1789864357825,
+   "t": 1789866739403,
    "target": "task-restore",
    "surface": "workstation",
    "era": "e3",
@@ -8247,9 +7874,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 340,
+   "step": 332,
    "kind": "press",
-   "t": 1789864360025,
+   "t": 1789866741603,
    "target": "board-back",
    "surface": "workstation",
    "logical": [
@@ -8287,9 +7914,9 @@
    ]
   },
   {
-   "step": 341,
+   "step": 333,
    "kind": "press",
-   "t": 1789864362224,
+   "t": 1789866743805,
    "target": "task-3",
    "surface": "workstation",
    "logical": [
@@ -8328,18 +7955,18 @@
    ]
   },
   {
-   "step": 342,
+   "step": 334,
    "kind": "listening",
-   "t": 1789864363134,
+   "t": 1789866744718,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 343,
+   "step": 335,
    "kind": "press",
-   "t": 1789864365344,
+   "t": 1789866746922,
    "target": "link",
    "surface": "phone",
    "logical": [
@@ -8375,9 +8002,9 @@
    "unreachable": []
   },
   {
-   "step": 344,
+   "step": 336,
    "kind": "inert",
-   "t": 1789864365345,
+   "t": 1789866746922,
    "target": "link",
    "surface": "phone",
    "era": "e3",
@@ -8386,9 +8013,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 345,
+   "step": 337,
    "kind": "press",
-   "t": 1789864367541,
+   "t": 1789866749127,
    "target": "dismiss",
    "surface": "phone",
    "logical": [
@@ -8423,9 +8050,9 @@
    "unreachable": []
   },
   {
-   "step": 346,
+   "step": 338,
    "kind": "press",
-   "t": 1789864369744,
+   "t": 1789866751344,
    "target": "task-restore",
    "surface": "workstation",
    "logical": [
@@ -8460,9 +8087,9 @@
    "unreachable": []
   },
   {
-   "step": 347,
+   "step": 339,
    "kind": "inert",
-   "t": 1789864369744,
+   "t": 1789866751344,
    "target": "task-restore",
    "surface": "workstation",
    "era": "e3",
@@ -8471,9 +8098,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 348,
+   "step": 340,
    "kind": "press",
-   "t": 1789864371940,
+   "t": 1789866753538,
    "target": "board-back",
    "surface": "workstation",
    "logical": [
@@ -8509,9 +8136,9 @@
    "unreachable": []
   },
   {
-   "step": 349,
+   "step": 341,
    "kind": "press",
-   "t": 1789864374142,
+   "t": 1789866755742,
    "target": "task-4",
    "surface": "workstation",
    "logical": [
@@ -8546,9 +8173,9 @@
    "unreachable": []
   },
   {
-   "step": 350,
+   "step": 342,
    "kind": "press",
-   "t": 1789864376342,
+   "t": 1789866757939,
    "target": "link",
    "surface": "phone",
    "logical": [
@@ -8583,9 +8210,9 @@
    "unreachable": []
   },
   {
-   "step": 351,
+   "step": 343,
    "kind": "inert",
-   "t": 1789864376342,
+   "t": 1789866757940,
    "target": "link",
    "surface": "phone",
    "era": "e3",
@@ -8594,9 +8221,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 352,
+   "step": 344,
    "kind": "press",
-   "t": 1789864378538,
+   "t": 1789866760142,
    "target": "task-restore",
    "surface": "workstation",
    "logical": [
@@ -8631,9 +8258,9 @@
    "unreachable": []
   },
   {
-   "step": 353,
+   "step": 345,
    "kind": "inert",
-   "t": 1789864378538,
+   "t": 1789866760142,
    "target": "task-restore",
    "surface": "workstation",
    "era": "e3",
@@ -8642,9 +8269,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 354,
+   "step": 346,
    "kind": "press",
-   "t": 1789864380742,
+   "t": 1789866762338,
    "target": "board-back",
    "surface": "workstation",
    "logical": [
@@ -8680,9 +8307,9 @@
    "unreachable": []
   },
   {
-   "step": 355,
+   "step": 347,
    "kind": "press",
-   "t": 1789864382958,
+   "t": 1789866764537,
    "target": "task-5",
    "surface": "workstation",
    "logical": [
@@ -8723,9 +8350,9 @@
    "unreachable": []
   },
   {
-   "step": 356,
+   "step": 348,
    "kind": "press",
-   "t": 1789864385157,
+   "t": 1789866766740,
    "target": "link",
    "surface": "phone",
    "logical": [
@@ -8766,9 +8393,9 @@
    "unreachable": []
   },
   {
-   "step": 357,
+   "step": 349,
    "kind": "inert",
-   "t": 1789864385157,
+   "t": 1789866766740,
    "target": "link",
    "surface": "phone",
    "era": "e3",
@@ -8777,9 +8404,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 358,
+   "step": 350,
    "kind": "press",
-   "t": 1789864387357,
+   "t": 1789866768936,
    "target": "task-restore",
    "surface": "workstation",
    "logical": [
@@ -8820,9 +8447,9 @@
    "unreachable": []
   },
   {
-   "step": 359,
+   "step": 351,
    "kind": "inert",
-   "t": 1789864387357,
+   "t": 1789866768936,
    "target": "task-restore",
    "surface": "workstation",
    "era": "e3",
@@ -8831,9 +8458,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 360,
+   "step": 352,
    "kind": "press",
-   "t": 1789864389556,
+   "t": 1789866771134,
    "target": "board-back",
    "surface": "workstation",
    "logical": [
@@ -8869,18 +8496,18 @@
    "unreachable": []
   },
   {
-   "step": 361,
+   "step": 353,
    "kind": "listening",
-   "t": 1789864390466,
+   "t": 1789866772041,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 362,
+   "step": 354,
    "kind": "press",
-   "t": 1789864392673,
+   "t": 1789866774236,
    "target": "update-now",
    "surface": "updateApp",
    "logical": [
@@ -8917,9 +8544,9 @@
    "unreachable": []
   },
   {
-   "step": 363,
+   "step": 355,
    "kind": "press",
-   "t": 1789864394872,
+   "t": 1789866776437,
    "target": "eula-readon",
    "surface": "updateApp",
    "logical": [
@@ -8956,9 +8583,9 @@
    "unreachable": []
   },
   {
-   "step": 364,
+   "step": 356,
    "kind": "sweep-hit",
-   "t": 1789864430099,
+   "t": 1789866811648,
    "target": "(swept) ritual",
    "surface": "os",
    "logical": [
@@ -8977,9 +8604,9 @@
    "what": "found by sweep — this surface publishes no hit rects"
   },
   {
-   "step": 365,
+   "step": 357,
    "kind": "press",
-   "t": 1789864432301,
+   "t": 1789866813851,
    "target": "eula-agree",
    "surface": "updateApp",
    "logical": [
@@ -9015,36 +8642,36 @@
    "unreachable": []
   },
   {
-   "step": 366,
+   "step": 358,
    "kind": "listening",
-   "t": 1789864433213,
+   "t": 1789866814762,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 367,
+   "step": 359,
    "kind": "listening",
-   "t": 1789864437763,
+   "t": 1789866819312,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 368,
+   "step": 360,
    "kind": "listening",
-   "t": 1789864443220,
+   "t": 1789866824770,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e3",
    "phase": "desktop",
    "spine": "e3"
   },
   {
-   "step": 369,
+   "step": 361,
    "kind": "press",
-   "t": 1789864447236,
+   "t": 1789866828791,
    "target": "task-6",
    "surface": "workstation",
    "logical": [
@@ -9082,27 +8709,27 @@
    ]
   },
   {
-   "step": 370,
+   "step": 362,
    "kind": "listening",
-   "t": 1789864491665,
+   "t": 1789866873204,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 371,
+   "step": 363,
    "kind": "listening",
-   "t": 1789864496218,
+   "t": 1789866877755,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 372,
+   "step": 364,
    "kind": "press",
-   "t": 1789864498418,
+   "t": 1789866879947,
    "target": "e4-touch",
    "surface": "os",
    "logical": [
@@ -9146,18 +8773,18 @@
    ]
   },
   {
-   "step": 373,
+   "step": 365,
    "kind": "listening",
-   "t": 1789864499326,
+   "t": 1789866880860,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 374,
+   "step": 366,
    "kind": "press",
-   "t": 1789864503354,
+   "t": 1789866884877,
    "target": "search-open",
    "surface": "e4.browser",
    "logical": [
@@ -9202,27 +8829,27 @@
    ]
   },
   {
-   "step": 375,
+   "step": 367,
    "kind": "listening",
-   "t": 1789864504264,
+   "t": 1789866885785,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 376,
+   "step": 368,
    "kind": "listening",
-   "t": 1789864508822,
+   "t": 1789866890341,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 377,
+   "step": 369,
    "kind": "press",
-   "t": 1789864511034,
+   "t": 1789866892546,
    "target": "agent-begin",
    "surface": "e4.browser",
    "logical": [
@@ -9266,18 +8893,18 @@
    ]
   },
   {
-   "step": 378,
+   "step": 370,
    "kind": "listening",
-   "t": 1789864511943,
+   "t": 1789866893463,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 379,
+   "step": 371,
    "kind": "press",
-   "t": 1789864515970,
+   "t": 1789866897480,
    "target": "tab2",
    "surface": "e4.browser",
    "logical": [
@@ -9319,18 +8946,18 @@
    ]
   },
   {
-   "step": 380,
+   "step": 372,
    "kind": "listening",
-   "t": 1789864516880,
+   "t": 1789866898395,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 381,
+   "step": 373,
    "kind": "press",
-   "t": 1789864520916,
+   "t": 1789866902432,
    "target": "step-record",
    "surface": "e4.browser",
    "logical": [
@@ -9374,18 +9001,18 @@
    ]
   },
   {
-   "step": 382,
+   "step": 374,
    "kind": "listening",
-   "t": 1789864521827,
+   "t": 1789866903344,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 383,
+   "step": 375,
    "kind": "press",
-   "t": 1789864525854,
+   "t": 1789866907383,
    "target": "step-next",
    "surface": "e4.browser",
    "logical": [
@@ -9428,18 +9055,18 @@
    ]
   },
   {
-   "step": 384,
+   "step": 376,
    "kind": "listening",
-   "t": 1789864526767,
+   "t": 1789866908294,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 385,
+   "step": 377,
    "kind": "press",
-   "t": 1789864530803,
+   "t": 1789866910496,
    "target": "tab3",
    "surface": "e4.browser",
    "logical": [
@@ -9482,18 +9109,9 @@
    ]
   },
   {
-   "step": 386,
-   "kind": "listening",
-   "t": 1789864531713,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 387,
+   "step": 378,
    "kind": "press",
-   "t": 1789864533916,
+   "t": 1789866912698,
    "target": "step-photos",
    "surface": "e4.browser",
    "logical": [
@@ -9538,9 +9156,9 @@
    ]
   },
   {
-   "step": 388,
+   "step": 379,
    "kind": "press",
-   "t": 1789864536116,
+   "t": 1789866914897,
    "target": "file-0",
    "surface": "e4.browser",
    "logical": [
@@ -9585,9 +9203,18 @@
    ]
   },
   {
-   "step": 389,
+   "step": 380,
+   "kind": "listening",
+   "t": 1789866915809,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 381,
    "kind": "press",
-   "t": 1789864538316,
+   "t": 1789866919846,
    "target": "file-back",
    "surface": "e4.browser",
    "logical": [
@@ -9628,18 +9255,18 @@
    ]
   },
   {
-   "step": 390,
+   "step": 382,
    "kind": "listening",
-   "t": 1789864539226,
+   "t": 1789866920760,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 391,
+   "step": 383,
    "kind": "press",
-   "t": 1789864541431,
+   "t": 1789866922964,
    "target": "tab2",
    "surface": "e4.browser",
    "logical": [
@@ -9684,18 +9311,18 @@
    ]
   },
   {
-   "step": 392,
+   "step": 384,
    "kind": "listening",
-   "t": 1789864542342,
+   "t": 1789866923875,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 393,
+   "step": 385,
    "kind": "press",
-   "t": 1789864546367,
+   "t": 1789866927914,
    "target": "step-next",
    "surface": "e4.browser",
    "logical": [
@@ -9738,9 +9365,9 @@
    ]
   },
   {
-   "step": 394,
+   "step": 386,
    "kind": "press",
-   "t": 1789864548567,
+   "t": 1789866930116,
    "target": "tab4",
    "surface": "e4.browser",
    "logical": [
@@ -9783,18 +9410,18 @@
    ]
   },
   {
-   "step": 395,
+   "step": 387,
    "kind": "listening",
-   "t": 1789864549477,
+   "t": 1789866931025,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 396,
+   "step": 388,
    "kind": "press",
-   "t": 1789864553498,
+   "t": 1789866935045,
    "target": "step-care",
    "surface": "e4.browser",
    "logical": [
@@ -9839,18 +9466,18 @@
    ]
   },
   {
-   "step": 397,
+   "step": 389,
    "kind": "listening",
-   "t": 1789864554410,
+   "t": 1789866935960,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 398,
+   "step": 390,
    "kind": "press",
-   "t": 1789864558431,
+   "t": 1789866939999,
    "target": "step-next",
    "surface": "e4.browser",
    "logical": [
@@ -9894,18 +9521,18 @@
    ]
   },
   {
-   "step": 399,
+   "step": 391,
    "kind": "listening",
-   "t": 1789864559339,
+   "t": 1789866940908,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 400,
+   "step": 392,
    "kind": "press",
-   "t": 1789864563365,
+   "t": 1789866944933,
    "target": "tab1",
    "surface": "e4.browser",
    "logical": [
@@ -9949,18 +9576,18 @@
    ]
   },
   {
-   "step": 401,
+   "step": 393,
    "kind": "listening",
-   "t": 1789864564275,
+   "t": 1789866945845,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 402,
+   "step": 394,
    "kind": "press",
-   "t": 1789864568297,
+   "t": 1789866949876,
    "target": "step-chat",
    "surface": "e4.browser",
    "logical": [
@@ -10006,18 +9633,18 @@
    ]
   },
   {
-   "step": 403,
+   "step": 395,
    "kind": "listening",
-   "t": 1789864569208,
+   "t": 1789866950790,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 404,
+   "step": 396,
    "kind": "press",
-   "t": 1789864571417,
+   "t": 1789866952997,
    "target": "step-next",
    "surface": "e4.browser",
    "logical": [
@@ -10061,9 +9688,9 @@
    ]
   },
   {
-   "step": 405,
+   "step": 397,
    "kind": "press",
-   "t": 1789864573616,
+   "t": 1789866955199,
    "target": "tab0",
    "surface": "e4.browser",
    "logical": [
@@ -10107,9 +9734,9 @@
    ]
   },
   {
-   "step": 406,
+   "step": 398,
    "kind": "press",
-   "t": 1789864575812,
+   "t": 1789866957391,
    "target": "tab0",
    "surface": "e4.browser",
    "logical": [
@@ -10153,18 +9780,18 @@
    ]
   },
   {
-   "step": 407,
+   "step": 399,
    "kind": "listening",
-   "t": 1789864576722,
+   "t": 1789866958305,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 408,
+   "step": 400,
    "kind": "press",
-   "t": 1789864578929,
+   "t": 1789866962327,
    "target": "tab1",
    "surface": "e4.browser",
    "logical": [
@@ -10208,9 +9835,18 @@
    ]
   },
   {
-   "step": 409,
+   "step": 401,
+   "kind": "listening",
+   "t": 1789866963238,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 402,
    "kind": "press",
-   "t": 1789864581129,
+   "t": 1789866965444,
    "target": "tab3",
    "surface": "e4.browser",
    "logical": [
@@ -10255,9 +9891,9 @@
    ]
   },
   {
-   "step": 410,
+   "step": 403,
    "kind": "press",
-   "t": 1789864583326,
+   "t": 1789866967642,
    "target": "tab4",
    "surface": "e4.browser",
    "logical": [
@@ -10301,18 +9937,9 @@
    ]
   },
   {
-   "step": 411,
-   "kind": "listening",
-   "t": 1789864584239,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 412,
+   "step": 404,
    "kind": "press",
-   "t": 1789864586446,
+   "t": 1789866969846,
    "target": "tab0",
    "surface": "e4.browser",
    "logical": [
@@ -10356,9 +9983,18 @@
    ]
   },
   {
-   "step": 413,
+   "step": 405,
+   "kind": "listening",
+   "t": 1789866970756,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 406,
    "kind": "press",
-   "t": 1789864588646,
+   "t": 1789866972960,
    "target": "tab1",
    "surface": "e4.browser",
    "logical": [
@@ -10402,9 +10038,9 @@
    ]
   },
   {
-   "step": 414,
+   "step": 407,
    "kind": "press",
-   "t": 1789864590849,
+   "t": 1789866975160,
    "target": "tab2",
    "surface": "e4.browser",
    "logical": [
@@ -10449,18 +10085,9 @@
    ]
   },
   {
-   "step": 415,
-   "kind": "listening",
-   "t": 1789864591761,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 416,
+   "step": 408,
    "kind": "press",
-   "t": 1789864595796,
+   "t": 1789866977361,
    "target": "legacy-toggle",
    "surface": "e4.browser",
    "logical": [
@@ -10507,18 +10134,18 @@
    ]
   },
   {
-   "step": 417,
+   "step": 409,
    "kind": "listening",
-   "t": 1789864596709,
+   "t": 1789866978273,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 418,
+   "step": 410,
    "kind": "press",
-   "t": 1789864598914,
+   "t": 1789866980479,
    "target": "legacy-toggle",
    "surface": "e4.browser",
    "logical": [
@@ -10563,9 +10190,9 @@
    ]
   },
   {
-   "step": 419,
+   "step": 411,
    "kind": "press",
-   "t": 1789864601112,
+   "t": 1789866982677,
    "target": "tab3",
    "surface": "e4.browser",
    "logical": [
@@ -10610,9 +10237,9 @@
    ]
   },
   {
-   "step": 420,
+   "step": 412,
    "kind": "press",
-   "t": 1789864603316,
+   "t": 1789866984877,
    "target": "step-photos",
    "surface": "e4.browser",
    "logical": [
@@ -10657,18 +10284,18 @@
    ]
   },
   {
-   "step": 421,
+   "step": 413,
    "kind": "listening",
-   "t": 1789864604228,
+   "t": 1789866985787,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 422,
+   "step": 414,
    "kind": "press",
-   "t": 1789864606428,
+   "t": 1789866987994,
    "target": "tab4",
    "surface": "e4.browser",
    "logical": [
@@ -10712,9 +10339,9 @@
    ]
   },
   {
-   "step": 423,
+   "step": 415,
    "kind": "press",
-   "t": 1789864608629,
+   "t": 1789866990195,
    "target": "tab0",
    "surface": "e4.browser",
    "logical": [
@@ -10758,9 +10385,18 @@
    ]
   },
   {
-   "step": 424,
+   "step": 416,
+   "kind": "listening",
+   "t": 1789866991103,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 417,
    "kind": "press",
-   "t": 1789864610848,
+   "t": 1789866995125,
    "target": "tab1",
    "surface": "e4.browser",
    "logical": [
@@ -10804,18 +10440,9 @@
    ]
   },
   {
-   "step": 425,
-   "kind": "listening",
-   "t": 1789864611760,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 426,
+   "step": 418,
    "kind": "press",
-   "t": 1789864615798,
+   "t": 1789866997328,
    "target": "tab2",
    "surface": "e4.browser",
    "logical": [
@@ -10860,18 +10487,18 @@
    ]
   },
   {
-   "step": 427,
+   "step": 419,
    "kind": "listening",
-   "t": 1789864616709,
+   "t": 1789866998241,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 428,
+   "step": 420,
    "kind": "press",
-   "t": 1789864618911,
+   "t": 1789867000444,
    "target": "legacy-toggle",
    "surface": "e4.browser",
    "logical": [
@@ -10916,9 +10543,9 @@
    ]
   },
   {
-   "step": 429,
+   "step": 421,
    "kind": "press",
-   "t": 1789864621114,
+   "t": 1789867002644,
    "target": "tab3",
    "surface": "e4.browser",
    "logical": [
@@ -10963,9 +10590,9 @@
    ]
   },
   {
-   "step": 430,
+   "step": 422,
    "kind": "press",
-   "t": 1789864623312,
+   "t": 1789867004841,
    "target": "step-photos",
    "surface": "e4.browser",
    "logical": [
@@ -11010,18 +10637,18 @@
    ]
   },
   {
-   "step": 431,
+   "step": 423,
    "kind": "listening",
-   "t": 1789864624223,
+   "t": 1789867005755,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 432,
+   "step": 424,
    "kind": "press",
-   "t": 1789864626432,
+   "t": 1789867007960,
    "target": "tab4",
    "surface": "e4.browser",
    "logical": [
@@ -11065,9 +10692,9 @@
    ]
   },
   {
-   "step": 433,
+   "step": 425,
    "kind": "press",
-   "t": 1789864628646,
+   "t": 1789867010161,
    "target": "tab0",
    "surface": "e4.browser",
    "logical": [
@@ -11111,9 +10738,9 @@
    ]
   },
   {
-   "step": 434,
+   "step": 426,
    "kind": "turn",
-   "t": 1789864629526,
+   "t": 1789867011024,
    "target": "(press) era4-visor",
    "surface": "plane",
    "era": "e4",
@@ -11122,18 +10749,18 @@
    "what": "turned 41.6° yaw / -9° pitch toward `(press) era4-visor` (0.92 m, was \"off-screen at -388,718\") — it is in frame now"
   },
   {
-   "step": 435,
+   "step": 427,
    "kind": "listening",
-   "t": 1789864630440,
+   "t": 1789867011935,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 436,
+   "step": 428,
    "kind": "press",
-   "t": 1789864633563,
+   "t": 1789867015057,
    "target": "tab1",
    "surface": "e4.browser",
    "logical": [
@@ -11172,45 +10799,45 @@
    ]
   },
   {
-   "step": 437,
+   "step": 429,
    "kind": "listening",
-   "t": 1789864634472,
+   "t": 1789867015965,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 438,
+   "step": 430,
    "kind": "listening",
-   "t": 1789864639041,
+   "t": 1789867020516,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 439,
+   "step": 431,
    "kind": "listening",
-   "t": 1789864644512,
+   "t": 1789867025981,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 440,
+   "step": 432,
    "kind": "listening",
-   "t": 1789864649979,
+   "t": 1789867031446,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 441,
+   "step": 433,
    "kind": "press",
-   "t": 1789864652195,
+   "t": 1789867033656,
    "target": "(press) era4-visor",
    "surface": "plane",
    "logical": null,
@@ -11244,9 +10871,9 @@
    ]
   },
   {
-   "step": 442,
+   "step": 434,
    "kind": "inert",
-   "t": 1789864652195,
+   "t": 1789867033656,
    "target": "(press) era4-visor",
    "surface": "plane",
    "era": "e4",
@@ -11255,9 +10882,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 443,
+   "step": 435,
    "kind": "turn",
-   "t": 1789864653024,
+   "t": 1789867034471,
    "target": "(press) monitor",
    "surface": "plane",
    "era": "e4",
@@ -11266,9 +10893,9 @@
    "what": "turned -42° yaw / 5° pitch toward `(press) monitor` (1 m, was \"off-screen at 1678,403\") — it is in frame now"
   },
   {
-   "step": 444,
+   "step": 436,
    "kind": "press",
-   "t": 1789864655228,
+   "t": 1789867036673,
    "target": "(press) laptop",
    "surface": "plane",
    "logical": null,
@@ -11304,9 +10931,9 @@
    ]
   },
   {
-   "step": 445,
+   "step": 437,
    "kind": "inert",
-   "t": 1789864655228,
+   "t": 1789867036673,
    "target": "(press) laptop",
    "surface": "plane",
    "era": "e4",
@@ -11315,9 +10942,9 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 446,
+   "step": 438,
    "kind": "press",
-   "t": 1789864657430,
+   "t": 1789867038876,
    "target": "(press) monitor",
    "surface": "plane",
    "logical": null,
@@ -11353,18 +10980,18 @@
    ]
   },
   {
-   "step": 447,
+   "step": 439,
    "kind": "listening",
-   "t": 1789864658341,
+   "t": 1789867039785,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 448,
+   "step": 440,
    "kind": "press",
-   "t": 1789864662382,
+   "t": 1789867043815,
    "target": "commons-join",
    "surface": "e4.ball",
    "logical": [
@@ -11403,18 +11030,18 @@
    ]
   },
   {
-   "step": 449,
+   "step": 441,
    "kind": "listening",
-   "t": 1789864663294,
+   "t": 1789867044725,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 450,
+   "step": 442,
    "kind": "press",
-   "t": 1789864665513,
+   "t": 1789867046926,
    "target": "(press) era4-visor",
    "surface": "plane",
    "logical": null,
@@ -11448,9 +11075,9 @@
    ]
   },
   {
-   "step": 451,
+   "step": 443,
    "kind": "inert",
-   "t": 1789864665514,
+   "t": 1789867046926,
    "target": "(press) era4-visor",
    "surface": "plane",
    "era": "e4",
@@ -11459,45 +11086,45 @@
    "what": "registered as live but the press changed nothing at all — most likely swallowed by a modal above it; not pressed again here"
   },
   {
-   "step": 452,
+   "step": 444,
    "kind": "waiting-out",
-   "t": 1789864665514,
+   "t": 1789867046926,
    "what": "every control on this screen has been pressed to its cap — waiting for the piece to speak rather than pressing spent controls",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 453,
+   "step": 445,
    "kind": "listening",
-   "t": 1789864671435,
+   "t": 1789867052850,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 454,
+   "step": 446,
    "kind": "listening",
-   "t": 1789864675996,
+   "t": 1789867057405,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 455,
+   "step": 447,
    "kind": "listening",
-   "t": 1789864681456,
+   "t": 1789867062877,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "e4"
   },
   {
-   "step": 456,
+   "step": 448,
    "kind": "press",
-   "t": 1789864683659,
+   "t": 1789867065092,
    "target": "(press) era4-visor",
    "surface": "plane",
    "logical": null,
@@ -11533,9 +11160,113 @@
    ]
   },
   {
+   "step": 449,
+   "kind": "listening",
+   "t": 1789867066004,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 450,
+   "kind": "listening",
+   "t": 1789867070559,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 451,
+   "kind": "listening",
+   "t": 1789867076032,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 452,
+   "kind": "listening",
+   "t": 1789867081499,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 453,
+   "kind": "listening",
+   "t": 1789867086973,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 454,
+   "kind": "listening",
+   "t": 1789867092437,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 455,
+   "kind": "listening",
+   "t": 1789867097911,
+   "what": "the screen is still drawing itself — holding rather than clicking over it",
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4"
+  },
+  {
+   "step": 456,
+   "kind": "press",
+   "t": 1789867102858,
+   "target": "e4-touch",
+   "surface": "os",
+   "logical": [
+    256,
+    192
+   ],
+   "page": [
+    640,
+    450
+   ],
+   "era": "e4",
+   "phase": "desktop",
+   "spine": "e4",
+   "qMode": "board",
+   "ledgerDelta": 0,
+   "ledgerNew": [],
+   "changed": false,
+   "live": [
+    "os:e4-touch",
+    "plane:(press) stream",
+    "plane:(press) era4-visor"
+   ],
+   "unreachable": [
+    "phone:link — era3-device-phone is disabled",
+    "phone:link — era3-device-phone is disabled",
+    "phone:link — era3-device-phone is disabled",
+    "workstation:win-min — era3-device-workstation is disabled",
+    "workstation:task-restore — era3-device-workstation is disabled",
+    "workstation:record-chip — era3-device-workstation is disabled",
+    "workstation:task-0 — era3-device-workstation is disabled",
+    "workstation:task-1 — era3-device-workstation is disabled",
+    "workstation:task-2 — era3-device-workstation is disabled",
+    "workstation:task-3 — era3-device-workstation is disabled",
+    "workstation:task-4 — era3-device-workstation is disabled",
+    "workstation:task-5 — era3-device-workstation is disabled"
+   ]
+  },
+  {
    "step": 457,
    "kind": "listening",
-   "t": 1789864684571,
+   "t": 1789867103771,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11544,7 +11275,7 @@
   {
    "step": 458,
    "kind": "listening",
-   "t": 1789864689138,
+   "t": 1789867108331,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11553,7 +11284,7 @@
   {
    "step": 459,
    "kind": "listening",
-   "t": 1789864694621,
+   "t": 1789867113796,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11562,7 +11293,7 @@
   {
    "step": 460,
    "kind": "listening",
-   "t": 1789864700097,
+   "t": 1789867119266,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11571,7 +11302,7 @@
   {
    "step": 461,
    "kind": "listening",
-   "t": 1789864705569,
+   "t": 1789867124744,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11580,7 +11311,7 @@
   {
    "step": 462,
    "kind": "listening",
-   "t": 1789864711033,
+   "t": 1789867130230,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11589,7 +11320,7 @@
   {
    "step": 463,
    "kind": "listening",
-   "t": 1789864716506,
+   "t": 1789867135708,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11598,7 +11329,7 @@
   {
    "step": 464,
    "kind": "press",
-   "t": 1789864721458,
+   "t": 1789867140657,
    "target": "e4-touch",
    "surface": "os",
    "logical": [
@@ -11639,7 +11370,7 @@
   {
    "step": 465,
    "kind": "listening",
-   "t": 1789864722371,
+   "t": 1789867141570,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11648,7 +11379,7 @@
   {
    "step": 466,
    "kind": "listening",
-   "t": 1789864726930,
+   "t": 1789867146129,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11657,7 +11388,7 @@
   {
    "step": 467,
    "kind": "listening",
-   "t": 1789864732398,
+   "t": 1789867151614,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11666,7 +11397,7 @@
   {
    "step": 468,
    "kind": "listening",
-   "t": 1789864737861,
+   "t": 1789867157087,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11675,7 +11406,7 @@
   {
    "step": 469,
    "kind": "listening",
-   "t": 1789864743332,
+   "t": 1789867162556,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11684,7 +11415,7 @@
   {
    "step": 470,
    "kind": "listening",
-   "t": 1789864748805,
+   "t": 1789867168032,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11693,7 +11424,7 @@
   {
    "step": 471,
    "kind": "listening",
-   "t": 1789864754270,
+   "t": 1789867173510,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11702,7 +11433,7 @@
   {
    "step": 472,
    "kind": "press",
-   "t": 1789864759208,
+   "t": 1789867178461,
    "target": "e4-touch",
    "surface": "os",
    "logical": [
@@ -11743,7 +11474,7 @@
   {
    "step": 473,
    "kind": "listening",
-   "t": 1789864760117,
+   "t": 1789867179373,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11752,7 +11483,7 @@
   {
    "step": 474,
    "kind": "listening",
-   "t": 1789864764668,
+   "t": 1789867183932,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11761,7 +11492,7 @@
   {
    "step": 475,
    "kind": "listening",
-   "t": 1789864770139,
+   "t": 1789867189411,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11770,7 +11501,7 @@
   {
    "step": 476,
    "kind": "listening",
-   "t": 1789864775603,
+   "t": 1789867194890,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11779,7 +11510,7 @@
   {
    "step": 477,
    "kind": "listening",
-   "t": 1789864781071,
+   "t": 1789867200355,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
@@ -11787,112 +11518,8 @@
   },
   {
    "step": 478,
-   "kind": "listening",
-   "t": 1789864786543,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 479,
-   "kind": "listening",
-   "t": 1789864792010,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 480,
    "kind": "press",
-   "t": 1789864796955,
-   "target": "e4-touch",
-   "surface": "os",
-   "logical": [
-    256,
-    192
-   ],
-   "page": [
-    640,
-    450
-   ],
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4",
-   "qMode": "board",
-   "ledgerDelta": 0,
-   "ledgerNew": [],
-   "changed": false,
-   "live": [
-    "os:e4-touch",
-    "plane:(press) stream",
-    "plane:(press) era4-visor"
-   ],
-   "unreachable": [
-    "phone:link — era3-device-phone is disabled",
-    "phone:link — era3-device-phone is disabled",
-    "phone:link — era3-device-phone is disabled",
-    "workstation:win-min — era3-device-workstation is disabled",
-    "workstation:task-restore — era3-device-workstation is disabled",
-    "workstation:record-chip — era3-device-workstation is disabled",
-    "workstation:task-0 — era3-device-workstation is disabled",
-    "workstation:task-1 — era3-device-workstation is disabled",
-    "workstation:task-2 — era3-device-workstation is disabled",
-    "workstation:task-3 — era3-device-workstation is disabled",
-    "workstation:task-4 — era3-device-workstation is disabled",
-    "workstation:task-5 — era3-device-workstation is disabled"
-   ]
-  },
-  {
-   "step": 481,
-   "kind": "listening",
-   "t": 1789864797869,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 482,
-   "kind": "listening",
-   "t": 1789864802434,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 483,
-   "kind": "listening",
-   "t": 1789864807904,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 484,
-   "kind": "listening",
-   "t": 1789864813375,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 485,
-   "kind": "listening",
-   "t": 1789864818849,
-   "what": "the screen is still drawing itself — holding rather than clicking over it",
-   "era": "e4",
-   "phase": "desktop",
-   "spine": "e4"
-  },
-  {
-   "step": 486,
-   "kind": "press",
-   "t": 1789864822871,
+   "t": 1789867204381,
    "target": "e4-touch",
    "surface": "os",
    "logical": [
@@ -11931,18 +11558,18 @@
    ]
   },
   {
-   "step": 487,
+   "step": 479,
    "kind": "listening",
-   "t": 1789864830243,
+   "t": 1789867211746,
    "what": "the screen is still drawing itself — holding rather than clicking over it",
    "era": "e4",
    "phase": "desktop",
    "spine": "done"
   },
   {
-   "step": 488,
+   "step": 480,
    "kind": "idle",
-   "t": 1789864874712,
+   "t": 1789867256201,
    "what": "waiting — 1 hit rect registered, 0 aimable, 18 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -12198,9 +11825,9 @@
    "audio": "passage_building.mp3,close_sky_bed.mp3"
   },
   {
-   "step": 489,
+   "step": 481,
    "kind": "idle",
-   "t": 1789864879638,
+   "t": 1789867261124,
    "what": "waiting — 1 hit rect registered, 0 aimable, 18 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -12456,24 +12083,24 @@
    "audio": "passage_building.mp3,close_sky_bed.mp3"
   },
   {
-   "step": 490,
+   "step": 482,
    "kind": "silent-screen",
-   "t": 1789864884563,
+   "t": 1789867266047,
    "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
    "era": "e4",
    "phase": "desktop",
    "spine": "done"
   },
   {
-   "step": 491,
+   "step": 483,
    "kind": "sweep-miss",
-   "t": 1789864884570,
+   "t": 1789867266055,
    "what": "swept 0 points on the OS canvas for the ritual and nothing moved"
   },
   {
-   "step": 492,
+   "step": 484,
    "kind": "idle",
-   "t": 1789864885491,
+   "t": 1789867266976,
    "what": "waiting — 1 hit rect registered, 0 aimable, 18 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -12729,9 +12356,9 @@
    "audio": "close_sky_bed.mp3"
   },
   {
-   "step": 493,
+   "step": 485,
    "kind": "press",
-   "t": 1789864906231,
+   "t": 1789867287733,
    "target": "e4-touch",
    "surface": "os",
    "logical": [
@@ -12766,9 +12393,9 @@
    ]
   },
   {
-   "step": 494,
+   "step": 486,
    "kind": "idle",
-   "t": 1789864907142,
+   "t": 1789867288648,
    "what": "waiting — 0 hit rects registered, 0 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -12912,9 +12539,9 @@
    "audio": "close_sky_bed.mp3"
   },
   {
-   "step": 495,
+   "step": 487,
    "kind": "idle",
-   "t": 1789864912072,
+   "t": 1789867293574,
    "what": "waiting — 0 hit rects registered, 0 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -13058,9 +12685,9 @@
    "audio": "close_sky_bed.mp3"
   },
   {
-   "step": 496,
+   "step": 488,
    "kind": "idle",
-   "t": 1789864917006,
+   "t": 1789867298501,
    "what": "waiting — 0 hit rects registered, 0 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -13204,9 +12831,9 @@
    "audio": "close_sky_bed.mp3,session_breath.mp3"
   },
   {
-   "step": 497,
+   "step": 489,
    "kind": "idle",
-   "t": 1789864921936,
+   "t": 1789867303426,
    "what": "waiting — 0 hit rects registered, 0 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -13350,9 +12977,9 @@
    "audio": "session_breath.mp3"
   },
   {
-   "step": 498,
+   "step": 490,
    "kind": "idle",
-   "t": 1789864931704,
+   "t": 1789867313201,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -13502,9 +13129,9 @@
    "audio": "playback_hiss.mp3"
   },
   {
-   "step": 499,
+   "step": 491,
    "kind": "idle",
-   "t": 1789864936632,
+   "t": 1789867318131,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -13654,9 +13281,9 @@
    "audio": ""
   },
   {
-   "step": 500,
+   "step": 492,
    "kind": "idle",
-   "t": 1789864941558,
+   "t": 1789867323063,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -13806,24 +13433,24 @@
    "audio": ""
   },
   {
-   "step": 501,
+   "step": 493,
    "kind": "silent-screen",
-   "t": 1789864946487,
+   "t": 1789867327992,
    "what": "nothing registered anywhere and nothing has moved — sweeping the canvas in case the screen itself is the control",
    "era": "e4",
    "phase": "desktop",
    "spine": "done"
   },
   {
-   "step": 502,
+   "step": 494,
    "kind": "sweep-skip",
-   "t": 1789864946488,
+   "t": 1789867327993,
    "what": "the Close: the glass is the Restart card, every control published, nothing to sweep"
   },
   {
-   "step": 503,
+   "step": 495,
    "kind": "idle",
-   "t": 1789864947403,
+   "t": 1789867328901,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -13973,9 +13600,9 @@
    "audio": ""
   },
   {
-   "step": 504,
+   "step": 496,
    "kind": "idle",
-   "t": 1789864952329,
+   "t": 1789867333822,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -14125,9 +13752,9 @@
    "audio": ""
   },
   {
-   "step": 505,
+   "step": 497,
    "kind": "idle",
-   "t": 1789864957254,
+   "t": 1789867338750,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -14277,9 +13904,9 @@
    "audio": ""
   },
   {
-   "step": 506,
+   "step": 498,
    "kind": "idle",
-   "t": 1789864962182,
+   "t": 1789867343679,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -14429,9 +14056,9 @@
    "audio": ""
   },
   {
-   "step": 507,
+   "step": 499,
    "kind": "idle",
-   "t": 1789864967105,
+   "t": 1789867348601,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -14581,9 +14208,9 @@
    "audio": ""
   },
   {
-   "step": 508,
+   "step": 500,
    "kind": "idle",
-   "t": 1789864972033,
+   "t": 1789867353524,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -14733,9 +14360,9 @@
    "audio": ""
   },
   {
-   "step": 509,
+   "step": 501,
    "kind": "idle",
-   "t": 1789864976960,
+   "t": 1789867358449,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -14885,9 +14512,9 @@
    "audio": ""
   },
   {
-   "step": 510,
+   "step": 502,
    "kind": "idle",
-   "t": 1789864981885,
+   "t": 1789867363377,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -15037,9 +14664,9 @@
    "audio": ""
   },
   {
-   "step": 511,
+   "step": 503,
    "kind": "idle",
-   "t": 1789864986812,
+   "t": 1789867368302,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -15189,9 +14816,9 @@
    "audio": ""
   },
   {
-   "step": 512,
+   "step": 504,
    "kind": "idle",
-   "t": 1789864991737,
+   "t": 1789867373235,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -15341,9 +14968,9 @@
    "audio": ""
   },
   {
-   "step": 513,
+   "step": 505,
    "kind": "idle",
-   "t": 1789864996665,
+   "t": 1789867378165,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -15493,9 +15120,9 @@
    "audio": ""
   },
   {
-   "step": 514,
+   "step": 506,
    "kind": "idle",
-   "t": 1789865001589,
+   "t": 1789867383090,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -15645,9 +15272,9 @@
    "audio": ""
   },
   {
-   "step": 515,
+   "step": 507,
    "kind": "idle",
-   "t": 1789865006515,
+   "t": 1789867388023,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -15797,9 +15424,9 @@
    "audio": ""
   },
   {
-   "step": 516,
+   "step": 508,
    "kind": "idle",
-   "t": 1789865011446,
+   "t": 1789867392953,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -15949,9 +15576,9 @@
    "audio": ""
   },
   {
-   "step": 517,
+   "step": 509,
    "kind": "idle",
-   "t": 1789865016374,
+   "t": 1789867397885,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -16101,9 +15728,9 @@
    "audio": ""
   },
   {
-   "step": 518,
+   "step": 510,
    "kind": "idle",
-   "t": 1789865021301,
+   "t": 1789867402817,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -16253,9 +15880,9 @@
    "audio": ""
   },
   {
-   "step": 519,
+   "step": 511,
    "kind": "idle",
-   "t": 1789865026231,
+   "t": 1789867407743,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -16405,9 +16032,9 @@
    "audio": ""
   },
   {
-   "step": 520,
+   "step": 512,
    "kind": "idle",
-   "t": 1789865031160,
+   "t": 1789867412673,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -16557,9 +16184,9 @@
    "audio": ""
   },
   {
-   "step": 521,
+   "step": 513,
    "kind": "idle",
-   "t": 1789865036086,
+   "t": 1789867417598,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -16709,9 +16336,9 @@
    "audio": ""
   },
   {
-   "step": 522,
+   "step": 514,
    "kind": "idle",
-   "t": 1789865041015,
+   "t": 1789867422524,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -16861,9 +16488,9 @@
    "audio": ""
   },
   {
-   "step": 523,
+   "step": 515,
    "kind": "idle",
-   "t": 1789865045941,
+   "t": 1789867427446,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -17013,9 +16640,9 @@
    "audio": ""
   },
   {
-   "step": 524,
+   "step": 516,
    "kind": "idle",
-   "t": 1789865050864,
+   "t": 1789867432374,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -17165,9 +16792,9 @@
    "audio": ""
   },
   {
-   "step": 525,
+   "step": 517,
    "kind": "idle",
-   "t": 1789865055798,
+   "t": 1789867437304,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -17317,9 +16944,9 @@
    "audio": ""
   },
   {
-   "step": 526,
+   "step": 518,
    "kind": "idle",
-   "t": 1789865060723,
+   "t": 1789867442232,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -17469,9 +17096,9 @@
    "audio": ""
   },
   {
-   "step": 527,
+   "step": 519,
    "kind": "idle",
-   "t": 1789865065651,
+   "t": 1789867447157,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -17621,9 +17248,9 @@
    "audio": ""
   },
   {
-   "step": 528,
+   "step": 520,
    "kind": "idle",
-   "t": 1789865070572,
+   "t": 1789867452085,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -17773,9 +17400,9 @@
    "audio": ""
   },
   {
-   "step": 529,
+   "step": 521,
    "kind": "idle",
-   "t": 1789865075495,
+   "t": 1789867457007,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -17925,9 +17552,9 @@
    "audio": ""
   },
   {
-   "step": 530,
+   "step": 522,
    "kind": "idle",
-   "t": 1789865080422,
+   "t": 1789867461931,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -18077,9 +17704,9 @@
    "audio": ""
   },
   {
-   "step": 531,
+   "step": 523,
    "kind": "idle",
-   "t": 1789865085351,
+   "t": 1789867466856,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -18229,9 +17856,9 @@
    "audio": ""
   },
   {
-   "step": 532,
+   "step": 524,
    "kind": "idle",
-   "t": 1789865090281,
+   "t": 1789867471781,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -18381,9 +18008,9 @@
    "audio": ""
   },
   {
-   "step": 533,
+   "step": 525,
    "kind": "idle",
-   "t": 1789865095206,
+   "t": 1789867476712,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -18533,9 +18160,9 @@
    "audio": ""
   },
   {
-   "step": 534,
+   "step": 526,
    "kind": "idle",
-   "t": 1789865100136,
+   "t": 1789867481637,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -18685,9 +18312,9 @@
    "audio": ""
   },
   {
-   "step": 535,
+   "step": 527,
    "kind": "idle",
-   "t": 1789865105060,
+   "t": 1789867486559,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -18837,9 +18464,9 @@
    "audio": ""
   },
   {
-   "step": 536,
+   "step": 528,
    "kind": "idle",
-   "t": 1789865109985,
+   "t": 1789867491487,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -18989,9 +18616,9 @@
    "audio": ""
   },
   {
-   "step": 537,
+   "step": 529,
    "kind": "idle",
-   "t": 1789865114915,
+   "t": 1789867496415,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -19141,9 +18768,9 @@
    "audio": ""
   },
   {
-   "step": 538,
+   "step": 530,
    "kind": "idle",
-   "t": 1789865119840,
+   "t": 1789867501345,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -19293,9 +18920,9 @@
    "audio": ""
   },
   {
-   "step": 539,
+   "step": 531,
    "kind": "idle",
-   "t": 1789865124760,
+   "t": 1789867506274,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -19445,9 +19072,9 @@
    "audio": ""
   },
   {
-   "step": 540,
+   "step": 532,
    "kind": "idle",
-   "t": 1789865129691,
+   "t": 1789867511202,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -19597,9 +19224,9 @@
    "audio": ""
   },
   {
-   "step": 541,
+   "step": 533,
    "kind": "idle",
-   "t": 1789865134621,
+   "t": 1789867516131,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -19749,9 +19376,9 @@
    "audio": ""
   },
   {
-   "step": 542,
+   "step": 534,
    "kind": "idle",
-   "t": 1789865139547,
+   "t": 1789867521055,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -19901,9 +19528,9 @@
    "audio": ""
   },
   {
-   "step": 543,
+   "step": 535,
    "kind": "idle",
-   "t": 1789865144469,
+   "t": 1789867525981,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -20053,9 +19680,9 @@
    "audio": ""
   },
   {
-   "step": 544,
+   "step": 536,
    "kind": "idle",
-   "t": 1789865149391,
+   "t": 1789867530910,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -20205,9 +19832,9 @@
    "audio": ""
   },
   {
-   "step": 545,
+   "step": 537,
    "kind": "idle",
-   "t": 1789865154317,
+   "t": 1789867535833,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -20357,9 +19984,9 @@
    "audio": ""
   },
   {
-   "step": 546,
+   "step": 538,
    "kind": "idle",
-   "t": 1789865159240,
+   "t": 1789867540762,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -20509,9 +20136,9 @@
    "audio": ""
   },
   {
-   "step": 547,
+   "step": 539,
    "kind": "idle",
-   "t": 1789865164169,
+   "t": 1789867545686,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -20661,9 +20288,9 @@
    "audio": ""
   },
   {
-   "step": 548,
+   "step": 540,
    "kind": "idle",
-   "t": 1789865169093,
+   "t": 1789867550611,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -20813,9 +20440,9 @@
    "audio": ""
   },
   {
-   "step": 549,
+   "step": 541,
    "kind": "idle",
-   "t": 1789865174015,
+   "t": 1789867555542,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -20965,9 +20592,9 @@
    "audio": ""
   },
   {
-   "step": 550,
+   "step": 542,
    "kind": "idle",
-   "t": 1789865178940,
+   "t": 1789867560474,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -21117,9 +20744,9 @@
    "audio": ""
   },
   {
-   "step": 551,
+   "step": 543,
    "kind": "idle",
-   "t": 1789865183866,
+   "t": 1789867565406,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -21269,9 +20896,9 @@
    "audio": ""
   },
   {
-   "step": 552,
+   "step": 544,
    "kind": "idle",
-   "t": 1789865188796,
+   "t": 1789867570334,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -21421,9 +21048,9 @@
    "audio": ""
   },
   {
-   "step": 553,
+   "step": 545,
    "kind": "idle",
-   "t": 1789865193723,
+   "t": 1789867575261,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -21573,9 +21200,9 @@
    "audio": ""
   },
   {
-   "step": 554,
+   "step": 546,
    "kind": "idle",
-   "t": 1789865198653,
+   "t": 1789867580194,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -21725,9 +21352,9 @@
    "audio": ""
   },
   {
-   "step": 555,
+   "step": 547,
    "kind": "idle",
-   "t": 1789865203576,
+   "t": 1789867585121,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -21877,9 +21504,9 @@
    "audio": ""
   },
   {
-   "step": 556,
+   "step": 548,
    "kind": "idle",
-   "t": 1789865208510,
+   "t": 1789867590052,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -22029,9 +21656,9 @@
    "audio": ""
   },
   {
-   "step": 557,
+   "step": 549,
    "kind": "idle",
-   "t": 1789865213444,
+   "t": 1789867594981,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -22181,9 +21808,9 @@
    "audio": ""
   },
   {
-   "step": 558,
+   "step": 550,
    "kind": "idle",
-   "t": 1789865218374,
+   "t": 1789867599906,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -22333,9 +21960,9 @@
    "audio": ""
   },
   {
-   "step": 559,
+   "step": 551,
    "kind": "idle",
-   "t": 1789865223304,
+   "t": 1789867604833,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -22485,9 +22112,9 @@
    "audio": ""
   },
   {
-   "step": 560,
+   "step": 552,
    "kind": "idle",
-   "t": 1789865228239,
+   "t": 1789867609759,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -22637,9 +22264,9 @@
    "audio": ""
   },
   {
-   "step": 561,
+   "step": 553,
    "kind": "idle",
-   "t": 1789865233171,
+   "t": 1789867614687,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -22789,9 +22416,9 @@
    "audio": ""
   },
   {
-   "step": 562,
+   "step": 554,
    "kind": "idle",
-   "t": 1789865238104,
+   "t": 1789867619616,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -22941,9 +22568,9 @@
    "audio": ""
   },
   {
-   "step": 563,
+   "step": 555,
    "kind": "idle",
-   "t": 1789865243032,
+   "t": 1789867624539,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -23093,9 +22720,9 @@
    "audio": ""
   },
   {
-   "step": 564,
+   "step": 556,
    "kind": "idle",
-   "t": 1789865247953,
+   "t": 1789867629470,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -23245,9 +22872,9 @@
    "audio": ""
   },
   {
-   "step": 565,
+   "step": 557,
    "kind": "idle",
-   "t": 1789865252885,
+   "t": 1789867634402,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -23397,9 +23024,9 @@
    "audio": ""
   },
   {
-   "step": 566,
+   "step": 558,
    "kind": "idle",
-   "t": 1789865257813,
+   "t": 1789867639331,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -23549,9 +23176,9 @@
    "audio": ""
   },
   {
-   "step": 567,
+   "step": 559,
    "kind": "idle",
-   "t": 1789865262746,
+   "t": 1789867644262,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -23701,9 +23328,9 @@
    "audio": ""
   },
   {
-   "step": 568,
+   "step": 560,
    "kind": "idle",
-   "t": 1789865267676,
+   "t": 1789867649189,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -23853,9 +23480,9 @@
    "audio": ""
   },
   {
-   "step": 569,
+   "step": 561,
    "kind": "idle",
-   "t": 1789865272596,
+   "t": 1789867654121,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -24005,9 +23632,9 @@
    "audio": ""
   },
   {
-   "step": 570,
+   "step": 562,
    "kind": "idle",
-   "t": 1789865277523,
+   "t": 1789867659055,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -24157,9 +23784,9 @@
    "audio": ""
   },
   {
-   "step": 571,
+   "step": 563,
    "kind": "idle",
-   "t": 1789865282450,
+   "t": 1789867663983,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -24309,9 +23936,9 @@
    "audio": ""
   },
   {
-   "step": 572,
+   "step": 564,
    "kind": "idle",
-   "t": 1789865287377,
+   "t": 1789867668905,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -24461,9 +24088,9 @@
    "audio": ""
   },
   {
-   "step": 573,
+   "step": 565,
    "kind": "idle",
-   "t": 1789865292306,
+   "t": 1789867673832,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -24613,9 +24240,9 @@
    "audio": ""
   },
   {
-   "step": 574,
+   "step": 566,
    "kind": "idle",
-   "t": 1789865297237,
+   "t": 1789867678757,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -24765,9 +24392,9 @@
    "audio": ""
   },
   {
-   "step": 575,
+   "step": 567,
    "kind": "idle",
-   "t": 1789865302166,
+   "t": 1789867683688,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -24917,9 +24544,9 @@
    "audio": ""
   },
   {
-   "step": 576,
+   "step": 568,
    "kind": "idle",
-   "t": 1789865307100,
+   "t": 1789867688610,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -25069,9 +24696,9 @@
    "audio": ""
   },
   {
-   "step": 577,
+   "step": 569,
    "kind": "idle",
-   "t": 1789865312033,
+   "t": 1789867693530,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -25221,9 +24848,9 @@
    "audio": ""
   },
   {
-   "step": 578,
+   "step": 570,
    "kind": "idle",
-   "t": 1789865316964,
+   "t": 1789867698456,
    "what": "waiting — 0 hit rects registered, 5 aimable, 13 unaimable, 0 markers",
    "era": "e4",
    "phase": "desktop",
@@ -25373,18 +25000,18 @@
    "audio": ""
   },
   {
-   "step": 579,
+   "step": 571,
    "kind": "stop",
-   "t": 1789865320980,
+   "t": 1789867702472,
    "what": "THE WALK IS LOOPING: this same screen has come round 80 times with every control on it pressed to its cap — there is no way onward from here",
    "era": "e4",
    "phase": "desktop",
    "spine": "done"
   },
   {
-   "step": 580,
+   "step": 572,
    "kind": "end",
-   "t": 1789865321130,
+   "t": 1789867702637,
    "what": "walk finished",
    "era": "e4",
    "phase": "desktop",

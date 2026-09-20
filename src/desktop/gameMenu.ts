@@ -333,7 +333,8 @@ export function mountGameMenu(): GameMenu {
   }
   function render(): void {
     clear();
-    panel.style.width = view === 'map' ? 'min(860px, 94vw)' : 'min(420px, 90vw)';
+    // R3-32 (S151): the file view widens like the map — "mobile-format, hard to read"
+    panel.style.width = view === 'map' || view === 'yourFile' ? 'min(860px, 94vw)' : 'min(420px, 90vw)';
     if (view === 'yourFile') { yourFileView(); return; }
     if (view === 'map') { mapView(); return; }
     if (view === 'main') {

@@ -40,6 +40,14 @@
  ],
  "dmReply": "you don't have to decide anything tonight. i'm always here.",
  "dmTitle": "MentorRob — private message",
+ "request": {
+  "_doc": "R3-26 (S151): Rob's DM arrives as a request the player accepts — Sérgio: 'Rob a pop-up you accept'. The other answer is drawn dead: the mentor always finds you.",
+  "title": "Private message",
+  "text": "MentorRob would like to send you a private message.",
+  "accept": "Accept",
+  "ignore": "Ignore",
+  "witness": "private message accepted — trusted contact opened"
+ },
  "channelReply": {
   "text": "hi. first time here.",
   "witness": "first message — spoke in channel, receptive"

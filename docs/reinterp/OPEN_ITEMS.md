@@ -47,15 +47,15 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-17 / 53 | ~~A programme loop (MIDI-hymn register) while the kit is open~~; the same loop as a file in 2003 | R3-17 DONE — S151 · `unwalk_loop_1997.mp3` (tools/make_hymn.py), yields to the tape and the menu · R3-53 OPEN (Priority 4) |
 | R3-20 | The tape's radio voice comes from a press and says what it is for | OPEN |
 | R3-21 / 22 | ~~The prayer's words on screen from the Whisper transcript, timed; follow along, press at the end (W: 08-21 §G)~~ | DONE — S151 · `s1_prayer.json` from his Whisper transcript, 147/147 words; highlighted as sung; Amen at the end; tour frame 12 |
-| R3-26 | Channel exchanges before the DM; the DM as a request to accept | OPEN |
-| R3-27 / 32 | The intake panel explains itself; practice title beside each row (W: 08-21 §J) | OPEN · repeat |
-| R3-28 | DM scrollback; faster typing | OPEN |
-| R3-38 | The racket: glow + guide line (W: 08-21 §D) | OPEN · repeat |
-| R3-40 | Deferral: the IRC closes; the belongings window reads as a thing to do | OPEN |
+| R3-26 | ~~Channel exchanges before the DM; the DM as a request to accept~~ | DONE — S151b · "MentorRob would like to send you a private message" — Accept (Ignore dead); the DM opens on the press; walked (dm-accept at 147) |
+| R3-27 / 32 | ~~The intake panel explains itself; practice title beside each row (W: 08-21 §J)~~ | DONE — S151b · the wall: "A file kept on you…" + the practice's title beside each entry; the menu's Your file as wide as the map; seen from the flip |
+| R3-28 | ~~DM scrollback; faster typing~~ | DONE — S151b · two arrows page the DM; 19 cps / 2.6 s hold; walked (dm-up/dm-down pressed) |
+| R3-38 | ~~The racket: glow + guide line (W: 08-21 §D)~~ | DONE — S151b · the lift breathes 0.35→1.0 on 2.6 s; the guide line "the racket on the wall — the first exercise" (S151); seen from the seat |
+| R3-40 | ~~Deferral: the IRC closes; the belongings window reads as a thing to do~~ | DONE — S151b · Remind me later closes the channel; "take what you are taking: press what you keep, here in the room"; the standing line says it too; the shelf breathes; by hand via update2 |
 | R3-24 | ~~Dial-up on the black screen with a connection panel — his references FOUND: `References images/to enter online.png` (Internet Setup Wizard) and `for IRC connection.png` (Make New Connection) (W: 08-21 §H)~~ | DONE — S151 · the Internet Setup Wizard on black: Welcome · Make New Connection · Connect To; the dial-up plays as it opens; tour frames 15–17 |
-| W-E1 | The floppy / the tapes glow so they can be found (08-21 §E) | OPEN |
+| W-E1 | ~~The floppy / the tapes glow so they can be found (08-21 §E)~~ | DONE — S151b · the disk, the tapes and the player breathe while their line is up (with R3-38) |
 | W-L1 | **Lamby's 1997 app**: today the rig file is "like a tamagotchi"; his design `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` (Root Cause Digger, Purity Maze, Straight & Narrow Crossing…) was never referenced in the repo — pick one for 1997 and build it as the kit's game | DESIGN · his pick |
-| W-E2 | Windows minimise, not just X (08-21 §E) | OPEN |
+| W-E2 | Windows minimise, not just X (08-21 §E) | PARTIAL — S151 · the Un-Walk wizard minimises (Cancel → its taskbar button; the A:\ icon brings it back); the channel, the packet and the diary still only close |
 
 ## Priority 3 — sound redo, one pass with his ear
 | id | item | status |
@@ -127,7 +127,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-15 | ~~**Un-Walk = the Starter Kit programme (UNWALK.EXE)**, "a box with white background, empty, black and white font" → the Win95 WIZARD look from his reference `References images/for the Era-1 programs.png` (left picture panel, text, Back/Next/Cancel) — one design with R3-16/19~~ | DONE — S151 · the Win95 wizard from his reference — picture panel, title, Back/Next/Cancel; tour frame 07 |
 | R3-29 | ~~Map wording: "the placement letter"~~ | DONE — S149 · "the placement letter" |
 | R3-30 / 31 | The unvoiced-name setting in plain words; menu design | OPEN |
-| R3-33 | "See behind you"; the flip button glows when the wall holds something unseen | OPEN |
+| R3-33 | ~~"See behind you"; the flip button glows when the wall holds something unseen~~ | DONE — S151b · "Record filed. (see behind you)"; the ⟲ control glows on the creep's breath while the wall holds something unseen |
 | W-F1 | Leave: an interim safe space with a way back (08-21 §F); in-fiction "leave" renamed "Go back" | DESIGN |
 | W-K1 | Browser: scroll wheel / trackpad zoom (08-21 §K) | OPEN |
 
@@ -157,6 +157,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
+- S151b (2026-09-20): R3-26, R3-27/32, R3-28, R3-33, R3-38, R3-40, W-E1 — Priority 2 Batch B; walked, 246 presses, spine done (`WALK_2026-09-20.md`).
 - S151 (2026-09-20): R3-13, R3-15, R3-16, R3-17, R3-19, R3-21/22, R3-24 — Priority 2 Batch A; walked, 256 presses, spine done (`WALK_2026-09-20.md`); tour frames `out/tour-e1/07–18`.
 - S150 (2026-09-19): R3-47, R3-49, R3-55, R3-69, R3-77, R3-79 (pixels), R3-96a, R3-98, R3-100, R3-113, R3-114 — walked, 223 presses, spine done.
 - S149 (2026-09-19): R3-95, R3-73/80, R3-04, R3-05, R3-06, R3-11, R3-18, R3-29, R3-37, R3-39, R3-67, R3-72, R3-76, R3-79 (the chat), R3-81, R3-97, R3-103 — walked, 238 presses, spine done, Era 3 ended through the phone.

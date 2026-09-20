@@ -73,6 +73,13 @@
           "where": "behind you"
         },
         {
+          "id": "request",
+          "label": "Rob's request",
+          "done": "dmAccepted",
+          "hint": "MentorRob has asked to message you privately. Accept the request.",
+          "where": "the monitor"
+        },
+        {
           "id": "dm",
           "label": "The private message",
           "done": "repliedToContact",

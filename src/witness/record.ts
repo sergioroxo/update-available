@@ -53,6 +53,10 @@ export function practiceOf(kind: string): Practice | undefined { return PRACTICE
 function recordKind(id: string): { kind: string; outcome: string; flagged: boolean } {
   if (id === 'profile-initialized') return { kind: 'profile', outcome: 'answered', flagged: false };
   if (id === 'kit-inserted') return { kind: 'kit', outcome: 'inserted', flagged: false };
+  if (id === 'kit-read') return { kind: 'kit', outcome: 'read', flagged: false };
+  if (id === 'prayer-said') return { kind: 'tapes', outcome: 'prayed', flagged: false };
+  if (id === 'rob-spoke-mother') return { kind: 'referral', outcome: 'parent contacted', flagged: false };
+  if (id.startsWith('dm-request:')) return { kind: 'referral', outcome: 'accepted', flagged: false };
   if (id === 'went-online' || id === 'mirc-log') return { kind: 'channel', outcome: 'joined', flagged: false };
   if (id.startsWith('channel-reply:')) return { kind: 'channel', outcome: 'spoke', flagged: false };
   if (id.startsWith('escalation-reply:')) {

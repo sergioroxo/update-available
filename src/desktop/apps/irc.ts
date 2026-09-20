@@ -15,9 +15,9 @@ interface Line { from: string; text: string }
 // pacing tuned for reading, not speed — most of the audience reads English as
 // a second language (Sérgio). Slow type, generous holds so each line can land.
 const CPS_CHANNEL = 22;       // the room chatters at a livelier clip
-const CPS_DM = 13;            // Rob types slowly and deliberately (Sérgio: don't cut)
+const CPS_DM = 19;            // Rob types deliberately, not slowly (R3-28: "faster")
 const HOLD_CHANNEL = 1.5;     // short pause between room lines
-const HOLD_DM = 3.6;          // long pause after a DM line — time to read Rob fully
+const HOLD_DM = 2.6;          // a pause after a DM line — time to read Rob, not to wait for him
 const AMBIENT_START = 1.4;    // s before the room starts talking
 // Rob does NOT message until the room's ambient chatter has finished (the last
 // line is the x-files exchange); otherwise his window covers the channel mid-
@@ -73,11 +73,22 @@ export class IrcApp {
   private channel = new TypeStream(HOLD_CHANNEL, CPS_CHANNEL);
   private dm = new TypeStream(HOLD_DM, CPS_DM);
   /** S141: a line arriving in either stream — os.ts wires the sound */
-  set onLine(fn: () => void) { this.channel.onStart = fn; this.dm.onStart = fn; }
+  set onLine(fn: () => void) {
+    this.channel.onStart = fn;
+    this.dm.onStart = () => { this.dmScroll = 0; fn(); };   // R3-28: a new line shows the end
+  }
   private t = 0;
   private ambientFed = false;
   private dmReadyAt = Infinity; // set once the room's ambient chatter settles
   private dmFed = false;
+  /** R3-26 — Rob's DM arrives as a REQUEST the player accepts, not a window that
+   *  opens on him: "MentorRob would like to message you — Accept". */
+  private dmRequested = false;
+  private dmAccepted = false;
+  /** R3-28 — the DM's scrollback: how many rows up from the newest (0 = the end) */
+  private dmScroll = 0;
+  private dmRowsTotal = 0;
+  private dmRowsShown = 0;
   onHooked?: () => void;
   private hooked = false;
   dirty = true;
@@ -149,11 +160,9 @@ export class IrcApp {
         && this.channel.idle && this.channel.done.length >= dialog.ambient.length + 2 + dialog.afterReply.length) {
       this.dmReadyAt = this.t + DM_AFTER_AMBIENT;
     }
-    if (!this.dmFed && this.t >= this.dmReadyAt) {
-      this.dmFed = true;
-      this.dmOpen = true;
-      this.focus = 'dm';
-      for (const line of dialog.dm) this.dm.queueLine({ from: 'MentorRob', text: this.fill(line) });
+    // R3-26: the room has settled — Rob ASKS first; the window opens on Accept
+    if (!this.dmRequested && this.t >= this.dmReadyAt) {
+      this.dmRequested = true;
       this.dirty = true;
     }
     if (this.dmFed && this.dm.update(dt)) this.dirty = true;
@@ -192,6 +201,7 @@ export class IrcApp {
     this.channel.pushWhole({ from: dialog.welcome.from, text: this.fill(dialog.welcome.text) });
     this.channel.pushWhole({ from: ledger.name, text: dialog.channelReply.text });
     for (const l of dialog.afterReply) this.channel.pushWhole({ from: l.from, text: this.fill(l.text) });
+    this.dmRequested = true; this.dmAccepted = true;
     this.dmFed = true;
     this.dmOpen = true;
     this.focus = 'dm';
@@ -206,6 +216,21 @@ export class IrcApp {
     }
     this.dirty = true;
   }
+
+  /** R3-26 — the request accepted: the DM opens and Rob's lines begin */
+  private acceptRequest(): void {
+    if (this.dmAccepted) return;
+    this.dmAccepted = true;
+    this.dmFed = true;
+    this.dmOpen = true;
+    this.focus = 'dm';
+    ledger.records.push(`dm-request:${dialog.request.witness}`);
+    for (const line of dialog.dm) this.dm.queueLine({ from: 'MentorRob', text: this.fill(line) });
+    this.dirty = true;
+  }
+
+  /** the request is on screen, unanswered — the guide's soft lines wait */
+  get requestPending(): boolean { return this.dmRequested && !this.dmAccepted; }
 
   /** the hook has been fully witnessed — Rob now pushes the residential program */
   beginEscalation(): void {
@@ -246,6 +271,7 @@ export class IrcApp {
   private chooseReply(i: number): void {
     const reply = end.escalation.turns[this.escTurn].replies[i];
     this.dm.pushWhole({ from: ledger.name, text: reply.text });
+    this.dmScroll = 0;
     ledger.records.push(`escalation-reply:${reply.witness}`);
     if (!ledger.tags.includes('consent-on-file')) ledger.tags.push('consent-on-file');
     this.escAwaitingReply = false;
@@ -260,7 +286,7 @@ export class IrcApp {
    *  reply's press cap on inert presses — a published rect must be a real one. */
   covered(): void { this.replyRects = []; }
   /** S151 — a reply tray is live: the player is being talked to (the guide's soft lines wait) */
-  get awaitingReply(): boolean { return this.chanAwaitingReply || this.escAwaitingReply; }
+  get awaitingReply(): boolean { return this.chanAwaitingReply || this.escAwaitingReply || this.requestPending; }
 
   // The DM is press-only and, since S142, so is the channel — there is no free
   // typing anywhere (Sérgio: no keyboard dependency in VR). You are watched; you
@@ -368,11 +394,40 @@ export class IrcApp {
       ui.setFont(ctx, 9);
       // the transcript scrolls; the reply takes the type area at the bottom (press-
       // only, no type box — Sérgio). When Rob is mid-line, the area is just empty.
-      const dmRows = this.rows(ctx, this.dm, d.w - 12,
-        (f) => (f === ledger.name ? ERA1.navy : ERA1.warnDark), ERA1.black, caretOn).slice(-9);
+      // R3-28 — SCROLLBACK: the window shows a page of the thread and two arrows
+      //   page it; a new line always brings the view back to the end
+      const all = this.rows(ctx, this.dm, d.w - 24,
+        (f) => (f === ledger.name ? ERA1.navy : ERA1.warnDark), ERA1.black, caretOn);
+      const PAGE = 9;
+      this.dmRowsTotal = all.length; this.dmRowsShown = PAGE;
+      this.dmScroll = Math.max(0, Math.min(this.dmScroll, Math.max(0, all.length - PAGE)));
+      const end = all.length - this.dmScroll;
+      const dmRows = all.slice(Math.max(0, end - PAGE), end);
       this.renderRows(ctx, dmRows, d.x + 4, d.y + 4);
       if (this.escAwaitingReply) this.drawReplyTray(ctx, d.x, d.y + d.h - 20, d.w);
       else this.replyRects = [];   // nothing to answer: publish nothing
+      if (all.length > PAGE) {
+        const ax = d.x + d.w - 14;
+        const canUp = end - PAGE > 0; const canDown = this.dmScroll > 0;
+        ui.button(ctx, ax, d.y + 2, 12, 12, '^', { disabled: !canUp });
+        ui.button(ctx, ax, d.y + d.h - 36, 12, 12, 'v', { disabled: !canDown });
+        if (canUp) this.replyRects.push({ x: ax, y: d.y + 2, w: 12, h: 12, id: 'dm-up' });
+        if (canDown) this.replyRects.push({ x: ax, y: d.y + d.h - 36, w: 12, h: 12, id: 'dm-down' });
+      }
+    }
+    // R3-26 — the request: a small dialog over the channel, one live answer
+    if (this.requestPending) {
+      const q = ui.windowFrame(ctx, 150, 150, 260, 92, dialog.request.title, true);
+      ui.px(ctx, q.x, q.y, q.w, q.h, ERA1.beige);
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = ERA1.black;
+      ui.wrapText(ctx, this.fill(dialog.request.text), q.w - 16).forEach((ln, i) => ctx.fillText(ln, q.x + 8, q.y + 8 + i * 13));
+      const by = q.y + q.h - 26;
+      ui.button(ctx, q.x + q.w - 8 - 70, by, 70, 20, dialog.request.accept, {});
+      // ⚑ the other answer is drawn dead: the mentor always finds you (the
+      //   routing is the harm) — shown to be dead, not hidden (R26's convention)
+      ui.button(ctx, q.x + q.w - 8 - 70 - 6 - 70, by, 70, 20, dialog.request.ignore, { disabled: true });
+      this.replyRects = [{ x: q.x + q.w - 8 - 70, y: by, w: 70, h: 20, id: 'dm-accept' }];
     }
   }
 
@@ -399,6 +454,21 @@ export class IrcApp {
   }
 
   handleClick(x: number, y: number): void {
+    // R3-26: the request owns the window while it stands
+    if (this.requestPending) {
+      const r = this.replyRects.find((r) => r.id === 'dm-accept');
+      if (r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) this.acceptRequest();
+      return;
+    }
+    // R3-28: the scrollback's arrows
+    const arrow = this.replyRects.find((r) => (r.id === 'dm-up' || r.id === 'dm-down')
+      && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
+    if (arrow) {
+      this.dmScroll += arrow.id === 'dm-up' ? this.dmRowsShown - 1 : -(this.dmRowsShown - 1);
+      this.dmScroll = Math.max(0, Math.min(this.dmScroll, Math.max(0, this.dmRowsTotal - this.dmRowsShown)));
+      this.dirty = true;
+      return;
+    }
     // the reply box is the only live control during the exchange
     if (this.escAwaitingReply) {
       const idx = this.replyRects.findIndex(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);

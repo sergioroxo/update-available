@@ -256,7 +256,9 @@ async function main() {
     await pressAll('primary', 3, 1200); await pressWhen('choice:0', 5000); await pressAll('primary', 6, 1200);
     await shot('look-pillow-end', 'the exercise, scored');
     await pressWhen('leave', 3000);
-    await pressWhen('reply:0', 120000); await wait(1500); await shot('look-dm', 'the private message: the first reply');
+    // R3-26: Rob asks first — the DM opens on Accept
+    if (await pressWhen('dm-accept', 120000, { settle: 300 })) { /* the request, accepted */ }
+    await pressWhen('reply:0', 120000); await wait(1500); await shot('look-dm', 'the private message: the first reply (the scrollback\'s arrow at the top right)');
     for (let i = 0; i < 5; i++) { if (!await pressWhen('reply:0', 60000)) break; }
     await shot('look-dm-end', 'the thread\'s end');
     // R3-13: the Family Form exists only now — Rob has spoken with his mother

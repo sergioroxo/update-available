@@ -1477,13 +1477,21 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // 0.32: measured on the shelf, 0.32 of a ~0.27 diffuse added ~0.09 emissive
   // to a dark object 1.9m away in a lamp-lit room, and before/after screenshots
   // were indistinguishable. The guidance said "the player is on the shelf" and
-  // nothing on the shelf changed. Still a static lift — no pulse, no halo, no
-  // new light source (Soft Lo-Fi); it just has to be visible to do its job.
-  // 0.55/0.06 was picked by eye against the lamp-lit shelf: 0.32 was invisible,
-  // 0.85 read as a glowing object (a new light, which the doctrine forbids).
-  const EMPHASIS_FRAC = 0.55;
-  /** …and a floor, so a very dark prop still reads as lifted at all */
+  // nothing on the shelf changed. (S49's static 0.55 is the MIDPOINT of the
+  // breath below; S151 made it move.)
+  /** a floor, so a very dark prop still reads as lifted at all */
   const EMPHASIS_FLOOR = 0.06;
+  /**
+   * ⚑ S151 — THE LIFT BREATHES (R3-38, W-E1). Sérgio, three times over two
+   * months: the racket "again forgotten", the disk and the tapes "so they can be
+   * found", "no glow around like a pressable area feedback". A static lift of
+   * 0.55 was chosen by eye once and never read from the seat — the shelf is
+   * 1.9 m away in a lamp-lit room. So the lift now swings between 0.35 and 1.0
+   * of the diffuse on a 2.6 s breath: still no halo and no new light (Soft
+   * Lo-Fi), but a thing that changes is a thing the eye finds.
+   */
+  const EMPHASIS_BREATH_SECONDS = 2.6;
+  let emphasisPhase = 0;
   let appliedEmphasis: string | null = null;
   /** id → the exact prior emissive of EVERY material that prop renders with */
   const emphasisRestore = new Map<string, pc.Color[]>();
@@ -1503,6 +1511,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       emphasisRestore.clear();
     }
     appliedEmphasis = key;
+    emphasisPhase = 0;
     if (key) {
       for (const id of EMPHASIS_PROPS[key] ?? []) {
         const h = room.props.get(id);
@@ -1511,15 +1520,27 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // nothing renders, which is exactly why this lift used to be invisible
         // on the boombox (src/room/era1room.ts's PropHandle doc).
         emphasisRestore.set(id, h.materials.map(m => m.emissive.clone()));
-        for (const m of h.materials) {
-          const d = m.diffuse;
-          m.emissive = new pc.Color(
-            Math.min(1, d.r * EMPHASIS_FRAC + EMPHASIS_FLOOR),
-            Math.min(1, d.g * EMPHASIS_FRAC + EMPHASIS_FLOOR),
-            Math.min(1, d.b * EMPHASIS_FRAC + EMPHASIS_FLOOR)
-          );
-          m.update();
-        }
+      }
+      breatheEmphasis(0);
+    }
+  }
+  /** the lifted props, re-lit each frame on the breath (see EMPHASIS_BREATH_SECONDS) */
+  function breatheEmphasis(dt: number): void {
+    if (!appliedEmphasis) return;
+    emphasisPhase += dt;
+    const k = 0.5 + 0.5 * Math.sin((emphasisPhase / EMPHASIS_BREATH_SECONDS) * Math.PI * 2);
+    const frac = 0.35 + (1.0 - 0.35) * k;
+    for (const id of EMPHASIS_PROPS[appliedEmphasis] ?? []) {
+      const h = room.props.get(id);
+      if (!h || h.emissive || !emphasisRestore.has(id)) continue;
+      for (const m of h.materials) {
+        const d = m.diffuse;
+        m.emissive = new pc.Color(
+          Math.min(1, d.r * frac + EMPHASIS_FLOOR),
+          Math.min(1, d.g * frac + EMPHASIS_FLOOR),
+          Math.min(1, d.b * frac + EMPHASIS_FLOOR)
+        );
+        m.update();
       }
     }
   }
@@ -3292,6 +3313,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // R28-2a: the active side-message's prop emphasis (data-driven; replaces
       // the R28-0c item-10 hardwired floppy lift — same visual mechanism).
       setPropEmphasis(os.guide?.activeEmphasis ?? null);
+      breatheEmphasis(dt);
       // R28-2c: kept-item marks (persistent, player-authored — see above)
       syncBelongingsMarks();
 
@@ -3399,9 +3421,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       coldPhase += dt;
       const pulse = 0.55 + 0.25 * Math.sin(coldPhase * 2.0); // 0.30–0.80, clearly felt
       coldCreep.style.opacity = pulse.toFixed(3);
+      // R3-33 (S151): the turn control itself glows while the wall holds
+      // something unseen — the same breath as the creep, on the button
+      const k = (0.5 + 0.5 * Math.sin(coldPhase * 2.0)) * 14;
+      flipBtn.style.boxShadow = `0 0 ${k.toFixed(1)}px ${(k / 3).toFixed(1)}px currentColor`;
     } else {
       coldPhase = 0;
       coldCreep.style.opacity = '0';
+      if (flipBtn.style.boxShadow) flipBtn.style.boxShadow = '';
     }
 
     if (glitchT > 0) {

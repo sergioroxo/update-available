@@ -8,7 +8,7 @@ import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont } from '../desktop/theme/chrome';
 import { FLAG, RECORD } from '../desktop/theme/witness';
 import { ledger } from '../state/ledger';
-import { entriesByEra } from './record';
+import { entriesByEra, practiceOf } from './record';
 import strings from '../../data/strings/slice.json';
 import opening from '../../data/strings/opening.json';
 import updates from '../../data/strings/updates.json';
@@ -315,6 +315,10 @@ export class WitnessCanvas {
     ctx.fillText(era.subheader, W - 190, 8);
     // S144: what the file is FOR, in the apparatus's own voice
     ctx.fillText(s.purpose, 16, 28);
+    // R3-27 (S151): and what it IS, in plain words — he asked twice
+    setFont(ctx, 9);
+    ctx.fillStyle = INK;
+    ctx.fillText(s.explain, 16, H - 34);
 
     /**
      * ⚑ 2026-09-05 — THE ERA-4 MISFILE IS GONE, WITH THE MIGRATION THAT NEEDED IT.
@@ -404,20 +408,29 @@ export class WitnessCanvas {
       setFont(ctx, 9);
       const flagged = mine.filter((e) => e.flagged).reverse();
       const rest = mine.filter((e) => !e.flagged).reverse();
-      const rows: { text: string; color: string }[] = [
-        ...endingLines.map((text) => ({ text, color: FLAG })),
-        ...flagged.map((e) => ({ text: e.witness, color: FLAG })),
-        ...rest.map((e) => ({ text: e.witness, color: INK }))
+      // R3-27/32 (S151): the practice's title beside each row — what the
+      // apparatus was DOING when it filed this, cold, one word or three
+      const rows: { text: string; color: string; practice: string }[] = [
+        ...endingLines.map((text) => ({ text, color: FLAG, practice: '' })),
+        ...flagged.map((e) => ({ text: e.witness, color: FLAG, practice: practiceOf(e.kind)?.title ?? '' })),
+        ...rest.map((e) => ({ text: e.witness, color: INK, practice: practiceOf(e.kind)?.title ?? '' }))
       ];
-      const shown = rows.slice(0, 7);
+      const shown = rows.slice(0, 6);   // six, so the plain sentence has its line
+      const PRACTICE_W = 118;
       shown.forEach((l, i) => {
         // S144: the row that just landed is lit for a beat — the wall answering
         const fresh = i === 0 && this.pulseT < PULSE_SECONDS;
         if (fresh) px(ctx, 24, 274 + i * 12, W - 48, 12, RECORD.pulseOn);
         ctx.fillStyle = fresh ? RECORD.cardLine : l.color;
-        ctx.save(); ctx.beginPath(); ctx.rect(24, 274 + i * 12, W - 48, 12); ctx.clip();
+        ctx.save(); ctx.beginPath(); ctx.rect(24, 274 + i * 12, W - 48 - PRACTICE_W - 6, 12); ctx.clip();
         ctx.fillText(l.text, 28, 276 + i * 12);
         ctx.restore();
+        if (l.practice) {
+          setFont(ctx, 8);
+          ctx.fillStyle = fresh ? RECORD.cardLine : DIM;
+          ctx.fillText(l.practice.toUpperCase(), W - 28 - PRACTICE_W, 277 + i * 12);
+          setFont(ctx, 9);
+        }
       });
     }
 

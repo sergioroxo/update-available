@@ -97,7 +97,7 @@
       "trigger": "belongingsWindowOpen",
       "done": "belongingsGathered",
       "expire": "belongingsDeclined",
-      "text": "departure scheduled. take what you are taking.",
+      "text": "departure scheduled. take what you are taking: press what you keep, here in the room.",
       "witness": {
         "followed": "belongings: gathered",
         "declined": "belongings: did not gather"

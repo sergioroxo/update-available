@@ -121,11 +121,13 @@ export class GuideThread {
       else if (this.active.expire && this.cond(this.active.expire)) {
         this.retire(this.active, 'declined');
       } else if (this.active.soft) {
-        // a soft line yields to any other line that is now due — no filing: it
-        // was not declined, it was talked over, and it will come back
+        // a soft line yields to any other line that is now due, and steps down
+        // when its own moment has passed — no filing either way: it was not
+        // declined, it was talked over, and it will come back
         const due = this.messages.find((m) => m !== this.active && !this.retired.has(m.id)
           && !this.cond(m.done) && this.cond(m.trigger));
         if (due) this.active = due;
+        else if (!this.cond(this.active.trigger)) this.active = null;
       }
     }
     if (!this.active) {

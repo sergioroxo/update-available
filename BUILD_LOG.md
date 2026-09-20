@@ -1258,3 +1258,26 @@ spent — a published rect must be a pressable one, so a tray under any window n
 (`irc.covered()`); the third, at `--max 1500`: 256 presses, spine done, the Close reached
 (`WALK_2026-09-20.md`; Era 1 ≈ 6.6 min of piece, the prayer is 2.6 of them). **closes R3-13,
 R3-15, R3-16, R3-17, R3-19, R3-21/22, R3-24.**
+
+## 2026-09-20 — S151b · ERA 1 CONDUCTED, BATCH B: THE CONDUCTING
+Rob asks first: once the room has answered his line, a small dialog — "MentorRob would like to send
+you a private message" — with one live answer, Accept (Ignore drawn dead: the mentor always finds
+you); the DM opens on the press and files `dm-request:…` (closes R3-26; the channel exchanges
+before it were S142's). The DM window has a SCROLLBACK — two arrows page the thread, a new line
+brings the view back to the end — and Rob types at 19 cps with a 2.6 s hold, not 13 and 3.6
+(closes R3-28). The prop lift BREATHES: 0.35 → 1.0 of the diffuse on a 2.6 s breath, no halo, no
+new light — the disk, the tapes and the player, the racket, the belongings are things the eye now
+finds from the seat (closes R3-38 with S151's line "the racket on the wall — the first exercise",
+and W-E1). The deferral: "Remind me later" closes the channel with the notice, the guide says
+"take what you are taking: press what you keep, here in the room", the standing line says the
+same, and the eligible props breathe for the whole window (closes R3-40). The wall explains itself
+— "A file kept on you. Every line below is something you did, and what it was filed as." — and
+every entry carries its practice's title beside it (THE TAPES · REFERRAL BY CONTACT · …); the
+menu's *Your file* is as wide as the map (closes R3-27/32). "Record filed. (see behind you)", and
+the turn control glows on the cold creep's breath while the wall holds something unseen (closes
+R3-33). Map: Rob's request is a beat. Record: `kit-read`, `prayer-said`, `rob-spoke-mother` and
+the accepted request have cold lines. Guide: a soft line also steps down when its own moment has
+passed. Walked: 246 presses, spine done, the Close reached — Rob's request accepted at press 147,
+the scrollback paged, the deferral not taken by the walker (it never defers; verified by hand:
+`update2` → Remind me later → the channel gone, the line up, the shelf breathing)
+(`WALK_2026-09-20.md`). **closes R3-26, R3-27/32, R3-28, R3-33, R3-38, R3-40, W-E1.**

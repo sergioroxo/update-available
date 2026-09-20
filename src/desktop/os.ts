@@ -578,7 +578,14 @@ export class DesktopOS {
     if (pass !== 0 && this.belongings) {
       const belongings = this.belongings;
       const p = pass as 1 | 2;
-      this.updateApp.onRemindLaterUsed = () => belongings.openWindow(p);
+      this.updateApp.onRemindLaterUsed = () => {
+        belongings.openWindow(p);
+        // R3-40 (Sérgio: "I deferred the update and there is nothing to do; the
+        // IRC window is still there"): the notice took the channel with it — the
+        // deferral's one act is in the ROOM, and the desktop must not argue
+        if (this.irc) this.irc.open = false;
+        this.dirty = true;
+      };
       this.updateApp.onWindowClosed = () => belongings.closeWindow();
       this.updateApp.onUpdateNowDirect = () => belongings.fileProcessed(p);
     }
