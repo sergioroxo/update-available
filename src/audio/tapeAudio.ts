@@ -41,6 +41,7 @@ const REGISTRY: Record<string, string> = {
   'lamby_pop.mp3': `${AUDIO_BASE}lamby_pop.mp3`,
   'descent_score.mp3': `${AUDIO_BASE}descent_score.mp3`,
   'close_score.mp3': `${AUDIO_BASE}close_score.mp3`,
+  'startup_1997.mp3': `${AUDIO_BASE}startup_1997.mp3`,   // S156 · the 1997 OS's own chime (ours)
   // Tape B — SWAPPABLE CANDIDATE (Sérgio is producing alternate versions of
   // the broadcast jingle). Swap by generating a new degraded/wrapped file
   // with tools/degrade_audio.sh, adding ONE line here, and pointing

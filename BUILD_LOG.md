@@ -1371,3 +1371,25 @@ the diagnoses ghost by turn rather than by chance, and a blind digger meets the 
 turns, every time (eight runs by hand). Second walk: 258 presses, spine done.
 **closes R3-08, R3-14, R3-25, R3-36, R3-43/63 (sound), R3-68, R3-85, R3-88, R3-102, W-G1; R3-02,
 R3-110 built — his to hear; R3-48/64 partial.**
+
+## 2026-09-20 — S156 · THE 1997 BOOT, AND PRIORITY 4 BATCH A: THE FLIGHT AND THE 2003 MACHINE
+His two notes on the descent: the machine's start is heard ON THE WAY DOWN now, four seconds into
+the descent, not on arrival ("as we travel"); and after the BIOS crawl there is an OS splash —
+the four-square mark, the loading bands — with the era's own startup chime (ours: four notes
+rising into a chord, `startup_1997`), before the profile. Then Priority 4, batch A. **R3-48**: the
+2003 boot is black → the POST beep and the drive → the splash (the jingle at half) → the crawl →
+black → "finishing installation…" → Lamby; the loading bar's LENGTH stays hung on his own track's
+phrases (S2R.0b, his ruling that the full jingle plays) — shortening it is his call. **R3-45**: the
+machine that was updated is a different machine — the beige CRT, tower and keyboard retire at the
+2003 fold and a black flat panel on a stem, a black tower and a black keyboard take their places,
+box-built behind the same screen plane (no new model; `Flat Monitor modern.glb` is unmeasured and
+has no licence row); the r4 fold removes them with the desk. **R3-46/86**: the flight is rise →
+hold overlooking → morph in view → descend: the overlook is higher and looks DOWN (pitch −40, the
+most a 7 s leg allows under the 9.1 °/s law; 1.51 m chord, 0.404 m/s), the hold sits over the room
+at −45° while it ages, and the descent takes 8 s so un-pitching stays under the ceiling (8.4 °/s).
+Seen by hand: the 1997 desk from above at the top of the rise, the 2003 desk under the same eye
+four seconds into the hold. The turn *before* the climb he asked for is not a leg the comfort law
+allows in flight (180° would need thirty seconds at 9 °/s); looking down IS the turn, and the
+player can turn in the seat first. **R3-60**: u3's deferral says "Restorify is being removed".
+Walked: 259 presses, spine done. **closes R3-45, R3-46/86, R3-60; R3-48 closes bar the bar's
+length (his call); his boot notes closed.**

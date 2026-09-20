@@ -80,6 +80,8 @@
   ],
   "updateNow": "Update now",
   "remindLater": "Remind me later",
+  "remindedStatus": "Restorify is being removed. Take what you are taking from the room — it will ask again.",
+  "_docRemindedStatus": "S156 / R3-60 (Sérgio: 'Update Later → the story app says continue; should say it is being removed'): u3's own deferral line — the shared one under `remindedStatus` at the root serves u2.",
   "eulaTitle": "GracePlatform — Community Guidelines",
   "eula": [
    [

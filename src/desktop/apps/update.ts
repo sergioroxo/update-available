@@ -47,6 +47,8 @@ interface UpdateStrings {
   notify: string[];
   updateNow: string;
   remindLater: string | null;
+  /** S156 / R3-60: this update's own standing line while deferred (the shared one otherwise) */
+  remindedStatus?: string;
   eulaTitle?: string;
   eula: string[][] | null;
   readOn?: string;
@@ -310,12 +312,13 @@ export class UpdateApp {
     // deferral in this build).
     if (this.phase === 'reminded') {
       ui.setFont(ctx, 9);
-      const tw = Math.ceil(ctx.measureText(REMIND_STATUS).width);
+      const line = this.s.remindedStatus ?? REMIND_STATUS;
+      const tw = Math.ceil(ctx.measureText(line).width);
       // sits just ABOVE the taskbar (which os.ts draws at H-22 and would
       // otherwise paint straight over this), in the era's own bevelled chrome
       ui.bevel(ctx, 6, H - 40, tw + 16, 15, true);
       ctx.fillStyle = ERA1.black;
-      ctx.fillText(REMIND_STATUS, 14, H - 37);
+      ctx.fillText(line, 14, H - 37);
       return;
     }
 

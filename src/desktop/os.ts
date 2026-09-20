@@ -76,9 +76,13 @@ import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.js
  * Dismissal works at BOTH beats and files at both; dismissing the
  * introduction skips the program beat entirely (the era does not chase).
  */
-type E2Stage = 'silence' | 'splash' | 'osBoot' | 'lambyBoot' | 'lambyIntro' | 'lambyProgram' | 'active';
+type E2Stage = 'silence' | 'post' | 'splash' | 'osBoot' | 'lambyBoot' | 'lambyIntro' | 'lambyProgram' | 'active';
+/** S156 / R3-48 — the black beat before the splash (the POST beep and the drive), and the black
+ *  beat before Lamby's panel: a 2003 machine goes dark between the things it shows you */
+const E2_POST_SECONDS = 2.0;
+const E2_LAMBY_BLACK = 0.9;
 const E2_BOOT_HOLD = 2.2;   // s — hold the completed LambyOS 2003 crawl before the installer line
-const LAMBY_BOOT_HOLD = 1.6; // s — the "finishing installation…" beat's hold
+const LAMBY_BOOT_HOLD = 2.4; // s — black (S156), then the "finishing installation…" line's hold
 /** S2R.5: s of ordinary desktop between the video beat ending and the
  *  PureMail envelope. The collapse is triggered by the apparatus's own
  *  documented failure, never by the player — the delay is only pacing.
@@ -96,13 +100,16 @@ const DESKTOP_RETURN_FADE = 1.8;
 // monitor sits in `r_dark`; O2 boot + O3 profile/recap render on the monitor.
 type Phase =
   | 'warning' | 'off' | 'boot' | 'splash' | 'name' | 'desktop' | 'left'
-  | 'r_dark' | 'r_boot' | 'r_profile' | 'r_recap';
+  | 'r_dark' | 'r_boot' | 'r_splash' | 'r_profile' | 'r_recap';
 type DesktopEra = 'e1' | 'e2' | 'e3' | 'e4';
 
 const SPLASH_SECONDS = 4.6;        // hold the loading screen long enough to read
 const BOOT_CPS = 0.030;            // seconds per char — slower BIOS crawl
 const BOOT_HOLD = 4.8;             // hold completed BIOS so the install lines read
 const R_BOOT_HOLD = 3.2;           // hold the LambyOS boot after the crawl completes
+/** S156 (Sérgio: "we are missing the chime of the boot-up… it jumps to the profile setup"): the
+ *  OS splash between the crawl and the profile, with the era's own startup chime */
+const R_SPLASH_SECONDS = 4.2;
 
 const WARNING_ARM_DELAY = 4; // s before CONTINUE becomes active (ethics)
 const ESCALATION_FALLBACK = 24; // s after the hook: Rob escalates even if the player never flips (main-parity)
@@ -367,7 +374,15 @@ export class DesktopOS {
     if (!this.reinterp || this.phase !== 'r_dark') return;
     ledger.name = opening.o3_prefilled_name; // "they already know your name"
     this.setPhase('r_boot');
-    playOnce('boot_1997_machine.mp3');   // S141: on disk since S102, never played
+    // (S156: the machine's own start is heard EARLIER now — app.ts plays it during the
+    //  descent, "as we travel", so the crawl arrives on a machine already running)
+  }
+
+  /** S156 — the splash: the OS's mark, the loading bands, and the startup chime (ours) */
+  private startReinterpSplash(): void {
+    if (this.phase !== 'r_boot') return;
+    this.setPhase('r_splash');
+    playOnce('startup_1997.mp3');
   }
 
   /** R3-13 — the Family Form exists once Rob has said "i spoke with your mother"
@@ -695,9 +710,10 @@ export class DesktopOS {
       // any press on the dark glass advances it, same grammar as S1.0's
       // power press. Files once, immediately.
       this.fileLambyRecord('returned', 'return-press', lambyStrings.witness.returnPressed);
-      this.startE2Splash();
+      this.startE2Post();
       return;
     }
+    if (this.e2Stage === 'post') return;   // the machine is starting; nothing to press
     /**
      * ⚑ NOT SKIPPABLE (Sérgio, 2026-09-04: *"not skipable"*). A press during
      * the splash does nothing at all — and that is the beat, not an oversight:
@@ -754,13 +770,19 @@ export class DesktopOS {
    * a bundled program has taken over the machine's boot entirely, which is what
    * the crawl's last line says out loud.
    */
+  /** S156 / R3-48: black → the POST beep and the drive → the splash */
+  private startE2Post(): void {
+    this.e2Stage = 'post';
+    this.e2StageT = 0;
+    playOnce('boot_2003.mp3');
+    this.dirty = true;
+  }
+
   private startE2Splash(): void {
     this.e2Stage = 'splash';
     this.e2StageT = 0;
     this.e2SplashFade = 0;
-    // S155 / R3-48 (Sérgio: "boot music too loud; no PC boot sounds"): the POST beep and the
-    // drive first — a machine starting — and the jingle under it at half
-    playOnce('boot_2003.mp3');
+    // S155 / R3-48 (Sérgio: "boot music too loud"): the jingle at half
     const jingle = playOnce(lambyStrings.osBootTrack);
     if (jingle) jingle.volume = 0.5;
     this.dirty = true;
@@ -1345,7 +1367,7 @@ export class DesktopOS {
   }
 
   openingProfileSnapshot(): OpeningProfileSnapshot {
-    const stage = this.phase === 'r_boot' ? 'boot'
+    const stage = this.phase === 'r_boot' || this.phase === 'r_splash' ? 'boot'
       : this.phase === 'r_profile' ? 'profile'
         : this.phase === 'r_recap' ? 'recap'
           : 'inactive';
@@ -1407,7 +1429,11 @@ export class DesktopOS {
     if (this.phase === 'r_boot') {
       const next = Math.min(Math.floor(this.phaseT / BOOT_CPS), this.rBootTotal);
       if (next !== this.rBootChars) { this.rBootChars = next; this.dirty = true; }
-      if (this.rBootChars >= this.rBootTotal && this.phaseT > R_BOOT_HOLD) this.setPhase('r_profile');
+      if (this.rBootChars >= this.rBootTotal && this.phaseT > R_BOOT_HOLD) this.startReinterpSplash();
+    }
+    if (this.phase === 'r_splash') {
+      this.dirty = true;   // the loading bands travel
+      if (this.phaseT >= R_SPLASH_SECONDS) this.setPhase('r_profile');
     }
     if (this.phase === 'name' && this.greeting && this.phaseT > 2.8) {
       this.setPhase('desktop'); // empty desk — the kit is the only way in (S1.1)
@@ -1478,6 +1504,8 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
       const e2Before = this.e2StageT;
       this.e2StageT += dt;
+      if (this.e2Stage === 'post' && this.e2StageT >= E2_POST_SECONDS) this.startE2Splash();
+      if (this.e2Stage === 'lambyBoot' && e2Before < E2_LAMBY_BLACK && this.e2StageT >= E2_LAMBY_BLACK) this.dirty = true;
       if (this.e2Stage === 'splash') {
         // the surface only re-uploads when something on it has actually moved
         if (e2SplashVersion(this.e2StageT) !== e2SplashVersion(e2Before)) this.dirty = true;
@@ -1618,6 +1646,7 @@ export class DesktopOS {
       case 'left': this.drawLeft(W, H); break;
       case 'r_dark': ui.px(this.ctx, 0, 0, W, H, ERA1.black); break; // O1: monitor off
       case 'r_boot': this.drawReinterpBoot(W, H); break;             // O2
+      case 'r_splash': this.drawSplash(W, H); break;                 // S156: the OS coming up, and its chime
       case 'r_profile': this.drawReinterpProfile(W, H); break;       // O3
       case 'r_recap': this.drawReinterpRecap(W, H); break;           // O3 close
     }
@@ -2087,6 +2116,7 @@ export class DesktopOS {
       ctx.fillText(lambyStrings.returnLine2, 30, Math.round(H / 2) + 8);
       return;
     }
+    if (this.e2Stage === 'post') return;   // black: the machine is starting (the sound says so)
     if (this.e2Stage === 'splash') { drawE2Splash(ctx, this.e2StageT); return; }
     if (this.e2Stage === 'osBoot') {
       this.drawE2Boot(H);
@@ -2098,6 +2128,7 @@ export class DesktopOS {
       return;
     }
     if (this.e2Stage === 'lambyBoot') {
+      if (this.e2StageT < E2_LAMBY_BLACK) return;   // S156 / R3-48: black before the installer line
       ui.setFont(ctx, 11);
       ctx.fillStyle = ERA1.silver;
       ctx.fillText(lambyStrings.installingLine, 22, Math.round(H / 2));
@@ -2435,7 +2466,8 @@ export class DesktopOS {
   /** click routing for the reinterp opening beats (O2/O3) */
   private handleOpeningClick(id: string): void {
     if (id === 'r-leave') { this.leave(); return; }
-    if (this.phase === 'r_boot') { this.setPhase('r_profile'); return; } // any click skips the crawl
+    if (this.phase === 'r_boot') { this.startReinterpSplash(); return; } // any click skips the crawl
+    if (this.phase === 'r_splash') { this.setPhase('r_profile'); return; } // …and the splash
     if (this.phase === 'r_profile') {
       if (id.startsWith('picon:')) {
         this.fileFirstProfileTouch();
@@ -2897,7 +2929,7 @@ export class DesktopOS {
       return;
     }
     // reinterp opening beats (O2/O3) own the monitor's clicks
-    if (this.phase === 'r_boot' || this.phase === 'r_profile' || this.phase === 'r_recap') {
+    if (this.phase === 'r_boot' || this.phase === 'r_splash' || this.phase === 'r_profile' || this.phase === 'r_recap') {
       this.handleOpeningClick(hit ? hit.id : '');
       return;
     }
@@ -3002,7 +3034,7 @@ export class DesktopOS {
   handleKey(key: string): boolean {
     if (key === 'Escape') {
       if (this.phase === 'desktop' || this.phase === 'name'
-          || this.phase === 'r_boot' || this.phase === 'r_profile' || this.phase === 'r_recap') {
+          || this.phase === 'r_boot' || this.phase === 'r_splash' || this.phase === 'r_profile' || this.phase === 'r_recap') {
         this.paused = !this.paused;
         this.dirty = true;
         return true;
@@ -3011,7 +3043,8 @@ export class DesktopOS {
     }
     if (this.paused) return true;
 
-    if (this.phase === 'r_boot' && key === 'Enter') { this.setPhase('r_profile'); return true; }
+    if (this.phase === 'r_boot' && key === 'Enter') { this.startReinterpSplash(); return true; }
+    if (this.phase === 'r_splash' && key === 'Enter') { this.setPhase('r_profile'); return true; }
 
     if (this.phase === 'warning' && key === 'Enter' && this.phaseT >= WARNING_ARM_DELAY) {
       this.setPhase('off');

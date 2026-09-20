@@ -414,3 +414,13 @@ for f in ui_press floppy_1997 irc_1997 diary_key diary_flag diary_erase passage_
          lambient_chime install_work restart_dark type_2026 lamby_pop descent_score close_score; do
   q -i "$OUT/$f.wav" -ac 1 -ar 44100 -codec:a libmp3lame -b:a 96k "$PUB/$f.mp3"
 done
+
+# ── ⚑ S156 · THE 1997 STARTUP CHIME (2026-09-20) ──────────────────────────────
+# Sérgio: "we are missing the chime of the boot-up". Ours, not Microsoft's: four notes rising
+# (E4 · G4 · B4 · E5) into a held chord with a soundcard's bright partials and a room's echo.
+q -f lavfi -i "sine=f=329.63:d=2.6" -f lavfi -i "sine=f=392:d=2.6" -f lavfi -i "sine=f=493.88:d=2.6" -f lavfi -i "sine=f=659.25:d=2.6" \
+  -filter_complex "[0]adelay=0|0,afade=t=in:st=0:d=0.05,volume=0.22[a];[1]adelay=350|350,afade=t=in:st=0.35:d=0.05,volume=0.2[b];[2]adelay=700|700,afade=t=in:st=0.7:d=0.05,volume=0.18[c];[3]adelay=1050|1050,afade=t=in:st=1.05:d=0.05,volume=0.16[d];
+    [a][b][c][d]amix=inputs=4:normalize=0,aeval='val(0)*(1+0.35*sin(2*PI*2*t))':c=same,lowpass=f=5200,afade=t=out:st=1.6:d=1.0,aecho=0.85:0.4:110:0.22" \
+  "$OUT/startup_1997.wav"
+level startup_1997 -24
+q -i "$OUT/startup_1997.wav" -ac 1 -ar 44100 -codec:a libmp3lame -b:a 96k "$PUB/startup_1997.mp3"

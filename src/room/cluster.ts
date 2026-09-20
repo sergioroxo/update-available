@@ -292,7 +292,9 @@ export interface RelocationPlan {
 /** keyed `${from}-${to}`; a transition absent here takes the plain morph path */
 export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
   'e1-e2': {
-    riseSeconds: 7.0, buildSeconds: 7.0, descendSeconds: 7.0,
+    /** S156 / R3-46: the descent now un-pitches 45° (the overlook looks down at the room as it
+     *  ages), and 1.5 × 45 / 8 = 8.4 °/s keeps it under the 9.1 ceiling; 7 s would be 9.6 */
+    riseSeconds: 7.0, buildSeconds: 7.0, descendSeconds: 8.0,
     opensWalls: false, seat: 0
   },
   'e2-e3': {

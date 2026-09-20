@@ -197,7 +197,11 @@ const WAKE_DURING_DESCENT_DELAY =
 /** end of leg 1: standing over Daniel's desk, still inside his closed room.
  *  Kept UNDER the ceiling (2.68) and the lintels (2.43) throughout, so no
  *  slab ever has to be hidden and restored (the churn S48 logged). */
-const RELOC_OVERLOOK_A = { x: 0.25, y: 2.16, z: 1.75, pitch: -17, yaw: 0 };
+/** ⚑ S156 / R3-46 (Sérgio: "we should fly to the top of the room and see the space morph"):
+ *  the overlook is HIGHER and looks DOWN — pitch −40, the most the comfort law allows in a
+ *  7 s leg (1.5 × 40 / 7 = 8.6 °/s under 9.1) — so the whole desk end of the room is in
+ *  view when the space starts to change. Chord from the seat 1.51 m → 0.404 m/s peak. */
+const RELOC_OVERLOOK_A = { x: 0.25, y: 2.35, z: 1.60, pitch: -40, yaw: 0 };
 /** leg 1's bezier control — offset PERPENDICULAR to the chord (S53's finding:
  *  a control point placed "between" the ends bows nothing, it only re-times).
  *  ~0.23 m of real sagitta: you rise first and lean back after, rather than
@@ -225,10 +229,10 @@ const RELOC_DESCEND_VIA = { x: -3.70, y: 2.10, z: 1.45 };
  * to it. That is deliberate and it is untested in the seat: flagged in the
  * Session 71 log as the one thing the cut leaves open.
  */
-const RELOC_E1_HOLD = { x: -0.30, y: 2.20, z: 1.62, pitch: -19, yaw: 0 };
+const RELOC_E1_HOLD = { x: -0.10, y: 2.35, z: 1.50, pitch: -45, yaw: 0 };   // S156: over the room, looking down at it as it ages
 /** E1→E2's leg 3 control: 0.23 m of sagitta (the rise's own figure), out over
  *  the room so you settle back into the chair rather than drop into it */
-const RELOC_E1_DESCEND_VIA = { x: -0.38, y: 1.90, z: 0.83 };
+const RELOC_E1_DESCEND_VIA = { x: -0.24, y: 1.95, z: 0.90 };
 /** E3→E4's leg 1 — Room 2's overlook. Deliberately the exact translation of
  *  Room 1's (+0.25 x, +1.00 y, +1.05 z off the seat, 1.4715 m of chord): by
  *  the third time, the move must be recognisable in the body, not just in the
@@ -2995,13 +2999,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * Once, then never again.
    */
   let bedStarted = false;
+  /** S156 — seconds until the 1997 machine's start is heard (Sérgio: "the boot sequence of
+   *  the computer should come sooner, as we travel to space"); < 0 = not pending */
+  let machineBootDue = -1;
   const startFirstBed = (): void => {
     if (bedStarted) return;
     bedStarted = true;
     roomBed.set(BED_FOR[os.era] ?? BED_FOR.e1, 1.5);
     // S155 / R3-02: the descent has a score — a pad falling an octave over the bed, 40 s,
     // fading as the seat is reached. ⚑ HIS TO HEAR (OPEN_ITEMS R3-02).
-    if (os.era === 'e1' && !options.era && !options.close) playOnce('descent_score.mp3');
+    if (os.era === 'e1' && !options.era && !options.close) {
+      playOnce('descent_score.mp3');
+      machineBootDue = 4.0;   // S156: the machine's own start, heard on the way down, not on arrival
+    }
   };
   canvasEl.addEventListener('pointerdown', startFirstBed);
   document.addEventListener('pointerdown', startFirstBed);
@@ -3391,6 +3401,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // unlike the guide thread's pure condition polling) — os.paused freezes
       // it exactly like it freezes everything else (Esc/pause law).
       syncKitLoop();
+      if (machineBootDue >= 0) {
+        machineBootDue -= dt;
+        if (machineBootDue < 0) playOnce('boot_1997_machine.mp3');
+      }
       if (tapes) {
         tapes.update(dt, os.paused);
         syncTapeAudio();

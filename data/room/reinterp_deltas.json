@@ -449,9 +449,151 @@
    "kitFloppyShutter",
    "kitFloppyLabel",
    "homeworkPile",
-   "sodaCan"
+   "sodaCan",
+   "crtBody",
+   "crtBezelTop",
+   "crtBezelBottom",
+   "crtBezelLeft",
+   "crtBezelRight",
+   "crtNeck",
+   "crtFoot",
+   "crtPowerButton",
+   "crtPowerLed",
+   "tower",
+   "towerFloppySlot",
+   "keyboard"
   ],
-  "add": []
+  "add": [
+   {
+    "id": "crtLcdPanel",
+    "pos": [
+     0,
+     1.08,
+     -0.03
+    ],
+    "size": [
+     0.5,
+     0.39,
+     0.035
+    ],
+    "color": "#1E1E22"
+   },
+   {
+    "id": "crtLcdBezel",
+    "pos": [
+     0,
+     1.08,
+     -0.012
+    ],
+    "size": [
+     0.46,
+     0.35,
+     0.006
+    ],
+    "color": "#111114"
+   },
+   {
+    "id": "crtLcdStem",
+    "pos": [
+     0,
+     0.84,
+     -0.06
+    ],
+    "size": [
+     0.05,
+     0.11,
+     0.04
+    ],
+    "color": "#2A2A2E"
+   },
+   {
+    "id": "crtLcdFoot",
+    "pos": [
+     0,
+     0.77,
+     -0.06
+    ],
+    "size": [
+     0.24,
+     0.02,
+     0.16
+    ],
+    "color": "#1E1E22"
+   },
+   {
+    "id": "crtLcdLed",
+    "pos": [
+     0.2,
+     0.895,
+     -0.008
+    ],
+    "size": [
+     0.012,
+     0.008,
+     0.006
+    ],
+    "color": "#3A9AFF",
+    "emissive": true
+   },
+   {
+    "id": "tower2003",
+    "pos": [
+     0.55,
+     0.95,
+     -0.28
+    ],
+    "size": [
+     0.18,
+     0.42,
+     0.42
+    ],
+    "color": "#1A1A1E"
+   },
+   {
+    "id": "tower2003Drive",
+    "pos": [
+     0.55,
+     1.08,
+     -0.062
+    ],
+    "size": [
+     0.13,
+     0.03,
+     0.012
+    ],
+    "color": "#2A2A2E"
+   },
+   {
+    "id": "tower2003Led",
+    "pos": [
+     0.55,
+     0.86,
+     -0.062
+    ],
+    "size": [
+     0.014,
+     0.008,
+     0.008
+    ],
+    "color": "#3A9AFF",
+    "emissive": true
+   },
+   {
+    "id": "keyboard2003",
+    "pos": [
+     0,
+     0.752,
+     0.16
+    ],
+    "size": [
+     0.42,
+     0.02,
+     0.14
+    ],
+    "color": "#1E1E22"
+   }
+  ],
+  "_docS156": "⚑ S156 / R3-45 (Sérgio: 'Should the computer model change?' — yes: 'a beige tower and a 4:3 CRT in 1997; a black tower and a flat LCD in 2003'). The machine that was UPDATED is a different machine: the beige CRT, its neck and foot, the beige tower and keyboard are retired at r2 and a black flat panel on a stem, a black tower and a black keyboard take their places — box-built like the CRT (no GLB: `Flat Monitor modern.glb` in Assests is unmeasured and unlicensed-in-repo, and a fitted model would have to be re-measured against the screen plane; the boxes sit exactly behind the plane app.ts already draws the desktop on, SCREEN {w 0.4, h 0.3, y 1.08, z 0}). The r4 fold removes these with the rest of the desk. Ids keep the `crt`/`tower`/`keyboard` stems so era1room.ts's tiers still read them as hero/system."
  },
  "r3": {
   "props": {
@@ -2506,21 +2648,9 @@
    "intakeRack",
    "intakeLed",
    "terminalFrame",
-   "crtBody",
-   "crtBezelTop",
-   "crtBezelBottom",
-   "crtBezelLeft",
-   "crtBezelRight",
-   "crtNeck",
-   "crtFoot",
-   "crtPowerButton",
-   "crtPowerLed",
-   "keyboard",
    "w_flatPanelBody",
    "w_keyboard",
    "w_mouse",
-   "tower",
-   "towerFloppySlot",
    "modem",
    "modemLed",
    "tennisRacketModel",
@@ -2567,7 +2697,16 @@
    "e_plant_top",
    "lampFoot",
    "lampPole",
-   "lampShade"
+   "lampShade",
+   "crtLcdPanel",
+   "crtLcdBezel",
+   "crtLcdStem",
+   "crtLcdFoot",
+   "crtLcdLed",
+   "tower2003",
+   "tower2003Drive",
+   "tower2003Led",
+   "keyboard2003"
   ],
   "add": [
    {
@@ -2686,6 +2825,7 @@
     "yaw": 270
    }
   ],
-  "_docE4Emptying": "⚑ 2026-09-05 — VERA'S COMPUTER LEAVES WITH HER ERA. Sérgio: *\"since we no longer can go to the other rooms, maybe we can remove the computers from the room 1 and 2 when we are at ERA-4, is that an option?\"* It is, and HALF OF IT WAS ALREADY TRUE: this same remove list has taken Daniel's CRT and keyboard out at r4 since the fold was written — Room 1's computer has been gone at E4 all along and nobody noticed, because nobody had measured what was left. Room 2's workstation had not gone anywhere. It does now, with its keyboard and mouse; `era3Devices.setEra` stops enabling the workstation and phone SCREENS at e4 in the same move, or a lit plane would be left hanging where the monitor used to be — which is exactly the fault S61 found on the spine and the one a removal always has. ⚑ This is the first, smallest increment of the emptied-rooms idea (NEXT_ROOM_PASS §5/§6): the rooms the piece has left stop being fully dressed. It is worth measuring against §6's table — Room 2's contents are 27 of the turn's 139 and Room 1's are 78. ⚑ EXTENDED 2026-09-05: *\"When we are at Era-4 there is no need to see the tower of Daniel desktop and the disk drive, or even the tenis racket and the moving boxes are still here.\"* So the r4 fold now also takes `tower`, `towerFloppySlot`, `modem`, `modemLed`, `tennisRacketModel` and `movingBox1/2`. ⚑ The boxes are the interesting one and he is right about them too: they arrive at r3 to say the room was PACKED, and a packed room does not still have its boxes in it ten years later — leaving them was me keeping a beat past the moment it finished. What stays in 2026 is the shape of a room and a light nobody turned off. ⚑ 2026-09-11 — ROOM 3 STRIPPED OF ITS BOXES. Sérgio, on his first sit-through of the deployed build: *\"there are blocks of stuff around us non-descriptive and useless\"* — and it was Room 3: the flag as five unreadable planks (his open question #6, answered by seeing it), the ally badge, the poster and sign (the purple slab, the navy block, the brown bar and the white slab behind the monitor), the pinboard and its two rectangles, a 0.11 m frame, the bare second shelf plank, two book-boxes on a wall shelf. Twenty-three props, every one an untextured cuboid with a name only the data can read. What stays is the furniture (all GLB), the window and curtains, the kept CRT on its one plank, and the things the story points at — the hoodie, the folders, the sketchbook, the mug, the plant, the headset kit. Every id is one line to restore. ⚑ 2026-09-12 — two more, from his review of the deployed build: `e_folders`, the off-white box sitting ON the laptop ('there is a box on top of it'), and `e_hoodie`, the light-blue cuboid on the chair back ('a box blocking out view of the rest of the space on the right side, a blue one'). The hoodie's story lives in the record tab now — OUTERWEAR · condition: keepsake? — and a garment rendered as a 0.1 x 0.32 x 0.36 block was not carrying it. ⚑ EXTENDED 2026-09-13 — THE BOXES. Sérgio, on the Close's Era-4 plate: \"There are still too many elements on Era-4 with boxes that aren't there.\" So every primitive-box dressing prop in Room 3 goes at r4: the mug, the sketchbook, the glasses, the throw, the second pillow, the floor cushion, the backpack, the sneakers, the keys, the glass, the cable, the clock, the plant (pot + top). What stays is what has a model or a job: the bed, the nightstand, the desk, the chair, the rug, the docked monitor, the laptop, the headset on its dock, the controller, the phone, the window and curtains, the old CRT on the shelf. The lamp goes too: it is Room 1's box lamp carried to this desk (r4 patched its three boxes to the far corner), and from the seat only its shade showed — an orange box floating on the wall in every plate; moved to the near corner it hid behind the headset's dock instead. Its LIGHT stays (cluster.ts carryLampLight, (5.45, 1.15, 1.20)): a warm wash on the desk wall with no box under it, which the soft lo-fi doctrine allows and a box lamp does not earn. History of the lamp's positions: ⚑ Sérgio, 2026-09-05: *\"check that you had at least a lamp floating above the bed at least in earlier images.\"* He is right and it is measurable: r4 patched the lamp to z 1.50, and `e_desk` (pos z 0.61, 1.40 deep) ENDS at z 1.31. The lamp had been standing 0.19 m past the edge of the desk and 0.27 m above the bed, held up by nothing. It arrived there when the lamp was 'carried to Maya's desk' at E4 without anyone measuring the desk. Moved to (5.45, 1.20): on the desk's far corner, clear of the folders (x 5.05–5.27) and of e_wallShelf (x 5.54+). cluster.ts's carryLampLight moves with it. ⚑ 2026-09-13: and from the far corner to the NEAR one (z 0.0): behind the laptop only the shade was visible — an orange box floating on the wall in every plate. Where the mug and glasses were (both struck the same day); clear of the headset's dock (x ≤ 5.31)."
+  "_docE4Emptying": "⚑ 2026-09-05 — VERA'S COMPUTER LEAVES WITH HER ERA. Sérgio: *\"since we no longer can go to the other rooms, maybe we can remove the computers from the room 1 and 2 when we are at ERA-4, is that an option?\"* It is, and HALF OF IT WAS ALREADY TRUE: this same remove list has taken Daniel's CRT and keyboard out at r4 since the fold was written — Room 1's computer has been gone at E4 all along and nobody noticed, because nobody had measured what was left. Room 2's workstation had not gone anywhere. It does now, with its keyboard and mouse; `era3Devices.setEra` stops enabling the workstation and phone SCREENS at e4 in the same move, or a lit plane would be left hanging where the monitor used to be — which is exactly the fault S61 found on the spine and the one a removal always has. ⚑ This is the first, smallest increment of the emptied-rooms idea (NEXT_ROOM_PASS §5/§6): the rooms the piece has left stop being fully dressed. It is worth measuring against §6's table — Room 2's contents are 27 of the turn's 139 and Room 1's are 78. ⚑ EXTENDED 2026-09-05: *\"When we are at Era-4 there is no need to see the tower of Daniel desktop and the disk drive, or even the tenis racket and the moving boxes are still here.\"* So the r4 fold now also takes `tower`, `towerFloppySlot`, `modem`, `modemLed`, `tennisRacketModel` and `movingBox1/2`. ⚑ The boxes are the interesting one and he is right about them too: they arrive at r3 to say the room was PACKED, and a packed room does not still have its boxes in it ten years later — leaving them was me keeping a beat past the moment it finished. What stays in 2026 is the shape of a room and a light nobody turned off. ⚑ 2026-09-11 — ROOM 3 STRIPPED OF ITS BOXES. Sérgio, on his first sit-through of the deployed build: *\"there are blocks of stuff around us non-descriptive and useless\"* — and it was Room 3: the flag as five unreadable planks (his open question #6, answered by seeing it), the ally badge, the poster and sign (the purple slab, the navy block, the brown bar and the white slab behind the monitor), the pinboard and its two rectangles, a 0.11 m frame, the bare second shelf plank, two book-boxes on a wall shelf. Twenty-three props, every one an untextured cuboid with a name only the data can read. What stays is the furniture (all GLB), the window and curtains, the kept CRT on its one plank, and the things the story points at — the hoodie, the folders, the sketchbook, the mug, the plant, the headset kit. Every id is one line to restore. ⚑ 2026-09-12 — two more, from his review of the deployed build: `e_folders`, the off-white box sitting ON the laptop ('there is a box on top of it'), and `e_hoodie`, the light-blue cuboid on the chair back ('a box blocking out view of the rest of the space on the right side, a blue one'). The hoodie's story lives in the record tab now — OUTERWEAR · condition: keepsake? — and a garment rendered as a 0.1 x 0.32 x 0.36 block was not carrying it. ⚑ EXTENDED 2026-09-13 — THE BOXES. Sérgio, on the Close's Era-4 plate: \"There are still too many elements on Era-4 with boxes that aren't there.\" So every primitive-box dressing prop in Room 3 goes at r4: the mug, the sketchbook, the glasses, the throw, the second pillow, the floor cushion, the backpack, the sneakers, the keys, the glass, the cable, the clock, the plant (pot + top). What stays is what has a model or a job: the bed, the nightstand, the desk, the chair, the rug, the docked monitor, the laptop, the headset on its dock, the controller, the phone, the window and curtains, the old CRT on the shelf. The lamp goes too: it is Room 1's box lamp carried to this desk (r4 patched its three boxes to the far corner), and from the seat only its shade showed — an orange box floating on the wall in every plate; moved to the near corner it hid behind the headset's dock instead. Its LIGHT stays (cluster.ts carryLampLight, (5.45, 1.15, 1.20)): a warm wash on the desk wall with no box under it, which the soft lo-fi doctrine allows and a box lamp does not earn. History of the lamp's positions: ⚑ Sérgio, 2026-09-05: *\"check that you had at least a lamp floating above the bed at least in earlier images.\"* He is right and it is measurable: r4 patched the lamp to z 1.50, and `e_desk` (pos z 0.61, 1.40 deep) ENDS at z 1.31. The lamp had been standing 0.19 m past the edge of the desk and 0.27 m above the bed, held up by nothing. It arrived there when the lamp was 'carried to Maya's desk' at E4 without anyone measuring the desk. Moved to (5.45, 1.20): on the desk's far corner, clear of the folders (x 5.05–5.27) and of e_wallShelf (x 5.54+). cluster.ts's carryLampLight moves with it. ⚑ 2026-09-13: and from the far corner to the NEAR one (z 0.0): behind the laptop only the shade was visible — an orange box floating on the wall in every plate. Where the mug and glasses were (both struck the same day); clear of the headset's dock (x ≤ 5.31).",
+  "_docS156": "S156: the CRT/tower/keyboard ids left r4's remove list — the r2 fold retires them now (R3-45), and r4 removes the 2003 machine instead."
  }
 }
