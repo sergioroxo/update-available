@@ -1,37 +1,49 @@
 {
- "_doc": "PLACEHOLDER — Sérgio voice pass pending on every display string below. THE INTERIM LOG-IN PANEL (docs/REINTERP_OPENING_DECISION_2026-07-24.md §2), the evolution of R28 §4 layer 1's minimal orienting card (D43): the whole front door now — what the project is, and HOW TO MOVE shown for BOTH headset and computer (an actual controls display, not a one-line hint; an accessibility gain as much as an orientation one), ending in a log-in action, plus the PLACEHOLDER-draft Enter VR label only when immersive VR is supported, that WAKES the room (lights up + the machine boots itself). Frame voice, per CLAUDE.md's 'the frame never plays': functional, undecorated, no fiction, no charm — the piece has not started while this is on screen. `premise` is the session brief's own wording (R9-canonized by Sérgio). `contentNote` deliberately overlaps with O1's own disclaimer (data/strings/opening.json's o1_disclaimer) — flagged in 01_SESSION_LOG.md Session 36, resolving once the O1 revamp (docs/reinterp/CODEX_BRIEF_O1_REVAMP_2026-07-12.md) lands. The two controls blocks should eventually be the SINGLE source for data/strings/gameMenu.json's `controlsLines` too (that list is desktop-only today, and is out of this session's file scope) — flagged in Session 44's log.",
+ "_doc": "THE FRONT DOOR (docs/REINTERP_OPENING_DECISION_2026-07-24.md §2; the evolution of R28 §4 layer 1's orienting card, D43). ⚑ S162 / R3-01 + F-01 (his 2026-09-20): the panel wears the 1997 machine's own chrome — the ERA1 palette from src/desktop/theme/era1.ts, a title bar, bevelled buttons, an interim mark (the CRT, drawn in code; his logo file is still his ask and replaces it) — and it OFFERS THE CHOICES instead of listing them: three cards, one per way of being here (this computer · a phone or tablet · a headset), each with its own controls and its own entry button, and a checkbox for the sound captions. The phone card's button is the real gesture iOS demands before it grants orientation (CLAUDE.md, look-mode 3), so choosing it asks there and then; the headset card is pressable only when this browser has confirmed an immersive session. Frame voice, per CLAUDE.md's 'the frame never plays': functional, undecorated, no fiction — the chrome is the machine's, the words are the frame's. `premise` is the session brief's own wording (R9-canonized by Sérgio; verbatim). `contentNote` and `nameNote` are the ethics surfaces (ETHICS_CONSTRAINTS #4; 08_STATUS_REGISTER §8 decision 9) behind the 4 s arm-delay — kept whole. The captions choice is `ledger.view.captions` (in memory only, never stored): the sound NAMES in the strip (data/strings/captions.json, W-G2); spoken words and the piece's own lines always show.",
  "title": "YOUR UPDATE HAS FAILED",
- "subtitle": "PC Simulator · SurvivingSOGICE · University of Bergen, Center for Digital Narrative",
+ "titleBar": "YOUR UPDATE HAS FAILED — PC Simulator",
+ "subtitle": "SurvivingSOGICE · University of Bergen, Center for Digital Narrative",
  "premise": "You will follow different lives through thirty years of one machine.",
- "about": "You sit at one computer in one room. The room ages around you, and the software keeps updating. What the software is for is the thing you are here to see.",
+ "about": "One computer, one room. The room ages around you and the software keeps updating. What the software is for is what you are here to see.",
  "contentNote": "This depicts how organised \"conversion\" networks target queer people online — in their own tactics and language. You can leave at any time; nothing you do is kept.",
  "nameNote": "One thing specifically, so it is not a surprise: in the last part, a system speaks a name that the person it is speaking to does not use. The piece is not neutral about this — the system is wrong. If you would rather not hear it said aloud, the menu (Esc, or the button in the corner) has a setting for that; the subtitles still show what the system did.",
- "controlsTitle": "How to move",
- "controlsDesktopHeading": "On this computer",
- "controlsDesktopLines": [
-  "Drag with the mouse to look around the room.",
-  "Click to choose, and to use things on the desk.",
-  "Click a marker on the floor to move to it.",
-  "Esc — or the corner button — opens the menu: pause, controls, credits, leave."
- ],
- "controlsHeadsetHeading": "In a headset",
- "controlsHeadsetLines": [
-  "Turn your head to look around the room.",
-  "Point with the controller and pull the trigger to choose.",
-  "Point at a marker on the floor and pull the trigger to move to it.",
-  "Squeeze the grip to open the same menu: pause, where you are, controls, leave."
- ],
- "controlsPhoneHeading": "On a phone or tablet",
- "controlsPhoneLines": [
-  "Turn the device to look around the room, as you would in a 360 video.",
-  "Or drag with one finger, if you would rather not move.",
-  "Tap to choose. A tap that slides is a look, not a choice.",
-  "Pinch to zoom in when something is too small to read.",
-  "Landscape shows the whole screen at once; upright works too."
- ],
- "controlsNote": "You never walk, and nothing here is timed. Turning to look is the only thing your body has to do.",
- "enterLabel": "Log in",
- "enterVrLabel": "Enter VR",
+ "chooseTitle": "How will you be here?",
+ "chooseNote": "Choose one. You never walk, and nothing is timed — turning to look is the only thing your body has to do.",
+ "cards": {
+  "desktop": {
+   "heading": "On this computer",
+   "lines": [
+    "Drag with the mouse to look around.",
+    "Click to choose, and to use things on the desk.",
+    "Click a marker on the floor to move to it."
+   ],
+   "button": "Log in"
+  },
+  "phone": {
+   "heading": "On a phone or tablet",
+   "lines": [
+    "Turn the device to look around, as in a 360 video.",
+    "Tap to choose. A tap that slides is a look, not a choice.",
+    "Pinch to zoom in when something is too small to read."
+   ],
+   "button": "Enter — turn the device",
+   "asking": "Asking the device…",
+   "denied": "Motion access was declined — you can still drag to look. Entering."
+  },
+  "headset": {
+   "heading": "In a headset",
+   "lines": [
+    "Turn your head to look around.",
+    "Point with the controller and pull the trigger to choose.",
+    "Squeeze the grip for the menu."
+   ],
+   "button": "Enter VR",
+   "unavailable": "No headset found in this browser."
+  }
+ },
+ "menuLine": "Esc — or the corner button — opens the menu: pause, where you are, controls, credits, leave.",
+ "captionsLabel": "Name every sound in the caption strip",
+ "captionsNote": "Spoken words are always captioned. This adds the sounds — a modem, a chime, a room.",
  "enterNote": "The room is dark until you do.",
  "leaveLabel": "Leave",
  "wait": "one moment",

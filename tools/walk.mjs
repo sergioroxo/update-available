@@ -713,8 +713,15 @@ const LAP = { w: 224, h: 140 };
      */
     const cm = window.__closeMonitor;
     const cmRects = cm && cm.on && Array.isArray(cm.hits) ? cm.hits : [];
+    // ⚑ S163 / C-02: the machine stands back in the sky at its own pose (`glass`,
+    //   world centre + size), no longer on Room 1's screen; `close-go` (the far
+    //   face's one press) is allowed — it only brings the eye to the card
+    const g = cm && cm.glass ? cm.glass : null;
     for (const r of cmRects) {
-      add(r.id, 'close-monitor', r, onMonitor(r.x + r.w / 2, r.y + r.h / 2, OS.w, OS.h));
+      const pt = g
+        ? toPage(g.x + (r.x + r.w / 2) / OS.w * g.w - g.w / 2, g.y - ((r.y + r.h / 2) / OS.h - 0.5) * g.h, g.z)
+        : onMonitor(r.x + r.w / 2, r.y + r.h / 2, OS.w, OS.h);
+      add(r.id, 'close-monitor', r, pt);
     }
 
     const surfaced = new Set(targets.map((t) => t.surface));

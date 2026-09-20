@@ -47,11 +47,45 @@ export interface CloseMonitor {
   press(x: number, y: number): boolean;
   onEra?: (era: EraKey) => void;
   onAgain?: () => void;
+  /** ⚑ S163 / C-02 — the machine stands back in the sky now; `present` puts the
+   *  dark body there before it is lit (R3-109), `setNear` says whether the eye
+   *  has come to it (the card's face and its presses depend on it) */
+  present(): void;
+  setNear(near: boolean): void;
+  readonly near: boolean;
+  /** the glass, in world space (centre + size) — for a ray test and for the walk's aim */
+  readonly glass: { x: number; y: number; z: number; w: number; h: number };
+  /** a world-space ray → the glass in logical canvas pixels, or null */
+  hitTest(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { x: number; y: number } | null;
+  /** she pressed the far glass: whoever mounts this moves the eye (app.ts) */
+  onGo?: () => void;
 }
 
 /** the CRT's visible screen, as app.ts has it (metres, 4:3) */
 const SCREEN = { w: 0.4, h: 0.3, x: 0, y: 1.08, z: 0 };
 const RISE_SECONDS = 3.0;
+/**
+ * ⚑ S163 / C-02 + R3-111 — FURTHER, AND BIGGER. Sérgio (2026-09-20): "the PC model
+ * is still all wrong and in front of the panels; it should be further, and the
+ * screen image bigger. If we need to, we can press and go there." And round 3:
+ * "the reboot PC should be Daniel's and much further away — I can barely see the
+ * Close." So the machine stands FAR_Z metres back into the sky, scaled ×SCALE
+ * about its own glass (the glass centre stays at the room's screen height), so
+ * the constellation is the frame and the monitor is a screen in it. From the
+ * seat the card is a title and one line; a press on the glass brings the eye to
+ * NEAR_DISTANCE (the room's own 0.7 m, scaled), where the full card is drawn and
+ * its buttons are live. The camera moves; the machine never does.
+ */
+export const CLOSE_MONITOR = {
+  /** the glass's world z (the seat is at z 0.7, so 3.0 m away) */
+  farZ: -2.3,
+  /** the glass centre's height: 0.15 under the room's screen, so the machine's
+   *  top (1.33) clears the panels' band (1.36 up — cluster.json pointCloud.panel) */
+  glassY: 0.93,
+  scale: 1.8,
+  /** eye-to-glass when she has come to it: the room's 0.7 m at the machine's scale */
+  nearDistance: 0.7 * 1.8
+} as const;
 const BODY_IDS = ['deskTop', 'crtBody', 'crtBezelTop', 'crtBezelBottom', 'crtBezelLeft', 'crtBezelRight',
   'crtNeck', 'crtFoot', 'crtPowerButton', 'crtPowerLed', 'keyboard'];
 
@@ -116,11 +150,39 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
   glass.setLocalEulerAngles(90, 0, 0);   // faces +Z, the chair — as desktop-screen does
   entity.addChild(glass);
   const glassMat = glass.render!.material as pc.StandardMaterial;
+  // C-02: back into the sky, scaled about the glass — its centre stays at (0, SCREEN.y, farZ)
+  const S = CLOSE_MONITOR.scale;
+  entity.setLocalScale(S, S, S);
+  entity.setLocalPosition(0, CLOSE_MONITOR.glassY - SCREEN.y * S, CLOSE_MONITOR.farZ);
+  const glassWorld = { x: 0, y: CLOSE_MONITOR.glassY, z: CLOSE_MONITOR.farZ, w: SCREEN.w * S, h: SCREEN.h * S };
 
   const hits: CloseMonitor['hits'] = [];
   const W = ERA1_CANVAS.width, H = ERA1_CANVAS.height;
 
-  /** the card, once — nothing on it moves, so it is drawn on `show()` and uploaded once */
+  /** ⚑ the FAR face (C-02): the mark, the title large, one line — readable at
+   *  three metres; the whole glass is the press that brings the eye to it */
+  function drawFar(): void {
+    hits.length = 0;
+    px(ctx, 0, 0, W, H, ERA1.black);
+    setFont(ctx, 12);
+    ctx.fillStyle = ERA1.silver;
+    ctx.fillText(card.mark, 24, 22);
+    const yw = ctx.measureText(card.years).width;
+    ctx.fillText(card.years, W - 24 - yw, 22);
+    px(ctx, 24, 40, W - 48, 1, ERA1.greyDark);
+    setFont(ctx, 40);
+    ctx.fillStyle = ERA1.white;
+    const tw = ctx.measureText(card.title).width;
+    ctx.fillText(card.title, Math.round((W - tw) / 2), 140);
+    setFont(ctx, 18);
+    ctx.fillStyle = ERA1.silver;
+    const cw = ctx.measureText(card.come).width;
+    ctx.fillText(card.come, Math.round((W - cw) / 2), 232);
+    hits.push({ x: 0, y: 0, w: W, h: H, id: 'close-go' });
+    tex.upload();
+  }
+
+  /** the card, once — nothing on it moves, so it is drawn on `setNear(true)` and uploaded once */
   function drawCard(): void {
     hits.length = 0;
     px(ctx, 0, 0, W, H, ERA1.black);
@@ -175,21 +237,54 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
 
   let on = false;
   let rise = 0;
+  let near = false;
   const api: CloseMonitor = {
     entity,
     get on() { return on; },
+    get near() { return near; },
+    get glass() { return glassWorld; },
     get hits() { return on && rise >= 1 ? hits : []; },   // pressable only once lit
+    present(): void {
+      // R3-109 ("in Daniel's place, the computer should be there"): the dark body
+      // stands in the sky before it is lit — a CRT-shaped shadow, no glass yet
+      if (on) return;
+      glassMat.emissive.set(0, 0, 0);
+      glassMat.update();
+      bodyMat.emissive.set(0.06, 0.055, 0.05);
+      bodyMat.update();
+      entity.enabled = true;
+    },
+    setNear(n: boolean): void {
+      if (near === n) return;
+      near = n;
+      if (on) { if (near) drawCard(); else drawFar(); }
+    },
+    hitTest(p0, p1): { x: number; y: number } | null {
+      if (!entity.enabled) return null;
+      const g = glassWorld;
+      const dz = p1.z - p0.z;
+      if (Math.abs(dz) < 1e-6) return null;
+      const t = (g.z - p0.z) / dz;
+      if (t < 0 || t > 1) return null;
+      const wx = p0.x + (p1.x - p0.x) * t;
+      const wy = p0.y + (p1.y - p0.y) * t;
+      const u = (wx - g.x) / g.w + 0.5;
+      const v = 0.5 - (wy - g.y) / g.h;
+      if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+      return { x: u * W, y: v * H };
+    },
     show(): void {
       if (on) return;
       on = true;
       rise = 0;
-      drawCard();
+      if (near) drawCard(); else drawFar();
       glassMat.emissive.set(0, 0, 0);
       glassMat.update();
       entity.enabled = true;
     },
     hide(): void {
       on = false;
+      near = false;
       entity.enabled = false;
       hits.length = 0;
     },
@@ -208,6 +303,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     press(x: number, y: number): boolean {
       for (const h of api.hits) {
         if (x < h.x || x > h.x + h.w || y < h.y || y > h.y + h.h) continue;
+        if (h.id === 'close-go') { api.onGo?.(); return true; }
         if (h.id === 'close-again') { api.onAgain?.(); return true; }
         const era = card.eras.find((e) => `close-era-${e.era}` === h.id)?.era;
         if (era) { api.onEra?.(era as EraKey); return true; }

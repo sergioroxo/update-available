@@ -76,6 +76,11 @@ class GameMenuBus {
    *  the line they just read is on screen when the room comes back */
   showHint: (() => void) | null = null;
 
+  /** ⚑ S163 / R3-111 — a press on one of the Close's panels opens the menu at
+   *  that panel's sources (the status and the dossier practices behind its
+   *  paragraph). The menu sets this when it mounts; the engine calls it. */
+  openCloseSources: ((panel: number) => void) | null = null;
+
   get isOpen(): boolean {
     return this._open;
   }

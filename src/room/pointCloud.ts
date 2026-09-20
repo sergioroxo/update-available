@@ -128,6 +128,15 @@ export interface PointCloud {
   /** 0→1 as the ceiling's stars open out into the sky */
   readonly open: number;
   update(dt: number): void;
+  /** ⚑ S163 / R3-111 — which panel a world-space ray lands on (0..3), or null.
+   *  A press on a panel is the way to its sources (the frame's menu). */
+  panelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): number | null;
+  /** ⚑ S163 / R3-112 — the drift pauses while the gaze rests on a panel
+   *  ("the constellation should travel only when I am not moving… hard to
+   *  read"): the caller says each frame whether the eye line is on one. */
+  gazeOnPanel(on: boolean): void;
+  /** …and holds still for `seconds` after any press */
+  holdDrift(seconds: number): void;
 }
 
 export function buildPointCloud(app: pc.Application): PointCloud {
@@ -553,6 +562,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
    */
   const CELL_W = 1536;
   const CELL_H = 768;
+  /** each panel's frame in the cloud's own space (centre, normal, right, up, half-sizes) — for `panelAt` */
+  const panelFrames: { c: pc.Vec3; n: pc.Vec3; r: pc.Vec3; u: pc.Vec3; hw: number; hh: number }[] = [];
   const PLATE = { x: 40, y: 40, w: 600, h: 688 };
   const TEXT_X = PLATE.x + PLATE.w + 48;
   const TEXT_W = CELL_W - TEXT_X - 44;
@@ -636,10 +647,11 @@ export function buildPointCloud(app: pc.Application): PointCloud {
           pc2.fillStyle = P.labelColor;
           for (const m of lines) { pc2.fillText('· ' + wrap(pc2, m, TEXT_W - 30)[0], TEXT_X, my); my += 30; }
         }
-        // the dossier status, small, where a card keeps its stamp
-        pc2.font = '26px monospace';
-        pc2.fillStyle = P.link;
-        pc2.fillText(panel.status, TEXT_X, y0 + CELL_H - 50);
+        // ⚑ S163 / R3-111 — no stamp on the panel (Sérgio: "don't want the
+        //   'documentary' label"): the status and the sources are the FRAME's to
+        //   show — the menu's "The Close's panels — sources", reached by a press
+        //   on the panel itself (`panelAt`). The panel says what happened; the
+        //   frame says how well it is documented.
       };
       panels.forEach((panel, i) => {
         const y0 = i * CELL_H;
@@ -713,6 +725,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         pU.cross(pN, pR).normalize();
         const hw = P.panel.w / 2;
         const hh = P.panel.h / 2;
+        panelFrames[i] = { c: new pc.Vec3(cx, cy, cz), n: pN.clone(), r: pR.clone(), u: pU.clone(), hw, hh };
         const base = i * 4;
         for (const [ux, uy] of [[-hw, hh], [hw, hh], [hw, -hh], [-hw, -hh]]) {
           pp.push(cx + pR.x * ux + pU.x * uy, cy + pR.y * ux + pU.y * uy, cz + pR.z * ux + pU.z * uy);
@@ -786,6 +799,15 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   let yaw = 0;
   /** 0 = gathered on the ceiling, 1 = open around the seat. See `openSeconds`. */
   let openK = 0;
+  /** ⚑ S163 / R3-112 — the drift's own gain: eases to 0 while the gaze rests on a
+   *  panel or a press has just landed, back to 1 when the eye moves on. Never a
+   *  snap: a sky that stops dead reads as a bug, one that settles reads as a hand. */
+  let driftK = 1;
+  let gazeHeld = false;
+  let holdT = 0;
+  const DRIFT_EASE_SECONDS = 1.6;
+  const invRoot = new pc.Mat4();
+  const lp0 = new pc.Vec3(), lp1 = new pc.Vec3(), ld = new pc.Vec3(), lh = new pc.Vec3();
 
   /**
    * Rewrites the existing merged label mesh so every quad faces the live
@@ -925,9 +947,31 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         openK = Math.min(1, openK + dt / P.openSeconds);
         applyOpen();
       }
-      yaw += P.driftDegPerSec * dt; // the slow drift — alive, not surveilled
+      if (holdT > 0) holdT = Math.max(0, holdT - dt);
+      const want = gazeHeld || holdT > 0 ? 0 : 1;
+      driftK += (want - driftK) * Math.min(1, dt / DRIFT_EASE_SECONDS);
+      yaw += P.driftDegPerSec * dt * driftK; // the slow drift — alive, not surveilled; still while read (R3-112)
       root.setLocalEulerAngles(0, yaw, 0);
       updateBillboards();
-    }
+    },
+    panelAt(p0, p1): number | null {
+      if (!visible || panelFrames.length === 0) return null;
+      invRoot.copy(root.getWorldTransform()).invert();
+      invRoot.transformPoint(lp0.set(p0.x, p0.y, p0.z), lp0);
+      invRoot.transformPoint(lp1.set(p1.x, p1.y, p1.z), lp1);
+      ld.sub2(lp1, lp0);
+      for (let i = 0; i < panelFrames.length; i++) {
+        const f = panelFrames[i];
+        const denom = ld.dot(f.n);
+        if (Math.abs(denom) < 1e-6) continue;
+        const t = (f.c.dot(f.n) - lp0.dot(f.n)) / denom;
+        if (t < 0 || t > 1) continue;
+        lh.copy(ld).mulScalar(t).add(lp0).sub(f.c);
+        if (Math.abs(lh.dot(f.r)) <= f.hw && Math.abs(lh.dot(f.u)) <= f.hh) return i;
+      }
+      return null;
+    },
+    gazeOnPanel(on: boolean): void { gazeHeld = on; },
+    holdDrift(seconds: number): void { holdT = Math.max(holdT, seconds); }
   };
 }

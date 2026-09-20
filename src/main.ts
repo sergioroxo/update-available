@@ -86,7 +86,10 @@ if (query.get('lambyrig') === '1') {
     launch();
   } else {
     // R28-3 (minimal): the orienting card precedes O1 on a fresh load only.
-    const card = mountOrientingCard(() => {
+    const card = mountOrientingCard((choice) => {
+      // S162 / F-01: the choice itself already did its work (the phone card asked
+      // the device; the headset card requested the session) — the room opens the same
+      document.documentElement.dataset.door = choice;
       card.destroy();
       launch();
     });

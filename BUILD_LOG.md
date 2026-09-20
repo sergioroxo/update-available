@@ -1508,3 +1508,62 @@ by hand in the pane: the flicker (k 0.55 blips over the room), the cut at 2.4 s 
 hall), a1–a4, off, g1/g2 with the two figures at −1.25/2.65 (from −1.7/3.1), o1 with them back
 and `ballT` at 0. Walked: 273 presses, spine done. **closes R3-105, R3-106.** Priority 6 is closed bar R3-92
 (later).
+
+## 2026-09-20 — S162 · PRIORITY 7: THE FRONT DOOR OFFERS THE CHOICES
+**R3-01** — the pre-fiction panel is a 1997 dialog: the ERA1 palette through the new shared
+`DIALOG` tokens (`theme/chrome.ts`; ERA1 only — the palette ratchet tightens 33 → 24), a title
+bar, bevelled buttons and group boxes, a sunk paper field for the notes, a system sans, and an
+interim mark at the top — a CRT drawn in code (`drawMark`; his logo file is still his ask and
+replaces it in one function). The premise stays verbatim (his R9 wording); `about` is cut to two
+sentences; the content note and the name advisory stay whole behind the 4 s arm-delay. **F-01**
+— the door OFFERS the choices instead of listing them: three cards, one per way of being here —
+*On this computer* (Log in) · *On a phone or tablet* (Enter — turn the device) · *In a headset*
+(Enter VR; "No headset found in this browser." until `isSessionSupported` + `prepareImmersiveVrEntry`
+say yes) — each with its three controls and its own way in. The phone card's press IS the gesture
+iOS demands: it asks the device there and then, files the answer in `ledger.view.motion`, and the
+engine acts on it at start (`app.ts`: granted → the listener attaches with no second press;
+denied → "Motion access declined. Drag to look."; a declined sensor is not a locked door). On a
+touch screen the phone card leads (an order, never a sniff that hides). And a checkbox: *Name every
+sound in the caption strip* — `ledger.view.captions` (in memory only), the sound NAMES of W-G2;
+spoken words always show; the same switch is a menu row ("Sound captions: …"). **R3-31** — the
+game menu wears the same chrome (a title bar carries each view's heading, bevelled rows, the pause
+glyph a 1997 button, the map's columns in the dialog's inks). **R3-30** — the unvoiced-name setting
+in plain words: "The name on the record: said aloud / shown, not said aloud" and a note that says
+what happens and how to switch. Verified by hand in the pane: the three cards in a row at 800 px
+and stacked at 375 px; Log in enters with `captions` false when unchecked; the phone card enters
+with the sensor declined and the room's button saying so; the menu row toggles the ledger. The
+headset note carries S162. Walked: with S163 — 280 presses, spine done. **closes F-01, R3-01 (bar the logo file — his),
+R3-30, R3-31.**
+
+## 2026-09-20 — S163 · PRIORITY 8: THE CLOSE
+**C-01** — the flight goes LEFT, and the morph is seen coming down. The travel is one 44 s sweep
+from her seat to Daniel's, rising over the partition and turning left the long way (`yawTurn` on
+`startCamMove`; 210° through east and north to WEST, the way she is going — 1.875 × 210 / 44 =
+8.95 °/s at the crest, under the 9.1 law), so Rooms 1 and 2 are ahead of her for the second
+half; 14 s before she lands night falls (the `close` rig), the score comes in and the
+constellation opens out of the ceiling over Daniel's seat, so the room dissolves under it while
+she is still coming down (`beginCloseMorph`, measured: the room went 7.7 s before arrival). At the
+seat, facing west, the eyes rise to the stars and the head comes round to the desk in one 20 s
+move (8.4 °/s). The review route (`?close=1`) keeps its old order. **C-02 / R3-111 (distance)** —
+Daniel's machine stands three metres back in the sky, ×1.8 about its own glass (`CLOSE_MONITOR` in
+`closeMonitor.ts`; the glass at 0.93 so the machine's top clears the panels' band); from the seat
+the card is a title and one line — "Press the screen to come to it." — and the whole glass is the
+press (`close-go`): the eye comes to it over 8 s (0.41 m/s), the full card is drawn on arrival
+and its buttons are live; the machine never moves. Presses reach it through its own ray test
+(`hitTest`), not Room 1's screen; the walker aims at `__closeMonitor.glass`. **R3-109** — "in
+Daniel's place, the computer should be there": the dark machine stands in the sky from the moment
+the room goes (`present`), lit only when the Close settles. **R3-111 (the label)** — no
+"documentary" stamp on the panels; the status and the sources are the frame's: Credits → *The
+Close's panels — sources & further reading* lists each panel with its status in plain words and
+the dossier practices its paragraph draws on (`close_network.json` `practices` →
+`practices.json`), each with its source; a press on a panel in the Close opens the menu at that
+panel (`cloud.panelAt`, `gameMenuBus.openCloseSources`). **R3-112** — the constellation's drift
+eases to a stop while the eye line rests on a panel and for 3 s after any press, and eases back
+(`driftK`, 1.6 s) — never a snap. Verified by hand in the pane: the sweep's yaw 240 → 450 while x
+4.4 → 0, the machine present at 61.6 s, the lookUp 450 → 360 with the 72° rise, the far face and
+`close-go`, the press bringing the eye to z −1.04 and the card's five buttons live, a panel press
+opening "The Close — sources" at 1997. ⚑ S162's own walk was aborted at press 100 by my own edit
+to `pointCloud.ts` while it ran (the law I keep breaking — Vite reloads the walker's page); the
+walk below covers S162 and S163 together. Walked: 280 presses, spine done (`WALK_2026-09-21.md`;
+the walker pressed `close-go` itself and the eye came to the card). **closes C-01, C-02, R3-109, R3-111,
+R3-112.**

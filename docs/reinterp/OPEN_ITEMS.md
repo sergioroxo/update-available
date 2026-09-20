@@ -121,13 +121,13 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 ## Priority 7 — the frame and the front door
 | id | item | status |
 |---|---|---|
-| F-01 | **The front door offers the choices** (his 2026-09-20): how you want to navigate this — computer (mouse/drag) · phone (turn the device) · headset — and captions on/off — chosen on the pre-fiction panel, not discovered; with R3-01's redesign | OPEN · his ask |
-| R3-01 | The pre-fiction panel: ERA1 look, the logo, three cards, the text | DESIGN · ask (logo) |
+| F-01 | ~~**The front door offers the choices** (his 2026-09-20): how you want to navigate this — computer (mouse/drag) · phone (turn the device) · headset — and captions on/off — chosen on the pre-fiction panel, not discovered; with R3-01's redesign~~ | DONE — S162 · three cards with their own way in (the phone card asks the device in its press); the captions checkbox = `ledger.view.captions`, also a menu row |
+| R3-01 | ~~The pre-fiction panel: ERA1 look, the logo, three cards, the text~~ | DONE — S162 · a 1997 dialog (`DIALOG` tokens), three cards, the text cut · **the logo file is still his ask** (an interim CRT mark stands in `drawMark`) |
 | R3-06 | ~~Helper idle 40 → 20 s~~ | DONE — S149 · 20 s |
 | R3-09 | Desktop icon grid with drawn pixel icons | OPEN |
 | R3-15 | ~~**Un-Walk = the Starter Kit programme (UNWALK.EXE)**, "a box with white background, empty, black and white font" → the Win95 WIZARD look from his reference `References images/for the Era-1 programs.png` (left picture panel, text, Back/Next/Cancel) — one design with R3-16/19~~ | DONE — S151 · the Win95 wizard from his reference — picture panel, title, Back/Next/Cancel; tour frame 07 |
 | R3-29 | ~~Map wording: "the placement letter"~~ | DONE — S149 · "the placement letter" |
-| R3-30 / 31 | The unvoiced-name setting in plain words; menu design | OPEN |
+| R3-30 / 31 | ~~The unvoiced-name setting in plain words; menu design~~ | DONE — S162 · "The name on the record: said aloud / shown, not said aloud" + a plain note; the menu wears the door's 1997 chrome |
 | R3-33 | ~~"See behind you"; the flip button glows when the wall holds something unseen~~ | DONE — S151b · "Record filed. (see behind you)"; the ⟲ control glows on the creep's breath while the wall holds something unseen |
 | W-F1 | Leave: an interim safe space with a way back (08-21 §F); in-fiction "leave" renamed "Go back" | DESIGN |
 | W-K1 | Browser: scroll wheel / trackpad zoom (08-21 §K) | OPEN |
@@ -135,13 +135,13 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 ## Priority 8 — the Close
 | id | item | status |
 |---|---|---|
-| C-01 | **The flight to the Close** (his 2026-09-20): "why does the camera go to the right and then to the left? it should go to the LEFT so we can see the other rooms as we voyage to Daniel's seat — that way, as the Close is morphing with the space, we arrive and still see part of it coming down on us" — redo the four legs: leftward past Rooms 3→2→1, the morph in view on the way, arriving into it | OPEN · his ask |
-| C-02 | **The Close's PC** (his 2026-09-20): "the PC model is still all wrong and in front of the panels; it should be further, and the screen image bigger. If we need to, we can press and go there" — the monitor further back, the Restart card's screen larger, a marker/press to go to it | OPEN · his ask |
+| C-01 | **The flight to the Close** (his 2026-09-20): "why does the camera go to the right and then to the left? it should go to the LEFT so we can see the other rooms as we voyage to Daniel's seat — that way, as the Close is morphing with the space, we arrive and still see part of it coming down on us" — redo the four legs: leftward past Rooms 3→2→1, the morph in view on the way, arriving into it | DONE — S163 · one 44 s sweep turning left the long way to face west; night + the constellation 14 s before landing; lookUp brings the head round |
+| C-02 | **The Close's PC** (his 2026-09-20): "the PC model is still all wrong and in front of the panels; it should be further, and the screen image bigger. If we need to, we can press and go there" — the monitor further back, the Restart card's screen larger, a marker/press to go to it | DONE — S163 · 3 m back, ×1.8; the far face + "Press the screen to come to it." (`close-go`); the eye comes to it over 8 s |
 | C-03 | ~~The beep at the end~~ | DONE — S159 · gone ("unnecessary") |
 | C-04 | ~~The keyboard sounds~~ | DONE — S159 · gone, all three (the page-turn click, the diary's key, the 2026 typing) — "hideous… or go find one from android"; the flag and the erase stay |
-| R3-111 | No "documentary" stamp on the panels; sources per panel in the frame; the CRT further back | OPEN |
-| R3-112 | The drift pauses while a panel is looked at or pressed | OPEN |
-| R3-109 | Daniel's computer visible from the start of the Close? | ASK |
+| R3-111 | ~~No "documentary" stamp on the panels; sources per panel in the frame; the CRT further back~~ | DONE — S163 · stamp gone; Credits → The Close's panels — sources; a press on a panel opens it there; the CRT 3 m back |
+| R3-112 | ~~The drift pauses while a panel is looked at or pressed~~ | DONE — S163 · eases to a stop on the gaze and for 3 s after a press, eases back |
+| R3-109 | ~~Daniel's computer visible from the start of the Close?~~ | DONE — S163 · read as yes: the dark machine stands in the sky from the moment the room goes; lit when the Close settles |
 
 ## From the audit of every message he sent (`LOST_ASKS_AUDIT_2026-09-17.md`, Sonnet, all 672 read)
 | id | item | first said | status |
@@ -164,11 +164,14 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | I-03 | His deep research's documented interactive forms as content: 1997 the pledge card / the ring; 2003 the multimedia rally, the testimony; 2016 the worldview audit (I-01), the testimony essay; 2026 the online peer group (the Commons), the deconstruction story circle (the Close?) | each era | IDEA · unscheduled |
 
 ## Asks (his)
-- R3-01 the logo file · R3-12 which "pause" button (a frame) · R3-07 the books: slabs or gone · W-L1 which mini-game first ·
-  L-07 the Close's ending: the Restart card, the version-history receipt, or both · L-08 bare rooms as a choice, yes/no ·
-  R3-61 anything after the residue · R3-109 the CRT from the start.
+- R3-01 the logo file (an interim CRT mark stands in `orientingCard.ts drawMark` — S162) · R3-12 which "pause" button (a frame) ·
+  R3-07 the books: slabs or gone · L-07 the Close's ending: the Restart card, the version-history receipt, or both ·
+  L-08 bare rooms as a choice, yes/no · R3-61 — his answer is in (the notice rises out of Caleb's residue; to build).
+  (W-L1 answered S153: Root Cause Digger · R3-109 read as yes and built S163.)
 
 ## Closed
+- S163 (2026-09-20): C-01, C-02, R3-109, R3-111, R3-112 — Priority 8, the Close; walked with S162, 280 presses, spine done — `WALK_2026-09-21.md`.
+- S162 (2026-09-20): F-01, R3-01 (bar the logo file), R3-30, R3-31 — Priority 7, the front door; its own walk was aborted at press 100 by an edit of mine; walked with S163 (280 presses, spine done — `WALK_2026-09-21.md`).
 - S161 (2026-09-20): R3-105, R3-106 — Priority 6 batch B (the entrance seen, the arrival slower); walked, 273 presses, spine done.
 - S160 (2026-09-20): R3-87, R3-89/90, R3-91, R3-93/104, R3-94, R3-96, R3-101 — Priority 6 batch A (the way in + the turn); walked, 275 presses, spine done.
 - S159 (2026-09-20): R3-20, W-G2, C-03, C-04 — his six answers, the quick four; R3-02/R3-110 sent to him to hear; W-E2 (a), R3-61, C-01, C-02, F-01 registered with his rulings.

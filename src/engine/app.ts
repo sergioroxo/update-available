@@ -24,7 +24,7 @@ const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
-import { mountCloseMonitor, type CloseMonitor } from '../room/closeMonitor';
+import { mountCloseMonitor, CLOSE_MONITOR, type CloseMonitor } from '../room/closeMonitor';
 import { entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
@@ -1742,8 +1742,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   function startCamMove(to: { x: number; y: number; z: number; pitch: number; yaw: number },
                         dur: number, conducted: boolean,
-                        via?: { x: number; y: number; z: number }): void {
-    const dyaw = ((to.yaw - camYaw + 540) % 360) - 180; // shortest signed rotation
+                        via?: { x: number; y: number; z: number },
+                        yawTurn?: number): void {
+    // shortest signed rotation — unless the leg says which way round (S163 / C-01:
+    // the Close's sweep turns LEFT the long way so the building is seen)
+    const dyaw = yawTurn ?? ((to.yaw - camYaw + 540) % 360) - 180;
     const fx = camPos.x, fy = camPos.y, fz = camPos.z;
     // `via` is the bezier CONTROL point (raised, back from center): the path bows
     // up-and-over toward it, so mid-travel you rise above the space and see the
@@ -2425,6 +2428,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const touchy = navigator.maxTouchPoints > 0 ||
       window.matchMedia?.('(pointer: coarse)')?.matches === true;
     if (hasEvent && (forced || needsPermission || touchy)) motionState = 'idle';
+    // ⚑ S162 / F-01 — CHOSEN AT THE DOOR. The front door's phone card asked the
+    //   device inside its own gesture (orientingCard.ts) and left the answer in
+    //   the ledger: granted → attach now, no second press; denied → say so.
+    if (hasEvent && ledger.view.motion === 'granted') {
+      motionState = 'asking';
+      attachMotion();
+    } else if (hasEvent && ledger.view.motion === 'denied') {
+      motionState = 'denied';
+    }
     paintMotionBtn();
     motionBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -2859,10 +2871,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // nothing/interacting). toDesktop() only matches the narrow monitor
       // plane, so this reorder costs nothing on the far more common case
       // (clicking a marker on the floor, nowhere near the screen).
+      // ⚑ S163: in the Close the machine stands back in the sky (C-02) — its own
+      //   glass is the press (far: come to it; near: the card) — and a panel is
+      //   the way to its sources (R3-111); any press holds the drift (R3-112)
+      if (closeMonitor?.on) {
+        const cp = closeMonitor.hitTest(ray.p0, ray.p1);
+        if (cp) { closeMonitor.press(cp.x, cp.y); cloud?.holdDrift(3); return; }
+      }
+      if (cloud?.visible) {
+        const pi = cloud.panelAt(ray.p0, ray.p1);
+        cloud.holdDrift(3);
+        if (pi !== null) { gameMenuBus.openCloseSources?.(pi); return; }
+      }
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
-        // ⚑ 2026-09-12: in the Close the same glass is Daniel's Restart card
-        if (closeMonitor?.on) { closeMonitor.press(p.x, p.y); return; }
         os.handleClick(p.x, p.y);
         return;
       }
@@ -2954,6 +2976,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let cueText: string | null = null;
   let cueT = 0;
   setCueListener((name) => {
+    if (!ledger.view.captions) return;   // S162 / F-01: the door's (and the menu's) choice
     const text = CUES.cues[name];
     if (!text) return;
     cueText = text;
@@ -3299,6 +3322,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           : closeStage === 'hold' ? CLOSE_HOLD_SECONDS : CLOSE_MONITOR_AFTER_SECONDS;
         if (closeHoldT >= cap) advanceClose();
       } else if (closeStage && !camMove) advanceClose();
+      // C-01: the night and the constellation begin before she lands
+      if (closeStage === 'travel' && camMove && !closeMorphBegun && camMove.dur - camMove.t <= CLOSE_MORPH_LEAD) beginCloseMorph();
+      // C-02 / R3-112: has the eye come to the machine; is it resting on a panel
+      if (closeMonitor?.on) {
+        const g = closeMonitor.glass;
+        closeMonitor.setNear(Math.hypot(camPos.x - g.x, camPos.z - (g.z + CLOSE_MONITOR.nearDistance)) < 0.25);
+      }
+      if (cloud?.visible && !camMove) {
+        const cp = camera.getPosition(), cf = camera.forward;
+        cloud.gazeOnPanel(cloud.panelAt(cp, { x: cp.x + cf.x * 8, y: cp.y + cf.y * 8, z: cp.z + cf.z * 8 }) !== null);
+      }
       // ⚑ the sky is LERPED, never cut (2026-09-12, "the light transition from
       //   the room to the dark and then blue should be smoother")
       if (skyLerp && camera.camera) {
@@ -3357,6 +3391,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           if (e instanceof pc.Entity) e.enabled = false;
         }
         closeRoomPending = null;
+        closeMonitor?.present();   // R3-109: Daniel's machine is there from the start of the Close, dark until it lights
       }
       spine?.update(dt);
       helper?.tick(dt);
@@ -3854,12 +3889,42 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * The Close is entered from the glitch now (`E4Shell.finishHandOff`), not
    * from a press on the laptop.
    */
+  /**
+   * ⚑ S163 / C-01 — THE FLIGHT GOES LEFT, AND THE MORPH IS SEEN COMING DOWN.
+   * Sérgio (2026-09-20): "why does the camera go to the right and then to the
+   * left? it should go to the LEFT so we can see the other rooms as we voyage to
+   * Daniel's seat — that way, as the Close is morphing with the space, we arrive
+   * and still see part of it coming down on us." The old travel turned the
+   * shortest way (east, then north) and faced a wall the whole crossing; the
+   * night and the constellation came only after the eyes had gone up. Now:
+   *   sweep   · ONE leg from her seat to Daniel's, rising over the partition and
+   *             turning LEFT the long way (through east and north to WEST, the
+   *             way she is travelling) so Rooms 1 and 2 are ahead of her for the
+   *             second half — 210° in CLOSE_SWEEP_SECONDS, at the law's peak.
+   *             CLOSE_MORPH_LEAD seconds before she lands, night falls (the
+   *             `close` rig), the score comes in, and the constellation opens out
+   *             of the ceiling over Daniel's seat: the room dissolves under it
+   *             while she is still coming down into it.
+   *   lookUp  · at the seat, facing west: the eyes rise to the stars and the
+   *             head comes round to the desk (yaw 90 → 0) in one move.
+   *   hold    · the stars, already night.
+   *   open    · the gaze comes down into the sky the constellation made.
+   *   settled · the monitor — standing back in the sky since the room went
+   *             (C-02, R3-109) — lights; the gaze comes down to it.
+   * The review route (`?close=1`) starts at Daniel's seat, so it keeps the old
+   * order: lookUp, night on the stars, then the opening.
+   */
   type CloseStage = 'lead' | 'travel' | 'lookUp' | 'hold' | 'open' | 'settled' | null;
   let closeStage: CloseStage = null;
   let closeHoldT = 0;
+  /** true once the night/constellation began during the sweep (C-01) */
+  let closeMorphBegun = false;
   const CLOSE_LEAD_SECONDS = 7;   // ⚑ 2026-09-13: the desk's two screens die at FAIL.off (8.5 s after the device stops); the update's 2.2 s + this = the travel begins over dead screens
-  const CLOSE_TRAVEL_SECONDS = 26;
-  const CLOSE_LOOKUP_SECONDS = 18;
+  /** 210° of turn: 1.875 × 210 / 44 = 8.95 °/s at the crest, under the 9.1 law */
+  const CLOSE_SWEEP_SECONDS = 44;
+  const CLOSE_MORPH_LEAD = 14;
+  /** 90° of turn with the 72° rise: 1.875 × 90 / 20 = 8.4 °/s */
+  const CLOSE_LOOKUP_SECONDS = 20;
   const CLOSE_LIGHTS_SECONDS = 8;
   const CLOSE_HOLD_SECONDS = 13;
   const CLOSE_OPEN_SECONDS = 16;
@@ -3868,13 +3933,31 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const CLOSE_SKY_PITCH = 10;
   const CLOSE_MONITOR_PITCH = -6;
   const CLOSE_MONITOR_TILT_SECONDS = 8;
+  /** C-02: the eye comes to the machine — 1.74 m in 8 s peaks at 0.41 m/s, under 0.43 */
+  const CLOSE_GO_SECONDS = 8;
   let skyLerp: { from: pc.Color; to: pc.Color; t: number; seconds: number } | null = null;
+
+  /** night falls, the score, and the constellation opens — once */
+  function beginCloseMorph(): void {
+    if (closeMorphBegun || !cluster || !cloud) return;
+    closeMorphBegun = true;
+    cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
+    // S155 / R3-110 (Sérgio: "the sky bed is too quiet to register"): the Close's score — the
+    // four beds resolving into one chord over the sky's air. ⚑ HIS TO HEAR.
+    roomBed.set('close_score.mp3', CLOSE_LIGHTS_SECONDS);
+    // Round 18: never black — the constellation sits in a night-blue sky;
+    // 2026-09-12: and it gets there over the opening, not on a frame
+    if (camera.camera) {
+      skyLerp = { from: camera.camera.clearColor.clone(), to: closeBackdropColor(), t: 0, seconds: CLOSE_OPEN_SECONDS };
+    }
+    cloud.show();
+  }
 
   function advanceClose(): void {
     if (!cluster || !cloud) { closeStage = null; return; }
     if (closeStage === 'lead') {
       // ⚑ 2026-09-13: the look BACK from the laptop — see `enterClose`; the
-      //   camera is mid-turn when the lead ends, so the travel begins from
+      //   camera is mid-turn when the lead ends, so the sweep begins from
       //   wherever the look has got to (startCamMove reads camPos/camYaw)
       const dx = camPos.x - EYE.x, dz = camPos.z - EYE.z;
       if (Math.hypot(dx, dz) > 0.5) {
@@ -3882,12 +3965,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         roomBed.set(PASSAGE_BED, 4.0);   // 2026-09-13: the building's own sound, once more, on the way out
         // the bezier control point sits over the partition between the rooms,
         // raised: the path bows up-and-over, the same stroke every relocation in
-        // the piece takes, and she sees the building once more on the way out
-        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 },
-          CLOSE_TRAVEL_SECONDS, true, { x: (camPos.x + EYE.x) / 2, y: 2.15, z: EYE.z });
+        // the piece takes — and the head turns LEFT the long way to face west,
+        // the way she is going (C-01)
+        const leftTurn = (((90 - camYaw) % 360) + 360) % 360;
+        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 90 },
+          CLOSE_SWEEP_SECONDS, true, { x: (camPos.x + EYE.x) / 2, y: 2.15, z: EYE.z }, leftTurn);
         return;
       }
-      // already in Daniel's room: begin with the eyes rising
+      // already in Daniel's room (the review route): begin with the eyes rising
       closeStage = 'travel';
     }
     if (closeStage === 'travel') {
@@ -3900,23 +3985,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ the lights go out ON the stars, not before the eyes start rising —
       //   measured: with the rig applied at the start of lookUp the whole rise
       //   was through a black room, and a ceiling you cannot see is not a
-      //   ceiling. She looks up in Daniel's lit room; then it is night — and
-      //   night FALLS (an 8 s crossfade), it is not switched.
+      //   ceiling. (In play the night has already fallen on the way in — C-01;
+      //   this is the review route's path.)
       closeStage = 'hold'; closeHoldT = 0;
-      cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
-      // S155 / R3-110 (Sérgio: "the sky bed is too quiet to register"): the Close's score — the
-      // four beds resolving into one chord over the sky's air. ⚑ HIS TO HEAR.
-      roomBed.set('close_score.mp3', CLOSE_LIGHTS_SECONDS);
+      if (!closeMorphBegun) {
+        cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
+        roomBed.set('close_score.mp3', CLOSE_LIGHTS_SECONDS);
+      }
       return;
     }
     if (closeStage === 'hold') {
       closeStage = 'open';
-      // Round 18: never black — the constellation sits in a night-blue sky;
-      // 2026-09-12: and it gets there over the opening, not on a frame
-      if (camera.camera) {
-        skyLerp = { from: camera.camera.clearColor.clone(), to: closeBackdropColor(), t: 0, seconds: CLOSE_OPEN_SECONDS };
+      if (!closeMorphBegun) {
+        closeMorphBegun = true;
+        if (camera.camera) {
+          skyLerp = { from: camera.camera.clearColor.clone(), to: closeBackdropColor(), t: 0, seconds: CLOSE_OPEN_SECONDS };
+        }
+        cloud.show();
       }
-      cloud.show();
       startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_SKY_PITCH, yaw: 0 },
         CLOSE_OPEN_SECONDS, true);
       return;
@@ -3925,14 +4011,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (closeStage === 'settled') {
       closeStage = null;
       // ⚑ the monitor lights, and the gaze comes down to it — conducted, slow,
-      //   the last move in the piece. Measured: at 0.7 m the CRT's glass spans
-      //   −18° to +6° of the eye line, so the card's last row was under the
-      //   frame at the sky pitch; at −6° the whole glass is in it.
+      //   the last move in the piece. It stands three metres back in the sky
+      //   (C-02); from here the card is a title and a line, and a press on the
+      //   glass brings the eye to it (`goToCloseMonitor`).
+      closeMonitor?.setNear(false);
       closeMonitor?.show();
       // (S159: the POST beep that played here is gone — Sérgio: "the beep on the computer at the end is unnecessary")
       startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_MONITOR_PITCH, yaw: 0 },
         CLOSE_MONITOR_TILT_SECONDS, true);
     }
+  }
+
+  /** C-02: "if we need to, we can press and go there" — the eye comes to the
+   *  machine's glass, the room's own distance at the machine's scale; the full
+   *  card is drawn on arrival (`setNear`, per frame below) */
+  function goToCloseMonitor(): void {
+    if (!closeMonitor?.on || closeMonitor.near || camMove) return;
+    const g = closeMonitor.glass;
+    startCamMove({ x: g.x, y: EYE.y, z: g.z + CLOSE_MONITOR.nearDistance, pitch: CLOSE_MONITOR_PITCH, yaw: 0 },
+      CLOSE_GO_SECONDS, true);
   }
 
   /**
@@ -3947,6 +4044,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     cloud.hide();
     closeMonitor?.hide();
     closeStage = null;
+    closeMorphBegun = false;
     skyLerp = null;
     camMove = null;
     for (const id of CLOSE_ROOM_ENTITIES) {
@@ -4048,7 +4146,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   by half again. 5.5 s puts the crest at 8.2 °/s and the eyes still land
     //   on the laptop before its screen goes off (FAIL.off = 8.5 s after the
     //   device stops; this fires ~2.2 s after that).
-    closeStage = 'lead'; closeHoldT = 0;
+    closeStage = 'lead'; closeHoldT = 0; closeMorphBegun = false;
     if (Math.hypot(camPos.x - EYE.x, camPos.z - EYE.z) > 0.5) {
       const toLaptop = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: -8, yaw: camYaw - 30 };
       startCamMove(toLaptop, 5.5, true);
@@ -4058,6 +4156,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (closeMonitor) {
     closeMonitor.onEra = (era) => leaveClose(era);
     closeMonitor.onAgain = () => { window.location.reload(); };
+    closeMonitor.onGo = () => goToCloseMonitor();
     // read-only probe, like __os: the walk aims at the card's rects through it
     (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;
   }

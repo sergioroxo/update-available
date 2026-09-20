@@ -30,7 +30,8 @@
  */
 import copy from '../../data/strings/orientingCard.json';
 import { prepareImmersiveVrEntry, requestImmersiveVrEntry } from '../engine/app';
-import { wipeLedger } from '../state/ledger';
+import { ledger, wipeLedger } from '../state/ledger';
+import { DIALOG, domBevel } from './theme/chrome';
 
 const ARM_DELAY_MS = 4000; // the ethics arm-delay: "enter" can never be instant
 
@@ -65,35 +66,44 @@ const SUPPORTS_BLUR = typeof CSS !== 'undefined'
  *  all raised toward opaque when there is no blur to protect the type */
 const VEIL_CORE = SUPPORTS_BLUR ? 0.86 : 0.96;
 const VEIL_EDGE = SUPPORTS_BLUR ? 0.55 : 0.82;
-const CARD_ALPHA = SUPPORTS_BLUR ? 0.90 : 0.98;
 
 /**
- * The frame's own palette — plain greys, one warm accent for the single live
- * action. Declared once here (CLAUDE.md pixel discipline is about the era
- * palettes in src/desktop/theme/; this DOM chrome is deliberately outside the
- * fiction and outside those palettes, exactly like src/desktop/gameMenu.ts).
+ * ⚑ S162 / R3-01 — THE 1997 MACHINE'S OWN CHROME. Sérgio (round 3): "the start-up
+ * menu needs a revamp: computer thematics, the logo, how the information is
+ * displayed, the text must make sense." So the panel is a 1997 dialog — the
+ * shared `DIALOG` tokens (theme/chrome.ts, ERA1 only — never invented here), a
+ * title bar, bevelled buttons, a checkbox, group boxes. The VEIL behind it stays
+ * the frame's own dark, and the words stay frame voice — the chrome is the
+ * machine's, nothing on it plays. The mark at the top is an interim CRT drawn
+ * in code; his logo file (his ask) replaces `drawMark` when it arrives.
  */
 const FRAME = {
-  backdropRGB: '8, 8, 10',
-  panelRGB: '16, 16, 20',
-  edge: '#383840',
-  rule: '#26262e',
-  ink: '#f2f4f8',
-  body: '#dfe3ea',
-  dim: '#b7bcc6',
-  faint: '#9aa0ac',
-  ghost: '#6f7480',
-  action: '#e8dcc0',
-  actionInk: '#141414'
+  backdropRGB: DIALOG.veilRGB,
+  panel: DIALOG.panel,
+  panelLight: DIALOG.light,
+  panelDark: DIALOG.dark,
+  panelDarker: DIALOG.darker,
+  titleBar: DIALOG.titleBar,
+  titleInk: DIALOG.titleInk,
+  ink: DIALOG.ink,
+  dim: DIALOG.dim,
+  faint: DIALOG.faint,
+  screen: DIALOG.screen,
+  screenDark: DIALOG.screenDark,
+  paper: DIALOG.paper
 } as const;
 
 export interface OrientingCard {
   destroy(): void;
 }
 
-export function mountOrientingCard(onContinue: () => void): OrientingCard {
+/** which way in was chosen at the door — `phone` has already asked the device */
+export type DoorChoice = 'desktop' | 'phone' | 'headset';
+
+export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): OrientingCard {
   let armed = false;
   let destroyed = false;
+  let entered = false;
 
   const root = document.createElement('div');
   root.id = 'reinterp-orienting-card';
@@ -103,39 +113,33 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
     position: 'fixed', inset: '0', zIndex: '900', // below the game menu (1000) — Esc still shows on top
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     overflowY: 'auto', padding: '24px 16px', boxSizing: 'border-box',
-    // the veil: densest across the middle where the card sits, thinning to the
-    // corners — the space reads around the panel, never under the type
+    // the veil: densest across the middle where the dialog sits, thinning to
+    // the corners — the space reads around the panel, never under the type
     background: `radial-gradient(ellipse at center, `
       + `rgba(${FRAME.backdropRGB}, ${VEIL_CORE}) 0%, `
       + `rgba(${FRAME.backdropRGB}, ${VEIL_CORE}) 38%, `
       + `rgba(${FRAME.backdropRGB}, ${VEIL_EDGE}) 100%)`,
-    font: '14px "Courier New", monospace', color: FRAME.body
+    // the machine's type: a small sans, the way a 1997 dialog set it — a system
+    // face, never a download (no fonts are fetched anywhere in the piece)
+    font: DIALOG.font, color: FRAME.ink
   } as CSSStyleDeclaration);
   if (SUPPORTS_BLUR) {
     root.style.backdropFilter = 'blur(3px)';
     root.style.setProperty('-webkit-backdrop-filter', 'blur(3px)');
   }
 
+  const bevel = domBevel;
+
+  // ── the dialog ──
   const card = document.createElement('div');
   Object.assign(card.style, {
     // ⚑ 900, not 660 (2026-08-12, Sérgio on a real iPad: "the panel at the
     //  beginning should also be wider on an iPad because it gets cut off").
-    //  The card carries THREE control blocks since the gyro look-mode was
-    //  added, and each column is `flex: 1 1 240px; min-width: 220px` — so a
-    //  single row needs 3×220 + 2×22 gap + 68 padding ≈ 772px. At 660 they
-    //  wrapped 2+1 and the card grew taller than an iPad's browser viewport.
-    //  ⚑ Adding the third block is what broke this; the width never moved.
+    //  Three cards in a row need 3×220 + 2×18 gap + padding ≈ 760px.
     width: 'min(900px, 96vw)', margin: 'auto', boxSizing: 'border-box',
-    padding: '30px 34px',
-    background: `rgba(${FRAME.panelRGB}, ${CARD_ALPHA})`,
-    border: `1px solid ${FRAME.edge}`, borderRadius: '2px'
+    background: FRAME.panel, padding: '0'
   } as CSSStyleDeclaration);
-  if (SUPPORTS_BLUR) {
-    // a heavier blur than the veil's: behind the words, nothing behind the
-    // words survives as detail — only as light
-    card.style.backdropFilter = 'blur(12px)';
-    card.style.setProperty('-webkit-backdrop-filter', 'blur(12px)');
-  }
+  bevel(card);
   root.appendChild(card);
 
   const line = (text: string, style: Partial<CSSStyleDeclaration>): HTMLDivElement => {
@@ -145,22 +149,38 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
     return el;
   };
 
-  // ── what this is ──
-  card.appendChild(line(copy.title, {
-    fontSize: '13px', letterSpacing: '2px', color: FRAME.faint, marginBottom: '6px'
-  }));
-  card.appendChild(line(copy.subtitle, {
-    fontSize: '11px', lineHeight: '1.5', color: FRAME.ghost, marginBottom: '20px'
-  }));
-  card.appendChild(line(copy.premise, {
-    fontSize: '16px', lineHeight: '1.5', color: FRAME.ink, marginBottom: '14px'
-  }));
-  card.appendChild(line(copy.about, {
-    fontSize: '12.5px', lineHeight: '1.6', color: FRAME.dim, marginBottom: '14px'
-  }));
-  card.appendChild(line(copy.contentNote, {
-    fontSize: '12.5px', lineHeight: '1.6', color: FRAME.dim, marginBottom: '14px'
-  }));
+  // the title bar — the dialog's, not a window anyone can move
+  const titleBar = document.createElement('div');
+  Object.assign(titleBar.style, {
+    display: 'flex', alignItems: 'center', gap: '8px',
+    background: FRAME.titleBar, color: FRAME.titleInk, padding: '4px 6px',
+    fontWeight: '700', fontSize: '12px', margin: '2px'
+  } as CSSStyleDeclaration);
+  titleBar.appendChild(drawMark(16));
+  titleBar.appendChild(line(copy.titleBar, { flex: '1' }));
+  card.appendChild(titleBar);
+
+  const inner = document.createElement('div');
+  Object.assign(inner.style, { padding: '14px 18px 16px' } as CSSStyleDeclaration);
+  card.appendChild(inner);
+
+  // ── what this is: the mark, the title, the premise ──
+  const masthead = document.createElement('div');
+  Object.assign(masthead.style, { display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '12px' } as CSSStyleDeclaration);
+  masthead.appendChild(drawMark(56));
+  const mastText = document.createElement('div');
+  mastText.appendChild(line(copy.title, { fontSize: '15px', fontWeight: '700', letterSpacing: '1px', color: FRAME.ink, marginBottom: '2px' }));
+  mastText.appendChild(line(copy.subtitle, { fontSize: '11px', color: FRAME.dim, marginBottom: '8px' }));
+  mastText.appendChild(line(copy.premise, { fontSize: '13px', lineHeight: '1.5', color: FRAME.ink }));
+  masthead.appendChild(mastText);
+  inner.appendChild(masthead);
+
+  // the notes, on the dialog's own paper (a sunk field, as a 1997 dialog set its text)
+  const notes = document.createElement('div');
+  Object.assign(notes.style, { background: FRAME.paper, padding: '10px 12px', marginBottom: '14px' } as CSSStyleDeclaration);
+  bevel(notes, true);
+  notes.appendChild(line(copy.about, { fontSize: '12px', lineHeight: '1.55', color: FRAME.ink, marginBottom: '8px' }));
+  notes.appendChild(line(copy.contentNote, { fontSize: '12px', lineHeight: '1.55', color: FRAME.ink, marginBottom: '8px' }));
   // ⚑ S77 — THE DEADNAME ADVISORY, and this panel is the only place it can
   // honestly go (08_STATUS_REGISTER §8 decision 9). An IN-FICTION advisory would
   // make the apparatus the thing offering you protection from itself, which is
@@ -168,113 +188,114 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
   // outside the fiction, behind the same 4 s ethics arm-delay as the content
   // note, and it says where the setting is rather than being the setting.
   // ⚑ It names what happens without naming any character or spoiling any beat,
-  // and it states the piece's position plainly: the system is wrong. That is
-  // not neutrality and is not meant to be.
-  // ⚑ PLACEHOLDER-draft, and BLOCKED-ON-READER-PASS with the beat it describes:
-  // the trans reader pass is a gate, not a review step, and this wording is
-  // inside that gate.
-  card.appendChild(line(copy.nameNote, {
-    fontSize: '12.5px', lineHeight: '1.6', color: FRAME.dim, marginBottom: '22px'
-  }));
+  // and it states the piece's position plainly: the system is wrong.
+  notes.appendChild(line(copy.nameNote, { fontSize: '12px', lineHeight: '1.55', color: FRAME.ink }));
+  inner.appendChild(notes);
 
-  // ── how to move: BOTH platforms, always both, never a device sniff (the
-  // player may be about to put a headset on; and a listed control you cannot
-  // use still tells you what the piece will ask of a body) ──
-  const rule = (): HTMLDivElement => line('', {
-    height: '1px', background: FRAME.rule, margin: '0 0 18px'
-  });
-  card.appendChild(rule());
-  card.appendChild(line(copy.controlsTitle, {
-    fontSize: '11px', letterSpacing: '2px', color: FRAME.faint, marginBottom: '14px'
-  }));
+  // ── F-01: THE CHOICES. Three cards, one per way of being here; each lists what
+  //   it will ask of a body and carries its own way in. All three are always
+  //   shown — never a device sniff: a listed control you cannot use still tells
+  //   you what the piece asks (an accessibility surface as much as a door). ──
+  inner.appendChild(line(copy.chooseTitle, { fontSize: '13px', fontWeight: '700', color: FRAME.ink, marginBottom: '4px' }));
+  inner.appendChild(line(copy.chooseNote, { fontSize: '11.5px', lineHeight: '1.5', color: FRAME.dim, marginBottom: '10px' }));
 
   const columns = document.createElement('div');
-  Object.assign(columns.style, {
-    display: 'flex', flexWrap: 'wrap', gap: '22px', marginBottom: '14px'
-  } as CSSStyleDeclaration);
-  card.appendChild(columns);
+  Object.assign(columns.style, { display: 'flex', flexWrap: 'wrap', gap: '14px', marginBottom: '12px' } as CSSStyleDeclaration);
+  inner.appendChild(columns);
 
-  const controlBlock = (heading: string, lines: string[]): void => {
-    const col = document.createElement('div');
-    Object.assign(col.style, { flex: '1 1 240px', minWidth: '220px' } as CSSStyleDeclaration);
-    col.appendChild(line(heading, {
-      fontSize: '12px', color: FRAME.ink, marginBottom: '8px'
-    }));
-    const list = document.createElement('ul');
-    Object.assign(list.style, {
-      margin: '0', padding: '0 0 0 16px', listStyle: 'square'
+  const button = (label: string): HTMLButtonElement => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    Object.assign(b.style, {
+      font: 'inherit', fontSize: '12px', padding: '6px 14px', cursor: 'pointer',
+      background: FRAME.panel, color: FRAME.ink, borderRadius: '0', whiteSpace: 'nowrap'
     } as CSSStyleDeclaration);
-    for (const text of lines) {
+    bevel(b);
+    return b;
+  };
+  const disable = (b: HTMLButtonElement, on: boolean): void => {
+    b.disabled = on;
+    b.style.cursor = on ? 'not-allowed' : 'pointer';
+    b.style.color = on ? FRAME.faint : FRAME.ink;
+  };
+
+  interface Card { heading: string; lines: string[]; button: string }
+  const entryButtons: HTMLButtonElement[] = [];
+  const choiceCard = (c: Card, withButton: boolean): { col: HTMLDivElement; foot: HTMLDivElement; btn: HTMLButtonElement | null } => {
+    const col = document.createElement('div');
+    Object.assign(col.style, {
+      flex: '1 1 220px', minWidth: '200px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column',
+      background: FRAME.panel, padding: '10px 12px 10px'
+    } as CSSStyleDeclaration);
+    bevel(col);
+    col.appendChild(line(c.heading, { fontSize: '12.5px', fontWeight: '700', color: FRAME.ink, marginBottom: '6px' }));
+    const list = document.createElement('ul');
+    Object.assign(list.style, { margin: '0 0 10px', padding: '0 0 0 14px', listStyle: 'square', flex: '1' } as CSSStyleDeclaration);
+    for (const text of c.lines) {
       const li = document.createElement('li');
       li.textContent = text;
-      Object.assign(li.style, {
-        fontSize: '12px', lineHeight: '1.6', color: FRAME.dim, marginBottom: '4px'
-      } as CSSStyleDeclaration);
+      Object.assign(li.style, { fontSize: '11.5px', lineHeight: '1.5', color: FRAME.ink, marginBottom: '3px' } as CSSStyleDeclaration);
       list.appendChild(li);
     }
     col.appendChild(list);
+    const foot = document.createElement('div');
+    Object.assign(foot.style, { minHeight: '30px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' } as CSSStyleDeclaration);
+    let btn: HTMLButtonElement | null = null;
+    if (withButton) {
+      btn = button(c.button);
+      disable(btn, true);
+      entryButtons.push(btn);
+      foot.appendChild(btn);
+    }
+    col.appendChild(foot);
     columns.appendChild(col);
+    return { col, foot, btn };
   };
-  controlBlock(copy.controlsDesktopHeading, copy.controlsDesktopLines);
-  controlBlock(copy.controlsHeadsetHeading, copy.controlsHeadsetLines);
-  // ⚑ 2026-08-06: the THIRD look-mode. S80 built gyro-to-look and correctly
-  // reported that this card still described only two ways to play — and for
-  // every Apple device but Vision Pro, this third one IS the experience
-  // (Safari has WebXR only on visionOS). The card is the piece's front door and
-  // an accessibility surface, so a mode nobody is told about does not exist.
-  controlBlock(copy.controlsPhoneHeading, copy.controlsPhoneLines);
 
-  card.appendChild(line(copy.controlsNote, {
-    fontSize: '12px', lineHeight: '1.6', color: FRAME.faint, marginBottom: '22px'
-  }));
-  card.appendChild(rule());
+  // all three, always — but on a touch screen the phone's card leads, so the
+  // one that fits the hand is not below the fold (an order, never a sniff that hides)
+  const coarse = window.matchMedia?.('(pointer: coarse)')?.matches === true;
+  const phone = coarse ? choiceCard(copy.cards.phone, true) : null;
+  const desktop = choiceCard(copy.cards.desktop, true);
+  const phoneCard = phone ?? choiceCard(copy.cards.phone, true);
+  const headset = choiceCard(copy.cards.headset, false);
+  const headsetNote = line(copy.cards.headset.unavailable, { fontSize: '11px', color: FRAME.dim });
+  headset.foot.appendChild(headsetNote);
+  const phoneNote = line('', { fontSize: '11px', color: FRAME.dim, display: 'none' });
+  phoneCard.foot.appendChild(phoneNote);
 
-  // ── entry actions (+ Leave, which always works) ──
+  inner.appendChild(line(copy.menuLine, { fontSize: '11.5px', lineHeight: '1.5', color: FRAME.dim, marginBottom: '10px' }));
+
+  // ── the captions checkbox: the sound NAMES in the strip (W-G2), on by default ──
+  const capRow = document.createElement('label');
+  Object.assign(capRow.style, { display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', marginBottom: '12px' } as CSSStyleDeclaration);
+  const cap = document.createElement('input');
+  cap.type = 'checkbox';
+  cap.checked = ledger.view.captions;
+  Object.assign(cap.style, { margin: '2px 0 0', accentColor: FRAME.titleBar } as CSSStyleDeclaration);
+  cap.addEventListener('change', () => { ledger.view.captions = cap.checked; });
+  capRow.appendChild(cap);
+  const capText = document.createElement('div');
+  capText.appendChild(line(copy.captionsLabel, { fontSize: '12px', color: FRAME.ink }));
+  capText.appendChild(line(copy.captionsNote, { fontSize: '11px', lineHeight: '1.5', color: FRAME.dim }));
+  capRow.appendChild(capText);
+  inner.appendChild(capRow);
+
+  // ── the foot: Leave (always works), the arm-delay's wait, the note ──
   const actions = document.createElement('div');
-  Object.assign(actions.style, {
-    display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px'
-  } as CSSStyleDeclaration);
-
-  const enter = document.createElement('button');
-  enter.textContent = copy.enterLabel;
-  enter.disabled = true;
-  Object.assign(enter.style, {
-    font: 'inherit', fontWeight: '700', fontSize: '13px', padding: '10px 26px',
-    border: `1px solid ${FRAME.edge}`, borderRadius: '2px', cursor: 'not-allowed',
-    background: FRAME.rule, color: FRAME.ghost, letterSpacing: '1px'
-  } as CSSStyleDeclaration);
-  let enterVr: HTMLButtonElement | null = null;
-
-  const leave = document.createElement('button');
-  leave.textContent = copy.leaveLabel;
-  Object.assign(leave.style, {
-    font: 'inherit', fontSize: '12px', padding: '9px 18px',
-    border: `1px solid ${FRAME.edge}`, borderRadius: '2px', cursor: 'pointer',
-    background: 'transparent', color: FRAME.dim
-  } as CSSStyleDeclaration);
-
-  const wait = line(`(${copy.wait})`, { fontSize: '11px', color: FRAME.ghost });
-  const enterNote = line(copy.enterNote, {
-    fontSize: '11px', color: FRAME.ghost, display: 'none'
-  });
-
-  actions.appendChild(enter);
+  Object.assign(actions.style, { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px', paddingTop: '10px', borderTop: `1px solid ${FRAME.panelDark}` } as CSSStyleDeclaration);
+  const leave = button(copy.leaveLabel);
+  const wait = line(`(${copy.wait})`, { fontSize: '11px', color: FRAME.dim });
+  const enterNote = line(copy.enterNote, { fontSize: '11px', color: FRAME.dim, display: 'none' });
   actions.appendChild(leave);
   actions.appendChild(wait);
   actions.appendChild(enterNote);
-  card.appendChild(actions);
+  inner.appendChild(actions);
 
   const arm = (): void => {
     if (destroyed) return;
     armed = true;
-    const enable = (button: HTMLButtonElement): void => {
-      button.disabled = false;
-      button.style.cursor = 'pointer';
-      button.style.background = FRAME.action;
-      button.style.color = FRAME.actionInk;
-    };
-    enable(enter);
-    if (enterVr) enable(enterVr);
+    for (const b of entryButtons) disable(b, false);
     wait.style.display = 'none';
     enterNote.style.display = 'block';
   };
@@ -284,15 +305,12 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
    * ⚑ S86 — FULLSCREEN ON THE DELIBERATE PRESS (Sérgio: he wants the piece to
    * start fullscreen). A browser will only grant it inside a transient user
    * activation, and it can never be asked for on load — it would simply throw.
-   * The orienting card's own start button IS that gesture, and it is the ONLY
-   * place in the piece with one before the room appears.
+   * The door's own entry buttons ARE that gesture, and the ONLY place in the
+   * piece with one before the room appears.
    *
    * Fails soft everywhere it is not available: iOS *phone* Safari has no
    * Element.requestFullscreen at all (iPadOS does), some embeds forbid it, and
-   * a user can leave it at any time. Nothing downstream may depend on it — the
-   * room is composed for the viewport it is given, and this only removes the
-   * browser's own furniture where the browser allows that.
-   *
+   * a user can leave it at any time. Nothing downstream may depend on it.
    * ⚑ The promise rejection must be swallowed: an unhandled rejection here
    * would surface as a console error on every phone that lacks the API, and
    * `npm run audit` counts console errors.
@@ -312,10 +330,50 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
     } catch { /* same */ }
   };
 
-  enter.addEventListener('click', () => {
+  const enterWith = (choice: DoorChoice): void => {
+    if (entered || destroyed) return;
+    entered = true;
+    for (const b of entryButtons) disable(b, true);
+    onContinue(choice);
+  };
+
+  desktop.btn!.addEventListener('click', () => {
     if (!armed || destroyed) return;
     goFullscreen(); // must happen INSIDE the click stack, before any await
-    onContinue();
+    enterWith('desktop');
+  });
+
+  /**
+   * ⚑ F-01 — THE PHONE CARD IS THE GESTURE. iOS grants orientation only from a
+   * real press over HTTPS, so choosing "turn the device" asks the device right
+   * here, in this click stack, and the answer goes into the ledger (in memory,
+   * never stored) for the engine to act on when it starts
+   * (src/engine/app.ts: granted → the listener attaches with no second press;
+   * denied → the room says so and drag-to-look stands). Android and every other
+   * browser have no prompt: the choice alone is the grant. Either way the room
+   * opens — a declined sensor is not a locked door.
+   */
+  phoneCard.btn!.addEventListener('click', () => {
+    if (!armed || destroyed || entered) return;
+    goFullscreen();
+    type Requestable = { requestPermission?: () => Promise<PermissionState | string> };
+    const req = (window.DeviceOrientationEvent as unknown as Requestable | undefined)?.requestPermission;
+    if (typeof req !== 'function') {
+      ledger.view.motion = 'granted';
+      enterWith('phone');
+      return;
+    }
+    phoneNote.textContent = copy.cards.phone.asking;
+    phoneNote.style.display = 'block';
+    for (const b of entryButtons) disable(b, true);
+    req.call(window.DeviceOrientationEvent)
+      .then((res: string) => { ledger.view.motion = res === 'granted' ? 'granted' : 'denied'; })
+      .catch(() => { ledger.view.motion = 'denied'; })
+      .then(() => {
+        if (destroyed) return;
+        if (ledger.view.motion === 'denied') phoneNote.textContent = copy.cards.phone.denied;
+        enterWith('phone');
+      });
   });
 
   /** Leave, before anything has started: nothing to hand off to (the engine
@@ -328,9 +386,9 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
     wipeLedger();
     window.clearTimeout(armTimer);
     armed = false;
-    card.replaceChildren(
-      line(copy.leftTitle, { fontSize: '16px', color: FRAME.ink, marginBottom: '10px' }),
-      line(copy.leftBody, { fontSize: '12.5px', lineHeight: '1.6', color: FRAME.dim })
+    inner.replaceChildren(
+      line(copy.leftTitle, { fontSize: '15px', fontWeight: '700', color: FRAME.ink, marginBottom: '8px' }),
+      line(copy.leftBody, { fontSize: '12px', lineHeight: '1.6', color: FRAME.ink })
     );
   };
   leave.addEventListener('click', doLeave);
@@ -338,38 +396,29 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
   document.body.appendChild(root);
 
   // `?flat=1` is the canvas-only review tool: do not even probe or
-  // prepare WebXR there. On every other path, unsupported browsers receive no
-  // extra element and retain the exact existing LOG IN flow.
+  // prepare WebXR there. On every other path, unsupported browsers keep the
+  // headset card as a listed way in that this browser cannot offer.
   if (new URLSearchParams(window.location.search).get('flat') !== '1' && navigator.xr) {
     void navigator.xr.isSessionSupported('immersive-vr').then(async (supported) => {
       if (!supported || destroyed) return;
       const canvas = document.getElementById('app');
       if (!(canvas instanceof HTMLCanvasElement)) return;
       const ready = await prepareImmersiveVrEntry(canvas);
-      if (!ready || destroyed || !actions.isConnected) return;
-
-      enterVr = document.createElement('button');
-      enterVr.textContent = copy.enterVrLabel;
-      enterVr.disabled = !armed;
-      Object.assign(enterVr.style, {
-        font: 'inherit', fontWeight: '700', fontSize: '13px', padding: '10px 26px',
-        border: `1px solid ${FRAME.edge}`, borderRadius: '2px',
-        cursor: armed ? 'pointer' : 'not-allowed',
-        background: armed ? FRAME.action : FRAME.rule,
-        color: armed ? FRAME.actionInk : FRAME.ghost,
-        letterSpacing: '1px'
-      } as CSSStyleDeclaration);
+      if (!ready || destroyed || !headset.foot.isConnected) return;
+      const enterVr = button(copy.cards.headset.button);
+      disable(enterVr, !armed);
+      entryButtons.push(enterVr);
       enterVr.addEventListener('click', () => {
         if (!armed || destroyed) return;
         // startApp consumes this flag synchronously inside onContinue's click
         // stack, before model preloading can yield and lose user activation.
         requestImmersiveVrEntry();
-        onContinue();
+        enterWith('headset');
       });
-      actions.insertBefore(enterVr, leave);
+      headsetNote.remove();
+      headset.foot.appendChild(enterVr);
     }).catch(() => {
-      // Availability failure is the unsupported path: leave the card exactly
-      // as it was, with LOG IN as its sole entry action.
+      // Availability failure is the unsupported path: the card stays as it is.
     });
   }
 
@@ -381,4 +430,36 @@ export function mountOrientingCard(onContinue: () => void): OrientingCard {
       root.remove();
     }
   };
+}
+
+/**
+ * ⚑ THE INTERIM MARK — a CRT with a lit screen, drawn in the ERA1 palette.
+ * R3-01 asks for the logo at the top and the file is his (an ASK); until it
+ * arrives this stands in its place, and it is replaced here, in one function,
+ * not around the panel. SVG, inline, no fetch.
+ */
+function drawMark(size: number): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 16 14');
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(Math.round(size * 14 / 16)));
+  svg.setAttribute('aria-hidden', 'true');
+  svg.style.flex = 'none';
+  svg.style.imageRendering = 'pixelated';
+  const rect = (x: number, y: number, w: number, h: number, fill: string): void => {
+    const r = document.createElementNS(ns, 'rect');
+    r.setAttribute('x', String(x)); r.setAttribute('y', String(y));
+    r.setAttribute('width', String(w)); r.setAttribute('height', String(h));
+    r.setAttribute('fill', fill);
+    svg.appendChild(r);
+  };
+  rect(0, 0, 16, 11, FRAME.panelDarker);     // the case
+  rect(1, 1, 14, 9, FRAME.panel);            // the bezel
+  rect(2, 2, 12, 7, FRAME.screenDark);       // the glass, dark
+  rect(3, 3, 10, 5, FRAME.screen);           // the picture
+  rect(4, 4, 1, 1, FRAME.panelLight);        // the prompt
+  rect(6, 11, 4, 1, FRAME.panelDarker);      // the neck
+  rect(4, 12, 8, 2, FRAME.panelDark);        // the foot
+  return svg;
 }

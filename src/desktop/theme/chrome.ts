@@ -116,6 +116,41 @@ export function inputField(
  * counts every copy. Named once here so a new piece of frame chrome imports
  * them rather than inventing a shade. Frame voice: functional, undecorated.
  */
+/**
+ * ⚑ S162 / R3-01 + R3-31 — THE FRAME'S DIALOG CHROME, in DOM: the 1997 machine's
+ * own look for the front door and the game menu (Sérgio: "computer thematics").
+ * ERA1 tokens only, named for how a dialog uses them. The frame still never
+ * plays: the chrome is the machine's, the words stay functional. The dark glass
+ * below (`FRAME`) stays for what sits OVER the room — the helper strip, the
+ * captions, the XR planes — where readability over a 3D scene wins.
+ */
+export const DIALOG = {
+  panel: ERA1.beige,
+  light: ERA1.white,
+  dark: ERA1.grey,
+  darker: ERA1.greyDark,
+  titleBar: ERA1.navy,
+  titleInk: ERA1.white,
+  ink: ERA1.black,
+  dim: ERA1.greyDark,
+  faint: ERA1.grey,
+  screen: ERA1.teal,
+  screenDark: ERA1.tealDark,
+  paper: ERA1.paper,
+  /** the veil behind a dialog: the frame's own dark, an rgb string, never a fiction colour */
+  veilRGB: '8, 8, 10',
+  font: '13px Tahoma, Verdana, "MS Sans Serif", Arial, sans-serif'
+} as const;
+
+/** the 1997 bevel on a DOM element: light top-left, dark bottom-right (sunk: the reverse) */
+export function domBevel(el: HTMLElement, sunk = false, width = 2): void {
+  const a = sunk ? DIALOG.dark : DIALOG.light;
+  const b = sunk ? DIALOG.light : DIALOG.darker;
+  el.style.borderStyle = 'solid';
+  el.style.borderWidth = `${width}px`;
+  el.style.borderColor = `${a} ${b} ${b} ${a}`;
+}
+
 export const FRAME = {
   glass: 'rgba(10,10,14,0.78)',
   ink: '#cdd3df',

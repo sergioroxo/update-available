@@ -98,7 +98,7 @@
    "era": 4
   }
  ],
- "_panelsDoc": "⚑ FOUR PANELS, ONE PER ERA, and they are the only prose in the Close. Rewritten 2026-09-12 (Sérgio: \"think as someone who doesn't know the whole project, and needs a more clean and guided way to understand the content… too segmented\"; and: \"We don't have the proof to say that, we just are using information we found\"). One flowing paragraph per era — who, what the machine did, why it matters — every general claim phrased as what the sources document, never as history; the last panel names itself speculative. `status` is the dossier law's own vocabulary (CLAUDE.md) and applies to the panel's claims as a whole. Each panel hangs beside its era's room plate (public/assets/close/era{N}.jpg, baked by tools/bake-close-plates.mjs) with the era's data cluster to its right. ⚑ They do NOT carry the title beat or `Restart as you are.` — those are the update's and the Restart card's. ⚑ S142: the 2016 panel said 'one day an item in her queue is about her' — the piece has no such item; its break is MALTA (s3_maiden.json), the law arriving in the group chat. Corrected to what the piece does.",
+ "_panelsDoc": "⚑ S163 / R3-111: `status` is no longer stamped on the panel — it is shown in the frame (the menu's The Close's panels — sources), with `practices`: the dossier practices (data/dossier/practices.json keys) each panel's paragraph draws on, listed there with their sources. A press on a panel opens that list. ⚑ FOUR PANELS, ONE PER ERA, and they are the only prose in the Close. Rewritten 2026-09-12 (Sérgio: \"think as someone who doesn't know the whole project, and needs a more clean and guided way to understand the content… too segmented\"; and: \"We don't have the proof to say that, we just are using information we found\"). One flowing paragraph per era — who, what the machine did, why it matters — every general claim phrased as what the sources document, never as history; the last panel names itself speculative. `status` is the dossier law's own vocabulary (CLAUDE.md) and applies to the panel's claims as a whole. Each panel hangs beside its era's room plate (public/assets/close/era{N}.jpg, baked by tools/bake-close-plates.mjs) with the era's data cluster to its right. ⚑ They do NOT carry the title beat or `Restart as you are.` — those are the update's and the Restart card's. ⚑ S142: the 2016 panel said 'one day an item in her queue is about her' — the piece has no such item; its break is MALTA (s3_maiden.json), the law arriving in the group chat. Corrected to what the piece does.",
  "panels": [
   {
    "era": 1,
@@ -106,6 +106,7 @@
    "title": "RECRUIT",
    "text": "Daniel is sixteen. His mother has found a “family companion” programme on a message board and printed its questionnaire for him. It asks whether he has corrected the way he walks, talks and sits. Anonymous boards and mailing lists were used by conversion practices in their move online: a name for “the problem”, and a way out of it, offered to whoever searched.",
    "status": "documentary",
+   "practices": ["profile", "kit", "channel", "referral", "placement", "provotype", "tapes", "belongings", "media"],
    "image": "assets/close/era1.jpg"
   },
   {
@@ -114,6 +115,7 @@
    "title": "AUDIT",
    "text": "Daniel is an adult, in the same room. The programme now lives on his computer as software. Every morning it asks how he is — Steady, Struggling, Grateful or Tired — and keeps the answer. It watches who he talks to; when a message arrives from someone outside, the programme sees it first. Daily self-reports, logging and the monitoring of contacts are documented features of accountability software of the period. Here they carry the demand to change without anyone saying it out loud.",
    "status": "documentary",
+   "practices": ["checkin", "assistant", "diary", "contact", "update"],
    "image": "assets/close/era2.jpg"
   },
   {
@@ -122,6 +124,7 @@
    "title": "GOVERN",
    "text": "Vera works from her room, correcting other people’s writing for a platform, one rule at a time: remove anything unresolved, add the scripture. She is paid per correction. One afternoon the group chat on her phone is about a law: Malta has just made what she does an offence, unanimously. Nobody in the room says anything. Content rules and moderation work were among the tools these networks used to reach people at scale. In this room nobody is treated; the writing is edited.",
    "status": "contested",
+   "practices": ["arrival", "queue", "moderation", "record"],
    "image": "assets/close/era3.jpg"
   },
   {
@@ -130,6 +133,7 @@
    "title": "RESURGE",
    "text": "Maya’s session is restored for her before she has touched anything. A companion finishes her search and suggests she wants to stop. Her record keeps her old name “for continuity of care”. Her photographs come back improved. A headset offers an immersive session. Then a friend’s invitation, inside that same headset, leads her somewhere the system cannot classify — a room where being trans is fine — and the update fails. This room is speculative. It extends patterns that are already documented — autocomplete, retained records, photo enhancement, “support” agents — into a system that presents itself as care. What it cannot classify is other people.",
    "status": "speculative",
+   "practices": ["session", "photos", "care", "headset", "termination"],
    "image": "assets/close/era4.jpg"
   }
  ]

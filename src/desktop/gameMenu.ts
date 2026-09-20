@@ -49,7 +49,8 @@ import copy from '../../data/strings/gameMenu.json';
 import attributions from '../../data/strings/attributions.json';
 import { entriesByEra, practiceOf, type RecordEra } from '../witness/record';
 import mapCopy from '../../data/strings/map.json';
-import { FRAME } from './theme/chrome';
+import closeNetwork from '../../data/strings/close_network.json';
+import { DIALOG, domBevel } from './theme/chrome';
 import originIntake from '../../data/provotypes/origin_intake_e1.json';
 import pillowCard from '../../data/provotypes/pillow.json';
 // ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
@@ -75,7 +76,7 @@ import e4Offers from '../../data/provotypes/e4_offers.json';
 // wiring below is what makes the card real rather than filed.
 import e3Day from '../../data/provotypes/e3_theday.json';
 
-type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'restartConfirm' | 'yourFile' | 'map';
+type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map';
 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
@@ -105,12 +106,14 @@ export function mountGameMenu(): GameMenu {
   glyph.textContent = copy.pauseGlyphSymbol;
   glyph.title = copy.pauseGlyphLabel;
   glyph.setAttribute('aria-label', copy.pauseGlyphLabel);
+  // ⚑ S162 / R3-31: the glyph is a 1997 button — the same chrome as the door and the menu
   Object.assign(glyph.style, {
     position: 'fixed', left: '14px', bottom: '14px', zIndex: String(GLYPH_Z),
-    width: '34px', height: '34px', borderRadius: '3px',
-    background: 'rgba(10,10,14,0.78)', color: '#cdd3df', border: '1px solid #444',
-    font: '13px monospace', letterSpacing: '1px', cursor: 'pointer'
+    width: '34px', height: '34px', borderRadius: '0',
+    background: DIALOG.panel, color: DIALOG.ink,
+    font: '13px monospace', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer'
   } as CSSStyleDeclaration);
+  domBevel(glyph);
   glyph.addEventListener('click', () => gameMenuBus.toggle());
   document.body.appendChild(glyph);
 
@@ -120,38 +123,47 @@ export function mountGameMenu(): GameMenu {
   Object.assign(root.style, {
     position: 'fixed', inset: '0', zIndex: String(MENU_Z),
     display: 'none', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(6,6,9,0.82)',
-    font: '13px "Courier New", monospace', color: '#dfe3ea',
+    background: `rgba(${DIALOG.veilRGB}, 0.82)`,
+    font: DIALOG.font, color: DIALOG.ink,
     opacity: '0', transition: 'opacity 0.18s'
   } as CSSStyleDeclaration);
 
+  // ⚑ S162 / R3-31 — THE MENU IS A 1997 DIALOG, the same chrome as the front door
+  //   (orientingCard.ts; `DIALOG` in theme/chrome.ts): a title bar, a beige panel,
+  //   bevelled rows. Frame voice, kept: the words are functional, nothing plays.
+  const dialog = document.createElement('div');
+  Object.assign(dialog.style, {
+    width: 'min(440px, 92vw)', maxHeight: '86vh', display: 'flex', flexDirection: 'column',
+    boxSizing: 'border-box', background: DIALOG.panel
+  } as CSSStyleDeclaration);
+  domBevel(dialog);
+  const titleBar = document.createElement('div');
+  Object.assign(titleBar.style, {
+    background: DIALOG.titleBar, color: DIALOG.titleInk, padding: '4px 8px', margin: '2px',
+    fontWeight: '700', fontSize: '12px', flex: 'none'
+  } as CSSStyleDeclaration);
+  dialog.appendChild(titleBar);
   const panel = document.createElement('div');
   Object.assign(panel.style, {
-    width: 'min(420px, 90vw)', maxHeight: '82vh', overflowY: 'auto',
-    boxSizing: 'border-box', padding: '22px 26px',
-    background: '#101014', border: '1px solid #383840', borderRadius: '2px'
+    overflowY: 'auto', boxSizing: 'border-box', padding: '14px 18px 16px', flex: '1 1 auto'
   } as CSSStyleDeclaration);
-  root.appendChild(panel);
+  dialog.appendChild(panel);
+  root.appendChild(dialog);
   document.body.appendChild(root);
 
   function clear(): void {
     panel.innerHTML = '';
+    titleBar.textContent = copy.title;
   }
 
   function heading(text: string): void {
-    const h = document.createElement('div');
-    Object.assign(h.style, {
-      fontSize: '15px', fontWeight: '700', letterSpacing: '1px',
-      marginBottom: '16px', color: '#f2f4f8'
-    } as CSSStyleDeclaration);
-    h.textContent = text;
-    panel.appendChild(h);
+    titleBar.textContent = text;
   }
 
   function paragraph(text: string): void {
     const p = document.createElement('div');
     Object.assign(p.style, {
-      fontSize: '12px', lineHeight: '1.6', color: '#b7bcc6', margin: '0 0 14px'
+      fontSize: '12px', lineHeight: '1.55', color: DIALOG.ink, margin: '0 0 12px'
     } as CSSStyleDeclaration);
     p.textContent = text;
     panel.appendChild(p);
@@ -162,12 +174,11 @@ export function mountGameMenu(): GameMenu {
     b.textContent = label;
     Object.assign(b.style, {
       display: 'block', width: '100%', textAlign: 'left', font: 'inherit',
-      color: emphasis ? '#ffffff' : '#dfe3ea',
-      background: 'transparent', border: '1px solid #303038',
-      padding: '10px 12px', margin: '0 0 8px', cursor: 'pointer', borderRadius: '2px'
+      fontWeight: emphasis ? '700' : '400', color: DIALOG.ink,
+      background: DIALOG.panel, borderRadius: '0',
+      padding: '8px 12px', margin: '0 0 6px', cursor: 'pointer'
     } as CSSStyleDeclaration);
-    b.addEventListener('mouseenter', () => { b.style.borderColor = '#5a5a66'; });
-    b.addEventListener('mouseleave', () => { b.style.borderColor = '#303038'; });
+    domBevel(b);
     b.addEventListener('click', onClick);
     panel.appendChild(b);
   }
@@ -213,6 +224,42 @@ export function mountGameMenu(): GameMenu {
     e4_ball: e4Ball as unknown as { debrief: { sources: { status: string; text: string }[] } },
     e4_offers: e4Offers as unknown as { debrief: { sources: { status: string; text: string }[] } }
   };
+  /**
+   * ⚑ S163 / R3-111 — THE CLOSE'S PANELS, SOURCED. Sérgio: "don't want the
+   * 'documentary' label [on the panels]. The dossier should list this content;
+   * press it to see the sources for each action." So the stamp left the panels
+   * (pointCloud.ts) and lives here: each panel's title and years, its dossier
+   * status in plain words, and the practices its paragraph draws on
+   * (`close_network.json` `practices` → `practices.json`), each with its
+   * source. A press on a panel in the Close opens this view at that panel
+   * (`gameMenuBus.openCloseSources`). Frame voice; nothing files.
+   */
+  let closeFocus = -1;
+  function closeSourcesView(): void {
+    heading(copy.closeSourcesTitle);
+    paragraph(copy.closeSourcesIntro);
+    const panels = (closeNetwork as { panels: { era: number; years: string; title: string; status: string; practices?: string[] }[] }).panels;
+    const statusWords = copy.closeSourcesStatus as Record<string, string>;
+    panels.forEach((pn, i) => {
+      const focus = i === closeFocus;
+      const h = document.createElement('div');
+      Object.assign(h.style, {
+        fontSize: '12.5px', fontWeight: '700', color: focus ? DIALOG.titleBar : DIALOG.ink,
+        margin: '10px 0 4px', paddingTop: '8px', borderTop: `1px solid ${DIALOG.dark}`
+      } as CSSStyleDeclaration);
+      h.textContent = `${pn.years} · ${pn.title}`;
+      panel.appendChild(h);
+      paragraph(`${copy.yourFilePractice}: ${statusWords[pn.status] ?? pn.status}`);
+      for (const kind of pn.practices ?? []) {
+        const pr = practiceOf(kind);
+        if (!pr) continue;
+        const src = pr.source ? SOURCE_FILES[pr.source.file]?.debrief.sources[pr.source.index] : null;
+        paragraph(`${pr.title.toUpperCase()} — ${pr.did}. [${pr.status}]${src ? ` ${copy.yourFileSource}: ${src.text}` : ` ${copy.yourFileNoSource}`}`);
+      }
+    });
+    backRow('credits');
+  }
+
   function yourFileView(): void {
     heading(copy.yourFileTitle);
     paragraph(copy.yourFileIntro);
@@ -274,7 +321,7 @@ export function mountGameMenu(): GameMenu {
     let ahead = false;
     const line = (parent: HTMLElement, text: string, color: string, size = '12px'): HTMLDivElement => {
       const d = document.createElement('div');
-      Object.assign(d.style, { font: `${size} "Courier New", monospace`, color, lineHeight: '1.5', whiteSpace: 'normal' } as CSSStyleDeclaration);
+      Object.assign(d.style, { font: `${size} Tahoma, Verdana, Arial, sans-serif`, color, lineHeight: '1.5', whiteSpace: 'normal' } as CSSStyleDeclaration);
       d.textContent = text;
       parent.appendChild(d);
       return d;
@@ -282,7 +329,7 @@ export function mountGameMenu(): GameMenu {
     for (const era of st.eras) {
       const col = document.createElement('div');
       Object.assign(col.style, {
-        borderTop: `2px solid ${era.here ? FRAME.bright : FRAME.rule}`, padding: '8px 4px 6px',
+        borderTop: `2px solid ${era.here ? DIALOG.titleBar : DIALOG.dark}`, padding: '8px 4px 6px',
         opacity: ahead && !era.here ? '0.55' : '1'
       } as CSSStyleDeclaration);
       grid.appendChild(col);
@@ -292,26 +339,26 @@ export function mountGameMenu(): GameMenu {
       head.textContent = era.label;
       Object.assign(head.style, {
         display: 'block', width: '100%', textAlign: 'left', font: '13px "Courier New", monospace', fontWeight: '700',
-        color: era.here ? FRAME.bright : FRAME.text, background: 'transparent', border: 'none', padding: '0 0 6px', cursor: isAhead ? 'default' : 'pointer'
+        color: era.here ? DIALOG.titleBar : DIALOG.ink, background: 'transparent', border: 'none', padding: '0 0 6px', cursor: isAhead ? 'default' : 'pointer'
       } as CSSStyleDeclaration);
       col.appendChild(head);
-      if (era.here) line(col, mapCopy.hereLabel, FRAME.bright, '10px');
-      if (isAhead) { line(col, era.id === 'close' ? mapCopy.aheadLabel : mapCopy.aheadCount.replace('{n}', String(era.beats.length)), FRAME.faint); continue; }
+      if (era.here) line(col, mapCopy.hereLabel, DIALOG.titleBar, '10px');
+      if (isAhead) { line(col, era.id === 'close' ? mapCopy.aheadLabel : mapCopy.aheadCount.replace('{n}', String(era.beats.length)), DIALOG.faint); continue; }
       const done = era.beats.filter((b) => b.state === 'done').length;
       for (const b of era.beats) {
         const mark = b.state === 'done' ? '✓' : b.state === 'current' ? '▸' : b.beat.optional ? '○' : '·';
-        const color = b.state === 'current' ? FRAME.bright : b.state === 'done' ? FRAME.dim : FRAME.faint;
+        const color = b.state === 'current' ? DIALOG.titleBar : b.state === 'done' ? DIALOG.ink : DIALOG.faint;
         line(col, `${mark} ${b.beat.label}${b.beat.optional && b.state !== 'done' ? ` (${mapCopy.optionalMark})` : ''}`, color);
       }
       if (era.id === 'close') continue;
-      line(col, mapCopy.progress.replace('{d}', String(done)).replace('{n}', String(era.beats.length)), FRAME.faint, '10px');
+      line(col, mapCopy.progress.replace('{d}', String(done)).replace('{n}', String(era.beats.length)), DIALOG.dim, '10px');
       // the era's file, under its beats, on a press
       const open = mapOpen.has(era.id);
       const fileBtn = document.createElement('button');
       fileBtn.textContent = (open ? mapCopy.fileClose : mapCopy.fileOpen).replace('{n}', String(era.entries));
       Object.assign(fileBtn.style, {
-        display: 'block', width: '100%', textAlign: 'left', font: '11px "Courier New", monospace', color: FRAME.text,
-        background: 'transparent', border: `1px solid ${FRAME.edge}`, padding: '5px 6px', margin: '8px 0 0', cursor: 'pointer', borderRadius: '2px'
+        display: 'block', width: '100%', textAlign: 'left', font: '11px Tahoma, Verdana, Arial, sans-serif', color: DIALOG.ink,
+        background: DIALOG.panel, border: `1px solid ${DIALOG.dark}`, padding: '5px 6px', margin: '8px 0 0', cursor: 'pointer', borderRadius: '0'
       } as CSSStyleDeclaration);
       const toggle = (): void => { if (mapOpen.has(era.id)) mapOpen.delete(era.id); else mapOpen.add(era.id); render(); };
       fileBtn.addEventListener('click', toggle);
@@ -319,11 +366,11 @@ export function mountGameMenu(): GameMenu {
       col.appendChild(fileBtn);
       if (open) {
         const entries = by[era.id as RecordEra];
-        if (!era.soFar.length) line(col, mapCopy.soFarEmpty, FRAME.faint, '10px');
+        if (!era.soFar.length) line(col, mapCopy.soFarEmpty, DIALOG.faint, '10px');
         for (const p of era.soFar) {
-          line(col, `${p.title.toUpperCase()} — ${p.did} [${p.status}]`, FRAME.dim, '11px').style.marginTop = '8px';
+          line(col, `${p.title.toUpperCase()} — ${p.did} [${p.status}]`, DIALOG.ink, '11px').style.marginTop = '8px';
           for (const e of entries.filter((x) => practiceOf(x.kind)?.title === p.title))
-            line(col, `  · ${e.witness}${e.flagged ? ` [${copy.yourFileFlag}]` : ''}`, e.flagged ? FRAME.text : FRAME.faint, '11px');
+            line(col, `  · ${e.witness}${e.flagged ? ` [${copy.yourFileFlag}]` : ''}`, e.flagged ? DIALOG.ink : DIALOG.dim, '11px');
         }
       }
     }
@@ -334,7 +381,7 @@ export function mountGameMenu(): GameMenu {
   function render(): void {
     clear();
     // R3-32 (S151): the file view widens like the map — "mobile-format, hard to read"
-    panel.style.width = view === 'map' || view === 'yourFile' ? 'min(860px, 94vw)' : 'min(420px, 90vw)';
+    dialog.style.width = view === 'map' || view === 'yourFile' ? 'min(860px, 94vw)' : 'min(440px, 92vw)';
     if (view === 'yourFile') { yourFileView(); return; }
     if (view === 'map') { mapView(); return; }
     if (view === 'main') {
@@ -389,6 +436,11 @@ export function mountGameMenu(): GameMenu {
         () => { ledger.view.unvoicedName = !ledger.view.unvoicedName; render(); }
       );
       paragraph(copy.unvoicedNameNote);
+      // S162 / F-01 — the door's captions choice, changeable here (the sound NAMES; W-G2)
+      row(
+        ledger.view.captions ? copy.captionsOn : copy.captionsOff,
+        () => { ledger.view.captions = !ledger.view.captions; render(); }
+      );
       row(copy.yourFile, () => { view = 'yourFile'; render(); });
       row(copy.restart, () => { view = 'restartConfirm'; render(); });
       row(copy.controls, () => { view = 'controls'; render(); });
@@ -436,9 +488,11 @@ export function mountGameMenu(): GameMenu {
       row(copy.creditsBallSources, () => { view = 'ballSources'; render(); });
       row(copy.creditsOffersSources, () => { view = 'offersSources'; render(); });
       row(copy.creditsDaySources, () => { view = 'daySources'; render(); });
+      row(copy.creditsCloseSources, () => { closeFocus = -1; view = 'closeSources'; render(); });
       backRow();
       return;
     }
+    if (view === 'closeSources') { closeSourcesView(); return; }
     if (view === 'ballSources') {
       sourcesView(e4Ball as unknown as DossierCard, copy.ballSourcesTitle);
       return;
@@ -492,6 +546,7 @@ export function mountGameMenu(): GameMenu {
     }
   }
 
+  gameMenuBus.openCloseSources = (i) => { closeFocus = i; view = 'closeSources'; render(); gameMenuBus.open(); };
   const unsubscribe = gameMenuBus.onChange(setOpenVisual);
   const onFullscreenChange = (): void => {
     if (gameMenuBus.isOpen && view === 'main') render();

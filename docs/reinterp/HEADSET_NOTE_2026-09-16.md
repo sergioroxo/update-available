@@ -55,3 +55,13 @@ type-checking against PlayCanvas 2.6's XR API.*
   `resolveTapRay` → `os.handleClick`). Cells are 30×26 logical px — at the seat's distance that is
   the smallest target in the piece so far; if the trigger misses cells, the fix is bigger cells
   (`CELL_W/CELL_H` in `src/desktop/apps/rootCause.ts`), not a different input.
+
+## Added 2026-09-20 (S162) — still never worn
+- **The front door is three cards now** (`src/desktop/orientingCard.ts`): this computer · a phone
+  or tablet · a headset. On a Quest browser the headset card's *Enter VR* appears only after
+  `isSessionSupported('immersive-vr')` and `prepareImmersiveVrEntry` both say yes — the same two
+  checks as before, the button has only moved into its card. Check: the card's button is there and
+  says "Enter VR"; it is greyed for the 4 s arm-delay, then pressable; the press enters the session
+  directly (it is still the one gesture). If the card says "No headset found in this browser." on a
+  Quest, that is the bug to report. The captions checkbox (the sound names in the strip) is a real
+  `<input type=checkbox>` on the DOM panel — pressable with the controller's ray as a DOM click.
