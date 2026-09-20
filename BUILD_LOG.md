@@ -1291,3 +1291,17 @@ ticks the step. His words: "some way of resistance to the system… and at the s
 something." Walked: 242 presses, spine done (the walker took Amen at the chorus). Register: W-L1 is his
 pick — Root Cause Digger, a second file beside `lamby_rig.exe`; I-01 the inspired person-diagram as a
 2016 correction job; I-03 his research's documented forms as content across eras. **closes I-02.**
+
+## 2026-09-20 — S152 · THE SENTENCE LINE
+Sérgio: "maybe I am being too afraid of this looking like a game… what would be a tool used in
+videogames in 1997?" The answer was Myst's hand and the LucasArts sentence line: nothing in the
+world glows, a thing NAMES ITSELF when the look rests on it. So now anything pressable in the room
+says what it is in the caption strip — "the companion disk — put it in", "◈ companion tape (a
+prayer)", "the racket on the wall — the first exercise", "keep: the mixtape", "move: …" — and the
+cursor becomes a hand; the same tests as the press, in the same order (`aimNameUnderRay`), read
+from whichever aim is live: the mouse's rest, the gyro's centre, the headset's ray (there it is the
+hint plane's first line). The screen names its own controls, so over the monitor it says nothing.
+The breath stays only while the system points. Strings in `data/strings/aim.json`. Verified by
+dispatched hovers: disk, tapes, racket, the playing boombox (the caption wins). Walked: 249 presses,
+spine done (a regression guard — the walker does not hover).
+Doctrine, restated for `CLAUDE.md`'s next edit: the world answers the look; the system alone lifts.

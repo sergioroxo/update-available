@@ -68,6 +68,8 @@ export class BelongingsSystem {
    *  mark sync may re-assert, across BOTH passes — a pass-1 keep must keep
    *  its warm lift re-asserted after pass 2 has narrowed what is on offer. */
   get eligible(): ReadonlySet<string> { return this.eligibleIds; }
+  /** S152 — the sentence line names what the look rests on */
+  labelOf(id: string): string { return this.items.find((i) => i.id === id)?.label ?? id; }
   /** what THIS pass actually offers: the pass's own set minus anything
    *  already kept (an object you took is not offered to you again). */
   get offered(): ReadonlySet<string> {

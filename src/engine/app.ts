@@ -31,6 +31,7 @@ import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
 import { TapeAudioBus, roomBed, setOneShotsMuted, playOnce, playLoop, stopClip } from '../audio/tapeAudio';
+import aimStrings from '../../data/strings/aim.json';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity, screenUploads } from './screenTexture';
 import { buildEra3Devices, type Era3Devices } from '../room/era3Devices';
@@ -2886,6 +2887,62 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
   }
 
+  /**
+   * ⚑ S152 — THE SENTENCE LINE. What the look is resting on, named — the same
+   * tests as `resolveTapRay`, in the same order, returning a name instead of
+   * acting. Sérgio (2026-09-20) asked for 1997's own tool for "you can press
+   * this": Myst's hand and the LucasArts sentence line. Nothing glows; a thing
+   * answers the look. Read each frame from whichever aim is live (the mouse,
+   * the gyro's centre, the headset's ray) and shown in the caption strip.
+   */
+  function aimNameUnderRay(ray: Ray): string | null {
+    const A = aimStrings as unknown as Record<string, string>;
+    if (os.isOff) return rayHitsPointR(ray, POWER_BTN, 0.08) ? A.power : null;
+    if (!os.inDesktop) return null;
+    if (options.reinterp && os.desktopIdleForProps?.() && rayHitsPointR(ray, RACKET_HIT, 0.34)) return A.racket;
+    if (!os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) return A.disk;
+    const belongings = os.belongings;
+    if (belongings?.windowOpen) {
+      const offered = belongings.offered;
+      for (const [id, hit] of Object.entries(BELONGINGS_HIT)) {
+        if (!offered.has(id)) continue;
+        if (rayHitsPointR(ray, hit.p, hit.r)) {
+          return (belongings.isKept(id) ? A.putBack : A.keep).replace('{label}', belongings.labelOf(id));
+        }
+      }
+    }
+    if (tapes && os.era === 'e1') {
+      for (const id of Object.keys(TAPE_SHELF) as TapeId[]) {
+        if (tapes.inserted === id) continue;
+        if (rayHitsPointR(ray, TAPE_SHELF[id], TAPE_HIT_RADIUS)) return `\u25c8 ${tapes.def(id).shelfLabel}`;
+      }
+      if (tapes.inserted && rayHitsPointR(ray, BOOMBOX_HIT, BOOMBOX_HIT_RADIUS)) return tapes.isPlaying ? A.boomboxStop : A.boomboxPlay;
+    }
+    if (toDesktopR(ray)) return null;   // the screen names its own controls
+    if (movementNodes && cluster && !scriptedBusy()) {
+      for (const n of movementNodes.available(cluster.era, seatYaw)) {
+        if (!movementNodes.isVisible(n.id)) continue;
+        if (rayHitsPointR(ray, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) return A.move.replace('{label}', n.label);
+      }
+    }
+    return null;
+  }
+  /** the mouse's last resting place over the canvas (null once it leaves) */
+  let hoverPointer: { x: number; y: number } | null = null;
+  /** the aim's ray this frame: the headset's, the gyro's centre, or the mouse's */
+  function aimRay(): Ray | null {
+    const xrRay = xrInput?.ray();
+    if (xr?.active) return xrRay ?? null;
+    if (!camera.camera) return null;
+    if (motionState === 'live') {
+      return { p0: camera.camera.screenToWorld(canvasEl.clientWidth / 2, canvasEl.clientHeight / 2, camera.camera.nearClip),
+        p1: camera.camera.screenToWorld(canvasEl.clientWidth / 2, canvasEl.clientHeight / 2, camera.camera.farClip) };
+    }
+    if (!hoverPointer || drag) return null;
+    return screenRay({ clientX: hoverPointer.x, clientY: hoverPointer.y } as MouseEvent);
+  }
+  let aimName: string | null = null;
+
   // ⚑ the browser must not claim the gestures the room needs: without this a
   // touch-drag scrolls/rubber-bands the page and a pinch zooms the DOCUMENT,
   // and neither pointer stream ever reaches the code above.
@@ -3025,10 +3082,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     // hover feedback follows the ray like everything else now — off the
     // monitor plane `toDesktop()` simply returns null (S80: no yaw gate).
+    hoverPointer = { x: e.clientX, y: e.clientY };   // S152: the sentence line reads it each frame
     const p = toDesktop(e);
     if (p) os.handleMove(p.x, p.y);
     else hoveredTapeId = testTapeHover(e); // S89: a genuine mouse hover over the shelf, no press
   });
+  canvasEl.addEventListener('pointerleave', () => { hoverPointer = null; });   // S152: nothing under a pointer that left
   canvasEl.addEventListener('pointerup', (e) => {
     pointers.delete(e.pointerId);
     hoveredTapeId = null; // S89: the press-preview ends at release either way (insert, if any, takes over the caption)
@@ -3163,7 +3222,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   wands follow the hands and the plane's cursor follows the ray
     xrInput?.tick();
     if (xrFrame?.isOpen) xrFrame.tick(xrInput?.ray() ?? null);
-    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(helper?.text() ?? null);
+    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(aimName ?? helper?.text() ?? null);
     if (options.reinterp && gameMenuBus.isOpen) return;
     if (tween !== null) {
       const dir = Math.sign(tween - camYaw);
@@ -3349,9 +3408,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           // ⚑ S89 — TAPE IDENTITY. No tape playing (nothing to caption) and the
           // pointer is over/holding a shelf tape: name it, so "which one is
           // this" is answered before a press commits to playing it, not after.
-          const hoverText = !cap && !tapes.inserted && hoveredTapeId
-            ? `◈ ${tapes.def(hoveredTapeId).shelfLabel}` : null;
+          // S152 — the sentence line: whatever the look rests on, named; the
+          //   S89 tape preview folds into it (a press-preview on touch still works)
+          const r = aimRay();
+          aimName = r ? aimNameUnderRay(r) : null;
+          const hoverText = aimName ?? (!cap && !tapes.inserted && hoveredTapeId
+            ? `◈ ${tapes.def(hoveredTapeId).shelfLabel}` : null);
           const text = cap ?? hoverText;
+          canvasEl.style.cursor = aimName && !xr?.active && motionState !== 'live' ? 'pointer' : 'default';
           tapeCaption.textContent = text ?? '';
           tapeCaption.style.opacity = text ? '1' : '0';
         }
