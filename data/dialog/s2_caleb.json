@@ -4,12 +4,12 @@
   "_doc": "⏱ THE ONE TIMING BLOCK (Session 48). EVERY number the Caleb thread waits on lives here, in seconds, so the pace can be tuned WITHOUT reading TypeScript — src/desktop/apps/caleb.ts and src/desktop/apps/accountability.ts both read this object and hold no timing constants of their own. WHY IT WAS RETIMED: Session 45 set these to make each beat VERIFIABLE — a session driving the thread with scripted clicks wants it brisk — and Sérgio's 2026-07-25 playthrough found the whole thread runs too fast to be READ. These values are for a FIRST-TIME HUMAN READER whose English is often a second language. Rule of thumb used while watching it at real speed: a line needs roughly 12–13 characters of dwell per second to be read comfortably, PLUS a beat afterwards to feel it — so a 70-character line wants ~6s on screen, not ~3s. NOTHING HERE IS A DEADLINE: the player is never asked to answer within a time, the chips wait forever, and Leave/pause stay live throughout (ethics #4). Raise any number freely; the only ones that interact are `chat.lineGapSeconds` (the pause between his lines) and `chat.replyGapSeconds` (the longer pause after the player answers), which stack when he replies to a chip.",
   "chat": {
    "_doc": "S2R.3A — the conversation. `typingCharsPerSecond` is Caleb TYPING, not a reveal effect: he is a person at a keyboard in 2003, so it should read as a hand, not a printer.",
-   "typingCharsPerSecond": 11,
+   "typingCharsPerSecond": 13,
    "openDelaySeconds": 1.8,
-   "lineGapSeconds": 1.9,
+   "lineGapSeconds": 1.4,
    "chipsArriveSeconds": 0.9,
-   "replyGapSeconds": 2.2,
-   "commitLandsSeconds": 2.8
+   "replyGapSeconds": 1.6,
+   "commitLandsSeconds": 2.2
   },
   "redactionRowSeconds": 0.52,
   "_doc_redaction": "s per transcript row for the blackout AND for its reverse at S2R.5 — one component run twice, so this single number times both. Slow enough to watch a sentence disappear; the whole walk must still finish comfortably inside the alert's own run (see `alert` below), or the stamp lands before the conversation is gone.",
@@ -43,7 +43,8 @@
    "_doc_exit": "S60 (finding F25's other half — Sérgio: after the press it 'jumped back to the Restorify desktop'). It did: the hold ended and the bare field was replaced by the full lit desktop on a single frame, which is the one edit this beat cannot survive. The last `exitFadeSeconds` of the hold now fade the field to black, and os.ts brings the desktop up out of that black — the era's quietest moment ends the way it began, as a dissolve."
   },
   "toastLifeSeconds": 14,
-  "_doc_toast": "how long Caleb's corner toast stays up during the video's break (cleared early by the collapse)."
+  "_doc_toast": "how long Caleb's corner toast stays up during the video's break (cleared early by the collapse).",
+  "_docS157": "S157 / R3-51 (Sérgio: 'the messenger part is slow'): the chat's gaps tightened — 11→13 cps, line gap 1.9→1.4, reply gap 2.2→1.6, commit 2.8→2.2. The return and residue keep their room."
  },
  "window": {
   "_doc": "FELT. `you` is the nick the player's own lines carry (finding C9, Sérgio: 'replies should be attributed to Daniel — the piece knows his name'). The transcript prefers `ledger.name` and falls back to this: on any review entry point that skips the opening, `ledger.name` is still empty and every reply he made rendered as a bare ': ' — which is exactly the path Sérgio played. Lowercase to match `contact`; this is a 2003 messenger, not a letterhead. `hint` is now drawn ONLY when the chips are actually on screen (finding C10: it used to sit there while Caleb was still typing, promising a click that did not exist yet).",
@@ -51,7 +52,21 @@
   "contact": "caleb",
   "you": "daniel",
   "status": "online",
-  "hint": "click to reply"
+  "hint": "click to reply",
+  "contacts": {
+   "_doc": "S157 / R3-51 — the 2003 IM look: a contact list beside the transcript (invented names; the one online is him), a dead nudge/wink/font toolbar, the messenger's own mark.",
+   "online": "Online (1)",
+   "offline": "Offline (3)",
+   "offlineNames": [
+    "jessa_k",
+    "mark_t",
+    "pastor_d"
+   ],
+   "nudge": "Nudge",
+   "wink": "Wink",
+   "font": "Font",
+   "mark": "HR"
+  }
  },
  "thread": [
   {
@@ -124,7 +139,8 @@
    "from": "them",
    "text": "i still have the tape from that night. i ripped it. sending it — it's small.",
    "audio": "caleb_last_night_2003.mp3",
-   "requiresAudio": true
+   "requiresAudio": true,
+   "attachment": true
   },
   {
    "id": "c06",
@@ -288,5 +304,46 @@
   "blockLifted": "block lifted — no evaluator assigned",
   "residue": "— entry could not be classified —"
  },
- "_docSong": "⚑ S143 (2026-09-14) — THE SONG HE SENDS. Era 2's respite had no music of its own (the tapes are Era 1's; the boombox leaves at E2). The period gesture is a file over messenger: after `c05` Caleb sends the rip from the last night at New Morning (`c05s`), it plays low under the rest of the thread, and the accountability alert CUTS it — the apparatus silencing the one thing that was theirs. `requiresAudio`: the line exists only when the file is registered and on disk (src/audio/tapeAudio.ts REGISTRY), so an unwritten song is not a broken beat. The track is Sérgio's to generate — docs/reinterp/ERA4_DRAFTS_2026-09-12.md §4 carries the prompt: INSTRUMENTAL, no voice, no lyrics (nothing here may be synthesized as a person), 2003 bedroom-electronic, ~90 s, loopable. Felt register: nothing announces it, nothing scores it."
+ "_docSong": "⚑ S143 (2026-09-14) — THE SONG HE SENDS. Era 2's respite had no music of its own (the tapes are Era 1's; the boombox leaves at E2). The period gesture is a file over messenger: after `c05` Caleb sends the rip from the last night at New Morning (`c05s`), it plays low under the rest of the thread, and the accountability alert CUTS it — the apparatus silencing the one thing that was theirs. `requiresAudio`: the line exists only when the file is registered and on disk (src/audio/tapeAudio.ts REGISTRY), so an unwritten song is not a broken beat. The track is Sérgio's to generate — docs/reinterp/ERA4_DRAFTS_2026-09-12.md §4 carries the prompt: INSTRUMENTAL, no voice, no lyrics (nothing here may be synthesized as a person), 2003 bedroom-electronic, ~90 s, loopable. Felt register: nothing announces it, nothing scores it.",
+ "network": {
+  "_doc": "S157 / R3-58/59 (Sérgio: 'does the programme try to make him call and the system fails?' — yes, and it must be SEEN failing before the mail). After the alert closes (and the video, if it was offered), the accountability window comes back ONCE MORE, not as Lamby — the SYSTEM's own status list — and tries to reach the people it says are holding him: each line types, waits, and fails. When the last has failed, the envelope tears in (S2R.5). The glitch that follows is this failure's consequence, shown as such.",
+  "title": "Restorify — Accountability network",
+  "heading": "Escalating. Contacting your accountability network…",
+  "lines": [
+   {
+    "try": "accountability partner (Mark T.) — calling…",
+    "fail": "no answer"
+   },
+   {
+    "try": "mentor line — connecting…",
+    "fail": "number not in service"
+   },
+   {
+    "try": "Restorify care server — verifying…",
+    "fail": "not responding"
+   },
+   {
+    "try": "regional office — contacting…",
+    "fail": "closed"
+   }
+  ],
+  "result": "Network status: none reachable. Escalation failed.",
+  "trySeconds": 2.0,
+  "failSeconds": 1.3,
+  "resultSeconds": 3.0
+ },
+ "player": {
+  "_doc": "S157 / R3-52 — the 2003 media player Caleb's rip opens in (src/desktop/apps/mediaPlayer.ts). His file arrives as an attachment on the line that sends it; the player is the only way it plays now (it used to start by itself under the thread).",
+  "title": "Media Player",
+  "play": "Play",
+  "stop": "Stop",
+  "sizeLabel": "{size} · audio file",
+  "unavailable": "the file could not be opened"
+ },
+ "attachment": {
+  "_doc": "S157 / R3-52 — the attachment chip under Caleb's line: press it and the player opens. The label has a space in it on purpose: check-spec's C10 reads any bare `name.mp3` string in data as a file the piece must ship, and this is a NAME on a chip, not a file — the file is the step's own `audio`.",
+  "label": "last night (rip).mp3",
+  "size": "2.1 MB",
+  "open": "open"
+ }
 }

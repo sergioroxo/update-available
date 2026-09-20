@@ -163,7 +163,7 @@
     "pos": [
      -0.9,
      1.5,
-     3.705
+     3.685
     ],
     "size": [
      1.26,
@@ -240,9 +240,9 @@
      0.75
     ],
     "size": [
-     0.75,
-     1.7,
-     0.5
+     0.76,
+     1.67,
+     0.475
     ],
     "color": "#8A5A3B",
     "model": "bookcase",
@@ -313,9 +313,9 @@
      0.87
     ],
     "size": [
-     0.07,
-     0.012,
-     0.045
+     0.02,
+     0.09,
+     0.055
     ],
     "color": "#D4D0C8",
     "model": "cassetteTapeShelf",
@@ -330,9 +330,9 @@
      0.97
     ],
     "size": [
-     0.07,
-     0.012,
-     0.045
+     0.02,
+     0.09,
+     0.055
     ],
     "color": "#9FB4C0",
     "model": "cassetteTapeShelf",
@@ -396,9 +396,9 @@
      0.62
     ],
     "size": [
+     0.15,
      0.18,
-     0.2,
-     0.36
+     0.41
     ],
     "color": "#44464F",
     "model": "cassettePlayer"
@@ -424,6 +424,21 @@
   "props": {
    "windowPane": {
     "color": "#D4D0C8"
+   },
+   "poster1": {
+    "color": "#3E4E7C"
+   },
+   "poster2": {
+    "color": "#2E2E36"
+   },
+   "lampShade": {
+    "color": "#F2F2EA"
+   },
+   "curtainLeft": {
+    "color": "#8FA3B8"
+   },
+   "curtainRight": {
+    "color": "#8FA3B8"
    }
   },
   "_docS86": "⚑ Session 86 — E2 WAS STILL WEARING E1'S CLOTHES. Sérgio, playing the deployed build: \"The pamphlet is still on the desk; the tape is still on the shelf. Era 2 should not be wearing Era 1's props.\" He was right on both counts, and the r2 fold was the thinnest in the file: it retired the boombox, tapeA/tapeB and their docked twins, and the moon, and nothing else — six years of this room's life were one recoloured window pane. Everything added below is an object that dates itself to 1997 and that a returning adult would not still have out. THE KIT (kitBrochure + its two folds, the cover band/title/motif, the three text blocks, the pocket flap and the floppy with its shutter and label) is the Family Design Solutions sales packet: its floppy has already been put into a machine that has since been updated twice, and the brochure lying open on the desk in 2003 reads as a set-dressing oversight rather than as a life. homeworkPile is a teenager's homework. sodaCan is the one judgement call in the list and is flagged for Sérgio — a can on a desk is not era-specific, and it is kept ONLY because removing it costs nothing to re-add if he disagrees. ⚑ NOT REMOVED, deliberately: mixtape (Tape C). It is belongings-eligible and the r3 fold relocates it onto bookcaseMoved with the duck and the teddy, so it is the one Era-1 object the piece has already decided survives — retiring it here would silently kill that payoff. FOR SÉRGIO: if the mixtape should also go, the honest place is the belongings beat (kept → frozen on the shelf; not kept → gone at r2), which would finally give that choice a visible consequence; it currently has none.",
@@ -591,9 +606,66 @@
      0.14
     ],
     "color": "#1E1E22"
+   },
+   {
+    "id": "cdSpindle",
+    "pos": [
+     -0.45,
+     0.78,
+     0.02
+    ],
+    "size": [
+     0.13,
+     0.08,
+     0.13
+    ],
+    "color": "#C8C8CC"
+   },
+   {
+    "id": "cdSpindleCap",
+    "pos": [
+     -0.45,
+     0.83,
+     0.02
+    ],
+    "size": [
+     0.05,
+     0.02,
+     0.05
+    ],
+    "color": "#9A9AA0"
+   },
+   {
+    "id": "flipPhone",
+    "pos": [
+     0.34,
+     0.75,
+     0.2
+    ],
+    "size": [
+     0.045,
+     0.02,
+     0.09
+    ],
+    "color": "#2A2A2E"
+   },
+   {
+    "id": "mug2003",
+    "pos": [
+     -0.36,
+     0.79,
+     0.24
+    ],
+    "size": [
+     0.08,
+     0.1,
+     0.08
+    ],
+    "color": "#3E5C7A"
    }
   ],
-  "_docS156": "⚑ S156 / R3-45 (Sérgio: 'Should the computer model change?' — yes: 'a beige tower and a 4:3 CRT in 1997; a black tower and a flat LCD in 2003'). The machine that was UPDATED is a different machine: the beige CRT, its neck and foot, the beige tower and keyboard are retired at r2 and a black flat panel on a stem, a black tower and a black keyboard take their places — box-built like the CRT (no GLB: `Flat Monitor modern.glb` in Assests is unmeasured and unlicensed-in-repo, and a fitted model would have to be re-measured against the screen plane; the boxes sit exactly behind the plane app.ts already draws the desktop on, SCREEN {w 0.4, h 0.3, y 1.08, z 0}). The r4 fold removes these with the rest of the desk. Ids keep the `crt`/`tower`/`keyboard` stems so era1room.ts's tiers still read them as hero/system."
+  "_docS156": "⚑ S156 / R3-45 (Sérgio: 'Should the computer model change?' — yes: 'a beige tower and a 4:3 CRT in 1997; a black tower and a flat LCD in 2003'). The machine that was UPDATED is a different machine: the beige CRT, its neck and foot, the beige tower and keyboard are retired at r2 and a black flat panel on a stem, a black tower and a black keyboard take their places — box-built like the CRT (no GLB: `Flat Monitor modern.glb` in Assests is unmeasured and unlicensed-in-repo, and a fitted model would have to be re-measured against the screen plane; the boxes sit exactly behind the plane app.ts already draws the desktop on, SCREEN {w 0.4, h 0.3, y 1.08, z 0}). The r4 fold removes these with the rest of the desk. Ids keep the `crt`/`tower`/`keyboard` stems so era1room.ts's tiers still read them as hero/system.",
+  "_docS157": "⚑ S157 / R3-44 (Sérgio, twice: 'Era 2's bedroom doesn't change enough to be memorable'): THE 2003 DRESSING PASS. Six years on: the poster is a different poster (navy, a band, not the pink one), the small one darker; the curtains are grey-blue (the bed is a model since r1 and its bedding is the model's — a recolour there is a model job, not a delta); the lamp has a white shade; the desk has what 2003 put there — a CD spindle, a flip phone, a mug. All box-built in the room's own idiom; r4 clears the desk of them with the rest. ⚑ AND THE ROOM-AUDIT FINDINGS ARE CLOSED, NOT TRIAGED: the model props' authored sizes now say what renders (mixtape, tapeA/B, the duck, the bookcase, the boombox — the numbers the audit printed), and the record's frame sits 2 cm out of the spine wall it was sunk in."
  },
  "r3": {
   "props": {
@@ -1894,9 +1966,9 @@
      3.44
     ],
     "size": [
-     0.75,
-     1.7,
-     0.5
+     0.76,
+     1.67,
+     0.475
     ],
     "color": "#8A5A3B",
     "model": "bookcase",
@@ -2706,7 +2778,11 @@
    "tower2003",
    "tower2003Drive",
    "tower2003Led",
-   "keyboard2003"
+   "keyboard2003",
+   "cdSpindle",
+   "cdSpindleCap",
+   "flipPhone",
+   "mug2003"
   ],
   "add": [
    {

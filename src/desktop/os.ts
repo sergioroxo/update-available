@@ -22,6 +22,7 @@ import { CalebThreadApp } from './apps/caleb';
 import { AccountabilityApp } from './apps/accountability';
 import { LambyRigFileApp } from './apps/lambyRigFile';
 import { RootCauseApp } from './apps/rootCause';
+import { MediaPlayerApp } from './apps/mediaPlayer';
 import rootCauseStrings from '../../data/strings/rootcause.json';
 // ERA 4's SHELL (S76) — the place the visor opens. See that module's header:
 // this file draws it INSTEAD of a desktop from `e4` on, because E4 has none.
@@ -80,6 +81,9 @@ type E2Stage = 'silence' | 'post' | 'splash' | 'osBoot' | 'lambyBoot' | 'lambyIn
 /** S156 / R3-48 — the black beat before the splash (the POST beep and the drive), and the black
  *  beat before Lamby's panel: a 2003 machine goes dark between the things it shows you */
 const E2_POST_SECONDS = 2.0;
+/** S157 / R3-50: how long a 2003 program's loading box holds before its window */
+const PROGRAM_SPLASH_SECONDS = 1.6;
+const MEDIA_PLAYER_TITLE = 'Media Player';
 const E2_LAMBY_BLACK = 0.9;
 const E2_BOOT_HOLD = 2.2;   // s — hold the completed LambyOS 2003 crawl before the installer line
 const LAMBY_BOOT_HOLD = 2.4; // s — black (S156), then the "finishing installation…" line's hold
@@ -176,6 +180,11 @@ export class DesktopOS {
   private lambyRigFile: LambyRigFileApp | null = null;
   /** S153 — ROOTCAUSE.EXE, the second file on the disk (W-L1, his pick) */
   rootCause: RootCauseApp | null = null;
+  /** S157 / R3-52 — the 2003 media player Caleb's file opens in */
+  mediaPlayer: MediaPlayerApp | null = null;
+  /** S157 / R3-50 — a program starting: the loading box every 2003 app shows first
+   *  (Sérgio: "Daily Realignment should have a loading box, like old Windows") */
+  private programSplash: { title: string; t: number } | null = null;
   /** the era-update ritual (spine-armed; never player-triggered) */
   updateApp: UpdateApp | null = null;
   /** ⚑ ERA 4's SHELL (S76) — null until the era is `e4`, and from then on it is
@@ -821,9 +830,38 @@ export class DesktopOS {
       this.restorify = new RestorifyApp();
       this.restorify.onCheckinFiled = () => this.maybeLandMessage();
       this.restorify.onCheckinAcknowledged = () => this.maybeAnnounceMessage();
+      this.startProgram(lambyStrings.restorifyTitle);
     }
     this.restorify.open = true;
     this.dirty = true;
+  }
+
+  /** S157 / R3-50 — the loading box: a small centred window with the program's name and a
+   *  bar that fills over PROGRAM_SPLASH_SECONDS; nothing under it takes a press meanwhile */
+  private startProgram(title: string): void {
+    if (this.desktopEra !== 'e2') return;   // 2003's furniture; the other eras have their own
+    this.programSplash = { title, t: 0 };
+    this.dirty = true;
+  }
+  private drawProgramSplash(W: number, H: number): void {
+    const sp = this.programSplash;
+    if (!sp) return;
+    const { ctx } = this;
+    const dw = 240; const dh = 64;
+    const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
+    ui.bevel(ctx, dx, dy, dw, dh, true);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(sp.title, dx + 12, dy + 10);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(lambyStrings.programLoading, dx + 12, dy + 26);
+    const bw = dw - 24; const by = dy + 42;
+    ui.px(ctx, dx + 11, by - 1, bw + 2, 12, ERA1.greyDark);
+    ui.px(ctx, dx + 12, by, bw, 10, ERA1.white);
+    const k = Math.min(1, sp.t / PROGRAM_SPLASH_SECONDS);
+    const blocks = Math.floor((bw / 9) * k);
+    for (let i = 0; i < blocks; i++) ui.px(ctx, dx + 13 + i * 9, by + 1, 7, 8, ERA1.navy);
   }
 
   /**
@@ -888,6 +926,7 @@ export class DesktopOS {
     if (this.restorify) this.restorify.open = false; // he takes the screen
     const thread = new CalebThreadApp();
     this.caleb = thread;
+    this.startProgram(calebStrings.window.title);   // S157 / R3-50: the messenger loads first
     thread.onCommit = () => this.openAccountabilityAlert();
     // S60 (finding E20): he pressed the notification. The felt module reports
     // the press and learns nothing; the apparatus answers it, by re-asserting
@@ -895,6 +934,14 @@ export class DesktopOS {
     // content. (This is also the ONLY thing that could honestly happen: the
     // block lifts on the apparatus's own failure, never on a player's press.)
     thread.onNotificationPressed = () => this.accountability?.pingStamp();
+    // S157 / R3-52: the file he sent opens in a player, by a press
+    thread.onOpenAttachment = (file) => {
+      if (this.mediaPlayer) return;
+      this.mediaPlayer = new MediaPlayerApp(file);
+      this.mediaPlayer.onClose = () => { this.mediaPlayer = null; this.dirty = true; };
+      this.startProgram(this.mediaPlayer ? MEDIA_PLAYER_TITLE : '');
+      this.dirty = true;
+    };
     thread.onThreadDone = () => {
       this.caleb = null;
       this.accountability = null;
@@ -931,6 +978,7 @@ export class DesktopOS {
     if (this.accountability) return;
     const alert = new AccountabilityApp();
     this.accountability = alert;
+    this.mediaPlayer?.close();   // S157: the block cuts the song — the player goes with it
     playOnce('alert_2003.mp3');   // S141: the messenger's chime, lower — care and surveillance share a voice
     if (this.caleb) alert.setChatRect(this.caleb.windowRect);
     alert.onRedactionStart = () => this.caleb?.beginRedaction();
@@ -1448,6 +1496,12 @@ export class DesktopOS {
       this.dirty = true;
     }
     if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
+    if (this.programSplash) {
+      this.programSplash.t += dt;
+      this.dirty = true;
+      if (this.programSplash.t >= PROGRAM_SPLASH_SECONDS) this.programSplash = null;
+    }
+    if (this.mediaPlayer) this.mediaPlayer.update(dt);
     if (this.phase === 'desktop' && this.rootCause) this.rootCause.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
     if (this.phase === 'desktop' && this.packet) this.packet.update(dt);
@@ -1486,7 +1540,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.netvision?.disclaimerDone) this.caleb?.pushBreakToast();
     if (this.t >= this.pureMailAt) {
       this.pureMailAt = Infinity;
-      this.accountability?.openMail();
+      this.accountability?.beginNetworkFailure();   // S157 / R3-58: seen failing, then the mail
       this.dirty = true;
     }
     // R28-2a: the guide is condition-driven only (no timers) — one tick per
@@ -1597,7 +1651,7 @@ export class DesktopOS {
       if (w?.dirty) { w.dirty = false; this.dirty = true; }
     };
     consume(this.kit); consume(this.irc); consume(this.packet); consume(this.diary); consume(this.rootCause);
-    consume(this.provotype); consume(this.restorify); consume(this.netvision);
+    consume(this.provotype); consume(this.restorify); consume(this.netvision); consume(this.mediaPlayer);
     consume(this.caleb); consume(this.accountability); consume(this.updateApp);
     // the era's shell keeps a real version counter instead of a flag (space.ts) —
     // it was read against `lastVersion` for the visor and never for this canvas.
@@ -1961,9 +2015,11 @@ export class DesktopOS {
     // calls — he is never drawn inside the chat's frame, in any beat.
     if (this.caleb?.open) this.caleb.draw(ctx);
     if (this.accountability) this.accountability.draw(ctx);
+    if (this.mediaPlayer?.open) this.mediaPlayer.draw(ctx);
     // finding B8: Lamby's message notice — over the desktop, never over the
     // Messenger itself (it is closed by the time that window opens)
     if (this.messageNoticeOpen) this.drawMessageNotice(W, H);
+    if (this.programSplash) this.drawProgramSplash(W, H);   // S157: over the window it precedes
     // S2R.4: Lamby's video offer, then the player itself (over Restorify, but
     // still under the system-modal update ritual below)
     if (this.netvisionOfferOpen) this.drawNetvisionOffer(W, H);
@@ -2989,6 +3045,9 @@ export class DesktopOS {
     // S2R.3: the apparatus's intrusion sits over the conversation, so it is
     // asked first; the chat's own chips answer underneath it.
     if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleClick(x, y); return; }
+    // S157: a program starting takes no press; the player, on top of the messenger, takes its own
+    if (this.phase === 'desktop' && this.programSplash) return;
+    if (this.phase === 'desktop' && this.mediaPlayer?.open) { this.mediaPlayer.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleClick(x, y); return; }
     // the provotype is modal while open — it owns the desktop's clicks
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }

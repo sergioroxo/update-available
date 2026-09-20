@@ -1393,3 +1393,31 @@ allows in flight (180° would need thirty seconds at 9 °/s); looking down IS th
 player can turn in the seat first. **R3-60**: u3's deferral says "Restorify is being removed".
 Walked: 259 presses, spine done. **closes R3-45, R3-46/86, R3-60; R3-48 closes bar the bar's
 length (his call); his boot notes closed.**
+
+## 2026-09-20 — S157 · PRIORITY 4 BATCH B: ERA 2'S APPS
+**R3-58/59**: the network is SEEN failing before the mail — after the alert (and the video, if it
+was offered) the accountability window comes back as the system's own status list and tries
+each contact: the partner (no answer), the mentor line (number not in service), the care server
+(not responding), the regional office (closed) — "Network status: none reachable. Escalation
+failed." — and the envelope tears in on that. The glitch that follows is this failure's
+consequence, shown as such. **R3-51**: the messenger has the 2003 IM look — the mark, the
+contact strip, a dead Nudge · Wink · Font toolbar, a contact list down the right (him online, the
+others not) — and its gaps are tightened (13 cps, 1.4 / 1.6 / 2.2 s). **R3-52**: Caleb's rip
+arrives as an ATTACHMENT under his line — "last night (rip).mp3 · 2.1 MB · open" — and pressing
+it opens a Media Player (`mediaPlayer.ts`: the file, a bar, Play / Stop); it no longer plays by
+itself, and the block closes it. **R3-75**: the Story cut PLAYS — a playhead runs the forty
+seconds across the timeline, her sentences light one by one on the card; no voice, none is ever
+synthesised for a member; Play / Stop beside the range (task surfaces have a `tick` now).
+**R3-50**: every 2003 program starts with a loading box — the name, "Loading, please wait…", a
+bar that fills — Daily Realignment, the Messenger, the player. **R3-62**: the 2003→2016 notice
+and its terms arrive on 2016's glass (aero frame and buttons), as u4's already did. **R3-41**:
+Restorify's 2003 terms wear the E2 look — the brand's navy band with its house mark over the
+paper. **R3-44**: the 2003 dressing pass — the posters are different posters (navy, dark), the
+curtains grey-blue, the lamp's shade white, a CD spindle, a flip phone and a mug on the desk
+(with R3-45's machine); the bed is a model since r1, so its bedding is a model job, not a
+delta; and the room audit's r2 findings are CLOSED, not triaged — 0 at r2 (the model props'
+authored sizes say what renders; the record's frame is out of the wall). Verified by hand: the
+room, the messenger, the attachment and the player, the network failing. Walked: 261 presses,
+spine done (the walker's Era 2 path runs Lamby → the check-in → the summons → the update and
+never the messenger, as it always has; the messenger's beats are proved by hand).
+**closes R3-41, R3-44, R3-50, R3-51, R3-52/75, R3-58/59, R3-62.**

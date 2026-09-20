@@ -35,9 +35,10 @@ import { playOnce, isAudioAvailable, stopClip } from '../../audio/tapeAudio';
 
 interface Chip { id: string; label: string; say: string; ledgerTag: string }
 interface ThreadStep { id: string; from?: string; text?: string; chips?: Chip[]; commit?: boolean;
-  /** S143: a file he sends — plays low once the line has typed; the block cuts it */
-  audio?: string; requiresAudio?: boolean }
-interface Msg { from: 'them' | 'you'; text: string }
+  /** S143: a file he sends. S157 / R3-52: it no longer plays by itself — it ARRIVES as an
+   *  attachment under the line, and pressing it opens the media player (os.ts). */
+  audio?: string; requiresAudio?: boolean; attachment?: boolean }
+interface Msg { from: 'them' | 'you'; text: string; attachment?: { name: string; audio: string; size: string } }
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 // ⚑ S143: a step that needs a file it does not have is not in the thread —
@@ -222,6 +223,9 @@ export class CalebThreadApp {
   onReturnSettled?: () => void;
   /** fires when the residue has been committed and held — the thread is over */
   onThreadDone?: () => void;
+  /** S157 / R3-52: the OS opens the media player for the file he sent */
+  onOpenAttachment?: (file: { name: string; audio: string; size: string }) => void;
+
   /** S60 — the player pressed Caleb's notification while the block is on.
    *  This module does not know and must not know what answers it: os.ts hands
    *  the press to the apparatus, which re-asserts its own stamp. The felt side
@@ -266,7 +270,10 @@ export class CalebThreadApp {
       if (this.phase === 'returning') this.returnLineCount++;
       // S143: the file he sent has arrived — it plays, low, under what follows
       const st = THREAD[this.step];
-      if (st && st.text === text && st.audio) { this.song = playOnce(st.audio); if (this.song) this.song.volume = 0.55; }
+      if (st && st.text === text && st.audio && st.attachment) {
+        const last = this.msgs[this.msgs.length - 1];
+        last.attachment = { name: caleb.attachment.label, audio: st.audio, size: caleb.attachment.size };
+      } else if (st && st.text === text && st.audio) { this.song = playOnce(st.audio); if (this.song) this.song.volume = 0.55; }
       this.dirty = true;
     };
     this.file('opened', 'intervened', caleb.witness.contactOpened);
@@ -496,17 +503,44 @@ export class CalebThreadApp {
     const c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, caleb.window.title, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
 
-    // the contact strip — no presence games, no typing tease, no ornament
+    // S157 / R3-51 — THE 2003 IM LOOK. The contact strip with the messenger's own mark,
+    // a toolbar whose verbs are dead (Nudge · Wink · Font — the era's furniture, not
+    // this piece's inputs), and a contact list down the right: him online, the
+    // others not. The transcript keeps its whole grammar; only the frame is fuller.
+    const CT = caleb.window.contacts;
     ui.px(ctx, c.x, c.y, c.w, 14, ERA1.beige);
     ui.setFont(ctx, 9);
+    ui.px(ctx, c.x + 4, c.y + 2, 12, 10, ERA1.navy);
+    ctx.fillStyle = ERA1.white;
+    ctx.fillText(CT.mark, c.x + 5, c.y + 3);
     ctx.fillStyle = ERA1.navy;
-    ctx.fillText(caleb.window.contact, c.x + 6, c.y + 3);
+    ctx.fillText(caleb.window.contact, c.x + 20, c.y + 3);
     ctx.fillStyle = ERA1.grey;
-    ctx.fillText(caleb.window.status, c.x + c.w - 44, c.y + 3);
+    ctx.fillText(caleb.window.status, c.x + 20 + ctx.measureText(caleb.window.contact).width + 8, c.y + 3);
+    // the dead toolbar
+    [CT.nudge, CT.wink, CT.font].forEach((v, i) => ui.button(ctx, c.x + c.w - 172 + i * 56, c.y + 1, 52, 12, v, { disabled: true }));
+    // the contact list
+    const LIST_W = 92;
+    const lx = c.x + c.w - LIST_W;
+    ui.px(ctx, lx, c.y + 14, LIST_W, c.h - 14, ERA1.beige);
+    ui.px(ctx, lx, c.y + 14, 1, c.h - 14, ERA1.grey);
+    ui.setFont(ctx, 8);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(CT.online, lx + 6, c.y + 20);
+    ui.px(ctx, lx + 6, c.y + 33, 5, 5, ERA1.ok);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(caleb.window.contact, lx + 14, c.y + 31);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(CT.offline, lx + 6, c.y + 48);
+    (CT.offlineNames as string[]).forEach((n, i) => {
+      ui.px(ctx, lx + 6, c.y + 61 + i * 11, 5, 5, ERA1.grey);
+      ctx.fillStyle = ERA1.grey;
+      ctx.fillText(n, lx + 14, c.y + 59 + i * 11);
+    });
 
     const bodyX = c.x + 6;
     const bodyY = c.y + 18;
-    const bodyW = c.w - 12;
+    const bodyW = c.w - 12 - LIST_W;
     // S60 (finding F22, Sérgio: *"after Continue, Caleb's messages were
     // cleared — did he say anything or not?"*). DIAGNOSED IN PLAY: the
     // un-redaction worked perfectly and then the transcript ate it. The body
@@ -520,14 +554,14 @@ export class CalebThreadApp {
     const bodyH = c.h - 18 - (this.phase === 'chat' ? TRAY_H : 0);
     this.drawTranscript(ctx, bodyX, bodyY, bodyW, bodyH);
 
-    if (this.phase === 'chat') this.drawTray(ctx, c.x + 6, c.y + c.h - TRAY_H + 4, c.w - 12);
+    if (this.phase === 'chat') this.drawTray(ctx, c.x + 6, c.y + c.h - TRAY_H + 4, c.w - 12 - LIST_W);
   }
 
   /** flatten the transcript into wrapped rows, then draw — the redaction walks
    *  these ROWS, so what blacks out is exactly what is on screen */
   private drawTranscript(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
     ui.setFont(ctx, 9);
-    const rows: { prefix: string; prefixColor: string; body: string; indent: number }[] = [];
+    const rows: { prefix: string; prefixColor: string; body: string; indent: number; attachment?: Msg['attachment'] }[] = [];
     const all: Msg[] = [...this.msgs];
     const partial = this.stream.partial;
     if (partial !== null) all.push({ from: 'them', text: partial });
@@ -550,6 +584,8 @@ export class CalebThreadApp {
         body: line,
         indent: i === 0 ? 0 : pw
       }));
+      // S157 / R3-52: the file, as a row of its own — a chip the player presses
+      if (m.attachment) rows.push({ prefix: '', prefixColor: ERA1.navy, body: '', indent: pw, attachment: m.attachment });
     }
     const maxRows = Math.floor(h / ROW_H);
     const shown = rows.slice(-maxRows);
@@ -566,6 +602,17 @@ export class CalebThreadApp {
         return;
       }
       let cx = x + r.indent;
+      if (r.attachment) {
+        // the attachment chip: an icon, the name, the size — pressable while the chat is live
+        const label = `${r.attachment.name}  ${r.attachment.size}  · ${caleb.attachment.open}`;
+        const lw = ctx.measureText(label).width + 22;
+        ui.bevel(ctx, cx, ry - 1, lw, ROW_H, true);
+        ui.px(ctx, cx + 4, ry + 1, 6, 7, ERA1.white); ui.px(ctx, cx + 5, ry + 4, 4, 2, ERA1.navy);
+        ctx.fillStyle = ERA1.navy;
+        ctx.fillText(label, cx + 14, ry);
+        if (this.phase === 'chat' && !this.redaction.hidden(i)) this.hits.push({ x: cx, y: ry - 1, w: lw, h: ROW_H, id: 'attachment' });
+        return;
+      }
       if (r.prefix) {
         ctx.fillStyle = r.prefixColor;
         ctx.fillText(r.prefix, cx, ry);
@@ -744,6 +791,11 @@ export class CalebThreadApp {
     if (!hit) return;
     if (hit.id === 'residue') { this.commitResidue(); return; }
     if (hit.id === 'toast') { this.onNotificationPressed?.(); return; }
+    if (hit.id === 'attachment') {
+      const m = this.msgs.find((mm) => mm.attachment);
+      if (m?.attachment) this.onOpenAttachment?.(m.attachment);
+      return;
+    }
     if (hit.id.startsWith('chip:') && this.awaiting) {
       const chip = this.awaiting.find(c => c.id === hit.id.slice(5));
       if (chip) this.chooseChip(chip);

@@ -511,6 +511,7 @@ export class GraceQueueLite {
     // moment the sheep does. Neither can ever re-upload the workstation.
     this.comments.update(dt);
     this.floppy.update(dt);
+    if (this.openSurface?.tick && this.mode === 'list') this.openSurface.tick(dt);   // S157: the open job's own clock
   }
 
   /** 0 → 1: how far the workstation's grade has warmed. Never resets once lit. */

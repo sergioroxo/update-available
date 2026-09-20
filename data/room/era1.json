@@ -71,7 +71,7 @@
     { "id": "boomboxSpeakerL", "pos": [1.0, 0.13, 0.395], "size": [0.1, 0.1, 0.02], "color": "#2C2C34" },
     { "id": "boomboxSpeakerR", "pos": [1.3, 0.13, 0.395], "size": [0.1, 0.1, 0.02], "color": "#2C2C34" },
     { "id": "boomboxDeck", "pos": [1.15, 0.16, 0.395], "size": [0.1, 0.06, 0.015], "color": "#2C2C34" },
-    { "id": "mixtape", "pos": [1.15, 0.262, 0.28], "size": [0.07, 0.012, 0.045], "color": "#E8D48A" },
+    { "id": "mixtape", "pos": [1.15, 0.262, 0.28], "size": [0.018, 0.09, 0.055], "color": "#E8D48A" },
 
     { "id": "bedFrame", "pos": [-1.72, 0.18, 1.15], "size": [0.78, 0.28, 1.95], "color": "#A07B52" },
     { "id": "mattress", "pos": [-1.72, 0.36, 1.15], "size": [0.72, 0.1, 1.88], "color": "#F0E5D4" },
@@ -87,7 +87,7 @@
     { "id": "book3", "pos": [1.98, 1.67, 0.6], "size": [0.09, 0.22, 0.07], "color": "#A8B49A" },
     { "id": "cdStack", "pos": [1.98, 0.71, 0.9], "size": [0.12, 0.14, 0.12], "color": "#D4D0C8" },
     { "id": "teddyBox", "model": "monkeyToy", "pos": [1.98, 0.71, 0.5], "size": [0.11, 0.12, 0.1], "yaw": 180, "color": "#C9A8A0", "_doc": "⚑ S149: `yaw: 180` — at yaw 0 the mesh's face pointed at the wall (Sérgio, 08-21 and 09-17: 'the monkey is still backward'); rotated live, screenshotted from the seat's side: the face now looks into the room (R3-05). ⚑ THE MONKEY IS THIS PROP'S REAL MESH — corrected 2026-08-17. Sérgio: 'It was the monkey as the replacement for the Teddy, this old news.' S90 read his Poly Pizza pick as a NEW prop and placed a monkey elsewhere while leaving this box on the shelf, so Room 1 briefly had both a primitive teddy and a loose monkey. The id stays `teddyBox` because belongings.json, reinterp_deltas.json's r3 carry and every era fold key off it — renaming an id to match a mesh is how folds break. D33 (Session 34) authored it; the colour reuses book1's dusty rose." , "modelScale": [0.0071, 0.0077, 0.007]},
-    { "id": "rainbowDuck", "pos": [1.98, 1.6, 0.38], "size": [0.09, 0.08, 0.1], "color": "#FFD24C", "_doc": "D33 (Session 34): the rainbow-duck prop — small, set-tier, shelf 3 beside book3. Colour is the one NEW hex this session: canon rubber-duck yellow, explicitly permitted by the brief ('the duck may use its canon rainbow colors') as an exception to the reuse-only rule; flagged for Sérgio in the session log. Eligible in data/room/belongings.json." },
+    { "id": "rainbowDuck", "pos": [1.98, 1.6, 0.38], "size": [0.075, 0.08, 0.088], "color": "#FFD24C", "_doc": "D33 (Session 34): the rainbow-duck prop — small, set-tier, shelf 3 beside book3. Colour is the one NEW hex this session: canon rubber-duck yellow, explicitly permitted by the brief ('the duck may use its canon rainbow colors') as an exception to the reuse-only rule; flagged for Sérgio in the session log. Eligible in data/room/belongings.json." },
 
     { "id": "rug", "pos": [0, 0.012, 0.85], "size": [1.5, 0.02, 1.1], "color": "#B98563" },
     { "id": "sodaCan", "pos": [0.45, 0.785, 0.1], "size": [0.05, 0.09, 0.05], "color": "#C42020" },

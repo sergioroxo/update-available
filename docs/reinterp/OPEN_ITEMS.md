@@ -81,16 +81,16 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | id | item | status |
 |---|---|---|
 | R3-46 / 86 | ~~Rise → hold → morph in view → descend~~ | DONE — S156 · rise to a high overlook looking down (−40°), hold over the room at −45° while it ages, 8 s descent; comfort law kept; seen by hand; walked 259 |
-| R3-44 | 2003 dressing pass; room-audit findings closed (W: 08-21 §B) | OPEN · repeat |
+| R3-44 | ~~2003 dressing pass; room-audit findings closed (W: 08-21 §B)~~ | DONE — S157 · the posters, the curtains, the lamp, the desk clutter, the machine (R3-45); the audit's r2 findings closed (0) |
 | R3-45 | ~~The computer changes: beige+CRT → black+LCD~~ | DONE — S156 · the 2003 fold retires the beige CRT/tower/keyboard and adds a black flat panel on a stem, a black tower, a black keyboard (box-built behind the same screen plane); r4 removes them |
 | R3-48 | E2 boot: black → POST → shorter splash → OS | DONE bar the bar — S156 · black → POST + drive → splash (jingle at half) → crawl → black → "finishing installation…"; the loading bar's length is hung on his own track's phrases (S2R.0b) — shortening it is his call |
-| R3-50 | Program-start splash for 2003 apps | OPEN |
-| R3-51 | Messenger: faster; the 2003 IM look | OPEN |
-| R3-52 / 75 | A media player: Caleb's song as an attachment; Noa's cut plays | OPEN |
-| R3-58 / 59 | The network's failure SEEN before the mail; the glitch as its consequence | DESIGN |
+| R3-50 | ~~Program-start splash for 2003 apps~~ | DONE — S157 · a loading box before every 2003 program |
+| R3-51 | ~~Messenger: faster; the 2003 IM look~~ | DONE — S157 · the 2003 IM look (mark, toolbar, contact list); gaps tightened |
+| R3-52 / 75 | ~~A media player: Caleb's song as an attachment; Noa's cut plays~~ | DONE — S157 · the rip as an attachment → a Media Player; the Story cut plays (playhead, her sentences lit; no voice) |
+| R3-58 / 59 | ~~The network's failure SEEN before the mail; the glitch as its consequence~~ | DONE — S157 · the network seen failing before the mail: four contacts tried and lost, "Escalation failed", then the envelope |
 | R3-60 | ~~Deferral copy: "being removed"~~ | DONE — S156 · u3 deferred: "Restorify is being removed. Take what you are taking…" |
-| R3-62 | The 2003→2016 notice gets the E3 look | OPEN |
-| R3-41 | The 2003 EULA gets the E2 look | OPEN |
+| R3-62 | ~~The 2003→2016 notice gets the E3 look~~ | DONE — S157 · the 2003→2016 notice and terms on 2016's glass |
+| R3-41 | ~~The 2003 EULA gets the E2 look~~ | DONE — S157 · Restorify's band and house mark over the 2003 terms |
 | R3-61 | Anything to do after the residue? | DESIGN · his |
 
 ## Priority 5 — Era 3's devices
@@ -164,6 +164,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
+- S157 (2026-09-20): R3-41, R3-44, R3-50, R3-51, R3-52/75, R3-58/59, R3-62 — Priority 4 batch B; walked, 261 presses, spine done.
 - S156 (2026-09-20): R3-45, R3-46/86, R3-60, R3-48 (bar the bar's length) — Priority 4 batch A; his boot notes (the machine heard on the way down, the OS splash + chime); walked, 259 presses, spine done.
 - S155 (2026-09-20): R3-08, R3-14, R3-25, R3-36, R3-43/63 (sound), R3-68, R3-85, R3-88, R3-102, W-G1; R3-02 and R3-110 built, his to hear; R3-48/64 partial; his ask: the prayer tape's intro cut — walked, 258 presses, spine done.
 - S154 (2026-09-20): I-01 — the member's figure as a 2016 correction job; walked, 261 presses, spine done.

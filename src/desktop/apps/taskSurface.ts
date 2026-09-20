@@ -70,6 +70,10 @@ export interface TaskSurface {
   /** a registered rect was pressed. Return true if it was consumed. */
   press(id: string): boolean;
 
+  /** S157 — a job with a clock of its own (the Story's playback) advances here, once
+   *  per frame while it is the open job; it bumps its own version when something moved */
+  tick?(dt: number): void;
+
   /** ⚑ SHE PUT IT DOWN. Optional, and it exists because a job could not tell
    *  the difference between "finished" and "walked away from" — `board-back` is
    *  resolved by the board before a job's `press` ever sees it, so a surface had

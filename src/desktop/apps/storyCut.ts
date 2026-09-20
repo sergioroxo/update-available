@@ -75,6 +75,8 @@ interface StoryCopy {
   suggestedTag: string;
   windowLabel: string;
   publish: string;
+  play: string;
+  stop: string;
   publishedHeading: string;
   publishedSub: string;
   backLabel: string;
@@ -171,6 +173,11 @@ export class StoryCutTask implements TaskSurface {
   private v = 0;
   private inIdx = SUGGESTED_IDX;
   private published = false;
+  /** S157 / R3-75 — the cut, PLAYED: seconds into the forty, or −1 when stopped. There is
+   *  no recording of her (no voice is ever synthesised for a member); what plays is the
+   *  vertical itself — the audiogram's bars, the playhead, her sentences one by one. */
+  private playT = -1;
+  private playV = 0;
   private openedFiled = false;
 
   version(): number { return this.v; }
@@ -322,6 +329,24 @@ export class StoryCutTask implements TaskSurface {
     const infoX = area.x + cardW + 14;
     setFont(ctx, 10); ctx.fillStyle = ERA3.titleText;
     ctx.fillText(`${mmss(this.inStart())}–${mmss(this.windowEnd())}`, infoX, cardY);
+    // S157 / R3-75 — play the cut: a playhead across the window on the timeline, the
+    // sentence being "read" lit on the card, a Play / Stop under the range
+    const playing = this.playT >= 0;
+    if (playing) {
+      const at = this.inStart() + this.playT;
+      const phx = Math.round(trackX + (at / TOTAL_SECONDS) * trackW);
+      px(ctx, phx, barTop - 4, 2, barH + 8, ERA3.white);
+      px(ctx, phx - 2, barTop - 6, 6, 3, ERA3.white);
+      // the sentence under the head, lit on the card
+      const cur = BEATS.findIndex((b, i) => i < BEAT_COUNT && at >= b.start && at < b.end);
+      const curText = cur >= 0 ? SENTENCES[cur] : '';   // a silence between her sentences shows nothing
+      setFont(ctx, 9); ctx.fillStyle = ERA3.accentHi;
+      wrapText(ctx, curText, area.w - infoX + area.x - 8).slice(0, 3).forEach((ln, i) => ctx.fillText(ln, infoX, cardY + 18 + i * 12));
+      setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
+      ctx.fillText(mmss(this.playT), infoX, cardY + 56);
+    }
+    aero.button(ctx, infoX, cardY + 70, 64, 20, playing ? STORY.stop : STORY.play, { primary: !playing });
+    hit({ x: infoX, y: cardY + 70, w: 64, h: 20, id: playing ? 'story-stop' : 'story-play' });
 
     // ── publish ──────────────────────────────────────────────────────────
     const bw = 96; const bh2 = 22;
@@ -354,8 +379,18 @@ export class StoryCutTask implements TaskSurface {
       .forEach((ln, i) => ctx.fillText(ln, cardX + 6, cardY + 30 + i * 10));
   }
 
+  tick(dt: number): void {
+    if (this.playT < 0) return;
+    this.playT += dt;
+    if (this.playT >= WINDOW_SECONDS) this.playT = -1;
+    const v = Math.floor((this.playT < 0 ? 0 : this.playT) * 4);
+    if (v !== this.playV) { this.playV = v; this.bump(); }
+  }
+
   press(id: string): boolean {
-    if (id.startsWith('story-seg-')) { this.selectSentence(Number(id.slice(10))); return true; }
+    if (id === 'story-play') { this.playT = 0; this.bump(); return true; }
+    if (id === 'story-stop') { this.playT = -1; this.bump(); return true; }
+    if (id.startsWith('story-seg-')) { this.playT = -1; this.selectSentence(Number(id.slice(10))); return true; }
     if (id === 'story-publish') { this.publish(); return true; }
     return false;
   }

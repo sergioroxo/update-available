@@ -49,7 +49,9 @@ const calebPacing = caleb.pacing;
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 type AlertStep = 'stop' | 'block' | 'wanting' | 'streak' | 'system' | 'sad' | 'caught' | 'closed';
-type MailPhase = 'none' | 'arriving' | 'envelope' | 'letter' | 'closed';
+type MailPhase = 'none' | 'failing' | 'arriving' | 'envelope' | 'letter' | 'closed';
+/** S157 / R3-58: the network's own status list, tried and failed before the mail */
+const NET = caleb.network as { title: string; heading: string; lines: { try: string; fail: string }[]; result: string; trySeconds: number; failSeconds: number; resultSeconds: number };
 
 // ── PACING — ALL OF IT LIVES IN data/dialog/s2_caleb.json's `pacing` BLOCK ──
 // Session 48 moved every timing constant out of here so Sérgio can tune the
@@ -171,7 +173,7 @@ export class AccountabilityApp {
   get stampVisible(): boolean { return this.stamped; }
   get alertRunning(): boolean { return this.step !== 'closed'; }
   get mailOpen(): boolean {
-    return this.mail === 'arriving' || this.mail === 'envelope' || this.mail === 'letter';
+    return this.mail === 'failing' || this.mail === 'arriving' || this.mail === 'envelope' || this.mail === 'letter';
   }
 
   setChatRect(r: { x: number; y: number; w: number; h: number }): void { this.chat = { ...r }; }
@@ -219,8 +221,30 @@ export class AccountabilityApp {
    *  failing, so its own signal tears and the message comes through the tear,
    *  in the warm-corrupt grammar the New You video broke in half an hour ago.
    *  Same vocabulary, slower, and the letter is what survives it. */
-  openMail(): void {
+  /** S157 / R3-58/59 — before the letter, the network is SEEN failing: the window
+   *  comes back as the system's own status list, tries each contact, and cannot
+   *  reach one. The envelope tears in on the last failure. */
+  beginNetworkFailure(): void {
     if (this.mail !== 'none') return;
+    this.mail = 'failing';
+    this.mailT = 0;
+    this.step = 'closed';
+    this.dirty = true;
+  }
+  /** how far the failing list has got: each line tries, then fails */
+  private failingRows(): { text: string; failed: boolean; shown: boolean }[] {
+    const per = NET.trySeconds + NET.failSeconds;
+    return NET.lines.map((l, i) => {
+      const t0 = i * per;
+      return { text: l.try, failed: this.mailT >= t0 + NET.trySeconds, shown: this.mailT >= t0 };
+    });
+  }
+  private get failingDone(): boolean {
+    return this.mailT >= NET.lines.length * (NET.trySeconds + NET.failSeconds) + NET.resultSeconds;
+  }
+
+  openMail(): void {
+    if (this.mail !== 'none' && this.mail !== 'failing') return;
     this.mail = 'arriving';
     this.mailT = 0;
     this.step = 'closed'; // by the collapse the assistant has always finished talking
@@ -232,6 +256,12 @@ export class AccountabilityApp {
   // ── update ─────────────────────────────────────────────────────────────
   update(dt: number): void {
     this.t += dt;
+    if (this.mail === 'failing') {
+      this.mailT += dt;
+      this.dirty = true;
+      if (this.failingDone) this.openMail();
+      return;
+    }
     if (this.stampPingT > 0) {
       this.stampPingT = Math.max(0, this.stampPingT - dt);
       this.dirty = true;
@@ -319,6 +349,7 @@ export class AccountabilityApp {
     this.hits = [];
     if (this.stamped) this.drawStamp(ctx);
     if (this.alertRunning) this.drawBand(ctx);
+    if (this.mail === 'failing') this.drawNetworkFailing(ctx);
     if (this.mail === 'arriving') this.drawMailArrival(ctx);
     if (this.mail === 'envelope') this.drawEnvelope(ctx, true);
     if (this.mail === 'letter') this.drawLetter(ctx);
@@ -476,6 +507,36 @@ export class AccountabilityApp {
    *     off it, like a tape finding its tracking.
    * Density ramps both ways. Never a flash, never a strobe.
    */
+  /** the system's status list — cold, typed, each contact tried and lost */
+  private drawNetworkFailing(ctx: CanvasRenderingContext2D): void {
+    const c = ui.windowFrame(ctx, BAND.x, BAND.y - 20, BAND.w, BAND.h + 12, NET.title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(NET.heading, c.x + 10, c.y + 8);
+    ui.setFont(ctx, 9);
+    this.failingRows().forEach((r, i) => {
+      if (!r.shown) return;
+      const y = c.y + 28 + i * 14;
+      ctx.fillStyle = r.failed ? ERA1.grey : ERA1.greyDark;
+      ctx.fillText(r.text, c.x + 14, y);
+      if (r.failed) {
+        ctx.fillStyle = ERA1.warnDark;
+        const fw = ctx.measureText(NET.lines[i].fail).width;
+        ctx.fillText(NET.lines[i].fail, c.x + c.w - 14 - fw, y);
+      } else if (Math.floor(this.mailT * 3) % 2 === 0) {
+        ctx.fillStyle = ERA1.greyDark;
+        ctx.fillText('…', c.x + c.w - 22, y);
+      }
+    });
+    const allFailed = this.failingRows().every((r) => r.failed);
+    if (allFailed) {
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = ERA1.warnDark;
+      ctx.fillText(NET.result, c.x + 10, c.y + c.h - 18);
+    }
+  }
+
   private drawMailArrival(ctx: CanvasRenderingContext2D): void {
     const W = ERA1_CANVAS.width;
     const { w: dw, h: dh, y: dy } = AccountabilityApp.MAILBOX;

@@ -107,5 +107,6 @@
  "dismissedToast": "Restorify — Daily Realignment is on the desktop when you want it.",
  "_docDismissedToast": "⚑ S150 (OPEN_ITEMS R3-49, Sérgio: 'what does the Not now button do?'): the dismissal always worked and filed, and nothing on screen said so. This is the SYSTEM's status-well toast after Not now — not Lamby (a dismissed conductor does not keep talking); it names where the program went. The window's 2003 look is Priority 4 (R3-41/50/51).",
  "messageToast": "A message came in while we were talking — it's in your Messenger.",
- "_docMessageToast": "⚑ S150 (OPEN_ITEMS R3-55, Sérgio 08-21 and 09-17: 'there is no need for the pop-up of Caleb'): the announcement is ONE line in the status well and the Messenger's dot — no card over the desktop. Lamby's voice, one beat, then quiet; the door stays open (the dot) and the era waits. `messageTitle/Line1/Line2/Open/NotNow` are kept for the record and unused."
+ "_docMessageToast": "⚑ S150 (OPEN_ITEMS R3-55, Sérgio 08-21 and 09-17: 'there is no need for the pop-up of Caleb'): the announcement is ONE line in the status well and the Messenger's dot — no card over the desktop. Lamby's voice, one beat, then quiet; the door stays open (the dot) and the era waits. `messageTitle/Line1/Line2/Open/NotNow` are kept for the record and unused.",
+ "programLoading": "Loading, please wait…"
 }

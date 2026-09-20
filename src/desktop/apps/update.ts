@@ -15,6 +15,8 @@
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import { ERA4 } from '../theme/era4';
 import * as ui from '../theme/chrome';
+import * as aero from '../theme/era3';
+import { ERA3 } from '../theme/era3';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
 import { drawLambyChar } from './lambyChar';
@@ -47,6 +49,8 @@ interface UpdateStrings {
   notify: string[];
   updateNow: string;
   remindLater: string | null;
+  /** S157 / R3-41: the brand on the 2003 terms' band */
+  eulaBrand?: string;
   /** S156 / R3-60: this update's own standing line while deferred (the shared one otherwise) */
   remindedStatus?: string;
   eulaTitle?: string;
@@ -367,13 +371,21 @@ export class UpdateApp {
         });
         return;
       }
-      const c = ui.windowFrame(ctx, dx, dy, dw, dh, this.s.notifyTitle, true);
+      // ⚑ S157 / R3-62 (Sérgio: "the GracePlatform notice inside Era 2 is barebones"): the
+      //   notice wears the era it is BRINGING, as u4's terms already did — 2016's glass
+      //   arrives in 2003's room. u2 keeps 1997's chrome: it is Restorify announcing itself.
+      const toE3 = this.ledgerEntry.toEra === 3;
+      const c = toE3
+        ? aero.windowFrame(ctx, dx, dy - 6, dw, dh + 12, this.s.notifyTitle, true)
+        : ui.windowFrame(ctx, dx, dy, dw, dh, this.s.notifyTitle, true);
+      if (toE3) ui.px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
       ui.setFont(ctx, 9);
       this.s.notify.forEach((line, i) => {
-        ctx.fillStyle = i < 2 ? ERA1.warnDark : ERA1.black;
+        ctx.fillStyle = toE3 ? (i < 2 ? ERA3.amber : ERA3.ink) : (i < 2 ? ERA1.warnDark : ERA1.black);
         ctx.fillText(line, c.x + 10, c.y + 6 + i * 12);
       });
-      ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.updateNow, {});
+      if (toE3) aero.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 20, this.s.updateNow, { primary: true });
+      else ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.updateNow, {});
       this.hits.push({ x: c.x + c.w - 96, y: c.y + c.h - 26, w: 88, h: 18, id: 'update-now' });
       // ⚑ S61 — a SPENT deferral is drawn, not deleted. It used to vanish, so
       // the notice's second appearance looked like a different dialog and the
@@ -383,7 +395,8 @@ export class UpdateApp {
       // `!this.remindUsed`, so the disabled button pushes no live hit — the
       // press does nothing, visibly.
       if (this.s.remindLater) {
-        ui.button(ctx, c.x + 8, c.y + c.h - 26, 120, 18,
+        if (toE3) aero.button(ctx, c.x + 8, c.y + c.h - 26, 120, 20, this.remindUsed ? REMIND_SPENT : this.s.remindLater, { disabled: this.remindUsed });
+        else ui.button(ctx, c.x + 8, c.y + c.h - 26, 120, 18,
           this.remindUsed ? REMIND_SPENT : this.s.remindLater, { disabled: this.remindUsed });
         // a SPENT deferral is drawn and registers nothing — the option is still
         // displayed and is no longer one (S61). Once only, exactly as before.
@@ -411,20 +424,44 @@ export class UpdateApp {
       if (this.ledgerEntry.toEra === 4) { this.drawEulaArriving(ctx, W, H); return; }
       const dw = 400; const dh = 280;
       const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
-      const c = ui.windowFrame(ctx, dx, dy, dw, dh, this.s.eulaTitle ?? '', true);
-      ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+      // ⚑ S157 / R3-41 + R3-62: the terms wear the era they bring. 2003's (Restorify) get the
+      //   E2 look — the brand's navy band and its house mark over the paper; 2016's
+      //   (GracePlatform) arrive on glass.
+      const toE3 = this.ledgerEntry.toEra === 3;
+      const toE2 = this.ledgerEntry.toEra === 2;
+      const c = toE3
+        ? aero.windowFrame(ctx, dx, dy, dw, dh, this.s.eulaTitle ?? '', true)
+        : ui.windowFrame(ctx, dx, dy, dw, dh, this.s.eulaTitle ?? '', true);
+      ui.px(ctx, c.x, c.y, c.w, c.h, toE3 ? ERA3.glass : ERA1.paper);
+      let top = c.y + 10;
+      if (toE2) {
+        // the band: Restorify's own, the house from its splash, the brand
+        ui.px(ctx, c.x, c.y, c.w, 30, ERA1.navy);
+        ui.px(ctx, c.x + 12, c.y + 8, 14, 14, ERA1.titleBlue);
+        ui.px(ctx, c.x + 15, c.y + 4, 8, 5, ERA1.titleBlue);
+        ui.px(ctx, c.x + 17, c.y + 13, 4, 5, ERA1.tooltip);
+        ui.setFont(ctx, 12);
+        ctx.fillStyle = ERA1.white;
+        ctx.fillText(this.s.eulaBrand ?? '', c.x + 34, c.y + 9);
+        top = c.y + 42;
+      }
       ui.setFont(ctx, 10);
-      ctx.fillStyle = ERA1.black;
+      ctx.fillStyle = toE3 ? ERA3.ink : ERA1.black;
       this.s.eula[this.page].forEach((line, i) => {
-        ctx.fillText(line, c.x + 14, c.y + 10 + i * 14);
+        ctx.fillText(line, c.x + 14, top + i * 14);
       });
       ui.setFont(ctx, 9);
-      ctx.fillStyle = ERA1.grey;
+      ctx.fillStyle = toE3 ? ERA3.grey : ERA1.grey;
       ctx.fillText(`${this.page + 1} / ${this.s.eula.length}`, c.x + 14, c.y + c.h - 22);
       const last = this.page === this.s.eula.length - 1;
       // one live I Agree — armed only on the last page (v0.5 §1)
-      ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.agree ?? 'I Agree', { disabled: !last });
-      ui.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 18, this.s.readOn ?? 'Read on', { disabled: last });
+      if (toE3) {
+        aero.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 20, this.s.agree ?? 'I Agree', { disabled: !last, primary: last });
+        aero.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 20, this.s.readOn ?? 'Read on', { disabled: last });
+      } else {
+        ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.agree ?? 'I Agree', { disabled: !last });
+        ui.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 18, this.s.readOn ?? 'Read on', { disabled: last });
+      }
       // only the armed one registers: one live "I Agree", on the last page (v0.5 §1)
       this.hits.push(last
         ? { x: c.x + c.w - 96, y: c.y + c.h - 26, w: 88, h: 18, id: 'eula-agree' }
