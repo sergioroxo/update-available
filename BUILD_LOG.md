@@ -1281,3 +1281,13 @@ passed. Walked: 246 presses, spine done, the Close reached — Rob's request acc
 the scrollback paged, the deferral not taken by the walker (it never defers; verified by hand:
 `update2` → Remind me later → the channel gone, the line up, the shelf breathing)
 (`WALK_2026-09-20.md`). **closes R3-26, R3-27/32, R3-28, R3-33, R3-38, R3-40, W-E1.**
+
+## 2026-09-20 — S151c · THE PRAYER, AS IN 1997
+Sérgio: no activity that costs more time — "what would be the experience of someone at the time?"
+Sit, follow the printed words, and, being sixteen, fast-forward the tape. So *Amen* is offered from
+the first chorus on (~42 s); taking it early stops the tape and files `prayer-cut`, flagged — *companion
+prayer stopped at the chorus — said early; noted* — while the full listen files `prayer-said`. Either
+ticks the step. His words: "some way of resistance to the system… and at the same time gives back
+something." Walked: 242 presses, spine done (the walker took Amen at the chorus). Register: W-L1 is his
+pick — Root Cause Digger, a second file beside `lamby_rig.exe`; I-01 the inspired person-diagram as a
+2016 correction job; I-03 his research's documented forms as content across eras. **closes I-02.**

@@ -55,7 +55,7 @@ const CONDITIONS: Record<string, Condition> = {
   // S151 — the wizard's steps (kit.ts): read · pray · connect
   kitRead: (os) => os.kit?.hasRead === true || ledger.records.includes('kit-read'),
   prayStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'pray',
-  prayerSaid: () => ledger.records.includes('prayer-said'),
+  prayerSaid: () => ledger.records.includes('prayer-said') || ledger.records.includes('prayer-cut'),
   connectStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'connect',
   kitConnecting: (os) => os.kit?.dialing === true || ledger.records.includes('went-online'),
   tapePlayed: () => ledger.records.includes('tape-played'),

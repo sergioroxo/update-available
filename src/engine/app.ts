@@ -2641,6 +2641,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     syncTapeProps();
     syncTapeAudio();
   };
+  os.onStopTape = () => {
+    if (!tapes || tapes.inserted !== 'tapeA') return;
+    tapes.eject();   // files "stopped midway" like a hand on the button would
+    syncTapeProps();
+    syncTapeAudio();
+  };
   os.tapeProbe = () => {
     const snap = tapes ? tapes.snapshot() : null;
     return snap ? { inserted: snap.inserted, playing: snap.playing, elapsed: snap.elapsed }

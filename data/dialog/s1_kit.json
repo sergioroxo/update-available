@@ -111,7 +111,9 @@
     "stopped": "The tape stopped before the end.",
     "again": "Play again",
     "ended": "The prayer is over. Say it with us.",
-    "amen": "Amen"
+    "amen": "Amen",
+    "mayStop": "The tape is playing. Say Amen when you have said it.",
+    "_doc": "2026-09-20, Sérgio: no activity that costs more time — 'what would be the experience of someone at the time?' Sit, follow the printed words, and, being sixteen, fast-forward the tape. So Amen is offered from the first chorus on; taking it early stops the tape and is filed (`prayer-cut`, flagged) — the one act of resistance the beat holds, and the record keeps it."
   },
   "connect": {
     "title": "You are not alone",

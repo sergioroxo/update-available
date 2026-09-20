@@ -281,6 +281,8 @@ export class DesktopOS {
   onKitInserted?: () => void;
   /** S151 — the Un-Walk's pray step presses play on Tape A (app.ts owns the boombox) */
   onPlayTape?: () => void;
+  /** …and Amen before the end takes it off */
+  onStopTape?: () => void;
   /** S151 — what the boombox is doing, for the prayer's words (app.ts) */
   tapeProbe?: () => { inserted: string | null; playing: boolean; elapsed: number };
   /** engine listens: mirror O3's live selections onto the rear cork/record plane */
@@ -398,6 +400,7 @@ export class DesktopOS {
     this.onKitInserted?.();
     // S151 — the programme's steps reach into the room and the desktop
     this.kit.onPlayTape = () => this.onPlayTape?.();
+    this.kit.onStopTape = () => this.onStopTape?.();
     this.kit.tapeProbe = () => this.tapeProbe?.() ?? { inserted: null, playing: false, elapsed: 0 };
     this.kit.formAvailable = () => this.formAvailable;
     this.kit.diaryAvailable = () => this.diary !== null || ledger.records.includes('enrollment-acknowledged');

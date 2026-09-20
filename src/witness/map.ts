@@ -71,7 +71,7 @@ const CONDITIONS: Record<string, Condition> = {
   kitInserted: () => has('kit-inserted'),
   // S151 — the Un-Walk's steps
   kitRead: () => has('kit-read'),
-  prayerSaid: () => has('prayer-said'),
+  prayerSaid: () => has('prayer-said') || has('prayer-cut'),
   wentOnline: () => has('went-online'),
   formDone: () => ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),

@@ -56,6 +56,10 @@ const DIAL_LINE_EVERY = 1.9;
 const PRAYER_AT = (tapesData as unknown as { tapes: { id: string; segments: { id: string; at: number }[] }[] })
   .tapes.find((t) => t.id === 'tapeA')!.segments.find((s) => s.id === 'a-prayer-01')!.at;
 const PRAYER_LEN = prayer.durationSec;
+/** the recording's second at which the first chorus has been sung — from there Amen is offered.
+ *  Sérgio (2026-09-20): a sixteen-year-old with a two-minute hymn on a cassette FAST-FORWARDED
+ *  it; the one act a person had here was to stop, and the record notices which they did. */
+const AMEN_FROM = (prayer.lines as { w: string; s: number; e: number }[][])[7].slice(-1)[0].e;
 
 /** a line cut to a width, with the era's own three dots */
 function fit(ctx: CanvasRenderingContext2D, text: string, maxW: number): string {
@@ -78,6 +82,8 @@ export class KitApp {
   onDial?: () => void;
   /** press play on the companion tape (app.ts: Tape A into the boombox) */
   onPlayTape?: () => void;
+  /** …and stop it: Amen before the end takes the tape off (app.ts: eject) */
+  onStopTape?: () => void;
   /** the fourth and fifth steps open desktop surfaces the OS owns */
   onOpenForm?: () => void;
   onOpenDiary?: () => void;
@@ -279,6 +285,8 @@ export class KitApp {
       case 'pray': {
         const p = this.prayerProbe();
         if (p.state === 'ended') return { id: 'amen', label: kit.pray.amen, disabled: false };
+        // the first chorus sung: the press is offered, and taking it early is a choice the file keeps
+        if (p.state === 'singing' && p.songT >= AMEN_FROM) return { id: 'amen', label: kit.pray.amen, disabled: false };
         if (p.state === 'idle' || p.state === 'stopped') return { id: 'play', label: p.state === 'stopped' ? kit.pray.again : kit.pray.play, disabled: false };
         return null;
       }
@@ -357,7 +365,7 @@ export class KitApp {
     // singing / ended: the words, a window of lines around the one being sung
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(p.state === 'ended' ? kit.pray.ended : kit.pray.playing, x, y + 24);
+    ctx.fillText(p.state === 'ended' ? kit.pray.ended : p.songT >= AMEN_FROM ? kit.pray.mayStop : kit.pray.playing, x, y + 24);
     const lines = prayer.lines as { w: string; s: number; e: number }[][];
     const songT = p.state === 'ended' ? PRAYER_LEN + 1 : p.songT;
     let curLine = 0;
@@ -531,11 +539,18 @@ export class KitApp {
         }
         return;
       case 'play': this.prayerStopped = false; this.onPlayTape?.(); return;
-      case 'amen':
+      case 'amen': {
+        const p = this.prayerProbe();
         this.prayerDone = true;
-        if (!ledger.records.includes('prayer-said')) ledger.records.push('prayer-said');
+        // to the end, or cut at the chorus — one line each; the early one is flagged
+        const early = p.state === 'singing';
+        if (!ledger.records.includes('prayer-said') && !ledger.records.includes('prayer-cut')) {
+          ledger.records.push(early ? 'prayer-cut' : 'prayer-said');
+        }
+        if (early) this.onStopTape?.();
         this.panel = 'steps';
         return;
+      }
       case 'connect':
         this.phase = 'setup';
         this.setupPage = 'welcome';
