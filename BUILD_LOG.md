@@ -1488,3 +1488,23 @@ ledger's `turn:` rows and their witnesses. Walked: 275 presses, spine done — t
 way in (the screensaver, the results, the site, the agent) and answered every turn before each
 step's press. **closes R3-87, R3-89/90, R3-91,
 R3-93/104, R3-94, R3-96, R3-101.** Batch B (R3-105/106, the arrival) next.
+
+## 2026-09-20 — S161 · PRIORITY 6 BATCH B: THE ENTRANCE SEEN, THE ARRIVAL SLOWER
+**R3-105** — "the glitch should appear before the disco starts so we don't miss the entrance":
+the hall used to be there from the press, behind the glass, so the cut from her room to the
+hall happened under the first label and was never seen as an event. Now the glass flickers over
+HER OWN ROOM for 2.4 s (`WORLD_IN_SECONDS`; a brief drop every 0.8 s, never clear, never the
+hall — the filter failing with nothing behind it yet) and the hall cuts in on the first full
+flash; the first label's own clock starts at the cut. **R3-106** — "restoring the session
+shouldn't be so fast: lights, people saying hi Maya": the lamps climb 0 → 9 → 17 → 25 across the
+fight (they used to reach all 41 by the third label) and the last sixteen come up in the hall,
+after the device is off; and before the MC has the floor the two beside her (commonsFigures.ts's
+pair a stride and a half either side) step in toward her seat and say hello — `ball.greeting`,
+two captions: "Hi, Maya." / "You made it. Over here, with us — they're about to shut the doors."
+— then step back as the MC begins "Doors are shut." The ball's own clock (the stutter, the
+intrusions) starts with the MC's first line, not the greeting. Captions, not voices
+(`_docVoice`); no spotlight on her (the light law); nothing of the ball's is touched. Verified
+by hand in the pane: the flicker (k 0.55 blips over the room), the cut at 2.4 s (k 0.1, the
+hall), a1–a4, off, g1/g2 with the two figures at −1.25/2.65 (from −1.7/3.1), o1 with them back
+and `ballT` at 0. Walked: 273 presses, spine done. **closes R3-105, R3-106.** Priority 6 is closed bar R3-92
+(later).

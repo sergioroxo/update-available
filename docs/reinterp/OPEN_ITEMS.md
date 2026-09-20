@@ -115,7 +115,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-94 | ~~Step 1 as the provider's intake gate; the BetterHelp case into the dossier~~ | DONE — S160 · "Second Thoughts Care · intake · required before care"; `e4_offers.json` source 4 (documentary, high), `practices.json` `care` cites it |
 | R3-96 | ~~L introduced by name on the laptop before the search~~ | DONE — S160 · the laptop's lines name L and say it is restoring six tabs |
 | R3-101 | ~~"L needs access to your messages" → allow → threads → this one~~ | DONE — S160 · Allow / Just this once → Junie · Mum · Flat 3B (Junie's the press) → the thread → Confirm |
-| R3-105 / 106 | The first flash before the world; a slower arrival with lights and a greeting | OPEN — batch B, next |
+| R3-105 / 106 | ~~The first flash before the world; a slower arrival with lights and a greeting~~ | DONE — S161 · the glass flickers over her room 2.4 s, the hall cuts in on the first full flash; lamps 0→9→17→25 in the fight, 41 in the hall; the two beside her step in: "Hi, Maya." / "You made it…" before the MC |
 | R3-92 | FloppySheep on the 2026 home screen | LATER |
 
 ## Priority 7 — the frame and the front door
@@ -169,6 +169,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
+- S161 (2026-09-20): R3-105, R3-106 — Priority 6 batch B (the entrance seen, the arrival slower); walked, 273 presses, spine done.
 - S160 (2026-09-20): R3-87, R3-89/90, R3-91, R3-93/104, R3-94, R3-96, R3-101 — Priority 6 batch A (the way in + the turn); walked, 275 presses, spine done.
 - S159 (2026-09-20): R3-20, W-G2, C-03, C-04 — his six answers, the quick four; R3-02/R3-110 sent to him to hear; W-E2 (a), R3-61, C-01, C-02, F-01 registered with his rulings.
 - S158 (2026-09-20): R3-66, R3-70, R3-71, R3-74, R3-78, R3-82 — Priority 5; walked, 262 presses, spine done (all four stories met).

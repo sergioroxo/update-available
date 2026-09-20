@@ -51,11 +51,19 @@ function makeRng(seed: number): () => number {
   };
 }
 
-interface Figure { x: number; z: number; h: number; w: number; phase: number; body: pc.Color; onStage: boolean }
+interface Figure { x: number; z: number; h: number; w: number; phase: number; body: pc.Color; onStage: boolean; beside?: boolean }
 
 let hook: ((on: boolean) => void) | null = null;
 /** the crowd is present, or it is not. It rises over RISE_SECONDS. */
 export function setCommonsFigures(on: boolean): void { hook?.(on); }
+let greetHook: ((on: boolean) => void) | null = null;
+/** ⚑ S161 / R3-106 — the two beside her turn to her: they lean in a step and
+ *  their sway lifts, for as long as the greeting is on the glass. Faceless
+ *  bodies cannot look, so the gesture is the whole of it — and it is only
+ *  ever these two, never the crowd, never the stage. */
+export function greetCommonsFigures(on: boolean): void { greetHook?.(on); }
+const GREET_SECONDS = 1.4;
+const GREET_STEP = 0.45;
 
 export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { update(dt: number): void } {
   const rng = makeRng(20260912);
@@ -72,7 +80,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   for (const [x, z] of [[4.9, -1.7], [4.8, 3.1]] as const) {
     figures.push({
       x, z, h: 1.55 + rng() * 0.25, w: 0.26 + rng() * 0.08, phase: rng() * 6.28,
-      body: cloth[1 + Math.floor(rng() * (cloth.length - 1))], onStage: false
+      body: cloth[1 + Math.floor(rng() * (cloth.length - 1))], onStage: false, beside: true
     });
   }
   // the rest between her and the stage, and a few behind her, uneven on purpose.
@@ -127,9 +135,15 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       if (sunk) { box(f.x, SUNK_Y, f.z, 0.1, 0.1, 0.1); box(f.x, SUNK_Y, f.z, 0.1, 0.1, 0.1); return; }
       // rising from the floor, then a sway
       const rise = (k - 1) * (f.h + 0.4);
-      const bob = 0.02 * Math.sin(t * 1.9 + f.phase);
-      const lean = 0.025 * Math.sin(t * 0.8 + f.phase * 1.7);
+      let bob = 0.02 * Math.sin(t * 1.9 + f.phase);
+      let lean = 0.025 * Math.sin(t * 0.8 + f.phase * 1.7);
       let x = f.x, z = f.z;
+      if (f.beside && greetK > 0) {
+        // the greeting's gesture: a step toward her seat, a lean, the sway lifted
+        z += Math.sign(SEAT.z - f.z) * GREET_STEP * greetK;
+        lean += Math.sign(SEAT.x - f.x) * 0.06 * greetK;
+        bob += 0.035 * greetK * Math.max(0, Math.sin(t * 2.6 + f.phase));
+      }
       if (f.onStage) {
         // the one with the floor: a slow walk along the stage and back
         x = STAGE.x - 0.3 + Math.cos(t * 0.17) * 0.3;
@@ -173,13 +187,17 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   let want = false;
   let k = 0;
   let acc = 0;
+  let greetWant = false;
+  let greetK = 0;
   hook = (on) => { want = on; if (on) ent.enabled = true; };
+  greetHook = (on) => { greetWant = on; };
   return {
     update(dt: number): void {
       if (!ent.enabled) return;
       t += dt;
       const before = k;
       k = want ? Math.min(1, k + dt / RISE_SECONDS) : Math.max(0, k - dt / RISE_SECONDS);
+      greetK = greetWant ? Math.min(1, greetK + dt / GREET_SECONDS) : Math.max(0, greetK - dt / GREET_SECONDS);
       acc += dt;
       if (acc < 1 / REBUILD_HZ && k === before) return;
       acc = 0;

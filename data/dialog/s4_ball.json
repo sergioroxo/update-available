@@ -30,14 +30,14 @@
     "object": "RISK",
     "text": "SOCIAL CONTAGION · HIGH · restoring your environment…",
     "hold": 4.8,
-    "lamps": 41
+    "lamps": 17
    },
    {
     "id": "a4",
     "object": "CATEGORY",
     "text": "NO CATEGORY FOUND",
     "hold": 6.0,
-    "lamps": 41
+    "lamps": 25
    }
   ],
   "_docStruggle": "⚑ 2026-09-13 — THE STRUGGLE. Sérgio: 'we can have it corrupted, with some difficulty getting to see the Commons appearing… the amount of Pride and religious love from TransJesus breaks through.' The hall is switched on the moment the link is pressed, BEHIND the agent's environment; the labels are the system fighting it (blocking the sender, naming the risk in its own vocabulary), the glass clears in flashes that get longer, and the stream's words and hearts bleed onto the glass label by label until the room wins. environmentK is the fight's score."
@@ -71,6 +71,21 @@
  "ball": {
   "_beat": "⚑ THE ROOM. No screen, no stage, no new geometry: sound and light in a building that has been standing since 1997 and had its walls taken down in 2016. The player's only action is to look, and everyone else is looking too, at one person, on purpose (deep pass §1.3). `at` is the light's position along the stations in src/room/cluster.ts — 1 is the far west end and 4 is the nearest the light ever comes; it never lands on the player, who is nobody's customer here. `flare` is the room answering.",
   "_beatMC": "⚑ FUNCTION, NOT COSTUME. The MC announces, categorises and celebrates, in plain English, with no borrowed idiom whatsoever — and the politics of it are the era's whole inversion: L narrates you privately and the naming becomes a record; the MC announces you publicly and the naming becomes a welcome (deep pass §1.2). Two scenes, one verb, opposite outcomes, and nothing anywhere says so.",
+  "greeting": {
+   "_beat": "⚑ S161 / R3-106 — THE ARRIVAL IS SLOWER, AND SHE IS GREETED. Sérgio (round 3): 'restoring the session shouldn't be so fast: lights, people saying hi Maya'. So: the device comes off into a hall that is still filling — the last of the lamps come up now, not during the fight — and the two beside her (commonsFigures.ts, the pair a stride and a half either side) lean in and say hello BEFORE the MC has the floor. Captions, not voices (`_docVoice`); nobody's face; no `at` — the attention light never lands on her, and these two are not a spotlight either. The ball's clock (stutter, intrusions) starts after the greeting, with o1.",
+   "lines": [
+    {
+     "id": "g1",
+     "text": "Hi, Maya.",
+     "hold": 3.2
+    },
+    {
+     "id": "g2",
+     "text": "You made it. Over here, with us — they're about to shut the doors.",
+     "hold": 4.6
+    }
+   ]
+  },
   "opening": {
    "lines": [
     {

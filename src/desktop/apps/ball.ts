@@ -98,13 +98,29 @@ import {
 import { px, setFont, wrapText } from '../theme/chrome';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
 import { setCommonsLamps } from '../../room/commonsLamps';
-import { setCommonsFigures } from '../../room/commonsFigures';
+import { setCommonsFigures, greetCommonsFigures } from '../../room/commonsFigures';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_ball.json';
 
 /** how long the machine's last failure sits on screen before the device comes
  *  off. Long enough to be read, short enough not to be a pause for effect. */
 const OFF_SECONDS = 2.6;
+/** ⚑ S161 / R3-105 — THE FIRST FLASH COMES BEFORE THE WORLD. Sérgio (round 3):
+ *  "the glitch should appear before the disco starts so we don't miss the
+ *  entrance." The hall used to be there from the press, behind the glass, so
+ *  the cut from her room to the hall happened under the first label and was
+ *  never seen as an event. Now the glass flickers over HER OWN ROOM for this
+ *  long — the filter failing with nothing behind it yet — and the hall cuts in
+ *  on the first full flash. */
+const WORLD_IN_SECONDS = 2.4;
+/** the flicker before the world: the glass drops to this every FLICKER_EVERY s, briefly */
+const FLICKER_EVERY = 0.8;
+const FLICKER_OPEN = 0.12;
+const FLICKER_K = 0.55;
+/** ⚑ S161 / R3-106 — the last of the lamps come up in the hall, after the device
+ *  is off, over the greeting — not during the fight (the labels now climb to
+ *  25; `commonsLamps.ts` holds 41). */
+const LAMP_FULL = 41;
 /** the room is already warming while the machine is still working at it — the
  *  player sees it around the edges of a picture that does not move. */
 const ARRIVAL_LEVEL = 0.28;
@@ -140,6 +156,8 @@ const STUTTER = script.stutter.labels as unknown as BLabel[];
 /** opening → the four categories → the closing, flattened once at module load:
  *  the ball is one continuous run of lines and the category boundaries are a
  *  fact about the writing, not a state machine. */
+/** ⚑ S161 / R3-106 — the two beside her, before the MC (`ball.greeting`) */
+const GREETING: BLine[] = script.ball.greeting.lines as unknown as BLine[];
 const BALL_LINES: BLine[] = [
   ...(script.ball.opening.lines as unknown as BLine[]),
   ...(script.ball.categories as unknown as { lines: BLine[] }[]).flatMap((c) => c.lines),
@@ -164,6 +182,10 @@ export class E4Ball {
 
   private phase: Phase = 'idle';
   private t = 0;
+  /** R3-105: the hall has cut in behind the glass (WORLD_IN_SECONDS into the arrival) */
+  private worldIn = false;
+  /** R3-106: the greeting's lines are on the glass; the ball's clock waits */
+  private greeting = false;
   /** seconds since the ball's first line — the stutter schedule's clock */
   private ballT = 0;
   private queue: BLine[] = [];
@@ -183,6 +205,11 @@ export class E4Ball {
    *  hers. The session does not end — it is seen through. */
   get environmentK(): number {
     if (this.phase === 'idle' || this.phase === 'invited') return 1;
+    if (this.phase === 'arrival' && !this.worldIn) {
+      // R3-105: the flicker over her own room — never clear, never the hall
+      const ph = (this.t % FLICKER_EVERY) / FLICKER_EVERY;
+      return ph < FLICKER_OPEN ? FLICKER_K : 1;
+    }
     if (this.phase === 'arrival') {
       /**
        * ⚑ THE FIGHT'S SCORE (2026-09-13, `arrival._docStruggle`). The base falls
@@ -269,10 +296,14 @@ export class E4Ball {
     this.labels = [...ARRIVAL];
     playOnce('ui_press.mp3');
     this.nextLabel();
-    // ⚑ 2026-09-13: the hall is THERE from the press — behind the agent's
-    //   environment, seen through it in flashes as the filter fights (see
-    //   `environmentK`). It used to arrive only when the device came off.
-    setCommonsWorld(true);
+    // ⚑ 2026-09-13: the hall is there behind the agent's environment, seen
+    //   through it in flashes as the filter fights (see `environmentK`). It
+    //   used to arrive only when the device came off — ⚑ and since S161 it
+    //   cuts in WORLD_IN_SECONDS after the press, on the first full flash, so
+    //   the entrance is seen (R3-105; `update`).
+    this.worldIn = false;
+    this.greeting = false;
+    this.t = 0;   // the arrival's clock starts at the press, not at the card
     // the room begins to warm behind the picture, low, while the machine works
     this.light(ARRIVAL_LEVEL, 1, 0);
     /**
@@ -307,6 +338,14 @@ export class E4Ball {
 
     if (this.phase === 'invited') return;   // waiting on her, indefinitely
     if (this.phase === 'arrival') {
+      if (!this.worldIn && this.t >= WORLD_IN_SECONDS) {
+        // R3-105: the cut — the hall arrives on the first full flash; the
+        // first label's own clock starts here so its flashes count from the cut
+        this.worldIn = true;
+        this.labelT = 0;
+        setCommonsWorld(true);
+        this.version++;
+      }
       const b4 = this.labelT;
       this.labelT += dt;
       if (Math.floor(b4 * 10) !== Math.floor(this.labelT * 10)) this.version++;   // the flashes are drawn, so they are uploaded
@@ -334,12 +373,23 @@ export class E4Ball {
         // ⚑ THE WALL COMES DOWN with the device. The same recording, unfiltered:
         //   she is not hearing it from somewhere else any more.
         roomBed.set(script.room.landing, 2.5);
-        this.queue = [...BALL_LINES];
+        // ⚑ S161 / R3-106 — THE ARRIVAL: the last of the lamps come up now, in
+        //   the hall, and the two beside her say hello before the MC has the
+        //   floor. The ball's own clock (stutter, intrusions) waits for o1.
+        this.crowd(LAMP_FULL);
+        this.greeting = true;
+        greetCommonsFigures(true);
+        this.queue = [...GREETING, ...BALL_LINES];
         this.nextLine();
       }
       return;
     }
 
+    if (this.greeting) {
+      // the greeting runs on the line clock alone; nothing of the ball's is counting yet
+      this.lineClock(dt);
+      return;
+    }
     this.ballT += dt;
     this.landingK = Math.max(0, this.landingK - dt / 2.4);
     this.stutterClock(dt);
@@ -388,6 +438,12 @@ export class E4Ball {
   private nextLine(): void {
     this.lineSeq++;
     this.cur = this.queue.shift() ?? null;
+    if (this.greeting && this.cur && !GREETING.includes(this.cur)) {
+      // the MC has the floor: the greeting is over, the two step back, the ball's clock starts
+      this.greeting = false;
+      greetCommonsFigures(false);
+      this.ballT = 0;
+    }
     if (this.cur?.flare) this.landingK = 1;
     this.lineAt = this.ballT;
     this.lineT = 0;
@@ -524,7 +580,7 @@ export class E4Ball {
   /** every lamp goes out — the era is over, not the community */
   clearLamps(): void { setCommonsLamps(0); setCommonsFigures(false); }
   /** the device has stopped: the hall goes and the room she was in comes back */
-  leaveWorld(): void { setCommonsWorld(false); this.clearLamps(); }
+  leaveWorld(): void { setCommonsWorld(false); this.clearLamps(); greetCommonsFigures(false); this.greeting = false; }
 
   /**
    * The press. With coordinates and the invitation up, it is the chip or
