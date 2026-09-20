@@ -21,6 +21,11 @@ const AUDIO_BASE = 'assets/audio/';
 /** Real bundled files, by the exact name a segment's `audio` field may use.
  *  Add a line here (and drop the file in public/assets/audio/) whenever a
  *  real recording lands — nothing else needs to change. */
+/** S159 / W-G2 (his call: name every sound, always) — the frame listens: every clip that starts
+ *  is announced by name, and app.ts turns the name into a caption in the strip. */
+let onCue: ((name: string) => void) | null = null;
+export function setCueListener(fn: ((name: string) => void) | null): void { onCue = fn; }
+
 const REGISTRY: Record<string, string> = {
   'tape-hiss.mp3': `${AUDIO_BASE}tape-hiss.mp3`,
   // R28-2b-ii (Session 32): Sérgio's real tape-side recordings, degraded via
@@ -468,6 +473,7 @@ class RoomBed {
       return;
     }
     this.name = name;
+    if (name) onCue?.(name);
     this.fadeSeconds = Math.max(0.01, crossfadeSeconds);
     this.fade = this.fadeSeconds;
     // whatever was live becomes the dying one; the incoming takes the other slot
@@ -545,6 +551,7 @@ export const roomBed = new RoomBed();
  */
 export function playOnce(name: string | null | undefined): HTMLAudioElement | null {
   if (!isAudioAvailable(name)) return null;
+  onCue?.(name as string);
   const audio = new Audio(REGISTRY[name as string]);
   audio.muted = oneShotsMuted;
   liveOneShots.add(audio);

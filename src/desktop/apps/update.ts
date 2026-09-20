@@ -688,7 +688,7 @@ export class UpdateApp {
 
     if (this.phase === 'eula' && this.s.eula) {
       if (id === 'eula-readon') {
-        playOnce('key_1997.mp3');   // S141: a page turned — the speaker's click, in every era (it is the machine's)
+        // (S159: the speaker's click on a page turn is gone — Sérgio: "the keyboard sound, just remove it")
         this.page += 1;
         this.ledgerEntry.eulaScrollPct = Math.round(((this.page + 1) / this.s.eula.length) * 100);
         this.dirty = true;

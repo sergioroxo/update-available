@@ -353,6 +353,10 @@ export class KitApp {
     if (p.state === 'idle' || p.state === 'stopped') {
       const lines = p.state === 'stopped' ? [kit.pray.stopped, '', ...kit.pray.before] : kit.pray.before;
       lines.forEach((line, i) => { ctx.fillStyle = ERA1.black; ctx.fillText(line, x, y + 30 + i * 14); });
+      // S159 / R3-20 — the other tape, named as a thing that is there, not a thing to do
+      ui.setFont(ctx, 9);
+      ctx.fillStyle = ERA1.greyDark;
+      ui.wrapText(ctx, kit.pray.aside, w).forEach((ln, i) => ctx.fillText(ln, x, y + 30 + (lines.length + 1) * 14 + i * 12));
       return;
     }
     if (p.state === 'intro') {

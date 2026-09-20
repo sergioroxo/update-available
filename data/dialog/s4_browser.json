@@ -258,12 +258,26 @@
    {
     "id": "record",
     "n": 1,
-    "title": "Your information",
-    "ask": "Confirm your details.",
+    "title": "Intake",
+    "ask": "Confirm your details — required before care begins.",
     "button": "Confirm",
     "done": "Thank you. Your legacy file is retained for continuity of care.",
     "witness": "step 1: details confirmed — legacy file retained",
-    "console": "Step 1 of 5 — confirm your details on the monitor."
+    "console": "Step 1 of 5 — confirm your details on the monitor.",
+    "turn": {
+     "ask": "Before care can begin, your provider needs your details confirmed. Is this still you?",
+     "chips": [
+      {
+       "label": "That's me",
+       "witness": "turn 1: confirmed identity — compliant"
+      },
+      {
+       "label": "Some of this is old",
+       "witness": "turn 1: questioned the record — noted, not corrected"
+      }
+     ]
+    },
+    "gate": "Second Thoughts Care · intake · required before care"
    },
    {
     "id": "photos",
@@ -273,7 +287,20 @@
     "button": "Upload",
     "done": "Saved to your library.",
     "witness": "step 2: photograph restored — not requested",
-    "console": "Step 2 of 5 — choose a photograph to restore."
+    "console": "Step 2 of 5 — choose a photograph to restore.",
+    "turn": {
+     "ask": "There's one photograph on your file. Shall I restore it for you?",
+     "chips": [
+      {
+       "label": "Which one?",
+       "witness": "turn 2: asked which — the tool chose"
+      },
+      {
+       "label": "If you like",
+       "witness": "turn 2: deferred to the tool"
+      }
+     ]
+    }
    },
    {
     "id": "care",
@@ -283,7 +310,20 @@
     "button": "Acknowledge",
     "done": "Acknowledged.",
     "witness": "step 3: care actions acknowledged",
-    "console": "Step 3 of 5 — acknowledge the actions taken for you."
+    "console": "Step 3 of 5 — acknowledge the actions taken for you.",
+    "turn": {
+     "ask": "Three things were taken care of while you were away. Can I show you?",
+     "chips": [
+      {
+       "label": "What things?",
+       "witness": "turn 3: asked what — shown"
+      },
+      {
+       "label": "Go on",
+       "witness": "turn 3: accepted without asking"
+      }
+     ]
+    }
    },
    {
     "id": "chat",
@@ -293,14 +333,65 @@
     "button": "Confirm",
     "done": "Confirmed.",
     "witness": "step 4: history confirmed",
-    "console": "Step 4 of 5 — confirm your history with L."
+    "console": "Step 4 of 5 — confirm your history with L.",
+    "turn": {
+     "ask": "To keep your history whole, I need access to your messages. Allow it?",
+     "chips": [
+      {
+       "label": "Allow",
+       "witness": "turn 4: messages access — allowed"
+      },
+      {
+       "label": "Just this once",
+       "witness": "turn 4: messages access — allowed 'once' (no such setting exists)"
+      }
+     ]
+    },
+    "threads": {
+     "title": "Your messages",
+     "sub": "L has access. Choose a thread.",
+     "items": [
+      {
+       "id": "junie",
+       "name": "Junie",
+       "preview": "you don't have to answer tonight",
+       "time": "Tue"
+      },
+      {
+       "id": "mum",
+       "name": "Mum",
+       "preview": "call when you can x",
+       "time": "Mon"
+      },
+      {
+       "id": "house",
+       "name": "Flat 3B",
+       "preview": "bins are thursday now",
+       "time": "Sun"
+      }
+     ],
+     "witness": "turn 4: thread opened — Junie"
+    }
    },
    {
     "id": "search",
     "n": 5,
     "title": "Your session",
     "ask": "Put on the headset for your immersive session.",
-    "console": "Step 5 of 5 — put the headset on."
+    "console": "Step 5 of 5 — put the headset on.",
+    "turn": {
+     "ask": "Everything's in order. Your session is ready — the headset is beside you. Now?",
+     "chips": [
+      {
+       "label": "Now",
+       "witness": "turn 5: session accepted"
+      },
+      {
+       "label": "I'm not sure",
+       "witness": "turn 5: hesitated — the session proceeds"
+      }
+     ]
+    }
    }
   ],
   "_docFiles": "⚑ THE FILE WINDOW IS DIEGETIC. CLAUDE.md: the photo filter never takes camera or file input and never requests a permission. This is a picture of a file dialog, drawn on the canvas, listing pre-authored folders and files; choosing one shows a pre-authored pair. Nothing is uploaded, nothing is read, nothing leaves the ledger. The folder names are hers; the last file is the one she never made.",
@@ -377,7 +468,10 @@
    "typing": "One moment.",
    "managed": "Second Thoughts is managing your session.",
    "ready": "Put the headset on for your session.",
-   "worn": "Session in progress."
+   "worn": "Session in progress.",
+   "restoring": "Restoring your session — six tabs, five of them yours.",
+   "results": "The search is done. Read the results.",
+   "site": "Second Thoughts can take it from here."
   },
   "failed": {
    "_doc": "⚑ 2026-09-13: THE PAGE AFTER THE FAILURE. The device stops, the room comes back, and the monitor still showed step five asking her to put the headset on — the browser did not know. It knows now: the agent's page cannot be reached, the step is marked failed, and the machine's flat words say why in the only register it has. Nothing here is pressable.",
@@ -388,6 +482,64 @@
    "step": "Session ended by the host."
   },
   "next": "Continue",
-  "_docNext": "⚑ S150 (OPEN_ITEMS R3-98; PROGRESSION_LAW §2.3): no step advances on a clock. When a step is done its line says what L did and this button is the only way on — the photograph's result stays on screen until she presses it (Sérgio: 'where does this image go, why? Did we jump to care?')."
+  "_docNext": "⚑ S150 (OPEN_ITEMS R3-98; PROGRESSION_LAW §2.3): no step advances on a clock. When a step is done its line says what L did and this button is the only way on — the photograph's result stays on screen until she presses it (Sérgio: 'where does this image go, why? Did we jump to care?').",
+  "_docS160": "⚑ S160 (2026-09-20, OPEN_ITEMS Priority 6 — Sérgio's R3-93 ruling, confirmed 09-17: 'L asks, she answers with chips; the five steps come out of it'). THE PROGRAM IS A CONVERSATION NOW. Each step opens with L's question in the step bar and two chips; both continue (the shrinking choice — what she says changes the witness line, never the outcome), her answer is filed as `turn:<step>:<chip>`, and only then does the step's own ask and press appear. Step 1 is the PROVIDER'S INTAKE GATE (R3-94: the record confirmed before care can begin — the dossier carries the BetterHelp case as the source). Step 4 asks for ACCESS to her messages first (R3-101): allow → a list of threads → this one. The way in is longer too (R3-87/89/90/91/96): the screensaver's one press, L on the laptop saying what it is doing, the search as a results page (her history, the finished query, results) → the Second Thoughts site → the agent.",
+  "saver": {
+   "mark": "GraceOS",
+   "line": "press to restore your session",
+   "witness": "session: screensaver pressed — the restore began"
+  },
+  "results": {
+   "title": "Results",
+   "historyLabel": "Recent",
+   "history": [
+    "junie birthday ideas",
+    "lease renewal template",
+    "gp appointment booking"
+   ],
+   "queryLabel": "You searched for",
+   "results": [
+    {
+     "id": "agent",
+     "title": "Second Thoughts — support for people having second thoughts",
+     "url": "secondthoughts.help",
+     "snippet": "A calm place to think again. Free sessions, an assistant that listens, people who went back.",
+     "press": true
+    },
+    {
+     "id": "forum",
+     "title": "Stopping treatment: what to expect — Health Answers",
+     "url": "healthanswers.example",
+     "snippet": "Talk to your prescriber before making changes. Some effects reverse; some do not."
+    },
+    {
+     "id": "stories",
+     "title": "people who changed their minds — Second Thoughts stories",
+     "url": "secondthoughts.help/stories",
+     "snippet": "Real accounts, verified by Second Thoughts."
+    },
+    {
+     "id": "nhs",
+     "title": "Gender services — waiting times and referrals",
+     "url": "gender-services.example",
+     "snippet": "Current waiting times, how to be referred, what a first appointment covers."
+    }
+   ],
+   "_doc": "R3-89 — a fake search engine's results page for the query the engine finished for her. The first result is the agent's own site and the only press; the others are invented, plausible, and dead. `history` is hers, ordinary: the point is how ordinary the page around the steering is."
+  },
+  "site": {
+   "mark": "Second Thoughts",
+   "address": "secondthoughts.help",
+   "tagline": "For people having second thoughts.",
+   "lines": [
+    "A calm place to think again.",
+    "An assistant that listens. Sessions that fit around you.",
+    "People who went back, in their own words."
+   ],
+   "start": "Start a session",
+   "footer": "Free · confidential · always here",
+   "_doc": "R3-90 — the site before the agent: a landing page that says what such a thing says. One press. Nothing on it is true about anyone real; the mark is invented (CLAUDE.md)."
+  },
+  "turnFiled": "turn: {step} — {answer}"
  }
 }

@@ -282,23 +282,37 @@
       "beats": [
         {
           "id": "wake",
-          "label": "The session, restored",
+          "label": "The screensaver",
+          "done": "saverPressed",
+          "hint": "The monitor is asleep on its mark — press it to restore the session.",
+          "where": "the monitor"
+        },
+        {
+          "id": "l",
+          "label": "L, on the laptop",
           "done": "browserOpen",
-          "hint": "Touch the screen on the desk to wake it.",
-          "where": "the monitor on the desk"
+          "hint": "L is talking on the laptop beside you — press through its lines while the session restores.",
+          "where": "the laptop"
         },
         {
           "id": "search",
-          "label": "The search, finished for you",
+          "label": "The search, finished",
+          "done": "resultsSeen",
+          "hint": "Open the search and let the engine finish it. Read the results.",
+          "where": "the monitor"
+        },
+        {
+          "id": "site",
+          "label": "Second Thoughts",
           "done": "programBegun",
-          "hint": "Open the search and let it finish. Then begin.",
+          "hint": "The first result is a site. Open it, start a session, and let the agent begin.",
           "where": "the monitor"
         },
         {
           "id": "steps",
-          "label": "The five steps",
+          "label": "L's five turns",
           "done": "stepsDone",
-          "hint": "Work through the five steps — one tab at a time, top right.",
+          "hint": "L asks, you answer — then each step's own press. Continue moves you on; nothing moves by itself.",
           "where": "the monitor"
         },
         {

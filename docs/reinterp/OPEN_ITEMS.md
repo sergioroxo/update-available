@@ -45,7 +45,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-13 | ~~The Family Form appears only after Rob's "I spoke with your mother"~~ | DONE — S151 · `rob-spoke-mother` filed by Rob's turn; the icon, the wizard's step 4 and the guide line read it; walked (step:form after the line) |
 | R3-16 | ~~The kit looks like a booklet; the guide stops saying "enclosed booklet"~~ | DONE — S151 · the wizard look (R3-15) supersedes the booklet; "read the programme." |
 | R3-17 / 53 | ~~A programme loop (MIDI-hymn register) while the kit is open~~; the same loop as a file in 2003 | R3-17 DONE — S151 · `unwalk_loop_1997.mp3` (tools/make_hymn.py), yields to the tape and the menu · R3-53 OPEN (Priority 4) |
-| R3-20 | The tape's radio voice comes from a press and says what it is for | OPEN |
+| R3-20 | ~~The tape's radio voice comes from a press and says what it is for~~ | DONE — S159 · his call: the wizard names it as an option — one line on the pray page: "the second tape on the shelf is the fellowship's radio hour — not a step; there if you want it" |
 | R3-21 / 22 | ~~The prayer's words on screen from the Whisper transcript, timed; follow along, press at the end (W: 08-21 §G)~~ | DONE — S151 · `s1_prayer.json` from his Whisper transcript, 147/147 words; highlighted as sung; Amen at the end; tour frame 12 |
 | R3-26 | ~~Channel exchanges before the DM; the DM as a request to accept~~ | DONE — S151b · "MentorRob would like to send you a private message" — Accept (Ignore dead); the DM opens on the press; walked (dm-accept at 147) |
 | R3-27 / 32 | ~~The intake panel explains itself; practice title beside each row (W: 08-21 §J)~~ | DONE — S151b · the wall: "A file kept on you…" + the practice's title beside each entry; the menu's Your file as wide as the map; seen from the flip |
@@ -55,12 +55,12 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-24 | ~~Dial-up on the black screen with a connection panel — his references FOUND: `References images/to enter online.png` (Internet Setup Wizard) and `for IRC connection.png` (Make New Connection) (W: 08-21 §H)~~ | DONE — S151 · the Internet Setup Wizard on black: Welcome · Make New Connection · Connect To; the dial-up plays as it opens; tour frames 15–17 |
 | W-E1 | ~~The floppy / the tapes glow so they can be found (08-21 §E)~~ | DONE — S151b · the disk, the tapes and the player breathe while their line is up (with R3-38) |
 | W-L1 | ~~**Lamby's 1997 app**: today the rig file is "like a tamagotchi"; his design `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` (Root Cause Digger, Purity Maze, Straight & Narrow Crossing…) was never referenced in the repo — pick one for 1997 and build it as the kit's game — ⚑ HIS PICK (2026-09-20): **Dig Dug → "Root Cause Digger"**~~ | DONE — S153 · ROOTCAUSE.EXE beside lamby_rig.exe: press-only, turn-based Dig Dug, the diagnoses, the burst, the glitch, the Authentic Memory flag; ○ on the map, one soft line; played to both endings by hand, walked (264, the walker dug) |
-| W-E2 | Windows minimise, not just X (08-21 §E) | PARTIAL — S151 · the Un-Walk wizard minimises (Cancel → its taskbar button; the A:\ icon brings it back); the channel, the packet and the diary still only close |
+| W-E2 | Windows minimise, not just X (08-21 §E) | OPEN · his call 2026-09-20: (a) ALL 1997/2003 windows get a taskbar button and a minimise box, period-true — build next (after Priority 6) |
 
 ## Priority 3 — sound redo, one pass with his ear
 | id | item | status |
 |---|---|---|
-| R3-02 | A score for the descent | BUILT — S155 · `descent_score` (a pad falling an octave, 40 s from Log in) — ⚑ HIS TO HEAR |
+| R3-02 | ~~A score for the descent~~ | DONE — S155 · `descent_score` — his 2026-09-20: "I don't mind the descent score" |
 | R3-08 | ~~`ui_press` soft click~~ | DONE — S155 · 14 ms filtered noise, ours; Freesound #619835 retired |
 | R3-14 | ~~Floppy drive sound~~ | DONE — S155 · a drive: motor, two head seeks, 3.4 s, lower |
 | R3-25 | ~~IRC tick: soft, only his lines + the DM~~ | DONE — S155 · one soft tick; only his lines and the request |
@@ -73,9 +73,9 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-88 | ~~`type_2026` soft~~ | DONE — S155 · sparser, softer, not per character |
 | R3-97 | ~~Drop `restore_2026`~~ | DONE — S149 · dropped |
 | R3-102 | ~~The session's recording introduced, hiss cue reconsidered~~ | DONE — S155 · "Now playing: a recorded conversation, 11 min…" before the sentences; the hiss at half; the card still on the dash |
-| R3-110 | A Close score | BUILT — S155 · `close_score` (the four beds resolving into one chord) in place of the sky bed — ⚑ HIS TO HEAR |
+| R3-110 | A Close score | BUILT — S155 · `close_score` — sent to him S159 to hear; the Close's other notes are C-01…C-03 |
 | W-G1 | ~~Lamby needs a sound ("how Clippy sounded") (08-21 §G)~~ | DONE — S155 · `lamby_pop` on his appear |
-| W-G2 | Captions everywhere (08-21 §G) | OPEN · inventory (S155): captioned today — the tapes (the strip), L's lines (on screen), Lambient/Lamby (on screen), the session's recording (on screen); NOT captioned — the one-shots (dings, ticks, the dial-up, the boots), Caleb's song, the hymn loop, the two scores. A caption law for the one-shots is a design call: a strip line per cue would name every press |
+| W-G2 | ~~Captions everywhere (08-21 §G)~~ | DONE — S159 · his call (b): every sound is named in the strip for 1.8 s (`data/strings/captions.json`, `setCueListener`); the tapes' words first, then a cue, then the sentence line. His second half — "in the startup panel include the option on how we'd want to navigate" — is F-01 under Priority 7 |
 
 ## Priority 4 — the flight and Era 2
 | id | item | status |
@@ -83,7 +83,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-46 / 86 | ~~Rise → hold → morph in view → descend~~ | DONE — S156 · rise to a high overlook looking down (−40°), hold over the room at −45° while it ages, 8 s descent; comfort law kept; seen by hand; walked 259 |
 | R3-44 | ~~2003 dressing pass; room-audit findings closed (W: 08-21 §B)~~ | DONE — S157 · the posters, the curtains, the lamp, the desk clutter, the machine (R3-45); the audit's r2 findings closed (0) |
 | R3-45 | ~~The computer changes: beige+CRT → black+LCD~~ | DONE — S156 · the 2003 fold retires the beige CRT/tower/keyboard and adds a black flat panel on a stem, a black tower, a black keyboard (box-built behind the same screen plane); r4 removes them |
-| R3-48 | E2 boot: black → POST → shorter splash → OS | DONE bar the bar — S156 · black → POST + drive → splash (jingle at half) → crawl → black → "finishing installation…"; the loading bar's length is hung on his own track's phrases (S2R.0b) — shortening it is his call |
+| R3-48 | E2 boot: black → POST → shorter splash → OS | HIS CALL PENDING — S159 sent him the five frames (post · house · bar · end · crawl) and the two sounds; the bar's length waits on his answer |
 | R3-50 | ~~Program-start splash for 2003 apps~~ | DONE — S157 · a loading box before every 2003 program |
 | R3-51 | ~~Messenger: faster; the 2003 IM look~~ | DONE — S157 · the 2003 IM look (mark, toolbar, contact list); gaps tightened |
 | R3-52 / 75 | ~~A media player: Caleb's song as an attachment; Noa's cut plays~~ | DONE — S157 · the rip as an attachment → a Media Player; the Story cut plays (playhead, her sentences lit; no voice) |
@@ -91,7 +91,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-60 | ~~Deferral copy: "being removed"~~ | DONE — S156 · u3 deferred: "Restorify is being removed. Take what you are taking…" |
 | R3-62 | ~~The 2003→2016 notice gets the E3 look~~ | DONE — S157 · the 2003→2016 notice and terms on 2016's glass |
 | R3-41 | ~~The 2003 EULA gets the E2 look~~ | DONE — S157 · Restorify's band and house mark over the 2003 terms |
-| R3-61 | Anything to do after the residue? | DESIGN · his |
+| R3-61 | Anything to do after the residue? | DESIGN → OPEN — his call 2026-09-20: "didn't we make Caleb the breaking point? then it should be in him" — the Service Transition notice rises out of the residue's own dark (the Messenger), not from a cleared desktop; build next (after Priority 6) |
 
 ## Priority 5 — Era 3's devices
 | id | item | status |
@@ -108,19 +108,20 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 ## Priority 6 — Era 4's program as a conversation with L
 | id | item | status |
 |---|---|---|
-| R3-93 / 104 | L asks, she answers (chips); the five steps come out of it and build to the session | DESIGN (major) |
-| R3-87 | The wake as a screensaver with one press | OPEN |
-| R3-89 / 90 | The search tab as a results page → the Second Thoughts site → the agent | OPEN |
-| R3-91 | The laptop says what it is doing | OPEN |
-| R3-94 | Step 1 as the provider's intake gate; the BetterHelp case into the dossier | OPEN |
-| R3-96 | L introduced by name on the laptop before the search | OPEN |
-| R3-101 | "L needs access to your messages" → allow → threads → this one | OPEN |
-| R3-105 / 106 | The first flash before the world; a slower arrival with lights and a greeting | OPEN |
+| R3-93 / 104 | ~~L asks, she answers (chips); the five steps come out of it and build to the session~~ | DONE — S160 · the turn: L's question in the step bar, two chips, both leading on; her answer filed as `turn:<step>`; no press of the step's own until answered; the headset only after the last |
+| R3-87 | ~~The wake as a screensaver with one press~~ | DONE — S160 · the mark drifting on black, "press to restore your session" (`saver-wake`) |
+| R3-89 / 90 | ~~The search tab as a results page → the Second Thoughts site → the agent~~ | DONE — S160 · recents, the query, four results (the first the only press), the landing page, Start a session → the agent |
+| R3-91 | ~~The laptop says what it is doing~~ | DONE — S160 · restoring · restored · the search is done · Second Thoughts can take it from here · each step's line · the headset |
+| R3-94 | ~~Step 1 as the provider's intake gate; the BetterHelp case into the dossier~~ | DONE — S160 · "Second Thoughts Care · intake · required before care"; `e4_offers.json` source 4 (documentary, high), `practices.json` `care` cites it |
+| R3-96 | ~~L introduced by name on the laptop before the search~~ | DONE — S160 · the laptop's lines name L and say it is restoring six tabs |
+| R3-101 | ~~"L needs access to your messages" → allow → threads → this one~~ | DONE — S160 · Allow / Just this once → Junie · Mum · Flat 3B (Junie's the press) → the thread → Confirm |
+| R3-105 / 106 | The first flash before the world; a slower arrival with lights and a greeting | OPEN — batch B, next |
 | R3-92 | FloppySheep on the 2026 home screen | LATER |
 
 ## Priority 7 — the frame and the front door
 | id | item | status |
 |---|---|---|
+| F-01 | **The front door offers the choices** (his 2026-09-20): how you want to navigate this — computer (mouse/drag) · phone (turn the device) · headset — and captions on/off — chosen on the pre-fiction panel, not discovered; with R3-01's redesign | OPEN · his ask |
 | R3-01 | The pre-fiction panel: ERA1 look, the logo, three cards, the text | DESIGN · ask (logo) |
 | R3-06 | ~~Helper idle 40 → 20 s~~ | DONE — S149 · 20 s |
 | R3-09 | Desktop icon grid with drawn pixel icons | OPEN |
@@ -134,6 +135,10 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 ## Priority 8 — the Close
 | id | item | status |
 |---|---|---|
+| C-01 | **The flight to the Close** (his 2026-09-20): "why does the camera go to the right and then to the left? it should go to the LEFT so we can see the other rooms as we voyage to Daniel's seat — that way, as the Close is morphing with the space, we arrive and still see part of it coming down on us" — redo the four legs: leftward past Rooms 3→2→1, the morph in view on the way, arriving into it | OPEN · his ask |
+| C-02 | **The Close's PC** (his 2026-09-20): "the PC model is still all wrong and in front of the panels; it should be further, and the screen image bigger. If we need to, we can press and go there" — the monitor further back, the Restart card's screen larger, a marker/press to go to it | OPEN · his ask |
+| C-03 | ~~The beep at the end~~ | DONE — S159 · gone ("unnecessary") |
+| C-04 | ~~The keyboard sounds~~ | DONE — S159 · gone, all three (the page-turn click, the diary's key, the 2026 typing) — "hideous… or go find one from android"; the flag and the erase stay |
 | R3-111 | No "documentary" stamp on the panels; sources per panel in the frame; the CRT further back | OPEN |
 | R3-112 | The drift pauses while a panel is looked at or pressed | OPEN |
 | R3-109 | Daniel's computer visible from the start of the Close? | ASK |
@@ -164,6 +169,8 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
+- S160 (2026-09-20): R3-87, R3-89/90, R3-91, R3-93/104, R3-94, R3-96, R3-101 — Priority 6 batch A (the way in + the turn); walked, 275 presses, spine done.
+- S159 (2026-09-20): R3-20, W-G2, C-03, C-04 — his six answers, the quick four; R3-02/R3-110 sent to him to hear; W-E2 (a), R3-61, C-01, C-02, F-01 registered with his rulings.
 - S158 (2026-09-20): R3-66, R3-70, R3-71, R3-74, R3-78, R3-82 — Priority 5; walked, 262 presses, spine done (all four stories met).
 - S157 (2026-09-20): R3-41, R3-44, R3-50, R3-51, R3-52/75, R3-58/59, R3-62 — Priority 4 batch B; walked, 261 presses, spine done.
 - S156 (2026-09-20): R3-45, R3-46/86, R3-60, R3-48 (bar the bar's length) — Priority 4 batch A; his boot notes (the machine heard on the way down, the OS splash + chime); walked, 259 presses, spine done.

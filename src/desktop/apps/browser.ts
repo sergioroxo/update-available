@@ -47,7 +47,15 @@ import body from '../../../data/dialog/s4_browser.json';
 type TabId = 'search' | 'chat' | 'record' | 'photos' | 'care' | 'extra';
 interface Tab { id: TabId; mark: string; title: string; notHers?: boolean; address?: string }
 const TABS = script.tabs as unknown as Tab[];
-interface Step { id: TabId; n: number; title: string; ask: string; button?: string; done?: string; witness?: string; console: string }
+interface Turn { ask: string; chips: { label: string; witness: string }[] }
+interface Thread { id: string; name: string; preview: string; time: string }
+interface Step { id: TabId; n: number; title: string; ask: string; button?: string; done?: string; witness?: string; console: string;
+  /** S160 / R3-93: L's question and her two answers, before the step's own press */
+  turn?: Turn;
+  /** S160 / R3-94: step 1's header — the provider's intake gate */
+  gate?: string;
+  /** S160 / R3-101: step 4's threads, after access is allowed */
+  threads?: { title: string; sub: string; items: Thread[]; witness: string } }
 interface FileItem { name: string; kind: 'folder' | 'file'; meta: string }
 interface Failed { status: string; title: string; line: string; detail: string; step: string }
 const PROGRAM = body.program as unknown as {
@@ -59,7 +67,13 @@ const PROGRAM = body.program as unknown as {
     upload: string; stages: string[]; adjusted: string[]; savedButton: string;
     folderItems: FileItem[]; back: string };
   failed: Failed;
-  console: { mark: string; restored: string; typing: string; managed: string; ready: string; worn: string };
+  console: { mark: string; restored: string; typing: string; managed: string; ready: string; worn: string;
+    restoring: string; results: string; site: string };
+  saver: { mark: string; line: string; witness: string };
+  results: { title: string; historyLabel: string; history: string[]; queryLabel: string;
+    results: { id: string; title: string; url: string; snippet: string; press?: boolean }[] };
+  site: { mark: string; address: string; tagline: string; lines: string[]; start: string; footer: string };
+  turnFiled: string;
 };
 /** the agent moves to the next step this long after the press */
 const ADVANCE_SECONDS = 1.4;
@@ -129,14 +143,20 @@ export class E4Browser {
    * until `beginSession()` is called — by app.ts's `endRelocation` on the real
    * E3→E4 leg, with the settle delay, and by the review jumps at once.
    */
-  private phase: 'dormant' | 'restoring' | 'open' | 'handed' | 'failed' = 'dormant';
+  private phase: 'dormant' | 'saver' | 'restoring' | 'open' | 'handed' | 'failed' = 'dormant';
+  /** S160 / R3-87: the screensaver's own clock — the mark drifts on it */
+  private saverT = 0;
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
 
   // ── ⚑ THE PROGRAM (2026-09-12) — see s4_browser.json `program._doc` ─────────
   /** free: the restored session, hers · typing: the search being finished for
    *  her · agent: Second Thoughts introducing itself · program: the five steps */
-  private mode: 'free' | 'typing' | 'agent' | 'program' = 'free';
+  private mode: 'free' | 'typing' | 'results' | 'site' | 'agent' | 'program' = 'free';
+  /** S160 / R3-93: the steps whose turn (L's question, her answer) is done */
+  private turnDone = new Set<string>();
+  /** S160 / R3-101: the chat step, after access — the threads list, then the one opened */
+  private threadOpen = false;
   private typeT = 0;
   /** seconds since the agent's page opened — its bubbles arrive on this */
   private agentT = 0;
@@ -154,17 +174,21 @@ export class E4Browser {
   get programMode(): string { return this.mode; }
   /** the steps are done and the headset is the only thing left */
   get programDone(): boolean {
-    return this.mode === 'program' && this.step >= PROGRAM.steps.length - 1;
+    // S160 — the last step's turn is asked before the headset is offered (the turn law)
+    return this.mode === 'program' && this.step >= PROGRAM.steps.length - 1 && !this.turnPending();
   }
   /** the line L's console on the laptop shows — see E4Shell.drawLaptop */
   get consoleLine(): string {
     const c = PROGRAM.console;
+    if (this.phase === 'restoring') return c.restoring;   // S160 / R3-91: the laptop says what it is doing
     if (this.mode === 'free') return this.phase === 'open' ? c.restored : '';
+    if (this.mode === 'results') return c.results;
+    if (this.mode === 'site') return c.site;
     if (this.mode === 'typing' || this.mode === 'agent') return c.typing;
     if (this.programDone) return c.ready;
     return PROGRAM.steps[this.step]?.console ?? '';
   }
-  get consoleMark(): string { return this.mode === 'free' ? PROGRAM.console.mark : PROGRAM.agentMark; }
+  get consoleMark(): string { return this.mode === 'free' || this.mode === 'typing' || this.mode === 'results' ? PROGRAM.console.mark : PROGRAM.agentMark; }
   get consoleLineWorn(): string { return PROGRAM.console.worn; }
   /** review only: land past the steps, headset wearable */
   debugFinishProgram(): void {
@@ -190,7 +214,18 @@ export class E4Browser {
     if (this.phase !== 'dormant') return;
     this.settleT = settleSeconds;
     this.t = 0;
+    // S160 / R3-87 (Sérgio: "a screensaver screen to press on to restore"): the machine is
+    // asleep on its mark until she presses it; the restore is her first act, not the landing's
+    this.phase = 'saver';
+    this.saverT = 0;
+    this.version++;
+  }
+  /** the press on the screensaver: the restore begins */
+  private wake(): void {
+    if (this.phase !== 'saver') return;
+    ledger.e4Space.push({ id: 'saver', outcome: 'pressed', witness: PROGRAM.saver.witness });
     this.phase = 'restoring';
+    this.t = 0;
     this.version++;
   }
   private t = 0;
@@ -240,6 +275,11 @@ export class E4Browser {
       return;
     }
     if (this.settleT > 0) { this.settleT = Math.max(0, this.settleT - dt); return; }
+    if (this.phase === 'saver') {
+      const b = this.saverT; this.saverT += dt;
+      if (Math.floor(b / 0.5) !== Math.floor(this.saverT / 0.5)) this.version++;   // the mark drifts in steps
+      return;
+    }
     this.t += dt;
     if (this.phase === 'restoring') {
       // ⚑ the whole boot is a clock and a line. Nothing is pressable during it,
@@ -256,7 +296,8 @@ export class E4Browser {
     if (this.mode === 'typing') {
       this.typeT += dt;
       this.version++;
-      if (this.typeT >= PROGRAM.typingSeconds + 0.6) { this.mode = 'agent'; this.agentT = 0; this.version++; playOnce('agent_2026.mp3'); }
+      // S160 / R3-89: the finished search lands on a RESULTS page, not on the agent
+      if (this.typeT >= PROGRAM.typingSeconds + 0.6) { this.mode = 'results'; this.version++; }
       return;
     }
     if (this.mode === 'agent') {
@@ -342,6 +383,22 @@ export class E4Browser {
       px(ctx, 0, 0, W, H, CHROME.page);
       return;
     }
+    if (this.phase === 'saver') {
+      // S160 / R3-87 — the screensaver: the system's mark drifting on the dark, one line, one press
+      px(ctx, 0, 0, W, H, CHROME.page);
+      const mx = Math.round(W * (0.3 + 0.4 * (0.5 + 0.5 * Math.sin(this.saverT * 0.23))));
+      const my = Math.round(H * (0.3 + 0.35 * (0.5 + 0.5 * Math.cos(this.saverT * 0.31))));
+      setFont(ctx, 22);
+      ctx.fillStyle = WEB.muted;
+      const mw = ctx.measureText(PROGRAM.saver.mark).width;
+      ctx.fillText(PROGRAM.saver.mark, mx - Math.round(mw / 2), my);
+      setFont(ctx, 9);
+      ctx.fillStyle = CHROME.hint;
+      const lw = ctx.measureText(PROGRAM.saver.line).width;
+      ctx.fillText(PROGRAM.saver.line, Math.round((W - lw) / 2), H - 30);
+      this.publish({ x: 0, y: 0, w: W, h: H, id: 'saver-wake' });
+      return;
+    }
     if (this.phase === 'restoring' && back <= 0) {
       if (this.t < BOOT_SECONDS) restoring(ctx, W, H, script.boot.bootLine, 0);
       else restoring(ctx, W, H, script.boot.restoring, (this.t - BOOT_SECONDS) / RESTORE_SECONDS);
@@ -352,7 +409,7 @@ export class E4Browser {
     // ⚑ 2026-09-13: once the page is the agent's, the tab says so — it read
     //   "how do i tell" over Second Thoughts for the whole program
     const shown = TABS.slice(0, back).map((t) =>
-      t.id === 'search' && this.mode !== 'free' && this.mode !== 'typing' ? { ...t, title: PROGRAM.agentMark } : t);
+      t.id === 'search' && this.mode !== 'free' && this.mode !== 'typing' && this.mode !== 'results' ? { ...t, title: PROGRAM.agentMark } : t);
     // ⚑ each tab shows its own address; only the search tab shows what she
     //   typed, and only it carries the cursor (2026-09-12, his review)
     const onSearch = this.liveTab === 'search';
@@ -421,7 +478,11 @@ export class E4Browser {
       }
     }
     switch (this.liveTab) {
-      case 'search': this.drawSearch(ctx, W); break;
+      case 'search':
+        if (this.mode === 'results') this.drawResults(ctx, W, H);
+        else if (this.mode === 'site') this.drawSite(ctx, W, H);
+        else this.drawSearch(ctx, W);
+        break;
       case 'chat': this.drawChat(ctx, W, H); break;
       case 'record': this.drawRecord(ctx, W, H); break;
       case 'care': this.drawCare(ctx, W, H); break;
@@ -477,6 +538,63 @@ export class E4Browser {
      * then done to her.
      */
     if (this.mode === 'free') this.publish({ x: ADDR.x, y: top, w: W - ADDR.x * 2, h, id: 'search-open' });
+  }
+
+  /**
+   * ⚑ S160 / R3-89 — THE RESULTS PAGE. "A fake Google with the results of the search she
+   * already did; recent queries." Her recent searches, ordinary; the query the engine
+   * finished for her; four results, of which the first is the agent's own site and the only
+   * press. Nothing here is true about anyone real; the marks are invented.
+   */
+  private drawResults(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const R = PROGRAM.results;
+    const top = ADDR.y + ADDR.h + 10;
+    px(ctx, 0, top - 10, W, H - top + 10, WEB.bg);
+    const x = ADDR.x + 8;
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+    ctx.fillText(R.historyLabel, x, top);
+    setFont(ctx, 9); ctx.fillStyle = WEB.muted;
+    R.history.forEach((h, i) => { px(ctx, x, top + 14 + i * 12 + 3, 4, 4, WEB.faint); ctx.fillText(h, x + 10, top + 12 + i * 12); });
+    let y = top + 14 + R.history.length * 12 + 8;
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+    ctx.fillText(R.queryLabel, x, y);
+    setFont(ctx, 11); ctx.fillStyle = WEB.ink;
+    ctx.fillText(PROGRAM.chosen, x, y + 11);
+    y += 30;
+    for (const r of R.results) {
+      const rh = 42;
+      if (y + rh > H - 14) break;
+      if (r.press) { roundEdge(ctx, x - 4, y - 4, W - ADDR.x * 2 - 8, rh + 2, 5, WEB.cardEdge, WEB.card); }
+      setFont(ctx, 8); ctx.fillStyle = WEB.accent;
+      ctx.fillText(r.url, x, y);
+      setFont(ctx, 11); ctx.fillStyle = r.press ? WEB.primary : WEB.ink;
+      ctx.fillText(r.title.length > 58 ? r.title.slice(0, 57) + '…' : r.title, x, y + 11);
+      setFont(ctx, 9); ctx.fillStyle = WEB.muted;
+      wrapText(ctx, r.snippet, W - ADDR.x * 2 - 24).slice(0, 1).forEach((ln) => ctx.fillText(ln, x, y + 25));
+      if (r.press) this.publish({ x: x - 4, y: y - 4, w: W - ADDR.x * 2 - 8, h: rh + 2, id: `result-${r.id}` });
+      y += rh + 6;
+    }
+  }
+
+  /** S160 / R3-90 — the site, before the agent: a landing page, one press */
+  private drawSite(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const S = PROGRAM.site;
+    const top = ADDR.y + ADDR.h + 8;
+    px(ctx, 0, top - 8, W, H - top + 8, WEB.bg);
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
+    webCard(ctx, cx, top, cw, H - top - 14);
+    avatar(ctx, cx + 16, top + 14, 26, WEB.primary, 'S');
+    setFont(ctx, 14); ctx.fillStyle = WEB.ink;
+    ctx.fillText(S.mark, cx + 52, top + 14);
+    setFont(ctx, 10); ctx.fillStyle = WEB.muted;
+    ctx.fillText(S.tagline, cx + 52, top + 32);
+    px(ctx, cx + 1, top + 52, cw - 2, 1, WEB.cardEdge);
+    setFont(ctx, 11); ctx.fillStyle = WEB.ink;
+    S.lines.forEach((ln, i) => ctx.fillText(ln, cx + 16, top + 66 + i * 18));
+    const r = webButton(ctx, cx + 16, top + 66 + S.lines.length * 18 + 6, S.start, 'primary', 120);
+    this.publish({ ...r, id: 'site-start' });
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+    ctx.fillText(S.footer, cx + 16, H - 34);
   }
 
   /**
@@ -561,6 +679,14 @@ export class E4Browser {
    * content sits under it, which is what makes a step a tab rather than a new
    * screen. Returns where the page body starts.
    */
+  /** S160 — a step whose turn is still unanswered publishes NO press of its own, in the
+   *  bar or in the body (the Upload well, Junie's thread): L asks first, then the step. */
+  private turnPending(): boolean {
+    if (this.mode !== 'program') return false;
+    const st = PROGRAM.steps[this.step];
+    return !!(st && st.turn && !this.stepDone.has(st.id) && !this.turnDone.has(st.id));
+  }
+
   private drawStepBar(ctx: CanvasRenderingContext2D, W: number, st: Step): number {
     const top = ADDR.y + ADDR.h + 6;
     const h = 44;
@@ -577,10 +703,27 @@ export class E4Browser {
     setFont(ctx, 8);
     ctx.fillStyle = WEB.muted;
     ctx.fillText(PROGRAM.stepLabel.replace('{n}', String(st.n)) + '  ·  ' + PROGRAM.agentMark, segX, top + 16);
+    // ⚑ S160 / R3-93 — THE TURN. Before the step's own press, L asks and she answers: the
+    //   question in the bar, two chips under it, both leading on. Her answer is filed as her
+    //   line; what changes is what the record says she said, never what happens next.
+    if (!done && st.turn && !this.turnDone.has(st.id)) {
+      setFont(ctx, 12);
+      ctx.fillStyle = WEB.ink;
+      const rows = wrapText(ctx, st.turn.ask, W - segX - 16).slice(0, 2);
+      rows.forEach((r, k) => ctx.fillText(r, segX, top + 27 + k * 14));
+      let cxp = segX;
+      st.turn.chips.forEach((c, k) => {
+        const r = webButton(ctx, cxp, top + 30 + rows.length * 14, c.label, k === 0 ? 'primary' : 'quiet');
+        this.publish({ ...r, id: `turn-${k}` });
+        cxp += r.w + 8;
+      });
+      return top + h + 40;
+    }
     setFont(ctx, 12);
     ctx.fillStyle = WEB.ink;
     ctx.fillText(done && st.done ? st.done : st.ask, segX, top + 27);
-    if (!done && st.button && !(st.id === 'photos' && this.picker !== 'closed')) {
+    if (st.gate && !done) { setFont(ctx, 8); ctx.fillStyle = WEB.accent; ctx.fillText(st.gate, segX, top + 40); }   // S160 / R3-94
+    if (!done && st.button && !(st.id === 'photos' && this.picker !== 'closed') && !(st.id === 'chat' && !this.threadOpen)) {
       const bw = Math.ceil(ctx.measureText(st.button).width) + 26;
       const r = webButton(ctx, W - ADDR.x - 12 - Math.max(84, bw), top + 12, st.button, 'primary', 84);
       this.publish({ ...r, id: `step-${st.id}` });
@@ -648,7 +791,7 @@ export class E4Browser {
       const l1 = 'Drop a photo here, or';
       ctx.fillText(l1, zx + Math.round((zw - ctx.measureText(l1).width) / 2), by + 54);
       const r = webButton(ctx, zx + Math.round(zw / 2) - 42, by + 72, F.upload, 'primary', 84);
-      this.publish({ ...r, id: 'step-photos' });
+      if (!this.turnPending()) this.publish({ ...r, id: 'step-photos' });
       setFont(ctx, 8);
       ctx.fillStyle = WEB.muted;
       ctx.fillText('Recent', cx + 16, by + zh + 12);
@@ -869,8 +1012,34 @@ export class E4Browser {
   /** ⚑ the transcript — fourteen months, read backwards. Her side of every
    *  exchange sits above the row it was chosen from, the unpicked options still
    *  greyed beside it. Nothing remarks on that. */
+  /** S160 / R3-101 — after access is allowed: her threads, and the one L means */
+  private drawThreads(ctx: CanvasRenderingContext2D, W: number, H: number, top: number, st: Step): void {
+    const T = st.threads!;
+    px(ctx, 0, top - 12, W, H - top + 12, WEB.bg);
+    webCard(ctx, ADDR.x + 8, top, W - ADDR.x * 2 - 16, H - top - 14);
+    const x = ADDR.x + 20;
+    setFont(ctx, 11); ctx.fillStyle = WEB.ink; ctx.fillText(T.title, x, top + 10);
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(T.sub, x, top + 24);
+    let y = top + 42;
+    for (const th of T.items) {
+      avatar(ctx, x, y, 20, th.id === 'junie' ? WEB.primary : WEB.chip, th.name[0]);
+      setFont(ctx, 10); ctx.fillStyle = WEB.ink; ctx.fillText(th.name, x + 28, y + 1);
+      setFont(ctx, 9); ctx.fillStyle = WEB.muted; ctx.fillText(th.preview, x + 28, y + 13);
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+      ctx.fillText(th.time, W - ADDR.x - 20 - ctx.measureText(th.time).width, y + 1);
+      px(ctx, x, y + 30, W - ADDR.x * 2 - 40, 1, WEB.cardEdge);
+      // only the one L means is a press — the others are pictures of threads
+      if (th.id === 'junie' && !this.turnPending()) this.publish({ x: ADDR.x + 8, y: y - 4, w: W - ADDR.x * 2 - 16, h: 34, id: 'thread-junie' });
+      y += 36;
+    }
+  }
+
   private drawChat(ctx: CanvasRenderingContext2D, W: number, H: number, bodyTop?: number): void {
     const top = bodyTop ?? ADDR.y + ADDR.h + 12;
+    if (this.mode === 'program') {
+      const st = PROGRAM.steps[this.step];
+      if (st && st.id === 'chat' && st.threads && !this.threadOpen && !this.stepDone.has('chat')) { this.drawThreads(ctx, W, H, top, st); return; }
+    }
     px(ctx, 0, top - 12, W, H - top + 12, WEB.bg);
     webCard(ctx, ADDR.x + 8, top, W - ADDR.x * 2 - 16, H - top - 14);
     const es = body.chat.entries as Array<{
@@ -1142,6 +1311,7 @@ export class E4Browser {
   handleClick(x: number, y: number): boolean {
     if (this.phase === 'handed') return false;
     if (this.phase === 'failed') return true;   // a dead page takes presses and does nothing
+    if (this.phase === 'saver') { this.wake(); return true; }   // S160: the one press that restores
     if (this.phase !== 'open') return true;   // the restore takes presses and eats them
     if (this.mode === 'typing') return true;  // the engine is busy finishing her sentence
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
@@ -1150,9 +1320,12 @@ export class E4Browser {
       if (this.mode === 'free' && (hit.id === 'search-open' || hit.id === 'tab0')) {
         if (this.live !== 0) { this.openTab(0); }
         this.mode = 'typing'; this.typeT = 0; this.live = 0; this.version++;
-        playOnce('ui_press.mp3'); playOnce('type_2026.mp3');
+        playOnce('ui_press.mp3');   // (S159: the typing sound is gone with the other keyboard sounds — his call)
         return true;
       }
+      // S160 / R3-89/90: the results page → the site → the agent
+      if (hit.id === 'result-agent' && this.mode === 'results') { this.mode = 'site'; this.version++; playOnce('ui_press.mp3'); return true; }
+      if (hit.id === 'site-start' && this.mode === 'site') { this.mode = 'agent'; this.agentT = 0; this.version++; playOnce('agent_2026.mp3'); return true; }
       if (hit.id === 'agent-begin' && this.mode === 'agent') {
         this.mode = 'program'; this.step = 0;
         this.live = this.stepTab(PROGRAM.steps[0].id);
@@ -1162,6 +1335,23 @@ export class E4Browser {
       }
       // ── the steps ──
       if (this.mode === 'program') {
+        // S160 / R3-93: her answer to L's question — filed, and the step's own press follows
+        if (hit.id.startsWith('turn-')) {
+          const st = PROGRAM.steps[this.step];
+          const chip = st?.turn?.chips[Number(hit.id.slice(5))];
+          if (st && chip && !this.turnDone.has(st.id)) {
+            this.turnDone.add(st.id);
+            ledger.e4Space.push({ id: `turn:${st.id}`, outcome: 'answered', witness: chip.witness });
+            playOnce('ui_press.mp3');
+            this.version++;
+          }
+          return true;
+        }
+        if (hit.id === 'thread-junie') {
+          const st = PROGRAM.steps[this.step];
+          if (st?.threads) { this.threadOpen = true; ledger.e4Space.push({ id: 'turn:thread', outcome: 'opened', witness: st.threads.witness }); this.version++; }
+          return true;
+        }
         if (hit.id === 'step-next') {
           // S150 — her press moves the program on, never a clock (R3-98)
           if (this.step < PROGRAM.steps.length - 1 && this.stepDone.has(PROGRAM.steps[this.step].id)) {

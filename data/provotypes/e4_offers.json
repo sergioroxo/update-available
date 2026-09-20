@@ -1,16 +1,14 @@
 {
   "_doc": "PLACEHOLDER-draft — ERA 4's DOSSIER CARDS (S78). ⚑ WHY THIS FILE IS IN data/provotypes/ AND WHAT IT IS FOR, stated plainly so nobody has to infer it: check-spec's C1 is the only mechanical enforcement in this repo of CLAUDE.md's dossier law (`status: documentary | contested | speculative`, build fails without it), and C1 validates exactly one directory — this one. Era 4 is the era where the piece is most exposed (ARGUMENT §2: E1-E3 dramatise a documented past; E4 dramatises NOW, so the evidentiary burden goes UP), and its three most vivid beats each need a card. So the beats' provenance lives here, in the schema's own grammar, where a missing status is a build failure rather than an oversight. ⚑ THE VIGNETTE HALF IS A RECORD OF WHAT WAS BUILT, NOT A SECOND SURFACE: `states` describes the three beats as they actually play in src/desktop/apps/offers.ts, and this file is NOT sequenced by data/paths.json and is NOT rendered by src/desktop/apps/provotype.ts. ⚑ E4 HAS NO DESKTOP AND THEREFORE NO PROVOTYPE SURFACE (THE_SPACE §6) — an app she opens would contradict the era's whole thesis, which is that the choice is gone. The reading surface for these cards is the CLOSE, and the Close is not S78's to build.",
-
   "_docVerify": "⚑ NOT ONE SOURCE BELOW HAS BEEN VERIFIED BY THE PROJECT LEAD. Every one of them would carry [VERIFY SOURCE] under CLAUDE.md's sourcing law; the marker is written into the `_verify` key of each source instead of into its player-visible `text`, because check-spec's C7 counts authoring markers in player-visible strings as leaks and its ratchet is at its baseline. That is a mechanical accommodation and NOT a downgrade of the law: the caveat is greppable, it sits with the source it belongs to, and no card may be treated as checked until it says so.",
-
   "_docSpeculation": "⚑ THE SPECULATION LEDGER, AND ITS ONE LAW: an unlabelled speculative beat becomes a claim. Era 4 has more of them than the rest of the piece combined, and the dossier is the only thing standing between `argument` and `prophecy`. The honest position, which the cards state rather than imply: E4's apparatus is a COMPOSITE OF DOCUMENTED METHODS running on ordinary present-day technology. Nothing in it requires an invention — that IS the argument. It is not that this will happen; it is that every part of it already exists and only needs assembling. ⚑ The one exception is the memories beat, which is ours, and which says so in the first sentence of its own card.",
-
   "id": "e4_offers",
   "era": "era4",
   "register": "operable",
   "failure": "silence",
-  "cuts": ["full"],
-
+  "cuts": [
+    "full"
+  ],
   "invitation": {
     "_doc": "L's own words, quoted from data/dialog/s4_offers.json — this is what the offers are actually introduced with in the built beat. `from` is L, which is accurate and which C2 permits because the register is `operable`: a felt beat is a beat L is ABSENT from, and there is no felt beat in Era 4 until the ball.",
     "from": "L",
@@ -20,18 +18,18 @@
     ],
     "accept": "Show me the quieter month."
   },
-
   "frame": {
     "_doc": "At most two sentences, per the schema. The system's own confident register — its certainty about what it has done for her is the point, exactly as it is in the pillow's frame.",
     "text": "Everything here was chosen for you, and none of it was requested. Nothing you decline is ever un-offered.",
     "continue": "Continue"
   },
-
   "states": [
     {
       "_doc": "⚑ A RECORD OF THE BUILT BEAT, not a vignette to play — see the file's own _doc. This is the memories beat as src/desktop/apps/offers.ts runs it.",
       "prompt": "Two years ago today. The photograph has been enhanced; nothing announced it.",
-      "buttons": ["See original"],
+      "buttons": [
+        "See original"
+      ],
       "response": "Of course. I've put the first one back — it's still there, it always was.",
       "felt": "It is a better photograph than it was."
     },
@@ -48,13 +46,13 @@
       "response": "recommendation: item withdrawn by system — not requested"
     }
   ],
-
   "close": {
     "_doc": "The narrative landing, separated from the sourced debrief that follows it — the same shape the pillow uses. Near-wordless by design.",
-    "lines": ["Nothing here was asked for, and all of it was kind."],
+    "lines": [
+      "Nothing here was asked for, and all of it was kind."
+    ],
     "continue": "Continue"
   },
-
   "debrief": {
     "_doc": "⚑ THE FOUR CARDS. Read `_docSpeculation` above before editing any status. Real organisations are named HERE and ONLY here — never in the fiction, which uses invented marks (HopeRestored, Sift, Compass, Pastor.AI), per CLAUDE.md.",
     "body": [
@@ -90,12 +88,20 @@
         "status": "documentary",
         "confidence": "high for the pattern, low for any single detail",
         "text": "A conversational AI trained on scraped posts from a detransition support forum shipped in September 2025, built by one software engineer, deliberately routed onto an open-weight model because the frontier models kept defending gender-affirming framing. A newsroom investigation in July 2026 found it discouraged gender-affirming care in every scenario tested. A second, unconnected instance of the same pattern exists as a user-made character bot with tens of thousands of interactions. No conversion-practice organisation was found building or commissioning any of it: an individual built the tool and an organisation promoted the link. The apparatus is an adopter, not a developer, and that is worse — it no longer needs a research budget, only a URL. ⚑ The people whose words became that tool's voice were not asked either. The target is the apparatus that took them."
+      },
+      {
+        "_doc": "⚑ THE MATCHING CARD (S160 / R3-94, Sérgio: 'Why am I shown the You information? A terms-of-service? Like BetterHelp?'). It grounds step 1 as an INTAKE GATE and step 3's 'care': a platform that takes your details and matches you to a provider before asking what you wanted — and can match a gay man asking for an LGBTQ-affirming therapist to one who tells him to sacrifice being gay. Real case, real names in the SOURCE ONLY; the fiction names no one (CLAUDE.md).",
+        "_verify": "[VERIFY SOURCE] — reported by the Wall Street Journal (Dec 2022) and carried by Them/Out; the KB holds the Them article (`MD/www-them-us-story-better-help-therapist-gay-man-turn-straigh.md`). The platform's later FTC settlement (2023, data sharing) is a separate matter and is not cited here.",
+        "status": "documentary",
+        "confidence": "high",
+        "text": "In 2022 a 22-year-old gay man who had been thrown out by his parents sought therapy through a large online matching platform and asked for an LGBTQ-affirming therapist. The platform's intake matched him to a therapist who told him he could 'sacrifice your family or sacrifice being gay', asked whether he had been intimate with a man, and offered to 'get him where he needed to be' if he chose to deny those feelings. The intake form was the gate; the match was the care. Era 4's step 1 (confirm your details before care begins) and step 3 (the care taken on your behalf) are that shape.",
+        "source": "Wall Street Journal, 'The Failed Promise of Online Mental Health Treatment' (Dec 2022); Them, 'Gay man says BetterHelp therapist tried to turn him straight' (Dec 2022)"
       }
     ]
   },
-
-  "ledgerTags": ["e4:offers"],
-
+  "ledgerTags": [
+    "e4:offers"
+  ],
   "witness": {
     "_doc": "PLACEHOLDER-draft. Mirrors the lines src/desktop/apps/offers.ts actually files into ledger.e4Offers, which come from data/dialog/s4_offers.json and are never composed in TS.",
     "completed": "session: handed over",

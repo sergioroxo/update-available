@@ -30,7 +30,8 @@ import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
-import { TapeAudioBus, roomBed, setOneShotsMuted, playOnce, playLoop, stopClip } from '../audio/tapeAudio';
+import { TapeAudioBus, roomBed, setOneShotsMuted, playOnce, playLoop, stopClip, setCueListener } from '../audio/tapeAudio';
+import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
 import { mountDebugPanel } from '../debug/panel';
 import { makeScreenTexture, makeScreenEntity, screenUploads } from './screenTexture';
@@ -2948,6 +2949,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return screenRay({ clientX: hoverPointer.x, clientY: hoverPointer.y } as MouseEvent);
   }
   let aimName: string | null = null;
+  // S159 / W-G2 — every sound is named in the strip for a moment (his call: option b)
+  const CUES = captionsData as unknown as { holdSeconds: number; cues: Record<string, string> };
+  let cueText: string | null = null;
+  let cueT = 0;
+  setCueListener((name) => {
+    const text = CUES.cues[name];
+    if (!text) return;
+    cueText = text;
+    cueT = CUES.holdSeconds;
+  });
 
   // ⚑ the browser must not claim the gestures the room needs: without this a
   // touch-drag scrolls/rubber-bands the page and a pinch zooms the DOCUMENT,
@@ -3433,7 +3444,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           aimName = r ? aimNameUnderRay(r) : null;
           const hoverText = aimName ?? (!cap && !tapes.inserted && hoveredTapeId
             ? `◈ ${tapes.def(hoveredTapeId).shelfLabel}` : null);
-          const text = cap ?? hoverText;
+          if (cueT > 0) cueT -= dt; else cueText = null;
+          // the tape's words first; then a sound's name while it is fresh; then what the look rests on
+          const text = cap ?? (cueT > 0 ? cueText : null) ?? hoverText;
           canvasEl.style.cursor = aimName && !xr?.active && motionState !== 'live' ? 'pointer' : 'default';
           tapeCaption.textContent = text ?? '';
           tapeCaption.style.opacity = text ? '1' : '0';
@@ -3916,7 +3929,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   −18° to +6° of the eye line, so the card's last row was under the
       //   frame at the sky pitch; at −6° the whole glass is in it.
       closeMonitor?.show();
-      playOnce('post_beep_1997.mp3');   // the 1997 machine, starting up again
+      // (S159: the POST beep that played here is gone — Sérgio: "the beep on the computer at the end is unnecessary")
       startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_MONITOR_PITCH, yaw: 0 },
         CLOSE_MONITOR_TILT_SECONDS, true);
     }

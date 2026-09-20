@@ -118,7 +118,8 @@ export function recordEntries(): RecordEntry[] {
     const kind = e.id === 'update' || e.id === 'companion' ? 'update'
       : e.id === 'record' || e.id === 'step:record' || e.id === 'legacy' ? 'record'
         : e.id === 'step:photos' || e.id === 'photos' ? 'photos'
-          : e.id === 'program' || e.id === 'session' || e.id.startsWith('step:') || e.id.startsWith('tab:') || e.id.startsWith('care') ? 'session'
+          : e.id === 'step:care' || e.id.startsWith('care') || e.id === 'turn:care' ? 'care'   // S160 / R3-94: the care assignment has its own practice and source
+          : e.id === 'program' || e.id === 'session' || e.id === 'saver' || e.id.startsWith('step:') || e.id.startsWith('tab:') || e.id.startsWith('turn:') ? 'session'
             : e.id === 'headset' || e.id === 'commons' || e.id === 'turn' ? 'headset'
               : e.id === 'laptop' ? 'termination' : 'session';
     push('e4', kind, e.id, e.outcome, e.witness);

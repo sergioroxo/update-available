@@ -192,6 +192,15 @@
         "file": "e4_offers",
         "index": 2
       }
+    },
+    "care": {
+      "title": "The care assignment",
+      "did": "took your details as the gate, and assigned care on your behalf",
+      "status": "documentary",
+      "source": {
+        "file": "e4_offers",
+        "index": 4
+      }
     }
   }
 }

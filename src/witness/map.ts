@@ -106,7 +106,9 @@ const CONDITIONS: Record<string, Condition> = {
   cascadeSeen: () => ledger.checkins.some((c) => c.id === 'e3_cascade'),
   updatedTo4: () => updatedTo(4),
   // ── 2026 ──
+  saverPressed: () => ledger.e4Space.some((e) => e.id === 'saver') || ledger.e4Space.some((e) => e.id === 'program'),
   browserOpen: (os) => os.e4?.browser.isOpen === true || ledger.e4Space.some((e) => e.id === 'program'),
+  resultsSeen: (os) => ['results', 'site', 'agent', 'program'].includes(os.e4?.browser.programMode ?? '') || ledger.e4Space.some((e) => e.id === 'program'),
   programBegun: () => ledger.e4Space.some((e) => e.id === 'program'),
   stepsDone: () => ledger.e4Space.some((e) => e.id === 'step:search'),
   headsetWorn: () => ledger.e4Space.some((e) => e.id === 'headset'),

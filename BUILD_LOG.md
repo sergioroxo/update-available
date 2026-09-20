@@ -1440,3 +1440,51 @@ backlog and is the way into the chat; FloppySheep and the stream stay. Verified 
 workstation and on the phone. Walked: 262 presses, spine done — and with the finished story holding
 instead of loading the next, the walker worked all four stories (Marisol included) before the phone.
 **closes R3-66, R3-70, R3-71, R3-74, R3-78, R3-82.**
+
+## 2026-09-20 — S159 · HIS SIX ANSWERS: THE QUICK ONES, AND EVERY SOUND NAMED
+The six open questions put to him after S158, answered; four built. **R3-20** — his call: the
+wizard names the radio tape as an option, one line on the pray page ("the second tape on the
+shelf is the fellowship's radio hour — not a step; there if you want it"), nothing more. **W-G2** — his call (b):
+every sound is named — `data/strings/captions.json`, one caption per master, shown in the strip
+for 1.8 s as the cue plays (`setCueListener` in `tapeAudio.ts`); the tapes' spoken words come
+first, the cue's name after, never over them. **C-03** — the beep at the end of the Close, gone
+("unnecessary"). **C-04** — the keyboard sounds, gone, all three (the page-turn click, the diary's
+key, the 2026 typing) — "hideous"; the diary's flag and erase stay. **R3-02 / R3-110** — the
+descent and Close scores sent to him to hear (five frames of the 2003 boot and its two sounds
+went with them for R3-48's bar). Registered as OPEN with his rulings, to build after Priority 6:
+**W-E2** (a) every 1997/2003 window minimises to a taskbar button; **R3-61** the Service
+Transition notice rises out of Caleb's residue ("the breaking point should be in him"); **C-01**
+the flight to the Close goes LEFT past the rooms, the morph seen coming down; **C-02** the Close's
+PC further back, the screen bigger, a press to go there; **F-01** the front door offers the
+choices (computer · phone · headset; captions). **closes R3-20, W-G2, C-03, C-04.**
+
+## 2026-09-20 — S160 · PRIORITY 6 BATCH A: ERA 4 AS A CONVERSATION WITH L
+**R3-87** — the wake is a screensaver: the platform's mark drifting on black, "press to restore
+your session", one press (`saver-wake`); the restore begins from it, never by itself. **R3-91** —
+the laptop says what it is doing: "Restoring your session — six tabs, five of them yours." while
+the tabs come back, then "Your session is restored, Maya. Start with the search." **R3-96** — L is
+introduced by name on the laptop before any search: the console carries the mark L and the
+laptop's own lines name it. **R3-89 / 90** — the search tab is a search: her recent queries, the
+typed one, a RESULTS page (four results; only the first is a press — Second Thoughts, "a calm
+place to think again"), the site's landing page (the mark, the tagline, three lines, "Start a
+session"), and only then the agent. The laptop reads each stage: "The search is done. Read the
+results." → "Second Thoughts can take it from here." **R3-93 / 104** — THE TURN, the era's major
+design: before each step's own press, L asks and she answers — the question in the step bar,
+two chips under it, both leading on; her answer is filed as her line (`turn:<step>`, the chip's
+witness) and changes what the record says she said, never what happens next. Five turns: is this
+still you (That's me / Some of this is old) · shall I restore the photograph (Which one? / If you
+like) · can I show you what was done (What things? / Go on) · allow access to your messages
+(Allow / Just this once — no such setting exists) · the session, now? (Now / I'm not sure — it
+proceeds). A step whose turn is unanswered publishes NO press of its own — not in the bar, not in
+the body (the Upload well, Junie's thread) — and the headset is offered only after the last
+answer. **R3-94** — step 1 is the provider's INTAKE gate ("Second Thoughts Care · intake ·
+required before care"); the matching-card practice enters the dossier as source 4 of
+`e4_offers.json` (documentary, high) and `practices.json`'s `care` cites it. **R3-101** — step 4:
+"L needs access to your messages" → Allow → her threads (Junie · Mum · Flat 3B; only Junie's is a
+press, the one L means) → the thread → Confirm. The map's 2026 beats follow the way in (the wake ·
+the restore · the results · the site · the program's steps · the headset · the session · the
+commons · the Close). Verified by hand: every press from the screensaver to the headset, the
+ledger's `turn:` rows and their witnesses. Walked: 275 presses, spine done — the walker took the
+way in (the screensaver, the results, the site, the agent) and answered every turn before each
+step's press. **closes R3-87, R3-89/90, R3-91,
+R3-93/104, R3-94, R3-96, R3-101.** Batch B (R3-105/106, the arrival) next.

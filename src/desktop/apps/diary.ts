@@ -63,8 +63,9 @@ export class DiaryApp {
     if (this.phase === 'writing') {
       const before = Math.floor(this.shown);
       this.shown += TYPE_CPS * dt;
-      // S155 / R3-36: a soft key per character — the machine's speaker, quieter than the page turn
-      if (Math.floor(this.shown) > before && end.diary.entry[before] !== ' ') playOnce('diary_key.mp3');
+      // (S155 gave this a key per character; S159 took it away — Sérgio: "the keyboard sound, just
+      //  remove it, or go find one from android". The flag and the erase stay.)
+      void before;
       this.dirty = true;
       if (this.shown >= end.diary.entry.length) {
         this.shown = end.diary.entry.length;
