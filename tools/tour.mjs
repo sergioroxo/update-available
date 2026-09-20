@@ -256,6 +256,18 @@ async function main() {
     await pressAll('primary', 3, 1200); await pressWhen('choice:0', 5000); await pressAll('primary', 6, 1200);
     await shot('look-pillow-end', 'the exercise, scored');
     await pressWhen('leave', 3000);
+    // S153 — the game on the disk (W-L1): open it, start, dig three cells, leave
+    if (await pressWhen('icon-rootcause', 5000)) {
+      await lookClose('r1'); await shot('look-rootcause', 'ROOTCAUSE.EXE — the fellowship\'s own game, on the disk');
+      await pressWhen('rootcause-start', 3000);
+      for (let i = 0; i < 3; i++) {
+        const dig = (await ids()).find((x) => /:dig:\d+:\d+$/.test(x));
+        if (!dig) break;
+        await pressWhen(dig.split(':').slice(1).join(':'), 3000, { settle: 400 });
+      }
+      await shot('look-rootcause-dug', 'three turns in: the layers, the diagnoses moving, the line under the earth');
+      await pressWhen('rootcause-close', 3000);
+    }
     // R3-26: Rob asks first — the DM opens on Accept
     if (await pressWhen('dm-accept', 120000, { settle: 300 })) { /* the request, accepted */ }
     await pressWhen('reply:0', 120000); await wait(1500); await shot('look-dm', 'the private message: the first reply (the scrollback\'s arrow at the top right)');

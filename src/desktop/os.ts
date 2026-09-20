@@ -21,6 +21,8 @@ import { NetVisionPlayerApp } from './apps/netvision';
 import { CalebThreadApp } from './apps/caleb';
 import { AccountabilityApp } from './apps/accountability';
 import { LambyRigFileApp } from './apps/lambyRigFile';
+import { RootCauseApp } from './apps/rootCause';
+import rootCauseStrings from '../../data/strings/rootcause.json';
 // ERA 4's SHELL (S76) — the place the visor opens. See that module's header:
 // this file draws it INSTEAD of a desktop from `e4` on, because E4 has none.
 import { E4Shell, setE4Bridge, roomIsMounted } from './apps/space';
@@ -165,6 +167,8 @@ export class DesktopOS {
    *  advertised. See src/desktop/apps/lambyRigFile.ts's header for the rules
    *  this field's own gating (e1DesktopIdle, below) exists to satisfy. */
   private lambyRigFile: LambyRigFileApp | null = null;
+  /** S153 — ROOTCAUSE.EXE, the second file on the disk (W-L1, his pick) */
+  rootCause: RootCauseApp | null = null;
   /** the era-update ritual (spine-armed; never player-triggered) */
   updateApp: UpdateApp | null = null;
   /** ⚑ ERA 4's SHELL (S76) — null until the era is `e4`, and from then on it is
@@ -506,7 +510,7 @@ export class DesktopOS {
    *  not), which the click ordering alone would not have prevented. */
   private e1DesktopIdle(): boolean {
     return !this.kit?.open && !this.irc?.open && !this.packet?.open && !this.diary?.open
-      && !this.provotype && !this.lambyRigFile;
+      && !this.provotype && !this.lambyRigFile && !this.rootCause;
   }
 
   /** the same idea, era-wide (Session 60): NOTHING is open — no window, no
@@ -525,6 +529,16 @@ export class DesktopOS {
   /** S55 — opens the found file. Never rewarded (no toast, no assistant
    *  remark); filed to the ledger like any other one-off act, and only ever
    *  once per session (a second open is not a second "discovery"). */
+  /** S153 — the game on the disk: opened like the rig file, never rewarded,
+   *  filed once on opening; its endings file themselves (rootCause.ts) */
+  private openRootCause(): void {
+    if (this.rootCause || !this.e1DesktopIdle()) return;
+    this.rootCause = new RootCauseApp();
+    this.rootCause.onClose = () => { this.rootCause = null; this.dirty = true; };
+    if (!ledger.records.includes('rootcause-opened')) ledger.records.push('rootcause-opened');
+    this.dirty = true;
+  }
+
   private openLambyRigFile(): void {
     if (!this.reinterp || this.lambyRigFile) return;
     this.lambyRigFile = new LambyRigFileApp();
@@ -651,6 +665,7 @@ export class DesktopOS {
     this.diary = null;
     this.provotype = null;
     this.lambyRigFile = null; // S55 — E1-only scope; the file has no E2+ existence
+    this.rootCause = null;    // S153 — the same: the disk stays in 1997
     this.sendOffer = null;
     this.clearExternalSendHits();
     this.dossierOpen = false;
@@ -1403,6 +1418,7 @@ export class DesktopOS {
       this.dirty = true;
     }
     if (this.phase === 'desktop' && this.kit) this.kit.update(dt);
+    if (this.phase === 'desktop' && this.rootCause) this.rootCause.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
     if (this.phase === 'desktop' && this.packet) this.packet.update(dt);
     if (this.phase === 'desktop' && this.diary) this.diary.update(dt);
@@ -1547,7 +1563,7 @@ export class DesktopOS {
     const consume = (w: { dirty: boolean } | null | undefined): void => {
       if (w?.dirty) { w.dirty = false; this.dirty = true; }
     };
-    consume(this.kit); consume(this.irc); consume(this.packet); consume(this.diary);
+    consume(this.kit); consume(this.irc); consume(this.packet); consume(this.diary); consume(this.rootCause);
     consume(this.provotype); consume(this.restorify); consume(this.netvision);
     consume(this.caleb); consume(this.accountability); consume(this.updateApp);
     // the era's shell keeps a real version counter instead of a flag (space.ts) —
@@ -1822,6 +1838,8 @@ export class DesktopOS {
       // why that gate exists, not just click-priority).
       if (this.reinterp && this.e1DesktopIdle()) {
         this.drawIcon(10, 200, 'lamby_rig.exe', true, 'icon-lambyrig');
+        // S153 — the game came with the disk: on the desktop from the moment it is in (○ sandbox)
+        if (ledger.records.includes('kit-inserted')) this.drawIcon(10, 248, rootCauseStrings.icon, true, 'icon-rootcause');
       }
     } else {
       this.drawEraDesktopChrome(W, skin, colors);
@@ -1892,9 +1910,10 @@ export class DesktopOS {
     if (this.dossierOpen) this.drawDossier(W, H);
     if (this.provotype?.open) this.provotype.draw(ctx);
     if (this.lambyRigFile?.open) this.lambyRigFile.draw(ctx);
+    if (this.rootCause?.open) this.rootCause.draw(ctx);
     // ⚑ a tray under another window is not pressable and publishes nothing
     if (this.irc?.open && (this.kit?.open || this.packet?.open || this.diary?.open || this.dossierOpen
-        || this.provotype?.open || this.lambyRigFile?.open)) this.irc.covered();
+        || this.provotype?.open || this.lambyRigFile?.open || this.rootCause?.open)) this.irc.covered();
     if (this.restorify?.open) this.restorify.draw(ctx);
     // the summons is a DESKTOP object, so it belongs under the windows. It was
     // drawn after them, and a real playthrough caught it: the s1 "Route sheet"
@@ -2938,6 +2957,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }
     // S55 — lamby_rig.exe is modal while open, same pattern as the provotype
     if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleClick(x, y); return; }
+    if (this.phase === 'desktop' && this.rootCause?.open) { this.rootCause.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }
     if (this.phase === 'desktop' && this.packet?.open) { this.packet.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleClick(x, y); return; }
@@ -2957,6 +2977,7 @@ export class DesktopOS {
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;
         case 'icon-lambyrig': this.openLambyRigFile(); break;
+        case 'icon-rootcause': this.openRootCause(); break;
         case 'icon-era-0':
         case 'icon-era-1': this.toast = { text: this.eraSkin().status, t: 5 }; break;
         case 'icon-restorify': this.openRestorify(); break;

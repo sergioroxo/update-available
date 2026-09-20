@@ -54,7 +54,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-40 | ~~Deferral: the IRC closes; the belongings window reads as a thing to do~~ | DONE — S151b · Remind me later closes the channel; "take what you are taking: press what you keep, here in the room"; the standing line says it too; the shelf breathes; by hand via update2 |
 | R3-24 | ~~Dial-up on the black screen with a connection panel — his references FOUND: `References images/to enter online.png` (Internet Setup Wizard) and `for IRC connection.png` (Make New Connection) (W: 08-21 §H)~~ | DONE — S151 · the Internet Setup Wizard on black: Welcome · Make New Connection · Connect To; the dial-up plays as it opens; tour frames 15–17 |
 | W-E1 | ~~The floppy / the tapes glow so they can be found (08-21 §E)~~ | DONE — S151b · the disk, the tapes and the player breathe while their line is up (with R3-38) |
-| W-L1 | **Lamby's 1997 app**: today the rig file is "like a tamagotchi"; his design `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` (Root Cause Digger, Purity Maze, Straight & Narrow Crossing…) was never referenced in the repo — pick one for 1997 and build it as the kit's game — ⚑ HIS PICK (2026-09-20): **Dig Dug → "Root Cause Digger"** | OPEN · build it as a SECOND file on the disk beside `lamby_rig.exe` (his 2026-09-20: the rig file stays — 'part of the programme, but not forcefully') — ○ sandbox by the Progression Law: on the desktop from the disk, on the map as ○, one soft guide line, never required |
+| W-L1 | ~~**Lamby's 1997 app**: today the rig file is "like a tamagotchi"; his design `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` (Root Cause Digger, Purity Maze, Straight & Narrow Crossing…) was never referenced in the repo — pick one for 1997 and build it as the kit's game — ⚑ HIS PICK (2026-09-20): **Dig Dug → "Root Cause Digger"**~~ | DONE — S153 · ROOTCAUSE.EXE beside lamby_rig.exe: press-only, turn-based Dig Dug, the diagnoses, the burst, the glitch, the Authentic Memory flag; ○ on the map, one soft line; played to both endings by hand, walked (264, the walker dug) |
 | W-E2 | Windows minimise, not just X (08-21 §E) | PARTIAL — S151 · the Un-Walk wizard minimises (Cancel → its taskbar button; the A:\ icon brings it back); the channel, the packet and the diary still only close |
 
 ## Priority 3 — sound redo, one pass with his ear
@@ -164,6 +164,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
+- S153 (2026-09-20): W-L1 — Root Cause Digger; walked, 264 presses, spine done. S152: the sentence line (doctrine; no id). S151c: I-02 (the prayer's Amen from the chorus); walked 242.
 - S151b (2026-09-20): R3-26, R3-27/32, R3-28, R3-33, R3-38, R3-40, W-E1 — Priority 2 Batch B; walked, 246 presses, spine done (`WALK_2026-09-20.md`).
 - S151 (2026-09-20): R3-13, R3-15, R3-16, R3-17, R3-19, R3-21/22, R3-24 — Priority 2 Batch A; walked, 256 presses, spine done (`WALK_2026-09-20.md`); tour frames `out/tour-e1/07–18`.
 - S150 (2026-09-19): R3-47, R3-49, R3-55, R3-69, R3-77, R3-79 (pixels), R3-96a, R3-98, R3-100, R3-113, R3-114 — walked, 223 presses, spine done.

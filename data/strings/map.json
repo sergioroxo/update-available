@@ -116,6 +116,14 @@
           "where": "the wall to your right"
         },
         {
+          "id": "rootcause",
+          "label": "Root Cause Digger",
+          "done": "rootCauseOpened",
+          "optional": true,
+          "hint": "A game came with the disk — ROOTCAUSE.EXE on the desktop. Dig, if you like.",
+          "where": "the monitor"
+        },
+        {
           "id": "update",
           "label": "The update",
           "done": "updatedTo2",

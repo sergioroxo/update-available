@@ -68,6 +68,7 @@ const CONDITIONS: Record<string, Condition> = {
     && !os.provotype && !os.packet?.open && !os.diary?.open && !os.updateArmed
     && !(os.irc?.open && os.irc.awaitingReply),
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
+  rootCauseOpened: () => ledger.records.includes('rootcause-opened'),
   packetOpen: (os) => os.packet?.open === true,
   packetAcked: () => ledger.records.includes('enrollment-acknowledged'),
   diaryOpen: (os) => os.diary?.open === true,

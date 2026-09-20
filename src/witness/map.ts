@@ -75,6 +75,7 @@ const CONDITIONS: Record<string, Condition> = {
   wentOnline: () => has('went-online'),
   formDone: () => ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
+  rootCauseOpened: () => has('rootcause-opened'),
   spokeInChannel: () => ledger.records.some((r) => r.startsWith('channel-reply:')),
   wallSeen: () => has('ministry-index-card'),
   dmAccepted: () => ledger.records.some((r) => r.startsWith('dm-request:')),

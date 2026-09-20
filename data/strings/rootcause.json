@@ -1,0 +1,77 @@
+{
+  "_doc": "ROOTCAUSE.EXE — Root Cause Digger (W-L1, his pick 2026-09-20, from `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` §1: Dig Dug). The second file on the companion disk beside lamby_rig.exe: shovelware the fellowship shipped, 1997. Register: operable — the programme's own game, so it may charm within Era 1's limits; the satire is the programme's (the diagnoses are its words) and it collapses on its own report. PRESS-ONLY (no WASD, ever): each press digs one cell beside Lamby and is one turn; the diagnoses move after every turn, through the tunnels the player dug. A diagnosis that reaches Lamby is APPLIED and goes back to its pocket; three applied and the programme writes its report. Press a diagnosis in the cell beside you to inflate it with a therapy word — three and it bursts ('it was only a word'). Two diagnoses in one cell glitch each other out ('fake labels'). Somewhere in the two deepest layers the AUTHENTIC MEMORY is buried; dig into it and the programme flags you. Both endings file to the record (`rootcause-memory:` flagged, `rootcause-report:`); leaving mid-game files nothing (unplayed media gets no response). ○ sandbox by the Progression Law: on the desktop from the disk, on the map as ○, one soft guide line, never required. Lamby is `drawLambyChar` (the same puppet as the rig file — the mascot before its debut, not charming yet).",
+  "title": "ROOTCAUSE.EXE — Root Cause Digger",
+  "icon": "rootcause.exe",
+  "intro": [
+    "Somewhere under the surface is the ROOT CAUSE",
+    "of the struggle. Dig deep. The programme will",
+    "name what you uncover.",
+    "",
+    "Press the earth beside Lamby to dig."
+  ],
+  "start": "Dig",
+  "hint": "press the earth beside Lamby to dig · press a diagnosis beside you to inflate it",
+  "layers": [
+    "Childhood",
+    "School",
+    "Father",
+    "Male friends",
+    "Anger",
+    "Shame",
+    "Desire",
+    "Body"
+  ],
+  "findings": [
+    "Childhood: you had a favourite blanket. Possible dependency root.",
+    "School: you liked drawing at age 7. Possible gender nonconformity root.",
+    "Father: he worked late. Possible father-wound root.",
+    "Male friends: you had two. Possible male-approval-hunger root.",
+    "Anger: none recorded. Possible repressed-anger root.",
+    "Shame: present. Confirms all of the above.",
+    "Desire: present. Root cause imminent.",
+    "Body: dig deeper."
+  ],
+  "diagnoses": [
+    "FATHER WOUND",
+    "REPRESSED ANGER",
+    "MALE APPROVAL HUNGER",
+    "MATERNAL ATTACHMENT",
+    "GENDER CONFUSION",
+    "EMOTIONAL DEPENDENCY"
+  ],
+  "therapyWords": [
+    "\"unmet needs\"",
+    "\"reparative\"",
+    "\"detachment\"",
+    "\"healing\"",
+    "\"legitimate needs\""
+  ],
+  "applied": "DIAGNOSIS APPLIED: {name} — possible root.",
+  "pumped": "{name}, inflated with {word}.",
+  "burst": "{name} burst. It was only a word.",
+  "glitched": "{a} met {b}. Both glitched: fake labels.",
+  "memoryFound": "AUTHENTIC MEMORY uncovered.",
+  "flag": {
+    "title": "ROOT CAUSE ERROR",
+    "lines": [
+      "Subject uncovered memory without shame filter.",
+      "Authentic childhood joy detected.",
+      "",
+      "This result has been filed."
+    ]
+  },
+  "report": {
+    "title": "ROOT CAUSE REPORT",
+    "lines": [
+      "Root causes found: {list}.",
+      "",
+      "Recommended: further sessions."
+    ]
+  },
+  "close": "Close",
+  "witness": {
+    "opened": "root cause digger opened by subject",
+    "memory": "root cause digger: authentic memory uncovered — no shame filter; flagged",
+    "report": "root cause digger: three roots applied — further sessions recommended"
+  }
+}

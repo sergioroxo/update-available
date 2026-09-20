@@ -45,3 +45,13 @@ type-checking against PlayCanvas 2.6's XR API.*
 - The pre-fiction panel itself is DOM: Enter VR is pressed from it, on the desktop, before the
   session starts. That is by design (WebXR needs the click).
 - The Quest's own menu button is the system's and cannot be used; the grip is the piece's.
+
+## Added 2026-09-20 (S152–S153) — still never worn
+- **The sentence line.** In the headset the controller's ray names what it rests on, on the hint
+  plane's first line (`aimNameUnderRay`, `xrFrame.setHint`). Check: point at a tape on the shelf —
+  "◈ companion tape (a prayer)"; at the racket; at a floor marker — "move: …". Over the monitor it
+  says nothing (the screen names its own). The helper's line returns when the ray rests on nothing.
+- **ROOTCAUSE.EXE.** A window on the 1997 monitor; every press is one turn (the trigger through
+  `resolveTapRay` → `os.handleClick`). Cells are 30×26 logical px — at the seat's distance that is
+  the smallest target in the piece so far; if the trigger misses cells, the fix is bigger cells
+  (`CELL_W/CELL_H` in `src/desktop/apps/rootCause.ts`), not a different input.

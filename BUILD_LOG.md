@@ -1305,3 +1305,23 @@ The breath stays only while the system points. Strings in `data/strings/aim.json
 dispatched hovers: disk, tapes, racket, the playing boombox (the caption wins). Walked: 249 presses,
 spine done (a regression guard — the walker does not hover).
 Doctrine, restated for `CLAUDE.md`'s next edit: the world answers the look; the system alone lifts.
+
+## 2026-09-20 — S153 · ROOT CAUSE DIGGER
+His pick for Lamby's 1997 game (W-L1): Dig Dug → **Root Cause Digger**, from his own design. A second
+file on the companion disk beside `lamby_rig.exe` — ROOTCAUSE.EXE, the fellowship's shovelware.
+Lamby digs down through the layers of a life (Childhood · School · Father · Male friends · Anger ·
+Shame · Desire · Body) because the programme says the root cause is buried there; each layer's
+"finding" is absurder than the last and the deepest is "dig deeper". The things that chase him are
+DIAGNOSES (his six); one that reaches him is APPLIED and three make the programme's report
+("Recommended: further sessions"). Press one beside you to inflate it with a therapy word until it
+bursts ("it was only a word"); two in one cell glitch each other out ("fake labels"). In the two
+deepest layers the AUTHENTIC MEMORY is buried, and uncovering it is the one thing the programme
+flags — ROOT CAUSE ERROR, "authentic childhood joy detected", filed to the wall in the flagged
+colour. **Press-only, turn-based**: every press digs one cell beside Lamby and the diagnoses move
+after it, through the tunnels dug (now and then straight through the earth). ○ sandbox by the law:
+on the desktop from the moment the disk is in, ○ on the map, one soft guide line ("a game came with
+the disk"), leavable at any moment, never required; leaving mid-game files nothing. Played by hand
+to both endings; the tour opens it (`look-rootcause`). Walked twice: the first time the walker opened
+it, started and closed — the close box was the first control registered, so a walk never played it;
+the close box is registered last now, and the second walk dug fourteen turns and pumped a diagnosis
+before moving on — 264 presses, spine done. **closes W-L1.**

@@ -71,6 +71,10 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   if (id === 'tape-played') return { kind: 'tapes', outcome: 'played', flagged: false };
   if (id === 'subject-migrated') return { kind: 'arrival', outcome: 'migrated', flagged: false };
   if (id === 'lamby-rig-opened') return { kind: 'assistant', outcome: 'opened', flagged: false };
+  // S153 — the game on the disk: opened, and its two endings
+  if (id === 'rootcause-opened') return { kind: 'kit', outcome: 'opened', flagged: false };
+  if (id.startsWith('rootcause-memory:')) return { kind: 'kit', outcome: 'uncovered', flagged: true };
+  if (id.startsWith('rootcause-report:')) return { kind: 'kit', outcome: 'reported', flagged: false };
   return { kind: 'provotype', outcome: 'filed', flagged: false };
 }
 

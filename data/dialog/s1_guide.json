@@ -115,6 +115,18 @@
         "followed": "guidance: racket — followed",
         "declined": "guidance: racket — no response"
       }
+    },
+    {
+      "id": "rootcause",
+      "soft": true,
+      "trigger": "roomQuiet",
+      "done": "rootCauseOpened",
+      "expire": "eraShifted",
+      "text": "a game came with the disk. ROOTCAUSE.EXE.",
+      "witness": {
+        "followed": "guidance: game — opened",
+        "declined": "guidance: game — no response"
+      }
     }
   ]
 }
