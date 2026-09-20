@@ -96,14 +96,14 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 ## Priority 5 — Era 3's devices
 | id | item | status |
 |---|---|---|
-| R3-66 | Lambient "Not now" sticker; one clock for phone + workstation | OPEN |
-| R3-70 | Corrections per story 7 → 3 | OPEN |
-| R3-71 | Noa's video: a real player, labelled | OPEN |
+| R3-66 | ~~Lambient "Not now" sticker; one clock for phone + workstation~~ | DONE — S158 · the "not yet available" sticker on Not now (it still works); one clock, 9:41 at sign-in, both faces |
+| R3-70 | ~~Corrections per story 7 → 3~~ | DONE — S158 · Renata: soften the term · clip for the broadcast · route for mentorship |
+| R3-71 | ~~Noa's video: a real player, labelled~~ | DONE — S158 · the player a third bigger, a Play/Pause button beside it |
 | R3-72 | ~~The phone on a stand~~ | DONE — S149 · the dock (`w_phoneStand`) |
-| R3-74 | "Back to today" at the bottom of a finished job | OPEN |
-| R3-78 | Phone home screen: Messages, the platform, FloppySheep | OPEN |
+| R3-74 | ~~"Back to today" at the bottom of a finished job~~ | DONE — S158 · a finished story holds: Back to today / Next story |
+| R3-78 | ~~Phone home screen: Messages, the platform, FloppySheep~~ | DONE — S158 · the platform's tile, Messages with the group's thread first, FloppySheep |
 | R3-81 | ~~A line to look at the phone; you can put it down~~ | DONE — S149 · Lambient: "Your phone's lit…" / "…you can always put it down." |
-| R3-82 | Era 3 beats gate on the previous being seen | OPEN |
+| R3-82 | ~~Era 3 beats gate on the previous being seen~~ | DONE — S158 · one job → the phone; the map's 2016 beats as the flow of record; walked 262 |
 
 ## Priority 6 — Era 4's program as a conversation with L
 | id | item | status |
@@ -164,6 +164,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
+- S158 (2026-09-20): R3-66, R3-70, R3-71, R3-74, R3-78, R3-82 — Priority 5; walked, 262 presses, spine done (all four stories met).
 - S157 (2026-09-20): R3-41, R3-44, R3-50, R3-51, R3-52/75, R3-58/59, R3-62 — Priority 4 batch B; walked, 261 presses, spine done.
 - S156 (2026-09-20): R3-45, R3-46/86, R3-60, R3-48 (bar the bar's length) — Priority 4 batch A; his boot notes (the machine heard on the way down, the OS splash + chime); walked, 259 presses, spine done.
 - S155 (2026-09-20): R3-08, R3-14, R3-25, R3-36, R3-43/63 (sound), R3-68, R3-85, R3-88, R3-102, W-G1; R3-02 and R3-110 built, his to hear; R3-48/64 partial; his ask: the prayer tape's intro cut — walked, 258 presses, spine done.

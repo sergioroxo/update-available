@@ -62,7 +62,7 @@ const HOME = m.home as unknown as Record<string, string>;
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
 type Stage = 'quiet' | 'first' | 'voted' | 'cascade' | 'after';
-type Screen = 'lock' | 'home' | 'group' | 'inbox';
+type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform';
 /** Lambient's card, and it is the same card whichever way she got here */
 type Card = null | 'opened' | 'ignored';
 
@@ -87,7 +87,9 @@ export class PhoneE3 {
   private readMessages = new Set<string>();
   private rects: Rect[] = [];
 
-  constructor(private readonly opts: { onLift(): void; floppyOpen(): boolean }) {}
+  /** S158 / R3-66: the phone's clock is the workstation's — one clock for the room */
+  constructor(private readonly opts: { onLift(): void; floppyOpen(): boolean; clock?: () => string }) {}
+  private get clockText(): string { return this.opts.clock ? this.opts.clock() : d.phone.lockClock; }
 
   private bump(): void { this.version++; }
 
@@ -177,6 +179,7 @@ export class PhoneE3 {
     ctx.fillRect(0, 0, W, H);
     if (this.screen === 'lock') { this.drawLock(ctx, W, H); }
     else if (this.screen === 'group') { this.drawGroup(ctx, W, H); }
+    else if (this.screen === 'platform') { this.drawPlatform(ctx, W, H); }
     else if (this.screen === 'inbox') { this.drawInbox(ctx, W, H); }
     else { this.drawHome(ctx, W, H); }
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
@@ -190,11 +193,11 @@ export class PhoneE3 {
    *  panel bolted to the bottom of a black rectangle. */
   private drawLock(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     wallpaper(ctx, W, H);
-    statusBar(ctx, W, d.phone.lockClock);
+    statusBar(ctx, W, this.clockText);
     phoneFont(ctx, 40, 400);
     ctx.fillStyle = PHONE.surface;
-    const cw = ctx.measureText(d.phone.lockClock).width;
-    ctx.fillText(d.phone.lockClock, Math.round((W - cw) / 2), 52);
+    const cw = ctx.measureText(this.clockText).width;
+    ctx.fillText(this.clockText, Math.round((W - cw) / 2), 52);
     phoneFont(ctx, 11);
     const dw = ctx.measureText(d.phone.lockDate).width;
     ctx.fillText(d.phone.lockDate, Math.round((W - dw) / 2), 100);
@@ -247,7 +250,7 @@ export class PhoneE3 {
    *  only one of them wants anything from her. */
   private drawHome(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     wallpaper(ctx, W, H);
-    statusBar(ctx, W, d.phone.lockClock);
+    statusBar(ctx, W, this.clockText);
 
     // ⚑ the at-a-glance card, and it is quietly the worst line on the device:
     //   "No events today", on the day the era ends.
@@ -267,12 +270,16 @@ export class PhoneE3 {
     const col = (i: number): number => gap + i * (s + gap);
     const rowY = (r: number): number => 84 + r * (s + 22);
 
-    appTile(ctx, col(0), rowY(0), s, PHONE.tileGroup, 'chat', HOME.shortGroup,
-      unread ? String(unread) : '');
-    this.rects.push({ x: col(0), y: rowY(0), w: s, h: s + 12, id: 'group' });
+    // ⚑ S158 / R3-78 (Sérgio: "I need the home screen and a Messages app to enter the chat"):
+    //   the first tile is THE PLATFORM's own app (it says she is signed in on the workstation
+    //   and sends her back to it); the group is reached through MESSAGES, where its thread
+    //   sits at the top with its unread count over the backlog.
+    appTile(ctx, col(0), rowY(0), s, PHONE.tileGroup, 'chat', HOME.shortPlatform, '');
+    this.rects.push({ x: col(0), y: rowY(0), w: s, h: s + 12, id: 'platform' });
 
+    const unreadAll = unread + unreadMail;
     appTile(ctx, col(1), rowY(0), s, PHONE.tileMail, 'mail', m.home.messagesLabel,
-      unreadMail ? String(unreadMail) : '');
+      unreadAll ? String(unreadAll) : '');
     this.rects.push({ x: col(1), y: rowY(0), w: s, h: s + 12, id: 'inbox' });
 
     // ⚑ FloppySheep gets its OWN icon — the sheep on its hill under its sky,
@@ -337,7 +344,7 @@ export class PhoneE3 {
    *  placeholder showing. Nothing points at this and nothing ever mentions it. */
   private drawGroup(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
-    const y0 = statusBar(ctx, W, d.phone.lockClock);
+    const y0 = statusBar(ctx, W, this.clockText);
     let top = appBar(ctx, W, y0, m.group.name, m.group.meta);
 
     const counted = this.stage === 'cascade' || this.stage === 'after';
@@ -454,8 +461,26 @@ export class PhoneE3 {
    *  of her. Drawn as a conversation LIST, with unread dots. */
   private drawInbox(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
-    const y0 = statusBar(ctx, W, d.phone.lockClock);
+    const y0 = statusBar(ctx, W, this.clockText);
     let y = appBar(ctx, W, y0, m.home.messagesLabel);
+    // S158 / R3-78 — the group's thread, first: the way into the chat is a thread like any other
+    {
+      const unread = this.stage === 'first' ? MALTA_ONE.length
+        : this.stage === 'voted' ? MALTA_TWO.length : 0;
+      const h = 48;
+      ctx.fillStyle = PHONE.surface; ctx.fillRect(0, y, W, h);
+      if (unread) { ctx.fillStyle = PHONE.tint; ctx.beginPath(); ctx.arc(10, y + 14, 3, 0, Math.PI * 2); ctx.fill(); }
+      avatar(ctx, 18, y + 5, 24, m.home.groupLabel);
+      phoneFont(ctx, 11, 600);
+      ctx.fillStyle = PHONE.ink;
+      ctx.fillText(m.home.groupLabel, 48, y + 5);
+      phoneFont(ctx, 10);
+      ctx.fillStyle = unread ? PHONE.ink : PHONE.dim;
+      ctx.fillText(unread ? m.home.groupUnread.replace('{n}', String(unread)) : m.home.groupQuiet, 48, y + 22);
+      ctx.fillStyle = PHONE.hairline; ctx.fillRect(48, y + h - 1, W - 48, 1);
+      this.rects.push({ x: 0, y, w: W, h, id: 'group' });
+      y += h;
+    }
     for (const b of BACKLOG) {
       const open = this.readMessages.has(b.from + b.time);
       phoneFont(ctx, 10);
@@ -541,7 +566,8 @@ export class PhoneE3 {
         this.screen = 'inbox';
         ledger.checkins.push({ id: 'e3_backlog', witness: m.witness.backlogOpened });
         this.bump(); return true;
-      case 'back': this.screen = 'home'; this.bump(); return true;
+      case 'back': this.screen = this.screen === 'group' ? 'inbox' : 'home'; this.bump(); return true;   // S158: the chat goes back to Messages
+      case 'platform': this.screen = 'platform'; this.bump(); return true;
       case 'dismiss': this.dismissCard(); return true;
       case 'link': case 'link2': this.openLink(); return true;
       // ⚑ the stream has no verb. Pressing it is consumed and does nothing,
@@ -585,6 +611,17 @@ export class PhoneE3 {
         this.bump();
         break;
     }
+  }
+
+  /** S158 / R3-78 — the platform's own app on the phone: a card that says where the work is */
+  private drawPlatform(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
+    const y0 = statusBar(ctx, W, this.clockText);
+    const y = appBar(ctx, W, y0, m.home.platformLabel);
+    phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.ink;
+    ctx.fillText(m.home.platformHello, 14, y + 20);
+    phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
+    phoneWrap(ctx, m.home.platformNote, W - 28).forEach((ln, i) => ctx.fillText(ln, 14, y + 40 + i * 13));
   }
 
   private openGroup(): void {

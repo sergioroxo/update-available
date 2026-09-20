@@ -167,7 +167,7 @@ interface SubmissionDef {
   text: string;
   /** a submission that came in as a recording rather than as writing. Noa's
    *  is the only one, and her own first line has always said so. */
-  video?: { label: string; duration: string; beforeLabel: string };
+  video?: { label: string; duration: string; beforeLabel: string; play?: string; pause?: string };
   /** S154 — a submission that came in as a DIAGRAM: her four lines on one body */
   diagram?: { label: string; beforeLabel: string; lines: string[]; houseLine: string };
   corrections: number[];
@@ -188,7 +188,8 @@ const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c
 /** ⚑ how many BOARD TILES go grey before Bea's first message arrives.
  *  ERA3_NARRATIVE.md §5 step 2–3: "2–3 tasks, her choice, from the board".
  *  Kept in step with `spine.ts`'s own E3 gate, which reads the same ledger. */
-const MALTA_AFTER_TASKS = 2;
+/** S158 / R3-82 — NARRATIVE_FLOW 2016 #5→#6: ONE job done, then the phone (was 2) */
+const MALTA_AFTER_TASKS = 1;
 
 type Outcome = 'applied' | 'skipped';
 
@@ -272,7 +273,8 @@ const CARET_SECONDS = 0.53;
  *  is the same picture at half that. `TRANSPORT_H` is reserved whether or not
  *  the preset has been applied, so applying it never shoves her card down the
  *  screen — only the lane fills. */
-const PLAYER_S = 1;
+/** S158 / R3-71 (Sérgio: 'impossible to understand the attached video; can't play it'): bigger */
+const PLAYER_S = 1.3;
 const PLAYER_W = NOA_FRAME.w * PLAYER_S;
 const PLAYER_H = NOA_FRAME.h * PLAYER_S;
 /** the ungraded frame that stays beside it — the same picture, half the size */
@@ -342,8 +344,19 @@ export class GraceQueueLite {
    *  because the room's light is this class's wire, not the phone's. */
   readonly phone = new PhoneE3({
     onLift: () => { if (!this.liftFired) this.liftT = 0; },
-    floppyOpen: () => this.floppy.open
+    floppyOpen: () => this.floppy.open,
+    clock: () => this.clockText()
   });
+  /** S158 / R3-66 — ONE CLOCK for the phone and the workstation: 9:41 at sign-in, ticking a
+   *  minute a minute, both faces reading it. (The stated day stays the phone's lock date.) */
+  private dayT = 0;
+  private clockMinute = -1;
+  private clockText(): string {
+    const base = q.app.clockStart as string;
+    const [h, m] = base.split(':').map(Number);
+    const total = h * 60 + m + Math.floor(this.dayT / 60);
+    return `${Math.floor(total / 60) % 24}:${String(total % 60).padStart(2, '0')}`;
+  }
 
   /**
    * ⚑ S116 — the idle clock, and it is the ONLY thing in this class that runs
@@ -387,6 +400,8 @@ export class GraceQueueLite {
   private arrivalT = -1;   // < 0 = not running
   private lastTick = -1;
   private subIdx = 0;
+  /** S158 / R3-74: the open story is finished and holding — Back to today / Next story */
+  private storyDone = false;
   private decisions = new Map<number, Outcome>();
   private rects: Rect[] = [];
   private lambLine: string;
@@ -441,6 +456,12 @@ export class GraceQueueLite {
   /** called every frame by era3Devices.tick — see the class header on why this
    *  does not break the dirty-upload law */
   update(dt: number): void {
+    // S158: the one clock — both faces re-upload only when the minute turns
+    if (this.mode !== 'dark' && this.mode !== 'boot' && this.mode !== 'install') {
+      this.dayT += dt;
+      const minute = Math.floor(this.dayT / 60);
+      if (minute !== this.clockMinute) { this.clockMinute = minute; this.bump(); this.phoneV++; }
+    }
     if (this.mode === 'dark') {
       const before = this.idleT;
       this.idleT += dt;
@@ -646,6 +667,7 @@ export class GraceQueueLite {
   beginList(): void {
     if (this.mode !== 'signin') return;
     playOnce('login_2016.mp3');   // S141: Vera signs in
+    if (!ledger.records.includes('e3-signed-in')) ledger.records.push('e3-signed-in');   // S158: the map's beat
     this.mode = this.consent ? 'board' : 'consent';
     if (this.mode === 'board') this.seenBoard = true;
     this.bump();
@@ -817,7 +839,15 @@ export class GraceQueueLite {
       outcome,
       witness: outcome === 'applied' ? item.witnessApplied : item.witnessSkipped
     });
-    if (!this.current()) this.nextSubmission();
+    if (!this.current()) {
+      // S158 / R3-74 (Sérgio: "when I finish a section there should be a button at the bottom
+      // to go back to the panel"): the story HOLDS, finished, with the way back and the way on
+      // — nothing loads by itself. The break arms here, as before.
+      this.storyDone = true;
+      if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
+      if (this.workDone() >= MALTA_AFTER_TASKS) this.armMalta();
+      if (this.completedCount() >= this.tasks().length && !ledger.records.includes('e3-day-done')) ledger.records.push('e3-day-done');
+    }
     this.bump();
   }
 
@@ -841,6 +871,7 @@ export class GraceQueueLite {
    *  The work does not pause for it: the board returns in the same instant the
    *  phone lights up. She is still holding the day when it arrives. */
   private nextSubmission(): void {
+    this.storyDone = false;
     if (this.workDone() >= MALTA_AFTER_TASKS) this.armMalta();
     // still stories in this job → the next one loads, because that IS the job
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
@@ -985,7 +1016,7 @@ export class GraceQueueLite {
     if (this.mode === 'boot') { this.drawBoot(ctx, W, H); return; }
     if (this.mode === 'install') { this.drawInstall(ctx, W, H); return; }
     aero.wallpaper(ctx, W, H);
-    aero.taskbar(ctx, W, H, '9:41'); // period placeholder clock, matches the phone's lock-screen clock
+    aero.taskbar(ctx, W, H, this.clockText()); // S158: the room's one clock, the phone reads the same
     // ⚑ MAXIMISED, NOT WINDOWED — 2026-08-24, Sérgio: "It should be maximized."
     //   It used to float with a 14 px margin all round and the wallpaper showing
     //   through, which is how a machine looks when someone is BROWSING. This is
@@ -1348,6 +1379,10 @@ export class GraceQueueLite {
     //   not greyed, not slower: it is a real button that really works.
     const bw = 120; const bh = 26; const by = c.y + c.h - bh - 8;
     aero.button(ctx, cx + cw - bw * 2 - 12, by, bw, bh, LAMBIENT.consentDecline);
+    // ⚑ S158 / R3-66 (Sérgio: 'Not now needs a sticker — "not yet available"'): the platform's
+    //   own sticker on the option it would rather you did not take. The button still works
+    //   — the dismissal law — and the sticker is the era telling on itself.
+    aero.tag(ctx, cx + cw - bw * 2 - 12 + bw - 4, by - 8, LAMBIENT.consentDeclineSticker, ERA3.ink, ERA3.amber);
     aero.button(ctx, cx + cw - bw, by, bw, bh, LAMBIENT.consentAllow, { primary: true });
     this.rects.push({ x: cx + cw - bw * 2 - 12, y: by, w: bw, h: bh, id: 'consent-decline' });
     this.rects.push({ x: cx + cw - bw, y: by, w: bw, h: bh, id: 'consent-allow' });
@@ -1510,7 +1545,7 @@ export class GraceQueueLite {
 
   private drawVideo(
     ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
-    sub: SubmissionDef, video: { label: string; duration: string; beforeLabel: string }
+    sub: SubmissionDef, video: { label: string; duration: string; beforeLabel: string; play?: string; pause?: string }
   ): void {
     const graded = this.graded(sub);
     px(ctx, x - 1, y - 1, PLAYER_W + 2, PLAYER_H + 2, ERA3.greyDk);
@@ -1519,10 +1554,14 @@ export class GraceQueueLite {
     this.rects.push({ x, y, w: PLAYER_W, h: PLAYER_H, id: 'video' });
 
     // the column beside the player: what the file is, and — once it has been
-    // graded — what it was.
+    // graded — what it was. ⚑ S158 / R3-71: and a PLAY button that reads as one — the
+    // transport's glyph was the only control and nobody found it.
     const x2 = x + PLAYER_W + 12;
     setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
     wrapText(ctx, video.label, x + w - x2).slice(0, 1).forEach(ln => ctx.fillText(ln, x2, y));
+    const pbw = 64; const pby = y + PLAYER_H - 22;
+    aero.button(ctx, x2, pby, pbw, 20, this.playing ? (video.pause ?? 'Pause') : (video.play ?? 'Play'), { primary: !this.playing, size: 10 });
+    this.rects.push({ x: x2, y: pby, w: pbw, h: 20, id: 'video' });
     if (graded) {
       px(ctx, x2 - 1, y + 15, THUMB_W + 2, THUMB_H + 2, ERA3.glassEdge);
       drawNoaFrame(ctx, x2, y + 16, THUMB_S);
@@ -1670,6 +1709,24 @@ export class GraceQueueLite {
       ry += 16;
       if (ry > y + h - 12) break;
     }
+    // S158 / R3-74 — the story is finished: it holds, and the two ways out sit at the
+    // bottom of the column: back to the day, or the next story (if there is one)
+    if (this.storyDone && !current) {
+      const by = y + h - 36; const bh = 26;
+      const next = SUBMISSIONS.some(sb => !this.subComplete(sb));
+      setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+      ctx.fillText(q.app.storyDone, x, by - 18);
+      if (next) {
+        const bw = Math.round((w - 10) / 2);
+        aero.button(ctx, x, by, bw, bh, q.app.boardBack, { size: 11 });
+        this.rects.push({ x, y: by, w: bw, h: bh, id: 'board-back' });
+        aero.button(ctx, x + bw + 10, by, bw, bh, q.app.nextStory, { primary: true, size: 11 });
+        this.rects.push({ x: x + bw + 10, y: by, w: bw, h: bh, id: 'next-story' });
+      } else {
+        aero.button(ctx, x, by, w, bh, q.app.boardBack, { primary: true, size: 11 });
+        this.rects.push({ x, y: by, w, h: bh, id: 'board-back' });
+      }
+    }
   }
 
   /** the one open item: the rule, one line of rationale, the two references,
@@ -1798,7 +1855,8 @@ export class GraceQueueLite {
     if (r.id === 'consent-wake') { this.toggleWakeWord(); return; }
     if (r.id === 'consent-allow') { this.decideConsent(true); return; }
     if (r.id === 'consent-decline') { this.decideConsent(false); return; }
-    if (r.id === 'board-back') { this.backToBoard(); return; }
+    if (r.id === 'board-back') { this.storyDone = false; this.backToBoard(); return; }
+    if (r.id === 'next-story') { this.nextSubmission(); this.bump(); return; }
     if (r.id === 'record-chip') { this.openRecordFromChip(); return; }
     if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }
     if (this.openSurface && this.openSurface.press(r.id)) { this.bump(); return; }

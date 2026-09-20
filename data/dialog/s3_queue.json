@@ -9,7 +9,10 @@
   "signInGreeting": "Welcome back, Vera.",
   "signInSub": "Sign in to continue.",
   "signInButton": "Sign in",
+  "clockStart": "9:41",
   "listHeading": "CORRECTIONS",
+  "storyDone": "This story is done.",
+  "nextStory": "Next story",
   "counter": "{n} of {m} applied",
   "doneHeading": "You're caught up.",
   "doneSub": "No new stories waiting right now.",
@@ -83,6 +86,7 @@
   "consentWakeWord": "Let Lambient answer when you say “Lamby”.",
   "consentAllow": "Allow",
   "consentDecline": "Not now",
+  "consentDeclineSticker": "not yet available",
   "acceptReply": "Lovely. I'll keep the room gentle.",
   "declineReply": "That's alright. I'll keep the room tidy either way.",
   "firstBoard1": "This is today. Open anything — they're all the same size to me.",
@@ -101,13 +105,10 @@
    "text": "I don't have a tidy version of this. I was nineteen when I stopped calling myself a lesbian, and I still don't know if I stopped because I believed it or because the room went quiet whenever I said it. My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself. I don't know what that minute means yet.",
    "corrections": [
     1,
-    2,
     3,
-    4,
-    5,
-    6,
     7
-   ]
+   ],
+   "_docS158": "S158 / R3-70 (Sérgio: 'the first testimony should be ~3 presses; too many per file'): seven → three. Kept: 1 soften the term (the era's vocabulary), 3 clip for the broadcast (the Story job's in-point reads correction 3's `edit.find`, so it stays on her), 7 route for mentorship (the day's last act on her). Corrections 2, 4, 5 and 6 stay defined below and unassigned — a later story may carry them."
   },
   {
    "id": 2,
@@ -116,7 +117,9 @@
    "video": {
     "label": "attached video",
     "duration": "0:24",
-    "beforeLabel": "as sent"
+    "beforeLabel": "as sent",
+    "play": "Play",
+    "pause": "Pause"
    },
    "corrections": [
     13,

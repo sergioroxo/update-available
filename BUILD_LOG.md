@@ -1421,3 +1421,22 @@ room, the messenger, the attachment and the player, the network failing. Walked:
 spine done (the walker's Era 2 path runs Lamby → the check-in → the summons → the update and
 never the messenger, as it always has; the messenger's beats are proved by hand).
 **closes R3-41, R3-44, R3-50, R3-51, R3-52/75, R3-58/59, R3-62.**
+
+## 2026-09-20 — S158 · PRIORITY 5: ERA 3'S DEVICES
+**R3-82** — the Progression Law applied to 2016, as the flow of record has it: sign in → Lambient's
+question → the board → ONE job to its end → the phone (it armed after two before; NARRATIVE_FLOW
+#5→#6 says one) → the vote → the cascade; the other jobs and the record stay ○. The map's 2016
+beats are those now (sign in · Lambient's question · one job done · the other jobs ○ · the phone ·
+the vote · the cascade). **R3-74** — a finished story HOLDS: "This story is done." with *Back to
+today* and *Next story* at the bottom of the column; nothing loads by itself. **R3-70** —
+Renata's corrections are three (soften the term · clip for the broadcast · route for mentorship);
+the other four stay defined, unassigned. **R3-66** — Lambient's *Not now* wears the platform's own
+sticker, "not yet available" (and still works: the dismissal law); the phone and the workstation
+read ONE clock — 9:41 at sign-in, ticking a minute a minute on both faces. **R3-71** — Noa's video
+is a third bigger and has a *Play / Pause* button that reads as one, beside the frame. **R3-78** —
+the phone's home screen: the first tile is the platform's own app (a card: signed in on the
+workstation), *Messages* carries the group's thread at the top with its unread count over the
+backlog and is the way into the chat; FloppySheep and the stream stay. Verified by hand at Vera's
+workstation and on the phone. Walked: 262 presses, spine done — and with the finished story holding
+instead of loading the next, the walker worked all four stories (Marisol included) before the phone.
+**closes R3-66, R3-70, R3-71, R3-74, R3-78, R3-82.**

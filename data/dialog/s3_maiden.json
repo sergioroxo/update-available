@@ -258,7 +258,14 @@
   "fPhotos": "Photos",
   "fWeather": "Weather",
   "fNotes": "Notes",
-  "fFiles": "Files"
+  "fFiles": "Files",
+  "shortPlatform": "Grace",
+  "platformLabel": "GracePlatform",
+  "platformHello": "Signed in on your workstation.",
+  "platformNote": "Today's board is open there. The phone keeps your messages.",
+  "groupUnread": "{n} new messages",
+  "groupQuiet": "No new messages",
+  "_docS158": "S158 / R3-78: the home screen's first tile is the platform's app (a card: signed in on the workstation), Messages carries the group's thread at the top with its unread count, and the chat's back goes to Messages."
  },
  "witness": {
   "groupOpened": "phone: group opened — Maiden-to-be",

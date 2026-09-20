@@ -210,16 +210,23 @@
         },
         {
           "id": "signin",
-          "label": "Sign-in, and the assistant's question",
+          "label": "Sign in",
+          "done": "signedIn",
+          "hint": "Sign in on the workstation.",
+          "where": "the workstation"
+        },
+        {
+          "id": "consent",
+          "label": "Lambient's question",
           "done": "consentAnswered",
-          "hint": "Sign in, then answer the assistant's question — either answer works.",
+          "hint": "Answer the assistant's question — either answer works.",
           "where": "the workstation"
         },
         {
           "id": "work",
-          "label": "The correction queue",
-          "done": "correctionsStarted",
-          "hint": "Open a task on the board and work through it — apply or skip, your choice.",
+          "label": "One job done",
+          "done": "oneJobDone",
+          "hint": "Open a task on the board and work through it — apply or skip, your choice — to its end.",
           "where": "the workstation"
         },
         {
@@ -231,11 +238,26 @@
           "where": "the workstation"
         },
         {
+          "id": "jobs",
+          "label": "The other jobs",
+          "done": "allJobsDone",
+          "optional": true,
+          "hint": "The board has more — in any order, or none.",
+          "where": "the workstation"
+        },
+        {
           "id": "phone",
           "label": "The phone",
           "done": "phoneAnswered",
           "hint": "Pick up the phone — it has a message. Unlock it and open the thread.",
           "where": "the phone on the desk — look down, a little to your left"
+        },
+        {
+          "id": "vote",
+          "label": "The vote",
+          "done": "voted",
+          "hint": "The group's link on the phone — open it, and the second one that follows.",
+          "where": "the phone"
         },
         {
           "id": "cascade",
