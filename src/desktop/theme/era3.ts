@@ -696,3 +696,63 @@ export function field(
     ctx.fillText(text, x + 6, y + Math.round((h - 11) / 2));
   }
 }
+
+/**
+ * ⚑ S154 — THE MEMBER'S FIGURE (I-01). An invented person-diagram in the genre
+ * the 2010s made familiar — one outline of a body with several labelled lines
+ * drawn to it — as a member posted it, and as the house redraws it. `lines`
+ * are her four labels (attraction · identity · expression · body), each with
+ * its own mark on the body: the heart, the head, the clothes, the whole
+ * outline. `house` draws the platform's version instead: the same outline,
+ * one line, one label. Nothing here comments on either; the two are what the
+ * card shows and the correction chooses between. Rose for hers (a real person
+ * speaking), the tool's blue for the house's. `s` is device px per unit; the
+ * figure with its label column is 140 × 100 units.
+ */
+export const MEMBER_FIGURE = { w: 140, h: 100 } as const;   // the body and its label column
+export function drawMemberFigure(
+  ctx: CanvasRenderingContext2D, x: number, y: number, s: number,
+  opts: { lines: string[]; house: boolean; houseLine: string }
+): void {
+  const P = (ux: number, uy: number, uw: number, uh: number, c: string): void =>
+    px(ctx, x + ux * s, y + uy * s, Math.max(1, uw * s), Math.max(1, uh * s), c);
+  const body = opts.house ? ERA3.lambTag : ERA3.rose;
+  const bx = 30;   // the outline's left edge
+  // the outline: head, neck, torso, arms, legs — a gingerbread silhouette in bands
+  P(bx + 10, 4, 12, 12, body);          // head
+  P(bx + 14, 16, 4, 3, body);           // neck
+  P(bx + 4, 19, 24, 26, body);          // torso
+  P(bx - 4, 21, 8, 16, body);           // arms
+  P(bx + 28, 21, 8, 16, body);
+  P(bx + 6, 45, 8, 24, body);           // legs
+  P(bx + 18, 45, 8, 24, body);
+  // the face, in the band colour's own light
+  P(bx + 13, 8, 2, 2, ERA3.white); P(bx + 17, 8, 2, 2, ERA3.white);
+  P(bx + 14, 12, 4, 1, ERA3.white);
+  setFont(ctx, Math.max(6, Math.round(7 * s)));
+  if (opts.house) {
+    // one line, down the whole figure, one label — the house's picture
+    P(bx + 15, 2, 1, 70, ERA3.white);
+    P(bx + 15, 2, 1, 70, ERA3.glassEdge);
+    P(bx + 34, 36, 14, 1, ERA3.lambTag);
+    ctx.fillStyle = ERA3.lambTag;
+    ctx.fillText(opts.houseLine, x + (bx + 50) * s, y + 32 * s);
+    return;
+  }
+  // her four lines: each mark on the body, a leader to the right, her word
+  const marks: [number, number, string][] = [
+    [bx + 12, 28, opts.lines[0] ?? ''],   // the heart — attraction
+    [bx + 16, 10, opts.lines[1] ?? ''],   // the head — identity
+    [bx + 30, 30, opts.lines[2] ?? ''],   // the sleeve — expression
+    [bx + 22, 56, opts.lines[3] ?? '']    // the leg — body
+  ];
+  marks.forEach(([mx, my, word], i) => {
+    P(mx - 1, my - 1, 3, 3, ERA3.white);
+    const ly = 8 + i * 22;
+    P(mx + 2, my, 40 - (mx - bx) + 8, 1, ERA3.rose);         // out to the margin
+    P(bx + 48, Math.min(my, ly), 1, Math.abs(ly - my) + 1, ERA3.rose);
+    P(bx + 48, ly, 6, 1, ERA3.rose);
+    ctx.fillStyle = ERA3.rose;
+    ctx.fillText(word, x + (bx + 56) * s, y + (ly - 3) * s);
+  });
+}

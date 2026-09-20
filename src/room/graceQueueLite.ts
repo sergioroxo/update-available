@@ -108,7 +108,7 @@
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
 import {
-  ERA3, drawLambMark, warmGrade, drawNoaFrame, honestLight, NOA_FRAME, NOA_SECONDS
+  ERA3, drawLambMark, warmGrade, drawNoaFrame, honestLight, NOA_FRAME, NOA_SECONDS, drawMemberFigure, MEMBER_FIGURE
 } from '../desktop/theme/era3';
 import { drawE3Idle, drawSpinner, e3SpinnerStep } from '../desktop/apps/bootSplash';
 import { ledger } from '../state/ledger';
@@ -154,6 +154,9 @@ interface CorrectionDef {
    *  not craft); `note` is what the panel says it does, and is the one place
    *  this item is allowed to charm. See `s3_queue.json`'s `_docVideo`. */
   grade?: { preset: string; note: string };
+  /** ⚑ S154, correction 14 only: the correction that redraws a member's PICTURE
+   *  — her four-line figure becomes the house's one-line one (I-01). */
+  figure?: { preset: string; note: string };
   witnessApplied: string;
   witnessSkipped: string;
 }
@@ -165,6 +168,8 @@ interface SubmissionDef {
   /** a submission that came in as a recording rather than as writing. Noa's
    *  is the only one, and her own first line has always said so. */
   video?: { label: string; duration: string; beforeLabel: string };
+  /** S154 — a submission that came in as a DIAGRAM: her four lines on one body */
+  diagram?: { label: string; beforeLabel: string; lines: string[]; houseLine: string };
   corrections: number[];
 }
 
@@ -276,6 +281,12 @@ const THUMB_W = NOA_FRAME.w * THUMB_S;
 const THUMB_H = NOA_FRAME.h * THUMB_S;
 const TRANSPORT_H = 28;
 const VIDEO_BLOCK_H = PLAYER_H + 4 + TRANSPORT_H;
+/** S154 — the member's figure block: 1.1 units per px, a thumb at half */
+const FIGURE_S = 1.1;
+const FIGURE_THUMB_S = 0.55;
+const FIGURE_W = Math.round(MEMBER_FIGURE.w * FIGURE_S) + 8;
+const FIGURE_H = Math.round(MEMBER_FIGURE.h * FIGURE_S) + 8;
+const FIGURE_BLOCK_H = FIGURE_H;
 /** her voice, as any 2016 editor would draw it: bursts with gaps in them. She
  *  said the true parts first in case she ran out of nerve, and then stopped.
  *  Authored, not random — the pauses are the composition. */
@@ -611,6 +622,10 @@ export class GraceQueueLite {
   /** has the house look been applied to this submission's picture? */
   private graded(sub: SubmissionDef): boolean {
     return this.items(sub).some(c => c.grade && this.decisions.get(c.id) === 'applied');
+  }
+  /** S154 — has the design figure been applied over her diagram? */
+  private figured(sub: SubmissionDef): boolean {
+    return this.items(sub).some(c => c.figure && this.decisions.get(c.id) === 'applied');
   }
 
   /** press the picture. It plays, or it stops. That is the entire contract:
@@ -1430,8 +1445,9 @@ export class GraceQueueLite {
     const rightW = c.x + c.w - rightX;
     // ⚑ the picture sits ABOVE her words, because that is the order she sent
     // them in: she recorded it, and then apologised for it in writing.
-    const videoH = sub.video ? VIDEO_BLOCK_H + 10 : 0;
+    const videoH = sub.video ? VIDEO_BLOCK_H + 10 : sub.diagram ? FIGURE_BLOCK_H + 10 : 0;
     if (sub.video) this.drawVideo(ctx, c.x, c.y, leftW, sub, sub.video);
+    if (sub.diagram) this.drawDiagram(ctx, c.x, c.y, leftW, sub, sub.diagram);
     this.drawSubmission(ctx, c.x, c.y + videoH, leftW, c.h - videoH, sub);
     this.drawCorrections(ctx, rightX, c.y, rightW, c.h, sub);
     // Lambient's badge sits at the BOTTOM-LEFT of the window body. It was in
@@ -1456,6 +1472,34 @@ export class GraceQueueLite {
    * the gaps in it, because she said the true parts first in case she ran out
    * of nerve. The pad the preset lays underneath does not have gaps.
    */
+  /**
+   * ⚑ S154 — THE DIAGRAM (I-01). The same discipline as the video: nothing
+   * over her picture; the tool's chrome only beside it. Before the correction,
+   * her figure — four lines, her words. After it, the house's — one line, one
+   * word — with hers small beside it, labelled `as sent`: the tracked change,
+   * for a picture. Both stay on screen; nothing here says which is right.
+   */
+  private drawDiagram(
+    ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
+    sub: SubmissionDef, diagram: { label: string; beforeLabel: string; lines: string[]; houseLine: string }
+  ): void {
+    const figured = this.figured(sub);
+    px(ctx, x - 1, y - 1, FIGURE_W + 2, FIGURE_H + 2, ERA3.glassEdge);
+    px(ctx, x, y, FIGURE_W, FIGURE_H, ERA3.white);
+    drawMemberFigure(ctx, x + 4, y + 4, FIGURE_S, { lines: diagram.lines, house: figured, houseLine: diagram.houseLine });
+    const x2 = x + FIGURE_W + 12;
+    setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+    wrapText(ctx, diagram.label, x + w - x2).slice(0, 1).forEach(ln => ctx.fillText(ln, x2, y));
+    if (figured) {
+      const tw = MEMBER_FIGURE.w * FIGURE_THUMB_S + 8; const th = MEMBER_FIGURE.h * FIGURE_THUMB_S + 8;
+      px(ctx, x2 - 1, y + 15, tw + 2, th + 2, ERA3.glassEdge);
+      px(ctx, x2, y + 16, tw, th, ERA3.white);
+      drawMemberFigure(ctx, x2 + 4, y + 20, FIGURE_THUMB_S, { lines: diagram.lines, house: false, houseLine: diagram.houseLine });
+      setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
+      ctx.fillText(diagram.beforeLabel, x2, y + 16 + th + 4);
+    }
+  }
+
   private drawVideo(
     ctx: CanvasRenderingContext2D, x: number, y: number, w: number,
     sub: SubmissionDef, video: { label: string; duration: string; beforeLabel: string }
@@ -1630,7 +1674,7 @@ export class GraceQueueLite {
     // clipped by the buttons, because the small print IS the argument.
     const announce = item.chip && !item.quiet ? item.chip
       : item.partner ? item.partner.note
-        : item.grade ? item.grade.note : '';
+        : item.grade ? item.grade.note : item.figure ? item.figure.note : '';
     // ⚑ MEASURE IN THE FONT YOU DRAW IN. This block wrapped and sized the card
     // at 10px/11px line-height while the text below is drawn at 11px/12px —
     // which I introduced when I raised the type, and it is two bugs, not one:
@@ -1665,6 +1709,7 @@ export class GraceQueueLite {
     // grade that makes a person look ill is called `Honest Light`. It is the
     // only badge on this item, and it is on the TOOL, never on her.
     if (item.grade) aero.tag(ctx, x + ctx.measureText(item.rule).width + 8, ry + 2, item.grade.preset, ERA3.white, ERA3.lambTag);
+    if (item.figure) aero.tag(ctx, x + ctx.measureText(item.rule).width + 8, ry + 2, item.figure.preset, ERA3.white, ERA3.lambTag);
     ry += 18;
     // ⚑ 10 → 11px, and `grey` → `greyDk` for the refs. NOT a change to the
     // doubling — a rescue of it. The rationale and BOTH references are the best

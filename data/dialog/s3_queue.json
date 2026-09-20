@@ -28,7 +28,7 @@
    "id": "testimony",
    "surface": "testimony",
    "label": "Correct a testimony",
-   "note": "three stories waiting"
+   "note": "four stories waiting"
   },
   {
    "id": "comments",
@@ -132,6 +132,22 @@
     10,
     11,
     12
+   ]
+  },
+  {
+   "id": 4,
+   "author": "Marisol",
+   "_doc": "I-01 (S154, 2026-09-20, Sérgio: 'I would use an inspired Genderbread person… not for 1997, but another era'). His research names the two rooms the figure lived in: affirming groups used it as a discussion resource; conservative ministries ran a 'worldview audit' — the leader puts the viral diagram up and the group finds its assumptions. This submission is the second room's version: a member posts the figure, and the platform's job is to apply its own. INVENTED figure in the genre (invented marks) — four lines on one body: attraction · identity · expression · body — drawn by era3.ts `drawMemberFigure`. The correction (14) collapses the four to one; both figures stay on screen; nothing here comments on either — the law on the gender-exploratory debate holds.",
+   "text": "I don't have a story yet, so I'm sending a picture instead. Someone in another group drew it: four lines on one body — who you're drawn to, who you are, how you look, what you were born as — and the point is that they're different lines. It was the first thing in years that let me breathe. I know it isn't from here. I'm posting it anyway because the words helped.",
+   "diagram": {
+    "label": "attached picture — four lines",
+    "beforeLabel": "as sent",
+    "lines": [ "attraction", "identity", "expression", "body" ],
+    "houseLine": "design"
+   },
+   "corrections": [
+    14,
+    15
    ]
   }
  ],
@@ -299,6 +315,32 @@
    },
    "witnessApplied": "list: applied — noa (apply the house look)",
    "witnessSkipped": "list: skipped — noa (apply the house look)"
+  },
+  {
+   "id": 14,
+   "rule": "Apply the design figure",
+   "why": "one body, one line — the house's own picture, so no member's differs",
+   "manual": "The Ordering §2.2 — the one design",
+   "verse": "Household 3:2 — \"and they drew the one shape over the many, so that none should be read apart\"",
+   "figure": {
+    "preset": "The Design",
+    "note": "four lines → one · her labels off"
+   },
+   "witnessApplied": "list: applied — marisol (apply the design figure)",
+   "witnessSkipped": "list: skipped — marisol (apply the design figure)"
+  },
+  {
+   "id": 15,
+   "rule": "Remove the outside source",
+   "why": "a picture from another room is not the house's; the words can stay without it",
+   "manual": "The Ordering §1.7 — provenance",
+   "verse": "Household 2:4 — \"bring nothing in from the road that the house did not make\"",
+   "edit": {
+    "kind": "cut",
+    "find": "I know it isn't from here. I'm posting it anyway because the words helped."
+   },
+   "witnessApplied": "list: applied — marisol (remove the outside source)",
+   "witnessSkipped": "list: skipped — marisol (remove the outside source)"
   }
  ],
  "tablet": {

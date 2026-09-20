@@ -1325,3 +1325,19 @@ to both endings; the tour opens it (`look-rootcause`). Walked twice: the first t
 it, started and closed — the close box was the first control registered, so a walk never played it;
 the close box is registered last now, and the second walk dug fourteen turns and pumped a diagnosis
 before moving on — 264 presses, spine done. **closes W-L1.**
+
+## 2026-09-20 — S154 · THE MEMBER'S FIGURE (I-01)
+His idea: an inspired Genderbread-type figure as content, "not for 1997, but another era". His
+research names where the figure lived in the 2010s: affirming groups used it as a discussion
+resource; conservative ministries ran a "worldview audit" — put the viral diagram up, find its
+assumptions. That second room is a 2016 correction job. A fourth story on the day's list: Marisol
+sends a PICTURE instead of a story — an invented four-line figure in the genre (attraction ·
+identity · expression · body, `drawMemberFigure`, rose: a person speaking) — "the first thing in
+years that let me breathe. I know it isn't from here." Correction 14, *Apply the design figure*
+(The Ordering §2.2 — the one design; Household 3:2): the house's figure — one body, one line,
+"design", the tool's blue — with hers small beside it, `as sent`. Correction 15, *Remove the outside
+source*, cuts her last two sentences. Both figures stay on screen; nothing comments on either (the
+law on the gender-exploratory debate); the record files what she chose. Verified by hand at Vera's
+workstation, before and after Apply, and on the ordinary path she loads fourth (fifteen presses through
+Renata, Noa and Deb — the walker leaves the day for the phone after two stories, as it always has, so
+the walk proves the era, not her). Walked: 261 presses, spine done. **closes I-01.**
