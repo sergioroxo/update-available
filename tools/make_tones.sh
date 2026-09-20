@@ -320,3 +320,97 @@ python3 tools/make_hymn.py "$OUT/unwalk_loop_1997.wav"
 q -i "$OUT/unwalk_loop_1997.wav" -af "lowpass=f=3200,highpass=f=70" "$OUT/unwalk_loop_1997.tmp.wav" && mv "$OUT/unwalk_loop_1997.tmp.wav" "$OUT/unwalk_loop_1997.wav"
 level unwalk_loop_1997 -27
 q -i "$OUT/unwalk_loop_1997.wav" -ac 1 -ar 44100 -codec:a libmp3lame -b:a 96k "$PUB/unwalk_loop_1997.mp3"
+
+# ── ⚑ S155 · THE SOUND REDO, THE PART THAT NEEDS NO EAR (2026-09-20, OPEN_ITEMS Priority 3) ──
+# His rows, in order: the button too thumpy (R3-08) · the floppy not good (R3-14) · the IRC
+# stringy, like radar, on every message (R3-25) · the diary silent (R3-36) · the flying sound
+# terrible (R3-43/63) · the boots (R3-48/64) · the platform needs system sound (R3-68) · the
+# update sound horrible (R3-85) · the typing horrible (R3-88) · Lamby needs a sound (W-G1) ·
+# the descent and the Close need a score (R3-02, R3-110). Everything below is ours and
+# deterministic; the two scores are marked HIS TO HEAR in the register.
+
+# R3-08 · the press: 14 ms of filtered noise, a fingertip on plastic — not a thud.
+# ⚑ replaces the Freesound cut (619835); data/audio/ingest.tsv's row is retired.
+q -f lavfi -i "anoisesrc=d=0.014:c=pink:a=0.6" -af "highpass=f=700,lowpass=f=3200,afade=t=out:st=0.004:d=0.010,volume=0.5" "$OUT/ui_press.wav"
+level ui_press -28
+
+# R3-14 · the floppy, as a drive: the motor spinning up (a low hum with a wobble), two head
+# seeks a second apart (brown-noise knocks), the motor winding down. 3.4 s, lower than before.
+q -f lavfi -i "sine=f=140:d=3.4" -f lavfi -i "anoisesrc=d=3.4:c=brown:a=0.9" -f lavfi -i "anoisesrc=d=3.4:c=pink:a=0.5" \
+  -filter_complex "[0]volume=0.12,tremolo=f=25:d=0.35,afade=t=in:st=0:d=0.35,afade=t=out:st=2.6:d=0.8,lowpass=f=400[motor];
+    [1]lowpass=f=900,aeval='val(0)*(gt(sin(2*PI*(t-0.9)*40),0.97)*lt(abs(t-0.95),0.06)+gt(sin(2*PI*(t-1.9)*40),0.97)*lt(abs(t-1.95),0.06))':c=same,volume=1.2[knock];
+    [2]bandpass=f=1800:w=800,aeval='val(0)*(lt(abs(t-1.0),0.12)+lt(abs(t-2.0),0.12))':c=same,volume=0.25[seek];
+    [motor][knock][seek]amix=inputs=3:normalize=0" "$OUT/floppy_1997.wav"
+level floppy_1997 -28
+
+# R3-25 · the IRC's tick: one soft short tick — no longer a radar beep, and (irc.ts) no
+# longer on every line: only his own, and the request's arrival.
+q -f lavfi -i "sine=f=740:d=0.045" -af "afade=t=in:st=0:d=0.004,afade=t=out:st=0.015:d=0.03,lowpass=f=2400,volume=0.3" "$OUT/irc_1997.wav"
+level irc_1997 -30
+
+# R3-36 · the diary: a soft key per character (quieter than the era's speaker click), the
+# FLAG (a two-note fall, low — the system noticing), the ERASE (a scrub sweeping down).
+q -f lavfi -i "anoisesrc=d=0.02:c=pink:a=0.6" -af "highpass=f=500,lowpass=f=2600,afade=t=out:st=0.006:d=0.014,volume=0.4" "$OUT/diary_key.wav"
+q -f lavfi -i "sine=f=330:d=0.14" -f lavfi -i "sine=f=247:d=0.26" \
+  -filter_complex "[0][1]concat=n=2:v=0:a=1,aeval=sgn(val(0))*0.22,lowpass=f=2200,afade=t=out:st=0.28:d=0.12" "$OUT/diary_flag.wav"
+q -f lavfi -i "anoisesrc=d=0.7:c=pink:a=0.6" -af "bandpass=f=1400:w=700,aeval='val(0)*(1-0.8*t/0.7)':c=same,lowpass=f=2500,afade=t=out:st=0.5:d=0.2,volume=0.35" "$OUT/diary_erase.wav"
+level diary_key -32; level diary_flag -26; level diary_erase -30
+
+# R3-43/63 · the passage: LOW WIND, no whoosh — brown noise through a slow open-and-close, 60 s,
+# seamless. Replaces the building's rumble for the flight (the building bed stays on disk).
+bed passage_wind.wav "lowpass=f=380,equalizer=f=90:t=q:w=1.2:g=8,tremolo=f=0.1:d=0.55,highpass=f=30"
+
+# R3-48/64 · the boots. 2003: a POST beep, then a hard drive seeking under a splash (1.6 s).
+# 2016: no beep — a soft rising pair, the sound of a machine that no longer clicks (0.9 s).
+q -f lavfi -i "sine=f=1000:d=0.16" -f lavfi -i "anoisesrc=d=1.6:c=pink:a=0.5" \
+  -filter_complex "[0]aeval=sgn(val(0))*0.3,lowpass=f=6000,afade=t=out:st=0.13:d=0.03[beep];
+    [1]bandpass=f=1600:w=900,aeval='val(0)*(gt(sin(2*PI*t*6.3+sin(t*17)*3),0.9))':c=same,adelay=350|350,volume=0.35,afade=t=out:st=1.2:d=0.4[hdd];
+    [beep][hdd]amix=inputs=2:normalize=0" "$OUT/boot_2003.wav"
+q -f lavfi -i "sine=f=392:d=0.5" -f lavfi -i "sine=f=587.33:d=0.7" \
+  -filter_complex "[0][1]concat=n=2:v=0:a=1,volume=0.2,lowpass=f=5000,afade=t=in:st=0:d=0.1,afade=t=out:st=0.7:d=0.5,aecho=0.85:0.3:90:0.18" "$OUT/boot_2016.wav"
+level boot_2003 -22; level boot_2016 -26
+
+# R3-68 · Lambient's chime: the 2016 ting's family, two notes, softer — the platform's lane
+# speaking. (The 2016 bed already exists: bed_2016.)
+q -f lavfi -i "sine=f=1046.5:d=0.18" -f lavfi -i "sine=f=1318.5:d=0.42" \
+  -filter_complex "[0][1]concat=n=2:v=0:a=1,volume=0.16,lowpass=f=6000,afade=t=out:st=0.3:d=0.3,aecho=0.9:0.35:60:0.2" "$OUT/lambient_chime.wav"
+level lambient_chime -27
+
+# R3-85/63 · the update: the install as a hard drive WORKING (gated pink noise, low, 4 s loop),
+# not a churn; the restart as the hum dropping and one soft tick as it comes back.
+q -f lavfi -i "anoisesrc=d=4:c=pink:a=0.5" -af "lowpass=f=700,equalizer=f=180:t=q:w=1.4:g=6,aeval='val(0)*(0.35+0.65*gt(sin(2*PI*t*2.5+sin(t*9)*1.5),0.55))':c=same,volume=0.3" "$OUT/install_work.wav"
+q -f lavfi -i "sine=f=90:d=1.4" -f lavfi -i "anoisesrc=d=0.02:c=brown:a=0.7" \
+  -filter_complex "[0]volume=0.14,afade=t=out:st=0.2:d=1.2,lowpass=f=260[h];[1]lowpass=f=1200,adelay=1700|1700,volume=0.3[t];[h][t]amix=inputs=2:normalize=0" "$OUT/restart_dark.wav"
+level install_work -36; level restart_dark -30
+
+# R3-88 · the search being typed: sparser, softer, not a character each — a hand that pauses.
+q -f lavfi -i "anoisesrc=d=6:c=pink:a=0.6" \
+  -af "highpass=f=1200,lowpass=f=3600,aeval='val(0)*(gt(sin(2*PI*t*4.1+sin(t*2.3)*2.5),0.965)*1)':c=same,volume=0.8,afade=t=out:st=5.4:d=0.6" \
+  "$OUT/type_2026.wav"
+level type_2026 -36
+
+# W-G1 · Lamby's sound: a small upward pop — a sine sweep, 240 → 720 Hz in 160 ms, the way a
+# desk assistant announced itself. Once, on his appear; never in a felt scene (os.ts).
+q -f lavfi -i "aevalsrc='0.3*sin(2*PI*(240*t+ (720-240)*t*t/(2*0.16)))':d=0.16" -af "afade=t=in:st=0:d=0.01,afade=t=out:st=0.1:d=0.06,lowpass=f=4000" "$OUT/lamby_pop.wav"
+level lamby_pop -26
+
+# R3-02 · THE DESCENT'S SCORE — ⚑ HIS TO HEAR. 40 s: a slow pad falling an octave (three
+# partials, detuned), the room's bed already under it; it fades as the seat is reached.
+# (the phase is the INTEGRAL of the falling frequency — 2π·f0·T/ln2·(1−2^(−t/T)) — so the
+#  glide is a true octave and not a chirp that folds through zero)
+q -f lavfi -i "aevalsrc='0.22*(sin(2*PI*220*40/log(2)*(1-pow(2,-t/40))) + 0.5*sin(2*PI*330*40/log(2)*(1-pow(2,-t/40))) + 0.25*sin(2*PI*440*40/log(2)*(1-pow(2,-t/40))+0.3))':d=40" \
+  -af "lowpass=f=2200,tremolo=f=0.15:d=0.2,afade=t=in:st=0:d=4,afade=t=out:st=30:d=10" "$OUT/descent_score.wav"
+level descent_score -30
+
+# R3-110 · THE CLOSE'S SCORE — ⚑ HIS TO HEAR. 60 s, seamless: the four beds resolving into one
+# chord — a warm C-major pad (C3 · G3 · C4 · E4), each voice with a slow separate swell, over
+# the sky bed's own air. Louder than the sky alone, which he could not hear.
+q -f lavfi -i "sine=f=130.81:d=60" -f lavfi -i "sine=f=196:d=60" -f lavfi -i "sine=f=261.63:d=60" -f lavfi -i "sine=f=329.63:d=60" -f lavfi -i "anoisesrc=d=60:c=brown:a=0.8" \
+  -filter_complex "[0]volume=0.2,tremolo=f=0.1:d=0.5[a];[1]volume=0.14,tremolo=f=0.13:d=0.5[b];[2]volume=0.12,tremolo=f=0.11:d=0.5[c];[3]volume=0.08,tremolo=f=0.17:d=0.5[d];
+    [4]lowpass=f=300,volume=0.25,tremolo=f=0.1:d=0.3[air];[a][b][c][d][air]amix=inputs=5:normalize=0,lowpass=f=2600" "$OUT/close_score.wav"
+level close_score -27
+
+for f in ui_press floppy_1997 irc_1997 diary_key diary_flag diary_erase passage_wind boot_2003 boot_2016 \
+         lambient_chime install_work restart_dark type_2026 lamby_pop descent_score close_score; do
+  q -i "$OUT/$f.wav" -ac 1 -ar 44100 -codec:a libmp3lame -b:a 96k "$PUB/$f.mp3"
+done

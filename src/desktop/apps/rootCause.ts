@@ -44,8 +44,9 @@ const WIN_X = 24; const WIN_Y = 10; const WIN_W = 464; const WIN_H = 344;
 const LABEL_W = 96;
 const APPLIED_TO_REPORT = 3;
 const PUMPS_TO_BURST = 3;
-/** a diagnosis with no tunnel to Lamby ghosts one step through earth this often */
-const GHOST_CHANCE = 0.3;
+/** a diagnosis with no tunnel to Lamby ghosts one step through earth every other turn —
+ *  by turn, not by chance, so a game always closes in a few dozen presses */
+const GHOST_EVERY = 2;
 
 type Phase = 'intro' | 'digging' | 'flag' | 'report';
 
@@ -64,6 +65,7 @@ export class RootCauseApp {
   private applied: string[] = [];
   private seenLayers = new Set<number>();
   private message = '';
+  private turn = 0;
   private messageT = 0;
   private hits: Hit[] = [];
   private filed = false;
@@ -78,7 +80,7 @@ export class RootCauseApp {
     this.memory = { r: mr, c: mc };
     // three diagnoses in pockets at the sides; the rest arrive as he goes deeper
     const names = [...copy.diagnoses];
-    const pockets: Cell[] = [{ r: 1, c: 0 }, { r: 3, c: COLS - 1 }, { r: 5, c: 0 }];
+    const pockets: Cell[] = [{ r: 1, c: 0 }, { r: 3, c: COLS - 1 }, { r: 5, c: 0 }, { r: 2, c: COLS - 1 }];
     pockets.forEach((p, i) => this.spawn(names[i], p));
   }
 
@@ -103,7 +105,7 @@ export class RootCauseApp {
       this.seenLayers.add(to.r);
       this.say(copy.findings[to.r] ?? '');
       // the deeper he goes, the more of them there are
-      if (to.r === 2 || to.r === 4) {
+      if (to.r === 3 || to.r === 5) {
         const name = copy.diagnoses[this.diagnoses.length];
         if (name) this.spawn(name, { r: to.r + 1, c: to.c < COLS / 2 ? COLS - 1 : 0 });
       }
@@ -132,9 +134,10 @@ export class RootCauseApp {
   /** every living diagnosis takes one step toward Lamby — through the tunnels,
    *  or, when there is no tunnel, now and then straight through the earth */
   private moveDiagnoses(): void {
-    for (const d of this.diagnoses) {
+    this.turn += 1;
+    for (const [i, d] of this.diagnoses.entries()) {
       if (!d.alive) continue;
-      const next = this.stepToward(d);
+      const next = this.stepToward(d, (this.turn + i) % GHOST_EVERY === 0);
       if (next) { d.r = next.r; d.c = next.c; }
     }
     // two in one cell: both glitch — the labels cancel
@@ -163,7 +166,7 @@ export class RootCauseApp {
   }
 
   /** breadth-first through dug cells; null when unreachable (then maybe a ghost step) */
-  private stepToward(d: Diagnosis): Cell | null {
+  private stepToward(d: Diagnosis, mayGhost: boolean): Cell | null {
     const key = (r: number, c: number): number => r * COLS + c;
     const prev = new Map<number, number>();
     const queue: Cell[] = [{ r: d.r, c: d.c }];
@@ -186,7 +189,7 @@ export class RootCauseApp {
       while (p !== key(d.r, d.c)) { k = p; p = prev.get(k)!; }
       return { r: Math.floor(k / COLS), c: k % COLS };
     }
-    if (Math.random() < GHOST_CHANCE) {
+    if (mayGhost) {
       // ghost: one step through anything, straight toward him
       const dr = Math.sign(this.lamby.r - d.r); const dc = Math.sign(this.lamby.c - d.c);
       if (Math.abs(this.lamby.r - d.r) >= Math.abs(this.lamby.c - d.c) && dr) return { r: d.r + dr, c: d.c };
@@ -203,6 +206,11 @@ export class RootCauseApp {
     if (c.c > 0) out.push({ r: c.r, c: c.c - 1 });
     if (c.c < COLS - 1) out.push({ r: c.r, c: c.c + 1 });
     return out;
+  }
+  /** the press's name is its DIRECTION from Lamby — four ids for the whole grid, so a
+   *  blind walk is bounded by its own per-control cap and the game still ends */
+  private dirOf(from: Cell, to: Cell): string {
+    return to.r < from.r ? 'up' : to.r > from.r ? 'down' : to.c < from.c ? 'left' : 'right';
   }
 
   private file(which: 'memory' | 'report'): void {
@@ -274,12 +282,12 @@ export class RootCauseApp {
         const x = gx + n.c * CELL_W; const y = gy + n.r * CELL_H;
         const dIdx = this.diagnoses.findIndex((d) => d.alive && d.r === n.r && d.c === n.c);
         if (dIdx >= 0) {
-          this.hits.push({ x, y, w: CELL_W, h: CELL_H, id: `pump:${dIdx}` });
+          this.hits.push({ x, y, w: CELL_W, h: CELL_H, id: `pump:${this.dirOf(this.lamby, n)}` });
           continue;
         }
         // a faint mark on the pressable earth — the hand names it; this only says "here"
         ui.px(ctx, x + CELL_W / 2 - 1, y + CELL_H / 2 - 1, 2, 2, ERA1.tooltip);
-        this.hits.push({ x, y, w: CELL_W, h: CELL_H, id: `dig:${n.r}:${n.c}` });
+        this.hits.push({ x, y, w: CELL_W, h: CELL_H, id: `dig:${this.dirOf(this.lamby, n)}` });
       }
     }
     // the line under the earth
@@ -314,14 +322,12 @@ export class RootCauseApp {
     if (hit.id === 'rootcause-close') { this.open = false; this.onClose?.(); return; }
     if (hit.id === 'rootcause-start') { this.phase = 'digging'; this.seenLayers.add(0); return; }
     if (this.phase !== 'digging') return;
-    if (hit.id.startsWith('dig:')) {
-      const [, r, c] = hit.id.split(':').map(Number);
-      this.dig({ r, c });
-      return;
-    }
+    const target = this.neighbours(this.lamby).find((n) => this.dirOf(this.lamby, n) === hit.id.split(':')[1]);
+    if (!target) return;
+    if (hit.id.startsWith('dig:')) { this.dig(target); return; }
     if (hit.id.startsWith('pump:')) {
-      const d = this.diagnoses[Number(hit.id.slice(5))];
-      if (d && d.alive) this.pump(d);
+      const d = this.diagnoses.find((d) => d.alive && d.r === target.r && d.c === target.c);
+      if (d) this.pump(d);
     }
   }
 }

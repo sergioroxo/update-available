@@ -61,7 +61,10 @@ export class DiaryApp {
 
   update(dt: number): void {
     if (this.phase === 'writing') {
+      const before = Math.floor(this.shown);
       this.shown += TYPE_CPS * dt;
+      // S155 / R3-36: a soft key per character — the machine's speaker, quieter than the page turn
+      if (Math.floor(this.shown) > before && end.diary.entry[before] !== ' ') playOnce('diary_key.mp3');
       this.dirty = true;
       if (this.shown >= end.diary.entry.length) {
         this.shown = end.diary.entry.length;
@@ -71,11 +74,11 @@ export class DiaryApp {
     } else if (this.phase === 'committed') {
       this.readT += dt;
       this.dirty = true;
-      if (this.readT >= READ_HOLD) this.phase = 'flagged';
+      if (this.readT >= READ_HOLD) { this.phase = 'flagged'; playOnce('diary_flag.mp3'); }   // S155: the system noticing
     } else if (this.phase === 'flagged') {
       this.flagT += dt;
       this.dirty = true;
-      if (this.flagT >= FLAG_WAIT) this.phase = 'deleting';
+      if (this.flagT >= FLAG_WAIT) { this.phase = 'deleting'; playOnce('diary_erase.mp3'); }   // S155: the erase, heard
     } else if (this.phase === 'deleting') {
       // the system erases toward this attempt's target, then STALLS (can't finish)
       this.erase += dt / DELETE_SECONDS;
@@ -85,7 +88,7 @@ export class DiaryApp {
       // the truth you held surges back, then the system steels itself for round 2
       this.erase -= dt / REASSERT_SECONDS;
       this.dirty = true;
-      if (this.erase <= REASSERT_LOW) { this.erase = REASSERT_LOW; this.eraseTarget = ERASE_2; this.phase = 'deleting'; }
+      if (this.erase <= REASSERT_LOW) { this.erase = REASSERT_LOW; this.eraseTarget = ERASE_2; this.phase = 'deleting'; playOnce('diary_erase.mp3'); }
     } else if (this.phase === 'breakout') {
       // it won for good: the words flood fully back (green), the split holds, then the update
       if (this.erase > 0) this.erase = Math.max(0, this.erase - dt / REASSERT_SECONDS);

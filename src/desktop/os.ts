@@ -758,7 +758,11 @@ export class DesktopOS {
     this.e2Stage = 'splash';
     this.e2StageT = 0;
     this.e2SplashFade = 0;
-    playOnce(lambyStrings.osBootTrack);
+    // S155 / R3-48 (Sérgio: "boot music too loud; no PC boot sounds"): the POST beep and the
+    // drive first — a machine starting — and the jingle under it at half
+    playOnce('boot_2003.mp3');
+    const jingle = playOnce(lambyStrings.osBootTrack);
+    if (jingle) jingle.volume = 0.5;
     this.dirty = true;
   }
 
@@ -1504,6 +1508,7 @@ export class DesktopOS {
         // ⚑ and here he is, for the first time in the piece
         this.e2Stage = 'lambyIntro';
         playOnce('chime_2003.mp3');   // S141: the machine has a sound card now, and it is pleased about it — Lamby arrives on it
+        playOnce('lamby_pop.mp3');    // S155 / W-G1: and Lamby has a sound of his own — a small pop, the way a desk assistant announced itself
         this.e2StageT = 0;
         this.lambyPoseT = 0;
         this.dirty = true;

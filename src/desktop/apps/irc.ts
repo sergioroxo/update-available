@@ -73,9 +73,12 @@ export class IrcApp {
   private channel = new TypeStream(HOLD_CHANNEL, CPS_CHANNEL);
   private dm = new TypeStream(HOLD_DM, CPS_DM);
   /** S141: a line arriving in either stream — os.ts wires the sound */
+  /** S155 / R3-25 — the tick sounds only for HIS lines and the request's arrival
+   *  (Sérgio: "not on every message"); the room's chatter and Rob's typing are silent */
+  private tick: (() => void) | null = null;
   set onLine(fn: () => void) {
-    this.channel.onStart = fn;
-    this.dm.onStart = () => { this.dmScroll = 0; fn(); };   // R3-28: a new line shows the end
+    this.tick = fn;
+    this.dm.onStart = () => { this.dmScroll = 0; };   // R3-28: a new line shows the end
   }
   private t = 0;
   private ambientFed = false;
@@ -163,6 +166,7 @@ export class IrcApp {
     // R3-26: the room has settled — Rob ASKS first; the window opens on Accept
     if (!this.dmRequested && this.t >= this.dmReadyAt) {
       this.dmRequested = true;
+      this.tick?.();
       this.dirty = true;
     }
     if (this.dmFed && this.dm.update(dt)) this.dirty = true;
@@ -262,6 +266,7 @@ export class IrcApp {
     this.chanAwaitingReply = false;
     this.chanReplied = true;
     this.channel.pushWhole({ from: ledger.name, text: dialog.channelReply.text });
+    this.tick?.();
     ledger.records.push(`channel-reply:${dialog.channelReply.witness}`);
     for (const l of dialog.afterReply) this.channel.queueLine({ from: l.from, text: this.fill(l.text) });
     this.dirty = true;
@@ -272,6 +277,7 @@ export class IrcApp {
     const reply = end.escalation.turns[this.escTurn].replies[i];
     this.dm.pushWhole({ from: ledger.name, text: reply.text });
     this.dmScroll = 0;
+    this.tick?.();
     ledger.records.push(`escalation-reply:${reply.witness}`);
     if (!ledger.tags.includes('consent-on-file')) ledger.tags.push('consent-on-file');
     this.escAwaitingReply = false;

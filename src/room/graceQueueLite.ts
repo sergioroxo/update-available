@@ -455,7 +455,7 @@ export class GraceQueueLite {
     //   board. Once, on the frame the phone reports `broken`.
     if (this.phone.broken && !this.afterSaid) {
       this.afterSaid = true;
-      this.lambLines = [LAMBIENT_AFTER1, LAMBIENT_AFTER2];
+      this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2]);
       this.bump();
     }
     if (this.arrivalT >= 0) {
@@ -466,6 +466,7 @@ export class GraceQueueLite {
       const tick = Math.floor(this.arrivalT / TICK);
       if (want !== this.mode) {
         this.mode = want;
+        if (want === 'boot') playOnce('boot_2016.mp3');   // S155 / R3-64: the 2016 machine coming on — no beep, a soft rising pair
         if (want === 'signin') this.arrivalT = -1; // the clock's work is done
         this.lastTick = tick;
         this.bump();
@@ -666,7 +667,7 @@ export class GraceQueueLite {
     //   tidy either way" IS the era, and it only works if she hears it while
     //   the refusal is still fresh. Both halves are Lambient, one beat, two
     //   lines, which is the cap.
-    this.lambLines = [allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, LAMBIENT.firstBoard1];
+    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, LAMBIENT.firstBoard1]);
     this.lambLine = LAMBIENT.greet;
     this.seenBoard = true;
     this.mode = 'board';
@@ -679,6 +680,12 @@ export class GraceQueueLite {
     if (this.mode !== 'consent') return;
     this.wakeWord = !this.wakeWord;
     this.bump();
+  }
+
+  /** S155 / R3-68 — Lambient speaks: the lines, and the platform's chime with them */
+  private lambSay(lines: string[]): void {
+    this.lambLines = lines;
+    if (lines.length) playOnce('lambient_chime.mp3');
   }
 
   /** ⚑ THE TILES. One per submission today — the three women whose testimony
@@ -752,7 +759,7 @@ export class GraceQueueLite {
     if (mounted) {
       this.openSurface = mounted;
       this.mode = 'list';
-      if (!this.seenTask) { this.seenTask = true; this.lambLines = [LAMBIENT.firstTask1, LAMBIENT.firstTask2]; }
+      if (!this.seenTask) { this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]); }
       this.bump();
       return;
     }
@@ -766,7 +773,7 @@ export class GraceQueueLite {
     //   it wrong" is meant as reassurance and is the surveillance clause.
     if (!this.seenTask) {
       this.seenTask = true;
-      this.lambLines = [LAMBIENT.firstTask1, LAMBIENT.firstTask2];
+      this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]);
     }
     this.bump();
   }
@@ -849,7 +856,7 @@ export class GraceQueueLite {
     this.maltaArrived = true;
     playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk
     this.phone.arm();
-    this.lambLines = [LAMBIENT.phone1, LAMBIENT.phone2];
+    this.lambSay([LAMBIENT.phone1, LAMBIENT.phone2]);
     this.phoneV++;
     this.bump();
   }
@@ -1937,7 +1944,7 @@ export class GraceQueueLite {
       case 'phoneCascade': this.phone.debugBeat('cascade'); this.phoneV++; break;
       case 'phoneAfter':
         this.phone.debugBeat('after');
-        this.lambLines = [LAMBIENT_AFTER1, LAMBIENT_AFTER2];
+        this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2]);
         this.phoneV++; this.bump();
         break;
       case 'floppy': case 'floppyPlay': case 'floppyOver':

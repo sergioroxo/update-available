@@ -371,7 +371,11 @@ export class E4Shell {
       const S = ballScript.session as { seconds: number };
       // S149 — the session is the only sound on the glass: the room's bed goes as it begins (R3-103)
       if (before < S.seconds && this.sessionT >= S.seconds) { roomBed.set(null, 3.0); this.breath = playLoop('session_breath.mp3'); }
-      if (before < S.seconds + 8 && this.sessionT >= S.seconds + 8) { stopClip(this.breath); this.breath = null; this.hiss = playOnce('playback_hiss.mp3'); }
+      if (before < S.seconds + 8 && this.sessionT >= S.seconds + 8) {
+        stopClip(this.breath); this.breath = null;
+        this.hiss = playOnce('playback_hiss.mp3');
+        if (this.hiss) this.hiss.volume = 0.5;   // S155 / R3-102: under the introduction, not over it
+      }
       if (this.sessionT >= space.sessionSeconds) {
         stopClip(this.breath); this.breath = null; stopClip(this.hiss); this.hiss = null;
         this.ball.invite();

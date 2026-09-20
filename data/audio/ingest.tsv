@@ -5,7 +5,7 @@
 589362	phone_ping_2016	0.00	0.32	-23	-	E3 · the single notification, distinct from the cascade's
 218043	click_floppysheep	0.00	0.40	-24	highpass=f=300	E3 · FloppySheep's click
 173859	fail_floppysheep	0.00	1.03	-22	-	E3 · FloppySheep, when it goes wrong
-619835	ui_press	0.00	0.85	-25	-	the apparatus's own surfaces — a press that lands
+# 619835	ui_press	— RETIRED S155 (R3-08, 'too thumpy'): ui_press is synthesized in tools/make_tones.sh now; re-running this ingest must not overwrite it
 619836	ui_refuse	0.00	1.10	-25	-	the same surfaces — a press that does not
 841814	boot_1997_machine	0.00	4.20	-20	highpass=f=60	E1 · the room wakes and the machine starts (r_boot)
 332776	glitch_e2	0.00	4.00	-20	-	E2 · the collapse

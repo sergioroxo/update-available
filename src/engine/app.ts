@@ -1812,7 +1812,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const BED_FOR: Record<string, string> = {
     e1: 'bed_1997.mp3', e2: 'bed_2003.mp3', e3: 'bed_2016.mp3', e4: 'bed_2026.mp3'
   };
-  const PASSAGE_BED = 'passage_building.mp3';
+  // S155 / R3-43/63 (Sérgio: "the flying sound is terrible"): low wind, no whoosh — the
+  // building's rumble stays on disk, unasked for
+  const PASSAGE_BED = 'passage_wind.mp3';
   /** set when an era lands mid-flight; consumed by `endRelocation` */
   let pendingBed: string | null | undefined;
 
@@ -2997,6 +2999,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (bedStarted) return;
     bedStarted = true;
     roomBed.set(BED_FOR[os.era] ?? BED_FOR.e1, 1.5);
+    // S155 / R3-02: the descent has a score — a pad falling an octave over the bed, 40 s,
+    // fading as the seat is reached. ⚑ HIS TO HEAR (OPEN_ITEMS R3-02).
+    if (os.era === 'e1' && !options.era && !options.close) playOnce('descent_score.mp3');
   };
   canvasEl.addEventListener('pointerdown', startFirstBed);
   document.addEventListener('pointerdown', startFirstBed);
@@ -3872,7 +3877,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   night FALLS (an 8 s crossfade), it is not switched.
       closeStage = 'hold'; closeHoldT = 0;
       cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
-      roomBed.set('close_sky_bed.mp3', CLOSE_LIGHTS_SECONDS);   // night falls in the ear too: a place with no walls
+      // S155 / R3-110 (Sérgio: "the sky bed is too quiet to register"): the Close's score — the
+      // four beds resolving into one chord over the sky's air. ⚑ HIS TO HEAR.
+      roomBed.set('close_score.mp3', CLOSE_LIGHTS_SECONDS);
       return;
     }
     if (closeStage === 'hold') {

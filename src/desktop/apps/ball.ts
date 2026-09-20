@@ -729,7 +729,7 @@ export class E4Ball {
     ctx.fillStyle = ERA4.meta;
     ctx.fillText(S.mark + '  ·  ' + S.title, Math.round(W * 0.56) + 32, fy + 2);
     const SB = S as unknown as { grounding: { title: string; in: string; out: string; note: string };
-      recorded: { title: string; mark: string; lines: string[] } };
+      recorded: { title: string; mark: string; lines: string[]; intro: string; introSeconds: number } };
     const item = t < S.seconds ? 0 : t < S.seconds + 8 ? 1 : 2;   // ⚑ 2026-09-13: the session BEGINS (session._docBegins)
     const tx = Math.round(W * 0.56);
     if (item === 0) {
@@ -772,11 +772,14 @@ export class E4Ball {
       setFont(ctx, 9);
       ctx.fillStyle = ERA4.meta;
       ctx.fillText(SB.recorded.title, tx, fy + 34);
-      const line = SB.recorded.lines[Math.min(SB.recorded.lines.length - 1, Math.floor(rt / 3.4))];   // three, and the card lands on the third's dash
-      setFont(ctx, 12);
-      ctx.fillStyle = ERA4.textHi;
+      // S155 / R3-102: introduced as what it is, first — then the sentences
+      const intro = rt < SB.recorded.introSeconds;
+      const rtl = Math.max(0, rt - SB.recorded.introSeconds);
+      const line = SB.recorded.lines[Math.min(SB.recorded.lines.length - 1, Math.floor(rtl / 3.4))];   // three, and the card lands on the third's dash
+      setFont(ctx, intro ? 10 : 12);
+      ctx.fillStyle = intro ? ERA4.meta : ERA4.textHi;
       let y = fy + 52;
-      for (const row of wrapText(ctx, '“' + line + '”', Math.round(W * 0.38))) { ctx.fillText(row, tx, y); y += 17; }
+      for (const row of wrapText(ctx, intro ? SB.recorded.intro : '“' + line + '”', Math.round(W * 0.38))) { ctx.fillText(row, tx, y); y += 17; }
       // a play bar, running
       const bw = Math.round(W * 0.34);
       pill(ctx, tx, y + 10, bw, 4, ERA4.rule);

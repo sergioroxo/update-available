@@ -163,6 +163,7 @@ lifted by accident. Ours are sine pairs whose exact filter chains are in `tools/
 | `lambyos_2003_boot.mp3` | a 6.5 s cut of the same track — the era's own jingle, heard first as a boot sting. Alternate cuts in `assets/audio/candidates/` | derivative of the above |
 | `post_beep_1997` · `err_ding_1997` · `chime_2003` · `alert_2003` · `ting_2016` · `tick_task` · `ready_e4` · `set_down_e4` | **synthesized**, `tools/make_tones.sh` — sine pairs and filtered noise | ours outright |
 | `bed_1997` · `bed_2003` · `bed_2016` · `bed_2026` · `passage_building` | **synthesized** room tone — brown noise with resonant peaks standing in for a PSU fan, an HVAC duct, a fridge through a wall | ours outright |
+| `ui_press` · `floppy_1997` · `irc_1997` · `diary_key` · `diary_flag` · `diary_erase` · `passage_wind` · `boot_2003` · `boot_2016` · `lambient_chime` · `install_work` · `restart_dark` · `type_2026` · `lamby_pop` · `descent_score` · `close_score` · `unwalk_loop_1997` | **synthesized**, `tools/make_tones.sh` (S151/S155 blocks; the hymn loop via `tools/make_hymn.py`). ⚑ `ui_press` was Freesound #619835 until S155 and is ours now — its `data/audio/ingest.tsv` row is retired | ours |
 | the 47 `l_*.mp3` | build-time TTS (Supertonic, `register: apparatus`) via `tools/tts/render.py` | ours; the model's own terms apply to the tool, not to the output |
 
 ⚑ **What is NOT here, and will owe a row when it lands:** a real party-through-a-wall recording for

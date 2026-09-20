@@ -60,22 +60,22 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 ## Priority 3 — sound redo, one pass with his ear
 | id | item | status |
 |---|---|---|
-| R3-02 | A score for the descent | OPEN |
-| R3-08 | `ui_press` soft click | OPEN |
-| R3-14 | Floppy drive sound | OPEN |
-| R3-25 | IRC tick: soft, only his lines + the DM | OPEN |
-| R3-36 | Diary: typing, flag, erase | OPEN |
+| R3-02 | A score for the descent | BUILT — S155 · `descent_score` (a pad falling an octave, 40 s from Log in) — ⚑ HIS TO HEAR |
+| R3-08 | ~~`ui_press` soft click~~ | DONE — S155 · 14 ms filtered noise, ours; Freesound #619835 retired |
+| R3-14 | ~~Floppy drive sound~~ | DONE — S155 · a drive: motor, two head seeks, 3.4 s, lower |
+| R3-25 | ~~IRC tick: soft, only his lines + the DM~~ | DONE — S155 · one soft tick; only his lines and the request |
+| R3-36 | ~~Diary: typing, flag, erase~~ | DONE — S155 · a key per character, the flag, the erase; by hand |
 | R3-39 | ~~Error ding lower~~ | DONE — S149 · u2 ding at 0.45 |
-| R3-43 / 63 | Passage sound: low wind, no whoosh | OPEN |
-| R3-48 / 64 | Boot cues 2003 / 2016; boot music quieter | OPEN |
-| R3-68 | 2016 platform bed + Lambient chime | OPEN |
-| R3-85 | The update's install/restart cues | OPEN |
-| R3-88 | `type_2026` soft | OPEN |
+| R3-43 / 63 | ~~Passage sound: low wind, no whoosh~~ | DONE (sound) — S155 · low wind (`passage_wind`), no whoosh; the update cues under R3-85 · the path is R3-46 |
+| R3-48 / 64 | Boot cues 2003 / 2016; boot music quieter | PARTIAL — S155 · 2003: POST beep + drive under the splash, the jingle at half; 2016: a soft rising pair · OPEN: the black screen before the blue house, the shorter loading bar |
+| R3-68 | ~~2016 platform bed + Lambient chime~~ | DONE — S155 · `lambient_chime` with every Lambient line, over the 2016 bed |
+| R3-85 | ~~The update's install/restart cues~~ | DONE — S155 · the install as a drive working, the restart as the hum dropping — HIS EAR on it |
+| R3-88 | ~~`type_2026` soft~~ | DONE — S155 · sparser, softer, not per character |
 | R3-97 | ~~Drop `restore_2026`~~ | DONE — S149 · dropped |
-| R3-102 | The session's recording introduced, hiss cue reconsidered | OPEN |
-| R3-110 | A Close score | OPEN |
-| W-G1 | Lamby needs a sound ("how Clippy sounded") (08-21 §G) | OPEN |
-| W-G2 | Captions everywhere (08-21 §G) | OPEN |
+| R3-102 | ~~The session's recording introduced, hiss cue reconsidered~~ | DONE — S155 · "Now playing: a recorded conversation, 11 min…" before the sentences; the hiss at half; the card still on the dash |
+| R3-110 | A Close score | BUILT — S155 · `close_score` (the four beds resolving into one chord) in place of the sky bed — ⚑ HIS TO HEAR |
+| W-G1 | ~~Lamby needs a sound ("how Clippy sounded") (08-21 §G)~~ | DONE — S155 · `lamby_pop` on his appear |
+| W-G2 | Captions everywhere (08-21 §G) | OPEN · inventory (S155): captioned today — the tapes (the strip), L's lines (on screen), Lambient/Lamby (on screen), the session's recording (on screen); NOT captioned — the one-shots (dings, ticks, the dial-up, the boots), Caleb's song, the hymn loop, the two scores. A caption law for the one-shots is a design call: a strip line per cue would name every press |
 
 ## Priority 4 — the flight and Era 2
 | id | item | status |
@@ -164,6 +164,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   R3-61 anything after the residue · R3-109 the CRT from the start.
 
 ## Closed
+- S155 (2026-09-20): R3-08, R3-14, R3-25, R3-36, R3-43/63 (sound), R3-68, R3-85, R3-88, R3-102, W-G1; R3-02 and R3-110 built, his to hear; R3-48/64 partial; his ask: the prayer tape's intro cut — walked, 258 presses, spine done.
 - S154 (2026-09-20): I-01 — the member's figure as a 2016 correction job; walked, 261 presses, spine done.
 - S153 (2026-09-20): W-L1 — Root Cause Digger; walked, 264 presses, spine done. S152: the sentence line (doctrine; no id). S151c: I-02 (the prayer's Amen from the chorus); walked 242.
 - S151b (2026-09-20): R3-26, R3-27/32, R3-28, R3-33, R3-38, R3-40, W-E1 — Priority 2 Batch B; walked, 246 presses, spine done (`WALK_2026-09-20.md`).

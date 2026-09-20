@@ -33,6 +33,6 @@
   "ask": "Restart as you are.",
   "_docWords": "⛑ THE CLOSE'S OWN WORDS, not new ones. `ask` and `button` are lifted from data/strings/updates.json's `close` block (notify[1] and updateNow) so the card on the laptop speaks with the same voice as the update it arms — and because the first pass invented 'Restart as you are' as a BUTTON label, which both duplicated the message and ran off the end of the button."
  },
- "sessionSeconds": 27.5,
+ "sessionSeconds": 30.5,
  "_docSessionSeconds": "⚑ 2026-09-13: 9 → 27.5. The session begins (grounding at 9, the recorded voice at 17 — three sentences on a 3.4 s clock) and Junie's card lands on the third's dash."
 }

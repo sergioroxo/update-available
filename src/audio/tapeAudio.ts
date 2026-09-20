@@ -30,6 +30,17 @@ const REGISTRY: Record<string, string> = {
   'family_design_solutions_tape97.mp3': `${AUDIO_BASE}family_design_solutions_tape97.mp3`, // Tape C track 1 (mixtape)
   'fold_my_hands_tape97.mp3': `${AUDIO_BASE}fold_my_hands_tape97.mp3`, // Tape A's prayer segment
   'unwalk_loop_1997.mp3': `${AUDIO_BASE}unwalk_loop_1997.mp3`, // S151 · the Un-Walk's programme loop (tools/make_hymn.py)
+  // S155 · the sound redo (tools/make_tones.sh, the S155 block)
+  'diary_key.mp3': `${AUDIO_BASE}diary_key.mp3`,
+  'diary_flag.mp3': `${AUDIO_BASE}diary_flag.mp3`,
+  'diary_erase.mp3': `${AUDIO_BASE}diary_erase.mp3`,
+  'passage_wind.mp3': `${AUDIO_BASE}passage_wind.mp3`,
+  'boot_2003.mp3': `${AUDIO_BASE}boot_2003.mp3`,
+  'boot_2016.mp3': `${AUDIO_BASE}boot_2016.mp3`,
+  'lambient_chime.mp3': `${AUDIO_BASE}lambient_chime.mp3`,
+  'lamby_pop.mp3': `${AUDIO_BASE}lamby_pop.mp3`,
+  'descent_score.mp3': `${AUDIO_BASE}descent_score.mp3`,
+  'close_score.mp3': `${AUDIO_BASE}close_score.mp3`,
   // Tape B — SWAPPABLE CANDIDATE (Sérgio is producing alternate versions of
   // the broadcast jingle). Swap by generating a new degraded/wrapped file
   // with tools/degrade_audio.sh, adding ONE line here, and pointing

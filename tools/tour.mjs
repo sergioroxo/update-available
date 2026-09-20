@@ -261,7 +261,7 @@ async function main() {
       await lookClose('r1'); await shot('look-rootcause', 'ROOTCAUSE.EXE — the fellowship\'s own game, on the disk');
       await pressWhen('rootcause-start', 3000);
       for (let i = 0; i < 3; i++) {
-        const dig = (await ids()).find((x) => /:dig:\d+:\d+$/.test(x));
+        const dig = (await ids()).find((x) => /:dig:(down|left|right|up)$/.test(x));
         if (!dig) break;
         await pressWhen(dig.split(':').slice(1).join(':'), 3000, { settle: 400 });
       }

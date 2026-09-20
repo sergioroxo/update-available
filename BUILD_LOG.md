@@ -1341,3 +1341,33 @@ law on the gender-exploratory debate); the record files what she chose. Verified
 workstation, before and after Apply, and on the ordinary path she loads fourth (fifteen presses through
 Renata, Noa and Deb — the walker leaves the day for the phone after two stories, as it always has, so
 the walk proves the era, not her). Walked: 261 presses, spine done. **closes I-01.**
+
+## 2026-09-20 — S155 · THE SOUND REDO, THE PART THAT NEEDS NO EAR (Priority 3)
+Sixteen masters in one `make_tones.sh` block, all ours and deterministic. The press is 14 ms of
+filtered noise, a fingertip on plastic — Freesound #619835 retired (closes R3-08). The floppy is
+a drive: motor up, two head seeks, motor down, 3.4 s, lower (closes R3-14). The IRC's tick is one
+soft short tick and sounds ONLY for his own lines and the request's arrival — the room's chatter
+and Rob's typing are silent (closes R3-25). The diary has a soft key per character, a two-note
+flag when the system notices, a scrub for each erase (closes R3-36). The passage is low wind, no
+whoosh — the building's rumble stays on disk (closes R3-43/63's sound half). 2003 boots on a POST
+beep and a drive under the splash, the jingle at half; 2016 boots on a soft rising pair
+(R3-48/64: the cues and the volume — the black screen and the shorter splash stay OPEN). Lambient
+has a chime with every line (closes R3-68 with the 2016 bed). The install is a drive working, not
+a churn; the restart is the hum dropping and one tick (closes R3-85; his ear on it). The search's
+typing is sparser and softer (closes R3-88). The session's recording is INTRODUCED as what it is
+— "Now playing: a recorded conversation, 11 min…" — before its sentences, the hiss under it at
+half; Junie's card still lands on the third sentence's dash (closes R3-102). Lamby has a sound of
+his own, a small upward pop on his appear (closes W-G1). Two compositions, ⚑ HIS TO HEAR: the
+descent's score — a pad falling an octave over the room's bed, 40 s from Log in (R3-02) — and the
+Close's score — the four beds resolving into one chord over the sky's air, in place of the sky bed
+he could not hear (R3-110). W-G2 (captions everywhere) stays open with its inventory in the
+register. **And his ask of the day: the prayer tape's spoken intro is CUT** — the tape opens on
+the prayer's first word; the four intro segments are gone from `s1_tapes.json`, the a-prayer times
+shifted −18, `tapeA_side_one_intro.wav` left on disk unreferenced. Verified by hand: the score at
+Log in, the prayer at 0, Amen at ~42 s, the diary's three sounds. Walked twice: the first stopped in
+the game — every cell was its own control, the walker dug forty-two fresh ones and the tool's
+"going nowhere" backstop fired; now the four presses are DIRECTIONS (`dig:down`, `pump:left`…),
+the diagnoses ghost by turn rather than by chance, and a blind digger meets the report in fourteen
+turns, every time (eight runs by hand). Second walk: 258 presses, spine done.
+**closes R3-08, R3-14, R3-25, R3-36, R3-43/63 (sound), R3-68, R3-85, R3-88, R3-102, W-G1; R3-02,
+R3-110 built — his to hear; R3-48/64 partial.**
