@@ -1682,3 +1682,23 @@ the scroll wheel and the trackpad pinch zoom the view exactly as the two-finger 
 the door's computer card and the menu's controls. Verified by hand: the 1997 desk's four icons; the
 FOV 42 → 33 on a wheel, 45 on notches, 69 on a ctrl-pinch. Walked: 292 presses, spine done.
 **closes R3-09, W-K1.**
+
+## 2026-09-21 — S170 · I-03: THE PLEDGE CARD (1997)
+His research's documented forms as content (I-03; his call: now). Read against the piece, three of
+the four eras already carry their form: 2003's multimedia rally and testimony are NetVision and the
+Messenger; 2016's testimony essay is the correction queue's stories; 2026's online peer group is the
+Commons and its story circle is the Close's panels and the file. The gap was 1997's: **the pledge
+card** (the report's §1990s — a signed card turning a private intention into a public object and an
+identity marker; Bearman & Brückner 2001 on what pledges did). Built as the Un-Walk wizard's third
+step, between Pray and Connect (`s1_kit.json` `pledge`; `kit.ts` `drawPledge`): the programme's own
+card in the programme's own words — "TRIEDPATH FELLOWSHIP · MY PLEDGE / I, {name}, choose the tried
+path…" with the name typed at the profile and nothing else; **Sign** on the wizard's row, **Not
+today** on the card; both lead on and both are filed (`pledge-signed`; `pledge-declined`, flagged —
+dismissal always works and is logged), and the card is "on file either way", which is the satire and
+it is the programme's; the ring is "in the post", which is where it stays. The record has the
+practice (`practices.json` `pledge` → a fifth source on `origin_intake_e1.json`, documentary,
+confidence medium — from his report; the cited study not yet re-read for this line); the map has
+the beat; the guide has one line. Verified by hand: the six-step list, the card with the name, Not
+today → declined → Connect, Sign → signed → Connect. Walked: 284 presses, spine done — the walker
+took the card and signed. **closes I-03 (1997);
+the other three eras' forms are noted as already built.**

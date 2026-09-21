@@ -56,6 +56,8 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   if (id === 'kit-read') return { kind: 'kit', outcome: 'read', flagged: false };
   if (id === 'prayer-said') return { kind: 'tapes', outcome: 'prayed', flagged: false };
   if (id === 'prayer-cut') return { kind: 'tapes', outcome: 'cut short', flagged: true };
+  if (id === 'pledge-signed') return { kind: 'pledge', outcome: 'signed', flagged: false };
+  if (id === 'pledge-declined') return { kind: 'pledge', outcome: 'set aside', flagged: true };
   if (id === 'rob-spoke-mother') return { kind: 'referral', outcome: 'parent contacted', flagged: false };
   if (id.startsWith('dm-request:')) return { kind: 'referral', outcome: 'accepted', flagged: false };
   if (id === 'went-online' || id === 'mirc-log') return { kind: 'channel', outcome: 'joined', flagged: false };

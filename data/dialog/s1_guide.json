@@ -40,6 +40,16 @@
       }
     },
     {
+      "id": "pledge",
+      "trigger": "pledgeStep",
+      "done": "pledgeAnswered",
+      "text": "the card. sign it in your name, or set it aside.",
+      "witness": {
+        "followed": "guidance: pledge — answered",
+        "declined": "guidance: pledge — no response"
+      }
+    },
+    {
       "id": "channel",
       "trigger": "connectStep",
       "done": "kitConnecting",

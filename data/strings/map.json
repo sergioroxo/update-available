@@ -51,10 +51,17 @@
           "where": "the monitor"
         },
         {
+          "id": "pledge",
+          "label": "The pledge card",
+          "done": "pledgeAnswered",
+          "hint": "Step 3: the card — sign it in your name, or set it aside.",
+          "where": "the monitor"
+        },
+        {
           "id": "connect",
           "label": "Going online",
           "done": "wentOnline",
-          "hint": "Step 3: connect — the Internet Setup Wizard dials the fellowship.",
+          "hint": "Step 4: connect — the Internet Setup Wizard dials the fellowship.",
           "where": "the monitor"
         },
         {

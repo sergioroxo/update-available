@@ -161,13 +161,14 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 |---|---|---|---|
 | I-01 | ~~**The Genderbread Person as content** — "not for 1997, but another era". His deep research (`Sources/Deep Research/Interactive Sexuality Pedagogy…md`) documents the 2010s–20s forms: affirming groups' *digital identity-resource discussion* (orientation / identity / expression / body drawn apart) and, on the other side, the conservative *social-media worldview audit* — a leader puts the viral diagram up and the group finds its "assumptions". That second one IS a 2016 correction job: a member posts the person-diagram, the platform's job is "apply the house look" — its own design-figure collapses the four lines into one; APPLY / SKIP, both captions kept, unresolved (the law on the gender-exploratory debate). ⚑ Invented figure in the genre, not the real graphic (invented marks); the real one is Killermann's, uncopyrighted but still someone's — his ethics call~~ | 2016, the correction list | DONE — S154 · his call: inspired. Marisol's four-line figure; correction 14 'Apply the design figure' → the house's one line, hers `as sent` beside it; correction 15 cuts the outside source; both stay, nothing comments; by hand + walked 261 |
 | I-02 | ~~The prayer: no added activity; "what would someone at the time do?" — fast-forward the tape~~ | 1997, the pray step | DONE — S151c · Amen offered from the first chorus; taking it early stops the tape and files `prayer-cut`, flagged — "some way of resistance… and it gives something back" |
-| I-03 | His deep research's documented interactive forms as content: 1997 the pledge card / the ring; 2003 the multimedia rally, the testimony; 2016 the worldview audit (I-01), the testimony essay; 2026 the online peer group (the Commons), the deconstruction story circle (the Close?) | each era | IDEA · unscheduled |
+| I-03 | ~~His deep research's documented interactive forms as content: 1997 the pledge card / the ring; 2003 the multimedia rally, the testimony; 2016 the worldview audit (I-01), the testimony essay; 2026 the online peer group (the Commons), the deconstruction story circle (the Close?)~~ | each era | DONE — S170 · the 1997 pledge card as the wizard's third step; 2003/2016/2026 already carried their forms (NetVision + the Messenger; the queue's stories; the Commons + the Close) |
 
 ## Asks (his)
 - R3-110 the Close score — his to hear on the sit-through ("should probably still have the song from TransJesus? dunno").
   (R3-01, R3-12, R3-07, L-07, L-08 answered 2026-09-21 and built S167/S168; W-L1 S153; R3-109 S163; R3-61 S164.)
 
 ## Closed
+- S170 (2026-09-21): I-03 — the pledge card; walked, 284 presses, spine done.
 - S169 (2026-09-21): R3-09, W-K1 — the icons drawn, the wheel zooms; walked, 292 presses, spine done.
 - S168 (2026-09-21): W-F1, R3-12, R3-07 (the duck; the books stay by his call), R3-92 — his answers 5–8; walked with S167, 291 presses, spine done.
 - S167 (2026-09-21): R3-01 (the logo), L-07 (the receipt), L-08 (no), the Close's occlusion + the dossier button — his answers 1, 3, 4; R3-110 awaits his sit-through.

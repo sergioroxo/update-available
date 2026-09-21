@@ -46,10 +46,16 @@
         "after": "after step 1"
       },
       {
+        "id": "pledge",
+        "label": "Pledge",
+        "desc": "Your card — the tried path, in writing",
+        "after": "after step 2"
+      },
+      {
         "id": "connect",
         "label": "Connect",
         "desc": "The fellowship channel",
-        "after": "after step 2"
+        "after": "after step 3"
       },
       {
         "id": "form",
@@ -116,6 +122,18 @@
     "_doc": "2026-09-20, Sérgio: no activity that costs more time — 'what would be the experience of someone at the time?' Sit, follow the printed words, and, being sixteen, fast-forward the tape. So Amen is offered from the first chorus on; taking it early stops the tape and is filed (`prayer-cut`, flagged) — the one act of resistance the beat holds, and the record keeps it.",
     "aside": "(The second tape on the shelf is the fellowship's radio hour — not a step; there if you want it.)",
     "_docAside": "S159 / R3-20 (Sérgio: 'the Un-Walk wizard can name it as an option if the person wants — teaching the user there is other stuff to see that might not be the main narrative'): one parenthetical line on the pray page, no press, no step."
+  },
+  "pledge": {
+  "_doc": "S170 / I-03 — THE PLEDGE CARD, from his research (Interactive Sexuality Pedagogy…, §1990s: the True Love Waits card ceremony — a signed card turning an intention into a public object, the movement's own identity marker; Bearman & Brückner 2001 on what pledges did). The programme's own form of it, in the programme's own words (register: operable — the satire is TriedPath's and it collapses on its own line: the card is 'on file' whether or not you sign it, and the copy for the fridge is printed by the programme). The name is the one typed at the profile (ledger.name), and only that. Two presses, both lead on: signing files `pledge-signed`; declining files `pledge-declined`, flagged, and the wizard moves on — dismissal always works and is logged. No ring: the fellowship's is 'in the post', which is where it stays.",
+  "title": "Your pledge",
+  "before": ["Every walker signs a card. It says, in your own name, which way you are walking.", "Read it. Then sign, or set it aside for today."],
+  "cardTitle": "TRIEDPATH FELLOWSHIP · MY PLEDGE",
+  "cardLines": ["I, {name}, choose the tried path.", "I will keep my thoughts, my eyes and my", "friendships pure, and I will let those", "who love me help me walk.", "Signed before God and my family."],
+  "ring": "(Your fellowship ring is in the post.)",
+  "sign": "Sign",
+  "later": "Not today",
+  "signed": "Your pledge is on file. A copy has been printed for the fridge.",
+  "declined": "That is all right. The card is on file either way, and it will keep."
   },
   "connect": {
     "title": "You are not alone",

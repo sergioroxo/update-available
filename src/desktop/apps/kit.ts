@@ -37,9 +37,9 @@ import prayer from '../../../data/dialog/s1_prayer.json';
 import tapesData from '../../../data/dialog/s1_tapes.json';
 
 type KitPhase = 'autorun' | 'wizard' | 'setup';
-type Panel = 'welcome' | 'steps' | 'read' | 'pray' | 'connect' | 'form' | 'diary';
+type Panel = 'welcome' | 'steps' | 'read' | 'pray' | 'pledge' | 'connect' | 'form' | 'diary';
 type SetupPage = 'welcome' | 'number' | 'connecting';
-export type StepId = 'read' | 'pray' | 'connect' | 'form' | 'diary';
+export type StepId = 'read' | 'pray' | 'pledge' | 'connect' | 'form' | 'diary';
 
 /** same shape every other surface in the build publishes (provotype.ts, os.ts,
  *  graceQueueLite.ts, phoneE3.ts) — built while drawing, tested on click */
@@ -128,6 +128,7 @@ export class KitApp {
     switch (id) {
       case 'read': return this.readDone;
       case 'pray': return this.prayerDone;
+      case 'pledge': return ledger.records.includes('pledge-signed') || ledger.records.includes('pledge-declined');
       case 'connect': return this.connected || ledger.records.includes('went-online');
       case 'form': return ledger.provotypes.some((p) => p.id === 'origin_intake_e1');
       case 'diary': return ledger.records.includes('diary-glitch');
@@ -234,6 +235,7 @@ export class KitApp {
         break;
       }
       case 'pray': this.drawPray(ctx, tx, ty, tw, c); break;
+      case 'pledge': this.drawPledge(ctx, tx, ty, tw, c); break;
       case 'connect': this.drawTextPage(ctx, tx, ty, tw, kit.connect.title, kit.connect.lines); break;
       case 'form': this.drawTextPage(ctx, tx, ty, tw, kit.form.title, kit.form.lines); break;
       case 'diary': this.drawTextPage(ctx, tx, ty, tw, kit.diary.title, kit.diary.lines); break;
@@ -290,6 +292,7 @@ export class KitApp {
         if (p.state === 'idle' || p.state === 'stopped') return { id: 'play', label: p.state === 'stopped' ? kit.pray.again : kit.pray.play, disabled: false };
         return null;
       }
+      case 'pledge': return { id: 'sign', label: kit.pledge.sign, disabled: false };
       case 'connect': return { id: 'connect', label: kit.connect.button, disabled: false };
       case 'form': return { id: 'open-form', label: kit.form.button, disabled: false };
       case 'diary': return { id: 'open-diary', label: kit.diary.button, disabled: false };
@@ -344,6 +347,47 @@ export class KitApp {
   }
 
   /** the prayer: the tape, then its words as they are sung */
+  /**
+   * ⚑ S170 / I-03 — THE PLEDGE CARD (his research's 1990s form: the signed card).
+   * The programme's own card, in the programme's own words, with the name typed
+   * at the profile and nothing else; Sign is the row's button and "Not today"
+   * sits on the card — both lead on, both are filed (the decline flagged), the
+   * card is 'on file' either way, which is the satire and it is the programme's.
+   */
+  private drawPledge(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, c: ui.ContentRect): void {
+    const P = kit.pledge;
+    ui.setFont(ctx, 14);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(P.title, x, y);
+    ui.setFont(ctx, 10);
+    const answered = this.stepDone('pledge');
+    if (answered) {
+      const signed = ledger.records.includes('pledge-signed');
+      ui.wrapText(ctx, signed ? P.signed : P.declined, w).forEach((ln, i) => ctx.fillText(ln, x, y + 30 + i * 14));
+      return;
+    }
+    let row = 0;
+    P.before.forEach((line) => ui.wrapText(ctx, line, w).forEach((ln) => { ctx.fillText(ln, x, y + 24 + row * 13); row++; }));
+    // the card: paper, a rule, the lines with the name set in
+    const cy = y + 24 + row * 13 + 8, ch = 92;
+    ui.px(ctx, x, cy, w, ch, ERA1.paper);
+    ui.px(ctx, x, cy, w, 1, ERA1.grey); ui.px(ctx, x, cy + ch - 1, w, 1, ERA1.grey);
+    ui.px(ctx, x, cy, 1, ch, ERA1.grey); ui.px(ctx, x + w - 1, cy, 1, ch, ERA1.grey);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.navy;
+    ctx.fillText(P.cardTitle, x + 8, cy + 6);
+    ui.px(ctx, x + 8, cy + 18, w - 16, 1, ERA1.grey);
+    ctx.fillStyle = ERA1.black;
+    const name = ledger.name && ledger.name !== '—' ? ledger.name : '________';
+    P.cardLines.forEach((ln, i) => ctx.fillText(ln.replace('{name}', name), x + 8, cy + 24 + i * 12));
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(P.ring, x, cy + ch + 6);
+    // "Not today" — on the card's own row, left of the wizard's buttons
+    const bw = 68, bh = 20, bx = x, by = c.y + c.h - 28;
+    ui.button(ctx, bx, by, bw, bh, P.later, {});
+    this.hits.push({ x: bx, y: by, w: bw, h: bh, id: 'pledge-notnow' });
+  }
+
   private drawPray(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, c: ui.ContentRect): void {
     ui.setFont(ctx, 14);
     ctx.fillStyle = ERA1.black;
@@ -541,6 +585,14 @@ export class KitApp {
           if (!ledger.records.includes('kit-read')) ledger.records.push('kit-read');
           this.panel = 'steps';
         }
+        return;
+      case 'sign':
+        if (!ledger.records.includes('pledge-signed') && !ledger.records.includes('pledge-declined')) ledger.records.push('pledge-signed');
+        this.panel = 'steps';
+        return;
+      case 'pledge-notnow':
+        if (!ledger.records.includes('pledge-signed') && !ledger.records.includes('pledge-declined')) ledger.records.push('pledge-declined');
+        this.panel = 'steps';
         return;
       case 'play': this.prayerStopped = false; this.onPlayTape?.(); return;
       case 'amen': {

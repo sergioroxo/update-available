@@ -56,6 +56,8 @@ const CONDITIONS: Record<string, Condition> = {
   kitRead: (os) => os.kit?.hasRead === true || ledger.records.includes('kit-read'),
   prayStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'pray',
   prayerSaid: () => ledger.records.includes('prayer-said') || ledger.records.includes('prayer-cut'),
+  pledgeStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'pledge',   // S170 / I-03
+  pledgeAnswered: () => ledger.records.includes('pledge-signed') || ledger.records.includes('pledge-declined'),
   connectStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'connect',
   kitConnecting: (os) => os.kit?.dialing === true || ledger.records.includes('went-online'),
   tapePlayed: () => ledger.records.includes('tape-played'),

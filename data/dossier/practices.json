@@ -19,6 +19,7 @@
         "index": 2
       }
     },
+    "pledge": { "title": "The pledge card", "did": "asked you to sign, in your own name, which way you were walking — and kept the card either way", "status": "documentary", "source": { "file": "origin_intake_e1", "index": 4 } },
     "channel": {
       "title": "The channel, and the log",
       "did": "routed you to people like you, and kept the transcript",

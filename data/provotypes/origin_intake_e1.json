@@ -127,6 +127,13 @@
         "confidence": "high",
         "text": "Professional bodies state these practices lack evidence of benefit and carry risk of harm: the APA's 2009 review of sexual-orientation change efforts, its 2021 resolutions covering both orientation and gender identity, and the UK's cross-government Memorandum of Understanding on Conversion Therapy (2015; extended to gender identity in 2017). This instrument's causal premises are unsupported. [VERIFY SOURCE]",
         "urls": ["https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf", "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF"]
+      },
+      {
+        "_doc": "S170 / I-03 — the pledge card's source: the project lead's deep-research report (Pc_Simulation/Sources/Deep Research/Interactive Sexuality Pedagogy in Christian Youth Ministry, 1990s–2026.md), §1990s, and the peer-reviewed study it cites. The card in the piece is the programme's own invented form of a documented practice; the movement's real name and card are not quoted. Confidence medium: the report is his, the DOI is real, and this line has not yet been re-read against the paper itself.",
+        "status": "documentary",
+        "confidence": "medium — from the lead's research report; the cited study not yet re-read for this line",
+        "text": "The signed abstinence pledge card of the 1990s youth movements turned a private intention into a public object and an identity marker; Bearman and Brückner's national longitudinal analysis (American Journal of Sociology 106(4), 2001, doi:10.1086/320295) found its effects conditional and identity-bound rather than protective. This programme's card is an invented form of that documented practice.",
+        "urls": ["https://doi.org/10.1086/320295"]
       }
     ]
   },
