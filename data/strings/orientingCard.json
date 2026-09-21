@@ -17,7 +17,8 @@
    "lines": [
     "Drag with the mouse to look around.",
     "Click to choose, and to use things on the desk.",
-    "Click a marker on the floor to move to it."
+    "Click a marker on the floor to move to it.",
+    "Scroll to zoom the view in or out."
    ],
    "button": "Log in"
   },

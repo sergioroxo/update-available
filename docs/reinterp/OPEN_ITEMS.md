@@ -124,13 +124,13 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | F-01 | ~~**The front door offers the choices** (his 2026-09-20): how you want to navigate this — computer (mouse/drag) · phone (turn the device) · headset — and captions on/off — chosen on the pre-fiction panel, not discovered; with R3-01's redesign~~ | DONE — S162 · three cards with their own way in (the phone card asks the device in its press); the captions checkbox = `ledger.view.captions`, also a menu row |
 | R3-01 | ~~The pre-fiction panel: ERA1 look, the logo, three cards, the text~~ | DONE — S162 · a 1997 dialog (`DIALOG` tokens), three cards, the text cut · S167: his logo file on the masthead |
 | R3-06 | ~~Helper idle 40 → 20 s~~ | DONE — S149 · 20 s |
-| R3-09 | Desktop icon grid with drawn pixel icons | OPEN |
+| R3-09 | ~~Desktop icon grid with drawn pixel icons~~ | DONE — S169 · `theme/icons.ts`, ten pictures |
 | R3-15 | ~~**Un-Walk = the Starter Kit programme (UNWALK.EXE)**, "a box with white background, empty, black and white font" → the Win95 WIZARD look from his reference `References images/for the Era-1 programs.png` (left picture panel, text, Back/Next/Cancel) — one design with R3-16/19~~ | DONE — S151 · the Win95 wizard from his reference — picture panel, title, Back/Next/Cancel; tour frame 07 |
 | R3-29 | ~~Map wording: "the placement letter"~~ | DONE — S149 · "the placement letter" |
 | R3-30 / 31 | ~~The unvoiced-name setting in plain words; menu design~~ | DONE — S162 · "The name on the record: said aloud / shown, not said aloud" + a plain note; the menu wears the door's 1997 chrome |
 | R3-33 | ~~"See behind you"; the flip button glows when the wall holds something unseen~~ | DONE — S151b · "Record filed. (see behind you)"; the ⟲ control glows on the creep's breath while the wall holds something unseen |
 | W-F1 | ~~Leave: an interim safe space with a way back (08-21 §F); in-fiction "leave" renamed "Go back"~~ | DONE — S168 · his call: an encyclopedia lookalike (`leavePage.ts`) with three discreet ways back; sound muted, the piece held; the exercises' Leave is Go back |
-| W-K1 | Browser: scroll wheel / trackpad zoom (08-21 §K) | OPEN |
+| W-K1 | ~~Browser: scroll wheel / trackpad zoom (08-21 §K)~~ | DONE — S169 · the wheel is the pinch (FOV 30–80°) |
 
 ## Priority 8 — the Close
 | id | item | status |
@@ -168,6 +168,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   (R3-01, R3-12, R3-07, L-07, L-08 answered 2026-09-21 and built S167/S168; W-L1 S153; R3-109 S163; R3-61 S164.)
 
 ## Closed
+- S169 (2026-09-21): R3-09, W-K1 — the icons drawn, the wheel zooms; walked, 292 presses, spine done.
 - S168 (2026-09-21): W-F1, R3-12, R3-07 (the duck; the books stay by his call), R3-92 — his answers 5–8; walked with S167, 291 presses, spine done.
 - S167 (2026-09-21): R3-01 (the logo), L-07 (the receipt), L-08 (no), the Close's occlusion + the dossier button — his answers 1, 3, 4; R3-110 awaits his sit-through.
 - S166 (2026-09-21): his S162 notes — the jingle is the software's (Lamby's cartoon over it; the machine boots in silence; the CD-ROM splash retired to review), the version on the door (v0.1.0 · alpha); walked, 271 presses, spine done. R3-48's bar question is moot (the splash's bar is gone from play).

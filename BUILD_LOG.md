@@ -1670,3 +1670,15 @@ the program is on rails; the laptop's line stays the restore's. Verified by hand
 the return (title restored, menu state kept), the duck's bands from the shelf, the game on the
 monitor (hop, its own back). Walked (with S167): 291 presses, spine done — the walker took the
 bookmark and hopped, and came to the machine's far glass. **closes W-F1, R3-12, R3-07, R3-92.**
+
+## 2026-09-21 — S169 · THE ICONS DRAWN; THE WHEEL IS THE PINCH
+**R3-09** — every launcher on the 1997/2003 desktops has its own picture now (`theme/icons.ts`,
+22 × 18 logical px, the ERA1 sixteen, integer rects): A:\ a floppy, mIRC a speech bubble, Session a
+sheet, Family Form a form with its ticks, lamby_rig.exe the lamb's face, rootcause.exe a shovel in
+the ground, referral_notes.txt a text file with a folded corner, Messenger two heads, Restorify the
+house with one lit window, Care Log a bound book. An id without a picture keeps the box. **W-K1** —
+the scroll wheel and the trackpad pinch zoom the view exactly as the two-finger pinch does (the same
+30°–80° FOV, the same law: a camera control, never a selection; the page never scrolls); named in
+the door's computer card and the menu's controls. Verified by hand: the 1997 desk's four icons; the
+FOV 42 → 33 on a wheel, 45 on notches, 69 on a ctrl-pinch. Walked: 292 presses, spine done.
+**closes R3-09, W-K1.**

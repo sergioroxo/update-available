@@ -8,6 +8,7 @@
  */
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
+import { drawPixelIcon, hasPixelIcon } from './theme/icons';
 import { setFaceEra } from './theme/fonts';
 import { IrcApp } from './apps/irc';
 import { KitApp } from './apps/kit';
@@ -2356,8 +2357,12 @@ export class DesktopOS {
     ctx: CanvasRenderingContext2D, hits: Hit[],
     x: number, y: number, label: string, id: string, enabled = true, unread = false
   ): void {
-    ui.px(ctx, x + 8, y, 20, 16, enabled ? ERA1.beige : ERA1.tealDark);
-    ui.px(ctx, x + 8, y, 20, 4, enabled ? ERA1.navy : ERA1.tealDark);
+    // S169 / R3-09: each launcher has its own picture (theme/icons.ts); the box stands in for an id without one
+    if (enabled && hasPixelIcon(id)) drawPixelIcon(ctx, x + 7, y - 1, id);
+    else {
+      ui.px(ctx, x + 8, y, 20, 16, enabled ? ERA1.beige : ERA1.tealDark);
+      ui.px(ctx, x + 8, y, 20, 4, enabled ? ERA1.navy : ERA1.tealDark);
+    }
     // the unread mark (finding B8): a pip, not a number in the label — the
     // label is clipped to 62px and "Messenger (1)" lost its own count to the
     // ellipsis. `warn` is reserved for narrative events, and an unopened

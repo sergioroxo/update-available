@@ -3099,6 +3099,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     hoveredTapeId = testTapeHover(e); // S89: name the tape the instant a finger lands, before release inserts it
     try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
   });
+  /**
+   * ⚑ S169 / W-K1 — THE WHEEL IS THE PINCH (his 08-21 §K: scroll wheel / trackpad
+   * zoom in the browser). Same bound camera control, same 30°–80° FOV, same
+   * law: you narrow the frame, the room never leaves. A trackpad's pinch
+   * arrives as a wheel event with ctrlKey, at a finer rate; a mouse wheel in
+   * notches. Neither can select anything (CLAUDE.md: the pinch is a camera
+   * control, not an input). The page itself never scrolls — the canvas owns it.
+   */
+  canvasEl.addEventListener('wheel', (e) => {
+    if (!camera.camera || xr?.active) return;
+    e.preventDefault();
+    const rate = e.ctrlKey ? 0.12 : (e.deltaMode === 1 ? 2.4 : 0.03);   // trackpad pinch · notches · pixels
+    camera.camera.fov = Math.max(FOV_MIN, Math.min(FOV_MAX, camera.camera.fov + e.deltaY * rate));
+  }, { passive: false });
   canvasEl.addEventListener('pointermove', (e) => {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch !== null) {
