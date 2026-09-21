@@ -13,6 +13,57 @@ import * as pc from 'playcanvas';
 import layout from '../../data/room/era1.json';
 import { hasModel, spawnModel } from './assets';
 
+/**
+ * ⚑ S168 / R3-07 — paint a spawned model in horizontal bands (the rainbow duck:
+ * Sérgio, twice — "the duck is still at the top, not pride colours"). The GLB
+ * ships one flat material and no colour stream, so the mesh is read back once
+ * (positions, normals, indices), given a vertex colour per band of its own
+ * height, and swapped in; the cloned material reads the colours. One draw, no
+ * new entity. ⚠ never batch a prop whose material something writes to — this
+ * writes once at spawn, before any batch is built.
+ */
+function bandModel(root: pc.Entity, bands: string[]): void {
+  root.forEach((node) => {
+    const ent = node as pc.Entity;
+    if (!ent.render) return;
+    // ⚑ a NEW MeshInstance per mesh, not `mi.mesh = …`: the engine reads the
+    //   vertex format's `hasColor` into `_shaderDefs` ONLY in the MeshInstance
+    //   constructor (playcanvas.mjs, SHADERDEF_VCOLOR), so a mesh swapped in
+    //   later renders without its colours, whatever the material says.
+    const rebuilt: pc.MeshInstance[] = [];
+    for (const mi of ent.render.meshInstances) {
+      const src = mi.mesh;
+      const pos: number[] = [], nrm: number[] = [], idx: number[] = [];
+      src.getPositions(pos);
+      src.getNormals(nrm);
+      src.getIndices(idx);
+      if (pos.length === 0) continue;
+      let y0 = Infinity, y1 = -Infinity;
+      for (let i = 1; i < pos.length; i += 3) { y0 = Math.min(y0, pos[i]); y1 = Math.max(y1, pos[i]); }
+      const cols: number[] = [];
+      const span = Math.max(1e-6, y1 - y0);
+      const rgb = bands.map((h) => hex(h));
+      for (let i = 0; i < pos.length; i += 3) {
+        const k = Math.min(bands.length - 1, Math.floor(((pos[i + 1] - y0) / span) * bands.length));
+        const c = rgb[k];
+        cols.push(c.r, c.g, c.b, 1);
+      }
+      const mesh = new pc.Mesh(src.device);
+      mesh.setPositions(pos);
+      if (nrm.length) mesh.setNormals(nrm);
+      mesh.setColors(cols);
+      if (idx.length) mesh.setIndices(idx);
+      mesh.update(pc.PRIMITIVE_TRIANGLES);
+      const m = new pc.StandardMaterial();
+      m.diffuse = new pc.Color(1, 1, 1);
+      m.diffuseVertexColor = true;
+      m.update();
+      rebuilt.push(new pc.MeshInstance(mesh, m, ent));
+    }
+    if (rebuilt.length) ent.render.meshInstances = rebuilt;
+  });
+}
+
 export interface PropDef {
   id: string;
   pos: [number, number, number] | number[];
@@ -26,6 +77,10 @@ export interface PropDef {
    *  If the model is loaded, this prop spawns the MESH (recolored to `color`);
    *  otherwise it falls back to the box defined by `size`. */
   model?: string;
+  /** ⚑ S168 / R3-07 — horizontal colour BANDS painted onto a model, bottom to top
+   *  (the rainbow duck's six: D33 permitted the duck its canon colours). The
+   *  mesh is rebuilt once with vertex colours; the material reads them. */
+  bands?: string[];
   /** OPTIONAL per-prop mesh scale, overriding data/room/models.json's per-KEY
    *  scale. Present because one model key furnishes three rooms at different
    *  measured sizes — see spawnModel's note. Set it only from a MEASUREMENT
@@ -239,7 +294,7 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
     const ms = p.modelScale;
     e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0, p.color,
       Array.isArray(ms) ? [ms[0], ms[1], ms[2]] : ms);
-    if (e) { e.name = p.id; isModel = true; }
+    if (e) { e.name = p.id; isModel = true; if (p.bands?.length) bandModel(e, p.bands); }
   }
   // the `parts` composite path (see PropDef.parts) — a wrapper with NO render
   // of its own (so batching.ts's existing `!h.entity.render` guard already

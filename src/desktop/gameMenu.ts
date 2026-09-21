@@ -51,6 +51,7 @@ import { entriesByEra, practiceOf, type RecordEra } from '../witness/record';
 import mapCopy from '../../data/strings/map.json';
 import closeNetwork from '../../data/strings/close_network.json';
 import { DIALOG, domBevel } from './theme/chrome';
+import { mountLeavePage } from '../frame/leavePage';
 import originIntake from '../../data/provotypes/origin_intake_e1.json';
 import pillowCard from '../../data/provotypes/pillow.json';
 // ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
@@ -93,6 +94,7 @@ const GLYPH_Z = 999;
 
 export function mountGameMenu(): GameMenu {
   let view: View = 'main';
+  const leavePage = mountLeavePage();
   let destroyed = false;
   const canFullscreen = (): boolean =>
     document.fullscreenEnabled && typeof document.documentElement.requestFullscreen === 'function';
@@ -522,7 +524,13 @@ export function mountGameMenu(): GameMenu {
    *  gameMenuBus.leaveEngine, wired once the real engine exists. Before that
    *  (still on the pre-fiction orienting card) there is nothing to hand off
    *  to yet, so a reload is the only clean "leave" available at that stage. */
+  /** ⚑ S168 / W-F1 — LEAVE IS AN IN-BETWEEN NOW (src/frame/leavePage.ts): a plain
+   *  page any screen can show, with a way back. Leaving FOR GOOD is the old flow
+   *  below (`leaveForGood`): the ledger wiped, the engine's "You left." screen. */
   function doLeave(): void {
+    leavePage.show(leaveForGood);
+  }
+  function leaveForGood(): void {
     wipeLedger();
     if (gameMenuBus.leaveEngine) {
       gameMenuBus.leaveEngine();
@@ -546,7 +554,8 @@ export function mountGameMenu(): GameMenu {
     }
   }
 
-  gameMenuBus.openCloseSources = (i) => { closeFocus = i; view = 'closeSources'; render(); gameMenuBus.open(); };
+  // (open first — opening resets the view to main — then land on the sources)
+  gameMenuBus.openCloseSources = (i) => { gameMenuBus.open(); closeFocus = i; view = 'closeSources'; render(); };
   const unsubscribe = gameMenuBus.onChange(setOpenVisual);
   const onFullscreenChange = (): void => {
     if (gameMenuBus.isOpen && view === 'main') render();

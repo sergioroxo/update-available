@@ -197,6 +197,19 @@ export function domBevel(el: HTMLElement, sunk = false, width = 2): void {
   el.style.borderColor = `${a} ${b} ${b} ${a}`;
 }
 
+/** ⚑ S168 — THE LEAVE PAGE's greys (src/frame/leavePage.ts): a reference site's own
+ *  palette, deliberately not the fiction's — the page must look like any page. */
+export const REFERENCE = {
+  paper: '#ffffff',
+  ink: '#202122',
+  link: '#3366cc',
+  rule: '#a2a9b1',
+  panel: '#f8f9fa',
+  panelHead: '#eaecf0',
+  muted: '#54595d',
+  placeholder: '#72777d'
+} as const;
+
 export const FRAME = {
   glass: 'rgba(10,10,14,0.78)',
   ink: '#cdd3df',

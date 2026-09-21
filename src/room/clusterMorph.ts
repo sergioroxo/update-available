@@ -56,14 +56,14 @@ const DELTA_LIST: Delta[] = SPACE_STATES.map(
   s => (deltas as unknown as Record<string, Delta>)[s]
 );
 
-interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string; modelScale?: number | number[]; parts?: PropDef['parts'] }
+interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string; modelScale?: number | number[]; parts?: PropDef['parts']; bands?: string[] }
 
 /** fold base + deltas 0..idx → each prop's full target state (module-level so
  *  the static-set computation shares the exact same fold the morph runs) */
 function foldTargets(idx: number): Map<string, PropTarget> {
   const m = new Map<string, PropTarget>();
   for (const d of (era1 as unknown as { props: PropDef[] }).props) {
-    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model, modelScale: d.modelScale, parts: d.parts });
+    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model, modelScale: d.modelScale, parts: d.parts, bands: d.bands });
   }
   for (let i = 0; i <= idx; i++) {
     const delta = DELTA_LIST[i];
@@ -198,7 +198,8 @@ export class ClusterMorph {
       // wall with the data looking correct — the exact shape of bug this
       // codebase keeps hitting: a field that exists in data, is honoured by
       // the spawner, and is lost in the layer between them.
-      color: t.color, emissive: t.emissive, yaw: t.yaw, model: t.model, modelScale: t.modelScale, parts: t.parts
+      color: t.color, emissive: t.emissive, yaw: t.yaw, model: t.model, modelScale: t.modelScale, parts: t.parts,
+      bands: t.bands   // S168: the duck's bands — the same class of field (data → spawner) this comment is about
     });
   }
 

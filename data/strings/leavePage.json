@@ -1,0 +1,51 @@
+{
+ "_doc": "⚑ S168 / W-F1 — THE LEAVE PAGE (his 2026-08-21 §F and 2026-09-21 answer 5): pressing Leave does not end the piece any more; it opens an in-between page — a plain encyclopedia article, the kind any screen can show without explaining itself — so a person can be protected in a room they share, and can still come back. Frame voice, and the frame never plays: the page is generic on purpose (an invented reference site, no real site's name or mark, no logo), the article is true and dull (a screensaver), and the way back is discreet but findable: the last entry under See also, the small link in the corner, and Esc. Audio is muted while the page is up and the piece is held (the menu's own freeze). 'Leave for good' is the old Leave: the ledger wiped, the inert 'You left.' screen. The article text is Claude's, checked for plain truth; nothing in it is quoted from anywhere.",
+ "siteName": "The Open Reference",
+ "tagline": "the free encyclopedia anyone can read",
+ "docTitle": "Screensaver — The Open Reference",
+ "tabs": ["Article", "Talk", "Read", "View history"],
+ "searchPlaceholder": "Search",
+ "title": "Screensaver",
+ "hatnote": "This article is about the display program. For the thing you were looking at before this page, see § See also.",
+ "lead": "A screensaver is a computer program that fills a display with moving images, patterns or a blank field when the computer has not been used for a while. It ends, and the screen returns to what it was showing, when a key is pressed or the mouse is moved.",
+ "contentsTitle": "Contents",
+ "sections": [
+  {
+   "heading": "History",
+   "paragraphs": [
+    "Screensavers were written for cathode-ray-tube displays, on which a picture left unchanged for a long time could leave a faint permanent ghost of itself in the phosphor coating, called burn-in. Blanking the screen, or keeping whatever it showed in motion, prevented this. Early versions did nothing but darken the display after a set number of minutes; later ones drew patterns, and the moving picture became the point.",
+    "Modern flat displays are far less prone to burn-in, and operating systems now dim or switch off a display to save power instead. Screensavers persist as decoration, as a way of showing photographs on an idle machine, and as a lock."
+   ]
+  },
+  {
+   "heading": "Kinds",
+   "paragraphs": [
+    "The simplest is a black screen. Others draw lines, starfields, pipes or clouds; some show a slideshow of the user's own pictures; some show the time. A well-known kind sends a small logo drifting across the screen, rebounding from each edge, and people watching an idle machine have been known to wait for the moment it lands exactly in a corner.",
+    "On shared or public computers the screensaver commonly locks the session as well, so that returning to the screen requires a password. In that use the picture is incidental: what matters is that whatever was on the screen is not on it any more."
+   ]
+  },
+  {
+   "heading": "In culture",
+   "paragraphs": [
+    "Because a screensaver appears only when nobody is using the machine, it is one of the few programs that most people have seen but few have ever run on purpose. Its imagery — flying shapes, slow gradients, a bouncing mark — became a shorthand for an office after hours, and for a computer left on with its user somewhere else."
+   ]
+  }
+ ],
+ "infobox": {
+  "title": "Screensaver",
+  "rows": [
+   ["Type", "utility software"],
+   ["First appeared", "1980s"],
+   ["Original purpose", "preventing burn-in on CRT displays"],
+   ["Later use", "decoration; session lock"],
+   ["Ends on", "a key press or mouse movement"]
+  ]
+ },
+ "seeAlsoTitle": "See also",
+ "seeAlso": ["Burn-in", "Cathode-ray tube", "Screen lock", "Idle (computing)"],
+ "resumeLink": "Your update has failed (resume where you were)",
+ "cornerResume": "↩ resume",
+ "leaveForGood": "leave for good — nothing is kept",
+ "footer": "Text is available under a free licence; this page is part of a work of fiction and stores nothing about you.",
+ "lastEdited": "This page was last edited on a Tuesday."
+}

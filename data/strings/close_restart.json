@@ -25,6 +25,25 @@
  ],
  "again": "Start again",
  "come": "Press the screen to come to it.",
+ "dossier": "The dossier",
+ "_docDossier": "S167 (his 2026-09-21: \"if I touch the computer, I should be able to go back to the dossiers\") — a button on the card that opens the frame's own reading of the four panels: their status and the practices behind them, each with its source (the menu's The Close — sources). The frame's, not the machine's: the machine offers a way back; the frame says what was done.",
+ "receipt": {
+  "_doc": "S167 / L-07 (his 2026-09-21: \"yes, you can create a receipt of the whole experience\") — the version-history receipt, back on the machine as a second face of the card: every update stacked, each FAILED, then the file's lines. Frame voice, in the machine's own till-print. `{n}` entries · `{f}` flagged from the ledger; the practices met, per era, from the record — read, never invented.",
+  "button": "Receipt",
+  "title": "RECEIPT",
+  "span": "1997 — 2026 · one machine",
+  "updates": [
+   { "era": "e1", "line": "1997 · Family Companion 1.0" },
+   { "era": "e2", "line": "2003 · Restorify" },
+   { "era": "e3", "line": "2016 · GracePlatform" },
+   { "era": "e4", "line": "2026 · L · Second Thoughts" }
+  ],
+  "failed": "FAILED",
+  "entries": "{n} entries filed · {f} flagged",
+  "practicesLabel": "what it did, in order:",
+  "kept": "kept by: nobody",
+  "back": "Back"
+ },
  "_docCome": "⚑ S163 / C-02 — the FAR face's one line (the machine stands three metres back in the sky now; the full card is drawn once the eye has come to it). Frame voice.",
  "witness": "the machine offered its restart; nothing was kept",
  "makers": "Made at the University of Bergen (SurvivingSOGICE) with Claude. Credits & sources: the menu.",

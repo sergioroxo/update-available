@@ -137,6 +137,12 @@ export interface PointCloud {
   gazeOnPanel(on: boolean): void;
   /** …and holds still for `seconds` after any press */
   holdDrift(seconds: number): void;
+  /** ⚑ S167 — THE CLEAR CORRIDOR (his 2026-09-21: "occlusion errors on the Close").
+   *  When the eye has come to Daniel's machine, everything of the constellation
+   *  between the eye and the glass is in the way of the card: labels inside the
+   *  corridor collapse, and the whole sky dims to `dim` while it is read. `null`
+   *  clears it. World space: a box from `zNear` to `zFar` (the glass), |x| ≤ hx. */
+  setClearCorridor(c: { hx: number; zNear: number; zFar: number; dim: number } | null): void;
 }
 
 export function buildPointCloud(app: pc.Application): PointCloud {
@@ -794,7 +800,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   const warmColors = tones.map(hex);
   const apparatusColor = hex(P.link); // the piece's own witness-blue, reused
   const linkColor = apparatusColor;
-  let level = 0;
+  let fadeLevel = 0;
   let visible = false;
   let yaw = 0;
   /** 0 = gathered on the ceiling, 1 = open around the seat. See `openSeconds`. */
@@ -808,6 +814,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   const DRIFT_EASE_SECONDS = 1.6;
   const invRoot = new pc.Mat4();
   const lp0 = new pc.Vec3(), lp1 = new pc.Vec3(), ld = new pc.Vec3(), lh = new pc.Vec3();
+  let corridor: { hx: number; zNear: number; zFar: number; dim: number } | null = null;
+  const lw = new pc.Vec3();
 
   /**
    * Rewrites the existing merged label mesh so every quad faces the live
@@ -845,12 +853,18 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     const upZ = sine * camUp.x + cosine * camUp.z;
     const halfHeight = P.labelHeight / 2;
 
+    const rootM = corridor ? root.getWorldTransform() : null;
     for (let li = 0; li < labels.length; li++) {
       const centerAt = li * 3;
       const centerX = labelCenters[centerAt];
       const centerY = labelCenters[centerAt + 1];
       const centerZ = labelCenters[centerAt + 2];
-      const halfWidth = labelWidths[li] / 2;
+      let halfWidth = labelWidths[li] / 2;
+      if (rootM && corridor) {
+        // S167: a label between the eye and the glass collapses to nothing
+        rootM.transformPoint(lw.set(centerX, centerY, centerZ), lw);
+        if (Math.abs(lw.x) <= corridor.hx && lw.z <= corridor.zNear && lw.z >= corridor.zFar) halfWidth = 0;
+      }
 
       for (let corner = 0; corner < 4; corner++) {
         const horizontal = corner === 0 || corner === 3 ? -halfWidth : halfWidth;
@@ -865,6 +879,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   }
 
   function applyFade(): void {
+    const level = fadeLevel * (corridor ? corridor.dim : 1);   // S167: dimmed while the card is read
     // PERSON tier: soft — opacity never reaches 1, even at full fade. This is
     // the whole visual argument: the apparatus gets to be sharp, the rooms
     // where people are do not, on purpose.
@@ -889,8 +904,10 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     labelMat.opacity = level;
     labelMat.update();
     // the four panels, on the same ramp — they arrive with the sky, not after it
-    panelMat.emissive.set(ll, ll, ll);
-    panelMat.opacity = level;
+    // (and never dim for the corridor: they are the reading, not the weather)
+    const pl = fadeLevel * 1.25;
+    panelMat.emissive.set(pl, pl, pl);
+    panelMat.opacity = fadeLevel;
     panelMat.update();
   }
 
@@ -928,7 +945,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       visible = false;
       root.enabled = false;
       openK = 0;
-      level = 0;
+      fadeLevel = 0;
+      corridor = null;
       applyFade();
       ceilingMat.opacity = CEIL.opacity;
       ceilingMat.update();
@@ -939,8 +957,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     get visible(): boolean { return visible; },
     update(dt: number): void {
       if (!visible) return;
-      if (level < 1) {
-        level = Math.min(1, level + dt / P.fadeSeconds);
+      if (fadeLevel < 1) {
+        fadeLevel = Math.min(1, fadeLevel + dt / P.fadeSeconds);
         applyFade();
       }
       if (openK < 1) {
@@ -972,6 +990,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       return null;
     },
     gazeOnPanel(on: boolean): void { gazeHeld = on; },
-    holdDrift(seconds: number): void { holdT = Math.max(holdT, seconds); }
+    holdDrift(seconds: number): void { holdT = Math.max(holdT, seconds); },
+    setClearCorridor(c): void {
+      if ((c === null) === (corridor === null) && (!c || !corridor || (c.hx === corridor.hx && c.zNear === corridor.zNear && c.dim === corridor.dim))) return;
+      corridor = c;
+      applyFade();
+      updateBillboards();
+    }
   };
 }

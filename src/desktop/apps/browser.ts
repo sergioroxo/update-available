@@ -34,6 +34,7 @@ import { pulse as witnessPulse } from '../../witness/pulse';
 import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 } from '../theme/era4';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
+import { FloppySheep, FLOPPY_LABEL } from './floppysheep';
 import script from '../../../data/dialog/s4_boot.json';
 import {
   WEB, roundRect, roundEdge, pill, webCard, webButton, chipRow, progressBar,
@@ -152,7 +153,15 @@ export class E4Browser {
   // ── ⚑ THE PROGRAM (2026-09-12) — see s4_browser.json `program._doc` ─────────
   /** free: the restored session, hers · typing: the search being finished for
    *  her · agent: Second Thoughts introducing itself · program: the five steps */
-  private mode: 'free' | 'typing' | 'results' | 'site' | 'agent' | 'program' = 'free';
+  private mode: 'free' | 'typing' | 'results' | 'site' | 'agent' | 'program' | 'game' = 'free';
+  /** ⚑ S168 / R3-92 — FLOPPYSHEEP, THE COMPUTER VERSION (his 2026-09-21: now). The
+   *  same game as Vera's phone (`floppysheep.ts`), on a bookmark in the free
+   *  browser: one press away while the session waits — the same thing it said in
+   *  2016, said again on a bigger screen. Optional; files nothing; never on rails
+   *  (the bookmark is gone once the program begins). Drawn in a phone-shaped
+   *  frame at GAME_SCALE; presses are mapped back into the game's own space. */
+  private readonly floppy = new FloppySheep();
+  private gameFrame = { x: 0, y: 0, s: 1 };
   /** S160 / R3-93: the steps whose turn (L's question, her answer) is done */
   private turnDone = new Set<string>();
   /** S160 / R3-101: the chat step, after access — the threads list, then the one opened */
@@ -181,14 +190,14 @@ export class E4Browser {
   get consoleLine(): string {
     const c = PROGRAM.console;
     if (this.phase === 'restoring') return c.restoring;   // S160 / R3-91: the laptop says what it is doing
-    if (this.mode === 'free') return this.phase === 'open' ? c.restored : '';
+    if (this.mode === 'free' || this.mode === 'game') return this.phase === 'open' ? c.restored : '';
     if (this.mode === 'results') return c.results;
     if (this.mode === 'site') return c.site;
     if (this.mode === 'typing' || this.mode === 'agent') return c.typing;
     if (this.programDone) return c.ready;
     return PROGRAM.steps[this.step]?.console ?? '';
   }
-  get consoleMark(): string { return this.mode === 'free' || this.mode === 'typing' || this.mode === 'results' ? PROGRAM.console.mark : PROGRAM.agentMark; }
+  get consoleMark(): string { return this.mode === 'free' || this.mode === 'game' || this.mode === 'typing' || this.mode === 'results' ? PROGRAM.console.mark : PROGRAM.agentMark; }
   get consoleLineWorn(): string { return PROGRAM.console.worn; }
   /** review only: land past the steps, headset wearable */
   debugFinishProgram(): void {
@@ -252,12 +261,42 @@ export class E4Browser {
   /** S145 — the map asks whether the session has come back (the wake beat) */
   get isOpen(): boolean { return this.phase === 'open' || this.phase === 'handed' || this.phase === 'failed'; }
 
+  /** the game in a phone-shaped frame on the page (S168 / R3-92) */
+  private drawGame(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const top = ADDR.y + ADDR.h + 8;
+    const GW = 140, GH = 280;
+    const s = Math.min(1.25, (H - top - 12) / GH);
+    const gx = Math.round((W - GW * s) / 2), gy = top;
+    this.gameFrame = { x: gx, y: gy, s };
+    px(ctx, gx - 6, gy - 6, Math.round(GW * s) + 12, Math.round(GH * s) + 12, WEB.cardEdge);
+    ctx.save();
+    ctx.translate(gx, gy);
+    ctx.scale(s, s);
+    ctx.beginPath(); ctx.rect(0, 0, GW, GH); ctx.clip();
+    this.floppy.draw(ctx, GW, GH);
+    ctx.restore();
+    // the whole frame is the press (a hop); the game's own Back is inside it
+    this.publish({ x: gx, y: gy, w: Math.round(GW * s), h: Math.round(GH * s), id: 'game-tap' });
+    setFont(ctx, 9);
+    ctx.fillStyle = CHROME.hint;
+    const back = body.game.back;
+    const bw = Math.ceil(ctx.measureText(back).width) + 16, bx = ADDR.x, by = top;
+    px(ctx, bx, by, bw, 16, WEB.card);
+    ctx.fillText(back, bx + 8, by + 4);
+    this.publish({ x: bx, y: by, w: bw, h: 16, id: 'game-back' });
+  }
+
   update(dt: number): void {
     // ⚑ a surface that has stopped being pressable publishes nothing, even if
     //   nothing redraws it: the walk found a stale `tab0` still advertised
     //   through the whole finale and pressed it forty-five times (2026-09-12)
     if (!this.pressable && this.hits.length) this.hits = [];
     if (this.phase === 'dormant') return;
+    if (this.mode === 'game') {
+      const v = this.floppy.version;
+      this.floppy.update(dt);
+      if (this.floppy.version !== v) this.version++;
+    }
     // S145 — the record tab's lamp: one upload per pulse step, not per frame
     const lamp = Math.ceil(witnessPulse.k() * 6);
     if (lamp !== this.lampStep) { this.lampStep = lamp; this.version++; }
@@ -462,6 +501,18 @@ export class E4Browser {
       //   s4_boot.json `_docPrivate`. It arrives with the last of her tabs.
       if (back >= TABS.length - 1) ctx.fillText(script.boot.private, ADDR.x + 2, ADDR.y + ADDR.h + 24);
       return;
+    }
+    if (this.mode === 'game') { this.drawGame(ctx, W, H); return; }
+    if (this.mode === 'free') {
+      // S168 / R3-92: the bookmark — a chip at the address bar's foot, right
+      const label = '☆ ' + FLOPPY_LABEL;
+      setFont(ctx, 9);
+      const bw = Math.ceil(ctx.measureText(label).width) + 14, bx = W - ADDR.x - bw, by = ADDR.y + ADDR.h + 4;
+      px(ctx, bx, by, bw, 15, WEB.card);
+      px(ctx, bx, by + 14, bw, 1, WEB.cardEdge);
+      ctx.fillStyle = CHROME.hint;
+      ctx.fillText(label, bx + 7, by + 4);
+      this.publish({ x: bx, y: by, w: bw, h: 15, id: 'bm-floppy' });
     }
     if (this.mode === 'typing') { this.drawSearch(ctx, W); return; }
     if (this.mode === 'agent') { this.drawAgent(ctx, W, H); return; }
@@ -1316,6 +1367,16 @@ export class E4Browser {
     if (this.mode === 'typing') return true;  // the engine is busy finishing her sentence
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (hit) {
+      // S168 / R3-92: the game, one press away
+      if (hit.id === 'bm-floppy' && this.mode === 'free') { this.mode = 'game'; this.floppy.openGame(); this.version++; return true; }
+      if (hit.id === 'game-back') { this.floppy.closeGame(); this.mode = 'free'; this.version++; return true; }
+      if (hit.id === 'game-tap') {
+        const f = this.gameFrame;
+        const handled = this.floppy.tap((x - f.x) / f.s, (y - f.y) / f.s);
+        if (!this.floppy.open) this.mode = 'free';   // its own Back
+        this.version++;
+        return handled;
+      }
       // ── the takeover ──
       if (this.mode === 'free' && (hit.id === 'search-open' || hit.id === 'tab0')) {
         if (this.live !== 0) { this.openTab(0); }

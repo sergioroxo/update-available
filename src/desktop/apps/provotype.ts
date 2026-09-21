@@ -591,9 +591,10 @@ export class ProvotypeApp {
   private drawPaused(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     ctx.fillStyle = 'rgba(212,208,200,0.82)'; // the era's chrome beige, veiled
     ctx.fillRect(c.x, c.y, c.w, c.h - 24);
-    ui.setFont(ctx, 12);
+    // S168 / R3-12: the hold says what it is, in one wrapped line
+    ui.setFont(ctx, 11);
     ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(chrome.paused, c.x + 12, c.y + 12);
+    ui.wrapText(ctx, chrome.paused, c.w - 24).forEach((ln, i) => ctx.fillText(ln, c.x + 12, c.y + 12 + i * 14));
   }
 
   // ── input ─────────────────────────────────────────────────────────────

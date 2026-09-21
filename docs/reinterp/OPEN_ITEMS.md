@@ -116,20 +116,20 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-96 | ~~L introduced by name on the laptop before the search~~ | DONE — S160 · the laptop's lines name L and say it is restoring six tabs |
 | R3-101 | ~~"L needs access to your messages" → allow → threads → this one~~ | DONE — S160 · Allow / Just this once → Junie · Mum · Flat 3B (Junie's the press) → the thread → Confirm |
 | R3-105 / 106 | ~~The first flash before the world; a slower arrival with lights and a greeting~~ | DONE — S161 · the glass flickers over her room 2.4 s, the hall cuts in on the first full flash; lamps 0→9→17→25 in the fight, 41 in the hall; the two beside her step in: "Hi, Maya." / "You made it…" before the MC |
-| R3-92 | FloppySheep on the 2026 home screen | LATER |
+| R3-92 | ~~FloppySheep on the 2026 home screen~~ | DONE — S168 · a ☆ bookmark in the free browser; the phone's game in a frame on the page |
 
 ## Priority 7 — the frame and the front door
 | id | item | status |
 |---|---|---|
 | F-01 | ~~**The front door offers the choices** (his 2026-09-20): how you want to navigate this — computer (mouse/drag) · phone (turn the device) · headset — and captions on/off — chosen on the pre-fiction panel, not discovered; with R3-01's redesign~~ | DONE — S162 · three cards with their own way in (the phone card asks the device in its press); the captions checkbox = `ledger.view.captions`, also a menu row |
-| R3-01 | ~~The pre-fiction panel: ERA1 look, the logo, three cards, the text~~ | DONE — S162 · a 1997 dialog (`DIALOG` tokens), three cards, the text cut · **the logo file is still his ask** (an interim CRT mark stands in `drawMark`) |
+| R3-01 | ~~The pre-fiction panel: ERA1 look, the logo, three cards, the text~~ | DONE — S162 · a 1997 dialog (`DIALOG` tokens), three cards, the text cut · S167: his logo file on the masthead |
 | R3-06 | ~~Helper idle 40 → 20 s~~ | DONE — S149 · 20 s |
 | R3-09 | Desktop icon grid with drawn pixel icons | OPEN |
 | R3-15 | ~~**Un-Walk = the Starter Kit programme (UNWALK.EXE)**, "a box with white background, empty, black and white font" → the Win95 WIZARD look from his reference `References images/for the Era-1 programs.png` (left picture panel, text, Back/Next/Cancel) — one design with R3-16/19~~ | DONE — S151 · the Win95 wizard from his reference — picture panel, title, Back/Next/Cancel; tour frame 07 |
 | R3-29 | ~~Map wording: "the placement letter"~~ | DONE — S149 · "the placement letter" |
 | R3-30 / 31 | ~~The unvoiced-name setting in plain words; menu design~~ | DONE — S162 · "The name on the record: said aloud / shown, not said aloud" + a plain note; the menu wears the door's 1997 chrome |
 | R3-33 | ~~"See behind you"; the flip button glows when the wall holds something unseen~~ | DONE — S151b · "Record filed. (see behind you)"; the ⟲ control glows on the creep's breath while the wall holds something unseen |
-| W-F1 | Leave: an interim safe space with a way back (08-21 §F); in-fiction "leave" renamed "Go back" | DESIGN |
+| W-F1 | ~~Leave: an interim safe space with a way back (08-21 §F); in-fiction "leave" renamed "Go back"~~ | DONE — S168 · his call: an encyclopedia lookalike (`leavePage.ts`) with three discreet ways back; sound muted, the piece held; the exercises' Leave is Go back |
 | W-K1 | Browser: scroll wheel / trackpad zoom (08-21 §K) | OPEN |
 
 ## Priority 8 — the Close
@@ -152,8 +152,8 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | L-04 | The Close's MAKERS as an in-world cluster/panels — the stars becoming the network of the data used to make the piece, four panels on the AI–human loop (his IDN disclosure) — built instead as a Credits paragraph + one line | 2026-07-24, again 2026-09-02 | OPEN · lost-partial |
 | L-05 | TTS read-aloud as a standing accessibility principle for every long in-world text (kit, diary, tapes, testimonies) — built for two instances only | 2026-07-24 | OPEN · lost-partial |
 | L-06 | The E1→E2 full-frame SYSTEM glitch: `os.onGlitch('system')` has no caller (the error-dialog cascade before the notice does exist — tour-e1 frame 24) | 2026-08-21 §H | OPEN · lost-partial |
-| L-07 | The Close's "version history" receipt (every update stacked, each FAILED) and "the one uninstalled update" ending — still canon in MASTER_PLAN_v2, retired by no document; the Restart card replaced it without a decision | 2026-07 | DESIGN · his (keep the card, or bring the receipt back onto it) |
-| L-08 | Rooms you have left go bare vs stay full — erasure or hope — as a choice | 2026-09-05 | UNSURE · his |
+| L-07 | ~~The Close's "version history" receipt (every update stacked, each FAILED) and "the one uninstalled update" ending — still canon in MASTER_PLAN_v2, retired by no document; the Restart card replaced it without a decision~~ | 2026-07 | DONE — S167 · his call: a receipt of the whole experience — the card's Receipt face |
+| L-08 | ~~Rooms you have left go bare vs stay full — erasure or hope — as a choice~~ | 2026-09-05 | CLOSED — S167 · his call: no ("what benefit would that be?"); the rooms keep their one light |
 | L-09 | The idle wipe: CLAUDE.md says the ledger is wiped on exit/IDLE/refusal; no idle timer exists in src/ (only Leave and beforeunload wipe). Exhibition hardware runs unattended | invariant | OPEN · bug |
 
 ## Ideas (his, 2026-09-20 — logged so they are not lost; none scheduled yet)
@@ -164,12 +164,12 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | I-03 | His deep research's documented interactive forms as content: 1997 the pledge card / the ring; 2003 the multimedia rally, the testimony; 2016 the worldview audit (I-01), the testimony essay; 2026 the online peer group (the Commons), the deconstruction story circle (the Close?) | each era | IDEA · unscheduled |
 
 ## Asks (his)
-- R3-01 the logo file (an interim CRT mark stands in `orientingCard.ts drawMark` — S162) · R3-12 which "pause" button (a frame) ·
-  R3-07 the books: slabs or gone · L-07 the Close's ending: the Restart card, the version-history receipt, or both ·
-  L-08 bare rooms as a choice, yes/no. (R3-61 built S164.)
-  (W-L1 answered S153: Root Cause Digger · R3-109 read as yes and built S163.)
+- R3-110 the Close score — his to hear on the sit-through ("should probably still have the song from TransJesus? dunno").
+  (R3-01, R3-12, R3-07, L-07, L-08 answered 2026-09-21 and built S167/S168; W-L1 S153; R3-109 S163; R3-61 S164.)
 
 ## Closed
+- S168 (2026-09-21): W-F1, R3-12, R3-07 (the duck; the books stay by his call), R3-92 — his answers 5–8; walked with S167, 291 presses, spine done.
+- S167 (2026-09-21): R3-01 (the logo), L-07 (the receipt), L-08 (no), the Close's occlusion + the dossier button — his answers 1, 3, 4; R3-110 awaits his sit-through.
 - S166 (2026-09-21): his S162 notes — the jingle is the software's (Lamby's cartoon over it; the machine boots in silence; the CD-ROM splash retired to review), the version on the door (v0.1.0 · alpha); walked, 271 presses, spine done. R3-48's bar question is moot (the splash's bar is gone from play).
 - S165 (2026-09-21): W-E2 (a) — every program window minimises; walked with S164, 277 presses, spine done (the first walk spent its budget toggling the new chrome — `LAST_RESORT` in walk.mjs now ranks `min-`/`taskbar-` last).
 - S164 (2026-09-21): R3-61 — the notice rises out of the residue's dark.

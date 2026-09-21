@@ -1623,3 +1623,50 @@ Palette ratchet 24 → 13 (S162's menu recut). Verified by hand in the pane: the
 cartoon (asleep · the cloud · the light · the screen with him pointing), the door's tag. Walked:
 271 presses, spine done (`WALK_2026-09-21.md`) — the walker sat through the cartoon (no click-through)
 and met Lamby on the last phrase.
+
+## 2026-09-21 — S167 · HIS EIGHT ANSWERS: THE LOGO, THE CLOSE
+His answers to the S166 questions. **(1) R3-01 the logo** — his file (`Pc_Simulation/Logo/
+YourUpdateHasFailed_Logo.png`, the CRT with the room inside) on the door's masthead at 132 px
+(`public/assets/logo/logo_480.png`, scaled from his 1448 px original; an asset load); the pixel
+CRT stays as the title bar's icon and stands in if the file fails. **(3) the Close** — three
+things: *occlusion*: when the eye comes to Daniel's machine, everything of the constellation
+between the eye and the glass was in the way of the card (his screenshot: labels and a node cube
+across it) — `cloud.setClearCorridor`: labels inside the corridor collapse and the sky dims to 12 %
+while the card is read; the panels keep their level. *"If I touch the computer I should be able to
+go back to the dossiers"*: a **The dossier** button on the card opens the frame's reading of the
+four panels (the menu's The Close — sources; the menu now opens BEFORE landing on the view — it
+reset to main on open). *"Yes, you can create a receipt of the whole experience"* (L-07): a
+**Receipt** button flips the card to the machine's till-print — RECEIPT · 1997 — 2026 · one
+machine; the four updates stacked, each FAILED (Family Companion 1.0 · Restorify · GracePlatform
+· L · Second Thoughts); the file's count; the practices met, in order; kept by: nobody; Back.
+**(2)** the Close score stays as built — "need to see the experience to confirm". **(4) L-08**
+closed as no ("what benefit would that be?"). Verified by hand: the door, the far/near card with
+its seven presses, the receipt, the dossier opening the menu at the sources. **closes R3-01, L-07,
+L-08; R3-110 awaits his sit-through.**
+
+## 2026-09-21 — S168 · THE LEAVE PAGE, THE HOLD, THE DUCK, FLOPPYSHEEP 2026
+**(5) W-F1 — the Leave page.** Leave opens an in-between now (`src/frame/leavePage.ts`,
+`data/strings/leavePage.json`): a plain encyclopedia article — an invented reference site, no
+real site's name or mark, a true and dull article (Screensaver: burn-in, the bouncing logo, the
+lock) — the kind of page any screen can show without explaining itself, so a person can be
+protected in a room they share. The way back is discreet and findable three ways: the last entry
+under See also ("Your update has failed (resume where you were)"), the small ↩ in the corner, and
+Esc. While it is up the piece is held (the menu's own freeze) and every sound is muted; the tab's
+title is the article's. "leave for good — nothing is kept" is the old Leave. The page's greys are
+`REFERENCE` in theme/chrome.ts. And his naming note: the in-fiction "Leave" on the exercises is
+**Go back** (it closes a window; leaving the piece is the frame's). **(7) R3-12 — the exercise's
+hold**: "maybe its own hold" — the row's second button is **Hold**, and the veil says what it is:
+"On hold. Nothing moves and nothing is filed until you press Resume." **(6) R3-07 — the duck**:
+the books stay ("leave them, it needs something of content"); the duck wears its six bands — a
+`bands` field on the prop paints a model in horizontal vertex-colour bands (`bandModel`,
+era1room.ts), carried through the space fold (`clusterMorph.ts` — the same class of lost field
+that file's own comment warns about). ⚑ Engine finding: PlayCanvas reads a mesh's `hasColor` into
+`_shaderDefs` only in the MeshInstance CONSTRUCTOR, so a mesh swapped in with `mi.mesh = …` renders
+without its colours whatever the material says — a new MeshInstance is the fix. **(8) R3-92 —
+FloppySheep, the computer version**: a ☆ FloppySheep bookmark at the address bar's foot in the
+free 2026 browser opens the phone's game in a phone-shaped frame on the page (`mode: 'game'`,
+presses mapped into the game's own space); one press away while the session waits; gone once
+the program is on rails; the laptop's line stays the restore's. Verified by hand: the page and
+the return (title restored, menu state kept), the duck's bands from the shelf, the game on the
+monitor (hop, its own back). Walked (with S167): 291 presses, spine done — the walker took the
+bookmark and hopped, and came to the machine's far glass. **closes W-F1, R3-12, R3-07, R3-92.**

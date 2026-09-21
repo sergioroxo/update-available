@@ -3327,7 +3327,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // C-02 / R3-112: has the eye come to the machine; is it resting on a panel
       if (closeMonitor?.on) {
         const g = closeMonitor.glass;
-        closeMonitor.setNear(Math.hypot(camPos.x - g.x, camPos.z - (g.z + CLOSE_MONITOR.nearDistance)) < 0.25);
+        const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + CLOSE_MONITOR.nearDistance)) < 0.25;
+        closeMonitor.setNear(near);
+        // S167: while the card is read, nothing of the sky sits between the eye and the glass
+        cloud?.setClearCorridor(near ? { hx: g.w * 0.9, zNear: camPos.z + 0.2, zFar: g.z - 0.3, dim: 0.12 } : null);
       }
       if (cloud?.visible && !camMove) {
         const cp = camera.getPosition(), cf = camera.forward;
@@ -4157,6 +4160,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMonitor.onEra = (era) => leaveClose(era);
     closeMonitor.onAgain = () => { window.location.reload(); };
     closeMonitor.onGo = () => goToCloseMonitor();
+    closeMonitor.onDossier = () => gameMenuBus.openCloseSources?.(-1);
     // read-only probe, like __os: the walk aims at the card's rects through it
     (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;
   }

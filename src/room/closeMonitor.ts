@@ -26,7 +26,7 @@
  * Frame voice: functional, undecorated. No music, no thanks, no credits.
  */
 import * as pc from 'playcanvas';
-import { recordEntries } from '../witness/record';
+import { recordEntries, practiceOf } from '../witness/record';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont, bevel } from '../desktop/theme/chrome';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
@@ -59,6 +59,8 @@ export interface CloseMonitor {
   hitTest(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { x: number; y: number } | null;
   /** she pressed the far glass: whoever mounts this moves the eye (app.ts) */
   onGo?: () => void;
+  /** S167: the card's "The dossier" — the frame opens its reading of the panels */
+  onDossier?: () => void;
 }
 
 /** the CRT's visible screen, as app.ts has it (metres, 4:3) */
@@ -218,15 +220,21 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       ctx.fillText(e.label, Math.round(bx + (bw - tw) / 2), by + 8);
       hits.push({ x: bx, y: by, w: bw, h: bh, id: `close-era-${e.era}` });
     });
-    // and the machine again, on its own row
-    const aw = 148, ah = 26;
-    const ax = Math.round((W - aw) / 2), ay = 262;
-    bevel(ctx, ax, ay, aw, ah, true);
-    setFont(ctx, 10);
-    ctx.fillStyle = ERA1.black;
-    const atw = ctx.measureText(card.again).width;
-    ctx.fillText(card.again, Math.round(ax + (aw - atw) / 2), ay + 8);
-    hits.push({ x: ax, y: ay, w: aw, h: ah, id: 'close-again' });
+    // and the machine again, on its own row — flanked by the receipt and the
+    // dossier (S167: his two asks for this screen)
+    const btn = (label: string, x: number, y: number, w: number, id: string): void => {
+      bevel(ctx, x, y, w, 26, true);
+      setFont(ctx, 10);
+      ctx.fillStyle = ERA1.black;
+      const tw = ctx.measureText(label).width;
+      ctx.fillText(label, Math.round(x + (w - tw) / 2), y + 8);
+      hits.push({ x, y, w, h: 26, id });
+    };
+    const aw = 148, ay = 262;
+    const ax = Math.round((W - aw) / 2);
+    btn(card.again, ax, ay, aw, 'close-again');
+    btn(card.receipt.button, ax - 108 - 14, ay, 108, 'close-receipt');
+    btn(card.dossier, ax + aw + 14, ay, 108, 'close-dossier');
     // S143: the makers, in one line, small — the frame's voice on the last screen
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.grey;
@@ -235,9 +243,62 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     tex.upload();
   }
 
+  /** ⚑ S167 / L-07 — THE RECEIPT: the version history, every update stacked and
+   *  FAILED, then the file's lines — the machine's own till-print of thirty
+   *  years. Read off the ledger and the record; nothing here is invented. */
+  function drawReceipt(): void {
+    hits.length = 0;
+    const R = card.receipt;
+    px(ctx, 0, 0, W, H, ERA1.black);
+    // the paper: a strip down the middle, torn at the foot
+    const pw = 300, pxl = Math.round((W - pw) / 2);
+    px(ctx, pxl, 0, pw, H - 22, ERA1.paper);
+    for (let x = 0; x < pw; x += 10) px(ctx, pxl + x, H - 22, 5, 5, ERA1.paper);
+    setFont(ctx, 12);
+    ctx.fillStyle = ERA1.black;
+    let y = 16;
+    const mono = (t: string, dy = 15): void => { ctx.fillText(t, pxl + 14, y); y += dy; };
+    const dots = (a: string, b: string): string => {
+      const cols = 34;
+      const room = Math.max(1, cols - a.length - b.length);
+      return a + ' ' + '.'.repeat(room) + ' ' + b;
+    };
+    mono(R.title); mono(R.span); y += 6;
+    px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
+    setFont(ctx, 9);
+    for (const u of R.updates) mono(dots(u.line, R.failed), 13);
+    y += 4; px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
+    const all = recordEntries();
+    mono(R.entries.replace('{n}', String(all.length)).replace('{f}', String(all.filter((e) => e.flagged).length)), 13);
+    mono(R.practicesLabel, 13);
+    // the practices met, in order of first appearance, one line each
+    const seen: string[] = [];
+    for (const e of all) if (!seen.includes(e.kind)) seen.push(e.kind);
+    ctx.fillStyle = ERA1.greyDark;
+    for (const kind of seen.slice(0, 12)) {
+      const pr = practiceOf(kind);
+      mono('  ' + (pr ? pr.title : kind).toLowerCase(), 12);
+    }
+    if (seen.length > 12) mono('  …', 12);
+    y += 4; px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
+    setFont(ctx, 11);
+    ctx.fillStyle = ERA1.black;
+    mono(R.kept, 14);
+    // Back, on the paper's foot
+    const bw = 80, bh = 22, bx = Math.round((W - bw) / 2), byy = H - 56;
+    bevel(ctx, bx, byy, bw, bh, true);
+    setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    const tw = ctx.measureText(R.back).width;
+    ctx.fillText(R.back, Math.round(bx + (bw - tw) / 2), byy + 6);
+    hits.push({ x: bx, y: byy, w: bw, h: bh, id: 'close-back' });
+    tex.upload();
+  }
+
   let on = false;
   let rise = 0;
   let near = false;
+  let face: 'card' | 'receipt' = 'card';
   const api: CloseMonitor = {
     entity,
     get on() { return on; },
@@ -257,7 +318,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     setNear(n: boolean): void {
       if (near === n) return;
       near = n;
-      if (on) { if (near) drawCard(); else drawFar(); }
+      if (on) { if (!near) drawFar(); else if (face === 'receipt') drawReceipt(); else drawCard(); }
     },
     hitTest(p0, p1): { x: number; y: number } | null {
       if (!entity.enabled) return null;
@@ -285,6 +346,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     hide(): void {
       on = false;
       near = false;
+      face = 'card';
       entity.enabled = false;
       hits.length = 0;
     },
@@ -305,6 +367,9 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         if (x < h.x || x > h.x + h.w || y < h.y || y > h.y + h.h) continue;
         if (h.id === 'close-go') { api.onGo?.(); return true; }
         if (h.id === 'close-again') { api.onAgain?.(); return true; }
+        if (h.id === 'close-receipt') { face = 'receipt'; drawReceipt(); return true; }
+        if (h.id === 'close-back') { face = 'card'; drawCard(); return true; }
+        if (h.id === 'close-dossier') { api.onDossier?.(); return true; }
         const era = card.eras.find((e) => `close-era-${e.era}` === h.id)?.era;
         if (era) { api.onEra?.(era as EraKey); return true; }
       }

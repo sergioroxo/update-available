@@ -171,7 +171,17 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
   // ── what this is: the mark, the title, the premise ──
   const masthead = document.createElement('div');
   Object.assign(masthead.style, { display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '12px' } as CSSStyleDeclaration);
-  masthead.appendChild(drawMark(56));
+  // ⚑ S167 / R3-01 — THE LOGO, his file (2026-09-21: "more symbolic of the project"): the CRT
+  //   with the room inside, `public/assets/logo/logo_480.png` (his 1448 px original scaled to
+  //   480; an asset load, not a runtime fetch). The pixel CRT (`drawMark`) stays as the title
+  //   bar's 16 px icon. If the file fails to load, the mark stands in its place.
+  const logo = document.createElement('img');
+  logo.src = 'assets/logo/logo_480.png';
+  logo.alt = '';
+  logo.setAttribute('aria-hidden', 'true');
+  Object.assign(logo.style, { width: '132px', height: 'auto', flex: 'none', display: 'block' } as CSSStyleDeclaration);
+  logo.addEventListener('error', () => { logo.replaceWith(drawMark(56)); });
+  masthead.appendChild(logo);
   const mastText = document.createElement('div');
   const titleRow = document.createElement('div');
   Object.assign(titleRow.style, { display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '2px' } as CSSStyleDeclaration);
