@@ -16,8 +16,13 @@ function buildTag(): string {
 }
 
 
+/** ⚑ S166 — the version on the front door (Sérgio: "since this is a work-in-progress, add
+ *  a V0.X or alpha/beta to the title"): package.json's version, never typed twice. */
+import { readFileSync } from 'node:fs';
+const PKG_VERSION = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
+
 export default defineConfig({
-  define: { __BUILD_TAG__: JSON.stringify(buildTag()) },
+  define: { __BUILD_TAG__: JSON.stringify(buildTag()), __APP_VERSION__: JSON.stringify(PKG_VERSION) },
   // Static deploy under https://<user>.github.io/update-available/
   base: './',
   server: {

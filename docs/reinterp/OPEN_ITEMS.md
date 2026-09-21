@@ -83,7 +83,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-46 / 86 | ~~Rise → hold → morph in view → descend~~ | DONE — S156 · rise to a high overlook looking down (−40°), hold over the room at −45° while it ages, 8 s descent; comfort law kept; seen by hand; walked 259 |
 | R3-44 | ~~2003 dressing pass; room-audit findings closed (W: 08-21 §B)~~ | DONE — S157 · the posters, the curtains, the lamp, the desk clutter, the machine (R3-45); the audit's r2 findings closed (0) |
 | R3-45 | ~~The computer changes: beige+CRT → black+LCD~~ | DONE — S156 · the 2003 fold retires the beige CRT/tower/keyboard and adds a black flat panel on a stem, a black tower, a black keyboard (box-built behind the same screen plane); r4 removes them |
-| R3-48 | E2 boot: black → POST → shorter splash → OS | HIS CALL PENDING — S159 sent him the five frames (post · house · bar · end · crawl) and the two sounds; the bar's length waits on his answer |
+| R3-48 | ~~E2 boot: black → POST → shorter splash → OS~~ | DONE — S166 · his call moved the whole question: the machine boots in silence (black · POST · crawl · installer line) and the jingle is the software's, over Lamby's cartoon; the splash and its bar are out of play (`e2Splash` reviews them) |
 | R3-50 | ~~Program-start splash for 2003 apps~~ | DONE — S157 · a loading box before every 2003 program |
 | R3-51 | ~~Messenger: faster; the 2003 IM look~~ | DONE — S157 · the 2003 IM look (mark, toolbar, contact list); gaps tightened |
 | R3-52 / 75 | ~~A media player: Caleb's song as an attachment; Noa's cut plays~~ | DONE — S157 · the rip as an attachment → a Media Player; the Story cut plays (playhead, her sentences lit; no voice) |
@@ -170,6 +170,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
   (W-L1 answered S153: Root Cause Digger · R3-109 read as yes and built S163.)
 
 ## Closed
+- S166 (2026-09-21): his S162 notes — the jingle is the software's (Lamby's cartoon over it; the machine boots in silence; the CD-ROM splash retired to review), the version on the door (v0.1.0 · alpha); walked, 271 presses, spine done. R3-48's bar question is moot (the splash's bar is gone from play).
 - S165 (2026-09-21): W-E2 (a) — every program window minimises; walked with S164, 277 presses, spine done (the first walk spent its budget toggling the new chrome — `LAST_RESORT` in walk.mjs now ranks `min-`/`taskbar-` last).
 - S164 (2026-09-21): R3-61 — the notice rises out of the residue's dark.
 - S163 (2026-09-20): C-01, C-02, R3-109, R3-111, R3-112 — Priority 8, the Close; walked with S162, 280 presses, spine done — `WALK_2026-09-21.md`.

@@ -1597,3 +1597,29 @@ the first walk spent its 1500-step budget in Era 1 — every press of the new ch
 picture, so a novelty-ranked walker did three laps of the same three windows (115 presses); the
 walker now ranks `min-`/`taskbar-` as LAST_RESORT, proved by hand, and the second walk went 277
 presses to the Close (S164 with it). **closes W-E2 (a).**
+
+## 2026-09-21 — S166 · THE SOFTWARE'S BOOT: LAMBY'S CARTOON OVER THE JINGLE; THE VERSION ON THE DOOR
+His notes on the S162 build. **The jingle is the programme's, not the machine's** — "maybe only
+makes sense not as a boot-in, but as when Lamby appears, as a song from the program, with a cute
+animation of Lamby sleeping and having impure thoughts, and being woken up by a light that shows
+him what is right, and it is a computer with 'purity streak'. The song can continue while on the
+menu, but it needs not to be the boot-in of the computer and OS, but of the software." So 2003
+boots in silence — black, the POST and the drive, the crawl, the installer line — and then THE
+SOFTWARE boots: `lambyCartoon.ts`, a new E2 stage between the installer line and his introduction,
+hung on the jingle's measured phrase onsets (0.12 · 3.34 · 5.20 · 9.64 · 20.71 · 23.66): Lamby
+asleep on a pillow, on his side (a 90° step; the puppet's own blink frame held for the closed
+eyes), zzz rising; a thought-cloud puffs in and fills with a scribble of static — never a picture
+of anything — thickening on the phrase; the monitor on the right switches on and its beam crosses
+the room; the cloud thins and goes; he stands (the appear pop), cheerful; the screen writes what
+is right — RESTORIFY · PURITY STREAK · 1 day; he points at it; on the last phrase his introduction
+takes over and the song plays out under it and into the programme. The satire is the programme's
+own and collapses on its own terms (the light that shows him what is right is a number on a
+screen). The S116 CD-ROM splash is retired from play and kept as a review surface (`e2Splash`);
+`e2Boot` is the whole arrival, `e2Cartoon` lands on the cartoon. **The version on the door**
+("since this is a work-in-progress, add a V0.X or alpha/beta to the title"): `v0.1.0 · alpha` on
+the title bar and beside the title — the number is package.json's, substituted at build
+(`__APP_VERSION__`, vite.config.ts); the word is `orientingCard.json` `versionTag`, his to move.
+Palette ratchet 24 → 13 (S162's menu recut). Verified by hand in the pane: the four beats of the
+cartoon (asleep · the cloud · the light · the screen with him pointing), the door's tag. Walked:
+271 presses, spine done (`WALK_2026-09-21.md`) — the walker sat through the cartoon (no click-through)
+and met Lamby on the last phrase.

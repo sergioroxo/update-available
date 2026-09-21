@@ -34,6 +34,9 @@ import { ledger, wipeLedger } from '../state/ledger';
 import { DIALOG, domBevel } from './theme/chrome';
 
 const ARM_DELAY_MS = 4000; // the ethics arm-delay: "enter" can never be instant
+/** S166 — the version on the door, from package.json at build (vite.config.ts) */
+declare const __APP_VERSION__: string;
+const VERSION_TAG = copy.versionTag.replace('{v}', typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0');
 
 /**
  * S53 — TRANSPARENCY. Sérgio, second playthrough: "I would like to see a little
@@ -158,6 +161,7 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
   } as CSSStyleDeclaration);
   titleBar.appendChild(drawMark(16));
   titleBar.appendChild(line(copy.titleBar, { flex: '1' }));
+  titleBar.appendChild(line(VERSION_TAG, { fontSize: '11px', fontWeight: '400', opacity: '0.85' }));
   card.appendChild(titleBar);
 
   const inner = document.createElement('div');
@@ -169,7 +173,13 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
   Object.assign(masthead.style, { display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '12px' } as CSSStyleDeclaration);
   masthead.appendChild(drawMark(56));
   const mastText = document.createElement('div');
-  mastText.appendChild(line(copy.title, { fontSize: '15px', fontWeight: '700', letterSpacing: '1px', color: FRAME.ink, marginBottom: '2px' }));
+  const titleRow = document.createElement('div');
+  Object.assign(titleRow.style, { display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '2px' } as CSSStyleDeclaration);
+  titleRow.appendChild(line(copy.title, { fontSize: '15px', fontWeight: '700', letterSpacing: '1px', color: FRAME.ink }));
+  const tag = line(VERSION_TAG, { fontSize: '10px', color: FRAME.ink, padding: '1px 6px', background: FRAME.paper });
+  bevel(tag, true, 1);
+  titleRow.appendChild(tag);
+  mastText.appendChild(titleRow);
   mastText.appendChild(line(copy.subtitle, { fontSize: '11px', color: FRAME.dim, marginBottom: '8px' }));
   mastText.appendChild(line(copy.premise, { fontSize: '13px', lineHeight: '1.5', color: FRAME.ink }));
   masthead.appendChild(mastText);

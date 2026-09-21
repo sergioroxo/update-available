@@ -33,6 +33,7 @@ import { E4Shell, setE4Bridge, roomIsMounted } from './apps/space';
 // himself by name should be the same creature the rest of the era shows.
 import { drawLambyChar, type LambyAction } from './apps/lambyChar';
 import { E2_SPLASH, drawE2Splash, e2SplashVersion } from './apps/bootSplash';
+import { drawLambyCartoon, e2CartoonVersion, E2_CARTOON } from './apps/lambyCartoon';
 // the boot jingle hook — an unregistered name is never requested (registry law
 // in that module's header), so this is silent and error-free until an asset lands
 import { playOnce, isAudioAvailable } from '../audio/tapeAudio';
@@ -77,7 +78,7 @@ import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.js
  * Dismissal works at BOTH beats and files at both; dismissing the
  * introduction skips the program beat entirely (the era does not chase).
  */
-type E2Stage = 'silence' | 'post' | 'splash' | 'osBoot' | 'lambyBoot' | 'lambyIntro' | 'lambyProgram' | 'active';
+type E2Stage = 'silence' | 'post' | 'splash' | 'osBoot' | 'lambyBoot' | 'lambyCartoon' | 'lambyIntro' | 'lambyProgram' | 'active';
 /** S156 / R3-48 — the black beat before the splash (the POST beep and the drive), and the black
  *  beat before Lamby's panel: a 2003 machine goes dark between the things it shows you */
 const E2_POST_SECONDS = 2.0;
@@ -815,7 +816,7 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
-    if (this.e2Stage === 'lambyBoot') return; // the beat resolves on its own (no click-through)
+    if (this.e2Stage === 'lambyBoot' || this.e2Stage === 'lambyCartoon') return; // the beat resolves on its own (no click-through)
     if (this.e2Stage === 'lambyIntro') {
       if (id === 'lamby-hello') {
         this.fileLambyRecord('begun', 'introduction', lambyStrings.witness.lambyIntroduced);
@@ -866,6 +867,14 @@ export class DesktopOS {
     this.e2Stage = 'splash';
     this.e2StageT = 0;
     this.e2SplashFade = 0;
+    // (S166: the jingle is the software's now — see `startE2Cartoon`; the splash is a review surface)
+    this.dirty = true;
+  }
+
+  /** S166 — the programme's boot: the cartoon, and the song is the programme's */
+  private startE2Cartoon(): void {
+    this.e2Stage = 'lambyCartoon';
+    this.e2StageT = 0;
     // S155 / R3-48 (Sérgio: "boot music too loud"): the jingle at half
     const jingle = playOnce(lambyStrings.osBootTrack);
     if (jingle) jingle.volume = 0.5;
@@ -1633,7 +1642,10 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
       const e2Before = this.e2StageT;
       this.e2StageT += dt;
-      if (this.e2Stage === 'post' && this.e2StageT >= E2_POST_SECONDS) this.startE2Splash();
+      // ⚑ S166: the machine boots in SILENCE — post → the crawl; the jingle is the
+      //   software's now and plays over Lamby's cartoon (`lambyCartoon`, below).
+      //   The CD-ROM splash (S116) is retired from play; `e2Splash` reviews it.
+      if (this.e2Stage === 'post' && this.e2StageT >= E2_POST_SECONDS) this.startE2Boot();
       if (this.e2Stage === 'lambyBoot' && e2Before < E2_LAMBY_BLACK && this.e2StageT >= E2_LAMBY_BLACK) this.dirty = true;
       if (this.e2Stage === 'splash') {
         // the surface only re-uploads when something on it has actually moved
@@ -1662,13 +1674,23 @@ export class DesktopOS {
         }
       }
       if (this.e2Stage === 'lambyBoot' && this.e2StageT > LAMBY_BOOT_HOLD) {
-        // ⚑ and here he is, for the first time in the piece
-        this.e2Stage = 'lambyIntro';
-        playOnce('chime_2003.mp3');   // S141: the machine has a sound card now, and it is pleased about it — Lamby arrives on it
-        playOnce('lamby_pop.mp3');    // S155 / W-G1: and Lamby has a sound of his own — a small pop, the way a desk assistant announced itself
-        this.e2StageT = 0;
-        this.lambyPoseT = 0;
-        this.dirty = true;
+        // ⚑ S166 — THE SOFTWARE BOOTS: Lamby's cartoon over the programme's own
+        //   song (Sérgio: "a song from the program… it needs not to be the boot-in
+        //   of the computer and OS, but of the software"). The jingle starts here
+        //   and plays on under his introduction and into the programme.
+        this.startE2Cartoon();
+      }
+      if (this.e2Stage === 'lambyCartoon') {
+        if (e2CartoonVersion(this.e2StageT) !== e2CartoonVersion(e2Before)) this.dirty = true;
+        if (this.e2StageT >= E2_CARTOON.handoff) {
+          // ⚑ and here he is, for the first time in the piece
+          this.e2Stage = 'lambyIntro';
+          playOnce('chime_2003.mp3');   // S141: the machine has a sound card now, and it is pleased about it — Lamby arrives on it
+          playOnce('lamby_pop.mp3');    // S155 / W-G1: and Lamby has a sound of his own — a small pop, the way a desk assistant announced itself
+          this.e2StageT = 0;
+          this.lambyPoseT = 0;
+          this.dirty = true;
+        }
       }
     }
     // Lamby's own clock — his appear-pop and idle fidget run whenever he is on
@@ -2274,6 +2296,7 @@ export class DesktopOS {
       }
       return;
     }
+    if (this.e2Stage === 'lambyCartoon') { drawLambyCartoon(ctx, this.e2StageT); return; }
     if (this.e2Stage === 'lambyBoot') {
       if (this.e2StageT < E2_LAMBY_BLACK) return;   // S156 / R3-48: black before the installer line
       ui.setFont(ctx, 11);
@@ -2741,12 +2764,22 @@ export class DesktopOS {
         this.dirty = true;
         break;
       case 'e2Boot':
-        // ⚑ S116: this is the WHOLE arrival now — Restorify's 23.7 s splash over
-        // the jingle, then the crawl typing under its dissolve. `e2Crawl` below
-        // is the short way in when only the boot text is under review.
+        // ⚑ S166: the WHOLE arrival — black, the POST, the crawl (silent), the
+        // installer line, then the software's boot: Lamby's cartoon over the jingle.
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.startE2Post();
+        break;
+      case 'e2Splash':
+        // review only: the S116 CD-ROM splash, retired from play (S166)
         this.setPhase('desktop');
         this.setDesktopEra('e2');
         this.startE2Splash();
+        break;
+      case 'e2Cartoon':
+        this.setPhase('desktop');
+        this.setDesktopEra('e2');
+        this.startE2Cartoon();
         break;
       case 'e2Crawl':
         this.setPhase('desktop');

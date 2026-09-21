@@ -113,7 +113,7 @@ const MAX_HERO_PER_SCENE = 3; // CLAUDE.md: "<=3 hero objects per scene on Quest
  * never speaks in the piece's voice). Lower this number when it drops; never
  * raise it without a note saying which law changed.
  */
-const HEX_BASELINE = 24;
+const HEX_BASELINE = 13;
 
 const errors = [];
 let conductKeys = 0, conductProps = 0;
