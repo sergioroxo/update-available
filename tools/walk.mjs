@@ -217,7 +217,11 @@ function resolveChrome() {
   ];
   return candidates.find((c) => existsSync(c)) ?? null;
 }
-const LAST_RESORT = /^leave$|not.?now|remind|skip|cancel|^back|^dismiss$|^close$/i;
+// ⚑ S165: the minimise boxes and the taskbar's window buttons are CHROME — every
+//   press of them changes the picture, so a novelty-ranked walker toggled them for
+//   a hundred steps (walk of 2026-09-21: 115 presses, three laps of the same three
+//   windows, the budget gone in Era 1). They are proved once and otherwise last.
+const LAST_RESORT = /^leave$|not.?now|remind|skip|cancel|^back|^dismiss$|^close$|^min-|^taskbar-/i;
 
 async function main() {
   if (JUMP && BROKEN_JUMPS[JUMP] && !ALLOW_BROKEN_JUMP) {

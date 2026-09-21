@@ -55,7 +55,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-24 | ~~Dial-up on the black screen with a connection panel — his references FOUND: `References images/to enter online.png` (Internet Setup Wizard) and `for IRC connection.png` (Make New Connection) (W: 08-21 §H)~~ | DONE — S151 · the Internet Setup Wizard on black: Welcome · Make New Connection · Connect To; the dial-up plays as it opens; tour frames 15–17 |
 | W-E1 | ~~The floppy / the tapes glow so they can be found (08-21 §E)~~ | DONE — S151b · the disk, the tapes and the player breathe while their line is up (with R3-38) |
 | W-L1 | ~~**Lamby's 1997 app**: today the rig file is "like a tamagotchi"; his design `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` (Root Cause Digger, Purity Maze, Straight & Narrow Crossing…) was never referenced in the repo — pick one for 1997 and build it as the kit's game — ⚑ HIS PICK (2026-09-20): **Dig Dug → "Root Cause Digger"**~~ | DONE — S153 · ROOTCAUSE.EXE beside lamby_rig.exe: press-only, turn-based Dig Dug, the diagnoses, the burst, the glitch, the Authentic Memory flag; ○ on the map, one soft line; played to both endings by hand, walked (264, the walker dug) |
-| W-E2 | Windows minimise, not just X (08-21 §E) | OPEN · his call 2026-09-20: (a) ALL 1997/2003 windows get a taskbar button and a minimise box, period-true — build next (after Priority 6) |
+| W-E2 | ~~Windows minimise, not just X (08-21 §E)~~ | DONE — S165 · his call (a): every program window has a `_` box and a taskbar button (mIRC · Un-Walk · lamby_rig · ROOTCAUSE · found · Restorify · Player · NetVision); the felt windows own the screen by law and do not |
 
 ## Priority 3 — sound redo, one pass with his ear
 | id | item | status |
@@ -91,7 +91,7 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R3-60 | ~~Deferral copy: "being removed"~~ | DONE — S156 · u3 deferred: "Restorify is being removed. Take what you are taking…" |
 | R3-62 | ~~The 2003→2016 notice gets the E3 look~~ | DONE — S157 · the 2003→2016 notice and terms on 2016's glass |
 | R3-41 | ~~The 2003 EULA gets the E2 look~~ | DONE — S157 · Restorify's band and house mark over the 2003 terms |
-| R3-61 | Anything to do after the residue? | DESIGN → OPEN — his call 2026-09-20: "didn't we make Caleb the breaking point? then it should be in him" — the Service Transition notice rises out of the residue's own dark (the Messenger), not from a cleared desktop; build next (after Priority 6) |
+| R3-61 | ~~Anything to do after the residue?~~ | DONE — S164 · his call: the monitor stays black after the residue and the Service Transition notice rises out of it (`residueDark`) |
 
 ## Priority 5 — Era 3's devices
 | id | item | status |
@@ -166,10 +166,12 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 ## Asks (his)
 - R3-01 the logo file (an interim CRT mark stands in `orientingCard.ts drawMark` — S162) · R3-12 which "pause" button (a frame) ·
   R3-07 the books: slabs or gone · L-07 the Close's ending: the Restart card, the version-history receipt, or both ·
-  L-08 bare rooms as a choice, yes/no · R3-61 — his answer is in (the notice rises out of Caleb's residue; to build).
+  L-08 bare rooms as a choice, yes/no. (R3-61 built S164.)
   (W-L1 answered S153: Root Cause Digger · R3-109 read as yes and built S163.)
 
 ## Closed
+- S165 (2026-09-21): W-E2 (a) — every program window minimises; walked with S164, 277 presses, spine done (the first walk spent its budget toggling the new chrome — `LAST_RESORT` in walk.mjs now ranks `min-`/`taskbar-` last).
+- S164 (2026-09-21): R3-61 — the notice rises out of the residue's dark.
 - S163 (2026-09-20): C-01, C-02, R3-109, R3-111, R3-112 — Priority 8, the Close; walked with S162, 280 presses, spine done — `WALK_2026-09-21.md`.
 - S162 (2026-09-20): F-01, R3-01 (bar the logo file), R3-30, R3-31 — Priority 7, the front door; its own walk was aborted at press 100 by an edit of mine; walked with S163 (280 presses, spine done — `WALK_2026-09-21.md`).
 - S161 (2026-09-20): R3-105, R3-106 — Priority 6 batch B (the entrance seen, the arrival slower); walked, 273 presses, spine done.

@@ -262,6 +262,79 @@ export class DesktopOS {
   private pureMailVoice: HTMLAudioElement | null = null;
   /** `t` at which the desktop began coming back up out of the residue's black */
   private desktopReturnAt = -1;
+  /** ⚑ S164 / R3-61 — THE NOTICE RISES OUT OF THE RESIDUE'S DARK. Sérgio
+   *  (2026-09-20): "didn't we make Caleb the breaking point of the narrative?
+   *  then it should be in him." So after the residue the desktop does NOT come
+   *  back: the monitor stays black — no icons, no taskbar, no toast — and the
+   *  Service Transition notice (u3) is the next thing on it. True until the
+   *  era changes (`setDesktopEra`). */
+  private residueDark = false;
+  /**
+   * ⚑ S165 / W-E2 (a) — MINIMISED WINDOWS. Sérgio (2026-09-20): "ALL 1997/2003
+   * windows get a taskbar button and a minimise box, period-true." The PROGRAM
+   * windows — the channel, the wizard, the rig file, Root Cause Digger, the found
+   * file, Restorify, the media player, the video — carry a `_` box
+   * (`ui.windowFrame`'s `minKey`) and a taskbar button: pressed in while the
+   * window is up, raised while it waits; the box or the button minimises, the
+   * button (or the desktop icon) restores. Minimised = `open` false with the
+   * instance kept, exactly S151's wizard, generalised. ⚑ NOT the felt windows —
+   * the Messenger, the diary, the letter own the screen by the register law
+   * (CLAUDE.md: felt = no mechanics) — and not the ritual's dialogs.
+   */
+  private minimised = new Set<string>();
+  private windowOf(key: string): { open: boolean; hits?: unknown[]; restore?: () => void } | null {
+    type Win = { open: boolean; hits?: unknown[]; restore?: () => void };
+    switch (key) {
+      case 'irc': return this.irc as unknown as Win | null;
+      case 'kit': return this.kit as unknown as Win | null;
+      case 'lambyrig': return this.lambyRigFile as unknown as Win | null;
+      case 'rootcause': return this.rootCause as unknown as Win | null;
+      case 'restorify': return this.restorify as unknown as Win | null;
+      case 'media': return this.mediaPlayer as unknown as Win | null;
+      case 'netvision': return this.netvision as unknown as Win | null;
+      case 'dossier': return { get open() { return false; } };   // handled by `dossierOpen` below
+      default: return null;
+    }
+  }
+  private windowOpen(key: string): boolean {
+    return key === 'dossier' ? this.dossierOpen : !!this.windowOf(key)?.open;
+  }
+  private windowPresent(key: string): boolean {
+    return key === 'dossier' ? (this.dossierOpen || this.minimised.has('dossier')) : !!this.windowOf(key);
+  }
+  minimiseWindow(key: string): void {
+    if (!this.windowPresent(key) || !this.windowOpen(key)) return;
+    if (key === 'dossier') this.dossierOpen = false;
+    else {
+      const w = this.windowOf(key)!;
+      w.open = false;
+      if (Array.isArray(w.hits)) w.hits.length = 0;   // nothing of a minimised window is aimable
+    }
+    this.minimised.add(key);
+    this.dirty = true;
+  }
+  restoreWindow(key: string): void {
+    this.minimised.delete(key);
+    if (key === 'dossier') { this.dossierOpen = true; this.dirty = true; return; }
+    const w = this.windowOf(key);
+    if (!w) return;
+    if (w.restore) w.restore(); else w.open = true;
+    this.dirty = true;
+  }
+  /** the taskbar's window buttons, in a fixed order: present windows only */
+  private taskbarWindows(): { key: string; label: string }[] {
+    const all: { key: string; label: string }[] = [
+      { key: 'kit', label: kitStrings.taskbarLabel },
+      { key: 'irc', label: strings.desktop.taskbarIrc },
+      { key: 'dossier', label: strings.desktop.taskbarDossier },
+      { key: 'lambyrig', label: strings.desktop.taskbarLambyRig },
+      { key: 'rootcause', label: strings.desktop.taskbarRootCause },
+      { key: 'restorify', label: strings.desktop.taskbarRestorify },
+      { key: 'media', label: strings.desktop.taskbarMedia },
+      { key: 'netvision', label: strings.desktop.taskbarNetvision }
+    ];
+    return all.filter((w) => this.windowPresent(w.key) && (this.windowOpen(w.key) || this.minimised.has(w.key)));
+  }
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
   private sendOffer: { id: string; open: boolean } | null = null;
   /** ⚑ S87 — hit rects from the last `drawSendOfferExternal` call (era3Devices.ts's
@@ -640,6 +713,8 @@ export class DesktopOS {
    *  the real S2R.0/S2R.1 beats to play. */
   setDesktopEra(era: string, settled = false): void {
     if (era !== 'e2' && era !== 'e3' && era !== 'e4') return;
+    this.residueDark = false;   // S164: the dark after the residue ends with the era
+    this.minimised.clear();     // S165: nothing waits in a taskbar the era no longer draws
     // ⚑ S104 — and the era's own surfaces stop publishing controls when the era
     //   does. See `clearExternalSendHits`: this is the belt to that brace, and it
     //   catches the case the retirement points cannot — an era ending while an
@@ -945,10 +1020,10 @@ export class DesktopOS {
     thread.onThreadDone = () => {
       this.caleb = null;
       this.accountability = null;
-      // finding F25 — the desktop comes back UP out of the residue's own
-      // fade-to-black instead of replacing it on one frame ("it jumped back
-      // to the Restorify desktop"). caleb.ts fades out; this fades in.
-      this.desktopReturnAt = this.t;
+      // finding F25 had the desktop come back UP out of the residue's own
+      // fade-to-black; ⚑ S164 / R3-61: it does not come back at all. The dark
+      // holds and the notice rises out of it (drawDesktop's `residueDark` branch).
+      this.residueDark = true;
       // S2R.7 — THE RESIDUE LEADS SOMEWHERE. The thread's end is the era's
       // end: from here the spine (src/narrative/spine.ts) reads the residue
       // filing off the ledger and takes the era to its u3 close, exactly the
@@ -1822,6 +1897,7 @@ export class DesktopOS {
   }
 
   private drawDesktop(W: number, H: number): void {
+    ui.resetFrames();   // S165: the frames drawn this frame, for the minimise boxes
     // S2R.0/S2R.1: the E2 arrival owns the WHOLE monitor until it settles —
     // no taskbar, no icons, no toast (the silence law; the Lamby beats are
     // transient conduction, not ordinary desktop chrome).
@@ -1833,6 +1909,14 @@ export class DesktopOS {
     // monitor. No guide, no UI, no apparatus — not even the taskbar.
     if (this.caleb?.ownsScreen) {
       this.caleb.draw(this.ctx);
+      return;
+    }
+    // ⚑ S164 / R3-61 — and after it, the dark stays: the era says nothing else
+    //   in its own voice; the next thing on the monitor is the system noticing
+    //   its own end (u3's notice, the one window drawn here), out of the black.
+    if (this.residueDark) {
+      ui.px(this.ctx, 0, 0, W, H, ERA1.black);
+      if (this.updateApp?.open) this.updateApp.draw(this.ctx);
       return;
     }
     // ⚑ ERA 4 — AND THERE IS NO DESKTOP HERE (THE_SPACE §6). Every branch below
@@ -2032,6 +2116,9 @@ export class DesktopOS {
     // do?"), so the gate is `open` and the app decides what a withdrawn
     // notice looks like. It still draws nothing at all in any other case.
     if (this.updateApp?.open) this.updateApp.draw(ctx);
+    // S165: the minimise boxes are aimable (the affordance is the target) — the
+    //   uncovered ones, by geometry; the press itself resolves by `topFrameAt`
+    for (const mb of ui.minBoxesVisible()) this.hits.push({ x: mb.x, y: mb.y, w: mb.w, h: mb.h, id: `min-${mb.key}` });
     // taskbar
     ui.bevel(ctx, 0, H - 22, W, 22, true);
     ui.button(ctx, 3, H - 19, 50, 16, 'MENU', {});
@@ -2042,20 +2129,24 @@ export class DesktopOS {
     // apparatus's own status voice (register: operable), NOT frame chrome.
     // It lives in the taskbar's sunken status well, one terse line at a time,
     // Era 1 only (Lamby conducts from E2). Not clickable, never a popup.
-    if (this.reinterp && this.desktopEra === 'e1') {
-      // S151 — the running programme has a taskbar button, the way a window did:
-      // pressed in while it is up, raised while it waits (W-E2, this window)
-      let wellX = 58;
-      if (this.kit && this.phase === 'desktop') {
-        const bw = 64;
-        ui.button(ctx, 58, H - 19, bw, 16, '', {});
-        if (this.kit.open) ui.bevel(ctx, 58, H - 19, bw, 16, false);
+    // S165 / W-E2 (a) — every present program window has a taskbar button, the
+    //   way a window did: pressed in while it is up, raised while it waits
+    //   (S151's wizard button, generalised — see `minimiseWindow`)
+    let wellX = 58;
+    if (this.reinterp && this.phase === 'desktop' && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
+      const bw = 64;
+      for (const w of this.taskbarWindows()) {
+        if (wellX + bw > W - 50 - 40) break;   // the well keeps at least its stub
+        ui.button(ctx, wellX, H - 19, bw, 16, '', {});
+        if (this.windowOpen(w.key)) ui.bevel(ctx, wellX, H - 19, bw, 16, false);
         ui.setFont(ctx, 9);
         ctx.fillStyle = ERA1.black;
-        ctx.fillText(kitStrings.taskbarLabel, 66, H - 16);
-        this.hits.push({ x: 58, y: H - 19, w: bw, h: 16, id: 'taskbar-kit' });
-        wellX = 58 + bw + 4;
+        ctx.fillText(w.label, wellX + 8, H - 16);
+        this.hits.push({ x: wellX, y: H - 19, w: bw, h: 16, id: `taskbar-${w.key}` });
+        wellX += bw + 4;
       }
+    }
+    if (this.reinterp && this.desktopEra === 'e1') {
       ui.bevel(ctx, wellX, H - 19, W - 50 - wellX, 16, false);
       const guideLine = this.guide?.activeText;
       if (guideLine) {
@@ -2074,13 +2165,13 @@ export class DesktopOS {
     //     the apparatus answers by re-asserting its block. The mark is cleared
     //     the moment the block lifts, because then it is no longer true.
     if (this.reinterp && this.desktopEra === 'e2' && this.calebNotificationVisible) {
-      const bw = W - 108;
-      ui.button(ctx, 58, H - 19, bw, 16, '', { hover: this.hover === 'taskbar-message' });
-      ui.px(ctx, 63, H - 15, 6, 6, ERA1.warn);
+      const bw = W - 50 - wellX;   // S165: after the window buttons, if any
+      ui.button(ctx, wellX, H - 19, bw, 16, '', { hover: this.hover === 'taskbar-message' });
+      ui.px(ctx, wellX + 5, H - 15, 6, 6, ERA1.warn);
       ui.setFont(ctx, 9);
       ctx.fillStyle = this.hover === 'taskbar-message' ? ERA1.navy : ERA1.black;
-      ctx.fillText(mediaStrings.breakNoticeText, 74, H - 16);
-      this.hits.push({ x: 58, y: H - 19, w: bw, h: 16, id: 'taskbar-message' });
+      ctx.fillText(mediaStrings.breakNoticeText, wellX + 16, H - 16);
+      this.hits.push({ x: wellX, y: H - 19, w: bw, h: 16, id: 'taskbar-message' });
     }
     // …and the desktop comes UP OUT OF BLACK after the residue (finding F25):
     // caleb.ts fades its field out, this fades the room back in. The era's
@@ -2282,7 +2373,7 @@ export class DesktopOS {
     const { ctx } = this;
     const dw = 340; const dh = 216;
     const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2) - 8;
-    const c = ui.windowFrame(ctx, dx, dy, dw, dh, strings.dossier.title, true);
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, strings.dossier.title, true, 'dossier');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.black;
@@ -3027,6 +3118,22 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
+    // S165 / W-E2: the topmost window's minimise box, before the windows take the
+    //   click — only a keyed frame has one, and only the frame on top is asked
+    if (this.phase === 'desktop') {
+      const top = ui.topFrameAt(x, y);
+      const mb = top?.minBox;
+      if (top?.key && mb && x >= mb.x && x <= mb.x + mb.w && y >= mb.y && y <= mb.y + mb.h) {
+        this.minimiseWindow(top.key);
+        return;
+      }
+      // …and the taskbar's window buttons, which no window covers
+      if (hit && hit.id.startsWith('taskbar-') && this.windowOf(hit.id.slice(8))) {
+        const key = hit.id.slice(8);
+        if (this.windowOpen(key)) this.minimiseWindow(key); else this.restoreWindow(key);
+        return;
+      }
+    }
     // S2R.6: the residue owns the whole monitor while it is up
     if (this.phase === 'desktop' && this.caleb?.ownsScreen) { this.caleb.handleClick(x, y); return; }
     // S2R.4: the video player, then Lamby's offer — both own every click
@@ -3063,9 +3170,7 @@ export class DesktopOS {
         case 'leave': this.leave(); break;
         case 'ok': this.confirmName(); break;
         case 'icon-a': this.insertKit(); break;
-        case 'taskbar-kit':
-          if (this.kit) { if (this.kit.open) this.kit.open = false; else this.kit.restore(); }
-          break;
+        // (the taskbar's window buttons are resolved above, before the windows take the click — S165)
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
         case 'icon-found-file': this.dossierOpen = true; break;
         case 'found-file-close': this.dossierOpen = false; break;

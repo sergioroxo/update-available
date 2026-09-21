@@ -55,7 +55,7 @@ export class RestorifyApp {
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
     const { dx, dy } = this.geom;
-    const c = ui.windowFrame(ctx, dx, dy, DW, DH, lamby.restorifyTitle, true);
+    const c = ui.windowFrame(ctx, dx, dy, DW, DH, lamby.restorifyTitle, true, 'restorify');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     const L = c.x + 10;
 

@@ -366,7 +366,7 @@ export class IrcApp {
 
   draw(ctx: CanvasRenderingContext2D, caretOn: boolean): void {
     // the channel is lurk-only — no input field; the chat fills the window
-    const c = ui.windowFrame(ctx, 14, 30, 400, 290, `${dialog.channel} — IRC`, this.focus === 'channel');
+    const c = ui.windowFrame(ctx, 14, 30, 400, 290, `${dialog.channel} — IRC`, this.focus === 'channel', 'irc');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     const listW = 78;
     ui.px(ctx, c.x + c.w - listW, c.y, listW, c.h, ERA1.tealDark);

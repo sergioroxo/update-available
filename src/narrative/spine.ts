@@ -47,6 +47,9 @@ const E4_HOLD = 22;     // s in E4 before the bare final restart
  *  that the notice is plainly NOT a response to the player's press (the press
  *  is the one thing in the era the apparatus was not there to file); short
  *  enough that the era reads as ending rather than idling. */
+/** ⚑ S164 / R3-61: the monitor stays DARK after the residue now (os.ts
+ *  `residueDark`); measured, the notice rises out of the black ~6 s after the
+ *  hold ends at this value (the update's own notice delay is on top of it). */
 const RESIDUE_GAP = 6;
 
 type SpineStep =

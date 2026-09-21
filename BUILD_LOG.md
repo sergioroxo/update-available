@@ -1567,3 +1567,33 @@ to `pointCloud.ts` while it ran (the law I keep breaking — Vite reloads the wa
 walk below covers S162 and S163 together. Walked: 280 presses, spine done (`WALK_2026-09-21.md`;
 the walker pressed `close-go` itself and the eye came to the card). **closes C-01, C-02, R3-109, R3-111,
 R3-112.**
+
+## 2026-09-21 — S164 · R3-61: THE NOTICE RISES OUT OF CALEB'S RESIDUE
+His call (2026-09-20): "didn't we make Caleb the breaking point of the narrative? then it should
+be in him." So after the residue the desktop does NOT come back: the monitor stays black — no
+icons, no taskbar, no toast (`residueDark` in os.ts; the branch draws nothing but the update
+ritual) — and the Service Transition notice is the next thing on it, rising out of the dark
+~6 s after the residue's hold (the spine's `RESIDUE_GAP` unchanged at 6; measured 6.2 s of black).
+The dark ends with the era (`setDesktopEra`). Verified by hand: the residue pressed, the hold,
+black, the notice on black. **closes R3-61.**
+
+## 2026-09-21 — S165 · W-E2 (a): EVERY PROGRAM WINDOW MINIMISES
+His call (2026-09-20): "(a) ALL 1997/2003 windows get a taskbar button and a minimise box,
+period-true." `ui.windowFrame` takes a `minKey` now: a `_` box beside the close box, and the frame
+is listed with its key (`framesDrawn`) so a press finds the TOPMOST frame under it and a covered
+window's box is never pressed through the one on top; the uncovered boxes are published as hits
+(`min-<key>`, the affordance is the target). The program windows opt in — the channel (mIRC), the
+wizard (S151's own button, generalised), lamby_rig, ROOTCAUSE, the found file, Restorify, the
+media player, NetVision — and each present one has a taskbar button (`taskbar-<key>`, 64 px,
+labels in `slice.json` `desktop.taskbar*`): pressed in while the window is up, raised while it
+waits; the box or the button minimises, the button or the desktop icon restores. Minimised =
+`open` false with the instance kept (`minimiseWindow` / `restoreWindow`, os.ts); the set clears
+with the era. Both the boxes and the buttons are resolved BEFORE the windows take the click. ⚑ Not
+the felt windows — the Messenger, the diary, the letter own the screen by the register law
+(CLAUDE.md: felt = no mechanics) — and not the ritual's dialogs; the 2003 message button shares the
+bar after the window buttons. Verified by hand: the wizard, lamby_rig, Restorify + the found file
+(two windows: the covered box unpublished, the taskbar toggling each, the boxes in turn). Walked:
+the first walk spent its 1500-step budget in Era 1 — every press of the new chrome changes the
+picture, so a novelty-ranked walker did three laps of the same three windows (115 presses); the
+walker now ranks `min-`/`taskbar-` as LAST_RESORT, proved by hand, and the second walk went 277
+presses to the Close (S164 with it). **closes W-E2 (a).**

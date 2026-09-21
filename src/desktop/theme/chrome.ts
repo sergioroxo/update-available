@@ -52,12 +52,50 @@ export function bevel(
   px(ctx, x + w - 1, y, 1, h, dark);
 }
 
-export interface ContentRect { x: number; y: number; w: number; h: number; closeBox: { x: number; y: number; w: number; h: number } }
+type Rect = { x: number; y: number; w: number; h: number };
+export interface ContentRect { x: number; y: number; w: number; h: number; closeBox: Rect; minBox?: Rect }
 
-/** Window frame with two-tone title bar + close box. Returns content rect. */
+/**
+ * ⚑ S165 / W-E2 (a) — THE FRAMES DRAWN THIS FRAME, in paint order. Sérgio
+ * (2026-09-20): "ALL 1997/2003 windows get a taskbar button and a minimise
+ * box, period-true." A window that passes `minKey` gets the `_` box beside
+ * its close box and is listed here with its key; every frame is listed (keyed
+ * or not) so a press can find the TOPMOST frame under it and a covered
+ * window's box is never pressed through the one on top. os.ts resets this at
+ * the top of each desktop draw and reads it in `handleClick`.
+ */
+export interface FrameRec { key?: string; x: number; y: number; w: number; h: number; minBox?: Rect }
+let framesDrawn: FrameRec[] = [];
+export function resetFrames(): void { framesDrawn = []; }
+/** the keyed frames whose minimise box is not under a later frame — the aimable ones */
+export function minBoxesVisible(): { key: string; x: number; y: number; w: number; h: number }[] {
+  const out: { key: string; x: number; y: number; w: number; h: number }[] = [];
+  framesDrawn.forEach((f, i) => {
+    if (!f.key || !f.minBox) return;
+    const cx = f.minBox.x + f.minBox.w / 2, cy = f.minBox.y + f.minBox.h / 2;
+    for (let j = i + 1; j < framesDrawn.length; j++) {
+      const g = framesDrawn[j];
+      if (cx >= g.x && cx <= g.x + g.w && cy >= g.y && cy <= g.y + g.h) return;
+    }
+    out.push({ key: f.key, ...f.minBox });
+  });
+  return out;
+}
+/** the topmost frame under a point, or null */
+export function topFrameAt(x: number, y: number): FrameRec | null {
+  for (let i = framesDrawn.length - 1; i >= 0; i--) {
+    const f = framesDrawn[i];
+    if (x >= f.x && x <= f.x + f.w && y >= f.y && y <= f.y + f.h) return f;
+  }
+  return null;
+}
+
+/** Window frame with two-tone title bar + close box. Returns content rect.
+ *  `minKey` (S165): the window minimises — a `_` box beside the close box, and
+ *  a taskbar button under that key (os.ts). */
 export function windowFrame(
   ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, title: string, active = true
+  x: number, y: number, w: number, h: number, title: string, active = true, minKey?: string
 ): ContentRect {
   bevel(ctx, x, y, w, h, true);
   const barH = 16;
@@ -73,7 +111,15 @@ export function windowFrame(
   bevel(ctx, cb.x, cb.y, cb.w, cb.h, true);
   ctx.fillStyle = ERA1.black;
   ctx.fillText('x', cb.x + 3, cb.y + 1);
-  return { x: x + 4, y: y + 3 + barH + 2, w: w - 8, h: h - barH - 9, closeBox: cb };
+  // minimise box, period-true: beside the close box, a bar at the foot
+  let mb: Rect | undefined;
+  if (minKey) {
+    mb = { x: cb.x - 14, y: cb.y, w: 12, h: 12 };
+    bevel(ctx, mb.x, mb.y, mb.w, mb.h, true);
+    px(ctx, mb.x + 3, mb.y + 8, 6, 2, ERA1.black);
+  }
+  framesDrawn.push({ key: minKey, x, y, w, h, minBox: mb });
+  return { x: x + 4, y: y + 3 + barH + 2, w: w - 8, h: h - barH - 9, closeBox: cb, minBox: mb };
 }
 
 export function button(

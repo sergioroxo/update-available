@@ -63,7 +63,7 @@ export class LambyRigFileApp {
 
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
-    const c = ui.windowFrame(ctx, RIG_X, RIG_Y, RIG_WINDOW_W, RIG_WINDOW_H, copy.title, true);
+    const c = ui.windowFrame(ctx, RIG_X, RIG_Y, RIG_WINDOW_W, RIG_WINDOW_H, copy.title, true, 'lambyrig');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.tealDark);
     for (const h of this.panel.draw(ctx, c, this.t, this.hover)) this.hits.push(h);
     this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'lambyrig-close' });

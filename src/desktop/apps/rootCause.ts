@@ -223,7 +223,7 @@ export class RootCauseApp {
   // ── drawing ─────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
-    const c = ui.windowFrame(ctx, WIN_X, WIN_Y, WIN_W, WIN_H, copy.title, true);
+    const c = ui.windowFrame(ctx, WIN_X, WIN_Y, WIN_W, WIN_H, copy.title, true, 'rootcause');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     // ⚑ the close box is registered LAST (see the end of draw): the walker takes
     //   the first untried control, and a game whose first control is its exit

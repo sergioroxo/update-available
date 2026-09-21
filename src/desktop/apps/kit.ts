@@ -207,7 +207,7 @@ export class KitApp {
     this.hits = [];
     if (this.phase === 'setup') { this.drawSetup(ctx); return; }
 
-    const c = ui.windowFrame(ctx, DX, DY, DW, DH, kit.windowTitle, true);
+    const c = ui.windowFrame(ctx, DX, DY, DW, DH, kit.windowTitle, true, 'kit');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     this.hits.push({ ...c.closeBox, id: 'cancel' });
 
@@ -420,7 +420,7 @@ export class KitApp {
     }
     const dw = 400; const dh = 300;
     const dx = Math.round((W - dw) / 2); const dy = Math.round((ERA1_CANVAS.height - dh) / 2);
-    const c = ui.windowFrame(ctx, dx, dy, dw, dh, s.windowTitle, true);
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, s.windowTitle, true, 'kit');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     this.hits.push({ ...c.closeBox, id: 'setup-cancel' });
     this.drawPicture(ctx, c.x + 8, c.y + 8, PIC_W, c.h - 52, true);

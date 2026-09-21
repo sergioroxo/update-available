@@ -55,7 +55,7 @@ export class MediaPlayerApp {
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
     const dx = Math.round((ERA1_CANVAS.width - DW) / 2); const dy = Math.round((ERA1_CANVAS.height - DH) / 2) + 30;
-    const c = ui.windowFrame(ctx, dx, dy, DW, DH, S.title, true);
+    const c = ui.windowFrame(ctx, dx, dy, DW, DH, S.title, true, 'media');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     this.hits.push({ ...c.closeBox, id: 'mp-close' });
     // the file
