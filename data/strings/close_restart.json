@@ -48,6 +48,21 @@
  "witness": "the machine offered its restart; nothing was kept",
  "makers": "Made at the University of Bergen (SurvivingSOGICE) with Claude. Credits & sources: the menu.",
  "_docMakers": "⚑ S143: the one-line disclosure on the last screen — frame voice, small, under the buttons. The long form is the MAKERS paragraph in the Credits view (docs/reinterp/ATTRIBUTIONS.md).",
+ "source": {
+  "windowTitle": "Dossier — {years} · {title}",
+  "statusLabel": "How well it is documented",
+  "practicesLabel": "What this room shows, and where to read it",
+  "refsLabel": "References this room drew on",
+  "makersRefsLabel": "The project's seven documents",
+  "makersTitle": "How this was made",
+  "makersLines": [
+   "These seven are the project's own documents: its research passes, its ethics rules, its script.",
+   "They are not sources about conversion practices. They are shown so that the making is not hidden."
+  ],
+  "more": "More",
+  "back": "Back"
+ },
+ "_docSource": "⚑ S174 / R4-18 — Sérgio, on the stills: 'we can't see the inside of each panel, the dossiers of the content used — maybe each button opens a panel in the style of the OS of the time.' A press on a label or a panel in the sky brings the eye to Daniel's machine and opens THAT ROOM's dossier on its screen, drawn in that room's own OS (1997 grey on teal, 2003 on Restorify's blue, 2016's glass, 2026's dark), with the frame's own dialog for the seven process labels. ⚑ NO PER-LABEL CLAIM IS MADE: a label only carries a name and an era, so its window is the room's dossier — its status, its practices and their verified sources (data/dossier/practices.json → the provotype cards) — with the room's references listed together and the pressed one marked. Opening 'detransition cohort study (Fenway)' onto Era 4's practices under its own name would have implied a link the data never makes.",
  "filed": "{n} entries were filed under four names, {f} of them flagged.",
  "_docFiled": "⚑ S146 — the one number the whole Witness system was building to, on the last screen, in the frame's flat voice: the file's size, read off the ledger at the moment the card lights (src/witness/record.ts). It sits above `kept`, so the two sentences are read together: this many entries; none kept."
 }

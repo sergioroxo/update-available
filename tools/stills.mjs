@@ -259,11 +259,11 @@ async function main() {
     // the termination, the glitch, and the 44 s sweep into the Close
     await wait(26000);
     await shot('05-the-sweep', 'the last move: rising over the partition, turning to face the building');
-    // ⚑ NO FRAME of the flight over Room 2 (the old `05-the-night`): at the Close
-    //   that room is back in its 2016 dressing with the monitor LIT — R4-16. And
-    //   none of the far machine (the old `08-the-machine`): it is a hand-built
-    //   slab and the corridor does not clear the stars off it — R4-14 / R4-15.
-    await wait(54000);
+    // S174: the two frames held back in S173c come back — Room 2 is emptied at
+    //   2026 (R4-16) and the machine has its faces and a clear sight-line (R4-14/15)
+    await wait(24000);
+    await shot('05b-the-night', 'night falls over the building, and the constellation opens while she is still coming down');
+    await wait(30000);
     await shot('06-constellation', 'the Close: the sky it ends under');
     await wait(26000);
     await shot('07-the-panels', 'the panels: the four rooms, and what was true in each');
@@ -274,6 +274,8 @@ async function main() {
       if (!go) await wait(2000);
     }
     if (go) {
+      await wait(1500);
+      await shot('07b-the-machine', "Daniel's machine, three metres back in the sky: \"Restart as you are.\"");
       await settled();
       const goPress = () => page.evaluate(() => { const cm = window.__closeMonitor; const h = (cm.hits || []).find((r) => r.id === 'close-go'); if (h) cm.press(h.x + h.w / 2, h.y + h.h / 2); });
       await goPress();
@@ -287,6 +289,12 @@ async function main() {
         await page.evaluate(() => { const cm = window.__closeMonitor; const h = cm.hits.find((r) => r.id === 'close-receipt'); cm.press(h.x + h.w / 2, h.y + h.h / 2); });
         await wait(1500);
         await shot('09-the-receipt', 'the receipt: every update stacked, each FAILED — kept by nobody');
+        // S174 / R4-18: a room's dossier, in that room's own OS (a label or a panel press opens it)
+        for (const [era, tag] of [[1, '1997'], [3, '2016'], [4, '2026'], [0, 'how-it-was-made']]) {
+          await page.evaluate((e) => window.__closeMonitor.openSource(e, null), era);
+          await wait(1200);
+          await shot(`10-dossier-${tag}`, era === 0 ? 'how this was made: the project\'s own documents, on the machine' : `the ${tag} room's dossier, in its own OS, on the one machine`);
+        }
       } else console.log('  ⚠ the card never came near — no receipt still');
     } else console.log('  ⚠ close-go not published — no receipt still');
   });

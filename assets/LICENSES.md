@@ -19,6 +19,10 @@ mix art styles between rooms).
 | rug | rugRectangle.glb | Kenney Furniture Kit | CC0 | no | |
 | nightstand | sideTable.glb | Kenney Furniture Kit | CC0 | no | |
 | opening_corkboard | wallCorkboardCreativeTrio.glb | Poly Pizza — "Wall Corkboard" by CreativeTrio | CC0 1.0 | no | geometry only; material overridden flat in code |
+| mouse | mouse.glb | Poly Pizza — "Mouse" by CreativeTrio (Household Props 001) | CC0 1.0 | no | S174: Sérgio's own copy (`Pc_Simulation/Assests/Household Props 001-glb/Mouse.glb`), re-exported geometry-only (its one embedded texture stripped — the no-textures law is about what ships). 1997/2003's mouse (era1.json) and Vera's (r3). |
+| cupOfTea | cupOfTea.glb | Poly Pizza — "Cup Of Tea" by CreativeTrio (Household Props 001) | CC0 1.0 | no | S174: 2003's cup (`mug2003`), geometry only. |
+| mugPens | mugPens.glb | Poly Pizza — "Mug With Office Tool" by CreativeTrio (Household Props 001) | CC0 1.0 | no | S174: Vera's pen mug (`w_mug`), geometry only. |
+| pcTower | pcTower.glb | Poly Pizza — "Computer" by CreativeTrio (Household Props 001) | CC0 1.0 | no | S174: Vera's PC tower (`w_tower`) — it was the pale box he circled as a 'magical shiny box'. Geometry only. |
 | plant | pottedPlant.glb | Kenney Furniture Kit | CC0 | no | Room 1 (C1), new r1-only dressing (windowsill corner) |
 | _(staged)_ | lampSquareTable.glb | Kenney Furniture Kit | CC0 | no | copied, not yet wired |
 | logo | public/assets/logo/logo_480.png | the project's own logo (Sérgio, 2026-09-21; original 1448×1086 at `Pc_Simulation/Logo/`) | project-owned | no | the front door's masthead (S167); scaled to 480 px |

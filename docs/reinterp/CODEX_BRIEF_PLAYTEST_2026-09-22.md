@@ -6,9 +6,10 @@ STATUS: live
 
 ---
 
-**Model:** Luna, at `xhigh` reasoning effort — or, if that is not what your account calls it, the
-strongest model available to your Codex, at its highest reasoning effort. This is a long, patient,
-judgement-heavy task; do not run it on a small model.
+**Model:** **Luna 6**, at `xhigh` reasoning effort — the project's GPT-side model from 2026-09-22
+(`03_COORDINATION.md` → *Model history*); if your account names it differently, the strongest model
+available to your Codex, at its highest reasoning effort. This is a long, patient, judgement-heavy task;
+do not run it on a small model.
 **Tools:** browser automation (your Playwright/Chrome tooling), a shell for the dev server, and read
 access to the repo.
 **Approval/sandbox:** may run `npm`/`node` locally and drive a browser at `localhost`. **Read-only on
@@ -26,7 +27,7 @@ networks target queer people online. You sit at one desk, in one room, across fo
 changes, only the disguise. You never walk: you turn, you click, and it ends with a record of what the
 machine filed about you.
 
-Repo: `/Users/sergiogalvaoroxo/update-available-reinterp` (worktree, branch `reinterp`, at `6e1b9f9`).
+Repo: `/Users/sergiogalvaoroxo/update-available-reinterp` (worktree, branch `reinterp`, at its tip — `git log -1`).
 
 ## 2 · Your job in one line
 
@@ -120,8 +121,11 @@ the Close and the receipt.**
 Each era is a desk with a sandbox on it: things you can open in any order, and a *gate* that ends the
 era. Read `docs/reinterp/PROGRESSION_LAW_2026-09-17.md` if you want to know what is supposed to block.
 For the intended flow beat by beat — and the twelve things already flagged — read
-`docs/reinterp/REVIEW_ROUND_4_2026-09-22.md`. **Anything already flagged there (R4-01…R4-12) is known;
+`docs/reinterp/REVIEW_ROUND_4_2026-09-22.md`. **Anything already flagged there (R4-01…R4-18 — the last six fixed in S174, so their return is a finding) is known;
 list it under "already known" rather than as a new finding.**
+
+**At the Close, press a label or a panel in the sky** (new in S174): the eye goes to Daniel's machine
+and it opens that room's dossier in that room's OS. Try every era's, page through one, and come back.
 
 If you genuinely run out of budget, the documented review jump is `?reinterp=1&era=2&descent=0` (and
 `era=3`); Era 4 is entered from Era 3's ending. **Say in the report exactly where you jumped and why** —

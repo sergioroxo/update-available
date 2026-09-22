@@ -476,7 +476,9 @@
    "crtPowerLed",
    "tower",
    "towerFloppySlot",
-   "keyboard"
+   "keyboard",
+   "modem",
+   "modemLed"
   ],
   "add": [
    {
@@ -608,6 +610,40 @@
     "color": "#1E1E22"
    },
    {
+    "id": "mug2003",
+    "pos": [
+     -0.36,
+     0.74,
+     0.12
+    ],
+    "size": [
+     0.08,
+     0.1,
+     0.08
+    ],
+    "color": "#3E5C7A",
+    "model": "cupOfTea",
+    "_docS174": "⚑ S174 — a cup, not a box: 'Cup Of Tea' (CreativeTrio, CC0, geometry only). Was a 0.08 m cuboid standing 3 cm over the desk's front edge (z 0.24 against an edge at 0.25). A model's `pos` y is its BASE (assets.ts spawnModel), so 0.74 = the desk top."
+   }
+  ],
+  "_docS156": "⚑ S156 / R3-45 (Sérgio: 'Should the computer model change?' — yes: 'a beige tower and a 4:3 CRT in 1997; a black tower and a flat LCD in 2003'). The machine that was UPDATED is a different machine: the beige CRT, its neck and foot, the beige tower and keyboard are retired at r2 and a black flat panel on a stem, a black tower and a black keyboard take their places — box-built like the CRT (no GLB: `Flat Monitor modern.glb` in Assests is unmeasured and unlicensed-in-repo, and a fitted model would have to be re-measured against the screen plane; the boxes sit exactly behind the plane app.ts already draws the desktop on, SCREEN {w 0.4, h 0.3, y 1.08, z 0}). The r4 fold removes these with the rest of the desk. Ids keep the `crt`/`tower`/`keyboard` stems so era1room.ts's tiers still read them as hero/system.",
+  "_docS157": "⚑ S157 / R3-44 (Sérgio, twice: 'Era 2's bedroom doesn't change enough to be memorable'): THE 2003 DRESSING PASS. Six years on: the poster is a different poster (navy, a band, not the pink one), the small one darker; the curtains are grey-blue (the bed is a model since r1 and its bedding is the model's — a recolour there is a model job, not a delta); the lamp has a white shade; the desk has what 2003 put there — a CD spindle, a flip phone, a mug. All box-built in the room's own idiom; r4 clears the desk of them with the rest. ⚑ AND THE ROOM-AUDIT FINDINGS ARE CLOSED, NOT TRIAGED: the model props' authored sizes now say what renders (mixtape, tapeA/B, the duck, the bookcase, the boombox — the numbers the audit printed), and the record's frame sits 2 cm out of the spine wall it was sunk in.",
+  "_parkedS174": [
+   {
+    "id": "flipPhone",
+    "pos": [
+     0.34,
+     0.75,
+     0.2
+    ],
+    "size": [
+     0.045,
+     0.02,
+     0.09
+    ],
+    "color": "#2A2A2E"
+   },
+   {
     "id": "cdSpindle",
     "pos": [
      -0.45,
@@ -634,38 +670,10 @@
      0.05
     ],
     "color": "#9A9AA0"
-   },
-   {
-    "id": "flipPhone",
-    "pos": [
-     0.34,
-     0.75,
-     0.2
-    ],
-    "size": [
-     0.045,
-     0.02,
-     0.09
-    ],
-    "color": "#2A2A2E"
-   },
-   {
-    "id": "mug2003",
-    "pos": [
-     -0.36,
-     0.79,
-     0.24
-    ],
-    "size": [
-     0.08,
-     0.1,
-     0.08
-    ],
-    "color": "#3E5C7A"
    }
   ],
-  "_docS156": "⚑ S156 / R3-45 (Sérgio: 'Should the computer model change?' — yes: 'a beige tower and a 4:3 CRT in 1997; a black tower and a flat LCD in 2003'). The machine that was UPDATED is a different machine: the beige CRT, its neck and foot, the beige tower and keyboard are retired at r2 and a black flat panel on a stem, a black tower and a black keyboard take their places — box-built like the CRT (no GLB: `Flat Monitor modern.glb` in Assests is unmeasured and unlicensed-in-repo, and a fitted model would have to be re-measured against the screen plane; the boxes sit exactly behind the plane app.ts already draws the desktop on, SCREEN {w 0.4, h 0.3, y 1.08, z 0}). The r4 fold removes these with the rest of the desk. Ids keep the `crt`/`tower`/`keyboard` stems so era1room.ts's tiers still read them as hero/system.",
-  "_docS157": "⚑ S157 / R3-44 (Sérgio, twice: 'Era 2's bedroom doesn't change enough to be memorable'): THE 2003 DRESSING PASS. Six years on: the poster is a different poster (navy, a band, not the pink one), the small one darker; the curtains are grey-blue (the bed is a model since r1 and its bedding is the model's — a recolour there is a model job, not a delta); the lamp has a white shade; the desk has what 2003 put there — a CD spindle, a flip phone, a mug. All box-built in the room's own idiom; r4 clears the desk of them with the rest. ⚑ AND THE ROOM-AUDIT FINDINGS ARE CLOSED, NOT TRIAGED: the model props' authored sizes now say what renders (mixtape, tapeA/B, the duck, the bookcase, the boombox — the numbers the audit printed), and the record's frame sits 2 cm out of the spine wall it was sunk in."
+  "_docParkedS174": "⚑ S174 (2026-09-22) — PARKED, NOT DELETED. Sérgio circled these on the 2003 exhibition still: untextured boxes that read as 'models missing'. No model for a flip phone or a CD spindle exists in Pc_Simulation/Assests, so they are out of the room until he fetches one (see docs/reinterp/ASSET_REQUEST_2026-09-22.md) — move an entry back into `add` (with its `model`) to restore it. The flip phone was also INSIDE the mouse: mouse x 0.27–0.33, phone x 0.32–0.36, same z, on the desk's front edge.",
+  "_docS174Modem": "⚑ S174 — the dial-up box leaves with 1997. Sérgio crossed it on the 2003 still. It had no job after Era 1's Connect step (grep: only era1room.ts's tier list names it)."
  },
  "r3": {
   "props": {
@@ -1300,7 +1308,7 @@
     "id": "w_tower",
     "pos": [
      -5.24,
-     0.22,
+     0.0,
      1.62
     ],
     "size": [
@@ -1308,8 +1316,10 @@
      0.44,
      0.45
     ],
-    "color": "#CFC6B2",
-    "_doc": "⛑ ROOM 2 HAD A MONITOR AND A KEYBOARD AND NOTHING DRIVING THEM — added 2026-08-24, Sérgio: 'Laptop? there is no laptop here...'. He was right twice: the code called Era 3's machine a LAPTOP everywhere (renamed to `workstation` this session, including the two player-visible strings) and the room had no tower, so a desk with a screen and a board on it read as a machine with no cause. It stands ON THE FLOOR at the far end of the desk. ⛑ I tried it on the desktop beside the monitor first, to get it inside the seat's 29.7° half-FOV, and it overlapped the monitor's own box by 104 mm on every arrangement that stayed in frame — the desk simply is not deep enough behind the panel. So it is where a tower actually goes, and it is seen on the entrance travelling and whenever she looks down, not from the chair at rest. That is a real limit and it is stated rather than hidden: if the room still does not read as a desktop, the next move is a second prop at eye level, not a bigger tower. ⛑ Beige, not black: this is a mid-2010s office tower issued to a worker, not a machine anybody chose."
+    "color": "#2A2A30",
+    "_doc": "⛑ ROOM 2 HAD A MONITOR AND A KEYBOARD AND NOTHING DRIVING THEM — added 2026-08-24, Sérgio: 'Laptop? there is no laptop here...'. He was right twice: the code called Era 3's machine a LAPTOP everywhere (renamed to `workstation` this session, including the two player-visible strings) and the room had no tower, so a desk with a screen and a board on it read as a machine with no cause. It stands ON THE FLOOR at the far end of the desk. ⛑ I tried it on the desktop beside the monitor first, to get it inside the seat's 29.7° half-FOV, and it overlapped the monitor's own box by 104 mm on every arrangement that stayed in frame — the desk simply is not deep enough behind the panel. So it is where a tower actually goes, and it is seen on the entrance travelling and whenever she looks down, not from the chair at rest. That is a real limit and it is stated rather than hidden: if the room still does not read as a desktop, the next move is a second prop at eye level, not a bigger tower. ⛑ Beige, not black: this is a mid-2010s office tower issued to a worker, not a machine anybody chose.",
+    "model": "pcTower",
+    "_docS174": "⚑ S174 — Sérgio circled a pale box on the floor ('the magical shiny box'): the PC tower, a #CFC6B2 cuboid that caught every light. Now 'Computer' (CreativeTrio, CC0) at ×1.3, dark, standing on the floor (model pos = its base)."
    },
    {
     "id": "w_towerLed",
@@ -1330,8 +1340,8 @@
     "id": "w_mouse",
     "pos": [
      -4.95,
-     0.76,
-     0.36
+     0.756,
+     0.4
     ],
     "size": [
      0.06,
@@ -1339,7 +1349,9 @@
      0.09
     ],
     "color": "#C9BFA6",
-    "yaw": 90
+    "yaw": 90,
+    "model": "mouse",
+    "_docS174": "⚑ S174 — the mouse is a mouse now ('Mouse', CreativeTrio, CC0) and is no longer under the mug: the mug stood on it (mouse z 0.33–0.39, mug z 0.26–0.34, same x). Beside the keyboard (z 0.49–0.91), on the seat's right."
    },
    {
     "id": "w_doorPanel",
@@ -2008,7 +2020,7 @@
     "id": "w_phoneDevice",
     "model": "phone",
     "pos": [
-     -5.0,
+     -4.979,
      0.916,
      0.97
     ],
@@ -2019,7 +2031,8 @@
     ],
     "yaw": 90,
     "color": "#15151F",
-    "_doc": "⚑ S149 — ON A STAND (OPEN_ITEMS R3-67/72): base at y 0.916 = the dock's top; leaning 15° back (models.json phone tilt), facing the seat (yaw 90). In frame from the r2 seat at pitch 0, measured live. Keep in step with era3Devices PLACEMENT.phone. ⛑ MOVED AGAIN, 2026-08-24, and this time to be REACHABLE: from (-5.02, 1.16) to (-5.10, 0.95). Measured from the workstation seat, the phone's screen projected to (-230, 1214) on a 1280x900 viewport — off the left edge AND below the bottom — and looking down never recovered it, because at z 1.16 it sat 36.5° off the view axis against a 29.7° horizontal half-FOV. THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE. It is now 19.7° off axis and enters the frame from a -10° look. ⛑ KEEP THIS IN STEP with era3Devices' PLACEMENT.phone — the prop and its screen have now been separated twice, and both times Sérgio found it before a check did. ⚑ ERA 3'S PHONE — one mesh, ON THE DESK, 2026-08-21. It was a parts-built box on the nightstand at (-2.42, 0.51, -0.72). ⚑ The move is the era's thesis in a coordinate: the tablet lived across the room and was reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, both at arm's length — which is what makes ignoring it a real CHOICE rather than a walk she declines to take. Its two hand-built parts (body + earpiece) are gone; the mesh carries them. ⚑ A note for the next prop added here: I first declared a SECOND w_phoneDevice rather than editing this one, and a duplicate id does not error — the later declaration silently wins and the earlier becomes invisible. Check for the id first."
+    "_doc": "⚑ S149 — ON A STAND (OPEN_ITEMS R3-67/72): base at y 0.916 = the dock's top; leaning 15° back (models.json phone tilt), facing the seat (yaw 90). In frame from the r2 seat at pitch 0, measured live. Keep in step with era3Devices PLACEMENT.phone. ⛑ MOVED AGAIN, 2026-08-24, and this time to be REACHABLE: from (-5.02, 1.16) to (-5.10, 0.95). Measured from the workstation seat, the phone's screen projected to (-230, 1214) on a 1280x900 viewport — off the left edge AND below the bottom — and looking down never recovered it, because at z 1.16 it sat 36.5° off the view axis against a 29.7° horizontal half-FOV. THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE. It is now 19.7° off axis and enters the frame from a -10° look. ⛑ KEEP THIS IN STEP with era3Devices' PLACEMENT.phone — the prop and its screen have now been separated twice, and both times Sérgio found it before a check did. ⚑ ERA 3'S PHONE — one mesh, ON THE DESK, 2026-08-21. It was a parts-built box on the nightstand at (-2.42, 0.51, -0.72). ⚑ The move is the era's thesis in a coordinate: the tablet lived across the room and was reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, both at arm's length — which is what makes ignoring it a real CHOICE rather than a walk she declines to take. Its two hand-built parts (body + earpiece) are gone; the mesh carries them. ⚑ A note for the next prop added here: I first declared a SECOND w_phoneDevice rather than editing this one, and a duplicate id does not error — the later declaration silently wins and the earlier becomes invisible. Check for the id first.",
+    "_docS174": "⚑ S174 / R4-13 — x −5.0 → −4.979: with the lean corrected (models.json phone), this puts the screen plane on the handset's front face. The base stays on the dock (x −5.045…−4.955)."
    },
    {
     "id": "w_phoneStand",
@@ -2100,9 +2113,9 @@
    {
     "id": "w_mug",
     "pos": [
-     -4.95,
-     0.795,
-     0.3
+     -5.18,
+     0.756,
+     0.26
     ],
     "size": [
      0.08,
@@ -2110,7 +2123,9 @@
      0.08
     ],
     "color": "#B8D0C8",
-    "yaw": 90
+    "yaw": 90,
+    "model": "mugPens",
+    "_docS174": "⚑ S174 — 'Mug With Office Tool' (CreativeTrio, CC0): a pen mug on a work desk; back by the wall, clear of the mouse."
    },
    {
     "id": "w_notepad",
@@ -2156,38 +2171,6 @@
     ],
     "color": "#A07B52",
     "yaw": 90
-   },
-   {
-    "id": "w_radio",
-    "pos": [
-     -5.26,
-     0.8,
-     0.28
-    ],
-    "size": [
-     0.18,
-     0.1,
-     0.1
-    ],
-    "color": "#D4D0C8",
-    "yaw": 90,
-    "_doc": "⚑ 2026-09-05: re-based on w_desk, for the same reason as w_frame. It stood on w_bookcase, which was struck with its eighteen books — and a removal's real cost is never the props it removes, it is the ones that were resting on them. room-audit caught this one (0.95 m of air) after I had already hand-fixed the other; the tool saw what the scan I ran by eye did not."
-   },
-   {
-    "id": "w_frame",
-    "pos": [
-     -5.32,
-     0.82,
-     1.15
-    ],
-    "size": [
-     0.11,
-     0.14,
-     0.02
-    ],
-    "color": "#8A5A3B",
-    "yaw": 90,
-    "_doc": "⚑ 2026-09-05: re-based on w_desk. It used to lean on w_bookcase, which Sérgio struck along with its eighteen book props (*\"you can remove the bookshelf in Room 2 and the books there. They have no use\"*) — so it would have been left hanging in the air, which is the failure mode a removal always has and a removal's own commit is the only place to catch it."
    },
    {
     "id": "w_calendar",
@@ -2697,7 +2680,42 @@
     "yaw": 270
    }
   ],
-  "_docDeskCleared": "⛑ e_keyboard and e_mouse REMOVED 2026-09-01 with the CRT's move (Sérgio: 'we can[not] really see it with all the clutter here' — 'it' being the headset, the era's ONE interaction and until now the least legible object on the desk). They were that machine's peripherals; wired to nothing they are just clutter in front of the thing the era is actually about. What stays is hers and not the apparatus's: the folders, her glasses, and the headset on its dock."
+  "_docDeskCleared": "⛑ e_keyboard and e_mouse REMOVED 2026-09-01 with the CRT's move (Sérgio: 'we can[not] really see it with all the clutter here' — 'it' being the headset, the era's ONE interaction and until now the least legible object on the desk). They were that machine's peripherals; wired to nothing they are just clutter in front of the thing the era is actually about. What stays is hers and not the apparatus's: the folders, her glasses, and the headset on its dock.",
+  "_parkedS174": [
+   {
+    "id": "w_frame",
+    "pos": [
+     -5.32,
+     0.82,
+     1.15
+    ],
+    "size": [
+     0.11,
+     0.14,
+     0.02
+    ],
+    "color": "#8A5A3B",
+    "yaw": 90,
+    "_doc": "⚑ 2026-09-05: re-based on w_desk. It used to lean on w_bookcase, which Sérgio struck along with its eighteen book props (*\"you can remove the bookshelf in Room 2 and the books there. They have no use\"*) — so it would have been left hanging in the air, which is the failure mode a removal always has and a removal's own commit is the only place to catch it."
+   },
+   {
+    "id": "w_radio",
+    "pos": [
+     -5.26,
+     0.8,
+     0.28
+    ],
+    "size": [
+     0.18,
+     0.1,
+     0.1
+    ],
+    "color": "#D4D0C8",
+    "yaw": 90,
+    "_doc": "⚑ 2026-09-05: re-based on w_desk, for the same reason as w_frame. It stood on w_bookcase, which was struck with its eighteen books — and a removal's real cost is never the props it removes, it is the ones that were resting on them. room-audit caught this one (0.95 m of air) after I had already hand-fixed the other; the tool saw what the scan I ran by eye did not."
+   }
+  ],
+  "_docParkedS174": "⚑ S174 — Sérgio crossed the photo frame and the radio on the 2016 still. Parked, not deleted."
  },
  "r4": {
   "props": {
@@ -2723,8 +2741,6 @@
    "w_flatPanelBody",
    "w_keyboard",
    "w_mouse",
-   "modem",
-   "modemLed",
    "tennisRacketModel",
    "movingBox1",
    "movingBox2",
@@ -2779,10 +2795,15 @@
    "tower2003Drive",
    "tower2003Led",
    "keyboard2003",
-   "cdSpindle",
-   "cdSpindleCap",
-   "flipPhone",
-   "mug2003"
+   "mug2003",
+   "mouse",
+   "w_tower",
+   "w_towerLed",
+   "w_phoneDevice",
+   "w_phoneStand",
+   "w_mug",
+   "w_notepad",
+   "w_pen"
   ],
   "add": [
    {
@@ -2902,6 +2923,7 @@
    }
   ],
   "_docE4Emptying": "⚑ 2026-09-05 — VERA'S COMPUTER LEAVES WITH HER ERA. Sérgio: *\"since we no longer can go to the other rooms, maybe we can remove the computers from the room 1 and 2 when we are at ERA-4, is that an option?\"* It is, and HALF OF IT WAS ALREADY TRUE: this same remove list has taken Daniel's CRT and keyboard out at r4 since the fold was written — Room 1's computer has been gone at E4 all along and nobody noticed, because nobody had measured what was left. Room 2's workstation had not gone anywhere. It does now, with its keyboard and mouse; `era3Devices.setEra` stops enabling the workstation and phone SCREENS at e4 in the same move, or a lit plane would be left hanging where the monitor used to be — which is exactly the fault S61 found on the spine and the one a removal always has. ⚑ This is the first, smallest increment of the emptied-rooms idea (NEXT_ROOM_PASS §5/§6): the rooms the piece has left stop being fully dressed. It is worth measuring against §6's table — Room 2's contents are 27 of the turn's 139 and Room 1's are 78. ⚑ EXTENDED 2026-09-05: *\"When we are at Era-4 there is no need to see the tower of Daniel desktop and the disk drive, or even the tenis racket and the moving boxes are still here.\"* So the r4 fold now also takes `tower`, `towerFloppySlot`, `modem`, `modemLed`, `tennisRacketModel` and `movingBox1/2`. ⚑ The boxes are the interesting one and he is right about them too: they arrive at r3 to say the room was PACKED, and a packed room does not still have its boxes in it ten years later — leaving them was me keeping a beat past the moment it finished. What stays in 2026 is the shape of a room and a light nobody turned off. ⚑ 2026-09-11 — ROOM 3 STRIPPED OF ITS BOXES. Sérgio, on his first sit-through of the deployed build: *\"there are blocks of stuff around us non-descriptive and useless\"* — and it was Room 3: the flag as five unreadable planks (his open question #6, answered by seeing it), the ally badge, the poster and sign (the purple slab, the navy block, the brown bar and the white slab behind the monitor), the pinboard and its two rectangles, a 0.11 m frame, the bare second shelf plank, two book-boxes on a wall shelf. Twenty-three props, every one an untextured cuboid with a name only the data can read. What stays is the furniture (all GLB), the window and curtains, the kept CRT on its one plank, and the things the story points at — the hoodie, the folders, the sketchbook, the mug, the plant, the headset kit. Every id is one line to restore. ⚑ 2026-09-12 — two more, from his review of the deployed build: `e_folders`, the off-white box sitting ON the laptop ('there is a box on top of it'), and `e_hoodie`, the light-blue cuboid on the chair back ('a box blocking out view of the rest of the space on the right side, a blue one'). The hoodie's story lives in the record tab now — OUTERWEAR · condition: keepsake? — and a garment rendered as a 0.1 x 0.32 x 0.36 block was not carrying it. ⚑ EXTENDED 2026-09-13 — THE BOXES. Sérgio, on the Close's Era-4 plate: \"There are still too many elements on Era-4 with boxes that aren't there.\" So every primitive-box dressing prop in Room 3 goes at r4: the mug, the sketchbook, the glasses, the throw, the second pillow, the floor cushion, the backpack, the sneakers, the keys, the glass, the cable, the clock, the plant (pot + top). What stays is what has a model or a job: the bed, the nightstand, the desk, the chair, the rug, the docked monitor, the laptop, the headset on its dock, the controller, the phone, the window and curtains, the old CRT on the shelf. The lamp goes too: it is Room 1's box lamp carried to this desk (r4 patched its three boxes to the far corner), and from the seat only its shade showed — an orange box floating on the wall in every plate; moved to the near corner it hid behind the headset's dock instead. Its LIGHT stays (cluster.ts carryLampLight, (5.45, 1.15, 1.20)): a warm wash on the desk wall with no box under it, which the soft lo-fi doctrine allows and a box lamp does not earn. History of the lamp's positions: ⚑ Sérgio, 2026-09-05: *\"check that you had at least a lamp floating above the bed at least in earlier images.\"* He is right and it is measurable: r4 patched the lamp to z 1.50, and `e_desk` (pos z 0.61, 1.40 deep) ENDS at z 1.31. The lamp had been standing 0.19 m past the edge of the desk and 0.27 m above the bed, held up by nothing. It arrived there when the lamp was 'carried to Maya's desk' at E4 without anyone measuring the desk. Moved to (5.45, 1.20): on the desk's far corner, clear of the folders (x 5.05–5.27) and of e_wallShelf (x 5.54+). cluster.ts's carryLampLight moves with it. ⚑ 2026-09-13: and from the far corner to the NEAR one (z 0.0): behind the laptop only the shade was visible — an orange box floating on the wall in every plate. Where the mug and glasses were (both struck the same day); clear of the headset's dock (x ≤ 5.31).",
-  "_docS156": "S156: the CRT/tower/keyboard ids left r4's remove list — the r2 fold retires them now (R3-45), and r4 removes the 2003 machine instead."
+  "_docS156": "S156: the CRT/tower/keyboard ids left r4's remove list — the r2 fold retires them now (R3-45), and r4 removes the 2003 machine instead.",
+  "_docS174": "⚑ S174 / R4-16 — ROOM 2 IS EMPTIED AT 2026, all of it. His 2026-09-05 ruling took Vera's monitor, keyboard and mouse; her tower, her phone on its dock, her mug and her notepad stayed, and the stills showed them lit over the building at the Close (the Commons also switched the two screens back on — app.ts, onCommonsRoom). Room 1's mouse goes too: its keyboard left at 2003."
  }
 }

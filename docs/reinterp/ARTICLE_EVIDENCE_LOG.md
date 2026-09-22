@@ -90,6 +90,15 @@ AI-enabled IDN."
   avoid implying the shipped piece itself runs generative AI at runtime, which it explicitly and
   deliberately does not).
 
+## 2026-09-22 — the models changed under the project again
+Two model changes in one day, both recorded as he asked: the Claude build lane moves from **Opus 5 to
+Opus 5.5** (from S174, the repair session after the exhibition stills), and the GPT side moves to its
+6-series — **Sol 6** and **Luna 6** — beginning with the two Codex briefs written the same day (a visual
+pass and a browser playtest). The table of record is `03_COORDINATION.md` → *Model history*. Worth a
+line in the article next to July's 4.8 → 5: the build has now crossed three model generations on the
+Claude side, and the work carried across each without a restart — the continuity lives in the repo's
+own logs, not in any one model.
+
 ## Open items (Sérgio's, not Claude's)
 
 - The abstract itself (500 words max, bio 200 words max, cc `DCsubmit@gmail.com`) is his to write —

@@ -7,7 +7,7 @@ at the frames and at the code behind them. Do both, in either order, in separate
 
 ---
 
-**Model:** GPT-5.1-Codex-Max — or the strongest Codex model your account offers.
+**Model:** **Sol 6** — the project's GPT-side model from 2026-09-22 (`03_COORDINATION.md` → *Model history*); if your account names it differently, the strongest model it offers.
 **Reasoning effort:** `xhigh`. **Approval/sandbox:** read-only; no edits, no commits, no branches.
 **Shape of the session:** one long pass. Spend it looking and reading, not building.
 
@@ -23,7 +23,7 @@ changes, only the disguise. You never walk: you turn, you click, and it ends wit
 the machine filed about you.
 
 Repo: `/Users/sergiogalvaoroxo/update-available-reinterp` (git worktree, branch `reinterp`, at
-`6e1b9f9`). Everything the player touches is drawn to offscreen 2D canvases and textured onto the
+the branch's tip — `git log -1` names it; this brief was last brought up to date after S174). Everything the player touches is drawn to offscreen 2D canvases and textured onto the
 monitor / phone meshes inside a low-poly 3D room. There is no DOM UI. That is why this review is done
 from **pictures**.
 
@@ -45,7 +45,8 @@ line where it lives (`src/desktop/apps/kit.ts:412`). Do not fix it.
 1. `CLAUDE.md` (repo root) — the laws. **Binding.** Read the "REINTERP AMENDMENTS (R28)" block: this
    branch is the reinterpretation, behind `?reinterp=1`.
 2. `docs/reinterp/REVIEW_ROUND_4_2026-09-22.md` — the piece as it plays right now, era by era, with
-   the frames inline and twelve open flags (R4-01…R4-12). **This is the map of the thing you are
+   the frames inline and its open flags — R4-01…R4-12, plus R4-13…R4-18 from the exhibition stills,
+   which S174 fixed (so a regression of any of those IS a finding). **This is the map of the thing you are
    reviewing.** Anything already flagged there is known — say so rather than re-raising it, and only
    add to it if you can say something new.
 3. `docs/reinterp/OPEN_ITEMS.md` — the register of what is owed. The Round 4 block at the end is
@@ -85,6 +86,19 @@ Each tour takes 5–15 minutes and plays the era through the player's own surfac
 are a free camera (the reviewer's eye); every other frame is **the seat's own view** — that is what a
 player actually sees, and "is it readable / is it in frame" must be judged on those.
 
+### ⚑ And the exhibition stills — the best pictures of the piece there are
+`out/stills/` — **2560 × 1440**, every era from the same four places (its corner, above, the seat, the
+screen close), plus the Close. `out/stills/STILLS.md` names each and the camera it came from. These are
+composed for people, so they are the frames where a visual defect costs the most. Regenerate with:
+
+```bash
+node tools/stills.mjs --port 3000
+```
+
+**⚑ Regenerate the tour frames too before you start.** Both folders are git-ignored and local; the
+ones on this machine were shot BEFORE S174 (the Close's machine, Room 2 at 2026, the phone and the desk
+props all changed since). Reviewing stale frames reports bugs that are already fixed.
+
 ## 5 · How to run it
 
 ```bash
@@ -100,7 +114,7 @@ shipped baseline, which is not what this review is about.
 - `?flat=1&reinterp=1` draws the desktop canvas alone. **It is a review tool, not an audience target.**
   Never judge the piece by it and never propose work for it.
 - `npm test` runs the invariant checkers (no network, no storage, spec laws, palette ratchet, doc
-  STATUS headers). Run it if you like; it should be green at `6e1b9f9`.
+  STATUS headers). Run it if you like; it should be green at the branch's tip.
 
 ## 6 · The laws you must not "fix"
 
@@ -134,6 +148,9 @@ Anything a player would see and that is wrong on its own terms:
 - **the next action is not discoverable** — the frame gives a player nothing to aim at
 - **the story does not read** — this beat does not follow from the last one, or the picture points at
   the wrong thing for what is being said
+- **the Close's dossier windows** (new in S174): press a label or a panel in the sky and Daniel's
+  machine opens that room's dossier in that room's own OS. Check every era's window for overflow,
+  paging (More n/N) and legibility at the distance the eye stops at
 - **anything that looks like a bug**: a stray rect, a flash of the wrong palette, a half-drawn frame,
   a caption on screen with nothing to caption.
 
@@ -161,7 +178,7 @@ Structure:
 Severity: `URGENT` (a player cannot proceed, or cannot read something they must read) ·
 `HIGH` (visibly broken, will be noticed) · `MEDIUM` (wrong but survivable) · `LOW` (polish).
 
-4. **Already known** — anything you found that R4-01…R4-12 already covers, listed by their id, so we
+4. **Already known** — anything you found that R4-01…R4-18 already covers, listed by their id, so we
    can tell new from old.
 5. **Where I would look next** — three lines, what a second pass should cover.
 

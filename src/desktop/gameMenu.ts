@@ -48,12 +48,11 @@ import { gameMenuBus } from '../state/gameMenuBus';
 import copy from '../../data/strings/gameMenu.json';
 import attributions from '../../data/strings/attributions.json';
 import { entriesByEra, practiceOf, type RecordEra } from '../witness/record';
+import { SOURCE_FILES } from '../witness/sources';
 import mapCopy from '../../data/strings/map.json';
 import closeNetwork from '../../data/strings/close_network.json';
 import { DIALOG, domBevel } from './theme/chrome';
 import { mountLeavePage } from '../frame/leavePage';
-import originIntake from '../../data/provotypes/origin_intake_e1.json';
-import pillowCard from '../../data/provotypes/pillow.json';
 // ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
 // (6 sourced entries + the credit paragraph) and `data/provotypes/e4_offers.json`
 // (4 sourced entries) were never imported anywhere — each appeared exactly once,
@@ -219,13 +218,7 @@ export function mountGameMenu(): GameMenu {
    * points at — a pointer into the provotypes' existing cards, never a new
    * claim. See docs/reinterp/THE_RECORD_PLAN_2026-09-15.md.
    */
-  const SOURCE_FILES: Record<string, { debrief: { sources: { status: string; text: string }[] } }> = {
-    origin_intake_e1: originIntake as unknown as { debrief: { sources: { status: string; text: string }[] } },
-    pillow: pillowCard as unknown as { debrief: { sources: { status: string; text: string }[] } },
-    e3_theday: e3Day as unknown as { debrief: { sources: { status: string; text: string }[] } },
-    e4_ball: e4Ball as unknown as { debrief: { sources: { status: string; text: string }[] } },
-    e4_offers: e4Offers as unknown as { debrief: { sources: { status: string; text: string }[] } }
-  };
+  // S174: the practice → source table lives in witness/sources.ts (the Close's dossier reads it too)
   /**
    * ⚑ S163 / R3-111 — THE CLOSE'S PANELS, SOURCED. Sérgio: "don't want the
    * 'documentary' label [on the panels]. The dossier should list this content;

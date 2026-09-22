@@ -79,8 +79,8 @@ export function closeBackdropColor(): pc.Color {
  * cloud; a slot field is this piece's building. Same mesh, same draw call, one
  * axis.
  */
-function cubesMesh(device: pc.GraphicsDevice, centers: number[][], half: number, aspect = 1): pc.Mesh {
-  const positions: number[] = [];
+function cubesMesh(device: pc.GraphicsDevice, centers: number[][], half: number, aspect = 1, keep?: number[]): pc.Mesh {
+  const positions: number[] = keep ?? [];
   const indices: number[] = [];
   // 8 corners / 12 tris per cube, flat-shaded by unlit material (no normals needed)
   const C = [
@@ -138,11 +138,29 @@ export interface PointCloud {
   /** …and holds still for `seconds` after any press */
   holdDrift(seconds: number): void;
   /** ⚑ S167 — THE CLEAR CORRIDOR (his 2026-09-21: "occlusion errors on the Close").
-   *  When the eye has come to Daniel's machine, everything of the constellation
-   *  between the eye and the glass is in the way of the card: labels inside the
-   *  corridor collapse, and the whole sky dims to `dim` while it is read. `null`
-   *  clears it. World space: a box from `zNear` to `zFar` (the glass), |x| ≤ hx. */
-  setClearCorridor(c: { hx: number; zNear: number; zFar: number; dim: number } | null): void;
+   *  Everything of the constellation that stands between the eye and Daniel's
+   *  machine is in the way of it: labels and stars on that line of sight
+   *  collapse, and so does a panel crossing it; the whole sky dims to `dim`.
+   *  `null` clears it.
+   *  ⚑ S174 / R4-15 — it was a BOX (|x| ≤ hx, zFar…zNear) and it only ever
+   *  collapsed LABELS: the stars are merged meshes with one opacity per tone, so
+   *  they could only dim, and the far machine stood speckled with them. And the
+   *  panels were exempt ("they are the reading"), so the 1997 panel — whose arc
+   *  bearing is exactly the machine's, 5 cm behind its glass — hung across the
+   *  machine's top in the receipt frame. It is a SIGHT-LINE now: from `eye`,
+   *  does this point land on the machine's silhouette in the glass plane? */
+  setClearCorridor(c: SightCorridor | null): void;
+  /** ⚑ S174 / R4-18 — which label a world-space ray lands on (a label on the
+   *  sight-line to the machine is folded away and cannot be pressed), or null */
+  labelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { era: number; text: string } | null;
+}
+
+/** the machine as seen from the eye: its silhouette in the plane of its glass */
+export interface SightCorridor {
+  eye: { x: number; y: number; z: number };
+  /** the glass plane's z, the silhouette's centre x and half-width, its y range */
+  z: number; x: number; hx: number; yLo: number; yHi: number;
+  dim: number;
 }
 
 export function buildPointCloud(app: pc.Application): PointCloud {
@@ -370,6 +388,15 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   // ── build: one mesh per warm (person) tone + the apparatus mesh + the
   // apparatus link mesh ──
   const root = new pc.Entity('point-cloud');
+  /** ⚑ S174 / R4-15 — each star mesh keeps its centres and its full vertex list,
+   *  so a star on the sight-line to the machine can be folded to a point and
+   *  given back when the line moves off it. One rewrite per CHANGE, not per frame. */
+  const starTiers: { mesh: pc.Mesh; centers: number[][]; full: number[]; hidden: Uint8Array }[] = [];
+  /** …and the apparatus's link lines, two vertices a segment (the receipt had one
+   *  running diagonally through its text) */
+  let linkMeshRef: pc.Mesh | null = null;
+  let linkFull: number[] = [];
+  let linkHidden = new Uint8Array(0);
   const warmMats: pc.StandardMaterial[] = [];
   const tones = P.warm as string[];
   const byTone: number[][][] = tones.map(() => []);
@@ -388,10 +415,11 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     mat.opacity = 0;
     mat.update();
     warmMats.push(mat);
+    const full: number[] = [];
+    const mesh = cubesMesh(app.graphicsDevice, byTone[t], personHalf, P.personSlotAspect, full);
+    starTiers.push({ mesh, centers: byTone[t], full, hidden: new Uint8Array(byTone[t].length) });
     const e = new pc.Entity(`cloud-person-${t}`);
-    e.addComponent('render', {
-      meshInstances: [new pc.MeshInstance(cubesMesh(app.graphicsDevice, byTone[t], personHalf, P.personSlotAspect), mat)]
-    });
+    e.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)] });
     root.addChild(e);
   });
 
@@ -405,12 +433,16 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   apparatusMat.opacity = 0;
   apparatusMat.update();
   const apparatusEnt = new pc.Entity('cloud-apparatus');
-  apparatusEnt.addComponent('render', {
-    meshInstances: [new pc.MeshInstance(cubesMesh(app.graphicsDevice, apparatusNodes, apparatusHalf), apparatusMat)]
-  });
+  const apparatusFull: number[] = [];
+  const apparatusMesh = cubesMesh(app.graphicsDevice, apparatusNodes, apparatusHalf, 1, apparatusFull);
+  starTiers.push({ mesh: apparatusMesh, centers: apparatusNodes, full: apparatusFull, hidden: new Uint8Array(apparatusNodes.length) });
+  apparatusEnt.addComponent('render', { meshInstances: [new pc.MeshInstance(apparatusMesh, apparatusMat)] });
   root.addChild(apparatusEnt);
 
   const linkMesh = new pc.Mesh(app.graphicsDevice);
+  linkFull = apparatusLinkPositions.slice();
+  linkHidden = new Uint8Array(apparatusLinkPositions.length / 6);
+  linkMeshRef = linkMesh;
   linkMesh.setPositions(apparatusLinkPositions);
   linkMesh.update(pc.PRIMITIVE_LINES);
   const linkMat = new pc.StandardMaterial();
@@ -451,6 +483,11 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     actx.fillStyle = P.labelColor;
     const widths: number[] = [];
     labels.forEach((text, i) => {
+      // ⚑ S174 / R4-17 — the seven process labels (era 0: the project's own
+      //   documents) in the link's cool blue, not the lamp's warm: Sérgio read
+      //   them as "sources that aren't sources", and he was right that nothing
+      //   told them apart. An existing hue (cluster.json `link`), no new colour.
+      actx.fillStyle = entries[i].era === 0 ? P.link : P.labelColor;
       actx.fillText(text, 4, i * ROW + ROW / 2, ATLAS - 8);
       widths.push(Math.min(actx.measureText(text).width + 8, ATLAS));
     });
@@ -570,6 +607,10 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   const CELL_H = 768;
   /** each panel's frame in the cloud's own space (centre, normal, right, up, half-sizes) — for `panelAt` */
   const panelFrames: { c: pc.Vec3; n: pc.Vec3; r: pc.Vec3; u: pc.Vec3; hw: number; hh: number }[] = [];
+  /** S174 / R4-15: the panels' merged mesh, kept rewritable like the stars */
+  let panelMesh: pc.Mesh | null = null;
+  let panelFull: number[] = [];
+  let panelHidden = new Uint8Array(0);
   const PLATE = { x: 40, y: 40, w: 600, h: 688 };
   const TEXT_X = PLATE.x + PLATE.w + 48;
   const TEXT_W = CELL_W - TEXT_X - 44;
@@ -742,6 +783,9 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         pidx.push(base, base + 1, base + 2, base, base + 2, base + 3);
       });
       const pmesh = new pc.Mesh(app.graphicsDevice);
+      panelMesh = pmesh;
+      panelFull = pp.slice();
+      panelHidden = new Uint8Array(panels.length);
       pmesh.setPositions(pp);
       pmesh.setUvs(0, puv);
       pmesh.setIndices(pidx);
@@ -814,8 +858,108 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   const DRIFT_EASE_SECONDS = 1.6;
   const invRoot = new pc.Mat4();
   const lp0 = new pc.Vec3(), lp1 = new pc.Vec3(), ld = new pc.Vec3(), lh = new pc.Vec3();
-  let corridor: { hx: number; zNear: number; zFar: number; dim: number } | null = null;
+  let corridor: SightCorridor | null = null;
   const lw = new pc.Vec3();
+  const sw = new pc.Vec3();
+
+  /** ⚑ S174 / R4-15 — from the eye, does world point (x, y, z) land on the
+   *  machine's silhouette (± margin) in the plane of its glass? Only what stands
+   *  between the eye and the machine counts — or no more than `behind` past its
+   *  glass, which the body would otherwise hide on its own. */
+  function onSight(x: number, y: number, z: number, margin: number, behind = 0.05): boolean {
+    const c = corridor;
+    if (!c) return false;
+    const e = c.eye;
+    if (z >= e.z - 0.05 || z < c.z - behind) return false;
+    const s = (c.z - e.z) / (z - e.z);
+    const hx = e.x + (x - e.x) * s;
+    const hy = e.y + (y - e.y) * s;
+    return Math.abs(hx - c.x) <= c.hx + margin && hy >= c.yLo - margin && hy <= c.yHi + margin;
+  }
+
+  /** fold every vertex of a hidden group onto that group's centre (a point
+   *  draws nothing), give the rest back — straight into the vertex buffer, as
+   *  the labels have always been written */
+  function rewrite(mesh: pc.Mesh, full: number[], hidden: Uint8Array, per: number, centre: (g: number) => number[]): void {
+    const vb = mesh.vertexBuffer;
+    const el = vb?.format.elements.find((element) => element.name === pc.SEMANTIC_POSITION);
+    if (!vb || !el) return;
+    const data = new Float32Array(vb.lock());
+    const off = el.offset / Float32Array.BYTES_PER_ELEMENT;
+    const stride = el.stride / Float32Array.BYTES_PER_ELEMENT;
+    for (let g = 0; g < hidden.length; g++) {
+      const c = hidden[g] ? centre(g) : null;
+      for (let k = 0; k < per; k++) {
+        const v = g * per + k;
+        const at = v * stride + off;
+        data[at] = c ? c[0] : full[v * 3];
+        data[at + 1] = c ? c[1] : full[v * 3 + 1];
+        data[at + 2] = c ? c[2] : full[v * 3 + 2];
+      }
+    }
+    vb.unlock();
+  }
+
+  /** per frame while the machine is in view: which stars and panels stand on
+   *  the sight-line. The sky drifts, so the answer moves — but the buffers are
+   *  rewritten only when it CHANGES (a star crossing in or out), not per frame. */
+  function applySight(): void {
+    const M = root.getWorldTransform();
+    for (const tier of starTiers) {
+      let changed = false;
+      for (let i = 0; i < tier.centers.length; i++) {
+        let h = 0;
+        if (corridor) {
+          const c = tier.centers[i];
+          M.transformPoint(sw.set(c[0], c[1], c[2]), sw);
+          h = onSight(sw.x, sw.y, sw.z, 0.06) ? 1 : 0;
+        }
+        if (h !== tier.hidden[i]) { tier.hidden[i] = h; changed = true; }
+      }
+      if (changed) rewrite(tier.mesh, tier.full, tier.hidden, 8, (g) => tier.centers[g]);
+    }
+    if (linkMeshRef) {
+      let changed = false;
+      for (let i = 0; i < linkHidden.length; i++) {
+        let h = 0;
+        if (corridor) {
+          const a = i * 6;
+          for (let k = 0; k <= 4 && !h; k++) {   // both ends and three points between
+            const t = k / 4;
+            M.transformPoint(sw.set(
+              linkFull[a] + (linkFull[a + 3] - linkFull[a]) * t,
+              linkFull[a + 1] + (linkFull[a + 4] - linkFull[a + 1]) * t,
+              linkFull[a + 2] + (linkFull[a + 5] - linkFull[a + 2]) * t), sw);
+            if (onSight(sw.x, sw.y, sw.z, 0.04)) h = 1;
+          }
+        }
+        if (h !== linkHidden[i]) { linkHidden[i] = h; changed = true; }
+      }
+      if (changed) rewrite(linkMeshRef, linkFull, linkHidden, 2, (g) => [linkFull[g * 6], linkFull[g * 6 + 1], linkFull[g * 6 + 2]]);
+    }
+    if (panelMesh) {
+      let changed = false;
+      for (let i = 0; i < panelFrames.length; i++) {
+        let h = 0;
+        if (corridor) {
+          // a panel is big: sample it on a 3 × 3 grid; one sitting just past
+          // the glass still hangs across the machine's top, so it counts too
+          const f = panelFrames[i];
+          for (let a = -1; a <= 1 && !h; a++) {
+            for (let b = -1; b <= 1 && !h; b++) {
+              M.transformPoint(sw.set(
+                f.c.x + f.r.x * a * f.hw + f.u.x * b * f.hh,
+                f.c.y + f.r.y * a * f.hw + f.u.y * b * f.hh,
+                f.c.z + f.r.z * a * f.hw + f.u.z * b * f.hh), sw);
+              if (onSight(sw.x, sw.y, sw.z, 0.18, 0.6)) h = 1;
+            }
+          }
+        }
+        if (h !== panelHidden[i]) { panelHidden[i] = h; changed = true; }
+      }
+      if (changed) rewrite(panelMesh, panelFull, panelHidden, 4, (g) => [panelFrames[g].c.x, panelFrames[g].c.y, panelFrames[g].c.z]);
+    }
+  }
 
   /**
    * Rewrites the existing merged label mesh so every quad faces the live
@@ -861,9 +1005,10 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       const centerZ = labelCenters[centerAt + 2];
       let halfWidth = labelWidths[li] / 2;
       if (rootM && corridor) {
-        // S167: a label between the eye and the glass collapses to nothing
+        // S167: a label on the sight-line to the machine collapses to nothing
+        //   (S174: the sight-line, not a box — see SightCorridor)
         rootM.transformPoint(lw.set(centerX, centerY, centerZ), lw);
-        if (Math.abs(lw.x) <= corridor.hx && lw.z <= corridor.zNear && lw.z >= corridor.zFar) halfWidth = 0;
+        if (onSight(lw.x, lw.y, lw.z, labelWidths[li] / 2)) halfWidth = 0;
       }
 
       for (let corner = 0; corner < 4; corner++) {
@@ -947,6 +1092,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       openK = 0;
       fadeLevel = 0;
       corridor = null;
+      applySight();   // S174: every folded star and panel back, for the next Close
       applyFade();
       ceilingMat.opacity = CEIL.opacity;
       ceilingMat.update();
@@ -971,6 +1117,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       yaw += P.driftDegPerSec * dt * driftK; // the slow drift — alive, not surveilled; still while read (R3-112)
       root.setLocalEulerAngles(0, yaw, 0);
       updateBillboards();
+      if (corridor) applySight();
     },
     panelAt(p0, p1): number | null {
       if (!visible || panelFrames.length === 0) return null;
@@ -989,13 +1136,41 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       }
       return null;
     },
+    labelAt(p0, p1): { era: number; text: string } | null {
+      const camera = app.systems.camera?.cameras[0]?.entity;
+      if (!visible || !camera || fadeLevel < 0.5 || labels.length === 0) return null;
+      const M = root.getWorldTransform();
+      const sc = root.getLocalScale().x;
+      const dx = p1.x - p0.x, dy = p1.y - p0.y, dz = p1.z - p0.z;
+      const dd = dx * dx + dy * dy + dz * dz;
+      if (dd < 1e-9) return null;
+      const right = camera.right, up = camera.up;
+      let best = -1, bestT = Infinity;
+      for (let i = 0; i < labels.length; i++) {
+        M.transformPoint(sw.set(labelCenters[i * 3], labelCenters[i * 3 + 1], labelCenters[i * 3 + 2]), sw);
+        if (corridor && onSight(sw.x, sw.y, sw.z, labelWidths[i] / 2)) continue;   // folded away
+        const t = ((sw.x - p0.x) * dx + (sw.y - p0.y) * dy + (sw.z - p0.z) * dz) / dd;
+        if (t <= 0 || t >= bestT) continue;
+        const ox = sw.x - (p0.x + dx * t), oy = sw.y - (p0.y + dy * t), oz = sw.z - (p0.z + dz * t);
+        const h = Math.abs(ox * right.x + oy * right.y + oz * right.z);
+        const v = Math.abs(ox * up.x + oy * up.y + oz * up.z);
+        // the quad's own size, plus a little: a label is small, and a press is a press
+        if (h <= (labelWidths[i] / 2) * sc + 0.03 && v <= (P.labelHeight / 2) * sc + 0.03) { best = i; bestT = t; }
+      }
+      return best >= 0 ? { era: entries[best].era, text: entries[best].text } : null;
+    },
     gazeOnPanel(on: boolean): void { gazeHeld = on; },
     holdDrift(seconds: number): void { holdT = Math.max(holdT, seconds); },
     setClearCorridor(c): void {
-      if ((c === null) === (corridor === null) && (!c || !corridor || (c.hx === corridor.hx && c.zNear === corridor.zNear && c.dim === corridor.dim))) return;
+      const same = (c === null && corridor === null) || (!!c && !!corridor && c.dim === corridor.dim && c.hx === corridor.hx
+        && c.yLo === corridor.yLo && c.yHi === corridor.yHi && c.z === corridor.z
+        && Math.abs(c.eye.x - corridor.eye.x) < 1e-3 && Math.abs(c.eye.y - corridor.eye.y) < 1e-3 && Math.abs(c.eye.z - corridor.eye.z) < 1e-3);
+      if (same) return;
+      const dimChanged = (c?.dim ?? 1) !== (corridor?.dim ?? 1);
       corridor = c;
-      applyFade();
+      if (dimChanged) applyFade();
       updateBillboards();
+      applySight();   // S174: clearing it gives every star and panel back
     }
   };
 }

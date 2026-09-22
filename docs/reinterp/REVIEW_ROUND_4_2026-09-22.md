@@ -16,6 +16,34 @@ one place, so it can become OPEN_ITEMS' next block.
 
 **Legend.** ✔ = built and walked this round · ⚑ = something I would look at twice · ❓ = your call.
 
+
+### ⚑ Since this was written (S172–S174, same day) — check these on your run too
+*The exhibition stills put four defects on the table that no walk had seen, and you marked more on
+them. All built in S174 and walked (see BUILD_LOG S174); the frames in `out/stills/` show them. Tick
+what reads.*
+
+1. `[ ]` **2003's desk** — the CD spindle and the modem gone (both parked, not deleted), the mug a cup,
+   the mouse a mouse, and the flip phone no longer standing inside it. (`e2-01`, `e2-04`)
+2. `[ ]` **2016's desk** — the frame and the radio gone, the pen mug and the mouse real models and no
+   longer on top of each other, the tower a dark PC on the floor instead of a glowing box. (`e3-01`)
+3. `[ ]` **Vera's phone (R4-13)** — it stands on its dock, leaning back, with the screen on its face
+   (it was sunk half into the stand and leaning the wrong way, so it cropped its own screen).
+4. `[ ]` **Room 2 at 2026 and through the Close (R4-16)** — emptied: no lit "Welcome back, Vera", no
+   phone, no tower. (Leaving the Commons switched every room screen back on; it now restores them as
+   they were.)
+5. `[ ]` **The Close's machine (R4-14)** — Daniel's beige CRT on its desk, with its faces, standing a
+   little off-axis so you see its depth.
+6. `[ ]` **Nothing between you and it (R4-15)** — no stars, labels, link lines or panels on the line
+   from your eye to the machine, far or near; the receipt frame holds the whole machine.
+7. `[ ]` **The dossiers open (R4-18)** — press a label or a panel in the sky: the eye goes to the
+   machine and it shows that room's dossier in that room's OS (1997 grey on teal, 2003 on Restorify's
+   blue, 2016's glass, 2026's dark). ⚑ Your eye on one thing: the source texts carry their
+   `[VERIFY SOURCE]` markers verbatim, as the menu always has — the dossier now puts them in front of
+   every visitor at the ending, so they are worth your pass before the exhibition.
+8. `[ ]` **The seven process labels (R4-17)** — drawn in the constellation's cool blue now, and their
+   window is "How this was made", which says they are the project's documents, not sources about the
+   practices. My call on your "keep / set apart / drop" — set apart; reverse it if you disagree.
+
 ---
 
 ## 0 · The front door and the frame

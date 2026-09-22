@@ -1791,3 +1791,34 @@ code: the flight over Room 2 (R4-16 — that room is back in 2016 with its monit
 far machine (R4-14/15 — a hand-built slab, speckled with stars the corridor does not clear). Also
 `--no-close` so the Close's four minutes can be skipped while framing 2026's early beats. 33 stills,
 `out/stills/STILLS.md` naming each and its camera.
+
+## 2026-09-22 — S174 · WHAT THE STILLS EXPOSED, FIXED (R4-13…R4-18) — the first Opus 5.5 session
+He marked the exhibition stills (crosses = take it out, circles = make it a real thing) and asked for
+R4-13…R4-18 before his run. Every mark was identified by projecting the room's props through the still's
+own camera, not by eye. **The desks:** 2003's CD spindle, cup, modem, mouse and a flip phone standing
+*inside* the mouse; 2016's photo frame, radio, a mug standing on the mouse, and the pale PC tower ("the
+magical shiny box"). Four real models from his own `Pc_Simulation/Assests` (CreativeTrio, CC0: Mouse,
+Cup Of Tea, Mug With Office Tool, Computer), re-exported geometry-only in a small GLB stripper so no
+texture ships; the crossed three out; the spindle and flip phone PARKED in r2 (no model on his disk —
+`ASSET_REQUEST_2026-09-22.md`). **R4-13 the phone:** phone.glb's origin is its centre, so `baseY: 0`
+sank it half into the dock, and its +15° tilt leaned it toward the seat against the screen's backward
+lean — measured both leans live; −15, base −0.4547, 2.1 cm toward the seat. **R4-16 Room 2 at 2026:**
+leaving the Commons set every room entity to enabled (re-lighting Vera's sign-in and phone over the
+building for the whole Close) — it now restores what each was; a per-frame line re-lit the resting
+phone in every era — now 2016 only; the r4 fold takes her tower, phone, dock, mug and notepad.
+**R4-14 the machine:** Daniel's CRT all along, but shared-corner boxes averaged every normal and one
+flat emissive washed all faces the same — per-face vertices, baked face shades, `emissiveVertexColor`,
+and 0.4 m off the seat's axis so its depth shows. **R4-15:** the corridor is a sight-line (eye → the
+machine's silhouette from its own mesh): stars, links, labels and panels on it fold away, far and near,
+buffers rewritten only on change; the near view 1.26 → 1.55 m so the receipt frame holds the machine.
+**R4-18:** a press on a label or panel opens that room's dossier ON the machine in that room's OS
+(1997 grey/teal · 2003 Restorify blue · 2016 glass · 2026 dark · the frame's dialog for the process
+seven) — the room's dossier, never a per-label claim (labels carry only a name and an era; the Fenway
+study must not open onto Era 4's practices under its own name). `witness/sources.ts` now holds the
+practice → source table the menu and the machine both read. **R4-17 (my call, reversible):** the process
+labels drawn in the cloud's link blue. Also: the two Codex briefs name Sol 6 / Luna 6; the model change
+recorded (`03_COORDINATION.md` → Model history; ARTICLE_EVIDENCE_LOG); the review document carries a
+since-written block; stills 39 (the night and the machine back; four dossier frames). Walked: 285
+presses, spine done, console clean (the Close's close-go/receipt/back read "inert" — the walker's known
+blind spot for that canvas; 565 close-go → 567 close-receipt proves the arrival).
+**closes R4-13, R4-14, R4-15, R4-16, R4-17, R4-18; opens R4-19 (his `[VERIFY SOURCE]` pass), R4-20 (two assets).**

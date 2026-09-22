@@ -49,6 +49,9 @@ import { mountHelper, type Helper } from '../frame/helper';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { FRAME } from '../desktop/theme/chrome';
+import closeNetwork from '../../data/strings/close_network.json';
+/** S174 / R4-18: panel index → its era, for the Close's dossier window */
+const closeNetworkPanels = (closeNetwork as { panels: { era: number }[] }).panels;
 
 const FLIP_SECONDS = 0.9;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
@@ -2879,9 +2882,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (cp) { closeMonitor.press(cp.x, cp.y); cloud?.holdDrift(3); return; }
       }
       if (cloud?.visible) {
-        const pi = cloud.panelAt(ray.p0, ray.p1);
         cloud.holdDrift(3);
-        if (pi !== null) { gameMenuBus.openCloseSources?.(pi); return; }
+        // ⚑ S174 / R4-18 — a label, then a panel: each opens ITS ROOM's dossier
+        //   on Daniel's machine, in that room's own OS (Sérgio: "each button opens
+        //   a panel in the style of the OS of the time"). Until the machine is lit
+        //   a panel still opens the frame's reading, as it did (S163).
+        const lb = cloud.labelAt(ray.p0, ray.p1);
+        if (lb && closeMonitor?.on) { closeMonitor.openSource(lb.era, lb.text); return; }
+        const pi = cloud.panelAt(ray.p0, ray.p1);
+        if (pi !== null) {
+          const era = (closeNetworkPanels[pi]?.era ?? pi + 1);
+          if (closeMonitor?.on) closeMonitor.openSource(era, null);
+          else gameMenuBus.openCloseSources?.(pi);
+          return;
+        }
       }
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
@@ -3343,8 +3357,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const g = closeMonitor.glass;
         const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + CLOSE_MONITOR.nearDistance)) < 0.25;
         closeMonitor.setNear(near);
-        // S167: while the card is read, nothing of the sky sits between the eye and the glass
-        cloud?.setClearCorridor(near ? { hx: g.w * 0.9, zNear: camPos.z + 0.2, zFar: g.z - 0.3, dim: 0.12 } : null);
+        // S167: while the card is read, nothing of the sky sits between the eye and the glass.
+        // ⚑ S174 / R4-15: and while it is FAR too — the sight-line from the eye to the
+        //   whole machine is kept clear of stars, labels and panels from the moment it
+        //   stands in the sky; only the dimming waits for the card to be read.
+        const sil = closeMonitor.silhouette;
+        cloud?.setClearCorridor({ eye: { x: camPos.x, y: camPos.y, z: camPos.z },
+          x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: near ? 0.12 : 1 });
       }
       if (cloud?.visible && !camMove) {
         const cp = camera.getPosition(), cf = camera.forward;
@@ -3624,7 +3643,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   never in two places at once. `performSeatCut` already did this for the
     //   seat path; the press path needs the same guard, and doing it here covers
     //   both without either having to know about the other.
-    if (era3Devices) {
+    // ⚑ S174 / R4-16: in 2016 only — the one era the phone is lifted. Unguarded,
+    //   this re-lit the resting handset every frame in every era, so no fold
+    //   could ever take Vera's phone out of Room 2 (it stood on its dock at 2026
+    //   and through the Close).
+    if (era3Devices && cluster?.era === 'e3') {
       const restPhone = room?.props.get('w_phoneDevice');
       if (restPhone) restPhone.entity.enabled = !era3Devices.phoneInHand;
     }
@@ -3847,11 +3870,21 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     'era3-device-laptop', 'era3-device-monitor'
   ];   // ⚑ not 'movement-nodes': the hall has its own markers (nodes.json `commons`)
   let roomClearColor: pc.Color | null = null;
+  /** ⚑ S174 / R4-16 — what each room entity WAS when the hall came on. The
+   *  comment above always promised "exactly as they were"; the code set every
+   *  one to `true` on the way back, which re-lit Room 2's two screens (Vera's
+   *  "Welcome back" sign-in and her phone) that 2026's `setEra` had switched
+   *  off — and they then hung lit over the building through the whole Close.
+   *  Sérgio saw it in the exhibition stills. */
+  const roomEntitiesWere = new Map<string, boolean>();
   onCommonsRoom((hidden) => {
     for (const id of ROOM_ENTITIES) {
       const e = app.root.findByName(id);
-      if (e instanceof pc.Entity) e.enabled = !hidden;
+      if (!(e instanceof pc.Entity)) continue;
+      if (hidden) { roomEntitiesWere.set(id, e.enabled); e.enabled = false; }
+      else e.enabled = roomEntitiesWere.get(id) ?? true;
     }
+    if (!hidden) roomEntitiesWere.clear();
     // ⚑ the hall's markers on, the rooms' off — and leaving the world puts her
     //   back in Maya's seat, wherever in the hall she had blinked to
     movementNodes?.setCommons(hidden);
@@ -3950,7 +3983,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const CLOSE_SKY_PITCH = 10;
   const CLOSE_MONITOR_PITCH = -6;
   const CLOSE_MONITOR_TILT_SECONDS = 8;
-  /** C-02: the eye comes to the machine — 1.74 m in 8 s peaks at 0.41 m/s, under 0.43 */
+  /** C-02: the eye comes to the machine — S174: 1.45 m now (near 1.55), 8 s peaks at 0.34 m/s, under 0.43 */
   const CLOSE_GO_SECONDS = 8;
   let skyLerp: { from: pc.Color; to: pc.Color; t: number; seconds: number } | null = null;
 

@@ -16,6 +16,17 @@ the DISPATCH BOARD for what to run next.*
 | **ChatGPT Deep Research** | Historian/sourcer — **creative/documentary content questions ONLY** (Round 15: no process/logistics/meta research — ever); one focused question per prompt | a single-focus `CHATGPT_DEEPRESEARCH_*.md` prompt doc | multi-part bundles · process/ethics-logistics topics |
 | **Sérgio** | Author of record — voice passes, ethics judgment, playtests, greenlights, assets; runs each lane in its own chat window | the ROUND REPORT + the paste list | (everything is ultimately his) |
 
+### ⚑ Model history — which model ran which lane, and when (dated; the article cites this)
+| date | change | where it shows |
+|---|---|---|
+| 2026-07-02 | Fable 5 coordinator/designer; Opus 4.8 hard code; Sonnet 5 volume; Codex 5.5 prototypes | this table, Round 10/15 |
+| 2026-07-22 → 24 | **Opus 4.8 → Opus 5** (Session 43 is still 4.8; Session 44 on the 24th is Opus 5) | `01_SESSION_LOG.md` |
+| **2026-09-22** | **The Claude build lane moves to Opus 5.5.** Sérgio's note, same day: *"we changed models for Opus 5.5 on September 22."* S171–S173 (the run-through, the stills) were Opus 5; the repair session after them (S174, R4-13…R4-18) is the first Opus 5.5 session | `BUILD_LOG.md` S174 |
+| 2026-09-22 (planned) | **The GPT side moves to its 6-series: Sol 6 and Luna 6.** Sérgio: *"We'll do that for GPT as well for Sol and Luna 6."* The two Codex briefs of 2026-09-22 name them: the visual pass → Sol 6, the playtest → Luna 6, both at `xhigh` | `CODEX_BRIEF_VISUAL_PASS_2026-09-22.md`, `CODEX_BRIEF_PLAYTEST_2026-09-22.md` |
+
+*The table above still reads Opus 4.8 / Codex 5.5 — it is the Round-15 role split, kept as it was
+written; the roles did not change, only the models under them.*
+
 **How sessions actually run (added Round 14 — see `05_HOW_TO_RUN_A_SESSION.md` for the full plain-language
 version):** there is no automatic model-to-model calling in this system. Each lane above is a SEPARATE chat
 window Sérgio opens himself, with the model set to whatever the dispatch board names, in the right folder

@@ -41,7 +41,7 @@
     { "id": "towerFloppySlot", "pos": [0.55, 1.06, -0.062], "size": [0.12, 0.02, 0.012], "color": "#404040" },
 
     { "id": "keyboard", "pos": [0, 0.752, 0.16], "size": [0.42, 0.025, 0.14], "color": "#C9BFA6" },
-    { "id": "mouse", "pos": [0.3, 0.75, 0.18], "size": [0.06, 0.02, 0.09], "color": "#C9BFA6" },
+    { "id": "mouse", "model": "mouse", "pos": [0.3, 0.74, 0.14], "size": [0.06, 0.02, 0.09], "color": "#C9BFA6", "_docS174": "⚑ S174 — Sérgio's arrow on the 2003 still: the mouse was a box and a flip phone stood inside it on the desk's front edge. Now 'Mouse' (CreativeTrio, CC0); a model's pos y is its BASE (0.74 = the desk top), 4 cm back from the edge." },
     { "id": "modem", "pos": [0.62, 0.77, 0.05], "size": [0.14, 0.05, 0.2], "color": "#D4D0C8" },
     { "id": "modemLed", "pos": [0.62, 0.77, 0.152], "size": [0.02, 0.012, 0.006], "color": "#008000", "emissive": true },
 
