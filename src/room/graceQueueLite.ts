@@ -1855,7 +1855,9 @@ export class GraceQueueLite {
     if (r.id === 'consent-wake') { this.toggleWakeWord(); return; }
     if (r.id === 'consent-allow') { this.decideConsent(true); return; }
     if (r.id === 'consent-decline') { this.decideConsent(false); return; }
-    if (r.id === 'board-back') { this.storyDone = false; this.backToBoard(); return; }
+    // R4-04 (S171): Back FROM THE RECORD returns to the job she had open — a finished story
+    // keeps its "done" row; only Back to today from the story itself clears it
+    if (r.id === 'board-back') { if (!this.chipReturn) this.storyDone = false; this.backToBoard(); return; }
     if (r.id === 'next-story') { this.nextSubmission(); this.bump(); return; }
     if (r.id === 'record-chip') { this.openRecordFromChip(); return; }
     if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }

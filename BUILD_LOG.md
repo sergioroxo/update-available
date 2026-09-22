@@ -1702,3 +1702,21 @@ the beat; the guide has one line. Verified by hand: the six-step list, the card 
 today → declined → Connect, Sign → signed → Connect. Walked: 284 presses, spine done — the walker
 took the card and signed. **closes I-03 (1997);
 the other three eras' forms are noted as already built.**
+
+## 2026-09-22 — S171 · THE RUN-THROUGH: REVIEW ROUND 4'S LIST, AND THE TOURS BROUGHT UP TO DATE
+His ask: a run through the whole experience on the new build, a check of the storytelling flow,
+and a review list for him to complete. **`docs/reinterp/REVIEW_ROUND_4_2026-09-22.md`** — the flow
+as it plays now, era by era, each beat with a frame and a checkbox; my notes on what reads and what
+I would flag; his questions; and the flags in one table (R4-01…R4-12) for OPEN_ITEMS' next block.
+The frames come from the tours, which were STALE against the piece and are current again:
+`tour.mjs` — the door (full page), the menu and the Leave page, the pledge step, 2003's boot by
+stage (post · crawl · installing · the cartoon's four beats) from the arrival (`e2Silence`, since
+the review jump lands settled), the Messenger by its icon (the notice card went in S150), the
+video and the network failing, the dark after the residue, 2016's flow of record (one story, the
+phone via Messages, the vote's link); `tour-e4.mjs` — the screensaver, FloppySheep, the results,
+the site, the turns, the threads, the flicker before the world, the greeting, the Close's sweep,
+morph, landing, far card, the press to come to it, the receipt (presses polled, not timed). Found
+on the way: **R4-04** — Back from the record cleared a finished story's "done" row (fixed: the
+row survives the record's Back; only Back to today clears it). Images at 800 px in
+`review-2026-09-22/img/` (local; ignored by git). Walked: 292 presses, spine done (`WALK_2026-09-22.md`).
+**closes R4-04; opens R4-01…R4-12 for his sit-through.**

@@ -11,3 +11,6 @@ out/
 .audition/
 # freesound originals — large, re-downloadable, never committed
 .originals/
+
+# review frames are local (tours re-photograph them); the review MDs are committed
+docs/reinterp/review-*/img/

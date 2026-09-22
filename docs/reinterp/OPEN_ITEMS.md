@@ -167,7 +167,25 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 - R3-110 the Close score — his to hear on the sit-through ("should probably still have the song from TransJesus? dunno").
   (R3-01, R3-12, R3-07, L-07, L-08 answered 2026-09-21 and built S167/S168; W-L1 S153; R3-109 S163; R3-61 S164.)
 
+## Round 4 — his sit-through of the new build (2026-09-22)
+*From `REVIEW_ROUND_4_2026-09-22.md` §5 — my flags; his notes come on top when he has played it.*
+| id | item | status |
+|---|---|---|
+| R4-01 | The door's Leave (inert page) vs the piece's Leave (the encyclopedia page) | ❓ his |
+| R4-02 | The ring "in the post" — a payoff in 2003, or dangling | ❓ his |
+| R4-03 | The 1997 update notice lands over the open channel — close/minimise the windows first | PROPOSED |
+| R4-04 | ~~Back from the record cleared a finished story's done row~~ | DONE — S171 |
+| R4-05 | The tour cannot photograph 2016's ending | tool · optional |
+| R4-06 | The chime and pop over the jingle's tail | ❓ his ear |
+| R4-07 | The black after the residue (~6 s) | ❓ his ear |
+| R4-08 | The chips both lead on with no on-screen acknowledgement — one line from L? | ❓ his |
+| R4-09 | The receipt's practice list in a real playthrough | CHECK on his sit-through |
+| R4-10 | The sky at 12 % while the card is read | ❓ his eye |
+| R4-11 | The Close score (= R3-110) | ❓ his ear |
+| R4-12 | The Leave page's article rhymes with the piece | ❓ his |
+
 ## Closed
+- S171 (2026-09-22): R4-04; the tours brought up to date; the review list written; walked, 292 presses, spine done.
 - S170 (2026-09-21): I-03 — the pledge card; walked, 284 presses, spine done.
 - S169 (2026-09-21): R3-09, W-K1 — the icons drawn, the wheel zooms; walked, 292 presses, spine done.
 - S168 (2026-09-21): W-F1, R3-12, R3-07 (the duck; the books stay by his call), R3-92 — his answers 5–8; walked with S167, 291 presses, spine done.

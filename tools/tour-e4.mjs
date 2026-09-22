@@ -89,6 +89,17 @@ async function main() {
     if (!ok) log.push(`  ⚠ ${id} not pressable here`);
     return ok;
   };
+  /** S171: press once the rect appears (the agent says "One moment." before it offers Begin) */
+  const pressWhen = async (id, ms = 15000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      const there = await page.evaluate((id) => !!(window.__os.e4.browser.hits || []).find((r) => r.id === id), id);
+      if (there) return press(id);
+      await wait(300);
+    }
+    log.push(`  ⚠ ${id} never appeared (${ms} ms)`); console.log(`  ⚠ ${id} never appeared`);
+    return false;
+  };
   const cam = async (x, y, z, pitch, yaw) => {
     await page.evaluate((a) => window.__camFree(a[0], a[1], a[2], a[3], a[4]), [x, y, z, pitch, yaw]);
     await wait(700);
@@ -98,49 +109,65 @@ async function main() {
 
   // ── 1 · the boot ── (a fresh shell, so the boot is photographed: the settled
   //   jump's own boot has run by the time the tour is ready)
+  // ⚑ S171: the way in is S160's — the screensaver, the restore, the results, the site, the agent;
+  //   a turn (L's question, two chips) before every step
   await cam(...SEAT);
-  await page.evaluate(() => { window.__os.debugJump('e4Standby'); window.__os.e4.beginSession(0.3); });
-  await wait(1100);
-  await shot('boot-L', 'the session booting');
-  await wait(2400);
-  await shot('boot-restoring', 'restoring the session');
-  await wait(3500);
+  const untilPhase = (ph, ms = 20000) => page.waitForFunction((p) => window.__os.e4.browser.phase === p, { timeout: ms }, ph).then(() => true).catch(() => false);
+  const untilMode = (m, ms = 20000) => page.waitForFunction((p) => window.__os.e4.browser.programMode === p, { timeout: ms }, m).then(() => true).catch(() => false);
+  await untilPhase('saver', 15000); await wait(1500);
+  await shot('saver', 'the screensaver: the mark drifting on the dark — one press to restore (R3-87)');
+  await pressWhen('saver-wake'); await wait(1500);
+  await shot('boot-restoring', 'restoring the session — six tabs, five of them hers (the laptop says what it is doing)');
+  await untilPhase('open', 30000); await wait(1200);
   await shot('browser-open', 'the browser as she arrives at it');
   await cam(...CLOSE);
-  await shot('look-browser-open', 'closer: the six tabs, the search half-typed');
+  await shot('look-browser-open', 'closer: the six tabs, the search half-typed, the ☆ FloppySheep bookmark');
+  await press('bm-floppy'); await wait(800);
+  await shot('look-floppysheep', 'FloppySheep, the computer version — one press away (R3-92)');
+  await press('game-back'); await wait(500);
 
-  // ── 2 · the search, taken over ──
-  await press('search-open');
-  await wait(1500);
+  // ── 2 · the search, taken over → the results → the site → the agent ──
+  await pressWhen('search-open'); await wait(1500);
   await shot('look-search-typing', 'the sentence being finished for her');
-  await wait(6000);
-  await shot('look-agent', 'Second Thoughts');
-  await press('agent-begin');
-  await wait(1200);
-  await shot('look-steps', 'the five steps');
+  await untilMode('results', 20000); await wait(800);
+  await shot('look-results', 'the results page: her recent searches, the query, four results — the first the only press (R3-89)');
+  await pressWhen('result-agent'); await wait(1200);
+  await shot('look-site', 'the Second Thoughts site (R3-90)');
+  await pressWhen('site-start'); await wait(1500);
+  await shot('look-agent', 'the agent');
+  await pressWhen('agent-begin'); await wait(1500);
+  await shot('look-turn-1', 'THE TURN (R3-93): L asks, two chips — before any step of its own');
+  await pressWhen('turn-0'); await wait(800);
+  await shot('look-steps', 'answered: the step\'s own press appears — intake, required before care (R3-94)');
 
   // ── 3 · the steps ──
-  await press('step-record'); await wait(1200);
+  await pressWhen('step-record'); await wait(1200);
   await shot('look-record-done', 'the record, confirmed — and Continue (S150: no step advances on a clock)');
-  await press('step-next'); await wait(1500);
+  await pressWhen('step-next'); await wait(1500);
+  await pressWhen('turn-1'); await wait(600);
   await shot('look-photos', 'the Restoration tool');
-  await press('step-photos'); await wait(1000);
+  await pressWhen('step-photos'); await wait(1000);
   await shot('look-photos-picker', 'the file window (a picture of one)');
-  await press('file-0'); await wait(900);
+  await pressWhen('file-0'); await wait(900);
   await shot('look-photos-folder', "inside Pride '24");
-  await press('file-1'); await wait(1500);
+  await pressWhen('file-1'); await wait(1500);
   await shot('look-photos-restoring', 'restoring…');
   await wait(2600);
   await shot('look-photos-result', 'before / after — it stays until Continue');
-  await press('step-next'); await wait(1500);
+  await pressWhen('step-next'); await wait(1500);
+  await pressWhen('turn-0'); await wait(600);
   await shot('look-care', 'care');
-  await press('step-care'); await wait(2500);
-  await press('step-next'); await wait(1500);
+  await pressWhen('step-care'); await wait(2500);
+  await pressWhen('step-next'); await wait(1500);
+  await shot('look-chat-turn', 'turn 4: "L needs access to your messages" (R3-101)');
+  await pressWhen('turn-0'); await wait(800);
+  await shot('look-chat-threads', 'her threads — Junie · Mum · Flat 3B; only the one L means is a press');
+  await pressWhen('thread-junie'); await wait(800);
   await shot('look-chat', 'the chat');
-  await press('step-chat'); await wait(2500);
-  await press('step-next'); await wait(1500);
-  await shot('look-search-step', 'the last step');
-  await press('step-search'); await wait(3000);
+  await pressWhen('step-chat'); await wait(2500);
+  await pressWhen('step-next'); await wait(1500);
+  await shot('look-search-step', 'the last turn: the session, now?');
+  await pressWhen('turn-0'); await wait(1500);
   await cam(...SEAT);
   await shot('program-done', 'the headset asked for — the desk after the steps');
 
@@ -166,14 +193,19 @@ async function main() {
     return true;
   });
   console.log(`  press commons-join → ${joined}`);
-  await wait(2000);
-  await shot('struggle-1', 'the filter fighting the room: the link blocked');
+  await wait(1200);
+  await shot('struggle-0', 'S161: the glass flickers over HER OWN ROOM first — the hall has not cut in yet');
+  await wait(3000);
+  await shot('struggle-1', 'the filter fighting the room: the link blocked; the hall, in flashes');
   await wait(5000);
   await shot('struggle-2', 'the sender blocked, the room flashing through');
   await wait(5000);
   await shot('struggle-3', 'social contagion · high — the room mostly through');
-  await wait(6000);
-  await shot('world-arrival', 'the Commons: the seat, facing the stage');
+  await page.waitForFunction(() => window.__os.e4.ball.phaseId === 'ball', { timeout: 40000 }).catch(() => {});
+  await wait(3500);
+  await shot('world-greeting', 'S161: the two beside her step in — "Hi, Maya." — before the MC');
+  await wait(5500);
+  await shot('world-arrival', 'the Commons: the seat, facing the stage; the MC has the floor');
   await cam(4.4, 1.16, 0.7, 0, 300);
   await shot('look-world-left', 'the hall to her left');
   await cam(4.4, 1.16, 0.7, 0, 240);
@@ -223,20 +255,32 @@ async function main() {
   await shot('screens-glitching', 'the conducted look: both screens tearing');
   await wait(3000);
   await shot('screens-off', 'both screens off — the travel begins');
-  await wait(8000);
-  await shot('close-travel', 'travelling back to Daniel\'s room');
-  await wait(16000);
-  await shot('close-lookup', 'the eyes rising');
-  await wait(18000);
-  await shot('close-hold', 'night falls on the stars');
+  // S163: one 44 s sweep, turning LEFT to face the building; night and the constellation 14 s before landing
   await wait(14000);
-  await shot('close-open', 'the sky opening');
-  await wait(12000);
-  await shot('close-panels', 'the panels');
-  await wait(24000);
-  await shot('close-monitor', 'Daniel\'s monitor');
-  await wait(9000);
-  await shot('close-restart', 'the Restart card, in frame');
+  await shot('close-sweep-1', 'the sweep: rising over the partition, turning left');
+  await wait(14000);
+  await shot('close-sweep-2', 'facing west: Rooms 1 and 2 ahead');
+  await wait(10000);
+  await shot('close-morph', 'night falls and the constellation opens while she is still coming down (C-01)');
+  await wait(8000);
+  await shot('close-landed', 'landed at Daniel\'s seat, facing west; the dark machine already there (R3-109)');
+  await wait(20000);
+  await shot('close-lookup', 'the eyes on the stars, the head come round');
+  await wait(14000);
+  await shot('close-open', 'the gaze coming down into the sky');
+  await wait(16000);
+  await shot('close-panels', 'the panels; the drift stills while one is read (R3-112)');
+  await wait(22000);
+  await shot('close-monitor-far', 'Daniel\'s machine, three metres back: the far face — "Press the screen to come to it." (C-02)');
+  const go = await page.evaluate(() => { const cm = window.__closeMonitor; const h = (cm.hits || []).find((r) => r.id === 'close-go'); return !!h; });
+  if (go) {
+    await page.evaluate(() => { const cm = window.__closeMonitor; const h = cm.hits.find((r) => r.id === 'close-go'); cm.press(h.x + h.w / 2, h.y + h.h / 2); });
+    await wait(9500);
+    await shot('close-restart', 'the Restart card, come to — the rooms, Receipt, Start again, The dossier');
+    await page.evaluate(() => { const cm = window.__closeMonitor; const h = cm.hits.find((r) => r.id === 'close-receipt'); if (h) cm.press(h.x + h.w / 2, h.y + h.h / 2); });
+    await wait(800);
+    await shot('close-receipt', 'the receipt: every update stacked, each FAILED; the file; kept by nobody (L-07)');
+  } else log.push('  ⚠ close-go not published — the card was not far');
 
   fs.writeFileSync(path.join(OUT, 'TOUR.md'), `# Era 4 tour · ${new Date().toISOString()}\n\n${log.join('\n')}\n\n## page errors\n${errors.join('\n') || 'none'}\n`);
   console.log(`\nwrote ${path.relative(process.cwd(), OUT)}/ — ${n} frames, ${errors.length} page error(s)`);

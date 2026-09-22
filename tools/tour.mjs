@@ -85,10 +85,12 @@ async function main() {
   await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: 'networkidle2', timeout: 60000 });
   await page.waitForFunction(() => [...document.querySelectorAll('button')]
     .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
+  // S171: the front door itself is a frame — the three cards, the logo, the version
+  if (ERA === 1) { await page.screenshot({ path: path.join(OUT, '00-door.png'), fullPage: true }); console.log('00-door.png  the front door'); }
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Log in')); if (b) b.click(); });
   await page.waitForFunction(() => window.__os && window.__camFree && window.__poses, { timeout: 40000 });
   // the frame's chrome is hidden for the fiction's frames and shown for the frame's own
-  const hideChrome = await page.addStyleTag({ content: 'body > *:not(canvas):not(#reinterp-game-menu):not(#reinterp-helper) { display: none !important; } #reinterp-menu-glyph { display: none !important; }' });
+  const hideChrome = await page.addStyleTag({ content: 'body > *:not(canvas):not(#reinterp-game-menu):not(#reinterp-helper):not(#reinterp-leave-page) { display: none !important; } #reinterp-menu-glyph { display: none !important; }' });
   void hideChrome;
 
   let n = 0;
@@ -231,6 +233,13 @@ async function main() {
     await pressWhen('r-continue'); await wait(2500); await shot('look-recap', 'the recap — the profile read back');
     await pressWhen('r-enter'); await wait(2000);
     await shot('look-desktop', 'the 1997 desktop: A:, the guide\'s first line in the status well');
+    // S168: the Leave page — the in-between, from the menu; then back
+    await page.evaluate(() => document.getElementById('reinterp-menu-glyph').click()); await wait(400);
+    await shot('frame-menu', 'the menu (S162: the 1997 chrome)');
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#reinterp-game-menu button')].find((x) => x.textContent === 'Leave'); if (b) b.click(); }); await wait(500);
+    await page.screenshot({ path: path.join(OUT, `${String(++n).padStart(2, '0')}-frame-leave-page.png`), fullPage: true }); log.push('frame-leave-page  the Leave page: an encyclopedia lookalike, three ways back');
+    await page.evaluate(() => { const a = document.querySelector('#reinterp-leave-page a'); if (a) a.click(); }); await wait(300);
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#reinterp-game-menu button')].find((x) => x.textContent === 'Resume'); if (b) b.click(); }); await wait(600);
     // S151 — UN-WALK is a wizard whose First Steps page is the era's programme (R3-15/16/19)
     await pressWhen('icon-a'); await wait(3500); await shot('look-kit', 'UN-WALK: the wizard\'s welcome — picture panel, title, Back / Next / Cancel');
     await pressWhen('next'); await wait(600); await shot('look-kit-steps', 'the First Steps: five presses, in order; the first live');
@@ -238,8 +247,10 @@ async function main() {
     await pressWhen('next'); await pressWhen('done'); await wait(600); await shot('look-kit-steps-1', 'read ticked; pray live; the well names the tape');
     await pressWhen('step:pray'); await wait(600); await shot('look-kit-pray', 'step 2, pray: the tape, from here or the shelf');
     await pressWhen('play'); await wait(32000); await shot('look-kit-pray-words', 'the words as they are sung (R3-21/22), the current one lit');
-    await pressWhen('amen', 170000); await wait(600); await shot('look-kit-steps-2', 'two done; connect live');
-    await pressWhen('step:connect'); await wait(500); await shot('look-kit-connect', 'step 3, connect');
+    await pressWhen('amen', 170000); await wait(600); await shot('look-kit-steps-2', 'two done; the pledge live (S170)');
+    await pressWhen('step:pledge'); await wait(500); await shot('look-kit-pledge', 'step 3, the pledge card — in his name; Sign, or Not today');
+    await pressWhen('sign'); await wait(500); await shot('look-kit-steps-3', 'three done; connect live');
+    await pressWhen('step:connect'); await wait(500); await shot('look-kit-connect', 'step 4, connect');
     await pressWhen('connect'); await wait(800); await shot('look-setup', 'the Internet Setup Wizard, on the black screen (R3-24)');
     await pressWhen('setup-next'); await wait(600); await shot('look-setup-number', 'Make New Connection: the number the disk filled in');
     await pressWhen('setup-next'); await wait(3200); await shot('look-setup-dialing', 'dialing — the modem, the lines, the sound');
@@ -295,12 +306,26 @@ async function main() {
 
   if (ERA === 2) {
     await wait(4000);
+    // S171: the review jump lands SETTLED; the arrival (the silence, the boot, the cartoon, Lamby's
+    //   debut and his conduction of the message) plays only from the linear entry — so take it
+    await page.evaluate(() => window.__os.debugJump('e2Silence')); await wait(1500);
     await atSeat('r1'); await shot('room', 'Room 1 in 2003 — the machine waiting dark (the silence)');
     // THE RETURN PRESS: any press on the dark glass advances the silence; then the splash
     // (not skippable, ~half a minute) and the OS boot, on their own clocks
-    await page.evaluate(() => window.__os.handleClick(200, 150)); await wait(6000);
-    await lookClose('r1'); await shot('look-splash', 'the 2003 splash — it holds you');
-    await wait(20000); await shot('look-boot', 'the OS boot');
+    await page.evaluate(() => window.__os.handleClick(200, 150));
+    const stage = (name, ms) => page.waitForFunction((st) => window.__os.e2Stage === st, { timeout: ms }, name).then(() => true).catch(() => false);
+    await lookClose('r1');
+    if (await stage('post', 8000)) { await wait(800); await shot('look-boot-post', 'black: the POST beep and the drive (S156) — the machine boots in silence now'); }
+    if (await stage('osBoot', 15000)) { await wait(5000); await shot('look-boot-crawl', 'the crawl, silent: RESTORIFY IS NOW PART OF THIS COMPUTER'); }
+    if (await stage('lambyBoot', 30000)) { await wait(1500); await shot('look-boot-installing', 'finishing installation…'); }
+    // S166: THE SOFTWARE BOOTS — Lamby's cartoon over the jingle, on the phrases
+    if (await stage('lambyCartoon', 15000)) {
+      await wait(1500); await shot('look-cartoon-asleep', 'the cartoon: Lamby asleep, zzz (the jingle begins here)');
+      await wait(5500); await shot('look-cartoon-cloud', 'the thought-cloud, filling with static');
+      await wait(4000); await shot('look-cartoon-light', 'the monitor switches on; the beam');
+      await wait(7000); await shot('look-cartoon-awake', 'he stands; the screen writes RESTORIFY · PURITY STREAK');
+      await wait(4500); await shot('look-cartoon-point', 'he points at it');
+    }
     // the assistant's greeting is the arrival's own beat (S2R.1) and does not play from the
     // review jump — the walk covers it; here it is taken if it comes
     if (await pressWhen('lamby-hello', 15000)) { await wait(1500); await shot('look-lamby-hello', 'the assistant introduces itself'); }
@@ -308,14 +333,21 @@ async function main() {
     else await shot('look-desktop', 'the 2003 desktop: Restorify, Session, Care Log, Family Form — and the Route sheet, a summons');
     await pressWhen('icon-restorify', 20000); await wait(1200); await shot('look-checkin', 'the daily check-in');
     await pressWhen('checkin:steady', 10000); await pressWhen('checkin-continue', 10000); await wait(1000); await shot('look-checkin-done', 'answered');
-    await pressWhen('message-open', 90000); await wait(2500); await shot('look-message', 'a message from outside — opened');
+    // S150: the notice card is gone — Lamby's one line and the Messenger's unread dot are the door
+    await wait(4000); await shot('look-message-toast', 'after the check-in: Lamby names the message once; the Messenger icon with its dot');
+    await pressWhen('icon-messenger', 90000); await wait(2500); await shot('look-message', 'the Messenger, 2003: the thread opens');
     for (const chip of ['chip:its-me', 'chip:every-word', 'chip:saturday', 'chip:want-you-too']) {
       if (await pressWhen(chip, 60000)) { await wait(2500); await shot(`look-${chip.replace(':', '-')}`, `the thread: ${chip.slice(5)}`); }
     }
     await pressWhen('alert-dismiss', 90000); await wait(1200); await shot('look-alert', 'the accountability alert');
-    await pressWhen('mail-open', 60000); await wait(2000); await shot('look-mail', 'the mail');
+    await pressWhen('alert-ok', 30000); await wait(1500);
+    await pressWhen('netvision-watch', 30000); await wait(9000); await shot('look-netvision', 'the video: the showpiece, and the crack in it');
+    await pressWhen('skip', 60000); await wait(1500);
+    await wait(6000); await shot('look-network-failing', 'S157: the network seen failing before the mail');
+    await pressWhen('mail-open', 90000); await wait(2000); await shot('look-mail', 'the mail');
     await pressWhen('mail-continue', 60000); await wait(2500); await shot('look-restored', 'restored');
     await pressWhen('residue', 120000); await wait(2500); await shot('look-residue', 'what is left');
+    await wait(7000); await shot('look-residue-dark', 'S164: the monitor stays black after the residue — the notice will rise out of it');
     await mapShot('map-e2', 'THE MAP at the end of 2003');
     await atSeat('r1'); await shot('seat-after', 'the seat frame after');
     await update('e2');
@@ -328,16 +360,25 @@ async function main() {
     await lookClose('r2');
     await pressWhen('signin', 60000); await wait(1500); await shot('look-signin', 'signed in');
     await pressWhen('consent-allow', 30000); await wait(1500); await shot('look-board', 'the board — and the record chip in the taskbar');
+    if (await pressWhen('unlock', 10000)) { await wait(800); await shot('look-phone-home', 'the phone\'s home before any job: the platform\'s tile, Messages, FloppySheep, the stream (R3-78)'); }
     await pressWhen('task-0', 10000); await wait(1200); await shot('look-task', 'a job open');
     await pressAll('apply', 4, 900); await shot('look-applied', 'four corrections applied — the chip counting');
     await pressWhen('record-chip', 10000); await wait(1200); await shot('look-record', 'Your record, from the chip: today\'s rows, then the imported history');
     await pressWhen('board-back', 10000); await wait(800); await shot('look-back-to-job', 'Back — to the job she had open');
     await mapShot('map-e3', 'THE MAP at 2016: two eras done, 2016 in progress');
     await mapShot('map-e3-file', "2016's file opened", '2016');
-    await pressAll('apply', 12, 700); await pressWhen('board-back', 10000); await wait(1000); await shot('look-board-after', 'the board, one tile greyed');
-    const phone = (await ids()).filter((s) => s.startsWith('ws.phone'));
-    if (phone.length) { await atSeat('r2'); await shot('seat-phone', `the phone has ${phone.length} control(s): ${phone.slice(0, 4).join(' ')}`); }
-    for (const t of ['task-1', 'task-2']) { if (await pressWhen(t, 5000)) { await wait(1200); await shot(`look-${t}`, `job ${t}`); await pressWhen('board-back', 5000); } }
+    // S158's flow of record: ONE job to its end → the phone (Messages, the group's link) → the vote → the cascade
+    await pressAll('apply', 12, 2000); await wait(1500); await shot('look-story-done', 'the story done: it holds — Back to today / Next story (R3-74)');
+    if (await pressWhen('next-story', 20000)) { await wait(1500); await shot('look-next-story', 'the next story (Marisol\'s figure is one of the four)'); await pressAll('apply', 12, 2000); }
+    await atSeat('r2'); await wait(2000); await shot('seat-phone', 'the seat: the phone on its dock — lit once one job is done (R3-82)');
+    await lookClose('r2');
+    // the phone was unlocked earlier (its home shot): the way in is Messages → the group's thread
+    if (await pressWhen('inbox', 90000)) { await wait(800); await shot('look-phone-inbox', 'Messages: the group\'s thread first, unread'); }
+    if (await pressWhen('group', 20000)) { await wait(1500); await shot('look-phone-messages', 'the group\'s thread'); }
+    if (await pressWhen('link', 60000)) { await wait(2500); await shot('look-link', 'the link — the vote'); }
+    if (await pressWhen('link2', 20000)) { await wait(1500); await shot('look-link2', 'the second link'); }
+    await pressWhen('dismiss', 5000);
+    await pressWhen('task-restore', 8000); await pressWhen('board-back', 8000);
     await atSeat('r2');
     await update('e3');
   }
