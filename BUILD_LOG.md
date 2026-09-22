@@ -1737,3 +1737,23 @@ through no fault of the build — another tool dropped a whole repo copy at `doc
 and its 26 headerless .md files tripped the doc-status ratchet; the two doc walkers now skip hidden
 directories (`tools/check-spec.mjs`, `tools/doc-status-report.mjs`). Green again: headerless 0/0.
 **Nothing buildable: R4-01…R4-12 still wait on his sit-through.**
+
+## 2026-09-22 — S173 · THE PIECE PHOTOGRAPHED AS PICTURES (`tools/stills.mjs`)
+He asked, before giving his review back: *"do we have any screenshots for the exhibition?"* — for
+**After Virtual Reality** (CDN, 14–22 Oct). We did not. Everything we had was shot to prove something:
+the tours frame a beat at 1280 × 860 with the camera against the glass, and `out/figures/`'s three
+JPGs are from 30 July, ninety sessions stale, with half the constellation's labels mirrored (that bug
+is long fixed). So: a stills instrument. Same driving as the tours, two differences — **resolution**
+(the viewport stays 1280 × 720 so the FOV is a player's, and `deviceScaleFactor: 2` doubles the
+backing store, which is exactly `maxPixelRatio`'s own `min(2, dpr)` cap: 2560 × 1440, nothing
+upscaled) and **framing** (`seat` restores the authored pose from `__poses`, `free` poses the
+reviewer's eye, `turn` presses the arrow keys because the filing wall only draws while the look is
+really turned). His call on the set: web/listing + slides, and both eyes as one set. **24 stills** in
+`out/stills/` with `STILLS.md` naming each and its camera. Three things the tool had to learn, each
+costing a run: a pose set under a driven camera is erased (the descent and every leg write camPos
+every frame — `settled()` now waits), the overlooks are the LIFT's poses and `look-R2` points at a
+window (the room shots are era 1's overlook offset re-expressed per room), and the far machine
+publishes `close-go` only once the landing settles (polled, not timed). **No free-camera shot of the
+Close:** the era panels sit at their own bearing and do not billboard, so from anywhere but the seat
+some read backwards — the same trap that spoiled July's fig3, found again and this time written down.
+`out/` is git-ignored: the pictures are local, the instrument is committed.
