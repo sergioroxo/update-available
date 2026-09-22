@@ -1775,3 +1775,19 @@ the monitor lit** — "Welcome back, Vera" — which the r4 emptying was suppose
 **R4-17/18**, his: the 7 process labels in the constellation, and his ask that each source OPEN into a
 dossier panel drawn in its own era's OS chrome. **Nothing built: they need a walk, and his review is
 still open.**
+
+## 2026-09-22 — S173c · THE WHOLE SET REFRAMED (33 stills)
+His ask after seeing 1997: the same treatment everywhere, "like the Restorify not being seen on the
+screen", minus the frames that wait on a fix — and then, on seeing the wides, the close-ups back too
+("they were good, just needed a slight nudge down"). So every era now carries the SAME four places,
+which is the point: **the entrance** (the room from its corner), **above** (the desk at the centre),
+**the seat** (lower and further back than the authored eye — 1.08 m, so the whole monitor is in
+frame), and **the close** (the screen filling the frame at 1.10 m / −3°, which holds the dialog's
+bottom edge the old crop was cutting). Rooms 2 and 3 get Room 1's own poses re-expressed in their
+forward (yaw 90 faces −x, 270 faces +x), so the three rooms are photographed from the same places and
+read as one room ageing. New beats along the way: 2003's residue, 1997's cascade and diary apart, 2026
+site and search as separate frames. **Two frames deliberately not taken** and the reason is in the
+code: the flight over Room 2 (R4-16 — that room is back in 2016 with its monitor lit) and the Close's
+far machine (R4-14/15 — a hand-built slab, speckled with stars the corridor does not clear). Also
+`--no-close` so the Close's four minutes can be skipped while framing 2026's early beats. 33 stills,
+`out/stills/STILLS.md` naming each and its camera.

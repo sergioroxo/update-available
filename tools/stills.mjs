@@ -40,6 +40,7 @@ const has = (n) => argv.includes(`--${n}`);
 const PORT = Number(flag('port', 3000));
 const SQUARE = has('square');
 const ONLY = flag('only', '');
+const NO_CLOSE = has('no-close');
 const OUT = path.resolve(flag('out', SQUARE ? 'out/stills-square' : 'out/stills'));
 const VIEW = SQUARE
   ? { width: 720, height: 720, deviceScaleFactor: 2 }
@@ -172,101 +173,122 @@ async function main() {
     await turn(33);
     await shot('04-the-turn', 'the turn: the room\'s other face, where attention becomes evidence');
     await turn(33, 'ArrowLeft');
+    await jump('kit', 2600);
+    await free(0, 1.10, 0.38, -3, 0);
+    await shot('05-close-the-programme', 'close: the programme on the glass, the First Steps in order');
     await jump('diary', 2600);
     await free(0, 1.10, 0.55, -2, 0);
-    await shot('05-the-diary', 'closer: DIARY.TXT — the line written to a future self');
+    await shot('06-the-diary', 'closer: DIARY.TXT — the line written to a future self');
     await jump('diaryGlitch', 3200);
-    await free(0, 1.10, 0.55, -2, 0);
-    await shot('06-the-cascade', 'the machine failing: PHASE/2 95 — "a new update is needed"');
+    await free(0, 1.10, 0.45, -2, 0);
+    await shot('07-the-cascade', 'the machine failing: PHASE/2 95 — "a new update is needed"');
   });
 
   // ── 2003 ────────────────────────────────────────────────────────────────
-  await era(2, async ({ shot, free, seat, overlook, jump }) => {
-    await overlook('look-A-room1');
-    await shot('01-room-2003', 'the same room, aged — 2003 (free camera)');
+  await era(2, async ({ shot, free, seat, jump }) => {
+    // the same room as 1997 and the same two poses, so the pair reads as one
+    // room ageing rather than two rooms (his ask: the eras should rhyme)
+    await jump('e2Program', 2600);
+    await free(1.0, 2.25, 2.55, -28, 22);
+    await shot('00-entrance-2003', 'the same corner, six years on — the bed gone, the desk kept');
+    await free(0, 2.3, 1.75, -38, 0);
+    await shot('01-room-2003', '2003 from above, the desk at the centre');
     await jump('e2Cartoon', 7000);
     await seat('r1');
     await shot('02-lamby-asleep', 'the software boots: Lamby asleep, and the thought he is having');
     await wait(7000);
     await shot('03-lamby-light', 'the light that shows him what is right — a computer, with a purity streak');
     await jump('e2Restorify', 2600);
-    await free(0, 1.16, 0.34, 0, 0);
-    await shot('04-restorify', 'closer: the daily check-in');
+    await free(0, 1.08, 1.05, -2, 0);
+    await shot('04-restorify', 'the daily check-in on the screen it is on: 412 days, "How is your walk today?"');
+    await free(0, 1.10, 0.38, -3, 0);
+    await shot('04b-close-restorify', 'close: 412 days · Purity Streak · "How is your walk today?"');
     await jump('calebChat', 2600);
-    await shot('05-messenger', 'closer: the Messenger — the thread that gets a person caught');
+    await free(0, 1.08, 1.05, -2, 0);
+    await shot('05-messenger', 'the Messenger — the thread that gets a person caught');
+    await free(0, 1.10, 0.38, -3, 0);
+    await shot('06-close-messenger', 'close: the thread, as he reads it');
+    await jump('calebResidue', 3000);
+    await free(0, 1.08, 1.05, -2, 0);
+    await shot('07-what-is-left', 'what is left of him, and the box that asks for it');
   });
 
   // ── 2016 ────────────────────────────────────────────────────────────────
-  await era(3, async ({ shot, free, seat }) => {
+  await era(3, async ({ shot, free, jump }) => {
     // ⚑ the overlooks are the LIFT's poses, aimed along its flight — `look-R2`
-    //   points at a window, not at the desk. So the room shots are the era-1
-    //   overlook's own offset (0.9 m behind the seat, 1.19 m up, 40° down),
-    //   re-expressed in each room's forward (yaw 90 faces -x, 270 faces +x).
+    //   points at a window, not at the desk. Room 2 and Room 3 get Room 1's own
+    //   two poses re-expressed in their forward (yaw 90 faces -x, 270 faces +x),
+    //   so all three rooms are photographed from the same two places.
+    await free(-2.55, 2.25, -0.30, -28, 112);
+    await shot('00-entrance-2016', 'Room 2 from its corner — the room she works in');
     await free(-3.5, 2.35, 0.95, -40, 90);
-    await shot('01-room-2016', 'Room 2, the workstation — the wage-work room (free camera)');
-    await seat('r2');
-    await shot('02-seat-board', 'the seat: the platform\'s board, the day\'s queue');
-    await free(-4.05, 1.30, 0.62, -14, 90);
-    await shot('03-the-glass', 'closer: the glass, one story at a time');
+    await shot('01-room-2016', '2016 from above, the desk at the centre');
+    await free(-4.05, 1.08, 0.70, -2, 90);
+    await shot('02-seat-board', 'the seat: the whole screen, the platform waiting to be signed into');
+    await free(-4.62, 1.10, 0.70, -3, 90);
+    await shot('03-close-the-platform', 'close: the platform, and the name it greets her by');
+    await jump('u3Dispersal', 1200).catch(() => {});
   });
 
   // ── 2026 ────────────────────────────────────────────────────────────────
-  await era(4, async ({ page, shot, free, seat, jump, settled }) => {
+  await era(4, async ({ page, shot, free, jump, settled }) => {
+    await free(2.55, 2.25, 1.70, -28, 292);
+    await shot('00-entrance-2026', 'Room 3 from its corner — thirty years on, the same desk');
     await free(3.5, 2.35, 0.95, -40, 270);
-    await shot('00-room-2026', 'Room 3, 2026 — the same desk, the last of the three (free camera)');
+    await shot('01-room-2026', '2026 from above, the desk at the centre');
     await jump('e4Browser', 2000);
     await page.evaluate(() => window.__os.e4.browser.debugJumpTo('search'));
     await wait(2500);
-    await seat('r3');
-    await shot('01-seat-2026', 'the seat: the laptop she comes back to — six tabs, five of them hers');
-    await free(4.82, 1.06, 0.7, -2, 270);
-    await shot('02-the-agent', 'closer: the search finished for her, and what it leads to');
+    await free(4.05, 1.08, 0.70, -2, 270);
+    await shot('02-seat-2026', 'the seat: the laptop she comes back to — six tabs, five of them hers');
+    await free(4.62, 1.10, 0.70, -3, 270);
+    await shot('02b-close-the-search', 'close: the search finished for her');
+    await page.evaluate(() => window.__os.e4.browser.debugJumpTo('site'));
+    await wait(2500);
+    await free(4.05, 1.08, 0.70, -2, 270);
+    await shot('03-the-site', 'where the search led: one door, and an agent behind it');
+    await free(4.62, 1.10, 0.70, -3, 270);
+    await shot('03b-close-the-site', 'close: the door the search led to');
     await jump('e4Ball', 2000);
     await page.evaluate(() => window.__os.e4.ball.debugJumpTo('ball'));
     await wait(6000);
-    await shot('03-the-commons', 'the one room the system has no category for');
+    await shot('04-the-commons', 'the one room the system has no category for');
+    if (NO_CLOSE) return;
     await page.evaluate(() => window.__os.e4.ball.debugJumpTo('after'));
     await wait(1500);
     // the termination, the glitch, and the 44 s sweep into the Close
     await wait(26000);
-    await shot('04-the-sweep', 'the last move: rising over the partition, turning to face the building');
-    await wait(24000);
-    await shot('05-the-night', 'night falls and the constellation opens while she is still coming down');
-    await wait(30000);
-    await shot('06-constellation', 'the Close: twenty-four labels, each rated by the piece\'s own evidentiary law');
+    await shot('05-the-sweep', 'the last move: rising over the partition, turning to face the building');
+    // ⚑ NO FRAME of the flight over Room 2 (the old `05-the-night`): at the Close
+    //   that room is back in its 2016 dressing with the monitor LIT — R4-16. And
+    //   none of the far machine (the old `08-the-machine`): it is a hand-built
+    //   slab and the corridor does not clear the stars off it — R4-14 / R4-15.
+    await wait(54000);
+    await shot('06-constellation', 'the Close: the sky it ends under');
     await wait(26000);
     await shot('07-the-panels', 'the panels: the four rooms, and what was true in each');
-    // the far machine publishes `close-go` only once the landing has settled —
-    // poll for it rather than guessing a number (the first run missed it by 8 s)
+    await wait(22000);
     let go = false;
     for (let i = 0; i < 60 && !go; i++) {
       go = await page.evaluate(() => !!(window.__closeMonitor?.hits || []).find((r) => r.id === 'close-go'));
       if (!go) await wait(2000);
     }
     if (go) {
-      await shot('08-the-machine', 'Daniel\'s machine, three metres back in the sky: "Restart as you are."');
-      // ⚑ press it only once the landing's own move is over — a press placed
-      //   under a driven camera is swallowed, which cost two runs
       await settled();
       const goPress = () => page.evaluate(() => { const cm = window.__closeMonitor; const h = (cm.hits || []).find((r) => r.id === 'close-go'); if (h) cm.press(h.x + h.w / 2, h.y + h.h / 2); });
       await goPress();
-      // the card's own buttons appear only once the eye has come within 1.26 m
       let near = false;
       for (let i = 0; i < 40 && !near; i++) {
         near = await page.evaluate(() => !!(window.__closeMonitor?.hits || []).find((r) => r.id === 'close-receipt'));
         if (!near) { await wait(1500); if (i === 12 || i === 24) await goPress(); }
       }
       if (near) {
-        await shot('09-restart-as-you-are', 'the card, come to: the four rooms · Receipt · Start again · The dossier');
+        await shot('08-restart-as-you-are', 'the card, come to: the four rooms · Receipt · Start again · The dossier');
         await page.evaluate(() => { const cm = window.__closeMonitor; const h = cm.hits.find((r) => r.id === 'close-receipt'); cm.press(h.x + h.w / 2, h.y + h.h / 2); });
         await wait(1500);
-        await shot('10-the-receipt', 'the receipt: every update stacked, each FAILED — kept by nobody');
+        await shot('09-the-receipt', 'the receipt: every update stacked, each FAILED — kept by nobody');
       } else console.log('  ⚠ the card never came near — no receipt still');
     } else console.log('  ⚠ close-go not published — no receipt still');
-    // ⚑ NO free-camera shot of the Close. The era panels sit on an arc at their
-    //   own bearing and do NOT billboard (pointCloud.ts) — from anywhere but the
-    //   seat, some of them read backwards. In play that never happens; in a
-    //   photograph it does, and it is the same trap that spoiled July's fig3.
   });
 
   for (const f of Object.keys(sheet)) if (!fs.existsSync(path.join(OUT, f))) delete sheet[f];
