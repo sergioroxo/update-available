@@ -184,6 +184,21 @@ Sources: `REVIEW_ROUND_3_2026-09-17.md` (R3-nn, the full reply to each), `WALKTH
 | R4-11 | The Close score (= R3-110) | ❓ his ear |
 | R4-12 | The Leave page's article rhymes with the piece | ❓ his |
 
+### Round 4b — what the exhibition stills exposed (2026-09-22, S173; his eye on the frames)
+*Photographing the piece at 2560 px put four defects on the table that no walk and no check has ever
+caught, because every one of them is about what a thing LOOKS like from a place the tools never stood.
+Measured, not eyeballed. Nothing here is built: they need a walk, and his review is still open.*
+
+| id | item | status |
+|---|---|---|
+| R4-13 | **Era 3's phone: the screen is not on the phone.** Measured live — the body (`w_phoneDevice` → mesh `Phone`) spans y 0.841–0.990 at rot (−75, 90, 0); the screen plane (`era3-device-phone`) spans y 0.916–1.062 at rot (+75, 90, 0). So the lit screen sits 7 cm above the body's centre, leaning the OTHER way, and the body clips its lower half. His words: "the stand of the phone is looking at the wall and not the user so it crops the phone screen." The 2026-08-24 note in `reinterp_deltas.json` warns the prop and its screen have been separated twice; this is the third | BUG — measured |
+| R4-14 | **The Close's far machine is a shape, not a machine.** `closeMonitor.ts` builds it from one hand-written mesh (a bezel, a base) rather than the era-1 CRT model the rest of the piece uses — at ×1.8 and 3 m back it reads as a grey slab | BUG |
+| R4-15 | **The clear corridor does not clear the stars.** `setClearCorridor` collapses LABELS inside the corridor (`pointCloud.ts:866`, `halfWidth = 0`) and dims the whole sky by `corridor.dim`, but the node sprites themselves still draw, so the far machine is speckled with constellation. He read this as the occlusion fix not having landed, and he is right that the picture is not clean | BUG |
+| R4-16 | **At the Close, Room 2 is back in 2016, and its monitor is ON.** The night frame shows Vera's workstation lit with "Welcome back, Vera. Sign in to continue.", the phone on its dock, and an untextured white cuboid beside the desk. The r4 fold empties that room and `era3Devices.setEra` stops enabling its screens — neither holds through the Close | BUG |
+| R4-17 | The constellation's 24 labels include the project's own 7 process labels ("production script v0.3", "ethics constraints v1"). Deliberate — the makers cluster, and the AI-authorship disclosure the IDN paper wants — but he read them as "sources that aren't sources". Keep / set them apart visually / drop | ❓ his |
+| R4-18 | **His ask: the sources should OPEN.** Each node (or each panel's button) opens a dossier panel drawn in the OS chrome of its own era — the content behind the label, readable in the room it belongs to. A build of its own | ❓ his, then build |
+
+
 ## Closed
 - S171 (2026-09-22): R4-04; the tours brought up to date; the review list written; walked, 292 presses, spine done.
 - S170 (2026-09-21): I-03 — the pledge card; walked, 284 presses, spine done.

@@ -148,21 +148,36 @@ async function main() {
   };
 
   // ── 1997 ────────────────────────────────────────────────────────────────
-  await era(1, async ({ shot, free, seat, overlook, turn, jump }) => {
-    await jump('desktop', 2600);
-    await overlook('look-A-room1');
-    await shot('01-room-1997', 'the room as the lift shows it — 1997, lamp-lit (free camera)');
-    await seat();
-    await shot('02-seat-desktop', 'the seat: the CRT filling the view, the 1997 desktop and its drawn icons — the architecture in one frame');
+  await era(1, async ({ shot, free, turn, jump }) => {
     await jump('kit', 2600);
-    await shot('03-the-programme', 'the seat: A:\\ opened — the Un-Walk programme, the era\'s spine');
+    // ⚑ THE ENTRANCE (his ask: replicate out/figures/fig1_entrance_overhead.jpg).
+    //   Found by probing, not reasoned: the room's own overlooks are the lift's
+    //   poses and none of them holds this composition — bed left, desk right,
+    //   chair centre, the window over the lamp.
+    await free(1.0, 2.25, 2.55, -28, 22);
+    await shot('00-entrance', 'the room from the door\'s corner — bed, desk, chair, the window over the lamp');
+    await jump('desktop', 2000);
+    // the desk centred (his note on the first pass: the overlook put it off-centre)
+    await free(0, 2.3, 1.75, -38, 0);
+    await shot('01-room-1997', '1997 from above, the desk at the centre');
+    // ⚑ the seated views sit LOWER and FURTHER BACK than the authored eye: at the
+    //   seat's own 1.16 m the bezel is cropped top and bottom. 1.08 / z 1.05 holds
+    //   the whole CRT, its stand, and the desk in front of it (his note).
+    await free(0, 1.08, 1.05, -2, 0);
+    await shot('02-seat-desktop', 'the seat: the whole CRT on the desk — one UI surface, textured onto a monitor in a room');
+    await jump('kit', 2600);
+    await free(0, 1.08, 1.05, -2, 0);
+    await shot('03-the-programme', 'A:\\ opened — the Un-Walk programme, the era\'s spine');
     await jump('desktop', 1200);
     await turn(33);
     await shot('04-the-turn', 'the turn: the room\'s other face, where attention becomes evidence');
     await turn(33, 'ArrowLeft');
+    await jump('diary', 2600);
+    await free(0, 1.10, 0.55, -2, 0);
+    await shot('05-the-diary', 'closer: DIARY.TXT — the line written to a future self');
     await jump('diaryGlitch', 3200);
-    await free(0, 1.16, 0.32, 0, 0);
-    await shot('05-diary', 'closer: the diary, and the deletion that fails');
+    await free(0, 1.10, 0.55, -2, 0);
+    await shot('06-the-cascade', 'the machine failing: PHASE/2 95 — "a new update is needed"');
   });
 
   // ── 2003 ────────────────────────────────────────────────────────────────

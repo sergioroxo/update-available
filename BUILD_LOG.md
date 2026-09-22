@@ -1757,3 +1757,21 @@ publishes `close-go` only once the landing settles (polled, not timed). **No fre
 Close:** the era panels sit at their own bearing and do not billboard, so from anywhere but the seat
 some read backwards — the same trap that spoiled July's fig3, found again and this time written down.
 `out/` is git-ignored: the pictures are local, the instrument is committed.
+
+## 2026-09-22 — S173b · HIS EYE ON THE STILLS: the entrance replicated, and four defects the frames exposed
+He asked for `out/figures/fig1_entrance_overhead.jpg` back — the room from the door's corner, bed left,
+desk right, chair centre. None of the build's own overlooks holds that composition (they are the lift's
+poses), so it was found by probing: **(1.0, 2.25, 2.55, pitch −28, yaw 22)**, now `e1-00-entrance`.
+His three framing notes, all applied: the overhead is centred on the desk (0, 2.3, 1.75, −38); the
+seated views sit **lower and further back than the authored eye** — 1.08 m at z 1.05, because at the
+seat's own 1.16 m the bezel crops top and bottom and the icon column runs into it; the diary is at the
+same lower plane and legible, and the error cascade got its own frame. 26 stills now.
+**And the pictures did what pictures do.** Four defects no walk has ever caught, because each is about
+what a thing looks like from somewhere the tools never stood — logged as **R4-13…R4-16** with live
+measurements (the phone's screen floats 7 cm above its body and leans the opposite way; the Close's
+far machine is a hand-built slab, not the CRT model; the clear corridor collapses labels but not the
+star sprites, so the machine is speckled; and at the Close **Room 2 is back in its 2016 dressing with
+the monitor lit** — "Welcome back, Vera" — which the r4 emptying was supposed to have taken). Plus
+**R4-17/18**, his: the 7 process labels in the constellation, and his ask that each source OPEN into a
+dossier panel drawn in its own era's OS chrome. **Nothing built: they need a walk, and his review is
+still open.**
