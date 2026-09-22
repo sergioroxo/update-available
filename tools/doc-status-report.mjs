@@ -20,6 +20,7 @@ const byStatus = { live: [], 'history-only': [], UNREVIEWED: [], 'superseded-by'
 
 (function walkMd(dir) {
   for (const name of readdirSync(dir).sort()) {
+    if (name.startsWith('.')) continue; // hidden dirs are other tools' scratch, not documentation
     const p = join(dir, name);
     if (statSync(p).isDirectory()) {
       walkMd(p);

@@ -1720,3 +1720,20 @@ on the way: **R4-04** — Back from the record cleared a finished story's "done"
 row survives the record's Back; only Back to today clears it). Images at 800 px in
 `review-2026-09-22/img/` (local; ignored by git). Walked: 292 presses, spine done (`WALK_2026-09-22.md`).
 **closes R4-04; opens R4-01…R4-12 for his sit-through.**
+
+## 2026-09-22 — S172 · THE TWO CODEX BRIEFS (docs only; nothing built)
+His ask after the run-through: a Codex pass on the same build, "to see if it can find stuff that is
+bugging" — and, separately, a playtest that actually drives a browser. Two briefs, each written to be
+pasted whole as a session prompt, each naming its model and effort: **`CODEX_BRIEF_VISUAL_PASS_2026-09-22.md`**
+(strongest Codex model, `xhigh`, read-only — the 158 tour frames + the code behind them; the two
+questions are "would a player know what to press from this frame" and "does the story read in order";
+findings by the `eN-…png` name, worst first) and **`CODEX_BRIEF_PLAYTEST_2026-09-22.md`** (Luna at
+`xhigh`, driving the browser — click-only, no debug jumps, URGENT split from the rest, and a paragraph
+on what it understood the piece to be about before it reads any design doc). Both carry the laws it
+must not "fix" (palettes, soft lo-fi, click/tap, no locomotion, the frame never plays, felt bare, no
+network/storage, invented marks, the copy is not theirs), how to run (`npm run dev -- --port 3000`,
+`?reinterp=1`), and how to regenerate the git-ignored frames. Found on the way: `npm test` had gone red
+through no fault of the build — another tool dropped a whole repo copy at `docs/reinterp/.kilo/worktrees/`
+and its 26 headerless .md files tripped the doc-status ratchet; the two doc walkers now skip hidden
+directories (`tools/check-spec.mjs`, `tools/doc-status-report.mjs`). Green again: headerless 0/0.
+**Nothing buildable: R4-01…R4-12 still wait on his sit-through.**

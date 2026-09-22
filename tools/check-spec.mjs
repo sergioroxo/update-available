@@ -276,6 +276,7 @@ const PROMPT_STATUS = /PROMPT STATUS:\s*(SHIPPED|QUEUED|BLOCKED|DRAFT)/;
 
 (function walkMd(dir) {
   for (const name of readdirSync(dir)) {
+    if (name.startsWith('.')) continue; // a hidden dir under docs/ is another tool's scratch (a .kilo worktree copy), not our documentation
     const p = join(dir, name);
     if (statSync(p).isDirectory()) {
       walkMd(p);
