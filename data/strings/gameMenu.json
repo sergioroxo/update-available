@@ -44,13 +44,9 @@
  "creditsOffersSources": "Era 4's offers — sources & further reading",
  "creditsDaySources": "Era 3's day — sources & further reading",
  "creditsCloseSources": "The Close's panels — sources & further reading",
+ "creditsSourcesPage": "All sources, with their links — opens a web page ↗",
  "closeSourcesTitle": "The Close — sources",
- "closeSourcesIntro": "The four panels say what happened. This says how well each of it is documented, and where to read. The status words are the dossier's own.",
- "closeSourcesStatus": {
-  "documentary": "documentary — documented practice, cited below",
-  "contested": "contested — documented, and disputed in the record",
-  "speculative": "speculative — the piece's own extrapolation, marked as such"
- },
+ "closeSourcesIntro": "The four panels say what happened. This says how well each part of it is documented — documented, disputed, or imagined — and where to read. A press on a panel in the sky turns it to the same.",
  "daySourcesTitle": "Era 3 — sources",
  "ballSourcesTitle": "The ball — sources",
  "offersSourcesTitle": "Era 4's offers — sources",

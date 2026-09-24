@@ -121,11 +121,12 @@ the Close and the receipt.**
 Each era is a desk with a sandbox on it: things you can open in any order, and a *gate* that ends the
 era. Read `docs/reinterp/PROGRESSION_LAW_2026-09-17.md` if you want to know what is supposed to block.
 For the intended flow beat by beat — and the twelve things already flagged — read
-`docs/reinterp/REVIEW_ROUND_4_2026-09-22.md`. **Anything already flagged there (R4-01…R4-18 — the last six fixed in S174, so their return is a finding) is known;
+`docs/reinterp/REVIEW_ROUND_4_2026-09-22.md`. **Anything already flagged there (R4-01…R4-22 — most of the later ones fixed in S174–S175, so their return is a finding) is known;
 list it under "already known" rather than as a new finding.**
 
-**At the Close, press a label or a panel in the sky** (new in S174): the eye goes to Daniel's machine
-and it opens that room's dossier in that room's OS. Try every era's, page through one, and come back.
+**At the Close, press a panel in the sky** (S175): it turns to its room's dossier in that room's OS,
+page by page, and back. Press a label too — it opens its room's panel. Then open menu → Credits → "All
+sources, with their links" and tell me whether the page makes sense to someone who has just played.
 
 If you genuinely run out of budget, the documented review jump is `?reinterp=1&era=2&descent=0` (and
 `era=3`); Era 4 is entered from Era 3's ending. **Say in the report exactly where you jumped and why** —

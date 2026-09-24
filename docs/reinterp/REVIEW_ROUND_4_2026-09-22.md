@@ -35,14 +35,29 @@ what reads.*
    little off-axis so you see its depth.
 6. `[ ]` **Nothing between you and it (R4-15)** — no stars, labels, link lines or panels on the line
    from your eye to the machine, far or near; the receipt frame holds the whole machine.
-7. `[ ]` **The dossiers open (R4-18)** — press a label or a panel in the sky: the eye goes to the
-   machine and it shows that room's dossier in that room's OS (1997 grey on teal, 2003 on Restorify's
-   blue, 2016's glass, 2026's dark). ⚑ Your eye on one thing: the source texts carry their
-   `[VERIFY SOURCE]` markers verbatim, as the menu always has — the dossier now puts them in front of
-   every visitor at the ending, so they are worth your pass before the exhibition.
+7. `[ ]` **The dossiers open — on the panels (R4-18, moved in S175)** — press a panel in the sky: it
+   turns to its room's dossier in that room's OS (1997 grey on teal, 2003 on Restorify's blue, 2016's
+   glass, 2026's dark), page by page; the last press turns it back. A label press opens its room's panel
+   with the label marked. Nothing sends you to the machine any more (your "nuisance to go back and forth").
 8. `[ ]` **The seven process labels (R4-17)** — drawn in the constellation's cool blue now, and their
    window is "How this was made", which says they are the project's documents, not sources about the
    practices. My call on your "keep / set apart / drop" — set apart; reverse it if you disagree.
+
+9. `[ ]` **The status words, for the public (S175)** — everywhere a visitor meets them (the panels, the
+   menu's sources, the sources page): **documented · disputed · imagined**, each with its one-line
+   explanation. The data keeps documentary / contested / speculative (the build requires them).
+   `[VERIFY SOURCE]` now reads "(this source is still being verified)" — and most of those eleven were
+   in fact checked by your 24 July verification run; its corrections await your approval (R4-19).
+10. `[ ]` **The sources page (S175)** — menu → Credits → "All sources, with their links". Generated
+    from the piece's own data: the four rooms, every practice and its source, all 35 sources, the
+    project's documents, the credits. 18 verified links on 8 sources — only links your verification
+    run attached to that exact claim (the generator refuses any other). The rest say "no verified link
+    yet" (R4-22).
+11. `[ ]` **Your models (S175)** — 2003: the flip phone open by the mouse, the mug with the flag washed
+    out on it, a CD spindle we made, the new tower; 2016: the phone reclined in its stand on a stack of
+    books (still in frame from her seat), the desk lamp, the slippers, the notebook. Every model
+    credited, CC0 included — and the three J-Toastie models (headset, controller, laptop) were
+    uncredited until now.
 
 ---
 

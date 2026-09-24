@@ -556,7 +556,7 @@
     "id": "tower2003",
     "pos": [
      0.55,
-     0.95,
+     0.74,
      -0.28
     ],
     "size": [
@@ -564,7 +564,9 @@
      0.42,
      0.42
     ],
-    "color": "#1A1A1E"
+    "color": "#1A1A1E",
+    "model": "systemUnit",
+    "_docS175": "⚑ S175 (2026-09-24) — the same 'System unit' as 1997's, black: six years on, a new machine of the same shape."
    },
    {
     "id": "tower2003Drive",
@@ -622,32 +624,39 @@
      0.08
     ],
     "color": "#3E5C7A",
-    "model": "cupOfTea",
-    "_docS174": "⚑ S174 — a cup, not a box: 'Cup Of Tea' (CreativeTrio, CC0, geometry only). Was a 0.08 m cuboid standing 3 cm over the desk's front edge (z 0.24 against an edge at 0.25). A model's `pos` y is its BASE (assets.ts spawnModel), so 0.74 = the desk top."
-   }
-  ],
-  "_docS156": "⚑ S156 / R3-45 (Sérgio: 'Should the computer model change?' — yes: 'a beige tower and a 4:3 CRT in 1997; a black tower and a flat LCD in 2003'). The machine that was UPDATED is a different machine: the beige CRT, its neck and foot, the beige tower and keyboard are retired at r2 and a black flat panel on a stem, a black tower and a black keyboard take their places — box-built like the CRT (no GLB: `Flat Monitor modern.glb` in Assests is unmeasured and unlicensed-in-repo, and a fitted model would have to be re-measured against the screen plane; the boxes sit exactly behind the plane app.ts already draws the desktop on, SCREEN {w 0.4, h 0.3, y 1.08, z 0}). The r4 fold removes these with the rest of the desk. Ids keep the `crt`/`tower`/`keyboard` stems so era1room.ts's tiers still read them as hero/system.",
-  "_docS157": "⚑ S157 / R3-44 (Sérgio, twice: 'Era 2's bedroom doesn't change enough to be memorable'): THE 2003 DRESSING PASS. Six years on: the poster is a different poster (navy, a band, not the pink one), the small one darker; the curtains are grey-blue (the bed is a model since r1 and its bedding is the model's — a recolour there is a model job, not a delta); the lamp has a white shade; the desk has what 2003 put there — a CD spindle, a flip phone, a mug. All box-built in the room's own idiom; r4 clears the desk of them with the rest. ⚑ AND THE ROOM-AUDIT FINDINGS ARE CLOSED, NOT TRIAGED: the model props' authored sizes now say what renders (mixtape, tapeA/B, the duck, the bookcase, the boombox — the numbers the audit printed), and the record's frame sits 2 cm out of the spine wall it was sunk in.",
-  "_parkedS174": [
+    "model": "redMug",
+    "_docS174": "⚑ S174 — a cup, not a box: 'Cup Of Tea' (CreativeTrio, CC0, geometry only). Was a 0.08 m cuboid standing 3 cm over the desk's front edge (z 0.24 against an edge at 0.25). A model's `pos` y is its BASE (assets.ts spawnModel), so 0.74 = the desk top.",
+    "bands": [
+     "#A36C98",
+     "#6F8CCE",
+     "#6FA36C",
+     "#E1D45B",
+     "#E1A85B",
+     "#D56A5D"
+    ],
+    "_docS175": "⚑ S175 (2026-09-24) — THE MUG CARRIES THE FLAG, WASHED OUT. Sérgio: 'is there a way to make a hidden SOGICE remark on the cup? like a LGBT flag faded effect.' 'Red Mug' by Isa Lousberg, coloured by `bands` (era1room.ts bandModel — the rainbow duck's mechanism): the six stripes of the flag, violet at the foot to red at the rim, each washed 55% toward the room's beige (#C9BFA6). A stripey mug at a glance; the flag on a second look — six years into the programme, it is still on his desk, and it has faded. The same language as 2016's greyscale flag (r4 `_doc` 2026-09-05): the person's own mark, drained, never spoken about. No caption, no press, nothing points at it."
+   },
    {
     "id": "flipPhone",
     "pos": [
-     0.34,
-     0.75,
-     0.2
+     0.44,
+     0.74,
+     0.16
     ],
     "size": [
      0.045,
      0.02,
      0.09
     ],
-    "color": "#2A2A2E"
+    "color": "#2A2A2E",
+    "model": "flipPhone",
+    "_docS175": "⚑ S175 (2026-09-24) — BACK, as a phone: 'Flip Phone' by Timmy Turner (CC-BY 4.0), open on the desk right of the mouse — no longer standing inside it."
    },
    {
     "id": "cdSpindle",
     "pos": [
      -0.45,
-     0.78,
+     0.74,
      0.02
     ],
     "size": [
@@ -655,8 +664,24 @@
      0.08,
      0.13
     ],
-    "color": "#C8C8CC"
-   },
+    "color": "#C8C8CC",
+    "model": "cdSpindle",
+    "bands": [
+     "#2A2A30",
+     "#C8C8CC",
+     "#DADAE0",
+     "#C8C8CC",
+     "#3A3A40",
+     "#3A3A40"
+    ],
+    "_docS175": "⚑ S175 (2026-09-24) — BACK, as a spindle: the project's own model (tools/make_cd_spindle.py — he could not find one). One mesh; `bands` colour it by height: the black base, the discs, the post."
+   }
+  ],
+  "_docS156": "⚑ S156 / R3-45 (Sérgio: 'Should the computer model change?' — yes: 'a beige tower and a 4:3 CRT in 1997; a black tower and a flat LCD in 2003'). The machine that was UPDATED is a different machine: the beige CRT, its neck and foot, the beige tower and keyboard are retired at r2 and a black flat panel on a stem, a black tower and a black keyboard take their places — box-built like the CRT (no GLB: `Flat Monitor modern.glb` in Assests is unmeasured and unlicensed-in-repo, and a fitted model would have to be re-measured against the screen plane; the boxes sit exactly behind the plane app.ts already draws the desktop on, SCREEN {w 0.4, h 0.3, y 1.08, z 0}). The r4 fold removes these with the rest of the desk. Ids keep the `crt`/`tower`/`keyboard` stems so era1room.ts's tiers still read them as hero/system.",
+  "_docS157": "⚑ S157 / R3-44 (Sérgio, twice: 'Era 2's bedroom doesn't change enough to be memorable'): THE 2003 DRESSING PASS. Six years on: the poster is a different poster (navy, a band, not the pink one), the small one darker; the curtains are grey-blue (the bed is a model since r1 and its bedding is the model's — a recolour there is a model job, not a delta); the lamp has a white shade; the desk has what 2003 put there — a CD spindle, a flip phone, a mug. All box-built in the room's own idiom; r4 clears the desk of them with the rest. ⚑ AND THE ROOM-AUDIT FINDINGS ARE CLOSED, NOT TRIAGED: the model props' authored sizes now say what renders (mixtape, tapeA/B, the duck, the bookcase, the boombox — the numbers the audit printed), and the record's frame sits 2 cm out of the spine wall it was sunk in.",
+  "_docParkedS174": "⚑ S174 parked flipPhone, cdSpindle and cdSpindleCap for want of models; S175 brought the first two back as models. The cap stays parked — the spindle model has its own post.",
+  "_docS174Modem": "⚑ S174 — the dial-up box leaves with 1997. Sérgio crossed it on the 2003 still. It had no job after Era 1's Connect step (grep: only era1room.ts's tier list names it).",
+  "_parkedS175": [
    {
     "id": "cdSpindleCap",
     "pos": [
@@ -671,9 +696,7 @@
     ],
     "color": "#9A9AA0"
    }
-  ],
-  "_docParkedS174": "⚑ S174 (2026-09-22) — PARKED, NOT DELETED. Sérgio circled these on the 2003 exhibition still: untextured boxes that read as 'models missing'. No model for a flip phone or a CD spindle exists in Pc_Simulation/Assests, so they are out of the room until he fetches one (see docs/reinterp/ASSET_REQUEST_2026-09-22.md) — move an entry back into `add` (with its `model`) to restore it. The flip phone was also INSIDE the mouse: mouse x 0.27–0.33, phone x 0.32–0.36, same z, on the desk's front edge.",
-  "_docS174Modem": "⚑ S174 — the dial-up box leaves with 1997. Sérgio crossed it on the 2003 still. It had no job after Era 1's Connect step (grep: only era1room.ts's tier list names it)."
+  ]
  },
  "r3": {
   "props": {
@@ -2020,8 +2043,8 @@
     "id": "w_phoneDevice",
     "model": "phone",
     "pos": [
-     -4.979,
-     0.916,
+     -4.958,
+     0.924,
      0.97
     ],
     "size": [
@@ -2032,13 +2055,14 @@
     "yaw": 90,
     "color": "#15151F",
     "_doc": "⚑ S149 — ON A STAND (OPEN_ITEMS R3-67/72): base at y 0.916 = the dock's top; leaning 15° back (models.json phone tilt), facing the seat (yaw 90). In frame from the r2 seat at pitch 0, measured live. Keep in step with era3Devices PLACEMENT.phone. ⛑ MOVED AGAIN, 2026-08-24, and this time to be REACHABLE: from (-5.02, 1.16) to (-5.10, 0.95). Measured from the workstation seat, the phone's screen projected to (-230, 1214) on a 1280x900 viewport — off the left edge AND below the bottom — and looking down never recovered it, because at z 1.16 it sat 36.5° off the view axis against a 29.7° horizontal half-FOV. THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE. It is now 19.7° off axis and enters the frame from a -10° look. ⛑ KEEP THIS IN STEP with era3Devices' PLACEMENT.phone — the prop and its screen have now been separated twice, and both times Sérgio found it before a check did. ⚑ ERA 3'S PHONE — one mesh, ON THE DESK, 2026-08-21. It was a parts-built box on the nightstand at (-2.42, 0.51, -0.72). ⚑ The move is the era's thesis in a coordinate: the tablet lived across the room and was reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, both at arm's length — which is what makes ignoring it a real CHOICE rather than a walk she declines to take. Its two hand-built parts (body + earpiece) are gone; the mesh carries them. ⚑ A note for the next prop added here: I first declared a SECOND w_phoneDevice rather than editing this one, and a duplicate id does not error — the later declaration silently wins and the earlier becomes invisible. Check for the id first.",
-    "_docS174": "⚑ S174 / R4-13 — x −5.0 → −4.979: with the lean corrected (models.json phone), this puts the screen plane on the handset's front face. The base stays on the dock (x −5.045…−4.955)."
+    "_docS174": "⚑ S174 / R4-13 — x −5.0 → −4.979: with the lean corrected (models.json phone), this puts the screen plane on the handset's front face. The base stays on the dock (x −5.045…−4.955).",
+    "_docS175": "⚑ S175 — the phone rests in the stand: base in its seat-side lip (x −4.958, y 0.924 = the books 0.912 + the lip), reclined −50 (models.json phone). era3Devices PLACEMENT.phone moved and reclined with it — keep them in step."
    },
    {
     "id": "w_phoneStand",
     "pos": [
      -5.0,
-     0.836,
+     0.756,
      0.97
     ],
     "size": [
@@ -2046,8 +2070,11 @@
      0.16,
      0.05
     ],
-    "color": "#15151F",
-    "_doc": "⚑ S149 — the phone's dock (OPEN_ITEMS R3-72, Sérgio: 'maybe the phone needs to be on a stand'): a 16 cm charging stand on the desk's front-left, the phone's own dark hex. The phone stands on its top (y 0.916)."
+    "color": "#7A5C48",
+    "_doc": "⚑ S149 — the phone's dock (OPEN_ITEMS R3-72, Sérgio: 'maybe the phone needs to be on a stand'): a 16 cm charging stand on the desk's front-left, the phone's own dark hex. The phone stands on its top (y 0.916).",
+    "model": "books",
+    "yaw": 90,
+    "_docS175": "⚑ S175 (2026-09-24) — THE DOCK IS A STACK OF BOOKS WITH A STAND ON IT. Sérgio sent a real phone stand ('Phone Stand', zhekamen188, CC-BY 4.0), but a desk stand holds the phone ~1 cm off the desk — 15 cm lower than the 16 cm dock R3-67 measured into frame, and from her seat the screen would sit ~29° under the eye line, outside the frame even with the ending's small look down. So the stand stands on a stack of books ('Books', CreativeTrio, CC0, 15.6 cm), which is what people do, and the phone keeps its height (base 0.924 vs 0.916)."
    },
    {
     "id": "e_folders",
@@ -2069,7 +2096,7 @@
     "id": "w_lamp2Foot",
     "pos": [
      -5.3,
-     0.76,
+     0.756,
      1.24
     ],
     "size": [
@@ -2078,37 +2105,9 @@
      0.14
     ],
     "color": "#74492F",
-    "yaw": 90
-   },
-   {
-    "id": "w_lamp2Pole",
-    "pos": [
-     -5.3,
-     0.86,
-     1.24
-    ],
-    "size": [
-     0.035,
-     0.18,
-     0.035
-    ],
-    "color": "#74492F",
-    "yaw": 90
-   },
-   {
-    "id": "w_lamp2Shade",
-    "pos": [
-     -5.3,
-     1.0,
-     1.24
-    ],
-    "size": [
-     0.17,
-     0.12,
-     0.17
-    ],
-    "color": "#EFA13F",
-    "yaw": 90
+    "yaw": 90,
+    "model": "deskLamp",
+    "_docS175": "⚑ S175 (2026-09-24) — Vera's lamp is 'Light Desk' by Quaternius (CC0) — an articulated desk lamp; the pole and shade boxes are parked. Its light is the room rig's, unchanged."
    },
    {
     "id": "w_mug",
@@ -2131,7 +2130,7 @@
     "id": "w_notepad",
     "pos": [
      -4.95,
-     0.762,
+     0.756,
      1.05
     ],
     "size": [
@@ -2140,13 +2139,15 @@
      0.16
     ],
     "color": "#F5F4ED",
-    "yaw": 90
+    "yaw": 90,
+    "model": "notebook",
+    "_docS175": "⚑ S175 (2026-09-24) — 'Notebook' by jeremy (Poly Pizza, CC-BY 3.0)."
    },
    {
     "id": "w_pen",
     "pos": [
      -4.93,
-     0.775,
+     0.77,
      1.05
     ],
     "size": [
@@ -2161,7 +2162,7 @@
     "id": "w_slippers",
     "pos": [
      -3.6,
-     0.03,
+     0.0,
      0.26
     ],
     "size": [
@@ -2170,7 +2171,9 @@
      0.22
     ],
     "color": "#A07B52",
-    "yaw": 90
+    "yaw": 90,
+    "model": "slippers",
+    "_docS175": "⚑ S175 (2026-09-24) — 'Slippers' by Isa Lousberg (Poly Pizza) — the unmarked box by the bed, which he answered with a model."
    },
    {
     "id": "w_calendar",
@@ -2678,6 +2681,23 @@
     ],
     "color": "#E8B7C8",
     "yaw": 270
+   },
+   {
+    "id": "w_phoneCradle",
+    "model": "phoneStand",
+    "pos": [
+     -5.0,
+     0.912,
+     0.97
+    ],
+    "size": [
+     0.115,
+     0.064,
+     0.067
+    ],
+    "yaw": 180,
+    "color": "#2A2A30",
+    "_doc": "⚑ S175 (2026-09-24) — 'Phone Stand' by zhekamen188 (Sketchfab, CC-BY 4.0), on the books (w_phoneStand); the phone rests in it."
    }
   ],
   "_docDeskCleared": "⛑ e_keyboard and e_mouse REMOVED 2026-09-01 with the CRT's move (Sérgio: 'we can[not] really see it with all the clutter here' — 'it' being the headset, the era's ONE interaction and until now the least legible object on the desk). They were that machine's peripherals; wired to nothing they are just clutter in front of the thing the era is actually about. What stays is hers and not the apparatus's: the folders, her glasses, and the headset on its dock.",
@@ -2715,7 +2735,39 @@
     "_doc": "⚑ 2026-09-05: re-based on w_desk, for the same reason as w_frame. It stood on w_bookcase, which was struck with its eighteen books — and a removal's real cost is never the props it removes, it is the ones that were resting on them. room-audit caught this one (0.95 m of air) after I had already hand-fixed the other; the tool saw what the scan I ran by eye did not."
    }
   ],
-  "_docParkedS174": "⚑ S174 — Sérgio crossed the photo frame and the radio on the 2016 still. Parked, not deleted."
+  "_docParkedS174": "⚑ S174 — Sérgio crossed the photo frame and the radio on the 2016 still. Parked, not deleted.",
+  "_parkedS175": [
+   {
+    "id": "w_lamp2Pole",
+    "pos": [
+     -5.3,
+     0.86,
+     1.24
+    ],
+    "size": [
+     0.035,
+     0.18,
+     0.035
+    ],
+    "color": "#74492F",
+    "yaw": 90
+   },
+   {
+    "id": "w_lamp2Shade",
+    "pos": [
+     -5.3,
+     1.0,
+     1.24
+    ],
+    "size": [
+     0.17,
+     0.12,
+     0.17
+    ],
+    "color": "#EFA13F",
+    "yaw": 90
+   }
+  ]
  },
  "r4": {
   "props": {
@@ -2803,7 +2855,10 @@
    "w_phoneStand",
    "w_mug",
    "w_notepad",
-   "w_pen"
+   "w_pen",
+   "w_phoneCradle",
+   "flipPhone",
+   "cdSpindle"
   ],
   "add": [
    {

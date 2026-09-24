@@ -45,8 +45,8 @@ line where it lives (`src/desktop/apps/kit.ts:412`). Do not fix it.
 1. `CLAUDE.md` (repo root) — the laws. **Binding.** Read the "REINTERP AMENDMENTS (R28)" block: this
    branch is the reinterpretation, behind `?reinterp=1`.
 2. `docs/reinterp/REVIEW_ROUND_4_2026-09-22.md` — the piece as it plays right now, era by era, with
-   the frames inline and its open flags — R4-01…R4-12, plus R4-13…R4-18 from the exhibition stills,
-   which S174 fixed (so a regression of any of those IS a finding). **This is the map of the thing you are
+   the frames inline and its open flags — R4-01…R4-12, plus R4-13…R4-22 from the exhibition stills,
+   most of them fixed in S174–S175 (so a regression of any of those IS a finding). **This is the map of the thing you are
    reviewing.** Anything already flagged there is known — say so rather than re-raising it, and only
    add to it if you can say something new.
 3. `docs/reinterp/OPEN_ITEMS.md` — the register of what is owed. The Round 4 block at the end is
@@ -148,9 +148,11 @@ Anything a player would see and that is wrong on its own terms:
 - **the next action is not discoverable** — the frame gives a player nothing to aim at
 - **the story does not read** — this beat does not follow from the last one, or the picture points at
   the wrong thing for what is being said
-- **the Close's dossier windows** (new in S174): press a label or a panel in the sky and Daniel's
-  machine opens that room's dossier in that room's own OS. Check every era's window for overflow,
-  paging (More n/N) and legibility at the distance the eye stops at
+- **the Close's dossiers, on the panels** (S175): press a panel in the sky and it turns to its room's
+  dossier in that room's own OS, page by page. Check every era's page for overflow, clipping and
+  legibility at 3 m; check that the panel you need is never folded away behind the machine
+- **the sources page** (S175): `public/sources/index.html` (menu → Credits → "All sources, with their
+  links"). Light and dark, desktop and phone width: legibility, broken layout, a link that looks dead
 - **anything that looks like a bug**: a stray rect, a flash of the wrong palette, a half-drawn frame,
   a caption on screen with nothing to caption.
 
@@ -178,7 +180,7 @@ Structure:
 Severity: `URGENT` (a player cannot proceed, or cannot read something they must read) ·
 `HIGH` (visibly broken, will be noticed) · `MEDIUM` (wrong but survivable) · `LOW` (polish).
 
-4. **Already known** — anything you found that R4-01…R4-18 already covers, listed by their id, so we
+4. **Already known** — anything you found that R4-01…R4-22 already covers, listed by their id, so we
    can tell new from old.
 5. **Where I would look next** — three lines, what a second pass should cover.
 

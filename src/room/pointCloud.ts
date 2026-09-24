@@ -43,6 +43,8 @@
 import * as pc from 'playcanvas';
 import clusterData from '../../data/room/cluster.json';
 import network from '../../data/strings/close_network.json';
+import closeCard from '../../data/strings/close_restart.json';
+import { drawDossier } from '../witness/dossier';
 
 const P = clusterData.pointCloud;
 
@@ -153,6 +155,11 @@ export interface PointCloud {
   /** ⚑ S174 / R4-18 — which label a world-space ray lands on (a label on the
    *  sight-line to the machine is folded away and cannot be pressed), or null */
   labelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { era: number; text: string } | null;
+  /** ⚑ S175 — a press on panel i: its story → its dossier, page by page → its story again */
+  pressPanel(i: number): void;
+  /** ⚑ S175 — a label pressed: its room's dossier on its room's panel, the label marked.
+   *  Era 0 (the project's own documents) has no room: it opens on the panel you face. */
+  openDossierFor(era: number, label: string | null): void;
 }
 
 /** the machine as seen from the eye: its silhouette in the plane of its glass */
@@ -592,6 +599,14 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   const panels = ((network as { panels?: Panel[] }).panels ?? []).slice(0, 4);
   const panelMat = new pc.StandardMaterial();
   let panelRedraw: ((linesByEra: Record<number, string[]>) => void) | null = null;
+  /** ⚑ S175 — each panel's face: -1 = its room's story, n ≥ 0 = page n of its dossier */
+  let panelFace: number[] = [];
+  let panelLabel: (string | null)[] = [];
+  let panelEra: number[] = [];
+  /** the era whose dossier a panel is showing — its own, or 0 (how this was made) */
+  let panelShowEra: number[] = [];
+  let showPanel: ((i: number) => void) | null = null;
+  let pressPanelImpl: ((i: number) => void) | null = null;
   /**
    * ⚑ 2026-09-12 (Phase D): the card carries the era's ROOM now. Sérgio: *"You
    * see the 4 panels around you that have the explanation and image of the
@@ -700,8 +715,26 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         //   on the panel itself (`panelAt`). The panel says what happened; the
         //   frame says how well it is documented.
       };
-      panels.forEach((panel, i) => {
+      const plates: (HTMLImageElement | null)[] = panels.map(() => null);
+      const lastLines: string[][] = panels.map(() => []);
+      const drawPlate = (i: number): void => {
+        const img = plates[i];
+        if (!img) return;
         const y0 = i * CELL_H;
+        // cover-fit the picture into its well
+        const sc = Math.max(PLATE.w / img.width, PLATE.h / img.height);
+        const dw = img.width * sc, dh = img.height * sc;
+        pc2.save();
+        pc2.beginPath();
+        pc2.rect(PLATE.x, y0 + PLATE.y, PLATE.w, PLATE.h);
+        pc2.clip();
+        pc2.drawImage(img, PLATE.x + (PLATE.w - dw) / 2, y0 + PLATE.y + (PLATE.h - dh) / 2, dw, dh);
+        pc2.restore();
+      };
+      /** the room's face: the plate, the paragraph, your lines — and one frame-voice line under them */
+      const drawStoryCell = (panel: Panel, i: number): void => {
+        const y0 = i * CELL_H;
+        pc2.clearRect(0, y0, CELL_W, CELL_H);
         pc2.globalAlpha = 0.9;
         pc2.fillStyle = P.backdrop;
         pc2.fillRect(0, y0 + 8, CELL_W, CELL_H - 16);
@@ -712,10 +745,60 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         // where the picture goes: a dark well until it arrives
         pc2.fillStyle = P.backdrop;
         pc2.fillRect(PLATE.x, y0 + PLATE.y, PLATE.w, PLATE.h);
-        drawText(panel, i, []);
-      });
+        drawPlate(i);
+        drawText(panel, i, lastLines[i]);
+        // ⚑ S175: the way in to its sources, said once, small, in the web's blue
+        pc2.font = '24px monospace';
+        pc2.fillStyle = P.link;
+        pc2.textBaseline = 'middle';
+        pc2.fillText(closeCard.source.panelHint + '  ›', TEXT_X, y0 + CELL_H - 48);
+      };
+      /**
+       * ⚑ S175 — THE ROOM'S DOSSIER, ON ITS OWN PANEL. Sérgio: "the sources open
+       * need to be on the 4 panels that make the Close — it is nuisance to go back
+       * and forth. Instead of the computer." A press on a panel turns it to its
+       * room's dossier, drawn in that room's own OS (witness/dossier.ts), page by
+       * page; the last page's press turns it back to the room. Drawn at ×3 into
+       * the cell — 512 × 256 logical, the 1997 desktop's own pixel scale.
+       */
+      const drawDossierCell = (i: number): void => {
+        const y0 = i * CELL_H;
+        pc2.save();
+        pc2.clearRect(0, y0, CELL_W, CELL_H);
+        pc2.beginPath();
+        pc2.rect(0, y0, CELL_W, CELL_H);
+        pc2.clip();
+        pc2.translate(0, y0);
+        pc2.scale(CELL_W / 512, CELL_H / 256);
+        const r = drawDossier(pc2, 512, 256, panelShowEra[i], panelLabel[i], panelFace[i], (pg, n) =>
+          pg + 1 < n ? closeCard.source.panelNext.replace('{p}', String(pg + 1)).replace('{n}', String(n))
+            : closeCard.source.panelBack);
+        pc2.restore();
+        panelFace[i] = r.page;
+        dossierPages[i] = r.pages;
+      };
+      const dossierPages: number[] = panels.map(() => 1);
+      panelFace = panels.map(() => -1);
+      panelLabel = panels.map(() => null);
+      panelEra = panels.map((pn) => pn.era);
+      panelShowEra = panels.map((pn) => pn.era);
+      panels.forEach((panel, i) => drawStoryCell(panel, i));
+      showPanel = (i: number): void => {
+        if (panelFace[i] < 0) drawStoryCell(panels[i], i);
+        else drawDossierCell(i);
+        ptex.upload();
+      };
+      pressPanelImpl = (i: number): void => {
+        if (panelFace[i] < 0) { panelFace[i] = 0; panelLabel[i] = null; panelShowEra[i] = panelEra[i]; }
+        else if (panelFace[i] + 1 >= dossierPages[i]) { panelFace[i] = -1; panelShowEra[i] = panelEra[i]; panelLabel[i] = null; }
+        else panelFace[i] += 1;
+        showPanel?.(i);
+      };
       panelRedraw = (linesByEra) => {
-        panels.forEach((panel, i) => drawText(panel, i, linesByEra[panel.era] ?? []));
+        panels.forEach((panel, i) => {
+          lastLines[i] = linesByEra[panel.era] ?? [];
+          if (panelFace[i] < 0) drawStoryCell(panel, i);
+        });
         ptex.upload();
       };
       const ptex = new pc.Texture(app.graphicsDevice, {
@@ -729,17 +812,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         if (!panel.image) return;
         const img = new Image();
         img.onload = (): void => {
-          const y0 = i * CELL_H;
-          // cover-fit the picture into its well
-          const s = Math.max(PLATE.w / img.width, PLATE.h / img.height);
-          const dw = img.width * s, dh = img.height * s;
-          pc2.save();
-          pc2.beginPath();
-          pc2.rect(PLATE.x, y0 + PLATE.y, PLATE.w, PLATE.h);
-          pc2.clip();
-          pc2.drawImage(img, PLATE.x + (PLATE.w - dw) / 2, y0 + PLATE.y + (PLATE.h - dh) / 2, dw, dh);
-          pc2.restore();
-          ptex.upload();
+          plates[i] = img;
+          if (panelFace[i] < 0) { drawPlate(i); ptex.upload(); }
         };
         img.src = panel.image;
       });
@@ -799,6 +873,15 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   root.enabled = false;
   root.setLocalPosition(ox, oy, oz);
   app.root.addChild(root);
+  // ⚑ S175 review aid (read-only, like __closePanelSizes): where each panel hangs
+  //   in the world right now, and what it shows — so a probe can aim a REAL press
+  (window as unknown as { __closePanels: () => unknown }).__closePanels = () => {
+    const M = root.getWorldTransform();
+    return panelFrames.map((f, i) => {
+      const w = M.transformPoint(new pc.Vec3(f.c.x, f.c.y, f.c.z));
+      return { i, era: panelEra[i], face: panelFace[i], hidden: panelHidden[i] === 1, x: w.x, y: w.y, z: w.z };
+    });
+  };
 
   /**
    * ── ⚑ S101 — THE STARS ON THE CEILING, and they are a real object in the
@@ -951,7 +1034,10 @@ export function buildPointCloud(app: pc.Application): PointCloud {
                 f.c.x + f.r.x * a * f.hw + f.u.x * b * f.hh,
                 f.c.y + f.r.y * a * f.hw + f.u.y * b * f.hh,
                 f.c.z + f.r.z * a * f.hw + f.u.z * b * f.hh), sw);
-              if (onSight(sw.x, sw.y, sw.z, 0.18, 0.6)) h = 1;
+              // S175: 3 cm, not 18 — panels are pressable now (their dossiers), and a
+              //   folded panel cannot be pressed; the 1997 panel clears the machine's
+              //   top by ~3 cm, so it folds only on a real overlap
+              if (onSight(sw.x, sw.y, sw.z, 0.03, 0.6)) h = 1;
             }
           }
         }
@@ -1093,6 +1179,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       fadeLevel = 0;
       corridor = null;
       applySight();   // S174: every folded star and panel back, for the next Close
+      // S175: and every panel back to its room's face
+      panelFace.forEach((f, i) => { if (f >= 0) { panelFace[i] = -1; panelShowEra[i] = panelEra[i]; panelLabel[i] = null; showPanel?.(i); } });
       applyFade();
       ceilingMat.opacity = CEIL.opacity;
       ceilingMat.update();
@@ -1158,6 +1246,32 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         if (h <= (labelWidths[i] / 2) * sc + 0.03 && v <= (P.labelHeight / 2) * sc + 0.03) { best = i; bestT = t; }
       }
       return best >= 0 ? { era: entries[best].era, text: entries[best].text } : null;
+    },
+    pressPanel(i: number): void { pressPanelImpl?.(i); },
+    openDossierFor(era: number, label: string | null): void {
+      if (!showPanel || panelFrames.length === 0) return;
+      let i = panelEra.indexOf(era);
+      if (i < 0) {
+        // no room of its own: the panel nearest the camera's forward, in the cloud's space
+        const camera = app.systems.camera?.cameras[0]?.entity;
+        if (!camera) return;
+        invRoot.copy(root.getWorldTransform()).invert();
+        const f = camera.forward;
+        invRoot.transformVector(lp0.set(f.x, f.y, f.z), lp0);
+        const th = Math.atan2(lp0.x, -lp0.z);
+        let best = 0, bestD = Infinity;
+        panelFrames.forEach((pf, k) => {
+          let d = Math.atan2(pf.c.x, -pf.c.z) - th;
+          while (d > Math.PI) d -= Math.PI * 2;
+          while (d < -Math.PI) d += Math.PI * 2;
+          if (Math.abs(d) < bestD) { bestD = Math.abs(d); best = k; }
+        });
+        i = best;
+      }
+      panelShowEra[i] = era;
+      panelLabel[i] = label;
+      panelFace[i] = 0;
+      showPanel(i);
     },
     gazeOnPanel(on: boolean): void { gazeHeld = on; },
     holdDrift(seconds: number): void { holdT = Math.max(holdT, seconds); },

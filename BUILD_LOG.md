@@ -1822,3 +1822,36 @@ since-written block; stills 39 (the night and the machine back; four dossier fra
 presses, spine done, console clean (the Close's close-go/receipt/back read "inert" — the walker's known
 blind spot for that canvas; 565 close-go → 567 close-receipt proves the arrival).
 **closes R4-13, R4-14, R4-15, R4-16, R4-17, R4-18; opens R4-19 (his `[VERIFY SOURCE]` pass), R4-20 (two assets).**
+
+## 2026-09-24 — S175 · HIS MODELS IN, THE DOSSIERS ON THE PANELS, THE STATUS WORDS FOR THE PUBLIC, THE SOURCES PAGE
+**His models** (`Pc_Simulation/Assests/21:09/`), each measured from its file and imported geometry-only
+with the new `tools/glb_import.py` (bounds + strip): the 1997/2003 towers are Poly by Google's System
+unit; 2003's flip phone lies open by the mouse; **2003's mug carries the flag washed out** — his idea, a
+hidden remark: six stripes faded toward the room's beige, the same language as 2016's greyscale flag;
+Vera's lamp (Quaternius), slippers (Isa Lousberg), notebook (jeremy); her phone now **reclines in a real
+stand on a stack of books** — the Sketchfab stand was exported lying on its side (its root matrix; tilt
++90), a desk stand holds a phone ~1 cm off the desk (out of frame from her seat), so it stands on
+CreativeTrio's books and the phone rests in its lip at its slope (−50°), its screen reclined with it;
+body and screen measured coincident, the whole screen in frame from the seat with a 10° look down.
+**The CD spindle is ours** (`tools/make_cd_spindle.py`): the only CD he found is CC BY-NC, a licence
+nothing in the build carries. **Two engine fixes on the way:** the fold dropped `bands` for props added
+by a later era (the exact "field lost between data and spawner" clusterMorph warns about), and banding
+coloured VERTICES, so a sparse mesh (the mug) blended into one gradient — every triangle is now clipped
+into its band slabs: crisp stripes on any model. **Every model credited, CC0 included** (his rule) — and
+the three J-Toastie CC-BY models (headset, controller, laptop) had never been credited at all.
+**The dossiers moved onto the panels** (his: "nuisance to go back and forth. Instead of the computer"):
+a press turns a panel to its room's dossier in its room's OS, page by page, and back; a label opens its
+room's panel; the machine keeps its card and receipt. Panel fold margin 18 → 3 cm, so a pressable panel
+is not folded away above the machine. `witness/dossier.ts` holds the content and the drawing.
+**The status words, public-facing** (his: "[documentary] … is confusing"): documented · disputed ·
+imagined, one sentence each (`data/strings/status_words.json`), in the panels, the menu and the page; the
+data keeps documentary/contested/speculative. `[VERIFY SOURCE]` reads "(this source is still being
+verified)" — and most of the eleven were checked by his 24 July run; its corrections await his approval.
+**The sources page** (`tools/gen_sources_page.mjs` → `public/sources/index.html`; menu → Credits): the
+rooms, every practice and source, all 35 sources, the process documents, the credits; **18 verified
+links on 8 sources**, only ones his verification run attached to that exact claim — the generator
+refuses any link not verbatim in its verification doc (S175 nearly shipped a URL completed from memory;
+caught). Walked: 292 presses, spine done, console clean (13 Unlock presses — identical to S174's; the
+phone's ending reached through `link`/`link2`). Stills 39 (the four panel dossiers, pressed for real).
+**closes R4-20; moves R4-18 to the panels; opens R4-21 (Room 2 floor z-fight), R4-22 (links for the
+other 27 sources), R4-23 (his blank item 4).**

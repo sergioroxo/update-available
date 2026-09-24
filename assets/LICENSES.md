@@ -23,6 +23,15 @@ mix art styles between rooms).
 | cupOfTea | cupOfTea.glb | Poly Pizza — "Cup Of Tea" by CreativeTrio (Household Props 001) | CC0 1.0 | no | S174: 2003's cup (`mug2003`), geometry only. |
 | mugPens | mugPens.glb | Poly Pizza — "Mug With Office Tool" by CreativeTrio (Household Props 001) | CC0 1.0 | no | S174: Vera's pen mug (`w_mug`), geometry only. |
 | pcTower | pcTower.glb | Poly Pizza — "Computer" by CreativeTrio (Household Props 001) | CC0 1.0 | no | S174: Vera's PC tower (`w_tower`) — it was the pale box he circled as a 'magical shiny box'. Geometry only. |
+| systemUnit | systemUnit.glb | Poly Pizza — "System unit" by Poly by Google (https://poly.pizza/m/1rAUeGQ3J_y) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S175: 1997/2003 towers. Per-axis scale. |
+| flipPhone | flipPhone.glb | Sketchfab — "Flip Phone" by Timmy Turner (https://skfb.ly/p96G9) | CC-BY 4.0 | **yes** — ATTRIBUTIONS.md | S175: 2003, open on the desk (tilt −90). |
+| phoneStand | phoneStand.glb | Sketchfab — "Phone Stand" by zhekamen188 | CC-BY 4.0 | **yes** — ATTRIBUTIONS.md | S175: Vera's stand. The export lies on its side (root matrix) — tilt +90. ⚑ No source URL supplied yet. |
+| notebook | notebook.glb | Poly Pizza — "Notebook" by jeremy (https://poly.pizza/m/9Ptsg_xZt6B) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S175: Vera's notebook. |
+| deskLamp | deskLamp.glb | Poly Pizza — "Light Desk" by Quaternius (https://poly.pizza/m/uJDWrSJGVH) | CC0 1.0 | credited by choice | S175: Vera's lamp. |
+| books | books.glb | Poly Pizza — "Books" by CreativeTrio (Household Props 001) | CC0 1.0 | credited by choice | S175: the riser under Vera's phone stand. Geometry only. |
+| redMug | redMug.glb | Poly Pizza — "Red Mug" by Isa Lousberg (https://poly.pizza/m/Su9VxfL5Yl) | CC0 (per Poly Pizza's credit line) | credited by choice | S175: 2003's mug, coloured by `bands`. Geometry only. |
+| slippers | slippers.glb | Poly Pizza — "Slippers" by Isa Lousberg (https://poly.pizza/m/XV1WqNYen3) | CC0 (per Poly Pizza's credit line) | credited by choice | S175: Vera's slippers. Geometry only. |
+| cdSpindle | cdSpindle.glb | made for this project — `tools/make_cd_spindle.py` | project-owned | no | S175: he could not find one; the only CD model found is CC BY-NC and was not used. |
 | plant | pottedPlant.glb | Kenney Furniture Kit | CC0 | no | Room 1 (C1), new r1-only dressing (windowsill corner) |
 | _(staged)_ | lampSquareTable.glb | Kenney Furniture Kit | CC0 | no | copied, not yet wired |
 | logo | public/assets/logo/logo_480.png | the project's own logo (Sérgio, 2026-09-21; original 1448×1086 at `Pc_Simulation/Logo/`) | project-owned | no | the front door's masthead (S167); scaled to 480 px |

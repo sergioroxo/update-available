@@ -49,6 +49,7 @@ import copy from '../../data/strings/gameMenu.json';
 import attributions from '../../data/strings/attributions.json';
 import { entriesByEra, practiceOf, type RecordEra } from '../witness/record';
 import { SOURCE_FILES } from '../witness/sources';
+import { statusShort, statusLong, publicText } from '../witness/dossier';
 import mapCopy from '../../data/strings/map.json';
 import closeNetwork from '../../data/strings/close_network.json';
 import { DIALOG, domBevel } from './theme/chrome';
@@ -206,7 +207,7 @@ export function mountGameMenu(): GameMenu {
     heading(title);
     for (const line of card.debrief.body) paragraph(line);
     for (const s of card.debrief.sources) {
-      paragraph(`[${s.status} · ${s.confidence}] ${s.text}`);
+      paragraph(`[${statusShort(s.status)} · ${s.confidence}] ${publicText(s.text)}`);   // S175: the public words
     }
     backRow('credits');
   }
@@ -234,7 +235,6 @@ export function mountGameMenu(): GameMenu {
     heading(copy.closeSourcesTitle);
     paragraph(copy.closeSourcesIntro);
     const panels = (closeNetwork as { panels: { era: number; years: string; title: string; status: string; practices?: string[] }[] }).panels;
-    const statusWords = copy.closeSourcesStatus as Record<string, string>;
     panels.forEach((pn, i) => {
       const focus = i === closeFocus;
       const h = document.createElement('div');
@@ -244,12 +244,12 @@ export function mountGameMenu(): GameMenu {
       } as CSSStyleDeclaration);
       h.textContent = `${pn.years} · ${pn.title}`;
       panel.appendChild(h);
-      paragraph(`${copy.yourFilePractice}: ${statusWords[pn.status] ?? pn.status}`);
+      paragraph(`${copy.yourFilePractice}: ${statusLong(pn.status)}`);
       for (const kind of pn.practices ?? []) {
         const pr = practiceOf(kind);
         if (!pr) continue;
         const src = pr.source ? SOURCE_FILES[pr.source.file]?.debrief.sources[pr.source.index] : null;
-        paragraph(`${pr.title.toUpperCase()} — ${pr.did}. [${pr.status}]${src ? ` ${copy.yourFileSource}: ${src.text}` : ` ${copy.yourFileNoSource}`}`);
+        paragraph(`${pr.title.toUpperCase()} — ${pr.did}. [${statusShort(pr.status)}]${src ? ` ${copy.yourFileSource}: ${publicText(src.text)}` : ` ${copy.yourFileNoSource}`}`);
       }
     });
     backRow('credits');
@@ -276,7 +276,7 @@ export function mountGameMenu(): GameMenu {
         for (const e of mine) paragraph(`  · ${e.witness}${e.flagged ? `  [${copy.yourFileFlag}]` : ''}`);
         if (pr) {
           const src = pr.source ? SOURCE_FILES[pr.source.file]?.debrief.sources[pr.source.index] : null;
-          paragraph(`  ${copy.yourFilePractice}: ${pr.status}${src ? ` — ${copy.yourFileSource}: ${src.text}` : ` — ${copy.yourFileNoSource}`}`);
+          paragraph(`  ${copy.yourFilePractice}: ${statusShort(pr.status)}${src ? ` — ${copy.yourFileSource}: ${publicText(src.text)}` : ` — ${copy.yourFileNoSource}`}`);
         }
       }
     }
@@ -484,6 +484,22 @@ export function mountGameMenu(): GameMenu {
       row(copy.creditsOffersSources, () => { view = 'offersSources'; render(); });
       row(copy.creditsDaySources, () => { view = 'daySources'; render(); });
       row(copy.creditsCloseSources, () => { closeFocus = -1; view = 'closeSources'; render(); });
+      // ⚑ S175 — the companion page (tools/gen_sources_page.mjs → public/sources/):
+      //   every source, every verified link, in the public words. A plain link the
+      //   visitor follows into a new tab — a navigation they choose, never a request
+      //   the piece makes.
+      const a = document.createElement('a');
+      a.href = 'sources/index.html';
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = copy.creditsSourcesPage;
+      Object.assign(a.style, {
+        display: 'block', width: '100%', textAlign: 'left', font: 'inherit', fontWeight: '700',
+        color: DIALOG.ink, background: DIALOG.panel, padding: '8px 12px', margin: '0 0 6px',
+        textDecoration: 'none', boxSizing: 'border-box'
+      } as CSSStyleDeclaration);
+      domBevel(a);
+      panel.appendChild(a);
       backRow();
       return;
     }

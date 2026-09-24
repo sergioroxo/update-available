@@ -37,7 +37,7 @@
     { "id": "crtPowerButton", "pos": [0.19, 0.895, 0.024], "size": [0.05, 0.028, 0.014], "color": "#B5A98C" },
     { "id": "crtPowerLed", "pos": [0.13, 0.895, 0.022], "size": [0.018, 0.014, 0.012], "color": "#008000", "emissive": true },
 
-    { "id": "tower", "pos": [0.55, 0.95, -0.28], "size": [0.18, 0.42, 0.42], "color": "#D8CDB4" },
+    { "id": "tower", "model": "systemUnit", "pos": [0.55, 0.74, -0.28], "size": [0.18, 0.42, 0.42], "color": "#D8CDB4", "_docS175": "⚑ S175 — a tower, not a box: 'System unit' (Poly by Google, CC-BY 3.0), from Sérgio's asset pass. A model's pos y is its BASE (0.74 = the desk top). Purely visual: the press that powers the machine on is the CRT's own button (app.ts POWER_BTN), never this mesh." },
     { "id": "towerFloppySlot", "pos": [0.55, 1.06, -0.062], "size": [0.12, 0.02, 0.012], "color": "#404040" },
 
     { "id": "keyboard", "pos": [0, 0.752, 0.16], "size": [0.42, 0.025, 0.14], "color": "#C9BFA6" },

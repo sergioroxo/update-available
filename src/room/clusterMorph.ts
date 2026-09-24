@@ -79,7 +79,10 @@ function foldTargets(idx: number): Map<string, PropTarget> {
     }
     for (const id of delta.remove ?? []) { const t = m.get(id); if (t) t.present = false; }
     for (const def of delta.add ?? []) {
-      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model, modelScale: def.modelScale, parts: def.parts });
+      // ⚑ S175: `bands` too — the base path above carried it (S168, the duck) and
+      //   this `add` path did not, so a banded prop introduced by a later era (the
+      //   2003 mug's washed-out flag, the CD spindle) spawned one flat colour
+      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model, modelScale: def.modelScale, parts: def.parts, bands: def.bands });
     }
   }
   return m;

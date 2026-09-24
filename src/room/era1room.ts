@@ -40,19 +40,66 @@ function bandModel(root: pc.Entity, bands: string[]): void {
       if (pos.length === 0) continue;
       let y0 = Infinity, y1 = -Infinity;
       for (let i = 1; i < pos.length; i += 3) { y0 = Math.min(y0, pos[i]); y1 = Math.max(y1, pos[i]); }
-      const cols: number[] = [];
       const span = Math.max(1e-6, y1 - y0);
       const rgb = bands.map((h) => hex(h));
-      for (let i = 0; i < pos.length; i += 3) {
-        const k = Math.min(bands.length - 1, Math.floor(((pos[i + 1] - y0) / span) * bands.length));
-        const c = rgb[k];
-        cols.push(c.r, c.g, c.b, 1);
+      /**
+       * ⚑ S175 — CRISP STRIPES, WHATEVER THE TESSELLATION. Colouring each VERTEX by
+       * its band only works on a dense mesh (the duck); a mug's side has vertices at
+       * its rim and its foot only, so each face blended violet→red into one mauve
+       * gradient and the flag was invisible (Sérgio's 2003 mug). So every triangle
+       * is CLIPPED into the band slabs it crosses — a two-plane clip per band, fanned
+       * back into triangles, positions and normals interpolated at the cuts — and
+       * each piece is flat-coloured by its band. Built once, at spawn.
+       */
+      const tri = idx.length ? idx : Array.from({ length: pos.length / 3 }, (_, i) => i);
+      const hasN = nrm.length === pos.length;
+      type V = { p: number[]; n: number[] };
+      const outP: number[] = [], outN: number[] = [], outC: number[] = [];
+      const lerpV = (a: V, b: V, t: number): V => {
+        const n = a.n.map((v, j) => v + (b.n[j] - v) * t);
+        const len = Math.hypot(n[0], n[1], n[2]) || 1;
+        return { p: a.p.map((v, j) => v + (b.p[j] - v) * t), n: n.map((v) => v / len) };
+      };
+      /** keep the part of a polygon on one side of the plane y = h */
+      const clip = (poly: V[], h: number, keepAbove: boolean): V[] => {
+        const out: V[] = [];
+        for (let i = 0; i < poly.length; i++) {
+          const a = poly[i], b = poly[(i + 1) % poly.length];
+          const ina = keepAbove ? a.p[1] >= h : a.p[1] <= h;
+          const inb = keepAbove ? b.p[1] >= h : b.p[1] <= h;
+          if (ina) out.push(a);
+          if (ina !== inb) out.push(lerpV(a, b, (h - a.p[1]) / (b.p[1] - a.p[1])));
+        }
+        return out;
+      };
+      const vert = (i: number): V => ({
+        p: [pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]],
+        n: hasN ? [nrm[i * 3], nrm[i * 3 + 1], nrm[i * 3 + 2]] : [0, 1, 0]
+      });
+      for (let t = 0; t + 2 < tri.length; t += 3) {
+        const face = [vert(tri[t]), vert(tri[t + 1]), vert(tri[t + 2])];
+        const ys = face.map((v) => v.p[1]);
+        const kLo = Math.max(0, Math.floor(((Math.min(...ys) - y0) / span) * bands.length));
+        const kHi = Math.min(bands.length - 1, Math.floor(((Math.max(...ys) - y0) / span) * bands.length));
+        for (let k = kLo; k <= kHi; k++) {
+          let poly = face;
+          if (k > 0) poly = clip(poly, y0 + (span * k) / bands.length, true);
+          if (k < bands.length - 1) poly = clip(poly, y0 + (span * (k + 1)) / bands.length, false);
+          if (poly.length < 3) continue;
+          const c = rgb[k];
+          for (let j = 1; j + 1 < poly.length; j++) {
+            for (const v of [poly[0], poly[j], poly[j + 1]]) {
+              outP.push(v.p[0], v.p[1], v.p[2]);
+              outN.push(v.n[0], v.n[1], v.n[2]);
+              outC.push(c.r, c.g, c.b, 1);
+            }
+          }
+        }
       }
       const mesh = new pc.Mesh(src.device);
-      mesh.setPositions(pos);
-      if (nrm.length) mesh.setNormals(nrm);
-      mesh.setColors(cols);
-      if (idx.length) mesh.setIndices(idx);
+      mesh.setPositions(outP);
+      if (hasN) mesh.setNormals(outN);
+      mesh.setColors(outC);
       mesh.update(pc.PRIMITIVE_TRIANGLES);
       const m = new pc.StandardMaterial();
       m.diffuse = new pc.Color(1, 1, 1);

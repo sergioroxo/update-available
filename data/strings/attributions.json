@@ -36,6 +36,104 @@
       "license": "CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)",
       "usedAs": "Room 1 belongings — `tennisRacket`, reinterp only",
       "firstUsed": "Session 90 (2026-08-15)"
+    },
+    {
+      "asset": "\"VR Headset\"",
+      "creator": "J-Toastie, via Poly Pizza (https://poly.pizza/m/raCB2tOkk3)",
+      "license": "CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)",
+      "usedAs": "Era 4: Maya's headset. ⚑ Owed since it shipped — missing from this table until S175",
+      "firstUsed": "S74 (2026-08)"
+    },
+    {
+      "asset": "\"VR Controller\"",
+      "creator": "J-Toastie, via Poly Pizza (https://poly.pizza/m/z76Vm9mH2f)",
+      "license": "CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)",
+      "usedAs": "Era 4: the headset's controller. ⚑ Owed since it shipped — missing until S175",
+      "firstUsed": "S74 (2026-08)"
+    },
+    {
+      "asset": "\"Laptop\"",
+      "creator": "J-Toastie, via Poly Pizza (https://poly.pizza/m/UGOWjMUC5U)",
+      "license": "CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)",
+      "usedAs": "Era 4: Maya's laptop. ⚑ Owed since it shipped — missing until S175",
+      "firstUsed": "S98 (2026-09-01)"
+    },
+    {
+      "asset": "\"System unit\"",
+      "creator": "Poly by Google, via Poly Pizza (https://poly.pizza/m/1rAUeGQ3J_y)",
+      "license": "CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)",
+      "usedAs": "1997 and 2003: the PC towers on Daniel's desk",
+      "firstUsed": "S175, 2026-09-24"
+    },
+    {
+      "asset": "\"Flip Phone\"",
+      "creator": "Timmy Turner, via Sketchfab (https://skfb.ly/p96G9)",
+      "license": "CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)",
+      "usedAs": "2003: Daniel's phone, open on the desk",
+      "firstUsed": "S175, 2026-09-24"
+    },
+    {
+      "asset": "\"Phone Stand\"",
+      "creator": "zhekamen188, via Sketchfab",
+      "license": "CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/)",
+      "usedAs": "2016: Vera's phone stand",
+      "firstUsed": "S175, 2026-09-24"
+    },
+    {
+      "asset": "\"Notebook\"",
+      "creator": "jeremy, via Poly Pizza (https://poly.pizza/m/9Ptsg_xZt6B)",
+      "license": "CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)",
+      "usedAs": "2016: Vera's notebook",
+      "firstUsed": "S175, 2026-09-24"
+    },
+    {
+      "asset": "Furniture Kit (bed, desk, desk chair, bookcase, rug, side table, potted plant) and \"Computer Screen\", \"Computer Keyboard\"",
+      "creator": "Kenney (https://kenney.nl/assets/furniture-kit)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "the three rooms' furniture; 2016's monitor and keyboard",
+      "firstUsed": "Round 24 (2026-07)"
+    },
+    {
+      "asset": "\"Phone\"",
+      "creator": "Quaternius, via Poly Pizza (https://poly.pizza/m/k2kgBepoMU)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2016: Vera's phone",
+      "firstUsed": "2026-08-21"
+    },
+    {
+      "asset": "\"Light Desk\"",
+      "creator": "Quaternius, via Poly Pizza (https://poly.pizza/m/uJDWrSJGVH)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2016: Vera's desk lamp",
+      "firstUsed": "S175, 2026-09-24"
+    },
+    {
+      "asset": "\"Wall Corkboard\", \"Rubber Duck\"",
+      "creator": "CreativeTrio, via Poly Pizza (https://poly.pizza/m/oH3dEdlDpB)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "the opening's corkboard; Room 1's rainbow duck",
+      "firstUsed": "2026-08-17"
+    },
+    {
+      "asset": "\"Mouse\", \"Cup Of Tea\", \"Mug With Office Tool\", \"Computer\", \"Books\" (Household Props 001)",
+      "creator": "CreativeTrio, via Poly Pizza",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "the desks' mice, cups and mugs; Vera's PC tower; the books under her phone",
+      "firstUsed": "S174–S175, 2026-09-22/24"
+    },
+    {
+      "asset": "\"Red Mug\", \"Slippers\"",
+      "creator": "Isa Lousberg, via Poly Pizza (https://poly.pizza/m/Su9VxfL5Yl, https://poly.pizza/m/XV1WqNYen3)",
+      "license": "as Poly Pizza lists it (no CC-BY tag in its credit line → CC0) — credited by choice",
+      "usedAs": "2003: Daniel's mug, the flag faded on it; 2016: Vera's slippers",
+      "firstUsed": "S175, 2026-09-24"
+    },
+    {
+      "asset": "CD spindle",
+      "creator": "made for this project (`tools/make_cd_spindle.py`)",
+      "license": "project-owned",
+      "usedAs": "2003: the CD spindle on Daniel's desk",
+      "firstUsed": "S175, 2026-09-24"
     }
   ],
   "influences": [

@@ -28,13 +28,7 @@
 import * as pc from 'playcanvas';
 import { recordEntries, practiceOf } from '../witness/record';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
-import { px, setFont, bevel, wrapText, windowFrame, DIALOG } from '../desktop/theme/chrome';
-import { ERA3, windowFrame as aeroFrame } from '../desktop/theme/era3';
-import { ERA4 } from '../desktop/theme/era4';
-import { setFaceEra, faceEra, type FaceEra } from '../desktop/theme/fonts';
-import { sourceTextOf } from '../witness/sources';
-import closeNetwork from '../../data/strings/close_network.json';
-import menuCopy from '../../data/strings/gameMenu.json';
+import { px, setFont, bevel } from '../desktop/theme/chrome';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import layout from '../../data/room/era1.json';
 import card from '../../data/strings/close_restart.json';
@@ -70,10 +64,6 @@ export interface CloseMonitor {
   onGo?: () => void;
   /** S167: the card's "The dossier" — the frame opens its reading of the panels */
   onDossier?: () => void;
-  /** ⚑ S174 / R4-18 — a label or panel pressed in the sky: this room's dossier on
-   *  the machine's screen, in that room's own OS (era 0 = how this was made).
-   *  From afar it asks for the eye to come (`onGo`); the window is drawn on arrival. */
-  openSource(era: number, label: string | null): void;
 }
 
 /** the CRT's visible screen, as app.ts has it (metres, 4:3) */
@@ -345,124 +335,10 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     tex.upload();
   }
 
-  /**
-   * ⚑ S174 / R4-18 — THE ROOM'S DOSSIER, IN THE ROOM'S OWN OS. One machine
-   * (the receipt's own words: "1997 – 2026 · one machine") shows every era's
-   * window: 1997's grey on teal, 2003's on Restorify's blue, 2016's glass, 2026's
-   * dark; the seven process labels in the frame's own dialog. The content is the
-   * dossier the frame's menu already reads — the panel's status, its practices,
-   * each practice's verified source — and the room's references, listed together
-   * with the pressed one marked. Nothing here is a new claim (close_restart.json
-   * `_docSource`). Long dossiers page; Back returns to the card.
-   */
-  type Line = { t: string; k: 'head' | 'body' | 'dim' | 'ref' | 'mine' };
-  const SRC = card.source;
-  const statusWords = menuCopy.closeSourcesStatus as Record<string, string>;
-  function sourceLines(era: number, label: string | null): { title: string; lines: Line[] } {
-    const lines: Line[] = [];
-    const refs = (closeNetwork.labels as { era: number; text: string }[]).filter((l) => l.era === era);
-    const refBlock = (): void => {
-      lines.push({ t: era === 0 ? SRC.makersRefsLabel : SRC.refsLabel, k: 'head' });
-      for (const r of refs) lines.push({ t: (r.text === label ? '› ' : '  ') + r.text, k: r.text === label ? 'mine' : 'ref' });
-    };
-    if (era === 0) {
-      for (const l of SRC.makersLines) lines.push({ t: l, k: 'body' });
-      refBlock();
-      lines.push({ t: card.makers, k: 'dim' });
-      return { title: SRC.makersTitle, lines };
-    }
-    const pn = (closeNetwork.panels as { era: number; years: string; title: string; status: string; practices?: string[] }[])
-      .find((p) => p.era === era);
-    if (!pn) return { title: '', lines };
-    lines.push({ t: `${SRC.statusLabel}: ${statusWords[pn.status] ?? pn.status}`, k: 'body' });
-    lines.push({ t: SRC.practicesLabel, k: 'head' });
-    for (const kind of pn.practices ?? []) {
-      const pr = practiceOf(kind);
-      if (!pr) continue;
-      lines.push({ t: `${pr.title.toUpperCase()} — ${pr.did}. [${pr.status}]`, k: 'body' });
-      const src = sourceTextOf(pr as { source?: { file: string; index: number } | null });
-      lines.push({ t: src ? `${menuCopy.yourFileSource}: ${src}` : menuCopy.yourFileNoSource, k: 'dim' });
-    }
-    refBlock();
-    return { title: SRC.windowTitle.replace('{years}', pn.years).replace('{title}', pn.title), lines };
-  }
-
-  let srcEra = 0;
-  let srcLabel: string | null = null;
-  let srcPage = 0;
-  function drawSource(): void {
-    hits.length = 0;
-    const was = faceEra();
-    const fe: FaceEra = srcEra === 0 ? 'e1' : (`e${srcEra}` as FaceEra);
-    setFaceEra(fe);
-    const { title, lines } = sourceLines(srcEra, srcLabel);
-    // the desktop, the window, and the ink — each room's own
-    let area: { x: number; y: number; w: number; h: number };
-    let ink: string = ERA1.black, dim: string = ERA1.greyDark, head: string = ERA1.navy, mine: string = ERA1.warnDark;
-    const wx = 14, wy = 12, ww = W - 28, wh = H - 24;
-    if (srcEra === 3) {
-      px(ctx, 0, 0, W, H, ERA3.deskMid);
-      area = aeroFrame(ctx, wx, wy, ww, wh, title);
-      ink = ERA3.titleText; dim = ERA3.frame; head = ERA3.deskMid; mine = ERA3.deskTop;
-    } else if (srcEra === 4) {
-      px(ctx, 0, 0, W, H, ERA4.field);
-      px(ctx, wx, wy, ww, wh, ERA4.panelEdge);
-      px(ctx, wx + 1, wy + 1, ww - 2, wh - 2, ERA4.panel);
-      px(ctx, wx + 1, wy + 1, ww - 2, 22, ERA4.panelHi);
-      setFont(ctx, 11);
-      ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(title, wx + 10, wy + 6);
-      area = { x: wx + 10, y: wy + 30, w: ww - 20, h: wh - 38 };
-      ink = ERA4.text; dim = ERA4.dim; head = ERA4.meta; mine = ERA4.textHi;
-    } else {
-      px(ctx, 0, 0, W, H, srcEra === 0 ? DIALOG.screenDark : srcEra === 2 ? ERA1.titleBlue : ERA1.teal);
-      const c = windowFrame(ctx, wx, wy, ww, wh, title);
-      area = { x: c.x + 4, y: c.y + 4, w: c.w - 8, h: c.h - 8 };
-    }
-    // wrap, then page: the button row keeps the foot of the window
-    setFont(ctx, 10);
-    const rows: Line[] = [];
-    for (const l of lines) {
-      if (l.k === 'head' && rows.length) rows.push({ t: '', k: 'body' });
-      for (const w of wrapText(ctx, l.t, area.w)) rows.push({ t: w, k: l.k });
-    }
-    const LH = 13;
-    const perPage = Math.max(1, Math.floor((area.h - 32) / LH));
-    const pages = Math.max(1, Math.ceil(rows.length / perPage));
-    srcPage = srcPage % pages;
-    let y = area.y;
-    for (const r of rows.slice(srcPage * perPage, (srcPage + 1) * perPage)) {
-      ctx.fillStyle = r.k === 'head' ? head : r.k === 'dim' ? dim : r.k === 'mine' ? mine : ink;
-      ctx.fillText(r.t, area.x, y);
-      y += LH;
-    }
-    // Back, and More when the dossier runs past one page
-    const btn = (label: string, x: number, id: string): void => {
-      const by = area.y + area.h - 24, bw = 80;
-      if (srcEra >= 3) {
-        px(ctx, x, by, bw, 22, srcEra === 3 ? ERA3.glassEdge : ERA4.chipEdge);
-        px(ctx, x + 1, by + 1, bw - 2, 20, srcEra === 3 ? ERA3.titleA : ERA4.chip);
-        ctx.fillStyle = srcEra === 3 ? ERA3.titleText : ERA4.chipText;
-      } else {
-        bevel(ctx, x, by, bw, 22, true);
-        ctx.fillStyle = ERA1.black;
-      }
-      const tw = ctx.measureText(label).width;
-      ctx.fillText(label, Math.round(x + (bw - tw) / 2), by + 6);
-      hits.push({ x, y: by, w: bw, h: 22, id });
-    };
-    btn(SRC.back, area.x + area.w - 80, 'close-src-back');
-    if (pages > 1) {
-      btn(`${SRC.more} ${srcPage + 1}/${pages}`, area.x + area.w - 172, 'close-src-more');
-    }
-    setFaceEra(was);
-    tex.upload();
-  }
-
   let on = false;
   let rise = 0;
   let near = false;
-  let face: 'card' | 'receipt' | 'source' = 'card';
+  let face: 'card' | 'receipt' = 'card';
   const api: CloseMonitor = {
     entity,
     get on() { return on; },
@@ -483,7 +359,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     setNear(n: boolean): void {
       if (near === n) return;
       near = n;
-      if (on) { if (!near) drawFar(); else if (face === 'receipt') drawReceipt(); else if (face === 'source') drawSource(); else drawCard(); }
+      if (on) { if (!near) drawFar(); else if (face === 'receipt') drawReceipt(); else drawCard(); }
     },
     hitTest(p0, p1): { x: number; y: number } | null {
       if (!entity.enabled) return null;
@@ -527,14 +403,6 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       bodyMat.emissive.set(0.8 * k, 0.8 * k, 0.8 * k);   // and lighter again (2026-09-13); × the vertex colour since S174
       bodyMat.update();
     },
-    openSource(era: number, label: string | null): void {
-      if (!on) return;
-      face = 'source';
-      srcEra = Math.max(0, Math.min(4, era | 0));
-      srcLabel = label;
-      srcPage = 0;
-      if (near) drawSource(); else api.onGo?.();
-    },
     press(x: number, y: number): boolean {
       for (const h of api.hits) {
         if (x < h.x || x > h.x + h.w || y < h.y || y > h.y + h.h) continue;
@@ -543,8 +411,6 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         if (h.id === 'close-receipt') { face = 'receipt'; drawReceipt(); return true; }
         if (h.id === 'close-back') { face = 'card'; drawCard(); return true; }
         if (h.id === 'close-dossier') { api.onDossier?.(); return true; }
-        if (h.id === 'close-src-back') { face = 'card'; drawCard(); return true; }
-        if (h.id === 'close-src-more') { srcPage++; drawSource(); return true; }
         const era = card.eras.find((e) => `close-era-${e.era}` === h.id)?.era;
         if (era) { api.onEra?.(era as EraKey); return true; }
       }

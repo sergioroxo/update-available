@@ -289,11 +289,17 @@ async function main() {
         await page.evaluate(() => { const cm = window.__closeMonitor; const h = cm.hits.find((r) => r.id === 'close-receipt'); cm.press(h.x + h.w / 2, h.y + h.h / 2); });
         await wait(1500);
         await shot('09-the-receipt', 'the receipt: every update stacked, each FAILED — kept by nobody');
-        // S174 / R4-18: a room's dossier, in that room's own OS (a label or a panel press opens it)
-        for (const [era, tag] of [[1, '1997'], [3, '2016'], [4, '2026'], [0, 'how-it-was-made']]) {
-          await page.evaluate((e) => window.__closeMonitor.openSource(e, null), era);
+        // S175: each room's dossier, ON ITS PANEL (a press turns it), shot from the seat —
+        //   aimed with the review probe __closePanels, pressed with the REAL mouse
+        for (const [era, tag] of [[1, '1997'], [2, '2003'], [3, '2016'], [4, '2026']]) {
+          const q = (await page.evaluate(() => window.__closePanels())).find((x) => x.era === era);
+          if (!q || q.hidden) { console.log(`  ⚠ the ${tag} panel is folded behind the machine right now — no frame`); continue; }
+          const E = { x: 0, y: 1.16, z: 0.7 };
+          const dx = q.x - E.x, dy = q.y - E.y, dz = q.z - E.z;
+          await free(E.x, E.y, E.z, Math.atan2(dy, Math.hypot(dx, dz)) * 180 / Math.PI, Math.atan2(-dx, -dz) * 180 / Math.PI);
+          await page.mouse.move(640, 360); await page.mouse.down(); await wait(70); await page.mouse.up();
           await wait(1200);
-          await shot(`10-dossier-${tag}`, era === 0 ? 'how this was made: the project\'s own documents, on the machine' : `the ${tag} room's dossier, in its own OS, on the one machine`);
+          await shot(`10-dossier-${tag}`, `the ${tag} room's dossier, on its own panel, in its own OS`);
         }
       } else console.log('  ⚠ the card never came near — no receipt still');
     } else console.log('  ⚠ close-go not published — no receipt still');

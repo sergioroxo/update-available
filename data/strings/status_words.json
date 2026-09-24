@@ -1,0 +1,16 @@
+{
+ "_doc": "⚑ S175 (2026-09-24) — THE STATUS WORDS, FOR THE PUBLIC. Sérgio: 'We need to settle better on this labeling as [documentary] etc, that worked better for our organization but for public facing it is confusing.' The dossier's own vocabulary (documentary / contested / speculative) stays in the DATA — CLAUDE.md and check-spec require it on every card — and this file is how it READS wherever a visitor meets it: the Close's panels, the menu's sources, the public sources page. One place, so the three never drift. The marker `[VERIFY SOURCE]` (a source the project has not finished checking) is shown to the public as `verifyPublic` — honest that it is unfinished, without the in-house shorthand (OPEN_ITEMS R4-19: his pass).",
+ "short": {
+  "documentary": "documented",
+  "contested": "disputed",
+  "speculative": "imagined"
+ },
+ "long": {
+  "documentary": "Documented — this happened, and the sources show it.",
+  "contested": "Documented, and disputed — the record shows it and argues over it.",
+  "speculative": "Imagined — the piece's own projection from what is documented, and marked as such."
+ },
+ "_verifyMarker": "[VERIFY SOURCE]",
+ "verifyPublic": "(this source is still being verified)",
+ "linkedNote": "↗ its verified links are on the sources page (menu → Credits)"
+}

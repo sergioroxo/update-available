@@ -1,0 +1,39 @@
+{
+ "_doc": "⚑ S175 (2026-09-24) — THE LINKS, AND ONLY VERIFIED ONES. Sérgio: 'we need to have an accompanying webpage to this project where all the sources are listed with the links to what we use.' None of the piece's 35 source texts carries a URL; they are citations in prose. This file adds links WITHOUT touching a dossier text (ETHICS_CONSTRAINTS #13/#14), keyed `<provotype file>#<source index>`, and every link here is one that docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md (his Deep Research verification run) attaches to THAT claim — nothing guessed, nothing found by searching. Sources with no entry are listed on the page without a link, honestly. Add a link only with its `verifiedIn`. tools/gen_sources_page.mjs reads this.",
+ "links": {
+  "origin_intake_e1#0": [
+   { "label": "Gerard van den Aardweg, The Battle for Normality (1997), PDF", "url": "https://exgaycalling.com/wp-content/uploads/2020/03/Battle-For-Normality-The-Dr.-Gerard-van-den-Aardweg.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+  ],
+  "origin_intake_e1#1": [
+   { "label": "Love Won Out conference guide", "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Love_Won_Out_Conference_Guide.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+  ],
+  "origin_intake_e1#2": [
+   { "label": "TIME, July 2014 — James Guay's account", "url": "https://time.com/2986440/sexual-conversion-therapy-gay/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "Flentje, Heck & Cochran (2013), Journal of Gay & Lesbian Mental Health 17(3)", "url": "https://doi.org/10.1080/19359705.2013.773268", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "Survivors of sexual orientation change efforts — amicus brief, US Ninth Circuit (2013)", "url": "https://cdn.ca9.uscourts.gov/datastore/general/2013/02/04/13-15023_Amicus_brief_by_Survivors_of_Sexual_Orientation_Change_Efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+  ],
+  "origin_intake_e1#3": [
+   { "label": "APA Task Force (2009), Appropriate Therapeutic Responses to Sexual Orientation", "url": "https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "APA Resolution on Sexual Orientation Change Efforts (2021)", "url": "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "APA Resolution on Gender Identity Change Efforts (2021)", "url": "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "UK Memorandum of Understanding on Conversion Therapy, version 2 (2017)", "url": "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+  ],
+  "pillow#0": [
+   { "label": "The Washington Post, 16 August 2005 — a profile of Richard Cohen", "url": "https://www.washingtonpost.com/archive/lifestyle/wellness/2005/08/16/a-conversion-therapists-unusual-odyssey/8e1a190d-edc8-4914-b847-310098afed61/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+  ],
+  "pillow#2": [
+   { "label": "Ferguson v. JONAH — New Jersey Appellate Division opinion", "url": "https://www.njcourts.gov/system/files/court-opinions/2019/fergusonvjonah.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "Ferguson v. JONAH — SPLC case docket", "url": "https://www.splcenter.org/resources/civil-rights-case-docket/michael-ferguson-et-al-v-jonah-et-al/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+  ],
+  "pillow#3": [
+   { "label": "APA Task Force (2009), Appropriate Therapeutic Responses to Sexual Orientation", "url": "https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "APA Resolution on Sexual Orientation Change Efforts (2021)", "url": "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "APA Resolution on Gender Identity Change Efforts (2021)", "url": "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "UK Memorandum of Understanding on Conversion Therapy, version 2 (2017)", "url": "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+  ],
+  "e3_theday#12": [
+   { "label": "Malta — Affirmation of Sexual Orientation, Gender Identity and Gender Expression Act (Chapter 567)", "url": "https://legislation.mt/eli/cap/567/eng", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
+   { "label": "Parliament of Malta — Bill No. 167", "url": "https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+  ]
+ }
+}

@@ -1,40 +1,41 @@
 STATUS: live
 
-# ASSET REQUEST — the models to fetch for me (2026-09-22, S174)
+# ASSET REQUEST — the models to fetch (2026-09-22, S174; updated 2026-09-24, S175)
 *Sérgio, after the exhibition stills: "those are clearly models missing, so if needed give me a list of
-assets would like me to grab for you, and in what type of file." I checked `Pc_Simulation/Assests`
-first — most of what you marked already had a model on your disk, and those are in the build now
-(Mouse, Cup Of Tea, Mug With Office Tool and Computer, all CreativeTrio, CC0). This is only what is
-genuinely missing.*
+assets would like me to grab for you, and in what type of file." He fetched a batch on 2026-09-24
+(`Pc_Simulation/Assests/21:09/`); what came in and where it went is below, then what is still open.*
 
 ## The file you want, every time
-- **Format: `.glb`** (binary glTF — one file, no separate textures folder). `.gltf` + `.bin` works too;
-  `.fbx`, `.obj`, `.blend` do not go straight in.
-- **Low-poly**, under ~2,000 triangles. One object, not a scene. Textures do not matter — I strip them
-  (the no-textures law) and colour the model flat to its era.
-- **Licence, in order of preference: CC0** (Kenney, Quaternius, CreativeTrio on Poly Pizza — nothing to
-  credit) → **CC-BY** (fine: it gets a line in `ATTRIBUTIONS.md` and the credits). Nothing "free for
-  personal use", nothing with no licence stated.
-- **Where:** drop it in `Pc_Simulation/Assests/` and add its line to `Licenses .rtf` the way the others
-  are ("Name by Author (licence) via Poly Pizza (link)"). Tell me the file name; I do the rest.
+- **Format: `.glb`** (binary glTF — one file). `.gltf` + `.bin` works too; `.fbx`, `.obj`, `.blend` do not
+  go straight in.
+- **Low-poly**, under ~2,000 triangles, one object. Textures do not matter — `tools/glb_import.py strip`
+  removes them (the no-textures law) and the room colours the model flat to its era.
+- **Licence: CC0 or CC-BY.** ⚑ Not **CC BY-NC** (non-commercial): nothing in the build carries it, and a
+  public, exhibited work is exactly where "non-commercial" gets argued about. Nothing "personal use only",
+  nothing unlicensed.
+- **Every model is credited, CC0 included** (his rule, 2026-09-24) — `docs/reinterp/ATTRIBUTIONS.md` →
+  the in-piece Credits and the public sources page. So send the **source URL** with each one.
 
-## Needed — these are out of the room until a model exists
-| # | what | where it goes | why | search terms |
-|---|---|---|---|---|
-| 1 | **A flip phone** (clamshell, closed) | 2003, on Daniel's desk | it dates the room; it was a box standing *inside* the mouse | Poly Pizza "flip phone", "cell phone", "Nokia" |
-| 2 | **A CD spindle** (or a small stack of CD cases) | 2003, desk corner by the lamp | you circled it: a grey box with a cap | "CD spindle", "CD stack", "disc" |
+## What came in on 2026-09-24, and where it went
+| model | from | licence | where |
+|---|---|---|---|
+| Flip Phone | Timmy Turner, Sketchfab | CC-BY 4.0 | 2003, open on Daniel's desk right of the mouse |
+| Red Mug | Isa Lousberg, Poly Pizza | CC0 (per its credit line) | 2003 — **the flag, washed out**: six faded stripes (his idea: a hidden remark) |
+| System unit | Poly by Google, Poly Pizza | CC-BY 3.0 | the 1997 and 2003 towers |
+| Light Desk | Quaternius, Poly Pizza | CC0 | Vera's lamp (2016). Room 1 keeps its box lamp, which he likes |
+| Phone Stand | zhekamen188, Sketchfab | CC-BY 4.0 | Vera's phone — on a stack of books, so it stays in frame from her seat |
+| Slippers | Isa Lousberg, Poly Pizza | CC0 (per its credit line) | Vera's slippers, by the bed |
+| Desk | Kenney, Poly Pizza | CC0 | **already in the build** — it is the Kenney desk the rooms have used since Round 24 |
+| Lowpoly CD | beelur, Sketchfab | **CC BY-NC** | **not used** — the licence (above). The CD spindle is our own model instead (`tools/make_cd_spindle.py`) |
+| Books, Notebook | CreativeTrio / jeremy (already on his disk) | CC0 / CC-BY 3.0 | the books under the stand; Vera's notebook |
 
-Both are **parked, not deleted** (`reinterp_deltas.json` r2 → `_parkedS174`): the moment a model exists,
-they go back in one line each.
-
-## Nice to have — each would replace a box that works but reads as a box
+## Still open
 | # | what | where | note |
 |---|---|---|---|
-| 3 | A **1990s beige PC tower** | 1997 (`tower`) and 2003 (`tower2003`) | both towers are boxes; they read, but a model would match the new mouse |
-| 4 | A **dial-up modem / early router** | 2003 | only if you want the modem back — you crossed it and it is out |
-| 5 | A **table/desk lamp**, era-neutral | Rooms 1 and 2 | the lamp is three boxes; your `Household Props 001` has `Desk Lamp.glb` and `Lamp With Shade.glb` — say the word and I use one of those (no fetching needed) |
+| 1 | **The Phone Stand's source URL** | credits | he sent the model without its Sketchfab link — the credit line needs it |
+| 2 | **A wall calendar** (paper, hanging) | 2016, Vera's wall | today two flat boxes (`w_calendar`, `w_calendarPage`) |
+| 3 | **A pen** | 2016, on the notebook | today a thin box — optional, it is small |
+| 4 | A **dial-up modem / early router** | 2003 | only if he wants the modem back — he crossed it |
 
-## Already on your disk and NOT used — so you know
-`Radio.glb` (Quaternius) and `Empty Picture Frame.glb` (Jarlan Perez) exist, but you crossed the radio
-and the frame on the 2016 still, so they are out of the room rather than modelled. If the crosses meant
-"make this real" and not "take it out", tell me and they go back in with their models.
+*Not asked for, deliberately:* Vera's poster and sign are flat colour cards on the wall by design (a poster
+IS flat — S115/S122 made them read as posters), and the 2016 flag is greyscale on purpose (2026-09-05).

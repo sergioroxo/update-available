@@ -49,9 +49,7 @@ import { mountHelper, type Helper } from '../frame/helper';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { FRAME } from '../desktop/theme/chrome';
-import closeNetwork from '../../data/strings/close_network.json';
-/** S174 / R4-18: panel index → its era, for the Close's dossier window */
-const closeNetworkPanels = (closeNetwork as { panels: { era: number }[] }).panels;
+
 
 const FLIP_SECONDS = 0.9;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
@@ -2883,19 +2881,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       if (cloud?.visible) {
         cloud.holdDrift(3);
-        // ⚑ S174 / R4-18 — a label, then a panel: each opens ITS ROOM's dossier
-        //   on Daniel's machine, in that room's own OS (Sérgio: "each button opens
-        //   a panel in the style of the OS of the time"). Until the machine is lit
-        //   a panel still opens the frame's reading, as it did (S163).
+        // ⚑ S175 — a label, then a panel: each turns ITS ROOM's panel to the room's
+        //   dossier, in that room's own OS, right where it hangs (Sérgio: "the
+        //   sources open need to be on the 4 panels … it is nuisance to go back and
+        //   forth. Instead of the computer."). A panel's press turns its pages and,
+        //   after the last, turns it back to the room.
         const lb = cloud.labelAt(ray.p0, ray.p1);
-        if (lb && closeMonitor?.on) { closeMonitor.openSource(lb.era, lb.text); return; }
+        if (lb) { cloud.openDossierFor(lb.era, lb.text); return; }
         const pi = cloud.panelAt(ray.p0, ray.p1);
-        if (pi !== null) {
-          const era = (closeNetworkPanels[pi]?.era ?? pi + 1);
-          if (closeMonitor?.on) closeMonitor.openSource(era, null);
-          else gameMenuBus.openCloseSources?.(pi);
-          return;
-        }
+        if (pi !== null) { cloud.pressPanel(pi); return; }
       }
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room

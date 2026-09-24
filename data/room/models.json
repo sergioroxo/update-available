@@ -203,11 +203,12 @@
       "baseY": -0.4547,
       "_docTilt": "⚑ S149: [15,0,0] — the handset STANDS on its dock now, leaning 15° back toward the seat (was [90,0,0], flat on the desk; see era3Devices PLACEMENT.phone and reinterp_deltas w_phoneStand).",
       "tilt": [
-        -15,
+        -50,
         0,
         0
       ],
-      "_docS174": "⚑ S174 / R4-13 — the handset now STANDS ON its dock. `baseY` was 0 but phone.glb's origin is its CENTRE (native y −0.4547…+0.4538), so the base-at-pos rule seated the phone's middle on the dock top: half of it sunk into the stand, and the screen plane — correctly placed for a phone standing there — floated 7 cm above the body. And `tilt` was +15, which leans the top TOWARD the seat while the screen plane leans back: the two crossed, and the body hid the top of the screen ('the stand is looking at the wall and not the user'). Measured both leans live; −15 matches the plane, and the prop sits 2.1 cm nearer the seat (reinterp_deltas w_phoneDevice) so the screen lies on its face."
+      "_docS174": "⚑ S174 / R4-13 — the handset now STANDS ON its dock. `baseY` was 0 but phone.glb's origin is its CENTRE (native y −0.4547…+0.4538), so the base-at-pos rule seated the phone's middle on the dock top: half of it sunk into the stand, and the screen plane — correctly placed for a phone standing there — floated 7 cm above the body. And `tilt` was +15, which leans the top TOWARD the seat while the screen plane leans back: the two crossed, and the body hid the top of the screen ('the stand is looking at the wall and not the user'). Measured both leans live; −15 matches the plane, and the prop sits 2.1 cm nearer the seat (reinterp_deltas w_phoneDevice) so the screen lies on its face.",
+      "_docS175": "⚑ S175 — reclined −15 → −50: the phone rests in a real stand now (w_phoneCradle, 'Phone Stand' by zhekamen188), base in its seat-side lip, back on its slope. era3Devices PLACEMENT.phone reclines with it (euler 75 → 40)."
     },
     {
       "key": "computerScreen",
@@ -297,6 +298,119 @@
       "yaw": 0,
       "cx": -0.0938,
       "cz": 0.0008,
+      "baseY": 0
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — 'Flip Phone' by Timmy Turner (Sketchfab, CC-BY 4.0). An OPEN clamshell authored standing (native 1.31 × 4.76 × 0.79, origin at its middle); tilt −90 lays it on the desk, tiltOffset lifts its half-thickness off the top.",
+      "key": "flipPhone",
+      "file": "flipPhone.glb",
+      "scale": 0.036,
+      "yaw": 0,
+      "cx": 0,
+      "cz": 0.0043,
+      "baseY": -2.3718,
+      "tilt": [
+        -90,
+        0,
+        0
+      ],
+      "tiltOffset": [
+        0,
+        0.0142
+      ]
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — 'Red Mug' by Isa Lousberg (Poly Pizza), geometry only. Native 0.512 × 0.35 × 0.375 (handle included; centre x 0.0697). Coloured by the prop's `bands`.",
+      "key": "redMug",
+      "file": "redMug.glb",
+      "scale": 0.25,
+      "yaw": 0,
+      "cx": 0.0697,
+      "cz": 0,
+      "baseY": 0
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — 'Slippers' by Isa Lousberg (Poly Pizza), geometry only. Native 0.735 × 0.206 × 0.59 — the pair.",
+      "key": "slippers",
+      "file": "slippers.glb",
+      "scale": 0.38,
+      "yaw": 0,
+      "cx": 0,
+      "cz": -0.0047,
+      "baseY": 0
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — 'System unit' by Poly by Google (Poly Pizza, CC-BY 3.0): a desktop tower. Native units are millimetres-ish (154 × 280 × 384.4, centre x −8 z 5.2, minY −136); the per-axis scale meets the 0.18 × 0.42 × 0.45 box it replaces without reaching past the desk's back edge.",
+      "key": "systemUnit",
+      "file": "systemUnit.glb",
+      "scale": [
+        0.00117,
+        0.0015,
+        0.00117
+      ],
+      "yaw": 0,
+      "cx": -8.0,
+      "cz": 5.2,
+      "baseY": -136
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — 'Light Desk' by Quaternius (Poly Pizza, CC0): an articulated desk lamp. Native 0.2515 × 0.5732 × 0.4532, centre z 0.1008.",
+      "key": "deskLamp",
+      "file": "deskLamp.glb",
+      "scale": 0.6,
+      "yaw": 0,
+      "cx": 0,
+      "cz": 0.1008,
+      "baseY": 0.0002
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — 'Phone Stand' by zhekamen188 (Sketchfab, CC-BY 4.0). Native centimetres: 11.49 × 6.35 × 6.73, off its pivot (centre x −4.80 z −2.60).",
+      "key": "phoneStand",
+      "file": "phoneStand.glb",
+      "scale": 0.01,
+      "yaw": 0,
+      "cx": -4.7992,
+      "cz": -2.5961,
+      "baseY": 0,
+      "tilt": [
+        90,
+        0,
+        0
+      ],
+      "tiltOffset": [
+        0,
+        0.034
+      ],
+      "_docTilt": "⚑ S175: the Sketchfab export stands the stand on its side — its root matrix maps the extrusion (6.35) to world up and the side profile's height to world −z. tilt +90 about x puts the profile upright; tiltOffset lifts its half-height off the desk."
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — 'Books' by CreativeTrio (Poly Pizza, CC0), geometry only: a stack 0.197 × 0.156 × 0.125 — the riser that keeps Vera's phone at the height its ending needs.",
+      "key": "books",
+      "file": "books.glb",
+      "scale": 1.0,
+      "yaw": 0,
+      "cx": 0.0804,
+      "cz": -0.0148,
+      "baseY": 0
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — 'Notebook' by jeremy (Poly Pizza, CC-BY 3.0). Native 7.18 × 0.345 × 9.86 (origin mid-thickness, minY −0.1647).",
+      "key": "notebook",
+      "file": "notebook.glb",
+      "scale": 0.022,
+      "yaw": 0,
+      "cx": 0,
+      "cz": 0.0041,
+      "baseY": -0.1647
+    },
+    {
+      "_doc": "⚑ S175 (2026-09-24) — THE PROJECT'S OWN: a CD spindle generated by tools/make_cd_spindle.py (real metres, base on y 0, 0.128 × 0.076 × 0.128). Coloured by the prop's `bands`.",
+      "key": "cdSpindle",
+      "file": "cdSpindle.glb",
+      "scale": 1.0,
+      "yaw": 0,
+      "cx": 0,
+      "cz": 0,
       "baseY": 0
     }
   ]
