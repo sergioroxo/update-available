@@ -493,7 +493,11 @@ const PLACEMENT = {
     //   tilted axis and 6 mm proud of the body: (−4.955 − 0.0745·sin18.4° + 0.006·cos18.4°,
     //   0.922 + 0.0745·cos18.4° + 0.006·sin18.4°).
     pos: { x: -4.9728, y: 0.9946, z: 0.97 },
-    size: { w: 0.071, h: 0.152 },
+    // ⚑ S177 — the GLASS, not the body (his: "the phone model screen limits, it cuts out
+    //   of it"). 0.071 × 0.152 was the whole handset, bezels included, so the lit plane
+    //   overhung its edges. Measured from the model in the room: the glass is ~88% of the
+    //   width and ~78% of the height, centred; the canvas keeps its 1 : 2.
+    size: { w: 0.0595, h: 0.119 },
     // the plane primitive faces +Y; (70, 90, 0) stands it up facing +x (the seat)
     // leaning 20° back — `plane.up` measured live as (+0.94, +0.34, 0).
     // ⚑ S175: (40, 90, 0) — reclined 50°, lying on the stand's slope with the body
@@ -671,6 +675,10 @@ export interface Era3Devices {
   noteSeat(seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
   /** the phone is lifted off the desk right now */
   readonly phoneInHand: boolean;
+  /** S177 — the phone's screen plane, and how far it has travelled toward the hand
+   *  (0 on the stand … 1 held), so the engine can carry the handset's body with it */
+  readonly phoneScreen: pc.Entity | null;
+  readonly phoneLift: number;
   /** S149 — the engine lends its current look so the held phone comes to the eyes (R3-76) */
   setLookProvider(fn: () => { pitch: number; yaw: number }): void;
   holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
@@ -830,7 +838,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);
     draw(ctx, logical.w, logical.h);
-    const tex = makeScreenTexture(app, canvas);
+    const tex = makeScreenTexture(app, canvas, name === 'phone');   // S177: the phone is a dense 2016 display, not pixel art
     const place = PLACEMENT[name];
     const entity = makeScreenEntity(`era3-device-${name}`, tex, place.size.w, place.size.h);
     entity.setLocalPosition(place.pos.x, place.pos.y, place.pos.z);
@@ -1354,6 +1362,8 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
      *  RESTING prop and keep the object out of two places at once. app.ts did
      *  this on seat cuts already; the press path needs the same guard. */
     get phoneInHand(): boolean { return phoneHeld; },
+    get phoneScreen(): pc.Entity | null { return screens.find((x) => x.name === 'phone')?.entity ?? null; },
+    get phoneLift(): number { return screens.find((x) => x.name === 'phone')?.holdK ?? 0; },
     setLookProvider(fn: () => { pitch: number; yaw: number }): void { lookNow = fn; },
     holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void {
       lastSeat = seat;

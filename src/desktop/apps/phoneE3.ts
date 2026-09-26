@@ -62,7 +62,7 @@ const HOME = m.home as unknown as Record<string, string>;
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
 type Stage = 'quiet' | 'first' | 'voted' | 'cascade' | 'after';
-type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform';
+type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message';
 /** Lambient's card, and it is the same card whichever way she got here */
 type Card = null | 'opened' | 'ignored';
 
@@ -85,6 +85,8 @@ export class PhoneE3 {
   /** the block has been shown for the current stage */
   private carded = false;
   private readMessages = new Set<string>();
+  /** S177 — the backlog message open on its own screen (`from + time`), or null */
+  private openMessage: string | null = null;
   private rects: Rect[] = [];
 
   /** S158 / R3-66: the phone's clock is the workstation's — one clock for the room */
@@ -181,6 +183,7 @@ export class PhoneE3 {
     else if (this.screen === 'group') { this.drawGroup(ctx, W, H); }
     else if (this.screen === 'platform') { this.drawPlatform(ctx, W, H); }
     else if (this.screen === 'inbox') { this.drawInbox(ctx, W, H); }
+    else if (this.screen === 'message') { this.drawMessage(ctx, W, H); }
     else { this.drawHome(ctx, W, H); }
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
     if (this.card) this.drawCard(ctx, W, H);
@@ -346,6 +349,7 @@ export class PhoneE3 {
     ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
     const y0 = statusBar(ctx, W, this.clockText);
     let top = appBar(ctx, W, y0, m.group.name, m.group.meta);
+    this.pushBack(y0, top);
 
     const counted = this.stage === 'cascade' || this.stage === 'after';
     if (counted) {
@@ -463,6 +467,7 @@ export class PhoneE3 {
     ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
     const y0 = statusBar(ctx, W, this.clockText);
     let y = appBar(ctx, W, y0, m.home.messagesLabel);
+    this.pushBack(y0, y);
     // S158 / R3-78 — the group's thread, first: the way into the chat is a thread like any other
     {
       const unread = this.stage === 'first' ? MALTA_ONE.length
@@ -484,9 +489,9 @@ export class PhoneE3 {
     for (const b of BACKLOG) {
       const open = this.readMessages.has(b.from + b.time);
       phoneFont(ctx, 10);
-      const lines = open
-        ? phoneWrap(ctx, b.text, W - 50)
-        : phoneWrap(ctx, b.text, W - 50).slice(0, 2);
+      // S177: a preview, always — a press opens the message on its own screen
+      //   (his 2026-09-26: "I press on the messages and it just expands? weird")
+      const lines = phoneWrap(ctx, b.text, W - 50).slice(0, 2);
       const h = 22 + lines.length * 13;
       if (y + h > H - 16) break;
       ctx.fillStyle = PHONE.surface; ctx.fillRect(0, y, W, h);
@@ -566,7 +571,8 @@ export class PhoneE3 {
         this.screen = 'inbox';
         ledger.checkins.push({ id: 'e3_backlog', witness: m.witness.backlogOpened });
         this.bump(); return true;
-      case 'back': this.screen = this.screen === 'group' ? 'inbox' : 'home'; this.bump(); return true;   // S158: the chat goes back to Messages
+      // S158: the chat goes back to Messages; S177: so does an open message
+      case 'back': this.screen = this.screen === 'group' || this.screen === 'message' ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
       case 'dismiss': this.dismissCard(); return true;
       case 'link': case 'link2': this.openLink(); return true;
@@ -576,6 +582,8 @@ export class PhoneE3 {
       default:
         if (r.id.startsWith('read-')) {
           this.readMessages.add(r.id.slice(5));
+          this.openMessage = r.id.slice(5);
+          this.screen = 'message';
           this.bump();
           return true;
         }
@@ -613,11 +621,43 @@ export class PhoneE3 {
     }
   }
 
+  /**
+   * ⚑ S177 — the phone's back chevron was DRAWN on every app bar (theme/phone.ts appBar)
+   * and never published as a rect, so it could not be pressed (his 2026-09-26: "the back
+   * button on it doesn't work"). Every screen with an app bar now publishes it.
+   */
+  private pushBack(barTop: number, barBottom: number): void {
+    this.rects.push({ x: 0, y: barTop, w: 44, h: barBottom - barTop, id: 'back' });
+  }
+
+  /** S177 — one backlog message on its own screen: the sender in the bar, the whole
+   *  message as a bubble, the time under it. Read-only, like the inbox; files nothing. */
+  private drawMessage(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
+    const y0 = statusBar(ctx, W, this.clockText);
+    const b = BACKLOG.find((x) => x.from + x.time === this.openMessage);
+    const top = appBar(ctx, W, y0, b ? b.from : m.home.messagesLabel);
+    this.pushBack(y0, top);
+    if (!b) return;
+    phoneFont(ctx, 11);
+    const lines = phoneWrap(ctx, b.text, W - 64);
+    const bw = Math.min(W - 40, Math.max(...lines.map((ln) => ctx.measureText(ln).width)) + 20);
+    const bh = lines.length * 14 + 14;
+    const by = top + 16;
+    bubble(ctx, 16, by, bw, bh, 'in');
+    ctx.fillStyle = PHONE.ink;
+    lines.forEach((ln, i) => ctx.fillText(ln, 26, by + 8 + i * 14));
+    phoneFont(ctx, 9);
+    ctx.fillStyle = PHONE.dim;
+    ctx.fillText(b.time, 20, Math.min(by + bh + 8, H - 14));
+  }
+
   /** S158 / R3-78 — the platform's own app on the phone: a card that says where the work is */
   private drawPlatform(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
     const y0 = statusBar(ctx, W, this.clockText);
     const y = appBar(ctx, W, y0, m.home.platformLabel);
+    this.pushBack(y0, y);
     phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.ink;
     ctx.fillText(m.home.platformHello, 14, y + 20);
     phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;

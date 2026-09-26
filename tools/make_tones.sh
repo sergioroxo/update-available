@@ -307,10 +307,25 @@ level caleb_last_night_2003 -26
 # ── ⚑ S144 · THE STAMP — a filing, heard. One short cold thock, a relay closing
 # and a rubber stamp's fall in the same 90 ms: the witness side answering an act.
 # The same sound in every era, because the file never changed.
-q -f lavfi -i "anoisesrc=d=0.09:c=brown:a=0.9" -f lavfi -i "sine=f=180:d=0.09" \
-  -filter_complex "[0]lowpass=f=700,afade=t=out:st=0.01:d=0.08,volume=0.6[k];[1]volume=0.25,afade=t=out:st=0.0:d=0.09[t];[k][t]amix=inputs=2:normalize=0" \
+# ⚑ S177 (2026-09-26) — Sérgio: "still didn't change the sound of clicking stuff, still a thump."
+#   The press itself (ui_press) had been a 14 ms tick since S155; the thump was THIS, played on
+#   every press that files something (src/witness/pulse.ts). It was 90 ms of brown noise under
+#   700 Hz plus a 180 Hz tone — a rubber stamp, and a stamp is a thump. Now a pen's tick on
+#   paper: 12 ms of bright noise and a faint high ping, 50 ms in all, nothing under 2 kHz.
+q -f lavfi -i "anoisesrc=d=0.012:c=pink:a=0.7" -f lavfi -i "sine=f=2637:d=0.05" \
+  -filter_complex "[0]highpass=f=2500,lowpass=f=7500,afade=t=out:st=0.002:d=0.010[n];[1]volume=0.10,afade=t=out:st=0:d=0.05[s];[n][s]amix=inputs=2:normalize=0" \
   "$OUT/stamp_witness.wav"
-level stamp_witness -24
+level stamp_witness -30
+q -i "$OUT/stamp_witness.wav" -ac 1 -ar 44100 -codec:a libmp3lame -b:a 96k "$PUB/stamp_witness.mp3"
+
+# ⚑ S177 · FLOPPYSHEEP'S HOP — Sérgio: "the click sound inside of the FloppySheep game is no
+#   bueno." It was Freesound #218043, a "bird chirp / click thing". Now ours: one square-wave
+#   blip sweeping up 520 → 880 Hz in 70 ms, the sound a 2016 phone game makes for a jump.
+#   (ingest.tsv's row for 218043 is retired; the credit row goes with it.)
+q -f lavfi -i "aevalsrc='0.3*sgn(sin(2*PI*(520*t+2600*t*t)))':d=0.075:s=44100" \
+  -af "lowpass=f=3200,afade=t=in:st=0:d=0.004,afade=t=out:st=0.045:d=0.03" "$OUT/click_floppysheep.wav"
+level click_floppysheep -26
+q -i "$OUT/click_floppysheep.wav" -ac 1 -ar 44100 -codec:a libmp3lame -b:a 96k "$PUB/click_floppysheep.mp3"
 
 # ── ⚑ S151 · THE UN-WALK PROGRAMME LOOP (R3-17, 2026-09-20) ──────────────────
 # Sérgio: "this needs a song of the programmes of the time to fill the void." A

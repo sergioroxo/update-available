@@ -7,14 +7,21 @@
  */
 import * as pc from 'playcanvas';
 
-export function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement): pc.Texture {
+/**
+ * `smooth` (S177) is for a screen that is NOT pixel art: Era 3's phone, a 2016 handset
+ * with a dense display, drawn at ×3 (540 × 1080) and seen from the seat ~120 px tall.
+ * Nearest-filtered with no mipmaps, that shrinks into jagged, shimmering pixels (his
+ * 2026-09-26: "the quality of the phone screen is terrible, super pixelated"). Smooth
+ * = mipmaps + trilinear; the upload stays on-dirty-only, the mip chain rides with it.
+ */
+export function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement, smooth = false): pc.Texture {
   const tex = new pc.Texture(app.graphicsDevice, {
     width: source.width,
     height: source.height,
     format: pc.PIXELFORMAT_RGBA8,
-    mipmaps: false,
-    minFilter: pc.FILTER_NEAREST,
-    magFilter: pc.FILTER_NEAREST,
+    mipmaps: smooth,
+    minFilter: smooth ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST,
+    magFilter: smooth ? pc.FILTER_LINEAR : pc.FILTER_NEAREST,
     addressU: pc.ADDRESS_CLAMP_TO_EDGE,
     addressV: pc.ADDRESS_CLAMP_TO_EDGE
   });

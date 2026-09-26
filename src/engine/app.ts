@@ -3644,11 +3644,50 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (era3Devices && cluster?.era === 'e3') {
       const restPhone = room?.props.get('w_phoneDevice');
       if (restPhone) restPhone.entity.enabled = !era3Devices.phoneInHand;
-    }
+      carryPhoneBody(restPhone?.entity ?? null);
+    } else if (heldPhoneBody) heldPhoneBody.enabled = false;
     era3Devices?.tick(dt); // Session 37: uploads each device screen once, the first dirty frame
 
     if (os.inDesktop) flipBtn.style.display = 'block';
   });
+
+  /**
+   * ⚑ S177 — THE HANDSET COMES WITH ITS SCREEN. Sérgio, 2026-09-26: "when it comes closer
+   * to use, the 3D model just disappears." Lifting the phone moved only its lit plane to
+   * the eyes and hid the resting prop (so the object is never in two places) — a glowing
+   * rectangle with no phone around it. Now a copy of the resting body rides the plane:
+   * its offset from the screen is measured once while both sit on the stand, and kept.
+   */
+  let heldPhoneBody: pc.Entity | null = null;
+  const phoneBodyOffPos = new pc.Vec3();
+  const phoneBodyOffRot = new pc.Quat();
+  let phoneBodyOffReady = false;
+  const carryQ = new pc.Quat();
+  const carryV = new pc.Vec3();
+  function carryPhoneBody(rest: pc.Entity | null): void {
+    const scr = era3Devices?.phoneScreen;
+    if (!rest || !scr || !era3Devices) return;
+    const lift = era3Devices.phoneLift;
+    if (!phoneBodyOffReady) {
+      if (lift > 0) return;   // measure only while both are on the stand
+      const inv = scr.getRotation().clone().invert();
+      phoneBodyOffRot.mul2(inv, rest.getRotation());
+      inv.transformVector(rest.getPosition().clone().sub(scr.getPosition()), phoneBodyOffPos);
+      phoneBodyOffReady = true;
+    }
+    if (lift <= 0 && !era3Devices.phoneInHand) { if (heldPhoneBody) heldPhoneBody.enabled = false; return; }
+    if (!heldPhoneBody) {
+      heldPhoneBody = rest.clone() as pc.Entity;
+      heldPhoneBody.name = 'w_phoneDevice-held';
+      heldPhoneBody.forEach((n) => { const e = n as pc.Entity; if (e.render) e.render.batchGroupId = -1; });
+      app.root.addChild(heldPhoneBody);
+    }
+    heldPhoneBody.enabled = true;
+    const sr = scr.getRotation();
+    heldPhoneBody.setRotation(carryQ.mul2(sr, phoneBodyOffRot));
+    sr.transformVector(phoneBodyOffPos, carryV);
+    heldPhoneBody.setPosition(carryV.add(scr.getPosition()));
+  }
 
   // ── the E1 two-temperature rig (§2-E1) — TWO LIGHTS FIGHT FOR ONE ROOM ──
   // Warm = life (lamp + fill), cool = the system (moon window + monitor + the

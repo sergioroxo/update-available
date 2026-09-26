@@ -3,7 +3,7 @@
 351879	notify_2003	0.10	0.60	-22	-	E2 · Caleb's messenger pings; the accountability alert reuses it pitched down
 589353	phone_msg_2016	0.00	0.30	-21	-	E3 · one per message in the phone cascade (CASCADE_STEP = 0.45 s)
 589362	phone_ping_2016	0.00	0.32	-23	-	E3 · the single notification, distinct from the cascade's
-218043	click_floppysheep	0.00	0.40	-24	highpass=f=300	E3 · FloppySheep's click
+# 218043	click_floppysheep	— RETIRED S177 (his 2026-09-26: "no bueno"): synthesized in tools/make_tones.sh now; re-running this ingest must not overwrite it
 173859	fail_floppysheep	0.00	1.03	-22	-	E3 · FloppySheep, when it goes wrong
 # 619835	ui_press	— RETIRED S155 (R3-08, 'too thumpy'): ui_press is synthesized in tools/make_tones.sh now; re-running this ingest must not overwrite it
 619836	ui_refuse	0.00	1.10	-25	-	the same surfaces — a press that does not

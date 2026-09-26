@@ -50,6 +50,7 @@ for (const [key, arr] of Object.entries(links)) {
 }
 if (bad.length) { console.error('REFUSED — links not verified verbatim:\n  ' + bad.join('\n  ')); process.exit(1); }
 
+const TOP = '<p class="top"><a href="#top">↑ back to the top</a></p>';
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const pub = (t) => esc(t.split(words._verifyMarker).join(words.verifyPublic)).replace(/⚑ ?/g, '');
 const short = (s) => words.short[s] ?? s;
@@ -73,13 +74,13 @@ const rooms = net.panels.map((pn) => {
     return pr ? { kind, ...pr } : null;
   }).filter(Boolean);
   const refs = net.labels.filter((l) => l.era === pn.era).map((l) => `<li>${esc(l.text)}</li>`).join('');
-  return `<section id="era-${pn.era}"><h2>${esc(pn.years)} · ${esc(pn.title)}</h2>
+  return `<section id="era-${pn.era}" class="room era${pn.era}"><h2><span class="yr">${esc(pn.years)}</span> ${esc(pn.title)}</h2>
 <p class="status"><span class="tag ${esc(pn.status)}">${esc(short(pn.status))}</span> ${esc(long(pn.status))}</p>
 <p class="panel">${esc(pn.text)}</p>
 <h3>What this room shows, and where to read it</h3>
 ${prs.map((pr) => `<div class="practice"><h4>${esc(pr.title)} <span class="tag ${esc(pr.status)}">${esc(short(pr.status))}</span></h4>
 <p class="did">It ${esc(pr.did)}.</p>${pr.source ? sourceBlock(pr.source.file, pr.source.index) : '<p class="nolink">No source: this beat is the piece\'s own.</p>'}</div>`).join('\n')}
-<h3>References this room drew on</h3><ul class="refs">${refs}</ul></section>`;
+<h3>References this room drew on</h3><ul class="refs">${refs}</ul>${TOP}</section>`;
 }).join('\n');
 
 // ── every source on every card ──
@@ -97,20 +98,39 @@ const html = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YOUR UPDATE HAS FAILED — sources</title>
 <style>
-:root{--bg:#f6f4ef;--ink:#1d1d22;--dim:#5b5b66;--rule:#d8d4c8;--card:#fffdf8;--doc:#2f6e3f;--dis:#8a5a00;--ima:#5b3f8a;--link:#1f4d9a}
-@media (prefers-color-scheme:dark){:root{--bg:#15151c;--ink:#ecebe6;--dim:#a3a3ad;--rule:#2c2c36;--card:#1c1c25;--doc:#8fd19e;--dis:#e6b35a;--ima:#c3a6f0;--link:#9cc1ff}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
-main{max-width:780px;margin:0 auto;padding:40px 18px 80px}h1{font-size:1.7rem;margin:0 0 6px}h2{margin:48px 0 8px;padding-top:18px;border-top:2px solid var(--rule)}
-h3{margin:28px 0 8px;font-size:1.05rem}h4{margin:18px 0 4px;font-size:1rem}p{margin:6px 0}.lede{color:var(--dim)}
-.tag{display:inline-block;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:3px;border:1px solid currentColor;vertical-align:1px}
+:root{--bg:#f4f1ea;--ink:#1d1d22;--dim:#5b5b66;--rule:#dcd6c8;--card:#fffdf8;--band:#15151c;--bandInk:#ecebe6;--doc:#2f6e3f;--dis:#8a5a00;--ima:#5b3f8a;--link:#1f4d9a;--e1:#008080;--e2:#1084d0;--e3:#7d8fb0;--e4:#4a4a66}
+@media (prefers-color-scheme:dark){:root{--bg:#121218;--ink:#ecebe6;--dim:#a3a3ad;--rule:#2c2c36;--card:#1b1b24;--band:#0b0b10;--doc:#8fd19e;--dis:#e6b35a;--ima:#c3a6f0;--link:#9cc1ff;--e1:#3fb8b8;--e2:#5fb2f0;--e3:#a9b8d6;--e4:#9a9ac4}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+a{color:var(--link)}
+header.bar{position:sticky;top:0;z-index:2;background:var(--band);color:var(--bandInk);border-bottom:3px solid var(--e2)}
+header.bar .in{max-width:880px;margin:0 auto;padding:10px 18px;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+header.bar .home{color:var(--bandInk);font-weight:700;text-decoration:none;letter-spacing:.02em;margin-right:auto}
+header.bar nav a{color:var(--bandInk);opacity:.85;text-decoration:none;font-size:.85rem;padding:2px 8px;border:1px solid rgba(255,255,255,.25);border-radius:12px}
+header.bar nav a:hover{opacity:1;border-color:rgba(255,255,255,.7)}
+main{max-width:880px;margin:0 auto;padding:36px 18px 80px}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:2.1rem;line-height:1.2;margin:0 0 10px}
+h2{font-family:Georgia,"Times New Roman",serif;margin:0 0 10px;font-size:1.55rem}
+h3{margin:26px 0 8px;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--dim)}
+h4{margin:0 0 4px;font-size:1.02rem}p{margin:6px 0}.lede{color:var(--dim);font-size:1.05rem}
+section{margin:44px 0;scroll-margin-top:64px}.room{background:var(--card);border:1px solid var(--rule);border-top:6px solid var(--e1);border-radius:6px;padding:22px 24px}
+.era2{border-top-color:var(--e2)}.era3{border-top-color:var(--e3)}.era4{border-top-color:var(--e4)}
+.yr{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:1rem;padding:2px 8px;margin-right:6px;border-radius:3px;background:var(--e1);color:#fff;vertical-align:4px}
+.era2 .yr{background:var(--e2)}.era3 .yr{background:var(--e3)}.era4 .yr{background:var(--e4)}
+.tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 7px;border-radius:3px;border:1px solid currentColor;vertical-align:1px}
 .documentary{color:var(--doc)}.contested{color:var(--dis)}.speculative{color:var(--ima)}
-.panel{background:var(--card);border-left:3px solid var(--rule);padding:10px 14px}.did{color:var(--dim)}
-.src{background:var(--card);border:1px solid var(--rule);border-radius:4px;padding:10px 14px;margin:8px 0}.conf{font-size:.8rem;color:var(--dim)}
-.links{margin:6px 0 0;padding-left:18px}.nolink{font-size:.85rem;color:var(--dim);font-style:italic}a{color:var(--link)}
-.refs{columns:2;padding-left:18px}table{width:100%;border-collapse:collapse;font-size:.85rem}td{border-top:1px solid var(--rule);padding:6px 6px 6px 0;vertical-align:top}
-.key dt{font-weight:700;margin-top:6px}.key dd{margin:0 0 4px 0;color:var(--dim)}footer{margin-top:60px;font-size:.8rem;color:var(--dim)}
-@media (max-width:560px){.refs{columns:1}}
-</style></head><body><main>
+.panel{border-left:3px solid var(--rule);padding:6px 14px;font-family:Georgia,"Times New Roman",serif;font-size:1.05rem}.did{color:var(--dim)}
+.practice{margin:14px 0 0}
+.src{background:var(--bg);border:1px solid var(--rule);border-radius:4px;padding:10px 14px;margin:8px 0}.conf{font-size:.8rem;color:var(--dim)}
+.links{margin:6px 0 0;padding-left:18px}.nolink{font-size:.85rem;color:var(--dim);font-style:italic}
+.refs{columns:2;padding-left:18px}.top{margin-top:18px;font-size:.85rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem}td{border-top:1px solid var(--rule);padding:6px 6px 6px 0;vertical-align:top}
+.key{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;align-items:baseline}.key dt{margin:0}.key dd{margin:0;color:var(--dim)}
+footer{margin-top:60px;font-size:.8rem;color:var(--dim)}
+@media (max-width:560px){.refs{columns:1}.room{padding:16px}h1{font-size:1.6rem}}
+</style></head><body id="top">
+<header class="bar"><div class="in"><a class="home" href="../index.html?reinterp=1">← Back to the piece</a>
+<nav>${net.panels.map((pn) => `<a href="#era-${pn.era}">${esc(pn.years)}</a>`).join('')}<a href="#every-source">Every source</a><a href="#made">How it was made</a><a href="#credits">Credits</a></nav></div></header>
+<main>
 <h1>YOUR UPDATE HAS FAILED — sources</h1>
 <p class="lede">A browser and WebXR piece from SurvivingSOGICE (University of Bergen, Center for Digital Narrative) about how conversion-practice networks — efforts to change a person's sexual orientation or gender identity — have reached queer people online. The fiction is built from documented history, never from the people who lived it: every organisation and product in the piece is invented, and no survivor's words are used. This page lists what it is built from.</p>
 <h3>How to read the labels</h3>
@@ -119,17 +139,17 @@ h3{margin:28px 0 8px;font-size:1.05rem}h4{margin:18px 0 4px;font-size:1rem}p{mar
 <dt><span class="tag contested">${esc(words.short.contested)}</span></dt><dd>${esc(words.long.contested)}</dd>
 <dt><span class="tag speculative">${esc(words.short.speculative)}</span></dt><dd>${esc(words.long.speculative)}</dd>
 </dl>
-<p class="nolink">A source marked "${esc(words.verifyPublic)}" is one the project has not finished checking. Links appear only where the project has verified them.</p>
+<p class="nolink">A source marked "${esc(words.verifyPublic)}" is one the project has not finished checking. Links appear only where the project has verified them. If you came here from the piece, its tab is still open where you left it — "Back to the piece" starts it from the beginning.</p>
 ${rooms}
-<h2>Every source on every dossier card</h2>
+<section id="every-source"><h2>Every source on every dossier card</h2>
 <p class="lede">The rooms above show the sources behind each thing the piece does. The cards below hold everything the dossier cites, including what it could not source and says so.</p>
-${allSources}
-<h2>${esc(card.source.makersTitle)}</h2>
+${allSources}${TOP}</section>
+<section id="made"><h2>${esc(card.source.makersTitle)}</h2>
 ${card.source.makersLines.map((l) => `<p>${esc(l)}</p>`).join('')}
 <ul class="refs">${makers}</ul>
-<p>${esc(attr.projectLine ?? '')}</p>
-<h2>Credits — models and sound</h2>
-<table><tbody>${credits}</tbody></table>
+<p>${esc(attr.projectLine ?? '')}</p>${TOP}</section>
+<section id="credits"><h2>Credits — models and sound</h2>
+<table><tbody>${credits}</tbody></table>${TOP}</section>
 <footer>Generated from the piece's own data by tools/gen_sources_page.mjs · v${esc(pkg.version)} · ${new Date().toISOString().slice(0, 10)} · This page has no scripts and records nothing.</footer>
 </main></body></html>
 `;
