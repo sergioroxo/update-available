@@ -1855,3 +1855,15 @@ caught). Walked: 292 presses, spine done, console clean (13 Unlock presses — i
 phone's ending reached through `link`/`link2`). Stills 39 (the four panel dossiers, pressed for real).
 **closes R4-20; moves R4-18 to the panels; opens R4-21 (Room 2 floor z-fight), R4-22 (links for the
 other 27 sources), R4-23 (his blank item 4).**
+
+## 2026-09-26 — S176 · PLANNING ONLY (he is at 99% of the week): the clearance document and the plan
+Nothing built. **`VERIFY_SOURCE_CLEARANCE_2026-09-26.md`**: the markers split three ways — **A**, the 8
+visitors read (the 1997 questionnaire and pillow cards): his 24 July run checked every one and **all its
+corrections are already in the text**, so only the markers remain, each one tick; **B**, 4 reference notes
+(Paulk, Chambers, Malta + the one app, Truth in Love) matching the run word for word; **C**, 27 claims no one
+has verified (2016's accountability research, the ball, the 2026 offers, the dispersal note), with a
+ready-to-paste Deep Research prompt generated from the data — whose answers also give the sources page its
+missing links. **`PLAN_NEXT_2026-09-26.md`**: his notes of 09-24 in four batches with their walks, and five
+decisions first (the calendar's page as a pixel-art exception, per-part model colours, an era-styled
+"Sources" button on the panels, the calendar images per era — proposed — and his ticks). OPEN_ITEMS
+R4-24…R4-32 opened; R4-23 dropped.

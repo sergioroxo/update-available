@@ -201,7 +201,20 @@ Measured, not eyeballed. Nothing here is built: they need a walk, and his review
 | R4-20 | ~~Models he fetched~~ (flip phone, red mug, system unit, desk lamp, phone stand, slippers; the CD spindle made by us; the BY-NC CD not used) | DONE — S175 · still open: the Phone Stand's source URL (credit), a wall calendar and a pen for 2016 (`ASSET_REQUEST_2026-09-22.md`) |
 | R4-21 | Room 2's floor z-fights: the rug and the floor flicker through each other in streaks (seen on the S175 slippers frame) — predates S175 | BUG — mine, next |
 | R4-22 | The sources page's links: 18 verified links on 8 of 35 sources. The other 27 need a link pass against the research docs — only links a verification run attached to that exact claim (`data/dossier/links.json`; the generator refuses anything else) | OPEN — mine, with his research docs |
-| R4-23 | His item 4 of 2026-09-24 was left blank | ❓ his |
+| R4-23 | ~~His item 4 of 2026-09-24 was left blank~~ | DROPPED — he could not remember it (2026-09-26) |
+
+### Round 4c — his notes of 2026-09-24 (planned in `PLAN_NEXT_2026-09-26.md`, not yet built)
+| id | item | status |
+|---|---|---|
+| R4-24 | Vera's phone on the stand's **higher** side, turned to us | PLANNED — Batch 1 |
+| R4-25 | 2003: the CD spindle clashes with the mug — move it | PLANNED — Batch 1 |
+| R4-26 | 2003: the modem back ("it was fine, just poorly positioned") | PLANNED — Batch 1 |
+| R4-27 | The calendar (jeremy, CC-BY) in the rooms, **a page per era** tied to age, time and SOGICE | ❓ his: D1 (a pixel-art page on a room object) + D4 (the images) |
+| R4-28 | The pen (jeremy, CC-BY) on Vera's notebook; the Phone Stand's URL in the credits | PLANNED — Batch 1 |
+| R4-29 | "The materials have no texture — the lamp is just brown": every model tinted to ONE colour | ❓ his: D2 (per-part flat colours) |
+| R4-30 | The panels: an era-styled "Sources" button, or press anywhere? | ❓ his: D3 (both, recommended) |
+| R4-31 | Check every project file for anything unclaimed — a permanent licence check in `npm test` | PLANNED — Batch 4 |
+| R4-32 | Clear `[VERIFY SOURCE]`: `VERIFY_SOURCE_CLEARANCE_2026-09-26.md` — A (8) and B (4) ready; C (27) needs a run | ❓ his ticks + the run |
 
 
 ## Closed
