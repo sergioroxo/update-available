@@ -202,13 +202,10 @@
       "cz": 0,
       "baseY": -0.4547,
       "_docTilt": "⚑ S149: [15,0,0] — the handset STANDS on its dock now, leaning 15° back toward the seat (was [90,0,0], flat on the desk; see era3Devices PLACEMENT.phone and reinterp_deltas w_phoneStand).",
-      "tilt": [
-        -50,
-        0,
-        0
-      ],
+      "tilt": [-18.4, 0, 0],
       "_docS174": "⚑ S174 / R4-13 — the handset now STANDS ON its dock. `baseY` was 0 but phone.glb's origin is its CENTRE (native y −0.4547…+0.4538), so the base-at-pos rule seated the phone's middle on the dock top: half of it sunk into the stand, and the screen plane — correctly placed for a phone standing there — floated 7 cm above the body. And `tilt` was +15, which leans the top TOWARD the seat while the screen plane leans back: the two crossed, and the body hid the top of the screen ('the stand is looking at the wall and not the user'). Measured both leans live; −15 matches the plane, and the prop sits 2.1 cm nearer the seat (reinterp_deltas w_phoneDevice) so the screen lies on its face.",
-      "_docS175": "⚑ S175 — reclined −15 → −50: the phone rests in a real stand now (w_phoneCradle, 'Phone Stand' by zhekamen188), base in its seat-side lip, back on its slope. era3Devices PLACEMENT.phone reclines with it (euler 75 → 40)."
+      "_docS175": "⚑ S175 — reclined −15 → −50: the phone rests in a real stand now (w_phoneCradle, 'Phone Stand' by zhekamen188), base in its seat-side lip, back on its slope. era3Devices PLACEMENT.phone reclines with it (euler 75 → 40).",
+      "_docS177": "⚑ S177 / R4-24 — reclined −50 → −18.4: the stand turned so its upright plate faces the seat (his: the higher side, facing us), and the phone lies flat on that plate, which leans 18.4° from vertical (measured from phoneStand.glb's vertices)."
     },
     {
       "key": "computerScreen",
@@ -412,6 +409,27 @@
       "cx": 0,
       "cz": 0,
       "baseY": 0
+    },
+    {
+      "_doc": "⚑ S177 (2026-09-26) — 'Pen' by jeremy (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/7SIpgx0rEIv), from Sérgio's asset pass; textures stripped (tools/glb_import.py). Native 0.96 × 1.06 × 10.07, long along z, minY −0.4232. 0.0139 → a 14 cm pen. Parts: 1A1A1A · 455A64 · 039BE5 (partColors).",
+      "key": "pen",
+      "file": "pen.glb",
+      "scale": 0.0139,
+      "yaw": 0,
+      "cx": 0,
+      "cz": 0.0574,
+      "baseY": -0.4232
+    },
+    {
+      "_doc": "⚑ S177 (2026-09-26) — 'Calendar' by jeremy (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/2yHE0n1ahjp), from Sérgio's asset pass; textures stripped. Native 10 × 18.94 × 0.69, facing +z, the page's front at z 0, rings standing out to z 0.35. 0.024 → a 24 × 45 cm wall calendar. `face` is the printed page (x0, y0, x1, y1, z) where calendarPage.ts hangs the era's month, a hair in front of the paper (R4-27, his D1: 'make the pixel art good').",
+      "key": "calendar",
+      "file": "calendar.glb",
+      "scale": 0.024,
+      "yaw": 0,
+      "cx": 0,
+      "cz": 0,
+      "baseY": -9.5517,
+      "face": [-5, -9.5517, 5, 9.3925, 0.03]
     }
   ]
 }

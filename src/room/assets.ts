@@ -39,10 +39,13 @@ interface ModelEntry {
    *  model's own scaled units; measured live against the real mesh (no 3D
    *  viewer in this pipeline — same method every prior model entry used). */
   tiltOffset?: [number, number];
+  /** ⚑ S177 — a printed face on the model (the calendar's page): [x0, y0, x1, y1, z]
+   *  in native units, where calendarPage.ts hangs a pixel-art page. */
+  face?: [number, number, number, number, number];
 }
 
 const containers = new Map<string, pc.Asset>();
-const meta = new Map<string, { scale: Scale; yaw: number; cx: number; cz: number; baseY: number; tilt?: [number, number, number]; tiltOffset?: [number, number] }>();
+const meta = new Map<string, { scale: Scale; yaw: number; cx: number; cz: number; baseY: number; tilt?: [number, number, number]; tiltOffset?: [number, number]; face?: [number, number, number, number, number] }>();
 
 /** preload the manifest's models. Empty manifest → instant no-op (boxes stay). */
 export async function preloadModels(app: pc.Application): Promise<void> {
@@ -64,7 +67,7 @@ function loadOne(app: pc.Application, entry: ModelEntry): Promise<boolean> {
       containers.set(entry.key, asset);
       meta.set(entry.key, { scale: entry.scale ?? 1, yaw: entry.yaw ?? 0,
         cx: entry.cx ?? 0, cz: entry.cz ?? 0, baseY: entry.baseY ?? 0,
-        tilt: entry.tilt, tiltOffset: entry.tiltOffset });
+        tilt: entry.tilt, tiltOffset: entry.tiltOffset, face: entry.face });
       resolve(true);
     });
     asset.once('error', () => resolve(false)); // missing/invalid → retry, then box fallback
@@ -74,6 +77,8 @@ function loadOne(app: pc.Application, entry: ModelEntry): Promise<boolean> {
 }
 
 export function hasModel(key: string): boolean { return containers.has(key); }
+/** the model's printed face, if it has one (models.json `face`) */
+export function modelFace(key: string): [number, number, number, number, number] | undefined { return meta.get(key)?.face; }
 
 function hexToColor(hex: string): pc.Color {
   const n = parseInt(hex.slice(1), 16);
@@ -98,7 +103,7 @@ const TINT_STRENGTH = 0.8;
  * instance of the same model key (e.g. every bookcase in the room) still
  * references (same clone-before-mutate rule as room/batching.ts's
  * clearSettledBatch). */
-function tintModel(root: pc.Entity, colorHex: string): void {
+function tintModel(root: pc.Entity, colorHex: string, partColors?: Record<string, string>): void {
   const tint = hexToColor(colorHex);
   root.forEach((node) => {
     const ent = node as pc.Entity;
@@ -108,7 +113,11 @@ function tintModel(root: pc.Entity, colorHex: string): void {
       if (!src) continue;
       const clone = src.clone() as pc.StandardMaterial;
       const d = clone.diffuse;
-      clone.diffuse = new pc.Color(
+      // ⚑ S177 / R4-29 (his D2, 2026-09-26: "yes do the separate colors") — a
+      // part the prop names by its GLB material gets its OWN flat colour, not
+      // the 80% pull toward the one prop colour (the lamp read as one brown).
+      const part = partColors?.[src.name];
+      clone.diffuse = part ? hexToColor(part) : new pc.Color(
         lerp(d.r, tint.r, TINT_STRENGTH),
         lerp(d.g, tint.g, TINT_STRENGTH),
         lerp(d.b, tint.b, TINT_STRENGTH)
@@ -138,7 +147,7 @@ function tintModel(root: pc.Entity, colorHex: string): void {
  * room/morph transforms — its scale is 1, so the morph can't distort the mesh.
  * Returns null if the model isn't loaded (caller falls back to a box).
  */
-export function spawnModel(key: string, pos: number[], propYaw: number, colorHex?: string, scaleOverride?: Scale): pc.Entity | null {
+export function spawnModel(key: string, pos: number[], propYaw: number, colorHex?: string, scaleOverride?: Scale, partColors?: Record<string, string>): pc.Entity | null {
   const asset = containers.get(key);
   const res = asset?.resource as { instantiateRenderEntity?: () => pc.Entity } | undefined;
   if (!res?.instantiateRenderEntity) return null;
@@ -163,7 +172,7 @@ export function spawnModel(key: string, pos: number[], propYaw: number, colorHex
   const [sx, sy, sz] = Array.isArray(s) ? s : [s, s, s];
   model.setLocalScale(sx, sy, sz);
   model.setLocalPosition(-m.cx * sx, -m.baseY * sy, -m.cz * sz);
-  if (colorHex) tintModel(model, colorHex);
+  if (colorHex) tintModel(model, colorHex, partColors);
 
   // `tilt` rotates the already-recentered model around its own pivot (fixed
   // at this entity's origin) — a correction `yaw` alone can't express, since

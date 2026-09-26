@@ -21,6 +21,7 @@ import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import chrome from '../../../data/strings/reinterp.json';
+import words from '../../../data/strings/status_words.json';
 
 export interface ProvotypeSource {
   status: 'documentary' | 'contested' | 'speculative';
@@ -455,11 +456,13 @@ export class ProvotypeApp {
     out.push({ kind: 'text', text: chrome.debriefHeading, size: 8, color: ERA1.greyDark, dx: 0, h: 12 });
     for (const src of this.data.debrief.sources) {
       out.push({
-        kind: 'status', text: src.status, size: 8, color: STATUS_COLOR[src.status], dx: 0, h: 10,
+        // ⚑ S177 — the public words here too (S175, status_words.json): this card was the
+        //   one place a visitor still read the in-house "documentary" and "[VERIFY SOURCE]".
+        kind: 'status', text: (words.short as Record<string, string>)[src.status] ?? src.status, size: 8, color: STATUS_COLOR[src.status], dx: 0, h: 10,
         tail: `· ${src.confidence} confidence`
       });
       ui.setFont(ctx, 8);
-      for (const w of wrap(ctx, src.text, maxW - 8)) {
+      for (const w of wrap(ctx, src.text.split(words._verifyMarker).join(words.verifyPublic), maxW - 8)) {
         out.push({ kind: 'text', text: w, size: 8, color: ERA1.black, dx: 8, h: 10 });
       }
       out.push({ kind: 'gap', h: 2 });

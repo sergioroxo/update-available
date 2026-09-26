@@ -32,10 +32,10 @@ assets would like me to grab for you, and in what type of file." He fetched a ba
 ## Still open
 | # | what | where | note |
 |---|---|---|---|
-| 1 | **The Phone Stand's source URL** | credits | he sent the model without its Sketchfab link — the credit line needs it |
-| 2 | **A wall calendar** (paper, hanging) | 2016, Vera's wall | today two flat boxes (`w_calendar`, `w_calendarPage`) |
-| 3 | **A pen** | 2016, on the notebook | today a thin box — optional, it is small |
-| 4 | A **dial-up modem / early router** | 2003 | only if he wants the modem back — he crossed it |
+| 1 | ~~The Phone Stand's source URL~~ | credits | DONE S177 — https://skfb.ly/6wuCz |
+| 2 | ~~A wall calendar~~ | 2016, Vera's wall | DONE S177 — jeremy's 'Calendar' (CC-BY 3.0) in all three rooms, a pixel-art month per era |
+| 3 | ~~A pen~~ | 2016, on the notebook | DONE S177 — jeremy's 'Pen' (CC-BY 3.0) |
+| 4 | ~~A dial-up modem / early router~~ | 2003 | not needed — he: 'the one we had was fine, it was just poorly positioned'; S177 moved it |
 
 *Not asked for, deliberately:* Vera's poster and sign are flat colour cards on the wall by design (a poster
 IS flat — S115/S122 made them read as posters), and the 2016 flag is greyscale on purpose (2026-09-05).

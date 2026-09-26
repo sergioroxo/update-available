@@ -25,8 +25,10 @@ mix art styles between rooms).
 | pcTower | pcTower.glb | Poly Pizza — "Computer" by CreativeTrio (Household Props 001) | CC0 1.0 | no | S174: Vera's PC tower (`w_tower`) — it was the pale box he circled as a 'magical shiny box'. Geometry only. |
 | systemUnit | systemUnit.glb | Poly Pizza — "System unit" by Poly by Google (https://poly.pizza/m/1rAUeGQ3J_y) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S175: 1997/2003 towers. Per-axis scale. |
 | flipPhone | flipPhone.glb | Sketchfab — "Flip Phone" by Timmy Turner (https://skfb.ly/p96G9) | CC-BY 4.0 | **yes** — ATTRIBUTIONS.md | S175: 2003, open on the desk (tilt −90). |
-| phoneStand | phoneStand.glb | Sketchfab — "Phone Stand" by zhekamen188 | CC-BY 4.0 | **yes** — ATTRIBUTIONS.md | S175: Vera's stand. The export lies on its side (root matrix) — tilt +90. ⚑ No source URL supplied yet. |
+| phoneStand | phoneStand.glb | Sketchfab — "Phone Stand" by zhekamen188 (https://skfb.ly/6wuCz) | CC-BY 4.0 | **yes** — ATTRIBUTIONS.md | S175: Vera's stand. The export lies on its side (root matrix) — tilt +90. S177: its URL, from Sérgio (2026-09-24). |
 | notebook | notebook.glb | Poly Pizza — "Notebook" by jeremy (https://poly.pizza/m/9Ptsg_xZt6B) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S175: Vera's notebook. |
+| pen | pen.glb | Poly Pizza — "Pen" by jeremy (https://poly.pizza/m/7SIpgx0rEIv) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S177: on Vera's notebook. Textures stripped. |
+| calendar | calendar.glb | Poly Pizza — "Calendar" by jeremy (https://poly.pizza/m/2yHE0n1ahjp) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S177: the wall calendars; textures stripped — the pages are the project's own pixel art (src/room/calendarArt.ts). |
 | deskLamp | deskLamp.glb | Poly Pizza — "Light Desk" by Quaternius (https://poly.pizza/m/uJDWrSJGVH) | CC0 1.0 | credited by choice | S175: Vera's lamp. |
 | books | books.glb | Poly Pizza — "Books" by CreativeTrio (Household Props 001) | CC0 1.0 | credited by choice | S175: the riser under Vera's phone stand. Geometry only. |
 | redMug | redMug.glb | Poly Pizza — "Red Mug" by Isa Lousberg (https://poly.pizza/m/Su9VxfL5Yl) | CC0 (per Poly Pizza's credit line) | credited by choice | S175: 2003's mug, coloured by `bands`. Geometry only. |
@@ -143,8 +145,8 @@ that owe credit, and CC0 owes none.
 | Asset | Creator | Source | Licence | Used as |
 |---|---|---|---|---|
 | Phone | **Quaternius** | https://poly.pizza/m/k2kgBepoMU | **CC0** | Era 3's phone — the device that is hers |
-| Computer Screen | **Kenney** | https://poly.pizza/m/V5Qo141OcB | **CC0** | Era 3's desktop monitor |
-| Computer Keyboard | **Kenney** | https://poly.pizza/m/vsqTUPFSw6 | **CC0** | Era 3's desktop keyboard |
+| Computer Screen (`computerScreen.glb`) | **Kenney** | https://poly.pizza/m/V5Qo141OcB | **CC0** | Era 3's desktop monitor |
+| Computer Keyboard (`computerKeyboard.glb`) | **Kenney** | https://poly.pizza/m/vsqTUPFSw6 | **CC0** | Era 3's desktop keyboard |
 | vr_headset | vrHeadset.glb | Poly Pizza — "VR Headset" by J-Toastie (https://poly.pizza/m/raCB2tOkk3) | CC-BY 3.0 | **YES** — credited in the colophon | converted OBJ→GLB with obj2gltf; geometry only, recolored flat in code |
 | vr_controller | vrController.glb | Poly Pizza — "VR Controller" by J-Toastie (https://poly.pizza/m/z76Vm9mH2f) | CC-BY 3.0 | **YES** — credited in the colophon | as above |
 | laptop | laptop.glb | Poly Pizza — "Laptop" by J-Toastie (https://poly.pizza/m/UGOWjMUC5U) | CC-BY 3.0 | **YES** — credited in the colophon | as above |
@@ -178,6 +180,10 @@ lifted by accident. Ours are sine pairs whose exact filter chains are in `tools/
 | `post_beep_1997` · `err_ding_1997` · `chime_2003` · `alert_2003` · `ting_2016` · `tick_task` · `ready_e4` · `set_down_e4` | **synthesized**, `tools/make_tones.sh` — sine pairs and filtered noise | ours outright |
 | `bed_1997` · `bed_2003` · `bed_2016` · `bed_2026` · `passage_building` | **synthesized** room tone — brown noise with resonant peaks standing in for a PSU fan, an HVAC duct, a fridge through a wall | ours outright |
 | `ui_press` · `floppy_1997` · `irc_1997` · `diary_key` · `diary_flag` · `diary_erase` · `passage_wind` · `boot_2003` · `boot_2016` · `lambient_chime` · `install_work` · `restart_dark` · `type_2026` · `lamby_pop` · `descent_score` · `close_score` · `unwalk_loop_1997` | **synthesized**, `tools/make_tones.sh` (S151/S155 blocks; the hymn loop via `tools/make_hymn.py`). ⚑ `ui_press` was Freesound #619835 until S155 and is ours now — its `data/audio/ingest.tsv` row is retired | ours |
+| `agent_2026` · `caleb_last_night_2003` · `card_junie` · `close_sky_bed` · `dialup_1997` · `filter_deny` · `key_1997` · `playback_hiss` · `power_down_2026` · `reconnect_2026` · `restore_2026` · `session_breath` · `stamp_witness` · `startup_1997` · `static_2026` · `step_done_2026` · `terminate_2026` · `wear_2026` | **synthesized**, `tools/make_tones.sh` (each is a `$OUT/<name>.wav` line there) — added after this table was written and never entered until S177's licence check found them | ours outright |
+| `lambyos_2003_boot_*` (`assets/audio/candidates/`) | alternate cuts of Sérgio's "Chase The Clouds" for the 2003 boot sting — not served | derivative of his own track |
+| `tapeA_side_one_intro` · `lamby_puremail_apology` | build-time TTS (Supertonic, `register: apparatus`) via `tools/tts/render.py`, from `data/audio/tts_manifest.json` | ours; the model's own terms apply to the tool, not to the output |
+| `discover_the_new_you_infomercial_tape03` | Sérgio's "Discover The New You" jingle, degraded for 2003's infomercial by `tools/degrade_audio.sh` (see the jingle's row above) | derivative of his own generation |
 | the 47 `l_*.mp3` | build-time TTS (Supertonic, `register: apparatus`) via `tools/tts/render.py` | ours; the model's own terms apply to the tool, not to the output |
 
 ⚑ **What is NOT here, and will owe a row when it lands:** a real party-through-a-wall recording for
@@ -201,3 +207,15 @@ the rubber duck's entry above. Crediting the uploaders anyway is courteous and i
 | ⚑ rejected | why |
 |---|---|
 | freesound **#643257** "Startup 2" (sonically_sound) | **CC-BY-NC 4.0.** This repo is public and the work is exhibited, so NonCommercial is unusable rather than merely awkward. Recorded here so it is not re-added by someone who only sees the title. |
+
+---
+
+## THE PROJECT'S OWN IMAGES — 2026-09-26 (S177, found by `tools/check-licences.mjs`)
+| file | origin | terms |
+|---|---|---|
+| `app-icon.svg` · `app-icon-180.png` · `app-icon-192.png` · `app-icon-512.png` | the home-screen icon — a monitor with a crosshair, drawn as SVG for the project (commit c8e82bd2, 2026-08-13) and rasterised | project-owned |
+| `era1.jpg` · `era2.jpg` · `era3.jpg` · `era4.jpg` (`public/assets/close/`) | the Close's room plates — the piece's own rooms, rendered by `tools/bake-close-plates.mjs` | project-owned |
+
+⚑ **`tools/check-licences.mjs` runs in `npm test`**: every file under `public/` and `assets/` must be named
+in this ledger (or in `docs/reinterp/ATTRIBUTIONS.md`), every CC-BY or credited-by-choice row must have its
+attribution row, and nothing may be NC. A new file with no row fails the build.

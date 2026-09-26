@@ -21,8 +21,10 @@ source list it will read from once built. CC0 assets need no entry here (see
 | "Laptop" | J-Toastie, via Poly Pizza (https://poly.pizza/m/UGOWjMUC5U) | CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/) | Era 4: Maya's laptop. ⚑ Owed since it shipped — missing until S175 | S98 (2026-09-01) |
 | "System unit" | Poly by Google, via Poly Pizza (https://poly.pizza/m/1rAUeGQ3J_y) | CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/) | 1997 and 2003: the PC towers on Daniel's desk | S175, 2026-09-24 |
 | "Flip Phone" | Timmy Turner, via Sketchfab (https://skfb.ly/p96G9) | CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/) | 2003: Daniel's phone, open on the desk | S175, 2026-09-24 |
-| "Phone Stand" | zhekamen188, via Sketchfab | CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/) | 2016: Vera's phone stand | S175, 2026-09-24 |
+| "Phone Stand" | zhekamen188, via Sketchfab (https://skfb.ly/6wuCz) | CC-BY 4.0 (https://creativecommons.org/licenses/by/4.0/) | 2016: Vera's phone stand | S175, 2026-09-24 |
 | "Notebook" | jeremy, via Poly Pizza (https://poly.pizza/m/9Ptsg_xZt6B) | CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/) | 2016: Vera's notebook | S175, 2026-09-24 |
+| "Pen" | jeremy, via Poly Pizza (https://poly.pizza/m/7SIpgx0rEIv) | CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/) | 2016: the pen on Vera's notebook | S177, 2026-09-26 |
+| "Calendar" | jeremy, via Poly Pizza (https://poly.pizza/m/2yHE0n1ahjp) | CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/) | the wall calendars — Daniel's (1997, 2003), Vera's (2016), Maya's (2026); the pages are the project's own pixel art | S177, 2026-09-26 |
 | Furniture Kit (bed, desk, desk chair, bookcase, rug, side table, potted plant) and "Computer Screen", "Computer Keyboard" | Kenney (https://kenney.nl/assets/furniture-kit) | CC0 1.0 — credited by choice | the three rooms' furniture; 2016's monitor and keyboard | Round 24 (2026-07) |
 | "Phone" | Quaternius, via Poly Pizza (https://poly.pizza/m/k2kgBepoMU) | CC0 1.0 — credited by choice | 2016: Vera's phone | 2026-08-21 |
 | "Light Desk" | Quaternius, via Poly Pizza (https://poly.pizza/m/uJDWrSJGVH) | CC0 1.0 — credited by choice | 2016: Vera's desk lamp | S175, 2026-09-24 |

@@ -487,12 +487,18 @@ const PLACEMENT = {
     //   live from the r2 seat at pitch 0: the whole screen is in frame, bottom
     //   left, clear of the monitor's face. The prop (`w_phoneDevice`) stands on
     //   the same dock with the same lean — keep the two in step, as ever.
-    pos: { x: -5.011, y: 0.977, z: 0.97 },   // S175: the phone reclined 50° in its stand on the books: base (−4.958, 0.924), centre 0.0745 up the tilted axis, the face 6 mm proud
+    // ⚑ S177 / R4-24 (his: the phone on the stand's HIGHER side, facing us): the stand
+    //   turned 180°, the phone flat on its upright plate — 18.4° from vertical, measured
+    //   from the mesh. Base centre (−4.955, 0.922); the screen's centre 0.0745 up the
+    //   tilted axis and 6 mm proud of the body: (−4.955 − 0.0745·sin18.4° + 0.006·cos18.4°,
+    //   0.922 + 0.0745·cos18.4° + 0.006·sin18.4°).
+    pos: { x: -4.9728, y: 0.9946, z: 0.97 },
     size: { w: 0.071, h: 0.152 },
     // the plane primitive faces +Y; (70, 90, 0) stands it up facing +x (the seat)
     // leaning 20° back — `plane.up` measured live as (+0.94, +0.34, 0).
     // ⚑ S175: (40, 90, 0) — reclined 50°, lying on the stand's slope with the body
-    euler: { x: 40, y: 90, z: 0 }
+    // ⚑ S177: (71.6, 90, 0) — reclined 18.4° on the stand's upright plate.
+    euler: { x: 71.6, y: 90, z: 0 }
   }
 } as const;
 

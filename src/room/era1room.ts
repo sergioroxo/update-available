@@ -11,7 +11,8 @@
  */
 import * as pc from 'playcanvas';
 import layout from '../../data/room/era1.json';
-import { hasModel, spawnModel } from './assets';
+import { hasModel, spawnModel, modelFace } from './assets';
+import { attachCalendarPage, type PageEra } from './calendarPage';
 
 /**
  * ⚑ S168 / R3-07 — paint a spawned model in horizontal bands (the rainbow duck:
@@ -128,6 +129,14 @@ export interface PropDef {
    *  (the rainbow duck's six: D33 permitted the duck its canon colours). The
    *  mesh is rebuilt once with vertex colours; the material reads them. */
   bands?: string[];
+  /** ⚑ S177 / R4-29 (his D2) — a flat colour per model PART, keyed by the GLB's
+   *  material name (`python3 tools/glb_import.py bounds` lists them): the lamp's
+   *  Black / LightMetal / White each get their own era colour instead of all
+   *  being pulled toward `color`. Parts not named still tint toward `color`. */
+  partColors?: Record<string, string>;
+  /** ⚑ S177 / R4-27 — a calendar page on a model with a printed `face` (models.json):
+   *  which era's month hangs on it (src/room/calendarArt.ts draws the four). */
+  page?: PageEra;
   /** OPTIONAL per-prop mesh scale, overriding data/room/models.json's per-KEY
    *  scale. Present because one model key furnishes three rooms at different
    *  measured sizes — see spawnModel's note. Set it only from a MEASUREMENT
@@ -340,8 +349,13 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
   if (room.reinterp && p.model && hasModel(p.model)) {
     const ms = p.modelScale;
     e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0, p.color,
-      Array.isArray(ms) ? [ms[0], ms[1], ms[2]] : ms);
-    if (e) { e.name = p.id; isModel = true; if (p.bands?.length) bandModel(e, p.bands); }
+      Array.isArray(ms) ? [ms[0], ms[1], ms[2]] : ms, p.partColors);
+    if (e) {
+      e.name = p.id; isModel = true;
+      if (p.bands?.length) bandModel(e, p.bands);
+      const face = p.page ? modelFace(p.model) : undefined;
+      if (p.page && face) attachCalendarPage(e, face, p.page);
+    }
   }
   // the `parts` composite path (see PropDef.parts) — a wrapper with NO render
   // of its own (so batching.ts's existing `!h.entity.render` guard already

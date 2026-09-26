@@ -199,22 +199,22 @@ Measured, not eyeballed. Nothing here is built: they need a walk, and his review
 | R4-18 | ~~His ask: the sources should OPEN~~ — and then: *on the panels, not the computer* | DONE — S174 (on the machine) → **S175 on the panels**: a press turns a panel to its room's dossier in its room's OS, page by page, and back; a label opens its room's panel (the process seven: the panel you face). Real mouse presses; frames `e4-10-dossier-*` |
 | R4-19 | The `[VERIFY SOURCE]` markers (11 in the data). S175: shown to the public as "(this source is still being verified)". ⚑ Most were in fact checked by his 24 July Deep Research run (`SOURCE_VERIFICATION_RESULTS_2026-07-24.md`: "every claim survived, six need rewording"); the markers stay only because those corrections await his approval (ETHICS #13/#14) | ❓ his: approve the prepared corrections |
 | R4-20 | ~~Models he fetched~~ (flip phone, red mug, system unit, desk lamp, phone stand, slippers; the CD spindle made by us; the BY-NC CD not used) | DONE — S175 · still open: the Phone Stand's source URL (credit), a wall calendar and a pen for 2016 (`ASSET_REQUEST_2026-09-22.md`) |
-| R4-21 | Room 2's floor z-fights: the rug and the floor flicker through each other in streaks (seen on the S175 slippers frame) — predates S175 | BUG — mine, next |
+| R4-21 | Room 2's floor z-fights: the rug and the floor flicker through each other in streaks (seen on the S175 slippers frame) — predates S175 | DONE S177 — the floor box's top sat at 0.020 and the rug's at 0.019; the floor lowered so its top is y 0 (the rug shows for the first time) |
 | R4-22 | The sources page's links: 18 verified links on 8 of 35 sources. The other 27 need a link pass against the research docs — only links a verification run attached to that exact claim (`data/dossier/links.json`; the generator refuses anything else) | OPEN — mine, with his research docs |
 | R4-23 | ~~His item 4 of 2026-09-24 was left blank~~ | DROPPED — he could not remember it (2026-09-26) |
 
 ### Round 4c — his notes of 2026-09-24 (planned in `PLAN_NEXT_2026-09-26.md`, not yet built)
 | id | item | status |
 |---|---|---|
-| R4-24 | Vera's phone on the stand's **higher** side, turned to us | PLANNED — Batch 1 |
-| R4-25 | 2003: the CD spindle clashes with the mug — move it | PLANNED — Batch 1 |
-| R4-26 | 2003: the modem back ("it was fine, just poorly positioned") | PLANNED — Batch 1 |
-| R4-27 | The calendar (jeremy, CC-BY), a page per era tied to age, time and SOGICE | RULED 2026-09-26 — D1 yes ("make the pixel art good"), D4 the four proposed pages — Batch 1 |
-| R4-28 | The pen (jeremy, CC-BY) on Vera's notebook; the Phone Stand's URL in the credits | PLANNED — Batch 1 |
-| R4-29 | Every model tinted to ONE colour (the lamp all brown) | RULED 2026-09-26 — D2 yes: per-part flat colours — Batch 1 |
+| R4-24 | Vera's phone on the stand's **higher** side, turned to us | DONE S177 — the stand turned 180°; the phone lies on its upright plate (18.4°, measured from the mesh); whole screen in frame from her seat |
+| R4-25 | 2003: the CD spindle clashes with the mug — move it | DONE S177 — back-left of the desk, 38 cm from the mug |
+| R4-26 | 2003: the modem back ("it was fine, just poorly positioned") | DONE S177 — the same 1997 box, at the back between the monitor and the tower, its light to the seat |
+| R4-27 | The calendar (jeremy, CC-BY), a page per era tied to age, time and SOGICE | DONE S177 — jeremy's Calendar in three rooms; a pixel-art month per era (`src/room/calendarArt.ts`, previews `node tools/calendar_preview.mjs`): SUGARWIRE + 'camp' in his mother's hand; Restorify's sunrise, 1–18 Nov crossed off; GracePlatform's planner, the 13th ringed, the quota note; the bookshop's party, 'commons' |
+| R4-28 | The pen (jeremy, CC-BY) on Vera's notebook; the Phone Stand's URL in the credits | DONE S177 |
+| R4-29 | Every model tinted to ONE colour (the lamp all brown) | DONE S177 — `partColors` by GLB material: the lamp (teal enamel / steel / warm shade), the flip phone, the notebook, both towers, the pen, the calendar |
 | R4-30 | The panels' affordance | RULED 2026-09-26 — D3 yes: an era-styled "Sources" button + the whole panel pressable — Batch 2 |
-| R4-31 | Check every project file for anything unclaimed — a permanent licence check in `npm test` | PLANNED — Batch 4 |
-| R4-32 | Clear `[VERIFY SOURCE]` | A + B: he wants MORE EXPLAINERS before ticking (rewrite the doc's A/B in plain words) · C: his run is back — `~/Pc_Simulation/Sources/Deep Research/Verify_sources_26sep.md` → a results doc for his approval + links (R4-22) |
+| R4-31 | Check every project file for anything unclaimed — a permanent licence check in `npm test` | DONE S177 — `tools/check-licences.mjs` in `npm test`; its first run found 170 unclaimed files (18 of our own synthesized sounds, 4 TTS/derived, the icons, the Close plates, two Kenney files never named) — all rowed; **12 Freesound sounds (CC0) still owe their credit row** under his 'credit the free ones' rule: their uploader names need `node tools/freesound.mjs licenses …` (the API, his token) — held as a ratchet that fails on anything new |
+| R4-32 | Clear `[VERIFY SOURCE]` | S177: **A and B rewritten in plain words** (`VERIFY_SOURCE_CLEARANCE_2026-09-26.md` — what the sticker is, what each claim says, what the run checked, what a visitor sees change); **C turned into `docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md`** — 4 clean, 23 wording proposals, 2 ethics calls (linking the apparatus's own pages; a name coincidence), verbatim links for the page. **All waiting on his ticks** — nothing applied |
 
 
 ## Closed

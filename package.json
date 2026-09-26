@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node tools/check-invariants.mjs && node tools/check-rooms.mjs && node tools/check-spec.mjs",
+    "test": "node tools/check-invariants.mjs && node tools/check-rooms.mjs && node tools/check-spec.mjs && node tools/check-licences.mjs",
     "audit": "npm test && node tools/room-audit.mjs && node tools/shots.mjs audit",
     "rooms": "node tools/gen_rooms.mjs",
     "gen-attributions": "node tools/gen_attributions.mjs",

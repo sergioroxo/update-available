@@ -134,9 +134,18 @@ function renderComponents(entity: pc.Entity): pc.RenderComponent[] {
 }
 
 /** materials are shared only within this group, so a colour signature is enough */
+/** materials that may share one canonical instance in the batch. ⚑ S177: a TEXTURED
+ *  material is its own key — the calendar pages (calendarPage.ts) are white-diffuse
+ *  with a map, and keyed by colour alone Vera's page was swapped for the plain white
+ *  of the paper beside it: the room showed a blank calendar with its rings. */
+const mapIds = new WeakMap<pc.Texture, number>();
+let nextMapId = 1;
 function materialKey(m: pc.StandardMaterial): string {
   const c = m.diffuse; const e = m.emissive;
+  const map = m.diffuseMap;
+  if (map && !mapIds.has(map)) mapIds.set(map, nextMapId++);
   return [
+    map ? `map${mapIds.get(map)}` : 'flat',
     m.useLighting ? 1 : 0,
     m.blendType,
     m.opacity.toFixed(4),
