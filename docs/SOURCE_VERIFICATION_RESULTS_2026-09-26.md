@@ -49,7 +49,7 @@ C26 **down** to contested (the tag would read "disputed").
 2. **A name coincidence (C26).** The man in the BetterHelp case is named in the reporting (Caleb Hill). The
    piece has its own invented Caleb (Era 2's song). The dossier sentence names no one and should stay that
    way; but the linked articles do name him. There is no connection — flagging it only so it is your decision
-   whether the sources page links those two articles.
+   whether the sources page links those two articles. **RULED 2026-09-26 — Sérgio: "I like Caleb so no need to change."** Both articles are linked; our Caleb stays.
 
 ---
 
@@ -380,7 +380,7 @@ C14 (no source by nature), and C27 (the note is not on the page).
 pages, the LGB Alliance letter, detrans.ai — are **the apparatus's own pages**. A sources page linking them sends
 visitors to them. They are the primary evidence and the run chose them for that reason; the page labels them as
 what they are. Whether to link the apparatus directly or only through independent reporting is **your call**
-(ethics): [ ] link both · [ ] independent sources only for the apparatus's pages.
+(ethics): **RULED 2026-09-26 — Sérgio: "yes it should link to the apparatus."** [x] link both
 
 ## Next actions
 1. **You** tick/rewrite C1–C27 above, and the two ethics calls (the Caleb coincidence; linking the apparatus).

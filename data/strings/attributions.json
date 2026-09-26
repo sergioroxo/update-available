@@ -101,6 +101,90 @@
       "firstUsed": "S177, 2026-09-26"
     },
     {
+      "asset": "\"Computer Starting\"",
+      "creator": "izzint, via Freesound (https://freesound.org/s/841814/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "1997: the machine booting (`boot_1997_machine`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"[SFX] bird chirp / click thing / hi - bip / thing thinger\"",
+      "creator": "waveplaySFX, via Freesound (https://freesound.org/s/218043/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2016: FloppySheep's click (`click_floppysheep`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"Sine Beep Sytlized App UI\"",
+      "creator": "CogFireStudios, via Freesound (https://freesound.org/s/619839/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "1997: the error cascade (`err_cascade_1997`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"j1game_over_mono.wav\"",
+      "creator": "jivatma07, via Freesound (https://freesound.org/s/173859/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2016: FloppySheep's game over (`fail_floppysheep`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"glitch 2\"",
+      "creator": "AmicaSys, via Freesound (https://freesound.org/s/332776/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2003: the collapse glitch (`glitch_e2`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"Glitch013.wav\"",
+      "creator": "Zeraora, via Freesound (https://freesound.org/s/467407/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2026: the glitch at the end (`glitch_e4_end`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"Startup sound computer\"",
+      "creator": "xkeril, via Freesound (https://freesound.org/s/827123/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2026: L introduces itself (`l_arrives_2026`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"Login_Jingle\"",
+      "creator": "Mediasaur, via Freesound (https://freesound.org/s/789040/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2016: Vera signs in (`login_2016`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"Computer Chimes - Notification.aif\"",
+      "creator": "marlonnnnnn, via Freesound (https://freesound.org/s/351879/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2003: the messenger's ping (`notify_2003`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"SFX_MONOSJAM_slayer_impulse_34.wav\"",
+      "creator": "MrFossy, via Freesound (https://freesound.org/s/589353/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2016: a message on the phone (`phone_msg_2016`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"SFX_MONOSJAM_slayer_impulse_43.wav\"",
+      "creator": "MrFossy, via Freesound (https://freesound.org/s/589362/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "2016: the phone's notification (`phone_ping_2016`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
+      "asset": "\"Weird Buttons App Game UI\"",
+      "creator": "CogFireStudios, via Freesound (https://freesound.org/s/619836/)",
+      "license": "CC0 1.0 — credited by choice",
+      "usedAs": "a press that does not land (`ui_refuse`)",
+      "firstUsed": "S177, 2026-09-26 (credit; in use since 2026-09-03)"
+    },
+    {
       "asset": "Furniture Kit (bed, desk, desk chair, bookcase, rug, side table, potted plant) and \"Computer Screen\", \"Computer Keyboard\"",
       "creator": "Kenney (https://kenney.nl/assets/furniture-kit)",
       "license": "CC0 1.0 — credited by choice",

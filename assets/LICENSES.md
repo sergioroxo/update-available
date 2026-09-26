@@ -200,6 +200,25 @@ relicensed under us. The thirteen adopted in tranche 1 are listed in
 `docs/reinterp/SOUND_MAP_2026-09-02.md` §4 with their source ids; the full list with Sérgio's intent
 against each is `data/audio/sound_candidates.tsv`.
 
+**⚑ S177 (2026-09-26) — credited after all, under Sérgio's rule of 2026-09-24 ("even the free to use models
+should have the credits"): the twelve in use, from his own `node tools/freesound.mjs licenses` run. Each also has
+its row in `docs/reinterp/ATTRIBUTIONS.md`, which is what the in-piece Credits and the sources page read.**
+
+| file | source | author | licence |
+|---|---|---|---|
+| `boot_1997_machine` | [freesound #841814](https://freesound.org/s/841814/) — "Computer Starting" | izzint | CC0 |
+| `click_floppysheep` | [freesound #218043](https://freesound.org/s/218043/) — "[SFX] bird chirp / click thing / hi - bip / thing thinger" | waveplaySFX | CC0 |
+| `err_cascade_1997` | [freesound #619839](https://freesound.org/s/619839/) — "Sine Beep Sytlized App UI" | CogFireStudios | CC0 |
+| `fail_floppysheep` | [freesound #173859](https://freesound.org/s/173859/) — "j1game_over_mono.wav" | jivatma07 | CC0 |
+| `glitch_e2` | [freesound #332776](https://freesound.org/s/332776/) — "glitch 2" | AmicaSys | CC0 |
+| `glitch_e4_end` | [freesound #467407](https://freesound.org/s/467407/) — "Glitch013.wav" | Zeraora | CC0 |
+| `l_arrives_2026` | [freesound #827123](https://freesound.org/s/827123/) — "Startup sound computer" | xkeril | CC0 |
+| `login_2016` | [freesound #789040](https://freesound.org/s/789040/) — "Login_Jingle" | Mediasaur | CC0 |
+| `notify_2003` | [freesound #351879](https://freesound.org/s/351879/) — "Computer Chimes - Notification.aif" | marlonnnnnn | CC0 |
+| `phone_msg_2016` | [freesound #589353](https://freesound.org/s/589353/) — "SFX_MONOSJAM_slayer_impulse_34.wav" | MrFossy | CC0 |
+| `phone_ping_2016` | [freesound #589362](https://freesound.org/s/589362/) — "SFX_MONOSJAM_slayer_impulse_43.wav" | MrFossy | CC0 |
+| `ui_refuse` | [freesound #619836](https://freesound.org/s/619836/) — "Weird Buttons App Game UI" | CogFireStudios | CC0 |
+
 **CC0 owes no credit and this table does not pad itself with public-domain rows** — same reasoning as
 the rubber duck's entry above. Crediting the uploaders anyway is courteous and is a choice, not a debt;
 `node tools/freesound.mjs licenses <id...>` prints the rows if we decide to.

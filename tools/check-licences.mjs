@@ -74,7 +74,7 @@ const mentions = (text, token) => new RegExp(`(^|[^A-Za-z0-9_])${token.replace(/
  * session could not run. Each id leaves this list when its ATTRIBUTIONS.md row lands;
  * nothing may be added to it.
  */
-const OWED = new Set(['841814', '218043', '619839', '173859', '332776', '467407', '789040', '351879', '589353', '589362', '619836', '827123']);
+const OWED = new Set([]);   // S177: emptied the same day — his `freesound.mjs licenses` run gave the twelve names
 const owed = new Set();
 const unclaimed = [];
 const rows = [];
