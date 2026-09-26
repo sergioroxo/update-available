@@ -45,6 +45,11 @@ import clusterData from '../../data/room/cluster.json';
 import network from '../../data/strings/close_network.json';
 import closeCard from '../../data/strings/close_restart.json';
 import { drawDossier } from '../witness/dossier';
+import { ERA1 } from '../desktop/theme/era1';
+import { ERA3 } from '../desktop/theme/era3';
+import { ERA4 } from '../desktop/theme/era4';
+import { px, setFont } from '../desktop/theme/chrome';
+import { setFaceEra, faceEra, type FaceEra } from '../desktop/theme/fonts';
 
 const P = clusterData.pointCloud;
 
@@ -628,6 +633,8 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   let panelHidden = new Uint8Array(0);
   const PLATE = { x: 40, y: 40, w: 600, h: 688 };
   const TEXT_X = PLATE.x + PLATE.w + 48;
+  /** S177 / R4-30 — the Sources button's rect in the cell (px), bottom right, on the hint's line */
+  const SRC_BTN = { x: CELL_W - 40 - 300, y: CELL_H - 48 - 39, w: 300, h: 78 };
   const TEXT_W = CELL_W - TEXT_X - 44;
   const READING_FACE = '"Helvetica Neue", Helvetica, Arial, sans-serif';
   const wrap = (c: CanvasRenderingContext2D, text: string, maxW: number): string[] => {
@@ -751,7 +758,59 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         pc2.font = '24px monospace';
         pc2.fillStyle = P.link;
         pc2.textBaseline = 'middle';
-        pc2.fillText(closeCard.source.panelHint + '  ›', TEXT_X, y0 + CELL_H - 48);
+        pc2.fillText(closeCard.source.panelHint, TEXT_X, y0 + CELL_H - 48);
+        drawSourcesButton(panel.era, y0);
+      };
+      /**
+       * ⚑ S177 / R4-30 — THE SOURCES BUTTON, in the room's own OS (his D3, 2026-09-26:
+       * "yes" to a real button, the whole panel still pressable). A press anywhere on
+       * the panel still turns it (the headset's wand needs no aim); the button is what
+       * a visitor LOOKS for. 1997 a grey bevel, 2003 Restorify's blue, 2016 a glass
+       * pill, 2026 a dark chip — drawn at ×3, the 1997 desktop's own pixel scale, like
+       * the dossier behind it. Its rect is published (`__closePanels`) so the walk can
+       * aim a real press at it: the affordance is the target.
+       */
+      const drawSourcesButton = (era: number, y0: number): void => {
+        const S = 3, W = SRC_BTN.w / S, H = SRC_BTN.h / S;
+        const was = faceEra();
+        setFaceEra(`e${Math.min(4, Math.max(1, era))}` as FaceEra);
+        pc2.save();
+        pc2.translate(SRC_BTN.x, y0 + SRC_BTN.y);
+        pc2.scale(S, S);
+        let ink: string = ERA1.black;
+        if (era === 1) {
+          px(pc2, 0, 0, W, H, ERA1.black);                  // the outer shadow line, bottom-right
+          px(pc2, 0, 0, W - 1, H - 1, ERA1.white);
+          px(pc2, 1, 1, W - 2, H - 2, ERA1.greyDark);
+          px(pc2, 1, 1, W - 3, H - 3, ERA1.silver);
+          px(pc2, 2, 2, W - 4, H - 4, ERA1.beige);
+        } else if (era === 2) {
+          px(pc2, 1, 0, W - 2, H, ERA1.navy);               // corners cut: Restorify's rounded blue
+          px(pc2, 0, 1, W, H - 2, ERA1.navy);
+          px(pc2, 1, 1, W - 2, H - 2, ERA1.titleBlue);
+          px(pc2, 2, 1, W - 4, 1, ERA1.white);
+          ink = ERA1.white;
+        } else if (era === 3) {
+          for (let y = 0; y < H; y++) {                    // the pill: 3 px of curve each end
+            const cut = y < 3 ? 3 - y : y > H - 4 ? y - (H - 4) : 0;
+            px(pc2, cut, y, W - 2 * cut, 1, y === 0 || y === H - 1 ? ERA3.glassEdge : y < H / 2 ? ERA3.glassHi : ERA3.glass);
+          }
+          px(pc2, 0, 3, 1, H - 6, ERA3.glassEdge); px(pc2, W - 1, 3, 1, H - 6, ERA3.glassEdge);
+          ink = ERA3.titleText;
+        } else {
+          px(pc2, 0, 0, W, H, ERA4.chipEdge);
+          px(pc2, 1, 1, W - 2, H - 2, ERA4.chip);
+          ink = ERA4.chipText;
+        }
+        setFont(pc2, 11);
+        pc2.fillStyle = ink;
+        pc2.textBaseline = 'middle';
+        const label = closeCard.source.panelButton;
+        const tw = pc2.measureText(label).width;
+        pc2.fillText(label, Math.round((W - tw) / 2), Math.round(H / 2));
+        pc2.restore();
+        pc2.textBaseline = 'middle';
+        setFaceEra(was);
       };
       /**
        * ⚑ S175 — THE ROOM'S DOSSIER, ON ITS OWN PANEL. Sérgio: "the sources open
@@ -879,7 +938,12 @@ export function buildPointCloud(app: pc.Application): PointCloud {
     const M = root.getWorldTransform();
     return panelFrames.map((f, i) => {
       const w = M.transformPoint(new pc.Vec3(f.c.x, f.c.y, f.c.z));
-      return { i, era: panelEra[i], face: panelFace[i], hidden: panelHidden[i] === 1, x: w.x, y: w.y, z: w.z };
+      // S177: and where its Sources button is, on the story face — a real press can aim at it
+      const bx = ((SRC_BTN.x + SRC_BTN.w / 2) / CELL_W - 0.5) * 2 * f.hw;
+      const by = (0.5 - (SRC_BTN.y + SRC_BTN.h / 2) / CELL_H) * 2 * f.hh;
+      const b = M.transformPoint(new pc.Vec3(f.c.x + f.r.x * bx + f.u.x * by, f.c.y + f.r.y * bx + f.u.y * by, f.c.z + f.r.z * bx + f.u.z * by));
+      return { i, era: panelEra[i], face: panelFace[i], hidden: panelHidden[i] === 1, x: w.x, y: w.y, z: w.z,
+        button: panelFace[i] < 0 ? { x: b.x, y: b.y, z: b.z } : null };
     });
   };
 

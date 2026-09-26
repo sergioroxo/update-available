@@ -295,9 +295,15 @@ async function main() {
           const q = (await page.evaluate(() => window.__closePanels())).find((x) => x.era === era);
           if (!q || q.hidden) { console.log(`  ⚠ the ${tag} panel is folded behind the machine right now — no frame`); continue; }
           const E = { x: 0, y: 1.16, z: 0.7 };
-          const dx = q.x - E.x, dy = q.y - E.y, dz = q.z - E.z;
-          await free(E.x, E.y, E.z, Math.atan2(dy, Math.hypot(dx, dz)) * 180 / Math.PI, Math.atan2(-dx, -dz) * 180 / Math.PI);
+          const aim = (t) => { const dx = t.x - E.x, dy = t.y - E.y, dz = t.z - E.z; return free(E.x, E.y, E.z, Math.atan2(dy, Math.hypot(dx, dz)) * 180 / Math.PI, Math.atan2(-dx, -dz) * 180 / Math.PI); };
+          await aim(q);
+          await wait(600);
+          // S177 / R4-30: the story face first, with its era's Sources button …
+          await shot(`10a-panel-${tag}`, `the ${tag} panel: its room, and its Sources button in that room's OS`);
+          // … then the press lands ON the button (its published point), with the real mouse
+          await aim(q.button ?? q);
           await page.mouse.move(640, 360); await page.mouse.down(); await wait(70); await page.mouse.up();
+          await aim(q);
           await wait(1200);
           await shot(`10-dossier-${tag}`, `the ${tag} room's dossier, on its own panel, in its own OS`);
         }

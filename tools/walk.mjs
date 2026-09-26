@@ -727,6 +727,19 @@ const LAP = { w: 224, h: 140 };
         : onMonitor(r.x + r.w / 2, r.y + r.h / 2, OS.w, OS.h);
       add(r.id, 'close-monitor', r, pt);
     }
+    /**
+     * ⚑ S177 / R4-30 — THE PANELS' SOURCES BUTTONS. Each panel's story face carries an
+     * era-styled button (his D3); `__closePanels()` publishes its world point while the
+     * face shows (null once the panel has turned to its dossier). Named `close-src-*`,
+     * so LAST_RESORT presses each once and never laps them.
+     */
+    const cps = cm && cm.on && typeof window.__closePanels === 'function' ? window.__closePanels() : [];
+    for (const p of cps) {
+      if (!p.button || p.hidden) continue;
+      const pt = toPage(p.button.x, p.button.y, p.button.z);
+      if (pt) targets.push({ id: 'close-src-e' + p.era, surface: 'panel', logical: null, pt });
+      else dropped.push({ id: 'close-src-e' + p.era, surface: 'panel', logical: null, why: lastWhy || 'unprojectable', turn: turnTo(lastWorld) });
+    }
 
     const surfaced = new Set(targets.map((t) => t.surface));
     root.forEach((e) => {
@@ -834,8 +847,12 @@ const LAP = { w: 224, h: 140 };
      * and the next surface somebody adds is hashed the day it appears.
      */
     const canvases = window.__era3Devices ? window.__era3Devices() : {};
+    // ⚑ S177: and the Close's four panels — a Sources press turns a panel to its dossier
+    //   on the panel atlas, which no canvas above holds; its face index is the change
+    const panelFaces = typeof window.__closePanels === 'function'
+      ? 'panels:' + window.__closePanels().map((p) => p.face).join(',') : '';
     const screenHash = hashOf(os.canvas) + '/' +
-      Object.keys(canvases).sort().map((k) => k + ':' + hashOf(canvases[k])).join('/');
+      Object.keys(canvases).sort().map((k) => k + ':' + hashOf(canvases[k])).join('/') + '/' + panelFaces;
 
     /**
      * ⚑ AND SOME OF THIS PIECE DOES NOT SPEAK IN PIXELS AT ALL (A-5.3).
