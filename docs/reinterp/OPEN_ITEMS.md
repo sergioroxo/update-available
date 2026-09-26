@@ -209,12 +209,12 @@ Measured, not eyeballed. Nothing here is built: they need a walk, and his review
 | R4-24 | Vera's phone on the stand's **higher** side, turned to us | PLANNED — Batch 1 |
 | R4-25 | 2003: the CD spindle clashes with the mug — move it | PLANNED — Batch 1 |
 | R4-26 | 2003: the modem back ("it was fine, just poorly positioned") | PLANNED — Batch 1 |
-| R4-27 | The calendar (jeremy, CC-BY) in the rooms, **a page per era** tied to age, time and SOGICE | ❓ his: D1 (a pixel-art page on a room object) + D4 (the images) |
+| R4-27 | The calendar (jeremy, CC-BY), a page per era tied to age, time and SOGICE | RULED 2026-09-26 — D1 yes ("make the pixel art good"), D4 the four proposed pages — Batch 1 |
 | R4-28 | The pen (jeremy, CC-BY) on Vera's notebook; the Phone Stand's URL in the credits | PLANNED — Batch 1 |
-| R4-29 | "The materials have no texture — the lamp is just brown": every model tinted to ONE colour | ❓ his: D2 (per-part flat colours) |
-| R4-30 | The panels: an era-styled "Sources" button, or press anywhere? | ❓ his: D3 (both, recommended) |
+| R4-29 | Every model tinted to ONE colour (the lamp all brown) | RULED 2026-09-26 — D2 yes: per-part flat colours — Batch 1 |
+| R4-30 | The panels' affordance | RULED 2026-09-26 — D3 yes: an era-styled "Sources" button + the whole panel pressable — Batch 2 |
 | R4-31 | Check every project file for anything unclaimed — a permanent licence check in `npm test` | PLANNED — Batch 4 |
-| R4-32 | Clear `[VERIFY SOURCE]`: `VERIFY_SOURCE_CLEARANCE_2026-09-26.md` — A (8) and B (4) ready; C (27) needs a run | ❓ his ticks + the run |
+| R4-32 | Clear `[VERIFY SOURCE]` | A + B: he wants MORE EXPLAINERS before ticking (rewrite the doc's A/B in plain words) · C: his run is back — `~/Pc_Simulation/Sources/Deep Research/Verify_sources_26sep.md` → a results doc for his approval + links (R4-22) |
 
 
 ## Closed

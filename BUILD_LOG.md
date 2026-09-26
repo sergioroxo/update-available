@@ -1867,3 +1867,4 @@ missing links. **`PLAN_NEXT_2026-09-26.md`**: his notes of 09-24 in four batches
 decisions first (the calendar's page as a pixel-art exception, per-part model colours, an era-styled
 "Sources" button on the panels, the calendar images per era — proposed — and his ticks). OPEN_ITEMS
 R4-24…R4-32 opened; R4-23 dropped.
+- S176b (2026-09-26): his rulings recorded — D1 yes ("make the pixel art good"), D2 yes, D3 yes, D4 "love it", D5 A/B need plain-word explainers; his Deep Research run on the 27 unverified claims is in (`~/Pc_Simulation/Sources/Deep Research/Verify_sources_26sep.md`). Compaction handoff: STATE first block.
