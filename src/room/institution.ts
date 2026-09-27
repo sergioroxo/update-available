@@ -47,7 +47,7 @@ import type { EraKey } from './cluster';
 type V3 = { x: number; y: number; z: number };
 
 /** what the look can rest on, per era: the aim key, the prop it moves, a world point and radius */
-interface Target { key: string; prop: string; at: V3; r: number }
+interface Target { key: string; prop: string; at: V3; r: number; practice: string }
 
 /** every prop this module writes to — handed to the batcher as never-batch */
 export const INSTITUTION_IDS = [
@@ -288,23 +288,27 @@ export function createInstitution(room: RoomHandles): Institution {
     }
   }
 
-  function targets(_era: EraKey): Target[] {
+  function targets(era: EraKey): Target[] {
     const out: Target[] = [];
-    const add = (key: string, prop: string, r: number, dy = 0): void => {
+    const add = (key: string, prop: string, r: number, practice: string, dy = 0): void => {
       const e = ent(prop);
       if (!e) return;
       const p = e.getPosition();
-      out.push({ key, prop, at: { x: p.x, y: p.y + dy, z: p.z }, r });
+      out.push({ key, prop, at: { x: p.x, y: p.y + dy, z: p.z }, r, practice });
     };
-    add('instDrawer', 'inst_cabinet', 0.3, 0.1);
-    add('instScanner', 'inst_scanner', 0.18);
-    add('instTerminal', 'inst_terminal', 0.17);
-    add('instReferral', 'inst_referral', 0.17);
-    add('instRules', 'inst_rules', 0.17);
-    add('instPacket', 'inst_packet', 0.14);
-    add('instSuitcase', 'suitcase', 0.26);
-    add('instRouter', 'inst_router', 0.12);
-    add('instStatus', 'inst_statusLed', 0.1);
+    // ⚑ S183d — THE SECOND READING. Sérgio: "the Witness system needs to have a dual functionality
+    //   of helping understand the underlines of the SOGICE ecosystem." Each object is the material
+    //   trace of a documented practice (data/dossier/practices.json — his approved titles and lines),
+    //   and a press names it: the look says WHAT the thing is, the press says WHAT IT IS PART OF.
+    add('instDrawer', 'inst_cabinet', 0.3, 'profile', 0.1);
+    add('instScanner', 'inst_scanner', 0.18, 'update');
+    add('instTerminal', 'inst_terminal', 0.17, era === 'e3' ? 'arrival' : 'placement');
+    add('instReferral', 'inst_referral', 0.17, 'placement');
+    add('instRules', 'inst_rules', 0.17, 'placement');
+    add('instPacket', 'inst_packet', 0.14, 'placement');
+    add('instSuitcase', 'suitcase', 0.26, 'placement');
+    add('instRouter', 'inst_router', 0.12, 'arrival');
+    add('instStatus', 'inst_statusLed', 0.1, 'record');
     return out;
   }
 

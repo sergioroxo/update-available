@@ -46,6 +46,7 @@ import menuStrings from '../../data/strings/gameMenu.json';
 import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { createInstitution, INSTITUTION_IDS } from '../room/institution';
+import { practiceOf } from '../witness/record';
 import { mountHelper, type Helper } from '../frame/helper';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
@@ -2942,16 +2943,27 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S183 — the institution's corner answers a press with its own movement
       //   (src/room/institution.ts). Last, so a marker or a screen always wins.
       const inst = institutionUnderRay(ray);
-      if (inst) { institution?.press(inst); return; }
+      if (inst) {
+        institution?.press(inst.key);
+        // ⚑ S183d — the press names the practice the object belongs to (practices.json, his
+        //   approved lines), held in the sentence line long enough to read
+        const pr = practiceOf(inst.practice);
+        if (pr) { practiceText = (aimStrings as unknown as Record<string, string>).instPractice.replace('{title}', pr.title).replace('{did}', pr.did); practiceT = PRACTICE_SECONDS; }
+        return;
+      }
     }
   }
 
-  /** ⚑ S183 — the corner object under a ray (its aim key), or null */
-  function institutionUnderRay(ray: Ray): string | null {
+  /** ⚑ S183 — the corner object under a ray (its aim key and practice), or null */
+  function institutionUnderRay(ray: Ray): { key: string; practice: string } | null {
     if (!institution || !cluster || !os.inDesktop) return null;
-    for (const t of institution.targets(cluster.era)) if (rayHitsPointR(ray, t.at, t.r)) return t.key;
+    for (const t of institution.targets(cluster.era)) if (rayHitsPointR(ray, t.at, t.r)) return t;
     return null;
   }
+  /** ⚑ S183d — the practice a corner press named, and how long it stays in the sentence line */
+  const PRACTICE_SECONDS = 6;
+  let practiceText: string | null = null;
+  let practiceT = 0;
 
   /**
    * ⚑ S152 — THE SENTENCE LINE. What the look is resting on, named — the same
@@ -2992,7 +3004,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
     }
     const inst = institutionUnderRay(ray);
-    return inst ? A[inst] ?? null : null;
+    return inst ? A[inst.key] ?? null : null;
   }
   /** the mouse's last resting place over the canvas (null once it leaves) */
   let hoverPointer: { x: number; y: number } | null = null;
@@ -3540,8 +3552,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           const hoverText = aimName ?? (!cap && !tapes.inserted && hoveredTapeId
             ? `◈ ${tapes.def(hoveredTapeId).shelfLabel}` : null);
           if (cueT > 0) cueT -= dt; else cueText = null;
-          // the tape's words first; then a sound's name while it is fresh; then what the look rests on
-          const text = cap ?? (cueT > 0 ? cueText : null) ?? hoverText;
+          if (practiceT > 0) practiceT -= dt; else practiceText = null;
+          // the tape's words first; then a sound's name while it is fresh; then the practice a corner
+          // press named (S183d); then what the look rests on
+          const text = cap ?? (cueT > 0 ? cueText : null) ?? practiceText ?? hoverText;
           canvasEl.style.cursor = aimName && !xr?.active && motionState !== 'live' ? 'pointer' : 'default';
           tapeCaption.textContent = text ?? '';
           tapeCaption.style.opacity = text ? '1' : '0';
