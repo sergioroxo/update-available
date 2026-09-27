@@ -1,4 +1,4 @@
-STATUS: live — plan for his approval (2026-09-27)
+STATUS: live
 
 # Phase 4 · The games — plan
 *His asks, gathered: a handheld in 1997, "tetris like?"; the 2003 snake ("Reach", framing approved); FloppySheep "not
@@ -6,6 +6,17 @@ monochrome", with his song and its lyrics; the Switch-like model "we can make a 
 models (all CC-BY 3.0) credited on import. And the two principles he set during Phase 3, which now govern this
 phase too: **things appear in the story's order** ("there are stuff that need to appear in sequence") and **the
 Witness system has a second reading** (each thing is a trace of a documented practice).*
+
+## ⚑ His decisions (2026-09-28)
+- **2026: A · TIDY** — but **not gentle.** His correction, and it supersedes my framing below: *"the reality of 2026
+  being gentle is something that I think we need to supersede, the reality is that the increase of violence is
+  worsening, especially now with the LGB Alliance and stuff attacking Trans people, so we need to be more direct and
+  use these spaces to educate on that, so softness might not be the best reality here."* → TIDY is redesigned below
+  (**"2026 · TIDY — direct"**). The Switch-like model goes **on Maya's bed**.
+- **FloppySheep: keep S70** (never judges; no ledger, no lapse screen).
+- **REACH: on the phone** (Daniel's 2003 phone).
+- **The referral list as a printout: now** — BUILT S185 (tractor-feed 1997 paper, the page's print header, the
+  listings, the ring's PREV · NEXT bar, 1/3, her pen).
 
 ## The one idea that holds the four together
 **Each era's game is the apparatus gamifying the same thing: fitting a life into a shape.** Tetris-like in 1997
@@ -40,7 +51,7 @@ plays it at work, and the piece never scolds her for it.
 
 ### 2003 · REACH — on Daniel's phone (Restorify's own game)
 - **Arrives in sequence:** after the first check-in (the plan's *CHECK-IN KEPT*), Restorify offers it: "Play REACH
-  while you wait". On the DS-like model on his shelf or the phone — see question 3.
+  while you wait". On **his phone** (his decision).
 - **Play:** a snake. **The snake is the ministry, not the player's desire.** It eats bright queer symbols — a pink
   triangle, a rainbow, two interlocking signs, a heart — and grows longer and greyer with each; the score counts
   **"SOULS REACHED"**. The symbols **stay bright and whole where they were**: each one eaten leaves its twin behind
@@ -60,17 +71,37 @@ plays it at work, and the piece never scolds her for it.
   group?"* screen. S70 made FloppySheep the one thing in 2016 that never judges her. My recommendation: **keep S70** —
   the streak counter can be the game's own brag, but a crash just restarts the run.
 
-### 2026 · a new game for the Switch-like model — Maya's desk
-Three concepts; **his pick** (question 1):
-- **A · TIDY** *(my recommendation)* — the cosy organising game of the 2020s (the "put everything in its place"
-  genre). A bedroom's objects on a shelf grid, each with a right place; the game is pleasant, tactile, rewarding.
-  Some objects have no place at all — a binder, a pride pin, a letter — and the game keeps offering one box for
-  them: **"Let go"**. Nothing is ever destroyed: if you leave them out, the room is simply never "complete", and the
-  game says so, warmly, forever. It is FIT IN again, thirty years later and gentle — which is the thesis of 2026.
-- **B · DAILY SPIN** — the reward wheel in L's app that always lands on *"Try again tomorrow"* (DESIGN_NEXT §2).
-  Smallest to build, least to play.
-- **C · a streak-pet** — the Tamagotchi grammar in 2026 clothes: a companion that is fed by check-ins and droops when
-  you skip them (DESIGN_NEXT's "Virtue Pet", moved to 2026 where companion apps actually live).
+### 2026 · TIDY — direct (on the Switch-like model, on Maya's bed) — REDESIGNED 2026-09-28
+*(Superseded: "It is FIT IN again, thirty years later and gentle — which is the thesis of 2026." It is not. His
+correction above.)*
+- **The surface is cosy on purpose** — the "put everything in its place" genre of the 2020s, a room of Maya's things
+  on a shelf grid — **because that is the disguise, and the game strips it.** Every object has a place except the
+  ones that make her life hers (a binder, the letter with her name, the pride pin, the prescription), and for those
+  the game offers one box.
+- **The box speaks the campaigns' own words, named and cited.** Its label changes with each object: the documented
+  claims of named actors (e.g. the claim, in LGB Alliance's own letter to MPs, that affirming a child is "itself a
+  form of conversion therapy" — already on the dossier, e4_offers#2, at his word). Satire of the *seller* only; the
+  gender-exploratory clinical debate stays unsatirised (both readings, unresolved).
+- **Between rooms, a card says what the words did.** Not a score: a dated, sourced consequence — a law passed, a ban
+  in force, a documented rise in reported hate crime — each with its status (`documentary | contested |
+  speculative`) and its link, in the dossier's grammar. **Nothing goes on a card until his research verifies it**
+  (prompt below). This is where the space educates.
+- **It collapses:** the room is never "complete"; the last card names who published the game and what their
+  campaign asked for. Nothing of Maya's is ever destroyed — the objects stay on the floor, bright, where she left them.
+- **Files:** "TIDY played — n objects kept" (a refusal is filed exactly like compliance; the witness is symmetric).
+
+**Deep Research prompt for TIDY (his to run):**
+> For an artwork about conversion practices (2026 section, a trans woman's room), I need verified, dated, sourced
+> facts for 2023–2026 in the UK, the US and Europe: (1) laws and policies restricting trans people's lives (gender-
+> affirming care bans and their dates and scope; the UK puberty-blocker restrictions; school name/pronoun and
+> bathroom laws; ID and legal-recognition changes), with the number of US states with care bans by year; (2) official
+> hate-crime statistics for transgender identity (UK Home Office annual releases, FBI data, EU/FRA surveys) — the
+> numbers, the direction, and the caveats the sources themselves give; (3) the documented public claims of named
+> campaigning organisations (e.g. LGB Alliance, and others) about trans people and conversion-practice bans, quoted
+> from their own publications with dates; (4) where conversion-practice bans excluded or included gender identity,
+> and who lobbied for each outcome. Grade each point documented / contested / speculative, give primary links, and
+> say plainly what cannot be verified. Keep the gender-exploratory clinical debate separate and neutral: report it,
+> do not adjudicate it.
 
 ## The models (his six files, `~/Pc_Simulation/Assests/27:09/`)
 | model | author · licence | size | where |
@@ -79,7 +110,7 @@ Three concepts; **his pick** (question 1):
 | Handheld videogame console (DS-like) | Poly by Google · CC-BY 3.0 | 22 KB | Daniel's shelf, 2003 — REACH (if not the phone) |
 | Handheld game console (DSi-like, light blue) | Poly by Google · CC-BY 3.0 | 192 KB | Vera's desk, 2016 — an object |
 | Portable game device (DSi/XL-like) | Poly by Google · CC-BY 3.0 | 302 KB | spare (the two copies are identical) |
-| Nintendo Switch (OLED-like) | Jasmine Roberts · CC-BY 3.0 | 61 KB | Maya's desk, 2026 — the new game |
+| Nintendo Switch (OLED-like) | Jasmine Roberts · CC-BY 3.0 | 61 KB | **Maya's bed**, 2026 — TIDY |
 
 Credited on import (LICENSES.md, ATTRIBUTIONS.md, the Leave page's credits) — "even the free to use models should
 have the credits". Each gets measured before it ships (tris and draw calls against the Quest budget: ≤75 draw
@@ -90,7 +121,7 @@ calls; worst look today 41).
 2. **FloppySheep in colour + his song** — the most defined, the assets exist.
 3. **FIT IN (1997)** — the cartridge in the kit, the game, the filing.
 4. **REACH (2003)** — after the first check-in.
-5. **The 2026 game** — after his pick.
+5. **TIDY (2026)** — after his Deep Research run (the cards need verified facts).
 
 ## His questions
 1. **2026:** A (TIDY), B (DAILY SPIN) or C (streak-pet)?

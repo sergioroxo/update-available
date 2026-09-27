@@ -27,7 +27,7 @@ export type PrintId = 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour
 export const PRINT_SIZE: Record<PrintId, [number, number]> = {
   rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
   tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100],
-  drawer12: [24, 12], campTag: [36, 22], referral1997: [42, 56], rules2003: [42, 56], indexCard: [26, 16]
+  drawer12: [24, 12], campTag: [36, 22], referral1997: [60, 80], rules2003: [42, 56], indexCard: [26, 16]
 };
 
 const centre = (c: Ctx, s: string, y: number, col: string, W: number, sc = 1): void => {
@@ -198,21 +198,39 @@ function campTag(c: Ctx, W: number, H: number): void {
 
 /**
  * ⚑ S182 / R5-03 — THE REFERRAL LIST (his intake research, 2026-09-27: in 1997 the documented path
- * was a parent calling the pastor, and the pastor using a ministry referral directory — "a folded
- * referral sheet… with a pastor's handwritten phone number"). A photocopied page of ministry listings,
- * and a number written on it in his mother's biro. Invented names; the form is the documented one.
+ * was a parent calling the pastor, and the pastor using a ministry referral directory).
+ * ⚑ S185 — AND THE DIRECTORY WAS ONLINE. His web-archive finds (docs/reinterp/SOURCES_1997_WEB_2026-09-27.md):
+ * a college faculty page carried Exodus referrals, by state and by country, from 1996; link directories
+ * listed "Local/Individual Ministries (USA) … by U.S. state", chained to each other by webrings. So the
+ * sheet is a PRINTOUT of such a page (his "printout now", 2026-09-28): 1997 continuous paper with the
+ * tractor-feed holes down both edges and the perforation beside them, the browser's own print header, the
+ * listings, the ring's PREV · NEXT bar at the foot, "1/3" — and, over it, his mother's pen: one listing
+ * underlined, the pastor's number written in. The page is invented; the form is the documented one.
  */
 function referral1997(c: Ctx, W: number, H: number): void {
+  const M = 7;                                          // the tractor strip, each side
   px(c, 0, 0, P.cardStock, W, H);
-  text(c, 'REFERRALS', 3, 3, P.cardInk);
-  px(c, 3, 10, P.cardInk, W - 6, 1);
-  for (let i = 0; i < 7; i++) {                       // the listings: a name line, an address line
-    const y = 13 + i * 5;
-    px(c, 3, y, P.cardInk, 3, 2); px(c, 8, y, P.cardInk, 14 + ((i * 7) % 12), 1); px(c, 8, y + 2, P.tagString, 10 + ((i * 5) % 9), 1);
+  for (const x0 of [0, W - M]) {                        // the strips: holes every 6 px, a perforation inside
+    for (let y = 3; y < H - 2; y += 6) px(c, x0 + 2, y, P.tagString, 2, 2);
+    for (let y = 0; y < H; y += 2) px(c, x0 === 0 ? M - 1 : W - M, y, P.tagString, 1, 1);
   }
-  line(c, 2, 26, 40, 26, P.motherInk);                // one listing underlined, in her pen
-  hand(c, 'pas', 4, 44, P.motherInk);                  // "pastor" won't fit at this size: her own abbreviation
-  text(c, '555-0147', 6, 50, P.motherInk);            // 32 px: on its own line, so it never runs off the sheet
+  for (let x = M + 1; x < W - M - 1; x += 3) px(c, x, 1, P.tagString, 2, 1);   // the print header (the URL)
+  text(c, 'MINISTRIES', M + 3, 4, P.cardInk);
+  px(c, M + 3, 10, P.cardInk, W - 2 * M - 6, 1);
+  text(c, 'BY STATE', M + 3, 12, P.tagString);
+  for (let i = 0; i < 7; i++) {                         // the listings: a name, an address line
+    const y = 20 + i * 5;
+    px(c, M + 3, y, P.cardInk, 2, 2);
+    px(c, M + 7, y, P.confBlue, 14 + ((i * 7) % 12), 1);           // a link, in the page's blue
+    px(c, M + 7, y + 2, P.tagString, 10 + ((i * 5) % 9), 1);
+  }
+  line(c, M + 6, 39, W - M - 5, 39, P.motherInk);       // one listing underlined, in her pen (under it, not through it)
+  px(c, M + 2, H - 13, P.cardInk, W - 2 * M - 4, 7);    // the ring's bar: < PREV · NEXT >
+  text(c, '<', M + 4, H - 12, P.cardStock); text(c, 'RING', Math.round(W / 2) - 7, H - 12, P.cardStock);
+  text(c, '>', W - M - 7, H - 12, P.cardStock);
+  text(c, '1/3', W - M - 13, H - 5, P.tagString);
+  hand(c, 'pas', M + 3, 55, P.motherInk);               // "pastor" won't fit at this size: her own abbreviation
+  text(c, '555-0147', M + 5, 61, P.motherInk);          // written across the page's white, over the print
 }
 
 /**
