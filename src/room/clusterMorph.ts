@@ -88,6 +88,17 @@ function foldTargets(idx: number): Map<string, PropTarget> {
   return m;
 }
 
+/** ⚑ S183 — a prop's resting position in one space state, or null where it is absent.
+ *  src/room/institution.ts moves the corner's props RELATIVE to this, so an era change
+ *  (which the morph owns) never leaves an offset baked into a position. */
+const FOLD_CACHE = new Map<number, Map<string, PropTarget>>();
+export function foldedPos(id: string, idx: number): number[] | null {
+  let m = FOLD_CACHE.get(idx);
+  if (!m) { m = foldTargets(idx); FOLD_CACHE.set(idx, m); }
+  const t = m.get(id);
+  return t && t.present ? t.pos : null;
+}
+
 /**
  * The ids whose folded target is IDENTICAL in every space state: present from
  * r1 through r4 with the same color/pos/size/yaw, and not a real model. These

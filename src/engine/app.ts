@@ -45,6 +45,7 @@ import reinterpStrings from '../../data/strings/reinterp.json';
 import menuStrings from '../../data/strings/gameMenu.json';
 import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
+import { createInstitution, INSTITUTION_IDS } from '../room/institution';
 import { mountHelper, type Helper } from '../frame/helper';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
@@ -1569,6 +1570,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * full reasoning.
    */
   cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat());
+  /** ⚑ S183 — the institution's corner: named, pressable, and pulling with the file */
+  const institution = options.reinterp === true ? createInstitution(room) : null;
+  if (institution) {
+    cluster?.setNeverBatch(INSTITUTION_IDS);
+    // the auditor's handle (memory: the affordance is the target) — what can be pressed there now
+    (window as unknown as { __institution?: () => unknown }).__institution =
+      () => (cluster ? institution.targets(cluster.era) : []);
+  }
 
   // R28-2c: the belongings beat's visual mark — a PERSISTENT warm lift on a
   // kept prop, distinct from setPropEmphasis above in both mechanism-detail
@@ -2930,7 +2939,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           }
         }
       }
+      // ⚑ S183 — the institution's corner answers a press with its own movement
+      //   (src/room/institution.ts). Last, so a marker or a screen always wins.
+      const inst = institutionUnderRay(ray);
+      if (inst) { institution?.press(inst); return; }
     }
+  }
+
+  /** ⚑ S183 — the corner object under a ray (its aim key), or null */
+  function institutionUnderRay(ray: Ray): string | null {
+    if (!institution || !cluster || !os.inDesktop) return null;
+    for (const t of institution.targets(cluster.era)) if (rayHitsPointR(ray, t.at, t.r)) return t.key;
+    return null;
   }
 
   /**
@@ -2971,7 +2991,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (rayHitsPointR(ray, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) return A.move.replace('{label}', n.label);
       }
     }
-    return null;
+    const inst = institutionUnderRay(ray);
+    return inst ? A[inst] ?? null : null;
   }
   /** the mouse's last resting place over the canvas (null once it leaves) */
   let hoverPointer: { x: number; y: number } | null = null;
@@ -3590,6 +3611,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S145 — one observer for every face (witness/pulse.ts): the stamp plays
     //   there, the wall is told, and the 2016 chip / 2026 badge read `pulse.k()`.
     witnessPulse.tick(dt);
+    if (institution && cluster) {
+      institution.tick(dt, cluster.era, cluster.busy, witnessPulse.countFor(cluster.era), witnessPulse.k(),
+        ledger.records.includes('ministry-index-card'));
+    }
     // S146 — a filing is the piece moving: the helper's stillness clock restarts on it
     if (witnessPulse.k() > 0.98) helper?.activity();
     // cold creep: pulse the witness side into the edges while it goes unseen

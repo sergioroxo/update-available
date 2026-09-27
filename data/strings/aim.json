@@ -8,5 +8,15 @@
   "keep": "keep: {label}",
   "putBack": "put back: {label}",
   "move": "move: {label}",
-  "screen": "the screen"
+  "screen": "the screen",
+  "_docInst": "⚑ S183 — the institution's corner (src/room/institution.ts). Sérgio, 2026-09-27: 'how can this be more understandable of what they are here? does touching any of them gives added information to the user?' Each object says what it is and what it does to the person, in the frame's plain voice; a press is answered by the object's own movement. 1997 and 2003 are Daniel's file ('your'); 2016 and 2026 are said without a person.",
+  "instDrawer": "drawer 12 — the file with your name in it",
+  "instTerminal": "the intake terminal — what you do is typed in here",
+  "instReferral": "the referral list — the pastor's number, in your mother's pen",
+  "instSuitcase": "the suitcase — packed for the youth weekend, 12–19 july",
+  "instRules": "the programme's rules — read, signed, returned",
+  "instPacket": "the application — twenty-six pages and a liability release",
+  "instScanner": "the scanner — your paper file becoming a digital one",
+  "instRouter": "the router — the file travels on a network now",
+  "instStatus": "a status light — the file is kept somewhere you cannot point to"
 }
