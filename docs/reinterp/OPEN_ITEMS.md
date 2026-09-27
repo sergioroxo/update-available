@@ -214,7 +214,7 @@ Measured, not eyeballed. Nothing here is built: they need a walk, and his review
 | R4-29 | Every model tinted to ONE colour (the lamp all brown) | DONE S177 — `partColors` by GLB material: the lamp (teal enamel / steel / warm shade), the flip phone, the notebook, both towers, the pen, the calendar |
 | R4-30 | The panels' affordance | DONE S177 — `drawSourcesButton` (pointCloud.ts): 1997 grey bevel, 2003 Restorify blue, 2016 glass pill, 2026 dark chip; the hint says the whole panel still works; the button's world point published on `__closePanels()`, pressed by the walk (`close-src-*`) and by the stills (e4-10a-panel-* → e4-10-dossier-*). The Close's room plates rebaked (the 2003 plate still showed the 1997 CRT) |
 | R4-31 | Check every project file for anything unclaimed — a permanent licence check in `npm test` | DONE S177 — `tools/check-licences.mjs` in `npm test`; its first run found 170 unclaimed files (18 of our own synthesized sounds, 4 TTS/derived, the icons, the Close plates, two Kenney files never named) — all rowed; **12 Freesound sounds (CC0) still owe their credit row** under his 'credit the free ones' rule: their uploader names need `node tools/freesound.mjs licenses …` (the API, his token) — held as a ratchet that fails on anything new |
-| R4-32 | Clear `[VERIFY SOURCE]` | S177: **A and B rewritten in plain words** (`VERIFY_SOURCE_CLEARANCE_2026-09-26.md` — what the sticker is, what each claim says, what the run checked, what a visitor sees change); **C turned into `docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md`** — 4 clean, 23 wording proposals, 2 ethics calls (linking the apparatus's own pages; a name coincidence), verbatim links for the page. **All waiting on his ticks** — nothing applied |
+| R4-32 | Clear `[VERIFY SOURCE]` | DONE S179 (his: "Clear all of A and B, approve almost all of C") — A, B cleared; C applied except e4_offers#2; stickers kept where parts stay unchecked; 68 verified links on 30 sources. Open: e4_offers#2's own search and prompt 2 (PLAN_ROUND5 §7); four status yes/no |
 | R4-33 | **Give the project a style** (his 2026-09-26, after the calendar pages: "a lot of old ideas of design were kept behind and never fully realized in the styling of the rooms") | PROPOSED S178 — `STYLE_PROPOSAL_2026-09-27.md`: "the room is drawn in the era's own interface"; mock-ups M1–M3 in out/style/ — his call on the direction and the first pass |
 | R4-34 | His: Room 1's box lamp "fits the time" better than Vera's modelled lamp | DONE S178 — box-built again (slate foot and pole, pale gold shade), 6 cm left with its light |
 | R4-35 | His: "the phone is still on top of the books? why?" | DONE S178 — his ruling: on the desk, in line with the monitor; then 9 cm toward her (his circle on the still). The books are gone |
@@ -254,3 +254,15 @@ Measured, not eyeballed. Nothing here is built: they need a walk, and his review
 - S151 (2026-09-20): R3-13, R3-15, R3-16, R3-17, R3-19, R3-21/22, R3-24 — Priority 2 Batch A; walked, 256 presses, spine done (`WALK_2026-09-20.md`); tour frames `out/tour-e1/07–18`.
 - S150 (2026-09-19): R3-47, R3-49, R3-55, R3-69, R3-77, R3-79 (pixels), R3-96a, R3-98, R3-100, R3-113, R3-114 — walked, 223 presses, spine done.
 - S149 (2026-09-19): R3-95, R3-73/80, R3-04, R3-05, R3-06, R3-11, R3-18, R3-29, R3-37, R3-39, R3-67, R3-72, R3-76, R3-79 (the chat), R3-81, R3-97, R3-103 — walked, 238 presses, spine done, Era 3 ended through the phone.
+
+## Round 5 — his notes of 2026-09-27 → `PLAN_ROUND5_2026-09-27.md`
+| id | item | state |
+|---|---|---|
+| R5-01 | Light: late in the day, warm, never daylight; 2026 one warm beacon; personal things muted; bedding | PLANNED — Phase 1 |
+| R5-02 | Posters of SOGICE culture per era (invented marks) + one hidden queer thing per room | PLANNED — Phase 2 (drafts for his edit) |
+| R5-03 | The institutional back wall again; the camp pressure visible (suitcase, cabinet); "a view to the system" | PLANNED — Phase 3, research first |
+| R5-04 | Your file on the devices (folder, the accountability app, the record tab) | PLANNED — Phase 3 |
+| R5-05 | Games: 1997 handheld ("FIT IN"?), 2003 snake ("Reach"), FloppySheep in colour with his song, 2026 object | PLANNED — Phase 4; his six handheld models to import |
+| R5-06 | Social media: "the recommendation event" across the four eras (his Deep Research) | PLANNED — Phase 5 |
+| R5-07 | The GPT visual walkthrough | after Phases 1–3 |
+

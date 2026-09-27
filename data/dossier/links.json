@@ -2,38 +2,405 @@
  "_doc": "⚑ S175 (2026-09-24) — THE LINKS, AND ONLY VERIFIED ONES. Sérgio: 'we need to have an accompanying webpage to this project where all the sources are listed with the links to what we use.' None of the piece's 35 source texts carries a URL; they are citations in prose. This file adds links WITHOUT touching a dossier text (ETHICS_CONSTRAINTS #13/#14), keyed `<provotype file>#<source index>`, and every link here is one that docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md (his Deep Research verification run) attaches to THAT claim — nothing guessed, nothing found by searching. Sources with no entry are listed on the page without a link, honestly. Add a link only with its `verifiedIn`. tools/gen_sources_page.mjs reads this.",
  "links": {
   "origin_intake_e1#0": [
-   { "label": "Gerard van den Aardweg, The Battle for Normality (1997), PDF", "url": "https://exgaycalling.com/wp-content/uploads/2020/03/Battle-For-Normality-The-Dr.-Gerard-van-den-Aardweg.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+   {
+    "label": "Gerard van den Aardweg, The Battle for Normality (1997), PDF",
+    "url": "https://exgaycalling.com/wp-content/uploads/2020/03/Battle-For-Normality-The-Dr.-Gerard-van-den-Aardweg.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   }
   ],
   "origin_intake_e1#1": [
-   { "label": "Love Won Out conference guide", "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Love_Won_Out_Conference_Guide.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+   {
+    "label": "Love Won Out conference guide",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Love_Won_Out_Conference_Guide.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   }
   ],
   "origin_intake_e1#2": [
-   { "label": "TIME, July 2014 — James Guay's account", "url": "https://time.com/2986440/sexual-conversion-therapy-gay/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "Flentje, Heck & Cochran (2013), Journal of Gay & Lesbian Mental Health 17(3)", "url": "https://doi.org/10.1080/19359705.2013.773268", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "Survivors of sexual orientation change efforts — amicus brief, US Ninth Circuit (2013)", "url": "https://cdn.ca9.uscourts.gov/datastore/general/2013/02/04/13-15023_Amicus_brief_by_Survivors_of_Sexual_Orientation_Change_Efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+   {
+    "label": "TIME, July 2014 — James Guay's account",
+    "url": "https://time.com/2986440/sexual-conversion-therapy-gay/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "Flentje, Heck & Cochran (2013), Journal of Gay & Lesbian Mental Health 17(3)",
+    "url": "https://doi.org/10.1080/19359705.2013.773268",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "Survivors of sexual orientation change efforts — amicus brief, US Ninth Circuit (2013)",
+    "url": "https://cdn.ca9.uscourts.gov/datastore/general/2013/02/04/13-15023_Amicus_brief_by_Survivors_of_Sexual_Orientation_Change_Efforts.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   }
   ],
   "origin_intake_e1#3": [
-   { "label": "APA Task Force (2009), Appropriate Therapeutic Responses to Sexual Orientation", "url": "https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "APA Resolution on Sexual Orientation Change Efforts (2021)", "url": "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "APA Resolution on Gender Identity Change Efforts (2021)", "url": "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "UK Memorandum of Understanding on Conversion Therapy, version 2 (2017)", "url": "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+   {
+    "label": "APA Task Force (2009), Appropriate Therapeutic Responses to Sexual Orientation",
+    "url": "https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "APA Resolution on Sexual Orientation Change Efforts (2021)",
+    "url": "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "APA Resolution on Gender Identity Change Efforts (2021)",
+    "url": "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "UK Memorandum of Understanding on Conversion Therapy, version 2 (2017)",
+    "url": "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   }
   ],
   "pillow#0": [
-   { "label": "The Washington Post, 16 August 2005 — a profile of Richard Cohen", "url": "https://www.washingtonpost.com/archive/lifestyle/wellness/2005/08/16/a-conversion-therapists-unusual-odyssey/8e1a190d-edc8-4914-b847-310098afed61/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+   {
+    "label": "The Washington Post, 16 August 2005 — a profile of Richard Cohen",
+    "url": "https://www.washingtonpost.com/archive/lifestyle/wellness/2005/08/16/a-conversion-therapists-unusual-odyssey/8e1a190d-edc8-4914-b847-310098afed61/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   }
   ],
   "pillow#2": [
-   { "label": "Ferguson v. JONAH — New Jersey Appellate Division opinion", "url": "https://www.njcourts.gov/system/files/court-opinions/2019/fergusonvjonah.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "Ferguson v. JONAH — SPLC case docket", "url": "https://www.splcenter.org/resources/civil-rights-case-docket/michael-ferguson-et-al-v-jonah-et-al/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+   {
+    "label": "Ferguson v. JONAH — New Jersey Appellate Division opinion",
+    "url": "https://www.njcourts.gov/system/files/court-opinions/2019/fergusonvjonah.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "Ferguson v. JONAH — SPLC case docket",
+    "url": "https://www.splcenter.org/resources/civil-rights-case-docket/michael-ferguson-et-al-v-jonah-et-al/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   }
   ],
   "pillow#3": [
-   { "label": "APA Task Force (2009), Appropriate Therapeutic Responses to Sexual Orientation", "url": "https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "APA Resolution on Sexual Orientation Change Efforts (2021)", "url": "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "APA Resolution on Gender Identity Change Efforts (2021)", "url": "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "UK Memorandum of Understanding on Conversion Therapy, version 2 (2017)", "url": "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+   {
+    "label": "APA Task Force (2009), Appropriate Therapeutic Responses to Sexual Orientation",
+    "url": "https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "APA Resolution on Sexual Orientation Change Efforts (2021)",
+    "url": "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "APA Resolution on Gender Identity Change Efforts (2021)",
+    "url": "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "UK Memorandum of Understanding on Conversion Therapy, version 2 (2017)",
+    "url": "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   }
   ],
   "e3_theday#12": [
-   { "label": "Malta — Affirmation of Sexual Orientation, Gender Identity and Gender Expression Act (Chapter 567)", "url": "https://legislation.mt/eli/cap/567/eng", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" },
-   { "label": "Parliament of Malta — Bill No. 167", "url": "https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md" }
+   {
+    "label": "Malta — Sexual Orientation, Gender Identity and Gender Expression Act (Chapter 567)",
+    "url": "https://legislation.mt/eli/cap/567/eng",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "Parliament of Malta — Bill No. 167",
+    "url": "https://www.parlament.mt/12th-leg/bills-12th/bill-no-167/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md"
+   },
+   {
+    "label": "Parliament of Malta, Act No. LV of 2016",
+    "url": "https://www.parlament.mt/en/12th-leg/acts-12th/act-lv-of-2016/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "The Guardian, 7 Dec 2016 — Malta's ban",
+    "url": "https://www.theguardian.com/world/2016/dec/07/malta-becomes-first-european-country-to-ban-gay-cure-therapy",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#0": [
+   {
+    "label": "Desert Stream Ministries, Living Waters Leader's Guide (June 2024), PDF",
+    "url": "https://s3-us-west-1.amazonaws.com/faithnetworkuserfilestore/FAITHNETWORK_USERFILESTORE/FAITHNETWORK_USERFILESTORE/filecabinet/ministries/4477894d-b627-46bb-a551-6fc979e28e53/LWLG%20Final_June_2024.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Jowett et al., Conversion therapy: an evidence assessment and qualitative study (Government Equalities Office, 2021)",
+    "url": "https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/conversion-therapy-an-evidence-assessment-and-qualitative-study",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#1": [
+   {
+    "label": "Desert Stream Ministries, Living Waters Leader's Guide (June 2024), PDF",
+    "url": "https://s3-us-west-1.amazonaws.com/faithnetworkuserfilestore/FAITHNETWORK_USERFILESTORE/FAITHNETWORK_USERFILESTORE/filecabinet/ministries/4477894d-b627-46bb-a551-6fc979e28e53/LWLG%20Final_June_2024.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Robinson & Spivey, \"Putting Lesbians in Their Place\", Social Sciences (2015)",
+    "url": "https://www.mdpi.com/2076-0760/4/3/879",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#2": [
+   {
+    "label": "Desert Stream Ministries, Living Waters Leader's Guide (June 2024), PDF",
+    "url": "https://s3-us-west-1.amazonaws.com/faithnetworkuserfilestore/FAITHNETWORK_USERFILESTORE/FAITHNETWORK_USERFILESTORE/filecabinet/ministries/4477894d-b627-46bb-a551-6fc979e28e53/LWLG%20Final_June_2024.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Jowett et al., Conversion therapy: an evidence assessment and qualitative study (Government Equalities Office, 2021)",
+    "url": "https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/conversion-therapy-an-evidence-assessment-and-qualitative-study",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#3": [
+   {
+    "label": "Love Won Out conference guide",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Love_Won_Out_Conference_Guide.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Janelle Hallman, The Heart of Female Same-Sex Attraction (2008), excerpt",
+    "url": "https://www.courage.org.pl/wp-content/uploads/zasoby/Janelle_Hallman_-_The_Heart_of_Female_Same-Sex_Attraction_%282008%29.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Robinson & Spivey, \"Putting Lesbians in Their Place\", Social Sciences (2015)",
+    "url": "https://www.mdpi.com/2076-0760/4/3/879",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#4": [
+   {
+    "label": "Desert Stream Ministries, FAQ",
+    "url": "https://www.desertstream.org/faq",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Love Won Out conference guide",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Love_Won_Out_Conference_Guide.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Robinson & Spivey, \"Putting Lesbians in Their Place\", Social Sciences (2015)",
+    "url": "https://www.mdpi.com/2076-0760/4/3/879",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#5": [
+   {
+    "label": "Love Won Out conference guide",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/a/ae/Love_Won_Out_Conference_Guide.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Desert Stream Ministries, Living Waters Leader's Guide (June 2024), PDF",
+    "url": "https://s3-us-west-1.amazonaws.com/faithnetworkuserfilestore/FAITHNETWORK_USERFILESTORE/FAITHNETWORK_USERFILESTORE/filecabinet/ministries/4477894d-b627-46bb-a551-6fc979e28e53/LWLG%20Final_June_2024.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Government Equalities Office, An assessment of the evidence on conversion therapy (2021)",
+    "url": "https://www.gov.uk/government/publications/an-assessment-of-the-evidence-on-conversion-therapy-for-sexual-orientation-and-gender-identity/an-assessment-of-the-evidence-on-conversion-therapy-for-sexual-orientation-and-gender-identity",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#6": [
+   {
+    "label": "Covenant Eyes, Device Cheat Sheet (2015), PDF",
+    "url": "https://www.covenanteyes.com/wp-content/uploads/2010/09/covenant-eyes-device_cheat_sheet_2015.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Covenant Eyes, company history",
+    "url": "https://www.covenanteyes.com/about/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "WIRED (2022) — an anti-porn app and surveillance",
+    "url": "https://www.wired.com/story/covenant-eyes-anti-porn-accountability-monitoring-apps/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#7": [
+   {
+    "label": "Covenant Eyes, Device Cheat Sheet (2015), PDF",
+    "url": "https://www.covenanteyes.com/wp-content/uploads/2010/09/covenant-eyes-device_cheat_sheet_2015.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "WIRED (2022) — an anti-porn app and surveillance",
+    "url": "https://www.wired.com/story/covenant-eyes-anti-porn-accountability-monitoring-apps/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#8": [
+   {
+    "label": "Harvest USA, Parents & Family Ministry",
+    "url": "https://harvestusa.org/get-help-for-yourself/parents-families/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#9": [
+   {
+    "label": "US Catholic bishops, Always Our Children (1997), PDF",
+    "url": "https://www.usccb.org/resources/Always%20Our%20Children.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#10": [
+   {
+    "label": "Desert Stream Ministries, Living Waters Leader's Guide (June 2024), PDF",
+    "url": "https://s3-us-west-1.amazonaws.com/faithnetworkuserfilestore/FAITHNETWORK_USERFILESTORE/FAITHNETWORK_USERFILESTORE/filecabinet/ministries/4477894d-b627-46bb-a551-6fc979e28e53/LWLG%20Final_June_2024.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Harvest USA, Parents & Family Ministry",
+    "url": "https://harvestusa.org/get-help-for-yourself/parents-families/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#11": [
+   {
+    "label": "Jowett et al., Conversion therapy: an evidence assessment and qualitative study (Government Equalities Office, 2021)",
+    "url": "https://www.gov.uk/government/publications/conversion-therapy-an-evidence-assessment-and-qualitative-study/conversion-therapy-an-evidence-assessment-and-qualitative-study",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e3_theday#14": [
+   {
+    "label": "Desert Stream Ministries, Living Waters Leader's Guide (June 2024), PDF",
+    "url": "https://s3-us-west-1.amazonaws.com/faithnetworkuserfilestore/FAITHNETWORK_USERFILESTORE/FAITHNETWORK_USERFILESTORE/filecabinet/ministries/4477894d-b627-46bb-a551-6fc979e28e53/LWLG%20Final_June_2024.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_ball#0": [
+   {
+    "label": "Royal House of LaBeija, history",
+    "url": "https://www.royalhouseoflabeija.com/history",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Marlon M. Bailey, \"Structures of Kinship\" (Anthropology Now, 2021), PDF",
+    "url": "https://sst.asu.edu/sites/g/files/litvpz446/files/2021-02/AR_March%202021_Marlon%20Bailey.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_ball#1": [
+   {
+    "label": "Marlon M. Bailey, Butch Queens Up in Pumps (University of Michigan Press, 2013)",
+    "url": "https://press.umich.edu/Books/B/Butch-Queens-Up-in-Pumps",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "\"Constructing Home and Family\", Journal of Gay & Lesbian Social Services (2008)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3489283/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Los Angeles ballroom community study",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3492531/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_ball#2": [
+   {
+    "label": "Marlon M. Bailey, \"Gender/Racial Realness\", Feminist Studies (2011)",
+    "url": "https://doi.org/10.1353/fem.2011.0016",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Marlon M. Bailey, Butch Queens Up in Pumps (University of Michigan Press, 2013)",
+    "url": "https://press.umich.edu/Books/B/Butch-Queens-Up-in-Pumps",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_ball#3": [
+   {
+    "label": "BFI, Paris Is Burning (1990)",
+    "url": "https://www.bfi.org.uk/film/a5127db5-f329-5865-bb89-f3928194cf52/paris-is-burning",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "bell hooks, \"Is Paris Burning?\" (1992), PDF",
+    "url": "https://liberalarts.austincc.edu/peace-conflict-studies/wp-content/uploads/sites/7/2022/04/hooks-IsParisBurning.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Lucas Hilderbrand, Paris Is Burning (Arsenal Pulp, 2013)",
+    "url": "https://arsenalpulp.com/Books/P/Paris-Is-Burning",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_ball#4": [
+   {
+    "label": "Marlon M. Bailey, \"Structures of Kinship\" (Anthropology Now, 2021), PDF",
+    "url": "https://sst.asu.edu/sites/g/files/litvpz446/files/2021-02/AR_March%202021_Marlon%20Bailey.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "\"Constructing Home and Family\", Journal of Gay & Lesbian Social Services (2008)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3489283/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_ball#5": [
+   {
+    "label": "Beacon Press, And the Category Is… (Ricky Tucker, 2022)",
+    "url": "https://www.beacon.org/And-the-Category-Is-P1787.aspx",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Marlon M. Bailey, Butch Queens Up in Pumps (University of Michigan Press, 2013)",
+    "url": "https://press.umich.edu/Books/B/Butch-Queens-Up-in-Pumps",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "The Brooklyn Rail, interview with Ricky Tucker (2021)",
+    "url": "https://brooklynrail.org/2021/12/books/Ricky-Tuckers-And-the-Category-Is/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_offers#1": [
+   {
+    "label": "IFTCC, conference announcement (2024)",
+    "url": "https://iftcc.org/global-therapists-gather-228527-2/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "IFTCC, course catalogue",
+    "url": "https://learning.iftcc.org/courses/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Outright International, Harmful Treatment (2023), PDF",
+    "url": "https://outrightinternational.org/sites/default/files/2023-08/082123_Outright_Conversion2023.pdf",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_offers#3": [
+   {
+    "label": "Detrans.ai, \"How does it work?\"",
+    "url": "https://detrans.ai/en/prompts",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Rewire News Group, 15 July 2026",
+    "url": "https://rewirenewsgroup.com/2026/07/15/ai-therapy-chatbot-conversion-therapy-trans/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
+  ],
+  "e4_offers#4": [
+   {
+    "label": "The Wall Street Journal, 18 Dec 2022",
+    "url": "https://www.wsj.com/articles/the-failed-promise-of-online-mental-health-treatment-11671390353",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   },
+   {
+    "label": "Out, 22 Dec 2022",
+    "url": "https://www.out.com/health/2022/12/22/gay-man-accuses-betterhelp-therapist-conversion-therapy-tactics",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md"
+   }
   ]
- }
+ },
+ "_docS178": "⚑ S178 (2026-09-27) — the 26 Sept run's links, added after Sérgio's approval of group C ('approve almost all of C'), verifiedIn docs/SOURCE_VERIFICATION_RESULTS_2026-09-26.md. Held back: e4_offers#2 (his new search first). The apparatus's own pages are linked by his ruling ('yes it should link to the apparatus'). The Chapter 567 label follows C13: the Act's title, not the bill's."
 }

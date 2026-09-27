@@ -23,6 +23,9 @@ regenerates the sources page, and walks.*
   corrections (C1–C6); those corrections were applied to the text in S47. So for A and B, the checking **has
   been done and the text already says what the run said** — only the sticker is left.
 
+> ⚑ **2026-09-27 — Sérgio: "Clear all of A and B, approve almost all of C." APPLIED S179:** every A and B
+> sticker removed; A6's move to *documented* is still his yes/no (PLAN_ROUND5 §7). C → the results document.
+
 ## The short version
 | group | where | markers | state |
 |---|---|---|---|
@@ -43,7 +46,7 @@ validated** as a diagnostic tool; two of our questions quote it, one paraphrases
 *The run checked:* the book and the questionnaire exist (1997); it was never validated — and it told us to stop
 calling it "a clinical instrument" (C3). *In the text now:* ✔ "presented as clinical; never validated,
 standardized, or recognized". *Visitors see:* the 1997 panel's dossier and the questionnaire's debrief lose the
-"still being verified" line. [ ] clear · [ ] keep
+"still being verified" line. [x] clear (S179)
 
 **A2 · `origin_intake_e1#1` — Love Won Out taught parents to watch their children.**
 *The claim:* Focus on the Family's "Love Won Out" conferences told **parents** to treat a child's gender
@@ -51,7 +54,7 @@ nonconformity as a warning sign and to enlist relatives, coaches, teachers; a **
 parents to check school curricula.
 *The run checked:* both sessions exist, and they are separate; nothing told **schools** to watch children — we
 had merged the two (C4). *In the text now:* ✔ the two sessions are named apart. *Visitors see:* the sticker
-goes. [ ] clear · [ ] keep
+goes. [x] clear (S179)
 
 **A3 · `origin_intake_e1#2` — where the monitoring questions come from.**
 *The claim:* the questions about watching one's own behaviour are **our composite**, built from a survivor's
@@ -59,7 +62,7 @@ published account (James Guay, TIME, 2014) and a peer-reviewed study of ex-ex-ga
 Cochran, 2013) — whose sample was self-selected, which the card says.
 *The run checked:* identified "Guay" as James Guay (TIME, July 2014; also a court brief by survivors), and
 confirmed the study, its journal and pages. *In the text now:* ✔ full name, full citation, the sample caveat.
-*Visitors see:* the sticker goes. [ ] clear · [ ] keep
+*Visitors see:* the sticker goes. [x] clear (S179)
 
 **A4 · `origin_intake_e1#3` — the professional bodies say it harms.**
 *The claim:* the American Psychological Association and the UK's professional bodies say these practices have
@@ -67,14 +70,14 @@ no proven benefit and risk harm.
 *The run checked:* the APA's 2009 report covers **orientation only**; for orientation **and** gender identity
 you cite its two 2021 resolutions; the UK agreement (the "Memorandum of Understanding") has a 2015 edition
 (orientation) and a 2017 one (adding gender identity) (C2). *In the text now:* ✔ 2009 + 2021 + MoU 2015/2017.
-*Visitors see:* the sticker goes. [ ] clear · [ ] keep
+*Visitors see:* the sticker goes. [x] clear (S179)
 
 **A5 · `pillow#0` — the pillow exercise is Richard Cohen's.**
 *The claim:* the scene where Daniel hits a pillow with a tennis racket while speaking to a parent is a real
 "anger release" exercise promoted by Richard Cohen.
 *The run checked:* confirmed from Cohen's own book (*Coming Out Straight*, 2000) and a Washington Post profile
 (16 Aug 2005) in which the reporter watched him demonstrate it (C5). *In the text now:* ✔. *Visitors see:* the
-sticker goes. [ ] clear · [ ] keep
+sticker goes. [x] clear (S179)
 
 **A6 · `pillow#1` — "until deeper feelings" is not his word.**
 *The claim:* Cohen's own instruction is to repeat the person's name *"until some thoughts or feelings emerge."*
@@ -85,16 +88,16 @@ use it as his.
 ⚑ *A second choice here:* this sentence is labelled **imagined** today, from when we could not find his
 wording. It now reports a documented fact (what he wrote, and what he did not). Moving it to **documented**
 changes the tag a visitor sees from "imagined" to "documented".
-[ ] clear · [ ] keep · [ ] **and** move it to *documented*
+[x] clear (S179) · [ ] **and** move it to *documented*
 
 **A7 · `pillow#2` — the court case that closed JONAH.**
 *The claim:* a New Jersey court case (Ferguson v. JONAH) ended a conversion organisation: a judge's ruling
 before trial, a jury verdict of consumer fraud (25 June 2015), and a settlement that December that dissolved it.
 *The run checked:* those are **three separate steps**, and our old wording had the jury doing all of it (C1).
-*In the text now:* ✔ all three, in order. *Visitors see:* the sticker goes. [ ] clear · [ ] keep
+*In the text now:* ✔ all three, in order. *Visitors see:* the sticker goes. [x] clear (S179)
 
 **A8 · `pillow#3` — the professional bodies, on the pillow card.** The same sentence as A4, repeated on the
-pillow's card; the same check (C2). *Visitors see:* the sticker goes. [ ] clear · [ ] keep
+pillow's card; the same check (C2). *Visitors see:* the sticker goes. [x] clear (S179)
 
 **One optional check the run asked for (C3):** "diff our questions 1–2 against van den Aardweg's real item
 text." The card says two prompts quote it directly and the childhood-play question paraphrases it. If you
@@ -110,21 +113,21 @@ rests on. They carry links in the data; those links are not on the sources page 
 **B1 · `updates.json` u2 — why 1997 becomes 2003.** *The note:* John Paulk, the face of the 1998 ex-gay
 newspaper ads, was photographed in a Washington gay bar (19 Sept 2000) and removed as Exodus's board chair
 (3 Oct 2000). It says plainly that Exodus did **not** collapse in 2000. *The run:* confirmed both dates and
-warned against the collapse claim. ✔ word for word. [ ] clear
+warned against the collapse claim. ✔ word for word. [x] clear (S179)
 
 **B2 · `updates.json` u3 — why 2003 becomes 2016.** *The note:* Exodus's president Alan Chambers apologised
 and the board decided to close Exodus on the same day, 19 June 2013. *The run:* "use the date, not 'in 2013'".
-✔ [ ] clear
+✔ [x] clear (S179)
 
 **B3 · `updates.json` u4 — why 2016 becomes 2026.** *The note:* Malta's law banning conversion practices (Act
 LV of 2016, published 9 Dec 2016, now Chapter 567); and app stores removed **one** conversion-therapy app
 (Living Hope Ministries), Dec 2018 – Mar 2019 — not "several". *The run:* confirmed, and corrected the plural.
-✔ (26 Sept's run adds a detail on Malta — see C13 in the new results doc; it does not touch this note.) [ ] clear
+✔ (26 Sept's run adds a detail on Malta — see C13 in the new results doc; it does not touch this note.) [x] clear (S179)
 
 **B4 · `s2_media.json` — the infomercial.** *The note:* the 2003 "New You" infomercial is **our combination**:
 the *message* of the 1998 "Truth in Love" ads (which were newspaper ads, NYT 13 July 1998 — not TV) with the
 *format* of a TV evangelist's show (Robert Tilton's *Success-N-Life*, which was never a conversion programme).
-*The run:* confirmed both, and caught that we had called the ads a TV infomercial (C6). ✔ [ ] clear
+*The run:* confirmed both, and caught that we had called the ads a TV infomercial (C6). ✔ [x] clear (S179)
 
 ## C · The 27 claims — the run came back on 26 Sept
 ⚑ **Superseded by `SOURCE_VERIFICATION_RESULTS_2026-09-26.md`**, which turns the run into decisions. The

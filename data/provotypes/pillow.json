@@ -146,14 +146,14 @@
         "_doc": "PLACEHOLDER — Sérgio voice pass pending",
         "status": "documentary",
         "confidence": "high",
-        "text": "A 2005 Washington Post profile and GLAAD's summary both document Richard Cohen's promotion of an anger-release exercise: striking a pillow with a tennis racket while addressing a parent, framed as a route to repressed feeling. [VERIFY SOURCE]"
+        "text": "A 2005 Washington Post profile and GLAAD's summary both document Richard Cohen's promotion of an anger-release exercise: striking a pillow with a tennis racket while addressing a parent, framed as a route to repressed feeling."
       },
       {
         "_doc": "PLACEHOLDER — Sérgio voice pass pending; the omission itself is the disclosure, per master plan §R2-2 — do not present the phrase as documented",
         "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
         "status": "speculative",
         "confidence": "low",
-        "text": "Cohen's own instruction is to repeat the person's name \"until some thoughts or feelings emerge.\" The widely-quoted stronger phrasing — continuing until *deeper* feelings surface — is not his word, and is not used as documented wording in this scene. [VERIFY SOURCE]",
+        "text": "Cohen's own instruction is to repeat the person's name \"until some thoughts or feelings emerge.\" The widely-quoted stronger phrasing — continuing until *deeper* feelings surface — is not his word, and is not used as documented wording in this scene.",
         "urls": ["https://www.washingtonpost.com/archive/lifestyle/wellness/2005/08/16/a-conversion-therapists-unusual-odyssey/8e1a190d-edc8-4914-b847-310098afed61/"],
         "_urlsDoc": "WaPo profile (16 Aug 2005) documents the exercise itself; the 'until some thoughts or feelings emerge' wording is Cohen's own, per Coming Out Straight (2000, no stable public URL — cite as book). Status stays speculative per this session's scope (the appendix flags speculative→contested as Sérgio's own open call, not a precision fix — see session log)."
       },
@@ -162,7 +162,7 @@
         "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
         "status": "documentary",
         "confidence": "high",
-        "text": "Ferguson v. JONAH (New Jersey): a jury found the organization's commercial representations fraudulent under the Consumer Fraud Act (25 June 2015), after a pre-trial ruling that presenting homosexuality as a disorder and advertising unsupported change claims violated consumer-protection law. A settlement that December dissolved JONAH. [VERIFY SOURCE]",
+        "text": "Ferguson v. JONAH (New Jersey): a jury found the organization's commercial representations fraudulent under the Consumer Fraud Act (25 June 2015), after a pre-trial ruling that presenting homosexuality as a disorder and advertising unsupported change claims violated consumer-protection law. A settlement that December dissolved JONAH.",
         "urls": ["https://www.njcourts.gov/system/files/court-opinions/2019/fergusonvjonah.pdf", "https://www.splcenter.org/resources/civil-rights-case-docket/michael-ferguson-et-al-v-jonah-et-al/"]
       },
       {
@@ -170,7 +170,7 @@
         "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
         "status": "documentary",
         "confidence": "high",
-        "text": "Professional bodies state these practices lack evidence of benefit and carry risk of harm: the APA's 2009 review of sexual-orientation change efforts, its 2021 resolutions covering both orientation and gender identity, and the UK's cross-government Memorandum of Understanding on Conversion Therapy (2015; extended to gender identity in 2017). [VERIFY SOURCE]",
+        "text": "Professional bodies state these practices lack evidence of benefit and carry risk of harm: the APA's 2009 review of sexual-orientation change efforts, its 2021 resolutions covering both orientation and gender identity, and the UK's cross-government Memorandum of Understanding on Conversion Therapy (2015; extended to gender identity in 2017).",
         "urls": ["https://www.apa.org/pi/lgbt/resources/therapeutic-response.pdf", "https://www.apa.org/about/policy/resolution-sexual-orientation-change-efforts.pdf", "https://www.apa.org/about/policy/resolution-gender-identity-change-efforts.pdf", "https://www.rcgp.org.uk/getmedia/4ac66d06-b013-4ff0-a471-63dbaecde0d9/RCGP-MoU-oct-2017.PDF"]
       }
     ]

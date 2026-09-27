@@ -8,6 +8,13 @@ STATUS: live
 Per ETHICS_CONSTRAINTS #13/#14 **no dossier text, status or marker has been edited** — every correction below
 is a proposal for your approval. The links at the end are copied verbatim from the run.*
 
+> ⚑ **2026-09-27 — Sérgio: "approve almost all of C" — e4_offers#2 (C24) excepted: he wants its own search
+> (prompt in `docs/reinterp/PLAN_ROUND5_2026-09-27.md` §7). APPLIED S179:** C1–C23, C25–C27 word for word as
+> proposed; stickers cleared where the whole sentence is now checked, KEPT with a note on e3_theday#8,
+> e4_ball#1–#5, e4_offers#1/#3/#4 and the dispersal note (the "not checked by the run" parts — prompt 2 in
+> PLAN_ROUND5 §7); the links below added to `data/dossier/links.json` (68 on 30 sources). The four status
+> choices (A6, C6, C12, C26) are still his yes/no.
+
 ## How to read this
 - **The run's grades** use the public words: *documented* (a source supports it), *disputed* (some support,
   but our wording overstates or conflicts with the record), *imagined* (interpretation or invention the record
