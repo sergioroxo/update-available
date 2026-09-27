@@ -67,3 +67,33 @@ export const CAL_2026 = {
   // her felt-tip
   felt: '#8e44ad'
 } as const;
+
+/**
+ * ⚑ S179 / R5-02 — THE WALLS' PRINTS (src/room/printArt.ts). Sérgio, 2026-09-27: the posters
+ * should "reflect the culture of SOGICE — like movie posters for SOGICE movies, religious
+ * elements, secular marches… stuff that helps set the tone of the time"; the 2016 one "more
+ * related to X-out-Loud, they even have music videos". Every title below is an invented
+ * mark (CLAUDE.md); the genres are documented, the names are ours.
+ */
+export const PRINT = {
+  // 1997 · the camp's rally poster
+  rallyNight: '#10204a', rallyDawn: '#e8834a', rallyGlow: '#f7c46a', rallyHill: '#1c2b24', rallyCross: '#fff4d6',
+  rallyTitle: '#ffffff', rallyAccent: '#f4d35e', rallyCrowd: '#0b1322',
+  // 1997 · the Christian rock band
+  bandBg: '#2f4a2a', bandBgHi: '#5a7a3a', bandInk: '#f0a04b', bandPale: '#f5ecd2', bandDark: '#161a12', bandDove: '#ffffff',
+  // 2003 · the testimony film
+  filmSky: '#1a2236', filmDawn: '#f2a65a', filmSun: '#ffe08a', filmRoad: '#3a3a44', filmRoadLit: '#c9a36a',
+  filmField: '#2a3a2a', filmFieldLit: '#6a7a3a', filmMan: '#0c0c12', filmTitle: '#f5f0e0', filmCredit: '#8a8aa0',
+  // 2003 · the restored-family conference
+  confBg: '#f4efe4', confBlue: '#1f4d9a', confGold: '#d4a13f', confRed: '#b8413a', confInk: '#23262d',
+  // 2016 · the testimony tour (music video)
+  tourA: '#f7c6d6', tourB: '#c9b6f0', tourC: '#9fd8e8', tourSpot: '#fff6e0', tourSinger: '#2a2238', tourTitle: '#2a2238',
+  tourPlay: '#ffffff', tourPlayBg: '#e0567a',
+  // 2016 · the women's retreat sign
+  retreatBg: '#f6efe6', retreatRose: '#d98a9a', retreatLeaf: '#8fb08a', retreatInk: '#5a4a5a',
+  // 2016 · the march flyer
+  marchBg: '#ffffff', marchBlue: '#2b5fae', marchPink: '#e27a9a', marchInk: '#1d2330', marchSky: '#dfe9f5',
+  // 2026 · the Commons ball poster
+  ballBg: '#1d1830', ballGlow: '#3a2a5c', ballGold: '#f4c95d', ballPink: '#f5a9b8', ballBlue: '#5bcefa', ballWhite: '#ffffff',
+  ballFigure: '#f1c9a5', ballInk: '#fff4d6'
+} as const;

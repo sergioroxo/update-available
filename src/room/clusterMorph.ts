@@ -56,14 +56,14 @@ const DELTA_LIST: Delta[] = SPACE_STATES.map(
   s => (deltas as unknown as Record<string, Delta>)[s]
 );
 
-interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string; modelScale?: number | number[]; parts?: PropDef['parts']; bands?: string[]; partColors?: Record<string, string>; page?: PropDef['page'] }
+interface PropTarget { color: string; pos: number[]; size: number[]; emissive: boolean; present: boolean; yaw: number; model?: string; modelScale?: number | number[]; parts?: PropDef['parts']; bands?: string[]; partColors?: Record<string, string>; page?: PropDef['page']; print?: PropDef['print']; partGlow?: string[] }
 
 /** fold base + deltas 0..idx → each prop's full target state (module-level so
  *  the static-set computation shares the exact same fold the morph runs) */
 function foldTargets(idx: number): Map<string, PropTarget> {
   const m = new Map<string, PropTarget>();
   for (const d of (era1 as unknown as { props: PropDef[] }).props) {
-    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model, modelScale: d.modelScale, parts: d.parts, bands: d.bands, partColors: d.partColors, page: d.page });
+    m.set(d.id, { color: d.color, pos: [...d.pos], size: [...d.size], emissive: !!d.emissive, present: true, yaw: d.yaw ?? 0, model: d.model, modelScale: d.modelScale, parts: d.parts, bands: d.bands, partColors: d.partColors, page: d.page, print: d.print, partGlow: d.partGlow });
   }
   for (let i = 0; i <= idx; i++) {
     const delta = DELTA_LIST[i];
@@ -82,7 +82,7 @@ function foldTargets(idx: number): Map<string, PropTarget> {
       // ⚑ S175: `bands` too — the base path above carried it (S168, the duck) and
       //   this `add` path did not, so a banded prop introduced by a later era (the
       //   2003 mug's washed-out flag, the CD spindle) spawned one flat colour
-      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model, modelScale: def.modelScale, parts: def.parts, bands: def.bands, partColors: def.partColors, page: def.page });
+      m.set(def.id, { color: def.color, pos: [...def.pos], size: [...def.size], emissive: !!def.emissive, present: true, yaw: def.yaw ?? 0, model: def.model, modelScale: def.modelScale, parts: def.parts, bands: def.bands, partColors: def.partColors, page: def.page, print: def.print, partGlow: def.partGlow });
     }
   }
   return m;
@@ -204,7 +204,9 @@ export class ClusterMorph {
       color: t.color, emissive: t.emissive, yaw: t.yaw, model: t.model, modelScale: t.modelScale, parts: t.parts,
       bands: t.bands,   // S168: the duck's bands — the same class of field (data → spawner) this comment is about
       partColors: t.partColors,   // S177: and the per-part colours (D2)
-      page: t.page                // S177: and a calendar's page
+      page: t.page,               // S177: and a calendar's page
+      print: t.print,             // S179: and a poster's print
+      partGlow: t.partGlow        // S179: and a lamp's glowing parts
     });
   }
 

@@ -12,7 +12,8 @@
 import * as pc from 'playcanvas';
 import layout from '../../data/room/era1.json';
 import { hasModel, spawnModel, modelFace } from './assets';
-import { attachCalendarPage, type PageEra } from './calendarPage';
+import { attachCalendarPage, attachPrintToBox, type PageEra } from './calendarPage';
+import type { PrintId } from './printArt';
 
 /**
  * ⚑ S168 / R3-07 — paint a spawned model in horizontal bands (the rainbow duck:
@@ -134,9 +135,14 @@ export interface PropDef {
    *  Black / LightMetal / White each get their own era colour instead of all
    *  being pulled toward `color`. Parts not named still tint toward `color`. */
   partColors?: Record<string, string>;
+  /** ⚑ S179 — model parts (by material name) that glow in their own colour: a lamp's bulb */
+  partGlow?: string[];
   /** ⚑ S177 / R4-27 — a calendar page on a model with a printed `face` (models.json):
    *  which era's month hangs on it (src/room/calendarArt.ts draws the four). */
   page?: PageEra;
+  /** ⚑ S179 / R5-02 — a pixel-art print on a BOX prop's front face (a poster, a sign, a flyer):
+   *  which one (src/room/printArt.ts). Reinterp only. */
+  print?: PrintId;
   /** OPTIONAL per-prop mesh scale, overriding data/room/models.json's per-KEY
    *  scale. Present because one model key furnishes three rooms at different
    *  measured sizes — see spawnModel's note. Set it only from a MEASUREMENT
@@ -287,6 +293,12 @@ function classifyProp(rawId: string): StyleTier {
   return 'set';                                        // desk/shelf/door/chair/lamp/shell — left true
 }
 
+/** a colour back to `#rrggbb` (for handing a muted colour to the model tinter) */
+function toHex(c: pc.Color): string {
+  const h = (v: number): string => Math.round(Math.max(0, Math.min(1, v)) * 255).toString(16).padStart(2, '0');
+  return `#${h(c.r)}${h(c.g)}${h(c.b)}`;
+}
+
 /** desaturate → warm-nudge → darken; `amt` scales how far the edge recedes */
 function muteColor(c: pc.Color, amt: number): pc.Color {
   const lum = 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
@@ -348,8 +360,17 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
   let isComposite = false;
   if (room.reinterp && p.model && hasModel(p.model)) {
     const ms = p.modelScale;
-    e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0, p.color,
-      Array.isArray(ms) ? [ms[0], ms[1], ms[2]] : ms, p.partColors);
+    // ⚑ S179 / R5-01 — the muting reaches the MODELS too (his: "I love that detail of the
+    //   personal stuff to be muted"). `styleMaterial` only ever styled the box material, so a
+    //   modelled bed, mug or notebook kept its full colour while its box-built neighbours
+    //   receded. Personal and fog models are handed muted colours (their parts too).
+    const tier = classifyProp(p.id);
+    const amt = tier === 'personal' ? 0.32 : tier === 'fog' ? 0.5 : 0;
+    const mute = (h: string): string => (amt ? toHex(muteColor(hex(h), amt)) : h);
+    const parts = p.partColors
+      ? Object.fromEntries(Object.entries(p.partColors).map(([k, v]) => [k, mute(v)])) : undefined;
+    e = spawnModel(p.model, p.pos as number[], p.yaw ?? 0, mute(p.color),
+      Array.isArray(ms) ? [ms[0], ms[1], ms[2]] : ms, parts, p.partGlow);
     if (e) {
       e.name = p.id; isModel = true;
       if (p.bands?.length) bandModel(e, p.bands);
@@ -386,6 +407,7 @@ export function spawnProp(room: RoomHandles, p: PropDef): PropHandle {
     e = new pc.Entity(p.id);
     e.addComponent('render', { type: 'box' });
     if (e.render) e.render.material = material;
+    if (room.reinterp && p.print) attachPrintToBox(e, p.print);
   }
   if (!isModel) {
     e.setLocalPosition(p.pos[0], p.pos[1], p.pos[2]);

@@ -148,15 +148,7 @@
         "confidence": "high",
         "text": "A 2005 Washington Post profile and GLAAD's summary both document Richard Cohen's promotion of an anger-release exercise: striking a pillow with a tennis racket while addressing a parent, framed as a route to repressed feeling."
       },
-      {
-        "_doc": "PLACEHOLDER — Sérgio voice pass pending; the omission itself is the disclosure, per master plan §R2-2 — do not present the phrase as documented",
-        "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",
-        "status": "speculative",
-        "confidence": "low",
-        "text": "Cohen's own instruction is to repeat the person's name \"until some thoughts or feelings emerge.\" The widely-quoted stronger phrasing — continuing until *deeper* feelings surface — is not his word, and is not used as documented wording in this scene.",
-        "urls": ["https://www.washingtonpost.com/archive/lifestyle/wellness/2005/08/16/a-conversion-therapists-unusual-odyssey/8e1a190d-edc8-4914-b847-310098afed61/"],
-        "_urlsDoc": "WaPo profile (16 Aug 2005) documents the exercise itself; the 'until some thoughts or feelings emerge' wording is Cohen's own, per Coming Out Straight (2000, no stable public URL — cite as book). Status stays speculative per this session's scope (the appendix flags speculative→contested as Sérgio's own open call, not a precision fix — see session log)."
-      },
+      {"_doc": "PLACEHOLDER — Sérgio voice pass pending; the omission itself is the disclosure, per master plan §R2-2 — do not present the phrase as documented", "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio", "status": "documentary", "confidence": "low", "text": "Cohen's own instruction is to repeat the person's name \"until some thoughts or feelings emerge.\" The widely-quoted stronger phrasing — continuing until *deeper* feelings surface — is not his word, and is not used as documented wording in this scene.", "urls": ["https://www.washingtonpost.com/archive/lifestyle/wellness/2005/08/16/a-conversion-therapists-unusual-odyssey/8e1a190d-edc8-4914-b847-310098afed61/"], "_urlsDoc": "WaPo profile (16 Aug 2005) documents the exercise itself; the 'until some thoughts or feelings emerge' wording is Cohen's own, per Coming Out Straight (2000, no stable public URL — cite as book). Status stays speculative per this session's scope (the appendix flags speculative→contested as Sérgio's own open call, not a precision fix — see session log).", "_statusS179": "⚑ S179 (Sérgio, 2026-09-27, 'yes to all four'): imagined → documented: the sentence now reports a documented fact about Cohen's own wording (A6)."},
       {
         "_doc": "PLACEHOLDER — Sérgio voice pass pending",
         "_proposed": "S47 2026-07-25 — wording corrected per SOURCE_VERIFICATION_RESULTS; awaiting Sérgio",

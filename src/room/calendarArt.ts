@@ -48,14 +48,15 @@ const GLYPH: Record<string, string> = {
   Q: '010101101110011', R: '110101110101101', S: '011100010001110', T: '111010010010010',
   U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101',
   Y: '101101010010010', Z: '111001010100111', '/': '001001010100100', '-': '000000111000000',
-  ',': '000000000010100', '.': '000000000000010', ' ': '000000000000000'
+  ',': '000000000010100', '.': '000000000000010', ' ': '000000000000000',
+  "'": '010010000000000', '&': '010101010101011'
 };
 
-type Ctx = Painter;
-function px(c: Ctx, x: number, y: number, col: string, w = 1, h = 1): void { c.fillStyle = col; c.fillRect(x, y, w, h); }
+export type Ctx = Painter;
+export function px(c: Ctx, x: number, y: number, col: string, w = 1, h = 1): void { c.fillStyle = col; c.fillRect(x, y, w, h); }
 
 /** one line of 3×5 text; `s` scales every cell (a ×2 title). Returns the width drawn. */
-function text(c: Ctx, str: string, x: number, y: number, col: string, s = 1): number {
+export function text(c: Ctx, str: string, x: number, y: number, col: string, s = 1): number {
   let cx = x;
   for (const ch of str.toUpperCase()) {
     const g = GLYPH[ch] ?? GLYPH[' '];
@@ -64,22 +65,22 @@ function text(c: Ctx, str: string, x: number, y: number, col: string, s = 1): nu
   }
   return cx - x - s;
 }
-const textW = (str: string, s = 1): number => str.length * 4 * s - s;
+export const textW = (str: string, s = 1): number => str.length * 4 * s - s;
 
 /** a pixel sprite from rows of characters; each char maps to a colour, '.' is clear */
-function sprite(c: Ctx, x: number, y: number, rows: string[], map: Record<string, string>): void {
+export function sprite(c: Ctx, x: number, y: number, rows: string[], map: Record<string, string>): void {
   rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) { const col = map[r[i]]; if (col) px(c, x + i, y + j, col); } });
 }
 
 /** a vertical band from `a` to `b` over rows y0..y1, dithered across the seam */
-function gradient(c: Ctx, y0: number, y1: number, stops: string[]): void {
+export function gradient(c: Ctx, y0: number, y1: number, stops: string[], width = PAGE_W): void {
   const n = stops.length - 1;
   for (let y = y0; y <= y1; y++) {
     const t = ((y - y0) / Math.max(1, y1 - y0)) * n;
     const k = Math.min(n - 1, Math.floor(t));
     const f = t - k;
     // ordered 2×2 dither: the next stop creeps in over the seam in a checker
-    for (let x = 0; x < PAGE_W; x++) {
+    for (let x = 0; x < width; x++) {
       const thr = ((x & 1) * 2 + (y & 1)) / 4 + 0.125;
       px(c, x, y, f > thr ? stops[k + 1] : stops[k]);
     }
@@ -87,7 +88,7 @@ function gradient(c: Ctx, y0: number, y1: number, stops: string[]): void {
 }
 
 /** a filled disc (for the sun, the drum, the lights) */
-function disc(c: Ctx, cx: number, cy: number, r: number, col: string, clipY = 999): void {
+export function disc(c: Ctx, cx: number, cy: number, r: number, col: string, clipY = 999): void {
   for (let y = Math.ceil(cy - r); y <= cy + r; y++) {
     if (y > clipY) continue;
     const w = Math.floor(Math.sqrt(Math.max(0, r * r - (y - cy) * (y - cy))));
@@ -96,7 +97,7 @@ function disc(c: Ctx, cx: number, cy: number, r: number, col: string, clipY = 99
 }
 
 /** a pixel line (Bresenham), `t` thick */
-function line(c: Ctx, x0: number, y0: number, x1: number, y1: number, col: string, t = 1): void {
+export function line(c: Ctx, x0: number, y0: number, x1: number, y1: number, col: string, t = 1): void {
   const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
   let err = dx + dy, x = x0, y = y0;
   for (;;) {
@@ -254,6 +255,9 @@ function page1997(c: Ctx): void {
     '.kkk..kkk.kkk'
   ], F);
   px(c, 43, 31, P.cone, 2, 2); // the mic
+  // ⚑ S179 — hidden in plain sight (his: "hidden elements of queerness"): a pink triangle pin on
+  //   the singer's chest, two pixels. Nobody on the page mentions it.
+  px(c, 36, 38, P.title, 2, 1); px(c, 36, 39, P.title, 1, 1);
   // the bass player, right
   sprite(c, 60, 35, [
     '..kk........',

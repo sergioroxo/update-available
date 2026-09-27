@@ -18,11 +18,13 @@ import { join } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const SCALE = Number(process.argv[2] ?? 4);
-const out = await build({
-  entryPoints: [join(ROOT, 'src/room/calendarArt.ts')], bundle: true, write: false, format: 'esm', platform: 'node'
-});
-const mod = await import('data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64'));
-const { drawCalendarPage, PAGE_W, PAGE_H } = mod;
+const load = async (entry) => {
+  const out = await build({ entryPoints: [join(ROOT, entry)], bundle: true, write: false, format: 'esm', platform: 'node' });
+  return import('data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64'));
+};
+const { drawCalendarPage, PAGE_W, PAGE_H } = await load('src/room/calendarArt.ts');
+// S179: and the walls' prints (src/room/printArt.ts)
+const { drawPrint, PRINT_SIZE } = await load('src/room/printArt.ts');
 
 function painter(w, h) {
   const buf = Buffer.alloc(w * h * 4);
@@ -65,4 +67,19 @@ sheet.fillStyle = '#3a3a40'; sheet.fillRect(0, 0, 4 * PAGE_W + 5 * GAP, PAGE_H +
 });
 const SW = 4 * PAGE_W + 5 * GAP, SH = PAGE_H + 2 * GAP;
 writeFileSync(join(dir, 'sheet.png'), png(SW * SCALE, SH * SCALE, upscale(sheet.buf, SW, SH, SCALE)));
-console.log(`wrote out/calendar/page-e1..e4.png + sheet.png (×${SCALE})`);
+{
+  const ids = Object.keys(PRINT_SIZE);
+  const PW = ids.reduce((a, id) => a + PRINT_SIZE[id][0] + GAP, GAP), PH = Math.max(...ids.map((id) => PRINT_SIZE[id][1])) + 2 * GAP;
+  const pr = painter(PW, PH);
+  pr.fillStyle = '#3a3a40'; pr.fillRect(0, 0, PW, PH);
+  let x = GAP;
+  for (const id of ids) {
+    const [w, h] = PRINT_SIZE[id];
+    const p = painter(w, h);
+    drawPrint(p, id);
+    for (let y = 0; y < h; y++) p.buf.copy(pr.buf, ((y + GAP) * PW + x) * 4, y * w * 4, (y + 1) * w * 4);
+    x += w + GAP;
+  }
+  writeFileSync(join(dir, 'prints.png'), png(PW * SCALE, PH * SCALE, upscale(pr.buf, PW, PH, SCALE)));
+}
+console.log(`wrote out/calendar/page-e1..e4.png + sheet.png + prints.png (×${SCALE})`);

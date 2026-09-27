@@ -638,7 +638,7 @@ export function buildClusterShell(
   const lampHome = lampLight ? lampLight.getLocalPosition().clone() : null;
   function carryLampLight(to: boolean): void {
     if (!lampLight || !lampHome) return;
-    if (to) lampLight.setLocalPosition(5.45, 1.15, 1.20); // Maya's desk (Room 3) — ⚑ 2026-09-05: z 1.5 was 0.19 m PAST the desk's own edge (it ends at 1.31), so the lamp it follows was standing over the bed
+    if (to) lampLight.setLocalPosition(5.44, 1.02, 1.2); // ⚑ S179: at the head of Maya's beacon lamp (e_lampBeacon) // Maya's desk (Room 3) — ⚑ 2026-09-05: z 1.5 was 0.19 m PAST the desk's own edge (it ends at 1.31), so the lamp it follows was standing over the bed
     else lampLight.setLocalPosition(lampHome.x, lampHome.y, lampHome.z);
   }
 

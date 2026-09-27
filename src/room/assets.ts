@@ -103,7 +103,7 @@ const TINT_STRENGTH = 0.8;
  * instance of the same model key (e.g. every bookcase in the room) still
  * references (same clone-before-mutate rule as room/batching.ts's
  * clearSettledBatch). */
-function tintModel(root: pc.Entity, colorHex: string, partColors?: Record<string, string>): void {
+function tintModel(root: pc.Entity, colorHex: string, partColors?: Record<string, string>, partGlow?: string[]): void {
   const tint = hexToColor(colorHex);
   root.forEach((node) => {
     const ent = node as pc.Entity;
@@ -128,6 +128,9 @@ function tintModel(root: pc.Entity, colorHex: string, partColors?: Record<string
       // diffuseMap would just multiply the tint OVER the texture rather than
       // replacing it. Strip it so `tint` always lands as a flat color.
       clone.diffuseMap = null;
+      // ⚑ S179 — a part that GLOWS (a lamp's bulb and shade inside): its own colour as emissive,
+      //   so a light source reads as a source (his 2026 beacon)
+      if (partGlow?.includes(src.name)) clone.emissive = clone.diffuse.clone();
       clone.update();
       mi.material = clone;
     }
@@ -147,7 +150,7 @@ function tintModel(root: pc.Entity, colorHex: string, partColors?: Record<string
  * room/morph transforms — its scale is 1, so the morph can't distort the mesh.
  * Returns null if the model isn't loaded (caller falls back to a box).
  */
-export function spawnModel(key: string, pos: number[], propYaw: number, colorHex?: string, scaleOverride?: Scale, partColors?: Record<string, string>): pc.Entity | null {
+export function spawnModel(key: string, pos: number[], propYaw: number, colorHex?: string, scaleOverride?: Scale, partColors?: Record<string, string>, partGlow?: string[]): pc.Entity | null {
   const asset = containers.get(key);
   const res = asset?.resource as { instantiateRenderEntity?: () => pc.Entity } | undefined;
   if (!res?.instantiateRenderEntity) return null;
@@ -172,7 +175,7 @@ export function spawnModel(key: string, pos: number[], propYaw: number, colorHex
   const [sx, sy, sz] = Array.isArray(s) ? s : [s, s, s];
   model.setLocalScale(sx, sy, sz);
   model.setLocalPosition(-m.cx * sx, -m.baseY * sy, -m.cz * sz);
-  if (colorHex) tintModel(model, colorHex, partColors);
+  if (colorHex) tintModel(model, colorHex, partColors, partGlow);
 
   // `tilt` rotates the already-recentered model around its own pivot (fixed
   // at this entity's origin) — a correction `yaw` alone can't express, since
