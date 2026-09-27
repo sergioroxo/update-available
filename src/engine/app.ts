@@ -3613,7 +3613,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     witnessPulse.tick(dt);
     if (institution && cluster) {
       institution.tick(dt, cluster.era, cluster.busy, witnessPulse.countFor(cluster.era), witnessPulse.k(),
-        ledger.records.includes('ministry-index-card'));
+        facingBack, (id) => ledger.records.includes(id));
     }
     // S146 — a filing is the piece moving: the helper's stillness clock restarts on it
     if (witnessPulse.k() > 0.98) helper?.activity();

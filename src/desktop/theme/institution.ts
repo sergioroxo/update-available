@@ -8,5 +8,7 @@ export const INSTITUTION = {
   terminalGlow: '#3AE07A',
   scannerGlow: '#EEF6FF',
   routerGlow: '#3AE07A',
-  statusGlow: '#3A9AFF'
+  statusGlow: '#3A9AFF',
+  // the intake terminal's screen (S183b): what it types, before the wall shows it
+  screenBg: '#0B1710', screenInk: '#3AE07A', screenDim: '#1F6B3C'
 } as const;

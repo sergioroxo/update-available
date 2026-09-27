@@ -15,17 +15,18 @@
  *    the sentence line (data/strings/aim.json `inst*`), the build's one grammar for
  *    "you can touch this" (S152). A press is answered with the object's own gesture.
  *
- * 2. IT PULLS. The corner moves with the file — the witness pulse (src/witness/pulse.ts)
- *    is its clock, so it moves when the stamp sounds and never otherwise:
- *    - the index card on the desk is TAKEN into drawer 12 the moment the card is filed
- *      (`ministry-index-card`, which is filed as you turn: you watch it go);
- *    - drawer 12 stands open wider as the file grows — it is waiting for more — and
- *      every filing slams it shut and lets it open again, on the stamp;
- *    - the terminal's screen lights on every filing, and idles with a slow cursor;
- *    - 1997: the suitcase is carried toward the door, a step per entry (it is gone in
- *      2003 — the weekend happened);
- *    - 2003: the application packet is drawn toward the terminal, a step per entry;
- *    - 2016: the router's light chatters; 2026: the status light breathes.
+ * 2. IT PULLS — and mostly WHILE YOUR BACK IS TURNED (S183c, his "yes go that way"): most filings
+ *    happen while you face the desktop; you hear the stamp, the cold creep calls, and the turn finds
+ *    the room moved. Three surfaces, three questions, never the same text twice:
+ *    - THE WALL (the record) — the past: what you did, and what it was filed as;
+ *    - THE TERMINAL — the plan: what the file is being used for NOW and NEXT, the chain of who hands
+ *      you to whom (data/strings/institution.json), typed in when it moves;
+ *    - THE SUITCASE (1997) — what that does to Daniel: absent until Rob has reached your mother, then
+ *      packed with her tag on it; by the door once the placement packet is acknowledged.
+ *    Also: the referral list (her pen) arrives with her; drawer 12 stands wider as the file grows and
+ *    slams on every stamp; 2003's application is drawn toward the terminal; 2016's router chatters;
+ *    2026's status light breathes. The index card stays on the desk, face up: the record already
+ *    carries the moment it is "seen" (S183c cut its flight — his "what is it bringing here?").
  *
  * 3. A PRESS gets the gesture a filing gets, for that object alone: the side of the
  *    room that pulls answers a touch by doing what it does.
@@ -38,6 +39,9 @@ import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
 import { foldedPos } from './clusterMorph';
 import { INSTITUTION } from '../desktop/theme/institution';
+import { attachPrintToTop } from './calendarPage';
+import { text, px } from './calendarArt';
+import planData from '../../data/strings/institution.json';
 import type { EraKey } from './cluster';
 
 type V3 = { x: number; y: number; z: number };
@@ -58,18 +62,17 @@ const PACKET_PARTS = ['inst_packet', 'inst_packetClip'];
 
 /** 1997: where the suitcase ends up — by the door (door: x 2.1, z 1.78–2.62) */
 const SUITCASE_DOOR = { x: 1.7, z: 2.95 };
-/** entries it takes to get there (the turn files the 2nd; a full 1997 files ~12) */
-const SUITCASE_STEPS = 10;
 const DRAWER_OPEN_MIN = 0.02, DRAWER_OPEN_PER = 0.014, DRAWER_OPEN_MAX = 0.2;
 const DRAWER_PRESS = 0.16;
 const PACKET_PER = 0.02, PACKET_MAX = 0.2;
-const CARD_SECONDS = 1.4;
+/** the intake terminal's screen, in pixels (a 16-column, 6-row 3×5 text screen) */
+const TERM_W = 64, TERM_H = 36, TYPE_CPS = 16;   // 15 columns of 3×5 type: plan values stay ≤ 15 characters
 
 const ease = (t: number): number => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
 export interface Institution {
   /** once a frame */
-  tick(dt: number, era: EraKey, busy: boolean, fileSize: number, pulseK: number, cardFiled: boolean): void;
+  tick(dt: number, era: EraKey, busy: boolean, fileSize: number, pulseK: number, watched: boolean, has: (id: string) => boolean): void;
   /** what can be pressed now: aim key, world point, radius (the caller owns the ray maths) */
   targets(era: EraKey): Target[];
   /** a press on one object */
@@ -80,8 +83,8 @@ export function createInstitution(room: RoomHandles): Institution {
   const eraIdx: Record<EraKey, number> = { e1: 0, e2: 1, e3: 2, e4: 3 };
   const presses = new Map<string, number>();   // key → seconds since pressed
   let lastEra: EraKey | null = null;
-  let cardWas: boolean | null = null;
-  let cardT = -1;                              // the card's flight, 0…1, or -1
+  /** ⚑ S183c — what 1997 has revealed so far, APPLIED ONLY WHILE YOUR BACK IS TURNED (see tick) */
+  let arrived = { mother: false, packed: false };
   let suitcaseT = 0, packetT = 0, drawerOpen = DRAWER_OPEN_MIN, clock = 0;
 
   const ent = (id: string): pc.Entity | null => {
@@ -105,7 +108,6 @@ export function createInstitution(room: RoomHandles): Institution {
     }
   };
   const col = (hex: string): pc.Color => new pc.Color().fromString(hex);
-  const TERMINAL = col(INSTITUTION.terminalGlow);
   const SCANNER = col(INSTITUTION.scannerGlow);
   const ROUTER = col(INSTITUTION.routerGlow);
   const STATUS = col(INSTITUTION.statusGlow);
@@ -128,15 +130,106 @@ export function createInstitution(room: RoomHandles): Institution {
   /** the filing's slam: shut on the stamp, then open again */
   const slam = (k: number): number => (k <= 0 ? 0 : k > 0.8 ? 1 : ease(k / 0.8));
 
-  function tick(dt: number, era: EraKey, busy: boolean, fileSize: number, pulseK: number, cardFiled: boolean): void {
+  /**
+   * ⚑ S183c — THE TERMINAL SHOWS THE PLAN. Sérgio, 2026-09-27: "what does the second computer add
+   * there? does the screen show anything?" — and then, when S183b had it type each record entry:
+   * "if the screen of the computer is working, what is the Witness panel doing there?" Right: two
+   * surfaces saying one thing. So the wall keeps the PAST (what you did, what it was filed as) and the
+   * terminal carries the PLAN: what the file is being used for NOW and what comes NEXT — the chain of
+   * who hands you to whom (mentor → parent → pastor → placement), in the system's own terse voice
+   * (data/strings/institution.json). A step that changes is typed in, a letter at a time; between
+   * changes the screen waits under a blinking cursor. One small canvas, uploaded only when a letter
+   * or the cursor changes.
+   */
+  type Step = { when?: string; atCount?: number; now: string; next: string };
+  const PLAN = planData as unknown as { header: Record<string, string>; now: string; next: string; steps: Record<string, Step[]> };
+  let term: { ctx: CanvasRenderingContext2D; tex: pc.Texture; mat: pc.StandardMaterial } | null = null;
+  let planKey = '';              // the step on screen, as `now|next`
+  let shown = -1;                // how many of its characters are typed
+  let drawn = '';                // the last frame's picture, as a key
+  let termEra: EraKey | null = null;
+  function stepFor(era: EraKey, has: (id: string) => boolean, fileSize: number): Step | null {
+    const steps = PLAN.steps[era];
+    if (!steps) return null;
+    let cur: Step | null = null;
+    for (const st of steps) {
+      if (st.when && !has(st.when)) continue;
+      if (st.atCount !== undefined && fileSize < st.atCount) continue;
+      cur = st;
+    }
+    return cur;
+  }
+  function buildTerminal(): void {
+    const screen = room.props.get('inst_terminalScreen')?.entity;
+    const app = pc.Application.getApplication();
+    if (!screen || !app) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = TERM_W; canvas.height = TERM_H;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const tex = new pc.Texture(app.graphicsDevice, {
+      width: TERM_W, height: TERM_H, format: pc.PIXELFORMAT_RGBA8, mipmaps: false,
+      minFilter: pc.FILTER_NEAREST, magFilter: pc.FILTER_NEAREST,
+      addressU: pc.ADDRESS_CLAMP_TO_EDGE, addressV: pc.ADDRESS_CLAMP_TO_EDGE
+    });
+    tex.setSource(canvas);
+    const mat = new pc.StandardMaterial();
+    mat.diffuse.set(0, 0, 0);
+    mat.emissiveMap = tex;
+    mat.emissive.set(1, 1, 1);
+    mat.update();
+    const plane = new pc.Entity('inst_terminalScreen-text');
+    plane.addComponent('render', { type: 'plane' });
+    if (plane.render) plane.render.material = mat;
+    plane.setLocalEulerAngles(90, 180, 0);          // the screen faces the room (-Z), as the wall prints do
+    plane.setLocalPosition(0, 0, -0.52);
+    screen.addChild(plane);
+    term = { ctx, tex, mat };
+  }
+  function typeTick(dt: number, era: EraKey, has: (id: string) => boolean, fileSize: number, lit: number): void {
+    if (!term) return;
+    const st = stepFor(era, has, fileSize);
+    if (!st) return;
+    const key = `${st.now}|${st.next}`;
+    if (termEra !== era) { termEra = era; planKey = key; shown = st.now.length + st.next.length; }
+    else if (key !== planKey) { planKey = key; shown = 0; }
+    const total = st.now.length + st.next.length;
+    if (shown < total) shown = Math.min(total, shown + dt * TYPE_CPS);
+    const n = Math.floor(shown);
+    const cursorOn = n < total || Math.floor(clock * 2) % 2 === 0;
+    term.mat.emissiveIntensity = 1 + lit * 0.8;
+    term.mat.update();
+    const pic = `${era}|${key}|${n}|${cursorOn}`;
+    if (pic === drawn) return;
+    drawn = pic;
+    const c = term.ctx;
+    const nowTxt = st.now.slice(0, n), nextTxt = st.next.slice(0, Math.max(0, n - st.now.length));
+    px(c, 0, 0, INSTITUTION.screenBg, TERM_W, TERM_H);
+    text(c, PLAN.header[era] ?? '', 2, 1, INSTITUTION.screenDim);
+    px(c, 2, 7, INSTITUTION.screenDim, TERM_W - 4, 1);
+    text(c, PLAN.now, 2, 10, INSTITUTION.screenDim);
+    text(c, nowTxt, 2, 16, INSTITUTION.screenInk);
+    text(c, PLAN.next, 2, 22, INSTITUTION.screenDim);
+    text(c, nextTxt, 2, 28, INSTITUTION.screenInk);
+    if (cursorOn) {
+      const onNext = n >= st.now.length;
+      const cx = Math.min(TERM_W - 5, 2 + (onNext ? nextTxt.length : nowTxt.length) * 4);
+      px(c, cx, (onNext ? 28 : 16) + 4, INSTITUTION.screenInk, 3, 1);
+    }
+    term.tex.upload();
+  }
+
+  function tick(dt: number, era: EraKey, busy: boolean, fileSize: number, pulseK: number, watched: boolean, has: (id: string) => boolean): void {
     clock += dt;
     for (const [k, t] of presses) presses.set(k, t + dt);
     if (lastEra !== era) {                     // a new era starts from its own resting state
       lastEra = era; presses.clear();
       suitcaseT = -1; packetT = -1;
     }
-    if (cardWas === null) { cardWas = cardFiled; cardT = cardFiled ? 1 : -1; }
-    else if (cardFiled && !cardWas) { cardWas = true; cardT = 0; }
+    // ⚑ S183c — THE CORNER CHANGES WHILE YOUR BACK IS TURNED. Most filings happen while you face
+    //   the desktop; the stamp is heard, the cold creep calls, and the turn finds the room moved.
+    //   What 1997 has revealed is therefore applied only while the corner is out of view.
+    if (!watched) arrived = { mother: has('rob-spoke-mother'), packed: has('enrollment-acknowledged') };
     if (busy) return;                          // the cascade owns every prop while it runs
 
     // ── drawer 12: open by the file's size; a filing slams it; a press pulls it out
@@ -145,43 +238,34 @@ export function createInstitution(room: RoomHandles): Institution {
     const open = drawerOpen * (1 - slam(pulseK)) + DRAWER_PRESS * drawerPress();
     for (const id of DRAWER_PARTS) place(id, era, 0, 0, -open);
 
-    // ── the index card: taken into the drawer when it is filed
-    const card = room.props.get('inst_indexCard');
-    if (card) {
-      if (cardT >= 1) card.entity.enabled = false;
-      else if (cardT >= 0) {
-        cardT = Math.min(1, cardT + dt / CARD_SECONDS);
-        const from = base('inst_indexCard', era); const d = base('inst_drawer12', era);
-        if (from && d) {
-          const t = ease(cardT);
-          const to = { x: d.x, y: d.y + 0.2, z: d.z - open };
-          card.entity.setLocalPosition(
-            from.x + (to.x - from.x) * t,
-            from.y + (to.y - from.y) * t + Math.sin(Math.PI * t) * 0.25,
-            from.z + (to.z - from.z) * t);
-          if (cardT >= 1) card.entity.enabled = false;
-        }
-      }
-    }
+    // ── the terminal: the plan, typed in when it moves (S183c)
+    typeTick(dt, era, has, fileSize, Math.max(pulseK, pressK('instTerminal', 1.2)));
 
-    // ── the terminal: a slow cursor, lit by every filing and every press
-    const cursor = Math.floor(clock * 1.2) % 2 === 0 ? 0.1 : 0.02;
-    glow('inst_terminalScreen', TERMINAL, Math.max(cursor, pulseK * 0.9, pressK('instTerminal', 1.2) * 0.9));
-
-    // ── the wall sheet (1997 the referral list, 2003 the rules): a filing or a press lifts it off the wall
+    // ── the wall sheet (1997 the referral list, 2003 the rules): a press lifts it off the wall.
+    //    ⚑ S183c: 1997's referral list is not there until Rob has reached your mother — the
+    //    pastor's number is in HER pen; it arrives with her (while your back is turned).
     const sheetKey = era === 'e1' ? 'instReferral' : 'instRules';
-    const lift = 0.03 * Math.max(bump(pulseK), bump(pressK(sheetKey, 0.9)));
-    place(era === 'e1' ? 'inst_referral' : 'inst_rules', era, 0, 0, -lift);
+    const sheetId = era === 'e1' ? 'inst_referral' : 'inst_rules';
+    const sheet = room.props.get(sheetId);
+    if (sheet && era === 'e1') sheet.entity.enabled = arrived.mother;
+    place(sheetId, era, 0, 0, -0.03 * bump(pressK(sheetKey, 0.9)));
 
-    // ── 1997: the suitcase is carried to the door, a step per entry
+    // ── 1997: the suitcase. ⚑ S183c — Sérgio: "The suitcase should be something that appears after
+    //    some actions, because we don't know Daniel is going to a camp until later." It is not there
+    //    until Rob has spoken to your mother ('placement prepared') — packed, her tag on it — and it
+    //    stands by the door once the placement packet is acknowledged ('consent already filed').
+    //    Both changes land only while your back is turned.
     if (era === 'e1') {
-      const want = ease(Math.max(0, Math.min(1, (fileSize - 2) / SUITCASE_STEPS)));
-      suitcaseT = suitcaseT < 0 ? want : suitcaseT + (want - suitcaseT) * Math.min(1, dt * 1.2);
-      const b = base('suitcase', era);
-      if (b) {
-        const dx = (SUITCASE_DOOR.x - b.x) * suitcaseT, dz = (SUITCASE_DOOR.z - b.z) * suitcaseT;
-        const hop = 0.03 * bump(pressK('instSuitcase', 0.5));
-        for (const id of SUITCASE_PARTS) place(id, era, dx, hop, dz);
+      for (const id of SUITCASE_PARTS) { const h = room.props.get(id); if (h) h.entity.enabled = arrived.mother; }
+      if (arrived.mother) {
+        const want = arrived.packed ? 1 : 0;
+        suitcaseT = suitcaseT < 0 || !watched ? want : suitcaseT;
+        const b = base('suitcase', era);
+        if (b) {
+          const dx = (SUITCASE_DOOR.x - b.x) * suitcaseT, dz = (SUITCASE_DOOR.z - b.z) * suitcaseT;
+          const hop = 0.03 * bump(pressK('instSuitcase', 0.5));
+          for (const id of SUITCASE_PARTS) place(id, era, dx, hop, dz);
+        }
       }
     }
 
@@ -223,6 +307,10 @@ export function createInstitution(room: RoomHandles): Institution {
     add('instStatus', 'inst_statusLed', 0.1);
     return out;
   }
+
+  buildTerminal();
+  const cardEnt = room.props.get('inst_indexCard')?.entity;
+  if (cardEnt) attachPrintToTop(cardEnt, 'indexCard');
 
   return {
     tick, targets,

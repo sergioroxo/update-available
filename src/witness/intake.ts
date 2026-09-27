@@ -398,7 +398,11 @@ export class WitnessCanvas {
      */
     const byEra = entriesByEra();
     const mine = this.era === 'e1' ? byEra.e1 : [...byEra.e1, ...byEra.e2];
-    const endingLines = [...this.endingRecordLines(), ...this.migrationLines()];
+    // ⚑ S183c: an ending line the file already carries is not printed twice — 'placement packet
+    //   acknowledged' came both from endingRecords and from the record's own `enrollment-acknowledged`
+    //   row (S144's recordLines), so every 1997 that reached the packet showed it twice.
+    const endingLines = [...this.endingRecordLines(), ...this.migrationLines()]
+      .filter((t) => !mine.some((e) => e.witness === t));
     if (mine.length > 0 || endingLines.length > 0) {
       setFont(ctx, 8);
       ctx.fillStyle = DIM;

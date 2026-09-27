@@ -1,0 +1,25 @@
+{
+  "_doc": "⚑ S183c — THE INTAKE TERMINAL'S PLAN (src/room/institution.ts). Sérgio, 2026-09-27: 'if the screen of the computer is working, what is the Witness panel doing there?' — so the terminal no longer repeats the record. The WALL is the past (what you did, what it was filed as); the TERMINAL is the plan (what the file is being used for, and what comes NEXT); the suitcase is what that does to Daniel's life. Each step is who hands you to whom — the ecosystem's chain made visible in the system's own terse voice (his: 'the Witness system needs a dual functionality of helping understand the underlines of the SOGICE ecosystem'). 1997 follows his intake research (Deep Research/intake.md, 2026-09-27): a mentor online, then the parent, then the pastor's referral, then the placement — the documented path was parent → pastor → referral directory. `when` is a ledger record id (the latest reached wins); `atCount` is the era's file size. Values ≤ 15 characters: the screen is 15 columns of 3×5 type.",
+  "header": { "e1": "CASE 12  PLAN", "e2": "CASE 12  PLAN", "e3": "FILE 12  SYNC" },
+  "now": "NOW",
+  "next": "NEXT",
+  "steps": {
+    "e1": [
+      { "now": "KIT BY POST", "next": "ASSIGN MENTOR" },
+      { "when": "went-online", "now": "MENTOR ASSIGNED", "next": "CONTACT PARENT" },
+      { "when": "rob-spoke-mother", "now": "PARENT REACHED", "next": "PASTOR REFERRAL" },
+      { "when": "enrollment-acknowledged", "now": "CONSENT ON FILE", "next": "DEPART 12 JUL" }
+    ],
+    "e2": [
+      { "now": "ENROLLED", "next": "APPLICATION" },
+      { "atCount": 2, "now": "PAGE 9 OF 26", "next": "LIABILITY" },
+      { "atCount": 4, "now": "RELEASE SIGNED", "next": "RULES 1-7" },
+      { "atCount": 6, "now": "RULES SIGNED", "next": "SCAN FILE" },
+      { "atCount": 8, "now": "FILE SCANNED", "next": "RETAIN" }
+    ],
+    "e3": [
+      { "now": "FILE MIGRATED", "next": "SYNC PARTNERS" },
+      { "atCount": 3, "now": "PARTNERS SYNCED", "next": "WEEKLY REPORT" }
+    ]
+  }
+}

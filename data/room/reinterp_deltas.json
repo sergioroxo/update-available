@@ -414,6 +414,9 @@
    {"id": "suitcase", "pos": [0.45, 0.21, 3.55], "size": [0.5, 0.42, 0.18], "color": "#6E3A34", "_docS181": "⚑ S181 / R5-03 — THE VIEW TO THE SYSTEM. Sérgio, 2026-09-27: in the pre-reinterp version 'the wall behind us had a symbolic representation of the institutional side, like a desk with a computer, a filing cabinet… I kinda miss that connection'; 'can we make the pressure for the fact Daniel is going to be sent out to a camp more visible? Does it make sense to add suitcases?'. The institution's corner returns around the record on the back wall — the record's own card already reads 'index · era 1 · drawer 12' — and it ages with the eras: paper (1997), scanned (2003), networked (2016), a light (2026). 1997: Daniel's suitcase, packed, by the door — the calendar's 'camp · 12–19 July' made physical. Gone at r2: he went."},
    {"id": "suitcaseHandle", "pos": [0.45, 0.44, 3.55], "size": [0.14, 0.04, 0.03], "color": "#2A2020"},
    {"id": "suitcaseTag", "pos": [0.6, 0.32, 3.458], "size": [0.09, 0.055, 0.003], "color": "#E8DCC0", "yaw": 180, "print": "campTag", "_docS181": "The luggage tag: 'camp', 12–19, in his mother's biro — the same hand as the calendar."},
+   {"id": "inst_floor", "pos": [-1.2, 0.007, 3.32], "size": [1.82, 0.014, 0.76], "color": "#565C68", "_docS183b": "⚑ S183b — Sérgio, 2026-09-27: 'Should we change the color of that section of the floor to make it more distinct so that it isn't part of the room?' Yes: the corner stands on its own ground — cold office linoleum under the cabinet and the desk, with a hard dark edge where his wooden floor begins. The shipped build had a whole dark witness-side floor (era1.json floorWitnessDark, #15151F), retired by r1 when the rooms became cozy; this returns only the institution's footprint, and grey, not dark (Soft Lo-Fi: never horror-dark). The suitcase stays on the wood — it is his, and it is being pulled across the line. Stays while the desk does (1997–2016); gone in 2026, when the file is a light."},
+   {"id": "inst_floorEdgeFront", "pos": [-1.2, 0.009, 2.935], "size": [1.82, 0.018, 0.02], "color": "#2A2C34"},
+   {"id": "inst_floorEdgeSide", "pos": [-0.28, 0.009, 3.32], "size": [0.02, 0.018, 0.78], "color": "#2A2C34"},
    {"id": "inst_referral", "pos": [0.12, 1.3, 3.695], "size": [0.21, 0.28, 0.004], "color": "#EFE9D6", "yaw": 180, "print": "referral1997", "_docS182": "⚑ S182 / R5-03 — from his intake research (~/Pc_Simulation/Sources/Deep Research/intake.md, 2026-09-27): in 1997 the documented path was a parent calling the pastor, and the pastor using a ministry referral directory (Exodus had no youth programme until 1999). So the institution's first object is this: a photocopied referral list pinned beside the record, one listing underlined and a number written on it in his mother's biro. Gone at r2."}
   ]
  },
@@ -2643,7 +2646,10 @@
    "inst_terminalScreen",
    "inst_indexCard",
    "inst_router",
-   "inst_routerLed"
+   "inst_routerLed",
+   "inst_floor",
+   "inst_floorEdgeFront",
+   "inst_floorEdgeSide"
   ],
   "add": [
    {

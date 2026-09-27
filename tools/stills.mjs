@@ -149,7 +149,7 @@ async function main() {
   };
 
   // ── 1997 ────────────────────────────────────────────────────────────────
-  await era(1, async ({ shot, free, turn, jump }) => {
+  await era(1, async ({ page, shot, free, turn, jump }) => {
     await jump('kit', 2600);
     // ⚑ THE ENTRANCE (his ask: replicate out/figures/fig1_entrance_overhead.jpg).
     //   Found by probing, not reasoned: the room's own overlooks are the lift's
@@ -172,6 +172,17 @@ async function main() {
     await jump('desktop', 1200);
     await turn(33);
     await shot('04-the-turn', 'the turn: the room\'s other face, where attention becomes evidence');
+    await turn(33, 'ArrowLeft');
+    // ⚑ S183c — the corner LATER in 1997: the suitcase and the referral list arrive only after Rob
+    //   has reached his mother, and only while his back is turned; the terminal's plan moves on the
+    //   packet. The jumps never file those beats, so this still files them (the page's own ledger
+    //   module, the same instance the build reads) — a REVIEW state, labelled as one.
+    await page.evaluate(async () => { const m = await import('/src/state/ledger.ts');
+      for (const id of ['went-online', 'rob-spoke-mother', 'enrollment-acknowledged']) if (!m.ledger.records.includes(id)) m.ledger.records.push(id); });
+    await wait(600);
+    await turn(33);
+    await wait(1800);
+    await shot('04b-the-turn-later', 'later in 1997 (review state: Rob has reached his mother, the packet is acknowledged): her suitcase by the door, her referral list, the plan on the terminal');
     await turn(33, 'ArrowLeft');
     await jump('kit', 2600);
     await free(0, 1.10, 0.38, -3, 0);

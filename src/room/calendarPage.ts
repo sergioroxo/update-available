@@ -64,6 +64,25 @@ function printMaterial(app: pc.AppBase, w: number, h: number, draw: (ctx: Canvas
 }
 
 /**
+ * ⚑ S183b — the same print on a box's TOP face (+Y): the index card, which lies face-up on the
+ * institution's desk and is then stood up in drawer 12 (institution.ts turns the box -90° about X,
+ * which carries this face to the room; the plane's own 180° keeps the print upright there).
+ */
+export function attachPrintToTop(box: pc.Entity, id: PrintId): void {
+  const app = pc.Application.getApplication();
+  if (!app) return;
+  const [w, h] = PRINT_SIZE[id];
+  const mat = printMaterial(app, w, h, (ctx) => drawPrint(ctx, id));
+  if (!mat) return;
+  const plane = new pc.Entity(`${box.name}-print`);
+  plane.addComponent('render', { type: 'plane' });
+  if (plane.render) plane.render.material = mat;
+  plane.setLocalEulerAngles(0, 180, 0);
+  plane.setLocalPosition(0, 0.52, 0);
+  box.addChild(plane);
+}
+
+/**
  * ⚑ S179 / R5-02 — a PRINT on a box prop (a poster, a sign, a flyer): one plane over the box's
  * front face (+Z in its own frame, which its yaw turns to face the room), a hair proud of it.
  * The box is scaled to its size, so a unit plane inside it is exactly the face.

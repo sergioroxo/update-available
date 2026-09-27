@@ -21,13 +21,13 @@
 import { px, text, textW, disc, line, sprite, gradient, hand, type Ctx } from './calendarArt';
 import { PRINT as P } from '../desktop/theme/calendar';
 
-export type PrintId = 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003';
+export type PrintId = 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard';
 
 /** each print's pixel size, ~2 px per centimetre of the prop it hangs on */
 export const PRINT_SIZE: Record<PrintId, [number, number]> = {
   rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
   tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100],
-  drawer12: [24, 12], campTag: [36, 22], referral1997: [42, 56], rules2003: [42, 56]
+  drawer12: [24, 12], campTag: [36, 22], referral1997: [42, 56], rules2003: [42, 56], indexCard: [26, 16]
 };
 
 const centre = (c: Ctx, s: string, y: number, col: string, W: number, sc = 1): void => {
@@ -233,8 +233,22 @@ function rules2003(c: Ctx, W: number, H: number): void {
   line(c, 4, H - 5, 14, H - 6, P.motherInk);           // signed
 }
 
+/**
+ * ⚑ S183b — THE INDEX CARD. Sérgio, 2026-09-27, on a frame of it flying into drawer 12: "Is the
+ * file that flat floating thing?" It was — 13 cm of blank card seen edge-on. It carries its face
+ * now: a ruled index card, the red head rule, the name, the drawer. It stands up in the drawer
+ * with that face toward the room (src/room/institution.ts).
+ */
+function indexCard(c: Ctx, W: number, H: number): void {
+  px(c, 0, 0, P.cardStock, W, H);
+  px(c, 0, 2, P.confRed, W, 1);                        // the red head rule
+  text(c, 'DANIEL', 2, 4, P.cardInk);
+  px(c, 2, 11, P.confBlue, 13, 1); px(c, 2, 14, P.confBlue, 10, 1);   // ruled lines
+  text(c, '12', W - 9, H - 6, P.cardInk);
+}
+
 const DRAW: Record<PrintId, (c: Ctx, W: number, H: number) => void> = {
-  rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003
+  rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard
 };
 
 export function drawPrint(c: Ctx, id: PrintId): void {
