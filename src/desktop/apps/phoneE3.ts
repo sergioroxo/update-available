@@ -41,6 +41,7 @@ import {
 } from '../theme/phone';
 import { drawFloppyIcon } from './floppysheep';
 import { ledger } from '../../state/ledger';
+import { entriesByEra } from '../../witness/record';
 import m from '../../../data/dialog/s3_maiden.json';
 import d from '../../../data/strings/era3_devices.json';
 import { playOnce } from '../../audio/tapeAudio';
@@ -62,7 +63,7 @@ const HOME = m.home as unknown as Record<string, string>;
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
 type Stage = 'quiet' | 'first' | 'voted' | 'cascade' | 'after';
-type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message';
+type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk';
 /** Lambient's card, and it is the same card whichever way she got here */
 type Card = null | 'opened' | 'ignored';
 
@@ -190,6 +191,7 @@ export class PhoneE3 {
     else if (this.screen === 'platform') { this.drawPlatform(ctx, W, H); }
     else if (this.screen === 'inbox') { this.drawInbox(ctx, W, H); }
     else if (this.screen === 'message') { this.drawMessage(ctx, W, H); }
+    else if (this.screen === 'walk') { this.drawWalk(ctx, W, H); }
     else { this.drawHome(ctx, W, H); }
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
     if (this.card) this.drawCard(ctx, W, H);
@@ -336,7 +338,10 @@ export class PhoneE3 {
       ['notes', HOME.fNotes], ['files', HOME.fFiles]
     ] as const;
     furniture.forEach(([kind, label], i) => {
-      furnitureTile(ctx, col(i % 4), rowY(1 + Math.floor(i / 4)), s, kind, label);
+      // ⚑ S181 / R5-04 — the last tile is the accountability app: her file, on her phone
+      const walk = kind === 'files';
+      furnitureTile(ctx, col(i % 4), rowY(1 + Math.floor(i / 4)), s, kind, walk ? HOME.fWalk : label);
+      if (walk) this.rects.push({ x: col(i % 4), y: rowY(1 + Math.floor(i / 4)), w: s, h: s + 12, id: 'walk' });
     });
 
     pageDots(ctx, W, H - 56, 2, 0);
@@ -580,6 +585,7 @@ export class PhoneE3 {
       // S158: the chat goes back to Messages; S177: so does an open message
       case 'back': this.screen = this.screen === 'group' || this.screen === 'message' ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
+      case 'walk': this.screen = 'walk'; this.bump(); return true;
       case 'dismiss': this.dismissCard(); return true;
       case 'link': case 'link2': this.openLink(); return true;
       // ⚑ the stream has no verb. Pressing it is consumed and does nothing,
@@ -656,6 +662,32 @@ export class PhoneE3 {
     phoneFont(ctx, 9);
     ctx.fillStyle = PHONE.dim;
     ctx.fillText(b.time, 20, Math.min(by + bh + 8, H - 14));
+  }
+
+  /** ⚑ S181 / R5-04 — WALK WITH, the accountability app: her own file, newest first, in the
+   *  app's warm voice. Read only; the frame's menu keeps the reading of what it means. */
+  private drawWalk(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
+    const y0 = statusBar(ctx, W, this.clockText);
+    const top = appBar(ctx, W, y0, HOME.walkTitle, HOME.walkSub);
+    this.pushBack(y0, top);
+    const rows = entriesByEra().e3.slice().reverse();
+    let y = top + 8;
+    phoneFont(ctx, 10);
+    if (!rows.length) { ctx.fillStyle = PHONE.dim; ctx.fillText(HOME.walkEmpty, 14, y + 4); }
+    for (const r of rows) {
+      const lines = phoneWrap(ctx, r.witness, W - 34);
+      const h = lines.length * 13 + 8;
+      if (y + h > H - 22) break;
+      ctx.fillStyle = r.flagged ? PHONE.badge : PHONE.tint;
+      ctx.beginPath(); ctx.arc(14, y + 6, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = PHONE.ink;
+      lines.forEach((ln, i) => ctx.fillText(ln, 24, y + i * 13));
+      ctx.fillStyle = PHONE.hairline; ctx.fillRect(24, y + h - 4, W - 34, 1);
+      y += h;
+    }
+    phoneFont(ctx, 9); ctx.fillStyle = PHONE.faint;
+    ctx.fillText(HOME.walkFoot, 12, H - 16);
   }
 
   /** S158 / R3-78 — the platform's own app on the phone: a card that says where the work is */

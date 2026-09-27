@@ -418,7 +418,7 @@ if (staleExclusions.length) {
  * `to write]`) were applied. Lower this number when a hit gets fixed; never
  * raise it without a note saying which session introduced the regression.
  */
-const AUTHORING_MARKER_BASELINE = 10;
+const AUTHORING_MARKER_BASELINE = 2;
 const AUTHORING_MARKERS = [
   'PLACEHOLDER', 'to write]', 'TODO', 'Sérgio', '[VERIFY SOURCE]', 'researcher note', 'FIXME'
 ];

@@ -18,15 +18,16 @@
  * real film, band, church, ministry or march is named or imitated. Drawn with calendarArt.ts's
  * own tools; colours in src/desktop/theme/calendar.ts (PRINT). Previews: tools/calendar_preview.mjs.
  */
-import { px, text, textW, disc, line, sprite, gradient, type Ctx } from './calendarArt';
+import { px, text, textW, disc, line, sprite, gradient, hand, type Ctx } from './calendarArt';
 import { PRINT as P } from '../desktop/theme/calendar';
 
-export type PrintId = 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026';
+export type PrintId = 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag';
 
 /** each print's pixel size, ~2 px per centimetre of the prop it hangs on */
 export const PRINT_SIZE: Record<PrintId, [number, number]> = {
   rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
-  tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100]
+  tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100],
+  drawer12: [24, 12], campTag: [36, 22]
 };
 
 const centre = (c: Ctx, s: string, y: number, col: string, W: number, sc = 1): void => {
@@ -99,20 +100,42 @@ function conf2003(c: Ctx, W: number, H: number): void {
 }
 
 function tour2016(c: Ctx, W: number, H: number): void {
-  gradient(c, 0, H - 1, [P.tourA, P.tourB, P.tourC], W);
-  // the spotlight and the singer — a music-video still
-  for (let y = 20; y < 92; y++) { const half = 4 + Math.round((y - 20) * 0.35); for (let x = 50 - half; x <= 50 + half; x += 2) px(c, x + (y & 1), y, P.tourSpot); }
-  sprite(c, 44, 48, [
-    '...##...', '..####..', '..####..', '...##...', '.######.', '########', '##.##.##', '##.##.##',
-    '..####..', '..####..', '..#..#..', '..#..#..', '..#..#..', '..#..#..', '.##..##.'
+  // ⚑ S181 (his: "a bit too clean… maybe like now streaming on your ministry channel") — a
+  //   still from the tour's music video: a dark stage, pastel haze, the crowd's raised hands, the
+  //   player's own progress bar. The testimony as content.
+  px(c, 0, 0, P.tourDark, W, H);
+  text(c, 'BRAVE & NEW', 8, 4, P.tourHands, 2);
+  text(c, 'BRAVE & NEW', 7, 3, P.tourA, 2);
+  // the video frame
+  const FY = 17, FH = 66;
+  gradient(c, FY, FY + FH, [P.tourDark, P.tourB, P.tourA], W);
+  // haze beams from the rig, dithered
+  for (const [bx, col] of [[22, P.tourC], [50, P.tourSpot], [78, P.tourB]] as [number, string][]) {
+    for (let y = FY; y < FY + FH; y++) { const half = 1 + Math.round((y - FY) * 0.28); for (let x = bx - half; x <= bx + half; x += 2) if (((x + y) & 1) === 0) px(c, x, y, col); }
+  }
+  // the singer, a hand raised, the mic in the other
+  sprite(c, 42, FY + 18, [
+    '.......##.......', '......####......', '......####......', '.......##.....#.', '....########.##.', '...##########...',
+    '...##.####.##...', '...##.####.#....', '...#..####......', '......####......', '......####......', '.....##..##.....',
+    '.....##..##.....', '.....##..##.....', '.....##..##.....', '....###..###....'
   ], { '#': P.tourSinger });
-  px(c, 55, 50, P.tourSinger, 1, 14); px(c, 54, 48, P.tourSinger, 3, 2);   // the mic stand
-  centre(c, 'BRAVE & NEW', 6, P.tourTitle, W, 1);
-  centre(c, 'TESTIMONY TOUR 2016', 96, P.tourTitle, W);
-  // the video's play badge
-  disc(c, 50, 108, 6, P.tourPlayBg);
-  sprite(c, 48, 105, ['#..', '##.', '###', '##.', '#..'], { '#': P.tourPlay });
-  text(c, 'NEW VIDEO', 62, 106, P.tourTitle);
+  px(c, 44, FY + 22, P.tourSinger, 1, 4); px(c, 43, FY + 21, P.tourSpot, 2, 1);   // the mic, catching the light
+  // the crowd's hands, raised into the frame
+  for (let i = 0; i < 12; i++) {
+    const x = 3 + i * 8 + (i % 2), top = FY + FH - 12 + (i % 3) * 2;
+    px(c, x, top + 4, P.tourHands, 5, FY + FH - top - 4);
+    px(c, x + 1, top, P.tourHands, 1, 5); if (i % 2) px(c, x + 3, top + 1, P.tourHands, 1, 4);
+  }
+  // grain
+  for (let k = 0; k < 90; k++) px(c, (k * 37) % W, FY + ((k * 53) % FH), P.tourGrain);
+  // the player: play, progress, time
+  const BY = FY + FH + 3;
+  sprite(c, 4, BY - 1, ['#..', '##.', '###', '##.', '#..'], { '#': P.tourPlay });
+  px(c, 10, BY + 1, P.tourBarBg, 70, 2); px(c, 10, BY + 1, P.tourPlayBg, 44, 2); px(c, 53, BY, P.tourPlay, 2, 4);
+  text(c, '3:42', 83, BY, P.tourSpot);
+  text(c, 'NOW STREAMING', Math.round((W - textW('NOW STREAMING')) / 2), BY + 10, P.tourA);
+  text(c, 'ON YOUR MINISTRY CHANNEL', Math.round((W - textW('ON YOUR MINISTRY CHANNEL')) / 2), BY + 17, P.tourSpot);
+  text(c, 'TESTIMONY TOUR 2016', Math.round((W - textW('TESTIMONY TOUR 2016')) / 2), BY + 26, P.tourC);
 }
 
 function retreat2016(c: Ctx, W: number, H: number): void {
@@ -156,8 +179,25 @@ function ball2026(c: Ctx, W: number, H: number): void {
   centre(c, 'FRI 23 OCT', 93, P.ballBlue, W);
 }
 
+/** ⚑ S181 / R5-03 — drawer 12's card: the index card on the record says "index · era 1 · drawer 12" */
+function drawer12(c: Ctx, W: number, H: number): void {
+  px(c, 0, 0, P.cardStock, W, H);
+  px(c, 0, 0, P.cardInk, W, 1); px(c, 0, H - 1, P.cardInk, W, 1);
+  text(c, '12', 3, 4, P.cardInk);
+  px(c, 12, 6, P.cardInk, 9, 1); px(c, 12, 8, P.cardInk, 6, 1);   // a surname's worth of typed line
+}
+
+/** ⚑ S181 / R5-03 — the suitcase's tag: "camp", 12–19, in the calendar's own hand (his mother's biro) */
+function campTag(c: Ctx, W: number, H: number): void {
+  px(c, 0, 0, P.tagStock, W, H);
+  disc(c, 4, 4, 2, P.tagString); px(c, 4, 4, P.tagStock);   // the eyelet
+  hand(c, 'camp', 9, 3, P.motherInk);
+  text(c, '12-19', 9, 13, P.motherInk);
+  line(c, 30, 14, 34, 14, P.motherInk);
+}
+
 const DRAW: Record<PrintId, (c: Ctx, W: number, H: number) => void> = {
-  rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026
+  rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag
 };
 
 export function drawPrint(c: Ctx, id: PrintId): void {

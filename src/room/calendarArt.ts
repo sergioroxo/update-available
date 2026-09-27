@@ -49,7 +49,7 @@ const GLYPH: Record<string, string> = {
   U: '101101101101111', V: '101101101101010', W: '101101111111101', X: '101101010101101',
   Y: '101101010010010', Z: '111001010100111', '/': '001001010100100', '-': '000000111000000',
   ',': '000000000010100', '.': '000000000000010', ' ': '000000000000000',
-  "'": '010010000000000', '&': '010101010101011'
+  "'": '010010000000000', ':': '000010000010000', '&': '010101010101011'
 };
 
 export type Ctx = Painter;
@@ -157,7 +157,7 @@ const HAND: Record<string, string[]> = {
   s: ['.##', '#..', '.#.', '..#', '##.']
 };
 /** a word in someone's hand, letters a pixel apart, each with its own small lift */
-function hand(c: Ctx, word: string, x: number, y: number, col: string): number {
+export function hand(c: Ctx, word: string, x: number, y: number, col: string): number {
   let cx = x;
   [...word].forEach((ch, k) => {
     const g = HAND[ch];

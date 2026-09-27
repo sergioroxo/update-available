@@ -89,11 +89,14 @@ export const PRINT = {
   // 2016 · the testimony tour (music video)
   tourA: '#f7c6d6', tourB: '#c9b6f0', tourC: '#9fd8e8', tourSpot: '#fff6e0', tourSinger: '#2a2238', tourTitle: '#2a2238',
   tourPlay: '#ffffff', tourPlayBg: '#e0567a',
+  tourDark: '#1c1428', tourGrain: '#3a2c48', tourHands: '#0e0a16', tourBarBg: '#5a4a66', tourHaze: '#8a6a9a',
   // 2016 · the women's retreat sign
   retreatBg: '#f6efe6', retreatRose: '#d98a9a', retreatLeaf: '#8fb08a', retreatInk: '#5a4a5a',
   // 2016 · the march flyer
   marchBg: '#ffffff', marchBlue: '#2b5fae', marchPink: '#e27a9a', marchInk: '#1d2330', marchSky: '#dfe9f5',
   // 2026 · the Commons ball poster
   ballBg: '#1d1830', ballGlow: '#3a2a5c', ballGold: '#f4c95d', ballPink: '#f5a9b8', ballBlue: '#5bcefa', ballWhite: '#ffffff',
-  ballFigure: '#f1c9a5', ballInk: '#fff4d6'
+  ballFigure: '#f1c9a5', ballInk: '#fff4d6',
+  // S181 · the institution's labels: a drawer card, a luggage tag in his mother's hand
+  cardStock: '#efe9d6', cardInk: '#23232f', tagStock: '#e8dcc0', tagString: '#8a6a4a', motherInk: '#2446a8'
 } as const;

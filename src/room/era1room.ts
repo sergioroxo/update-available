@@ -275,7 +275,8 @@ function classifyProp(rawId: string): StyleTier {
   if (is('crt', 'kit', 'headset')) return 'hero';       // monitor + starter kit + headset (≤3 hero)
   // the apparatus's gear — Room 2's flat panel is the same tier as Room 1's
   // tower: the system's instruments are the most defined objects in the room.
-  if (is('tower', 'keyboard', 'mouse', 'modem', 'flatPanel',
+  // S181 — the institution's corner (`inst_*`) is the apparatus's own furniture: crisp, true
+  if (is('tower', 'keyboard', 'mouse', 'modem', 'flatPanel', 'inst_',
          'tabletDevice', 'phoneDevice')) return 'system';
   if (is('sodaCan', 'homeworkPile', 'plant_', 'sign',
          // Session 74 — Maya's own small clutter (see data/room/reinterp_deltas.json):

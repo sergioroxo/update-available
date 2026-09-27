@@ -7,6 +7,11 @@ run left unchecked). As before (ETHICS #13/#14) **nothing here is applied** — 
 approval. The runs' URLs carried a `?utm_source=chatgpt.com` tracking suffix; it is dropped below (the same page,
 without the tracker), nothing else changed.*
 
+> ⚑ **2026-09-27 — Sérgio: "approve round 3"; "you can name the LGB Alliance, this is important information. They
+> are making these claims"; item 1: "drop the quotation marks but the intent is solid"; and "make all text more
+> explicit, instead of so defensive — we are not making this to justify, we are explaining what was used." APPLIED
+> S181** in that register; links on the sources page; no `[VERIFY SOURCE]` remains in the dossier.
+
 ## Headline
 Two genuine factual errors in the piece's sources, both now correctable: **the House of Xtravaganza was founded by
 Hector Valle** (Hector Crespo/Xtravaganza was an early member — the Smithsonian says he *helped* found it), and
