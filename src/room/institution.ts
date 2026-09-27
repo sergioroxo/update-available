@@ -57,6 +57,23 @@ export const INSTITUTION_IDS = [
 ];
 
 const DRAWER_PARTS = ['inst_drawer12', 'inst_handle2', 'inst_drawerLabel'];
+/**
+ * ⚑ S183e — THE CORNER ASSEMBLES IN THE STORY'S ORDER (1997). Sérgio, 2026-09-27: "although people
+ * can explore freely, there are stuff that need to appear in sequence and that are core elements to
+ * the progression of the narrative." Until now the cabinet, desk and terminal stood behind him from
+ * the era's first second — the ending, visible at the entrance. Now nothing of the institution is
+ * there until the file exists, and each piece arrives with the beat that brings it, while his back is
+ * turned (see `arrived`):
+ *   FILE  — the first filing (the wall hardens into the record): the cabinet with drawer 12, the
+ *           floor it stands on, the desk and the index card the record will say he "saw";
+ *   PLAN  — the mentor is assigned (`went-online`): the terminal, and its plan begins;
+ *   MOTHER— Rob has reached his mother (`rob-spoke-mother`): her referral list, her suitcase;
+ *   PACKED— the placement packet is acknowledged: the suitcase by the door.
+ * 2003 opens already enrolled, so from r2 on the corner is simply what the data folds to.
+ */
+const STAGE_FILE = ['inst_cabinet', 'inst_handle1', 'inst_handle3', 'inst_drawer12', 'inst_handle2', 'inst_drawerLabel',
+  'inst_floor', 'inst_floorEdgeFront', 'inst_floorEdgeSide', 'inst_desk', 'inst_deskBase', 'inst_indexCard'];
+const STAGE_PLAN = ['inst_terminal', 'inst_terminalScreen'];
 const SUITCASE_PARTS = ['suitcase', 'suitcaseHandle', 'suitcaseTag'];
 const PACKET_PARTS = ['inst_packet', 'inst_packetClip'];
 
@@ -73,7 +90,8 @@ const ease = (t: number): number => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * 
 export interface Institution {
   /** once a frame */
   tick(dt: number, era: EraKey, busy: boolean, fileSize: number, pulseK: number, watched: boolean, has: (id: string) => boolean): void;
-  /** what can be pressed now: aim key, world point, radius (the caller owns the ray maths) */
+  /** what can be pressed now: aim key, world point, radius (the caller owns the ray maths) — only
+   *  what has arrived: a hidden prop is not a target */
   targets(era: EraKey): Target[];
   /** a press on one object */
   press(key: string): void;
@@ -84,7 +102,7 @@ export function createInstitution(room: RoomHandles): Institution {
   const presses = new Map<string, number>();   // key → seconds since pressed
   let lastEra: EraKey | null = null;
   /** ⚑ S183c — what 1997 has revealed so far, APPLIED ONLY WHILE YOUR BACK IS TURNED (see tick) */
-  let arrived = { mother: false, packed: false };
+  let arrived = { file: false, plan: false, mother: false, packed: false };
   let suitcaseT = 0, packetT = 0, drawerOpen = DRAWER_OPEN_MIN, clock = 0;
 
   const ent = (id: string): pc.Entity | null => {
@@ -229,8 +247,21 @@ export function createInstitution(room: RoomHandles): Institution {
     // ⚑ S183c — THE CORNER CHANGES WHILE YOUR BACK IS TURNED. Most filings happen while you face
     //   the desktop; the stamp is heard, the cold creep calls, and the turn finds the room moved.
     //   What 1997 has revealed is therefore applied only while the corner is out of view.
-    if (!watched) arrived = { mother: has('rob-spoke-mother'), packed: has('enrollment-acknowledged') };
+    if (!watched) {
+      arrived = { file: fileSize > 0, plan: has('went-online'), mother: has('rob-spoke-mother'), packed: has('enrollment-acknowledged') };
+    }
     if (busy) return;                          // the cascade owns every prop while it runs
+
+    // ── S183e: which of the corner exists yet. In 1997, by the story's beats; from 2003 on, whatever
+    //    the era's data folds to (a prop hidden in 1997 must come back where the fold keeps it).
+    const show = (ids: string[], on: boolean): void => {
+      for (const id of ids) {
+        const h = room.props.get(id);
+        if (h && base(id, era)) h.entity.enabled = era === 'e1' ? on : true;
+      }
+    };
+    show(STAGE_FILE, arrived.file);
+    show(STAGE_PLAN, arrived.plan);
 
     // ── drawer 12: open by the file's size; a filing slams it; a press pulls it out
     const want = Math.min(DRAWER_OPEN_MAX, DRAWER_OPEN_MIN + DRAWER_OPEN_PER * fileSize);
