@@ -3,6 +3,7 @@
   "header": { "e1": "CASE 12  PLAN", "e2": "CASE 12  PLAN", "e3": "FILE 12  SYNC" },
   "now": "NOW",
   "next": "NEXT",
+  "_docE2": "⚑ S183f — 2003 on its story beats too (his: \"tie 2003's plan to its story beats too\"). Daniel is past the residential programme and in its aftercare: the rules signed (the sheet on the wall), then the companion (Lamby, who debuts with this update), the daily check-in (Restorify), the media plan (Lamby's video), the contacts watched (Caleb's message, intercepted) — and NEXT: SCAN FILE, which 2016 answers with FILE MIGRATED. `when: kind:<practice>` is reached when this era's file holds an entry of that practice (src/witness/record.ts kinds).",
   "steps": {
     "e1": [
       { "now": "KIT BY POST", "next": "ASSIGN MENTOR" },
@@ -11,15 +12,24 @@
       { "when": "enrollment-acknowledged", "now": "CONSENT ON FILE", "next": "DEPART 12 JUL" }
     ],
     "e2": [
-      { "now": "ENROLLED", "next": "APPLICATION" },
-      { "atCount": 2, "now": "PAGE 9 OF 26", "next": "LIABILITY" },
-      { "atCount": 4, "now": "RELEASE SIGNED", "next": "RULES 1-7" },
-      { "atCount": 6, "now": "RULES SIGNED", "next": "SCAN FILE" },
-      { "atCount": 8, "now": "FILE SCANNED", "next": "RETAIN" }
+      { "now": "RULES SIGNED", "next": "ASSIGN COMPANION" },
+      { "when": "kind:assistant", "now": "COMPANION ON", "next": "DAILY CHECK-IN" },
+      { "when": "kind:checkin", "now": "CHECK-IN KEPT", "next": "MEDIA PLAN" },
+      { "when": "kind:media", "now": "MEDIA LOGGED", "next": "WATCH CONTACTS" },
+      { "when": "kind:contact", "now": "CONTACT FLAGGED", "next": "SCAN FILE" }
     ],
     "e3": [
       { "now": "FILE MIGRATED", "next": "SYNC PARTNERS" },
       { "atCount": 3, "now": "PARTNERS SYNCED", "next": "WEEKLY REPORT" }
     ]
+  },
+  "yourFile": {
+    "_doc": "⚑ S183f / R5-04 — 2003's device face of the file (PLAN_ROUND5 Phase 3: '2003 a desktop folder \"Your file (read only)\"'). A file that came with him to the new desktop, in the second column beside the Family Form: Daniel's whole file (1997 and 2003), newest first, each line with the practice it belongs to — the same reading as the menu's Your file, for this person only. Read only: nothing in it can be pressed but the close box.",
+    "icon": "Your file",
+    "title": "Your file (read only)",
+    "sub": "Daniel  ·  drawer 12  ·  scanned 2003  ·  {n} entries",
+    "empty": "Nothing on file yet.",
+    "more": "… and {n} earlier",
+    "footer": "Read only. The original is kept elsewhere."
   }
 }

@@ -8,6 +8,8 @@
  */
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
+import institutionStrings from '../../data/strings/institution.json';
+import { entriesByEra, practiceOf } from '../witness/record';
 import { drawPixelIcon, hasPixelIcon } from './theme/icons';
 import { setFaceEra } from './theme/fonts';
 import { IrcApp } from './apps/irc';
@@ -368,6 +370,8 @@ export class DesktopOS {
   hasUnseenWitness = false;
   dossierUnlocked = false;
   private dossierOpen = false;
+  /** ⚑ S183f / R5-04 — 2003's "Your file (read only)" (drawYourFile) */
+  private yourFileOpen = false;
   /** engine listens: pulse the flip affordance when the hook lands */
   onFlipReady?: () => void;
   /** engine listens: user chose LEAVE */
@@ -619,7 +623,7 @@ export class DesktopOS {
    *  Messenger, the residue) are windows, and a window means not idle. */
   private desktopIdle(): boolean {
     return this.e1DesktopIdle()
-      && !this.dossierOpen
+      && !this.dossierOpen && !this.yourFileOpen
       && !this.restorify?.open && !this.caleb && !this.accountability
       && !this.netvision && !this.netvisionOfferOpen && !this.messageNoticeOpen
       && !this.updateApp && !this.sendOffer?.open;
@@ -770,6 +774,7 @@ export class DesktopOS {
     this.sendOffer = null;
     this.clearExternalSendHits();
     this.dossierOpen = false;
+    this.yourFileOpen = false;
     this.kitToastShown = true;
     this.behindToastShown = true;
     this.behindToastAt = Infinity;
@@ -2080,6 +2085,8 @@ export class DesktopOS {
       if (this.reinterp && this.desktopEra === 'e2' && this.desktopIdle()) {
         this.drawIcon(100, 92, reinterpStrings.launcherIcon, true, 'icon-provotype');
         this.drawIcon(100, 140, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
+        // ⚑ S183f / R5-04 — and his own file, which came with him too
+        this.drawIcon(100, 188, institutionStrings.yourFile.icon, true, 'icon-your-file');
       }
     }
     // THE FOUND FILE (Session 60) — the renamed dossier, in every era, on the
@@ -2103,6 +2110,7 @@ export class DesktopOS {
     if (this.packet?.open) this.packet.draw(ctx);
     if (this.diary?.open) this.diary.draw(ctx);
     if (this.dossierOpen) this.drawDossier(W, H);
+    if (this.yourFileOpen) this.drawYourFile(W, H);
     if (this.provotype?.open) this.provotype.draw(ctx);
     if (this.lambyRigFile?.open) this.lambyRigFile.draw(ctx);
     if (this.rootCause?.open) this.rootCause.draw(ctx);
@@ -2411,6 +2419,50 @@ export class DesktopOS {
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(strings.dossier.footer, c.x + 10, c.y + c.h - 16);
     this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'found-file-close' });
+  }
+
+  /**
+   * ⚑ S183f / R5-04 — YOUR FILE (READ ONLY), 2003's device face of the record (PLAN_ROUND5 Phase 3:
+   * "1997 the file is paper (the cabinet); 2003 a desktop folder; 2016 the accountability app; 2026
+   * the record tab"). Daniel's whole file — 1997 and 2003, the same entries the wall shows him in
+   * 2003 — newest first, each with the practice it belongs to (practices.json's title). Nothing
+   * in it answers a press but the close box: it is a copy, and it says so.
+   */
+  private drawYourFile(W: number, H: number): void {
+    const { ctx } = this;
+    const S = institutionStrings.yourFile;
+    const dw = 400; const dh = 236;
+    const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2) - 8;
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, S.title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+    const by = entriesByEra();
+    const all = [...by.e1, ...by.e2].reverse();
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(S.sub.replace('{n}', String(all.length)), c.x + 10, c.y + 8);
+    ui.px(ctx, c.x + 8, c.y + 22, c.w - 16, 1, ERA1.grey);
+    const ROW = 13; const top = c.y + 28; const PW = 128;
+    const room = Math.floor((c.h - 28 - 26) / ROW);
+    const rows = all.length > room ? all.slice(0, room - 1) : all;
+    if (all.length === 0) { ctx.fillStyle = ERA1.greyDark; ctx.fillText(S.empty, c.x + 10, top); }
+    rows.forEach((e, i) => {
+      const y = top + i * ROW;
+      ctx.save(); ctx.beginPath(); ctx.rect(c.x + 8, y - 2, c.w - 16 - PW - 6, ROW); ctx.clip();
+      ctx.fillStyle = e.flagged ? ERA1.warnDark : ERA1.black;
+      ctx.fillText(e.witness, c.x + 10, y);
+      ctx.restore();
+      ctx.fillStyle = ERA1.grey;
+      ui.setFont(ctx, 8);
+      ctx.fillText((practiceOf(e.kind)?.title ?? '').toUpperCase(), c.x + c.w - 8 - PW, y + 1);
+      ui.setFont(ctx, 9);
+    });
+    if (rows.length < all.length) {
+      ctx.fillStyle = ERA1.grey;
+      ctx.fillText(S.more.replace('{n}', String(all.length - rows.length)), c.x + 10, top + rows.length * ROW);
+    }
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(S.footer, c.x + 10, c.y + c.h - 14);
+    this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'your-file-close' });
   }
 
   private drawPause(W: number, H: number): void {
@@ -3212,6 +3264,8 @@ export class DesktopOS {
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
         case 'icon-found-file': this.dossierOpen = true; break;
         case 'found-file-close': this.dossierOpen = false; break;
+        case 'icon-your-file': this.yourFileOpen = true; break;
+        case 'your-file-close': this.yourFileOpen = false; break;
         case 'icon-messenger': this.openMessenger(); break;
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;

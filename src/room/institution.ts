@@ -42,6 +42,7 @@ import { INSTITUTION } from '../desktop/theme/institution';
 import { attachPrintToTop } from './calendarPage';
 import { text, px } from './calendarArt';
 import planData from '../../data/strings/institution.json';
+import { entriesByEra } from '../witness/record';
 import type { EraKey } from './cluster';
 
 type V3 = { x: number; y: number; z: number };
@@ -166,12 +167,19 @@ export function createInstitution(room: RoomHandles): Institution {
   let shown = -1;                // how many of its characters are typed
   let drawn = '';                // the last frame's picture, as a key
   let termEra: EraKey | null = null;
+  /** the practices this era's file holds so far — for `when: "kind:<practice>"` (2003's beats) */
+  let kinds = new Set<string>();
+  let kindsKey = '';
   function stepFor(era: EraKey, has: (id: string) => boolean, fileSize: number): Step | null {
     const steps = PLAN.steps[era];
     if (!steps) return null;
+    if (kindsKey !== `${era}|${fileSize}`) {
+      kindsKey = `${era}|${fileSize}`;
+      kinds = new Set(entriesByEra()[era].map((e) => e.kind));
+    }
     let cur: Step | null = null;
     for (const st of steps) {
-      if (st.when && !has(st.when)) continue;
+      if (st.when?.startsWith('kind:') ? !kinds.has(st.when.slice(5)) : st.when && !has(st.when)) continue;
       if (st.atCount !== undefined && fileSize < st.atCount) continue;
       cur = st;
     }
