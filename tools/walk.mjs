@@ -170,9 +170,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * the piece in its first ten seconds, which is what the first run did.
  */
 const PREFER = [
-  /understand|continue|^ok$|^okay$|next|read.?on|agree|proceed|begin|start$|enter|hello|open|insert|play/i,
+  /understand|continue|^ok$|^okay$|next|read.?on|agree|proceed|begin|start$|enter|hello|open|insert|play|^notification$/i,   // S178: the news outranks a bare Unlock
   /apply|send|confirm|done|finish|accept|update.?now|sign.?in|signin|allow|unlock/i,
-  /^task-|^tile-|^consent|^board|^group$|^inbox$|^link\d*$|^notification$/i   // S149: `link2`, the vote's card (a fresh id ranked under a spent `task-` for 270 presses)
+  /^task-|^tile-|^consent|^board|^group$|^inbox$|^link\d*$/i   // S149: `link2`, the vote's card (a fresh id ranked under a spent `task-` for 270 presses)
 ];
 /**
  * ⚑ ANCHORED, AND THE TWO WORDS THAT WERE NOT COST THE WHOLE TAIL (S103).
@@ -896,7 +896,9 @@ const LAP = { w: 224, h: 140 };
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
       screenHash, domText, audio, surfaces, silent, quiet, roomDesync, pose, program,
-      targets, dropped, moves, ledCount, ledList, ledger: led
+      targets, dropped, moves, ledCount, ledList, ledger: led,
+      // S178: the phone is in her hand (app.ts carries a copy of its body while it is)
+      phoneHeld: !!(window.__app && window.__app.root.findByName('w_phoneDevice-held')?.enabled)
     };
   }, { VW: VIEW.width, VH: VIEW.height });
 
@@ -1298,7 +1300,22 @@ const LAP = { w: 224, h: 140 };
     const withRects = live.filter((t) => t.surface !== 'plane');
     const pool = withRects.length ? withRects : live;
     const inApp = pool.some((t) => t.surface !== 'os');
-    const scoped = inApp ? pool.filter((t) => t.surface !== 'os') : pool;
+    let scoped = inApp ? pool.filter((t) => t.surface !== 'os') : pool;
+    /**
+     * ⚑ S178 — A PHONE IN THE HAND IS USED. A press on the resting phone only lifts it
+     * (the piece's design: lying on its stand it is not for reading), and any press past
+     * it puts it down. So a walker that lifted the phone and then reached for the monitor
+     * had lifted it for nothing — and did that for 800 steps once the phone sat lower on
+     * the desk (S178), because a lift reads as "inert". A person holding their phone uses
+     * it: while it is in the hand, only its own controls are candidates (its Back
+     * included, which is otherwise a last resort).
+     */
+    //   …for a few presses, then it goes back on its stand: a person looks, and puts it
+    //   down to get on with the work (which is also what brings the next news to it).
+    if (lastState && lastState.phoneHeld && heldRun <= 4) {
+      const onPhone = scoped.filter((t) => t.surface === 'phone');
+      if (onPhone.length) scoped = onPhone;
+    }
     const tier = (t) => {
       if (LAST_RESORT.test(t.id)) return 90;
       const i = PREFER.findIndex((rx) => rx.test(t.id));
@@ -1361,6 +1378,7 @@ const LAP = { w: 224, h: 140 };
   let s = await probe();
   /** the probe `pick` is being asked about — for the tab budget only */
   let lastState = s;
+  let heldRun = 0;
   note('seated', { era: s.era, phase: s.phase, spine: s.spine, what: s.targets.length + ' live controls' });
   let stalls = 0;
   /** the last state in which the piece was seen to MOVE — see the loop detector */
@@ -1527,6 +1545,7 @@ const LAP = { w: 224, h: 140 };
 
     const sig = stableOf(s);
     lastState = s;
+    heldRun = s.phoneHeld ? heldRun + 1 : 0;   // S178: how many steps the phone has been in hand
     /**
      * ⚑ A BEAT THAT IS DELIBERATELY DOING NOTHING IS NOT A DEAD END (S103b).
      *

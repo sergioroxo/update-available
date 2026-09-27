@@ -2035,44 +2035,7 @@
     "color": "#A8917B",
     "_doc": "See movingBox1 — Daniel's room, packed at the transfer."
    },
-   {
-    "id": "w_phoneDevice",
-    "model": "phone",
-    "pos": [
-     -4.955,
-     0.922,
-     0.97
-    ],
-    "size": [
-     0.071,
-     0.152,
-     0.03
-    ],
-    "yaw": 90,
-    "color": "#15151F",
-    "_doc": "⚑ S149 — ON A STAND (OPEN_ITEMS R3-67/72): base at y 0.916 = the dock's top; leaning 15° back (models.json phone tilt), facing the seat (yaw 90). In frame from the r2 seat at pitch 0, measured live. Keep in step with era3Devices PLACEMENT.phone. ⛑ MOVED AGAIN, 2026-08-24, and this time to be REACHABLE: from (-5.02, 1.16) to (-5.10, 0.95). Measured from the workstation seat, the phone's screen projected to (-230, 1214) on a 1280x900 viewport — off the left edge AND below the bottom — and looking down never recovered it, because at z 1.16 it sat 36.5° off the view axis against a 29.7° horizontal half-FOV. THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE. It is now 19.7° off axis and enters the frame from a -10° look. ⛑ KEEP THIS IN STEP with era3Devices' PLACEMENT.phone — the prop and its screen have now been separated twice, and both times Sérgio found it before a check did. ⚑ ERA 3'S PHONE — one mesh, ON THE DESK, 2026-08-21. It was a parts-built box on the nightstand at (-2.42, 0.51, -0.72). ⚑ The move is the era's thesis in a coordinate: the tablet lived across the room and was reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, both at arm's length — which is what makes ignoring it a real CHOICE rather than a walk she declines to take. Its two hand-built parts (body + earpiece) are gone; the mesh carries them. ⚑ A note for the next prop added here: I first declared a SECOND w_phoneDevice rather than editing this one, and a duplicate id does not error — the later declaration silently wins and the earlier becomes invisible. Check for the id first.",
-    "_docS174": "⚑ S174 / R4-13 — x −5.0 → −4.979: with the lean corrected (models.json phone), this puts the screen plane on the handset's front face. The base stays on the dock (x −5.045…−4.955).",
-    "_docS175": "⚑ S175 — the phone rests in the stand: base in its seat-side lip (x −4.958, y 0.924 = the books 0.912 + the lip), reclined −50 (models.json phone). era3Devices PLACEMENT.phone moved and reclined with it — keep them in step.",
-    "_docS177": "⚑ S177 / R4-24 (Sérgio, 2026-09-24: the phone on the stand's HIGHER side, facing us). The stand turned 180° (w_phoneCradle yaw 0) so its upright plate faces the seat; measured from the mesh (tools/glb_import.py vertices): the plate's front face leans 18.4° from vertical, its ledge top at y 0.9204. The phone lies flat on that face: back-bottom corner (−4.9598, 0.9204), base centre (−4.955, 0.922), reclined 18.4° (models.json phone tilt). Screen plane: era3Devices PLACEMENT.phone — keep in step."
-   },
-   {
-    "id": "w_phoneStand",
-    "pos": [
-     -5.0,
-     0.756,
-     0.97
-    ],
-    "size": [
-     0.09,
-     0.16,
-     0.05
-    ],
-    "color": "#7A5C48",
-    "_doc": "⚑ S149 — the phone's dock (OPEN_ITEMS R3-72, Sérgio: 'maybe the phone needs to be on a stand'): a 16 cm charging stand on the desk's front-left, the phone's own dark hex. The phone stands on its top (y 0.916).",
-    "model": "books",
-    "yaw": 90,
-    "_docS175": "⚑ S175 (2026-09-24) — THE DOCK IS A STACK OF BOOKS WITH A STAND ON IT. Sérgio sent a real phone stand ('Phone Stand', zhekamen188, CC-BY 4.0), but a desk stand holds the phone ~1 cm off the desk — 15 cm lower than the 16 cm dock R3-67 measured into frame, and from her seat the screen would sit ~29° under the eye line, outside the frame even with the ending's small look down. So the stand stands on a stack of books ('Books', CreativeTrio, CC0, 15.6 cm), which is what people do, and the phone keeps its height (base 0.924 vs 0.916)."
-   },
+   {"id": "w_phoneDevice", "model": "phone", "pos": [-5.195, 0.766, 1.1], "size": [0.071, 0.152, 0.03], "yaw": 90, "color": "#15151F", "_doc": "⚑ S149 — ON A STAND (OPEN_ITEMS R3-67/72): base at y 0.916 = the dock's top; leaning 15° back (models.json phone tilt), facing the seat (yaw 90). In frame from the r2 seat at pitch 0, measured live. Keep in step with era3Devices PLACEMENT.phone. ⛑ MOVED AGAIN, 2026-08-24, and this time to be REACHABLE: from (-5.02, 1.16) to (-5.10, 0.95). Measured from the workstation seat, the phone's screen projected to (-230, 1214) on a 1280x900 viewport — off the left edge AND below the bottom — and looking down never recovered it, because at z 1.16 it sat 36.5° off the view axis against a 29.7° horizontal half-FOV. THE WHOLE ENDING OF ERA 3 IS ON THIS DEVICE. It is now 19.7° off axis and enters the frame from a -10° look. ⛑ KEEP THIS IN STEP with era3Devices' PLACEMENT.phone — the prop and its screen have now been separated twice, and both times Sérgio found it before a check did. ⚑ ERA 3'S PHONE — one mesh, ON THE DESK, 2026-08-21. It was a parts-built box on the nightstand at (-2.42, 0.51, -0.72). ⚑ The move is the era's thesis in a coordinate: the tablet lived across the room and was reached by a seat jump, and the phone is hers and stays within reach. The desk is where she is employed, the phone is where she is a person, both at arm's length — which is what makes ignoring it a real CHOICE rather than a walk she declines to take. Its two hand-built parts (body + earpiece) are gone; the mesh carries them. ⚑ A note for the next prop added here: I first declared a SECOND w_phoneDevice rather than editing this one, and a duplicate id does not error — the later declaration silently wins and the earlier becomes invisible. Check for the id first.", "_docS174": "⚑ S174 / R4-13 — x −5.0 → −4.979: with the lean corrected (models.json phone), this puts the screen plane on the handset's front face. The base stays on the dock (x −5.045…−4.955).", "_docS175": "⚑ S175 — the phone rests in the stand: base in its seat-side lip (x −4.958, y 0.924 = the books 0.912 + the lip), reclined −50 (models.json phone). era3Devices PLACEMENT.phone moved and reclined with it — keep them in step.", "_docS177": "⚑ S177 / R4-24 (Sérgio, 2026-09-24: the phone on the stand's HIGHER side, facing us). The stand turned 180° (w_phoneCradle yaw 0) so its upright plate faces the seat; measured from the mesh (tools/glb_import.py vertices): the plate's front face leans 18.4° from vertical, its ledge top at y 0.9204. The phone lies flat on that face: back-bottom corner (−4.9598, 0.9204), base centre (−4.955, 0.922), reclined 18.4° (models.json phone tilt). Screen plane: era3Devices PLACEMENT.phone — keep in step.", "_docS177b": "⚑ S177 / R4-35 (Sérgio, 2026-09-27: 'the phone is still on top of the books' → 'just make its position on the same line to the screen, and people will be able to see it'): the books are gone; the stand stands on the desk just left of the monitor, its phone's face in line with the monitor's screen (x ≈ −5.30), 3 cm clear of the monitor's edge. Same stand, same 18.4° plate; everything dropped by the books' 0.156 m.", "_docS178": "⚑ S178 (Sérgio, 2026-09-27, on the seat still with a blue circle drawn: 'too far away, almost out of the desk'): 9 cm forward, toward her, onto the circle."},
    {
     "id": "e_folders",
     "pos": [
@@ -2089,25 +2052,9 @@
     "yaw": 270,
     "_doc": "S118: +0.20 on z, clear of the laptop's new footprint and still on the desk (which runs to z 1.30)."
    },
-   {
-    "id": "w_lamp2Foot",
-    "pos": [
-     -5.3,
-     0.756,
-     1.24
-    ],
-    "size": [
-     0.14,
-     0.03,
-     0.14
-    ],
-    "color": "#74492F",
-    "yaw": 90,
-    "model": "deskLamp",
-    "_docS175": "⚑ S175 (2026-09-24) — Vera's lamp is 'Light Desk' by Quaternius (CC0) — an articulated desk lamp; the pole and shade boxes are parked. Its light is the room rig's, unchanged.",
-    "partColors": {"Black": "#34504E", "LightMetal": "#B4B6BA", "White": "#F3E7C6"},
-    "_docS177": "⚑ S177 / R4-29 (his D2, 2026-09-26: 'yes do the separate colors') — the lamp in three flat colours, one per part of Quaternius's model (materials Black, LightMetal, White): a teal enamel body and shade, steel arm and joints, the warm inside of the shade. It had read as one brown: every part pulled 80% toward the prop colour."
-   },
+   {"id": "w_lamp2Foot", "pos": [-5.3, 0.756, 1.3], "size": [0.14, 0.03, 0.14], "color": "#3F4A56", "yaw": 90, "_docS175": "⚑ S175 (2026-09-24) — Vera's lamp is 'Light Desk' by Quaternius (CC0) — an articulated desk lamp; the pole and shade boxes are parked. Its light is the room rig's, unchanged.", "_docS177": "⚑ S177 / R4-29 (his D2, 2026-09-26: 'yes do the separate colors') — the lamp in three flat colours, one per part of Quaternius's model (materials Black, LightMetal, White): a teal enamel body and shade, steel arm and joints, the warm inside of the shade. It had read as one brown: every part pulled 80% toward the prop colour.", "_docS177b": "⚑ S177 / R4-34 (Sérgio, 2026-09-27: Room 1's box lamp 'fits the time' better than the modelled one — 'yes please'): Vera's lamp is box-built again, like Daniel's, in her own colours: a slate foot and pole, a pale warm shade that glows. Nineteen years newer, the same object. Moved 6 cm left (z 1.30) to give the phone its place beside the monitor; light-r2Lamp (cluster.ts) moved with it."},
+   {"id": "w_lamp2Pole", "pos": [-5.3, 0.86, 1.3], "size": [0.035, 0.18, 0.035], "color": "#3F4A56", "yaw": 90, "_docS177b": "Un-parked (S175 had parked it under the modelled lamp) — see w_lamp2Foot."},
+   {"id": "w_lamp2Shade", "pos": [-5.3, 1.0, 1.3], "size": [0.17, 0.12, 0.17], "color": "#F2C879", "yaw": 90, "emissive": true, "_docS177b": "Un-parked (S175 had parked it under the modelled lamp) — see w_lamp2Foot."},
    {
     "id": "w_mug",
     "pos": [
@@ -2640,20 +2587,7 @@
     "color": "#E8B7C8",
     "yaw": 270
    },
-   {
-    "id": "w_phoneCradle",
-    "model": "phoneStand",
-    "pos": [-5, 0.912, 0.938],
-    "size": [
-     0.115,
-     0.064,
-     0.067
-    ],
-    "yaw": 0,
-    "color": "#2A2A30",
-    "_doc": "⚑ S175 (2026-09-24) — 'Phone Stand' by zhekamen188 (Sketchfab, CC-BY 4.0), on the books (w_phoneStand); the phone rests in it.",
-    "_docS177": "⚑ S177 / R4-24 — turned 180° (yaw 0): the upright plate now faces the seat and the phone leans on it (his: the higher side, facing us). z 0.938 centres the tilted stand (depth 0…0.0635 in its own frame) on the phone at z 0.97."
-   }
+   {"id": "w_phoneCradle", "model": "phoneStand", "pos": [-5.24, 0.756, 1.068], "size": [0.115, 0.064, 0.067], "yaw": 0, "color": "#2A2A30", "_doc": "⚑ S175 (2026-09-24) — 'Phone Stand' by zhekamen188 (Sketchfab, CC-BY 4.0), on the books (w_phoneStand); the phone rests in it.", "_docS177": "⚑ S177 / R4-24 — turned 180° (yaw 0): the upright plate now faces the seat and the phone leans on it (his: the higher side, facing us). z 0.938 centres the tilted stand (depth 0…0.0635 in its own frame) on the phone at z 0.97.", "_docS177b": "⚑ S177 / R4-35 (Sérgio, 2026-09-27: 'the phone is still on top of the books' → 'just make its position on the same line to the screen, and people will be able to see it'): the books are gone; the stand stands on the desk just left of the monitor, its phone's face in line with the monitor's screen (x ≈ −5.30), 3 cm clear of the monitor's edge. Same stand, same 18.4° plate; everything dropped by the books' 0.156 m.", "_docS178": "⚑ S178 (Sérgio, 2026-09-27, on the seat still with a blue circle drawn: 'too far away, almost out of the desk'): 9 cm forward, toward her, onto the circle."}
   ],
   "_docDeskCleared": "⛑ e_keyboard and e_mouse REMOVED 2026-09-01 with the CRT's move (Sérgio: 'we can[not] really see it with all the clutter here' — 'it' being the headset, the era's ONE interaction and until now the least legible object on the desk). They were that machine's peripherals; wired to nothing they are just clutter in front of the thing the era is actually about. What stays is hers and not the apparatus's: the folders, her glasses, and the headset on its dock.",
   "_parkedS174": [
@@ -2690,39 +2624,7 @@
     "_doc": "⚑ 2026-09-05: re-based on w_desk, for the same reason as w_frame. It stood on w_bookcase, which was struck with its eighteen books — and a removal's real cost is never the props it removes, it is the ones that were resting on them. room-audit caught this one (0.95 m of air) after I had already hand-fixed the other; the tool saw what the scan I ran by eye did not."
    }
   ],
-  "_docParkedS174": "⚑ S174 — Sérgio crossed the photo frame and the radio on the 2016 still. Parked, not deleted.",
-  "_parkedS175": [
-   {
-    "id": "w_lamp2Pole",
-    "pos": [
-     -5.3,
-     0.86,
-     1.24
-    ],
-    "size": [
-     0.035,
-     0.18,
-     0.035
-    ],
-    "color": "#74492F",
-    "yaw": 90
-   },
-   {
-    "id": "w_lamp2Shade",
-    "pos": [
-     -5.3,
-     1.0,
-     1.24
-    ],
-    "size": [
-     0.17,
-     0.12,
-     0.17
-    ],
-    "color": "#EFA13F",
-    "yaw": 90
-   }
-  ]
+  "_docParkedS174": "⚑ S174 — Sérgio crossed the photo frame and the radio on the 2016 still. Parked, not deleted."
  },
  "r4": {
   "props": {
@@ -2807,7 +2709,6 @@
    "w_tower",
    "w_towerLed",
    "w_phoneDevice",
-   "w_phoneStand",
    "w_mug",
    "w_notepad",
    "w_pen",

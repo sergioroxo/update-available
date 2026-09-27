@@ -3,7 +3,12 @@
  "siteName": "The Open Reference",
  "tagline": "the free encyclopedia anyone can read",
  "docTitle": "Screensaver — The Open Reference",
- "tabs": ["Article", "Talk", "Read", "View history"],
+ "tabs": [
+  "Article",
+  "Talk",
+  "Read",
+  "View history"
+ ],
  "searchPlaceholder": "Search",
  "title": "Screensaver",
  "hatnote": "This article is about the display program. For the thing you were looking at before this page, see § See also.",
@@ -14,6 +19,7 @@
    "heading": "History",
    "paragraphs": [
     "Screensavers were written for cathode-ray-tube displays, on which a picture left unchanged for a long time could leave a faint permanent ghost of itself in the phosphor coating, called burn-in. Blanking the screen, or keeping whatever it showed in motion, prevented this. Early versions did nothing but darken the display after a set number of minutes; later ones drew patterns, and the moving picture became the point.",
+    "Burn-in is often confused with image retention, a milder effect in which the outline of a picture that was held on a screen for too long lingers after the picture is gone. Retention is not damage. The ghost belongs to what was shown, not to the screen, and it fades once the screen is allowed to show other things — which is all a screensaver ever asked of it.",
     "Modern flat displays are far less prone to burn-in, and operating systems now dim or switch off a display to save power instead. Screensavers persist as decoration, as a way of showing photographs on an idle machine, and as a lock."
    ]
   },
@@ -34,18 +40,49 @@
  "infobox": {
   "title": "Screensaver",
   "rows": [
-   ["Type", "utility software"],
-   ["First appeared", "1980s"],
-   ["Original purpose", "preventing burn-in on CRT displays"],
-   ["Later use", "decoration; session lock"],
-   ["Ends on", "a key press or mouse movement"]
+   [
+    "Type",
+    "utility software"
+   ],
+   [
+    "First appeared",
+    "1980s"
+   ],
+   [
+    "Original purpose",
+    "preventing burn-in on CRT displays"
+   ],
+   [
+    "Later use",
+    "decoration; session lock"
+   ],
+   [
+    "Ends on",
+    "a key press or mouse movement"
+   ]
   ]
  },
  "seeAlsoTitle": "See also",
- "seeAlso": ["Burn-in", "Cathode-ray tube", "Screen lock", "Idle (computing)"],
+ "seeAlso": [
+  "Halation",
+  "Overscan",
+  "Phosphor",
+  "Energy saving (computing)"
+ ],
  "resumeLink": "Your update has failed (resume where you were)",
  "cornerResume": "↩ resume",
  "leaveForGood": "leave for good — nothing is kept",
  "footer": "Text is available under a free licence; this page is part of a work of fiction and stores nothing about you.",
- "lastEdited": "This page was last edited on a Tuesday."
+ "lastEdited": "This page was last edited on a Tuesday.",
+ "screensaver": {
+  "caption": "A starfield screensaver",
+  "lines": [
+   "NOTHING IS",
+   "WRONG",
+   "WITH YOU"
+  ],
+  "everySeconds": 30,
+  "holdSeconds": 3.5
+ },
+ "_docHope": "⚑ S177 (Sérgio, 2026-09-26/27: the faux encyclopedia 'just beautiful' — 'make the leave page about a hidden message of hope, within a screensaver analogy'; all three proposals, 'can they all be included?'). THREE HIDDEN READINGS, each invisible to someone glancing over a shoulder, because the page's first job is still the disguise: (1) THE BURN-IN PARAGRAPH (History ¶2) — true of displays (image retention is temporary, unlike burn-in), and read a second time about a person: the ghost belongs to what was shown, not to the screen, and it fades once the screen can show other things. (2) THE ACROSTIC — See also reads Halation · Overscan · Phosphor · Energy saving: H-O-P-E down the column, each a real display term; the way back stays the last entry. (3) THE SCREENSAVER — the infobox's picture is a starfield (src/frame/leavePage.ts) that every `everySeconds` gathers for `holdSeconds` into `lines` and scatters again, the way screensavers drift into a clock. Claude's words, frame voice; his edit wins."
 }

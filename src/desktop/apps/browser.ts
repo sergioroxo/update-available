@@ -473,7 +473,7 @@ export class E4Browser {
     const lit = witnessPulse.k() > 0;
     const looks: TabLook[] = shown.map((t) => {
       if (this.phase === 'failed') return t.id === 'search' ? { badge: '!', state: 'normal' } : { state: 'locked' };
-      if (this.mode !== 'program') return t.id === 'record' ? { badge: String(witnessPulse.count()), lit } : {};
+      if (this.mode !== 'program') return t.id === 'record' ? { badge: String(witnessPulse.countFor('e4')), lit } : {};   // S178: her file, not the run's
       const st = PROGRAM.steps.find(x => x.id === t.id);
       if (!st) return { state: 'locked' };
       const idx = PROGRAM.steps.indexOf(st);

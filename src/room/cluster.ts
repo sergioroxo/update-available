@@ -583,7 +583,7 @@ export function buildClusterShell(
    * era arc can take it down as the cold light wins. ROLLBACK: delete this
    * light, the three `w_lamp2*` props, and the `r2Lamp` rig entries.
    */
-  mkLight('light-r2Lamp', [-5.30, 1.02, 1.24], rigColor('r2Lamp'), 2.6);
+  mkLight('light-r2Lamp', [-5.30, 1.02, 1.30], rigColor('r2Lamp'), 2.6);   // S177: with the lamp, 6 cm left
   const mayaGlow = mkLight('light-mayaGlow', [4.4, 1.35, 0.7], '#8899BB', 3.0); // Room 3 interface light (E4)
   void mayaGlow; // rig-driven by id
 

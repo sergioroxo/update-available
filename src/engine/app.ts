@@ -286,7 +286,16 @@ export interface CameraPose { x: number; y: number; z: number; pitch: number; ya
  *  output rather than a transcription of it (see CAMERA_POSES below). */
 export function seatPose(yaw: number): CameraPose {
   switch (((yaw % 360) + 360) % 360) {
-    case 90:  return { x: -4.4, y: EYE.y, z: 0.7, pitch: 0, yaw: 90 };  // Room 2 (west)
+    /**
+     * ⚑ S178 — ROOM 2 SITS EIGHT DEGREES DOWN AND THREE LEFT. Sérgio, 2026-09-27: the
+     * phone off its books, onto the desk beside the monitor, then toward her ("just make
+     * its position on the same line to the screen, and people will be able to see it").
+     * On the desk it fell below a level frame (the walk: "off-screen at 63,914") — and
+     * the era's ending is on that phone. Eight degrees down is how a person sits at a
+     * desk; three left brings the phone 5° inside the frame's edge; the monitor stays
+     * whole. Room 3's own precedent, above.
+     */
+    case 90:  return { x: -4.4, y: EYE.y, z: 0.7, pitch: -8, yaw: 93 };  // Room 2 (west)
     /**
      * ⚑ ROOM 3 SITS THREE DEGREES DOWN — Sérgio, 2026-09-04, off the seat
      * renders. Every other seat is level because every other seat's subject is

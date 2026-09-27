@@ -101,6 +101,12 @@ export class PhoneE3 {
     if (this.stage !== 'quiet') return;
     this.stage = 'first';
     this.carded = false;
+    // ⚑ S178 — THE NEWS FINDS HER WHEREVER THE PHONE WAS. The notification lives on the
+    //   lock screen; a phone left open on Messages, on a message, or on the home grid
+    //   never showed it (the S178 walk stalled on a message screen for 800 steps — and a
+    //   player could too). A phone lights up with a notification whatever it was showing.
+    this.screen = 'lock';
+    this.openMessage = null;
     this.bump();
   }
 

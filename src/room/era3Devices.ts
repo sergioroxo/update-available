@@ -492,7 +492,10 @@ const PLACEMENT = {
     //   from the mesh. Base centre (−4.955, 0.922); the screen's centre 0.0745 up the
     //   tilted axis and 6 mm proud of the body: (−4.955 − 0.0745·sin18.4° + 0.006·cos18.4°,
     //   0.922 + 0.0745·cos18.4° + 0.006·sin18.4°).
-    pos: { x: -4.9728, y: 0.9946, z: 0.97 },
+    // ⚑ S177 / R4-35: off the books, onto the desk beside the monitor — the same pose
+    //   moved (−0.33, −0.156, +0.13), in line with the monitor's screen (his ruling).
+    // ⚑ S178: and 9 cm toward her (his circle on the seat still: 'almost out of the desk')
+    pos: { x: -5.2128, y: 0.8386, z: 1.1 },
     // ⚑ S177 — the GLASS, not the body (his: "the phone model screen limits, it cuts out
     //   of it"). 0.071 × 0.152 was the whole handset, bezels included, so the lit plane
     //   overhung its edges. Measured from the model in the room: the glass is ~88% of the

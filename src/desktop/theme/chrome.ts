@@ -207,7 +207,11 @@ export const REFERENCE = {
   panel: '#f8f9fa',
   panelHead: '#eaecf0',
   muted: '#54595d',
-  placeholder: '#72777d'
+  placeholder: '#72777d',
+  /** S177 — the infobox's starfield: a screensaver's night and its stars */
+  saverSky: '#05060c',
+  saverStar: '#e8ecf8',
+  saverDim: '#6f7896'
 } as const;
 
 export const FRAME = {

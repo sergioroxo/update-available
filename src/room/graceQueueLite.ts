@@ -1424,7 +1424,7 @@ export class GraceQueueLite {
     //   from every signed-in screen; Back returns to wherever she was.
     if (this.mode === 'dark' || this.mode === 'boot' || this.mode === 'install' || this.mode === 'signin') return;
     const k = witnessPulse.k();
-    const label = q.app.recordChip.replace('{n}', String(witnessPulse.count()));
+    const label = q.app.recordChip.replace('{n}', String(witnessPulse.countFor('e3')));   // S178: her file, not the run's
     setFont(ctx, 11);
     const cw = Math.ceil(ctx.measureText(label).width) + 20;
     const cx = bx + bw + 8;

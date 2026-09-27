@@ -12,7 +12,7 @@
  * It never writes to the ledger. The witness is symmetric: a refusal grows
  * the count exactly as compliance does, and lights the same chip.
  */
-import { recordCount } from './record';
+import { recordCount, entriesByEra, type RecordEra } from './record';
 import { playOnce } from '../audio/tapeAudio';
 
 export const PULSE_SECONDS = 1.6;
@@ -40,6 +40,11 @@ export const pulse = {
   k(): number { return t >= PULSE_SECONDS ? 0 : 1 - t / PULSE_SECONDS; },
   /** the file's size as of the last tick */
   count(): number { return count; },
+  /** ⚑ S178 — ONE PERSON'S file: what a device inside an era may show. Daniel, Vera and Maya
+   *  do not share a file (his ruling); the run's total belongs to the frame (the menu, the
+   *  Close). Found by his Witness research (2026-09-27): Vera's chip and Maya's badge showed
+   *  the whole run's count while their pages listed only their own entries. */
+  countFor(era: RecordEra): number { return entriesByEra()[era].length; },
   /** the wall (and any other surface that keeps its own clock) is told once per growth */
   set onGrow(fn: (() => void) | null) { onGrow = fn; },
   /** a review that wipes the ledger (Restart) must not hear a hundred stamps catching up */
