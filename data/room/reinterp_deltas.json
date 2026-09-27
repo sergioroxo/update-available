@@ -413,7 +413,8 @@
    {"id": "inst_indexCard", "pos": [-0.55, 0.645, 3.35], "size": [0.13, 0.008, 0.09], "color": "#EFE9D6"},
    {"id": "suitcase", "pos": [0.45, 0.21, 3.55], "size": [0.5, 0.42, 0.18], "color": "#6E3A34", "_docS181": "⚑ S181 / R5-03 — THE VIEW TO THE SYSTEM. Sérgio, 2026-09-27: in the pre-reinterp version 'the wall behind us had a symbolic representation of the institutional side, like a desk with a computer, a filing cabinet… I kinda miss that connection'; 'can we make the pressure for the fact Daniel is going to be sent out to a camp more visible? Does it make sense to add suitcases?'. The institution's corner returns around the record on the back wall — the record's own card already reads 'index · era 1 · drawer 12' — and it ages with the eras: paper (1997), scanned (2003), networked (2016), a light (2026). 1997: Daniel's suitcase, packed, by the door — the calendar's 'camp · 12–19 July' made physical. Gone at r2: he went."},
    {"id": "suitcaseHandle", "pos": [0.45, 0.44, 3.55], "size": [0.14, 0.04, 0.03], "color": "#2A2020"},
-   {"id": "suitcaseTag", "pos": [0.6, 0.32, 3.458], "size": [0.09, 0.055, 0.003], "color": "#E8DCC0", "yaw": 180, "print": "campTag", "_docS181": "The luggage tag: 'camp', 12–19, in his mother's biro — the same hand as the calendar."}
+   {"id": "suitcaseTag", "pos": [0.6, 0.32, 3.458], "size": [0.09, 0.055, 0.003], "color": "#E8DCC0", "yaw": 180, "print": "campTag", "_docS181": "The luggage tag: 'camp', 12–19, in his mother's biro — the same hand as the calendar."},
+   {"id": "inst_referral", "pos": [0.12, 1.3, 3.695], "size": [0.21, 0.28, 0.004], "color": "#EFE9D6", "yaw": 180, "print": "referral1997", "_docS182": "⚑ S182 / R5-03 — from his intake research (~/Pc_Simulation/Sources/Deep Research/intake.md, 2026-09-27): in 1997 the documented path was a parent calling the pastor, and the pastor using a ministry referral directory (Exodus had no youth programme until 1999). So the institution's first object is this: a photocopied referral list pinned beside the record, one listing underlined and a number written on it in his mother's biro. Gone at r2."}
   ]
  },
  "r2": {
@@ -479,7 +480,8 @@
    "bedModel",
    "suitcase",
    "suitcaseHandle",
-   "suitcaseTag"
+   "suitcaseTag",
+   "inst_referral"
   ],
   "add": [
    {
@@ -683,6 +685,9 @@
    {"id": "bedModel2003", "pos": [-1.53, 0, 1.15], "size": [0.78, 0.5, 1.95], "color": "#A07B52", "model": "bed", "modelScale": [1.3659, 1.3342, 1.7337], "partColors": {"carpet": "#9A958A", "carpetWhite": "#D8D4CA", "wood": "#8A5A3B", "metal": "#7A7A80"}, "_docS179": "⚑ S179 / R5-01 (his 2026-09-27: 'You can also change the color of the beddings, reflect on that'): the bedding, one per life, by part (the Kenney bed: carpet = the blanket, carpetWhite = the sheets and pillow, wood = the frame, metal = the legs). Muted with the other personal things (his 'I love that detail of the personal stuff to be muted'). 2003, Daniel as an adult: flat beige-grey — a room he no longer decorates. Replaces bedModel at r2 (a model's colours are fixed at spawn)."},
    {"id": "inst_scanner", "pos": [-1.78, 1.44, 3.4], "size": [0.44, 0.08, 0.34], "color": "#D8D4CC", "_docS181": "⚑ S181 / R5-03 — THE VIEW TO THE SYSTEM. Sérgio, 2026-09-27: in the pre-reinterp version 'the wall behind us had a symbolic representation of the institutional side, like a desk with a computer, a filing cabinet… I kinda miss that connection'; 'can we make the pressure for the fact Daniel is going to be sent out to a camp more visible? Does it make sense to add suitcases?'. The institution's corner returns around the record on the back wall — the record's own card already reads 'index · era 1 · drawer 12' — and it ages with the eras: paper (1997), scanned (2003), networked (2016), a light (2026). 2003: a flatbed scanner on the cabinet — the paper is being scanned (the record's own label: 'scanned')."},
    {"id": "inst_scannerLid", "pos": [-1.78, 1.485, 3.42], "size": [0.42, 0.01, 0.3], "color": "#BEB8AC"},
+   {"id": "inst_rules", "pos": [0.12, 1.3, 3.695], "size": [0.21, 0.28, 0.004], "color": "#EFE9D6", "yaw": 180, "print": "rules2003", "_docS182": "⚑ S182 / R5-03 — from his intake research (~/Pc_Simulation/Sources/Deep Research/intake.md, 2026-09-27): 2003–05 is where the paperwork is documented — numbered programme rules (hair, clothing, media, bedroom doors, contact with unapproved people), handed over and signed. The rules sheet takes the referral list's place on the wall."},
+   {"id": "inst_packet", "pos": [-0.52, 0.665, 3.38], "size": [0.22, 0.05, 0.29], "color": "#E8E2D0", "_docS182": "⚑ S182 / R5-03 — from his intake research (~/Pc_Simulation/Sources/Deep Research/intake.md, 2026-09-27): the application packet — twenty-six pages with a liability release, the documented form (2005) — a thick stack on the office desk."},
+   {"id": "inst_packetClip", "pos": [-0.52, 0.692, 3.27], "size": [0.06, 0.008, 0.03], "color": "#3A3A44"},
    {"id": "calendar2003", "model": "calendar", "page": "e2", "pos": [0.47, 1.4, -0.695], "size": [0.24, 0.455, 0.02], "yaw": 0, "color": "#F8F8F4", "partColors": {"FFFFFF": "#F8F8F4", "1A1A1A": "#8C8C94"}, "_docS177": "⚑ S177 / R4-27 — the same nail, six years on: Restorify's promotional calendar, November 2003, the 1st to the 18th crossed off in his marker — the streak the software counts, kept by him. Taken down at r3 (the room is packed)."}
   ],
   "_docS156": "⚑ S156 / R3-45 (Sérgio: 'Should the computer model change?' — yes: 'a beige tower and a 4:3 CRT in 1997; a black tower and a flat LCD in 2003'). The machine that was UPDATED is a different machine: the beige CRT, its neck and foot, the beige tower and keyboard are retired at r2 and a black flat panel on a stem, a black tower and a black keyboard take their places — box-built like the CRT (no GLB: `Flat Monitor modern.glb` in Assests is unmeasured and unlicensed-in-repo, and a fitted model would have to be re-measured against the screen plane; the boxes sit exactly behind the plane app.ts already draws the desktop on, SCREEN {w 0.4, h 0.3, y 1.08, z 0}). The r4 fold removes these with the rest of the desk. Ids keep the `crt`/`tower`/`keyboard` stems so era1room.ts's tiers still read them as hero/system.",
@@ -780,7 +785,10 @@
    "inst_drawer12",
    "inst_drawerLabel",
    "inst_scanner",
-   "inst_scannerLid"
+   "inst_scannerLid",
+   "inst_rules",
+   "inst_packet",
+   "inst_packetClip"
   ],
   "add": [
    {

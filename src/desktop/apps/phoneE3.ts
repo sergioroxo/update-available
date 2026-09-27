@@ -671,8 +671,13 @@ export class PhoneE3 {
     const y0 = statusBar(ctx, W, this.clockText);
     const top = appBar(ctx, W, y0, HOME.walkTitle, HOME.walkSub);
     this.pushBack(y0, top);
+    // ⚑ S182 — WHO RECEIVES IT (his intake research: the documented 2016 form is a weekly report
+    //   emailed to a named partner — spouse, parent, pastor, mentor; here Deirdre, the group's facilitator)
+    phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim;
+    ctx.fillText(HOME.walkReport, 12, top + 6);
+    ctx.fillStyle = PHONE.hairline; ctx.fillRect(12, top + 18, W - 24, 1);
     const rows = entriesByEra().e3.slice().reverse();
-    let y = top + 8;
+    let y = top + 26;
     phoneFont(ctx, 10);
     if (!rows.length) { ctx.fillStyle = PHONE.dim; ctx.fillText(HOME.walkEmpty, 14, y + 4); }
     for (const r of rows) {

@@ -193,6 +193,9 @@ async function main() {
     await shot('00-entrance-2003', 'the same corner, six years on — the bed gone, the desk kept');
     await free(0, 2.3, 1.75, -38, 0);
     await shot('01-room-2003', '2003 from above, the desk at the centre');
+    // S182: the institution's corner six years on — the rules sheet, the packet, the scanner on the cabinet
+    await seat('r1-turned');
+    await shot('01b-the-turn-2003', 'behind him in 2003: the rules, the application packet, the scanner on the cabinet');
     await jump('e2Cartoon', 7000);
     await seat('r1');
     await shot('02-lamby-asleep', 'the software boots: Lamby asleep, and the thought he is having');

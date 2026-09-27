@@ -21,13 +21,13 @@
 import { px, text, textW, disc, line, sprite, gradient, hand, type Ctx } from './calendarArt';
 import { PRINT as P } from '../desktop/theme/calendar';
 
-export type PrintId = 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag';
+export type PrintId = 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003';
 
 /** each print's pixel size, ~2 px per centimetre of the prop it hangs on */
 export const PRINT_SIZE: Record<PrintId, [number, number]> = {
   rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
   tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100],
-  drawer12: [24, 12], campTag: [36, 22]
+  drawer12: [24, 12], campTag: [36, 22], referral1997: [42, 56], rules2003: [42, 56]
 };
 
 const centre = (c: Ctx, s: string, y: number, col: string, W: number, sc = 1): void => {
@@ -196,8 +196,45 @@ function campTag(c: Ctx, W: number, H: number): void {
   line(c, 30, 14, 34, 14, P.motherInk);
 }
 
+/**
+ * ⚑ S182 / R5-03 — THE REFERRAL LIST (his intake research, 2026-09-27: in 1997 the documented path
+ * was a parent calling the pastor, and the pastor using a ministry referral directory — "a folded
+ * referral sheet… with a pastor's handwritten phone number"). A photocopied page of ministry listings,
+ * and a number written on it in his mother's biro. Invented names; the form is the documented one.
+ */
+function referral1997(c: Ctx, W: number, H: number): void {
+  px(c, 0, 0, P.cardStock, W, H);
+  text(c, 'REFERRALS', 3, 3, P.cardInk);
+  px(c, 3, 10, P.cardInk, W - 6, 1);
+  for (let i = 0; i < 7; i++) {                       // the listings: a name line, an address line
+    const y = 13 + i * 5;
+    px(c, 3, y, P.cardInk, 3, 2); px(c, 8, y, P.cardInk, 14 + ((i * 7) % 12), 1); px(c, 8, y + 2, P.tagString, 10 + ((i * 5) % 9), 1);
+  }
+  line(c, 2, 26, 40, 26, P.motherInk);                // one listing underlined, in her pen
+  hand(c, 'pas', 4, 44, P.motherInk);                  // "pastor" won't fit at this size: her own abbreviation
+  text(c, '555-0147', 6, 50, P.motherInk);            // 32 px: on its own line, so it never runs off the sheet
+}
+
+/**
+ * ⚑ S182 / R5-03 — THE RULES (documented for 2003–05: a programme's numbered rules on hair, clothing,
+ * media, bedroom doors, contact with unapproved people; a 26-page application with a liability release).
+ * The sheet a client is handed and signs. Numbered lines; the text too small to read, the form legible.
+ */
+function rules2003(c: Ctx, W: number, H: number): void {
+  px(c, 0, 0, P.cardStock, W, H);
+  px(c, 0, 0, P.confBlue, W, 7);
+  text(c, 'RULES', 3, 1, P.cardStock);
+  for (let i = 0; i < 7; i++) {                        // 6 px a row: the 5-px digits must not touch
+    const y = 10 + i * 6;
+    text(c, String(i + 1), 2, y - 1, P.cardInk);
+    px(c, 8, y + 1, P.cardInk, 18 + ((i * 11) % 14), 1);
+  }
+  px(c, 3, H - 3, P.cardInk, 16, 1);                  // the signature line
+  line(c, 4, H - 5, 14, H - 6, P.motherInk);           // signed
+}
+
 const DRAW: Record<PrintId, (c: Ctx, W: number, H: number) => void> = {
-  rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag
+  rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003
 };
 
 export function drawPrint(c: Ctx, id: PrintId): void {
