@@ -126,6 +126,8 @@ export function recordEntries(): RecordEntry[] {
   for (const a of ledger.era3Arrival) push('e3', 'arrival', 'arrival', 'migrated', a.witness, false);
   for (const g of ledger.graceQueue) push('e3', 'queue', `card ${g.cardId}`, g.outcome, g.witness);
   for (const c of ledger.comments) push('e3', 'moderation', c.commentId, c.follow ? 'followed' : 'own words', c.witness, !c.follow);
+  // S192 — Tag the video: the recommendation, filed as media (a practice of its own awaits his approval)
+  for (const j of ledger.era3Jobs) push('e3', 'media', j.id, 'tagged', j.witness, false);
   // ── 2026 ──
   for (const e of ledger.e4Space) {
     const kind = e.id === 'update' || e.id === 'companion' ? 'update'
@@ -158,5 +160,5 @@ export function recordCount(): number {
     + ledger.tapes.length + ledger.belongings.length + ledger.lamby.length + ledger.checkins.length
     + ledger.media.length + ledger.caleb.length + ledger.era3Arrival.length + ledger.graceQueue.length
     + ledger.comments.length + ledger.e4Space.length + ledger.updates.length + ledger.tags.length
-    + ledger.games.length;
+    + ledger.games.length + ledger.era3Jobs.length;
 }

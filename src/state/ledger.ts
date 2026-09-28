@@ -121,6 +121,8 @@ export interface Ledger {
    * In-memory only, like everything here.
    */
   games: { id: string; era: 'e1' | 'e2' | 'e3' | 'e4'; witness: string }[];
+  /** ⚑ S192 — 2016's newer board jobs that file their own line (Tag the video) */
+  era3Jobs: { id: string; witness: string }[];
   caleb: {
     id: string;
     outcome: 'replied' | 'held' | 'committed' | 'intervened' | 'dismissed' | 'restored' | 'residue';
@@ -344,6 +346,7 @@ const fresh = (): Ledger => ({
   media: [],
   caleb: [],
   games: [],
+  era3Jobs: [],
   era3Arrival: [],
   graceQueue: [],
   comments: [],

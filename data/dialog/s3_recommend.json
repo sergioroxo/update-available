@@ -1,0 +1,29 @@
+{
+  "_doc": "⚑ S192 — THE RECOMMENDATION, 2016 (Phase 5; his 'from early Internet Explorer to modern Chrome'). Vera's day has a new job: tag the network's new testimony video for the platform's Recommended. She PRODUCES, never moderates (S64's evidentiary law). The tags are the house vocabulary, and the explicit term is greyed 'not used in house style' — the documented route: organisations use euphemistic vocabulary ('same-sex attraction', 'sexual brokenness'…), and later audits found such terms surface providers where explicit terms surface critical information (his research SocialMedia_Deep.md §3: [D] vocabulary, [R] audits, [I] the routing in 2016). 'Preview as viewer' opens the platform's page in a Chrome-grammar window: the video, and Up next walking theology → pastoral advice → testimony in three steps (the research's own proposal, [S]/[I]), '84% match — recommended for you', and the end card — 'Does any of this sound familiar?' and 'Share your story' (CHANGED/#OnceGay's documented 'share your story' onboarding). 2016 has NO moderation note: explicit platform rules against conversion-practice promotion come later (TikTok 2022 — the research, [D]); that paradox is 2026's. Every mark INVENTED (Streamline, the channels, the titles).",
+  "tile": { "label": "Tag the video", "note": "keywords for Recommended" },
+  "title": "GracePlatform · Tag the video",
+  "video": { "title": "Leaving it behind — my story", "length": "11:41", "channel": "New Hope Stories", "views": "18,204 views" },
+  "tagsLabel": "Keywords",
+  "tags": [
+    { "id": "ssa", "label": "same-sex attraction" },
+    { "id": "christiangay", "label": "Christian and gay" },
+    { "id": "brokenness", "label": "sexual brokenness" },
+    { "id": "identity", "label": "identity" },
+    { "id": "hope", "label": "hope" },
+    { "id": "ct", "label": "conversion therapy", "off": "not used in house style" }
+  ],
+  "reachLabel": "Estimated reach",
+  "reach": ["searches for 'Christian and gay'", "viewers of 'Can you be gay and Christian?'", "viewers of 'I thought being gay was my identity'"],
+  "preview": "Preview as viewer",
+  "browser": { "tab": "Leaving it behind — my story - Streamline", "omnibox": "streamline.com/watch?v=hope11", "site": "Streamline" },
+  "upNext": "Up next",
+  "chain": [
+    { "title": "Can you be gay and Christian?", "channel": "Grace Talks", "length": "4:38", "kind": "theology" },
+    { "title": "I thought being gay was my identity", "channel": "Pastor Mark Q&A", "length": "7:12", "kind": "pastoral advice" },
+    { "title": "Leaving it behind — my story", "channel": "New Hope Stories", "length": "11:41", "kind": "testimony", "match": "84% match — recommended for you" }
+  ],
+  "endCard": { "title": "Does any of this sound familiar?", "boxes": ["I feel distant from God", "I'm confused about my sexuality", "I don't know who to talk to"], "share": "Share your story" },
+  "comments": [ { "who": "jess_m", "text": "I thought I was the only one." }, { "who": "d.walker", "text": "This saved my life. ❤ 18K" } ],
+  "done": "Tagged. Recommended to viewers like these.",
+  "witness": { "tagged": "video tagged for Recommended — {n} keywords", "declined": "video left untagged" }
+}

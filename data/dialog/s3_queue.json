@@ -63,7 +63,8 @@
    "label": "Build the course module",
    "note": "modules and pricing"
   },
-  {
+  { "id": "recommend", "surface": "recommend", "label": "Tag the video", "note": "keywords for Recommended", "_docS192": "⚑ S192 — the recommendation event, 2016 (src/desktop/apps/recommendTask.ts; data/dialog/s3_recommend.json)." },
+    {
    "id": "record",
    "surface": "record",
    "label": "Your record",

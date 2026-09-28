@@ -756,3 +756,10 @@ export function drawMemberFigure(
     ctx.fillText(word, x + (bx + 56) * s, y + (ly - 3) * s);
   });
 }
+
+/** ⚑ S192 — Streamline, the 2016 video platform as a viewer sees it in the browser (recommendTask.ts) */
+export const STREAMLINE = {
+  chrome: '#dee1e6', tab: '#ffffff', omnibox: '#f1f3f4', page: '#f9f9f9', brand: '#cc2a2a',
+  player: '#1b1b1f', playerInk: '#ffffff', bar: '#5a5a60', barOn: '#cc2a2a', match: '#2f7a3a',
+  chip: '#e6edf5', chipOn: '#2f86d8', chipOff: '#eceef1'
+} as const;
