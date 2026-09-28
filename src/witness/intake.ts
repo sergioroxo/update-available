@@ -344,7 +344,7 @@ export class WitnessCanvas {
     );
     this.field(
       s.channelLog,
-      ledger.records.includes('went-online')
+      ledger.records.includes('channel-joined')
         ? s.messagesLogged.replace('{n}', String(this.messagesOnFile))
         : (era.notOnline ?? s.notOnline),
       106

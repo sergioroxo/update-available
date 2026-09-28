@@ -7,7 +7,7 @@
   "steps": {
     "e1": [
       { "now": "KIT BY POST", "next": "ASSIGN MENTOR" },
-      { "when": "went-online", "now": "MENTOR ASSIGNED", "next": "CONTACT PARENT" },
+      { "when": "channel-joined", "now": "MENTOR ASSIGNED", "next": "CONTACT PARENT" },
       { "when": "rob-spoke-mother", "now": "PARENT REACHED", "next": "PASTOR REFERRAL" },
       { "when": "enrollment-acknowledged", "now": "CONSENT ON FILE", "next": "DEPART 12 JUL" }
     ],

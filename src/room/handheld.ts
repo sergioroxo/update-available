@@ -13,7 +13,7 @@
  *   flat plane at y 0.827, x ±0.771, z −0.03…1.99 in its node — measured from the mesh). A tap on the left or
  *   right half of the glass turns the snake. Before: the phone's own idle screen.
  * - 2026 · the console on Maya's bed ('Nintendo Switch', Jasmine Roberts) — TIDY, once her file holds two
- *   entries (her first steps with the programme). Its screen is the model's dark panel ('Material.006').
+ *   entries (her first steps with the programme). Its screen is the model's glass (the x ±2.777, y ±1.61 quad of 'Material.006'; that material also carries a small button at x 3.2–3.5).
  *   Taps on the glass play it. Before: a dark home screen with the time.
  * In 2003 the 1997 handheld stands on his bookcase (his: "remove the DS in 2003 … maybe the game boy just moves
  * to another place"), dressed with the same face and a dark screen — kept, not played; never lifted.
@@ -77,7 +77,7 @@ const SPECS: DeviceSpec[] = [
   {
     propId: 'e_console', modelKey: 'console2026', era: 'e4', gameId: 'tidy',
     screenOn: { material: 'Material.006' },
-    screen: { pos: [0.35, 0, 0.28], euler: [90, 0, 0], scale: [5.7, 1, 3.2], w: 128, h: 72 },
+    screen: { pos: [0, 0, 0.28], euler: [90, 0, 0], scale: [5.55, 1, 3.22], w: 128, h: 72 },   // ⚑ the glass quad, x ±2.777 y ±1.61 (Material.006 also carries a button at x 3.2–3.5, which off-centred the first fit — his note, 2026-09-28)
     available: (_has, fileSize) => fileSize >= 2,
     idle: (g, w, h) => { px(g, 0, 0, TD.cardBg, w, h); text(g, '23:12', w - 24, 4, TD.cardDim); },
     game: () => new Tidy(),

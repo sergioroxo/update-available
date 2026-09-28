@@ -60,6 +60,14 @@
       }
     },
     {
+      "id": "search",
+      "trigger": "browsing",
+      "done": "channelJoined",
+      "text": "search. the fellowship's pages will show you the way to the channel.",
+      "_docS190": "⚑ S190 — the 1997 browser (src/desktop/apps/web1997.ts): between the dial-up and the channel.",
+      "witness": {"followed": "guidance: search — followed", "declined": "guidance: search — no response"}
+    },
+    {
       "id": "form",
       "soft": true,
       "trigger": "formAvailable",

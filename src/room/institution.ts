@@ -256,7 +256,7 @@ export function createInstitution(room: RoomHandles): Institution {
     //   the desktop; the stamp is heard, the cold creep calls, and the turn finds the room moved.
     //   What 1997 has revealed is therefore applied only while the corner is out of view.
     if (!watched) {
-      arrived = { file: fileSize > 0, plan: has('went-online'), mother: has('rob-spoke-mother'), packed: has('enrollment-acknowledged') };
+      arrived = { file: fileSize > 0, plan: has('channel-joined'), mother: has('rob-spoke-mother'), packed: has('enrollment-acknowledged') };
     }
     if (busy) return;                          // the cascade owns every prop while it runs
 

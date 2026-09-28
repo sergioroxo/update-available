@@ -60,6 +60,9 @@ const CONDITIONS: Record<string, Condition> = {
   pledgeAnswered: () => ledger.records.includes('pledge-signed') || ledger.records.includes('pledge-declined'),
   connectStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'connect',
   kitConnecting: (os) => os.kit?.dialing === true || ledger.records.includes('went-online'),
+  // S190 — the 1997 browser, between the dial-up and the channel
+  browsing: (os) => os.web?.open === true,
+  channelJoined: () => ledger.records.includes('channel-joined'),
   tapePlayed: () => ledger.records.includes('tape-played'),
   // R3-13 — the Family Form exists once Rob has said it
   formAvailable: (os) => os.formAvailable && !os.provotype,
@@ -68,7 +71,7 @@ const CONDITIONS: Record<string, Condition> = {
   // R3-38 — the racket's line fills the quiet: the disk is in, no window is up
   roomQuiet: (os) => ledger.records.includes('kit-inserted') && os.kit?.open !== true
     && !os.provotype && !os.packet?.open && !os.diary?.open && !os.updateArmed
-    && !(os.irc?.open && os.irc.awaitingReply),
+    && !(os.irc?.open && os.irc.awaitingReply) && !os.web,
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
   rootCauseOpened: () => ledger.records.includes('rootcause-opened'),
   packetOpen: (os) => os.packet?.open === true,

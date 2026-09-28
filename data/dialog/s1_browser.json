@@ -1,0 +1,35 @@
+{
+  "_doc": "⚑ S190 — THE SEARCH, 1997 (Phase 5; his idea, 2026-09-28: 'the idea should be inside of the computer interactions, as it gives a directly and important claim that there was already an infrastructure behind this digital point… a browser… based on the shame felt'; 'from early internet explorer to modern Chrome'). After the kit's dial-up the browser opens, the search field already holding tonight's query and the history below it holding the nights before (no free typing — the law). The results are the network: a links directory by state, a testimony page, a college page with international referrals and an anonymous mailer, a webring, the channel. Every page carries the ring's bar and the channel's Join; the search is how he finds the channel. The third page of results never loads. GROUNDING (docs/reinterp/SOURCES_1997_WEB_2026-09-27.md; his research SocialMedia_Deep.md §1): directories by state and by country from 1996; webrings; counters; an anonymous mailer (1996); 'search engine / Christian website → testimony → links page → ministry → forum/chat' as the documented path, the specific search [I]. 1997 engines did not autocomplete, so the history carries the earlier queries. Every mark here is INVENTED (NetPilot, Seekr, Fellowship Links, the Walking-Out Ring, the pages' addresses).",
+  "browser": "NetPilot 3.0",
+  "engine": "Seekr",
+  "address": "http://www.seekr.com/",
+  "back": "Back",
+  "searchButton": "Search",
+  "query": "christian help homosexual",
+  "historyLabel": "Recent searches",
+  "history": ["how to stop being gay", "is it a sin to think about it", "am i gay"],
+  "resultsFor": "Results for \"{q}\"",
+  "resultsCount": "Documents 1-6 of about 1,240 matching the query.",
+  "resultsPages": "Pages:",
+  "next": "Next",
+  "results": [
+    { "id": "directory", "title": "Fellowship Links — ministries by state", "url": "members.homepage.com/fellowshiplinks/", "snippet": "Links and e-mail addresses for ministries of healing from homosexuality, by state." },
+    { "id": "testimony", "title": "Can you change? YES! — testimonies", "url": "members.homepage.com/fellowshiplinks/yes.html", "snippet": "Real people who walked out. Read their stories. There IS hope for all of us!" },
+    { "id": "college", "title": "Christianity and Homosexuality — help and referrals", "url": "www.faith-college.edu/~staff/h/", "snippet": "International referrals. Write to us anonymously — you do not have to say who you are." },
+    { "id": "chat", "title": "#stillstruggling — a confidential chat for strugglers", "url": "irc.fellowship.net", "snippet": "Others are online right now. A mentor is waiting to talk with you." },
+    { "id": "ring", "title": "The Walking-Out Ring — Christian sites", "url": "members.ringsurf.com/walkingout/", "snippet": "Walking out of homosexuality and walking with the Lord. 212 member sites." },
+    { "id": "faq", "title": "Healing FAQ — what does the Bible say?", "url": "members.homepage.com/fellowshiplinks/faq.html", "snippet": "How do I find a ministry in my local area? What if I need one outside the USA?" }
+  ],
+  "ringBar": { "name": "The Walking-Out Ring", "prev": "< Prev", "next": "Next >", "random": "Random", "list": "List" },
+  "join": "Chat with others like you tonight:  #stillstruggling  [Join]",
+  "counter": "There have been OVER 22,000 visitors since June 1996",
+  "pages": {
+    "directory": { "heading": "Fellowship Links", "lines": ["Ministries regarding healing from homosexuality", "and related issues. Listed by U.S. state.", "", "Q: How do I find a ministry in my local area?", "A: Choose your state below.", "", "ALABAMA · ARIZONA · CALIFORNIA · COLORADO", "FLORIDA · GEORGIA · ILLINOIS · INDIANA · OHIO", "", "Parents: please see the page for families."], "counter": true },
+    "testimony": { "heading": "Can you change? YES!", "lines": ["\"I spent years thinking this was who I was.", "Then a friend sent me a link.\"", "", "\"Such were some of you.\" 1 Cor 6:11", "", "Read more stories. Or add your own:", "every testimony helps someone who is where you are."] },
+    "college": { "heading": "Christianity and Homosexuality", "lines": ["Help and referrals, in the USA and abroad.", "", "Write to us anonymously. Our mailer does not", "send your name or where you are from.", "", "We have added a number of links to", "ministries this year."] },
+    "ring": { "heading": "The Walking-Out Ring", "lines": ["Walking out of homosexuality and", "walking with the Lord.", "", "212 member sites. Use the bar below to visit", "the next one — or a random one.", "", "Every site in this ring is a ministry."] },
+    "faq": { "heading": "Healing FAQ", "lines": ["Q: What if I have a question?", "A: Join the chat. Someone is always there.", "", "Q: What if I need a ministry outside the USA?", "A: See the international list.", "", "Q: What does the Bible say?", "A: There IS hope for all of us!!"] }
+  },
+  "ringOrder": ["directory", "testimony", "college", "faq", "ring"],
+  "filing": "search history kept — referral pages returned"
+}

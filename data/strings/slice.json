@@ -161,7 +161,9 @@
   "recordLines": {
    "_doc": "⚑ S144: the cold line for each era-1 `records` id, which the ledger stores as an id alone. Read by src/witness/record.ts; the fields above the log are unchanged.",
    "kit-inserted": "starter kit v1.2 inserted — companion loaded",
-   "went-online": "channel joined — transcript kept",
+   "went-online": "online — the fellowship network, dialled from the kit",
+   "search-1997": "search history kept — referral pages returned",
+   "channel-joined": "channel joined — transcript kept",
    "mirc-log": "channel log opened for review",
    "ministry-index-card": "index card seen by subject — no action",
    "enrollment-acknowledged": "placement packet acknowledged — consent already filed",

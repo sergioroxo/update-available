@@ -60,7 +60,10 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   if (id === 'pledge-declined') return { kind: 'pledge', outcome: 'set aside', flagged: true };
   if (id === 'rob-spoke-mother') return { kind: 'referral', outcome: 'parent contacted', flagged: false };
   if (id.startsWith('dm-request:')) return { kind: 'referral', outcome: 'accepted', flagged: false };
-  if (id === 'went-online' || id === 'mirc-log') return { kind: 'channel', outcome: 'joined', flagged: false };
+  if (id === 'went-online') return { kind: 'channel', outcome: 'online', flagged: false };
+  if (id === 'channel-joined' || id === 'mirc-log') return { kind: 'channel', outcome: 'joined', flagged: false };
+  // S190 — the search that found the network
+  if (id === 'search-1997') return { kind: 'referral', outcome: 'searched', flagged: false };
   if (id.startsWith('channel-reply:')) return { kind: 'channel', outcome: 'spoke', flagged: false };
   if (id.startsWith('escalation-reply:')) {
     const w = id.slice('escalation-reply:'.length);

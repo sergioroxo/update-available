@@ -11,6 +11,7 @@ import * as ui from './theme/chrome';
 import institutionStrings from '../../data/strings/institution.json';
 import { entriesByEra, practiceOf } from '../witness/record';
 import { drawYesPoster, YES_W, YES_H } from './apps/yesPoster';
+import { Web1997App } from './apps/web1997';
 import ircDialog from '../../data/dialog/s1_irc.json';
 import { drawPixelIcon, hasPixelIcon } from './theme/icons';
 import { setFaceEra } from './theme/fonts';
@@ -374,6 +375,9 @@ export class DesktopOS {
   private dossierOpen = false;
   /** ⚑ S183f / R5-04 — 2003's "Your file (read only)" (drawYourFile) */
   private yourFileOpen = false;
+  /** ⚑ S190 — the 1997 browser: the search, between the dial-up and the channel */
+  web: Web1997App | null = null;
+  private joinChannel: () => void = () => {};
   /** ⚑ S186 — the image Rob sent over DCC, open in its viewer (owns the screen until closed) */
   private yesOpen = false;
   private yesArt: HTMLCanvasElement | null = null;
@@ -521,8 +525,17 @@ export class DesktopOS {
     // R3-24: the dial-up is heard as the connecting page opens, not after it
     this.kit.onDial = () => playOnce('dialup_1997.mp3');
     this.kit.onConnect = () => {
-      // S1.4 — the kit's last step is the channel it chose for you
+      // S1.4 — online. ⚑ S190: the browser opens first — the search is how he finds the channel
+      //   (Phase 5; data/dialog/s1_browser.json); the channel opens from any page's Join
       if (!ledger.records.includes('went-online')) ledger.records.push('went-online');
+      this.web = new Web1997App();
+      this.web.onSearch = () => { if (!ledger.records.includes('search-1997')) ledger.records.push('search-1997'); this.dirty = true; };
+      this.web.onJoin = () => { this.web = null; this.joinChannel(); this.dirty = true; };
+      this.dirty = true;
+    };
+    this.joinChannel = () => {
+      if (this.irc) return;
+      if (!ledger.records.includes('channel-joined')) ledger.records.push('channel-joined');
       this.irc = new IrcApp();
       this.irc.onLine = () => playOnce('irc_1997.mp3');
       this.irc.onImage = () => { this.yesOpen = true; this.dirty = true; };
@@ -619,7 +632,7 @@ export class DesktopOS {
    *  not), which the click ordering alone would not have prevented. */
   private e1DesktopIdle(): boolean {
     return !this.kit?.open && !this.irc?.open && !this.packet?.open && !this.diary?.open
-      && !this.provotype && !this.lambyRigFile && !this.rootCause;
+      && !this.provotype && !this.lambyRigFile && !this.rootCause && !this.web;
   }
 
   /** the same idea, era-wide (Session 60): NOTHING is open — no window, no
@@ -776,6 +789,7 @@ export class DesktopOS {
     this.diary = null;
     this.provotype = null;
     this.lambyRigFile = null; // S55 — E1-only scope; the file has no E2+ existence
+    this.web = null;          // S190 — the 1997 browser stays in 1997
     this.rootCause = null;    // S153 — the same: the disk stays in 1997
     this.sendOffer = null;
     this.clearExternalSendHits();
@@ -2113,6 +2127,7 @@ export class DesktopOS {
     // only by a press (the A:\ icon, the taskbar): a window brought back is on top
     if (this.irc?.open) this.irc.draw(ctx, this.caretOn());
     if (this.kit?.open) this.kit.draw(ctx);
+    if (this.web?.open) this.web.draw(ctx);
     if (this.packet?.open) this.packet.draw(ctx);
     if (this.diary?.open) this.diary.draw(ctx);
     if (this.dossierOpen) this.drawDossier(W, H);
@@ -3185,6 +3200,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
+    if (this.phase === 'desktop' && this.web?.open) { this.web.handleMove(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
@@ -3328,6 +3344,7 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
+    if (this.phase === 'desktop' && this.web?.open) { this.web.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.kit?.open) { this.kit.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.irc?.open) this.irc.handleClick(x, y);
   }
