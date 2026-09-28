@@ -46,6 +46,7 @@ import menuStrings from '../../data/strings/gameMenu.json';
 import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { createInstitution, INSTITUTION_IDS } from '../room/institution';
+import { buildHandheld, HANDHELD_ID } from '../room/handheld';
 import { practiceOf } from '../witness/record';
 import { mountHelper, type Helper } from '../frame/helper';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
@@ -1574,7 +1575,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** ⚑ S183 — the institution's corner: named, pressable, and pulling with the file */
   const institution = options.reinterp === true ? createInstitution(room) : null;
   if (institution) {
-    cluster?.setNeverBatch(INSTITUTION_IDS);
+    cluster?.setNeverBatch([...INSTITUTION_IDS, HANDHELD_ID]);
     // the auditor's handle (memory: the affordance is the target) — what can be pressed there now
     (window as unknown as { __institution?: () => unknown }).__institution =
       () => (cluster ? institution.targets(cluster.era) : []);
@@ -2942,6 +2943,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       // ⚑ S183 — the institution's corner answers a press with its own movement
       //   (src/room/institution.ts). Last, so a marker or a screen always wins.
+      if (handheldUnderRay(ray)) { handheld?.press(camera); return; }
       const inst = institutionUnderRay(ray);
       if (inst) {
         institution?.press(inst.key);
@@ -2952,6 +2954,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         return;
       }
     }
+  }
+
+  /** ⚑ S188 — Daniel's handheld (1997): a press lifts it to you, another sets it down */
+  const handheld = options.reinterp === true ? buildHandheld(room) : null;
+  function handheldUnderRay(ray: Ray): boolean {
+    if (!handheld || !cluster || cluster.era !== 'e1' || !os.inDesktop) return false;
+    const t = handheld.target();
+    return !!t && rayHitsPointR(ray, t.at, t.r);
   }
 
   /** ⚑ S183 — the corner object under a ray (its aim key and practice), or null */
@@ -3003,6 +3013,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (rayHitsPointR(ray, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) return A.move.replace('{label}', n.label);
       }
     }
+    if (handheldUnderRay(ray)) return handheld?.held ? A.handheldDown : A.handheld;
     const inst = institutionUnderRay(ray);
     return inst ? A[inst.key] ?? null : null;
   }
@@ -3629,6 +3640,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       institution.tick(dt, cluster.era, cluster.busy, witnessPulse.countFor(cluster.era), witnessPulse.k(),
         facingBack, (id) => ledger.records.includes(id));
     }
+    if (handheld && cluster) handheld.tick(dt, cluster.era, camera, ledger.records.includes('kit-inserted'));
     // S146 — a filing is the piece moving: the helper's stillness clock restarts on it
     if (witnessPulse.k() > 0.98) helper?.activity();
     // cold creep: pulse the witness side into the edges while it goes unseen

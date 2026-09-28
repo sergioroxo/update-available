@@ -444,16 +444,6 @@
       "tiltOffset": [0, 0.0099]
     },
     {
-      "_doc": "⚑ S187 (2026-09-28) — 'Handheld videogame console' by Poly by Google (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/5kxD7n4F3lv). A DS-like, open, on Daniel's 2003 bed — an object (REACH is on his phone, his decision). Texture stripped. Native 59.28 × 43.84 × 73.70, centre x 0.339, minY 0.0002. 0.00224 → 13 cm wide.",
-      "key": "handheld2003",
-      "file": "handheld2003.glb",
-      "scale": 0.00224,
-      "yaw": 0,
-      "cx": 0.3391,
-      "cz": 0,
-      "baseY": 0.0002
-    },
-    {
       "_doc": "⚑ S187 (2026-09-28) — 'Handheld game console' by Poly by Google (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/fw194G1mJA9). A DSi-like, light blue, open, on Vera's bed (2016) — an object. No textures. Native 2670.8 × 932.3 × 2204.0 (authored far from the origin: centre x −3497.46, z 5977.28), minY −2.6697. 0.0000513 → 14 cm wide. Materials: '_crayfishdiffuse' (the shell), '03___Default' ×2, '02___Default'.",
       "key": "handheld2016",
       "file": "handheld2016.glb",

@@ -116,3 +116,10 @@ export const YES_POSTER = {
   shirts: ['#e05a4a', '#f2c14e', '#5aa0d8', '#ffffff', '#7a5ac8', '#4aa86a', '#f08aa8'],
   skins: ['#f1c9a5', '#c58c5c', '#8a5a3a', '#e8b890']
 } as const;
+
+/** ⚑ S188 — Daniel's 1997 handheld (src/room/handheld.ts): the classic grey body is the prop's own colour;
+ *  these are its face — the bezel, the lit screen's four greens, the magenta A/B, the dark d-pad. */
+export const HANDHELD = {
+  bezel: '#4a4a58', dpad: '#23232b', button: '#a8235d',
+  screenLight: '#c4cf6e', screenMid: '#8a9a4a', screenDark: '#2f3d23'
+} as const;
