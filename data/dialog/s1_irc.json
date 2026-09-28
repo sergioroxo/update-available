@@ -38,6 +38,7 @@
   "it's where things finally started to change for me.",
   "no pressure at all. i just thought of you."
  ],
+ "dcc": {"_doc": "⚑ S186 — yes.gif, SENT (Sérgio, 2026-09-28: 'the poster using the YES online, as something sent to Daniel'; 'you have to accept, it's not optional (pressure)'). Once Rob's private message has landed, he sends an image over DCC — how pictures travelled in mIRC in 1997. Accept is the only live answer; Ignore is drawn dead (R3-26's convention: shown to be dead, not hidden). The image opens in a viewer that owns the screen until closed (os.ts); then Rob says one more line, and only then does the channel hand on (the hook). src/desktop/apps/yesPoster.ts draws it.", "title": "DCC Send", "text": "MentorRob is sending you yes.gif (48 KB).", "from": "From: MentorRob  ·  #stillstruggling", "accept": "Accept", "ignore": "Ignore", "viewerTitle": "yes.gif - Image Viewer", "viewerFoot": "96 x 150  ·  256 colours  ·  from MentorRob", "afterSend": "that's us, at the summer weekend. every one of them was where you are."},
  "dmReply": "you don't have to decide anything tonight. i'm always here.",
  "dmTitle": "MentorRob — private message",
  "request": {

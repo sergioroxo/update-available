@@ -100,3 +100,19 @@ export const PRINT = {
   // S181 · the institution's labels: a drawer card, a luggage tag in his mother's hand
   cardStock: '#efe9d6', cardInk: '#23232f', tagStock: '#e8dcc0', tagString: '#8a6a4a', motherInk: '#2446a8'
 } as const;
+
+/**
+ * ⚑ S186 — yes.gif, the image MentorRob sends Daniel over DCC in 1997 (src/desktop/apps/yesPoster.ts).
+ * Its grammar is the documented one of the mid-90s ex-gay print advertising Sérgio found (a crowd of
+ * smiling people, arms raised, before a waterfall; "YES!"; a verse; a PO box — his 1996 image,
+ * docs/reinterp/SOURCES_1997_WEB_2026-09-27.md); every mark on it is invented.
+ */
+export const YES_POSTER = {
+  sky: '#a9cdea', skyHigh: '#d6eaf8', water: '#f4f9ff', waterShade: '#bcd6ee', mist: '#e6f1fb',
+  rock: '#46614f', rockDark: '#2a3e31', moss: '#6f8f58',
+  title: '#1d3c86', yes: '#ffffff', yesEdge: '#1d3c86', yesShade: '#8fb6e0',
+  verse: '#14203e', band: '#1d3c86', bandInk: '#ffffff', bandDim: '#a9cdea',
+  hair: '#2a1e16',
+  shirts: ['#e05a4a', '#f2c14e', '#5aa0d8', '#ffffff', '#7a5ac8', '#4aa86a', '#f08aa8'],
+  skins: ['#f1c9a5', '#c58c5c', '#8a5a3a', '#e8b890']
+} as const;

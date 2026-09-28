@@ -88,6 +88,13 @@ export class IrcApp {
    *  opens on him: "MentorRob would like to message you — Accept". */
   private dmRequested = false;
   private dmAccepted = false;
+  /** ⚑ S186 — yes.gif over DCC: offered once his DM has landed, accepted (the only live answer),
+   *  viewed (os.ts owns the viewer), and only then does Rob's last line come and the hook land */
+  private sendOffered = false;
+  private sendAccepted = false;
+  private sendViewed = false;
+  /** os opens the viewer */
+  onImage?: () => void;
   /** R3-28 — the DM's scrollback: how many rows up from the newest (0 = the end) */
   private dmScroll = 0;
   private dmRowsTotal = 0;
@@ -171,8 +178,14 @@ export class IrcApp {
     }
     if (this.dmFed && this.dm.update(dt)) this.dirty = true;
 
-    // the hook lands once the whole DM has finished typing
-    if (this.dmFed && !this.hooked && this.dm.idle && this.dm.done.length >= dialog.dm.length) {
+    // ⚑ S186 — his DM has landed: Rob sends the picture (the only answer is Accept)
+    if (this.dmFed && !this.sendOffered && this.dm.idle && this.dm.done.length >= dialog.dm.length) {
+      this.sendOffered = true;
+      this.tick?.();
+      this.dirty = true;
+    }
+    // the hook lands once the whole DM — and the picture, and Rob's line after it — has landed
+    if (this.dmFed && !this.hooked && this.sendViewed && this.dm.idle && this.dm.done.length >= dialog.dm.length + 1) {
       this.hooked = true;
       if (!ledger.records.includes('mirc-log')) ledger.records.push('mirc-log');
       if (!ledger.tags.includes('pastoral-referral')) ledger.tags.push('pastoral-referral');
@@ -206,11 +219,13 @@ export class IrcApp {
     this.channel.pushWhole({ from: ledger.name, text: dialog.channelReply.text });
     for (const l of dialog.afterReply) this.channel.pushWhole({ from: l.from, text: this.fill(l.text) });
     this.dmRequested = true; this.dmAccepted = true;
+    this.sendOffered = true; this.sendAccepted = true; this.sendViewed = true;   // S186: the review jump has had the picture
     this.dmFed = true;
     this.dmOpen = true;
     this.focus = 'dm';
     if (this.dm.done.length === 0) {
       for (const line of dialog.dm) this.dm.pushWhole({ from: 'MentorRob', text: this.fill(line) });
+      this.dm.pushWhole({ from: 'MentorRob', text: this.fill(dialog.dcc.afterSend) });
     }
     if (!this.hooked) {
       this.hooked = true;
@@ -235,6 +250,24 @@ export class IrcApp {
 
   /** the request is on screen, unanswered — the guide's soft lines wait */
   get requestPending(): boolean { return this.dmRequested && !this.dmAccepted; }
+
+  /** ⚑ S186 — the DCC send is on screen, unanswered */
+  get sendPending(): boolean { return this.sendOffered && !this.sendAccepted; }
+  /** accepted: filed, and the picture opens (os.ts) */
+  private acceptSend(): void {
+    if (this.sendAccepted) return;
+    this.sendAccepted = true;
+    if (!ledger.records.includes('yes-received')) ledger.records.push('yes-received');
+    this.onImage?.();
+    this.dirty = true;
+  }
+  /** the viewer was closed: Rob says the line he was waiting to say */
+  imageClosed(): void {
+    if (this.sendViewed || !this.sendAccepted) return;
+    this.sendViewed = true;
+    this.dm.queueLine({ from: 'MentorRob', text: this.fill(dialog.dcc.afterSend) });
+    this.dirty = true;
+  }
 
   /** the hook has been fully witnessed — Rob now pushes the residential program */
   beginEscalation(): void {
@@ -292,7 +325,7 @@ export class IrcApp {
    *  reply's press cap on inert presses — a published rect must be a real one. */
   covered(): void { this.replyRects = []; }
   /** S151 — a reply tray is live: the player is being talked to (the guide's soft lines wait) */
-  get awaitingReply(): boolean { return this.chanAwaitingReply || this.escAwaitingReply || this.requestPending; }
+  get awaitingReply(): boolean { return this.chanAwaitingReply || this.escAwaitingReply || this.requestPending || this.sendPending; }
 
   // The DM is press-only and, since S142, so is the channel — there is no free
   // typing anywhere (Sérgio: no keyboard dependency in VR). You are watched; you
@@ -435,6 +468,21 @@ export class IrcApp {
       ui.button(ctx, q.x + q.w - 8 - 70 - 6 - 70, by, 70, 20, dialog.request.ignore, { disabled: true });
       this.replyRects = [{ x: q.x + q.w - 8 - 70, y: by, w: 70, h: 20, id: 'dm-accept' }];
     }
+    // ⚑ S186 — the DCC send: the same grammar, one live answer (his "you have to accept")
+    if (this.sendPending) {
+      const q = ui.windowFrame(ctx, 160, 170, 270, 104, dialog.dcc.title, true);
+      ui.px(ctx, q.x, q.y, q.w, q.h, ERA1.beige);
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = ERA1.black;
+      ui.wrapText(ctx, this.fill(dialog.dcc.text), q.w - 16).forEach((ln, i) => ctx.fillText(ln, q.x + 8, q.y + 8 + i * 13));
+      ui.setFont(ctx, 9);
+      ctx.fillStyle = ERA1.greyDark;
+      ctx.fillText(dialog.dcc.from, q.x + 8, q.y + 38);
+      const by = q.y + q.h - 26;
+      ui.button(ctx, q.x + q.w - 8 - 70, by, 70, 20, dialog.dcc.accept, {});
+      ui.button(ctx, q.x + q.w - 8 - 70 - 6 - 70, by, 70, 20, dialog.dcc.ignore, { disabled: true });
+      this.replyRects = [{ x: q.x + q.w - 8 - 70, y: by, w: 70, h: 20, id: 'dcc-accept' }];
+    }
   }
 
   /** the line(s) the player can say, in the type area at the bottom of the DM */
@@ -464,6 +512,12 @@ export class IrcApp {
     if (this.requestPending) {
       const r = this.replyRects.find((r) => r.id === 'dm-accept');
       if (r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) this.acceptRequest();
+      return;
+    }
+    // S186: …and so does the DCC send
+    if (this.sendPending) {
+      const r = this.replyRects.find((r) => r.id === 'dcc-accept');
+      if (r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) this.acceptSend();
       return;
     }
     // R3-28: the scrollback's arrows

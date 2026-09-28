@@ -10,6 +10,8 @@ import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
 import institutionStrings from '../../data/strings/institution.json';
 import { entriesByEra, practiceOf } from '../witness/record';
+import { drawYesPoster, YES_W, YES_H } from './apps/yesPoster';
+import ircDialog from '../../data/dialog/s1_irc.json';
 import { drawPixelIcon, hasPixelIcon } from './theme/icons';
 import { setFaceEra } from './theme/fonts';
 import { IrcApp } from './apps/irc';
@@ -372,6 +374,9 @@ export class DesktopOS {
   private dossierOpen = false;
   /** ⚑ S183f / R5-04 — 2003's "Your file (read only)" (drawYourFile) */
   private yourFileOpen = false;
+  /** ⚑ S186 — the image Rob sent over DCC, open in its viewer (owns the screen until closed) */
+  private yesOpen = false;
+  private yesArt: HTMLCanvasElement | null = null;
   /** engine listens: pulse the flip affordance when the hook lands */
   onFlipReady?: () => void;
   /** engine listens: user chose LEAVE */
@@ -520,6 +525,7 @@ export class DesktopOS {
       if (!ledger.records.includes('went-online')) ledger.records.push('went-online');
       this.irc = new IrcApp();
       this.irc.onLine = () => playOnce('irc_1997.mp3');
+      this.irc.onImage = () => { this.yesOpen = true; this.dirty = true; };
       this.irc.onHooked = () => {
         this.toast = { text: strings.desktop.logToast, t: 6 };
         this.hasUnseenWitness = true; // the cold side begins to creep in
@@ -623,7 +629,7 @@ export class DesktopOS {
    *  Messenger, the residue) are windows, and a window means not idle. */
   private desktopIdle(): boolean {
     return this.e1DesktopIdle()
-      && !this.dossierOpen && !this.yourFileOpen
+      && !this.dossierOpen && !this.yourFileOpen && !this.yesOpen
       && !this.restorify?.open && !this.caleb && !this.accountability
       && !this.netvision && !this.netvisionOfferOpen && !this.messageNoticeOpen
       && !this.updateApp && !this.sendOffer?.open;
@@ -2117,6 +2123,11 @@ export class DesktopOS {
     // ⚑ a tray under another window is not pressable and publishes nothing
     if (this.irc?.open && (this.kit?.open || this.packet?.open || this.diary?.open || this.dossierOpen
         || this.provotype?.open || this.lambyRigFile?.open || this.rootCause?.open)) this.irc.covered();
+    // S186 — the picture Rob sent, on top of everything, until it is closed
+    if (this.yesOpen) {
+      this.drawYesViewer(W, H);
+      this.irc?.covered();
+    }
     if (this.restorify?.open) this.restorify.draw(ctx);
     // the summons is a DESKTOP object, so it belongs under the windows. It was
     // drawn after them, and a real playthrough caught it: the s1 "Route sheet"
@@ -2241,6 +2252,9 @@ export class DesktopOS {
       ctx.fillStyle = ERA1.black;
       ctx.fillText(this.toast.text, W - tw, H - 38);
     }
+    // ⚑ S186 — the picture Rob sent owns the screen (the click routing says so): the taskbar and the
+    //   minimise boxes drawn after it are not pressable while it is up, so they are not published
+    if (this.yesOpen) this.hits = this.hits.filter((h) => h.id === 'yes-close');
   }
 
   private drawEraDesktopChrome(
@@ -2463,6 +2477,31 @@ export class DesktopOS {
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(S.footer, c.x + 10, c.y + c.h - 14);
     this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'your-file-close' });
+  }
+
+  /** ⚑ S186 — yes.gif in a 1997 image viewer: the pixel art at ×2, nearest-neighbour; one close box */
+  private drawYesViewer(W: number, H: number): void {
+    const { ctx } = this;
+    if (!this.yesArt) {
+      const cv = document.createElement('canvas');
+      cv.width = YES_W; cv.height = YES_H;
+      const c2 = cv.getContext('2d');
+      if (c2) drawYesPoster(c2);
+      this.yesArt = cv;
+    }
+    const S = 2, iw = YES_W * S, ih = YES_H * S;
+    const dw = iw + 16, dh = ih + 46;
+    const dx = Math.round((W - dw) / 2), dy = Math.max(4, Math.round((H - dh) / 2) - 10);
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, ircDialog.dcc.viewerTitle, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.greyDark);
+    const smooth = ctx.imageSmoothingEnabled;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(this.yesArt, c.x + 4, c.y + 4, iw, ih);
+    ctx.imageSmoothingEnabled = smooth;
+    ui.setFont(ctx, 8);
+    ctx.fillStyle = ERA1.silver;
+    ctx.fillText(ircDialog.dcc.viewerFoot, c.x + 4, c.y + ih + 10);
+    this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'yes-close' });
   }
 
   private drawPause(W: number, H: number): void {
@@ -3192,6 +3231,12 @@ export class DesktopOS {
     // own), and the greeting's own two chips are hit-tested normally.
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
       this.handleE2ArrivalClick(hit ? hit.id : '');
+      return;
+    }
+    // ⚑ S186 — the picture Rob sent owns the screen while it is open: only its close box answers
+    if (this.phase === 'desktop' && this.yesOpen) {
+      if (hit?.id === 'yes-close') { this.yesOpen = false; this.irc?.imageClosed(); }
+      this.dirty = true;
       return;
     }
     // the taskbar is CHROME: it sits outside every window, so its own hit is

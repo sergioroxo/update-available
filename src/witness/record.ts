@@ -67,6 +67,8 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
     return { kind: 'referral', outcome: 'replied', flagged: /resist|boundary|don't|refus/i.test(w) };
   }
   if (id === 'ministry-index-card') return { kind: 'referral', outcome: 'witnessed', flagged: false };
+  // S186 — the image Rob sent over DCC: the advertising, delivered by the friend
+  if (id === 'yes-received') return { kind: 'referral', outcome: 'accepted', flagged: false };
   if (id === 'enrollment-acknowledged') return { kind: 'placement', outcome: 'acknowledged', flagged: false };
   if (id.startsWith('diary')) return { kind: 'diary', outcome: id === 'diary-glitch' ? 'kept' : 'written', flagged: id === 'diary-glitch' };
   if (id === 'deletion-failed') return { kind: 'diary', outcome: 'refused deletion', flagged: true };
