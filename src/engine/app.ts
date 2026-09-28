@@ -46,7 +46,7 @@ import menuStrings from '../../data/strings/gameMenu.json';
 import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { createInstitution, INSTITUTION_IDS } from '../room/institution';
-import { buildHandheld, HANDHELD_ID } from '../room/handheld';
+import { buildDevices, DEVICE_PROP_IDS } from '../room/handheld';
 import { practiceOf } from '../witness/record';
 import { mountHelper, type Helper } from '../frame/helper';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
@@ -1575,7 +1575,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** ⚑ S183 — the institution's corner: named, pressable, and pulling with the file */
   const institution = options.reinterp === true ? createInstitution(room) : null;
   if (institution) {
-    cluster?.setNeverBatch([...INSTITUTION_IDS, HANDHELD_ID]);
+    cluster?.setNeverBatch([...INSTITUTION_IDS, ...DEVICE_PROP_IDS]);
     // the auditor's handle (memory: the affordance is the target) — what can be pressed there now
     (window as unknown as { __institution?: () => unknown }).__institution =
       () => (cluster ? institution.targets(cluster.era) : []);
@@ -2943,7 +2943,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       // ⚑ S183 — the institution's corner answers a press with its own movement
       //   (src/room/institution.ts). Last, so a marker or a screen always wins.
-      if (handheldUnderRay(ray)) { handheld?.press(camera); return; }
+      // S189 — the device in this era (1997's handheld, 2003's phone, 2026's console): pick it up, play it
+      if (devices && cluster && os.inDesktop && devices.press(ray, cluster.era, camera)) return;
       const inst = institutionUnderRay(ray);
       if (inst) {
         institution?.press(inst.key);
@@ -2956,12 +2957,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
   }
 
-  /** ⚑ S188 — Daniel's handheld (1997): a press lifts it to you, another sets it down */
-  const handheld = options.reinterp === true ? buildHandheld(room) : null;
-  function handheldUnderRay(ray: Ray): boolean {
-    if (!handheld || !cluster || cluster.era !== 'e1' || !os.inDesktop) return false;
-    const t = handheld.target();
-    return !!t && rayHitsPointR(ray, t.at, t.r);
+  /** ⚑ S188/S189 — the devices you can pick up and play (src/room/handheld.ts, src/games/) */
+  const devices = options.reinterp === true ? buildDevices(room) : null;
+  /** `has` for the devices' story gates: a ledger record id, or "kind:<practice>" in this era's file */
+  let kindsAt = ''; let kinds = new Set<string>();
+  function deviceHas(era: string, fileSize: number): (id: string) => boolean {
+    return (id) => {
+      if (!id.startsWith('kind:')) return ledger.records.includes(id);
+      if (kindsAt !== `${era}|${fileSize}`) {
+        kindsAt = `${era}|${fileSize}`;
+        kinds = new Set(entriesByEra()[era as 'e1' | 'e2' | 'e3' | 'e4'].map((e) => e.kind));
+      }
+      return kinds.has(id.slice(5));
+    };
   }
 
   /** ⚑ S183 — the corner object under a ray (its aim key and practice), or null */
@@ -3013,7 +3021,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (rayHitsPointR(ray, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) return A.move.replace('{label}', n.label);
       }
     }
-    if (handheldUnderRay(ray)) return handheld?.held ? A.handheldDown : A.handheld;
+    const dev = devices && cluster && os.inDesktop ? devices.aim(ray, cluster.era) : null;
+    if (dev) {
+      const [game, what] = dev.split(':');
+      const name = A[`dev_${game}`] ?? '';
+      return (A[`devAim_${what}`] ?? A.devAim_screen).replace('{name}', name);
+    }
     const inst = institutionUnderRay(ray);
     return inst ? A[inst.key] ?? null : null;
   }
@@ -3640,7 +3653,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       institution.tick(dt, cluster.era, cluster.busy, witnessPulse.countFor(cluster.era), witnessPulse.k(),
         facingBack, (id) => ledger.records.includes(id));
     }
-    if (handheld && cluster) handheld.tick(dt, cluster.era, camera, ledger.records.includes('kit-inserted'));
+    if (devices && cluster) {
+      const size = witnessPulse.countFor(cluster.era);
+      for (const f of devices.tick(dt, cluster.era, deviceHas(cluster.era, size), size)) {
+        ledger.games.push({ id: f.id, era: f.era as 'e1' | 'e2' | 'e3' | 'e4', witness: f.witness });
+      }
+    }
     // S146 — a filing is the piece moving: the helper's stillness clock restarts on it
     if (witnessPulse.k() > 0.98) helper?.activity();
     // cold creep: pulse the witness side into the edges while it goes unseen

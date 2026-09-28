@@ -123,3 +123,21 @@ export const HANDHELD = {
   bezel: '#4a4a58', dpad: '#23232b', button: '#a8235d',
   screenLight: '#c4cf6e', screenMid: '#8a9a4a', screenDark: '#2f3d23'
 } as const;
+
+/** ⚑ S189 — REACH, on Daniel's 2003 phone: the phone's grey-blue LCD, the snake's greys, the symbols' colours */
+export const REACH = {
+  lcd: '#9fb3bd', lcdDark: '#1f2c33', lcdMid: '#5e7482',
+  snakeHead: '#2a3136', snakeFrom: '#6d7479', snakeTo: '#2a2d30',
+  pink: '#f08aa8', blue: '#5bcefa', white: '#ffffff', red: '#e0454f', orange: '#f29a3b', yellow: '#f2d94e',
+  green: '#4aa86a', violet: '#8a5ac8',
+  halo: '#f2d06b', lattice: '#8ea2ad', frame: '#3a4b55', wool: '#ffffff', woolShade: '#d6dde2'
+} as const;
+
+/** ⚑ S189 — TIDY (2026), on Maya's console: the cosy genre's pastels (the disguise), and the cards' dark */
+export const TIDY = {
+  bg: '#f6efe6', shelf: '#d9c3a5', slot: '#c9b08c', ink: '#3a3040', dim: '#9a8a78', accent: '#e8a0b4', glow: '#f2d06b',
+  box: '#b89a7a', boxDark: '#8a6e52', floor: '#e9dccb', cardBg: '#1c1a24', cardInk: '#f6efe6', cardDim: '#9a93a8',
+  mug: '#6fa8d8', book: '#c0504d', plant: '#5aa06a', clock: '#e0b050', lamp: '#f2c879', frame: '#a07a5a',
+  pen: '#2a4a8a', notebook: '#8a5ac8', phones: '#303038', charger: '#e8e8e8', cup: '#d87a5a',
+  binder: '#3a3a48', pinBlue: '#5bcefa', pinPink: '#f5a9b8', pinWhite: '#ffffff', letter: '#ffffff', rx: '#f0f0f0', rxCap: '#5b8fd8'
+} as const;

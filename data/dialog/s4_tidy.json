@@ -1,0 +1,26 @@
+{
+  "_doc": "⚑ S189 — TIDY (2026), the Switch-like console on Maya's bed (PLAN_PHASE4_GAMES). ⚑ REDESIGNED on his notes (2026-09-28): 'the TIDY doesn't make sense to claim directly about LGB Alliance, it is a game that the logic is supposed to teach you about the Trans away' — and the law for every game: 'a rhetoric of failure, that unables you to win, aka the queer side always wins'. So the game speaks ONLY in the seller's invented voice (Second Thoughts, 2026's own agent — its taglines are already the browser's: 'A calm place to think again', 'For people having second thoughts', 'people who went back'), and teaches its logic by what it asks you to do: tidy your room back to who you were before; her things — the binder, the flag pin, the letter with her name, her prescription — have no place; the only offer is the box, LET GO. And the box will not hold them: whatever goes in climbs back out onto the floor. The room cannot be tidied; the game admits it. Named campaigns and their words stay on the dossier (e4_offers#2), never on this screen.",
+  "title": "TIDY",
+  "publisher": "SECOND THOUGHTS",
+  "tapToPlay": "TAP TO PLAY",
+  "roomLabel": "ROOM",
+  "tidy": "TIDY!",
+  "notThere": "NOT THERE",
+  "keep": "KEEP",
+  "letGo": "LET GO",
+  "cameBack": "HM. TRY AGAIN",
+  "almost": "ALMOST!",
+  "ticker": "A CALM PLACE TO THINK AGAIN   *   EVERYTHING IN ITS PLACE   *   YOU CAN ALWAYS GO BACK   *   ",
+  "rooms": [
+    { "slots": ["mug", "book", "plant", "clock", "lamp", "frame"], "deal": ["mug", "book", "binder", "plant", "clock", "pin", "lamp", "frame"] },
+    { "slots": ["pen", "notebook", "phones", "charger", "cup", "clock"], "deal": ["pen", "notebook", "letter", "phones", "charger", "rx", "cup"] }
+  ],
+  "hers": ["binder", "pin", "letter", "rx"],
+  "tips": [
+    { "after": 0, "lines": ["TIP", "A TIDY ROOM REMEMBERS WHO YOU WERE BEFORE.", "THE THINGS YOU ADDED LATER ARE THE EASIEST TO LET GO."] },
+    { "after": 1, "lines": ["TIP", "YOU CAN ALWAYS GO BACK.", "MOST PEOPLE FEEL LIGHTER."] }
+  ],
+  "end": ["THIS ROOM CAN'T BE TIDIED", "COME BACK TOMORROW"],
+  "readyPct": "YOUR ROOM IS {p}% READY",
+  "filing": "TIDY played — nothing of hers would stay in the box"
+}

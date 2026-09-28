@@ -18,6 +18,23 @@ Witness system has a second reading** (each thing is a trace of a documented pra
 - **The referral list as a printout: now** — BUILT S185 (tractor-feed 1997 paper, the page's print header, the
   listings, the ring's PREV · NEXT bar, 1/3, her pen).
 
+## ⚑ His notes on the first builds (2026-09-28) — BUILT S189
+*"To make the gameboy accurate it can't have colors, since it is all in shade of green. The REACH needs to have
+more design, too bare. And the TIDY doesn't make sense to claim directly about LGB Alliance, it is a game that the
+logic is supposed to teach you about the Trans away etc. They all have a rhetoric of failure, that unables you to
+win, aka the queer side always wins."* → the law for every game here: **its goal is impossible, and the queer thing
+persists.**
+- **FIT IN** — four greens only; the odd pieces read by the screen's own dither; they land NOT A FIT and **stay**; a
+  row that holds one never clears; the well fills; GAME OVER — THEY STAYED.
+- **REACH** — a framed board over a stained-glass lattice, the lamb and a boxed SOULS counter, a grey scaled snake
+  with a halo (its picture of itself); the symbols stay whole; SOULS REACHED 0 — NONE CHANGED.
+- **TIDY** — no named campaign on its screen: the seller's voice only (Second Thoughts' own taglines), the seller's
+  TIPS between rooms teach the logic ("a tidy room remembers who you were before"; "you can always go back"); her
+  things go in the box LET GO — and **climb back out**; the room never reaches 100%: THIS ROOM CAN'T BE TIDIED —
+  COME BACK TOMORROW. (Supersedes the "box speaks the campaigns' words" and the cards above; the named claims stay
+  on the dossier, e4_offers#2.)
+- **FloppySheep** — already in colour; his song behind a ♪ in the footer, his timed words across the sky.
+
 ## The one idea that holds the four together
 **Each era's game is the apparatus gamifying the same thing: fitting a life into a shape.** Tetris-like in 1997
 (force the odd pieces into straight lines), the snake in 2003 (the ministry's appetite, counted in souls), the

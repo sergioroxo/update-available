@@ -36,7 +36,8 @@
 import { px, setFont } from '../theme/chrome';
 import { ERA3, FLOPPY } from '../theme/era3';
 import g from '../../../data/dialog/s3_floppysheep.json';
-import { playOnce } from '../../audio/tapeAudio';
+import { playOnce, stopClip } from '../../audio/tapeAudio';
+import lyrics from '../../../data/dialog/s3_floppysheep_lyrics.json';
 
 const FENCES = g.fences as { gap: number; h: number }[];
 
@@ -105,6 +106,7 @@ export class FloppySheep {
   closeGame(): void {
     if (!this.open) return;
     this.open = false;
+    this.stopSong();
     this.version++;
   }
 
@@ -117,12 +119,24 @@ export class FloppySheep {
     this.fenceIdx = 1;
   }
 
+  // ── ⚑ S189 — HIS SONG, behind the ♪ (Sérgio, 2026-09-26: the song "playing in the big white space, with
+  //   a button, the lyrics passing there"). Off until pressed: the game is silent unless she chooses it.
+  //   His timed words (data/dialog/s3_floppysheep_lyrics.json, from his LRC) run karaoke-style across the
+  //   sky while it plays; closing the game stops it. The song is the game's, like the hops: nothing filed.
+  private song: HTMLAudioElement | null = null;
+  private startSong(): void {
+    this.song = playOnce('floppysheep_song.mp3');
+    this.song?.addEventListener('ended', () => { this.song = null; this.version++; });
+  }
+  private stopSong(): void { stopClip(this.song); this.song = null; }
+
   // ── one thumb ────────────────────────────────────────────────────────────
   /** the entire input surface. `true` = the tap was the game's. */
   tap(x: number, y: number): boolean {
     if (!this.open) return false;
     const r = this.rects.find(rr => x >= rr.x && x <= rr.x + rr.w && y >= rr.y && y <= rr.y + rr.h);
     if (r?.id === 'back') { this.closeGame(); return true; }
+    if (r?.id === 'song') { if (this.song) this.stopSong(); else this.startSong(); this.version++; return true; }
     if (this.mode === 'over') {
       if (this.overT >= OVER_ARM_SECONDS) { this.reset(); this.mode = 'run'; this.version++; }
       return true;
@@ -182,8 +196,8 @@ export class FloppySheep {
       if (this.y > 0) { this.vy += GRAVITY * step; this.y = Math.max(0, this.y - this.vy * step); }
     }
 
-    // the redraw clock — 30/s while anything is moving, and nothing otherwise
-    const moving = this.mode === 'run' || (this.mode === 'over' && this.overT < 1.2) || this.mode === 'idle';
+    // the redraw clock — 30/s while anything is moving (or the song is singing), and nothing otherwise
+    const moving = this.mode === 'run' || (this.mode === 'over' && this.overT < 1.2) || this.mode === 'idle' || !!this.song;
     if (!moving) return;
     const tick = Math.floor(this.t / TICK);
     if (tick !== this.lastTick) { this.lastTick = tick; this.version++; }
@@ -253,8 +267,44 @@ export class FloppySheep {
     setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
     ctx.fillText(g.publisher, Math.round((W - ctx.measureText(g.publisher).width) / 2), FOOT_Y + 19);
 
+    // the ♪ — a pixel note in the footer's white space, pressed in while the song plays
+    const NX = W - 20, NY = FOOT_Y + 10;
+    px(ctx, NX, NY, 14, 14, this.song ? FLOPPY.hillFar : ERA3.white);
+    px(ctx, NX, NY, 14, 1, FLOPPY.hillDk); px(ctx, NX, NY + 13, 14, 1, FLOPPY.hillDk);
+    px(ctx, NX, NY, 1, 14, FLOPPY.hillDk); px(ctx, NX + 13, NY, 1, 14, FLOPPY.hillDk);
+    px(ctx, NX + 8, NY + 3, 1, 7, FLOPPY.ink); px(ctx, NX + 9, NY + 3, 2, 1, FLOPPY.ink); px(ctx, NX + 10, NY + 4, 1, 1, FLOPPY.ink);
+    px(ctx, NX + 5, NY + 9, 4, 3, FLOPPY.ink);
+    this.rects.push({ x: NX - 4, y: FOOT_Y, w: 22, h: H - FOOT_Y, id: 'song' });
+    // his words, across the sky, while it plays: the line being sung, each word lit as it comes
+    if (this.song) {
+      const now = this.song.currentTime;
+      const L = (lyrics as unknown as { lines: Array<{ t: number; words: Array<[number, string]> }> }).lines;
+      let li = -1;
+      for (let i = 0; i < L.length; i++) if (L[i].t <= now) li = i;
+      if (li >= 0 && now - (L[li].words[L[li].words.length - 1][0]) < 3) {
+        setFont(ctx, 10);
+        const words = L[li].words;
+        const rows: Array<Array<[number, string]>> = [[]];
+        let width = 0;
+        for (const w of words) {
+          const ww = ctx.measureText(w[1] + ' ').width;
+          if (width + ww > W - 16 && rows[rows.length - 1].length) { rows.push([]); width = 0; }
+          rows[rows.length - 1].push(w); width += ww;
+        }
+        rows.forEach((row, ri) => {
+          const text = row.map((w) => w[1]).join(' ');
+          let x = Math.round((W - ctx.measureText(text).width) / 2);
+          const y = 128 + ri * 14;
+          for (const [t, w] of row) {
+            ctx.fillStyle = t <= now ? FLOPPY.ink : ERA3.grey;
+            ctx.fillText(w, x, y);
+            x += ctx.measureText(w + ' ').width;
+          }
+        });
+      }
+    }
     if (this.mode === 'over') this.drawOver(ctx, W);
-    // the whole screen is the button — one thumb, anywhere
+    // the whole screen is the button — one thumb, anywhere (the ♪ and the back arrow are asked first)
     this.rects.push({ x: 0, y: HEADER_H, w: W, h: H - HEADER_H, id: 'tap' });
   }
 

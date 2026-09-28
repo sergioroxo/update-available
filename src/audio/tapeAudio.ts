@@ -35,6 +35,7 @@ const REGISTRY: Record<string, string> = {
   'family_design_solutions_tape97.mp3': `${AUDIO_BASE}family_design_solutions_tape97.mp3`, // Tape C track 1 (mixtape)
   'fold_my_hands_tape97.mp3': `${AUDIO_BASE}fold_my_hands_tape97.mp3`, // Tape A's prayer segment
   'unwalk_loop_1997.mp3': `${AUDIO_BASE}unwalk_loop_1997.mp3`, // S151 · the Un-Walk's programme loop (tools/make_hymn.py)
+  'floppysheep_song.mp3': `${AUDIO_BASE}floppysheep_song.mp3`, // S189 · his song, behind FloppySheep's ♪ (off until pressed)
   // S155 · the sound redo (tools/make_tones.sh, the S155 block)
   'diary_key.mp3': `${AUDIO_BASE}diary_key.mp3`,
   'diary_flag.mp3': `${AUDIO_BASE}diary_flag.mp3`,

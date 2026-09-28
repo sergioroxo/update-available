@@ -104,6 +104,8 @@ export function recordEntries(): RecordEntry[] {
     push('e1', k.kind, r, k.outcome, recordWitness(r), k.flagged);
   }
   for (const p of ledger.provotypes) push(p.id === 'pillow' ? 'e1' : 'e1', 'provotype', p.id, p.outcome, p.witness);
+  // S189 — the games: each in the era it was played, as The exercise (a task that could only end one way)
+  for (const g of ledger.games) push(g.era, 'provotype', g.id, 'played', g.witness, false);
   for (const s of ledger.sends) push('e1', 'referral', s.id, s.outcome, s.witness);
   for (const g of ledger.guidance) push('e1', 'assistant', g.id, g.outcome, g.witness);
   for (const t of ledger.tapes) push('e1', 'tapes', t.id, t.outcome, t.witness);
@@ -148,5 +150,6 @@ export function recordCount(): number {
   return ledger.records.length + ledger.provotypes.length + ledger.sends.length + ledger.guidance.length
     + ledger.tapes.length + ledger.belongings.length + ledger.lamby.length + ledger.checkins.length
     + ledger.media.length + ledger.caleb.length + ledger.era3Arrival.length + ledger.graceQueue.length
-    + ledger.comments.length + ledger.e4Space.length + ledger.updates.length + ledger.tags.length;
+    + ledger.comments.length + ledger.e4Space.length + ledger.updates.length + ledger.tags.length
+    + ledger.games.length;
 }

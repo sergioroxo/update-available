@@ -115,6 +115,12 @@ export interface Ledger {
    * `witness` resolved from data/dialog/s2_caleb.json at file time, never
    * composed in TS. In-memory only, like everything here.
    */
+  /**
+   * ⚑ S189 — Phase 4's games (src/games/): one line per run that ended, in the era it was played —
+   * FIT IN (1997), REACH (2003), TIDY (2026). FloppySheep never files (S70: it never judges her).
+   * In-memory only, like everything here.
+   */
+  games: { id: string; era: 'e1' | 'e2' | 'e3' | 'e4'; witness: string }[];
   caleb: {
     id: string;
     outcome: 'replied' | 'held' | 'committed' | 'intervened' | 'dismissed' | 'restored' | 'residue';
@@ -337,6 +343,7 @@ const fresh = (): Ledger => ({
   checkins: [],
   media: [],
   caleb: [],
+  games: [],
   era3Arrival: [],
   graceQueue: [],
   comments: [],
