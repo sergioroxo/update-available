@@ -1,0 +1,39 @@
+{
+  "_doc": "⚑ S191 — THE RECOMMENDATION, 2003 (Phase 5; PLAN_ROUND5 'from early Internet Explorer to modern Chrome'). After his first daily check-in, a senior member of the programme's forum recommends a thread; the forum opens in the period's browser. Before the board, its RULES page — 'I Agree' the only live answer, the web twin of the rules sheet on the institution's wall. The thread is about coming home from the programme; he can post one fixed line (no free typing), a moderator approves it, and '3 people are praying for you'. GROUNDING (his research SocialMedia_Deep.md §2; intake.md): moderated, confidential forums with membership approval, category rooms by age/sex/marital status, accountability threads, peer prayer, senior members answering newcomers (Living Hope's boards, documented from 1998 — described in 2003 as a 'confidential, free, moderated message board'); the Rules page and 'I Agree' are the research's own proposal [I]. Every mark here is INVENTED (Harbor, WebView, the members).",
+  "icon": "Harbor Forums",
+  "toast": "David recommends a thread for you.",
+  "browser": "WebView 6",
+  "menus": ["File", "Edit", "View", "Favorites", "Tools", "Help"],
+  "toolbar": ["Back", "Forward", "Stop", "Refresh", "Home"],
+  "addressLabel": "Address",
+  "go": "Go",
+  "address": "http://www.harborforums.org/",
+  "banner": "HARBOR",
+  "bannerSub": "a confidential, free, moderated message board",
+  "rules": {
+    "title": "Before you enter",
+    "lines": ["Confidentiality — what is said here stays here.", "No exchanging personal contact information.", "Respect biblical teaching.", "No sexually explicit material.", "Accountability is an act of love."],
+    "agree": "I Agree",
+    "disagree": "I Do Not Agree",
+    "note": "A moderator reviews every new member."
+  },
+  "rooms": ["Under 27", "Men", "Women", "Married", "Parents & family", "Accountability"],
+  "roomsLabel": "Forums",
+  "thread": {
+    "room": "Under 27",
+    "title": "Home from the summer programme — how do you keep it?",
+    "posts": [
+      { "who": "David", "meta": "Senior member · 1,204 posts · walking out since 1996", "lines": ["The first weeks back are the hardest. Your room is the same,", "your friends are the same. You are not.", "Post in the accountability thread every day. We will pray."] },
+      { "who": "Tomas_22", "meta": "Member · 88 posts", "lines": ["Same here. Deleted my old screen name the day I got home.", "Checking in every night helps."] },
+      { "who": "hopeful1", "meta": "Member · 12 posts", "lines": ["Praying for everyone who just came back."] }
+    ],
+    "reply": "Post reply",
+    "yourLine": "I'm back. I'll post every day.",
+    "pending": "Thank you. Your post will appear once a moderator approves it.",
+    "praying": "3 people are praying for you."
+  },
+  "filing": {
+    "rules": "forum rules agreed — accountability on",
+    "posted": "posted in the accountability room — awaiting approval"
+  }
+}

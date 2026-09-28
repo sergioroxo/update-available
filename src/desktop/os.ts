@@ -12,6 +12,8 @@ import institutionStrings from '../../data/strings/institution.json';
 import { entriesByEra, practiceOf } from '../witness/record';
 import { drawYesPoster, YES_W, YES_H } from './apps/yesPoster';
 import { Web1997App } from './apps/web1997';
+import { Web2003App } from './apps/web2003';
+import forumStrings from '../../data/dialog/s2_forum.json';
 import ircDialog from '../../data/dialog/s1_irc.json';
 import { drawPixelIcon, hasPixelIcon } from './theme/icons';
 import { setFaceEra } from './theme/fonts';
@@ -377,6 +379,9 @@ export class DesktopOS {
   private yourFileOpen = false;
   /** ⚑ S190 — the 1997 browser: the search, between the dial-up and the channel */
   web: Web1997App | null = null;
+  /** ⚑ S191 — 2003's forum: recommended after the first check-in; opened from its desktop icon */
+  forum: Web2003App | null = null;
+  private forumRecommended = false;
   private joinChannel: () => void = () => {};
   /** ⚑ S186 — the image Rob sent over DCC, open in its viewer (owns the screen until closed) */
   private yesOpen = false;
@@ -642,7 +647,7 @@ export class DesktopOS {
    *  Messenger, the residue) are windows, and a window means not idle. */
   private desktopIdle(): boolean {
     return this.e1DesktopIdle()
-      && !this.dossierOpen && !this.yourFileOpen && !this.yesOpen
+      && !this.dossierOpen && !this.yourFileOpen && !this.yesOpen && !this.forum?.open
       && !this.restorify?.open && !this.caleb && !this.accountability
       && !this.netvision && !this.netvisionOfferOpen && !this.messageNoticeOpen
       && !this.updateApp && !this.sendOffer?.open;
@@ -790,6 +795,8 @@ export class DesktopOS {
     this.provotype = null;
     this.lambyRigFile = null; // S55 — E1-only scope; the file has no E2+ existence
     this.web = null;          // S190 — the 1997 browser stays in 1997
+    this.forum = null;        // S191 — and the forum in 2003
+    this.forumRecommended = false;
     this.rootCause = null;    // S153 — the same: the disk stays in 1997
     this.sendOffer = null;
     this.clearExternalSendHits();
@@ -938,11 +945,29 @@ export class DesktopOS {
   private openRestorify(): void {
     if (!this.restorify) {
       this.restorify = new RestorifyApp();
-      this.restorify.onCheckinFiled = () => this.maybeLandMessage();
+      this.restorify.onCheckinFiled = () => { this.maybeLandMessage(); this.recommendForum(); };
       this.restorify.onCheckinAcknowledged = () => this.maybeAnnounceMessage();
       this.startProgram(lambyStrings.restorifyTitle);
     }
     this.restorify.open = true;
+    this.dirty = true;
+  }
+
+  /** ⚑ S191 — the recommendation event, 2003: a senior member picks the next thing for him */
+  private recommendForum(): void {
+    if (this.forumRecommended || this.desktopEra !== 'e2') return;
+    this.forumRecommended = true;
+    if (!ledger.records.includes('forum-recommended')) ledger.records.push('forum-recommended');
+    this.toast = { text: forumStrings.toast, t: 6 };
+    this.dirty = true;
+  }
+  private openForum(): void {
+    if (!this.forum) {
+      this.forum = new Web2003App();
+      this.forum.onAgree = () => { if (!ledger.records.includes('forum-rules')) ledger.records.push('forum-rules'); this.dirty = true; };
+      this.forum.onPost = () => { if (!ledger.records.includes('forum-posted')) ledger.records.push('forum-posted'); this.dirty = true; };
+    }
+    this.forum.open = true;
     this.dirty = true;
   }
 
@@ -2107,6 +2132,8 @@ export class DesktopOS {
         this.drawIcon(100, 140, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
         // ⚑ S183f / R5-04 — and his own file, which came with him too
         this.drawIcon(100, 188, institutionStrings.yourFile.icon, true, 'icon-your-file');
+        // ⚑ S191 — the forum, once a thread has been recommended; unread until he opens it
+        if (this.forumRecommended) this.drawIcon(100, 236, forumStrings.icon, true, 'icon-forum', !this.forum);
       }
     }
     // THE FOUND FILE (Session 60) — the renamed dossier, in every era, on the
@@ -2151,6 +2178,8 @@ export class DesktopOS {
     // never surface on top of S2R.3's window; this is that law in the paint
     // order. (Clicks were never affected — the chat takes them first.)
     this.drawSendOffer(W, H);
+    // ⚑ S191 — 2003's forum: over the desktop's objects and Restorify, under the felt window and the intrusions
+    if (this.forum?.open) this.forum.draw(ctx);
     // S2R.3: the person's window FIRST (felt), then every intrusion on it
     // (operable) drawn over it. Lamby lives only in the second of these two
     // calls — he is never drawn inside the chat's frame, in any beat.
@@ -3201,6 +3230,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.web?.open) { this.web.handleMove(x, y); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleMove(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
@@ -3326,6 +3356,7 @@ export class DesktopOS {
         case 'icon-found-file': this.dossierOpen = true; break;
         case 'found-file-close': this.dossierOpen = false; break;
         case 'icon-your-file': this.yourFileOpen = true; break;
+        case 'icon-forum': this.openForum(); break;
         case 'your-file-close': this.yourFileOpen = false; break;
         case 'icon-messenger': this.openMessenger(); break;
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
@@ -3345,6 +3376,7 @@ export class DesktopOS {
       return;
     }
     if (this.phase === 'desktop' && this.web?.open) { this.web.handleClick(x, y); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.kit?.open) { this.kit.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.irc?.open) this.irc.handleClick(x, y);
   }

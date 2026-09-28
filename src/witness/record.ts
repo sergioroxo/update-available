@@ -64,6 +64,10 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   if (id === 'channel-joined' || id === 'mirc-log') return { kind: 'channel', outcome: 'joined', flagged: false };
   // S190 — the search that found the network
   if (id === 'search-1997') return { kind: 'referral', outcome: 'searched', flagged: false };
+  // S191 — 2003's forum: recommended, its rules agreed, a post held for approval
+  if (id === 'forum-recommended') return { kind: 'referral', outcome: 'recommended', flagged: false };
+  if (id === 'forum-rules') return { kind: 'channel', outcome: 'agreed', flagged: false };
+  if (id === 'forum-posted') return { kind: 'channel', outcome: 'posted', flagged: false };
   if (id.startsWith('channel-reply:')) return { kind: 'channel', outcome: 'spoke', flagged: false };
   if (id.startsWith('escalation-reply:')) {
     const w = id.slice('escalation-reply:'.length);
@@ -104,7 +108,7 @@ export function recordEntries(): RecordEntry[] {
   // ── 1997 ──
   for (const r of ledger.records) {
     const k = recordKind(r);
-    push('e1', k.kind, r, k.outcome, recordWitness(r), k.flagged);
+    push(r.startsWith('forum-') ? 'e2' : 'e1', k.kind, r, k.outcome, recordWitness(r), k.flagged);   // S191: 2003's forum files in 2003
   }
   for (const p of ledger.provotypes) push(p.id === 'pillow' ? 'e1' : 'e1', 'provotype', p.id, p.outcome, p.witness);
   // S189 — the games: each in the era it was played, as The exercise (a task that could only end one way)
