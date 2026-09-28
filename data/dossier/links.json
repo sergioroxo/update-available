@@ -1,6 +1,7 @@
 {
  "_doc": "⚑ S175 (2026-09-24) — THE LINKS, AND ONLY VERIFIED ONES. Sérgio: 'we need to have an accompanying webpage to this project where all the sources are listed with the links to what we use.' None of the piece's 35 source texts carries a URL; they are citations in prose. This file adds links WITHOUT touching a dossier text (ETHICS_CONSTRAINTS #13/#14), keyed `<provotype file>#<source index>`, and every link here is one that docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md (his Deep Research verification run) attaches to THAT claim — nothing guessed, nothing found by searching. Sources with no entry are listed on the page without a link, honestly. Add a link only with its `verifiedIn`. tools/gen_sources_page.mjs reads this.",
  "links": {
+  "e3_theday#15": [{"label": "GPAHE, Conversion Therapy Online: The Ecosystem in 2023", "url": "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-27.md"}],
   "origin_intake_e1#5": [{"label": "Smithsonian, Love in Action Collection (1978–2013)", "url": "https://sova.si.edu/record/nmah.ac.1428", "verifiedIn": "docs/reinterp/SOURCES_1997_WEB_2026-09-27.md"}],
   "origin_intake_e1#0": [
    {

@@ -63,9 +63,27 @@
       "id": "search",
       "trigger": "browsing",
       "done": "channelJoined",
-      "text": "search. the fellowship's pages will show you the way to the channel.",
+      "text": "join the channel from the fellowship's page, or browse its pages first.",
       "_docS190": "⚑ S190 — the 1997 browser (src/desktop/apps/web1997.ts): between the dial-up and the channel.",
       "witness": {"followed": "guidance: search — followed", "declined": "guidance: search — no response"}
+    },
+    {
+      "id": "browseIdle",
+      "soft": true,
+      "trigger": "browsingIdle",
+      "done": "channelJoined",
+      "text": "you can keep browsing, or go to the channel. someone is waiting there.",
+      "_docS194": "⚑ S194 — his: 'the message that appears after a bit of inactivity is a helper… allow the user to explore or to connect back to the main narrative'. After 25 s with the browser open and nothing pressed.",
+      "witness": {"followed": "guidance: channel — joined after browsing", "declined": "guidance: channel — not yet"}
+    },
+    {
+      "id": "waitRob",
+      "soft": true,
+      "trigger": "channelWaiting",
+      "done": "channelHooked",
+      "text": "while you wait, the fellowship's pages are still open in NetPilot.",
+      "_docS194": "⚑ S194 — 'it is better to have people do stuff than to panic in waiting': in the channel, before Rob writes, after 20 s with nothing pressed.",
+      "witness": {"followed": "guidance: waiting — the mentor wrote", "declined": "guidance: waiting — no response"}
     },
     {
       "id": "form",

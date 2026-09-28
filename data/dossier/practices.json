@@ -194,6 +194,15 @@
         "index": 2
       }
     },
+    "recommendation": {
+      "title": "The recommendation",
+      "did": "chose the next thing you would see, and filed what you were shown",
+      "status": "documentary",
+      "source": {
+        "file": "e3_theday",
+        "index": 15
+      }
+    },
     "care": {
       "title": "The care assignment",
       "did": "took your details as the gate, and assigned care on your behalf",

@@ -65,7 +65,7 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   // S190 — the search that found the network
   if (id === 'search-1997') return { kind: 'referral', outcome: 'searched', flagged: false };
   // S191 — 2003's forum: recommended, its rules agreed, a post held for approval
-  if (id === 'forum-recommended') return { kind: 'referral', outcome: 'recommended', flagged: false };
+  if (id === 'forum-recommended') return { kind: 'recommendation', outcome: 'recommended', flagged: false };   // S195
   if (id === 'forum-rules') return { kind: 'channel', outcome: 'agreed', flagged: false };
   if (id === 'forum-posted') return { kind: 'channel', outcome: 'posted', flagged: false };
   if (id.startsWith('channel-reply:')) return { kind: 'channel', outcome: 'spoke', flagged: false };
@@ -127,7 +127,7 @@ export function recordEntries(): RecordEntry[] {
   for (const g of ledger.graceQueue) push('e3', 'queue', `card ${g.cardId}`, g.outcome, g.witness);
   for (const c of ledger.comments) push('e3', 'moderation', c.commentId, c.follow ? 'followed' : 'own words', c.witness, !c.follow);
   // S192 — Tag the video: the recommendation, filed as media (a practice of its own awaits his approval)
-  for (const j of ledger.era3Jobs) push('e3', 'media', j.id, 'tagged', j.witness, false);
+  for (const j of ledger.era3Jobs) push('e3', 'recommendation', j.id, 'tagged', j.witness, false);   // S195: The recommendation
   // ── 2026 ──
   for (const e of ledger.e4Space) {
     const kind = e.id === 'update' || e.id === 'companion' ? 'update'

@@ -63,6 +63,10 @@ const CONDITIONS: Record<string, Condition> = {
   // S190 — the 1997 browser, between the dial-up and the channel
   browsing: (os) => os.web?.open === true,
   channelJoined: () => ledger.records.includes('channel-joined'),
+  // S194 — the helpers wait for a quiet stretch (os.idleSeconds, reset on every press)
+  browsingIdle: (os) => os.web?.open === true && os.idleSeconds > 25,
+  channelWaiting: (os) => !!os.irc && ledger.records.includes('channel-joined') && !ledger.records.includes('mirc-log') && !os.irc.awaitingReply && os.idleSeconds > 20,
+  channelHooked: () => ledger.records.includes('mirc-log'),
   tapePlayed: () => ledger.records.includes('tape-played'),
   // R3-13 — the Family Form exists once Rob has said it
   formAvailable: (os) => os.formAvailable && !os.provotype,

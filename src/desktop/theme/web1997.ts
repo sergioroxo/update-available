@@ -6,7 +6,8 @@
 export const WEB97 = {
   page: '#ccccff', heading: '#660099', headingShade: '#330066', link: '#0000ee', visited: '#551a8b',
   text: '#000033', dim: '#555577', rule: '#9999cc', ringBar: '#dddddd', ringInk: '#000080',
-  counterBg: '#aaaadd', searchBg: '#ffffff', engine: '#cc0000', engineAlt: '#0033cc', join: '#008000'
+  counterBg: '#aaaadd', searchBg: '#ffffff', engine: '#cc0000', engineAlt: '#0033cc', join: '#008000',
+  construction: '#ffdd33'   // S194 — the period's 'under construction' yellow
 } as const;
 
 /** ⚑ S191 — the 2003 forum (src/desktop/apps/web2003.ts): a UBB/phpBB-era board, navy banner, pale panels */

@@ -12,6 +12,7 @@ import institutionStrings from '../../data/strings/institution.json';
 import { entriesByEra, practiceOf } from '../witness/record';
 import { drawYesPoster, YES_W, YES_H } from './apps/yesPoster';
 import { Web1997App } from './apps/web1997';
+import browserStrings from '../../data/dialog/s1_browser.json';
 import { Web2003App } from './apps/web2003';
 import forumStrings from '../../data/dialog/s2_forum.json';
 import ircDialog from '../../data/dialog/s1_irc.json';
@@ -295,6 +296,7 @@ export class DesktopOS {
     type Win = { open: boolean; hits?: unknown[]; restore?: () => void };
     switch (key) {
       case 'irc': return this.irc as unknown as Win | null;
+      case 'web': return this.web as unknown as Win | null;
       case 'kit': return this.kit as unknown as Win | null;
       case 'lambyrig': return this.lambyRigFile as unknown as Win | null;
       case 'rootcause': return this.rootCause as unknown as Win | null;
@@ -335,6 +337,7 @@ export class DesktopOS {
     const all: { key: string; label: string }[] = [
       { key: 'kit', label: kitStrings.taskbarLabel },
       { key: 'irc', label: strings.desktop.taskbarIrc },
+      { key: 'web', label: browserStrings.taskbar },
       { key: 'dossier', label: strings.desktop.taskbarDossier },
       { key: 'lambyrig', label: strings.desktop.taskbarLambyRig },
       { key: 'rootcause', label: strings.desktop.taskbarRootCause },
@@ -382,6 +385,8 @@ export class DesktopOS {
   /** ⚑ S191 — 2003's forum: recommended after the first check-in; opened from its desktop icon */
   forum: Web2003App | null = null;
   private forumRecommended = false;
+  /** ⚑ S194 — seconds since the last press on the desktop (the helpers wait for quiet) */
+  idleSeconds = 0;
   private joinChannel: () => void = () => {};
   /** ⚑ S186 — the image Rob sent over DCC, open in its viewer (owns the screen until closed) */
   private yesOpen = false;
@@ -535,7 +540,7 @@ export class DesktopOS {
       if (!ledger.records.includes('went-online')) ledger.records.push('went-online');
       this.web = new Web1997App();
       this.web.onSearch = () => { if (!ledger.records.includes('search-1997')) ledger.records.push('search-1997'); this.dirty = true; };
-      this.web.onJoin = () => { this.web = null; this.joinChannel(); this.dirty = true; };
+      this.web.onJoin = () => { this.minimiseWindow('web'); this.joinChannel(); this.dirty = true; };
       this.dirty = true;
     };
     this.joinChannel = () => {
@@ -1589,6 +1594,7 @@ export class DesktopOS {
 
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
+    this.idleSeconds += dt;
     this.t += dt;
     this.phaseT += dt;
     if (this.paused) {
@@ -3239,6 +3245,7 @@ export class DesktopOS {
   }
 
   handleClick(x: number, y: number): void {
+    this.idleSeconds = 0;   // S194 — the helpers wait for quiet
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (this.paused) {
       if (hit?.id === 'resume') this.paused = false;
