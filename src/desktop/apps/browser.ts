@@ -71,7 +71,7 @@ const PROGRAM = body.program as unknown as {
   console: { mark: string; restored: string; typing: string; managed: string; ready: string; worn: string;
     restoring: string; results: string; site: string };
   saver: { mark: string; line: string; witness: string };
-  results: { title: string; historyLabel: string; history: string[]; queryLabel: string;
+  results: { title: string; historyLabel: string; history: string[]; queryLabel: string; relatedLabel?: string; related?: string[];
     results: { id: string; title: string; url: string; snippet: string; press?: boolean }[] };
   site: { mark: string; address: string; tagline: string; lines: string[]; start: string; footer: string };
   turnFiled: string;
@@ -612,6 +612,15 @@ export class E4Browser {
     setFont(ctx, 11); ctx.fillStyle = WEB.ink;
     ctx.fillText(PROGRAM.chosen, x, y + 11);
     y += 30;
+    // ⚑ S193 — the related searches: her question, walked into the apparatus's vocabulary
+    if (R.related?.length) {
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+      ctx.fillText(R.relatedLabel ?? '', x, y - 6);
+      setFont(ctx, 9); ctx.fillStyle = WEB.accent;
+      let rx = x + ctx.measureText((R.relatedLabel ?? '') + '  ').width;
+      for (const t of R.related) { ctx.fillText(t, rx, y - 6); rx += ctx.measureText(t + '   ').width; }
+      y += 10;
+    }
     for (const r of R.results) {
       const rh = 42;
       if (y + rh > H - 14) break;
@@ -623,7 +632,12 @@ export class E4Browser {
       setFont(ctx, 9); ctx.fillStyle = WEB.muted;
       wrapText(ctx, r.snippet, W - ADDR.x * 2 - 24).slice(0, 1).forEach((ln) => ctx.fillText(ln, x, y + 25));
       if (r.press) this.publish({ x: x - 4, y: y - 4, w: W - ADDR.x * 2 - 8, h: rh + 2, id: `result-${r.id}` });
-      y += rh + 6;
+      // ⚑ S193 — the moderation paradox: the platform's own note, and the recommendation right under it
+      const rr = r as { label?: string; match?: string };
+      let extra = 0;
+      if (rr.label) { setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(`ⓘ ${rr.label}`, x, y + 38); extra += 12; }
+      if (rr.match) { setFont(ctx, 9); ctx.fillStyle = WEB.match; ctx.fillText(rr.match, x, y + 38 + extra); extra += 13; }
+      y += rh + 6 + extra;
     }
   }
 

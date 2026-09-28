@@ -1315,6 +1315,7 @@ export const BALL = {
 export const COMMONS_SKY = '#141826';
 
 export const WEB = {
+  match: '#2f7a3a',          // S193 — the recommender's green ('84% match — recommended for you')
   bg: '#ECE8DF',        // the app's ground — a shade cooler than the cards
   card: '#FBFAF6',
   cardEdge: '#DED8CA',

@@ -502,6 +502,9 @@
     "gp appointment booking"
    ],
    "queryLabel": "You searched for",
+   "relatedLabel": "Related searches",
+   "related": ["identity exploration", "people who went back", "second thoughts support"],
+   "_docS193": "⚑ S193 — Phase 5, 2026 (PLAN_ROUND5 four-era browser plan; his research SocialMedia_Deep.md §4): the MODERATION PARADOX — a platform label that the claims are disputed, sitting directly above '84% match — recommended for you' (the research's proposal [S]; explicit platform rules are documented from 2022, [D]) — and SEMANTIC MIGRATION made visible: the related searches walk her question into the apparatus's own vocabulary (euphemism routing documented by later audits, [R]).",
    "results": [
     {
      "id": "agent",
@@ -520,7 +523,7 @@
      "id": "stories",
      "title": "people who changed their minds — Second Thoughts stories",
      "url": "secondthoughts.help/stories",
-     "snippet": "Real accounts, verified by Second Thoughts."
+     "snippet": "Real accounts, verified by Second Thoughts.", "label": "Some claims on this page are disputed by major medical organisations.", "match": "84% match — recommended for you"
     },
     {
      "id": "nhs",

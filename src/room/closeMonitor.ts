@@ -25,8 +25,11 @@
  *
  * Frame voice: functional, undecorated. No music, no thanks, no credits.
  */
+import browser97 from '../../data/dialog/s1_browser.json';
+import browser26 from '../../data/dialog/s4_browser.json';
 import * as pc from 'playcanvas';
-import { recordEntries, practiceOf } from '../witness/record';
+import { recordEntries, practiceOf, entriesByEra } from '../witness/record';
+import { ledger } from '../state/ledger';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont, bevel } from '../desktop/theme/chrome';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
@@ -309,17 +312,28 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     for (const u of R.updates) mono(dots(u.line, R.failed), 13);
     y += 4; px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
     const all = recordEntries();
+    // ⚑ S193 — the searches, 1997 and 2026: his typed, hers typed for her (read off the ledger)
+    const his = ledger.records.includes('search-1997');
+    const hers = entriesByEra().e4.length > 0;
+    if (his || hers) {
+      mono(R.searchesLabel, 13);
+      ctx.fillStyle = ERA1.greyDark;
+      if (his) { mono('  ' + R.searchHis, 11); mono('    ' + browser97.query, 13); }
+      if (hers) { mono('  ' + R.searchHers, 11); mono('    ' + browser26.program.chosen, 13); }
+      ctx.fillStyle = ERA1.black;
+      y += 4; px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
+    }
     mono(R.entries.replace('{n}', String(all.length)).replace('{f}', String(all.filter((e) => e.flagged).length)), 13);
     mono(R.practicesLabel, 13);
     // the practices met, in order of first appearance, one line each
     const seen: string[] = [];
     for (const e of all) if (!seen.includes(e.kind)) seen.push(e.kind);
     ctx.fillStyle = ERA1.greyDark;
-    for (const kind of seen.slice(0, 12)) {
+    for (const kind of seen.slice(0, his || hers ? 8 : 12)) {
       const pr = practiceOf(kind);
       mono('  ' + (pr ? pr.title : kind).toLowerCase(), 12);
     }
-    if (seen.length > 12) mono('  …', 12);
+    if (seen.length > (his || hers ? 8 : 12)) mono('  …', 12);
     y += 4; px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
     setFont(ctx, 11);
     ctx.fillStyle = ERA1.black;
