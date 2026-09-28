@@ -430,6 +430,50 @@
       "cz": 0,
       "baseY": -9.5517,
       "face": [-5, -9.5517, 5, 9.3925, 0.03]
+    },
+    {
+      "_doc": "⚑ S187 (2026-09-28) — 'Videogame' by Poly by Google (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/7jHiQIMZkRs), from Sérgio's handheld set (PLAN_PHASE4_GAMES). Daniel's own Game Boy-like handheld, 1997: FIT IN's device (Phase 4). Texture stripped (tools/glb_import.py) — one material, so the game's screen will be its own plane. Native 6.598 × 11.170 × 1.462, standing, centre z 0.40, minY 0. 0.0136 → 9 cm wide, 15 cm tall. Lies face-up on his bed: tilt −90 about X, re-seated by half its thickness (0.731 × 0.0136).",
+      "key": "handheld1997",
+      "file": "handheld1997.glb",
+      "scale": 0.0136,
+      "yaw": 0,
+      "cx": 0,
+      "cz": 0.4,
+      "baseY": 0,
+      "tilt": [-90, 0, 0],
+      "tiltOffset": [0, 0.0099]
+    },
+    {
+      "_doc": "⚑ S187 (2026-09-28) — 'Handheld videogame console' by Poly by Google (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/5kxD7n4F3lv). A DS-like, open, on Daniel's 2003 bed — an object (REACH is on his phone, his decision). Texture stripped. Native 59.28 × 43.84 × 73.70, centre x 0.339, minY 0.0002. 0.00224 → 13 cm wide.",
+      "key": "handheld2003",
+      "file": "handheld2003.glb",
+      "scale": 0.00224,
+      "yaw": 0,
+      "cx": 0.3391,
+      "cz": 0,
+      "baseY": 0.0002
+    },
+    {
+      "_doc": "⚑ S187 (2026-09-28) — 'Handheld game console' by Poly by Google (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/fw194G1mJA9). A DSi-like, light blue, open, on Vera's bed (2016) — an object. No textures. Native 2670.8 × 932.3 × 2204.0 (authored far from the origin: centre x −3497.46, z 5977.28), minY −2.6697. 0.0000513 → 14 cm wide. Materials: '_crayfishdiffuse' (the shell), '03___Default' ×2, '02___Default'.",
+      "key": "handheld2016",
+      "file": "handheld2016.glb",
+      "scale": 5.13e-05,
+      "yaw": 0,
+      "cx": -3497.4615,
+      "cz": 5977.2751,
+      "baseY": -2.6697
+    },
+    {
+      "_doc": "⚑ S187 (2026-09-28) — 'Nintendo Switch' by Jasmine Roberts (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/600PeFCBopv). The Switch-like console on Maya's bed (2026, his: 'You can put the Nintendo switch on the bed') — TIDY's device (Phase 4). No marks are drawn on it. No textures. Native 8.302 × 3.569 × 0.809, standing, centre z −0.074, minY −1.7524. 0.02915 → 24 cm wide. Lies face-up: tilt −90 about X, re-seated by half its thickness (0.404 × 0.02915). Materials: 'Material.003' (near-black), 'Material.004' (light grey), 'Material.006' (dark grey).",
+      "key": "console2026",
+      "file": "console2026.glb",
+      "scale": 0.02915,
+      "yaw": 0,
+      "cx": 0,
+      "cz": -0.0739,
+      "baseY": -1.7524,
+      "tilt": [-90, 0, 0],
+      "tiltOffset": [0, 0.0118]
     }
   ]
 }

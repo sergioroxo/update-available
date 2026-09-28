@@ -29,6 +29,10 @@ mix art styles between rooms).
 | notebook | notebook.glb | Poly Pizza — "Notebook" by jeremy (https://poly.pizza/m/9Ptsg_xZt6B) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S175: Vera's notebook. |
 | pen | pen.glb | Poly Pizza — "Pen" by jeremy (https://poly.pizza/m/7SIpgx0rEIv) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S177: on Vera's notebook. Textures stripped. |
 | calendar | calendar.glb | Poly Pizza — "Calendar" by jeremy (https://poly.pizza/m/2yHE0n1ahjp) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S177: the wall calendars; textures stripped — the pages are the project's own pixel art (src/room/calendarArt.ts). |
+| handheld1997 | handheld1997.glb | Poly Pizza — "Videogame" by Poly by Google (https://poly.pizza/m/7jHiQIMZkRs) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S187: Daniel's handheld, 1997 (FIT IN's device). Texture stripped. |
+| handheld2003 | handheld2003.glb | Poly Pizza — "Handheld videogame console" by Poly by Google (https://poly.pizza/m/5kxD7n4F3lv) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S187: open on Daniel's 2003 bed. Texture stripped. |
+| handheld2016 | handheld2016.glb | Poly Pizza — "Handheld game console" by Poly by Google (https://poly.pizza/m/fw194G1mJA9) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S187: on Vera's bed, 2016. |
+| console2026 | console2026.glb | Poly Pizza — "Nintendo Switch" by Jasmine Roberts (https://poly.pizza/m/600PeFCBopv) | CC-BY 3.0 | **yes** — ATTRIBUTIONS.md | S187: on Maya's bed, 2026 (TIDY's device). No marks drawn. |
 | deskLamp | deskLamp.glb | Poly Pizza — "Light Desk" by Quaternius (https://poly.pizza/m/uJDWrSJGVH) | CC0 1.0 | credited by choice | S175: Vera's lamp. |
 | books | books.glb | Poly Pizza — "Books" by CreativeTrio (Household Props 001) | CC0 1.0 | credited by choice | S175: the riser under Vera's phone stand. Geometry only. |
 | redMug | redMug.glb | Poly Pizza — "Red Mug" by Isa Lousberg (https://poly.pizza/m/Su9VxfL5Yl) | CC0 (per Poly Pizza's credit line) | credited by choice | S175: 2003's mug, coloured by `bands`. Geometry only. |
