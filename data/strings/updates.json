@@ -54,6 +54,7 @@
    "+ fresh look, brighter rooms",
    "+ accountability web (always on)",
    "= your history: retained",
+   "= Daniel's file: carried over, scanned",
    "= your goal: unchanged",
    "- nothing is ever removed"
   ],
@@ -116,6 +117,7 @@
    "- daily realignment: shut down",
    "= your chart: exported, complete",
    "= your file: transferred in full",
+   "= Daniel's file: archived · a new file: Vera",
    "+ nothing has been deleted"
   ],
   "_uninstallDoc": "PLACEHOLDER — Sérgio voice pass pending. THE DISPERSAL (E2 script S2R.7; D31 STRUCK by Sérgio 2026-07-25 after the GPAHE check, with refinements — docs/REINTERP_D31_DISPERSAL_EVIDENCE_2026-07-25.md). The program's collapse doesn't kill the watcher; it renames it. The uninstall report renders AFTER the changelog finishes typing; lines prefixed '~' draw small and dim (the quiet line carries the thesis). Under the report LAMBY HIMSELF comes apart into seven small marks — the same seven src/desktop/theme/era3.ts's drawLambMark renders SETTLED as Lambient's badge on Room 2's three screens at E3, so what leaves here is literally what arrives there. Built by Fable, Session 33; re-staged and re-worded Session 58. WHY 'RENAMED' AND NOT 'MIGRATING' (Sérgio's adopted refinement): renaming is the documented mechanism — NARTH became ATCSI in 2014, and GPAHE 2023 finds providers relabelling in medical-sounding language to evade moderation. An uninstaller that reports success while the process continues under a new label is better sourced than vague migration AND it rhymes with the piece's own update-as-survival grammar. FRAMING DISCIPLINE (binding): this is survival by scattering, never omnipotence — GPAHE 2023 finds deplatforming partly WORKED, so the staging keeps the marks few, small, and settled, and the fiction keeps its invented marks (Restorify → GracePlatform); the real companies GPAHE names belong to dossier/provenance surfaces only, never to a room.",
@@ -229,6 +231,7 @@
    "+ your photographs, restored",
    "+ immersive sessions · headset included",
    "= the record: thirty years, intact",
+   "= Vera's file: archived · a new file: Maya",
    "= the goal: unchanged, on file",
    "- contributor tools: retired",
    "- the moderation queue: retired",
@@ -290,5 +293,6 @@
   "eula": null,
   "changelog": null,
   "restarting": "Your update has failed."
- }
+ },
+ "_docS201": "⚑ S201 — PLAN_WEB_AND_HELPERS §3: each install names whose file carries over and to whom — each person's file is their own (his ruling, R3-95), and none is deleted. One changelog line per update."
 }

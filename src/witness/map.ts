@@ -74,6 +74,17 @@ const CONDITIONS: Record<string, Condition> = {
   prayerSaid: () => has('prayer-said') || has('prayer-cut'),
   pledgeAnswered: () => has('pledge-signed') || has('pledge-declined'),   // S170 / I-03
   wentOnline: () => has('went-online'),
+  // S201 — the web, the picture, the games, the forum, the 2016 jobs
+  channelJoined: () => has('channel-joined'),
+  searched: () => has('search-1997'),
+  yesReceived: () => has('yes-received'),
+  fitinPlayed: () => ledger.games.some((g) => g.id === 'fitin'),
+  forumRules: () => has('forum-rules'),
+  forumApplied: () => has('forum-applied'),
+  reachPlayed: () => ledger.games.some((g) => g.id === 'reach'),
+  tagged: () => ledger.era3Jobs.some((j) => j.id === 'recommend'),
+  grouped: () => ledger.era3Jobs.some((j) => j.id === 'group'),
+  tidyPlayed: () => ledger.games.some((g) => g.id === 'tidy'),
   formDone: () => ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
   rootCauseOpened: () => has('rootcause-opened'),

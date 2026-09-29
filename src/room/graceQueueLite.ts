@@ -455,7 +455,18 @@ export class GraceQueueLite {
 
   /** called every frame by era3Devices.tick — see the class header on why this
    *  does not break the dirty-upload law */
+  /** ⚑ S201 — seconds of quiet on the board (Lambient's "while you wait", once) */
+  private boardQuietT = 0;
+  private waitSaid = false;
+
   update(dt: number): void {
+    if (this.mode === 'board' && !this.openSurface) {
+      this.boardQuietT += dt;
+      if (!this.waitSaid && this.boardQuietT > 25) {
+        const waiting = ['group', 'recommend'].some((id) => { const s = this.surfaces.get(id); return s && !s.complete(); });
+        if (waiting) { this.waitSaid = true; this.lambSay([LAMBIENT.waitLine1, LAMBIENT.waitLine2]); this.bump(); }
+      }
+    }
     // S158: the one clock — both faces re-upload only when the minute turns
     if (this.mode !== 'dark' && this.mode !== 'boot' && this.mode !== 'install') {
       this.dayT += dt;
@@ -1844,6 +1855,7 @@ export class GraceQueueLite {
 
   // ── input ────────────────────────────────────────────────────────────────
   handleClick(x: number, y: number): void {
+    this.boardQuietT = 0;
     const r = this.rects.find(rr => hit(rr, x, y));
     if (!r) return;
     // ⚑ the taskbar button is tested FIRST and is the only live control while

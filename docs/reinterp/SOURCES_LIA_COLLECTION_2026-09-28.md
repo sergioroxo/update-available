@@ -123,3 +123,11 @@ a directory of ~150 links (Exodus International and Exodus Global Alliance, NART
 in Action, PFOX, regional and international groups): https://groups.google.com/g/ex-gay-muslims/c/D5fugfcxlNM — the 1997 directory
 form, a decade on, crossing faiths and living inside a platform.
 
+## 7 · APPLIED to the dossier (S201, his "yes to all of them… this is important to not be minimized… as long as every element that makes these decisions is explained on the sources")
+Five sources, each saying what the piece does with the document (`documentary`, high). Links, verbatim:
+- Exodus International, *Telephone Counseling Manual* (1988), Smithsonian NMAH.AC.1428 B2 F10 — https://mads.si.edu/mads/id/NMAH-AC1428-B002-F010-000001
+- Love in Action, *The Source Program, application* (2001), B1 F6 — https://mads.si.edu/mads/id/NMAH-AC1428-B001-F006
+- Love in Action, *The Source Residential Program* (women's, 2001), B1 F22 — the collection record https://sova.si.edu/record/nmah.ac.1428
+- Evergreen International homepage, 28 Oct 2004 (Wayback; his visual-archive run, tracker dropped) — https://web.archive.org/web/20041028162709/http://www.evergreeninternational.org/
+- Evergreen International, About Us, 6 Mar 2005 (Wayback) — https://web.archive.org/web/20050306200207/http://www.evergreeninternational.org/about_us.htm
+

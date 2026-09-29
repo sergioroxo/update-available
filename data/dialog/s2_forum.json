@@ -352,5 +352,7 @@
   "submit": "Submit application",
   "received": "Received. A member of staff will contact your parents.",
   "none": "—"
- }
+ },
+ "lambyWait": "While you wait: Harbor has a thread picked out for you. And your phone has a game on it now!",
+ "_docLambyWait": "⚑ S201 — Lamby's 'while you wait' (PLAN_WEB_AND_HELPERS §3): once, after 30 s of quiet on the 2003 desktop once the thread is recommended and before the forum is opened. His voice, the apparatus's: it points at the recommendation and the game."
 }

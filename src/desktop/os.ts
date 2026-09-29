@@ -385,6 +385,7 @@ export class DesktopOS {
   /** ⚑ S191 — 2003's forum: recommended after the first check-in; opened from its desktop icon */
   forum: Web2003App | null = null;
   private forumRecommended = false;
+  private lambyWaitShown = false;
   /** ⚑ S194 — seconds since the last press on the desktop (the helpers wait for quiet) */
   idleSeconds = 0;
   private joinChannel: () => void = () => {};
@@ -802,6 +803,7 @@ export class DesktopOS {
     this.web = null;          // S190 — the 1997 browser stays in 1997
     this.forum = null;        // S191 — and the forum in 2003
     this.forumRecommended = false;
+    this.lambyWaitShown = false;
     this.rootCause = null;    // S153 — the same: the disk stays in 1997
     this.sendOffer = null;
     this.clearExternalSendHits();
@@ -1596,6 +1598,14 @@ export class DesktopOS {
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
     this.idleSeconds += dt;
+    // ⚑ S201 — Lamby's "while you wait": once, on a quiet 2003 desktop, after the thread was recommended
+    if (!this.lambyWaitShown && this.desktopEra === 'e2' && this.e2Stage === 'active' && this.forumRecommended
+        && !this.forum && this.idleSeconds > 30 && this.desktopIdle() && !this.toast) {
+      this.lambyWaitShown = true;
+      this.toast = { text: forumStrings.lambyWait, t: 8 };
+      this.lambyPoseT = 0;
+      this.dirty = true;
+    }
     this.t += dt;
     this.phaseT += dt;
     if (this.paused) {

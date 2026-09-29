@@ -1,8 +1,20 @@
 {
  "_doc": "⚑ S175 (2026-09-24) — THE LINKS, AND ONLY VERIFIED ONES. Sérgio: 'we need to have an accompanying webpage to this project where all the sources are listed with the links to what we use.' None of the piece's 35 source texts carries a URL; they are citations in prose. This file adds links WITHOUT touching a dossier text (ETHICS_CONSTRAINTS #13/#14), keyed `<provotype file>#<source index>`, and every link here is one that docs/SOURCE_VERIFICATION_RESULTS_2026-07-24.md (his Deep Research verification run) attaches to THAT claim — nothing guessed, nothing found by searching. Sources with no entry are listed on the page without a link, honestly. Add a link only with its `verifiedIn`. tools/gen_sources_page.mjs reads this.",
  "links": {
-  "e3_theday#15": [{"label": "GPAHE, Conversion Therapy Online: The Ecosystem in 2023", "url": "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/", "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-27.md"}],
-  "origin_intake_e1#5": [{"label": "Smithsonian, Love in Action Collection (1978–2013)", "url": "https://sova.si.edu/record/nmah.ac.1428", "verifiedIn": "docs/reinterp/SOURCES_1997_WEB_2026-09-27.md"}],
+  "e3_theday#15": [
+   {
+    "label": "GPAHE, Conversion Therapy Online: The Ecosystem in 2023",
+    "url": "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/",
+    "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-27.md"
+   }
+  ],
+  "origin_intake_e1#5": [
+   {
+    "label": "Smithsonian, Love in Action Collection (1978–2013)",
+    "url": "https://sova.si.edu/record/nmah.ac.1428",
+    "verifiedIn": "docs/reinterp/SOURCES_1997_WEB_2026-09-27.md"
+   }
+  ],
   "origin_intake_e1#0": [
    {
     "label": "Gerard van den Aardweg, The Battle for Normality (1997), PDF",
@@ -513,6 +525,46 @@
     "label": "Karrington 2022, defining desistance — systematic review",
     "url": "https://pubmed.ncbi.nlm.nih.gov/36643060/",
     "verifiedIn": "docs/SOURCE_VERIFICATION_RESULTS_2026-09-27.md"
+   }
+  ],
+  "origin_intake_e1#6": [
+   {
+    "label": "Exodus International, Telephone Counseling Manual (1988) — Smithsonian",
+    "url": "https://mads.si.edu/mads/id/NMAH-AC1428-B002-F010-000001",
+    "verifiedIn": "docs/reinterp/SOURCES_LIA_COLLECTION_2026-09-28.md"
+   }
+  ],
+  "origin_intake_e1#7": [
+   {
+    "label": "Love in Action, The Source Program application (2001) — Smithsonian",
+    "url": "https://mads.si.edu/mads/id/NMAH-AC1428-B001-F006",
+    "verifiedIn": "docs/reinterp/SOURCES_LIA_COLLECTION_2026-09-28.md"
+   }
+  ],
+  "e4_offers#5": [
+   {
+    "label": "Exodus International, Telephone Counseling Manual (1988) — the transsexuality script",
+    "url": "https://mads.si.edu/mads/id/NMAH-AC1428-B002-F010-000001",
+    "verifiedIn": "docs/reinterp/SOURCES_LIA_COLLECTION_2026-09-28.md"
+   }
+  ],
+  "e4_offers#6": [
+   {
+    "label": "Smithsonian, Love in Action Collection (The Source Residential Program, 2001)",
+    "url": "https://sova.si.edu/record/nmah.ac.1428",
+    "verifiedIn": "docs/reinterp/SOURCES_LIA_COLLECTION_2026-09-28.md"
+   }
+  ],
+  "e3_theday#16": [
+   {
+    "label": "Evergreen International homepage, 28 Oct 2004 (Wayback)",
+    "url": "https://web.archive.org/web/20041028162709/http://www.evergreeninternational.org/",
+    "verifiedIn": "docs/reinterp/SOURCES_LIA_COLLECTION_2026-09-28.md"
+   },
+   {
+    "label": "Evergreen International, About Us, 6 Mar 2005 (Wayback)",
+    "url": "https://web.archive.org/web/20050306200207/http://www.evergreeninternational.org/about_us.htm",
+    "verifiedIn": "docs/reinterp/SOURCES_LIA_COLLECTION_2026-09-28.md"
    }
   ]
  },

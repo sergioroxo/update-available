@@ -1,363 +1,442 @@
 {
-  "_doc": "⚑ THE MAP (S145, 2026-09-16 — docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md §3A). FRAME VOICE: this is the game menu's 'Where you are' and the idle helper's one line — the frame explaining the piece, which it may, because the frame never plays. Four eras; each a list of beats in the order the spine walks them. `done` is a condition key resolved in src/witness/map.ts against the ledger and the OS (conditions in code, content in data — the guide's own pattern); `hint` is the plain line for what to do; `where` the plain direction; `optional` beats are shown but are never 'current' (the piece does not require them); `quiet` beats never raise the helper (felt / respite / the Close: nothing plain is allowed to speak over them). Nothing here is display text in the fiction and nothing here files.",
-  "title": "Where you are",
-  "row": "Where you are — and what is next",
-  "nextLabel": "Next",
-  "hereLabel": "You are here",
-  "soFarLabel": "So far, the software has",
-  "soFarEmpty": "nothing filed here yet",
-  "readFile": "Read your file — the entries and their sources",
-  "aheadLabel": "ahead",
-  "doneLabel": "done",
-  "optionalMark": "optional",
-  "closeLabel": "The Close",
-  "closeHint": "Look up. Then read the four panels, and the screen on the desk.",
-  "helper": {
-    "idleSeconds": 20,
-    "prefix": "Next:",
-    "dismissHint": "(any press hides this)"
-  },
-  "eras": [
+ "_doc": "⚑ THE MAP (S145, 2026-09-16 — docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md §3A). FRAME VOICE: this is the game menu's 'Where you are' and the idle helper's one line — the frame explaining the piece, which it may, because the frame never plays. Four eras; each a list of beats in the order the spine walks them. `done` is a condition key resolved in src/witness/map.ts against the ledger and the OS (conditions in code, content in data — the guide's own pattern); `hint` is the plain line for what to do; `where` the plain direction; `optional` beats are shown but are never 'current' (the piece does not require them); `quiet` beats never raise the helper (felt / respite / the Close: nothing plain is allowed to speak over them). Nothing here is display text in the fiction and nothing here files.",
+ "title": "Where you are",
+ "row": "Where you are — and what is next",
+ "nextLabel": "Next",
+ "hereLabel": "You are here",
+ "soFarLabel": "So far, the software has",
+ "soFarEmpty": "nothing filed here yet",
+ "readFile": "Read your file — the entries and their sources",
+ "aheadLabel": "ahead",
+ "doneLabel": "done",
+ "optionalMark": "optional",
+ "closeLabel": "The Close",
+ "closeHint": "Look up. Then read the four panels, and the screen on the desk.",
+ "helper": {
+  "idleSeconds": 20,
+  "prefix": "Next:",
+  "dismissHint": "(any press hides this)"
+ },
+ "eras": [
+  {
+   "id": "e1",
+   "label": "1997 · Daniel",
+   "beats": [
     {
-      "id": "e1",
-      "label": "1997 · Daniel",
-      "beats": [
-        {
-          "id": "profile",
-          "label": "The questionnaire",
-          "done": "profileFiled",
-          "hint": "Answer the questions on the screen — pick the pictures and the words that fit.",
-          "where": "the monitor"
-        },
-        {
-          "id": "kit",
-          "label": "The disk",
-          "done": "kitInserted",
-          "hint": "Open the disk — the A: icon on the desktop, or the disk on the desk.",
-          "where": "the monitor"
-        },
-        {
-          "id": "read",
-          "label": "Un-Walk, the programme",
-          "done": "kitRead",
-          "hint": "Read the programme: step 1 on its First Steps page, then Done.",
-          "where": "the monitor"
-        },
-        {
-          "id": "pray",
-          "label": "The prayer",
-          "done": "prayerSaid",
-          "hint": "Step 2: play the companion tape and follow the words to the end.",
-          "where": "the monitor"
-        },
-        {
-          "id": "pledge",
-          "label": "The pledge card",
-          "done": "pledgeAnswered",
-          "hint": "Step 3: the card — sign it in your name, or set it aside.",
-          "where": "the monitor"
-        },
-        {
-          "id": "connect",
-          "label": "Going online",
-          "done": "wentOnline",
-          "hint": "Step 4: connect — the Internet Setup Wizard dials the fellowship.",
-          "where": "the monitor"
-        },
-        {
-          "id": "channel",
-          "label": "The channel",
-          "done": "spokeInChannel",
-          "hint": "Say something in the channel — pick a reply.",
-          "where": "the monitor"
-        },
-        {
-          "id": "wall",
-          "label": "The wall behind you",
-          "done": "wallSeen",
-          "optional": true,
-          "hint": "Turn around. Something on the wall is keeping notes.",
-          "where": "behind you"
-        },
-        {
-          "id": "request",
-          "label": "Rob's request",
-          "done": "dmAccepted",
-          "hint": "MentorRob has asked to message you privately. Accept the request.",
-          "where": "the monitor"
-        },
-        {
-          "id": "dm",
-          "label": "The private message",
-          "done": "repliedToContact",
-          "hint": "Someone has written to you privately. Answer.",
-          "where": "the monitor"
-        },
-        {
-          "id": "packet",
-          "label": "The placement letter",
-          "done": "packetAcked",
-          "hint": "A letter has arrived on the screen — read it and press Ok.",
-          "where": "the monitor"
-        },
-        {
-          "id": "form",
-          "label": "The Family Form",
-          "done": "formDone",
-          "hint": "Your mentor's form is on the desktop now. Open it.",
-          "where": "the monitor"
-        },
-        {
-          "id": "diary",
-          "label": "DIARY.TXT",
-          "done": "diaryDone",
-          "hint": "Open DIARY.TXT and write.",
-          "where": "the monitor"
-        },
-        {
-          "id": "racket",
-          "label": "The racket on the wall",
-          "done": "pillowDone",
-          "optional": true,
-          "hint": "The racket on the wall opens the first exercise. Press it.",
-          "where": "the wall to your right"
-        },
-        {
-          "id": "rootcause",
-          "label": "Root Cause Digger",
-          "done": "rootCauseOpened",
-          "optional": true,
-          "hint": "A game came with the disk — ROOTCAUSE.EXE on the desktop. Dig, if you like.",
-          "where": "the monitor"
-        },
-        {
-          "id": "update",
-          "label": "The update",
-          "done": "updatedTo2",
-          "hint": "An update notice will arrive on its own. Answer it when it does.",
-          "where": "the monitor"
-        }
-      ]
+     "id": "profile",
+     "label": "The questionnaire",
+     "done": "profileFiled",
+     "hint": "Answer the questions on the screen — pick the pictures and the words that fit.",
+     "where": "the monitor"
     },
     {
-      "id": "e2",
-      "label": "2003 · Daniel",
-      "beats": [
-        {
-          "id": "assistant",
-          "label": "The assistant",
-          "done": "assistantMet",
-          "hint": "The assistant is waiting on the screen. Let it begin.",
-          "where": "the monitor"
-        },
-        {
-          "id": "checkin",
-          "label": "The daily check-in",
-          "done": "checkinDone",
-          "hint": "Open the check-in on the desktop and answer it.",
-          "where": "the monitor"
-        },
-        {
-          "id": "send",
-          "label": "A summons",
-          "done": "sendResolved",
-          "optional": true,
-          "hint": "When the screen sends you somewhere, a marker appears on the floor. Press it to go — or stay.",
-          "where": "the floor"
-        },
-        {
-          "id": "message",
-          "label": "A message from outside",
-          "done": "contactOpened",
-          "hint": "A message has arrived. Open it.",
-          "where": "the monitor"
-        },
-        {
-          "id": "thread",
-          "label": "The thread",
-          "done": "threadCommitted",
-          "quiet": true,
-          "hint": "Answer him — pick what you would say.",
-          "where": "the monitor"
-        },
-        {
-          "id": "alert",
-          "label": "The intervention",
-          "done": "restoreDone",
-          "hint": "Read the alert, then open the mail and continue.",
-          "where": "the monitor"
-        },
-        {
-          "id": "residue",
-          "label": "What is left",
-          "done": "residueFiled",
-          "quiet": true,
-          "hint": "One line is left on the screen. Press it when you are ready.",
-          "where": "the monitor"
-        },
-        {
-          "id": "update",
-          "label": "The update",
-          "done": "updatedTo3",
-          "hint": "An update notice will arrive on its own. Answer it when it does.",
-          "where": "the monitor"
-        }
-      ]
+     "id": "kit",
+     "label": "The disk",
+     "done": "kitInserted",
+     "hint": "Open the disk — the A: icon on the desktop, or the disk on the desk.",
+     "where": "the monitor"
     },
     {
-      "id": "e3",
-      "label": "2016 · Vera",
-      "beats": [
-        {
-          "id": "migrate",
-          "label": "The migration",
-          "done": "migrated",
-          "hint": "Continue on the screen — the file is being moved to the new service.",
-          "where": "the workstation on the desk"
-        },
-        {
-          "id": "signin",
-          "label": "Sign in",
-          "done": "signedIn",
-          "hint": "Sign in on the workstation.",
-          "where": "the workstation"
-        },
-        {
-          "id": "consent",
-          "label": "Lambient's question",
-          "done": "consentAnswered",
-          "hint": "Answer the assistant's question — either answer works.",
-          "where": "the workstation"
-        },
-        {
-          "id": "work",
-          "label": "One job done",
-          "done": "oneJobDone",
-          "hint": "Open a task on the board and work through it — apply or skip, your choice — to its end.",
-          "where": "the workstation"
-        },
-        {
-          "id": "record",
-          "label": "Your record",
-          "done": "recordViewed",
-          "optional": true,
-          "hint": "Your record is on the platform — the chip at the bottom of the screen.",
-          "where": "the workstation"
-        },
-        {
-          "id": "jobs",
-          "label": "The other jobs",
-          "done": "allJobsDone",
-          "optional": true,
-          "hint": "The board has more — in any order, or none.",
-          "where": "the workstation"
-        },
-        {
-          "id": "phone",
-          "label": "The phone",
-          "done": "phoneAnswered",
-          "hint": "Pick up the phone — it has a message. Unlock it and open the thread.",
-          "where": "the phone on the desk — look down, a little to your left"
-        },
-        {
-          "id": "vote",
-          "label": "The vote",
-          "done": "voted",
-          "hint": "The group's link on the phone — open it, and the second one that follows.",
-          "where": "the phone"
-        },
-        {
-          "id": "cascade",
-          "label": "The group",
-          "done": "cascadeSeen",
-          "quiet": true,
-          "hint": "Open the link on the phone. The group answers.",
-          "where": "the phone on the desk"
-        },
-        {
-          "id": "update",
-          "label": "The update",
-          "done": "updatedTo4",
-          "hint": "An update notice will arrive on its own. Answer it when it does.",
-          "where": "the workstation"
-        }
-      ]
+     "id": "read",
+     "label": "Un-Walk, the programme",
+     "done": "kitRead",
+     "hint": "Read the programme: step 1 on its First Steps page, then Done.",
+     "where": "the monitor"
     },
     {
-      "id": "e4",
-      "label": "2026 · Maya",
-      "beats": [
-        {
-          "id": "wake",
-          "label": "The screensaver",
-          "done": "saverPressed",
-          "hint": "The monitor is asleep on its mark — press it to restore the session.",
-          "where": "the monitor"
-        },
-        {
-          "id": "l",
-          "label": "L, on the laptop",
-          "done": "browserOpen",
-          "hint": "L is talking on the laptop beside you — press through its lines while the session restores.",
-          "where": "the laptop"
-        },
-        {
-          "id": "search",
-          "label": "The search, finished",
-          "done": "resultsSeen",
-          "hint": "Open the search and let the engine finish it. Read the results.",
-          "where": "the monitor"
-        },
-        {
-          "id": "site",
-          "label": "Second Thoughts",
-          "done": "programBegun",
-          "hint": "The first result is a site. Open it, start a session, and let the agent begin.",
-          "where": "the monitor"
-        },
-        {
-          "id": "steps",
-          "label": "L's five turns",
-          "done": "stepsDone",
-          "hint": "L asks, you answer — then each step's own press. Continue moves you on; nothing moves by itself.",
-          "where": "the monitor"
-        },
-        {
-          "id": "headset",
-          "label": "The headset",
-          "done": "headsetWorn",
-          "hint": "Put the headset on — press it, on the desk.",
-          "where": "the headset on the desk"
-        },
-        {
-          "id": "session",
-          "label": "The session on the glass",
-          "done": "commonsJoined",
-          "quiet": true,
-          "hint": "Sit with it. A link will come — press it.",
-          "where": "the glass"
-        },
-        {
-          "id": "commons",
-          "label": "The Commons",
-          "done": "terminated",
-          "quiet": true,
-          "hint": "Stay. Turn to look. The markers on the floor move you.",
-          "where": "the floor"
-        },
-        {
-          "id": "close",
-          "label": "The update fails",
-          "done": "closed",
-          "quiet": true,
-          "hint": "Watch the screens.",
-          "where": "the desk"
-        }
-      ]
+     "id": "pray",
+     "label": "The prayer",
+     "done": "prayerSaid",
+     "hint": "Step 2: play the companion tape and follow the words to the end.",
+     "where": "the monitor"
+    },
+    {
+     "id": "pledge",
+     "label": "The pledge card",
+     "done": "pledgeAnswered",
+     "hint": "Step 3: the card — sign it in your name, or set it aside.",
+     "where": "the monitor"
+    },
+    {
+     "id": "connect",
+     "label": "Going online",
+     "done": "wentOnline",
+     "hint": "Step 4: connect — the Internet Setup Wizard dials the fellowship.",
+     "where": "the monitor"
+    },
+    {
+     "id": "web",
+     "label": "The fellowship's page",
+     "done": "channelJoined",
+     "hint": "The browser opened on the fellowship's page. Join #stillstruggling at the top — or browse the pages first; the channel waits.",
+     "where": "the monitor"
+    },
+    {
+     "id": "browse",
+     "label": "The web and the ring",
+     "done": "searched",
+     "optional": true,
+     "hint": "Search, open the directory, or follow the ring: every page leads to another ministry.",
+     "where": "the monitor"
+    },
+    {
+     "id": "channel",
+     "label": "The channel",
+     "done": "spokeInChannel",
+     "hint": "Say something in the channel — pick a reply.",
+     "where": "the monitor"
+    },
+    {
+     "id": "wall",
+     "label": "The wall behind you",
+     "done": "wallSeen",
+     "optional": true,
+     "hint": "Turn around. Something on the wall is keeping notes.",
+     "where": "behind you"
+    },
+    {
+     "id": "request",
+     "label": "Rob's request",
+     "done": "dmAccepted",
+     "hint": "MentorRob has asked to message you privately. Accept the request.",
+     "where": "the monitor"
+    },
+    {
+     "id": "image",
+     "label": "The picture",
+     "done": "yesReceived",
+     "hint": "MentorRob is sending you a picture. Accept it, then close the viewer.",
+     "where": "the monitor"
+    },
+    {
+     "id": "dm",
+     "label": "The private message",
+     "done": "repliedToContact",
+     "hint": "Someone has written to you privately. Answer.",
+     "where": "the monitor"
+    },
+    {
+     "id": "packet",
+     "label": "The placement letter",
+     "done": "packetAcked",
+     "hint": "A letter has arrived on the screen — read it and press Ok.",
+     "where": "the monitor"
+    },
+    {
+     "id": "form",
+     "label": "The Family Form",
+     "done": "formDone",
+     "hint": "Your mentor's form is on the desktop now. Open it.",
+     "where": "the monitor"
+    },
+    {
+     "id": "diary",
+     "label": "DIARY.TXT",
+     "done": "diaryDone",
+     "hint": "Open DIARY.TXT and write.",
+     "where": "the monitor"
+    },
+    {
+     "id": "racket",
+     "label": "The racket on the wall",
+     "done": "pillowDone",
+     "optional": true,
+     "hint": "The racket on the wall opens the first exercise. Press it.",
+     "where": "the wall to your right"
+    },
+    {
+     "id": "rootcause",
+     "label": "Root Cause Digger",
+     "done": "rootCauseOpened",
+     "optional": true,
+     "hint": "A game came with the disk — ROOTCAUSE.EXE on the desktop. Dig, if you like.",
+     "where": "the monitor"
+    },
+    {
+     "id": "handheld",
+     "label": "Your handheld",
+     "done": "fitinPlayed",
+     "optional": true,
+     "hint": "Your handheld is on the bed. Pick it up; once the disk has come, it has a game.",
+     "where": "the bed"
+    },
+    {
+     "id": "update",
+     "label": "The update",
+     "done": "updatedTo2",
+     "hint": "An update notice will arrive on its own. Answer it when it does.",
+     "where": "the monitor"
     }
-  ],
-  "aheadCount": "{n} beats ahead",
-  "progress": "{d} of {n} done",
-  "fileOpen": "What it did here — {n} entries ▸",
-  "fileClose": "What it did here — {n} entries ▾"
+   ]
+  },
+  {
+   "id": "e2",
+   "label": "2003 · Daniel",
+   "beats": [
+    {
+     "id": "assistant",
+     "label": "The assistant",
+     "done": "assistantMet",
+     "hint": "The assistant is waiting on the screen. Let it begin.",
+     "where": "the monitor"
+    },
+    {
+     "id": "checkin",
+     "label": "The daily check-in",
+     "done": "checkinDone",
+     "hint": "Open the check-in on the desktop and answer it.",
+     "where": "the monitor"
+    },
+    {
+     "id": "forum",
+     "label": "Harbor Forums",
+     "done": "forumRules",
+     "optional": true,
+     "hint": "A thread was recommended to you: the Harbor Forums icon on the desktop.",
+     "where": "the monitor"
+    },
+    {
+     "id": "apply",
+     "label": "The application",
+     "done": "forumApplied",
+     "optional": true,
+     "hint": "Harbor's Apply page: the programme's application, already filled in.",
+     "where": "the monitor"
+    },
+    {
+     "id": "reach",
+     "label": "REACH",
+     "done": "reachPlayed",
+     "optional": true,
+     "hint": "Your phone on the desk has a game on it now.",
+     "where": "the desk"
+    },
+    {
+     "id": "send",
+     "label": "A summons",
+     "done": "sendResolved",
+     "optional": true,
+     "hint": "When the screen sends you somewhere, a marker appears on the floor. Press it to go — or stay.",
+     "where": "the floor"
+    },
+    {
+     "id": "message",
+     "label": "A message from outside",
+     "done": "contactOpened",
+     "hint": "A message has arrived. Open it.",
+     "where": "the monitor"
+    },
+    {
+     "id": "thread",
+     "label": "The thread",
+     "done": "threadCommitted",
+     "quiet": true,
+     "hint": "Answer him — pick what you would say.",
+     "where": "the monitor"
+    },
+    {
+     "id": "alert",
+     "label": "The intervention",
+     "done": "restoreDone",
+     "hint": "Read the alert, then open the mail and continue.",
+     "where": "the monitor"
+    },
+    {
+     "id": "residue",
+     "label": "What is left",
+     "done": "residueFiled",
+     "quiet": true,
+     "hint": "One line is left on the screen. Press it when you are ready.",
+     "where": "the monitor"
+    },
+    {
+     "id": "update",
+     "label": "The update",
+     "done": "updatedTo3",
+     "hint": "An update notice will arrive on its own. Answer it when it does.",
+     "where": "the monitor"
+    }
+   ]
+  },
+  {
+   "id": "e3",
+   "label": "2016 · Vera",
+   "beats": [
+    {
+     "id": "migrate",
+     "label": "The migration",
+     "done": "migrated",
+     "hint": "Continue on the screen — the file is being moved to the new service.",
+     "where": "the workstation on the desk"
+    },
+    {
+     "id": "signin",
+     "label": "Sign in",
+     "done": "signedIn",
+     "hint": "Sign in on the workstation.",
+     "where": "the workstation"
+    },
+    {
+     "id": "consent",
+     "label": "Lambient's question",
+     "done": "consentAnswered",
+     "hint": "Answer the assistant's question — either answer works.",
+     "where": "the workstation"
+    },
+    {
+     "id": "work",
+     "label": "One job done",
+     "done": "oneJobDone",
+     "hint": "Open a task on the board and work through it — apply or skip, your choice — to its end.",
+     "where": "the workstation"
+    },
+    {
+     "id": "record",
+     "label": "Your record",
+     "done": "recordViewed",
+     "optional": true,
+     "hint": "Your record is on the platform — the chip at the bottom of the screen.",
+     "where": "the workstation"
+    },
+    {
+     "id": "jobs",
+     "label": "The other jobs",
+     "done": "allJobsDone",
+     "optional": true,
+     "hint": "The board has more — in any order, or none.",
+     "where": "the workstation"
+    },
+    {
+     "id": "recommend",
+     "label": "Tag the video",
+     "done": "tagged",
+     "optional": true,
+     "hint": "On the board: Tag the video.",
+     "where": "the workstation"
+    },
+    {
+     "id": "group",
+     "label": "Post to the group",
+     "done": "grouped",
+     "optional": true,
+     "hint": "On the board: Post to the group.",
+     "where": "the workstation"
+    },
+    {
+     "id": "phone",
+     "label": "The phone",
+     "done": "phoneAnswered",
+     "hint": "Pick up the phone — it has a message. Unlock it and open the thread.",
+     "where": "the phone on the desk — look down, a little to your left"
+    },
+    {
+     "id": "vote",
+     "label": "The vote",
+     "done": "voted",
+     "hint": "The group's link on the phone — open it, and the second one that follows.",
+     "where": "the phone"
+    },
+    {
+     "id": "cascade",
+     "label": "The group",
+     "done": "cascadeSeen",
+     "quiet": true,
+     "hint": "Open the link on the phone. The group answers.",
+     "where": "the phone on the desk"
+    },
+    {
+     "id": "update",
+     "label": "The update",
+     "done": "updatedTo4",
+     "hint": "An update notice will arrive on its own. Answer it when it does.",
+     "where": "the workstation"
+    }
+   ]
+  },
+  {
+   "id": "e4",
+   "label": "2026 · Maya",
+   "beats": [
+    {
+     "id": "wake",
+     "label": "The screensaver",
+     "done": "saverPressed",
+     "hint": "The monitor is asleep on its mark — press it to restore the session.",
+     "where": "the monitor"
+    },
+    {
+     "id": "l",
+     "label": "L, on the laptop",
+     "done": "browserOpen",
+     "hint": "L is talking on the laptop beside you — press through its lines while the session restores.",
+     "where": "the laptop"
+    },
+    {
+     "id": "search",
+     "label": "The search, finished",
+     "done": "resultsSeen",
+     "hint": "Open the search and let the engine finish it. Read the results.",
+     "where": "the monitor"
+    },
+    {
+     "id": "site",
+     "label": "Second Thoughts",
+     "done": "programBegun",
+     "hint": "The first result is a site. Open it, start a session, and let the agent begin.",
+     "where": "the monitor"
+    },
+    {
+     "id": "tidy",
+     "label": "The console",
+     "done": "tidyPlayed",
+     "optional": true,
+     "hint": "The console on the bed. Pick it up.",
+     "where": "the bed"
+    },
+    {
+     "id": "steps",
+     "label": "L's five turns",
+     "done": "stepsDone",
+     "hint": "L asks, you answer — then each step's own press. Continue moves you on; nothing moves by itself.",
+     "where": "the monitor"
+    },
+    {
+     "id": "headset",
+     "label": "The headset",
+     "done": "headsetWorn",
+     "hint": "Put the headset on — press it, on the desk.",
+     "where": "the headset on the desk"
+    },
+    {
+     "id": "session",
+     "label": "The session on the glass",
+     "done": "commonsJoined",
+     "quiet": true,
+     "hint": "Sit with it. A link will come — press it.",
+     "where": "the glass"
+    },
+    {
+     "id": "commons",
+     "label": "The Commons",
+     "done": "terminated",
+     "quiet": true,
+     "hint": "Stay. Turn to look. The markers on the floor move you.",
+     "where": "the floor"
+    },
+    {
+     "id": "close",
+     "label": "The update fails",
+     "done": "closed",
+     "quiet": true,
+     "hint": "Watch the screens.",
+     "where": "the desk"
+    }
+   ]
+  }
+ ],
+ "aheadCount": "{n} beats ahead",
+ "progress": "{d} of {n} done",
+ "fileOpen": "What it did here — {n} entries ▸",
+ "fileClose": "What it did here — {n} entries ▾",
+ "_docS201": "⚑ S201 — the map follows the new flow (his 'use the narrative helpers… to help navigate this space. It is better to have people do stuff than to panic in waiting'): 1997's browser is a required beat before the channel, the picture Rob sends is a required beat before his message, and the pages, the games, the forum, the application and the 2016 jobs are listed as optional — the menu's 'Where you are' shows them, and the idle helper names the required next step."
 }
