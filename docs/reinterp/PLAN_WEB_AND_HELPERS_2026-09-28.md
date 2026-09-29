@@ -67,3 +67,24 @@ documentary. It takes 2016's Tag the video and 2003's recommended thread. **The 
 4. **2016:** Streamline's home, the network map, two Resources videos; Lambient's wait lines.
 5. **2026:** the agent's articles (both readings), L's wait lines.
 6. **Phase 6's remaining lines:** the guided first filing and the four carry-over lines.
+
+## 6 · His visual archive (Deep Research, 2026-09-29 — `~/Pc_Simulation/Sources/Deep Research/visual archive.md`) — what it corrects
+- **1997: not "1990s costume".** It warns against putting webring + counter + guestbook + "under construction" on one page without
+  site evidence. His own finds (the NCXDS link directory, 1999–2005: counter, webrings, guestbook) are that evidence for the
+  directory page; the counsellor's and the parents' pages stay plain (table, logo, text links, e-mail). The BROWSER should be
+  Netscape 4's grammar — grey chrome, large picture buttons (Back · Forward · Reload · Home · Search · Print), the location field,
+  a status bar — and discovery can be Yahoo's: **categories** as well as search. → build.
+- **2003: Evergreen International's 2004 capture is the model** — navigation by audience (Individuals · Family · Support Groups ·
+  Therapists & Church Leaders), "The Way Out", a bookstore (cover · title · copy · "order"), events/conference, a referral
+  database behind it. Forums in UBB's grammar (Topic · Author · Replies · Views · Last Post). → Harbor's index can take the
+  Topic/Replies/Views matrix; a bookstore page.
+- **2016: the ministry disappears into platforms** — a Facebook group in Facebook's own frame; YouTube's watch page with Up next
+  (built S192); the **accountability apps** as ordinary UI (Enable · Partner · Report · Weekly report — Covenant Eyes, Ever
+  Accountable 30 June 2016, Accountable2You). Walk With (S181) is that. ⚑ **CHANGED/#OnceGay's "Share your story" is later
+  2010s** — 2016's end card keeps a generic "Share your story" (a platform CTA), its data note corrected.
+- **2026: the conversation.** detrans.ai's interface is documented (heading, "Please don't share any personal information… Chats
+  are public", Recent Conversations). ⚑ **A visible "these claims are disputed" label is NOT documented**; platform policy is
+  (TikTok, YouTube, Google), and the visible form is generic — *"removed for violating Community Guidelines"*. → **S193's note on
+  Maya's results is replaced by a removal notice on one result while the recommended one stays live** (the paradox kept, now in a
+  documented form).
+

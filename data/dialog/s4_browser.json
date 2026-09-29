@@ -503,7 +503,11 @@
    ],
    "queryLabel": "You searched for",
    "relatedLabel": "Related searches",
-   "related": ["identity exploration", "people who went back", "second thoughts support"],
+   "related": [
+    "identity exploration",
+    "people who went back",
+    "second thoughts support"
+   ],
    "_docS193": "⚑ S193 — Phase 5, 2026 (PLAN_ROUND5 four-era browser plan; his research SocialMedia_Deep.md §4): the MODERATION PARADOX — a platform label that the claims are disputed, sitting directly above '84% match — recommended for you' (the research's proposal [S]; explicit platform rules are documented from 2022, [D]) — and SEMANTIC MIGRATION made visible: the related searches walk her question into the apparatus's own vocabulary (euphemism routing documented by later audits, [R]).",
    "results": [
     {
@@ -520,10 +524,18 @@
      "snippet": "Talk to your prescriber before making changes. Some effects reverse; some do not."
     },
     {
+     "id": "removed",
+     "removed": true,
+     "title": "Video unavailable",
+     "url": "streamline.com/watch?v=backagain",
+     "snippet": "This video has been removed for violating our Community Guidelines."
+    },
+    {
      "id": "stories",
      "title": "people who changed their minds — Second Thoughts stories",
      "url": "secondthoughts.help/stories",
-     "snippet": "Real accounts, verified by Second Thoughts.", "label": "Some claims on this page are disputed by major medical organisations.", "match": "84% match — recommended for you"
+     "snippet": "Real accounts, verified by Second Thoughts.",
+     "match": "84% match — recommended for you"
     },
     {
      "id": "nhs",
@@ -532,7 +544,8 @@
      "snippet": "Current waiting times, how to be referred, what a first appointment covers."
     }
    ],
-   "_doc": "R3-89 — a fake search engine's results page for the query the engine finished for her. The first result is the agent's own site and the only press; the others are invented, plausible, and dead. `history` is hers, ordinary: the point is how ordinary the page around the steering is."
+   "_doc": "R3-89 — a fake search engine's results page for the query the engine finished for her. The first result is the agent's own site and the only press; the others are invented, plausible, and dead. `history` is hers, ordinary: the point is how ordinary the page around the steering is.",
+   "_docS197": "⚑ S197 — his visual archive (2026-09-29) corrected S193: a visible 'these claims are disputed' label on conversion-practice content is NOT documented; the platform POLICIES are (TikTok, YouTube, Google), and what a user sees is generic — 'removed for violating our Community Guidelines'. So the paradox is kept in its documented form: one video removed, and directly under it the agent's stories, '84% match — recommended for you'. The removal is the platform's; the recommendation is also the platform's."
   },
   "site": {
    "mark": "Second Thoughts",

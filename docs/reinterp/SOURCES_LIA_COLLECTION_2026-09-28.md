@@ -101,3 +101,25 @@ Garrard Conley's workbook (B13 F2) is viewable online only (slideshow viewer).
 > description of the visual design (layout, palette, typefaces, imagery), and whether it is a primary capture or a
 > description. Grade each: documented / reported / inferred. Do not reproduce personal data or survivor testimony;
 > describe interfaces, not individuals.
+
+## 5 · The second batch (2026-09-29) — `Boy Erased/New/`, PDFs with his OCR'd Markdown beside them
+| folder | what it is | where it lands |
+|---|---|---|
+| **B2 F10 — Exodus Telephone Counseling Manual (1988)** | caller SCRIPTS in tabbed sections (AIDS, Emotional Dependency, Parents, Suicide, Transsexuality, Transvestism, Wife of a Homosexual Struggler, How to Witness…); each tab runs *Situation* (the caller) → *Definition* → *Biblical Statement* → *Scripture* → *Counsel* → *Prayer* → *Resources* | **the lineage of scripted care**: Rob's lines (1997) and L's (2026) are this form, and so is the piece's own "fake intelligence" |
+| B2 F12 — Exodus North American Resource Booklets (1998) | the period's leaflets ("Are People Born Gay? Understanding the root of homosexuality"…) | 1997's Resources pages |
+| B8 F5 — *When a Loved One Says "I'm Gay"* (Focus on the Family, 2002) | the parents' booklet ("The Bombshell Hits", "Haunting Grief", "The 'If Onlys'"…) | 2003's "For families"; the mother's side |
+| B6 F4 / F5 — *The Roots and Causes of Female / Male Homosexuality* (Focus on the Family, 2001) | the root/wound rhetoric in the period's booklet form | "The wound behind it" |
+| B2 F14 — Establishing Group Meetings (2001) · B1 F18 / B13 F1 — study and class manuals | how groups were run; the "Steps Out" class | 2003 groups; 2016's peer group |
+| B1 F5 — Genogram (2000) · F9 — Feeling Words · F14 — The Life Development Process | intake and counselling worksheets | 2003 intake; the record's grammar |
+| B1 F19 / F20 — Radical Living (the programme after The Source) · F24 — the women's Source notebook (2002) | the later programme; the women's side | 2016 (Vera) |
+
+**⚑ Two passages that need his judgment before any use (documented harm — dossier only, never a game's voice):**
+- the Transsexuality tab conditions counsel on the caller agreeing *"to be called by their original name"* and to *"dress in clothing appropriate to their original sex while the phone counseling is taking place"*, and says *"most transsexuals love the attention their 'unique' problem gains for them"* — the documented ancestor of Era 4's "under the old file" (the piece still never shows a deadname);
+- the Suicide tab calls suicide *"extremely selfish"*.
+
+## 6 · A link from the time (his, 2026-09-29)
+**Google Groups, "EX GAY MUSLIMS"** (*"Ex-Gay Discussion Board — A Place of Hope for Gays Seeking Change"*) — one message, 24 January 2008,
+a directory of ~150 links (Exodus International and Exodus Global Alliance, NARTH, Homosexuals Anonymous, Desert Stream, Love
+in Action, PFOX, regional and international groups): https://groups.google.com/g/ex-gay-muslims/c/D5fugfcxlNM — the 1997 directory
+form, a decade on, crossing faiths and living inside a platform.
+

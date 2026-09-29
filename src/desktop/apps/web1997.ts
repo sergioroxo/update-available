@@ -25,13 +25,16 @@ type PageId = keyof typeof D.pages;
 type View = { kind: 'portal' } | { kind: 'results'; page: number } | { kind: 'page'; id: PageId } | { kind: 'list' };
 type PageDef = { heading: string; byline?: string; lines: string[]; counter?: boolean; practice?: string };
 
-const WX = 6, WY = 6, WW = 500, WH = 350;
+const WX = 4, WY = 3, WW = 504, WH = 356;
+/** ⚑ S197 — Netscape 4's grammar (his visual archive): picture buttons, the location field, a status bar */
+const TOOL_H = 30, LOC_H = 18, STATUS_H = 12;
 
 export class Web1997App {
   open = true;
   hits: Hit[] = [];
   private view: View = { kind: 'portal' };
   private back: View[] = [];
+  private fwd: View[] = [];
   private visited = new Set<string>();
   private hover = '';
   /** the first search, filed by os */
@@ -39,7 +42,7 @@ export class Web1997App {
   /** Join: the channel opens */
   onJoin?: () => void;
 
-  private go(v: View): void { this.back.push(this.view); this.view = v; }
+  private go(v: View): void { this.back.push(this.view); this.fwd = []; this.view = v; }
 
   handleMove(x: number, y: number): void {
     const h = this.hits.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
@@ -50,7 +53,9 @@ export class Web1997App {
     const h = this.hits.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
     if (!h) return;
     const id = h.id;
-    if (id === 'web-back') { const b = this.back.pop(); if (b) this.view = b; return; }
+    if (id === 'web-back') { const b = this.back.pop(); if (b) { this.fwd.push(this.view); this.view = b; } return; }
+    if (id === 'web-fwd') { const f = this.fwd.pop(); if (f) { this.back.push(this.view); this.view = f; } return; }
+    if (id === 'web-reload') return;   // the same page, again
     if (id === 'web-home') { this.go({ kind: 'portal' }); return; }
     if (id === 'web-search' || id.startsWith('web-hist')) {
       this.onSearch?.();
@@ -82,20 +87,38 @@ export class Web1997App {
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
     const c = ui.windowFrame(ctx, WX, WY, WW, WH, `${D.browser}`, true, 'web');
-    // the chrome: Back, Home, the address
-    ui.px(ctx, c.x, c.y, c.w, 22, ERA1.beige);
-    const canBack = this.back.length > 0;
-    ui.button(ctx, c.x + 3, c.y + 3, 40, 16, D.back, { disabled: !canBack, hover: this.hover === 'web-back' });
-    if (canBack) this.hits.push({ x: c.x + 3, y: c.y + 3, w: 40, h: 16, id: 'web-back' });
-    const atHome = this.view.kind === 'portal';
-    ui.button(ctx, c.x + 46, c.y + 3, 40, 16, 'Home', { disabled: atHome, hover: this.hover === 'web-home' });
-    if (!atHome) this.hits.push({ x: c.x + 46, y: c.y + 3, w: 40, h: 16, id: 'web-home' });
-    ui.bevel(ctx, c.x + 90, c.y + 3, c.w - 94, 16, false);
-    ui.px(ctx, c.x + 92, c.y + 5, c.w - 98, 12, ERA1.white);
+    // the chrome, Netscape 4's: a row of picture buttons, then the location field
+    ui.px(ctx, c.x, c.y, c.w, TOOL_H + LOC_H + 4, ERA1.beige);
+    const tools: Array<[string, string, boolean]> = [
+      ['back', 'Back', this.back.length > 0], ['fwd', 'Forward', this.fwd.length > 0], ['reload', 'Reload', true],
+      ['home', 'Home', this.view.kind !== 'portal'], ['search', 'Search', true], ['print', 'Print', false]
+    ];
+    tools.forEach(([k, label, live], i) => {
+      const bx = c.x + 3 + i * 46, by = c.y + 2;
+      ui.bevel(ctx, bx, by, 44, TOOL_H - 2, true);
+      this.icon(ctx, k, bx + 16, by + 3, live);
+      ui.setFont(ctx, 8);
+      ctx.fillStyle = live ? ERA1.black : ERA1.grey;
+      ctx.fillText(label, bx + Math.round((44 - ctx.measureText(label).width) / 2), by + 16);
+      if (live) this.hits.push({ x: bx, y: by, w: 44, h: TOOL_H - 2, id: k === 'home' ? 'web-home' : k === 'search' ? 'web-search' : `web-${k}` });
+    });
+    // the browser's own mark, animated in the period (here: still)
+    ui.px(ctx, c.x + c.w - 30, c.y + 2, 26, TOOL_H - 2, P.logoBg);
+    ui.setFont(ctx, 14); ctx.fillStyle = P.logoInk; ctx.fillText('N', c.x + c.w - 22, c.y + 7);
+    const ly = c.y + TOOL_H + 2;
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.black; ctx.fillText('Location:', c.x + 4, ly + 4);
+    ui.bevel(ctx, c.x + 50, ly, c.w - 54, 16, false);
+    ui.px(ctx, c.x + 52, ly + 2, c.w - 58, 12, ERA1.white);
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.black;
-    ctx.fillText(this.address(), c.x + 95, c.y + 6);
-    const body = { x: c.x, y: c.y + 24, w: c.w, h: c.h - 24 };
+    ctx.fillText(this.address(), c.x + 55, ly + 3);
+    // the status bar
+    const sy = c.y + c.h - STATUS_H;
+    ui.px(ctx, c.x, sy, c.w, STATUS_H, ERA1.beige);
+    ui.bevel(ctx, c.x + 2, sy + 1, c.w - 60, STATUS_H - 2, false);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.black; ctx.fillText('Document: Done', c.x + 6, sy + 2);
+    const top = TOOL_H + LOC_H + 4;
+    const body = { x: c.x, y: c.y + top, w: c.w, h: c.h - top - STATUS_H };
     ui.px(ctx, body.x, body.y, body.w, body.h, this.view.kind === 'results' ? ERA1.white : P.page);
     if (this.view.kind === 'portal') this.drawPortal(ctx, body);
     else if (this.view.kind === 'results') this.drawResults(ctx, body, this.view.page);
@@ -103,6 +126,18 @@ export class Web1997App {
     else this.drawPage(ctx, body, this.view.id);
     // (its close box answers nothing: the network does not let go — the channel is the way on;
     //  its minimise box and its taskbar button are the way to put it down)
+  }
+
+  /** the picture on each toolbar button, drawn in pixels (grey when the button is dead) */
+  private icon(ctx: CanvasRenderingContext2D, k: string, x: number, y: number, live: boolean): void {
+    const c = live ? P.iconInk : ERA1.grey;
+    const r = (dx: number, dy: number, w: number, h: number) => ui.px(ctx, x + dx, y + dy, w, h, c);
+    if (k === 'back') { for (let i = 0; i < 5; i++) r(4 - i, 5 - i, 1, 1 + i * 2); r(5, 4, 6, 3); }
+    else if (k === 'fwd') { for (let i = 0; i < 5; i++) r(7 + i, 5 - i, 1, 1 + i * 2); r(1, 4, 6, 3); }
+    else if (k === 'reload') { r(2, 2, 8, 2); r(2, 2, 2, 8); r(2, 8, 8, 2); r(8, 5, 2, 5); r(9, 1, 3, 3); }
+    else if (k === 'home') { for (let i = 0; i < 5; i++) r(5 - i, i, 2 + i * 2, 1); r(2, 5, 8, 5); ui.px(ctx, x + 5, y + 7, 2, 3, P.logoBg); }
+    else if (k === 'search') { r(2, 1, 6, 2); r(1, 2, 2, 5); r(7, 2, 2, 5); r(2, 7, 6, 2); r(8, 8, 3, 3); }
+    else { r(2, 0, 8, 4); r(0, 4, 12, 5); r(2, 9, 8, 2); }
   }
 
   private address(): string {
@@ -135,17 +170,17 @@ export class Web1997App {
     this.heading(ctx, b, T.heading);
     ui.setFont(ctx, 10);
     ctx.fillStyle = P.text;
-    ctx.fillText(T.welcome, b.x + Math.round((b.w - ctx.measureText(T.welcome).width) / 2), b.y + 40);
+    ctx.fillText(T.welcome, b.x + Math.round((b.w - ctx.measureText(T.welcome).width) / 2), b.y + 34);
     // the one big button
-    const bw = 200, bx = b.x + Math.round((b.w - bw) / 2), by = b.y + 58;
+    const bw = 200, bx = b.x + Math.round((b.w - bw) / 2), by = b.y + 50;
     ui.button(ctx, bx, by, bw, 24, T.join, { hover: this.hover === 'web-join' });
     this.hits.push({ x: bx, y: by, w: bw, h: 24, id: 'web-join' });
     ui.setFont(ctx, 9);
     ctx.fillStyle = P.dim;
     ctx.fillText(T.joinSub, b.x + Math.round((b.w - ctx.measureText(T.joinSub).width) / 2), by + 30);
-    ui.px(ctx, b.x + 20, b.y + 124, b.w - 40, 1, P.rule);
+    ui.px(ctx, b.x + 20, b.y + 96, b.w - 40, 1, P.rule);
     // the search, tonight's query already in the field (no free typing — the law), the nights before under it
-    const fx = b.x + 24, fy = b.y + 134;
+    const fx = b.x + 24, fy = b.y + 104;
     ui.setFont(ctx, 9); ctx.fillStyle = P.text; ctx.fillText(T.searchLabel, fx, fy + 4);
     const sx = fx + 84, sw = 180;
     ui.bevel(ctx, sx, fy, sw, 18, false);
@@ -156,16 +191,16 @@ export class Web1997App {
     ctx.fillStyle = P.dim; ctx.fillText(D.historyLabel, fx, fy + 26);
     let hx = fx + ctx.measureText(D.historyLabel).width + 10;
     D.history.forEach((q, i) => { this.link(ctx, q, hx, fy + 26, `web-hist:${i}`, true); hx += ctx.measureText(q).width + 12; });
-    ui.px(ctx, b.x + 20, b.y + 184, b.w - 40, 1, P.rule);
+    ui.px(ctx, b.x + 20, b.y + 146, b.w - 40, 1, P.rule);
     // the Resources, and the ring's list
-    ui.setFont(ctx, 11); ctx.fillStyle = P.heading; ctx.fillText(T.resourcesLabel, fx, b.y + 192);
+    ui.setFont(ctx, 11); ctx.fillStyle = P.heading; ctx.fillText(T.resourcesLabel, fx, b.y + 152);
     ui.setFont(ctx, 10);
     T.resources.forEach((pid, i) => {
       const pg = D.pages[pid as PageId] as PageDef;
-      this.link(ctx, pg.heading, fx + 12 + (i % 2) * 220, b.y + 212 + Math.floor(i / 2) * 18, `web-res:${pid}`, this.visited.has(pid));
+      this.link(ctx, pg.heading, fx + 12 + (i % 2) * 220, b.y + 170 + Math.floor(i / 2) * 18, `web-res:${pid}`, this.visited.has(pid));
     });
     ui.setFont(ctx, 9);
-    this.link(ctx, T.ringLink, fx, b.y + 256, 'web-ring:list');
+    this.link(ctx, T.ringLink, fx, b.y + 212, 'web-ring:list');
     // the counter
     const cw = ctx.measureText(D.counter).width + 12;
     ui.px(ctx, b.x + Math.round((b.w - cw) / 2), b.y + b.h - 22, cw, 16, P.counterBg);
@@ -183,7 +218,7 @@ export class Web1997App {
     ctx.fillText(D.resultsCount.replace('1-6', page === 1 ? '1-6' : '7-12'), b.x + 8, b.y + 28);
     const rs = page === 1 ? D.results : [...D.results].reverse();   // page 2: the same network, again
     rs.forEach((r, i) => {
-      const y = b.y + 44 + i * 40;
+      const y = b.y + 40 + i * 36;
       ui.setFont(ctx, 10);
       this.link(ctx, r.title, b.x + 12, y, `web-res:${r.id}`, this.visited.has(r.id));
       ui.setFont(ctx, 9);
@@ -210,7 +245,7 @@ export class Web1997App {
     ui.setFont(ctx, 9); ctx.fillStyle = P.dim;
     ctx.fillText(L.sub, b.x + Math.round((b.w - ctx.measureText(L.sub).width) / 2), b.y + 32);
     L.members.forEach((m, i) => {
-      const y = b.y + 50 + i * 21;
+      const y = b.y + 44 + i * 18;
       ui.setFont(ctx, 10);
       if (m.page) this.link(ctx, m.name, b.x + 30, y, `web-res:${m.page}`, this.visited.has(m.page));
       else {

@@ -625,6 +625,14 @@ export class E4Browser {
       const rh = 42;
       if (y + rh > H - 14) break;
       if (r.press) { roundEdge(ctx, x - 4, y - 4, W - ADDR.x * 2 - 8, rh + 2, 5, WEB.cardEdge, WEB.card); }
+      // ⚑ S197 — a removed result: the platform's own generic notice, greyed, nothing to press
+      if ((r as { removed?: boolean }).removed) {
+        setFont(ctx, 8); ctx.fillStyle = WEB.faint; ctx.fillText(r.url, x, y);
+        setFont(ctx, 11); ctx.fillStyle = WEB.muted; ctx.fillText(`⊘ ${r.title}`, x, y + 11);
+        setFont(ctx, 9); ctx.fillStyle = WEB.muted; ctx.fillText(r.snippet, x, y + 25);
+        y += rh + 6;
+        continue;
+      }
       setFont(ctx, 8); ctx.fillStyle = WEB.accent;
       ctx.fillText(r.url, x, y);
       setFont(ctx, 11); ctx.fillStyle = r.press ? WEB.primary : WEB.ink;
@@ -633,10 +641,9 @@ export class E4Browser {
       wrapText(ctx, r.snippet, W - ADDR.x * 2 - 24).slice(0, 1).forEach((ln) => ctx.fillText(ln, x, y + 25));
       if (r.press) this.publish({ x: x - 4, y: y - 4, w: W - ADDR.x * 2 - 8, h: rh + 2, id: `result-${r.id}` });
       // ⚑ S193 — the moderation paradox: the platform's own note, and the recommendation right under it
-      const rr = r as { label?: string; match?: string };
+      const rr = r as { match?: string };
       let extra = 0;
-      if (rr.label) { setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(`ⓘ ${rr.label}`, x, y + 38); extra += 12; }
-      if (rr.match) { setFont(ctx, 9); ctx.fillStyle = WEB.match; ctx.fillText(rr.match, x, y + 38 + extra); extra += 13; }
+      if (rr.match) { setFont(ctx, 9); ctx.fillStyle = WEB.match; ctx.fillText(rr.match, x, y + 38); extra += 13; }
       y += rh + 6 + extra;
     }
   }
