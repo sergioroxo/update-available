@@ -95,7 +95,99 @@
   ],
   "directory": "Find a group near you",
   "conference": "Conference 2003 — register",
-  "back": "‹ Harbor index"
+  "back": "‹ Harbor index",
+  "audiences": [
+   {
+    "label": "Individuals",
+    "to": "page:wayout"
+   },
+   {
+    "label": "Family",
+    "to": "page:families"
+   },
+   {
+    "label": "Support Groups",
+    "to": "page:directory"
+   },
+   {
+    "label": "Pastors & Counsellors",
+    "to": "page:conference"
+   }
+  ],
+  "nav": [
+   {
+    "label": "The Way Out",
+    "to": "page:wayout"
+   },
+   {
+    "label": "Resources",
+    "to": "page:process"
+   },
+   {
+    "label": "Bookstore",
+    "to": "books"
+   },
+   {
+    "label": "Events",
+    "to": "page:conference"
+   },
+   {
+    "label": "Forums",
+    "to": "thread"
+   },
+   {
+    "label": "Apply",
+    "to": "apply"
+   },
+   {
+    "label": "About Us",
+    "to": null
+   },
+   {
+    "label": "Contact Us",
+    "to": null
+   }
+  ],
+  "topicsHead": [
+   "Topic",
+   "Author",
+   "Replies",
+   "Views",
+   "Last Post"
+  ],
+  "topics": [
+   {
+    "t": "Home from the summer programme — how do you keep it?",
+    "a": "David",
+    "r": "14",
+    "v": "212",
+    "l": "Today",
+    "live": true
+   },
+   {
+    "t": "Checking in — week 3",
+    "a": "Tomas_22",
+    "r": "31",
+    "v": "480",
+    "l": "Yesterday"
+   },
+   {
+    "t": "For parents: when he comes home",
+    "a": "hopeful1",
+    "r": "9",
+    "v": "166",
+    "l": "Mon"
+   },
+   {
+    "t": "Accountability partner wanted (under 27)",
+    "a": "walkingon",
+    "r": "6",
+    "v": "98",
+    "l": "Sun"
+   }
+  ],
+  "featured": "Featured: When Your Son Comes Home — for parents",
+  "forumsLabel": "Forum summary"
  },
  "pages": {
   "process": {
@@ -172,7 +264,93 @@
     "file": "origin_intake_e1",
     "index": 1
    }
+  },
+  "wayout": {
+   "heading": "The Way Out",
+   "lines": [
+    "1. Tell someone you trust — your pastor, your parents.",
+    "2. Find a group near you. You are not alone.",
+    "3. Apply to the Anchor Program.",
+    "4. Keep walking. Change is a process, not an event."
+   ],
+   "card": {
+    "file": "e3_theday",
+    "index": 0
+   }
   }
  },
- "dossierMark": "in the dossier:"
+ "dossierMark": "in the dossier:",
+ "_docS199": "⚑ S199 — his visual archive (2026-09-29): Evergreen International's 28 Oct 2004 capture is the model for a 2003 ministry site — navigation by AUDIENCE (Individuals · Family · Support Groups · Therapists & Church Leaders), 'The Way Out', a Bookstore (cover · title · copy · order), Events and conferences, a referral database behind it (documented, primary capture) — and the forum software's own grammar (UBB, 2003: Topic · Author · Replies · Views · Last Post). And his 'yes to The Source application': the programme's application as a web form, PRE-FILLED FROM DANIEL'S 1997 FILE. Its form is the documented one (Love in Action's The Source application, 2001 — Smithsonian NMAH.AC.1428, B1 F6: an $80 processing fee, parental references, 'have you told your pastor', male/female authority figures, 'three reasons why you want to overcome', a youth option attended with a parent at $1,500 for two weeks or $2,500 for eight); its opening line is a close paraphrase, not a quotation; the programme's name is invented (Anchor). The three reasons stay blank: the one thing his file cannot fill in.",
+ "books": {
+  "heading": "Bookstore",
+  "note": "Order by mail or telephone. Allow 2-3 weeks for delivery.",
+  "items": [
+   {
+    "title": "Walking Out: A Young Man's Guide",
+    "copy": [
+     "From confusion to confidence.",
+     "Study questions for youth groups."
+    ],
+    "price": "$9.95"
+   },
+   {
+    "title": "When Your Son Comes Home",
+    "copy": [
+     "For parents: the first weeks,",
+     "and what to say."
+    ],
+    "price": "$11.95"
+   },
+   {
+    "title": "The Healing Journal",
+    "copy": [
+     "A 52-week workbook.",
+     "One honest page a day."
+    ],
+    "price": "$14.95"
+   }
+  ],
+  "order": "Add to order",
+  "ordered": "In your order"
+ },
+ "apply": {
+  "heading": "The Anchor Program — Application",
+  "intro": "This application did not reach you by accident. Filling it in is your first step.",
+  "onFile": "on file",
+  "parts": {
+   "p1": "Part 1 — Personal information",
+   "p3": "Part 3 — Spiritual information",
+   "p4": "Part 4 — Your struggle",
+   "p10": "Part 10 — References"
+  },
+  "name": "Full name",
+  "referred": "Referred by",
+  "referredValue": "your mentor, #stillstruggling (1997)",
+  "pastor": "Told your pastor?",
+  "pastorValue": "Yes — your parent did (1997)",
+  "authority": "Male authority figures:",
+  "authorityOpts": [
+   "Appreciative",
+   "Comfortable",
+   "Distant",
+   "Fearful"
+  ],
+  "authorityPick": 2,
+  "authorityFrom": "from your questionnaire",
+  "previous": "Previous programmes",
+  "previousValue": "Summer Youth Weekend, 12-19 July 1997",
+  "pledge": "Pledge card",
+  "pledgeSigned": "signed",
+  "pledgeDeclined": "set aside",
+  "reasons": "Three reasons to overcome:",
+  "parental": "Parental reference",
+  "parentalValue": "received — your mother",
+  "option": "Programme:",
+  "optionA": "Anchor Youth — two weeks, with a parent · $1,500",
+  "optionB": "eight weeks · $2,500",
+  "fee": "$80 processing fee — paid",
+  "submit": "Submit application",
+  "received": "Received. A member of staff will contact your parents.",
+  "none": "—"
+ }
 }

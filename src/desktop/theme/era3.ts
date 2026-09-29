@@ -763,3 +763,8 @@ export const STREAMLINE = {
   player: '#1b1b1f', playerInk: '#ffffff', bar: '#5a5a60', barOn: '#cc2a2a', match: '#2f7a3a',
   chip: '#e6edf5', chipOn: '#2f86d8', chipOff: '#eceef1'
 } as const;
+
+/** ⚑ S200 — "gather", the 2016 social network's frame (groupTask.ts): its blue bar, the page, the cards */
+export const GATHER = {
+  blue: '#3a5795', white: '#ffffff', search: '#e9ebee', page: '#e9ebee', card: '#ffffff', cover: '#8fa6c9', profile: '#c9a27a'
+} as const;

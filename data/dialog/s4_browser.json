@@ -558,7 +558,16 @@
    ],
    "start": "Start a session",
    "footer": "Free · confidential · always here",
-   "_doc": "R3-90 — the site before the agent: a landing page that says what such a thing says. One press. Nothing on it is true about anyone real; the mark is invented (CLAUDE.md)."
+   "_doc": "R3-90 — the site before the agent: a landing page that says what such a thing says. One press. Nothing on it is true about anyone real; the mark is invented (CLAUDE.md).",
+   "heading": "Talk to people who went back",
+   "privacy": "Please don't share anything that could identify you. Conversations are public.",
+   "recentLabel": "Recent conversations",
+   "recent": [
+    "can hormones be undone?",
+    "is it normal to regret it after a year",
+    "how do i tell my parents i want to stop"
+   ],
+   "_docS200": "⚑ S200 — his visual archive (2026-09-29): the 2026 interface is a CONVERSATION, and its documented form (detrans.ai's live page, on the dossier at e4_offers#3) is a large heading, a privacy warning that chats are public, the chat, and a list of recent conversations — other people's questions, visible. The landing page's own footer still says 'confidential'; the conversation page says 'public'. Both are the product's. Invented mark (Second Thoughts); the questions are composites, no one's words."
   },
   "turnFiled": "turn: {step} — {answer}"
  }

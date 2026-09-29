@@ -63,7 +63,8 @@
    "label": "Build the course module",
    "note": "modules and pricing"
   },
-  { "id": "recommend", "surface": "recommend", "label": "Tag the video", "note": "keywords for Recommended", "_docS192": "⚑ S192 — the recommendation event, 2016 (src/desktop/apps/recommendTask.ts; data/dialog/s3_recommend.json)." },
+  { "id": "group", "surface": "group", "label": "Post to the group", "note": "this week's story", "_docS200": "⚑ S200 — the group, in the platform's own frame (src/desktop/apps/groupTask.ts)." },
+    { "id": "recommend", "surface": "recommend", "label": "Tag the video", "note": "keywords for Recommended", "_docS192": "⚑ S192 — the recommendation event, 2016 (src/desktop/apps/recommendTask.ts; data/dialog/s3_recommend.json)." },
     {
    "id": "record",
    "surface": "record",

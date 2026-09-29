@@ -68,6 +68,7 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   if (id === 'forum-recommended') return { kind: 'recommendation', outcome: 'recommended', flagged: false };   // S195
   if (id === 'forum-rules') return { kind: 'channel', outcome: 'agreed', flagged: false };
   if (id === 'forum-posted') return { kind: 'channel', outcome: 'posted', flagged: false };
+  if (id === 'forum-applied') return { kind: 'placement', outcome: 'applied', flagged: false };   // S199
   if (id.startsWith('channel-reply:')) return { kind: 'channel', outcome: 'spoke', flagged: false };
   if (id.startsWith('escalation-reply:')) {
     const w = id.slice('escalation-reply:'.length);

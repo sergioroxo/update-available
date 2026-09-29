@@ -73,7 +73,8 @@ const PROGRAM = body.program as unknown as {
   saver: { mark: string; line: string; witness: string };
   results: { title: string; historyLabel: string; history: string[]; queryLabel: string; relatedLabel?: string; related?: string[];
     results: { id: string; title: string; url: string; snippet: string; press?: boolean }[] };
-  site: { mark: string; address: string; tagline: string; lines: string[]; start: string; footer: string };
+  site: { mark: string; address: string; tagline: string; lines: string[]; start: string; footer: string;
+    heading?: string; privacy?: string; recentLabel?: string; recent?: string[] };
   turnFiled: string;
 };
 /** the agent moves to the next step this long after the press */
@@ -693,6 +694,16 @@ export class E4Browser {
     ctx.fillText('online', cx + 50, top + 23);
     px(ctx, cx + 1, top + 40, cw - 2, 1, WEB.cardEdge);
     let y = top + 52;
+    // ⚑ S200 — the documented chatbot form (his visual archive): a heading, the warning that conversations are
+    //   public (the landing page said "confidential"), and other people's recent questions, visible
+    const SITE = PROGRAM.site;
+    if (this.mode === 'agent' && SITE.privacy) {
+      setFont(ctx, 12); ctx.fillStyle = WEB.ink;
+      if (SITE.heading) ctx.fillText(SITE.heading, cx + 42, top + 48);
+      roundRect(ctx, cx + 42, top + 64, cw - 54, 16, 5, WEB.accentSoft);
+      setFont(ctx, 8); ctx.fillStyle = WEB.ink; ctx.fillText(`ⓘ ${SITE.privacy}`, cx + 50, top + 68);
+      y = top + 90;
+    }
     const bubble = (text: string, mine = false): void => {
       setFont(ctx, 10);
       const rows = wrapText(ctx, text, cw - 120).slice(0, 4);
@@ -740,6 +751,11 @@ export class E4Browser {
         }
         ly += 17;
       }
+    }
+    if (this.mode === 'agent' && SITE.recent?.length) {
+      const ry = top + (H - top - 14) - 34 - 12 - SITE.recent.length * 12;
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(SITE.recentLabel ?? '', cx + 42, ry);
+      SITE.recent.forEach((q, i) => { ctx.fillStyle = WEB.accent; ctx.fillText(q, cx + 50, ry + 12 + i * 12); });
     }
     messageBar(ctx, cx + 12, top + (H - top - 14) - 34, cw - 24, `Message ${PROGRAM.agentMark}`);
   }

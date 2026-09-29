@@ -277,5 +277,51 @@
   ]
  },
  "dossierMark": "in the dossier:",
- "constructionMark": "UNDER CONSTRUCTION"
+ "constructionMark": "UNDER CONSTRUCTION",
+ "_docS198": "⚑ S198 — his visual archive (2026-09-29): 1998's discovery was a DIRECTORY as much as a search — Yahoo's hand-curated category tree, its category matches listed ABOVE the site matches on a results page (documented, the 30 June 1998 capture). So Seekr has a directory: the path down to 'Ex-Gay', its sub-categories with counts ('@' marks a category cross-listed from elsewhere in the tree, as Yahoo did), and its site listings — the ring's members. The results page names the category first. Every mark invented.",
+ "directory": {
+  "label": "Browse the Seekr directory",
+  "resultsCategory": "Seekr Category:",
+  "path": [
+   "Top",
+   "Society and Culture",
+   "Religion and Spirituality",
+   "Faiths and Practices",
+   "Christianity",
+   "Ministries",
+   "Sexuality"
+  ],
+  "heading": "Ex-Gay",
+  "count": "(12)",
+  "categoriesLabel": "Categories",
+  "categories": [
+   {
+    "name": "Organizations",
+    "n": 6,
+    "page": "directory"
+   },
+   {
+    "name": "Parents and Families",
+    "n": 4,
+    "page": "parents"
+   },
+   {
+    "name": "Youth",
+    "n": 3,
+    "page": "weekend"
+   },
+   {
+    "name": "International@",
+    "n": 9,
+    "page": "intl"
+   },
+   {
+    "name": "Testimonies",
+    "n": 5,
+    "page": "testimony"
+   }
+  ],
+  "sitesLabel": "Site Listings",
+  "address": "http://www.seekr.com/Society_and_Culture/Religion/Christianity/Ministries/Sexuality/Ex_Gay/"
+ }
 }

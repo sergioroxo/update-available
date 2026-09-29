@@ -14,6 +14,7 @@ import * as ui from '../theme/chrome';
 import { ERA1 } from '../theme/era1';
 import { WEB2003 as P } from '../theme/web1997';
 import D from '../../../data/dialog/s2_forum.json';
+import { ledger } from '../../state/ledger';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 const WX = 8, WY = 8, WW = 496, WH = 344;
@@ -33,6 +34,10 @@ export class Web2003App {
   /** os files these (ledger.records) */
   onAgree?: () => void;
   onPost?: () => void;
+  /** S199 — the pre-filled application, submitted */
+  onApply?: () => void;
+  private applied = false;
+  private ordered = new Set<number>();
 
   handleMove(x: number, y: number): void {
     const h = this.hits.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
@@ -48,6 +53,9 @@ export class Web2003App {
     if (h.id === 'forum-thread') { this.trail.push(this.stage); this.stage = 'thread'; return; }
     if (h.id.startsWith('forum-page:')) { this.trail.push(this.stage); this.stage = 'page:' + h.id.slice(11); return; }
     if (h.id === 'forum-post' && !this.posted) { this.posted = true; this.onPost?.(); }
+    if (h.id.startsWith('forum-go:')) { this.trail.push(this.stage); this.stage = h.id.slice(9); return; }
+    if (h.id.startsWith('forum-order:')) { this.ordered.add(Number(h.id.slice(12))); return; }
+    if (h.id === 'forum-submit' && !this.applied) { this.applied = true; this.onApply?.(); }
   }
 
   draw(ctx: CanvasRenderingContext2D): void {
@@ -77,6 +85,7 @@ export class Web2003App {
     ui.px(ctx, c.x + 52, c.y + 42, c.w - 94, 11, ERA1.white);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(this.stage === 'rules' ? `${D.address}join.asp` : this.stage === 'index' ? `${D.address}default.asp`
+      : this.stage === 'apply' ? `${D.address}anchor/apply.asp` : this.stage === 'books' ? `${D.address}store/default.asp`
       : this.stage.startsWith('page:') ? `${D.address}resources/${this.stage.slice(5)}.asp` : `${D.address}thread.asp?t=4471`, c.x + 55, c.y + 43);
     ui.button(ctx, c.x + c.w - 36, c.y + 40, 32, 15, D.go, {});
     // the page
@@ -92,6 +101,8 @@ export class Web2003App {
     ctx.fillText(D.bannerSub, b.x + 100, b.y + 12);
     if (this.stage === 'rules') this.drawRules(ctx, b);
     else if (this.stage === 'index') this.drawIndex(ctx, b);
+    else if (this.stage === 'apply') this.drawApply(ctx, b);
+    else if (this.stage === 'books') this.drawBooks(ctx, b);
     else if (this.stage.startsWith('page:')) this.drawPage(ctx, b, this.stage.slice(5));
     else this.drawThread(ctx, b);
   }
@@ -129,20 +140,122 @@ export class Web2003App {
     this.hits.push({ x: x - 2, y: y - 2, w: w + 4, h: 14, id });
   }
 
-  /** ⚑ S196 — the board's front page: the recommendation pinned, the rooms, Resources, groups, the conference */
+  /** ⚑ S196/S199 — the front page, on Evergreen's 2004 layout: audience tabs, a left navigation column, the
+   *  recommendation pinned, the forum summary in the forum software's own columns, a featured book */
   private drawIndex(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
     const I = D.index;
-    const x0 = b.x + 12;
-    ui.setFont(ctx, 11); ctx.fillStyle = P.text; ctx.fillText(I.title, x0, b.y + 36);
-    ui.px(ctx, x0, b.y + 52, b.w - 24, 28, P.pending);
-    ui.setFont(ctx, 9); ctx.fillStyle = P.dim; ctx.fillText(I.recommended, x0 + 6, b.y + 55);
-    this.link(ctx, D.thread.title, x0 + 6, b.y + 67, 'forum-thread');
-    ui.setFont(ctx, 10); ctx.fillStyle = P.text; ctx.fillText(D.roomsLabel, x0, b.y + 90);
-    D.rooms.forEach((r, i) => { ui.setFont(ctx, 9); ctx.fillStyle = P.link; ctx.fillText(r, x0 + 10 + (i % 3) * 150, b.y + 106 + Math.floor(i / 3) * 14); });
-    ui.setFont(ctx, 10); ctx.fillStyle = P.text; ctx.fillText(I.resourcesLabel, x0, b.y + 142);
-    I.resources.forEach((id, i) => this.link(ctx, (D.pages as Record<string, { heading: string }>)[id].heading, x0 + 10, b.y + 158 + i * 16, `forum-page:${id}`));
-    this.link(ctx, I.directory, x0 + 250, b.y + 158, 'forum-page:directory');
-    this.link(ctx, I.conference, x0 + 250, b.y + 174, 'forum-page:conference');
+    // the audience tabs, under the banner
+    let tx = b.x + 104;
+    ui.setFont(ctx, 9);
+    for (const a of I.audiences) {
+      const w = ctx.measureText(a.label).width + 14;
+      ui.px(ctx, tx, b.y + 32, w, 14, P.tab);
+      this.link(ctx, a.label, tx + 7, b.y + 34, `forum-go:${a.to}`);
+      tx += w + 3;
+    }
+    // the left column
+    ui.px(ctx, b.x, b.y + 30, 96, b.h - 30, P.panel);
+    I.nav.forEach((n, i) => {
+      const y = b.y + 40 + i * 16;
+      if (n.to) this.link(ctx, n.label, b.x + 8, y, `forum-go:${n.to}`);
+      else { ui.setFont(ctx, 9); ctx.fillStyle = P.dim; ctx.fillText(n.label, b.x + 8, y); }
+    });
+    const x0 = b.x + 104, w0 = b.w - 112;
+    // the recommendation, pinned
+    ui.px(ctx, x0, b.y + 52, w0, 26, P.pending);
+    ui.setFont(ctx, 8); ctx.fillStyle = P.dim; ctx.fillText(I.recommended, x0 + 4, b.y + 54);
+    this.link(ctx, D.thread.title, x0 + 4, b.y + 64, 'forum-thread');
+    // the forum summary: Topic · Author · Replies · Views · Last Post
+    ui.setFont(ctx, 9); ctx.fillStyle = P.text; ctx.fillText(I.forumsLabel, x0, b.y + 84);
+    const cols = [0, w0 - 170, w0 - 110, w0 - 76, w0 - 42];
+    ui.px(ctx, x0, b.y + 96, w0, 12, P.panelHead);
+    ui.setFont(ctx, 8); ctx.fillStyle = P.bannerInk;
+    I.topicsHead.forEach((h, i) => ctx.fillText(h, x0 + 3 + cols[i], b.y + 98));
+    I.topics.forEach((t, r) => {
+      const y = b.y + 110 + r * 13;
+      ui.px(ctx, x0, y - 1, w0, 12, r % 2 ? P.panel : P.white);
+      ui.setFont(ctx, 8);
+      if (t.live) this.link(ctx, t.t.length > 44 ? t.t.slice(0, 43) + '…' : t.t, x0 + 3, y, 'forum-thread');
+      else { ctx.fillStyle = P.text; ctx.fillText(t.t, x0 + 3, y); }
+      ui.setFont(ctx, 8); ctx.fillStyle = P.dim;
+      [t.a, t.r, t.v, t.l].forEach((v, i) => ctx.fillText(v, x0 + 3 + cols[i + 1], y));
+    });
+    // Resources, and the featured book
+    const ry = b.y + 170;
+    ui.setFont(ctx, 9); ctx.fillStyle = P.text; ctx.fillText(I.resourcesLabel, x0, ry);
+    I.resources.forEach((id, i) => this.link(ctx, (D.pages as Record<string, { heading: string }>)[id].heading, x0 + 8 + i * 120, ry + 14, `forum-page:${id}`));
+    ui.px(ctx, x0, ry + 32, 12, 16, P.cover2);
+    this.link(ctx, I.featured, x0 + 18, ry + 36, 'forum-go:books');
+  }
+
+  /** ⚑ S199 — the bookstore: cover · title · copy · order, the period's shape */
+  private drawBooks(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
+    const B = D.books;
+    const x0 = b.x + 24;
+    ui.setFont(ctx, 14); ctx.fillStyle = P.banner; ctx.fillText(B.heading, x0, b.y + 38);
+    ui.setFont(ctx, 8); ctx.fillStyle = P.dim; ctx.fillText(B.note, x0, b.y + 56);
+    const covers = [P.cover1, P.cover2, P.cover3];
+    B.items.forEach((it, i) => {
+      const y = b.y + 70 + i * 52;
+      ui.px(ctx, x0, y, 30, 42, covers[i % 3]);
+      ui.px(ctx, x0 + 4, y + 6, 22, 2, P.white);
+      ui.setFont(ctx, 10); ctx.fillStyle = P.text; ctx.fillText(it.title, x0 + 40, y);
+      ui.setFont(ctx, 9); ctx.fillStyle = P.dim;
+      it.copy.forEach((l, k) => ctx.fillText(l, x0 + 40, y + 14 + k * 11));
+      ctx.fillStyle = P.text; ctx.fillText(it.price, x0 + 300, y);
+      if (this.ordered.has(i)) { ctx.fillStyle = P.check; ctx.fillText(B.ordered, x0 + 300, y + 14); }
+      else this.link(ctx, B.order, x0 + 300, y + 14, `forum-order:${i}`);
+    });
+    this.link(ctx, D.index.back, x0, b.y + b.h - 16, 'forum-index');
+  }
+
+  /** ⚑ S199 — THE APPLICATION, pre-filled from his 1997 file. Only Submit is live; the three reasons stay blank */
+  private drawApply(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
+    const A = D.apply;
+    const has = (id: string) => ledger.records.includes(id);
+    const x0 = b.x + 16, vx = b.x + 196;
+    ui.setFont(ctx, 12); ctx.fillStyle = P.banner; ctx.fillText(A.heading, x0, b.y + 34);
+    ui.setFont(ctx, 8); ctx.fillStyle = P.dim; ctx.fillText(A.intro, x0, b.y + 50);
+    let y = b.y + 64;
+    const part = (t: string) => { ui.px(ctx, x0, y - 1, b.w - 32, 10, P.panel); ui.setFont(ctx, 8); ctx.fillStyle = P.panelHead; ctx.fillText(t, x0 + 2, y); y += 11; };
+    const row = (label: string, value: string | null, from = A.onFile) => {
+      ui.setFont(ctx, 8); ctx.fillStyle = P.text; ctx.fillText(label, x0 + 4, y);
+      ctx.fillStyle = value ? P.filled : P.dim; ctx.fillText(value ?? A.none, vx, y);
+      if (value) { ctx.fillStyle = P.dim; ctx.fillText(`(${from})`, vx + ctx.measureText(value).width + 6, y); }
+      y += 11;
+    };
+    const pledge = has('pledge-signed') ? A.pledgeSigned : has('pledge-declined') ? A.pledgeDeclined : null;
+    part(A.parts.p1);
+    row(A.name, ledger.name || null);
+    row(A.referred, has('channel-joined') ? A.referredValue : null);
+    part(A.parts.p3);
+    row(A.pastor, has('rob-spoke-mother') ? A.pastorValue : null);
+    ui.setFont(ctx, 8); ctx.fillStyle = P.text; ctx.fillText(A.authority, x0 + 4, y);
+    let ax = vx;
+    A.authorityOpts.forEach((o, i) => {
+      const on = i === A.authorityPick && has('profile-initialized');
+      ui.px(ctx, ax, y + 1, 7, 7, on ? P.filled : P.white);
+      ctx.fillStyle = P.text; ctx.fillText(o, ax + 10, y); ax += ctx.measureText(o).width + 18;
+    });
+    y += 11;
+    part(A.parts.p4);
+    row(A.previous, has('enrollment-acknowledged') ? A.previousValue : null);
+    row(A.pledge, pledge);
+    ui.setFont(ctx, 8); ctx.fillStyle = P.text; ctx.fillText(A.reasons, x0 + 4, y);
+    [0, 1, 2].forEach((i) => { ctx.fillText(`${i + 1}.`, vx + i * 70, y); ui.px(ctx, vx + 10 + i * 70, y + 8, 50, 1, P.dim); });
+    y += 12;
+    part(A.parts.p10);
+    row(A.parental, has('rob-spoke-mother') ? A.parentalValue : null);
+    ui.setFont(ctx, 8); ctx.fillStyle = P.text; ctx.fillText(A.option, x0 + 4, y);
+    ui.px(ctx, vx, y + 1, 7, 7, P.filled); ctx.fillStyle = P.filled; ctx.fillText(A.optionA, vx + 10, y); y += 11;
+    ui.px(ctx, vx, y + 1, 7, 7, P.white); ctx.fillStyle = P.text; ctx.fillText(A.optionB, vx + 10, y); y += 12;
+    ctx.fillStyle = P.filled; ctx.fillText(A.fee, x0 + 4, y); y += 14;
+    if (this.applied) { ui.px(ctx, x0, y - 2, b.w - 32, 14, P.pending); ctx.fillStyle = P.text; ctx.fillText(A.received, x0 + 4, y); }
+    else {
+      ui.button(ctx, x0 + 4, y - 2, 110, 16, A.submit, { hover: this.hover === 'forum-submit' });
+      this.hits.push({ x: x0 + 4, y: y - 2, w: 110, h: 16, id: 'forum-submit' });
+    }
+    this.link(ctx, D.index.back, b.x + b.w - 90, b.y + b.h - 14, 'forum-index');
   }
 
   /** a Resources page: the seller's voice, and at its foot the dossier card it stands on (the second reading) */

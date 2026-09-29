@@ -971,6 +971,7 @@ export class DesktopOS {
       this.forum = new Web2003App();
       this.forum.onAgree = () => { if (!ledger.records.includes('forum-rules')) ledger.records.push('forum-rules'); this.dirty = true; };
       this.forum.onPost = () => { if (!ledger.records.includes('forum-posted')) ledger.records.push('forum-posted'); this.dirty = true; };
+      this.forum.onApply = () => { if (!ledger.records.includes('forum-applied')) ledger.records.push('forum-applied'); this.dirty = true; };
     }
     this.forum.open = true;
     this.dirty = true;
@@ -3351,6 +3352,11 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.rootCause?.open) { this.rootCause.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }
     if (this.phase === 'desktop' && this.packet?.open) { this.packet.handleClick(x, y); return; }
+    // ⚑ S199 — the browsers are windows over the desktop: asked AFTER the modal windows that draw above them
+    //   (the exercise, the rig, the game, the diary, the packet — a walk stuck there when this came first) and
+    //   BEFORE Restorify and the desktop's own icons, which sit under their left columns
+    if (this.phase === 'desktop' && this.web?.open) { this.web.handleClick(x, y); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleClick(x, y); return; }
     if (hit) {
       switch (hit.id) {
@@ -3382,8 +3388,6 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
-    if (this.phase === 'desktop' && this.web?.open) { this.web.handleClick(x, y); this.dirty = true; return; }
-    if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.kit?.open) { this.kit.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.irc?.open) this.irc.handleClick(x, y);
   }

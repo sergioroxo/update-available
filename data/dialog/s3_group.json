@@ -1,0 +1,70 @@
+{
+ "_doc": "⚑ S200 — POST TO THE GROUP (src/desktop/apps/groupTask.ts). His visual archive (2026-09-29), 2014–17: 'the ministry disappears into platforms' — a group inside the social network's own frame (blue header, cover, profile square, Joined/Invite, post cards with likes/comments/shares, suggested groups in a sidebar); 'the institution becomes visually subordinate' (documented platform grammar; a specific ministry's page INFERRED). Closed peer groups are documented (e3_theday#0). Vera posts the week's testimony (the one she tagged) to the network's private group; the platform returns it as a count. Every mark invented.",
+ "tile": {
+  "label": "Post to the group",
+  "note": "this week's story"
+ },
+ "title": "GracePlatform · Post to the group",
+ "platform": "gather",
+ "searchHint": "Search gather",
+ "group": {
+  "name": "New Hope Stories",
+  "meta": "Private group · 4,208 members · admin approval required",
+  "buttons": [
+   "Joined",
+   "Invite",
+   "Notifications"
+  ]
+ },
+ "composerLabel": "Write something... (drafted for you by GracePlatform)",
+ "composerEmpty": "Write something...",
+ "postButton": "Post",
+ "post": {
+  "who": "New Hope Stories",
+  "when": "Just now · Private group",
+  "text": "This week's story: if this is where you are, you're not alone.",
+  "link": "streamline.com · Leaving it behind — my story · 11:41",
+  "seen": "Seen by 1,211 · 0 comments"
+ },
+ "feed": [
+  {
+   "who": "Tomas R.",
+   "when": "3 hrs",
+   "text": "Day 40. Thank you all for the prayers this week.",
+   "link": null,
+   "stats": "64 likes · 12 comments"
+  },
+  {
+   "who": "Parents of Prodigals",
+   "when": "Yesterday · shared a link",
+   "text": "When your child says the words: the first 24 hours.",
+   "link": "parentsofprodigals.org · A guide for families",
+   "stats": "212 likes · 38 comments · 51 shares"
+  },
+  {
+   "who": "Walking Out Together",
+   "when": "Mon",
+   "text": "Accountability call tonight at 9. Everyone welcome.",
+   "link": null,
+   "stats": "31 likes · 4 comments"
+  }
+ ],
+ "about": {
+  "label": "About",
+  "lines": [
+   "A private group for people",
+   "walking out of same-sex attraction.",
+   "Admin approval required."
+  ]
+ },
+ "suggested": {
+  "label": "Suggested groups",
+  "join": "Join",
+  "items": [
+   "Parents of Prodigals",
+   "Walking Out Together",
+   "Pure Hearts Daily"
+  ]
+ },
+ "witness": "this week's story posted to the private group — seen by 1,211"
+}

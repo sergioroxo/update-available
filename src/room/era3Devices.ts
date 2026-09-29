@@ -45,6 +45,7 @@ import { StoryCutTask } from '../desktop/apps/storyCut';
 import { CourseBuilder } from '../desktop/apps/courseBuilder';
 import { YourRecordApp } from '../desktop/apps/yourRecord';
 import { RecommendTask } from '../desktop/apps/recommendTask';
+import { GroupTask } from '../desktop/apps/groupTask';
 import { FamilyCallsApp } from '../desktop/apps/familyCalls';
 import { GraceQueueLite } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
@@ -839,6 +840,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   graceQueueLite.mountTask(new CourseBuilder());
   graceQueueLite.mountTask(new YourRecordApp());   // S144: the file inside the platform
   graceQueueLite.mountTask(new RecommendTask());   // S192: Tag the video — the recommendation event, 2016
+  graceQueueLite.mountTask(new GroupTask());       // S200: Post to the group — the platform's own frame
 
   function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);

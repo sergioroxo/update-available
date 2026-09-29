@@ -22,7 +22,7 @@ import D from '../../../data/dialog/s1_browser.json';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 type PageId = keyof typeof D.pages;
-type View = { kind: 'portal' } | { kind: 'results'; page: number } | { kind: 'page'; id: PageId } | { kind: 'list' };
+type View = { kind: 'portal' } | { kind: 'results'; page: number } | { kind: 'page'; id: PageId } | { kind: 'list' } | { kind: 'dir' };
 type PageDef = { heading: string; byline?: string; lines: string[]; counter?: boolean; practice?: string };
 
 const WX = 4, WY = 3, WW = 504, WH = 356;
@@ -63,6 +63,7 @@ export class Web1997App {
       return;
     }
     if (id === 'web-next') { this.go({ kind: 'results', page: 2 }); return; }
+    if (id === 'web-dir') { this.go({ kind: 'dir' }); return; }   // S198 — the directory
     if (id.startsWith('web-res:')) {
       const rid = id.slice(8);
       this.visited.add(rid);
@@ -119,10 +120,11 @@ export class Web1997App {
     ui.setFont(ctx, 8); ctx.fillStyle = ERA1.black; ctx.fillText('Document: Done', c.x + 6, sy + 2);
     const top = TOOL_H + LOC_H + 4;
     const body = { x: c.x, y: c.y + top, w: c.w, h: c.h - top - STATUS_H };
-    ui.px(ctx, body.x, body.y, body.w, body.h, this.view.kind === 'results' ? ERA1.white : P.page);
+    ui.px(ctx, body.x, body.y, body.w, body.h, this.view.kind === 'results' || this.view.kind === 'dir' ? ERA1.white : P.page);
     if (this.view.kind === 'portal') this.drawPortal(ctx, body);
     else if (this.view.kind === 'results') this.drawResults(ctx, body, this.view.page);
     else if (this.view.kind === 'list') this.drawList(ctx, body);
+    else if (this.view.kind === 'dir') this.drawDir(ctx, body);
     else this.drawPage(ctx, body, this.view.id);
     // (its close box answers nothing: the network does not let go — the channel is the way on;
     //  its minimise box and its taskbar button are the way to put it down)
@@ -144,6 +146,7 @@ export class Web1997App {
     if (this.view.kind === 'portal') return D.portal.address;
     if (this.view.kind === 'results') return `${D.address}search?q=${D.query.replace(/ /g, '+')}${this.view.page > 1 ? '&page=2' : ''}`;
     if (this.view.kind === 'list') return 'http://members.ringsurf.com/walkingout/list.html';
+    if (this.view.kind === 'dir') return D.directory.address;
     const id = this.view.id;
     const r = D.results.find((x) => x.id === id);
     return `http://${r?.url ?? `members.homepage.com/fellowshiplinks/${id}.html`}`;
@@ -201,6 +204,7 @@ export class Web1997App {
     });
     ui.setFont(ctx, 9);
     this.link(ctx, T.ringLink, fx, b.y + 212, 'web-ring:list');
+    this.link(ctx, D.directory.label, fx + 260, b.y + 212, 'web-dir');
     // the counter
     const cw = ctx.measureText(D.counter).width + 12;
     ui.px(ctx, b.x + Math.round((b.w - cw) / 2), b.y + b.h - 22, cw, 16, P.counterBg);
@@ -215,10 +219,14 @@ export class Web1997App {
     ctx.fillText(D.resultsFor.replace('{q}', D.query), b.x + 70, b.y + 8);
     ui.setFont(ctx, 8);
     ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(D.resultsCount.replace('1-6', page === 1 ? '1-6' : '7-12'), b.x + 8, b.y + 28);
+    ctx.fillText(D.resultsCount.replace('1-6', page === 1 ? '1-6' : '7-12'), b.x + 8, b.y + 22);
+    // S198 — the category match, above the sites (Yahoo, 1998)
+    ctx.fillText(D.directory.resultsCategory, b.x + 8, b.y + 32);
+    ui.setFont(ctx, 9);
+    this.link(ctx, [...D.directory.path.slice(-3), D.directory.heading].join(' > '), b.x + 80, b.y + 32, 'web-dir');
     const rs = page === 1 ? D.results : [...D.results].reverse();   // page 2: the same network, again
     rs.forEach((r, i) => {
-      const y = b.y + 40 + i * 36;
+      const y = b.y + 48 + i * 33;
       ui.setFont(ctx, 10);
       this.link(ctx, r.title, b.x + 12, y, `web-res:${r.id}`, this.visited.has(r.id));
       ui.setFont(ctx, 9);
@@ -236,6 +244,40 @@ export class Web1997App {
     ctx.fillStyle = page === 2 ? ERA1.black : P.link; ctx.fillText('2', b.x + 62, py);
     ctx.fillStyle = ERA1.grey; ctx.fillText('3', b.x + 74, py);
     if (page === 1) this.link(ctx, `${D.next} >`, b.x + 90, py, 'web-next');
+  }
+
+  /** ⚑ S198 — the directory, Yahoo-style: the path, the sub-categories, the site listings */
+  private drawDir(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
+    const T = D.directory;
+    ui.setFont(ctx, 16); ctx.fillStyle = P.engine; ctx.fillText(D.engine, b.x + 8, b.y + 4);
+    ui.setFont(ctx, 8);
+    let x = b.x + 8;
+    T.path.forEach((p, i) => {
+      if (i === 0) { this.link(ctx, p, x, b.y + 26, 'web-home'); x += ctx.measureText(p).width; }
+      else { ctx.fillStyle = P.link; ctx.fillText(p, x, b.y + 26); x += ctx.measureText(p).width; }
+      ctx.fillStyle = ERA1.black; ctx.fillText(' > ', x, b.y + 26); x += ctx.measureText(' > ').width;
+    });
+    ui.setFont(ctx, 12); ctx.fillStyle = ERA1.black;
+    ctx.fillText(`${T.heading} ${T.count}`, b.x + 8, b.y + 40);
+    ui.px(ctx, b.x + 8, b.y + 56, b.w - 16, 1, ERA1.grey);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(T.categoriesLabel, b.x + 8, b.y + 62);
+    T.categories.forEach((c, i) => {
+      const cx = b.x + 20 + (i % 2) * 230, cy = b.y + 76 + Math.floor(i / 2) * 14;
+      ui.setFont(ctx, 10);
+      this.link(ctx, c.name, cx, cy, `web-res:${c.page}`, this.visited.has(c.page));
+      ctx.fillStyle = ERA1.black; ctx.fillText(` (${c.n})`, cx + ctx.measureText(c.name).width + 2, cy);
+    });
+    const sy = b.y + 76 + Math.ceil(T.categories.length / 2) * 14 + 8;
+    ui.px(ctx, b.x + 8, sy - 4, b.w - 16, 1, ERA1.grey);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(T.sitesLabel, b.x + 8, sy);
+    D.list.members.filter((m) => m.page).slice(0, 8).forEach((m, i) => {
+      const y = sy + 14 + i * 14;
+      ui.setFont(ctx, 10);
+      this.link(ctx, m.name, b.x + 20, y, `web-res:${m.page}`, this.visited.has(m.page!));
+      const nw = ctx.measureText(m.name).width;
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black;
+      ctx.fillText(` - ${m.note}`, b.x + 24 + nw, y + 1);
+    });
   }
 
   /** the ring's list of member sites — the network's scale, seen */
