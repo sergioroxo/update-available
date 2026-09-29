@@ -445,6 +445,7 @@
     },
     {
       "_doc": "⚑ S187 (2026-09-28) — 'Handheld game console' by Poly by Google (Poly Pizza, CC-BY 3.0; https://poly.pizza/m/fw194G1mJA9). A DSi-like, light blue, open, on Vera's bed (2016) — an object. No textures. Native 2670.8 × 932.3 × 2204.0 (authored far from the origin: centre x −3497.46, z 5977.28), minY −2.6697. 0.0000513 → 14 cm wide. Materials: '_crayfishdiffuse' (the shell), '03___Default' ×2, '02___Default'.",
+      "_docP7": "⚑ Phase 7 (2026-09-30, his: it was still on Vera's bed and floating; he had asked for the DS to go in 2003) — no longer placed in any room. The file and its credit stay.",
       "key": "handheld2016",
       "file": "handheld2016.glb",
       "scale": 5.13e-05,

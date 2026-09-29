@@ -376,7 +376,11 @@ export function mountGameMenu(): GameMenu {
   function render(): void {
     clear();
     // R3-32 (S151): the file view widens like the map — "mobile-format, hard to read"
-    dialog.style.width = view === 'map' || view === 'yourFile' ? 'min(860px, 94vw)' : 'min(440px, 92vw)';
+    // ⚑ Phase 7 (his: "the close sources need to be wider on PC as they are still in mobile size") —
+    //   every reading view (the sources, the credits) takes the wide dialog too; the menu itself stays narrow
+    const wide = view === 'map' || view === 'yourFile' || view === 'closeSources' || view === 'daySources'
+      || view === 'offersSources' || view === 'ballSources' || view === 'credits';
+    dialog.style.width = wide ? 'min(860px, 94vw)' : 'min(440px, 92vw)';
     if (view === 'yourFile') { yourFileView(); return; }
     if (view === 'map') { mapView(); return; }
     if (view === 'main') {

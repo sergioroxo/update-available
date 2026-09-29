@@ -84,7 +84,9 @@ const H_PAGE = 384;
 /** ⚑ the failure on the desk's two screens, in seconds from the device stopping:
  *  the sentence holds, then the bands tear it, then both are off — and the Close's
  *  travel begins over dead screens (app.ts CLOSE_LEAD_SECONDS is set to match). */
-export const FAIL = { bands: 5.5, off: 8.5 } as const;
+// ⚑ Phase 7 (his: "we need more time to see the computers break down") — the sentence holds a
+//   little longer and the bands take eight seconds to eat both screens, not three
+export const FAIL = { bands: 6.5, off: 14.5 } as const;
 /** …except after the Restoration, whose before/after is the point: it holds */
 const RESULT_HOLD_SECONDS = 4.5;   // S150: no longer an advance — kept for the tour's timing notes
 void RESULT_HOLD_SECONDS;
@@ -757,7 +759,9 @@ export class E4Browser {
       setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(SITE.recentLabel ?? '', cx + 42, ry);
       SITE.recent.forEach((q, i) => { ctx.fillStyle = WEB.accent; ctx.fillText(q, cx + 50, ry + 12 + i * 12); });
     }
-    messageBar(ctx, cx + 12, top + (H - top - 14) - 34, cw - 24, `Message ${PROGRAM.agentMark}`);
+    // ⚑ Phase 7 — the bar is a picture of a bar, and now it says so (nothing is ever typed here)
+    const C = (PROGRAM as unknown as { composer: { agent: string; session: string } }).composer;
+    messageBar(ctx, cx + 12, top + (H - top - 14) - 34, cw - 24, this.mode === 'agent' ? C.agent : C.session);
   }
 
   /**

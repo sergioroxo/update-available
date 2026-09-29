@@ -156,7 +156,10 @@ export class FitIn implements DeviceGame {
       text(g, 'FIT IN', Math.round((W - textW('FIT IN', 2)) / 2), 14, H.screenDark, 2);
       px(g, 14, 29, H.screenMid, W - 28, 1);
       text(g, 'MAKE CLEAN LINES', Math.round((W - textW('MAKE CLEAN LINES')) / 2), 34, H.screenMid);
-      if (blink) text(g, 'PRESS START', Math.round((W - textW('PRESS START')) / 2), 50, H.screenDark);
+      if (blink) text(g, 'PRESS START', Math.round((W - textW('PRESS START')) / 2), 46, H.screenDark);
+      // ⚑ Phase 7 (the Codex pass: the title never said which button does what) — the handheld's own legend
+      text(g, '< > MOVE  A TURN', Math.round((W - textW('< > MOVE  A TURN')) / 2), 57, H.screenMid);
+      text(g, 'B DROP', Math.round((W - textW('B DROP')) / 2), 64, H.screenMid);
       return;
     }
     // the well: a grey grid of straight lines

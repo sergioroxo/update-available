@@ -54,6 +54,7 @@ import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
 import opening from '../../data/strings/opening.json';
 import lambyStrings from '../../data/dialog/s2_lamby.json';
+import jingleLyrics from '../../data/dialog/s2_jingle_lyrics.json';
 import s4update from '../../data/dialog/s4_update.json';
 import mediaStrings from '../../data/dialog/s2_media.json';
 import calebStrings from '../../data/dialog/s2_caleb.json';
@@ -91,6 +92,13 @@ type E2Stage = 'silence' | 'post' | 'splash' | 'osBoot' | 'lambyBoot' | 'lambyCa
 /** S156 / R3-48 — the black beat before the splash (the POST beep and the drive), and the black
  *  beat before Lamby's panel: a 2003 machine goes dark between the things it shows you */
 const E2_POST_SECONDS = 2.0;
+/** ⚑ Phase 7 (his: "the song needs a fade-out, not a drop cut") — the jingle at half (S155), fading to nothing over its last seconds */
+const JINGLE_VOLUME = 0.5;
+const JINGLE_FADE_SECONDS = 3.5;
+type LyricLine = { t: number; words: Array<[number, string]> };
+const JINGLE_LINES = (jingleLyrics as unknown as { lines: LyricLine[] }).lines;
+/** ⚑ Phase 7 — how long a new guide line stands in full above the taskbar before it folds into its well */
+const GUIDE_TIP_SECONDS = 7;
 /** S157 / R3-50: how long a 2003 program's loading box holds before its window */
 const PROGRAM_SPLASH_SECONDS = 1.6;
 const MEDIA_PLAYER_TITLE = 'Media Player';
@@ -156,6 +164,12 @@ export class DesktopOS {
   private phaseT = 0;
   private hits: Hit[] = [];
   private hover = '';
+  /** ⚑ Phase 7 — the 2003 jingle, kept so its tail can fade and its words can be drawn */
+  private e2Jingle: HTMLAudioElement | null = null;
+  private jingleLyricKey = '';
+  /** ⚑ Phase 7 — the guide's tooltip: when its line last changed (−1: folded), and whether a press holds it up */
+  private guideTipAt = -1;
+  private guideTipPinned = false;
   paused = false;
 
   // boot
@@ -380,6 +394,8 @@ export class DesktopOS {
   private dossierOpen = false;
   /** ⚑ S183f / R5-04 — 2003's "Your file (read only)" (drawYourFile) */
   private yourFileOpen = false;
+  /** ⚑ Phase 7 — the map's ○ beat: the folder has been opened once (menu state, never filed) */
+  yourFileSeen = false;
   /** ⚑ S190 — the 1997 browser: the search, between the dial-up and the channel */
   web: Web1997App | null = null;
   /** ⚑ S191 — 2003's forum: recommended after the first check-in; opened from its desktop icon */
@@ -917,7 +933,9 @@ export class DesktopOS {
     this.e2StageT = 0;
     // S155 / R3-48 (Sérgio: "boot music too loud"): the jingle at half
     const jingle = playOnce(lambyStrings.osBootTrack);
-    if (jingle) jingle.volume = 0.5;
+    if (jingle) jingle.volume = JINGLE_VOLUME;
+    this.e2Jingle = jingle;
+    jingle?.addEventListener('ended', () => { this.e2Jingle = null; this.dirty = true; });
     this.dirty = true;
   }
 
@@ -1414,6 +1432,14 @@ export class DesktopOS {
     this.drawSendOfferInto(this.ctx, this.hits, W, H);
   }
 
+  /** ⚑ Phase 7 — the summons' icon on Daniel's own desktop, in the icon pass (x 12 · y 188, the grid's free cell) */
+  private drawSendOfferIcon(ctx: CanvasRenderingContext2D, hits: Hit[]): void {
+    if (!this.sendOffer || this.sendOffer.open) return;
+    const def = (sendsData as unknown as { sends: { id: string; offer: { icon: string } }[] }).sends
+      .find(s => s.id === this.sendOffer?.id);
+    if (def) this.drawIconInto(ctx, hits, this.desktopEra === 'e1' ? 10 : 12, 188, def.offer.icon, 'icon-send');
+  }
+
   /**
    * ⚑ S87 — THE SEND OFFER'S GEOMETRY, factored out so it can be drawn into
    * ANY context/hit table — Daniel's own (the ordinary call above, unchanged
@@ -1449,7 +1475,8 @@ export class DesktopOS {
     }).sends.find(s => s.id === this.sendOffer?.id);
     if (!def) return;
     if (!this.sendOffer.open) {
-      this.drawIconInto(ctx, hits, 10, 200, def.offer.icon, 'icon-send');
+      // Daniel's desktop draws the icon with its other icons (drawSendOfferIcon); a borrowed screen draws it here
+      if (ctx !== this.ctx) this.drawIconInto(ctx, hits, 10, 200, def.offer.icon, 'icon-send');
       return;
     }
     const dw = 300; const dh = 150;
@@ -1703,6 +1730,17 @@ export class DesktopOS {
     // evaluates every frame but says nothing new costs no upload.
     const guideTextBefore = this.guide?.activeText ?? null;
     if (this.phase === 'desktop' && this.desktopEra === 'e1' && this.guide) this.guide.update();
+    // ⚑ Phase 7 — the jingle: its tail fades; the drawn words change only when a word does
+    if (this.e2Jingle) {
+      const a = this.e2Jingle;
+      const left = (Number.isFinite(a.duration) ? a.duration : 30.77) - a.currentTime;
+      a.volume = JINGLE_VOLUME * Math.max(0, Math.min(1, left / JINGLE_FADE_SECONDS));
+      const key = this.jingleKey();
+      if (key !== this.jingleLyricKey) { this.jingleLyricKey = key; this.dirty = true; }
+    }
+    // ⚑ Phase 7 — a new line rises in full above the bar for a moment (see the taskbar's tooltip)
+    if ((this.guide?.activeText ?? null) !== guideTextBefore) { this.guideTipAt = this.t; this.guideTipPinned = false; }
+    if (this.guideTipAt >= 0 && this.t - this.guideTipAt > GUIDE_TIP_SECONDS && !this.guideTipPinned) { this.guideTipAt = -1; this.dirty = true; }
     // S2R.0/S2R.1: the E2 arrival's own transient beats. 'silence' holds until
     // pressed (no timer — click-only, rail); 'lambyBoot' is a brief system
     // beat ("Restorify — finishing installation…") that resolves on its own,
@@ -1869,8 +1907,49 @@ export class DesktopOS {
       case 'r_profile': this.drawReinterpProfile(W, H); break;       // O3
       case 'r_recap': this.drawReinterpRecap(W, H); break;           // O3 close
     }
+    if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Jingle) this.drawJingleLyrics(W, H);
     if (this.reinterp) this.drawReinterpMarker(W);
     if (this.paused) this.drawPause(W, H);
+  }
+
+  /** the line being sung (index) and how many of its words are lit — '' when none is up */
+  private jingleKey(): string {
+    const a = this.e2Jingle;
+    if (!a) return '';
+    const now = a.currentTime;
+    let li = -1;
+    for (let i = 0; i < JINGLE_LINES.length; i++) if (JINGLE_LINES[i].t <= now) li = i;
+    if (li < 0) return '';
+    const L = JINGLE_LINES[li];
+    if (li === JINGLE_LINES.length - 1 && now - L.words[L.words.length - 1][0] > 2.5) return '';
+    return `${li}:${L.words.filter((w) => w[0] <= now).length}`;
+  }
+
+  /**
+   * ⚑ Phase 7 (his: "The Lamby boot-up needs lyrics") — the programme's song, sung under its cartoon:
+   * one line at a time on Restorify's navy band at the foot of the screen, each word lit as it is sung
+   * (FloppySheep's karaoke, in 2003's chrome). The song is the programme's; nothing is filed.
+   */
+  private drawJingleLyrics(W: number, H: number): void {
+    const key = this.jingleKey();
+    if (!key || !this.e2Jingle) return;
+    const [li] = key.split(':').map(Number);
+    const now = this.e2Jingle.currentTime;
+    const words = JINGLE_LINES[li].words;
+    const { ctx } = this;
+    ui.setFont(ctx, 12);
+    const text = words.map((w) => w[1]).join(' ');
+    const tw = Math.ceil(ctx.measureText(text).width);
+    const bw = Math.min(W - 16, tw + 28), bh = 22;
+    const bx = Math.round((W - bw) / 2), by = H - (this.e2Stage === 'active' ? 22 : 0) - bh - 10;
+    ui.px(ctx, bx, by, bw, bh, ERA1.navy);
+    ui.px(ctx, bx, by, bw, 1, ERA1.titleBlue);
+    let x = Math.round((W - tw) / 2);
+    for (const [t, w] of words) {
+      ctx.fillStyle = t <= now ? ERA1.white : ERA1.grey;
+      ctx.fillText(w, x, by + 5);
+      x += ctx.measureText(w + ' ').width;
+    }
   }
 
   private drawReinterpMarker(W: number): void {
@@ -2158,8 +2237,12 @@ export class DesktopOS {
     // never on screen during a felt beat, and never competes with a window),
     // never announced, never rewarded. It is there for the player who looks.
     if (this.reinterp && this.dossierUnlocked && this.desktopIdle()) {
-      this.drawIcon(this.desktopEra === 'e1' ? 10 : 12, 296, strings.dossier.icon, true, 'icon-found-file');
+      // ⚑ Phase 7 — on its column's 48 px grid in 2003 (it sat 12 px under it)
+      this.drawIcon(this.desktopEra === 'e1' ? 10 : 12, this.desktopEra === 'e1' ? 296 : 284, strings.dossier.icon, true, 'icon-found-file');
     }
+    // ⚑ Phase 7 (his: the Route sheet "is not lined" and "appears on top of other stuff") — the summons'
+    //   icon is a desktop object: drawn here with the others, UNDER every window, on the first column's grid
+    this.drawSendOfferIcon(this.ctx, this.hits);
     // …and the Messenger, once a message has landed and not yet been read
     // (finding B8): the door stays visible whether or not Lamby's notice was
     // taken, so nothing depends on having said yes to him.
@@ -2250,12 +2333,37 @@ export class DesktopOS {
       }
     }
     if (this.reinterp && this.desktopEra === 'e1') {
-      ui.bevel(ctx, wellX, H - 19, W - 50 - wellX, 16, false);
+      const wellW = W - 50 - wellX;
+      ui.bevel(ctx, wellX, H - 19, wellW, 16, false);
       const guideLine = this.guide?.activeText;
       if (guideLine) {
+        // ⚑ Phase 7 (his: "the suggestion flows over in the menu bar") — the line is kept inside its
+        //   well; when it does not fit, the well shows its start and the whole line rises above the bar
+        //   as a 1997 tooltip (the system's yellow slip, no character): for a moment when the line is
+        //   new, and again whenever the well is pressed. Nothing is filed by reading it.
         ui.setFont(ctx, 9);
         ctx.fillStyle = ERA1.greyDark;
-        ctx.fillText(guideLine, wellX + 6, H - 16);
+        const room = wellW - 12;
+        const fits = ctx.measureText(guideLine).width <= room;
+        let shown = guideLine;
+        if (!fits) {
+          while (shown.length > 4 && ctx.measureText(`${shown}...`).width > room) shown = shown.slice(0, -1);
+          shown = `${shown.trimEnd()}...`;
+        }
+        ctx.fillText(shown, wellX + 6, H - 16);
+        if (!fits) {
+          this.hits.push({ x: wellX, y: H - 19, w: wellW, h: 16, id: 'taskbar-guide' });
+          if (this.guideTipAt >= 0 || this.guideTipPinned) {
+            const lines = ui.wrapText(ctx, guideLine, Math.min(300, wellW + 40) - 12);
+            const tw = Math.ceil(Math.max(...lines.map((l) => ctx.measureText(l).width))) + 12;
+            const th = lines.length * 11 + 6;
+            const tx = Math.max(4, Math.min(W - tw - 4, wellX)); const ty = H - 22 - th - 2;
+            ui.px(ctx, tx, ty, tw, th, ERA1.black);
+            ui.px(ctx, tx + 1, ty + 1, tw - 2, th - 2, ERA1.tooltip);
+            ctx.fillStyle = ERA1.black;
+            lines.forEach((l, i) => ctx.fillText(l, tx + 6, ty + 4 + i * 11));
+          }
+        }
       }
     }
     // THE BREAK's residue (S2R.4), now a REAL AFFORDANCE (S60, finding E20 —
@@ -3306,6 +3414,11 @@ export class DesktopOS {
     // the taskbar is CHROME: it sits outside every window, so its own hit is
     // asked before the window routing below (which returns unconditionally and
     // would otherwise swallow a press meant for the bar). Finding E20.
+    if (this.phase === 'desktop' && hit?.id === 'taskbar-guide') {
+      this.guideTipPinned = !this.guideTipPinned; this.guideTipAt = -1;
+      this.dirty = true;
+      return;
+    }
     if (this.phase === 'desktop' && hit?.id === 'taskbar-message') {
       this.accountability?.pingStamp();
       this.dirty = true;
@@ -3378,7 +3491,7 @@ export class DesktopOS {
         case 'icon-irc': if (this.irc) this.irc.open = true; break;
         case 'icon-found-file': this.dossierOpen = true; break;
         case 'found-file-close': this.dossierOpen = false; break;
-        case 'icon-your-file': this.yourFileOpen = true; break;
+        case 'icon-your-file': this.yourFileOpen = true; this.yourFileSeen = true; break;
         case 'icon-forum': this.openForum(); break;
         case 'your-file-close': this.yourFileOpen = false; break;
         case 'icon-messenger': this.openMessenger(); break;

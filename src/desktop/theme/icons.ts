@@ -98,6 +98,42 @@ const ICONS: Record<string, (ctx: Ctx, x: number, y: number) => void> = {
     px(ctx, x + 6, y + 10, 4, 4, ERA1.tooltip); // the lit window
     px(ctx, x + 13, y + 12, 3, 6, ERA1.greyDark); // the door
   },
+  // ⚑ Phase 7 (his: "Your file, Harbor… and Route sheet… doesn't have an icon") —
+  // Your file (read only) — a manila folder, a tab, and the padlock that makes it read-only
+  'icon-your-file': (ctx, x, y) => {
+    px(ctx, x + 1, y + 2, 8, 3, ERA1.olive);    // the tab
+    px(ctx, x + 1, y + 4, 20, 13, ERA1.olive);  // the folder
+    px(ctx, x + 2, y + 5, 18, 11, ERA1.tooltip);
+    px(ctx, x + 2, y + 5, 18, 1, ERA1.beige);   // a sheet's edge inside
+    px(ctx, x + 13, y + 9, 6, 6, ERA1.greyDark); // the padlock
+    px(ctx, x + 14, y + 6, 4, 1, ERA1.greyDark);
+    px(ctx, x + 14, y + 6, 1, 3, ERA1.greyDark); px(ctx, x + 17, y + 6, 1, 3, ERA1.greyDark);
+    px(ctx, x + 15, y + 11, 2, 2, ERA1.tooltip); // its keyhole
+  },
+  // Harbor Forums — an anchor on a page, the board's own mark
+  'icon-forum': (ctx, x, y) => {
+    px(ctx, x + 2, y, 18, 18, ERA1.greyDark);
+    px(ctx, x + 3, y + 1, 16, 16, ERA1.white);
+    px(ctx, x + 3, y + 1, 16, 3, ERA1.navy);    // the board's bar
+    px(ctx, x + 10, y + 6, 2, 9, ERA1.navy);    // the shank
+    px(ctx, x + 9, y + 5, 4, 2, ERA1.navy);     // the ring
+    px(ctx, x + 7, y + 8, 8, 1, ERA1.navy);     // the stock
+    px(ctx, x + 6, y + 12, 2, 2, ERA1.navy);    // the arms
+    px(ctx, x + 14, y + 12, 2, 2, ERA1.navy);
+    px(ctx, x + 7, y + 14, 8, 2, ERA1.navy);
+  },
+  // Route sheet — a sheet with the route drawn on it: a dotted line from a pin to a cross
+  'icon-send': (ctx, x, y) => {
+    px(ctx, x + 2, y + 1, 18, 16, ERA1.greyDark);
+    px(ctx, x + 3, y + 2, 16, 14, ERA1.paper);
+    for (let i = 0; i < 5; i++) px(ctx, x + 6 + i * 2, y + 12 - i * 1, 1, 1, ERA1.grey);
+    px(ctx, x + 5, y + 11, 3, 3, ERA1.warn);    // where he is
+    px(ctx, x + 6, y + 14, 1, 1, ERA1.warn);
+    px(ctx, x + 15, y + 4, 1, 1, ERA1.navy);    // where he is sent
+    px(ctx, x + 14, y + 5, 3, 1, ERA1.navy); px(ctx, x + 15, y + 6, 1, 1, ERA1.navy);
+    px(ctx, x + 14, y + 3, 1, 1, ERA1.navy); px(ctx, x + 16, y + 3, 1, 1, ERA1.navy);
+    px(ctx, x + 14, y + 7, 1, 1, ERA1.navy); px(ctx, x + 16, y + 7, 1, 1, ERA1.navy);
+  },
   // Care Log — a bound book
   'icon-era-1': (ctx, x, y) => {
     px(ctx, x + 3, y + 1, 16, 16, ERA1.navy);

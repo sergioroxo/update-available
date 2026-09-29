@@ -14,7 +14,7 @@
     ],
     [
      14.56,
-     "sequency"
+     "sequence"
     ],
     [
      15.44,
@@ -106,7 +106,7 @@
     ],
     [
      27.38,
-     "bininary"
+     "binary"
     ],
     [
      28.2,
@@ -131,7 +131,7 @@
     ],
     [
      30.66,
-     "bininary"
+     "binary"
     ],
     [
      31.52,
@@ -152,11 +152,11 @@
    "words": [
     [
      33.68,
-     "Stereostate"
+     "Error state,"
     ],
     [
      38.1,
-     "cloppy"
+     "Floppy"
     ],
     [
      39.16,
@@ -256,7 +256,7 @@
     ],
     [
      73.74,
-     "bininary"
+     "binary"
     ],
     [
      74.54,
@@ -281,7 +281,7 @@
     ],
     [
      77.04,
-     "bininary"
+     "binary"
     ],
     [
      77.86,
@@ -302,7 +302,7 @@
    "words": [
     [
      80.0,
-     "Aristate"
+     "Error state"
     ]
    ]
   },
@@ -1810,5 +1810,6 @@
     ]
    ]
   }
- ]
+ ],
+ "_docP7": "⚑ Phase 7 (his corrections, 2026-09-29/30): the LRC's transcription slips fixed at his word — 'Aristate' → 'Error state', 'sequency' → 'sequence', 'bininary' → 'binary', 'Stereostate cloppy sheep' → 'Error state, Floppy sheep'. Every other word as his LRC has it."
 }

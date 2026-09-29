@@ -261,14 +261,18 @@ export class KitApp {
     ui.px(ctx, c.x + 8, ry, c.w - 16, 1, ERA1.grey);
     ui.px(ctx, c.x + 8, ry + 1, c.w - 16, 1, ERA1.white);
     const by = c.y + c.h - 28; const bw = 68; const bh = 20;
-    const x3 = c.x + c.w - 8 - bw; const x2 = x3 - 6 - bw; const x1 = x2 - 2 - bw;
+    // ⚑ Phase 7 (his: "Play the tape button: the text flows over") — the middle button is as wide as
+    //   its word: "Play the tape", "Open DIARY.TXT", "Connect now" ran past a 68 px button
+    const primary = this.primaryButton();
+    ui.setFont(ctx, 10);
+    const pw = primary ? Math.max(bw, Math.ceil(ctx.measureText(primary.label).width) + 16) : bw;
+    const x3 = c.x + c.w - 8 - bw; const x2 = x3 - 6 - pw; const x1 = x2 - 2 - bw;
     // ⚑ BACK GETS NO HIT RECT, deliberately — it is drawn dead so the affordance
     // of return is SHOWN to be dead rather than hidden (R26, Sérgio).
     ui.button(ctx, x1, by, bw, bh, kit.buttons.back, { disabled: true });
-    const primary = this.primaryButton();
     if (primary) {
-      ui.button(ctx, x2, by, bw, bh, primary.label, { disabled: primary.disabled });
-      if (!primary.disabled) this.hits.push({ x: x2, y: by, w: bw, h: bh, id: primary.id });
+      ui.button(ctx, x2, by, pw, bh, primary.label, { disabled: primary.disabled });
+      if (!primary.disabled) this.hits.push({ x: x2, y: by, w: pw, h: bh, id: primary.id });
     }
     ui.button(ctx, x3, by, bw, bh, kit.buttons.cancel, {});
     this.hits.push({ x: x3, y: by, w: bw, h: bh, id: 'cancel' });

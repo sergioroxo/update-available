@@ -916,19 +916,21 @@ export class E4Ball {
       const of = ST.categoryOf.replace('{n}', String(idx + 1)).replace('{m}', String(cats.length));
       const since = this.ballT - this.lineAt;
       const k = Math.min(1, since / 0.5);
+      // ⚑ Phase 7 (the Codex pass: the long title lost its last word to the clip) — the title wraps
+      //   inside the lower third, which grows upward a line at a time; nothing is clipped
       setFont(ctx, 11);
-      const tw = Math.min(pw - 16, Math.ceil(ctx.measureText(title).width) + 24);
+      const rows = wrapText(ctx, title, pw - 40);
+      const tw = Math.min(pw - 16, Math.ceil(Math.max(...rows.map((r) => ctx.measureText(r).width))) + 24);
+      const bh = 20 + rows.length * 12, by = H - 8 - bh;
       const lx = 8 - Math.round((1 - k) * (tw + 20));
-      roundRect(ctx, lx, H - 40, tw, 32, 3, ERA4.panel);
-      px(ctx, lx, H - 40, 4, 32, PLACE.textileHi);
+      roundRect(ctx, lx, by, tw, bh, 3, ERA4.panel);
+      px(ctx, lx, by, 4, bh, PLACE.textileHi);
       setFont(ctx, 8);
       ctx.fillStyle = PLACE.sunHi;
-      ctx.fillText(of, lx + 12, H - 36);
+      ctx.fillText(of, lx + 12, by + 4);
       setFont(ctx, 11);
       ctx.fillStyle = ERA4.textHi;
-      ctx.save(); ctx.beginPath(); ctx.rect(lx, H - 40, tw, 32); ctx.clip();
-      ctx.fillText(title, lx + 12, H - 24);
-      ctx.restore();
+      rows.forEach((r, i) => ctx.fillText(r, lx + 12, by + 16 + i * 12));
     }
     // the chat column: lines arriving, hearts rising
     px(ctx, W - cw - 2, TB, cw + 2, H - TB, ERA4.panel);

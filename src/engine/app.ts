@@ -4080,7 +4080,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let closeHoldT = 0;
   /** true once the night/constellation began during the sweep (C-01) */
   let closeMorphBegun = false;
-  const CLOSE_LEAD_SECONDS = 7;   // ⚑ 2026-09-13: the desk's two screens die at FAIL.off (8.5 s after the device stops); the update's 2.2 s + this = the travel begins over dead screens
+  const CLOSE_LEAD_SECONDS = 14.5;   // ⚑ Phase 7: FAIL.off is 14.5 s now; enterClose fires ~2.2 s after the stop, so the travel begins ~2 s over dead screens · was 7: ⚑ 2026-09-13: the desk's two screens die at FAIL.off (8.5 s after the device stops); the update's 2.2 s + this = the travel begins over dead screens
   /** 210° of turn: 1.875 × 210 / 44 = 8.95 °/s at the crest, under the 9.1 law */
   const CLOSE_SWEEP_SECONDS = 44;
   const CLOSE_MORPH_LEAD = 14;
@@ -4308,9 +4308,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   on the laptop before its screen goes off (FAIL.off = 8.5 s after the
     //   device stops; this fires ~2.2 s after that).
     closeStage = 'lead'; closeHoldT = 0; closeMorphBegun = false;
+    // ⚑ Phase 7 (his: "no need to 'look to the right'") — the conducted turn to the laptop is gone.
+    //   The eyes stay where she was facing and the seat eases back 30 cm, so the monitor and the
+    //   laptop are both in frame while they die (0.08 m/s at the crest; no yaw at all)
     if (Math.hypot(camPos.x - EYE.x, camPos.z - EYE.z) > 0.5) {
-      const toLaptop = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: -8, yaw: camYaw - 30 };
-      startCamMove(toLaptop, 5.5, true);
+      const r = camYaw * Math.PI / 180;
+      const back = { x: camPos.x + Math.sin(r) * 0.3, y: camPos.y + 0.04, z: camPos.z + Math.cos(r) * 0.3, pitch: -8, yaw: camYaw };
+      startCamMove(back, 6, true);
     }
   }
 

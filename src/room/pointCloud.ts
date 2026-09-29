@@ -631,6 +631,10 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   let panelMesh: pc.Mesh | null = null;
   let panelFull: number[] = [];
   let panelHidden = new Uint8Array(0);
+  /** ⚑ Phase 7 (his: "the panels are flashing on and off") — how far each panel is folded, 0 → 1,
+   *  eased toward `panelHidden` over PANEL_FOLD_SECONDS instead of popping on the frame it changes */
+  let panelK = new Float32Array(0);
+  const PANEL_FOLD_SECONDS = 0.7;
   const PLATE = { x: 40, y: 40, w: 600, h: 688 };
   const TEXT_X = PLATE.x + PLATE.w + 48;
   /** S177 / R4-30 — the Sources button's rect in the cell (px), bottom right, on the hint's line */
@@ -919,6 +923,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       panelMesh = pmesh;
       panelFull = pp.slice();
       panelHidden = new Uint8Array(panels.length);
+      panelK = new Float32Array(panels.length);
       pmesh.setPositions(pp);
       pmesh.setUvs(0, puv);
       pmesh.setIndices(pidx);
@@ -1085,7 +1090,6 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       if (changed) rewrite(linkMeshRef, linkFull, linkHidden, 2, (g) => [linkFull[g * 6], linkFull[g * 6 + 1], linkFull[g * 6 + 2]]);
     }
     if (panelMesh) {
-      let changed = false;
       for (let i = 0; i < panelFrames.length; i++) {
         let h = 0;
         if (corridor) {
@@ -1101,14 +1105,48 @@ export function buildPointCloud(app: pc.Application): PointCloud {
               // S175: 3 cm, not 18 — panels are pressable now (their dossiers), and a
               //   folded panel cannot be pressed; the 1997 panel clears the machine's
               //   top by ~3 cm, so it folds only on a real overlap
-              if (onSight(sw.x, sw.y, sw.z, 0.03, 0.6)) h = 1;
+              // ⚑ Phase 7: and a folded one opens again only once it is 8 cm clear — a panel
+              //   riding the edge of the sight-line must not blink as the sky drifts
+              if (onSight(sw.x, sw.y, sw.z, panelHidden[i] ? 0.08 : 0.03, 0.6)) h = 1;
             }
           }
         }
-        if (h !== panelHidden[i]) { panelHidden[i] = h; changed = true; }
+        if (h !== panelHidden[i]) panelHidden[i] = h;
       }
-      if (changed) rewrite(panelMesh, panelFull, panelHidden, 4, (g) => [panelFrames[g].c.x, panelFrames[g].c.y, panelFrames[g].c.z]);
+      // (the panels' buffer is written by `easePanels`, a little each frame, never here at once)
     }
+  }
+
+  /** ⚑ Phase 7 — the panels fold toward their centre and open back out, eased (smoothstep over
+   *  PANEL_FOLD_SECONDS). Written only on the frames a panel is actually moving. */
+  function easePanels(dt: number): void {
+    if (!panelMesh) return;
+    let moving = false;
+    for (let i = 0; i < panelK.length; i++) {
+      const want = panelHidden[i];
+      const k = panelK[i];
+      if (k === want) continue;
+      panelK[i] = want ? Math.min(1, k + dt / PANEL_FOLD_SECONDS) : Math.max(0, k - dt / PANEL_FOLD_SECONDS);
+      moving = true;
+    }
+    if (!moving) return;
+    const vb = panelMesh.vertexBuffer;
+    const el = vb?.format.elements.find((element) => element.name === pc.SEMANTIC_POSITION);
+    if (!vb || !el) return;
+    const data = new Float32Array(vb.lock());
+    const off = el.offset / Float32Array.BYTES_PER_ELEMENT;
+    const stride = el.stride / Float32Array.BYTES_PER_ELEMENT;
+    for (let g = 0; g < panelK.length; g++) {
+      const t = panelK[g], e = t * t * (3 - 2 * t);
+      const c = panelFrames[g].c;
+      for (let k = 0; k < 4; k++) {
+        const v = g * 4 + k, at = v * stride + off;
+        data[at] = panelFull[v * 3] + (c.x - panelFull[v * 3]) * e;
+        data[at + 1] = panelFull[v * 3 + 1] + (c.y - panelFull[v * 3 + 1]) * e;
+        data[at + 2] = panelFull[v * 3 + 2] + (c.z - panelFull[v * 3 + 2]) * e;
+      }
+    }
+    vb.unlock();
   }
 
   /**
@@ -1270,6 +1308,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       root.setLocalEulerAngles(0, yaw, 0);
       updateBillboards();
       if (corridor) applySight();
+      easePanels(dt);
     },
     panelAt(p0, p1): number | null {
       if (!visible || panelFrames.length === 0) return null;

@@ -135,6 +135,9 @@ export class FamilyCallsApp implements TaskSurface {
       const done = this.outcomes.has(p.id);
       px(ctx, x + 4, ry, w - 8, rowH - 3, ERA3.white);
       px(ctx, x + 4, ry, 3, rowH - 3, done ? ERA3.grey : ERA3.accent);
+      // ⚑ Phase 7 (the Codex pass: on the board the names ran into each other) — under 12 px a row the
+      //   name is a line of ink, not letters: the tile's picture stays a stack of waiting messages
+      if (rowH < 12) { px(ctx, x + 12, ry + Math.max(0, Math.floor((rowH - 4) / 2)), Math.min(w - 24, 16 + p.from.length * 3), 1, done ? ERA3.grey : ERA3.titleText); return; }
       setFont(ctx, roomy ? 10 : 9);
       ctx.fillStyle = done ? ERA3.grey : ERA3.titleText;
       ctx.fillText(p.from, x + 12, ry + 2);

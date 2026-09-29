@@ -6,6 +6,7 @@
   "publisher": "a Lamby game",
   "iconLabel": "FloppySheep",
   "tagline": "Mind the fences!",
+  "jump": "JUMP",
   "tapHint": "tap to hop",
   "tapHintAir": "tap again mid-air",
   "hopsLabel": "hops",

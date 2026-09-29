@@ -169,21 +169,21 @@ async function main() {
     await jump('kit', 2600);
     await free(0, 1.08, 1.05, -2, 0);
     await shot('03-the-programme', 'A:\\ opened — the Un-Walk programme, the era\'s spine');
-    await jump('desktop', 1200);
-    await turn(33);
+    // ⚑ Phase 7 (the Codex pass: this frame once caught 2026's desk mid-fold, and the record's header
+    //   sat above the frame) — the room is given time to settle, and the turn is a pose that holds the
+    //   whole wall: a step forward, the eyes lifted six degrees
+    await jump('desktop', 3500);
+    await free(0, 1.12, 0.95, 6, 180);
     await shot('04-the-turn', 'the turn: the room\'s other face, where attention becomes evidence');
-    await turn(33, 'ArrowLeft');
     // ⚑ S183c — the corner LATER in 1997: the suitcase and the referral list arrive only after Rob
     //   has reached his mother, and only while his back is turned; the terminal's plan moves on the
     //   packet. The jumps never file those beats, so this still files them (the page's own ledger
     //   module, the same instance the build reads) — a REVIEW state, labelled as one.
     await page.evaluate(async () => { const m = await import('/src/state/ledger.ts');
       for (const id of ['went-online', 'rob-spoke-mother', 'enrollment-acknowledged']) if (!m.ledger.records.includes(id)) m.ledger.records.push(id); });
-    await wait(600);
-    await turn(33);
-    await wait(1800);
+    await wait(2400);
+    await free(0, 1.12, 0.95, 6, 180);
     await shot('04b-the-turn-later', 'later in 1997 (review state: Rob has reached his mother, the packet is acknowledged): her suitcase by the door, her referral list, the plan on the terminal');
-    await turn(33, 'ArrowLeft');
     await jump('kit', 2600);
     await free(0, 1.10, 0.38, -3, 0);
     await shot('05-close-the-programme', 'close: the programme on the glass, the First Steps in order');
@@ -241,6 +241,9 @@ async function main() {
     await shot('02-seat-board', 'the seat: the whole screen, the platform waiting to be signed into');
     await free(-4.62, 1.10, 0.70, -3, 90);
     await shot('03-close-the-platform', 'close: the platform, and the name it greets her by');
+    // ⚑ Phase 7 (Codex F8) — the turn in 2016: the corner as infrastructure
+    await free(-4.3, 1.12, 0.7, 4, 270);
+    await shot('04-the-turn-2016', 'behind her in 2016: the system\'s corner as infrastructure — the router, the record on the wall');
     await jump('u3Dispersal', 1200).catch(() => {});
   });
 
@@ -257,12 +260,16 @@ async function main() {
     await shot('02-seat-2026', 'the seat: the laptop she comes back to — six tabs, five of them hers');
     await free(4.62, 1.10, 0.70, -3, 270);
     await shot('02b-close-the-search', 'close: the search finished for her');
-    await page.evaluate(() => window.__os.e4.browser.debugJumpTo('site'));
+    // ⚑ Phase 7 (Codex F9): 'site' is a MODE of the browser, not a tab — debugJumpTo('site') landed on the search again
+    await page.evaluate(() => { const b = window.__os.e4.browser; b.debugJumpTo('search'); b.mode = 'site'; b.version++; });
     await wait(2500);
     await free(4.05, 1.08, 0.70, -2, 270);
     await shot('03-the-site', 'where the search led: one door, and an agent behind it');
     await free(4.62, 1.10, 0.70, -3, 270);
     await shot('03b-close-the-site', 'close: the door the search led to');
+    // ⚑ Phase 7 (Codex F8) — the turn in 2026: the record back beside her, the status light
+    await free(4.3, 1.12, 0.7, 4, 90);
+    await shot('03c-the-turn-2026', 'behind her in 2026: the record again, and the one light the system keeps on');
     await jump('e4Ball', 2000);
     await page.evaluate(() => window.__os.e4.ball.debugJumpTo('ball'));
     await wait(6000);

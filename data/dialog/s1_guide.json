@@ -19,6 +19,8 @@
     },
     {
       "id": "kit",
+      "_docP7": "⚑ Phase 7 (the Codex pass: the diary was open while the bar still said 'read the programme') — soft, so a later step's line talks over it and it steps down once the programme is not being read; it comes back if it is.",
+      "soft": true,
       "trigger": "kitReading",
       "done": "kitRead",
       "text": "read the programme.",

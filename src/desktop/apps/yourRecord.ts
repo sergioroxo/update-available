@@ -53,8 +53,9 @@ export class YourRecordApp implements TaskSurface {
     //   (S145: a 24 px well holds the avatar and the name, nothing under them)
     const av = Math.min(22, h - 8);
     px(ctx, x + 8, y + 4, av, av, ERA3.glassEdge);
-    setFont(ctx, 10); ctx.fillStyle = ERA3.titleText;
-    ctx.fillText(this.name, x + 8 + av + 8, y + 6);
+    // ⚑ Phase 7 — a well too short for the name draws the name as a line (it ran out of the tile)
+    if (h < 20) px(ctx, x + 8 + av + 8, y + Math.floor(h / 2), 28, 1, ERA3.titleText);
+    else { setFont(ctx, 10); ctx.fillStyle = ERA3.titleText; ctx.fillText(this.name, x + 8 + av + 8, y + 6); }
     if (h >= 36) {
       setFont(ctx, 8); ctx.fillStyle = ERA3.grey;
       ctx.fillText(R.statusValue, x + 8 + av + 8, y + 19);

@@ -98,6 +98,7 @@ const CONDITIONS: Record<string, Condition> = {
   // ── 2003 ──
   assistantMet: () => ledger.lamby.some((l) => l.id === 'first-greeting' || l.id === 'introduction'),
   checkinDone: () => ledger.checkins.some((c) => !c.id.startsWith('e3')),
+  yourFileSeen: (os) => os.yourFileSeen === true,   // Phase 7
   sendResolved: () => ledger.sends.some((s) => s.outcome === 'visited' || s.outcome === 'declined'),
   contactOpened: () => ledger.caleb.some((c) => c.id === 'opened'),
   threadCommitted: () => ledger.caleb.some((c) => c.outcome === 'committed' || c.outcome === 'held'),

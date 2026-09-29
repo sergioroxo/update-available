@@ -374,7 +374,9 @@ export class UpdateApp {
       // ⚑ S157 / R3-62 (Sérgio: "the GracePlatform notice inside Era 2 is barebones"): the
       //   notice wears the era it is BRINGING, as u4's terms already did — 2016's glass
       //   arrives in 2003's room. u2 keeps 1997's chrome: it is Restorify announcing itself.
-      const toE3 = this.ledgerEntry.toEra === 3;
+      // ⚑ Phase 7 (his: "the GracePlatform important changes is not in the same style") — u4 is
+      //   GracePlatform announcing its own change on 2016's glass, so it wears 2016's frame too
+      const toE3 = this.ledgerEntry.toEra === 3 || this.key === 'u4';
       const c = toE3
         ? aero.windowFrame(ctx, dx, dy - 6, dw, dh + 12, this.s.notifyTitle, true)
         : ui.windowFrame(ctx, dx, dy, dw, dh, this.s.notifyTitle, true);

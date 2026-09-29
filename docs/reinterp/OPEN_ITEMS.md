@@ -266,3 +266,36 @@ Measured, not eyeballed. Nothing here is built: they need a walk, and his review
 | R5-06 | Social media: "the recommendation event" across the four eras (his Deep Research) | PLANNED — Phase 5 |
 | R5-07 | The GPT visual walkthrough | after Phases 1–3 |
 
+
+## Phase 7 — the visual walkthrough (2026-09-29/30): his notes + the two GPT/Codex passes
+*Sources: `~/Pc_Simulation/Sources/Deep Research/Visual ,review.md` (Codex, two passes: A = stills, B = live) and his notes of 2026-09-29 with his answers of 09-30. Brief: `PHASE7_VISUAL_WALKTHROUGH_2026-09-29.md`.*
+
+| id | item | state |
+|---|---|---|
+| P7-01 | 1997: "Play the tape" (and "Open DIARY.TXT", "Connect now") ran past the wizard's button | DONE S203 — the middle button is as wide as its word |
+| P7-02 | 1997: the guide's line ran past the taskbar well | DONE S203 — clipped to its well; a line that does not fit rises in full as a 1997 tooltip for 7 s when new, and again on a press of the well |
+| P7-03 | 1997: a "Clippy" to help with the suggestions | ❓ his — 09-30: "maybe it isn't needed, I will check with the potential players later"; R28 §2 unchanged (no character in Era 1); the tooltip is the impersonal half |
+| P7-04 | 2003: Your file, Harbor and Route sheet had no icon; the Route sheet off the grid and drawn over windows | DONE S203 — three pixel icons (a locked folder, an anchor on a page, a route on a sheet); the Route sheet at x 12 · y 188 in the icon pass, under every window; the found file on the grid (y 284); "Harbor" |
+| P7-05 | 2003: the Lamby boot needs lyrics; the song ends on a drop cut | DONE S203 — his LRC (`s2_jingle_lyrics.json`) sung line by line on Restorify's navy band, each word lit; the last 3.5 s fade (the file ended at full level) |
+| P7-06 | 1997: Raise the Racket — older design, unclear; the racket on the floor behind you; a poster that opens it | S203 — his ruling 09-30: on the wall beside the bed ("the pillow is there"); the Release Work sheet beside it (press either); the exercise opens in the Un-Walk wizard's look with the figure as the visualizer; it said "from: Restorify" in 1997 — now the programme's own |
+| P7-07 | The map ("Where you are") not updated — his 09-30: the game menu's map | DONE S203 — the phone's place (on its stand, left of the monitor, since R4-35), the racket's (the wall by the bed), 2003's read-only folder added (○) |
+| P7-08 | FloppySheep: unused white area → a JUMP button; the song from the beginning; "Aristate" → "Error state"; his other LRC slips (09-30 "yes please") | DONE S203 — JUMP in the phone's white area; the song starts with the first run from its first second (♪ turns it off); sequence, binary, "Error state, Floppy sheep" |
+| P7-09 | 2016: the GracePlatform "Important Changes" notice not in the platform's style | DONE S203 — u4 wears 2016's glass (as its terms already did) |
+| P7-10 | 2016: the light-blue handheld floating on Vera's bed (a DS-like, not the Switch) | DONE S203 — removed from the room (his: the DS goes); the model's file and credit stay |
+| P7-11 | The flight Vera → Maya: the turn inside it | S203 — one blink at the top of the rise turns you to face Room 3; the crossing goes straight over the open building; Room 3's walls rise during the descent |
+| P7-12 | 2026: who says "Hi Maya", and the messages? | S203 — every spoken line is a bubble with its speaker's name: Junie, Ade, the MC |
+| P7-13 | 2026: the ball / the show must be SEEN | S203 — each category is walked down the crowd's middle toward her (four abreast for the Late Arrivals), a patch of light under them, the crowd's arms up on a landing |
+| P7-14 | 2026: the house's text → chat bubbles, separated | S203 — with P7-12: up to three bubbles, the newest brightest |
+| P7-15 | 2026: the session breaking — more time to see the computers break; no "look to the right" | DONE S203 — the bands take 8 s (off at 14.5 s, was 8.5); the conducted turn to the laptop is gone (the seat eases back 30 cm, no yaw); the Close's travel waits for the dead screens |
+| P7-16 | The Close: the panels flash on and off | DONE S203 — measured (a panel on the sight-line popped at 83 s, 106 s, 131 s): the fold is eased (0.7 s) with an 8 cm margin before a folded panel opens again |
+| P7-17 | The flight Daniel 1997 → 2003 should see more of the room | S203 — the hold pulls back to the room's far end (z 3.25, −30°), the descent 13 s |
+| P7-18 | The Close's sources in mobile size on a computer | DONE S203 — every reading view of the menu takes the wide dialog |
+| P7-19 | The Close: the overview (stars, then the room) — "I like the idea… but be careful" | kept; P7-16 is the care |
+| P7-20 | Codex A-F1/F2/F8/F9/F3: stills that caught the wrong state (the 1997 turn, the 2026 site), the missing turns for 2016/2026, the 1997 results page | DONE S203 — tools/stills.mjs + out/probe/web97.mjs |
+| P7-21 | Codex A-F5: the family-calls tile's names collided on the board | DONE S203 — under 12 px a row the name is a line of ink |
+| P7-22 | Codex B-F1: the bar said "read the programme" over the open diary | DONE S203 — the line is soft |
+| P7-23 | Codex B-F3: FIT IN never says which button does what | DONE S203 — a legend on the title screen |
+| P7-24 | Codex B-F4: the Commons category title clipped | DONE S203 — wraps in the lower third |
+| P7-25 | Codex B-F5: 2026's message bar looks typeable | DONE S203 — it says what it is |
+| P7-26 | Codex B-F2/F6/F7/F8/F9/F10 (the disabled "Not now" and "Ignore", the fixed diary line, the drawn file picker, "Allow"/"Just this once", FloppySheep's ordinary retry) | BY DESIGN — his rulings (pressure is the point; no free typing; no real file input); recorded, not changed |
+| P7-27 | Codex A-F4 (2003's corner: a large dark rectangle) · A-F10 (the panels' overview frame) | taste · tool — left |

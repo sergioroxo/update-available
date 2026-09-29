@@ -99,6 +99,7 @@ export class FloppySheep {
   openGame(): void {
     if (this.open) return;
     this.open = true;
+    this.songOff = false;
     this.reset();
     this.version++;
   }
@@ -124,6 +125,8 @@ export class FloppySheep {
   //   His timed words (data/dialog/s3_floppysheep_lyrics.json, from his LRC) run karaoke-style across the
   //   sky while it plays; closing the game stops it. The song is the game's, like the hops: nothing filed.
   private song: HTMLAudioElement | null = null;
+  /** ⚑ Phase 7 — the ♪ pressed OFF this session: the run no longer starts the song */
+  private songOff = false;
   private startSong(): void {
     this.song = playOnce('floppysheep_song.mp3');
     this.song?.addEventListener('ended', () => { this.song = null; this.version++; });
@@ -136,12 +139,14 @@ export class FloppySheep {
     if (!this.open) return false;
     const r = this.rects.find(rr => x >= rr.x && x <= rr.x + rr.w && y >= rr.y && y <= rr.y + rr.h);
     if (r?.id === 'back') { this.closeGame(); return true; }
-    if (r?.id === 'song') { if (this.song) this.stopSong(); else this.startSong(); this.version++; return true; }
+    // ⚑ Phase 7 (his: "the music should start from the beginning") — the song begins with the first run,
+    //   from its first second; the ♪ turns it off (and on again, from the top)
+    if (r?.id === 'song') { if (this.song) { this.stopSong(); this.songOff = true; } else { this.startSong(); this.songOff = false; } this.version++; return true; }
     if (this.mode === 'over') {
       if (this.overT >= OVER_ARM_SECONDS) { this.reset(); this.mode = 'run'; this.version++; }
       return true;
     }
-    if (this.mode === 'idle') { this.mode = 'run'; }
+    if (this.mode === 'idle') { this.mode = 'run'; if (!this.song && !this.songOff) this.startSong(); }
     if (this.y <= 0) { this.vy = HOP_V; this.flapped = false; playOnce('click_floppysheep.mp3'); }
     else if (!this.flapped) { this.vy = FLAP_V; this.flapped = true; playOnce('click_floppysheep.mp3'); }
     this.version++;
@@ -302,6 +307,21 @@ export class FloppySheep {
           }
         });
       }
+    }
+    // ⚑ Phase 7 (his: "a lot of not used area, maybe you can add a button to play, just saying jump") —
+    //   on a screen taller than the game (the phone), the white below the footer holds one big JUMP. It
+    //   is the same press as anywhere else on the screen; it is there so the thumb knows where to go.
+    if (H - FOOT_Y >= 90) {
+      const bh = 40, bw = W - 36;
+      const bx = Math.round((W - bw) / 2), by = Math.round(FOOT_Y + 30 + Math.max(0, Math.min(40, (H - FOOT_Y - 30 - bh) / 2 - 10)));
+      const down = this.mode === 'run' && this.y > 0;
+      px(ctx, bx + 2, by, bw - 4, bh, FLOPPY.hillDk);
+      px(ctx, bx, by + 2, bw, bh - 4, FLOPPY.hillDk);
+      px(ctx, bx + 2, by + (down ? 2 : 0), bw - 4, bh - 3, FLOPPY.hillFar);
+      px(ctx, bx + 1, by + 2 + (down ? 2 : 0), bw - 2, bh - 7, FLOPPY.hillFar);
+      px(ctx, bx + 4, by + 2 + (down ? 2 : 0), bw - 8, 2, ERA3.white);
+      setFont(ctx, 14); ctx.fillStyle = FLOPPY.ink;
+      ctx.fillText(g.jump, Math.round((W - ctx.measureText(g.jump).width) / 2), by + 12 + (down ? 2 : 0));
     }
     if (this.mode === 'over') this.drawOver(ctx, W);
     // the whole screen is the button — one thumb, anywhere (the ♪ and the back arrow are asked first)
