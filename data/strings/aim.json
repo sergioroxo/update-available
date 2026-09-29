@@ -1,7 +1,8 @@
 {
   "_doc": "THE SENTENCE LINE (S152, 2026-09-20). Sérgio asked what a 1997 videogame's tool for 'you can press this' would be: Myst's hand cursor and the LucasArts sentence line — nothing in the world glows; a thing NAMES ITSELF when the look rests on it. So: anything pressable in the room says what it is in the caption strip (and the cursor becomes a hand) while the mouse hovers it, the gyro's centre rests on it, or the headset's ray touches it — src/engine/app.ts `aimNameUnderRay`, the same tests in the same order as the press itself. The breath (the lift) stays only for the moment the system points at a thing. Frame voice: plain, lowercase, no charm. The tapes' names come from s1_tapes.json `shelfLabel`; the belongings' from room/belongings.json `label`; the markers' from room/nodes.json `label`.",
   "power": "the power button — switch the computer on",
-  "racket": "the racket on the wall — the first exercise",
+  "racket": "the racket on the wall by the bed — the first exercise",
+  "releasePoster": "Release Work — the exercise sheet. Press to begin",
   "disk": "the companion disk — put it in",
   "boomboxStop": "the tape player — stop the tape",
   "boomboxPlay": "the tape player — play",

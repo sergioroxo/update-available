@@ -7,12 +7,21 @@
   "cuts": ["festival", "full"],
   "invitation": {
     "_doc": "PLACEHOLDER — Sérgio voice pass pending",
-    "from": "Restorify",
+    "from": "Un-Walk · TriedPath Fellowship",
     "lines": [
       "Release Work — today's session.",
       "Would you like to begin?"
     ],
     "accept": "Begin"
+  },
+  "wizard": {
+    "_doc": "⚑ Phase 7 (his: 'The Raise the Racket thing still has an older design… needs to be clearer about what it is: does it need visualizers, does it need the photos like the book?') — the exercise opens in the Un-Walk programme's own wizard (the kit's look): the picture panel on the left is the visualizer — the figure performing the step being asked, the pillow under it, the three steps listed with the current one lit — and the text on the right. Its felt lines stay bare: the panel empties for them. The invitation spoke 'from Restorify' in 1997, a name from 2003; it is the programme's own now.",
+    "title": "Release Work — TriedPath Fellowship",
+    "heading": "Release Work",
+    "frameHeading": "Today's session",
+    "step": "Step {n} of 3",
+    "round": "round {r}",
+    "steps": ["Raise", "Exhale", "Strike"]
   },
   "frame": {
     "_doc": "PLACEHOLDER — Sérgio voice pass pending; frame stays at most two sentences. Revised per embodiment analysis §4 (grounding stakes-line): names who 'Dad' is to Daniel and why today, in the system's own confident register — not a hedge, since the system's certainty about a false premise is the point.",

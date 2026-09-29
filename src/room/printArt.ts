@@ -21,11 +21,11 @@
 import { px, text, textW, disc, line, sprite, gradient, hand, type Ctx } from './calendarArt';
 import { PRINT as P } from '../desktop/theme/calendar';
 
-export type PrintId = 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard';
+export type PrintId = 'release1997' | 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard';
 
 /** each print's pixel size, ~2 px per centimetre of the prop it hangs on */
 export const PRINT_SIZE: Record<PrintId, [number, number]> = {
-  rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
+  release1997: [60, 90], rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
   tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100],
   drawer12: [24, 12], campTag: [36, 22], referral1997: [60, 80], rules2003: [42, 56], indexCard: [26, 16]
 };
@@ -51,6 +51,39 @@ function rally1997(c: Ctx, W: number, H: number): void {
   centre(c, "YOUTH WEEKEND '97", 18, P.rallyAccent, W);
   centre(c, 'CAMP - JULY 12-19', 92, P.rallyAccent, W);
   centre(c, 'CHANGE STARTS HERE', 100, P.rallyTitle, W);
+}
+
+/**
+ * ⚑ Phase 7 — RELEASE WORK, the programme's exercise sheet (1997), pinned beside the racket on the wall by
+ * the bed. His ask: a poster that "can already give more important information" and opens the exercise.
+ * A photocopied ministry handout: the title band, what it is for, the three steps as three small diagrams
+ * (the monitor's own figure, raise / exhale / strike, the pillow under each), and the fellowship's name.
+ */
+function release1997(c: Ctx, W: number, H: number): void {
+  px(c, 0, 0, P.relPaper, W, H);
+  px(c, 0, 0, P.relNavy, W, 14);
+  centre(c, 'RELEASE', 2, P.relWhite, W);
+  centre(c, 'WORK', 8, P.relWhite, W);
+  centre(c, 'EXERCISE ONE', 17, P.relInk, W);
+  centre(c, 'THE FATHER', 24, P.relRed, W);
+  centre(c, 'WOUND', 30, P.relRed, W);
+  // three diagrams: a figure at the pillow, the racket raised, held, down
+  for (let i = 0; i < 3; i++) {
+    const x0 = 2 + i * 19, y0 = 38;
+    px(c, x0, y0, P.relGrey, 18, 1); px(c, x0, y0 + 20, P.relGrey, 18, 1);
+    px(c, x0 + 3, y0 + 15, P.relPillow, 12, 4);                 // the pillow
+    px(c, x0 + 6, y0 + 3, P.relInk, 3, 3);                      // the head
+    px(c, x0 + 5, y0 + 6, P.relInk, 5, 8);                      // the body
+    if (i === 0) { px(c, x0 + 10, y0 + 2, P.relInk, 1, 6); px(c, x0 + 9, y0 + 1, P.relGrey, 4, 2); }
+    if (i === 1) { px(c, x0 + 10, y0 + 7, P.relInk, 4, 1); px(c, x0 + 14, y0 + 5, P.relGrey, 3, 3); }
+    if (i === 2) { px(c, x0 + 10, y0 + 9, P.relInk, 1, 6); px(c, x0 + 9, y0 + 14, P.relGrey, 4, 2); }
+    text(c, String(i + 1), x0 + 1, y0 + 2, P.relNavy);
+  }
+  text(c, '1 RAISE IT', 4, 62, P.relInk);
+  text(c, '2 EXHALE', 4, 68, P.relInk);
+  text(c, '3 STRIKE', 4, 74, P.relInk);
+  px(c, 0, 82, P.relNavy, W, H - 82);
+  centre(c, 'TRIEDPATH', 84, P.relWhite, W);
 }
 
 function band1997(c: Ctx, W: number, H: number): void {
@@ -266,7 +299,7 @@ function indexCard(c: Ctx, W: number, H: number): void {
 }
 
 const DRAW: Record<PrintId, (c: Ctx, W: number, H: number) => void> = {
-  rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard
+  release1997, rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard
 };
 
 export function drawPrint(c: Ctx, id: PrintId): void {

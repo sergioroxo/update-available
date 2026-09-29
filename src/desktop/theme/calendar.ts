@@ -98,7 +98,10 @@ export const PRINT = {
   ballBg: '#1d1830', ballGlow: '#3a2a5c', ballGold: '#f4c95d', ballPink: '#f5a9b8', ballBlue: '#5bcefa', ballWhite: '#ffffff',
   ballFigure: '#f1c9a5', ballInk: '#fff4d6',
   // S181 · the institution's labels: a drawer card, a luggage tag in his mother's hand
-  cardStock: '#efe9d6', cardInk: '#23232f', tagStock: '#e8dcc0', tagString: '#8a6a4a', motherInk: '#2446a8'
+  cardStock: '#efe9d6', cardInk: '#23232f', tagStock: '#e8dcc0', tagString: '#8a6a4a', motherInk: '#2446a8',
+  // Phase 7 · the Release Work sheet (1997) — ERA1's own paper, navy, greys and dark red, re-used
+  relPaper: '#f5f4ed', relNavy: '#000080', relInk: '#404040', relGrey: '#808080', relPillow: '#d4d0c8',
+  relWhite: '#ffffff', relRed: '#800000'
 } as const;
 
 /**

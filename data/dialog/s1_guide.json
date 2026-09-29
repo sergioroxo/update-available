@@ -148,7 +148,7 @@
       "trigger": "roomQuiet",
       "done": "pillowDone",
       "expire": "eraShifted",
-      "text": "the racket on the wall — the first exercise.",
+      "text": "the racket on the wall by the bed — the first exercise.",
       "witness": {
         "followed": "guidance: racket — followed",
         "declined": "guidance: racket — no response"

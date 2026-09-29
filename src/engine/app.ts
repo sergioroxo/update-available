@@ -234,10 +234,10 @@ const RELOC_DESCEND_VIA = { x: -3.70, y: 2.10, z: 1.45 };
  * to it. That is deliberate and it is untested in the seat: flagged in the
  * Session 71 log as the one thing the cut leaves open.
  */
-const RELOC_E1_HOLD = { x: -0.10, y: 2.35, z: 1.50, pitch: -45, yaw: 0 };   // S156: over the room, looking down at it as it ages
+const RELOC_E1_HOLD = { x: -0.10, y: 2.38, z: 3.25, pitch: -30, yaw: 0 };   // ⚑ Phase 7 (his: "the flying when we move from daniel era 1 to era 2… supposed to see more of the overall room"): the hold pulls back 1.75 m to the room's far end, under the ceiling, so the whole room — bed, shelf, desk, walls — ages in front of you (1.5 × 1.66 / 7 = 0.36 m/s). S156's was over the desk at −45°.
 /** E1→E2's leg 3 control: 0.23 m of sagitta (the rise's own figure), out over
  *  the room so you settle back into the chair rather than drop into it */
-const RELOC_E1_DESCEND_VIA = { x: -0.24, y: 1.95, z: 0.90 };
+const RELOC_E1_DESCEND_VIA = { x: -0.20, y: 2.25, z: 1.70 };   // Phase 7: from the far end, forward over the room, then down into the chair
 /** E3→E4's leg 1 — Room 2's overlook. Deliberately the exact translation of
  *  Room 1's (+0.25 x, +1.00 y, +1.05 z off the seat, 1.4715 m of chord): by
  *  the third time, the move must be recognisable in the body, not just in the
@@ -247,7 +247,7 @@ const RELOC_R2_RISE_VIA = { x: -4.25, y: 2.00, z: 0.95 };
 /** E3→E4's leg 2 — the mirror of RELOC_OVERLOOK_B, over the Room 1 / Room 3
  *  threshold, and the crossing that gets there is the longest move in the
  *  piece: 6.45 m and 142° of turn. See the durations in cluster.ts. */
-const RELOC_OVERLOOK_C = { x: 2.30, y: 2.28, z: 1.60, pitch: -13, yaw: 308 };
+const RELOC_OVERLOOK_C = { x: 3.00, y: 2.28, z: 1.60, pitch: -13, yaw: 270 };   // ⚑ Phase 7: facing Room 3 the whole way (the blink turned you at the top), ending inside it
 /** E3→E4's leg 3 control — RELOC_DESCEND_VIA mirrored in x, so the descent
  *  into Maya's seat is geometrically identical to the one into Vera's */
 const RELOC_R3_DESCEND_VIA = { x: 3.70, y: 2.10, z: 1.45 };
@@ -464,7 +464,9 @@ const TAPE_HIT_RADIUS = 0.045; // stays under half the 0.10m shelf spacing (Sess
 /** the tennis racket on the Room-1 floor (data/room/reinterp_deltas.json r1);
  *  a generous radius because it lies flat and low, and a floor object read at
  *  a seated angle is a small target. */
-const RACKET_HIT = { x: -0.65, y: 0.12, z: 2.6 };
+const RACKET_HIT = { x: -2.06, y: 1.0, z: 0.86 };   // ⚑ Phase 7: on the wall by the bed (was the floor behind the seat)
+/** ⚑ Phase 7 — the Release Work sheet beside it (reinterp_deltas.json r1 `releasePoster`): a press opens the exercise too */
+const RELEASE_POSTER_HIT = { x: -2.1, y: 1.3, z: 1.36 };
 const BOOMBOX_HIT = { x: 1.86, y: 0.793, z: 0.62 };
 const BOOMBOX_HIT_RADIUS = 0.21;
 /** the visual "docked" spot, just in front of the boombox's own deck plate */
@@ -1364,7 +1366,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // arithmetic; beginRelocation/advanceRelocation/endRelocation drive it.
   // S67: plus WHICH relocation — the key into RELOC_POSES / cluster.ts's
   // RELOCATIONS, and the plan itself, so a leg never has to ask what era it is.
-  let relocLeg: 'rise' | 'build' | 'descend' | null = null;
+  let relocLeg: 'rise' | 'turn' | 'build' | 'descend' | null = null;
   let relocKey: string | null = null;
   let relocPlan: RelocationPlan | null = null;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
@@ -1380,6 +1382,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let blinkPhase: 'out' | 'in' | null = null;
   let blinkT = 0;
   let blinkTargetNode: string | null = null;
+  /** ⚑ Phase 7 — something to do at the bottom of a blink other than a seat cut (the E3→E4 turn) */
+  let blinkAction: (() => void) | null = null;
   let moveHintShown = false;
   let moveHintDismissed = false;
   /** Session 65 (Sérgio: *"there's a 'click a marker to move' always on, we
@@ -1430,17 +1434,27 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // down. one position, not a swing — no arc is drawn between these
     strike: { yaw: 14, pitch: -8,  y: 0.16 }
   };
-  let racketPose: string | null = null;
+  /** ⚑ Phase 7 (his: the racket on the wall by the bed, "for the movement would be similar because the
+   *  pillow is there") — it hangs on the wall, head up; the demonstration takes it off the wall to the
+   *  pillow under it: raised over the pillow, held, down on it. Same law as before — three still
+   *  positions, hard cuts, no swing. Positions are the prop root (its base centre), in the room's frame. */
+  const RACKET_WALL = { x: -2.07, y: 1.0, z: 0.86, pitch: -90, yaw: 90, roll: 0 };
+  const RACKET_OVER: Record<string, { x: number; y: number; z: number; pitch: number; yaw: number; roll: number }> = {
+    lift:   { x: -1.78, y: 1.05, z: 0.66, pitch: -68, yaw: 100, roll: 0 },
+    exhale: { x: -1.78, y: 1.02, z: 0.66, pitch: -62, yaw: 100, roll: 0 },
+    strike: { x: -1.74, y: 0.5,  z: 0.7,  pitch: -8,  yaw: 104, roll: 0 }
+  };
+  void RACKET_REST; void RACKET_POSES;   // the floor-era poses, kept as the record of the S90 demonstration
+  let racketPose: string | null = 'init';
   function syncRacketDemo(): void {
     const want = (os.provotype?.roomPose ?? null) as string | null;
     if (want === racketPose) return;
-    racketPose = want;
     const h = room.props.get('tennisRacketModel');
     if (!h) return;
-    const p = want ? RACKET_POSES[want] : null;
-    const base = RACKET_HIT;
-    h.entity.setLocalPosition(base.x, (p ? p.y : RACKET_REST.y), base.z);
-    h.entity.setLocalEulerAngles(p ? p.pitch : RACKET_REST.pitch, p ? p.yaw : RACKET_REST.yaw, 0);
+    racketPose = want;
+    const p = (want && RACKET_OVER[want]) || RACKET_WALL;
+    h.entity.setLocalPosition(p.x, p.y, p.z);
+    h.entity.setLocalEulerAngles(p.pitch, p.yaw, p.roll);
   }
 
   // R28-2a: prop emphasis follows the ACTIVE side-message (data key
@@ -1871,6 +1885,27 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function advanceRelocation(): void {
     const poses = relocKey ? RELOC_POSES[relocKey] : undefined;
     if (!poses || !relocPlan) { endRelocation(); return; }
+    if (relocLeg === 'rise' && relocKey === 'e3-e4') {
+      /**
+       * ⚑ Phase 7 — THE TURN, REDONE (his: "the turn inside of the flight from Vera to Maya is still to
+       * be redone"; 08-21: "the fly over the camera should turn… pointing to the Era 4 room, makes no
+       * sense to be looking at the wall"). The crossing used to swing 142° over 24 s while Room 3's walls
+       * rebuilt around the path — most of it spent facing a wall from inside the partition. Now: up over
+       * Vera's room, looking at it; one BLINK at the top turns you to face Maya's (R28's own grammar — a
+       * blink is how this piece turns you, and a snap is the comfortable way to turn anyone); then the
+       * crossing goes straight, over the building as r4's fold opens it, facing where it goes.
+       */
+      relocLeg = 'turn';
+      blinkAction = () => {
+        camYaw = RELOC_OVERLOOK_C.yaw;
+        if (relocLeg !== 'turn' || !relocPlan) return;
+        relocLeg = 'build';
+        startCamMove(poses.hold, relocPlan.buildSeconds, true);
+      };
+      blinkPhase = 'out';
+      blinkT = 0;
+      return;
+    }
     if (relocLeg === 'rise') {
       relocLeg = 'build';
       // a straight eased tween: while the space changes, the camera is the
@@ -2822,7 +2857,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   used. Guarded on `inDesktop` so it never fires over a window or a
       //   felt scene, and on `reinterp` because the provotypes are ours.
       if (options.reinterp && os.inDesktop && os.desktopIdleForProps?.() &&
-          rayHitsPointR(ray, RACKET_HIT, 0.34)) {
+          (rayHitsPointR(ray, RACKET_HIT, 0.3) || rayHitsPointR(ray, RELEASE_POSTER_HIT, 0.24))) {
         os.openPillowFromRoom?.();
         return;
       }
@@ -2995,7 +3030,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const A = aimStrings as unknown as Record<string, string>;
     if (os.isOff) return rayHitsPointR(ray, POWER_BTN, 0.08) ? A.power : null;
     if (!os.inDesktop) return null;
-    if (options.reinterp && os.desktopIdleForProps?.() && rayHitsPointR(ray, RACKET_HIT, 0.34)) return A.racket;
+    if (options.reinterp && os.desktopIdleForProps?.() && rayHitsPointR(ray, RACKET_HIT, 0.3)) return A.racket;
+    if (options.reinterp && os.desktopIdleForProps?.() && rayHitsPointR(ray, RELEASE_POSTER_HIT, 0.24)) return A.releasePoster;
     if (!os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) return A.disk;
     const belongings = os.belongings;
     if (belongings?.windowOpen) {
@@ -3502,6 +3538,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (k >= 1) {
           if (blinkTargetNode) performSeatCut(blinkTargetNode);
           blinkTargetNode = null;
+          if (blinkAction) { const a = blinkAction; blinkAction = null; a(); }
           blinkPhase = 'in';
           blinkT = 0;
         }

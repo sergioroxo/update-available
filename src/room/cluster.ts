@@ -285,6 +285,9 @@ export interface RelocationPlan {
    * Omitted → opensWalls ? cascade − 3.0 : min(2.5, cascade × 0.35).
    */
   rigDelaySeconds?: number;
+  /** ⚑ Phase 7 — seconds after the rise before the space begins to change (default 0). Tried on E3→E4 and
+   *  taken back the same day: r4's fold is what OPENS Room 1's east wall, so holding it kept a wall in the path. */
+  morphDelaySeconds?: number;
   /** the seat yaw the descent lands in (0 = Room 1, 90 = Room 2, 270 = Room 3) */
   seat: number;
 }
@@ -294,7 +297,9 @@ export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
   'e1-e2': {
     /** S156 / R3-46: the descent now un-pitches 45° (the overlook looks down at the room as it
      *  ages), and 1.5 × 45 / 8 = 8.4 °/s keeps it under the 9.1 ceiling; 7 s would be 9.6 */
-    riseSeconds: 7.0, buildSeconds: 7.0, descendSeconds: 8.0,
+    riseSeconds: 7.0, buildSeconds: 7.0,
+    /** ⚑ Phase 7: 13, not 8 — the hold is at the room's far end now, 2.84 m from the chair (1.875 × 2.84 / 13 = 0.41 m/s) */
+    descendSeconds: 13.0,
     opensWalls: false, seat: 0
   },
   'e2-e3': {
@@ -961,7 +966,7 @@ export function buildClusterShell(
           ?? (reloc.opensWalls ? cascade - 3.0 : Math.min(2.5, cascade * 0.35));
         state = toIdx >= 1 ? 'open' : 'sealed';
         const events: { t: number; fn: () => void }[] = [
-          { t: R, fn: () => {                                  // the space begins to change
+          { t: R + (reloc.morphDelaySeconds ?? 0), fn: () => {   // the space begins to change (Phase 7: E3→E4 later)
             beginMorphedStateBatch();
             morph.goToState(toIdx, true, pace);
             // S61: the record leaves the spine WITH the walls (see

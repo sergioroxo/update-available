@@ -1296,7 +1296,10 @@ export const BALL = {
    *  captions already established for audio that plays IN THE ROOM. It is the
    *  era's warmest legible ink because a subtitle's one job is to be read. */
   captionInk: ERA4.textHi,
-  captionField: 'rgba(10,10,14,0.78)'
+  captionField: 'rgba(10,10,14,0.78)',
+  /** ⚑ Phase 7 — the speaker's name over each bubble: the MC in the hall's gold, the friends in its textile pink */
+  whoMC: PLACE.sunHi,
+  whoFriend: PLACE.textileHi
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════

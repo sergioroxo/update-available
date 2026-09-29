@@ -72,6 +72,8 @@ export interface Provotype {
   debrief: { body: string[]; close?: string; sources: ProvotypeSource[] };
   ledgerTags: string[];
   witness?: { completed?: string; abandoned?: string };
+  /** ⚑ Phase 7 — when present, invitation/frame/vignette open in the Un-Walk wizard's look (pillow.json) */
+  wizard?: { title: string; heading: string; frameHeading: string; step: string; round: string; steps: string[] };
 }
 
 type Phase = 'invitation' | 'frame' | 'vignette' | 'close' | 'debrief';
@@ -170,6 +172,14 @@ export class ProvotypeApp {
     // instead of ordinary Win95 app-window chrome. Invitation/frame/debrief
     // (the system's own surfaces, and the sourced dossier) keep the chrome.
     const isRoomPhase = this.phase === 'vignette' || this.phase === 'close';
+    // ⚑ Phase 7 — Release Work in the Un-Walk programme's own wizard (pillow.json `wizard`)
+    const Wz = this.data.wizard;
+    if (Wz && (this.phase === 'invitation' || this.phase === 'frame' || this.phase === 'vignette')) {
+      const wc = this.drawWizard(ctx, Wz);
+      this.drawFixedRow(ctx);
+      if (this.paused) this.drawPaused(ctx, wc);
+      return;
+    }
     let c: ui.ContentRect;
     if (isRoomPhase) {
       this.drawRoomBackdrop(ctx, WIN.x, WIN.y, WIN.w, WIN.h);
@@ -376,9 +386,64 @@ export class ProvotypeApp {
     return (this.showResponse ? st.animPose : undefined) ?? null;
   }
 
-  private drawFigure(ctx: CanvasRenderingContext2D, x: number, top: number): void {
+  /**
+   * ⚑ Phase 7 — THE WIZARD (his: "does it need visualizers, does it need the photos like the book?").
+   * The kit's grammar: the picture panel on the left, the words on the right, the etched rule and the row.
+   * The panel is the visualizer: the figure performing the step being ASKED (a tutorial shows the move
+   * before you make it), twice its old size, and the three steps with the current one lit. For a felt
+   * line the panel empties and the heading goes: the programme has nothing to show there.
+   */
+  private drawWizard(ctx: CanvasRenderingContext2D, Wz: NonNullable<Provotype['wizard']>): ui.ContentRect {
+    const c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, Wz.title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'leave' });
+    const PIC = 150;
+    const px0 = c.x + 8, py0 = c.y + 8, ph = ROW_Y - 12 - py0;
     const st = this.data.states[this.stateIndex];
-    const pose = this.showResponse ? st.animPose : undefined;
+    const felt = this.phase === 'vignette' && this.showResponse && this.feltRevealed && !!st.felt;
+    ui.px(ctx, px0, py0, PIC, ph, ERA1.teal);
+    ui.px(ctx, px0, py0, PIC, 1, ERA1.tealDark); ui.px(ctx, px0, py0, 1, ph, ERA1.tealDark);
+    const pose = this.phase === 'vignette' ? (st.animPose ?? null) : null;
+    const k = pose === 'lift' ? 0 : pose === 'exhale' ? 1 : pose === 'strike' ? 2 : -1;
+    if (!felt) {
+      ctx.save(); ctx.translate(px0 + 1, py0 + 6); ctx.scale(2, 2); this.drawFigure(ctx, 0, 0, pose); ctx.restore();
+      Wz.steps.forEach((label, i) => {
+        const ry = py0 + 198 + i * 16;
+        if (i === k) ui.px(ctx, px0 + 6, ry - 3, PIC - 12, 15, ERA1.navy);
+        ui.setFont(ctx, 10);
+        ctx.fillStyle = i === k ? ERA1.white : ERA1.silver;
+        ctx.fillText(`${i + 1}   ${label}`, px0 + 14, ry);
+      });
+    }
+    ui.px(ctx, c.x + 8, ROW_Y - 6, c.w - 16, 1, ERA1.grey);
+    ui.px(ctx, c.x + 8, ROW_Y - 5, c.w - 16, 1, ERA1.white);
+    const tx = px0 + PIC + 14, tw = c.w - PIC - 38;
+    let ty = c.y + 10;
+    if (!felt) {
+      ui.setFont(ctx, 14);
+      ctx.fillStyle = ERA1.black;
+      const head = this.phase === 'invitation' ? Wz.heading : this.phase === 'frame' ? Wz.frameHeading
+        : k >= 0 ? Wz.step.replace('{n}', String(k + 1)) : Wz.heading;
+      ctx.fillText(head, tx, ty);
+      if (this.phase === 'vignette') {
+        ui.setFont(ctx, 9);
+        ctx.fillStyle = ERA1.greyDark;
+        ctx.fillText(Wz.round.replace('{r}', String(Math.floor(this.stateIndex / 4) + 1)), tx, ty + 18);
+      }
+      ty += 34;
+    }
+    switch (this.phase) {
+      case 'invitation': this.drawInvitation(ctx, tx, ty, tw); break;
+      case 'frame': this.drawFrame(ctx, tx, ty, tw); break;
+      default: this.drawVignette(ctx, tx, ty, tw);
+    }
+    return c;
+  }
+
+  private drawFigure(ctx: CanvasRenderingContext2D, x: number, top: number, poseArg?: 'lift' | 'exhale' | 'strike' | null): void {
+    const st = this.data.states[this.stateIndex];
+    // Phase 7: the wizard's panel asks for the pose being taught; the old card showed the one just done
+    const pose = poseArg !== undefined ? (poseArg ?? undefined) : this.showResponse ? st.animPose : undefined;
     const w = 74, h = 92;
     ui.px(ctx, x, top, w, h, ERA1.paper);
     ui.px(ctx, x, top, w, 1, ERA1.silver);

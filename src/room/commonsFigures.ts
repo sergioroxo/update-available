@@ -65,6 +65,24 @@ export function greetCommonsFigures(on: boolean): void { greetHook?.(on); }
 const GREET_SECONDS = 1.4;
 const GREET_STEP = 0.45;
 
+/**
+ * ⚑ Phase 7 — THE SHOW, SEEN (his: "the Ball/Trans jesus, we need visually to see the show in some way").
+ * The MC calls a category and its performers WALK it where she can see them: off the stage's front edge,
+ * down the gap the crowd leaves in the middle, to a few metres from her, a turn, and back — slowly, the
+ * way a floor is taken. The four Late Arrivals walk it together, abreast. A pale patch of light lies on
+ * the floor under whoever has it. When the room answers a line (its `flare`) the crowd's arms go up.
+ * All of it in the one mesh and the one draw call the crowd already had.
+ */
+export interface CommonsShow { performers: number; category: number; cheer: boolean }
+let showHook: ((s: CommonsShow) => void) | null = null;
+export function setCommonsShow(s: CommonsShow): void { showHook?.(s); }
+const PERFORMERS = 4;
+/** the runway: from the stage's front edge toward her, down the crowd's middle gap */
+const RUNWAY = { from: WORLD.stage.x - WORLD.stage.d / 2 - 0.2, to: WORLD.seat.x + 1.7, z: WORLD.stage.z };   // the near end IN FRONT of the crowd (its nearest stand 2.6 m off)
+/** one pass: out, a pause at the near end, back, a pause at the stage */
+const WALK_OUT = 7.5, WALK_HOLD = 2.0;
+const ARM_EASE = 0.5;
+
 export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { update(dt: number): void } {
   const rng = makeRng(20260912);
   // ⚑ the crowd is dressed for it: the palette's brightest, not its greys
@@ -111,15 +129,28 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     [0, 1, 2, 0, 2, 3], [4, 6, 5, 4, 7, 6], [0, 4, 5, 0, 5, 1],
     [3, 2, 6, 3, 6, 7], [0, 3, 7, 0, 7, 4], [1, 5, 6, 1, 6, 2]
   ];
-  const BOXES = FIGURES * 2 + 1;
+  // Phase 7: each figure also has two arms; the performers are four more figures with arms; one patch of light
+  const BOXES = FIGURES * 4 + PERFORMERS * 4 + 1 + 1;
   const indices: number[] = [];
   for (let n = 0; n < BOXES; n++) for (const face of F) for (const i of face) indices.push(n * 8 + i);
   const colors: number[] = [];
   const pushBoxColor = (c: pc.Color): void => { for (let i = 0; i < 8; i++) colors.push(c.r, c.g, c.b, 1); };
-  for (const f of figures) { pushBoxColor(f.body); pushBoxColor(skin); }
+  for (const f of figures) { pushBoxColor(f.body); pushBoxColor(skin); pushBoxColor(f.body); pushBoxColor(f.body); }
+  // the performers, dressed for it: the palette's brightest, one each
+  const perfCloth = [PLACE.textileHi, PLACE.sunHi, PLACE.sky, PLACE.bookAlt].map((h) => new pc.Color().fromString(h));
+  const perfH = [1.72, 1.6, 1.66, 1.58];
+  for (let i = 0; i < PERFORMERS; i++) { pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(perfCloth[i]); pushBoxColor(perfCloth[i]); }
+  pushBoxColor(new pc.Color().fromString(PLACE.sunHi));      // the light on the floor under them
   pushBoxColor(new pc.Color().fromString(PLACE.floorLo));
 
+  const PERF_BOXES = PERFORMERS * 4 + 1;
+  const boxIdx = (n: number): number[] => { const out: number[] = []; for (let b = 0; b < n; b++) for (const face of F) for (const i of face) out.push(b * 8 + i); return out; };
+  const indicesA = boxIdx(BOXES - PERF_BOXES), indicesB = boxIdx(PERF_BOXES);
+  const cA0 = FIGURES * 4 * 32, cB1 = (FIGURES * 4 + PERF_BOXES) * 32;
+  const colorsA = colors.slice(0, cA0).concat(colors.slice(cB1)), colorsB = colors.slice(cA0, cB1);
+  void indices;
   const mesh = new pc.Mesh(app.graphicsDevice);
+  const perfMesh = new pc.Mesh(app.graphicsDevice);
   const positions = new Array<number>(BOXES * 8 * 3).fill(0);
   let pi = 0;
   const box = (x: number, y: number, z: number, hx: number, hy: number, hz: number): void => {
@@ -128,11 +159,25 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     }
   };
   let t = 0;
+  // Phase 7 — the show's state: who is walking (and since when), how high the arms are
+  let show: CommonsShow = { performers: 0, category: -1, cheer: false };
+  let walkT = 0;
+  let armK = 0;
+  const sinkBox = (x: number, z: number): void => box(x, SUNK_Y, z, 0.1, 0.1, 0.1);
+  /** two arms at a body's shoulders: down at its sides, or up over its head by `up` (0..1) */
+  const arms = (x: number, top: number, z: number, w: number, h: number, up: number): void => {
+    const len = h * 0.3, hw = 0.035;
+    for (const side of [-1, 1]) {
+      const sz = z + side * (w / 2 + hw + 0.01);
+      const k = up * up * (3 - 2 * up);
+      box(x, top + (k * 2 - 1) * (len / 2 + 0.02), sz, hw, len / 2, hw);   // hanging at the side → raised over the shoulder
+    }
+  };
   const build = (k: number, stageK: number): void => {
     pi = 0;
     const sunk = k <= 0;
     figures.forEach((f, n) => {
-      if (sunk) { box(f.x, SUNK_Y, f.z, 0.1, 0.1, 0.1); box(f.x, SUNK_Y, f.z, 0.1, 0.1, 0.1); return; }
+      if (sunk) { sinkBox(f.x, f.z); sinkBox(f.x, f.z); sinkBox(f.x, f.z); sinkBox(f.x, f.z); return; }
       // rising from the floor, then a sway
       const rise = (k - 1) * (f.h + 0.4);
       let bob = 0.02 * Math.sin(t * 1.9 + f.phase);
@@ -156,15 +201,47 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       const bodyH = f.h * 0.62, headH = f.h * 0.055;
       box(x + lean, base + bodyH / 2 + bob, z, f.w / 2, bodyH / 2, f.w * 0.36);
       box(x + lean * 1.4, base + bodyH + headH + 0.03 + bob, z, headH, headH, headH * 0.9);
+      // the arms: the crowd's go up when the room answers (not the one on the stage, not the two beside her mid-greeting)
+      arms(x + lean, base + bodyH + bob, z, f.w, f.h, f.onStage || (f.beside && greetK > 0) ? 0 : armK * (0.75 + 0.25 * Math.sin(f.phase)));
       void n;
     });
+    // ⚑ Phase 7 — the performers: down the runway and back, abreast, for as long as their category is called
+    const nWalk = sunk ? 0 : Math.min(PERFORMERS, show.performers);
+    const cycle = WALK_OUT * 2 + WALK_HOLD * 2;
+    const ph = walkT % cycle;
+    const leg = ph < WALK_OUT ? ph / WALK_OUT : ph < WALK_OUT + WALK_HOLD ? 1
+      : ph < WALK_OUT * 2 + WALK_HOLD ? 1 - (ph - WALK_OUT - WALK_HOLD) / WALK_OUT : 0;
+    const e = leg * leg * (3 - 2 * leg);
+    const px = RUNWAY.from + (RUNWAY.to - RUNWAY.from) * e;
+    for (let i = 0; i < PERFORMERS; i++) {
+      if (i >= nWalk) { sinkBox(px, RUNWAY.z); sinkBox(px, RUNWAY.z); sinkBox(px, RUNWAY.z); sinkBox(px, RUNWAY.z); continue; }
+      const z = RUNWAY.z + (i - (nWalk - 1) / 2) * 0.55;
+      const h = perfH[i], w = 0.3;
+      const step = Math.abs(Math.sin(walkT * 3.2 + i)) * 0.025 * (leg > 0 && leg < 1 ? 1 : 0.2);
+      const bodyH = h * 0.62, headH = h * 0.055;
+      box(px, bodyH / 2 + step + 0.02, z, w / 2, bodyH / 2, w * 0.36);
+      box(px, bodyH + headH + 0.05 + step, z, headH, headH, headH * 0.9);
+      arms(px, bodyH + step + 0.02, z, w, h, leg >= 1 ? 0.9 : 0.15);   // at the near end, the arms open to the room
+    }
+    // the light under them — a flat pale patch, on the floor, where they are
+    if (nWalk > 0) box(px, 0.012, RUNWAY.z, 0.55, 0.004, 0.35 + nWalk * 0.28);
+    else sinkBox(px, RUNWAY.z);
     // (the stage itself is the hall's — commonsWorld.ts; this box is spare and sunk)
     box(STAGE.x, SUNK_Y, STAGE.z, 0.1, 0.1, 0.1); void stageK;
-    mesh.setPositions(positions);
-    mesh.setIndices(indices);
-    mesh.setColors(colors);   // floats 0..1 — setColors32 wants bytes, and read these as black
-    mesh.setNormals(pc.calculateNormals(positions, indices));
+    // ⚑ Phase 7 — two meshes from the one buffer: the crowd, lit by the room; the performers and their
+    //   patch of light, lit from within, so the one who has the floor is the brightest thing in the hall
+    const A0 = FIGURES * 4 * 24, B1 = (FIGURES * 4 + PERF_BOXES) * 24;
+    const posA = positions.slice(0, A0).concat(positions.slice(B1)), posB = positions.slice(A0, B1);
+    mesh.setPositions(posA);
+    mesh.setIndices(indicesA);
+    mesh.setColors(colorsA);   // floats 0..1 — setColors32 wants bytes, and read these as black
+    mesh.setNormals(pc.calculateNormals(posA, indicesA));
     mesh.update(pc.PRIMITIVE_TRIANGLES);
+    perfMesh.setPositions(posB);
+    perfMesh.setIndices(indicesB);
+    perfMesh.setColors(colorsB);
+    perfMesh.setNormals(pc.calculateNormals(posB, indicesB));
+    perfMesh.update(pc.PRIMITIVE_TRIANGLES);
   };
   build(0, 0);
 
@@ -178,8 +255,17 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   mat.emissive = new pc.Color(0.42, 0.42, 0.42);
   mat.update();
   const ent = new pc.Entity('commons-figures');
-  ent.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)] });
+  // the performers' material: the same vertex colours, lit from within at nearly full
+  const perfMat = new pc.StandardMaterial();
+  perfMat.diffuse = new pc.Color(1, 1, 1);
+  perfMat.diffuseVertexColor = true;
+  perfMat.specular = new pc.Color(0, 0, 0);
+  perfMat.emissiveVertexColor = true;
+  perfMat.emissive = new pc.Color(0.92, 0.92, 0.92);
+  perfMat.update();
+  ent.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat), new pc.MeshInstance(perfMesh, perfMat)] });
   ent.render!.meshInstances[0].cull = false;
+  ent.render!.meshInstances[1].cull = false;
   ent.enabled = false;
   parent.addChild(ent);
 
@@ -191,6 +277,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   let greetK = 0;
   hook = (on) => { want = on; if (on) ent.enabled = true; };
   greetHook = (on) => { greetWant = on; };
+  showHook = (s) => { if (s.category !== show.category) walkT = 0; show = s; };
   return {
     update(dt: number): void {
       if (!ent.enabled) return;
@@ -198,6 +285,8 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       const before = k;
       k = want ? Math.min(1, k + dt / RISE_SECONDS) : Math.max(0, k - dt / RISE_SECONDS);
       greetK = greetWant ? Math.min(1, greetK + dt / GREET_SECONDS) : Math.max(0, greetK - dt / GREET_SECONDS);
+      if (show.performers > 0) walkT += dt;
+      armK = show.cheer ? Math.min(1, armK + dt / ARM_EASE) : Math.max(0, armK - dt / (ARM_EASE * 3));
       acc += dt;
       if (acc < 1 / REBUILD_HZ && k === before) return;
       acc = 0;

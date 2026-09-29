@@ -77,12 +77,14 @@
     {
      "id": "g1",
      "text": "Hi, Maya.",
-     "hold": 3.2
+     "hold": 3.2,
+     "who": "Junie"
     },
     {
      "id": "g2",
      "text": "You made it. Over here, with us — they're about to shut the doors.",
-     "hold": 4.6
+     "hold": 4.6,
+     "who": "Ade"
     }
    ]
   },
@@ -140,7 +142,8 @@
       "hold": 3.6,
       "at": 4
      }
-    ]
+    ],
+    "performers": 1
    },
    {
     "id": "cat_four_chips",
@@ -179,7 +182,8 @@
       "hold": 4.8,
       "at": 3
      }
-    ]
+    ],
+    "performers": 4
    },
    {
     "id": "cat_remove_unresolved",
@@ -218,7 +222,8 @@
       "hold": 5.6,
       "at": 2
      }
-    ]
+    ],
+    "performers": 1
    },
    {
     "id": "cat_in_repair",
@@ -256,7 +261,8 @@
       "hold": 6.8,
       "at": 4
      }
-    ]
+    ],
+    "performers": 1
    }
   ],
   "closing": {
@@ -283,7 +289,10 @@
    ]
   },
   "_docCut": "⚑ 2026-09-11 — CUT FROM 38 MC LINES TO 25, and the cut is the recording sheet. Sérgio: 'three and a half minutes, then it is too long.' Each category keeps five beats — the call, the House and the name, one instruction, the room's answer, the name again — and loses its second look-at-that. The opening loses its third line. The closing is untouched. Scripted clock: filter ~20 s, lines ~128 s, hold 5 s — about 2½ minutes, ending on its own.",
-  "_docNoAudio": "⚑ S141: the `audio` fields (25 `ball_*.wav` never rendered) are gone from every line — Sérgio, 2026-09-12: 'TransJesus doesn't have voice.' The MC's lines are captions; the room's sound is the two recordings in `room`."
+  "_docNoAudio": "⚑ S141: the `audio` fields (25 `ball_*.wav` never rendered) are gone from every line — Sérgio, 2026-09-12: 'TransJesus doesn't have voice.' The MC's lines are captions; the room's sound is the two recordings in `room`.",
+  "mc": "MC",
+  "_docWho": "⚑ Phase 7 (his: 'who says Hi Maya and the messages?… a lot of text of the house, this needs to be inside of chat bubble text separated that people can read and understand the different elements') — every spoken line names its speaker in a bubble of its own: 'Hi, Maya.' is Junie (who sent the link, and whose category is the last), the second is Ade, a friend of hers from the house (an invented name), and everything after the doors shut is the MC's. Up to three bubbles stand at once, the newest brightest. Still captions (frame chrome, `_docVoice`): nobody's voice is synthesized.",
+  "_docShow": "⚑ Phase 7 (his: 'the Ball/Trans jesus, we need visually to see the show in some way') — each category is WALKED where she can see it: its performers come off the stage down the gap in the crowd toward her and back (one for Wren, Ines and Junie; the four Late Arrivals at once), a pale patch of light on the floor under them, and the crowd's arms go up when the room answers (a line's `flare`). Faceless figures, the piece's own; nothing is a trap, nothing is revealed as fake (respite)."
  },
  "room": {
   "_beat": "⚑ THE BALL'S OWN SOUND, and it is the one thing in this file that is not a caption. A ball is loud, structured and attentive — the beat, the calls, the applause on the landing — and NOT laughter, chatter or generic warmth (deep pass §1.2: 'community equals laughter' is the lazy image and it was cut on purpose). ⚑ 2026-09-12: BOTH DELIVERED AND REGISTERED — Sérgio's own generations ('Community Hall House Jam' → landing, 'Through the Wall' → bed), instrumental, no voice, no lyrics, in src/audio/tapeAudio.ts and assets/LICENSES.md. The room is audible for the first time. _docVoice still stands: nothing else in this file may be synthesized.",
@@ -345,9 +354,9 @@
   "recorded": {
    "title": "Someone who went back  ·  2 of 3",
    "mark": "recorded  ·  verified by Second Thoughts",
-  "intro": "Now playing: a recorded conversation, 11 min. The speaker's name has been removed for their privacy.",
-  "introSeconds": 3.0,
-  "_docIntro": "S155 / R3-102 (Sérgio: 'What is this recording sound? The session sequence is poorly done'): the recording is INTRODUCED as what it is before its first sentence — the apparatus's own framing, in its own voice; the hiss starts under the introduction, at half its old level. Still: two flat sentences, invented, nobody's; the card lands on the third's dash.",
+   "intro": "Now playing: a recorded conversation, 11 min. The speaker's name has been removed for their privacy.",
+   "introSeconds": 3.0,
+   "_docIntro": "S155 / R3-102 (Sérgio: 'What is this recording sound? The session sequence is poorly done'): the recording is INTRODUCED as what it is before its first sentence — the apparatus's own framing, in its own voice; the hiss starts under the introduction, at half its old level. Still: two flat sentences, invented, nobody's; the card lands on the third's dash.",
    "lines": [
     "I just wanted things to be simple again.",
     "Nobody made me. I was helped.",

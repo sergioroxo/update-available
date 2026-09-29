@@ -141,8 +141,8 @@
      "label": "The racket on the wall",
      "done": "pillowDone",
      "optional": true,
-     "hint": "The racket on the wall opens the first exercise. Press it.",
-     "where": "the wall to your right"
+     "hint": "The racket and the Release Work sheet hang on the wall by the bed. Press either.",
+     "where": "the wall by the bed, to your left"
     },
     {
      "id": "rootcause",

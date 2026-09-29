@@ -272,10 +272,11 @@
    {
     "id": "tennisRacketModel",
     "_doc": "S90: a NEW Room-1 prop (Sérgio's own Poly Pizza pick, see data/room/models.json's `tennisRacket` entry for the source/43-mesh-merge/measurement story). No `tilt`: the native mesh is already authored lying flat (its thin axis is already native Y, see the model manifest's own doc), so this prop only needs `yaw` to choose which way it points. `color` #44464F reuses `boombox`'s own existing dark-grey hex (era1.json) — no new hex. `size` is the fallback box in the prop's OWN pre-yaw frame (width × thickness × length = 0.26 × 0.037 × 0.66), matching the model's measured scaled footprint. S91: S90's original placement (x-1.6, z3.0, 'clear of the bed's AABB by 0.79m on z') was clear of the bed's BOX but, like `monkeyToyModel` right above, sat behind the bed's own frame from the seat's actual line of sight — live-verified at the prop's bearing (yaw145.18°/pitch-22.14°): no racket-coloured pixel visible at all, despite the dark grey (#44464F) that should contrast against the warm floor if unoccluded. Moved to (-0.9, 0, 2.35): clear of the bed's x-extent (AABB tops out at x-0.987; this sits at x-0.9, on the seat's own side) and past `rug`'s z-run (era1.json's rug ends z1.4), close enough to `monkeyToyModel`'s new spot to still read as 'things dropped near the foot of the bed' (0.53m apart, no overlap — checked against both props' own footprints). Re-verified live at the new bearing: the racket's strung head and handle are both plainly legible on open floor. `tools/room-audit.mjs` then caught a real regression this move introduced: at x-0.9 the racket's own rotated (`yaw:25`) AABB — its long axis swinging toward the bed — clipped 3.7cm into the bed's REAL rendered AABB (larger than the authored fallback box the first S91 move was checked against: SCALE finding shows bedModel renders +39%/+42%/+10% over its authored size). x-0.9 → -0.65 (0.25m more clearance from the bed on the axis that matters) clears it; re-run confirmed zero new OVERLAP/FLOATING/BOUNDS findings for either prop.",
+    "_docP7": "⚑ Phase 7 (his, 2026-09-30: 'I would put it on the wall side to the bed, that way it is visible and also, for the movement would be similar because the pillow is there') — it hangs on the west wall over the head of the bed, the pillow under it; its hanging turn and the three demonstrated poses are set in src/engine/app.ts (RACKET_WALL / RACKET_OVER).",
     "pos": [
-     -0.65,
-     0,
-     2.6
+     -2.07,
+     1.0,
+     0.86
     ],
     "size": [
      0.26,
@@ -286,6 +287,7 @@
     "model": "tennisRacket",
     "yaw": 25
    },
+   {"id": "releasePoster", "print": "release1997", "pos": [-2.105, 1.3, 1.36], "size": [0.3, 0.45, 0.004], "color": "#F5F4ED", "yaw": 90, "_docP7": "⚑ Phase 7 (his: 'Should it be on the wall and have a poster where, if you press it, it opens the app and you can try it out? … the poster can already give more important information') — the programme's exercise sheet for Release Work, pinned beside the racket: what it is (the father-wound teaching's anger exercise; dossier: the pillow provotype's sources) and its three steps drawn. Pressing it, or the racket, opens the exercise. Invented mark (TriedPath)."},
    {
     "id": "tapeA",
     "pos": [
@@ -2577,6 +2579,7 @@
    "w_flatPanelBody",
    "w_keyboard",
    "w_mouse",
+   "releasePoster",
    "tennisRacketModel",
    "movingBox1",
    "movingBox2",

@@ -98,7 +98,7 @@ import {
 import { px, setFont, wrapText } from '../theme/chrome';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
 import { setCommonsLamps } from '../../room/commonsLamps';
-import { setCommonsFigures, greetCommonsFigures } from '../../room/commonsFigures';
+import { setCommonsFigures, greetCommonsFigures, setCommonsShow } from '../../room/commonsFigures';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_ball.json';
 
@@ -139,7 +139,11 @@ const JOIN = { x: INVITE.x + 14, y: INVITE.y + INVITE.h - 34, w: 96, h: 22 } as 
  *  `offers.ts` keep, for the same reason, and NOT a pacing choice. */
 const CAPTION_LEAD = 0.5;
 
-interface BLine { id: string; text: string; audio?: string; hold: number; at?: number; flare?: number }
+interface BLine { id: string; text: string; audio?: string; hold: number; at?: number; flare?: number; who?: string }
+/** ⚑ Phase 7 — the MC's name in the bubbles (s4_ball.json `ball.mc`) */
+const MC_NAME = (script.ball as unknown as { mc: string }).mc;
+/** how many bubbles stand at once, newest at the bottom */
+const BUBBLES = 3;
 interface BLabel { id: string; object: string; text: string; hold: number; at?: number; lamps?: number }
 
 type Phase = 'idle' | 'invited' | 'arrival' | 'off' | 'ball' | 'after' | 'done';
@@ -424,6 +428,7 @@ export class E4Ball {
     // not a prompt, not an ending. The room is still full.
     this.cur = null;
     this.showCaption('');
+    setCommonsShow({ performers: 0, category: -1, cheer: false });
     this.phase = 'after';
     this.afterT = 0;
     stopClip(this.reconnect); this.reconnect = null;
@@ -449,8 +454,12 @@ export class E4Ball {
     this.lineT = 0;
     this.spoke = false;
     if (!this.cur) return;
-    this.showCaption(this.cur.text);
+    this.showCaption(this.cur.text, this.cur.who ?? (this.greeting ? '' : MC_NAME));
     this.light(BALL_LEVEL, this.cur.at ?? this.station, this.cur.flare ?? 0);
+    // ⚑ Phase 7 — the show: the category's performers walk while it is called; the room's arms go up on a landing
+    const cats = script.ball.categories as unknown as { lines: BLine[]; performers?: number }[];
+    const cat = cats.find((c) => c.lines.includes(this.cur as BLine));
+    setCommonsShow({ performers: cat ? (cat.performers ?? 1) : 0, category: cat ? cats.indexOf(cat) : -1, cheer: (this.cur.flare ?? 0) > 0 });
   }
 
   private nextLabel(): void {
@@ -956,15 +965,48 @@ export class E4Ball {
   }
 
   // ── the subtitle (frame chrome — see the file header) ─────────────────────
-  private showCaption(text: string): void {
+  /**
+   * ⚑ Phase 7 (his: "a lot of text of the house, this needs to be inside of chat bubble text separated
+   * that people can read and understand the different elements"; "who says Hi Maya?") — each line is a
+   * bubble of its own with its speaker's name over it, the last three standing, the newest brightest.
+   * The friends' bubbles sit to one side, the MC's across the middle. Still a subtitle: frame chrome.
+   */
+  private said: Array<{ who: string; text: string }> = [];
+  private showCaption(text: string, who = ''): void {
     if (!text) {
+      this.said = [];
       if (this.caption) this.caption.style.opacity = '0';
       return;
     }
     if (!this.caption) this.mountCaption();
     if (!this.caption) return;
-    this.caption.textContent = text;
-    this.caption.style.opacity = '1';
+    this.said.push({ who, text });
+    if (this.said.length > BUBBLES) this.said.shift();
+    const el = this.caption;
+    el.replaceChildren();
+    this.said.forEach((s, i) => {
+      const newest = i === this.said.length - 1;
+      const mc = s.who === MC_NAME;
+      const b = document.createElement('div');
+      Object.assign(b.style, {
+        alignSelf: mc ? 'center' : 'flex-start', maxWidth: mc ? '100%' : '78%',
+        background: BALL.captionField, color: BALL.captionInk, borderRadius: mc ? '6px' : '12px 12px 12px 3px',
+        padding: '5px 12px 6px', textAlign: mc ? 'center' : 'left', opacity: newest ? '1' : '0.55',
+        borderLeft: mc ? 'none' : `3px solid ${BALL.whoFriend}`
+      } as CSSStyleDeclaration);
+      if (s.who) {
+        const n = document.createElement('div');
+        n.textContent = s.who;
+        Object.assign(n.style, { font: '700 10px monospace', letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: mc ? BALL.whoMC : BALL.whoFriend, marginBottom: '2px' } as CSSStyleDeclaration);
+        b.appendChild(n);
+      }
+      const t = document.createElement('div');
+      t.textContent = s.text;
+      b.appendChild(t);
+      el.appendChild(b);
+    });
+    el.style.opacity = '1';
   }
 
   private mountCaption(): void {
@@ -974,9 +1016,8 @@ export class E4Ball {
     el.setAttribute('aria-live', 'polite');
     Object.assign(el.style, {
       position: 'fixed', left: '50%', bottom: '4%', transform: 'translateX(-50%)',
-      zIndex: '9', background: BALL.captionField, color: BALL.captionInk,
-      font: '13px monospace', padding: '6px 14px', borderRadius: '4px',
-      maxWidth: '76%', textAlign: 'center', lineHeight: '1.45',
+      zIndex: '9', display: 'flex', flexDirection: 'column', gap: '6px', width: 'min(640px, 86vw)',
+      font: '13px monospace', lineHeight: '1.45',
       opacity: '0', pointerEvents: 'none', transition: 'opacity 0.3s'
     } as CSSStyleDeclaration);
     document.body.appendChild(el);
