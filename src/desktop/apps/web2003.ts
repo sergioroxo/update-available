@@ -17,11 +17,17 @@ import D from '../../../data/dialog/s2_forum.json';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 const WX = 8, WY = 8, WW = 496, WH = 344;
+/** the dossier cards, as the sources page names them */
+const CARD_LABEL: Record<string, string> = {
+  origin_intake_e1: '1997, the questionnaire and the programme', e3_theday: '2016, the platform and the group'
+};
 
 export class Web2003App {
   open = true;
   hits: Hit[] = [];
-  private stage: 'rules' | 'thread' = 'rules';
+  /** S196 — the board is a place: its index, its pages; Back returns along the way he came */
+  private stage: string = 'rules';   // 'rules' | 'thread' | 'index' | 'page:<id>'
+  private trail: string[] = [];
   private posted = false;
   private hover = '';
   /** os files these (ledger.records) */
@@ -37,6 +43,10 @@ export class Web2003App {
     if (!h) return;
     if (h.id === 'forum-close') { this.open = false; return; }
     if (h.id === 'forum-agree') { this.stage = 'thread'; this.onAgree?.(); return; }
+    if (h.id === 'forum-back' && this.trail.length) { this.stage = this.trail.pop()!; return; }
+    if (h.id === 'forum-index') { this.trail.push(this.stage); this.stage = 'index'; return; }
+    if (h.id === 'forum-thread') { this.trail.push(this.stage); this.stage = 'thread'; return; }
+    if (h.id.startsWith('forum-page:')) { this.trail.push(this.stage); this.stage = 'page:' + h.id.slice(11); return; }
     if (h.id === 'forum-post' && !this.posted) { this.posted = true; this.onPost?.(); }
   }
 
@@ -55,7 +65,9 @@ export class Web2003App {
     let tx = c.x + 4;
     D.toolbar.forEach((t, i) => {
       const w = ctx.measureText(t).width + 14;
-      ui.button(ctx, tx, c.y + 18, w, 18, t, { disabled: i === 1 || i === 2 });
+      const live = i === 0 && this.trail.length > 0;
+      ui.button(ctx, tx, c.y + 18, w, 18, t, { disabled: i === 1 || i === 2 || (i === 0 && !live) });
+      if (live) this.hits.push({ x: tx, y: c.y + 18, w, h: 18, id: 'forum-back' });
       tx += w + 3;
     });
     // the address bar
@@ -64,7 +76,8 @@ export class Web2003App {
     ui.bevel(ctx, c.x + 50, c.y + 40, c.w - 90, 15, false);
     ui.px(ctx, c.x + 52, c.y + 42, c.w - 94, 11, ERA1.white);
     ctx.fillStyle = ERA1.black;
-    ctx.fillText(this.stage === 'rules' ? `${D.address}join.asp` : `${D.address}thread.asp?t=4471`, c.x + 55, c.y + 43);
+    ctx.fillText(this.stage === 'rules' ? `${D.address}join.asp` : this.stage === 'index' ? `${D.address}default.asp`
+      : this.stage.startsWith('page:') ? `${D.address}resources/${this.stage.slice(5)}.asp` : `${D.address}thread.asp?t=4471`, c.x + 55, c.y + 43);
     ui.button(ctx, c.x + c.w - 36, c.y + 40, 32, 15, D.go, {});
     // the page
     const b = { x: c.x, y: c.y + 60, w: c.w, h: c.h - 60 };
@@ -77,7 +90,10 @@ export class Web2003App {
     ui.setFont(ctx, 9);
     ctx.fillStyle = P.bannerDim;
     ctx.fillText(D.bannerSub, b.x + 100, b.y + 12);
-    if (this.stage === 'rules') this.drawRules(ctx, b); else this.drawThread(ctx, b);
+    if (this.stage === 'rules') this.drawRules(ctx, b);
+    else if (this.stage === 'index') this.drawIndex(ctx, b);
+    else if (this.stage.startsWith('page:')) this.drawPage(ctx, b, this.stage.slice(5));
+    else this.drawThread(ctx, b);
   }
 
   private drawRules(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
@@ -104,6 +120,45 @@ export class Web2003App {
     this.hits.push({ x: b.x + b.w / 2 + 10, y: by, w: 100, h: 20, id: 'forum-agree' });
   }
 
+  private link(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, id: string): void {
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = P.link;
+    ctx.fillText(text, x, y);
+    const w = ctx.measureText(text).width;
+    ui.px(ctx, x, y + 10, w, 1, P.link);
+    this.hits.push({ x: x - 2, y: y - 2, w: w + 4, h: 14, id });
+  }
+
+  /** ⚑ S196 — the board's front page: the recommendation pinned, the rooms, Resources, groups, the conference */
+  private drawIndex(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
+    const I = D.index;
+    const x0 = b.x + 12;
+    ui.setFont(ctx, 11); ctx.fillStyle = P.text; ctx.fillText(I.title, x0, b.y + 36);
+    ui.px(ctx, x0, b.y + 52, b.w - 24, 28, P.pending);
+    ui.setFont(ctx, 9); ctx.fillStyle = P.dim; ctx.fillText(I.recommended, x0 + 6, b.y + 55);
+    this.link(ctx, D.thread.title, x0 + 6, b.y + 67, 'forum-thread');
+    ui.setFont(ctx, 10); ctx.fillStyle = P.text; ctx.fillText(D.roomsLabel, x0, b.y + 90);
+    D.rooms.forEach((r, i) => { ui.setFont(ctx, 9); ctx.fillStyle = P.link; ctx.fillText(r, x0 + 10 + (i % 3) * 150, b.y + 106 + Math.floor(i / 3) * 14); });
+    ui.setFont(ctx, 10); ctx.fillStyle = P.text; ctx.fillText(I.resourcesLabel, x0, b.y + 142);
+    I.resources.forEach((id, i) => this.link(ctx, (D.pages as Record<string, { heading: string }>)[id].heading, x0 + 10, b.y + 158 + i * 16, `forum-page:${id}`));
+    this.link(ctx, I.directory, x0 + 250, b.y + 158, 'forum-page:directory');
+    this.link(ctx, I.conference, x0 + 250, b.y + 174, 'forum-page:conference');
+  }
+
+  /** a Resources page: the seller's voice, and at its foot the dossier card it stands on (the second reading) */
+  private drawPage(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }, id: string): void {
+    const pg = (D.pages as Record<string, { heading: string; lines: string[]; card: { file: string; index: number } }>)[id];
+    if (!pg) return;
+    const x0 = b.x + 24;
+    ui.setFont(ctx, 14); ctx.fillStyle = P.banner; ctx.fillText(pg.heading, x0, b.y + 40);
+    ui.px(ctx, x0, b.y + 60, b.w - 48, 1, P.panelHead);
+    ui.setFont(ctx, 10); ctx.fillStyle = P.text;
+    pg.lines.forEach((l, i) => ctx.fillText(l, x0, b.y + 70 + i * 14));
+    ui.setFont(ctx, 8); ctx.fillStyle = P.dim;
+    ctx.fillText(`${D.dossierMark} ${CARD_LABEL[pg.card.file] ?? pg.card.file} — source ${pg.card.index + 1}`, x0, b.y + b.h - 30);
+    this.link(ctx, D.index.back, x0, b.y + b.h - 16, 'forum-index');
+  }
+
   private drawThread(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
     const T = D.thread;
     // the rooms, down the left
@@ -117,8 +172,9 @@ export class Web2003App {
       ctx.fillStyle = on ? P.bannerInk : P.link;
       ctx.fillText(r, b.x + 8, b.y + 52 + i * 16);
     });
-    // the thread
+    // the thread (and the way to the rest of the board)
     const x0 = b.x + 104, w0 = b.w - 112;
+    this.link(ctx, D.index.back, b.x + 8, b.y + b.h - 16, 'forum-index');
     ui.setFont(ctx, 11);
     ctx.fillStyle = P.text;
     ctx.fillText(T.title, x0, b.y + 36);

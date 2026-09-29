@@ -6,7 +6,7 @@ Source' — residential manual which we can infer on that to make the digital ve
 guide that brings this narrative… there you already have some of the books, which would be accurate at the time and
 even surveys." His files: `~/Pc_Simulation/Sources/Boy Erased/` — the finding aid (EAD XML) and four digitized
 folders. The scans have no text layer; they were read with macOS's own Vision OCR (a Swift script, PDFKit + Vision,
-no downloads), output kept beside his PDFs in `Boy Erased/ocr/`. This document is a reading, not a dossier entry:
+no downloads), output kept beside his PDFs in `Boy Erased/ocr/` (with the script, `pdfocr.swift`, to read any folder he fetches next). This document is a reading, not a dossier entry:
 nothing here is on a card until he approves its wording (ETHICS #13/#14).*
 
 **The collection.** *The Mattachine Society of Washington "Love in Action" Collection*, Archives Center, National
@@ -50,7 +50,13 @@ own child"*), a table of "sexual deviations", a knowledge survey.
 - **The moral inventory** (twelve-step form: *"a searching and fearless moral inventory"*); the **family roles**
   handout (Enabler, Hero, Scapegoat, Lost Child, Mascot).
 
-**B1 F25 — The Source Discipleship Program (2007–08).** *(OCR in progress at the time of writing.)*
+**B1 F25 — The Source Discipleship Program (2007–08), 143 pp.** The residential rules a decade on: *"Cell phones,
+beepers, or e-mail/internet access are not permitted"*; *"No computers or laptops while in the program. No computer
+games allowed."*; relational phone calls only with permission, long distance on a bought phone card; clients *"must be
+in-phase at all times"* — in groups of three, never alone, even between houses and to the restrooms; a *"Tools for
+Transition: Accountability"* workbook with trigger charts and a list of people who will "hold you accountable"; moral
+inventories that model confessing *"inappropriate material on the internet"* on *"the family computer"*. For **2016**:
+the programme's rule against the very devices the platform now lives on — and FloppySheep's "no computer games".
 
 ## 2 · Where it lands in the piece (proposals — his call)
 | document | lands in | how |

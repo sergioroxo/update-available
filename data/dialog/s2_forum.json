@@ -1,39 +1,178 @@
 {
-  "_doc": "⚑ S191 — THE RECOMMENDATION, 2003 (Phase 5; PLAN_ROUND5 'from early Internet Explorer to modern Chrome'). After his first daily check-in, a senior member of the programme's forum recommends a thread; the forum opens in the period's browser. Before the board, its RULES page — 'I Agree' the only live answer, the web twin of the rules sheet on the institution's wall. The thread is about coming home from the programme; he can post one fixed line (no free typing), a moderator approves it, and '3 people are praying for you'. GROUNDING (his research SocialMedia_Deep.md §2; intake.md): moderated, confidential forums with membership approval, category rooms by age/sex/marital status, accountability threads, peer prayer, senior members answering newcomers (Living Hope's boards, documented from 1998 — described in 2003 as a 'confidential, free, moderated message board'); the Rules page and 'I Agree' are the research's own proposal [I]. Every mark here is INVENTED (Harbor, WebView, the members).",
-  "icon": "Harbor Forums",
-  "toast": "David recommends a thread for you.",
-  "browser": "WebView 6",
-  "menus": ["File", "Edit", "View", "Favorites", "Tools", "Help"],
-  "toolbar": ["Back", "Forward", "Stop", "Refresh", "Home"],
-  "addressLabel": "Address",
-  "go": "Go",
-  "address": "http://www.harborforums.org/",
-  "banner": "HARBOR",
-  "bannerSub": "a confidential, free, moderated message board",
-  "rules": {
-    "title": "Before you enter",
-    "lines": ["Confidentiality — what is said here stays here.", "No exchanging personal contact information.", "Respect biblical teaching.", "No sexually explicit material.", "Accountability is an act of love."],
-    "agree": "I Agree",
-    "disagree": "I Do Not Agree",
-    "note": "A moderator reviews every new member."
+ "_doc": "⚑ S191 — THE RECOMMENDATION, 2003 (Phase 5; PLAN_ROUND5 'from early Internet Explorer to modern Chrome'). After his first daily check-in, a senior member of the programme's forum recommends a thread; the forum opens in the period's browser. Before the board, its RULES page — 'I Agree' the only live answer, the web twin of the rules sheet on the institution's wall. The thread is about coming home from the programme; he can post one fixed line (no free typing), a moderator approves it, and '3 people are praying for you'. GROUNDING (his research SocialMedia_Deep.md §2; intake.md): moderated, confidential forums with membership approval, category rooms by age/sex/marital status, accountability threads, peer prayer, senior members answering newcomers (Living Hope's boards, documented from 1998 — described in 2003 as a 'confidential, free, moderated message board'); the Rules page and 'I Agree' are the research's own proposal [I]. Every mark here is INVENTED (Harbor, WebView, the members).",
+ "icon": "Harbor Forums",
+ "toast": "David recommends a thread for you.",
+ "browser": "WebView 6",
+ "menus": [
+  "File",
+  "Edit",
+  "View",
+  "Favorites",
+  "Tools",
+  "Help"
+ ],
+ "toolbar": [
+  "Back",
+  "Forward",
+  "Stop",
+  "Refresh",
+  "Home"
+ ],
+ "addressLabel": "Address",
+ "go": "Go",
+ "address": "http://www.harborforums.org/",
+ "banner": "HARBOR",
+ "bannerSub": "a confidential, free, moderated message board",
+ "rules": {
+  "title": "Before you enter",
+  "lines": [
+   "Confidentiality — what is said here stays here.",
+   "No exchanging personal contact information.",
+   "Respect biblical teaching.",
+   "No sexually explicit material.",
+   "Accountability is an act of love."
+  ],
+  "agree": "I Agree",
+  "disagree": "I Do Not Agree",
+  "note": "A moderator reviews every new member."
+ },
+ "rooms": [
+  "Under 27",
+  "Men",
+  "Women",
+  "Married",
+  "Parents & family",
+  "Accountability"
+ ],
+ "roomsLabel": "Forums",
+ "thread": {
+  "room": "Under 27",
+  "title": "Home from the summer programme — how do you keep it?",
+  "posts": [
+   {
+    "who": "David",
+    "meta": "Senior member · 1,204 posts · walking out since 1996",
+    "lines": [
+     "The first weeks back are the hardest. Your room is the same,",
+     "your friends are the same. You are not.",
+     "Post in the accountability thread every day. We will pray."
+    ]
+   },
+   {
+    "who": "Tomas_22",
+    "meta": "Member · 88 posts",
+    "lines": [
+     "Same here. Deleted my old screen name the day I got home.",
+     "Checking in every night helps."
+    ]
+   },
+   {
+    "who": "hopeful1",
+    "meta": "Member · 12 posts",
+    "lines": [
+     "Praying for everyone who just came back."
+    ]
+   }
+  ],
+  "reply": "Post reply",
+  "yourLine": "I'm back. I'll post every day.",
+  "pending": "Thank you. Your post will appear once a moderator approves it.",
+  "praying": "3 people are praying for you."
+ },
+ "filing": {
+  "rules": "forum rules agreed — accountability on",
+  "posted": "posted in the accountability room — awaiting approval"
+ },
+ "_docS196": "⚑ S196 — the web, 2003 (PLAN_WEB_AND_HELPERS §2): Harbor becomes a place, not only a thread. Its index carries the recommendation (David's thread, pinned 'recommended for you'), the rooms, Resources, 'Find a group near you' and the conference. Every page speaks a documented position of the period in the seller's voice and names its dossier card at the foot: 'Healing is a process' → the person split from the identity, and a lapse framed as confession (e3_theday#4, #2); 'The wound behind it' → the father/mother 'wound' teaching (#5); 'For families' → families as a ministry of their own (#8); 'Find a group near you' → closed peer accountability groups (#0); the conference → the travelling parents' conferences (origin_intake_e1#1). Invented marks, no real people.",
+ "index": {
+  "title": "Harbor — forum index",
+  "recommended": "Recommended for you by David:",
+  "resourcesLabel": "Resources",
+  "resources": [
+   "process",
+   "wound",
+   "families"
+  ],
+  "directory": "Find a group near you",
+  "conference": "Conference 2003 — register",
+  "back": "‹ Harbor index"
+ },
+ "pages": {
+  "process": {
+   "heading": "Healing is a process",
+   "lines": [
+    "You are not gay. You are a person who struggles",
+    "with same-sex attraction. The attraction is not you.",
+    "",
+    "Healing is a process, not an event. A fall is not",
+    "the end: confess it, pray through it, tell your",
+    "accountability partner, and keep walking."
+   ],
+   "card": {
+    "file": "e3_theday",
+    "index": 4
+   }
   },
-  "rooms": ["Under 27", "Men", "Women", "Married", "Parents & family", "Accountability"],
-  "roomsLabel": "Forums",
-  "thread": {
-    "room": "Under 27",
-    "title": "Home from the summer programme — how do you keep it?",
-    "posts": [
-      { "who": "David", "meta": "Senior member · 1,204 posts · walking out since 1996", "lines": ["The first weeks back are the hardest. Your room is the same,", "your friends are the same. You are not.", "Post in the accountability thread every day. We will pray."] },
-      { "who": "Tomas_22", "meta": "Member · 88 posts", "lines": ["Same here. Deleted my old screen name the day I got home.", "Checking in every night helps."] },
-      { "who": "hopeful1", "meta": "Member · 12 posts", "lines": ["Praying for everyone who just came back."] }
-    ],
-    "reply": "Post reply",
-    "yourLine": "I'm back. I'll post every day.",
-    "pending": "Thank you. Your post will appear once a moderator approves it.",
-    "praying": "3 people are praying for you."
+  "wound": {
+   "heading": "The wound behind it",
+   "lines": [
+    "Behind most same-sex attraction is a wound:",
+    "a father who was absent, a mother too close,",
+    "a need for a man's love that was never met.",
+    "",
+    "Name the wound. Let God meet the need",
+    "in safe, same-sex friendship."
+   ],
+   "card": {
+    "file": "e3_theday",
+    "index": 5
+   }
   },
-  "filing": {
-    "rules": "forum rules agreed — accountability on",
-    "posted": "posted in the accountability room — awaiting approval"
+  "families": {
+   "heading": "For families",
+   "lines": [
+    "Your son's struggle is your family's too.",
+    "Families have a ministry of their own here:",
+    "a parents' group, a curriculum, a counsellor.",
+    "",
+    "Grief is normal. Grace and truth, together.",
+    "Love him without condoning."
+   ],
+   "card": {
+    "file": "e3_theday",
+    "index": 8
+   }
+  },
+  "directory": {
+   "heading": "Find a group near you",
+   "lines": [
+    "Weekly groups meet in 140 cities.",
+    "Membership is closed: what is shared stays in the room.",
+    "",
+    "NORTHEAST · SOUTHEAST · MIDWEST · SOUTHWEST · WEST",
+    "",
+    "Ask your group leader for an accountability partner."
+   ],
+   "card": {
+    "file": "e3_theday",
+    "index": 0
+   }
+  },
+  "conference": {
+   "heading": "Conference 2003",
+   "lines": [
+    "One day. Twelve cities. For parents, pastors and youth.",
+    "",
+    "Hear from people who walked out.",
+    "Workshops: 'Understanding your child', 'The early signs'.",
+    "",
+    "Register your youth group — group rates for churches."
+   ],
+   "card": {
+    "file": "origin_intake_e1",
+    "index": 1
+   }
   }
+ },
+ "dossierMark": "in the dossier:"
 }
