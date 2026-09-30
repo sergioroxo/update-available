@@ -23,7 +23,7 @@
  "restartConfirmNo": "Cancel",
  "controlsTitle": "Controls",
  "controlsLines": [
-  "Drag to look around.",
+  "Drag — or hold the arrow keys or W A S D — to look around.",
   "On a phone or tablet, turn the device to look — the button at the bottom of the screen switches that on.",
   "Pinch with two fingers — or scroll the wheel — to zoom the view in or out.",
   "Click a marker to move.",

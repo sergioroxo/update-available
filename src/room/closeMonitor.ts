@@ -29,6 +29,7 @@ import browser97 from '../../data/dialog/s1_browser.json';
 import browser26 from '../../data/dialog/s4_browser.json';
 import * as pc from 'playcanvas';
 import { recordEntries, practiceOf, entriesByEra } from '../witness/record';
+import { PRINTOUT } from '../desktop/theme/calendar';
 import { ledger } from '../state/ledger';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
 import { px, setFont, bevel } from '../desktop/theme/chrome';
@@ -289,63 +290,124 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
   /** ⚑ S167 / L-07 — THE RECEIPT: the version history, every update stacked and
    *  FAILED, then the file's lines — the machine's own till-print of thirty
    *  years. Read off the ledger and the record; nothing here is invented. */
+  /**
+   * ⚑ S204 — THE PRINTOUT (his, 2026-09-30: "shouldn't it be a print out? like those old school printer
+   * with paper with holes on the side?"). The receipt now PRINTS: a dot-matrix printer at the foot of the
+   * glass feeds continuous tractor-feed paper up out of its slot — sprocket holes down both edges, green
+   * bars, a perforation — a line at a time, the newest at the head. Each era is a block: the update and
+   * FAILED; what it promised, in its own words; what it filed and the practices it used (the record's, per
+   * era); the search typed, where there was one; and its person — NOT CHANGED. Then one closing line (his to
+   * approve) and "kept by: nobody". Read off the ledger and the record; the promises are quoted.
+   */
+  type PLine = { t: string; right?: string; col?: string; rightCol?: string; rule?: boolean };
+  let printLines: PLine[] = [];
+  let printT = 0;
+  const PRINT_LPS = 7;          // lines a second — a 1990s dot matrix at draft speed
+  const LH = 10;
+  function composeReceipt(): PLine[] {
+    const R = card.receipt as typeof card.receipt & {
+      eras: { era: string; subject: string; promised: string }[]; promisedLabel: string; filedLine: string;
+      usedLabel: string; notChanged: string; couldNot: string;
+    };
+    setFont(ctx, 9);
+    const maxW = 324;
+    const wrapTo = (text: string, lead: string, max = 2): string[] => {
+      const words = text.split(' '); const out: string[] = []; let cur = lead;
+      for (const w of words) {
+        const next = cur.trim().length > lead.trim().length || cur !== lead ? `${cur}${cur.endsWith(' ') ? '' : ' '}${w}` : `${cur}${w}`;
+        if (ctx.measureText(next).width > maxW && cur.trim() !== lead.trim()) { out.push(cur); cur = ' '.repeat(lead.length) + w; }
+        else cur = next;
+      }
+      out.push(cur);
+      if (out.length > max) { out.length = max; out[max - 1] = out[max - 1].replace(/\s*\S*$/, ' …'); }
+      return out;
+    };
+    const by = entriesByEra();
+    const his = ledger.records.includes('search-1997');
+    const hers = by.e4.length > 0;
+    const L: PLine[] = [{ t: R.title, right: R.span }, { t: '' }];
+    for (const u of R.updates) {
+      const e = R.eras.find((x) => x.era === u.era);
+      const es = by[u.era as 'e1' | 'e2' | 'e3' | 'e4'];
+      L.push({ t: u.line, right: R.failed, rightCol: PRINTOUT.failed });
+      if (e) for (const l of wrapTo(e.promised, `  ${R.promisedLabel} `)) L.push({ t: l, col: PRINTOUT.inkDim });
+      L.push({ t: '  ' + R.filedLine.replace('{n}', String(es.length)).replace('{f}', String(es.filter((x) => x.flagged).length)), col: PRINTOUT.inkDim });
+      const kinds: string[] = [];
+      for (const x of es) if (!kinds.includes(x.kind)) kinds.push(x.kind);
+      if (kinds.length) {
+        const used = kinds.map((k) => (practiceOf(k)?.title ?? k).toLowerCase()).join(' · ');
+        for (const l of wrapTo(used, `  ${R.usedLabel} `)) L.push({ t: l, col: PRINTOUT.inkDim });
+      }
+      if (u.era === 'e1' && his) for (const l of wrapTo(browser97.query, `  ${R.searchHis} `, 1)) L.push({ t: l, col: PRINTOUT.inkDim });
+      if (u.era === 'e4' && hers) for (const l of wrapTo(browser26.program.chosen, `  ${R.searchHers} `, 2)) L.push({ t: l, col: PRINTOUT.inkDim });
+      if (e) L.push({ t: '  ' + e.subject, right: R.notChanged });
+      L.push({ t: '' });
+    }
+    L.push({ t: '', rule: true });
+    for (const l of wrapTo(R.couldNot, '', 2)) L.push({ t: l });
+    L.push({ t: R.kept });
+    return L;
+  }
   function drawReceipt(): void {
     hits.length = 0;
     const R = card.receipt;
+    if (!printLines.length) printLines = composeReceipt();
     px(ctx, 0, 0, W, H, ERA1.black);
-    // the paper: a strip down the middle, torn at the foot
-    const pw = 300, pxl = Math.round((W - pw) / 2);
-    px(ctx, pxl, 0, pw, H - 22, ERA1.paper);
-    for (let x = 0; x < pw; x += 10) px(ctx, pxl + x, H - 22, 5, 5, ERA1.paper);
-    setFont(ctx, 12);
-    ctx.fillStyle = ERA1.black;
-    let y = 16;
-    const mono = (t: string, dy = 15): void => { ctx.fillText(t, pxl + 14, y); y += dy; };
-    const dots = (a: string, b: string): string => {
-      const cols = 34;
-      const room = Math.max(1, cols - a.length - b.length);
-      return a + ' ' + '.'.repeat(room) + ' ' + b;
-    };
-    mono(R.title); mono(R.span); y += 6;
-    px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
+    const shown = Math.min(printLines.length, Math.floor(printT * PRINT_LPS));
+    const done = shown >= printLines.length;
+    // the printer: a beige body across the foot of the glass, its slot, its light
+    const bodyY = H - 58, slotY = bodyY + 6;
+    const pw = 372, pl = Math.round((W - pw) / 2), pr = pl + pw;
+    // the paper rises out of the slot: the newest line sits just above the head
+    const paperTop = slotY - 8 - shown * LH - 16;
+    const y0 = Math.max(0, paperTop);
+    px(ctx, pl, y0, pw, slotY - y0, PRINTOUT.paper);
+    for (let i = 0; i < printLines.length + 4; i += 4) {   // green bars, two lines in every four
+      const by0 = paperTop + 12 + i * LH;
+      const a = Math.max(y0, by0), b = Math.min(slotY, by0 + 2 * LH);
+      if (b > a) px(ctx, pl + 18, a, pw - 36, b - a, PRINTOUT.bar);
+    }
+    for (let hy = paperTop + 6; hy < slotY; hy += 12) {     // the sprocket holes, riding with the paper
+      if (hy < y0 - 4) continue;
+      px(ctx, pl + 6, hy, 6, 6, PRINTOUT.hole); px(ctx, pr - 12, hy, 6, 6, PRINTOUT.hole);
+    }
+    px(ctx, pl + 16, y0, 1, slotY - y0, PRINTOUT.perf); px(ctx, pr - 17, y0, 1, slotY - y0, PRINTOUT.perf);
+    if (paperTop >= 0) for (let x = pl; x < pr; x += 6) px(ctx, x, paperTop, 3, 1, PRINTOUT.perf);   // the tear line
     setFont(ctx, 9);
-    for (const u of R.updates) mono(dots(u.line, R.failed), 13);
-    y += 4; px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
-    const all = recordEntries();
-    // ⚑ S193 — the searches, 1997 and 2026: his typed, hers typed for her (read off the ledger)
-    const his = ledger.records.includes('search-1997');
-    const hers = entriesByEra().e4.length > 0;
-    if (his || hers) {
-      mono(R.searchesLabel, 13);
-      ctx.fillStyle = ERA1.greyDark;
-      if (his) { mono('  ' + R.searchHis, 11); mono('    ' + browser97.query, 13); }
-      if (hers) { mono('  ' + R.searchHers, 11); mono('    ' + browser26.program.chosen, 13); }
+    for (let i = 0; i < shown; i++) {
+      const l = printLines[i];
+      const y = paperTop + 14 + i * LH;
+      if (y < -LH || y > slotY - 4) continue;
+      if (l.rule) { for (let x = pl + 22; x < pr - 22; x += 6) px(ctx, x, y + 4, 3, 1, PRINTOUT.inkDim); continue; }
+      ctx.fillStyle = l.col ?? PRINTOUT.ink;
+      ctx.fillText(l.t, pl + 22, y);
+      if (l.right) {
+        const rw = ctx.measureText(l.right).width;
+        const lw = ctx.measureText(l.t).width;
+        ctx.fillStyle = PRINTOUT.inkDim;
+        let dots = '';
+        while (ctx.measureText(dots + ' .').width < pr - 22 - rw - (pl + 22 + lw) - 8) dots += ' .';
+        ctx.fillText(dots, pl + 22 + lw, y);
+        ctx.fillStyle = l.rightCol ?? PRINTOUT.ink;
+        ctx.fillText(l.right, pr - 22 - rw, y);
+      }
+    }
+    // the printer's body over the slot, and its head moving while it prints
+    px(ctx, pl - 20, bodyY, pw + 40, H - bodyY, PRINTOUT.body);
+    px(ctx, pl - 20, bodyY, pw + 40, 2, PRINTOUT.bodyDark);
+    px(ctx, pl, slotY, pw, 4, PRINTOUT.slot);
+    if (!done) { const hx = pl + 22 + ((shown * 53) % (pw - 60)); px(ctx, hx, slotY - 2, 16, 3, PRINTOUT.bodyDark); }
+    px(ctx, pl - 10, bodyY + 14, 6, 6, done ? PRINTOUT.led : PRINTOUT.failed);
+    // Back, on the printer, once the page is out
+    if (done) {
+      const bw = 80, bh = 22, bx = Math.round((W - bw) / 2), byy = H - 32;
+      bevel(ctx, bx, byy, bw, bh, true);
+      setFont(ctx, 10);
       ctx.fillStyle = ERA1.black;
-      y += 4; px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
+      const tw = ctx.measureText(R.back).width;
+      ctx.fillText(R.back, Math.round(bx + (bw - tw) / 2), byy + 6);
+      hits.push({ x: bx, y: byy, w: bw, h: bh, id: 'close-back' });
     }
-    mono(R.entries.replace('{n}', String(all.length)).replace('{f}', String(all.filter((e) => e.flagged).length)), 13);
-    mono(R.practicesLabel, 13);
-    // the practices met, in order of first appearance, one line each
-    const seen: string[] = [];
-    for (const e of all) if (!seen.includes(e.kind)) seen.push(e.kind);
-    ctx.fillStyle = ERA1.greyDark;
-    for (const kind of seen.slice(0, his || hers ? 8 : 12)) {
-      const pr = practiceOf(kind);
-      mono('  ' + (pr ? pr.title : kind).toLowerCase(), 12);
-    }
-    if (seen.length > (his || hers ? 8 : 12)) mono('  …', 12);
-    y += 4; px(ctx, pxl + 14, y - 4, pw - 28, 1, ERA1.greyDark); y += 6;
-    setFont(ctx, 11);
-    ctx.fillStyle = ERA1.black;
-    mono(R.kept, 14);
-    // Back, on the paper's foot
-    const bw = 80, bh = 22, bx = Math.round((W - bw) / 2), byy = H - 56;
-    bevel(ctx, bx, byy, bw, bh, true);
-    setFont(ctx, 10);
-    ctx.fillStyle = ERA1.black;
-    const tw = ctx.measureText(R.back).width;
-    ctx.fillText(R.back, Math.round(bx + (bw - tw) / 2), byy + 6);
-    hits.push({ x: bx, y: byy, w: bw, h: bh, id: 'close-back' });
     tex.upload();
   }
 
@@ -406,6 +468,12 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       hits.length = 0;
     },
     update(dt: number): void {
+      // ⚑ S204 — the printer's clock: a redraw only when a new line comes out of the head
+      if (on && near && face === 'receipt' && printLines.length && Math.floor(printT * PRINT_LPS) < printLines.length) {
+        const before = Math.floor(printT * PRINT_LPS);
+        printT += dt;
+        if (Math.floor(printT * PRINT_LPS) !== before) drawReceipt();
+      }
       if (!on || rise >= 1) return;
       rise = Math.min(1, rise + dt / RISE_SECONDS);
       const k = rise * rise * (3 - 2 * rise);
@@ -422,7 +490,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         if (x < h.x || x > h.x + h.w || y < h.y || y > h.y + h.h) continue;
         if (h.id === 'close-go') { api.onGo?.(); return true; }
         if (h.id === 'close-again') { api.onAgain?.(); return true; }
-        if (h.id === 'close-receipt') { face = 'receipt'; drawReceipt(); return true; }
+        if (h.id === 'close-receipt') { face = 'receipt'; printLines = []; printT = 0; drawReceipt(); return true; }
         if (h.id === 'close-back') { face = 'card'; drawCard(); return true; }
         if (h.id === 'close-dossier') { api.onDossier?.(); return true; }
         const era = card.eras.find((e) => `close-era-${e.era}` === h.id)?.era;

@@ -464,6 +464,9 @@ const TAPE_HIT_RADIUS = 0.045; // stays under half the 0.10m shelf spacing (Sess
 /** the tennis racket on the Room-1 floor (data/room/reinterp_deltas.json r1);
  *  a generous radius because it lies flat and low, and a floor object read at
  *  a seated angle is a small target. */
+/** ⚑ S204 — how fast a held look key turns the view (°/s): the player's own turn, not a scripted one */
+const LOOK_YAW_RATE = 70;
+const LOOK_PITCH_RATE = 45;
 const RACKET_HIT = { x: -2.06, y: 1.0, z: 0.86 };   // ⚑ Phase 7: on the wall by the bed (was the floor behind the seat)
 /** ⚑ Phase 7 — the Release Work sheet beside it (reinterp_deltas.json r1 `releasePoster`): a press opens the exercise too */
 const RELEASE_POSTER_HIT = { x: -2.1, y: 1.3, z: 1.36 };
@@ -3320,6 +3323,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     hoveredTapeId = null;
     if (pointers.size < 2) pinch = null;
   });
+  // ⚑ S204 — the look keys, and which are held (seconds held, for the smooth turn after the first step)
+  const LOOK_KEYS: Record<string, 'l' | 'r' | 'u' | 'd'> = {
+    ArrowLeft: 'l', ArrowRight: 'r', ArrowUp: 'u', ArrowDown: 'd',
+    a: 'l', A: 'l', d: 'r', D: 'r', w: 'u', W: 'u', s: 'd', S: 'd'
+  };
+  const heldLook = new Map<'l' | 'r' | 'u' | 'd', number>();
+  window.addEventListener('keyup', (e) => { const l = LOOK_KEYS[e.key]; if (l) heldLook.delete(l); });
+  window.addEventListener('blur', () => heldLook.clear());
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     // S48: any key skips the descent too (Escape excepted — the game menu
@@ -3342,7 +3353,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // phase — so no separate Escape guard is needed here).
     if (options.reinterp && !os.paused && !gameMenuBus.isOpen) {
       const k = e.key;
-      if (k === 'ArrowLeft' || k === 'ArrowRight' || k === 'ArrowUp' || k === 'ArrowDown') {
+      // ⚑ S204 (his, 2026-09-30: "we can add extra movements of WASD but not for walking but just to look
+      //   around") — W/A/S/D look exactly as the arrows do: up/left/down/right, IN PLACE. Nothing walks,
+      //   ever (R28 §1). Letters only while no phase is capturing typed text.
+      const look = LOOK_KEYS[k] && (k.startsWith('Arrow') || !os.isCapturingText) ? LOOK_KEYS[k] : null;
+      if (look) {
+        // held: the view keeps turning smoothly (the frame loop below); this press still steps once,
+        // so a tap is the same 6° it always was (the walker and the stills turn by taps)
+        if (!e.repeat) heldLook.set(look, 0);
+        else { e.preventDefault(); return; }
+      }
+      if (look) {
         // R28-0c (item 13): arrow keys are look-in-place ONLY, every era —
         // the old "left/right = dolly to the adjacent room" (Round 23) was a
         // non-marker way to change seats, which Sérgio flagged as the camera
@@ -3351,9 +3372,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // (sends/updates/the TURN) — never a raw keypress.
         nudgeCamera();
         if (!camMove) {
-          if (k === 'ArrowLeft') camYaw += 6;
-          else if (k === 'ArrowRight') camYaw -= 6;
-          else if (k === 'ArrowUp') camPitch = Math.min(DRAG_PITCH_MAX, camPitch + 5);
+          if (look === 'l') camYaw += 6;
+          else if (look === 'r') camYaw -= 6;
+          else if (look === 'u') camPitch = Math.min(DRAG_PITCH_MAX, camPitch + 5);
           else camPitch = Math.max(-DRAG_PITCH_MAX, camPitch - 5);
         }
         e.preventDefault();
@@ -3526,6 +3547,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         closeMonitor?.present();   // R3-109: Daniel's machine is there from the start of the Close, dark until it lights
       }
       spine?.update(dt);
+      // ⚑ S204 — a held look key turns the view smoothly, after the tap's own step (0.22 s in)
+      if (heldLook.size && !camMove && !os.paused && !gameMenuBus.isOpen) {
+        for (const [l, t] of heldLook) {
+          heldLook.set(l, t + dt);
+          if (t < 0.22) continue;
+          if (l === 'l') camYaw += LOOK_YAW_RATE * dt;
+          else if (l === 'r') camYaw -= LOOK_YAW_RATE * dt;
+          else if (l === 'u') camPitch = Math.min(DRAG_PITCH_MAX, camPitch + LOOK_PITCH_RATE * dt);
+          else camPitch = Math.max(-DRAG_PITCH_MAX, camPitch - LOOK_PITCH_RATE * dt);
+        }
+      }
       helper?.tick(dt);
 
       // R28-1 movement prototype: the blink timer + marker visibility. The

@@ -104,6 +104,12 @@ export const PRINT = {
   relWhite: '#ffffff', relRed: '#800000'
 } as const;
 
+/** ⚑ S204 — the Close's printout: continuous tractor-feed paper, green-bar, from a dot-matrix printer */
+export const PRINTOUT = {
+  paper: '#f7f5ec', bar: '#dcebd8', hole: '#101014', perf: '#c9c6ba', ink: '#26262c', inkDim: '#5a5a62',
+  failed: '#8a1c1c', body: '#d4d0c8', bodyDark: '#8a877f', slot: '#2a2a2e', led: '#3a9a3a'
+} as const;
+
 /**
  * ⚑ S186 — yes.gif, the image MentorRob sends Daniel over DCC in 1997 (src/desktop/apps/yesPoster.ts).
  * Its grammar is the documented one of the mid-90s ex-gay print advertising Sérgio found (a crowd of
