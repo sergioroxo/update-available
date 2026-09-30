@@ -476,7 +476,9 @@
    "worn": "Session in progress.",
    "restoring": "Restoring your session — six tabs, five of them yours.",
    "results": "The search is done. Read the results.",
-   "site": "Second Thoughts can take it from here."
+   "site": "Second Thoughts can take it from here.",
+   "wait": "While you think it over, Maya — the console on your bed has a game from us. Tidy a room. It settles the mind.",
+   "_docWait": "⚑ Phase 7 / S203 — L's own 'while you wait' (the last of the three helpers S201 began: Lamby 2003, Lambient 2016). Once, after 25 s without a press while the programme is open, and only while the console on her bed has its game ready and unplayed. The seller's voice pointing at the seller's game — TIDY ('False Images' as its rule): the helper gives her something to do, and what it gives her is the programme. It clears on her next press."
   },
   "failed": {
    "_doc": "⚑ 2026-09-13: THE PAGE AFTER THE FAILURE. The device stops, the room comes back, and the monitor still showed step five asking her to put the headset on — the browser did not know. It knows now: the agent's page cannot be reached, the step is marked failed, and the machine's flat words say why in the only register it has. Nothing here is pressable.",

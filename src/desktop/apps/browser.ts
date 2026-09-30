@@ -174,6 +174,10 @@ export class E4Browser {
   private agentT = 0;
   /** index into program.steps; the live step. The last step is the headset. */
   private step = 0;
+  /** ⚑ S203 — L's "while you wait": seconds without a press while the programme is open; said once */
+  private quietT = 0;
+  private waitSaid = false;
+  private waitNow = false;
   private stepDone = new Set<string>();
   /** seconds since the live step was completed — the agent moves on after a beat */
   private advanceT = -1;
@@ -192,6 +196,7 @@ export class E4Browser {
   /** the line L's console on the laptop shows — see E4Shell.drawLaptop */
   get consoleLine(): string {
     const c = PROGRAM.console;
+    if (this.waitNow) return (c as unknown as { wait: string }).wait;
     if (this.phase === 'restoring') return c.restoring;   // S160 / R3-91: the laptop says what it is doing
     if (this.mode === 'free' || this.mode === 'game') return this.phase === 'open' ? c.restored : '';
     if (this.mode === 'results') return c.results;
@@ -295,6 +300,13 @@ export class E4Browser {
     //   through the whole finale and pressed it forty-five times (2026-09-12)
     if (!this.pressable && this.hits.length) this.hits = [];
     if (this.phase === 'dormant') return;
+    // ⚑ S203 — L's "while you wait" (see s4_browser.json console._docWait)
+    if (!this.waitSaid && this.phase === 'open' && (this.mode === 'program' || this.mode === 'results' || this.mode === 'site' || this.mode === 'agent')) {
+      this.quietT += dt;
+      if (this.quietT > 25 && entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'tidy')) {
+        this.waitSaid = true; this.waitNow = true; this.version++;
+      }
+    }
     if (this.mode === 'game') {
       const v = this.floppy.version;
       this.floppy.update(dt);
@@ -1401,6 +1413,8 @@ export class E4Browser {
   }
 
   handleClick(x: number, y: number): boolean {
+    this.quietT = 0;
+    if (this.waitNow) { this.waitNow = false; this.version++; }
     if (this.phase === 'handed') return false;
     if (this.phase === 'failed') return true;   // a dead page takes presses and does nothing
     if (this.phase === 'saver') { this.wake(); return true; }   // S160: the one press that restores
