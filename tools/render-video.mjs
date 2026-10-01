@@ -66,7 +66,7 @@ await esbuild.build({
 });
 
 const { NetVisionPlayerApp, ERA1_CANVAS, RENDER_SCALE, ledger, setNetVisionVariant } = await import(bundle);
-// ⚑ S207 — which version of the ad: original | participant | daniel (s2_media.json _docVariants)
+// ⚑ S207 — which version of the ad: participant (in the piece) | original (s2_media.json _docVariants)
 const VARIANT = argOf('--variant', '');
 if (VARIANT) setNetVisionVariant(VARIANT);
 // ⚑ S207 — as in play since S205: his testimony is published before the video is offered, so the ad's

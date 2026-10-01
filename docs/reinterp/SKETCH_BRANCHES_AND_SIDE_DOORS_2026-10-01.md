@@ -80,7 +80,14 @@ moment when the main path is waiting anyway, listing only what has not been open
 6. Walks after each half; the stills re-shot for the four pauses.
 No fork anywhere; the story's route is unchanged.
 
-## 5 · His question (2026-10-01): does Daniel's video reach Vera's 2016? — a proposal, NOT BUILT
+## 5 · His question (2026-10-01): does Daniel's video reach Vera's 2016? — DECLINED by him the same day
+
+> ⚑ **HIS RULING (2026-10-01): no.** *"I don't like that we use Daniel's video. I think this needs to be dedicated to
+> the lesbian point; they already lack visibility. There is language that we can be inspired by, but not using it."*
+> So 2016 stays Vera's and Renata's. What may carry over is the testimony economy's LANGUAGE (the before/after
+> grammar, the release, the vertical's cut), never Daniel's footage or his story. The proposal is kept below only as
+> the record of what was declined and why.
+
 *"How could we relate the documentary Daniel is making to Vera's world? Could it be an edit of some testimonials?…
 even if the person leaves it, the recording still follows the person. But maybe not since it is focused on the lesbian
 aspect… Just thinking."*
