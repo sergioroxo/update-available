@@ -66,6 +66,9 @@ import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import { releaseBus } from '../../audio/tapeAudio';
 import media from '../../../data/dialog/s2_media.json';
+import { drawFootage } from './testimony';
+/** ⚑ S206 — how long Daniel's own frame holds at the head of the ACTUAL PARTICIPANT shot */
+const TAPE_INSERT_SECONDS = 2.4;
 
 interface Scene {
   at: number;
@@ -74,6 +77,8 @@ interface Scene {
   speaker: string;
   line: string;
   grade?: 'before' | 'after';
+  /** S206 — this shot opens on a frame from Daniel's own Tape 04 ("Real stories. Real change.") */
+  insertTape?: boolean;
   karaoke?: boolean;
   /** S62: a period-real DRTV caption, by key into `tags` (DRAMATIZATION,
    *  ACTUAL PARTICIPANT, RESULTS NOT TYPICAL, PAID PROGRAMMING) */
@@ -693,6 +698,22 @@ export class NetVisionPlayerApp {
         this.drawLowerThird(ctx, a, scene, override);
         return;
       case 'testimony':
+        // ⚑ S206 — REAL STORIES. REAL CHANGE. (s2_media.json _docRealStories): his own take, cut into the ad
+        if (scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < TAPE_INSERT_SECONDS) {
+          drawFootage(ctx, 'daniel', 13.2, a.x, a.y, a.w, a.h, 0, true);
+          const M2 = media as unknown as { realStories: string; realStoriesLine: string };
+          ui.px(ctx, a.x, a.y + Math.round(a.h * 0.08), a.w, 26, ERA1.navy);
+          ui.setFont(ctx, 14); ctx.fillStyle = ERA1.white;
+          const tw = ctx.measureText(M2.realStories).width;
+          ctx.fillText(M2.realStories, a.x + Math.round((a.w - tw) / 2), a.y + Math.round(a.h * 0.08) + 6);
+          ui.setFont(ctx, 10);
+          const lw = ctx.measureText(M2.realStoriesLine).width;
+          ui.px(ctx, a.x + Math.round((a.w - lw) / 2) - 6, a.y + a.h - 70, Math.ceil(lw) + 12, 16, ERA1.black);
+          ctx.fillStyle = ERA1.white;
+          ctx.fillText(M2.realStoriesLine, a.x + Math.round((a.w - lw) / 2), a.y + a.h - 67);
+          this.drawTag(ctx, a, scene);
+          return;
+        }
         this.drawTestimonySet(ctx, a, scene);
         this.drawTag(ctx, a, scene);
         this.drawLowerThird(ctx, a, scene, override);

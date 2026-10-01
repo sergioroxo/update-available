@@ -375,21 +375,69 @@ export class TestimonyApp {
 }
 
 // ── the footage ──────────────────────────────────────────────────────────────
-/** a person, faceless as every body in the piece: trousers, a shirt, a head, hair. `stand` 0 = seated, 1 = standing */
-function person(ctx: CanvasRenderingContext2D, cx: number, floorY: number, s: number, shirt: string, trousers: string, stand: number, skin: string): void {
-  const legH = Math.round((stand * 34 + (1 - stand) * 16) * s);
-  const torsoH = Math.round(36 * s), torsoW = Math.round(26 * s), headW = Math.round(15 * s), headH = Math.round(17 * s);
-  const hip = floorY - legH - Math.round((1 - stand) * 20 * s);
-  ui.px(ctx, cx - Math.round(10 * s), hip, Math.round(8 * s), legH + Math.round((1 - stand) * 20 * s), trousers);
-  ui.px(ctx, cx + Math.round(2 * s), hip, Math.round(8 * s), legH + Math.round((1 - stand) * 20 * s), trousers);
-  if (stand < 0.5) ui.px(ctx, cx - Math.round(12 * s), hip, Math.round(26 * s), Math.round(8 * s), trousers);   // the lap
-  ui.px(ctx, cx - Math.round(torsoW / 2), hip - torsoH, torsoW, torsoH, shirt);
-  ui.px(ctx, cx - Math.round(headW / 2), hip - torsoH - headH - 1, headW, headH, skin);
-  ui.px(ctx, cx - Math.round(headW / 2), hip - torsoH - headH - 1, headW, Math.round(5 * s), F.hair);
+/**
+ * ⚑ S206 — TAPE 04, MADE AS WELL AS THE AD (his, 2026-10-01: "the video from the Advert was amazing and that would
+ * need to make the video of Tape need to also be as good"). The infomercial's grammar, used for the opposite purpose:
+ * posable figures built from limbs (a seated body's knees come to camera, hands that fold and open, a head that
+ * drops and lifts, breath), light that means something, framing that tells it. The ad lights its actors to sell;
+ * the tape is lit by the producer's key — and at "cut" the key goes off, so the two of them are lit only by the
+ * hall, and by the corridor behind the door Caleb comes through. Faceless, as every body in the piece; a head's
+ * turn is carried by where its hair sits.
+ */
+interface Pose {
+  s: number; seated?: boolean; lean?: number; headDrop?: number; look?: number;   // look: −1 left … 1 right
+  arms?: 'folded' | 'rest' | 'gesture' | 'open' | 'reach'; step?: number;
+  shirt: string; trousers: string; skin: string; breath?: number;
 }
+function limb(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, w: number, col: string): void {
+  ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(Math.round(x1), Math.round(y1)); ctx.lineTo(Math.round(x2), Math.round(y2)); ctx.stroke();
+}
+function figure(ctx: CanvasRenderingContext2D, cx: number, baseY: number, p: Pose): void {
+  const s = p.s, lean = (p.lean ?? 0) * s, drop = ((p.headDrop ?? 0) + (p.breath ?? 0)) * s, look = p.look ?? 0;
+  const W = (n: number): number => Math.max(2, Math.round(n * s));
+  const hipY = baseY - (p.seated ? 22 : 31) * s;
+  const shY = hipY - 25 * s + drop * 0.4, shX = cx + lean;
+  const half = 10.5 * s;
+  // legs: a seated figure's knees come toward camera
+  if (p.seated) {
+    for (const side of [-1, 1]) {
+      const kx = cx + 15 * s * (look >= 0 ? 1 : -1) + side * 4 * s, ky = hipY + 2 * s;
+      limb(ctx, cx + side * 4 * s, hipY, kx, ky, W(8), p.trousers);
+      limb(ctx, kx, ky, kx - 2 * s * (look >= 0 ? 1 : -1), baseY, W(7), p.trousers);
+    }
+  } else {
+    const st = p.step ?? 0;
+    for (const side of [-1, 1]) limb(ctx, cx + side * 3.5 * s, hipY, cx + side * 4 * s + side * st * 4 * s, baseY, W(8), p.trousers);
+  }
+  // the torso and the shoulders
+  limb(ctx, cx, hipY, shX, shY, W(13), p.shirt);
+  limb(ctx, shX - half, shY, shX + half, shY, W(9), p.shirt);
+  // the arms, by what the hands are doing
+  for (const side of [-1, 1]) {
+    const sx = shX + side * half;
+    let ex = sx + side * 2 * s, ey = shY + 12 * s, hx = cx + side * 4 * s, hy = hipY - 2 * s;
+    if (p.arms === 'rest') { hx = sx + side * 3 * s; hy = hipY + (p.seated ? 2 : 6) * s; ex = sx + side * 3 * s; ey = shY + 13 * s; }
+    if (p.arms === 'gesture' && side === 1) { ex = sx + 8 * s; ey = shY + 9 * s; hx = ex + 9 * s; hy = ey - 3 * s; }
+    if (p.arms === 'open') { ex = sx + side * 6 * s; ey = shY + 10 * s; hx = ex + side * 10 * s; hy = ey - 1 * s; }
+    if (p.arms === 'reach' && side === Math.sign(look || 1)) { ex = sx + side * 9 * s; ey = shY + 8 * s; hx = ex + side * 9 * s; hy = ey + 2 * s; }
+    limb(ctx, sx, shY + s, ex, ey, W(7), p.shirt);
+    limb(ctx, ex, ey, hx, hy, W(5), p.shirt);
+    ctx.fillStyle = p.skin; ctx.beginPath(); ctx.arc(Math.round(hx), Math.round(hy), Math.max(1.5, 2.6 * s), 0, Math.PI * 2); ctx.fill();
+  }
+  // the neck, the head; the hair sits on the side the head is turned away from
+  const hr = 7.4 * s, hx0 = shX + lean * 0.3 + look * 2.2 * s, hy0 = shY - 10 * s + drop;
+  limb(ctx, shX, shY, hx0, hy0 + hr * 0.7, W(5), p.skin);
+  ctx.fillStyle = p.skin; ctx.beginPath(); ctx.ellipse(Math.round(hx0), Math.round(hy0), hr * 0.86, hr * 1.06, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = F.hair; ctx.beginPath();
+  ctx.ellipse(Math.round(hx0 - look * 2.4 * s), Math.round(hy0 - hr * 0.42), hr * 0.9, hr * 0.62, 0, Math.PI, Math.PI * 2); ctx.fill();
+  // the back of the head, on the side away from where he is looking — never across the face
+  if (Math.abs(look) > 0.2) { const sd = Math.sign(look); ctx.beginPath(); ctx.ellipse(Math.round(hx0 - sd * hr * 0.62), Math.round(hy0 - hr * 0.1), hr * 0.3, hr * 0.78, 0, 0, Math.PI * 2); ctx.fill(); }
+}
+const ease = (k: number): number => { const c = Math.max(0, Math.min(1, k)); return c * c * (3 - 2 * c); };
 
-/** the camcorder's picture of the hall at time t — the clip's own staging, then the camera's overlays */
-function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: number, x: number, y: number, w: number, h: number, tick: number, still = false): void {
+/** the camcorder's picture of the hall at time t — the clip's own staging, then the camera */
+export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: number, x: number, y: number, w: number, h: number, tick: number, still = false): void {
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
   if (clip === 'tone') {
@@ -403,67 +451,127 @@ function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: number, x: 
     return;
   }
   const s = w / 400;
-  // after "cut" the camera is left running and has been knocked a little
-  const bump = clip === 'daniel' && t > 17 ? Math.round(6 * s) : 0;
-  const pan = clip === 'broll' ? Math.round(-t * 7 * s) : 0;
-  const ox = x + bump + pan, floorY = y + Math.round(h * 0.78) + Math.round(bump / 2);
+  const S = (n: number): number => Math.round(n * s);
+  const danielClip = clip === 'daniel';
+  // after "cut" the camera is left running: knocked a little, and the producer's key goes off
+  const knocked = danielClip ? ease((t - 19.2) / 0.6) : 0;
+  const keyOn = danielClip ? 1 - ease((t - 16.9) / 0.35) : 1;
+  const pan = clip === 'broll' ? -t * 9 * s : 0;
+  const ox = Math.round(x + knocked * S(9) + pan), oy = Math.round(y + knocked * S(5));
+  const floorY = oy + Math.round(h * 0.8);
+  // the hall: plaster above, wood panelling below, the floor
   ui.px(ctx, x, y, w, h, F.wall);
-  ui.px(ctx, x, y + Math.round(h * 0.06), w, Math.round(h * 0.03), F.wallHi);
+  ui.px(ctx, x, oy + Math.round(h * 0.52), w, floorY - oy - Math.round(h * 0.52), F.panel);
+  for (let i = -2; i < 14; i++) ui.px(ctx, ox + S(i * 40), oy + Math.round(h * 0.52), S(2), floorY - oy - Math.round(h * 0.52), F.panelDk);
+  ui.px(ctx, x, oy + Math.round(h * 0.52), w, S(3), F.panelDk);
   ui.px(ctx, x, floorY, w, y + h - floorY, F.floor);
-  ui.px(ctx, x, floorY, w, 2, F.floorHi);
-  // the banner on the back wall
-  const bw = Math.round(220 * s), bx = ox + Math.round(w * 0.5) - Math.round(bw / 2), by = y + Math.round(h * 0.14);
-  ui.px(ctx, bx, by, bw, Math.round(22 * s), F.banner);
-  ui.setFont(ctx, Math.max(7, Math.round(10 * s)));
+  ui.px(ctx, x, floorY, w, S(2), F.floorHi);
+  // the banner, and the plain wooden cross above it
+  const bw = S(210), bx = ox + S(150), by = oy + S(30);
+  ui.px(ctx, bx + Math.round(bw / 2) - S(2), oy + S(4), S(5), S(22), F.cross);
+  ui.px(ctx, bx + Math.round(bw / 2) - S(8), oy + S(10), S(17), S(4), F.cross);
+  ui.px(ctx, bx, by, bw, S(22), F.banner);
+  ui.setFont(ctx, Math.max(7, S(10)));
   ctx.fillStyle = F.bannerInk;
-  const bt = T.tapes.banner, btw = ctx.measureText(bt).width;
-  ctx.fillText(bt, bx + Math.round((bw - btw) / 2), by + Math.round(5 * s));
-  // the light stand and its softbox, left
-  ui.px(ctx, ox + Math.round(56 * s), y + Math.round(h * 0.3), Math.round(3 * s), floorY - y - Math.round(h * 0.3), F.stand);
-  ui.px(ctx, ox + Math.round(38 * s), y + Math.round(h * 0.22), Math.round(40 * s), Math.round(30 * s), F.softbox);
+  const btw = ctx.measureText(T.tapes.banner).width;
+  ctx.fillText(T.tapes.banner, bx + Math.round((bw - btw) / 2), by + S(6));
+  // the side door, right — the corridor light behind it when it opens
+  const doorX = ox + S(328), doorY = oy + S(64), doorW = S(40), doorH = floorY - doorY;
+  const doorOpen = danielClip ? ease((t - 20.6) / 1.2) : 0;
+  ui.px(ctx, doorX - S(3), doorY - S(3), doorW + S(6), doorH + S(3), F.panelDk);
+  ui.px(ctx, doorX, doorY, doorW, doorH, doorOpen > 0 ? F.doorLight : F.door);
+  if (doorOpen > 0) {
+    ui.px(ctx, doorX, doorY, Math.round(doorW * (1 - doorOpen * 0.8)), doorH, F.door);   // the door swinging in
+    const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.22 * doorOpen;
+    ctx.fillStyle = F.doorLight; ctx.beginPath();
+    ctx.moveTo(doorX, floorY); ctx.lineTo(doorX + doorW, floorY); ctx.lineTo(doorX - S(40), y + h); ctx.lineTo(doorX - S(120), y + h); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = was;
+  }
+  // the coffee table at the back, left: an urn and a stack of last year's DVDs
+  ui.px(ctx, ox + S(86), floorY - S(30), S(52), S(4), F.table);
+  ui.px(ctx, ox + S(90), floorY - S(26), S(3), S(26), F.table); ui.px(ctx, ox + S(131), floorY - S(26), S(3), S(26), F.table);
+  ui.px(ctx, ox + S(94), floorY - S(46), S(12), S(16), F.urn);
+  for (let i = 0; i < 4; i++) ui.px(ctx, ox + S(112), floorY - S(34) - i * S(3), S(16), S(2), i % 2 ? F.banner : F.caseSpine);
+  // the light stand and its softbox, left; lit while the producer is shooting
+  ui.px(ctx, ox + S(40), oy + S(70), S(3), floorY - oy - S(70), F.stand);
+  ui.px(ctx, ox + S(22), oy + S(54), S(42), S(32), keyOn > 0.5 ? F.softbox : F.stand);
   if (clip === 'broll') {
-    for (let i = 0; i < 7; i++) {   // the chairs set out in rows
-      const cx = ox + Math.round((60 + i * 60) * s);
-      ui.px(ctx, cx, floorY - Math.round(30 * s), Math.round(24 * s), Math.round(4 * s), F.chair);
-      ui.px(ctx, cx, floorY - Math.round(52 * s), Math.round(4 * s), Math.round(52 * s), F.chair);
+    for (let r = 0; r < 2; r++) for (let i = 0; i < 8; i++) {   // the chairs set out in rows
+      const cx = ox + S(150 + i * 54 + r * 26), cy = floorY + S(r * 10);
+      ui.px(ctx, cx, cy - S(28), S(24), S(4), F.chair);
+      ui.px(ctx, cx, cy - S(54), S(4), S(54), F.chair);
+      ui.px(ctx, cx + S(20), cy - S(28), S(4), S(28), F.chair);
     }
   } else {
-    // the chair, the subject's
-    const chx = ox + Math.round(w * 0.42);
-    ui.px(ctx, chx - Math.round(16 * s), floorY - Math.round(26 * s), Math.round(32 * s), Math.round(5 * s), F.chair);
-    ui.px(ctx, chx + Math.round(12 * s), floorY - Math.round(64 * s), Math.round(5 * s), Math.round(64 * s), F.chair);
-    if (clip === 'daniel') {
-      const stand = t < 18 ? 0 : Math.min(1, (t - 18) / 1.6);
-      person(ctx, chx, floorY, s, F.danielShirt, F.danielTrousers, stand, F.skin);
-      if (t > 21) {   // Caleb comes in from the right, looking for where to sit
-        const k = Math.min(1, (t - 21) / 3.5);
-        const e = k * k * (3 - 2 * k);
-        const cx = Math.round(x + w + 30 * s - (x + w + 30 * s - (ox + w * 0.68)) * e);
-        const step = k < 1 ? Math.round(Math.abs(Math.sin(t * 7)) * 2 * s) : 0;
-        person(ctx, cx, floorY - step, s, F.calebJacket, F.calebTrousers, 1, F.skin2);
+    // the chair, three-quarters to camera
+    const chx = ox + S(176);
+    ui.px(ctx, chx - S(14), floorY - S(25), S(34), S(5), F.chair);
+    ui.px(ctx, chx - S(16), floorY - S(66), S(5), S(66), F.chair);
+    ui.px(ctx, chx + S(16), floorY - S(25), S(4), S(25), F.chair);
+    const breath = Math.sin(tick * 1.4) * 0.5;
+    if (danielClip) {
+      // DANIEL: settles, says the template, is told "cut", breathes out, stands; then Caleb
+      const arms: Pose['arms'] = t < 3.2 ? 'folded' : t < 7.7 ? 'folded' : t < 12.1 ? 'gesture' : t < 16.3 ? 'open' : 'rest';
+      const headDrop = t < 3.2 ? 3 : t < 16.3 ? 0 : t < 18.6 ? 4 : 1;
+      const seated = t < 18.6;
+      const look = t < 25.6 ? 0.55 : 0.55 + ease((t - 25.6) / 0.8) * 0.45;
+      const reach = t > 33.2 && t < 35.4;
+      figure(ctx, chx + (seated ? 0 : S(14)), floorY, {
+        s: 1.55 * s, seated, lean: seated ? (t > 16.4 ? 3 : 0) : 1, headDrop, look, arms: reach ? 'reach' : arms,
+        shirt: F.danielShirt, trousers: F.danielTrousers, skin: F.skin, breath: breath * 0.8
+      });
+      if (t > 21.0) {   // Caleb, from the door, looking for where to sit — and then he sees who it is
+        const k = ease((t - 21.0) / 3.6);
+        const cx = doorX + doorW / 2 + (ox + S(268) - (doorX + doorW / 2)) * k;
+        const walking = k > 0 && k < 1;
+        const look2 = t < 25.8 ? -0.2 : -0.9;
+        const nearer = t > 30.8 ? ease((t - 30.8) / 1.0) * S(10) : 0;
+        figure(ctx, cx - nearer, floorY, {
+          s: 1.55 * s, seated: false, lean: t > 28.4 && t < 29.4 ? -2 : 0, headDrop: t > 26 && t < 28.4 ? -1 : 0, look: look2,
+          arms: 'rest', step: walking ? Math.sin(t * 7) : 0, shirt: F.calebJacket, trousers: F.calebTrousers, skin: F.skin2, breath: breath * 0.6
+        });
       }
-    } else if (clip === 'caleb') {
-      person(ctx, chx, floorY, s, F.calebJacket, F.calebTrousers, 0, F.skin2);
+    } else {
+      // CALEB's own take: seated, the template's open hands on its last line, then "once more"
+      const arms: Pose['arms'] = t < 6.7 ? 'folded' : t < 10.5 ? 'rest' : t < 14.5 ? 'open' : 'folded';
+      figure(ctx, chx, floorY, { s: 1.55 * s, seated: true, look: 0.5, headDrop: t > 16.8 ? 4 : 0, arms, shirt: F.calebJacket, trousers: F.calebTrousers, skin: F.skin2, breath: breath * 0.8 });
     }
   }
-  // the camera's overlays: REC, the tape, the timecode, and the lines of a video picture
+  // the light: the producer's warm key on the subject while it is on; the hall's cooler flat light once it is off
+  const was = ctx.globalAlpha;
+  if (clip !== 'broll') {
+    ctx.globalAlpha = was * 0.14 * keyOn;
+    ctx.fillStyle = F.key; ctx.beginPath();
+    ctx.moveTo(ox + S(64), oy + S(58)); ctx.lineTo(ox + S(64), oy + S(84)); ctx.lineTo(ox + S(250), floorY + S(20)); ctx.lineTo(ox + S(250), oy + S(40)); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = was * 0.16 * (1 - keyOn);
+    ui.px(ctx, x, y, w, h, F.cool);
+  }
+  // the camcorder: a soft vignette, a little noise, the lines of a video picture
+  ctx.globalAlpha = was * 0.16;
+  for (let i = 0; i < 6; i++) { const e = S(4 + i * 4); ui.px(ctx, x, y + i * S(3), w, S(3), F.black); ui.px(ctx, x, y + h - (i + 1) * S(3), w, S(3), F.black); ui.px(ctx, x + i * S(4) - e + e, y, S(4), h, F.black); ui.px(ctx, x + w - (i + 1) * S(4), y, S(4), h, F.black); ctx.globalAlpha *= 0.72; }
+  ctx.globalAlpha = was * 0.12;
+  for (let yy = y; yy < y + h; yy += 3) ui.px(ctx, x, yy, w, 1, F.scan);
+  if (!still) {
+    ctx.globalAlpha = was * 0.35;
+    for (let i = 0; i < 40; i++) {
+      const nx = x + ((i * 97 + Math.floor(tick * 24) * 31) % w), ny = y + ((i * 53 + Math.floor(tick * 24) * 17) % h);
+      ui.px(ctx, nx, ny, 1, 1, i % 2 ? F.osd : F.black);
+    }
+  }
+  ctx.globalAlpha = was;
+  // the camera's own words: REC, the tape, the timecode
   if (!still) {
     ui.setFont(ctx, Math.max(7, Math.round(9 * s)));
-    if (Math.floor(tick * 2) % 2 === 0) { ui.px(ctx, x + 8, y + 9, Math.round(6 * s) + 1, Math.round(6 * s) + 1, F.rec); }
+    if (Math.floor(tick * 2) % 2 === 0) ui.px(ctx, x + 8, y + 9, Math.round(6 * s) + 1, Math.round(6 * s) + 1, F.rec);
     ctx.fillStyle = F.osd; ctx.fillText('REC', x + 18, y + 7);
     const tw = ctx.measureText(T.tapes.tape).width;
     ctx.fillText(T.tapes.tape, x + w - 10 - tw, y + 7);
     const base = clip === 'daniel' ? 252 : clip === 'caleb' ? 301 : 340;
     const sec = base + Math.floor(t), fr = Math.floor((t % 1) * 25);
     const tc = `00:${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}:${String(fr).padStart(2, '0')}`;
-    const tcw = ctx.measureText(tc).width;
-    ctx.fillText(tc, x + w - 10 - tcw, y + h - 16);
+    ctx.fillText(tc, x + w - 10 - ctx.measureText(tc).width, y + h - 16);
     ctx.fillText('SP', x + 10, y + h - 16);
   }
-  const was = ctx.globalAlpha;
-  ctx.globalAlpha = was * 0.12;
-  for (let yy = y; yy < y + h; yy += 3) ui.px(ctx, x, yy, w, 1, F.scan);
-  ctx.globalAlpha = was;
   ctx.restore();
 }
 

@@ -28,6 +28,9 @@
     "THE CONGREGATION": ""
   },
   "_docS62_tags": "S62 — THE DRTV CHYRON LAYER (Sérgio: the bodies need 'messages on the screen to add layers of interpretation'). These four captions are not invented furniture: they are what real direct-response television is legally obliged to put on screen, and DRAMATIZATION standing under a testimony is the most damning caption the era supplies — the apparatus retracts its own witness in 6pt type. Scenes reference these by key so the wording is edited in one place.",
+  "_docRealStories": "⚑ S206 (his, 2026-10-01: \"I really like the addition to the Real Stories. Real Change, very powerful\") — the testimony and the infomercial are one media economy (docs/reinterp/SKETCH_BRANCHES_AND_SIDE_DOORS_2026-10-01.md §3): for the first seconds of the ACTUAL PARTICIPANT shot, the ad cuts in a frame from Daniel's own Tape 04 under this title — his own sentence used to sell the programme back to him — then cuts to its actor. Only once his testimony is published (`testimony-online`). Grounding: testimony re-used as advertising (Truth in Love, 1998; dossier e3_theday #17).",
+  "realStories": "REAL STORIES. REAL CHANGE.",
+  "realStoriesLine": "I'm not who I was. Every day, I choose it.",
   "tags": {
     "dramatization": "DRAMATIZATION",
     "participant": "ACTUAL PARTICIPANT",
@@ -92,7 +95,7 @@
     { "at": 12.70,  "shot": "host",      "speaker": "PASTOR DALE", "line": "The world says it's who you are, we say" },
     { "at": 17.16,  "shot": "host",      "speaker": "THE COUNSELLOR", "line": "It's a weight you can set down" },
     { "at": 21.50,  "shot": "brand",     "speaker": "ANNOUNCER",   "line": "Introducing the new you program" },
-    { "at": 25.73,  "shot": "testimony", "speaker": "MARCUS",      "line": "I tried everything, I thought this was just me", "grade": "before", "tag": "participant" },
+    { "at": 25.73,  "shot": "testimony", "speaker": "MARCUS",      "line": "I tried everything, I thought this was just me", "grade": "before", "tag": "participant", "insertTape": true },
     { "at": 33.43,  "shot": "product",   "speaker": "MARCUS",      "line": "Then Pastor Dale showed me the program", "tag": "dramatization" },
     { "at": 37.07,  "shot": "testimony", "speaker": "MARCUS",      "line": "Now I'm flourishing", "grade": "after", "tag": "notTypical" },
     { "at": 41.65,  "shot": "host",      "speaker": "THE COUNSELLOR", "line": "Three gentle steps" },

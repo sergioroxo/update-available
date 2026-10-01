@@ -52,3 +52,30 @@ infomercial (the ad made of you) → 2016's testimony music videos and video tag
 **One proposal to tie them (his call — ethics and taste):** the NetVision infomercial carries a two-second insert,
 "Real stories. Real change.", over a frame from Tape 04 — Daniel's own sentence. He is shown his own words being used
 to sell the programme back to him. Grounding: testimony re-used as advertising is documented (Truth in Love).
+
+## 4 · His answer (2026-10-01) — pauses, not forks
+*"I don't want to see this as a full fork… I just felt the need to have some elements of pause where people can better
+understand that the rest of the elements can have a way to be interacted with and not just lost in the void. Maybe
+there is information that needs to be disclosed in the system."* And: "Real Stories. Real Change" — yes (built S206,
+with Tape 04 redrawn to the infomercial's standard).
+
+**So: one PAUSE per era, where the system itself discloses what else is on the desk** — in its own period form, at a
+moment when the main path is waiting anyway, listing only what has not been opened yet (it shrinks as you go):
+| era | the pause | in the system's own form |
+|---|---|---|
+| 1997 | while he waits for Rob in the channel | the Un-Walk's "Did you know?" box — Win95's tip-of-the-day: the game on the disk, the cartridge for the handheld, the radio-hour tape, Release Work on the wall, the web pages still open |
+| 2003 | after the check-in, before Your Story | Restorify's home: "Today in Restorify" — Your Story (new), Harbor, REACH on your phone, Your file (read only) |
+| 2016 | after the first job | GracePlatform's "This week" panel: the other jobs, Your record, the phone (and FloppySheep on it) |
+| 2026 | while the session restores | L on the laptop: "While it restores: your console, your record, the photos" |
+
+**What building it entails** (an estimate; about two sessions with walks):
+1. One data file of the four pauses' words, and one helper that reads the map's optional beats not yet done — so each
+   pause lists only what is left, and nothing goes stale when the map changes.
+2. Four pause surfaces, one per era, each drawn in that era's software (a dialog, a Restorify panel, a GracePlatform
+   panel, L's laptop line); each appears once at its moment and can be reopened (an icon / the map).
+3. The way back: about ten optional surfaces get one closing line in the system's voice naming the main path's current
+   step (FIT IN, ROOTCAUSE, Release Work, the 1997 web, Harbor, REACH, Your file, FloppySheep, TIDY, the record tab).
+4. The exceptions written down, so they stay exceptions: Caleb's song, the radio tape, Tape C, the outtake, the ball.
+5. The map's "Where you are" keeps listing everything (frame voice), as now.
+6. Walks after each half; the stills re-shot for the four pauses.
+No fork anywhere; the story's route is unchanged.

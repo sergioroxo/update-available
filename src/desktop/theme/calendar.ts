@@ -110,7 +110,11 @@ export const FOOTAGE = {
   wall: '#c9b48e', wallHi: '#d8c6a2', floor: '#7a5a3e', floorHi: '#8d6a4a', banner: '#22305e', bannerInk: '#e8c96a',
   chair: '#5a4632', stand: '#3a3a40', softbox: '#f2eee2', skin: '#d9a77f', skin2: '#b9835c', hair: '#2e2420',
   danielShirt: '#5f7fa8', danielTrousers: '#34363e', calebJacket: '#5d7a4e', calebTrousers: '#2c2e34',
-  rec: '#d23a2a', osd: '#f4f2ea', scan: '#000000', black: '#0a0a0c', sub: '#ffffff', subWho: '#e8c96a'
+  rec: '#d23a2a', osd: '#f4f2ea', scan: '#000000', black: '#0a0a0c', sub: '#ffffff', subWho: '#e8c96a',
+  // S206 — the hall, properly: wood panelling, the side door and the corridor light behind it, the coffee table,
+  // the producer's warm key, the hall's own cool light once the key is off
+  panel: '#8a6a48', panelDk: '#6b5036', door: '#4a3a2c', doorLight: '#f3e2b8', table: '#6b4f36', urn: '#b9bcc0',
+  key: '#fff1cf', cool: '#7d93ad', cross: '#5e4630', caseSpine: '#2a4a7a'
 } as const;
 
 /** ⚑ S204 — the Close's printout: continuous tractor-feed paper, green-bar, from a dot-matrix printer */
