@@ -1,0 +1,59 @@
+{
+ "_doc": "⚑ S207 — THE PAUSES AND THE WAYS BACK (his, 2026-10-01: 'I don't want to see this as a full fork… elements of pause where people can better understand that the rest of the elements can have a way to be interacted with and not just lost in the void. Maybe there is information that needs to be disclosed in the system'; 'yes, build the four pauses and the ways back… see if they make sense when building them'). Plan: docs/reinterp/SKETCH_BRANCHES_AND_SIDE_DOORS_2026-10-01.md §4. ONE PAUSE PER ERA, once, at a moment the main path is waiting anyway, in the era's own software, listing only what has not been opened yet (read live from data/strings/map.json's optional beats — nothing here goes stale). THE WAYS BACK: when an optional thing is closed, the era's voice names the main path's current step (map.json's label). Seller's voice throughout — operable register; the satire is the system's, and it is never about the person. ⚑ THE EXCEPTIONS, by law: what people made for each other never pushes back — Caleb's song, the radio-hour tape, Tape C, the outtake on Tape 04, the ball. None of those calls wayBack.",
+ "wayBack": {
+  "e1": "Un-Walk: your programme is waiting — next: {beat}.",
+  "e2": "Lamby: that's a good stretch. Back to it — next: {beat}.",
+  "e3": "Lovely break. Next on today: {beat}.",
+  "e4": "Shall we get back to it, Maya? Next: {beat}."
+ },
+ "pause": {
+  "e1": {
+   "title": "Un-Walk — Did you know?",
+   "lead": "Did you know…",
+   "items": {
+    "browse": "the fellowship's pages stay open in NetPilot — search them, browse the directory, follow the ring.",
+    "wall": "the wall behind you keeps notes on your progress. Turn around.",
+    "racket": "Release Work hangs on the wall by your bed — the racket and its sheet.",
+    "rootcause": "a game came on your disk: ROOTCAUSE.EXE, on the desktop.",
+    "handheld": "your handheld on the bed has a cartridge from the kit."
+   },
+   "outro": "Every part of the kit is part of your programme.",
+   "close": "Close"
+  },
+  "e2": {
+   "title": "Restorify — Today",
+   "lead": "Today in Restorify",
+   "items": {
+    "story": "Your Story — our new video, Discover the New You, wants you in it.",
+    "yourfile": "Your file — read only, on the desktop.",
+    "forum": "Harbor — a thread picked out for you.",
+    "apply": "Harbor's application — already filled in from your file.",
+    "reach": "REACH — on your phone, on the desk."
+   },
+   "outro": "Everything in Restorify counts toward your streak.",
+   "close": "Okay"
+  },
+  "e3": {
+   "title": "This week",
+   "lead": "This week on GracePlatform",
+   "items": {
+    "record": "Your record — the chip at the bottom of the screen.",
+    "jobs": "More jobs on the board, in any order.",
+    "recommend": "Tag the video.",
+    "group": "Post to the group.",
+    "floppy": "FloppySheep — on your phone. A little reward."
+   },
+   "outro": "Small steps count.",
+   "close": "Close"
+  },
+  "e4": {
+   "line": "While it settles, Maya — {items}. Or start with the search.",
+   "items": {
+    "tidy": "the console on your bed",
+    "record": "your record",
+    "photos": "your photographs"
+   },
+   "joiner": ", "
+  }
+ }
+}

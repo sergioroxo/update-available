@@ -122,6 +122,7 @@ import d from '../../data/strings/era3_devices.json';
 import maiden from '../../data/dialog/s3_maiden.json';
 import { playOnce } from '../audio/tapeAudio';
 import { pulse as witnessPulse } from '../witness/pulse';
+import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 
 /** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
  *  the type moved to `desktop/apps/comments.ts` when that module took over the
@@ -458,10 +459,22 @@ export class GraceQueueLite {
   /** ⚑ S201 — seconds of quiet on the board (Lambient's "while you wait", once) */
   private boardQuietT = 0;
   private waitSaid = false;
+  /** ⚑ S207 — 2016's pause ("This week", pauses.json): open now, shown once; FloppySheep opened at least once */
+  private pauseOpen = false;
+  private pauseShown = false;
+  private pauseLines: string[] = [];
+  private floppyOpened = false;
 
   update(dt: number): void {
     if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
+      // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
+      //   "This week" card lists what else is open to her (only what is left); once
+      if (!this.pauseShown && !this.minimised && ledger.records.includes('e3-job-done') && this.boardQuietT > 6) {
+        this.pauseShown = true;
+        this.pauseLines = pauseItems('e3', this.floppyOpened ? ['floppy'] : []);
+        if (this.pauseLines.length) { this.pauseOpen = true; this.waitSaid = true; this.bump(); }
+      }
       if (!this.waitSaid && this.boardQuietT > 25) {
         const waiting = ['group', 'recommend'].some((id) => { const s = this.surfaces.get(id); return s && !s.complete(); });
         if (waiting) { this.waitSaid = true; this.lambSay([LAMBIENT.waitLine1, LAMBIENT.waitLine2]); this.bump(); }
@@ -1231,6 +1244,34 @@ export class GraceQueueLite {
     if (this.seenTask && this.lambLines) { this.lambLines = null; this.lambLine = LAMBIENT.greet; }
     this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+    if (this.pauseOpen) this.drawPauseCard(ctx, c);
+  }
+
+  /** ⚑ S207 — "This week": the platform's own card over the board, in its glass; the only thing pressable while up */
+  private drawPauseCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const P = pauseWords('e3');
+    this.rects = this.rects.filter((r) => r.id === 'task-restore');
+    const cw = Math.min(520, c.w - 80);
+    setFont(ctx, 12);
+    const rows = this.pauseLines.map((l) => wrapText(ctx, l, cw - 64));
+    const ch = 120 + rows.reduce((n, r) => n + r.length, 0) * 18 + rows.length * 6;
+    const cx = c.x + Math.round((c.w - cw) / 2), cy = c.y + Math.round((c.h - ch) / 2);
+    px(ctx, cx - 2, cy - 2, cw + 4, ch + 4, ERA3.glassEdge);
+    px(ctx, cx, cy, cw, ch, ERA3.white);
+    px(ctx, cx, cy, cw, 4, ERA3.accent);
+    setFont(ctx, 11); ctx.fillStyle = ERA3.grey; ctx.fillText(P.title.toUpperCase(), cx + 22, cy + 18);
+    setFont(ctx, 16); ctx.fillStyle = ERA3.titleText; ctx.fillText(P.lead, cx + 22, cy + 36);
+    let y = cy + 66;
+    setFont(ctx, 12);
+    rows.forEach((rs) => {
+      px(ctx, cx + 26, y + 6, 6, 6, ERA3.accent);
+      rs.forEach((r) => { ctx.fillStyle = ERA3.titleText; ctx.fillText(r, cx + 42, y); y += 18; });
+      y += 6;
+    });
+    setFont(ctx, 11); ctx.fillStyle = ERA3.grey; ctx.fillText(P.outro, cx + 22, y + 4);
+    const bw = 110, bh = 30, bx = cx + cw - bw - 18, by = cy + ch - bh - 14;
+    aero.button(ctx, bx, by, bw, bh, P.close, { primary: true });
+    this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'pause-close' });
   }
 
   /**
@@ -1862,6 +1903,7 @@ export class GraceQueueLite {
     //   the window is down — a minimised window can never be a dead end.
     if (r.id === 'task-restore') { if (this.minimised) this.toggleMinimised(); return; }
     if (this.minimised) return;
+    if (this.pauseOpen) { if (r.id === 'pause-close') { this.pauseOpen = false; this.bump(); } return; }   // S207
     if (r.id === 'win-min') { this.toggleMinimised(); return; }
     if (r.id === 'signin') { this.beginList(); return; }
     if (r.id === 'consent-wake') { this.toggleWakeWord(); return; }
@@ -1881,10 +1923,15 @@ export class GraceQueueLite {
 
   handlePhoneClick(x: number, y: number): boolean {
     // the game takes the whole screen and the whole thumb while it is open
-    if (this.floppy.open) return this.floppy.tap(x, y);
+    if (this.floppy.open) {
+      const res = this.floppy.tap(x, y);
+      // ⚑ S207 — the way back: the programme's own game, closed, and Lambient names the next step
+      if (!this.floppy.open) { const l = wayBackLine('e3'); if (l) { this.lambSay([l]); this.bump(); } }
+      return res;
+    }
     // ⚑ the game is still the era's, not the phone's — the phone reports the
     //   press and this class opens it, so FloppySheep keeps one owner.
-    if (this.phone.isFloppyPress(x, y)) { this.floppy.openGame(); return true; }
+    if (this.phone.isFloppyPress(x, y)) { this.floppy.openGame(); this.floppyOpened = true; return true; }
     return this.phone.press(x, y);
   }
 

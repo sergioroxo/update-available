@@ -55,8 +55,9 @@ mkdirSync(WORK, { recursive: true });
 const entry = join(WORK, 'entry.ts');
 const bundle = join(WORK, 'bundle.mjs');
 writeFileSync(entry, `
-  export { NetVisionPlayerApp } from '../src/desktop/apps/netvision';
+  export { NetVisionPlayerApp, setNetVisionVariant } from '../src/desktop/apps/netvision';
   export { ERA1_CANVAS, RENDER_SCALE } from '../src/desktop/theme/era1';
+  export { ledger } from '../src/state/ledger';
 `);
 await esbuild.build({
   entryPoints: [entry], bundle: true, outfile: bundle,
@@ -64,7 +65,13 @@ await esbuild.build({
   logLevel: 'error'
 });
 
-const { NetVisionPlayerApp, ERA1_CANVAS, RENDER_SCALE } = await import(bundle);
+const { NetVisionPlayerApp, ERA1_CANVAS, RENDER_SCALE, ledger, setNetVisionVariant } = await import(bundle);
+// ⚑ S207 — which version of the ad: original | participant | daniel (s2_media.json _docVariants)
+const VARIANT = argOf('--variant', '');
+if (VARIANT) setNetVisionVariant(VARIANT);
+// ⚑ S207 — as in play since S205: his testimony is published before the video is offered, so the ad's
+//   ACTUAL PARTICIPANT shot opens on his own Tape 04 frame (REAL STORIES. REAL CHANGE.)
+if (!ledger.records.includes('testimony-online')) ledger.records.push('testimony-online');
 
 // ── render, exactly as os.ts composes the surface ────────────────────────────
 const W = ERA1_CANVAS.width * RENDER_SCALE;

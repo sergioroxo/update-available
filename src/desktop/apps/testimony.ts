@@ -16,7 +16,9 @@
  *   3 TAPES    — TAPE_04_CAPTURE: Daniel_A, Caleb_B, the B-roll, the room tone. Daniel's take is the template in his
  *                mouth; the producer says cut; THE TAPE KEEPS RUNNING; Caleb walks in looking for where to sit. The
  *                footage is the people's: bare, nothing scored, nothing narrated.
- *   4 CUT      — the Story Editor assembles it: chapter cards between his sentences (CONFUSION → SURRENDER → CHANGE →
+ *   ⚑ S207 (his ruling): ONE media object — the tapes are the raw shoot of Restorify's infomercial, 'Discover the New
+ *   You'; the editor cuts by the ad's own structure (BEFORE · THE PROGRAM · AFTER · CALL NOW).
+ *   4 CUT      — the Story Editor assembles it: chapter cards between his sentences (was CONFUSION → SURRENDER → CHANGE →
  *                HOPE), the rest into Unused media ("I still…", "some days…", "…Caleb?"). He can only press Next cut
  *                and Export. (2016's "Cut the Story" is this, industrialised.)
  *   5 ONLINE   — "Your testimony is reaching people": his page on the ministry's site, a .wmv that buffers on dial-up,
@@ -376,67 +378,58 @@ export class TestimonyApp {
 
 // ── the footage ──────────────────────────────────────────────────────────────
 /**
- * ⚑ S206 — TAPE 04, MADE AS WELL AS THE AD (his, 2026-10-01: "the video from the Advert was amazing and that would
- * need to make the video of Tape need to also be as good"). The infomercial's grammar, used for the opposite purpose:
- * posable figures built from limbs (a seated body's knees come to camera, hands that fold and open, a head that
- * drops and lifts, breath), light that means something, framing that tells it. The ad lights its actors to sell;
- * the tape is lit by the producer's key — and at "cut" the key goes off, so the two of them are lit only by the
- * hall, and by the corridor behind the door Caleb comes through. Faceless, as every body in the piece; a head's
- * turn is carried by where its hair sits.
+ * ⚑ S207 — TAPE 04 IS THE AD'S SHOOT (his ruling, 2026-10-01: merge — "the documentary is one thing and the infomercial
+ * another… a clash of ideas"; and of S206's drawing: "these new images of the tape aren't great"). Daniel is filmed for
+ * Restorify's own infomercial, "Discover the New You": Tape 04 is the RAW footage of its ACTUAL PARTICIPANT segment.
+ * So it is drawn in the ad's own language (src/desktop/apps/netvision.ts, the testimony set he called "awesome"):
+ * the BEFORE set — grey flats, the window, one hard light from above — and black silhouettes built from limbs, a
+ * seated body's knees to camera, a head that drops. Raw, it shows what the cut ad hides: the edges of the flats, the
+ * dark studio around them, the lamp on its stand, the boom dipping in. At "cut" the hard light goes off and the flat
+ * work lights come on; Caleb walks in out of the dark of the studio. Then B-roll of the AFTER set being dressed.
  */
-interface Pose {
-  s: number; seated?: boolean; lean?: number; headDrop?: number; look?: number;   // look: −1 left … 1 right
-  arms?: 'folded' | 'rest' | 'gesture' | 'open' | 'reach'; step?: number;
-  shirt: string; trousers: string; skin: string; breath?: number;
+interface Pose { scale: number; seated?: boolean; lean?: number; headDrop?: number; turn?: number; armSpread?: number; armLift?: number; handsFolded?: boolean; reach?: number; step?: number; color?: string }
+/** the ad's limb: a run of square stamps — pixel-true, as the ad draws them */
+function limb(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: number, y1: number, thick: number, color: string): void {
+  const steps = Math.max(Math.round(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0))), 1);
+  const h = Math.floor(thick / 2);
+  ctx.fillStyle = color;
+  for (let i = 0; i <= steps; i++) ctx.fillRect(Math.round(x0 + (x1 - x0) * (i / steps)) - h, Math.round(y0 + (y1 - y0) * (i / steps)) - h, thick, thick);
 }
-function limb(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, w: number, col: string): void {
-  ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(Math.round(x1), Math.round(y1)); ctx.lineTo(Math.round(x2), Math.round(y2)); ctx.stroke();
-}
+/** the ad's figure (netvision.ts drawFigure), with a reach for the end of the outtake */
 function figure(ctx: CanvasRenderingContext2D, cx: number, baseY: number, p: Pose): void {
-  const s = p.s, lean = (p.lean ?? 0) * s, drop = ((p.headDrop ?? 0) + (p.breath ?? 0)) * s, look = p.look ?? 0;
-  const W = (n: number): number => Math.max(2, Math.round(n * s));
-  const hipY = baseY - (p.seated ? 22 : 31) * s;
-  const shY = hipY - 25 * s + drop * 0.4, shX = cx + lean;
-  const half = 10.5 * s;
-  // legs: a seated figure's knees come toward camera
+  const s = p.scale, col = p.color ?? ERA1.black, lean = (p.lean ?? 0) * s, drop = (p.headDrop ?? 0) * s;
+  const spread = p.armSpread ?? 0, lift = p.armLift ?? 0, turn = p.turn ?? 1;
+  const t = (n: number): number => Math.max(2, Math.round(n * s));
+  const hipY = Math.round(baseY - (p.seated ? 22 : 30) * s);
+  const shoulderY = Math.round(hipY - 24 * s + drop);
+  const shoulderX = Math.round(cx + lean);
+  const half = 10 * s * (0.34 + 0.66 * turn);
   if (p.seated) {
-    for (const side of [-1, 1]) {
-      const kx = cx + 15 * s * (look >= 0 ? 1 : -1) + side * 4 * s, ky = hipY + 2 * s;
-      limb(ctx, cx + side * 4 * s, hipY, kx, ky, W(8), p.trousers);
-      limb(ctx, kx, ky, kx - 2 * s * (look >= 0 ? 1 : -1), baseY, W(7), p.trousers);
-    }
+    const kneeY = hipY + 3 * s;
+    for (const side of [-1, 1]) { const kx = cx + 17 * s + side * 4 * s; limb(ctx, cx + side * 4 * s, hipY, kx, kneeY, t(7), col); limb(ctx, kx, kneeY, kx - 3 * s, baseY, t(6), col); }
   } else {
     const st = p.step ?? 0;
-    for (const side of [-1, 1]) limb(ctx, cx + side * 3.5 * s, hipY, cx + side * 4 * s + side * st * 4 * s, baseY, W(8), p.trousers);
+    for (const side of [-1, 1]) limb(ctx, cx + side * 3 * s, hipY, cx + side * (4 + 2 * turn) * s + side * st * 4 * s, baseY, t(7), col);
   }
-  // the torso and the shoulders
-  limb(ctx, cx, hipY, shX, shY, W(13), p.shirt);
-  limb(ctx, shX - half, shY, shX + half, shY, W(9), p.shirt);
-  // the arms, by what the hands are doing
+  limb(ctx, cx, hipY, shoulderX, shoulderY, t(11), col);
+  limb(ctx, shoulderX - half, shoulderY, shoulderX + half, shoulderY, t(7), col);
   for (const side of [-1, 1]) {
-    const sx = shX + side * half;
-    let ex = sx + side * 2 * s, ey = shY + 12 * s, hx = cx + side * 4 * s, hy = hipY - 2 * s;
-    if (p.arms === 'rest') { hx = sx + side * 3 * s; hy = hipY + (p.seated ? 2 : 6) * s; ex = sx + side * 3 * s; ey = shY + 13 * s; }
-    if (p.arms === 'gesture' && side === 1) { ex = sx + 8 * s; ey = shY + 9 * s; hx = ex + 9 * s; hy = ey - 3 * s; }
-    if (p.arms === 'open') { ex = sx + side * 6 * s; ey = shY + 10 * s; hx = ex + side * 10 * s; hy = ey - 1 * s; }
-    if (p.arms === 'reach' && side === Math.sign(look || 1)) { ex = sx + side * 9 * s; ey = shY + 8 * s; hx = ex + side * 9 * s; hy = ey + 2 * s; }
-    limb(ctx, sx, shY + s, ex, ey, W(7), p.shirt);
-    limb(ctx, ex, ey, hx, hy, W(5), p.shirt);
-    ctx.fillStyle = p.skin; ctx.beginPath(); ctx.arc(Math.round(hx), Math.round(hy), Math.max(1.5, 2.6 * s), 0, Math.PI * 2); ctx.fill();
+    const sx = shoulderX + side * half;
+    let ex: number, ey: number, hx: number, hy: number;
+    if (p.handsFolded) { ex = sx + side * 2 * s; ey = shoulderY + 12 * s; hx = cx + side * 3 * s; hy = hipY - 2 * s; }
+    else { ex = sx + side * (2 + spread * 12) * s; ey = shoulderY + (12 - lift * 9) * s; hx = ex + side * (2 + spread * 14) * s; hy = ey + (11 - lift * 20) * s; }
+    if (p.reach && side === 1) { ex = sx + 8 * s * p.reach; ey = shoulderY + 9 * s; hx = ex + 10 * s * p.reach; hy = ey + 1 * s; }
+    limb(ctx, sx, shoulderY + s, ex, ey, t(6), col);
+    limb(ctx, ex, ey, hx, hy, t(5), col);
   }
-  // the neck, the head; the hair sits on the side the head is turned away from
-  const hr = 7.4 * s, hx0 = shX + lean * 0.3 + look * 2.2 * s, hy0 = shY - 10 * s + drop;
-  limb(ctx, shX, shY, hx0, hy0 + hr * 0.7, W(5), p.skin);
-  ctx.fillStyle = p.skin; ctx.beginPath(); ctx.ellipse(Math.round(hx0), Math.round(hy0), hr * 0.86, hr * 1.06, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = F.hair; ctx.beginPath();
-  ctx.ellipse(Math.round(hx0 - look * 2.4 * s), Math.round(hy0 - hr * 0.42), hr * 0.9, hr * 0.62, 0, Math.PI, Math.PI * 2); ctx.fill();
-  // the back of the head, on the side away from where he is looking — never across the face
-  if (Math.abs(look) > 0.2) { const sd = Math.sign(look); ctx.beginPath(); ctx.ellipse(Math.round(hx0 - sd * hr * 0.62), Math.round(hy0 - hr * 0.1), hr * 0.3, hr * 0.78, 0, 0, Math.PI * 2); ctx.fill(); }
+  const headR = 7 * s, hx0 = Math.round(shoulderX + lean * 0.35), hy0 = Math.round(shoulderY - 9 * s);
+  limb(ctx, hx0, hy0 + headR, shoulderX, shoulderY, t(4), col);
+  ctx.fillStyle = col; ctx.beginPath();
+  ctx.ellipse(hx0, hy0, Math.max(2, Math.round(headR * (0.78 + 0.22 * turn))), Math.max(2, Math.round(headR * 1.08)), 0, 0, Math.PI * 2); ctx.fill();
 }
 const ease = (k: number): number => { const c = Math.max(0, Math.min(1, k)); return c * c * (3 - 2 * c); };
 
-/** the camcorder's picture of the hall at time t — the clip's own staging, then the camera */
+/** the camcorder's raw picture of the shoot at time t, then the camera's own words */
 export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: number, x: number, y: number, w: number, h: number, tick: number, still = false): void {
   ctx.save();
   ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
@@ -450,105 +443,79 @@ export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: numb
     ctx.restore();
     return;
   }
-  const s = w / 400;
-  const S = (n: number): number => Math.round(n * s);
+  const s = w / 400, S = (n: number): number => Math.round(n * s);
   const danielClip = clip === 'daniel';
-  // after "cut" the camera is left running: knocked a little, and the producer's key goes off
-  const knocked = danielClip ? ease((t - 19.2) / 0.6) : 0;
-  const keyOn = danielClip ? 1 - ease((t - 16.9) / 0.35) : 1;
-  const pan = clip === 'broll' ? -t * 9 * s : 0;
-  const ox = Math.round(x + knocked * S(9) + pan), oy = Math.round(y + knocked * S(5));
-  const floorY = oy + Math.round(h * 0.8);
-  // the hall: plaster above, wood panelling below, the floor
-  ui.px(ctx, x, y, w, h, F.wall);
-  ui.px(ctx, x, oy + Math.round(h * 0.52), w, floorY - oy - Math.round(h * 0.52), F.panel);
-  for (let i = -2; i < 14; i++) ui.px(ctx, ox + S(i * 40), oy + Math.round(h * 0.52), S(2), floorY - oy - Math.round(h * 0.52), F.panelDk);
-  ui.px(ctx, x, oy + Math.round(h * 0.52), w, S(3), F.panelDk);
-  ui.px(ctx, x, floorY, w, y + h - floorY, F.floor);
-  ui.px(ctx, x, floorY, w, S(2), F.floorHi);
-  // the banner, and the plain wooden cross above it
-  const bw = S(210), bx = ox + S(150), by = oy + S(30);
-  ui.px(ctx, bx + Math.round(bw / 2) - S(2), oy + S(4), S(5), S(22), F.cross);
-  ui.px(ctx, bx + Math.round(bw / 2) - S(8), oy + S(10), S(17), S(4), F.cross);
-  ui.px(ctx, bx, by, bw, S(22), F.banner);
-  ui.setFont(ctx, Math.max(7, S(10)));
-  ctx.fillStyle = F.bannerInk;
-  const btw = ctx.measureText(T.tapes.banner).width;
-  ctx.fillText(T.tapes.banner, bx + Math.round((bw - btw) / 2), by + S(6));
-  // the side door, right — the corridor light behind it when it opens
-  const doorX = ox + S(328), doorY = oy + S(64), doorW = S(40), doorH = floorY - doorY;
-  const doorOpen = danielClip ? ease((t - 20.6) / 1.2) : 0;
-  ui.px(ctx, doorX - S(3), doorY - S(3), doorW + S(6), doorH + S(3), F.panelDk);
-  ui.px(ctx, doorX, doorY, doorW, doorH, doorOpen > 0 ? F.doorLight : F.door);
-  if (doorOpen > 0) {
-    ui.px(ctx, doorX, doorY, Math.round(doorW * (1 - doorOpen * 0.8)), doorH, F.door);   // the door swinging in
-    const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.22 * doorOpen;
-    ctx.fillStyle = F.doorLight; ctx.beginPath();
-    ctx.moveTo(doorX, floorY); ctx.lineTo(doorX + doorW, floorY); ctx.lineTo(doorX - S(40), y + h); ctx.lineTo(doorX - S(120), y + h); ctx.closePath(); ctx.fill();
-    ctx.globalAlpha = was;
-  }
-  // the coffee table at the back, left: an urn and a stack of last year's DVDs
-  ui.px(ctx, ox + S(86), floorY - S(30), S(52), S(4), F.table);
-  ui.px(ctx, ox + S(90), floorY - S(26), S(3), S(26), F.table); ui.px(ctx, ox + S(131), floorY - S(26), S(3), S(26), F.table);
-  ui.px(ctx, ox + S(94), floorY - S(46), S(12), S(16), F.urn);
-  for (let i = 0; i < 4; i++) ui.px(ctx, ox + S(112), floorY - S(34) - i * S(3), S(16), S(2), i % 2 ? F.banner : F.caseSpine);
-  // the light stand and its softbox, left; lit while the producer is shooting
-  ui.px(ctx, ox + S(40), oy + S(70), S(3), floorY - oy - S(70), F.stand);
-  ui.px(ctx, ox + S(22), oy + S(54), S(42), S(32), keyOn > 0.5 ? F.softbox : F.stand);
+  const hardOn = danielClip ? 1 - ease((t - 16.9) / 0.3) : 1;     // the set's one hard light; off at "cut"
+  const workOn = danielClip ? ease((t - 17.6) / 0.6) : 0;          // the studio's flat work lights, after
+  const pan = clip === 'broll' ? -t * 6 * s : 0;
+  const ox = Math.round(x + pan);
+  // the studio: dark, and the set built in the middle of it
+  ui.px(ctx, x, y, w, h, F.black);
+  ui.px(ctx, x, y + Math.round(h * 0.86), w, h, ERA1.greyDark);   // the studio floor
+  const setX = ox + S(70), setW = S(260), setTop = y + S(14), floorY = y + Math.round(h * 0.82);
   if (clip === 'broll') {
-    for (let r = 0; r < 2; r++) for (let i = 0; i < 8; i++) {   // the chairs set out in rows
-      const cx = ox + S(150 + i * 54 + r * 26), cy = floorY + S(r * 10);
-      ui.px(ctx, cx, cy - S(28), S(24), S(4), F.chair);
-      ui.px(ctx, cx, cy - S(54), S(4), S(54), F.chair);
-      ui.px(ctx, cx + S(20), cy - S(28), S(4), S(28), F.chair);
-    }
+    // the AFTER set, being dressed: warm flats, the olive floor, the family-shaped shadows going up on the wall
+    ui.px(ctx, setX, setTop, setW, floorY - setTop, ERA1.paper);
+    ui.px(ctx, setX, setTop, setW, S(30), ERA1.beige);
+    ui.px(ctx, setX, floorY, setW, S(18), ERA1.olive);
+    figure(ctx, setX + S(70), floorY + 2, { scale: 0.62 * s * 1.6, color: ERA1.silver, turn: 0.8, armSpread: 0.12 });
+    if (t > 5) figure(ctx, setX + S(190), floorY + 2, { scale: 0.46 * s * 1.6, color: ERA1.silver, turn: 0.8, armSpread: 0.1 });
+    ui.px(ctx, setX + setW + S(10), y + S(40), S(3), floorY - y - S(40), ERA1.grey);   // a stand at the edge
   } else {
-    // the chair, three-quarters to camera
-    const chx = ox + S(176);
-    ui.px(ctx, chx - S(14), floorY - S(25), S(34), S(5), F.chair);
-    ui.px(ctx, chx - S(16), floorY - S(66), S(5), S(66), F.chair);
-    ui.px(ctx, chx + S(16), floorY - S(25), S(4), S(25), F.chair);
-    const breath = Math.sin(tick * 1.4) * 0.5;
+    // the BEFORE set: grey flats, a darker band above, the window — the ad's own, seen raw
+    ui.px(ctx, setX, setTop, setW, floorY - setTop, ERA1.grey);
+    ui.px(ctx, setX, setTop, setW, S(34), ERA1.greyDark);
+    ui.px(ctx, setX, floorY, setW, S(18), ERA1.greyDark);
+    const wx = setX + S(170), wy = setTop + S(46), ww = S(64), wh = S(54);
+    ui.px(ctx, wx - S(3), wy - S(3), ww + S(6), wh + S(6), ERA1.greyDark);
+    ui.px(ctx, wx, wy, ww, wh, ERA1.silver);
+    ui.px(ctx, wx + Math.round(ww / 2) - 1, wy, S(2), wh, ERA1.greyDark);
+    ui.px(ctx, wx, wy + Math.round(wh / 2) - 1, ww, S(2), ERA1.greyDark);
+    // the flats' raw edges: their bracing, which the cut ad crops away with black bars
+    ui.px(ctx, setX - S(2), setTop, S(2), floorY - setTop + S(18), ERA1.silver);
+    ui.px(ctx, setX + setW, setTop, S(2), floorY - setTop + S(18), ERA1.silver);
+    // the hard light: its lamp on a stand outside the set, and its cone straight down on the stool
+    ui.px(ctx, ox + S(24), y + S(20), S(3), floorY - y, ERA1.grey);
+    ui.px(ctx, ox + S(14), y + S(14), S(22), S(10), hardOn > 0.5 ? ERA1.tooltip : ERA1.greyDark);
+    const stoolX = setX + S(96);
+    if (hardOn > 0) {
+      const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.16 * hardOn;
+      for (let i = 0; i < 20; i++) { const ww2 = S(10 + i * 2), yy = setTop + i * Math.round((floorY - setTop) / 20); ui.px(ctx, stoolX - Math.round(ww2 / 2), yy, ww2, Math.ceil((floorY - setTop) / 20) + 1, ERA1.silver); }
+      ctx.globalAlpha = was;
+    }
+    // the boom, dipping in over the subject while he talks; lifted away after cut
+    const boomY = y + S(danielClip && t > 17.4 ? -40 : 6) + Math.round(Math.sin(tick * 0.9) * 2);
+    ui.px(ctx, x, boomY, stoolX - x - S(6), S(3), ERA1.grey);
+    ui.px(ctx, stoolX - S(10), boomY - S(3), S(16), S(9), ERA1.greyDark);
+    // the stool
+    ui.px(ctx, stoolX - S(10), floorY - S(20), S(22), S(3), ERA1.greyDark);
+    ui.px(ctx, stoolX - S(8), floorY - S(17), S(2), S(17), ERA1.greyDark); ui.px(ctx, stoolX + S(8), floorY - S(17), S(2), S(17), ERA1.greyDark);
+    const breath = (Math.sin(tick * 1.15) + 1) / 2;
+    const sc = 1.25 * s;
     if (danielClip) {
-      // DANIEL: settles, says the template, is told "cut", breathes out, stands; then Caleb
-      const arms: Pose['arms'] = t < 3.2 ? 'folded' : t < 7.7 ? 'folded' : t < 12.1 ? 'gesture' : t < 16.3 ? 'open' : 'rest';
-      const headDrop = t < 3.2 ? 3 : t < 16.3 ? 0 : t < 18.6 ? 4 : 1;
-      const seated = t < 18.6;
-      const look = t < 25.6 ? 0.55 : 0.55 + ease((t - 25.6) / 0.8) * 0.45;
-      const reach = t > 33.2 && t < 35.4;
-      figure(ctx, chx + (seated ? 0 : S(14)), floorY, {
-        s: 1.55 * s, seated, lean: seated ? (t > 16.4 ? 3 : 0) : 1, headDrop, look, arms: reach ? 'reach' : arms,
-        shirt: F.danielShirt, trousers: F.danielTrousers, skin: F.skin, breath: breath * 0.8
+      // DANIEL: slumped as the ad's BEFORE wants him; the template's lines; "cut"; he breathes out, stands
+      const seated = t < 18.4;
+      const reach = t > 33.2 && t < 35.6 ? ease((t - 33.2) / 0.5) : 0;
+      const turnTo = t > 25.6 ? ease((t - 25.6) / 0.8) : 0;
+      figure(ctx, stoolX + (seated ? 0 : S(6)), floorY + 2, {
+        scale: sc, seated, lean: seated ? (t < 12.2 ? 7 : 5) : 2 + turnTo * 3, headDrop: seated ? (t < 3.4 ? 8 : t < 12.2 ? 6 : t < 16.4 ? 4 : 9) + breath * 1.2 : (t < 26 ? 3 : 0),
+        turn: seated ? 0.7 : 0.6 + turnTo * 0.4, handsFolded: seated && t < 7.8, armSpread: seated && t >= 12.2 && t < 16.4 ? 0.25 : 0, reach
       });
-      if (t > 21.0) {   // Caleb, from the door, looking for where to sit — and then he sees who it is
+      if (t > 21.0) {   // Caleb, out of the dark of the studio, looking for where to sit
         const k = ease((t - 21.0) / 3.6);
-        const cx = doorX + doorW / 2 + (ox + S(268) - (doorX + doorW / 2)) * k;
-        const walking = k > 0 && k < 1;
-        const look2 = t < 25.8 ? -0.2 : -0.9;
-        const nearer = t > 30.8 ? ease((t - 30.8) / 1.0) * S(10) : 0;
-        figure(ctx, cx - nearer, floorY, {
-          s: 1.55 * s, seated: false, lean: t > 28.4 && t < 29.4 ? -2 : 0, headDrop: t > 26 && t < 28.4 ? -1 : 0, look: look2,
-          arms: 'rest', step: walking ? Math.sin(t * 7) : 0, shirt: F.calebJacket, trousers: F.calebTrousers, skin: F.skin2, breath: breath * 0.6
-        });
+        const fromX = x + w + S(20), toX = stoolX + S(80) - (t > 30.8 ? ease((t - 30.8) / 1.0) * S(14) : 0);
+        const cx = Math.round(fromX + (toX - fromX) * k);
+        figure(ctx, cx, floorY + 2, { scale: sc * 1.04, turn: t > 25.8 ? 0.95 : 0.55, headDrop: t > 26 && t < 28.6 ? -1 : 0, step: k > 0 && k < 1 ? Math.sin(t * 7) : 0, armSpread: 0.04 });
       }
     } else {
-      // CALEB's own take: seated, the template's open hands on its last line, then "once more"
-      const arms: Pose['arms'] = t < 6.7 ? 'folded' : t < 10.5 ? 'rest' : t < 14.5 ? 'open' : 'folded';
-      figure(ctx, chx, floorY, { s: 1.55 * s, seated: true, look: 0.5, headDrop: t > 16.8 ? 4 : 0, arms, shirt: F.calebJacket, trousers: F.calebTrousers, skin: F.skin2, breath: breath * 0.8 });
+      // CALEB's own take: the same set, the same stool, the same slump the ad asks for; open hands on its last line
+      figure(ctx, stoolX, floorY + 2, { scale: sc, seated: true, lean: 6, headDrop: (t > 16.8 ? 9 : 6) + breath * 1.2, turn: 0.7, handsFolded: t < 6.7, armSpread: t >= 10.5 && t < 14.5 ? 0.3 : 0 });
     }
+    // after cut: the studio's flat work lights over everything
+    if (workOn > 0) { const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.14 * workOn; ui.px(ctx, x, y, w, h, ERA1.white); ctx.globalAlpha = was; }
   }
-  // the light: the producer's warm key on the subject while it is on; the hall's cooler flat light once it is off
+  // the camcorder: interlace, a little noise
   const was = ctx.globalAlpha;
-  if (clip !== 'broll') {
-    ctx.globalAlpha = was * 0.14 * keyOn;
-    ctx.fillStyle = F.key; ctx.beginPath();
-    ctx.moveTo(ox + S(64), oy + S(58)); ctx.lineTo(ox + S(64), oy + S(84)); ctx.lineTo(ox + S(250), floorY + S(20)); ctx.lineTo(ox + S(250), oy + S(40)); ctx.closePath(); ctx.fill();
-    ctx.globalAlpha = was * 0.16 * (1 - keyOn);
-    ui.px(ctx, x, y, w, h, F.cool);
-  }
-  // the camcorder: a soft vignette, a little noise, the lines of a video picture
-  ctx.globalAlpha = was * 0.16;
-  for (let i = 0; i < 6; i++) { const e = S(4 + i * 4); ui.px(ctx, x, y + i * S(3), w, S(3), F.black); ui.px(ctx, x, y + h - (i + 1) * S(3), w, S(3), F.black); ui.px(ctx, x + i * S(4) - e + e, y, S(4), h, F.black); ui.px(ctx, x + w - (i + 1) * S(4), y, S(4), h, F.black); ctx.globalAlpha *= 0.72; }
   ctx.globalAlpha = was * 0.12;
   for (let yy = y; yy < y + h; yy += 3) ui.px(ctx, x, yy, w, 1, F.scan);
   if (!still) {
@@ -559,7 +526,6 @@ export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: numb
     }
   }
   ctx.globalAlpha = was;
-  // the camera's own words: REC, the tape, the timecode
   if (!still) {
     ui.setFont(ctx, Math.max(7, Math.round(9 * s)));
     if (Math.floor(tick * 2) % 2 === 0) ui.px(ctx, x + 8, y + 9, Math.round(6 * s) + 1, Math.round(6 * s) + 1, F.rec);

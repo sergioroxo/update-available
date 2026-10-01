@@ -3726,6 +3726,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const size = witnessPulse.countFor(cluster.era);
       for (const f of devices.tick(dt, cluster.era, deviceHas(cluster.era, size), size)) {
         ledger.games.push({ id: f.id, era: f.era as 'e1' | 'e2' | 'e3' | 'e4', witness: f.witness });
+        os.wayBack(f.era);   // S207 — a game the programme made ends by pointing back to the programme
       }
     }
     // S146 — a filing is the piece moving: the helper's stillness clock restarts on it

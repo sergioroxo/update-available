@@ -34,6 +34,7 @@ import { pulse as witnessPulse } from '../../witness/pulse';
 import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 } from '../theme/era4';
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
+import { pauseWords } from '../../narrative/pauses';
 import { FloppySheep, FLOPPY_LABEL } from './floppysheep';
 import script from '../../../data/dialog/s4_boot.json';
 import {
@@ -178,6 +179,12 @@ export class E4Browser {
   private quietT = 0;
   private waitSaid = false;
   private waitNow = false;
+  /** ⚑ S207 — a line L says on the laptop until her next press: the pause, or a way back */
+  private nowLine: string | null = null;
+  private freeQuietT = 0;
+  private pauseSaid = false;
+  /** S207 — the way back: L names the main path's next step (os.wayBack) */
+  sayLine(line: string): void { this.nowLine = line; this.version++; }
   private stepDone = new Set<string>();
   /** seconds since the live step was completed — the agent moves on after a beat */
   private advanceT = -1;
@@ -196,6 +203,7 @@ export class E4Browser {
   /** the line L's console on the laptop shows — see E4Shell.drawLaptop */
   get consoleLine(): string {
     const c = PROGRAM.console;
+    if (this.nowLine) return this.nowLine;
     if (this.waitNow) return (c as unknown as { wait: string }).wait;
     if (this.phase === 'restoring') return c.restoring;   // S160 / R3-91: the laptop says what it is doing
     if (this.mode === 'free' || this.mode === 'game') return this.phase === 'open' ? c.restored : '';
@@ -300,6 +308,21 @@ export class E4Browser {
     //   through the whole finale and pressed it forty-five times (2026-09-12)
     if (!this.pressable && this.hits.length) this.hits = [];
     if (this.phase === 'dormant') return;
+    // ⚑ S207 — 2026's PAUSE (pauses.json): restored, before the search, after a quiet moment, L says once what
+    //   else is open to her — only what is left (the console only once its game is there)
+    if (!this.pauseSaid && this.phase === 'open' && this.mode === 'free') {
+      this.freeQuietT += dt;
+      if (this.freeQuietT > 10) {
+        this.pauseSaid = true;
+        const P = pauseWords('e4') as unknown as { line: string; items: Record<string, string>; joiner: string };
+        const items: string[] = [];
+        if (entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'tidy')) items.push(P.items.tidy);
+        if (!ledger.e4Space.some((e) => e.id === 'record')) items.push(P.items.record);
+        items.push(P.items.photos);
+        this.nowLine = P.line.replace('{items}', items.join(P.joiner));
+        this.version++;
+      }
+    }
     // ⚑ S203 — L's "while you wait" (see s4_browser.json console._docWait)
     if (!this.waitSaid && this.phase === 'open' && (this.mode === 'program' || this.mode === 'results' || this.mode === 'site' || this.mode === 'agent')) {
       this.quietT += dt;
@@ -1414,7 +1437,9 @@ export class E4Browser {
 
   handleClick(x: number, y: number): boolean {
     this.quietT = 0;
+    this.freeQuietT = 0;
     if (this.waitNow) { this.waitNow = false; this.version++; }
+    if (this.nowLine) { this.nowLine = null; this.version++; }
     if (this.phase === 'handed') return false;
     if (this.phase === 'failed') return true;   // a dead page takes presses and does nothing
     if (this.phase === 'saver') { this.wake(); return true; }   // S160: the one press that restores

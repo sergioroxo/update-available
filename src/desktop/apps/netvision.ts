@@ -67,6 +67,10 @@ import { ledger } from '../../state/ledger';
 import { releaseBus } from '../../audio/tapeAudio';
 import media from '../../../data/dialog/s2_media.json';
 import { drawFootage } from './testimony';
+/** ⚑ S207 — which version of the ad plays (s2_media.json `variant`; _docVariants). The render tool may override. */
+let VARIANT: 'original' | 'participant' | 'daniel' = ((media as unknown as { variant?: string }).variant ?? 'participant') as 'original' | 'participant' | 'daniel';
+export function setNetVisionVariant(v: 'original' | 'participant' | 'daniel'): void { VARIANT = v; }
+const VDANIEL = (media as unknown as { variants: { daniel: { chyronBefore: string; chyronAfter: string; burn: string } } }).variants.daniel;
 /** ⚑ S206 — how long Daniel's own frame holds at the head of the ACTUAL PARTICIPANT shot */
 const TAPE_INSERT_SECONDS = 2.4;
 
@@ -699,7 +703,7 @@ export class NetVisionPlayerApp {
         return;
       case 'testimony':
         // ⚑ S206 — REAL STORIES. REAL CHANGE. (s2_media.json _docRealStories): his own take, cut into the ad
-        if (scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < TAPE_INSERT_SECONDS) {
+        if (VARIANT !== 'original' && scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < TAPE_INSERT_SECONDS) {
           drawFootage(ctx, 'daniel', 13.2, a.x, a.y, a.w, a.h, 0, true);
           const M2 = media as unknown as { realStories: string; realStoriesLine: string };
           ui.px(ctx, a.x, a.y + Math.round(a.h * 0.08), a.w, 26, ERA1.navy);
@@ -715,6 +719,14 @@ export class NetVisionPlayerApp {
           return;
         }
         this.drawTestimonySet(ctx, a, scene);
+        // ⚑ S207 — 'featuring Daniel': his raw tape's timecode left burnt into the corner — the ad is made of his footage
+        if (VARIANT === 'daniel') {
+          ui.setFont(ctx, 8);
+          const tc = `${VDANIEL.burn}${String(13 + Math.floor((this.elapsed - scene.at) % 47)).padStart(2, '0')}`;
+          const tw = ctx.measureText(tc).width;
+          ui.px(ctx, a.x + a.w - tw - 14, a.y + a.h - 64, Math.ceil(tw) + 8, 12, ERA1.black);
+          ctx.fillStyle = ERA1.white; ctx.fillText(tc, a.x + a.w - tw - 10, a.y + a.h - 62);
+        }
         this.drawTag(ctx, a, scene);
         this.drawLowerThird(ctx, a, scene, override);
         return;
@@ -1335,7 +1347,9 @@ export class NetVisionPlayerApp {
    *  an empty navy slab. */
   private drawLowerThird(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene, override?: string,
                          showLine = true): void {
-    const chyron = scene.speaker ? (M.chyrons[scene.speaker] ?? '') : '';
+    let chyron = scene.speaker ? (M.chyrons[scene.speaker] ?? '') : '';
+    // ⚑ S207 — 'featuring Daniel': the participant segment carries his name
+    if (VARIANT === 'daniel' && scene.shot === 'testimony') chyron = scene.grade === 'after' ? VDANIEL.chyronAfter : VDANIEL.chyronBefore;
     let line = override ?? (showLine ? scene.line : '');
     // S62: a `reveal` line spells itself out letter by letter — used once, on
     // "To the self he meant you to be", because that is the sentence the whole

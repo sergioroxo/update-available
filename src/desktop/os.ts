@@ -49,6 +49,7 @@ import { drawLambyCartoon, e2CartoonVersion, E2_CARTOON } from './apps/lambyCart
 // in that module's header), so this is silent and error-free until an asset lands
 import { playOnce, isAudioAvailable } from '../audio/tapeAudio';
 import { GuideThread } from '../narrative/guide';
+import { setPauseOS, pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
 import { ledger, wipeLedger } from '../state/ledger';
@@ -166,6 +167,10 @@ export class DesktopOS {
   private phaseT = 0;
   private hits: Hit[] = [];
   private hover = '';
+  /** ⚑ S207 — the era's pause (data/strings/pauses.json): open now, and which eras have had theirs */
+  private pauseOpen: 'e1' | 'e2' | null = null;
+  private pauseLines: string[] = [];
+  private readonly pauseShown = new Set<string>();
   /** ⚑ Phase 7 — the 2003 jingle, kept so its tail can fade and its words can be drawn */
   private e2Jingle: HTMLAudioElement | null = null;
   private jingleLyricKey = '';
@@ -429,6 +434,7 @@ export class DesktopOS {
 
   constructor(options: DesktopOSOptions = {}) {
     this.reinterp = options.reinterp === true;
+    setPauseOS(this);   // S207 — the pauses read the same map from every era's surface
     this.canvas = document.createElement('canvas');
     this.canvas.width = ERA1_CANVAS.width * RENDER_SCALE;
     this.canvas.height = ERA1_CANVAS.height * RENDER_SCALE;
@@ -645,7 +651,7 @@ export class DesktopOS {
   private openProvotype(data: Provotype): void {
     if (!this.reinterp || this.provotype) return;
     this.provotype = new ProvotypeApp(data);
-    this.provotype.onClose = () => { this.provotype = null; this.dirty = true; };
+    this.provotype.onClose = () => { this.provotype = null; this.dirty = true; this.wayBack(this.desktopEra); };   // S207
     this.dirty = true;
   }
 
@@ -685,7 +691,7 @@ export class DesktopOS {
   private openRootCause(): void {
     if (this.rootCause || !this.e1DesktopIdle()) return;
     this.rootCause = new RootCauseApp();
-    this.rootCause.onClose = () => { this.rootCause = null; this.dirty = true; };
+    this.rootCause.onClose = () => { this.rootCause = null; this.dirty = true; this.wayBack(this.desktopEra); };   // S207
     if (!ledger.records.includes('rootcause-opened')) ledger.records.push('rootcause-opened');
     this.dirty = true;
   }
@@ -693,7 +699,7 @@ export class DesktopOS {
   private openLambyRigFile(): void {
     if (!this.reinterp || this.lambyRigFile) return;
     this.lambyRigFile = new LambyRigFileApp();
-    this.lambyRigFile.onClose = () => { this.lambyRigFile = null; this.dirty = true; };
+    this.lambyRigFile.onClose = () => { this.lambyRigFile = null; this.dirty = true; this.wayBack(this.desktopEra); };   // S207
     if (!ledger.records.includes('lamby-rig-opened')) ledger.records.push('lamby-rig-opened');
     this.dirty = true;
   }
@@ -991,6 +997,80 @@ export class DesktopOS {
     // S205: at the first check-in the testimony's request has the one toast; the forum's icon carries its pip
     if (!quiet) this.toast = { text: forumStrings.toast, t: 6 };
     this.dirty = true;
+  }
+
+  /**
+   * ⚑ S207 — THE PAUSE, 1997 and 2003 (pauses.json; SKETCH §4). Once per era, while the main path is waiting
+   * anyway, the era's software says what else is on the desk — only what has not been opened yet:
+   *   1997 · once he is online and the screen has been quiet a while (he is waiting on the channel): the
+   *          Un-Walk's "Did you know?" — Win95's tip of the day, in the programme's voice;
+   *   2003 · after the first check-in, on a quiet desktop: Restorify's "Today" — Your Story first.
+   * A modal dialog, one button; nothing filed. If there is nothing left to list, there is no pause.
+   */
+  private maybePause(): void {
+    if (this.pauseOpen || this.phase !== 'desktop' || !this.reinterp) return;
+    const era = this.desktopEra;
+    if (era !== 'e1' && era !== 'e2') return;
+    if (this.pauseShown.has(era)) return;
+    let due = false;
+    if (era === 'e1') {
+      due = ledger.records.includes('went-online') && this.idleSeconds > 16
+        && !this.provotype && !this.diary?.open && !this.packet?.open && !this.yesOpen && !this.updateApp && !this.kit?.open;
+    } else {
+      due = this.e2Stage === 'active' && this.testimonyOffered && this.idleSeconds > 12 && this.desktopIdle();
+    }
+    if (!due) return;
+    this.pauseShown.add(era);
+    const lines = pauseItems(era);
+    if (!lines.length) return;
+    this.pauseLines = lines;
+    this.pauseOpen = era;
+    if (era === 'e2') this.lambyWaitShown = true;   // the pause says it all; the older 'while you wait' toast retires
+    this.dirty = true;
+  }
+
+  /** ⚑ S207 — THE WAY BACK: an optional thing was closed; the era's voice names the main path's next step.
+   *  Never called for the people's things (Caleb's song, the tapes, the outtake, the ball). */
+  wayBack(era: string): void {
+    if (era === 'e1' || era === 'e2') {
+      const l = wayBackLine(era);
+      if (l) { this.toast = { text: l, t: 7 }; this.dirty = true; }
+    } else if (era === 'e4') {
+      const l = wayBackLine('e4');
+      if (l) this.e4?.browser.sayLine(l);
+    }
+  }
+
+  private drawPauseDialog(W: number, H: number): void {
+    if (!this.pauseOpen) return;
+    const { ctx } = this;
+    const P = pauseWords(this.pauseOpen);
+    ui.setFont(ctx, 10);
+    const dw = 360;
+    const wrapped = this.pauseLines.map((l) => ui.wrapText(ctx, l, dw - 60));
+    const rows = wrapped.reduce((n, w) => n + w.length, 0);
+    const dh = 112 + rows * 13 + this.pauseLines.length * 4;   // room for the outro above the button
+    const dx = Math.round((W - dw) / 2), dy = Math.round((H - dh) / 2) - 10;
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, P.title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'pause-close' });
+    // the period's tip: a lit bulb (1997) or Restorify's house (2003), then the list
+    if (this.pauseOpen === 'e1') {
+      ui.px(ctx, c.x + 12, c.y + 10, 14, 14, ERA1.tooltip); ui.px(ctx, c.x + 15, c.y + 24, 8, 4, ERA1.grey);
+      ui.px(ctx, c.x + 12, c.y + 10, 14, 1, ERA1.greyDark); ui.px(ctx, c.x + 12, c.y + 10, 1, 14, ERA1.greyDark); ui.px(ctx, c.x + 25, c.y + 10, 1, 14, ERA1.greyDark);
+    } else if (hasPixelIcon('icon-restorify')) drawPixelIcon(ctx, c.x + 8, c.y + 8, 'icon-restorify');
+    ui.setFont(ctx, 12); ctx.fillStyle = ERA1.navy; ctx.fillText(P.lead, c.x + 40, c.y + 10);
+    let y = c.y + 32;
+    ui.setFont(ctx, 10);
+    wrapped.forEach((rowsOf) => {
+      ui.px(ctx, c.x + 42, y + 4, 3, 3, ERA1.navy);
+      rowsOf.forEach((r) => { ctx.fillStyle = ERA1.black; ctx.fillText(r, c.x + 50, y); y += 13; });
+      y += 4;
+    });
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(P.outro, c.x + 40, y + 4);
+    const bw = 80, bx = c.x + c.w - bw - 10, by = c.y + c.h - 28;
+    ui.button(ctx, bx, by, bw, 20, P.close, { hover: this.hover === 'pause-close' });
+    this.hits.push({ x: bx, y: by, w: bw, h: 20, id: 'pause-close' });
   }
 
   /** ⚑ S205 — 2003's testimony: Lamby asks for his story after the first check-in (s2_testimony.json) */
@@ -1653,6 +1733,7 @@ export class DesktopOS {
   update(dt: number): void {
     this.idleSeconds += dt;
     if (this.testimony?.open) { this.testimony.update(dt); if (this.testimony.dirty) this.dirty = true; }   // S205
+    this.maybePause();
     // ⚑ S201 — Lamby's "while you wait": once, on a quiet 2003 desktop, after the thread was recommended
     if (!this.lambyWaitShown && this.desktopEra === 'e2' && this.e2Stage === 'active' && this.forumRecommended
         && !this.forum && this.idleSeconds > 30 && this.desktopIdle() && !this.toast) {
@@ -2455,6 +2536,8 @@ export class DesktopOS {
     // ⚑ S186 — the picture Rob sent owns the screen (the click routing says so): the taskbar and the
     //   minimise boxes drawn after it are not pressable while it is up, so they are not published
     if (this.yesOpen) this.hits = this.hits.filter((h) => h.id === 'yes-close');
+    // ⚑ S207 — the pause is modal: drawn last, and the only thing pressable while it is up
+    if (this.pauseOpen) { this.hits = []; this.drawPauseDialog(W, H); }
   }
 
   private drawEraDesktopChrome(
@@ -3438,6 +3521,10 @@ export class DesktopOS {
       return;
     }
     // ⚑ S186 — the picture Rob sent owns the screen while it is open: only its close box answers
+    if (this.phase === 'desktop' && this.pauseOpen) {   // S207 — the pause owns the screen until it is closed
+      if (hit?.id === 'pause-close') { this.pauseOpen = null; this.dirty = true; }
+      return;
+    }
     if (this.phase === 'desktop' && this.yesOpen) {
       if (hit?.id === 'yes-close') { this.yesOpen = false; this.irc?.imageClosed(); }
       this.dirty = true;
@@ -3512,7 +3599,7 @@ export class DesktopOS {
     //   BEFORE Restorify and the desktop's own icons, which sit under their left columns
     if (this.phase === 'desktop' && this.web?.open) { this.web.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.testimony?.open) { this.testimony.handleClick(x, y); this.dirty = true; return; }
-    if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleClick(x, y); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleClick(x, y); this.dirty = true; if (!this.forum.open) this.wayBack('e2'); return; }   // S207: closed → the way back
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleClick(x, y); return; }
     if (hit) {
       switch (hit.id) {
@@ -3527,7 +3614,7 @@ export class DesktopOS {
         case 'icon-your-file': this.yourFileOpen = true; this.yourFileSeen = true; break;
         case 'icon-story': this.openTestimony(); break;   // S205
         case 'icon-forum': this.openForum(); break;
-        case 'your-file-close': this.yourFileOpen = false; break;
+        case 'your-file-close': this.yourFileOpen = false; this.wayBack('e2'); break;   // S207
         case 'icon-messenger': this.openMessenger(); break;
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;

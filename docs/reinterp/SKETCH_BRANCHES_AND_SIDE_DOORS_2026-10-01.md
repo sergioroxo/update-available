@@ -79,3 +79,32 @@ moment when the main path is waiting anyway, listing only what has not been open
 5. The map's "Where you are" keeps listing everything (frame voice), as now.
 6. Walks after each half; the stills re-shot for the four pauses.
 No fork anywhere; the story's route is unchanged.
+
+## 5 · His question (2026-10-01): does Daniel's video reach Vera's 2016? — a proposal, NOT BUILT
+*"How could we relate the documentary Daniel is making to Vera's world? Could it be an edit of some testimonials?…
+even if the person leaves it, the recording still follows the person. But maybe not since it is focused on the lesbian
+aspect… Just thinking."*
+
+**Yes, and it fits — if 2016 keeps it as a template rather than a story.** His own research (s2_testimony.json `_doc`)
+already marks "a participant later rejecting the meaning attached to his filmed story" as DOCUMENTED; the 2003 release
+he signs covers "broadcast and paid programming" with no end date. The point is not that Daniel is in 2016 — it is that
+his cut is.
+
+**The proposal: Vera's existing job, "Cut the Story" (forty seconds for the vertical), uses Daniel's 2003 cut as its
+reference.** Three small touches, all on the job card that already exists:
+1. A **reference clip** pinned to the job: `NewYou_participant_v3.wmv — 2003 — Restorify Media archive`, playing a few
+   seconds of the participant cut (the same drawing as 2003's, now a thumbnail in a 2016 media bin).
+2. The **structure** the job pre-selects for Renata's story is the 2003 Story Editor's four chapters — BEFORE · THE
+   PROGRAM · AFTER · CALL NOW — renamed in 2016's dialect (e.g. *Struggle · Turning point · Freedom · Get involved*).
+   The form that cut him now cuts her. Nobody says so.
+3. One line of metadata on the reference clip, in the archive's own voice: *Subject no longer affiliated (2009).
+   Release: perpetual.* That is the whole "the recording follows the person" — no scene, no commentary.
+
+**Why this and not more:** a Daniel job in 2016 would pull the era off Vera and Renata, which is his worry, rightly.
+This keeps the era's focus where it is and makes the media economy continuous: 2003 makes the object, 2016 reuses its
+shape on someone new, and the object outlives the man's own position. It also gives the record (THE RECORD) a line it
+can carry forward without adding a beat.
+
+**What it would touch:** data/dialog/s3_queue.json (the job's reference + chapter names), src/room/graceQueueLite.ts
+(a thumbnail on the job card, drawn with testimony.ts's `drawFootage` at a small size), the 2016 map (no new beat).
+The "2009" is a reconstruction and would be labelled so; the dossier wording is his. **Waits on his yes.**
