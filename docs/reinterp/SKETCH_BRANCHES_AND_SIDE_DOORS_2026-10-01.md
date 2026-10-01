@@ -1,4 +1,4 @@
-STATUS: proposed
+STATUS: live
 
 # SKETCH — side doors, branches, and 2003's video (2026-10-01)
 *His questions (2026-10-01): "Sketch where a branch could live, but also how the user can even open the other any-time
