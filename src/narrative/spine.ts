@@ -172,9 +172,16 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
         // is CAUSED by the climax rather than merely following it — while the
         // update itself still fires on the apparatus's documented failure, not
         // on any press of the player's (SCRIPT_UPDATE v0.5 §1).
+        // ⚑ S205 — TWO HOLES CLOSED. (1) The summonses wait for his story to be out
+        //   (`testimony-online`): the Route sheet used to arrive over the check-in's
+        //   heels and take the player out of the era before 2003 had begun. (2) The
+        //   sends alone no longer arm u3: resolving both summonses was a second exit
+        //   that skipped the testimony AND Caleb's thread entirely — the walk took it
+        //   every time (2003 measured 13 presses). PROGRESSION_LAW: the era's exit is
+        //   its climax; the residue is the only way out of 2003.
         case 'e2':
           if (residueFiled()) { step = 'e2_residue'; t = 0; break; }
-          if (t >= SEND_DELAY) offer('s1', 'e2_s1');
+          if (t >= SEND_DELAY && ledger.records.includes('testimony-online')) offer('s1', 'e2_s1');
           break;
         case 'e2_s1':
           if (residueFiled()) { step = 'e2_residue'; t = 0; break; }
@@ -182,7 +189,7 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
           break;
         case 'e2_s2':
           if (residueFiled()) { step = 'e2_residue'; t = 0; break; }
-          if (sendResolved('s2') && t >= UPDATE_GAP) arm('u3', 'e3');
+          void UPDATE_GAP;   // (was: sendResolved('s2') && t >= UPDATE_GAP → u3 — see above)
           break;
         case 'e2_residue':
           // the quiet after the quiet: nothing speaks, and then the system

@@ -69,6 +69,8 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   if (id === 'forum-rules') return { kind: 'channel', outcome: 'agreed', flagged: false };
   if (id === 'forum-posted') return { kind: 'channel', outcome: 'posted', flagged: false };
   if (id === 'forum-applied') return { kind: 'placement', outcome: 'applied', flagged: false };   // S199
+  // S205 — 2003's testimony: his story prepared, released, filmed, cut and published (s2_testimony.json)
+  if (id.startsWith('testimony-')) return { kind: 'testimony', outcome: id.slice('testimony-'.length), flagged: id === 'testimony-online' };
   if (id.startsWith('channel-reply:')) return { kind: 'channel', outcome: 'spoke', flagged: false };
   if (id.startsWith('escalation-reply:')) {
     const w = id.slice('escalation-reply:'.length);
@@ -109,7 +111,7 @@ export function recordEntries(): RecordEntry[] {
   // ── 1997 ──
   for (const r of ledger.records) {
     const k = recordKind(r);
-    push(r.startsWith('forum-') ? 'e2' : 'e1', k.kind, r, k.outcome, recordWitness(r), k.flagged);   // S191: 2003's forum files in 2003
+    push(r.startsWith('forum-') || r.startsWith('testimony-') ? 'e2' : 'e1', k.kind, r, k.outcome, recordWitness(r), k.flagged);   // S191: 2003's forum files in 2003 (S205: and its testimony)
   }
   for (const p of ledger.provotypes) push(p.id === 'pillow' ? 'e1' : 'e1', 'provotype', p.id, p.outcome, p.witness);
   // S189 — the games: each in the era it was played, as The exercise (a task that could only end one way)

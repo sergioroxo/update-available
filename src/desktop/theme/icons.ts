@@ -134,6 +134,15 @@ const ICONS: Record<string, (ctx: Ctx, x: number, y: number) => void> = {
     px(ctx, x + 14, y + 3, 1, 1, ERA1.navy); px(ctx, x + 16, y + 3, 1, 1, ERA1.navy);
     px(ctx, x + 14, y + 7, 1, 1, ERA1.navy); px(ctx, x + 16, y + 7, 1, 1, ERA1.navy);
   },
+  // ⚑ S205 — Your Story: a MiniDV cassette with its label, the testimony's tape
+  'icon-story': (ctx, x, y) => {
+    px(ctx, x + 1, y + 3, 20, 13, ERA1.greyDark);
+    px(ctx, x + 2, y + 4, 18, 11, ERA1.black);
+    px(ctx, x + 4, y + 6, 14, 4, ERA1.white);     // the label
+    px(ctx, x + 5, y + 7, 7, 1, ERA1.warn);       // its line in red pen
+    px(ctx, x + 5, y + 11, 3, 3, ERA1.grey);      // the spools
+    px(ctx, x + 14, y + 11, 3, 3, ERA1.grey);
+  },
   // Care Log — a bound book
   'icon-era-1': (ctx, x, y) => {
     px(ctx, x + 3, y + 1, 16, 16, ERA1.navy);

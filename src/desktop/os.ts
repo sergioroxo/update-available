@@ -14,6 +14,8 @@ import { drawYesPoster, YES_W, YES_H } from './apps/yesPoster';
 import { Web1997App } from './apps/web1997';
 import browserStrings from '../../data/dialog/s1_browser.json';
 import { Web2003App } from './apps/web2003';
+import { TestimonyApp } from './apps/testimony';
+import testimonyStrings from '../../data/dialog/s2_testimony.json';
 import forumStrings from '../../data/dialog/s2_forum.json';
 import ircDialog from '../../data/dialog/s1_irc.json';
 import { drawPixelIcon, hasPixelIcon } from './theme/icons';
@@ -669,7 +671,7 @@ export class DesktopOS {
    *  Messenger, the residue) are windows, and a window means not idle. */
   private desktopIdle(): boolean {
     return this.e1DesktopIdle()
-      && !this.dossierOpen && !this.yourFileOpen && !this.yesOpen && !this.forum?.open
+      && !this.dossierOpen && !this.yourFileOpen && !this.yesOpen && !this.forum?.open && !this.testimony?.open
       && !this.restorify?.open && !this.caleb && !this.accountability
       && !this.netvision && !this.netvisionOfferOpen && !this.messageNoticeOpen
       && !this.updateApp && !this.sendOffer?.open;
@@ -819,6 +821,8 @@ export class DesktopOS {
     this.web = null;          // S190 — the 1997 browser stays in 1997
     this.forum = null;        // S191 — and the forum in 2003
     this.forumRecommended = false;
+    this.testimony = null;    // S205 — and his story
+    this.testimonyOffered = false;
     this.lambyWaitShown = false;
     this.rootCause = null;    // S153 — the same: the disk stays in 1997
     this.sendOffer = null;
@@ -970,7 +974,8 @@ export class DesktopOS {
   private openRestorify(): void {
     if (!this.restorify) {
       this.restorify = new RestorifyApp();
-      this.restorify.onCheckinFiled = () => { this.maybeLandMessage(); this.recommendForum(); };
+      // ⚑ S205 — the first check-in brings the testimony request; Caleb's message waits for the story to be out
+      this.restorify.onCheckinFiled = () => { this.offerTestimony(); this.recommendForum(true); };
       this.restorify.onCheckinAcknowledged = () => this.maybeAnnounceMessage();
       this.startProgram(lambyStrings.restorifyTitle);
     }
@@ -979,11 +984,32 @@ export class DesktopOS {
   }
 
   /** ⚑ S191 — the recommendation event, 2003: a senior member picks the next thing for him */
-  private recommendForum(): void {
+  private recommendForum(quiet = false): void {
     if (this.forumRecommended || this.desktopEra !== 'e2') return;
     this.forumRecommended = true;
     if (!ledger.records.includes('forum-recommended')) ledger.records.push('forum-recommended');
-    this.toast = { text: forumStrings.toast, t: 6 };
+    // S205: at the first check-in the testimony's request has the one toast; the forum's icon carries its pip
+    if (!quiet) this.toast = { text: forumStrings.toast, t: 6 };
+    this.dirty = true;
+  }
+
+  /** ⚑ S205 — 2003's testimony: Lamby asks for his story after the first check-in (s2_testimony.json) */
+  testimony: TestimonyApp | null = null;
+  private testimonyOffered = false;
+  private offerTestimony(): void {
+    if (this.testimonyOffered || this.desktopEra !== 'e2') return;
+    this.testimonyOffered = true;
+    this.toast = { text: testimonyStrings.offer, t: 9 };
+    this.dirty = true;
+  }
+  private openTestimony(): void {
+    if (!this.testimony) {
+      this.testimony = new TestimonyApp();
+      this.testimony.onFile = (id) => { if (!ledger.records.includes(id)) ledger.records.push(id); this.dirty = true; };
+      // the story is out — and now Caleb writes ("saw they put yours up")
+      this.testimony.onDone = () => { this.maybeLandMessage(); this.maybeAnnounceMessage(); this.dirty = true; };
+    }
+    this.testimony.open = true;
     this.dirty = true;
   }
   private openForum(): void {
@@ -1035,7 +1061,8 @@ export class DesktopOS {
    */
   private maybeLandMessage(): void {
     if (this.calebOpenedThisSession || this.messagePending) return;
-    if (ledger.checkins.length !== 1) return;
+    // ⚑ S205 — not at the first check-in any more: after his testimony is published (they met again at the shoot)
+    if (!ledger.records.includes('testimony-online')) return;
     this.messagePending = true;
     this.dirty = true;
   }
@@ -1625,6 +1652,7 @@ export class DesktopOS {
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
     this.idleSeconds += dt;
+    if (this.testimony?.open) { this.testimony.update(dt); if (this.testimony.dirty) this.dirty = true; }   // S205
     // ⚑ S201 — Lamby's "while you wait": once, on a quiet 2003 desktop, after the thread was recommended
     if (!this.lambyWaitShown && this.desktopEra === 'e2' && this.e2Stage === 'active' && this.forumRecommended
         && !this.forum && this.idleSeconds > 30 && this.desktopIdle() && !this.toast) {
@@ -2230,6 +2258,8 @@ export class DesktopOS {
         this.drawIcon(100, 188, institutionStrings.yourFile.icon, true, 'icon-your-file');
         // ⚑ S191 — the forum, once a thread has been recommended; unread until he opens it
         if (this.forumRecommended) this.drawIcon(100, 236, forumStrings.icon, true, 'icon-forum', !this.forum);
+        // ⚑ S205 — his story, once it has been asked for; unread until it is out
+        if (this.testimonyOffered) this.drawIcon(100, 284, testimonyStrings.icon, true, 'icon-story', !ledger.records.includes('testimony-online'));
       }
     }
     // THE FOUND FILE (Session 60) — the renamed dossier, in every era, on the
@@ -2280,6 +2310,7 @@ export class DesktopOS {
     this.drawSendOffer(W, H);
     // ⚑ S191 — 2003's forum: over the desktop's objects and Restorify, under the felt window and the intrusions
     if (this.forum?.open) this.forum.draw(ctx);
+    if (this.testimony?.open) this.testimony.draw(ctx);   // S205
     // S2R.3: the person's window FIRST (felt), then every intrusion on it
     // (operable) drawn over it. Lamby lives only in the second of these two
     // calls — he is never drawn inside the chat's frame, in any beat.
@@ -3355,6 +3386,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.web?.open) { this.web.handleMove(x, y); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.testimony?.open) { this.testimony.handleMove(x, y); if (this.testimony.dirty) this.dirty = true; return; }
     if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleMove(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
@@ -3479,6 +3511,7 @@ export class DesktopOS {
     //   (the exercise, the rig, the game, the diary, the packet — a walk stuck there when this came first) and
     //   BEFORE Restorify and the desktop's own icons, which sit under their left columns
     if (this.phase === 'desktop' && this.web?.open) { this.web.handleClick(x, y); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.testimony?.open) { this.testimony.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleClick(x, y); return; }
     if (hit) {
@@ -3492,6 +3525,7 @@ export class DesktopOS {
         case 'icon-found-file': this.dossierOpen = true; break;
         case 'found-file-close': this.dossierOpen = false; break;
         case 'icon-your-file': this.yourFileOpen = true; this.yourFileSeen = true; break;
+        case 'icon-story': this.openTestimony(); break;   // S205
         case 'icon-forum': this.openForum(); break;
         case 'your-file-close': this.yourFileOpen = false; break;
         case 'icon-messenger': this.openMessenger(); break;

@@ -203,6 +203,13 @@
         "index": 15
       }
     },
+    "testimony": {
+      "_doc": "⚑ S205 — 2003's testimony (s2_testimony.json); DRAFT wording for his approval.",
+      "title": "The testimony",
+      "did": "turned your story into the ministry's media, and filed you as its evidence",
+      "status": "documentary",
+      "source": {"file": "e3_theday", "index": 17}
+    },
     "care": {
       "title": "The care assignment",
       "did": "took your details as the gate, and assigned care on your behalf",

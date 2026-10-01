@@ -104,6 +104,15 @@ export const PRINT = {
   relWhite: '#ffffff', relRed: '#800000'
 } as const;
 
+/** ⚑ S205 — 2003's testimony footage: a church hall on a camcorder — warm walls, a navy banner, two people
+ *  (faceless, as every body in the piece), the camera's own overlays */
+export const FOOTAGE = {
+  wall: '#c9b48e', wallHi: '#d8c6a2', floor: '#7a5a3e', floorHi: '#8d6a4a', banner: '#22305e', bannerInk: '#e8c96a',
+  chair: '#5a4632', stand: '#3a3a40', softbox: '#f2eee2', skin: '#d9a77f', skin2: '#b9835c', hair: '#2e2420',
+  danielShirt: '#5f7fa8', danielTrousers: '#34363e', calebJacket: '#5d7a4e', calebTrousers: '#2c2e34',
+  rec: '#d23a2a', osd: '#f4f2ea', scan: '#000000', black: '#0a0a0c', sub: '#ffffff', subWho: '#e8c96a'
+} as const;
+
 /** ⚑ S204 — the Close's printout: continuous tractor-feed paper, green-bar, from a dot-matrix printer */
 export const PRINTOUT = {
   paper: '#f7f5ec', bar: '#dcebd8', hole: '#101014', perf: '#c9c6ba', ink: '#26262c', inkDim: '#5a5a62',
