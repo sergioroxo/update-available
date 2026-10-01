@@ -4,8 +4,7 @@ STATUS: live
 *From his research run "Yes — the testimony layer is historically…" (`~/Pc_Simulation/Sources/Deep Research/`), which
 he read and answered (2026-10-01: all five steps, in order; Daniel and Caleb meet again at the shoot; silent footage
 with subtitles). Two dossier entries are drafted from it — `e3_theday` sources 17 (documentary) and 18 (speculative),
-and the practice "The testimony" (`data/dossier/practices.json`). ⚑ The wording is a DRAFT for his approval (dossier
-wording is his). ⚑ The links below are AS CITED by that run; they are not yet on the sources page — they go into
+and the practice "The testimony" (`data/dossier/practices.json`). ⚑ The wording is APPROVED by him (2026-10-01). ⚑ The links below are AS CITED by that run; they are not yet on the sources page — they go into
 `data/dossier/links.json` once he has opened them.*
 
 ## What the piece rests on (documented, per the research)
