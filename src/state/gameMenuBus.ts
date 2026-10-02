@@ -60,6 +60,10 @@ class GameMenuBus {
    * when it is null. Frame voice, invisible to the record.
    */
   stopMotion: (() => void) | null = null;
+  /** ⚑ S209 / A21 (REVIEW_ROUND_5, PLATFORM-02) — the one mute, in the frame: the room's only mute used to show only
+   *  while a tape was in, so after 1997 there was none. app.ts offers the toggle once the engine has sound. */
+  toggleSound: (() => void) | null = null;
+  soundMuted: (() => boolean) | null = null;
 
   /**
    * ⚑ S145 — THE MAP's source (docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md

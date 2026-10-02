@@ -23,20 +23,14 @@
     "channel": {
       "title": "The channel, and the log",
       "did": "routed you to people like you, and kept the transcript",
-      "status": "documentary",
-      "source": {
-        "file": "origin_intake_e1",
-        "index": 1
-      }
+      "status": "speculative",
+      "source": {"file": "origin_intake_e1", "index": 8}
     },
     "referral": {
       "title": "Referral by contact",
       "did": "sent a friend to you by name; the friend was the network",
-      "status": "documentary",
-      "source": {
-        "file": "origin_intake_e1",
-        "index": 1
-      }
+      "status": "speculative",
+      "source": {"file": "origin_intake_e1", "index": 8}
     },
     "placement": {
       "title": "The placement",
@@ -80,11 +74,8 @@
     "checkin": {
       "title": "The daily check-in",
       "did": "asked how you were, every morning, and kept the answer",
-      "status": "documentary",
-      "source": {
-        "file": "e3_theday",
-        "index": 1
-      }
+      "status": "speculative",
+      "source": {"file": "e3_theday", "index": 19}
     },
     "assistant": {
       "title": "The assistant",
@@ -98,47 +89,32 @@
     "media": {
       "title": "Media as instruction",
       "did": "showed you a programme and recorded whether you watched it through",
-      "status": "documentary",
-      "source": {
-        "file": "origin_intake_e1",
-        "index": 1
-      }
+      "status": "speculative",
+      "source": {"file": "e3_theday", "index": 19}
     },
     "contact": {
       "title": "Contact monitoring",
       "did": "saw a message from outside before you did, and intervened",
-      "status": "documentary",
-      "source": {
-        "file": "e3_theday",
-        "index": 6
-      }
+      "status": "speculative",
+      "source": {"file": "e3_theday", "index": 19}
     },
     "update": {
       "title": "The update",
       "did": "changed what the machine was, and kept your file across the change",
-      "status": "documentary",
-      "source": {
-        "file": "e4_offers",
-        "index": 1
-      }
+      "status": "speculative",
+      "source": {"file": "origin_intake_e1", "index": 5}
     },
     "arrival": {
       "title": "The migration",
       "did": "moved your file to a new service without asking you",
-      "status": "documentary",
-      "source": {
-        "file": "e4_offers",
-        "index": 1
-      }
+      "status": "speculative",
+      "source": {"file": "origin_intake_e1", "index": 5}
     },
     "queue": {
       "title": "The correction queue",
-      "did": "paid you per correction to edit other people's accounts of themselves",
-      "status": "documentary",
-      "source": {
-        "file": "e3_theday",
-        "index": 4
-      }
+      "did": "had you edit other people's accounts of themselves, rule by rule",
+      "status": "speculative",
+      "source": {"file": "e3_theday", "index": 20}
     },
     "moderation": {
       "title": "Moderation",
@@ -161,11 +137,8 @@
     "record": {
       "title": "The retained record",
       "did": "kept your old file 'for continuity of care'",
-      "status": "documentary",
-      "source": {
-        "file": "e3_theday",
-        "index": 6
-      }
+      "status": "speculative",
+      "source": {"file": "origin_intake_e1", "index": 5}
     },
     "photos": {
       "title": "The Restoration tool",
@@ -189,10 +162,7 @@
       "title": "The termination",
       "did": "ended the session for your safety, and named the reason",
       "status": "speculative",
-      "source": {
-        "file": "e4_offers",
-        "index": 2
-      }
+      "source": {"file": "e4_offers", "index": 2}
     },
     "recommendation": {
       "title": "The recommendation",
@@ -209,6 +179,13 @@
       "did": "turned your story into the ministry's media, and filed you as its evidence",
       "status": "documentary",
       "source": {"file": "e3_theday", "index": 17}
+    },
+    "nolaw": {
+      "_doc": "⚑ S209 / B5 (REVIEW_ROUND_5, ERA26-01): the documented fact first on the 2026 dossier, beside the inferred room.",
+      "title": "The law that was not made",
+      "did": "was asked by more than a million people to ban conversion practices, and answered with a recommendation instead of a law",
+      "status": "documentary",
+      "source": {"file": "e4_offers", "index": 7}
     },
     "care": {
       "title": "The care assignment",

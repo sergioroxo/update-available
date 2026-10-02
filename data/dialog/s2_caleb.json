@@ -231,7 +231,8 @@
  },
  "video": {
   "_doc": "S2R.4's revision, per the spec: the skip does not arm instantly. Lamby is SHOWING you this — leaving is a social act, not a UI convenience. Supersedes s2_media.json's skipDelaySeconds (5) on this path.",
-  "skipDelaySeconds": 15
+  "skipDelaySeconds": 34,
+  "_docB19": "⚑ S209 / B19 (REVIEW_ROUND_5, ERA03-02): 15 → 34 s — the skip used to arm ten seconds before the REAL STORIES montage, so the first press skipped the one moment that holds his own tape. It now arms after the montage and Marcus alone (25.7 → 33.4 s)."
  },
  "toasts": {
   "_doc": "FELT content in the system's own nag-grammar: MSN-style corner message popups, the same shape the apparatus used to nag him, now carrying the person back in. Sérgio: \"not too much\" — so the crack stays a crack. One toast; the array is the seam if a second is ever wanted. S60 RETIMED (finding D17): it used to fire at the START of the break and cover the end-of-video disclaimer scroll — the one piece of fine print Sérgio called 'a great text' — then expire unusably. It now arrives only once the crawl has finished (the video's own end), and it PERSISTS instead of counting down: the crack does not close on a timer, it closes when the block lifts. Clicking it is a real act — see `hint`.",

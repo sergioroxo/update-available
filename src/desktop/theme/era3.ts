@@ -161,7 +161,7 @@ export function taskbar(ctx: CanvasRenderingContext2D, W: number, H: number, clo
  *  taskbar rather than in a data file because it is CHROME, not dialogue — the
  *  same reason the caption glyphs live here. It matches the phone's own lock
  *  screen date; the two devices are in the same day. */
-const TASKBAR_DATE = '13/12';
+const TASKBAR_DATE = '06/12';   // S209 / B7 — the day Malta's parliament passed the ban (6 Dec 2016)
 
 export interface AeroContent {
   x: number; y: number; w: number; h: number;

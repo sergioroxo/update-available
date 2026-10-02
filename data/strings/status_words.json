@@ -3,13 +3,14 @@
  "short": {
   "documentary": "documented",
   "contested": "disputed",
-  "speculative": "imagined"
+  "speculative": "inferred"
  },
  "long": {
   "documentary": "Documented — this happened, and the sources show it.",
   "contested": "Documented, and disputed — the record shows it and argues over it.",
-  "speculative": "Imagined — the piece's own projection from what is documented, and marked as such."
+  "speculative": "Inferred — the piece's own creative inference from what is documented, and marked as such."
  },
+ "_docS209": "⚑ S209 (his, 2026-10-02, B5): 'Inferred', not 'Imagined' — \"imagined sounds like it is a manipulative act on my side, while we are talking about creative inference and speculative approaches\".",
  "_verifyMarker": "[VERIFY SOURCE]",
  "verifyPublic": "(this source is still being verified)",
  "linkedNote": "↗ its verified links are on the sources page (menu → Credits)"

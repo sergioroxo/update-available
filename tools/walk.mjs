@@ -318,6 +318,9 @@ async function main() {
 
   const noise = [];
   page.on('pageerror', (e) => noise.push(`PAGEERROR ${String(e).slice(0, 180)}`));
+  // S209 — a page that goes away under the walk says why: a crash or a navigation (the 2026-10-02 run lost its frame at the Close)
+  page.on('error', (e) => process.stdout.write(`PAGE CRASH ${String(e).slice(0, 200)}\n`));
+  page.on('framenavigated', (f) => { if (f === page.mainFrame()) process.stdout.write(`PAGE NAVIGATED ${f.url()}\n`); });
   page.on('console', (m) => {
     const t = m.text();
     if (/ASSERT|Invalid batch|Uncaught|TypeError/i.test(t)) noise.push(t.slice(0, 180));

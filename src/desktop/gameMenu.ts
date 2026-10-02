@@ -426,6 +426,10 @@ export function mountGameMenu(): GameMenu {
       if (gameMenuBus.stopMotion) {
         row(copy.motionDisable, () => { gameMenuBus.stopMotion?.(); gameMenuBus.close(); });
       }
+      // S209 / A21 — the one mute, every era, every source
+      if (gameMenuBus.toggleSound) {
+        row(gameMenuBus.soundMuted?.() ? copy.soundMuted : copy.soundOn, () => { gameMenuBus.toggleSound?.(); render(); });
+      }
       // S84 — frame-level display control. iPad Safari exposes the standard
       // API; iPhone Safari may not. Absence is a fact, so the row is omitted
       // rather than presented as a dead promise. Add to Home Screen remains

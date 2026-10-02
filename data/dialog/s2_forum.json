@@ -180,6 +180,7 @@
    },
    {
     "t": "Accountability partner wanted (under 27)",
+    "page": "partner",
     "a": "walkingon",
     "r": "6",
     "v": "98",
@@ -190,6 +191,21 @@
   "forumsLabel": "Forum summary"
  },
  "pages": {
+  "partner": {
+   "_doc": "⚑ S209 / B22 (REVIEW_ROUND_5, ERA03-06; his \"I think so\"): 2003's documented core act — a newcomer asking a hosted board for an accountability partner, a veteran telling him to stay off the computer (sogice-social-media-layer.md, 2003 §3, Weiss et al. 2010). Opening it files harbor-partner; it is how Mark T. stops arriving from nowhere.",
+   "heading": "Accountability partner wanted (under 27)",
+   "lines": [
+    "walkingon: Looking for an accountability partner. Daily",
+    "check-in by e-mail, honest about falls. Four months in.",
+    "",
+    "graceandgrit: Find one. Don't go it alone. And stay off",
+    "the computer when it's bad — that's where most of us fell.",
+    "",
+    "Harbor has matched you with an accountability partner:",
+    "Mark T. He will check in with you each evening."
+   ],
+   "card": { "file": "e3_theday", "index": 0 }
+  },
   "process": {
    "heading": "Healing is a process",
    "lines": [

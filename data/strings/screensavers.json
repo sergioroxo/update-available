@@ -17,6 +17,10 @@
   "in": "breathe in",
   "out": "breathe out",
   "affirmations": ["you are becoming", "this is care", "slowly, Maya", "nothing is lost here", "we kept your place"],
-  "idleLine": "press to continue"
+  "idleLine": "press to continue",
+  "_docTell": "⚑ S209 / B8 (his, 2026-10-02: 'add something eerie like \"L is waiting to help you\", \"L phrase of the day\"'). The orb's tell: the companion is never asleep, and its phrase of the day is one of the networks' own 'reasons' — the Lexicon (P7-47) will turn it over at the Close.",
+  "waiting": "L is waiting to help you.",
+  "phraseLabel": "L's phrase of the day",
+  "phrase": "No one is born this way."
  }
 }

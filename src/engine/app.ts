@@ -860,12 +860,22 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   bus; the menu, the map and the helper's line hang on planes in front
     //   of the head while the session is immersive. Driven moves swallow the
     //   trigger exactly as they swallow a pointer (S86).
+    /** ⚑ S209 / A24 (REVIEW_ROUND_5, ERA26-04) — Start again is a reload: the only restart that truly wipes the
+     *  session (no storage, ever). In a headset the reload ends the immersive session, so it says so first, on the
+     *  frame's own plate, and gives the visitor a moment to read it. Outside a headset it is immediate, as before. */
+    function restartPiece(): void {
+      wipeLedger();
+      if (!xr?.active) { window.location.reload(); return; }
+      xrFrame?.close();
+      xrFrame?.setHint(menuStrings.xrRestartNote);
+      window.setTimeout(() => window.location.reload(), 3200);
+    }
     xrFrame = mountXrFrame(app, camera, {
       onLeave: () => os.leaveNow(),
-      onRestart: () => { wipeLedger(); window.location.reload(); }
+      onRestart: () => restartPiece()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (ray) => { if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },
+      onSelect: (ray) => { if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
       onMenuSelect: (ray) => { xrFrame?.press(ray); },
       onSqueeze: () => gameMenuBus.toggle(),
       menuOpen: () => gameMenuBus.isOpen,
@@ -1110,13 +1120,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       opacity: '0', pointerEvents: 'none', transition: 'opacity 0.3s', cursor: 'pointer'
     } as CSSStyleDeclaration);
     document.body.appendChild(tapeMuteBtn);
-    tapeMuteBtn.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      if (!tapeAudio || !tapeMuteBtn) return;
+    // ⚑ S209 / A21 — one mute for every source, shared by the room's button and the menu's row
+    function toggleAllSound(): void {
+      if (!tapeAudio) return;
       tapeAudio.setMuted(!tapeAudio.isMuted);
       roomBed.setMuted(tapeAudio.isMuted);   // ⚑ S109 — one mute, every source
       setOneShotsMuted(tapeAudio.isMuted);   // ⚑ S116 — …and it now actually is
-      tapeMuteBtn.textContent = tapeAudio.isMuted ? 'unmute' : 'mute';
+      if (tapeMuteBtn) tapeMuteBtn.textContent = tapeAudio.isMuted ? 'unmute' : 'mute';
+    }
+    gameMenuBus.toggleSound = toggleAllSound;
+    gameMenuBus.soundMuted = () => !!tapeAudio?.isMuted;
+    tapeMuteBtn.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      if (!tapeAudio || !tapeMuteBtn) return;
+      toggleAllSound();
     });
 
     // ⚑ S80 — THE MOTION BUTTON. Frame chrome, exactly like the three above:
@@ -2459,7 +2476,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   function recentreView(): void {
     ledger.view.recentres++;
-    if (camera.camera) camera.camera.fov = FOV_HOME;
+    if (camera.camera) camera.camera.fov = homeFov();   // A23: the orientation's own home
+    fovTouched = false;
     if (motionState === 'live') {
       motionWantZero = true; // the next reading decides where forward is
       return;
@@ -2813,6 +2831,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const FOV_MIN = 30;
   const FOV_MAX = 80;
   const FOV_HOME = 42; // createAppShell's authored value, and CAMERA_POSES.fov
+  /** ⚑ S209 / A23 (REVIEW_ROUND_5, PLATFORM-04) — a portrait phone held the landscape's vertical 42°, which left
+   *  ~20° across: the monitor was cropped at the seat. The home view now keeps at least the landscape's width of the
+   *  desk (22° either side of centre), within the pinch's own 80° ceiling. A pinch or a wheel wins until Recentre. */
+  function homeFov(): number {
+    const aspect = canvasEl.clientWidth / Math.max(1, canvasEl.clientHeight);
+    if (aspect >= 1) return FOV_HOME;
+    const v = 2 * Math.atan(Math.tan((22 * Math.PI) / 180) / aspect) * 180 / Math.PI;
+    return Math.max(FOV_HOME, Math.min(FOV_MAX, v));
+  }
+  let fovTouched = false;
+  window.addEventListener('resize', () => {
+    if (!fovTouched && camera.camera && !xr?.active) camera.camera.fov = homeFov();
+  });
+  if (camera.camera && !xr?.active) camera.camera.fov = homeFov();
   const PINCH_SENSITIVITY = 0.10; // °/px, by feel — never tested on hardware
   let pinch: number | null = null; // last two-finger distance, or null
 
@@ -3227,6 +3259,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     e.preventDefault();
     const rate = e.ctrlKey ? 0.12 : (e.deltaMode === 1 ? 2.4 : 0.03);   // trackpad pinch · notches · pixels
     camera.camera.fov = Math.max(FOV_MIN, Math.min(FOV_MAX, camera.camera.fov + e.deltaY * rate));
+    fovTouched = true;
   }, { passive: false });
   canvasEl.addEventListener('pointermove', (e) => {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -3236,6 +3269,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const d = pointerSpread();
       camera.camera.fov = Math.max(FOV_MIN, Math.min(FOV_MAX,
         camera.camera.fov - (d - pinch) * PINCH_SENSITIVITY));
+      fovTouched = true;
       pinch = d;
       return;
     }
@@ -4399,7 +4433,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   if (closeMonitor) {
     closeMonitor.onEra = (era) => leaveClose(era);
-    closeMonitor.onAgain = () => { window.location.reload(); };
+    closeMonitor.onAgain = () => {   // S209 / A24 — as the headset menu's Restart: in a headset, say so first
+      wipeLedger();
+      if (!xr?.active) { window.location.reload(); return; }
+      xrFrame?.close();
+      xrFrame?.setHint(menuStrings.xrRestartNote);
+      window.setTimeout(() => window.location.reload(), 3200);
+    };
     closeMonitor.onGo = () => goToCloseMonitor();
     closeMonitor.onDossier = () => gameMenuBus.openCloseSources?.(-1);
     // read-only probe, like __os: the walk aims at the card's rects through it

@@ -263,6 +263,16 @@ export class Screensaver {
     ui.setFont(ctx, 12);
     const mw = ctx.measureText(S.e4.mark).width;
     ctx.fillStyle = ERA4.dim; ctx.fillText(S.e4.mark, Math.round(cx - mw / 2), 22);
+    // ⚑ S209 / B8 — the tell: the companion is awake behind the calm, and it has a phrase for her
+    ui.setFont(ctx, 10);
+    const ww2 = ctx.measureText(S.e4.waiting).width;
+    ctx.fillStyle = ERA4.meta; ctx.fillText(S.e4.waiting, Math.round(cx - ww2 / 2), 40);
+    if (Math.floor(this.t / 12) % 2 === 1) {   // every other twelve seconds, the phrase of the day
+      const ph = `${S.e4.phraseLabel}: \u201c${S.e4.phrase}\u201d`;
+      ui.setFont(ctx, 10);
+      const pw = ctx.measureText(ph).width;
+      ctx.fillStyle = ERA4.l; ctx.fillText(ph, Math.round(cx - pw / 2), H - 58);
+    }
     if (this.line) {
       ui.setFont(ctx, 12);   // S208 / A20 (ERA26-11) — the one instruction, legible: 12 px in the era's text colour
       const lw = ctx.measureText(this.line).width;

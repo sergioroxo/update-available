@@ -11,8 +11,8 @@
  *        Summer camps were a documented vector; nothing on the page is religious.
  *   e2 · November 2003 — Restorify's promotional calendar (its sunrise, its lamb) and
  *        the days crossed off in his own marker: the software's streak, kept by him.
- *   e3 · December 2016 — Vera's work planner from the platform, the 13th ringed (the
- *        "Tuesday 13 December" of her phone's lock screen) and the shift's quota on a
+ *   e3 · December 2016 — Vera's work planner from the platform, the 6th ringed (the
+ *        "Tuesday 6 December" of her phone's lock screen — S209: the real vote day) and the shift's quota on a
  *        sticky note. Malta's law is published on the 9th; the page knows nothing of it.
  *   e4 · October 2026 — a queer bookshop's gift calendar, one night marked in her
  *        hand: the Commons. The respite register — joy, never a trap.
@@ -353,7 +353,7 @@ function page2003(c: Ctx): void {
   }
 }
 
-// ── 2016 · December · the platform's planner, the 13th, the quota ───────────
+// ── 2016 · December · the platform’s planner, the 6th, the quota ───────────
 function page2016(c: Ctx): void {
   const P = CAL_2016;
   px(c, 0, 0, P.paper, PAGE_W, PAGE_H);
@@ -381,8 +381,9 @@ function page2016(c: Ctx): void {
   for (const [fx, fy] of [[9, 20], [26, 24], [44, 19], [52, 30], [14, 36], [38, 33], [67, 22], [47, 42], [8, 45], [29, 44]]) px(c, fx, fy, P.flake);
   binding(c, P);
   const g = monthGrid(c, { name: 'DECEMBER', year: 2016, first: 4, days: 31, mondayFirst: true }, P, [5, 6]);
-  // ⚑ HER BIRO — the 13th ringed, not quite closed. The day on her phone's lock screen.
-  const { x, y } = g.at(13);
+  // ⚑ HER BIRO — the 6th ringed, not quite closed. The day on her phone's lock screen: ⚑ S209 / B7 (his ruling),
+  //   the day Malta's parliament passed its ban, unanimously (6 December 2016), so the fiction sits on the record.
+  const { x, y } = g.at(6);
   const ring = ['..######..', '.#......#.', '#........#', '#........#', '#........#', '#........#', '#.......#.', '.#.....#..', '..#####...'];
   sprite(c, x + 1, y + 1, ring, { '#': P.pen });
   // the platform's sticky note, stuck over the month's last days

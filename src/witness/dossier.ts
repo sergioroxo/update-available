@@ -27,7 +27,7 @@ import { ERA3, windowFrame as aeroFrame } from '../desktop/theme/era3';
 import { ERA4 } from '../desktop/theme/era4';
 import { setFaceEra, faceEra, type FaceEra } from '../desktop/theme/fonts';
 
-/** documented / disputed / imagined — the public word for a dossier status */
+/** documented / disputed / inferred — the public word for a dossier status */
 export function statusShort(s: string): string {
   return (words.short as Record<string, string>)[s] ?? s;
 }

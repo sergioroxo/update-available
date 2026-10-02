@@ -399,6 +399,8 @@ export class DesktopOS {
   private diaryPendingAt = Infinity; // soft beat between the packet and the diary
   /** ⚑ S208 / A4 (REVIEW_ROUND_5, ERA97-02) — the Family Form has been opened (finished or abandoned: both count —
    *  dismissal always works). The diary waits for it, so the MAIN beat can never be skipped past and lost. */
+  /** S209 / B18 — the ad waits on the desktop after a dismissed alert */
+  private netvisionIcon = false;
   private formOpenedOnce = false;
   private diaryAfterForm = false;
   /** engine reads this to creep the cold (witness) side into peripheral vision */
@@ -1292,7 +1294,12 @@ export class DesktopOS {
       // S2R.4: "I found something that helped others like you." If Lamby was
       // dismissed instead, the offer never comes — the era does not chase —
       // but the collapse still arrives: it was never the player's to trigger.
-      if (dismissed || this.netvisionOfferedThisSession) this.pureMailAt = this.t + PUREMAIL_DELAY;
+      if (dismissed || this.netvisionOfferedThisSession) {
+        this.pureMailAt = this.t + PUREMAIL_DELAY;
+        // ⚑ S209 / B18 (REVIEW_ROUND_5, ERA03-01; his "maybe also offer") — dismissing Lamby no longer costs the ad:
+        //   it waits on the desktop as an unread icon. The era still does not chase; it is simply there.
+        if (dismissed && !this.netvisionOfferedThisSession) this.netvisionIcon = true;
+      }
       else {
         this.netvisionOfferedThisSession = true;
         this.netvisionOfferOpen = true;
@@ -2380,6 +2387,8 @@ export class DesktopOS {
         if (this.forumRecommended) this.drawIcon(100, 236, forumStrings.icon, true, 'icon-forum', !this.forum);
         // ⚑ S205 — his story, once it has been asked for; unread until it is out
         if (this.testimonyOffered) this.drawIcon(100, 284, testimonyStrings.icon, true, 'icon-story', !ledger.records.includes('testimony-online'));
+        // ⚑ S209 / B18 — the ad, after a dismissed alert: unread until watched
+        if (this.netvisionIcon) this.drawIcon(190, 92, mediaStrings.icon, true, 'icon-netvision', !this.netvisionOfferedThisSession);
       }
     }
     // THE FOUND FILE (Session 60) — the renamed dossier, in every era, on the
@@ -3655,6 +3664,7 @@ export class DesktopOS {
         case 'found-file-close': this.dossierOpen = false; break;
         case 'icon-your-file': this.yourFileOpen = true; this.yourFileSeen = true; break;
         case 'icon-story': this.openTestimony(); break;   // S205
+        case 'icon-netvision': if (!this.netvision) { this.netvisionOfferedThisSession = true; this.openNetVision(); } break;   // S209 / B18
         case 'icon-forum': this.openForum(); break;
         case 'your-file-close': this.yourFileOpen = false; this.wayBack('e2'); break;   // S207
         case 'icon-messenger': this.openMessenger(); break;

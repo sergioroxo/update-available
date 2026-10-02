@@ -68,7 +68,7 @@
  "link": {
   "masthead": "The Continental Wire",
   "headline": "Malta moves to outlaw conversion practices",
-  "standfirst": "A bill before parliament would make it an offence to carry out or advertise practices intended to change a person's sexual orientation or gender identity, with penalties for practitioners and for anyone commissioning them. A vote is expected within days.",
+  "standfirst": "A bill before parliament would make it an offence to carry out or advertise practices intended to change a person's sexual orientation or gender identity, with penalties for practitioners and for anyone commissioning them. The final vote is expected today.",
   "tapHint": "Tap to open"
  },
  "_docMaltaTwo": "AND THE SECOND — 'it happened somewhere'. Short, because it is.",
@@ -204,6 +204,7 @@
   "lambientLine1": "Everything on your board is still there.",
   "lambientLine2": "Take the time you need with it."
  },
+ "_docB13": "⚑ S209 / B13 (REVIEW_ROUND_5, ERA16-05; his ruling: visibility) — the word is said plainly ONCE, here, where no rule of the platform reaches: the Wick's own message. Everywhere the system touches, it is the word being struck out.",
  "_docBacklog": "THE ERA'S RESPITE AND ITS CRUELTY IN ONE INBOX (§6), and it needs no commentary at all. DESIGN LAW: the piece never makes her open them. They can be read, all of them, at any time, and NOTHING IS FILED EITHER WAY. If a player never touches this, that is also true of her. ⚑ THE WICK is an invented bar. Its birthday message is dated 14 March — Sérgio's date for her, day and month only, no year — and has been sitting unread for nine months; the second one is from today and is about nothing. ⚑ NONE OF THESE PEOPLE ARGUE WITH HER. Not one of them mentions the programme, asks her a question, or wants anything. That is the whole point of the inbox.",
  "backlog": [
   {
@@ -214,7 +215,7 @@
   {
    "from": "The Wick",
    "time": "today",
-   "text": "We're doing a carol thing on the 20th. Mulled everything, no singing required, nobody has to talk to anybody. Doors from seven."
+   "text": "Lesbian carol night on the 20th. Mulled everything, no singing required, nobody has to talk to anybody. Doors from seven."
   },
   {
    "from": "Orla",
@@ -246,7 +247,7 @@
   "readNote": "Nothing here is filed.",
   "unlockHint": "Unlock",
   "widgetWeekday": "Tue, Dec",
-  "widgetDate": "Dec 13",
+  "widgetDate": "Dec 6",
   "widgetNote": "No events today",
   "shortGroup": "Maiden",
   "shortStream": "Live",

@@ -1,13 +1,14 @@
 {
  "_doc": "⚑ S192 — THE RECOMMENDATION, 2016 (Phase 5; his 'from early Internet Explorer to modern Chrome'). Vera's day has a new job: tag the network's new testimony video for the platform's Recommended. She PRODUCES, never moderates (S64's evidentiary law). The tags are the house vocabulary, and the explicit term is greyed 'not used in house style' — the documented route: organisations use euphemistic vocabulary ('same-sex attraction', 'sexual brokenness'…), and later audits found such terms surface providers where explicit terms surface critical information (his research SocialMedia_Deep.md §3: [D] vocabulary, [R] audits, [I] the routing in 2016). 'Preview as viewer' opens the platform's page in a Chrome-grammar window: the video, and Up next walking theology → pastoral advice → testimony in three steps (the research's own proposal, [S]/[I]), '84% match — recommended for you', and the end card — 'Does any of this sound familiar?' and 'Share your story' — a generic platform call to action here (⚑ S197: his visual archive dates CHANGED/#OnceGay's 'Share your story' campaign to the later 2010s, so 2016 does not borrow it). 2016 has NO moderation note: explicit platform rules against conversion-practice promotion come later (TikTok 2022 — the research, [D]); that paradox is 2026's. Every mark INVENTED (Streamline, the channels, the titles).",
+ "_docB14": "⚑ S209 / B14 (REVIEW_ROUND_5, ERA16-07; his yes): the video she tags is Renata's own forty seconds — the cut her first job makes — and the chain and keywords that carry it are a lesbian woman's, as the era is (his 2026-10-01 ruling).",
  "tile": {
   "label": "Tag the video",
   "note": "keywords for Recommended"
  },
  "title": "GracePlatform · Tag the video",
  "video": {
-  "title": "Leaving it behind — my story",
-  "length": "11:41",
+  "title": "Renata — my story, in forty seconds",
+  "length": "0:40",
   "channel": "New Hope Stories",
   "views": "18,204 views"
  },
@@ -19,7 +20,7 @@
   },
   {
    "id": "christiangay",
-   "label": "Christian and gay"
+   "label": "Christian lesbian"
   },
   {
    "id": "brokenness",
@@ -41,34 +42,34 @@
  ],
  "reachLabel": "Estimated reach",
  "reach": [
-  "searches for 'Christian and gay'",
-  "viewers of 'Can you be gay and Christian?'",
-  "viewers of 'I thought being gay was my identity'"
+  "searches for 'Christian lesbian'",
+  "viewers of 'Can a Christian woman be gay?'",
+  "viewers of 'I thought loving women was who I was'"
  ],
  "preview": "Preview as viewer",
  "browser": {
-  "tab": "Leaving it behind — my story - Streamline",
+  "tab": "Renata — my story, in forty seconds - Streamline",
   "omnibox": "streamline.com/watch?v=hope11",
   "site": "Streamline"
  },
  "upNext": "Up next",
  "chain": [
   {
-   "title": "Can you be gay and Christian?",
+   "title": "Can a Christian woman be gay?",
    "channel": "Grace Talks",
    "length": "4:38",
    "kind": "theology"
   },
   {
-   "title": "I thought being gay was my identity",
+   "title": "I thought loving women was who I was",
    "channel": "Pastor Mark Q&A",
    "length": "7:12",
    "kind": "pastoral advice"
   },
   {
-   "title": "Leaving it behind — my story",
+   "title": "Renata — my story, in forty seconds",
    "channel": "New Hope Stories",
-   "length": "11:41",
+   "length": "0:40",
    "kind": "testimony",
    "match": "84% match — recommended for you"
   }

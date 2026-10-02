@@ -746,7 +746,9 @@ export class NetVisionPlayerApp {
         // ⚑ S206 — REAL STORIES. REAL CHANGE. (s2_media.json _docRealStories): his own take, cut into the ad
         if (montageOn() && scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < MONTAGE_SECONDS) {
           this.drawRealStoriesMontage(ctx, a, (this.elapsed - scene.at) / MONTAGE_PACE);
-          this.drawLowerThird(ctx, a, scene, override);   // his line runs under the wall: "I thought this was just me"
+          // his line runs under the wall ("I thought this was just me") — ⚑ S209 / B20: without his name, which waits
+          //   for the cut to him; the wall is everyone's, and the centre tile is Daniel's tape
+          this.drawLowerThird(ctx, a, { ...scene, speaker: '' }, override);
           return;
         }
         if (VARIANT === 'participant' && scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < TAPE_INSERT_SECONDS) {
@@ -983,6 +985,15 @@ export class NetVisionPlayerApp {
     const fx = Math.round(a.x + (mid.x - a.x) * k), fy = Math.round(a.y + (mid.y - a.y) * k);
     const fw = Math.round(a.w + (mid.w - a.w) * k), fh = Math.round(gridH + (mid.h - gridH) * k);
     drawFootage(ctx, 'daniel', 13.2, fx, fy, fw, fh, 0, true);
+    // ⚑ S209 / B20 — once it is a tile among tiles, his is the one still marked as a raw tape: TAPE 04
+    if (T >= 1.15) {
+      const tm = (media as unknown as { montage: { tapeMark: string } }).montage.tapeMark;
+      ui.setFont(ctx, 9);
+      const w = Math.ceil(ctx.measureText(tm).width) + 14;
+      ui.px(ctx, mid.x + 3, mid.y + 3, w, 12, ERA1.black);
+      ui.px(ctx, mid.x + 6, mid.y + 7, 3, 3, ERA1.warn);
+      ctx.fillStyle = ERA1.white; ctx.fillText(tm, mid.x + 12, mid.y + 4);
+    }
     if (T < 0.95) {
       ui.setFont(ctx, 10);
       const lw = ctx.measureText(MS.realStoriesLine).width;

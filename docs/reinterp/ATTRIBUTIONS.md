@@ -88,10 +88,12 @@ Dossier card at `data/provotypes/e4_ball.json`.*
 > (1972), after Crystal LaBeija objected on camera to racist judging at the 1967
 > Miss All-America Camp Beauty Pageant. Its categories, houses and vocabulary
 > remain the living culture of a specific community and not a generic aesthetic.
-> This project invents its houses, categories, names and announcements, depicts no
-> real ball, house or person, and borrows no vernacular, in recognition that
-> ballroom's language and forms have too often been taken into mainstream culture
-> without credit or benefit to their originators. For further reading, from within
+> This project invents its houses, categories, names and announcements and depicts no
+> real ball, house or person. It does borrow the form of a ball — a category called,
+> a house, the walk — because that form is what the scene honours, and it names where
+> the form comes from, in recognition that ballroom's language and forms have too
+> often been taken into mainstream culture without credit or benefit to their
+> originators. For further reading, from within
 > the culture and about it: Ricky Tucker, *And the Category Is...* (2022); Marlon
 > M. Bailey, *Butch Queens Up in Pumps* (2013); and the Peabody Ballroom
 > Experience at Johns Hopkins, co-authored with Baltimore ballroom leaders.

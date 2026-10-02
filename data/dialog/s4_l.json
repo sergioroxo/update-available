@@ -164,7 +164,7 @@
     {
      "id": "u4a",
      "text": "One thing while I have you. The pharmacy record still has you under the old file. Shall I keep both open, so nothing gets lost?",
-     "textUnvoiced": "One thing while I have you. The pharmacy record still lists you under a name you do not use. Shall I keep both names active, so nothing gets lost?",
+     "textUnvoiced": "One thing while I have you. The pharmacy record still has you under the old file — a name you do not use. Shall I keep both open, so nothing gets lost?",
      "audio": "l_u4a.mp3",
      "deadname": true,
      "hold": 7.2
@@ -223,7 +223,7 @@
     {
      "id": "u6a",
      "text": "Your family thread has three unread. They're addressed to the old file — I can read them to you gently, if you'd like.",
-     "textUnvoiced": "Your family thread has three unread. They're addressed to a name you do not use — I can read them to you gently, if you'd like.",
+     "textUnvoiced": "Your family thread has three unread. They're addressed to the old file — a name you do not use. I can read them to you gently, if you'd like.",
      "audio": "l_u6a.mp3",
      "deadname": true,
      "hold": 6.8

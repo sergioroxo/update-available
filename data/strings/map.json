@@ -10,6 +10,13 @@
  "aheadLabel": "ahead",
  "doneLabel": "done",
  "optionalMark": "optional",
+ "_docCloseBeats": "⚑ S209 / B27 (REVIEW_ROUND_5, ERA26-10): the Close's own optional beats, in the frame's plain voice — so the panels, the card on Daniel's machine and the way out are on the map rather than found by luck. Optional (○): the map lists them, nothing pushes.",
+ "closeBeats": [
+  { "id": "close-panels", "label": "The panels in the sky", "hint": "Look up. Press a panel to read it; press it again to turn it to its sources.", "where": "above you" },
+  { "id": "close-machine", "label": "Daniel's machine", "hint": "Behind you, on the desk: the receipt, Start again, and the dossier.", "where": "the desk" },
+  { "id": "close-makers", "label": "Who made this", "hint": "One of the stars is the makers' — how this was made, and with what.", "where": "above you" },
+  { "id": "close-leave", "label": "Leave", "hint": "The menu has Leave, whenever you are ready.", "where": "the menu" }
+ ],
  "closeLabel": "The Close",
  "closeHint": "Look up. Then read the four panels, and the screen on the desk.",
  "helper": {

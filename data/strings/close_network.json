@@ -113,7 +113,7 @@
    "era": 2,
    "years": "2003",
    "title": "AUDIT",
-   "text": "Daniel is an adult, in the same room. The programme now lives on his computer as software. Every morning it asks how he is — Steady, Struggling, Grateful or Tired — and keeps the answer. It watches who he talks to; when a message arrives from someone outside, the programme sees it first. Daily self-reports, logging and the monitoring of contacts are documented features of accountability software of the period. Here they carry the demand to change without anyone saying it out loud.",
+   "text": "Daniel is an adult, in the same room. The programme now lives on his computer as software. Every morning it asks how he is — Steady, Struggling, Grateful or Tired — and keeps the answer. It watches who he talks to; when a message arrives from someone outside, the programme sees it first. Peer accountability, and software that logged browsing and reported it to a partner, are documented; the streak and the machine that reads his messages are the piece's own compression of them. Here they carry the demand to change without anyone saying it out loud.",
    "status": "documentary",
    "practices": ["checkin", "assistant", "diary", "contact", "update"],
    "image": "assets/close/era2.jpg"
@@ -122,7 +122,7 @@
    "era": 3,
    "years": "2016",
    "title": "GOVERN",
-   "text": "Vera works from her room, correcting other people’s writing for a platform, one rule at a time: remove anything unresolved, add the scripture. She is paid per correction. One afternoon the group chat on her phone is about a law: Malta has just made what she does an offence, unanimously. Nobody in the room says anything. Content rules and moderation work were among the tools these networks used to reach people at scale. In this room nobody is treated; the writing is edited.",
+   "text": "Vera works from her room, correcting other women’s writing for a platform — lesbian women, writing about their own lives — one rule at a time: remove anything unresolved, add the scripture. One afternoon the group chat on her phone is about a law: Malta has just made practices like hers an offence, unanimously. Nobody in the room says anything. Content rules and moderation work were among the tools these networks used to reach people at scale. In this room nobody is treated; the writing is edited.",
    "status": "contested",
    "practices": ["arrival", "queue", "moderation", "record"],
    "image": "assets/close/era3.jpg"
@@ -131,9 +131,9 @@
    "era": 4,
    "years": "2026",
    "title": "RESURGE",
-   "text": "Maya’s session is restored for her before she has touched anything. A companion finishes her search and suggests she wants to stop. Her record keeps her old name “for continuity of care”. Her photographs come back improved. A headset offers an immersive session. Then a friend’s invitation, inside that same headset, leads her somewhere the system cannot classify — a room where being trans is fine — and the update fails. This room is speculative. It extends patterns that are already documented — autocomplete, retained records, photo enhancement, “support” agents — into a system that presents itself as care. What it cannot classify is other people.",
+   "text": "Maya’s session is restored for her before she has touched anything. A companion finishes her search and suggests she wants to stop. Her record keeps her old name “for continuity of care”. Her photographs come back improved. A headset offers an immersive session. Then a friend’s invitation, inside that same headset, leads her somewhere the system cannot classify — a room where being trans is fine — and the update fails. This room is inferred. Around it, the record is not: in May 2026 the European Commission answered more than a million people asking for a ban on conversion practices with a non-binding recommendation, and declined to propose a law; organised campaigns against trans people’s care run across Europe. The room extends patterns that are already documented — autocomplete, retained records, photo enhancement, “support” agents — into a system that presents itself as care. What it cannot classify is other people.",
    "status": "speculative",
-   "practices": ["session", "photos", "care", "headset", "termination"],
+   "practices": ["nolaw", "termination", "session", "photos", "care", "headset"],
    "image": "assets/close/era4.jpg"
   }
  ]

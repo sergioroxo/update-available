@@ -51,7 +51,12 @@ export class Web2003App {
     if (h.id === 'forum-back' && this.trail.length) { this.stage = this.trail.pop()!; return; }
     if (h.id === 'forum-index') { this.trail.push(this.stage); this.stage = 'index'; return; }
     if (h.id === 'forum-thread') { this.trail.push(this.stage); this.stage = 'thread'; return; }
-    if (h.id.startsWith('forum-page:')) { this.trail.push(this.stage); this.stage = 'page:' + h.id.slice(11); return; }
+    if (h.id.startsWith('forum-page:')) {
+      this.trail.push(this.stage); this.stage = 'page:' + h.id.slice(11);
+      // S209 / B22 — asking for a partner is the board's act; Harbor files the match
+      if (h.id === 'forum-page:partner' && !ledger.records.includes('harbor-partner')) ledger.records.push('harbor-partner');
+      return;
+    }
     if (h.id === 'forum-post' && !this.posted) { this.posted = true; this.onPost?.(); }
     if (h.id.startsWith('forum-go:')) { this.trail.push(this.stage); this.stage = h.id.slice(9); return; }
     if (h.id.startsWith('forum-order:')) { this.ordered.add(Number(h.id.slice(12))); return; }
@@ -176,6 +181,7 @@ export class Web2003App {
       ui.px(ctx, x0, y - 1, w0, 12, r % 2 ? P.panel : P.white);
       ui.setFont(ctx, 8);
       if (t.live) this.link(ctx, t.t.length > 44 ? t.t.slice(0, 43) + '…' : t.t, x0 + 3, y, 'forum-thread');
+      else if ((t as { page?: string }).page) this.link(ctx, t.t.length > 44 ? t.t.slice(0, 43) + '…' : t.t, x0 + 3, y, `forum-page:${(t as { page?: string }).page}`);   // S209 / B22
       else { ctx.fillStyle = P.text; ctx.fillText(t.t, x0 + 3, y); }
       ui.setFont(ctx, 8); ctx.fillStyle = P.dim;
       [t.a, t.r, t.v, t.l].forEach((v, i) => ctx.fillText(v, x0 + 3 + cols[i + 1], y));

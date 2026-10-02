@@ -190,7 +190,12 @@ export function mapState(os: DesktopOS): MapState {
   });
   eras.push({
     id: 'close', label: M.closeLabel, here: now === 'close',
-    beats: [{ beat: { id: 'close', label: M.closeLabel, done: 'closed', hint: M.closeHint, quiet: true }, state: now === 'close' ? 'current' : 'ahead' }],
+    beats: [
+      { beat: { id: 'close', label: M.closeLabel, done: 'closed', hint: M.closeHint, quiet: true }, state: now === 'close' ? 'current' : 'ahead' },
+      // ⚑ S209 / B27 — the Close's own ○ beats: listed, never pushed (no condition files them; the Close files nothing)
+      ...((M as unknown as { closeBeats?: { id: string; label: string; hint: string; where?: string }[] }).closeBeats ?? [])
+        .map((b) => ({ beat: { ...b, done: '', optional: true }, state: 'ahead' as BeatState }))
+    ],
     soFar: [], entries: 0
   });
   return { eras, current, quiet };

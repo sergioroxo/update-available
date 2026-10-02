@@ -48,6 +48,8 @@ const PLANE_W = 0.62, PLANE_H = PLANE_W * H / W;
 const PLANE_DIST = 0.62, PLANE_DROP = 0.04;
 const HINT_W = 0.5, HINT_H = HINT_W * 136 / 1024;
 const HINT_DIST = 0.6, HINT_DROP = 0.2;
+/** ⚑ S209 / A22 — the menu tab: small, low, a little to the side; the headset's second way to the menu */
+const TAB_W = 0.12, TAB_H = TAB_W * 64 / 256, TAB_DIST = 0.6, TAB_DROP = 0.36, TAB_TURN = 0.9;
 const FONT = '"Courier New", monospace';
 
 export interface XrFrame {
@@ -60,6 +62,8 @@ export interface XrFrame {
   press(ray: Ray): boolean;
   /** the helper's line, or null */
   setHint(text: string | null): void;
+  /** ⚑ S209 / A22 — a select on the ≡ Menu tab opens the menu (true if the tab took it) */
+  pressTab(ray: Ray): boolean;
   readonly isOpen: boolean;
   /** ?debug=1 review: where a ray lands on the menu plane, in canvas px */
   debugHit(ray: Ray): { x: number; y: number } | null;
@@ -270,6 +274,38 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     hintTex.upload();
   };
 
+  // ── ⚑ S209 / A22 (REVIEW_ROUND_5, PLATFORM-03) — THE MENU TAB. The grip squeeze was the only way to the menu, and
+  //   Vision Pro (pinch only) and some hand-tracking have no squeeze: no Resume, no Leave. A small plate, frame voice,
+  //   hangs low and to the side of the gaze whenever the menu is closed; the same select as everything else opens the
+  //   menu. It re-hangs when the head has turned well away from it. Never gaze: looking at it does nothing.
+  const tabCanvas = document.createElement('canvas');
+  tabCanvas.width = 256; tabCanvas.height = 64;
+  const tctx = tabCanvas.getContext('2d');
+  const tabTex = makeScreenTexture(app, tabCanvas);
+  const tabPlane = makeScreenEntity('xr-frame-tab', tabTex, TAB_W, TAB_H, true);
+  overRoom(tabPlane);
+  tabPlane.enabled = false;
+  app.root.addChild(tabPlane);
+  if (tctx) {
+    tctx.fillStyle = FRAME.glass; tctx.fillRect(0, 0, 256, 64);
+    tctx.strokeStyle = FRAME.edge; tctx.lineWidth = 3; tctx.strokeRect(1.5, 1.5, 253, 61);
+    tctx.fillStyle = FRAME.bright; tctx.font = '28px monospace'; tctx.textBaseline = 'middle';
+    tctx.fillText(`\u2261 ${copy.menuTab}`, 24, 33);
+    tabTex.upload();
+  }
+  const hangTab = (): void => {
+    hang(tabPlane, TAB_DIST, TAB_DROP);
+    // a little to the right of the gaze, so it is never in the way of the work
+    const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, -1); fwd.normalize();
+    const right = new pc.Vec3(-fwd.z, 0, fwd.x);
+    tabPlane.setPosition(tabPlane.getPosition().add(right.mulScalar(0.18)));
+  };
+  const tabOffAxis = (): boolean => {
+    const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) return false; fwd.normalize();
+    const to = tabPlane.getPosition().clone().sub(head.getPosition()); to.y = 0; to.normalize();
+    return fwd.dot(to) < Math.cos(TAB_TURN);
+  };
+
   const act = (id: string): void => {
     switch (id) {
       case 'resume': gameMenuBus.close(); gameMenuBus.showHint?.(); return;
@@ -288,6 +324,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     get isOpen(): boolean { return open; },
     open(): void {
       open = true; view = 'main'; hover = null; cursor = null;
+      tabPlane.enabled = false;
       hang(plane, PLANE_DIST, PLANE_DROP);
       plane.enabled = true;
       hintPlane.enabled = false;
@@ -297,6 +334,12 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     close(): void {
       open = false;
       plane.enabled = false;
+    },
+    pressTab(ray: Ray): boolean {
+      if (open || !tabPlane.enabled) return false;
+      if (!planeHit(tabPlane, ray, TAB_W, TAB_H, 256, 64)) return false;
+      gameMenuBus.open();
+      return true;
     },
     press(ray: Ray): boolean {
       if (!open) return false;
@@ -315,7 +358,13 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     },
     debugHit(ray: Ray): { x: number; y: number } | null { return planeHit(plane, ray, PLANE_W, PLANE_H, W, H); },
     tick(ray: Ray | null): void {
-      if (!open) return;
+      if (!open) {
+        // the tab: shown while immersive and closed; re-hung when the head has turned away from it
+        const immersive = !!app.xr?.active;
+        if (!immersive) { tabPlane.enabled = false; return; }
+        if (!tabPlane.enabled || tabOffAxis()) { hangTab(); tabPlane.enabled = true; }
+        return;
+      }
       const p = ray ? planeHit(plane, ray, PLANE_W, PLANE_H, W, H) : null;
       const h = p ? hits.find((r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h)?.id ?? null : null;
       const moved = !!p !== !!cursor || (p && cursor && (Math.abs(p.x - cursor.x) > 2 || Math.abs(p.y - cursor.y) > 2));
