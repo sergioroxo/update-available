@@ -397,6 +397,10 @@ export class DesktopOS {
   private behindToastAt = Infinity;
   private escalationFallbackAt = Infinity; // Rob escalates on this deadline if the player never flips
   private diaryPendingAt = Infinity; // soft beat between the packet and the diary
+  /** ⚑ S208 / A4 (REVIEW_ROUND_5, ERA97-02) — the Family Form has been opened (finished or abandoned: both count —
+   *  dismissal always works). The diary waits for it, so the MAIN beat can never be skipped past and lost. */
+  private formOpenedOnce = false;
+  private diaryAfterForm = false;
   /** engine reads this to creep the cold (witness) side into peripheral vision */
   hasUnseenWitness = false;
   dossierUnlocked = false;
@@ -609,7 +613,9 @@ export class DesktopOS {
     this.packet = new PacketApp();
     this.packet.onAck = () => {
       this.packet = null;
-      this.diaryPendingAt = this.t + 1.0;
+      // S208 / A4 — the form first, if it has been sent and not yet opened; the diary follows its closing
+      if (this.formAvailable && !this.formOpenedOnce) this.diaryAfterForm = true;
+      else this.diaryPendingAt = this.t + 1.0;
       this.dirty = true;
     };
     this.dirty = true;
@@ -656,7 +662,14 @@ export class DesktopOS {
   private openProvotype(data: Provotype): void {
     if (!this.reinterp || this.provotype) return;
     this.provotype = new ProvotypeApp(data);
-    this.provotype.onClose = () => { this.provotype = null; this.dirty = true; this.wayBack(this.desktopEra); };   // S207
+    const isForm = data === (originIntakeProvotypeData as unknown as Provotype);
+    if (isForm) this.formOpenedOnce = true;
+    this.provotype.onClose = () => {
+      this.provotype = null; this.dirty = true;
+      // S208 / A4 — the form was the beat the diary was waiting on: it follows now, and no "back to it" toast over it
+      if (isForm && this.diaryAfterForm) { this.diaryAfterForm = false; this.diaryPendingAt = this.t + 1.0; return; }
+      this.wayBack(this.desktopEra);   // S207
+    };
     this.dirty = true;
   }
 
@@ -1018,7 +1031,7 @@ export class DesktopOS {
   private updateSaver(dt: number): void {
     const era = this.desktopEra;
     if (!this.saver) {
-      if (this.reinterp && this.phase === 'desktop' && (era === 'e1' || era === 'e2') && this.idleSeconds > SAVER_SECONDS
+      if (this.reinterp && this.phase === 'desktop' && (era === 'e1' || (era === 'e2' && this.e2Stage === 'active')) && this.idleSeconds > SAVER_SECONDS   // A6: 2003's only once the era has begun
           && this.desktopIdle() && !this.pauseOpen && !this.toast && !this.paused && !this.e2Jingle && !anythingPlaying()) {
         this.saver = new Screensaver(era === 'e2' ? 'lambs' : ledger.records.includes('kit-inserted') ? 'text' : 'stars');
         this.dirty = true;
@@ -1037,7 +1050,8 @@ export class DesktopOS {
     let due = false;
     if (era === 'e1') {
       due = ledger.records.includes('went-online') && this.idleSeconds > 16
-        && !this.provotype && !this.diary?.open && !this.packet?.open && !this.yesOpen && !this.updateApp && !this.kit?.open;
+        && !this.provotype && !this.diary?.open && !this.packet?.open && !this.yesOpen && !this.updateApp && !this.kit?.open
+        && !this.irc?.open;   // S208 / A5 (REVIEW_ROUND_5, ERA97-01) — never over the channel: Lume's welcome is the first warm contact
     } else {
       due = this.e2Stage === 'active' && this.testimonyOffered && this.idleSeconds > 12 && this.desktopIdle();
     }
@@ -1054,14 +1068,16 @@ export class DesktopOS {
   /** ⚑ S207 — THE WAY BACK: an optional thing was closed; the era's voice names the main path's next step.
    *  Never called for the people's things (Caleb's song, the tapes, the outtake, the ball). */
   wayBack(era: string): void {
-    if (era === 'e1' || era === 'e2') {
-      const l = wayBackLine(era);
-      if (l) { this.toast = { text: l, t: 7 }; this.dirty = true; }
-    } else if (era === 'e4') {
-      const l = wayBackLine('e4');
-      if (l) this.e4?.browser.sayLine(l);
-    }
+    // ⚑ S208 / A19 (REVIEW_ROUND_5, ERA03-08) — said once per next step, and never twice within 90 s: a way back
+    //   is a pointer, not a nag, and a two-second look is not "a good stretch"
+    const l = era === 'e1' || era === 'e2' || era === 'e4' ? wayBackLine(era as 'e1' | 'e2' | 'e4') : null;
+    if (!l || this.wayBackSaid.has(l) || this.t - this.wayBackAt < 90) return;
+    this.wayBackSaid.add(l); this.wayBackAt = this.t;
+    if (era === 'e4') this.e4?.browser.sayLine(l);
+    else { this.toast = { text: l, t: 7 }; this.dirty = true; }
   }
+  private wayBackSaid = new Set<string>();
+  private wayBackAt = -Infinity;
 
   private drawPauseDialog(W: number, H: number): void {
     if (!this.pauseOpen) return;

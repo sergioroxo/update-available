@@ -317,7 +317,7 @@
     "witness": "step 3: care actions acknowledged",
     "console": "Step 3 of 5 — acknowledge the actions taken for you.",
     "turn": {
-     "ask": "Three things were taken care of while you were away. Can I show you?",
+     "ask": "Four things were taken care of while you were away. Can I show you?",
      "chips": [
       {
        "label": "What things?",

@@ -3,7 +3,7 @@
  "mark": "LambyOS",
  "years": "1997 — 2026",
  "title": "Restart as you are.",
- "kept": "Nothing you did here was kept by anyone but you.",
+ "kept": "Nothing you did here was kept — not by the machine, not by us.",
  "choose": "Go back to a room, or start the machine again.",
  "eras": [
   {
@@ -39,7 +39,7 @@
    { "era": "e4", "line": "2026 · L · Second Thoughts" }
   ],
   "failed": "FAILED",
-  "entries": "{n} entries filed · {f} flagged",
+  "entries": "entries filed: {n} · flagged: {f}",
   "searchesLabel": "the searches:", "searchHis": "1997 · he typed:", "searchHers": "2026 · typed for her:", "_docSearches": "⚑ S193 — the four-era browser's rhyme (PLAN_ROUND5, his 'from early Internet Explorer to modern Chrome'): in 1997 the shame typed the query and the network answered it; in 2026 the machine typed it for her. Read off the ledger: his line only if he searched (search-1997), hers only if 2026's file has begun; the queries themselves are the data's (s1_browser.json query, s4_browser.json program.chosen).", "practicesLabel": "what it did, in order:",
   "kept": "kept by: nobody",
   "back": "Back",
@@ -51,7 +51,7 @@
    { "era": "e4", "subject": "Maya", "promised": "your session, restored before you arrive" }
   ],
   "promisedLabel": "promised:",
-  "filedLine": "filed: {n} entries · {f} flagged",
+  "filedLine": "entries filed: {n} · flagged: {f}",
   "usedLabel": "used:",
   "notChanged": "NOT CHANGED",
   "couldNot": "four updates, thirty years: none of them changed who they were."
@@ -80,6 +80,6 @@
  },
  "_docSourceButton": "⚑ S177 / R4-30 (his D3, 2026-09-26) — `panelButton` is the era-styled button on each panel's story face (1997 bevel, 2003 Restorify blue, 2016 glass pill, 2026 dark chip; pointCloud.ts drawSourcesButton); `panelHint` says the whole panel still works — the headset's wand presses anywhere. Frame voice.",
  "_docSource": "⚑ S175 (was S174 / R4-18) — THE DOSSIERS ARE ON THE PANELS. S174 opened a room's dossier on Daniel's machine; Sérgio: 'the sources open need to be on the 4 panels that make the Close — it is nuisance to go back and forth. Instead of the computer.' So a press on a panel turns IT to its room's dossier, in that room's own OS (1997 grey on teal, 2003 on Restorify's blue, 2016's glass, 2026's dark), page by page, and back to the room after the last page; a label press opens its room's panel (the seven process labels, which have no room, open on the panel you face, in the frame's own dialog). Content and drawing: src/witness/dossier.ts; the words a visitor reads for the statuses: status_words.json. ⚑ NO PER-LABEL CLAIM IS MADE: a label only carries a name and an era, so its window is its room's dossier with the label marked — opening 'detransition cohort study (Fenway)' onto Era 4's practices under its own name would imply a link the data never makes.",
- "filed": "{n} entries were filed under four names, {f} of them flagged.",
+ "filed": "Entries filed across the four updates: {n}. Flagged: {f}.",
  "_docFiled": "⚑ S146 — the one number the whole Witness system was building to, on the last screen, in the frame's flat voice: the file's size, read off the ledger at the moment the card lights (src/witness/record.ts). It sits above `kept`, so the two sentences are read together: this many entries; none kept."
 }

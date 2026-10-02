@@ -338,6 +338,14 @@ export class TestimonyApp {
     // the picture: a still, or the player
     const vx = px0 + 12, vy = py0 + 56, vw = 176, vh = 132;
     if (this.web === 'page' || this.web === 'done') drawFootage(ctx, 'daniel', 9, vx, vy, vw, vh, 0, true);
+    // ⚑ S208 / A9 (REVIEW_ROUND_5, ERA03-10) — the still is the play button too, as a 2003 page's was: a big ▶ on it,
+    //   the whole picture pressable, so the beat no longer hangs on finding two 9 px links
+    if (this.web === 'page') {
+      const cx = vx + Math.round(vw / 2), cy = vy + Math.round(vh / 2);
+      ui.px(ctx, cx - 20, cy - 16, 40, 32, ERA1.black);
+      for (let r = 0; r < 20; r++) ui.px(ctx, cx - 7, cy - 10 + r, Math.round(16 * (1 - Math.abs(r - 10) / 10)) + 1, 1, ERA1.white);
+      this.hits.push({ x: vx, y: vy, w: vw, h: vh, id: 'ts-watch' });
+    }
     else if (this.web === 'buffer') {
       ui.px(ctx, vx, vy, vw, vh, ERA1.black);
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.silver;

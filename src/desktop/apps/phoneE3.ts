@@ -356,10 +356,23 @@ export class PhoneE3 {
    *  right-hand side is EMPTY, for the whole length of the era, because she
    *  never writes anything here. The composer sits at the bottom with its
    *  placeholder showing. Nothing points at this and nothing ever mentions it. */
+  /** ⚑ S208 / A20 (REVIEW_ROUND_5, ERA16-15) — the header counts the people the cascade adds ("Aoife was added",
+   *  "3 people were added"): the ending is people joining, and the group's own number should say so */
+  private membersMeta(): string {
+    let n = parseInt(m.group.meta, 10) || 0;
+    const shown = this.stage === 'cascade' || this.stage === 'after' ? CASCADE.slice(0, this.cascadeN) : [];
+    for (const c of shown) {
+      const t = (c as { text?: string }).text ?? '';
+      const k = t.match(/^(\d+) people were added/);
+      if (k) n += Number(k[1]); else if (/ was added$/.test(t)) n += 1;
+    }
+    return m.group.meta.replace(/^\d+/, String(n));
+  }
+
   private drawGroup(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
     const y0 = statusBar(ctx, W, this.clockText);
-    let top = appBar(ctx, W, y0, m.group.name, m.group.meta);
+    let top = appBar(ctx, W, y0, m.group.name, this.membersMeta());
     this.pushBack(y0, top);
 
     const counted = this.stage === 'cascade' || this.stage === 'after';

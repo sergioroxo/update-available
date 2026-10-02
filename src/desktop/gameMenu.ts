@@ -82,6 +82,27 @@ type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
 
+
+/** ⚑ S208 / A14 (REVIEW_ROUND_5, COPY-01) — the credits table is generated from docs/reinterp/ATTRIBUTIONS.md, which
+ *  keeps its build notes (⚑ …, S-numbers), markdown and file ids on purpose — it is the record. The public page shows
+ *  the credit only: markdown links as "text (url)", no bold, no `ids`, no build notes, no branch words. */
+function creditText(t: string): string {
+  return t
+    .replace(/\s*⚑.*$/, '')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
+    .replace(/\*\*/g, '')
+    .replace(/\s*\(`[^`]+`\)/g, '')
+    .replace(/\s*—\s*`[^`]+`/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/,\s*reinterp only/g, '')
+    .trim();
+}
+/** a licence line that argues its case ("as Poly Pizza lists it (… → CC0)") shows the conclusion only */
+function creditLicence(t: string): string {
+  const s = creditText(t);
+  return /→\s*CC0/.test(s) ? `CC0 1.0${/credited by choice/.test(s) ? ' — credited by choice' : ''}` : s;
+}
+
 export interface GameMenu {
   destroy(): void;
 }
@@ -467,7 +488,7 @@ export function mountGameMenu(): GameMenu {
         paragraph(copy.creditsNone);
       } else {
         for (const e of attributions.entries) {
-          paragraph(`${e.asset} — ${e.creator}. ${e.license}. Used as: ${e.usedAs}.`);
+          paragraph(`${creditText(e.asset)} — ${creditText(e.creator)}. ${creditLicence(e.license)}. Used as: ${creditText(e.usedAs).replace(/\.$/, '')}.`);
         }
       }
       // ⚑ S79 — CULTURAL INFLUENCE, below the licensed assets and in the same

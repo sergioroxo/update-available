@@ -411,7 +411,7 @@
      "id": "l",
      "label": "L, on the laptop",
      "done": "browserOpen",
-     "hint": "L is talking on the laptop beside you — press through its lines while the session restores.",
+     "hint": "The laptop is restoring your session — wait for it, then start with the search.",
      "where": "the laptop"
     },
     {
@@ -477,10 +477,10 @@
    ]
   }
  ],
- "aheadCount": "{n} beats ahead",
+ "aheadCount": "ahead: {n}",
  "progress": "{d} of {n} done",
- "fileOpen": "What it did here — {n} entries ▸",
- "fileClose": "What it did here — {n} entries ▾",
+ "fileOpen": "What it did here — entries: {n} ▸",
+ "fileClose": "What it did here — entries: {n} ▾",
  "_docS201": "⚑ S201 — the map follows the new flow (his 'use the narrative helpers… to help navigate this space. It is better to have people do stuff than to panic in waiting'): 1997's browser is a required beat before the channel, the picture Rob sends is a required beat before his message, and the pages, the games, the forum, the application and the 2016 jobs are listed as optional — the menu's 'Where you are' shows them, and the idle helper names the required next step.",
  "_docP7": "⚑ Phase 7 (his: 'the Where you are is not updated') — the phone's place says where the phone is now (on its stand left of the monitor since R4-35, not 'look down, a little to your left'); 2003's read-only folder is on the map (○); the racket's place follows it to the wall by the bed.",
  "_docS205": "⚑ S205 — 2003's testimony is the era's main path now (s2_testimony.json): the request, the release, the tapes, the edit, the page. Caleb's message comes after it."

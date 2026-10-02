@@ -79,7 +79,7 @@
    "e2": {
     "clock": "2003",
     "brand": "Restorify 2003",
-    "status": "journey file migrated · accountability online",
+    "status": "journey file migrated",
     "icons": [
      "Restorify",
      "Care Log"
@@ -122,7 +122,7 @@
   "trustedMade": "MentorRob — contact established",
   "channelLog": "CHANNEL LOG",
   "notOnline": "subject not yet online",
-  "messagesLogged": "{n} message(s) on file",
+  "messagesLogged": "messages on file: {n}",
   "tags": "CLASSIFICATION",
   "status": "STATUS",
   "statusValue": "IDENTIFIED",
@@ -153,9 +153,9 @@
    "deletion": "deletion failed — content remains",
    "glitch": "update trigger: person could not be overwritten"
   },
-  "fileCount": "{n} entries · {f} flagged",
+  "fileCount": "entries: {n} · flagged: {f}",
   "purpose": "Kept so the programme can be adjusted to the subject. Not shown to the subject.",
-  "explain": "A file kept on you. Every line below is something you did, and what it was filed as.",
+  "explain": "A file kept on you. Every line above is something you did, and what it was filed as.",
   "_docExplain": "R3-27 (S151) — Sérgio: 'the intake panel should explain what it is'. One plain sentence under the header, the practice's title beside each entry (from data/dossier/practices.json). The sources stay in the frame (the menu's Your file).",
   "_docS144": "⚑ S144 — THE RECORD REDESIGNED AS A MAP (THE_RECORD_PLAN §3G): a count line, the flagged rows first (they are what the apparatus acts on), newest first, and one sentence under the header in the apparatus's own voice saying what the file is FOR — `purpose`. The fields above the log are unchanged. Cold, sharp, read at the flip's distance.",
   "recordLines": {

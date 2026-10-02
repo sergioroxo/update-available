@@ -264,9 +264,9 @@ export class Screensaver {
     const mw = ctx.measureText(S.e4.mark).width;
     ctx.fillStyle = ERA4.dim; ctx.fillText(S.e4.mark, Math.round(cx - mw / 2), 22);
     if (this.line) {
-      ui.setFont(ctx, 9);
+      ui.setFont(ctx, 12);   // S208 / A20 (ERA26-11) — the one instruction, legible: 12 px in the era's text colour
       const lw = ctx.measureText(this.line).width;
-      ctx.fillStyle = ERA4.dim; ctx.fillText(this.line, Math.round((W - lw) / 2), H - 30);
+      ctx.fillStyle = ERA4.text; ctx.fillText(this.line, Math.round((W - lw) / 2), H - 34);
     }
   }
 }

@@ -12,7 +12,7 @@
       { "when": "enrollment-acknowledged", "now": "CONSENT ON FILE", "next": "DEPART 12 JUL" }
     ],
     "e2": [
-      { "now": "RULES SIGNED", "next": "ASSIGN COMPANION" },
+      { "now": "RULES SIGNED", "next": "COMPANION" },
       { "when": "kind:assistant", "now": "COMPANION ON", "next": "DAILY CHECK-IN" },
       { "when": "kind:checkin", "now": "CHECK-IN KEPT", "next": "MEDIA PLAN" },
       { "when": "kind:media", "now": "MEDIA LOGGED", "next": "WATCH CONTACTS" },
@@ -27,7 +27,7 @@
     "_doc": "⚑ S183f / R5-04 — 2003's device face of the file (PLAN_ROUND5 Phase 3: '2003 a desktop folder \"Your file (read only)\"'). A file that came with him to the new desktop, in the second column beside the Family Form: Daniel's whole file (1997 and 2003), newest first, each line with the practice it belongs to — the same reading as the menu's Your file, for this person only. Read only: nothing in it can be pressed but the close box.",
     "icon": "Your file",
     "title": "Your file (read only)",
-    "sub": "Daniel  ·  drawer 12  ·  scanned 2003  ·  {n} entries",
+    "sub": "Daniel  ·  drawer 12  ·  scanned 2003  ·  entries: {n}",
     "empty": "Nothing on file yet.",
     "more": "… and {n} earlier",
     "footer": "Read only. The original is kept elsewhere."

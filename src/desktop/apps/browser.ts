@@ -341,10 +341,10 @@ export class E4Browser {
         const P = pauseWords('e4') as unknown as { line: string; items: Record<string, string>; joiner: string };
         const items: string[] = [];
         if (entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'tidy')) items.push(P.items.tidy);
-        if (!ledger.e4Space.some((e) => e.id === 'record')) items.push(P.items.record);
-        items.push(P.items.photos);
-        this.nowLine = P.line.replace('{items}', items.join(P.joiner));
-        this.version++;
+        // S208 / A12 (REVIEW_ROUND_5, ERA26-17) — only what is left: a tab she has read (or a change she requested) is not offered
+        if (!ledger.e4Space.some((e) => e.id === 'record' || e.id === 'tab:record')) items.push(P.items.record);
+        if (!ledger.e4Space.some((e) => e.id === 'tab:photos')) items.push(P.items.photos);
+        if (items.length) { this.nowLine = P.line.replace('{items}', items.join(P.joiner)); this.version++; }
       }
     }
     // ⚑ S203 — L's "while you wait" (see s4_browser.json console._docWait)

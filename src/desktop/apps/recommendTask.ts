@@ -151,6 +151,7 @@ export class RecommendTask implements TaskSurface {
     if (id.startsWith('tag:')) {
       const t = id.slice(4);
       if (this.applied.has(t)) this.applied.delete(t); else this.applied.add(t);
+      this.touched = true;
       this.v++; return true;
     }
     if (id === 'preview') { this.view = 'preview'; this.step = 0; this.file(); this.v++; return true; }
@@ -163,15 +164,26 @@ export class RecommendTask implements TaskSurface {
     return false;
   }
 
+  /** ⚑ S208 / A8 (REVIEW_ROUND_5, ERA16-09) — a press on a tag; a peek and Back is not a refusal */
+  private touched = false;
+  private declinedFiled = false;
+
   private file(): void {
-    if (this.filed) return;
+    if (this.filed && !this.declinedFiled) return;
+    // a later tag-and-preview replaces an earlier "left untagged": the record keeps what she finally did
+    if (this.declinedFiled) {
+      const i = ledger.era3Jobs.findIndex((j) => j.id === 'recommend' && j.witness === D.witness.declined);
+      if (i >= 0) ledger.era3Jobs.splice(i, 1);
+      this.declinedFiled = false;
+    }
     this.filed = true;
     ledger.era3Jobs.push({ id: 'recommend', witness: D.witness.tagged.replace('{n}', String(this.applied.size)) });
   }
 
   onLeave(): void {
-    if (this.filed) return;
+    if (this.filed || !this.touched) return;   // only a real leaving — after she had begun — is filed
     this.filed = true;
+    this.declinedFiled = true;
     ledger.era3Jobs.push({ id: 'recommend', witness: D.witness.declined });
   }
 

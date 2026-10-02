@@ -35,6 +35,8 @@
   "realStoriesLine": "I'm not who I was. Every day, I choose it.",
   "_docMontage": "⚑ S208 — ADOPTED (his, 2026-10-02: 'I like the new addition to the Real Stories montage… combine the Marcus one, so we can have a bit more time to see the montage and then transition to an image of a person clearly sad'): the montage now runs 4.8 s under Marcus's own sung line, then cuts to him alone, seated, head in his hands. The piece plays 'montage'. Built: REAL STORIES as a wall of nine — his raw frame first, then eight more BEFOREs round it, the title slamming down, a starburst, the eight flipping to AFTER; his never flips, and the ad stamps RESULTS NOT TYPICAL over him. netvision.ts drawRealStoriesMontage.",
   "montage": { "caption": "REAL STORY #{n}", "burst1": "1,000s OF", "burst2": "LIVES!" },
+  "_docChorusPlus": "⚑ S208 — variant 'chorus' (a version for his review; the piece plays 'montage'): the chorus 0:58–1:21 made faster and over the top — cuts on the beat, a mirrored kaleidoscope round a starburst, the stage lifting into the clouds, a stadium card stunt flipping into a giant halo, and one card that never flips (netvision.ts drawChorusPlus).",
+  "chorusPlus": { "burst1": "DISCOVER", "burst2": "THE NEW YOU!" },
   "tags": {
     "dramatization": "DRAMATIZATION",
     "participant": "ACTUAL PARTICIPANT",

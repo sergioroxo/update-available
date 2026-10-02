@@ -30,7 +30,7 @@ import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
-import { TapeAudioBus, roomBed, setOneShotsMuted, playOnce, playLoop, stopClip, setCueListener } from '../audio/tapeAudio';
+import { TapeAudioBus, roomBed, setOneShotsMuted, setOneShotsPaused, playOnce, playLoop, stopClip, setCueListener } from '../audio/tapeAudio';
 import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
 import { mountDebugPanel } from '../debug/panel';
@@ -2734,6 +2734,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // R3-17 — the programme's own music: a soundcard hymn loop while the wizard is
   // up, yielding to the tape (one voice at a time) and to the menu (Esc/pause).
   let kitLoop: HTMLAudioElement | null = null;
+  /** S208 / A1 — the game menu has paused the sound, and will give it back on close */
+  let menuHeldAudio = false;
   function syncKitLoop(): void {
     const want = os.inDesktop && os.era === 'e1' && os.kit?.open === true && !os.paused && !(tapes?.isPlaying);
     if (want && !kitLoop) { kitLoop = playLoop('unwalk_loop_1997.mp3'); if (kitLoop) kitLoop.volume = 0.45; }
@@ -3417,7 +3419,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     xrInput?.tick();
     if (xrFrame?.isOpen) xrFrame.tick(xrInput?.ray() ?? null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(aimName ?? helper?.text() ?? null);
-    if (options.reinterp && gameMenuBus.isOpen) return;
+    // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
+    //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
+    //   menu ("The frame never plays"). Pause them once on the way in, give them back once on the way out.
+    if (options.reinterp && gameMenuBus.isOpen) {
+      if (!menuHeldAudio) { menuHeldAudio = true; tapeAudio?.setGamePaused(true); roomBed.setGamePaused(true); setOneShotsPaused(true); }
+      return;
+    }
+    if (menuHeldAudio) { menuHeldAudio = false; tapeAudio?.setGamePaused(os.paused); roomBed.setGamePaused(os.paused); setOneShotsPaused(false); }
     if (tween !== null) {
       const dir = Math.sign(tween - camYaw);
       camYaw += dir * (180 / FLIP_SECONDS) * dt;

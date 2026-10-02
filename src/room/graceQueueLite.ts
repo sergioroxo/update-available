@@ -408,6 +408,8 @@ export class GraceQueueLite {
   private rects: Rect[] = [];
   /** ⚑ S208 — GracePlatform's lock screen, after SAVER_SECONDS of quiet on the board with nothing open or playing */
   private saver: Screensaver | null = null;
+  /** S208 / A2·A7 — the work count when the phone lit; one more finished job after that, link unopened, is "ignored" */
+  private maltaWork = -1;
   private lambLine: string;
   /** the two-line beat, when a beat has two (see drawLambientLane) */
   private lambLines: string[] | null = null;
@@ -470,6 +472,7 @@ export class GraceQueueLite {
 
   update(dt: number): void {
     this.updateSaver(dt);
+    this.updateGate();
     if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
@@ -573,6 +576,23 @@ export class GraceQueueLite {
   // ── the list ─────────────────────────────────────────────────────────────
   private bump(): void { this.ownVersion++; }
 
+  /** ⚑ S208 / A2 (REVIEW_ROUND_5, ERA16-01) — ANY finished job moves the day on, not only the testimony: the board
+   *  says "Start anywhere", so the phone lights after whichever job she finishes first. And A7 (ERA16-04) — capture
+   *  either way: if she finishes another job after the phone lit without opening Bea's link, the phone's own
+   *  "ignored" card comes (phoneE3.onWorkDone). Her next action triggers it, never a clock. */
+  private updateGate(): void {
+    if (this.mode !== 'board' && this.mode !== 'done') return;
+    const wd = this.workDone();
+    if (!this.maltaArrived) {
+      if (wd >= MALTA_AFTER_TASKS) {
+        if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
+        this.armMalta();
+      }
+      return;
+    }
+    if (this.maltaWork >= 0 && wd > this.maltaWork) { this.maltaWork = -1; this.phone.onWorkDone(); this.phoneV++; this.bump(); }
+  }
+
   /** ⚑ S208 — the lock screen (screensaver.ts 'lock'): only on the board, nothing open, no card up, nothing playing;
    *  anything that opens or plays wakes it. The corrections counter starts from the board's open jobs. */
   private updateSaver(dt: number): void {
@@ -662,10 +682,12 @@ export class GraceQueueLite {
     for (const run of runs) {
       for (const word of run.text.split(' ')) {
         if (!word) continue;
-        const piece = line.length ? ' ' + word : word;
+        // S208 / A20 (ERA16-13) — punctuation that begins a run ("," after a struck word) joins without a space
+        const glue = /^[,.;:!?)]/.test(word) ? '' : ' ';
+        const piece = line.length ? glue + word : word;
         const pw = ctx.measureText(piece).width;
         if (line.length && w + pw > maxW) { lines.push(line); line = []; w = 0; }
-        const t = line.length ? ' ' + word : word;
+        const t = line.length ? glue + word : word;
         const last = line[line.length - 1];
         if (last && last.state === run.state) last.text += t;
         else line.push({ text: t, state: run.state });
@@ -932,6 +954,7 @@ export class GraceQueueLite {
   armMalta(): void {
     if (this.maltaArrived) return;
     this.maltaArrived = true;
+    this.maltaWork = this.workDone();
     playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk
     this.phone.arm();
     this.lambSay([LAMBIENT.phone1, LAMBIENT.phone2]);
@@ -1265,7 +1288,10 @@ export class GraceQueueLite {
     // ⚑ and the beat closes when she acts: opening a job replaces it with the
     //   task beat, and by the time she is back here Lambient is down to its one
     //   standing line. Nothing repeats itself at her.
-    if (this.seenTask && this.lambLines) { this.lambLines = null; this.lambLine = LAMBIENT.greet; }
+    //   ⚑ S208 / A3 (REVIEW_ROUND_5, ERA16-02) — ONLY the first-task beat closes this way. Every later beat (the
+    //   phone, the wait line, the way back, the cascade's "Everything on your board is still there…") was being
+    //   wiped here before it was ever drawn; they now stay until she acts.
+    //   The first-task beat itself closes on her next press on the board (handleClick).
     this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     if (this.pauseOpen) this.drawPauseCard(ctx, c);
@@ -1313,8 +1339,8 @@ export class GraceQueueLite {
     this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
     let area = { x: c.x, y: c.y + backH + 8, w: c.w, h: c.h - backH - 8 };
 
-    const lane = this.lambLines;
-    if (lane) { this.drawLambientLane(ctx, c, lane); area = { ...area, h: area.h - 46 }; }
+    // ⚑ S208 / A18 (ERA16-03, ETHICS-02) — no Lambient lane on a job screen: jobs show people's own words, and
+    //   the register law keeps the assistant off them. Its lines wait for the board.
 
     surface.draw(ctx, area, r => this.rects.push(r));
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
@@ -1552,11 +1578,8 @@ export class GraceQueueLite {
     //   commenting on her, which the register laws forbid. It opens for the
     //   one-off conduction beat and closes again, and the columns shorten for
     //   it rather than being drawn over.
-    const lane = this.lambLines;
-    if (lane) {
-      this.drawLambientLane(ctx, c, lane);
-      c = { ...c, h: c.h - 46 };
-    }
+    //   ⚑ S208 / A18 (REVIEW_ROUND_5, ERA16-03, ETHICS-02) — and now not even for the one-off beat: the law has no
+    //   one-off exception. Lambient's lines wait for the board, where they are drawn whole.
 
     const GAP = 18;
     const leftW = 350;
@@ -1922,6 +1945,8 @@ export class GraceQueueLite {
   handleClick(x: number, y: number): void {
     this.boardQuietT = 0;
     if (this.saver) { this.saver = null; this.bump(); return; }   // S208 — a press wakes it, and does nothing else
+    // S208 / A3 — the first-task beat, once seen on the board, closes when she acts there
+    if (this.mode === 'board' && this.lambLines?.[0] === LAMBIENT.firstTask1) { this.lambLines = null; this.lambLine = LAMBIENT.greet; this.bump(); }
     const r = this.rects.find(rr => hit(rr, x, y));
     if (!r) return;
     // ⚑ the taskbar button is tested FIRST and is the only live control while

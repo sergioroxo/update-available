@@ -69,7 +69,7 @@
    "id": "record",
    "surface": "record",
    "label": "Your record",
-   "note": "profile · imported history"
+   "note": "account · activity"
   }
  ],
  "verbs": {
@@ -396,7 +396,7 @@
   "workValue": "{n} decided",
   "footer": "This record is maintained by GracePlatform for continuity of care. Requests to amend it are reviewed by your provider.",
   "witness": "record: viewed — profile and activity",
-  "todayLabel": "{n} events · today",
+  "todayLabel": "events today: {n}",
   "todayEmpty": "no activity yet"
  }
 }

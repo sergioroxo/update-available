@@ -30,7 +30,7 @@
   "sub": "this session did not end",
   "note": "The headset stopped responding.",
   "button": "Restart",
-  "witness": "desk: the device stopped — the laptop offered a restart",
+  "witness": "desk: the device stopped — the laptop reported the update failed",
   "ask": "Restart as you are.",
   "_docWords": "⛑ THE CLOSE'S OWN WORDS, not new ones. `ask` and `button` are lifted from data/strings/updates.json's `close` block (notify[1] and updateNow) so the card on the laptop speaks with the same voice as the update it arms — and because the first pass invented 'Restart as you are' as a BUTTON label, which both duplicated the message and ran off the end of the button."
  },

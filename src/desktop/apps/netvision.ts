@@ -68,7 +68,9 @@ import { releaseBus } from '../../audio/tapeAudio';
 import media from '../../../data/dialog/s2_media.json';
 import { drawFootage } from './testimony';
 /** ⚑ S207 — which version of the ad plays (s2_media.json `variant`; _docVariants). The render tool may override. */
-type Variant = 'original' | 'participant' | 'montage';
+type Variant = 'original' | 'participant' | 'montage' | 'chorus';
+/** the REAL STORIES montage plays in 'montage' and in 'chorus' (which adds the S208 chorus on top of it) */
+const montageOn = (): boolean => VARIANT === 'montage' || VARIANT === 'chorus';
 let VARIANT: Variant = ((media as unknown as { variant?: string }).variant ?? 'participant') as Variant;
 export function setNetVisionVariant(v: Variant): void { VARIANT = v; }
 /** ⚑ S208 — the REAL STORIES montage (variant 'montage'; his, 2026-10-02: 'combine the Marcus one, so we can have a bit
@@ -742,7 +744,7 @@ export class NetVisionPlayerApp {
         return;
       case 'testimony':
         // ⚑ S206 — REAL STORIES. REAL CHANGE. (s2_media.json _docRealStories): his own take, cut into the ad
-        if (VARIANT === 'montage' && scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < MONTAGE_SECONDS) {
+        if (montageOn() && scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < MONTAGE_SECONDS) {
           this.drawRealStoriesMontage(ctx, a, (this.elapsed - scene.at) / MONTAGE_PACE);
           this.drawLowerThird(ctx, a, scene, override);   // his line runs under the wall: "I thought this was just me"
           return;
@@ -768,7 +770,8 @@ export class NetVisionPlayerApp {
         return;
       default: {
         // THE CONGREGATION — the chorus (58.51 → 78.91).
-        this.drawChorusSet(ctx, a, scene);
+        if (VARIANT === 'chorus') this.drawChorusPlus(ctx, a, scene);
+        else this.drawChorusSet(ctx, a, scene);
         // a karaoke scene's line is already the karaoke bar's text — one
         // subtitle, not two stacked copies of the same lyric
         const sung = !!scene.karaoke && !this.inBreak();
@@ -1058,7 +1061,7 @@ export class NetVisionPlayerApp {
       }
       ctx.globalAlpha = 1;
 
-      if (VARIANT === 'montage') {
+      if (montageOn()) {
         // ⚑ S208 — after the wall of stories, one man alone, plainly sad: seated, folded over, head in his hands
         this.drawSadFigure(ctx, cx - 70, floorY + 6, 1.6);
       } else {
@@ -1268,6 +1271,139 @@ export class NetVisionPlayerApp {
    *     empty pool of light in the Struggler's shot at 5.92. Nothing ever
    *     mentions either one.
    */
+  /**
+   * ⚑ S208 — THE CHORUS, OVER THE TOP (variant 'chorus'; his, 2026-10-02: "the section of 0:58 to 1:21… a bit faster
+   * or include something really over the top in the middle, or give it more bizarre details at the end, where the
+   * crescendo hits… please don't delete the one you have now"). The first line is the chorus as he loved it; then:
+   *   line 2 — faster: a cut every two beats, the wide and two close-ups (integer zoom);
+   *   line 3 — "Discover the new you today": the congregation mirrored four ways round a spinning starburst;
+   *   line 4 — "a brighter, lighter way": the whole stage lifts off into the clouds, doves crossing;
+   *   line 5 — "Yes, discover the new": a stadium card stunt, the cards flipping in a wave into a giant halo;
+   *   line 6 — "The new you": the halo complete, fireworks — and one card that never flipped, a dark square in
+   *            the halo, which the camera closes in on. The same refusal as Daniel's tile and the halo-less lamb.
+   * No faces, no flashes (positions, flips and fills only), the era's palette, whole pixels.
+   */
+  private drawChorusPlus(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
+    const chorus = this.scenes.filter(s => s.shot === 'crowd');
+    const idx = Math.max(chorus.indexOf(scene), 0);
+    const t = this.elapsed - scene.at;
+    const next = chorus[idx + 1]?.at ?? (scene.at + 2.7);
+    const len = Math.max(0.1, next - scene.at);
+    const beat = Math.max(0, Math.floor((this.elapsed - SONG_ANCHOR) / SONG_BEAT));
+    const ease = (k: number): number => { const c = Math.max(0, Math.min(1, k)); return c * c * (3 - 2 * c); };
+    const CP = (M as unknown as { chorusPlus: { burst1: string; burst2: string } }).chorusPlus;
+    if (idx === 0) { this.drawChorusSet(ctx, a, scene); return; }
+    if (idx === 1) {   // a cut every two beats: wide · close on the left · close on the right
+      const shot = Math.floor(beat / 2) % 3;
+      if (shot === 0) { this.drawChorusSet(ctx, a, scene); return; }
+      const zx = Math.round(a.x + a.w * (shot === 1 ? 0.3 : 0.7)), zy = Math.round(a.y + a.h * 0.6);
+      ctx.save(); ctx.translate(zx, zy); ctx.scale(2, 2); ctx.translate(-zx, -zy);
+      this.drawChorusSet(ctx, a, scene); ctx.restore();
+      return;
+    }
+    if (idx === 2) {   // the kaleidoscope: four mirrored copies, the mirrors swapping on the beat
+      const hw = Math.round(a.w / 2), hh = Math.round(a.h / 2);
+      for (let q = 0; q < 4; q++) {
+        const qx = a.x + (q % 2) * hw, qy = a.y + Math.floor(q / 2) * hh;
+        const flipX = ((q % 2) + beat) % 2 === 1, flipY = (Math.floor(q / 2) + Math.floor(beat / 2)) % 2 === 1;
+        ctx.save();
+        ctx.beginPath(); ctx.rect(qx, qy, hw, hh); ctx.clip();
+        ctx.translate(qx + (flipX ? hw : 0), qy + (flipY ? hh : 0));
+        ctx.scale(flipX ? -0.5 : 0.5, flipY ? -0.5 : 0.5);
+        ctx.translate(-a.x, -a.y);
+        this.drawChorusSet(ctx, a, scene);
+        ctx.restore();
+      }
+      const r = Math.round(30 + 8 * Math.sin(this.elapsed * 6));
+      this.drawStarburst(ctx, a.x + hw, a.y + hh, r, CP.burst1, CP.burst2);
+      return;
+    }
+    if (idx === 3) {   // the lift: the whole stage, an island now, rising through the clouds
+      ui.px(ctx, a.x, a.y, a.w, Math.round(a.h * 0.55), ERA1.titleBlue);
+      ui.px(ctx, a.x, a.y + Math.round(a.h * 0.55), a.w, a.h - Math.round(a.h * 0.55), ERA1.paper);
+      const cloud = (i: number, front: boolean): void => {
+        const speed = front ? 160 : 60;
+        const cyy = a.y + ((i * 71 + Math.round(t * speed)) % (a.h + 60)) - 30;
+        const cxx = a.x + ((i * 113 + (front ? 40 : 0)) % a.w);
+        ctx.fillStyle = front ? ERA1.white : ERA1.silver;
+        ctx.beginPath(); ctx.ellipse(cxx, cyy, front ? 54 : 34, front ? 12 : 8, 0, 0, Math.PI * 2); ctx.fill();
+      };
+      for (let i = 0; i < 6; i++) cloud(i, false);
+      const rise = ease(t / (len * 0.85));
+      const ix = a.x + Math.round(a.w / 4), iy = a.y + Math.round(a.h * (0.5 - rise * 0.42));
+      // the island's underside: earth hanging off the bottom of the stage
+      const bottom = iy + Math.round(a.h / 2);
+      ctx.fillStyle = ERA1.greyDark;
+      ctx.beginPath(); ctx.moveTo(ix, bottom); ctx.lineTo(ix + Math.round(a.w / 2), bottom);
+      ctx.lineTo(ix + Math.round(a.w * 0.34), bottom + 34); ctx.lineTo(ix + Math.round(a.w * 0.18), bottom + 40); ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.beginPath(); ctx.rect(ix, iy, Math.round(a.w / 2), Math.round(a.h / 2)); ctx.clip();
+      ctx.translate(ix, iy); ctx.scale(0.5, 0.5); ctx.translate(-a.x, -a.y);
+      this.drawChorusSet(ctx, a, scene); ctx.restore();
+      for (let i = 0; i < 4; i++) cloud(i + 7, true);
+      for (let i = 0; i < 14; i++) {   // doves
+        const dx = a.x + ((i * 53 + Math.round(t * (40 + i * 3))) % a.w), dy = a.y + 16 + ((i * 37) % Math.round(a.h * 0.7));
+        const flap = (beat + i) % 2;
+        ctx.fillStyle = ERA1.white;
+        ctx.fillRect(dx - 3, dy - flap, 3, 1); ctx.fillRect(dx, dy, 1, 1); ctx.fillRect(dx + 1, dy - flap, 3, 1);
+      }
+      return;
+    }
+    // lines 5 and 6: the card stunt — a stand full of people, each holding a card over their head
+    const COLS = 18, ROWS = 9;
+    const cw = Math.floor(a.w / COLS), rh = Math.floor((a.h - 30) / ROWS);
+    const stuntAt = chorus[4]?.at ?? scene.at;
+    const st = this.elapsed - stuntAt;
+    const ccx = (COLS - 1) / 2, ccy = (ROWS - 1) / 2;
+    const odd = { c: 12, r: 3 };   // the one who does not flip
+    // the closing push-in toward the card that never turned
+    const zoomK = idx === 5 ? ease((t - 0.6) / (len - 0.6)) : 0;
+    const oddX = a.x + odd.c * cw + Math.round(cw / 2), oddY = a.y + 6 + odd.r * rh + Math.round(rh / 2);
+    ctx.save();
+    if (zoomK > 0) {
+      const z = 1 + Math.round(zoomK * 2);   // 1 → 3, whole steps only
+      ctx.translate(oddX, oddY); ctx.scale(z, z); ctx.translate(-oddX, -oddY);
+    }
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.greyDark);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const x = a.x + c * cw, y = a.y + 6 + r * rh;
+      this.drawBust(ctx, x + Math.round(cw / 2), y + rh, 0.28, ERA1.black);
+      // the mosaic: a gold ring on white, inside a navy field — a halo the size of the stand
+      const d = Math.hypot((c - ccx) / (COLS / 2), (r - ccy) / (ROWS / 2));
+      const face = d < 0.42 ? ERA1.white : d < 0.66 ? ERA1.tooltip : d < 0.78 ? ERA1.olive : ERA1.navy;
+      const flipAt = c * 0.09 + Math.abs(r - ccy) * 0.06;
+      const f = Math.max(0, Math.min(1, (st - flipAt) / 0.18));
+      const isOdd = c === odd.c && r === odd.r;
+      const open = Math.abs(Math.cos(f * Math.PI));
+      const w = Math.max(1, Math.round((cw - 2) * (isOdd ? 1 : open)));
+      const shown = isOdd ? ERA1.grey : f >= 0.5 ? face : ERA1.grey;   // the backs are plain grey
+      ui.px(ctx, x + 1 + Math.round((cw - 2 - w) / 2), y + 2 - ((beat + c) % 2), w, Math.round(rh * 0.55), shown);
+    }
+    ctx.restore();
+    if (idx === 5 && zoomK < 0.34) {   // the scoreboard over the stand: THE NEW YOU in bulbs, chasing on the beat
+      const bw = Math.round(a.w * 0.7), bh = 40, bx = a.x + Math.round((a.w - bw) / 2), by = a.y + 10;
+      ui.px(ctx, bx - 3, by - 3, bw + 6, bh + 6, ERA1.black);
+      ui.px(ctx, bx, by, bw, bh, ERA1.navy);
+      for (let k = 0; k < Math.floor(bw / 8); k++) {
+        ctx.fillStyle = (k + beat) % 2 ? ERA1.tooltip : ERA1.warn;
+        ctx.fillRect(bx + k * 8 + 2, by - 2, 3, 3); ctx.fillRect(bx + k * 8 + 2, by + bh - 1, 3, 3);
+      }
+      ui.setFont(ctx, 22);
+      const tw = ctx.measureText(M.brand).width;
+      this.fringeText(ctx, M.brand, bx + Math.round((bw - tw) / 2), by + 9, ERA1.tooltip);
+    }
+    if (idx === 5) {   // fireworks over the stand: pixel bursts on the beat
+      for (let i = 0; i < 5; i++) {
+        const k = ((this.elapsed * 1.4 + i * 0.37) % 1);
+        const fx = a.x + Math.round(a.w * (0.15 + i * 0.17)), fy = a.y + Math.round(a.h * (0.15 + (i % 2) * 0.12));
+        ctx.fillStyle = [ERA1.tooltip, ERA1.white, ERA1.warn][i % 3];
+        for (let s2 = 0; s2 < 8; s2++) {
+          const an = (s2 / 8) * Math.PI * 2;
+          ctx.fillRect(Math.round(fx + Math.cos(an) * k * 28), Math.round(fy + Math.sin(an) * k * 28), 2, 2);
+        }
+      }
+    }
+  }
+
   private drawChorusSet(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
     const chorus = this.scenes.filter(s => s.shot === 'crowd');
     const idx = Math.max(chorus.indexOf(scene), 0);

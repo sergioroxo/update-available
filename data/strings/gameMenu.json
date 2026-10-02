@@ -28,7 +28,7 @@
   "Pinch with two fingers — or scroll the wheel — to zoom the view in or out.",
   "Click a marker to move.",
   "Click to interact.",
-  "Recentre the view puts forward back where the room's front is.",
+  "Recentre the view turns you back to face the front of the room.",
   "Fullscreen is available from this menu when the browser supports it.",
   "Esc — or this menu's corner button — pauses."
  ],
@@ -60,7 +60,7 @@
   "e3": "2016 · Vera",
   "e4": "2026 · Maya"
  },
- "yourFileCount": "{n} entries · {f} flagged",
+ "yourFileCount": "entries: {n} · flagged: {f}",
  "yourFileFlag": "flagged",
  "yourFilePractice": "the practice",
  "yourFileSource": "read",

@@ -608,6 +608,18 @@ export function anythingPlaying(): boolean {
   return false;
 }
 
+/** ⚑ S208 / A1 — the game menu holds every one-shot too (L's voice, the songs, the jingle, the ball): pause what is
+ *  playing, and resume exactly those on close — a clip that had ended stays ended */
+const heldOneShots = new Set<HTMLAudioElement>();
+export function setOneShotsPaused(paused: boolean): void {
+  if (paused) {
+    for (const a of liveOneShots) if (!a.paused && !a.ended) { a.pause(); heldOneShots.add(a); }
+  } else {
+    for (const a of heldOneShots) a.play().catch(() => { /* autoplay policy or a headless harness */ });
+    heldOneShots.clear();
+  }
+}
+
 /** for probes: what is playing right now, by file (the bus as 'bus') */
 export function playingNow(): string[] {
   const out: string[] = liveBus?.isPlaying() ? ['bus'] : [];

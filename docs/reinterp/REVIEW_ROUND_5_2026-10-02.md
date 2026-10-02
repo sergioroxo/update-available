@@ -124,3 +124,51 @@ Tape 04's outtake ("…Caleb?"), the sign-in-sheet line, Noa unresolved, the 201
 inbox, the tab order of 2026 as an argument, the record tab's locked rows, the failure on both screens, the printout's
 closing line, REACH and TIDY's rhetoric of failure, Harbor's dead "I Do Not Agree", the screensavers' gate and the
 flock's one halo-less lamb, the lock screen's climbing counter, and "No Daniel in Vera's room".
+
+---
+
+## HIS RULINGS (2026-10-02)
+*A: "Let's do all of A." B, item by item, in his words where they matter:*
+
+| B | Ruling | What I build |
+|---|---|---|
+| B1 | "Relabel and write on the needed parts" | re-label the eight cards honestly; write the missing "this part is ours" cards (2003's streak, the 1997 channel, the migrating file) |
+| B2 | "honestly remove, not really needed here" | remove "paid per correction" from the Close's 2016 panel and its card |
+| B3 | "Correct" | done (source 17); anything still unverified goes on the deep-research list |
+| B4 | yes | a contested card: what "social contagion" claims, who uses it, that it is not a settled finding |
+| B5 | yes — and **"Inferred" rather than "Imagined"**: "'imagined' sounds like a manipulative act on my side, while we are talking about creative inference and speculative approaches" | the plain documentary sentence on the 2026 panel's face; the campaign card first; the dossier's "Imagined" banner becomes "Inferred" everywhere |
+| B6 | "They are real, so they have a reason to be in the Close" | keep the names |
+| B7 | align the fiction's day with the real record (not before it) | set Malta's day to the documented vote date, verified first |
+| B8 | add something eerie — "L is waiting to help you", an "L phrase of the day" | the orb gains its tell |
+| B9 | "yes, no mocking" | the line on the recording's card |
+| B10 | yes | "don't let it finish the sentence" |
+| B11 | rewrite | the content notice and its toggle, to what plays now |
+| B12 | delete — "this is not for survivors, this is to educate about the topic, especially for those who might need other forms of content to interact with it, to understand the underlying stuff and to create awareness" | delete the line |
+| B13 | yes | "lesbian" said plainly once where the system cannot edit it; the women named on the Close's 2016 panel |
+| B14 | yes | the tagged video is Renata's own cut; the group's poster is a woman |
+| B15 | part of the main beat | Annette's family calls join 2016's main beat |
+| B16 | keep | — |
+| B17 | "you decide" | soften the credit: the piece invents its houses, categories and names and depicts no real ball |
+| B18 | "Maybe also offer" | the ad also offered as an unread icon after a dismissal |
+| B19 | "don't fully know what this is" | explained to him: the ad's skip arms at 15 s, the montage starts at 25.7 s |
+| B20 | "okay? or already resolved?" | explained to him: still open (the centre tile is never named as Daniel's) |
+| B21 | "Uh that's lovely" | one trace of Caleb in 1997 |
+| B22 | "I think so" | the board's accountability-partner request becomes pressable; Mark T. is assigned there |
+| B23 | "can you show me that?" | stills of the two stage directions sent to him |
+| B24 | "Warm it please!" | the Commons warmed; the lamps raised to string-light height |
+| B25 | yes | one non-AI route in 2026: a short video whose comments point to a "survivor network" |
+| B26 | "needs to be reviewed in more detail… we are talking about a multitude of actions and systems, they are never one" | NOT a unification — a design note first: the names stay many, and the piece shows they are many |
+| B27 | add | four optional Close beats on the map |
+| B28 | after people review | — |
+
+**A new idea of his (2026-10-02):** nothing in the piece shows the TERMS the networks use and the "REASONS" they give for
+being LGBTQIA+ — "phrases of the day? an extra app installed with every update — an association game, a trivia, or an
+encyclopedia of the words we've found them collecting and the reasons they give for being gay or trans?" → a proposal
+to him first (see the session's reply).
+
+**The Close's message (RESEARCH_CLOSE_MESSAGE_2026-10-02.md), his notes:**
+- "trans and gender diverse", not the binary pair — B2's line to be worded to what FRA measured;
+- drop the search-results detail ("not relevant to common people");
+- the EU: "a non-committal recommendation… 2027 means nothing, because it killed the law";
+- "Love the B5";
+- his B6: *"The next update is still being written, but their perpetrators are already making more victims."*
