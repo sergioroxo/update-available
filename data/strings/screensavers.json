@@ -1,0 +1,22 @@
+{
+ "_doc": "⚑ S208 — THE SCREENSAVERS (his, 2026-10-01: 'a screensaver inspired by the 95 ones… they should have some relevance to the topic and the thematic and style of the experience… be creative about it… you can invent for 2016 and 2026… they don't appear if someone is watching the videos or the song: idle must be with nothing active'). Each era's machine sleeps the way machines of its day did, and each sleep belongs to whoever owns the machine by then. 1997: the PC's own starfield — until the kit is installed, after which the kit has quietly replaced it with its own words in spinning chrome. 2003: Restorify's flock — Lamby Productions' lambs flying out of the dark, haloed, all one way; one flies the other way, without a halo, and is never caught. 2016: GracePlatform's lock screen — a sunrise, the time, an inspirational line, a 'Like what you see?' that harvests a preference even at rest, and the corrections still counting up while she is away. 2026: GraceOS's breathing orb — wellness language over the programme (the rebrand toward 'choice, support, wellness' is documented: sogice-social-media-layer.md, 2026 §3). Operable register throughout: the seller's voice, never the person's. Code: src/desktop/apps/screensaver.ts. Idle: SAVER_SECONDS of no press with nothing open and nothing playing.",
+ "e1": {
+  "_docText": "the kit's own words — its last step's sign-off (s1_kit.json allDone: 'Walk on.'), set as his screensaver",
+  "text": "WALK ON"
+ },
+ "e3": {
+  "brand": "GracePlatform",
+  "quote": "Every heart can be restored.",
+  "quoteBy": "— GracePlatform Daily",
+  "like": "Like what you see?",
+  "waiting": "{n} corrections waiting",
+  "_docWaiting": "the counter starts at the board's open jobs and climbs while she is away: the work does not stop when she does"
+ },
+ "e4": {
+  "mark": "GraceOS",
+  "in": "breathe in",
+  "out": "breathe out",
+  "affirmations": ["you are becoming", "this is care", "slowly, Maya", "nothing is lost here", "we kept your place"],
+  "idleLine": "press to continue"
+ }
+}

@@ -50,6 +50,8 @@ import { drawLambyCartoon, e2CartoonVersion, E2_CARTOON } from './apps/lambyCart
 import { playOnce, isAudioAvailable } from '../audio/tapeAudio';
 import { GuideThread } from '../narrative/guide';
 import { setPauseOS, pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
+import { Screensaver, SAVER_SECONDS } from './apps/screensaver';
+import { anythingPlaying } from '../audio/tapeAudio';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
 import { ledger, wipeLedger } from '../state/ledger';
@@ -411,6 +413,9 @@ export class DesktopOS {
   private lambyWaitShown = false;
   /** ⚑ S194 — seconds since the last press on the desktop (the helpers wait for quiet) */
   idleSeconds = 0;
+  /** ⚑ S208 — the era's own screensaver (1997 the starfield, then the kit's WALK ON; 2003 Restorify's flock), after
+   *  SAVER_SECONDS of quiet on an idle desktop with nothing playing */
+  saver: Screensaver | null = null;
   private joinChannel: () => void = () => {};
   /** ⚑ S186 — the image Rob sent over DCC, open in its viewer (owns the screen until closed) */
   private yesOpen = false;
@@ -1007,6 +1012,23 @@ export class DesktopOS {
    *   2003 · after the first check-in, on a quiet desktop: Restorify's "Today" — Your Story first.
    * A modal dialog, one button; nothing filed. If there is nothing left to list, there is no pause.
    */
+  /** ⚑ S208 — the screensaver: only on a desktop with nothing open (no window, no media, no notice) and nothing
+   *  playing, never over the pause; anything the system opens or plays wakes it, as a dialog would. A press wakes it
+   *  and does nothing else. */
+  private updateSaver(dt: number): void {
+    const era = this.desktopEra;
+    if (!this.saver) {
+      if (this.reinterp && this.phase === 'desktop' && (era === 'e1' || era === 'e2') && this.idleSeconds > SAVER_SECONDS
+          && this.desktopIdle() && !this.pauseOpen && !this.toast && !this.paused && !this.e2Jingle && !anythingPlaying()) {
+        this.saver = new Screensaver(era === 'e2' ? 'lambs' : ledger.records.includes('kit-inserted') ? 'text' : 'stars');
+        this.dirty = true;
+      }
+      return;
+    }
+    if (this.phase !== 'desktop' || !this.desktopIdle() || this.pauseOpen || this.toast || anythingPlaying() || (era !== 'e1' && era !== 'e2')) { this.saver = null; this.dirty = true; return; }
+    if (this.saver.update(dt)) this.dirty = true;
+  }
+
   private maybePause(): void {
     if (this.pauseOpen || this.phase !== 'desktop' || !this.reinterp) return;
     const era = this.desktopEra;
@@ -1732,6 +1754,7 @@ export class DesktopOS {
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
     this.idleSeconds += dt;
+    this.updateSaver(dt);
     if (this.testimony?.open) { this.testimony.update(dt); if (this.testimony.dirty) this.dirty = true; }   // S205
     this.maybePause();
     // ⚑ S201 — Lamby's "while you wait": once, on a quiet 2003 desktop, after the thread was recommended
@@ -2538,6 +2561,8 @@ export class DesktopOS {
     if (this.yesOpen) this.hits = this.hits.filter((h) => h.id === 'yes-close');
     // ⚑ S207 — the pause is modal: drawn last, and the only thing pressable while it is up
     if (this.pauseOpen) { this.hits = []; this.drawPauseDialog(W, H); }
+    // ⚑ S208 — the screensaver covers everything; the whole glass is the one thing to press (it only wakes)
+    if (this.saver) { this.saver.draw(ctx, W, H); this.hits = [{ x: 0, y: 0, w: W, h: H, id: 'saver-wake' }]; }
   }
 
   private drawEraDesktopChrome(
@@ -3480,6 +3505,7 @@ export class DesktopOS {
 
   handleClick(x: number, y: number): void {
     this.idleSeconds = 0;   // S194 — the helpers wait for quiet
+    if (this.saver) { this.saver = null; this.dirty = true; return; }   // S208 — a press wakes it, and does nothing else
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (this.paused) {
       if (hit?.id === 'resume') this.paused = false;

@@ -120,7 +120,8 @@ import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
 import maiden from '../../data/dialog/s3_maiden.json';
-import { playOnce } from '../audio/tapeAudio';
+import { playOnce, anythingPlaying } from '../audio/tapeAudio';
+import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 
@@ -405,6 +406,8 @@ export class GraceQueueLite {
   private storyDone = false;
   private decisions = new Map<number, Outcome>();
   private rects: Rect[] = [];
+  /** ⚑ S208 — GracePlatform's lock screen, after SAVER_SECONDS of quiet on the board with nothing open or playing */
+  private saver: Screensaver | null = null;
   private lambLine: string;
   /** the two-line beat, when a beat has two (see drawLambientLane) */
   private lambLines: string[] | null = null;
@@ -466,6 +469,7 @@ export class GraceQueueLite {
   private floppyOpened = false;
 
   update(dt: number): void {
+    this.updateSaver(dt);
     if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
@@ -568,6 +572,24 @@ export class GraceQueueLite {
 
   // ── the list ─────────────────────────────────────────────────────────────
   private bump(): void { this.ownVersion++; }
+
+  /** ⚑ S208 — the lock screen (screensaver.ts 'lock'): only on the board, nothing open, no card up, nothing playing;
+   *  anything that opens or plays wakes it. The corrections counter starts from the board's open jobs. */
+  private updateSaver(dt: number): void {
+    const quiet = this.mode === 'board' && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying();
+    if (!this.saver) {
+      if (quiet && this.boardQuietT > SAVER_SECONDS) {
+        this.saver = new Screensaver('lock', 2016);
+        this.saver.waitingFrom = Math.max(1, [...this.surfaces.values()].filter((s) => !s.complete()).length);
+        this.saver.clock = this.clockText();
+        this.bump();
+      }
+      return;
+    }
+    if (!quiet) { this.saver = null; this.bump(); return; }
+    this.saver.clock = this.clockText();
+    if (this.saver.update(dt)) this.bump();
+  }
 
   private submission(): SubmissionDef | undefined { return SUBMISSIONS[this.subIdx]; }
 
@@ -1039,6 +1061,8 @@ export class GraceQueueLite {
     if (this.mode === 'dark') { drawE3Idle(ctx, W, H, this.idleT); return; }
     if (this.mode === 'boot') { this.drawBoot(ctx, W, H); return; }
     if (this.mode === 'install') { this.drawInstall(ctx, W, H); return; }
+    // ⚑ S208 — asleep: the lock screen is the whole panel, and the whole glass only wakes it
+    if (this.saver) { this.saver.draw(ctx, W, H); this.rects = [{ x: 0, y: 0, w: W, h: H, id: 'saver-wake' }]; return; }
     aero.wallpaper(ctx, W, H);
     aero.taskbar(ctx, W, H, this.clockText()); // S158: the room's one clock, the phone reads the same
     // ⚑ MAXIMISED, NOT WINDOWED — 2026-08-24, Sérgio: "It should be maximized."
@@ -1897,6 +1921,7 @@ export class GraceQueueLite {
   // ── input ────────────────────────────────────────────────────────────────
   handleClick(x: number, y: number): void {
     this.boardQuietT = 0;
+    if (this.saver) { this.saver = null; this.bump(); return; }   // S208 — a press wakes it, and does nothing else
     const r = this.rects.find(rr => hit(rr, x, y));
     if (!r) return;
     // ⚑ the taskbar button is tested FIRST and is the only live control while

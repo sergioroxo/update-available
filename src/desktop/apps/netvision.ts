@@ -68,8 +68,14 @@ import { releaseBus } from '../../audio/tapeAudio';
 import media from '../../../data/dialog/s2_media.json';
 import { drawFootage } from './testimony';
 /** ⚑ S207 — which version of the ad plays (s2_media.json `variant`; _docVariants). The render tool may override. */
-let VARIANT: 'original' | 'participant' = ((media as unknown as { variant?: string }).variant ?? 'participant') as 'original' | 'participant';
-export function setNetVisionVariant(v: 'original' | 'participant'): void { VARIANT = v; }
+type Variant = 'original' | 'participant' | 'montage';
+let VARIANT: Variant = ((media as unknown as { variant?: string }).variant ?? 'participant') as Variant;
+export function setNetVisionVariant(v: Variant): void { VARIANT = v; }
+/** ⚑ S208 — the REAL STORIES montage (variant 'montage'; his, 2026-10-02: 'combine the Marcus one, so we can have a bit
+ *  more time to see the montage and then transition to an image of a person clearly sad'): the montage runs at
+ *  MONTAGE_PACE under Marcus's own line, then the shot cuts to him alone */
+const MONTAGE_PACE = 1.5;
+const MONTAGE_SECONDS = 3.2 * MONTAGE_PACE;
 /** ⚑ S206 — how long Daniel's own frame holds at the head of the ACTUAL PARTICIPANT shot */
 const TAPE_INSERT_SECONDS = 2.4;
 
@@ -616,6 +622,40 @@ export class NetVisionPlayerApp {
     ctx.fill();
   }
 
+  /**
+   * ⚑ S208 — the montage's last shot (his: "an image of a person clearly sad"). Side-on, because the front-facing
+   * figure could not fold far enough to read: on a stool, bent double, elbows on the knees, the bowed head held in
+   * both hands. The shoulders rise and fall with the breath, and that is all that moves. No face, as ever.
+   */
+  private drawSadFigure(ctx: CanvasRenderingContext2D, x0: number, y0: number, s: number): void {
+    const col = ERA1.black;
+    const t = (n: number): number => Math.max(2, Math.round(n * s));
+    const b = this.breath(0.4) * 1.2 * s;
+    // the stool
+    this.limb(ctx, x0 - 9 * s, y0 - 21 * s, x0 + 6 * s, y0 - 21 * s, t(3), col);
+    this.limb(ctx, x0 - 7 * s, y0 - 21 * s, x0 - 9 * s, y0, t(2), col);
+    this.limb(ctx, x0 + 4 * s, y0 - 21 * s, x0 + 6 * s, y0, t(2), col);
+    // legs: thigh forward, shin down to the floor
+    const hip = [x0 - 2 * s, y0 - 25 * s], knee = [x0 + 13 * s, y0 - 26 * s], foot = [x0 + 14 * s, y0 - 1 * s];
+    this.limb(ctx, hip[0], hip[1], knee[0], knee[1], t(8), col);
+    this.limb(ctx, knee[0], knee[1], foot[0], foot[1], t(6), col);
+    this.limb(ctx, foot[0] - 1 * s, foot[1], foot[0] + 5 * s, foot[1], t(3), col);
+    // the back, bent far over the knees
+    const shoulder = [x0 + 7 * s, y0 - 44 * s - b];
+    this.limb(ctx, hip[0], hip[1], x0 + 1 * s, y0 - 36 * s - b * 0.5, t(10), col);
+    this.limb(ctx, x0 + 1 * s, y0 - 36 * s - b * 0.5, shoulder[0], shoulder[1], t(10), col);
+    // the head, bowed below the shoulders, in front of them
+    const head = [x0 + 15 * s, y0 - 39 * s - b * 0.6];
+    this.limb(ctx, shoulder[0], shoulder[1], head[0] - 3 * s, head[1] - 2 * s, t(4), col);
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.ellipse(Math.round(head[0]), Math.round(head[1]), Math.round(5.5 * s), Math.round(6 * s), 0.5, 0, Math.PI * 2); ctx.fill();
+    // elbow down on the knee, the forearm up, the hand over the face
+    const elbow = [knee[0] - 1 * s, knee[1] - 3 * s];
+    this.limb(ctx, shoulder[0], shoulder[1] + 2 * s, elbow[0], elbow[1], t(5), col);
+    this.limb(ctx, elbow[0], elbow[1], head[0] + 4 * s, head[1] + 2 * s, t(5), col);
+    ctx.fillRect(Math.round(head[0] + 2 * s), Math.round(head[1] - 1 * s), t(4), t(5));
+  }
+
   /** a 1px outline box — the period phone and a few frames are drawn from
    *  these, so the outline vocabulary lives in one place */
   private outline(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number,
@@ -702,7 +742,12 @@ export class NetVisionPlayerApp {
         return;
       case 'testimony':
         // ⚑ S206 — REAL STORIES. REAL CHANGE. (s2_media.json _docRealStories): his own take, cut into the ad
-        if (VARIANT !== 'original' && scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < TAPE_INSERT_SECONDS) {
+        if (VARIANT === 'montage' && scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < MONTAGE_SECONDS) {
+          this.drawRealStoriesMontage(ctx, a, (this.elapsed - scene.at) / MONTAGE_PACE);
+          this.drawLowerThird(ctx, a, scene, override);   // his line runs under the wall: "I thought this was just me"
+          return;
+        }
+        if (VARIANT === 'participant' && scene.insertTape && ledger.records.includes('testimony-online') && this.elapsed - scene.at < TAPE_INSERT_SECONDS) {
           drawFootage(ctx, 'daniel', 13.2, a.x, a.y, a.w, a.h, 0, true);
           const M2 = media as unknown as { realStories: string; realStoriesLine: string };
           ui.px(ctx, a.x, a.y + Math.round(a.h * 0.08), a.w, 26, ERA1.navy);
@@ -891,6 +936,101 @@ export class NetVisionPlayerApp {
    * ⚑ The quiet inversion (spec §3): the BEFORE has the window and the AFTER
    * does not. Recovery as enclosure. It is never remarked on, by anyone, ever.
    */
+  /**
+   * ⚑ S208 — REAL STORIES, AS A MONTAGE (his, 2026-10-01: "I like the Real Stories opening, maybe I could see a
+   * tentative version of that montage"). Variant 'montage' only; the piece still plays 'participant'.
+   * Daniel's raw frame first, full screen, his line under it — then it shrinks into the middle of a wall of nine
+   * "real stories", eight more slumped BEFOREs popping in round him; the title slams down, a starburst spins, and
+   * the eight flip to AFTER one by one, arms up. His does not flip — the tape has no after, the tape kept running —
+   * so the ad slaps its own disclaimer over him. The satire is the seller's and it collapses on him: the one real
+   * story is the one they have to cover. No flashes (the break's own law): every change is position, scale-by-clip
+   * or text.
+   */
+  private drawRealStoriesMontage(ctx: CanvasRenderingContext2D, a: Rect, T: number): void {
+    const MS = media as unknown as { realStories: string; realStoriesLine: string; montage: { caption: string; burst1: string; burst2: string } };
+    const ease = (k: number): number => { const c = Math.max(0, Math.min(1, k)); return c * c * (3 - 2 * c); };
+    const gap = 4;
+    const gridH = a.h - 34;   // the lower third (Marcus's line) runs under the wall
+    const tw = Math.floor((a.w - gap * 4) / 3), th = Math.floor((gridH - gap * 4) / 3);
+    const tile = (i: number): Rect => ({ x: a.x + gap + (i % 3) * (tw + gap), y: a.y + gap + Math.floor(i / 3) * (th + gap), w: tw, h: th });
+    ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.navy);
+    // the eight others: in order round the middle, popping in, then flipping (a clip that narrows and opens)
+    const order = [0, 1, 2, 5, 8, 7, 6, 3];
+    order.forEach((ti, n) => {
+      const appear = 0.9 + n * 0.05;
+      if (T < appear) return;
+      const flipAt = 1.45 + n * 0.1;
+      const f = Math.max(0, Math.min(1, (T - flipAt) / 0.16));
+      const after = f >= 0.5;
+      const open = Math.abs(Math.cos(f * Math.PI));
+      const r = tile(ti);
+      const cw = Math.max(1, Math.round(r.w * (T < flipAt ? 1 : open)));
+      ctx.save();
+      ctx.beginPath(); ctx.rect(r.x + Math.round((r.w - cw) / 2), r.y, cw, r.h); ctx.clip();
+      this.drawMiniStory(ctx, r, n, after);
+      ui.setFont(ctx, 8);
+      const cap = MS.montage.caption.replace('{n}', String(1100 + n * 137));
+      ui.px(ctx, r.x + 3, r.y + r.h - 13, Math.ceil(ctx.measureText(cap).width) + 6, 10, ERA1.black);
+      ctx.fillStyle = after ? ERA1.tooltip : ERA1.silver; ctx.fillText(cap, r.x + 6, r.y + r.h - 12);
+      ctx.restore();
+    });
+    // his: full screen, then into the middle tile
+    const k = ease((T - 0.9) / 0.25);
+    const mid = tile(4);
+    const fx = Math.round(a.x + (mid.x - a.x) * k), fy = Math.round(a.y + (mid.y - a.y) * k);
+    const fw = Math.round(a.w + (mid.w - a.w) * k), fh = Math.round(gridH + (mid.h - gridH) * k);
+    drawFootage(ctx, 'daniel', 13.2, fx, fy, fw, fh, 0, true);
+    if (T < 0.95) {
+      ui.setFont(ctx, 10);
+      const lw = ctx.measureText(MS.realStoriesLine).width;
+      ui.px(ctx, a.x + Math.round((a.w - lw) / 2) - 6, a.y + gridH - 24, Math.ceil(lw) + 12, 16, ERA1.black);
+      ctx.fillStyle = ERA1.white; ctx.fillText(MS.realStoriesLine, a.x + Math.round((a.w - lw) / 2), a.y + gridH - 21);
+    }
+    // the title slams down: big to small, no flash
+    if (T >= 1.25) {
+      const s2 = ease((T - 1.25) / 0.18);
+      const size = Math.round(30 - 14 * s2);
+      ui.setFont(ctx, size);
+      const w = ctx.measureText(MS.realStories).width;
+      const by = a.y + Math.round(a.h * 0.36) - Math.round(size * 0.9);
+      ui.px(ctx, a.x, by, a.w, Math.round(size * 1.8), ERA1.navy);
+      ui.px(ctx, a.x, by + Math.round(size * 1.8), a.w, 2, ERA1.tooltip);
+      this.fringeText(ctx, MS.realStories, a.x + Math.round((a.w - w) / 2), by + Math.round(size * 0.4), ERA1.white);
+    }
+    if (T >= 1.7) this.drawStarburst(ctx, a.x + a.w - 52, a.y + Math.round(gridH * 0.74), 34, MS.montage.burst1, MS.montage.burst2);
+    // and the one that never flipped gets the small print, stamped over him
+    if (T >= 2.4) {
+      const tag = M.tags.notTypical;
+      ui.setFont(ctx, 12);
+      const w = Math.min(mid.w + 16, Math.ceil(ctx.measureText(tag).width) + 18);
+      const sx = mid.x + Math.round((mid.w - w) / 2), sy = mid.y + Math.round(mid.h * 0.5);
+      ui.px(ctx, sx - 2, sy - 2, w + 4, 32, ERA1.black);
+      ui.px(ctx, sx, sy, w, 28, ERA1.tooltip);
+      ctx.fillStyle = ERA1.warnDark; ctx.fillText(tag, sx + 9, sy + 8);
+    }
+  }
+
+  /** one of the montage's other "real stories": the ad's own BEFORE or AFTER, small, each a little different */
+  private drawMiniStory(ctx: CanvasRenderingContext2D, r: Rect, n: number, after: boolean): void {
+    const floorY = r.y + Math.round(r.h * 0.8);
+    const cx = r.x + Math.round(r.w * (0.38 + (n % 3) * 0.12));
+    if (!after) {
+      const walls = [ERA1.grey, ERA1.silver, ERA1.grey, ERA1.beige];
+      ui.px(ctx, r.x, r.y, r.w, r.h, walls[n % walls.length]);
+      ui.px(ctx, r.x, r.y, r.w, Math.round(r.h * 0.18), ERA1.greyDark);
+      ui.px(ctx, r.x, floorY, r.w, r.h - Math.round(r.h * 0.8), ERA1.greyDark);
+      const wx = r.x + Math.round(r.w * (n % 2 ? 0.12 : 0.62)), wy = r.y + Math.round(r.h * 0.26);
+      ui.px(ctx, wx - 2, wy - 2, 34, 30, ERA1.greyDark); ui.px(ctx, wx, wy, 30, 26, ERA1.silver);
+      this.drawFigure(ctx, cx, floorY + 3, { scale: 0.42 + (n % 3) * 0.04, seated: n % 2 === 0, lean: 5 + (n % 4), headDrop: 6 + (n % 3), turn: 0.7 });
+    } else {
+      ui.px(ctx, r.x, r.y, r.w, r.h, ERA1.paper);
+      ui.px(ctx, r.x, r.y, r.w, Math.round(r.h * 0.16), ERA1.beige);
+      ui.px(ctx, r.x, floorY, r.w, r.h - Math.round(r.h * 0.8), ERA1.olive);
+      this.drawFigure(ctx, cx + 26, floorY + 1, { scale: 0.28, color: ERA1.silver, turn: 0.8, armSpread: 0.12 });
+      this.drawFigure(ctx, cx, floorY + 3, { scale: 0.46 + (n % 3) * 0.04, armSpread: 0.34, armLift: 0.5 + (n % 2) * 0.3, headDrop: -1 });
+    }
+  }
+
   private drawTestimonySet(ctx: CanvasRenderingContext2D, a: Rect, scene: Scene): void {
     const before = scene.grade === 'before';
     const cx = a.x + Math.round(a.w / 2);
@@ -918,9 +1058,14 @@ export class NetVisionPlayerApp {
       }
       ctx.globalAlpha = 1;
 
-      this.drawFigure(ctx, cx - 62, floorY + 6, {
-        scale: 0.95, lean: 7, headDrop: 7 + this.breath(0.4) * 1.4, armSpread: 0, turn: 0.7
-      });
+      if (VARIANT === 'montage') {
+        // ⚑ S208 — after the wall of stories, one man alone, plainly sad: seated, folded over, head in his hands
+        this.drawSadFigure(ctx, cx - 70, floorY + 6, 1.6);
+      } else {
+        this.drawFigure(ctx, cx - 62, floorY + 6, {
+          scale: 0.95, lean: 7, headDrop: 7 + this.breath(0.4) * 1.4, armSpread: 0, turn: 0.7
+        });
+      }
 
       // the frame closes in on him — drawn last so it genuinely crops
       const bar = Math.round(a.w * 0.16);

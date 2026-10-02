@@ -353,6 +353,9 @@ export class TapeAudioBus {
     return this.hiss;
   }
 
+  /** ⚑ S208 — is the bus meant to be playing (a tape, the ad's song)? The screensavers wait for silence. */
+  isPlaying(): boolean { return this.wantPlaying; }
+
   /** start the ambient hiss (+ a named clip, if that file is registered) */
   start(clipName?: string | null): void {
     this.wantPlaying = true;
@@ -595,6 +598,21 @@ export function stopClip(a: HTMLAudioElement | null): void {
   a.loop = false;
   a.pause();
   liveOneShots.delete(a);
+}
+
+/** ⚑ S208 — is anything audible playing: a tape or the ad on the bus, or any one-shot or loop (a song, a jingle,
+ *  a read-aloud, the ball)? The room's ambient bed does not count. The screensavers come on only in silence. */
+export function anythingPlaying(): boolean {
+  if (liveBus?.isPlaying()) return true;
+  for (const a of liveOneShots) if (!a.paused && !a.ended) return true;
+  return false;
+}
+
+/** for probes: what is playing right now, by file (the bus as 'bus') */
+export function playingNow(): string[] {
+  const out: string[] = liveBus?.isPlaying() ? ['bus'] : [];
+  for (const a of liveOneShots) if (!a.paused && !a.ended) out.push(a.src.split('/').pop() ?? a.src);
+  return out;
 }
 
 export function setOneShotsMuted(muted: boolean): void {

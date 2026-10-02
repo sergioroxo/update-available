@@ -28,7 +28,9 @@
  * not instances; the Dossier carries what is documented about the category.
  */
 import { px, setFont, wrapText } from '../theme/chrome';
-import { playOnce } from '../../audio/tapeAudio';
+import { playOnce, anythingPlaying } from '../../audio/tapeAudio';
+import { Screensaver, SAVER_SECONDS } from './screensaver';
+import SAVERS from '../../../data/strings/screensavers.json';
 import { entriesByEra } from '../../witness/record';
 import { pulse as witnessPulse } from '../../witness/pulse';
 import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 } from '../theme/era4';
@@ -151,6 +153,11 @@ export class E4Browser {
   private phase: 'dormant' | 'saver' | 'restoring' | 'open' | 'handed' | 'failed' = 'dormant';
   /** S160 / R3-87: the screensaver's own clock — the mark drifts on it */
   private saverT = 0;
+  /** ⚑ S208 — GraceOS's breathing orb (screensaver.ts 'orb'): the arrival's sleep, and the laptop's own sleep again
+   *  after SAVER_SECONDS of quiet on the restored page with nothing playing (that one files nothing) */
+  private orb: Screensaver | null = null;
+  private idleOrb: Screensaver | null = null;
+  private idleT = 0;
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
 
@@ -243,7 +250,24 @@ export class E4Browser {
     // asleep on its mark until she presses it; the restore is her first act, not the landing's
     this.phase = 'saver';
     this.saverT = 0;
+    this.orb = new Screensaver('orb', 2026);
+    this.orb.line = PROGRAM.saver.line;
     this.version++;
+  }
+  /** ⚑ S208 — the laptop sleeps again only on the restored page at rest: nothing said, nothing playing, pressable */
+  private updateIdleOrb(dt: number): void {
+    const quiet = this.phase === 'open' && this.mode === 'free' && this.pressable && !this.nowLine && !this.waitNow && !anythingPlaying();
+    if (!this.idleOrb) {
+      this.idleT = quiet ? this.idleT + dt : 0;
+      if (this.idleT > SAVER_SECONDS) {
+        this.idleOrb = new Screensaver('orb', 2027);
+        this.idleOrb.line = SAVERS.e4.idleLine;
+        this.version++;
+      }
+      return;
+    }
+    if (!quiet) { this.idleOrb = null; this.idleT = 0; this.version++; return; }
+    if (this.idleOrb.update(dt)) this.version++;
   }
   /** the press on the screensaver: the restore begins */
   private wake(): void {
@@ -353,11 +377,12 @@ export class E4Browser {
     }
     if (this.settleT > 0) { this.settleT = Math.max(0, this.settleT - dt); return; }
     if (this.phase === 'saver') {
-      const b = this.saverT; this.saverT += dt;
-      if (Math.floor(b / 0.5) !== Math.floor(this.saverT / 0.5)) this.version++;   // the mark drifts in steps
+      this.saverT += dt;
+      if (this.orb?.update(dt)) this.version++;   // the orb breathes in steps
       return;
     }
     this.t += dt;
+    this.updateIdleOrb(dt);
     if (this.phase === 'restoring') {
       // ⚑ the whole boot is a clock and a line. Nothing is pressable during it,
       // and nothing can be skipped — the same ruling E2's splash got.
@@ -461,18 +486,13 @@ export class E4Browser {
       return;
     }
     if (this.phase === 'saver') {
-      // S160 / R3-87 — the screensaver: the system's mark drifting on the dark, one line, one press
-      px(ctx, 0, 0, W, H, CHROME.page);
-      const mx = Math.round(W * (0.3 + 0.4 * (0.5 + 0.5 * Math.sin(this.saverT * 0.23))));
-      const my = Math.round(H * (0.3 + 0.35 * (0.5 + 0.5 * Math.cos(this.saverT * 0.31))));
-      setFont(ctx, 22);
-      ctx.fillStyle = WEB.muted;
-      const mw = ctx.measureText(PROGRAM.saver.mark).width;
-      ctx.fillText(PROGRAM.saver.mark, mx - Math.round(mw / 2), my);
-      setFont(ctx, 9);
-      ctx.fillStyle = CHROME.hint;
-      const lw = ctx.measureText(PROGRAM.saver.line).width;
-      ctx.fillText(PROGRAM.saver.line, Math.round((W - lw) / 2), H - 30);
+      // S160 / R3-87 — the screensaver, one press; ⚑ S208: GraceOS's breathing orb (screensaver.ts)
+      if (this.orb) this.orb.draw(ctx, W, H); else px(ctx, 0, 0, W, H, CHROME.page);
+      this.publish({ x: 0, y: 0, w: W, h: H, id: 'saver-wake' });
+      return;
+    }
+    if (this.idleOrb && this.phase === 'open') {   // S208 — asleep again; the whole glass only wakes it
+      this.idleOrb.draw(ctx, W, H);
       this.publish({ x: 0, y: 0, w: W, h: H, id: 'saver-wake' });
       return;
     }
@@ -1438,6 +1458,8 @@ export class E4Browser {
   handleClick(x: number, y: number): boolean {
     this.quietT = 0;
     this.freeQuietT = 0;
+    this.idleT = 0;
+    if (this.idleOrb) { this.idleOrb = null; this.version++; return true; }   // S208 — a press wakes it, and does nothing else
     if (this.waitNow) { this.waitNow = false; this.version++; }
     if (this.nowLine) { this.nowLine = null; this.version++; }
     if (this.phase === 'handed') return false;
