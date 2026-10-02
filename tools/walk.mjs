@@ -172,6 +172,10 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const PREFER = [
   /understand|continue|^ok$|^okay$|next|read.?on|agree|proceed|begin|start$|enter|hello|open|insert|play|^notification$/i,   // S178: the news outranks a bare Unlock
   /apply|send|confirm|done|finish|accept|update.?now|sign.?in|signin|allow|unlock/i,
+  // ⚑ S209 / A25 (REVIEW_ROUND_5, ERA16-16) — 2016's other jobs, worked to their end: the tier below ranked
+  //   `board-back` (via /^board/) as high as a job's own controls, so every job but the testimony was opened and
+  //   left. Now a job's controls outrank leaving it.
+  /^family-sel-|^family-reply-|^family-handle|^group-post$|^story-seg-|^story-publish$|^podcast-publish$|^publish$|^mod:|^price:|^tag:|^preview$|^next:|^c:|^t:|^icon-netvision$/i,
   /^task-|^tile-|^consent|^board|^group$|^inbox$|^link\d*$/i   // S149: `link2`, the vote's card (a fresh id ranked under a spent `task-` for 270 presses)
 ];
 /**
@@ -317,6 +321,22 @@ async function main() {
   });
 
   const noise = [];
+  // ⚑ S209 — two runs on 2026-10-02 lost their frame mid-wait (once at the Close, once in 2003) with no navigation
+  //   and no crash logged: headless Chrome swapping the page's frame under a pending evaluate. Retry, and say so;
+  //   a real reload still shows as PAGE NAVIGATED and a crash as PAGE CRASH.
+  {
+    const evalOnce = page.evaluate.bind(page);
+    page.evaluate = async (...args) => {
+      for (let attempt = 0; ; attempt++) {
+        try { return await evalOnce(...args); }
+        catch (e) {
+          if (!/detached Frame/i.test(String(e)) || attempt >= 4) throw e;
+          process.stdout.write(`FRAME DETACHED — retry ${attempt + 1}\n`);
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+      }
+    };
+  }
   page.on('pageerror', (e) => noise.push(`PAGEERROR ${String(e).slice(0, 180)}`));
   // S209 — a page that goes away under the walk says why: a crash or a navigation (the 2026-10-02 run lost its frame at the Close)
   page.on('error', (e) => process.stdout.write(`PAGE CRASH ${String(e).slice(0, 200)}\n`));

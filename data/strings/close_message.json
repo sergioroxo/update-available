@@ -1,0 +1,25 @@
+{
+ "_doc": "⚑ S209 / P7-48 — THE CLOSE'S MESSAGE (his, 2026-10-02: 'we are missing the information about SOGICE and why this is important, like the educational aspect that helps close the narrative… after the glitching of Maya maybe the computer should say \"L will be waiting for the next update — coming soon\"… then messages about the continued rise of violence against LGBTQIA+ people, and the continued existence of SOGICE'). Built from docs/reinterp/RESEARCH_CLOSE_MESSAGE_2026-10-02.md (every claim fetched and labelled there; the Commission's page and the FRA figures re-checked by me) with his notes: 'trans people' rather than the binary pair (FRA publishes figures for trans women and trans men only, so 'trans and gender diverse' would claim a number it did not publish); no search-results detail; the EU 'declined to propose a law'; his B6 line verbatim. FRAME VOICE: plain, no sensationalism, no graphic violence; the frame never plays. Shown after the eyes rise to the stars and before the panels open; each card holds ~9 s or until a press.",
+ "laptopLine": "L will be waiting for the next update — coming soon.",
+ "cards": [
+  { "text": "L is invented. Being told to change is not. In a European survey of more than 100,000 LGBTIQ people, one in four said someone had tried to change them. Most often it was words, and often it was family.", "src": ["fra"] },
+  { "text": "For trans people it was nearly one in two. Three in four of those who went through it said they never agreed to it.", "src": ["fra"] },
+  { "text": "“Conversion therapy never goes away, no matter the scandals.”", "by": "— Global Project Against Hate and Extremism, 2022", "src": ["gpahe"] },
+  { "text": "When a practice is banned by name, it changes its name. The UN's independent expert reported it in 2020: the same practices, renamed, offered again.", "src": ["un"] },
+  { "text": "Some laws have changed. Seventeen countries ban it nationwide. More than a million Europeans asked the EU to. It answered with a non-binding recommendation, and declined to propose a law.", "src": ["ilga", "eci"] },
+  { "text": "A 2026 review of 47 European countries found none in the lowest range of organised campaigning against LGBTIQ+ rights, and none where it had declined over twenty-five years.", "src": ["hate"] },
+  { "text": "Harassment is more common than it was in 2019, and most people who are attacked tell no one official. A ban is a law on paper; safety is what happens on the street and online.", "src": ["fra"] },
+  { "_s": "his line, verbatim (2026-10-02) — never paraphrased", "text": "The next update is still being written, but their perpetrators are already making more victims.", "src": [] }
+ ],
+ "continue": "press to continue",
+ "sourcesNote": "The sources for these words are in the menu, under Credits.",
+ "sourcesTitle": "The closing message — sources",
+ "sources": {
+  "fra": "EU Agency for Fundamental Rights, LGBTIQ equality at a crossroads: progress and challenges (EU LGBTIQ Survey III, 14 May 2024) — https://fra.europa.eu/en/publication/2024/lgbtiq-equality-crossroads-progress-and-challenges",
+  "gpahe": "Global Project Against Hate and Extremism, Conversion Therapy Online: The Players (January 2022) — https://globalextremism.org/reports/conversion-therapy-online-the-players/",
+  "un": "UN Independent Expert on sexual orientation and gender identity, report on 'conversion therapy', A/HRC/44/53 (2020) — https://documents.un.org/api/symbol/access?s=A/HRC/44/53&l=en&t=pdf",
+  "ilga": "ILGA World, Pride Month 2026 maps and data (1 June 2026) — https://ilga.org/news/pride-month-2026-lgbti-maps-data/",
+  "eci": "European Commission, reply to the 'Ban on conversion practices in the European Union' initiative (13 May 2026) — https://citizens-initiative.europa.eu/news/european-commission-replies-ban-conversion-practices-european-union-initiative-2026-05-13_en",
+  "hate": "Forbidden Colours, The Hate Review (September 2026), the continental analysis"
+ }
+}

@@ -172,3 +172,21 @@ to him first (see the session's reply).
 - the EU: "a non-committal recommendation… 2027 means nothing, because it killed the law";
 - "Love the B5";
 - his B6: *"The next update is still being written, but their perpetrators are already making more victims."*
+
+---
+
+## BUILT (S209, S209b, S209c — 2026-10-02)
+- **A1–A24: done** (f88c9d1, ea04ee2). **A25: in part** — the walker now works 2016's other jobs (a PREFER tier for
+  their controls; `^board` had ranked "board-back" as high as the jobs), presses the ad's unread icon, and logs
+  crashes and navigations. Still to teach: the 2026 step into the crowd (`commons-crowd` by pointing), and a fresh
+  2016 photo set (tour).
+- **B1, B2, B4 (verified: the 2019 correction read — an earlier draft's claim about the survey's websites was wrong
+  and never shipped), B5, B7, B8, B9, B10, B11, B12, B13, B14, B15 (two pieces of work before the phone), B17, B18,
+  B19, B20, B21, B22, B24 (warm wall and wood; string lights visible), B25 (a renamed account's short video and its
+  comments, with a documented card), B27: done.**
+- **B23:** his yes (2026-10-02, "delete both") — both stage directions removed from Tape 04's subtitles.
+- **B6, B16:** keep, as ruled. **B26, B28:** later, as ruled.
+- **P7-48, the Close's message:** built — the laptop's "L will be waiting for the next update — coming soon.", then
+  eight frame-voice cards on the stars before the panels (data/strings/close_message.json), his last line verbatim,
+  sources under Credits.
+- **P7-47, the Lexicon:** researched (RESEARCH_LEXICON_2026-10-02.md); the design waits on his yes.

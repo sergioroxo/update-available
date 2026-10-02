@@ -122,6 +122,8 @@ export interface Ledger {
    */
   games: { id: string; era: 'e1' | 'e2' | 'e3' | 'e4'; witness: string }[];
   /** ⚑ S192 — 2016's newer board jobs that file their own line (Tag the video) */
+  /** ⚑ S209 / P7-47 — the Lexicon's words the player met, in order (src/room/lexicon.ts meetWord); never a record line */
+  lexicon: string[];
   era3Jobs: { id: string; witness: string }[];
   caleb: {
     id: string;
@@ -346,6 +348,7 @@ const fresh = (): Ledger => ({
   media: [],
   caleb: [],
   games: [],
+  lexicon: [],
   era3Jobs: [],
   era3Arrival: [],
   graceQueue: [],

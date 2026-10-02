@@ -6,6 +6,8 @@
  * Registers: warning/left = frame (bare); name/desktop = operable;
  * the ESC pause overlay is care infrastructure and preempts everything.
  */
+import { meetWord } from '../room/lexicon';
+import lexStrings from '../../data/strings/lexicon.json';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
 import * as ui from './theme/chrome';
 import institutionStrings from '../../data/strings/institution.json';
@@ -402,6 +404,10 @@ export class DesktopOS {
   /** S209 / B18 — the ad waits on the desktop after a dismissed alert */
   private netvisionIcon = false;
   private formOpenedOnce = false;
+  /** ⚑ S209 / P7-47 — each update's own Word of the Day (data/strings/lexicon.json wotdApps): once per era, on a quiet
+   *  desktop after the pause; the word is met (ledger.lexicon) and the Lexicon will turn it over at the Close */
+  private wotdOpen: 'e1' | 'e2' | null = null;
+  private wotdShown = new Set<string>();
   private diaryAfterForm = false;
   /** engine reads this to creep the cold (witness) side into peripheral vision */
   hasUnseenWitness = false;
@@ -713,6 +719,7 @@ export class DesktopOS {
     this.rootCause = new RootCauseApp();
     this.rootCause.onClose = () => { this.rootCause = null; this.dirty = true; this.wayBack(this.desktopEra); };   // S207
     if (!ledger.records.includes('rootcause-opened')) ledger.records.push('rootcause-opened');
+    meetWord('roots');   // S209 / P7-47
     this.dirty = true;
   }
 
@@ -1034,7 +1041,7 @@ export class DesktopOS {
     const era = this.desktopEra;
     if (!this.saver) {
       if (this.reinterp && this.phase === 'desktop' && (era === 'e1' || (era === 'e2' && this.e2Stage === 'active')) && this.idleSeconds > SAVER_SECONDS   // A6: 2003's only once the era has begun
-          && this.desktopIdle() && !this.pauseOpen && !this.toast && !this.paused && !this.e2Jingle && !anythingPlaying()) {
+          && this.desktopIdle() && !this.pauseOpen && !this.wotdOpen && !this.toast && !this.paused && !this.e2Jingle && !anythingPlaying()) {
         this.saver = new Screensaver(era === 'e2' ? 'lambs' : ledger.records.includes('kit-inserted') ? 'text' : 'stars');
         this.dirty = true;
       }
@@ -1042,6 +1049,40 @@ export class DesktopOS {
     }
     if (this.phase !== 'desktop' || !this.desktopIdle() || this.pauseOpen || this.toast || anythingPlaying() || (era !== 'e1' && era !== 'e2')) { this.saver = null; this.dirty = true; return; }
     if (this.saver.update(dt)) this.dirty = true;
+  }
+
+  private maybeWotd(): void {
+    const era = this.desktopEra;
+    if (this.wotdOpen || this.pauseOpen || this.saver || this.phase !== 'desktop' || !this.reinterp) return;
+    if ((era !== 'e1' && era !== 'e2') || this.wotdShown.has(era) || !this.pauseShown.has(era)) return;
+    if (this.idleSeconds < 30 || !this.desktopIdle() || this.toast) return;
+    this.wotdShown.add(era);
+    this.wotdOpen = era;
+    meetWord((lexStrings.wotdApps as Record<string, { word: string }>)[era].word);
+    this.dirty = true;
+  }
+
+  private drawWotd(W: number, H: number): void {
+    if (!this.wotdOpen) return;
+    const { ctx } = this;
+    const app = (lexStrings.wotdApps as Record<string, { title: string; word: string }>)[this.wotdOpen];
+    const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
+    if (!t?.word) { this.wotdOpen = null; return; }
+    const dw = 320;
+    ui.setFont(ctx, 10);
+    const rows = ui.wrapText(ctx, t.line ?? '', dw - 40);
+    const dh = 110 + rows.length * 13;
+    const dx = Math.round((W - dw) / 2), dy = Math.round((H - dh) / 2) - 10;
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, app.title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'wotd-ok' });
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(lexStrings.wotdPrefix, c.x + 14, c.y + 10);
+    ui.setFont(ctx, 16); ctx.fillStyle = ERA1.navy; ctx.fillText(t.word, c.x + 14, c.y + 24);
+    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black;
+    rows.forEach((r, i) => ctx.fillText(r, c.x + 14, c.y + 50 + i * 13));
+    const bw = 70, bx = c.x + c.w - bw - 10, by = c.y + c.h - 28;
+    ui.button(ctx, bx, by, bw, 20, lexStrings.ok, { hover: this.hover === 'wotd-ok' });
+    this.hits.push({ x: bx, y: by, w: bw, h: 20, id: 'wotd-ok' });
   }
 
   private maybePause(): void {
@@ -1780,6 +1821,7 @@ export class DesktopOS {
     this.updateSaver(dt);
     if (this.testimony?.open) { this.testimony.update(dt); if (this.testimony.dirty) this.dirty = true; }   // S205
     this.maybePause();
+    this.maybeWotd();   // S209 / P7-47
     // ⚑ S201 — Lamby's "while you wait": once, on a quiet 2003 desktop, after the thread was recommended
     if (!this.lambyWaitShown && this.desktopEra === 'e2' && this.e2Stage === 'active' && this.forumRecommended
         && !this.forum && this.idleSeconds > 30 && this.desktopIdle() && !this.toast) {
@@ -2586,6 +2628,7 @@ export class DesktopOS {
     if (this.yesOpen) this.hits = this.hits.filter((h) => h.id === 'yes-close');
     // ⚑ S207 — the pause is modal: drawn last, and the only thing pressable while it is up
     if (this.pauseOpen) { this.hits = []; this.drawPauseDialog(W, H); }
+    if (this.wotdOpen) { this.hits = []; this.drawWotd(W, H); }   // S209 / P7-47 — modal, like the pause
     // ⚑ S208 — the screensaver covers everything; the whole glass is the one thing to press (it only wakes)
     if (this.saver) { this.saver.draw(ctx, W, H); this.hits = [{ x: 0, y: 0, w: W, h: H, id: 'saver-wake' }]; }
   }
@@ -3531,6 +3574,11 @@ export class DesktopOS {
   handleClick(x: number, y: number): void {
     this.idleSeconds = 0;   // S194 — the helpers wait for quiet
     if (this.saver) { this.saver = null; this.dirty = true; return; }   // S208 — a press wakes it, and does nothing else
+    if (this.wotdOpen) {   // S209 / P7-47 — the Word of the Day owns the screen until OK
+      const hw = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+      if (hw?.id === 'wotd-ok') { this.wotdOpen = null; this.dirty = true; }
+      return;
+    }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (this.paused) {
       if (hit?.id === 'resume') this.paused = false;

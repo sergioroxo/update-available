@@ -105,6 +105,8 @@
  * their hit rects, their version counters and the debug reach — and because
  * `era3Devices.ts` is 3D plumbing that should not learn what a comment is.
  */
+import { meetWord } from './lexicon';
+import lexStrings from '../../data/strings/lexicon.json';
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
 import {
@@ -191,7 +193,10 @@ const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c
  *  ERA3_NARRATIVE.md §5 step 2–3: "2–3 tasks, her choice, from the board".
  *  Kept in step with `spine.ts`'s own E3 gate, which reads the same ledger. */
 /** S158 / R3-82 — NARRATIVE_FLOW 2016 #5→#6: ONE job done, then the phone (was 2) */
-const MALTA_AFTER_TASKS = 1;
+/** ⚑ S209 / B15 (REVIEW_ROUND_5, ERA16-06; his ruling: more of the main beat) — two pieces of work before the phone:
+ *  a story to its end and another (a story, or any job — Annette's family calls among them). 1 gave the era's
+ *  lesbian story about a minute. */
+const MALTA_AFTER_TASKS = 2;
 
 type Outcome = 'applied' | 'skipped';
 
@@ -410,6 +415,7 @@ export class GraceQueueLite {
   private saver: Screensaver | null = null;
   /** S208 / A2·A7 — the work count when the phone lit; one more finished job after that, link unopened, is "ignored" */
   private maltaWork = -1;
+  private wotdSaid = false;   // S209 / P7-47
   private lambLine: string;
   /** the two-line beat, when a beat has two (see drawLambientLane) */
   private lambLines: string[] | null = null;
@@ -481,6 +487,12 @@ export class GraceQueueLite {
         this.pauseShown = true;
         this.pauseLines = pauseItems('e3', this.floppyOpened ? ['floppy'] : []);
         if (this.pauseLines.length) { this.pauseOpen = true; this.waitSaid = true; this.bump(); }
+      }
+      // ⚑ S209 / P7-47 — GracePlatform's Today's language: once, after the "This week" card, on a quiet board
+      if (!this.wotdSaid && this.pauseShown && !this.pauseOpen && this.boardQuietT > 18) {
+        const app = lexStrings.wotdApps.e3;
+        const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
+        if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? '']); this.bump(); }
       }
       if (!this.waitSaid && this.boardQuietT > 25) {
         const waiting = ['group', 'recommend'].some((id) => { const s = this.surfaces.get(id); return s && !s.complete(); });
@@ -584,8 +596,9 @@ export class GraceQueueLite {
     if (this.mode !== 'board' && this.mode !== 'done') return;
     const wd = this.workDone();
     if (!this.maltaArrived) {
+      if (wd >= 1 && !ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
       if (wd >= MALTA_AFTER_TASKS) {
-        if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
+        if (!ledger.records.includes('e3-two-jobs')) ledger.records.push('e3-two-jobs');
         this.armMalta();
       }
       return;
@@ -848,6 +861,7 @@ export class GraceQueueLite {
     const mounted = this.surfaces.get(t.id);
     this.chipReturn = null;
     if (mounted) {
+      if (t.id === 'recommend') meetWord('brokenness');   // S209 / P7-47 — the house keywords
       this.openSurface = mounted;
       this.mode = 'list';
       if (!this.seenTask) { this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]); }
@@ -855,6 +869,7 @@ export class GraceQueueLite {
       return;
     }
     if (t.surface !== 'testimony') return;
+    meetWord('ssa');   // S209 / P7-47 — her house rules begin by taking the word away
     this.openSurface = null;
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
     this.subIdx = next < 0 ? 0 : next;
@@ -955,6 +970,8 @@ export class GraceQueueLite {
     if (this.maltaArrived) return;
     this.maltaArrived = true;
     this.maltaWork = this.workDone();
+    // the phone lights only after the two pieces of work (B15), whichever path armed it: the map's beat is ticked here
+    if (!ledger.records.includes('e3-two-jobs')) ledger.records.push('e3-two-jobs');
     playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk
     this.phone.arm();
     this.lambSay([LAMBIENT.phone1, LAMBIENT.phone2]);

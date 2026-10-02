@@ -32,7 +32,7 @@ import { BALL, PLACE, ERA4 } from '../desktop/theme/era4';
 
 const LAMP_COUNT = 41;
 /** half-size of a lamp: a small held thing, not a piece of furniture */
-const LAMP_HALF = 0.018;   // ⚑ 0.03 read as yellow blocks a metre from the seat (2026-09-12)
+const LAMP_HALF = 0.04;    // ⚑ S209 / B24 — strung at the ceiling line (2.85–3.2 m) they must read as string lights from the seat; 0.018 vanished up there (the 0.03 note was from when they hung at hand height, 2026-09-12)
 const LAMP_ASPECT = 1.4;
 /** where a hidden lamp waits — under the building, out of every frustum */
 const SUNK_Y = -40;

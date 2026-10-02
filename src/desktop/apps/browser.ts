@@ -27,6 +27,8 @@
  * educational side."* `Lantern` and `Second Thoughts` name CATEGORIES of thing,
  * not instances; the Dossier carries what is documented about the category.
  */
+import lexStrings from '../../../data/strings/lexicon.json';
+import { meetWord } from '../../room/lexicon';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { playOnce, anythingPlaying } from '../../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from './screensaver';
@@ -158,6 +160,7 @@ export class E4Browser {
   private orb: Screensaver | null = null;
   private idleOrb: Screensaver | null = null;
   private idleT = 0;
+  private wotdSaid = false;   // S209 / P7-47
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
 
@@ -345,6 +348,15 @@ export class E4Browser {
         if (!ledger.e4Space.some((e) => e.id === 'record' || e.id === 'tab:record')) items.push(P.items.record);
         if (!ledger.e4Space.some((e) => e.id === 'tab:photos')) items.push(P.items.photos);
         if (items.length) { this.nowLine = P.line.replace('{items}', items.join(P.joiner)); this.version++; }
+      }
+    }
+    // ⚑ S209 / P7-47 — L's phrase of the day, once, after the pause's line, on the restored page at rest
+    if (this.pauseSaid && !this.wotdSaid && this.phase === 'open' && this.mode === 'free' && !this.nowLine) {
+      this.freeQuietT += dt;
+      if (this.freeQuietT > 22) {
+        const app = lexStrings.wotdApps.e4;
+        const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
+        if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.sayLine(`${app.title}: ${t.word}. ${t.line ?? ''}`); }
       }
     }
     // ⚑ S203 — L's "while you wait" (see s4_browser.json console._docWait)

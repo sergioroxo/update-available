@@ -60,6 +60,8 @@
  * spends the update's one "I Agree" and the ONE TOUCH on the headset. There is
  * nothing else to press here, and adding a "continue" would break the rule.
  */
+import { meetWord } from '../../room/lexicon';
+import closeMessage from '../../../data/strings/close_message.json';
 import { visorField, visorEdge, glitchBands, ERA4 } from '../theme/era4';
 import { E4Browser, FAIL } from './browser';
 import { setFont, px } from '../theme/chrome';
@@ -628,6 +630,11 @@ export class E4Shell {
       setFont(ctx, 9);
       ctx.fillStyle = ERA4.dim;
       for (const row of wrapLaptop(ctx, space.corrupt.note, W - 20)) { ctx.fillText(row, 10, ny); ny += 12; }
+      // ⚑ S209 / P7-48 (his) — the machine's last word, in L's own colour: it is not over, it is only deferred
+      ny += 6;
+      setFont(ctx, 11);
+      ctx.fillStyle = ERA4.l;
+      for (const row of wrapLaptop(ctx, closeMessage.laptopLine, W - 20)) { ctx.fillText(row, 10, ny); ny += 14; }
       if (this.failT >= FAIL.bands) {
         // the bands tear it, and the light goes out of it
         const k = Math.min(1, (this.failT - FAIL.bands) / (FAIL.off - FAIL.bands));
@@ -883,6 +890,7 @@ export class E4Shell {
      * Nobody presses anything; the journey to Daniel's room starts by itself.
      */
     ledger.e4Space.push({ id: 'laptop', outcome: 'read', witness: space.corrupt.witness });
+    meetWord('contagion');   // S209 / P7-47 — the reason the session gave for ending her
     this.onCloseRequest?.();
   }
 

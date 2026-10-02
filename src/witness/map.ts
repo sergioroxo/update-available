@@ -118,6 +118,7 @@ const CONDITIONS: Record<string, Condition> = {
   correctionsStarted: () => ledger.graceQueue.length >= 1,
   // S158 / R3-82 — 2016's beats as the flow of record has them: one job to its end, the vote
   oneJobDone: () => has('e3-job-done'),
+  twoJobsDone: () => has('e3-two-jobs'),   // S209 / B15
   allJobsDone: () => has('e3-day-done'),
   voted: () => ledger.checkins.some((c) => c.id === 'e3_malta_voted'),
   recordViewed: () => ledger.era3Arrival.some((a) => a.witness === RECORD_VIEWED_LINE),

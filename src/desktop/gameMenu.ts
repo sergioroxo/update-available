@@ -43,6 +43,7 @@
  * plays" assertion above. See the import comment below for what these two
  * files are and why only their `debrief` half is ever read here.
  */
+import closeMessage from '../../data/strings/close_message.json';
 import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import copy from '../../data/strings/gameMenu.json';
@@ -513,6 +514,9 @@ export function mountGameMenu(): GameMenu {
       row(copy.creditsOffersSources, () => { view = 'offersSources'; render(); });
       row(copy.creditsDaySources, () => { view = 'daySources'; render(); });
       row(copy.creditsCloseSources, () => { closeFocus = -1; view = 'closeSources'; render(); });
+      // ⚑ S209 / P7-48 — the closing message's sources, plainly, where its last card says they are
+      heading(closeMessage.sourcesTitle);
+      for (const line of Object.values(closeMessage.sources)) paragraph(line);
       // ⚑ S175 — the companion page (tools/gen_sources_page.mjs → public/sources/):
       //   every source, every verified link, in the public words. A plain link the
       //   visitor follows into a new tab — a navigation they choose, never a request

@@ -335,9 +335,9 @@
     },
     {
      "id": "work",
-     "label": "One job done",
-     "done": "oneJobDone",
-     "hint": "Open a task on the board and work through it — apply or skip, your choice — to its end.",
+     "label": "Two pieces of work",
+     "done": "twoJobsDone",
+     "hint": "Work a story through to its end — apply or skip, your choice — then another story, or another job. Annette's family calls are on the board.",
      "where": "the workstation"
     },
     {

@@ -25,6 +25,8 @@
  *
  * Frame voice: functional, undecorated. No music, no thanks, no credits.
  */
+import lexStrings from '../../data/strings/lexicon.json';
+import { Lexicon } from './lexicon';
 import browser97 from '../../data/dialog/s1_browser.json';
 import browser26 from '../../data/dialog/s4_browser.json';
 import * as pc from 'playcanvas';
@@ -68,6 +70,8 @@ export interface CloseMonitor {
   onGo?: () => void;
   /** S167: the card's "The dossier" — the frame opens its reading of the panels */
   onDossier?: () => void;
+  /** ⚑ S209 / P7-47 — open the Lexicon on the glass (from its star, or the card's button) */
+  openLexicon(): void;
 }
 
 /** the CRT's visible screen, as app.ts has it (metres, 4:3) */
@@ -274,6 +278,8 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       ctx.fillText(label, Math.round(x + (w - tw) / 2), y + 8);
       hits.push({ x, y, w, h: 26, id });
     };
+    // ⚑ S209 / P7-47 — the Lexicon, on its own row (its star in the sky opens it too)
+    btn(lexStrings.star, Math.round((W - 220) / 2), 232, 220, 'close-lexicon');
     const aw = 148, ay = 262;
     const ax = Math.round((W - aw) / 2);
     btn(card.again, ax, ay, aw, 'close-again');
@@ -414,7 +420,9 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
   let on = false;
   let rise = 0;
   let near = false;
-  let face: 'card' | 'receipt' = 'card';
+  let face: 'card' | 'receipt' | 'lexicon' = 'card';
+  const lexicon = new Lexicon();
+  function drawLexicon(): void { lexicon.draw(ctx, W, H, hits); tex.upload(); }
   const api: CloseMonitor = {
     entity,
     get on() { return on; },
@@ -435,7 +443,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     setNear(n: boolean): void {
       if (near === n) return;
       near = n;
-      if (on) { if (!near) drawFar(); else if (face === 'receipt') drawReceipt(); else drawCard(); }
+      if (on) { if (!near) drawFar(); else if (face === 'receipt') drawReceipt(); else if (face === 'lexicon') drawLexicon(); else drawCard(); }
     },
     hitTest(p0, p1): { x: number; y: number } | null {
       if (!entity.enabled) return null;
@@ -450,6 +458,10 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       const v = 0.5 - (wy - g.y) / g.h;
       if (u < 0 || u > 1 || v < 0 || v > 1) return null;
       return { x: u * W, y: v * H };
+    },
+    openLexicon(): void {
+      face = 'lexicon'; lexicon.face = 'title';
+      if (on && near) drawLexicon();
     },
     show(): void {
       if (on) return;
@@ -491,6 +503,10 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         if (h.id === 'close-go') { api.onGo?.(); return true; }
         if (h.id === 'close-again') { api.onAgain?.(); return true; }
         if (h.id === 'close-receipt') { face = 'receipt'; printLines = []; printT = 0; drawReceipt(); return true; }
+        // ⚑ S209 / P7-47 — the Lexicon: its own presses, and its Close back to the card
+        if (h.id === 'close-lexicon') { face = 'lexicon'; lexicon.face = 'title'; drawLexicon(); return true; }
+        if (h.id === 'lex-close') { face = 'card'; drawCard(); return true; }
+        if (lexicon.press(h.id)) { drawLexicon(); return true; }
         if (h.id === 'close-back') { face = 'card'; drawCard(); return true; }
         if (h.id === 'close-dossier') { api.onDossier?.(); return true; }
         const era = card.eras.find((e) => `close-era-${e.era}` === h.id)?.era;

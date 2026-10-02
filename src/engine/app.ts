@@ -8,6 +8,8 @@
  * On the witness side every control is dead (cursor: not-allowed).
  * Units are meters; the monitor screen is centered at the origin.
  */
+import lexStrings from '../../data/strings/lexicon.json';
+import closeMessage from '../../data/strings/close_message.json';
 import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 import { WitnessCanvas } from '../witness/intake';
@@ -2884,6 +2886,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** ⚑ S147 — one resolution for every press: the mouse's tap (above) and the
    *  controller's select (xrInput.ts) both arrive here as a ray. */
   function resolveTapRay(ray: Ray): void {
+    if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
     {
       if (os.isOff && rayHitsPointR(ray, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();
@@ -2979,6 +2982,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   forth. Instead of the computer."). A panel's press turns its pages and,
         //   after the last, turns it back to the room.
         const lb = cloud.labelAt(ray.p0, ray.p1);
+        // ⚑ S209 / P7-47 — the Lexicon's star opens the encyclopedia on Daniel's machine, and the eye goes to it
+        if (lb && lb.text === lexStrings.star && closeMonitor) {
+          closeMonitor.openLexicon();
+          if (!closeMonitor.on) { closeMonitor.setNear(false); closeMonitor.show(); }
+          goToCloseMonitor();
+          return;
+        }
         if (lb) { cloud.openDossierFor(lb.era, lb.text); return; }
         const pi = cloud.panelAt(ray.p0, ray.p1);
         if (pi !== null) { cloud.pressPanel(pi); return; }
@@ -3504,7 +3514,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (relocLeg && !camMove) advanceRelocation();
       // ⚑ the Close's four legs hand over the same way; `hold` is the one
       //   without a camera move, so it runs on its own small clock
-      if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled') {
+      if (closeStage === 'message') {
+        closeHoldT += dt;
+        if (closeHoldT >= CLOSE_CARD_SECONDS) nextCloseCard();
+      } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled') {
         closeHoldT += dt;
         const cap = closeStage === 'lead' ? CLOSE_LEAD_SECONDS
           : closeStage === 'hold' ? CLOSE_HOLD_SECONDS : CLOSE_MONITOR_AFTER_SECONDS;
@@ -4188,7 +4201,48 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * The review route (`?close=1`) starts at Daniel's seat, so it keeps the old
    * order: lookUp, night on the stars, then the opening.
    */
-  type CloseStage = 'lead' | 'travel' | 'lookUp' | 'hold' | 'open' | 'settled' | null;
+  type CloseStage = 'lead' | 'travel' | 'lookUp' | 'message' | 'hold' | 'open' | 'settled' | null;
+  /** ⚑ S209 / P7-48 — THE CLOSE'S MESSAGE (data/strings/close_message.json): with the eyes on the stars and before
+   *  the panels open, a few plain cards in the frame's voice — what SOGICE is, that it persists, that the law did not
+   *  come, and his last line. Each holds CLOSE_CARD_SECONDS or until a press; the frame never plays. */
+  let closeCard = -1;
+  const CLOSE_CARD_SECONDS = 9;
+  const closeMsgEl = document.createElement('div');
+  Object.assign(closeMsgEl.style, {
+    position: 'fixed', left: '50%', top: '42%', transform: 'translate(-50%, -50%)', zIndex: '12',
+    background: FRAME.glass, color: FRAME.bright, border: `1px solid ${FRAME.edge}`,
+    font: '16px/1.55 monospace', padding: '18px 22px', borderRadius: '4px',
+    maxWidth: 'min(560px, 86vw)', textAlign: 'left',
+    opacity: '0', pointerEvents: 'none', transition: 'opacity 0.6s'
+  } as CSSStyleDeclaration);
+  document.body.appendChild(closeMsgEl);
+  function showCloseCard(i: number): void {
+    closeCard = i; closeHoldT = 0;
+    const c = closeMessage.cards[i] as { text: string; by?: string };
+    closeMsgEl.replaceChildren();
+    const p = document.createElement('div'); p.textContent = c.text; closeMsgEl.appendChild(p);
+    if (c.by) { const b = document.createElement('div'); b.textContent = c.by; b.style.color = FRAME.dim; b.style.marginTop = '6px'; b.style.fontSize = '13px'; closeMsgEl.appendChild(b); }
+    const last = i === closeMessage.cards.length - 1;
+    const f = document.createElement('div');
+    f.textContent = last ? closeMessage.sourcesNote : closeMessage.continue;
+    Object.assign(f.style, { color: FRAME.faint, marginTop: '12px', fontSize: '11px' });
+    closeMsgEl.appendChild(f);
+    closeMsgEl.style.opacity = '1';
+    xrFrame?.setHint(c.text);   // the headset reads it on the frame's plate
+  }
+  function nextCloseCard(): void {
+    if (closeStage !== 'message') return;
+    if (closeCard + 1 < closeMessage.cards.length) { showCloseCard(closeCard + 1); return; }
+    closeMsgEl.style.opacity = '0';
+    xrFrame?.setHint(null);
+    closeCard = -1;
+    // what the 'lookUp' leg used to do on its way to 'hold': the night on the stars (the review route's path)
+    closeStage = 'hold'; closeHoldT = 0;
+    if (!closeMorphBegun && cluster) {
+      cluster.applyRig('close', true, CLOSE_LIGHTS_SECONDS);
+      roomBed.set('close_score.mp3', CLOSE_LIGHTS_SECONDS);
+    }
+  }
   let closeStage: CloseStage = null;
   let closeHoldT = 0;
   /** true once the night/constellation began during the sweep (C-01) */
@@ -4256,6 +4310,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       return;
     }
     if (closeStage === 'lookUp') {
+      // ⚑ S209 / P7-48 — the message first, with the eyes on the stars; its last card hands on to 'hold'
+      if (closeMessage.cards.length) { closeStage = 'message'; showCloseCard(0); return; }
       // ⚑ the lights go out ON the stars, not before the eyes start rising —
       //   measured: with the rig applied at the start of lookUp the whole rise
       //   was through a black room, and a ceiling you cannot see is not a

@@ -40,6 +40,7 @@
  * toward the camera. All scratch storage is preallocated: nothing allocates
  * per frame. Parameters in data/room/cluster.json. ?reinterp=1 only.
  */
+import lexStrings from '../../data/strings/lexicon.json';
 import * as pc from 'playcanvas';
 import clusterData from '../../data/room/cluster.json';
 import network from '../../data/strings/close_network.json';
@@ -500,6 +501,15 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       //   them as "sources that aren't sources", and he was right that nothing
       //   told them apart. An existing hue (cluster.json `link`), no new colour.
       actx.fillStyle = entries[i].era === 0 ? P.link : P.labelColor;
+      // ⚑ S209 / P7-47 — the Lexicon's star wears its costume: a small gilt book before a gold title
+      if (text === lexStrings.star) {
+        const by = i * ROW + 6, bh = ROW - 12;
+        actx.fillStyle = P.labelColor; actx.fillRect(4, by, 34, bh);
+        actx.fillStyle = P.link; actx.fillRect(7, by + 3, 13, bh - 6); actx.fillRect(22, by + 3, 13, bh - 6);
+        actx.fillStyle = P.labelColor; actx.fillText(text, 44, i * ROW + ROW / 2, ATLAS - 48);
+        widths.push(Math.min(actx.measureText(text).width + 48, ATLAS));
+        return;
+      }
       actx.fillText(text, 4, i * ROW + ROW / 2, ATLAS - 8);
       widths.push(Math.min(actx.measureText(text).width + 8, ATLAS));
     });

@@ -42,8 +42,11 @@ export const WORLD = {
    *  as a beige horizon under the rig); tall, and in the sky's own dark */
   walls: { h: 5.2, back: 12.4, front: -6.4, left: -7.3, right: 8.7 },
   sky: COMMONS_SKY,
-  floorColor: ERA4.panelEdge,
-  wallColor: ERA4.panel,
+  // ⚑ S209 / B24 (REVIEW_ROUND_5, ERA26-05; his "Warm it please!") — the one respite was the darkest room in the piece:
+  //   near-black interface panels for walls and floor. Now the warm wall and wood of the rooms themselves (PLACE),
+  //   so the hall is a place people made, not the system's dark
+  floorColor: PLACE.floor,
+  wallColor: PLACE.wallLo,
   stageColor: PLACE.floorLo,
   frameColor: ERA4.panelHi
 } as const;

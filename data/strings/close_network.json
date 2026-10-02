@@ -2,6 +2,11 @@
  "_doc": "The Close constellation — the network of the material this piece is built from, and the four panels that read it. Sérgio, 2026-09-02: \"I would still want to keep the idea of the Stars in the ceiling becoming the network of the data used to create this project with the 4 panels with the information.\" S101 keeps both halves: the stars over the seat open out into this network (src/room/pointCloud.ts), and each of the four eras gets ONE panel hanging over its own arc of anchors. ⚑ WHAT CHANGED IN THE SHAPE: every entry used to be a bare string on a golden-angle spread, so the mesh's topology said nothing. Each entry now carries the ERA OF THE PIECE IT GROUNDS — 0 for the project's own frame, which hangs overhead where the ceiling was, and 1-4 for the rooms — and the geometry follows it: one arc per era, at one bearing per era, so the player TURNS through 1997 → 2003 → 2016 → now, and the links run along each era and then across to the next. The cross-era links are the piece's own thesis and there are exactly three of them. ⚑ Era is the era each anchor GROUNDS IN THE PIECE, not the anchor's own date (Love Won Out ran from 1998; it grounds 2003's curricula). Cap: 32 (the label atlas's own row budget). No survivor names, no real individuals — sources and structures only. ⚑ Panel copy is Claude's draft under the 2026-08-17 norm; Sérgio owns dossier phrasing and every status, and his edit wins.",
  "labels": [
   {
+   "text": "The Lexicon — Multimedia Edition",
+   "era": 0,
+   "_doc": "⚑ S209 / P7-47 — the retro CD-ROM star: a press opens the Lexicon on Daniel's machine (app.ts)"
+  },
+  {
    "text": "SurvivingSOGICE — UiB / CDN",
    "era": 0
   },
@@ -133,7 +138,7 @@
    "title": "RESURGE",
    "text": "Maya’s session is restored for her before she has touched anything. A companion finishes her search and suggests she wants to stop. Her record keeps her old name “for continuity of care”. Her photographs come back improved. A headset offers an immersive session. Then a friend’s invitation, inside that same headset, leads her somewhere the system cannot classify — a room where being trans is fine — and the update fails. This room is inferred. Around it, the record is not: in May 2026 the European Commission answered more than a million people asking for a ban on conversion practices with a non-binding recommendation, and declined to propose a law; organised campaigns against trans people’s care run across Europe. The room extends patterns that are already documented — autocomplete, retained records, photo enhancement, “support” agents — into a system that presents itself as care. What it cannot classify is other people.",
    "status": "speculative",
-   "practices": ["nolaw", "termination", "session", "photos", "care", "headset"],
+   "practices": ["nolaw", "termination", "shorts", "session", "photos", "care", "headset"],
    "image": "assets/close/era4.jpg"
   }
  ]

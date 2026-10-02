@@ -10,6 +10,7 @@
  * 3. "Post reply" posts his one given line (no free typing), a moderator holds it, and "3 people are praying
  *    for you." Filed. The window closes and reopens where it was.
  */
+import { meetWord } from '../../room/lexicon';
 import * as ui from '../theme/chrome';
 import { ERA1 } from '../theme/era1';
 import { WEB2003 as P } from '../theme/web1997';
@@ -55,6 +56,10 @@ export class Web2003App {
       this.trail.push(this.stage); this.stage = 'page:' + h.id.slice(11);
       // S209 / B22 — asking for a partner is the board's act; Harbor files the match
       if (h.id === 'forum-page:partner' && !ledger.records.includes('harbor-partner')) ledger.records.push('harbor-partner');
+      // S209 / P7-47 — the words met where the board uses them
+      if (h.id === 'forum-page:partner') meetWord('accountability');
+      if (h.id === 'forum-page:process') { meetWord('ssa'); meetWord('struggle'); }
+      if (h.id === 'forum-page:wound') meetWord('wound');
       return;
     }
     if (h.id === 'forum-post' && !this.posted) { this.posted = true; this.onPost?.(); }

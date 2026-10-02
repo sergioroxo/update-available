@@ -161,8 +161,8 @@
     "termination": {
       "title": "The termination",
       "did": "ended the session for your safety, and named the reason",
-      "status": "speculative",
-      "source": {"file": "e4_offers", "index": 2}
+      "status": "contested",
+      "source": {"file": "e4_offers", "index": 8}
     },
     "recommendation": {
       "title": "The recommendation",
@@ -186,6 +186,13 @@
       "did": "was asked by more than a million people to ban conversion practices, and answered with a recommendation instead of a law",
       "status": "documentary",
       "source": {"file": "e4_offers", "index": 7}
+    },
+    "shorts": {
+      "_doc": "⚑ S209 / B25 — the non-AI route on 2026's results page.",
+      "title": "The comments",
+      "did": "came back under a new name after it was removed, and answered a request for help with an invitation to a private group",
+      "status": "documentary",
+      "source": {"file": "e4_offers", "index": 9}
     },
     "care": {
       "title": "The care assignment",

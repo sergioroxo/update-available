@@ -1,0 +1,546 @@
+{
+ "_doc": "⚑ S209 / P7-47 — THE LEXICON (his, 2026-10-02: \"'The Lexicon — Multimedia Edition' — love this! I like your design proposal\"; \"the word of the day could be quite good\"). Generated from docs/reinterp/RESEARCH_LEXICON_2026-10-02.md (every claim sourced there; statuses read by hand from its Evidence lines — the word's USE is documented for all of them; `status` is what its CLAIM is). The 'line' is the seller's Word of the Day (operable: it mocks only the programme's pitch, never the people); the 'close' is the Lexicon's own plain sentence. No Word of the Day for SOGICE, detransition or chosen family (the research's ethics notes). Shown at the Close on Daniel's machine (src/room/lexicon.ts) and, one word per era, as each update's own 'word of the day' app.",
+ "title": "THE LEXICON",
+ "edition": "Multimedia Edition",
+ "sub": "the words they used, and the reasons they gave · 1997–2026",
+ "tabs": {
+  "words": "The Words",
+  "reasons": "The Reasons",
+  "yours": "Your Words",
+  "close": "Close"
+ },
+ "prev": "◄ Prev",
+ "next": "Next ►",
+ "page": "{i} / {n}",
+ "met": "★ you met this word",
+ "metCount": "★ you met {n} of these {m} words",
+ "sold": "As it was sold:",
+ "wotdPrefix": "WORD OF THE DAY:",
+ "statusLabels": {
+  "notsupported": "What it claims: not supported",
+  "contested": "What it claims: disputed",
+  "moral": "A moral frame, not a finding",
+  "political": "A political frame, not a finding",
+  "documented": "Documented",
+  "community": "The community's own word",
+  "half": "Half right, and the half that matters is wrong"
+ },
+ "reasonsIntro": "What the networks said caused people to be gay, lesbian, bisexual or trans. The reasons change with the decades; their shape does not: the cause is placed in a family injury or a deficit, so the person becomes the symptom.",
+ "groups": {
+  "men": "Gay men",
+  "women": "Lesbian women",
+  "trans": "Trans people"
+ },
+ "arcTitle": "Across thirty years",
+ "arc": [
+  "1997 — father, mother, abuse, unmet needs, choice. Said with confidence.",
+  "2003 — the same, with testimonies as proof.",
+  "2016 — for lesbian women: the mother wound, emotional dependency, abuse, a 'spiritual fallacy'.",
+  "2026 — for trans people: confusion, trauma, peer influence, 'gender ideology', in the softer language of many factors."
+ ],
+ "yoursNone": "You met none of them by name. They were there anyway.",
+ "yoursIntro": "The words that reached you, in the order they did:",
+ "sources": "Sources: menu → Credits; the research is RESEARCH_LEXICON in the project's documents.",
+ "star": "The Lexicon — Multimedia Edition",
+ "wotdApps": {
+  "e1": {
+   "title": "Un-Walk — Word for the Walk",
+   "word": "roots"
+  },
+  "e2": {
+   "title": "Restorify — Truth of the Day",
+   "word": "overcomer"
+  },
+  "e3": {
+   "title": "GracePlatform — Today's language",
+   "word": "dependency"
+  },
+  "e4": {
+   "title": "L's phrase of the day",
+   "word": "exploring"
+  }
+ },
+ "ok": "OK",
+ "terms": [
+  {
+   "id": "ssa",
+   "term": "same-sex attraction",
+   "eras": [
+    1997,
+    2003,
+    2016,
+    2026
+   ],
+   "status": "notsupported",
+   "close": "A phrase ministries prefer to \"gay\" or \"lesbian\". It frames attraction as a feeling to be reduced, not part of who someone is. Mainstream health bodies reject that framing.",
+   "word": "ATTRACTION",
+   "line": "Just a feeling you have, like a cold. Not who you are. Feeling lighter already?"
+  },
+  {
+   "id": "unwanted",
+   "term": "unwanted same-sex attraction",
+   "eras": [
+    2003,
+    2016,
+    2026
+   ],
+   "status": "contested",
+   "close": "\"Unwanted\" suggests a free choice. Research finds the wish to change usually comes from religious or family pressure, and many people exposed to change efforts were minors.",
+   "word": "UNWANTED",
+   "line": "Nobody made you want this to stop. You just… noticed that everyone around you does."
+  },
+  {
+   "id": "struggle",
+   "term": "the struggle",
+   "eras": [
+    1997,
+    2003,
+    2016
+   ],
+   "status": "moral",
+   "close": "A word that casts being gay as a battle to be fought. The people who use it describe their own desires as a temptation; major health bodies do not.",
+   "word": "STRUGGLE",
+   "line": "Struggling means you're trying. Good for you! (We'll tell you what you're trying to do.)"
+  },
+  {
+   "id": "lifestyle",
+   "term": "the lifestyle",
+   "eras": [
+    1997,
+    2003,
+    2016
+   ],
+   "status": "notsupported",
+   "close": "A word that treats being gay as a habit or a choice. Attraction is not chosen, and health bodies describe it as a normal variation of human sexuality.",
+   "word": "LIFESTYLE",
+   "line": "Like a gym membership, but with a view on eternity. You can cancel any time!"
+  },
+  {
+   "id": "exgay",
+   "term": "ex-gay",
+   "eras": [
+    1997,
+    2003,
+    2016
+   ],
+   "status": "notsupported",
+   "close": "\"Ex-gay\" claims that orientation can be left behind. Research finds change efforts rarely change attraction and often harm. Many people who tried now call themselves ex-ex-gay.",
+   "word": "FORMER",
+   "line": "Everything you were before today is former. Isn't that nice? Say it again, softly."
+  },
+  {
+   "id": "overcomer",
+   "term": "overcomer",
+   "eras": [
+    1997,
+    2003,
+    2016,
+    2026
+   ],
+   "status": "notsupported",
+   "close": "A word that treats attraction as an enemy. The \"overcome, don't eliminate\" version is a retreat from earlier promises of change, not a finding that it works.",
+   "word": "OVERCOMER",
+   "line": "Today you overcame a thought. Tomorrow: another thought! Overcoming never stops. Neither do we."
+  },
+  {
+   "id": "brokenness",
+   "term": "brokenness",
+   "eras": [
+    2003,
+    2016,
+    2026
+   ],
+   "status": "notsupported",
+   "close": "A word that treats sexuality as damage. No orientation is a disorder; the damage described in research comes from stigma and from change efforts themselves.",
+   "word": "BROKENNESS",
+   "line": "Good news! If you're broken, you're fixable. (Terms and conditions apply to the fixing.)"
+  },
+  {
+   "id": "roots",
+   "term": "root causes",
+   "eras": [
+    1997,
+    2003,
+    2016
+   ],
+   "status": "notsupported",
+   "close": "The idea that being gay is a symptom of a hidden hurt. Researchers reviewing the evidence found no such root; theories blaming family patterns have been discredited.",
+   "word": "ROOT",
+   "line": "Every flower has one. Let's dig yours up and look at it together. Don't worry; it'll hurt a little."
+  },
+  {
+   "id": "wound",
+   "term": "the wound",
+   "eras": [
+    1997,
+    2003,
+    2016
+   ],
+   "status": "notsupported",
+   "close": "The claim that a distant father or smothering mother makes a child gay. Studies do not support it; a painful childhood is real for some, but does not decide orientation.",
+   "word": "WOUND",
+   "line": "It's not your fault. It's your father's. (Or your mother's. We'll find out together.)"
+  },
+  {
+   "id": "dependency",
+   "term": "emotional dependency",
+   "eras": [
+    2003,
+    2016
+   ],
+   "status": "notsupported",
+   "close": "A term for treating lesbian love as a disorder of \"needing too much\". Researchers who studied the movement describe it as a euphemism, not a clinical finding.",
+   "word": "DEPENDENCY",
+   "line": "Loving someone too much is a symptom. Don't worry, we have a worksheet for love."
+  },
+  {
+   "id": "confusion",
+   "term": "gender confusion",
+   "eras": [
+    1997,
+    2003,
+    2016,
+    2026
+   ],
+   "status": "notsupported",
+   "close": "\"Gender confusion\" is not a medical term. Current diagnostic manuals use \"gender dysphoria\" or \"gender incongruence\". The word has been used to read ordinary gender nonconformity as a problem.",
+   "word": "CONFUSION",
+   "line": "Feeling confused? Wonderful. That means we can start by clarifying you."
+  },
+  {
+   "id": "reparative",
+   "term": "reparative therapy",
+   "eras": [
+    1997,
+    2003,
+    2016
+   ],
+   "status": "notsupported",
+   "close": "A trademarked name for therapy aimed at reducing same-sex attraction. Mainstream associations oppose it; studies find it does not work and can harm.",
+   "word": "REPARATIVE",
+   "line": "Tiny repairs, every week. Like a hotel, but for your insides."
+  },
+  {
+   "id": "reintegrative",
+   "term": "reintegrative therapy",
+   "eras": [
+    2016,
+    2026
+   ],
+   "status": "contested",
+   "close": "A newer name for therapy linked to reparative therapy. Its providers deny it aims to change orientation; researchers and forensic experts classify it with change efforts.",
+   "word": "REINTEGRATIVE",
+   "line": "Same cure, bigger word. Please don't call it a cure."
+  },
+  {
+   "id": "sogice",
+   "term": "SOGICE",
+   "eras": [
+    2026
+   ],
+   "status": "documented",
+   "close": "Short for efforts to change or suppress sexual orientation, gender identity or expression. Used by researchers and survivors; practitioners usually call it something gentler.",
+   "word": null,
+   "line": null
+  },
+  {
+   "id": "conversion",
+   "term": "conversion practices",
+   "eras": [
+    2026
+   ],
+   "status": "documented",
+   "close": "An umbrella term for efforts to change or suppress who someone is. Major health bodies reject it. It is banned in a growing number of places and rebrands when banned.",
+   "word": "COUNSELLING",
+   "line": "We don't do the other thing. We just talk. About changing."
+  },
+  {
+   "id": "accountability",
+   "term": "accountability partner",
+   "eras": [
+    2003,
+    2016,
+    2026
+   ],
+   "status": "contested",
+   "close": "A peer asked to monitor and report someone's behaviour. Support in itself is not harmful; here it was used to police a person's identity and treat lapses as failure.",
+   "word": "ACCOUNTABILITY",
+   "line": "Someone who loves you will always want to know where you were."
+  },
+  {
+   "id": "freedom",
+   "term": "freedom, healing, restoration",
+   "eras": [
+    1997,
+    2003,
+    2016,
+    2026
+   ],
+   "status": "notsupported",
+   "close": "Words that present being gay as a captivity or injury. The research on these programmes finds the \"freedom\" was rarely delivered, and the harm that followed was real.",
+   "word": "FREEDOM",
+   "line": "The door is open. (Please use the door we pointed at.)"
+  },
+  {
+   "id": "affirmation",
+   "term": "affirming",
+   "eras": [
+    1997,
+    2003,
+    2016,
+    2026
+   ],
+   "status": "contested",
+   "close": "\"Affirming\" has two meanings. Therapists use it for acceptance without a set outcome. Change programmes used it for affirming \"masculinity\" or \"femininity\" as defined by them.",
+   "word": "AFFIRMATION",
+   "line": "We affirm everything about you! (Except the part you came in with.)"
+  },
+  {
+   "id": "ideology",
+   "term": "gender ideology",
+   "eras": [
+    2016,
+    2026
+   ],
+   "status": "political",
+   "close": "A label used since the 2010s for gender studies, trans rights and sex education as one hidden agenda. Researchers describe it as a political frame, not a scientific claim.",
+   "word": "IDEOLOGY",
+   "line": "Everyone else has one. We just have the truth."
+  },
+  {
+   "id": "contagion",
+   "term": "social contagion",
+   "eras": [
+    2026
+   ],
+   "status": "contested",
+   "close": "The claim that gender identity spreads among friends or online. It began as parents' reports; no validated clinical entity exists. Reviews call the topic contested and caution against simple explanations.",
+   "word": "ENVIRONMENT",
+   "line": "Protect yours! (We've already tidied it for you.)"
+  },
+  {
+   "id": "desistance",
+   "term": "desistance",
+   "eras": [
+    2026
+   ],
+   "status": "contested",
+   "close": "\"Desistance\" means a child's gender-variant feelings fading. Studies from the 1980s onward are disputed over how they counted children and what the numbers mean for care today.",
+   "word": "PHASE",
+   "line": "Children grow out of things. You did. We saw you grow."
+  },
+  {
+   "id": "detransition",
+   "term": "detransition",
+   "eras": [
+    2026
+   ],
+   "status": "contested",
+   "close": "Some people stop or reverse a gender transition, for many reasons, including regret, stigma, family pressure and changed understanding. Both their care and the way campaigns use their stories matter.",
+   "word": null,
+   "line": null
+  },
+  {
+   "id": "exploring",
+   "term": "just exploring",
+   "eras": [
+    2016,
+    2026
+   ],
+   "status": "contested",
+   "close": "\"Exploratory\" therapy says it only helps people think. Supporters deny it is conversion therapy; critics say it steers people away from transition. The question is disputed.",
+   "word": "EXPLORING",
+   "line": "No pressure. No conclusions. Only a gentle, endless not yet."
+  },
+  {
+   "id": "chosenfamily",
+   "term": "chosen family",
+   "eras": [
+    2016,
+    2026
+   ],
+   "status": "community",
+   "close": "Family made by choice and care, not blood. For people rejected by their families, it can be a source of safety and support.",
+   "word": null,
+   "line": null
+  },
+  {
+   "id": "bornthatway",
+   "term": "born that way",
+   "eras": [
+    1997,
+    2003,
+    2016
+   ],
+   "status": "half",
+   "close": "Scientists do not know exactly why orientation varies, and no single cause has been found. That does not show it can be changed; research finds attempts do not work.",
+   "word": "GENE",
+   "line": "Nobody's found one! (That settles everything. Don't read the rest.)"
+  },
+  {
+   "id": "needs",
+   "term": "legitimate needs",
+   "eras": [
+    1997,
+    2003
+   ],
+   "status": "notsupported",
+   "close": "The idea that same-sex attraction is really an unmet need for love in disguise. It is a theory from the 1980s; researchers have not found it to be true.",
+   "word": "NEEDS",
+   "line": "You have needs! Wonderful. We'll tell you which ones are legitimate."
+  }
+ ],
+ "reasons": {
+  "men": [
+   {
+    "reason": "A distant, absent or rejecting father (\"father hunger\")",
+    "era": "1997-2026",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "An overbearing, \"enmeshed\" mother",
+    "era": "1997-2005",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "Peer rejection, being \"not man enough\", childhood gender nonconformity (\"gender esteem\"; \"prehomosexual boy\"; \"chronic juvenile unmasculinity\")",
+    "era": "1997-2017",
+    "status": "not supported as a cause"
+   },
+   {
+    "reason": "Sexual abuse or \"premature exposure to sexual experience\"",
+    "era": "1997-2016",
+    "status": "NOT SUPPORTED as a cause of orientation"
+   },
+   {
+    "reason": "Unmet \"homoemotional\" needs (the unmet-needs theory)",
+    "era": "1997-2005",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "Fear of heterosexual men (\"heterophobia\"), offered to rebut \"internalised homophobia\"",
+    "era": "2003-2005",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "A series of decisions / habit / sin (\"agency\")",
+    "era": "1997-2012",
+    "status": "NOT AN EMPIRICAL CLAIM for the moral half"
+   },
+   {
+    "reason": "Pornography, masturbation, fantasy as a trap",
+    "era": "1997-2012",
+    "status": "no source gives it as a cause"
+   },
+   {
+    "reason": "Media, schools, \"gay activists\", culture",
+    "era": "2003-2012",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "Spiritual: demons, \"negative spiritual influences\", sin",
+    "era": "1997-2026",
+    "status": "NOT AN EMPIRICAL CLAIM"
+   },
+   {
+    "reason": "\"Biology, environment and early development all play a role\" (the softened version)",
+    "era": "2012-2026",
+    "status": "documented — a retreat"
+   },
+   {
+    "reason": "Trauma and \"attachment loss\" in a clinical dress (\"symbolic defense against attachment loss\"; \"signal\")",
+    "era": "2016-2026",
+    "status": "NOT SUPPORTED as a cause of orientation"
+   }
+  ],
+  "women": [
+   {
+    "reason": "The mother wound: failed attachment to the mother, \"disidentification\" with her femininity",
+    "era": "2001-2017",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "Sexual abuse as a path from femininity",
+    "era": "2001-2012",
+    "status": "NOT SUPPORTED as a cause"
+   },
+   {
+    "reason": "Emotional dependency (\"enmeshment\")",
+    "era": "1990-2016",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "A passive or unavailable father who fails to protect; or a father who does not affirm her",
+    "era": "2001-2012",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "Peer labelling and \"friends who affirm femininity\" lacking",
+    "era": "2001",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "Fear of, or inability to relate to, men / the opposite sex",
+    "era": "2001",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "Feminism, women's colleges, \"older lesbians\" as influence",
+    "era": "2001-2017",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "A \"narcissistic family system\"",
+    "era": "2017",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "Lesbianism as \"an identity crisis, not a sexual orientation problem\"",
+    "era": "2001",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "\"Spiritual fallacy\": a cold, distant, uncaring picture of God learned at home or church",
+    "era": "2001",
+    "status": "NOT AN EMPIRICAL CLAIM"
+   }
+  ],
+  "trans": [
+   {
+    "reason": "\"Gender confusion\" / disturbed gender development from family dynamics (parents tolerating cross-gender behaviour \"as a phase\"; maternal difficulties; distant fathers)",
+    "era": "2004-2017",
+    "status": "CONTESTED in the clinical literature"
+   },
+   {
+    "reason": "Trauma, abuse, mental-health conditions, maladaptive coping",
+    "era": "2018-2026",
+    "status": "CONTESTED: some individuals' own reading, not an established cause. Cass notes gender distress can manifest \"like eating disorders or depression\" in some, as one of several possibilities"
+   },
+   {
+    "reason": "Peer influence, social media, \"social contagion\"/ROGD",
+    "era": "2018-2026",
+    "status": "CONTESTED"
+   },
+   {
+    "reason": "Parent-child conflict as an alternative explanation",
+    "era": "2018",
+    "status": "CONTESTED"
+   },
+   {
+    "reason": "\"Gender ideology\" in schools, media, law",
+    "era": "2016-2026",
+    "status": "NOT AN EMPIRICAL CLAIM"
+   },
+   {
+    "reason": "Homophobia or difficulty accepting being lesbian, gay or bi as a driver of trans identity",
+    "era": "2018-2026",
+    "status": "CONTESTED"
+   },
+   {
+    "reason": "Availability of puberty blockers as an explanation for rising referrals",
+    "era": "2024",
+    "status": "CONTESTED"
+   }
+  ]
+ }
+}

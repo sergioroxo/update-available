@@ -16,6 +16,7 @@
  * Pixel discipline: whole-pixel rects in each era's palette, banded (never smooth) light; it steps at ~11 Hz so the
  * monitor's texture uploads only when something moved.
  */
+import { meetWord } from '../../room/lexicon';
 import { ERA1 } from '../theme/era1';
 import { ERA3 } from '../theme/era3';
 import { ERA4 } from '../theme/era4';
@@ -268,6 +269,7 @@ export class Screensaver {
     const ww2 = ctx.measureText(S.e4.waiting).width;
     ctx.fillStyle = ERA4.meta; ctx.fillText(S.e4.waiting, Math.round(cx - ww2 / 2), 40);
     if (Math.floor(this.t / 12) % 2 === 1) {   // every other twelve seconds, the phrase of the day
+      meetWord('bornthatway');   // S209 / P7-47
       const ph = `${S.e4.phraseLabel}: \u201c${S.e4.phrase}\u201d`;
       ui.setFont(ctx, 10);
       const pw = ctx.measureText(ph).width;

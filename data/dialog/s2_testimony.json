@@ -54,7 +54,6 @@
      { "t": 7.8, "who": "DANIEL", "text": "At New Morning I learned where it came from." },
      { "t": 12.2, "who": "DANIEL", "text": "I'm not who I was. Every day, I choose it." },
      { "t": 16.4, "who": "PRODUCER", "text": "Lovely. And — cut. Thank you, Daniel." },
-     { "t": 19.6, "who": "", "text": "(the tape keeps running)" },
      { "t": 22.4, "who": "CALEB", "text": "Sorry — is this where they want the next one?" },
      { "t": 26.0, "who": "DANIEL", "text": "…Caleb?" },
      { "t": 28.6, "who": "CALEB", "text": "Daniel." },
@@ -76,7 +75,6 @@
    "broll": {
     "seconds": 12,
     "lines": [
-     { "t": 1.0, "who": "", "text": "(the AFTER set, being dressed: the warm flats, the family going up on the wall)" }
     ]
    },
    "tone": { "seconds": 8, "lines": [] }
