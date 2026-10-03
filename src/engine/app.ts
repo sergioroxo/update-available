@@ -3641,6 +3641,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       if (cluster && movementNodes) {
         const busy = scriptedBusy() || blinkPhase !== null;
+        movementNodes.setOnly(os.e4?.ball.wantsHer ? 'commons-crowd' : null);   // ⚑ S209f / A25
         movementNodes.refresh(cluster.era, seatYaw, busy);
         if (!moveHintShown && !moveHintDismissed && !busy && moveHint) {
           if (movementNodes.available(cluster.era, seatYaw).length > 0) {

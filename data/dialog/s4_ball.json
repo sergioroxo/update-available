@@ -416,6 +416,9 @@
   "holding": "holding…",
   "inCrowd": "{n} present  ·  you",
   "_docNeedsHer": "⚑ 2026-09-13 — THE SECOND REFUSAL IS HERS. The second intrusion does not lose on its own: its bar holds at the top until she has stepped into the crowd (the 'in the crowd' marker, commons-crowd — the room's one movement, a blink), and the count that refuses the connection then includes her ('47 present · you'). If she never moves, it holds through its whole `hold` and refuses anyway — nothing is gated on her, but the win is hers to take. A hint on the glass says where.",
-  "hint": "the room is asking you to stand with it"
+  "hint": "the room is asking you to stand with it",
+  "_docHintWhere": "⚑ S209f / A25 — the _doc above promised the hint 'says where', and it did not: from the seat the crowd's ring is 36° to the left and below the frame, and the one ring in view was the stage's. Now, while the room waits for her, the crowd's ring is the ONLY one offered (app.ts → movementNodes.setOnly — curation, not a glow; the markers' no-pulse law holds) and a second line names it: to your left from the seat, 'in the crowd' from anywhere else. Measured by out/probe/crowd26.mjs: six arrow-key turns, one real click.",
+  "hintWhere": "the ring on the floor, to your left",
+  "hintWhereAway": "the ring on the floor, in the crowd"
  }
 }

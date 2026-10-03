@@ -67,6 +67,8 @@ export interface MovementNodes {
   isVisible(id: string): boolean;
   /** ⚑ 2026-09-12: the world is on — offer the hall's places, hide the rooms' */
   setCommons(on: boolean): void;
+  /** ⚑ S209f / A25 — offer only this commons node (null: all of them) */
+  setOnly(id: string | null): void;
 }
 
 const MARKER_DIAMETER = 0.44; // 0.22m radius disc — small, quiet
@@ -118,8 +120,11 @@ export function buildMovementNodes(app: pc.Application): MovementNodes {
     entities.set(n.id, e);
   }
 
+  // ⚑ S209f / A25 — while the ball's second intrusion waits for her, the
+  //   system curates the hall down to the one ring that answers it
+  let only: string | null = null;
   function available(era: EraKey, currentYaw: number): MovementNode[] {
-    if (commonsOn) return nodes.filter(n => n.commons && n.seatYaw !== currentYaw);
+    if (commonsOn) return nodes.filter(n => n.commons && n.seatYaw !== currentYaw && (!only || n.id === only));
     return nodes.filter(n => !n.commons && n.eras.includes(era) && n.seatYaw !== currentYaw);
   }
 
@@ -132,6 +137,7 @@ export function buildMovementNodes(app: pc.Application): MovementNodes {
       for (const [id, e] of entities) e.enabled = shown.has(id);
     },
     isVisible: (id) => entities.get(id)?.enabled ?? false,
-    setCommons: (on) => { commonsOn = on; }
+    setCommons: (on) => { commonsOn = on; },
+    setOnly: (id) => { only = id; }
   };
 }

@@ -153,7 +153,7 @@ const ARRIVAL = script.arrival.labels as unknown as BLabel[];
 const SYSTEM = script.system as unknown as {
   intrusions: { at: number; hold: number; needsHer?: boolean }[]; mark: string; reconnecting: string; restoring: string;
   present: string; refused: string; terminated: string; reason: string; terminatedNote: string; terminateSeconds: number;
-  holding: string; inCrowd: string; hint: string;
+  holding: string; inCrowd: string; hint: string; hintWhere: string; hintWhereAway: string;
 };
 const STUTTER = script.stutter.labels as unknown as BLabel[];
 
@@ -486,6 +486,8 @@ export class E4Ball {
   private intrusionT = -1;   // <0: none running
   /** she is standing in the crowd (the `commons-crowd` marker) — `E4Shell` tells this */
   inCrowd = false;
+  /** ⚑ S209f / A25 — she is still at the seat she arrived at (the hint's "to your left" is true only from there) */
+  atSeat = true;
   /** the ball clock at which she stepped in during a `needsHer` intrusion, so the bar falls from THEN */
   private herAt = -1;
   private intrusionClock(dt: number): void {
@@ -747,6 +749,9 @@ export class E4Ball {
       ctx.fillStyle = PLACE.textileHi;
       const hw = Math.ceil(ctx.measureText(SYSTEM.hint).width);
       ctx.fillText(SYSTEM.hint, Math.round((W - hw) / 2), cy + ch + 10);
+      const where = this.atSeat ? SYSTEM.hintWhere : SYSTEM.hintWhereAway;
+      const ww = Math.ceil(ctx.measureText(where).width);
+      ctx.fillText(where, Math.round((W - ww) / 2), cy + ch + 22);
     }
   }
 
