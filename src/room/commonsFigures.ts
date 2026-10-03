@@ -154,18 +154,18 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     [3, 2, 6, 3, 6, 7], [0, 3, 7, 0, 7, 4], [1, 5, 6, 1, 6, 2]
   ];
   // Phase 7: each figure also has two arms; the performers are four more figures with arms; one patch of light
-  const PER = 6;
+  const PER = 9;   // ⚑ S212: legs, torso, head (two crossed pieces), hair, and each arm with its hand
   const BOXES = FIGURES * PER + PERFORMERS * PER + 1 + 1;
   const indices: number[] = [];
   for (let n = 0; n < BOXES; n++) for (const face of F) for (const i of face) indices.push(n * 8 + i);
   const colors: number[] = [];
   const pushBoxColor = (c: pc.Color): void => { for (let i = 0; i < 8; i++) colors.push(c.r, c.g, c.b, 1); };
-  for (const f of figures) { pushBoxColor(f.lower!); pushBoxColor(f.body); pushBoxColor(skin); pushBoxColor(f.hair!); pushBoxColor(f.body); pushBoxColor(f.body); }
+  for (const f of figures) { pushBoxColor(f.lower!); pushBoxColor(f.body); pushBoxColor(skin); pushBoxColor(skin); pushBoxColor(f.hair!); pushBoxColor(f.body); pushBoxColor(skin); pushBoxColor(f.body); pushBoxColor(skin); }
   // the performers, dressed for it: the palette's brightest, one each
   const perfCloth = [PLACE.textileHi, PLACE.sunHi, PLACE.sky, PLACE.bookAlt].map((h) => new pc.Color().fromString(h));
   const perfH = [1.72, 1.6, 1.66, 1.58];
   const perfHair = [PLACE.ink, PLACE.sunHi, PLACE.book, PLACE.floorLo].map((h) => new pc.Color().fromString(h));
-  for (let i = 0; i < PERFORMERS; i++) { pushBoxColor(perfCloth[(i + 1) % PERFORMERS]); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(perfHair[i]); pushBoxColor(perfCloth[i]); pushBoxColor(perfCloth[i]); }
+  for (let i = 0; i < PERFORMERS; i++) { pushBoxColor(perfCloth[(i + 1) % PERFORMERS]); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(skin); pushBoxColor(perfHair[i]); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(perfCloth[i]); pushBoxColor(skin); }
   pushBoxColor(new pc.Color().fromString(PLACE.sunHi));      // the light on the floor under them
   pushBoxColor(new pc.Color().fromString(PLACE.floorLo));
 
@@ -208,7 +208,9 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     const ty = base + legH + torsoH / 2 + bob;
     taper(x + lean, ty, z, torsoH / 2, w * 0.27, w * 0.44, w * 0.3, sh);
     const hy = base + legH + torsoH + 0.03 + headH + bob, hx = x + lean * 1.4;
-    box(hx, hy, z, headH * 0.92, headH, headH);
+    // ⚑ S212 — a rounder head: two crossed pieces read near-octagonal from any side, and keep to 90° steps
+    box(hx, hy, z, headH * 0.92, headH * 0.78, headH);
+    box(hx, hy, z, headH * 0.7, headH, headH * 0.76);
     if (style === 0) box(hx - headH * 0.12, hy + headH * 0.62, z, headH * 1.02, headH * 0.42, headH * 1.06);          // short
     else if (style === 1) box(hx - headH * 0.55, hy - headH * 0.55, z, headH * 0.55, headH * 1.55, headH * 1.1);     // long, down the back
     else if (style === 2) box(hx - headH * 0.15, hy + headH * 0.35, z, headH * 1.3, headH * 1.05, headH * 1.35);     // big, round
@@ -221,7 +223,11 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     for (const side of [-1, 1]) {
       const sz = z + side * (w / 2 + hw + 0.01);
       const k = up * up * (3 - 2 * up);
-      box(x, top + (k * 2 - 1) * (len / 2 + 0.02), sz, hw, len / 2, hw);   // hanging at the side → raised over the shoulder
+      const cy = top + (k * 2 - 1) * (len / 2 + 0.02);
+      box(x, cy, sz, hw, len / 2, hw);   // hanging at the side → raised over the shoulder
+      // ⚑ S212 — a hand at the arm's end: below it when the arm hangs, above it when raised
+      const end = cy + (k * 2 - 1) * (len / 2 + 0.03);
+      box(x, end, sz, hw * 1.15, 0.03, hw * 1.15);
     }
   };
   const build = (k: number, stageK: number): void => {
