@@ -261,7 +261,7 @@
   "continueLabel": "Continue",
   "readAloudLabel": "▶ read aloud",
   "readAloudStopLabel": "■ stop",
-  "readAloudTrack": "lamby_puremail_apology.wav",
+  "readAloudTrack": "lamby_puremail_apology.mp3",
   "_doc_readAloud": "WIRED (S60). Was a hook: S46 rendered and committed public/assets/audio/lamby_puremail_apology.wav and registered it in src/audio/tapeAudio.ts, and nothing ever called it. Now os.ts plays it through `playOnce`, the row renders only when `isAudioAvailable` says the file is really registered (a missing WAV degrades to no button at all — Session 30's pattern), and pressing it again stops it. Build-time TTS in LAMBY'S VOICE: the apparatus reading its own death notice in the cheerful assistant timbre, doubling as the read-aloud accessibility layer. Apparatus register only; never a felt/survivor-side line.",
   "heading": "A message from the Restorify team.",
   "lines": [

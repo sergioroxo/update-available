@@ -131,7 +131,7 @@ export class AccountabilityApp {
   /** the letter has been read and closed — the block lifts after this */
   onMailClosed?: () => void;
   /**
-   * S46's WAV, WIRED (S60). `public/assets/audio/lamby_puremail_apology.wav`
+   * S46's WAV, WIRED (S60). `public/assets/audio/lamby_puremail_apology.mp3` (S210: MP3; the WAV master is in assets/audio/)
    * was rendered, committed and registered months ago and nothing ever played
    * it: the apparatus reading its own death notice, in the cheerful assistant
    * timbre, sitting unused on disk.

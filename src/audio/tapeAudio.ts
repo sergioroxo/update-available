@@ -69,13 +69,13 @@ const REGISTRY: Record<string, string> = {
   // its own death notice (S2R.5's PureMail apology). APPARATUS audio, so unlike
   // the tape entries above it never goes through degrade_audio.sh (that pass is
   // for HUMAN/TAPE audio only, per that script's own doctrine comment).
-  'lamby_puremail_apology.wav': `${AUDIO_BASE}lamby_puremail_apology.wav`,
+  'lamby_puremail_apology.mp3': `${AUDIO_BASE}lamby_puremail_apology.mp3`,   // S210 / PLATFORM-12: was a 2.7 MB WAV fetched mid-scene; the master is in assets/audio/
   // ⚑ TAPE A'S SPOKEN SIDE ONE — rendered 2026-08-21 (tools/tts/render.py,
   //   register: apparatus). Registering it is not a formality: the law above
   //   means an UNREGISTERED name is never requested, silently and with no
   //   console error — so a rendered file, correctly named in the data, would
   //   still have played nothing and looked exactly like the bug it was fixing.
-  'tapeA_side_one_intro.wav': `${AUDIO_BASE}tapeA_side_one_intro.wav`,
+  'tapeA_side_one_intro.mp3': `${AUDIO_BASE}tapeA_side_one_intro.mp3`,   // S210 / PLATFORM-12
   // ⚑ L, ERA 4's VOICE — 47 clips, rendered 2026-09-02 in ONE sitting
   //   (tools/tts/render.py, Supertonic F3, register: apparatus). Ten
   //   conversation units from data/dialog/s4_l.json and the fifteen offer

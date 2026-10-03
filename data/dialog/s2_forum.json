@@ -1,7 +1,7 @@
 {
  "_doc": "⚑ S191 — THE RECOMMENDATION, 2003 (Phase 5; PLAN_ROUND5 'from early Internet Explorer to modern Chrome'). After his first daily check-in, a senior member of the programme's forum recommends a thread; the forum opens in the period's browser. Before the board, its RULES page — 'I Agree' the only live answer, the web twin of the rules sheet on the institution's wall. The thread is about coming home from the programme; he can post one fixed line (no free typing), a moderator approves it, and '3 people are praying for you'. GROUNDING (his research SocialMedia_Deep.md §2; intake.md): moderated, confidential forums with membership approval, category rooms by age/sex/marital status, accountability threads, peer prayer, senior members answering newcomers (Living Hope's boards, documented from 1998 — described in 2003 as a 'confidential, free, moderated message board'); the Rules page and 'I Agree' are the research's own proposal [I]. Every mark here is INVENTED (Harbor, WebView, the members).",
  "icon": "Harbor",
- "toast": "David recommends a thread for you.",
+ "toast": "Gareth recommends a thread for you.",
  "browser": "WebView 6",
  "menus": [
   "File",
@@ -50,7 +50,7 @@
   "title": "Home from the summer programme — how do you keep it?",
   "posts": [
    {
-    "who": "David",
+    "who": "Gareth",
     "meta": "Senior member · 1,204 posts · walking out since 1996",
     "lines": [
      "The first weeks back are the hardest. Your room is the same,",
@@ -86,7 +86,7 @@
  "_docS196": "⚑ S196 — the web, 2003 (PLAN_WEB_AND_HELPERS §2): Harbor becomes a place, not only a thread. Its index carries the recommendation (David's thread, pinned 'recommended for you'), the rooms, Resources, 'Find a group near you' and the conference. Every page speaks a documented position of the period in the seller's voice and names its dossier card at the foot: 'Healing is a process' → the person split from the identity, and a lapse framed as confession (e3_theday#4, #2); 'The wound behind it' → the father/mother 'wound' teaching (#5); 'For families' → families as a ministry of their own (#8); 'Find a group near you' → closed peer accountability groups (#0); the conference → the travelling parents' conferences (origin_intake_e1#1). Invented marks, no real people.",
  "index": {
   "title": "Harbor — forum index",
-  "recommended": "Recommended for you by David:",
+  "recommended": "Recommended for you by Gareth:",
   "resourcesLabel": "Resources",
   "resources": [
    "process",
@@ -158,7 +158,7 @@
   "topics": [
    {
     "t": "Home from the summer programme — how do you keep it?",
-    "a": "David",
+    "a": "Gareth",
     "r": "14",
     "v": "212",
     "l": "Today",

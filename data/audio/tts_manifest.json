@@ -12,7 +12,7 @@
       "lang": "en",
       "speed": 0.94,
       "steps": 10,
-      "outFile": "public/assets/audio/tapeA_side_one_intro.wav",
+      "outFile": "assets/audio/tapeA_side_one_intro.wav",
       "source": {
         "file": "data/dialog/s1_tapes.json",
         "fields": [
@@ -31,7 +31,7 @@
       "lang": "en",
       "speed": 1.0,
       "steps": 10,
-      "outFile": "public/assets/audio/lamby_puremail_apology.wav",
+      "outFile": "assets/audio/lamby_puremail_apology.wav",
       "source": {
         "file": "data/dialog/s2_caleb.json",
         "fields": ["pureMail.heading", "pureMail.lines[]", "pureMail.closing"]
