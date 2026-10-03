@@ -91,15 +91,24 @@
   },
   {
    "text": "GETA clinical guide 2022",
-   "era": 4
+   "era": 4,
+   "_doc": "⚑ S209j / ERA26-07 — from his Deep Research (~/Pc_Simulation/Sources/Deep Research/gate.md, 2026-10-03), recorded in VERIFY_CLOSE_LABELS_2026-10-03.md. Documented; the classification contested — both positions kept, unresolved. ⚑ Rewritten the same day (his: 'what is the point with this?'): the point is the WORD — the apparatus's 'exploring' (Lexicon e4 word of the day; 'identity exploration' in her related searches) and the rename to Therapy First, the Close message's 'when a practice is banned by name, it changes its name'.",
+   "note": "The word 2026 uses, “exploring”, has a source: a 2022 guide by the Gender Exploratory Therapy Association made “exploratory psychotherapy” the first step for young people with gender distress. Critics such as Florence Ashley say it works like a conversion practice under a gentler name; its authors deny it. The association has since renamed itself Therapy First.",
+   "src": "GETA, A Clinical Guide for Therapists Working with Gender-Questioning Youth (2022); Ashley, Perspectives on Psychological Science (2022); D'Angelo, Journal of Medical Ethics (2023)"
   },
   {
-   "text": "Genspect parent survey",
-   "era": 4
+   "text": "Genspect parents' survey (2025)",
+   "era": 4,
+   "_doc": "⚑ S209j / ERA26-07 — from his Deep Research (~/Pc_Simulation/Sources/Deep Research/gate.md, 2026-10-03), recorded in VERIFY_CLOSE_LABELS_2026-10-03.md. Was 'Genspect parent survey': the research found the 2025 instrument is an assessment questionnaire, not a published study (and a separate 2024 survey has no published methods) — so the label names the instrument and the sentence says what it is.",
+   "note": "Genspect's Parents' Survey is a questionnaire families fill in about their child and give to clinicians. It is not a published research study, and we found no published validation of it.",
+   "src": "Genspect, “The Genspect Parents' Survey: How It All Started” (2025)"
   },
   {
-   "text": "detransition cohort study (Fenway)",
-   "era": 4
+   "text": "detransition study (Turban et al., 2021)",
+   "era": 4,
+   "_doc": "⚑ S209j / ERA26-07 — from his Deep Research (~/Pc_Simulation/Sources/Deep Research/gate.md, 2026-10-03), recorded in VERIFY_CLOSE_LABELS_2026-10-03.md. Was 'detransition cohort study (Fenway)': not a Fenway cohort but a secondary analysis of the 2015 U.S. Transgender Survey by authors at Stanford, the Fenway Institute, Harvard, BU and MGH. The sampling limit is kept in the sentence, as the research insists. ⚑ Rewritten the same day on his correction: pausing or stopping a transition is not questioning yourself — every respondent still identified as trans, and 'affirmation' was broadly defined (social steps included), so the study measures interruption by pressure, which is the very thing the 2026 apparatus counts as 'second thoughts'.",
+   "note": "Second Thoughts counts every stop as a change of mind. This study counted 2,242 trans and gender-diverse people who had paused or stopped a transition, social or medical, at some point: 82.5% named an outside pressure, such as family, stigma or safety. All of them still identified as trans. It measures transitions interrupted by pressure, not people who stopped being trans.",
+   "src": "Turban, Loo, Almazan and Keuroghlian, LGBT Health (2021); MacKinnon et al., Bulletin of Applied Transgender Studies (2022)"
   },
   {
    "text": "SPLC detrans reporting",
