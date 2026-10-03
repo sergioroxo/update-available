@@ -157,3 +157,28 @@ budget: ≤75 draw calls (the figures are batched, so movement must be a cheap p
 
 **My order, if you tick them:** L1 + L2 + M1 first (biggest change, least risk), then I3 and I1 (her agency), then
 L3 and M2. M3 waits for your eye.
+
+---
+
+## HIS RULINGS (2026-10-03) AND WHAT WAS BUILT (S209g)
+
+**B26.**
+- **The principle: yes.** "Keep the systems many… if we fix only the drift it makes sense."
+- **D1: LambyOS throughout.** The 1997 failure cascade now reads "LambyOS 4.0.7". His reason, verbatim, is in ARTICLE_EVIDENCE_LOG (2026-10-03): the lamb as the biblical sacrificial lamb and the image given to people still learning; a system built to show how it creeps in, which renames don't replace.
+- **D2: yes.** The companion disk is the object, Un-Walk the programme, TriedPath the ministry. "Starter kit", "brochure" and the 1997 "booklet" are gone: the witness source, the kit-inserted record line, the parcel toast and the guide's witnesses. The IRC line now says "Un-Walk says…". (2016's family "booklet" is a different object, the family programme's, and stays.)
+- **D3: the legible lie.** The page sells "Summer Youth Weekend, Sat 12 – Sun 13 July… A weekend away"; the packet in Daniel's hands still says 14 days, and Rob still says two weeks. The suitcase reads "packed for the youth weekend. two weeks of clothes." 2003's pre-filled form keeps the truth: "Summer Youth Weekend, July 1997 (residential: 14 days)".
+- **D4: yes.** The notice now ends "…a family of wellness services, and moving to GraceOS". The changelog gains "+ GraceOS, with L: one companion on every screen". The report reads "L — ready · companion licence transferred". Second Thoughts opens with "L referred you."
+- **The receipt.** Each update is named by its vendor (1997 · Un-Walk 1.2 / 2003 · Restorify / 2016 · GracePlatform / 2026 · Continuity). Under each, every hand the file passed through, then "hands: 13 · file: 1".
+- **The exhibition text: changed** (v6): "One desk, thirty years, many hands passing the same file, until it reaches someone they cannot file."
+- **The lamb: (b), a mascot.** At 2016's consent card it says "It's Lamby. GracePlatform has me now."
+
+**The Commons.** He ticked L1, L2, L3, M1, M2, M3 (faceless) and "we can try" I1 and I3. Then, on the first stills: *"I actually don't like the string lights like that, preferred without them, so it can look more like a starry sky… To make the respite lighter is not just to make it less dark, when the overall aesthetic is very boxy. This is a VR world, either make the set more dynamic, or think of a logic that reduces the enclosure. It boxes off the space, instead of letting it breathe."* So the plan changed:
+- **No walls.** The hall is an open platform under the sky: a slab with a rim of light at its edge, and a dusk glow all round the horizon (haze → dusty rose → night). The four columns, the back band and the rail are gone. The screen stands on two trusses.
+- **A starry sky, no strings.** 260 far stars stay still. The 41 lamps are the near stars: as each person arrives, their lamp **rises out of the crowd into the sky** and takes its place. They twinkle. A wave crosses the sky when a category is called, and the whole sky flares on a landing. (This also fixed an old bug: since 2026-09-12 every lamp had drawn white, because rebuilds dropped the colour stream.)
+- **The words, freestanding** (L3): the four houses' banners on poles to her right; the house rules on a board on legs to her left; "OUR FIRSTS", a board of polaroids of people with their arms up, behind her. All invented.
+- **Light** (L1): the platform's own light is raised and a warm fill added. Measured from the seat before the sky change: brightness 78–97 out of 255 became 119–142.
+- **M1: the crowd dances.** A bounce on the beat, each figure a little out of step, plus a sway. Before, a 2 cm sway read as standing boxes.
+- **I1: her lamp.** A small lantern rests at the bottom edge of her view. During the ball, a press anywhere in the hall (after the rings, so a ring always wins) raises it, and the sky flares and the two beside her raise their arms. It is never counted and never filed.
+- **I3: the crowd makes room.** While the second intrusion waits for her, the people round the crowd's ring step out and open their arms.
+
+**Budget:** 10–13 draw calls in the hall (limit 75).

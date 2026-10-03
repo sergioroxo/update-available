@@ -97,8 +97,9 @@ import {
 } from '../theme/era4';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
-import { setCommonsLamps } from '../../room/commonsLamps';
-import { setCommonsFigures, greetCommonsFigures, setCommonsShow } from '../../room/commonsFigures';
+import { setCommonsLamps, pulseCommonsLamps } from '../../room/commonsLamps';
+import { setCommonsFigures, greetCommonsFigures, setCommonsShow, inviteCommonsFigures, answerCommonsFigures } from '../../room/commonsFigures';
+import { setHerLamp, raiseHerLamp, herLampRaised } from '../../room/commonsWorld';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import script from '../../../data/dialog/s4_ball.json';
 
@@ -337,6 +338,9 @@ export class E4Ball {
   }
 
   update(dt: number): void {
+    // ⚑ S209g — her lamp is in her hand for the ball itself; the room makes space while it waits for her (I1, I3)
+    setHerLamp(this.phase === 'ball');
+    inviteCommonsFigures(this.wantsHer);
     if (this.phase === 'idle' || this.phase === 'done') return;
     this.t += dt;
 
@@ -440,6 +444,7 @@ export class E4Ball {
   private lineT = 0;
   private afterT = 0;
 
+  private lastCat = -1;
   private nextLine(): void {
     this.lineSeq++;
     this.cur = this.queue.shift() ?? null;
@@ -449,7 +454,7 @@ export class E4Ball {
       greetCommonsFigures(false);
       this.ballT = 0;
     }
-    if (this.cur?.flare) this.landingK = 1;
+    if (this.cur?.flare) { this.landingK = 1; pulseCommonsLamps('flare'); }   // ⚑ S209g / M2 — the hall's lamps answer a landing
     this.lineAt = this.ballT;
     this.lineT = 0;
     this.spoke = false;
@@ -459,6 +464,8 @@ export class E4Ball {
     // ⚑ Phase 7 — the show: the category's performers walk while it is called; the room's arms go up on a landing
     const cats = script.ball.categories as unknown as { lines: BLine[]; performers?: number }[];
     const cat = cats.find((c) => c.lines.includes(this.cur as BLine));
+    if (cat && cats.indexOf(cat) !== this.lastCat) pulseCommonsLamps('chase');   // ⚑ S209g / M2 — a category called: a chase down the strings
+    this.lastCat = cat ? cats.indexOf(cat) : this.lastCat;
     setCommonsShow({ performers: cat ? (cat.performers ?? 1) : 0, category: cat ? cats.indexOf(cat) : -1, cheer: (this.cur.flare ?? 0) > 0 });
   }
 
@@ -486,6 +493,8 @@ export class E4Ball {
   private intrusionT = -1;   // <0: none running
   /** she is standing in the crowd (the `commons-crowd` marker) — `E4Shell` tells this */
   inCrowd = false;
+  /** ⚑ S209g / I1 — times she raised her lamp; for the probes only, never filed */
+  lampsRaised = 0;
   /** ⚑ S209f / A25 — she is still at the seat she arrived at (the hint's "to your left" is true only from there) */
   atSeat = true;
   /** the ball clock at which she stepped in during a `needsHer` intrusion, so the bar falls from THEN */
@@ -606,6 +615,12 @@ export class E4Ball {
         this.onJoin?.();
         this.begin();
       }
+      return true;
+    }
+    // ⚑ S209g / I1 (his tick, "we can try") — during the ball a press is her noise: she raises her lamp, and the
+    //   hall's lamps and the two beside her answer. Never counted, never filed (respite).
+    if (this.phase === 'ball') {
+      if (!herLampRaised()) { raiseHerLamp(); pulseCommonsLamps('flare'); answerCommonsFigures(); this.lampsRaised++; }
       return true;
     }
     if (!this.returnable) return true;
@@ -746,11 +761,14 @@ export class E4Ball {
     // the hint, under the card, in the room's colour: where the win is
     if (this.wantsHer) {
       setFont(ctx, 9);
-      ctx.fillStyle = PLACE.textileHi;
       const hw = Math.ceil(ctx.measureText(SYSTEM.hint).width);
-      ctx.fillText(SYSTEM.hint, Math.round((W - hw) / 2), cy + ch + 10);
       const where = this.atSeat ? SYSTEM.hintWhere : SYSTEM.hintWhereAway;
       const ww = Math.ceil(ctx.measureText(where).width);
+      // ⚑ S209g — on a dark band: the hall is bright now (L1), and pink on its floor did not read
+      const bw = Math.max(hw, ww) + 16;
+      roundRect(ctx, Math.round((W - bw) / 2), cy + ch + 6, bw, 30, 6, ERA4.field);
+      ctx.fillStyle = PLACE.textileHi;
+      ctx.fillText(SYSTEM.hint, Math.round((W - hw) / 2), cy + ch + 10);
       ctx.fillText(where, Math.round((W - ww) / 2), cy + ch + 22);
     }
   }

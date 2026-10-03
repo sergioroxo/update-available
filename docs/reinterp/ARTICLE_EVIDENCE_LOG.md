@@ -15,6 +15,12 @@ actually citable in an academic paper about human-AI co-creative authorship in V
 in a few sentences, not leave it buried in a session-log paragraph. This doc is NOT the abstract or the
 paper — co-created (Claude drafts, Sérgio finalizes, 2026-07-24 norm); this is the raw material.
 
+**⚑ 2026-10-03 (his): the article is pushed to December.** Until then this log and
+`ARTICLE_COMPILATION_2026-10-03.md` (a pathed compilation of the whole arc: numbers, authorship
+changes, his overrides, the checks, the ethics as practised, the theses, figures, gaps) are the
+standing store for everything worth keeping, for the article AND for the exhibition text
+(`EXHIBITION_TEXT_v6_2026-09-14.md`, live). Add to them as things happen; no deadline work is due.
+
 ## Screenshot / visual-evidence practice (going forward)
 
 No infrastructure exists yet to auto-archive images shared in chat — Claude cannot save a pasted image
@@ -98,6 +104,29 @@ pass and a browser playtest). The table of record is `03_COORDINATION.md` → *M
 line in the article next to July's 4.8 → 5: the build has now crossed three model generations on the
 Claude side, and the work carried across each without a restart — the continuity lives in the repo's
 own logs, not in any one model.
+
+## 2026-10-03 — why the machine is called LambyOS, and why its names keep changing (his words)
+
+Ruling B26 of review round 5 asked whether the piece's many system names should be unified. He said no, in
+two steps. First (2026-10-02): *"we are talking about a multitude of actions and systems, they are never one."*
+Then, on the 1997 machine's name (2026-10-03), verbatim:
+
+> "LambyOS starts as the machine yes — It is a symbolic way of showing how digital systems creep in and get
+> updated through overall changes. Because some software may change names as companies do, the corrective
+> intent still remains. The name lamb serves here as a play on the biblical LAMB, the sacrificial lamb, and the
+> image given to people when they are still learning. It is a system designed to teach the audience how it
+> creeps in, and even renames don't replace that."
+
+**Why it is citable.** It states the piece's theory of persistence in one move. The *systems* are many and
+renamed (LambyOS → Restorify → GracePlatform → Continuity/GraceOS; their helpers Lamby → Lambient → L), while the
+*corrective intent* and *the file* carry across every rename. The lamb holds three readings at once: the
+sacrificial lamb, the lamb of a flock being taught, and a friendly mascot. The build answers with a design
+principle he endorsed the same day, "many hands, one file" (REVIEW_B26_AND_COMMONS_2026-10-03.md):
+- the drift of one object under several names is fixed;
+- the many systems are kept, and the Close's receipt counts them;
+- the lamb is read as a mascot sold on with the file, not one character who survives every vendor.
+
+This is also a clear instance of the authorship split: the reviewing models proposed unifying the names (COPY-07/09/10/11); the human lead reframed the finding as the work's thesis.
 
 ## Open items (Sérgio's, not Claude's)
 

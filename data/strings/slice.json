@@ -70,7 +70,7 @@
   "taskbarMedia": "Player",
   "taskbarNetvision": "NetVision",
   "_docTaskbar": "S165 / W-E2 (a): the taskbar buttons of the program windows (≤ 9 characters at the 9 px face; 64 px buttons). Period-true 1997/2003: pressed in while the window is up, raised while it waits.",
-  "kitToast": "The brochure on your desk says: insert the enclosed disk to begin.",
+  "kitToast": "The parcel on your desk holds a companion disk. Insert it to begin.",
   "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log",
   "behindToast": "Record filed. (see behind you)",
   "eraSkins": {
@@ -115,7 +115,7 @@
   "subheader": "CLASSIFIED — INTERNAL USE ONLY",
   "subject": "SUBJECT",
   "source": "SOURCE",
-  "sourceValue": "starter kit v1.2 — postal placement",
+  "sourceValue": "companion disk v1.2 — postal placement",
   "trustedContact": "TRUSTED CONTACT",
   "trustedAssigned": "assigned — awaiting first contact",
   "trustedMade": "MentorRob — contact established",
@@ -133,13 +133,13 @@
    "_note": "keys are era ids; a missing key falls back to the flat era-1 wording above. ⚑ Eras 3 AND 4 are absent on purpose: the record is off the wall for 2016, and as of 2026-09-05 it is off for 2026 too — Sérgio retired the migration that used to carry it onto Maya's wall, so this panel now lives and ages entirely inside Daniel's own six years. See cluster.ts setTerminalVisible.",
    "e1": {
     "subheader": "CLASSIFIED — INTERNAL USE ONLY",
-    "sourceValue": "starter kit v1.2 — postal placement",
+    "sourceValue": "companion disk v1.2 — postal placement",
     "statusValue": "IDENTIFIED",
     "card": "index · era 1 · drawer 12"
    },
    "e2": {
     "subheader": "CLASSIFIED — INTERNAL USE ONLY",
-    "sourceValue": "starter kit v1.2 — postal placement",
+    "sourceValue": "companion disk v1.2 — postal placement",
     "statusValue": "ENROLLED",
     "card": "index · era 2 · drawer 12 · scanned"
    }
@@ -159,7 +159,7 @@
   "_docS144": "⚑ S144 — THE RECORD REDESIGNED AS A MAP (THE_RECORD_PLAN §3G): a count line, the flagged rows first (they are what the apparatus acts on), newest first, and one sentence under the header in the apparatus's own voice saying what the file is FOR — `purpose`. The fields above the log are unchanged. Cold, sharp, read at the flip's distance.",
   "recordLines": {
    "_doc": "⚑ S144: the cold line for each era-1 `records` id, which the ledger stores as an id alone. Read by src/witness/record.ts; the fields above the log are unchanged.",
-   "kit-inserted": "starter kit v1.2 inserted — companion loaded",
+   "kit-inserted": "companion disk v1.2 inserted — Un-Walk loaded",
    "went-online": "online — the fellowship network, dialled from the kit",
    "search-1997": "search history kept — referral pages returned",
    "channel-joined": "channel joined — transcript kept",

@@ -4,7 +4,7 @@
   "toEra": "e2",
   "_docCascade": "⚑ THE ERROR CASCADE — restored 2026-08-21. It was authored in data/dialog/s1_end.json's `ritual` block (error / errorRetry / errorCancel / loading) and NOTHING IN src/ EVER READ IT: that whole block is orphaned, so the beat existed only as text. Sérgio named this loss from memory in his 2026-08-21 walkthrough — 'the transition from Era 1 to Era 2 is missing the cascade of windows that we talked about previously and the glitching effects' — and he was right. The copy below is that authored copy, moved to the file the live code actually reads. Its own design note: 'Runs straight off the diary glitch, replicating the Error-999 stack.' ⚑ IT IS A STACK, NOT A DIALOG: the windows arrive one after another, each offset from the last, until the screen is a pile of the same refusal. Retry and Cancel BOTH lead onward — the era's own law is register-not-branch, and an error you can genuinely dismiss is not this system. Set `cascade: null` on any update that should not have one; only u2 does today.",
   "cascade": {
-   "title": "PHASE/2 95",
+   "title": "LambyOS 4.0.7",
    "line": "a new update is needed",
    "retry": "Retry",
    "cancel": "Cancel",
@@ -159,7 +159,8 @@
    "",
    "Contributor tools are being retired.",
    "GracePlatform is joining Continuity,",
-   "a family of wellness services.",
+   "a family of wellness services,",
+   "and moving to GraceOS.",
    "",
    "Your file comes with you."
   ],
@@ -225,6 +226,7 @@
   "installTitle": "Updating…",
   "changelog": [
    "CONTINUITY — WHAT IS NEW",
+   "+ GraceOS, with L: one companion on every screen",
    "+ your session, restored before you arrive",
    "+ search that finishes your sentence",
    "+ support, in the tab that opens itself",
@@ -240,7 +242,7 @@
   "_reportDoc": "⚑ L IS INSTALLED HERE, and this is the only place in the piece where that happens. `report` renders exactly like u3's `uninstall` block (types on after the changelog; a line prefixed '~' renders small and dim) and is deliberately its MIRROR: u3's report is what could not be removed and left in pieces, u4's is what arrived and will not be leaving. ⚑ The dispersal animation belongs to u3 alone and does not play here — see the key guard in src/desktop/apps/update.ts. The quiet line is the thesis, and it is also the touchless budget spoken by the apparatus itself: from here on the piece moves without you.",
   "report": [
    "Registering companion service…",
-   "L — ready",
+   "L — ready · companion licence transferred",
    "~ no further action is required from you."
   ],
   "installSeconds": 13.5,

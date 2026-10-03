@@ -292,6 +292,19 @@
   "_docNoAudio": "⚑ S141: the `audio` fields (25 `ball_*.wav` never rendered) are gone from every line — Sérgio, 2026-09-12: 'TransJesus doesn't have voice.' The MC's lines are captions; the room's sound is the two recordings in `room`.",
   "mc": "MC",
   "_docWho": "⚑ Phase 7 (his: 'who says Hi Maya and the messages?… a lot of text of the house, this needs to be inside of chat bubble text separated that people can read and understand the different elements') — every spoken line names its speaker in a bubble of its own: 'Hi, Maya.' is Junie (who sent the link, and whose category is the last), the second is Ade, a friend of hers from the house (an invented name), and everything after the doors shut is the MC's. Up to three bubbles stand at once, the newest brightest. Still captions (frame chrome, `_docVoice`): nobody's voice is synthesized.",
+  "hall": {
+   "_doc": "⚑ S209g / B24 again (his, 2026-10-03: L1, L2, L3, M1, M2, M3 faceless, I1, I3 — REVIEW_B26_AND_COMMONS_2026-10-03.md). The walls say people made this place: the four invented houses' banners on her right, the house rules on her left (Dame-Griff's note: a community's rules are ordinary, owned and warm), a wall of firsts behind her. Invented, never a real house or a real ball's rules. Respite: nothing here is a trap and nothing is revealed as fake.",
+   "rulesTitle": "HOUSE RULES",
+   "rules": [
+    "1. Everybody walks.",
+    "2. Nobody is filed here.",
+    "3. Cheer loudest for the scared ones.",
+    "4. Your name is the one you give.",
+    "5. Doors shut at nine. Nobody is left outside."
+   ],
+   "banners": ["House of Lamps", "House of Open Doors", "House of Mending", "House of Late Arrivals"],
+   "firstsTitle": "OUR FIRSTS"
+  },
   "_docShow": "⚑ Phase 7 (his: 'the Ball/Trans jesus, we need visually to see the show in some way') — each category is WALKED where she can see it: its performers come off the stage down the gap in the crowd toward her and back (one for Wren, Ines and Junie; the four Late Arrivals at once), a pale patch of light on the floor under them, and the crowd's arms go up when the room answers (a line's `flare`). Faceless figures, the piece's own; nothing is a trap, nothing is revealed as fake (respite)."
  },
  "room": {

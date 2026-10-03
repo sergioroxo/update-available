@@ -314,6 +314,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     const R = card.receipt as typeof card.receipt & {
       eras: { era: string; subject: string; promised: string }[]; promisedLabel: string; filedLine: string;
       usedLabel: string; notChanged: string; couldNot: string;
+      handsLabel: string; hands: Record<string, string[]>; handsTotal: string;
     };
     setFont(ctx, 9);
     const maxW = 324;
@@ -336,6 +337,9 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       const e = R.eras.find((x) => x.era === u.era);
       const es = by[u.era as 'e1' | 'e2' | 'e3' | 'e4'];
       L.push({ t: u.line, right: R.failed, rightCol: PRINTOUT.failed });
+      // ⚑ S209g / B26 — many hands, one file: every system the file passed through in this era
+      const hands = R.hands[u.era] ?? [];
+      if (hands.length) for (const l of wrapTo(hands.join(' · '), `  ${R.handsLabel} `)) L.push({ t: l, col: PRINTOUT.inkDim });
       if (e) for (const l of wrapTo(e.promised, `  ${R.promisedLabel} `)) L.push({ t: l, col: PRINTOUT.inkDim });
       L.push({ t: '  ' + R.filedLine.replace('{n}', String(es.length)).replace('{f}', String(es.filter((x) => x.flagged).length)), col: PRINTOUT.inkDim });
       const kinds: string[] = [];
@@ -349,6 +353,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       if (e) L.push({ t: '  ' + e.subject, right: R.notChanged });
       L.push({ t: '' });
     }
+    L.push({ t: R.handsTotal.replace('{h}', String(Object.values(R.hands).reduce((n, h) => n + h.length, 0))) });
     L.push({ t: '', rule: true });
     for (const l of wrapTo(R.couldNot, '', 2)) L.push({ t: l });
     L.push({ t: R.kept });

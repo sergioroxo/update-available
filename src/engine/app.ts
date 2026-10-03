@@ -3023,6 +3023,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           }
         }
       }
+      // ⚑ S209g / I1 — in the ball, a press anywhere else in the hall is her noise: she raises her lamp.
+      //   After the markers, so a ring always wins; the headset's own sphere (era3Devices) still hands it back.
+      if (os.e4?.pressHall()) return;
       // ⚑ S183 — the institution's corner answers a press with its own movement
       //   (src/room/institution.ts). Last, so a marker or a screen always wins.
       // S189 — the device in this era (1997's handheld, 2003's phone, 2026's console): pick it up, play it

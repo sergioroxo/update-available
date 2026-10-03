@@ -1315,7 +1315,8 @@ export const BALL = {
 // Nothing in this kit is pressable by itself; the pages decide what publishes.
 // ═══════════════════════════════════════════════════════════════════════════
 /** ⚑ the Commons hall's sky (commonsWorld.ts) — the one colour the world adds */
-export const COMMONS_SKY = '#141826';
+// ⚑ S209g (his, 2026-10-03: a starry sky; no walls) — #141826 → a deep violet night over a dusk horizon
+export const COMMONS_SKY = '#2A2445';
 
 export const WEB = {
   match: '#2f7a3a',          // S193 — the recommender's green ('84% match — recommended for you')

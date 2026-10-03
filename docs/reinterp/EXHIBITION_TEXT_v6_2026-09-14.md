@@ -65,7 +65,9 @@ A browser and WebXR narrative about SOGICE, sexual orientation and gender identi
 
 ## One line
 
-One desk, thirty years, four names for the same demand, until the system meets someone it cannot file.
+One desk, thirty years, many hands passing the same file, until it reaches someone they cannot file.
+
+*(Changed 2026-10-03, his B26 ruling: the systems are "a multitude of actions and systems, they are never one". Was: "…four names for the same demand, until the system meets someone it cannot file.")*
 
 ---
 

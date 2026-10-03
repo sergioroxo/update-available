@@ -33,11 +33,20 @@
   "title": "RECEIPT",
   "span": "1997 — 2026 · one machine",
   "updates": [
-   { "era": "e1", "line": "1997 · Family Companion 1.0" },
+   { "era": "e1", "line": "1997 · Un-Walk 1.2" },
    { "era": "e2", "line": "2003 · Restorify" },
    { "era": "e3", "line": "2016 · GracePlatform" },
-   { "era": "e4", "line": "2026 · L · Second Thoughts" }
+   { "era": "e4", "line": "2026 · Continuity" }
   ],
+  "_docHands": "⚑ S209g / B26 (his, 2026-10-03: 'a multitude of actions and systems, they are never one'; the principle 'many hands, one file', REVIEW_B26_AND_COMMONS_2026-10-03.md) — under each update, every hand the file passed through in that era; the total at the end. The ads and the player apps are surroundings, not hands.",
+  "handsLabel": "hands:",
+  "hands": {
+   "e1": ["TriedPath Fellowship", "Un-Walk", "New Morning"],
+   "e2": ["Restorify", "Lamby", "Harbor Forums", "the Anchor Program"],
+   "e3": ["GracePlatform", "Lambient"],
+   "e4": ["Continuity", "GraceOS", "L", "Second Thoughts"]
+  },
+  "handsTotal": "hands: {h} · file: 1",
   "failed": "FAILED",
   "entries": "entries filed: {n} · flagged: {f}",
   "searchesLabel": "the searches:", "searchHis": "1997 · he typed:", "searchHers": "2026 · typed for her:", "_docSearches": "⚑ S193 — the four-era browser's rhyme (PLAN_ROUND5, his 'from early Internet Explorer to modern Chrome'): in 1997 the shame typed the query and the network answered it; in 2026 the machine typed it for her. Read off the ledger: his line only if he searched (search-1997), hers only if 2026's file has begun; the queries themselves are the data's (s1_browser.json query, s4_browser.json program.chosen).", "practicesLabel": "what it did, in order:",

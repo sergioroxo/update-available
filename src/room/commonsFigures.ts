@@ -29,6 +29,7 @@
 import * as pc from 'playcanvas';
 import { PLACE, ERA4 } from '../desktop/theme/era4';
 import { WORLD } from './commonsWorld';
+import nodesData from '../../data/room/nodes.json';
 
 const FIGURES = 22;   // ⚑ 2026-09-13: 14 → 22, and placed where the seat can SEE them (below)
 const SUNK_Y = -40;
@@ -38,7 +39,11 @@ const SEAT = { x: 4.4, z: 0.7, clear: 1.3 };
  *  where a hall's stage is — and the crowd stands between her and it, and
  *  around her, the way you stand in a crowd. */
 const STAGE = { x: WORLD.stage.x, y: 0.0, z: WORLD.stage.z, w: WORLD.stage.w, d: WORLD.stage.d, h: WORLD.stage.h };
-const REBUILD_HZ = 8;
+const REBUILD_HZ = 12;   // ⚑ S209g / M1 — 8 → 12: a dance needs more frames than a sway
+/** ⚑ S209g / I3 — the crowd's ring (nodes.json `commons-crowd`): while the room waits for her, the people
+ *  around it step aside and open their arms — a gap is the invitation, in the world, not a glow */
+const CROWD_RING = ((nodesData.nodes as unknown as { id: string; marker: number[] }[]).find((n) => n.id === 'commons-crowd')?.marker) ?? [5.8, 0.03, -1.7];
+const INVITE_RADIUS = 1.9, INVITE_STEP = 0.7, INVITE_SECONDS = 1.6;
 
 function makeRng(seed: number): () => number {
   let s = seed >>> 0;
@@ -62,6 +67,12 @@ let greetHook: ((on: boolean) => void) | null = null;
  *  bodies cannot look, so the gesture is the whole of it — and it is only
  *  ever these two, never the crowd, never the stage. */
 export function greetCommonsFigures(on: boolean): void { greetHook?.(on); }
+let inviteHook: ((on: boolean) => void) | null = null;
+/** ⚑ S209g / I3 — the room makes space round the crowd's ring (ball.ts, while `wantsHer`) */
+export function inviteCommonsFigures(on: boolean): void { inviteHook?.(on); }
+let answerHook: (() => void) | null = null;
+/** ⚑ S209g / I1 — she raised her lamp: the two beside her raise their arms with her */
+export function answerCommonsFigures(): void { answerHook?.(); }
 const GREET_SECONDS = 1.4;
 const GREET_STEP = 0.45;
 
@@ -178,11 +189,26 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     const sunk = k <= 0;
     figures.forEach((f, n) => {
       if (sunk) { sinkBox(f.x, f.z); sinkBox(f.x, f.z); sinkBox(f.x, f.z); sinkBox(f.x, f.z); return; }
-      // rising from the floor, then a sway
+      // rising from the floor, then the dance — ⚑ S209g / M1 (his tick): a bounce on the beat (two a
+      //   second, each a little out of step with the next), a side-to-side sway on the bar, a lean; it was
+      //   a 2 cm sway nobody could see, and the crowd read as boxes
       const rise = (k - 1) * (f.h + 0.4);
-      let bob = 0.02 * Math.sin(t * 1.9 + f.phase);
-      let lean = 0.025 * Math.sin(t * 0.8 + f.phase * 1.7);
+      const beat = t * Math.PI * 2 + f.phase * 0.35;
+      let bob = 0.045 * Math.abs(Math.sin(beat));
+      let lean = 0.035 * Math.sin(t * 0.8 + f.phase * 1.7);
       let x = f.x, z = f.z;
+      if (!f.onStage) z += 0.06 * Math.sin(beat / 2);
+      // ⚑ S209g / I3 — make room: step out from the ring, and turn the body toward her
+      let inviteArms = 0;
+      if (inviteK > 0 && !f.onStage) {
+        const dx = f.x - CROWD_RING[0], dz = f.z - CROWD_RING[2], d = Math.hypot(dx, dz);
+        if (d < INVITE_RADIUS && d > 0.01) {
+          const w = inviteK * (1 - d / INVITE_RADIUS * 0.5);
+          x += (dx / d) * INVITE_STEP * w; z += (dz / d) * INVITE_STEP * w;
+          lean += Math.sign(SEAT.x - f.x) * 0.05 * w;
+          inviteArms = 0.45 * w;
+        }
+      }
       if (f.beside && greetK > 0) {
         // the greeting's gesture: a step toward her seat, a lean, the sway lifted
         z += Math.sign(SEAT.z - f.z) * GREET_STEP * greetK;
@@ -202,7 +228,9 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       box(x + lean, base + bodyH / 2 + bob, z, f.w / 2, bodyH / 2, f.w * 0.36);
       box(x + lean * 1.4, base + bodyH + headH + 0.03 + bob, z, headH, headH, headH * 0.9);
       // the arms: the crowd's go up when the room answers (not the one on the stage, not the two beside her mid-greeting)
-      arms(x + lean, base + bodyH + bob, z, f.w, f.h, f.onStage || (f.beside && greetK > 0) ? 0 : armK * (0.75 + 0.25 * Math.sin(f.phase)));
+      const answer = f.beside ? answerK : 0;
+      arms(x + lean, base + bodyH + bob, z, f.w, f.h, f.onStage || (f.beside && greetK > 0) ? 0
+        : Math.max(armK * (0.75 + 0.25 * Math.sin(f.phase)), inviteArms, answer));
       void n;
     });
     // ⚑ Phase 7 — the performers: down the runway and back, abreast, for as long as their category is called
@@ -275,8 +303,14 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   let acc = 0;
   let greetWant = false;
   let greetK = 0;
+  let inviteWant = false;
+  let inviteK = 0;
+  let answerT = -1;
+  let answerK = 0;
   hook = (on) => { want = on; if (on) ent.enabled = true; };
   greetHook = (on) => { greetWant = on; };
+  inviteHook = (on) => { inviteWant = on; };
+  answerHook = () => { answerT = 0; };
   showHook = (s) => { if (s.category !== show.category) walkT = 0; show = s; };
   return {
     update(dt: number): void {
@@ -285,6 +319,8 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       const before = k;
       k = want ? Math.min(1, k + dt / RISE_SECONDS) : Math.max(0, k - dt / RISE_SECONDS);
       greetK = greetWant ? Math.min(1, greetK + dt / GREET_SECONDS) : Math.max(0, greetK - dt / GREET_SECONDS);
+      inviteK = inviteWant ? Math.min(1, inviteK + dt / INVITE_SECONDS) : Math.max(0, inviteK - dt / INVITE_SECONDS);
+      if (answerT >= 0) { answerT += dt; answerK = answerT < 0.4 ? answerT / 0.4 : answerT > 2.2 ? Math.max(0, 1 - (answerT - 2.2) / 0.5) : 1; if (answerT > 2.7) { answerT = -1; answerK = 0; } }
       if (show.performers > 0) walkT += dt;
       armK = show.cheer ? Math.min(1, armK + dt / ARM_EASE) : Math.max(0, armK - dt / (ARM_EASE * 3));
       acc += dt;
