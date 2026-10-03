@@ -432,3 +432,22 @@ Wayback captures: the timestamp shown is the one served.
 8. **Not found.** Homosexuals Anonymous (no Wayback capture at the URLs tried); Exodus's 2003 "women" page (404); a dated origin for "chosen family"; a bisexual-specific causal theory; the exact phrase "just exploring" as a network term; a ministry source in what I read that gives pornography as the *cause* of orientation; the date of `samesexattraction.org`. I did not read: Hallman's, Moberly's and Rentzel's books (only via Robinson and Spivey and Throckmorton), the full text of Weiss et al. (a local copy exists; see section 3.1), the HHS 2025 review, or most of the folder's long books beyond term counts.
 9. **Names.** The piece's fictional marks are used inside the fiction; real organisations (Exodus International, NARTH, People Can Change, Love in Action, Courage, Evergreen International, Desert Stream, Focus on the Family, Catholic Medical Association, GETA/Therapy First, Genspect, SPLC, Forbidden Colours, GPAHE, ILGA, the APA) may be named in documentary text where sourced; their exact documentary wording above is attributed to the cited page. Every claim about an organisation should carry its source on the Dossier card (status `documentary | contested | speculative`).
 10. **A suggestion for the order of collection.** The strongest "where the system uses it" hooks already in the repo are: SSA (`s2_forum`, `s3_recommend`), root cause and father wound (ROOTCAUSE), emotional dependency (ROOTCAUSE, Era 3 course copy), accountability partner (`s2_forum`, `s3_maiden`), gender confusion (`s3_queue`, ROOTCAUSE), social contagion (`s4_ball` RISK line). Terms with **no hook yet**: unwanted SSA, lifestyle, overcomer, brokenness (only in a tag list), reintegrative, gender ideology, desistance (dossier link only), "just exploring".
+
+---
+
+## 6. ADDITIONS (S209, 2026-10-02 — his two sources, read by me)
+- **S40 — People Can Change, "Perceptions Among Men With Unwanted Same-Sex Attractions (SSA) of the Factors
+  Contributing to the Development of Their Homosexual Feelings" (survey, June 2004).** Local file:
+  `~/Pc_Simulation/PDF/MD/Surveyoncauses.md`. 205 of about 600 members of its online support groups; admission
+  required affirming a wish to change. Most-cited factors: father 97% (71% "top three"), male peers 97%, mother 91%;
+  48% reported childhood sexual abuse; 95% disagreed they were "born to be gay". Its own caveat: it measures
+  *perceptions*, "not a measurement of actual causes", and the sample is not representative. → used in the Lexicon
+  as the programme's teaching returning as its members' belief (status: perceptions, not causes).
+- **S41 — An LDS Social Services practitioner module on "understanding and changing homosexual orientation
+  problems"** (men only; leans on the Church's 1981 *Homosexuality* booklet). Wayback capture, 15 Feb 2005:
+  https://web.archive.org/web/20050215014802/http://mentalhealthlibrary.info/library/same/samelds/sameldsfamily/understandingchanging/understandhomosexualx.htm
+  (local copy: `~/Pc_Simulation/PDF/MD/web-archive-org-web-20050215014802-http-mentalhealthlibrary-.md`). It states a
+  "gospel position" that being born gay is incompatible with free agency, quoting church leaders who call it a lie;
+  a four-stage "etiological framework" (confusion, filling the void, sexual identity crisis, resolution); and grades
+  clients by "mild, moderate, severe symptoms" by the frequency of their homosexual experience. → the new term
+  "symptoms", a note on "born that way", and a reason row for men. Status: NOT SUPPORTED (APA 2009, S09).

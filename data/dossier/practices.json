@@ -180,6 +180,13 @@
       "status": "documentary",
       "source": {"file": "e3_theday", "index": 17}
     },
+    "freedom": {
+      "_doc": "⚑ S209 — the ad's AFTER, grounded (his, 2026-10-02).",
+      "title": "The picture of freedom",
+      "did": "sold your change as a silhouette with its arms in the air, among a family",
+      "status": "documentary",
+      "source": {"file": "e3_theday", "index": 21}
+    },
     "nolaw": {
       "_doc": "⚑ S209 / B5 (REVIEW_ROUND_5, ERA26-01): the documented fact first on the 2026 dossier, beside the inferred room.",
       "title": "The law that was not made",

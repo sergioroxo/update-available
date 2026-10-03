@@ -176,6 +176,7 @@ to him first (see the session's reply).
 ---
 
 ## BUILT (S209, S209b, S209c — 2026-10-02)
+- **A25, 2016 — PROVED (S209e):** `out/probe/jobs16.mjs` opens each of 2016's seven other jobs and works it by its own controls only: comments (4 presses), family calls (8), the story cut (7), the podcast (5), the course (11), the group (1), the video tags (6) — all complete, and the phone lights after the second piece of work. The general walker still follows the story instead; the probe is the proof.
 - **A1–A24: done** (f88c9d1, ea04ee2). **A25: in part** — the walker now works 2016's other jobs (a PREFER tier for
   their controls; `^board` had ranked "board-back" as high as the jobs), presses the ad's unread icon, and logs
   crashes and navigations. Still to teach: the 2026 step into the crowd (`commons-crowd` by pointing), and a fresh

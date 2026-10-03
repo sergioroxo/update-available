@@ -373,7 +373,7 @@
     2016
    ],
    "status": "half",
-   "close": "Scientists do not know exactly why orientation varies, and no single cause has been found. That does not show it can be changed; research finds attempts do not work.",
+   "close": "Scientists do not know exactly why orientation varies, and no single cause has been found. That does not show it can be changed; research finds attempts do not work. A church agency trained its counsellors (module captured 2005) to call 'born that way' a lie.",
    "word": "GENE",
    "line": "Nobody's found one! (That settles everything. Don't read the rest.)"
   },
@@ -388,6 +388,18 @@
    "close": "The idea that same-sex attraction is really an unmet need for love in disguise. It is a theory from the 1980s; researchers have not found it to be true.",
    "word": "NEEDS",
    "line": "You have needs! Wonderful. We'll tell you which ones are legitimate."
+  },
+  {
+   "id": "symptoms",
+   "term": "symptoms (mild, moderate, severe)",
+   "eras": [
+    1997,
+    2003
+   ],
+   "status": "notsupported",
+   "close": "A church agency's counsellor module (captured 2005) called being gay an 'orientation problem' and graded people by 'symptoms' — mild, moderate, severe — counting how often they had loved men. Being gay is not an illness.",
+   "word": "SYMPTOMS",
+   "line": "Mild, moderate or severe? Take our two-minute quiz! (There is no fourth option.)"
   }
  ],
  "reasons": {
@@ -451,6 +463,16 @@
     "reason": "Trauma and \"attachment loss\" in a clinical dress (\"symbolic defense against attachment loss\"; \"signal\")",
     "era": "2016-2026",
     "status": "NOT SUPPORTED as a cause of orientation"
+   },
+   {
+    "reason": "Four stages — 'confusion', 'filling the void', 'sexual identity crisis', 'resolution' — and being born this way denied as doctrine",
+    "era": "c. 1990s–2005",
+    "status": "NOT SUPPORTED"
+   },
+   {
+    "reason": "The programme's own members, asked in 2004, named the programme's causes: father 97%, male peers 97%, mother 91%; 95% rejected 'born this way'",
+    "era": "2004",
+    "status": "perceptions, not causes"
    }
   ],
   "women": [
