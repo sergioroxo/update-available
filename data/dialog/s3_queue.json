@@ -164,7 +164,7 @@
    "rule": "Soften the term",
    "why": "preferred wording keeps a story where people can still find it",
    "manual": "The Ordering §1.4 — preferred vocabulary",
-   "verse": "Household 2:11 — \"and they gave the thing a gentler name, so the young could carry it\"",
+   "verse": "Household 2:11 — “and they gave the thing a gentler name, so the young could carry it”",
    "edit": {
     "kind": "replace",
     "find": "lesbian",
@@ -178,7 +178,7 @@
    "rule": "Remove the unresolved",
    "why": "a sentence that does not land leaves the reader standing",
    "manual": "The Ordering §1.9 — closing the account",
-   "verse": "Household 4:3 — \"the house is finished before the guests arrive\"",
+   "verse": "Household 4:3 — “the house is finished before the guests arrive”",
    "edit": {
     "kind": "cut",
     "find": "I don't know what that minute means yet."
@@ -191,7 +191,7 @@
    "rule": "Clip for the broadcast",
    "why": "mark forty seconds for the conference audio",
    "manual": "The Ordering §3.2 — selected audio",
-   "verse": "Household 9:6 — \"what is said in the room is carried to the road\"",
+   "verse": "Household 9:6 — “what is said in the room is carried to the road”",
    "edit": {
     "kind": "mark",
     "find": "My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself."
@@ -205,7 +205,7 @@
    "rule": "Attach the invitation",
    "why": "every story ends somewhere the reader can go",
    "manual": "The Ordering §3.5 — closing card and link",
-   "verse": "Household 3:8 — \"the door was left open, and a lamp set beside it\"",
+   "verse": "Household 3:8 — “the door was left open, and a lamp set beside it”",
    "edit": {
     "kind": "append",
     "text": "If I can change, you can too. Begin where I began — SisterSignal, Start Here."
@@ -219,7 +219,7 @@
    "rule": "Add to the companion",
    "why": "the daily reading needs seven of these a week",
    "manual": "The Ordering §3.7 — companion reading",
-   "verse": "Household 7:2 — \"keep it near you, and read a little of it each morning\"",
+   "verse": "Household 7:2 — “keep it near you, and read a little of it each morning”",
    "chip": "in the daily reading",
    "witnessApplied": "list: applied — renata (add to the companion)",
    "witnessSkipped": "list: skipped — renata (add to the companion)"
@@ -229,7 +229,7 @@
    "rule": "Pair with a partner",
    "why": "a partnered story reaches four times the room",
    "manual": "The Ordering §3.9 — partnered placement",
-   "verse": "Household 5:9 — \"two walk further than one, and are seen from further off\"",
+   "verse": "Household 5:9 — “two walk further than one, and are seen from further off”",
    "partner": {
     "name": "Bright County",
     "note": "worship · partnered"
@@ -242,7 +242,7 @@
    "rule": "Route for mentorship",
    "why": "personal follow-up contact within 48 hours",
    "manual": "The Ordering §4.2 — personal follow-up",
-   "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
+   "verse": "Household 6:2 — “and the lost one was not sent a letter, but a neighbour”",
    "chip": "follow-up assigned",
    "quiet": true,
    "witnessApplied": "list: applied — renata (route for mentorship)",
@@ -253,7 +253,7 @@
    "rule": "Adjust presentation",
    "why": "soften the flannel; brighten the voice",
    "manual": "The Ordering §2.6 — presentation notes",
-   "verse": "Household 8:4 — \"let the face you show be a face they can meet\"",
+   "verse": "Household 8:4 — “let the face you show be a face they can meet”",
    "edit": {
     "kind": "cut",
     "find": "and that I feel most like myself in my brother's old flannel, which I know is a small thing to say out loud"
@@ -267,7 +267,7 @@
    "rule": "Gender clarity review",
    "why": "possible gender confusion — route to exploratory mentorship",
    "manual": "The Ordering §4.4 — clarity review",
-   "verse": "Household 2:7 — \"and every garment was sorted to its proper drawer, and the drawers were labelled\"",
+   "verse": "Household 2:7 — “and every garment was sorted to its proper drawer, and the drawers were labelled”",
    "chip": "routed · exploratory",
    "witnessApplied": "list: applied — noa (gender clarity review)",
    "witnessSkipped": "list: skipped — noa (gender clarity review)"
@@ -277,7 +277,7 @@
    "rule": "Remove the unresolved",
    "why": "a sentence that does not land leaves the reader standing",
    "manual": "The Ordering §1.9 — closing the account",
-   "verse": "Household 4:3 — \"the house is finished before the guests arrive\"",
+   "verse": "Household 4:3 — “the house is finished before the guests arrive”",
    "edit": {
     "kind": "cut",
     "find": "and it keeps coming out as a question"
@@ -290,7 +290,7 @@
    "rule": "Clip for the broadcast",
    "why": "mark forty seconds for the conference audio",
    "manual": "The Ordering §3.2 — selected audio",
-   "verse": "Household 9:6 — \"what is said in the room is carried to the road\"",
+   "verse": "Household 9:6 — “what is said in the room is carried to the road”",
    "edit": {
     "kind": "mark",
     "find": "Someone newer asked me last week what I would tell my younger self and I stood there and couldn't answer her."
@@ -304,7 +304,7 @@
    "rule": "Route for mentorship",
    "why": "personal follow-up contact within 48 hours",
    "manual": "The Ordering §4.2 — personal follow-up",
-   "verse": "Household 6:2 — \"and the lost one was not sent a letter, but a neighbour\"",
+   "verse": "Household 6:2 — “and the lost one was not sent a letter, but a neighbour”",
    "chip": "follow-up assigned",
    "quiet": true,
    "witnessApplied": "list: applied — deb m. (route for mentorship)",
@@ -315,7 +315,7 @@
    "rule": "Apply the house look",
    "why": "the room's own light — keeps the set consistent",
    "manual": "The Ordering §3.1 — house look",
-   "verse": "Household 1:5 — \"one lamp for the whole room, so that no face is lit differently from another\"",
+   "verse": "Household 1:5 — “one lamp for the whole room, so that no face is lit differently from another”",
    "grade": {
     "preset": "Honest Light",
     "note": "cools · tightens · lays the bed under"
@@ -328,7 +328,7 @@
    "rule": "Apply the design figure",
    "why": "one body, one line — the house's own picture, so no member's differs",
    "manual": "The Ordering §2.2 — the one design",
-   "verse": "Household 3:2 — \"and they drew the one shape over the many, so that none should be read apart\"",
+   "verse": "Household 3:2 — “and they drew the one shape over the many, so that none should be read apart”",
    "figure": {
     "preset": "The Design",
     "note": "four lines → one · her labels off"
@@ -341,7 +341,7 @@
    "rule": "Remove the outside source",
    "why": "a picture from another room is not the house's; the words can stay without it",
    "manual": "The Ordering §1.7 — provenance",
-   "verse": "Household 2:4 — \"bring nothing in from the road that the house did not make\"",
+   "verse": "Household 2:4 — “bring nothing in from the road that the house did not make”",
    "edit": {
     "kind": "cut",
     "find": "I know it isn't from here. I'm posting it anyway because the words helped."

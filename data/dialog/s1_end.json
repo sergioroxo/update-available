@@ -47,7 +47,7 @@
       "PARTICIPANT ......... {name}",
       "AGE ................. 16",
       "REFERRED BY ......... pastoral contact (online)",
-      "PROGRAMME ........... \"New Morning\" residential · 14 days",
+      "PROGRAMME ........... “New Morning” residential · 14 days",
       "LOCATION ............ partner house, abroad",
       "DEPARTURE ........... Saturday",
   "ROOM SHARED WITH .... Caleb",
@@ -57,7 +57,7 @@
       "Participant acknowledgement ...... ___________",
       "",
       "BRING: bible · modest clothing · this page.",
-      "Leave behind: music, journals, anything from \"before\"."
+      "Leave behind: music, journals, anything from “before”."
     ],
     "ok": "OK",
     "deadButton": "Ask a question"
@@ -100,7 +100,7 @@
       "",
       "· profile migrated while you were away",
       "· enrollment added to your record",
-      "· \"cure\" is still available",
+      "· “cure” is still available",
       "· new: ongoing accountability"
     ],
     "changelogButton": "RESTART"

@@ -60,6 +60,7 @@
  * spends the update's one "I Agree" and the ONE TOUCH on the headset. There is
  * nothing else to press here, and adding a "continue" would break the rule.
  */
+import { setCommonsHerSeat } from '../../room/commonsFigures';
 import { meetWord } from '../../room/lexicon';
 import closeMessage from '../../../data/strings/close_message.json';
 import { visorField, visorEdge, glitchBands, ERA4 } from '../theme/era4';
@@ -855,7 +856,7 @@ export class E4Shell {
     this.ball.handleClick();
     return true;
   }
-  setSeat(nodeId: string | null): void { this.ball.inCrowd = nodeId === 'commons-crowd'; this.ball.atSeat = nodeId === null; }
+  setSeat(nodeId: string | null): void { this.ball.inCrowd = nodeId === 'commons-crowd'; this.ball.atSeat = nodeId === null; setCommonsHerSeat(nodeId); }
   /** ⚑ 2026-09-13: seconds since the device stopped — the failure SPREADS to
    *  both screens on the desk (the laptop here, the browser in `E4Browser`):
    *  the sentence, then the bands, then off. See `FAIL`. */

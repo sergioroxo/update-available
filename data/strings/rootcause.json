@@ -40,11 +40,11 @@
     "EMOTIONAL DEPENDENCY"
   ],
   "therapyWords": [
-    "\"unmet needs\"",
+    "“unmet needs”",
     "\"reparative\"",
     "\"detachment\"",
     "\"healing\"",
-    "\"legitimate needs\""
+    "“legitimate needs”"
   ],
   "applied": "DIAGNOSIS APPLIED: {name} — possible root.",
   "pumped": "{name}, inflated with {word}.",

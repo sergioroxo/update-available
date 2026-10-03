@@ -12,7 +12,7 @@
   "is it a sin to think about it",
   "am i gay"
  ],
- "resultsFor": "Results for \"{q}\"",
+ "resultsFor": "Results for “{q}”",
  "resultsCount": "Documents 1-6 of about 1,240 matching the query.",
  "resultsPages": "Pages:",
  "next": "Next",
@@ -87,7 +87,7 @@
     "\"I spent years thinking this was who I was.",
     "Then a friend sent me a link.\"",
     "",
-    "\"Such were some of you.\" 1 Cor 6:11",
+    "“Such were some of you.” 1 Cor 6:11",
     "",
     "Read more stories. Or add your own:",
     "every testimony helps someone who is where you are."

@@ -1797,6 +1797,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let dwellMs = 0;
   let gazeFg: FacetState | null = null;
 
+  /** ⚑ S211 / PLATFORM-13 — REDUCED MOTION. When the visitor's device asks for less motion (or a review
+   *  passes ?motion=reduced), every conducted flight keeps its clock — the story's beats that ride on it
+   *  still land on time — but the camera does not travel: it fades, cuts to where the flight ends, and
+   *  fades back. A blink is already this piece's grammar for moving you (R28 §1). */
+  const reducedMotion = (() => {
+    try {
+      if (new URLSearchParams(location.search).get('motion') === 'reduced') return true;
+      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch { return false; }
+  })();
+  const RM_FADE = 0.25;
   function startCamMove(to: { x: number; y: number; z: number; pitch: number; yaw: number },
                         dur: number, conducted: boolean,
                         via?: { x: number; y: number; z: number },
@@ -3489,7 +3500,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // that yields instantly to any input (endDescent). S53: it IS a camMove
       // now, so it needs no clock of its own; it is landed below, the frame
       // the arc resolves.
-      if (camMove) {
+      if (camMove && reducedMotion) {
+        // the cut: dark by RM_FADE, the pose set at the bottom of the fade, light again by 2×RM_FADE
+        const before = camMove.t;
+        camMove.t += dt;
+        if (before < RM_FADE && camMove.t >= RM_FADE) {
+          camPos.x = camMove.tx; camPos.y = camMove.ty; camPos.z = camMove.tz;
+          camPitch = camMove.tp; camYaw = camMove.tyaw;
+        }
+        if (blinkPhase === null && blinkOverlay) {
+          const o = camMove.t < RM_FADE ? camMove.t / RM_FADE : Math.max(0, 1 - (camMove.t - RM_FADE) / RM_FADE);
+          blinkOverlay.style.opacity = o.toFixed(3);
+        }
+        if (camMove.t >= camMove.dur) {
+          camPos.x = camMove.tx; camPos.y = camMove.ty; camPos.z = camMove.tz;
+          camPitch = camMove.tp; camYaw = camMove.tyaw;
+          if (blinkPhase === null && blinkOverlay) blinkOverlay.style.opacity = '0';
+          camMove = null;
+        }
+      } else if (camMove) {
         camMove.t += dt;
         const k = Math.min(1, camMove.t / camMove.dur);
         // arcs use smootherstep (zero velocity AND acceleration at the ends — no

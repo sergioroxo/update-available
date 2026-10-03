@@ -56,7 +56,7 @@ function makeRng(seed: number): () => number {
   };
 }
 
-interface Figure { x: number; z: number; h: number; w: number; phase: number; body: pc.Color; onStage: boolean; beside?: boolean }
+interface Figure { x: number; z: number; h: number; w: number; phase: number; body: pc.Color; onStage: boolean; beside?: boolean; lower?: pc.Color; hair?: pc.Color; style?: number; build?: number }
 
 let hook: ((on: boolean) => void) | null = null;
 /** the crowd is present, or it is not. It rises over RISE_SECONDS. */
@@ -73,6 +73,10 @@ export function inviteCommonsFigures(on: boolean): void { inviteHook?.(on); }
 let answerHook: (() => void) | null = null;
 /** ⚑ S209g / I1 — she raised her lamp: the two beside her raise their arms with her */
 export function answerCommonsFigures(): void { answerHook?.(); }
+/** ⚑ S211 — where she stands in the hall: at "by the stage" she is ON the runway's line, and the
+ *  performers walked through her (the tour's termination frame was a performer's back, 3 Oct) */
+let herAtStage = false;
+export function setCommonsHerSeat(nodeId: string | null): void { herAtStage = nodeId === 'commons-stage'; }
 const GREET_SECONDS = 1.4;
 const GREET_STEP = 0.45;
 
@@ -131,7 +135,16 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     });
   }
 
-  // ── geometry: every figure is two boxes (body, head); the stage is one ──
+  // ⚑ S211 (his: "the overall aesthetic is very boxy") — still faceless, never a likeness, but people:
+  //   a lower garment and a top in different colours, a build (shoulders), and hair in four shapes
+  const hairs = [PLACE.ink, PLACE.floorLo, PLACE.book, PLACE.sunHi, ERA4.l, PLACE.bookAlt].map((h) => new pc.Color().fromString(h));
+  for (const f of figures) {
+    f.lower = cloth[Math.floor(rng() * cloth.length)];
+    f.hair = hairs[Math.floor(rng() * hairs.length)];
+    f.style = Math.floor(rng() * 4);
+    f.build = rng();
+  }
+  // ── geometry: every person is six pieces (legs, torso, head, hair, two arms) ──
   const C = [
     [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
     [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
@@ -141,23 +154,25 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     [3, 2, 6, 3, 6, 7], [0, 3, 7, 0, 7, 4], [1, 5, 6, 1, 6, 2]
   ];
   // Phase 7: each figure also has two arms; the performers are four more figures with arms; one patch of light
-  const BOXES = FIGURES * 4 + PERFORMERS * 4 + 1 + 1;
+  const PER = 6;
+  const BOXES = FIGURES * PER + PERFORMERS * PER + 1 + 1;
   const indices: number[] = [];
   for (let n = 0; n < BOXES; n++) for (const face of F) for (const i of face) indices.push(n * 8 + i);
   const colors: number[] = [];
   const pushBoxColor = (c: pc.Color): void => { for (let i = 0; i < 8; i++) colors.push(c.r, c.g, c.b, 1); };
-  for (const f of figures) { pushBoxColor(f.body); pushBoxColor(skin); pushBoxColor(f.body); pushBoxColor(f.body); }
+  for (const f of figures) { pushBoxColor(f.lower!); pushBoxColor(f.body); pushBoxColor(skin); pushBoxColor(f.hair!); pushBoxColor(f.body); pushBoxColor(f.body); }
   // the performers, dressed for it: the palette's brightest, one each
   const perfCloth = [PLACE.textileHi, PLACE.sunHi, PLACE.sky, PLACE.bookAlt].map((h) => new pc.Color().fromString(h));
   const perfH = [1.72, 1.6, 1.66, 1.58];
-  for (let i = 0; i < PERFORMERS; i++) { pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(perfCloth[i]); pushBoxColor(perfCloth[i]); }
+  const perfHair = [PLACE.ink, PLACE.sunHi, PLACE.book, PLACE.floorLo].map((h) => new pc.Color().fromString(h));
+  for (let i = 0; i < PERFORMERS; i++) { pushBoxColor(perfCloth[(i + 1) % PERFORMERS]); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(perfHair[i]); pushBoxColor(perfCloth[i]); pushBoxColor(perfCloth[i]); }
   pushBoxColor(new pc.Color().fromString(PLACE.sunHi));      // the light on the floor under them
   pushBoxColor(new pc.Color().fromString(PLACE.floorLo));
 
-  const PERF_BOXES = PERFORMERS * 4 + 1;
+  const PERF_BOXES = PERFORMERS * PER + 1;
   const boxIdx = (n: number): number[] => { const out: number[] = []; for (let b = 0; b < n; b++) for (const face of F) for (const i of face) out.push(b * 8 + i); return out; };
   const indicesA = boxIdx(BOXES - PERF_BOXES), indicesB = boxIdx(PERF_BOXES);
-  const cA0 = FIGURES * 4 * 32, cB1 = (FIGURES * 4 + PERF_BOXES) * 32;
+  const cA0 = FIGURES * PER * 32, cB1 = (FIGURES * PER + PERF_BOXES) * 32;
   const colorsA = colors.slice(0, cA0).concat(colors.slice(cB1)), colorsB = colors.slice(cA0, cB1);
   void indices;
   const mesh = new pc.Mesh(app.graphicsDevice);
@@ -175,6 +190,31 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   let walkT = 0;
   let armK = 0;
   const sinkBox = (x: number, z: number): void => box(x, SUNK_Y, z, 0.1, 0.1, 0.1);
+  const sinkPerson = (x: number, z: number): void => { for (let k = 0; k < PER; k++) sinkBox(x, z); };
+  /** a piece narrower or wider at the top than the bottom (half-sizes: depth hx, width hz) */
+  const taper = (x: number, y: number, z: number, hy: number, bx: number, bz: number, tx: number, tz: number): void => {
+    for (const [cx, cy, cz] of C) {
+      const top = cy > 0;
+      positions[pi++] = x + cx * (top ? tx : bx); positions[pi++] = y + cy * hy; positions[pi++] = z + cz * (top ? tz : bz);
+    }
+  };
+  /** ⚑ S211 — a person, faceless: legs (or a skirt) tapering to the floor, a torso widening to the shoulders,
+   *  a head, hair in one of four shapes behind and over it, and two arms. Six pieces, the same draw call. */
+  const person = (x: number, base: number, z: number, w: number, h: number, bob: number, lean: number, up: number, style: number, build: number): void => {
+    const legH = h * 0.40, torsoH = h * 0.24, headH = h * 0.055;
+    const skirt = style === 1;
+    taper(x + lean * 0.3, base + legH / 2 + bob * 0.5, z, legH / 2, w * 0.28, w * (skirt ? 0.62 : 0.40), w * 0.27, w * 0.44);
+    const sh = w * (0.48 + 0.12 * build);
+    const ty = base + legH + torsoH / 2 + bob;
+    taper(x + lean, ty, z, torsoH / 2, w * 0.27, w * 0.44, w * 0.3, sh);
+    const hy = base + legH + torsoH + 0.03 + headH + bob, hx = x + lean * 1.4;
+    box(hx, hy, z, headH * 0.92, headH, headH);
+    if (style === 0) box(hx - headH * 0.12, hy + headH * 0.62, z, headH * 1.02, headH * 0.42, headH * 1.06);          // short
+    else if (style === 1) box(hx - headH * 0.55, hy - headH * 0.55, z, headH * 0.55, headH * 1.55, headH * 1.1);     // long, down the back
+    else if (style === 2) box(hx - headH * 0.15, hy + headH * 0.35, z, headH * 1.3, headH * 1.05, headH * 1.35);     // big, round
+    else box(hx - headH * 0.2, hy + headH * 1.1, z, headH * 0.5, headH * 0.45, headH * 0.5);                          // a bun
+    arms(x + lean, base + legH + torsoH + bob, z, sh * 2, h, up);
+  };
   /** two arms at a body's shoulders: down at its sides, or up over its head by `up` (0..1) */
   const arms = (x: number, top: number, z: number, w: number, h: number, up: number): void => {
     const len = h * 0.3, hw = 0.035;
@@ -188,7 +228,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     pi = 0;
     const sunk = k <= 0;
     figures.forEach((f, n) => {
-      if (sunk) { sinkBox(f.x, f.z); sinkBox(f.x, f.z); sinkBox(f.x, f.z); sinkBox(f.x, f.z); return; }
+      if (sunk) { sinkPerson(f.x, f.z); return; }
       // rising from the floor, then the dance — ⚑ S209g / M1 (his tick): a bounce on the beat (two a
       //   second, each a little out of step with the next), a side-to-side sway on the bar, a lean; it was
       //   a 2 cm sway nobody could see, and the crowd read as boxes
@@ -224,13 +264,10 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       // half-sizes: a body 0.62 of the height and the width given; a head a
       // fifth of the height across (half = 0.055 h) — the first cut passed the
       // head's SIZE as its half-size and rendered 0.38 m heads on 0.26 m bodies
-      const bodyH = f.h * 0.62, headH = f.h * 0.055;
-      box(x + lean, base + bodyH / 2 + bob, z, f.w / 2, bodyH / 2, f.w * 0.36);
-      box(x + lean * 1.4, base + bodyH + headH + 0.03 + bob, z, headH, headH, headH * 0.9);
       // the arms: the crowd's go up when the room answers (not the one on the stage, not the two beside her mid-greeting)
       const answer = f.beside ? answerK : 0;
-      arms(x + lean, base + bodyH + bob, z, f.w, f.h, f.onStage || (f.beside && greetK > 0) ? 0
-        : Math.max(armK * (0.75 + 0.25 * Math.sin(f.phase)), inviteArms, answer));
+      const up = f.onStage || (f.beside && greetK > 0) ? 0 : Math.max(armK * (0.75 + 0.25 * Math.sin(f.phase)), inviteArms, answer);
+      person(x, base, z, f.w, f.h, bob, lean, up, f.style ?? 0, f.build ?? 0.5);
       void n;
     });
     // ⚑ Phase 7 — the performers: down the runway and back, abreast, for as long as their category is called
@@ -240,25 +277,24 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     const leg = ph < WALK_OUT ? ph / WALK_OUT : ph < WALK_OUT + WALK_HOLD ? 1
       : ph < WALK_OUT * 2 + WALK_HOLD ? 1 - (ph - WALK_OUT - WALK_HOLD) / WALK_OUT : 0;
     const e = leg * leg * (3 - 2 * leg);
-    const px = RUNWAY.from + (RUNWAY.to - RUNWAY.from) * e;
+    // she is at the stage's edge: they perform up ON the stage, to her, and do not come down the runway
+    const px = herAtStage ? WORLD.stage.x - 0.5 : RUNWAY.from + (RUNWAY.to - RUNWAY.from) * e;
+    const pBase = herAtStage ? WORLD.stage.h + 0.02 : 0.02;
     for (let i = 0; i < PERFORMERS; i++) {
-      if (i >= nWalk) { sinkBox(px, RUNWAY.z); sinkBox(px, RUNWAY.z); sinkBox(px, RUNWAY.z); sinkBox(px, RUNWAY.z); continue; }
+      if (i >= nWalk) { sinkPerson(px, RUNWAY.z); continue; }
       const z = RUNWAY.z + (i - (nWalk - 1) / 2) * 0.55;
       const h = perfH[i], w = 0.3;
       const step = Math.abs(Math.sin(walkT * 3.2 + i)) * 0.025 * (leg > 0 && leg < 1 ? 1 : 0.2);
-      const bodyH = h * 0.62, headH = h * 0.055;
-      box(px, bodyH / 2 + step + 0.02, z, w / 2, bodyH / 2, w * 0.36);
-      box(px, bodyH + headH + 0.05 + step, z, headH, headH, headH * 0.9);
-      arms(px, bodyH + step + 0.02, z, w, h, leg >= 1 ? 0.9 : 0.15);   // at the near end, the arms open to the room
+      person(px, pBase, z, w, h, step, 0, herAtStage || leg >= 1 ? 0.9 : 0.15, [1, 0, 2, 3][i], [0.2, 0.9, 0.5, 0.3][i]);   // at the near end, the arms open to the room
     }
     // the light under them — a flat pale patch, on the floor, where they are
-    if (nWalk > 0) box(px, 0.012, RUNWAY.z, 0.55, 0.004, 0.35 + nWalk * 0.28);
+    if (nWalk > 0) box(px, pBase - 0.008, RUNWAY.z, 0.55, 0.004, 0.35 + nWalk * 0.28);
     else sinkBox(px, RUNWAY.z);
     // (the stage itself is the hall's — commonsWorld.ts; this box is spare and sunk)
     box(STAGE.x, SUNK_Y, STAGE.z, 0.1, 0.1, 0.1); void stageK;
     // ⚑ Phase 7 — two meshes from the one buffer: the crowd, lit by the room; the performers and their
     //   patch of light, lit from within, so the one who has the floor is the brightest thing in the hall
-    const A0 = FIGURES * 4 * 24, B1 = (FIGURES * 4 + PERF_BOXES) * 24;
+    const A0 = FIGURES * PER * 24, B1 = (FIGURES * PER + PERF_BOXES) * 24;
     const posA = positions.slice(0, A0).concat(positions.slice(B1)), posB = positions.slice(A0, B1);
     mesh.setPositions(posA);
     mesh.setIndices(indicesA);
