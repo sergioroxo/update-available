@@ -691,10 +691,40 @@ export class E4Browser {
       for (const t of R.related) { ctx.fillText(t, rx, y - 6); rx += ctx.measureText(t + '   ').width; }
       y += 10;
     }
+    // ⚑ S209h / ERA26-16 — "People also ask": the platform's voice, sure of itself, in the right-hand column
+    //   where answer panels sit. It opens the question that serves its partner and leaves the neutral ones
+    //   folded; it says "multiple sources" and names three that are one network's — all in the results
+    //   beside it. The critique is readable, never said.
+    const P = (R as { paa?: { label: string; open: string; answer: string; closed: string[]; note: string; sourcesLabel: string; sources: string[] } }).paa;
+    const fullW = W - ADDR.x * 2 - 8;
+    const colW = P ? Math.min(fullW, 410) : fullW;
+    if (P) {
+      const px0 = x - 4 + colW + 12, bw = W - ADDR.x - px0, inner = bw - 16;
+      setFont(ctx, 9);
+      const ans = wrapText(ctx, P.answer, inner - 12);
+      const srcs: string[] = [];
+      for (const src of P.sources) srcs.push(src);
+      const bh = 30 + ans.length * 12 + P.closed.length * 12 + 18 + 12 + srcs.length * 11 + 8;
+      roundEdge(ctx, px0, y - 4, bw, bh, 5, WEB.cardEdge, WEB.card);
+      const lx = px0 + 8;
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(P.label, lx, y + 2);
+      setFont(ctx, 10); ctx.fillStyle = WEB.ink; ctx.fillText('▾ ' + P.open, lx, y + 15);
+      let py = y + 30;
+      setFont(ctx, 9); ctx.fillStyle = WEB.ink;
+      for (const ln of ans) { ctx.fillText(ln, lx + 10, py); py += 12; }
+      py += 4;
+      ctx.fillStyle = WEB.muted;
+      for (const q of P.closed) { ctx.fillText('▸ ' + q, lx, py); py += 12; }
+      py += 6;
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(P.note, lx, py); py += 12;
+      ctx.fillStyle = WEB.faint; ctx.fillText(P.sourcesLabel, lx, py); py += 11;
+      ctx.fillStyle = WEB.accent;
+      for (const src of srcs) { ctx.fillText(src, lx + 6, py); py += 11; }
+    }
     for (const r of R.results) {
       const rh = 42;
       if (y + rh > H - 14) break;
-      if (r.press) { roundEdge(ctx, x - 4, y - 4, W - ADDR.x * 2 - 8, rh + 2, 5, WEB.cardEdge, WEB.card); }
+      if (r.press) { roundEdge(ctx, x - 4, y - 4, colW, rh + 2, 5, WEB.cardEdge, WEB.card); }
       // ⚑ S197 — a removed result: the platform's own generic notice, greyed, nothing to press
       if ((r as { removed?: boolean }).removed) {
         setFont(ctx, 8); ctx.fillStyle = WEB.faint; ctx.fillText(r.url, x, y);
@@ -708,8 +738,8 @@ export class E4Browser {
       setFont(ctx, 11); ctx.fillStyle = r.press ? WEB.primary : WEB.ink;
       ctx.fillText(r.title.length > 58 ? r.title.slice(0, 57) + '…' : r.title, x, y + 11);
       setFont(ctx, 9); ctx.fillStyle = WEB.muted;
-      wrapText(ctx, r.snippet, W - ADDR.x * 2 - 24).slice(0, 1).forEach((ln) => ctx.fillText(ln, x, y + 25));
-      if (r.press) this.publish({ x: x - 4, y: y - 4, w: W - ADDR.x * 2 - 8, h: rh + 2, id: `result-${r.id}` });
+      wrapText(ctx, r.snippet, colW - 16).slice(0, 1).forEach((ln) => ctx.fillText(ln, x, y + 25));
+      if (r.press) this.publish({ x: x - 4, y: y - 4, w: colW, h: rh + 2, id: `result-${r.id}` });
       // ⚑ S193 — the moderation paradox: the platform's own note, and the recommendation right under it
       const rr = r as { match?: string };
       let extra = 0;

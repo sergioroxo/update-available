@@ -175,8 +175,27 @@ export class TestimonyApp {
 
   private drawPrep(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     this.heading(ctx, c, T.prep.title, T.prep.intro);
-    const filed = entriesByEra().e1.map((e) => e.witness).filter(Boolean);
-    const frag = (i: number): string => filed.length ? filed[(i * 3) % filed.length] : T.prep.fallback[i % T.prep.fallback.length];
+    const entries = entriesByEra().e1.filter((e) => e.witness);
+    const filed = entries.map((e) => e.witness);
+    // ⚑ S209h / ERA03-11 — each topic takes the file line that MEANS it (the institution building his story
+    //   out of what it holds), first unused match in order; the old arithmetic only when nothing matches
+    const WANT: string[][] = [
+      ['profile', 'diary'],                // BEFORE
+      ['pledge', 'tapes', 'kit'],          // WHAT I BELIEVED
+      ['channel', 'referral'],             // TURNING POINT
+      ['placement', 'tapes', 'provotype'], // WHAT CHANGED
+      ['placement', 'arrival', 'kit'],     // WHERE I AM NOW
+      ['referral', 'channel']              // TO SOMEONE STRUGGLING
+    ];
+    const used = new Set<number>();
+    const picks = WANT.map((kinds) => {
+      for (const k of kinds) {
+        const j = entries.findIndex((e, n) => e.kind === k && !used.has(n));
+        if (j >= 0) { used.add(j); return entries[j].witness; }
+      }
+      return null;
+    });
+    const frag = (i: number): string => picks[i] ?? (filed.length ? filed[(i * 3) % filed.length] : T.prep.fallback[i % T.prep.fallback.length]);
     for (let i = 0; i < this.topics; i++) {
       const tp = T.prep.topics[i];
       const y = c.y + 46 + i * 41;

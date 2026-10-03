@@ -128,6 +128,25 @@ principle he endorsed the same day, "many hands, one file" (REVIEW_B26_AND_COMMO
 
 This is also a clear instance of the authorship split: the reviewing models proposed unifying the names (COPY-07/09/10/11); the human lead reframed the finding as the work's thesis.
 
+## 2026-10-03 — HIS LIST: what the article (December) must include
+
+His words: *"be sure to include stuff like the first Trans Jesus md file, and changes we've done, when the models
+changed and were started to use, the extractions of the chat windows we talked about this, the schematics of the
+project and the different parts. Video comparisons of before and after, images of the evolution. The inclusion of
+the existence of the previous versions and why they changed etc."* Where each item lives now, and what still has to
+be made. The dates question (`ARTICLE_COMPILATION_2026-10-03.md` §0) waits, as he ruled.
+
+| His item | Where it is | Still to make |
+|---|---|---|
+| The first Trans Jesus file (the origin) | `~/Pc_Simulation/Sources/Random Ideas/Trans-Jesus.md` (26 Jan 2026, outside the repo); `~/Pc_Simulation/ArenaAI_TransJesus/V1`; `~/Pc_Simulation/Proposals_2026-06-10/` ("ArenaAI Trial, before Claude", KICKOFF_PLAN, CREATIVE_ANALYSIS_v1) | A dated origin chain: Jan 2026 idea → the Arena AI trial → the 10 June proposals → the first commit (`cf257bee`, 12 June 2026) |
+| The changes made | BUILD_LOG.md (one line per session, S1–S209); review rounds 1–5; OPEN_ITEMS.md | A one-page timeline of the turning points (the reinterpretation of 2 July; the three rooms that age; the browser as the 3D room; the Commons as a world; the Close; the Lexicon) |
+| When the models changed, and were started | 03_COORDINATION.md → *Model history*; the commit trailers (counted in ARTICLE_COMPILATION §1: Opus 4.8, Fable 5, Opus 5, Sonnet 5, Opus 5.5, Fable 5.1); the GPT side (Codex, Sol 6 / Luna 6) | A table: model, first and last date, what it did, and the handover (how the work carried across) |
+| The extractions of the chat windows | His messages in the repo to 2026-09-16 (ARTICLE_COMPILATION §9: 672 entries); 47 raw transcripts (~1.15 GB) outside the repo | An extraction of his rulings and the turning-point exchanges (this one included), quoted verbatim with dates; it needs his permission on which to use |
+| Schematics of the project and its parts | docs/INTERACTION_MAP.md, docs/SOUND_MAP_2026-09-02.md, NARRATIVE_FLOW, PROGRESSION_LAW, the witness system map, the Close constellation | Clean diagrams: the four eras × the three rooms; the update cycle (notification → EULA → install → restart); the witness/record system; many hands, one file |
+| Video comparisons, before and after | `~/Pc_Simulation/new_you_*.mp4` (the ad's versions: original, featuring Daniel, the cut, REAL STORIES v1/v2, the montage, the chorus); `~/Pc_Simulation/screensavers/`; the TXI19… trials | Paired clips of the same beat before and after a ruling (e.g. the Commons with its walls, then open; the ad, then the montage) |
+| Images of the evolution | out/review5/stills (45 PNGs, git-ignored); out/tour-e4; out/probe/commons (today's sheets 1–6: the walled hall → the warmed hall → the open sky) | A committed `docs/reinterp/article-evidence/` folder with dated stills per surface, before and after |
+| The previous versions, and why they changed | The ad's rejected versions (2026-10-01: "visually ridiculous and over-the-top"); the Commons' walls → the open sky (2026-10-03: "it boxes off the space"); the string lights → stars; the hexagon/wedge → the three rooms (R24); `?flat=1` as fallback → review tool (2026-08-06) | For each: the version, the date, his words, and what replaced it |
+
 ## Open items (Sérgio's, not Claude's)
 
 - The abstract itself (500 words max, bio 200 words max, cc `DCsubmit@gmail.com`) is his to write —

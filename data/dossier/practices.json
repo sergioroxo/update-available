@@ -194,6 +194,13 @@
       "status": "documentary",
       "source": {"file": "e4_offers", "index": 7}
     },
+    "paa": {
+      "_doc": "⚑ S209h / ERA26-16 — the answer box: a documented mechanism, an inferred capture.",
+      "title": "The answer box",
+      "did": "said its answers came from multiple sources, and took all of them from one network",
+      "status": "speculative",
+      "source": {"file": "e4_offers", "index": 10}
+    },
     "shorts": {
       "_doc": "⚑ S209 / B25 — the non-AI route on 2026's results page.",
       "title": "The comments",

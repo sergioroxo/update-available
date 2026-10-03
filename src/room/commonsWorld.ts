@@ -26,6 +26,7 @@
 import * as pc from 'playcanvas';
 import { PLACE, ERA4, BALL, COMMONS_SKY } from '../desktop/theme/era4';
 import { setFont } from '../desktop/theme/chrome';
+import { roundRect } from '../desktop/theme/era4';
 import script from '../../data/dialog/s4_ball.json';
 
 /** the world is laid out round the E4 seat, facing +x like the seat does */
@@ -123,7 +124,7 @@ export function mountCommonsWorld(app: pc.Application): CommonsWorld {
   const B = WORLD.boards;
   for (const bx of B.banners.xs) { pushBox(pos, idx, bx, 2.2, B.banners.z, 0.025, 2.2, 0.025); paint(PLACE.floorLo, 8); }
   pushBox(pos, idx, (B.banners.xs[0] + B.banners.xs[3]) / 2, 4.28, B.banners.z, (B.banners.xs[3] - B.banners.xs[0]) / 2 + 0.6, 0.025, 0.025); paint(PLACE.floorLo, 8);
-  for (const dx of [-1.4, 1.4]) { pushBox(pos, idx, B.rules.x + dx, 0.55, B.rules.z, 0.04, 0.55, 0.04); paint(PLACE.floorLo, 8); }
+  // (the house rules float: a world's sign, no legs — S209i)
   for (const dz of [-1.6, 1.6]) { pushBox(pos, idx, B.firsts.x, 0.45, B.firsts.z + dz, 0.04, 0.45, 0.04); paint(PLACE.floorLo, 8); }
   const mesh = new pc.Mesh(app.graphicsDevice);
   mesh.setPositions(pos);
@@ -216,7 +217,7 @@ export function mountCommonsWorld(app: pc.Application): CommonsWorld {
 // `ball.hall`; the colours the theme's. Invented throughout — no real house,
 // no real ball's rules.
 // ═══════════════════════════════════════════════════════════════════════════
-const HALL = (script as unknown as { ball: { hall: { rulesTitle: string; rules: string[]; banners: string[]; firstsTitle: string } } }).ball.hall;
+const HALL = (script as unknown as { ball: { hall: { rulesTitle: string; rulesPin: string; rules: string[]; banners: string[]; firstsTitle: string } } }).ball.hall;
 const ATLAS = 512;
 const RULES = { x: 0, y: 0, w: 256, h: 160 };
 const BANNER = { x: 256, y: 0, w: 64, h: 184 };
@@ -227,25 +228,35 @@ function drawHallAtlas(): HTMLCanvasElement {
   c.width = ATLAS; c.height = ATLAS;
   const g = c.getContext('2d')!;
   const rect = (x: number, y: number, w: number, h: number, col: string): void => { g.fillStyle = col; g.fillRect(x, y, w, h); };
-  // the house rules: a cream board, a wood edge, the title in the books' red
-  rect(RULES.x, RULES.y, RULES.w, RULES.h, PLACE.floorLo);
-  rect(RULES.x + 4, RULES.y + 4, RULES.w - 8, RULES.h - 8, PLACE.wallHi);
+  // ⚑ S209i (his, 2026-10-03: "very basic and not aesthetical, make it more for the time") — the house rules
+  //   as a 2026 social-VR world posts them: a floating glass card, a glowing edge, a gradient header with the
+  //   house's lamp, each rule on its own chip with a coloured mark, and the pin at the foot
+  const R0 = RULES;
+  roundRect(g, R0.x, R0.y, R0.w, R0.h, 12, ERA4.l);                         // the glow edge
+  roundRect(g, R0.x + 2, R0.y + 2, R0.w - 4, R0.h - 4, 10, ERA4.panel);     // the glass
+  const HDR = 30;
+  roundRect(g, R0.x + 4, R0.y + 4, R0.w - 8, HDR - 2, 8, PLACE.textileHi);   // the header band
+  rect(R0.x + 4, R0.y + HDR - 6, R0.w - 8, 4, PLACE.textileHi);
+  rect(R0.x + 12, R0.y + 9, 9, 14, PLACE.ink); rect(R0.x + 14, R0.y + 11, 5, 10, PLACE.sunHi);   // the lamp
   setFont(g, 14);
-  g.fillStyle = PLACE.book;
-  const tw = Math.ceil(g.measureText(HALL.rulesTitle).width);
-  g.fillText(HALL.rulesTitle, RULES.x + Math.round((RULES.w - tw) / 2), RULES.y + 12);
-  setFont(g, 10);
-  g.fillStyle = PLACE.ink;
-  let ry = RULES.y + 38;
-  for (const rule of HALL.rules) {
-    const words = rule.split(' '); let line = '';
-    for (const w of words) {
-      const next = line ? line + ' ' + w : w;
-      if (g.measureText(next).width > RULES.w - 32 && line) { g.fillText(line, RULES.x + 16, ry); ry += 13; line = '   ' + w; }
-      else line = next;
-    }
-    g.fillText(line, RULES.x + 16, ry); ry += 19;
-  }
+  g.fillStyle = ERA4.panel;
+  g.fillText(HALL.rulesTitle, R0.x + 28, R0.y + 10);
+  const mark = [PLACE.textileHi, PLACE.sunHi, ERA4.l, PLACE.book, PLACE.sky];
+  setFont(g, 9);
+  let ry = R0.y + HDR + 5;
+  HALL.rules.forEach((rule, i) => {
+    const text = rule.replace(/^\d+\.\s*/, '');
+    roundRect(g, R0.x + 8, ry, R0.w - 16, 18, 6, ERA4.panelHi);
+    rect(R0.x + 14, ry + 5, 8, 8, mark[i % mark.length]);
+    g.fillStyle = ERA4.textHi;
+    let line = text;
+    while (g.measureText(line).width > R0.w - 44 && line.includes(' ')) line = line.slice(0, line.lastIndexOf(' '));
+    g.fillText(line, R0.x + 28, ry + 4);
+    ry += 21;
+  });
+  setFont(g, 8);
+  g.fillStyle = ERA4.dim;
+  g.fillText(HALL.rulesPin, R0.x + 12, R0.y + R0.h - 13);
   // the four banners: a house's colour, its name down the cloth, a lamp at the head, a swallowtail
   const cloth = [PLACE.sunHi, ERA4.l, PLACE.textileHi, PLACE.bookAlt];
   const ink = [PLACE.ink, PLACE.ink, PLACE.ink, PLACE.mug];

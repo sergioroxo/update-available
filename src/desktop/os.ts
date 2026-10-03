@@ -2421,8 +2421,8 @@ export class DesktopOS {
        * S76's question and another session's fence.
        */
       if (this.reinterp && this.desktopEra === 'e2' && this.desktopIdle()) {
-        this.drawIcon(100, 92, reinterpStrings.launcherIcon, true, 'icon-provotype');
-        this.drawIcon(100, 140, reinterpStrings.launcherIconIntake, true, 'icon-provotype-intake');
+        this.drawIcon(100, 92, reinterpStrings.launcherIcon2003, true, 'icon-provotype');   // ⚑ S209h / ERA03-15 — 1997's files, named as such
+        this.drawIcon(100, 140, reinterpStrings.launcherIconIntake2003, true, 'icon-provotype-intake');
         // ⚑ S183f / R5-04 — and his own file, which came with him too
         this.drawIcon(100, 188, institutionStrings.yourFile.icon, true, 'icon-your-file');
         // ⚑ S191 — the forum, once a thread has been recommended; unread until he opens it

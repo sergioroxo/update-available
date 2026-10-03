@@ -506,6 +506,16 @@
    ],
    "queryLabel": "You searched for",
    "relatedLabel": "Related searches",
+   "paa": {
+    "_doc": "⚑ S209h / ERA26-16 (his, 2026-10-03: 'think of the voice… and how to include some of the hypocrisy and critique inside'; 'go ahead with your edits'). The PLATFORM's voice — neutral, helpful, sure — and the critique is never said, only readable: it claims 'multiple sources' and its sources are one network's (the agent, its stories page, the renamed account, all on this same page below); it opens the question that serves its partner and leaves the neutral ones folded. The clinical debate itself is never mocked or settled — only the curation is shown. The mechanism is documented (Dame-Griff, ch. 6: the box cuts one confident line from pages that say less); its capture here is ours (dossier e4_offers #10, inferred).",
+    "label": "People also ask",
+    "open": "What happens if you stop?",
+    "answer": "“Many people say stopping was the right choice for them.”",
+    "closed": ["Is it common to stop?", "Who can I talk to first?"],
+    "note": "Answers are generated from multiple sources.",
+    "sourcesLabel": "Sources:",
+    "sources": ["secondthoughts.help", "secondthoughts.help/stories", "loop.video/@backagain_2"]
+   },
    "related": [
     "identity exploration",
     "people who went back",

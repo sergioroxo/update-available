@@ -46,10 +46,14 @@ export type DossierLine = { t: string; k: 'head' | 'body' | 'dim' | 'ref' | 'min
 export function dossierLines(era: number, label: string | null): { title: string; lines: DossierLine[] } {
   const SRC = card.source;
   const lines: DossierLine[] = [];
-  const refs = (closeNetwork.labels as { era: number; text: string }[]).filter((l) => l.era === era);
+  const refs = (closeNetwork.labels as { era: number; text: string; note?: string; src?: string }[]).filter((l) => l.era === era);
   const refBlock = (): void => {
     lines.push({ t: era === 0 ? SRC.makersRefsLabel : SRC.refsLabel, k: 'head' });
-    for (const r of refs) lines.push({ t: (r.text === label ? '› ' : '  ') + r.text, k: r.text === label ? 'mine' : 'ref' });
+    for (const r of refs) {
+      lines.push({ t: (r.text === label ? '› ' : '  ') + r.text, k: r.text === label ? 'mine' : 'ref' });
+      // ⚑ S209i / ERA26-07 (his: "one sourced sentence") — a named organisation carries what the sources say of it
+      if (r.note) lines.push({ t: `    ${r.note}${r.src ? ` (${r.src})` : ''}`, k: 'dim' });
+    }
   };
   if (era === 0) {
     for (const l of SRC.makersLines) lines.push({ t: l, k: 'body' });

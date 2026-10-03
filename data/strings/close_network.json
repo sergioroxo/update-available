@@ -83,8 +83,11 @@
    "era": 3
   },
   {
-   "text": "SEGM-Genspect-GETA mesh",
-   "era": 4
+   "text": "SEGM and Genspect (SPLC listing, 2024)",
+   "era": 4,
+   "_doc": "⚑ S209i / ERA26-07 (his, 2026-10-03: 'one sourced sentence'). Was 'SEGM-Genspect-GETA mesh': 'mesh' asserted a link no source states (EVID-17), and nothing verified covers GETA here. Sentence verified in docs/research/E4_SOURCES_ai_2026-08-06.md (lines 31, 73), including their dispute of the listing.",
+   "note": "In June 2024 the Southern Poverty Law Center listed Genspect and SEGM (the Society for Evidence-Based Gender Medicine) as anti-LGBTQ hate groups. Both dispute the listing, saying it suppresses legitimate debate.",
+   "src": "LGBTQ Nation, June 2024; SEGM's response"
   },
   {
    "text": "GETA clinical guide 2022",
@@ -100,7 +103,10 @@
   },
   {
    "text": "SPLC detrans reporting",
-   "era": 4
+   "era": 4,
+   "_doc": "⚑ S209i / ERA26-07 — verified in docs/research/E4_SOURCES_ai_2026-08-06.md line 73 (SPLC Hatewatch, 'Detransition narratives').",
+   "note": "The SPLC's Hatewatch reported how stories of detransition are used against trans people, and described detrans.ai as built on “reductive, anti-trans ideas and debunked pseudoscience”.",
+   "src": "SPLC Hatewatch, “Detransition narratives”"
   }
  ],
  "_panelsDoc": "⚑ S163 / R3-111: `status` is no longer stamped on the panel — it is shown in the frame (the menu's The Close's panels — sources), with `practices`: the dossier practices (data/dossier/practices.json keys) each panel's paragraph draws on, listed there with their sources. A press on a panel opens that list. ⚑ FOUR PANELS, ONE PER ERA, and they are the only prose in the Close. Rewritten 2026-09-12 (Sérgio: \"think as someone who doesn't know the whole project, and needs a more clean and guided way to understand the content… too segmented\"; and: \"We don't have the proof to say that, we just are using information we found\"). One flowing paragraph per era — who, what the machine did, why it matters — every general claim phrased as what the sources document, never as history; the last panel names itself speculative. `status` is the dossier law's own vocabulary (CLAUDE.md) and applies to the panel's claims as a whole. Each panel hangs beside its era's room plate (public/assets/close/era{N}.jpg, baked by tools/bake-close-plates.mjs) with the era's data cluster to its right. ⚑ They do NOT carry the title beat or `Restart as you are.` — those are the update's and the Restart card's. ⚑ S142: the 2016 panel said 'one day an item in her queue is about her' — the piece has no such item; its break is MALTA (s3_maiden.json), the law arriving in the group chat. Corrected to what the piece does.",
@@ -138,7 +144,7 @@
    "title": "RESURGE",
    "text": "Maya’s session is restored for her before she has touched anything. A companion finishes her search and suggests she wants to stop. Her record keeps her old name “for continuity of care”. Her photographs come back improved. A headset offers an immersive session. Then a friend’s invitation, inside that same headset, leads her somewhere the system cannot classify — a room where being trans is fine — and the update fails. This room is inferred. Around it, the record is not: in May 2026 the European Commission answered more than a million people asking for a ban on conversion practices with a non-binding recommendation, and declined to propose a law; organised campaigns against trans people’s care run across Europe. The room extends patterns that are already documented — autocomplete, retained records, photo enhancement, “support” agents — into a system that presents itself as care. What it cannot classify is other people.",
    "status": "speculative",
-   "practices": ["nolaw", "termination", "shorts", "session", "photos", "care", "headset"],
+   "practices": ["nolaw", "termination", "shorts", "paa", "session", "photos", "care", "headset"],
    "image": "assets/close/era4.jpg"
   }
  ]
