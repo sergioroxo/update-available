@@ -1,0 +1,25 @@
+{
+  "_doc": "⚑ 2026-10-04 — FIT IN v4 (1997), on Daniel's handheld; ported from the games review's prototype (Games_Proposals_2026-10-04_v4/fitin_v4.html), which Sérgio called 'fantastic'. It replaces the falling-blocks FIT IN. A block slides; a tap drops it; only the part that fits the dotted MOULD stays; what is cut off falls onto the heap, and the heap STAYS, run after run, shared by every mould. When the tower is over the programme's own blocks slide out one by one and the heap stands. Every mould narrows or steps in somewhere, so the programme's win — a tower with nothing cut off — is in none of them: the game cannot be won, and the queer side always wins (his law for every game). The satire is the seller's: the mould, the cheer, the cartridge; nothing here speaks for a person. All of it is plain upper-case pixel text in the 3×5 type (which has no '=' or '+'). The moulds' shapes are code (src/games/fitIn.ts MOULDS); their names and the screen's words are here. The filing line is unchanged from the old game.",
+  "title": "FIT IN",
+  "publisher": "A FELLOWSHIP GAME",
+  "licence": "UNLICENSED - NOT FOR RESALE",
+  "moulds": [
+    { "name": "THE TAPER", "short": "TAPER" },
+    { "name": "THE HOUSE", "short": "HOUSE" },
+    { "name": "THE CHURCH", "short": "CHURCH" },
+    { "name": "THE CAKE", "short": "CAKE" },
+    { "name": "THE GOWN", "short": "GOWN" },
+    { "name": "THE PORTRAIT", "short": "PORTRAIT" }
+  ],
+  "card": {
+    "start": "PRESS A TO START",
+    "rule1": "TAP DROPS THE BLOCK.",
+    "rule2": "ONLY WHAT FITS THE MOULD STAYS."
+  },
+  "hud": { "fit": "FIT", "kept": "KEPT", "top": "TOP", "all": "ALL" },
+  "hint": { "rule1": "TAP DROPS THE BLOCK", "rule2": "ONLY WHAT FITS STAYS" },
+  "cheer": { "clean": "CLEAN!", "top": "TO THE TOP!" },
+  "pause": { "title": "PAUSE", "resume": "START" },
+  "end": { "title": "GAME OVER", "next": "NEXT ", "press": "PRESS A" },
+  "filing": "FIT IN played — the odd pieces stayed"
+}

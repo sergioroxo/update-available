@@ -46,7 +46,7 @@ const at = (x: number, y: number): [number, number, number] => [x, y, FACE_Z + 0
 const SPECS: DeviceSpec[] = [
   {
     propId: 'danielHandheld', modelKey: 'handheld1997', era: 'e1', gameId: 'fitin',
-    screen: { pos: [0.15, 8.25, FACE_Z + 0.07], euler: [90, 0, 0], scale: [3.9, 1, 3.5], w: 80, h: 72 },
+    screen: { pos: [0.15, 8.25, FACE_Z + 0.07], euler: [90, 0, 0], scale: [3.9, 1, 3.5], w: 160, h: 144 },   // ⚑ 2026-10-04: FIT IN v4 is a 160 × 144 game (the real handheld's glass); same aspect, same plane
     dress: (_face, box) => gbHardware(box),
     // ~7 mm targets at arm's length: the d-pad's four arms, A, B, START and SELECT (both start)
     buttons: [
@@ -56,7 +56,7 @@ const SPECS: DeviceSpec[] = [
       { key: 'start', at: at(0.15, 1.95), r: 0.007 }, { key: 'start', at: at(-0.75, 1.95), r: 0.007 }
     ],
     available: (has) => has('kit-inserted'),
-    idle: (g, w, h) => { px(g, 0, 0, H.screenLight, w, h); px(g, 16, 32, H.screenDark, 48, 8); },
+    idle: (g, w, h) => { px(g, 0, 0, H.screenLight, w, h); px(g, 32, 64, H.screenDark, 96, 16); },
     game: () => new FitIn()
   },
   {

@@ -143,7 +143,15 @@ export const YES_POSTER = {
  *  these are its face — the bezel, the lit screen's four greens, the magenta A/B, the dark d-pad. */
 export const HANDHELD = {
   bezel: '#4a4a58', dpad: '#23232b', button: '#a8235d',
-  screenLight: '#c4cf6e', screenMid: '#8a9a4a', screenDark: '#2f3d23'
+  screenLight: '#c4cf6e', screenMid: '#8a9a4a', screenDark: '#2f3d23',
+  // ⚑ 2026-10-04 — FIT IN v4 needs a longer ramp than four greens (his ruling: "as many as necessary"). Three
+  //   derived steps, each the midpoint of its two neighbours (half-steps rounded up) — nothing invented — so the screen is a
+  //   six-step ramp, lightest to darkest: screenLight > screenLightMid > screenMid > screenMidDark >
+  //   screenDeep > screenDark. They shade the blocks (light top, a step, a step under), the heap's checker,
+  //   the HUD rule and the new moulds' outlines.
+  screenLightMid: '#a7b45c',   // = mid(screenLight, screenMid)
+  screenMidDark: '#5c6c37',    // = mid(screenMid, screenDark)   (v3's fourth green, kept)
+  screenDeep: '#45542d'        // = mid(screenMidDark, screenDark)
 } as const;
 
 /** ⚑ S189 — REACH, on Daniel's 2003 phone: the phone's grey-blue LCD, the snake's greys, the symbols' colours */
