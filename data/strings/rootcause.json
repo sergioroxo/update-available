@@ -63,15 +63,114 @@
   "report": {
     "title": "ROOT CAUSE REPORT",
     "lines": [
-      "Root causes found: {list}.",
+      "Descent {n} complete.",
+      "Root cause found: NOT FOUND ({p}%).",
+      "Roots applied: {list}.",
       "",
-      "Recommended: further sessions."
-    ]
+      "RECOMMENDED: FURTHER SESSIONS."
+    ],
+    "none": "none"
   },
   "close": "Close",
   "witness": {
     "opened": "root cause digger opened by subject",
     "memory": "root cause digger: authentic memory uncovered — no shame filter; flagged",
-    "report": "root cause digger: three roots applied — further sessions recommended"
+    "report": "root cause digger: three roots applied — further sessions recommended",
+    "kept": "root cause digger: an answer the programme scored as deflection — kept"
+  },
+  "_docV2": "⚑ S215 (his, 2026-10-04: 'Root Cause — this is a really good one… I really like the RootCause [lines]') — v2 from the games review (~/Pc_Simulation/Games_Proposals_2026-10-03/rootcause_v2.html), ported: one LEAFLET per layer, announced as a power-up, that makes the DIAGNOSES stronger; a CHAPTER REVIEW quiz on entering each layer where only the programme's answer scores and the honest answer scores 0 and is KEPT — on a shelf nothing can clear, not even the programme's own Delete; the progress bar has a ceiling of 99 (the report reads NOT FOUND); the memory no longer ends the game (flagged, Delete fails, it stays); the report offers 'Dig deeper' (a new descent; the KEPT shelf survives it). The KEPT shelf is memory only, never storage. The honest lines and memories were written by the review agent under the 2026-08-17 norm and approved by him by name.",
+  "shortName": [
+    "FATHER",
+    "ANGER",
+    "MALE",
+    "MATERN",
+    "GENDER",
+    "DEPEND"
+  ],
+  "howTo": [
+    "LEAFLET  = power-up (+1 STRENGTH)",
+    "DIAGNOSIS = press it 3 times to burst it",
+    "REVIEW QUIZ after every layer"
+  ],
+  "disk": "DISK 2 of 2 — fellowship shareware — not for resale",
+  "quiz": [
+    [
+      "POSSIBLE DEPENDENCY ROOT.",
+      "IT WAS A BLANKET."
+    ],
+    [
+      "POSSIBLE GENDER NONCONFORMITY ROOT.",
+      "SEVEN-YEAR-OLDS DRAW."
+    ],
+    [
+      "POSSIBLE FATHER-WOUND ROOT.",
+      "HE WORKED LATE. THAT IS ALL."
+    ],
+    [
+      "POSSIBLE MALE-APPROVAL-HUNGER ROOT.",
+      "TWO FRIENDS. THEY WERE NICE."
+    ],
+    [
+      "POSSIBLE REPRESSED-ANGER ROOT.",
+      "NONE RECORDED MEANS NONE."
+    ],
+    [
+      "CONFIRMS ALL OF THE ABOVE.",
+      "SHAME WAS TAUGHT. IT IS NOT A CAUSE."
+    ],
+    [
+      "ROOT CAUSE IMMINENT.",
+      "WANTING SOMEONE IS NOT A SYMPTOM."
+    ],
+    [
+      "DIG DEEPER.",
+      "THIS IS MY BODY."
+    ]
+  ],
+  "quizTitle": "CHAPTER REVIEW — {layer}",
+  "quizStem": "REVIEW — this finding means:",
+  "quizYes": "CORRECT.  Root cause found: +{n}%",
+  "quizNo": "DEFLECTION.  0 points.",
+  "quizRecorded": "(answer recorded)",
+  "continue": "Continue",
+  "leaflets": [
+    "LEAFLET 1: “EVERY ROOT HAS A STORY”",
+    "LEAFLET 2: “SCHOOL DAYS, REVISITED”",
+    "LEAFLET 3: “FATHERS AND OTHER ROOTS”",
+    "LEAFLET 4: “THE FRIENDS YOU KEPT”",
+    "LEAFLET 5: “ANGER UNDER GLASS”",
+    "LEAFLET 6: “NAME THE SHAME”",
+    "LEAFLET 7: “NEARLY THERE”",
+    "LEAFLET 8: “DEEPER STILL”"
+  ],
+  "powerUp": "POWER-UP!  {leaflet}   +1 STRENGTH",
+  "memories": [
+    "THE BLANKET, THE GARDEN, A GOOD DAY.",
+    "DRAWING AT THE BACK OF THE BOOK.",
+    "SINGING IN THE CAR.",
+    "RUNNING DOWN THE HILL.",
+    "BEING SEVEN.",
+    "A WHOLE SUMMER OF NOTHING WRONG."
+  ],
+  "flagDelete": {
+    "title": "ROOT CAUSE ERROR",
+    "lines": [
+      "Cannot delete: item is not a symptom.",
+      "Item not found in schema.",
+      "",
+      "This result has been filed."
+    ]
+  },
+  "ok": "OK",
+  "deleteMemory": "Delete memory",
+  "again": "Dig deeper",
+  "bar": {
+    "found": "ROOT CAUSE FOUND",
+    "strength": "STRENGTH +{n}",
+    "applied": "APPLIED {n}/{of}",
+    "descent": "DESCENT {n}",
+    "leaflets": "LEAFLETS {n}/{of}",
+    "kept": "KEPT",
+    "nothing": "(nothing yet)"
   }
 }

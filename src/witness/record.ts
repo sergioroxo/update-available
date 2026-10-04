@@ -89,6 +89,7 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   if (id === 'rootcause-opened') return { kind: 'kit', outcome: 'opened', flagged: false };
   if (id.startsWith('rootcause-memory:')) return { kind: 'kit', outcome: 'uncovered', flagged: true };
   if (id.startsWith('rootcause-report:')) return { kind: 'kit', outcome: 'reported', flagged: false };
+  if (id.startsWith('rootcause-kept:')) return { kind: 'kit', outcome: 'kept', flagged: true };   // S215: the honest answer, scored as deflection
   return { kind: 'provotype', outcome: 'filed', flagged: false };
 }
 
