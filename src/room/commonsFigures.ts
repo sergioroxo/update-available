@@ -155,7 +155,10 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   ];
   // Phase 7: each figure also has two arms; the performers are four more figures with arms; one patch of light
   const PER = 9;   // ⚑ S212: legs, torso, head (two crossed pieces), hair, and each arm with its hand
-  const BOXES = FIGURES * PER + PERFORMERS * PER + 1 + 1;
+  // ⚑ S213 (his: "go ahead with the costumes for the performers") — the ones who walk are dressed for it:
+  //   two costume pieces each, chosen by the category being walked (the four Late Arrivals one each)
+  const PERF_PER = PER + 2;
+  const BOXES = FIGURES * PER + PERFORMERS * PERF_PER + 1 + 1;
   const indices: number[] = [];
   for (let n = 0; n < BOXES; n++) for (const face of F) for (const i of face) indices.push(n * 8 + i);
   const colors: number[] = [];
@@ -165,11 +168,11 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   const perfCloth = [PLACE.textileHi, PLACE.sunHi, PLACE.sky, PLACE.bookAlt].map((h) => new pc.Color().fromString(h));
   const perfH = [1.72, 1.6, 1.66, 1.58];
   const perfHair = [PLACE.ink, PLACE.sunHi, PLACE.book, PLACE.floorLo].map((h) => new pc.Color().fromString(h));
-  for (let i = 0; i < PERFORMERS; i++) { pushBoxColor(perfCloth[(i + 1) % PERFORMERS]); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(skin); pushBoxColor(perfHair[i]); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(perfCloth[i]); pushBoxColor(skin); }
+  for (let i = 0; i < PERFORMERS; i++) { pushBoxColor(perfCloth[(i + 1) % PERFORMERS]); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(skin); pushBoxColor(perfHair[i]); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(perfCloth[i]); pushBoxColor(skin); pushBoxColor(skin); pushBoxColor(skin); }
   pushBoxColor(new pc.Color().fromString(PLACE.sunHi));      // the light on the floor under them
   pushBoxColor(new pc.Color().fromString(PLACE.floorLo));
 
-  const PERF_BOXES = PERFORMERS * PER + 1;
+  const PERF_BOXES = PERFORMERS * PERF_PER + 1;
   const boxIdx = (n: number): number[] => { const out: number[] = []; for (let b = 0; b < n; b++) for (const face of F) for (const i of face) out.push(b * 8 + i); return out; };
   const indicesA = boxIdx(BOXES - PERF_BOXES), indicesB = boxIdx(PERF_BOXES);
   const cA0 = FIGURES * PER * 32, cB1 = (FIGURES * PER + PERF_BOXES) * 32;
@@ -191,6 +194,33 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   let armK = 0;
   const sinkBox = (x: number, z: number): void => box(x, SUNK_Y, z, 0.1, 0.1, 0.1);
   const sinkPerson = (x: number, z: number): void => { for (let k = 0; k < PER; k++) sinkBox(x, z); };
+  type Costume = 'gown' | 'cape' | 'train' | 'pads';
+  const COSTUME_BY_CATEGORY: Costume[] = ['gown', 'pads', 'cape', 'train'];
+  const LATE_ARRIVALS: Costume[] = ['pads', 'gown', 'cape', 'train'];
+  const costumeOf = (cat: number, i: number, n: number): Costume => n > 1 ? LATE_ARRIVALS[i % 4] : COSTUME_BY_CATEGORY[Math.max(0, cat) % 4];
+  const COSTUME_COLOURS: Record<Costume, [pc.Color, pc.Color]> = {
+    gown: [new pc.Color().fromString(PLACE.textileHi), new pc.Color().fromString(PLACE.sunHi)],   // a flared skirt, a crown
+    cape: [new pc.Color().fromString(PLACE.book), new pc.Color().fromString(PLACE.sunHi)],        // a red cape, a gold collar
+    train: [new pc.Color().fromString(PLACE.sky), new pc.Color().fromString(PLACE.sunHi)],        // a long train, a tiara
+    pads: [new pc.Color().fromString(ERA4.l), new pc.Color().fromString(PLACE.ink)]                // shoulders, tall hair
+  };
+  /** two costume pieces over a performer; `back` is the side they walk away from (+x on the way out) */
+  const costume = (kind: Costume, x: number, base: number, z: number, w: number, h: number, bob: number): void => {
+    const headH = h * 0.055, shoulderY = base + h * 0.64 + bob, headTop = shoulderY + 0.03 + headH * 2;
+    if (kind === 'gown') {
+      taper(x, base + h * 0.2 + bob * 0.5, z, h * 0.2, w * 0.55, w * 0.95, w * 0.3, w * 0.45);
+      box(x, headTop + 0.05, z, 0.03, 0.06, 0.07);
+    } else if (kind === 'cape') {
+      box(x + w * 0.36, base + h * 0.42 + bob, z, 0.015, h * 0.24, w * 0.66);
+      box(x, shoulderY + 0.02, z, w * 0.32, 0.035, w * 0.5);
+    } else if (kind === 'train') {
+      box(x + w * 0.3 + 0.36, base + 0.012, z, 0.4, 0.01, w * 0.55);
+      box(x, headTop + 0.02, z, 0.02, 0.025, 0.08);
+    } else {
+      box(x, shoulderY - 0.01, z, w * 0.32, 0.035, w * 0.88);
+      box(x, headTop + 0.12, z, headH * 0.9, 0.12, headH * 0.9);
+    }
+  };
   /** a piece narrower or wider at the top than the bottom (half-sizes: depth hx, width hz) */
   const taper = (x: number, y: number, z: number, hy: number, bx: number, bz: number, tx: number, tz: number): void => {
     for (const [cx, cy, cz] of C) {
@@ -287,11 +317,19 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     const px = herAtStage ? WORLD.stage.x - 0.5 : RUNWAY.from + (RUNWAY.to - RUNWAY.from) * e;
     const pBase = herAtStage ? WORLD.stage.h + 0.02 : 0.02;
     for (let i = 0; i < PERFORMERS; i++) {
-      if (i >= nWalk) { sinkPerson(px, RUNWAY.z); continue; }
+      if (i >= nWalk) { sinkPerson(px, RUNWAY.z); sinkBox(px, RUNWAY.z); sinkBox(px, RUNWAY.z); continue; }
       const z = RUNWAY.z + (i - (nWalk - 1) / 2) * 0.55;
       const h = perfH[i], w = 0.3;
       const step = Math.abs(Math.sin(walkT * 3.2 + i)) * 0.025 * (leg > 0 && leg < 1 ? 1 : 0.2);
       person(px, pBase, z, w, h, step, 0, herAtStage || leg >= 1 ? 0.9 : 0.15, [1, 0, 2, 3][i], [0.2, 0.9, 0.5, 0.3][i]);   // at the near end, the arms open to the room
+      const kind = costumeOf(show.category, i, nWalk);
+      costume(kind, px, pBase, z, w, h, step);
+      // the costume's colours live in the performers' own colour stream: set them for this walker
+      const [ca, cb] = COSTUME_COLOURS[kind];
+      for (const [slot, c] of [[PER, ca], [PER + 1, cb]] as const) {
+        const o = (i * PERF_PER + slot) * 32;
+        for (let v = 0; v < 8; v++) { colorsB[o + v * 4] = c.r; colorsB[o + v * 4 + 1] = c.g; colorsB[o + v * 4 + 2] = c.b; colorsB[o + v * 4 + 3] = 1; }
+      }
     }
     // the light under them — a flat pale patch, on the floor, where they are
     if (nWalk > 0) box(px, pBase - 0.008, RUNWAY.z, 0.55, 0.004, 0.35 + nWalk * 0.28);
