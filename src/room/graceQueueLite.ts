@@ -122,7 +122,7 @@ import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
 import maiden from '../../data/dialog/s3_maiden.json';
-import { playOnce, anythingPlaying } from '../audio/tapeAudio';
+import { playOnce, anythingPlaying, stopClip } from '../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
@@ -424,6 +424,8 @@ export class GraceQueueLite {
   // Nobody is asked to press this and nothing files when they do.
   private playT = 0;
   private playing = false;
+  /** ⚑ S216 — the room the video was sent from, heard while it plays (his ear, 2026-10-04: 'the flat room tone works') */
+  private roomTone: HTMLAudioElement | null = null;
 
   // the break
   private maltaArrived = false;
@@ -547,7 +549,7 @@ export class GraceQueueLite {
     if (this.playing) {
       const before = Math.floor(this.playT / TICK);
       this.playT += dt;
-      if (this.playT >= NOA_SECONDS) { this.playT = NOA_SECONDS; this.playing = false; this.bump(); }
+      if (this.playT >= NOA_SECONDS) { this.playT = NOA_SECONDS; this.playing = false; stopClip(this.roomTone); this.roomTone = null; this.bump(); }
       else if (Math.floor(this.playT / TICK) !== before) this.bump();
     }
 
@@ -739,6 +741,13 @@ export class GraceQueueLite {
     if (!this.submission()?.video) return;
     if (this.playT >= NOA_SECONDS) this.playT = 0; // finished: pressing plays it again
     this.playing = !this.playing;
+    // the room tone follows the picture: starts where it is, stops when she is paused
+    stopClip(this.roomTone); this.roomTone = null;
+    if (this.playing) {
+      const v = (this.submission() as { video?: { audio?: string } } | null)?.video?.audio;
+      this.roomTone = playOnce(v);
+      if (this.roomTone) { this.roomTone.currentTime = Math.min(this.playT, 23); this.roomTone.volume = 0.6; }
+    }
     this.bump();
   }
 
