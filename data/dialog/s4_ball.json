@@ -311,7 +311,10 @@
  "room": {
   "_beat": "⚑ THE BALL'S OWN SOUND, and it is the one thing in this file that is not a caption. A ball is loud, structured and attentive — the beat, the calls, the applause on the landing — and NOT laughter, chatter or generic warmth (deep pass §1.2: 'community equals laughter' is the lazy image and it was cut on purpose). ⚑ 2026-09-12: BOTH DELIVERED AND REGISTERED — Sérgio's own generations ('Community Hall House Jam' → landing, 'Through the Wall' → bed), instrumental, no voice, no lyrics, in src/audio/tapeAudio.ts and assets/LICENSES.md. The room is audible for the first time. _docVoice still stands: nothing else in this file may be synthesized.",
   "bed": "ball_room_bed.mp3",
-  "landing": "ball_room_landing.mp3"
+  "landing": "ball_room_landing.mp3",
+  "_docS214": "⚑ S214 (his ear, 2026-10-04: 'mostly okay') — two sounds for what the room does, not for anybody's voice: the lamps rising (glass bells, from the sound review's draft 01) and her lamp raised (one bell that is hers and three that answer, draft 02). _docVoice stands: nothing here synthesises a voice or a word. No synthesised applause (his: 'don't like it, and don't think it is needed').",
+  "lampsRise": "commons_lamps_rise.mp3",
+  "herLamp": "commons_her_lantern.mp3"
  },
  "witness": {
   "_beat": "⚑ THE BALL FILES NOTHING — src/desktop/apps/ball.ts imports no ledger. What IS filed is filed by the apparatus's own surface (E4Space): the moment she leaves for a space it cannot see, in its own words (`commons.witness` above). The apparatus can record her going; it cannot record where.",

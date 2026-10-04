@@ -277,10 +277,13 @@ export class UpdateApp {
   }
 
   private churn: HTMLAudioElement | null = null;
+  /** ⚑ S214 — the 2003 dispersal's sound plays once per install */
+  private dispersalHeard = false;
   private beginInstall(): void {
     // the bare final restart has no changelog — straight to the dark beat
     this.phase = this.s.changelog ? 'install' : 'restart';
     this.t = 0;
+    this.dispersalHeard = false;
     if (this.s.changelog) this.churn = playLoop('install_work.mp3');   // S141: the machine working under the changelog
     else playOnce('restart_dark.mp3');
     this.onInstallBegin?.(this.s.toEra); // ⚑ S86 — the ascent starts on THIS press
@@ -510,7 +513,11 @@ export class UpdateApp {
         // apart under the line that says he could not be removed — and u4's
         // report uses the same block for the opposite event. Keyed rather than
         // flagged in data because it is a scene, not a setting.
-        if (quietAt >= 0 && this.key === 'u3') this.drawDispersal(ctx, this.t - quietAt);
+        if (quietAt >= 0 && this.key === 'u3') {
+          // ⚑ S214 — the dispersal has its sound: seven marks of a music box, each flatter and further (draft 07)
+          if (!this.dispersalHeard) { this.dispersalHeard = true; const a = playOnce('lamby_dispersal_2003.mp3'); if (a) a.volume = 0.5; }
+          this.drawDispersal(ctx, this.t - quietAt);
+        }
       }
       // progress + the glitch: the bar stutters near the end (soft, no strobe)
       const bw = 220; const bx = Math.round((W - bw) / 2); const by = H - 70;

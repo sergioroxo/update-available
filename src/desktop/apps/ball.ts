@@ -332,7 +332,14 @@ export class E4Ball {
     setCommonsLamps(this.label?.lamps ?? 0);
   }
   /** the lamps and the people arrive together — the people from nine lamps on */
+  private lampsShown = 0;
   private crowd(n: number): void {
+    // ⚑ S214 — the lamps going up have a sound: glass bells, louder as more arrive (never on the way down)
+    if (n > this.lampsShown) {
+      const a = playOnce(script.room.lampsRise);
+      if (a) a.volume = Math.min(0.6, 0.25 + n / 100);
+    }
+    this.lampsShown = n;
     setCommonsLamps(n);
     setCommonsFigures(n >= 9);
   }
@@ -620,7 +627,11 @@ export class E4Ball {
     // ⚑ S209g / I1 (his tick, "we can try") — during the ball a press is her noise: she raises her lamp, and the
     //   hall's lamps and the two beside her answer. Never counted, never filed (respite).
     if (this.phase === 'ball') {
-      if (!herLampRaised()) { raiseHerLamp(); pulseCommonsLamps('flare'); answerCommonsFigures(); this.lampsRaised++; }
+      if (!herLampRaised()) {
+        raiseHerLamp(); pulseCommonsLamps('flare'); answerCommonsFigures(); this.lampsRaised++;
+        const a = playOnce(script.room.herLamp);   // ⚑ S214 — the hall noticing; once per raise, never a button sound
+        if (a) a.volume = 0.5;
+      }
       return true;
     }
     if (!this.returnable) return true;

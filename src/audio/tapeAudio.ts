@@ -247,6 +247,10 @@ const REGISTRY: Record<string, string> = {
   'ui_refuse.mp3': `${AUDIO_BASE}ui_refuse.mp3`,
   'l_arrives_2026.mp3': `${AUDIO_BASE}l_arrives_2026.mp3`,
   'glitch_e4_end.mp3': `${AUDIO_BASE}glitch_e4_end.mp3`,
+  // ⚑ S214 — from the sound review (~/Pc_Simulation/Sound_Proposals_2026-10-03, tools/sound/), his ear 2026-10-04: "mostly okay"
+  'commons_lamps_rise.mp3': `${AUDIO_BASE}commons_lamps_rise.mp3`,
+  'commons_her_lantern.mp3': `${AUDIO_BASE}commons_her_lantern.mp3`,
+  'lamby_dispersal_2003.mp3': `${AUDIO_BASE}lamby_dispersal_2003.mp3`,
   // ⚑ 2026-09-13 — THE SECOND ACT'S SOUNDS (tools/make_tones.sh, "ERA 4, THE
   //   SECOND ACT"): synthesized, ours, no voice. The system's register is
   //   sines that resolve; the room's is warmer and a third apart.
@@ -453,6 +457,19 @@ class RoomBed {
   /** the bed's own quiet level — the floor the whole mix sits on. Deliberately
    *  the hiss bed's number: this is ambient presence, never a voice. */
   private static readonly LEVEL = 0.12;
+  /** ⚑ S214 (his, 2026-10-04: the level policy — "you do that"). The one 0.12 cap sat on top of each
+   *  file's own level, so the era beds (mastered at −34 LUFS as the floor) played near −53 LUFS, the
+   *  Close's score near −45, and the Commons' music near −31: 25–35 dB under the one-shots instead of
+   *  the intended 10–14 (the sound review's measurements). Each bed now has its own level, chosen to put
+   *  it back where make_tones.sh meant it; LEVEL stays for anything unnamed. Tune by ear. */
+  private static readonly LEVELS: Record<string, number> = {
+    'bed_1997.mp3': 0.5, 'bed_2003.mp3': 0.5, 'bed_2016.mp3': 0.5, 'bed_2026.mp3': 0.5,
+    'passage_wind.mp3': 0.5, 'passage_building.mp3': 0.5,
+    'close_score.mp3': 0.55,
+    'ball_room_bed.mp3': 0.35, 'ball_room_landing.mp3': 0.35
+  };
+  private level = RoomBed.LEVEL;   // the level of the bed that is live now
+  private dyingLevel = RoomBed.LEVEL;   // and of the one fading out
 
   private get live(): HTMLAudioElement | null { return this.useA ? this.a : this.b; }
   private get dying(): HTMLAudioElement | null { return this.useA ? this.b : this.a; }
@@ -505,7 +522,9 @@ class RoomBed {
       incoming.volume = 0;
       if (!this.paused) incoming.play().catch(() => { /* autoplay policy or a headless harness */ });
     }
-    this.target = incoming ? RoomBed.LEVEL : 0;
+    this.dyingLevel = this.level;
+    this.level = name ? (RoomBed.LEVELS[name] ?? RoomBed.LEVEL) : 0;
+    this.target = incoming ? this.level : 0;
   }
 
   /** driven from the engine's own frame loop, like everything else here */
@@ -515,7 +534,7 @@ class RoomBed {
     const k = 1 - this.fade / this.fadeSeconds;   // 0 → 1 across the crossfade
     if (this.live) this.live.volume = this.target * k;
     if (this.dying) {
-      this.dying.volume = RoomBed.LEVEL * (1 - k);
+      this.dying.volume = this.dyingLevel * (1 - k);
       // ⚑ paused only once it is actually silent, or the swap clicks
       if (this.fade === 0) { this.dying.pause(); if (this.useA) this.b = null; else this.a = null; }
     }

@@ -842,6 +842,8 @@ export class E4Shell {
      */
     this.stageNow = 'glitch';
     playOnce('glitch_e4_end.mp3');
+    // ⚑ S214 — the party does not play on through the place coming apart: it goes back behind the wall
+    roomBed.set('ball_room_bed.mp3', 2.0);
     this.glitchT = 0;
     this.glitchStep = -1;
     this.version++;
