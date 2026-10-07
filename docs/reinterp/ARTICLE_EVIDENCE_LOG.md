@@ -147,6 +147,15 @@ be made. The dates question (`ARTICLE_COMPILATION_2026-10-03.md` §0) waits, as 
 | Images of the evolution | out/review5/stills (45 PNGs, git-ignored); out/tour-e4; out/probe/commons (today's sheets 1–6: the walled hall → the warmed hall → the open sky) | A committed `docs/reinterp/article-evidence/` folder with dated stills per surface, before and after |
 | The previous versions, and why they changed | The ad's rejected versions (2026-10-01: "visually ridiculous and over-the-top"); the Commons' walls → the open sky (2026-10-03: "it boxes off the space"); the string lights → stars; the hexagon/wedge → the three rooms (R24); `?flat=1` as fallback → review tool (2026-08-06) | For each: the version, the date, his words, and what replaced it |
 
+## 2026-10-08 — three captures (his note, after a colleague's walkthrough)
+His words, to be kept as a frame for the article and the exhibition text: **Daniel is captured by his family; Vera is
+part of the system, trying to escape it; Maya is about algorithmic capture.** One machine, thirty years, three ways a
+person is taken: by kin, by an institution you serve, by a feed. (Register: WALKTHROUGH_1_2026-10-08.md §H.)
+
+**A process finding (W1-B12):** a fix to the old-name / opt-out wording did not hold; the colleague met a version of it
+again ("still opted out of the deadname"). Regressions of the most ethically loaded line are a finding about building
+with models across many sessions: every surface that re-renders a line is a place it can return.
+
 ## Open items (Sérgio's, not Claude's)
 
 - The abstract itself (500 words max, bio 200 words max, cc `DCsubmit@gmail.com`) is his to write —
