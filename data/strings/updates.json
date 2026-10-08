@@ -82,7 +82,7 @@
   ],
   "updateNow": "Update now",
   "remindLater": "Remind me later",
-  "remindedStatus": "Restorify is being removed. Take what you are taking from the room — it will ask again.",
+  "remindedStatus": "Restorify is being removed. It will ask again.",
   "_docRemindedStatus": "S156 / R3-60 (Sérgio: 'Update Later → the story app says continue; should say it is being removed'): u3's own deferral line — the shared one under `remindedStatus` at the root serves u2.",
   "eulaTitle": "GracePlatform — Community Guidelines",
   "eula": [
@@ -260,7 +260,7 @@
   "_docChangelog2026": "⚑ 2026-09-13 (S141): rewritten against the Era 4 that exists — the restored session, the search taken over, Second Thoughts in the tab that arrived by itself, the Restoration tool, the headset — instead of the companion-that-talks era retired in September. Still a changelog-as-thesis: every '+' is a thing done FOR her."
  },
  "_remindDoc": "PLACEHOLDER — Sérgio voice pass pending. Session 61, his note on u3: 'Remind me later — what does it do?' The law (SCRIPT_UPDATE v0.5 §1 / CLAUDE.md) is that it works exactly ONCE, and the code has always honoured that — but nothing on screen said so. Pressing it withdrew the notice with no acknowledgement, and when the notice came back the button had silently vanished, which reads as a different dialog rather than as a spent option. Two strings fix it: `remindedStatus` stays on screen for the whole deferral (the system tells you it is coming back), and `remindSpent` labels the button when it returns GREYED — the S60 ruling applied to the one place in the piece where a dead button is literally the thesis. You may defer this once. You may not decline it.",
- "remindedStatus": "Update deferred. Take what you are taking from the room — it will ask again.",
+ "remindedStatus": "Update deferred. It will ask again.",
  "remindSpent": "Reminder used",
  "_e3ArrivalDoc": "PLACEHOLDER — Sérgio voice pass pending on EVERY string below. Session 61 — THE OTHER HALF OF u3, played on VERA's workstation (src/room/graceQueueLite.ts), not on Daniel's CRT. Sequence: you land in Room 2 at a DARK screen → the machine boots in front of you (his note: 'we shouldn't start without the boot up on the computer' — the same gap S59 closed for E2) → GracePlatform installs, and the changelog-as-thesis types on THERE, on the machine it is actually being installed onto → SisterSignal's sign-in, which is where the era's existing GraceQueue material begins. The changelog is the one that used to run on Daniel's screen, moved wholesale: the era law (era transitions = software updates) keeps its install stage and its thesis, it just happens on the right computer. `signInAfter` is a hold, not a gate — nothing here is pressable and nothing is timed for the player.",
  "e3_arrival": {

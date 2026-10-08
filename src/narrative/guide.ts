@@ -42,6 +42,10 @@ export interface SideMessage {
 
 type Condition = (os: DesktopOS) => boolean;
 
+/** W1-C3 — the programme was set aside (Cancel or the minimise box) before the line was ever opened */
+const programmeSetAside = (os: DesktopOS): boolean => ledger.records.includes('kit-inserted') && !!os.kit && !os.kit.open
+  && !ledger.records.includes('went-online') && !os.web;
+
 /**
  * The thin condition registry (brief: conditions in code, content in data).
  * Every key resolves against existing OS/ledger state; an unknown key is
@@ -54,12 +58,18 @@ const CONDITIONS: Record<string, Condition> = {
   kitReading: (os) => os.kit?.reading === true && !os.kit.hasRead,
   // S151 — the wizard's steps (kit.ts): read · pray · connect
   kitRead: (os) => os.kit?.hasRead === true || ledger.records.includes('kit-read'),
-  prayStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'pray',
+  // ⚑ S219 / W1-C5 (his: "it should not so easily happen") — never while the tape is already playing, and only
+  //   after a quiet stretch on the pray step, so the wizard's own words get read first
+  prayStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'pray'
+    && !(os.tapeProbe?.().playing ?? false) && os.idleSeconds > 20,
   prayerSaid: () => ledger.records.includes('prayer-said') || ledger.records.includes('prayer-cut'),
   pledgeStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'pledge',   // S170 / I-03
   pledgeAnswered: () => ledger.records.includes('pledge-signed') || ledger.records.includes('pledge-declined'),
   connectStep: (os) => os.kit?.reading === true && os.kit.currentStep === 'connect',
   kitConnecting: (os) => os.kit?.dialing === true || ledger.records.includes('went-online'),
+  // W1-C3 — the programme was set aside (Cancel or the minimise box) before the line was ever opened: it is still
+  // on the taskbar, and the disk brings it back
+  kitSetAside: programmeSetAside,
   // S190 — the 1997 browser, between the dial-up and the channel
   browsing: (os) => os.web?.open === true,
   channelJoined: () => ledger.records.includes('channel-joined'),
@@ -74,6 +84,7 @@ const CONDITIONS: Record<string, Condition> = {
     || ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
   // R3-38 — the racket's line fills the quiet: the disk is in, no window is up
   roomQuiet: (os) => ledger.records.includes('kit-inserted') && os.kit?.open !== true
+    && !programmeSetAside(os)   // W1-C3: the line that says how to get the programme back is the only one then (two soft lines trade places every frame)
     && !os.provotype && !os.packet?.open && !os.diary?.open && !os.updateArmed
     && !(os.irc?.open && os.irc.awaitingReply) && !os.web,
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),

@@ -65,7 +65,7 @@ export interface CloseMonitor {
    *  from its own mesh: what the sky must keep off the eye's line to it */
   readonly silhouette: { x: number; hx: number; yLo: number; yHi: number; z: number };
   /** a world-space ray → the glass in logical canvas pixels, or null */
-  hitTest(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { x: number; y: number } | null;
+  hitTest(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { x: number; y: number; t: number } | null;
   /** she pressed the far glass: whoever mounts this moves the eye (app.ts) */
   onGo?: () => void;
   /** S167: the card's "The dossier" — the frame opens its reading of the panels */
@@ -450,7 +450,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       near = n;
       if (on) { if (!near) drawFar(); else if (face === 'receipt') drawReceipt(); else if (face === 'lexicon') drawLexicon(); else drawCard(); }
     },
-    hitTest(p0, p1): { x: number; y: number } | null {
+    hitTest(p0, p1): { x: number; y: number; t: number } | null {
       if (!entity.enabled) return null;
       const g = glassWorld;
       const dz = p1.z - p0.z;
@@ -462,7 +462,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       const u = (wx - g.x) / g.w + 0.5;
       const v = 0.5 - (wy - g.y) / g.h;
       if (u < 0 || u > 1 || v < 0 || v > 1) return null;
-      return { x: u * W, y: v * H };
+      return { x: u * W, y: v * H, t };   // W1-G2: how far along the ray the glass is, so a nearer panel can win
     },
     openLexicon(): void {
       face = 'lexicon'; lexicon.face = 'title';

@@ -130,16 +130,13 @@
       }
     },
     {
-      "id": "belongings",
-      "emphasis": "belongings",
-      "trigger": "belongingsWindowOpen",
-      "done": "belongingsGathered",
-      "expire": "belongingsDeclined",
-      "text": "departure scheduled. take what you are taking: press what you keep, here in the room.",
-      "witness": {
-        "followed": "belongings: gathered",
-        "declined": "belongings: did not gather"
-      }
+      "id": "setAside",
+      "_docW1C3": "⚑ W1-C3 (walkthrough 1: Cancel 'broke the system') — Cancel set the wizard aside and the desktop said nothing about getting it back; the racket line then led away from the programme. Soft: it steps down, unfiled, the moment the wizard is open again or the line is online.",
+      "soft": true,
+      "trigger": "kitSetAside",
+      "done": "kitConnecting",
+      "text": "the programme is on the taskbar. press it, or the disk, to go on.",
+      "witness": {"followed": "guidance: Un-Walk — set aside, then online", "declined": "guidance: Un-Walk — set aside"}
     },
     {
       "id": "racket",

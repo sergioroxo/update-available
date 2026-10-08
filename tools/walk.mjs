@@ -199,7 +199,7 @@ const PREFER = [
  * menu's; `pause_yes` is the era's, and the difference between them is the
  * difference between quitting the piece and playing it.
  */
-const FORBIDDEN = /^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$/i;   // S167: close-dossier opens the FRAME's menu, which holds the piece
+const FORBIDDEN = /^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-shut$/i;   // S167: close-dossier opens the FRAME's menu, which holds the piece; S219: so does the Start menu's Shut Down… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again)
 
 /** ⚑ see the launch below — order: --chrome, the environment, the platform */
 function resolveChrome() {

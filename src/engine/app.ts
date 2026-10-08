@@ -8,6 +8,8 @@
  * On the witness side every control is dead (cursor: not-allowed).
  * Units are meters; the monitor screen is centered at the origin.
  */
+import { PRAYER_AT, PRAYER_LEN } from '../desktop/apps/kit';
+import type { GameKey } from '../games/types';
 import lexStrings from '../../data/strings/lexicon.json';
 import closeMessage from '../../data/strings/close_message.json';
 import * as pc from 'playcanvas';
@@ -854,7 +856,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     witnessPulse.onGrow = () => witness.pulse();
     helper = mountHelper({
       hint: () => nextHint(os),
-      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy()
+      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy(),
+      // ⚑ S219 / W1-B6 — a mouse and a big screen: 1.8× the wait; a touch device or a headset: as written
+      idleScale: () => (xr?.active ? 1 : window.matchMedia('(pointer: coarse)').matches ? 1 : 1.8)
     });
     // ⚑ S147 — THE HEADSET'S INPUT AND THE FRAME'S XR FACE (frame/xrInput.ts,
     //   frame/xrFrame.ts). The trigger is the tap and goes through the same
@@ -2744,20 +2748,48 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // S151 — the Un-Walk's pray step reaches the boombox: pressing "Play the tape"
   // on the wizard is the same act as pressing Tape A on the shelf (R3-22), and
   // the wizard reads the deck each frame to highlight the words as they are sung.
+  /**
+   * ⚑ S219 / W1-C4 (walkthrough 1: "the prayer makes the people look at the radio rather than the computer";
+   * his ruling, 2026-10-08: "play the prayer from the computer"). The Un-Walk's pray step plays the prayer
+   * through the machine itself, where its words are lit — the boombox stays a thing on the shelf, and Tape A
+   * still plays there if the player puts it in by hand. The kit's word clock reads this as before: the
+   * elapsed time is the recording's, offset by where the prayer sits on the tape (PRAYER_AT).
+   */
+  let pcPrayer: HTMLAudioElement | null = null;
+  // ⚑ the prayer keeps its own time: the element's clock while it actually moves, a wall clock when it does not.
+  //   A browser with no audio output (the walk's headless Chrome; a machine with no sound device) leaves
+  //   `currentTime` almost still, and the prayer never ended — the walk circled 1997 for half an hour. A
+  //   paused element (the game menu holds the sound) pauses this clock too.
+  let pcOn = false;
+  let pcT = 0;
+  let pcLast = 0;
+  let pcLastCT = 0;
   os.onPlayTape = () => {
-    if (!tapes) return;
-    if (tapes.inserted === 'tapeA') { if (!tapes.isPlaying) tapes.togglePlay(); }
-    else tapes.insert('tapeA');
-    syncTapeProps();
-    syncTapeAudio();
+    if (pcOn && pcT < PRAYER_LEN) {
+      if (pcPrayer?.paused && !pcPrayer.ended) void pcPrayer.play().catch(() => { /* autoplay */ });
+      return;
+    }
+    pcPrayer = playOnce('fold_my_hands_tape97.mp3');
+    pcOn = true; pcT = 0; pcLastCT = 0; pcLast = performance.now();
+    // the record keeps the line the tape used to file when the prayer played
+    if (!ledger.records.includes('tape-played')) ledger.records.push('tape-played');
   };
   os.onStopTape = () => {
-    if (!tapes || tapes.inserted !== 'tapeA') return;
-    tapes.eject();   // files "stopped midway" like a hand on the button would
-    syncTapeProps();
-    syncTapeAudio();
+    stopClip(pcPrayer);
+    pcPrayer = null;
+    pcOn = false;
   };
   os.tapeProbe = () => {
+    if (pcOn) {
+      const now = performance.now();
+      const held = !!pcPrayer && pcPrayer.paused && !pcPrayer.ended;
+      const ct = pcPrayer ? pcPrayer.currentTime : 0;
+      if (ct > pcLastCT + 0.001) pcT = ct;               // the recording is moving: it is the clock
+      else if (!held) pcT += (now - pcLast) / 1000;      // it is not: the wall keeps the prayer's time
+      pcLast = now; pcLastCT = ct;
+      if (pcT >= PRAYER_LEN) return { inserted: 'tapeA', playing: false, elapsed: PRAYER_AT + PRAYER_LEN };
+      return { inserted: 'tapeA', playing: !held, elapsed: PRAYER_AT + pcT };
+    }
     const snap = tapes ? tapes.snapshot() : null;
     return snap ? { inserted: snap.inserted, playing: snap.playing, elapsed: snap.elapsed }
       : { inserted: null, playing: false, elapsed: 0 };
@@ -2768,7 +2800,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** S208 / A1 — the game menu has paused the sound, and will give it back on close */
   let menuHeldAudio = false;
   function syncKitLoop(): void {
-    const want = os.inDesktop && os.era === 'e1' && os.kit?.open === true && !os.paused && !(tapes?.isPlaying);
+    const want = os.inDesktop && os.era === 'e1' && os.kit?.open === true && !os.paused && !(tapes?.isPlaying)
+      && !(pcPrayer && !pcPrayer.paused && !pcPrayer.ended);   // S219: and yields to the prayer the computer plays
     if (want && !kitLoop) { kitLoop = playLoop('unwalk_loop_1997.mp3'); if (kitLoop) kitLoop.volume = 0.45; }
     else if (!want && kitLoop) { stopClip(kitLoop); kitLoop = null; }
   }
@@ -2978,31 +3011,40 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // nothing/interacting). toDesktop() only matches the narrow monitor
       // plane, so this reorder costs nothing on the far more common case
       // (clicking a marker on the floor, nowhere near the screen).
-      // ⚑ S163: in the Close the machine stands back in the sky (C-02) — its own
-      //   glass is the press (far: come to it; near: the card) — and a panel is
-      //   the way to its sources (R3-111); any press holds the drift (R3-112)
-      if (closeMonitor?.on) {
-        const cp = closeMonitor.hitTest(ray.p0, ray.p1);
-        if (cp) { closeMonitor.press(cp.x, cp.y); cloud?.holdDrift(3); return; }
-      }
+      // ⚑ W1-G2 (walkthrough 1: "clicking the panels activates the computer") — A PRESS ON A PANEL ANSWERS ONLY THE
+      //   PANEL. The machine stands back in the sky and its glass was asked first, as a bare plane through the whole
+      //   ray: any panel hanging in front of it along the line of sight, and any label, gave the press to the glass
+      //   behind (and brought the eye to it). The sky's own things are asked first now; the glass is the answer only
+      //   when nothing nearer took the press. (A panel folded off the machine's sight-line is not hittable — see
+      //   `panelAt` — so the machine stays pressable through the gap the corridor opens.)
+      const glassHit = closeMonitor?.on ? closeMonitor.hitTest(ray.p0, ray.p1) : null;
+      const tGlass = glassHit ? glassHit.t : undefined;   // a panel or label BEHIND the glass does not answer for it
       if (cloud?.visible) {
         cloud.holdDrift(3);
         // ⚑ S175 — a label, then a panel: each turns ITS ROOM's panel to the room's
-        //   dossier, in that room's own OS, right where it hangs (Sérgio: "the
-        //   sources open need to be on the 4 panels … it is nuisance to go back and
-        //   forth. Instead of the computer."). A panel's press turns its pages and,
+        //   dossier, in that room's own OS, right where it hangs (Sérgio: "the sources open need to be on the 4 panels
+        //   … it is nuisance to go back and forth. Instead of the computer."). A panel's press turns its pages and,
         //   after the last, turns it back to the room.
-        const lb = cloud.labelAt(ray.p0, ray.p1);
-        // ⚑ S209 / P7-47 — the Lexicon's star opens the encyclopedia on Daniel's machine, and the eye goes to it
-        if (lb && lb.text === lexStrings.star && closeMonitor) {
+        const lb = cloud.labelAt(ray.p0, ray.p1, tGlass);
+        const pi = cloud.panelAt(ray.p0, ray.p1, tGlass);
+        // ⚑ S209 / P7-47 — the Lexicon's star opens the encyclopedia on Daniel's machine, and the eye goes to it.
+        //   ⚑ W1-G2 — but a star hung over a panel's face must not take the press meant for the panel: that was the
+        //   other way a panel "activated the computer" (the star's quad is generous and was asked first). On a
+        //   panel, the panel answers; the star answers only in the open sky.
+        if (lb && lb.text === lexStrings.star && closeMonitor && pi === null) {
           closeMonitor.openLexicon();
           if (!closeMonitor.on) { closeMonitor.setNear(false); closeMonitor.show(); }
           goToCloseMonitor();
           return;
         }
-        if (lb) { cloud.openDossierFor(lb.era, lb.text); return; }
-        const pi = cloud.panelAt(ray.p0, ray.p1);
+        if (lb && lb.text !== lexStrings.star) { cloud.openDossierFor(lb.era, lb.text); return; }
         if (pi !== null) { cloud.pressPanel(pi); return; }
+      }
+      // ⚑ S163: in the Close the machine stands back in the sky (C-02) — its own glass is the press (far: come to
+      //   it; near: the card); any press holds the drift (R3-112)
+      if (closeMonitor?.on) {
+        const cp = glassHit;
+        if (cp) { closeMonitor.press(cp.x, cp.y); cloud?.holdDrift(3); return; }
       }
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
@@ -3411,6 +3453,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // Resume (note: Escape itself never reaches this listener at all while
     // the menu exists — src/desktop/gameMenu.ts intercepts it in the capture
     // phase — so no separate Escape guard is needed here).
+    // ⚑ S219 / W1-B7 (walkthrough 1: "pressing the buttons activated the camera movement, and led people to
+    //   frustration") — a game in play takes its keys before the camera does: the device in hand (arrows/WASD
+    //   = the d-pad, Space or Z = A, X = B, Enter = START), and ROOTCAUSE's window (the arrows dig)
+    if (options.reinterp && !os.paused && !gameMenuBus.isOpen && !os.isCapturingText) {
+      const GAME_KEYS: Record<string, GameKey> = {
+        ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down',
+        a: 'left', A: 'left', d: 'right', D: 'right', w: 'up', W: 'up', s: 'down', S: 'down',
+        ' ': 'a', z: 'a', Z: 'a', x: 'b', X: 'b', Enter: 'start'
+      };
+      const gk = GAME_KEYS[e.key];
+      if (gk && devices && cluster && devices.key(gk, cluster.era)) { e.preventDefault(); return; }
+      const rc = (os as unknown as { rootCause?: { open: boolean; key(d: string): boolean } | null }).rootCause;
+      if (gk && rc?.open && (gk === 'left' || gk === 'right' || gk === 'up' || gk === 'down') && rc.key(gk)) { e.preventDefault(); return; }
+    }
     if (options.reinterp && !os.paused && !gameMenuBus.isOpen) {
       const k = e.key;
       // ⚑ S204 (his, 2026-09-30: "we can add extra movements of WASD but not for walking but just to look
@@ -4221,6 +4277,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *             turning LEFT the long way (through east and north to WEST, the
    *             way she is travelling) so Rooms 1 and 2 are ahead of her for the
    *             second half — 210° in CLOSE_SWEEP_SECONDS, at the law's peak.
+   *             ⚑ W1-G1 (2026-10-08) — NO LONGER: the crossing keeps her bearing (see `advanceClose`).
    *             CLOSE_MORPH_LEAD seconds before she lands, night falls (the
    *             `close` rig), the score comes in, and the constellation opens out
    *             of the ceiling over Daniel's seat: the room dissolves under it
@@ -4326,11 +4383,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         roomBed.set(PASSAGE_BED, 4.0);   // 2026-09-13: the building's own sound, once more, on the way out
         // the bezier control point sits over the partition between the rooms,
         // raised: the path bows up-and-over, the same stroke every relocation in
-        // the piece takes — and the head turns LEFT the long way to face west,
-        // the way she is going (C-01)
-        const leftTurn = (((90 - camYaw) % 360) + 360) % 360;
-        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 90 },
-          CLOSE_SWEEP_SECONDS, true, { x: (camPos.x + EYE.x) / 2, y: 2.15, z: EYE.z }, leftTurn);
+        // the piece takes.
+        // ⚑ W1-G1 (walkthrough 1, 2026-10-08: "remove the rotation at the Close") — and it does NOT turn. S163 turned
+        //   her 210° LEFT the long way so the building would face her; a colleague, first time through, was spun
+        //   round. The eyes keep their bearing for the whole crossing (yawTurn 0) and the flight is only the rise
+        //   over the partition and the glide west. The one quarter-turn that remains, to face Daniel's machine,
+        //   is split across the eyes rising to the stars and the gaze coming down (`lookUp`, `open`), never a spin.
+        startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: camYaw },
+          CLOSE_SWEEP_SECONDS, true, { x: (camPos.x + EYE.x) / 2, y: 2.15, z: EYE.z }, 0);
         return;
       }
       // already in Daniel's room (the review route): begin with the eyes rising
@@ -4338,7 +4398,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     if (closeStage === 'travel') {
       closeStage = 'lookUp';
-      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_STARS_PITCH, yaw: 0 },
+      // ⚑ W1-G1 — the eyes rise to the stars and come round only HALF of the quarter-turn to Daniel's desk (the other
+      //   half is spent while the gaze comes down, in `open`): 45° over 20 s and 45° over 16 s, 4 and 5 °/s at the
+      //   crest, where the one 90° turn in either leg alone would be 8–10 °/s — a spin straight overhead.
+      const quarter = ((0 - camYaw + 540) % 360) - 180;
+      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_STARS_PITCH, yaw: camYaw + quarter / 2 },
         CLOSE_LOOKUP_SECONDS, true);
       return;
     }

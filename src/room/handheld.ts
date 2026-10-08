@@ -23,6 +23,7 @@ import type { RoomHandles } from './era1room';
 import { px, text, textW } from './calendarArt';
 import { HANDHELD as H, REACH as RC, TIDY as TD } from '../desktop/theme/calendar';
 import { buildHeldDevice, type DeviceSpec, type HeldDevice } from './heldDevice';
+import type { GameKey } from '../games/types';
 import { FitIn } from '../games/fitIn';
 import { Reach } from '../games/reach';
 import { Tidy } from '../games/tidy';
@@ -89,6 +90,8 @@ export interface Devices {
   tick(dt: number, era: string, has: (id: string) => boolean, fileSize: number): Array<{ id: string; era: string; witness: string }>;
   aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string): string | null;
   press(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string, cam: pc.Entity): boolean;
+  /** ⚑ S219 / W1-B7 — the keyboard reaches the device in hand before it reaches the camera */
+  key(k: GameKey, era: string): boolean;
 }
 
 export function buildDevices(room: RoomHandles): Devices {
@@ -130,7 +133,8 @@ export function buildDevices(room: RoomHandles): Devices {
       const a = d?.aim(ray);
       return a ? `${d!.spec.gameId}:${a}` : null;
     },
-    press(ray, era, cam) { return current(era)?.press(ray, cam) ?? false; }
+    press(ray, era, cam) { return current(era)?.press(ray, cam) ?? false; },
+    key(k, era) { return current(era)?.key(k) ?? false; }
   };
 }
 

@@ -969,7 +969,9 @@ export class E4Shell {
        */
       ctx.clearRect(0, 0, W, H);
       this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
-      visorEdge(ctx, W, H, 0.35);
+      // ⚑ W1-F6 — and NO EDGE. The plane is 4:3 and the frame is wider; a dark rectangle drawn on it floated in the
+      //   middle of the Commons as a square layer round nothing ("the square layer around the VR doesn't work").
+      //   The glass is clear here; only the overlay's own failures draw on it.
       return;
     }
     // the era has not begun until L has finished on the laptop: the device is
@@ -1046,7 +1048,10 @@ export class E4Shell {
       ctx.globalAlpha = was;
     }
     this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
-    visorEdge(ctx, W, H, this.ball.live ? 0.35 + 0.65 * k : 1);
+    // ⚑ W1-F6 — the edge fades WITH the environment (k) and is gone when the room is through: it used to hold at
+    //   0.35 in the Commons, a hard square floating in the world. The session's own rectangle still has its edge.
+    if (!this.ball.live) visorEdge(ctx, W, H);
+    else if (k > 0) visorEdge(ctx, W, H, k);
   }
 
   /**

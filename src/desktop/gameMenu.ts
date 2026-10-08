@@ -456,11 +456,11 @@ export function mountGameMenu(): GameMenu {
       // advisory that tells the player this exists is on the pre-fiction panel
       // (src/desktop/orientingCard.ts), which is the last surface before the
       // fiction starts and the only place an advisory can honestly go.
-      row(
-        ledger.view.unvoicedName ? copy.unvoicedNameOn : copy.unvoicedNameOff,
-        () => { ledger.view.unvoicedName = !ledger.view.unvoicedName; render(); }
-      );
-      paragraph(copy.unvoicedNameNote);
+      // ⚑ S219 / W1-B12 (walkthrough 1: "still opted out of the deadname — a recurring error that should be gone
+      //   already"). The beat no longer contains a deadname (CLAUDE.md, 2026-08-17: the record misfiles her
+      //   "under the old file", it never says a name), so the opt-out and its advisory are a leftover that
+      //   reads as if a name were coming. Both are off the player's screens; the ledger field stays (default:
+      //   voiced) so nothing downstream changes. It had returned once already — see ARTICLE_EVIDENCE_LOG.
       // S162 / F-01 — the door's captions choice, changeable here (the sound NAMES; W-G2)
       row(
         ledger.view.captions ? copy.captionsOn : copy.captionsOff,

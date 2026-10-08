@@ -53,9 +53,9 @@ const AUTORUN_SECONDS = 2.6;
 const DIAL_SECONDS = 8.0;
 const DIAL_LINE_EVERY = 1.9;
 /** tape-time second at which the prayer's recording begins on Tape A */
-const PRAYER_AT = (tapesData as unknown as { tapes: { id: string; segments: { id: string; at: number }[] }[] })
+export const PRAYER_AT = (tapesData as unknown as { tapes: { id: string; segments: { id: string; at: number }[] }[] })
   .tapes.find((t) => t.id === 'tapeA')!.segments.find((s) => s.id === 'a-prayer-01')!.at;
-const PRAYER_LEN = prayer.durationSec;
+export const PRAYER_LEN = prayer.durationSec;
 /** the recording's second at which the first chorus has been sung — from there Amen is offered.
  *  Sérgio (2026-09-20): a sixteen-year-old with a two-minute hymn on a cassette FAST-FORWARDED
  *  it; the one act a person had here was to stop, and the record notices which they did. */
@@ -84,6 +84,10 @@ export class KitApp {
   onPlayTape?: () => void;
   /** …and stop it: Amen before the end takes the tape off (app.ts: eject) */
   onStopTape?: () => void;
+  /** ⚑ W1-C3 (walkthrough 1: "the Un-Walk's Cancel button broke the system") — Cancel is the OS's own minimise,
+   *  so the wizard keeps its taskbar button like every other window and the guide knows it was set aside;
+   *  before this it only shut `open`, and the person was left on a bare desktop with a small disk icon */
+  onCancel?: () => void;
   /** the fourth and fifth steps open desktop surfaces the OS owns */
   onOpenForm?: () => void;
   onOpenDiary?: () => void;
@@ -181,9 +185,11 @@ export class KitApp {
       return { state: this.prayerStopped ? 'stopped' : 'idle', songT: 0 };
     }
     const songT = live.elapsed - PRAYER_AT;
+    // ⚑ S219 — the end is asked BEFORE "not playing": the computer's prayer (W1-C4) stops by itself at its end,
+    //   and a finished prayer read as "stopped" offered Play again forever (the walk looped here)
+    if (songT >= PRAYER_LEN - 0.5) return { state: 'ended', songT };
     if (!live.playing) return { state: 'stopped', songT };
     if (songT < 0) return { state: 'intro', songT };
-    if (songT >= PRAYER_LEN) return { state: 'ended', songT };
     return { state: 'singing', songT };
   }
 
@@ -578,7 +584,7 @@ export class KitApp {
       return;
     }
     switch (id) {
-      case 'cancel': this.open = false; return;
+      case 'cancel': if (this.onCancel) this.onCancel(); else this.open = false; return;
       case 'next':
         if (this.panel === 'welcome') this.panel = 'steps';
         else if (this.panel === 'read' && this.readPage < kit.read.pages.length - 1) this.readPage++;

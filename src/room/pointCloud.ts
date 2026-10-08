@@ -138,7 +138,7 @@ export interface PointCloud {
   update(dt: number): void;
   /** ⚑ S163 / R3-111 — which panel a world-space ray lands on (0..3), or null.
    *  A press on a panel is the way to its sources (the frame's menu). */
-  panelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): number | null;
+  panelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }, tMax?: number): number | null;
   /** ⚑ S163 / R3-112 — the drift pauses while the gaze rests on a panel
    *  ("the constellation should travel only when I am not moving… hard to
    *  read"): the caller says each frame whether the eye line is on one. */
@@ -160,7 +160,7 @@ export interface PointCloud {
   setClearCorridor(c: SightCorridor | null): void;
   /** ⚑ S174 / R4-18 — which label a world-space ray lands on (a label on the
    *  sight-line to the machine is folded away and cannot be pressed), or null */
-  labelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { era: number; text: string } | null;
+  labelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }, tMax?: number): { era: number; text: string } | null;
   /** ⚑ S175 — a press on panel i: its story → its dossier, page by page → its story again */
   pressPanel(i: number): void;
   /** ⚑ S175 — a label pressed: its room's dossier on its room's panel, the label marked.
@@ -947,6 +947,15 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   root.enabled = false;
   root.setLocalPosition(ox, oy, oz);
   app.root.addChild(root);
+  // ⚑ W1-G2 review aid (read-only, like __closePanels): where each LABEL hangs in the world right now, so a probe can
+  //   aim a real press at one that sits over a panel
+  (window as unknown as { __closeLabels: () => unknown }).__closeLabels = () => {
+    const M = root.getWorldTransform();
+    return labels.map((_, i) => {
+      const w = M.transformPoint(new pc.Vec3(labelCenters[i * 3], labelCenters[i * 3 + 1], labelCenters[i * 3 + 2]));
+      return { i, era: entries[i].era, text: entries[i].text, x: w.x, y: w.y, z: w.z, w: labelWidths[i] };
+    });
+  };
   // ⚑ S175 review aid (read-only, like __closePanelSizes): where each panel hangs
   //   in the world right now, and what it shows — so a probe can aim a REAL press
   (window as unknown as { __closePanels: () => unknown }).__closePanels = () => {
@@ -1320,24 +1329,28 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       if (corridor) applySight();
       easePanels(dt);
     },
-    panelAt(p0, p1): number | null {
+    panelAt(p0, p1, tMax = 1): number | null {
       if (!visible || panelFrames.length === 0) return null;
       invRoot.copy(root.getWorldTransform()).invert();
       invRoot.transformPoint(lp0.set(p0.x, p0.y, p0.z), lp0);
       invRoot.transformPoint(lp1.set(p1.x, p1.y, p1.z), lp1);
       ld.sub2(lp1, lp0);
       for (let i = 0; i < panelFrames.length; i++) {
+        // ⚑ W1-G2 — a panel folded off the machine's sight-line is not there to be pressed (it was, once it was
+        //   asked about at all: nothing asked before the monitor did, so this never mattered). Asked FIRST now, it
+        //   must not swallow the press that is meant for the glass behind it.
+        if (panelK[i] > 0.5) continue;
         const f = panelFrames[i];
         const denom = ld.dot(f.n);
         if (Math.abs(denom) < 1e-6) continue;
         const t = (f.c.dot(f.n) - lp0.dot(f.n)) / denom;
-        if (t < 0 || t > 1) continue;
+        if (t < 0 || t > tMax) continue;   // W1-G2: nothing past the glass answers for it
         lh.copy(ld).mulScalar(t).add(lp0).sub(f.c);
         if (Math.abs(lh.dot(f.r)) <= f.hw && Math.abs(lh.dot(f.u)) <= f.hh) return i;
       }
       return null;
     },
-    labelAt(p0, p1): { era: number; text: string } | null {
+    labelAt(p0, p1, tMax = Infinity): { era: number; text: string } | null {
       const camera = app.systems.camera?.cameras[0]?.entity;
       if (!visible || !camera || fadeLevel < 0.5 || labels.length === 0) return null;
       const M = root.getWorldTransform();
@@ -1351,7 +1364,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
         M.transformPoint(sw.set(labelCenters[i * 3], labelCenters[i * 3 + 1], labelCenters[i * 3 + 2]), sw);
         if (corridor && onSight(sw.x, sw.y, sw.z, labelWidths[i] / 2)) continue;   // folded away
         const t = ((sw.x - p0.x) * dx + (sw.y - p0.y) * dy + (sw.z - p0.z) * dz) / dd;
-        if (t <= 0 || t >= bestT) continue;
+        if (t <= 0 || t >= bestT || t > tMax) continue;   // W1-G2: nothing past the glass answers for it
         const ox = sw.x - (p0.x + dx * t), oy = sw.y - (p0.y + dy * t), oz = sw.z - (p0.z + dz * t);
         const h = Math.abs(ox * right.x + oy * right.y + oz * right.z);
         const v = Math.abs(ox * up.x + oy * up.y + oz * up.z);

@@ -38,6 +38,9 @@ export interface Helper {
 const H = (mapData as unknown as { helper: { idleSeconds: number; prefix: string } }).helper;
 
 export function mountHelper(opts: {
+  /** ⚑ S219 / W1-B6 — a multiplier on the idle wait: at a computer people stand still reading far longer
+   *  than on a phone or in a headset, so the line waits longer there (1 = the data's own seconds) */
+  idleScale?: () => number;
   /** the map's current hint, or null when the piece is not waiting on the player */
   hint: () => HelperHint | null;
   /** false while the fiction has not started, or the engine is paused */
@@ -100,7 +103,7 @@ export function mountHelper(opts: {
       if (shown && shownKey !== h.key) hide();
       if (forced) return;
       idle += dt;
-      if (!shown && idle >= H.idleSeconds) show(h);
+      if (!shown && idle >= H.idleSeconds * (opts.idleScale?.() ?? 1)) show(h);
     },
     activity: onActivity,
     text(): string | null { return shown ? el.textContent : null; },

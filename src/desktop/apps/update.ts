@@ -360,7 +360,12 @@ export class UpdateApp {
     }
     if (this.phase === 'notify') {
       const bare = this.key === 'close';
-      const dw = 320; const dh = bare ? 110 : 150;
+      // ⚑ S219 / W1-E8 ("Important Changes is cut off"): u4's notice is nine lines on 2016's glass, and the glass's
+      //   body is the frame minus its title bar and margins — at 150 the last line ("Your file comes with you.")
+      //   ran under the Remind-me-later button. The window is sized from the lines it carries, the buttons under them.
+      const toE3Early = !bare && (this.ledgerEntry.toEra === 3 || this.key === 'u4');
+      const dw = 320;
+      const dh = bare ? 110 : toE3Early ? Math.max(150, this.s.notify.length * 12 + 64) : 150;
       const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
       if (bare) {
         // felt register: no chrome cheer, one line, one button

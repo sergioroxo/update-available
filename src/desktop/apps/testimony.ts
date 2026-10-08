@@ -32,6 +32,7 @@ import * as ui from '../theme/chrome';
 import { FOOTAGE as F } from '../theme/calendar';
 import { entriesByEra } from '../../witness/record';
 import { ledger } from '../../state/ledger';
+import { playLoop, stopClip } from '../../audio/tapeAudio';
 import T from '../../../data/dialog/s2_testimony.json';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -76,6 +77,19 @@ export class TestimonyApp {
 
   get done(): boolean { return this.web === 'done' && this.stage === 'online'; }
 
+  /** ⚑ W1-D10 (walkthrough 1: "the room tone is not working") — ROOM_TONE was a waveform with no sound, and the
+   *  takes were as silent. The hall's tone now plays while a clip plays: full for the tone file, under the takes
+   *  as what the room sounds like behind them (data/strings/captions.json names it). */
+  private hall: HTMLAudioElement | null = null;
+  private syncHall(): void {
+    const want = this.open && this.stage === 'player' && this.playing;
+    if (!want) { if (this.hall) { stopClip(this.hall); this.hall = null; } return; }
+    if (!this.hall) {
+      this.hall = playLoop('testimony_hall_tone_2003.mp3');
+      if (this.hall) this.hall.volume = this.clip === 'tone' ? 0.8 : 0.4;
+    }
+  }
+
   update(dt: number): void {
     const before = Math.floor(this.tick * 12);
     this.tick += dt;
@@ -88,6 +102,7 @@ export class TestimonyApp {
         this.dirty = true;
       }
     }
+    this.syncHall();
     if (this.stage === 'cut' && this.previewT >= 0) {
       this.previewT += dt; moving = true;
       if (this.previewT >= VERSIONS[this.version].length * BLOCK_SECONDS) { this.previewT = -1; this.dirty = true; }
@@ -112,6 +127,11 @@ export class TestimonyApp {
 
   /** every press inside the window is the window's */
   handleClick(x: number, y: number): boolean {
+    const r = this.press(x, y);
+    this.syncHall();   // a press may start, stop or close a clip — the hall follows at once, not on the next frame
+    return r;
+  }
+  private press(x: number, y: number): boolean {
     const h = this.hits.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
     const inside = x >= DX && x <= DX + DW && y >= DY && y <= DY + DH;
     if (!h) return inside;
@@ -170,7 +190,8 @@ export class TestimonyApp {
   }
   private heading(ctx: CanvasRenderingContext2D, c: ui.ContentRect, title: string, intro?: string): void {
     ui.setFont(ctx, 12); ctx.fillStyle = ERA1.navy; ctx.fillText(title, c.x + 12, c.y + 10);
-    if (intro) { ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(intro, c.x + 12, c.y + 28); }
+    // ⚑ W1-D6 (walkthrough 1: the story preparation had text cut off) — the intro wraps to the window, it never runs off it
+    if (intro) { ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ui.wrapText(ctx, intro, c.w - 24).forEach((ln, i) => ctx.fillText(ln, c.x + 12, c.y + 28 + i * 10)); }
   }
 
   private drawPrep(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
@@ -196,18 +217,22 @@ export class TestimonyApp {
       return null;
     });
     const frag = (i: number): string => picks[i] ?? (filed.length ? filed[(i * 3) % filed.length] : T.prep.fallback[i % T.prep.fallback.length]);
+    // the filed line wraps (it used to keep only its first wrapped line, and the rest was simply gone);
+    // the rows are a little tighter and the button sits lower, so a second line has room
     for (let i = 0; i < this.topics; i++) {
       const tp = T.prep.topics[i];
-      const y = c.y + 46 + i * 41;
+      const y = c.y + 50 + i * 40;
       ui.px(ctx, c.x + 12, y - 2, c.w - 24, 1, ERA1.silver);
-      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(`${i + 1}. ${tp.h}`, c.x + 14, y + 2);
-      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(tp.note, c.x + 30, y + 15);
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(`${i + 1}. ${tp.h}`, c.x + 14, y + 1);
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(tp.note, c.x + 30, y + 12);
       ui.setFont(ctx, 8); ctx.fillStyle = ERA1.navy;
-      const line = `${T.prep.fromFile} ${frag(i)}`;
-      ctx.fillText(ui.wrapText(ctx, line, c.w - 60)[0], c.x + 30, y + 27);
+      ui.wrapText(ctx, `${T.prep.fromFile} ${frag(i)}`, c.w - 60).slice(0, 2).forEach((ln, k) => ctx.fillText(ln, c.x + 30, y + 23 + k * 9));
     }
-    if (this.topics < T.prep.topics.length) this.rightButton(ctx, c, T.prep.next, 'ts-next');
-    else this.rightButton(ctx, c, T.prep.done, 'ts-prep-done');
+    const label = this.topics < T.prep.topics.length ? T.prep.next : T.prep.done;
+    const bid = this.topics < T.prep.topics.length ? 'ts-next' : 'ts-prep-done';
+    ui.setFont(ctx, 10);
+    const bw = Math.max(76, Math.ceil(ctx.measureText(label).width) + 18);
+    this.button(ctx, c.x + c.w - 10 - bw, c.y + c.h - 32, label, bid, bw);
   }
 
   private drawRelease(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {

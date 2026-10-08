@@ -14,14 +14,26 @@ import * as pc from 'playcanvas';
  * 2026-09-26: "the quality of the phone screen is terrible, super pixelated"). Smooth
  * = mipmaps + trilinear; the upload stays on-dirty-only, the mip chain rides with it.
  */
-export function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement, smooth = false): pc.Texture {
+export function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement, smooth: boolean | 'minify' = false): pc.Texture {
+  /**
+   * ⚑ W1-F1 — `'minify'`: A PIXEL SCREEN SEEN FROM FAR, WHICH IS EVERY ROOM-3 SCREEN. The 2026 monitor is drawn at
+   * ×3 (2130 × 1152) and, from the seat, covers ~500 screen px: 4 texels to a pixel. Plain FILTER_NEAREST keeps one
+   * texel in four and throws the rest away, so a 9 px glyph loses half its strokes ("Restoration" read as noise —
+   * the colleague's "all so poorly scaled", 2026-10-08). Nearest is right for MAGNIFYING pixel art and wrong for
+   * shrinking it. So: a mip chain for the shrink (trilinear, with anisotropy for the slant of the desk) and
+   * FILTER_NEAREST kept for the magnify — close up, in a headset, a pixel is still a hard square. Still one
+   * upload on dirty; the chain is built by the GPU with it.
+   */
+  const minify = smooth === 'minify';
+  const mips = smooth === true || minify;
   const tex = new pc.Texture(app.graphicsDevice, {
     width: source.width,
     height: source.height,
     format: pc.PIXELFORMAT_RGBA8,
-    mipmaps: smooth,
-    minFilter: smooth ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST,
-    magFilter: smooth ? pc.FILTER_LINEAR : pc.FILTER_NEAREST,
+    mipmaps: mips,
+    minFilter: mips ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST,
+    magFilter: smooth === true ? pc.FILTER_LINEAR : pc.FILTER_NEAREST,
+    anisotropy: minify ? 8 : 1,
     addressU: pc.ADDRESS_CLAMP_TO_EDGE,
     addressV: pc.ADDRESS_CLAMP_TO_EDGE
   });

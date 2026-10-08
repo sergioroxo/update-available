@@ -274,6 +274,8 @@ const LIFT_DELAY_SECONDS = 1.4;
  *  arrive lit at the same moment */
 const LIFT_SECONDS = 5.0;
 const CARET_SECONDS = 0.53;
+/** ⚑ S219 / W1-E3 — a job worked to its end holds this long, finished and readable, and then the day comes back */
+const JOB_RETURN_SECONDS = 2.0;
 
 /** ⚑ THE PLAYER (S69). `PLAYER_S` device pixels per frame unit → a 176×100
  *  picture on the workstation's 676×390 panel; the small "as sent" frame beside it
@@ -409,6 +411,11 @@ export class GraceQueueLite {
   private subIdx = 0;
   /** S158 / R3-74: the open story is finished and holding — Back to today / Next story */
   private storyDone = false;
+  /** ⚑ S219 / W1-E3 — the open job's finishing, watched: which job, whether it was already finished when she opened it,
+   *  and how long it has held since it finished (< 0 = not counting) */
+  private doneKey: string | null = null;
+  private doneAtOpen = false;
+  private doneT = -1;
   private decisions = new Map<number, Outcome>();
   private rects: Rect[] = [];
   /** ⚑ S208 — GracePlatform's lock screen, after SAVER_SECONDS of quiet on the board with nothing open or playing */
@@ -481,6 +488,7 @@ export class GraceQueueLite {
   update(dt: number): void {
     this.updateSaver(dt);
     this.updateGate();
+    this.updateJobReturn(dt);
     if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
@@ -491,7 +499,8 @@ export class GraceQueueLite {
         if (this.pauseLines.length) { this.pauseOpen = true; this.waitSaid = true; this.bump(); }
       }
       // ⚑ S209 / P7-47 — GracePlatform's Today's language: once, after the "This week" card, on a quiet board
-      if (!this.wotdSaid && this.pauseShown && !this.pauseOpen && this.boardQuietT > 18) {
+      // ⚑ S219 / W1-B14 — no longer behind the pause (it never came for a busy player); a quiet board is enough
+      if (!this.wotdSaid && !this.pauseOpen && this.boardQuietT > 12) {
         const app = lexStrings.wotdApps.e3;
         const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
         if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? '']); this.bump(); }
@@ -606,6 +615,26 @@ export class GraceQueueLite {
       return;
     }
     if (this.maltaWork >= 0 && wd > this.maltaWork) { this.maltaWork = -1; this.phone.onWorkDone(); this.phoneV++; this.bump(); }
+  }
+
+  /** ⚑ S219 / W1-E3 (his walkthrough: "finishing a card should return you to the Today panel") — a job worked to its end
+   *  returns to the board by itself, after a short hold so its last state can be read. Only a finishing that happens
+   *  WHILE the job is open counts: a finished job she reopens to look at stays open, and so do the record (a reading
+   *  surface, never "worked") and anything opened from the chip (Back owns that road). A story that is not the last
+   *  keeps its Next story / Back pair — the job is not finished. */
+  private updateJobReturn(dt: number): void {
+    if (this.mode !== 'list' || this.chipReturn || this.openSurface?.id === 'record') { this.doneKey = null; this.doneT = -1; return; }
+    const key = this.openSurface ? this.openSurface.id : 'testimony';
+    const done = this.openSurface
+      ? this.openSurface.complete()
+      : this.storyDone && SUBMISSIONS.every(sb => this.subComplete(sb));
+    if (this.doneKey !== key) { this.doneKey = key; this.doneAtOpen = done; this.doneT = -1; return; }
+    if (!done || this.doneAtOpen || this.minimised || this.pauseOpen) { if (!done) this.doneT = -1; return; }
+    this.doneT = this.doneT < 0 ? 0 : this.doneT + dt;
+    if (this.doneT >= JOB_RETURN_SECONDS) {
+      this.doneT = -1; this.doneKey = null; this.storyDone = false;
+      this.backToBoard();
+    }
   }
 
   /** ⚑ S208 — the lock screen (screensaver.ts 'lock'): only on the board, nothing open, no card up, nothing playing;

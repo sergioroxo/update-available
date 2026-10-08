@@ -529,6 +529,15 @@ export class RootCauseApp {
     }
   }
 
+  /** ⚑ S219 / W1-B7 — the arrow keys dig (or inflate) in their direction, as the presses beside Lamby do;
+   *  true when the game took the key, so the camera does not turn while you play */
+  key(dir: 'up' | 'down' | 'left' | 'right'): boolean {
+    if (this.phase === 'intro') return false;
+    const h = this.hits.find((x) => x.id === `dig:${dir}` || x.id === `pump:${dir}`);
+    if (h) this.handleClick(h.x + h.w / 2, h.y + h.h / 2);
+    return true;
+  }
+
   handleClick(x: number, y: number): void {
     const hit = [...this.hits].reverse().find((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit) return;

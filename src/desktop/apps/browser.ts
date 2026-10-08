@@ -351,9 +351,10 @@ export class E4Browser {
       }
     }
     // ⚑ S209 / P7-47 — L's phrase of the day, once, after the pause's line, on the restored page at rest
-    if (this.pauseSaid && !this.wotdSaid && this.phase === 'open' && this.mode === 'free' && !this.nowLine) {
+    // ⚑ S219 / W1-B14 — no longer behind the pause's line (it never came for a player who searched at once)
+    if (!this.wotdSaid && this.phase === 'open' && this.mode === 'free' && !this.nowLine) {
       this.freeQuietT += dt;
-      if (this.freeQuietT > 22) {
+      if (this.freeQuietT > 10) {
         const app = lexStrings.wotdApps.e4;
         const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
         if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.sayLine(`${app.title}: ${t.word}. ${t.line ?? ''}`); }

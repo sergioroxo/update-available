@@ -6,6 +6,8 @@
  * Registers: warning/left = frame (bare); name/desktop = operable;
  * the ESC pause overlay is care infrastructure and preempts everything.
  */
+import { mapState } from '../witness/map';
+import { gameMenuBus as startMenuBus } from '../state/gameMenuBus';
 import { meetWord } from '../room/lexicon';
 import lexStrings from '../../data/strings/lexicon.json';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
@@ -393,7 +395,22 @@ export class DesktopOS {
   onEraRelocate?: (era: string) => void;
   /** engine listens: the player answered a summons (visit dollies the camera) */
   onSendResolve?: (id: string, outcome: 'visited' | 'declined') => void;
-  private toast: { text: string; t: number } | null = null;
+  /** `act`: a toast that is also a door (W1-D17 — Caleb's message): a press on it does the thing it names */
+  private _toast: { text: string; t: number; act?: 'message-open' } | null = null;
+  /** ⚑ W1-D17 — a door-toast is not talked over: the send offer's, the forum's and the era's own ambient toasts all
+   *  wrote this one slot, and Caleb's message was gone within a second of landing (the Route sheet arrived with it —
+   *  his W1-D16). Anything that clears it (null) or replaces it with another door still works. */
+  private get toast(): { text: string; t: number; act?: 'message-open' } | null { return this._toast; }
+  private set toast(v: { text: string; t: number; act?: 'message-open' } | null) {
+    if (this._toast?.act && v && !v.act && this._toast.t > 0) return;
+    this._toast = v;
+  }
+  /** ⚑ S219 / W1-B4 — LambyOS's Start menu (the taskbar's MENU), and the icons drawn this frame it lists */
+  private startOpen = false;
+  private startHits: Hit[] = [];
+  private iconsDrawn: { id: string; label: string }[] = [];
+  /** the desktop's own presses while the Start menu covers them, so a program entry can press its icon */
+  private hitsUnderStart: Hit[] = [];
   private kitToastShown = false;
   private behindToastShown = false;
   private behindToastAt = Infinity;
@@ -560,13 +577,14 @@ export class DesktopOS {
     if (this.phase !== 'desktop') return;
     // S151: the wizard keeps its state — the A:\ icon and the taskbar button
     // bring it back where it was (W-E2 for this window; Cancel minimises)
-    if (this.kit) { this.kit.restore(); this.dirty = true; return; }
+    if (this.kit) { this.kit.restore(); this.minimised.delete('kit'); this.dirty = true; return; }
     this.kit = new KitApp();
     this.toast = null;
     playOnce('floppy_1997.mp3');   // S141: the disk goes in, the drive reads it
     if (!ledger.records.includes('kit-inserted')) ledger.records.push('kit-inserted');
     this.onKitInserted?.();
     // S151 — the programme's steps reach into the room and the desktop
+    this.kit.onCancel = () => this.minimiseWindow('kit');   // W1-C3: Cancel is the minimise box, with its taskbar button
     this.kit.onPlayTape = () => this.onPlayTape?.();
     this.kit.onStopTape = () => this.onStopTape?.();
     this.kit.tapeProbe = () => this.tapeProbe?.() ?? { inserted: null, playing: false, elapsed: 0 };
@@ -775,8 +793,12 @@ export class DesktopOS {
     // Same wiring, same window, a different pass number; u4/close have no
     // gathering (there is no room left to gather from — the apparatus is
     // ambient by then, and the final restart is bare by law).
+    // ⚑ S219 / W1-C10 (his, 2026-10-08: "drop the mechanic and drop it from the text") — the gathering is OFF:
+    //   'Remind me later' defers the update once and opens nothing in the room. The beat's code stays (one flag)
+    //   so it can return; its lines in data/ are gone.
+    const GATHERING = false;
     const pass = key === 'u2' ? 1 : key === 'u3' ? 2 : 0;
-    if (pass !== 0 && this.belongings) {
+    if (GATHERING && pass !== 0 && this.belongings) {
       const belongings = this.belongings;
       const p = pass as 1 | 2;
       this.updateApp.onRemindLaterUsed = () => {
@@ -1054,8 +1076,14 @@ export class DesktopOS {
   private maybeWotd(): void {
     const era = this.desktopEra;
     if (this.wotdOpen || this.pauseOpen || this.saver || this.phase !== 'desktop' || !this.reinterp) return;
-    if ((era !== 'e1' && era !== 'e2') || this.wotdShown.has(era) || !this.pauseShown.has(era)) return;
-    if (this.idleSeconds < 30 || !this.desktopIdle() || this.toast) return;
+    // ⚑ S219 / W1-B14 (walkthrough 1: "the word of the day didn't appear at all") — it waited for the era's
+    //   pause to have shown AND for 30 s more of stillness, which a moving player never gives. It now needs
+    //   only a quiet desktop for 15 s, once per era
+    if ((era !== 'e1' && era !== 'e2') || this.wotdShown.has(era)) return;
+    // ⚑ never over a screen something else owns: 2003's arrival draws without the desktop tail, so an
+    //   unseen Word of the Day swallowed every press on the dark glass (the walk stopped at "Welcome back")
+    if ((era === 'e2' && this.e2Stage !== 'active') || this.caleb?.ownsScreen || this.updateApp?.open) return;
+    if (this.idleSeconds < 15 || !this.desktopIdle() || this.toast) return;
     this.wotdShown.add(era);
     this.wotdOpen = era;
     meetWord((lexStrings.wotdApps as Record<string, { word: string }>)[era].word);
@@ -1237,7 +1265,10 @@ export class DesktopOS {
     // ⚑ S150 — ONE LINE AND THE DOT, no card (OPEN_ITEMS R3-55). The pop-up sat
     //   over the desktop beside PureMail's envelope and the two read as one
     //   choice; the Messenger's unread mark is the door, Lamby names it once.
-    this.toast = { text: lambyStrings.messageToast, t: 8 };
+    // ⚑ W1-D17 (walkthrough 1: "the pop-up doesn't work with Caleb's message") — the line was text only: nothing
+    //   answered a press on it, and it was gone in eight seconds. It is the door now, for as long as it is up
+    //   (and the Messenger's unread mark stays on the desktop after it) — still one line, no card (S150).
+    this.toast = { text: lambyStrings.messageToast, t: 14, act: 'message-open' };
     this.lambyPoseT = 0;
     this.dirty = true;
   }
@@ -2089,6 +2120,7 @@ export class DesktopOS {
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
     this.hits = [];
+    this.iconsDrawn = [];
 
     switch (this.phase) {
       case 'warning': this.drawWarning(W, H); break;
@@ -2105,7 +2137,9 @@ export class DesktopOS {
       case 'r_recap': this.drawReinterpRecap(W, H); break;           // O3 close
     }
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Jingle) this.drawJingleLyrics(W, H);
-    if (this.reinterp) this.drawReinterpMarker(W);
+    // ⚑ S219 / W1-B10 (walkthrough 1: "those bars" sat against the windows' close boxes) — the build's dev marker
+    //   is gone from the player's screen; kept for review under ?debug=1 only
+    if (this.reinterp && /[?&]debug=1/.test(location.search)) this.drawReinterpMarker(W);
     if (this.paused) this.drawPause(W, H);
   }
 
@@ -2146,6 +2180,72 @@ export class DesktopOS {
       ctx.fillStyle = t <= now ? ERA1.white : ERA1.grey;
       ctx.fillText(w, x, by + 5);
       x += ctx.measureText(w + ' ').width;
+    }
+  }
+
+  /** ⚑ S219 / W1-B4 — LambyOS's Start menu: what the piece is waiting on, what is on this desktop, what waits
+   *  in the room, and the way out. The words are the map's (data/strings/map.json); the labels slice.json's. */
+  private drawStartMenu(W: number, H: number): void {
+    const { ctx } = this;
+    const S = strings.desktop.startMenu;
+    this.startHits = [];
+    const st = mapState(this);
+    const era = st.eras.find((e) => e.here);
+    const now = st.current && era && st.current.era === era.id ? st.current.beat : null;
+    const room = (era?.beats ?? []).filter((b) => b.beat.optional && b.state !== 'done' && b.beat.where && !/monitor|screen|desktop/i.test(b.beat.where))
+      .map((b) => b.beat).slice(0, 4);
+    const progs = this.iconsDrawn.slice(0, 8);
+    const w = 236; const row = 15; const tx = 30; const tw = w - tx - 8;
+    ui.setFont(ctx, 9);
+    const nowLines = now ? ui.wrapText(ctx, now.hint, tw).slice(0, 3) : [];
+    const lines = 1 + (now ? 1 + nowLines.length : 0) + 1 + Math.max(1, progs.length) + (room.length ? 1 + room.length : 0) + 1;
+    const h = lines * row + 16;
+    const x = 3; const y = Math.max(4, H - 22 - h);
+    ui.bevel(ctx, x, y, w, h, true);
+    ui.px(ctx, x + 3, y + 3, 20, h - 6, ERA1.navy);
+    ctx.save(); ctx.translate(x + 7, y + h - 8); ctx.rotate(-Math.PI / 2);
+    ui.setFont(ctx, 12); ctx.fillStyle = ERA1.white; ctx.fillText(S.banner, 0, 0); ctx.restore();
+    let cy = y + 6;
+    const head = (t: string): void => { ui.setFont(ctx, 9); ctx.fillStyle = ERA1.navy; ctx.fillText(t.toUpperCase(), x + tx, cy + 2); cy += row; };
+    const item = (label: string, id: string, dim = false): void => {
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = dim ? ERA1.grey : ERA1.black;
+      let l = label; while (ctx.measureText(l).width > tw && l.length > 4) l = `${l.slice(0, -2)}…`;
+      ctx.fillText(l, x + tx + 4, cy + 2);
+      if (!dim) this.startHits.push({ x: x + tx, y: cy, w: tw, h: row, id });
+      cy += row;
+    };
+    if (now) {
+      head(S.now);
+      item(now.label, 'sm-now');
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark;
+      for (const l of nowLines) { ctx.fillText(l, x + tx + 10, cy + 1); cy += row; }
+    }
+    head(S.programs);
+    if (progs.length) for (const p of progs) item(p.label, `sm-prog:${p.id}`);
+    else item(S.nothing, 'sm-none', true);
+    if (room.length) { head(S.room); for (const b of room) item(b.label, `sm-room:${b.id}`); }
+    ui.px(ctx, x + tx, cy, tw, 1, ERA1.grey); ui.px(ctx, x + tx, cy + 1, tw, 1, ERA1.white);
+    item(S.shutDown, 'sm-shut');
+    void W;
+  }
+
+  private pressStart(id: string): void {
+    const S = strings.desktop.startMenu;
+    const st = mapState(this);
+    const era = st.eras.find((e) => e.here);
+    if (id === 'sm-shut') { startMenuBus.open(); return; }
+    if (id === 'sm-now' && st.current) { this.toast = { text: st.current.beat.hint, t: 9 }; return; }
+    if (id.startsWith('sm-room:')) {
+      const b = era?.beats.find((x) => x.beat.id === id.slice(8))?.beat;
+      if (b) this.toast = { text: S.roomPrefix.replace('{where}', b.where ?? '').replace('{hint}', b.hint), t: 9 };
+      return;
+    }
+    if (id.startsWith('sm-prog:')) {
+      // the same press its desktop icon answers: find the icon's rect and press it
+      const iid = id.slice(8);
+      const ih = this.hitsUnderStart.find((h) => h.id === iid);
+      if (ih) { this.hits = this.hitsUnderStart; this.handleClick(ih.x + ih.w / 2, ih.y + ih.h / 2); }
     }
   }
 
@@ -2509,7 +2609,8 @@ export class DesktopOS {
     for (const mb of ui.minBoxesVisible()) this.hits.push({ x: mb.x, y: mb.y, w: mb.w, h: mb.h, id: `min-${mb.key}` });
     // taskbar
     ui.bevel(ctx, 0, H - 22, W, 22, true);
-    ui.button(ctx, 3, H - 19, 50, 16, 'MENU', {});
+    ui.button(ctx, 3, H - 19, 50, 16, 'MENU', { hover: this.startOpen });
+    if (this.reinterp) this.hits.push({ x: 3, y: H - 19, w: 50, h: 16, id: 'start-menu' });
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(skin.clock, W - 44, H - 16);
@@ -2622,6 +2723,13 @@ export class DesktopOS {
       ui.px(ctx, W - 7, H - 42, 1, 16, ERA1.black);
       ctx.fillStyle = ERA1.black;
       ctx.fillText(this.toast.text, W - tw, H - 38);
+      if (this.toast.act) {
+        // pressable: a raised edge says so, as every other press in this era's chrome does (the fill stays)
+        ui.px(ctx, W - tw - 5, H - 41, tw - 2, 1, ERA1.white); ui.px(ctx, W - tw - 5, H - 41, 1, 14, ERA1.white);
+        ui.px(ctx, W - tw - 5, H - 28, tw - 2, 1, this.hover === 'toast-act' ? ERA1.navy : ERA1.greyDark);
+        ui.px(ctx, W - 8, H - 41, 1, 14, this.hover === 'toast-act' ? ERA1.navy : ERA1.greyDark);
+        this.hits.push({ x: W - tw - 6, y: H - 42, w: tw, h: 16, id: 'toast-act' });
+      }
     }
     // ⚑ S186 — the picture Rob sent owns the screen (the click routing says so): the taskbar and the
     //   minimise boxes drawn after it are not pressable while it is up, so they are not published
@@ -2629,6 +2737,14 @@ export class DesktopOS {
     // ⚑ S207 — the pause is modal: drawn last, and the only thing pressable while it is up
     if (this.pauseOpen) { this.hits = []; this.drawPauseDialog(W, H); }
     if (this.wotdOpen) { this.hits = []; this.drawWotd(W, H); }   // S209 / P7-47 — modal, like the pause
+    // ⚑ S219 / W1-B4 — the Start menu draws over the desktop and owns the press while it is open
+    // ⚑ open, it is the ONLY pressable thing (a press outside just closes it, as Windows' did), so only its entries
+    //   and MENU are published — the walk spent every icon behind an open menu as 'inert' and stalled in 2003
+    if (this.startOpen && this.phase === 'desktop' && !this.pauseOpen && !this.wotdOpen) {
+      this.drawStartMenu(W, H);
+      this.hitsUnderStart = this.hits;
+      this.hits = [...this.startHits, ...this.hits.filter((h) => h.id === 'start-menu')];
+    } else this.startHits = [];
     // ⚑ S208 — the screensaver covers everything; the whole glass is the one thing to press (it only wakes)
     if (this.saver) { this.saver.draw(ctx, W, H); this.hits = [{ x: 0, y: 0, w: W, h: H, id: 'saver-wake' }]; }
   }
@@ -2744,6 +2860,7 @@ export class DesktopOS {
   private drawIcon(
     x: number, y: number, label: string, enabled: boolean, id: string, unread = false
   ): void {
+    if (enabled) this.iconsDrawn.push({ id, label });
     this.drawIconInto(this.ctx, this.hits, x, y, label, id, enabled, unread);
   }
 
@@ -2866,7 +2983,11 @@ export class DesktopOS {
       this.yesArt = cv;
     }
     const S = 2, iw = YES_W * S, ih = YES_H * S;
-    const dw = iw + 16, dh = ih + 46;
+    // ⚑ W1-C12 (walkthrough 1: the image's descriptions sat outside its frame) — the foot is wrapped to the
+    //   picture's own width and the frame takes the lines it needs, so no size can push it past the edge
+    ui.setFont(ctx, 8);
+    const footLines = ui.wrapText(ctx, ircDialog.dcc.viewerFoot, iw);
+    const dw = iw + 16, dh = ih + 36 + footLines.length * 10;
     const dx = Math.round((W - dw) / 2), dy = Math.max(4, Math.round((H - dh) / 2) - 10);
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, ircDialog.dcc.viewerTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.greyDark);
@@ -2876,7 +2997,7 @@ export class DesktopOS {
     ctx.imageSmoothingEnabled = smooth;
     ui.setFont(ctx, 8);
     ctx.fillStyle = ERA1.silver;
-    ctx.fillText(ircDialog.dcc.viewerFoot, c.x + 4, c.y + ih + 10);
+    footLines.forEach((ln, i) => ctx.fillText(ln, c.x + 4, c.y + ih + 10 + i * 10));
     this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'yes-close' });
   }
 
@@ -3601,6 +3722,16 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
+    // ⚑ S219 / W1-B4 — LambyOS's Start menu: open, it owns the press (outside it closes it); MENU toggles it
+    //   from anywhere on the desktop, whatever window is up
+    if (this.phase === 'desktop' && this.startOpen) {
+      const sh = this.startHits.find((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+      // a closed menu publishes nothing: the walk reads every `…Hits` field, and a stale list read as live entries
+      this.startOpen = false; this.startHits = []; this.dirty = true;
+      if (sh) this.pressStart(sh.id);
+      return;
+    }
+    if (this.phase === 'desktop' && this.reinterp && hit?.id === 'start-menu') { this.startOpen = true; this.dirty = true; return; }
     // ⚑ S76 — E4's shell owns every press on this surface, because it IS the
     // surface. Closed: any press on the dark glass is THE ONE TOUCH (S1.0's
     // power-press grammar). Worn: nothing is pressable yet, and a press falls
@@ -3639,6 +3770,14 @@ export class DesktopOS {
     }
     if (this.phase === 'desktop' && hit?.id === 'taskbar-message') {
       this.accountability?.pingStamp();
+      this.dirty = true;
+      return;
+    }
+    // W1-D17 — the message toast is a door, drawn over every window like the taskbar: asked before them
+    if (this.phase === 'desktop' && hit?.id === 'toast-act' && this.toast?.act === 'message-open') {
+      this.toast = null;
+      this.fileLambyRecord('begun', 'message-notice', lambyStrings.witness.messageOpened);
+      this.openMessenger();
       this.dirty = true;
       return;
     }

@@ -695,12 +695,40 @@ def make_noa_graded_bed():
     write('10_noa_graded_bed_2016', y)
 
 
+# ───────────────────────────── 11 · the 2003 shoot's room tone ─────────────────────────────
+def make_hall_room_tone():
+    """2003 — the ROOM_TONE file on TAPE_04_CAPTURE ("the hall, empty. Audio only.") and, under the takes, the hall the
+    infomercial was shot in. W1-D10 (walkthrough 1: 'the room tone is not working'): the file was a waveform that made
+    no sound. A converted hall used as a studio: air handling far above the ceiling (a low rumble), a vent's slow wash,
+    a ballast's hum at twice the mains (120 Hz and its harmonics). No voice, no event, nothing that tells you what room
+    it is beyond its size: flat, a little cold, and made to loop (the tail is folded onto the head, so the seam is silent)."""
+    rng = np.random.default_rng(1011)
+    L = 8.0
+    pad_s = 1.0
+    n = int((L + pad_s) * SR)
+    t = np.arange(n) / SR
+    rumble = lp(brown(n, rng), 140, 2)
+    rumble /= np.std(rumble)
+    wash = bp(pink(n, rng), 280, 2400, 2)
+    wash /= np.std(wash)
+    wash *= 0.8 + 0.2 * np.sin(2 * np.pi * (1 / L) * t + 0.7)          # one slow swell per loop, so the seam is a whole period
+    hum = sum(a * np.sin(2 * np.pi * h * t + rng.random() * 6) for h, a in [(120, 1.0), (240, 0.4), (360, 0.18)])
+    hum /= np.std(hum)
+    y = rumble * 0.55 + wash * 0.30 + hum * 0.05
+    # fold the pad onto the head: the loop's end meets its start without a join
+    m = int(pad_s * SR)
+    ramp = np.linspace(0, 1, m)
+    out = y[:n - m].copy()
+    out[:m] = out[:m] * ramp + y[n - m:] * (1 - ramp)
+    write('11_testimony_hall_tone_2003', out)
+
+
 if __name__ == '__main__':
     which = sys.argv[1:]
     makers = {
         '01': make_lamps_rise, '02': make_her_lantern, '03': make_landing_hands, '04': make_room_pushes_back,
         '05': make_floor_beat, '06': make_malta_hum, '07': make_lamby_dispersal, '08': make_bed_1997_alive,
-        '09': make_noa_room_tone, '10': make_noa_graded_bed,
+        '09': make_noa_room_tone, '10': make_noa_graded_bed, '11': make_hall_room_tone,
     }
     for k, f in makers.items():
         if not which or k in which:

@@ -252,6 +252,7 @@ const REGISTRY: Record<string, string> = {
   'commons_her_lantern.mp3': `${AUDIO_BASE}commons_her_lantern.mp3`,
   'lamby_dispersal_2003.mp3': `${AUDIO_BASE}lamby_dispersal_2003.mp3`,
   'noa_video_room_tone_2016.mp3': `${AUDIO_BASE}noa_video_room_tone_2016.mp3`,   // S216: flat room tone under Noa's video (his ear)
+  'testimony_hall_tone_2003.mp3': `${AUDIO_BASE}testimony_hall_tone_2003.mp3`,   // W1-D10: the shoot's hall, empty — the ROOM_TONE file, and under the takes
   // ⚑ 2026-09-13 — THE SECOND ACT'S SOUNDS (tools/make_tones.sh, "ERA 4, THE
   //   SECOND ACT"): synthesized, ours, no voice. The system's register is
   //   sines that resolve; the room's is warmer and a third apart.

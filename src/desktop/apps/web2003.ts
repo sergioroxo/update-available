@@ -19,10 +19,8 @@ import { ledger } from '../../state/ledger';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 const WX = 8, WY = 8, WW = 496, WH = 344;
-/** the dossier cards, as the sources page names them */
-const CARD_LABEL: Record<string, string> = {
-  origin_intake_e1: '1997, the questionnaire and the programme', e3_theday: '2016, the platform and the group'
-};
+/** the dossier cards, as the sources page names them (data/dialog/s2_forum.json cardLabels — never a later year) */
+const CARD_LABEL = D.cardLabels as Record<string, string>;
 
 export class Web2003App {
   open = true;
@@ -86,6 +84,8 @@ export class Web2003App {
       const live = i === 0 && this.trail.length > 0;
       ui.button(ctx, tx, c.y + 18, w, 18, t, { disabled: i === 1 || i === 2 || (i === 0 && !live) });
       if (live) this.hits.push({ x: tx, y: c.y + 18, w, h: 18, id: 'forum-back' });
+      // W1-D3 — Home is the front page, as in every browser of the period; before, it was drawn live and did nothing
+      if (i === 4 && this.stage !== 'index' && this.stage !== 'rules') this.hits.push({ x: tx, y: c.y + 18, w, h: 18, id: 'forum-index' });
       tx += w + 3;
     });
     // the address bar
@@ -224,7 +224,9 @@ export class Web2003App {
   private drawApply(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
     const A = D.apply;
     const has = (id: string) => ledger.records.includes(id);
-    const x0 = b.x + 16, vx = b.x + 196;
+    // ⚑ W1-D5 (walkthrough 1: the application ran off the screen) — the label column is only as wide as its longest
+    //   label, so the filed values have the room they need; a note that still would not fit is dropped, never clipped
+    const x0 = b.x + 16, vx = b.x + 150, vmax = b.x + b.w - 12;
     ui.setFont(ctx, 12); ctx.fillStyle = P.banner; ctx.fillText(A.heading, x0, b.y + 34);
     ui.setFont(ctx, 8); ctx.fillStyle = P.dim; ctx.fillText(A.intro, x0, b.y + 50);
     let y = b.y + 64;
@@ -232,7 +234,10 @@ export class Web2003App {
     const row = (label: string, value: string | null, from = A.onFile) => {
       ui.setFont(ctx, 8); ctx.fillStyle = P.text; ctx.fillText(label, x0 + 4, y);
       ctx.fillStyle = value ? P.filled : P.dim; ctx.fillText(value ?? A.none, vx, y);
-      if (value) { ctx.fillStyle = P.dim; ctx.fillText(`(${from})`, vx + ctx.measureText(value).width + 6, y); }
+      if (value) {
+        const nx = vx + ctx.measureText(value).width + 6;
+        if (nx + ctx.measureText(`(${from})`).width <= vmax) { ctx.fillStyle = P.dim; ctx.fillText(`(${from})`, nx, y); }
+      }
       y += 11;
     };
     const pledge = has('pledge-signed') ? A.pledgeSigned : has('pledge-declined') ? A.pledgeDeclined : null;
@@ -327,6 +332,13 @@ export class Web2003App {
       ctx.fillText(T.pending, x0 + 6, y + 4);
       ctx.fillStyle = P.praying;
       ctx.fillText(T.praying, x0 + 6, y + 17);
+      // ⚑ W1-D3 (walkthrough 1: "how do you get out after posting?") — the page used to end on the
+      //   confirmation, with only a small link in the corner and the tiny close box; two plain buttons now
+      const bw = 130, by = y + 36;
+      ui.button(ctx, x0, by, bw, 18, T.afterBoard, { hover: this.hover === 'forum-index' });
+      this.hits.push({ x: x0, y: by, w: bw, h: 18, id: 'forum-index' });
+      ui.button(ctx, x0 + bw + 8, by, bw, 18, T.afterClose, { hover: this.hover === 'forum-close' });
+      this.hits.push({ x: x0 + bw + 8, y: by, w: bw, h: 18, id: 'forum-close' });
     }
   }
 }

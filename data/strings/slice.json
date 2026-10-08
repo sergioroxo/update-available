@@ -102,6 +102,16 @@
      "Continuity"
     ]
    }
+  },
+  "startMenu": {
+   "_doc": "⚑ S219 / W1-B4 (walkthrough 1: 'the menu button doesn't do anything and it should… like the start menu, with all the stuff you can do, like the games, and it just tells you to go grab the handheld'). The taskbar's MENU opens LambyOS's own Start menu: NOW (the beat the piece is waiting on, with its hint), PROGRAMS (what is on this desktop, opened from here), IN THE ROOM (the era's ○ beats away from the screen: the handheld, the tapes, the racket…), and Shut Down…, which opens the frame's game menu. Its words come from data/strings/map.json; only these labels are its own. The machine's voice: plain, period, never a quest log.",
+   "banner": "LambyOS",
+   "now": "Now",
+   "programs": "Programs",
+   "room": "In the room",
+   "shutDown": "Shut Down…",
+   "nothing": "(nothing on this desktop yet)",
+   "roomPrefix": "{where}: {hint}"
   }
  },
  "pause": {

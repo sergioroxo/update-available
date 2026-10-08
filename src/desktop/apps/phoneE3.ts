@@ -72,6 +72,9 @@ type Card = null | 'opened' | 'ignored';
  *  ⚑ This is the ONE clocked beat in this module and it bumps only the phone's
  *  version, so it never re-uploads the workstation panel beside it. */
 const CASCADE_STEP = 0.45;
+/** ⚑ S219 / W1-B13 — at most one message sound per this many seconds, the repeats at a fraction of the first */
+const CASCADE_SOUND_GAP = 1.5;
+const CASCADE_REPEAT_VOLUME = 0.4;
 
 export class PhoneE3 {
   version = 0;
@@ -86,6 +89,13 @@ export class PhoneE3 {
   /** the block has been shown for the current stage */
   private carded = false;
   private readMessages = new Set<string>();
+  /** ⚑ S219 / W1-E4·E7 — how many of the group's messages she has SEEN. The badge and the thread's "N new messages" were
+   *  computed from the stage alone, so they never fell: opening the thread left "4 new messages", and the cascade's
+   *  sixteen stayed counted on the home grid for good. Unread is what has landed and has not yet been on her screen. */
+  private groupSeen = 0;
+  /** ⚑ S219 / W1-E6 — the card on the glass is a SPENT link being answered, not the stage's own beat: it closes and
+   *  moves nothing (no ledger, no lift, no stage) */
+  private spentCard = false;
   /** S177 — the backlog message open on its own screen (`from + time`), or null */
   private openMessage: string | null = null;
   private rects: Rect[] = [];
@@ -95,6 +105,21 @@ export class PhoneE3 {
   private get clockText(): string { return this.opts.clock ? this.opts.clock() : d.phone.lockClock; }
 
   private bump(): void { this.version++; }
+
+  /** ⚑ S219 — every message of the group's thread that has landed, past the history she already had */
+  private groupLanded(): number {
+    return this.stage === 'first' ? MALTA_ONE.length
+      : this.stage === 'voted' ? MALTA_ONE.length + MALTA_TWO.length
+        : this.stage === 'cascade' || this.stage === 'after' ? MALTA_ONE.length + MALTA_TWO.length + this.cascadeN : 0;
+  }
+  private groupUnread(): number { return Math.max(0, this.groupLanded() - this.groupSeen); }
+  /** the thread is on her screen: what has landed is seen */
+  private markGroupSeen(): void { this.groupSeen = this.groupLanded(); }
+  /** a link card is LIVE only at the stage it belongs to: Bea's bill at `first`, the vote's result at `voted`.
+   *  Every other card (the bill again once the vote is in, the forwards in the cascade) is spent. */
+  private linkSpent(kind: string | undefined): boolean {
+    return kind === 'link2' ? this.stage !== 'voted' : this.stage !== 'first';
+  }
 
   // ── the era drives these ─────────────────────────────────────────────────
   /** Bea's first messages land. Called when the day's work reaches the gate. */
@@ -133,7 +158,8 @@ export class PhoneE3 {
     while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
       this.cascadeT -= CASCADE_STEP;
       this.cascadeN++;
-      playOnce('phone_msg_2016.mp3');   // S141: one per message, 0.45 s apart
+      this.cascadeSound();
+      if (this.screen === 'group') this.markGroupSeen();   // it landed under her eyes
       this.bump();
     }
     if (this.cascadeN >= CASCADE.length) {
@@ -141,6 +167,25 @@ export class PhoneE3 {
       ledger.checkins.push({ id: 'e3_cascade', witness: m.witness.cascadeSeen });
       this.bump();
     }
+  }
+
+  /** ⚑ S219 / W1-B13 (his walkthrough: "message sounds are too much") — the cascade is sixteen messages 0.45 s apart and each
+   *  used to ring. Now a message that lands while the last one is still sounding makes no sound, a repeat inside
+   *  `CASCADE_SOUND_GAP` seconds is silent, and the later ones are quieter. The cascade still READS as more-than-one-person
+   *  (the thread fills at the same pace); it just stops being a ringing. */
+  private lastSound: HTMLAudioElement | null = null;
+  private lastSoundAt = -1e9;
+  private soundCount = 0;
+  private cascadeSound(): void {
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
+    const still = this.lastSound && !this.lastSound.ended && !this.lastSound.paused;
+    if (still || now - this.lastSoundAt < CASCADE_SOUND_GAP) return;
+    const a = playOnce('phone_msg_2016.mp3');
+    if (!a) return;
+    a.volume = this.soundCount === 0 ? 1 : CASCADE_REPEAT_VOLUME;
+    this.soundCount++;
+    this.lastSound = a;
+    this.lastSoundAt = now;
   }
 
   // ── the beats ────────────────────────────────────────────────────────────
@@ -161,15 +206,29 @@ export class PhoneE3 {
   private dismissCard(): void {
     if (!this.card) return;
     this.card = null;
+    // ⚑ S219 / W1-E6 — a spent link's sheet only closes; it moves nothing
+    if (this.spentCard) { this.spentCard = false; this.bump(); return; }
     // ⚑ the era advances on the DISMISS, not on the choice — because the choice
     //   was never the variable. first → voted → cascade.
     if (this.stage === 'first') { this.stage = 'voted'; this.carded = false; }
     else if (this.stage === 'voted') { this.stage = 'cascade'; this.cascadeT = 0; }
+    if (this.screen === 'group') this.markGroupSeen();   // the vote's messages landed under her eyes
     this.bump();
   }
 
-  private openLink(): void {
+  /** ⚑ S219 / W1-E6 (his walkthrough: "clicking the link does nothing after the sequence ends") — a press ALWAYS answers.
+   *  The live card does what it always did. A SPENT one (the bill once the vote is in, every forward in the cascade)
+   *  answers with the same sheet it gave the first time, and files nothing, lifts nothing and moves no stage: before,
+   *  it re-filed the ledger and re-fired the light on every press, and pressing the old bill in `voted` could carry the
+   *  era past the vote's own card. */
+  private openLink(kind?: string): void {
     if (this.card) return;
+    if (this.linkSpent(kind)) {
+      this.card = this.opened ? 'opened' : 'ignored';
+      this.spentCard = true;
+      this.bump();
+      return;
+    }
     this.opened = true;
     this.showCard('opened');
   }
@@ -267,9 +326,7 @@ export class PhoneE3 {
     //   "No events today", on the day the era ends.
     dateWidget(ctx, 10, 24, W - 20, HOME.widgetWeekday, HOME.widgetDate, HOME.widgetNote);
 
-    const unread = this.stage === 'first' ? MALTA_ONE.length
-      : this.stage === 'voted' ? MALTA_TWO.length
-        : this.stage === 'cascade' || this.stage === 'after' ? this.cascadeN : 0;
+    const unread = this.groupUnread();
     const unreadMail = BACKLOG.length - this.readMessages.size;
 
     // ⚑ FOUR COLUMNS AT PHONE DENSITY, not a 2×2 of billboards. The four apps
@@ -472,13 +529,15 @@ export class PhoneE3 {
     //   its own press: the stage moves on a card's dismissal, and the second
     //   card could not be opened by pressing the first again.
     const link = msg.kind === 'link2' ? LINK_VOTE : m.link;
+    // ⚑ S219 / W1-E6 — a spent card is drawn spent (the headline goes quiet), and a press on it still answers (openLink)
+    const spent = this.linkSpent(msg.kind);
     roundRect(ctx, x, y, w, 48, 9, PHONE.surface);
-    roundRect(ctx, x + 6, y + 6, 36, 36, 5, PHONE.tileLive);
+    roundRect(ctx, x + 6, y + 6, 36, 36, 5, spent ? PHONE.hairline : PHONE.tileLive);
     phoneFont(ctx, 8);
     ctx.fillStyle = PHONE.dim;
     ctx.fillText(link.masthead, x + 48, y + 7);
     phoneFont(ctx, 10, 600);
-    ctx.fillStyle = PHONE.ink;
+    ctx.fillStyle = spent ? PHONE.dim : PHONE.ink;
     phoneWrap(ctx, link.headline, w - 56).slice(0, 2)
       .forEach((ln, i) => ctx.fillText(ln, x + 48, y + 19 + i * 12));
     this.rects.push({ x, y, w, h: 48, id: msg.kind === 'link2' ? 'link2' : 'link' });
@@ -494,8 +553,7 @@ export class PhoneE3 {
     this.pushBack(y0, y);
     // S158 / R3-78 — the group's thread, first: the way into the chat is a thread like any other
     {
-      const unread = this.stage === 'first' ? MALTA_ONE.length
-        : this.stage === 'voted' ? MALTA_TWO.length : 0;
+      const unread = this.groupUnread();
       const h = 48;
       ctx.fillStyle = PHONE.surface; ctx.fillRect(0, y, W, h);
       if (unread) { ctx.fillStyle = PHONE.tint; ctx.beginPath(); ctx.arc(10, y + 14, 3, 0, Math.PI * 2); ctx.fill(); }
@@ -505,17 +563,22 @@ export class PhoneE3 {
       ctx.fillText(m.home.groupLabel, 48, y + 5);
       phoneFont(ctx, 10);
       ctx.fillStyle = unread ? PHONE.ink : PHONE.dim;
-      ctx.fillText(unread ? m.home.groupUnread.replace('{n}', String(unread)) : m.home.groupQuiet, 48, y + 22);
+      ctx.fillText(unread === 1 ? m.home.groupUnreadOne : unread ? m.home.groupUnread.replace('{n}', String(unread)) : m.home.groupQuiet, 48, y + 22);
       ctx.fillStyle = PHONE.hairline; ctx.fillRect(48, y + h - 1, W - 48, 1);
       this.rects.push({ x: 0, y, w: W, h, id: 'group' });
       y += h;
     }
+    // ⚑ S219 / W1-E7 — EVERY MESSAGE MUST BE REACHABLE. Six rows of two preview lines did not fit under the thread (the
+    //   loop `break`s at the glass's foot), so the sixth message could never be opened and "unread" could never reach
+    //   zero. When the two-line previews would not all fit, the previews are one line — the message opens whole on its
+    //   own screen anyway.
+    const previewLines = y + BACKLOG.length * (22 + 2 * 13) <= H - 16 ? 2 : 1;
     for (const b of BACKLOG) {
       const open = this.readMessages.has(b.from + b.time);
       phoneFont(ctx, 10);
       // S177: a preview, always — a press opens the message on its own screen
       //   (his 2026-09-26: "I press on the messages and it just expands? weird")
-      const lines = phoneWrap(ctx, b.text, W - 50).slice(0, 2);
+      const lines = phoneWrap(ctx, b.text, W - 50).slice(0, previewLines);
       const h = 22 + lines.length * 13;
       if (y + h > H - 16) break;
       ctx.fillStyle = PHONE.surface; ctx.fillRect(0, y, W, h);
@@ -600,7 +663,7 @@ export class PhoneE3 {
       case 'platform': this.screen = 'platform'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
       case 'dismiss': this.dismissCard(); return true;
-      case 'link': case 'link2': this.openLink(); return true;
+      case 'link': case 'link2': this.openLink(r.id); return true;
       // ⚑ the stream has no verb. Pressing it is consumed and does nothing,
       //   which is truer than making it play: nobody asked her to watch it.
       case 'stream': return true;
@@ -634,7 +697,7 @@ export class PhoneE3 {
       case 'ignored': this.arm(); this.onWorkDone(); break;
       case 'voted': this.debugBeat('blocked'); this.dismissCard(); break;
       case 'cascade':
-        this.debugBeat('voted'); this.openLink(); this.dismissCard();
+        this.debugBeat('voted'); this.openLink('link2'); this.dismissCard();
         this.screen = 'group'; this.bump();
         break;
       case 'after':
@@ -721,6 +784,7 @@ export class PhoneE3 {
   }
 
   private openGroup(): void {
+    this.markGroupSeen();
     ledger.checkins.push({ id: 'e3_group', witness: m.witness.groupOpened });
     this.bump();
   }

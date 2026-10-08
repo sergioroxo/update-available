@@ -272,6 +272,7 @@
   "platformHello": "Signed in on your workstation.",
   "platformNote": "Today's board is open there. The phone keeps your messages.",
   "groupUnread": "{n} new messages",
+  "groupUnreadOne": "1 new message",
   "groupQuiet": "No new messages",
   "_docS158": "S158 / R3-78: the home screen's first tile is the platform's app (a card: signed in on the workstation), Messages carries the group's thread at the top with its unread count, and the chat's back goes to Messages."
  },

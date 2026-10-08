@@ -209,7 +209,7 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
   // note, and it says where the setting is rather than being the setting.
   // ⚑ It names what happens without naming any character or spoiling any beat,
   // and it states the piece's position plainly: the system is wrong.
-  notes.appendChild(line(copy.nameNote, { fontSize: '12px', lineHeight: '1.55', color: FRAME.ink }));
+  // ⚑ S219 / W1-B12 — the old-name advisory is gone with the opt-out (see gameMenu.ts): no name is ever said
   inner.appendChild(notes);
 
   // ── F-01: THE CHOICES. Three cards, one per way of being here; each lists what

@@ -49,6 +49,8 @@ export interface HeldDevice {
   /** can this ray press it, and what would it be called */
   aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): 'pick' | 'drop' | 'screen' | GameKey | null;
   press(ray: { p0: pc.Vec3; p1: pc.Vec3 }, cam: pc.Entity): boolean;
+  /** ⚑ S219 / W1-B7 — a keyboard key, while it is in hand: true when the game took it (so the camera does not) */
+  key(k: GameKey): boolean;
 }
 
 const LIFT_SECONDS = 0.45;
@@ -159,6 +161,11 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   return {
     spec,
     get held() { return holding; },
+    key(k) {
+      if (!holding || !game) return false;
+      game.key?.(k);
+      return true;
+    },
     aim(ray) {
       if (!wrap.enabled) return null;
       if (!holding) return bodyHit(ray) ? 'pick' : null;

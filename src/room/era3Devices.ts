@@ -845,7 +845,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);
     draw(ctx, logical.w, logical.h);
-    const tex = makeScreenTexture(app, canvas, name === 'phone');   // S177: the phone is a dense 2016 display, not pixel art
+    // S177: the phone is a dense 2016 display, not pixel art. W1-F1: the monitor and the lid are pixel art SEEN SMALL —
+    //   mipmaps for the shrink, nearest kept for the magnify (see makeScreenTexture)
+    const tex = makeScreenTexture(app, canvas, name === 'phone' ? true : (name === 'monitor' || name === 'laptop') ? 'minify' : false);
     const place = PLACEMENT[name];
     const entity = makeScreenEntity(`era3-device-${name}`, tex, place.size.w, place.size.h);
     entity.setLocalPosition(place.pos.x, place.pos.y, place.pos.z);
@@ -1073,7 +1075,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     const source = e4Bridge()?.canvas();
     if (!source) return;
     const place = PLACEMENT.visor;
-    const tex = makeScreenTexture(app, source);
+    const tex = makeScreenTexture(app, source, 'minify');   // W1-F1: 1536 px of glass worn at ~900 screen px, and ~100 on its stand
     // ⚑ S104 — TRANSPARENT, so the ready state can be a GLOW and not a slab.
     //   The plane's alpha now comes from the canvas: where the shell draws
     //   nothing, there is nothing on the headset's face. See `E4Shell.draw`'s

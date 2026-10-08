@@ -77,7 +77,9 @@
   "reply": "Post reply",
   "yourLine": "I'm back. I'll post every day.",
   "pending": "Thank you. Your post will appear once a moderator approves it.",
-  "praying": "3 people are praying for you."
+  "praying": "3 people are praying for you.",
+  "afterBoard": "Back to the board",
+  "afterClose": "Close Harbor"
  },
  "filing": {
   "rules": "forum rules agreed — accountability on",
@@ -296,6 +298,11 @@
   }
  },
  "dossierMark": "in the dossier:",
+ "_docW1D4": "⚑ W1-D4 (walkthrough 1: 2003 showed 2016 references) — each Resources page names the dossier card it stands on, and the card's own file is 2016's; the label said '2016, the platform and the group' on 2003's own pages. A page now says what it stands on in the period's own terms.",
+ "cardLabels": {
+  "origin_intake_e1": "1997, the questionnaire and the programme",
+  "e3_theday": "the teachings and groups behind these pages"
+ },
  "_docS199": "⚑ S199 — his visual archive (2026-09-29): Evergreen International's 28 Oct 2004 capture is the model for a 2003 ministry site — navigation by AUDIENCE (Individuals · Family · Support Groups · Therapists & Church Leaders), 'The Way Out', a Bookstore (cover · title · copy · order), Events and conferences, a referral database behind it (documented, primary capture) — and the forum software's own grammar (UBB, 2003: Topic · Author · Replies · Views · Last Post). And his 'yes to The Source application': the programme's application as a web form, PRE-FILLED FROM DANIEL'S 1997 FILE. Its form is the documented one (Love in Action's The Source application, 2001 — Smithsonian NMAH.AC.1428, B1 F6: an $80 processing fee, parental references, 'have you told your pastor', male/female authority figures, 'three reasons why you want to overcome', a youth option attended with a parent at $1,500 for two weeks or $2,500 for eight); its opening line is a close paraphrase, not a quotation; the programme's name is invented (Anchor). The three reasons stay blank: the one thing his file cannot fill in.",
  "books": {
   "heading": "Bookstore",
