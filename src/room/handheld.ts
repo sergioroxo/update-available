@@ -60,7 +60,9 @@ const SPECS: DeviceSpec[] = [
     ],
     available: (has) => has('kit-inserted'),
     idle: (g, w, h) => { px(g, 0, 0, H.screenLight, w, h); px(g, 32, 64, H.screenDark, 96, 16); },
-    game: () => new FitIn()
+    game: () => new FitIn(),
+    // S222 / W1-B8, W1-K4: held high in the frame so the d-pad, A, B and START under the glass stay in view
+    view: { fill: 0.38, raise: 0.24, maxW: 0.66 }
   },
   {
     propId: 'flipPhone', modelKey: 'flipPhone', era: 'e2', gameId: 'clear',
@@ -77,7 +79,8 @@ const SPECS: DeviceSpec[] = [
       text57(g, 'RESTORIFY', Math.round((w - textW57('RESTORIFY', 2)) / 2), 220, RC.lcdMid, 2);
     },
     game: () => new Clear(),
-    holdDist: 0.19
+    holdDist: 0.19,
+    view: { fill: 0.75, maxW: 0.8 }   // S222 / W1-K4: the glass is the game; the keypad is never pressed
   },
   {
     propId: 'e_console', modelKey: 'console2026', era: 'e4', gameId: 'tidy',
@@ -86,7 +89,8 @@ const SPECS: DeviceSpec[] = [
     available: (_has, fileSize) => fileSize >= 2,
     idle: (g, w, h) => { px(g, 0, 0, TD.cardBg, w, h); text(g, '23:12', w - 24, 4, TD.cardDim); },
     game: () => new Tidy(),
-    holdDist: 0.42
+    holdDist: 0.42,
+    view: { fill: 0.6 }
   }
 ];
 

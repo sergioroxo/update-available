@@ -39,7 +39,16 @@ export interface DeviceSpec {
   game: () => DeviceGame;
   /** the ledger line's id */
   gameId: string;
+  /** in a headset: how far in front of the eyes it is held (metres) */
   holdDist?: number;
+  /**
+   * ⚑ S222 / W1-B8, W1-K4 — on a FLAT screen the device is placed by the view, not by a distance: the glass
+   * takes `fill` of the frame's height (and never more than 90% of its width), so a game pixel is at least about
+   * 1.5 screen pixels on a laptop and on a phone. `raise` lifts the glass above the middle by that share of the
+   * frame, so a handheld's buttons under it stay in view; `maxW` caps the glass's share of the frame's width (a
+   * console wider than its glass keeps its buttons on a portrait phone).
+   */
+  view?: { fill: number; raise?: number; maxW?: number };
 }
 
 export interface HeldDevice {
@@ -126,9 +135,34 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   const from = { pos: new pc.Vec3(), rot: new pc.Quat() };
   const to = { pos: new pc.Vec3(), rot: new pc.Quat() };
   let t = 1, holding = false;
+  /**
+   * ⚑ S222 / W1-B8 + W1-K4 (his: "the handheld is too small; hold it closer to the eye"; "we need to be sure they
+   * can play well on the screen, closer to the screen"). Measured on a 1280 × 720 window, the fixed distances
+   * showed FIT IN's 144-pixel glass at ~121 screen pixels (0.84 a game pixel: the 5×7 letters lost rows to the
+   * nearest filter) and CLEAR's 320 at ~352. On a flat screen the distance is now solved from the camera's
+   * field of view and the glass's real size; in a headset it stays `holdDist` (an arm's distance is a body fact
+   * there, and the headset's own resolution already gives these glasses enough pixels).
+   */
+  const viewDist = (cam: pc.Entity): { d: number; raise: number } => {
+    const dHead = spec.holdDist ?? 0.37;
+    const c = cam.camera;
+    if (!spec.view || !c || app?.xr?.active) return { d: dHead, raise: -0.03 };   // the old small drop below the eye line
+    const sc = plane.getWorldTransform().getScale();
+    const gw = Math.abs(sc.x), gh = Math.abs(sc.z);               // the glass's world size (the plane's local X and Z)
+    const tanV = Math.tan((c.fov * Math.PI) / 360);
+    const gd = app?.graphicsDevice;
+    const aspect = gd && gd.height > 0 ? gd.width / gd.height : 16 / 9;
+    const tanH = tanV * aspect;
+    const d = Math.max(gh / (2 * tanV * spec.view.fill), gw / (2 * tanH * (spec.view.maxW ?? 0.9)));
+    // never lift the glass's top out of the frame: on a tall phone the width decides the size, not `fill`
+    const gf = gh / (2 * d * tanV);
+    const raise = Math.max(0, Math.min(spec.view.raise ?? 0, 0.44 - gf / 2));
+    return { d, raise: raise * 2 * d * tanV };
+  };
   const heldPose = (cam: pc.Entity): void => {
     const fwd = cam.forward.clone(), up = cam.up.clone();
-    to.pos.copy(cam.getPosition()).add(fwd.clone().mulScalar(spec.holdDist ?? 0.37)).add(up.clone().mulScalar(-0.03));
+    const v = viewDist(cam);
+    to.pos.copy(cam.getPosition()).add(fwd.clone().mulScalar(v.d)).add(up.clone().mulScalar(v.raise));
     // the prop's frame: its face is local +Y (every device here lies tilted −90° about X), its top local −Z
     const y = fwd.clone().mulScalar(-1), z = up.clone().mulScalar(-1), x = new pc.Vec3().cross(y, z);
     const m = new pc.Mat4();
