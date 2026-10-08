@@ -64,7 +64,7 @@
  * as broken.
  */
 
-import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -231,7 +231,9 @@ function resolveChrome() {
     'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
   ] : [
     '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium', '/usr/bin/chromium-browser', '/snap/bin/chromium'
+    '/usr/bin/chromium', '/usr/bin/chromium-browser', '/snap/bin/chromium',
+    // S223: the cloud sessions (claude.ai/code) ship a Playwright Chromium here and nothing on PATH
+    ...(() => { try { return readdirSync('/opt/pw-browsers').filter((d) => /^chromium-\d+$/.test(d)).sort().reverse().map((d) => `/opt/pw-browsers/${d}/chrome-linux/chrome`); } catch { return []; } })()
   ];
   return candidates.find((c) => existsSync(c)) ?? null;
 }

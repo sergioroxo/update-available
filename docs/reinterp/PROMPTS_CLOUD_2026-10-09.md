@@ -5,6 +5,8 @@ STATUS: live
 prompt: paste it into a new cloud session pointed at the GitHub repository **sergioroxo/update-available**, branch
 **reinterp**. A cloud session sees only what is pushed to GitHub: nothing in `~/Pc_Simulation`, nothing uncommitted.*
 
+**⚑ First run (2026-10-09):** the session cloned `main`, not `reinterp`, and found a Playwright Chromium at `/opt/pw-browsers` (4 cores, 15 GiB). Every prompt now starts by switching to `reinterp` itself, and the walker finds that Chromium without help.
+
 **How to use them**
 - **Run Prompt 0 first, once.** It only checks what the cloud machine can do, and changes nothing. Whether a cloud session can run the walk (it needs Chrome) decides how far Prompts 1–5 can verify their own work.
 - **Prompts 1–5 are independent.** Run them in parallel if you like. Each works on its own new branch and opens a pull request. **None merges or pushes to `reinterp`.** I review each one locally, walk it, and merge.
@@ -14,14 +16,15 @@ prompt: paste it into a new cloud session pointed at the GitHub repository **ser
 
 ## Prompt 0 — what can this machine do? (no changes; ~10 min)
 ```
-Repository: sergioroxo/update-available, branch reinterp. Do not commit, push or open a PR in this session.
+SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
+  git fetch origin reinterp && git checkout -B cloud/check origin/reinterp && npm ci
+  (tools/walk.mjs finds the machine's Chromium at /opt/pw-browsers by itself; do not download a browser.)
+Do not commit, push or open a PR in this session.
 Read CLAUDE.md fully first (it is the project's law).
 Report, as a short checklist, what this cloud machine can and cannot do for this project:
 1. Run npm ci, then npm test (report pass/fail and the four OK lines).
 2. Start the dev server: npx vite --port 3000 --strictPort (in the background), and curl it.
-3. Is a Chrome/Chromium binary present (google-chrome, chromium, chromium-browser)? tools/walk.mjs needs one
-   (it uses puppeteer-core with a system Chrome; set $CHROME to its path). Do NOT download a browser: if none is
-   present, say so and stop there.
+3. Which Chromium tools/walk.mjs will use (it looks on PATH, then in /opt/pw-browsers). Do NOT download one.
 4. If Chrome is present: run node tools/walk.mjs --port 3000 --max 120 --from-era 4 --one-era and report the
    last 15 lines of its output (it is a smoke test; it will not finish the era in 120 steps).
 5. How many CPU cores and how much memory the machine has.
@@ -32,7 +35,9 @@ End with one line: "walks possible: yes/no".
 
 ## Prompt 1 — cut the heaviest text (W1-B1/B2: "we need more images and less text")
 ```
-Repository: sergioroxo/update-available, branch reinterp. Create a new branch cloud/text-cut-1 from reinterp.
+SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
+  git fetch origin reinterp && git checkout -B cloud/text-cut-1 origin/reinterp && npm ci
+  (tools/walk.mjs finds the machine's Chromium at /opt/pw-browsers by itself; do not download a browser.)
 Read CLAUDE.md fully first; it binds. Then read docs/reinterp/WALKTHROUGH_1_2026-10-08.md (items W1-B1, B2, C7,
 E1, D14) and docs/reinterp/TEXT_CENSUS_2026-10-08.md (every distinct screen of text the full walk saw, ranked by
 words; canvases marked ATLAS hold several panels at once — judge each panel on its own).
@@ -61,7 +66,9 @@ body is a table: screen, file/key, words before → after, and the before/after 
 
 ## Prompt 2 — LambyOS Home, the front door (W1-A1, A2, A4, A5, A7)
 ```
-Repository: sergioroxo/update-available, branch reinterp. Create a new branch cloud/lambyos-home from reinterp.
+SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
+  git fetch origin reinterp && git checkout -B cloud/lambyos-home origin/reinterp && npm ci
+  (tools/walk.mjs finds the machine's Chromium at /opt/pw-browsers by itself; do not download a browser.)
 Read CLAUDE.md fully first. Then read docs/reinterp/WALKTHROUGH_1_2026-10-08.md sections A (the opening,
 inspired by Microsoft Bob) and K, the current opening (src/desktop/orientingCard.ts and data/strings/
 orientingCard.json; the reinterp opening beats in src/desktop/os.ts, phases r_boot / r_splash / r_profile /
@@ -92,7 +99,9 @@ push the branch, open a PR into reinterp titled "LambyOS Home: design draft". Do
 
 ## Prompt 3 — 2003's cadence (W1-B3, D1, D2, D7, D13, D14, D16, D18, D19)
 ```
-Repository: sergioroxo/update-available, branch reinterp. Create a new branch cloud/cadence-2003 from reinterp.
+SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
+  git fetch origin reinterp && git checkout -B cloud/cadence-2003 origin/reinterp && npm ci
+  (tools/walk.mjs finds the machine's Chromium at /opt/pw-browsers by itself; do not download a browser.)
 Read CLAUDE.md fully first. Then docs/reinterp/WALKTHROUGH_1_2026-10-08.md (B3 and section D). 2003 is Daniel's
 era (Caleb, the forum, the story videos, the mail, the purity streak, the glitch).
 
@@ -119,7 +128,9 @@ push the branch, open a PR into reinterp titled "2003 cadence: timeline and wait
 
 ## Prompt 4 — 2016's reading load and Vera's options (W1-E1, E2, E5)
 ```
-Repository: sergioroxo/update-available, branch reinterp. Create a new branch cloud/vera-options from reinterp.
+SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
+  git fetch origin reinterp && git checkout -B cloud/vera-options origin/reinterp && npm ci
+  (tools/walk.mjs finds the machine's Chromium at /opt/pw-browsers by itself; do not download a browser.)
 Read CLAUDE.md fully first. Then docs/reinterp/WALKTHROUGH_1_2026-10-08.md section E ("far too much reading in
 2016"; "reduce Vera's options to about three; the player can unlock the rest — 'update to new functionalities'";
 "the link-clicking cadence of the messages is too much"). 2016 is Vera's era: the workstation's moderation board
@@ -139,7 +150,10 @@ push, open a PR into reinterp titled "2016: three options, then updates (plan)".
 
 ## Prompt 5 — a rules sweep across all the text (cheap; Haiku-suitable)
 ```
-Repository: sergioroxo/update-available, branch reinterp. Do not change any file except the one report below.
+SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
+  git fetch origin reinterp && git checkout -B cloud/rules-sweep origin/reinterp && npm ci
+  (tools/walk.mjs finds the machine's Chromium at /opt/pw-browsers by itself; do not download a browser.)
+Do not change any file except the one report below.
 Read CLAUDE.md fully first. Then check every string in data/**/*.json (keys starting with "_" are notes, skip
 them) against these rules, and list every hit with file, key and the text:
 1. A real person, brand, product, platform or organisation named (the invented marks — Compass, HopeRestored,
@@ -151,6 +165,6 @@ them) against these rules, and list every hit with file, key and the text:
 5. British/American spelling mixed within one file (the piece writes British: programme, colour, authorised).
 6. Any line over 40 words that the player must read to know what to do next.
 Write the report to docs/reinterp/RULES_SWEEP_2026-10-09.md (first line "STATUS: live"), grouped by rule, with a
-one-line verdict per hit ("fine because…" or "fix"). Commit it on a new branch cloud/rules-sweep (message ending
+one-line verdict per hit ("fine because…" or "fix"). Commit it on the branch cloud/rules-sweep (message ending
 "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"), push, open a PR titled "Rules sweep (report only)".
 ```
