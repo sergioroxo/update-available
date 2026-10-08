@@ -84,6 +84,9 @@ class GameMenuBus {
    *  that panel's sources (the status and the dossier practices behind its
    *  paragraph). The menu sets this when it mounts; the engine calls it. */
   openCloseSources: ((panel: number) => void) | null = null;
+  /** ⚑ S220 — LambyOS's Start menu has Leave…: it opens the menu at the leave note (frame voice), never the
+   *  leave page directly — the fiction offers the door, the frame says where it goes. Set when the menu mounts. */
+  openLeave: (() => void) | null = null;
 
   get isOpen(): boolean {
     return this._open;

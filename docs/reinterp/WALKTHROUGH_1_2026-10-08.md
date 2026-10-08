@@ -132,3 +132,9 @@ like a lot of levels that are amazing… but then the other parts fall off."
 | W1-J2 | **CAMP TYCOON (2003),** "a whole separate thing for later". | L | later | parked |
 | W1-J3 | **CLEAR is the v7 Zuma (letters spell "I KNOW WHO I AM").** Waiting on his eye: the cut diary line, the two new dismissal lines, SAME-SEX ATTRACTION on the belt, a colour-blind aid. | M | his, then port | open |
 | W1-J4 | **FloppySheep v7** (the paced cannons) to bring into the piece. | M | port | open |
+
+## K · Follow-ups (his, 2026-10-08, after S219)
+| Id | His words / the item | Size | How | State |
+|---|---|---|---|---|
+| W1-K1 | **"Shut down should not work, but leave can… Shut down should pop up a message saying 'you are not authorised to leave your treatment'."** Shut Down… is refused in LambyOS's voice (one line, OK, nothing filed); **Leave…** sits under it and opens the frame's menu at a short note ("Opens a different, plain page outside the story. You can come back from it.", Leave / Stay). The main menu's Leave keeps the quick exit: the same note as a grey line under the row, no extra press (my call, so a shared room stays one press away; his to reverse). | S | local | BUILT S220 |
+| W1-K2 | **"(The monitor)… if it is the system you can remove it."** It was the place, not the system: the "Next:" line now names the place only when it is somewhere else in the room. | S | local | BUILT S220 |

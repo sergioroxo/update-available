@@ -78,7 +78,7 @@ import e4Offers from '../../data/provotypes/e4_offers.json';
 // wiring below is what makes the card real rather than filed.
 import e3Day from '../../data/provotypes/e3_theday.json';
 
-type View = 'main' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map';
+type View = 'main' | 'leaveConfirm' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map';
 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
@@ -188,6 +188,16 @@ export function mountGameMenu(): GameMenu {
     const p = document.createElement('div');
     Object.assign(p.style, {
       fontSize: '12px', lineHeight: '1.55', color: DIALOG.ink, margin: '0 0 12px'
+    } as CSSStyleDeclaration);
+    p.textContent = text;
+    panel.appendChild(p);
+  }
+
+  /** a quiet line under the row above it (frame voice: small, undecorated) */
+  function note(text: string): void {
+    const p = document.createElement('div');
+    Object.assign(p.style, {
+      fontSize: '11px', lineHeight: '1.4', color: DIALOG.dim, margin: '-2px 2px 8px'
     } as CSSStyleDeclaration);
     p.textContent = text;
     panel.appendChild(p);
@@ -471,6 +481,17 @@ export function mountGameMenu(): GameMenu {
       row(copy.controls, () => { view = 'controls'; render(); });
       row(copy.credits, () => { view = 'credits'; render(); });
       row(copy.leave, () => doLeave());
+      // ⚑ S220 (his, 2026-10-08: "leave needs a small message saying that it will [go to] a different space") — said
+      //   UNDER the row, not asked after it: this Leave is the quick way out of a shared room, and a confirm would
+      //   slow exactly the person it is for
+      note(copy.leaveNote);
+      return;
+    }
+    if (view === 'leaveConfirm') {
+      heading(copy.leave);
+      paragraph(copy.leaveNote);
+      row(copy.leave, () => doLeave(), true);
+      row(copy.leaveStay, () => gameMenuBus.close());
       return;
     }
     if (view === 'restartConfirm') {
@@ -597,6 +618,7 @@ export function mountGameMenu(): GameMenu {
   }
 
   // (open first — opening resets the view to main — then land on the sources)
+  gameMenuBus.openLeave = () => { gameMenuBus.open(); view = 'leaveConfirm'; render(); };
   gameMenuBus.openCloseSources = (i) => { gameMenuBus.open(); closeFocus = i; view = 'closeSources'; render(); };
   const unsubscribe = gameMenuBus.onChange(setOpenVisual);
   const onFullscreenChange = (): void => {

@@ -104,12 +104,19 @@
    }
   },
   "startMenu": {
-   "_doc": "⚑ S219 / W1-B4 (walkthrough 1: 'the menu button doesn't do anything and it should… like the start menu, with all the stuff you can do, like the games, and it just tells you to go grab the handheld'). The taskbar's MENU opens LambyOS's own Start menu: NOW (the beat the piece is waiting on, with its hint), PROGRAMS (what is on this desktop, opened from here), IN THE ROOM (the era's ○ beats away from the screen: the handheld, the tapes, the racket…), and Shut Down…, which opens the frame's game menu. Its words come from data/strings/map.json; only these labels are its own. The machine's voice: plain, period, never a quest log.",
+   "_doc": "⚑ S219 / W1-B4 (walkthrough 1: 'the menu button doesn't do anything and it should… like the start menu, with all the stuff you can do, like the games, and it just tells you to go grab the handheld'). The taskbar's MENU opens LambyOS's own Start menu: NOW (the beat the piece is waiting on, with its hint), PROGRAMS (what is on this desktop, opened from here), IN THE ROOM (the era's ○ beats away from the screen: the handheld, the tapes, the racket…), Shut Down… (refused, S220) and Leave… (the frame's door, S220). Its words come from data/strings/map.json; only these labels are its own. The machine's voice: plain, period, never a quest log.",
    "banner": "LambyOS",
    "now": "Now",
    "programs": "Programs",
    "room": "In the room",
    "shutDown": "Shut Down…",
+   "leave": "Leave…",
+   "shutRefused": {
+    "title": "Shut Down",
+    "line": "You are not authorised to leave your treatment.",
+    "ok": "OK"
+   },
+   "_docShut": "⚑ S220 (his, 2026-10-08: 'shut down should not work, but leave can… Shut down should pop up a message saying \"you are not authorised to leave your treatment\" or something'). Shut Down… is the machine's and the machine refuses (one line, OK, nothing filed); Leave… under it is the frame's door — it opens the game menu at the leave note (gameMenu.json leaveNote) and the plain page beyond it. The refusal is never the only way out.",
    "nothing": "(nothing on this desktop yet)",
    "roomPrefix": "{where}: {hint}"
   }

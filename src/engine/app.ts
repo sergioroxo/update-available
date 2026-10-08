@@ -2784,8 +2784,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const now = performance.now();
       const held = !!pcPrayer && pcPrayer.paused && !pcPrayer.ended;
       const ct = pcPrayer ? pcPrayer.currentTime : 0;
-      if (ct > pcLastCT + 0.001) pcT = ct;               // the recording is moving: it is the clock
-      else if (!held) pcT += (now - pcLast) / 1000;      // it is not: the wall keeps the prayer's time
+      const dt = (now - pcLast) / 1000;
+      // the recording is the clock only while it KEEPS PACE: headless Chrome creeps it a few ms a second, and
+      // taking every creep as the time reset the prayer to nearly zero on each probe (the S220 walk hung on it)
+      if (ct - pcLastCT >= 0.5 * dt && ct > 0) pcT = Math.max(pcT, ct);
+      else if (!held) pcT += dt;                         // it is not: the wall keeps the prayer's time
       pcLast = now; pcLastCT = ct;
       if (pcT >= PRAYER_LEN) return { inserted: 'tapeA', playing: false, elapsed: PRAYER_AT + PRAYER_LEN };
       return { inserted: 'tapeA', playing: !held, elapsed: PRAYER_AT + pcT };

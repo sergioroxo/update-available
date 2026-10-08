@@ -71,7 +71,10 @@ export function mountHelper(opts: {
     el.style.opacity = '0';
   };
   const show = (h: HelperHint): void => {
-    el.textContent = `${H.prefix} ${h.text}${h.where ? `  (${h.where})` : ''}`;
+    // ⚑ S220 (his, 2026-10-08: "(the monitor)… we dont need to announce") — the place is named only when it is
+    //   somewhere ELSE in the room; "the monitor" is where the player is already looking, 36 of the map's beats
+    const where = h.where && h.where !== 'the monitor' ? `  (${h.where})` : '';
+    el.textContent = `${H.prefix} ${h.text}${where}`;
     shownKey = h.key;
     shown = true;
     el.style.opacity = '1';

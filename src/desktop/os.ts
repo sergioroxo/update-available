@@ -424,6 +424,8 @@ export class DesktopOS {
   /** ⚑ S209 / P7-47 — each update's own Word of the Day (data/strings/lexicon.json wotdApps): once per era, on a quiet
    *  desktop after the pause; the word is met (ledger.lexicon) and the Lexicon will turn it over at the Close */
   private wotdOpen: 'e1' | 'e2' | null = null;
+  /** ⚑ S220 — Shut Down… refused (his, 2026-10-08): the machine will not let you go; the frame's Leave always does */
+  private shutRefused = false;
   private wotdShown = new Set<string>();
   private diaryAfterForm = false;
   /** engine reads this to creep the cold (witness) side into peripheral vision */
@@ -1111,6 +1113,26 @@ export class DesktopOS {
     const bw = 70, bx = c.x + c.w - bw - 10, by = c.y + c.h - 28;
     ui.button(ctx, bx, by, bw, 20, lexStrings.ok, { hover: this.hover === 'wotd-ok' });
     this.hits.push({ x: bx, y: by, w: bw, h: 20, id: 'wotd-ok' });
+  }
+
+  /** ⚑ S220 — the machine's refusal: Shut Down… is LambyOS's, and LambyOS does not let a subject leave the
+   *  treatment. The door that works is the one under it (Leave…, the frame's). Modal, one OK, like the Word of the Day. */
+  private drawShutRefused(W: number, H: number): void {
+    const { ctx } = this;
+    const R = strings.desktop.startMenu.shutRefused;
+    const dw = 300;
+    ui.setFont(ctx, 10);
+    const rows = ui.wrapText(ctx, R.line, dw - 40);
+    const dh = 74 + rows.length * 13;
+    const dx = Math.round((W - dw) / 2), dy = Math.round((H - dh) / 2) - 10;
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, R.title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'shut-ok' });
+    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black;
+    rows.forEach((r, i) => ctx.fillText(r, c.x + 14, c.y + 12 + i * 13));
+    const bw = 70, bx = c.x + c.w - bw - 10, by = c.y + c.h - 28;
+    ui.button(ctx, bx, by, bw, 20, R.ok, { hover: this.hover === 'shut-ok' });
+    this.hits.push({ x: bx, y: by, w: bw, h: 20, id: 'shut-ok' });
   }
 
   private maybePause(): void {
@@ -2198,7 +2220,7 @@ export class DesktopOS {
     const w = 236; const row = 15; const tx = 30; const tw = w - tx - 8;
     ui.setFont(ctx, 9);
     const nowLines = now ? ui.wrapText(ctx, now.hint, tw).slice(0, 3) : [];
-    const lines = 1 + (now ? 1 + nowLines.length : 0) + 1 + Math.max(1, progs.length) + (room.length ? 1 + room.length : 0) + 1;
+    const lines = 1 + (now ? 1 + nowLines.length : 0) + 1 + Math.max(1, progs.length) + (room.length ? 1 + room.length : 0) + 2;
     const h = lines * row + 16;
     const x = 3; const y = Math.max(4, H - 22 - h);
     ui.bevel(ctx, x, y, w, h, true);
@@ -2227,6 +2249,7 @@ export class DesktopOS {
     if (room.length) { head(S.room); for (const b of room) item(b.label, `sm-room:${b.id}`); }
     ui.px(ctx, x + tx, cy, tw, 1, ERA1.grey); ui.px(ctx, x + tx, cy + 1, tw, 1, ERA1.white);
     item(S.shutDown, 'sm-shut');
+    item(S.leave, 'sm-leave');
     void W;
   }
 
@@ -2234,7 +2257,8 @@ export class DesktopOS {
     const S = strings.desktop.startMenu;
     const st = mapState(this);
     const era = st.eras.find((e) => e.here);
-    if (id === 'sm-shut') { startMenuBus.open(); return; }
+    if (id === 'sm-shut') { this.shutRefused = true; this.dirty = true; return; }
+    if (id === 'sm-leave') { startMenuBus.openLeave?.(); return; }
     if (id === 'sm-now' && st.current) { this.toast = { text: st.current.beat.hint, t: 9 }; return; }
     if (id.startsWith('sm-room:')) {
       const b = era?.beats.find((x) => x.beat.id === id.slice(8))?.beat;
@@ -2737,10 +2761,11 @@ export class DesktopOS {
     // ⚑ S207 — the pause is modal: drawn last, and the only thing pressable while it is up
     if (this.pauseOpen) { this.hits = []; this.drawPauseDialog(W, H); }
     if (this.wotdOpen) { this.hits = []; this.drawWotd(W, H); }   // S209 / P7-47 — modal, like the pause
+    if (this.shutRefused && this.phase === 'desktop') { this.hits = []; this.drawShutRefused(W, H); }   // S220
     // ⚑ S219 / W1-B4 — the Start menu draws over the desktop and owns the press while it is open
     // ⚑ open, it is the ONLY pressable thing (a press outside just closes it, as Windows' did), so only its entries
     //   and MENU are published — the walk spent every icon behind an open menu as 'inert' and stalled in 2003
-    if (this.startOpen && this.phase === 'desktop' && !this.pauseOpen && !this.wotdOpen) {
+    if (this.startOpen && this.phase === 'desktop' && !this.pauseOpen && !this.wotdOpen && !this.shutRefused) {
       this.drawStartMenu(W, H);
       this.hitsUnderStart = this.hits;
       this.hits = [...this.startHits, ...this.hits.filter((h) => h.id === 'start-menu')];
@@ -3695,6 +3720,11 @@ export class DesktopOS {
   handleClick(x: number, y: number): void {
     this.idleSeconds = 0;   // S194 — the helpers wait for quiet
     if (this.saver) { this.saver = null; this.dirty = true; return; }   // S208 — a press wakes it, and does nothing else
+    if (this.shutRefused) {   // S220 — the refusal owns the screen until OK
+      const hs = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+      if (hs?.id === 'shut-ok') { this.shutRefused = false; this.dirty = true; }
+      return;
+    }
     if (this.wotdOpen) {   // S209 / P7-47 — the Word of the Day owns the screen until OK
       const hw = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
       if (hw?.id === 'wotd-ok') { this.wotdOpen = null; this.dirty = true; }
