@@ -1,4 +1,8 @@
 /**
+ * ⚑⚑ S222 — UNHOOKED: CLEAR (src/games/clear.ts, his approved CLEAR v8) REPLACED this game on Daniel's phone.
+ * Nothing constructs it any more (src/room/handheld.ts builds `Clear`) and nothing files its line; it is kept,
+ * not deleted, as the record of what the phone played from S189 to S221.
+ *
  * ⚑ S189 — REACH (2003), Restorify's game, on Daniel's phone. PLAN_PHASE4_GAMES (his framing approved
  * 2026-09-27; "REACH: on the phone", and on the first build, 2026-09-28: "the REACH needs to have more
  * design, too bare" — and the law for every game: "a rhetoric of failure … the queer side always wins").

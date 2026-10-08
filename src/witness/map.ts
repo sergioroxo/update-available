@@ -81,7 +81,7 @@ const CONDITIONS: Record<string, Condition> = {
   fitinPlayed: () => ledger.games.some((g) => g.id === 'fitin'),
   forumRules: () => has('forum-rules'),
   forumApplied: () => has('forum-applied'),
-  reachPlayed: () => ledger.games.some((g) => g.id === 'reach'),
+  clearPlayed: () => ledger.games.some((g) => g.id === 'clear'),   // ⚑ S222: CLEAR replaced REACH on the 2003 phone
   tagged: () => ledger.era3Jobs.some((j) => j.id === 'recommend'),
   grouped: () => ledger.era3Jobs.some((j) => j.id === 'group'),
   tidyPlayed: () => ledger.games.some((g) => g.id === 'tidy'),

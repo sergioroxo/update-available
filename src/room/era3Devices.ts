@@ -1212,6 +1212,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // in this module with a clock. It bumps `version` on its own quantised
       // schedule, so the redraw path below is unchanged and still fires only
       // on a real content change — never per frame. See GraceQueueLite's header.
+      // ⚑ S221 — Vera's phone game does not outlive 2016: its song is the one sound that would carry on into the
+      //   next era (the agent's port flagged it; the old fence-hopper had the same exposure)
+      if (eraNow !== 'e3' && graceQueueLite.floppy.open) graceQueueLite.floppy.closeGame();
       graceQueueLite.update(dt);
       // the held read's own easing — position/rotation only, never a redraw:
       // moving a screen through the room does not change a pixel on it, so

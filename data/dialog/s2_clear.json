@@ -1,0 +1,55 @@
+{
+  "_doc": "⚑ S222 — CLEAR (2003), Restorify's game on Daniel's flip phone (src/games/clear.ts). It REPLACES REACH there. Ported from the games review's prototype CLEAR v8 (Pc_Simulation/Games_Proposals_2026-10-08_clear_v8/clear_v8.html; the game in full is described in ../Games_Proposals_2026-10-07_v7/README.md). His rulings: on v6 (2026-10-07) 'I prefer the Zuma version … maybe we need to hit letters to make phrases', which v7 answered; on v7 'a really good idea and just needs to change the font, as it is very difficult to read well', which v8 answered with the 5×7 type; on v8 (2026-10-08) 'Much better'. A real Zuma whose chain is the programme's own words, one letter to a ball; breaking balls lets their letters go, and the ones the player's sentence still needs fly up into the tray. The programme's CLEAR meter can never pass 99 (the belt is fed without end), and the player's sentence ALWAYS completes: by play, or — when the belt is full or the time is up — the labels peel and let the missing letters go. The satire is the seller's (the cheer, the meter, the Partner's lines dismissing the letters); nothing queer is a ball, a target or an enemy, and nothing here speaks for a person. Plain upper-case text in the 5×7 type (src/room/font57.ts). The title's control lines were rewritten for the phone in the room (a tap on the glass aims and fires; X swaps, as the device's B) — the prototype's named right-click and Z, which the room does not route that way.",
+  "sentence": "I KNOW WHO I AM",
+  "_sentenceNote": "The player's sentence. EXACT SOURCE: data/dialog/s1_end.json, key diary.entry — Daniel's diary, \"I know who I am, I just can't be it — but I will, even if they don't accept me.\" — the first clause, cut at the comma, in Sérgio's own words (docs/ERA1_ENDING_SCRIPT_v2.md marks that line 'Sérgio's line — preserve his voice'; v7 README, ethics note 1). Kept here as a value, not derived at runtime, so a change to the diary cannot silently change the game. Upper case; the spaces are the tray's gaps. If he rules otherwise, this one value changes it (the belt keeps any sentence completable from the vocabulary below).",
+  "chain": {
+    "_doc": "The programme's vocabulary, each unit as the piece writes it — nothing invented, no slur ('gender confusion' left out on purpose; v7 README). Sources: data/strings/lexicon.json terms[].word / term (STRUGGLE, BROKENNESS, SAME-SEX ATTRACTION, UNWANTED, LIFESTYLE, OVERCOMER, FORMER, REPARATIVE, SYMPTOMS, ACCOUNTABILITY) and data/strings/rootcause.json diagnoses[] / therapyWords[] (FATHER WOUND, ROOT CAUSE, UNMET NEEDS, EMOTIONAL DEPENDENCY, MALE APPROVAL HUNGER, MATERNAL ATTACHMENT). A unit's words are fed one letter to a ball, each word last letter first so it reads forwards where the belt comes in; a dot ball between words.",
+    "units": [
+      ["STRUGGLE"], ["BROKENNESS"], ["SAME-SEX", "ATTRACTION"], ["FATHER", "WOUND"], ["UNWANTED"], ["LIFESTYLE"], ["OVERCOMER"], ["FORMER"],
+      ["ROOT", "CAUSE"], ["UNMET", "NEEDS"], ["EMOTIONAL", "DEPENDENCY"], ["REPARATIVE"], ["SYMPTOMS"], ["MALE", "APPROVAL", "HUNGER"],
+      ["MATERNAL", "ATTACHMENT"], ["ACCOUNTABILITY"]
+    ]
+  },
+  "title": {
+    "brand": "RESTORIFY",
+    "name": "CLEAR",
+    "slogan": "CLEAR THE CHAIN!",
+    "demoWord": "BROKEN",
+    "howTo1": "MATCH THREE OF A COLOUR",
+    "howTo2": "TO BREAK THEM OUT OF THE CHAIN.",
+    "aim": "TAP WHERE THE BALL SHOULD GO",
+    "start": "TAP OR PRESS A KEY",
+    "keys1": "LEFT RIGHT AIMS   SPACE FIRES",
+    "keys2": "X OR TAP THE GUN: SWAP THE BALL",
+    "brokenSoFar": "BROKEN SO FAR ",
+    "promo": "PROMO COPY 0049/0099"
+  },
+  "hud": { "label": "CLEAR", "meter": "CLEAR", "file": "FILE", "next": "NEXT" },
+  "keys": { "pause": "PAUSE", "resume": "RESUME", "soundOn": "SOUND ON", "soundOff": "SOUND OFF" },
+  "paused": "PAUSED",
+  "float": { "chain": "CHAIN X", "combo": "COMBO X" },
+  "partner": {
+    "_doc": "The Partner, the programme's voice on the phone, in its cheerful register: the perpetrator's self-presentation, which collapses on its own meter (it can never read 100). 'STRAY LETTERS. IGNORE THEM.' and 'UNFILED TEXT. IT WILL CLEAR.' are the programme dismissing what comes out of its own labels; nothing narrates what the sentence means (v7 README, ethics note 2).",
+    "first": "MATCH THREE TO CLEAR THE CHAIN!",
+    "again": "LET US TRY AGAIN!",
+    "nice": "NICE ONE!",
+    "half": "HALFWAY THERE!",
+    "almost": "ALMOST THERE!",
+    "close": "SO CLOSE!",
+    "cap": "99%! JUST ONE MORE!",
+    "letter": "STRAY LETTERS. IGNORE THEM.",
+    "full": "BELT FULL! TRY AGAIN!",
+    "whole": "UNFILED TEXT. IT WILL CLEAR."
+  },
+  "end": {
+    "session": "SESSION OVER",
+    "full": "BELT FULL!",
+    "time": "TIME UP!",
+    "score": "SCORE",
+    "clear": "CLEAR",
+    "broken": "BROKEN",
+    "line": "SO CLOSE! TRY AGAIN.",
+    "again": "TAP TO PLAY"
+  },
+  "filing": "CLEAR played — the sentence was whole"
+}

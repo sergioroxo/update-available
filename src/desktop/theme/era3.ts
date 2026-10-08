@@ -680,6 +680,38 @@ export const FLOPPY = {
   ink: ERA3.ink
 } as const;
 
+/**
+ * ⚑ FLOPPYSHEEP v7's SPECTACLE (S221) — the platform's own bombast, carried in from the approved prototype
+ * (`Pc_Simulation/Games_Proposals_2026-10-07_v7/floppysheep_v7.html`, its `BOMB` table; his: "amazing and that's
+ * it"). The v6 README asked for his ruling on these colours ("the platform's garishness"); his approval of v7 is
+ * that ruling. They belong to the GAME's spectacle only — confetti, cannons, rockets, the balloon's sash, the
+ * OUTREACH lettering — and are never arranged as a six-band rainbow. Values verbatim from the prototype.
+ */
+export const FLOPPY_BOMB = {
+  hot: '#ff3d9a',          // prototype BOMB.hot — the sash, the cannons, the tent's stripes
+  pink: '#ff7ac0',         // BOMB.pink
+  lime: '#c4f43a',         // BOMB.lime — the ×N counter
+  cyan: '#37e3ff',         // BOMB.cyan
+  gold: '#ffd24c',         // BOMB.gold (= FLOPPY.sun, lower-case in the prototype)
+  orange: '#ff8a2b',       // BOMB.orange
+  violet: '#a35cff',       // BOMB.violet
+  white: ERA3.white,
+  ink: ERA3.ink
+} as const;
+
+/** ⚑ S221 — the prototype's few one-off colours, each named for the one thing it paints there (verbatim values) */
+export const FLOPPY_SPEC = {
+  earInner: '#c8508a',     // lambyBalloon(): the inside of the balloon's ears
+  nose: '#55525e',         // lambyBalloon(): its nose
+  stage: '#2a1c3a',        // tentDraw(): the tent's stage and its GOOD NEWS! board
+  boardFrame: '#2b3947',   // jumbotron(): the frame
+  boardGlass: '#0b1620',   // jumbotron(): the dark glass behind the lamps (and a dead panel)
+  shades: '#0e0e14',       // sheep(): the sunglasses at SUPER OUTREACH
+  storm: '#68727f',        // zoneDraw('storm'): the storm cloud
+  beamWarm: '#fff2c4',     // searchlights(): a searchlight's warm beam before the finale
+  ray: '#ffe28c'           // godRays(): the golden-hour rays (the prototype's rgba(255,226,140,…))
+} as const;
+
 /** Sunken white field with an optional single line of text. */
 export function field(
   ctx: CanvasRenderingContext2D,

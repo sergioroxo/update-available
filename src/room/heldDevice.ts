@@ -1,7 +1,7 @@
 /**
  * ⚑ S189 — A HELD DEVICE: a room object you can pick up and play (Phase 4). Generalised from S188's Game
  * Boy (his: "so it can press it, it comes closer to you to let you play") so that the three games share
- * one grammar: 1997's handheld (FIT IN), 2003's phone (REACH), 2026's console (TIDY).
+ * one grammar: 1997's handheld (FIT IN), 2003's phone (CLEAR, which replaced REACH in S222), 2026's console (TIDY).
  *
  * - The prop is spawnModel's wrapper; the mesh sits inside `model-<key>-tilt`. The SCREEN is a plane
  *   parented to a node of the mesh (chosen by the material it sits on, or the mesh root) and placed in that

@@ -171,3 +171,19 @@ export const TIDY = {
   pen: '#2a4a8a', notebook: '#8a5ac8', phones: '#303038', charger: '#e8e8e8', cup: '#d87a5a',
   binder: '#3a3a48', pinBlue: '#5bcefa', pinPink: '#f5a9b8', pinWhite: '#ffffff', letter: '#ffffff', rx: '#f0f0f0', rxCap: '#5b8fd8'
 } as const;
+
+/**
+ * ⚑ S222 — CLEAR (2003), on Daniel's flip phone (src/games/clear.ts), which replaced REACH there. SOURCE: the
+ * prototype he approved, Pc_Simulation/Games_Proposals_2026-10-08_clear_v8/clear_v8.html (its `R` object,
+ * verbatim — which the prototype itself took from REACH above, so the phone keeps its grey-blue LCD). Five of
+ * them are the balls (pink, blue, yellow, green, violet). Every other shade on that screen — a ball's cut
+ * (highlight, shadow, its five brightnesses), the stain the groove keeps, and the steps that stand in for the
+ * prototype's transparency (the Painter has no alpha) — is MIXED in clear.ts from these, exactly as the
+ * prototype mixes them (toward white, toward lcdDark, or one of these over another). Nothing else is introduced.
+ */
+export const CLEAR = {
+  lcd: '#9fb3bd', lcdDark: '#1f2c33', lcdMid: '#5e7482', snakeHead: '#2a3136',
+  pink: '#f08aa8', blue: '#5bcefa', white: '#ffffff', red: '#e0454f', orange: '#f29a3b', yellow: '#f2d94e',
+  green: '#4aa86a', violet: '#8a5ac8',
+  halo: '#f2d06b', lattice: '#8ea2ad', frame: '#3a4b55', wool: '#ffffff'
+} as const;

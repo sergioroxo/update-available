@@ -33,7 +33,9 @@
  * All display text is data/dialog/s1_fitin.json. Filed once, when the first run ends:
  * "FIT IN played — the odd pieces stayed" (unchanged).
  */
-import { px as pxc, text, textW, type Painter } from '../room/calendarArt';
+import { px as pxc, type Painter } from '../room/calendarArt';
+// ⚑ S221 (his, 2026-10-08: "make sure the FIT IN also has it, so it looks good") — CLEAR v8's 5×7 type, not the calendar's 3×5
+import { text, textW } from '../room/font57';
 import { HANDHELD as H } from '../desktop/theme/calendar';
 import { gameMenuBus } from '../state/gameMenuBus';
 import D from '../../data/dialog/s1_fitin.json';
@@ -359,7 +361,7 @@ export class FitIn implements DeviceGame {
   tap(x?: number, y?: number): void {
     if (this.mode === 'pause') { this.key('start'); return; }
     if ((this.mode === 'title' || this.mode === 'end') && x !== undefined && y !== undefined) {
-      const sy0 = this.mode === 'title' ? 62 : 52, sy1 = sy0 + 12;
+      const sy0 = this.mode === 'title' ? 76 : 61, sy1 = sy0 + 12;   // S221: the arrows' rows moved with the 5×7 type
       if (y >= sy0 - 2 && y <= sy1 + 2 && (x < 30 || x > W - 30)) { this.key(x < 30 ? 'left' : 'right'); return; }
     }
     this.key('a');
@@ -448,29 +450,28 @@ export class FitIn implements DeviceGame {
     const blink = Math.floor(this.clock * 2) % 2 === 0;
     const ctext = (s: string, y: number, col: string, k = 1, x0 = 0, w = W): void => { text(g, s, x0 + Math.round((w - textW(s, k)) / 2), y, col, k); };
     if (this.mode === 'play' && this.hintT < 4 && this.placedCount === 0) {
-      pxc(g, 20, 88, G.D, 120, 11); ctext(this.RM.name, 91, G.LM);
-      pxc(g, 20, 100, G.D, 120, 11); ctext(D.hint.rule1, 103, G.L);
-      pxc(g, 20, 112, G.D, 120, 11); ctext(D.hint.rule2, 115, G.L);
+      pxc(g, 20, 88, G.D, 120, 11); ctext(this.RM.name, 90, G.LM);
+      pxc(g, 20, 100, G.D, 120, 11); ctext(D.hint.rule1, 102, G.L);
+      pxc(g, 20, 112, G.D, 120, 11); ctext(D.hint.rule2, 114, G.L);
     }
     if (this.cheer && (this.mode === 'play' || this.mode === 'dying')) {
       const wd = textW(this.cheer.s) + 8;
-      pxc(g, Math.round((W - wd) / 2), 20, G.D, wd, 9); ctext(this.cheer.s, 22, G.L);
+      pxc(g, Math.round((W - wd) / 2), 20, G.D, wd, 11); ctext(this.cheer.s, 22, G.L);
     }
-    if (this.mode === 'pause') { pxc(g, 40, 52, G.D, 80, 22); ctext(D.pause.title, 56, G.L, 2); ctext(D.pause.resume, 67, G.M); }
+    if (this.mode === 'pause') { pxc(g, 40, 50, G.D, 80, 30); ctext(D.pause.title, 53, G.L, 2); ctext(D.pause.resume, 70, G.M); }
     if (this.mode === 'end') {
-      pxc(g, 16, 12, G.D, 128, 66); pxc(g, 18, 14, G.L, 124, 62); pxc(g, 19, 15, G.D, 122, 60); pxc(g, 20, 16, G.L, 120, 58);
-      ctext(D.end.title, 19, G.D, 2); pxc(g, 28, 31, G.MD, 104, 1);
-      text(g, D.hud.fit, 26, 36, G.MD); text(g, `${String(this.placedCount).padStart(2, '0')}/${MOULDS[this.ranLvl].top}`, 38, 34, G.D, 2);
-      text(g, D.hud.top, 94, 36, G.MD); text(g, String(this.hiBy[this.ranLvl]).padStart(2, '0'), 106, 34, G.D, 2);
-      this.oddIcon(g, 26, 46);
-      // KEPT, a plus (the 3×5 type has none), what this run cut off, and the heap's whole
-      text(g, D.hud.kept, 36, 47, G.D);
-      const kx = 36 + textW(D.hud.kept) + 2;
-      pxc(g, kx, 49, G.D, 3, 1); pxc(g, kx + 1, 48, G.D, 1, 3);
-      text(g, `${this.countShown}  ${D.hud.all} ${this.keptCells}`, kx + 5, 47, G.D);
-      this.arrow(g, 24, 56, -1, G.D); this.arrow(g, 133, 56, 1, G.D);
-      ctext((this.completed ? D.end.next : '') + this.CM.name, 58, G.D);
-      if (blink) ctext(D.end.press, 67, G.MD);
+      pxc(g, 16, 13, G.D, 128, 72); pxc(g, 18, 15, G.L, 124, 68); pxc(g, 19, 16, G.D, 122, 66); pxc(g, 20, 17, G.L, 120, 64);
+      ctext(D.end.title, 20, G.D, 2); pxc(g, 28, 36, G.MD, 104, 1);
+      // S221: the 5×7 type is taller, so the counts sit at single size, dark on their pale labels
+      const fitL = D.hud.fit, topL = D.hud.top;
+      text(g, fitL, 26, 41, G.MD); text(g, `${String(this.placedCount).padStart(2, '0')}/${MOULDS[this.ranLvl].top}`, 26 + textW(fitL) + 4, 41, G.D);
+      text(g, topL, 92, 41, G.MD); text(g, String(this.hiBy[this.ranLvl]).padStart(2, '0'), 92 + textW(topL) + 4, 41, G.D);
+      this.oddIcon(g, 26, 52);
+      // KEPT +, what this run cut off, and the heap's whole
+      text(g, `${D.hud.kept} +${this.countShown}  ${D.hud.all} ${this.keptCells}`, 36, 52, G.D);
+      this.arrow(g, 24, 63, -1, G.D); this.arrow(g, 133, 63, 1, G.D);
+      ctext((this.completed ? D.end.next : '') + this.CM.name, 63, G.D);
+      if (blink) ctext(D.end.press, 73, G.MD);
     }
   }
 
@@ -483,9 +484,9 @@ export class FitIn implements DeviceGame {
   }
   private hud(g: Painter): void {
     pxc(g, 0, 0, G.D, W, 11);
-    text(g, D.hud.fit, 3, 3, G.M); text(g, String(this.placedCount).padStart(2, '0'), 17, 2, G.L, 2);
-    text(g, this.RM.short, 38, 3, G.LM);
-    this.oddIcon(g, 98, 2); text(g, D.hud.kept, 106, 3, G.M); text(g, String(this.keptCells).padStart(4, '0'), 126, 3, G.L);
+    text(g, D.hud.fit, 3, 2, G.M); text(g, String(this.placedCount).padStart(2, '0'), 3 + textW(D.hud.fit) + 4, 2, G.L);
+    text(g, this.RM.short, 40, 2, G.LM);
+    this.oddIcon(g, 98, 2); text(g, D.hud.kept, 106, 2, G.M); text(g, String(this.keptCells).padStart(4, '0'), 106 + textW(D.hud.kept) + 4, 2, G.L);
     pxc(g, 0, 11, G.DD, W, 1);
   }
   private sy(h: number): number { return GROUND_Y + Math.round(this.camH) - h; }
@@ -604,16 +605,16 @@ export class FitIn implements DeviceGame {
     const ph = (Math.sin(this.clock * 1.7) + 1) / 2;
     // cartridge label
     for (let x = 0; x < W; x += 4) { pxc(g, x, 0, G.D, 2, 2); pxc(g, x + 2, 2, G.D, 2, 2); }
-    pxc(g, 8, 8, G.D, W - 16, 1); pxc(g, 8, 36, G.D, W - 16, 1);
-    ctext(D.publisher, 11, G.M); ctext(D.title, 17, G.D, 3);
-    if (Math.floor(this.clock * 2) % 2 === 0) ctext(D.card.start, 40, G.D);
-    ctext(D.card.rule1, 49, G.D); ctext(D.card.rule2, 56, G.D);
+    pxc(g, 8, 8, G.D, W - 16, 1); pxc(g, 8, 44, G.D, W - 16, 1);
+    ctext(D.publisher, 11, G.M); ctext(D.title, 21, G.D, 3);
+    if (Math.floor(this.clock * 2) % 2 === 0) ctext(D.card.start, 48, G.D);
+    ctext(D.card.rule1, 58, G.D); ctext(D.card.rule2, 67, G.D);
     // the mould chooser: two small arrows on the glass and the d-pad, left and right
-    this.arrow(g, 14, 63, -1, G.D); this.arrow(g, 142, 63, 1, G.D);
-    ctext(`${this.lvl + 1}/${MOULDS.length} ${this.CM.name}`, 65, G.D);
+    this.arrow(g, 14, 78, -1, G.D); this.arrow(g, 142, 78, 1, G.D);
+    ctext(`${this.lvl + 1}/${MOULDS.length} ${this.CM.name}`, 78, G.D);
     // a miniature of the chosen mould (dotted), a sliding block, and the heap at the foot
-    const m = this.CM, oc = m === MOULDS[0] ? G.MD : G.DD, top = m.top * BH, ky = 44 / Math.max(top, 60), kx = 0.55, baseY = 117;
-    for (let yy = 72; yy < baseY; yy++) {
+    const m = this.CM, oc = m === MOULDS[0] ? G.MD : G.DD, top = m.top * BH, ky = 27 / Math.max(top, 60), kx = 0.55, baseY = 117;
+    for (let yy = 90; yy < baseY; yy++) {
       const h = (baseY - yy) / ky; if (h > top + 3) continue;
       const half = m.w(h) * kx / 2, up = m.w(h + 1 / ky) * kx / 2;
       if (half >= 1 && yy % 2 === 0) { pxc(g, Math.round(CX - half), yy, oc); pxc(g, Math.round(CX + half - 1), yy, oc); }
@@ -629,7 +630,7 @@ export class FitIn implements DeviceGame {
     pxc(g, 0, 118, G.D, W, 1);
     pxc(g, 0, 126, G.D, W, 1); pxc(g, 0, 127, G.L, W, 17);
     // the cartridge's own count
-    this.oddIcon(g, 4, 129); text(g, `${D.hud.kept} ${this.keptCells}  ${D.hud.top} ${this.hiBy[this.lvl]}`, 14, 130, G.D);
+    this.oddIcon(g, 4, 128); text(g, `${D.hud.kept} ${this.keptCells}  ${D.hud.top} ${this.hiBy[this.lvl]}`, 14, 128, G.D);
     ctext(D.licence, 136, G.MD);
   }
 }

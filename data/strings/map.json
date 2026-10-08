@@ -254,9 +254,9 @@
      "where": "the monitor"
     },
     {
-     "id": "reach",
-     "label": "REACH",
-     "done": "reachPlayed",
+     "id": "clear",
+     "label": "CLEAR",
+     "done": "clearPlayed",
      "optional": true,
      "hint": "Your phone on the desk has a game on it now.",
      "where": "the desk"

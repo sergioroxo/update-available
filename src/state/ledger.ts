@@ -117,7 +117,7 @@ export interface Ledger {
    */
   /**
    * ⚑ S189 — Phase 4's games (src/games/): one line per run that ended, in the era it was played —
-   * FIT IN (1997), REACH (2003), TIDY (2026). FloppySheep never files (S70: it never judges her).
+   * FIT IN (1997), CLEAR (2003; ⚑ S222 — it replaced REACH, whose id 'reach' nothing files any more), TIDY (2026). FloppySheep never files (S70: it never judges her).
    * In-memory only, like everything here.
    */
   games: { id: string; era: 'e1' | 'e2' | 'e3' | 'e4'; witness: string }[];

@@ -8,10 +8,11 @@
  *   bezel, the lit screen, the magenta A/B, the d-pad, start/select — and those buttons ARE the controls.
  *   Its game is there once the starter kit has come (the cartridge came in the kit's post); before, a Game
  *   Boy switched on with nothing in it: a dark bar.
- * - 2003 · Daniel's flip phone on his desk ('Flip Phone', Timmy Turner) — REACH, Restorify's game, once the
- *   first daily check-in is on his file. Its screen is the model's own grey-blue glass ('Material.006', a
- *   flat plane at y 0.827, x ±0.771, z −0.03…1.99 in its node — measured from the mesh). A tap on the left or
- *   right half of the glass turns the snake. Before: the phone's own idle screen.
+ * - 2003 · Daniel's flip phone on his desk ('Flip Phone', Timmy Turner) — CLEAR, Restorify's game (⚑ S222: it
+ *   replaced REACH; src/games/clear.ts), once the first daily check-in is on his file. Its screen is the model's
+ *   own grey-blue glass ('Material.006', a flat plane at y 0.827, x ±0.771, z −0.03…1.99 in its node — measured
+ *   from the mesh). A tap on the glass aims the gun at the tap and fires; the soft keys on the glass pause, swap
+ *   and set the piece's one mute. Before: the phone's own idle screen.
  * - 2026 · the console on Maya's bed ('Nintendo Switch', Jasmine Roberts) — TIDY, once her file holds two
  *   entries (her first steps with the programme). Its screen is the model's glass (the x ±2.777, y ±1.61 quad of 'Material.006'; that material also carries a small button at x 3.2–3.5).
  *   Taps on the glass play it. Before: a dark home screen with the time.
@@ -20,12 +21,13 @@
  */
 import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
-import { px, text, textW } from './calendarArt';
-import { HANDHELD as H, REACH as RC, TIDY as TD } from '../desktop/theme/calendar';
+import { px, text } from './calendarArt';
+import { text as text57, textW as textW57 } from './font57';
+import { HANDHELD as H, CLEAR as RC, TIDY as TD } from '../desktop/theme/calendar';
 import { buildHeldDevice, type DeviceSpec, type HeldDevice } from './heldDevice';
 import type { GameKey } from '../games/types';
 import { FitIn } from '../games/fitIn';
-import { Reach } from '../games/reach';
+import { Clear } from '../games/clear';
 import { Tidy } from '../games/tidy';
 
 export const DEVICE_PROP_IDS = ['danielHandheld', 'flipPhone', 'e_console'];
@@ -61,18 +63,20 @@ const SPECS: DeviceSpec[] = [
     game: () => new FitIn()
   },
   {
-    propId: 'flipPhone', modelKey: 'flipPhone', era: 'e2', gameId: 'reach',
+    propId: 'flipPhone', modelKey: 'flipPhone', era: 'e2', gameId: 'clear',
     screenOn: { material: 'Material.006' },
-    screen: { pos: [0, 0.836, 0.98], euler: [0, 0, 0], scale: [1.5, 1, 1.98], w: 72, h: 96 },
+    // ⚑ S222: CLEAR v8 is a 240 × 320 game (REACH was 72 × 96) — the same 3:4, so the same glass quad
+    screen: { pos: [0, 0.836, 0.98], euler: [0, 0, 0], scale: [1.5, 1, 1.98], w: 240, h: 320 },
     available: (has) => has('kind:checkin'),
     idle: (g, w, h, clock) => {
+      // ⚑ S222 — drawn for the 240 × 320 glass in the game's own 5×7 type (it was 72 × 96, in the 3×5)
       px(g, 0, 0, RC.lcd, w, h);
-      for (let i = 0; i < 4; i++) px(g, 3 + i * 3, 6 - i, RC.lcdDark, 2, 2 + i);
+      for (let i = 0; i < 4; i++) px(g, 10 + i * 9, 26 - (6 + i * 4), RC.lcdDark, 6, 6 + i * 4);
       const t = Math.floor(clock / 2) % 2 ? '21:40' : '21 40';
-      text(g, t, Math.round((w - textW(t, 2)) / 2), 30, RC.lcdDark, 2);
-      text(g, 'RESTORIFY', Math.round((w - textW('RESTORIFY')) / 2), 66, RC.lcdMid);
+      text57(g, t, Math.round((w - textW57(t, 6)) / 2), 100, RC.lcdDark, 6);
+      text57(g, 'RESTORIFY', Math.round((w - textW57('RESTORIFY', 2)) / 2), 220, RC.lcdMid, 2);
     },
-    game: () => new Reach(),
+    game: () => new Clear(),
     holdDist: 0.19
   },
   {

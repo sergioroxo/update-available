@@ -25,6 +25,9 @@ const AUDIO_BASE = 'assets/audio/';
  *  is announced by name, and app.ts turns the name into a caption in the strip. */
 let onCue: ((name: string) => void) | null = null;
 export function setCueListener(fn: ((name: string) => void) | null): void { onCue = fn; }
+/** ⚑ S222 — a LIVE sound (Web Audio, no file: CLEAR's bell on Daniel's phone) names itself the same way, so the
+ *  strip can caption it too (data/strings/captions.json). The caller announces only what is actually heard. */
+export function announceCue(name: string): void { onCue?.(name); }
 
 const REGISTRY: Record<string, string> = {
   'tape-hiss.mp3': `${AUDIO_BASE}tape-hiss.mp3`,

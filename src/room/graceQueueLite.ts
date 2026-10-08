@@ -2172,7 +2172,7 @@ export class GraceQueueLite {
         this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2]);
         this.phoneV++; this.bump();
         break;
-      case 'floppy': case 'floppyPlay': case 'floppyOver':
+      case 'floppy': case 'floppyPlay': case 'floppyFinale': case 'floppyOver':
         this.floppy.debugBeat(beat); break;
     }
   }

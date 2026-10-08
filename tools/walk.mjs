@@ -286,6 +286,33 @@ async function main() {
    * and hands it back untouched, so the piece cannot tell it is being listened
    * to. Lane A of the review used exactly this to watch the tail.
    */
+  /**
+   * ⚑ S221 — THE TEXT CENSUS (W1-B1/B2: "too much text"; "an analysis of the quantity of text per surface").
+   * Every 2D canvas's fillText is listened to (read-only: the call goes through untouched). A fill or clear
+   * that covers the whole canvas starts a new frame for it, so each canvas holds the words of the picture it
+   * shows NOW. The walk reads that at every step; the report ranks the screens by words. Canvas text only:
+   * the pixel games draw their letters with rects, and DOM chrome (captions, the menu) is not counted.
+   */
+  await page.evaluateOnNewDocument(() => {
+    const per = new Map();
+    const wrap = (P) => {
+      if (!P) return;
+      const ft = P.fillText, fr = P.fillRect, cr = P.clearRect;
+      const full = (ctx, x, y, w, h) => {   // in device pixels: the surfaces draw in logical units under a DPR scale
+        const c = ctx.canvas, m = ctx.getTransform ? ctx.getTransform() : { a: 1, d: 1, e: 0, f: 0 };
+        return x * m.a + m.e <= 0.5 && y * m.d + m.f <= 0.5 && (x + w) * m.a + m.e >= c.width - 0.5 && (y + h) * m.d + m.f >= c.height - 0.5;
+      };
+      const frame = (ctx) => { per.set(ctx.canvas, []); };
+      P.fillText = function (t, ...rest) { const c = this.canvas; let a = per.get(c); if (!a) { a = []; per.set(c, a); } const v = String(t).trim(); if (v && a.length < 600) a.push(v); return ft.call(this, t, ...rest); };
+      P.fillRect = function (x, y, w, h) { if (full(this, x, y, w, h)) frame(this); return fr.call(this, x, y, w, h); };
+      P.clearRect = function (x, y, w, h) { if (full(this, x, y, w, h)) frame(this); return cr.call(this, x, y, w, h); };
+    };
+    wrap(window.CanvasRenderingContext2D && CanvasRenderingContext2D.prototype);
+    wrap(window.OffscreenCanvasRenderingContext2D && OffscreenCanvasRenderingContext2D.prototype);
+    window.__textNow = () => [...per.entries()].filter(([, a]) => a.length)
+      .map(([c, a]) => ({ size: c.width + 'x' + c.height, text: [...new Set(a)].join(' | ') }));
+  });
+
   await page.evaluateOnNewDocument(() => {
     const w = window;
     const Native = w.Audio;
@@ -1397,6 +1424,20 @@ const LAP = { w: 224, h: 140 };
   const advanceOf = (st) =>
     st.era + '|' + st.phase + '|' + st.spine + '|' + st.qMode;
 
+  /** S221 — the text census: every distinct screen of words the walk saw, keyed by era, canvas and text */
+  const census = new Map();
+  const takeCensus = async (st, step) => {
+    const now = await page.evaluate(() => (window.__textNow ? window.__textNow() : [])).catch(() => []);
+    for (const c of now) {
+      const words = c.text.split(/[\s|]+/).filter((w) => /[A-Za-z]/.test(w)).length;
+      if (words < 1) continue;
+      const key = st.era + '|' + c.size + '|' + c.text;
+      const had = census.get(key);
+      if (had) { had.seen++; continue; }
+      census.set(key, { era: st.era, phase: st.phase, size: c.size, words, step, seen: 1, text: c.text });
+    }
+  };
+
   // ── the walk ──
   let s = await probe();
   /** the probe `pick` is being asked about — for the tab budget only */
@@ -1538,6 +1579,7 @@ const LAP = { w: 224, h: 140 };
 
   for (let i = 0; i < MAX_STEPS; i++) {
     if (s.driven) { await wait(1600); s = await probe(); continue; }   // a travelling is playing
+    await takeCensus(s, i);
 
     /**
      * ⚑ ONLY A JUMPED RUN CAN GET HERE, and the walk stops rather than
@@ -1957,6 +1999,34 @@ const LAP = { w: 224, h: 140 };
       const n = String(l.target).replace('(swept) ', '');
       if (!sweptAt[n]) sweptAt[n] = l.logical;
     }
+
+  {
+    // ⚑ S221 — the text census report (docs/reinterp/TEXT_CENSUS_<stamp>.md)
+    const rows = [...census.values()];
+    // a screen that grows (a chat filling, a page typing out) is many entries; keep the largest of each prefix family
+    //   … and a screen that changes in place (a record filling, a choice lit) is one screen: grouped by era, canvas and its
+    //   opening words (its title, in practice), the fullest version kept, with how many variants it had
+    const fam = new Map();
+    for (const r of rows) {
+      const k = r.era + '|' + r.size + '|' + r.text.slice(0, 48);
+      const f = fam.get(k);
+      if (!f) fam.set(k, { ...r, variants: 1 });
+      else { f.variants++; if (r.words > f.words) Object.assign(f, { ...r, variants: f.variants }); }
+    }
+    const keep = [...fam.values()];
+    const byEra = {};
+    for (const r of keep) { const e = (byEra[r.era] ??= { screens: 0, words: 0, max: 0 }); e.screens++; e.words += r.words; e.max = Math.max(e.max, r.words); }
+    const top = [...keep].sort((a, b) => b.words - a.words).slice(0, 40);
+    let cm = 'STATUS: live\n\n# Text census — ' + stamp + '\n\n';
+    cm += '*Made by tools/walk.mjs (S221, W1-B1/B2). Every distinct screen of canvas text the walk saw, counted in words. ';
+    cm += 'Canvas text only (the pixel games and the DOM chrome are not counted). A screen that fills up over time is counted at its fullest.*\n\n';
+    cm += '## Per era\n\n| era | distinct screens | words in all | heaviest screen |\n|---|---|---|---|\n';
+    for (const [e, v] of Object.entries(byEra)) cm += `| ${e} | ${v.screens} | ${v.words} | ${v.max} |\n`;
+    cm += '\n## The 40 heaviest screens\n\n';
+    for (const r of top) { const [cw, ch] = r.size.split('x').map(Number); cm += `### ${r.words} words · ${r.era} · ${r.phase} · canvas ${r.size} · step ${r.step}${r.variants > 1 ? ' · ' + r.variants + ' variants' : ''}${ch >= 2 * cw ? ' · ⚑ ATLAS: several panels on one canvas, one shown at a time' : ''}\n\n> ${r.text.slice(0, 900).replace(/\n/g, ' ')}${r.text.length > 900 ? ' …' : ''}\n\n`; }
+    writeFileSync(join(OUT_DIR, 'TEXT_CENSUS_' + stamp + '.md'), cm);
+    writeFileSync(join(OUT_DIR, 'TEXT_CENSUS_' + stamp + '.json'), JSON.stringify(keep, null, 1));
+  }
 
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.json'), JSON.stringify({
     when: new Date().toISOString(), port: PORT, viewport: VIEW,

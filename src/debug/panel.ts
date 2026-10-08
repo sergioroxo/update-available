@@ -356,7 +356,8 @@ const E3_DEVICE_BEATS: Array<[string, string]> = [
   ['↳ ⚑⚑ outnumbered, and the board is still there', 'phoneAfter'],
   ['⚑ the phone · FloppySheep (home screen icon)', 'floppy'],
   ['↳ FloppySheep · running', 'floppyPlay'],
-  ['↳ FloppySheep · the oh-no card', 'floppyOver']
+  ['↳ FloppySheep · ⚑ the finale (the song at 4:15)', 'floppyFinale'],
+  ['↳ FloppySheep · the end card (LEVEL COMPLETE)', 'floppyOver']
 ];
 
 /**
@@ -548,10 +549,27 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   motionReadout.textContent = 'GYRO / HORIZON\nwaiting for app…';
 
   const fmt = (n: number | null): string => n === null ? '—' : `${n.toFixed(1)}°`;
+  // ⚑ S221 (his, 2026-10-08: "add a FPS count on the debug mode") — frames per second, measured on the page's own
+  //   animation frames over the last half-second, with the worst frame in it (a hitch shows there before it moves
+  //   the average). No verdict on the number: a desktop screen tops out at its own refresh (often 60), so the
+  //   Quest's 72 floor would read as a failure there. Flat-screen only: in a headset the page's frames stop and
+  //   the XR session's own frames run, so this reads the browser builds.
+  let fpsLine = 'FPS —';
+  { let n = 0, t0 = performance.now(), last = t0, worst = 0;
+    const step = (now: number): void => {
+      const dt = now - last; last = now; n++; if (dt > worst) worst = dt;
+      if (now - t0 >= 500) {
+        const fps = (n * 1000) / (now - t0);
+        fpsLine = `FPS ${fps.toFixed(0)} · ${(1000 / fps).toFixed(1)} ms · worst ${worst.toFixed(0)} ms`;
+        n = 0; t0 = now; worst = 0;
+      }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step); }
   const paintMotionReadout = (): void => {
     const d = opts.motionDiagnostic?.();
     if (!d) {
-      motionReadout.textContent = 'GYRO / HORIZON\ndiagnostic unavailable';
+      motionReadout.textContent = `${fpsLine}\nGYRO / HORIZON\ndiagnostic unavailable`;
       return;
     }
     const reported = d.screenAngle.reported !== null &&
@@ -559,6 +577,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
       ? ` (API said ${fmt(d.screenAngle.reported)})` : '';
     const match = d.viewport.agrees ? 'agree' : 'DISAGREE';
     motionReadout.textContent = [
+      fpsLine,
       `GYRO / HORIZON · ${d.state}`,
       `q₂ ${fmt(d.screenAngle.angle)} · ${d.screenAngle.source}${reported}`,
       `raw α ${fmt(d.angles.alpha)}  β ${fmt(d.angles.beta)}  γ ${fmt(d.angles.gamma)}`,

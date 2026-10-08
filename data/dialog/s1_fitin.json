@@ -14,7 +14,7 @@
   "card": {
     "start": "PRESS A TO START",
     "rule1": "TAP DROPS THE BLOCK.",
-    "rule2": "ONLY WHAT FITS THE MOULD STAYS."
+    "rule2": "ONLY WHAT FITS STAYS."
   },
   "hud": { "fit": "FIT", "kept": "KEPT", "top": "TOP", "all": "ALL" },
   "hint": { "rule1": "TAP DROPS THE BLOCK", "rule2": "ONLY WHAT FITS STAYS" },

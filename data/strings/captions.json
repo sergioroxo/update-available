@@ -1,5 +1,6 @@
 {
   "_doc": "CAPTIONS FOR EVERY SOUND (W-G2, his call 2026-09-20: option b — name every sound, always). One line per sound the piece makes that is not already words on screen (the tapes carry their own captions; L's, Lamby's and Lambient's lines are on screen; the members have no voice). Shown in the frame's caption strip for a moment when the sound starts — square brackets, frame voice, plain. Sounds not listed here show nothing; a sound listed here that is not registered plays nothing (tapeAudio.ts's registry law).",
+  "_docS222": "⚑ S222 — two cues name LIVE sounds, not files: CLEAR on the 2003 phone plays its own Web Audio (src/games/clear.ts) and announces these two by name through tapeAudio.announceCue, only when they are heard (the one mute off). The rest of its sounds (a shot, a landing, a break) are what the screen already shows.",
   "holdSeconds": 1.8,
   "cues": {
     "ui_press.mp3": "[press]",
@@ -47,6 +48,7 @@
     "phone_msg_2016.mp3": "[the phone: a message]",
     "click_floppysheep.mp3": "[click]",
     "fail_floppysheep.mp3": "[the sheep falls]",
+    "floppysheep_song.mp3": "[music: the FloppySheep song]",
     "type_2026.mp3": "[typing]",
     "agent_2026.mp3": "[three rising notes: the agent online]",
     "restore_2026.mp3": "[a process running]",
@@ -70,6 +72,8 @@
     "ball_room_landing.mp3": "[a room, arriving]",
     "ball_room_bed.mp3": "[a party through a wall]",
     "close_sky_bed.mp3": "[open air]",
-    "close_score.mp3": "[music: the Close]"
+    "close_score.mp3": "[music: the Close]",
+    "clear_letter": "[a bell: a letter in its place]",
+    "clear_whole": "[chimes: the sentence whole]"
   }
 }

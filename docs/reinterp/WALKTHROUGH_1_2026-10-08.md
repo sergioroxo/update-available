@@ -26,6 +26,7 @@ tablet: Enter · In a headset: Enter VR*), with Sound captions, Controls, Credit
 | W1-A3 | **The festival cut is named "Speedrun Version".** Joins P7-33 / L-02 / B28 (the festival cut, "after people review"). | S | local | open |
 | W1-A4 | **A pre-game advert video** (his, 2026-10-08: "what do you think, what are your suggestions?"), a weird explainer of the topic in the programme's own voice ("come join us in the lives of those who struggle"), like Theme Hospital's intro films. He is unsure it should START the piece; it could live inside the Bob room as its explainer. | M | local + his | open: his ruling on where |
 | W1-A5 | **The Lexicon also on the Bob room's shelf.** | S | local | open |
+| W1-A7 | **The Bob room is named "LambyOS Home"** (his, 2026-10-08: "It can be LambyOS Home"). Diegetic: the programme's own front door, the way Bob was Windows'. | — | — | DECIDED |
 | W1-A6 | **A "what you can do here" panel at the start of EVERY era.** The colleague liked the one level panel that said what you could do. | M | local | open |
 
 ## B · Across the piece
@@ -128,13 +129,15 @@ like a lot of levels that are amazing… but then the other parts fall off."
 ## J · Games (his rulings 2026-10-07/08)
 | id | note | size | where | status |
 |---|---|---|---|---|
-| W1-J1 | **TIDY is replaced by ANTIVIRUS (2026, Maya):** a "Scan & Clean" utility that flags her life under "social contagion". Prototype first. | M | prototype agent → then local port | open |
+| W1-J1 | **ANTIVIRUS rejected** (his, 2026-10-08: "interesting elements but not well conceptualised or even realised"). He sends GPT a context-only prompt for **three** mini-games on the 2026 console (`PROMPT_GPT_SWITCH_GAMES_2026-10-08.md`); he picks one, then a local port. | M | his (GPT) → port | open |
 | W1-J2 | **CAMP TYCOON (2003),** "a whole separate thing for later". | L | later | parked |
-| W1-J3 | **CLEAR is the v7 Zuma (letters spell "I KNOW WHO I AM").** Waiting on his eye: the cut diary line, the two new dismissal lines, SAME-SEX ATTRACTION on the belt, a colour-blind aid. | M | his, then port | open |
-| W1-J4 | **FloppySheep v7** (the paced cannons) to bring into the piece. | M | port | open |
+| W1-J3 | **CLEAR v7 approved** (his, 2026-10-08: "a really good idea and just needs to change the font, as it is very difficult to read, and I fear with a smaller screen it will get lost"). v8: the 3×5 type replaced by a 5×7 dot-matrix alphabet (the LCD type of the period). Then the port onto the 2003 flip phone. | M | v8 local → port | in progress |
+| W1-J4 | **FloppySheep v7 approved** (his, 2026-10-08: "amazing and that's it"). Port onto Vera's phone, replacing the S70 version. | M | port (worktree agent) | in progress |
 
 ## K · Follow-ups (his, 2026-10-08, after S219)
 | Id | His words / the item | Size | How | State |
 |---|---|---|---|---|
 | W1-K1 | **"Shut down should not work, but leave can… Shut down should pop up a message saying 'you are not authorised to leave your treatment'."** Shut Down… is refused in LambyOS's voice (one line, OK, nothing filed); **Leave…** sits under it and opens the frame's menu at a short note ("Opens a different, plain page outside the story. You can come back from it.", Leave / Stay). The main menu's Leave keeps the quick exit: the same note as a grey line under the row, no extra press (my call, so a shared room stays one press away; his to reverse). | S | local | BUILT S220 |
 | W1-K2 | **"(The monitor)… if it is the system you can remove it."** It was the place, not the system: the "Next:" line now names the place only when it is somewhere else in the room. | S | local | BUILT S220 |
+| W1-K3 | **Games file one line per GAME, not per round** (his, 2026-10-08: "one line per game yes, not round"). FIT IN, CLEAR (and REACH before it) already do. | — | — | DECIDED |
+| W1-K4 | **"They haven't been played on a phone, but we need to be sure they can play well on the screen, closer to the screen"** (joins W1-B8, "the handheld is too small; hold it closer to the eye"). Measured from the room's numbers on a 1280 × 720 window: FIT IN's glass shows at ~121 px for 144 game pixels (0.84 screen px per game px: the 5×7 letters lose rows), CLEAR's at ~352 px for 320 (1.1), the 2026 console's at ~210 px for 72 (2.9). Fix: on a flat screen the held device is placed by the view (the glass fills a set share of the frame, whatever the window or phone shape), at least ~1.5 screen px per game px; in a headset it stays at a comfortable arm's distance. Then photographed held, at laptop and phone sizes. | M | local | open |
