@@ -7,19 +7,20 @@ prompt: paste it into a new cloud session pointed at the GitHub repository **ser
 
 **⚑ First run (2026-10-09):** the session cloned `main`, not `reinterp`, and found a Playwright Chromium at `/opt/pw-browsers` (4 cores, 15 GiB). Every prompt now starts by switching to `reinterp` itself, and the walker finds that Chromium without help.
 
-**Which model for which prompt** (choose it in the cloud session's model picker before pasting)
+**Which model, at which effort, for which prompt** (set both in the cloud session before pasting)
 
-| Prompt | Model | Why |
-|---|---|---|
-| 0 — machine check | **Haiku 5.5** | mechanical: run commands, report; nothing to judge |
-| 1 — text cut | **Opus 5.5** | it rewrites display text, including felt scenes: the writing and the care are the job |
-| 2 — LambyOS Home | **Opus 5.5** | design and the advert's script, with ethics questions to raise for you |
-| 3 — 2003 cadence | **Sonnet 5.5** | mostly reading code and mapping timings; the code changes are small waits |
-| 4 — Vera's options | **Sonnet 5.5** | a plan built from reading code and counting text; no final writing |
-| 5 — rules sweep | **Haiku 5.5** | thousands of lines, each a yes/no check against six rules |
+| Prompt | Model | Effort | Why |
+|---|---|---|---|
+| 0 — machine check | **Haiku 5.5** | **low** | mechanical: run commands, report; nothing to judge |
+| 1 — text cut | **Opus 5.5** | **high** | it rewrites display text, including felt scenes: the writing and the care are the job |
+| 2 — LambyOS Home | **Opus 5.5** | **high** | design and the advert's script, with ethics questions to raise for you |
+| 3 — 2003 cadence | **Sonnet 5.5** | **high** | tracing timers and triggers through several files is where shallow reading goes wrong |
+| 4 — Vera's options | **Sonnet 5.5** | **medium** | a plan built from reading code and counting text; no final writing |
+| 5 — rules sweep | **Haiku 5.5** | **medium** | thousands of lines, each a yes/no check against six rules, with a one-line verdict each |
 
-Cost order is Haiku < Sonnet < Opus. If credits run short, 3 and 4 also work on Haiku with a slower, more literal
-result; 1 and 2 should stay on Opus.
+Cost order is Haiku < Sonnet < Opus, and higher effort costs more of each. If credits run short, lower the effort before
+the model (3 and 4 at medium still work; 1 and 2 should stay Opus at high). xhigh and max are not worth it here: these
+are long, careful tasks, not hard puzzles.
 
 **How to use them**
 - **Run Prompt 0 first, once.** It only checks what the cloud machine can do, and changes nothing. Whether a cloud session can run the walk (it needs Chrome) decides how far Prompts 1–5 can verify their own work.
@@ -29,7 +30,7 @@ result; 1 and 2 should stay on Opus.
 ---
 
 ## Prompt 0 — what can this machine do? (no changes; ~10 min)
-**Model: Haiku 5.5**
+**Model: Haiku 5.5 · effort: low**
 ```
 SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
   git fetch origin reinterp && git checkout -B cloud/check origin/reinterp && npm ci
@@ -49,7 +50,7 @@ End with one line: "walks possible: yes/no".
 ---
 
 ## Prompt 1 — cut the heaviest text (W1-B1/B2: "we need more images and less text")
-**Model: Opus 5.5**
+**Model: Opus 5.5 · effort: high**
 ```
 SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
   git fetch origin reinterp && git checkout -B cloud/text-cut-1 origin/reinterp && npm ci
@@ -81,7 +82,7 @@ body is a table: screen, file/key, words before → after, and the before/after 
 ---
 
 ## Prompt 2 — LambyOS Home, the front door (W1-A1, A2, A4, A5, A7)
-**Model: Opus 5.5**
+**Model: Opus 5.5 · effort: high**
 ```
 SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
   git fetch origin reinterp && git checkout -B cloud/lambyos-home origin/reinterp && npm ci
@@ -115,7 +116,7 @@ push the branch, open a PR into reinterp titled "LambyOS Home: design draft". Do
 ---
 
 ## Prompt 3 — 2003's cadence (W1-B3, D1, D2, D7, D13, D14, D16, D18, D19)
-**Model: Sonnet 5.5**
+**Model: Sonnet 5.5 · effort: high**
 ```
 SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
   git fetch origin reinterp && git checkout -B cloud/cadence-2003 origin/reinterp && npm ci
@@ -145,7 +146,7 @@ push the branch, open a PR into reinterp titled "2003 cadence: timeline and wait
 ---
 
 ## Prompt 4 — 2016's reading load and Vera's options (W1-E1, E2, E5)
-**Model: Sonnet 5.5**
+**Model: Sonnet 5.5 · effort: medium**
 ```
 SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
   git fetch origin reinterp && git checkout -B cloud/vera-options origin/reinterp && npm ci
@@ -168,7 +169,7 @@ push, open a PR into reinterp titled "2016: three options, then updates (plan)".
 ---
 
 ## Prompt 5 — a rules sweep across all the text (cheap; Haiku-suitable)
-**Model: Haiku 5.5**
+**Model: Haiku 5.5 · effort: medium**
 ```
 SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
   git fetch origin reinterp && git checkout -B cloud/rules-sweep origin/reinterp && npm ci
