@@ -136,10 +136,24 @@ const BROKEN_JUMPS = {
     'it goes through update3 (see above) and inherits the same unmoved room.'
 };
 const ALLOW_BROKEN_JUMP = process.argv.includes('--allow-broken-jump');
+/**
+ * ⚑ `--from-era N` (S223, his 2026-10-09: "be sure that the walk can be done after big changes and not just small
+ * ones"). A full walk is about an hour; after a big change the first question is "which era broke", and four
+ * eras walked side by side answer it in a quarter of that (tools/walk-eras.mjs runs them together). It boots the
+ * way the stills do — `?era=N` sets the room, the seat and the desktop up as the piece itself does on arrival,
+ * unlike `--jump`, which moves the OS and leaves the room behind — and then walks forward by pressing, to the
+ * Close. It is NOT a reachability proof (the ledger has none of the earlier eras' choices in it), so it stamps
+ * itself and writes to out/walks/, never over the real report. The full walk from the front door stays the gate.
+ */
+const FROM_ERA = Number(flag('from-era', '0')) || 0;
+/** ⚑ `--one-era` (S223): stop, successfully, the moment the walk arrives in the NEXT era (or at the Close, from
+ *  Era 4). With `--from-era` that makes each of tools/walk-eras.mjs's four walks one era long. */
+const ONE_ERA = process.argv.includes('--one-era');
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
-const OUT_DIR = join(ROOT, 'docs/reinterp');
-const SHOT_DIR = flag('shots', '/private/tmp/claude-501/-Users-sergiogalvaoroxo-update-available-reinterp/075bbfca-c1d9-46aa-9460-981c2835de49/scratchpad/walk');
+const OUT_DIR = join(ROOT, process.argv.includes('--from-era') ? 'out/walks' : 'docs/reinterp');
+// S223: inside the project (a cloud machine has no /private/tmp of ours), one folder per era so side-by-side walks do not overwrite
+const SHOT_DIR = flag('shots', join(ROOT, 'out/walk-shots' + (FROM_ERA > 1 ? '-e' + FROM_ERA : '')));
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -247,6 +261,7 @@ async function main() {
     process.exit(0);
   }
   mkdirSync(SHOT_DIR, { recursive: true });
+  mkdirSync(OUT_DIR, { recursive: true });
 
   /**
    * ⚑ PORTABLE CHROME (S103d). This was a hardcoded macOS path, so the tool that
@@ -383,18 +398,21 @@ async function main() {
     );
   };
 
-  await page.goto(`http://localhost:${PORT}/?reinterp=1&debug=1`, { waitUntil: 'networkidle2', timeout: 60000 });
-  note('open', { what: '?reinterp=1&debug=1 — debug is READ-ONLY here; no panel button, no jump, no __requestMove' });
+  const startQuery = FROM_ERA > 1 ? `?reinterp=1&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&debug=1';
+  await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'networkidle2', timeout: 60000 });
+  note('open', { what: startQuery + (FROM_ERA > 1 ? ' — ⚑ FROM ERA ' + FROM_ERA + ': not a reachability proof' : ' — debug is READ-ONLY here; no panel button, no jump, no __requestMove') });
 
   // ── the front door is real DOM, not canvas (4 s ethics delay honoured) ──
-  await page.waitForFunction(
-    () => [...document.querySelectorAll('button')].some((b) => /Log in/i.test(b.textContent || '') && !b.disabled),
-    { timeout: 45000 });
-  await page.$$eval('button', (bs) => {
-    const b = bs.find((x) => /Log in/i.test(x.textContent || ''));
-    if (b) b.click();
-  });
-  note('dom', { target: 'Log in', what: 'the content-warning panel (real DOM button)' });
+  if (FROM_ERA <= 1) {
+    await page.waitForFunction(
+      () => [...document.querySelectorAll('button')].some((b) => /Log in/i.test(b.textContent || '') && !b.disabled),
+      { timeout: 45000 });
+    await page.$$eval('button', (bs) => {
+      const b = bs.find((x) => /Log in/i.test(x.textContent || ''));
+      if (b) b.click();
+    });
+    note('dom', { target: 'Log in', what: 'the content-warning panel (real DOM button)' });
+  }
   await page.waitForFunction(() => !!window.__os && !!window.__app, { timeout: 45000 });
   await wait(7000);
 
@@ -1147,6 +1165,26 @@ const LAP = { w: 224, h: 140 };
     if (was !== null && now !== null &&
         Math.abs(wrap(now - was)) < 0.5) {
       /**
+       * ⚑ S223 — FIRST, IS THE FRAME'S MENU UP? It gates the look keys by design, and something the walk pressed
+       * (Leave…, a dossier's sources, the Close's sources) can open it. Then the answer is to press the menu's
+       * own Resume, as a person would, and look again — not to give up on turning for the rest of the run
+       * (S219's walk lost its head in 2003 and could not reach 2026's headset because of exactly this).
+       */
+      const menuUp = await page.evaluate(() => { const m = document.getElementById('reinterp-game-menu'); return !!m && getComputedStyle(m).display !== 'none'; }).catch(() => false);
+      if (menuUp) {
+        await page.evaluate(() => { const b = [...document.querySelectorAll('#reinterp-game-menu button')].find((x) => /^\s*Resume\s*$/i.test(x.textContent || '')); if (b) b.click(); });
+        await wait(600);
+        note('menu-closed', { target: want.id, era: after.era, phase: after.phase, what: 'the frame\'s menu was up and held the look keys; pressed its Resume and turned again' });
+        await turnBy(yawSteps, pitchSteps);
+        after = await probe();
+        const again = facing(after);
+        if (again !== null && Math.abs(wrap(again - was)) >= 0.5) {
+          const got2 = after.targets.some((t) => t.surface === want.surface && t.id === want.id);
+          if (!got2) { await restoreLook(was, wasPitch); after = await probe(); }
+          return after;
+        }
+      }
+      /**
        * ⚑ THE KEYS DID NOT REACH THE PIECE, and that is a finding about this
        * tool, reported as one rather than quietly producing a walk that looks
        * like a walk. app.ts gates the arrow block on `options.reinterp`, on the
@@ -1577,8 +1615,10 @@ const LAP = { w: 224, h: 140 };
    */
   let desyncRuns = 0;
 
+  const startEraSeen = s.era;
   for (let i = 0; i < MAX_STEPS; i++) {
     if (s.driven) { await wait(1600); s = await probe(); continue; }   // a travelling is playing
+    if (ONE_ERA && s.era !== startEraSeen) { note('era-done', { era: s.era, phase: s.phase, what: 'arrived in ' + s.era + ' from ' + startEraSeen + ' — one era walked' }); break; }
     await takeCensus(s, i);
 
     /**
@@ -1988,7 +2028,7 @@ const LAP = { w: 224, h: 140 };
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '');
+    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '');
   const presses = log.filter((l) => l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move');
   const dead = presses.filter((p) => p.changed === false);
   const silentFound = [...new Set(log.filter((l) => l.kind === 'silent-surface')
@@ -2031,7 +2071,7 @@ const LAP = { w: 224, h: 140 };
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.json'), JSON.stringify({
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
     jumpedTo: JUMP || null,
-    isReachabilityProof: !JUMP,
+    isReachabilityProof: !JUMP && FROM_ERA <= 1,
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,
     ledger: final.ledger, console: noise, log
@@ -2205,7 +2245,7 @@ const LAP = { w: 224, h: 140 };
   ].join('\n');
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.md'), md + '\n');
 
-  console.log('\nwrote docs/reinterp/WALK_' + stamp + '.{json,md} — ' +
+  console.log('\nwrote ' + (FROM_ERA > 1 ? 'out/walks' : 'docs/reinterp') + '/WALK_' + stamp + '.{json,md} — ' +
     presses.length + ' presses, reached ' + final.era);
   await browser.close();
 
@@ -2224,7 +2264,15 @@ const LAP = { w: 224, h: 140 };
    * `onClose()`, which only the Close's own restart can reach. Nothing else in
    * the piece can fake it.
    */
-  if (flag('require-close') !== undefined || process.argv.includes('--require-close')) {
+  if (ONE_ERA) {
+    const startE = log.find((l) => l.era)?.era;
+    if (final.spine === 'done' || (startE && final.era !== startE)) {
+      console.log('✓ one era: walked from ' + startE + ' to ' + (final.spine === 'done' ? 'the Close' : final.era) + '.');
+    } else {
+      console.error('\n⚑ ONE-ERA REGRESSION: the walk did not leave ' + startE + ' after ' + presses.length + ' presses. Read STOPPED BECAUSE.\n');
+      process.exit(1);
+    }
+  } else if (flag('require-close') !== undefined || process.argv.includes('--require-close')) {
     if (final.spine === 'done') {
       console.log('✓ reachability: the walk reached the Close (spine: done).');
     } else {
