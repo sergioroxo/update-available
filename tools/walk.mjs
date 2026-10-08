@@ -281,7 +281,13 @@ async function main() {
   const browser = await puppeteer.launch({
     executablePath: chrome,
     headless: true,
-    args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox'],
+    // S223: and none of Chromium's own background traffic (update checks, field trials, safe browsing). A cloud
+    //   sandbox rejects it, the browser keeps retrying, and the page never reached "network idle" (the first cloud
+    //   run timed out on www.google.com, which is the browser calling home, never the piece: src/ names no host)
+    args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox',
+      '--disable-background-networking', '--disable-component-update', '--disable-default-apps', '--no-first-run',
+      '--disable-sync', '--disable-domain-reliability', '--disable-features=OptimizationHints,MediaRouter,Translate',
+      '--metrics-recording-only'],
     defaultViewport: { ...VIEW, deviceScaleFactor: 1 }
   });
   const page = await browser.newPage();
@@ -401,21 +407,23 @@ async function main() {
   };
 
   const startQuery = FROM_ERA > 1 ? `?reinterp=1&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&debug=1';
-  await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'networkidle2', timeout: 60000 });
+  // S223: wait for the page's own load, not for "network idle", and give a COLD dev server time: on a fresh machine
+  //   Vite transforms every module on first request (the cloud's first run spent its whole minute there)
+  await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'load', timeout: 240000 });
   note('open', { what: startQuery + (FROM_ERA > 1 ? ' — ⚑ FROM ERA ' + FROM_ERA + ': not a reachability proof' : ' — debug is READ-ONLY here; no panel button, no jump, no __requestMove') });
 
   // ── the front door is real DOM, not canvas (4 s ethics delay honoured) ──
   if (FROM_ERA <= 1) {
     await page.waitForFunction(
       () => [...document.querySelectorAll('button')].some((b) => /Log in/i.test(b.textContent || '') && !b.disabled),
-      { timeout: 45000 });
+      { timeout: 180000 });
     await page.$$eval('button', (bs) => {
       const b = bs.find((x) => /Log in/i.test(x.textContent || ''));
       if (b) b.click();
     });
     note('dom', { target: 'Log in', what: 'the content-warning panel (real DOM button)' });
   }
-  await page.waitForFunction(() => !!window.__os && !!window.__app, { timeout: 45000 });
+  await page.waitForFunction(() => !!window.__os && !!window.__app, { timeout: 180000 });
   await wait(7000);
 
   if (JUMP) {

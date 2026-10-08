@@ -22,6 +22,8 @@ Cost order is Haiku < Sonnet < Opus, and higher effort costs more of each. If cr
 the model (3 and 4 at medium still work; 1 and 2 should stay Opus at high). xhigh and max are not worth it here: these
 are long, careful tasks, not hard puzzles.
 
+**⚑ Second run (2026-10-09):** on `reinterp` the build, the four checks and the dev server all pass; the walk timed out loading the page. Two causes, both in the walker, both fixed (S223e): it waited for "network idle" while the cloud's Chromium kept retrying its own blocked calls home (www.google.com — the browser, not the piece: src/ names no host and the invariant check passed), and a cold dev server needs more than a minute to prepare every file on first load. Run Prompt 0 once more; it should end "walks possible: yes".
+
 **How to use them**
 - **Run Prompt 0 first, once.** It only checks what the cloud machine can do, and changes nothing. Whether a cloud session can run the walk (it needs Chrome) decides how far Prompts 1–5 can verify their own work.
 - **Prompts 1–5 are independent.** Run them in parallel if you like. Each works on its own new branch and opens a pull request. **None merges or pushes to `reinterp`.** I review each one locally, walk it, and merge.
