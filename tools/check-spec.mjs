@@ -256,7 +256,9 @@ if (hexCount > HEX_BASELINE) {
  */
 const HEADERLESS_BASELINE = 0;
 
-const STATUS_LINE = /^STATUS:\s*(live|history-only|UNREVIEWED|superseded-by\s+(\S+))\s*$/;
+// S224: `draft` too — a design proposal waiting on the lead's answers is neither live nor history (the LambyOS Home PR had
+//   to fake a second `live` line to pass)
+const STATUS_LINE = /^STATUS:\s*(live|draft|history-only|UNREVIEWED|superseded-by\s+(\S+))\s*$/;
 const KILLS_LINE = /^KILLS:\s*(src\/\S+?)#(\S+)\s*$/;
 
 let headerlessCount = 0;
