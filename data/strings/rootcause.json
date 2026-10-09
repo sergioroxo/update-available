@@ -1,11 +1,11 @@
 {
   "_doc": "ROOTCAUSE.EXE — Root Cause Digger (W-L1, his pick 2026-09-20, from `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` §1: Dig Dug). The second file on the companion disk beside lamby_rig.exe: shovelware the fellowship shipped, 1997. Register: operable — the programme's own game, so it may charm within Era 1's limits; the satire is the programme's (the diagnoses are its words) and it collapses on its own report. PRESS-ONLY (no WASD, ever): each press digs one cell beside Lamby and is one turn; the diagnoses move after every turn, through the tunnels the player dug. A diagnosis that reaches Lamby is APPLIED and goes back to its pocket; three applied and the programme writes its report. Press a diagnosis in the cell beside you to inflate it with a therapy word — three and it bursts ('it was only a word'). Two diagnoses in one cell glitch each other out ('fake labels'). Somewhere in the two deepest layers the AUTHENTIC MEMORY is buried; dig into it and the programme flags you. Both endings file to the record (`rootcause-memory:` flagged, `rootcause-report:`); leaving mid-game files nothing (unplayed media gets no response). ○ sandbox by the Progression Law: on the desktop from the disk, on the map as ○, one soft guide line, never required. Lamby is `drawLambyChar` (the same puppet as the rig file — the mascot before its debut, not charming yet).",
+  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: the intro says the claim and the one instruction; the board and the legend show the rest. The diagnoses, findings and legend are untouched.",
   "title": "ROOTCAUSE.EXE — Root Cause Digger",
   "icon": "rootcause.exe",
   "intro": [
-    "Somewhere under the surface is the ROOT CAUSE",
-    "of the struggle. Dig deep. The programme will",
-    "name what you uncover.",
+    "The ROOT CAUSE is under the surface.",
+    "The programme will name what you find.",
     "",
     "Press the earth beside Lamby to dig."
   ],
@@ -92,7 +92,7 @@
     "DIAGNOSIS = press it 3 times to burst it",
     "REVIEW QUIZ after every layer"
   ],
-  "disk": "DISK 2 of 2 — fellowship shareware — not for resale",
+  "disk": "DISK 2 of 2 — fellowship shareware",
   "quiz": [
     [
       "POSSIBLE DEPENDENCY ROOT.",

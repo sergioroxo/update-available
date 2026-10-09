@@ -143,7 +143,7 @@
   "status": "STATUS",
   "statusValue": "IDENTIFIED",
   "file": "FILE RECORD",
-  "footer": "READ ONLY — THIS PANEL DOES NOT RESPOND TO YOU",
+  "footer": "READ ONLY — DOES NOT RESPOND",
   "hint": "press the flip control to return",
   "_docEras": "⚑ S106 — THE RECORD AGES. One file, four decades, and until now every word on it was 1997's: the panel that migrates onto Maya's wall in 2026 still read SUBJECT Daniel / index · era 1 · drawer 12. The fields in `eras` are the ONLY ones that move, and they move because a filing system running for thirty years would have re-stamped exactly these — where the record came from, what it now calls the subject, and the stamp on the card. Everything else (the header, the dead FILE button, the footer's READ ONLY) is deliberately unchanged, because the point is that it did not have to change. ⚑ THE MISFILE, NOT A DEADNAME (CLAUDE.md; s4_l.json's _docFormerName): at era 4 the SUBJECT row carries Maya's OWN name and the amber note `under the old file`. No name that is not Maya's is ever rendered here. The index card underneath keeps the file's REGISTERED name — the one the player typed in 1997 — because that is what an index card in a drawer carries, and the gap between the two rows IS the beat: the system knows who she is and files her under someone else anyway. PLACEHOLDER-draft wording; Sérgio's stamp to overwrite (03_COORDINATION #5).",
   "eras": {
@@ -170,8 +170,9 @@
    "glitch": "update trigger: person could not be overwritten"
   },
   "fileCount": "entries: {n} · flagged: {f}",
-  "purpose": "Kept so the programme can be adjusted to the subject. Not shown to the subject.",
-  "explain": "A file kept on you. Every line above is something you did, and what it was filed as.",
+  "purpose": "Kept to adjust the programme. Not shown to the subject.",
+  "explain": "A file kept on you: what you did, and what it was filed as.",
+  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: `purpose`, `explain` and the record's `footer` shortened (same meaning, fewer words). The record's rows are the instrument and are untouched.",
   "_docExplain": "R3-27 (S151) — Sérgio: 'the intake panel should explain what it is'. One plain sentence under the header, the practice's title beside each entry (from data/dossier/practices.json). The sources stay in the frame (the menu's Your file).",
   "_docS144": "⚑ S144 — THE RECORD REDESIGNED AS A MAP (THE_RECORD_PLAN §3G): a count line, the flagged rows first (they are what the apparatus acts on), newest first, and one sentence under the header in the apparatus's own voice saying what the file is FOR — `purpose`. The fields above the log are unchanged. Cold, sharp, read at the flip's distance.",
   "recordLines": {
