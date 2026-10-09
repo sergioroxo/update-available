@@ -24,6 +24,8 @@ are long, careful tasks, not hard puzzles.
 
 **⚑ Second run (2026-10-09):** on `reinterp` the build, the four checks and the dev server all pass; the walk timed out loading the page. Two causes, both in the walker, both fixed (S223e): it waited for "network idle" while the cloud's Chromium kept retrying its own blocked calls home (www.google.com — the browser, not the piece: src/ names no host and the invariant check passed), and a cold dev server needs more than a minute to prepare every file on first load. Run Prompt 0 once more; it should end "walks possible: yes".
 
+**⚑ After the first text cut (2026-10-09):** his worry, rightly: *"when it says cut it makes me scared, we need to visually see the differences"*. The first pass removed whole lines from the 1997 channel and Rob's messages and trimmed the 2016 members' stories. Prompt 1 now SHORTENS ONLY (whole-line removals are listed, never applied), and every text change gets a numbered before/after page (I build it locally from the branch) before anything is merged.
+
 **How to use them**
 - **Run Prompt 0 first, once.** It only checks what the cloud machine can do, and changes nothing. Whether a cloud session can run the walk (it needs Chrome) decides how far Prompts 1–5 can verify their own work.
 - **Prompts 1–5 are independent.** Run them in parallel if you like. Each works on its own new branch and opens a pull request. **None merges or pushes to `reinterp`.** I review each one locally, walk it, and merge.
@@ -71,6 +73,12 @@ Rules (non-negotiable, from CLAUDE.md and the lead's standing orders):
   no borrowed testimony; satire only in the perpetrator's own voice; the clinical debate stays unsatirised.
 - Instructions the player needs to act must survive (shorter, not gone). Prefer showing over telling: where a
   paragraph explains what a picture or a button already shows, cut the paragraph.
+- SHORTEN, do not remove: keep every line, message and list item that exists (a chat line, a step, a story);
+  make each one shorter. Removing a whole line needs the lead's yes — list such proposals separately in the PR,
+  do not apply them. Lines where a person speaks (chat members, Rob, the 2016 members' stories, Caleb) are
+  shortened only where the screen already shows what the words said, and each is flagged in the PR.
+- NEVER edit a file while a walk is running: the dev server reloads the page and the walk dies mid-run (the first
+  text-cut run lost three of its four walks this way). Finish all edits, then walk.
 - Display text only. Do not change code, layout or timing. Keep JSON valid; keep each file's _doc keys and
   add a short _docS223cut note where you cut ("cut for W1-B1, cloud, 2026-10-09").
 Verify: npm test must pass. If the machine can run the walk (see Prompt 0), also run
@@ -140,6 +148,8 @@ condition that defers a line, a toast or an arrival until the player is idle or 
 text, no removed beats. Each change carries a comment "S223 cloud / W1-Dxx" quoting his note.
 Verify: npm test. If the machine can walk (Prompt 0): npx vite --port 3000 --strictPort & then
 node tools/walk.mjs --port 3000 --max 1500 --from-era 2 --one-era, and report its result line and STOPPED BECAUSE.
+- NEVER edit a file while a walk is running: the dev server reloads the page and the walk dies mid-run (the first
+  text-cut run lost three of its four walks this way). Finish all edits, then walk.
 Write the document to docs/reinterp/CADENCE_2003_2026-10-09.md (first line "STATUS: draft").
 Deliver: commit (explicit paths; message ending "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"),
 push the branch, open a PR into reinterp titled "2003 cadence: timeline and waits". Do not merge.
