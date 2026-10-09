@@ -282,6 +282,9 @@ export class CalebThreadApp {
   /** the whole monitor belongs to the residue beat (respite: no UI, no chrome).
    *  It flips at the dissolve's TEAR, not at its start — see DISSOLVE_TEAR. */
   get ownsScreen(): boolean { return this.phase === 'residue'; }
+  /** ⚑ S223 cloud / W1-D13 — the conversation is still being walked out line by line (the redaction, ~8 s at most).
+   *  os.ts holds the PureMail's start until this is false. Reads state only; the felt module learns nothing. */
+  get blackingOut(): boolean { return this.redaction.running; }
   /** the felt window's rect — the operable stamp is positioned against it */
   get windowRect(): { x: number; y: number; w: number; h: number } { return { ...WIN }; }
   get windowVisible(): boolean {

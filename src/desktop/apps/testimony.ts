@@ -77,6 +77,16 @@ export class TestimonyApp {
 
   get done(): boolean { return this.web === 'done' && this.stage === 'online'; }
 
+  /** ⚑ S223 cloud / W1-D7 (walkthrough 1: "The helper keeps showing lines while your story's videos play") — true
+   *  while a picture of his story is MOVING: a clip on the player, the editor's preview or its export, the page's
+   *  dial-up buffer and its video. os.ts `fictionPlaying` reads it so the frame's helper stays quiet over all of it. */
+  get playbackActive(): boolean {
+    if (!this.open) return false;
+    return (this.stage === 'player' && this.playing)
+      || (this.stage === 'cut' && (this.previewT >= 0 || (this.exportT >= 0 && !this.exported)))
+      || (this.stage === 'online' && (this.web === 'buffer' || this.web === 'play'));
+  }
+
   /** ⚑ W1-D10 (walkthrough 1: "the room tone is not working") — ROOM_TONE was a waveform with no sound, and the
    *  takes were as silent. The hall's tone now plays while a clip plays: full for the tone file, under the takes
    *  as what the room sounds like behind them (data/strings/captions.json names it). */

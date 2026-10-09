@@ -856,7 +856,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     witnessPulse.onGrow = () => witness.pulse();
     helper = mountHelper({
       hint: () => nextHint(os),
-      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy(),
+      // ⚑ S223 cloud / W1-D7 (walkthrough 1: "The helper keeps showing lines while your story's videos play") — the
+      //   helper's clock only counts stillness, and a player watching a video is still. While the fiction is playing
+      //   by its own clock (os.fictionPlaying: his story's clips and page, Caleb's song, Lamby's video, the alert's
+      //   timed holds) the line stays down and the idle wait restarts when it stops.
+      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !os.fictionPlaying,
       // ⚑ S219 / W1-B6 — a mouse and a big screen: 1.8× the wait; a touch device or a headset: as written
       idleScale: () => (xr?.active ? 1 : window.matchMedia('(pointer: coarse)').matches ? 1 : 1.8)
     });

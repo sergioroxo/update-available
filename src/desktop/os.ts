@@ -880,6 +880,7 @@ export class DesktopOS {
     this.forumRecommended = false;
     this.testimony = null;    // S205 — and his story
     this.testimonyOffered = false;
+    this.testimonyToastPending = false;
     this.lambyWaitShown = false;
     this.rootCause = null;    // S153 — the same: the disk stays in 1997
     this.sendOffer = null;
@@ -1146,7 +1147,10 @@ export class DesktopOS {
         && !this.provotype && !this.diary?.open && !this.packet?.open && !this.yesOpen && !this.updateApp && !this.kit?.open
         && !this.irc?.open;   // S208 / A5 (REVIEW_ROUND_5, ERA97-01) — never over the channel: Lume's welcome is the first warm contact
     } else {
-      due = this.e2Stage === 'active' && this.testimonyOffered && this.idleSeconds > 12 && this.desktopIdle();
+      // ⚑ S223 cloud / W1-D16 — and never over Caleb's door-toast: the once-per-era pause is modal and used to open
+      //   on top of "A message came in while we were talking", hiding it (it opens after the toast if still quiet)
+      due = this.e2Stage === 'active' && this.testimonyOffered && this.idleSeconds > 12 && this.desktopIdle()
+        && this.toast?.act !== 'message-open';
     }
     if (!due) return;
     this.pauseShown.add(era);
@@ -1207,9 +1211,20 @@ export class DesktopOS {
   /** ⚑ S205 — 2003's testimony: Lamby asks for his story after the first check-in (s2_testimony.json) */
   testimony: TestimonyApp | null = null;
   private testimonyOffered = false;
+  /** ⚑ S223 cloud / W1-B3 (walkthrough 1: "wait for the player's interaction before the narrative moves on") —
+   *  the offer's line used to land the moment a check-in answer was pressed, over the card he was reading Lamby's
+   *  reply on. The Your Story icon still appears at once (nothing hides); the line waits for the card to close. */
+  private testimonyToastPending = false;
   private offerTestimony(): void {
     if (this.testimonyOffered || this.desktopEra !== 'e2') return;
     this.testimonyOffered = true;
+    this.testimonyToastPending = true;
+    this.flushTestimonyToast();
+    this.dirty = true;
+  }
+  private flushTestimonyToast(): void {
+    if (!this.testimonyToastPending || this.restorify?.open) return;
+    this.testimonyToastPending = false;
     this.toast = { text: testimonyStrings.offer, t: 9 };
     this.dirty = true;
   }
@@ -1641,7 +1656,25 @@ export class DesktopOS {
    *  never surface on top of S2R.3's felt window, and u3 must not arm while
    *  the Caleb thread is still running. */
   get sendOfferPending(): boolean {
-    return this.sendOffer !== null || this.caleb !== null || this.e4HoldsTheSpine;
+    // ⚑ S223 cloud / W1-D16 (walkthrough 1: "Caleb's message conflicts with the rest of the mail arriving") — his
+    //   message lands at `testimony-online`, and in the same frame the spine offered the Route sheet. While Caleb's
+    //   door-toast is up the summons now waits; if the toast passes unanswered the summons arrives after it, and if
+    //   the player presses it the Caleb thread holds the spine as before (W1-D17 made the toast a door).
+    return this.sendOffer !== null || this.caleb !== null || this.e4HoldsTheSpine
+      || this.toast?.act === 'message-open';
+  }
+
+  /** ⚑ S223 cloud / W1-D7 (walkthrough 1: "The helper keeps showing lines while your story's videos play") — a
+   *  picture or a sound of the fiction's is moving by its own clock: his story's clips, preview, export and page; the
+   *  song Caleb sent; Lamby's video; the alert's timed holds and the network failing. The frame's helper reads this
+   *  (engine/app.ts) and stays silent — and its idle clock restarts — until it is false. Play/pause: a paused clip
+   *  is not playing, so a player who stops the tape and wanders is still helped. */
+  get fictionPlaying(): boolean {
+    return !!this.testimony?.playbackActive
+      || !!this.mediaPlayer?.playing
+      || !!this.netvision?.open
+      || !!this.accountability?.autoRunning
+      || !!this.caleb?.blackingOut;
   }
 
   /**
@@ -1871,6 +1904,7 @@ export class DesktopOS {
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
     this.idleSeconds += dt;
+    this.flushTestimonyToast();   // S223 cloud / W1-B3 — the offer's line, once the check-in card has closed
     this.updateSaver(dt);
     if (this.testimony?.open) { this.testimony.update(dt); if (this.testimony.dirty) this.dirty = true; }   // S205
     this.maybePause();
@@ -1967,7 +2001,11 @@ export class DesktopOS {
     // your old self may not be recoverable…", the line Sérgio called a great
     // text and never got to read. The tape gets to finish lying first.
     if (this.phase === 'desktop' && this.netvision?.disclaimerDone) this.caleb?.pushBreakToast();
-    if (this.t >= this.pureMailAt) {
+    // ⚑ S223 cloud / W1-D13 (walkthrough 1: "'Read the Mail' should wait while the person is talking with Caleb") —
+    //   when Lamby is dismissed at the alert, the failing list armed 5 s later and could take the screen while the
+    //   conversation was still being walked out line by line (the redaction runs up to ~8 s). The mail now waits
+    //   until Caleb's chat is fully sealed; nothing is removed and the apparatus's failure is still not the player's.
+    if (this.t >= this.pureMailAt && !this.caleb?.blackingOut) {
       this.pureMailAt = Infinity;
       this.accountability?.beginNetworkFailure();   // S157 / R3-58: seen failing, then the mail
       this.dirty = true;

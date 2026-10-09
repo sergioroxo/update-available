@@ -172,6 +172,12 @@ export class AccountabilityApp {
   /** the stamp outlives the alert: it sits on the chat until the block lifts */
   get stampVisible(): boolean { return this.stamped; }
   get alertRunning(): boolean { return this.step !== 'closed'; }
+  /** ⚑ S223 cloud / W1-D7 — the machine is acting on its own clock: the alert's timed holds (stop … sad) and the
+   *  network failing / the envelope tearing in. It is NOT true at `caught` (the player's two buttons) or on the
+   *  envelope and the letter (the player's Open and Continue), so the helper may still speak there. */
+  get autoRunning(): boolean {
+    return (this.step !== 'closed' && this.step !== 'caught') || this.mail === 'failing' || this.mail === 'arriving';
+  }
   get mailOpen(): boolean {
     return this.mail === 'failing' || this.mail === 'arriving' || this.mail === 'envelope' || this.mail === 'letter';
   }

@@ -181,11 +181,15 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
         //   its climax; the residue is the only way out of 2003.
         case 'e2':
           if (residueFiled()) { step = 'e2_residue'; t = 0; break; }
-          if (t >= SEND_DELAY && ledger.records.includes('testimony-online')) offer('s1', 'e2_s1');
+          // ⚑ S223 cloud / W1-D16 ("Caleb's message conflicts with the rest of the mail arriving") — the summons
+          //   waits for a bare desktop, as Era 3's did (the comment further down): it no longer lands over a window
+          //   he is in, or in the frame his message lands in (os.sendOfferPending also holds it for Caleb's toast)
+          if (t >= SEND_DELAY && ledger.records.includes('testimony-online') && os.desktopIdleForProps()) offer('s1', 'e2_s1');
           break;
         case 'e2_s1':
           if (residueFiled()) { step = 'e2_residue'; t = 0; break; }
-          if (sendResolved('s1') && t >= SEND_GAP) offer('s2', 'e2_s2');
+          // ⚑ S223 cloud / W1-B3 — the second summons also waits for a bare desktop (the gap is a floor, not a trigger)
+          if (sendResolved('s1') && t >= SEND_GAP && os.desktopIdleForProps()) offer('s2', 'e2_s2');
           break;
         case 'e2_s2':
           if (residueFiled()) { step = 'e2_residue'; t = 0; break; }
