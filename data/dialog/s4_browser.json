@@ -1,6 +1,6 @@
 {
  "_doc": "⚑ S128 — THE TABS, AND NOBODY HAS TO READ THEM ALL. Sérgio, 2026-09-08: *'that should be the playable content… maybe we can make into a way that doesn't require people have to do everything?'* That single note solves two problems at once. **Nothing here is required.** Six tabs, any order, none gating anything: the headset is on the desk from the first frame and the era ends when she wears it, whether she has read one tab or all six. ⚑ SO ERA 4 IS AS LONG AS THE PLAYER MAKES IT — which is the answer to the thing he has now said three times, that the era takes too much of the piece's time. A reader who opens two tabs is out in four minutes; a reader who opens six is out in nine; neither is missing 'the' path, because there isn't one.",
- "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: the results page keeps every result, title and address and cuts each snippet to its one claim; the agent's greeting keeps three bubbles at half the words; the stories tab keeps the line that echoes 1997 ('It has been where you are'). The People-also-ask block and its sources, L's history and the care log are untouched.",
+ "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: the results page keeps every result, title and address and cuts each snippet to its one claim; the agent's greeting keeps three bubbles at half the words; the stories tab keeps the line that echoes 1997 ('It has been where you are'). The People-also-ask block and its sources, L's history and the care log are untouched. ⚑ HIS REVIEW (2026-10-09): the greeting keeps 'I'm here for people having second thoughts.'",
  "_docFiling": "⚑ AND WHAT YOU CHOSE TO READ IS ITSELF FILED. Every tab opened writes one line to the session file — the strip that has been on screen since S119 — in the machine's flattest register. That is the era's whole argument turned into the one mechanic it has: you are reading its record of her, and it is keeping a record of your reading. Nothing says so. ⚑ It files ONCE per tab: opening something twice is a person re-reading, not a second interest, the same rule `flip()` and the offer cards obey.",
  "_docSources": "⚑ GROUNDED, NOT INVENTED. Research pass 2026-09-07 found two live systems: a subscriber chatbot built by RAG over one author's writings on 'same-sex attraction', framed as information and explicitly not therapy; and an AI presented as the 'collective consciousness of detransitioners', synthesising public testimony, free to 'those questioning', existing 'to restore balance' — **and its chats are public by default**. Everything below extrapolates from those two documented facts and from ordinary consumer behaviour (autocomplete, automatic photo enhancement, wellbeing interventions). Per Sérgio's ruling of 2026-09-07 the marks are INVENTED and symbolic — `Lantern`, `Second Thoughts` — because the educational work is done by depicting the CATEGORY, not by naming an instance.",
  "chat": {
@@ -252,7 +252,7 @@
   "agentAddress": "secondthoughts.help/session",
   "greeting": [
    "Hi Maya.",
-   "L referred you.",
+   "L referred you. I'm here for people having second thoughts.",
    "Five steps. I'll do most of it."
   ],
   "begin": "Begin",

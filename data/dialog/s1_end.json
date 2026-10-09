@@ -1,6 +1,6 @@
 {
   "_doc": "PLACEHOLDER — Era-1 ending content S1.7–ritual (ERA1_ENDING_SCRIPT_v2). Register per beat. ⚑ ALL DRAFT for Sérgio. Names: TriedPath Fellowship / 'New Morning' residential. Escalation is now a TURN-BY-TURN exchange (Sérgio): Rob says a line, the player replies with a given line (the narrowed inner voice), Rob continues. Each reply only changes the witness LABEL, never the outcome (v0.8 §3). The reply box sits OUTSIDE the chat window so it never covers what you read. The diary now has a deletion beat: the system flags the truth as 'dangerous', tries to erase it, fails — that failure is the person's glitch (glitch doctrine: the system cannot overwrite a person), and it covers the room change.",
-  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: Rob's escalation turns trimmed to their hinge (meeting in person, residential, your mother, already made). Same five turns, same replies, same records.",
+  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: Rob's escalation turns trimmed to their hinge (meeting in person, residential, your mother, already made). Same five turns, same replies, same records. ⚑ HIS REVIEW (2026-10-09): 'she's relieved, honestly' kept.",
 
   "escalation": {
     "turns": [
@@ -23,7 +23,7 @@
         ]
       },
       {
-        "rob": "i spoke with your mother. she wants this for you.",
+        "rob": "i spoke with your mother. she's relieved, honestly. she wants this for you.",
         "replies": [
           { "text": "you talked to my mum?", "witness": "boundary probe — affirm trust" }
         ],

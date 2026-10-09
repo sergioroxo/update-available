@@ -1,6 +1,6 @@
 {
   "_doc": "S1.2–S1.4 — UN-WALK, the Starter Kit's programme (ERA1_LOGIC_v1 §3). Register: operable (perpetrator self-presentation; period-real, satire only where it collapses). ⚑ REBUILT 2026-09-20 (S151, R3-15/16/19/21/22/24): the booklet is now a Win95 WIZARD — his reference `References images/for the Era-1 programs.png`: a picture panel on the left, a bold title, plain text, Back / Next / Cancel — and its First Steps page is THE ERA'S PROGRAMME: five steps, each a press that opens its own panel and ticks off when done, in order (read · pray · connect · form · journal). The prayer step shows the sung words from `s1_prayer.json`, highlighted as they are sung, and asks for one press at the end. The connect step is the Internet Setup Wizard (`to enter online.png`, `for IRC connection.png`) on the black screen. Names follow the 'uncanny CT branding' doctrine (SCRIPT_UPDATE_v0.8 §5): TriedPath Fellowship, Un-Walk — read real, land wrong. Period vocabulary: 'struggler', 'SSA', 'change is possible'. BACK is drawn dead on every page (R26: the path only runs forward). All wording Claude's, his edit wins.",
-  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: the wizard pages keep their claim and their one instruction each, and lose the sentence that explains what the next step will show anyway (the mentor's form and journal; thousands before you; where the tape sits). The Internet Setup welcome says the same in fewer words. The pledge's lead-in goes to one line, since the card below already shows the name. The pledge card itself is untouched.",
+  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: the wizard pages keep their claim and their one instruction each, and lose the sentence that explains what the next step will show anyway (the mentor's form and journal; thousands before you; where the tape sits). The Internet Setup welcome says the same in fewer words. The pledge's lead-in goes to one line, since the card below already shows the name. The pledge card itself is untouched. ⚑ HIS REVIEW (2026-10-09): the welcome page and 'step by step' kept as they were; the mentor page keeps 'He has been where you are.' (the form-and-journal sentence stays cut).",
   "ministry": "TriedPath Fellowship",
   "program": "Un-Walk",
   "version": "companion disk v1.2",
@@ -23,9 +23,10 @@
     "title": "Welcome to Un-Walk!",
     "lines": [
       "This programme will walk you through your",
-      "first steps out of the struggle.",
+      "first steps out of the struggle, one at a time.",
       "",
       "Someone who loves you wanted you to have it.",
+      "Thousands have walked this road before you.",
       "",
       "To begin, click Next."
     ]
@@ -85,7 +86,7 @@
           "",
           "The world will tell you it is an identity.",
           "We gently say: it is a struggle — and a",
-          "struggle can be walked out of."
+          "struggle can be walked out of, step by step."
         ]
       },
       {
@@ -95,7 +96,8 @@
           "gives you the words. A fellowship channel",
           "gives you friends of the right kind.",
           "",
-          "A mentor will find you there.",
+          "A mentor will find you there. He has been",
+          "where you are.",
           "",
           "Change is possible. Click Done to begin."
         ]
