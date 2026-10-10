@@ -1564,7 +1564,7 @@ export class DesktopOS {
    */
   private drawE2Conduction(
     W: number, H: number, title: string, line1: string, line2: string,
-    accept: { label: string; id: string }, dismiss: { label: string; id: string }
+    accept: { label: string; id: string }, dismiss: { label: string; id: string }, dismissAsClose = false
   ): void {
     const { ctx } = this;
     ui.px(ctx, 0, 0, W, H, ERA1.tealDark);
@@ -1572,8 +1572,13 @@ export class DesktopOS {
     const c = this.drawLambyDialog(W, H, title, line1, line2, { dy: 200, hideChar: true });
     const by = c.y + c.h - 26;
     ui.button(ctx, c.x + c.w - 104, by, 96, 18, accept.label, { hover: this.hover === accept.id });
-    ui.button(ctx, c.x + 8, by, 96, 18, dismiss.label, { hover: this.hover === dismiss.id });
     this.hits.push({ x: c.x + c.w - 104, y: by, w: 96, h: 18, id: accept.id });
+    // ⚑ S227 / W1-D1 (walkthrough 1: "Remove the first Not Now button in 2003") — on Lamby's first greeting the
+    //   dismissal is the window's own close box, not a second button beside "hello": the dismissal law still holds
+    //   (it works and is filed exactly as the button was), the greeting just no longer offers two doors at once
+    const cb = (c as { closeBox?: { x: number; y: number; w: number; h: number } }).closeBox;
+    if (dismissAsClose && cb && cb.w > 0) { this.hits.push({ ...cb, id: dismiss.id }); return; }
+    ui.button(ctx, c.x + 8, by, 96, 18, dismiss.label, { hover: this.hover === dismiss.id });
     this.hits.push({ x: c.x + 8, y: by, w: 96, h: 18, id: dismiss.id });
   }
 
@@ -2912,7 +2917,7 @@ export class DesktopOS {
       this.drawE2Conduction(W, H, lambyStrings.introTitle,
         lambyStrings.introLine1, lambyStrings.introLine2,
         { label: lambyStrings.introAccept, id: 'lamby-hello' },
-        { label: lambyStrings.introDismiss, id: 'lamby-intro-dismiss' });
+        { label: lambyStrings.introDismiss, id: 'lamby-intro-dismiss' }, true);
       return;
     }
     // 'lambyProgram' — and now the program he is the face of
