@@ -343,7 +343,7 @@ export class E4Browser {
         this.pauseSaid = true;
         const P = pauseWords('e4') as unknown as { line: string; items: Record<string, string>; joiner: string };
         const items: string[] = [];
-        if (entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'tidy')) items.push(P.items.tidy);
+        if (entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'matchmade')) items.push(P.items.matchmade);
         // S208 / A12 (REVIEW_ROUND_5, ERA26-17) — only what is left: a tab she has read (or a change she requested) is not offered
         if (!ledger.e4Space.some((e) => e.id === 'record' || e.id === 'tab:record')) items.push(P.items.record);
         if (!ledger.e4Space.some((e) => e.id === 'tab:photos')) items.push(P.items.photos);
@@ -363,7 +363,7 @@ export class E4Browser {
     // ⚑ S203 — L's "while you wait" (see s4_browser.json console._docWait)
     if (!this.waitSaid && this.phase === 'open' && (this.mode === 'program' || this.mode === 'results' || this.mode === 'site' || this.mode === 'agent')) {
       this.quietT += dt;
-      if (this.quietT > 25 && entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'tidy')) {
+      if (this.quietT > 25 && entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'matchmade')) {
         this.waitSaid = true; this.waitNow = true; this.version++;
       }
     }

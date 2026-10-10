@@ -49,7 +49,7 @@
   "e4": {
    "line": "While it settles, Maya — {items}. Or start with the search.",
    "items": {
-    "tidy": "the console on your bed",
+    "matchmade": "the console on your bed",
     "record": "your record",
     "photos": "your photographs"
    },

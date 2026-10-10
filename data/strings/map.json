@@ -436,9 +436,9 @@
      "where": "the monitor"
     },
     {
-     "id": "tidy",
+     "id": "matchmade",
      "label": "The console",
-     "done": "tidyPlayed",
+     "done": "matchmadePlayed",
      "optional": true,
      "hint": "The console on the bed. Pick it up.",
      "where": "the bed"

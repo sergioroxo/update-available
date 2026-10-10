@@ -163,13 +163,42 @@ export const REACH = {
   halo: '#f2d06b', lattice: '#8ea2ad', frame: '#3a4b55', wool: '#ffffff', woolShade: '#d6dde2'
 } as const;
 
-/** ⚑ S189 — TIDY (2026), on Maya's console: the cosy genre's pastels (the disguise), and the cards' dark */
+/** ⚑ S189 — TIDY (2026), on Maya's console: the cosy genre's pastels (the disguise), and the cards' dark.
+ *  ⚑ S227: TIDY is unhooked (MATCH MADE SIMPLE replaced it); kept because src/games/tidy.ts stays in the repo and
+ *  MATCHMADE below is copied from it. */
 export const TIDY = {
   bg: '#f6efe6', shelf: '#d9c3a5', slot: '#c9b08c', ink: '#3a3040', dim: '#9a8a78', accent: '#e8a0b4', glow: '#f2d06b',
   box: '#b89a7a', boxDark: '#8a6e52', floor: '#e9dccb', cardBg: '#1c1a24', cardInk: '#f6efe6', cardDim: '#9a93a8',
   mug: '#6fa8d8', book: '#c0504d', plant: '#5aa06a', clock: '#e0b050', lamp: '#f2c879', frame: '#a07a5a',
   pen: '#2a4a8a', notebook: '#8a5ac8', phones: '#303038', charger: '#e8e8e8', cup: '#d87a5a',
   binder: '#3a3a48', pinBlue: '#5bcefa', pinPink: '#f5a9b8', pinWhite: '#ffffff', letter: '#ffffff', rx: '#f0f0f0', rxCap: '#5b8fd8'
+} as const;
+
+/**
+ * ⚑ S227 — MATCH MADE SIMPLE (2026), on Maya's console (src/games/matchMade.ts), which replaced TIDY there. SOURCE:
+ * the prototype he approved ("Yes it is very good indeed!"), Pc_Simulation/2026-screen-prototypes/
+ * v2_match_made_simple/match_made_simple_v2.html (its `C` object, verbatim). That prototype took fourteen of these
+ * from TIDY above (the key each came from is named beside it) and two from L's own colours (ERA4.l, ERA4.lDim in
+ * era4.ts). Nothing else is painted on that screen: its gloss and gradients are row DITHERS between these, never
+ * mixed shades.
+ */
+export const MATCHMADE = {
+  ink: '#1c1a24',     // TIDY.cardBg
+  plum: '#3a3040',    // TIDY.ink
+  dim: '#9a93a8',     // TIDY.cardDim
+  cream: '#f6efe6',   // TIDY.bg
+  white: '#ffffff',   // TIDY.pinWhite
+  sand: '#d9c3a5',    // TIDY.shelf
+  wood: '#8a6e52',    // TIDY.boxDark
+  pink: '#e8a0b4',    // TIDY.accent
+  tblue: '#5bcefa',   // TIDY.pinBlue
+  blue: '#6fa8d8',    // TIDY.mug
+  pen: '#2a4a8a',     // TIDY.pen
+  violet: '#8a5ac8',  // TIDY.notebook
+  gold: '#f2d06b',    // TIDY.glow
+  orange: '#d87a5a',  // TIDY.cup
+  mint: '#9FD8CB',    // ERA4.l     (L's voice colour)
+  green: '#5DCAA5'    // ERA4.lDim  (L's second colour)
 } as const;
 
 /**

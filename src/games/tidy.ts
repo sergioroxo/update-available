@@ -1,4 +1,7 @@
 /**
+ * ⚑ UNHOOKED — replaced by MATCH MADE SIMPLE, S227 (src/games/matchMade.ts is the console's game now; this file and
+ * data/dialog/s4_tidy.json stay in the repo, nothing builds a Tidy any more, and the id 'tidy' is filed by nothing).
+ *
  * ⚑ S189 — TIDY (2026), on the console on Maya's bed. PLAN_PHASE4_GAMES; data/dialog/s4_tidy.json.
  * ⚑ REDESIGNED on his notes (2026-09-28): it must not quote a named campaign on its screen — "it is a game
  * that the logic is supposed to teach you about the Trans away" — and, like every game here, it has "a

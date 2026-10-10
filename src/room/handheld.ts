@@ -13,22 +13,23 @@
  *   own grey-blue glass ('Material.006', a flat plane at y 0.827, x ±0.771, z −0.03…1.99 in its node — measured
  *   from the mesh). A tap on the glass aims the gun at the tap and fires; the soft keys on the glass pause, swap
  *   and set the piece's one mute. Before: the phone's own idle screen.
- * - 2026 · the console on Maya's bed ('Nintendo Switch', Jasmine Roberts) — TIDY, once her file holds two
- *   entries (her first steps with the programme). Its screen is the model's glass (the x ±2.777, y ±1.61 quad of 'Material.006'; that material also carries a small button at x 3.2–3.5).
+ * - 2026 · the console on Maya's bed ('Nintendo Switch', Jasmine Roberts) — MATCH MADE SIMPLE, Second Thoughts' game
+ *   (⚑ S227: it replaced TIDY; src/games/matchMade.ts), once her file holds two entries (her first steps with the
+ *   programme). A 960 × 540 game on the same 16:9 glass TIDY's 128 × 72 had. Its screen is the model's glass (the x ±2.777, y ±1.61 quad of 'Material.006'; that material also carries a small button at x 3.2–3.5).
  *   Taps on the glass play it. Before: a dark home screen with the time.
  * In 2003 the 1997 handheld stands on his bookcase (his: "remove the DS in 2003 … maybe the game boy just moves
  * to another place"), dressed with the same face and a dark screen — kept, not played; never lifted.
  */
 import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
-import { px, text } from './calendarArt';
+import { px } from './calendarArt';
 import { text as text57, textW as textW57 } from './font57';
-import { HANDHELD as H, CLEAR as RC, TIDY as TD } from '../desktop/theme/calendar';
+import { HANDHELD as H, CLEAR as RC, MATCHMADE as MM } from '../desktop/theme/calendar';
 import { buildHeldDevice, type DeviceSpec, type HeldDevice } from './heldDevice';
 import type { GameKey } from '../games/types';
 import { FitIn } from '../games/fitIn';
 import { Clear } from '../games/clear';
-import { Tidy } from '../games/tidy';
+import { MatchMade } from '../games/matchMade';
 
 export const DEVICE_PROP_IDS = ['danielHandheld', 'flipPhone', 'e_console'];
 /** the Game Boy face, native units — shared by 1997's handheld and 2003's shelf copy */
@@ -83,12 +84,14 @@ const SPECS: DeviceSpec[] = [
     view: { fill: 0.75, maxW: 0.8 }   // S222 / W1-K4: the glass is the game; the keypad is never pressed
   },
   {
-    propId: 'e_console', modelKey: 'console2026', era: 'e4', gameId: 'tidy',
+    propId: 'e_console', modelKey: 'console2026', era: 'e4', gameId: 'matchmade',
     screenOn: { material: 'Material.006' },
-    screen: { pos: [0, 0, 0.28], euler: [90, 0, 0], scale: [5.55, 1, 3.22], w: 128, h: 72 },   // ⚑ the glass quad, x ±2.777 y ±1.61 (Material.006 also carries a button at x 3.2–3.5, which off-centred the first fit — his note, 2026-09-28)
+    // ⚑ S227: MATCH MADE SIMPLE is a 960 × 540 game (TIDY was 128 × 72) — the same 16:9, so the same glass quad
+    screen: { pos: [0, 0, 0.28], euler: [90, 0, 0], scale: [5.55, 1, 3.22], w: 960, h: 540 },   // ⚑ the glass quad, x ±2.777 y ±1.61 (Material.006 also carries a button at x 3.2–3.5, which off-centred the first fit — his note, 2026-09-28)
     available: (_has, fileSize) => fileSize >= 2,
-    idle: (g, w, h) => { px(g, 0, 0, TD.cardBg, w, h); text(g, '23:12', w - 24, 4, TD.cardDim); },
-    game: () => new Tidy(),
+    // the console's dark home screen with the time, drawn for the 960 × 540 glass in the 5×7 type
+    idle: (g, w, h) => { px(g, 0, 0, MM.ink, w, h); text57(g, '23:12', w - 24 - textW57('23:12', 4), 20, MM.dim, 4); },
+    game: () => new MatchMade(),
     holdDist: 0.42,
     view: { fill: 0.6 }
   }

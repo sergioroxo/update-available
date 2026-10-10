@@ -4,7 +4,8 @@
  *
  *     node tools/game_preview.mjs [tag] [scale]               # → out/games/fitin-<tag>-{title,play,cheer,pause,end}.png (default ×4)
  *     node tools/game_preview.mjs [tag] [scale] --game clear  # → out/games/clear-<tag>-{title,play,pause,end}.png (S222; default ×3)
- *     node tools/game_preview.mjs [tag] [scale] --game all    # both
+ *     node tools/game_preview.mjs [tag] [scale] --game matchmade  # → out/games/matchmade-<tag>-{title,play,counter,card99,original}.png (S227; default ×1 — it is 960 × 540)
+ *     node tools/game_preview.mjs [tag] [scale] --game all    # all three
  *
  * ⚑ WHY (S221). The games draw only with fillStyle + fillRect (src/games/types.ts), so they paint into a buffer
  * exactly as calendar_preview.mjs paints the calendar pages. A look at every screen of a 160 × 144 game costs a
@@ -102,6 +103,41 @@ async function clear() {
   console.log('clear: mode', g.mode, 'end', g.endWhy, 'filled', g.slots.filter((s) => s.st === 2).length, '/', g.slots.filter((s) => s.st !== 3).length, 'filing', g.takeFiling());
 }
 
+/**
+ * ⚑ S227 — MATCH MADE SIMPLE (960 × 540), PLAYED like CLEAR's: a seeded bot taps the first legal pair on the glass
+ * whenever it is her turn (the prototype's check_v2.mjs player). Stills: the title (PLAY armed), mid-game (a match
+ * of hers: the burst, the confetti, +n%), the counter-move (L's mint cursor choosing its swap), the 99% card, and the
+ * intact original after the collapse. Compare with the prototype's stills
+ * (Pc_Simulation/2026-screen-prototypes/v2_match_made_simple/stills/, also ×1).
+ */
+async function matchMade() {
+  const { MatchMade } = await load('src/games/matchMade.ts');
+  const g = new MatchMade(), snap = snapper(g, 'matchmade', Number(SCALE_ARG ?? 1)), P = g.probe;
+  P.seed(7);
+  const DT = 1 / 60;
+  const tapTile = (i) => { const p = P.tpos(i); g.tap(p.x + 25, p.y + 25); };
+  /** step until `until()` (or `sec` run out), the bot playing her turns after a short think */
+  const run = (sec, until = () => false) => {
+    let wait = 0.6;
+    for (let t = 0; t < sec; t += DT) {
+      g.tick(DT);
+      if (until()) return true;
+      if (P.s.canPlay) { wait -= DT; if (wait <= 0) { const m = P.move(); if (m) { tapTile(m[0]); tapTile(m[1]); } wait = 0.6; } }
+    }
+    return false;
+  };
+  run(3); snap('title');
+  g.tap(480, 410);
+  run(120, () => P.s.earned >= 6 && P.s.actor === 'player' && P.s.phase === 'pop'); for (let i = 0; i < 6; i++) g.tick(DT); snap('play');
+  run(30, () => P.s.actor === 'system' && P.s.phase === 'think'); for (let i = 0; i < 50; i++) g.tick(DT); snap('counter');
+  run(300, () => P.s.state === 'end'); for (let i = 0; i < 170; i++) g.tick(DT); snap('card99');
+  const score = P.s.score;
+  run(20, () => P.s.state === 'final'); for (let i = 0; i < 200; i++) g.tick(DT); snap('original');
+  const s = P.s;
+  console.log('matchmade: state', s.state, 'earned', s.earned, 'score', score, 'recoats', s.recoats, 'counterTurns', s.counterTurns, 'record wiped', s.history === 0 && s.filed === 0 && s.cards === 0, 'original', JSON.stringify(s.original), 'filing', g.takeFiling(), 'again', g.takeFiling());
+}
+
 if (GAME === 'fitin' || GAME === 'all') await fitIn();
 if (GAME === 'clear' || GAME === 'all') await clear();
+if (GAME === 'matchmade' || GAME === 'all') await matchMade();
 console.log('wrote', dir, TAG, GAME);
