@@ -3220,9 +3220,19 @@ export class DesktopOS {
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(opening.o3_chip_prompt, L, c.y + 108);
-    ui.setFont(ctx, 9);
-    ctx.fillStyle = this.profileChips.length === 3 ? ERA1.ok : ERA1.grey;
-    ctx.fillText(`(${opening.o3_chip_count}: ${this.profileChips.length}/3)`, L + 210, c.y + 108);
+    // ⚑ S227 / W1-C1 (walkthrough 1: "make it clearer that you choose 3 things about yourself") — three boxes that
+    //   fill as she chooses, beside the words, instead of a small grey "(pick three: 0/3)"
+    {
+      const px0 = L + 196;
+      for (let i = 0; i < 3; i++) {
+        const filled = i < this.profileChips.length;
+        ui.bevel(ctx, px0 + i * 16, c.y + 106, 12, 12, !filled);
+        if (filled) ui.px(ctx, px0 + i * 16 + 3, c.y + 109, 6, 6, ERA1.navy);
+      }
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = this.profileChips.length === 3 ? ERA1.ok : ERA1.navy;
+      ctx.fillText(opening.o3_chip_count, px0 + 52, c.y + 108);
+    }
     const chips = opening.o3_chips as { id: string; label: string }[];
     const chipW = 142, chipH = 18, chipGap = 6;
     chips.forEach((ch, i) => {
@@ -3233,7 +3243,7 @@ export class DesktopOS {
       ui.bevel(ctx, x, y, chipW, chipH, !on); // selected → sunken
       ui.setFont(ctx, 10);
       ctx.fillStyle = on ? ERA1.navy : ERA1.black;
-      ctx.fillText(ch.label, x + 6, y + 4);
+      ctx.fillText((on ? '✓ ' : '') + ch.label, x + 6, y + 4);   // S227 / W1-C1 — a chosen one says so
       this.hits.push({ x, y, w: chipW, h: chipH, id: `pchip:${ch.id}` });
     });
 
