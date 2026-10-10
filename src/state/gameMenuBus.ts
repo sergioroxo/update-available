@@ -87,6 +87,9 @@ class GameMenuBus {
   /** ⚑ S220 — LambyOS's Start menu has Leave…: it opens the menu at the leave note (frame voice), never the
    *  leave page directly — the fiction offers the door, the frame says where it goes. Set when the menu mounts. */
   openLeave: (() => void) | null = null;
+  /** ⚑ S227 — LambyOS Home's plaque has a Credits line: it opens the menu at Credits & attributions (frame voice,
+   *  nothing files). Set when the menu mounts. */
+  openCredits: (() => void) | null = null;
 
   get isOpen(): boolean {
     return this._open;

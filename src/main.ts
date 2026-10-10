@@ -10,6 +10,7 @@ import { startFlat } from './flat/flat';
 import { startLambyRig } from './lambyrig/lambyRig';
 import { mountGameMenu } from './desktop/gameMenu';
 import { mountOrientingCard } from './desktop/orientingCard';
+import { mountLambyosHome } from './desktop/home/lambyosHome';
 import './state/ledger'; // installs the beforeunload wipe
 
 const canvas = document.getElementById('app') as HTMLCanvasElement | null;
@@ -85,8 +86,12 @@ if (query.get('lambyrig') === '1') {
   if (reviewMode) {
     launch();
   } else {
-    // R28-3 (minimal): the orienting card precedes O1 on a fresh load only.
-    const card = mountOrientingCard((choice) => {
+    // R28-3 (minimal): the front door precedes O1 on a fresh load only.
+    // ⚑ S227 — the front door is LAMBYOS HOME now (src/desktop/home/; docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md).
+    //   `?home=0` skips the room for the SHORT DOOR — today's orienting card, content note and arm-delay intact —
+    //   for installations and the festival cut. Both hand over through the same callback.
+    const mountDoor = query.get('home') === '0' ? mountOrientingCard : mountLambyosHome;
+    const card = mountDoor((choice) => {
       // S162 / F-01: the choice itself already did its work (the phone card asked
       // the device; the headset card requested the session) — the room opens the same
       document.documentElement.dataset.door = choice;

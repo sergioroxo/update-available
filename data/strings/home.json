@@ -1,0 +1,64 @@
+{
+ "_doc": "⚑ S227 — LAMBYOS HOME, first pass (docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md; W1-A1/A2/A4/A5/A7). The programme's front door, the way Bob was Windows': a flat illustrated 1997 living room (src/desktop/home/), one object = one thing to learn, each opening a plain card in the FRAME's voice. It replaces the orienting card (src/desktop/orientingCard.ts) as the first thing a fresh reinterp load shows; that card survives as the SHORT DOOR (`?home=0`, and the notice's 'Been here before?' line). THE FRAME'S WORDS ARE NOT COPIED HERE: the content note, premise, about, subtitle, version tag, the three ways to look (`cards.*`), the menu line, captions, Leave's left page and the wait/enter notes are read from data/strings/orientingCard.json, unchanged, so the two doors can never drift apart (design §1: 'the words already in orientingCard.json … reused verbatim'). This file holds only what is new to Home. HIS ANSWERS (design §7, 2026-10-09/10): (1) 'only speech bubbles like BOB' — Lamby is in the room and speaks ONLY in bubbles (`lamby.*`), the programme's own voice (register operable), short, never over the content note (every bubble is hidden while any card is open), always dismissible; no bubble ever carries a frame word. (2) 'Record? no' — Home files nothing: no ledger record, no witness entry; only the two view settings carry over in memory (the look mode and `ledger.view.captions`). (3) The Lexicon is NOT in Home at the start: it appears when the Close returns to Home (later). (4)/(6) The advert on the tape is his choice (c) and 'both', but it needs its drawing: in this pass the tape sits on the sideboard, drawn and named, and cannot be pressed. THE ONE GATE (design §1): the notice ('Before you come in') is the only thing lit at the start; closing it starts the existing 4 s arm-delay, after which the three enter buttons light. THE CUT (his 2026-10-10 ruling 'both': the exhibition offers the full piece AND the Speedrun Version, W1-A3): one quiet choice in each device card, default the full piece, `?cut=speedrun` preselects; src/state/cut.ts, memory only. `door.note` is new frame wording (this Leave is today's door's Leave, 'You left. / Nothing was kept.', not the menu's leave page, so gameMenu.leaveNote would have said the wrong thing). `armchair.body` is `chooseNote` without its first sentence ('Choose one.' belongs to the devices). `mat` is the programme's signage, drawn in the room's pixel type.",
+ "roomLabel": "LambyOS Home",
+ "mat": "WELCOME HOME",
+ "close": "Close",
+ "objects": {
+  "door": "The front door: leave",
+  "notice": "The notice: before you come in",
+  "plaque": "The plaque: what this is",
+  "tape": "The tape",
+  "armchair": "The armchair: the turn",
+  "remote": "The remote control: captions",
+  "switch": "The light switch: the menu",
+  "computer": "The mouse: on this computer",
+  "tablet": "The tablet: on a phone or tablet",
+  "headset": "The headset: in a headset",
+  "lamby": "Lamby"
+ },
+ "notice": {
+  "title": "Before you come in",
+  "shortDoor": "Been here before? Take the short door."
+ },
+ "plaque": {
+  "title": "What this is",
+  "credits": "Credits & attributions"
+ },
+ "armchair": {
+  "title": "The turn",
+  "body": "You never walk, and nothing is timed — turning to look is the only thing your body has to do."
+ },
+ "remote": {
+  "title": "Captions",
+  "on": "Sound names: on",
+  "off": "Sound names: off"
+ },
+ "switch": {
+  "title": "The menu",
+  "open": "Open the menu"
+ },
+ "door": {
+  "title": "Leave",
+  "note": "Leaving now ends it here, before anything has started. Nothing is kept. Inside the piece, Leave is always in the menu.",
+  "leave": "Leave",
+  "stay": "Stay"
+ },
+ "cut": {
+  "legend": "Which version?",
+  "full": "The full piece (about 60 minutes)",
+  "speedrun": "The Speedrun Version (about 20 minutes)"
+ },
+ "lamby": {
+  "_doc": "The programme's voice (LambyOS, register operable): cosy, a little too eager, and it never explains anything the frame explains. No line mentions the notice, the content, leaving, or what the piece is about.",
+  "dismiss": "Dismiss",
+  "greet": "Welcome home! Everything is set up already.",
+  "greetAgain": "Welcome home again! Everything is set up already.",
+  "chatter": [
+   "I'm Lamby. I look after the house.",
+   "Make yourself comfortable. We chose everything in here for you.",
+   "When you're ready, the machines are on the little table.",
+   "You don't need to do anything."
+  ],
+  "armchair": "Our best chair. It turns right round!"
+ }
+}

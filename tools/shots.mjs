@@ -832,7 +832,7 @@ async function zoomLegibility(browser, asserts, outDir) {
     const page = await browser.newPage();
     await page.setViewport({ width: w, height: h });
     page.on('console', (m) => { const t = m.text(); if (/ASSERT|Invalid batch/i.test(t)) asserts.push(t.slice(0, 160)); });
-    const q = era === 1 ? '?reinterp=1&debug=1&descent=0' : `?reinterp=1&era=${era}&debug=1&descent=0`;
+    const q = era === 1 ? '?reinterp=1&debug=1&descent=0&home=0' : `?reinterp=1&era=${era}&debug=1&descent=0`;
     await page.goto(`http://localhost:${PORT}/${q}`, { waitUntil: 'networkidle2', timeout: 60000 });
     if (era === 1) {
       // ⚑ ORDER MATTERS: a fresh load is gated by the pre-fiction orienting
@@ -1030,7 +1030,7 @@ async function comfort(browser, asserts) {
   {
     const page = await browser.newPage();
     page.on('console', (m) => { const t = m.text(); if (/ASSERT|Invalid batch/i.test(t)) asserts.push(t.slice(0, 160)); });
-    await page.goto(`http://localhost:${PORT}/?reinterp=1&debug=1`, { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto(`http://localhost:${PORT}/?reinterp=1&debug=1&home=0`, { waitUntil: 'networkidle2', timeout: 60000 });
     // ⚑ The ethics arm-delay (orientingCard.ts, ARM_DELAY_MS): "enter" can
     // never be instant, so the button is disabled for the first seconds. Wait
     // for it rather than shortening it — the delay is a law, not a loading bar.

@@ -416,6 +416,20 @@ async function main() {
 
   // ── the front door is real DOM, not canvas (4 s ethics delay honoured) ──
   if (FROM_ERA <= 1) {
+    // ⚑ S227 — the front door is LAMBYOS HOME (src/desktop/home/): the notice first (its Close starts the 4 s arm),
+    //   then the computer's card, whose "Log in" is the old door's. Real DOM buttons, pressed in the player's order.
+    //   Without Home (`?home=0`, the short door) the old panel's Log in is on screen at once and this is skipped.
+    if (await page.$('#lambyos-home')) {
+      const pressHome = async (sel, what) => {
+        await page.waitForSelector(sel, { timeout: 30000 });
+        await page.$eval(sel, (b) => b.click());
+        note('dom', { target: sel, what });
+        await wait(400);
+      };
+      await pressHome('[data-home="notice"]', 'LambyOS Home: the notice (the content note)');
+      await pressHome('[data-home-close]', 'the notice closed — the 4 s arm starts');
+      await pressHome('[data-home="computer"]', 'LambyOS Home: the mouse — On this computer');
+    }
     await page.waitForFunction(
       () => [...document.querySelectorAll('button')].some((b) => /Log in/i.test(b.textContent || '') && !b.disabled),
       { timeout: 180000 });

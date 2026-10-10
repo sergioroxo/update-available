@@ -81,7 +81,7 @@ async function main() {
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
   page.on('console', (m) => { const t = m.text(); if (m.type() === 'error' && !/Failed to load resource/.test(t)) errors.push(t.slice(0, 200)); });
   page.on('response', (r) => { if (r.status() >= 400 && !/favicon/.test(r.url())) errors.push(`${r.status()} ${r.url()}`); });
-  const query = ERA === 1 ? '?reinterp=1&debug=1' : `?reinterp=1&era=${ERA}&debug=1&descent=0`;
+  const query = ERA === 1 ? '?reinterp=1&debug=1&home=0' : `?reinterp=1&era=${ERA}&debug=1&descent=0`;
   await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: 'networkidle2', timeout: 60000 });
   await page.waitForFunction(() => [...document.querySelectorAll('button')]
     .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});

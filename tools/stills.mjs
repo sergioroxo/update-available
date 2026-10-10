@@ -80,7 +80,7 @@ async function main() {
     await page.setViewport(VIEW);
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e).slice(0, 160)));
-    const query = n === 1 ? '?reinterp=1&debug=1' : `?reinterp=1&era=${n}&debug=1&descent=0`;
+    const query = n === 1 ? '?reinterp=1&debug=1&home=0' : `?reinterp=1&era=${n}&debug=1&descent=0`;
     await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: 'networkidle2', timeout: 60000 });
     if (n === 1) {
       await page.waitForFunction(() => [...document.querySelectorAll('button')]

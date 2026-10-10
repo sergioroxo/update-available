@@ -579,6 +579,11 @@ export function mountGameMenu(): GameMenu {
    *  teardown/rebuild, which would be far riskier to get right this session. */
   function doRestart(): void {
     wipeLedger();
+    // ⚑ S227 — A RESTART IN THE SAME TAB RETURNS TO LAMBYOS HOME ALREADY ARMING (design §3, way 2): the visitor
+    //   read the notice minutes ago in this tab. Nothing can be stored, so the only carrier is the reload's own
+    //   URL: `#home-armed`, which Home reads once and strips at once (a later reload is a fresh visit). It carries
+    //   nothing about the person — the ledger is wiped above, as it always was.
+    try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search + '#home-armed'); } catch { /* restart unarmed */ }
     window.location.reload();
   }
 
@@ -619,6 +624,7 @@ export function mountGameMenu(): GameMenu {
 
   // (open first — opening resets the view to main — then land on the sources)
   gameMenuBus.openLeave = () => { gameMenuBus.open(); view = 'leaveConfirm'; render(); };
+  gameMenuBus.openCredits = () => { gameMenuBus.open(); view = 'credits'; render(); };
   gameMenuBus.openCloseSources = (i) => { gameMenuBus.open(); closeFocus = i; view = 'closeSources'; render(); };
   const unsubscribe = gameMenuBus.onChange(setOpenVisual);
   const onFullscreenChange = (): void => {
