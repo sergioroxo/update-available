@@ -27,6 +27,7 @@
  *
  * Drawn in 2003's desktop chrome (ERA1's, as Restorify's windows are); the footage in theme/calendar.ts's FOOTAGE.
  */
+import { isSpeedrun } from '../../state/cut';
 import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { FOOTAGE as F } from '../theme/calendar';
@@ -150,7 +151,12 @@ export class TestimonyApp {
       case 'ts-close': this.open = false; return true;
       case 'ts-next': this.topics = Math.min(T.prep.topics.length, this.topics + 1); return true;
       case 'ts-prep-done': this.onFile?.('testimony-prep'); this.stage = 'release'; return true;
-      case 'ts-agree': this.onFile?.('testimony-release'); this.stage = 'tapes'; return true;
+      case 'ts-agree':
+        this.onFile?.('testimony-release');
+        // ⚑ S227 — the Speedrun Version: the programme assembles his story itself (the tapes and the edit are its
+        //   work, W1-D11 "too confusing and unnecessary"); the same three filings, then straight to his story online
+        if (isSpeedrun()) { this.onFile?.('testimony-tapes'); this.onFile?.('testimony-cut'); this.exported = true; this.stage = 'online'; this.web = 'notice'; return true; }
+        this.stage = 'tapes'; return true;
       case 'ts-play': if (this.clipT >= CLIPS[this.clip].seconds) this.clipT = 0; this.playing = true; return true;
       case 'ts-stop': this.playing = false; return true;
       case 'ts-folder': this.playing = false; this.stage = 'tapes'; return true;

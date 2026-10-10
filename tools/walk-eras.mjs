@@ -33,6 +33,7 @@ const t0 = Date.now();
 const runs = ERAS.map((n) => new Promise((resolve) => {
   // one era each: e1 from the front door to 2003's arrival, e2 to 2016's, e3 to 2026's, e4 to the Close
   const args = ['tools/walk.mjs', '--port', PORT, '--max', MAX, '--one-era', '--from-era', String(n)];
+  if (flag('cut', '')) args.push('--cut', flag('cut', ''));   // S227: --cut speedrun walks the Speedrun Version
   const log = join(LOGS, `walk-e${n}.log`);
   const out = [];
   const child = spawn(process.execPath, args, { cwd: ROOT });

@@ -29,6 +29,7 @@
  * src/engine/app.ts, so the tape system stays the one clock and the shelf's
  * own press does exactly what the button does.
  */
+import { isSpeedrun } from '../../state/cut';
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
@@ -298,7 +299,8 @@ export class KitApp {
         const p = this.prayerProbe();
         if (p.state === 'ended') return { id: 'amen', label: kit.pray.amen, disabled: false };
         // the first chorus sung: the press is offered, and taking it early is a choice the file keeps
-        if (p.state === 'singing' && p.songT >= AMEN_FROM) return { id: 'amen', label: kit.pray.amen, disabled: false };
+        // ⚑ S227 — the Speedrun Version (his, 2026-10-10: "both"): Amen is offered from the first sung word
+        if (p.state === 'singing' && p.songT >= (isSpeedrun() ? 0 : AMEN_FROM)) return { id: 'amen', label: kit.pray.amen, disabled: false };
         if (p.state === 'idle' || p.state === 'stopped') return { id: 'play', label: p.state === 'stopped' ? kit.pray.again : kit.pray.play, disabled: false };
         return null;
       }
@@ -423,7 +425,7 @@ export class KitApp {
     // singing / ended: the words, a window of lines around the one being sung
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(p.state === 'ended' ? kit.pray.ended : p.songT >= AMEN_FROM ? kit.pray.mayStop : kit.pray.playing, x, y + 24);
+    ctx.fillText(p.state === 'ended' ? kit.pray.ended : p.songT >= (isSpeedrun() ? 0 : AMEN_FROM) ? kit.pray.mayStop : kit.pray.playing, x, y + 24);
     const lines = prayer.lines as { w: string; s: number; e: number }[][];
     const songT = p.state === 'ended' ? PRAYER_LEN + 1 : p.songT;
     let curLine = 0;
@@ -587,7 +589,8 @@ export class KitApp {
       case 'cancel': if (this.onCancel) this.onCancel(); else this.open = false; return;
       case 'next':
         if (this.panel === 'welcome') this.panel = 'steps';
-        else if (this.panel === 'read' && this.readPage < kit.read.pages.length - 1) this.readPage++;
+        // S227 — the Speedrun Version reads the first page and the last
+        else if (this.panel === 'read' && this.readPage < kit.read.pages.length - 1) this.readPage = isSpeedrun() ? kit.read.pages.length - 1 : this.readPage + 1;
         return;
       case 'done':
         if (this.panel === 'read') {

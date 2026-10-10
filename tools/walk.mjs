@@ -149,6 +149,8 @@ const FROM_ERA = Number(flag('from-era', '0')) || 0;
 /** ⚑ `--one-era` (S223): stop, successfully, the moment the walk arrives in the NEXT era (or at the Close, from
  *  Era 4). With `--from-era` that makes each of tools/walk-eras.mjs's four walks one era long. */
 const ONE_ERA = process.argv.includes('--one-era');
+/** ⚑ `--cut speedrun` (S227): walk the Speedrun Version (`?cut=speedrun`, src/state/cut.ts) instead of the full piece */
+const CUT = flag('cut', '') === 'speedrun' ? 'speedrun' : '';
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
 const OUT_DIR = join(ROOT, process.argv.includes('--from-era') ? 'out/walks' : 'docs/reinterp');
@@ -406,7 +408,7 @@ async function main() {
     );
   };
 
-  const startQuery = FROM_ERA > 1 ? `?reinterp=1&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&debug=1';
+  const startQuery = (FROM_ERA > 1 ? `?reinterp=1&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&debug=1') + (CUT ? '&cut=' + CUT : '');
   // S223: wait for the page's own load, not for "network idle", and give a COLD dev server time: on a fresh machine
   //   Vite transforms every module on first request (the cloud's first run spent its whole minute there)
   await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'load', timeout: 240000 });
@@ -2047,7 +2049,7 @@ const LAP = { w: 224, h: 140 };
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '');
+    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '') + (CUT ? '_' + CUT.toUpperCase() : '');
   const presses = log.filter((l) => l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move');
   const dead = presses.filter((p) => p.changed === false);
   const silentFound = [...new Set(log.filter((l) => l.kind === 'silent-surface')

@@ -6,6 +6,7 @@
  * Registers: warning/left = frame (bare); name/desktop = operable;
  * the ESC pause overlay is care infrastructure and preempts everything.
  */
+import { isSpeedrun } from '../state/cut';
 import { mapState } from '../witness/map';
 import { gameMenuBus as startMenuBus } from '../state/gameMenuBus';
 import { meetWord } from '../room/lexicon';
@@ -2276,7 +2277,8 @@ export class DesktopOS {
     const st = mapState(this);
     const era = st.eras.find((e) => e.here);
     const now = st.current && era && st.current.era === era.id ? st.current.beat : null;
-    const room = (era?.beats ?? []).filter((b) => b.beat.optional && b.state !== 'done' && b.beat.where && !/monitor|screen|desktop/i.test(b.beat.where))
+    // S227 — the Speedrun Version lists no side trips: only what moves the story
+    const room = isSpeedrun() ? [] : (era?.beats ?? []).filter((b) => b.beat.optional && b.state !== 'done' && b.beat.where && !/monitor|screen|desktop/i.test(b.beat.where))
       .map((b) => b.beat).slice(0, 4);
     const progs = this.iconsDrawn.slice(0, 8);
     const w = 236; const row = 15; const tx = 30; const tw = w - tx - 8;
