@@ -43,16 +43,12 @@
   }
  ],
  "_docMaltaOne": "BEA'S FIRST MESSAGE — 'it might happen'. She is not campaigning. She is a woman inside the same apparatus reading the news on her break, and the reason it matters to her is not political. ⚑ S149 — THE LINK CARD IS IN THE THREAD NOW. `phoneE3.ts` publishes the pressable `link` rect only while drawing a message of `kind: 'link'`, and no message carried that kind — so the article card (`link` below: masthead, headline, 'Tap to open') was never drawn, the card could never be opened, the stage could never leave `first`, and the group's cascade — the era's ending — was unreachable from the phone. Sérgio, 09-17 (R3-79): 'I opened the chat and nothing happened.' The era used to end on the work count instead, over her open job; it ends on the cascade now (era3Devices.tick), which this message makes reachable.",
+ "_docS227MaltaOne": "⚑ S227 — M4 (docs/reinterp/VERA_OPTIONS_2026-10-09.md §3; his answers 2026-10-10, second round: 'Q7: M3, M4, M5 accepted'). Bea's first two messages are one now: the reading-cadence cut (W1-E1, W1-E5). Her voice and her words, in one bubble; it is also the lock screen's preview.",
  "maltaOne": [
   {
    "from": "Bea",
    "time": "11:02",
-   "text": "is anyone else reading about malta"
-  },
-  {
-   "from": "Bea",
-   "time": "11:02",
-   "text": "there's a bill. they're about to make it an offence to try to change somebody. an actual law, with a penalty on it."
+   "text": "is anyone else reading about malta. there's a bill, they're about to make it an offence to try to change somebody."
   },
   {
    "from": "Bea",
@@ -67,21 +63,16 @@
  ],
  "link": {
   "masthead": "The Continental Wire",
-  "headline": "Malta moves to outlaw conversion practices",
-  "standfirst": "A bill before parliament would make it an offence to carry out or advertise practices intended to change a person's sexual orientation or gender identity, with penalties for practitioners and for anyone commissioning them. The final vote is expected today.",
-  "tapHint": "Tap to open"
+  "headline": "Malta moves to outlaw conversion practices"
  },
+ "_docS227Link": "⚑ S227 — M1 (VERA_OPTIONS §3; the plan he approved 2026-10-10): the `standfirst` and `tapHint` fields are deleted from both cards (`link`, `linkVote`). phoneE3.ts never drew them (masthead and headline only), so nothing on screen changes.",
  "_docMaltaTwo": "AND THE SECOND — 'it happened somewhere'. Short, because it is.",
+ "_docS227MaltaTwo": "⚑ S227 — M5 (VERA_OPTIONS §3; his 2026-10-10 answers, 'M3, M4, M5 accepted'): 'they voted. unanimous.' in one message. Susan's 'unanimous' and Hanne's 'read that again susan' still echo it.",
  "maltaTwo": [
   {
    "from": "Bea",
    "time": "15:47",
-   "text": "they voted."
-  },
-  {
-   "from": "Bea",
-   "time": "15:47",
-   "text": "unanimous. not one against it."
+   "text": "they voted. unanimous."
   },
   {
    "from": "Bea",
@@ -111,7 +102,9 @@
   "witnessOpened": "malta: link opened — blocked, group flagged",
   "witnessIgnored": "malta: link not opened — group flagged anyway"
  },
+ "_docS227Block": "⚑ S227 — M2/M7 (VERA_OPTIONS §3; his 2026-10-10 answers, 'Q6: two sheets, the second shortened'): only the first sheet in a run shows its body. Every later sheet (the vote's, or a spent link answered again) shows the title and the note alone — 'Not available on your work profile' / 'I let the team know…', or 'Just so you know' / 'It has been passed on.' Both ledger lines (e3_malta_first, e3_malta_voted) still file; the cadence is still two presses.",
  "_docCascade": "⚑ THE CASCADE IS VOLUME, NOT DAMAGE (§7.2). No crash screen, no corruption, no glitch glyphs, no error state. THE BLOCK KEEPS WORKING, CORRECTLY, ON MESSAGE AFTER MESSAGE — there are simply more messages than blocks. The software is not broken. It is outnumbered. ⚑ AND IT IS NOT VERA WHO DOES IT: she sends nothing here. Deirdre — the woman who runs the group, who moved Thursday's call so Susan could get there — is in the middle of it, and people are being ADDED to the group while it happens. That is 'the system collapses if everyone no longer performs it', and it is why the ending is collective and has no heroine.",
+ "_docS227Cascade": "⚑ S227 — M3 (VERA_OPTIONS §3; his 2026-10-10 answers, 'M3, M4, M5 accepted'): the cascade's ten forwarded link cards are halved to five, one per name — Susan, Hanne, Deirdre, Aoife, Bea. The six text messages and the three 'added' lines stay, so it still reads as more than one person at once: 16 messages to 11, 7.2 s to 4.95 s. Bea's forward moves to the end so the thread closes on a forward, not on a system line. Nothing counts the messages (the ledger files e3_cascade when the last one lands). Headset check pending (his Q10).",
  "cascade": [
   {
    "from": "Susan",
@@ -149,11 +142,6 @@
    "text": "Aoife was added"
   },
   {
-   "from": "Hanne",
-   "time": "15:53",
-   "kind": "link"
-  },
-  {
    "from": "Aoife",
    "time": "15:54",
    "kind": "link"
@@ -164,33 +152,13 @@
    "text": "Nell was added"
   },
   {
-   "from": "Bea",
-   "time": "15:54",
-   "kind": "link"
-  },
-  {
-   "from": "Nell",
-   "time": "15:55",
-   "kind": "link"
-  },
-  {
    "from": "system",
    "time": "15:55",
    "text": "3 people were added"
   },
   {
-   "from": "Susan",
+   "from": "Bea",
    "time": "15:55",
-   "kind": "link"
-  },
-  {
-   "from": "Aoife",
-   "time": "15:56",
-   "kind": "link"
-  },
-  {
-   "from": "Deirdre",
-   "time": "15:56",
    "kind": "link"
   }
  ],
@@ -284,9 +252,7 @@
  },
  "linkVote": {
   "masthead": "The Continental Wire",
-  "headline": "Malta outlaws conversion practices — unanimous vote",
-  "standfirst": "Parliament passed the bill without a single vote against. Carrying out or advertising practices intended to change a person's sexual orientation or gender identity is now an offence, with penalties for practitioners and for anyone who commissions them.",
-  "tapHint": "Tap to open"
+  "headline": "Malta outlaws conversion practices — unanimous vote"
  },
  "_docLinkVote": "⚑ S149 — THE SECOND CARD: the vote's result, shared into the thread with 'they voted.' (maltaTwo). The stage advances on the CARD's dismissal, and the second card needs its own press: this is it (`kind: 'link2'`). Same invented paper as `link`; the numbers are the Malta bill's public record (unanimous)."
 }

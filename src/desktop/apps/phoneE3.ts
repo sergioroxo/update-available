@@ -53,7 +53,7 @@ const BEFORE = m.before as Msg[];
 const MALTA_ONE = m.maltaOne as Msg[];
 const MALTA_TWO = m.maltaTwo as Msg[];
 const CASCADE = m.cascade as Msg[];
-const LINK_VOTE = m.linkVote as { masthead: string; headline: string; standfirst: string; tapHint: string };
+const LINK_VOTE = m.linkVote as { masthead: string; headline: string };   // S227 / M1: the never-drawn standfirst and tapHint are gone
 const BACKLOG = m.backlog as { from: string; time: string; text: string }[];
 const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
 const HOME = m.home as unknown as Record<string, string>;
@@ -96,6 +96,11 @@ export class PhoneE3 {
   /** ⚑ S219 / W1-E6 — the card on the glass is a SPENT link being answered, not the stage's own beat: it closes and
    *  moves nothing (no ledger, no lift, no stage) */
   private spentCard = false;
+  /** ⚑ S227 / M2·M7 (his 2026-10-10: "two sheets, the second shortened") — how many sheets this run has put on the
+   *  glass, and whether the one up now is a later one: only the first shows its body; every later one is the title and
+   *  the note alone. The ledger lines are untouched. */
+  private sheetsShown = 0;
+  private shortSheet = false;
   /** S177 — the backlog message open on its own screen (`from + time`), or null */
   private openMessage: string | null = null;
   private rects: Rect[] = [];
@@ -192,6 +197,7 @@ export class PhoneE3 {
   private showCard(which: 'opened' | 'ignored'): void {
     this.card = which;
     this.carded = true;
+    this.countSheet();
     ledger.checkins.push({
       id: 'e3_malta_' + this.stage,
       witness: which === 'opened' ? m.block.witnessOpened : m.block.witnessIgnored
@@ -202,6 +208,11 @@ export class PhoneE3 {
     this.opts.onLift();
     this.bump();
   }
+
+  private countSheet(): void { this.shortSheet = this.sheetsShown > 0; this.sheetsShown++; }
+
+  /** ⚑ S227 — the phone has moved past Bea's first card (the board may offer an update again; see graceQueueLite) */
+  get pastFirst(): boolean { return this.stage === 'voted' || this.stage === 'cascade' || this.stage === 'after'; }
 
   private dismissCard(): void {
     if (!this.card) return;
@@ -226,6 +237,7 @@ export class PhoneE3 {
     if (this.linkSpent(kind)) {
       this.card = this.opened ? 'opened' : 'ignored';
       this.spentCard = true;
+      this.countSheet();
       this.bump();
       return;
     }
@@ -613,7 +625,7 @@ export class PhoneE3 {
     const body = opened ? m.block.openedBody : m.block.ignoredBody;
     const note = opened ? m.block.openedNote : m.block.ignoredNote;
     phoneFont(ctx, 11);
-    const bodyLines = phoneWrap(ctx, body, W - 32);
+    const bodyLines = this.shortSheet ? [] : phoneWrap(ctx, body, W - 32);   // S227 / M2: a later sheet has no body
     const noteLines = phoneWrap(ctx, note, W - 32);
     // ⚑ THE SHEET IS SIZED FROM ITS CONTENT AND THE BUTTON SITS UNDER IT. The
     //   first build pinned the pill to `H - 40` and let the text run behind it,
@@ -636,7 +648,7 @@ export class PhoneE3 {
     phoneFont(ctx, 11);
     ctx.fillStyle = PHONE.dim;
     bodyLines.forEach(ln => { ctx.fillText(ln, 16, y); y += 14; });
-    y += 6;
+    if (bodyLines.length) y += 6;
     ctx.fillStyle = PHONE.faint;
     noteLines.forEach(ln => { ctx.fillText(ln, 16, y); y += 14; });
 

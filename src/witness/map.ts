@@ -22,6 +22,7 @@ import type { DesktopOS } from '../desktop/os';
 import mapData from '../../data/strings/map.json';
 import { entriesByEra, practiceOf, type RecordEra, type Practice } from './record';
 import queue from '../../data/dialog/s3_queue.json';
+import { isSpeedrun } from '../state/cut';
 
 export interface MapBeat {
   id: string;
@@ -31,6 +32,9 @@ export interface MapBeat {
   where?: string;
   optional?: boolean;
   quiet?: boolean;
+  /** ⚑ S227 — the Speedrun Version's own words for this beat, where its route differs (map.json `_docS227`) */
+  labelSpeedrun?: string;
+  hintSpeedrun?: string;
 }
 export interface MapEra { id: RecordEra; label: string; beats: MapBeat[] }
 export type BeatState = 'done' | 'current' | 'ahead';
@@ -157,7 +161,13 @@ export function mapState(os: DesktopOS): MapState {
   const by = entriesByEra();
   let current: MapState['current'] = null;
   let quiet = now === 'close';
-  const eras: MapEraState[] = M.eras.map((era) => {
+  const speedrun = isSpeedrun();
+  const eras: MapEraState[] = M.eras.map((rawEra) => {
+    // ⚑ S227 — the Speedrun Version reads its own label and hint where a beat has one
+    const era = !speedrun ? rawEra : {
+      ...rawEra,
+      beats: rawEra.beats.map((b) => ({ ...b, label: b.labelSpeedrun ?? b.label, hint: b.hintSpeedrun ?? b.hint }))
+    };
     const eraIdx = ORDER.indexOf(era.id);
     const here = era.id === now;
     let currentFound = false;

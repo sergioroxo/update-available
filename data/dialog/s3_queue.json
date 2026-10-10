@@ -17,6 +17,10 @@
   "counter": "{n} of {m} applied",
   "doneHeading": "You're caught up.",
   "doneSub": "No new stories waiting right now.",
+  "updateLine": "New in Contributor tools: {tool}.",
+  "updateVersion": "GracePlatform {v}",
+  "updateInstall": "Install",
+  "_docUpdate": "⚑ S227 — THE UPDATE OFFER (docs/reinterp/VERA_OPTIONS_2026-10-09.md §2c and §7; his answer 2026-10-10: 'the system asks for the update, and the player confirms'). After a finished piece of work, on her return to the board, the platform offers its next tool in its own voice — one line and an Install button in the board's header — and nothing installs until she presses it. Ignoring it is declining it, and leaves the board as it is. Never on the return where the phone lights (an update must not arrive with Bea's message), never while the phone is in her hand or a card is on its glass. No count, no 'unlocked', no reward, no modal, no clock, no sound, and nothing filed (his Q5: updates file nothing). 'Contributor tools' is the era's own phrase: u4's changelog retires them.",
   "boardTitle": "GracePlatform · Today",
   "boardHeading": "TODAY",
   "boardSub": "Start anywhere. The order is yours.",
@@ -70,9 +74,22 @@
    "id": "record",
    "surface": "record",
    "label": "Your record",
-   "note": "account · activity"
+   "note": "account · activity",
+   "_docS227": "⚑ S227 — NO LONGER A TILE (VERA_OPTIONS §4c.3; his Q8, 2026-10-10: yes, her record stops counting as a job). The surface stays mounted for the taskbar chip (`Your record · {n}`), which is how she opens it; reading it is not a unit of work and never arms the phone."
   }
  ],
+ "_docContributorTools": "⚑ S227 — VERA STARTS WITH THREE JOBS, AND THE REST ARRIVE AS UPDATES (docs/reinterp/VERA_OPTIONS_2026-10-09.md §2 and §7; his answers 2026-10-10, two rounds). `starters` are on the board from sign-in, in the order Lambient's opening message names them (his: 'the order of the three is Lambient's'): Correct a testimony, Return the family calls (Annette is a starter: 'if that is more emotional yes'), Post to the group. `updates` are offered one at a time in this order, lightest first (his Q4 yes), Tag the video first because Annette joined the starters. Each installed tile is APPENDED after the ones already there, so no tile moves. `startersSpeedrun` is the Speedrun Version's order (src/state/cut.ts): Lambient sends her straight to Annette ('to speed up the narrative'), and one finished job lights the phone. The `board` rows above are still the roster: label, note and surface live there.",
+ "contributorTools": {
+  "starters": ["testimony", "family", "group"],
+  "startersSpeedrun": ["family", "testimony", "group"],
+  "updates": [
+   { "id": "recommend", "tool": "Video Tags", "version": "2016.1" },
+   { "id": "podcast", "tool": "Podcast Studio", "version": "2016.2" },
+   { "id": "course", "tool": "Course Builder", "version": "2016.3" },
+   { "id": "story", "tool": "Story Editor", "version": "2016.4" },
+   { "id": "comments", "tool": "Comment Review", "version": "2016.5" }
+  ]
+ },
  "verbs": {
   "apply": "Apply",
   "skip": "Skip",
@@ -96,7 +113,12 @@
   "firstTask1": "Apply what fits. Skip what doesn't.",
   "firstTask2": "Either way it's recorded, so you can't get it wrong.",
   "waitLine1": "Quiet moment? The group still needs this week's story.",
-  "waitLine2": "And the new video wants its keywords. No rush.",
+  "waitLine2": "The new video wants its keywords. No rush.",
+  "waitFamily": "The family line still has parents waiting.",
+  "_docWait": "⚑ S227 (VERA_OPTIONS §4c.2) — the waiting lines name only jobs that are ON the board and unfinished: the group (waitLine1), the family calls (waitFamily), the video once its update is installed (waitLine2, its 'And' dropped so it can stand first). At most two, the R28 cap; none if nothing named is open.",
+  "firstOrder": "A testimony first. Then the family calls, then the group's post.",
+  "firstOrderSpeedrun": "Start with the family calls. Annette first. The rest can wait.",
+  "_docFirstOrder": "⚑ S227 — LAMBIENT'S OPENING MESSAGE CALLS HER TO THE THREE IN ORDER (his 2026-10-10: 'the order of the three is Lambient's'; one short clause per job), said as the second line of the consent beat so the reply ('I'll keep the room tidy either way') is still heard first and the beat stays at two lines (R28). The board's own header still says 'Start anywhere. The order is yours.' — the platform offers a freedom and its assistant hands her an order in the same breath. In the Speedrun Version (`?cut=speedrun`) Lambient sends her straight to Annette's job ('to speed up the narrative').",
   "witnessAllowed": "assistant: introduced — Lambient permissions granted",
   "witnessDeclined": "assistant: dismissed — Lambient permissions declined, companion retained",
   "phone1": "Your phone's lit — someone's writing to you.",

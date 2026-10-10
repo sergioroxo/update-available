@@ -126,6 +126,7 @@ import { playOnce, anythingPlaying, stopClip } from '../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
+import { isSpeedrun } from '../state/cut';
 
 /** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
  *  the type moved to `desktop/apps/comments.ts` when that module took over the
@@ -186,6 +187,13 @@ const SUBMISSIONS = q.submissions as SubmissionDef[];
  *  screen for that job is not built yet, and such a tile is NOT DRAWN. */
 type BoardTask = { id: string; surface: string | null; label: string; note: string };
 const BOARD = (q as unknown as { board: BoardTask[] }).board;
+/** ⚑ S227 — VERA'S THREE JOBS, THEN UPDATES (docs/reinterp/VERA_OPTIONS_2026-10-09.md §2, §7; `_docContributorTools`
+ *  in s3_queue.json). The board starts with `starters`; each of `updates` is OFFERED by the platform after a finished
+ *  piece of work and installs only when she presses Install. `BOARD` stays the roster (labels, notes, surfaces). */
+type ToolUpdate = { id: string; tool: string; version: string };
+const TOOLS = (q as unknown as {
+  contributorTools: { starters: string[]; startersSpeedrun: string[]; updates: ToolUpdate[] };
+}).contributorTools;
 const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c]));
 /** the submission after which Malta arrives on the phone (Noa's — the era's
  *  contradiction is complete, and the break lands on the person holding it) */
@@ -197,6 +205,10 @@ const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c
  *  a story to its end and another (a story, or any job — Annette's family calls among them). 1 gave the era's
  *  lesbian story about a minute. */
 const MALTA_AFTER_TASKS = 2;
+/** ⚑ S227 — the Speedrun Version (src/state/cut.ts): Lambient sends her straight to Annette, and ONE finished job lights
+ *  the phone (his 2026-10-10: "to speed up the narrative"). Read when asked, never at module load: the front door may
+ *  choose the cut after this file is imported. */
+function maltaAfter(): number { return isSpeedrun() ? 1 : MALTA_AFTER_TASKS; }
 
 type Outcome = 'applied' | 'skipped';
 
@@ -423,6 +435,14 @@ export class GraceQueueLite {
   /** S208 / A2·A7 — the work count when the phone lit; one more finished job after that, link unopened, is "ignored" */
   private maltaWork = -1;
   private wotdSaid = false;   // S209 / P7-47
+  /** ⚑ S227 — the jobs on the board, in the order they arrived (starters, then each installed update). Seeded on first
+   *  use, which is after the front door has chosen the cut. */
+  private unlocked: string[] | null = null;
+  /** ⚑ S227 — the update the platform is offering now (one at a time, never expiring), and the work count it was last
+   *  weighed against; `maltaAt` is the count at which the phone lit, so that return never brings an offer with it */
+  private offer: ToolUpdate | null = null;
+  private offerWork = 0;
+  private maltaAt = -1;
   private lambLine: string;
   /** the two-line beat, when a beat has two (see drawLambientLane) */
   private lambLines: string[] | null = null;
@@ -511,8 +531,12 @@ export class GraceQueueLite {
         if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? '']); this.bump(); }
       }
       if (!this.waitSaid && this.boardQuietT > 25) {
-        const waiting = ['group', 'recommend'].some((id) => { const s = this.surfaces.get(id); return s && !s.complete(); });
-        if (waiting) { this.waitSaid = true; this.lambSay([LAMBIENT.waitLine1, LAMBIENT.waitLine2]); this.bump(); }
+        // ⚑ S227 (VERA_OPTIONS §4c.2) — only a job that is ON the board and unfinished is named: mounted is not enough
+        //   now that most of the day arrives by update
+        const waiting = ([['group', LAMBIENT.waitLine1], ['family', LAMBIENT.waitFamily], ['recommend', LAMBIENT.waitLine2]] as const)
+          .filter(([id]) => { const s = this.surfaces.get(id); return this.isUnlocked(id) && !!s && !s.complete(); })
+          .map(([, line]) => line).slice(0, 2);
+        if (waiting.length) { this.waitSaid = true; this.lambSay(waiting); this.bump(); }
       }
     }
     // S158: the one clock — both faces re-upload only when the minute turns
@@ -613,13 +637,47 @@ export class GraceQueueLite {
     const wd = this.workDone();
     if (!this.maltaArrived) {
       if (wd >= 1 && !ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
-      if (wd >= MALTA_AFTER_TASKS) {
+      if (wd >= maltaAfter()) {
         if (!ledger.records.includes('e3-two-jobs')) ledger.records.push('e3-two-jobs');
         this.armMalta();
       }
+    } else if (this.maltaWork >= 0 && wd > this.maltaWork) { this.maltaWork = -1; this.phone.onWorkDone(); this.phoneV++; this.bump(); }
+    this.updateOffer(wd);
+    // ⚑ S227 — the day is done only when the whole roster is, not the tiles that happen to be on the board
+    if (this.rosterComplete() && !ledger.records.includes('e3-day-done')) ledger.records.push('e3-day-done');
+  }
+
+  /** ⚑ S227 — THE PLATFORM OFFERS ITS NEXT TOOL (VERA_OPTIONS §2c; his: "the system asks for the update, and the player
+   *  confirms"). A finished piece of work, seen on her return to the board, makes the next tool available — except on
+   *  the return where the phone lit (the phone's turn is the era's), and never while the phone is in her hand or a
+   *  card is on its glass (it waits for her to put it down). One offer at a time; it never expires. And a board with
+   *  every tile grey offers the next tool rather than sitting grey (once the phone is past Bea's first card, if the
+   *  last unit was the one that lit it). Nothing here files. */
+  private updateOffer(wd: number): void {
+    if (this.offer) return;
+    const next = this.pendingTools()[0];
+    if (!next) { this.offerWork = wd; return; }
+    const blocked = this.phoneInHand || this.phone.cardOpen;
+    if (wd > this.offerWork) {
+      const phoneTurn = this.maltaAt >= 0 && this.offerWork < this.maltaAt && wd <= this.maltaAt;
+      if (phoneTurn) { this.offerWork = wd; return; }
+      if (blocked) return;
+      this.offerWork = wd;
+      this.offer = next;
+      this.bump();
       return;
     }
-    if (this.maltaWork >= 0 && wd > this.maltaWork) { this.maltaWork = -1; this.phone.onWorkDone(); this.phoneV++; this.bump(); }
+    const allGrey = this.tasks().every((t) => this.taskComplete(t));
+    if (allGrey && !blocked && (wd !== this.maltaAt || this.phone.pastFirst)) { this.offer = next; this.bump(); }
+  }
+
+  /** she pressed Install: the tile is appended to the board (nothing already there moves) and that is all */
+  private installOffer(): void {
+    if (!this.offer) return;
+    this.unlockedIds().push(this.offer.id);
+    this.offer = null;
+    if (this.mode === 'done') this.mode = 'board';
+    this.bump();
   }
 
   /** ⚑ S219 / W1-E3 (his walkthrough: "finishing a card should return you to the Today panel") — a job worked to its end
@@ -649,7 +707,7 @@ export class GraceQueueLite {
     if (!this.saver) {
       if (quiet && this.boardQuietT > SAVER_SECONDS) {
         this.saver = new Screensaver('lock', 2016);
-        this.saver.waitingFrom = Math.max(1, [...this.surfaces.values()].filter((s) => !s.complete()).length);
+        this.saver.waitingFrom = Math.max(1, this.tasks().filter((t) => !this.taskComplete(t)).length);   // S227: what is on the board
         this.saver.clock = this.clockText();
         this.bump();
       }
@@ -814,7 +872,9 @@ export class GraceQueueLite {
     //   tidy either way" IS the era, and it only works if she hears it while
     //   the refusal is still fresh. Both halves are Lambient, one beat, two
     //   lines, which is the cap.
-    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, LAMBIENT.firstBoard1]);
+    // ⚑ S227 — and the second line is the ORDER of the day's three (his: "the order of the three is Lambient's");
+    //   in the Speedrun Version it sends her straight to Annette
+    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, isSpeedrun() ? LAMBIENT.firstOrderSpeedrun : LAMBIENT.firstOrder]);
     this.lambLine = LAMBIENT.greet;
     this.seenBoard = true;
     this.mode = 'board';
@@ -855,8 +915,33 @@ export class GraceQueueLite {
   /** a job's tile is drawn when its row says it has a surface AND that surface
    *  is actually mounted. Both halves matter: the row is the design's list, the
    *  map is what exists. */
+  /** ⚑ S227 — the tiles are the jobs she has: the three starters, then each update she installed, in arrival order */
   private tasks(): BoardTask[] {
-    return BOARD.filter(t => t.surface === 'testimony' || this.surfaces.has(t.id));
+    return this.unlockedIds()
+      .map((id) => BOARD.find((t) => t.id === id))
+      .filter((t): t is BoardTask => !!t && (t.surface === 'testimony' || this.surfaces.has(t.id)));
+  }
+
+  private unlockedIds(): string[] {
+    if (!this.unlocked) this.unlocked = [...(isSpeedrun() ? TOOLS.startersSpeedrun : TOOLS.starters)];
+    return this.unlocked;
+  }
+  private isUnlocked(id: string): boolean { return this.unlockedIds().includes(id); }
+
+  /** the tools the platform has not installed yet, in the order it offers them (mounted ones only) */
+  private pendingTools(): ToolUpdate[] {
+    return TOOLS.updates.filter((u) => !this.isUnlocked(u.id) && this.surfaces.has(u.id));
+  }
+
+  /** every job in the roster (the record is not a job — his Q8), installed or not, finished */
+  private rosterComplete(): boolean {
+    return BOARD.filter((t) => t.id !== 'record' && (t.surface === 'testimony' || this.surfaces.has(t.id)))
+      .every((t) => this.taskComplete(t));
+  }
+
+  /** "You're caught up" is true only when nothing is left to do AND nothing is left to install */
+  private caughtUp(): boolean {
+    return this.completedCount() >= this.tasks().length && this.pendingTools().length === 0;
   }
 
   /** every mounted job's version, so the board re-uploads when any tile's
@@ -943,7 +1028,7 @@ export class GraceQueueLite {
       return;
     }
     this.openSurface = null;
-    this.mode = this.completedCount() >= this.tasks().length ? 'done' : 'board';
+    this.mode = this.caughtUp() ? 'done' : 'board';
     this.bump();
   }
 
@@ -971,8 +1056,8 @@ export class GraceQueueLite {
       // — nothing loads by itself. The break arms here, as before.
       this.storyDone = true;
       if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
-      if (this.workDone() >= MALTA_AFTER_TASKS) this.armMalta();
-      if (this.completedCount() >= this.tasks().length && !ledger.records.includes('e3-day-done')) ledger.records.push('e3-day-done');
+      if (this.workDone() >= maltaAfter()) this.armMalta();
+      if (this.rosterComplete() && !ledger.records.includes('e3-day-done')) ledger.records.push('e3-day-done');
     }
     this.bump();
   }
@@ -998,11 +1083,11 @@ export class GraceQueueLite {
    *  phone lights up. She is still holding the day when it arrives. */
   private nextSubmission(): void {
     this.storyDone = false;
-    if (this.workDone() >= MALTA_AFTER_TASKS) this.armMalta();
+    if (this.workDone() >= maltaAfter()) this.armMalta();
     // still stories in this job → the next one loads, because that IS the job
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
     if (next >= 0) { this.subIdx = next; return; }
-    this.mode = this.completedCount() >= this.tasks().length ? 'done' : 'board';
+    this.mode = this.caughtUp() ? 'done' : 'board';
   }
 
   // ── the break ────────────────────────────────────────────────────────────
@@ -1013,6 +1098,7 @@ export class GraceQueueLite {
     if (this.maltaArrived) return;
     this.maltaArrived = true;
     this.maltaWork = this.workDone();
+    this.maltaAt = this.maltaWork;   // S227: the return that brings the phone brings no update
     // the phone lights only after the two pieces of work (B15), whichever path armed it: the map's beat is ticked here
     if (!ledger.records.includes('e3-two-jobs')) ledger.records.push('e3-two-jobs');
     playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk
@@ -1306,6 +1392,7 @@ export class GraceQueueLite {
     setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
     ctx.fillText(q.app.boardSub, c.x, c.y + 18);
     px(ctx, c.x, c.y + 36, c.w, 1, ERA3.glassEdge);
+    if (this.offer) this.drawOffer(ctx, c, this.offer);
 
     const tasks = this.tasks();
     const GAP = 14;
@@ -1355,6 +1442,31 @@ export class GraceQueueLite {
     this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     if (this.pauseOpen) this.drawPauseCard(ctx, c);
+  }
+
+  /** ⚑ S227 — THE OFFER, in the board's header, right of TODAY: the platform's one line, its version in small type, and
+   *  Install. Not modal (the board stays live under it), not "busy", no badge, no count. Ignoring it declines it. */
+  private drawOffer(ctx: CanvasRenderingContext2D, c: aero.AeroContent, u: ToolUpdate): void {
+    const line = q.app.updateLine.replace('{tool}', u.tool);
+    const ver = q.app.updateVersion.replace('{v}', u.version);
+    setFont(ctx, 9);
+    const vw = ctx.measureText(ver).width;
+    setFont(ctx, 11);
+    const tw = Math.max(ctx.measureText(line).width, vw);
+    const bw = 70, bh = 22, pad = 8;
+    const w = Math.ceil(tw) + bw + pad * 3, h = 32;
+    const x = c.x + c.w - w, y = c.y;
+    px(ctx, x, y, w, h, ERA3.white);
+    px(ctx, x, y, w, 1, ERA3.glassHi);
+    px(ctx, x, y + h - 1, w, 1, ERA3.glassEdge);
+    px(ctx, x, y, 3, h, ERA3.accent);
+    setFont(ctx, 11); ctx.fillStyle = ERA3.titleText;
+    ctx.fillText(line, x + pad + 2, y + 4);
+    setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
+    ctx.fillText(ver, x + pad + 2, y + 19);
+    const bx = x + w - bw - pad, by = y + Math.round((h - bh) / 2);
+    aero.button(ctx, bx, by, bw, bh, q.app.updateInstall, { primary: true, size: 11 });
+    this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'update-accept' });
   }
 
   /** ⚑ S207 — "This week": the platform's own card over the board, in its glass; the only thing pressable while up */
@@ -2024,6 +2136,7 @@ export class GraceQueueLite {
     if (r.id === 'board-back') { if (!this.chipReturn) this.storyDone = false; this.backToBoard(); return; }
     if (r.id === 'next-story') { this.nextSubmission(); this.bump(); return; }
     if (r.id === 'record-chip') { this.openRecordFromChip(); return; }
+    if (r.id === 'update-accept') { this.installOffer(); return; }   // S227 — she confirms the platform's update
     if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }
     if (this.openSurface && this.openSurface.press(r.id)) { this.bump(); return; }
     if (r.id === 'apply') { this.apply(); return; }
@@ -2070,6 +2183,7 @@ export class GraceQueueLite {
       const [jobId, sub] = beat.split(':');
       const job = this.surfaces.get(jobId);
       if (!job) return;
+      if (jobId !== 'record' && !this.isUnlocked(jobId)) this.unlockedIds().push(jobId);   // S227: a review jump installs it
       // ⚑ PUT DOWN WHATEVER IS OPEN FIRST. Without this a review jump from one
       //   job to another silently did nothing: `debugBeat('board')` routes
       //   through `beginList()`, which only fires from `signin`, so the mode
@@ -2114,6 +2228,8 @@ export class GraceQueueLite {
       case 'minimise': this.debugBeat('board'); this.minimised = true; this.bump(); break;
       case 'boardDone': // every tile grey — the day finished, and still there
         this.debugBeat('board');
+        for (const u of this.pendingTools()) this.unlockedIds().push(u.id);   // S227: every update installed first
+        this.offer = null;
         for (let i = 0; i < this.tasks().length; i++) {
           this.openTask(i);
           for (let g = 0; g < 32 && this.current(); g++) this.apply();
@@ -2143,7 +2259,7 @@ export class GraceQueueLite {
       case 'gradeSkip': this.debugBeat('noa'); this.skip(); break;
       case 'maltaArrive': // ⚑ two tiles grey, which is what actually arms it now
         this.debugBeat('board');
-        for (let i = 0; i < this.tasks().length && this.completedCount() < MALTA_AFTER_TASKS; i++) {
+        for (let i = 0; i < this.tasks().length && this.completedCount() < maltaAfter(); i++) {
           this.openTask(i);
           applyUntil(() => !this.current());
         }

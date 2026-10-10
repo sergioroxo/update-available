@@ -34,12 +34,13 @@
    "close": "Okay"
   },
   "e3": {
+   "_docS227": "⚑ S227 — `items.recommend`: Tag the video is the first update now (docs/reinterp/VERA_OPTIONS_2026-10-09.md §2b, §7: Annette joined the three starters), so the platform lists it as coming, not as on the board.",
    "title": "This week",
    "lead": "This week on GracePlatform",
    "items": {
     "record": "Your record — the chip at the bottom of the screen.",
     "jobs": "More jobs on the board, in any order.",
-    "recommend": "Tag the video.",
+    "recommend": "Tag the video — coming to Contributor tools.",
     "group": "Post to the group.",
     "floppy": "FloppySheep — on your phone. A little reward."
    },
