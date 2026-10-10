@@ -427,11 +427,14 @@ Ethics calls are marked ⚑.
      finally reads the small print the tape could not finish: "*30 years: no evidence of benefit; a documented risk
      of harm. Sources in Credits." The advert's own trick is what breaks it.
    - (d) *No card*: the tape stops on VCR blue with Play again and Close; the statement waits for the Close.
+   - **⚑ HIS CHOICE (2026-10-10): (c), the asterisk answered** ("yeah the 'Over 30 years of care'"). The card is the
+     small print the tape could not finish. Its exact wording stays his (dossier phrasing); the shape is decided.
 5. **The kitchen-table shot: "we can check after".** Kept in the draft; judged once it is drawn.
 6. **Where the advert plays: "how so?"** Three options, explained to him: (i) only in Home, as an explainer on the
    shelf; (ii) inside the story, where the same tape turns up in the fiction (Daniel's 1997 room, the 2003 TV) as
    the advert his mother was sold, unexplained; (iii) both: offered in Home, met again inside the piece, where the
-   recognition does the work (my recommendation). Waiting on his choice.
+   recognition does the work (my recommendation). **⚑ HIS CHOICE (2026-10-10): both** ("Lets do Both"). Offered on
+   Home's shelf; met again inside the piece, unexplained, as the advert the family was sold.
 
 Still open from §6: Q3 (whose room), Q7 (Restart), Q8 (the festival cut), Q9 (keyboard focus), Q10 (A6 panels),
 Q11 (the logo).

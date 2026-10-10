@@ -286,3 +286,17 @@ the platform advertises is not an act on her. Question 5.
    product, not a score; is there any reading of them you want to avoid?
 10. **Headset.** None of this has been run: M3 (the shorter cascade) and the chip's place on the board need a look in
     the headset before they are final.
+
+---
+
+## 7 · His answers (2026-10-10)
+- **Q1, who installs an update: "the system asks for the update, and the player confirms".** Neither of my two: the
+  platform offers each update itself (its own voice, "New in Contributor tools: …"), and nothing installs until Vera
+  presses to accept. Declining or ignoring it leaves the board as it is. Still no count, no "unlocked", no reward,
+  nothing filed.
+- **The proposal (§2: start with Correct a testimony, Post to the group, Tag the video; then the five tools, lightest
+  first; each arriving as "new in Contributor tools", the last update retiring them): "I think I agree".**
+- **Q3 (Annette) and Q7 (the felt text changes M3, M4, M5, M10): he asked for a plainer explainer** — given in the
+  session on 2026-10-10; still open.
+- **Still open:** Q2 (are the three right), Q3, Q4 (unlock order), Q5 (does an update file a line: recommended no),
+  Q6 (one sheet or two), Q7, Q8 (her record as work), Q9 (the wording), Q10 (headset).

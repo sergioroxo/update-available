@@ -201,3 +201,45 @@ Write the report to docs/reinterp/RULES_SWEEP_2026-10-09.md (first line "STATUS:
 one-line verdict per hit ("fine because…" or "fix"). Commit it on the branch cloud/rules-sweep (message ending
 "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"), push, open a PR titled "Rules sweep (report only)".
 ```
+
+---
+
+## Prompt 6 — cadence, not clock: every timed beat, and every route to each era's end (W1-B3; his 2026-10-10)
+**Model: Opus 5.5 · effort: high** — it is a design study across the whole piece; reading timers right and judging the
+dramaturgy both matter.
+
+*His words: "We should try and not use time-based sequences, and make them cadence-wise, so to study the multiple
+pathways to achieve the resolution."*
+```
+SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
+  git fetch origin reinterp && git checkout -B cloud/cadence-study origin/reinterp && npm ci
+  (tools/walk.mjs finds the machine's Chromium at /opt/pw-browsers by itself; do not download a browser.)
+Read CLAUDE.md fully first; it binds. Then docs/reinterp/WALKTHROUGH_1_2026-10-08.md (B3, section D, E5, F4) and
+docs/reinterp/CADENCE_2003_2026-10-09.md (the 2003 timeline already made; its six waits are merged or being merged).
+
+The lead's direction: the piece should move by CADENCE, not by CLOCK. A beat should happen because the player did
+something (pressed, finished, turned, put something down, came back), or because they have been quiet for a while,
+never because N seconds passed while they were busy. And there are many ways through each era; he wants to see them.
+
+Task: a STUDY DOCUMENT, no code. For each of the four eras (1997, 2003, 2016, 2026) and the Close:
+1. THE CLOCKS: every time-based trigger in the era: every setTimeout, every `…At`/`…T`/`…Seconds`/`HOLD`/`DELAY`
+   constant, every "after N seconds" in src/ and data/ (grep widely: os.ts, the apps under src/desktop/apps/,
+   src/room/graceQueueLite.ts, era3Devices.ts, space.ts, src/narrative/*, src/frame/helper.ts, data/dialog/*). For
+   each: what it starts, what the player is likely doing at that moment, and whether it can land while they are
+   busy (a video playing, a conversation open, a game in hand, a window being read).
+2. A VERDICT for each clock, one of: (a) KEEP — it is the fiction's own time and should stay (a song's length, a
+   dial-up, a typing animation, the ball's 3½ minutes of stillness: "stillness is not a dead end"); (b) CADENCE — it
+   should wait for a player event instead, and which event; (c) IDLE — it should wait for the player to be quiet,
+   and for how long. Give the smallest code change for (b) and (c), with file/function names.
+3. THE PATHWAYS: a map of the routes from each era's arrival to its update (and from 2026 to the Close): the beats
+   on the required spine (src/narrative/spine.ts, the map in src/witness/map.ts and data/strings/map.json), the
+   optional ones, and the different orders a player can take them in. Draw it as a table and as a mermaid graph per
+   era. Mark every place where one route makes a beat unreachable or plays two beats on top of each other.
+4. THE FIRST BATCH: the ten (b)/(c) changes that would most improve the cadence his notes complain about, ranked.
+5. Questions for the lead (ethics and dramaturgy are his), numbered.
+If the machine can walk, you may run node tools/walk-eras.mjs --port 3000 (after npx vite --port 3000 --strictPort &)
+to see how the walker experiences the timing, but change NO file while it runs.
+Write it to docs/reinterp/CADENCE_STUDY_2026-10-10.md (first line "STATUS: draft").
+Deliver: commit (explicit paths; message ending "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"), push,
+open a PR into reinterp titled "Cadence, not clock: the study". Do not merge.
+```
