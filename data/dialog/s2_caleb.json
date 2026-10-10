@@ -32,12 +32,13 @@
    "_doc": "S2R.5 — his four lines after the block lifts. They need room to LAND (playthrough finding 8): `leadInSeconds` is the quiet between the un-redaction finishing and his first line starting to type, `lineGapSeconds` the space between the four, `settleSeconds` the silence after the last one before anything else happens at all.",
    "leadInSeconds": 3.4,
    "lineGapSeconds": 2.8,
-   "settleSeconds": 4.5
+   "settleSeconds": 1.5,
+   "_docS226": "⚑ S226 (his, 2026-10-10, W1-D19: \"a break that makes no sense until the glitch\"; \"yes shorter, like 4 seconds maybe\") — the 11.7 s from his last line to the residue (settle 4.5 + dissolve 4.2 + dark 3.0) is now 4.1 s (1.5 + 1.8 + 0.8): still a settling, no longer a wait"
   },
   "residue": {
    "_doc": "S2R.6 — the quietest moment in the piece. `dissolveSeconds` is the slow glitch dissolve that carries the desktop away and leaves the bare field (a settling, not an effect — same grammar as the mail's entrance, run slower and quieter). `arriveSeconds` is the bare dark AFTER the dissolve and BEFORE the line surfaces: nothing at all on screen, on purpose. `holdSeconds` is how long the committed line is allowed to just stand there once the player has pressed it.",
-   "dissolveSeconds": 4.2,
-   "arriveSeconds": 3.0,
+   "dissolveSeconds": 1.8,
+   "arriveSeconds": 0.8,
    "holdSeconds": 6.5,
    "exitFadeSeconds": 1.8,
    "_doc_exit": "S60 (finding F25's other half — Sérgio: after the press it 'jumped back to the Restorify desktop'). It did: the hold ended and the bare field was replaced by the full lit desktop on a single frame, which is the one edit this beat cannot survive. The last `exitFadeSeconds` of the hold now fade the field to black, and os.ts brings the desktop up out of that black — the era's quietest moment ends the way it began, as a dissolve."

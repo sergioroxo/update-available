@@ -415,6 +415,11 @@ export class DesktopOS {
   private behindToastShown = false;
   private behindToastAt = Infinity;
   private escalationFallbackAt = Infinity; // Rob escalates on this deadline if the player never flips
+  /** ⚑ S226 / W1-C8 (cadence study 1.12, his "sounds okay") — the fallback's 24 s are counted only while the player is
+   *  quiet with the channel open: a player turning slowly, or reading Rob's last line, is not left behind by a clock */
+  private escalationQuietT = 0;
+  /** ⚑ S226 — set by the frame loop each frame (engine/app.ts): false while she is turned away from the desk */
+  screenFacing = true;
   private diaryPendingAt = Infinity; // soft beat between the packet and the diary
   /** ⚑ S208 / A4 (REVIEW_ROUND_5, ERA97-02) — the Family Form has been opened (finished or abandoned: both count —
    *  dismissal always works). The diary waits for it, so the MAIN beat can never be skipped past and lost. */
@@ -620,6 +625,7 @@ export class DesktopOS {
         // pushes the residential program after you've turned and witnessed the
         // record — with a fallback so a player who never turns still advances.
         this.escalationFallbackAt = this.t + ESCALATION_FALLBACK;
+        this.escalationQuietT = 0;
       };
       // S1.7 → S1.8: the chosen reply summons the placement packet. The diary
       // glitch, not the IRC, is the true E1 → T1 trigger.
@@ -1289,6 +1295,10 @@ export class DesktopOS {
     if (this.calebOpenedThisSession || this.messagePending) return;
     // ⚑ S205 — not at the first check-in any more: after his testimony is published (they met again at the shoot)
     if (!ledger.records.includes('testimony-online')) return;
+    // ⚑ S226 (his, 2026-10-10: the summons "should be part of the main narrative") — the programme's call comes FIRST:
+    //   his message lands only once the first summons has been answered or set aside, so every player meets the
+    //   programme's pull before Caleb reaches through it (a player who went straight to Caleb used to never see it)
+    if (!ledger.sends.some((s) => s.id === 's1' && (s.outcome === 'visited' || s.outcome === 'declined'))) return;
     this.messagePending = true;
     this.dirty = true;
   }
@@ -1973,7 +1983,12 @@ export class DesktopOS {
     // the fallback: if the player never turns to witness the record, Rob
     // escalates anyway once the deadline passes (main-parity — the flip is
     // the earned path, not a hard gate)
-    if (this.t >= this.escalationFallbackAt) this.escalate();
+    if (this.escalationFallbackAt !== Infinity) {
+      // quiet time counts in full, busy time at half (a player who keeps clicking is never left without the
+      //   escalation: the S226 four-era walk stalled 1997 here), and nothing counts while Rob's picture is open
+      if (!this.yesOpen) this.escalationQuietT += this.idleSeconds > 4 ? dt : dt * 0.5;
+      if (this.escalationQuietT >= ESCALATION_FALLBACK) this.escalate();
+    }
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (this.phase === 'desktop' && this.lambyRigFile?.open) this.lambyRigFile.update(dt);
     // ⚑ S76: the ritual and the era's shell tick regardless of the phase, and
@@ -2005,7 +2020,13 @@ export class DesktopOS {
     //   when Lamby is dismissed at the alert, the failing list armed 5 s later and could take the screen while the
     //   conversation was still being walked out line by line (the redaction runs up to ~8 s). The mail now waits
     //   until Caleb's chat is fully sealed; nothing is removed and the apparatus's failure is still not the player's.
-    if (this.t >= this.pureMailAt && !this.caleb?.blackingOut) {
+    // ⚑ S226 / W1-D13, reading A (his yes, 2026-10-10: "yes add the second mail wait") — and not while his break toast
+    //   is new: the mail used to take the whole screen 5 s after the video, just as the player might press Caleb's
+    //   toast. It waits until the toast has been pressed and the player is quiet again, or has been up for 12 s.
+    const calebMoment = !this.caleb?.breakToastUp
+      || this.caleb.breakToastAge >= 12
+      || (this.caleb.breakToastPressed && this.idleSeconds >= 3);
+    if (this.t >= this.pureMailAt && !this.caleb?.blackingOut && calebMoment) {
       this.pureMailAt = Infinity;
       this.accountability?.beginNetworkFailure();   // S157 / R3-58: seen failing, then the mail
       this.dirty = true;
@@ -2090,13 +2111,16 @@ export class DesktopOS {
     // Lamby's own clock — his appear-pop and idle fidget run whenever he is on
     // screen, in any of his windows (the debut, the notice, the video offer).
     if (this.phase === 'desktop' && this.lambyOnScreen) this.lambyPoseT += dt;
-    if (!this.behindToastShown && this.t >= this.behindToastAt) {
+    // ⚑ S226 (cadence study 1.11) — "look behind you" waits for the player to be quiet, not on Rob's last line or the picture
+    if (!this.behindToastShown && this.t >= this.behindToastAt && this.idleSeconds > 6 && !this.yesOpen) {
       this.behindToastShown = true;
       this.toast = { text: strings.desktop.behindToast, t: 7 };
       this.dirty = true;
     }
     if (this.toast) {
-      this.toast.t -= dt;
+      // ⚑ S226 (his, cadence study Q7: "yes") — a corner line only spends its life while she is facing the screen:
+      //   a line that landed while she was turned away waits for her instead of expiring unseen
+      if (this.screenFacing) this.toast.t -= dt;
       // the text does not animate; only its arrival and its going matter
       if (this.toast.t <= 0) { this.toast = null; this.dirty = true; }
     }

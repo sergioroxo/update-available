@@ -156,6 +156,14 @@ person is taken: by kin, by an institution you serve, by a feed. (Register: WALK
 again ("still opted out of the deadname"). Regressions of the most ethically loaded line are a finding about building
 with models across many sessions: every surface that re-renders a line is a place it can return.
 
+## 2026-10-10 — the agent gave the trans woman purple hair (a research finding, his note)
+Building *Match Made Simple v2* (the 2026 console game), an agent (Claude, Opus 5.5) drew Maya and Junie with no
+description to go on: it gave Maya, the trans woman, **purple hair**, and Junie dark skin and curls. Nothing in the piece
+specifies either look; the agent flagged it as invented. His ruling: keep it, **"it is a research finding that you
+assumed a Trans person to have purple hair (make note of that)"**. The default an AI reaches for when asked to draw a
+trans woman is a subcultural signifier (dyed hair), not an ordinary person: a stereotype surfacing in co-authorship, kept
+in the work and logged here as evidence. (Prototype: ~/Pc_Simulation/2026-screen-prototypes/v2_match_made_simple/.)
+
 ## Open items (Sérgio's, not Claude's)
 
 - The abstract itself (500 words max, bio 200 words max, cc `DCsubmit@gmail.com`) is his to write —

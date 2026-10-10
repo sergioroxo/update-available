@@ -285,6 +285,11 @@ export class CalebThreadApp {
   /** ⚑ S223 cloud / W1-D13 — the conversation is still being walked out line by line (the redaction, ~8 s at most).
    *  os.ts holds the PureMail's start until this is false. Reads state only; the felt module learns nothing. */
   get blackingOut(): boolean { return this.redaction.running; }
+  /** ⚑ S226 / W1-D13, reading A (his yes, 2026-10-10) — how long his break toast has been up, and whether the player
+   *  has pressed it: os.ts lets the mail take the screen only once the player has had their moment with it */
+  breakToastAge = 0;
+  breakToastPressed = false;
+  get breakToastUp(): boolean { return this.toasts.length > 0 && this.toasts[0].life === Infinity; }
   /** the felt window's rect — the operable stamp is positioned against it */
   get windowRect(): { x: number; y: number; w: number; h: number } { return { ...WIN }; }
   get windowVisible(): boolean {
@@ -351,6 +356,7 @@ export class CalebThreadApp {
     const hit = this.hits.find(h => h.id === 'toast');
     if (!hit) return false;
     if (x < hit.x || x > hit.x + hit.w || y < hit.y || y > hit.y + hit.h) return false;
+    this.breakToastPressed = true;
     this.onNotificationPressed?.();
     return true;
   }
@@ -364,6 +370,7 @@ export class CalebThreadApp {
   // ── update ─────────────────────────────────────────────────────────────
   update(dt: number): void {
     this.t += dt;
+    if (this.breakToastUp) this.breakToastAge += dt;
 
     if (this.toasts.length > 0) {
       // a finite life still expires (the array is the seam for any future

@@ -1628,6 +1628,15 @@ const LAP = { w: 224, h: 140 };
   const startEraSeen = s.era;
   for (let i = 0; i < MAX_STEPS; i++) {
     if (s.driven) { await wait(1600); s = await probe(); continue; }   // a travelling is playing
+    // ⚑ S226 — the Close's cards wait for a press now (his, 2026-10-10): a press anywhere turns one, as the card says
+    {
+      const card = await page.evaluate(() => window.__closeCard && window.__closeCard.on ? window.__closeCard.i : -1).catch(() => -1);
+      if (card >= 0) {
+        await page.mouse.move(VIEW.width / 2, VIEW.height * 0.7); await page.mouse.down(); await wait(70); await page.mouse.up();
+        note('press', { target: 'close-card:' + card, era: s.era, phase: s.phase, what: 'the Close\'s card ' + (card + 1) + ' — a press anywhere turns it' });
+        await wait(900); s = await probe(); continue;
+      }
+    }
     if (ONE_ERA && s.era !== startEraSeen) { note('era-done', { era: s.era, phase: s.phase, what: 'arrived in ' + s.era + ' from ' + startEraSeen + ' — one era walked' }); break; }
     await takeCensus(s, i);
 

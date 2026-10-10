@@ -478,6 +478,10 @@ export class GraceQueueLite {
    *  does not break the dirty-upload law */
   /** ⚑ S201 — seconds of quiet on the board (Lambient's "while you wait", once) */
   private boardQuietT = 0;
+  /** ⚑ S226 (his, cadence study Q11: "yes", a breach of the felt law) — set each frame by era3Devices: Vera has the
+   *  phone in her hand, Bea's thread may be on it, and no Lambient line may sit on the workstation beside a person's
+   *  words. The board's quiet does not count while she holds it, and starts again when she puts it down. */
+  phoneInHand = false;
   private waitSaid = false;
   /** ⚑ S207 — 2016's pause ("This week", pauses.json): open now, shown once; FloppySheep opened at least once */
   private pauseOpen = false;
@@ -489,7 +493,8 @@ export class GraceQueueLite {
     this.updateSaver(dt);
     this.updateGate();
     this.updateJobReturn(dt);
-    if (this.mode === 'board' && !this.openSurface) {
+    if (this.phoneInHand) this.boardQuietT = 0;
+    else if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
       //   "This week" card lists what else is open to her (only what is left); once

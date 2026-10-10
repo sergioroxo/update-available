@@ -20,7 +20,32 @@ study, 2003's cadence (code, testing now).
 
 ---
 
-## Phase 1 — the decided fixes (now → Sunday 11)
+## ⚑ REVISED the same day (his: "your plan of action is too conservative, this is all possible to be done by the 15th. We just need to build stuff and not run 300 walks… those walks that can be done on the cloud, you can deploy to the cloud?")
+
+**How it ships now.** Build in parallel (my own work plus worktree agents, one surface each); merge as things land;
+**no walk between small steps**. The quick check is `npm test` and the type-check (seconds). The four-era walk runs
+**in the cloud** on a pushed branch while building continues here. **One full walk from the front door each evening**,
+on the day's merged work, before the day's push to the live site. The headset waits until the 19th (his).
+
+| Day | Built | By whom |
+|---|---|---|
+| **Sat 10** | Phase 1, the decided fixes (done: mail waits, summons first, the 4 s break, Rob's quiet fallback, the Close's cards on a press, corner lines until seen, Lambient off Bea's thread, no look writes the record, Genspect) | me |
+| | Match Made Simple ported onto the console (replaces TIDY) | agent |
+| | Vera's three jobs (Annette among them, Lambient calling the order) + the five tools by update | agent |
+| | LambyOS Home, first build (the room, its objects, Lamby in bubbles, Leave, the three ways to look) | agent |
+| | The Speedrun Version alongside the full piece (**both**, his) | me |
+| **Sun 11** | The Commons streamlined (PR #7 + his answers) | agent |
+| | "Take the viewer there" across the eras (the cadence study's pathway maps) | me |
+| | The "what you can do here" panel per era | me |
+| **Mon 12** | The text cut, second pass (shorten only) | cloud |
+| | The Close returns to LambyOS Home with the Lexicon | me |
+| | The 2003 story-making simplified (editing, B-roll, Caleb's video) | agent |
+| **Tue 13** | 1997 details (profile choose-three, the flip, the form, the printout, the transition) and the remaining walkthrough items | me + agents |
+| **Wed 14** | Fix what the evening walks found; freeze | me |
+| **Thu 15** | Done; the evening walk is the release check | — |
+| 19th | His headset check | him |
+
+## (superseded schedule, kept for the list) Phase 1 — the decided fixes
 All of these are his answers already; none needs a new decision.
 
 | # | Change | Era | Register |

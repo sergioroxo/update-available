@@ -3610,8 +3610,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ the Close's four legs hand over the same way; `hold` is the one
       //   without a camera move, so it runs on its own small clock
       if (closeStage === 'message') {
-        closeHoldT += dt;
-        if (closeHoldT >= CLOSE_CARD_SECONDS) nextCloseCard();
+        // ⚑ S226 (his, 2026-10-10, cadence study Q6: "Press") — a card waits for a press, never for a clock: 39 words
+        //   in 9 s was ~260 words a minute for readers in their second language. Each card says how to go on.
+        void CLOSE_CARD_SECONDS;
       } else if (closeStage === 'lead' || closeStage === 'hold' || closeStage === 'settled') {
         closeHoldT += dt;
         const cap = closeStage === 'lead' ? CLOSE_LEAD_SECONDS
@@ -3838,8 +3839,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
             if (dwellMs >= gz.dwellMs && gazeFg !== best) {
               niche.setFacet(best);
               gazeFg = best;
-              const tag = `niche:dwell:${best}`; // Ethics #10 — the player's own act
-              if (!ledger.tags.includes(tag)) ledger.tags.push(tag);
+              // ⚑ S226 (his, cadence study Q12: "make it need a press"; and his rule of the day: no beat is triggered by
+              //   a look) — a look no longer writes the record. The station still answers the gaze with its light (it
+              //   recedes, never latches); `niche:dwell:<facet>` was read by nothing, and a pressed version waits for a
+              //   reason to exist.
             }
           } else if (dwellMs > 0 && gz.decay) {
             dwellMs -= dt * 1000;
@@ -3854,6 +3857,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
 
     const nowBack = isBackYaw();
+    os.screenFacing = !nowBack;   // S226 — the desktop's corner lines wait while she is turned away
     if (nowBack !== facingBack) {
       facingBack = nowBack;
       if (facingBack) os.markWitnessSeen(); // turning around answers the nudge
@@ -4326,6 +4330,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMsgEl.appendChild(f);
     closeMsgEl.style.opacity = '1';
     xrFrame?.setHint(c.text);   // the headset reads it on the frame's plate
+    // the audit's handle (?debug=1 tools only): a card is up and a press anywhere turns it (tools/walk.mjs)
+    (window as { __closeCard?: { on: boolean; i: number } }).__closeCard = { on: true, i };
   }
   function nextCloseCard(): void {
     if (closeStage !== 'message') return;
@@ -4333,6 +4339,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMsgEl.style.opacity = '0';
     xrFrame?.setHint(null);
     closeCard = -1;
+    (window as { __closeCard?: { on: boolean; i: number } }).__closeCard = { on: false, i: -1 };
     // what the 'lookUp' leg used to do on its way to 'hold': the night on the stars (the review route's path)
     closeStage = 'hold'; closeHoldT = 0;
     if (!closeMorphBegun && cluster) {
@@ -4346,7 +4353,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let closeMorphBegun = false;
   const CLOSE_LEAD_SECONDS = 14.5;   // ⚑ Phase 7: FAIL.off is 14.5 s now; enterClose fires ~2.2 s after the stop, so the travel begins ~2 s over dead screens · was 7: ⚑ 2026-09-13: the desk's two screens die at FAIL.off (8.5 s after the device stops); the update's 2.2 s + this = the travel begins over dead screens
   /** 210° of turn: 1.875 × 210 / 44 = 8.95 °/s at the crest, under the 9.1 law */
-  const CLOSE_SWEEP_SECONDS = 44;
+  // ⚑ S226 (his, cadence study Q10: "keep, shorten the sweep") — since W1-G1 the crossing does not turn, so the
+  //   9.1 °/s law no longer sets its length: 44 s of glide became 26
+  const CLOSE_SWEEP_SECONDS = 26;
   const CLOSE_MORPH_LEAD = 14;
   /** 90° of turn with the 72° rise: 1.875 × 90 / 20 = 8.4 °/s */
   const CLOSE_LOOKUP_SECONDS = 20;

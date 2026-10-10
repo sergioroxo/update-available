@@ -265,7 +265,7 @@
      "id": "send",
      "label": "A summons",
      "done": "sendResolved",
-     "optional": true,
+     "optional": false,
      "hint": "When the screen sends you somewhere, a marker appears on the floor. Press it to go — or stay.",
      "where": "the floor"
     },
