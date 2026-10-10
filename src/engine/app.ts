@@ -60,7 +60,8 @@ import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { FRAME } from '../desktop/theme/chrome';
 
 
-const FLIP_SECONDS = 0.9;
+// ⚑ S227 / W1-C8 (walkthrough 1: "the flip should zoom out, and more slowly") — 0.9 s was a 200 °/s whip
+const FLIP_SECONDS = 1.8;
 /** the CRT's visible screen (meters, 4:3) — bezels in era1.json sit flush */
 const SCREEN = { w: 0.4, h: 0.3, x: 0, y: 1.08, z: 0 };
 /** the witness repository wall (sharp, oversized — surveillance scale) */
@@ -3584,6 +3585,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         tween = null;
       }
       camPitch += (0 - camPitch) * Math.min(1, dt * 6); // level out during the swing
+    }
+    // ⚑ S227 / W1-C8 — and it ZOOMS OUT: facing the record the view widens (+14°), so the wall reads as a whole
+    //   instead of a close-up; facing the desk it eases back. Only while she has not set the zoom herself.
+    if (options.reinterp && !xr?.active && !fovTouched && camera.camera && os.inDesktop) {
+      const want = facingBack ? Math.min(FOV_MAX, homeFov() + 14) : homeFov();
+      if (Math.abs(camera.camera.fov - want) > 0.05) camera.camera.fov += (want - camera.camera.fov) * Math.min(1, dt * 1.6);
     }
     if (options.reinterp) {
       // the descent owns the camera outright while it runs — it is the one
