@@ -219,7 +219,7 @@
      "id": "cut",
      "label": "The edit",
      "done": "testimonyCut",
-     "hint": "The editor assembles the story. Press Next cut until Export is offered, then export it.",
+     "hint": "The programme cuts your story for you once the tapes are sent (W1-D11).",
      "where": "the monitor"
     },
     {

@@ -160,7 +160,12 @@ export class TestimonyApp {
       case 'ts-play': if (this.clipT >= CLIPS[this.clip].seconds) this.clipT = 0; this.playing = true; return true;
       case 'ts-stop': this.playing = false; return true;
       case 'ts-folder': this.playing = false; this.stage = 'tapes'; return true;
-      case 'ts-send': this.onFile?.('testimony-tapes'); this.stage = 'cut'; this.version = 0; return true;
+      case 'ts-send':
+        this.onFile?.('testimony-tapes');
+        // ⚑ S227 / W1-D11 (walkthrough 1, his: "The editing system is too confusing and unnecessary. Submit the videos
+        //   and get the final version.") — the programme makes the cut itself: the same filing, then his story online.
+        //   The editor (stage 'cut') stays in the file, unreached.
+        this.onFile?.('testimony-cut'); this.exported = true; this.stage = 'online'; this.web = 'notice'; return true;
       case 'ts-preview': this.previewT = 0; return true;
       case 'ts-nextcut': this.version = Math.min(VERSIONS.length - 1, this.version + 1); this.previewT = -1; return true;
       case 'ts-export': this.exportT = 0; this.previewT = -1; return true;
