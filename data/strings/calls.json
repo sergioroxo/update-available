@@ -1,0 +1,6 @@
+{
+  "_doc": "⚑ S227 — THE CALL (src/frame/call.ts). His rule, 2026-10-10 (CLAUDE.md R28 amendment 1 revised): 'we should not expect people to look around at any part, we need to take the viewer there'; his pattern from the Commons design: 'a button can pop up saying \"someone is calling you — press to go\", so the person doesn't get startled'. When the story's next step is a thing in the room away from the screen in front of her, a small frame-voice button does what pressing the thing does. Plain, short, never the programme's voice. Nothing is filed.",
+  "phone": "Your phone has a message — press to pick it up",
+  "phoneLink": "The group's link is on your phone — press to pick it up",
+  "headset": "The headset is ready — press to put it on"
+}

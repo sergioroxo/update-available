@@ -53,6 +53,8 @@ import { createInstitution, INSTITUTION_IDS } from '../room/institution';
 import { buildDevices, DEVICE_PROP_IDS } from '../room/handheld';
 import { practiceOf } from '../witness/record';
 import { mountHelper, type Helper } from '../frame/helper';
+import { mountCall } from '../frame/call';
+import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { FRAME } from '../desktop/theme/chrome';
@@ -832,6 +834,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // performs; the engine moves the space; the spine decides when. ──
   let spine: Spine | null = null;
   let helper: Helper | null = null;
+  let call: ReturnType<typeof mountCall> | null = null;
   let xrFrame: XrFrame | null = null;
   let xrInput: XrInput | null = null;
   if (options.reinterp === true) {
@@ -863,6 +866,31 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !os.fictionPlaying,
       // ⚑ S219 / W1-B6 — a mouse and a big screen: 1.8× the wait; a touch device or a headset: as written
       idleScale: () => (xr?.active ? 1 : window.matchMedia('(pointer: coarse)').matches ? 1 : 1.8)
+    });
+    // ⚑ S227 — THE CALL (src/frame/call.ts; his rule "take the viewer there"): the story's next thing, if it is away
+    //   from the screen in front of her, is one press away. The phone comes to the eye; the headset goes on.
+    call = mountCall({
+      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !gameMenuBus.isOpen,
+      current: () => {
+        const cur = mapState(os).current;
+        if (!cur) return null;
+        const id = cur.beat.id;
+        if (cur.era === 'e3' && (id === 'phone' || id === 'vote' || id === 'cascade') && era3Devices && !era3Devices.phoneInHand) {
+          return {
+            id: 'phone', text: id === 'phone' ? callStrings.phone : callStrings.phoneLink,
+            act: () => {
+              const sp = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw };
+              era3Devices?.noteSeat(sp);
+              era3Devices?.holdDevice('phone', sp);
+            }
+          };
+        }
+        const shell = os.e4;
+        if (cur.era === 'e4' && id === 'headset' && shell && !shell.worn) {
+          return { id: 'headset', text: callStrings.headset, act: () => shell.wear() };
+        }
+        return null;
+      }
     });
     // ⚑ S147 — THE HEADSET'S INPUT AND THE FRAME'S XR FACE (frame/xrInput.ts,
     //   frame/xrFrame.ts). The trigger is the tap and goes through the same
@@ -3711,6 +3739,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         }
       }
       helper?.tick(dt);
+      call?.tick(dt);
 
       // R28-1 movement prototype: the blink timer + marker visibility. The
       // cut happens at the BOTTOM of the 'out' fade (screen is fully black),
