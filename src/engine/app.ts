@@ -54,6 +54,7 @@ import { buildDevices, DEVICE_PROP_IDS } from '../room/handheld';
 import { practiceOf } from '../witness/record';
 import { mountHelper, type Helper } from '../frame/helper';
 import { mountCall } from '../frame/call';
+import { drawPrint, PRINT_SIZE } from '../room/printArt';
 import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
@@ -2958,6 +2959,29 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return null;
   }
 
+  /** ⚑ S227 / W1-C11 — the printout, up close: the same print large, one plain line, Close */
+  function showReferral(): void {
+    if (document.getElementById('reinterp-closer')) return;
+    const [w, h] = PRINT_SIZE.referral1997;
+    const veil = document.createElement('div');
+    veil.id = 'reinterp-closer';
+    Object.assign(veil.style, { position: 'fixed', inset: '0', zIndex: '13', background: 'rgba(8,8,10,0.82)', display: 'flex',
+      flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '14px', padding: '16px' } as CSSStyleDeclaration);
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const cx = cv.getContext('2d'); if (cx) drawPrint(cx as unknown as Parameters<typeof drawPrint>[0], 'referral1997');
+    Object.assign(cv.style, { height: 'min(70vh, 640px)', imageRendering: 'pixelated', boxShadow: '0 6px 30px #0009' } as CSSStyleDeclaration);
+    const cap = document.createElement('div'); cap.textContent = callStrings.referralCaption;
+    Object.assign(cap.style, { color: FRAME.bright, font: '15px/1.5 monospace', maxWidth: 'min(560px, 90vw)', textAlign: 'center' } as CSSStyleDeclaration);
+    const btn = document.createElement('button'); btn.textContent = callStrings.close;
+    Object.assign(btn.style, { font: '14px monospace', padding: '8px 18px', minHeight: '44px', background: FRAME.glass, color: FRAME.bright,
+      border: `1px solid ${FRAME.edge}`, borderRadius: '4px', cursor: 'pointer' } as CSSStyleDeclaration);
+    const close = (e?: Event): void => { e?.stopPropagation(); veil.remove(); };
+    btn.addEventListener('click', close);
+    veil.addEventListener('click', close);
+    veil.append(cv, cap, btn);
+    document.body.appendChild(veil);
+  }
+
   /** the interaction resolution — everything that used to run on pointerdown */
   function resolveTap(e: PointerEvent): void {
     const ray = screenRay(e);
@@ -2967,6 +2991,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  controller's select (xrInput.ts) both arrive here as a ray. */
   function resolveTapRay(ray: Ray): void {
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
+    // ⚑ S227 / W1-C11 — the referral printout on the record wall comes up close when pressed (no zooming to read it)
+    {
+      const sheet = room?.props.get('inst_referral')?.entity;
+      if (sheet?.enabled && os.inDesktop && rayHitsPointR(ray, sheet.getPosition(), 0.17)) { showReferral(); return; }
+    }
     {
       if (os.isOff && rayHitsPointR(ray, POWER_BTN, 0.08)) { // the era's first gesture
         os.powerOn();

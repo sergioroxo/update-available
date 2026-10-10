@@ -2,5 +2,8 @@
   "_doc": "⚑ S227 — THE CALL (src/frame/call.ts). His rule, 2026-10-10 (CLAUDE.md R28 amendment 1 revised): 'we should not expect people to look around at any part, we need to take the viewer there'; his pattern from the Commons design: 'a button can pop up saying \"someone is calling you — press to go\", so the person doesn't get startled'. When the story's next step is a thing in the room away from the screen in front of her, a small frame-voice button does what pressing the thing does. Plain, short, never the programme's voice. Nothing is filed.",
   "phone": "Your phone has a message — press to pick it up",
   "phoneLink": "The group's link is on your phone — press to pick it up",
-  "headset": "The headset is ready — press to put it on"
+  "headset": "The headset is ready — press to put it on",
+  "_docReferral": "⚑ S227 / W1-C11 (walkthrough 1: 'the ministry-by-state printout feels clickable but doesn't press, and its design is very hard to read. Make it work without zoom being the main mode of interaction'). A press on the sheet brings it up close: the same print, large, with one plain line saying what it is (frame voice, like a label beside an object). The line restates only what the sheet itself shows and what printArt.ts's S182/S185 notes document (the 1997 referral directories online, by state; his mother's pen). Nothing is filed.",
+  "referralCaption": "A printout of a 1997 web directory: ministries, listed by state. His mother has underlined one and written a pastor's number on it.",
+  "close": "Close"
 }
