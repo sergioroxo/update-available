@@ -79,7 +79,10 @@ const CONDITIONS: Record<string, Condition> = {
   channelHooked: () => ledger.records.includes('mirc-log'),
   tapePlayed: () => ledger.records.includes('tape-played'),
   // R3-13 — the Family Form exists once Rob has said it
-  formAvailable: (os) => os.formAvailable && !os.provotype,
+  // ⚑ S227 / W1-C9 (walkthrough 1: "'The form is on the desk' should come after the person says yes, so they can
+  //   continue and not worry where") — the line waits for the conversation to end in its yes (the placement packet
+  //   acknowledged); the form itself is on the desktop from Rob's 'i spoke with your mother', as before
+  formAvailable: (os) => os.formAvailable && !os.provotype && ledger.records.includes('enrollment-acknowledged'),
   formOpened: (os) => os.provotype?.id === 'origin_intake_e1'
     || ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
   // R3-38 — the racket's line fills the quiet: the disk is in, no window is up
