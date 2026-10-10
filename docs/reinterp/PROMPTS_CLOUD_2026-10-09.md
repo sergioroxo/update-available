@@ -243,3 +243,41 @@ Write it to docs/reinterp/CADENCE_STUDY_2026-10-10.md (first line "STATUS: draft
 Deliver: commit (explicit paths; message ending "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"), push,
 open a PR into reinterp titled "Cadence, not clock: the study". Do not merge.
 ```
+
+---
+
+## Prompt 7 — streamline the Commons (W1-F3, F4, F5, F7; his 2026-10-10)
+**Model: Opus 5.5 · effort: high** — a redesign of the era's last stretch, with felt and respite material in it.
+
+*His words: "All of them. The need to jump to different places, the way the sequence flows and the length. There is
+too much information with the ball notes etc, so this needs to be more streamlined." And his rule for the whole piece
+(CLAUDE.md, R28 amendment 1, revised 2026-10-10): "We should not expect people to look around at any part, we need to
+take the viewer there."*
+```
+SETUP FIRST (the session starts on main; the project lives on the reinterp branch):
+  git fetch origin reinterp && git checkout -B cloud/commons-streamline origin/reinterp && npm ci
+  (tools/walk.mjs finds the machine's Chromium at /opt/pw-browsers by itself; do not download a browser.)
+Read CLAUDE.md fully first; it binds — especially the R28 amendment 1 revision of 2026-10-10 (take the viewer there).
+Then docs/reinterp/WALKTHROUGH_1_2026-10-08.md section F (F3 "too noisy; the overlapping songs are too much", F4
+"the steps are confusing", F5 "the several spots don't work; streamline to one area", F7 "the Speedrun Version's
+sequence must be clearer about where you need to go"), docs/reinterp/CADENCE_STUDY_2026-10-10.md (§ on 2026 and §9,
+his answers), and the 2026 code: src/desktop/apps/space.ts (E4Shell, the ball, the Commons), src/room/era3Devices.ts
+(the visor), src/room/pointCloud.ts, data/dialog/s4_*.json.
+
+Task: a REDESIGN DOCUMENT, no code. The Commons today, then the Commons streamlined:
+1. TODAY: every place the player is moved to or asked to go, every note/card/text on screen, every sound layer, every
+   step, with its trigger and its length (a table), and where the player is expected to look on their own.
+2. ONE AREA: the whole Commons in one place, the player taken through it as a sequence of actions (a press, a
+   put-down, a turn the piece conducts) — never by asking them to look around, never by a clock alone. Keep what the
+   lead has protected: the respite (genuine queer joy; never a trap, never revealed as fake), Junie, the ball's
+   stillness as the work's slowest intentional beat, the programme's intrusions and their failure.
+3. LESS INFORMATION: which notes, cards and lines go, merge or shorten (before → after words). Felt and respite
+   lines are shortened, never removed; removals are listed for his yes, not applied.
+4. ONE SOUND AT A TIME: a plan so songs and voices never overlap (F3).
+5. THE SPEEDRUN VERSION (F7): the shortest clear route through the same area.
+6. The code changes it implies, with file/function names, in the order to build them; what the walk must check.
+7. Questions for the lead, numbered (ethics and dramaturgy are his).
+Write it to docs/reinterp/COMMONS_STREAMLINE_2026-10-10.md (first line "STATUS: draft"). Change no other file.
+Deliver: commit (explicit paths; message ending "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"), push,
+open a PR into reinterp titled "The Commons, streamlined (design)". Do not merge.
+```

@@ -300,3 +300,14 @@ the platform advertises is not an act on her. Question 5.
   session on 2026-10-10; still open.
 - **Still open:** Q2 (are the three right), Q3, Q4 (unlock order), Q5 (does an update file a line: recommended no),
   Q6 (one sheet or two), Q7, Q8 (her record as work), Q9 (the wording), Q10 (headset).
+
+### His answers, second round (2026-10-10)
+- **Q2/Q3 — Annette is a starter** ("it makes sense that the player does"; "if that is more emotional yes"). The three:
+  Correct a testimony, Return the family calls (Annette), Post to the group. Tag the video becomes the first update.
+- **The order of the three is Lambient's**: its opening message calls Vera to them in order. **In the Speedrun Version,
+  Lambient sends her straight to Annette** ("to speed up the narrative").
+- **Q4 yes** (lightest first). **Q5: updates file nothing.** **Q6: two sheets, the second shortened (M2/M7).**
+- **Q7: M3, M4, M5 accepted; M10 declined** (it would break the doubling: the rulebook and the verse at the same weight
+  every time is the design).
+- **Q8 yes** (her record stops counting as a job). **Q9 yes** (the wording). **Q10**: a headset check (the shorter
+  cascade and the update button at headset distance) once built; a three-line checklist will go with the build.

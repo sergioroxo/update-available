@@ -445,3 +445,25 @@ data only, small), and the session's 30.5 s (4.8).
 every inline `idleSeconds > n`, `…T > n`, `t >= …At`; every numeric `…Seconds` / `hold` / `delay` / `after` /
 `gap` key in `data/`. Each live hit was read in its function. Debug-only clocks (`src/debug/`) and pixel-game
 internals (`src/games/`, FloppySheep's cannon schedule) are left out as fiction. The walker was not run.*
+
+---
+
+## 9 · His answers (2026-10-10)
+1. **The rule: yes.** A beat waits for a press, a finished thing, a put-down, a return or a quiet stretch; boots, songs,
+   typing, the ball's own time and the camera's conducted moves keep their clocks.
+2. **Rob's fallback: the quiet stretch facing the desk.** "Sounds okay."
+3. **The alert: automatic.** It stays the machine acting on him; nothing else may land during it (PR #3).
+4. **After "i'm coming to you": shorter, about 4 s** (was 11.7 s). No press.
+5. **The mail waits for Caleb's note: yes.**
+6. **The Close's cards: press** (no idle fallback).
+7. **Corner lines live until she has faced the monitor for a few seconds: yes.**
+8. **⚑ NEW RULE, FOR THE WHOLE PIECE:** *"No, this needs to be a sequence of actions, not just looking. We should not
+   expect people to look around at any part, we need to take the viewer there. This is a rule for all."* No beat may
+   depend on the player choosing to look somewhere: where the story needs them to see something, the piece takes them
+   there (a scripted send, a conducted turn, a device brought to the eye). The 2026 session's 30.5 s becomes a
+   sequence of actions, not a held look or a clock. Recorded in CLAUDE.md (R28 amendment 1, revised).
+9. **The Commons (W1-F4): "all of them"** — the jumps between places, the way the sequence flows, its length, and too
+   much information (the ball's notes): it needs streamlining. A study of its own: cloud Prompt 7.
+10. **The Close's conducted moves: keep, shorten the sweep.**
+11. **Lambient on the workstation while Bea's thread is open: a breach of the felt law. Fix.**
+12. **The niche's look that files a record line: make it need a press.**

@@ -15,6 +15,11 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
    gaze-triggered, never smooth travel) plus scripted sends. One seat per
    room; rotation IS the exploration; cross-room jumps are system-sent tasks
    from Era 3 on. The turn remains the signature bodily ask.
+   ⚑ **REVISED 2026-10-10 (Sérgio): "We should not expect people to look around at any part, we need to take the
+   viewer there. This is a rule for all."** No story beat may depend on the player choosing to look somewhere, and
+   no beat is triggered by a look: where the story needs them to see something, the piece TAKES them there (a
+   scripted send, a conducted turn, a device brought to the eye), as a sequence of actions. Looking around stays
+   free; it is never required. (Cadence study §9, docs/reinterp/CADENCE_STUDY_2026-10-10.md.)
 2. **Guidance (revises the Assistant caps):** Era 1 has NO assistant
    character — only impersonal system side-messages (short hints that help
    navigate and PREPARE the user for Lamby). The Lamby character-conductor
