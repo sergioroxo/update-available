@@ -31,9 +31,10 @@
  * minutes ago in this tab, and strips the marker so a later reload is a fresh visit. `?home=0` skips Home for the
  * short door (installations, the festival cut).
  */
+import { mountHomeXr, type HomeXr } from './homeXr';
 import copy from '../../../data/strings/home.json';
 import door from '../../../data/strings/orientingCard.json';
-import { prepareImmersiveVrEntry, requestImmersiveVrEntry } from '../../engine/app';
+import { prepareImmersiveVrEntry, requestImmersiveVrEntry, preparedHomeShell, enterImmersiveHome } from '../../engine/app';
 import { ledger, wipeLedger } from '../../state/ledger';
 import { gameMenuBus } from '../../state/gameMenuBus';
 import { chooseCut, currentCut, type Cut } from '../../state/cut';
@@ -84,6 +85,8 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   let arming = false;
   let cut: Cut = currentCut();
   let vrReady = false;
+  let immersive = false;
+  let xrFace: HomeXr | null = null;
   let shortDoor: { destroy(): void } | null = null;
   let leavePage: LeavePage | null = null;   // S233: the return door's Leave opens the in-between page (src/frame/leavePage.ts)
   let lexiconSaid = false;                  // S233: Lamby's "saved for later" bubble comes once, just before the Lexicon first opens
@@ -503,6 +506,9 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     entered = true;
     for (const b of enterButtons) b.disabled = true;
     chooseCut(cut);
+    for (const input of root.querySelectorAll<HTMLInputElement>('input')) input.disabled = true;
+    if (cardBody) cardBody.appendChild(para(copy.xr.loading));
+    xrFace?.invalidate();
     onContinue(choice);
   };
 
@@ -563,7 +569,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
         goFullscreen(); // must happen INSIDE the click stack
         enterWith('desktop');
       });
-      deviceFoot(body, enter);
+      deviceFoot(body, immersive ? null : enter);
     });
   }
 
@@ -595,22 +601,24 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
             enterWith('phone');
           });
       });
-      deviceFoot(body, enter, note);
+      deviceFoot(body, immersive ? null : enter, note);
     });
   }
 
   function openHeadset(): void {
     const c = door.cards.headset;
     openCard('headset', c.heading, (body) => {
-      controls(body, c.lines);
+      controls(body, immersive ? [c.lines[0], copy.xr.select, c.lines[2]] : c.lines);
       if (!vrReady) {
         deviceFoot(body, null, el('div', c.unavailable, { fontSize: '12px', color: DIALOG.dim }));
         return;
       }
+      if (!immersive) body.appendChild(btn(copy.xr.preview, () => enterImmersiveHome()));
       cutChoice(body);
       const enter = btn(c.button, () => {
         if (!armed || destroyed) return;
-        requestImmersiveVrEntry(); // consumed synchronously inside onContinue's click stack
+        if (!immersive) { enterImmersiveHome(); return; }
+        requestImmersiveVrEntry();
         enterWith('headset');
       });
       deviceFoot(body, enter);
@@ -724,7 +732,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
           body.appendChild(para(door.contentNote));
           const sd = btn(copy.notice.shortDoor, () => takeShortDoor());
           Object.assign(sd.style, { fontSize: '12px', margin: '2px 0 4px' } as CSSStyleDeclaration);
-          body.appendChild(sd);
+          if (!immersive) body.appendChild(sd);
         }, isReturn ? undefined : startArming);
         return;
       case 'plaque':
@@ -857,6 +865,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     window.clearTimeout(armTimer);
     window.clearTimeout(lexiconTimer);
     window.removeEventListener('resize', layoutAll);
+    xrFace?.destroy(); xrFace = null;
     if (now || reducedMotion()) { root.remove(); return; }
     // the bridge (design §3): the room fades as the 3D room's light comes up behind it
     root.style.pointerEvents = 'none';
@@ -906,6 +915,24 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
       const cv = document.getElementById('app');
       if (!(cv instanceof HTMLCanvasElement)) return;
       vrReady = await prepareImmersiveVrEntry(cv);
+      if (destroyed) return;
+      const shell = preparedHomeShell();
+      if (vrReady && shell) {
+        xrFace = mountHomeXr(shell, {
+          root, veil,
+          state: () => ({ armed, entered, clockQuarter, month, isReturn, noticeSeen, bubble: bubble.style.display !== 'none' && !cardOpen ? bubbleText.textContent ?? '' : '' }),
+          press: (k) => buttons[k].click(),
+          dismiss: () => bubbleX.click(),
+          onImmersive: (active) => {
+            immersive = active;
+            if (cardOpen === 'computer') openComputer();
+            if (cardOpen === 'tablet') openTablet();
+            if (cardOpen === 'headset') openHeadset();
+            if (cardOpen === 'notice') press('notice');
+          }
+        });
+        if (!shell.started) { shell.app.start(); shell.started = true; }
+      }
       if (vrReady && cardOpen === 'headset' && cardBody) openHeadset();
     }).catch(() => { /* the unsupported path: the headset card says so */ });
   }

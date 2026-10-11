@@ -51,6 +51,8 @@ export function mountXrInput(app: pc.Application, opts: {
   menuOpen: () => boolean;
   /** the wand's colour, from a theme — never a literal here */
   wandColor: pc.Color;
+  /** Home keeps the wand and its window in one layer above the loading room. */
+  layers?: number[];
 }): XrInput {
   const xr = app.xr;
   const wands = new Map<pc.XrInputSource, pc.Entity>();
@@ -76,7 +78,7 @@ export function mountXrInput(app: pc.Application, opts: {
   const onAdd = (src: pc.XrInputSource): void => {
     if (src.targetRayMode === pc.XRTARGETRAY_GAZE) return;
     const e = new pc.Entity('xr-wand');
-    e.addComponent('render', { type: 'box' });
+    e.addComponent('render', { type: 'box', ...(opts.layers ? { layers: opts.layers } : {}) });
     if (e.render) e.render.material = mat;
     e.setLocalScale(WAND_THICK, WAND_THICK, WAND_LENGTH);
     e.enabled = false;
@@ -96,13 +98,16 @@ export function mountXrInput(app: pc.Application, opts: {
     if (opts.menuOpen()) opts.onMenuSelect(r); else opts.onSelect(r);
   };
   const onSqueeze = (src: pc.XrInputSource): void => { primary = src; opts.onSqueeze(); };
+  const onEnd = (): void => { for (const e of wands.values()) e.enabled = false; };
 
   if (xr) {
     xr.input.on('add', onAdd);
     xr.input.on('remove', onRemove);
     xr.input.on('select', onSelect);
     xr.input.on('squeezestart', onSqueeze);
-    xr.on('end', () => { for (const e of wands.values()) e.enabled = false; });
+    xr.on('end', onEnd);
+    // Home hands the same live session to the room: its controllers already exist.
+    for (const src of xr.input.inputSources) onAdd(src);
   }
 
   return {
@@ -128,9 +133,11 @@ export function mountXrInput(app: pc.Application, opts: {
         xr.input.off('remove', onRemove);
         xr.input.off('select', onSelect);
         xr.input.off('squeezestart', onSqueeze);
+        xr.off('end', onEnd);
       }
       for (const e of wands.values()) e.destroy();
       wands.clear();
+      mat.destroy();
     }
   };
 }

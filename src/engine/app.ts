@@ -543,11 +543,12 @@ interface AppOptions {
  * the child's tracked head pose while the existing entrance/relocation/TURN
  * choreography continues to move the rig.
  */
-interface AppShell {
+export interface AppShell {
   canvasEl: HTMLCanvasElement;
   app: pc.Application;
   cameraRig: pc.Entity;
   camera: pc.Entity;
+  started: boolean;
 }
 
 let preparedXrShell: AppShell | null = null;
@@ -584,8 +585,12 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
     nearClip: 0.05
   });
   cameraRig.addChild(camera);
+  // Home can end XR before the story starts; clear its last tracked child pose too.
+  app.xr?.on('end', () => {
+    camera.setLocalPosition(0, 0, 0); camera.setLocalEulerAngles(0, 0, 0); app.resizeCanvas();
+  });
 
-  return { canvasEl, app, cameraRig, camera };
+  return { canvasEl, app, cameraRig, camera, started: false };
 }
 
 /**
@@ -628,6 +633,18 @@ export function prepareImmersiveVrEntry(canvasEl: HTMLCanvasElement): Promise<bo
   return preparedXrReady;
 }
 
+/** Home uses this same shell, then hands it to startApp after its one gate. */
+export function preparedHomeShell(): AppShell | null { return preparedXrShell; }
+
+/** Start immersive Home in the original button gesture; no story entry yet. */
+export function enterImmersiveHome(): void {
+  const shell = preparedXrShell;
+  if (!shell?.camera.camera || !shell.app.xr || shell.app.xr.active) return;
+  shell.app.xr.start(shell.camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
+    callback: () => { /* Home stays available on desktop if entry is declined. */ }
+  });
+}
+
 /** Mark the next synchronous startApp() call as the ENTER VR path. */
 export function requestImmersiveVrEntry(): void {
   immersiveVrRequested = true;
@@ -643,6 +660,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   immersiveVrRequested = false;
   const { app, cameraRig, camera } = shell;
   const xr = app.xr;
+  let xrFrame: XrFrame | null = null;
+  let xrInput: XrInput | null = null;
 
   /** PlayCanvas leaves its last tracked local pose on the camera when a
    * session ends. Restore the identity child so the authored rig is once again
@@ -652,12 +671,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camera.setLocalEulerAngles(0, 0, 0);
     app.resizeCanvas();
   };
-  xr?.on('end', restoreDesktopCamera);
   xr?.on('end', () => { xrFrame?.setHint(null); xrFrame?.close(); });
 
   // This must remain before the first await in this async function: WebXR
   // accepts requestSession only inside ENTER VR's original click stack.
-  if (startInVr && xr && camera.camera) {
+  if (startInVr && xr && !xr.active && camera.camera) {
     xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
       callback: (error) => {
         if (!error) return;
@@ -845,8 +863,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let call: ReturnType<typeof mountCall> | null = null;
   // ⚑ S229 / W1-C13 — the years the 1997→2003 morph turns through (room/timePassing.ts)
   let timePassing: TimePassing | null = null;
-  let xrFrame: XrFrame | null = null;
-  let xrInput: XrInput | null = null;
   if (options.reinterp === true) {
     // S58: review params (?era=/?close=/?reveal=/?morphDemo=) used to skip
     // spine creation entirely via a `reviewMode` gate — the conductor stayed
@@ -925,9 +941,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRestart: () => restartPiece()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (ray) => { noteHumanInput(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
-      onMenuSelect: (ray) => { noteHumanInput(); xrFrame?.press(ray); },
-      onSqueeze: () => { noteHumanInput(); gameMenuBus.toggle(); },
+      onSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
+      onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); xrFrame?.press(ray); },
+      onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
       wandColor: new pc.Color().fromString(FRAME.ink)
     });
@@ -4893,6 +4909,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     });
   }
 
-  app.start();
+  if (!shell.started) { app.start(); shell.started = true; }
+  // Home covers the first complete room render as well as model loading: its
+  // handover must not expose a frame before the new GPU resources are ready.
+  await new Promise<void>((resolve) => app.once('frameend', () => resolve()));
   return app;
 }

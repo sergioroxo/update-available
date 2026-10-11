@@ -62,7 +62,7 @@ const nobatch = query.get('nobatch') === '1';
 // review jump.
 const reviewMode = !!(era || morphDemo || close || reveal);
 
-function launch(): void {
+function launch(): Promise<unknown> {
   // ⚑ ?flat=1 — a REVIEW TOOL: the desktop canvas alone, no WebGL, no room,
   // for inspecting 2D work without the space around it. Corrected 2026-08-06
   // by Sérgio — it is NOT a fallback and not an audience target (the old
@@ -70,8 +70,8 @@ function launch(): void {
   // docs/REINTERP_THE_LOOK_MODES_2026-08-06.md). The fallback when VR is not
   // possible is the browser 3D ROOM, which is a first-class build with two
   // look-modes of its own: drag (desktop) and gyro (phone/tablet, S80).
-  if (query.get('flat') === '1') startFlat(canvas as HTMLCanvasElement, { reinterp });
-  else void startApp(canvas as HTMLCanvasElement, {
+  if (query.get('flat') === '1') { startFlat(canvas as HTMLCanvasElement, { reinterp }); return Promise.resolve(); }
+  return startApp(canvas as HTMLCanvasElement, {
     reinterp, facet, era, morphDemo, close, reveal, nobatch,
     // ⚑ S230 — the Close returns to LambyOS Home (design §7 item 3): the piece opens in the programme's showroom and
     //   closes in it, with the Lexicon on the shelf. Home in its 'return' mode never hands on to anything; it offers
@@ -110,8 +110,7 @@ if (query.get('lambyrig') === '1') {
       // S162 / F-01: the choice itself already did its work (the phone card asked
       // the device; the headset card requested the session) — the room opens the same
       document.documentElement.dataset.door = choice;
-      card.destroy();
-      launch();
+      void launch().then(() => card.destroy());
     });
   }
 } else {
