@@ -669,6 +669,16 @@ export class AccountabilityApp {
 
   handleClick(x: number, y: number): void {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    // ⚑ S228 / W1-D15 (his, 2026-10-11: "the steps of the message need to be either faster, or less details, or if you
+    //   press it finishes the message faster") — the alert still runs itself (his cadence answer: automatic), but a
+    //   press anywhere hurries the step on screen to its end, and the falling streak with it. Nothing is skipped or
+    //   filed differently: the same steps play, in order, only sooner.
+    if (!hit && this.step !== 'closed' && this.step !== 'caught') {
+      this.stepT = Math.max(this.stepT, HOLD[this.step] - 0.35);
+      if (this.streakT >= 0 && this.streakT < STREAK_FALL) this.streakT = Math.max(this.streakT, STREAK_FALL - 0.3);
+      this.dirty = true;
+      return;
+    }
     if (!hit) return;
     switch (hit.id) {
       case 'alert-ok': playOnce('ui_press.mp3'); this.closeAlert(false); break;
