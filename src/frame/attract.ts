@@ -33,6 +33,7 @@
  * Off with `?kiosk=0` (the walk tools pass it). `?idlescale=N` = seconds per minute (default 60; `1` makes 15 min
  * 15 s) — a REVIEW parameter only.
  */
+import { starfield } from './leavePage';
 import copy from '../../data/strings/attract.json';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { wipeLedger } from '../state/ledger';
@@ -89,6 +90,8 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
   let stage: HTMLDivElement | null = null;
   let cvs: HTMLCanvasElement | null = null;
   let cardEl: HTMLDivElement | null = null;
+  let cardCvs: HTMLCanvasElement | null = null;
+  let stopStars: (() => void) | null = null;
   let footEl: HTMLDivElement | null = null;
   let advertHost: HTMLDivElement | null = null;
   let askEl: HTMLDivElement | null = null;
@@ -171,11 +174,20 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
       position: 'absolute', inset: '0', display: 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       textAlign: 'center', padding: '0 6vw', boxSizing: 'border-box', background: `rgb(${DIALOG.veilRGB})`
     }) as HTMLDivElement;
+    // ⚑ S234 — the title is drawn by the Leave page's starfield (his 2026-10-11: "the screensaver effect of the fake
+    // wikipedia page … so it is not so barebones"): the stars fly, then gather into the title, hold, and scatter.
+    // The words stay in the DOM for screen readers (visually hidden); the invite line sits under the gathered title.
+    cardCvs = document.createElement('canvas');
+    cardCvs.setAttribute('aria-hidden', 'true');
+    Object.assign(cardCvs.style, { position: 'absolute', inset: '0', width: '100%', height: '100%' } as CSSStyleDeclaration);
+    cardEl.appendChild(cardCvs);
     cardEl.appendChild(el('div', {
-      font: '700 clamp(26px, 6.2vw, 84px) Tahoma, Verdana, Arial, sans-serif', letterSpacing: '0.08em', color: FRAME.bright, lineHeight: '1.15'
+      position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap'
     }, copy.title));
-    cardEl.appendChild(el('div', { width: 'min(220px, 30vw)', height: '2px', background: FRAME.rule, margin: 'clamp(16px, 3.4vw, 40px) 0' }));
-    cardEl.appendChild(el('div', { font: 'clamp(16px, 2.6vw, 34px) Tahoma, Verdana, Arial, sans-serif', color: FRAME.dim }, copy.invite));
+    cardEl.appendChild(el('div', {
+      position: 'absolute', left: '0', right: '0', bottom: '16vh', textAlign: 'center',
+      font: 'clamp(16px, 2.6vw, 34px) Tahoma, Verdana, Arial, sans-serif', color: FRAME.dim
+    }, copy.invite));
     stage.appendChild(cardEl);
 
     advertHost = el('div', { position: 'absolute', inset: '0', display: 'none' }) as HTMLDivElement;
@@ -202,6 +214,13 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
     slide = next;
     const isSaver = next !== 'card' && next !== 'advert';
     cardEl.style.display = next === 'card' ? 'flex' : 'none';
+    stopStars?.(); stopStars = null;
+    if (next === 'card' && cardCvs) {
+      const W = window.innerWidth, H = window.innerHeight;
+      const longest = Math.max(...copy.titleLines.map((l: string) => l.length));
+      const cell = Math.floor(Math.min((W * 0.82) / (longest * 4), (H * 0.42) / (copy.titleLines.length * 7)));
+      stopStars = starfield(cardCvs, W, H, { lines: copy.titleLines, every: copy.secondsCard, hold: copy.secondsCard - 5, cell, minStars: 420 });
+    }
     cvs.style.display = isSaver ? 'block' : 'none';
     advertHost.style.display = next === 'advert' ? 'block' : 'none';
     footEl.style.display = state === 'attract' && isSaver ? 'block' : 'none';
@@ -287,7 +306,9 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
     cancelAnimationFrame(raf);
     stopAdvert?.(); stopAdvert = null;
     root?.remove();
+    stopStars?.(); stopStars = null;
     root = stage = cvs = cardEl = footEl = advertHost = askEl = null;
+    cardCvs = null;
     carryBtn = startBtn = null;
     saver = null;
   }

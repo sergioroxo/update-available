@@ -197,10 +197,25 @@ export function mountLeavePage(): LeavePage {
 const DOT: Record<string, string> = {
   A: '010101111101101', D: '110101101101110', E: '111100110100111', G: '011100101101011', H: '101101111101101',
   I: '111010010010111', N: '110101101101101', O: '010101101101010', R: '110101110101101', S: '011100010001110',
-  T: '111010010010010', U: '101101101101111', W: '101101111111101', Y: '101101010010010', ' ': '000000000000000'
+  T: '111010010010010', U: '101101101101111', W: '101101111111101', Y: '101101010010010', ' ': '000000000000000',
+  // ⚑ S234 — for the exhibition's call-in card (src/frame/attract.ts): YOUR UPDATE HAS FAILED
+  P: '110101110100100', F: '111100110100100', L: '100100100100111'
 };
 
-function starfield(cvs: HTMLCanvasElement, W: number, H: number): () => void {
+export interface StarfieldOpts {
+  /** the lines the stars gather into (DOT letters only) */
+  lines: string[];
+  /** a gathering every `every` seconds, held for `hold` */
+  every: number; hold: number;
+  /** grid cell in CSS px; omitted = 4 (the Leave page's infobox). The call-in card sizes it to the screen */
+  cell?: number;
+  /** star count floor */
+  minStars?: number;
+}
+
+/** ⚑ S234 — exported for the exhibition's call-in card (his 2026-10-11: "we can even have the screensaver effect of
+ *  the fake wikipedia page to create this image, so it is not so barebones"). One warp starfield, two places. */
+export function starfield(cvs: HTMLCanvasElement, W: number, H: number, opts?: StarfieldOpts): () => void {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   cvs.width = W * dpr; cvs.height = H * dpr;
   const ctx = cvs.getContext('2d');
@@ -208,8 +223,9 @@ function starfield(cvs: HTMLCanvasElement, W: number, H: number): () => void {
   ctx.scale(dpr, dpr);
   // the message's dots, centred, 4 px per cell
   const targets: { x: number; y: number }[] = [];
-  const lines = copy.screensaver.lines;
-  const CELL = 4, LINE_H = 6 * CELL + 4;
+  const lines = opts?.lines ?? copy.screensaver.lines;
+  const CELL = Math.max(4, Math.round(opts?.cell ?? 4)), LINE_H = 6 * CELL + CELL;
+  const DOT_PX = CELL <= 4 ? 2 : CELL - Math.ceil(CELL / 4);   // the infobox keeps its 2 px dots
   lines.forEach((line, li) => {
     const w = line.length * 4 * CELL - CELL;
     const x0 = (W - w) / 2, y0 = (H - lines.length * LINE_H) / 2 + li * LINE_H + 2;
@@ -218,9 +234,9 @@ function starfield(cvs: HTMLCanvasElement, W: number, H: number): () => void {
       for (let i = 0; i < 15; i++) if (g[i] === '1') targets.push({ x: x0 + ci * 4 * CELL + (i % 3) * CELL, y: y0 + Math.floor(i / 3) * CELL });
     });
   });
-  const N = Math.max(160, targets.length + 40);
+  const N = Math.max(opts?.minStars ?? 160, targets.length + 40);
   const stars = Array.from({ length: N }, () => ({ x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: Math.random() }));
-  const EVERY = copy.screensaver.everySeconds, HOLD = copy.screensaver.holdSeconds, MOVE = 1.4;
+  const EVERY = opts?.every ?? copy.screensaver.everySeconds, HOLD = opts?.hold ?? copy.screensaver.holdSeconds, MOVE = 1.4;
   // never early: a person may have opened this page because someone is looking
   let raf = 0, last = performance.now(), clock = 0;
   const frame = (now: number): void => {
@@ -236,7 +252,7 @@ function starfield(cvs: HTMLCanvasElement, W: number, H: number): () => void {
       const px = W / 2 + (s.x / s.z) * (W / 4), py = H / 2 + (s.y / s.z) * (H / 4);
       const tg = targets[i];
       const x = tg ? px + (tg.x - px) * e : px, y = tg ? py + (tg.y - py) * e : py;
-      const size = tg && e > 0.5 ? 2 : s.z < 0.35 ? 2 : 1;
+      const size = tg && e > 0.5 ? DOT_PX : s.z < 0.35 ? 2 : 1;
       ctx.fillStyle = !tg && e > 0 ? REFERENCE.saverDim : REFERENCE.saverStar;
       if (x >= 0 && x < W && y >= 0 && y < H) ctx.fillRect(Math.round(x), Math.round(y), size, size);
     });
