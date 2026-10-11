@@ -295,15 +295,16 @@ export interface RelocationPlan {
 /** keyed `${from}-${to}`; a transition absent here takes the plain morph path */
 export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
   'e1-e2': {
-    /** S156 / R3-46: the descent now un-pitches 45° (the overlook looks down at the room as it
-     *  ages), and 1.5 × 45 / 8 = 8.4 °/s keeps it under the 9.1 ceiling; 7 s would be 9.6 */
-    riseSeconds: 7.0, buildSeconds: 7.0,
+    /** W1-B11: the rise pitches 40° on a smootherstep arc;
+     *  1.875×40/8.3=9.04°/s, inside the 9.1°/s comfort law. */
+    riseSeconds: 8.3, buildSeconds: 7.0,
     /** ⚑ Phase 7: 13, not 8 — the hold is at the room's far end now, 2.84 m from the chair (1.875 × 2.84 / 13 = 0.41 m/s) */
     descendSeconds: 13.0,
     opensWalls: false, seat: 0
   },
   'e2-e3': {
-    riseSeconds: 7.0,
+    // W1-B11: pitch 40° uses smootherstep, not smoothstep: 1.875×40/8.3=9.04°/s.
+    riseSeconds: 8.3,
     buildSeconds: 11.0,
     /** 11.5, not 10: the descent is the longest leg of this move (2.54 m of
      *  chord) and at 10 s it measured a 0.477 m/s peak — over S53's 0.43
@@ -314,18 +315,18 @@ export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
   },
   'e3-e4': {
     riseSeconds: 7.0,
-    /** 24.0 is set by the TURN, not by the distance: the crossing swings the
-     *  view 142° and 1.5 × 142 / 24 = 8.88 °/s sits under S53's 9.1 °/s
-     *  ceiling. The translation peak that falls out of it (0.403 m/s) is
-     *  comfortably inside 0.43. */
-    buildSeconds: 24.0,
+    /** W1-B11: Phase 7 moved the facing change into a blink. The former
+     *  142°/24 s calculation is historical; distance now sets the duration. */
+    // W1-B11: actual R2→C chord is 7.152 m; 1.5×7.152/25=0.4291 m/s.
+    // The facing changes in a blink; continuous rotation remains ≤9.1°/s.
+    buildSeconds: 25.0,
     /** the r4 fold reads at the same pace the wall-drop did; the remaining
      *  ~13 s of the leg is travel over a finished building */
     cascadeSeconds: 11.0,
     descendSeconds: 11.5,
     /** 2.0 s before the crossing ends, so the 2.5 s crossfade finishes just
      *  after the descent starts: the lights go out as you come down */
-    rigDelaySeconds: 22.0,
+    rigDelaySeconds: 23.0,
     opensWalls: false, seat: 270
   }
 };
@@ -443,6 +444,9 @@ export interface ClusterShell {
    *  timeline OR a morph cascade) — R28-1: movement markers hide for this,
    *  same "scripted moves always win" rule the camera dolly already honors. */
   readonly busy: boolean;
+  /** W1-B11: fade only a closed partition approached by a scripted camera
+   * path. Distance uses the live mesh bounds, so cancellation inside it stays clear. */
+  updateTravelClearance(eye: { x: number; y: number; z: number }, moving: boolean): void;
   update(dt: number): void;
 }
 
@@ -535,6 +539,62 @@ export function buildClusterShell(
     pendingSettledRebatch = true;
   }
   if (batch) rebuildSettled();
+
+  // W1-B11: E2's sends traverse the still-closed full-height partitions;
+  // E3's dormant s4 does too. There is no over-wall gap (wall top 2.70,
+  // ceiling underside 2.70). Fade the crossed wall, never accelerate or make
+  // the viewer find a route. Only camera POSITION matters, never head bearing.
+  // Fully clear 12 cm before the mesh, fade over the next 38 cm. At ≤0.43 m/s
+  // this is a gradual passage; orientation remains ≤9.1°/s in the camera code.
+  // Temporarily exclude only the approached wall from the shared batch BEFORE
+  // writing opacity; otherwise every same-colour wall would fade with it.
+  const travelWalls = new Map<string, { material: pc.StandardMaterial;
+    opacity: number; blendType: number; depthWrite: boolean; excluded: boolean }>();
+  function restoreTravelWalls(): void {
+    for (const [id, saved] of travelWalls) {
+      saved.material.opacity = saved.opacity;
+      saved.material.blendType = saved.blendType;
+      saved.material.depthWrite = saved.depthWrite;
+      saved.material.update();
+      if (!saved.excluded) excluded.delete(id);
+    }
+    travelWalls.clear();
+  }
+  function updateTravelClearance(eye: { x: number; y: number; z: number }, moving: boolean): void {
+    for (const id of ['wallWest', 'wallEast']) {
+      const h = room.props.get(id);
+      const mi = h?.entity.render?.meshInstances[0];
+      if (!h || !mi) continue;
+      const a = mi.aabb, c = a.center, e = a.halfExtents;
+      const distance = Math.hypot(Math.max(Math.abs(eye.x - c.x) - e.x, 0),
+        Math.max(Math.abs(eye.y - c.y) - e.y, 0), Math.max(Math.abs(eye.z - c.z) - e.z, 0));
+      const present = h.entity.enabled && Math.min(e.x, e.y, e.z) > 0.00001;
+      let saved = travelWalls.get(id);
+      if (!saved && moving && present && distance < 0.50) {
+        const wasExcluded = excluded.has(id);
+        excluded.add(id);
+        rebuildSettled(); // returns this wall a PRIVATE material, still renders neighbours batched
+        saved = { material: h.material, opacity: h.material.opacity,
+          blendType: h.material.blendType, depthWrite: h.material.depthWrite, excluded: wasExcluded };
+        travelWalls.set(id, saved);
+      }
+      if (!saved) continue;
+      const k = Math.max(0, Math.min(1, (distance - 0.12) / 0.38));
+      saved.material.opacity = saved.opacity * k * k * (3 - 2 * k);
+      saved.material.blendType = pc.BLEND_NORMAL;
+      saved.material.depthWrite = false;
+      saved.material.update();
+      if (!present || distance >= 0.50) {
+        saved.material.opacity = saved.opacity;
+        saved.material.blendType = saved.blendType;
+        saved.material.depthWrite = saved.depthWrite;
+        saved.material.update();
+        if (!saved.excluded) excluded.delete(id);
+        travelWalls.delete(id);
+        rebuildSettled();
+      }
+    }
+  }
 
   // ── zone accent lights (rig-driven; the two rooms' own temperatures) ──
   const zoneLights: pc.Entity[] = [];
@@ -932,6 +992,7 @@ export function buildClusterShell(
     },
 
     morphToEra(toEra: EraKey, animate: boolean, plan?: RelocationPlan | null): void {
+      restoreTravelWalls();
       const fromEra = era;
       era = toEra;
       const fromIdx = STATE_FOR_ERA[fromEra];
@@ -1030,6 +1091,7 @@ export function buildClusterShell(
     setKeptIds(ids: ReadonlySet<string>): void { morph.setKeptIds(ids); },
 
     settleNow(): void {
+      restoreTravelWalls();
       timeline = [];
       timelineT = 0;
       clearSettled();
@@ -1043,6 +1105,8 @@ export function buildClusterShell(
       applyLayout();
       rebuildSettled();
     },
+
+    updateTravelClearance,
 
     update(dt: number): void {
       if (timeline.length) {

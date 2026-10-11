@@ -460,7 +460,9 @@ async function main() {
   const probe = () => page.evaluate(({ VW, VH }) => {
     const os = window.__os;
     const app = window.__app;
-    const q = window.__graceQueue ? window.__graceQueue() : null;
+    // The Era-3 queue survives in memory after its room ages. Its saver and
+    // controls belong only to Era 3 (W1-B11 full-walk finding).
+    const q = os.desktopEra === 'e3' && window.__graceQueue ? window.__graceQueue() : null;
     const pose = window.__camPose ? window.__camPose() : null;
     const root = app.root;
     let cam = null;

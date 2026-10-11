@@ -5,10 +5,10 @@ Narrative.* A browser + WebXR (Quest 3) narrative experience about how
 conversion-practice (SOGICE) networks target queer people online — and how
 the demand never changes, only the disguise.
 
-**Status: scaffold (v0.1.0).** `npm run dev` shows the Era-1 BIOS boot
-sequence on the in-world monitor with crisp nearest-neighbour pixels. The
-room, name entry, the Witness flip, and the desktop apps arrive with the
-vertical slice.
+**Status: four-era development build.** `?reinterp=1` enables the current
+reinterpretation, including the scripted era journeys and the Close. Browser
+and WebXR share the 3D room and monitor; headset verification is still pending
+for the changes documented below.
 
 ## Run
 
@@ -27,6 +27,24 @@ npm test             # no-network / no-storage invariants + room fold + spec law
 | `check-licences.mjs` | every shipped asset has a credit and compatible licence |
 | `check-rooms.mjs` | the room deltas fold cleanly over the base room |
 | `check-spec.mjs` | dossier `status`, felt-scene purity, `tier`/`register` vocabulary, the ≤3-hero Quest budget, a palette ratchet, doc lifecycle tracking (`STATUS:` headers, supersession links, opt-in `KILLS:` assertions — see `docs/reinterp/08_STATUS_REGISTER.md` §5), `?debug=1` panel completeness (every `debugJump` id `os.ts` accepts has a panel button or a documented exclusion — C6), and an authoring-marker leak ratchet (no `PLACEHOLDER`/`Sérgio`/`[VERIFY SOURCE]`/etc. in player-visible `data/**.json` strings, growth-only like the palette ratchet — C7) |
+
+### Scripted travel clearance (`?reinterp=1`)
+
+Era crossings pass below the measured doorway undersides (2.14 m and 2.18 m).
+Closed partitions on scripted sends fade as the camera approaches and restore
+once it clears them; head direction does not trigger this. The comfort envelope
+remains 0.43 m/s and 9.1°/s. Each era rise fits its duration to the actual
+starting seat and facing; the room cascade shares that timing. Cross-room reset
+uses the send's 39-second duration.
+Headset comfort and tracked-head clearance still need an in-headset pass.
+
+For the offline mesh audit and five photographs per leg, start Vite on an
+explicit unused port, then run `node tools/travel-walls.mjs --port 3203 --phase after`.
+It writes live mesh bounds, GLB accessor bounds, crossings, measured speeds and
+screenshots under `out/travel-walls/after/`. Add `--only alternate --phase after-alternate`
+to test the real era-shift seam from other seats. The report and baseline photographs
+for W1-B11 are in `out/travel-walls/`; captures are review states, while the full
+`tools/walk.mjs` run checks narrative reachability.
 
 ### Build-time voice lines (offline, never runtime)
 Some apparatus/system lines (never survivor-side lines) are voiced with a local

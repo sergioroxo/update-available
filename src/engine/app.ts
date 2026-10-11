@@ -204,7 +204,8 @@ const WAKE_DURING_DESCENT_DELAY =
 // an arc and 1.5 × chord / duration for a tween, which is why every duration
 // here is a quotient rather than a preference: E2→E3's descent is 11.5 s and
 // not 10 because 1.875 × 2.5445 / 10 = 0.477, over the envelope. E3→E4's
-// crossing is 24 s because the building is 8.8 m wide and the turn is 142°.
+// crossing is 25 s: the actual 7.152 m chord peaks at 0.4291 m/s. Its
+// 180° facing change happens in the existing blink, before the crossing.
 // Measured peaks from real runs are in the session log; ALL are desktop
 // figures, because A11 (the in-headset pass) has still never run. Any input
 // lands you in the seat at once (endRelocation) and settles the room — the
@@ -215,18 +216,27 @@ const WAKE_DURING_DESCENT_DELAY =
  *  slab ever has to be hidden and restored (the churn S48 logged). */
 /** ⚑ S156 / R3-46 (Sérgio: "we should fly to the top of the room and see the space morph"):
  *  the overlook is HIGHER and looks DOWN — pitch −40, the most the comfort law allows in a
- *  7 s leg (1.5 × 40 / 7 = 8.6 °/s under 9.1) — so the whole desk end of the room is in
- *  view when the space starts to change. Chord from the seat 1.51 m → 0.404 m/s peak. */
+ *  8.3 s arc (1.875 × 40 / 8.3 = 9.04 °/s under 9.1) — so the whole desk end of the room is in
+ *  view when the space starts to change. The 8.3 s rise measures 0.344 m/s peak from the home seat. */
 const RELOC_OVERLOOK_A = { x: 0.25, y: 2.35, z: 1.60, pitch: -40, yaw: 0 };
 /** leg 1's bezier control — offset PERPENDICULAR to the chord (S53's finding:
  *  a control point placed "between" the ends bows nothing, it only re-times).
  *  ~0.23 m of real sagitta: you rise first and lean back after, rather than
  *  sliding up the diagonal. */
 const RELOC_RISE_VIA = { x: 0.15, y: 2.00, z: 0.95 };
+/** W1-B11 / travel-walls: the live box meshes put w1doorLintel's UNDERSIDE
+ * at y=2.14 (2.42 − 0.56/2), w_lintel at 2.18, not the old comment's 2.43.
+ * B at y=2.00 crosses their x=−2.13 / −2.05 openings at y≈2.02 / 2.03,
+ * leaving >0.10 m below the lower lintel. R2 and C stay at y=2.00 for the
+ * whole E3→E4 crossing. All remain below the y=2.70 ceiling slab. No look
+ * triggers any of this: the scripted move takes the viewer through the opening.
+ * Comfort: ≤0.43 m/s, ≤9.1°/s; durations in RELOCATIONS use the actual
+ * smootherstep (1.875 peak) for arcs, smoothstep (1.5 peak) for straight legs.
+ */
 /** end of leg 2: out over the middle of the opened space, already turning
  *  toward Room 2. A straight eased tween, not an arc — during the build the
  *  camera should be the steadiest thing on screen. */
-const RELOC_OVERLOOK_B = { x: -2.30, y: 2.28, z: 1.60, pitch: -13, yaw: 52 };
+const RELOC_OVERLOOK_B = { x: -2.30, y: 2.00, z: 1.60, pitch: -13, yaw: 52 };
 /** leg 3's control point: out over Room 2's floor, so the descent curls in
  *  over the bed and settles at the desk instead of dropping on a diagonal */
 const RELOC_DESCEND_VIA = { x: -3.70, y: 2.10, z: 1.45 };
@@ -249,16 +259,16 @@ const RELOC_E1_HOLD = { x: -0.10, y: 2.38, z: 3.25, pitch: -30, yaw: 0 };   // �
 /** E1→E2's leg 3 control: 0.23 m of sagitta (the rise's own figure), out over
  *  the room so you settle back into the chair rather than drop into it */
 const RELOC_E1_DESCEND_VIA = { x: -0.20, y: 2.25, z: 1.70 };   // Phase 7: from the far end, forward over the room, then down into the chair
-/** E3→E4's leg 1 — Room 2's overlook. Deliberately the exact translation of
- *  Room 1's (+0.25 x, +1.00 y, +1.05 z off the seat, 1.4715 m of chord): by
- *  the third time, the move must be recognisable in the body, not just in the
- *  edit. Same via offset, same 7.0 s, same 0.394 m/s peak. */
-const RELOC_OVERLOOK_R2 = { x: -4.15, y: 2.16, z: 1.75, pitch: -17, yaw: 90 };
+/** E3→E4's leg 1 — Room 2's overlook, lowered to y=2.00 for the next
+ *  doorway crossing. Its 7 s home-seat rise measures 0.368 m/s; an alternate
+ *  starting seat gets the same curve with a duration fitted to the comfort law. */
+const RELOC_OVERLOOK_R2 = { x: -4.15, y: 2.00, z: 1.75, pitch: -17, yaw: 90 };
 const RELOC_R2_RISE_VIA = { x: -4.25, y: 2.00, z: 0.95 };
 /** E3→E4's leg 2 — the mirror of RELOC_OVERLOOK_B, over the Room 1 / Room 3
  *  threshold, and the crossing that gets there is the longest move in the
- *  piece: 6.45 m and 142° of turn. See the durations in cluster.ts. */
-const RELOC_OVERLOOK_C = { x: 3.00, y: 2.28, z: 1.60, pitch: -13, yaw: 270 };   // ⚑ Phase 7: facing Room 3 the whole way (the blink turned you at the top), ending inside it
+ *  piece: 7.152 m at 0.429 m/s over 25 s. The facing changes in the
+ *  existing blink before the crossing. See the durations in cluster.ts. */
+const RELOC_OVERLOOK_C = { x: 3.00, y: 2.00, z: 1.60, pitch: -13, yaw: 270 };   // ⚑ Phase 7: facing Room 3 the whole way (the blink turned you at the top), ending inside it
 /** E3→E4's leg 3 control — RELOC_DESCEND_VIA mirrored in x, so the descent
  *  into Maya's seat is geometrically identical to the one into Vera's */
 const RELOC_R3_DESCEND_VIA = { x: 3.70, y: 2.10, z: 1.45 };
@@ -1961,6 +1971,32 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** set when an era lands mid-flight; consumed by `endRelocation` */
   let pendingBed: string | null | undefined;
 
+  /** W1-B11: a send or a seat cut can leave the viewer away from the era's
+   * home seat. Fit the rise to its ACTUAL start, never silently reset them.
+   * The quadratic's derivative is evaluated in normalized smootherstep time;
+   * 1024 intervals plus a small numerical margin bound its peak translation.
+   * Rotation uses its exact 1.875 peak and the same shortest yaw as startCamMove.
+   * Both camera and space receive this ONE plan, so walls age only after the
+   * real rise lands. Comfort remains ≤0.43 m/s and ≤9.1°/s, with no roll. */
+  function relocationPlanFromHere(key: string, base: RelocationPlan): RelocationPlan {
+    const p = RELOC_POSES[key];
+    if (!p) return base;
+    let linearPeak = 0;
+    for (let i = 0; i <= 1024; i++) {
+      const k = i / 1024;
+      const s = k * k * k * (k * (k * 6 - 15) + 10);
+      const ds = 30 * k * k * (1 - k) * (1 - k);
+      const dx = 2 * ((1 - s) * (p.riseVia.x - camPos.x) + s * (p.rise.x - p.riseVia.x));
+      const dy = 2 * ((1 - s) * (p.riseVia.y - camPos.y) + s * (p.rise.y - p.riseVia.y));
+      const dz = 2 * ((1 - s) * (p.riseVia.z - camPos.z) + s * (p.rise.z - p.riseVia.z));
+      linearPeak = Math.max(linearPeak, Math.hypot(dx, dy, dz) * ds);
+    }
+    const yaw = ((p.rise.yaw - camYaw + 540) % 360) - 180;
+    const angularPeak = 1.875 * Math.hypot(p.rise.pitch - camPitch, yaw);
+    const seconds = Math.max(base.riseSeconds, linearPeak * 1.0001 / 0.43, angularPeak / 9.1);
+    return { ...base, riseSeconds: Math.ceil(seconds * 10 - 1e-8) / 10 };
+  }
+
   function beginRelocation(key: string, plan: RelocationPlan): void {
     // ⚑ the building, for the length of the flight. `onEraShift` brings the
     //   destination's own bed up when the era actually lands.
@@ -2120,7 +2156,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
   function dollyTo(toYaw: number, totalDur: number, conducted: boolean): void {
     seatYaw = toYaw;
-    if (angDist(camYaw, toYaw) < 1 && !camMove) return; // already there
+    if (Math.hypot(camPos.x - seatPose(toYaw).x, camPos.z - seatPose(toYaw).z) < 0.01
+      && angDist(camYaw, seatPose(toYaw).yaw) < 1 && !camMove) return; // already there
     // one continuous arc: seat → up-and-back over the space (you SEE all three
     // rooms) → the next desk. Single eased curve = no stop-and-go at the center.
     startCamMove(seatPose(toYaw), totalDur, conducted, DOLLY_CTRL);
@@ -3601,7 +3638,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       if (!os.isCapturingText) {
         if (k === 'r' || k === 'R') { // reset to the era's home seat (E4: the TURN's facing)
-          if (seatYaws().length > 1 && cluster) dollyTo(cluster.homeYaw, 2.2, false);
+          if (seatYaws().length > 1 && cluster) dollyTo(cluster.homeYaw, CAMERA_POSES.dollySeconds, false);
           else startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: cluster ? cluster.homeYaw : 0 }, 0.7, false);
           e.preventDefault();
           return;
@@ -3762,6 +3799,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (!camMove) commitLookOffset();
       cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
+    cluster?.updateTravelClearance(camPos, !!camMove);
     cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
     // ⚑ S80: …and then the head, if the player is turning a device. The rig is
     // the seat; this is the look. Nothing above it changes, in any era.
@@ -4246,7 +4284,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // owns the E2 daylight cue (data/room/cluster.json's `e2` rig) in the
     // SAME morph beat as the room aging — see the note above applyLightsOn().
     const key = `${fromEra}-${era}`;
-    const plan = drivenMoves ? relocationFor(fromEra, era) : undefined;
+    const basePlan = drivenMoves ? relocationFor(fromEra, era) : undefined;
+    const plan = basePlan ? relocationPlanFromHere(key, basePlan) : undefined;
     // the space's half is scheduled around the camera's legs; passing the plan
     // (or an explicit null) keeps the two halves reading the SAME numbers.
     cluster.morphToEra(era, true, plan ?? null);
