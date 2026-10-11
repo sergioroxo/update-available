@@ -1,0 +1,92 @@
+STATUS: live
+
+# Lexicon sources — tick list (2026-10-11)
+*Every web source in docs/reinterp/RESEARCH_LEXICON_2026-10-02.md §3. Tick [x] the ones that go into the Lexicon's Sources tab (they are then copied into data/dossier/links.json with `verifiedIn` = that file, verbatim). Local files and books cannot be linked; they are listed at the end for the record. Already in the tab: S15/S22's Littman 2019 correction and S17 the Cass Review.*
+
+- [ ] **S01** — Evergreen International, "Understanding Male Same-sex Attraction" (capture 2005-03-15)
+    - https://web.archive.org/web/20050315001302/http://www.evergreeninternational.org/Male_ssa.htm
+- [ ] **S02** — Evergreen International, 2012 captures: map, home, "Resources for individuals", Articles, Christ-centered approach, women's page, men's page, Myths, masculinity, self-perception, how-to-talk primer, FAQ, relationships
+    - https://web.archive.org/web/20120724193826/http://www.evergreeninternational.org/map.htm
+    - http://www.evergreeninternational.org/
+- [ ] **S03** — Exodus International, 2003 captures: home (2003-12-26), FAQs, About
+    - https://web.archive.org/web/20031226194746/http://exodus-international.org/
+    - https://web.archive.org/web/20031202170407/http://www.exodus-international.org/exodus_faqs.shtml
+    - https://web.archive.org/web/20031202165922/http://www.exodus-international.org/about_exodus.shtml
+- [ ] **S04** — Exodus International, testimonials page (2003-12-25)
+    - https://web.archive.org/web/20031225083127/http://www.exodus-international.org/testimonials_left_homosexuality.shtml
+- [ ] **S05** — Courage (Catholic), FAQ, Five Goals, Reparational Group (2004)
+    - https://web.archive.org/web/20041204002841/http://www.couragerc.net/FAQs.html
+    - https://web.archive.org/web/20041206232358/http://www.couragerc.net/TheFiveGoals.html
+    - https://web.archive.org/web/20041206182405/http://www.couragerc.net/ReparationalGroup.html
+- [ ] **S06** — Love in Action, home (2005-01-09), Programs (2005-01-09), About (2004-12-07)
+    - https://web.archive.org/web/20050109010955/http://www.loveinaction.org/
+    - https://web.archive.org/web/20050109011944/http://www.loveinaction.org/Programs/Programs.html
+    - https://web.archive.org/web/20041207011909/http://www.loveinaction.org/About%20LIA/About%20LIA.html
+- [ ] **S06b** — Desert Stream Ministries (home of Living Waters), 2005-01-20
+    - https://web.archive.org/web/20050120092248/http://www.desertstream.org/
+- [ ] **S06c** — NARTH, home (2004-12-31), "Born that way" theory (2005-01-24)
+    - https://web.archive.org/web/20041231090626/http://www.narth.com/
+    - https://web.archive.org/web/20050124021422/http://www.narth.com/menus/born.html
+- [ ] **S07** — People Can Change: home (2005-01-22), "Root Problems" (2005-02-07), "Is Change Possible" (2005-02-07)
+    - https://web.archive.org/web/20050122215949/http://peoplecanchange.com/
+    - https://web.archive.org/web/20050207061114/http://peoplecanchange.com/Root_Problems.htm
+    - https://web.archive.org/web/20050207053403/http://peoplecanchange.com/Is_Change_Possible.htm
+- [ ] **S08** — UN Independent Expert on SOGI, *Practices of so-called "conversion therapy"*, A/HRC/44/53 (1 May 2020)
+    - https://documents.un.org/api/symbol/access?s=A/HRC/44/53&l=en&t=pdf
+    - https://documents.un.org/doc/undoc/gen/g20/108/68/pdf/g2010868.pdf)
+- [ ] **S09** — APA Task Force, *Report on Appropriate Therapeutic Responses to Sexual Orientation* (2009); copy hosted by AGLP (apa.org's own PDF returned a bot wall)
+    - https://www.aglp.org/Documents/APsycholA%20on%20Orientation.pdf
+- [ ] **S10** — ILGA World, *Curbing Deception* (2020)
+    - https://www.ohchr.org/sites/default/files/Documents/Issues/SexualOrientation/IESOGI/CSOsAJ/ILGA_World_Curbing_Deception_world_survey_legal_restrictions_conversion_therapy.pdf
+- [ ] **S10b** — NARTH, "How Should Clinicians Deal With GID In Children?" (2004-12-04)
+    - https://web.archive.org/web/20041204022744/http://www.narth.com/docs/gid.html
+- [ ] **S11** — GPAHE, *Conversion Therapy Online: The Ecosystem* (2022; page metadata 2021-12-28)
+    - https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem/
+- [ ] **S12** — GPAHE, *Conversion Therapy Online: The Ecosystem in 2023* (published 2024-01-23)
+    - https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/
+- [ ] **S14** — Robinson and Spivey, "Putting Lesbians in Their Place", *Social Sciences* 4(3):879-908 (2015)
+    - https://pdfs.semanticscholar.org/290d/4ee5704cd0b51d6320caf3862f83e3e3175b.pdf
+- [ ] **S15** — Throckmorton, blog on the NARTH female-development fact sheet (2008-08-22), and Littman 2018 + 2019 correction
+    - https://wthrockmorton.com/2008/08/22/narth-fact-sheet-female-homosexual-development/
+    - https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0202330
+    - https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0214157
+- [ ] **S16** — Zucker (2018), "The myth of persistence", *Int J Transgenderism*
+    - https://www.hbrs.no/wp-content/uploads/2017/05/The-myth-of-persistence-0ZUCKER.IJT_.2018.pdf
+- [ ] **S16b** — Temple Newhook et al. (2018), critical commentary on "desistance"; read via a working-group excerpt (the journal page returned 403)
+    - https://www.gdaworkinggroup.com/blog/2018/12/21/a-critical-commentary-on-follow-up-studies-and-desistance-theories-about-transgender-and-gender-nonconforming-children
+- [ ] **S17** — Cass Review, *Final Report* (April 2024), Internet Archive copy
+    - https://archive.org/download/cass-review-final/CassReview_Final.pdf
+- [ ] **S18** — WHO, "Gender incongruence and transgender health in the ICD"
+    - https://www.who.int/standards/classifications/frequently-asked-questions/gender-incongruence-and-transgender-health-in-the-icd
+- [ ] **S19** — APA (psychiatry), DSM-5 Gender Dysphoria fact sheet
+    - https://www.psychiatry.org/File%20Library/Psychiatrists/Practice/DSM/APA_DSM-5-Gender-Dysphoria.pdf
+- [ ] **S20** — Congregation for Catholic Education, *"Male and Female He Created Them"* (2019)
+    - https://www.vatican.va/roman_curia/congregations/ccatheduc/documents/rc_con_ccatheduc_doc_20190202_maschio-e-femmina_en.pdf
+- [ ] **S22** — Littman (2021) *Arch Sex Behav* and Turban et al. (2021) *LGBT Health*, abstracts via Europe PMC
+    - https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMCID:PMC8604821&format=json&resultType=core
+    - https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=PMCID:PMC8213007&format=json&resultType=core
+- [ ] **S23** — Slate (2023), "Trans kids: What gender-exploratory therapy is really about"
+    - https://slate.com/technology/2023/05/gender-exploratory-therapy-trans-kids-what-is-it.html
+- [ ] **S24** — Wikipedia, "Therapy First" (secondary)
+    - https://en.wikipedia.org/wiki/Therapy_First
+- [ ] **S25** — Wikipedia, "Rapid-onset gender dysphoria controversy" (secondary: lists WPATH 2018, CAAPS 2021, SOC-8 2022, European Academy of Paediatrics 2024)
+    - https://en.wikipedia.org/wiki/Rapid-onset_gender_dysphoria_controversy
+- [ ] **S26** — Wikipedia, "Chosen family" (secondary)
+    - https://en.wikipedia.org/wiki/Chosen_family
+- [ ] **S27** — Wikipedia, "Evergreen International" (secondary: founded 1989, independent of the LDS Church, closed 2014)
+    - https://en.wikipedia.org/wiki/Evergreen_International
+- [ ] **S29** — The Equality Project, "What is the SOGICE Statement?" (survivor-led Australian statement; page undated)
+    - https://www.theequalityproject.org.au/blog/what-is-the-sogice-statement
+- [ ] **S30** — Weiss, Morehouse, Yeager and Berry (2010), "A Qualitative Study of Ex-Gay and Ex-Ex-Gay Experiences", *J Gay & Lesbian Mental Health*: metadata only (Crossref); the content is via the project's own research note
+    - https://api.crossref.org/works/10.1080/19359705.2010.506412
+- [ ] **S31** — PCMag (Benj Edwards, 19 Oct 2017), "7 Retro Religious Video Games Worth Exploring" (pcmag.com returned 403; read the Wayback capture of 2025-08-21)
+    - https://web.archive.org/web/2/https://www.pcmag.com/news/7-retro-religious-video-games-worth-exploring
+
+## Not linkable (local files, books, not found)
+
+- S21 — Forbidden Colours, *The Hate Review 2026* (Sept 2026), local file (`/Users/sergiogalvaoroxo/Documents/Shame Database/Relevant/Part 12/c/The_Hate_Review_-_Full_Report_-_Forbidden_Colours_-)
+- S32 — Wayback requests for Homosexuals Anonymous (`ha-fellowship.org`, `homosexualsanonymous.org`) (returned "not archived": **not found**)
+- S33 — Nicolosi, *A Parent's Guide to Preventing Homosexuality* (© 2017 ed.; IVP original 2000 per Waidzunas) (`[L: A_Parent’s_Guide_to_Preventing_-_Nicolosi,_Joseph_7391.md]`)
+- S34 — Local folder `/Users/sergiogalvaoroxo/Pc_Simulation/PDF/MD` (about 100 files; see triage below) (each cited by filename)
+- S35 — Project's Smithsonian folder (Love in Action Collection OCR): `/Users/sergiogalvaoroxo/Pc_Simulation/Sources/Boy Erased/New/`: NMAH-AC1428-B006-F004 (FOF, *Roots and Causes of Female Homosexuality*, 2001), B006-F005 (male booklet; mostly endnotes), B002-F012 (Exodus resource booklets, 1998) (local files (OCR is rough; section names given where legible))
+- S36 — Waidzunas (2015), *The Straight Line* (U Minnesota Press): notes on NARTH 2006 bulletin; ch. 4 opening (`[L: The_Straight_Line_;_How_the_Fringe_Science_of_Ex-Gay_Therapy…md]`)

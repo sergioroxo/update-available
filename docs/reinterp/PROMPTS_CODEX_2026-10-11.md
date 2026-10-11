@@ -137,3 +137,23 @@ it). Nothing may be fetched from the network at runtime beyond the piece's own f
 Do not change any display text or any art's look. Walk: `node tools/walk.mjs --port 3205 --max 2600 --require-close`
 against `npx vite preview --port 3205` of the built output if possible (say which you used).
 ```
+
+## C1b · The Library: three fixes after review (port 3201) — paste into the SAME Codex chat as C1
+
+```
+Claude reviewed CODEX: library (merged into reinterp). Three fixes, same rules as before; rebase your worktree first:
+`git fetch` is not needed (same repo) — run `git rebase reinterp` on codex/library, or start a new branch
+codex/library-2 from reinterp.
+1. FAR FEWER LABELS. Every object carries a dark-blue label (Leave, Start again, What this is, Receipt, Lamby, THE
+   LEXICON, the four "year · name"). Bob had none, and the front door (LambyOS Home) shows labels only on its four
+   key objects. Keep visible labels ONLY on the four era computers ("1997", "2003", "2016", "2026" — drop the names)
+   and the Lexicon. All other labels appear only on keyboard focus (and stay in the hit rects / aria names).
+2. FILL THE MONITOR. The Library is letterboxed: black bands above and below waste about a third of the glass, and a
+   title strip "LambyOS Home — Library" duplicates the painted sign. Remove the strip and scale the room to cover the
+   whole glass (crop the room's left/right edges a little if the monitor's aspect differs; keep the door and the 2026
+   computer fully inside).
+3. LAMBY'S BUBBLE covers the right-hand bookshelf and the receipt. Place it where it covers no object (above Lamby,
+   tail down, or on the wall left of the round window), and shrink it to its line.
+Screenshots at 1280×720 and 390×844 to out/library/; walk: node tools/walk.mjs --port 3201 --max 900 --from-era 4
+--require-close. Commit "CODEX: library-2 — …", report as before.
+```
