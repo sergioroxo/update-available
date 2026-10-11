@@ -269,6 +269,8 @@ The laws in CLAUDE.md (R28 §1–4 and the hard invariants), applied to Home:
 
 ## 5 · Three image-generation prompts for GPT (A2)
 
+> ⚑ **SUPERSEDED 2026-10-11** (his: "your prompts are not well done, and they don't have the pop of color I want from BOB"): these asked for the rooms' Soft Lo-Fi look, which is wrong for the programme's showroom. Use `docs/reinterp/PROMPT_GPT_LAMBYOS_HOME_2026-10-11.md` (Bob's saturated cartoon; GPT builds the screen, Claude ports and tests it and writes GPT feedback).
+
 **How to use them.** Send each one as its own request. Prompt 1 is the backdrop. Prompts 2 and 3 are the objects,
 each drawn alone on a flat background so they can be cut out as layers and placed over the backdrop.
 
