@@ -408,7 +408,7 @@ async function main() {
     );
   };
 
-  const startQuery = (FROM_ERA > 1 ? `?reinterp=1&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&debug=1') + (CUT ? '&cut=' + CUT : '');
+  const startQuery = (FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '');
   // S223: wait for the page's own load, not for "network idle", and give a COLD dev server time: on a fresh machine
   //   Vite transforms every module on first request (the cloud's first run spent its whole minute there)
   await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'load', timeout: 240000 });

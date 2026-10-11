@@ -34,6 +34,7 @@ import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
+import { noteHumanInput, registerXrSession } from '../frame/attract';
 import { TapeAudioBus, roomBed, setOneShotsMuted, setOneShotsPaused, playOnce, playLoop, stopClip, setCueListener } from '../audio/tapeAudio';
 import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
@@ -925,12 +926,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRestart: () => restartPiece()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (ray) => { if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
-      onMenuSelect: (ray) => { xrFrame?.press(ray); },
-      onSqueeze: () => gameMenuBus.toggle(),
+      onSelect: (ray) => { noteHumanInput(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
+      onMenuSelect: (ray) => { noteHumanInput(); xrFrame?.press(ray); },
+      onSqueeze: () => { noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
       wandColor: new pc.Color().fromString(FRAME.ink)
     });
+    // ⚑ S232 — the exhibition's idle clock (frame/attract.ts): a headset has no DOM events, so the select/squeeze above
+    //   feed it, and at 30 min untouched it ends the session here before the fresh-visit reload
+    registerXrSession({ active: () => !!xr?.active, end: () => { if (xr?.active) xr.end(); } });
     gameMenuBus.onChange((isOpen) => {
       if (!xr?.active) return;
       if (isOpen) xrFrame?.open(); else xrFrame?.close();

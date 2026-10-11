@@ -11,6 +11,7 @@ import { startLambyRig } from './lambyrig/lambyRig';
 import { mountGameMenu } from './desktop/gameMenu';
 import { mountOrientingCard } from './desktop/orientingCard';
 import { mountLambyosHome } from './desktop/home/lambyosHome';
+import { mountAttract } from './frame/attract';
 import './state/ledger'; // installs the beforeunload wipe
 
 const canvas = document.getElementById('app') as HTMLCanvasElement | null;
@@ -88,6 +89,14 @@ if (query.get('lambyrig') === '1') {
   // before either engine starts and before the orienting card below — the
   // hard "Esc/pause works from every state" law (CLAUDE.md REINTERP
   // AMENDMENTS §3/§4) includes the pre-fiction card itself.
+  // ⚑ S232 — THE EXHIBITION'S IDLE CYCLE (src/frame/attract.ts): 15 min untouched → the screensavers and the call-in
+  //   card, a touch asks "Start from the beginning?", 30 min → Home as a fresh visit, and so on. Mounted BEFORE the menu
+  //   so its input listeners run first. `?kiosk=0` turns it off (the walk tools pass it); `?idlescale=N` = seconds per
+  //   minute (review only: `1` makes 15 min 15 s).
+  if (query.get('kiosk') !== '0') {
+    const scale = Number(query.get('idlescale'));
+    mountAttract({ idleScale: scale > 0 ? scale : 60, debug: query.get('debug') === '1' });
+  }
   mountGameMenu();
   if (reviewMode) {
     launch();

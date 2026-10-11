@@ -1,0 +1,21 @@
+{
+ "_doc": "⚑ S232 — THE EXHIBITION'S IDLE CYCLE (the lead, 2026-10-11: 'if the experience is left untouched for 15 minutes it goes to the screensavers, that also show the advert to call people to the piece, and if the person touches it, it asks if you want to start from the beginning. If after 30 minutes no one touches it it goes back to the home, and after 15 minutes goes to the screensavers, and so on.'). FRAME voice throughout: plain, functional, no fiction colour, nothing plays. This layer is the exhibition's, not the piece's — it sits over everything (room, desktop, LambyOS Home, the menu, the Leave page) and never files anything. Code: src/frame/attract.ts. The era screensavers (screensavers.json) are reused as they are; the in-fiction ones that appear after ~150 s idle inside each era are untouched.",
+ "label": "YOUR UPDATE HAS FAILED — touch the screen to begin",
+ "title": "YOUR UPDATE HAS FAILED",
+ "invite": "Touch the screen to begin.",
+ "foot": "Touch the screen to begin.",
+ "ask": {
+  "_doc": "shown after a touch during the cycle, when the visit had begun; if the cycle began while LambyOS Home was showing (the visit had not begun) a touch just dismisses it and nothing is asked",
+  "titleBar": "YOUR UPDATE HAS FAILED",
+  "question": "Start from the beginning?",
+  "note": "Starting again clears this visit.",
+  "start": "Start from the beginning",
+  "carryOn": "Carry on"
+ },
+ "cycle": ["card", "stars", "text", "lambs", "card", "lock", "orb", "advert"],
+ "_docCycle": "slide names: card = the call-in card; stars/text/lambs/lock/orb = the era screensavers (screensavers.json, src/desktop/apps/screensaver.ts) drawn on the full screen; advert = THE ADVERT SLOT (src/frame/attract.ts, setAdvert) — the video/animation that calls people to the piece, not yet made; the slot is skipped while empty",
+ "secondsCard": 12,
+ "secondsSaver": 20,
+ "lockClock": "9:41",
+ "_docLockClock": "the 2016 lock screen's clock is the fiction's own 9:41 (graceQueueLite: clockStart), held still"
+}

@@ -127,7 +127,7 @@ async function main() {
   // the favicon's 404 is the dev server's, not the piece's: report failed resources by URL, not by console line
   page.on('console', (m) => { const t = m.text(); if ((m.type() === 'error' && !/Failed to load resource/.test(t)) || /ASSERT|Invalid batch/i.test(t)) errors.push(t.slice(0, 200)); });
   page.on('response', (r) => { if (r.status() >= 400 && !/favicon/.test(r.url())) errors.push(`${r.status()} ${r.url()}`); });
-  await page.goto(`http://localhost:${PORT}/?reinterp=1&era=4&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
+  await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=4&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
   await page.waitForFunction(() => [...document.querySelectorAll('button')]
     .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Log in')); if (b) b.click(); });

@@ -53,6 +53,13 @@ This branch carries the isolated reinterpretation build. `?reinterp=1`
 enables reinterpretation-only hooks; without that flag the shipped path is
 the regression baseline. For flat preview, use `?flat=1&reinterp=1`.
 
+**Exhibition idle cycle** (`src/frame/attract.ts`, words in `data/strings/attract.json`):
+15 min untouched shows the screensavers and a call-in card (with an empty slot,
+`setAdvert`, for the advert), a touch asks "Start from the beginning?", and 30 min
+returns to LambyOS Home as a fresh visit, then repeats. `?kiosk=0` turns it off
+(the walk and screenshot tools pass it); `?idlescale=N` sets seconds per minute
+for review (`1` makes 15 min 15 s).
+
 ### Standalone prototypes
 `?lambyrig=1` opens the isolated Lamby rig lab. It is a canvas-only procedural
 prototype for the assistant-as-guide work and is not integrated into the OS.

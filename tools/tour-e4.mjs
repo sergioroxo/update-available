@@ -54,7 +54,7 @@ async function main() {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
-  await page.goto(`http://localhost:${PORT}/?reinterp=1&era=4&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
+  await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=4&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
   await page.waitForFunction(() => [...document.querySelectorAll('button')]
     .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Log in')); if (b) b.click(); });

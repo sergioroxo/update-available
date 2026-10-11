@@ -63,7 +63,7 @@ async function main() {
   fs.mkdirSync(OUT, { recursive: true });
   for (const era of [1, 2, 3, 4]) {
     const page = await browser.newPage();
-    await page.goto(`http://localhost:${PORT}/?reinterp=1&era=${era}&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=${era}&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
     // the front door (shots.mjs's own lesson): the button arms after a delay
     await page.waitForFunction(() => [...document.querySelectorAll('button')]
       .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});

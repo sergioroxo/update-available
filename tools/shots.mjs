@@ -761,7 +761,7 @@ async function sweep(browser, asserts, outDir) {
   // itself a claim about where bugs can be, and this one quietly asserted that
   // Era 1 could not have any.
   for (const era of [1, 2, 3, 4]) {
-    const page = await openPage(browser, `?reinterp=1&era=${era}&debug=1&descent=0`, asserts);
+    const page = await openPage(browser, `?reinterp=1&kiosk=0&era=${era}&debug=1&descent=0`, asserts);
     const p = withDerivedSeats(await page.evaluate(() => window.__poses()));
     poses = p; // identical every era; kept for the offline framing pass
     const shots = [
@@ -832,7 +832,7 @@ async function zoomLegibility(browser, asserts, outDir) {
     const page = await browser.newPage();
     await page.setViewport({ width: w, height: h });
     page.on('console', (m) => { const t = m.text(); if (/ASSERT|Invalid batch/i.test(t)) asserts.push(t.slice(0, 160)); });
-    const q = era === 1 ? '?reinterp=1&debug=1&descent=0&home=0' : `?reinterp=1&era=${era}&debug=1&descent=0`;
+    const q = era === 1 ? '?reinterp=1&kiosk=0&debug=1&descent=0&home=0' : `?reinterp=1&kiosk=0&era=${era}&debug=1&descent=0`;
     await page.goto(`http://localhost:${PORT}/${q}`, { waitUntil: 'networkidle2', timeout: 60000 });
     if (era === 1) {
       // ⚑ ORDER MATTERS: a fresh load is gated by the pre-fiction orienting
@@ -885,7 +885,7 @@ async function zoomLegibility(browser, asserts, outDir) {
 /** the offscreen device canvases (S70's captures), driven through real beats */
 async function devices(browser, asserts, outDir) {
   fs.mkdirSync(outDir, { recursive: true });
-  const page = await openPage(browser, '?reinterp=1&era=3&debug=1&descent=0', asserts);
+  const page = await openPage(browser, '?reinterp=1&kiosk=0&era=3&debug=1&descent=0', asserts);
   await page.waitForFunction(() => window.__era3Devices && window.__era3Devices(), { timeout: 30000 });
   const beat = (b) => page.evaluate((x) => window.__graceQueue().debugBeat(x), b);
   const grab = async (device, name) => {
@@ -1030,7 +1030,7 @@ async function comfort(browser, asserts) {
   {
     const page = await browser.newPage();
     page.on('console', (m) => { const t = m.text(); if (/ASSERT|Invalid batch/i.test(t)) asserts.push(t.slice(0, 160)); });
-    await page.goto(`http://localhost:${PORT}/?reinterp=1&debug=1&home=0`, { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&debug=1&home=0`, { waitUntil: 'networkidle2', timeout: 60000 });
     // ⚑ The ethics arm-delay (orientingCard.ts, ARM_DELAY_MS): "enter" can
     // never be instant, so the button is disabled for the first seconds. Wait
     // for it rather than shortening it — the delay is a law, not a loading bar.
@@ -1056,7 +1056,7 @@ async function comfort(browser, asserts) {
     ['2 · E2→E3', 'E2→E3', 36],
     ['3 · E3→E4', 'E3→E4', 50]
   ]) {
-    const page = await openPage(browser, '?reinterp=1&era=2&debug=1&descent=0', asserts);
+    const page = await openPage(browser, '?reinterp=1&kiosk=0&era=2&debug=1&descent=0', asserts);
     await page.evaluate(RECORDER);
     const found = await clickPanel(page, label);
     if (!found) { console.log(`   ⚠ panel button "${label}" not found — leg NOT measured`); await page.close(); continue; }
@@ -1072,7 +1072,7 @@ async function comfort(browser, asserts) {
   // ── the scripted sends: the REAL callback the OS fires on a resolved
   //    summons (app.ts's os.onSendResolve → dollyTo), not a simulation of it ──
   {
-    const page = await openPage(browser, '?reinterp=1&era=3&debug=1&descent=0', asserts);
+    const page = await openPage(browser, '?reinterp=1&kiosk=0&era=3&debug=1&descent=0', asserts);
     let peak = 0;
     for (const id of ['s1', 's2', 's3', 's4']) {
       await page.evaluate(RECORDER);
@@ -1102,7 +1102,7 @@ async function comfort(browser, asserts) {
 
 /** 5 · CONSOLE ASSERTS — S71 drove the eight `terminalFrame` ones to zero */
 async function assertSweep(browser, asserts) {
-  const page = await openPage(browser, '?reinterp=1&era=2&debug=1&descent=0', asserts);
+  const page = await openPage(browser, '?reinterp=1&kiosk=0&era=2&debug=1&descent=0', asserts);
   for (const label of ['E3 2016', 'E4 now', 'E2 2003', 'E1 1997']) {
     await clickPanel(page, label);
     await wait(3500);
@@ -1144,7 +1144,7 @@ function subjectsInFrame(poses) {
  * smoothstep tween) against a live recording.
  */
 async function verify(browser, asserts) {
-  const page = await openPage(browser, '?reinterp=1&era=4&debug=1&descent=0', asserts);
+  const page = await openPage(browser, '?reinterp=1&kiosk=0&era=4&debug=1&descent=0', asserts);
   const poses = await page.evaluate(() => window.__poses());
   const aspect = VIEWPORT.width / VIEWPORT.height;
   const probes = [];

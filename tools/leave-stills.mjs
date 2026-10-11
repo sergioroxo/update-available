@@ -23,7 +23,7 @@ const puppeteer = (await import('puppeteer-core')).default;
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox'] });
 const page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 860, deviceScaleFactor: 2 });
-await page.goto(`http://localhost:${PORT}/?reinterp=1&era=3&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
+await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=3&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 await wait(5000);
 await page.keyboard.press('Escape');
