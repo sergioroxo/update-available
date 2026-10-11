@@ -44,6 +44,7 @@ import { mountOrientingCard, type DoorChoice } from '../orientingCard';
 import { Lexicon, LEXICON_SOURCES } from '../../room/lexicon';
 import { mountLeavePage, type LeavePage } from '../../frame/leavePage';
 import lex from '../../../data/strings/lexicon.json';
+import { playLoop, stopClip } from '../../audio/tapeAudio';
 import {
   DECOR, HAND_PIVOT, TAB_ORDER, ROOM, bubbleRect, handRect, hitRect, layerSize, layerUrl, modeFor, padlockAnchor, useLarge, visualRect,
   type HomeObject, type Mode, type Rect
@@ -852,6 +853,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   function teardown(now: boolean): void {
     if (destroyed) return;
     destroyed = true;
+    fadeMusic();
     window.clearTimeout(armTimer);
     window.clearTimeout(lexiconTimer);
     window.removeEventListener('resize', layoutAll);
@@ -861,6 +863,29 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     root.style.opacity = '0';
     window.setTimeout(() => root.remove(), 750);
   }
+
+  // ⚑ S235 — the room's music (his, 2026-10-11: a 20 s loopable tune, Suno). A browser plays sound only after a
+  // press, so it starts with the first press or key in the room and loops softly; it fades out when the room goes
+  // (Enter, Leave, the short door). The menu's mute and the idle cycle's mute reach it (it is a tracked one-shot).
+  let music: HTMLAudioElement | null = null;
+  const startMusic = (): void => {
+    if (music || destroyed) return;
+    music = playLoop('lambyos_home_loop.mp3');
+    if (music) music.volume = 0.4;
+  };
+  function fadeMusic(): void {
+    const a = music; music = null;
+    if (!a) return;
+    const v0 = a.volume, t0 = performance.now();
+    const step = (): void => {
+      const k = Math.min(1, (performance.now() - t0) / 1200);
+      a.volume = v0 * (1 - k);
+      if (k < 1) requestAnimationFrame(step); else stopClip(a);
+    };
+    requestAnimationFrame(step);
+  }
+  root.addEventListener('pointerdown', startMusic, { capture: true });
+  root.addEventListener('keydown', startMusic, { capture: true });
 
   window.addEventListener('resize', layoutAll);
   document.body.appendChild(root);
