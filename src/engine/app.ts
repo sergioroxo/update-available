@@ -4626,7 +4626,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function startLibraryMusic(): void {
     if (!libraryLoop) { libraryLoop=playLoop('lambyos_home_loop.mp3'); if (libraryLoop) libraryLoop.volume=0.18; }
   }
-  /** Fit the whole 4:3 glass in portrait too; the 16:9 Library is letterboxed inside it. */
+  /** Fit the whole 4:3 glass in portrait too; the Library backdrop covers it while its object layers stay inside. */
   function libraryDistance(): number {
     const aspect=app.graphicsDevice.width / app.graphicsDevice.height;
     const fov=(camera.camera?.fov ?? 42)*Math.PI/180;

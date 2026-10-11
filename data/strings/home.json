@@ -97,6 +97,8 @@
   },
   "library": {
    "title": "LambyOS Home — Library",
+   "eras": ["1997", "2003", "2016", "2026"],
+   "dismissMark": "×",
    "_doc": "The Close ends on Daniel’s monitor. Canvas artwork and controls replace the Restart card; the DOM return mode remains available in code. Action labels reuse home, Lexicon and receipt strings."
   }
  },

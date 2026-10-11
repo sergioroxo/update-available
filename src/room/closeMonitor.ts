@@ -433,6 +433,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       bodyMat.update();
     },
     press(x: number, y: number): boolean {
+      const clearedFocus = library.pointerPress();
       // Bubble controls are drawn last and answer before the objects under them.
       for (const h of [...api.hits].reverse()) {
         if (x < h.x || x > h.x + h.w || y < h.y || y > h.y + h.h) continue;
@@ -451,6 +452,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         const era = card.eras.find((e) => `library-era-${e.label.slice(0,4)}` === h.id)?.era;
         if (era) { api.onEra?.(era as EraKey); return true; }
       }
+      if (clearedFocus && on && near && face === 'card') drawCard();
       return false;
     }
   };
