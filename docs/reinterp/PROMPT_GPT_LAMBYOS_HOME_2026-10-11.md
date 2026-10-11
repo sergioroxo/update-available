@@ -130,3 +130,28 @@ that. Changes for round 2, in order of importance:
 11. MUSIC: keep it (off until chosen, stops on Enter or Leave). Note in NOTES.md that it was generated with Web Audio
    by you, so it can be credited.
 ```
+
+---
+
+## Round 2 feedback (Claude, 2026-10-11, on output/lambyos-home/round2)
+*Round 2 fixed points 1–11: the painted "LambyOS Home" sign, the full red door, Lamby pointing at the notice, padlocked
+devices, labels only where needed, one native grid, a composed tall room, indexed layers, layout.json. The laptop layout
+is close to ready.*
+
+```
+Round 2 is very close on the laptop. Five changes for round 3:
+
+1. THE PHONE IS TOO SMALL. At 390×844 the 270×480 room shows at scale 1 with wide empty margins, and the labels
+   ("In a headset", "Phone / tablet") are unreadably small. On phone-sized screens, scale the room to FILL the screen
+   width with nearest-neighbour sampling, even when that scale is not a whole number (keep whole numbers on laptops).
+   Draw the labels and the speech bubble's text as DOM text at a readable size (at least 15 px), not inside the
+   pixel art.
+2. THE SPEECH BUBBLE COVERS THE ROOM. On the laptop it sits over the right-hand bookshelf (where the special Lexicon
+   book is). Place it where it covers no object — to Lamby's left, tail pointing at Lamby — and shrink it to the line.
+3. AN EMPTY BOARD. On the laptop backdrop, above the content note on the right, there is a blank white board/frame
+   left over from the backdrop. Remove it from the backdrop (or move the notice onto it so there is one frame).
+4. THE LOCKED DEVICES ARE TOO GREY. Locked, they should keep their colour: dim them about 30% and keep the padlock —
+   the pop of colour is the point of the room, even before entry.
+5. THE REMOTE is tiny and at the desk's edge. Bring it onto the desk at the size of the other objects (captions are
+   an accessibility control; it should be easy to find and press).
+```

@@ -1654,6 +1654,8 @@ const LAP = { w: 224, h: 140 };
       }
     }
     if (ONE_ERA && s.era !== startEraSeen) { note('era-done', { era: s.era, phase: s.phase, what: 'arrived in ' + s.era + ' from ' + startEraSeen + ' — one era walked' }); break; }
+    // S227 — from 2026 there is no next era: the Close's own end (spine done) is the finish line, not the step cap
+    if (ONE_ERA && s.spine === 'done') { note('era-done', { era: s.era, phase: s.phase, what: 'the Close reached (spine done) — one era walked' }); break; }
     await takeCensus(s, i);
 
     /**
