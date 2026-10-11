@@ -154,4 +154,44 @@ Round 2 is very close on the laptop. Five changes for round 3:
    the pop of colour is the point of the room, even before entry.
 5. THE REMOTE is tiny and at the desk's edge. Bring it onto the desk at the size of the other objects (captions are
    an accessibility control; it should be easy to find and press).
+
+Put round 3 in its own folder, output/lambyos-home/round3/ (the HTML, layout.json, the layers, NOTES.md, a laptop and
+a phone preview PNG), and leave round 2 as it is.
+```
+
+---
+
+## Round 3 feedback (Claude, 2026-10-11, on output/lambyos-home/round3)
+*His note: "I think the quality was way destroyed." He is right, and the cause is MY round-1 points 7 and 8 (one 480×270
+native grid, 256 indexed colours, under 1.5 MB): round 2 resampled round 1's full-resolution art down to that grid, and
+round 3 inherits it (same layer sizes). Round 3 then darkened the locked devices (brightness .7: the cream CRT reads
+grey) and scaled the phone room by a fraction with nearest-neighbour sampling (uneven pixels). His standing word, given
+before: low resolution is not a constraint; it needs resolution. Round 1's full-resolution sources are still on disk
+(output/lambyos-home/image-a-room.png 1920×1080, assets/*.png).*
+
+```
+Round 3's layout and behaviour are right, but the picture lost its quality, and that is my fault: my round-1 points 7
+and 8 (one 480×270 grid, 256 indexed colours, a 1.5 MB cap) made you shrink the art. Please undo those, keep
+everything else:
+
+1. AS BIG AS POSSIBLE — 4K. Make the art for 4K screens: the room at 3840×2160 (laptop/wide) and a tall room at
+   2160×3840 (phone), and every object layer at that same scale, with all the detail and soft highlights of round 1
+   (round 1 is the quality floor, not the target). Drop the native grid, the indexed palette and the 1.5 MB cap: no
+   size limit — more is better than less; we compress later if needed. Generate at the highest resolution you can;
+   where generation tops out lower, upscale with a quality upscaler that keeps the outlines clean, and also deliver
+   the untouched generated originals in a sources/ folder. Lossless PNG (or lossless WebP) for every layer.
+2. SMOOTH SCALING. Scale the room to fit the screen (contain on laptops, fill the width on phones) with normal smooth
+   image scaling (image-rendering: auto), not nearest-neighbour, so nothing gets uneven pixels at any size. Serve the
+   art crisp on high-density screens.
+3. LOCKED DEVICES KEEP FULL COLOUR. No darkening at all (no brightness filter). Show "locked" with the padlock badge
+   only, a little larger, and lift each device to its normal look when the gate opens. The cream CRT must stay cream.
+4. KEEP all of round 2 and 3's fixes: the painted LambyOS Home sign, the notice-first gate (marigold pulse, Lamby
+   pointing, the 4-second unlock), labels only on the notice and the three devices, the full red door, the bubble to
+   Lamby's left covering nothing, the removed empty board, the bigger remote on the desk, DOM text at 15 px or more,
+   layout.json (rectangles now in the 3840×2160 / 2160×3840 coordinates), the Tab order, the music, onEnter.
+5. PHONE LABELS. "Phone / tablet" wraps onto its padlock on the phone. Put each device's padlock at the device's top
+   corner, and its label under the device on one line ("Computer", "Phone / tablet", "Headset" on phones only).
+6. Compare against my Bob style reference again (attached): that level of detail and colour is the target.
+
+Put round 4 in output/lambyos-home/round4/ and leave round 3 as it is.
 ```
