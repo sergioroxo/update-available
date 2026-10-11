@@ -253,6 +253,20 @@
       "license": "generated for this project; no third-party work reproduced",
       "usedAs": "LambyOS Home, the front door and the return: the room, Lamby, the devices and the toys",
       "firstUsed": "S231, 2026-10-11"
+    },
+    {
+      "asset": "LambyOS Home — Library art (`public/library/lib_*.webp`)",
+      "creator": "Image generation by GPT (OpenAI) at the project’s direction, 2026",
+      "license": "generated for this project; no third-party work reproduced",
+      "usedAs": "The Close on Daniel’s monitor: the Library room and its object layers, with Home round-4 assets reused",
+      "firstUsed": "CODEX library, 2026-10-11"
+    },
+    {
+      "asset": "LambyOS Home ambient loop (`lambyos_home_loop.mp3`)",
+      "creator": "Project lead; generated using Suno V6-mini",
+      "license": "project-original; paid-plan licence confirmation pending",
+      "usedAs": "Soft looping music in the Library on Daniel’s monitor",
+      "firstUsed": "S235 / CODEX library, 2026-10-11"
     }
   ],
   "influences": [

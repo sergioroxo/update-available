@@ -1,0 +1,370 @@
+{
+ "name": "LambyOS Home — Library",
+ "version": 1,
+ "canvas": {
+  "width": 3840,
+  "height": 2160
+ },
+ "units": "backdrop pixels",
+ "rectFormat": "[x,y,width,height]",
+ "boundsConvention": "visualBounds are absolute alpha bounds at alpha > 8; localVisualBounds are relative to rectangle. PNG dimensions equal rectangle dimensions; draw 1:1 at x,y.",
+ "backdrop": "assets/room.png",
+ "objects": [
+  {
+   "id": "lexicon",
+   "rectangle": [
+    1580,
+    990,
+    680,
+    810
+   ],
+   "tabOrder": 1,
+   "zIndex": 1,
+   "assets": {
+    "lexicon": "assets/lexicon.png"
+   },
+   "visualBounds": {
+    "lexicon": [
+     1580,
+     1189,
+     680,
+     611
+    ]
+   },
+   "localVisualBounds": {
+    "lexicon": [
+     0,
+     199,
+     680,
+     611
+    ]
+   },
+   "defaultAsset": "lexicon"
+  },
+  {
+   "id": "era-1997",
+   "rectangle": [
+    90,
+    1570,
+    720,
+    570
+   ],
+   "tabOrder": 2,
+   "zIndex": 2,
+   "assets": {
+    "era-1997": "assets/era-1997.png"
+   },
+   "visualBounds": {
+    "era-1997": [
+     106,
+     1570,
+     687,
+     570
+    ]
+   },
+   "localVisualBounds": {
+    "era-1997": [
+     16,
+     0,
+     687,
+     570
+    ]
+   },
+   "defaultAsset": "era-1997"
+  },
+  {
+   "id": "era-2003",
+   "rectangle": [
+    840,
+    1570,
+    720,
+    570
+   ],
+   "tabOrder": 3,
+   "zIndex": 3,
+   "assets": {
+    "era-2003": "assets/era-2003.png"
+   },
+   "visualBounds": {
+    "era-2003": [
+     857,
+     1570,
+     685,
+     570
+    ]
+   },
+   "localVisualBounds": {
+    "era-2003": [
+     17,
+     0,
+     685,
+     570
+    ]
+   },
+   "defaultAsset": "era-2003"
+  },
+  {
+   "id": "era-2016",
+   "rectangle": [
+    2280,
+    1570,
+    720,
+    570
+   ],
+   "tabOrder": 4,
+   "zIndex": 4,
+   "assets": {
+    "era-2016": "assets/era-2016.png"
+   },
+   "visualBounds": {
+    "era-2016": [
+     2280,
+     1625,
+     720,
+     515
+    ]
+   },
+   "localVisualBounds": {
+    "era-2016": [
+     0,
+     55,
+     720,
+     515
+    ]
+   },
+   "defaultAsset": "era-2016"
+  },
+  {
+   "id": "era-2026",
+   "rectangle": [
+    3030,
+    1570,
+    720,
+    570
+   ],
+   "tabOrder": 5,
+   "zIndex": 5,
+   "assets": {
+    "era-2026": "assets/era-2026.png"
+   },
+   "visualBounds": {
+    "era-2026": [
+     3030,
+     1616,
+     720,
+     524
+    ]
+   },
+   "localVisualBounds": {
+    "era-2026": [
+     0,
+     46,
+     720,
+     524
+    ]
+   },
+   "defaultAsset": "era-2026"
+  },
+  {
+   "id": "receipt",
+   "rectangle": [
+    2720,
+    1010,
+    470,
+    520
+   ],
+   "tabOrder": 6,
+   "zIndex": 6,
+   "assets": {
+    "receipt": "assets/receipt.png"
+   },
+   "visualBounds": {
+    "receipt": [
+     2720,
+     1097,
+     470,
+     433
+    ]
+   },
+   "localVisualBounds": {
+    "receipt": [
+     0,
+     87,
+     470,
+     433
+    ]
+   },
+   "defaultAsset": "receipt"
+  },
+  {
+   "id": "plaque",
+   "rectangle": [
+    490,
+    475,
+    310,
+    230
+   ],
+   "tabOrder": 7,
+   "zIndex": 7,
+   "assets": {
+    "plaque": "assets/plaque.png"
+   },
+   "visualBounds": {
+    "plaque": [
+     505,
+     475,
+     280,
+     230
+    ]
+   },
+   "localVisualBounds": {
+    "plaque": [
+     15,
+     0,
+     280,
+     230
+    ]
+   },
+   "defaultAsset": "plaque"
+  },
+  {
+   "id": "start-again",
+   "rectangle": [
+    650,
+    1050,
+    410,
+    440
+   ],
+   "tabOrder": 8,
+   "zIndex": 8,
+   "assets": {
+    "start-again": "assets/start-again.png"
+   },
+   "visualBounds": {
+    "start-again": [
+     650,
+     1143,
+     410,
+     347
+    ]
+   },
+   "localVisualBounds": {
+    "start-again": [
+     0,
+     93,
+     410,
+     347
+    ]
+   },
+   "defaultAsset": "start-again"
+  },
+  {
+   "id": "door",
+   "rectangle": [
+    12,
+    280,
+    440,
+    1160
+   ],
+   "tabOrder": 9,
+   "zIndex": 9,
+   "assets": {
+    "door": "assets/door.png"
+   },
+   "visualBounds": {
+    "door": [
+     23,
+     280,
+     418,
+     1160
+    ]
+   },
+   "localVisualBounds": {
+    "door": [
+     11,
+     0,
+     418,
+     1160
+    ]
+   },
+   "defaultAsset": "door"
+  },
+  {
+   "id": "lamby",
+   "rectangle": [
+    3280,
+    950,
+    490,
+    570
+   ],
+   "tabOrder": 10,
+   "zIndex": 10,
+   "assets": {
+    "lamby-wave": "assets/lamby-wave.png",
+    "lamby-book": "assets/lamby-book.png"
+   },
+   "visualBounds": {
+    "lamby-wave": [
+     3280,
+     1025,
+     490,
+     495
+    ],
+    "lamby-book": [
+     3293,
+     950,
+     463,
+     570
+    ]
+   },
+   "localVisualBounds": {
+    "lamby-wave": [
+     0,
+     75,
+     490,
+     495
+    ],
+    "lamby-book": [
+     13,
+     0,
+     463,
+     570
+    ]
+   },
+   "defaultAsset": "lamby-wave"
+  },
+  {
+   "id": "speech-bubble",
+   "rectangle": [
+    2710,
+    800,
+    600,
+    160
+   ],
+   "tabOrder": null,
+   "zIndex": 11,
+   "assets": {
+    "speech-bubble": "assets/speech-bubble.png"
+   },
+   "visualBounds": {
+    "speech-bubble": [
+     2736,
+     800,
+     547,
+     160
+    ]
+   },
+   "localVisualBounds": {
+    "speech-bubble": [
+     26,
+     0,
+     547,
+     160
+    ]
+   },
+   "defaultAsset": "speech-bubble",
+   "interactive": false,
+   "text": "Empty artwork; runtime supplies DOM or canvas text."
+  }
+ ]
+}

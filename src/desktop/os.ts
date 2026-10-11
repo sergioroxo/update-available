@@ -837,7 +837,9 @@ export class DesktopOS {
    *  real update ritual and the debug "era — the rooms age" jump both want
    *  the real S2R.0/S2R.1 beats to play. */
   setDesktopEra(era: string, settled = false): void {
-    if (era !== 'e2' && era !== 'e3' && era !== 'e4') return;
+    if (era !== 'e1' && era !== 'e2' && era !== 'e3' && era !== 'e4') return;
+    // The Library's 1997 computer uses the settled return path; ordinary updates still move forward.
+    if (era === 'e1' && !settled) return;
     this.residueDark = false;   // S164: the dark after the residue ends with the era
     this.minimised.clear();     // S165: nothing waits in a taskbar the era no longer draws
     // ⚑ S104 — and the era's own surfaces stop publishing controls when the era

@@ -87,6 +87,10 @@
    "what": "This is a piece about how organised “conversion” networks (SOGICE) targeted queer people online, from 1997 to 2026. Four updates, thirty years: none of them changed who anyone was.",
    "part": "It is part of SurvivingSOGICE, at the University of Bergen's Center for Digital Narrative, and rests on the project's research and sources: the Lexicon on the shelf holds the words and the reasons, and the menu's Credits & attributions lists the rest.",
    "made": "It was directed by the project, and written and built in collaboration with Claude (Anthropic)."
+  },
+  "library": {
+   "title": "LambyOS Home — Library",
+   "_doc": "The Close ends on Daniel’s monitor. Canvas artwork and controls replace the Restart card; the DOM return mode remains available in code. Action labels reuse home, Lexicon and receipt strings."
   }
  },
  "labels": {

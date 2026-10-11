@@ -28,7 +28,8 @@ const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
-import { mountCloseMonitor, CLOSE_MONITOR, type CloseMonitor } from '../room/closeMonitor';
+import { mountLeavePage } from '../frame/leavePage';
+import { mountCloseMonitor, type CloseMonitor } from '../room/closeMonitor';
 import { entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
@@ -525,8 +526,7 @@ interface AppOptions {
   reveal?: boolean;
   /** ?nobatch=1 — disable static batching (A/B perf comparison, review tool) */
   nobatch?: boolean;
-  /** ⚑ S230 — the Close's last move: take the visitor back into LambyOS Home (src/main.ts mounts it, mode 'return').
-   *  Absent → the Close ends on the Restart card as it always did. */
+  /** Legacy DOM Home return hook, retained for callers. The Close now ends on its monitor's Library. */
   onReturnHome?: () => void;
 }
 
@@ -702,9 +702,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let cluster: ClusterShell | null = null;
   let cloud: PointCloud | null = null;
   let closeMonitor: CloseMonitor | null = null;
-  /** S230: seconds the lit Restart card has stood unpressed (the scripted send home, see `returnToHome`);
-   *  declared up here because a tap resets it */
-  let closeHomeIdle = 0;
+  let closeLibraryDistance = 0.95;
   let sendRt: SendRuntime | null = null;
   let movementNodes: MovementNodes | null = null;
   // R28-2b: the tape system's pure logic (src/narrative/tapes.ts, mirrors
@@ -916,6 +914,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
      *  frame's own plate, and gives the visitor a moment to read it. Outside a headset it is immediate, as before. */
     function restartPiece(): void {
       wipeLedger();
+      try { window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+'#home-armed'); } catch { /* restart unarmed */ }
       if (!xr?.active) { window.location.reload(); return; }
       xrFrame?.close();
       xrFrame?.setHint(menuStrings.xrRestartNote);
@@ -2686,6 +2685,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   os.onFlipReady = pulse;
   os.onLeave = () => {
     flipBtn.style.display = 'none';
+    closeMonitor?.hide();
+    stopClip(libraryLoop); libraryLoop = null;
     if (xr?.active) xr.end();
   };
 
@@ -3005,7 +3006,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** ⚑ S147 — one resolution for every press: the mouse's tap (above) and the
    *  controller's select (xrInput.ts) both arrive here as a ray. */
   function resolveTapRay(ray: Ray): void {
-    closeHomeIdle = 0;   // S230: any press in the Close starts the count to the scripted send home again
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
     // ⚑ S227 / W1-C11 — the referral printout on the record wall comes up close when pressed (no zooming to read it)
     {
@@ -3099,6 +3099,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   when nothing nearer took the press. (A panel folded off the machine's sight-line is not hittable — see
       //   `panelAt` — so the machine stays pressable through the gap the corridor opens.)
       const glassHit = closeMonitor?.on ? closeMonitor.hitTest(ray.p0, ray.p1) : null;
+      // At the reading seat the glass owns its visible controls, including XR rays.
+      // A drifting sky panel must not steal a Library press while the visitor reads it.
+      if (glassHit && closeMonitor?.near) {
+        closeMonitor.press(glassHit.x, glassHit.y); cloud?.holdDrift(3); return;
+      }
       const tGlass = glassHit ? glassHit.t : undefined;   // a panel or label BEHIND the glass does not answer for it
       if (cloud?.visible) {
         cloud.holdDrift(3);
@@ -3516,6 +3521,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   window.addEventListener('blur', () => heldLook.clear());
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!camMove && !gameMenuBus.isOpen && !os.paused && closeMonitor?.key(e.key,e.shiftKey)) { e.preventDefault(); return; }
     // S48: any key skips the descent too (Escape excepted — the game menu
     // intercepts that in the capture phase and never reaches here)
     if (descentActive) { endDescent(); return; }
@@ -3704,7 +3710,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // C-02 / R3-112: has the eye come to the machine; is it resting on a panel
       if (closeMonitor?.on) {
         const g = closeMonitor.glass;
-        const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + CLOSE_MONITOR.nearDistance)) < 0.25;
+        const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + closeLibraryDistance)) < 0.25;
+        if (near && !closeMonitor.near) startLibraryMusic();
         closeMonitor.setNear(near);
         // S167: while the card is read, nothing of the sky sits between the eye and the glass.
         // ⚑ S174 / R4-15: and while it is FAR too — the sight-line from the eye to the
@@ -3731,11 +3738,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (skyLerp.t >= 1) skyLerp = null;
       }
       closeMonitor?.update(dt);
-      // ⚑ S230 — the scripted send home: the card is lit, nothing is being pressed, no menu holds the piece
-      if (closeMonitor?.on && closeMonitor.hits.length > 0 && !camMove && !gameMenuBus.isOpen) {
-        closeHomeIdle += dt;
-        if (closeHomeIdle >= CLOSE_HOME_AFTER_SECONDS) returnToHome();
-      } else closeHomeIdle = 0;
       // ⚑ S85: a driven leg has ended and nothing took it over, so a look taken
       // during it becomes simply the look you are holding. (A landing never
       // reaches here with an offset — endDescent/seatCut clear it — and a
@@ -4491,8 +4493,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const CLOSE_MONITOR_AFTER_SECONDS = 20;
   const CLOSE_STARS_PITCH = 72;
   const CLOSE_SKY_PITCH = 10;
-  const CLOSE_MONITOR_PITCH = -6;
-  const CLOSE_MONITOR_TILT_SECONDS = 8;
+  const CLOSE_LIBRARY_APPROACH_SECONDS = 12;
   /** C-02: the eye comes to the machine — S174: 1.45 m now (near 1.55), 8 s peaks at 0.34 m/s, under 0.43 */
   const CLOSE_GO_SECONDS = 8;
   let skyLerp: { from: pc.Color; to: pc.Color; t: number; seconds: number } | null = null;
@@ -4579,15 +4580,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (closeStage === 'open') { closeStage = 'settled'; closeHoldT = 0; return; }
     if (closeStage === 'settled') {
       closeStage = null;
-      // ⚑ the monitor lights, and the gaze comes down to it — conducted, slow,
-      //   the last move in the piece. It stands three metres back in the sky
-      //   (C-02); from here the card is a title and a line, and a press on the
-      //   glass brings the eye to it (`goToCloseMonitor`).
+      // The Library lights on Daniel's glass and the piece brings the eye to it.
+      // Its destination is authored; no look or press is needed to reach the ending.
       closeMonitor?.setNear(false);
       closeMonitor?.show();
       // (S159: the POST beep that played here is gone — Sérgio: "the beep on the computer at the end is unnecessary")
-      startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: CLOSE_MONITOR_PITCH, yaw: 0 },
-        CLOSE_MONITOR_TILT_SECONDS, true);
+      const g = closeMonitor!.glass;
+      closeLibraryDistance = libraryDistance();
+      startCamMove({ x:g.x, y:g.y, z:g.z+closeLibraryDistance, pitch:0, yaw:0 },
+        CLOSE_LIBRARY_APPROACH_SECONDS, true);
+      roomBed.set(null,3.5);
     }
   }
 
@@ -4597,36 +4599,23 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function goToCloseMonitor(): void {
     if (!closeMonitor?.on || closeMonitor.near || camMove) return;
     const g = closeMonitor.glass;
-    startCamMove({ x: g.x, y: EYE.y, z: g.z + CLOSE_MONITOR.nearDistance, pitch: CLOSE_MONITOR_PITCH, yaw: 0 },
+    closeLibraryDistance = libraryDistance();
+    startCamMove({ x: g.x, y: g.y, z: g.z + closeLibraryDistance, pitch: 0, yaw: 0 },
       CLOSE_GO_SECONDS, true);
   }
 
-  /**
-   * ⚑ S230 — THE CLOSE RETURNS TO LAMBYOS HOME (design §7 item 3, his idea: "Should we make the final moment with
-   * the computer in the Close a comeback to the BOB and have it there?"). The piece opened in the programme's
-   * showroom (src/desktop/home/) and closes back in it: the same room, now with the Lexicon on the shelf lit and the
-   * devices offering Start again. Two ways in, and neither asks the visitor to look anywhere (his 2026-10-10 rule:
-   * "we need to take the viewer there"):
-   *   · the Restart card's own button, `close-home`;
-   *   · the piece itself, when the card has stood lit and unpressed for CLOSE_HOME_AFTER_SECONDS — a scripted send,
-   *     the same hand that brought the monitor up. Any press anywhere in the Close (a panel, the glass, a card)
-   *     starts the count again, and an open menu holds it.
-   * The Close's score fades out as Home fades in over the canvas; in a headset the immersive session ends first
-   * (Home is a page). Home files nothing, and the ledger is left whole so Your Words can be read there.
-   */
-  const CLOSE_HOME_AFTER_SECONDS = 90;
-  let homeReturned = false;
-  function returnToHome(): void {
-    if (homeReturned || !options.onReturnHome) return;
-    homeReturned = true;
-    closeMsgEl.style.opacity = '0';
-    xrFrame?.setHint(null);
-    roomBed.set(null, 3.5);
-    if (xr?.active) xr.end();
-    options.onReturnHome();
-    // the room under an opaque page need not be drawn for the rest of the visit (it is a reload from here)
-    window.setTimeout(() => { app.autoRender = false; }, 2500);
-    (window as { __homeReturn?: boolean }).__homeReturn = true;   // the audit's handle (?debug=1 tools only)
+  /** The shared Home loop, supplied by Claude’s S235. The registry keeps this missing-file-safe.
+   * The shared one-shot bus carries pause/mute/Leave; leaving the Close stops the loop. */
+  let libraryLoop: HTMLAudioElement | null = null;
+  function startLibraryMusic(): void {
+    if (!libraryLoop) { libraryLoop=playLoop('lambyos_home_loop.mp3'); if (libraryLoop) libraryLoop.volume=0.18; }
+  }
+  /** Fit the whole 4:3 glass in portrait too; the 16:9 Library is letterboxed inside it. */
+  function libraryDistance(): number {
+    const aspect=app.graphicsDevice.width / app.graphicsDevice.height;
+    const fov=(camera.camera?.fov ?? 42)*Math.PI/180;
+    const g=closeMonitor!.glass;
+    return Math.max(0.95,g.w/(2*Math.tan(fov/2)*aspect)*1.12);
   }
 
   /**
@@ -4640,6 +4629,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!cluster || !cloud) return;
     cloud.hide();
     closeMonitor?.hide();
+    stopClip(libraryLoop); libraryLoop=null;
     closeStage = null;
     closeMorphBegun = false;
     skyLerp = null;
@@ -4758,13 +4748,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMonitor.onEra = (era) => leaveClose(era);
     closeMonitor.onAgain = () => {   // S209 / A24 — as the headset menu's Restart: in a headset, say so first
       wipeLedger();
+      try { window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+'#home-armed'); } catch { /* restart unarmed */ }
       if (!xr?.active) { window.location.reload(); return; }
       xrFrame?.close();
       xrFrame?.setHint(menuStrings.xrRestartNote);
       window.setTimeout(() => window.location.reload(), 3200);
     };
     closeMonitor.onGo = () => goToCloseMonitor();
-    closeMonitor.onHome = () => returnToHome();
+    closeMonitor.onLeave = () => mountLeavePage().show(() => { wipeLedger(); os.leaveNow(); gameMenuBus.close(); });
     closeMonitor.onDossier = () => gameMenuBus.openCloseSources?.(-1);
     // read-only probe, like __os: the walk aims at the card's rects through it
     (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;

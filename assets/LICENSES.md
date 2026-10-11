@@ -248,3 +248,5 @@ the rubber duck's entry above. Crediting the uploaders anyway is courteous and i
 ⚑ **`tools/check-licences.mjs` runs in `npm test`**: every file under `public/` and `assets/` must be named
 in this ledger (or in `docs/reinterp/ATTRIBUTIONS.md`), every CC-BY or credited-by-choice row must have its
 attribution row, and nothing may be NC. A new file with no row fails the build.
+
+| `lib_*.webp` (`public/library/`) | LambyOS Home — Library: room, Lexicon, four era computers, receipt, plaque, bell, door, Lamby (wave and book), speech bubble. Image generation by GPT (OpenAI) at the project’s direction, 2026, with Home round-4 assets reused; round-1 PNG masters in `output/lambyos-library/round1/`. WebP q90 derivatives with alpha by `tools/library-art.mjs`, fitted to 2048×1152. No real person, likeness or logo; no third-party artwork reproduced. Credited in `docs/reinterp/ATTRIBUTIONS.md`. | generated for this project, project-commissioned; credited by choice |

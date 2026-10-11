@@ -215,7 +215,7 @@ const PREFER = [
  * menu's; `pause_yes` is the era's, and the difference between them is the
  * difference between quitting the piece and playing it.
  */
-const FORBIDDEN = /^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // S230: close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
+const FORBIDDEN = /^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
 
 /** ⚑ see the launch below — order: --chrome, the environment, the platform */
 function resolveChrome() {
@@ -985,6 +985,7 @@ const LAP = { w: 224, h: 140 };
     return {
       phase: os.phase, era: os.desktopEra,
       spine: window.__spine ? window.__spine().step : null,
+      libraryShowing: !!window.__closeMonitor?.libraryShowing,
       driven: !!(pose && pose.driven),
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
@@ -1655,11 +1656,10 @@ const LAP = { w: 224, h: 140 };
     }
     if (ONE_ERA && s.era !== startEraSeen) { note('era-done', { era: s.era, phase: s.phase, what: 'arrived in ' + s.era + ' from ' + startEraSeen + ' — one era walked' }); break; }
     // S227 — from 2026 there is no next era: the Close's own end (spine done) is the finish line, not the step cap
-    // ⚑ S230 — THE CLOSE RETURNS TO LAMBYOS HOME (its card's button, or the piece's own send after ~90 s unpressed): that is the
-    //   piece's last page (the Lexicon on the shelf, Start again on the devices, Leave on the door). The walk ends here and
-    //   never presses Start again (FORBIDDEN above), which would wipe and reload.
-    if (await page.evaluate(() => !!document.querySelector('#lambyos-home[data-mode="return"]')).catch(() => false)) {
-      note('era-done', { era: s.era, phase: s.phase, what: 'the Close returned to LambyOS Home (data-mode=return) — the piece has ended; the walk stops here' }); break;
+    // The Close ends on the Library, on Daniel's monitor. Wait for the scripted approach, then stop.
+    // Its bell, door and era computers are forbidden above so the walk never restarts, leaves or returns to a room.
+    if (s.libraryShowing) {
+      note('era-done', { era: s.era, phase: s.phase, what: 'the Close reached LambyOS Home — Library on Daniel’s monitor; the walk stops here' }); break;
     }
     if (ONE_ERA && s.spine === 'done') { note('era-done', { era: s.era, phase: s.phase, what: 'the Close reached (spine done) — one era walked' }); break; }
     await takeCensus(s, i);
@@ -2316,8 +2316,8 @@ const LAP = { w: 224, h: 140 };
       process.exit(1);
     }
   } else if (flag('require-close') !== undefined || process.argv.includes('--require-close')) {
-    if (final.spine === 'done') {
-      console.log('✓ reachability: the walk reached the Close (spine: done).');
+    if (final.spine === 'done' && final.libraryShowing) {
+      console.log('✓ reachability: the walk reached the Close (spine: done), Library showing on Daniel’s monitor.');
     } else {
       console.error(
         '\n⚑ REACHABILITY REGRESSION: the walk did NOT reach the Close.\n' +
