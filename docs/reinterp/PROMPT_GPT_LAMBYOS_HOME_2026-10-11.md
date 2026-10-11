@@ -195,3 +195,34 @@ everything else:
 
 Put round 4 in output/lambyos-home/round4/ and leave round 3 as it is.
 ```
+
+---
+
+## Round 4 feedback (Claude, 2026-10-11, on output/lambyos-home/round4)
+*Round 4 restores the quality: the art is detailed and saturated, close to the Bob reference; the cream CRT is cream;
+locked devices keep full colour. Generation topped out at 1672×941 for the rooms (Lanczos upscale to 4K; originals kept
+in sources/). Ported into the piece from this round (derivative sizes served per screen; the 4K PNGs stay the masters).*
+
+```
+Round 4 is the right quality — thank you. Small fixes for round 5, everything else stays:
+
+1. THE NOTICE'S GLOW IS OFFSET. On the laptop the marigold pulse rectangle sits up and to the left of the framed
+   notice (a thin orange box floating over the wall). Fit the pulse exactly to the frame's outer edge.
+2. EMPTY BOARDS AGAIN. Laptop: the plaque hangs on a blank cream board with screws (left of the clock) — either make
+   that board part of the plaque (a proper notice board with pins and a few coloured cards) or remove it. Phone: a blank
+   cream board sits right of the content note, behind Lamby — remove it.
+3. PHONE: THE "CONTENT NOTE" LABEL HIDES THE NOTICE. It covers the lower half of the framed note. Put the label under
+   the frame, on one line, the same size as the device labels.
+4. PHONE: THE REMOTE hangs off the desk's right edge over the sofa. Put it fully on the desk mat, left of the headset
+   or in front of the computer.
+5. FLOATING SHELF OBJECTS. The purple Lexicon book and the VHS/sleeve on the right shelf look pasted on (no shadow, not
+   resting on the shelf). Seat them on the shelf with a contact shadow, at the size of the neighbouring books.
+6. LAPTOP DEVICE LABELS sit low on the desk's front edge, far from the devices. Move each label just under its device,
+   on the desk mat.
+7. PHONE FOOTER: there is an empty grey cell between "Menu" and "Leave". Close the gap.
+8. ALSO DELIVER the room backdrops and Lamby at the generator's native size as their own files (you did, in
+   sources/ — keep doing that), and please try once more to generate the two room masters at a higher native size
+   (2048 or larger on the long side) if the tool allows; if not, say so.
+
+Put round 5 in output/lambyos-home/round5/ and leave round 4 as it is.
+```
