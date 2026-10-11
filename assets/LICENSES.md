@@ -239,6 +239,11 @@ the rubber duck's entry above. Crediting the uploaders anyway is courteous and i
 | `app-icon.svg` · `app-icon-180.png` · `app-icon-192.png` · `app-icon-512.png` | the home-screen icon — a monitor with a crosshair, drawn as SVG for the project (commit c8e82bd2, 2026-08-13) and rasterised | project-owned |
 | `era1.jpg` · `era2.jpg` · `era3.jpg` · `era4.jpg` (`public/assets/close/`) | the Close's room plates — the piece's own rooms, rendered by `tools/bake-close-plates.mjs` | project-owned |
 
+## LAMBYOS HOME'S ART — 2026-10-11 (S231)
+| file | origin | terms |
+|---|---|---|
+| `lh_*.webp` (`public/home/`) | the room, Lamby (point and wave), the notice, plaque, light switch, remote, devices, door, VHS, CD box, Lexicon, clock and hands, calendar and speech bubble of LambyOS Home — **image generation by GPT (OpenAI) at the project's direction, 2026** (round 4, `output/lambyos-home/round4/`, made for this project from the project's own prompts and reference direction); WebP derivatives (full and half size, alpha kept) of its 4K PNG layers by `tools/home-art.mjs`. No real person, likeness or logo; no third-party artwork reproduced. Credited in `docs/reinterp/ATTRIBUTIONS.md`. | generated for this project, project-commissioned; credited by choice, same as the other generated work |
+
 ⚑ **`tools/check-licences.mjs` runs in `npm test`**: every file under `public/` and `assets/` must be named
 in this ledger (or in `docs/reinterp/ATTRIBUTIONS.md`), every CC-BY or credited-by-choice row must have its
 attribution row, and nothing may be NC. A new file with no row fails the build.

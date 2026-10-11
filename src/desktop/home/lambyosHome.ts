@@ -2,7 +2,8 @@
  * ⚑ S227 — LAMBYOS HOME, first pass: the programme's front door, the way Bob was Windows'
  * (docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md, his answers in §7).
  *
- * WHAT IT IS. A flat illustrated 1997 living room (DOM + one canvas; the art is homeArt.ts), mounted where the
+ * WHAT IT IS. An illustrated 1997 living room (S231: GPT's round-4 layers as <img>s under real <button>s, placed by
+ * homeArt.ts from its layout.json; before S231 it was a pixel-art canvas drawn in code), mounted where the
  * orienting card used to be mounted (src/main.ts): before the engine starts, beside the game menu, so Esc and the
  * corner glyph work from its first frame. Each object teaches one thing and opens one plain card in the FRAME's
  * voice (functional, undecorated; the orienting card's own words, from orientingCard.json, unchanged). The room
@@ -43,8 +44,8 @@ import { mountOrientingCard, type DoorChoice } from '../orientingCard';
 import { Lexicon } from '../../room/lexicon';
 import lex from '../../../data/strings/lexicon.json';
 import {
-  SPRITES, LAMBY_SIZE, drawBackdrop, drawLamby, drawSprite, finalHits, tallLayout, wideLayout,
-  type HomeLayout, type HomeObject, type Rect
+  DECOR, HAND_PIVOT, TAB_ORDER, ROOM, bubbleRect, handRect, hitRect, layerSize, layerUrl, modeFor, padlockAnchor, useLarge, visualRect,
+  type HomeObject, type Mode, type Rect
 } from './homeArt';
 
 const ARM_DELAY_MS = 4000; // the same ethics arm-delay as the orienting card
@@ -55,8 +56,7 @@ const VERSION_TAG = door.versionTag.replace('{v}', typeof __APP_VERSION__ === 's
 export interface LambyosHome { destroy(): void }
 
 /**
- * ⚑ S230 — THE ROOM HAS TWO MODES, and only the logic differs (the art is the same, and GPT's 4K art will replace it
- * without touching this):
+ * ⚑ S230 — THE ROOM HAS TWO MODES, and only the logic differs (the art is the same):
  *   'arrival' — the front door, before the fiction (everything above).
  *   'return'  — the Close brings the visitor back (design §7 item 3, his idea: the piece opens in the showroom and
  *               closes in it). The same room, but: the Lexicon on the shelf is lit and opens the Lexicon (the Close's
@@ -67,9 +67,6 @@ export interface LambyosHome { destroy(): void }
  */
 export type HomeMode = 'arrival' | 'return';
 export interface HomeOptions { mode?: HomeMode }
-
-/** the reading order of design §1's table: door, notice, plaque, tape, armchair, remote, switch, the devices; Lamby last */
-const ORDER: HomeObject[] = ['door', 'notice', 'plaque', 'tape', 'lexicon', 'armchair', 'remote', 'switch', 'computer', 'tablet', 'headset', 'lamby'];
 
 const reducedMotion = (): boolean => {
   try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
@@ -84,7 +81,6 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   let arming = false;
   let cut: Cut = currentCut();
   let vrReady = false;
-  let chairFrame = 0;
   let shortDoor: { destroy(): void } | null = null;
 
   // ── a Restart in this tab: the notice was read minutes ago (design §3, way 2) ──
@@ -101,72 +97,159 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   root.dataset.mode = isReturn ? 'return' : 'arrival';   // the audit's handle (tools/walk.mjs stops at a return)
   Object.assign(root.style, {
     position: 'fixed', inset: '0', zIndex: '900', overflow: 'hidden',
-    background: HOME.wallLo, font: DIALOG.font, color: DIALOG.ink,
+    background: HOME.ink, font: DIALOG.font, color: DIALOG.ink,   // the bars where the room does not fill the screen: the room's own warm brown
     transition: 'opacity 0.7s'
   } as CSSStyleDeclaration);
   if (isReturn) { root.style.opacity = '0'; root.style.transition = 'opacity 2.2s'; }   // the Close gives way to the room slowly
 
   const stage = document.createElement('div');
-  Object.assign(stage.style, { position: 'absolute' } as CSSStyleDeclaration);
+  Object.assign(stage.style, { position: 'absolute', zIndex: '0' } as CSSStyleDeclaration);   // its own stacking context: the cards (veil) sit above every layer
   root.appendChild(stage);
 
-  const canvas = document.createElement('canvas');
-  canvas.setAttribute('aria-hidden', 'true');
-  Object.assign(canvas.style, { position: 'absolute', left: '0', top: '0', imageRendering: 'pixelated' } as CSSStyleDeclaration);
-  stage.appendChild(canvas);
+  // ── the art: GPT's round-4 layers (homeArt.ts says where each sits and which file it is) ──
+  const noSelect = { userSelect: 'none', pointerEvents: 'none', position: 'absolute', imageRendering: 'auto' } as CSSStyleDeclaration;
+  /** an <img> that changes its file only when the file changes (a resize that keeps the size set re-downloads nothing) */
+  const setSrc = (i: HTMLImageElement, url: string): void => { if (i.dataset.url !== url) { i.dataset.url = url; i.src = url; } };
+  const newImg = (): HTMLImageElement => {
+    const i = new Image();
+    i.alt = ''; i.decoding = 'async'; i.draggable = false;
+    i.setAttribute('aria-hidden', 'true');
+    Object.assign(i.style, noSelect);
+    return i;
+  };
+  /** a layer centred on its visual rectangle at its natural size (GPT's own placement: the wave pose is a few units
+   *  taller than the point pose, and sits on the same centre) */
+  const placeImg = (i: HTMLImageElement, name: string, vis: Rect, origin: Rect): void => {
+    const nat = layerSize(name, mode);
+    const w = nat.w * scale, h = nat.h * scale;
+    Object.assign(i.style, {
+      left: `${(vis.x + vis.w / 2 - origin.x) * scale - w / 2}px`, top: `${(vis.y + vis.h / 2 - origin.y) * scale - h / 2}px`,
+      width: `${w}px`, height: `${h}px`
+    } as CSSStyleDeclaration);
+    setSrc(i, layerUrl(name, mode, large));
+  };
 
-  const lambyCanvas = document.createElement('canvas');
-  lambyCanvas.width = LAMBY_SIZE.w; lambyCanvas.height = LAMBY_SIZE.h;
-  lambyCanvas.setAttribute('aria-hidden', 'true');
-  Object.assign(lambyCanvas.style, { position: 'absolute', imageRendering: 'pixelated', pointerEvents: 'none' } as CSSStyleDeclaration);
-  stage.appendChild(lambyCanvas);
+  const roomImg = newImg();
+  Object.assign(roomImg.style, { left: '0', top: '0', width: '100%', height: '100%' } as CSSStyleDeclaration);
+  stage.appendChild(roomImg);
+  const decor = DECOR.map((name) => { const i = newImg(); stage.appendChild(i); return { name, i }; });
 
-  // ── the objects: real buttons over the art, in the design's reading order ──
+  // ── the objects: real buttons over the art, in GPT's tab order (the Lexicon after the plaque) ──
   const focusCss = document.createElement('style');
   focusCss.textContent =
-    `#lambyos-home [data-home]{background:transparent;border:0;padding:0;margin:0;cursor:pointer;position:absolute;border-radius:0}` +
+    `#lambyos-home [data-home]{background:transparent;border:0;padding:0;margin:0;cursor:pointer;position:absolute;border-radius:0;z-index:2;-webkit-tap-highlight-color:transparent;touch-action:manipulation}` +
+    `#lambyos-home [data-home="door"]{z-index:1}#lambyos-home [data-home="lamby"]{z-index:3}#lambyos-home [data-home="armchair"]{z-index:4}` +
     `#lambyos-home [data-home][aria-disabled="true"]{cursor:default}` +
-    `#lambyos-home [data-home]:focus-visible{outline:2px dashed ${HOME.accent};outline-offset:1px}` +
-    `#lambyos-home [data-home]:hover:not([aria-disabled="true"]){outline:1px solid ${HOME.accent};outline-offset:0}` +
+    `#lambyos-home [data-home]:focus-visible{outline:2px dashed ${HOME.accent};outline-offset:-2px}` +
+    `#lambyos-home [data-home]:hover:not([aria-disabled="true"]) img{filter:drop-shadow(1px 0 ${HOME.accent});animation:lh-wiggle 1.2s ease-in-out infinite}` +
+    `#lambyos-home [data-home="lexicon"][data-state="dead"] img{filter:grayscale(.75) brightness(.9)}` +
+    `#lambyos-home [data-home="lexicon"][data-state="lit"] img{filter:drop-shadow(0 0 6px ${HOME.accent});animation:lh-glow 2.4s ease-in-out infinite}` +
+    `#lambyos-home [data-home="notice"][data-pulse] img{outline:2px solid ${HOME.accent};animation:lh-pulse 2s ease-in-out infinite}` +
+    `@keyframes lh-wiggle{25%{translate:-1px -1px}75%{translate:1px -1px}}` +
+    `@keyframes lh-pulse{50%{box-shadow:0 0 0 3px ${HOME.accent};filter:brightness(1.08)}}` +
+    `@keyframes lh-glow{50%{filter:drop-shadow(0 0 12px ${HOME.accent})}}` +
     `#lambyos-home .home-btn{font:inherit;font-size:13px;min-height:44px;padding:8px 16px;background:${DIALOG.panel};color:${DIALOG.ink};border-radius:0;cursor:pointer}` +
     `#lambyos-home .home-btn:disabled{color:${DIALOG.faint};cursor:not-allowed}` +
     `#lambyos-home .home-btn:focus-visible{outline:2px dotted ${DIALOG.ink};outline-offset:-6px}` +
-    `@media (prefers-reduced-motion: reduce){#lambyos-home{transition:none!important}}`;
+    `@media (prefers-reduced-motion: reduce){#lambyos-home{transition:none!important}#lambyos-home *{animation:none!important}}`;
   root.appendChild(focusCss);
 
+  /** what each button holds: its pictures (each centred on a rectangle of the layout) */
+  interface Held { img: HTMLImageElement; name: () => string; vis: () => Rect }
+  const held = {} as Record<HomeObject, Held[]>;
   const buttons = {} as Record<HomeObject, HTMLButtonElement>;
-  for (const k of ORDER) {
+  const HAS_PICTURE: Partial<Record<HomeObject, () => string>> = {
+    door: () => 'door', notice: () => 'notice', plaque: () => 'plaque', lexicon: () => 'lexicon', remote: () => 'remote', switch: () => 'switch',
+    computer: () => 'computer', tablet: () => 'tablet', headset: () => 'headset', clock: () => 'clock', calendar: () => 'calendar',
+    lamby: () => (armed ? 'lamby-wave' : 'lamby')   // pointing at the notice until the gate opens, then waving (round4 pose())
+  };
+  const handImgs = {} as Record<'hour' | 'minute', HTMLImageElement>;
+  const monthLabel = document.createElement('span');
+  Object.assign(monthLabel.style, {
+    position: 'absolute', textAlign: 'center', font: 'bold 15px/1 monospace', color: HOME.ink, pointerEvents: 'none', transform: 'translateY(-50%)'
+  } as CSSStyleDeclaration);
+  for (const k of TAB_ORDER) {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset.home = k;
     b.setAttribute('aria-label', copy.objects[k]);
-    if (k === 'tape') b.setAttribute('aria-disabled', 'true'); // the advert needs its drawing; the tape is just the tape
-    if (k === 'lexicon' && !isReturn) {   // S230: on the shelf from the first frame, drawn dead until the Close brings the visitor back
-      b.setAttribute('aria-disabled', 'true');
-      b.setAttribute('aria-label', copy.objects.lexiconLater);
+    if (k === 'lexicon') {   // S230: on the shelf from the first frame, drawn dead until the Close brings the visitor back
+      b.dataset.state = isReturn ? 'lit' : 'dead';
+      if (!isReturn) { b.setAttribute('aria-disabled', 'true'); b.setAttribute('aria-label', copy.objects.lexiconLater); }
     }
+    if (k === 'notice' && !isReturn) b.dataset.pulse = '1';   // the marigold pulse: the one thing they want you to read
     b.addEventListener('click', () => press(k));
     buttons[k] = b;
+    held[k] = [];
+    const name = HAS_PICTURE[k];
+    if (name) {
+      const img = newImg();
+      if (k === 'lamby') img.style.transform = 'scaleX(-1)';   // GPT's art faces right; Lamby faces the notice
+      b.appendChild(img);
+      held[k].push({ img, name, vis: () => visualRect(k, mode)! });
+    }
+    if (k === 'clock') {
+      for (const which of ['hour', 'minute'] as const) {
+        const img = newImg();
+        img.style.transformOrigin = `${HAND_PIVOT[0] * 100}% ${HAND_PIVOT[1] * 100}%`;
+        handImgs[which] = img;
+        b.appendChild(img);
+        held[k].push({ img, name: () => `clock-${which}-hand`, vis: () => handRect(which, mode) });
+      }
+    }
+    if (k === 'calendar') b.appendChild(monthLabel);
     stage.appendChild(b);
   }
 
-  // ── Lamby's bubble: the programme's voice, the 1997 tooltip's paper ──
+  // ── the visible labels: only the notice and the three devices, DOM text ≥ 15 px whatever the art's size ──
+  const makeLabel = (k: 'notice' | 'computer' | 'tablet' | 'headset'): HTMLSpanElement => {
+    const s = document.createElement('span');
+    s.setAttribute('aria-hidden', 'true');
+    Object.assign(s.style, {
+      position: 'absolute', zIndex: '5', background: DIALOG.panel, color: DIALOG.ink, font: '700 15px/1.12 Arial, sans-serif',
+      padding: '3px 5px', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none'
+    } as CSSStyleDeclaration);
+    domBevel(s, false, 1);
+    s.addEventListener('click', () => buttons[k].click());
+    stage.appendChild(s);
+    return s;
+  };
+  const labels = { notice: makeLabel('notice'), computer: makeLabel('computer'), tablet: makeLabel('tablet'), headset: makeLabel('headset') };
+
+  // ── the padlocks: on the three devices until the gate opens (full colour: the devices themselves never darken) ──
+  const locks = {} as Record<'computer' | 'tablet' | 'headset', SVGSVGElement>;
+  for (const k of ['computer', 'tablet', 'headset'] as const) {
+    const NS = 'http://www.w3.org/2000/svg';
+    const s = document.createElementNS(NS, 'svg');
+    s.setAttribute('viewBox', '0 0 9 11');
+    s.setAttribute('aria-hidden', 'true');
+    Object.assign(s.style, { position: 'absolute', zIndex: '6', width: '20px', height: '24px', pointerEvents: 'none', filter: `drop-shadow(0 1px 1px ${HOME.ink})` } as CSSStyleDeclaration);
+    const path = (d: string, attrs: Record<string, string>): void => {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d);
+      for (const [a, v] of Object.entries(attrs)) p.setAttribute(a, v);
+      s.appendChild(p);
+    };
+    path('M2 5V2H3V1H6V2H7V5H6V2H3V5', { fill: HOME.paper });
+    path('M1 5H8V10H1Z', { fill: HOME.accent, stroke: HOME.ink });
+    path('M4 7H5V9H4Z', { fill: HOME.ink });
+    locks[k] = s;
+    stage.appendChild(s);
+  }
+
+  // ── Lamby's bubble: the programme's voice, on GPT's speech-bubble layer (its tail faces right, toward Lamby) ──
   const bubble = document.createElement('div');
   bubble.setAttribute('role', 'status');
   bubble.setAttribute('aria-live', 'polite');
   Object.assign(bubble.style, {
-    position: 'absolute', display: 'none', boxSizing: 'border-box', maxWidth: '240px',
-    background: ERA1.tooltip, color: ERA1.black, border: `2px solid ${ERA1.black}`,
-    padding: '8px 40px 8px 10px', fontSize: '13px', lineHeight: '1.4', borderRadius: '10px'
+    position: 'absolute', display: 'none', boxSizing: 'border-box', zIndex: '8', isolation: 'isolate', width: 'max-content',
+    minHeight: '54px', padding: '8px 49px 14px 14px', color: ERA1.black, font: '700 15px/1.2 Arial, sans-serif'
   } as CSSStyleDeclaration);
+  const bubbleImg = newImg();
+  Object.assign(bubbleImg.style, { left: '0', top: '0', width: '100%', height: '100%', zIndex: '-1', transform: 'scaleX(-1)' } as CSSStyleDeclaration);
+  bubble.appendChild(bubbleImg);
   const bubbleText = document.createElement('div');
   bubble.appendChild(bubbleText);
-  const bubbleTail = document.createElement('div');
-  Object.assign(bubbleTail.style, {
-    position: 'absolute', bottom: '-10px', width: '0', height: '0',
-    borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderTop: `10px solid ${ERA1.black}`
-  } as CSSStyleDeclaration);
-  bubble.appendChild(bubbleTail);
   const bubbleX = document.createElement('button');
   bubbleX.type = 'button';
   bubbleX.textContent = '×';
@@ -188,79 +271,100 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   try { veil.style.backdropFilter = 'blur(3px)'; veil.style.setProperty('-webkit-backdrop-filter', 'blur(3px)'); } catch { /* no blur: the veil alone */ }
   root.appendChild(veil);
 
-  let layout: HomeLayout = wideLayout();
+  let mode: Mode = 'laptop';
   let scale = 1;
+  let large = false;
+  let noticeSeen = false;   // the pulse stops the first time the notice is pressed
+  let clockQuarter = 0;     // the toys: hands turn in 90° steps, the calendar turns months (round4 clock() / calendar())
+  let month = 9;            // OCT, where GPT's calendar starts
 
   // ── drawing ──
-  const lit = (k: HomeObject): boolean =>
-    isReturn ? (k === 'lexicon' || k === 'computer' || k === 'tablet' || k === 'headset')
-      : k === 'notice' || (armed && (k === 'computer' || k === 'tablet' || k === 'headset'));
-  function drawRoom(): void {
-    const L = layout;
-    canvas.width = L.W; canvas.height = L.H;
-    const c = canvas.getContext('2d')!;
-    c.imageSmoothingEnabled = false;
-    drawBackdrop(c, L, copy.mat);
-    drawSprite(c, SPRITES.notice, L.at.notice, { lit: lit('notice') });
-    drawSprite(c, SPRITES.lightSwitch, L.at.switch);
-    drawSprite(c, SPRITES.plaque, L.at.plaque);
-    drawSprite(c, SPRITES.vcr, L.at.vcr);
-    drawSprite(c, SPRITES.crt, L.at.crt);
-    drawSprite(c, SPRITES.tape, L.at.tape);
-    drawSprite(c, SPRITES.lexicon, L.at.lexicon, { lit: lit('lexicon') });
-    drawSprite(c, SPRITES.computer, L.at.computer, { lit: lit('computer') });
-    drawSprite(c, SPRITES.tablet, L.at.tablet, { lit: lit('tablet') });
-    drawSprite(c, SPRITES.headset, L.at.headset, { lit: lit('headset') });
-    drawSprite(c, SPRITES.chair, L.at.chair, { frame: chairFrame });
-    if (chairFrame === 0) drawSprite(c, SPRITES.remote, L.at.remote);
+  /** the button's rectangle in room units: the layout's, grown to MIN_TARGET_CSS on a small screen */
+  const grown = (r: Rect): Rect => {
+    const m = MIN_TARGET_CSS / scale;
+    const out = { ...r };
+    if (out.w < m) { out.x -= (m - out.w) / 2; out.w = m; }
+    if (out.h < m) { out.y -= (m - out.h) / 2; out.h = m; }
+    return out;
+  };
+  const px = (el: HTMLElement | SVGElement, r: { l: number; t: number; w?: number; h?: number }): void => {
+    el.style.left = `${r.l}px`; el.style.top = `${r.t}px`;
+    if (r.w !== undefined) el.style.width = `${r.w}px`;
+    if (r.h !== undefined) el.style.height = `${r.h}px`;
+  };
+
+  function turnToys(): void {
+    handImgs.hour.style.transform = `rotate(${clockQuarter * 90}deg)`;
+    handImgs.minute.style.transform = `rotate(${((clockQuarter + 1) % 4) * 90}deg)`;
+    monthLabel.textContent = copy.calendar.months[month];
+    buttons.calendar.setAttribute('aria-label', `${copy.objects.calendar} (${copy.calendar.months[month]})`);
   }
 
-  function place(el: HTMLElement, R: Rect): void {
-    Object.assign(el.style, {
-      left: `${R.x * scale}px`, top: `${R.y * scale}px`, width: `${R.w * scale}px`, height: `${R.h * scale}px`
-    } as CSSStyleDeclaration);
+  /** what changes with the gate: Lamby's pose, the padlocks (arrival only, until armed), the Lexicon's light */
+  function refreshState(): void {
+    placeButton('lamby');
+    for (const k of ['computer', 'tablet', 'headset'] as const) locks[k].style.display = !isReturn && !armed ? 'block' : 'none';
+    buttons.lexicon.dataset.state = isReturn ? 'lit' : 'dead';
+    if (noticeSeen) delete buttons.notice.dataset.pulse;
+  }
+
+  function placeButton(k: HomeObject): void {
+    const base = hitRect(k, mode);
+    const r = grown(base);
+    px(buttons[k], { l: r.x * scale, t: r.y * scale, w: r.w * scale, h: r.h * scale });
+    for (const h of held[k]) placeImg(h.img, h.name(), h.vis(), r);
+    if (k === 'calendar') {
+      const v = visualRect('calendar', mode)!;
+      px(monthLabel, { l: (v.x - r.x) * scale, t: (v.y + v.h * 0.58 - r.y) * scale, w: v.w * scale });
+    }
   }
 
   function layoutAll(): void {
     const vw = window.innerWidth, vh = window.innerHeight;
-    layout = vw >= vh ? wideLayout() : tallLayout();
-    const fit = Math.min(vw / layout.W, vh / layout.H);
-    scale = fit >= 1 ? Math.floor(fit) : fit; // an integer scale wherever the screen allows (pixel discipline)
-    const sw = layout.W * scale, sh = layout.H * scale;
+    mode = modeFor(vw, vh);
+    const R = ROOM[mode];
+    // contain on a laptop; fill the width on a phone (and contain where a tall tablet is too short for that)
+    scale = Math.min(vw / R.w, vh / R.h);
+    large = useLarge(scale, window.devicePixelRatio || 1);
+    const sw = R.w * scale, sh = R.h * scale;
     Object.assign(stage.style, {
       width: `${sw}px`, height: `${sh}px`,
       left: `${Math.round((vw - sw) / 2)}px`, top: `${Math.round((vh - sh) / 2)}px`
     } as CSSStyleDeclaration);
-    canvas.style.width = `${sw}px`; canvas.style.height = `${sh}px`;
-    const hits = finalHits(layout, Math.ceil(MIN_TARGET_CSS / scale));
-    for (const k of ORDER) place(buttons[k], hits[k]);
-    place(lambyCanvas, { x: layout.at.lamby.x, y: layout.at.lamby.y, w: LAMBY_SIZE.w, h: LAMBY_SIZE.h });
-    drawRoom();
+    setSrc(roomImg, layerUrl('room', mode, large));
+    for (const d of decor) placeImg(d.i, d.name, visualRect(d.name, mode)!, { x: 0, y: 0, w: R.w, h: R.h });
+    for (const k of TAB_ORDER) placeButton(k);
+    setSrc(bubbleImg, layerUrl('speech-bubble', mode, large));
+    // the labels: the notice's sits on its lower edge; a device's hangs just below its rectangle, centred (phone: the short words)
+    for (const k of ['notice', 'computer', 'tablet', 'headset'] as const) {
+      const lab = labels[k];
+      lab.textContent = k === 'notice' ? copy.labels.notice : mode === 'phone' ? copy.labels.phone[k] : copy.labels[k];
+      const r = hitRect(k, mode);
+      const cx = (r.x + r.w / 2) * scale;
+      lab.style.left = `${Math.max(2, Math.min(sw - lab.offsetWidth - 2, cx - lab.offsetWidth / 2))}px`;
+      lab.style.top = `${k === 'notice' ? (r.y + r.h) * scale - lab.offsetHeight : (r.y + r.h) * scale + 4}px`;
+    }
+    for (const k of ['computer', 'tablet', 'headset'] as const) {
+      const v = visualRect(k, mode)!, [ax, ay] = padlockAnchor(k);
+      px(locks[k], { l: (v.x + v.w * ax) * scale - 10, t: (v.y + v.h * ay) * scale });
+    }
+    turnToys();
+    refreshState();
     if (bubble.style.display !== 'none') positionBubble();
   }
 
-  // ── Lamby: the one Lamby (apps/lambyChar.ts), cheerful; his fidget runs only while nothing asks for stillness ──
-  const born = performance.now();
-  let raf = 0;
-  const frameLamby = (now: number): void => {
-    if (destroyed) return;
-    const t = (now - born) / 1000;
-    drawLamby(lambyCanvas, { mood: 'cheerful', action: t < 3.2 ? 'appear' : 'idle', t, moodStart: 0 });
-    raf = requestAnimationFrame(frameLamby);
-  };
-  if (reducedMotion()) drawLamby(lambyCanvas, { mood: 'cheerful', action: 'idle', t: 4, moodStart: 0 });
-  else raf = requestAnimationFrame(frameLamby);
-
+  /** GPT's rule: the bubble's RIGHT edge and top stay at the layout's anchor; it is as wide as its line needs, up to
+   *  the layout's width (a little more on a phone, where that width is only 185 px) and never off the stage */
   function positionBubble(): void {
-    const lx = (layout.at.lamby.x + LAMBY_SIZE.w / 2) * scale;
-    const ly = (layout.at.lamby.y + 4) * scale;
-    const sw = layout.W * scale;
-    const bw = Math.min(240, sw - 16);
-    bubble.style.width = `${bw}px`;
-    const left = Math.max(8, Math.min(sw - bw - 8, Math.round(lx - bw / 2)));
-    bubble.style.left = `${left}px`;
-    bubble.style.top = `${Math.max(8, Math.round(ly - bubble.offsetHeight - 12))}px`;
-    bubbleTail.style.left = `${Math.max(10, Math.min(bw - 26, Math.round(lx - left - 8)))}px`;
+    const b = bubbleRect(mode);
+    const right = (b.x + b.w) * scale;
+    const maxW = Math.min(right - 4, Math.max(b.w * scale, mode === 'phone' ? 230 : 0));
+    bubble.style.maxWidth = `${maxW}px`;
+    bubble.style.left = '0px';
+    bubble.style.top = `${b.y * scale}px`;
+    // the layer's tail takes the lower third of its picture: room for it grows with the text (round4's rule)
+    bubble.style.paddingBottom = `${Math.max(14, Math.ceil((bubbleText.offsetHeight + 12) * 0.35))}px`;
+    bubble.style.left = `${Math.max(4, right - bubble.offsetWidth)}px`;
   }
   let chatter = 0;
   function say(text: string): void {
@@ -368,7 +472,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     for (const b of enterButtons) b.disabled = false;
     for (const w of waitNotes) w.style.display = 'none';
     for (const n of enterNotes) n.style.display = 'block';
-    drawRoom();
+    refreshState();   // the padlocks go, Lamby waves
   }
   function startArming(): void {
     if (arming || armed) return;
@@ -591,6 +695,8 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     if (destroyed || entered) return;
     switch (k) {
       case 'notice':
+        noticeSeen = true;
+        refreshState();
         openCard('notice', copy.notice.title, (body) => {
           body.appendChild(para(door.contentNote));
           const sd = btn(copy.notice.shortDoor, () => takeShortDoor());
@@ -616,16 +722,22 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
           }));
         });
         return;
-      case 'tape':
-        return; // just the tape, in this pass: the advert waits for its drawing
       case 'lexicon':
         if (isReturn) openLexicon();
         else say(copy.lamby.lexiconLater);   // drawn dead until the Close brings the visitor back
         return;
       case 'armchair':
-        turnChair(1, () => openCard('armchair', copy.armchair.title, (body) => {
+        openCard('armchair', copy.armchair.title, (body) => {
           body.appendChild(para(copy.armchair.body));
-        }, () => turnChair(-1, () => say(copy.lamby.armchair))));
+        }, () => say(copy.lamby.armchair));   // S231: the chair is part of GPT's room picture and no longer swivels on the press
+        return;
+      case 'clock':   // the toys (round4): no card, no bubble, nothing kept
+        clockQuarter = (clockQuarter + 1) % 4;
+        turnToys();
+        return;
+      case 'calendar':
+        month = (month + 1) % 12;
+        turnToys();
         return;
       case 'remote':
         openCard('remote', copy.remote.title, (body) => {
@@ -668,23 +780,6 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     }
   }
 
-  /** the armchair turns a quarter at a time (back → side → facing you, and back); reduced motion: a cut */
-  let turning = false;
-  function turnChair(dir: 1 | -1, done: () => void): void {
-    if (turning) return;
-    const target = dir === 1 ? 2 : 0;
-    if (reducedMotion()) { chairFrame = target; drawRoom(); done(); return; }
-    turning = true;
-    const step = (): void => {
-      if (destroyed) return;
-      chairFrame += dir;
-      drawRoom();
-      if (chairFrame === target) { turning = false; window.setTimeout(done, 220); return; }
-      window.setTimeout(step, 260);
-    };
-    window.setTimeout(step, 60);
-  }
-
   /** Leave, before anything has started: exactly the orienting card's — the ledger wiped, an inert page */
   function doLeave(): void {
     if (destroyed) return;
@@ -693,7 +788,6 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     window.clearTimeout(armTimer);
     armed = false;
     closeCard(true);
-    cancelAnimationFrame(raf);
     stage.remove();
     const dlg = document.createElement('div');
     Object.assign(dlg.style, { width: 'min(420px, 100%)', background: DIALOG.panel, padding: '16px 18px', boxSizing: 'border-box', margin: 'auto' } as CSSStyleDeclaration);
@@ -716,7 +810,6 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     if (destroyed) return;
     destroyed = true;
     window.clearTimeout(armTimer);
-    cancelAnimationFrame(raf);
     window.removeEventListener('resize', layoutAll);
     if (now || reducedMotion()) { root.remove(); return; }
     // the bridge (design §3): the room fades as the 3D room's light comes up behind it

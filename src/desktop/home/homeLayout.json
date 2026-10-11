@@ -1,0 +1,654 @@
+{
+  "version": 4,
+  "coordinateSystem": "4K backdrop pixels; laptop 3840\u00d72160, phone 2160\u00d73840. Object rectangles are [x,y,width,height]. visualRect gives fitted artwork bounds; labels are DOM text below devices.",
+  "laptop": {
+    "width": 3840,
+    "height": 2160
+  },
+  "phone": {
+    "width": 2160,
+    "height": 3840
+  },
+  "objects": [
+    {
+      "id": "notice",
+      "laptop": [
+        2760,
+        736,
+        464,
+        528
+      ],
+      "phone": [
+        576,
+        1912,
+        464,
+        528
+      ],
+      "tabOrder": 1,
+      "asset": "notice",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          2762,
+          736,
+          460,
+          528
+        ],
+        "phone": [
+          578,
+          1912,
+          460,
+          528
+        ]
+      }
+    },
+    {
+      "id": "plaque",
+      "laptop": [
+        592,
+        336,
+        352,
+        352
+      ],
+      "phone": [
+        600,
+        1472,
+        352,
+        352
+      ],
+      "tabOrder": 2,
+      "asset": "plaque",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          642,
+          408,
+          253,
+          208
+        ],
+        "phone": [
+          650,
+          1544,
+          253,
+          208
+        ]
+      }
+    },
+    {
+      "id": "armchair",
+      "laptop": [
+        3480,
+        1160,
+        352,
+        352
+      ],
+      "phone": [
+        1800,
+        2288,
+        352,
+        352
+      ],
+      "tabOrder": 3,
+      "asset": null,
+      "interactive": true
+    },
+    {
+      "id": "remote",
+      "laptop": [
+        528,
+        1496,
+        352,
+        464
+      ],
+      "phone": [
+        1760,
+        2600,
+        352,
+        352
+      ],
+      "tabOrder": 4,
+      "asset": "remote",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          592,
+          1620,
+          224,
+          215
+        ],
+        "phone": [
+          1824,
+          2668,
+          224,
+          215
+        ]
+      }
+    },
+    {
+      "id": "switch",
+      "laptop": [
+        520,
+        1144,
+        352,
+        352
+      ],
+      "phone": [
+        48,
+        320,
+        352,
+        352
+      ],
+      "tabOrder": 5,
+      "asset": "switch",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          648,
+          1257,
+          96,
+          126
+        ],
+        "phone": [
+          176,
+          433,
+          96,
+          126
+        ]
+      }
+    },
+    {
+      "id": "door",
+      "laptop": [
+        16,
+        240,
+        456,
+        1264
+      ],
+      "phone": [
+        0,
+        696,
+        352,
+        1504
+      ],
+      "tabOrder": 6,
+      "asset": "door",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          16,
+          240,
+          456,
+          1264
+        ],
+        "phone": [
+          0,
+          696,
+          352,
+          1504
+        ]
+      }
+    },
+    {
+      "id": "computer",
+      "laptop": [
+        920,
+        1112,
+        1040,
+        848
+      ],
+      "phone": [
+        160,
+        2696,
+        824,
+        640
+      ],
+      "tabOrder": 7,
+      "asset": "computer",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          973,
+          1112,
+          934,
+          848
+        ],
+        "phone": [
+          220,
+          2696,
+          705,
+          640
+        ]
+      },
+      "label": {
+        "position": "below device",
+        "phoneSingleLine": true,
+        "minimumScreenFontPx": 15
+      },
+      "padlock": {
+        "position": "top right of visible hardware",
+        "screenSizePx": [
+          20,
+          24
+        ],
+        "visualAnchor": [
+          0.72,
+          0.025
+        ]
+      }
+    },
+    {
+      "id": "tablet",
+      "laptop": [
+        2096,
+        1304,
+        416,
+        648
+      ],
+      "phone": [
+        1032,
+        2792,
+        392,
+        560
+      ],
+      "tabOrder": 8,
+      "asset": "tablet",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          2096,
+          1337,
+          416,
+          582
+        ],
+        "phone": [
+          1032,
+          2798,
+          392,
+          548
+        ]
+      },
+      "label": {
+        "position": "below device",
+        "phoneSingleLine": true,
+        "minimumScreenFontPx": 15
+      },
+      "padlock": {
+        "position": "top right of visible hardware",
+        "screenSizePx": [
+          20,
+          24
+        ],
+        "visualAnchor": [
+          0.75,
+          0.025
+        ]
+      }
+    },
+    {
+      "id": "headset",
+      "laptop": [
+        2600,
+        1456,
+        640,
+        512
+      ],
+      "phone": [
+        1456,
+        2952,
+        584,
+        400
+      ],
+      "tabOrder": 9,
+      "asset": "headset",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          2600,
+          1484,
+          640,
+          457
+        ],
+        "phone": [
+          1468,
+          2952,
+          561,
+          400
+        ]
+      },
+      "label": {
+        "position": "below device",
+        "phoneSingleLine": true,
+        "minimumScreenFontPx": 15
+      },
+      "padlock": {
+        "position": "top right of visible hardware",
+        "screenSizePx": [
+          20,
+          24
+        ],
+        "visualAnchor": [
+          0.86,
+          0.035
+        ]
+      }
+    },
+    {
+      "id": "lamby",
+      "laptop": [
+        3256,
+        1000,
+        560,
+        792
+      ],
+      "phone": [
+        1160,
+        2008,
+        592,
+        672
+      ],
+      "tabOrder": 10,
+      "asset": "lamby-point",
+      "interactive": true,
+      "flipX": true,
+      "visualRect": {
+        "laptop": [
+          3256,
+          1118,
+          560,
+          557
+        ],
+        "phone": [
+          1160,
+          2050,
+          592,
+          589
+        ]
+      }
+    },
+    {
+      "id": "clock",
+      "laptop": [
+        960,
+        240,
+        352,
+        352
+      ],
+      "phone": [
+        1568,
+        520,
+        352,
+        352
+      ],
+      "tabOrder": 11,
+      "asset": "clock-dial",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          1044,
+          312,
+          183,
+          208
+        ],
+        "phone": [
+          1652,
+          592,
+          183,
+          208
+        ]
+      }
+    },
+    {
+      "id": "calendar",
+      "laptop": [
+        592,
+        720,
+        352,
+        352
+      ],
+      "phone": [
+        1656,
+        1464,
+        352,
+        352
+      ],
+      "tabOrder": 12,
+      "asset": "calendar",
+      "interactive": true,
+      "visualRect": {
+        "laptop": [
+          656,
+          779,
+          224,
+          234
+        ],
+        "phone": [
+          1720,
+          1523,
+          224,
+          234
+        ]
+      }
+    },
+    {
+      "id": "lexicon",
+      "laptop": [
+        3272,
+        512,
+        352,
+        352
+      ],
+      "phone": [
+        1808,
+        1880,
+        352,
+        352
+      ],
+      "tabOrder": null,
+      "asset": "book-purple",
+      "interactive": false,
+      "visualRect": {
+        "laptop": [
+          3384,
+          593,
+          128,
+          190
+        ],
+        "phone": [
+          1920,
+          1961,
+          128,
+          190
+        ]
+      }
+    },
+    {
+      "id": "vhs",
+      "laptop": [
+        3576,
+        576,
+        200,
+        304
+      ],
+      "phone": [
+        1832,
+        1088,
+        184,
+        288
+      ],
+      "tabOrder": null,
+      "asset": "vhs",
+      "interactive": false,
+      "visualRect": {
+        "laptop": [
+          3576,
+          638,
+          200,
+          181
+        ],
+        "phone": [
+          1832,
+          1149,
+          184,
+          166
+        ]
+      }
+    },
+    {
+      "id": "cd-box",
+      "laptop": [
+        200,
+        1784,
+        240,
+        304
+      ],
+      "phone": [
+        56,
+        3440,
+        184,
+        240
+      ],
+      "tabOrder": null,
+      "asset": "cd-box",
+      "interactive": false,
+      "visualRect": {
+        "laptop": [
+          200,
+          1806,
+          240,
+          261
+        ],
+        "phone": [
+          56,
+          3460,
+          184,
+          200
+        ]
+      }
+    },
+    {
+      "id": "speech-bubble",
+      "laptop": [
+        1656,
+        592,
+        1040,
+        304
+      ],
+      "phone": [
+        616,
+        896,
+        1024,
+        512
+      ],
+      "tabOrder": 13,
+      "asset": "speech-bubble",
+      "interactive": false,
+      "visualRect": {
+        "laptop": [
+          1656,
+          592,
+          1040,
+          304
+        ],
+        "phone": [
+          616,
+          896,
+          1024,
+          512
+        ]
+      },
+      "dynamicHeight": true,
+      "textRendering": "Unscaled DOM, minimum 15 screen pixels; tail faces right toward Lamby.",
+      "anchor": "Right edge stays fixed; width and height shrink to DOM text."
+    },
+    {
+      "id": "clock-hour-hand",
+      "laptop": [
+        1112,
+        336,
+        40,
+        96
+      ],
+      "phone": [
+        1720,
+        616,
+        40,
+        96
+      ],
+      "tabOrder": null,
+      "asset": "clock-hour-hand",
+      "interactive": false,
+      "pivot": [
+        0.5,
+        0.85
+      ],
+      "visualRect": {
+        "laptop": [
+          1112,
+          336,
+          40,
+          96
+        ],
+        "phone": [
+          1720,
+          616,
+          40,
+          96
+        ]
+      }
+    },
+    {
+      "id": "clock-minute-hand",
+      "laptop": [
+        1120,
+        320,
+        24,
+        120
+      ],
+      "phone": [
+        1728,
+        600,
+        24,
+        120
+      ],
+      "tabOrder": null,
+      "asset": "clock-minute-hand",
+      "interactive": false,
+      "pivot": [
+        0.5,
+        0.85
+      ],
+      "visualRect": {
+        "laptop": [
+          1120,
+          320,
+          24,
+          120
+        ],
+        "phone": [
+          1728,
+          600,
+          24,
+          120
+        ]
+      }
+    }
+  ],
+  "frameControls": [
+    {
+      "id": "footer-captions",
+      "tabOrder": 14
+    },
+    {
+      "id": "footer-menu",
+      "tabOrder": 15
+    },
+    {
+      "id": "footer-leave",
+      "tabOrder": 16
+    },
+    {
+      "id": "music-toggle",
+      "tabOrder": 17
+    }
+  ]
+}

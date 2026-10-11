@@ -1,0 +1,192 @@
+{
+ "calendar-laptop": {
+  "stem": "lh_calendar_laptop",
+  "w": 224,
+  "h": 234
+ },
+ "calendar-phone": {
+  "stem": "lh_calendar_laptop",
+  "w": 224,
+  "h": 234
+ },
+ "cd-box-laptop": {
+  "stem": "lh_cd_box_laptop",
+  "w": 240,
+  "h": 261
+ },
+ "cd-box-phone": {
+  "stem": "lh_cd_box_phone",
+  "w": 184,
+  "h": 200
+ },
+ "clock-hour-hand-laptop": {
+  "stem": "lh_clock_hour_hand_laptop",
+  "w": 40,
+  "h": 96
+ },
+ "clock-hour-hand-phone": {
+  "stem": "lh_clock_hour_hand_laptop",
+  "w": 40,
+  "h": 96
+ },
+ "clock-laptop": {
+  "stem": "lh_clock_laptop",
+  "w": 183,
+  "h": 208
+ },
+ "clock-minute-hand-laptop": {
+  "stem": "lh_clock_minute_hand_laptop",
+  "w": 24,
+  "h": 120
+ },
+ "clock-minute-hand-phone": {
+  "stem": "lh_clock_minute_hand_laptop",
+  "w": 24,
+  "h": 120
+ },
+ "clock-phone": {
+  "stem": "lh_clock_laptop",
+  "w": 183,
+  "h": 208
+ },
+ "computer-laptop": {
+  "stem": "lh_computer_laptop",
+  "w": 934,
+  "h": 848
+ },
+ "computer-phone": {
+  "stem": "lh_computer_phone",
+  "w": 705,
+  "h": 640
+ },
+ "door-laptop": {
+  "stem": "lh_door_laptop",
+  "w": 456,
+  "h": 1264
+ },
+ "door-phone": {
+  "stem": "lh_door_phone",
+  "w": 352,
+  "h": 1504
+ },
+ "headset-laptop": {
+  "stem": "lh_headset_laptop",
+  "w": 640,
+  "h": 457
+ },
+ "headset-phone": {
+  "stem": "lh_headset_phone",
+  "w": 561,
+  "h": 400
+ },
+ "lamby-laptop": {
+  "stem": "lh_lamby_laptop",
+  "w": 560,
+  "h": 557
+ },
+ "lamby-phone": {
+  "stem": "lh_lamby_phone",
+  "w": 592,
+  "h": 589
+ },
+ "lamby-wave-laptop": {
+  "stem": "lh_lamby_wave_laptop",
+  "w": 560,
+  "h": 566
+ },
+ "lamby-wave-phone": {
+  "stem": "lh_lamby_wave_phone",
+  "w": 592,
+  "h": 598
+ },
+ "lexicon-laptop": {
+  "stem": "lh_lexicon_laptop",
+  "w": 128,
+  "h": 190
+ },
+ "lexicon-phone": {
+  "stem": "lh_lexicon_laptop",
+  "w": 128,
+  "h": 190
+ },
+ "notice-laptop": {
+  "stem": "lh_notice_laptop",
+  "w": 460,
+  "h": 528
+ },
+ "notice-phone": {
+  "stem": "lh_notice_laptop",
+  "w": 460,
+  "h": 528
+ },
+ "plaque-laptop": {
+  "stem": "lh_plaque_laptop",
+  "w": 253,
+  "h": 208
+ },
+ "plaque-phone": {
+  "stem": "lh_plaque_laptop",
+  "w": 253,
+  "h": 208
+ },
+ "remote-laptop": {
+  "stem": "lh_remote_laptop",
+  "w": 224,
+  "h": 215
+ },
+ "remote-phone": {
+  "stem": "lh_remote_laptop",
+  "w": 224,
+  "h": 215
+ },
+ "room-laptop": {
+  "stem": "lh_room_laptop",
+  "w": 3840,
+  "h": 2160
+ },
+ "room-phone": {
+  "stem": "lh_room_phone",
+  "w": 2160,
+  "h": 3840
+ },
+ "speech-bubble-laptop": {
+  "stem": "lh_speech_bubble_laptop",
+  "w": 1040,
+  "h": 304
+ },
+ "speech-bubble-phone": {
+  "stem": "lh_speech_bubble_phone",
+  "w": 1024,
+  "h": 512
+ },
+ "switch-laptop": {
+  "stem": "lh_switch_laptop",
+  "w": 96,
+  "h": 126
+ },
+ "switch-phone": {
+  "stem": "lh_switch_laptop",
+  "w": 96,
+  "h": 126
+ },
+ "tablet-laptop": {
+  "stem": "lh_tablet_laptop",
+  "w": 416,
+  "h": 582
+ },
+ "tablet-phone": {
+  "stem": "lh_tablet_phone",
+  "w": 392,
+  "h": 548
+ },
+ "vhs-laptop": {
+  "stem": "lh_vhs_laptop",
+  "w": 200,
+  "h": 181
+ },
+ "vhs-phone": {
+  "stem": "lh_vhs_phone",
+  "w": 184,
+  "h": 166
+ }
+}

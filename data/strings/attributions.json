@@ -246,6 +246,13 @@
       "license": "project-owned",
       "usedAs": "2003: the CD spindle on Daniel's desk",
       "firstUsed": "S175, 2026-09-24"
+    },
+    {
+      "asset": "LambyOS Home art (`public/home/lh_*.webp`)",
+      "creator": "Image generation by GPT (OpenAI) at the project's direction, 2026",
+      "license": "generated for this project; no third-party work reproduced",
+      "usedAs": "LambyOS Home, the front door and the return: the room, Lamby, the devices and the toys",
+      "firstUsed": "S231, 2026-10-11"
     }
   ],
   "influences": [
