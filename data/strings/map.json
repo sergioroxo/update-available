@@ -464,16 +464,18 @@
      "label": "The session on the glass",
      "done": "commonsJoined",
      "quiet": true,
-     "hint": "Sit with it. A link will come — press it.",
-     "where": "the glass"
+     "hint": "Press Begin, and sit with it. A link will come — press it.",
+     "where": "the glass",
+     "_docS227": "⚑ S227 — the session begins on her press (his Q7, COMMONS_STREAMLINE_2026-10-10.md §8: the card follows an action, never a clock alone)."
     },
     {
      "id": "commons",
      "label": "The Commons",
      "done": "terminated",
      "quiet": true,
-     "hint": "Stay. Turn to look. The markers on the floor move you.",
-     "where": "the floor"
+     "hint": "Stay. Your lamp is yours to raise.",
+     "where": "the hall",
+     "_docS227": "⚑ S227 — T10 (COMMONS_STREAMLINE §3, his §8): one spot, no markers; the piece takes her there, so nothing here says turn or move."
     },
     {
      "id": "close",

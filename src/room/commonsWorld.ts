@@ -54,9 +54,27 @@ export const WORLD = {
   wallColor: PLACE.wallLo,
   stageColor: PLACE.floorLo,
   frameColor: ERA4.panelHi,
-  /** ⚑ S209g — where the hall's words stand, now that there are no walls to hang them on */
-  boards: { rules: { x: 6.2, z: -6.8 }, banners: { xs: [2.4, 3.8, 5.2, 6.6], z: 5.6 }, firsts: { x: -3.4, z: 0.7 } }
+  /** ⚑ S227 — THE ONE SPOT (nodes.json `commons-spot`, kept in step by hand): the front of the crowd, on the
+   *  stage's axis, 4.2 m from it. She is cut here when the hall cuts in, and everything she needs is ahead. */
+  spot: { x: 5.2, z: 0.7 },
+  /** ⚑ S209g — where the hall's words stand, now that there are no walls to hang them on.
+   *  ⚑ S227 (his §8 Q9: "the wall of firsts comes into the forward half; nothing she needs is behind her") —
+   *  all three moved forward of the spot: the rules front-left of the stage (~−41°), the banners front-right
+   *  (~+30…50°), the wall of firsts out to her left (~−78°), facing her. They used to stand left, right and
+   *  BEHIND the old seat. Axis-aligned still: 90° steps only. */
+  boards: {
+    rules: { x: 9.0, z: -2.6 },
+    banners: { xs: [7.4, 8.4, 9.4, 10.4], z: 4.2 },
+    firsts: { x: 6.0, z: -3.4 }
+  }
 } as const;
+
+/** ⚑ S227 — HIS Q8 ("not a conducted turn — a prompt"): the room's call is pressed on the glass (ball.ts), and
+ *  the turn to the stage is the camera's, so it is the engine's (app.ts registers it). One hook, like
+ *  cluster.ts's `onCommonsRoom`, because the shell that presses it is rebuilt on every return to 2026. */
+let turnHook: (() => void) | null = null;
+export function onTurnToStage(fn: () => void): void { turnHook = fn; }
+export function turnToStage(): void { turnHook?.(); }
 
 function pushBox(pos: number[], idx: number[], x: number, y: number, z: number, hx: number, hy: number, hz: number): void {
   const base = pos.length / 3;
@@ -125,7 +143,8 @@ export function mountCommonsWorld(app: pc.Application): CommonsWorld {
   for (const bx of B.banners.xs) { pushBox(pos, idx, bx, 2.2, B.banners.z, 0.025, 2.2, 0.025); paint(PLACE.floorLo, 8); }
   pushBox(pos, idx, (B.banners.xs[0] + B.banners.xs[3]) / 2, 4.28, B.banners.z, (B.banners.xs[3] - B.banners.xs[0]) / 2 + 0.6, 0.025, 0.025); paint(PLACE.floorLo, 8);
   // (the house rules float: a world's sign, no legs — S209i)
-  for (const dz of [-1.6, 1.6]) { pushBox(pos, idx, B.firsts.x, 0.45, B.firsts.z + dz, 0.04, 0.45, 0.04); paint(PLACE.floorLo, 8); }
+  // ⚑ S227 — the board of firsts faces her now (it spans x, like the rules), so its legs stand along x
+  for (const dx of [-1.6, 1.6]) { pushBox(pos, idx, B.firsts.x + dx, 0.45, B.firsts.z, 0.04, 0.45, 0.04); paint(PLACE.floorLo, 8); }
   const mesh = new pc.Mesh(app.graphicsDevice);
   mesh.setPositions(pos);
   mesh.setIndices(idx);
@@ -315,12 +334,12 @@ function mountHallWalls(app: pc.Application): pc.Entity {
     idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
   };
   const B = WORLD.boards;
-  // her left (−z): the house rules, on legs, at eye height
+  // ⚑ S227 — front-left of the stage (−z, ahead): the house rules, floating at eye height
   quad(B.rules.x, 2.0, B.rules.z, 1, 0, 1.4, 0.88, RULES);
-  // her right (+z): the four banners, hung from their crossbar
+  // front-right of the stage (+z, ahead): the four banners, hung from their crossbar
   B.banners.xs.forEach((x, i) => quad(x + 0.3, 2.95, B.banners.z - 0.04, -1, 0, 0.42, 1.2, { ...BANNER, x: BANNER.x + i * BANNER.w }));
-  // behind her (−x): the board of firsts, on legs
-  quad(B.firsts.x + 0.05, 1.75, B.firsts.z, 0, -1, 1.6, 0.98, FIRSTS);
+  // out to her left (−z, a little ahead), facing her: the board of firsts, on legs
+  quad(B.firsts.x, 1.75, B.firsts.z + 0.05, 1, 0, 1.6, 0.98, FIRSTS);
   const mesh = new pc.Mesh(app.graphicsDevice);
   mesh.setPositions(pos);
   mesh.setUvs(0, uv);

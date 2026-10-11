@@ -44,67 +44,28 @@
    ]
   },
   {
-   "id": "commons-stage",
+   "id": "commons-spot",
    "commons": true,
-   "seatYaw": 271,
-   "label": "by the stage",
+   "seatYaw": 272,
+   "label": "the front of the crowd",
    "marker": [
-    7.6,
+    5.2,
     0.03,
     0.7
    ],
    "pose": {
-    "x": 7.6,
+    "x": 5.2,
     "y": 1.16,
     "z": 0.7,
-    "pitch": -2,
+    "pitch": 1,
     "yaw": 270
    },
-   "eras": []
-  },
-  {
-   "id": "commons-crowd",
-   "commons": true,
-   "seatYaw": 227,
-   "label": "in the crowd",
-   "marker": [
-    5.8,
-    0.03,
-    -1.7
-   ],
-   "pose": {
-    "x": 5.8,
-    "y": 1.16,
-    "z": -1.7,
-    "pitch": -2,
-    "yaw": 227
-   },
    "eras": [],
-   "yaw": 227,
-   "_doc": "⚑ 2026-09-13: yaw 300 → 227 — from (5.8, −1.7) 300° looked at a column and away from the stage; 227° is the bearing OF the stage, with the crowd between."
-  },
-  {
-   "id": "commons-screen",
-   "commons": true,
-   "seatYaw": 205,
-   "label": "by the screen",
-   "marker": [
-    10.2,
-    0.03,
-    3.6
-   ],
-   "pose": {
-    "x": 10.2,
-    "y": 1.16,
-    "z": 3.6,
-    "pitch": -3,
-    "yaw": 205
-   },
-   "eras": []
+   "_doc": "⚑ S227 — THE ONE SPOT (W1-F5 'streamline to one area'; COMMONS_STREAMLINE_2026-10-10.md §2 and his §8: 'the cut to one spot is inside' R28 amendment 1 as revised 2026-10-10, 'take the viewer there'). The front of the crowd, on the stage's axis: the stage 4.2 m ahead, the screen above it, Junie a step to her left, Ade to her right, the boards in the forward half. She is CUT here the moment the hall cuts in (app.ts, the room hook) and arrives facing Junie, 20° left of this pose; the room's call turns her the rest of the way on her press. Never offered as a marker (seatYaw 272 is its own, so the seat she is in hides it). Placed on the axis rather than at the old 'in the crowd' ring so the walk down the runway comes TO her. Retired with it: commons-stage, commons-crowd, commons-screen."
   }
  ],
  "_docHeld": "Session 66 — the device seats no longer CRANE. They used to sit 0.6-0.8 m from a screen lying flat on furniture, pitched -37/-38 deg, which is how a 7 cm phone ended up carrying the era's break unreadably. The device now comes to the hand instead (src/room/era3Devices.ts, holdDevice), so these poses are ordinary seated ones: a gentle downward gaze at a thing held in front of you. `pose` still overrides seatPose() exactly as before; only the numbers changed, and the held pose is DERIVED from them, so retuning a seat moves its device with it. PLACEHOLDER-draft framing, Sérgio's to retune by feel.",
  "_docPhoneSeatRemoved": "⛑ r2-phone REMOVED 2026-08-24. ERA3_BUILD_PLAN §0 retires the device seats — \"with the tablet gone and the phone in her hand, jump-to-a-device is no longer the movement; one desk seat, the phone is held\" — and this node had become a live WRONG AFFORDANCE: its floor marker still stood at (-2.42, 0.03, 0.12), 2.6 m from where the phone actually lies since stage 2 moved it to the desk, so a player clicking a marker labelled \"the phone\" was teleported across the room to an empty patch of floor. The phone is now PICKED UP BY PRESSING IT (src/room/era3Devices.ts, handleWorkstationPointer) and put down by pressing past it. DEVICE_SEAT_POSES and app.ts's r2-phone branch are left in place and inert; removing them is a separate cut.",
  "_docTabletRemoved": "⚑ r2-tablet REMOVED 2026-08-21 (Sérgio: Era 3 is DESKTOP + PHONE, the tablet goes). _doc2 above still describes the three-device-seat model and its 'machine is everywhere you sit' thesis — that thesis now rests on TWO devices, and it is not weakened by the cut: the desk is where she is employed and the phone is where she is a person, which is a sharper split than three surfaces of the same work. The r2-phone node stays. See docs/reinterp/ERA3_BUILD_PLAN.md §0.",
- "_docCommons": "⚑ 2026-09-12 — THREE PLACES TO STAND IN THE COMMONS. Sérgio: 'Can we walk in the space? with WASD?' No — no locomotion ever is the piece's law, comfort-derived and not up for re-litigation — but the piece's own way to move is a marker you click to blink to, and a hall can have those. These are offered only while the world is on (`commons: true`, `eras: []`); the room's markers are hidden then. Poses are explicit: by the stage (facing it, the walker two metres off), in the crowd at stage left, and the reverse angle from beside the screen, looking back across the stage at the crowd she was in. seatYaw values are distinct so none hides another; none is 270, so the base seat can offer all three. Leaving the world puts her back in Maya's seat (app.ts, the room hook)."
+ "_docCommons": "⚑ SUPERSEDED by S227 (`commons-spot`): one place, no markers. The record follows. ⚑ 2026-09-12 — THREE PLACES TO STAND IN THE COMMONS. Sérgio: 'Can we walk in the space? with WASD?' No — no locomotion ever is the piece's law, comfort-derived and not up for re-litigation — but the piece's own way to move is a marker you click to blink to, and a hall can have those. These are offered only while the world is on (`commons: true`, `eras: []`); the room's markers are hidden then. Poses are explicit: by the stage (facing it, the walker two metres off), in the crowd at stage left, and the reverse angle from beside the screen, looking back across the stage at the crowd she was in. seatYaw values are distinct so none hides another; none is 270, so the base seat can offer all three. Leaving the world puts her back in Maya's seat (app.ts, the room hook)."
 }

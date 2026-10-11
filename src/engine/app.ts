@@ -23,7 +23,7 @@ import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { onCommonsRoom, setCommonsWorld } from '../room/cluster';
-import { WORLD as COMMONS_WORLD } from '../room/commonsWorld';
+import { WORLD as COMMONS_WORLD, onTurnToStage } from '../room/commonsWorld';
 const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
@@ -3802,7 +3802,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       if (cluster && movementNodes) {
         const busy = scriptedBusy() || blinkPhase !== null;
-        movementNodes.setOnly(os.e4?.ball.wantsHer ? 'commons-crowd' : null);   // ⚑ S209f / A25
         movementNodes.refresh(cluster.era, seatYaw, busy);
         if (!moveHintShown && !moveHintDismissed && !busy && moveHint) {
           if (movementNodes.available(cluster.era, seatYaw).length > 0) {
@@ -4279,6 +4278,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  off — and they then hung lit over the building through the whole Close.
    *  Sérgio saw it in the exhibition stills. */
   const roomEntitiesWere = new Map<string, boolean>();
+  /** ⚑ S227 — the Commons' one spot (nodes.json) and how far toward Junie she arrives facing */
+  const COMMONS_SPOT = 'commons-spot';
+  const COMMONS_ARRIVE_OFF = 20;
+  /**
+   * ⚑ S227 — HIS Q8: "not a conducted turn — a prompt… so the person doesn't get startled." The turn to the
+   * stage happens only on her press of the room's call (ball.ts). From wherever she is actually looking (the
+   * drag folded in), to the spot's authored facing, a plain tween under the comfort law: smoothstep peaks at
+   * 1.5× its mean, so 20° in 3.6 s is 8.3 °/s against the 9.1 °/s envelope, and a larger turn takes longer.
+   * Never in a headset, where the head is the camera.
+   */
+  onTurnToStage(() => {
+    if (app.xr?.active) return;
+    const node = movementNodes?.find(COMMONS_SPOT);
+    if (!node?.pose) return;
+    commitLookOffset();
+    const d = Math.abs((((node.pose.yaw - camYaw) % 360) + 540) % 360 - 180);
+    const dur = Math.max(3.6, (1.5 * d) / 8.5);
+    startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: node.pose.pitch, yaw: node.pose.yaw }, dur, true);
+  });
   onCommonsRoom((hidden) => {
     for (const id of ROOM_ENTITIES) {
       const e = app.root.findByName(id);
@@ -4291,6 +4309,21 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   back in Maya's seat, wherever in the hall she had blinked to
     movementNodes?.setCommons(hidden);
     if (!hidden && seatNodeId && seatNodeId.startsWith('commons-')) performSeatCut('r3-desk');
+    /**
+     * ⚑ S227 — TAKEN THERE (R28 amendment 1 as revised 2026-10-10, "take the viewer there"; his answers to
+     * COMMONS_STREAMLINE_2026-10-10.md §8, Q1: "the cut to one spot is inside it"). The hall cuts in on the
+     * glass's first full flash and she is cut with it to the one spot, the front of the crowd: no marker, no
+     * look-and-go. She arrives facing Junie, who greets her — 20° left of the stage — and the room's call turns
+     * her the rest of the way on her press (`onTurnToStage` below). In a headset the head is the camera: the
+     * cut lands her facing the stage and the turn is hers.
+     */
+    if (hidden) {
+      performSeatCut(COMMONS_SPOT);
+      if (!app.xr?.active) {
+        camYaw += COMMONS_ARRIVE_OFF;
+        cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+      }
+    }
     if (camera.camera) {
       if (hidden) { roomClearColor = camera.camera.clearColor.clone(); camera.camera.clearColor = new pc.Color().fromString(WORLD_SKY); }
       else if (roomClearColor) camera.camera.clearColor = roomClearColor;

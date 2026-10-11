@@ -532,14 +532,35 @@ class RoomBed {
     this.target = incoming ? this.level : 0;
   }
 
+  /**
+   * ⚑ S227 — THE DUCK (COMMONS_STREAMLINE_2026-10-10.md §4, his W1-F3 "too noisy"): while a system sound plays
+   * over the room's music, the music steps down by `db` for `seconds` (extended, never stacked, by a second
+   * call), easing over a quarter of a second either way. One music, one system sound at most, and the system
+   * sound is heard over the room without the room ever stopping.
+   */
+  duck(db: number, seconds: number): void {
+    this.duckWant = Math.min(1, Math.pow(10, db / 20));
+    this.duckLeft = Math.max(this.duckLeft, seconds);
+  }
+  private duckWant = 1;
+  private duckLeft = 0;
+  private duckGain = 1;
+
   /** driven from the engine's own frame loop, like everything else here */
   update(dt: number): void {
-    if (this.fade <= 0) return;
+    if (this.duckLeft > 0) { this.duckLeft = Math.max(0, this.duckLeft - dt); if (this.duckLeft === 0) this.duckWant = 1; }
+    const g0 = this.duckGain;
+    const step = dt / 0.25;
+    this.duckGain = this.duckGain < this.duckWant ? Math.min(this.duckWant, this.duckGain + step) : Math.max(this.duckWant, this.duckGain - step);
+    if (this.fade <= 0) {
+      if (this.duckGain !== g0 && this.live) this.live.volume = this.target * this.duckGain;
+      return;
+    }
     this.fade = Math.max(0, this.fade - dt);
     const k = 1 - this.fade / this.fadeSeconds;   // 0 → 1 across the crossfade
-    if (this.live) this.live.volume = this.target * k;
+    if (this.live) this.live.volume = this.target * k * this.duckGain;
     if (this.dying) {
-      this.dying.volume = this.dyingLevel * (1 - k);
+      this.dying.volume = this.dyingLevel * (1 - k) * this.duckGain;
       // ⚑ paused only once it is actually silent, or the swap clicks
       if (this.fade === 0) { this.dying.pause(); if (this.useA) this.b = null; else this.a = null; }
     }

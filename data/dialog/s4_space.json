@@ -35,5 +35,6 @@
   "_docWords": "⛑ THE CLOSE'S OWN WORDS, not new ones. `ask` and `button` are lifted from data/strings/updates.json's `close` block (notify[1] and updateNow) so the card on the laptop speaks with the same voice as the update it arms — and because the first pass invented 'Restart as you are' as a BUTTON label, which both duplicated the message and ran off the end of the button."
  },
  "sessionSeconds": 30.5,
+ "_docSessionSecondsS227": "⚑ S227 — his Q7 (COMMONS_STREAMLINE_2026-10-10.md §8: 'Junie's card follows an action, never a held look or a clock alone'). The clock no longer starts when the device goes on: the plan arrives, Begin is offered, and from HER PRESS the card lands at sessionSeconds − session.seconds (21.5 s: one breath of grounding, then the recording, the card on its third sentence's dash). In the Speedrun Version the card follows the press (s4_ball.json speedrun.session.cardAfter).",
  "_docSessionSeconds": "⚑ 2026-09-13: 9 → 27.5. The session begins (grounding at 9, the recorded voice at 17 — three sentences on a 3.4 s clock) and Junie's card lands on the third's dash."
 }

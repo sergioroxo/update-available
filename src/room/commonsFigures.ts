@@ -34,16 +34,19 @@ import nodesData from '../../data/room/nodes.json';
 const FIGURES = 22;   // ⚑ 2026-09-13: 14 → 22, and placed where the seat can SEE them (below)
 const SUNK_Y = -40;
 const RISE_SECONDS = 2.2;
-const SEAT = { x: 4.4, z: 0.7, clear: 1.3 };
+/** ⚑ S227 — where SHE stands: the one spot (commonsWorld.ts `WORLD.spot`, nodes.json `commons-spot`), at the
+ *  front of the crowd. Everything below that was measured from Maya's seat is measured from here now. */
+const SEAT = { x: WORLD.spot.x, z: WORLD.spot.z, clear: 1.3 };
 /** ⚑ 2026-09-12: the stage is the WORLD's (commonsWorld.ts) — in front of her,
  *  where a hall's stage is — and the crowd stands between her and it, and
  *  around her, the way you stand in a crowd. */
 const STAGE = { x: WORLD.stage.x, y: 0.0, z: WORLD.stage.z, w: WORLD.stage.w, d: WORLD.stage.d, h: WORLD.stage.h };
 const REBUILD_HZ = 12;   // ⚑ S209g / M1 — 8 → 12: a dance needs more frames than a sway
-/** ⚑ S209g / I3 — the crowd's ring (nodes.json `commons-crowd`): while the room waits for her, the people
- *  around it step aside and open their arms — a gap is the invitation, in the world, not a glow */
-const CROWD_RING = ((nodesData.nodes as unknown as { id: string; marker: number[] }[]).find((n) => n.id === 'commons-crowd')?.marker) ?? [5.8, 0.03, -1.7];
-const INVITE_RADIUS = 1.9, INVITE_STEP = 0.7, INVITE_SECONDS = 1.6;
+/** ⚑ S209g / I3 — while the room waits for her, the people near her open their arms toward her.
+ *  ⚑ S227 — centred on HER now (the spot), and nobody steps away: the ring she was asked to walk to is
+ *  retired with the markers, and what the room asks for is her lamp (his §8 Q2). The gesture is the ask. */
+const CROWD_RING = ((nodesData.nodes as unknown as { id: string; marker: number[] }[]).find((n) => n.id === 'commons-spot')?.marker) ?? [WORLD.spot.x, 0.03, WORLD.spot.z];
+const INVITE_RADIUS = 3.2, INVITE_STEP = 0, INVITE_SECONDS = 1.6;
 
 function makeRng(seed: number): () => number {
   let s = seed >>> 0;
@@ -75,8 +78,10 @@ let answerHook: (() => void) | null = null;
 export function answerCommonsFigures(): void { answerHook?.(); }
 /** ⚑ S211 — where she stands in the hall: at "by the stage" she is ON the runway's line, and the
  *  performers walked through her (the tour's termination frame was a performer's back, 3 Oct) */
+//   ⚑ S227: there is one spot and it is not on the stage's edge, so this stays false; kept so the
+//   performers' on-stage branch below still has its reason written down.
 let herAtStage = false;
-export function setCommonsHerSeat(nodeId: string | null): void { herAtStage = nodeId === 'commons-stage'; }
+export function setCommonsHerSeat(nodeId: string | null): void { herAtStage = false; void nodeId; }
 const GREET_SECONDS = 1.4;
 const GREET_STEP = 0.45;
 
@@ -93,7 +98,7 @@ let showHook: ((s: CommonsShow) => void) | null = null;
 export function setCommonsShow(s: CommonsShow): void { showHook?.(s); }
 const PERFORMERS = 4;
 /** the runway: from the stage's front edge toward her, down the crowd's middle gap */
-const RUNWAY = { from: WORLD.stage.x - WORLD.stage.d / 2 - 0.2, to: WORLD.seat.x + 1.7, z: WORLD.stage.z };   // the near end IN FRONT of the crowd (its nearest stand 2.6 m off)
+const RUNWAY = { from: WORLD.stage.x - WORLD.stage.d / 2 - 0.2, to: WORLD.spot.x + 1.7, z: WORLD.stage.z };   // ⚑ S227: to her, at the spot   // the near end IN FRONT of the crowd (its nearest stand 2.6 m off)
 /** one pass: out, a pause at the near end, back, a pause at the stage */
 const WALK_OUT = 7.5, WALK_HOLD = 2.0;
 const ARM_EASE = 0.5;
@@ -110,7 +115,11 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   // two beside her, a stride and a half away either side, so she is IN the
   // crowd — ⚑ at half a metre a person fills the frame (measured); at 1.4 m
   // they are a person standing next to you
-  for (const [x, z] of [[4.9, -1.7], [4.8, 3.1]] as const) {
+  // ⚑ S227 — at the spot: Junie a step ahead-left (she faces Junie as she arrives), Ade ahead-right, both
+  //   inside the frame once she has turned to the stage, both clear of the runway's four abreast
+  //   (measured from the spot's first frames: at 1.45 m Junie was a wall across half the frame; at ~2.1 m she
+  //   is a person standing with you)
+  for (const [x, z] of [[SEAT.x + 1.55, SEAT.z - 1.45], [SEAT.x + 1.7, SEAT.z + 1.3]] as const) {
     figures.push({
       x, z, h: 1.55 + rng() * 0.25, w: 0.26 + rng() * 0.08, phase: rng() * 6.28,
       body: cloth[1 + Math.floor(rng() * (cloth.length - 1))], onStage: false, beside: true
@@ -121,13 +130,15 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   //   at 3.5 m ±2 m; the first cut spread the crowd over ±3.2 m and the seat
   //   saw nobody but the walker. Now they stand within the frame's band, either
   //   side of a gap down the middle, the way a crowd faces a stage.
+  // ⚑ S227 — she is AT THE FRONT of the crowd now, so the crowd is beside and behind her: a flank either
+  //   side of the stage's axis, framing the stage at the edges of her view, and the rest at her back.
   while (figures.length < FIGURES) {
-    const behind = figures.length >= FIGURES - 3;
-    const x = behind ? SEAT.x - 1.6 - rng() * 1.6 : SEAT.x + 2.6 + rng() * 1.4;   // ⚑ never nearer than 2.6 m: at 1.4 a figure was a wall, at 2.2 a door
+    const behind = figures.length >= FIGURES - 9;
+    const x = behind ? SEAT.x - 0.8 - rng() * 2.4 : SEAT.x + 0.2 + rng() * 2.2;
     const side = rng() < 0.5 ? -1 : 1;
-    const reach = 0.55 + (x - SEAT.x) * 0.5;   // the frame's half-width at that distance
-    const z = behind ? STAGE.z + (rng() - 0.5) * 4.0 : STAGE.z + side * (0.55 + rng() * reach);
+    const z = behind ? SEAT.z + (rng() - 0.5) * 5.0 : SEAT.z + side * (1.7 + rng() * 0.9);
     if (Math.hypot(x - SEAT.x, z - SEAT.z) < 1.5) continue;
+    if (figures.some((g) => g.beside && Math.hypot(g.x - x, g.z - z) < 0.7)) continue;   // ⚑ S227: nobody inside Junie or Ade
     if (x > STAGE.x - STAGE.d / 2 - 0.4) continue;
     figures.push({
       x, z, h: 1.5 + rng() * 0.32, w: 0.24 + rng() * 0.1, phase: rng() * 6.28,

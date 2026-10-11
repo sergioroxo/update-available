@@ -11,14 +11,8 @@
  "arrival": {
   "_beat": "⚑ THE FILTER. She has gone in, and the overlay is still on her face, trying to do to a room what it did to her hoodie: classify it. Four attempts, in the label field, front and centre now — this used to play on a nine-centimetre visor across the room that nobody read. Each one fails a little worse, and the lamps come up in the room behind the glass as it fails: none, then some, then forty-one. The last label is the era's — it recognises every word and cannot occupy the role. NOBODY EXPLAINS IT.",
   "_beatFinal": "⚑ AND THE LAST STATE IS THE ERA'S. It recognises every word and cannot occupy the role: it is looking at its own vocabulary with the scoring taken out of its hands. ⚑ It is NOT the hoodie's line. The hoodie got 'no category — held for review' — deferred, routed, a human would decide later. This gets no route and no review at all, because there is nobody left to hold it for. A player who noticed the hoodie meets the same limit at room scale; a player who did not still meets it whole. NOBODY EXPLAINS IT. Ever. No line, no cue, in this file or any other.",
+  "_docS227": "⚑ S227 (his answers, COMMONS_STREAMLINE_2026-10-10.md §8 Q4: 'yes, remove' T2) — the first label (LINK · not available to this account) is gone: three attempts now, SENDER → RISK → CATEGORY, ≈15 s. The lamps still climb under them (9 → 17 → 25), but silently: the bell rings once, at the drop (§4, one sound at a time). The Speedrun Version plays the last two only (`speedrun.arrival`).",
   "labels": [
-   {
-    "id": "a1",
-    "object": "LINK",
-    "text": "commons.world · not available to this account",
-    "hold": 4.6,
-    "lamps": 0
-   },
    {
     "id": "a2",
     "object": "SENDER",
@@ -43,32 +37,7 @@
   ],
   "_docStruggle": "⚑ 2026-09-13 — THE STRUGGLE. Sérgio: 'we can have it corrupted, with some difficulty getting to see the Commons appearing… the amount of Pride and religious love from TransJesus breaks through.' The hall is switched on the moment the link is pressed, BEHIND the agent's environment; the labels are the system fighting it (blocking the sender, naming the risk in its own vocabulary), the glass clears in flashes that get longer, and the stream's words and hearts bleed onto the glass label by label until the room wins. environmentK is the fight's score."
  },
- "stutter": {
-  "_beat": "⚑ THE OVERLAY GOES ON TRYING, in the corner of the glass, while the room is full. Three more attempts on the shorter clock, then it stops. `at` is seconds from the ball's first line.",
-  "labels": [
-   {
-    "id": "s1",
-    "at": 20,
-    "object": "EVENT",
-    "text": "re-checking…",
-    "hold": 5.0
-   },
-   {
-    "id": "s2",
-    "at": 55,
-    "object": "EVENT",
-    "text": "sensitive content · hidden by default",
-    "hold": 5.0
-   },
-   {
-    "id": "s3",
-    "at": 95,
-    "object": "EVENT",
-    "text": "3 attempts · no result",
-    "hold": 7.0
-   }
-  ]
- },
+ "_docStutterRemoved": "⚑ S227 (his answers, COMMONS_STREAMLINE_2026-10-10.md §8 Q4: 'yes, remove' T3) — the three corner labels that ran during the ball on a clock (re-checking… / sensitive content · hidden by default / 3 attempts · no result) are gone: the third landed on top of the second intrusion, two system texts on the glass at once. Its words survive as intrusion 2's status line (`system.intrusions[1].status`). The overlay now fails on the glass only when it comes back for her.",
  "ball": {
   "_beat": "⚑ THE ROOM. No screen, no stage, no new geometry: sound and light in a building that has been standing since 1997 and had its walls taken down in 2016. The player's only action is to look, and everyone else is looking too, at one person, on purpose (deep pass §1.3). `at` is the light's position along the stations in src/room/cluster.ts — 1 is the far west end and 4 is the nearest the light ever comes; it never lands on the player, who is nobody's customer here. `flare` is the room answering.",
   "_beatMC": "⚑ FUNCTION, NOT COSTUME. The MC announces, categorises and celebrates, in plain English, with no borrowed idiom whatsoever — and the politics of it are the era's whole inversion: L narrates you privately and the naming becomes a record; the MC announces you publicly and the naming becomes a welcome (deep pass §1.2). Two scenes, one verb, opposite outcomes, and nothing anywhere says so.",
@@ -83,11 +52,18 @@
     },
     {
      "id": "g2",
-     "text": "You made it. Over here, with us — they're about to shut the doors.",
-     "hold": 4.6,
-     "who": "Ade"
+     "text": "You made it. Over here, with us.",
+     "hold": 3.6,
+     "who": "Ade",
+     "_doc": "⚑ S227 — T4, shortened, never removed (respite; COMMONS_STREAMLINE §3, his §8 'less text'): 13 → 7 words. She is already beside them — the piece put her there."
     }
-   ]
+   ],
+   "_docS227": "⚑ S227 — the greeting is at THE SPOT now (nodes.json `commons-spot`): the press on Open link cuts her to the front of the crowd, Junie a step to her left (she faces Junie as she arrives), Ade to her right. Then the room's prompt (`call`), never a turn the piece makes on its own."
+  },
+  "call": {
+   "_doc": "⚑ S227 — HIS ANSWER Q8 (COMMONS_STREAMLINE_2026-10-10.md §8): 'not a conducted turn — a prompt. Since we are in a virtual space a button can pop up saying \"someone is calling you — press to go\", so the person doesn't get startled.' After the greeting the room calls the floor open; a small card on the glass says so and waits. Her press turns her the ~20° from Junie to the stage (slowly, under the comfort law; never in a headset, where the head is the camera) and the MC opens. Any press while it is up is the press: there is nothing else to press. Respite register — the room's pink, never the system's green.",
+   "line": "someone is calling you",
+   "chip": "Press to turn"
   },
   "opening": {
    "lines": [
@@ -99,9 +75,10 @@
     },
     {
      "id": "o2",
-     "text": "Same as always — I call a category, somebody takes the floor, and the rest of you make the noise.",
-     "hold": 6.6,
-     "at": 0.7
+     "text": "I call a category, somebody takes the floor, and the rest of you make the noise.",
+     "hold": 6.0,
+     "at": 0.7,
+     "_doc": "⚑ S227 — T5, shortened (respite; COMMONS_STREAMLINE §3, his §8 'less text'): 19 → 15 words."
     }
    ]
   },
@@ -160,9 +137,10 @@
      },
      {
       "id": "c2c",
-      "text": "House of Late Arrivals — all four of you, at once, and take as long as you like.",
+      "text": "House of Late Arrivals — all four of you, at once. Take as long as you like.",
       "hold": 6.2,
-      "at": 2.4
+      "at": 2.4,
+      "_doc": "⚑ S227 — T6, shortened for its rhythm (respite; COMMONS_STREAMLINE §3, his §8 'less text'): 17 → 16 words."
      },
      {
       "id": "c2d",
@@ -296,7 +274,8 @@
   "hall": {
    "_doc": "⚑ S209g / B24 again (his, 2026-10-03: L1, L2, L3, M1, M2, M3 faceless, I1, I3 — REVIEW_B26_AND_COMMONS_2026-10-03.md). The walls say people made this place: the four invented houses' banners on her right, the house rules on her left (Dame-Griff's note: a community's rules are ordinary, owned and warm), a wall of firsts behind her. Invented, never a real house or a real ball's rules. Respite: nothing here is a trap and nothing is revealed as fake.",
    "rulesTitle": "HOUSE RULES",
-   "rulesPin": "pinned by House of Lamps · read it, then dance",
+   "rulesPin": "pinned by House of Lamps",
+  "_docS227": "⚑ S227 — T8, shortened (COMMONS_STREAMLINE §3, his §8 'less text'): 9 → 5 words. And HIS Q9: the boards are in the forward half now (commonsWorld.ts `WORLD.boards`) — the rules front-left, the banners front-right, the wall of firsts out to her left: nothing she needs is behind her.",
    "rules": [
     "1. Everybody walks.",
     "2. Nobody is filed here.",
@@ -314,6 +293,7 @@
   "bed": "ball_room_bed.mp3",
   "landing": "ball_room_landing.mp3",
   "_docS214": "⚑ S214 (his ear, 2026-10-04: 'mostly okay') — two sounds for what the room does, not for anybody's voice: the lamps rising (glass bells, from the sound review's draft 01) and her lamp raised (one bell that is hers and three that answer, draft 02). _docVoice stands: nothing here synthesises a voice or a word. No synthesised applause (his: 'don't like it, and don't think it is needed').",
+  "_docS227": "⚑ S227 — ONE SOUND AT A TIME (W1-F3, 'too noisy; the overlapping songs are too much'; COMMONS_STREAMLINE §4 and his §8 Q5). One music: the bed through the wall from Junie's card, then the landing — the wall comes down with the overlay (a 1.5 s crossfade at the drop, no longer mid-fight). One system sound at most, and while it sounds the room ducks ~9 dB (tapeAudio.ts `roomBed.duck`). One sign of the room: the lamps-rise bell rings ONCE, at the drop (it rang four times in ~22 s), and her lantern waits for a bell still sounding. Q5 'yes, end the party at the glitch': the music fades under the glitch and does not come back behind a wall; the Close has its own score.",
   "lampsRise": "commons_lamps_rise.mp3",
   "herLamp": "commons_her_lantern.mp3"
  },
@@ -333,15 +313,18 @@
   "meta": "sender muted  ·  delivered anyway",
   "chip": "Open link",
   "link": "commons.world/tonight",
-  "note": "this one gets past the filter. don't let it finish the sentence.",
+  "note": "it gets past the filter. don't let it finish.",
+  "_docNoteS227": "⚑ S227 — T1, shortened (respite; COMMONS_STREAMLINE §3, his §8 'less text'): 12 → 9 words. ⚑ And the card follows an action now (his Q7: 'Junie's card follows an action, never a held look or a clock alone'): she presses Begin on the session, the grounding breathes once and finishes, the recording plays, and the card lands on its third sentence's dash.",
   "_docLink": "⚑ 2026-09-13 (Sérgio: 'Junie sends us a link that hacks the system, states that to us, so it clearly corrupts the previous conversion in VR'). The card carries a LINK and says what it is for. Pressing it is going; what it does to the session is the arrival — the filter fighting the room (s4_ball.json `arrival._docStruggle`)."
  },
  "session": {
   "_beat": "⚑ 2026-09-12 — THE CORRECTION SESSION, and it replaces the offers (Sérgio's ruling: 'cut the offers entirely — we are taken to a correction system'). One screen on the glass: the agent's own environment, the photograph it restored framed on the wall, and a line that says the session is about to begin. It never does. What begins instead is Junie's card.",
   "mark": "Second Thoughts",
   "title": "Your session",
-  "line": "This is your session, Maya. We'll begin in a moment.",
+  "line": "This is your session, Maya. Begin when you're ready.",
   "preparing": "Preparing your environment",
+  "begin": "Begin",
+  "_docBeginS227": "⚑ S227 — HIS Q7 (COMMONS_STREAMLINE_2026-10-10.md §8, from his cadence rule, CADENCE_STUDY §9.8: 'the 2026 session's 30.5 s becomes a sequence of actions, not a held look or a clock'). The session no longer runs on a clock from the moment the device is worn: the plan arrives, and the apparatus offers ONE chip, Begin. Her press starts it — the grounding (one breath, in and out: a finished thing), then the recorded voice (a playback keeps its own clock, his §9.1), and Junie's card lands on its third sentence's dash, as before. She began the correction herself; the room interrupts it. Operable register: the system's own chip. In the Speedrun Version the card follows the press directly (`speedrun.session`).",
   "seconds": 9.0,
   "plan": [
    {
@@ -406,20 +389,22 @@
   "categoryPrefix": "CATEGORY",
   "event": "House of Lamps  ·  tonight",
   "categoryOf": "CATEGORY {n} OF {m}",
-  "host": "hosted by transjesus",
+  "_docHostRemoved": "⚑ S227 — T9 removed (his answers, COMMONS_STREAMLINE_2026-10-10.md §8 Q4: 'yes, remove'): the title bar's 'hosted by transjesus' said again what the mark `transjesus.str` already says.",
   "_docPanel": "⚑ 2026-09-13 (Sérgio: 'more clear info on the panel of the livestream'): the title bar names the event and the host; the lower third names the category by number and title, large; the chat is set larger."
  },
  "system": {
   "_doc": "⚑ 2026-09-13 — PEER PRESSURE. Sérgio: 'my fear with the Commons is that it resolves itself very quickly and easily… maybe it's the system that tries to overtake it but shuts down due to Peer Pressure (a play on social contagion and the importance of community).' So while the ball runs the agent comes back for her: twice, a card on the glass — reconnecting, restoring the environment — and each time the room's count pushes its bar back down and the connection is refused. The third time it does not try: it terminates the session and names its reason in its own ideology. That is the shutdown; the glitch follows; the failure spreads to both screens on the desk.",
+  "_docIntrusionsS227": "⚑ S227 — HIS ANSWERS (COMMONS_STREAMLINE_2026-10-10.md §8): the intrusions land on the ball's own structure, never on a clock — `afterCategory` n is 'when n categories have finished' (1 and 3; the Speedrun's one is 0, before Junie's category). The MC waits between categories while the system is on the glass, and carries on the moment the room has refused it (never mid-line, never through a performer). Q2/Q3: the second asks her to RAISE HER LAMP, the ball's own gesture, and the room refuses it whether she does or not — the outcome never depends on her. `status` is the old third stutter label, folded onto this card (T3).",
   "intrusions": [
    {
-    "at": 42,
+    "afterCategory": 1,
     "hold": 8.0
    },
    {
-    "at": 96,
+    "afterCategory": 3,
     "hold": 14.0,
-    "needsHer": true
+    "needsHer": true,
+    "status": "3 attempts · no result"
    }
   ],
   "mark": "Second Thoughts",
@@ -433,10 +418,25 @@
   "terminateSeconds": 5.0,
   "holding": "holding…",
   "inCrowd": "{n} present  ·  you",
-  "_docNeedsHer": "⚑ 2026-09-13 — THE SECOND REFUSAL IS HERS. The second intrusion does not lose on its own: its bar holds at the top until she has stepped into the crowd (the 'in the crowd' marker, commons-crowd — the room's one movement, a blink), and the count that refuses the connection then includes her ('47 present · you'). If she never moves, it holds through its whole `hold` and refuses anyway — nothing is gated on her, but the win is hers to take. A hint on the glass says where.",
-  "hint": "the room is asking you to stand with it",
-  "_docHintWhere": "⚑ S209f / A25 — the _doc above promised the hint 'says where', and it did not: from the seat the crowd's ring is 36° to the left and below the frame, and the one ring in view was the stage's. Now, while the room waits for her, the crowd's ring is the ONLY one offered (app.ts → movementNodes.setOnly — curation, not a glow; the markers' no-pulse law holds) and a second line names it: to your left from the seat, 'in the crowd' from anywhere else. Measured by out/probe/crowd26.mjs: six arrow-key turns, one real click.",
-  "hintWhere": "the ring on the floor, to your left",
-  "hintWhereAway": "the ring on the floor, in the crowd"
+  "_docNeedsHer": "⚑ SUPERSEDED IN PART by S227 (`_docIntrusionsS227`, `_docHintS227`): she is no longer asked to walk to the crowd — her lamp is the act, and there are no markers. The record of 2026-09-13 follows. ⚑ 2026-09-13 — THE SECOND REFUSAL IS HERS. The second intrusion does not lose on its own: its bar holds at the top until she has stepped into the crowd (the 'in the crowd' marker, commons-crowd — the room's one movement, a blink), and the count that refuses the connection then includes her ('47 present · you'). If she never moves, it holds through its whole `hold` and refuses anyway — nothing is gated on her, but the win is hers to take. A hint on the glass says where.",
+  "hint": "raise your lamp",
+  "_docHintS227": "⚑ S227 — T7 (his Q2, COMMONS_STREAMLINE_2026-10-10.md §8: 'yes, the lamp'): the hint no longer sends her to a ring on the floor (the one spot has no rings: §2, F4/F5). It asks for the ball's own gesture, under the card, in the room's colour: any press raises her lamp, the hall answers, and the count that refuses the connection includes her. Without her the room refuses it anyway at hold − 3 s (Q3). `hintWhere` / `hintWhereAway` are retired with the markers."
+ },
+ "speedrun": {
+  "_doc": "⚑ S227 — THE SPEEDRUN VERSION's Commons (W1-F7, W1-A3; his §8 Q6: 'yes', Junie's category, about 75 s). A composition of the lines above, not a second code path: read by ball.ts when `isSpeedrun()` (src/state/cut.ts, `?cut=speedrun` or the front door's choice). Same one spot, same press to turn, same refusal. The session: Begin, then the card after `session.cardAfter` s (the press is the action). Then two labels, Junie's 'Hi, Maya.', the call, intrusion 2 before her category (raise your lamp; refused either way), CONDITION: IN REPAIR, 'Music stays on. Nobody has to go anywhere.', the termination, the glitch. Every line here is a line of the full piece, uncut.",
+  "session": { "cardAfter": 0.8 },
+  "arrival": ["a3", "a4"],
+  "greeting": ["g1"],
+  "opening": [],
+  "categories": ["cat_in_repair"],
+  "closing": ["z2"],
+  "intrusions": [
+   {
+    "afterCategory": 0,
+    "hold": 14.0,
+    "needsHer": true,
+    "status": "3 attempts · no result"
+   }
+  ]
  }
 }

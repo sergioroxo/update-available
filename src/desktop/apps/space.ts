@@ -73,7 +73,8 @@ import ballScript from '../../../data/dialog/s4_ball.json';
 import updates from '../../../data/strings/updates.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
-import { E4Ball } from './ball';
+import { E4Ball, SPEEDRUN_CARD_AFTER } from './ball';
+import { isSpeedrun } from '../../state/cut';
 import type { UpdateApp } from './update';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
@@ -221,6 +222,9 @@ export class E4Shell {
   get offersRetired(): boolean { return !this.offersPending; }
   /** seconds since the device went on — the correction session's clock */
   private sessionT = 0;
+  /** ⚑ S227 — seconds since she pressed Begin on the session (−1: not yet). His Q7
+   *  (COMMONS_STREAMLINE_2026-10-10.md §8): Junie's card follows an action, never a clock alone. */
+  private sessionBegunT = -1;
   private breath: HTMLAudioElement | null = null;
   private hiss: HTMLAudioElement | null = null;
   /** ⚑ S79 — THE BALL. Made with the shell for the same reason the two above
@@ -372,16 +376,25 @@ export class E4Shell {
       // ⚑ 2026-09-13: the session is HEARD — grounding breathes (a loop), the
       //   "recording" plays with nobody in it, and both stop when the card lands
       const S = ballScript.session as { seconds: number };
-      // S149 — the session is the only sound on the glass: the room's bed goes as it begins (R3-103)
-      if (before < S.seconds && this.sessionT >= S.seconds) { roomBed.set(null, 3.0); this.breath = playLoop('session_breath.mp3'); }
-      if (before < S.seconds + 8 && this.sessionT >= S.seconds + 8) {
-        stopClip(this.breath); this.breath = null;
-        this.hiss = playOnce('playback_hiss.mp3');
-        if (this.hiss) this.hiss.volume = 0.5;   // S155 / R3-102: under the introduction, not over it
-      }
-      if (this.sessionT >= space.sessionSeconds) {
-        stopClip(this.breath); this.breath = null; stopClip(this.hiss); this.hiss = null;
-        this.ball.invite();
+      // ⚑ S227 (his Q7) — the plan arrives, Begin is offered once it is up, and nothing runs until she presses
+      //   it (`beginCorrection`). From the press: one breath of grounding (a finished thing), the recording (a
+      //   playback keeps its own clock, CADENCE_STUDY §9.1), and the card on its third sentence's dash —
+      //   the same 21.5 s the old clock spent after its own 9.
+      if (before < E4Ball.PLAN_SECONDS && this.sessionT >= E4Ball.PLAN_SECONDS) this.version++;
+      if (this.sessionBegunT >= 0) {
+        const b4 = this.sessionBegunT;
+        this.sessionBegunT += dt;
+        if (Math.floor(b4 * 4) !== Math.floor(this.sessionBegunT * 4)) this.version++;
+        if (!isSpeedrun() && b4 < 8 && this.sessionBegunT >= 8) {
+          stopClip(this.breath); this.breath = null;
+          this.hiss = playOnce('playback_hiss.mp3');
+          if (this.hiss) this.hiss.volume = 0.5;   // S155 / R3-102: under the introduction, not over it
+        }
+        const cardAt = isSpeedrun() ? SPEEDRUN_CARD_AFTER : space.sessionSeconds - S.seconds;
+        if (this.sessionBegunT >= cardAt) {
+          stopClip(this.breath); this.breath = null; stopClip(this.hiss); this.hiss = null;
+          this.ball.invite();
+        }
       }
     }
     this.offers.update(dt);
@@ -796,6 +809,22 @@ export class E4Shell {
     // ⚑ 2026-09-12: the offers do not open any more. The correction session
     //   runs on `sessionT`, and Junie's card arrives when it is up.
     this.sessionT = 0;
+    this.sessionBegunT = -1;
+  }
+
+  /** ⚑ S227 — Begin is on the glass: the plan is up and she has not pressed it yet */
+  get beginOffered(): boolean {
+    return this.stageNow === 'worn' && !this.ball.live && this.sessionBegunT < 0 && this.sessionT >= E4Ball.PLAN_SECONDS;
+  }
+  /** ⚑ S227 — her press on Begin: the session starts (S149 — the session is the only sound on the glass:
+   *  the room's bed goes as it begins, R3-103; the grounding breathes) */
+  private beginCorrection(): void {
+    if (!this.beginOffered) return;
+    this.sessionBegunT = 0;
+    playOnce('ui_press.mp3');
+    roomBed.set(null, 3.0);
+    if (!isSpeedrun()) this.breath = playLoop('session_breath.mp3');
+    this.version++;
   }
 
   /**
@@ -842,8 +871,10 @@ export class E4Shell {
      */
     this.stageNow = 'glitch';
     playOnce('glitch_e4_end.mp3');
-    // ⚑ S214 — the party does not play on through the place coming apart: it goes back behind the wall
-    roomBed.set('ball_room_bed.mp3', 2.0);
+    // ⚑ S214 — the party does not play on through the place coming apart. ⚑ S227 (his §8 Q5: "yes, end the
+    //   party at the glitch") — and it does not go back behind a wall either: it ends here, under the glitch,
+    //   and the Close's own score (`close_score.mp3`) has the room alone when the night comes.
+    roomBed.set(null, 1.2);
     this.glitchT = 0;
     this.glitchStep = -1;
     this.version++;
@@ -858,7 +889,8 @@ export class E4Shell {
     this.ball.handleClick();
     return true;
   }
-  setSeat(nodeId: string | null): void { this.ball.inCrowd = nodeId === 'commons-crowd'; this.ball.atSeat = nodeId === null; setCommonsHerSeat(nodeId); }
+  /** ⚑ S227 — one spot, nothing to stand anywhere else for: the ball no longer reads where she is */
+  setSeat(nodeId: string | null): void { setCommonsHerSeat(nodeId); }
   /** ⚑ 2026-09-13: seconds since the device stopped — the failure SPREADS to
    *  both screens on the desk (the laptop here, the browser in `E4Browser`):
    *  the sentence, then the bands, then off. See `FAIL`. */
@@ -1044,7 +1076,7 @@ export class E4Shell {
     if (k > 0) {
       const was = ctx.globalAlpha;
       ctx.globalAlpha = k;
-      this.ball.drawSession(ctx, W, H, this.sessionT);
+      this.ball.drawSession(ctx, W, H, this.sessionT, this.sessionBegunT, this.beginOffered);
       ctx.globalAlpha = was;
     }
     this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
@@ -1075,6 +1107,12 @@ export class E4Shell {
       // ⚑ S133: while the invitation is up it owns the press — one chip, or
       //   nothing, consumed either way, exactly as L's chips were.
       if (this.ball.invited) return this.ball.handleClick(x, y);
+      // ⚑ S227 (his Q7) — Begin: the chip, or nothing (consumed either way, like every press on the worn glass)
+      if (this.beginOffered) {
+        const h = this.ball.sessionHits[0];
+        if (h && x >= h.x - 6 && x <= h.x + h.w + 6 && y >= h.y - 6 && y <= h.y + h.h + 6) this.beginCorrection();
+        return true;
+      }
       // ⚑ the offers get first refusal, because by the time they are on screen L
       // has finished and its chips are gone. Two of the era's three presses land
       // here — the memories undo and the careful pause — and everything else on
