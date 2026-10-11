@@ -7,7 +7,7 @@
  * the ESC pause overlay is care infrastructure and preempts everything.
  */
 import { isSpeedrun } from '../state/cut';
-import { mapState } from '../witness/map';
+import { mapState, beatDone } from '../witness/map';
 import { gameMenuBus as startMenuBus } from '../state/gameMenuBus';
 import { meetWord } from '../room/lexicon';
 import lexStrings from '../../data/strings/lexicon.json';
@@ -56,6 +56,7 @@ import { playOnce, isAudioAvailable } from '../audio/tapeAudio';
 import { GuideThread } from '../narrative/guide';
 import { setPauseOS, pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 import { Screensaver, SAVER_SECONDS } from './apps/screensaver';
+import { StartPanel } from './apps/startPanel';   // S229 / W1-A6
 import { anythingPlaying } from '../audio/tapeAudio';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
@@ -433,6 +434,12 @@ export class DesktopOS {
   /** ⚑ S220 — Shut Down… refused (his, 2026-10-08): the machine will not let you go; the frame's Leave always does */
   private shutRefused = false;
   private wotdShown = new Set<string>();
+  /** ⚑ S229 / W1-A6 — "what you can do here": the era's own card, once per era, 1997 and 2003 on this canvas
+   *  (2016's lives on Vera's workstation, 2026's in the browser). Under every window; closes with its own box. */
+  private startPanels: { e1: StartPanel; e2: StartPanel } = {
+    e1: new StartPanel('e1', (k) => beatDone(k, this)),
+    e2: new StartPanel('e2', (k) => beatDone(k, this))
+  };
   private diaryAfterForm = false;
   /** engine reads this to creep the cold (witness) side into peripheral vision */
   hasUnseenWitness = false;
@@ -1083,6 +1090,21 @@ export class DesktopOS {
     if (this.saver.update(dt)) this.dirty = true;
   }
 
+  /** ⚑ S229 / W1-A6 — the screen is calm: the desktop is bare and nothing modal, felt or booting owns it. The card
+   *  sits under every window, so this is also the only time it is drawn (and the only time its close box exists). */
+  private startPanelCalm(): boolean {
+    const era = this.desktopEra;
+    if (!this.reinterp || this.phase !== 'desktop' || (era !== 'e1' && era !== 'e2')) return false;
+    if (era === 'e2' && this.e2Stage !== 'active') return false;
+    return this.desktopIdle() && !this.pauseOpen && !this.wotdOpen && !this.shutRefused && !this.startOpen && !this.saver
+      && !this.programSplash && !this.e2Jingle && this.desktopReturnAt < 0 && !this.residueDark;
+  }
+  private updateStartPanel(dt: number): void {
+    const era = this.desktopEra;
+    if (era !== 'e1' && era !== 'e2') return;
+    if (this.startPanels[era].tick(dt, this.startPanelCalm())) this.dirty = true;
+  }
+
   private maybeWotd(): void {
     const era = this.desktopEra;
     if (this.wotdOpen || this.pauseOpen || this.saver || this.phase !== 'desktop' || !this.reinterp) return;
@@ -1094,6 +1116,7 @@ export class DesktopOS {
     //   unseen Word of the Day swallowed every press on the dark glass (the walk stopped at "Welcome back")
     if ((era === 'e2' && this.e2Stage !== 'active') || this.caleb?.ownsScreen || this.updateApp?.open) return;
     if (this.idleSeconds < 15 || !this.desktopIdle() || this.toast) return;
+    if (!this.startPanels[era].everShown) return;   // S229 / W1-A6 — one thing at a time: the era's "what you can do here" card comes first
     this.wotdShown.add(era);
     this.wotdOpen = era;
     meetWord((lexStrings.wotdApps as Record<string, { word: string }>)[era].word);
@@ -1925,6 +1948,7 @@ export class DesktopOS {
     if (this.testimony?.open) { this.testimony.update(dt); if (this.testimony.dirty) this.dirty = true; }   // S205
     this.maybePause();
     this.maybeWotd();   // S209 / P7-47
+    this.updateStartPanel(dt);   // S229 / W1-A6
     // ⚑ S201 — Lamby's "while you wait": once, on a quiet 2003 desktop, after the thread was recommended
     if (!this.lambyWaitShown && this.desktopEra === 'e2' && this.e2Stage === 'active' && this.forumRecommended
         && !this.forum && this.idleSeconds > 30 && this.desktopIdle() && !this.toast) {
@@ -2642,6 +2666,14 @@ export class DesktopOS {
     // taken, so nothing depends on having said yes to him.
     if (this.desktopEra === 'e2' && this.messagePending) {
       this.drawIcon(12, 236, lambyStrings.messengerIcon, true, 'icon-messenger', true);
+    }
+    // ⚑ S229 / W1-A6 — "what you can do here": a desktop object, so UNDER every window (and drawn only while the
+    //   desktop is calm, which is when its close box is published; hits go first so nothing behind can take it)
+    if ((this.desktopEra === 'e1' || this.desktopEra === 'e2') && this.startPanels[this.desktopEra].open && this.startPanelCalm()) {
+      const sp = this.startPanels[this.desktopEra];
+      const pw = 240;
+      const rects = sp.draw(ctx, W - pw - 10, 84, pw);
+      this.hits.unshift(...rects.map((r) => ({ ...r, id: 'startpanel-close' })));
     }
     // windows
     // S151 — the wizard minimises itself when the channel opens, and comes back
@@ -3953,6 +3985,7 @@ export class DesktopOS {
         case 'continue': this.setPhase('off'); break;
         case 'leave': this.leave(); break;
         case 'ok': this.confirmName(); break;
+        case 'startpanel-close': if (this.desktopEra === 'e1' || this.desktopEra === 'e2') this.startPanels[this.desktopEra].close(); break;   // S229 / W1-A6
         case 'icon-a': this.insertKit(); break;
         // (the taskbar's window buttons are resolved above, before the windows take the click — S165)
         case 'icon-irc': if (this.irc) this.irc.open = true; break;

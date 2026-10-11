@@ -1,0 +1,51 @@
+{
+ "_doc": "⚑ S229 / W1-A6 (walkthrough 1: 'a what-you-can-do-here panel at the start of EVERY era — the colleague liked the one level panel that said what you could do'; also B4, B14). One short card per era, in THAT ERA'S OWN SOFTWARE VOICE, on the era's own screen: 1997 the programme's Getting Started window, 2003 Restorify's Today, 2016 GracePlatform's first-day card, 2026 GraceOS's welcome-back card. It is the programme telling her what to do, never the frame: no Assistant, nothing in the piece's own voice, and it files nothing. Each step names a witness-map condition (`done` = a key of CONDITIONS in src/witness/map.ts), so a tick is only ever true; a step may carry `textSpeedrun` (the Speedrun Version's own wording) and `doneSpeedrun`, or `speedrun: false` to leave the Speedrun Version's card without it. 3–5 steps, one line each. On 2016's board, where a card would lie over the day's tiles, it becomes a one-row strip under them (`strip` / `stripSpeedrun`: the same steps, shorter) while the board is one row of tiles. It opens once per era after the arrival has settled, only on a calm screen (never over a required modal, never during a felt scene), sits UNDER every window, and closes with its own close box (src/desktop/apps/startPanel.ts).",
+ "e1": {
+  "title": "Getting Started",
+  "lead": "Welcome to your companion disk. Do these in order:",
+  "steps": [
+   { "text": "Open the disk: the A:\\ icon.", "done": "kitInserted" },
+   { "text": "Read the programme, then press Done.", "done": "kitRead" },
+   { "text": "Play the tape and follow the prayer.", "done": "prayerSaid" },
+   { "text": "Sign the pledge card, or set it aside.", "done": "pledgeAnswered" },
+   { "text": "Go online: the wizard dials the fellowship.", "done": "wentOnline" }
+  ],
+  "close": "Close"
+ },
+ "e2": {
+  "title": "Restorify 2003 - Today",
+  "lead": "Today's steps, in order:",
+  "steps": [
+   { "text": "Answer the daily check-in.", "done": "checkinDone" },
+   { "text": "Open Your Story and go through the topics.", "done": "testimonyPrep" },
+   { "text": "Agree to the release.", "done": "testimonyRelease" },
+   { "text": "Play your take, then send it to editing.", "done": "testimonyTapes", "speedrun": false },
+   { "text": "Watch your story online.", "done": "testimonyOnline" }
+  ],
+  "close": "Close"
+ },
+ "e3": {
+  "title": "GETTING STARTED",
+  "lead": "Your first shift",
+  "steps": [
+   { "text": "Sign in.", "strip": "Sign in.", "done": "signedIn" },
+   { "text": "Answer Lambient's question.", "strip": "Lambient's question.", "done": "consentAnswered" },
+   { "text": "Work two stories through to their end.", "strip": "Two stories through.", "done": "twoJobsDone", "textSpeedrun": "Work a story through to its end.", "stripSpeedrun": "One story through.", "doneSpeedrun": "oneJobDone" },
+   { "text": "Pick up your phone: it has a message.", "strip": "Your phone has a message.", "done": "phoneAnswered" },
+   { "text": "Open the group's link.", "strip": "Open the group's link.", "done": "voted" }
+  ],
+  "close": "Close"
+ },
+ "e4": {
+  "title": "WELCOME BACK, MAYA",
+  "lead": "Here is what happens next",
+  "steps": [
+   { "text": "Your session is back.", "done": "browserOpen" },
+   { "text": "Search, and let the engine finish it.", "done": "resultsSeen" },
+   { "text": "Open the first result and begin.", "done": "programBegun" },
+   { "text": "Answer L, one step at a time.", "done": "stepsDone" },
+   { "text": "Put the headset on.", "done": "headsetWorn" }
+  ],
+  "close": "Close"
+ }
+}

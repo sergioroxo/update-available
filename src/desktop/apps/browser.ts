@@ -39,6 +39,8 @@ import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 }
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
 import { pauseWords } from '../../narrative/pauses';
+import { StartPanel, fakeOs } from './startPanel';   // S229 / W1-A6
+import { beatDone } from '../../witness/map';
 import { FloppySheep, FLOPPY_LABEL } from './floppysheep';
 import script from '../../../data/dialog/s4_boot.json';
 import {
@@ -161,6 +163,12 @@ export class E4Browser {
   private idleOrb: Screensaver | null = null;
   private idleT = 0;
   private wotdSaid = false;   // S209 / P7-47
+  /** ⚑ S229 / W1-A6 — GraceOS's welcome-back card: once, on the restored page before the search, under nothing and over
+   *  nothing (the page's lower half is bare); the map's conditions are asked of THIS browser (browserOpen, resultsSeen) */
+  private readonly startPanel = new StartPanel('e4', (k) => beatDone(k, fakeOs({ e4: { browser: this } } as never)));
+  private startCalm(): boolean {
+    return this.phase === 'open' && this.mode === 'free' && this.liveTab === 'search' && this.pressable && !this.idleOrb;
+  }
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
 
@@ -335,6 +343,7 @@ export class E4Browser {
     //   through the whole finale and pressed it forty-five times (2026-09-12)
     if (!this.pressable && this.hits.length) this.hits = [];
     if (this.phase === 'dormant') return;
+    if (this.startPanel.tick(dt, this.startCalm())) this.version++;   // S229 / W1-A6
     // ⚑ S207 — 2026's PAUSE (pauses.json): restored, before the search, after a quiet moment, L says once what
     //   else is open to her — only what is left (the console only once its game is there)
     if (!this.pauseSaid && this.phase === 'open' && this.mode === 'free') {
@@ -610,6 +619,10 @@ export class E4Browser {
       case 'care': this.drawCare(ctx, W, H); break;
       case 'extra': this.drawExtra(ctx, W, H); break;
       case 'photos': this.drawPhotos(ctx, W, H); break;
+    }
+    // ⚑ S229 / W1-A6 — the welcome-back card, over the page's bare lower half (never over the completions or the tabs)
+    if (this.startPanel.open && this.startCalm()) {
+      for (const b of this.startPanel.draw(ctx, 24, 176, 300)) this.publish({ ...b, id: 'startpanel-close' });
     }
   }
 
@@ -1512,6 +1525,7 @@ export class E4Browser {
     if (this.mode === 'typing') return true;  // the engine is busy finishing her sentence
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (hit) {
+      if (hit.id === 'startpanel-close') { this.startPanel.close(); this.version++; return true; }   // S229 / W1-A6
       // S168 / R3-92: the game, one press away
       if (hit.id === 'bm-floppy' && this.mode === 'free') { this.mode = 'game'; this.floppy.openGame(); this.version++; return true; }
       if (hit.id === 'game-back') { this.floppy.closeGame(); this.mode = 'free'; this.version++; return true; }

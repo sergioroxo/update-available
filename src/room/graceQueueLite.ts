@@ -127,6 +127,7 @@ import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 import { isSpeedrun } from '../state/cut';
+import { StartPanel } from '../desktop/apps/startPanel';   // S229 / W1-A6
 
 /** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
  *  the type moved to `desktop/apps/comments.ts` when that module took over the
@@ -503,6 +504,25 @@ export class GraceQueueLite {
    *  words. The board's quiet does not count while she holds it, and starts again when she puts it down. */
   phoneInHand = false;
   private waitSaid = false;
+  /** ⚑ S229 / W1-A6 — GracePlatform's "getting started" card: once, on the sign-in screen and then the board while it
+   *  is still a short board; under the pause card, away on a job / the consent question / the phone in her hand */
+  private readonly startPanel = new StartPanel('e3');
+  private startPanelCalm(): boolean {
+    if (this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface) return false;
+    if (this.mode === 'signin') return true;
+    return this.mode === 'board' && this.tasks().length <= 3;   // one row of tiles: the strip fits under them
+  }
+  /** the board's third column — where the card sits, so it never lies over a tile that exists */
+  private startPanelRect(c: aero.AeroContent): { x: number; y: number; w: number } {
+    const GAP = 14;
+    const tileW = Math.floor((c.w - GAP * 2) / 3);
+    return { x: c.x + 2 * (tileW + GAP), y: c.y + 52, w: tileW };
+  }
+  private drawStartPanel(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    if (!this.startPanel.open || !this.startPanelCalm()) return;
+    const r = this.startPanelRect(c);
+    for (const b of this.startPanel.draw(ctx, r.x, r.y, r.w)) this.rects.push({ ...b, id: 'startpanel-close' });
+  }
   /** ⚑ S207 — 2016's pause ("This week", pauses.json): open now, shown once; FloppySheep opened at least once */
   private pauseOpen = false;
   private pauseShown = false;
@@ -513,6 +533,7 @@ export class GraceQueueLite {
     this.updateSaver(dt);
     this.updateGate();
     this.updateJobReturn(dt);
+    if (this.startPanel.tick(dt, this.startPanelCalm())) this.bump();
     if (this.phoneInHand) this.boardQuietT = 0;
     else if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
@@ -1362,6 +1383,7 @@ export class GraceQueueLite {
     ctx.fillText(q.app.signInGreeting, cx, c.y + 40);
     setFont(ctx, 15); ctx.fillStyle = ERA3.grey;
     ctx.fillText(q.app.signInSub, cx, c.y + 78);
+    this.drawStartPanel(ctx, c);
     const bx = cx; const by = c.y + c.h - 70; const bw = 220; const bh = 42;
     aero.button(ctx, bx, by, bw, bh, q.app.signInButton, { primary: true, tone: 'good', size: 16 });
     this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'signin' });
@@ -1441,6 +1463,14 @@ export class GraceQueueLite {
     //   The first-task beat itself closes on her next press on the board (handleClick).
     this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+    // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
+    //   it fits between them and Lambient's lane
+    if (this.startPanel.open && this.startPanelCalm() && rows === 1) {
+      const sy = top + tileH + 4;
+      if (sy + StartPanel.STRIP_H <= c.y + c.h - 42 - 2) {
+        for (const b of this.startPanel.drawStrip(ctx, c.x, sy, c.w)) this.rects.push({ ...b, id: 'startpanel-close' });
+      }
+    }
     if (this.pauseOpen) this.drawPauseCard(ctx, c);
   }
 
@@ -2126,6 +2156,7 @@ export class GraceQueueLite {
     if (r.id === 'task-restore') { if (this.minimised) this.toggleMinimised(); return; }
     if (this.minimised) return;
     if (this.pauseOpen) { if (r.id === 'pause-close') { this.pauseOpen = false; this.bump(); } return; }   // S207
+    if (r.id === 'startpanel-close') { this.startPanel.close(); this.bump(); return; }   // S229 / W1-A6
     if (r.id === 'win-min') { this.toggleMinimised(); return; }
     if (r.id === 'signin') { this.beginList(); return; }
     if (r.id === 'consent-wake') { this.toggleWakeWord(); return; }

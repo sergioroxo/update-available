@@ -146,6 +146,13 @@ function cond(key: string, os: DesktopOS): boolean {
   return fn ? fn(os) : false;
 }
 
+/** ⚑ S229 / W1-A6 — one condition, answered for a surface that asks on its own (the per-era "what you can do here"
+ *  cards, src/desktop/apps/startPanel.ts). `os` may be absent or partial (Vera's workstation and the 2026 browser
+ *  hold no DesktopOS): a condition that needs a part that is not there is simply not true. */
+export function beatDone(key: string, os?: DesktopOS): boolean {
+  try { return cond(key, os as DesktopOS); } catch { return false; }
+}
+
 /** which era the player is in, for the map: the OS's desktop era, unless the
  *  final restart is on the ledger (the Close has no desktop era) */
 export function mapEraNow(os: DesktopOS): RecordEra | 'close' {
