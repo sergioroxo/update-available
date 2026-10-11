@@ -4,7 +4,9 @@
  "years": "1997 — 2026",
  "title": "Restart as you are.",
  "kept": "Nothing you did here was kept — not by the machine, not by us.",
- "choose": "Go back to a room, or start the machine again.",
+ "choose": "Go back to a room, go home, or start the machine again.",
+ "home": "Return to LambyOS Home",
+ "_docHome": "⚑ S230 — THE CLOSE RETURNS TO LAMBYOS HOME (docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md §7 item 3). This button is the card's own way home; the piece also TAKES the visitor there when the card has gone unpressed for a long while (src/engine/app.ts, CLOSE_HOME_AFTER_SECONDS) — a story beat never waits on a choice to look or to press. Frame voice, functional. Home (src/desktop/home/) is where the Lexicon stands at the end.",
  "eras": [
   {
    "era": "e1",

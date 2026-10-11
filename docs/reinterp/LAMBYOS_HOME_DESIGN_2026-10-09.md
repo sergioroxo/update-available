@@ -419,6 +419,13 @@ Ethics calls are marked ⚑.
    opens in the programme's showroom and closes back in it, and at the end the Lexicon is on the shelf with its
    sources. Recommendation: keep the Lexicon out of Home at the start, so the vocabulary is not explained before the
    piece uses it. (Q4 above is answered by this.)
+   **⚑ BUILT S230 (2026-10-11).** Home has two modes (`mountLambyosHome(…, { mode: 'arrival' | 'return' })`). The Close's
+   Restart card on Daniel's monitor has a "Return to LambyOS Home" button, and if the lit card stands unpressed for
+   ~90 s the piece takes the visitor there itself (scripted; any press or the open menu resets it). In the return the
+   Lexicon on the shelf (its big-box sprite stands there from the first frame, drawn dead at arrival) is lit and opens
+   the Close's own Lexicon, Your Words from this visit's memory, with its sources line and the Credits; the three
+   devices offer Start again (the menu's Restart: wipe, reload, `#home-armed`); the door is Leave; Lamby has two
+   end-of-visit lines. Home still files nothing. Words: data/strings/home.json `return.*`, close_restart.json `home`.
 4. **The advert's last card: "need more examples".** Four, all in the frame's voice, after the tape stops; the
    wording is his (dossier phrasing):
    - (a) *Plain fact* (the draft above): "That was the programme's own advert. The practices it sells have no

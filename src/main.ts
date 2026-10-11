@@ -70,7 +70,13 @@ function launch(): void {
   // possible is the browser 3D ROOM, which is a first-class build with two
   // look-modes of its own: drag (desktop) and gyro (phone/tablet, S80).
   if (query.get('flat') === '1') startFlat(canvas as HTMLCanvasElement, { reinterp });
-  else void startApp(canvas as HTMLCanvasElement, { reinterp, facet, era, morphDemo, close, reveal, nobatch });
+  else void startApp(canvas as HTMLCanvasElement, {
+    reinterp, facet, era, morphDemo, close, reveal, nobatch,
+    // ⚑ S230 — the Close returns to LambyOS Home (design §7 item 3): the piece opens in the programme's showroom and
+    //   closes in it, with the Lexicon on the shelf. Home in its 'return' mode never hands on to anything; it offers
+    //   Start again (a reload) and Leave. It does so even when `?home=0` skipped the room at the start.
+    onReturnHome: reinterp ? () => { mountLambyosHome(() => { /* a return admits nobody */ }, { mode: 'return' }); } : undefined
+  });
 }
 
 // ?lambyrig=1 — standalone procedural assistant rig lab; no OS integration,

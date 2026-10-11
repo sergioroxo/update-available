@@ -524,6 +524,9 @@ interface AppOptions {
   reveal?: boolean;
   /** ?nobatch=1 — disable static batching (A/B perf comparison, review tool) */
   nobatch?: boolean;
+  /** ⚑ S230 — the Close's last move: take the visitor back into LambyOS Home (src/main.ts mounts it, mode 'return').
+   *  Absent → the Close ends on the Restart card as it always did. */
+  onReturnHome?: () => void;
 }
 
 /**
@@ -698,6 +701,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let cluster: ClusterShell | null = null;
   let cloud: PointCloud | null = null;
   let closeMonitor: CloseMonitor | null = null;
+  /** S230: seconds the lit Restart card has stood unpressed (the scripted send home, see `returnToHome`);
+   *  declared up here because a tap resets it */
+  let closeHomeIdle = 0;
   let sendRt: SendRuntime | null = null;
   let movementNodes: MovementNodes | null = null;
   // R28-2b: the tape system's pure logic (src/narrative/tapes.ts, mirrors
@@ -2995,6 +3001,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** ⚑ S147 — one resolution for every press: the mouse's tap (above) and the
    *  controller's select (xrInput.ts) both arrive here as a ray. */
   function resolveTapRay(ray: Ray): void {
+    closeHomeIdle = 0;   // S230: any press in the Close starts the count to the scripted send home again
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
     // ⚑ S227 / W1-C11 — the referral printout on the record wall comes up close when pressed (no zooming to read it)
     {
@@ -3720,6 +3727,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (skyLerp.t >= 1) skyLerp = null;
       }
       closeMonitor?.update(dt);
+      // ⚑ S230 — the scripted send home: the card is lit, nothing is being pressed, no menu holds the piece
+      if (closeMonitor?.on && closeMonitor.hits.length > 0 && !camMove && !gameMenuBus.isOpen) {
+        closeHomeIdle += dt;
+        if (closeHomeIdle >= CLOSE_HOME_AFTER_SECONDS) returnToHome();
+      } else closeHomeIdle = 0;
       // ⚑ S85: a driven leg has ended and nothing took it over, so a look taken
       // during it becomes simply the look you are holding. (A landing never
       // reaches here with an offset — endDescent/seatCut clear it — and a
@@ -4586,6 +4598,34 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
 
   /**
+   * ⚑ S230 — THE CLOSE RETURNS TO LAMBYOS HOME (design §7 item 3, his idea: "Should we make the final moment with
+   * the computer in the Close a comeback to the BOB and have it there?"). The piece opened in the programme's
+   * showroom (src/desktop/home/) and closes back in it: the same room, now with the Lexicon on the shelf lit and the
+   * devices offering Start again. Two ways in, and neither asks the visitor to look anywhere (his 2026-10-10 rule:
+   * "we need to take the viewer there"):
+   *   · the Restart card's own button, `close-home`;
+   *   · the piece itself, when the card has stood lit and unpressed for CLOSE_HOME_AFTER_SECONDS — a scripted send,
+   *     the same hand that brought the monitor up. Any press anywhere in the Close (a panel, the glass, a card)
+   *     starts the count again, and an open menu holds it.
+   * The Close's score fades out as Home fades in over the canvas; in a headset the immersive session ends first
+   * (Home is a page). Home files nothing, and the ledger is left whole so Your Words can be read there.
+   */
+  const CLOSE_HOME_AFTER_SECONDS = 90;
+  let homeReturned = false;
+  function returnToHome(): void {
+    if (homeReturned || !options.onReturnHome) return;
+    homeReturned = true;
+    closeMsgEl.style.opacity = '0';
+    xrFrame?.setHint(null);
+    roomBed.set(null, 3.5);
+    if (xr?.active) xr.end();
+    options.onReturnHome();
+    // the room under an opaque page need not be drawn for the rest of the visit (it is a reload from here)
+    window.setTimeout(() => { app.autoRender = false; }, 2500);
+    (window as { __homeReturn?: boolean }).__homeReturn = true;   // the audit's handle (?debug=1 tools only)
+  }
+
+  /**
    * ⚑ LEAVING THE CLOSE — the Restart card's era buttons. The sky goes, the
    * monitor goes, every room entity the Close switched off comes back, the
    * room's own sky colour returns, and the settled jump does the rest exactly
@@ -4720,6 +4760,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       window.setTimeout(() => window.location.reload(), 3200);
     };
     closeMonitor.onGo = () => goToCloseMonitor();
+    closeMonitor.onHome = () => returnToHome();
     closeMonitor.onDossier = () => gameMenuBus.openCloseSources?.(-1);
     // read-only probe, like __os: the walk aims at the card's rects through it
     (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;

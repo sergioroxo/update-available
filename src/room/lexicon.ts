@@ -101,7 +101,9 @@ export class Lexicon {
     wrapText(ctx, L.sub, W - 268).forEach((l, i) => ctx.fillText(l, 252, 152 + i * 12));
     const n = ledger.lexicon.length;
     setFont(ctx, 9); ctx.fillStyle = ERA1.tooltip;
-    ctx.fillText(n ? L.metCount.replace('{n}', String(n)).replace('{m}', String(TERMS.length)) : L.yoursNone, 252, 196);
+    // S230: wrapped — the one line ran off the glass (and, in LambyOS Home, off the card) at "They were there an…"
+    wrapText(ctx, n ? L.metCount.replace('{n}', String(n)).replace('{m}', String(TERMS.length)) : L.yoursNone, W - 268)
+      .forEach((l, i) => ctx.fillText(l, 252, 196 + i * 12));
   }
 
   private drawWord(ctx: CanvasRenderingContext2D, W: number, H: number, hits: Hit[]): void {

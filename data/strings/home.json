@@ -1,5 +1,5 @@
 {
- "_doc": "⚑ S227 — LAMBYOS HOME, first pass (docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md; W1-A1/A2/A4/A5/A7). The programme's front door, the way Bob was Windows': a flat illustrated 1997 living room (src/desktop/home/), one object = one thing to learn, each opening a plain card in the FRAME's voice. It replaces the orienting card (src/desktop/orientingCard.ts) as the first thing a fresh reinterp load shows; that card survives as the SHORT DOOR (`?home=0`, and the notice's 'Been here before?' line). THE FRAME'S WORDS ARE NOT COPIED HERE: the content note, premise, about, subtitle, version tag, the three ways to look (`cards.*`), the menu line, captions, Leave's left page and the wait/enter notes are read from data/strings/orientingCard.json, unchanged, so the two doors can never drift apart (design §1: 'the words already in orientingCard.json … reused verbatim'). This file holds only what is new to Home. HIS ANSWERS (design §7, 2026-10-09/10): (1) 'only speech bubbles like BOB' — Lamby is in the room and speaks ONLY in bubbles (`lamby.*`), the programme's own voice (register operable), short, never over the content note (every bubble is hidden while any card is open), always dismissible; no bubble ever carries a frame word. (2) 'Record? no' — Home files nothing: no ledger record, no witness entry; only the two view settings carry over in memory (the look mode and `ledger.view.captions`). (3) The Lexicon is NOT in Home at the start: it appears when the Close returns to Home (later). (4)/(6) The advert on the tape is his choice (c) and 'both', but it needs its drawing: in this pass the tape sits on the sideboard, drawn and named, and cannot be pressed. THE ONE GATE (design §1): the notice ('Before you come in') is the only thing lit at the start; closing it starts the existing 4 s arm-delay, after which the three enter buttons light. THE CUT (his 2026-10-10 ruling 'both': the exhibition offers the full piece AND the Speedrun Version, W1-A3): one quiet choice in each device card, default the full piece, `?cut=speedrun` preselects; src/state/cut.ts, memory only. `door.note` is new frame wording (this Leave is today's door's Leave, 'You left. / Nothing was kept.', not the menu's leave page, so gameMenu.leaveNote would have said the wrong thing). `armchair.body` is `chooseNote` without its first sentence ('Choose one.' belongs to the devices). `mat` is the programme's signage, drawn in the room's pixel type.",
+ "_doc": "⚑ S227 — LAMBYOS HOME, first pass (docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md; W1-A1/A2/A4/A5/A7). The programme's front door, the way Bob was Windows': a flat illustrated 1997 living room (src/desktop/home/), one object = one thing to learn, each opening a plain card in the FRAME's voice. It replaces the orienting card (src/desktop/orientingCard.ts) as the first thing a fresh reinterp load shows; that card survives as the SHORT DOOR (`?home=0`, and the notice's 'Been here before?' line). THE FRAME'S WORDS ARE NOT COPIED HERE: the content note, premise, about, subtitle, version tag, the three ways to look (`cards.*`), the menu line, captions, Leave's left page and the wait/enter notes are read from data/strings/orientingCard.json, unchanged, so the two doors can never drift apart (design §1: 'the words already in orientingCard.json … reused verbatim'). This file holds only what is new to Home. HIS ANSWERS (design §7, 2026-10-09/10): (1) 'only speech bubbles like BOB' — Lamby is in the room and speaks ONLY in bubbles (`lamby.*`), the programme's own voice (register operable), short, never over the content note (every bubble is hidden while any card is open), always dismissible; no bubble ever carries a frame word. (2) 'Record? no' — Home files nothing: no ledger record, no witness entry; only the two view settings carry over in memory (the look mode and `ledger.view.captions`). (3) The Lexicon: its big-box CD-ROM stands on the shelf from the first frame but DRAWN DEAD (S230: present, not pressable; Lamby says 'for later'); it is lit and opens only when the Close returns to Home (`return.*`, below). (4)/(6) The advert on the tape is his choice (c) and 'both', but it needs its drawing: in this pass the tape sits on the sideboard, drawn and named, and cannot be pressed. THE ONE GATE (design §1): the notice ('Before you come in') is the only thing lit at the start; closing it starts the existing 4 s arm-delay, after which the three enter buttons light. THE CUT (his 2026-10-10 ruling 'both': the exhibition offers the full piece AND the Speedrun Version, W1-A3): one quiet choice in each device card, default the full piece, `?cut=speedrun` preselects; src/state/cut.ts, memory only. `door.note` is new frame wording (this Leave is today's door's Leave, 'You left. / Nothing was kept.', not the menu's leave page, so gameMenu.leaveNote would have said the wrong thing). `armchair.body` is `chooseNote` without its first sentence ('Choose one.' belongs to the devices). `mat` is the programme's signage, drawn in the room's pixel type.",
  "roomLabel": "LambyOS Home",
  "mat": "WELCOME HOME",
  "close": "Close",
@@ -8,6 +8,8 @@
   "notice": "The notice: before you come in",
   "plaque": "The plaque: what this is",
   "tape": "The tape",
+  "lexicon": "The Lexicon: on the shelf",
+  "lexiconLater": "The Lexicon: on the shelf (not yet)",
   "armchair": "The armchair: the turn",
   "remote": "The remote control: captions",
   "switch": "The light switch: the menu",
@@ -59,6 +61,25 @@
    "When you're ready, the machines are on the little table.",
    "You don't need to do anything."
   ],
-  "armchair": "Our best chair. It turns right round!"
+  "armchair": "Our best chair. It turns right round!",
+  "lexiconLater": "That one's for later!"
+ },
+ "return": {
+  "_doc": "⚑ S230 — THE CLOSE RETURNS TO LAMBYOS HOME (his idea, design §7 item 3: 'Should we make the final moment with the computer in the Close a comeback to the BOB and have it there? Maybe the Lexicon would be there?'). The piece is bookended: it opened in the programme's showroom and closes back in it, the same room with `mode: return` (src/desktop/home/lambyosHome.ts). At the end the Lexicon on the shelf is lit and opens the Lexicon (src/room/lexicon.ts, data/strings/lexicon.json, with Your Words from this visit's memory), the three devices offer START AGAIN instead of Enter, and the door is Leave. Home still files NOTHING. Two voices, kept apart as in arrival: `again.*` and `door.note` are the FRAME's (plain); `lamby.*` is the PROGRAMME's (register operable, cheerful; never about the topic, never jokes at the victim, never carries a frame word). `lamby.greet` is the arrival's greeting WORD FOR WORD: the same eager welcome, the second time round. The Lexicon card keeps the Lexicon's own words (lexicon.json) and adds only the Credits line already on the plaque.",
+  "roomLabel": "LambyOS Home, the end of the visit",
+  "door": {
+   "note": "Leaving ends the visit here. Nothing from this visit is kept."
+  },
+  "again": {
+   "body": "Start again begins a new visit from the front door. Nothing from this visit is kept.",
+   "button": "Start again"
+  },
+  "lamby": {
+   "greet": "Welcome home! Everything is set up already.",
+   "chatter": [
+    "Have a look at the shelf!",
+    "You don't need to do anything."
+   ]
+  }
  }
 }

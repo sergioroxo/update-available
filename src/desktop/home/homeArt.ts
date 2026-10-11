@@ -18,7 +18,7 @@ import { HOME } from '../theme/home';
 import { drawLambyChar, type LambyPose } from '../apps/lambyChar';
 
 export type HomeObject =
-  | 'door' | 'notice' | 'plaque' | 'tape' | 'armchair' | 'remote' | 'switch'
+  | 'door' | 'notice' | 'plaque' | 'tape' | 'lexicon' | 'armchair' | 'remote' | 'switch'
   | 'computer' | 'tablet' | 'headset' | 'lamby';
 
 export interface Rect { x: number; y: number; w: number; h: number }
@@ -40,7 +40,7 @@ export interface HomeLayout {
   rug: Rect;
   table: Rect;
   /** where each sprite sits (its top-left); the sprite's size is its own */
-  at: Record<'notice' | 'switch' | 'plaque' | 'crt' | 'vcr' | 'tape' | 'chair' | 'remote' | 'computer' | 'tablet' | 'headset' | 'lamby', { x: number; y: number }>;
+  at: Record<'notice' | 'switch' | 'plaque' | 'crt' | 'vcr' | 'tape' | 'lexicon' | 'chair' | 'remote' | 'computer' | 'tablet' | 'headset' | 'lamby', { x: number; y: number }>;
   /** the pressable rects, in logical px (the art's own extent, before the 44 px minimum is applied) */
   hits: Record<HomeObject, Rect>;
 }
@@ -137,6 +137,27 @@ const tape: Sprite = {
   }
 };
 
+/**
+ * ⚑ S230 — THE LEXICON, on the shelf: a big-box CD-ROM (A5), standing in the gap the shelf has always kept for it
+ * (`drawShelfUnit`: "the Lexicon's place"). Navy and gilt, as the reference titles of the decade were; no lettering
+ * (its words are the card's). Unlit it is simply there, drawn dead; in the return it takes the marigold edge.
+ */
+const lexicon: Sprite = {
+  w: 12, h: 16,
+  draw(c) {
+    r(c, 0, 0, 12, 16, HOME.ink);
+    r(c, 1, 1, 10, 14, HOME.crtNavy);
+    r(c, 1, 1, 10, 1, HOME.crtScreen);            // the box's lit top edge
+    r(c, 2, 3, 8, 3, HOME.sun);                   // the gilded title band
+    r(c, 2, 3, 8, 1, HOME.sunHi);
+    r(c, 3, 8, 6, 4, HOME.paper);                 // the open book on the cover
+    r(c, 3, 8, 6, 1, HOME.silver);
+    r(c, 6, 8, 1, 4, HOME.grey);                  // its gutter
+    r(c, 4, 10, 2, 1, HOME.silver); r(c, 7, 10, 2, 1, HOME.silver);
+    r(c, 2, 13, 8, 1, HOME.sun);                  // the foot of the box
+  }
+};
+
 /** the armchair, in three quarter-turns: 0 = from behind (as the room sees it), 1 = side, 2 = facing you */
 const chair: Sprite = {
   w: 50, h: 54,
@@ -225,7 +246,15 @@ const headset: Sprite = {
   }
 };
 
-export const SPRITES = { notice, lightSwitch, plaque, crt, vcr, tape, chair, remote, computer, tablet, headset };
+export const SPRITES = { notice, lightSwitch, plaque, crt, vcr, tape, lexicon, chair, remote, computer, tablet, headset };
+
+/** where the Lexicon stands: the gap on the bookshelf's second shelf (the same arithmetic as `drawShelfUnit`) */
+function lexiconAt(shelf: Rect): { x: number; y: number } {
+  const rows = Math.max(3, Math.floor(shelf.h / 22));
+  const step = Math.floor((shelf.h - 4) / rows);
+  const sy = shelf.y + 2 + 2 * step;
+  return { x: shelf.x + shelf.w - 3 - 13, y: sy - 2 - lexicon.h };
+}
 
 // ── the pixel type for the doormat (the programme's signage) ────────────────────────────────────────────────────────
 const GLYPHS: Record<string, string[]> = {
@@ -261,7 +290,8 @@ export function wideLayout(): HomeLayout {
     crt: { x: 178, y: 64 }, vcr: { x: 176, y: 88 }, tape: { x: 214, y: 80 },
     chair: { x: 214, y: 124 }, remote: { x: 257, y: 143 },
     computer: { x: 64, y: 128 }, tablet: { x: 92, y: 126 }, headset: { x: 118, y: 127 },
-    lamby: { x: 148, y: 112 }
+    lamby: { x: 148, y: 112 },
+    lexicon: lexiconAt({ x: 244, y: 22, w: 46, h: 90 })
   };
   const L: HomeLayout = {
     kind: 'wide', W: 320, H: 180, floorY: 112,
@@ -282,6 +312,7 @@ export function wideLayout(): HomeLayout {
     notice: hitOf(at.notice, notice),
     plaque: hitOf(at.plaque, plaque),
     tape: hitOf(at.tape, tape),
+    lexicon: hitOf(at.lexicon, lexicon),
     armchair: { x: 214, y: 124, w: 40, h: 56 },
     remote: hitOf(at.remote, remote),
     switch: hitOf(at.switch, lightSwitch),
@@ -299,7 +330,8 @@ export function tallLayout(): HomeLayout {
     crt: { x: 104, y: 104 }, vcr: { x: 102, y: 128 }, tape: { x: 140, y: 120 },
     chair: { x: 116, y: 256 }, remote: { x: 159, y: 275 },
     computer: { x: 10, y: 218 }, tablet: { x: 44, y: 216 }, headset: { x: 72, y: 217 },
-    lamby: { x: 92, y: 176 }
+    lamby: { x: 92, y: 176 },
+    lexicon: lexiconAt({ x: 152, y: 20, w: 28, h: 132 })
   };
   const L: HomeLayout = {
     kind: 'tall', W: 180, H: 320, floorY: 152,
@@ -320,6 +352,7 @@ export function tallLayout(): HomeLayout {
     notice: hitOf(at.notice, notice),
     plaque: hitOf(at.plaque, plaque),
     tape: hitOf(at.tape, tape),
+    lexicon: hitOf(at.lexicon, lexicon),
     armchair: { x: 116, y: 256, w: 40, h: 64 },
     remote: hitOf(at.remote, remote),
     switch: hitOf(at.switch, lightSwitch),
@@ -425,7 +458,7 @@ function drawShelfUnit(c: Ctx, R: Rect): void {
     const sy = y + 2 + (i + 1) * step;
     r(c, x, sy - 2, w, 3, HOME.sill);
     r(c, x, sy + 1, w, 1, HOME.floorLo);
-    // books on this shelf (one shelf keeps a gap: the Lexicon's place, empty until the Close brings it)
+    // books on this shelf (one shelf keeps a gap: the Lexicon's place (S230: its sprite stands in it))
     let bx = x + 3, n = i * 3;
     const end = x + w - 3 - (i === 1 ? 14 : 0);
     while (bx < end - 2) {

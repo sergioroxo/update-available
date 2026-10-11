@@ -37,9 +37,11 @@ import { ledger, wipeLedger } from '../../state/ledger';
 import { gameMenuBus } from '../../state/gameMenuBus';
 import { chooseCut, currentCut, type Cut } from '../../state/cut';
 import { DIALOG, domBevel } from '../theme/chrome';
-import { ERA1 } from '../theme/era1';
+import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../theme/era1';
 import { HOME } from '../theme/home';
 import { mountOrientingCard, type DoorChoice } from '../orientingCard';
+import { Lexicon } from '../../room/lexicon';
+import lex from '../../../data/strings/lexicon.json';
 import {
   SPRITES, LAMBY_SIZE, drawBackdrop, drawLamby, drawSprite, finalHits, tallLayout, wideLayout,
   type HomeLayout, type HomeObject, type Rect
@@ -52,17 +54,32 @@ const VERSION_TAG = door.versionTag.replace('{v}', typeof __APP_VERSION__ === 's
 
 export interface LambyosHome { destroy(): void }
 
+/**
+ * ⚑ S230 — THE ROOM HAS TWO MODES, and only the logic differs (the art is the same, and GPT's 4K art will replace it
+ * without touching this):
+ *   'arrival' — the front door, before the fiction (everything above).
+ *   'return'  — the Close brings the visitor back (design §7 item 3, his idea: the piece opens in the showroom and
+ *               closes in it). The same room, but: the Lexicon on the shelf is lit and opens the Lexicon (the Close's
+ *               own UI and data, Your Words read from this visit's memory, with its sources); the three devices
+ *               offer START AGAIN instead of Enter (the wipe and the reload the menu's Restart does); the door is
+ *               Leave; nothing is gated (nobody is being admitted); Lamby's bubbles are end-of-visit lines. It
+ *               never calls `onContinue`, and it files nothing, exactly as arrival.
+ */
+export type HomeMode = 'arrival' | 'return';
+export interface HomeOptions { mode?: HomeMode }
+
 /** the reading order of design §1's table: door, notice, plaque, tape, armchair, remote, switch, the devices; Lamby last */
-const ORDER: HomeObject[] = ['door', 'notice', 'plaque', 'tape', 'armchair', 'remote', 'switch', 'computer', 'tablet', 'headset', 'lamby'];
+const ORDER: HomeObject[] = ['door', 'notice', 'plaque', 'tape', 'lexicon', 'armchair', 'remote', 'switch', 'computer', 'tablet', 'headset', 'lamby'];
 
 const reducedMotion = (): boolean => {
   try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
 };
 
-export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): LambyosHome {
+export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts: HomeOptions = {}): LambyosHome {
+  const isReturn = opts.mode === 'return';
   let destroyed = false;
   let entered = false;
-  let armed = false;
+  let armed = isReturn;   // a return admits nobody: there is nothing to arm
   let armTimer = 0;
   let arming = false;
   let cut: Cut = currentCut();
@@ -71,7 +88,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
   let shortDoor: { destroy(): void } | null = null;
 
   // ── a Restart in this tab: the notice was read minutes ago (design §3, way 2) ──
-  const returning = window.location.hash === '#home-armed';
+  const returning = !isReturn && window.location.hash === '#home-armed';
   if (returning) {
     try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search); } catch { /* keep the hash */ }
   }
@@ -80,12 +97,14 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
   const root = document.createElement('div');
   root.id = 'lambyos-home';
   root.setAttribute('role', 'main');
-  root.setAttribute('aria-label', copy.roomLabel);
+  root.setAttribute('aria-label', isReturn ? copy.return.roomLabel : copy.roomLabel);
+  root.dataset.mode = isReturn ? 'return' : 'arrival';   // the audit's handle (tools/walk.mjs stops at a return)
   Object.assign(root.style, {
     position: 'fixed', inset: '0', zIndex: '900', overflow: 'hidden',
     background: HOME.wallLo, font: DIALOG.font, color: DIALOG.ink,
     transition: 'opacity 0.7s'
   } as CSSStyleDeclaration);
+  if (isReturn) { root.style.opacity = '0'; root.style.transition = 'opacity 2.2s'; }   // the Close gives way to the room slowly
 
   const stage = document.createElement('div');
   Object.assign(stage.style, { position: 'absolute' } as CSSStyleDeclaration);
@@ -122,6 +141,10 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
     b.dataset.home = k;
     b.setAttribute('aria-label', copy.objects[k]);
     if (k === 'tape') b.setAttribute('aria-disabled', 'true'); // the advert needs its drawing; the tape is just the tape
+    if (k === 'lexicon' && !isReturn) {   // S230: on the shelf from the first frame, drawn dead until the Close brings the visitor back
+      b.setAttribute('aria-disabled', 'true');
+      b.setAttribute('aria-label', copy.objects.lexiconLater);
+    }
     b.addEventListener('click', () => press(k));
     buttons[k] = b;
     stage.appendChild(b);
@@ -169,7 +192,9 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
   let scale = 1;
 
   // ── drawing ──
-  const lit = (k: HomeObject): boolean => k === 'notice' || (armed && (k === 'computer' || k === 'tablet' || k === 'headset'));
+  const lit = (k: HomeObject): boolean =>
+    isReturn ? (k === 'lexicon' || k === 'computer' || k === 'tablet' || k === 'headset')
+      : k === 'notice' || (armed && (k === 'computer' || k === 'tablet' || k === 'headset'));
   function drawRoom(): void {
     const L = layout;
     canvas.width = L.W; canvas.height = L.H;
@@ -182,6 +207,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
     drawSprite(c, SPRITES.vcr, L.at.vcr);
     drawSprite(c, SPRITES.crt, L.at.crt);
     drawSprite(c, SPRITES.tape, L.at.tape);
+    drawSprite(c, SPRITES.lexicon, L.at.lexicon, { lit: lit('lexicon') });
     drawSprite(c, SPRITES.computer, L.at.computer, { lit: lit('computer') });
     drawSprite(c, SPRITES.tablet, L.at.tablet, { lit: lit('tablet') });
     drawSprite(c, SPRITES.headset, L.at.headset, { lit: lit('headset') });
@@ -271,7 +297,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
     return b;
   };
 
-  function openCard(k: HomeObject, title: string, build: (body: HTMLDivElement) => void, closed?: () => void): void {
+  function openCard(k: HomeObject, title: string, build: (body: HTMLDivElement) => void, closed?: () => void, wide = false): void {
     if (destroyed) return;
     closeCard(true);
     hideBubble();
@@ -282,7 +308,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
     dlg.setAttribute('aria-modal', 'true');
     dlg.setAttribute('aria-label', title);
     Object.assign(dlg.style, {
-      width: 'min(480px, 100%)', maxHeight: '100%', display: 'flex', flexDirection: 'column',
+      width: wide ? 'min(580px, 100%)' : 'min(480px, 100%)', maxHeight: '100%', display: 'flex', flexDirection: 'column',
       boxSizing: 'border-box', background: DIALOG.panel, margin: 'auto'
     } as CSSStyleDeclaration);
     domBevel(dlg);
@@ -481,6 +507,85 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
     });
   }
 
+  // ── S230: the return ──────────────────────────────────────────────────────────────────────────────────────────
+  /** START AGAIN: what the menu's Restart does (the ledger wiped, a reload; `#home-armed` so Home arms at once, the
+   *  notice having been read in this tab). The new visit goes Home → 1997 by the normal path. */
+  function startAgain(): void {
+    if (entered || destroyed) return;
+    entered = true;
+    wipeLedger();
+    try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search + '#home-armed'); } catch { /* start unarmed */ }
+    window.location.reload();
+  }
+  function openAgain(k: 'computer' | 'tablet' | 'headset'): void {
+    const c = door.cards[k === 'computer' ? 'desktop' : k === 'tablet' ? 'phone' : 'headset'];
+    openCard(k, c.heading, (body) => {
+      body.appendChild(para(copy.return.again.body));
+      const b = btn(copy.return.again.button, () => startAgain());
+      b.dataset.homeAgain = '1';
+      Object.assign(b.style, { margin: '0 0 6px' } as CSSStyleDeclaration);
+      body.appendChild(b);
+    });
+  }
+
+  /** the Lexicon's card: the Close's own faces (The Words, The Reasons, Your Words — src/room/lexicon.ts), drawn on a
+   *  canvas exactly as the machine draws them, with a real button laid over each of its published hit rects so it is
+   *  reachable by keyboard and by touch. Reading only: Your Words comes from this visit's memory, nothing is filed. */
+  function openLexicon(): void {
+    const book = new Lexicon();
+    const LW = ERA1_CANVAS.width, LH = ERA1_CANVAS.height;
+    const labels: Record<string, string> = {
+      'lex-words': lex.tabs.words, 'lex-reasons': lex.tabs.reasons, 'lex-yours': lex.tabs.yours, 'lex-close': lex.tabs.close,
+      'lex-prev': lex.prev, 'lex-next': lex.next, 'lex-title': lex.title
+    };
+    openCard('lexicon', `${lex.title} — ${lex.edition}`, (body) => {
+      const wrap = document.createElement('div');
+      Object.assign(wrap.style, { position: 'relative', width: '100%', maxWidth: `${LW}px`, aspectRatio: `${LW} / ${LH}`, margin: '0 auto 12px' } as CSSStyleDeclaration);
+      const cv = document.createElement('canvas');
+      cv.width = LW * RENDER_SCALE; cv.height = LH * RENDER_SCALE;
+      cv.setAttribute('aria-hidden', 'true');
+      Object.assign(cv.style, { width: '100%', height: '100%', display: 'block', imageRendering: 'pixelated' } as CSSStyleDeclaration);
+      wrap.appendChild(cv);
+      const overlay = document.createElement('div');
+      Object.assign(overlay.style, { position: 'absolute', inset: '0' } as CSSStyleDeclaration);
+      wrap.appendChild(overlay);
+      body.insertBefore(wrap, body.firstChild);
+      const hits: { x: number; y: number; w: number; h: number; id: string }[] = [];
+      const ctx = cv.getContext('2d')!;
+      const redraw = (focusId?: string): void => {
+        ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
+        ctx.imageSmoothingEnabled = false;
+        book.draw(ctx, LW, LH, hits);
+        overlay.replaceChildren();
+        for (const h of hits) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.dataset.lex = h.id;
+          b.setAttribute('aria-label', labels[h.id] ?? h.id);
+          Object.assign(b.style, {
+            position: 'absolute', left: `${(h.x / LW) * 100}%`, top: `${(h.y / LH) * 100}%`,
+            width: `${(h.w / LW) * 100}%`, height: `${(h.h / LH) * 100}%`,
+            background: 'transparent', border: '0', padding: '0', margin: '0', cursor: 'pointer'
+          } as CSSStyleDeclaration);
+          b.addEventListener('focus', () => { b.style.outline = `2px dashed ${HOME.accent}`; b.style.outlineOffset = '-2px'; });
+          b.addEventListener('blur', () => { b.style.outline = 'none'; });
+          b.addEventListener('click', () => {
+            if (h.id === 'lex-close') { closeCard(); return; }
+            if (book.press(h.id)) redraw(h.id);
+          });
+          overlay.appendChild(b);
+        }
+        if (focusId) (overlay.querySelector(`[data-lex="${focusId}"]`) as HTMLElement | null)?.focus();
+      };
+      redraw();
+      // its sources, in the Lexicon's own plain sentence, and the way to them (the menu's Credits, as the plaque has)
+      body.insertBefore(para(lex.sources, { fontSize: '12px', color: DIALOG.dim, margin: '0 0 10px' }), wrap.nextSibling);
+      const src = btn(copy.plaque.credits, () => { closeCard(true); gameMenuBus.openCredits?.(); });
+      src.dataset.homeLexSources = '1';
+      body.insertBefore(src, wrap.nextSibling?.nextSibling ?? null);
+    }, undefined, true);
+  }
+
   // ── the objects ──
   function press(k: HomeObject): void {
     if (destroyed || entered) return;
@@ -491,7 +596,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
           const sd = btn(copy.notice.shortDoor, () => takeShortDoor());
           Object.assign(sd.style, { fontSize: '12px', margin: '2px 0 4px' } as CSSStyleDeclaration);
           body.appendChild(sd);
-        }, startArming);
+        }, isReturn ? undefined : startArming);
         return;
       case 'plaque':
         openCard('plaque', copy.plaque.title, (body) => {
@@ -513,6 +618,10 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
         return;
       case 'tape':
         return; // just the tape, in this pass: the advert waits for its drawing
+      case 'lexicon':
+        if (isReturn) openLexicon();
+        else say(copy.lamby.lexiconLater);   // drawn dead until the Close brings the visitor back
+        return;
       case 'armchair':
         turnChair(1, () => openCard('armchair', copy.armchair.title, (body) => {
           body.appendChild(para(copy.armchair.body));
@@ -539,7 +648,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
         return;
       case 'door':
         openCard('door', copy.door.title, (body) => {
-          body.appendChild(para(copy.door.note));
+          body.appendChild(para(isReturn ? copy.return.door.note : copy.door.note));
           const row = document.createElement('div');
           Object.assign(row.style, { display: 'flex', gap: '10px', flexWrap: 'wrap', margin: '0 0 6px' } as CSSStyleDeclaration);
           row.appendChild(btn(copy.door.leave, () => doLeave()));
@@ -547,13 +656,15 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
           body.appendChild(row);
         });
         return;
-      case 'computer': openComputer(); return;
-      case 'tablet': openTablet(); return;
-      case 'headset': openHeadset(); return;
-      case 'lamby':
-        say(copy.lamby.chatter[chatter % copy.lamby.chatter.length]);
+      case 'computer': if (isReturn) openAgain('computer'); else openComputer(); return;
+      case 'tablet': if (isReturn) openAgain('tablet'); else openTablet(); return;
+      case 'headset': if (isReturn) openAgain('headset'); else openHeadset(); return;
+      case 'lamby': {
+        const lines = isReturn ? copy.return.lamby.chatter : copy.lamby.chatter;
+        say(lines[chatter % lines.length]);
         chatter++;
         return;
+      }
     }
   }
 
@@ -578,6 +689,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
   function doLeave(): void {
     if (destroyed) return;
     wipeLedger();
+    if (isReturn) gameMenuBus.leaveEngine?.();   // S230: the Close's engine is still running behind this page — end it too
     window.clearTimeout(armTimer);
     armed = false;
     closeCard(true);
@@ -616,11 +728,17 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void): Lamb
   window.addEventListener('resize', layoutAll);
   document.body.appendChild(root);
   layoutAll();
-  say(returning ? copy.lamby.greetAgain : copy.lamby.greet);
+  say(isReturn ? copy.return.lamby.greet : returning ? copy.lamby.greetAgain : copy.lamby.greet);
   if (returning) startArming();
+  if (isReturn) {
+    // the Close gives way to the room: it fades up over the canvas, and the shelf's book takes the eye's place for
+    // keyboards (a conducted focus; nothing is chosen for anyone)
+    requestAnimationFrame(() => { root.style.opacity = '1'; });
+    window.setTimeout(() => { if (!destroyed && !cardOpen) buttons.lexicon.focus({ preventScroll: true }); }, reducedMotion() ? 0 : 2300);
+  }
 
   // the headset: Enter VR only where this browser has confirmed an immersive session (as the orienting card did)
-  if (new URLSearchParams(window.location.search).get('flat') !== '1' && navigator.xr) {
+  if (!isReturn && new URLSearchParams(window.location.search).get('flat') !== '1' && navigator.xr) {
     void navigator.xr.isSessionSupported('immersive-vr').then(async (supported) => {
       if (!supported || destroyed) return;
       const cv = document.getElementById('app');

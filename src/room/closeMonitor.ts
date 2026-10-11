@@ -72,6 +72,8 @@ export interface CloseMonitor {
   onDossier?: () => void;
   /** ⚑ S209 / P7-47 — open the Lexicon on the glass (from its star, or the card's button) */
   openLexicon(): void;
+  /** ⚑ S230 — the card's "Return to LambyOS Home": whoever mounts this takes the visitor there (app.ts) */
+  onHome?: () => void;
 }
 
 /** the CRT's visible screen, as app.ts has it (metres, 4:3) */
@@ -285,6 +287,8 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     btn(card.again, ax, ay, aw, 'close-again');
     btn(card.receipt.button, ax - 108 - 14, ay, 108, 'close-receipt');
     btn(card.dossier, ax + aw + 14, ay, 108, 'close-dossier');
+    // ⚑ S230 — the way home: the piece closes where it opened (LambyOS Home, with the Lexicon on the shelf)
+    btn(card.home, Math.round((W - 220) / 2), 296, 220, 'close-home');
     // S143: the makers, in one line, small — the frame's voice on the last screen
     setFont(ctx, 8);
     ctx.fillStyle = ERA1.grey;
@@ -507,6 +511,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         if (x < h.x || x > h.x + h.w || y < h.y || y > h.y + h.h) continue;
         if (h.id === 'close-go') { api.onGo?.(); return true; }
         if (h.id === 'close-again') { api.onAgain?.(); return true; }
+        if (h.id === 'close-home') { api.onHome?.(); return true; }
         if (h.id === 'close-receipt') { face = 'receipt'; printLines = []; printT = 0; drawReceipt(); return true; }
         // ⚑ S209 / P7-47 — the Lexicon: its own presses, and its Close back to the card
         if (h.id === 'close-lexicon') { face = 'lexicon'; lexicon.face = 'title'; drawLexicon(); return true; }
