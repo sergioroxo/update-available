@@ -61,7 +61,7 @@
    "When you're ready, the machines are on the little table.",
    "You don't need to do anything."
   ],
-  "armchair": "Our best chair. It turns right round!",
+  "armchair": "Our best chair. Have a look around — turn as much as you like!",
   "lexiconLater": "That one's for later!"
  },
  "return": {
@@ -79,7 +79,14 @@
    "chatter": [
     "Have a look at the shelf!",
     "You don't need to do anything."
-   ]
+   ],
+   "lexicon": "That's the one I saved for later!"
+  },
+  "plaque": {
+   "_doc": "⚑ S233 — THE PLAQUE ON THE RETURN: the fuller explainer (his 2026-10-11 answer 2). Arrival's plaque keeps its two sentences (orientingCard.json premise + about); on the return the plaque gives the whole account, in the FRAME's plain voice (≤ 90 words, no personal names). `what` closes on the Close's own sentence (close_restart.json couldNot); `part`/`made` follow the Credits' MAKERS paragraph (attributions.json) and the Close's one-line disclosure (close_restart.json makers), claiming nothing they do not. The Lexicon and the menu's Credits are named because they are where the sources are.",
+   "what": "This is a piece about how organised “conversion” networks (SOGICE) targeted queer people online, from 1997 to 2026. Four updates, thirty years: none of them changed who anyone was.",
+   "part": "It is part of SurvivingSOGICE, at the University of Bergen's Center for Digital Narrative, and rests on the project's research and sources: the Lexicon on the shelf holds the words and the reasons, and the menu's Credits & attributions lists the rest.",
+   "made": "It was directed by the project, and written and built in collaboration with Claude (Anthropic)."
   }
  },
  "labels": {

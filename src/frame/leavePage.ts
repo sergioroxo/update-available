@@ -43,7 +43,14 @@ export interface LeavePage {
   readonly isOpen: boolean;
 }
 
+/** ⚑ S233 — ONE page for the whole piece: the game menu's Leave and LambyOS Home's return door both open it, and Esc must
+ *  find whichever opened it, so `mountLeavePage()` hands back the same instance every time. */
+let shared: LeavePage | null = null;
 export function mountLeavePage(): LeavePage {
+  return (shared ??= createLeavePage());
+}
+
+function createLeavePage(): LeavePage {
   let root: HTMLDivElement | null = null;
   let savedTitle = '';
   let wasMenuOpen = false;

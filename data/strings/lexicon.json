@@ -7,6 +7,7 @@
   "words": "The Words",
   "reasons": "The Reasons",
   "yours": "Your Words",
+  "sources": "Sources",
   "close": "Close"
  },
  "prev": "◄ Prev",
@@ -40,7 +41,8 @@
  ],
  "yoursNone": "You met none of them by name. They were there anyway.",
  "yoursIntro": "The words that reached you, in the order they did:",
- "sources": "Sources: open the menu, then Credits & attributions.",
+ "sources": "More sources: open the menu, then Credits & attributions.",
+ "sourcesIntro": "Links the research behind this Lexicon points to. They are printed here, not opened.",
  "star": "The Lexicon — Multimedia Edition",
  "wotdApps": {
   "e1": {

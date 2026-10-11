@@ -53,6 +53,8 @@ This branch carries the isolated reinterpretation build. `?reinterp=1`
 enables reinterpretation-only hooks; without that flag the shipped path is
 the regression baseline. For flat preview, use `?flat=1&reinterp=1`.
 
+**LambyOS Home's return** (`src/desktop/home/lambyosHome.ts`, `mode: 'return'`, words in `data/strings/home.json` → `return.*`): the door's Leave opens the Leave page (`src/frame/leavePage.ts`, one shared instance; its way back, or Esc, lands in Home), the plaque gives the fuller explainer, the first press on the lit Lexicon gets Lamby's "saved for later" bubble, and the Lexicon (`src/room/lexicon.ts`, shared with the Close) has a fourth tab, Sources: the links in `data/dossier/links.json` verified in `docs/reinterp/RESEARCH_LEXICON_2026-10-02.md`, printed as text.
+
 **Exhibition idle cycle** (`src/frame/attract.ts`, words in `data/strings/attract.json`):
 15 min untouched shows the screensavers and a call-in card (with an empty slot,
 `setAdvert`, for the advert), a touch asks "Start from the beginning?", and 30 min

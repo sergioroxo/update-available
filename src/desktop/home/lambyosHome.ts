@@ -41,7 +41,8 @@ import { DIALOG, domBevel } from '../theme/chrome';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../theme/era1';
 import { HOME } from '../theme/home';
 import { mountOrientingCard, type DoorChoice } from '../orientingCard';
-import { Lexicon } from '../../room/lexicon';
+import { Lexicon, LEXICON_SOURCES } from '../../room/lexicon';
+import { mountLeavePage, type LeavePage } from '../../frame/leavePage';
 import lex from '../../../data/strings/lexicon.json';
 import {
   DECOR, HAND_PIVOT, TAB_ORDER, ROOM, bubbleRect, handRect, hitRect, layerSize, layerUrl, modeFor, padlockAnchor, useLarge, visualRect,
@@ -49,6 +50,7 @@ import {
 } from './homeArt';
 
 const ARM_DELAY_MS = 4000; // the same ethics arm-delay as the orienting card
+const LEXICON_SAY_MS = 1900; // S233: how long Lamby's line stands before the Lexicon opens (reading time; not a motion, so reduced motion keeps it)
 const MIN_TARGET_CSS = 44; // design §4: every object's hit area, whatever the art's size
 declare const __APP_VERSION__: string;
 const VERSION_TAG = door.versionTag.replace('{v}', typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '0.0');
@@ -82,6 +84,9 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   let cut: Cut = currentCut();
   let vrReady = false;
   let shortDoor: { destroy(): void } | null = null;
+  let leavePage: LeavePage | null = null;   // S233: the return door's Leave opens the in-between page (src/frame/leavePage.ts)
+  let lexiconSaid = false;                  // S233: Lamby's "saved for later" bubble comes once, just before the Lexicon first opens
+  let lexiconTimer = 0;
 
   // ── a Restart in this tab: the notice was read minutes ago (design §3, way 2) ──
   const returning = !isReturn && window.location.hash === '#home-armed';
@@ -639,7 +644,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     const book = new Lexicon();
     const LW = ERA1_CANVAS.width, LH = ERA1_CANVAS.height;
     const labels: Record<string, string> = {
-      'lex-words': lex.tabs.words, 'lex-reasons': lex.tabs.reasons, 'lex-yours': lex.tabs.yours, 'lex-close': lex.tabs.close,
+      'lex-words': lex.tabs.words, 'lex-reasons': lex.tabs.reasons, 'lex-yours': lex.tabs.yours, 'lex-sources': lex.tabs.sources, 'lex-close': lex.tabs.close,
       'lex-prev': lex.prev, 'lex-next': lex.next, 'lex-title': lex.title
     };
     openCard('lexicon', `${lex.title} — ${lex.edition}`, (body) => {
@@ -654,12 +659,28 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
       Object.assign(overlay.style, { position: 'absolute', inset: '0' } as CSSStyleDeclaration);
       wrap.appendChild(overlay);
       body.insertBefore(wrap, body.firstChild);
+      // S233: the Sources face is drawn on the canvas (aria-hidden, and small on a phone), so on that tab its addresses are
+      // ALSO here as plain selectable text under the glass, in the same order: legible, copyable, readable by a screen
+      // reader. Printed, never fetched or opened (the piece makes no network calls).
+      const srcList = document.createElement('ul');
+      srcList.setAttribute('aria-label', lex.tabs.sources);
+      Object.assign(srcList.style, { display: 'none', margin: '0 0 10px', padding: '0 0 0 18px', fontSize: '12px', lineHeight: '1.45', userSelect: 'text' } as CSSStyleDeclaration);
+      for (const s of LEXICON_SOURCES) {
+        const li = document.createElement('li');
+        li.style.marginBottom = '6px';
+        li.appendChild(document.createTextNode(s.label));
+        li.appendChild(document.createElement('br'));
+        const u = el('span', s.url, { wordBreak: 'break-all', color: DIALOG.dim });
+        li.appendChild(u);
+        srcList.appendChild(li);
+      }
       const hits: { x: number; y: number; w: number; h: number; id: string }[] = [];
       const ctx = cv.getContext('2d')!;
       const redraw = (focusId?: string): void => {
         ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
         ctx.imageSmoothingEnabled = false;
         book.draw(ctx, LW, LH, hits);
+        srcList.style.display = book.face === 'sources' ? 'block' : 'none';
         overlay.replaceChildren();
         for (const h of hits) {
           const b = document.createElement('button');
@@ -683,10 +704,11 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
       };
       redraw();
       // its sources, in the Lexicon's own plain sentence, and the way to them (the menu's Credits, as the plaque has)
-      body.insertBefore(para(lex.sources, { fontSize: '12px', color: DIALOG.dim, margin: '0 0 10px' }), wrap.nextSibling);
+      body.insertBefore(srcList, wrap.nextSibling);
+      body.insertBefore(para(lex.sources, { fontSize: '12px', color: DIALOG.dim, margin: '0 0 10px' }), srcList.nextSibling);
       const src = btn(copy.plaque.credits, () => { closeCard(true); gameMenuBus.openCredits?.(); });
       src.dataset.homeLexSources = '1';
-      body.insertBefore(src, wrap.nextSibling?.nextSibling ?? null);
+      body.insertBefore(src, srcList.nextSibling?.nextSibling ?? null);
     }, undefined, true);
   }
 
@@ -713,9 +735,15 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
           domBevel(tag, true, 1);
           head.appendChild(tag);
           body.appendChild(head);
-          body.appendChild(para(door.subtitle, { fontSize: '12px', color: DIALOG.dim }));
-          body.appendChild(para(door.premise));
-          body.appendChild(para(door.about));
+          if (isReturn) {   // S233: the fuller explainer (what it is, whose it is, what it rests on, who made it)
+            body.appendChild(para(copy.return.plaque.what));
+            body.appendChild(para(copy.return.plaque.part));
+            body.appendChild(para(copy.return.plaque.made));
+          } else {
+            body.appendChild(para(door.subtitle, { fontSize: '12px', color: DIALOG.dim }));
+            body.appendChild(para(door.premise));
+            body.appendChild(para(door.about));
+          }
           body.appendChild(btn(copy.plaque.credits, () => {
             closeCard(true);
             gameMenuBus.openCredits?.();
@@ -723,8 +751,16 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
         });
         return;
       case 'lexicon':
-        if (isReturn) openLexicon();
-        else say(copy.lamby.lexiconLater);   // drawn dead until the Close brings the visitor back
+        if (!isReturn) { say(copy.lamby.lexiconLater); return; }   // drawn dead until the Close brings the visitor back
+        // S233: the first press on the lit Lexicon gets Lamby's line, then it opens (a second press opens it at once)
+        if (!lexiconSaid) {
+          lexiconSaid = true;
+          say(copy.return.lamby.lexicon);
+          lexiconTimer = window.setTimeout(() => { lexiconTimer = 0; if (!destroyed && !cardOpen) openLexicon(); }, LEXICON_SAY_MS);
+        } else {
+          window.clearTimeout(lexiconTimer); lexiconTimer = 0;
+          openLexicon();
+        }
         return;
       case 'armchair':
         openCard('armchair', copy.armchair.title, (body) => {
@@ -763,7 +799,13 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
           body.appendChild(para(isReturn ? copy.return.door.note : copy.door.note));
           const row = document.createElement('div');
           Object.assign(row.style, { display: 'flex', gap: '10px', flexWrap: 'wrap', margin: '0 0 6px' } as CSSStyleDeclaration);
-          row.appendChild(btn(copy.door.leave, () => doLeave()));
+          row.appendChild(btn(copy.door.leave, () => {
+            if (!isReturn) { doLeave(); return; }
+            // S233: on the return the door's Leave opens the Leave page (the same encyclopedia lookalike Leave opens inside
+            // the piece), whose way back lands here; "Leave for good" on it is this door's own old Leave
+            closeCard();
+            (leavePage ??= mountLeavePage()).show(doLeave);
+          }));
           row.appendChild(btn(copy.door.stay, () => closeCard()));
           body.appendChild(row);
         });
@@ -786,6 +828,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     wipeLedger();
     if (isReturn) gameMenuBus.leaveEngine?.();   // S230: the Close's engine is still running behind this page — end it too
     window.clearTimeout(armTimer);
+    window.clearTimeout(lexiconTimer);
     armed = false;
     closeCard(true);
     stage.remove();
@@ -810,6 +853,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     if (destroyed) return;
     destroyed = true;
     window.clearTimeout(armTimer);
+    window.clearTimeout(lexiconTimer);
     window.removeEventListener('resize', layoutAll);
     if (now || reducedMotion()) { root.remove(); return; }
     // the bridge (design §3): the room fades as the 3D room's light comes up behind it

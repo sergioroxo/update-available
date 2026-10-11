@@ -646,6 +646,9 @@ export function mountGameMenu(): GameMenu {
   const onKeydown = (e: KeyboardEvent): void => {
     if (e.key !== 'Escape') return;
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // ⚑ S233 — while the Leave page is up, Esc is ITS way back (src/frame/leavePage.ts registers its own capture listener
+    //   after this one): without this the menu took the key, toggled itself, and the page stayed — Esc did not get back.
+    if (leavePage.isOpen) return;
     gameMenuBus.toggle();
     e.preventDefault();
     e.stopImmediatePropagation();

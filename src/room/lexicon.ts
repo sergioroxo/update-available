@@ -15,12 +15,31 @@ import { ERA1 } from '../desktop/theme/era1';
 import { px, setFont, wrapText, bevel } from '../desktop/theme/chrome';
 import { ledger } from '../state/ledger';
 import L from '../../data/strings/lexicon.json';
+import linkData from '../../data/dossier/links.json';
 
-type Face = 'title' | 'words' | 'reasons' | 'yours';
+type Face = 'title' | 'words' | 'reasons' | 'yours' | 'sources';
 type Hit = { x: number; y: number; w: number; h: number; id: string };
 interface Term { id: string; term: string; eras: number[]; status: string; close: string; word: string | null; line: string | null }
 const TERMS = L.terms as Term[];
 const REASONS = L.reasons as Record<'men' | 'women' | 'trans', { reason: string; era: string; status: string }[]>;
+
+/** ⚑ S233 — THE LEXICON'S OWN SOURCES (his 2026-10-11): every link in data/dossier/links.json whose verification is the
+ *  Lexicon's research document, label and address exactly as stored there. Text only — the piece makes no network
+ *  calls, so nothing here is opened or fetched. (tools/gen_sources_page.mjs refuses any link not verbatim in its doc.) */
+export const LEXICON_RESEARCH_DOC = 'docs/reinterp/RESEARCH_LEXICON_2026-10-02.md';
+export interface LexiconSource { label: string; url: string }
+export const LEXICON_SOURCES: LexiconSource[] = (() => {
+  const out: LexiconSource[] = [];
+  const seen = new Set<string>();
+  for (const arr of Object.values(linkData.links as Record<string, Array<LexiconSource & { verifiedIn: string }>>)) {
+    for (const l of arr) {
+      if (l.verifiedIn !== LEXICON_RESEARCH_DOC || seen.has(l.url)) continue;
+      seen.add(l.url);
+      out.push({ label: l.label, url: l.url });
+    }
+  }
+  return out;
+})();
 const GROUPS: Array<'men' | 'women' | 'trans' | 'arc'> = ['women', 'men', 'trans', 'arc'];   // the 2016 era's women first
 /** the reasons, paged: each group in runs of six (no reason is ever dropped for space), then the arc */
 const REASON_PAGES: Array<{ g: 'men' | 'women' | 'trans' | 'arc'; rows: { reason: string; era: string; status: string }[] }> = (() => {
@@ -43,6 +62,7 @@ export class Lexicon {
     if (id === 'lex-words') { this.face = 'words'; this.page = 0; }
     else if (id === 'lex-reasons') { this.face = 'reasons'; this.page = 0; }
     else if (id === 'lex-yours') { this.face = 'yours'; this.page = 0; }
+    else if (id === 'lex-sources') { this.face = 'sources'; this.page = 0; }
     else if (id === 'lex-title') { this.face = 'title'; }
     else if (id === 'lex-next') this.page = Math.min(this.pages() - 1, this.page + 1);
     else if (id === 'lex-prev') this.page = Math.max(0, this.page - 1);
@@ -62,6 +82,7 @@ export class Lexicon {
     if (this.face === 'title') this.drawTitle(ctx, W, H);
     else if (this.face === 'words') this.drawWord(ctx, W, H, hits);
     else if (this.face === 'reasons') this.drawReasons(ctx, W, H, hits);
+    else if (this.face === 'sources') this.drawSources(ctx, W, H);
     else this.drawYours(ctx, W, H);
     this.drawTabs(ctx, W, H, hits);
   }
@@ -176,6 +197,24 @@ export class Lexicon {
     }
   }
 
+  /** ⚑ S233 — the Lexicon's Sources: what its research points to, printed (label, then the address in full, broken
+   *  anywhere it must be, since an address has no spaces) */
+  private drawSources(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.gilded(ctx, L.tabs.sources.toUpperCase(), 20, 18, 20);
+    setFont(ctx, 10); ctx.fillStyle = ERA1.silver;
+    let y = 56;
+    for (const l of wrapText(ctx, L.sourcesIntro, W - 40)) { ctx.fillText(l, 20, y); y += 13; }
+    y += 8;
+    for (const s of LEXICON_SOURCES) {
+      if (y > H - 50) break;
+      setFont(ctx, 11); ctx.fillStyle = ERA1.white;
+      for (const l of wrapText(ctx, s.label, W - 40)) { ctx.fillText(l, 20, y); y += 14; }
+      setFont(ctx, 9); ctx.fillStyle = ERA1.tooltip;
+      for (const l of breakAnywhere(ctx, s.url, W - 48)) { ctx.fillText(l, 24, y); y += 12; }
+      y += 10;
+    }
+  }
+
   private pager(ctx: CanvasRenderingContext2D, W: number, H: number, hits: Hit[]): void {
     const y = H - 62, n = this.pages();
     const btn = (label: string, x: number, id: string): void => {
@@ -193,17 +232,29 @@ export class Lexicon {
   private drawTabs(ctx: CanvasRenderingContext2D, W: number, H: number, hits: Hit[]): void {
     const y = H - 32, h = 24;
     px(ctx, 0, y - 6, W, 1, ERA1.titleBlue);
-    const tabs: Array<[string, string]> = [[L.tabs.words, 'lex-words'], [L.tabs.reasons, 'lex-reasons'], [L.tabs.yours, 'lex-yours'], [L.tabs.close, 'lex-close']];
-    const w = Math.floor((W - 20 - 8 * 3) / 4);
+    const tabs: Array<[string, string]> = [[L.tabs.words, 'lex-words'], [L.tabs.reasons, 'lex-reasons'], [L.tabs.yours, 'lex-yours'], [L.tabs.sources, 'lex-sources'], [L.tabs.close, 'lex-close']];
+    const w = Math.floor((W - 20 - 8 * (tabs.length - 1)) / tabs.length);
     tabs.forEach(([label, id], i) => {
       const x = 10 + i * (w + 8);
-      const on = (id === 'lex-words' && this.face === 'words') || (id === 'lex-reasons' && this.face === 'reasons') || (id === 'lex-yours' && this.face === 'yours');
+      const on = (id === 'lex-words' && this.face === 'words') || (id === 'lex-reasons' && this.face === 'reasons') || (id === 'lex-yours' && this.face === 'yours') || (id === 'lex-sources' && this.face === 'sources');
       bevel(ctx, x, y, w, h, !on);
       setFont(ctx, 10); ctx.fillStyle = ERA1.black;
       ctx.fillText(label, x + Math.round((w - ctx.measureText(label).width) / 2), y + 7);
       hits.push({ x, y, w, h, id });
     });
   }
+}
+
+/** break a string with no spaces (an address) at the last character that fits, line by line, in the ctx's current font */
+function breakAnywhere(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const lines: string[] = [];
+  let cur = '';
+  for (const ch of text) {
+    if (cur && ctx.measureText(cur + ch).width > maxWidth) { lines.push(cur); cur = ch; }
+    else cur += ch;
+  }
+  if (cur) lines.push(cur);
+  return lines;
 }
 
 /** the research's status column, in the Lexicon's own short words */
