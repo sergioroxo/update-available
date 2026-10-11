@@ -54,6 +54,7 @@ import { buildDevices, DEVICE_PROP_IDS } from '../room/handheld';
 import { practiceOf } from '../witness/record';
 import { mountHelper, type Helper } from '../frame/helper';
 import { mountCall } from '../frame/call';
+import { createTimePassing, type TimePassing } from '../room/timePassing';
 import { drawPrint, PRINT_SIZE } from '../room/printArt';
 import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
@@ -837,6 +838,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let spine: Spine | null = null;
   let helper: Helper | null = null;
   let call: ReturnType<typeof mountCall> | null = null;
+  // ⚑ S229 / W1-C13 — the years the 1997→2003 morph turns through (room/timePassing.ts)
+  let timePassing: TimePassing | null = null;
   let xrFrame: XrFrame | null = null;
   let xrInput: XrInput | null = null;
   if (options.reinterp === true) {
@@ -871,6 +874,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     });
     // ⚑ S227 — THE CALL (src/frame/call.ts; his rule "take the viewer there"): the story's next thing, if it is away
     //   from the screen in front of her, is one press away. The phone comes to the eye; the headset goes on.
+    timePassing = createTimePassing(app, () => !!app.xr?.active);
     call = mountCall({
       enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !gameMenuBus.isOpen,
       current: () => {
@@ -2018,6 +2022,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     relocPlan = null;
     camMove = null;
     cluster?.settleNow(); // the space finishes wherever the cascade had got to
+    timePassing?.settle(); // ⚑ S229: …and the calendar lands on 2003, the counter away
     // ⚑ S150 — THE LANDING KEEPS YOUR LOOK (OPEN_ITEMS R3-47). The cut used to
     //   commit the seat's authored pose and clear the drag that rode the flight,
     //   so a player looking to the side was snapped to the screen on arrival —
@@ -3751,6 +3756,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (morphDemoIn <= 0 && cluster && options.morphDemo) driveMorph(options.morphDemo);
       }
       cluster?.update(dt);
+      timePassing?.tick(dt);
       ceiling?.update(dt);
       cloud?.update(dt);
       // ⚑ S101 — the room goes once the sky is on its way (see `enterClose`).
@@ -4210,6 +4216,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // the space's half is scheduled around the camera's legs; passing the plan
     // (or an explicit null) keeps the two halves reading the SAME numbers.
     cluster.morphToEra(era, true, plan ?? null);
+    // ⚑ S229 / W1-C13 — "the transition from 1997 to 2003 wasn't clear": the calendar turns the years and a
+    //   counter names them, for the length of THIS cascade (the plan's own seconds, or the undriven 6.5 s)
+    if (fromEra === 'e1' && era === 'e2') {
+      if (plan) timePassing?.begin(plan.riseSeconds + (plan.morphDelaySeconds ?? 0), plan.cascadeSeconds ?? plan.buildSeconds);
+      else timePassing?.begin(0, 6.5);
+    }
     if (plan) {
       beginRelocation(key, plan);
     } else if (relocationFor(fromEra, era)) {

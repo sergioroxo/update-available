@@ -74,19 +74,19 @@ export function sprite(c: Ctx, x: number, y: number, rows: string[], map: Record
   rows.forEach((r, j) => { for (let i = 0; i < r.length; i++) { const col = map[r[i]]; if (col) px(c, x + i, y + j, col); } });
 }
 
+/** the colour a dithered vertical band gives pixel (x, y): the next stop creeps in over the seam in a checker */
+function gradColor(x: number, y: number, y0: number, y1: number, stops: string[]): string {
+  const n = stops.length - 1;
+  const t = ((y - y0) / Math.max(1, y1 - y0)) * n;
+  const k = Math.min(n - 1, Math.floor(t));
+  const f = t - k;
+  const thr = ((x & 1) * 2 + (y & 1)) / 4 + 0.125;   // ordered 2×2 dither
+  return f > thr ? stops[k + 1] : stops[k];
+}
+
 /** a vertical band from `a` to `b` over rows y0..y1, dithered across the seam */
 export function gradient(c: Ctx, y0: number, y1: number, stops: string[], width = PAGE_W): void {
-  const n = stops.length - 1;
-  for (let y = y0; y <= y1; y++) {
-    const t = ((y - y0) / Math.max(1, y1 - y0)) * n;
-    const k = Math.min(n - 1, Math.floor(t));
-    const f = t - k;
-    // ordered 2×2 dither: the next stop creeps in over the seam in a checker
-    for (let x = 0; x < width; x++) {
-      const thr = ((x & 1) * 2 + (y & 1)) / 4 + 0.125;
-      px(c, x, y, f > thr ? stops[k + 1] : stops[k]);
-    }
-  }
+  for (let y = y0; y <= y1; y++) for (let x = 0; x < width; x++) px(c, x, y, gradColor(x, y, y0, y1, stops));
 }
 
 /** a filled disc (for the sun, the drum, the lights) */
@@ -464,6 +464,40 @@ function page2026(c: Ctx): void {
   const w = hand(c, 'commons', x + 2, y + 8, P.felt);
   // and a small heart after it
   sprite(c, x + 2 + w + 2, y + 9, ['#.#', '###', '.#.'], { '#': P.felt });
+}
+
+/**
+ * ⚑ S229 / W1-C13 — THE LEAF BETWEEN THE YEARS. Walkthrough 1: "the transition from 1997 to 2003 wasn't clear";
+ * the lead: "some uncertainty of the time passing… maybe it needs some details morphing". While the room ages
+ * (the E1→E2 cascade) the wall calendar is turned a year at a time, 1997 → 2003; src/room/timePassing.ts drives
+ * it. These are the years BETWEEN the two authored pages (1998–2002): the same July grid, with the year printed
+ * big where the picture goes, and the picture itself — the stage's night — dissolving, in a 4×4 ordered dither,
+ * into Restorify's morning. `f` is how far along the six years it is (0 = 1997, 1 = 2003). Only the two
+ * eras' own inks (CAL_1997 / CAL_2003); the dither mixes the pixels, never the colours.
+ */
+export function drawFlipPage(c: Painter, year: number, f: number): void {
+  const late = f >= 0.5;
+  const P = late ? CAL_2003 : CAL_1997;
+  px(c, 0, 0, P.paper, PAGE_W, PAGE_H);
+  const A = [CAL_1997.night, CAL_1997.dusk, CAL_1997.haze, CAL_1997.glow];
+  const B = [CAL_2003.skyTop, CAL_2003.skyMid, CAL_2003.skyLow, CAL_2003.skyHorizon];
+  const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  for (let y = 0; y <= 59; y++) for (let x = 0; x < PAGE_W; x++) {
+    const thr = (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16;
+    px(c, x, y, f > thr ? gradColor(x, y, 0, 59, B) : gradColor(x, y, 0, 59, A));
+  }
+  // the year, ×3, where the band's name stood
+  const label = String(year);
+  const tx = Math.round((PAGE_W - textW(label, 3)) / 2);
+  text(c, label, tx + 1, 21, late ? CAL_2003.brandShadow : CAL_1997.titleShadow, 3);
+  text(c, label, tx, 20, late ? CAL_2003.brand : CAL_1997.title, 3);
+  // the ground the picture stands on: the stage's boards, going over to the hill
+  px(c, 0, 60, late ? CAL_2003.hillBack : CAL_1997.stageTop, PAGE_W, 1);
+  px(c, 0, 61, late ? CAL_2003.hillFront : CAL_1997.stage, PAGE_W, 10);
+  px(c, 0, 71, late ? CAL_2003.hillFrontShade : CAL_1997.stageFront, PAGE_W, 1);
+  binding(c, P);
+  const first = new Date(Date.UTC(year, 6, 1)).getUTCDay();   // the weekday July 1st fell on that year
+  monthGrid(c, { name: 'JULY', year, first, days: 31, mondayFirst: false }, P, late ? [0, 6] : [0]);
 }
 
 export function drawCalendarPage(c: Painter, era: PageEra): void {

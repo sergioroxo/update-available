@@ -1,0 +1,4 @@
+{
+  "_doc": "⚑ S229 / W1-C13 (walkthrough 1: 'the transition from 1997 to 2003 wasn't clear'; his rule 'we should not expect people to look around… we need to take the viewer there'). While the room ages from 1997 to 2003 a small frame-voice counter, top centre, counts the years — src/room/timePassing.ts — and the wall calendar turns a page for each. A year and nothing else: no sentence, no commentary. {year} is the only slot.",
+  "year": "{year}"
+}
