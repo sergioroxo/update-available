@@ -58,7 +58,7 @@ const nobatch = query.get('nobatch') === '1';
 // branch); the pre-fiction orienting card is one layer earlier and follows
 // the same convention rather than adding an extra click in front of a
 // review jump.
-const reviewMode = !!(era || morphDemo || close || reveal);
+const reviewMode = !!(era || morphDemo || close || reveal || query.get('setup') === '1');
 
 function launch(): Promise<unknown> {
   // ⚑ ?flat=1 — a REVIEW TOOL: the desktop canvas alone, no WebGL, no room,

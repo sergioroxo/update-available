@@ -1,3 +1,4 @@
+import { registerSetupHost, type LambySetup } from './setup/setup';
 /**
  * The desktop OS — phase state machine for the vertical slice:
  * warning → boot → name → desktop (mIRC → DM → log toast) → [flip happens
@@ -170,6 +171,8 @@ export class DesktopOS {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly reinterp: boolean;
   dirty = true;
+  /** The pre-story setup owns this same canvas, never a second UI surface. */
+  setup: LambySetup | null = null;
 
   private phase: Phase = 'warning';
   private t = 0;
@@ -493,6 +496,7 @@ export class DesktopOS {
     if (!ctx) throw new Error('2D context unavailable');
     this.ctx = ctx;
     this.ctx.imageSmoothingEnabled = false;
+    if (this.reinterp) registerSetupHost(this);
     this.ctx.scale(RENDER_SCALE, RENDER_SCALE); // all layout stays logical
     // reinterp replaces the shipped opening: the monitor waits dark (O1 lives
     // as the engine's DOM overlay) until beginReinterpOpening() lights the boot.
@@ -1956,6 +1960,11 @@ export class DesktopOS {
 
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
+    if (this.setup?.open) {
+      if (!this.paused) this.setup.update(dt);
+      if (this.setup.dirty) { this.setup.dirty = false; this.dirty = true; this.draw(); }
+      return;
+    }
     this.idleSeconds += dt;
     this.flushTestimonyToast();   // S223 cloud / W1-B3 — the offer's line, once the check-in card has closed
     this.updateSaver(dt);
@@ -2249,6 +2258,7 @@ export class DesktopOS {
     const H = ERA1_CANVAS.height;
     this.hits = [];
     this.iconsDrawn = [];
+    if (this.setup?.open) { this.setup.draw(this.ctx); return; }
 
     switch (this.phase) {
       case 'warning': this.drawWarning(W, H); break;
@@ -3832,6 +3842,7 @@ export class DesktopOS {
 
   // ── input ──────────────────────────────────────────────────────────────
   handleMove(x: number, y: number): void {
+    if (this.setup?.open) { this.setup.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleMove(x, y); return; }
@@ -3847,6 +3858,7 @@ export class DesktopOS {
   }
 
   handleClick(x: number, y: number): void {
+    if (this.setup?.open) { if (!this.paused) this.setup.handleClick(x, y); return; }
     this.idleSeconds = 0;   // S194 — the helpers wait for quiet
     if (this.saver) { this.saver = null; this.dirty = true; return; }   // S208 — a press wakes it, and does nothing else
     if (this.shutRefused) {   // S220 — the refusal owns the screen until OK
@@ -4036,6 +4048,7 @@ export class DesktopOS {
   }
 
   handleKey(key: string): boolean {
+    if (this.setup?.open) return true; // the frame menu owns Esc; setup has no keyboard input
     if (key === 'Escape') {
       if (this.phase === 'desktop' || this.phase === 'name'
           || this.phase === 'r_boot' || this.phase === 'r_splash' || this.phase === 'r_profile' || this.phase === 'r_recap') {
@@ -4098,6 +4111,7 @@ export class DesktopOS {
   }
 
   private leave(): void {
+    this.setup?.destroy(); this.setup = null;
     wipeLedger();
     this.stopReadAloud(); // the voice does not outlive the session (S60)
     this.paused = false;

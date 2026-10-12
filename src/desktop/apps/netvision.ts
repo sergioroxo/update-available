@@ -210,6 +210,8 @@ const SONG_BEAT = 0.51;
 const SONG_ANCHOR = 58.51;
 
 export interface NetVisionOptions {
+  /** Pre-story showroom: files nothing; the story default remains true. */
+  fileToLedger?: boolean;
   /** S2R.4 (revised, Session 45): the skip does not arm instantly — Lamby is
    *  SHOWING you this, so leaving is a social act rather than a UI
    *  convenience. os.ts passes data/dialog/s2_caleb.json's 15s; the data
@@ -232,11 +234,13 @@ export class NetVisionPlayerApp {
   private hits: Hit[] = [];
   private hover = '';
 
+  private readonly fileToLedger: boolean;
   private readonly skipAt: number;
   private readonly scenes: Scene[] = M.scenes;
   private readonly duration: number = M.duration;
 
   constructor(options: NetVisionOptions = {}) {
+    this.fileToLedger = options.fileToLedger !== false;
     this.skipAt = options.skipDelaySeconds ?? M.skipDelaySeconds;
   }
   /** THE BREAK begins where the data says it does — S51: the scene flagged
@@ -393,12 +397,13 @@ export class NetVisionPlayerApp {
   }
 
   private fileOutcome(outcome: 'watched' | 'skipped'): void {
-    if (this.filed) return;
+    if (!this.fileToLedger || this.filed) return;
     this.filed = true;
     ledger.media.push({ id: 'video', outcome, witness: M.witness[outcome] });
   }
 
   private fileInterrupted(): void {
+    if (!this.fileToLedger) return;
     ledger.media.push({ id: 'video-break', outcome: 'interrupted', witness: M.witness.interrupted });
   }
 
@@ -413,7 +418,7 @@ export class NetVisionPlayerApp {
 
   /** the skip ▶▶ — appears after skipDelaySeconds (data-driven) */
   skip(): void {
-    if (this.stage !== 'playing' || this.elapsed < this.skipAt) return;
+    if ((this.fileToLedger && this.stage !== 'playing') || this.elapsed < this.skipAt) return;
     this.fileOutcome('skipped');
     this.close('skipped');
   }

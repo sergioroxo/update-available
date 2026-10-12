@@ -1,3 +1,4 @@
+import { startSetup } from '../desktop/setup/setup';
 /**
  * Engine — one room, two facings (PRODUCTION_SCRIPT v0.3 Part I; room per
  * ERA1_LOGIC v1 §4). The monitor at the desk carries the desktop OS; behind
@@ -2589,7 +2590,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
      * "Stop device look" is a menu row now (gameMenuBus.stopMotion), beside
      * Recentre. Sérgio's ruling, same day.
      */
-    motionBtn.style.display = (motionState === 'unsupported' || motionState === 'live') ? 'none' : 'block';
+    motionBtn.style.display = (os.setup?.open || motionState === 'unsupported' || motionState === 'live') ? 'none' : 'block';
+    os.setup?.setDeviceStatus(motionState);
     gameMenuBus.stopMotion = motionState === 'live' ? () => stopMotion('off') : null;
     // ⚑ S86: NO `translateX(-50%)` HERE ANY MORE. This line used to re-centre
     // the button on every repaint, which is how it kept landing back on top of
@@ -3900,7 +3902,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         closeRoomPending = null;
         closeMonitor?.present();   // R3-109: Daniel's machine is there from the start of the Close, dark until it lights
       }
-      spine?.update(dt);
+      if (!os.setup?.open) spine?.update(dt);
       // ⚑ S204 — a held look key turns the view smoothly, after the tap's own step (0.22 s in)
       if (heldLook.size && !camMove && !os.paused && !gameMenuBus.isOpen) {
         for (const [l, t] of heldLook) {
@@ -4120,6 +4122,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       offHint.style.opacity = offShown ? '1' : '0';
     }
 
+    if (os.setup?.open) {
+      os.setup.requestDeviceLook = motionState === 'asking' || motionState === 'live' ? null : requestMotion;
+      os.setup.deviceLookAvailable = !xr?.active && motionState !== 'unsupported' && motionState !== 'live';
+      if (motionBtn) motionBtn.style.display = 'none';
+    }
     os.update(dt);
     syncRacketDemo(); // the room mirrors the diagram's pose (see its doc)
     if (os.dirty) { frontTex.upload(); os.dirty = false; }
@@ -4879,7 +4886,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (options.reinterp) {
     // review tools (?close / ?era / ?reveal / ?morph) bypass the O1 overlay —
     // they exist to look at 3D states, not to play the opening
-    if (options.close && cluster && cloud) {
+    if (new URLSearchParams(location.search).get('setup') === '1') {
+      // Review entrance: Daniel's lit 1997 room at the authored monitor seat.
+      // No review jump seeds the story or ledger before setup finishes.
+      applyLightsOn();
+      camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
+      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      cameraRig.setLocalEulerAngles(0, 0, 0);
+      void startSetup().then(() => { os.setup = null; paintMotionBtn(); os.beginReinterpOpening(); });
+    } else if (options.close && cluster && cloud) {
       enterClose();
     } else if (options.era && cluster) {
       jumpToEraSettled(options.era);

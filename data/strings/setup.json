@@ -1,0 +1,123 @@
+{
+  "_doc": "Setup before the story, operable programme balloons; plain frame windows. PLAN_ENTRANCE_RESTORE_SESSION_2026-10-13 §3 verbatim. Nothing filed. Existing plaque and content note copied verbatim here so every setup string is editable in this file. No version durations.",
+  "title": "LambyOS Setup",
+  "boot": "LambyOS",
+  "startMenu": "Start",
+  "icons": [
+    "My Computer",
+    "About this project",
+    "LambyOS Setup"
+  ],
+  "balloons": [
+    {
+      "text": "Hi! It looks like you're restoring a session. Want a hand?",
+      "buttons": [
+        "Yes, please",
+        "I know what to do"
+      ]
+    },
+    {
+      "text": "Want to know what this place is?",
+      "buttons": [
+        "Show me",
+        "Later"
+      ]
+    },
+    {
+      "text": "Can you hear me? Things sound better with headphones.",
+      "buttons": [
+        "Play a test sound",
+        "Sound on",
+        "Keep it quiet"
+      ]
+    },
+    {
+      "text": "You won't need to walk. Just turn!",
+      "buttons": [
+        "Show me how"
+      ]
+    },
+    {
+      "text": "One more thing before we start.",
+      "buttons": []
+    },
+    {
+      "text": "Which version would you like?",
+      "buttons": [
+        "The full piece",
+        "The Speedrun Version"
+      ]
+    },
+    {
+      "text": "Want to see our advert first?",
+      "buttons": [
+        "Play it",
+        "Skip"
+      ]
+    },
+    {
+      "text": "All set! See you later!",
+      "buttons": [
+        "Start"
+      ]
+    }
+  ],
+  "about": {
+    "title": "About this project",
+    "paragraphs": [
+      "This is a piece about how organised “conversion” networks (SOGICE) targeted queer people online, from 1997 to 2026. Four updates, thirty years: none of them changed who anyone was.",
+      "It is part of SurvivingSOGICE, at the University of Bergen's Center for Digital Narrative, and rests on the project's research and sources: the Lexicon on the shelf holds the words and the reasons, and the menu's Credits & attributions lists the rest.",
+      "It was directed by the project, and written and built in collaboration with Claude (Anthropic).",
+      "More to be added soon."
+    ],
+    "toolbar": [
+      "Back",
+      "Forward",
+      "Reload",
+      "Home",
+      "Search",
+      "Print"
+    ],
+    "location": "Location:",
+    "address": "lambyos://about",
+    "status": "Document: Done"
+  },
+  "sound": {
+    "title": "Sound",
+    "body": "Things sound better with headphones.",
+    "buttons": [
+      "Play a test sound",
+      "Sound on",
+      "Keep it quiet"
+    ]
+  },
+  "look": {
+    "title": "How to look",
+    "captions": [
+      "On a computer, drag to look.",
+      "On a phone or tablet, turn the device.",
+      "In a headset, turn your head."
+    ],
+    "body": "The piece will take you wherever you need to be.",
+    "permission": "Look with your device",
+    "asking": "Asking the device…",
+    "denied": "Motion access was declined — you can still drag to look.",
+    "unavailable": "Device look is unavailable — you can still drag to look."
+  },
+  "note": {
+    "title": "CONTENT NOTE",
+    "body": "This depicts how organised “conversion” networks target queer people online — in their own tactics and language. It has brief flashing when a system fails, and a few moments when the view is moved for you between rooms (if your device is set to reduce motion, those become cuts). You can leave at any time; nothing you do is kept.",
+    "menu": "Esc — or the corner button — opens the menu: pause, where you are, controls, credits, leave."
+  },
+  "advert": {
+    "title": "Discover the New You",
+    "skip": "Skip"
+  },
+  "close": "Close",
+  "dismiss": "×",
+  "advertAsterisk": {
+    "_doc": "The lead's dossier phrasing, drafted by Claude, pending his final word. Choice (c), LAMBYOS_HOME_DESIGN_2026-10-09.md §7 item 4. Plain frame voice; shown only after the advert finishes, never after Skip.",
+    "line": "*Over 30 years: no evidence of benefit, and a documented risk of harm.",
+    "sources": "Sources: open the menu, then Credits & attributions."
+  }
+}

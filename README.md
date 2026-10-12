@@ -155,3 +155,12 @@ node tools/walk.mjs --port 3206 --max 1200 --one-era
 ```
 
 One-era reports are saved under `out/walks/` with separate restore/default filenames.
+### Lamblippy setup review (2026-10-13)
+
+`?reinterp=1&setup=1&debug=1&home=0&kiosk=0&descent=0` opens Daniel’s 1997 room at the monitor seat with LambyOS Setup on the existing desktop canvas. E1 may call `startSetup()` from `src/desktop/setup/setup.ts` after restoring the seat, then await `{ cut: 'full' | 'speedrun' }` and run its Enter glitch. This review route hands off to the existing 1997 opening after Start; it does not implement E1’s starfield or glitch.
+
+All new copy is in `data/strings/setup.json`. Lamblippy is silent; the information windows hide him. The content note opens even on the experienced route, and Start is disabled until it has closed and four seconds have elapsed. The setup files nothing; captions and device-look preferences remain in memory. The optional advert uses the existing player with ledger filing disabled and immediate Skip. After playback finishes, the lead’s asterisk wording appears in a plain card with one Close button; Skip omits it. No new shipped assets.
+
+Run on a dedicated port: `npm run dev -- --port 3207 --strictPort`. Capture every step with `node tools/setup-stills.mjs --port 3207`; PNGs and behavioral assertions go to `out/setup-lamblippy/`. Walk setup plus Era 1 with `node tools/walk.mjs --port 3207 --max 900 --one-era --setup`; reports go to `out/walks/`. The walker chooses full and skips the advert offer; advert Play is forbidden because the 114-second film exceeds its per-step patience. The capture checks Play and immediate Skip separately.
+
+Hardware note: laptop/phone viewport rendering and hit rectangles are checked in headless Chrome. Real phone orientation permissions and an in-headset pass remain to be checked on hardware. The asterisk card uses the lead-supplied wording verbatim, marked in the data as his dossier phrasing drafted by Claude, pending his final word.

@@ -97,7 +97,7 @@ export class Web1997App {
     tools.forEach(([k, label, live], i) => {
       const bx = c.x + 3 + i * 46, by = c.y + 2;
       ui.bevel(ctx, bx, by, 44, TOOL_H - 2, true);
-      this.icon(ctx, k, bx + 16, by + 3, live);
+      drawWeb1997Icon(ctx, k, bx + 16, by + 3, live);
       ui.setFont(ctx, 8);
       ctx.fillStyle = live ? ERA1.black : ERA1.grey;
       ctx.fillText(label, bx + Math.round((44 - ctx.measureText(label).width) / 2), by + 16);
@@ -128,18 +128,6 @@ export class Web1997App {
     else this.drawPage(ctx, body, this.view.id);
     // (its close box answers nothing: the network does not let go — the channel is the way on;
     //  its minimise box and its taskbar button are the way to put it down)
-  }
-
-  /** the picture on each toolbar button, drawn in pixels (grey when the button is dead) */
-  private icon(ctx: CanvasRenderingContext2D, k: string, x: number, y: number, live: boolean): void {
-    const c = live ? P.iconInk : ERA1.grey;
-    const r = (dx: number, dy: number, w: number, h: number) => ui.px(ctx, x + dx, y + dy, w, h, c);
-    if (k === 'back') { for (let i = 0; i < 5; i++) r(4 - i, 5 - i, 1, 1 + i * 2); r(5, 4, 6, 3); }
-    else if (k === 'fwd') { for (let i = 0; i < 5; i++) r(7 + i, 5 - i, 1, 1 + i * 2); r(1, 4, 6, 3); }
-    else if (k === 'reload') { r(2, 2, 8, 2); r(2, 2, 2, 8); r(2, 8, 8, 2); r(8, 5, 2, 5); r(9, 1, 3, 3); }
-    else if (k === 'home') { for (let i = 0; i < 5; i++) r(5 - i, i, 2 + i * 2, 1); r(2, 5, 8, 5); ui.px(ctx, x + 5, y + 7, 2, 3, P.logoBg); }
-    else if (k === 'search') { r(2, 1, 6, 2); r(1, 2, 2, 5); r(7, 2, 2, 5); r(2, 7, 6, 2); r(8, 8, 3, 3); }
-    else { r(2, 0, 8, 4); r(0, 4, 12, 5); r(2, 9, 8, 2); }
   }
 
   private address(): string {
@@ -350,4 +338,16 @@ export class Web1997App {
       this.link(ctx, t, b.x + 20 + i * slot + Math.round((slot - tw) / 2), ry + 16, `web-ring:${k}`);
     });
   }
+}
+
+/** the picture on each toolbar button, drawn in pixels (grey when the button is dead) */
+export function drawWeb1997Icon(ctx: CanvasRenderingContext2D, k: string, x: number, y: number, live: boolean): void {
+  const c = live ? P.iconInk : ERA1.grey;
+  const r = (dx: number, dy: number, w: number, h: number) => ui.px(ctx, x + dx, y + dy, w, h, c);
+  if (k === 'back') { for (let i = 0; i < 5; i++) r(4 - i, 5 - i, 1, 1 + i * 2); r(5, 4, 6, 3); }
+  else if (k === 'fwd') { for (let i = 0; i < 5; i++) r(7 + i, 5 - i, 1, 1 + i * 2); r(1, 4, 6, 3); }
+  else if (k === 'reload') { r(2, 2, 8, 2); r(2, 2, 2, 8); r(2, 8, 8, 2); r(8, 5, 2, 5); r(9, 1, 3, 3); }
+  else if (k === 'home') { for (let i = 0; i < 5; i++) r(5 - i, i, 2 + i * 2, 1); r(2, 5, 8, 5); ui.px(ctx, x + 5, y + 7, 2, 3, P.logoBg); }
+  else if (k === 'search') { r(2, 1, 6, 2); r(1, 2, 2, 5); r(7, 2, 2, 5); r(2, 7, 6, 2); r(8, 8, 3, 3); }
+  else { r(2, 0, 8, 4); r(0, 4, 12, 5); r(2, 9, 8, 2); }
 }

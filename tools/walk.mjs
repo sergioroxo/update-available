@@ -149,12 +149,13 @@ const FROM_ERA = Number(flag('from-era', '0')) || 0;
 /** ⚑ `--one-era` (S223): stop, successfully, the moment the walk arrives in the NEXT era (or at the Close, from
  *  Era 4). With `--from-era` that makes each of tools/walk-eras.mjs's four walks one era long. */
 const ONE_ERA = process.argv.includes('--one-era');
+const SETUP = process.argv.includes('--setup');
 /** ⚑ `--cut speedrun` (S227): walk the Speedrun Version (`?cut=speedrun`, src/state/cut.ts) instead of the full piece */
 const ENTRANCE = flag('entrance', '') === 'restore' ? 'restore' : '';
 const CUT = flag('cut', '') === 'speedrun' ? 'speedrun' : '';
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
-const OUT_DIR = join(ROOT, process.argv.includes('--from-era') || ENTRANCE || ONE_ERA ? 'out/walks' : 'docs/reinterp');
+const OUT_DIR = join(ROOT, SETUP || process.argv.includes('--from-era') || ENTRANCE || ONE_ERA ? 'out/walks' : 'docs/reinterp');
 // S223: inside the project (a cloud machine has no /private/tmp of ours), one folder per era so side-by-side walks do not overwrite
 const SHOT_DIR = flag('shots', join(ROOT, 'out/walk-shots' + (FROM_ERA > 1 ? '-e' + FROM_ERA : '') + (ENTRANCE ? '-entrance-restore' : '')));
 
@@ -187,6 +188,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * the piece in its first ten seconds, which is what the first run did.
  */
 const PREFER = [
+  // Setup advert Play is forbidden: its 114 s tape exceeds a step's patience. Separate capture verifies Play + Skip.
+  /^setup-choice-0$|^setup-advert-offer-skip-1$|^setup-sound-on$|^setup-advert-skip$|^setup-close$/i,
   /understand|continue|^ok$|^okay$|next|read.?on|agree|proceed|begin|start$|enter|hello|open|insert|play|^notification$/i,   // S178: the news outranks a bare Unlock
   /apply|send|confirm|done|finish|accept|update.?now|sign.?in|signin|allow|unlock/i,
   // ⚑ S209 / A25 (REVIEW_ROUND_5, ERA16-16) — 2016's other jobs, worked to their end: the tier below ranked
@@ -216,7 +219,7 @@ const PREFER = [
  * menu's; `pause_yes` is the era's, and the difference between them is the
  * difference between quitting the piece and playing it.
  */
-const FORBIDDEN = /^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
+const FORBIDDEN = /^setup-dismiss$|^setup-advert-play-0$|^setup-device$|^setup-test$|^setup-choice-[12]$|^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
 
 /** ⚑ see the launch below — order: --chrome, the environment, the platform */
 function resolveChrome() {
@@ -409,7 +412,7 @@ async function main() {
     );
   };
 
-  const startQuery = (FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '') + (ENTRANCE ? '&entrance=' + ENTRANCE : '');
+  const startQuery = (SETUP ? '?reinterp=1&setup=1&home=0&kiosk=0&debug=1&descent=0' : FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '') + (ENTRANCE && !SETUP ? '&entrance=' + ENTRANCE : '');
   // S223: wait for the page's own load, not for "network idle", and give a COLD dev server time: on a fresh machine
   //   Vite transforms every module on first request (the cloud's first run spent its whole minute there)
   await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'load', timeout: 240000 });
@@ -421,7 +424,7 @@ async function main() {
     await page.mouse.click(VIEW.width / 2, VIEW.height / 2);
     note('dom', { target: 'wake', what: 'restore entrance: real press; no reload' });
     await page.waitForFunction(() => !document.getElementById('restore-entrance') && !!window.__os, { timeout: 90000 });
-  } else if (FROM_ERA <= 1) {
+  } else if (FROM_ERA <= 1 && !SETUP) {
     // ⚑ S227 — the front door is LAMBYOS HOME (src/desktop/home/): the notice first (its Close starts the 4 s arm),
     //   then the computer's card, whose "Log in" is the old door's. Real DOM buttons, pressed in the player's order.
     //   Without Home (`?home=0`, the short door) the old panel's Log in is on screen at once and this is skipped.
@@ -991,7 +994,7 @@ const LAP = { w: 224, h: 140 };
     }
 
     return {
-      phase: os.phase, era: os.desktopEra,
+      phase: os.setup?.open ? 'setup:' + os.setup.stage : os.phase, era: os.desktopEra,
       spine: window.__spine ? window.__spine().step : null,
       libraryShowing: !!window.__closeMonitor?.libraryShowing,
       driven: !!(pose && pose.driven),
@@ -2122,7 +2125,8 @@ const LAP = { w: 224, h: 140 };
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.json'), JSON.stringify({
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
     jumpedTo: JUMP || null,
-    isReachabilityProof: !JUMP && FROM_ERA <= 1,
+    setupEntrance: SETUP,
+    isReachabilityProof: !SETUP && !JUMP && FROM_ERA <= 1,
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,
     ledger: final.ledger, console: noise, log
@@ -2296,7 +2300,7 @@ const LAP = { w: 224, h: 140 };
   ].join('\n');
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.md'), md + '\n');
 
-  console.log('\nwrote ' + (FROM_ERA > 1 || ENTRANCE || ONE_ERA ? 'out/walks' : 'docs/reinterp') + '/WALK_' + stamp + '.{json,md} — ' +
+  console.log('\nwrote ' + (SETUP || FROM_ERA > 1 || ENTRANCE || ONE_ERA ? 'out/walks' : 'docs/reinterp') + '/WALK_' + stamp + '.{json,md} — ' +
     presses.length + ' presses, reached ' + final.era);
   await browser.close();
 
