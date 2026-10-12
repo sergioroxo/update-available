@@ -29,7 +29,7 @@
  * starts, so Esc/the pause glyph already work while this panel is showing.
  */
 import copy from '../../data/strings/orientingCard.json';
-import { prepareImmersiveVrEntry, requestImmersiveVrEntry } from '../engine/app';
+import { prepareImmersiveVrEntry, requestImmersiveVrEntry } from '../engine/entry';
 import { ledger, wipeLedger } from '../state/ledger';
 import { DIALOG, domBevel } from './theme/chrome';
 
@@ -172,11 +172,11 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
   const masthead = document.createElement('div');
   Object.assign(masthead.style, { display: 'flex', gap: '16px', alignItems: 'flex-start', marginBottom: '12px' } as CSSStyleDeclaration);
   // ⚑ S167 / R3-01 — THE LOGO, his file (2026-09-21: "more symbolic of the project"): the CRT
-  //   with the room inside, `public/assets/logo/logo_480.png` (his 1448 px original scaled to
+  //   with the room inside, `public/assets/logo/logo_480.webp` (lossless; his 1448 px original scaled to
   //   480; an asset load, not a runtime fetch). The pixel CRT (`drawMark`) stays as the title
   //   bar's 16 px icon. If the file fails to load, the mark stands in its place.
   const logo = document.createElement('img');
-  logo.src = 'assets/logo/logo_480.png';
+  logo.src = 'assets/logo/logo_480.webp';
   logo.alt = '';
   logo.setAttribute('aria-hidden', 'true');
   Object.assign(logo.style, { width: '132px', height: 'auto', flex: 'none', display: 'block' } as CSSStyleDeclaration);

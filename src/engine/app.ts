@@ -610,9 +610,9 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
  */
 export function prepareImmersiveVrEntry(canvasEl: HTMLCanvasElement): Promise<boolean> {
   if (preparedXrShell?.canvasEl === canvasEl && preparedXrReady) return preparedXrReady;
-  if (preparedXrShell) return Promise.resolve(false);
+  if (preparedXrShell && preparedXrShell.canvasEl !== canvasEl) return Promise.resolve(false);
 
-  const shell = createAppShell(canvasEl);
+  const shell = preparedXrShell ?? createAppShell(canvasEl);
   preparedXrShell = shell;
   const xr = shell.app.xr;
   if (!xr) {
@@ -641,6 +641,14 @@ export function prepareImmersiveVrEntry(canvasEl: HTMLCanvasElement): Promise<bo
     xr.on('error', fail);
   });
   return preparedXrReady;
+}
+
+/** Asset preparation only: Home stays in front; no room, fiction, or input starts.
+ * Reuse the same shell and model promise at entry, including the XR path. */
+export async function prepareRoomAssets(canvasEl: HTMLCanvasElement): Promise<void> {
+  const shell = preparedXrShell ?? createAppShell(canvasEl);
+  preparedXrShell = shell;
+  await preloadModels(shell.app);
 }
 
 /** Home uses this same shell, then hands it to startApp after its one gate. */

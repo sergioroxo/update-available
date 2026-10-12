@@ -31,10 +31,10 @@
  * minutes ago in this tab, and strips the marker so a later reload is a fresh visit. `?home=0` skips Home for the
  * short door (installations, the festival cut).
  */
-import { mountHomeXr, type HomeXr } from './homeXr';
+import type { HomeXr } from './homeXr';
 import copy from '../../../data/strings/home.json';
 import door from '../../../data/strings/orientingCard.json';
-import { prepareImmersiveVrEntry, requestImmersiveVrEntry, preparedHomeShell, enterImmersiveHome } from '../../engine/app';
+import { prepareImmersiveVrEntry, requestImmersiveVrEntry, preparedHomeShell, enterImmersiveHome } from '../../engine/entry';
 import { ledger, wipeLedger } from '../../state/ledger';
 import { gameMenuBus } from '../../state/gameMenuBus';
 import { chooseCut, currentCut, type Cut } from '../../state/cut';
@@ -914,6 +914,8 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
       if (!supported || destroyed) return;
       const cv = document.getElementById('app');
       if (!(cv instanceof HTMLCanvasElement)) return;
+      const { mountHomeXr } = await import('./homeXr');
+      if (destroyed) return;
       vrReady = await prepareImmersiveVrEntry(cv);
       if (destroyed) return;
       const shell = preparedHomeShell();

@@ -5,9 +5,7 @@
  * Hard invariants (see CLAUDE.md + tools/check-invariants.mjs):
  * no runtime network calls, no storage of user input, ledger wiped on exit.
  */
-import { startApp } from './engine/app';
-import { startFlat } from './flat/flat';
-import { startLambyRig } from './lambyrig/lambyRig';
+import { loadEngine, readyEngine, warmRoomBehindHome } from './engine/entry';
 import { mountGameMenu } from './desktop/gameMenu';
 import { mountOrientingCard } from './desktop/orientingCard';
 import { mountLambyosHome } from './desktop/home/lambyosHome';
@@ -70,8 +68,11 @@ function launch(): Promise<unknown> {
   // docs/REINTERP_THE_LOOK_MODES_2026-08-06.md). The fallback when VR is not
   // possible is the browser 3D ROOM, which is a first-class build with two
   // look-modes of its own: drag (desktop) and gyro (phone/tablet, S80).
-  if (query.get('flat') === '1') { startFlat(canvas as HTMLCanvasElement, { reinterp }); return Promise.resolve(); }
-  return startApp(canvas as HTMLCanvasElement, {
+  if (query.get('flat') === '1') return import('./flat/flat').then(({ startFlat }) => startFlat(canvas as HTMLCanvasElement, { reinterp }));
+  const engine = readyEngine();
+  // XR preparation caches the module before enabling Enter: preserve that gesture.
+  if (!engine) return loadEngine().then(() => launch());
+  return engine.startApp(canvas as HTMLCanvasElement, {
     reinterp, facet, era, morphDemo, close, reveal, nobatch,
     // ⚑ S230 — the Close returns to LambyOS Home (design §7 item 3): the piece opens in the programme's showroom and
     //   closes in it, with the Lexicon on the shelf. Home in its 'return' mode never hands on to anything; it offers
@@ -83,7 +84,7 @@ function launch(): Promise<unknown> {
 // ?lambyrig=1 — standalone procedural assistant rig lab; no OS integration,
 // no orienting card/game menu (out of scope for that dev tool).
 if (query.get('lambyrig') === '1') {
-  startLambyRig(canvas);
+  void import('./lambyrig/lambyRig').then(({ startLambyRig }) => startLambyRig(canvas));
 } else if (reinterp) {
   // R28-4: the game menu (Esc + the persistent corner glyph) mounts FIRST,
   // before either engine starts and before the orienting card below — the
@@ -106,12 +107,15 @@ if (query.get('lambyrig') === '1') {
     //   `?home=0` skips the room for the SHORT DOOR — today's orienting card, content note and arm-delay intact —
     //   for installations and the festival cut. Both hand over through the same callback.
     const mountDoor = query.get('home') === '0' ? mountOrientingCard : mountLambyosHome;
+    let stopWarming: (() => void) | undefined;
     const card = mountDoor((choice) => {
+      stopWarming?.();
       // S162 / F-01: the choice itself already did its work (the phone card asked
       // the device; the headset card requested the session) — the room opens the same
       document.documentElement.dataset.door = choice;
       void launch().then(() => card.destroy());
     });
+    if (query.get('flat') !== '1') stopWarming = warmRoomBehindHome(canvas);
   }
 } else {
   launch();

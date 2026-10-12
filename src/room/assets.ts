@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /**
  * Asset pipeline — REAL low-poly models (Round 24; Sérgio: "I want only real
  * low-poly models… add asset pipeline"). Hero furniture becomes CC0 GLB meshes
@@ -47,17 +48,27 @@ interface ModelEntry {
 const containers = new Map<string, pc.Asset>();
 const meta = new Map<string, { scale: Scale; yaw: number; cx: number; cz: number; baseY: number; tilt?: [number, number, number]; tiltOffset?: [number, number]; face?: [number, number, number, number, number] }>();
 
-/** preload the manifest's models. Empty manifest → instant no-op (boxes stay). */
-export async function preloadModels(app: pc.Application): Promise<void> {
-  const entries = (modelManifest.models ?? []) as ModelEntry[];
-  // SEQUENTIAL, not Promise.all: the vite dev server occasionally returns
-  // index.html for a public file when many land at once (a dev-only race);
-  // one-at-a-time + a single retry loads them reliably. Static prod is unaffected.
-  for (const e of entries) {
-    if (!(await loadOne(app, e))) await loadOne(app, e); // retry once on failure
-  }
-  // dev aid (?debug=1): which models actually loaded, for the panel/console
-  (window as { __modelsLoaded?: string[] }).__modelsLoaded = [...containers.keys()];
+// One in-memory preparation per application; Home and entry share it.
+const preparations = new WeakMap<pc.Application, Promise<void>>();
+
+/** Production loads four independent files at a time; dev retains its serial retry. */
+export function preloadModels(app: pc.Application): Promise<void> {
+  const existing = preparations.get(app);
+  if (existing) return existing;
+  const ready = (async () => {
+    const entries = (modelManifest.models ?? []) as ModelEntry[];
+    let next = 0;
+    const worker = async (): Promise<void> => {
+      while (next < entries.length) {
+        const entry = entries[next++];
+        if (!(await loadOne(app, entry))) await loadOne(app, entry);
+      }
+    };
+    await Promise.all(Array.from({ length: import.meta.env.DEV ? 1 : 4 }, worker));
+    (window as { __modelsLoaded?: string[] }).__modelsLoaded = [...containers.keys()];
+  })();
+  preparations.set(app, ready);
+  return ready;
 }
 
 function loadOne(app: pc.Application, entry: ModelEntry): Promise<boolean> {

@@ -45,6 +45,23 @@ screenshots under `out/travel-walls/after/`. Add `--only alternate --phase after
 to test the real era-shift seam from other seats. The report and baseline photographs
 for W1-B11 are in `out/travel-walls/`; captures are review states, while the full
 `tools/walk.mjs` run checks narrative reachability.
+### Exhibition build (14–22 October 2026)
+
+With `?reinterp=1`, LambyOS Home paints from a small entry bundle before the room engine is imported. After Home’s initial images and two paint opportunities, local engine/model assets prepare behind it; the fiction starts only on Enter. One application shell and one model-load promise carry through to browser/XR entry. Production loads four models at a time; development keeps the serial retry. XR preparation enables its buttons before the original gesture requests a session.
+
+Seven larger stereo audio distribution files are 128 kbps MP3, with duration, sample rate and channels preserved and masters retained in `assets/audio/`. The short-door logo is lossless WebP with its PNG master in `assets/logo/`. Existing Home/Library WebP art and model geometry are unchanged. PNG app icons stay for home-screen compatibility; lossless WebP made the four small JPEG room plates larger, so those stay JPEG.
+
+Cold-cache built preview on port 3205, headless Chrome and Puppeteer’s Fast 4G preset: Home’s median first complete frame improved from 2.30 s to 1.31 s; a real notice press responded by 2.36 s → 1.37 s. Total `dist/` decreased from 43.99 MB to 39.76 MB (decimal MB). These are desktop measurements without CPU throttling, not device or headset timings.
+
+```bash
+npm run build
+npx vite preview --port 3205 --strictPort
+node tools/exhibition-measure.mjs after   # three cold-cache Fast 4G trials; port 3205
+node tools/exhibition-check.mjs           # hold model requests, verify Home + handover; port 3205
+node tools/walk.mjs --port 3205 --max 2600 --require-close
+```
+
+For an offline exhibition, serve the complete `dist/` locally; phone/tablet and Quest need access to that same local server. Use trusted HTTPS for device orientation permission and immersive WebXR. No CDN, analytics, persistent browser storage or service-worker cache is added. Loading a previously unseen file still needs the local server, so disconnecting all networking after opening the page is not an offline installation strategy. Real phone/Quest startup, listening on exhibition speakers, stereo XR, and 72 Hz remain unverified; the XR entry/window handover was checked with the existing mocked manager and real mono WebGL.
 
 ### Build-time voice lines (offline, never runtime)
 Some apparatus/system lines (never survivor-side lines) are voiced with a local
