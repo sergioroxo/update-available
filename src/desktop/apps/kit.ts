@@ -75,6 +75,8 @@ const DW = 430; const DH = 330; const DX = Math.round((W - DW) / 2); const DY = 
 const PIC_W = 112;
 
 export class KitApp {
+  minimiseLabel: string | null = null;
+  setupBackLabel: string | null = null;
   open = true;
   dirty = true;
   /** fires when the dial sequence completes — the OS opens the channel */
@@ -281,7 +283,7 @@ export class KitApp {
       ui.button(ctx, x2, by, pw, bh, primary.label, { disabled: primary.disabled });
       if (!primary.disabled) this.hits.push({ x: x2, y: by, w: pw, h: bh, id: primary.id });
     }
-    ui.button(ctx, x3, by, bw, bh, kit.buttons.cancel, {});
+    ui.button(ctx, x3, by, bw, bh, this.minimiseLabel ?? kit.buttons.cancel, {});
     this.hits.push({ x: x3, y: by, w: bw, h: bh, id: 'cancel' });
   }
 
@@ -506,7 +508,7 @@ export class KitApp {
     ui.button(ctx, x1, by, bw, bh, kit.buttons.back, { disabled: true });
     ui.button(ctx, x2, by, bw, bh, kit.buttons.next, {});
     this.hits.push({ x: x2, y: by, w: bw, h: bh, id: 'setup-next' });
-    ui.button(ctx, x3, by, bw, bh, kit.buttons.cancel, {});
+    ui.button(ctx, x3, by, bw, bh, this.setupBackLabel ?? kit.buttons.cancel, {});
     this.hits.push({ x: x3, y: by, w: bw, h: bh, id: 'setup-cancel' });
   }
 

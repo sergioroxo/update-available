@@ -14,6 +14,7 @@ import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import end from '../../../data/dialog/s1_end.json';
+import pauseCopy from '../../../data/strings/pauses.json';
 import { playOnce } from '../../audio/tapeAudio';
 
 type DiaryPhase = 'prompt' | 'writing' | 'committed' | 'flagged' | 'deleting' | 'resist' | 'reassert' | 'breakout';
@@ -44,6 +45,7 @@ const PAD = { x: 108, y: 104, w: 384, h: 196 };
 export class DiaryApp {
   open = true;
   dirty = true;
+  arrivalLine: string | null = null;
   /** fires when the deletion fails — triggers the screen split (person's glitch) */
   onBreakout?: () => void;
   /** fires after the breakout beat — the update ritual begins */
@@ -135,11 +137,15 @@ export class DiaryApp {
   }
 
   private drawNote(ctx: CanvasRenderingContext2D): void {
-    const n = ui.windowFrame(ctx, NOTE.x, NOTE.y, NOTE.w, NOTE.h, end.diary.noteTitle, false);
+    const n = ui.windowFrame(ctx, NOTE.x, this.arrivalLine ? 12 : NOTE.y, NOTE.w,
+      this.arrivalLine ? 84 : NOTE.h, this.arrivalLine ? pauseCopy.returnCues.diaryTitle : end.diary.noteTitle, false);
     ui.px(ctx, n.x, n.y, n.w, n.h, ERA1.paper);
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.greyDark;
-    end.diary.note.forEach((line, i) => ctx.fillText(line, n.x + 8, n.y + 6 + i * 14));
+    if (this.arrivalLine) {
+      ctx.fillText(this.arrivalLine, n.x + 8, n.y + 6);
+      pauseCopy.returnCues.diaryAssignment.forEach((line, i) => ctx.fillText(line, n.x + 8, n.y + 20 + i * 14));
+    } else end.diary.note.forEach((line, i) => ctx.fillText(line, n.x + 8, n.y + 6 + i * 14));
   }
 
   private drawNotepad(ctx: CanvasRenderingContext2D): void {

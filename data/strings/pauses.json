@@ -1,10 +1,21 @@
 {
  "_doc": "⚑ S207 — THE PAUSES AND THE WAYS BACK (his, 2026-10-01: 'I don't want to see this as a full fork… elements of pause where people can better understand that the rest of the elements can have a way to be interacted with and not just lost in the void. Maybe there is information that needs to be disclosed in the system'; 'yes, build the four pauses and the ways back… see if they make sense when building them'). Plan: docs/reinterp/SKETCH_BRANCHES_AND_SIDE_DOORS_2026-10-01.md §4. ONE PAUSE PER ERA, once, at a moment the main path is waiting anyway, in the era's own software, listing only what has not been opened yet (read live from data/strings/map.json's optional beats — nothing here goes stale). THE WAYS BACK: when an optional thing is closed, the era's voice names the main path's current step (map.json's label). Seller's voice throughout — operable register; the satire is the system's, and it is never about the person. ⚑ THE EXCEPTIONS, by law: what people made for each other never pushes back — Caleb's song, the radio-hour tape, Tape C, the outtake on Tape 04, the ball. None of those calls wayBack.",
  "wayBack": {
-  "e1": "Un-Walk: your programme is waiting — next: {beat}.",
-  "e2": "Lamby: that's a good stretch. Back to it — next: {beat}.",
-  "e3": "Lovely break. Next on today: {beat}.",
-  "e4": "Shall we get back to it, Maya? Next: {beat}."
+  "e1": "Un-Walk: next - {beat}. Start > Now gives directions.",
+  "e2": "Restorify: next - {beat}. Start > Now gives directions.",
+  "e3": "GracePlatform: next - {beat}. Return to Today on the computer.",
+  "e4": "GraceOS: next - {beat}. Return to your session on the computer."
+ },
+ "returnCues": {
+  "diaryTitle": "Un-Walk - Before departure",
+  "diaryFromForm": "Family Form closed. Next: DIARY.TXT.",
+  "diaryFromPacket": "Placement acknowledged. Next: DIARY.TXT.",
+  "diaryAssignment": ["Write a message to yourself,", "to read when you return.", "Tell him it was the right decision."],
+  "minimise": "Minimise",
+  "kitSetupBack": "< Un-Walk",
+  "today": "Back to Today",
+  "job": "Back to job",
+  "board": "Back to Today"
  },
  "pause": {
   "e1": {

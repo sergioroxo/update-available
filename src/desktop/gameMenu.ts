@@ -218,7 +218,7 @@ export function mountGameMenu(): GameMenu {
   }
 
   function backRow(target: View = 'main'): void {
-    row(copy.back, () => { view = target; render(); });
+    row(target === 'credits' ? copy.backCredits : copy.back, () => { view = target; render(); });
   }
 
   /** ⚑ S87 — one line per source, same status/confidence/text grouping

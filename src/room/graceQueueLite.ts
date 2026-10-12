@@ -126,6 +126,7 @@ import { playOnce, anythingPlaying, stopClip } from '../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
+import pauseCopy from '../../data/strings/pauses.json';
 import { isSpeedrun } from '../state/cut';
 import { StartPanel } from '../desktop/apps/startPanel';   // S229 / W1-A6
 
@@ -1053,6 +1054,12 @@ export class GraceQueueLite {
     this.bump();
   }
 
+  private boardBackLabel(): string {
+    return this.chipReturn
+      ? (this.chipReturn.mode === 'list' ? pauseCopy.returnCues.job : pauseCopy.returnCues.board)
+      : pauseCopy.returnCues.today;
+  }
+
   /** the window goes to the taskbar, and comes back from it. */
   toggleMinimised(): void { this.minimised = !this.minimised; this.bump(); }
 
@@ -1128,6 +1135,9 @@ export class GraceQueueLite {
     this.phoneV++;
     this.bump();
   }
+
+  /** The rest of the day uses both screens, even after the phone is put down. */
+  get phoneStoryActive(): boolean { return this.maltaArrived; }
 
   /** ⚑ S149 — "nothing is open": a job on the workstation, or a card on the phone's
    *  glass. The era's exit (era3Devices.tick) waits on this. */
@@ -1537,7 +1547,7 @@ export class GraceQueueLite {
     ctx: CanvasRenderingContext2D, c: aero.AeroContent, surface: TaskSurface
   ): void {
     const backW = 96; const backH = 18;
-    aero.button(ctx, c.x, c.y - 2, backW, backH, q.app.boardBack);
+    aero.button(ctx, c.x, c.y - 2, backW, backH, this.boardBackLabel());
     this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
     let area = { x: c.x, y: c.y + backH + 8, w: c.w, h: c.h - backH - 8 };
 
@@ -1770,7 +1780,7 @@ export class GraceQueueLite {
     //   decision already filed to the ledger stays filed, and the tile keeps
     //   whatever progress it has. Nothing warns her. Nothing asks if she is sure.
     const backW = 96; const backH = 18;
-    aero.button(ctx, c.x, c.y - 2, backW, backH, q.app.boardBack);
+    aero.button(ctx, c.x, c.y - 2, backW, backH, this.boardBackLabel());
     this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
     c = { ...c, y: c.y + backH + 8, h: c.h - backH - 8 };
 
@@ -2019,12 +2029,12 @@ export class GraceQueueLite {
       ctx.fillText(q.app.storyDone, x, by - 18);
       if (next) {
         const bw = Math.round((w - 10) / 2);
-        aero.button(ctx, x, by, bw, bh, q.app.boardBack, { size: 11 });
+        aero.button(ctx, x, by, bw, bh, this.boardBackLabel(), { size: 11 });
         this.rects.push({ x, y: by, w: bw, h: bh, id: 'board-back' });
         aero.button(ctx, x + bw + 10, by, bw, bh, q.app.nextStory, { primary: true, size: 11 });
         this.rects.push({ x: x + bw + 10, y: by, w: bw, h: bh, id: 'next-story' });
       } else {
-        aero.button(ctx, x, by, w, bh, q.app.boardBack, { primary: true, size: 11 });
+        aero.button(ctx, x, by, w, bh, this.boardBackLabel(), { primary: true, size: 11 });
         this.rects.push({ x, y: by, w, h: bh, id: 'board-back' });
       }
     }

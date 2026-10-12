@@ -2983,14 +2983,36 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const FOV_MIN = 30;
   const FOV_MAX = 80;
   const FOV_HOME = 42; // createAppShell's authored value, and CAMERA_POSES.fov
+  // W1-B9: browser desk framing only. XR keeps the authored rig and tracked head.
+  const DESK_VIEW = {
+    e1: { fov: 32, halfWidth: 18, pitch: -6.5, yaw: 0 },
+    e2: { fov: 32, halfWidth: 18, pitch: -6.5, yaw: 0 },
+    e3: { fov: 32, halfWidth: 20.6, pitch: 0, yaw: -3 },
+    e4: { fov: 30, halfWidth: 17, pitch: -5, yaw: 0 }
+  };
+  let deskPitch = 0;
+  let deskYaw = 0;
+  let browserDeskActive = false;
+  function browserDesk(): boolean {
+    const seat = seatPose(os.era === 'e3' ? 90 : os.era === 'e4' ? 270 : 0);
+    return options.reinterp === true && !xr?.active && os.inDesktop && !camMove
+      && !closeStage && (!seatNodeId || ['r1-desk', 'r2-desk', 'r3-desk'].includes(seatNodeId))
+      && Math.hypot(camPos.x - seat.x, camPos.y - seat.y, camPos.z - seat.z) < 0.1
+      && !heldDevice && !era3Devices?.phoneInHand
+      && !(os.era === 'e3' && era3Devices?.phoneStoryActive)
+      && !(os.era === 'e4' && os.e4?.stage !== 'closed')
+      && !facingBack && !descentActive && revealReturn <= 0;
+  }
   /** ⚑ S209 / A23 (REVIEW_ROUND_5, PLATFORM-04) — a portrait phone held the landscape's vertical 42°, which left
    *  ~20° across: the monitor was cropped at the seat. The home view now keeps at least the landscape's width of the
    *  desk (22° either side of centre), within the pinch's own 80° ceiling. A pinch or a wheel wins until Recentre. */
   function homeFov(): number {
     const aspect = canvasEl.clientWidth / Math.max(1, canvasEl.clientHeight);
-    if (aspect >= 1) return FOV_HOME;
-    const v = 2 * Math.atan(Math.tan((22 * Math.PI) / 180) / aspect) * 180 / Math.PI;
-    return Math.max(FOV_HOME, Math.min(FOV_MAX, v));
+    const desk = browserDeskActive ? DESK_VIEW[os.era] : null;
+    const base = desk?.fov ?? FOV_HOME;
+    if (!desk && aspect >= 1) return base;
+    const v = 2 * Math.atan(Math.tan(((desk?.halfWidth ?? 22) * Math.PI) / 180) / aspect) * 180 / Math.PI;
+    return Math.max(base, Math.min(FOV_MAX, v));
   }
   let fovTouched = false;
   window.addEventListener('resize', () => {
@@ -3690,8 +3712,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       camPitch += (0 - camPitch) * Math.min(1, dt * 6); // level out during the swing
     }
-    // ⚑ S227 / W1-C8 — and it ZOOMS OUT: facing the record the view widens (+14°), so the wall reads as a whole
-    //   instead of a close-up; facing the desk it eases back. Only while she has not set the zoom herself.
+    // The room moves and the witness wall use the wider room view; the desk eases back in.
+    browserDeskActive = browserDesk();
     if (options.reinterp && !xr?.active && !fovTouched && camera.camera && os.inDesktop) {
       const want = facingBack ? Math.min(FOV_MAX, homeFov() + 14) : homeFov();
       if (Math.abs(camera.camera.fov - want) > 0.05) camera.camera.fov += (want - camera.camera.fov) * Math.min(1, dt * 1.6);
@@ -3800,7 +3822,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
     cluster?.updateTravelClearance(camPos, !!camMove);
-    cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
+    browserDeskActive = browserDesk();
+    const deskView = browserDeskActive ? DESK_VIEW[os.era] : null;
+    deskPitch += ((deskView?.pitch ?? 0) - deskPitch) * Math.min(1, dt * 1.3);
+    deskYaw += ((deskView?.yaw ?? 0) - deskYaw) * Math.min(1, dt * 1.3);
+    const browserFrame = options.reinterp && !xr?.active;
+    cameraRig.setLocalEulerAngles(camPitch + lookOffPitch + (browserFrame ? deskPitch : 0),
+      camYaw + lookOffYaw + (browserFrame ? deskYaw : 0), 0);
     // ⚑ S80: …and then the head, if the player is turning a device. The rig is
     // the seat; this is the look. Nothing above it changes, in any era.
     applyMotionLook();

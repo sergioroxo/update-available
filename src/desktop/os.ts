@@ -55,6 +55,7 @@ import { drawLambyCartoon, e2CartoonVersion, E2_CARTOON } from './apps/lambyCart
 import { playOnce, isAudioAvailable } from '../audio/tapeAudio';
 import { GuideThread } from '../narrative/guide';
 import { setPauseOS, pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
+import pauseCopy from '../../data/strings/pauses.json';
 import { Screensaver, SAVER_SECONDS } from './apps/screensaver';
 import { StartPanel } from './apps/startPanel';   // S229 / W1-A6
 import { anythingPlaying } from '../audio/tapeAudio';
@@ -423,6 +424,7 @@ export class DesktopOS {
   /** ⚑ S226 — set by the frame loop each frame (engine/app.ts): false while she is turned away from the desk */
   screenFacing = true;
   private diaryPendingAt = Infinity; // soft beat between the packet and the diary
+  private diaryPendingFromForm = false;
   /** ⚑ S208 / A4 (REVIEW_ROUND_5, ERA97-02) — the Family Form has been opened (finished or abandoned: both count —
    *  dismissal always works). The diary waits for it, so the MAIN beat can never be skipped past and lost. */
   /** S209 / B18 — the ad waits on the desktop after a dismissed alert */
@@ -594,6 +596,10 @@ export class DesktopOS {
     // bring it back where it was (W-E2 for this window; Cancel minimises)
     if (this.kit) { this.kit.restore(); this.minimised.delete('kit'); this.dirty = true; return; }
     this.kit = new KitApp();
+    if (this.reinterp) {
+      this.kit.minimiseLabel = pauseCopy.returnCues.minimise;
+      this.kit.setupBackLabel = pauseCopy.returnCues.kitSetupBack;
+    }
     this.toast = null;
     playOnce('floppy_1997.mp3');   // S141: the disk goes in, the drive reads it
     if (!ledger.records.includes('kit-inserted')) ledger.records.push('kit-inserted');
@@ -657,7 +663,7 @@ export class DesktopOS {
       this.packet = null;
       // S208 / A4 — the form first, if it has been sent and not yet opened; the diary follows its closing
       if (this.formAvailable && !this.formOpenedOnce) this.diaryAfterForm = true;
-      else this.diaryPendingAt = this.t + 1.0;
+      else { this.diaryPendingFromForm = false; this.diaryPendingAt = this.t + 1.0; }
       this.dirty = true;
     };
     this.dirty = true;
@@ -666,8 +672,11 @@ export class DesktopOS {
   /** S1.85 — the deletion fails; the person's glitch arms the real T1 update */
   private openDiary(): void {
     if (this.diary) return;
+    const pending = this.diaryPendingAt !== Infinity;
     this.diaryPendingAt = Infinity;
     this.diary = new DiaryApp();
+    if (this.reinterp && pending) this.diary.arrivalLine = this.diaryPendingFromForm
+      ? pauseCopy.returnCues.diaryFromForm : pauseCopy.returnCues.diaryFromPacket;
     this.diary.onBreakout = () => this.onGlitch?.('person');
     this.diary.onDone = () => {
       this.diary = null;
@@ -709,7 +718,9 @@ export class DesktopOS {
     this.provotype.onClose = () => {
       this.provotype = null; this.dirty = true;
       // S208 / A4 — the form was the beat the diary was waiting on: it follows now, and no "back to it" toast over it
-      if (isForm && this.diaryAfterForm) { this.diaryAfterForm = false; this.diaryPendingAt = this.t + 1.0; return; }
+      if (isForm && this.diaryAfterForm) {
+        this.diaryAfterForm = false; this.diaryPendingFromForm = true; this.diaryPendingAt = this.t + 1.0; return;
+      }
       this.wayBack(this.desktopEra);   // S207
     };
     this.dirty = true;
@@ -908,6 +919,7 @@ export class DesktopOS {
     this.behindToastAt = Infinity;
     this.escalationFallbackAt = Infinity;
     this.diaryPendingAt = Infinity;
+    this.diaryPendingFromForm = false;
     this.hasUnseenWitness = false;
     if (this.desktopEra !== 'e2') {
       this.restorify = null; // leaving e2 closes Restorify
@@ -2842,20 +2854,24 @@ export class DesktopOS {
     // yields to it and comes back when the card closes.
     if (this.toast && !this.provotype?.open) {
       ui.setFont(ctx, 9);
-      const tw = ctx.measureText(this.toast.text).width + 12;
-      ui.px(ctx, W - tw - 6, H - 42, tw, 16, ERA1.tooltip);
-      ui.px(ctx, W - tw - 6, H - 42, tw, 1, ERA1.black);
-      ui.px(ctx, W - tw - 6, H - 42, 1, 16, ERA1.black);
+      const tw = this.reinterp ? Math.min(W - 16, Math.ceil(ctx.measureText(this.toast.text).width) + 12)
+        : ctx.measureText(this.toast.text).width + 12;
+      const rows = this.reinterp ? ui.wrapText(ctx, this.toast.text, tw - 12) : [this.toast.text];
+      const th = rows.length * 12 + 4;
+      const ty = H - 26 - th;
+      ui.px(ctx, W - tw - 6, ty, tw, th, ERA1.tooltip);
+      ui.px(ctx, W - tw - 6, ty, tw, 1, ERA1.black);
+      ui.px(ctx, W - tw - 6, ty, 1, th, ERA1.black);
       ui.px(ctx, W - tw - 6, H - 27, tw, 1, ERA1.black);
-      ui.px(ctx, W - 7, H - 42, 1, 16, ERA1.black);
+      ui.px(ctx, W - 7, ty, 1, th, ERA1.black);
       ctx.fillStyle = ERA1.black;
-      ctx.fillText(this.toast.text, W - tw, H - 38);
+      rows.forEach((row, i) => ctx.fillText(row, W - tw, ty + 4 + i * 12));
       if (this.toast.act) {
         // pressable: a raised edge says so, as every other press in this era's chrome does (the fill stays)
-        ui.px(ctx, W - tw - 5, H - 41, tw - 2, 1, ERA1.white); ui.px(ctx, W - tw - 5, H - 41, 1, 14, ERA1.white);
+        ui.px(ctx, W - tw - 5, ty + 1, tw - 2, 1, ERA1.white); ui.px(ctx, W - tw - 5, ty + 1, 1, th - 2, ERA1.white);
         ui.px(ctx, W - tw - 5, H - 28, tw - 2, 1, this.hover === 'toast-act' ? ERA1.navy : ERA1.greyDark);
-        ui.px(ctx, W - 8, H - 41, 1, 14, this.hover === 'toast-act' ? ERA1.navy : ERA1.greyDark);
-        this.hits.push({ x: W - tw - 6, y: H - 42, w: tw, h: 16, id: 'toast-act' });
+        ui.px(ctx, W - 8, ty + 1, 1, th - 2, this.hover === 'toast-act' ? ERA1.navy : ERA1.greyDark);
+        this.hits.push({ x: W - tw - 6, y: ty, w: tw, h: th, id: 'toast-act' });
       }
     }
     // ⚑ S186 — the picture Rob sent owns the screen (the click routing says so): the taskbar and the

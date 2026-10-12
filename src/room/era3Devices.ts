@@ -680,6 +680,7 @@ export interface Era3Devices {
   noteSeat(seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
   /** the phone is lifted off the desk right now */
   readonly phoneInHand: boolean;
+  readonly phoneStoryActive: boolean;
   /** S177 — the phone's screen plane, and how far it has travelled toward the hand
    *  (0 on the stand … 1 held), so the engine can carry the handset's body with it */
   readonly phoneScreen: pc.Entity | null;
@@ -1375,6 +1376,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
      *  RESTING prop and keep the object out of two places at once. app.ts did
      *  this on seat cuts already; the press path needs the same guard. */
     get phoneInHand(): boolean { return phoneHeld; },
+    get phoneStoryActive(): boolean { return graceQueueLite.phoneStoryActive; },
     get phoneScreen(): pc.Entity | null { return screens.find((x) => x.name === 'phone')?.entity ?? null; },
     get phoneLift(): number { return screens.find((x) => x.name === 'phone')?.holdK ?? 0; },
     setLookProvider(fn: () => { pitch: number; yaw: number }): void { lookNow = fn; },
