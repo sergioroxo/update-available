@@ -1,0 +1,253 @@
+PAGE NAVIGATED http://localhost:3206/?reinterp=1&kiosk=0&debug=1
+  1 open       ?reinterp=1&kiosk=0&debug=1 — debug is R               
+  2 dom        [data-home="notice"]                                   
+  3 dom        [data-home-close]                                      
+  4 dom        [data-home="computer"]                                 
+  5 dom        Log in                                                 
+  6 seated     0 live controls                          e1  r_dark    
+  7 listening  the screen is still drawing itself — hol e1  r_boot    
+  8 listening  the screen is still drawing itself — hol e1  r_boot    
+  9 idle       waiting — 0 hit rects registered, 0 aima e1  r_splash  
+ 10 press      picon:star                               e1  r_profile 
+ 11 press      picon:tape                               e1  r_profile 
+ 12 press      picon:flower                             e1  r_profile 
+ 13 press      picon:bird                               e1  r_profile 
+ 14 press      picon:heart                              e1  r_profile 
+ 15 inert      picon:heart                              e1  r_profile 
+ 16 press      picon:moon                               e1  r_profile 
+ 17 press      pchip:music                              e1  r_profile 
+ 18 press      pchip:diary                              e1  r_profile 
+ 19 press      pchip:friend                             e1  r_profile 
+ 20 press      pchip:quiet                              e1  r_profile 
+ 21 inert      pchip:quiet                              e1  r_profile 
+ 22 press      pchip:faith                              e1  r_profile 
+ 23 inert      pchip:faith                              e1  r_profile 
+ 24 press      pchip:better                             e1  r_profile 
+ 25 inert      pchip:better                             e1  r_profile 
+ 26 press      pgoal:fit_in                             e1  r_profile 
+ 27 inert      pgoal:fit_in                             e1  r_profile 
+ 28 press      r-continue                               e1  r_recap   
+ 29 press      r-enter                                  e1  desktop   
+ 30 listening  the screen is still drawing itself — hol e1  desktop   
+ 31 press      startpanel-close                         e1  desktop   
+ 32 press      icon-a                                   e1  desktop   
+ 33 listening  the screen is still drawing itself — hol e1  desktop   
+ 34 press      next                                     e1  desktop   
+ 35 press      step:read                                e1  desktop   
+ 36 press      next                                     e1  desktop   
+ 37 press      done                                     e1  desktop   
+ 38 press      step:pray                                e1  desktop   
+ 39 press      play                                     e1  desktop   
+ 40 listening  the screen is still drawing itself — hol e1  desktop   
+ 41 listening  the screen is still drawing itself — hol e1  desktop   
+ 42 press      cancel                                   e1  desktop   
+ 43 press      icon-provotype                           e1  desktop   
+ 44 press      primary                                  e1  desktop   
+ 45 press      primary                                  e1  desktop   
+ 46 press      choice:0                                 e1  desktop   
+ 47 press      primary                                  e1  desktop   
+ 48 press      choice:0                                 e1  desktop   
+ 49 inert      choice:0                                 e1  desktop   
+ 50 press      leave                                    e1  desktop   
+ 51 press      icon-lambyrig                            e1  desktop   
+ 52 listening  the screen is still drawing itself — hol e1  desktop   
+ 53 listening  the screen is still drawing itself — hol e1  desktop   
+ 54 listening  the screen is still drawing itself — hol e1  desktop   
+ 55 listening  the screen is still drawing itself — hol e1  desktop   
+ 56 listening  the screen is still drawing itself — hol e1  desktop   
+ 57 listening  the screen is still drawing itself — hol e1  desktop   
+ 58 listening  the screen is still drawing itself — hol e1  desktop   
+ 59 press      mood:cheerful                            e1  desktop   
+ 60 listening  the screen is still drawing itself — hol e1  desktop   
+ 61 listening  the screen is still drawing itself — hol e1  desktop   
+ 62 listening  the screen is still drawing itself — hol e1  desktop   
+ 63 listening  the screen is still drawing itself — hol e1  desktop   
+ 64 listening  the screen is still drawing itself — hol e1  desktop   
+ 65 listening  the screen is still drawing itself — hol e1  desktop   
+ 66 listening  the screen is still drawing itself — hol e1  desktop   
+ 67 press      mood:clinical                            e1  desktop   
+ 68 listening  the screen is still drawing itself — hol e1  desktop   
+ 69 listening  the screen is still drawing itself — hol e1  desktop   
+ 70 listening  the screen is still drawing itself — hol e1  desktop   
+ 71 listening  the screen is still drawing itself — hol e1  desktop   
+ 72 listening  the screen is still drawing itself — hol e1  desktop   
+ 73 listening  the screen is still drawing itself — hol e1  desktop   
+ 74 listening  the screen is still drawing itself — hol e1  desktop   
+ 75 press      mood:sterile                             e1  desktop   
+ 76 listening  the screen is still drawing itself — hol e1  desktop   
+ 77 listening  the screen is still drawing itself — hol e1  desktop   
+ 78 listening  the screen is still drawing itself — hol e1  desktop   
+ 79 listening  the screen is still drawing itself — hol e1  desktop   
+ 80 listening  the screen is still drawing itself — hol e1  desktop   
+ 81 listening  the screen is still drawing itself — hol e1  desktop   
+ 82 listening  the screen is still drawing itself — hol e1  desktop   
+ 83 press      mood:sad                                 e1  desktop   
+ 84 listening  the screen is still drawing itself — hol e1  desktop   
+ 85 listening  the screen is still drawing itself — hol e1  desktop   
+ 86 listening  the screen is still drawing itself — hol e1  desktop   
+ 87 listening  the screen is still drawing itself — hol e1  desktop   
+ 88 listening  the screen is still drawing itself — hol e1  desktop   
+ 89 listening  the screen is still drawing itself — hol e1  desktop   
+ 90 listening  the screen is still drawing itself — hol e1  desktop   
+ 91 press      action:idle                              e1  desktop   
+ 92 listening  the screen is still drawing itself — hol e1  desktop   
+ 93 listening  the screen is still drawing itself — hol e1  desktop   
+ 94 listening  the screen is still drawing itself — hol e1  desktop   
+ 95 listening  the screen is still drawing itself — hol e1  desktop   
+ 96 listening  the screen is still drawing itself — hol e1  desktop   
+ 97 listening  the screen is still drawing itself — hol e1  desktop   
+ 98 listening  the screen is still drawing itself — hol e1  desktop   
+ 99 press      action:point                             e1  desktop   
+100 listening  the screen is still drawing itself — hol e1  desktop   
+101 listening  the screen is still drawing itself — hol e1  desktop   
+102 listening  the screen is still drawing itself — hol e1  desktop   
+103 listening  the screen is still drawing itself — hol e1  desktop   
+104 listening  the screen is still drawing itself — hol e1  desktop   
+105 listening  the screen is still drawing itself — hol e1  desktop   
+106 listening  the screen is still drawing itself — hol e1  desktop   
+107 press      action:appear                            e1  desktop   
+108 listening  the screen is still drawing itself — hol e1  desktop   
+109 listening  the screen is still drawing itself — hol e1  desktop   
+110 listening  the screen is still drawing itself — hol e1  desktop   
+111 listening  the screen is still drawing itself — hol e1  desktop   
+112 listening  the screen is still drawing itself — hol e1  desktop   
+113 listening  the screen is still drawing itself — hol e1  desktop   
+114 listening  the screen is still drawing itself — hol e1  desktop   
+115 press      action:disappear                         e1  desktop   
+116 listening  the screen is still drawing itself — hol e1  desktop   
+117 press      lambyrig-close                           e1  desktop   
+118 press      icon-rootcause                           e1  desktop   
+119 press      rootcause-start                          e1  desktop   
+120 press      dig:down                                 e1  desktop   
+121 press      ans:1                                    e1  desktop   
+122 press      qnext                                    e1  desktop   
+123 press      dig:up                                   e1  desktop   
+124 press      dig:left                                 e1  desktop   
+125 press      dig:right                                e1  desktop   
+126 press      rootcause-close                          e1  desktop   
+127 press      start-menu                               e1  desktop   
+128 press      sm-now                                   e1  desktop   
+129 press      icon-a                                   e1  desktop   
+130 press      amen                                     e1  desktop   
+131 press      step:pledge                              e1  desktop   
+132 press      sign                                     e1  desktop   
+133 press      step:connect                             e1  desktop   
+134 press      connect                                  e1  desktop   
+135 press      setup-next                               e1  desktop   
+136 press      setup-next                               e1  desktop   
+137 listening  the screen is still drawing itself — hol e1  desktop   
+138 press      icon-provotype                           e1  desktop   
+139 press      primary                                  e1  desktop   
+140 press      primary                                  e1  desktop   
+141 press      web-reload                               e1  desktop   
+142 inert      web-reload                               e1  desktop   
+143 press      leave                                    e1  desktop   
+144 press      web-search                               e1  desktop   
+145 press      web-next                                 e1  desktop   
+146 press      web-back                                 e1  desktop   
+147 press      web-next                                 e1  desktop   
+148 press      web-home                                 e1  desktop   
+149 press      web-join                                 e1  desktop   
+150 listening  the screen is still drawing itself — hol e1  desktop   
+151 press      start-menu                               e1  desktop   
+152 press      sm-prog:icon-a                           e1  desktop   
+153 press      cancel                                   e1  desktop   
+154 press      icon-a                                   e1  desktop   
+155 press      cancel                                   e1  desktop   
+156 press      reply:0                                  e1  desktop   
+157 listening  the screen is still drawing itself — hol e1  desktop   
+158 press      icon-provotype                           e1  desktop   
+159 press      primary                                  e1  desktop   
+160 press      primary                                  e1  desktop   
+161 press      choice:0                                 e1  desktop   
+162 press      primary                                  e1  desktop   
+163 press      choice:0                                 e1  desktop   
+164 inert      choice:0                                 e1  desktop   
+165 press      leave                                    e1  desktop   
+166 listening  the screen is still drawing itself — hol e1  desktop   
+167 press      start-menu                               e1  desktop   
+168 press      sm-prog:icon-provotype                   e1  desktop   
+169 press      primary                                  e1  desktop   
+170 press      primary                                  e1  desktop   
+171 press      choice:0                                 e1  desktop   
+172 press      primary                                  e1  desktop   
+173 press      choice:0                                 e1  desktop   
+174 inert      choice:0                                 e1  desktop   
+175 press      leave                                    e1  desktop   
+176 press      dm-accept                                e1  desktop   
+177 press      icon-a                                   e1  desktop   
+178 press      cancel                                   e1  desktop   
+179 listening  the screen is still drawing itself — hol e1  desktop   
+180 press      icon-provotype                           e1  desktop   
+181 press      primary                                  e1  desktop   
+182 press      leave                                    e1  desktop   
+183 press      start-menu                               e1  desktop   
+184 listening  the screen is still drawing itself — hol e1  desktop   
+185 press      sm-room:handheld                         e1  desktop   
+186 listening  the screen is still drawing itself — hol e1  desktop   
+187 press      dcc-accept                               e1  desktop   
+188 press      yes-close                                e1  desktop   
+189 listening  the screen is still drawing itself — hol e1  desktop   
+190 press      dm-up                                    e1  desktop   
+191 press      dm-down                                  e1  desktop   
+192 press      dm-up                                    e1  desktop   
+193 press      dm-down                                  e1  desktop   
+194 press      dm-up                                    e1  desktop   
+195 press      dm-down                                  e1  desktop   
+196 press      dm-up                                    e1  desktop   
+197 press      dm-down                                  e1  desktop   
+198 press      dm-up                                    e1  desktop   
+199 press      dm-down                                  e1  desktop   
+200 press      dm-up                                    e1  desktop   
+201 press      dm-down                                  e1  desktop   
+202 press      dm-up                                    e1  desktop   
+203 press      dm-down                                  e1  desktop   
+204 press      dm-up                                    e1  desktop   
+205 press      dm-down                                  e1  desktop   
+206 press      dm-up                                    e1  desktop   
+207 press      dm-down                                  e1  desktop   
+208 press      dm-up                                    e1  desktop   
+209 press      dm-down                                  e1  desktop   
+210 press      dm-up                                    e1  desktop   
+211 press      dm-down                                  e1  desktop   
+212 press      dm-up                                    e1  desktop   
+213 listening  the screen is still drawing itself — hol e1  desktop   
+214 press      reply:0                                  e1  desktop   
+215 listening  the screen is still drawing itself — hol e1  desktop   
+216 press      icon-a                                   e1  desktop   
+217 press      cancel                                   e1  desktop   
+218 press      reply:0                                  e1  desktop   
+219 listening  the screen is still drawing itself — hol e1  desktop   
+220 press      reply:0                                  e1  desktop   
+221 listening  the screen is still drawing itself — hol e1  desktop   
+222 listening  the screen is still drawing itself — hol e1  desktop   
+223 press      reply:0                                  e1  desktop   
+224 press      icon-provotype-intake                    e1  desktop   
+225 press      leave                                    e1  desktop   
+226 press      reply:0                                  e1  desktop   
+227 press      icon-provotype-intake                    e1  desktop   
+228 press      ok                                       e1  desktop   
+229 inert      ok                                       e1  desktop   
+230 press      leave                                    e1  desktop   
+231 press      ok                                       e1  desktop   
+232 silent-surface diary is live and owns no rect field at  e1  desktop   
+233 sweep-hit  (swept) diary                            e1  desktop   
+234 press      diary (known control)                    e1  desktop   
+235 silent-surface diary is live and owns no rect field at  e1  desktop   
+236 sweep-hit  (swept) diary                            e1  desktop   
+237 press      diary (known control)                    e1  desktop   
+238 silent-surface diary is live and owns no rect field at  e1  desktop   
+239 sweep-hit  (swept) diary                            e1  desktop   
+240 press      diary (known control)                    e1  desktop   
+241 silent-surface diary is live and owns no rect field at  e1  desktop   
+242 sweep-hit  (swept) diary                            e1  desktop   
+243 listening  the screen is still drawing itself — hol e1  desktop   
+244 press      cascade-retry                            e1  desktop   
+245 press      update-now                               e1  desktop   
+246 press      eula-readon                              e1  desktop   
+247 press      eula-agree                               e1  desktop   
+248 era-done   arrived in e2 from e1 — one era walked   e2  desktop   
+249 end        walk finished                            e2  desktop   
+
+wrote out/walks/WALK_2026-10-13_ONE_ERA.{json,md} — 149 presses, reached e2
+✓ one era: walked from e1 to e2.

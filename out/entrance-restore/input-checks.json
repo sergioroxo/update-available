@@ -1,0 +1,22 @@
+[
+  {
+    "input": "keyboard",
+    "passed": true,
+    "plays": [
+      "http://localhost:3206/assets/audio/bed_1997.mp3",
+      "http://localhost:3206/assets/audio/descent_score.mp3"
+    ],
+    "idle": 6,
+    "hardware": "browser simulation; no headset"
+  },
+  {
+    "input": "simulated-xr-select",
+    "passed": true,
+    "plays": [
+      "http://localhost:3206/assets/audio/bed_1997.mp3",
+      "http://localhost:3206/assets/audio/descent_score.mp3"
+    ],
+    "idle": 5,
+    "hardware": "browser simulation; no headset"
+  }
+]

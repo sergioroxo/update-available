@@ -1,0 +1,14 @@
+capture 1280 720
+shot wake-streaming
+shot wake-title
+shot mid-restore
+shot glitch
+shot room-monitor
+idle reference 1280
+capture 390 844
+shot wake-streaming
+shot wake-title
+shot mid-restore
+shot glitch
+shot room-monitor
+idle reference 390

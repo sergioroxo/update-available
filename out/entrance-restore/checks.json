@@ -1,0 +1,41 @@
+[
+  {
+    "check": "reduced motion, drag/pinch no select, ledger unchanged, pause/resume, URL speedrun hand-off",
+    "passed": true,
+    "phases": [
+      "flight",
+      "setup"
+    ],
+    "pose": {
+      "x": 0,
+      "y": 1.16,
+      "z": 0.7,
+      "pitch": 0,
+      "yaw": 0,
+      "driven": false,
+      "seq": 0,
+      "conducted": false,
+      "arc": false,
+      "dur": 0,
+      "t": 0,
+      "leg": null,
+      "reloc": null,
+      "descent": false,
+      "lookYaw": 0,
+      "lookPitch": 0
+    }
+  },
+  {
+    "check": "entrance=home&kiosk=0",
+    "passed": true
+  },
+  {
+    "check": "entrance=restore&home=0&kiosk=0",
+    "passed": true
+  },
+  {
+    "check": "30-minute fresh-visit reload, time scaled to 15 seconds, era review removed, returns to WAKE",
+    "passed": true,
+    "url": "http://localhost:3206/?reinterp=1&debug=1&entrance=restore&idlescale=0.5"
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "dragged": false,
+    "maxDrawCalls": 72,
+    "linear": 0.4144954761714322,
+    "angular": 8.32091289826778,
+    "frames": 1179,
+    "seat": {
+      "x": 0,
+      "y": 1.16,
+      "z": 0.7,
+      "pitch": 0,
+      "yaw": 0,
+      "driven": false,
+      "seq": 1,
+      "conducted": false,
+      "arc": false,
+      "dur": 0,
+      "t": 0,
+      "leg": null,
+      "reloc": null,
+      "descent": false,
+      "lookYaw": 0,
+      "lookPitch": 0
+    }
+  },
+  {
+    "dragged": true,
+    "maxDrawCalls": 28,
+    "linear": 0.24096903628160685,
+    "angular": 9.099993396842043,
+    "frames": 1699,
+    "seat": {
+      "x": 0,
+      "y": 1.16,
+      "z": 0.7,
+      "pitch": 0,
+      "yaw": 0,
+      "driven": false,
+      "seq": 1,
+      "conducted": false,
+      "arc": false,
+      "dur": 0,
+      "t": 0,
+      "leg": null,
+      "reloc": null,
+      "descent": false,
+      "lookYaw": 0,
+      "lookPitch": 0
+    }
+  }
+]
