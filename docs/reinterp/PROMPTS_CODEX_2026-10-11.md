@@ -157,3 +157,86 @@ codex/library-2 from reinterp.
 Screenshots at 1280×720 and 390×844 to out/library/; walk: node tools/walk.mjs --port 3201 --max 900 --from-era 4
 --require-close. Commit "CODEX: library-2 — …", report as before.
 ```
+
+---
+
+## E1 · The entrance: wake (the starfield) → restore (the stars become the room) → the monitor (port 3206)
+*Plan: docs/reinterp/PLAN_ENTRANCE_RESTORE_SESSION_2026-10-13.md (read it all first, especially §1 and §2 — the
+aesthetic reasons are the brief). Paste the PREAMBLE first. Revised 2026-10-13: the starfield, not pipes.*
+
+```
+TASK = entrance-restore. Read docs/reinterp/PLAN_ENTRANCE_RESTORE_SESSION_2026-10-13.md fully; §2 explains why this
+must look like the rest of the piece. Build, behind `?entrance=restore` (LambyOS Home in src/desktop/home/ stays the
+default and stays reachable as `?entrance=home`; `?home=0` keeps meaning the short door):
+1. WAKE — THE STARFIELD IN 3D. The piece already has a pixel warp starfield that gathers into words: starfield() in
+   src/frame/leavePage.ts (its DOT font, timing and colours REFERENCE.saverSky/saverStar/saverDim in
+   src/desktop/theme/chrome.ts) and its full-screen use for the idle card in src/frame/attract.ts. Rebuild that look IN
+   THE PLAYCANVAS SCENE so it is the same in a headset: square pixel stars (tiny camera-facing quads or 90°-step cubes,
+   instanced/merged, ≤ 10 draw calls added) streaming past the viewer in a NIGHT-BLUE space (the Close's backdrop rule:
+   never black — use the night-blue the Close's point cloud uses, src/room/pointCloud.ts / data/room/cluster.json), then
+   gathering, in front of the viewer at a comfortable distance, into the dot-matrix title YOUR UPDATE / HAS FAILED
+   (the same 3×5 DOT glyphs), holding, and drifting apart again, on a loop. Under it, frame-voice lines "Click or
+   press any key" and, small, "Session still active." (DOM text in the browser; in XR a small world-space text panel
+   or dots — say which). Words in data/strings/entrance.json. Warm stars (the lamp pool's warm tone used by the Close's
+   PERSON points) with a few cool ones (the APPARATUS tone): the same two tones as the Close's constellation, so the
+   piece's first image answers its last. Any press / key / XR select → RESTORE.
+2. RESTORE — THE STARS BECOME THE ROOM. "Restoring previous session…" types in (frame voice, bottom-left, monospace,
+   as in the lead's concept image). The stars fly to points sampled on Daniel's 1997 room surfaces (sample vertices of
+   the room's meshes); where they land, the room's own low-poly materials fade up from dark, so the room is rebuilt out
+   of points over ~6–8 s (reuse the cluster / clusterMorph machinery and the existing entrance flight in
+   src/engine/app.ts — search `the entrance`, `descent`, ENTRANCE — rather than inventing new systems). Then "Room found.
+   User profile pending." The camera is TAKEN to the seat facing the monitor (never make the viewer look for it). The
+   monitor wakes into the setup (job E2). Comfort: the camera rules already in app.ts (≤ 9.1 °/s rotation, the
+   documented speeds). Reduced motion: a slow cross-fade instead of the flight.
+3. HAND-OFF: create `src/desktop/setup/setup.ts` exporting `startSetup(): Promise<{ cut: 'full' | 'speedrun' }>` as a
+   STUB that resolves at once with the URL's cut (job E2 replaces this file — keep the signature). After the room is
+   restored: `await startSetup()`, then chooseCut(cut), run the Enter glitch (4), and continue exactly as LambyOS Home's
+   Enter does today (main.ts `mountDoor` → onContinue(choice) with the computer; find it) so the 1997 story begins.
+4. THE ENTER GLITCH: export `entranceGlitch(): Promise<void>` that, for ≤ 0.8 s, shows the room "as it was": flat cool
+   fluorescent light, saturation about halved, a slight green cast (a light/material state of the existing room — no
+   new art), then restores it; ≤ 2 flashes; skipped with prefers-reduced-motion.
+5. IDLE CYCLE: src/frame/attract.ts's 30-minute fresh visit reloads to LambyOS Home today; under the restore entrance it
+   must reload to the WAKE starfield (the content note lives in the setup, so nothing the visitor must read is skipped).
+6. The walker: add `--entrance restore` to tools/walk.mjs (default unchanged) so it walks wake → restore → (stub)
+   setup → 1997; it must never press anything that reloads.
+Checks: screenshots of wake (stars streaming; title gathered), mid-restore, the room restored at the monitor, and the
+glitch frame — at 1280×720 and 390×844 — to out/entrance-restore/, LOOKED AT next to the idle card's starfield
+(src/frame/attract.ts) so the two read as one language; `node tools/walk.mjs --port 3206 --max 1200 --one-era
+--entrance restore` reaches 2003; the default path unchanged: `node tools/walk.mjs --port 3206 --max 1200 --one-era`.
+```
+
+## E2 · LambyOS Setup on the monitor, with Lamblippy (port 3207)
+
+```
+TASK = setup-lamblippy. Read docs/reinterp/PLAN_ENTRANCE_RESTORE_SESSION_2026-10-13.md fully — §3 holds the exact
+steps and words (use them verbatim; put every string in data/strings/setup.json). Build the 1997 PC's first screen,
+"LambyOS Setup", drawn on the DESKTOP CANVAS that is textured onto the monitor (src/desktop/ — the one UI surface;
+FILTER_NEAREST; era-1 palette and the existing Win95 chrome helpers in src/desktop/theme/ and os.ts/apps/*), so it
+works in the browser, on a phone and in a headset with the same hit rects the desktop already publishes:
+- The monitor wakes from the starfield entrance (job E1): first a short black-to-teal Win95 boot, then a Windows 95
+  desktop (teal, a few icons, a taskbar "Start" button inert) with LAMBLIPPY: Lamby (the piece's lamb
+  mascot — find its existing pixel sprite/cartoon in src/desktop, e.g. lamby_pop / the 2003 Lamby drawing) restyled
+  as a Clippy-like assistant on a little pad, with a yellow Win95 tooltip-style balloon and buttons in it. Text only —
+  no voice, no sound for Lamblippy. One balloon at a time; the balloon's buttons are hit rects.
+- The windows it opens (plain Win95 windows, frame voice): "About this project" as a 1997 web browser window (reuse
+  the 1997 browser look from src/desktop/apps/browser.ts) showing home.json `return.plaque` paragraphs + "More to be
+  added soon."; the sound window (a test chime via tapeAudio's playOnce of an existing UI sound; Sound on / Keep it
+  quiet → captions on via ledger.view.captions); "How to look" with three small pixel pictures you draw in code (a hand
+  dragging on a laptop, a phone being turned, a head turning in a headset) and the device-permission button where
+  needed (reuse the existing "Look with your device" flow); the CONTENT NOTE window (the existing content-note text —
+  find it in data/strings/orientingCard.json — the only gate: Start stays disabled until it has been opened and closed,
+  then 4 s, exactly as LambyOS Home's gate); the version choice (the full piece / the Speedrun Version → the cut; NO durations — the lead's ruling); the advert offer (play the
+  existing "Discover the New You" infomercial — src/desktop/apps/netvision.ts / data/dialog/s2_media.json — in a
+  period player window, Skip always available); Start.
+- Export from `src/desktop/setup/setup.ts`: `startSetup(): Promise<{ cut: 'full' | 'speedrun' }>` (job E1 calls it;
+  if E1's stub is not in your tree, create the file with this signature and add a review route `?setup=1` that opens
+  the 1997 room at the seat with the setup on the monitor).
+- Nothing is stored; Home files nothing in the ledger; the frame never plays (Lamblippy is the PROGRAMME's voice:
+  register operable; it never states the content note, facts or sources — the windows do).
+- The walker: publish every balloon button and window close as hit rects so tools/walk.mjs can press through
+  setup (it must open and close the content note, choose full, Skip the advert, press Start); add the setup's
+  "advert Play" to its FORBIDDEN list only if playing would exceed its patience (say which).
+Checks: screenshots of each step on the monitor at 1280×720 and 390×844 (and the canvas itself) to
+out/setup-lamblippy/, LOOKED AT; `?setup=1` walk: `node tools/walk.mjs --port 3207 --max 900 --one-era` with whatever
+flag reaches the setup (document it); tsc + npm test.
+```

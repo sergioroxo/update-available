@@ -54,8 +54,8 @@
  },
  "cut": {
   "legend": "Which version?",
-  "full": "The full piece (about 60 minutes)",
-  "speedrun": "The Speedrun Version (about 20 minutes)"
+  "full": "The full piece",
+  "speedrun": "The Speedrun Version"
  },
  "lamby": {
   "_doc": "The programme's voice (LambyOS, register operable): cosy, a little too eager, and it never explains anything the frame explains. No line mentions the notice, the content, leaving, or what the piece is about.",
