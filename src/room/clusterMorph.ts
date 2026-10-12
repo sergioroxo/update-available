@@ -395,3 +395,35 @@ export class ClusterMorph {
     if (this.t > (CASCADE + PROP_DUR) * this.pace) this.active = false;
   }
 }
+
+/** Restore entrance: sample the already-folded r1 meshes, including model children.
+ * Points come from real mesh vertices/triangles, never from a second room layout. */
+export function sampleRoomSurfaces(room: RoomHandles, count: number): { point: pc.Vec3; material: pc.Material }[] {
+  const triangles: pc.Vec3[][] = [];
+  const materials: pc.Material[] = [];
+  for (const h of room.props.values()) {
+    if (!h.entity.enabled) continue;
+    h.entity.forEach((node) => {
+      const e = node as pc.Entity;
+      for (const mi of e.render?.meshInstances ?? []) {
+        const positions: number[] = [], indices: number[] = [];
+        mi.mesh.getPositions(positions); mi.mesh.getIndices(indices);
+        const transform = mi.node.getWorldTransform();
+        const vertex = (i: number): pc.Vec3 => transform.transformPoint(new pc.Vec3(...positions.slice(i * 3, i * 3 + 3)));
+        const ids = indices.length ? indices : Array.from({ length: positions.length / 3 }, (_, i) => i);
+        for (let i = 0; i + 2 < ids.length; i += 3) { triangles.push([vertex(ids[i]), vertex(ids[i + 1]), vertex(ids[i + 2])]); materials.push(mi.material); }
+      }
+    });
+  }
+  // Area-weighted selection keeps large room surfaces legible beside detailed props.
+  const area: number[] = []; let total = 0;
+  for (const [a, b, c] of triangles) { total += new pc.Vec3().cross(b.clone().sub(a), c.clone().sub(a)).length() / 2; area.push(total); }
+  let seed = 1997;
+  const random = (): number => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  return Array.from({ length: count }, () => {
+    const pick = random() * total; let lo = 0, hi = area.length - 1;
+    while (lo < hi) { const mid = (lo + hi) >>> 1; if (area[mid] < pick) lo = mid + 1; else hi = mid; }
+    const [a, b, c] = triangles[lo]; const u = Math.sqrt(random()), v = random();
+    return { point: a.clone().mulScalar(1 - u).add(b.clone().mulScalar(u * (1 - v))).add(c.clone().mulScalar(u * v)), material: materials[lo] };
+  });
+}

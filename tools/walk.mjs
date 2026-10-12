@@ -150,12 +150,13 @@ const FROM_ERA = Number(flag('from-era', '0')) || 0;
  *  Era 4). With `--from-era` that makes each of tools/walk-eras.mjs's four walks one era long. */
 const ONE_ERA = process.argv.includes('--one-era');
 /** ⚑ `--cut speedrun` (S227): walk the Speedrun Version (`?cut=speedrun`, src/state/cut.ts) instead of the full piece */
+const ENTRANCE = flag('entrance', '') === 'restore' ? 'restore' : '';
 const CUT = flag('cut', '') === 'speedrun' ? 'speedrun' : '';
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
-const OUT_DIR = join(ROOT, process.argv.includes('--from-era') ? 'out/walks' : 'docs/reinterp');
+const OUT_DIR = join(ROOT, process.argv.includes('--from-era') || ENTRANCE || ONE_ERA ? 'out/walks' : 'docs/reinterp');
 // S223: inside the project (a cloud machine has no /private/tmp of ours), one folder per era so side-by-side walks do not overwrite
-const SHOT_DIR = flag('shots', join(ROOT, 'out/walk-shots' + (FROM_ERA > 1 ? '-e' + FROM_ERA : '')));
+const SHOT_DIR = flag('shots', join(ROOT, 'out/walk-shots' + (FROM_ERA > 1 ? '-e' + FROM_ERA : '') + (ENTRANCE ? '-entrance-restore' : '')));
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -408,14 +409,19 @@ async function main() {
     );
   };
 
-  const startQuery = (FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '');
+  const startQuery = (FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '') + (ENTRANCE ? '&entrance=' + ENTRANCE : '');
   // S223: wait for the page's own load, not for "network idle", and give a COLD dev server time: on a fresh machine
   //   Vite transforms every module on first request (the cloud's first run spent its whole minute there)
   await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'load', timeout: 240000 });
   note('open', { what: startQuery + (FROM_ERA > 1 ? ' — ⚑ FROM ERA ' + FROM_ERA + ': not a reachability proof' : ' — debug is READ-ONLY here; no panel button, no jump, no __requestMove') });
 
   // ── the front door is real DOM, not canvas (4 s ethics delay honoured) ──
-  if (FROM_ERA <= 1) {
+  if (FROM_ERA <= 1 && ENTRANCE) {
+    await page.waitForSelector('#restore-entrance[data-phase="wake"]', { timeout: 180000 });
+    await page.mouse.click(VIEW.width / 2, VIEW.height / 2);
+    note('dom', { target: 'wake', what: 'restore entrance: real press; no reload' });
+    await page.waitForFunction(() => !document.getElementById('restore-entrance') && !!window.__os, { timeout: 90000 });
+  } else if (FROM_ERA <= 1) {
     // ⚑ S227 — the front door is LAMBYOS HOME (src/desktop/home/): the notice first (its Close starts the 4 s arm),
     //   then the computer's card, whose "Log in" is the old door's. Real DOM buttons, pressed in the player's order.
     //   Without Home (`?home=0`, the short door) the old panel's Log in is on screen at once and this is skipped.
@@ -2073,7 +2079,7 @@ const LAP = { w: 224, h: 140 };
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '') + (CUT ? '_' + CUT.toUpperCase() : '');
+    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '') + (CUT ? '_' + CUT.toUpperCase() : '') + (ENTRANCE ? '_ENTRANCE_RESTORE' : '') + (ONE_ERA ? '_ONE_ERA' : '');
   const presses = log.filter((l) => l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move');
   const dead = presses.filter((p) => p.changed === false);
   const silentFound = [...new Set(log.filter((l) => l.kind === 'silent-surface')
@@ -2290,7 +2296,7 @@ const LAP = { w: 224, h: 140 };
   ].join('\n');
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.md'), md + '\n');
 
-  console.log('\nwrote ' + (FROM_ERA > 1 ? 'out/walks' : 'docs/reinterp') + '/WALK_' + stamp + '.{json,md} — ' +
+  console.log('\nwrote ' + (FROM_ERA > 1 || ENTRANCE || ONE_ERA ? 'out/walks' : 'docs/reinterp') + '/WALK_' + stamp + '.{json,md} — ' +
     presses.length + ' presses, reached ' + final.era);
   await browser.close();
 

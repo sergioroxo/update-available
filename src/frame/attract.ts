@@ -112,14 +112,20 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
   let pressedBtn: Element | null = null;
 
   /** is the visit still in the front room? (Home, the short door's orienting card) — then there is nothing to hold or ask */
-  const homeShowing = (): boolean => !!document.querySelector('#lambyos-home, #reinterp-orienting-card');
+  const homeShowing = (): boolean => !!document.querySelector('#lambyos-home, #reinterp-orienting-card, #restore-entrance');
 
   // ── the fresh visit: Home again, the ledger wiped ──
   function freshVisit(): void {
     if (leaving) return;
     leaving = true;
     wipeLedger();
-    try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search); } catch { /* keep the hash */ }
+    // Restore visits return to WAKE, including when a review URL had started at an era.
+    const freshQuery = new URLSearchParams(window.location.search);
+    const restoreVisit = freshQuery.get('entrance') === 'restore' && freshQuery.get('home') !== '0';
+    if (restoreVisit) {
+      for (const key of ['era', 'morph', 'close', 'reveal']) freshQuery.delete(key);
+    }
+    try { window.history.replaceState(window.history.state, '', window.location.pathname + (restoreVisit ? '?' + freshQuery.toString() : window.location.search)); } catch { /* keep the hash */ }
     if (xrSession?.active()) {
       // ⚑ a headset has no overlay to take down: end the immersive session, then the same reload
       try { xrSession.end(); } catch { /* the reload ends it anyway */ }

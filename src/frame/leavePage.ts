@@ -201,7 +201,7 @@ function createLeavePage(): LeavePage {
 // `everySeconds` the stars gather for `holdSeconds` into three short lines and scatter
 // again — the way a screensaver drifts into a clock. Read by nobody who is not looking.
 // No storage, no timers left behind: the loop is one rAF and stops when the page closes.
-const DOT: Record<string, string> = {
+export const DOT: Record<string, string> = {
   A: '010101111101101', D: '110101101101110', E: '111100110100111', G: '011100101101011', H: '101101111101101',
   I: '111010010010111', N: '110101101101101', O: '010101101101010', R: '110101110101101', S: '011100010001110',
   T: '111010010010010', U: '101101101101111', W: '101101111111101', Y: '101101010010010', ' ': '000000000000000',

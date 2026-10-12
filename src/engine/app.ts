@@ -61,6 +61,7 @@ import { drawPrint, PRINT_SIZE } from '../room/printArt';
 import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
+import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
 
 
@@ -536,6 +537,8 @@ interface AppOptions {
   reveal?: boolean;
   /** ?nobatch=1 — disable static batching (A/B perf comparison, review tool) */
   nobatch?: boolean;
+  /** Opt-in E1 frame entrance; Home and the short door keep their existing paths. */
+  restoreEntrance?: boolean;
   /** Legacy DOM Home return hook, retained for callers. The Close now ends on its monitor's Library. */
   onReturnHome?: () => void;
 }
@@ -722,6 +725,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // vite dev-server public-file race on the pages that don't need them).
   if (options.reinterp === true) await preloadModels(app);
 
+  let restoreEntrance: RestoreEntrance | null = null;
+  let restoreSeatDone: (() => void) | null = null;
   const room = buildEra1Room(app, options.reinterp === true);
 
   // ── the fluid trans niche + the cluster shell (reinterp only) ──
@@ -959,7 +964,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRestart: () => restartPiece()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (ray) => { if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); xrFrame?.press(ray); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
@@ -1692,10 +1697,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * declared after the shell is built; `ClusterShell.setNeverBatch` carries the
    * full reasoning.
    */
-  cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat());
+  // Entrance holds every narrative mutation: keep these props batched until setup hands over.
+  if (!options.restoreEntrance) cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat());
   /** ⚑ S183 — the institution's corner: named, pressable, and pulling with the file */
   const institution = options.reinterp === true ? createInstitution(room) : null;
   if (institution) {
+    // r1's institutional corner appears only with its filings; restoration must not pre-empt it.
+    if (options.restoreEntrance) institution.tick(0, 'e1', false, 0, 0, false, () => false);
     cluster?.setNeverBatch([...INSTITUTION_IDS, ...DEVICE_PROP_IDS]);
     // the auditor's handle (memory: the affordance is the target) — what can be pressed there now
     (window as unknown as { __institution?: () => unknown }).__institution =
@@ -2745,6 +2753,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   };
   os.onFlipReady = pulse;
   os.onLeave = () => {
+    if (restoreEntrance?.blocking) {
+      restoreEntrance.cancel(); camMove = null; clearLookOffset();
+      const resolve = restoreSeatDone; restoreSeatDone = null; resolve?.();
+      camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
+      cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
+      cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat());
+    }
     flipBtn.style.display = 'none';
     closeMonitor?.hide();
     stopClip(libraryLoop); libraryLoop = null;
@@ -3435,7 +3450,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   //   the browser needs (Sérgio, 09-17 R3-04: "the sound of the room only starts
   //   with the movement"). The listeners above stay as the fallback for a review
   //   page that arrived without one.
-  if (options.reinterp === true) startFirstBed();
+  if (options.reinterp === true && !options.restoreEntrance) startFirstBed();
 
   canvasEl.addEventListener('pointerdown', (e) => {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -3453,7 +3468,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // Record it through S80's same 10 px / 1.2 s release test: travelling is a
     // LOOK and must not destroy the opening. This branch also avoids
     // nudgeCamera(), which would cancel the conducted entrance arc itself.
-    if (descentActive) {
+    if (descentActive || restoreEntrance?.blocking) {
       press = { id: e.pointerId, t: performance.now(), moved: 0, opening: true };
       drag = { x: e.clientX, y: e.clientY };
       try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
@@ -3557,6 +3572,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!p || p.id !== e.pointerId) return;
     if (p.moved > TAP_SLOP_PX) return;                 // it travelled: a look
     if (performance.now() - p.t > TAP_MS) return;      // it lingered: not a tap
+    if (restoreEntrance?.blocking) { restoreEntrance.press(); return; }
     if (p.opening) {
       // ⚑⚑ THE DRIVEN MOVES ARE NOT SKIPPABLE BY POINTER. FIXED 2026-08-15.
       //
@@ -3603,6 +3619,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   window.addEventListener('keyup', (e) => { const l = LOOK_KEYS[e.key]; if (l) heldLook.delete(l); });
   window.addEventListener('blur', () => heldLook.clear());
   window.addEventListener('keydown', (e) => {
+    if (restoreEntrance?.blocking) { if (e.key !== 'Escape' && !gameMenuBus.isOpen) { startFirstBed(); restoreEntrance.press(); } return; }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (!camMove && !gameMenuBus.isOpen && !os.paused && closeMonitor?.key(e.key,e.shiftKey)) { e.preventDefault(); return; }
     // S48: any key skips the descent too (Escape excepted — the game menu
@@ -3711,6 +3728,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       return;
     }
     if (menuHeldAudio) { menuHeldAudio = false; tapeAudio?.setGamePaused(os.paused); roomBed.setGamePaused(os.paused); setOneShotsPaused(false); }
+    restoreEntrance?.update(dt);
+    if (restoreEntrance?.blocking && !restoreEntrance.flying) {
+      cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
+      applyMotionLook(); return;
+    }
     if (tween !== null) {
       const dir = Math.sign(tween - camYaw);
       camYaw += dir * (180 / FLIP_SECONDS) * dt;
@@ -3840,6 +3862,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S80: …and then the head, if the player is turning a device. The rig is
     // the seat; this is the look. Nothing above it changes, in any era.
     applyMotionLook();
+    if (restoreSeatDone && !camMove) { const resolve = restoreSeatDone; restoreSeatDone = null; clearLookOffset(); cameraRig.setLocalEulerAngles(0, 0, 0); resolve(); }
+    if (restoreEntrance?.blocking) return;
     publishNow(); // ?debug=1 live "you are here" readout
 
     // ── cluster / ceiling / Close + the O7 choreography (reinterp only) ──
@@ -4868,6 +4892,35 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camPitch = ESTABLISH.pitch;
       camYaw = 0;
       cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    } else if (options.restoreEntrance) {
+      camPos.set(drivenMoves && !reducedMotion ? DESCENT_FROM.x : EYE.x,
+        drivenMoves && !reducedMotion ? DESCENT_FROM.y : EYE.y,
+        drivenMoves && !reducedMotion ? DESCENT_FROM.z : EYE.z);
+      camPitch = drivenMoves && !reducedMotion ? DESCENT_FROM.pitch : 0;
+      camYaw = drivenMoves && !reducedMotion ? DESCENT_FROM.yaw : 0;
+      cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+      applyLightsOn();
+      restoreEntrance = buildRestoreEntrance(app, room, cameraRig, camera, {
+        reduced: reducedMotion, crossFade: reducedMotion || !drivenMoves, lights: applyRoomLight,
+        prepareRestore: () => {
+          if (!drivenMoves || reducedMotion) {
+            clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
+            cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
+          }
+        },
+        flyToSeat: () => {
+          if (!drivenMoves || reducedMotion) {
+            clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
+            cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
+            return Promise.resolve();
+          }
+          return new Promise<void>((resolve) => {
+            restoreSeatDone = resolve;
+            startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, Math.max(DESCENT_SECONDS, 1.875 * Math.hypot(((camYaw + 180) % 360 + 360) % 360 - 180, camPitch) / 9.1), true, DESCENT_VIA);
+          });
+        },
+        beginStory: () => { cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat()); wakeActive = true; wakeT = WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS; finishWake(); }
+      });
     } else {
       // fresh load (past the interim log-in panel): the room is already there,
       // dark, and you come DOWN into it (S48) while it WAKES on its own

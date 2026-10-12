@@ -139,3 +139,19 @@ doctrine, and the era-update transition grammar.
 No backend. No analytics. No cookies. No storage. The typed name lives in
 memory only and is wiped on exit — enforced by CI (`npm test`) and, in
 deployment, by CSP. This page cannot phone home even if code tried.
+
+### Restore entrance (opt-in E1)
+
+`?reinterp=1&entrance=restore` opens the frame's pixel starfield in the 3D scene. Its stars gather into the existing DOT title, then a deliberate tap, key or XR select restores Daniel's already-folded 1997 room from sampled mesh surfaces over seven seconds. The existing comfortable entrance arc takes the camera to the monitor before setup and the single 0.65-second material/light glitch hand over to the ordinary story opening. The new geometry adds one draw call in the browser, two in XR (the second is a nearest-filtered world-space frame-text panel); no imported asset is added.
+
+LambyOS Home remains the default and `?entrance=home` explicitly selects it. `?home=0` still selects the short door, including when `entrance=restore` is present. `?descent=0` assembles by cross-fade at the seat; `prefers-reduced-motion` also stops streaming, cross-fades the room and skips the glitch. Esc/pause holds the entrance; Leave-for-good cancels every pending hand-off and retains the inert left screen. The 30-minute fresh-visit cycle preserves `entrance=restore` and removes review-era jumps to return to WAKE.
+
+`src/desktop/setup/setup.ts` is the E2 hand-off stub: `startSetup(): Promise<{ cut: 'full' | 'speedrun' }>` currently resolves with the URL's cut. The monitor setup and content note belong to E2; this opt-in implementation is not the finished exhibition entrance. Browser checks cannot establish headset comfort: the starfield, XR text, trigger input and the inherited flight need an in-headset check.
+
+```bash
+npm run dev -- --port 3206 --strictPort
+node tools/walk.mjs --port 3206 --max 1200 --one-era --entrance restore
+node tools/walk.mjs --port 3206 --max 1200 --one-era
+```
+
+One-era reports are saved under `out/walks/` with separate restore/default filenames.

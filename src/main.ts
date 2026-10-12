@@ -74,6 +74,7 @@ function launch(): Promise<unknown> {
   if (!engine) return loadEngine().then(() => launch());
   return engine.startApp(canvas as HTMLCanvasElement, {
     reinterp, facet, era, morphDemo, close, reveal, nobatch,
+    restoreEntrance: reinterp && !reviewMode && query.get("entrance") === "restore" && query.get("home") !== "0",
     // ⚑ S230 — the Close returns to LambyOS Home (design §7 item 3): the piece opens in the programme's showroom and
     //   closes in it, with the Lexicon on the shelf. Home in its 'return' mode never hands on to anything; it offers
     //   Start again (a reload) and Leave. It does so even when `?home=0` skipped the room at the start.
@@ -99,8 +100,9 @@ if (query.get('lambyrig') === '1') {
     mountAttract({ idleScale: scale > 0 ? scale : 60, debug: query.get('debug') === '1' });
   }
   mountGameMenu();
-  if (reviewMode) {
-    launch();
+  if (reviewMode || (query.get("entrance") === "restore" && query.get("home") !== "0" && query.get("flat") !== "1")) {
+    document.documentElement.dataset.door = "computer";
+    void launch();
   } else {
     // R28-3 (minimal): the front door precedes O1 on a fresh load only.
     // ⚑ S227 — the front door is LAMBYOS HOME now (src/desktop/home/; docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md).
