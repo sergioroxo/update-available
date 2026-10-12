@@ -90,6 +90,8 @@ class GameMenuBus {
   /** ⚑ S227 — LambyOS Home's plaque has a Credits line: it opens the menu at Credits & attributions (frame voice,
    *  nothing files). Set when the menu mounts. */
   openCredits: (() => void) | null = null;
+  /** ⚑ S237 — LambyOS Home's window bar has a Controls button: it opens the menu at the controls help (frame voice, files nothing). Set when the menu mounts. */
+  openControls: (() => void) | null = null;
 
   get isOpen(): boolean {
     return this._open;

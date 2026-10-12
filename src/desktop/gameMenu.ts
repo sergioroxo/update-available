@@ -625,6 +625,7 @@ export function mountGameMenu(): GameMenu {
   // (open first — opening resets the view to main — then land on the sources)
   gameMenuBus.openLeave = () => { gameMenuBus.open(); view = 'leaveConfirm'; render(); };
   gameMenuBus.openCredits = () => { gameMenuBus.open(); view = 'credits'; render(); };
+  gameMenuBus.openControls = () => { gameMenuBus.open(); view = 'controls'; render(); };
   gameMenuBus.openCloseSources = (i) => { gameMenuBus.open(); closeFocus = i; view = 'closeSources'; render(); };
   const unsubscribe = gameMenuBus.onChange(setOpenVisual);
   const onFullscreenChange = (): void => {

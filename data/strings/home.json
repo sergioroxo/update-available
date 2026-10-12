@@ -102,6 +102,14 @@
    "_doc": "The Close ends on Daniel’s monitor. Canvas artwork and controls replace the Restart card; the DOM return mode remains available in code. Action labels reuse home, Lexicon and receipt strings."
   }
  },
+ "window": {
+  "_doc": "S237 (his 2026-10-12: 'I don't understand why it lost the overall layout of the old windows 95 on the menus'): Home sits inside a Windows-95 application window again, as in his style reference and GPT's design. The title is the piece's own (orientingCard.json 'title') + ' | ' + titleSuffix. Frame voice: functional, undecorated. The bottom bar is the frame's own controls (the same captions toggle as the remote; the game menu's Controls and Credits; the door's Leave; the room's music).",
+  "titleSuffix": "PC Simulator",
+  "captions": "Sound captions",
+  "credits": "Credits",
+  "music": "Music",
+  "escHint": "Esc opens the menu."
+ },
  "labels": {
   "notice": "Content note",
   "computer": "On this computer",

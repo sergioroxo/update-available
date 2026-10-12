@@ -458,7 +458,7 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
  * arrives this stands in its place, and it is replaced here, in one function,
  * not around the panel. SVG, inline, no fetch.
  */
-function drawMark(size: number): SVGSVGElement {
+export function drawMark(size: number): SVGSVGElement {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('viewBox', '0 0 16 14');

@@ -9,6 +9,14 @@
  * voice (functional, undecorated; the orienting card's own words, from orientingCard.json, unchanged). The room
  * and Lamby's bubbles are the PROGRAMME's (register operable): they may charm; they never carry a frame word.
  *
+ * ⚑ S237 — THE WINDOW (his 2026-10-12: "I don't understand why it lost the overall layout of the old windows 95 on the
+ * menus"). The room sits inside a Windows-95 application window again, as in his style reference and GPT's design: a
+ * navy title bar across the top (the mark, the piece's title | PC Simulator, the _ □ X boxes: the first two inert, the
+ * X is the door's Leave) and a grey bar along the bottom (Sound captions, Controls, Credits, Leave, Music, and "Esc
+ * opens the menu."). The room is laid out in the window's client area between them. All DOM, the piece's own chrome
+ * (theme/chrome.ts DIALOG + domBevel, the orienting card's mark), words in data/strings/home.json `window`. The global
+ * pause button is hidden while Home is up (the bottom bar gives the menu; on a phone it has a Menu button).
+ *
  * THE ONE GATE (design §1). The notice is the only thing lit at the start. Closing its card starts the existing
  * 4 s arm-delay ("enter can never be instant", orientingCard.ts ARM_DELAY_MS); then the three enter buttons light.
  * Until then they are drawn dead (R3-26: shown to be dead, not hidden). Nothing else is gated, nothing is ticked:
@@ -34,6 +42,7 @@
 import type { HomeXr } from './homeXr';
 import copy from '../../../data/strings/home.json';
 import door from '../../../data/strings/orientingCard.json';
+import menuCopy from '../../../data/strings/gameMenu.json';
 import { prepareImmersiveVrEntry, requestImmersiveVrEntry, preparedHomeShell, enterImmersiveHome } from '../../engine/entry';
 import { ledger, wipeLedger } from '../../state/ledger';
 import { gameMenuBus } from '../../state/gameMenuBus';
@@ -41,7 +50,7 @@ import { chooseCut, currentCut, type Cut } from '../../state/cut';
 import { DIALOG, domBevel } from '../theme/chrome';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../theme/era1';
 import { HOME } from '../theme/home';
-import { mountOrientingCard, type DoorChoice } from '../orientingCard';
+import { mountOrientingCard, drawMark, type DoorChoice } from '../orientingCard';
 import { Lexicon, LEXICON_SOURCES } from '../../room/lexicon';
 import { mountLeavePage, type LeavePage } from '../../frame/leavePage';
 import lex from '../../../data/strings/lexicon.json';
@@ -91,6 +100,8 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   let leavePage: LeavePage | null = null;   // S233: the return door's Leave opens the in-between page (src/frame/leavePage.ts)
   let lexiconSaid = false;                  // S233: Lamby's "saved for later" bubble comes once, just before the Lexicon first opens
   let lexiconTimer = 0;
+  let capBox: HTMLInputElement | null = null;     // S237: the bottom bar's Sound captions box (kept in step with the remote's card)
+  let musicBox: HTMLInputElement | null = null;   // S237: the bottom bar's Music box (reflects whether the loop is playing)
 
   // ── a Restart in this tab: the notice was read minutes ago (design §3, way 2) ──
   const returning = !isReturn && window.location.hash === '#home-armed';
@@ -106,14 +117,39 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   root.dataset.mode = isReturn ? 'return' : 'arrival';   // the audit's handle (tools/walk.mjs stops at a return)
   Object.assign(root.style, {
     position: 'fixed', inset: '0', zIndex: '900', overflow: 'hidden',
-    background: HOME.ink, font: DIALOG.font, color: DIALOG.ink,   // the bars where the room does not fill the screen: the room's own warm brown
+    background: DIALOG.panel, font: DIALOG.font, color: DIALOG.ink,
     transition: 'opacity 0.7s'
   } as CSSStyleDeclaration);
   if (isReturn) { root.style.opacity = '0'; root.style.transition = 'opacity 2.2s'; }   // the Close gives way to the room slowly
 
+  // ── S237: the Windows-95 window — title bar, client area (the room), bottom bar (filled by fillBars, below) ──
+  const win = document.createElement('div');
+  win.dataset.homeWindow = '1';
+  Object.assign(win.style, { position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', background: DIALOG.panel } as CSSStyleDeclaration);
+  domBevel(win);
+  root.appendChild(win);
+  const titleBar = document.createElement('div');
+  titleBar.className = 'hw-title';
+  Object.assign(titleBar.style, {
+    display: 'flex', alignItems: 'center', gap: '8px', flex: 'none', boxSizing: 'border-box',
+    background: DIALOG.titleBar, color: DIALOG.titleInk, padding: '0 3px 0 8px', fontWeight: '700', fontSize: '13px'
+  } as CSSStyleDeclaration);
+  win.appendChild(titleBar);
+  const client = document.createElement('div');   // the window's client area: the room is laid out in here
+  client.className = 'hw-client';
+  Object.assign(client.style, { position: 'relative', flex: '1 1 0', minHeight: '0', overflow: 'hidden', background: HOME.ink } as CSSStyleDeclaration);
+  win.appendChild(client);
+  const statusBar = document.createElement('div');
+  statusBar.className = 'hw-bar';
+  Object.assign(statusBar.style, {
+    display: 'flex', alignItems: 'center', gap: '8px', flex: 'none', boxSizing: 'border-box', background: DIALOG.panel,
+    borderTop: `2px solid ${DIALOG.light}`, padding: '3px 8px'
+  } as CSSStyleDeclaration);
+  win.appendChild(statusBar);
+
   const stage = document.createElement('div');
   Object.assign(stage.style, { position: 'absolute', zIndex: '0' } as CSSStyleDeclaration);   // its own stacking context: the cards (veil) sit above every layer
-  root.appendChild(stage);
+  client.appendChild(stage);
 
   // ── the art: GPT's round-4 layers (homeArt.ts says where each sits and which file it is) ──
   const noSelect = { userSelect: 'none', pointerEvents: 'none', position: 'absolute', imageRendering: 'auto' } as CSSStyleDeclaration;
@@ -160,6 +196,21 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     `#lambyos-home .home-btn{font:inherit;font-size:13px;min-height:44px;padding:8px 16px;background:${DIALOG.panel};color:${DIALOG.ink};border-radius:0;cursor:pointer}` +
     `#lambyos-home .home-btn:disabled{color:${DIALOG.faint};cursor:not-allowed}` +
     `#lambyos-home .home-btn:focus-visible{outline:2px dotted ${DIALOG.ink};outline-offset:-6px}` +
+    // S237 — the window's bars. The global pause button is hidden while Home is up (the bar gives the menu).
+    `body:has(#lambyos-home) #reinterp-menu-glyph{display:none!important}` +
+    `#lambyos-home .hw-title{min-height:30px}` +
+    `#lambyos-home .hw-box{width:22px;height:20px;flex:none;font:inherit}` +
+    `#lambyos-home .hw-x{margin-left:2px}` +
+    `#lambyos-home .hw-bar .home-btn{min-height:34px;padding:4px 14px;font-size:13px}` +
+    `#lambyos-home .hw-chk{display:flex;align-items:center;gap:6px;min-height:34px;cursor:pointer;white-space:nowrap;font-size:13px}` +
+    `#lambyos-home .hw-chk input{width:16px;height:16px;margin:0;accent-color:${DIALOG.titleBar}}` +
+    `#lambyos-home .hw-chk:focus-within,#lambyos-home .hw-x:focus-visible{outline:2px dotted ${DIALOG.ink};outline-offset:-3px}` +
+    `#lambyos-home .hw-esc{margin-left:14px;font-size:12px;color:${DIALOG.dim};white-space:nowrap}` +
+    `#lambyos-home .hw-menu{display:none}` +
+    `@media (max-width:760px),(pointer:coarse){#lambyos-home .hw-title{min-height:44px}#lambyos-home .hw-x{width:44px;height:36px}` +
+    `#lambyos-home .hw-bar .home-btn,#lambyos-home .hw-chk{min-height:44px}#lambyos-home .hw-chk input{width:20px;height:20px}}` +
+    `@media (max-width:760px){#lambyos-home .hw-inert,#lambyos-home .hw-controls,#lambyos-home .hw-credits,#lambyos-home .hw-esc{display:none!important}` +
+    `#lambyos-home .hw-menu{display:inline-block}#lambyos-home .hw-bar{padding:3px 6px;gap:6px}#lambyos-home .hw-bar .home-btn{padding:4px 10px}}` +
     `@media (prefers-reduced-motion: reduce){#lambyos-home{transition:none!important}#lambyos-home *{animation:none!important}}`;
   root.appendChild(focusCss);
 
@@ -278,7 +329,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     background: `rgba(${DIALOG.veilRGB}, 0.5)`, padding: '16px', boxSizing: 'border-box', overflowY: 'auto'
   } as CSSStyleDeclaration);
   try { veil.style.backdropFilter = 'blur(3px)'; veil.style.setProperty('-webkit-backdrop-filter', 'blur(3px)'); } catch { /* no blur: the veil alone */ }
-  root.appendChild(veil);
+  client.appendChild(veil);   // a card covers the room, not the window: the title bar and the bottom bar stay
 
   let mode: Mode = 'laptop';
   let scale = 1;
@@ -329,7 +380,8 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   }
 
   function layoutAll(): void {
-    const vw = window.innerWidth, vh = window.innerHeight;
+    // S237: the room is laid out in the window's client area (between the two bars), not the whole viewport
+    const vw = client.clientWidth || window.innerWidth, vh = client.clientHeight || window.innerHeight;
     mode = modeFor(vw, vh);
     const R = ROOM[mode];
     // contain on a laptop; fill the width on a phone (and contain where a tall tablet is too short for that)
@@ -792,6 +844,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
             ledger.view.captions = !ledger.view.captions;
             t.textContent = ledger.view.captions ? copy.remote.on : copy.remote.off;
             t.setAttribute('aria-pressed', String(ledger.view.captions));
+            if (capBox) capBox.checked = ledger.view.captions;
           });
           t.setAttribute('aria-pressed', String(ledger.view.captions));
           body.appendChild(t);
@@ -841,6 +894,9 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     armed = false;
     closeCard(true);
     stage.remove();
+    // S237: "You left." is an inert page, not a window: the bars and the frame go with the room
+    titleBar.style.display = 'none'; statusBar.style.display = 'none';
+    win.style.border = '0'; win.style.background = 'transparent'; client.style.background = 'transparent';
     const dlg = document.createElement('div');
     Object.assign(dlg.style, { width: 'min(420px, 100%)', background: DIALOG.panel, padding: '16px 18px', boxSizing: 'border-box', margin: 'auto' } as CSSStyleDeclaration);
     domBevel(dlg);
@@ -876,14 +932,25 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   // ⚑ S235 — the room's music (his, 2026-10-11: a 20 s loopable tune, Suno). A browser plays sound only after a
   // press, so it starts with the first press or key in the room and loops softly; it fades out when the room goes
   // (Enter, Leave, the short door). The menu's mute and the idle cycle's mute reach it (it is a tracked one-shot).
+  // ⚑ S237 — the bottom bar's Music box controls it: the first press in the room still starts it (unless it was
+  // switched off here), and the box reflects whether it is playing.
   let music: HTMLAudioElement | null = null;
+  let musicOff = false;   // he unchecked Music: no later press starts it again
+  const syncMusic = (): void => { if (musicBox) musicBox.checked = !!music; };
   const startMusic = (): void => {
     if (music || destroyed) return;
     music = playLoop('lambyos_home_loop.mp3');
     if (music) music.volume = 0.4;
+    syncMusic();
+  };
+  const autoMusic = (e: Event): void => {
+    if (musicOff || music) return;
+    if ((e.target as Element | null)?.closest?.('[data-home-bar="music"]')) return;   // a press on the box itself is its own say
+    startMusic();
   };
   function fadeMusic(): void {
     const a = music; music = null;
+    syncMusic();
     if (!a) return;
     const v0 = a.volume, t0 = performance.now();
     const step = (): void => {
@@ -893,11 +960,93 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     };
     requestAnimationFrame(step);
   }
-  root.addEventListener('pointerdown', startMusic, { capture: true });
-  root.addEventListener('keydown', startMusic, { capture: true });
+  root.addEventListener('pointerdown', autoMusic, { capture: true });
+  root.addEventListener('keydown', autoMusic, { capture: true });
+
+  // ── S237: the window's bars, filled (title bar: mark, title | PC Simulator, _ □ X; bottom bar: captions, controls…) ──
+  function fillBars(): void {
+    const NS = 'http://www.w3.org/2000/svg';
+    titleBar.appendChild(drawMark(18));
+    const titleText = document.createElement('div');
+    Object.assign(titleText.style, { flex: '1 1 auto', minWidth: '0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '0.5px' } as CSSStyleDeclaration);
+    titleText.textContent = door.title;
+    titleText.appendChild(el('span', ` | ${copy.window.titleSuffix}`, { fontWeight: '400', letterSpacing: '0' }));
+    titleBar.appendChild(titleText);
+    /** a title-bar box: a bevelled face with a pixel glyph (the _ and □ are drawn only; the X is a real button) */
+    const boxGlyph = (kind: 'min' | 'max' | 'close'): SVGSVGElement => {
+      const g = document.createElementNS(NS, 'svg');
+      g.setAttribute('viewBox', '0 0 8 8'); g.setAttribute('width', '10'); g.setAttribute('height', '10'); g.setAttribute('aria-hidden', 'true');
+      g.style.flex = 'none'; g.style.shapeRendering = 'crispEdges';
+      const q = document.createElementNS(NS, 'path');
+      q.setAttribute('d', kind === 'min' ? 'M0 6H6V8H0Z' : kind === 'max' ? 'M0 0H8V8H0ZM1 2V7H7V2Z' : 'M0 0H2L4 2L6 0H8L5 3L8 6V8H6L4 5L2 8H0V6L3 3Z');
+      q.setAttribute('fill', DIALOG.ink);
+      g.appendChild(q);
+      return g;
+    };
+    const boxFace = (b: HTMLElement): void => {
+      Object.assign(b.style, { display: 'flex', alignItems: 'center', justifyContent: 'center', background: DIALOG.panel, boxSizing: 'border-box', padding: '0', margin: '0', borderRadius: '0' } as CSSStyleDeclaration);
+      domBevel(b);
+    };
+    for (const kind of ['min', 'max'] as const) {
+      const b = document.createElement('div');
+      b.className = 'hw-box hw-inert';
+      b.setAttribute('aria-hidden', 'true');
+      boxFace(b);
+      b.appendChild(boxGlyph(kind));
+      titleBar.appendChild(b);
+    }
+    const closeX = document.createElement('button');
+    closeX.type = 'button';
+    closeX.className = 'hw-box hw-x';
+    closeX.dataset.homeBar = 'x';
+    closeX.setAttribute('aria-label', copy.door.leave);
+    boxFace(closeX);
+    closeX.style.cursor = 'pointer';
+    closeX.appendChild(boxGlyph('close'));
+    closeX.addEventListener('click', () => buttons.door.click());   // the door's Leave card, exactly
+    titleBar.appendChild(closeX);
+
+    // the bottom bar
+    const check = (label: string, id: string, checked: boolean, onChange: (on: boolean) => void): { wrap: HTMLLabelElement; box: HTMLInputElement } => {
+      const wrap = document.createElement('label');
+      wrap.className = 'hw-chk';
+      wrap.dataset.homeBar = id;
+      const box = document.createElement('input');
+      box.type = 'checkbox';
+      box.checked = checked;
+      box.addEventListener('change', () => onChange(box.checked));
+      wrap.appendChild(box);
+      wrap.appendChild(document.createTextNode(label));
+      return { wrap, box };
+    };
+    const barBtn = (label: string, id: string, cls: string, onClick: () => void): HTMLButtonElement => {
+      const b = btn(label, onClick);
+      b.dataset.homeBar = id;
+      b.classList.add(cls);
+      return b;
+    };
+    const spacer = (): HTMLDivElement => { const d = document.createElement('div'); d.style.flex = '1 1 0'; d.style.minWidth = '0'; d.setAttribute('aria-hidden', 'true'); return d; };
+    const cap = check(copy.window.captions, 'captions', ledger.view.captions, (on) => { ledger.view.captions = on; });
+    capBox = cap.box;
+    const mus = check(copy.window.music, 'music', false, (on) => {
+      if (on) { musicOff = false; startMusic(); syncMusic(); } else { musicOff = true; fadeMusic(); }
+    });
+    musicBox = mus.box;
+    const esc = el('div', copy.window.escHint, {});
+    esc.className = 'hw-esc';
+    statusBar.append(
+      cap.wrap, spacer(),
+      barBtn(menuCopy.controls, 'controls', 'hw-controls', () => gameMenuBus.openControls?.()),
+      barBtn(copy.window.credits, 'credits', 'hw-credits', () => gameMenuBus.openCredits?.()),
+      barBtn(menuCopy.title, 'menu', 'hw-menu', () => gameMenuBus.open()),
+      barBtn(copy.door.leave, 'leave', 'hw-leave', () => buttons.door.click()),
+      spacer(), mus.wrap, esc
+    );
+  }
 
   window.addEventListener('resize', layoutAll);
   document.body.appendChild(root);
+  fillBars();
   layoutAll();
   say(isReturn ? copy.return.lamby.greet : returning ? copy.lamby.greetAgain : copy.lamby.greet);
   if (returning) startArming();
