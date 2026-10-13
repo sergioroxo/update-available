@@ -66,14 +66,14 @@ Programme voice in the balloon; frame voice in the windows it opens. No duration
 ## 4 · Plan of action — to track (☐ open · ☑ done)
 | # | when | what | who | status |
 |---|---|---|---|---|
-| 1 | Tue 13 | push yesterday's work after the full walk (Codex C1b–C5, the Win95 window) | Claude | ☐ walk running |
-| 2 | Tue 13 | remove the durations from the version choice (LambyOS Home's cards now; the setup has none) | Claude | ☐ after the walk |
-| 3 | Tue 13 | send **E1** (wake starfield → the stars become the room → the monitor; the glitch; idle → wake) to Codex | **he** | ☐ |
-| 4 | Tue 13 | send **E2** (LambyOS Setup with Lamblippy, all windows) to Codex, in a second chat at the same time | **he** | ☐ |
+| 1 | Tue 13 | push yesterday's work after the full walk (Codex C1b–C5, the Win95 window) | Claude | ☑ pushed 6e9e7e9 |
+| 2 | Tue 13 | remove the durations from the version choice (LambyOS Home's cards now; the setup has none) | Claude | ☑ |
+| 3 | Tue 13 | send **E1** (wake starfield → the stars become the room → the monitor; the glitch; idle → wake) to Codex | **he** | ☑ (and E3: setup in the stars) |
+| 4 | Tue 13 | send **E2** (LambyOS Setup with Lamblippy, all windows) to Codex, in a second chat at the same time | **he** | ☑ |
 | 5 | Tue 13 | edit Lamblippy's words in §3 if he wants (else they ship as drafted) | **he** | ☐ |
-| 6 | Tue 13 eve | review E1 + E2, merge, full walk with `--entrance restore` | Claude | ☐ |
+| 6 | Tue 13 eve | review E1 + E2, merge, full walk with `--entrance restore` | Claude | ☑ merged, walked 563 presses |
 | 7 | Wed 14 | he plays the new entrance on laptop and phone; notes → one fix round (Codex or Claude) | he → Claude | ☐ |
-| 8 | Wed 14 | make the restore entrance the default (`?entrance=home` keeps Bob) once the walk passes | Claude | ☐ |
+| 8 | Wed 14 | make the restore entrance the default (`?entrance=home` keeps Bob) once the walk passes | Claude | ☑ default since c75fb54 |
 | 9 | Wed 14 | the advert's asterisk card wording (his, dossier phrasing) | **he** | ☐ |
 | 10 | Wed 14 eve | full walk + Speedrun walk; push; build for the exhibition machine (offline, C5) | Claude | ☐ |
 | 11 | Thu 15 am | final walk, push, exhibition machine set up (Chrome kiosk, sound, idle cycle check) — **freeze at noon** | Claude + he | ☐ |
