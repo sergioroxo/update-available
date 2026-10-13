@@ -965,7 +965,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRestart: () => restartPiece()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (ray) => { if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (ray) => { if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(ray); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); xrFrame?.press(ray); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
@@ -3547,6 +3547,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // hover feedback follows the ray like everything else now — off the
     // monitor plane `toDesktop()` simply returns null (S80: no yaw gate).
     hoverPointer = { x: e.clientX, y: e.clientY };   // S152: the sentence line reads it each frame
+    if (restoreEntrance?.blocking) { const ray = screenRay(e); if (ray) restoreEntrance.hover(ray); return; }
     const p = toDesktop(e);
     if (p) os.handleMove(p.x, p.y);
     else hoveredTapeId = testTapeHover(e); // S89: a genuine mouse hover over the shelf, no press
@@ -3574,7 +3575,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!p || p.id !== e.pointerId) return;
     if (p.moved > TAP_SLOP_PX) return;                 // it travelled: a look
     if (performance.now() - p.t > TAP_MS) return;      // it lingered: not a tap
-    if (restoreEntrance?.blocking) { restoreEntrance.press(); return; }
+    if (restoreEntrance?.blocking) { const ray = screenRay(e); if (ray) restoreEntrance.press(ray); return; }
     if (p.opening) {
       // ⚑⚑ THE DRIVEN MOVES ARE NOT SKIPPABLE BY POINTER. FIXED 2026-08-15.
       //
@@ -3730,8 +3731,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       return;
     }
     if (menuHeldAudio) { menuHeldAudio = false; tapeAudio?.setGamePaused(os.paused); roomBed.setGamePaused(os.paused); setOneShotsPaused(false); }
+    if (restoreEntrance?.blocking && os.setup?.open) {
+      os.setup.requestDeviceLook = motionState === 'asking' || motionState === 'live' ? null : requestMotion;
+      os.setup.deviceLookAvailable = !xr?.active && motionState !== 'unsupported' && motionState !== 'live';
+      if (motionBtn) motionBtn.style.display = 'none';
+    }
+    const entranceRay = xrInput?.ray();
+    if (entranceRay) restoreEntrance?.hover(entranceRay);
     restoreEntrance?.update(dt);
     if (restoreEntrance?.blocking && !restoreEntrance.flying) {
+      publishNow();
       cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
       applyMotionLook(); return;
     }
@@ -4916,6 +4925,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
       applyLightsOn();
       restoreEntrance = buildRestoreEntrance(app, room, cameraRig, camera, {
+        setupCanvas: os.canvas, setup: () => os.setup,
+        updateSetup: (dt) => { os.update(dt); const dirty = os.dirty; os.dirty = false; return dirty; },
+        clearSetup: () => {
+          if (os.setup) {
+            os.setup = null; os.dirty = true; os.update(0);
+            // The floating texture holds its final uploaded frame through the
+            // fold. Erase the shared CPU canvas before the monitor first draws.
+            frontTex.upload(); os.dirty = false;
+          }
+          paintMotionBtn();
+        },
         reduced: reducedMotion, crossFade: reducedMotion || !drivenMoves, lights: applyRoomLight,
         prepareRestore: () => {
           if (!drivenMoves || reducedMotion) {

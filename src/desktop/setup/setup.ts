@@ -1,5 +1,6 @@
-/** Pre-story setup, on the same monitor canvas and hit rectangles as the OS.
- * E1 calls startSetup() after restoring the seat. It owns the Enter glitch.
+/** Pre-story setup, on the same desktop canvas and hit rectangles as the OS.
+ * The restore entrance calls startSetup() in the stars, before restoring the seat.
+ * The entrance owns the Enter glitch; ?setup=1 remains the monitor review route.
  * Programme balloons are operable; all information lives in plain windows.
  * No record, storage, voice or assistant sound. Only view preferences carry on.
  */

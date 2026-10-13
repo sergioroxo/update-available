@@ -140,24 +140,29 @@ No backend. No analytics. No cookies. No storage. The typed name lives in
 memory only and is wiped on exit — enforced by CI (`npm test`) and, in
 deployment, by CSP. This page cannot phone home even if code tried.
 
-### Restore entrance (opt-in E1)
+### Restore entrance: setup in the stars (2026-10-13)
 
-`?reinterp=1&entrance=restore` opens the frame's pixel starfield in the 3D scene. Its stars gather into the existing DOT title, then a deliberate tap, key or XR select restores Daniel's already-folded 1997 room from sampled mesh surfaces over seven seconds. The existing comfortable entrance arc takes the camera to the monitor before setup and the single 0.65-second material/light glitch hand over to the ordinary story opening. The new geometry adds one draw call in the browser, two in XR (the second is a nearest-filtered world-space frame-text panel); no imported asset is added.
+`?reinterp=1&entrance=restore` opens the night-blue pixel starfield in the 3D scene. Streaming is half the previous speed; the DOT title gathers over 2.4 seconds and holds for 17 seconds in a 24-second cycle. A deliberate tap, key or XR select releases the title and fades in the existing LambyOS Setup desktop on one nearest-filtered floating quad. It is 2 m wide, 2.2 m ahead at eye height in XR; browser framing uses 70% of the view width, or 95% below 600 px. The same desktop canvas renders the balloons, information windows, content note, versions, advert and asterisk card. Only dirty setup frames upload. Setup is never uploaded onto Daniel’s monitor.
 
-LambyOS Home remains the default and `?entrance=home` explicitly selects it. `?home=0` still selects the short door, including when `entrance=restore` is present. `?descent=0` assembles by cross-fade at the seat; `prefers-reduced-motion` also stops streaming, cross-fades the room and skips the glitch. Esc/pause holds the entrance; Leave-for-good cancels every pending hand-off and retains the inert left screen. The 30-minute fresh-visit cycle preserves `entrance=restore` and removes review-era jumps to return to WAKE.
+Start folds the floating window into a single star, then types “Restoring previous session…”. The stars assemble Daniel’s 1997 room over seven seconds; “Room found. User profile pending.” precedes the conducted seat flight. The existing single 0.65-second Enter glitch hands over to Daniel’s ordinary 1997 opening. `prefers-reduced-motion` stops streaming, fades the window away in place, cross-fades the room, takes the seat without flight and skips the glitch.
 
-`src/desktop/setup/setup.ts` is the E2 hand-off stub: `startSetup(): Promise<{ cut: 'full' | 'speedrun' }>` currently resolves with the URL's cut. The monitor setup and content note belong to E2; this opt-in implementation is not the finished exhibition entrance. Browser checks cannot establish headset comfort: the starfield, XR text, trigger input and the inherited flight need an in-headset check.
+The content note remains the only gate, including the existing four-second arm after Close. Versions show no durations. The existing advert plays its animated picture; Skip is immediate and omits the post-play asterisk card. Esc/pause holds setup and the entrance; Leave-for-good cancels the hand-off. The 30-minute idle fresh visit preserves `entrance=restore`, removes review-era jumps and returns to WAKE. LambyOS Home remains the default. `?home=0` still selects the short door even with `entrance=restore`; omit it when reviewing this entrance. `?descent=0` reviews restore by cross-fade at the seat.
+
+Browser mouse/touch rays and the existing XR controller/hand-select rays intersect the same quad. No gaze selection. In debug mode, `#restore-entrance` publishes read-only `data-setup-stage` and projected `data-setup-hits` for real walker presses. No imported asset is added. XR comfort, controller/pinch behavior and 72 Hz require an in-headset check; phone viewports do not establish real orientation permission behavior.
 
 ```bash
-npm run dev -- --port 3206 --strictPort
-node tools/walk.mjs --port 3206 --max 1200 --one-era --entrance restore
-node tools/walk.mjs --port 3206 --max 1200 --one-era
+npm run dev -- --port 3208 --strictPort
+node tools/setup-stars-stills.mjs --port 3208
+node tools/setup-stars-edge-checks.mjs --port 3208
+node tools/walk.mjs --port 3208 --max 1400 --one-era --entrance restore
+node tools/walk.mjs --port 3208 --max 1200 --one-era
 ```
 
-One-era reports are saved under `out/walks/` with separate restore/default filenames.
+Screenshots and capture assertions are in `out/setup-in-stars/`; one-era reports are in `out/walks/` with separate restore/default filenames.
+
 ### Lamblippy setup review (2026-10-13)
 
-`?reinterp=1&setup=1&debug=1&home=0&kiosk=0&descent=0` opens Daniel’s 1997 room at the monitor seat with LambyOS Setup on the existing desktop canvas. E1 may call `startSetup()` from `src/desktop/setup/setup.ts` after restoring the seat, then await `{ cut: 'full' | 'speedrun' }` and run its Enter glitch. This review route hands off to the existing 1997 opening after Start; it does not implement E1’s starfield or glitch.
+`?reinterp=1&setup=1&debug=1&home=0&kiosk=0&descent=0` opens Daniel’s 1997 room at the monitor seat with LambyOS Setup on the existing desktop canvas. The restore entrance calls `startSetup()` from `src/desktop/setup/setup.ts` in the starfield, then awaits `{ cut: 'full' | 'speedrun' }` and runs its Enter glitch. This review route hands off to the existing 1997 opening after Start; it does not implement E1’s starfield or glitch.
 
 All new copy is in `data/strings/setup.json`. Lamblippy is silent; the information windows hide him. The content note opens even on the experienced route, and Start is disabled until it has closed and four seconds have elapsed. The setup files nothing; captions and device-look preferences remain in memory. The optional advert uses the existing player with ledger filing disabled and immediate Skip. After playback finishes, the lead’s asterisk wording appears in a plain card with one Close button; Skip omits it. No new shipped assets.
 

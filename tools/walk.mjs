@@ -423,7 +423,28 @@ async function main() {
     await page.waitForSelector('#restore-entrance[data-phase="wake"]', { timeout: 180000 });
     await page.mouse.click(VIEW.width / 2, VIEW.height / 2);
     note('dom', { target: 'wake', what: 'restore entrance: real press; no reload' });
-    await page.waitForFunction(() => !document.getElementById('restore-entrance') && !!window.__os, { timeout: 90000 });
+    // The entrance publishes projections of its world-space quad. These are
+    // actual mouse taps, through the same ray test as touch and XR select.
+    const pressSetup = async (id) => {
+      await page.waitForFunction(id => JSON.parse(document.getElementById('restore-entrance')?.dataset.setupHits || '[]').some(h => h.id === id), { timeout: 30000 }, id);
+      const h = await page.evaluate(id => JSON.parse(document.getElementById('restore-entrance').dataset.setupHits).find(h => h.id === id), id);
+      await page.mouse.click(h.x + h.w / 2, h.y + h.h / 2);
+      note('press', { target: id, what: 'floating setup: projected quad / real mouse ray' });
+      await wait(350);
+    };
+    await pressSetup('setup-choice-0'); // welcome → About offer
+    await pressSetup('setup-choice-0'); // open About
+    await pressSetup('setup-close');
+    await pressSetup('setup-choice-0'); // Sound
+    await pressSetup('setup-sound-on');
+    await pressSetup('setup-choice-0'); // How to look
+    await pressSetup('setup-close');
+    await page.waitForFunction(() => document.getElementById('restore-entrance')?.dataset.setupStage === 'note', { timeout: 30000 });
+    await pressSetup('setup-close'); // the only gate, including its existing arm
+    await pressSetup('setup-choice-0'); // Full piece
+    await pressSetup('setup-advert-offer-skip-1');
+    await pressSetup('setup-choice-0'); // Start → restore → seat → Enter
+    await page.waitForFunction(() => !document.getElementById('restore-entrance') && !!window.__os, { timeout: 120000 });
   } else if (FROM_ERA <= 1 && !SETUP) {
     // ⚑ S227 — the front door is LAMBYOS HOME (src/desktop/home/): the notice first (its Close starts the 4 s arm),
     //   then the computer's card, whose "Log in" is the old door's. Real DOM buttons, pressed in the player's order.

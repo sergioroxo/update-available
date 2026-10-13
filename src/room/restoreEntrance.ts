@@ -14,6 +14,9 @@ import type { RoomHandles } from './era1room';
 import { makeScreenEntity, makeScreenTexture } from '../engine/screenTexture';
 import { startSetup } from '../desktop/setup/setup';
 import { chooseCut } from '../state/cut';
+import { mountSetupWindow } from '../desktop/setup/setupWindow';
+import type { Ray } from '../frame/xrFrame';
+import type { LambySetup } from '../desktop/setup/setup';
 import { gameMenuBus } from '../state/gameMenuBus';
 
 let glitch: (() => Promise<void>) | null = null;
@@ -23,17 +26,18 @@ export function entranceGlitch(): Promise<void> { return glitch?.() ?? Promise.r
 export interface RestoreEntrance {
   readonly blocking: boolean;
   readonly flying: boolean;
-  press(): void;
+  press(ray?: Ray): void;
+  hover(ray: Ray): void;
   cancel(): void;
   update(dt: number): void;
 }
 
 export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig: pc.Entity, camera: pc.Entity,
-  opts: { reduced: boolean; crossFade: boolean; prepareRestore(): void; flyToSeat(): Promise<void>; beginStory(): void; lights(k: number): void }): RestoreEntrance {
-  type Phase = 'wake' | 'restore' | 'flight' | 'setup' | 'glitch' | 'done';
-  let phase: Phase = 'wake', clock = 0, elapsed = 0, flash = 0;
+  opts: { setupCanvas: HTMLCanvasElement; setup(): LambySetup | null; updateSetup(dt: number): boolean; clearSetup(): void; reduced: boolean; crossFade: boolean; prepareRestore(): void; flyToSeat(): Promise<void>; beginStory(): void; lights(k: number): void }): RestoreEntrance {
+  type Phase = 'wake' | 'restore' | 'flight' | 'setup' | 'fold' | 'typing' | 'glitch' | 'done';
+  let phase: Phase = 'wake', clock = 0, elapsed = 0, releaseTime = 0, flash = 0;
   let resolveFlash: (() => void) | null = null;
-  const N = 900, RESTORE = 7, EVERY = attractCopy.secondsCard, HOLD = EVERY - 5, MOVE = 1.4;
+  const N = 900, RESTORE = 7, EVERY = attractCopy.secondsCard * 2, HOLD = EVERY - 7, MOVE = 2.4;
   const smooth = (k: number): number => k * k * (3 - 2 * k);
   const origin = rig.getWorldTransform().clone();
   const world = (p: pc.Vec3): pc.Vec3 => origin.transformPoint(p);
@@ -145,16 +149,17 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
     lights.forEach(({ light }) => { light.color = cool.clone(); light.intensity = light.type === 'directional' ? 0.3 : 0.25; });
     return new Promise<void>((resolve) => { resolveFlash = resolve; });
   };
+  let floating: ReturnType<typeof mountSetupWindow> | null = null;
   let disposed = false;
   function dispose(): void {
     if (disposed) return; disposed = true;
     originalPaint(); instances.forEach((mi, i) => { mi.visible = visible[i]; });
     app.xr?.off(`available:${pc.XRTYPE_VR}`, availableVr);
+    floating?.destroy(); floating = null; opts.setup()?.destroy(); opts.clearSetup();
     frame.remove(); root.destroy(); mesh.destroy(); ink.destroy(); panel.destroy(); texture.destroy(); glitch = null;
   }
   async function handover(): Promise<void> {
-    await opts.flyToSeat(); if (disposed) return; setPhase('setup'); words(copy.found);
-    const { cut } = await startSetup(); if (disposed) return; chooseCut(cut);
+    await opts.flyToSeat(); if (disposed) return;
     await entranceGlitch(); if (disposed) return; setPhase('done'); dispose();
     opts.beginStory();
   }
@@ -165,9 +170,20 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
     cancel() {
       setPhase('done'); dispose(); const resolve = resolveFlash; resolveFlash = null; resolve?.();
     },
-    press() {
-      if (phase !== 'wake' || gameMenuBus.isOpen) return;
-      stars.forEach((s) => s.from.copy(s.p)); opts.prepareRestore(); setPhase('restore'); invite.style.display = 'none'; words('');
+    hover(ray) { if (phase === 'setup') floating?.hover(ray); },
+    press(ray) {
+      if (gameMenuBus.isOpen) return;
+      if (phase === 'setup') { if (ray) floating?.press(ray); return; }
+      if (phase !== 'wake') return;
+      stars.forEach((s) => s.from.copy(s.p)); setPhase('setup'); invite.style.display = 'none'; words('');
+      const result = startSetup();
+      floating = mountSetupWindow(app, camera, frame, {
+        canvas: opts.setupCanvas, setup: opts.setup, update: opts.updateSetup
+      });
+      void result.then(({ cut }) => {
+        if (disposed) return;
+        chooseCut(cut); opts.clearSetup(); setPhase('fold'); words('');
+      });
     },
     update(dt) {
       if (phase === 'done') return;
@@ -178,12 +194,28 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
         if (flash >= 0.65) { originalPaint(); const resolve = resolveFlash; resolveFlash = null; resolve?.(); }
         return;
       }
-      if (phase !== 'wake' && phase !== 'restore') return;
+      if (phase === 'typing') {
+        words(copy.restoring.slice(0, Math.floor(elapsed * 23)));
+        if (elapsed < copy.restoring.length / 23 + 0.2) return;
+        stars.forEach((s) => s.from.copy(s.p)); opts.prepareRestore(); setPhase('restore');
+      }
+      if (phase !== 'wake' && phase !== 'restore' && phase !== 'setup' && phase !== 'fold') return;
+      if (phase === 'setup' || phase === 'fold') releaseTime += dt;
+      if (phase === 'setup') floating?.update(dt, smooth(Math.min(1, elapsed / 2)));
+      if (phase === 'fold') {
+        const k = smooth(Math.min(1, elapsed / 1.8));
+        floating?.fold(k, opts.reduced, world(new pc.Vec3(0.3, 0.2, -3)));
+        if (elapsed >= 1.8) {
+          floating?.destroy(); floating = null;
+          stars[N - 1].p.copy(world(new pc.Vec3(0.3, 0.2, -3)));
+          setPhase('typing'); words('');
+        }
+      }
       const t = clock % EVERY, start = EVERY - HOLD - 2 * MOVE;
       const k = t < start ? 0 : t < start + MOVE ? (t - start) / MOVE : t < start + MOVE + HOLD ? 1 : Math.max(0, 1 - (t - start - MOVE - HOLD) / MOVE);
       const e = opts.reduced ? 1 : smooth(k);
       if (phase === 'restore') {
-        words(copy.restoring.slice(0, Math.floor(elapsed * 23)));
+        words(copy.restoring);
         if (elapsed > 1.3) instances.forEach((mi, i) => { mi.visible = visible[i]; });
         paint(smooth(Math.max(0, Math.min(1, (elapsed - 1.3) / 5.7))));
       }
@@ -192,11 +224,17 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
       for (let i = 0; i < N; i++) {
         const s = stars[i]; let half = 0.010;
         if (phase === 'wake') {
-          if (!opts.reduced) s.z += dt * 6.3 * (1 - e);
+          if (!opts.reduced) s.z += dt * 3.15 * (1 - e);
           if (s.z > -0.2) s.z = -18;
           s.p.set(s.x, s.y, s.z); origin.transformPoint(s.p, s.p);
           if (targets[i]) { s.p.lerp(s.p, targets[i], e); half = 0.010 + 0.008 * e; }
-        } else {
+        } else if (phase === 'setup' || phase === 'fold') {
+          // The title releases into a calm field; the setup stays at the eye.
+          const drift = opts.reduced ? 0 : smooth(Math.min(1, releaseTime / 2.4));
+          const loose = world(new pc.Vec3(s.x, s.y, s.z));
+          s.p.lerp(s.from, loose, drift);
+          if (!opts.reduced) s.z += dt * 0.035;
+        } else if (phase === 'restore') {
           const progress = Math.max(0, Math.min(1, (elapsed - s.delay) / 2.8));
           s.p.lerp(s.from, land[i].point, smooth(progress));
           if (opts.crossFade) s.p.copy(s.from);
