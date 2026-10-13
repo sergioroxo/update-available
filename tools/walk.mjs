@@ -151,13 +151,16 @@ const FROM_ERA = Number(flag('from-era', '0')) || 0;
 const ONE_ERA = process.argv.includes('--one-era');
 const SETUP = process.argv.includes('--setup');
 /** ⚑ `--cut speedrun` (S227): walk the Speedrun Version (`?cut=speedrun`, src/state/cut.ts) instead of the full piece */
-const ENTRANCE = flag('entrance', '') === 'restore' ? 'restore' : '';
+/** ⚑ S240 — the restore entrance (stars → setup → Daniel's room) is the DEFAULT front door; `--entrance home` walks
+ *  the older LambyOS Home door instead (`?entrance=home`). */
+const HOME_DOOR = flag('entrance', '') === 'home';
+const ENTRANCE = HOME_DOOR ? '' : 'restore';
 const CUT = flag('cut', '') === 'speedrun' ? 'speedrun' : '';
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
-const OUT_DIR = join(ROOT, SETUP || process.argv.includes('--from-era') || ENTRANCE || ONE_ERA ? 'out/walks' : 'docs/reinterp');
+const OUT_DIR = join(ROOT, SETUP || process.argv.includes('--from-era') || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp');
 // S223: inside the project (a cloud machine has no /private/tmp of ours), one folder per era so side-by-side walks do not overwrite
-const SHOT_DIR = flag('shots', join(ROOT, 'out/walk-shots' + (FROM_ERA > 1 ? '-e' + FROM_ERA : '') + (ENTRANCE ? '-entrance-restore' : '')));
+const SHOT_DIR = flag('shots', join(ROOT, 'out/walk-shots' + (FROM_ERA > 1 ? '-e' + FROM_ERA : '') + (HOME_DOOR ? '-entrance-home' : '')));
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -412,7 +415,7 @@ async function main() {
     );
   };
 
-  const startQuery = (SETUP ? '?reinterp=1&setup=1&home=0&kiosk=0&debug=1&descent=0' : FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '') + (ENTRANCE && !SETUP ? '&entrance=' + ENTRANCE : '');
+  const startQuery = (SETUP ? '?reinterp=1&setup=1&home=0&kiosk=0&debug=1&descent=0' : FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '') + (HOME_DOOR && !SETUP ? '&entrance=home' : '');
   // S223: wait for the page's own load, not for "network idle", and give a COLD dev server time: on a fresh machine
   //   Vite transforms every module on first request (the cloud's first run spent its whole minute there)
   await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'load', timeout: 240000 });
@@ -2103,7 +2106,7 @@ const LAP = { w: 224, h: 140 };
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '') + (CUT ? '_' + CUT.toUpperCase() : '') + (ENTRANCE ? '_ENTRANCE_RESTORE' : '') + (ONE_ERA ? '_ONE_ERA' : '');
+    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '') + (CUT ? '_' + CUT.toUpperCase() : '') + (HOME_DOOR ? '_ENTRANCE_HOME' : '') + (false ? '_ENTRANCE_RESTORE' : '') + (ONE_ERA ? '_ONE_ERA' : '');
   const presses = log.filter((l) => l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move');
   const dead = presses.filter((p) => p.changed === false);
   const silentFound = [...new Set(log.filter((l) => l.kind === 'silent-surface')
@@ -2321,7 +2324,7 @@ const LAP = { w: 224, h: 140 };
   ].join('\n');
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.md'), md + '\n');
 
-  console.log('\nwrote ' + (SETUP || FROM_ERA > 1 || ENTRANCE || ONE_ERA ? 'out/walks' : 'docs/reinterp') + '/WALK_' + stamp + '.{json,md} — ' +
+  console.log('\nwrote ' + (SETUP || FROM_ERA > 1 || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp') + '/WALK_' + stamp + '.{json,md} — ' +
     presses.length + ' presses, reached ' + final.era);
   await browser.close();
 

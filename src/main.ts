@@ -74,7 +74,7 @@ function launch(): Promise<unknown> {
   if (!engine) return loadEngine().then(() => launch());
   return engine.startApp(canvas as HTMLCanvasElement, {
     reinterp, facet, era, morphDemo, close, reveal, nobatch,
-    restoreEntrance: reinterp && !reviewMode && query.get("entrance") === "restore" && query.get("home") !== "0",
+    restoreEntrance: reinterp && !reviewMode && query.get("entrance") !== "home" && query.get("home") !== "0",
     // ⚑ S230 — the Close returns to LambyOS Home (design §7 item 3): the piece opens in the programme's showroom and
     //   closes in it, with the Lexicon on the shelf. Home in its 'return' mode never hands on to anything; it offers
     //   Start again (a reload) and Leave. It does so even when `?home=0` skipped the room at the start.
@@ -100,7 +100,8 @@ if (query.get('lambyrig') === '1') {
     mountAttract({ idleScale: scale > 0 ? scale : 60, debug: query.get('debug') === '1' });
   }
   mountGameMenu();
-  if (reviewMode || (query.get("entrance") === "restore" && query.get("home") !== "0" && query.get("flat") !== "1")) {
+  // ⚑ S240 — the restore entrance (stars → LambyOS Setup → Daniel's room) is the reinterp's default front door; `?entrance=home` keeps LambyOS Home
+  if (reviewMode || (reinterp && query.get("entrance") !== "home" && query.get("home") !== "0" && query.get("flat") !== "1")) {
     document.documentElement.dataset.door = "computer";
     void launch();
   } else {

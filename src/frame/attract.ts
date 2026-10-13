@@ -121,7 +121,7 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
     wipeLedger();
     // Restore visits return to WAKE, including when a review URL had started at an era.
     const freshQuery = new URLSearchParams(window.location.search);
-    const restoreVisit = freshQuery.get('entrance') === 'restore' && freshQuery.get('home') !== '0';
+    const restoreVisit = freshQuery.get('entrance') !== 'home' && freshQuery.get('home') !== '0';
     if (restoreVisit) {
       for (const key of ['era', 'morph', 'close', 'reveal']) freshQuery.delete(key);
     }
