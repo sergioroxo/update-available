@@ -50,7 +50,6 @@ const SH: Record<string, Shot> = {};
 
 const W = 1920, H = 1080;
 const GATHER = setupCopy.advertAsterisk.gather as string[];
-const SOURCES = setupCopy.advertAsterisk.sources as string;
 const SMALL_PRINT: string = (media as { scenes: { line: string }[] }).scenes.find((s) => /not a cure/.test(s.line))?.line ?? '';
 const prop = (id: string): string => (room as { props: { id: string; color: string }[] }).props.find((p) => p.id === id)!.color;
 
@@ -897,26 +896,18 @@ function shotGather(ctx: CanvasRenderingContext2D, t: number): void {
     ctx.globalAlpha = 1;
   }
 }
-/** the frame's end card: the gathered words hold; the programme's own small print finally crawls at reading speed */
-function shotEnd(ctx: CanvasRenderingContext2D, tSinceGather: number, tEnd: number): void {
+/** the end card: the gathered words hold, and under them the programme's own small print — still, at last, readable
+ *  (his note, 2026-10-13: the gather is great, the small print is fine but not scrolling, and no Sources line here) */
+function shotEnd(ctx: CanvasRenderingContext2D, tSinceGather: number): void {
   shotGather(ctx, tSinceGather);
-  const bandY = GATHER_TOP + 2 * 7 * CELL + 40, bandH = 76;
-  const crawlStart = NOISE_S + MOVE_S * 0.8;
-  const tc = tSinceGather - crawlStart;
-  if (tc > 0) {
-    ctx.fillStyle = C.greyDark; ctx.fillRect(0, bandY, W, 2); ctx.fillRect(0, bandY + bandH, W, 2);
-    ctx.save(); ctx.beginPath(); ctx.rect(0, bandY + 2, W, bandH - 2); ctx.clip();
-    ctx.font = `bold 44px ${F_MONO}`; ctx.fillStyle = C.smallPrint; ctx.textBaseline = 'middle';
-    const tw = ctx.measureText(SMALL_PRINT).width, travel = W + tw;
-    ctx.fillText(SMALL_PRINT, Math.round(W - ((tc * 175) % travel)), bandY + bandH / 2 + 2);
-    ctx.restore();
-  }
-  if (tEnd > 3.2) {
-    ctx.globalAlpha = smooth((tEnd - 3.2) / 0.8);
-    ctx.font = `bold 38px ${F_MONO}`; ctx.fillStyle = C.white; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
-    ctx.fillText(SOURCES, W / 2, bandY + bandH + 120);
-    ctx.textAlign = 'left'; ctx.globalAlpha = 1;
-  }
+  const settle = NOISE_S + MOVE_S;
+  const a = smooth((tSinceGather - settle - 0.4) / 1.0);
+  if (a <= 0) return;
+  const y = GATHER_TOP + 2 * 7 * CELL + 110;
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.font = `bold 42px ${F_MONO}`; ctx.fillStyle = C.smallPrint; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(SMALL_PRINT, W / 2, y);
+  ctx.restore();
 }
 
 // ════════════════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -1139,8 +1130,8 @@ async function drawScene(ctx: CanvasRenderingContext2D, t: number): Promise<void
     if (toNoise > 0) drawNoise(ctx, t - s('gather').start + 10, toNoise);
     return;
   }
-  if (t < s('gather').end) { shotGather(ctx, loc('gather')); return; }
-  shotEnd(ctx, t - s('gather').start, loc('end'));
+  if (t < s('gather').end) { shotEnd(ctx, loc('gather')); return; }
+  shotEnd(ctx, t - s('gather').start);
 }
 
 function tapeState(t: number, frame: number): Tape {

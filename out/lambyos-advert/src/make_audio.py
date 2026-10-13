@@ -3,9 +3,10 @@
 LambyOS — Welcome Home: the soundtrack, and the timeline everything else follows.
 
 Everything here is made on this machine, at build time, from nothing but code:
-  * THE VOICE (the narrator = the apparatus, never Lamby): espeak-ng driving the MBROLA us2 diphone voice — a local,
-    offline synthesiser (no online TTS service; nothing is fetched). Its 1990s diphone timbre is left audible on
-    purpose: the advert is a 1997 tape.
+  * THE VOICE (the narrator = the apparatus, never Lamby): a local, offline synthesiser — no online TTS service,
+    nothing fetched at build time. script.json `voice` picks it: Kokoro-82M (Apache-2.0, via kokoro-onnx, from model
+    files on disk) or espeak-ng driving an MBROLA diphone voice. `--voice am_michael` / `--voice mbrola:mb-us2`
+    overrides it for an audition.
   * THE MUSIC: a cheerful 1997 jingle composed and synthesised by Claude for the project (FM electric piano, FM bells,
     a pulse lead, a square bass, synthesised drums, brass stabs, an orchestra hit) — numpy/scipy, sample by sample.
   * THE SOUNDS: the LambyOS chime, stings, dings, the tape stretching, the tape chewing, the TV's hiss.
@@ -217,15 +218,32 @@ def boing(dur=0.35):
 
 
 # ── the voice ────────────────────────────────────────────────────────────────────────────────────────────────
-def speak(text, work, key, speed, pitch, voice):
+_KOKORO = None
+
+
+def speak(text, work, key, rate, V):
+    """one line, spoken locally. `rate` multiplies the voice's own speed (the disclaimer is fast, the collapse slow).
+    engine 'kokoro': Kokoro-82M (Apache-2.0) via kokoro-onnx, from model files on disk (--kokoro-dir); no network.
+    engine 'mbrola': espeak-ng driving an MBROLA diphone voice."""
+    global _KOKORO
     out = work / 'voice' / f'{key}.wav'
     out.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(['espeak-ng', '-v', voice, '-s', str(speed), '-p', str(pitch), '-g', '2', '-w', str(out), text], check=True)
+    if V['engine'] == 'kokoro':
+        import soundfile as sf
+        if _KOKORO is None:
+            from kokoro_onnx import Kokoro
+            d = Path(V['_dir'])
+            _KOKORO = Kokoro(str(d / 'kokoro-v1.0.onnx'), str(d / 'voices-v1.0.bin'))
+        lang = 'en-gb' if V['voice'].startswith('b') else 'en-us'
+        samples, sr = _KOKORO.create(text, voice=V['voice'], speed=min(2.0, V['speed'] * rate), lang=lang)
+        sf.write(str(out), samples, sr, subtype='PCM_16')
+    else:
+        subprocess.run(['espeak-ng', '-v', V['voice'], '-s', str(round(V['speed'] * rate)), '-p', str(V['pitch']), '-g', '2', '-w', str(out), text], check=True)
     x = read_wav(out)
     # trim the synthesiser's own leading/trailing silence
     nz = np.nonzero(np.abs(x) > 0.004)[0]
     x = x[max(0, nz[0] - 200): nz[-1] + 400] if len(nz) else x
-    # the announcer: a little low cut, a little presence, a little warmth, levelled
+    # the announcer: a little low cut, a little presence, levelled
     x = hp(x, 90)
     x = x + 0.35 * bp(x, 2000, 4500)
     x = x / (np.max(np.abs(x)) + 1e-9) * 0.82
@@ -245,11 +263,17 @@ def warp(x, rate_fn):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--work', default='.advert-tmp')
+    ap.add_argument('--kokoro-dir', default='.advert-tmp/kokoro', help='kokoro-v1.0.onnx + voices-v1.0.bin (github.com/thewh1teagle/kokoro-onnx releases, model-files-v1.0)')
+    ap.add_argument('--voice', default=None, help='override script.json voice, e.g. am_michael or mbrola:mb-us2')
     args = ap.parse_args()
     work = Path(args.work).resolve()
     work.mkdir(parents=True, exist_ok=True)
     script = json.loads((HERE / 'script.json').read_text(encoding='utf-8'))
-    V = script['voice']
+    V = dict(script['voice'])
+    if args.voice:
+        V = {'engine': 'mbrola', 'voice': args.voice.split(':', 1)[1], 'speed': 174, 'pitch': 46} if args.voice.startswith('mbrola:') \
+            else {'engine': 'kokoro', 'voice': args.voice, 'speed': V.get('speed', 1.05) if V['engine'] == 'kokoro' else 1.05}
+    V['_dir'] = str(Path(args.kokoro_dir).resolve())
 
     # 1 · every line spoken, measured
     clips = {}
@@ -257,15 +281,15 @@ def main():
         for ln in shot.get('lines', []):
             say = ln.get('say', ln['text'])
             if ln.get('fast'):
-                x = speak(say, work, ln['id'], 265, V['pitch'] + 4, V['voice'])
+                x = speak(say, work, ln['id'], 1.52, V)
             elif ln.get('stretch'):
-                x = speak(say, work, ln['id'], 168, V['pitch'], V['voice'])
+                x = speak(say, work, ln['id'], 0.965, V)
                 # the tape stretching: from full speed to under half, the pitch sinking with it
                 x = warp(x, lambda k: 1.0 - 0.5 * k ** 1.6)
                 fade = np.clip((len(x) - np.arange(len(x))) / (0.25 * SR), 0, 1)
                 x = x * fade
             else:
-                x = speak(say, work, ln['id'], V['speed'], V['pitch'], V['voice'])
+                x = speak(say, work, ln['id'], 1.0, V)
             clips[ln['id']] = x
 
     # 2 · the timeline: each shot grows to fit its narration

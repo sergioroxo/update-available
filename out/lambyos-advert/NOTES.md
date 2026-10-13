@@ -1,6 +1,7 @@
 # LambyOS — Welcome Home · the advert, as a video (review only)
 
-**File:** `lambyos_welcome_home.mp4`. 1920×1080, 30 fps, H.264 (yuv420p, CRF 23, ~53 MB) with AAC 192k stereo. Length **1:37**.
+**File:** `lambyos_welcome_home.mp4`. 1920×1080, 30 fps, H.264 (yuv420p, CRF 23) with AAC 192k stereo. Length **1:36**. A 720p preview sits beside it, and
+`voice_auditions.mp4` holds the voice auditions (the old voice, then nine Kokoro voices reading the same lines).
 **Contact sheet:** `contact_sheet.png` (12 frames, one per beat, with the time of each).
 **Branch:** `cloud/advert-video`, which is never merged. This is a picture to review. It is not wired into the piece.
 
@@ -14,16 +15,16 @@ the programme's kit from `LAMBYOS_HOME_THINKING_2026-10-12.md` §6–7. The rule
 | Time | Beat | Picture | Narrator / on-screen type |
 |---|---|---|---|
 | 0:00–0:04.6 | **Ident** | VCR blue and PLAY ▶. The tracking lines settle. On Floppysheep's own morning field a pixel lamb hops the fence (*boing*), then the LambyOS chime. Chunky 3D type **LambyOS™ — Home Edition** bounces in, with a lens flare sweep and sparkles. | *(chime)* [captioned] |
-| 0:04.6–0:14.4 | **Kitchen table** | A low-poly 3D kitchen at night: a warm lamp, a cup of tea, the night window. A mother's hand (cardigan sleeve) slides a LambyOS floppy disk across. A teenager's hand (hoodie sleeve) comes in from the other side and stops short. Hands and sleeves only: no bodies, no faces. **Over 30 years of care.\*** fades in, with a glint. | "Does someone you love seem… far away? Since 1997, we have been there for families. Quietly. Gently. At the kitchen table." |
-| 0:14.4–0:33.4 | **Product parade** | A star wipe into a sunburst showroom. A candy-striped pedestal spins, and each product turns on it with a brass sting and a chunky title. Star wipes between items: **THE TAPE** (cassette), **THE DISK** (floppy), **THE STREAK** (CD-ROM with a little flame), **THE PLATFORM** (phone, glossy "GracePlatform" app, 412 days), **IMMERSIVE SESSIONS** (headset in a gift box, "HEADSET INCLUDED!" starburst). Then **BUT WAIT — THERE'S MORE!** with an orchestra hit. Then the Home Kit flashes by, each item with a **FREE!** badge: **The "Let go!" box** *for the old things* (a mixtape, a band T-shirt, a photo face-down), **The House Rules sampler** *doors always open* (cross-stitched: Doors open at all times · Modest dress · House meeting Sundays · Never alone), **The guest book** *approved callers only* (NAME / APPROVED Y/N, three lines filled, the rest blank). | The design's five lines, then "But wait — there's more!" (draft). The kit is type only, with no narration. |
-| 0:33.4–0:45.1 | **How it works** | A chart spins in (a 1997 DVE move) on Restorify's sunrise. Each box pops with a bell *ding* as it is named, and the arrows draw themselves on: **a feeling → a NAME → a ROOT CAUSE → a MENTOR → a NEW YOU**. The last box is a starburst with a flare. It contains words only: nobody is "made new". | The design's lines, verbatim. |
-| 0:45.1–0:55.7 | **Four empty rooms** | The piece's own rooms, photographed from the build (below), with slow push-ins and dissolves: **1997** (the CRT on, the desktop), **2003** (the PC on), **2016** (the phone glowing on the duvet), **2026** (the headset on the made bed). Each has a chunky year and v1.0…v4.0. Nobody is there. | "Come join us in the lives of those who struggle. One room. One machine. Thirty years. And every year, an update — because we never stop improving." |
-| 0:55.7–1:02.2 | **Pack shot** | The piece's Lamby (cheerful, silent) stands on the spinning pedestal against the sunrise. **LambyOS™**, and the slogan builds word by word: **Everything is set up already.** | "LambyOS. Everything is set up already. You don't need to do anything." |
-| 1:02.2–1:07.7 | **Small print, fast** | The disclaimer scrolls up under the logo, too fast to read. | The disclaimer, read fast (captioned in full). |
-| 1:07.7–1:17.2 | **The collapse** | The scroll slows to reading speed by itself. The picture loses its hold (tracking tears, colour drains) and the tape counter slows. The music and the voice stretch down together. | "Results not typical. No result has been shown to be typical. No result has been shown. What has been shown is —" |
-| 1:17.2–1:20.2 | **The tape chews** | The last picture freezes, so Lamby's smile holds too long. The picture rolls once (no strobe), then dissolves into TV noise. The VCR's on-screen display goes with the tape. | [the tape chews] · [TV hiss] |
-| 1:20.2–1:27.2 | **The noise gathers** | Era-grey static. Its dots drift together, as the piece's starfield does, into **OVER 30 YEARS / SOLD AS CARE!** in the piece's own DOT glyphs. | [TV hiss] (silence under the hiss) |
-| 1:27.2–1:37.2 | **The end card** (frame voice) | Under the words, the programme's own small print crawls at reading speed: **"…not therapy, not a cure… your old self may not be recoverable…"**, then **"Sources: open the menu, then Credits & attributions."** At the end the TV goes dark. | [TV hiss, quieter] |
+| 0:04.6–0:14.2 | **Kitchen table** | A low-poly 3D kitchen at night: a warm lamp, a cup of tea, the night window. A mother's hand (cardigan sleeve) slides a LambyOS floppy disk across. A teenager's hand (hoodie sleeve) comes in from the other side and stops short. Hands and sleeves only: no bodies, no faces. **Over 30 years of care.\*** fades in, with a glint. | "Does someone you love seem… far away? Since 1997, we have been there for families. Quietly. Gently. At the kitchen table." |
+| 0:14.2–0:32.7 | **Product parade** | A star wipe into a sunburst showroom. A candy-striped pedestal spins, and each product turns on it with a brass sting and a chunky title. Star wipes between items: **THE TAPE** (cassette), **THE DISK** (floppy), **THE STREAK** (CD-ROM with a little flame), **THE PLATFORM** (phone, glossy "GracePlatform" app, 412 days), **IMMERSIVE SESSIONS** (headset in a gift box, "HEADSET INCLUDED!" starburst). Then **BUT WAIT — THERE'S MORE!** with an orchestra hit. Then the Home Kit flashes by, each item with a **FREE!** badge: **The "Let go!" box** *for the old things* (a mixtape, a band T-shirt, a photo face-down), **The House Rules sampler** *doors always open* (cross-stitched: Doors open at all times · Modest dress · House meeting Sundays · Never alone), **The guest book** *approved callers only* (NAME / APPROVED Y/N, three lines filled, the rest blank). | The design's five lines, then "But wait — there's more!" (draft). The kit is type only, with no narration. |
+| 0:32.7–0:44.6 | **How it works** | A chart spins in (a 1997 DVE move) on Restorify's sunrise. Each box pops with a bell *ding* as it is named, and the arrows draw themselves on: **a feeling → a NAME → a ROOT CAUSE → a MENTOR → a NEW YOU**. The last box is a starburst with a flare. It contains words only: nobody is "made new". | The design's lines, verbatim. |
+| 0:44.6–0:55.2 | **Four empty rooms** | The piece's own rooms, photographed from the build (below), with slow push-ins and dissolves: **1997** (the CRT on, the desktop), **2003** (the PC on), **2016** (the phone glowing on the duvet), **2026** (the headset on the made bed). Each has a chunky year and v1.0…v4.0. Nobody is there. | "Come join us in the lives of those who struggle. One room. One machine. Thirty years. And every year, an update — because we never stop improving." |
+| 0:55.2–1:01.7 | **Pack shot** | The piece's Lamby (cheerful, silent) stands on the spinning pedestal against the sunrise. **LambyOS™**, and the slogan builds word by word: **Everything is set up already.** | "LambyOS. Everything is set up already. You don't need to do anything." |
+| 1:01.7–1:08.4 | **Small print, fast** | The disclaimer scrolls up under the logo, too fast to read. | The disclaimer, read fast (captioned in full). |
+| 1:08.4–1:18.3 | **The collapse** | The scroll slows to reading speed by itself. The picture loses its hold (tracking tears, colour drains) and the tape counter slows. The music and the voice stretch down together. | "Results not typical. No result has been shown to be typical. No result has been shown. What has been shown is —" |
+| 1:18.3–1:21.3 | **The tape chews** | The last picture freezes, so Lamby's smile holds too long. The picture rolls once (no strobe), then dissolves into TV noise. The VCR's on-screen display goes with the tape. | [the tape chews] · [TV hiss] |
+| 1:21.3–1:28.3 | **The noise gathers** | Era-grey static. Its dots drift together, as the piece's starfield does, into **OVER 30 YEARS / SOLD AS CARE!** in the piece's own DOT glyphs. | [TV hiss] (silence under the hiss) |
+| 1:28.3–1:36.3 | **The end card** (frame voice) | Under the words, the programme's own small print appears and stays still: **"…not therapy, not a cure… your old self may not be recoverable…"**. It does not scroll, and there is no Sources line (his note, 2026-10-13). At the end the TV goes dark. | [TV hiss, quieter] |
 
 Both the tape and the frame are present on screen. The VHS layer (chroma bleed, tracking, head-switching noise,
 scanlines, timecode, PLAY) belongs to the tape and dies with it. After the chew, the picture is the TV's glass only, with
@@ -52,14 +53,16 @@ scanlines and a little bloom: the end card is the frame's, not the programme's.
 - **Lamby** is drawn by the piece's `drawLambyChar` (cheerful, idle). He is a picture only, with no voice and no speech
   bubble.
 - **The end card** reads exactly what the piece's own end card (`src/desktop/setup/advertEnd.ts`) reads: the DOT glyphs
-  from `src/frame/leavePage.ts`, the two lines and the Sources pointer from `data/strings/setup.json`, and the small
+  from `src/frame/leavePage.ts`, the two lines from `data/strings/setup.json`, and the small
   print from `data/dialog/s2_media.json`.
-- **The voice** is the narrator, who is the apparatus and never Lamby. It is made by **espeak-ng with the MBROLA `us2`
-  diphone voice**, a local offline synthesiser, so no online TTS service is involved. The project's own Supertonic
-  pipeline (`tools/tts/render.py`) could not be used here, because this cloud machine cannot reach Hugging Face for its
-  weights. The result sounds like a 1990s speech synthesiser. That suits a 1997 tape, but it is not an announcer. **To
-  swap it:** replace `speak()` in `src/make_audio.py` with a call to `tools/tts/render.py` on a machine that has the
-  weights. Everything downstream is re-timed from the new line lengths.
+- **The voice** is the narrator, who is the apparatus and never Lamby. It is **Kokoro-82M**, voice `am_michael` (US
+  male), a neural TTS model run locally on CPU through `kokoro-onnx`; no online TTS service is involved. The model files
+  (`kokoro-v1.0.onnx`, `voices-v1.0.bin`) come from the kokoro-onnx GitHub release `model-files-v1.0`. They are kept
+  on disk and are not committed (≈350 MB). Kokoro is **Apache-2.0**. The first cut used espeak-ng with the MBROLA `us2`
+  diphone voice. That voice is still one switch away: `script.json` → `voice`, or `--voice mbrola:mb-us2`. **To try
+  another voice:** `python3 out/lambyos-advert/src/make_audio.py --voice bm_george`, then re-render. Everything
+  downstream is re-timed from the new line lengths. The project's own Supertonic pipeline still can't run here: its
+  weights are on Hugging Face, which this cloud machine cannot reach.
 - **Music: "LambyOS Home Edition" jingle, composed and synthesised by Claude for the project** (SurvivingSOGICE,
   University of Bergen CDN, 2026). It is written in numpy/scipy, sample by sample: an FM electric piano, FM bells, a
   pulse-wave lead singing the hook, a square bass, synthesised drums, brass stabs and an orchestra hit, at 120 bpm in C
@@ -77,7 +80,7 @@ scanlines and a little bloom: the end card is the frame's, not the programme's.
 
 ```
 npx vite --port 3000 &                                        # the piece, for the room plates
-python3 out/lambyos-advert/src/make_audio.py --work .advert-tmp   # voice + music + timeline.json   (needs espeak-ng, mbrola-us2, numpy, scipy)
+python3 out/lambyos-advert/src/make_audio.py --work .advert-tmp   # voice + music + timeline.json   (needs kokoro-onnx + model files in .advert-tmp/kokoro, numpy, scipy)
 node out/lambyos-advert/src/plates.mjs --port 3000            # the four rooms (~1 h in software GL)
 node out/lambyos-advert/src/render.mjs                        # → lambyos_welcome_home.mp4 + contact_sheet.png
 node out/lambyos-advert/src/render.mjs --stills 9s,30s,84s    # review frames only
@@ -113,9 +116,9 @@ The words live in `src/script.json`: the narrator lines, the on-screen type, and
 
 ## Deviations and things for Sérgio to decide
 
-1. **Length: 1:37, not ~75 s.** The design's own shot table runs to 1:27 and beyond, the kit beat adds about 6 s, and
+1. **Length: 1:36, not ~75 s.** The design's own shot table runs to 1:27 and beyond, the kit beat adds about 6 s, and
    every caption needs reading time. To get nearer 75 s, cut in this order: the kit montage (−6 s), the fast disclaimer
-   (−5.5 s), the end card's hold (−4 s), then tighten the pauses. The minimums are in `script.json`.
+   (−6.5 s), the end card's hold (−3 s), then tighten the pauses. The minimums are in `script.json`.
 2. **Claude's drafts, not his words** (the design's narration is used verbatim everywhere else):
    - narrated: "But wait — there's more!";
    - on screen: the product titles (THE TAPE … IMMERSIVE SESSIONS), "HEADSET INCLUDED!", "FREE!", "HOW IT WORKS", the
@@ -129,13 +132,12 @@ The words live in `src/script.json`: the narrator lines, the on-screen type, and
      recorded for quality and care.";
    - the app screen ("GracePlatform", "412 days walking", "Polish my story"). 412 days is Restorify's streak elsewhere
      in the piece.
-3. **The voice** (see above): a diphone synthesiser, not an announcer. **Licence:** the MBROLA `us2` database may be
-   copied and used freely only where no charge is made; it may not be part of a product that is sold. A non-commercial
-   exhibition fits that, but **he should confirm before any public use.** Alternatively, re-voice with Supertonic
-   locally.
+3. **The voice:** Kokoro `am_michael` is my pick from the auditions (`voice_auditions.mp4`), and the choice is his.
+   Kokoro is Apache-2.0, so it is fine for exhibition use with a credit. If he goes back to the MBROLA voice, its
+   licence only covers use where nothing is charged.
 4. **Attribution, if this is ever shown:** `cassetteTape.glb` (Poly by Google, CC-BY 3.0) and `vrHeadset.glb`
    (J-Toastie, CC-BY 3.0) need the credits the piece already gives them. `cupOfTea` and `lampSquareTable` are CC0. The
-   fonts baked into the picture are Inter, Liberation, DejaVu and Unifont, all free. espeak-ng is GPL-3; the MBROLA
-   voice is under the licence above. The music is made by Claude for the project.
+   fonts baked into the picture are Inter, Liberation, DejaVu and Unifont, all free. The narrator is Kokoro-82M
+   (Apache-2.0). The music is made by Claude for the project.
 5. **The rooms' two moved props** (the phone onto the duvet, the headset onto the bed) exist only in this video.
 6. **No "Close · Play again".** Those are buttons in the piece; the video simply ends.

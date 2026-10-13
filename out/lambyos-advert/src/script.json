@@ -1,10 +1,15 @@
 {
   "_doc": "LambyOS — Welcome Home (the advert, rendered). Shot table and narrator lines VERBATIM from docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md §'The advert' unless a line carries `draft: true` — those are Claude's drafts for the programme's kit (LAMBYOS_HOME_THINKING_2026-10-12.md §6–7), for Sérgio to keep, cut or rewrite. `min` is a shot's minimum length in seconds; a shot grows to fit its narration. `at` is where a line starts inside its shot. Narrator = the apparatus (never Lamby). Captions are burned in from `text`; `say` (when present) is only the pronunciation the speech synthesiser is given. The end card's two gathered lines and the Sources pointer are read from data/strings/setup.json (advertAsterisk), and its small print from data/dialog/s2_media.json — the same sources the piece's own end card (src/desktop/setup/advertEnd.ts) uses.",
   "voice": {
-    "engine": "espeak-ng + MBROLA (local, offline)",
-    "voice": "mb-us2",
-    "speed": 174,
-    "pitch": 46
+    "engine": "kokoro",
+    "voice": "am_michael",
+    "speed": 1.05,
+    "_alt": {
+      "engine": "mbrola",
+      "voice": "mb-us2",
+      "speed": 174,
+      "pitch": 46
+    }
   },
   "shots": [
     {
@@ -249,7 +254,7 @@
     },
     {
       "id": "end",
-      "min": 10.0,
+      "min": 8.0,
       "sounds": [
         {
           "at": 0.0,
