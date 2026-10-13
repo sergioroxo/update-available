@@ -240,3 +240,39 @@ Checks: screenshots of each step on the monitor at 1280×720 and 390×844 (and t
 out/setup-lamblippy/, LOOKED AT; `?setup=1` walk: `node tools/walk.mjs --port 3207 --max 900 --one-era` with whatever
 flag reaches the setup (document it); tsc + npm test.
 ```
+
+## E3 · The setup floats in the stars; then Daniel's session is restored (port 3208)
+*His review of E1+E2 (2026-10-13): "I do like E1, but I wished what happened at E2 with the setup could be like a
+floating window in the stars (that need to be slower). So it does make sense to have the session opening with Daniel."
+E1 and E2 are merged into reinterp (commits "CODEX: entrance-restore …" and "CODEX: setup-lamblippy …"). New chat,
+PREAMBLE first, effort high.*
+
+```
+TASK = setup-in-stars. E1 (src: the restore entrance — wake starfield → the stars become Daniel's room → the camera
+at the monitor) and E2 (src/desktop/setup/: LambyOS Setup with Lamblippy, drawn on the monitor's desktop canvas, via
+startSetup()) are both in reinterp. Reorder them into ONE sequence, behind `?entrance=restore` as now:
+1. WAKE, SLOWER: the starfield streams at about half its current speed, and gathers and holds the title longer
+   (calm, a screensaver at rest). Same look, tones and night-blue.
+2. SETUP IN THE STARS: on the first press the title's stars drift apart and slow almost to a stop; a floating
+   Windows 95 window fades in, in the starfield in front of the viewer (~2.2 m ahead, eye height, ~2 m wide in XR; in
+   the browser it fills ~70% of the view's width, on a phone ~95%): it shows the SAME LambyOS Setup E2 built — the
+   teal Win95 desktop with Lamblippy, its balloons, its windows (About, Sound, How to look, the content note gate,
+   the version choice, the advert and the asterisk card, Start). Render E2's setup canvas onto a world-space quad
+   (upload only when dirty), and hit-test it the same way in all modes: mouse/touch ray in the browser, the controller
+   ray / pinch in XR (reuse the floating-window approach of src/desktop/home/homeXr.ts and src/frame/xrInput.ts rather
+   than inventing one). The setup must NOT appear on Daniel's monitor any more.
+3. START → RESTORE: when Start is pressed, the window folds into a single star that joins the others; "Restoring
+   previous session…" types in; THEN E1's restore runs (the stars become Daniel's 1997 room; "Room found. User profile
+   pending."; the camera taken to the seat facing the monitor); then the Enter glitch; then the 1997 story begins on
+   the monitor exactly as LambyOS Home's Enter did (Daniel's session opens).
+4. Keep: the content note as the only gate; no durations on the version choice; the advert and asterisk card as E2
+   built them (check the advert actually plays its picture in the player — E2's screenshot showed only stars); the
+   idle cycle returning to WAKE after 30 min; reduced motion (slow fades, no flight, no glitch); the Quest budget
+   (≤ 75 draw calls; the window is one quad).
+5. Walker: `--entrance restore` must walk wake → the floating setup (publish the window's hit rects so the walker can
+   press them: open/close the content note, choose the full piece, Skip the advert, Start) → restore → 1997 → 2003.
+Checks: screenshots at 1280×720 and 390×844 — wake (slower), the floating setup at 3 steps, the content note, Start,
+mid-restore, the room at the monitor with 1997 starting — to out/setup-in-stars/, LOOKED AT; walks:
+`node tools/walk.mjs --port 3208 --max 1400 --one-era --entrance restore` reaches 2003, and the default path
+`node tools/walk.mjs --port 3208 --max 1200 --one-era` is unchanged.
+```
