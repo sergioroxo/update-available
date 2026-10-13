@@ -57,6 +57,8 @@ const REASON_PAGES: Array<{ g: 'men' | 'women' | 'trans' | 'arc'; rows: { reason
 export class Lexicon {
   face: Face = 'title';
   private page = 0;
+  /** S242 — the Sources face's page count, set by the last draw (it is counted by measuring) */
+  private sourcePages = 1;
 
   /** a press on the glass, by hit id; true when it was the Lexicon's. 'lex-close' is the caller's to act on. */
   press(id: string): boolean {
@@ -74,6 +76,7 @@ export class Lexicon {
   private pages(): number {
     if (this.face === 'words') return TERMS.length;
     if (this.face === 'reasons') return REASON_PAGES.length;
+    if (this.face === 'sources') return this.sourcePages;
     return 1;
   }
 
@@ -84,7 +87,7 @@ export class Lexicon {
     if (this.face === 'title') this.drawTitle(ctx, W, H);
     else if (this.face === 'words') this.drawWord(ctx, W, H, hits);
     else if (this.face === 'reasons') this.drawReasons(ctx, W, H, hits);
-    else if (this.face === 'sources') this.drawSources(ctx, W, H);
+    else if (this.face === 'sources') this.drawSources(ctx, W, H, hits);
     else this.drawYours(ctx, W, H);
     this.drawTabs(ctx, W, H, hits);
   }
@@ -200,21 +203,44 @@ export class Lexicon {
   }
 
   /** ⚑ S233 — the Lexicon's Sources: what its research points to, printed (label, then the address in full, broken
-   *  anywhere it must be, since an address has no spaces) */
-  private drawSources(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.gilded(ctx, L.tabs.sources.toUpperCase(), 20, 18, 20);
-    setFont(ctx, 10); ctx.fillStyle = ERA1.silver;
-    let y = 56;
-    for (const l of wrapText(ctx, L.sourcesIntro, W - 40)) { ctx.fillText(l, 20, y); y += 13; }
-    y += 8;
+   *  anywhere it must be, since an address has no spaces).
+   *  ⚑ S242 — PAGED like the other faces (there are ~36 now, the tab was built for 2): as many whole entries as fit
+   *  above the pager, each page counted by measuring, never a fixed number; prev / next / "page n / m" are the
+   *  Lexicon's own pager. The first page carries the intro line. */
+  private drawSources(ctx: CanvasRenderingContext2D, W: number, H: number, hits: Hit[]): void {
+    const LABEL_LH = 13, URL_LH = 11, GAP = 9, LIMIT = H - 68;
+    const measure = (s: LexiconSource): { label: string[]; url: string[]; h: number } => {
+      setFont(ctx, 10); const label = wrapText(ctx, s.label, W - 40);
+      setFont(ctx, 9); const url = breakAnywhere(ctx, s.url, W - 48);
+      return { label, url, h: label.length * LABEL_LH + url.length * URL_LH + GAP };
+    };
+    setFont(ctx, 10);
+    const intro = wrapText(ctx, L.sourcesIntro, W - 40);
+    const pages: Array<Array<{ label: string[]; url: string[]; h: number }>> = [];
+    let cur: Array<{ label: string[]; url: string[]; h: number }> = [], y = 56 + intro.length * 13 + 8;
     for (const s of LEXICON_SOURCES) {
-      if (y > H - 50) break;
-      setFont(ctx, 11); ctx.fillStyle = ERA1.white;
-      for (const l of wrapText(ctx, s.label, W - 40)) { ctx.fillText(l, 20, y); y += 14; }
-      setFont(ctx, 9); ctx.fillStyle = ERA1.tooltip;
-      for (const l of breakAnywhere(ctx, s.url, W - 48)) { ctx.fillText(l, 24, y); y += 12; }
-      y += 10;
+      const m = measure(s);
+      if (cur.length && y + m.h > LIMIT) { pages.push(cur); cur = []; y = 56; }
+      cur.push(m); y += m.h;
     }
+    if (cur.length) pages.push(cur);
+    this.sourcePages = Math.max(1, pages.length);
+    this.page = Math.min(this.page, this.sourcePages - 1);
+    this.gilded(ctx, L.tabs.sources.toUpperCase(), 20, 18, 20);
+    y = 56;
+    if (this.page === 0) {
+      setFont(ctx, 10); ctx.fillStyle = ERA1.silver;
+      for (const l of intro) { ctx.fillText(l, 20, y); y += 13; }
+      y += 8;
+    }
+    for (const m of pages[this.page] ?? []) {
+      setFont(ctx, 10); ctx.fillStyle = ERA1.white;
+      for (const l of m.label) { ctx.fillText(l, 20, y); y += LABEL_LH; }
+      setFont(ctx, 9); ctx.fillStyle = ERA1.tooltip;
+      for (const l of m.url) { ctx.fillText(l, 24, y); y += URL_LH; }
+      y += GAP;
+    }
+    this.pager(ctx, W, H, hits);
   }
 
   private pager(ctx: CanvasRenderingContext2D, W: number, H: number, hits: Hit[]): void {

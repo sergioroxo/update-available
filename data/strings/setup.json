@@ -116,8 +116,8 @@
   "close": "Close",
   "dismiss": "×",
   "advertAsterisk": {
-    "_doc": "The lead's dossier phrasing, drafted by Claude, pending his final word. Choice (c), LAMBYOS_HOME_DESIGN_2026-10-09.md §7 item 4. Plain frame voice; shown only after the advert finishes, never after Skip.",
-    "line": "*Over 30 years: no evidence of benefit, and a documented risk of harm.",
-    "sources": "Sources: open the menu, then Credits & attributions."
+    "gather": ["OVER 30 YEARS", "SOLD AS CARE!"],
+    "sources": "Sources: open the menu, then Credits & attributions.",
+    "_doc": "his wording 2026-10-13 ('Over 30 years sold as Care!'); the scroll is the infomercial's own small print"
   }
 }

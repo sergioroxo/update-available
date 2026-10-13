@@ -725,7 +725,9 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
       // reader. Printed, never fetched or opened (the piece makes no network calls).
       const srcList = document.createElement('ul');
       srcList.setAttribute('aria-label', lex.tabs.sources);
-      Object.assign(srcList.style, { display: 'none', margin: '0 0 10px', padding: '0 0 0 18px', fontSize: '12px', lineHeight: '1.45', userSelect: 'text' } as CSSStyleDeclaration);
+      // S242: ~36 entries now — its own scroll box (focusable, so the keyboard can scroll it), not the card's whole length
+      srcList.tabIndex = 0;
+      Object.assign(srcList.style, { display: 'none', margin: '0 0 10px', padding: '6px 8px 6px 26px', fontSize: '12px', lineHeight: '1.45', userSelect: 'text', maxHeight: '240px', overflowY: 'auto', border: `1px solid ${DIALOG.dim}` } as CSSStyleDeclaration);
       for (const s of LEXICON_SOURCES) {
         const li = document.createElement('li');
         li.style.marginBottom = '6px';

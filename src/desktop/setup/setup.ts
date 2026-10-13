@@ -13,6 +13,7 @@ import { NetVisionPlayerApp } from '../apps/netvision';
 import { playOnce } from '../../audio/tapeAudio';
 import { ledger } from '../../state/ledger';
 import { chooseCut, currentCut, type Cut } from '../../state/cut';
+import { AdvertEndCard } from './advertEnd';
 
 export interface SetupHit { x: number; y: number; w: number; h: number; id: string }
 interface SetupHost { setup: LambySetup | null; dirty: boolean }
@@ -46,6 +47,9 @@ export class LambySetup {
   private hover = '';
   private cut: Cut = currentCut();
   private player: NetVisionPlayerApp | null = null;
+  /** ⚑ S242 — the advert's end card: noise → gathered title + the small print (played advert only) */
+  endCard: AdvertEndCard | null = null;
+  private endCardPaint = 0;
   private sound: HTMLAudioElement | null = null;
   private track: HTMLAudioElement | null = null;
   private deviceStatus = '';
@@ -65,7 +69,7 @@ export class LambySetup {
   private closeWindow(): void {
     const w = this.window;
     if (w === 'advert') { this.player?.skip(); this.track?.pause(); this.track = null; this.player = null; this.advance(7); }
-    else if (w === 'asterisk') this.advance(7);
+    else if (w === 'asterisk') { this.endCard = null; this.advance(7); }
     else if (w === 'note') { if (this.noteClosedAt === null) this.noteClosedAt = this.clock; this.advance(5); }
     else if (w === 'about') this.advance(2);
     else if (w === 'sound') this.advance(3);
@@ -81,6 +85,12 @@ export class LambySetup {
     }
     if (this.noteClosedAt !== null && this.clock - this.noteClosedAt >= 4 && !this.readyDrawn) { this.readyDrawn = true; this.dirty = true; }
     if (this.player?.open) { this.player.update(dt); this.dirty = true; }
+    if (this.window === 'asterisk' && this.endCard) {
+      this.endCard.update(dt);
+      // ~30 fps is plenty for static and a slow crawl; reduced motion draws the card once
+      this.endCardPaint += dt;
+      if (this.endCard.animating && this.endCardPaint >= 1 / 30) { this.endCardPaint = 0; this.dirty = true; }
+    }
   }
   private readyDrawn = false;
   destroy(): void { this.open = false; this.hits = []; this.sound?.pause(); this.track?.pause(); }
@@ -123,7 +133,7 @@ export class LambySetup {
         this.player.onClosed = result => {
           this.track?.pause(); this.track = null; this.player = null;
           if (result === 'skipped') this.advance(7);
-          else { this.window = 'asterisk'; this.hits = []; this.dirty = true; }
+          else { this.window = 'asterisk'; this.endCard = new AdvertEndCard(); this.endCardPaint = 0; this.hits = []; this.dirty = true; }
         };
         this.track = playOnce(this.player.trackName);
       }
@@ -196,11 +206,11 @@ export class LambySetup {
       return;
     }
     if (kind === 'asterisk') {
-      // The lead's two lines, plain frame voice; one Close, no assistant or other control.
-      ui.bevel(ctx, 20, 100, 472, 174, true);
-      const y = this.text(ctx, copy.advertAsterisk.line, 40, 120, 432, 12);
-      this.text(ctx, copy.advertAsterisk.sources, 40, y + 14, 432, 11);
-      this.button(ctx, 'setup-close', copy.close, 391, 232, 81);
+      // ⚑ S242 — the player's own window, filled with noise that gathers into the title (advertEnd.ts).
+      // Frame voice; one Close, no assistant or other control.
+      const c = ui.windowFrame(ctx, 26, 22, 460, 340, copy.advert.title);
+      this.endCard?.draw(ctx, c);
+      this.button(ctx, 'setup-close', copy.close, c.x + c.w - 93, c.y + c.h - 37, 81);
       return;
     }
     const c = ui.windowFrame(ctx, 20, 19, 472, 321, copy[kind].title);
