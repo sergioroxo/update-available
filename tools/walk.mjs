@@ -1151,6 +1151,10 @@ const LAP = { w: 224, h: 140 };
    * grace is all it needs: having turned, try what is now in front of you.
    */
   let justTurned = false;
+  /** ⚑ S243 — after waking a screensaver, choose at once: a held listen on a page whose caret blinks outlasts the
+   *  2026 laptop's own sleep (SAVER_SECONDS), so the walker woke it, listened, watched it fall asleep, and woke it
+   *  again until the step limit (2026-10-13, twice, on two builds). A person who wakes a screen uses it. */
+  let justWoke = false;
 
   const tapKey = async (k, n) => {
     for (let i = 0; i < n; i++) { await page.keyboard.press(k); await wait(45); }
@@ -1890,7 +1894,7 @@ const LAP = { w: 224, h: 140 };
      * Bounded, because some screens animate forever (a caret, Lamby idling):
      * after `TALK_WAIT_MAX` consecutive holds the walker presses anyway.
      */
-    if (talkWaits < TALK_WAIT_MAX) {
+    if (!justWoke && talkWaits < TALK_WAIT_MAX) {
       const before = pulseOf(s);
       await wait(900);
       const now = await probe();
@@ -1926,6 +1930,7 @@ const LAP = { w: 224, h: 140 };
       const wasAdvance = advanceOf(s);
       pressed.set(keyOf(sig, t), (pressed.get(keyOf(sig, t)) || 0) + 1);
       seen.set(t.id, (seen.get(t.id) || 0) + 1);
+      justWoke = t.id === 'saver-wake';
       const after = await press(t, s);
       /**
        * ⚑ A PRESS THAT CHANGES NOTHING AT ALL — not one pixel, not one field —
