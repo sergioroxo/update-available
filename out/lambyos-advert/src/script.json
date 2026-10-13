@@ -1,0 +1,299 @@
+{
+  "_doc": "LambyOS — Welcome Home (the advert, rendered). Shot table and narrator lines VERBATIM from docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md §'The advert' unless a line carries `draft: true` — those are Claude's drafts for the programme's kit (LAMBYOS_HOME_THINKING_2026-10-12.md §6–7), for Sérgio to keep, cut or rewrite. `min` is a shot's minimum length in seconds; a shot grows to fit its narration. `at` is where a line starts inside its shot. Narrator = the apparatus (never Lamby). Captions are burned in from `text`; `say` (when present) is only the pronunciation the speech synthesiser is given. The end card's two gathered lines and the Sources pointer are read from data/strings/setup.json (advertAsterisk), and its small print from data/dialog/s2_media.json — the same sources the piece's own end card (src/desktop/setup/advertEnd.ts) uses.",
+  "voice": {
+    "engine": "kokoro",
+    "voice": "am_michael",
+    "speed": 1.05,
+    "_alt": {
+      "engine": "mbrola",
+      "voice": "mb-us2",
+      "speed": 174,
+      "pitch": 46
+    }
+  },
+  "shots": [
+    {
+      "id": "ident",
+      "min": 4.6,
+      "sounds": [
+        {
+          "at": 1.6,
+          "text": "[the LambyOS chime]"
+        }
+      ]
+    },
+    {
+      "id": "kitchen",
+      "min": 8.0,
+      "lines": [
+        {
+          "id": "k1",
+          "at": 0.5,
+          "text": "Does someone you love seem… far away?",
+          "say": "Does someone you love, seem... far away?"
+        },
+        {
+          "id": "k2",
+          "gap": 0.35,
+          "text": "Since 1997, we have been there for families. Quietly. Gently. At the kitchen table.",
+          "say": "Since nineteen ninety-seven, we have been there for families. Quietly. Gently. At the kitchen table."
+        }
+      ],
+      "tail": 0.6
+    },
+    {
+      "id": "parade",
+      "min": 10,
+      "lines": [
+        {
+          "id": "p1",
+          "at": 0.5,
+          "item": "tape",
+          "text": "A tape, for when you don't have the words."
+        },
+        {
+          "id": "p2",
+          "gap": 0.28,
+          "item": "disk",
+          "text": "A disk, for your first steps."
+        },
+        {
+          "id": "p3",
+          "gap": 0.28,
+          "item": "streak",
+          "text": "A streak, to keep you going."
+        },
+        {
+          "id": "p4",
+          "gap": 0.28,
+          "item": "platform",
+          "text": "A platform, to polish your story."
+        },
+        {
+          "id": "p5",
+          "gap": 0.28,
+          "item": "headset",
+          "text": "And now — immersive sessions. Headset included.",
+          "say": "And now... immersive sessions. Headset included!"
+        },
+        {
+          "id": "p6",
+          "gap": 0.4,
+          "item": "more",
+          "draft": true,
+          "text": "But wait — there's more!",
+          "say": "But wait... there's more!"
+        }
+      ],
+      "tail": 0.1,
+      "montage": [
+        {
+          "item": "letgo",
+          "dur": 1.6,
+          "draft": true,
+          "label": "The “Let go!” box",
+          "sub": "for the old things"
+        },
+        {
+          "item": "rules",
+          "dur": 1.6,
+          "draft": true,
+          "label": "The House Rules sampler",
+          "sub": "doors always open"
+        },
+        {
+          "item": "guestbook",
+          "dur": 1.8,
+          "draft": true,
+          "label": "The guest book",
+          "sub": "approved callers only"
+        }
+      ]
+    },
+    {
+      "id": "flow",
+      "min": 11.0,
+      "lines": [
+        {
+          "id": "f1",
+          "at": 0.4,
+          "text": "It's simple."
+        },
+        {
+          "id": "f2",
+          "gap": 0.25,
+          "box": 0,
+          "text": "A feeling is just a feeling."
+        },
+        {
+          "id": "f3",
+          "gap": 0.25,
+          "box": 1,
+          "text": "We give it a name."
+        },
+        {
+          "id": "f4",
+          "gap": 0.25,
+          "box": 2,
+          "text": "We find where it came from."
+        },
+        {
+          "id": "f5",
+          "gap": 0.25,
+          "box": 3,
+          "text": "We send someone who has been where you are."
+        },
+        {
+          "id": "f6",
+          "gap": 0.25,
+          "box": 4,
+          "text": "And out the other side comes — the new you!",
+          "say": "And out the other side comes... the new you!"
+        }
+      ],
+      "tail": 0.8
+    },
+    {
+      "id": "rooms",
+      "min": 10.6,
+      "lines": [
+        {
+          "id": "r1",
+          "at": 0.6,
+          "text": "Come join us in the lives of those who struggle."
+        },
+        {
+          "id": "r2",
+          "gap": 0.30000000000000004,
+          "text": "One room. One machine. Thirty years."
+        },
+        {
+          "id": "r3",
+          "gap": 0.30000000000000004,
+          "text": "And every year, an update — because we never stop improving.",
+          "say": "And every year, an update... because we never stop improving."
+        }
+      ],
+      "tail": 0.6
+    },
+    {
+      "id": "pack",
+      "min": 6.5,
+      "lines": [
+        {
+          "id": "s1",
+          "at": 0.8,
+          "text": "LambyOS.",
+          "say": "Lambee O S."
+        },
+        {
+          "id": "s2",
+          "gap": 0.25,
+          "slogan": true,
+          "text": "Everything is set up already."
+        },
+        {
+          "id": "s3",
+          "gap": 0.3,
+          "text": "You don't need to do anything."
+        }
+      ],
+      "tail": 0.6
+    },
+    {
+      "id": "fine",
+      "min": 5.0,
+      "lines": [
+        {
+          "id": "d1",
+          "at": 0.1,
+          "fast": true,
+          "text": "LambyOS is not a medical service. LambyOS is a community of intent. We keep everything, so you never have to start again. Results not typical.",
+          "say": "Lambee O S is not a medical service. Lambee O S is a community of intent. We keep everything, so you never have to start again. Results not typical."
+        }
+      ],
+      "tail": 0.2
+    },
+    {
+      "id": "collapse",
+      "min": 6.0,
+      "lines": [
+        {
+          "id": "c1",
+          "at": 0.2,
+          "stretch": true,
+          "text": "Results not typical. No result has been shown to be typical. No result has been shown. What has been shown is —",
+          "say": "Results not typical. No result has been shown to be typical. No result has been shown. What has been shown is"
+        }
+      ],
+      "tail": 0.3
+    },
+    {
+      "id": "chew",
+      "min": 3.0,
+      "sounds": [
+        {
+          "at": 0.0,
+          "text": "[the tape chews]"
+        },
+        {
+          "at": 1.9,
+          "text": "[TV hiss]"
+        }
+      ]
+    },
+    {
+      "id": "gather",
+      "min": 7.0,
+      "sounds": [
+        {
+          "at": 0.0,
+          "text": "[TV hiss]"
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "min": 8.0,
+      "sounds": [
+        {
+          "at": 0.0,
+          "text": "[TV hiss, quieter]"
+        }
+      ]
+    }
+  ],
+  "type": {
+    "ident": "LambyOS™ — Home Edition",
+    "kitchen": "Over 30 years of care.*",
+    "flow": [
+      "a feeling",
+      "a NAME",
+      "a ROOT CAUSE",
+      "a MENTOR",
+      "a NEW YOU"
+    ],
+    "rooms": [
+      "1997",
+      "2003",
+      "2016",
+      "2026"
+    ],
+    "slogan": "Everything is set up already.",
+    "fineFast": "LambyOS is not a medical service. LambyOS is a community of intent. We keep everything, so you never have to start again. Results not typical. LambyOS™, Home Edition, Restorify, GracePlatform, Un-Walk and Continuity are marks of the TriedPath Fellowship. Not available in all regions. Sessions may be recorded for quality and care.",
+    "parade": {
+      "tape": "THE TAPE",
+      "disk": "THE DISK",
+      "streak": "THE STREAK",
+      "platform": "THE PLATFORM",
+      "headset": "IMMERSIVE SESSIONS"
+    },
+    "headsetBadge": "HEADSET INCLUDED!",
+    "more": [
+      "BUT WAIT —",
+      "THERE'S MORE!"
+    ],
+    "free": "FREE!",
+    "flowTitle": "HOW IT WORKS"
+  }
+}
