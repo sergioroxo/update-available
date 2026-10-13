@@ -1,6 +1,6 @@
 # LambyOS — Welcome Home · the advert, as a video (review only)
 
-**File:** `lambyos_welcome_home.mp4`. 1920×1080, 30 fps, H.264 (yuv420p, CRF 18) with AAC 192k stereo. Length **1:37**.
+**File:** `lambyos_welcome_home.mp4`. 1920×1080, 30 fps, H.264 (yuv420p, CRF 23, ~53 MB) with AAC 192k stereo. Length **1:37**.
 **Contact sheet:** `contact_sheet.png` (12 frames, one per beat, with the time of each).
 **Branch:** `cloud/advert-video`, which is never merged. This is a picture to review. It is not wired into the piece.
 

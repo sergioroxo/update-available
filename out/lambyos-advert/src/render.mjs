@@ -89,7 +89,7 @@ async function main() {
     const last = TO ? Number(TO) : total;
     const silent = path.join(WORK, 'video_only.mp4');
     const ff = spawn('ffmpeg', ['-y', '-v', 'error', '-f', 'image2pipe', '-framerate', String(timeline.fps), '-c:v', 'mjpeg', '-i', '-',
-      '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(timeline.fps), silent], { stdio: ['pipe', 'inherit', 'inherit'] });
+      '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-pix_fmt', 'yuv420p', '-r', String(timeline.fps), silent], { stdio: ['pipe', 'inherit', 'inherit'] });
     const t0 = Date.now();
     for (let f = FROM; f < last; f++) {
       const buf = await grab(f);
