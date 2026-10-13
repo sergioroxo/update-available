@@ -276,3 +276,106 @@ mid-restore, the room at the monitor with 1997 starting — to out/setup-in-star
 `node tools/walk.mjs --port 3208 --max 1400 --one-era --entrance restore` reaches 2003, and the default path
 `node tools/walk.mjs --port 3208 --max 1200 --one-era` is unchanged.
 ```
+
+---
+
+## E4 · The entrance, his first walkthrough (2026-10-13) — fix round (port 3209)
+*His notes after playing the entrance (2026-10-13), each answered below. New chat, PREAMBLE first, effort high. Words
+are Claude's (approved process: Claude writes, he edits); use them verbatim, all in data/strings/setup.json or
+entrance.json.*
+
+```
+TASK = entrance-polish. The restore entrance (src/room/restoreEntrance.ts, src/desktop/setup/, data/strings/setup.json
+and entrance.json) is the default front door. The lead played it and wrote these notes; fix each one. Read
+docs/reinterp/PLAN_ENTRANCE_RESTORE_SESSION_2026-10-13.md first (style reasons), then:
+
+A. REGRESSIONS (fix first; compare against `?entrance=home`, which builds the same room the old way):
+ 1. "The racket is on the wall" — Daniel's tennis racket (models.json `tennisRacket`, placed by the bed with a tilt)
+    floats against the wall after the restore. 2. "The game boy is without textures." 3. "There is a flash of
+    white — why?" Find it (a clear colour, a texture upload, the glitch, a DOM layer) and remove it.
+    Likely cause for 1–2: the restore's fade-up of the room's materials/transforms (stars landing → surfaces fading up)
+    does not restore some props' own transforms/materials, or runs before src/room/assets.ts's shared model
+    preparation (changed by the exhibition-build commit) has finished. After the restore every prop must be exactly
+    as `?entrance=home` leaves it (positions, tilts, textures). Add a check script that compares the two.
+ 4. "The sound is completely off; it starts after the computer is already on." The first press on the wake screen is
+    the user gesture: start audio there. From that press until Start, LambyOS Home's loop plays softly
+    (lambyos_home_loop.mp3, already registered — "it is a good vibe"); it fades as the room is restored.
+
+B. THE WAKE SCREEN
+ 5. "The specks of 'YOUR UPDATE HAS FAILED' need to be slower and more readable": bigger, brighter dots for the
+    gathered title, a slower gather, a longer hold; legible at 390×844.
+ 6. "The fade to the OS doesn't work": the hand-over from the wake title to the setup window must be a visible,
+    smooth transition (no pop, no black).
+
+C. THE SETUP WINDOW
+ 7. "I like the fact that the computer screen becomes a star, so maybe it should come as a star from the beginning,
+    but from a different side": the window ARRIVES as one star flying in from the side (not the centre), which
+    grows and unfolds into the window; at Start it folds back into a star and leaves the other way.
+ 8. "When you press it, it opens the computer screen; that needs to occupy the whole frame": once open, the setup
+    window fills the whole view (browser and phone: full viewport, keeping its Win95 look; XR: a large panel).
+ 9. "Lamby should appear with the Hi": Lamblippy is on screen with the very first balloon, not after it.
+ 10. Sound step: the headphones line is Lamblippy's, and "Play a test sound" plays the chime IN PLACE — no jump to
+    another panel. Balloon: "Things sound better with headphones! Want a test sound?" — [Play a test sound]
+    [Sound on] [Keep it quiet]. Remove the separate Sound window.
+ 11. The About page's second paragraph reads more smoothly. Replace it with: "It is part of SurvivingSOGICE, a research
+    project at the University of Bergen's Center for Digital Narrative. Everything in it rests on that research: at
+    the end you will find a Library with the Lexicon — the words these networks used and the reasons they gave — and
+    the full list of sources is in the menu, under Credits & attributions."
+ 12. "It is missing the point of explaining the 'user profile' and what this project is about, the stories": add a
+    step right after About. Balloon: "You'll be restoring someone's session. Four of them, actually!" — [Whose?]
+    [Later]. [Whose?] opens a plain window "Whose session?" (frame voice): "On this one machine you will live through
+    four sessions, across thirty years: Daniel's in 1997 and in 2003, Vera's in 2016, and Maya's in 2026. They are
+    invented people, composed from documented accounts. Their user profiles are still pending: you fill them in as
+    you go, and the programme keeps what you give it." (Ties to the restore line "User profile pending.")
+ 13. "The advert needs to be introduced a bit more": Balloon: "We made an advert! It ran on TV in 2003. Want to see
+    it?" — [Play it] [Skip]. Small line under the player's title: "Paid programming, 2003".
+ 14. "It is missing the reduce motion button": the CONTENT NOTE window gets a checkbox "Reduce motion" (checked when
+    the device asks for reduced motion). Ticking it makes the whole piece behave as prefers-reduced-motion does
+    (cuts instead of flights, no glitch, no noise animation) — find every place that reads the media query and route
+    it through one function that also honours this switch (memory only; no storage).
+ 15. "I like the How to Look" — keep it as it is.
+
+D. THE TRAVEL INTO THE ROOM
+ 16. "The transition to the travelling is almost there; I don't like that it goes to black; it should flow better
+    from the stars to pixels and pixels to the image": no black frame anywhere. The stars become pixels (they grow
+    into square pixels in the room's colours as they land), and the pixels resolve into the room's image; the camera
+    flight overlaps the resolve. One continuous movement.
+
+E. THE FLOATING SPECKS
+ 17. "I don't know how it happened, but I love these floating specks, and would like them more integrated throughout
+    the experience": after the restore, some of the entrance's stars stay in Daniel's room as slow drifting specks
+    (warm and a few cool). Make this deliberate: a sparse, slow field of specks (≤ 40, one merged mesh, ≤ 1 draw call)
+    in every room in every era, warm and cool in the Close's two tones, denser in the dark corners and thinning in the
+    lamp's pool, never in front of the monitor or any device the viewer is reading, frozen with reduced motion. They
+    are the same points the piece began as and ends as (the Close's constellation). Keep within the Quest budget.
+
+Checks: tsc, npm test; screenshots of every step at 1280×720 and 390×844 (wake title, arrival of the window as a star,
+the full-frame setup with Lamblippy from the first balloon, the sound balloon, Whose session?, the content note with
+Reduce motion, the advert intro, the fold, the stars→pixels→room resolve, the room with specks, the racket and Game Boy
+up close next to the `?entrance=home` versions) in out/entrance-polish/, LOOKED AT. Walks: `node tools/walk.mjs --port
+3209 --max 1400 --one-era` reaches 2003; `node tools/walk.mjs --port 3209 --max 2600 --require-close` reaches the Close
+(run under `caffeinate -i`). List every new/changed string numbered BEFORE/AFTER in the report.
+```
+
+## E5 · More screensavers (port 3210)
+*His note (2026-10-13): "we need more screensavers". New chat, PREAMBLE first, effort medium. Can run with E4.*
+
+```
+TASK = more-screensavers. The piece's screensavers live in src/desktop/apps/screensaver.ts (kinds stars, text, lambs,
+lock, orb; words in data/strings/screensavers.json), shown in-fiction after ~150 s idle in each era and full-screen in
+the exhibition's idle cycle (src/frame/attract.ts, its `cycle` in data/strings/attract.json). Read both, and
+src/frame/leavePage.ts's starfield (the pixel stars that gather into words: the piece's screensaver language). Add
+FOUR new savers in that language (era palettes from src/desktop/theme/, pixel discipline, FILTER_NEAREST, ≤ 3 flashes
+a second, reduced motion → a still frame):
+ 1. `pipes` — the classic 3D pipes, as square-section voxel pipes in the 1997 palette (ochre, orange, teal on navy),
+    drawn on the 2D canvas in a simple isometric projection; 1997's saver alongside its others.
+ 2. `flock` — "flying toasters" turned into the programme's lambs: small pixel lambs with little wings crossing the
+    screen diagonally in a loose flock, one of them always slightly out of line; 2003.
+ 3. `lexicon` — the starfield gathering, each time, into one word from the Lexicon (data/strings/lexicon.json `terms`,
+    the `word` field), holding it, then scattering; any era; also in the idle cycle.
+ 4. `marquee` — Windows' scrolling marquee: the programme's slogans from the piece's own data (the infomercial's
+    lines in data/dialog/s2_media.json, the Word of the Day lines) crossing slowly in each era's typeface; 2016/2026.
+Add them to the in-fiction rotation per era (screensavers.json) and to the idle cycle (attract.json `cycle`, between
+the existing ones; the call-in card still every third slide). Screenshots of each at 1280×720 and 390×844 in
+out/more-screensavers/, LOOKED AT; tsc, npm test; `node tools/walk.mjs --port 3210 --max 1400 --one-era`.
+```
