@@ -169,11 +169,7 @@ product parade should include the programme's kit as the documents describe it (
 House Rules sampler, the approved-callers guest book), and it must be visually over-the-top (his standing rule for new
 versions), still with no faces "fixed" and no voice for Lamby (the narrator is the apparatus, not Lamby).
 
-**For Codex (curiosity only — not for the piece):** "Read docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md §'The advert'
-and LAMBYOS_HOME_THINKING_2026-10-12.md. As a sketch only, build a standalone animated storyboard of this advert as one
-HTML file in output/lambyos-advert-sketch/ (canvas, no network, no storage, captions on screen, no voice; placeholder
-shapes are fine; over-the-top 1997 infomercial look; the ending exactly as the table's last three rows). Do not touch
-src/, data/ or public/. Note what you would need to make it real."
+**To make it (2026-10-13, his correction: "I wanted to see the video"):** Codex prompt A1 in PROMPTS_CODEX_2026-10-11.md and cloud Prompt 8 in PROMPTS_CLOUD_2026-10-09.md — both render the advert to an MP4 in output/lambyos-advert/ (not wired into the piece). The earlier "storyboard" prompt is withdrawn.
 
 **Where the collapse's claim comes from.** The closing card states only what the piece's knowledge base already
 documents. Professional bodies state that these practices lack evidence of benefit and carry risk of harm: the

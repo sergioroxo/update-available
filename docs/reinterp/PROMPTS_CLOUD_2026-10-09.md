@@ -281,3 +281,33 @@ Write it to docs/reinterp/COMMONS_STREAMLINE_2026-10-10.md (first line "STATUS: 
 Deliver: commit (explicit paths; message ending "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"), push,
 open a PR into reinterp titled "The Commons, streamlined (design)". Do not merge.
 ```
+
+---
+
+## Prompt 8 — the LambyOS advert as a real video (2026-10-13)
+**Model: Opus 5.5 · effort: high** · *his ask: "make me one to send to Claude on the cloud" — the same brief as Codex's
+A1 (PROMPTS_CODEX_2026-10-11.md), to compare. The cloud cannot see ~/Pc_Simulation, so no Suno jingle there.*
+```
+SETUP FIRST: git fetch origin reinterp && git checkout -B cloud/advert-video origin/reinterp && npm ci
+Check for ffmpeg (`which ffmpeg`); if missing, try `apt-get install -y ffmpeg` (or a static ffmpeg via npm
+`ffmpeg-static`); Chromium for capture: /opt/pw-browsers (Playwright) as in earlier prompts.
+
+TASK: make the advert "LambyOS — Welcome Home" as a finished VIDEO FILE. Read CLAUDE.md (ethics), then
+docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md §"The advert" (shot table, timings, narrator lines, and the revised
+ending: the tape chews → TV noise → the noise's dots gather into OVER 30 YEARS / SOLD AS CARE! → the small print scrolls
+"…not therapy, not a cure… your old self may not be recoverable…" → "Sources: open the menu, then Credits &
+attributions.") and docs/reinterp/LAMBYOS_HOME_THINKING_2026-10-12.md (the programme's kit for the product parade: the
+"Let go!" box of False Images, the House Rules sampler, the approved guest book).
+Rules: satire only of the programme's pitch, and it collapses; hands, backs and empty rooms — no queer person "fixed",
+no faces; invented marks only; Lamby never speaks; captions burned in for every line; no voice track unless you can
+generate one locally at build time (no online TTS service); music: synthesize a short cheerful 1997 jingle yourself
+(Web Audio or a script), credited as made by Claude for the project.
+LOOK: visually OVER-THE-TOP — a 1997 infomercial gone too far (saturated gradients, star wipes, spinning pedestals,
+chunky 3D type, lens flares, a VHS layer with chroma bleed, tracking lines, timecode), built in the piece's palettes
+(src/desktop/theme/) and, where rooms appear, the piece's own low-poly room models (public/assets/, via PlayCanvas as
+the piece uses it).
+RENDER: drive the animation frame-by-frame in headless Chromium at 1920×1080, 30 fps, encode H.264 MP4 (~75 s).
+DELIVER on branch cloud/advert-video: out/lambyos-advert/lambyos_welcome_home.mp4 (commit it on this branch only — it
+will never be merged), the source, a 12-frame contact sheet, NOTES.md. Open a pull request into reinterp marked
+"DO NOT MERGE — review only". Never push to reinterp.
+```

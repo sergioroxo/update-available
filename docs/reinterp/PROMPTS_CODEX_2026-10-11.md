@@ -311,8 +311,10 @@ C. THE SETUP WINDOW
  7. "I like the fact that the computer screen becomes a star, so maybe it should come as a star from the beginning,
     but from a different side": the window ARRIVES as one star flying in from the side (not the centre), which
     grows and unfolds into the window; at Start it folds back into a star and leaves the other way.
- 8. "When you press it, it opens the computer screen; that needs to occupy the whole frame": once open, the setup
-    window fills the whole view (browser and phone: full viewport, keeping its Win95 look; XR: a large panel).
+ 8. ⚑ REVISED by him (2026-10-13): NOT the whole frame — "it is a bit too much to jump from a void to that so quickly".
+    The window opens LARGER than today but not full-frame (about 80% of the view's width on a laptop, ~92% on a
+    phone, a large panel in XR), and it grows there gradually as the star unfolds (an eased 1.5–2 s unfold), with
+    the starfield still visible around it.
  9. "Lamby should appear with the Hi": Lamblippy is on screen with the very first balloon, not after it.
  10. Sound step: the headphones line is Lamblippy's, and "Play a test sound" plays the chime IN PLACE — no jump to
     another panel. Balloon: "Things sound better with headphones! Want a test sound?" — [Play a test sound]
@@ -322,13 +324,14 @@ C. THE SETUP WINDOW
     the end you will find a Library with the Lexicon — the words these networks used and the reasons they gave — and
     the full list of sources is in the menu, under Credits & attributions."
  12. "It is missing the point of explaining the 'user profile' and what this project is about, the stories": add a
-    step right after About. Balloon: "You'll be restoring someone's session. Four of them, actually!" — [Whose?]
-    [Later]. [Whose?] opens a plain window "Whose session?" (frame voice): "On this one machine you will live through
-    four sessions, across thirty years: Daniel's in 1997 and in 2003, Vera's in 2016, and Maya's in 2026. They are
-    invented people, composed from documented accounts. Their user profiles are still pending: you fill them in as
-    you go, and the programme keeps what you give it." (Ties to the restore line "User profile pending.")
- 13. "The advert needs to be introduced a bit more": Balloon: "We made an advert! It ran on TV in 2003. Want to see
-    it?" — [Play it] [Skip]. Small line under the player's title: "Paid programming, 2003".
+    step right after About. Balloon: "You'll be restoring someone's session. Three of them, actually!" — [Whose?]
+    [Later]. [Whose?] opens a plain window "Whose session?" (frame voice): "On this one machine: three people's
+    sessions, four updates, thirty years of care. Their user profiles are still pending: you fill them in as you go,
+    and the programme keeps what you give it." (His ruling: no names, no years, no "invented" — it is 3 people in 4
+    eras; "thirty years of care" is the programme's own phrase, said straight.)
+ 13. "The advert needs to be introduced a bit more" — ⚑ his ruling: the advert IS the introduction to the experience,
+    not a TV curiosity. Balloon: "Before we begin, let me show you what we do!" — [Show me] [Skip]. No date, no "it
+    ran on TV".
  14. "It is missing the reduce motion button": the CONTENT NOTE window gets a checkbox "Reduce motion" (checked when
     the device asks for reduced motion). Ticking it makes the whole piece behave as prefers-reduced-motion does
     (cuts instead of flights, no glitch, no noise animation) — find every place that reads the media query and route
@@ -375,7 +378,47 @@ a second, reduced motion → a still frame):
     the `word` field), holding it, then scattering; any era; also in the idle cycle.
  4. `marquee` — Windows' scrolling marquee: the programme's slogans from the piece's own data (the infomercial's
     lines in data/dialog/s2_media.json, the Word of the Day lines) crossing slowly in each era's typeface; 2016/2026.
+ 5. `maze` — his ask (2026-10-13): the Windows 95 3D Maze, in our language: a first-person flight through a pixel
+    maze whose walls are the piece's rooms' own wallpapers and doors (era palettes), at a slow pace, turning at
+    corners; instead of the original's rat and smiley, a small pixel lamb (the programme's mascot) appears at a turn
+    now and then; the floor is Daniel's carpet, the ceiling the night-blue. 2D canvas raycaster (like a 1990s maze),
+    pixel discipline; any era; also in the idle cycle.
+REFERENCES (names and look only — draw everything yourself, copy nothing): the Windows 95/98 set as listed at
+https://cs.gettysburg.edu/~duncjo01/archive/screensavers/windows/95&98/ (3D Maze, 3D Pipes, 3D Text, 3D Flying
+Objects, Flying Through Space, Flying Windows, Mystify Your Mind, Curves and Colors, Scrolling Marquee) and the
+Windows XP set at https://archive.org/details/windows_xp_screen_savers (Bezier, Flowerbox, Marquee, Mystify, Pipes,
+Starfield, 3D Text, My Pictures). The lead's local copies are executables (.scr) — do NOT run them. Recordings of
+the piece's own savers: /Users/sergiogalvaoroxo/Pc_Simulation/screensavers/*.mp4.
 Add them to the in-fiction rotation per era (screensavers.json) and to the idle cycle (attract.json `cycle`, between
 the existing ones; the call-in card still every third slide). Screenshots of each at 1280×720 and 390×844 in
 out/more-screensavers/, LOOKED AT; tsc, npm test; `node tools/walk.mjs --port 3210 --max 1400 --one-era`.
+```
+
+## A1 · The LambyOS advert, as a real video (port 3211) — replaces the "storyboard" curiosity prompt
+*His correction (2026-10-13): "I didn't want a storyboard, I wanted to see the video." Not wired into the piece. New
+chat, PREAMBLE first, effort high. (A cloud-Claude version of the same brief is Prompt 8 in PROMPTS_CLOUD_2026-10-09.md
+— run both and compare.)*
+
+```
+TASK = lambyos-advert-video. Make the advert "LambyOS — Welcome Home" as a finished VIDEO FILE: read
+docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md §"The advert" (the shot table, timings, the narrator's lines, the
+revised ending: the tape chews → TV noise → the noise's dots gather into OVER 30 YEARS / SOLD AS CARE! → the small print
+scrolls "…not therapy, not a cure… your old self may not be recoverable…" → "Sources: open the menu, then Credits &
+attributions."), docs/reinterp/LAMBYOS_HOME_THINKING_2026-10-12.md (the programme's kit: the "Let go!" box of False
+Images, the House Rules sampler, the approved guest book — put them in the product parade), and CLAUDE.md's ethics
+(satire only of the programme's pitch, and it collapses; hands, backs and empty rooms — no queer person "fixed", no
+faces; invented marks only; no voice for Lamby).
+LOOK: visually OVER-THE-TOP (his standing rule for new versions): a 1997 infomercial gone too far — saturated
+gradients, star wipes, spinning product pedestals, chunky 3D type, lens flares, a VHS layer (chroma bleed, tracking
+lines, a timecode), all built in the piece's palettes (src/desktop/theme/) and its low-poly Soft Lo-Fi objects where
+rooms appear. Make it as a canvas/WebGL animation (you may use the piece's PlayCanvas and its room models from
+public/assets/ for the empty rooms and the product parade), then RENDER it to video: drive it frame-by-frame in
+headless Chrome (puppeteer-core) at 1920×1080, 30 fps, and encode with ffmpeg (/opt/homebrew/bin/ffmpeg) to H.264 MP4.
+SOUND: captions burned in for every line; for the narrator use build-time TTS only if the project already has it
+(search tools/ for render.py / Supertonic — register `apparatus`); otherwise leave the voice out and keep the captions.
+Music: the lead's own jingles in /Users/sergiogalvaoroxo/Pc_Simulation/Sources/Jingle_Brand New/ (his Suno/Treblo
+generations — pick one of the "Morning Joy Loop" files; credit it as his). ~75 s.
+DELIVER in output/lambyos-advert/: lambyos_welcome_home.mp4, the animation source (HTML/TS), a contact sheet of 12
+frames, NOTES.md (what you made, what is placeholder, credits). Do NOT touch src/, data/ or public/; do not commit the
+mp4 to git.
 ```
