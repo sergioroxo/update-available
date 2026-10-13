@@ -728,7 +728,7 @@ export class GraceQueueLite {
     const quiet = this.mode === 'board' && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying();
     if (!this.saver) {
       if (quiet && this.boardQuietT > SAVER_SECONDS) {
-        this.saver = new Screensaver('lock', 2016);
+        this.saver = new Screensaver('lock', 2016).rotate('e3');
         this.saver.waitingFrom = Math.max(1, this.tasks().filter((t) => !this.taskComplete(t)).length);   // S227: what is on the board
         this.saver.clock = this.clockText();
         this.bump();

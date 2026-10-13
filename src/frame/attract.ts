@@ -98,6 +98,7 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
   let carryBtn: HTMLButtonElement | null = null;
   let startBtn: HTMLButtonElement | null = null;
   let stopAdvert: (() => void) | null = null;
+  let saverDirty = true;
   let saver: Screensaver | null = null;
   let saverFace: FaceEra = 'e1';
   let slideIdx = -1;
@@ -210,9 +211,9 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
   }
 
   // ── the cycle ──
-  const cycle = (): SlideName[] => (copy.cycle as SlideName[]).filter((s) => s !== 'advert' || !!advert);
+  const cycle = (): SlideName[] => (copy.cycle as SlideName[]).map((s) => s === 'advert' && !advert ? 'lexicon' : s);
 
-  function faceFor(k: SlideName): FaceEra { return k === 'lock' ? 'e3' : k === 'orb' ? 'e4' : 'e1'; }
+  function faceFor(k: SlideName): FaceEra { return k === 'lock' || k === 'maze' ? 'e3' : k === 'orb' || k === 'marquee' ? 'e4' : k === 'flock' || k === 'lambs' ? 'e2' : 'e1'; }
 
   function showSlide(next: SlideName): void {
     if (!root || !cvs || !cardEl || !advertHost || !footEl) return;
@@ -268,9 +269,11 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
 
   function resize(): void {
     if (!cvs) return;
-    const aspect = Math.max(0.5, window.innerWidth / Math.max(1, window.innerHeight));
-    cvs.width = Math.max(LOGICAL_H, Math.min(900, Math.round(LOGICAL_H * aspect)));
+    const aspect = Math.max(0.25, window.innerWidth / Math.max(1, window.innerHeight));
+    const newSaver = saver && ['pipes', 'flock', 'lexicon', 'marquee', 'maze'].includes(saver.kind);
+    cvs.width = Math.max(newSaver ? 160 : LOGICAL_H, Math.min(900, Math.round(LOGICAL_H * aspect)));
     cvs.height = LOGICAL_H;
+    saverDirty = true;
   }
 
   function frame(now: number): void {
@@ -279,7 +282,8 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     const g = cvs.getContext('2d');
     if (!g) return;
-    saver.update(dt);
+    if (!saver.update(dt) && !saverDirty) return;
+    saverDirty = false;
     const prev = faceEra();
     setFaceEra(saverFace);
     try { g.save(); saver.draw(g, cvs.width, cvs.height); g.restore(); } finally { setFaceEra(prev); }

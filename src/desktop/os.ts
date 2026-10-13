@@ -1099,7 +1099,7 @@ export class DesktopOS {
     if (!this.saver) {
       if (this.reinterp && this.phase === 'desktop' && (era === 'e1' || (era === 'e2' && this.e2Stage === 'active')) && this.idleSeconds > SAVER_SECONDS   // A6: 2003's only once the era has begun
           && this.desktopIdle() && !this.pauseOpen && !this.wotdOpen && !this.toast && !this.paused && !this.e2Jingle && !anythingPlaying()) {
-        this.saver = new Screensaver(era === 'e2' ? 'lambs' : ledger.records.includes('kit-inserted') ? 'text' : 'stars');
+        this.saver = new Screensaver(era === 'e2' ? 'lambs' : ledger.records.includes('kit-inserted') ? 'text' : 'stars').rotate(era);
         this.dirty = true;
       }
       return;

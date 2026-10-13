@@ -16,11 +16,65 @@
   "mark": "GraceOS",
   "in": "breathe in",
   "out": "breathe out",
-  "affirmations": ["you are becoming", "this is care", "slowly, Maya", "nothing is lost here", "we kept your place"],
+  "affirmations": [
+   "you are becoming",
+   "this is care",
+   "slowly, Maya",
+   "nothing is lost here",
+   "we kept your place"
+  ],
   "idleLine": "press to continue",
   "_docTell": "⚑ S209 / B8 (his, 2026-10-02: 'add something eerie like \"L is waiting to help you\", \"L phrase of the day\"'). The orb's tell: the companion is never asleep, and its phrase of the day is one of the networks' own 'reasons' — the Lexicon (P7-47) will turn it over at the Close.",
   "waiting": "L is waiting to help you.",
   "phraseLabel": "L's phrase of the day",
   "phrase": "No one is born this way."
+ },
+ "rotation": {
+  "e1": [
+   "text",
+   "pipes",
+   "lexicon",
+   "maze"
+  ],
+  "e2": [
+   "lambs",
+   "flock",
+   "lexicon",
+   "maze"
+  ],
+  "e3": [
+   "lock",
+   "marquee",
+   "lexicon",
+   "maze"
+  ],
+  "e4": [
+   "orb",
+   "marquee",
+   "lexicon",
+   "maze"
+  ],
+  "e1BeforeKit": [
+   "stars",
+   "pipes",
+   "lexicon",
+   "maze"
+  ]
+ },
+ "_docRotation": "more-screensavers: every 24 seconds while the machine remains asleep; the first saver keeps the existing era arrival. All words are reused from the Lexicon or the infomercial. No new narrative copy. Before the kit, WALK ON is excluded; after the kit, text replaces stars as before. Lexicon and marquee resume with the next word/line on each in-memory visit, so exhibition slots vary across cycles.",
+ "marquee": {
+  "infomercial": [
+   "THE NEW YOU",
+   "REAL STORIES. REAL CHANGE.",
+   "3 easy payments of yourself",
+   "Three gentle steps",
+   "Confess it",
+   "Submit it",
+   "Let us hold it for you",
+   "Discover the new you today",
+   "It's a brighter, lighter way",
+   "Operators of grace are standing by"
+  ],
+  "_doc": "Verbatim programme slogans from data/dialog/s2_media.json; Word of the Day lines are read directly from lexicon.json (only terms with a line). No composite testimony or clinical-debate caption is used."
  }
 }

@@ -21,15 +21,46 @@ import { ERA1 } from '../theme/era1';
 import { ERA3 } from '../theme/era3';
 import { ERA4 } from '../theme/era4';
 import * as ui from '../theme/chrome';
+import { PLACE, WALL } from '../theme/era4';
+import { SAVER_ROOM } from '../theme/screensaver';
+import { text as dotText, textW } from '../../room/font57';
+import LEXICON from '../../../data/strings/lexicon.json';
+import { faceEra, type FaceEra } from '../theme/fonts';
 import S from '../../../data/strings/screensavers.json';
 
-export type SaverKind = 'stars' | 'text' | 'lambs' | 'lock' | 'orb';
+export type SaverKind = 'stars' | 'text' | 'lambs' | 'lock' | 'orb' | 'pipes' | 'flock' | 'lexicon' | 'marquee' | 'maze';
 /** how long a desktop must be quiet — no press, nothing open, nothing playing — before its machine sleeps */
 export const SAVER_SECONDS = 150;
 const STEP_S = 0.09;
+// In-memory visits keep short exhibition slots from always restarting at the same word.
+const WORDS = LEXICON.terms.map(t => t.word).filter((w): w is string => typeof w === 'string');
+const DAY_LINES = LEXICON.terms.map(t => t.line).filter((l): l is string => typeof l === 'string');
+const MARQUEE_LINES = S.marquee.infomercial.flatMap((line, i) => [line, DAY_LINES[i]])
+  .concat(DAY_LINES.slice(S.marquee.infomercial.length));
+let wordVisit = 0, marqueeVisit = 0;
 
 export class Screensaver {
+  private reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  private rotation: SaverKind[] = [];
+  private rotationT = 0;
+  private rotationIdx = 0;
+  private active: Screensaver | null = null;
+  private passage = 0;
+  private wordStart = 0;
+  private marqueeStart = 0;
+  private wordIdx = -1;
+  private targets: Array<[number, number]> = [];
+  private pipes: Array<{ x: number; y: number; z: number; ink: number }> = [];
+  private mazeCanvas: HTMLCanvasElement | null = null;
   private acc = 0;
+
+  /** The host still owns quiet/wake conditions; rotation never creates an input or a ledger event. */
+  rotate(era: 'e1' | 'e2' | 'e3' | 'e4'): this {
+    const list = (era === 'e1' && this.kind === 'stars' ? S.rotation.e1BeforeKit : S.rotation[era]) as SaverKind[];
+    const i = list.indexOf(this.kind);
+    this.rotation = [...list.slice(i), ...list.slice(0, i)];
+    return this;
+  }
   private t = 0;
   private seed: number;
   private pts: Array<{ x: number; y: number; z: number; against?: boolean }> = [];
@@ -43,12 +74,16 @@ export class Screensaver {
 
   constructor(readonly kind: SaverKind, seed = 1997) {
     this.seed = seed;
-    if (kind === 'stars') for (let i = 0; i < 110; i++) this.pts.push(this.spawn(true));
+    if (kind === 'lexicon') this.wordStart = wordVisit++ % WORDS.length;
+    if (kind === 'marquee') this.marqueeStart = marqueeVisit++ % MARQUEE_LINES.length;
+    if (kind === 'stars' || kind === 'lexicon') for (let i = 0; i < 110; i++) this.pts.push(this.spawn(true));
     if (kind === 'lambs') {
       for (let i = 0; i < 26; i++) this.pts.push(this.spawn(true));
       this.pts.push({ x: 0.15, y: -0.1, z: 1.2, against: true });
     }
     if (kind === 'text') this.buildVoxels();
+    if (kind === 'pipes') this.buildPipes();
+    if (this.reduced) this.t = 8;
   }
 
   private rnd(): number {
@@ -62,11 +97,22 @@ export class Screensaver {
 
   /** true when the picture changed (the host marks its canvas dirty) */
   update(dt: number): boolean {
+    if (this.reduced) return false;
+    if (this.rotation.length) {
+      this.rotationT += dt;
+      if (this.rotationT >= 24) {
+        this.rotationT %= 24;
+        this.rotationIdx = (this.rotationIdx + 1) % this.rotation.length;
+        this.active = new Screensaver(this.rotation[this.rotationIdx], this.seed + ++this.passage);
+        this.active.clock = this.clock; this.active.waitingFrom = this.waitingFrom; this.active.line = this.line;
+      }
+      if (this.active) { this.active.clock = this.clock; return this.active.update(dt); }
+    }
     this.acc += dt;
     if (this.acc < STEP_S) return false;
     const step = this.acc; this.acc = 0; this.t += step;
-    if (this.kind === 'stars' || this.kind === 'lambs') {
-      const speed = this.kind === 'stars' ? 1.3 : 0.55;
+    if (this.kind === 'stars' || this.kind === 'lambs' || this.kind === 'lexicon') {
+      const speed = this.kind === 'lambs' ? 0.55 : this.kind === 'lexicon' ? 0.25 : 1.3;
       for (let i = 0; i < this.pts.length; i++) {
         const p = this.pts[i];
         if (p.against) { p.z += step * 0.12; if (p.z > 4.5) { p.z = 0.9; p.x = (this.rnd() - 0.5) * 0.6; p.y = (this.rnd() - 0.5) * 0.4; } continue; }
@@ -78,13 +124,210 @@ export class Screensaver {
   }
 
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ctx.imageSmoothingEnabled = false;
+    if (this.active) { this.active.draw(ctx, W, H); return; }
     switch (this.kind) {
+      case 'pipes': this.drawPipes(ctx, W, H); return;
+      case 'flock': this.drawFlock(ctx, W, H); return;
+      case 'lexicon': this.drawLexicon(ctx, W, H); return;
+      case 'marquee': this.drawMarquee(ctx, W, H); return;
+      case 'maze': this.drawMaze(ctx, W, H); return;
       case 'stars': this.drawStars(ctx, W, H); return;
       case 'text': this.drawText(ctx, W, H); return;
       case 'lambs': this.drawLambs(ctx, W, H); return;
       case 'lock': this.drawLock(ctx, W, H); return;
       case 'orb': this.drawOrb(ctx, W, H); return;
     }
+  }
+
+  // New drawings are original canvas primitives, stepped at STEP_S; no bright flashes or canvas rotations.
+  private buildPipes(): void {
+    const occupied = new Set<string>();
+    for (let ink = 0; ink < 3; ink++) {
+      let x = ink * 4 - 4, y = ink * 3 - 3, z = -3;
+      for (let run = 0; run < 22; run++) {
+        const axis = Math.floor(this.rnd() * 3), dir = this.rnd() < 0.5 ? -1 : 1;
+        const length = 2 + Math.floor(this.rnd() * 5);
+        for (let j = 0; j < length; j++) {
+          const nx = x + (axis === 0 ? dir : 0), ny = y + (axis === 1 ? dir : 0), nz = z + (axis === 2 ? dir : 0);
+          const key = `${nx},${ny},${nz}`;
+          if (Math.max(Math.abs(nx), Math.abs(ny), Math.abs(nz)) > 8 || occupied.has(key)) break;
+          x = nx; y = ny; z = nz; occupied.add(key); this.pipes.push({ x, y, z, ink });
+        }
+      }
+    }
+  }
+
+  private drawPipes(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ui.px(ctx, 0, 0, W, H, ERA1.navy);
+    const u = Math.max(3, Math.floor(Math.min(W / 44, H / 38)));
+    const inks = [[PLACE.floor, PLACE.sun, ERA1.olive], [PLACE.floorLo, WALL.accent, PLACE.floorHi], [ERA1.tealDark, ERA1.teal, ERA1.titleBlue]];
+    // Fill, then clear one cell at a time; no whole-screen reset and no terminal still state.
+    const phase = (25 + Math.floor(this.t * 3)) % (this.pipes.length * 2);
+    const start = Math.max(0, phase - this.pipes.length);
+    const count = Math.min(this.pipes.length, phase);
+    const poly = (points: number[][], col: string): void => {
+      ctx.fillStyle = col; ctx.beginPath();
+      points.forEach(([x, y], i) => i ? ctx.lineTo(Math.round(x), Math.round(y)) : ctx.moveTo(Math.round(x), Math.round(y)));
+      ctx.closePath(); ctx.fill();
+    };
+    // Fixed isometric camera; painter order keeps square-section elbows legible.
+    const visible = this.pipes.slice(start, count).sort((a, b) => a.x + a.y - a.z - (b.x + b.y - b.z));
+    for (const p of visible) {
+      const x = Math.round(W / 2 + (p.x - p.y) * u), y = Math.round(H / 2 + (p.x + p.y) * u / 2 - p.z * u);
+      const [dark, front, top] = inks[p.ink];
+      poly([[x, y-u], [x+u,y-u/2], [x,y], [x-u,y-u/2]], top);
+      poly([[x-u,y-u/2],[x,y],[x,y+u],[x-u,y+u/2]], dark);
+      poly([[x,y],[x+u,y-u/2],[x+u,y+u/2],[x,y+u]], front);
+    }
+  }
+
+  private drawFlock(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ui.px(ctx, 0, 0, W, H, ERA1.navy);
+    for (let i = 0; i < 18; i++) {
+      const u = Math.max(1, Math.floor(H / 150));
+      const span = W + 70 * u, travel = (this.t * 18 + i * span / 18) % span;
+      const x = Math.round(travel - 35 * u);
+      const y = Math.round(((i % 5 + 1) * H / 7 + travel * 0.22 + (i === 8 ? 27 * u : 0)) % (H + 50 * u) - 25 * u);
+      const lift = Math.floor(this.t * 1.5 + i / 3) % 2;
+      ctx.fillStyle = ERA1.silver;
+      // Little stepped wings; the eighth lamb is consistently below its row.
+      for (const side of [-1, 1]) for (let j = 0; j < 4; j++) {
+        ctx.fillRect(x + side * (3 + j) * u - (side < 0 ? 2 * u : 0), y - (2 + j * lift) * u, 2 * u, 2 * u);
+      }
+      this.lamb(ctx, x, y, u, false, 1);
+    }
+  }
+
+  private drawLexicon(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const index = (this.wordStart + Math.floor(this.t / 18)) % WORDS.length, word = WORDS[index];
+    if (index !== this.wordIdx) {
+      this.wordIdx = index; this.targets = [];
+      const c = document.createElement('canvas'); c.width = textW(word); c.height = 7;
+      const g = c.getContext('2d');
+      if (g) {
+        dotText(g, word, 0, 0, ERA1.white);
+        const pixels = g.getImageData(0, 0, c.width, c.height).data;
+        for (let y = 0; y < 7; y++) for (let x = 0; x < c.width; x++) if (pixels[(y*c.width+x)*4+3]) this.targets.push([x, y]);
+      }
+      while (this.pts.length < this.targets.length + 80) this.pts.push(this.spawn(true));
+    }
+    const e = faceEra();
+    const sky = e === 'e4' ? ERA4.field : e === 'e3' ? ERA3.deskTop : ERA1.navy;
+    const ink = e === 'e4' ? ERA4.l : e === 'e3' ? ERA3.glow : ERA1.white;
+    ui.px(ctx, 0, 0, W, H, sky);
+    const ph = this.t % 18;
+    const k = ph < 4 ? 0 : ph < 6 ? (ph-4)/2 : ph < 11 ? 1 : ph < 14 ? 1-(ph-11)/3 : 0;
+    const ease = k*k*(3-2*k), cell = Math.max(1, Math.floor(W*0.84 / textW(word)));
+    const ox = Math.round((W-textW(word)*cell)/2), oy = Math.round((H-7*cell)/2);
+    this.pts.forEach((p,i) => {
+      const target = this.targets[i];
+      if (!target && ease > 0.5) return;
+      const sx = W/2 + p.x*W*0.25/p.z, sy = H/2 + p.y*H*0.25/p.z;
+      const x = Math.round(target ? sx + (ox+target[0]*cell-sx)*ease : sx);
+      const y = Math.round(target ? sy + (oy+target[1]*cell-sy)*ease : sy);
+      const size = target && ease > 0.5 ? Math.max(1, cell-1) : 1;
+      ui.px(ctx, x,y,size,size, target ? ink : ERA1.grey);
+    });
+  }
+
+  private drawMarquee(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const era: FaceEra = faceEra(), modern = era === 'e4';
+    ui.px(ctx, 0, 0, W, H, modern ? ERA4.field : era === 'e3' ? ERA3.deskTop : ERA1.navy);
+    const lines = [...MARQUEE_LINES.slice(this.marqueeStart), ...MARQUEE_LINES.slice(0, this.marqueeStart)];
+    ui.setFont(ctx, 26);
+    let clock = this.t;
+    let line = lines[0], x = Math.round(W*0.12);
+    if (!this.reduced) {
+      const durations = lines.map(l => (W + ctx.measureText(l).width + 40) / 36);
+      clock %= durations.reduce((a,b) => a+b,0);
+      for (let i=0; i<lines.length; i++) {
+        if (clock < durations[i]) { line = lines[i]; x = Math.round(W-36*clock); break; }
+        clock -= durations[i];
+      }
+    } else {
+      // Keep the entire line legible in a still frame, including a long Word of the Day on a phone.
+      ui.setFont(ctx, 16);
+      const rows = ui.wrapText(ctx, line, W * 0.8);
+      ctx.fillStyle = modern ? ERA4.l : era === 'e3' ? ERA3.white : ERA1.white;
+      rows.forEach((row, i) => ctx.fillText(row, Math.round((W - ctx.measureText(row).width) / 2),
+        Math.round((H - rows.length * 20) / 2 + i * 20)));
+      return;
+    }
+    ctx.fillStyle = modern ? ERA4.l : era === 'e3' ? ERA3.white : ERA1.white;
+    ctx.fillText(line, x, Math.round(H*0.48));
+  }
+
+  private drawMaze(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    // The path is authored in cells, with branches to look like a maze; the saver never moves the room camera.
+    const route = [[1.5,1.5],[7.5,1.5],[7.5,5.5],[5.5,5.5],[5.5,3.5],[3.5,3.5],[3.5,7.5],[1.5,7.5]];
+    const grid = Array.from({length:9}, () => Array(9).fill(1));
+    for (let i=0; i<route.length; i++) {
+      const a=route[i], b=route[(i+1)%route.length];
+      for(let j=0; j<=Math.abs(b[0]-a[0])+Math.abs(b[1]-a[1]); j++) {
+        grid[Math.floor(a[1]+Math.sign(b[1]-a[1])*j)][Math.floor(a[0]+Math.sign(b[0]-a[0])*j)] = 0;
+      }
+    }
+    grid[2][5]=0; grid[6][6]=0; grid[6][7]=0;
+    let time = this.t;
+    const durations = route.map((a,i) => {const b=route[(i+1)%route.length]; return (Math.abs(b[0]-a[0])+Math.abs(b[1]-a[1]))*3+3;});
+    time %= durations.reduce((a,b)=>a+b,0);
+    let leg=0; while (time>=durations[leg]) time-=durations[leg++];
+    const a=route[leg], b=route[(leg+1)%route.length], c=route[(leg+2)%route.length];
+    const move=durations[leg]-3, fraction=Math.min(1,time/move);
+    const px=a[0]+(b[0]-a[0])*fraction, py=a[1]+(b[1]-a[1])*fraction;
+    let angle=Math.atan2(b[1]-a[1],b[0]-a[0]);
+    let turn=Math.atan2(c[1]-b[1],c[0]-b[0])-angle;
+    while(turn>Math.PI) turn-=Math.PI*2; while(turn< -Math.PI) turn+=Math.PI*2;
+    if(time>move) {const k=(time-move)/3; angle+=turn*k*k*(3-2*k);}
+    const w=Math.max(40,Math.round(120*W/H)), h=120;
+    this.mazeCanvas ??= document.createElement('canvas');
+    if(this.mazeCanvas.width!==w || this.mazeCanvas.height!==h) {this.mazeCanvas.width=w;this.mazeCanvas.height=h;}
+    const g=this.mazeCanvas.getContext('2d'); if(!g) return;
+    const modern=faceEra()==='e4', cool=faceEra()==='e3';
+    const wall=modern ? PLACE.wall : cool ? ERA3.glassEdge : SAVER_ROOM.wall;
+    const band=modern ? PLACE.wallLo : cool ? ERA3.frame : SAVER_ROOM.wallSide;
+    ui.px(g,0,0,w,h,SAVER_ROOM.night);
+    // Perspective carpet weave, using Daniel's rug brown, never a borrowed texture.
+    for(let y=h/2+1;y<h;y++) {
+      const distance=h/(2*(y-h/2));
+      for(let x=0;x<w;x++) {
+        const ray=angle+Math.atan((x/w-0.5)*1.2);
+        const fx=Math.floor((px+Math.cos(ray)*distance)*24), fy=Math.floor((py+Math.sin(ray)*distance)*24);
+        ui.px(g,x,y,1,1,(fx+fy)%5===0 ? SAVER_ROOM.carpetLow : SAVER_ROOM.carpet);
+      }
+    }
+    const depths:number[]=[];
+    for(let x=0;x<w;x++) {
+      const ray=angle+Math.atan((x/w-0.5)*1.2), dx=Math.cos(ray), dy=Math.sin(ray);
+      let d=0, mx=0,my=0;
+      do {d+=0.025;mx=Math.floor(px+dx*d);my=Math.floor(py+dy*d);} while(d<16 && grid[my]?.[mx]===0);
+      const distance=Math.max(0.12,d*Math.cos(ray-angle)); depths[x]=distance;
+      const height=h/distance, top=Math.floor(h/2-height/2);
+      const hx=px+dx*d, hy=py+dy*d;
+      const side=Math.abs(hx-Math.round(hx))<0.04;
+      const u=((side?hy:hx)%1+1)%1;
+      const door=(mx+my)%4===0;
+      for(let y=Math.max(0,top);y<Math.min(h,top+height);y++) {
+        const v=(y-top)/height;
+        let col=side?band:wall;
+        if(door && u>0.15 && u<0.85 && v>0.08 && v<0.97) {
+          col=SAVER_ROOM.door;
+          if(u<0.19 || u>0.81 || v<0.12 || (v>0.48&&v<0.52)) col=PLACE.floorLo;
+          if(u>0.70&&u<0.77&&v>0.54&&v<0.60) col=SAVER_ROOM.knob;
+        } else if(v>0.90 || Math.floor(u*16)%8===0 || (Math.floor(v*24)%8===0&&Math.floor(u*16)%4===0)) col=band;
+        ui.px(g,x,y,1,1,col);
+      }
+    }
+    // A small mascot waits at alternate bends, occluded correctly by the wall columns.
+    if(leg%2===0) {
+      const dx=b[0]-px, dy=b[1]-py, forward=dx*Math.cos(angle)+dy*Math.sin(angle), lateral=-dx*Math.sin(angle)+dy*Math.cos(angle);
+      if(forward>0.6) {
+        const size=Math.max(1,Math.round(2/forward)), sx=Math.round(w/2+lateral/forward*w/1.2), sy=Math.round(h/2+h*0.45/forward-4*size);
+        if(sx>=0&&sx<w&&forward<depths[sx]) this.lamb(g,sx,sy,size,false,1);
+      }
+    }
+    ctx.drawImage(this.mazeCanvas,0,0,W,H);
   }
 
   // ── 1997 · the PC's own starfield ─────────────────────────────────────

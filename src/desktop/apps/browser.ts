@@ -271,7 +271,7 @@ export class E4Browser {
     if (!this.idleOrb) {
       this.idleT = quiet ? this.idleT + dt : 0;
       if (this.idleT > SAVER_SECONDS) {
-        this.idleOrb = new Screensaver('orb', 2027);
+        this.idleOrb = new Screensaver('orb', 2027).rotate('e4');
         this.idleOrb.line = SAVERS.e4.idleLine;
         this.version++;
       }

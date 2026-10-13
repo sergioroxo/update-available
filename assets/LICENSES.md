@@ -252,3 +252,16 @@ attribution row, and nothing may be NC. A new file with no row fails the build.
 | `lib_*.webp` (`public/library/`) | LambyOS Home — Library: room, Lexicon, four era computers, receipt, plaque, bell, door, Lamby (wave and book), speech bubble. Image generation by GPT (OpenAI) at the project’s direction, 2026, with Home round-4 assets reused; round-1 PNG masters in `output/lambyos-library/round1/`. WebP q90 derivatives with alpha by `tools/library-art.mjs`, fitted to 2048×1152. No real person, likeness or logo; no third-party artwork reproduced. Credited in `docs/reinterp/ATTRIBUTIONS.md`. | generated for this project, project-commissioned; credited by choice |
 
 Exhibition build (2026-10-12): the seven stereo distribution copies `family_design_solutions_tape97.mp3`, `fold_my_hands_tape97.mp3`, `discover_the_new_you_tape97_radio.mp3`, `discover_the_new_you_infomercial_tape03.mp3`, `ball_room_landing.mp3`, `ball_room_bed.mp3`, and `lambyos_home_loop.mp3` use 128 kbps MP3. Original/degraded masters remain in `assets/audio/`; existing ownership and credits above apply unchanged. The logo WebP is a lossless conversion; PNG master retained.
+
+## ORIGINAL PROCEDURAL SCREENSAVERS — 2026-10-13
+
+`src/desktop/apps/screensaver.ts` pipes, flock, lexicon, marquee and maze:
+original canvas drawings by Codex (OpenAI), at Sérgio Roxo's direction, for this
+project. Project-owned; no downloaded textures, sprites, recordings or Windows
+code used. Pixel maze papers interpret the rooms' flat wall colours; carpet
+and doors reuse Daniel's authored rug/door palette through `theme/screensaver.ts`.
+The existing project 5×7 font supplies Lexicon dots; existing vendored font credits
+apply to marquee type. Historical names/look references only: the
+[Windows 95/98 list](https://cs.gettysburg.edu/~duncjo01/archive/screensavers/windows/95%2698/)
+and [Windows XP collection](https://archive.org/details/windows_xp_screen_savers).
+No `.scr` executable was run.

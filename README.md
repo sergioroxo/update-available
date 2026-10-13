@@ -169,3 +169,18 @@ All new copy is in `data/strings/setup.json`. Lamblippy is silent; the informati
 Run on a dedicated port: `npm run dev -- --port 3207 --strictPort`. Capture every step with `node tools/setup-stills.mjs --port 3207`; PNGs and behavioral assertions go to `out/setup-lamblippy/`. Walk setup plus Era 1 with `node tools/walk.mjs --port 3207 --max 900 --one-era --setup`; reports go to `out/walks/`. The walker chooses full and skips the advert offer; advert Play is forbidden because the 114-second film exceeds its per-step patience. The capture checks Play and immediate Skip separately.
 
 Hardware note: laptop/phone viewport rendering and hit rectangles are checked in headless Chrome. Real phone orientation permissions and an in-headset pass remain to be checked on hardware. The asterisk card uses the lead-supplied wording verbatim, marked in the data as his dossier phrasing drafted by Claude, pending his final word.
+
+### Screensaver gallery (more-screensavers, 2026-10-13)
+
+Behind `?reinterp=1`, quiet era desktops still sleep after 150 seconds and wake
+with one swallowed press. While asleep they rotate every 24 seconds through
+`data/strings/screensavers.json`: voxel pipes (1997), winged lamb flock (2003),
+Lexicon star words (all eras), programme marquee (2016/2026), and pixel maze
+(all eras), alongside the existing savers. The maze is a canvas picture; the
+visitor remains seated. Reduced motion holds a still frame.
+
+The exhibition cycle interleaves the new drawings with the old ones and shows
+the call-in card every third slide. Review the drawings at desktop and phone
+viewport sizes with `node tools/screensaver-stills.mjs --port <your-port>`;
+results go to `out/more-screensavers/`. Headset and physical-phone checks remain
+pending; browser screenshots do not verify either device.
