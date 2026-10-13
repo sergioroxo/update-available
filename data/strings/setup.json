@@ -24,7 +24,7 @@
       ]
     },
     {
-      "text": "Can you hear me? Things sound better with headphones.",
+      "text": "Is your sound on? Things sound better with headphones.",
       "buttons": [
         "Play a test sound",
         "Sound on",
@@ -66,7 +66,7 @@
     "title": "About this project",
     "paragraphs": [
       "This is a piece about how organised “conversion” networks (SOGICE) targeted queer people online, from 1997 to 2026. Four updates, thirty years: none of them changed who anyone was.",
-      "It is part of SurvivingSOGICE, at the University of Bergen's Center for Digital Narrative, and rests on the project's research and sources: the Lexicon on the shelf holds the words and the reasons, and the menu's Credits & attributions lists the rest.",
+      "It is part of SurvivingSOGICE, at the University of Bergen's Center for Digital Narrative, and rests on the project's research and sources: the Lexicon in the Library, at the end, holds the words and the reasons, and the menu's Credits & attributions lists the rest.",
       "It was directed by the project, and written and built in collaboration with Claude (Anthropic).",
       "More to be added soon."
     ],

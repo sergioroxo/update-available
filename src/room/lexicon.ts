@@ -27,13 +27,15 @@ const REASONS = L.reasons as Record<'men' | 'women' | 'trans', { reason: string;
  *  Lexicon's research document, label and address exactly as stored there. Text only — the piece makes no network
  *  calls, so nothing here is opened or fetched. (tools/gen_sources_page.mjs refuses any link not verbatim in its doc.) */
 export const LEXICON_RESEARCH_DOC = 'docs/reinterp/RESEARCH_LEXICON_2026-10-02.md';
+/** ⚑ S241 — and the word-by-word source map (his Deep Research, 2026-10-11): USE and CLAIM sources per entry */
+export const LEXICON_SOURCES_DOC = 'docs/reinterp/LEXICON_SOURCES_VERIFIED_2026-10-11.md';
 export interface LexiconSource { label: string; url: string }
 export const LEXICON_SOURCES: LexiconSource[] = (() => {
   const out: LexiconSource[] = [];
   const seen = new Set<string>();
   for (const arr of Object.values(linkData.links as Record<string, Array<LexiconSource & { verifiedIn: string }>>)) {
     for (const l of arr) {
-      if (l.verifiedIn !== LEXICON_RESEARCH_DOC || seen.has(l.url)) continue;
+      if ((l.verifiedIn !== LEXICON_RESEARCH_DOC && l.verifiedIn !== LEXICON_SOURCES_DOC) || seen.has(l.url)) continue;
       seen.add(l.url);
       out.push({ label: l.label, url: l.url });
     }
