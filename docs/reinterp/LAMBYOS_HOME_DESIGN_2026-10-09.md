@@ -153,11 +153,27 @@ is allowed (render.py's `register: apparatus`). Sounds named in the strip when c
 | 0:53–1:03 | Pack shot: the lamb logo on a soft gradient. The slogan builds word by word. | "LambyOS. Everything is set up already. You don't need to do anything." Type: **Everything is set up already.** (the boot's own line, opening.json `o2_boot_lines`) |
 | 1:03–1:10 | The small print scrolls up under the logo, too fast to read; the narrator reads it fast, in the disclaimer voice. | "LambyOS is not a medical service. LambyOS is a community of intent. We keep everything, so you never have to start again. Results not typical." |
 | 1:10–1:16 | **The collapse.** The scroll slows to reading speed by itself, as if the tape were stretching. The narrator's voice slows with it and stops selling. | "Results not typical. No result has been shown to be typical. No result has been shown. What has been shown is —" |
-| 1:16–1:18 | The tape chews: the picture rolls once (no strobe; reduced motion: a straight cut), the lamb's smile holds a frame too long, then VCR blue: **■ STOP**. | *(the tape's mechanism)* |
-| 1:18 → | The TV holds VCR blue. Over it, the frame's plain card (frame voice, not the programme's): | **"That was the programme's own advert. The practices it sells have no evidence of benefit, and a documented risk of harm."** Close · Play again |
+| 1:16–1:19 | The tape chews: the picture rolls once (no strobe; reduced motion: a straight cut), the lamb's smile holds a frame too long, and the picture dissolves into **TV noise**. | *(the tape's mechanism; the hiss)* |
+| 1:19–1:27 | **The noise gathers.** The static's dots drift together, the way the piece's starfield screensaver gathers its stars into words (src/frame/leavePage.ts), into a dot-matrix line: **OVER 30 YEARS / SOLD AS CARE!** It holds. | *(silence under the hiss)* |
+| 1:27 → | Under it, the advert's own small print finally scrolls at reading speed: **"…not therapy, not a cure… your old self may not be recoverable…"**, then the frame's plain line **"Sources: open the menu, then Credits & attributions."** · Close · Play again | — |
 
-*The asterisk on "Over 30 years of care.\*" never resolves. The small print that would explain it is the part the
-tape cannot finish.*
+*The asterisk on "Over 30 years of care.\*" never resolves on the tape: the noise answers it. ⚑ REVISED 2026-10-13 (his
+words): the end card is no longer a plain card — "add the same effect from the screen saver, and from the noise it
+becomes 'Over 30 years sold as Care!' and keep the scroll 'not therapy, not a cure'". The same ending now closes "Discover
+the New You" in the entrance's LambyOS Setup (S242).*
+
+**⚑ 2026-10-13 — where this advert stands.** Not built. The entrance now offers the existing 2003 infomercial "Discover
+the New You" (src/desktop/apps/netvision.ts), which links the setup to Daniel's story. This "Welcome Home" advert waits
+for the Bob version of LambyOS Home, with Plan B's room (LAMBYOS_HOME_THINKING_2026-10-12.md): when it is made, its
+product parade should include the programme's kit as the documents describe it (the "Let go!" box of False Images, the
+House Rules sampler, the approved-callers guest book), and it must be visually over-the-top (his standing rule for new
+versions), still with no faces "fixed" and no voice for Lamby (the narrator is the apparatus, not Lamby).
+
+**For Codex (curiosity only — not for the piece):** "Read docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md §'The advert'
+and LAMBYOS_HOME_THINKING_2026-10-12.md. As a sketch only, build a standalone animated storyboard of this advert as one
+HTML file in output/lambyos-advert-sketch/ (canvas, no network, no storage, captions on screen, no voice; placeholder
+shapes are fine; over-the-top 1997 infomercial look; the ending exactly as the table's last three rows). Do not touch
+src/, data/ or public/. Note what you would need to make it real."
 
 **Where the collapse's claim comes from.** The closing card states only what the piece's knowledge base already
 documents. Professional bodies state that these practices lack evidence of benefit and carry risk of harm: the
