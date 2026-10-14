@@ -14,7 +14,7 @@ STATUS: live
    ```
 3. Serve it on this machine (leave this Terminal window open all day):
    ```bash
-   npx vite preview --port 4173 --strictPort --host
+   npx vite preview --port 4173 --strictPort
    ```
 4. Open Chrome full-screen in kiosk mode (a second Terminal window):
    ```bash
@@ -46,10 +46,8 @@ STATUS: live
 | the Mac went to sleep | System Settings → Lock Screen / Energy: never sleep while plugged in, for the exhibition days |
 
 ## 5 · Devices
-- **Laptop / desktop:** the steps above. Drag to look.
-- **Phone or tablet:** only on the same network, at the address the step-3 Terminal prints under "Network" (add
-  `/?reinterp=1`); on Android the phone asks once for motion access ("Look with your device"); an **iPhone/iPad only allows motion over HTTPS**, so on this local address it is drag-to-look only (the piece still works).
-- **Headset (Quest 3):** see the headset checklist (to come, for Mon 19); until then use the laptop set-up.
+The exhibition runs **the laptop version only** (his decision, 2026-10-14): one laptop, Chrome in kiosk mode, headphones.
+Drag to look. (Phones, tablets and the headset are not part of this exhibition.)
 
 ## 6 · Contact
 The project lead. Everything above is undoable: ⌘R always brings the piece back to the stars.
