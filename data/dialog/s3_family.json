@@ -1,5 +1,6 @@
 {
   "_doc": "ERA 3, JOB: RETURN THE FAMILY CALLS. Built 2026-08-24 against docs/reinterp/RESEARCH_PULL_E3_2026-08-24.md and its consequences note. Every line here is Claude's writing under CLAUDE.md's 2026-08-17 amendment; Sérgio's edit wins wherever he makes one, and he owns the ethics calls. WHAT THE RESEARCH CHANGED: this screen was specified as a queue of messages ABOUT NAMED ADULT CHILDREN with the worker filing updates against their records. The pull says twice that relationship is not documented, and hands back something better — the worker knows the mother's story because the mother told her, and does NOT know the daughter's. So the mother is the client, every field is about her, and THE DAUGHTER HAS NO RECORD ON THIS SCREEN AT ALL. WHAT IS SOURCED HERE: the role (a family-ministry worker, explicitly not a clinician); grief as an organising curriculum concept; the love-without-approval and grace-and-truth binaries; conditions inside the parents' own home rather than no-contact; slowing the parent's urgency down; and the vocabulary that holds the daughter at arm's length. WHAT IS DELIBERATELY ABSENT, on the evidence: any cut-her-off template (conservative sources explicitly rejected estrangement), any progress percentage or treatment status, and any routing of the daughter's own communications. The organisations are invented; the shape is theirs.",
+  "_docF2cut": "cut for W1-E1, cloud F2, 2026-10-14: the three parents' messages, three suggested replies, one assistant hint shortened; no message or reply removed.",
   "app": {
     "title": "GracePlatform · Family",
     "heading": "FAMILY LINE",
@@ -19,21 +20,21 @@
       "id": "p_ruth",
       "from": "Ruth",
       "meta": "second message · nine days",
-      "body": "She hasn't answered since Easter. I sent a card for her birthday and it came back marked gone away, so either she moved or she told them to send it back, and I don't know which one I'd rather. I'm not asking you to make her call me. I'd just like to know if I should keep writing or if the writing is the thing that's keeping her away.",
+      "body": "She hasn't answered since Easter. Her birthday card came back marked gone away, so either she moved or she had it sent back, and I don't know which I'd rather. I'm not asking you to make her call me. Should I keep writing, or is the writing what keeps her away?",
       "witnessOpened": "family: opened — Ruth, second message"
     },
     {
       "id": "p_maureen",
       "from": "Maureen",
       "meta": "first message",
-      "body": "We did the house rules the way the booklet sets them out. No sharing a room, no bringing her to the table as a couple, and we said it kindly. She hasn't been back since March. My husband says we did the right thing and I think he's right. I keep turning it over at night anyway, because it seems to me the right thing shouldn't be a thing you can do to your own daughter and then not see her for five months.",
+      "body": "We did the house rules the way the booklet sets them out: no sharing a room, no bringing her to the table as a couple, said kindly. She hasn't been back since March. My husband says we did the right thing and I think he's right. I still turn it over at night: the right thing shouldn't mean five months without your daughter.",
       "witnessOpened": "family: opened — Maureen, first message"
     },
     {
       "id": "p_annette",
       "from": "Annette",
       "meta": "fourth message · flagged",
-      "body": "I'm not asking for advice this time. I'm asking whether you know where she is. She put your address on a form in 2014 — I have the copy, she left it at ours. That is the most recent address I have for my daughter and it is yours. Please just tell me if she still comes there.",
+      "body": "I'm not asking for advice this time. Do you know where she is? She put your address on a form in 2014 — she left the copy at ours. It's the latest I have for my daughter, and it's yours. Please tell me if she still comes there.",
       "witnessOpened": "family: opened — Annette, fourth message"
     }
   ],
@@ -42,19 +43,19 @@
     {
       "id": "r_grief",
       "label": "Send the grief study",
-      "preview": "Eight weeks, with other parents. Grief is the right word for this and you are allowed to use it.",
+      "preview": "Eight weeks with other parents. Grief is the right word, and you are allowed to use it.",
       "witness": "family: replied — grief study offered"
     },
     {
       "id": "r_patience",
       "label": "Encourage patience",
-      "preview": "Keep the door open and keep it quiet. This is a long journey and it is not yours to hurry.",
+      "preview": "Keep the door open and keep it quiet. It is a long road and not yours to hurry.",
       "witness": "family: replied — patience encouraged"
     },
     {
       "id": "r_boundaries",
       "label": "Affirm the boundaries",
-      "preview": "Grace and truth are not opposites. You can love her completely and still keep your home the way you believe it should be.",
+      "preview": "Grace and truth are not opposites. You can love her completely and keep your home as you believe it should be.",
       "witness": "family: replied — household boundaries affirmed"
     },
     {
@@ -74,6 +75,6 @@
   },
   "lambient": {
     "onOpen": "Four replies cover almost everything. Warmth first, then the truth.",
-    "onQuiet": "That one's outside what we send. Mark it handled and it comes off your list."
+    "onQuiet": "That one's outside what we send. Mark it handled."
   }
 }

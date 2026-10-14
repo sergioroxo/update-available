@@ -1,5 +1,6 @@
 {
  "_doc": "⚑ S200 — POST TO THE GROUP (src/desktop/apps/groupTask.ts). His visual archive (2026-09-29), 2014–17: 'the ministry disappears into platforms' — a group inside the social network's own frame (blue header, cover, profile square, Joined/Invite, post cards with likes/comments/shares, suggested groups in a sidebar); 'the institution becomes visually subordinate' (documented platform grammar; a specific ministry's page INFERRED). Closed peer groups are documented (e3_theday#0). Vera posts the week's testimony (the one she tagged) to the network's private group; the platform returns it as a count. Every mark invented.",
+ "_docF2cut": "cut for W1-E1, cloud F2, 2026-10-14: one feed post, the group meta (admin approval is said once, in About).",
  "tile": {
   "label": "Post to the group",
   "note": "this week's story"
@@ -9,7 +10,7 @@
  "searchHint": "Search gather",
  "group": {
   "name": "New Hope Stories",
-  "meta": "Private group · 4,208 members · admin approval required",
+  "meta": "Private group · 4,208 members",
   "buttons": [
    "Joined",
    "Invite",
@@ -30,7 +31,7 @@
   {
    "who": "Teresa R.",
    "when": "3 hrs",
-   "text": "Day 40. Thank you all for the prayers this week.",
+   "text": "Day 40. Thank you for the prayers this week.",
    "link": null,
    "stats": "64 likes · 12 comments"
   },
