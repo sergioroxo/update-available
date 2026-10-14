@@ -34,18 +34,19 @@ for (const [name,width,height] of [['desktop',1280,720],['phone',390,844]]) {
  await wait(2500);await shot('07-advert-playing');
  // Save the actual setup surface too, to verify the film rather than the stars.
  fs.writeFileSync(path.join(out,`${name}-advert-canvas.png`),Buffer.from((await page.evaluate(()=>window.__os.canvas.toDataURL())).split(',')[1],'base64'));
- await press('setup-advert-skip');await page.waitForFunction(()=>window.__os.setup.ready);await shot('08-start');
+ await page.waitForFunction(()=>window.__os.setup.film?.duration>1);await page.evaluate(()=>{const f=window.__os.setup.film;f.currentTime=f.duration-0.3});await page.waitForFunction(()=>window.__os.setup.ready);await shot('08-start');
  const upload=await page.evaluate(()=>window.__uploads);await wait(800);assert.equal(await page.evaluate(()=>window.__uploads),upload,'Idle setup must not upload');
  await press('setup-choice-0');await shot('09-fold');
  await page.waitForSelector('#restore-entrance[data-phase="typing"]');await wait(450);await shot('09b-status-typing');
  assert.equal(await page.evaluate(()=>window.__app.root.findByName('desktop-screen').render.meshInstances[0].visible),false,'Monitor stays hidden while the restore line types');
  await page.waitForSelector('#restore-entrance[data-phase="restore"]');await wait(3200);await shot('10-mid-restore');
  await page.waitForFunction(()=>!document.getElementById('restore-entrance'),{timeout:120000});await wait(1000);await shot('11-1997-monitor');
- checks.push(`${name}: real ${name==='phone'?'touch':'mouse'} rays through full setup, advert picture, immediate Skip, content note, paused clock, idle uploads stable, Start→restore→1997`);
+ checks.push(`${name}: real ${name==='phone'?'touch':'mouse'} rays through full setup, film picture (no Skip; diagnostic seek to the end), content note, paused clock, idle uploads stable, Start→restore→1997`);
  // Played advert branch, seek only for diagnostic asterisk capture.
  await open();await page.mouse.click(width/2,height/2);await page.waitForFunction(()=>window.__os?.setup?.stage==='balloon-1');
  await press('setup-choice-1');await page.waitForFunction(()=>window.__os.setup.stage==='note');await press('setup-close');await press('setup-choice-0');await press('setup-advert-play-0');
- await page.evaluate(()=>window.__os.setup.player.debugSeek(113.9));await page.waitForFunction(()=>window.__os.setup.stage==='asterisk',{timeout:15000});await shot('12-asterisk');await press('setup-close');
+ // S245: the film ends the step by itself and carries its own end card; the setup's asterisk card is no longer reached.
+ await page.waitForFunction(()=>window.__os.setup.film?.duration>1);await page.evaluate(()=>{const f=window.__os.setup.film;f.currentTime=f.duration-0.3});await page.waitForFunction(()=>window.__os.setup.stage==='balloon-9',{timeout:15000});await shot('12-after-film');
  await page.close();
 }
 assert.deepEqual(errors,[]);

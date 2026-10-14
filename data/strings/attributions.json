@@ -20,7 +20,7 @@
       "asset": "\"Cassette tape\"",
       "creator": "Poly by Google, via Poly Pizza (https://poly.pizza/m/aR5ot8Z7_-v)",
       "license": "CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)",
-      "usedAs": "Room 1 (Era 1) tapeA/tapeB/mixtape models, reinterp only",
+      "usedAs": "Room 1 (Era 1) tapeA/tapeB/mixtape models, reinterp only; also in the opening advert (\"LambyOS — Welcome Home\")",
       "firstUsed": "Session 54 (2026-07-26)"
     },
     {
@@ -41,7 +41,7 @@
       "asset": "\"VR Headset\"",
       "creator": "J-Toastie, via Poly Pizza (https://poly.pizza/m/raCB2tOkk3)",
       "license": "CC-BY 3.0 (https://creativecommons.org/licenses/by/3.0/)",
-      "usedAs": "Era 4: Maya's headset. ⚑ Owed since it shipped — missing from this table until S175",
+      "usedAs": "Era 4: Maya's headset; also in the opening advert (\"LambyOS — Welcome Home\"). ⚑ Owed since it shipped — missing from this table until S175",
       "firstUsed": "S74 (2026-08)"
     },
     {
@@ -267,6 +267,27 @@
       "license": "project-original; paid-plan licence confirmation pending",
       "usedAs": "Soft looping music in the Library on Daniel’s monitor",
       "firstUsed": "S235 / CODEX library, 2026-10-11"
+    },
+    {
+      "asset": "\"LambyOS — Welcome Home\" (`lambyos_welcome_home.mp4`, 1:36)",
+      "creator": "Made for this project by Claude (Anthropic, a cloud session, 2026-10-13) from the project director's design: the picture, the jingle and every sound in it (synthesised for the project, no samples), the burned-in captions",
+      "license": "project-owned; the narrator's voice, the models shown and the type baked into the picture are credited in their own rows",
+      "usedAs": "The opening advert, shown once in the setup and not skippable. Its House Rules sampler is adapted from the documented rules (Love in Action Collection) as the programme's own product, not a documentary claim",
+      "firstUsed": "S245, 2026-10-14"
+    },
+    {
+      "asset": "Narrator's voice (\"LambyOS — Welcome Home\")",
+      "creator": "Kokoro-82M, voice `am_michael` (hexgrad; run locally with kokoro-onnx)",
+      "license": "Apache-2.0",
+      "usedAs": "The advert's narrator: the apparatus, never Lamby",
+      "firstUsed": "S245, 2026-10-14"
+    },
+    {
+      "asset": "Type baked into \"LambyOS — Welcome Home\"",
+      "creator": "Inter (SIL OFL), Liberation fonts (SIL OFL), DejaVu fonts (free Bitstream Vera licence), GNU Unifont (SIL OFL / GPL font exception)",
+      "license": "free font licences, as listed",
+      "usedAs": "The advert's titles, captions and small print, rendered into the picture",
+      "firstUsed": "S245, 2026-10-14"
     }
   ],
   "influences": [

@@ -32,7 +32,9 @@ try {
     await press('setup-choice-1');
     await page.waitForFunction(() => window.__os.setup.stage === 'note');
     await press('setup-close'); await press('setup-choice-0'); await press('setup-advert-play-0');
-    await page.evaluate(() => window.__os.setup.player.debugSeek(113.9));
+    // S245: the opening film replaced the player here, so the setup's end card is DORMANT; this review forces it up
+    await page.evaluate(() => { window.__os.setup.film?.pause(); });
+    await page.evaluate(async () => { const { AdvertEndCard } = await import('/src/desktop/setup/advertEnd.ts'); const s = window.__os.setup; s.window = 'asterisk'; s.endCard = new AdvertEndCard(); s.hits = []; s.dirty = true; });
     await page.waitForFunction(() => window.__os.setup.stage === 'asterisk', { timeout: 15000 });
     await page.evaluate(() => { window.__os.paused = true; });
     const frames = reduced ? [['settled', 9]] : [['1-noise', 0.5], ['2-gathering', 1.9], ['3-gathered', 3.4], ['4-scroll', 8], ['5-scroll-late', 15]];
@@ -51,7 +53,7 @@ try {
       if (JSON.stringify(ids) !== '["setup-close"]') errors.push('asterisk hits: ' + ids);
       await press('setup-close');
       const stage = await page.evaluate(() => window.__os.setup.stage);
-      if (stage !== 'balloon-8') errors.push('after close stage ' + stage);
+      if (stage !== 'balloon-9') errors.push('after close stage ' + stage);
     }
     await page.close();
   }

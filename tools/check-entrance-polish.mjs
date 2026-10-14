@@ -81,7 +81,7 @@ try {
     await stage(p,'note'); await shot(p,'content-note'); await press(p,'setup-reduce-motion'); await shot(p,'reduce-motion-checked');
     assert(await p.evaluate(async()=> (await import('/src/state/motion.ts')).reducedMotion()),'Checkbox applies');
     await press(p,'setup-reduce-motion'); await press(p,'setup-close'); await stage(p,'balloon-7'); await shot(p,'version'); await press(p,'setup-choice-0'); await stage(p,'balloon-8'); await shot(p,'advert-intro');
-    await press(p,'setup-advert-play-0'); await stage(p,'advert'); await shot(p,'advert-player'); await press(p,'setup-advert-skip'); await stage(p,'balloon-9'); await shot(p,'start');
+    await press(p,'setup-advert-play-0'); await stage(p,'advert'); await shot(p,'advert-player'); await p.waitForFunction(()=>window.__os.setup.film?.duration>1); await p.evaluate(()=>{const f=window.__os.setup.film;f.currentTime=f.duration-0.3}); await stage(p,'balloon-9');   /* S245: no Skip; diagnostic seek to the end */ await shot(p,'start');
     await press(p,'setup-choice-0'); await wait(380); await shot(p,'fold-window'); await wait(630); await shot(p,'fold-star');
     await p.waitForSelector('#restore-entrance[data-phase="restore"]',{timeout:30000}); await wait(900); await shot(p,'stars-to-pixels'); await wait(2000); await shot(p,'pixels-to-room'); await wait(2300); await shot(p,'room-resolve-flight');
     await p.waitForFunction(()=> !document.getElementById('restore-entrance'), {timeout:120000}); await wait(1200);

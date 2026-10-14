@@ -59,16 +59,17 @@ try {
     await shot('06-version'); await press('setup-choice-0');
     await shot('07-advert-offer'); await press('setup-advert-play-0');
     await shot('07-advert-player');
-    assert.ok(await page.evaluate(() => window.__os.setup.hits.some(h => h.id === 'setup-advert-skip')));
-    await press('setup-advert-skip');
-    assert.equal(await page.evaluate(() => window.__os.setup.stage), 'balloon-8', 'Skip must omit the asterisk card');
+    assert.deepEqual(await page.evaluate(() => window.__os.setup.hits.map(h => h.id)), [], 'S245: the film has no control at all (no Skip, no close)');
+    await page.waitForFunction(() => window.__os.setup.film?.duration > 1);
+    await page.evaluate(() => { const f = window.__os.setup.film; f.currentTime = f.duration - 0.3; });   // diagnostic seek; the walker never does
+    await page.waitForFunction(() => window.__os.setup.stage === 'balloon-9', { timeout: 15000 });
     await shot('08-start-wait');
     await page.waitForFunction(() => window.__os.setup.ready, { timeout: 10000 });
     await shot('08-start-ready');
     const after = await page.evaluate(() => window.__ledger());
     const { view: v1, ...b } = before; const { view: v2, ...a } = after;
-    assert.deepEqual(a,b,'Setup must file nothing, including advert Play and Skip');
-    checks.push(`${name}: all guided steps, test sound, quiet captions, advert Play + immediate Skip, ledger unchanged outside view`);
+    assert.deepEqual(a,b,'Setup must file nothing, including advert Play');
+    checks.push(`${name}: all guided steps, test sound, quiet captions, advert Play (film has no Skip; diagnostic seek to the end), ledger unchanged outside view`);
     await press('setup-choice-0');
     await page.waitForFunction(() => !window.__os.setup && window.__os.phase === 'r_boot');
     checks.push(`${name}: Start resolves and review route hands off to the existing 1997 opening`);
@@ -85,14 +86,13 @@ try {
     await press('setup-close'); await press('setup-choice-0');
     const adBefore = await page.evaluate(() => window.__ledger());
     await press('setup-advert-play-0');
-    await page.evaluate(() => window.__os.setup.player.debugSeek(113.9));
-    await page.waitForFunction(() => window.__os.setup.stage === 'asterisk', { timeout: 10000 });
-    await shot('09-advert-asterisk');
-    assert.deepEqual(await page.evaluate(() => window.__os.setup.hits.map(h => h.id)), ['setup-close']);
-    assert.deepEqual(await page.evaluate(() => window.__ledger()), adBefore, 'The played advert and asterisk card file nothing');
-    await press('setup-close'); await shot('10-after-asterisk');
-    assert.equal(await page.evaluate(() => window.__os.setup.stage), 'balloon-8');
-    checks.push(`${name}: played advert → exact asterisk card, single Close → Start; Skip omits it; ledger unchanged; frame menu pauses setup. Diagnostic seek to 113.9 s.`);
+    await page.waitForFunction(() => window.__os.setup.film?.duration > 1);
+    await page.evaluate(() => { const f = window.__os.setup.film; f.currentTime = f.duration - 0.3; });
+    await page.waitForFunction(() => window.__os.setup.stage === 'balloon-9', { timeout: 15000 });
+    await shot('09-after-film');
+    assert.equal(await page.evaluate(() => window.__os.setup.endCard), null, 'S245: no setup end card after the film');
+    assert.deepEqual(await page.evaluate(() => window.__ledger()), adBefore, 'The played film files nothing');
+    checks.push(`${name}: played film → ends by itself → All set (no end card); ledger unchanged; frame menu pauses setup. Diagnostic seek to the end.`);
     await page.close();
   }
   // The experienced route reaches Start quickly: no elapsed-time shortcut may bypass the content note.
@@ -106,7 +106,9 @@ try {
   };
   await press('setup-choice-1');
   await page.waitForFunction(() => window.__os.setup.stage === 'note');
-  await press('setup-close'); await press('setup-choice-1'); await press('setup-advert-offer-skip-1');
+  await press('setup-close'); await press('setup-choice-1'); await press('setup-advert-play-0');
+  await page.waitForFunction(() => window.__os.setup.film?.duration > 1); await page.evaluate(() => { const f = window.__os.setup.film; f.currentTime = f.duration - 0.3; });
+  await page.waitForFunction(() => window.__os.setup.stage === 'balloon-9', { timeout: 15000 });
   assert.equal(await page.evaluate(() => window.__os.setup.ready),false);
   assert.equal(await page.evaluate(() => window.__os.setup.hits.some(h=>h.id==='setup-choice-0')),false);
   await wait(4200); await press('setup-choice-0');

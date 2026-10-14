@@ -58,8 +58,7 @@
     {
       "text": "Before we begin, let me show you what we do!",
       "buttons": [
-        "Show me",
-        "Skip"
+        "Show me"
       ]
     },
     {
@@ -109,8 +108,8 @@
     "reduceMotion": "Reduce motion"
   },
   "advert": {
-    "title": "Discover the New You",
-    "skip": "Skip"
+    "title": "LambyOS — Welcome Home",
+    "_doc": "S245: the opening film, mandatory — no Skip, no Later, no close box; it carries its own captions and ending card (public/assets/video/lambyos_welcome_home.mp4)"
   },
   "close": "Close",
   "dismiss": "×",

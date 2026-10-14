@@ -613,6 +613,19 @@ export function playOnce(name: string | null | undefined): HTMLAudioElement | nu
 }
 
 /**
+ * ⚑ S245 — a media element the caller built itself (the opening advert, a <video>) joins the one-shot set, so the
+ * frame's one mute, the game menu's hold and the idle cycle's mute reach it exactly as they reach a `playOnce` clip.
+ * It leaves the set when it ends or errors, or when `stopClip` puts it down. The caller still owns play().
+ */
+export function adoptOneShot(el: HTMLMediaElement): void {
+  el.muted = oneShotsMuted;
+  liveOneShots.add(el);
+  const forget = (): void => { liveOneShots.delete(el); };
+  el.addEventListener('ended', forget);
+  el.addEventListener('error', forget);
+}
+
+/**
  * ⚑ THE MUTE BUTTON DID NOT REACH THE ONE-SHOTS, and S116 is what made that
  * visible rather than theoretical.
  *
@@ -628,7 +641,7 @@ export function playOnce(name: string | null | undefined): HTMLAudioElement | nu
  * The set holds only what is actually playing: elements remove themselves on
  * `ended` and on `error`, so nothing accumulates across a session.
  */
-const liveOneShots = new Set<HTMLAudioElement>();
+const liveOneShots = new Set<HTMLMediaElement>();
 let oneShotsMuted = false;
 
 /** ⚑ 2026-09-13: a one-shot that LOOPS until its owner stops it — the session's
@@ -639,7 +652,7 @@ export function playLoop(name: string | null | undefined): HTMLAudioElement | nu
   return a;
 }
 /** stop a loop (or any one-shot) cleanly; safe on null */
-export function stopClip(a: HTMLAudioElement | null): void {
+export function stopClip(a: HTMLMediaElement | null): void {
   if (!a) return;
   a.loop = false;
   a.pause();
@@ -656,7 +669,7 @@ export function anythingPlaying(): boolean {
 
 /** ⚑ S208 / A1 — the game menu holds every one-shot too (L's voice, the songs, the jingle, the ball): pause what is
  *  playing, and resume exactly those on close — a clip that had ended stays ended */
-const heldOneShots = new Set<HTMLAudioElement>();
+const heldOneShots = new Set<HTMLMediaElement>();
 export function setOneShotsPaused(paused: boolean): void {
   if (paused) {
     for (const a of liveOneShots) if (!a.paused && !a.ended) { a.pause(); heldOneShots.add(a); }

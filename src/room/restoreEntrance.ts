@@ -212,6 +212,11 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
       if (phase !== 'wake' && phase !== 'restore' && phase !== 'setup' && phase !== 'fold') return;
       if (phase === 'setup' || phase === 'fold') releaseTime += dt;
       if (phase === 'setup') floating?.update(dt, smooth(Math.min(1, elapsed / 2.3)));
+      // ⚑ S245 — the opening film has its own music: the setup's loop steps aside for it and comes back after
+      if (phase === 'setup' && music) {
+        const want = opts.setup()?.filmActive ? 0 : 0.28;
+        music.volume = Math.max(0, Math.min(1, music.volume + (want - music.volume) * Math.min(1, dt * 4)));
+      }
       if (phase === 'fold') {
         const k = smooth(Math.min(1, elapsed / 1.8));
         floating?.fold(k, opts.reduced(), world(new pc.Vec3(0.3, 0.2, -3)));

@@ -191,8 +191,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * the piece in its first ten seconds, which is what the first run did.
  */
 const PREFER = [
-  // Setup advert Play is forbidden: its 114 s tape exceeds a step's patience. Separate capture verifies Play + Skip.
-  /^setup-choice-0$|^setup-advert-offer-skip-1$|^setup-sound-on$|^setup-advert-skip$|^setup-close$/i,
+  // ⚑ S245 — the opening film (96 s) is MANDATORY and has no Skip: Show me is the only way on, and the walker sits
+  //   the whole film out (stallCap below; the scripted entrance waits for the step after it).
+  /^setup-choice-0$|^setup-advert-play-0$|^setup-sound-on$|^setup-close$/i,
   /understand|continue|^ok$|^okay$|next|read.?on|agree|proceed|begin|start$|enter|hello|open|insert|play|^notification$/i,   // S178: the news outranks a bare Unlock
   /apply|send|confirm|done|finish|accept|update.?now|sign.?in|signin|allow|unlock/i,
   // ⚑ S209 / A25 (REVIEW_ROUND_5, ERA16-16) — 2016's other jobs, worked to their end: the tier below ranked
@@ -222,7 +223,7 @@ const PREFER = [
  * menu's; `pause_yes` is the era's, and the difference between them is the
  * difference between quitting the piece and playing it.
  */
-const FORBIDDEN = /^setup-dismiss$|^setup-advert-play-0$|^setup-device$|^setup-test$|^setup-choice-[12]$|^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
+const FORBIDDEN = /^setup-dismiss$|^setup-device$|^setup-test$|^setup-choice-[12]$|^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
 
 /** ⚑ see the launch below — order: --chrome, the environment, the platform */
 function resolveChrome() {
@@ -447,7 +448,12 @@ async function main() {
     await page.waitForFunction(() => document.getElementById('restore-entrance')?.dataset.setupStage === 'note', { timeout: 30000 });
     await pressSetup('setup-close'); // the only gate, including its existing arm
     await pressSetup('setup-choice-0'); // Full piece
-    await pressSetup('setup-advert-offer-skip-1');
+    // ⚑ S245 — the opening film: mandatory, no Skip. Press Show me, then SIT THE WHOLE FILM OUT (~96 s; no seeking, ever)
+    //   until the setup moves on by itself to "All set". This is a wait on a film that is playing, not a stall.
+    await pressSetup('setup-advert-play-0');
+    note('wait', { what: 'the opening film (LambyOS — Welcome Home, ~96 s) is playing; no Skip exists; waiting for it to end' });
+    await page.waitForFunction(() => document.getElementById('restore-entrance')?.dataset.setupStage === 'balloon-9', { timeout: 200000, polling: 1000 });
+    note('dom', { target: 'balloon-9', what: 'the film ended by itself; the setup moved on to All set' });
     await pressSetup('setup-choice-0'); // Start → restore → seat → Enter
     await page.waitForFunction(() => !document.getElementById('restore-entrance') && !!window.__os, { timeout: 120000 });
   } else if (FROM_ERA <= 1 && !SETUP) {
@@ -1610,7 +1616,7 @@ const LAP = { w: 224, h: 140 };
    * one. And a slow STUCK late in Era 4 is a real finding (A-8's dead hand-back
    * is exactly that); what was worthless was a fast one during the ball.
    */
-  const stallCap = (st) => (st.era === 'e4' ? 160 : 14);
+  const stallCap = (st) => (st.era === 'e4' ? 160 : st.phase === 'setup:advert' ? 60 : 14);   // S245: the opening film is ~96 s (60 × 4 s)
   const pressed = new Map();
   /**
    * ⚑ KEYED ON THE COARSE STATE, NOT ON THE FULL CONTROL SET, and run 22 is why.

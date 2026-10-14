@@ -11,8 +11,7 @@ import { ERA1 as P } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { drawWeb1997Icon } from '../apps/web1997';
 import { drawLambyChar } from '../apps/lambyChar';
-import { NetVisionPlayerApp } from '../apps/netvision';
-import { playOnce } from '../../audio/tapeAudio';
+import { playOnce, adoptOneShot, stopClip } from '../../audio/tapeAudio';
 import { ledger } from '../../state/ledger';
 import { chooseCut, currentCut, type Cut } from '../../state/cut';
 import { AdvertEndCard } from './advertEnd';
@@ -49,12 +48,15 @@ export class LambySetup {
   private aboutPage = 0;
   private get mobile(): boolean { return window.innerWidth < 600; }
   private cut: Cut = currentCut();
-  private player: NetVisionPlayerApp | null = null;
+  /** ⚑ S245 — THE OPENING FILM ("LambyOS — Welcome Home", 1:36). Mandatory: no skip control exists, and nothing in
+   *  this class can end it early. It ends only by ending (or by failing to load, so a visitor is never stranded). */
+  private film: HTMLVideoElement | null = null;
+  private filmT = -1;
+  private filmNudge = 0;
   /** ⚑ S242 — the advert's end card: noise → gathered title + the small print (played advert only) */
   endCard: AdvertEndCard | null = null;
   private endCardPaint = 0;
   private sound: HTMLAudioElement | null = null;
-  private track: HTMLAudioElement | null = null;
   private deviceStatus = '';
   /** Engine wires the existing sensor request; called in the real tap stack. */
   requestDeviceLook: (() => void) | null = null;
@@ -63,16 +65,50 @@ export class LambySetup {
   constructor() { this.result = new Promise((resolve) => { this.resolve = resolve; }); }
   get ready(): boolean { return this.noteOpened && this.noteClosedAt !== null && this.clock - this.noteClosedAt >= 4; }
   get stage(): string { return this.window ?? `balloon-${this.step + 1}`; }
+  /** the film is on the glass (the entrance ducks its own music under it) */
+  get filmActive(): boolean { return this.window === 'advert' && this.film !== null; }
   setDeviceStatus(status: 'asking' | 'denied' | 'silent' | 'live' | 'idle' | 'unsupported'): void {
     const text = status === 'asking' ? copy.look.asking : status === 'denied' ? copy.look.denied
       : status === 'silent' || status === 'unsupported' ? copy.look.unavailable : '';
     if (text !== this.deviceStatus) { this.deviceStatus = text; this.dirty = true; }
   }
-  private advance(step: number): void { this.step = step; this.window = null; this.noteT = 0; this.hits = []; this.dirty = true; }
+  private advance(step: number): void {
+    this.step = step; this.window = null; this.noteT = 0; this.hits = []; this.dirty = true;
+    if (step === 7) this.prepareFilm();   // start fetching while the offer is on screen
+  }
+  private prepareFilm(): void {
+    if (this.film) return;
+    const v = document.createElement('video');
+    v.src = 'assets/video/lambyos_welcome_home.mp4';
+    v.preload = 'auto'; v.playsInline = true; v.controls = false; v.disablePictureInPicture = true;
+    v.setAttribute('disablepictureinpicture', ''); v.setAttribute('controlslist', 'nodownload noremoteplayback');
+    adoptOneShot(v);   // the frame's mute, the menu's hold and the idle cycle's mute reach the film's sound
+    v.addEventListener('ended', () => this.endFilm());
+    // a film that cannot load or play (no H.264 here) must not strand the visitor on a step with no control
+    v.addEventListener('error', () => this.endFilm());
+    this.film = v;
+  }
+  private startFilm(): void {
+    this.prepareFilm();
+    const v = this.film!;
+    this.window = 'advert'; this.hits = []; this.dirty = true; this.filmT = -1;
+    v.currentTime = 0;
+    v.play().catch(() => { if (this.film === v && v.paused && !v.ended) this.endFilm(); });
+  }
+  private endFilm(): void {
+    const v = this.film;
+    if (!v || this.window !== 'advert') { if (v && !this.open) this.dropFilm(); return; }
+    this.dropFilm();
+    this.advance(8);   // the film carries its own ending card; the setup's own post-advert card is not shown after it
+  }
+  private dropFilm(): void {
+    const v = this.film; this.film = null;
+    if (!v) return;
+    stopClip(v); v.removeAttribute('src'); v.load();
+  }
   private closeWindow(): void {
     const w = this.window;
-    if (w === 'advert') { this.player?.skip(); this.track?.pause(); this.track = null; this.player = null; this.advance(8); }
-    else if (w === 'asterisk') { this.endCard = null; this.advance(8); }
+    if (w === 'asterisk') { this.endCard = null; this.advance(8); }
     else if (w === 'note') { if (this.noteClosedAt === null) this.noteClosedAt = this.clock; this.advance(6); }
     else if (w === 'about') this.advance(2);
     else if (w === 'session') this.advance(3);
@@ -86,7 +122,16 @@ export class LambySetup {
       if (this.noteT >= 0.8) { this.window = 'note'; this.noteOpened = true; this.hits = []; this.dirty = true; }
     }
     if (this.noteClosedAt !== null && this.clock - this.noteClosedAt >= 4 && !this.readyDrawn) { this.readyDrawn = true; this.dirty = true; }
-    if (this.player?.open) { this.player.update(dt); this.dirty = true; }
+    if (this.film && this.window === 'advert') {
+      // redraw (and so re-upload the XR texture) only when the film has a new frame — never while it is paused
+      const v = this.film;
+      if (!v.paused && v.readyState >= 2 && v.currentTime !== this.filmT) { this.filmT = v.currentTime; this.dirty = true; }
+      // something outside the piece paused it (a hidden tab): give it back, at most once a second
+      this.filmNudge += dt;
+      if (v.paused && !v.ended && v.readyState >= 2 && this.filmNudge >= 1 && document.visibilityState === 'visible') {
+        this.filmNudge = 0; v.play().catch(() => { /* needs a gesture; the next press gives it */ });
+      }
+    }
     if (this.window === 'asterisk' && this.endCard) {
       this.endCard.update(dt);
       // ~30 fps is plenty for static and a slow crawl; reduced motion draws the card once
@@ -95,7 +140,7 @@ export class LambySetup {
     }
   }
   private readyDrawn = false;
-  destroy(): void { this.open = false; this.hits = []; this.sound?.pause(); this.track?.pause(); }
+  destroy(): void { this.open = false; this.hits = []; this.sound?.pause(); this.dropFilm(); }
   private testSound(): void { this.sound?.pause(); this.sound = playOnce('startup_1997.mp3'); }
   handleMove(x: number, y: number): void {
     const id = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h)?.id ?? '';
@@ -103,7 +148,7 @@ export class LambySetup {
   }
   handleClick(x: number, y: number): void {
     const id = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h)?.id;
-    if (!id) { if (this.window === 'advert') this.player?.handleClick(x, y); return; }
+    if (!id) return;
     if (id === 'setup-compact-close') {
       if (this.step < 6) this.advance(5);
       else if (this.step === 6) { chooseCut(this.cut); this.advance(7); }
@@ -111,7 +156,7 @@ export class LambySetup {
       else if (this.ready) { this.destroy(); this.resolve({ cut: this.cut }); }
       return;
     }
-    if (id === 'setup-close' || id === 'setup-advert-skip') { this.closeWindow(); return; }
+    if (id === 'setup-close') { this.closeWindow(); return; }
     if (id === 'setup-about-back' || id === 'setup-about-next') { this.aboutPage += id === 'setup-about-next' ? 1 : -1; this.dirty = true; return; }
     if (id === 'setup-device') { this.requestDeviceLook?.(); return; }
     if (id === 'setup-reduce-motion') { setReducedMotion(!reducedMotion()); this.dirty = true; return; }
@@ -130,19 +175,8 @@ export class LambySetup {
       else { ledger.view.captions = n === 2; setOneShotsMuted(ledger.view.captions); this.advance(4); }
     } else if (this.step === 4) this.window = 'look';
     else if (this.step === 6) { this.cut = n === 0 ? 'full' : 'speedrun'; chooseCut(this.cut); this.advance(7); }
-    else if (this.step === 7) {
-      if (n === 1) this.advance(8);
-      else {
-        this.window = 'advert';
-        this.player = new NetVisionPlayerApp({ skipDelaySeconds: 0, fileToLedger: false });
-        this.player.onClosed = result => {
-          this.track?.pause(); this.track = null; this.player = null;
-          if (result === 'skipped') this.advance(8);
-          else { this.window = 'asterisk'; this.endCard = new AdvertEndCard(); this.endCardPaint = 0; this.hits = []; this.dirty = true; }
-        };
-        this.track = playOnce(this.player.trackName);
-      }
-    } else if (this.step === 8 && this.ready) { this.destroy(); this.resolve({ cut: this.cut }); }
+    else if (this.step === 7) this.startFilm();   // the only button; there is no other way past this step
+    else if (this.step === 8 && this.ready) { this.destroy(); this.resolve({ cut: this.cut }); }
     this.hits = []; this.dirty = true;
   }
   private text(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, width: number, size = 11): number {
@@ -187,7 +221,7 @@ export class LambySetup {
     }
     if (this.dismissed) {
       const c = ui.windowFrame(ctx, 111, 76, 360, 140, copy.title);
-      if (this.step < 8 || this.ready) this.hits.push({ ...c.closeBox, id: 'setup-compact-close' });
+      if (this.step !== 7 && (this.step < 8 || this.ready)) this.hits.push({ ...c.closeBox, id: 'setup-compact-close' });
     }
     else { ui.px(ctx, 110, 75, 362, 142, P.black); ui.px(ctx, 111, 76, 360, 140, P.tooltip); }
     const b = copy.balloons[this.step];
@@ -200,7 +234,7 @@ export class LambySetup {
     let x = 128;
     b.buttons.forEach((label, i) => {
       ui.setFont(ctx, 10); const w = Math.ceil(ctx.measureText(label).width) + 18;
-      this.button(ctx, this.step === 7 ? (i === 0 ? 'setup-advert-play-0' : 'setup-advert-offer-skip-1') : this.step === 3 ? ['setup-test', 'setup-sound-on', 'setup-sound-quiet'][i] : `setup-choice-${i}`, label, x, 169, w, this.step === 8 && !this.ready);
+      this.button(ctx, this.step === 7 ? 'setup-advert-play-0' : this.step === 3 ? ['setup-test', 'setup-sound-on', 'setup-sound-quiet'][i] : `setup-choice-${i}`, label, x, 169, w, this.step === 8 && !this.ready);
       x += w + 6;
     });
   }
@@ -209,7 +243,7 @@ export class LambySetup {
     if (!this.dismissed) drawLambyChar(ctx, 414, 308, { mood: 'cheerful', action: 'point', t: 0, moodStart: 0, scale: 0.52 });
     if (this.dismissed) {
       const c = ui.windowFrame(ctx, 20, 26, 472, 246, copy.title);
-      if (this.step < 8 || this.ready) this.hits.push({ ...c.closeBox, id: 'setup-compact-close' });
+      if (this.step !== 7 && (this.step < 8 || this.ready)) this.hits.push({ ...c.closeBox, id: 'setup-compact-close' });
     } else {
       ui.px(ctx, 20, 26, 472, 246, P.black); ui.px(ctx, 21, 27, 470, 244, P.tooltip);
       ui.px(ctx, 373, 272, 16, 16, P.black); ui.px(ctx, 374, 272, 14, 14, P.tooltip);
@@ -218,19 +252,25 @@ export class LambySetup {
     }
     this.text(ctx, b.text, 42, this.dismissed ? 57 : 49, 414, 16);
     b.buttons.forEach((label, i) => {
-      const id = this.step === 7 ? (i === 0 ? 'setup-advert-play-0' : 'setup-advert-offer-skip-1')
+      const id = this.step === 7 ? 'setup-advert-play-0'
         : this.step === 3 ? ['setup-test','setup-sound-on','setup-sound-quiet'][i] : `setup-choice-${i}`;
       this.button(ctx, id, label, 42, 139 + i * 42, 320, this.step === 8 && !this.ready);
     });
   }
   private drawWindow(ctx: CanvasRenderingContext2D): void {
     const kind = this.window!;
-    if (kind === 'advert' && this.player) {
-      this.player.draw(ctx);
-      this.hits.push({ id: 'setup-close', x: 469, y: 27, w: 12, h: 12 });
-      // Period title and explicit close; Skip always exists, even during the end hold.
-      ui.px(ctx, 29, 23, 420, 16, P.navy); ui.setFont(ctx, 10); ctx.fillStyle = P.white; ctx.fillText(copy.advert.title, 34, 26);
-      this.button(ctx, 'setup-advert-skip', copy.advert.skip, 407, 319, 69);
+    if (kind === 'advert') {
+      // ⚑ S245 — the player's window, and no control on it at all: no close box, no Skip, nothing that publishes a hit.
+      // The 16:9 film fills the content (480 × 270 logical, ×3 on the canvas); the frame's menu (Esc) is the only way out.
+      const c = ui.windowFrame(ctx, 12, 30, 488, 295, copy.advert.title);
+      ui.px(ctx, c.closeBox.x - 1, c.closeBox.y - 1, c.closeBox.w + 2, c.closeBox.h + 2, P.titleBlue);   // no dead close box
+      ui.px(ctx, c.x, c.y, 480, 270, P.black);
+      const v = this.film;
+      if (v && v.readyState >= 2 && v.videoWidth > 0) {
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(v, c.x, c.y, 480, 270);
+        ctx.imageSmoothingEnabled = false;
+      }
       return;
     }
     if (kind === 'asterisk') {

@@ -19,9 +19,9 @@ try {
  const h=await page.evaluate(()=>JSON.parse(document.getElementById('restore-entrance').dataset.setupHits).find(h=>h.id==='setup-choice-0'));
  await page.mouse.move(h.x+h.w/2,h.y+h.h/2);await page.mouse.down();await page.mouse.move(h.x+h.w/2+20,h.y+h.h/2,{steps:4});await page.mouse.up();
  assert.equal(await page.evaluate(()=>window.__os.setup.stage),'balloon-1');checks.push('A 20 px drag across the floating welcome does not select.');
- await press('setup-choice-1');await page.waitForFunction(()=>window.__os.setup.stage==='note');await press('setup-close');await press('setup-choice-0');await press('setup-advert-offer-skip-1');
+ await press('setup-choice-1');await page.waitForFunction(()=>window.__os.setup.stage==='note');await press('setup-close');await press('setup-choice-0');await press('setup-advert-play-0');await page.waitForFunction(()=>window.__os.setup.film?.duration>1);await page.evaluate(()=>{const f=window.__os.setup.film;f.currentTime=f.duration-0.3});   /* S245: diagnostic seek past the mandatory film */
  await page.waitForFunction(()=>window.__os.setup.ready);
- const after=await page.evaluate(()=>window.__ledger());const {view:vb,...b}=before,{view:va,...a}=after;assert.deepEqual(a,b);checks.push('Experienced setup still requires note Close; full choice and advert Skip file no input outside view preferences.');
+ const after=await page.evaluate(()=>window.__ledger());const {view:vb,...b}=before,{view:va,...a}=after;assert.deepEqual(a,b);checks.push('Experienced setup still requires note Close; full choice and the film (no Skip exists) file no input outside view preferences.');
  await page.evaluate(()=>{window.__entrancePhases=[];const e=document.getElementById('restore-entrance');new MutationObserver(()=>window.__entrancePhases.push(e.dataset.phase)).observe(e,{attributes:true,attributeFilter:['data-phase']});});
  await press('setup-choice-0');await page.waitForSelector('#restore-entrance[data-phase="restore"]');await wait(2500);await page.screenshot({path:`${out}/reduced-mid-restore.png`});
  await page.waitForFunction(()=>!document.getElementById('restore-entrance'),{timeout:30000});
