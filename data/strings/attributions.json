@@ -263,10 +263,17 @@
     },
     {
       "asset": "LambyOS Home ambient loop (`lambyos_home_loop.mp3`)",
-      "creator": "Project lead; generated using Suno V6-mini",
-      "license": "project-original; paid-plan licence confirmation pending",
+      "creator": "Project lead; made with Suno (V6-mini)",
+      "license": "project-original; made on Suno's free plan for this non-commercial piece, credited to Suno",
       "usedAs": "Soft looping music in the Library on Daniel’s monitor",
       "firstUsed": "S235 / CODEX library, 2026-10-11"
+    },
+    {
+      "asset": "Songs and jingles: “Fold My Hands”, “Family Design Solutions”, “Discover the New You”",
+      "creator": "Project lead; made with Suno",
+      "license": "project-original; made on Suno's free plan for this non-commercial piece, credited to Suno",
+      "usedAs": "The 1997 tapes (the prayer, the mixtape, the broadcast jingle) and 2003's infomercial",
+      "firstUsed": "S32 / S89, 2026-07"
     },
     {
       "asset": "\"LambyOS — Welcome Home\" (`lambyos_welcome_home.mp4`, 1:33; re-cut 2026-10-14: the end hiss −12 dB, the noise-to-title run-up 1.75× faster)",
