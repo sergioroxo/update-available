@@ -269,7 +269,7 @@
       "firstUsed": "S235 / CODEX library, 2026-10-11"
     },
     {
-      "asset": "\"LambyOS — Welcome Home\" (`lambyos_welcome_home.mp4`, 1:36)",
+      "asset": "\"LambyOS — Welcome Home\" (`lambyos_welcome_home.mp4`, 1:33; re-cut 2026-10-14: the end hiss −12 dB, the noise-to-title run-up 1.75× faster)",
       "creator": "Made for this project by Claude (Anthropic, a cloud session, 2026-10-13) from the project director's design: the picture, the jingle and every sound in it (synthesised for the project, no samples), the burned-in captions",
       "license": "project-owned; the narrator's voice, the models shown and the type baked into the picture are credited in their own rows",
       "usedAs": "The opening advert, shown once in the setup and not skippable. Its House Rules sampler is adapted from the documented rules (Love in Action Collection) as the programme's own product, not a documentary claim",
