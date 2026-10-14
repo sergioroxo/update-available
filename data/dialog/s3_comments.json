@@ -1,5 +1,6 @@
 {
   "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending on EVERY line below (the post, every commenter, every template name and line, every echo, the dock copy and the witness lines). Session 70 (S70, THE COMMENTS), per docs/REINTERP_E3_THE_JOB_2026-08-03.md §1. THE BEAT: 'Route for mentorship' is a checkbox in the shipped correction list; here it is a conversation. Someone posts something vulnerable under a testimony, Vera replies, and SHE WRITES NOTHING — there are pinned templates. She picks one. Some of them also flag the account for follow-up, and the interface makes no distinction in how those look. That is the recruitment floor, live.",
+  "_docF2cut": "cut for W1-E1, cloud F2, 2026-10-14: the post, nine readers' comments, three template lines and the six echoes shortened; every comment and echo kept.",
   "_docRegister": "Register calls, enforced by hand and stated in the session log. SATIRICAL — the TOOL: `templates[].name`, the dock copy (`app.dockHint`, `app.sent`), the printed keyboard shortcuts, the tidy little list. It may charm; it is genuinely pleasant to use, and THAT is the horror — the work is enjoyable. EERIE — the ABSENCE: the thread never empties, the templates propagate (see `_docEcho`), and NOTHING anywhere comments on either. No stinger, no dimming, no dread: what is unsettling is that it is all perfectly normal. SERIOUS — the COMMENTERS: `felt`. Bare, sincere, never annotated, never satirised, never the joke. ⚑ VERA IS NEVER THE JOKE AND NEITHER IS ANY COMMENTER (Sérgio, verbatim: 'Vera is never the joke and the victims as well, they are not a joke'). If a beat reads as mocking a person, the fix is ALWAYS to make the tool more pleased with itself, never to make the person more ridiculous. E3 has NO respite — deliberate, confirmed.",
   "_docTrouble": "⚑ THE ETHICS GATE ON THIS FILE. Comment `c5` is unmistakably a person in trouble, and THERE IS NO RIGHT TEMPLATE — the interface has no button for what she actually needs, every template reads wrong on her, and nothing acknowledges that. Three rules, none negotiable. (1) DO NOT RESOLVE HER. No beat anywhere answers her, follows up on her, or tells the player what they should have pressed. (2) DO NOT PUNISH THE PLAYER. Nothing is scored, nothing is withheld, no line appears saying this was the wrong one — and replying to her is not treated differently from replying to anyone else. (3) DO NOT HAVE ANYONE NOTICE. Not Lambient, not the dock, not the record. Her text is plain and specific and asks for nothing; there is no crisis detail in it and none is to be added — distress is engaged purposefully here, never as spectacle (ETHICS_CONSTRAINTS #9, 'darkness earned'). The two templates that carry `follow: true` will send a person to her door, which is the whole point and is never remarked on.",
   "_docEcho": "⚑ THE PROPAGATION, and it is one data field. Every template carries an `echo` — the SAME sentence, some comments later, in a DIFFERENT account's mouth, spontaneously, as their own words, to someone else. You taught them how to sound. The echo chamber has been asserted in this project's docs since REVAMP_BRIEF rev 2 ('she is the audience for her own recruitment') and never mechanised; this mechanises it. Which echo fires is decided by which template the player actually deployed — most recently deployed first, each echo firing at most once — so the sentence that comes back is always one they chose. ⚑ IT MUST NEVER BE POINTED AT, NAMED, OR REMARKED ON BY ANYTHING: no highlight, no badge, no Lambient line, no ledger entry, no difference in how the comment is drawn. The player notices a beat late or not at all, and nothing in the piece has an opinion about that.",
@@ -23,7 +24,7 @@
   },
   "post": {
     "author": "Corinne H.",
-    "text": "Three years ago I could not have written any of this down. Here is the whole thing, finally. Thank you to everyone who sat in this room with me while I got to it.",
+    "text": "Three years ago I couldn't have written this down. Here it is, finally. Thank you to everyone who sat in this room with me.",
     "meta": "published Sunday · 1,204 views"
   },
   "templates": [
@@ -31,12 +32,12 @@
       "id": "welcome",
       "name": "Welcome Them In",
       "shortcut": "⌘1",
-      "line": "So glad you found us. You are not on your own in here.",
+      "line": "So glad you found us. You are not alone in here.",
       "follow": false,
       "echo": {
         "author": "Rae T.",
         "time": "now",
-        "text": "someone said this to me on this page a while back so i'm saying it to you — so glad you found us, you are not on your own in here. i read for a year before i typed anything."
+        "text": "someone said this to me once — so glad you found us, you are not alone in here. i read for a year first."
       },
       "witness": "thread: replied — welcome them in"
     },
@@ -44,12 +45,12 @@
       "id": "meet",
       "name": "Meet Them Where They Are",
       "shortcut": "⌘2",
-      "line": "Wherever you are today is a fine place to start. Nobody here is going to rush you.",
+      "line": "Wherever you are today is a fine place to start. Nobody will rush you.",
       "follow": true,
       "echo": {
         "author": "Junia F.",
         "time": "now",
-        "text": "wherever you are today is a fine place to start, nobody here is going to rush you. i think about that line more than anything else i've read on here."
+        "text": "wherever you are today is a fine place to start, nobody will rush you. i think about that line a lot."
       },
       "witness": "thread: replied — meet them where they are (follow-up assigned)"
     },
@@ -57,12 +58,12 @@
       "id": "path",
       "name": "Point to the Path",
       "shortcut": "⌘3",
-      "line": "There is a Start Here page with the first few steps on it — the link is on our profile.",
+      "line": "There is a Start Here page with the first few steps — the link is on our profile.",
       "follow": false,
       "echo": {
         "author": "Berit S.",
         "time": "now",
-        "text": "there is a Start Here page with the first few steps on it, the link is on their profile. that is how i started, for what it's worth."
+        "text": "there's a Start Here page with the first few steps, link on their profile. that's how i started."
       },
       "witness": "thread: replied — point to the path"
     },
@@ -75,7 +76,7 @@
       "echo": {
         "author": "Marisol P.",
         "time": "now",
-        "text": "if you ever want to write yours down, we would love to read it. that is what somebody said to me and it is the only reason i sent mine in."
+        "text": "if you ever want to write yours down, we would love to read it. somebody said that to me. it's why i sent mine."
       },
       "witness": "thread: replied — invite the story"
     },
@@ -88,7 +89,7 @@
       "echo": {
         "author": "Lyle B.",
         "time": "now",
-        "text": "we keep this space kind. thank you for reading with us. (borrowing that from the page, it does the job)"
+        "text": "we keep this space kind. thank you for reading with us. (borrowing that, it does the job)"
       },
       "witness": "thread: replied — hold the room gentle"
     },
@@ -101,7 +102,7 @@
       "echo": {
         "author": "Ade R.",
         "time": "now",
-        "text": "nobody should have to work this out on paper, they will find somebody near you. mine actually turned up at the door, which i did not expect."
+        "text": "nobody should have to work this out on paper, they'll find somebody near you. mine turned up at the door."
       },
       "witness": "thread: replied — find them a neighbour (follow-up assigned)"
     }
@@ -111,31 +112,31 @@
       "id": "c1",
       "author": "Marisol P.",
       "time": "2h",
-      "text": "Corinne I have watched this four times since Sunday. I keep starting a comment and deleting it. Anyway. Thank you."
+      "text": "Corinne I've watched this four times. I keep starting a comment and deleting it. Anyway. Thank you."
     },
     {
       "id": "c2",
       "author": "Jonah K.",
       "time": "1h",
-      "text": "Is there anything like this near where I live? I do not know how you find that out without asking somebody."
+      "text": "Is there anything like this near me? I don't know how you find out without asking somebody."
     },
     {
       "id": "c3",
       "author": "H. Whitlock",
       "time": "1h",
-      "text": "My sister did a programme like this one in 2009 and she is not okay. I am not trying to start anything on your page. I just do not think everybody comes out the other side of it the way you did."
+      "text": "My sister did a programme like this in 2009 and she is not okay. I'm not here to start anything. I just don't think everybody comes out the way you did."
     },
     {
       "id": "c4",
       "author": "Denise A.",
       "time": "48m",
-      "text": "My son is sixteen. He has not told us anything but I think I know. Is there someone we could talk to first, before we say anything to him?"
+      "text": "My son is sixteen. He hasn't told us anything but I think I know. Is there someone we could talk to first?"
     },
     {
       "id": "c5",
       "author": "quietwren",
       "time": "37m",
-      "text": "I do not really know why I am typing this here of all places. I have not said anything out loud to anybody since about February. I am not asking for anything. I just wanted it written down somewhere that is not my own handwriting."
+      "text": "I don't know why I'm typing this here. I haven't said anything out loud to anybody since February. I'm not asking for anything. I just wanted it written down somewhere that isn't my handwriting."
     },
     {
       "id": "c6",
@@ -159,13 +160,13 @@
       "id": "c9",
       "author": "Frances O.",
       "time": "9m",
-      "text": "Does it come back? The wanting. I am two years in and it came back last month and I do not know what that means about the two years."
+      "text": "Does it come back? The wanting. Two years in, it came back last month, and I don't know what that says about the two years."
     },
     {
       "id": "c10",
       "author": "T.",
       "time": "6m",
-      "text": "my mum sent me this. I do not know what she wants me to say about it."
+      "text": "my mum sent me this. I don't know what she wants me to say."
     },
     {
       "id": "c11",
