@@ -3459,8 +3459,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** S156 — seconds until the 1997 machine's start is heard (Sérgio: "the boot sequence of
    *  the computer should come sooner, as we travel to space"); < 0 = not pending */
   let machineBootDue = -1;
-  const startFirstBed = (): void => {
-    if (bedStarted || restoreEntrance?.blocking) return;
+  /** ⚑ S246 — `force`: the restore entrance starts the room's sound as the stars begin to become the room (his
+   *  2026-10-14: "the sound is still out of sync"), not after the flight and the glitch */
+  const startFirstBed = (): void => { startBed(false); };
+  function startBed(force: boolean): void {
+    if (bedStarted || (!force && restoreEntrance?.blocking)) return;
     bedStarted = true;
     roomBed.set(BED_FOR[os.era] ?? BED_FOR.e1, 1.5);
     // S155 / R3-02: the descent has a score — a pad falling an octave over the bed, 40 s,
@@ -4964,6 +4967,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         },
         reduced: reducedMotion, crossFade: () => reducedMotion() || !drivenMoves, lights: applyRoomLight,
         prepareRestore: () => {
+          startBed(true);   // S246: the room is heard as it is seen
           if (!drivenMoves || reducedMotion()) {
             clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
             cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);

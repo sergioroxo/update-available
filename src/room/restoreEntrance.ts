@@ -132,6 +132,8 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
       m.opacity = opacity * arrival; m.blendType = pc.BLEND_NORMAL; m.depthWrite = arrival > 0.95; m.update();
     });
     opts.lights(k); app.scene.ambientLight.copy(ambient).mulScalar(k);
+    // S246: LambyOS Home's loop gives way to the room's own sound as the room arrives (not a cut at the end)
+    if (music) music.volume = 0.28 * (1 - k);
   }
   function originalPaint(): void {
     for (const { m, diffuse, emissive, opacity, blend, depth } of paints) { m.diffuse.copy(diffuse); m.emissive.copy(emissive); m.opacity = opacity; m.blendType = blend; m.depthWrite = depth; m.update(); }
@@ -149,8 +151,14 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
       };
       m.diffuse.copy(flatten(diffuse)); m.emissive.copy(flatten(emissive)); m.update();
     }
-    app.scene.ambientLight.copy(ambient);
-    lights.forEach(({ light }) => { light.color = cool.clone(); light.intensity = light.type === 'directional' ? 0.3 : 0.25; });
+    // ⚑ S246 (his 2026-10-14: "there is a flash on the lights that become white"): the room as it was is FLATTER and
+    // DIMMER, never brighter — each light keeps its own hue, half-desaturated, at 70% of its strength; the ambient dims.
+    app.scene.ambientLight.copy(ambient).mulScalar(0.8);
+    lights.forEach(({ light, color, intensity }) => {
+      const g = (color.r + color.g + color.b) / 3;
+      light.color = new pc.Color((color.r + g) / 2, (color.g + g) / 2 * 1.03, (color.b + g) / 2);
+      light.intensity = intensity * 0.7;
+    });
     return new Promise<void>((resolve) => { resolveFlash = resolve; });
   };
   let music: HTMLAudioElement | null = null;
