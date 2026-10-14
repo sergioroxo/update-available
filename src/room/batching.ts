@@ -128,7 +128,7 @@ function renderComponents(entity: pc.Entity): pc.RenderComponent[] {
   const out: pc.RenderComponent[] = [];
   entity.forEach((node) => {
     const ent = node as pc.Entity;
-    if (ent.render) out.push(ent.render);
+    if (ent.render?.enabled) out.push(ent.render);
   });
   return out;
 }
@@ -142,10 +142,13 @@ const mapIds = new WeakMap<pc.Texture, number>();
 let nextMapId = 1;
 function materialKey(m: pc.StandardMaterial): string {
   const c = m.diffuse; const e = m.emissive;
-  const map = m.diffuseMap;
-  if (map && !mapIds.has(map)) mapIds.set(map, nextMapId++);
+  const maps = [m.diffuseMap, m.emissiveMap, m.opacityMap, m.normalMap, m.metalnessMap, m.glossMap, m.aoMap, m.lightMap];
+  const signature = maps.map(map => {
+    if (map && !mapIds.has(map)) mapIds.set(map, nextMapId++);
+    return map ? mapIds.get(map) : 0;
+  }).join(':');
   return [
-    map ? `map${mapIds.get(map)}` : 'flat',
+    signature, m.opacityMapChannel, m.emissiveMapChannel, m.diffuseVertexColor, m.emissiveVertexColor,
     m.useLighting ? 1 : 0,
     m.blendType,
     m.opacity.toFixed(4),

@@ -1,3 +1,4 @@
+import { reducedMotion } from '../../state/motion';
 /**
  * ⚑ FLOPPYSHEEP — the mascot game on Vera's phone (2016), and on a bookmark in 2026's browser.
  * ⚑ S221: v7, ported from the games review's prototype (`Pc_Simulation/Games_Proposals_2026-10-07_v7/
@@ -117,7 +118,6 @@ const CONFC = [BOMB.hot, BOMB.gold, BOMB.cyan, BOMB.lime, BOMB.orange, BOMB.viol
 const FW_PAIRS: Array<[string, string]> = [[BOMB.hot, BOMB.gold], [BOMB.cyan, BOMB.white], [BOMB.lime, BOMB.gold], [BOMB.violet, BOMB.pink], [BOMB.orange, BOMB.gold], [BOMB.cyan, BOMB.hot], [BOMB.gold, BOMB.white]];
 const TIERS: Array<[number, string, number]> = [[3, g.tiers[0], 0.0], [6, g.tiers[1], 0.6], [10, g.tiers[2], 1.4], [15, g.tiers[3], 2.4], [22, g.tiers[4], 3.4]];
 const rnd1 = (a: number, b: number): number => a + Math.random() * (b - a);       // visual randomness only: nothing that is played ever reads it
-const reducedMotion = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } })();
 const mmss = (s: number): string => { s = Math.max(0, Math.ceil(s - 0.06)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
 // the 3x5 type for the Jumbotron (the same bitmap letters as the 2003 phone), drawn as lamps
@@ -442,7 +442,7 @@ function makeGame(bump: () => void) {
   // ══ v6 · THE SPECTACLE ══ the platform's own bombast, laid over the world without touching one rule of it. Nothing here
   // ever mocks a lamb: the drift is untouched and never breaks a streak; the programme only counts what it called.
   let cannonLast = -99, cannonSide = 1;                          // v7: when the last salvo went, and which side the next lone cannon stands on
-  const SPEC: Spec = { full: !reducedMotion, combo: 0, heat: 0, tier: 0, best: 0, pulse: 0, lost: 0, lostText: '', shake: 0, flash: 0, flashGap: 0, fuel: 1, mi: 0, lastT: 0, finT: 0, trailT: 0, quiet: false, conf: [], rock: [], sparks: [], cannon: [], pops: [], litter: [], queue: [], lit: [1, 1, 1], ledFlash: 0, fanfare: 0 };
+  const SPEC: Spec = { full: !reducedMotion(), combo: 0, heat: 0, tier: 0, best: 0, pulse: 0, lost: 0, lostText: '', shake: 0, flash: 0, flashGap: 0, fuel: 1, mi: 0, lastT: 0, finT: 0, trailT: 0, quiet: false, conf: [], rock: [], sparks: [], cannon: [], pops: [], litter: [], queue: [], lit: [1, 1, 1], ledFlash: 0, fanfare: 0 };
   function specReset(): void {
     Object.assign(SPEC, { combo: 0, heat: 0, tier: 0, best: 0, pulse: 0, lost: 0, shake: 0, flash: 0, flashGap: 0, fuel: 1, mi: 0, lastT: 0, finT: 0, trailT: 0, quiet: false, conf: [], rock: [], sparks: [], cannon: [], pops: [], litter: [], queue: [], lit: [1, 1, 1], ledFlash: 0, fanfare: 0 });
     cannonLast = -99; cannonSide = 1;

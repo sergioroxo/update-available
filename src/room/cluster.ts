@@ -412,6 +412,8 @@ export interface ClusterShell {
    * happening (`window.__batchedProps`).
    */
   setNeverBatch(ids: Iterable<string>): void;
+  /** Only the active guidance lift needs private materials; the rest may share. */
+  setEmphasisBatch(ids: Iterable<string>): void;
   readonly state: ClusterState;
   readonly era: EraKey;
   /** the home facing: 0° (Room 1) until E4, then 270° — Room 3, Maya's room
@@ -509,12 +511,13 @@ export function buildClusterShell(
    * something writes to theirs at runtime and a shared write is a write to every
    * prop carrying it. `BELONGINGS_IDS` is the R28-2c set (the "kept" warm lift);
    * `UNBATCHED_IDS` is the S71 toggle; `neverBatch` is whatever the caller adds,
-   * which app.ts fills with the union of its own EMPHASIS_PROPS — the guide's
-   * prop-lift reaches those and nothing else. `staticIds` is NOT in this set any
+   * which app.ts fills with the moving instruments and devices. The guide's
+   * active lift is excluded separately, only for the life of that beat. `staticIds` is NOT in this set any
    * more: the static/settled split was the thing producing 61 duplicate batches,
    * and one group with one numeric id is what replaced it.
    */
   const excluded = new Set([...BELONGINGS_IDS, ...UNBATCHED_IDS, ...neverBatch]);
+  let emphasisBatch = new Set<string>();
   function publishBatchStats(): void {
     const w = window as { __batchedProps?: number; __staticBatchedProps?: number; __settledBatchedProps?: number };
     w.__staticBatchedProps = 0; // one group now — kept so old probes read 0, not stale
@@ -529,7 +532,7 @@ export function buildClusterShell(
   function rebuildSettled(): void {
     if (!batch) return;
     clearSettled();
-    roomBatch = bakeBatch(app, room, excluded);
+    roomBatch = bakeBatch(app, room, new Set([...excluded, ...emphasisBatch]));
     settledJoined = roomBatch?.joined ?? 0;
     publishBatchStats();
   }
@@ -973,6 +976,11 @@ export function buildClusterShell(
   function seamsOff(): void { for (const s of seams) s.enabled = false; }
 
   return {
+    setEmphasisBatch(ids: Iterable<string>): void {
+      const next = new Set(ids);
+      if (next.size === emphasisBatch.size && [...next].every(id => emphasisBatch.has(id))) return;
+      emphasisBatch = next; rebuildSettled();
+    },
     setNeverBatch(ids: Iterable<string>): void {
       for (const id of ids) excluded.add(id);
       rebuildSettled();

@@ -1,3 +1,4 @@
+import { REFERENCE } from './desktop/theme/chrome';
 /**
  * YOUR UPDATE HAS FAILED — entry point.
  * PC Simulator · SurvivingSOGICE · University of Bergen, CDN.
@@ -17,7 +18,12 @@ if (!canvas) throw new Error('missing #app canvas');
 
 const query = new URLSearchParams(window.location.search);
 const reinterp = query.get('reinterp') === '1';
-if (reinterp) document.documentElement.dataset.reinterp = '1';
+if (reinterp) {
+  document.documentElement.dataset.reinterp = '1';
+  if (query.get('entrance') !== 'home' && query.get('home') !== '0') {
+    document.documentElement.style.background = REFERENCE.saverSky; document.body.style.background = REFERENCE.saverSky;
+  }
+}
 
 // ?facet=tw|tm|nb|all — debug override forcing a fluid-niche facet state
 // (reinterp + 3D only; ignored by flat). No param = the era default.

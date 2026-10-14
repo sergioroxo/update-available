@@ -1,3 +1,4 @@
+import { dressDeviceHardware } from './deviceHardware';
 /**
  * ⚑ S189 — A HELD DEVICE: a room object you can pick up and play (Phase 4). Generalised from S188's Game
  * Boy (his: "so it can press it, it comes closer to you to let you play") so that the three games share
@@ -87,17 +88,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     });
   }
 
-  const box = (name: string, pos: V3, size: V3, hex: string): void => {
-    const m = new pc.StandardMaterial();
-    m.diffuse.fromString(hex); m.update();
-    const e = new pc.Entity(name);
-    e.addComponent('render', { type: 'box' });
-    if (e.render) { e.render.material = m; e.render.batchGroupId = -1; }
-    e.setLocalPosition(pos[0], pos[1], pos[2]);
-    e.setLocalScale(size[0], size[1], size[2]);
-    node.addChild(e);
-  };
-  spec.dress?.(node, box);
+  if (spec.dress) dressDeviceHardware(node, box => spec.dress!(node, box));
 
   // the screen
   const { w, h } = spec.screen;

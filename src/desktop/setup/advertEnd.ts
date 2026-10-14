@@ -1,3 +1,4 @@
+import { reducedMotion } from '../../state/motion';
 /**
  * ⚑ S242 — THE ADVERT'S END CARD (the lead, 2026-10-13: "add the same effect from the screen saver,
  * and from the noise it becomes 'Over 30 years sold as Care!' and keep the scroll 'not therapy, not a cure'").
@@ -40,12 +41,11 @@ function rng(seed: number): () => number {
   let a = seed >>> 0;
   return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
-const prefersReduced = (): boolean => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
 
 export class AdvertEndCard {
   /** seconds since the card opened (a still can set it) */
   t = 0;
-  readonly reduced = prefersReduced();
+  get reduced(): boolean { return reducedMotion(); }
   private noise: HTMLCanvasElement | null = null;
   private noiseAt = -1;
   private noiseW = 0;

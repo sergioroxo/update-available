@@ -1,3 +1,5 @@
+import { reducedMotion, setReducedMotion } from '../../state/motion';
+import { setOneShotsMuted } from '../../audio/tapeAudio';
 /** Pre-story setup, on the same desktop canvas and hit rectangles as the OS.
  * The restore entrance calls startSetup() in the stars, before restoring the seat.
  * The entrance owns the Enter glitch; ?setup=1 remains the monitor review route.
@@ -29,7 +31,7 @@ export function startSetup(): Promise<{ cut: 'full' | 'speedrun' }> {
   return os.setup.result;
 }
 
-type WindowKind = 'about' | 'sound' | 'look' | 'note' | 'advert' | 'asterisk';
+type WindowKind = 'about' | 'session' | 'look' | 'note' | 'advert' | 'asterisk';
 export class LambySetup {
   open = true;
   hits: SetupHit[] = [];
@@ -37,7 +39,6 @@ export class LambySetup {
   readonly result: Promise<{ cut: Cut }>;
   private resolve!: (result: { cut: Cut }) => void;
   private step = 0;
-  private bootT = 0;
   private noteT = 0;
   private noteOpened = false;
   private noteClosedAt: number | null = null;
@@ -45,6 +46,8 @@ export class LambySetup {
   private dismissed = false;
   private window: WindowKind | null = null;
   private hover = '';
+  private aboutPage = 0;
+  private get mobile(): boolean { return window.innerWidth < 600; }
   private cut: Cut = currentCut();
   private player: NetVisionPlayerApp | null = null;
   /** ⚑ S242 — the advert's end card: noise → gathered title + the small print (played advert only) */
@@ -59,7 +62,7 @@ export class LambySetup {
 
   constructor() { this.result = new Promise((resolve) => { this.resolve = resolve; }); }
   get ready(): boolean { return this.noteOpened && this.noteClosedAt !== null && this.clock - this.noteClosedAt >= 4; }
-  get stage(): string { return this.bootT < 1.4 ? 'boot' : this.window ?? `balloon-${this.step + 1}`; }
+  get stage(): string { return this.window ?? `balloon-${this.step + 1}`; }
   setDeviceStatus(status: 'asking' | 'denied' | 'silent' | 'live' | 'idle' | 'unsupported'): void {
     const text = status === 'asking' ? copy.look.asking : status === 'denied' ? copy.look.denied
       : status === 'silent' || status === 'unsupported' ? copy.look.unavailable : '';
@@ -68,18 +71,17 @@ export class LambySetup {
   private advance(step: number): void { this.step = step; this.window = null; this.noteT = 0; this.hits = []; this.dirty = true; }
   private closeWindow(): void {
     const w = this.window;
-    if (w === 'advert') { this.player?.skip(); this.track?.pause(); this.track = null; this.player = null; this.advance(7); }
-    else if (w === 'asterisk') { this.endCard = null; this.advance(7); }
-    else if (w === 'note') { if (this.noteClosedAt === null) this.noteClosedAt = this.clock; this.advance(5); }
+    if (w === 'advert') { this.player?.skip(); this.track?.pause(); this.track = null; this.player = null; this.advance(8); }
+    else if (w === 'asterisk') { this.endCard = null; this.advance(8); }
+    else if (w === 'note') { if (this.noteClosedAt === null) this.noteClosedAt = this.clock; this.advance(6); }
     else if (w === 'about') this.advance(2);
-    else if (w === 'sound') this.advance(3);
-    else if (w === 'look') this.advance(4);
+    else if (w === 'session') this.advance(3);
+    else if (w === 'look') this.advance(5);
   }
   update(dt: number): void {
     if (!this.open) return;
     this.clock += dt;
-    if (this.bootT < 1.4) { this.bootT += dt; this.dirty = true; }
-    if (this.step === 4 && !this.window && this.bootT >= 1.4) {
+    if (this.step === 5 && !this.window) {
       this.noteT += dt;
       if (this.noteT >= 0.8) { this.window = 'note'; this.noteOpened = true; this.hits = []; this.dirty = true; }
     }
@@ -103,59 +105,65 @@ export class LambySetup {
     const id = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h)?.id;
     if (!id) { if (this.window === 'advert') this.player?.handleClick(x, y); return; }
     if (id === 'setup-compact-close') {
-      if (this.step < 5) this.advance(4);
-      else if (this.step === 5) { chooseCut(this.cut); this.advance(6); }
-      else if (this.step === 6) this.advance(7);
+      if (this.step < 6) this.advance(5);
+      else if (this.step === 6) { chooseCut(this.cut); this.advance(7); }
+      else if (this.step === 7) this.advance(8);
       else if (this.ready) { this.destroy(); this.resolve({ cut: this.cut }); }
       return;
     }
     if (id === 'setup-close' || id === 'setup-advert-skip') { this.closeWindow(); return; }
+    if (id === 'setup-about-back' || id === 'setup-about-next') { this.aboutPage += id === 'setup-about-next' ? 1 : -1; this.dirty = true; return; }
     if (id === 'setup-device') { this.requestDeviceLook?.(); return; }
+    if (id === 'setup-reduce-motion') { setReducedMotion(!reducedMotion()); this.dirty = true; return; }
     if (id === 'setup-test') { this.testSound(); return; }
     if (id === 'setup-sound-on' || id === 'setup-sound-quiet') {
-      ledger.view.captions = id === 'setup-sound-quiet'; this.sound?.pause(); this.advance(3); return;
+      ledger.view.captions = id === 'setup-sound-quiet'; setOneShotsMuted(ledger.view.captions); this.sound?.pause(); this.advance(4); return;
     }
-    if (id === 'setup-dismiss') { this.dismissed = true; if (this.step < 5) this.advance(4); this.dirty = true; return; }
+    if (id === 'setup-dismiss') { this.dismissed = true; if (this.step < 6) this.advance(5); this.dirty = true; return; }
     if (id === 'setup-note-open') { this.window = 'note'; this.noteOpened = true; this.dirty = true; return; }
     const n = Number(id.substring(id.lastIndexOf('-') + 1));
-    if (this.step === 0) { if (n === 1) this.dismissed = true; this.advance(n === 0 ? 1 : 4); }
+    if (this.step === 0) { if (n === 1) this.dismissed = true; this.advance(n === 0 ? 1 : 5); }
     else if (this.step === 1) { if (n === 0) this.window = 'about'; else this.advance(2); }
-    else if (this.step === 2) {
-      if (n === 0) { this.window = 'sound'; this.testSound(); }
-      else { ledger.view.captions = n === 2; this.advance(3); }
-    } else if (this.step === 3) this.window = 'look';
-    else if (this.step === 5) { this.cut = n === 0 ? 'full' : 'speedrun'; chooseCut(this.cut); this.advance(6); }
-    else if (this.step === 6) {
-      if (n === 1) this.advance(7);
+    else if (this.step === 2) { if (n === 0) this.window = 'session'; else this.advance(3); }
+    else if (this.step === 3) {
+      if (n === 0) this.testSound();
+      else { ledger.view.captions = n === 2; setOneShotsMuted(ledger.view.captions); this.advance(4); }
+    } else if (this.step === 4) this.window = 'look';
+    else if (this.step === 6) { this.cut = n === 0 ? 'full' : 'speedrun'; chooseCut(this.cut); this.advance(7); }
+    else if (this.step === 7) {
+      if (n === 1) this.advance(8);
       else {
         this.window = 'advert';
         this.player = new NetVisionPlayerApp({ skipDelaySeconds: 0, fileToLedger: false });
         this.player.onClosed = result => {
           this.track?.pause(); this.track = null; this.player = null;
-          if (result === 'skipped') this.advance(7);
+          if (result === 'skipped') this.advance(8);
           else { this.window = 'asterisk'; this.endCard = new AdvertEndCard(); this.endCardPaint = 0; this.hits = []; this.dirty = true; }
         };
         this.track = playOnce(this.player.trackName);
       }
-    } else if (this.step === 7 && this.ready) { this.destroy(); this.resolve({ cut: this.cut }); }
+    } else if (this.step === 8 && this.ready) { this.destroy(); this.resolve({ cut: this.cut }); }
     this.hits = []; this.dirty = true;
   }
   private text(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, width: number, size = 11): number {
     ui.setFont(ctx, size); ctx.fillStyle = P.black;
-    for (const line of ui.wrapText(ctx, text, width)) { ctx.fillText(line, x, y); y += size + 5; }
+    for (const line of ui.wrapText(ctx, text, width)) { ctx.fillText(line, x, y); y += size + (this.mobile ? 3 : 5); }
     return y;
   }
   private button(ctx: CanvasRenderingContext2D, id: string, label: string, x: number, y: number, w: number, disabled = false): void {
-    ui.button(ctx, x, y, w, 27, label, { disabled, hover: this.hover === id });
-    if (!disabled) this.hits.push({ id, x, y, w, h: 27 });
+    const h = this.mobile ? 36 : 27;
+    ui.button(ctx, x, y, w, h, label, { disabled, hover: this.hover === id });
+    if (this.mobile) {
+      ui.setFont(ctx, 14);
+      // Cover the small shared-chrome label before setting the larger one.
+      ui.px(ctx, x + 2, y + 2, w - 4, h - 4, P.beige);
+      ctx.fillStyle = disabled ? P.grey : this.hover === id ? P.navy : P.black;
+      ctx.fillText(label, Math.round(x + (w - ctx.measureText(label).width) / 2), y + 10);
+    }
+    if (!disabled) this.hits.push({ id, x, y, w, h });
   }
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = []; ui.resetFrames();
-    if (this.bootT < 1.4) {
-      ui.px(ctx, 0, 0, 512, 384, this.bootT < 0.45 ? P.black : P.teal);
-      if (this.bootT >= 0.45) { ui.setFont(ctx, 24); ctx.fillStyle = P.white; ctx.fillText(copy.boot, 190, 153); }
-      return;
-    }
     ui.px(ctx, 0, 0, 512, 384, P.teal);
     // Inert desktop furniture; only the setup's controls publish hits.
     copy.icons.forEach((label, i) => {
@@ -169,6 +177,7 @@ export class LambySetup {
     ui.button(ctx, 4, 360, 54, 21, copy.startMenu);
     ui.bevel(ctx, 64, 360, 190, 21, false); ui.setFont(ctx, 10); ctx.fillStyle = P.black; ctx.fillText(copy.title, 72, 365);
     if (this.window) { this.drawWindow(ctx); return; }
+    if (this.mobile) { this.drawMobileBalloon(ctx); return; }
     if (!this.dismissed) {
       ui.bevel(ctx, 359, 304, 122, 29, true); ui.px(ctx, 366, 310, 108, 16, P.paper);
       drawLambyChar(ctx, 420, 260, { mood: 'cheerful', action: 'point', t: 0, moodStart: 0, scale: 0.7 });
@@ -178,7 +187,7 @@ export class LambySetup {
     }
     if (this.dismissed) {
       const c = ui.windowFrame(ctx, 111, 76, 360, 140, copy.title);
-      if (this.step < 7 || this.ready) this.hits.push({ ...c.closeBox, id: 'setup-compact-close' });
+      if (this.step < 8 || this.ready) this.hits.push({ ...c.closeBox, id: 'setup-compact-close' });
     }
     else { ui.px(ctx, 110, 75, 362, 142, P.black); ui.px(ctx, 111, 76, 360, 140, P.tooltip); }
     const b = copy.balloons[this.step];
@@ -191,8 +200,27 @@ export class LambySetup {
     let x = 128;
     b.buttons.forEach((label, i) => {
       ui.setFont(ctx, 10); const w = Math.ceil(ctx.measureText(label).width) + 18;
-      this.button(ctx, this.step === 6 ? (i === 0 ? 'setup-advert-play-0' : 'setup-advert-offer-skip-1') : `setup-choice-${i}`, label, x, 169, w, this.step === 7 && !this.ready);
+      this.button(ctx, this.step === 7 ? (i === 0 ? 'setup-advert-play-0' : 'setup-advert-offer-skip-1') : this.step === 3 ? ['setup-test', 'setup-sound-on', 'setup-sound-quiet'][i] : `setup-choice-${i}`, label, x, 169, w, this.step === 8 && !this.ready);
       x += w + 6;
+    });
+  }
+  private drawMobileBalloon(ctx: CanvasRenderingContext2D): void {
+    const b = copy.balloons[this.step];
+    if (!this.dismissed) drawLambyChar(ctx, 414, 308, { mood: 'cheerful', action: 'point', t: 0, moodStart: 0, scale: 0.52 });
+    if (this.dismissed) {
+      const c = ui.windowFrame(ctx, 20, 26, 472, 246, copy.title);
+      if (this.step < 8 || this.ready) this.hits.push({ ...c.closeBox, id: 'setup-compact-close' });
+    } else {
+      ui.px(ctx, 20, 26, 472, 246, P.black); ui.px(ctx, 21, 27, 470, 244, P.tooltip);
+      ui.px(ctx, 373, 272, 16, 16, P.black); ui.px(ctx, 374, 272, 14, 14, P.tooltip);
+      ui.setFont(ctx, 14); ctx.fillStyle = P.black; ctx.fillText(copy.dismiss, 470, 32);
+      this.hits.push({ id: 'setup-dismiss', x: 458, y: 28, w: 30, h: 30 });
+    }
+    this.text(ctx, b.text, 42, this.dismissed ? 57 : 49, 414, 16);
+    b.buttons.forEach((label, i) => {
+      const id = this.step === 7 ? (i === 0 ? 'setup-advert-play-0' : 'setup-advert-offer-skip-1')
+        : this.step === 3 ? ['setup-test','setup-sound-on','setup-sound-quiet'][i] : `setup-choice-${i}`;
+      this.button(ctx, id, label, 42, 139 + i * 42, 320, this.step === 8 && !this.ready);
     });
   }
   private drawWindow(ctx: CanvasRenderingContext2D): void {
@@ -224,13 +252,23 @@ export class LambySetup {
       ui.setFont(ctx, 9); ctx.fillStyle = P.black; ctx.fillText(copy.about.location, c.x + 4, c.y + 38);
       ui.inputField(ctx, c.x + 62, c.y + 34, c.w - 67, 19, copy.about.address, false);
       ui.px(ctx, c.x, c.y + 57, c.w, c.h - 76, P.paper);
-      let y = c.y + 66;
-      for (const p of copy.about.paragraphs) y = this.text(ctx, p, c.x + 12, y, c.w - 24, 10) + 8;
+      if (this.mobile) {
+        ui.setFont(ctx, 14);
+        const lines = copy.about.paragraphs.flatMap(p => [...ui.wrapText(ctx, p, c.w - 28), '']);
+        const pageSize = 10, pages = Math.ceil(lines.length / pageSize);
+        this.aboutPage = Math.max(0, Math.min(pages - 1, this.aboutPage));
+        ctx.fillStyle = P.black;
+        lines.slice(this.aboutPage * pageSize, (this.aboutPage + 1) * pageSize).forEach((line, i) => ctx.fillText(line, c.x + 14, c.y + 64 + i * 17));
+        this.button(ctx, 'setup-about-back', copy.about.toolbar[0], c.x + 12, c.y + c.h - 43, 95, this.aboutPage === 0);
+        this.button(ctx, 'setup-about-next', copy.about.toolbar[1], c.x + 116, c.y + c.h - 43, 110, this.aboutPage === pages - 1);
+      } else {
+        let y = c.y + 66;
+        for (const p of copy.about.paragraphs) y = this.text(ctx, p, c.x + 12, y, c.w - 24, 9) + 6;
+      }
       ui.bevel(ctx, c.x, c.y + c.h - 18, c.w, 17, false);
       this.text(ctx, copy.about.status, c.x + 4, c.y + c.h - 15, c.w - 8, 8);
-    } else if (kind === 'sound') {
-      this.text(ctx, copy.sound.body, c.x + 20, c.y + 20, c.w - 40, 12);
-      copy.sound.buttons.forEach((label, i) => this.button(ctx, ['setup-test','setup-sound-on','setup-sound-quiet'][i], label, c.x + 70, c.y + 69 + i * 43, 290));
+    } else if (kind === 'session') {
+      this.text(ctx, copy.session.body, c.x + 22, c.y + 26, c.w - 44, this.mobile ? 14 : 12);
     } else if (kind === 'look') {
       for (let i = 0; i < 3; i++) {
         const x = c.x + 22 + i * 149;
@@ -242,8 +280,13 @@ export class LambySetup {
       if (this.deviceStatus) this.text(ctx, this.deviceStatus, c.x + 20, c.y + 241, c.w - 40, 9);
     } else if (kind === 'note') {
       ui.px(ctx, c.x + 10, c.y + 12, c.w - 20, 206, P.paper);
-      const y = this.text(ctx, copy.note.body, c.x + 22, c.y + 26, c.w - 44, 12);
-      this.text(ctx, copy.note.menu, c.x + 22, y + 20, c.w - 44, 10);
+      const y = this.text(ctx, copy.note.body, c.x + 22, c.y + 26, c.w - 44, this.mobile ? 14 : 12);
+      this.text(ctx, copy.note.menu, c.x + 22, y + (this.mobile ? 8 : 12), c.w - 44, this.mobile ? 12 : 10);
+      const ry = c.y + c.h - 77;
+      ui.bevel(ctx, c.x + 22, ry, 14, 14, false);
+      if (reducedMotion()) { ui.px(ctx, c.x + 25, ry + 5, 3, 5, P.black); ui.px(ctx, c.x + 28, ry + 3, 5, 3, P.black); }
+      this.text(ctx, copy.note.reduceMotion, c.x + 44, ry, c.w - 66, this.mobile ? 14 : 11);
+      this.hits.push({ id: 'setup-reduce-motion', x: c.x + 20, y: ry - 4, w: c.w - 40, h: 22 });
     }
     this.button(ctx, 'setup-close', copy.close, c.x + c.w - 95, c.y + c.h - 43, 81);
   }

@@ -1,3 +1,5 @@
+import { buildRoomSpecks } from '../room/specks';
+import { reducedMotion } from '../state/motion';
 import { startSetup } from '../desktop/setup/setup';
 /**
  * Engine — one room, two facings (PRODUCTION_SCRIPT v0.3 Part I; room per
@@ -1123,6 +1125,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let glitchT = 0;
   let glitchDur = 0;
   os.onGlitch = (kind) => {
+    if (options.reinterp && reducedMotion()) return;
     glitch.style.background = kind === 'person'
       ? 'radial-gradient(ellipse at center, rgba(255,220,140,0.18) 0%, rgba(180,80,60,0.24) 58%, rgba(70,120,180,0.35) 100%)'
       : 'radial-gradient(ellipse at center, rgba(130,180,255,0.18) 0%, rgba(60,90,150,0.34) 68%, rgba(0,0,0,0.48) 100%)';
@@ -1656,6 +1659,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       emphasisRestore.clear();
     }
+    cluster?.setEmphasisBatch(key ? EMPHASIS_PROPS[key] ?? [] : []);
     appliedEmphasis = key;
     emphasisPhase = 0;
     if (key) {
@@ -1673,7 +1677,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** the lifted props, re-lit each frame on the breath (see EMPHASIS_BREATH_SECONDS) */
   function breatheEmphasis(dt: number): void {
     if (!appliedEmphasis) return;
-    emphasisPhase += dt;
+    if (!reducedMotion()) emphasisPhase += dt;
     const k = 0.5 + 0.5 * Math.sin((emphasisPhase / EMPHASIS_BREATH_SECONDS) * Math.PI * 2);
     const frac = 0.35 + (1.0 - 0.35) * k;
     for (const id of EMPHASIS_PROPS[appliedEmphasis] ?? []) {
@@ -1694,12 +1698,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /**
    * ⚑ S108 — the props the lift above can reach must not share a material with
    * anything, or lifting one lights every prop of the same colour in the batch.
-   * Handed to the cluster here rather than at construction because this table is
-   * declared after the shell is built; `ClusterShell.setNeverBatch` carries the
-   * full reasoning.
+   * setPropEmphasis restores the retiring lift, then gives the cluster only the
+   * current ids before capturing their new private paints. Inactive props can
+   * share again; the moving racket stays private throughout.
    */
-  // Entrance holds every narrative mutation: keep these props batched until setup hands over.
-  if (!options.restoreEntrance) cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat());
+  // Apply the authored tilt before the entrance takes its snapshot; rebuild below.
+  syncRacketDemo();
+  cluster?.setNeverBatch(['tennisRacketModel']); // the demonstration moves it
   /** ⚑ S183 — the institution's corner: named, pressable, and pulling with the file */
   const institution = options.reinterp === true ? createInstitution(room) : null;
   if (institution) {
@@ -1895,12 +1900,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  passes ?motion=reduced), every conducted flight keeps its clock — the story's beats that ride on it
    *  still land on time — but the camera does not travel: it fades, cuts to where the flight ends, and
    *  fades back. A blink is already this piece's grammar for moving you (R28 §1). */
-  const reducedMotion = (() => {
-    try {
-      if (new URLSearchParams(location.search).get('motion') === 'reduced') return true;
-      return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    } catch { return false; }
-  })();
+
   const RM_FADE = 0.25;
   function startCamMove(to: { x: number; y: number; z: number; pitch: number; yaw: number },
                         dur: number, conducted: boolean,
@@ -2760,7 +2760,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const resolve = restoreSeatDone; restoreSeatDone = null; resolve?.();
       camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
       cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
-      cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat());
+      cluster?.setNeverBatch(['tennisRacketModel']);
     }
     flipBtn.style.display = 'none';
     closeMonitor?.hide();
@@ -3283,6 +3283,30 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   /** ⚑ S188/S189 — the devices you can pick up and play (src/room/handheld.ts, src/games/) */
   const devices = options.reinterp === true ? buildDevices(room) : null;
+  devices?.tick(0, 'e1', () => false, 0); // initialise its glass before entrance captures the image
+  const specks = options.reinterp ? buildRoomSpecks(app, camera) : null;
+  if (debugOn) {
+    const round = (n: number): number => Math.round(n * 1e5) / 1e5;
+    (window as { __roomAppearance?: () => unknown }).__roomAppearance = () => {
+      const appearance: Record<string, unknown> = {};
+      for (const [id, h] of room.props) {
+        const nodes: unknown[] = [];
+        h.entity.forEach(n => {
+          const e = n as pc.Entity;
+          nodes.push({ name: e.name, enabled: e.enabled,
+            transform: [...e.getWorldTransform().data].map(round),
+            materials: (e.render?.meshInstances ?? []).map(mi => {
+              const m = mi.material as pc.StandardMaterial;
+              const maps = [m.diffuseMap, m.emissiveMap, m.opacityMap].map(t => t ? { width: t.width, height: t.height, name: t.name } : null);
+              return { diffuse: [m.diffuse.r, m.diffuse.g, m.diffuse.b].map(round), emissive: [m.emissive.r, m.emissive.g, m.emissive.b].map(round), opacity: round(m.opacity), blend: m.blendType, maps, vertices: mi.mesh.vertexBuffer.numVertices };
+            }) });
+        });
+        appearance[id] = nodes;
+      }
+      return appearance;
+    };
+  }
+
   /** `has` for the devices' story gates: a ledger record id, or "kind:<practice>" in this era's file */
   let kindsAt = ''; let kinds = new Set<string>();
   function deviceHas(era: string, fileSize: number): (id: string) => boolean {
@@ -3436,7 +3460,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  the computer should come sooner, as we travel to space"); < 0 = not pending */
   let machineBootDue = -1;
   const startFirstBed = (): void => {
-    if (bedStarted) return;
+    if (bedStarted || restoreEntrance?.blocking) return;
     bedStarted = true;
     roomBed.set(BED_FOR[os.era] ?? BED_FOR.e1, 1.5);
     // S155 / R3-02: the descent has a score — a pad falling an octave over the bed, 40 s,
@@ -3739,6 +3763,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const entranceRay = xrInput?.ray();
     if (entranceRay) restoreEntrance?.hover(entranceRay);
     restoreEntrance?.update(dt);
+    specks?.update(dt, cluster?.era ?? 'e1', cloud?.visible || closeStage ? 0 : restoreEntrance?.blocking ? restoreEntrance.roomVisibility : 1);
     if (restoreEntrance?.blocking && !restoreEntrance.flying) {
       publishNow();
       cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
@@ -3765,7 +3790,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // that yields instantly to any input (endDescent). S53: it IS a camMove
       // now, so it needs no clock of its own; it is landed below, the frame
       // the arc resolves.
-      if (camMove && reducedMotion) {
+      if (camMove && reducedMotion()) {
         // the cut: dark by RM_FADE, the pose set at the bottom of the fade, light again by 2×RM_FADE
         const before = camMove.t;
         camMove.t += dt;
@@ -4115,6 +4140,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (flipBtn.style.boxShadow) flipBtn.style.boxShadow = '';
     }
 
+    if (options.reinterp && reducedMotion()) { glitchT = 0; }
     if (glitchT > 0) {
       glitchT = Math.max(0, glitchT - dt);
       const k = glitchT / Math.max(glitchDur, 0.001);
@@ -4917,15 +4943,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camYaw = 0;
       cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else if (options.restoreEntrance) {
-      camPos.set(drivenMoves && !reducedMotion ? DESCENT_FROM.x : EYE.x,
-        drivenMoves && !reducedMotion ? DESCENT_FROM.y : EYE.y,
-        drivenMoves && !reducedMotion ? DESCENT_FROM.z : EYE.z);
-      camPitch = drivenMoves && !reducedMotion ? DESCENT_FROM.pitch : 0;
-      camYaw = drivenMoves && !reducedMotion ? DESCENT_FROM.yaw : 0;
+      camPos.set(drivenMoves && !reducedMotion() ? DESCENT_FROM.x : EYE.x,
+        drivenMoves && !reducedMotion() ? DESCENT_FROM.y : EYE.y,
+        drivenMoves && !reducedMotion() ? DESCENT_FROM.z : EYE.z);
+      camPitch = drivenMoves && !reducedMotion() ? DESCENT_FROM.pitch : 0;
+      camYaw = drivenMoves && !reducedMotion() ? DESCENT_FROM.yaw : 0;
       cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
       applyLightsOn();
       restoreEntrance = buildRestoreEntrance(app, room, cameraRig, camera, {
-        setupCanvas: os.canvas, setup: () => os.setup,
+        points: specks?.landingPoints() ?? [], setupCanvas: os.canvas, setup: () => os.setup,
         updateSetup: (dt) => { os.update(dt); const dirty = os.dirty; os.dirty = false; return dirty; },
         clearSetup: () => {
           if (os.setup) {
@@ -4936,15 +4962,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           }
           paintMotionBtn();
         },
-        reduced: reducedMotion, crossFade: reducedMotion || !drivenMoves, lights: applyRoomLight,
+        reduced: reducedMotion, crossFade: () => reducedMotion() || !drivenMoves, lights: applyRoomLight,
         prepareRestore: () => {
-          if (!drivenMoves || reducedMotion) {
+          if (!drivenMoves || reducedMotion()) {
             clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
             cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
           }
         },
         flyToSeat: () => {
-          if (!drivenMoves || reducedMotion) {
+          if (!drivenMoves || reducedMotion()) {
             clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
             cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
             return Promise.resolve();
@@ -4954,7 +4980,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
             startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }, Math.max(DESCENT_SECONDS, 1.875 * Math.hypot(((camYaw + 180) % 360 + 360) % 360 - 180, camPitch) / 9.1), true, DESCENT_VIA);
           });
         },
-        beginStory: () => { cluster?.setNeverBatch(Object.values(EMPHASIS_PROPS).flat()); wakeActive = true; wakeT = WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS; finishWake(); }
+        beginStory: () => { startFirstBed(); cluster?.setNeverBatch(['tennisRacketModel']); wakeActive = true; wakeT = WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS; finishWake(); }
       });
     } else {
       // fresh load (past the interim log-in panel): the room is already there,

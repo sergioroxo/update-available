@@ -1,3 +1,4 @@
+import { reducedMotion } from '../state/motion';
 /**
  * ⚑ S222 — CLEAR (2003), Restorify's game on Daniel's flip phone — ported from the games review's prototype
  * CLEAR v8 (Pc_Simulation/Games_Proposals_2026-10-08_clear_v8/clear_v8.html; the game in full is the v7
@@ -363,7 +364,6 @@ const SLOT_P = 13, SLOT_W = 10, SLOT_H = 14;   // v8: a slot holds one 5×7 lett
 const slotX = (i: number): number => { const tw = SENTENCE.length * SLOT_P - (SLOT_P - SLOT_W); return BX + Math.round((BW - tw) / 2) + i * SLOT_P; };
 const slotText = (g: Painter, ch: string, x: number, y: number, col: string): void => T(g, ch, x + Math.round((SLOT_W - textW(ch, 2)) / 2), y, col, 2);
 const mmss = (s: number): string => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-const reducedMotion = ((): boolean => { try { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } })();
 /** the soft keys on the glass (the prototype's hit rects) */
 const KEY_PAUSE = { x: 8, y: 292, w: 70, h: 26 }, KEY_SWAP = { x: 90, y: 292, w: 60, h: 26 }, KEY_SOUND = { x: 162, y: 292, w: 70, h: 26 };
 const inside = (r: { x: number; y: number; w: number; h: number }, x: number, y: number): boolean => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
@@ -573,7 +573,7 @@ export class Clear implements DeviceGame {
   private beginFinish(bySentence: boolean): void {
     this.mode = 'finish'; this.finT = 0; this.readI = -1; this.shots = []; SND.padOff();
     if (bySentence) this.say(D.partner.whole);
-    this.flashFx = reducedMotion ? 0 : 0.4; sfx.done();
+    this.flashFx = reducedMotion() ? 0 : 0.4; sfx.done();
   }
 
   // ── the turn of the clock ─────────────────────────────────────────────────────────────────────────────────

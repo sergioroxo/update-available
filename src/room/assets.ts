@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import { mergeRacketMeshes } from './racketMesh';
 /**
  * Asset pipeline — REAL low-poly models (Round 24; Sérgio: "I want only real
  * low-poly models… add asset pipeline"). Hero furniture becomes CC0 GLB meshes
@@ -187,6 +188,7 @@ export function spawnModel(key: string, pos: number[], propYaw: number, colorHex
   model.setLocalScale(sx, sy, sz);
   model.setLocalPosition(-m.cx * sx, -m.baseY * sy, -m.cz * sz);
   if (colorHex) tintModel(model, colorHex, partColors, partGlow);
+  if (key === 'tennisRacket') mergeRacketMeshes(model);
 
   // `tilt` rotates the already-recentered model around its own pivot (fixed
   // at this entity's origin) — a correction `yaw` alone can't express, since

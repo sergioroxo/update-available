@@ -1,3 +1,4 @@
+import { reducedMotion } from '../state/motion';
 /**
  * ⚑ THE LEAVE PAGE — an in-between (S168 / W-F1).
  *
@@ -249,11 +250,11 @@ export function starfield(cvs: HTMLCanvasElement, W: number, H: number, opts?: S
   // never early: a person may have opened this page because someone is looking
   let raf = 0, last = performance.now(), clock = 0;
   const frame = (now: number): void => {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; if (!reducedMotion()) clock += dt;
     const t = clock % EVERY, start = EVERY - HOLD - 2 * MOVE;
     // 0 = free flight, 1 = gathered
     const k = t < start ? 0 : t < start + MOVE ? (t - start) / MOVE : t < start + MOVE + HOLD ? 1 : Math.max(0, 1 - (t - start - MOVE - HOLD) / MOVE);
-    const e = k * k * (3 - 2 * k);
+    const e = reducedMotion() ? 1 : k * k * (3 - 2 * k);
     ctx.fillStyle = REFERENCE.saverSky; ctx.fillRect(0, 0, W, H);
     stars.forEach((s, i) => {
       s.z -= dt * 0.35 * (1 - e);

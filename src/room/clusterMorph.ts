@@ -1,3 +1,4 @@
+import { reducedMotion } from '../state/motion';
 /**
  * The cluster SPACE morph — the shipped build's EraMorph grammar, ported
  * (src/room/era2morph.ts in the main folder; Sérgio Round 21: "you already had
@@ -301,7 +302,7 @@ export class ClusterMorph {
   goToState(idx: number, animate: boolean, pace = 1): void {
     this.active = false; this.plans = [];
     this.pace = Math.max(0.1, pace);
-    if (!animate || idx <= 0) { this.snapTo(Math.max(0, idx)); return; }
+    if (!animate || reducedMotion() || idx <= 0) { this.snapTo(Math.max(0, idx)); return; }
 
     this.snapTo(idx - 1);
     this.state = idx;
@@ -405,7 +406,7 @@ export function sampleRoomSurfaces(room: RoomHandles, count: number): { point: p
     if (!h.entity.enabled) continue;
     h.entity.forEach((node) => {
       const e = node as pc.Entity;
-      for (const mi of e.render?.meshInstances ?? []) {
+      for (const mi of e.render?.enabled ? e.render.meshInstances : []) {
         const positions: number[] = [], indices: number[] = [];
         mi.mesh.getPositions(positions); mi.mesh.getIndices(indices);
         const transform = mi.node.getWorldTransform();

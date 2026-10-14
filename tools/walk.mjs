@@ -438,7 +438,9 @@ async function main() {
     await pressSetup('setup-choice-0'); // welcome → About offer
     await pressSetup('setup-choice-0'); // open About
     await pressSetup('setup-close');
-    await pressSetup('setup-choice-0'); // Sound
+    await pressSetup('setup-choice-0'); // Whose session?
+    await pressSetup('setup-close');
+    await pressSetup('setup-test'); // chime in the same balloon
     await pressSetup('setup-sound-on');
     await pressSetup('setup-choice-0'); // How to look
     await pressSetup('setup-close');
@@ -1021,7 +1023,8 @@ const LAP = { w: 224, h: 140 };
       phase: os.setup?.open ? 'setup:' + os.setup.stage : os.phase, era: os.desktopEra,
       spine: window.__spine ? window.__spine().step : null,
       libraryShowing: !!window.__closeMonitor?.libraryShowing,
-      driven: !!(pose && pose.driven),
+      // A relocation owns the view through the blink between its camera curves too.
+      driven: !!(pose && (pose.driven || pose.reloc)),
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,

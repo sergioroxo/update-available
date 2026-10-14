@@ -1,3 +1,4 @@
+import { reducedMotion } from '../../state/motion';
 /**
  * THE NETVISION PLAYER — the faux-VHS "New You Program" infomercial (S2R.4,
  * R28-2d-iv). Per docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md S2R.4
@@ -2002,6 +2003,7 @@ export class NetVisionPlayerApp {
   }
 
   private drawTapeNoise(ctx: CanvasRenderingContext2D, a: Rect, amount: number): void {
+    if (reducedMotion()) return;
     const count = Math.round(16 + amount * 260);
     for (let i = 0; i < count; i++) {
       const x = a.x + Math.floor(Math.random() * a.w);
@@ -2013,6 +2015,7 @@ export class NetVisionPlayerApp {
 
   /** an occasional rolling glitch bar — soft, not a strobe */
   private drawTrackingBand(ctx: CanvasRenderingContext2D, a: Rect): void {
+    if (reducedMotion()) return;
     const bandH = 6;
     const period = 2.4;
     const frac = (this.elapsed % period) / period;

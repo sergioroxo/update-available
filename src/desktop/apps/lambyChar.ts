@@ -1,3 +1,4 @@
+import { reducedMotion } from '../../state/motion';
 /**
  * LAMBY, THE CHARACTER — THE ONE DEFINITION (Session 45; de-duplicated and
  * restyled in Session 48).
@@ -60,13 +61,13 @@ const CYCLE = 3.2; // s — the lab's animation cycle (blink phase + appear pop)
 /** Slow ambient sway during idle — the "little fidget". Silenced while sad:
  *  stillness is the point of the hold. */
 function idleDrift(p: LambyPose): { dx: number; dy: number } {
-  if (p.action !== 'idle' || p.mood === 'sad') return { dx: 0, dy: 0 };
+  if (reducedMotion() || p.action !== 'idle' || p.mood === 'sad') return { dx: 0, dy: 0 };
   return { dx: Math.sin(p.t * 0.9) * 1.6, dy: Math.sin(p.t * 1.6 + 1.2) * 1.2 };
 }
 
 /** Clippy-style pop: overshoot on the way up, a squash on landing, then settle. */
 function appearBounce(p: LambyPose): { sx: number; sy: number } {
-  if (p.action !== 'appear') return { sx: 1, sy: 1 };
+  if (reducedMotion() || p.action !== 'appear') return { sx: 1, sy: 1 };
   const local = p.loopAppear ? (p.t % CYCLE) / CYCLE : Math.min(p.t, CYCLE) / CYCLE;
   if (local >= 0.6) return { sx: 1, sy: 1 };
   const q = local / 0.6;
@@ -81,7 +82,7 @@ function deflateAmount(p: LambyPose): { squash: number; sink: number } {
   if (p.mood !== 'sad') return { squash: 0, sink: 0 };
   const u = Math.min(1, Math.max(0, (p.t - p.moodStart) / 0.65));
   const eased = 1 - Math.pow(1 - u, 3);
-  const tremor = u >= 1 ? Math.sin(p.t * 1.1) * 0.4 : 0;
+  const tremor = u >= 1 && !reducedMotion() ? Math.sin(p.t * 1.1) * 0.4 : 0;
   return { squash: 0.1 * eased, sink: 6 * eased + tremor };
 }
 

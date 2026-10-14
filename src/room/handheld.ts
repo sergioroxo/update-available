@@ -1,3 +1,4 @@
+import { dressDeviceHardware } from './deviceHardware';
 /**
  * ⚑ S188/S189 — THE DEVICES YOU CAN PICK UP AND PLAY (Phase 4; PLAN_PHASE4_GAMES_2026-09-27).
  *
@@ -114,14 +115,10 @@ export function buildDevices(room: RoomHandles): Devices {
     if (shelfDressed) return;
     const face = (room.props.get('danielHandheld2003')?.entity.findByName('model-handheld1997-tilt') as pc.Entity | null)?.children[0] as pc.Entity | undefined;
     if (!face) return;
-    const box: Box = (name, pos, size, hex) => {
-      const m = new pc.StandardMaterial(); m.diffuse.fromString(hex); m.update();
-      const e = new pc.Entity(name); e.addComponent('render', { type: 'box' });
-      if (e.render) { e.render.material = m; e.render.batchGroupId = -1; }
-      e.setLocalPosition(pos[0], pos[1], pos[2]); e.setLocalScale(size[0], size[1], size[2]); face.addChild(e);
-    };
-    gbHardware(box);
-    box('hh-screenOff', [0.15, 8.25, FACE_Z + 0.04], [3.9, 3.5, 0.08], H.screenDark);
+    dressDeviceHardware(face, box => {
+      gbHardware(box);
+      box('hh-screenOff', [0.15, 8.25, FACE_Z + 0.04], [3.9, 3.5, 0.08], H.screenDark);
+    });
     shelfDressed = true;
   };
   const current = (era: string): HeldDevice | undefined => [...built.values()].find((d) => d.spec.era === era);

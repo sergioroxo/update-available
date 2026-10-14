@@ -1,3 +1,4 @@
+import { reducedMotion } from '../../state/motion';
 /**
  * ⚑ S227 — LAMBYOS HOME, first pass: the programme's front door, the way Bob was Windows'
  * (docs/reinterp/LAMBYOS_HOME_DESIGN_2026-10-09.md, his answers in §7).
@@ -81,11 +82,9 @@ export interface LambyosHome { destroy(): void }
 export type HomeMode = 'arrival' | 'return';
 export interface HomeOptions { mode?: HomeMode }
 
-const reducedMotion = (): boolean => {
-  try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; }
-};
 
 export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts: HomeOptions = {}): LambyosHome {
+  document.documentElement.dataset.reducedMotion = reducedMotion() ? '1' : '0';
   const isReturn = opts.mode === 'return';
   let destroyed = false;
   let entered = false;
@@ -211,7 +210,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     `#lambyos-home .hw-bar .home-btn,#lambyos-home .hw-chk{min-height:44px}#lambyos-home .hw-chk input{width:20px;height:20px}}` +
     `@media (max-width:760px){#lambyos-home .hw-inert,#lambyos-home .hw-controls,#lambyos-home .hw-credits,#lambyos-home .hw-esc{display:none!important}` +
     `#lambyos-home .hw-menu{display:inline-block}#lambyos-home .hw-bar{padding:3px 6px;gap:6px}#lambyos-home .hw-bar .home-btn{padding:4px 10px}}` +
-    `@media (prefers-reduced-motion: reduce){#lambyos-home{transition:none!important}#lambyos-home *{animation:none!important}}`;
+    `html[data-reduced-motion="1"] #lambyos-home{transition:none!important}html[data-reduced-motion="1"] #lambyos-home *{animation:none!important}`;
   root.appendChild(focusCss);
 
   /** what each button holds: its pictures (each centred on a rectangle of the layout) */

@@ -214,7 +214,7 @@ function modelMaterials(wrapper: pc.Entity): pc.StandardMaterial[] {
   const out: pc.StandardMaterial[] = [];
   wrapper.forEach((node) => {
     const ent = node as pc.Entity;
-    if (!ent.render) return;
+    if (!ent.render?.enabled) return;
     for (const mi of ent.render.meshInstances) {
       const m = mi.material as pc.StandardMaterial | undefined;
       if (m && !out.includes(m)) out.push(m);

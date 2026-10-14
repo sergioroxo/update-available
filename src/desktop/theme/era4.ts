@@ -1,3 +1,4 @@
+import { reducedMotion } from '../../state/motion';
 /**
  * ERA 4 palette + visor chrome (2026, Room 3, Maya).
  * ⚑ Written by the STOPPED run, which numbered itself Session 75. That number is
@@ -1186,6 +1187,7 @@ export function counterCard(
  * found.
  */
 export function glitchBands(ctx: CanvasRenderingContext2D, W: number, H: number, k: number): void {
+  if (reducedMotion()) return;
   const bands = 7;
   const bh = Math.ceil(H / bands);
   const S = RENDER_SCALE;

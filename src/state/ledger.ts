@@ -326,6 +326,7 @@ export interface Ledger {
     unvoicedName: boolean;
     /** S162 / F-01 — the sound NAMES in the caption strip (W-G2); chosen at the front door, changeable in the menu. Spoken words always show. */
     captions: boolean;
+    reduceMotion: boolean | null;
   };
 }
 
@@ -360,7 +361,7 @@ const fresh = (): Ledger => ({
   view: {
     motion: 'unasked', yawZero: null,
     screenAngle: null, screenAngleSource: 'unknown',
-    recentres: 0, unvoicedName: false, captions: true
+    recentres: 0, unvoicedName: false, captions: true, reduceMotion: null
   }
 });
 
