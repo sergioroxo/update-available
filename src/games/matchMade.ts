@@ -39,6 +39,7 @@ import type { Painter } from '../room/calendarArt';
 import { text as text57, textW } from '../room/font57';
 import { MATCHMADE as M } from '../desktop/theme/calendar';
 import { gameMenuBus } from '../state/gameMenuBus';
+import { scaleFor, subscribeMix } from '../audio/mix';
 import D from '../../data/dialog/s4_matchmade.json';
 import type { DeviceGame, GameKey } from './types';
 
@@ -329,7 +330,7 @@ const SND = (() => {
   let ac: AudioContext | null = null, master: GainNode | null = null, paused = false;
   const LEVEL = 0.5;
   const muted = (): boolean => gameMenuBus.soundMuted?.() === true || consoleQuiet;
-  const level = (): number => (muted() || paused ? 0 : LEVEL);
+  const level = (): number => (muted() || paused ? 0 : LEVEL * scaleFor('effects'));
   /** only ever called from a press (a gesture), so the context may start */
   function wake(): void {
     if (!ac) {
@@ -344,6 +345,7 @@ const SND = (() => {
   }
   /** a mute that arrives mid-tone silences the tails too */
   function sync(): void { if (ac && master) master.gain.setTargetAtTime(level(), ac.currentTime, 0.03); }
+  subscribeMix(sync);   // S248: the menu's master and EFFECTS sliders reach the synthesised sounds too
   function tone(f: number, d: number, o: ToneOpt = {}): void {
     if (muted() || paused) { sync(); return; }
     if (!ac || !master || ac.state !== 'running') return;

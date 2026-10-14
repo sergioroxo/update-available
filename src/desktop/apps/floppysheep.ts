@@ -49,6 +49,7 @@ import { sansFor } from '../theme/fonts';
 import g from '../../../data/dialog/s3_floppysheep.json';
 import { playOnce, stopClip } from '../../audio/tapeAudio';
 import { gameMenuBus } from '../../state/gameMenuBus';
+import { scaleFor, subscribeMix } from '../../audio/mix';
 import {
   LW as W, HEADER_H, GROUND_Y, GRASS_H, FOOT_Y, PLAY_BOT, LOW, SX, HW, SONG_LEN,
   LYRICS, wordAge, SECTIONS, envAt, smooth, D, Tinv, COURSE, DEFW, reserved, SETS, MARKS,
@@ -81,7 +82,7 @@ const SND = (() => {
       try {
         const Ctor: typeof AudioContext | undefined = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
         if (!Ctor) return null;
-        ac = new Ctor(); master = ac.createGain(); master.gain.value = MASTER;
+        ac = new Ctor(); master = ac.createGain(); master.gain.value = (MASTER * scaleFor('effects'));
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 7000; master.connect(lp); lp.connect(ac.destination);
         nbuf = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nbuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       } catch { ac = null; return null; }
@@ -90,7 +91,8 @@ const SND = (() => {
     return ac;
   }
   /** a mute that arrives mid-tone silences the tails too */
-  function sync(): void { if (ac && master) master.gain.setTargetAtTime(muted() ? 0 : MASTER, ac.currentTime, 0.03); }
+  function sync(): void { if (ac && master) master.gain.setTargetAtTime(muted() ? 0 : (MASTER * scaleFor('effects')), ac.currentTime, 0.03); }
+  subscribeMix(sync);   // S248: the menu's master and EFFECTS sliders reach the synthesised sounds too
   function tone(f: number, dur: number, o: ToneOpts = {}): void {
     if (muted()) { sync(); return; }
     const a = c_(); if (!a || !master) return; sync();

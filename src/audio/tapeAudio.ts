@@ -16,6 +16,8 @@
  * ugly, so we simply never issue the request for an unknown name.
  */
 
+import { track, type Channel } from './mix';   // ⚑ S248 — the one mixer: every element below is tracked, so master and channel sliders reach it
+
 const AUDIO_BASE = 'assets/audio/';
 
 /** Real bundled files, by the exact name a segment's `audio` field may use.
@@ -355,7 +357,7 @@ export class TapeAudioBus {
 
   private ensureHiss(): HTMLAudioElement {
     if (!this.hiss) {
-      this.hiss = new Audio(REGISTRY[HISS_FILE]);
+      this.hiss = track(new Audio(REGISTRY[HISS_FILE]), HISS_FILE);   // S248: the tape bus's hiss rides the VOICES & TAPES channel
       this.hiss.loop = true;
       this.hiss.muted = this.muted;
       this.hiss.volume = HISS_VOLUME_IDLE;
@@ -384,7 +386,7 @@ export class TapeAudioBus {
     if (this.hiss) this.hiss.volume = playingRealClip ? HISS_VOLUME_DUCKED : HISS_VOLUME_IDLE;
     if (!playingRealClip) return;
     const url = REGISTRY[clipName as string];
-    this.clip = new Audio(url);
+    this.clip = track(new Audio(url), clipName as string);   // S248: the clip's channel follows its name (a tape's song is MUSIC, a spoken line is VOICES)
     this.clip.muted = this.muted;
     this.clip.play().catch(() => { /* see start() */ });
   }
@@ -520,7 +522,7 @@ class RoomBed {
      */
     const occupant = this.useA ? this.a : this.b;
     occupant?.pause();
-    const incoming = name === null ? null : new Audio(REGISTRY[name]);
+    const incoming = name === null ? null : track(new Audio(REGISTRY[name]), name);   // S248: ROOM, or MUSIC for the scores and the ball's music
     if (this.useA) this.a = incoming; else this.b = incoming;
     if (incoming) {
       incoming.loop = true;
@@ -602,7 +604,7 @@ export const roomBed = new RoomBed();
 export function playOnce(name: string | null | undefined): HTMLAudioElement | null {
   if (!isAudioAvailable(name)) return null;
   onCue?.(name as string);
-  const audio = new Audio(REGISTRY[name as string]);
+  const audio = track(new Audio(REGISTRY[name as string]), name as string);   // S248: channel + baseline gain by name
   audio.muted = oneShotsMuted;
   liveOneShots.add(audio);
   const forget = (): void => { liveOneShots.delete(audio); };
@@ -617,7 +619,8 @@ export function playOnce(name: string | null | undefined): HTMLAudioElement | nu
  * frame's one mute, the game menu's hold and the idle cycle's mute reach it exactly as they reach a `playOnce` clip.
  * It leaves the set when it ends or errors, or when `stopClip` puts it down. The caller still owns play().
  */
-export function adoptOneShot(el: HTMLMediaElement): void {
+export function adoptOneShot(el: HTMLMediaElement, name: string | null = null, channel?: Channel): void {
+  track(el, name, channel);   // S248: the advert film is its own FILM channel (src/audio/channels.json)
   el.muted = oneShotsMuted;
   liveOneShots.add(el);
   const forget = (): void => { liveOneShots.delete(el); };

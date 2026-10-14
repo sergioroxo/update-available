@@ -113,6 +113,13 @@
   },
   "close": "Close",
   "dismiss": "×",
+  "volume": {
+    "_doc": "S248 — the trackbar under the sound balloon's words (the master volume; the menu holds the per-kind sliders). Frame voice. The test-sound button above plays in place so it can be set by ear.",
+    "label": "Volume",
+    "down": "-",
+    "up": "+",
+    "off": "off"
+  },
   "advertAsterisk": {
     "gather": [
       "OVER 30 YEARS",

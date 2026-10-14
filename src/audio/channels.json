@@ -1,0 +1,24 @@
+{
+  "_note": "S248 - which mixer channel each shipped audio file belongs to. Read by src/audio/mix.ts and by tools/audio-levels.mjs. Anything not named here (and not matching voicePattern) is EFFECTS. Edit here, then re-run `node tools/audio-levels.mjs`.",
+  "music": [
+    "lambyos_home_loop.mp3", "unwalk_loop_1997.mp3", "floppysheep_song.mp3",
+    "family_design_solutions_tape97.mp3", "fold_my_hands_tape97.mp3",
+    "discover_the_new_you_tape97_radio.mp3", "discover_the_new_you_infomercial_tape03.mp3",
+    "caleb_last_night_2003.mp3", "chase_the_clouds.mp3", "chase_the_clouds_broken.mp3",
+    "lambyos_2003_boot.mp3", "descent_score.mp3", "close_score.mp3",
+    "ball_room_landing.mp3", "ball_room_bed.mp3"
+  ],
+  "room": [
+    "bed_1997.mp3", "bed_2003.mp3", "bed_2016.mp3", "bed_2026.mp3",
+    "passage_wind.mp3", "passage_building.mp3", "close_sky_bed.mp3",
+    "noa_video_room_tone_2016.mp3", "testimony_hall_tone_2003.mp3",
+    "session_breath.mp3", "playback_hiss.mp3"
+  ],
+  "voices": [
+    "tape-hiss.mp3", "tapeA_side_one_intro.mp3", "lamby_puremail_apology.mp3"
+  ],
+  "voicePattern": "^l_[a-z]\\d",
+  "film": [
+    "lambyos_welcome_home.mp4"
+  ]
+}

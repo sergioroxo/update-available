@@ -1,5 +1,6 @@
 import { reducedMotion, setReducedMotion } from '../../state/motion';
 import { setOneShotsMuted } from '../../audio/tapeAudio';
+import { getMaster, setMaster } from '../../audio/mix';
 /** Pre-story setup, on the same desktop canvas and hit rectangles as the OS.
  * The restore entrance calls startSetup() in the stars, before restoring the seat.
  * The entrance owns the Enter glitch; ?setup=1 remains the monitor review route.
@@ -82,7 +83,7 @@ export class LambySetup {
     v.src = 'assets/video/lambyos_welcome_home.mp4';
     v.preload = 'auto'; v.playsInline = true; v.controls = false; v.disablePictureInPicture = true;
     v.setAttribute('disablepictureinpicture', ''); v.setAttribute('controlslist', 'nodownload noremoteplayback');
-    adoptOneShot(v);   // the frame's mute, the menu's hold and the idle cycle's mute reach the film's sound
+    adoptOneShot(v, 'lambyos_welcome_home.mp4');   // S248: FILM channel, under the master. The frame's mute, the menu's hold and the idle cycle's mute reach the film's sound
     v.addEventListener('ended', () => this.endFilm());
     // a film that cannot load or play (no H.264 here) must not strand the visitor on a step with no control
     v.addEventListener('error', () => this.endFilm());
@@ -141,7 +142,35 @@ export class LambySetup {
   }
   private readyDrawn = false;
   destroy(): void { this.open = false; this.hits = []; this.sound?.pause(); this.dropFilm(); }
-  private testSound(): void { this.sound?.pause(); this.sound = playOnce('startup_1997.mp3'); }
+  /** S248: a clear chime, not the startup swell (that one is mostly sub-bass and says little about the headphones) —
+   *  it plays in place and answers the trackbar live, so the volume can be set by ear. */
+  private testSound(): void { this.sound?.pause(); this.sound = playOnce('chime_2003.mp3'); }
+  /** the trackbar's geometry from the last draw (canvas px), so a press on the groove can be turned into a level */
+  private vol = { gx: 0, gw: 1, tw: 11 };
+  private stepVolume(delta: number): void { setMaster(Math.round((getMaster() + delta) * 10) / 10); this.hits = []; this.dirty = true; }
+  /** ⚑ S248 — a Win95 trackbar for the master volume: − and + (each ±10%), the groove (a press sets the nearest 10%),
+   *  the thumb (published, so it can be aimed at; dragging is not wired — the − / + / groove presses are enough). */
+  private drawTrackbar(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    const m = this.mobile, h = m ? 32 : 21, bw = m ? 36 : 19, tw = m ? 16 : 11, th = m ? 28 : 19, fs = m ? 14 : 10;
+    const labelW = m ? 64 : 48, gx = x + labelW + bw + 6, gw = m ? 170 : 196, v = getMaster();
+    ui.setFont(ctx, fs); ctx.fillStyle = P.black; ctx.fillText(copy.volume.label, x, y + Math.round((h - fs) / 2));
+    const down = v <= 0.0001, up = v >= 0.9999;
+    for (const [id, label, bx, dis] of [['setup-vol-down', copy.volume.down, x + labelW, down], ['setup-vol-up', copy.volume.up, gx + gw + 6, up]] as const) {
+      ui.button(ctx, bx, y, bw, h, label, { disabled: dis, hover: this.hover === id });
+      if (!dis) this.hits.push({ id, x: bx, y, w: bw, h });
+    }
+    // the groove (sunk), ten tick marks, then the raised thumb
+    ui.bevel(ctx, gx, y + Math.round(h / 2) - 2, gw, 4, false);
+    for (let i = 0; i <= 10; i++) ui.px(ctx, gx + Math.round(tw / 2) + Math.round(i * (gw - tw) / 10), y + h - 3, 1, 3, P.greyDark);
+    const tx = gx + Math.round(v * (gw - tw)), ty = y + Math.round((h - th) / 2) - 1;
+    ui.bevel(ctx, tx, ty, tw, th, true);
+    ui.px(ctx, tx + Math.floor(tw / 2), ty + 4, 1, th - 8, P.greyDark);
+    this.vol = { gx, gw, tw };
+    this.hits.push({ id: 'setup-vol-thumb', x: tx, y: ty, w: tw, h: th });
+    this.hits.push({ id: 'setup-vol-track', x: gx, y, w: gw, h });
+    const pct = v <= 0.0001 ? copy.volume.off : `${Math.round(v * 100)}%`;
+    ui.setFont(ctx, fs); ctx.fillStyle = P.black; ctx.fillText(pct, gx + gw + bw + 12, y + Math.round((h - fs) / 2));
+  }
   handleMove(x: number, y: number): void {
     const id = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h)?.id ?? '';
     if (id !== this.hover) { this.hover = id; this.dirty = true; }
@@ -161,6 +190,12 @@ export class LambySetup {
     if (id === 'setup-device') { this.requestDeviceLook?.(); return; }
     if (id === 'setup-reduce-motion') { setReducedMotion(!reducedMotion()); this.dirty = true; return; }
     if (id === 'setup-test') { this.testSound(); return; }
+    if (id === 'setup-vol-down' || id === 'setup-vol-up') { this.stepVolume(id === 'setup-vol-up' ? 0.1 : -0.1); return; }
+    if (id === 'setup-vol-thumb') return;   // the thumb is aimed at, not moved by a press; the groove and the buttons move it
+    if (id === 'setup-vol-track') {
+      const { gx, gw, tw } = this.vol;
+      setMaster(Math.round(Math.max(0, Math.min(1, (x - gx - tw / 2) / (gw - tw))) * 10) / 10); this.hits = []; this.dirty = true; return;
+    }
     if (id === 'setup-sound-on' || id === 'setup-sound-quiet') {
       ledger.view.captions = id === 'setup-sound-quiet'; setOneShotsMuted(ledger.view.captions); this.sound?.pause(); this.advance(4); return;
     }
@@ -227,6 +262,7 @@ export class LambySetup {
     const b = copy.balloons[this.step];
     const by = this.dismissed ? 105 : 94;
     this.text(ctx, b.text, 128, by, 321, 12);
+    if (this.step === 3) this.drawTrackbar(ctx, 128, this.dismissed ? 142 : 136);   // S248
     if (!this.dismissed) {
       ui.setFont(ctx, 11); ctx.fillStyle = P.black; ctx.fillText(copy.dismiss, 454, 80);
       this.hits.push({ id: 'setup-dismiss', x: 449, y: 77, w: 20, h: 20 });
@@ -251,6 +287,7 @@ export class LambySetup {
       this.hits.push({ id: 'setup-dismiss', x: 458, y: 28, w: 30, h: 30 });
     }
     this.text(ctx, b.text, 42, this.dismissed ? 57 : 49, 414, 16);
+    if (this.step === 3) this.drawTrackbar(ctx, 42, 98);   // S248
     b.buttons.forEach((label, i) => {
       const id = this.step === 7 ? 'setup-advert-play-0'
         : this.step === 3 ? ['setup-test','setup-sound-on','setup-sound-quiet'][i] : `setup-choice-${i}`;

@@ -55,6 +55,7 @@ import mapCopy from '../../data/strings/map.json';
 import closeNetwork from '../../data/strings/close_network.json';
 import { DIALOG, domBevel } from './theme/chrome';
 import { mountLeavePage } from '../frame/leavePage';
+import { CHANNELS, getMaster, setMaster, getChannel, setChannel, type Channel } from '../audio/mix';
 // ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
 // (6 sourced entries + the credit paragraph) and `data/provotypes/e4_offers.json`
 // (4 sourced entries) were never imported anywhere — each appeared exactly once,
@@ -78,7 +79,7 @@ import e4Offers from '../../data/provotypes/e4_offers.json';
 // wiring below is what makes the card real rather than filed.
 import e3Day from '../../data/provotypes/e3_theday.json';
 
-type View = 'main' | 'leaveConfirm' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map';
+type View = 'main' | 'sound' | 'leaveConfirm' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map';
 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
@@ -201,6 +202,58 @@ export function mountGameMenu(): GameMenu {
     } as CSSStyleDeclaration);
     p.textContent = text;
     panel.appendChild(p);
+  }
+
+
+  // ⚑ S248 — THE SOUND SLIDERS. Native <input type=range> (keyboard: the arrow keys; screen readers: its label), dressed in
+  //   the frame's 1997 chrome from DIALOG's own tokens — a sunken groove, a raised thumb. Frame voice: plain labels, no
+  //   sound of its own. The levels live in src/audio/mix.ts (memory only; a restart reloads the page and returns to the
+  //   baseline). Sound is HELD while this menu is open, so a change is heard on Resume.
+  const volStyle = document.createElement('style');
+  volStyle.textContent = [
+    `.reinterp-vol{-webkit-appearance:none;appearance:none;flex:1 1 auto;min-width:0;height:22px;margin:0;background:transparent;cursor:pointer}`,
+    `.reinterp-vol::-webkit-slider-runnable-track{height:0;border:2px solid;border-color:${DIALOG.dark} ${DIALOG.light} ${DIALOG.light} ${DIALOG.dark};background:${DIALOG.panel}}`,
+    `.reinterp-vol::-webkit-slider-thumb{-webkit-appearance:none;box-sizing:border-box;width:12px;height:22px;margin-top:-11px;background:${DIALOG.panel};border:2px solid;border-color:${DIALOG.light} ${DIALOG.darker} ${DIALOG.darker} ${DIALOG.light}}`,
+    `.reinterp-vol::-moz-range-track{height:0;border:2px solid;border-color:${DIALOG.dark} ${DIALOG.light} ${DIALOG.light} ${DIALOG.dark};background:${DIALOG.panel}}`,
+    `.reinterp-vol::-moz-range-thumb{box-sizing:border-box;width:12px;height:22px;border-radius:0;background:${DIALOG.panel};border:2px solid;border-color:${DIALOG.light} ${DIALOG.darker} ${DIALOG.darker} ${DIALOG.light}}`,
+    `.reinterp-vol:focus-visible{outline:1px dotted ${DIALOG.ink};outline-offset:3px}`
+  ].join('\n');
+  document.head.appendChild(volStyle);
+  let volId = 0;
+  const pct = (v: number): string => (v <= 0.0001 ? copy.soundOff : `${Math.round(v * 100)}%`);
+  /** one labelled slider, 0–100 in steps of 5; the right-hand figure says "off" at zero */
+  function sliderRow(label: string, get: () => number, set: (v: number) => void): void {
+    const wrap = document.createElement('div');
+    Object.assign(wrap.style, { display: 'flex', alignItems: 'center', gap: '10px', margin: '0 0 8px', padding: '0 2px' } as CSSStyleDeclaration);
+    const id = `reinterp-vol-${++volId}`;
+    const lab = document.createElement('label');
+    lab.htmlFor = id; lab.textContent = label;
+    Object.assign(lab.style, { flex: '0 0 112px', fontSize: '12px', color: DIALOG.ink } as CSSStyleDeclaration);
+    const input = document.createElement('input');
+    input.type = 'range'; input.id = id; input.className = 'reinterp-vol';
+    input.min = '0'; input.max = '100'; input.step = '5'; input.value = String(Math.round(get() * 100));
+    const val = document.createElement('span');
+    Object.assign(val.style, { flex: '0 0 38px', textAlign: 'right', fontSize: '12px', color: DIALOG.ink } as CSSStyleDeclaration);
+    const show = (): void => { val.textContent = pct(get()); input.setAttribute('aria-valuetext', pct(get())); };
+    input.addEventListener('input', () => { set(Number(input.value) / 100); show(); });
+    show();
+    wrap.append(lab, input, val);
+    panel.appendChild(wrap);
+  }
+  const channelCopy = copy.soundChannels as Record<Channel, { label: string; note: string }>;
+
+  function soundView(): void {
+    heading(copy.soundTitle);
+    sliderRow(copy.soundMaster, getMaster, setMaster);
+    for (const c of CHANNELS) {
+      sliderRow(channelCopy[c].label, () => getChannel(c), (v) => setChannel(c, v));
+      note(channelCopy[c].note);
+    }
+    if (gameMenuBus.toggleSound) {
+      row(gameMenuBus.soundMuted?.() ? copy.soundMuted : copy.soundOn, () => { gameMenuBus.toggleSound?.(); render(); });
+    }
+    note(copy.soundMixNote);
+    backRow();
   }
 
   function row(label: string, onClick: () => void, emphasis = false): void {
@@ -415,6 +468,7 @@ export function mountGameMenu(): GameMenu {
     dialog.style.width = wide ? 'min(860px, 94vw)' : 'min(440px, 92vw)';
     if (view === 'yourFile') { yourFileView(); return; }
     if (view === 'map') { mapView(); return; }
+    if (view === 'sound') { soundView(); return; }
     if (view === 'main') {
       heading(copy.title);
       row(copy.resume, () => gameMenuBus.close(), true);
@@ -441,6 +495,9 @@ export function mountGameMenu(): GameMenu {
       if (gameMenuBus.toggleSound) {
         row(gameMenuBus.soundMuted?.() ? copy.soundMuted : copy.soundOn, () => { gameMenuBus.toggleSound?.(); render(); });
       }
+      // ⚑ S248 — the master volume, here on the first page; the per-kind levels one press away
+      sliderRow(copy.soundVolume, getMaster, setMaster);
+      row(copy.soundMixRow, () => { view = 'sound'; render(); });
       // S84 — frame-level display control. iPad Safari exposes the standard
       // API; iPhone Safari may not. Absence is a fact, so the row is omitted
       // rather than presented as a dead promise. Add to Home Screen remains
@@ -665,6 +722,7 @@ export function mountGameMenu(): GameMenu {
       window.removeEventListener('keydown', onKeydown, { capture: true });
       glyph.remove();
       root.remove();
+      volStyle.remove();
     }
   };
 }

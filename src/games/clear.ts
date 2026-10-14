@@ -46,6 +46,7 @@ import type { Painter } from '../room/calendarArt';
 import { text as text57, textW, TH } from '../room/font57';
 import { CLEAR as R } from '../desktop/theme/calendar';
 import { gameMenuBus } from '../state/gameMenuBus';
+import { scaleFor, subscribeMix } from '../audio/mix';
 import { announceCue } from '../audio/tapeAudio';
 import D from '../../data/dialog/s2_clear.json';
 import type { DeviceGame, GameKey } from './types';
@@ -282,7 +283,7 @@ const SND = (() => {
         const Ctor: typeof AudioContext | undefined = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
         if (!Ctor) return null;
         ac = new Ctor();
-        master = ac.createGain(); master.gain.value = muted() ? 0 : MASTER;
+        master = ac.createGain(); master.gain.value = muted() ? 0 : (MASTER * scaleFor('effects'));
         const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; lp.Q.value = 0.4; lp.connect(ac.destination); master.connect(lp);
         // a small room: a convolver on a noise tail (the prototype's)
         const conv = ac.createConvolver(), n = Math.floor(ac.sampleRate * 1.4), ir = ac.createBuffer(2, n, ac.sampleRate);
@@ -294,7 +295,8 @@ const SND = (() => {
     return ac;
   }
   /** a mute that arrives mid-tone silences the tails (and the pad) too */
-  function sync(): void { if (ac && master) master.gain.setTargetAtTime(muted() ? 0 : MASTER, ac.currentTime, 0.03); }
+  function sync(): void { if (ac && master) master.gain.setTargetAtTime(muted() ? 0 : (MASTER * scaleFor('effects')), ac.currentTime, 0.03); }
+  subscribeMix(sync);   // S248: the menu's master and EFFECTS sliders reach the synthesised sounds too
   function tone(f: number, dur: number, o: Tone = {}): void {
     if (muted()) { sync(); return; }
     const a = ctx(); if (!a || !master) return;
