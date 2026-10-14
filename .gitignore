@@ -14,3 +14,6 @@ out/
 
 # review frames are local (tours re-photograph them); the review MDs are committed
 docs/reinterp/review-*/img/
+
+# Local Welcome Home film exports; never commit the MP4
+/output/lambyos-advert/*.mp4
