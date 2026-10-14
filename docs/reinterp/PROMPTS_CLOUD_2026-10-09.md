@@ -311,3 +311,28 @@ DELIVER on branch cloud/advert-video: out/lambyos-advert/lambyos_welcome_home.mp
 will never be merged), the source, a 12-frame contact sheet, NOTES.md. Open a pull request into reinterp marked
 "DO NOT MERGE — review only". Never push to reinterp.
 ```
+
+---
+
+## Prompts 9 and 10 — Codex's F1 and F2, run in the cloud (2026-10-15)
+*His ask: run them on the cloud credits instead of the weekly quota. Same tasks as PROMPTS_CODEX_2026-10-11.md §F1/§F2.
+**Model: Sonnet 5.5 · effort: high** for both (the credits are limited: $36). One new cloud session per prompt.*
+
+**Prompt 9 (F1, 2003's story-making)** and **Prompt 10 (F2, 2016 less reading)** — paste this, with N = F1 or F2:
+```
+SETUP FIRST: git fetch origin reinterp && git checkout -B cloud/N origin/reinterp && npm ci
+Chromium for the walker and screenshots: /opt/pw-browsers (Playwright), as tools/walk.mjs already finds it.
+Start the dev server yourself: npx vite --port 3000 --strictPort (background).
+
+TASK: read CLAUDE.md, then do EXACTLY the task in docs/reinterp/PROMPTS_CODEX_2026-10-11.md section "N" (and its
+PREAMBLE's rules: display text in data/strings/, no network, no storage, never touch `_s` lines or dossier text,
+shorten never delete, every changed line as a numbered BEFORE/AFTER list). Ignore the PREAMBLE's worktree, port and
+caffeinate lines: here you work on branch cloud/N on this machine.
+Checks: npx tsc --noEmit; npm test; the walk named in the section (node tools/walk.mjs --port 3000 --max 2600
+--require-close). If the walk stalls on this machine for reasons unrelated to your change, say so with the report's
+last lines — the lead's machine re-walks before merging anyway.
+DELIVER: commit on cloud/N with explicit paths (never `git add -A`), message starting "CLOUD: N —", ending with
+Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>; put your report (files, every BEFORE/AFTER line, what you
+could not verify) in out/N/REPORT.md and also paste it as the PR description; open a pull request into reinterp
+titled "N — DO NOT MERGE (review)". Never push to reinterp. Time limit: finish by 09:30 CEST on 15 Oct 2026.
+```
