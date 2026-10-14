@@ -422,3 +422,54 @@ DELIVER in output/lambyos-advert/: lambyos_welcome_home.mp4, the animation sourc
 frames, NOTES.md (what you made, what is placeholder, credits). Do NOT touch src/, data/ or public/; do not commit the
 mp4 to git.
 ```
+
+---
+
+## F1 · 2003's story-making (W1-D7, D8, D9, D12, D14) — before the opening (port 3212)
+*His walkthrough notes (2026-10-08) still open on 15 Oct. New chat, PREAMBLE first, effort high. ⚑ DEADLINE: it must be
+committed with its walk passed by 10:00 on Thu 15 Oct (the freeze is at noon); if not, stop, commit what is safe, and
+say what is left.*
+
+```
+TASK = story-making-2003. In 2003 Daniel makes his "testimony" video for the programme (Restorify; src/desktop/apps/
+testimony.ts and its data, the story-preparation topics, the takes, the edit, the playback; Caleb's video and messages:
+src/desktop/apps/caleb.ts, data/dialog/s2_caleb.json; S205's notes in BUILD_LOG.md). Read
+docs/reinterp/WALKTHROUGH_1_2026-10-08.md rows W1-D7…D19 and CLAUDE.md's felt/operable rules (Caleb's scenes are FELT:
+bare, no assistant, no satire, no mechanics). Fix the lead's five notes:
+- D7 "The helper keeps showing lines while your story's videos play": no helper/Lamby/hint line appears while any of
+  the story's videos is playing; they wait until it ends.
+- D8 "Caleb's video should be different from Daniel's": Caleb's video must not look like Daniel's testimony (same
+  framing, palette, set). Give it its own look — a webcam at night in his own room, lower quality, warmer, handheld
+  pauses — built with the same drawing system, no new real footage.
+- D9 "The B-roll doesn't make sense": find the B-roll in the testimony edit; either cut it, or make each shot plainly
+  belong to the programme's promise (the advert's world: the sunny kitchen, the ministry hall, the streak calendar).
+  Say which and why in the report.
+- D12 "The playback needs more quality when you see the video you made": the final playback of Daniel's edited video
+  plays larger (fill the monitor's video area at the canvas's full resolution, not a small window) and smoother
+  (frame pacing; no dropped redraws).
+- D14 "Caleb is very important here but feels lost in all the text": reduce the text around Caleb's beats (shorten,
+  never delete whole lines — the lead's rule after the first text cut; lines marked `_s` are his and are never
+  touched), give Caleb's message its own uncluttered moment (other windows minimised or held while it shows), and
+  make sure the mail/alerts do not land on top of it (see D13/D16, already partly fixed).
+Every display-text change: a numbered BEFORE/AFTER list in the report. Walk: `node tools/walk.mjs --port 3212 --max
+2600 --require-close` under `caffeinate -i` (passes the Close / Library). Screenshots of each fix in
+out/story-making-2003/, LOOKED AT.
+```
+
+## F2 · 2016: far less reading (W1-E1, E5) — before the opening (port 3213)
+*His note: "Far too much reading in 2016 ('too crazy amount')". Vera's three starting jobs are already built (S227).
+New chat, PREAMBLE first, effort high. ⚑ Same 10:00 deadline.*
+
+```
+TASK = less-reading-2016. In 2016 Vera works a moderation/"care" platform (src/room/graceQueueLite.ts, phoneE3,
+data/dialog/s3_*.json, data/strings for GracePlatform/Lambient). Run the text census first
+(the walker writes docs/reinterp/TEXT_CENSUS_<date>.md; or count the strings per surface in data/dialog/s3_*.json) and
+cut the reading in 2016 by about HALF, by these rules (the lead's, after an earlier cut scared him): SHORTEN lines,
+never delete a whole line or beat; never touch lines marked `_s` (his) or dossier text (status-bearing cards); keep
+every fact and every documented phrase; keep Lambient's voice and Vera's voice recognisable; long messages become
+shorter messages; repeated instructions appear once. Also W1-E5 "the link-clicking cadence of the messages is too
+much": where several messages each need a link pressed in a row, merge or space them so the player presses fewer
+links. Report: per surface, the word count before/after, and EVERY changed line as a numbered BEFORE/AFTER list
+(this is what he will read). Walk: `node tools/walk.mjs --port 3213 --max 2600 --require-close` under
+`caffeinate -i`. Screenshots of the busiest 2016 screens before/after in out/less-reading-2016/, LOOKED AT.
+```
