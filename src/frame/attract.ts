@@ -43,8 +43,10 @@ import { faceEra, setFaceEra, type FaceEra } from '../desktop/theme/fonts';
 import { DIALOG, FRAME, domBevel } from '../desktop/theme/chrome';
 
 const Z = 1300;   // over the Leave page (1200), the game menu (1000) and Home / the orienting card (900)
-const ATTRACT_MIN = 15;
-const RETURN_MIN = 30;
+// ⚑ S249 — the exhibition's timings (his 2026-10-15: "we can change to 5 minutes and 10 minutes for resets"): a gallery
+// visitor walks away mid-piece and the next one is waiting
+const ATTRACT_MIN = 5;
+const RETURN_MIN = 10;
 const LOGICAL_H = 384;   // the desktop canvases' height (ERA1_CANVAS): the savers are drawn for it
 
 // ── THE ADVERT SLOT ───────────────────────────────────────────────────────────────────────────────────────────────

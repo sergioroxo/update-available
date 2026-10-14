@@ -98,6 +98,9 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   const hint = document.createElement('div'); hint.textContent = copy.invite; invite.appendChild(hint);
   const active = document.createElement('div'); active.textContent = copy.active;
   Object.assign(active.style, { marginTop: '12px', fontSize: '12px', color: FRAME.dim }); invite.appendChild(active);
+  // S249 — the work-in-progress note (his 2026-10-15), frame voice, small
+  const wip = document.createElement('div'); wip.textContent = copy.wip;
+  Object.assign(wip.style, { marginTop: '18px', fontSize: '12px', color: FRAME.dim, padding: '0 16px' }); invite.appendChild(wip);
   const status = document.createElement('div');
   Object.assign(status.style, { position: 'absolute', left: '64px', bottom: '24px', right: '20px', lineHeight: '1.5' });
   frame.append(invite, status); document.body.appendChild(frame);

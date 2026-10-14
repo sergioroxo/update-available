@@ -1,8 +1,13 @@
 {
-  "title": ["YOUR UPDATE", "HAS FAILED"],
-  "invite": "Click or press any key",
-  "enterVr": "Enter VR",
-  "active": "Session still active.",
-  "restoring": "Restoring previous session…",
-  "found": "Room found. User profile pending."
+ "title": [
+  "YOUR UPDATE",
+  "HAS FAILED"
+ ],
+ "invite": "Click or press any key",
+ "enterVr": "Enter VR",
+ "active": "Session still active.",
+ "restoring": "Restoring previous session…",
+ "found": "Room found. User profile pending.",
+ "wip": "Work in progress — if something gets stuck, press Esc for the menu, or reload the page.",
+ "_docWip": "S249 (his 2026-10-15): the piece is shown as a work in progress; frame voice, small, on the wake screen only."
 }

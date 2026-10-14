@@ -31,10 +31,10 @@ STATUS: live
 - At the end: the Library on Daniel's monitor (the Lexicon with its sources, the four era computers, Start again).
 
 ## 3 · When nobody touches it
-- **15 minutes** untouched → the screensavers fill the screen (stars, pipes, flock, the Lexicon words, the marquee, the
+- **5 minutes** untouched → the screensavers fill the screen (stars, pipes, flock, the Lexicon words, the marquee, the
   maze…) with "Touch the screen to begin."
 - A touch during the screensavers → "Start from the beginning?" — **Start from the beginning** or **Carry on**.
-- **30 minutes** untouched → the piece clears the visit and returns to the stars by itself. Nothing is ever stored.
+- **10 minutes** untouched → the piece clears the visit and returns to the stars by itself. Nothing is ever stored.
 
 ## 4 · If something goes wrong
 | what | do |
