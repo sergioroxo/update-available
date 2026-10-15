@@ -8,7 +8,7 @@ Branch `cloud/F4` (from `origin/reinterp`). Commit `CLOUD: F4 — …`. Not merg
 **Era 4 barely moves: displayed text went from 3,222 to 3,173 words (−49, −1.5%) in 20 strings; no line removed.** Era 4 was cut in S223 and its surfaces are already at label size. What remains is, almost all of it, text that the rules protect (voiced, respite, clinical-debate, documented, the thesis of the update). To go further needs his yes on the proposals below. I did not widen the cut by touching protected text.
 
 ## Files changed
-`data/dialog/s4_browser.json` (14 strings), `s4_ball.json` (2), `s4_space.json` (1), `s4_offers.json` (1), `data/strings/map.json` (4 Era-4 route hints). Each file also carries a one-line `_docF4cut` note. No code, layout, timing, colour or audio touched. No `edit.find`, id, witness/ledger line, `_s` line or dossier text touched.
+`data/dialog/s4_browser.json` (12 strings), `s4_ball.json` (2), `s4_space.json` (1), `s4_offers.json` (1), `data/strings/map.json` (4 Era-4 route hints). Each file also carries a one-line `_docF4cut` note. No code, layout, timing, colour or audio touched. No `edit.find`, id, witness/ledger line, `_s` line or dossier text touched.
 
 ## Words per surface (displayed text only; excludes `_` notes, ids, audio names, witness/ledger/`filed` lines, speedrun id lists)
 | surface | before | after | change |
