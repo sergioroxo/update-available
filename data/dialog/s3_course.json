@@ -1,5 +1,6 @@
 {
   "_doc": "THE COURSE BUILDER (Era 3, sixth board job) — ERA3_NARRATIVE.md §3 names this task the era's sharpest point: 'the funnel stops being a metaphor at the number.' Every string below — module titles, module descriptions, the tool's own chrome, and all ten pricing witnesses — is Claude's own writing, per CLAUDE.md's 2026-08-17 amendment ('the writing is Claude's... nothing waits on him to write it'); Sérgio reviews when he wants to and his edit still wins, but nothing here is a parked draft awaiting one. The five modules follow docs/reinterp/RESEARCH_PULL_E3_2026-08-24.md PULL 1 exactly: the women's ex-gay literature's own documented vocabulary (emotional dependency, relational wounds, boundaries, femininity, identity in Christ, walking, wholeness, freedom) — never the masculinised 'gender deficit / manhood wound' language written for men, which docs/reinterp/RESEARCH_PULL_E3_CONSEQUENCES.md §2 explicitly rules out. The etiology named in 'wounds' (a parent's absence shaping the relationship) is CONTESTED — taught by these ministries and not established psychological science; the module title states it in the organisation's own sincere voice, and nothing in the surrounding tool ever endorses it. Satire lives ENTIRELY inside `app` — the cheerful bundling language, the PLATFORM PICK tag, the tidy customer-facing preview, the ordinary retail politeness of the price row — never in the module content, which is written as sincerely as the source ministries wrote their own. No real organisation, programme, author or book is named; 'The Path Forward' is an invented GracePlatform product. Pricing runs from a real, unpunished no-charge tier through a genuinely low and a genuinely high one; the screen never approves or objects to any of them — `pricing[].witness` is the only place a choice shows up at all, and it is two complete, pre-authored sentences per tier (`default`/`changed`, keyed only on whether the module set still matches the system's own starting picks), selected in src/desktop/apps/courseBuilder.ts and never composed there.",
+  "_docF2cut": "cut for W1-E1, cloud F2, 2026-10-14: four module descriptions shortened.",
   "app": {
     "title": "GracePlatform · Course Builder",
     "heading": "MODULES",
@@ -23,13 +24,13 @@
     {
       "id": "dependency",
       "title": "Understanding Emotional Dependency",
-      "desc": "Why an intense friendship can feel like more than friendship, and how to tell the difference.",
+      "desc": "Why an intense friendship can feel like more than friendship.",
       "defaultOn": true
     },
     {
       "id": "wounds",
       "title": "Naming the Wounds Underneath",
-      "desc": "The family-of-origin hurts a mentor will want to hear about first.",
+      "desc": "The family-of-origin hurts a mentor hears about first.",
       "defaultOn": true
     },
     {
@@ -41,13 +42,13 @@
     {
       "id": "femininity",
       "title": "Recovering a Grounded Femininity",
-      "desc": "Reconnecting with the parts of yourself the relationship had crowded out.",
+      "desc": "Reconnecting with what the relationship had crowded out.",
       "defaultOn": false
     },
     {
       "id": "identity",
       "title": "Identity in Christ, Walking in Freedom",
-      "desc": "Closing the course with where wholeness in Christ is meant to lead.",
+      "desc": "Closing with where wholeness in Christ is meant to lead.",
       "defaultOn": true
     }
   ],

@@ -1,5 +1,6 @@
 {
  "_doc": "ERA 3, JOB: CLEAR THE COMMENTS — the FLAGGED queue. ⛑ NOT s3_comments.json, which is S70's RECRUITMENT FLOOR (Vera replies with pinned templates, two of which silently route a person for follow-up) and which is currently ORPHANED because stage 2a removed the tablet it drew on. Both beats are real and they are different jobs; ERA3_BUILD_PLAN §0 and §3 disagree about which one \"clear the comments\" means, and this file implements §3's — the narrative's third draft, and the newer of the two. The recruitment floor still needs a home; it is flagged in the build log and its file is untouched. Built 2026-08-24; ERA3_BUILD_PLAN §3 calls it the sharpest item in the pool and the reason is one line — THE KIND ONES ARE THE FLAGGED ONES. This is a moderation queue on Renata's published testimony, the same testimony Vera edited earlier in the day. Every flagged comment is a stranger being decent to her; every flag reason is a real-sounding policy category. THE COMMENT THAT IS NOT FLAGGED IS CRUEL, sits in the same thread, and has no verb on it at all — the tool only handles what was flagged, and nothing on this screen can touch it. That absence is the argument, and it is the same structural move the family line makes with Annette. Claude's writing under CLAUDE.md's 2026-08-17 amendment; Sérgio owns the ethics call and his edit wins. All commenters are invented; no real person's words are used.",
+ "_docF2cut": "cut for W1-E1, cloud F2, 2026-10-14: one reader's comment shortened.",
  "app": {
   "title": "GracePlatform · Comments",
   "heading": "FLAGGED ON ONE STORY",
@@ -45,7 +46,7 @@
   {
    "id": "c_coffee",
    "author": "s.",
-   "body": "If you ever want a coffee with somebody who is not going to ask you a single question about any of it, I am in Cork most weeks.",
+   "body": "If you ever want a coffee with somebody who won't ask you a single question about any of it, I'm in Cork most weeks.",
    "flag": "solicitation · off-platform contact",
    "witnessRemoved": "comments: removed — off-platform contact offered",
    "witnessLeft": "comments: left up — off-platform contact offered"

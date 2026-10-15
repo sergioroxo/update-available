@@ -1,5 +1,6 @@
 {
  "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending on EVERY line below (submissions, rules, rationales, manual refs, verses, chips, witness lines). Session 64 (E3-iii, THE CORRECTION LIST), per docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md revision 4. ⚑ RETIREMENT: this file's Session-38 shape — `cards` (8 testimony cards), `order`, `miraId`, `miraGateFlags`, and the verbs `approve` / `moveToReview` / `letStand` / `systemSuggestsTag` / `yourCallTag` / `keepWholeNote` — is GONE, not deprecated-in-place. Reason, from the spec's §1 and the research it cites (REVAMP_BRIEF rev 3, correction 2): peer forum MODERATION is rated CONTESTED ('records are largely private or unarchived'), so Vera judging whether a story is allowed was a claim the piece would have had to mark contested. Testimony PRODUCTION — narratives edited and published by the network — is FULLY DOCUMENTED. So the submissions below are ALREADY ACCEPTED, and the verb is APPLY / SKIP against a style guide. `lambient.miraNote` and `tablet.miraCommentsTeaser` went with the cards (Mira is no longer load-bearing; the spec keeps her only as a name).",
+ "_docF2cut": "cut for W1-E1, cloud F2, 2026-10-14: Lambient's small print and wait line, three rule rationales, the record footer. Submissions, manual and verse lines untouched.",
  "_docS223cut": "cut for W1-E1 / W1-B1, cloud, 2026-10-09 ('far too much reading in 2016'). The submissions (felt) are cut with the most care and only where the screen already SHOWS what the sentence told: Marisol's description of the four lines goes because her picture is beside it, labelled; Noa's 'I sent a video' goes because the video is attached; Renata loses only her opening line. Every `edit.find` still matches its text word for word. Four rule rationales (`why`) shortened in the platform's voice; `manual` and `verse` untouched. Lambient's small print keeps every item the era later uses, in fewer words. The Today notes shortened to a few words each. ⚑ HIS REVIEW (2026-10-09): the four-lines sentence restored (the four dimensions taught in LGBTQ+ education, e.g. the Genderbread Person / Gender Unicorn models; the fiction attributes it to 'someone in another group', no citation); 'a picture' kept.",
  "_docScripture": "PLACEHOLDER-draft. §2 of the spec, the doubling: the manual is `The Ordering`, and it cites `Household`. Both invented — NO real scripture is ever quoted as the apparatus's justification, and no real manual is named. Three rules govern every `manual`/`verse` pair below and they are the whole design: (1) same weight, same colour, same size, same citation shape — the player's eye cannot tell which authority is which, because the interface does not distinguish them either; (2) never quoted aloud, never argued — it is furniture, the small print under a rule; (3) THE VERSE NEVER JUSTIFIES CRUELTY IN WORDS. Every verse below is gentle and is about care, belonging, or keeping. The cruelty is entirely in what it is footnoting. Household 6:2 is deliberately cited TWICE — under correction 7 (route for mentorship) and under correction 9 (gender clarity review) — because to the apparatus a routing is a routing; the interface never notices it is sending a person to the same door for two opposite reasons.",
  "_docRegister": "Register calls, enforced by hand and stated in the session log: the CORRECTION COLUMN, the chips, the manual/verse lines and the `n of m applied` counter are `operable` — the tool may be tidy and charming, and the satire lives THERE. The SUBMISSIONS (`submissions[].text`) are `felt`: bare, sincere, never the joke. The submitters are never satirised; the target is the apparatus that is editing them. E3 has NO respite — deliberate, confirmed by Sérgio.",
@@ -16,7 +17,7 @@
   "nextStory": "Next story",
   "counter": "{n} of {m} applied",
   "doneHeading": "You're caught up.",
-  "doneSub": "No new stories waiting right now.",
+  "doneSub": "No new stories waiting.",
   "updateLine": "New in Contributor tools: {tool}.",
   "updateVersion": "GracePlatform {v}",
   "updateInstall": "Install",
@@ -101,8 +102,8 @@
   "_doc": "⛑ THE INITIATION, 2026-08-24 (Sérgio: 'do the initiation process from the log in and the Lambient system explaining what to do, in a more Cortana way but playful like Lamby — Lamby is now Lambient, an improved and more persistent system here to guide you'). This is the SEQUEL to Era 2's `introTitle/introLine1/introLine2/introAccept/introDismiss` in s2_lamby.json, and it is deliberately the same card twice, thirteen years apart, asking for more. FORM ONLY is taken from the 2015-era assistant onboarding pattern — a friendly mark, a warm two-line hello, a wall of small print, a wake-word opt-in, decline and accept. ⛑ NO REAL PRODUCT'S WORDING IS REUSED and no real assistant is named or depicted; CLAUDE.md's invented-marks law holds. ⛑ THE PERMISSIONS LIST IS THE SATIRE AND IT MUST COLLAPSE: it is written in a genuine product-disclosure register and every item in it is a thing the era later uses. ⛑ AND DECLINING MUST WORK — the dismissal law (CLAUDE.md) plus §4 of ERA3_NARRATIVE: 'there is no compliant path'. `declineReply` is where the era's whole thesis is said out loud, kindly, on the first screen, and it is not supposed to land until much later.",
   "consentTitle": "Let Lambient work alongside you?",
   "consentHello1": "It's Lamby. GracePlatform has me now.",
-  "consentHello2": "I do more now, and I do it quietly.",
-  "consentSmallPrint": "Lambient learns from this device and your account: your stories and your decisions on them, your messages, your contacts and how often you reach them, your calendar, your location history, the pages you open, and how long you spend on each. Lambient keeps working when this window is closed.",
+  "consentHello2": "I do more now. Quietly.",
+  "consentSmallPrint": "Lambient learns from this device and your account: your stories and decisions, your messages, contacts and how often you reach them, calendar, location history, the pages you open and for how long. It keeps working when this window is closed.",
   "consentWakeWord": "Let Lambient answer when you say “Lamby”.",
   "consentAllow": "Allow",
   "consentDecline": "Not now",
@@ -112,7 +113,7 @@
   "firstBoard1": "Open anything. They're all the same size to me.",
   "firstTask1": "Apply what fits. Skip what doesn't.",
   "firstTask2": "Either way it's recorded, so you can't get it wrong.",
-  "waitLine1": "Quiet moment? The group still needs this week's story.",
+  "waitLine1": "The group still needs this week's story.",
   "waitLine2": "The new video wants its keywords. No rush.",
   "waitFamily": "The family line still has parents waiting.",
   "_docWait": "⚑ S227 (VERA_OPTIONS §4c.2) — the waiting lines name only jobs that are ON the board and unfinished: the group (waitLine1), the family calls (waitFamily), the video once its update is installed (waitLine2, its 'And' dropped so it can stand first). At most two, the R28 cap; none if nothing named is open.",
@@ -214,7 +215,7 @@
   {
    "id": 3,
    "rule": "Clip for the broadcast",
-   "why": "mark forty seconds for the conference audio",
+   "why": "forty seconds for the conference audio",
    "manual": "The Ordering §3.2 — selected audio",
    "verse": "Household 9:6 — “what is said in the room is carried to the road”",
    "edit": {
@@ -242,7 +243,7 @@
   {
    "id": 5,
    "rule": "Add to the companion",
-   "why": "the daily reading needs seven of these a week",
+   "why": "the daily reading needs seven a week",
    "manual": "The Ordering §3.7 — companion reading",
    "verse": "Household 7:2 — “keep it near you, and read a little of it each morning”",
    "chip": "in the daily reading",
@@ -313,7 +314,7 @@
   {
    "id": 11,
    "rule": "Clip for the broadcast",
-   "why": "mark forty seconds for the conference audio",
+   "why": "forty seconds for the conference audio",
    "manual": "The Ordering §3.2 — selected audio",
    "verse": "Household 9:6 — “what is said in the room is carried to the road”",
    "edit": {
@@ -419,7 +420,7 @@
   "consentAllowed": "working alongside you",
   "consentDeclined": "declined · suggestions still shown",
   "workValue": "{n} decided",
-  "footer": "This record is maintained by GracePlatform for continuity of care. Requests to amend it are reviewed by your provider.",
+  "footer": "Maintained by GracePlatform for continuity of care. Requests to amend it are reviewed by your provider.",
   "witness": "record: viewed — profile and activity",
   "todayLabel": "events today: {n}",
   "todayEmpty": "no activity yet"
