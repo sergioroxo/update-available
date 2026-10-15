@@ -1,4 +1,5 @@
 {
+  "_docF4cut": "cut for W1-B1, cloud F4, 2026-10-15: the program's operable lines only: five laptop console lines (the 'of 5' is on the monitor's own step label), four of L's five turn questions, the locked-step line, the console's wait line and the failed-site detail. L's history, the record, care, photos, the results page and its clinical-debate captions (People also ask, the forum and gender-services results) are untouched.",
  "_doc": "⚑ S128 — THE TABS, AND NOBODY HAS TO READ THEM ALL. Sérgio, 2026-09-08: *'that should be the playable content… maybe we can make into a way that doesn't require people have to do everything?'* That single note solves two problems at once. **Nothing here is required.** Six tabs, any order, none gating anything: the headset is on the desk from the first frame and the era ends when she wears it, whether she has read one tab or all six. ⚑ SO ERA 4 IS AS LONG AS THE PLAYER MAKES IT — which is the answer to the thing he has now said three times, that the era takes too much of the piece's time. A reader who opens two tabs is out in four minutes; a reader who opens six is out in nine; neither is missing 'the' path, because there isn't one.",
  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: the results page keeps every result, title and address and cuts each snippet to its one claim; the agent's greeting keeps three bubbles at half the words; the stories tab keeps the line that echoes 1997 ('It has been where you are'). The People-also-ask block and its sources, L's history and the care log are untouched. ⚑ HIS REVIEW (2026-10-09): the greeting keeps 'I'm here for people having second thoughts.'",
  "_docFiling": "⚑ AND WHAT YOU CHOSE TO READ IS ITSELF FILED. Every tab opened writes one line to the session file — the strip that has been on screen since S119 — in the machine's flattest register. That is the era's whole argument turned into the one mechanic it has: you are reading its record of her, and it is keeping a record of your reading. Nothing says so. ⚑ It files ONCE per tab: opening something twice is a person re-reading, not a second interest, the same rule `flip()` and the offer cards obey.",
@@ -258,7 +259,7 @@
   "begin": "Begin",
   "beginWitness": "program: begun — five steps assigned",
   "stepLabel": "Step {n} of 5",
-  "locked": "This step unlocks when the one before it is complete.",
+  "locked": "Unlocks when the step before it is complete.",
   "steps": [
    {
     "id": "record",
@@ -268,9 +269,9 @@
     "button": "Confirm",
     "done": "Thank you. Your legacy file is retained for continuity of care.",
     "witness": "step 1: details confirmed — legacy file retained",
-    "console": "Step 1 of 5 — confirm your details on the monitor.",
+    "console": "Step 1 — confirm your details on the monitor.",
     "turn": {
-     "ask": "Before care can begin, your provider needs your details confirmed. Is this still you?",
+     "ask": "Your provider needs your details confirmed first. Is this still you?",
      "chips": [
       {
        "label": "That's me",
@@ -292,9 +293,9 @@
     "button": "Upload",
     "done": "Saved to your library.",
     "witness": "step 2: photograph restored — not requested",
-    "console": "Step 2 of 5 — choose a photograph to restore.",
+    "console": "Step 2 — choose a photograph to restore.",
     "turn": {
-     "ask": "There's one photograph on your file. Shall I restore it for you?",
+     "ask": "There's one photograph on your file. Shall I restore it?",
      "chips": [
       {
        "label": "Which one?",
@@ -315,7 +316,7 @@
     "button": "Acknowledge",
     "done": "Acknowledged.",
     "witness": "step 3: care actions acknowledged",
-    "console": "Step 3 of 5 — acknowledge the actions taken for you.",
+    "console": "Step 3 — acknowledge the actions taken for you.",
     "turn": {
      "ask": "Four things were taken care of while you were away. Can I show you?",
      "chips": [
@@ -338,9 +339,9 @@
     "button": "Confirm",
     "done": "Confirmed.",
     "witness": "step 4: history confirmed",
-    "console": "Step 4 of 5 — confirm your history with L.",
+    "console": "Step 4 — confirm your history with L.",
     "turn": {
-     "ask": "To keep your history whole, I need access to your messages. Allow it?",
+     "ask": "To keep your history whole, I need your messages. Allow it?",
      "chips": [
       {
        "label": "Allow",
@@ -383,9 +384,9 @@
     "n": 5,
     "title": "Your session",
     "ask": "Put on the headset for your immersive session.",
-    "console": "Step 5 of 5 — put the headset on.",
+    "console": "Step 5 — put the headset on.",
     "turn": {
-     "ask": "Everything's in order. Your session is ready — the headset is beside you. Now?",
+     "ask": "Everything's in order. The headset is beside you. Now?",
      "chips": [
       {
        "label": "Now",
@@ -477,7 +478,7 @@
    "restoring": "Restoring your session — six tabs, five of them yours.",
    "results": "The search is done. Read the results.",
    "site": "Second Thoughts can take it from here.",
-   "wait": "While you think it over, Maya — the console on your bed has a game from us. Match three, and watch your before come back.",
+   "wait": "While you think, Maya — the console on your bed has a game from us. Match three, and watch your before come back.",
    "_docWait": "⚑ Phase 7 / S203 — L's own 'while you wait' (the last of the three helpers S201 began: Lamby 2003, Lambient 2016). Once, after 25 s without a press while the programme is open, and only while the console on her bed has its game ready and unplayed. The seller's voice pointing at the seller's game — ⚑ S227: now MATCH MADE SIMPLE, which replaced TIDY (the line was 'Tidy a room. It settles the mind.'; it now sells the new game's promise, a 'before' it can never deliver): the helper gives her something to do, and what it gives her is the programme. It clears on her next press."
   },
   "failed": {
@@ -485,7 +486,7 @@
    "status": "offline",
    "title": "This site can't be reached",
    "line": "secondthoughts.help took too long to respond.",
-   "detail": "Your session could not be continued. Second Thoughts has ended the session on your behalf.",
+   "detail": "Your session could not be continued. Second Thoughts ended it on your behalf.",
    "step": "Session ended by the host."
   },
   "next": "Continue",
