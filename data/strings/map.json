@@ -1,4 +1,5 @@
 {
+  "_docF4cut": "cut for W1-B1, cloud F4, 2026-10-15: four Era-4 route hints (wake, l, site, steps).",
  "_doc": "⚑ THE MAP (S145, 2026-09-16 — docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md §3A). FRAME VOICE: this is the game menu's 'Where you are' and the idle helper's one line — the frame explaining the piece, which it may, because the frame never plays. Four eras; each a list of beats in the order the spine walks them. `done` is a condition key resolved in src/witness/map.ts against the ledger and the OS (conditions in code, content in data — the guide's own pattern); `hint` is the plain line for what to do; `where` the plain direction; `optional` beats are shown but are never 'current' (the piece does not require them); `quiet` beats never raise the helper (felt / respite / the Close: nothing plain is allowed to speak over them). Nothing here is display text in the fiction and nothing here files.",
  "title": "Where you are",
  "row": "Where you are — and what is next",
@@ -413,14 +414,14 @@
      "id": "wake",
      "label": "The screensaver",
      "done": "saverPressed",
-     "hint": "The monitor is asleep on its mark — press it to restore the session.",
+     "hint": "The monitor is asleep — press it to restore the session.",
      "where": "the monitor"
     },
     {
      "id": "l",
      "label": "L, on the laptop",
      "done": "browserOpen",
-     "hint": "The laptop is restoring your session — wait for it, then start with the search.",
+     "hint": "The laptop is restoring your session — wait, then start with the search.",
      "where": "the laptop"
     },
     {
@@ -434,7 +435,7 @@
      "id": "site",
      "label": "Second Thoughts",
      "done": "programBegun",
-     "hint": "The first result is a site. Open it, start a session, and let the agent begin.",
+     "hint": "Open the first result, start a session, and let the agent begin.",
      "where": "the monitor"
     },
     {
@@ -449,7 +450,7 @@
      "id": "steps",
      "label": "L's five turns",
      "done": "stepsDone",
-     "hint": "L asks, you answer — then each step's own press. Continue moves you on; nothing moves by itself.",
+     "hint": "L asks, you answer — then each step's own press. Continue moves you on.",
      "where": "the monitor"
     },
     {
