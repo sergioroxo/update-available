@@ -1,4 +1,5 @@
 {
+  "_docF4cut": "cut for W1-B1, cloud F4, 2026-10-15: two operable lines of the session on the glass only (the recorded conversation's intro card; the grounding note). The ball (MC, categories, closing, house rules), Junie, Ade and the stream are respite and untouched.",
  "_doc": "PLACEHOLDER-draft — THE COMMONS, Era 4's last beat and the piece's one respite (S133, 2026-09-11; replaces S79's ball, whose lines it keeps and cuts). Every string here is a draft for the project lead's voice pass and his edit wins. ⚑ THE SHAPE, ruled by Sérgio the same day: the headset STAYS ON. The VR is the SOGICE risk — seclusion, an overlay on her own room — and it is the community that breaks it. Junie's invitation (muted six weeks ago by the care system, see s4_browser.json's care.invite) reaches the headset anyway; she goes in with ONE press; the overlay tries to filter the shared space and fails — forty-one people being specific is not a thing it can classify — and the space opens over her room: lamps, the MC, the four categories. Then the apparatus's update fails on an account it can no longer place. Nobody hacks anything (R28: updates are triggered by documented system failures, never by the player). Real-world referent for the Dossier: Trans Academy, a trans community that runs in VRChat (https://www.transacademy.org/) — [VERIFY SOURCE], cite documentary once checked; in the fiction the space is the invented mark below and never the real name.",
  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: only the recorded conversation's 3-second intro card is shortened. The Commons, Junie and the recorded lines are untouched.",
  "_docWhatThisIs": "⚑ AN INTERPRETIVE HOMAGE, ABSTRACTED — not a depiction. Ball culture is Black and Latino LGBTQ+ culture, built from the 1970s onward principally by Black and Latina trans women and gender-nonconforming people; its modern house-and-ball form dates to Crystal and Lottie LaBeija's House of LaBeija, 1972. This scene invents its houses, its categories, its names and its announcements; it depicts no real person, no real house and no real ball; it borrows the FORM (a category called, a house, the walk — credited, COPY-23, his 2026-10-03 'soften the credit') and none of the culture's own idiom beyond that. The MC here performs the FUNCTION — announce, categorise, celebrate — in ordinary English, because the borrowed words are the part that is not ours. The credit is not optional and it is not abstract: data/provotypes/e4_ball.json and docs/reinterp/ATTRIBUTIONS.md name the lineage. Crediting 'ballroom culture' in general repeats the extraction pattern rather than correcting it.",
@@ -350,12 +351,12 @@
    "title": "Grounding  ·  1 of 3",
    "in": "breathe in",
    "out": "breathe out",
-   "note": "a quiet room  ·  the environment is holding"
+   "note": "a quiet room  ·  holding"
   },
   "recorded": {
    "title": "Someone who went back  ·  2 of 3",
    "mark": "recorded  ·  verified by Second Thoughts",
-   "intro": "Now playing · 11 min. The speaker's name has been removed.",
+   "intro": "11 min. The speaker's name has been removed.",
    "introSeconds": 3.0,
    "_docIntro": "S155 / R3-102 (Sérgio: 'What is this recording sound? The session sequence is poorly done'): the recording is INTRODUCED as what it is before its first sentence — the apparatus's own framing, in its own voice; the hiss starts under the introduction, at half its old level. Still: two flat sentences, invented, nobody's; the card lands on the third's dash.",
    "lines": [
