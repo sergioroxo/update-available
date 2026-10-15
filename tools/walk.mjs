@@ -839,6 +839,8 @@ const LAP = { w: 224, h: 140 };
      */
     const e4 = os && os.e4;
     const program = !!(e4 && e4.browser && e4.browser.programMode && e4.browser.programMode !== 'free');
+    const b4 = e4 && e4.browser;
+    const bstate = b4 ? { mode: b4.mode, step: b4.step, picker: b4.picker, live: b4.live, turnDone: [...(b4.turnDone || [])], stepDone: [...(b4.stepDone || [])], done: !!b4.programDone, pending: typeof b4.turnPending === 'function' ? b4.turnPending() : null } : null;
     const lapRects = e4 && Array.isArray(e4.laptopHits) ? e4.laptopHits : [];
     for (const r of lapRects) {
       add(r.id, 'laptop', r, onPlane('era3-device-laptop', r.x + r.w / 2, r.y + r.h / 2, LAP.w, LAP.h));
@@ -1034,7 +1036,7 @@ const LAP = { w: 224, h: 140 };
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
-      screenHash, domText, audio, surfaces, silent, quiet, roomDesync, pose, program,
+      screenHash, domText, audio, surfaces, silent, quiet, roomDesync, pose, program, bstate,
       targets, dropped, moves, ledCount, ledList, ledger: led,
       // S178: the phone is in her hand (app.ts carries a copy of its body while it is)
       phoneHeld: !!(window.__app && window.__app.root.findByName('w_phoneDevice-held')?.enabled)
@@ -1188,7 +1190,15 @@ const LAP = { w: 224, h: 140 };
     .filter((d) => d.turn && !FORBIDDEN.test(d.id) &&
       Math.abs(d.turn.yaw) <= ((st.targets || []).length ? TURN_YAW_MAX : 180) &&
       Math.abs(d.turn.pitch) <= TURN_PITCH_MAX &&
-      (pressed.get(keyOf(sig, d)) || 0) < PRESS_CAP)
+      (pressed.get(keyOf(sig, d)) || 0) < PRESS_CAP &&
+      /**
+       * ⚑ A CANDIDATE ALREADY TURNED TO IN THIS STATE IS NOT A CANDIDATE. This returned the single NEAREST
+       * off-screen control and the caller then refused it for having been tried — so once the laptop and the
+       * monitor (the two nearest) had each had their one glance, nothing further out was ever considered. Booted with
+       * `--from-era 4` the seat leaves both off-screen, and the headset, the only way on, was third in line: the walk
+       * read the six tabs until GOING NOWHERE. (A full walk arrives with the laptop and monitor in frame.)
+       */
+      !turnedFor.has(keyOf(sig, d)))
     .sort((a, b) =>
       (Math.abs(a.turn.yaw) + Math.abs(a.turn.pitch)) -
       (Math.abs(b.turn.yaw) + Math.abs(b.turn.pitch)))[0] || null;
@@ -2006,7 +2016,7 @@ const LAP = { w: 224, h: 140 };
         note('stop', {
           what: 'GOING NOWHERE: 45 presses without the era, phase, spine, queue mode or ' +
             'ledger changing once — the piece is responding, but nothing here leads onward',
-          era: s.era, phase: s.phase, spine: s.spine
+          era: s.era, phase: s.phase, spine: s.spine, bstate: s.bstate
         });
         await page.screenshot({ path: join(SHOT_DIR, 'walk_nowhere.png') });
         break;
