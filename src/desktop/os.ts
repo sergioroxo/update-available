@@ -1345,12 +1345,30 @@ export class DesktopOS {
     this.dirty = true;
   }
 
+  /** ⚑ W1-D14 — while Caleb's Messenger is on screen no other corner line is drawn or spends its life over it */
+  private get calebHoldsToasts(): boolean { return !!this.caleb?.open && !this.toast?.act; }
+
+  /** ⚑ W1-D14 (walkthrough 1: "Caleb is very important here but feels lost in all the text") — his message gets the
+   *  room to itself: every other window is minimised (the taskbar brings each back) or put down (its icon does), so
+   *  nothing is lost and the toast that announces him and the Messenger that follows stand on a clear desktop */
+  private clearDeskForCaleb(): void {
+    for (const key of ['kit', 'irc', 'web', 'dossier', 'lambyrig', 'rootcause', 'media', 'netvision']) this.minimiseWindow(key);
+    // Restorify and the forum are put down, not parked on the taskbar (a row of buttons is more text round him); their
+    // desktop icons open them again
+    if (this.restorify?.open) this.restorify.open = false;
+    if (this.forum?.open) this.forum.open = false;
+    this.yourFileOpen = false;
+    this.startPanels.e2.close();   // the era's "what you can do here" card: the Start menu opens it again
+    this.dirty = true;
+  }
+
   /** …and THEN he tells you (one conduction beat, two lines, both answers
    *  work). Only ever on the ordinary desktop — never over a felt window. */
   private maybeAnnounceMessage(): void {
     if (!this.messagePending || this.messageNoticeShown) return;
     if (this.caleb) return; // the person's window is already open: nothing to announce
     this.messageNoticeShown = true;
+    this.clearDeskForCaleb();   // W1-D14
     // ⚑ S150 — ONE LINE AND THE DOT, no card (OPEN_ITEMS R3-55). The pop-up sat
     //   over the desktop beside PureMail's envelope and the two read as one
     //   choice; the Messenger's unread mark is the door, Lamby names it once.
@@ -1392,7 +1410,8 @@ export class DesktopOS {
   /** S2R.3A — the messenger window (felt). The apparatus is not in it. */
   private openCaleb(): void {
     if (this.caleb) return;
-    if (this.restorify) this.restorify.open = false; // he takes the screen
+    this.clearDeskForCaleb();   // W1-D14: he takes the screen, and the desk with it
+    if (this.restorify) this.restorify.open = false;
     const thread = new CalebThreadApp();
     this.caleb = thread;
     this.startProgram(calebStrings.window.title);   // S157 / R3-50: the messenger loads first
@@ -2173,7 +2192,11 @@ export class DesktopOS {
     if (this.toast) {
       // ⚑ S226 (his, cadence study Q7: "yes") — a corner line only spends its life while she is facing the screen:
       //   a line that landed while she was turned away waits for her instead of expiring unseen
-      if (this.screenFacing) this.toast.t -= dt;
+      //   ⚑ W1-D7 — and only while none of his story's pictures is moving: a corner line that lands over a clip waits
+      //   for the clip to end (it is held, not spent, and not drawn — see the toast's draw)
+      //   ⚑ W1-D14 — likewise while Caleb's window is up: the era's ambient lines wait for him (his own door-toast is
+      //   drawn before he opens it, so it is not held)
+      if (this.screenFacing && !this.testimony?.playbackActive && !this.calebHoldsToasts) this.toast.t -= dt;
       // the text does not animate; only its arrival and its going matter
       if (this.toast.t <= 0) { this.toast = null; this.dirty = true; }
     }
@@ -2862,7 +2885,7 @@ export class DesktopOS {
     // that row is load-bearing by its own law (Leave and Pause live from frame
     // one, at a fixed position, every phase) — so an ambient system remark
     // yields to it and comes back when the card closes.
-    if (this.toast && !this.provotype?.open) {
+    if (this.toast && !this.provotype?.open && !this.testimony?.playbackActive && !this.calebHoldsToasts) {   // W1-D7: never over his story's picture; W1-D14: nor over Caleb
       ui.setFont(ctx, 9);
       const tw = this.reinterp ? Math.min(W - 16, Math.ceil(ctx.measureText(this.toast.text).width) + 12)
         : ctx.measureText(this.toast.text).width + 12;
