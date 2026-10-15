@@ -2,13 +2,13 @@ STATUS: live
 
 # F4 — 2026: less reading (W1-B1, F-rows) — REPORT
 
-Branch `cloud/F4` (from `origin/reinterp`). Commit `CLOUD: F4 — …`. Not merged; PR is "F4 — DO NOT MERGE (review)".
+Branch `cloud/F4` (from `origin/reinterp`). Not merged; PR is "F4 — DO NOT MERGE (review)".
 
 ## The honest headline
 **Era 4 barely moves: displayed text went from 3,222 to 3,173 words (−49, −1.5%) in 20 strings; no line removed.** Era 4 was cut in S223 and its surfaces are already at label size. What remains is, almost all of it, text that the rules protect (voiced, respite, clinical-debate, documented, the thesis of the update). To go further needs his yes on the proposals below. I did not widen the cut by touching protected text.
 
 ## Files changed
-`data/dialog/s4_browser.json` (12 strings), `s4_ball.json` (2), `s4_space.json` (1), `s4_offers.json` (1), `data/strings/map.json` (4 Era-4 route hints). Each file also carries a one-line `_docF4cut` note. No code, layout, timing, colour or audio touched. No `edit.find`, id, witness/ledger line, `_s` line or dossier text touched.
+`data/dialog/s4_browser.json` (14 strings), `s4_ball.json` (2), `s4_space.json` (1), `s4_offers.json` (1), `data/strings/map.json` (4 Era-4 route hints). Each file also carries a one-line `_docF4cut` note. No code, layout, timing, colour or audio touched. No `edit.find`, id, witness/ledger line, `_s` line or dossier text touched.
 
 ## Words per surface (displayed text only; excludes `_` notes, ids, audio names, witness/ledger/`filed` lines, speedrun id lists)
 | surface | before | after | change |
@@ -51,7 +51,8 @@ Only operable, non-voiced, non-respite text: the laptop console's "Step n **of 5
 ## Checks
 - `npx tsc --noEmit`: clean.
 - `npm test` (invariants, rooms, spec, licences): all four OK.
-- `node tools/walk.mjs --port 3000 --max 2600 --require-close`: **RUNNING when this was written** (headless Chromium without a GPU on a 4-core container: ~6.5 s per step, so ≈ 4–5 h for 2,600 steps). The result is appended below the moment it finishes. This is a data-only change (strings; no ids, keys, code or layout), so the walk is a confirmation, not a discovery; the lead's machine re-walks before merging anyway.
+- `node tools/walk.mjs --port 3000 --max 2600 --require-close` (the full walk): **NOT completed.** Headless Chromium without a GPU on 4 cores runs ~12 s per step in Era 1; my 50-minute limit killed it at step 238 of 2,600 (Era 1, "FRAME DETACHED" at the kill; no content error before it). At that pace the full walk is ~9 h, beyond this session's limit. **Needs the lead's Mac walk.**
+- `node tools/walk.mjs --port 3000 --max 900 --from-era 4 --require-close` (the shortcut, to see Era 4 at all): stops with `GOING NOWHERE: 45 presses without the era advancing` in Era 4's six-tab loop after 87 presses, i.e. the known W1 walker stall ("on every build"; not caused by this change, I did not re-run the base to compare). It does not reach the Second Thoughts program, so **the walk exercised none of my edited step/turn/console lines**; it did exercise the tab strip and the boot (no page errors in its report). Those lines are plain strings read by the same code paths as before (no key, id or placeholder changed), but they have not been seen on screen by me.
 
 
 ## Every changed line (BEFORE / AFTER)
