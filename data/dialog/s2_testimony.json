@@ -36,7 +36,6 @@
   "files": [
    { "id": "daniel", "name": "Daniel_A.avi", "size": "212 MB" },
    { "id": "caleb", "name": "Caleb_B.avi", "size": "198 MB" },
-   { "id": "broll", "name": "BROLL_set.avi", "size": "61 MB" },
    { "id": "tone", "name": "ROOM_TONE — audio", "size": "4 MB" }
   ],
   "play": "Play",
@@ -70,11 +69,6 @@
      { "t": 10.6, "who": "CALEB", "text": "If you're watching this — it can be you too." },
      { "t": 14.6, "who": "PRODUCER", "text": "Good. Once more, slower?" },
      { "t": 17.4, "who": "CALEB", "text": "…Once more." }
-    ]
-   },
-   "broll": {
-    "seconds": 12,
-    "lines": [
     ]
    },
    "tone": { "seconds": 8, "lines": [] }
