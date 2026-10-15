@@ -1358,6 +1358,7 @@ export class DesktopOS {
     if (this.restorify?.open) this.restorify.open = false;
     if (this.forum?.open) this.forum.open = false;
     this.yourFileOpen = false;
+    this.startPanels.e2.close();   // the era's "what you can do here" card: the Start menu opens it again
     this.dirty = true;
   }
 
