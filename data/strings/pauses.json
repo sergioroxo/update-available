@@ -1,5 +1,6 @@
 {
  "_doc": "⚑ S207 — THE PAUSES AND THE WAYS BACK (his, 2026-10-01: 'I don't want to see this as a full fork… elements of pause where people can better understand that the rest of the elements can have a way to be interacted with and not just lost in the void. Maybe there is information that needs to be disclosed in the system'; 'yes, build the four pauses and the ways back… see if they make sense when building them'). Plan: docs/reinterp/SKETCH_BRANCHES_AND_SIDE_DOORS_2026-10-01.md §4. ONE PAUSE PER ERA, once, at a moment the main path is waiting anyway, in the era's own software, listing only what has not been opened yet (read live from data/strings/map.json's optional beats — nothing here goes stale). THE WAYS BACK: when an optional thing is closed, the era's voice names the main path's current step (map.json's label). Seller's voice throughout — operable register; the satire is the system's, and it is never about the person. ⚑ THE EXCEPTIONS, by law: what people made for each other never pushes back — Caleb's song, the radio-hour tape, Tape C, the outtake on Tape 04, the ball. None of those calls wayBack.",
+ "_docF3cut": "cut for W1-B1, cloud F3, 2026-10-15: e1 browse tip shortened by two words.",
  "wayBack": {
   "e1": "Un-Walk: next - {beat}. Start > Now gives directions.",
   "e2": "Restorify: next - {beat}. Start > Now gives directions.",
@@ -22,7 +23,7 @@
    "title": "Un-Walk — Did you know?",
    "lead": "Did you know…",
    "items": {
-    "browse": "the fellowship's pages stay open in NetPilot — search them, browse the directory, follow the ring.",
+    "browse": "the fellowship's pages stay open in NetPilot — search, browse the directory, follow the ring.",
     "wall": "the wall behind you keeps notes on your progress. Turn around.",
     "racket": "Release Work hangs on the wall by your bed — the racket and its sheet.",
     "rootcause": "a game came on your disk: ROOTCAUSE.EXE, on the desktop.",

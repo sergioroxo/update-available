@@ -1,4 +1,5 @@
 {
+ "_docF3cut": "cut for W1-B1, cloud F3, 2026-10-15: six hint lines shortened; each still names the one thing to press.",
   "_doc": "S151 (2026-09-20, Priority 2 — Era 1 conducted): the thread now follows the Un-Walk wizard's steps (src/desktop/apps/kit.ts): `kit` → read the programme (R3-16: no more 'enclosed booklet'), `tape` → the pray step, `channel` → the connect step, and two new lines — `form` (R3-13: only once Rob has 'spoken with your mother') and `racket` (R3-38: the room's first exercise, named at last). `soft: true` marks a line that steps aside, unfiled, when any other line becomes due, and returns in the next quiet gap — the sandbox's hints must never block the main line's. Priority = array order. ⚑ Everything below this sentence is the older doc, still true where it does not contradict this. PLACEHOLDER — Sérgio voice pass pending, EVERY display string below. R28-2a (docs/REINTERP_R28-2_GUIDED_NARRATIVE_SPEC_2026-07-10.md §2): Era 1's impersonal side-message guide thread — the pre-Lamby conductor. Register law: terse imperative, never 'I', never praise, the apparatus's own status voice (operable). One active message max; it retires on compliance and the next eligible one surfaces; no queue, no checklist, no progress. Rendered in the Era-1 taskbar status well (src/desktop/os.ts), NOT the non-diegetic DOM chrome movementHint uses. Fields: `trigger`/`done`/`expire` are CONDITION KEYS resolved by the registry in src/narrative/guide.ts (content lives here, conditions in code); `emphasis` names a prop-emphasis set the engine lifts while the message is active (floppy = the kit disk; boombox = the tape player AND all three shelf tapes, since the hint names both and only the player used to light; belongings = every eligible object in the gathering window, added 2026-08-21 after Sérgio found them clickable-but-unlit — 'no glow around like a pressable area feedback'; pillow = the tennis racket, which is that provotype's own instrument and had no room presence at all). ⚑ check-spec C11 now fails the build if an emphasis names a prop no room state contains, or if a message names an emphasis the engine cannot resolve — both have silently happened before; `witness.followed`/`witness.declined` are the cold-side lines filed to ledger.guidance BOTH ways (witness symmetry, ERA_MINING FIND #4 — there is no response that isn't data; declined copy must stay quiet, not scolding). The `tape` message's done key (tapePlayed) has no in-build source until R28-2b ships the tape system — by design it can only expire (filed as skipped) this build. The final `update` entry is the Lamby seed (spec §2: E2's debut lands as this promised 'improvement'); its `done` key is `updateEngaged` (R28-2c), not a bare era check — it retires the instant the player engages the T1 notice AT ALL (Update-now OR Remind-later), so 'belongings' can take the guide's one-active-message slot during the gathering window; the direct Update-Now path is unchanged (still waits for the actual era shift, since remind was never used). The new `belongings` entry (R28-2c, §4) is the T1 gathering-window prompt: trigger fires when 'Remind me later' opens the window (src/narrative/belongings.ts), done/expire read the FINAL kept-state at window-close (gathered at all vs declined to gather) — the per-item `kept: <label>` lines are filed separately (data/room/belongings.json), not through this message. RETIRED 2026-07-24 (Session 44, docs/REINTERP_OPENING_DECISION_2026-07-24.md): the `look` and `interact` entries S40 added at the head of this array are GONE, with the pre-boot window and the optional power-press they described. Entry is now the interim log-in panel (which teaches look/point/click for BOTH headset and computer, before anything starts) followed by the room waking on its own — no verb is taught by an in-room side-message any more, and nothing is asked of the player before the desktop. Every remaining entry in this array obeys the trigger/done registry convention above without exception. Historical note: the retired `interact` press was itself only OPTIONAL (Sérgio, 2026-07-24, resolving a conflict with D22's closed auto-boot decision and D38's E2 'Daniel presses power himself' thesis) — the decision doc's auto-boot removes even that, so D22 and D38 are now clean.",
   "beat": "e1.guide",
   "cuts": [
@@ -45,7 +46,7 @@
       "id": "pledge",
       "trigger": "pledgeStep",
       "done": "pledgeAnswered",
-      "text": "the card. sign it in your name, or set it aside.",
+      "text": "the card. sign it, or set it aside.",
       "witness": {
         "followed": "guidance: pledge — answered",
         "declined": "guidance: pledge — no response"
@@ -65,7 +66,7 @@
       "id": "search",
       "trigger": "browsing",
       "done": "channelJoined",
-      "text": "join the channel from the fellowship's page, or browse its pages first.",
+      "text": "join the channel from the fellowship's page, or browse first.",
       "_docS190": "⚑ S190 — the 1997 browser (src/desktop/apps/web1997.ts): between the dial-up and the channel.",
       "witness": {"followed": "guidance: search — followed", "declined": "guidance: search — no response"}
     },
@@ -74,7 +75,7 @@
       "soft": true,
       "trigger": "browsingIdle",
       "done": "channelJoined",
-      "text": "you can keep browsing, or go to the channel. someone is waiting there.",
+      "text": "keep browsing, or go to the channel. someone is waiting.",
       "_docS194": "⚑ S194 — his: 'the message that appears after a bit of inactivity is a helper… allow the user to explore or to connect back to the main narrative'. After 25 s with the browser open and nothing pressed.",
       "witness": {"followed": "guidance: channel — joined after browsing", "declined": "guidance: channel — not yet"}
     },
@@ -83,7 +84,7 @@
       "soft": true,
       "trigger": "channelWaiting",
       "done": "channelHooked",
-      "text": "while you wait, the fellowship's pages are still open in NetPilot.",
+      "text": "while you wait, browse the fellowship's pages in NetPilot.",
       "_docS194": "⚑ S194 — 'it is better to have people do stuff than to panic in waiting': in the channel, before Rob writes, after 20 s with nothing pressed.",
       "witness": {"followed": "guidance: waiting — the mentor wrote", "declined": "guidance: waiting — no response"}
     },
@@ -93,7 +94,7 @@
       "trigger": "formAvailable",
       "done": "formOpened",
       "expire": "eraShifted",
-      "text": "a form has been sent to you. it is on the desktop.",
+      "text": "a form has been sent. it is on the desktop.",
       "witness": {
         "followed": "guidance: family form — followed",
         "declined": "guidance: family form — no response"
@@ -135,7 +136,7 @@
       "soft": true,
       "trigger": "kitSetAside",
       "done": "kitConnecting",
-      "text": "the programme is on the taskbar. press it, or the disk, to go on.",
+      "text": "press the programme on the taskbar, or the disk, to go on.",
       "witness": {"followed": "guidance: Un-Walk — set aside, then online", "declined": "guidance: Un-Walk — set aside"}
     },
     {

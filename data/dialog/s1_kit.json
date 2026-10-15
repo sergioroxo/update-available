@@ -1,4 +1,5 @@
 {
+ "_docF3cut": "cut for W1-B1, cloud F3, 2026-10-15: the Amen line, the radio-hour aside, the pledge lead-in and the form page shortened. Welcome and 'step by step' untouched (his review).",
   "_doc": "S1.2–S1.4 — UN-WALK, the Starter Kit's programme (ERA1_LOGIC_v1 §3). Register: operable (perpetrator self-presentation; period-real, satire only where it collapses). ⚑ REBUILT 2026-09-20 (S151, R3-15/16/19/21/22/24): the booklet is now a Win95 WIZARD — his reference `References images/for the Era-1 programs.png`: a picture panel on the left, a bold title, plain text, Back / Next / Cancel — and its First Steps page is THE ERA'S PROGRAMME: five steps, each a press that opens its own panel and ticks off when done, in order (read · pray · connect · form · journal). The prayer step shows the sung words from `s1_prayer.json`, highlighted as they are sung, and asks for one press at the end. The connect step is the Internet Setup Wizard (`to enter online.png`, `for IRC connection.png`) on the black screen. Names follow the 'uncanny CT branding' doctrine (SCRIPT_UPDATE_v0.8 §5): TriedPath Fellowship, Un-Walk — read real, land wrong. Period vocabulary: 'struggler', 'SSA', 'change is possible'. BACK is drawn dead on every page (R26: the path only runs forward). All wording Claude's, his edit wins.",
   "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: the wizard pages keep their claim and their one instruction each, and lose the sentence that explains what the next step will show anyway (the mentor's form and journal; thousands before you; where the tape sits). The Internet Setup welcome says the same in fewer words. The pledge's lead-in goes to one line, since the card below already shows the name. The pledge card itself is untouched. ⚑ HIS REVIEW (2026-10-09): the welcome page and 'step by step' kept as they were; the mentor page keeps 'He has been where you are.' (the form-and-journal sentence stays cut).",
   "ministry": "TriedPath Fellowship",
@@ -117,16 +118,16 @@
     "again": "Play again",
     "ended": "The prayer is over. Say it with us.",
     "amen": "Amen",
-    "mayStop": "Press Amen to end the prayer here — or follow it to the end.",
+    "mayStop": "Press Amen to skip the rest, or follow it to the end.",
     "_docMayStop": "⚑ S204 (his, 2026-09-30: 'the Amen button can have an information of press Amen if you'd like to skip the rest of the prayer') — the line says plainly that Amen ends it now. Taking it early is still filed (`prayer-cut`).",
     "_doc": "2026-09-20, Sérgio: no activity that costs more time — 'what would be the experience of someone at the time?' Sit, follow the printed words, and, being sixteen, fast-forward the tape. So Amen is offered from the first chorus on; taking it early stops the tape and is filed (`prayer-cut`, flagged) — the one act of resistance the beat holds, and the record keeps it.",
-    "aside": "(The second tape is the fellowship's radio hour — not a step.)",
+    "aside": "(The second tape: the fellowship's radio hour. Not a step.)",
     "_docAside": "S159 / R3-20 (Sérgio: 'the Un-Walk wizard can name it as an option if the person wants — teaching the user there is other stuff to see that might not be the main narrative'): one parenthetical line on the pray page, no press, no step."
   },
   "pledge": {
   "_doc": "S170 / I-03 — THE PLEDGE CARD, from his research (Interactive Sexuality Pedagogy…, §1990s: the True Love Waits card ceremony — a signed card turning an intention into a public object, the movement's own identity marker; Bearman & Brückner 2001 on what pledges did). The programme's own form of it, in the programme's own words (register: operable — the satire is TriedPath's and it collapses on its own line: the card is 'on file' whether or not you sign it, and the copy for the fridge is printed by the programme). The name is the one typed at the profile (ledger.name), and only that. Two presses, both lead on: signing files `pledge-signed`; declining files `pledge-declined`, flagged, and the wizard moves on — dismissal always works and is logged. No ring: the fellowship's is 'in the post', which is where it stays.",
   "title": "Your pledge",
-  "before": ["Sign it in your name, or set it aside for today."],
+  "before": ["Sign it, or set it aside for today."],
   "cardTitle": "TRIEDPATH FELLOWSHIP · MY PLEDGE",
   "cardLines": ["I, {name}, choose the tried path.", "I will keep my thoughts, my eyes and my", "friendships pure, and I will let those", "who love me help me walk.", "Signed before God and my family."],
   "ring": "(Your fellowship ring is in the post.)",
@@ -152,7 +153,7 @@
     "title": "Family Form",
     "lines": [
       "Your mentor has sent a form for your family.",
-      "It is on the desktop. Open it and answer",
+      "It is on the desktop. Answer",
       "every question as fully as you can."
     ],
     "button": "Open the form"
