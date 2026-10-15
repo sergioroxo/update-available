@@ -1,5 +1,6 @@
 {
  "_doc": "⚑ S229 / W1-A6 (walkthrough 1: 'a what-you-can-do-here panel at the start of EVERY era — the colleague liked the one level panel that said what you could do'; also B4, B14). One short card per era, in THAT ERA'S OWN SOFTWARE VOICE, on the era's own screen: 1997 the programme's Getting Started window, 2003 Restorify's Today, 2016 GracePlatform's first-day card, 2026 GraceOS's welcome-back card. It is the programme telling her what to do, never the frame: no Assistant, nothing in the piece's own voice, and it files nothing. Each step names a witness-map condition (`done` = a key of CONDITIONS in src/witness/map.ts), so a tick is only ever true; a step may carry `textSpeedrun` (the Speedrun Version's own wording) and `doneSpeedrun`, or `speedrun: false` to leave the Speedrun Version's card without it. 3–5 steps, one line each. On 2016's board, where a card would lie over the day's tiles, it becomes a one-row strip under them (`strip` / `stripSpeedrun`: the same steps, shorter) while the board is one row of tiles. It opens once per era after the arrival has settled, only on a calm screen (never over a required modal, never during a felt scene), sits UNDER every window, and closes with its own close box (src/desktop/apps/startPanel.ts).",
+ "_docF3cut": "cut for W1-B1, cloud F3, 2026-10-15: e1 step 4 ('the pledge card' -> 'the pledge'; the card is on screen).",
  "e1": {
   "title": "Getting Started",
   "lead": "Welcome to your companion disk. Do these in order:",
@@ -7,7 +8,7 @@
    { "text": "Open the disk: the A:\\ icon.", "done": "kitInserted" },
    { "text": "Read the programme, then press Done.", "done": "kitRead" },
    { "text": "Play the tape and follow the prayer.", "done": "prayerSaid" },
-   { "text": "Sign the pledge card, or set it aside.", "done": "pledgeAnswered" },
+   { "text": "Sign the pledge, or set it aside.", "done": "pledgeAnswered" },
    { "text": "Go online: the wizard dials the fellowship.", "done": "wentOnline" }
   ],
   "close": "Close"
