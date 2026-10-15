@@ -923,7 +923,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   from the screen in front of her, is one press away. The phone comes to the eye; the headset goes on.
     timePassing = createTimePassing(app, () => !!app.xr?.active);
     call = mountCall({
-      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !gameMenuBus.isOpen,
+      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !gameMenuBus.isOpen && !os.testimony?.playbackActive,   // W1-D7: the call waits while his story plays
       current: () => {
         const cur = mapState(os).current;
         if (!cur) return null;

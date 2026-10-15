@@ -13,7 +13,7 @@
  *   2 RELEASE  — MEDIA PARTICIPATION & RELEASE, filled in from his profile; "website" is already ticked inside
  *                "ministry communications"; DISTRIBUTION: APPROVED. One live button. (A composite — no ex-gay release
  *                of the period was found; the dossier says so.)
- *   3 TAPES    — TAPE_04_CAPTURE: Daniel_A, Caleb_B, the B-roll, the room tone. Daniel's take is the template in his
+ *   3 TAPES    — TAPE_04_CAPTURE: Daniel_A, Caleb_B, the room tone. Daniel's take is the template in his
  *                mouth; the producer says cut; THE TAPE KEEPS RUNNING; Caleb walks in looking for where to sit. The
  *                footage is the people's: bare, nothing scored, nothing narrated.
  *   ⚑ S207 (his ruling): ONE media object — the tapes are the raw shoot of Restorify's infomercial, 'Discover the New
@@ -28,7 +28,7 @@
  * Drawn in 2003's desktop chrome (ERA1's, as Restorify's windows are); the footage in theme/calendar.ts's FOOTAGE.
  */
 import { isSpeedrun } from '../../state/cut';
-import { ERA1 } from '../theme/era1';
+import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { FOOTAGE as F } from '../theme/calendar';
 import { entriesByEra } from '../../witness/record';
@@ -38,7 +38,7 @@ import T from '../../../data/dialog/s2_testimony.json';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 type Stage = 'prep' | 'release' | 'tapes' | 'player' | 'cut' | 'online';
-type ClipId = 'daniel' | 'caleb' | 'broll' | 'tone';
+type ClipId = 'daniel' | 'caleb' | 'tone';
 interface Line { t: number; who: string; text: string }
 const CLIPS = T.tapes.clips as unknown as Record<ClipId, { seconds: number; lines: Line[] }>;
 
@@ -51,6 +51,8 @@ const VERSIONS: Array<Array<['S' | 'C' | 'F', number]>> = [
 ];
 const BLOCK_SECONDS = 1.9;
 const EXPORT_SECONDS = 4;
+/** ⚑ W1-D12 — the cross-fade between the cuts of the final playback */
+const FADE_SECONDS = 0.35;
 const BUFFER_SECONDS = 4.5;
 
 export class TestimonyApp {
@@ -102,7 +104,6 @@ export class TestimonyApp {
   }
 
   update(dt: number): void {
-    const before = Math.floor(this.tick * 12);
     this.tick += dt;
     let moving = false;
     if (this.stage === 'player' && this.playing) {
@@ -127,7 +128,9 @@ export class TestimonyApp {
       if (this.web === 'buffer' && this.webT >= BUFFER_SECONDS) { this.web = 'play'; this.webT = 0; }
       else if (this.web === 'play' && this.webT >= VERSIONS[2].length * BLOCK_SECONDS) { this.web = 'done'; this.webT = 0; this.dirty = true; }
     }
-    if (moving && Math.floor(this.tick * 12) !== before) this.dirty = true;
+    // ⚑ W1-D12 — a moving picture redraws on EVERY frame: it used to repaint at 12 Hz (one frame in five or six at the
+    //   monitor's rate), which read as a stutter on the story he made
+    if (moving) this.dirty = true;
   }
 
   handleMove(x: number, y: number): void {
@@ -185,6 +188,7 @@ export class TestimonyApp {
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
     this.dirty = false;
+    if (this.stage === 'online' && this.web === 'play') { this.drawFinal(ctx); return; }
     const c = ui.windowFrame(ctx, DX, DY, DW, DH, T.windowTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'ts-close' });
@@ -286,7 +290,7 @@ export class TestimonyApp {
     ui.setFont(ctx, 12); ctx.fillStyle = ERA1.navy; ctx.fillText(T.tapes.folder, c.x + 34, c.y + 10);
     ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(T.tapes.hint, c.x + 12, c.y + 30);
     const lx = c.x + 12, lw = c.w - 24;
-    ui.px(ctx, lx, c.y + 46, lw, 4 * 26 + 6, ERA1.white);
+    ui.px(ctx, lx, c.y + 46, lw, T.tapes.files.length * 26 + 6, ERA1.white);
     T.tapes.files.forEach((f, i) => {
       const y = c.y + 50 + i * 26, id = `ts-file:${f.id}`;
       if (this.hover === id) ui.px(ctx, lx + 2, y, lw - 4, 24, ERA1.tooltip);
@@ -326,6 +330,40 @@ export class TestimonyApp {
     const bx = c.x + 168, bw = c.w - 180;
     ui.px(ctx, bx, by + 7, bw, 6, ERA1.black);
     ui.px(ctx, bx, by + 7, Math.round(bw * Math.min(1, this.clipT / total)), 6, ERA1.navy);
+  }
+
+  /**
+   * ⚑ W1-D12 (walkthrough 1: "the playback needs more quality when you see the video you made") — the story he made
+   * plays across the WHOLE monitor, not in the page's 176×132 thumbnail: the desktop canvas's full width (16:9, the
+   * window and the page gone while it plays), the cuts cross-faded, the 56k's blocks left off (the dial-up's cost was
+   * the buffering before it; the picture itself is as good as the monitor can show). Only the close box stays, so
+   * the player can still leave it as they could leave any window; the taskbar is the desktop's and stays.
+   */
+  private drawFinal(ctx: CanvasRenderingContext2D): void {
+    const W = ERA1_CANVAS.width, H = ERA1_CANVAS.height - 22;
+    ui.px(ctx, 0, 0, W, H, ERA1.black);
+    const vh = Math.round(W * 9 / 16), vy = Math.round((H - vh) / 2);
+    const blocks = VERSIONS[2];
+    const k = this.webT / BLOCK_SECONDS;
+    const bi = Math.min(blocks.length - 1, Math.floor(k));
+    const into = this.webT - bi * BLOCK_SECONDS;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, vy, W, vh); ctx.clip();
+    if (bi > 0 && into < FADE_SECONDS) {
+      drawBlock(ctx, blocks[bi - 1], 0, vy, W, vh, this.tick, false, false, true);
+      ctx.globalAlpha = ease(into / FADE_SECONDS);
+    }
+    drawBlock(ctx, blocks[bi], 0, vy, W, vh, this.tick, false, false, true);
+    ctx.restore();
+    // the thin transport in the dark under the picture: where in his story it is — and, at its end, the close box
+    //   as every window's (the corner above the picture is the desktop's own tray mark)
+    const bw = W - 32 - 26, by = vy + vh + Math.round((H - vy - vh) / 2) - 2;
+    ui.px(ctx, 16, by, bw, 4, ERA1.greyDark);
+    ui.px(ctx, 16, by, Math.round(bw * Math.min(1, this.webT / (blocks.length * BLOCK_SECONDS))), 4, ERA1.silver);
+    const cb = { x: W - 30, y: by - 5, w: 14, h: 14 };
+    ui.bevel(ctx, cb.x, cb.y, cb.w, cb.h, true);
+    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText('x', cb.x + 4, cb.y + 2);
+    this.hits.push({ ...cb, id: 'ts-close' });
   }
 
   private drawCut(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
@@ -458,7 +496,10 @@ export class TestimonyApp {
  * the BEFORE set — grey flats, the window, one hard light from above — and black silhouettes built from limbs, a
  * seated body's knees to camera, a head that drops. Raw, it shows what the cut ad hides: the edges of the flats, the
  * dark studio around them, the lamp on its stand, the boom dipping in. At "cut" the hard light goes off and the flat
- * work lights come on; Caleb walks in out of the dark of the studio. Then B-roll of the AFTER set being dressed.
+ * work lights come on; Caleb walks in out of the dark of the studio.
+ * ⚑ W1-D9 — the tape had a fourth file, BROLL_set.avi (an empty AFTER set, with silhouettes, for twelve seconds). It
+ * belonged to nothing: no line, no cut of the edit, no beat of the story. It is cut; the folder holds the takes and the tone.
+ * ⚑ W1-D8 — and Caleb_B is no longer the same shoot from the same chair: it is his own webcam, at night (drawWebcam).
  */
 interface Pose { scale: number; seated?: boolean; lean?: number; headDrop?: number; turn?: number; armSpread?: number; armLift?: number; handsFolded?: boolean; reach?: number; step?: number; color?: string }
 /** the ad's limb: a run of square stamps — pixel-true, as the ad draws them */
@@ -516,77 +557,62 @@ export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: numb
     ctx.restore();
     return;
   }
+  if (clip === 'caleb') { drawWebcam(ctx, t, x, y, w, h, tick, still); ctx.restore(); return; }
   const s = w / 400, S = (n: number): number => Math.round(n * s);
-  const danielClip = clip === 'daniel';
-  const hardOn = danielClip ? 1 - ease((t - 16.9) / 0.3) : 1;     // the set's one hard light; off at "cut"
-  const workOn = danielClip ? ease((t - 17.6) / 0.6) : 0;          // the studio's flat work lights, after
-  const pan = clip === 'broll' ? -t * 6 * s : 0;
-  const ox = Math.round(x + pan);
+  // Daniel_A is the shoot (Caleb_B is his own webcam, above): the set's one hard light, off at "cut"; the studio's flat work lights after
+  const hardOn = 1 - ease((t - 16.9) / 0.3);
+  const workOn = ease((t - 17.6) / 0.6);
+  const ox = x;
   // the studio: dark, and the set built in the middle of it
   ui.px(ctx, x, y, w, h, F.black);
   ui.px(ctx, x, y + Math.round(h * 0.86), w, h, ERA1.greyDark);   // the studio floor
   const setX = ox + S(70), setW = S(260), setTop = y + S(14), floorY = y + Math.round(h * 0.82);
-  if (clip === 'broll') {
-    // the AFTER set, being dressed: warm flats, the olive floor, the family-shaped shadows going up on the wall
-    ui.px(ctx, setX, setTop, setW, floorY - setTop, ERA1.paper);
-    ui.px(ctx, setX, setTop, setW, S(30), ERA1.beige);
-    ui.px(ctx, setX, floorY, setW, S(18), ERA1.olive);
-    figure(ctx, setX + S(70), floorY + 2, { scale: 0.62 * s * 1.6, color: ERA1.silver, turn: 0.8, armSpread: 0.12 });
-    if (t > 5) figure(ctx, setX + S(190), floorY + 2, { scale: 0.46 * s * 1.6, color: ERA1.silver, turn: 0.8, armSpread: 0.1 });
-    ui.px(ctx, setX + setW + S(10), y + S(40), S(3), floorY - y - S(40), ERA1.grey);   // a stand at the edge
-  } else {
-    // the BEFORE set: grey flats, a darker band above, the window — the ad's own, seen raw
-    ui.px(ctx, setX, setTop, setW, floorY - setTop, ERA1.grey);
-    ui.px(ctx, setX, setTop, setW, S(34), ERA1.greyDark);
-    ui.px(ctx, setX, floorY, setW, S(18), ERA1.greyDark);
-    const wx = setX + S(170), wy = setTop + S(46), ww = S(64), wh = S(54);
-    ui.px(ctx, wx - S(3), wy - S(3), ww + S(6), wh + S(6), ERA1.greyDark);
-    ui.px(ctx, wx, wy, ww, wh, ERA1.silver);
-    ui.px(ctx, wx + Math.round(ww / 2) - 1, wy, S(2), wh, ERA1.greyDark);
-    ui.px(ctx, wx, wy + Math.round(wh / 2) - 1, ww, S(2), ERA1.greyDark);
-    // the flats' raw edges: their bracing, which the cut ad crops away with black bars
-    ui.px(ctx, setX - S(2), setTop, S(2), floorY - setTop + S(18), ERA1.silver);
-    ui.px(ctx, setX + setW, setTop, S(2), floorY - setTop + S(18), ERA1.silver);
-    // the hard light: its lamp on a stand outside the set, and its cone straight down on the stool
-    ui.px(ctx, ox + S(24), y + S(20), S(3), floorY - y, ERA1.grey);
-    ui.px(ctx, ox + S(14), y + S(14), S(22), S(10), hardOn > 0.5 ? ERA1.tooltip : ERA1.greyDark);
-    const stoolX = setX + S(96);
-    if (hardOn > 0) {
-      const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.16 * hardOn;
-      for (let i = 0; i < 20; i++) { const ww2 = S(10 + i * 2), yy = setTop + i * Math.round((floorY - setTop) / 20); ui.px(ctx, stoolX - Math.round(ww2 / 2), yy, ww2, Math.ceil((floorY - setTop) / 20) + 1, ERA1.silver); }
-      ctx.globalAlpha = was;
-    }
-    // the boom, dipping in over the subject while he talks; lifted away after cut
-    const boomY = y + S(danielClip && t > 17.4 ? -40 : 6) + Math.round(Math.sin(tick * 0.9) * 2);
-    ui.px(ctx, x, boomY, stoolX - x - S(6), S(3), ERA1.grey);
-    ui.px(ctx, stoolX - S(10), boomY - S(3), S(16), S(9), ERA1.greyDark);
-    // the stool
-    ui.px(ctx, stoolX - S(10), floorY - S(20), S(22), S(3), ERA1.greyDark);
-    ui.px(ctx, stoolX - S(8), floorY - S(17), S(2), S(17), ERA1.greyDark); ui.px(ctx, stoolX + S(8), floorY - S(17), S(2), S(17), ERA1.greyDark);
-    const breath = (Math.sin(tick * 1.15) + 1) / 2;
-    const sc = 1.25 * s;
-    if (danielClip) {
-      // DANIEL: slumped as the ad's BEFORE wants him; the template's lines; "cut"; he breathes out, stands
-      const seated = t < 18.4;
-      const reach = t > 33.2 && t < 35.6 ? ease((t - 33.2) / 0.5) : 0;
-      const turnTo = t > 25.6 ? ease((t - 25.6) / 0.8) : 0;
-      figure(ctx, stoolX + (seated ? 0 : S(6)), floorY + 2, {
-        scale: sc, seated, lean: seated ? (t < 12.2 ? 7 : 5) : 2 + turnTo * 3, headDrop: seated ? (t < 3.4 ? 8 : t < 12.2 ? 6 : t < 16.4 ? 4 : 9) + breath * 1.2 : (t < 26 ? 3 : 0),
-        turn: seated ? 0.7 : 0.6 + turnTo * 0.4, handsFolded: seated && t < 7.8, armSpread: seated && t >= 12.2 && t < 16.4 ? 0.25 : 0, reach
-      });
-      if (t > 21.0) {   // Caleb, out of the dark of the studio, looking for where to sit
-        const k = ease((t - 21.0) / 3.6);
-        const fromX = x + w + S(20), toX = stoolX + S(80) - (t > 30.8 ? ease((t - 30.8) / 1.0) * S(14) : 0);
-        const cx = Math.round(fromX + (toX - fromX) * k);
-        figure(ctx, cx, floorY + 2, { scale: sc * 1.04, turn: t > 25.8 ? 0.95 : 0.55, headDrop: t > 26 && t < 28.6 ? -1 : 0, step: k > 0 && k < 1 ? Math.sin(t * 7) : 0, armSpread: 0.04 });
-      }
-    } else {
-      // CALEB's own take: the same set, the same stool, the same slump the ad asks for; open hands on its last line
-      figure(ctx, stoolX, floorY + 2, { scale: sc, seated: true, lean: 6, headDrop: (t > 16.8 ? 9 : 6) + breath * 1.2, turn: 0.7, handsFolded: t < 6.7, armSpread: t >= 10.5 && t < 14.5 ? 0.3 : 0 });
-    }
-    // after cut: the studio's flat work lights over everything
-    if (workOn > 0) { const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.14 * workOn; ui.px(ctx, x, y, w, h, ERA1.white); ctx.globalAlpha = was; }
+  // the BEFORE set: grey flats, a darker band above, the window — the ad's own, seen raw
+  ui.px(ctx, setX, setTop, setW, floorY - setTop, ERA1.grey);
+  ui.px(ctx, setX, setTop, setW, S(34), ERA1.greyDark);
+  ui.px(ctx, setX, floorY, setW, S(18), ERA1.greyDark);
+  const wx = setX + S(170), wy = setTop + S(46), ww = S(64), wh = S(54);
+  ui.px(ctx, wx - S(3), wy - S(3), ww + S(6), wh + S(6), ERA1.greyDark);
+  ui.px(ctx, wx, wy, ww, wh, ERA1.silver);
+  ui.px(ctx, wx + Math.round(ww / 2) - 1, wy, S(2), wh, ERA1.greyDark);
+  ui.px(ctx, wx, wy + Math.round(wh / 2) - 1, ww, S(2), ERA1.greyDark);
+  // the flats' raw edges: their bracing, which the cut ad crops away with black bars
+  ui.px(ctx, setX - S(2), setTop, S(2), floorY - setTop + S(18), ERA1.silver);
+  ui.px(ctx, setX + setW, setTop, S(2), floorY - setTop + S(18), ERA1.silver);
+  // the hard light: its lamp on a stand outside the set, and its cone straight down on the stool
+  ui.px(ctx, ox + S(24), y + S(20), S(3), floorY - y, ERA1.grey);
+  ui.px(ctx, ox + S(14), y + S(14), S(22), S(10), hardOn > 0.5 ? ERA1.tooltip : ERA1.greyDark);
+  const stoolX = setX + S(96);
+  if (hardOn > 0) {
+    const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.16 * hardOn;
+    for (let i = 0; i < 20; i++) { const ww2 = S(10 + i * 2), yy = setTop + i * Math.round((floorY - setTop) / 20); ui.px(ctx, stoolX - Math.round(ww2 / 2), yy, ww2, Math.ceil((floorY - setTop) / 20) + 1, ERA1.silver); }
+    ctx.globalAlpha = was;
   }
+  // the boom, dipping in over the subject while he talks; lifted away after cut
+  const boomY = y + S(t > 17.4 ? -40 : 6) + Math.round(Math.sin(tick * 0.9) * 2);
+  ui.px(ctx, x, boomY, stoolX - x - S(6), S(3), ERA1.grey);
+  ui.px(ctx, stoolX - S(10), boomY - S(3), S(16), S(9), ERA1.greyDark);
+  // the stool
+  ui.px(ctx, stoolX - S(10), floorY - S(20), S(22), S(3), ERA1.greyDark);
+  ui.px(ctx, stoolX - S(8), floorY - S(17), S(2), S(17), ERA1.greyDark); ui.px(ctx, stoolX + S(8), floorY - S(17), S(2), S(17), ERA1.greyDark);
+  const breath = (Math.sin(tick * 1.15) + 1) / 2;
+  const sc = 1.25 * s;
+  // DANIEL: slumped as the ad's BEFORE wants him; the template's lines; "cut"; he breathes out, stands
+  const seated = t < 18.4;
+  const reach = t > 33.2 && t < 35.6 ? ease((t - 33.2) / 0.5) : 0;
+  const turnTo = t > 25.6 ? ease((t - 25.6) / 0.8) : 0;
+  figure(ctx, stoolX + (seated ? 0 : S(6)), floorY + 2, {
+    scale: sc, seated, lean: seated ? (t < 12.2 ? 7 : 5) : 2 + turnTo * 3, headDrop: seated ? (t < 3.4 ? 8 : t < 12.2 ? 6 : t < 16.4 ? 4 : 9) + breath * 1.2 : (t < 26 ? 3 : 0),
+    turn: seated ? 0.7 : 0.6 + turnTo * 0.4, handsFolded: seated && t < 7.8, armSpread: seated && t >= 12.2 && t < 16.4 ? 0.25 : 0, reach
+  });
+  if (t > 21.0) {   // Caleb, out of the dark of the studio, looking for where to sit
+    const k = ease((t - 21.0) / 3.6);
+    const fromX = x + w + S(20), toX = stoolX + S(80) - (t > 30.8 ? ease((t - 30.8) / 1.0) * S(14) : 0);
+    const cx = Math.round(fromX + (toX - fromX) * k);
+    figure(ctx, cx, floorY + 2, { scale: sc * 1.04, turn: t > 25.8 ? 0.95 : 0.55, headDrop: t > 26 && t < 28.6 ? -1 : 0, step: k > 0 && k < 1 ? Math.sin(t * 7) : 0, armSpread: 0.04 });
+  }
+  // after cut: the studio's flat work lights over everything
+  if (workOn > 0) { const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.14 * workOn; ui.px(ctx, x, y, w, h, ERA1.white); ctx.globalAlpha = was; }
   // the camcorder: interlace, a little noise
   const was = ctx.globalAlpha;
   ctx.globalAlpha = was * 0.12;
@@ -605,7 +631,7 @@ export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: numb
     ctx.fillStyle = F.osd; ctx.fillText('REC', x + 18, y + 7);
     const tw = ctx.measureText(T.tapes.tape).width;
     ctx.fillText(T.tapes.tape, x + w - 10 - tw, y + 7);
-    const base = clip === 'daniel' ? 252 : clip === 'caleb' ? 301 : 340;
+    const base = 252;
     const sec = base + Math.floor(t), fr = Math.floor((t % 1) * 25);
     const tc = `00:${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}:${String(fr).padStart(2, '0')}`;
     ctx.fillText(tc, x + w - 10 - ctx.measureText(tc).width, y + h - 16);
@@ -614,27 +640,147 @@ export function drawFootage(ctx: CanvasRenderingContext2D, clip: ClipId, t: numb
   ctx.restore();
 }
 
+/**
+ * ⚑ W1-D8 (walkthrough 1: "Caleb's video should be different from Daniel's") — CALEB_B IS HIS OWN, not the programme's.
+ * Daniel is shot on the set: grey flats, a hard top light, a camcorder's REC and timecode, a figure in black. Caleb is
+ * shot on a 2003 webcam in his own room at night: close, head and shoulders, warm — one desk lamp, a window on a
+ * streetlight, a shelf — the screen's cool glow on the side of his face, and a picture that is poor on purpose: it
+ * is drawn at a third of the resolution and blown up with hard pixels, at eight frames a second, with no REC and no
+ * tape — only the little light that says the camera is on. It stalls twice (the connection, or his hand off the
+ * mouse), and the picture is bumped once at the start and once at "Once more" (he nudges the camera; a hand rubs
+ * his eyes). Same drawing system — stamps, the theme's palette (calendar.ts FOOTAGE), faceless bodies — and no footage.
+ * His lines are unchanged (s2_testimony.json): this changes how he looks, not what he says.
+ */
+let camBuf: HTMLCanvasElement | null = null;
+/** [t, head drop, toward the lens, lean, rubbing his eyes] — the take's body, line by line */
+const WEBCAM_POSE: Array<[number, number, number, number, number]> = [
+  [0, 3, 0, 1, 0], [2.6, 3, 0, 1, 0],                    // reading the first line off the screen
+  [3.4, 1, 0.2, 0, 0], [6.4, 1.5, 0.2, 0, 0],            // "I came to New Morning angry."
+  [7.2, -0.5, 0.2, -1, 0], [10.2, -0.5, 0.3, -1, 0],     // "I left it with a family." — his head comes up
+  [11.0, -1.5, 1, -2, 0], [14.2, -1.5, 1, -2, 0],        // "If you're watching this —" — to the lens
+  [15.2, 3.5, 0, 1, 0], [17.2, 4, 0, 1.5, 0],            // "Once more, slower?" — he lets go of it
+  [17.8, 6, 0, 2, 1], [19.2, 6, 0, 2, 1], [20, 5, 0, 2, 0]
+];
+/** the connection stalls: the picture holds on its last frame */
+const WEBCAM_STALLS: Array<[number, number]> = [[4.7, 5.6], [12.4, 13.3]];
+function webcamPose(t: number): [number, number, number, number] {
+  const P = WEBCAM_POSE;
+  if (t <= P[0][0]) return [P[0][1], P[0][2], P[0][3], P[0][4]];
+  for (let i = 1; i < P.length; i++) {
+    if (t <= P[i][0]) {
+      const k = ease((t - P[i - 1][0]) / (P[i][0] - P[i - 1][0])), a = P[i - 1], b = P[i];
+      return [a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k, a[3] + (b[3] - a[3]) * k, a[4] + (b[4] - a[4]) * k];
+    }
+  }
+  const e = P[P.length - 1]; return [e[1], e[2], e[3], e[4]];
+}
+function drawWebcam(ctx: CanvasRenderingContext2D, t: number, x: number, y: number, w: number, h: number, tick: number, still: boolean): void {
+  const lw = Math.max(48, Math.round(w / 3)), lh = Math.max(27, Math.round(h / 3));
+  if (!camBuf) camBuf = document.createElement('canvas');
+  if (camBuf.width !== lw || camBuf.height !== lh) { camBuf.width = lw; camBuf.height = lh; }
+  const b = camBuf.getContext('2d');
+  if (!b) return;
+  // eight frames a second; a stall holds the frame it began on
+  const FPS = 8;
+  let tc = Math.floor(t * FPS) / FPS;
+  for (const [a, z] of WEBCAM_STALLS) if (t >= a && t < z) tc = Math.floor(a * FPS) / FPS;
+  const fr = Math.floor(tc * FPS);
+  const tk = tc + (tick - t);   // the room's own slow motion (breath, the screen's flicker) keeps the frame's time
+  const rnd = (n: number): number => { const v = Math.sin(n * 127.1 + fr * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const R = (col: string, rx: number, ry: number, rw: number, rh: number, a = 1): void => { b.globalAlpha = a; b.fillStyle = col; b.fillRect(Math.round(rx), Math.round(ry), Math.round(rw), Math.round(rh)); };
+  const E = (col: string, cx: number, cy: number, rx: number, ry: number, a = 1, from = 0, to = Math.PI * 2): void => {
+    b.globalAlpha = a; b.fillStyle = col; b.beginPath(); b.ellipse(cx, cy, rx, ry, 0, from, to); b.fill();
+  };
+  b.imageSmoothingEnabled = false;
+  R(F.black, 0, 0, lw, lh);
+  // the room: a dim wall, and the lamp's pool on it
+  R(F.panelDk, 0, 0, lw, lh * 0.8, 0.5);
+  const lampX = lw * 0.1, lampY = lh * 0.2;
+  for (let i = 0; i < 7; i++) E(F.key, lampX + 4, lampY + 4, lw * (0.09 + i * 0.06), lh * (0.14 + i * 0.1), 0.05);
+  // the window: a streetlight on the night, a curtain's edge
+  R(F.door, lw * 0.3 - 1, lh * 0.08 - 1, lw * 0.17 + 2, lh * 0.36 + 2, 0.9);
+  R(F.caseSpine, lw * 0.3, lh * 0.08, lw * 0.17, lh * 0.36, 0.7);
+  R(F.door, lw * 0.3 + lw * 0.085, lh * 0.08, 1, lh * 0.36, 0.9);
+  R(F.doorLight, lw * 0.4, lh * 0.15, 2, 2, 0.8);
+  R(F.panel, lw * 0.3, lh * 0.08, lw * 0.025, lh * 0.36, 0.6);
+  // the shelf, with a few spines on it
+  R(F.chair, lw * 0.7, lh * 0.34, lw * 0.28, 2, 0.8);
+  const spines = [F.caseSpine, F.cross, F.wall, F.panel, F.calebJacket, F.table, F.caseSpine];
+  spines.forEach((col, i) => R(col, lw * 0.72 + i * 3.4, lh * 0.34 - (6 + (i * 5) % 4), 2, 6 + (i * 5) % 4, 0.55));
+  // the desk, the lamp on it
+  R(F.table, 0, lh * 0.84, lw * 0.3, lh * 0.2, 0.9);
+  R(F.stand, lampX + 3, lampY + 6, 1, lh * 0.84 - lampY - 6);
+  R(ERA1.greyDark, lampX - 1, lh * 0.83, 9, 2);
+  R(F.key, lampX - 2, lampY, 11, 5, 0.95);
+  // Caleb: head and shoulders, close, a little right of the middle; faceless, as every body in the piece
+  const [drop, near, lean, rub] = webcamPose(tc);
+  const cx = lw * 0.56, breath = Math.sin(tk * 1.1) * 0.7;
+  const k = 1 + 0.1 * near, shY = lh * 0.66 + drop + breath - 3 * near;
+  const sw = lw * 0.26 * k, ry = lh * 0.18 * k, rx = lh * 0.15 * k, hcx = cx + lean * 1.2, hcy = shY - 7 - ry * 0.85;
+  const torso = (): void => { b.beginPath(); b.moveTo(cx - sw, lh); b.lineTo(cx - sw + 2, shY + 7); b.lineTo(cx - sw * 0.55, shY); b.lineTo(cx + sw * 0.55, shY); b.lineTo(cx + sw - 2, shY + 7); b.lineTo(cx + sw, lh); b.closePath(); };
+  b.globalAlpha = 1; b.fillStyle = F.calebJacket; torso(); b.fill();
+  // the side away from the lamp falls into shadow — on the jacket only
+  b.save(); torso(); b.clip(); R(ERA1.black, cx + sw * 0.1, shY, sw, lh, 0.22); R(F.key, cx - sw + 2, shY + 6, 2, lh, 0.22); b.restore();
+  R(F.skin2, cx - 3 + lean * 0.6, shY - 8, 7, 9);
+  E(F.skin, hcx, hcy, rx, ry);
+  E(F.hair, hcx, hcy - 1, rx + 0.5, ry + 0.5, 1, Math.PI * 1.08, Math.PI * 1.92);
+  // the lamp on one side of him, the screen's glow on the other
+  E(F.key, hcx - rx + 1, hcy + 1, 1.5, ry * 0.8, 0.3);
+  E(ERA1.black, hcx + rx * 0.5, hcy + 2, rx * 0.55, ry, 0.2);
+  // "Once more." — a hand to his eyes
+  if (rub > 0) {
+    b.globalAlpha = rub; b.strokeStyle = F.calebJacket; b.lineWidth = 6; b.beginPath(); b.moveTo(cx - sw * 0.8, lh); b.lineTo(hcx - rx * 0.7, hcy + 4); b.stroke();
+    E(F.skin2, hcx - rx * 0.75, hcy + 1, 4.5, 5.5, rub);
+  }
+  // the monitor in front of him throws a cool wash on everything it can reach, and it flickers
+  R(F.cool, 0, 0, lw, lh, 0.05 + 0.02 * Math.sin(tk * 9.7));
+  E(F.cool, hcx, hcy + 3, rx * 1.3, ry * 1.2, 0.07);
+  // the lens: dark corners
+  for (let i = 0; i < 5; i++) {
+    const a = 0.2 - i * 0.035;
+    R(ERA1.black, 0, i, lw, 1, a); R(ERA1.black, 0, lh - 1 - i, lw, 1, a); R(ERA1.black, i, 0, 1, lh, a); R(ERA1.black, lw - 1 - i, 0, 1, lh, a);
+  }
+  // a poor sensor: interlace, and noise that never settles
+  for (let yy = 0; yy < lh; yy += 2) R(ERA1.black, 0, yy, lw, 1, 0.08);
+  if (!still) {
+    for (let i = 0; i < Math.round(lw * lh / 70); i++) R(i % 3 ? F.osd : F.black, rnd(i) * lw, rnd(i + 999) * lh, 1, 1, 0.3);
+    // the little light that says the camera is on — it is the only thing on the picture
+    if (Math.floor(tick * 1.2) % 2 === 0) R(F.rec, 4, 4, 2, 2);
+  }
+  b.globalAlpha = 1;
+  // blown up with hard pixels; bumped when he moves the camera (the offset is the buffer's, so it is in whole big pixels)
+  const bump: Array<[number, number, number, number, number]> = [[0, 0.3, -3, 2, -1], [17.2, 17.6, 2, -1, 1]];
+  let bx = 0, by = 0;
+  for (const [a, z, dx, dy, rest] of bump) { if (t >= a && t < z) { bx = dx; by = dy; } else if (t >= z) { bx = rest; by = 0; } }
+  const sx = w / lw, sy = h / lh;
+  ui.px(ctx, x, y, w, h, F.black);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(camBuf, 0, 0, lw, lh, x + Math.round(bx * sx), y + Math.round(by * sy), w, h);
+}
+
 /** one block of the edit: a chapter card, a sentence over his take, or a fragment */
-function drawBlock(ctx: CanvasRenderingContext2D, b: ['S' | 'C' | 'F', number], x: number, y: number, w: number, h: number, tick: number, idle: boolean, web = false): void {
+/** `big` (W1-D12): the final playback, at the monitor's full width — the cards and the subtitle take the room they have */
+function drawBlock(ctx: CanvasRenderingContext2D, b: ['S' | 'C' | 'F', number], x: number, y: number, w: number, h: number, tick: number, idle: boolean, web = false, big = false): void {
   if (b[0] === 'C') {
     ui.px(ctx, x, y, w, h, ERA1.black);
-    ui.setFont(ctx, web ? 12 : 16);
+    ui.setFont(ctx, big ? 24 : web ? 12 : 16);
     ctx.fillStyle = ERA1.white;
     const t = T.cut.chapters[b[1]], tw = ctx.measureText(t).width;
-    ctx.fillText(t, x + Math.round((w - tw) / 2), y + Math.round(h / 2) - 8);
+    ctx.fillText(t, x + Math.round((w - tw) / 2), y + Math.round(h / 2) - (big ? 12 : 8));
     return;
   }
   const at = b[0] === 'S' ? [4, 8.4, 12.8][b[1]] : [2, 6, 26][b[1]];
   drawFootage(ctx, 'daniel', idle ? 9 : at, x, y, w, h, tick, true);
   if (idle) return;
   const text = b[0] === 'S' ? T.cut.sentences[b[1]] : T.cut.fragments[b[1]];
-  ui.setFont(ctx, web ? 8 : 9);
+  const fs = big ? 12 : web ? 8 : 9, rh = fs + 3;
+  ui.setFont(ctx, fs);
   const rows = ui.wrapText(ctx, text, w - 16);
   rows.forEach((r, i) => {
     const rw = ctx.measureText(r).width;
-    ui.px(ctx, x + Math.round((w - rw) / 2) - 4, y + h - 14 - (rows.length - i) * 12, Math.ceil(rw) + 8, 12, ERA1.black);
+    ui.px(ctx, x + Math.round((w - rw) / 2) - 4, y + h - 14 - (rows.length - i) * rh, Math.ceil(rw) + 8, rh, ERA1.black);
     ctx.fillStyle = ERA1.white;
-    ctx.fillText(r, x + Math.round((w - rw) / 2), y + h - 12 - (rows.length - i) * 12);
+    ctx.fillText(r, x + Math.round((w - rw) / 2), y + h - 12 - (rows.length - i) * rh);
   });
   if (web) {   // a .wmv at 56k: blocks of picture
     const was = ctx.globalAlpha; ctx.globalAlpha = was * 0.18;
