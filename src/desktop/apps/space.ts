@@ -74,7 +74,7 @@ import updates from '../../../data/strings/updates.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
 import { E4Ball, SPEEDRUN_CARD_AFTER } from './ball';
-import { isSpeedrun } from '../../state/cut';
+import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import type { UpdateApp } from './update';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
@@ -385,12 +385,12 @@ export class E4Shell {
         const b4 = this.sessionBegunT;
         this.sessionBegunT += dt;
         if (Math.floor(b4 * 4) !== Math.floor(this.sessionBegunT * 4)) this.version++;
-        if (!isSpeedrun() && b4 < 8 && this.sessionBegunT >= 8) {
+        if (!(isSpeedrun() && !extraOn('session')) && b4 < 8 && this.sessionBegunT >= 8) {
           stopClip(this.breath); this.breath = null;
           this.hiss = playOnce('playback_hiss.mp3');
           if (this.hiss) this.hiss.volume = 0.5;   // S155 / R3-102: under the introduction, not over it
         }
-        const cardAt = isSpeedrun() ? SPEEDRUN_CARD_AFTER : space.sessionSeconds - S.seconds;
+        const cardAt = isSpeedrun() && !extraOn('session') ? SPEEDRUN_CARD_AFTER : space.sessionSeconds - S.seconds;
         if (this.sessionBegunT >= cardAt) {
           stopClip(this.breath); this.breath = null; stopClip(this.hiss); this.hiss = null;
           this.ball.invite();
@@ -741,6 +741,14 @@ export class E4Shell {
    *  panel's Close button calls this first so a review that starts mid-era does
    *  not carry a worn visor into the journey back to Daniel's room. In play it
    *  is a no-op: `finishHandOff` has already run. */
+  /** A frame jump puts the device away without completing the Commons. */
+  closeForEraJump(): void {
+    const onOver = this.ball.onOver;
+    this.ball.onOver = undefined;
+    this.debugStopDevice();
+    this.ball.onOver = onOver;
+  }
+
   debugStopDevice(): void {
     if (this.handedOff) return;
     this.ball.close();
@@ -820,10 +828,11 @@ export class E4Shell {
    *  the room's bed goes as it begins, R3-103; the grounding breathes) */
   private beginCorrection(): void {
     if (!this.beginOffered) return;
+    markExtraPassed('session');
     this.sessionBegunT = 0;
     playOnce('ui_press.mp3');
     roomBed.set(null, 3.0);
-    if (!isSpeedrun()) this.breath = playLoop('session_breath.mp3');
+    if (!(isSpeedrun() && !extraOn('session'))) this.breath = playLoop('session_breath.mp3');
     this.version++;
   }
 

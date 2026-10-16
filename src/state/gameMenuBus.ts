@@ -29,7 +29,13 @@ class GameMenuBus {
    * Null before that — e.g. during the pre-fiction orienting card, where
    * there is nothing yet to hand the menu's Leave button off to.
    */
+  /** Navigation only: one settled engine jump; never a recorded choice. */
+  jumpToEra?: (era: 'e1' | 'e2' | 'e3' | 'e4') => void;
+
   leaveEngine: (() => void) | null = null;
+
+  /** Engine session bridge: every restart ends immersive XR before reloading. */
+  xrSession: { active(): boolean; end(): void } | null = null;
 
   /**
    * ⚑ S80 — the same idiom as `leaveEngine` directly above, for look-mode 3's

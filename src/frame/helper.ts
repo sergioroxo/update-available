@@ -96,7 +96,7 @@ export function mountHelper(opts: {
 
   return {
     tick(dt: number): void {
-      if (!opts.enabled() || gameMenuBus.isOpen) { if (shown && !forced) hide(); idle = 0; return; }
+      if (!opts.enabled() || gameMenuBus.isOpen) { hide(); idle = 0; return; }
       // the map is derived from the whole ledger; twice a second is plenty
       pollT += dt;
       if (pollT >= 0.5 || !polled) { pollT = 0; polled = true; last = opts.hint(); }

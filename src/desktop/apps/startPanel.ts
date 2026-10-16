@@ -28,7 +28,7 @@ import * as ui from '../theme/chrome';
 import * as aero from '../theme/era3';
 import { CHROME } from '../theme/era4';
 import { beatDone } from '../../witness/map';
-import { isSpeedrun } from '../../state/cut';
+import { isSpeedrun, extraOn } from '../../state/cut';
 import type { DesktopOS } from '../os';
 
 export type PanelEra = 'e1' | 'e2' | 'e3' | 'e4';
@@ -58,11 +58,11 @@ export class StartPanel {
   steps(strip = false): PanelStep[] {
     const speed = isSpeedrun();
     return DEFS[this.era].steps
-      .filter((s) => !(speed && s.speedrun === false))
-      .map((s) => ({
+      .filter((s) => !(speed && s.speedrun === false && !extraOn('tapes')))
+      .map((s) => { const speed = isSpeedrun() && !(this.era === 'e3' && extraOn('work')); return {
         text: strip && s.strip ? (speed && s.stripSpeedrun ? s.stripSpeedrun : s.strip) : speed && s.textSpeedrun ? s.textSpeedrun : s.text,
         done: this.done(speed && s.doneSpeedrun ? s.doneSpeedrun : s.done)
-      }));
+      }; });
   }
 
   /**
@@ -83,7 +83,11 @@ export class StartPanel {
     return changed;
   }
 
-  /** the close box, or the card's own Close: it never comes back this era */
+  /** Explicit help never depends on the first-arrival timer. */
+  reopen(): void { this.open = true; this.seen = true; }
+  toggle(): void { if (this.open) this.close(); else this.reopen(); }
+
+  /** the close box, or the card's own Close */
   close(): void { this.open = false; this.seen = true; }
 
   /** the first step not yet done — the one the card leans on */
@@ -168,6 +172,7 @@ export class StartPanel {
     aero.px(ctx, x, y, w, 4, aero.ERA3.accent);
     ui.setFont(ctx, 9); ctx.fillStyle = aero.ERA3.grey; ctx.fillText(D.title, x + m.pad, y + 11);
     ui.setFont(ctx, m.lead); ctx.fillStyle = aero.ERA3.titleText; ctx.fillText(D.lead, x + m.pad, y + 22);
+    ui.setFont(ctx, 10); ctx.fillText('×', x + w - 18, y + 8);
     let ty = y + m.head + 4;
     const cur = this.currentIndex(steps);
     steps.forEach((s, i) => {
@@ -183,7 +188,7 @@ export class StartPanel {
     });
     const bw = 64, bh = 20, bx = x + w - bw - m.pad, by = y + L.h - bh - 8;
     aero.button(ctx, bx, by, bw, bh, D.close, { size: 10 });
-    return [{ x: bx, y: by, w: bw, h: bh }];
+    return [{ x: x + w - 20, y: y + 7, w: 14, h: 14 }, { x: bx, y: by, w: bw, h: bh }];
   }
 
   /** the height of 2016's one-row strip (the board's variant of the card) */
@@ -200,7 +205,7 @@ export class StartPanel {
     aero.px(ctx, x, y, 3, h, aero.ERA3.accent);
     ui.setFont(ctx, 8); ctx.fillStyle = aero.ERA3.grey;
     ctx.fillText('GETTING', x + 10, y + 8); ctx.fillText('STARTED', x + 10, y + 18);
-    const labelW = 62, closeW = 52;
+    const labelW = 62, closeW = 76;
     const colW = Math.floor((w - labelW - closeW - 8) / steps.length);
     const cur = this.currentIndex(steps);
     steps.forEach((s, i) => {
@@ -212,9 +217,10 @@ export class StartPanel {
       ctx.fillStyle = s.done ? aero.ERA3.grey : i === cur ? aero.ERA3.titleText : aero.ERA3.greyDk;
       ui.wrapText(ctx, s.text, colW - 18).slice(0, 2).forEach((r, j) => ctx.fillText(r, bx + 15, y + 7 + j * 11));
     });
-    const bw = closeW - 6, bh = 18, bx = x + w - bw - 6, by = y + Math.round((h - bh) / 2);
+    const bw = 46, bh = 18, bx = x + w - 72, by = y + Math.round((h - bh) / 2);
     aero.button(ctx, bx, by, bw, bh, D.close, { size: 9 });
-    return [{ x: bx, y: by, w: bw, h: bh }];
+    ui.setFont(ctx, 10); ctx.fillStyle = aero.ERA3.greyDk; ctx.fillText('×', x + w - 17, y + 11);
+    return [{ x: x + w - 22, y: y + 8, w: 16, h: 16 }, { x: bx, y: by, w: bw, h: bh }];
   }
 
   /** 2026 — GraceOS's paper card on the restored page: warm, flat, one filled control (the era's own CHROME) */
@@ -227,6 +233,7 @@ export class StartPanel {
     ui.px(ctx, x + 1, y + 1, w - 2, L.h - 2, CHROME.field);
     ui.setFont(ctx, 8); ctx.fillStyle = CHROME.hint; ctx.fillText(D.title, x + m.pad, y + 10);
     ui.setFont(ctx, m.lead); ctx.fillStyle = CHROME.ink; ctx.fillText(D.lead, x + m.pad, y + 21);
+    ui.setFont(ctx, 10); ctx.fillText('×', x + w - 18, y + 8);
     let ty = y + m.head + 4;
     const cur = this.currentIndex(steps);
     steps.forEach((s, i) => {
@@ -245,7 +252,7 @@ export class StartPanel {
     ui.px(ctx, bx, by, bw, bh, CHROME.button);
     ctx.fillStyle = CHROME.buttonInk;
     ctx.fillText(label, bx + 9, by + 5);
-    return [{ x: bx, y: by, w: bw, h: bh }];
+    return [{ x: x + w - 20, y: y + 7, w: 14, h: 14 }, { x: bx, y: by, w: bw, h: bh }];
   }
 }
 

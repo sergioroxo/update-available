@@ -27,11 +27,26 @@
  "soundMaster": "Master",
  "soundOff": "off",
  "soundChannels": {
-  "music": { "label": "Music", "note": "Songs, jingles, the loops and the scores." },
-  "room": { "label": "Rooms", "note": "The hum and weather of each room and of the passages between." },
-  "voices": { "label": "Voices & tapes", "note": "Spoken lines, L, the notice read aloud, the tapes." },
-  "effects": { "label": "Effects", "note": "Presses, chimes, start-ups, the small games' sounds." },
-  "film": { "label": "The welcome film", "note": "The opening advert's own sound." }
+  "music": {
+   "label": "Music",
+   "note": "Songs, jingles, the loops and the scores."
+  },
+  "room": {
+   "label": "Rooms",
+   "note": "The hum and weather of each room and of the passages between."
+  },
+  "voices": {
+   "label": "Voices & tapes",
+   "note": "Spoken lines, L, the notice read aloud, the tapes."
+  },
+  "effects": {
+   "label": "Effects",
+   "note": "Presses, chimes, start-ups, the small games' sounds."
+  },
+  "film": {
+   "label": "The welcome film",
+   "note": "The opening advert's own sound."
+  }
  },
  "soundMixNote": "Each slider sets one kind of sound; zero silences just that kind. The mute row above silences everything at once. Sound is held while this menu is open, so a change is heard when you resume. Nothing here is kept: a restart returns to the starting levels.",
  "_docSound": "⚑ S248 — the one mixer (src/audio/mix.ts). The lead (2026-10-15): a volume slider on the menu, and the same for each kind of sound. The exhibition laptop runs at system volume 100%, so the starting master is 0.7 and every file is levelled to a baseline (src/audio/levels.json). Frame voice, plain.",
@@ -97,5 +112,10 @@
   "Squeeze the grip to open or close this menu.",
   "Nothing here is timed. Take it off whenever you want."
  ],
- "_docXr": "⚑ S147 — the frame's XR face (src/frame/xrFrame.ts): `xrHow` is the one line under the menu's rows in the headset; `controlsHeadsetLines` is the Controls view there. Frame voice, plain."
+ "_docXr": "⚑ S147 — the frame's XR face (src/frame/xrFrame.ts): `xrHow` is the one line under the menu's rows in the headset; `controlsHeadsetLines` is the Controls view there. Frame voice, plain.",
+ "goHere": "Go here",
+ "jumpConfirmTitle": "Jump to {era}?",
+ "jumpConfirmBody": "You will go straight there and skip what comes between. You can jump back the same way.",
+ "jumpConfirmYes": "Jump",
+ "jumpConfirmNo": "Stay here"
 }

@@ -51,6 +51,8 @@ export interface LambyPose {
   moodStart: number;
   /** 1 = the rig lab's size (~118 wide × 125 tall logical px) */
   scale?: number;
+  /** Tray and GraceOS reuse this exact head, without the body. */
+  headOnly?: boolean;
   /** the rig lab LOOPS the appear pop so it can be watched over and over;
    *  production plays it once and settles. Lab-only. */
   loopAppear?: boolean;
@@ -288,11 +290,13 @@ export function drawLambyChar(ctx: CanvasRenderingContext2D, cx: number, cy: num
   ctx.scale(bounce.sx, bounce.sy * (1 - deflate.squash));
   ctx.translate(-x, -anchorY + deflate.sink);
 
-  drawShadow(ctx, x, y + 70);
-  drawPaperclip(ctx, x, y, pose.mood, point);
-  drawBody(ctx, x, y, pose.mood);
+  if (!pose.headOnly) {
+    drawShadow(ctx, x, y + 70);
+    drawPaperclip(ctx, x, y, pose.mood, point);
+    drawBody(ctx, x, y, pose.mood);
+  }
   drawEars(ctx, x, y, pose.mood);   // roots go behind the face patch
   drawFace(ctx, x, y, pose.mood, phase);
-  drawGesture(ctx, x, y, pose.mood, pose.action, point);
+  if (!pose.headOnly) drawGesture(ctx, x, y, pose.mood, pose.action, point);
   ctx.restore();
 }

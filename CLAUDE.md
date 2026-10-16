@@ -20,13 +20,19 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
    no beat is triggered by a look: where the story needs them to see something, the piece TAKES them there (a
    scripted send, a conducted turn, a device brought to the eye), as a sequence of actions. Looking around stays
    free; it is never required. (Cadence study §9, docs/reinterp/CADENCE_STUDY_2026-10-10.md.)
-2. **Guidance (revises the Assistant caps):** Era 1 has NO assistant
-   character — only impersonal system side-messages (short hints that help
-   navigate and PREPARE the user for Lamby). The Lamby character-conductor
-   debuts with the Era-2 update and conducts thereafter, ≤2 lines per
-   conduction beat. Unchanged and non-negotiable: never during `felt` scenes,
+2. **Guidance (revised by Sérgio, 2026-10-15):** "We need to reinstate Lamby as the connection point of the correction and forcing you to do stuff."
+   Lamby is ONE guide with four era skins, from 1997: just-in-time hints when
+   the visitor stalls, a balloon with Yes/No, a pointer and an offer to take
+   them to the thing to press. Always ignorable; exploration stays free.
+   This supersedes "Era 1 has NO assistant character". Era 1's impersonal
+   side-messages stay; Era 2's conduction stays (≤2 lines per conduction beat).
+   ≤5 unsolicited guide balloons per era; visitor-requested help is uncapped.
+   One voice at a time: side-messages, conduction, toasts and guide wait for
+   one another; the desktop frame helper yields to Lamby's balloon.
+   Unchanged and non-negotiable: never during `felt` or `respite` scenes,
    never jokes at the victim, never delivers Dossier text, dismissal always
-   works and is logged.
+   works and is logged. Memory only; no sound. See
+   `docs/reinterp/OPENING_NOTES_2026-10-15.md` G2.
 3. **Input (revises "click/tap only"):** click/tap + the movement press
    (above) + Esc/pause opening the game menu. Still no free-text keyboard, no
    timers, no chords. ⚑ **S80: a tap is now resolved on RELEASE, behind a

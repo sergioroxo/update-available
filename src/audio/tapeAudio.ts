@@ -682,6 +682,12 @@ export function setOneShotsPaused(paused: boolean): void {
   }
 }
 
+/** A frame navigation cut ends the old scene's clips, including clips held by pause. */
+export function stopOneShots(): void {
+  for (const clip of [...liveOneShots]) stopClip(clip);
+  heldOneShots.clear();
+}
+
 /** for probes: what is playing right now, by file (the bus as 'bus') */
 export function playingNow(): string[] {
   const out: string[] = liveBus?.isPlaying() ? ['bus'] : [];

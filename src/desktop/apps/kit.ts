@@ -29,7 +29,7 @@
  * src/engine/app.ts, so the tape system stays the one clock and the shelf's
  * own press does exactly what the button does.
  */
-import { isSpeedrun } from '../../state/cut';
+import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
@@ -167,7 +167,7 @@ export class KitApp {
     }
     // the prayer, heard: live from the boombox, or already on the ledger
     const p = this.prayerProbe();
-    if (p.state === 'ended') this.prayerHeard = true;
+    if (p.state === 'ended') { this.prayerHeard = true; markExtraPassed('prayer'); }
     if (p.state === 'stopped') this.prayerStopped = true;
     if (p.state === 'singing' || p.state === 'intro') this.prayerStopped = false;
     this.dirty = true;
@@ -179,6 +179,7 @@ export class KitApp {
       const live = this.tapeProbe?.();
       if (live && live.inserted === 'tapeA' && live.playing) {
         const songT = live.elapsed - PRAYER_AT;
+        if (extraOn('prayer') && songT >= PRAYER_LEN) return { state: 'ended', songT };
         return songT < 0 ? { state: 'intro', songT } : { state: 'singing', songT };
       }
       return { state: 'ended', songT: PRAYER_LEN };
@@ -190,7 +191,7 @@ export class KitApp {
     const songT = live.elapsed - PRAYER_AT;
     // ⚑ S219 — the end is asked BEFORE "not playing": the computer's prayer (W1-C4) stops by itself at its end,
     //   and a finished prayer read as "stopped" offered Play again forever (the walk looped here)
-    if (songT >= PRAYER_LEN - 0.5) return { state: 'ended', songT };
+    if (songT >= PRAYER_LEN - (extraOn('prayer') ? 0 : 0.5)) return { state: 'ended', songT };
     if (!live.playing) return { state: 'stopped', songT };
     if (songT < 0) return { state: 'intro', songT };
     return { state: 'singing', songT };
@@ -302,7 +303,7 @@ export class KitApp {
         if (p.state === 'ended') return { id: 'amen', label: kit.pray.amen, disabled: false };
         // the first chorus sung: the press is offered, and taking it early is a choice the file keeps
         // ⚑ S227 — the Speedrun Version (his, 2026-10-10: "both"): Amen is offered from the first sung word
-        if (p.state === 'singing' && p.songT >= (isSpeedrun() ? 0 : AMEN_FROM)) return { id: 'amen', label: kit.pray.amen, disabled: false };
+        if (p.state === 'singing' && p.songT >= (isSpeedrun() && !extraOn('prayer') ? 0 : extraOn('prayer') ? PRAYER_LEN : AMEN_FROM)) return { id: 'amen', label: kit.pray.amen, disabled: false };
         if (p.state === 'idle' || p.state === 'stopped') return { id: 'play', label: p.state === 'stopped' ? kit.pray.again : kit.pray.play, disabled: false };
         return null;
       }
@@ -427,7 +428,7 @@ export class KitApp {
     // singing / ended: the words, a window of lines around the one being sung
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(p.state === 'ended' ? kit.pray.ended : p.songT >= (isSpeedrun() ? 0 : AMEN_FROM) ? kit.pray.mayStop : kit.pray.playing, x, y + 24);
+    ctx.fillText(p.state === 'ended' ? kit.pray.ended : p.songT >= (isSpeedrun() && !extraOn('prayer') ? 0 : extraOn('prayer') ? PRAYER_LEN : AMEN_FROM) ? kit.pray.mayStop : kit.pray.playing, x, y + 24);
     const lines = prayer.lines as { w: string; s: number; e: number }[][];
     const songT = p.state === 'ended' ? PRAYER_LEN + 1 : p.songT;
     let curLine = 0;
@@ -461,6 +462,7 @@ export class KitApp {
     if (this.setupPage === 'connecting') {
       const dw = 300; const dh = 130;
       const dx = Math.round((W - dw) / 2); const dy = Math.round((ERA1_CANVAS.height - dh) / 2);
+      // The X is deliberately inert during dial-up; the connection hands back to the browser.
       const c = ui.windowFrame(ctx, dx, dy, dw, dh, s.connecting.title, true);
       ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
       this.drawModem(ctx, c.x + 10, c.y + 14);
@@ -592,10 +594,15 @@ export class KitApp {
       case 'next':
         if (this.panel === 'welcome') this.panel = 'steps';
         // S227 — the Speedrun Version reads the first page and the last
-        else if (this.panel === 'read' && this.readPage < kit.read.pages.length - 1) this.readPage = isSpeedrun() ? kit.read.pages.length - 1 : this.readPage + 1;
+        else if (this.panel === 'read' && this.readPage < kit.read.pages.length - 1) {
+          const short = isSpeedrun() && !extraOn('programme');
+          this.readPage = short ? kit.read.pages.length - 1 : this.readPage + 1;
+          if (short) markExtraPassed('programme');
+        }
         return;
       case 'done':
         if (this.panel === 'read') {
+          markExtraPassed('programme');
           this.readDone = true;
           if (!ledger.records.includes('kit-read')) ledger.records.push('kit-read');
           this.panel = 'steps';
@@ -611,6 +618,7 @@ export class KitApp {
         return;
       case 'play': this.prayerStopped = false; this.onPlayTape?.(); return;
       case 'amen': {
+        markExtraPassed('prayer');
         const p = this.prayerProbe();
         this.prayerDone = true;
         // to the end, or cut at the chorus — one line each; the early one is flagged

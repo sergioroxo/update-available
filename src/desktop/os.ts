@@ -1,3 +1,8 @@
+import { reducedMotion } from '../state/motion';
+import { LambyGuide, type GuideInput } from '../narrative/lambyGuide';
+import { drawLambyGuide, type GuideHit, type GuidePaint } from './apps/lambyGuideDraw';
+import lambyGuideCopy from '../../data/strings/lambyGuide.json';
+import { gameMenuBus } from '../state/gameMenuBus';
 import { registerSetupHost, type LambySetup } from './setup/setup';
 /**
  * The desktop OS — phase state machine for the vertical slice:
@@ -7,7 +12,10 @@ import { registerSetupHost, type LambySetup } from './setup/setup';
  * Registers: warning/left = frame (bare); name/desktop = operable;
  * the ESC pause overlay is care infrastructure and preempts everything.
  */
+import { buildStartModel } from '../witness/startModel';
 import { isSpeedrun } from '../state/cut';
+import guidedCopy from '../../data/strings/extras.json';
+import { StartMenuMap } from './apps/startMenuMap';
 import { mapState, beatDone } from '../witness/map';
 import { gameMenuBus as startMenuBus } from '../state/gameMenuBus';
 import { meetWord } from '../room/lexicon';
@@ -59,10 +67,10 @@ import { setPauseOS, pauseItems, pauseWords, wayBackLine } from '../narrative/pa
 import pauseCopy from '../../data/strings/pauses.json';
 import { Screensaver, SAVER_SECONDS } from './apps/screensaver';
 import { StartPanel } from './apps/startPanel';   // S229 / W1-A6
-import { anythingPlaying } from '../audio/tapeAudio';
+import { anythingPlaying, stopOneShots, releaseBus } from '../audio/tapeAudio';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
-import { ledger, wipeLedger } from '../state/ledger';
+import { ledger, wipeLedger, ledgerGeneration } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
 import opening from '../../data/strings/opening.json';
@@ -203,6 +211,7 @@ export class DesktopOS {
   private rBootChars = 0;
   private readonly rBootTotal = (opening.o2_boot_lines as string[])
     .reduce((n, l) => n + Math.max(l.length, 1), 0);
+  private profileGroup = 0;
   private profileIcon = '';
   private profileChips: string[] = [];
   private profileGoal = ''; // '' until chosen; 'declined' files as a choice too
@@ -413,6 +422,14 @@ export class DesktopOS {
   }
   /** ⚑ S219 / W1-B4 — LambyOS's Start menu (the taskbar's MENU), and the icons drawn this frame it lists */
   private startOpen = false;
+  private readonly startMap = new StartMenuMap();
+  /** Scene position after returning from the Close; memory only, independent of its old update entry. */
+  mapAtClose?: boolean;
+  /** The same felt silence as the guide, without its operable/modal gates. */
+  get startMapSilent(): boolean {
+    return !!this.caleb?.open || this.residueDark || this.desktopReturnAt >= 0 || !!this.testimony?.playbackActive
+      || !!this.accountability || !!this.diary?.open || !!this.packet?.open || !!this.netvision?.open || !!this.mediaPlayer?.open;
+  }
   private startHits: Hit[] = [];
   private iconsDrawn: { id: string; label: string }[] = [];
   /** the desktop's own presses while the Start menu covers them, so a program entry can press its icon */
@@ -439,6 +456,8 @@ export class DesktopOS {
   /** ⚑ S220 — Shut Down… refused (his, 2026-10-08): the machine will not let you go; the frame's Leave always does */
   private shutRefused = false;
   private wotdShown = new Set<string>();
+  private modalCalm = 0;
+  private pendingUpdate: UpdateKey | null = null;
   /** ⚑ S229 / W1-A6 — "what you can do here": the era's own card, once per era, 1997 and 2003 on this canvas
    *  (2016's lives on Vera's workstation, 2026's in the browser). Under every window; closes with its own box. */
   private startPanels: { e1: StartPanel; e2: StartPanel } = {
@@ -461,6 +480,66 @@ export class DesktopOS {
   private forumRecommended = false;
   private lambyWaitShown = false;
   /** ⚑ S194 — seconds since the last press on the desktop (the helpers wait for quiet) */
+  /** Reinterp-only shared guide. Surface adapters report real silence/voice gates. */
+  lambyGuide = this.makeLambyGuide();
+  private guideLedger = ledgerGeneration;
+  lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
+  guideIdleScale: () => number = () => 1;
+  guideExternal: (() => { silent: boolean; voice: boolean }) | null = null;
+  onGuidePress: ((id: string) => void) | null = null;
+  onGuideMove: ((target: string) => void) | null = null;
+  private makeLambyGuide(): LambyGuide {
+    return new LambyGuide({
+      log: (outcome, beat, countDismissal, acknowledged) => {
+        if (countDismissal) ledger.assistant.dismissals++;
+        const line = acknowledged ? lambyGuideCopy.witness.acknowledged : lambyGuideCopy.witness[outcome];
+        this.fileLambyRecord(outcome, `guide:${beat}`, line.replace('{beat}', beat));
+      },
+      act: (act) => this.performGuideAct(act)
+    });
+  }
+  /** Only navigational acts are allowed. This list deliberately excludes every answer/release/take. */
+  private performGuideAct(act: string): void {
+    if (this.guideSilence.silent || this.guideSilence.voice) return;
+    if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
+    if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
+    if (this.desktopEra === 'e3' || this.desktopEra === 'e4') { this.onGuidePress?.(act.slice(6)); return; }
+    const allowed = ['icon-a', 'web-join', 'icon-restorify', 'icon-story', 'icon-send', 'start-menu', 'done', 'play', 'connect'];
+    const id = act.slice(6);
+    if (!act.startsWith('press:') || !allowed.includes(id)) return;
+    const hit = this.guideTargets().find(h => h.id === id);
+    if (hit) this.handleClick(hit.x + hit.w / 2, hit.y + hit.h / 2);
+  }
+  guideTargets(): GuideHit[] {
+    const children = [this.kit, this.web, this.irc, this.testimony];
+    return [...this.hits.filter(h => !h.id.startsWith('lg-')), ...children.flatMap(w => {
+      const v = w as unknown as { open: boolean; hits?: GuideHit[]; replyRects?: GuideHit[] } | null;
+      return v?.open ? [...(v.hits ?? []), ...(v.replyRects ?? [])] : [];
+    })];
+  }
+  get guideSilence(): { silent: boolean; voice: boolean } {
+    const external = this.guideExternal?.();
+    return {
+      silent: !this.reinterp || this.phase !== 'desktop' || this.paused || gameMenuBus.isOpen || !!this.setup?.open
+        || !!this.caleb?.open || this.residueDark || this.desktopReturnAt >= 0 || !!this.testimony?.playbackActive
+        || !!this.provotype?.open || !!this.diary?.open || !!this.packet?.open || this.dossierOpen || !!this.accountability || this.yesOpen || !!this.pauseOpen
+        || !!this.updateApp || !!this.sendOffer?.open || !!this.saver || this.startOpen || !!this.wotdOpen
+        || this.shutRefused || this.startMap.active || !!this.netvision?.open || !!this.mediaPlayer?.open
+        || (this.desktopEra === 'e2' && this.e2Stage !== 'active') || !!external?.silent,
+      voice: !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!external?.voice
+        || (this.desktopEra === 'e1' && !!this.guide?.activeText && (this.guideTipAt >= 0 || this.guideTipPinned))
+    };
+  }
+  private updateLambyGuide(dt: number): void {
+    if (!this.reinterp) return;
+    if (this.guideLedger !== ledgerGeneration) { this.lambyGuide = this.makeLambyGuide(); this.guideLedger = ledgerGeneration; }
+    const before = this.lambyGuide.version;
+    const input: GuideInput = { era: this.desktopEra, map: mapState(this), ...this.guideSilence,
+      formAvailable: this.formAvailable, formOpened: !!this.provotype || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
+      idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
+    this.lambyGuide.tick(dt, input);
+    if (before !== this.lambyGuide.version) { this.dirty = true; if (this.e4) this.e4.browser.version++; }
+  }
   idleSeconds = 0;
   /** ⚑ S208 — the era's own screensaver (1997 the starfield, then the kit's WALK ON; 2003 Restorify's flock), after
    *  SAVER_SECONDS of quiet on an idle desktop with nothing playing */
@@ -534,6 +613,8 @@ export class DesktopOS {
   }
 
   /** the current desktop era — read by the guide-thread conditions */
+  get assistantReady(): boolean { return this.desktopEra === 'e2' && this.e2Stage === 'active'; }
+
   get era(): DesktopEra {
     return this.desktopEra;
   }
@@ -632,6 +713,7 @@ export class DesktopOS {
       if (this.irc) return;
       if (!ledger.records.includes('channel-joined')) ledger.records.push('channel-joined');
       this.irc = new IrcApp();
+      this.irc.onClose = () => this.minimiseWindow('irc');
       this.irc.onLine = () => playOnce('irc_1997.mp3');
       this.irc.onImage = () => { this.yesOpen = true; this.dirty = true; };
       this.irc.onHooked = () => {
@@ -784,6 +866,7 @@ export class DesktopOS {
    *  never the player; SCRIPT_UPDATE v0.5 §1). Modal over the desktop. */
   armUpdate(key: UpdateKey): void {
     if (!this.reinterp || this.updateApp) return;
+    if (this.modalCalm > 0 || this.pauseOpen || this.wotdOpen) { this.pendingUpdate = key; return; }
     this.updateApp = new UpdateApp(key);
     // ⚑ S86: the press, reported the moment it happens. The engine starts the
     // relocation off this and finishes the era off `onComplete` below, so the
@@ -1098,7 +1181,7 @@ export class DesktopOS {
     const era = this.desktopEra;
     if (!this.saver) {
       if (this.reinterp && this.phase === 'desktop' && (era === 'e1' || (era === 'e2' && this.e2Stage === 'active')) && this.idleSeconds > SAVER_SECONDS   // A6: 2003's only once the era has begun
-          && this.desktopIdle() && !this.pauseOpen && !this.wotdOpen && !this.toast && !this.paused && !this.e2Jingle && !anythingPlaying()) {
+          && this.desktopIdle() && !this.startOpen && !this.startMap.active && !this.lambyGuide.active && !this.lambyGuide.waiting && !this.pauseOpen && !this.wotdOpen && !this.toast && !this.paused && !this.e2Jingle && !anythingPlaying()) {
         this.saver = new Screensaver(era === 'e2' ? 'lambs' : ledger.records.includes('kit-inserted') ? 'text' : 'stars').rotate(era);
         this.dirty = true;
       }
@@ -1114,7 +1197,7 @@ export class DesktopOS {
     const era = this.desktopEra;
     if (!this.reinterp || this.phase !== 'desktop' || (era !== 'e1' && era !== 'e2')) return false;
     if (era === 'e2' && this.e2Stage !== 'active') return false;
-    return this.desktopIdle() && !this.pauseOpen && !this.wotdOpen && !this.shutRefused && !this.startOpen && !this.saver
+    return this.desktopIdle() && !this.pauseOpen && !this.wotdOpen && !this.shutRefused && !this.startOpen && !this.startMap.active && !this.saver
       && !this.programSplash && !this.e2Jingle && this.desktopReturnAt < 0 && !this.residueDark;
   }
   private updateStartPanel(dt: number): void {
@@ -1125,7 +1208,7 @@ export class DesktopOS {
 
   private maybeWotd(): void {
     const era = this.desktopEra;
-    if (this.wotdOpen || this.pauseOpen || this.saver || this.phase !== 'desktop' || !this.reinterp) return;
+    if (this.modalCalm > 0 || this.wotdOpen || this.pauseOpen || this.saver || this.phase !== 'desktop' || !this.reinterp) return;
     // ⚑ S219 / W1-B14 (walkthrough 1: "the word of the day didn't appear at all") — it waited for the era's
     //   pause to have shown AND for 30 s more of stillness, which a moving player never gives. It now needs
     //   only a quiet desktop for 15 s, once per era
@@ -1185,7 +1268,7 @@ export class DesktopOS {
   }
 
   private maybePause(): void {
-    if (this.pauseOpen || this.phase !== 'desktop' || !this.reinterp) return;
+    if (this.modalCalm > 0 || this.wotdOpen || this.updateApp?.open || this.pauseOpen || this.phase !== 'desktop' || !this.reinterp) return;
     const era = this.desktopEra;
     if (era !== 'e1' && era !== 'e2') return;
     if (this.pauseShown.has(era)) return;
@@ -1343,6 +1426,12 @@ export class DesktopOS {
     if (!ledger.sends.some((s) => s.id === 's1' && (s.outcome === 'visited' || s.outcome === 'declined'))) return;
     this.messagePending = true;
     this.dirty = true;
+  }
+
+  /** Retry delivery as either prerequisite can arrive first; s1 still always precedes Caleb. */
+  private deliverCaleb(): void {
+    if (this.desktopEra === 'e2' && this.e2Stage === 'active') this.maybeLandMessage();
+    if (this.messagePending && !this.messageNoticeShown && !this.caleb && this.desktopIdle() && this.screenFacing && !this.sendOffer) this.maybeAnnounceMessage();
   }
 
   /** ⚑ W1-D14 — while Caleb's Messenger is on screen no other corner line is drawn or spends its life over it */
@@ -1584,6 +1673,7 @@ export class DesktopOS {
     const dw = 348; const dh = 138;
     const dx = Math.round((W - dw) / 2);
     const dy = opts.dy ?? Math.round((H - dh) / 2);
+    // Callers publish dismissal as the X on the first greeting, or as their explicit Not now button.
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, title, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     // Session 60: the little blocky mark this window used to carry is gone —
@@ -1781,6 +1871,7 @@ export class DesktopOS {
     this.dirty = true;
     this.sendOfferVersion++;
     this.onSendResolve?.(id, outcome);
+    this.maybeLandMessage();
   }
 
   private drawSendOffer(W: number, H: number): void {
@@ -1979,15 +2070,21 @@ export class DesktopOS {
 
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
+    if (this.paused) this.updateLambyGuide(0);
     if (this.setup?.open) {
       if (!this.paused) this.setup.update(dt);
       if (this.setup.dirty) { this.setup.dirty = false; this.dirty = true; this.draw(); }
       return;
     }
+    if (!this.paused) this.modalCalm = Math.max(0, this.modalCalm - dt);
+    if (this.pendingUpdate && !this.modalCalm && !this.pauseOpen && !this.wotdOpen) {
+      const key = this.pendingUpdate; this.pendingUpdate = null; this.armUpdate(key);
+    }
     this.idleSeconds += dt;
     this.flushTestimonyToast();   // S223 cloud / W1-B3 — the offer's line, once the check-in card has closed
     this.updateSaver(dt);
     if (this.testimony?.open) { this.testimony.update(dt); if (this.testimony.dirty) this.dirty = true; }   // S205
+    this.deliverCaleb();
     this.maybePause();
     this.maybeWotd();   // S209 / P7-47
     this.updateStartPanel(dt);   // S229 / W1-A6
@@ -2269,6 +2366,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.lambyOnScreen) this.dirty = true; // his sway is a sine, not a step
     if (this.phase === 'desktop' && this.lambyRigFile?.open) this.dirty = true; // panel on a bare clock
 
+    this.updateLambyGuide(dt);
     this.draw();
   }
 
@@ -2280,6 +2378,7 @@ export class DesktopOS {
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
     this.hits = [];
+    this.lambyGuidePaint = { rings: [], balloon: false };
     this.iconsDrawn = [];
     if (this.setup?.open) { this.setup.draw(this.ctx); return; }
 
@@ -2347,56 +2446,20 @@ export class DesktopOS {
   /** ⚑ S219 / W1-B4 — LambyOS's Start menu: what the piece is waiting on, what is on this desktop, what waits
    *  in the room, and the way out. The words are the map's (data/strings/map.json); the labels slice.json's. */
   private drawStartMenu(W: number, H: number): void {
-    const { ctx } = this;
-    const S = strings.desktop.startMenu;
-    this.startHits = [];
-    const st = mapState(this);
-    const era = st.eras.find((e) => e.here);
-    const now = st.current && era && st.current.era === era.id ? st.current.beat : null;
-    // S227 — the Speedrun Version lists no side trips: only what moves the story
-    const room = isSpeedrun() ? [] : (era?.beats ?? []).filter((b) => b.beat.optional && b.state !== 'done' && b.beat.where && !/monitor|screen|desktop/i.test(b.beat.where))
-      .map((b) => b.beat).slice(0, 4);
-    const progs = this.iconsDrawn.slice(0, 8);
-    const w = 236; const row = 15; const tx = 30; const tw = w - tx - 8;
-    ui.setFont(ctx, 9);
-    const nowLines = now ? ui.wrapText(ctx, now.hint, tw).slice(0, 3) : [];
-    const lines = 1 + (now ? 1 + nowLines.length : 0) + 1 + Math.max(1, progs.length) + (room.length ? 1 + room.length : 0) + 2;
-    const h = lines * row + 16;
-    const x = 3; const y = Math.max(4, H - 22 - h);
-    ui.bevel(ctx, x, y, w, h, true);
-    ui.px(ctx, x + 3, y + 3, 20, h - 6, ERA1.navy);
-    ctx.save(); ctx.translate(x + 7, y + h - 8); ctx.rotate(-Math.PI / 2);
-    ui.setFont(ctx, 12); ctx.fillStyle = ERA1.white; ctx.fillText(S.banner, 0, 0); ctx.restore();
-    let cy = y + 6;
-    const head = (t: string): void => { ui.setFont(ctx, 9); ctx.fillStyle = ERA1.navy; ctx.fillText(t.toUpperCase(), x + tx, cy + 2); cy += row; };
-    const item = (label: string, id: string, dim = false): void => {
-      ui.setFont(ctx, 10);
-      ctx.fillStyle = dim ? ERA1.grey : ERA1.black;
-      let l = label; while (ctx.measureText(l).width > tw && l.length > 4) l = `${l.slice(0, -2)}…`;
-      ctx.fillText(l, x + tx + 4, cy + 2);
-      if (!dim) this.startHits.push({ x: x + tx, y: cy, w: tw, h: row, id });
-      cy += row;
-    };
-    if (now) {
-      head(S.now);
-      item(now.label, 'sm-now');
-      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark;
-      for (const l of nowLines) { ctx.fillText(l, x + tx + 10, cy + 1); cy += row; }
-    }
-    head(S.programs);
-    if (progs.length) for (const p of progs) item(p.label, `sm-prog:${p.id}`);
-    else item(S.nothing, 'sm-none', true);
-    if (room.length) { head(S.room); for (const b of room) item(b.label, `sm-room:${b.id}`); }
-    ui.px(ctx, x + tx, cy, tw, 1, ERA1.grey); ui.px(ctx, x + tx, cy + 1, tw, 1, ERA1.white);
-    item(S.shutDown, 'sm-shut');
-    item(S.leave, 'sm-leave');
-    void W;
+    const era = this.desktopEra;
+    this.startMap.menu = this.startOpen;
+    this.startHits = this.startMap.draw(this.ctx, W, H, era, buildStartModel(this, era), this.startMapSilent, this.iconsDrawn);
   }
 
   private pressStart(id: string): void {
     const S = strings.desktop.startMenu;
+    if (this.startMap.press(id, buildStartModel(this, this.desktopEra), this.startMapSilent)) {
+      this.startOpen = this.startMap.menu; this.dirty = true; return;
+    }
+    this.startMap.menu = false;
     const st = mapState(this);
     const era = st.eras.find((e) => e.here);
+    if (id === 'sm-whattodo' && !this.startMapSilent && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) { this.startPanels[this.desktopEra].reopen(); this.dirty = true; return; }
     if (id === 'sm-shut') { this.shutRefused = true; this.dirty = true; return; }
     if (id === 'sm-leave') { startMenuBus.openLeave?.(); return; }
     if (id === 'sm-now' && st.current) { this.toast = { text: st.current.beat.hint, t: 9 }; return; }
@@ -2781,7 +2844,7 @@ export class DesktopOS {
     for (const mb of ui.minBoxesVisible()) this.hits.push({ x: mb.x, y: mb.y, w: mb.w, h: mb.h, id: `min-${mb.key}` });
     // taskbar
     ui.bevel(ctx, 0, H - 22, W, 22, true);
-    ui.button(ctx, 3, H - 19, 50, 16, 'MENU', { hover: this.startOpen });
+    ui.button(ctx, 3, H - 19, 50, 16, strings.desktop.startMenu.button, { hover: this.startOpen });
     if (this.reinterp) this.hits.push({ x: 3, y: H - 19, w: 50, h: 16, id: 'start-menu' });
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
@@ -2794,6 +2857,11 @@ export class DesktopOS {
     //   way a window did: pressed in while it is up, raised while it waits
     //   (S151's wizard button, generalised — see `minimiseWindow`)
     let wellX = 58;
+    if (this.reinterp && !this.startMapSilent && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
+      ui.button(ctx, wellX, H - 19, 76, 16, strings.desktop.startMenu.whatToDo);
+      this.hits.push({ x: wellX, y: H - 19, w: 76, h: 16, id: 'taskbar-whattodo' });
+      wellX += 80;
+    }
     if (this.reinterp && this.phase === 'desktop' && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
       const bw = 64;
       for (const w of this.taskbarWindows()) {
@@ -2810,7 +2878,7 @@ export class DesktopOS {
     if (this.reinterp && this.desktopEra === 'e1') {
       const wellW = W - 50 - wellX;
       ui.bevel(ctx, wellX, H - 19, wellW, 16, false);
-      const guideLine = this.guide?.activeText;
+      const guideLine = this.lambyGuide.active ? null : this.guide?.activeText;
       if (guideLine) {
         // ⚑ Phase 7 (his: "the suggestion flows over in the menu bar") — the line is kept inside its
         //   well; when it does not fit, the well shows its start and the whole line rises above the bar
@@ -2858,6 +2926,12 @@ export class DesktopOS {
       ctx.fillStyle = this.hover === 'taskbar-message' ? ERA1.navy : ERA1.black;
       ctx.fillText(mediaStrings.breakNoticeText, wellX + 16, H - 16);
       this.hits.push({ x: wellX, y: H - 19, w: bw, h: 16, id: 'taskbar-message' });
+    }
+    if (this.reinterp && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
+      this.updateLambyGuide(0);
+      const targets = this.guideTargets();
+      this.lambyGuidePaint = drawLambyGuide(ctx, this.desktopEra, this.lambyGuide.view, targets);
+      this.hits.push(...targets.filter(h => h.id.startsWith('lg-')));
     }
     // …and the desktop comes UP OUT OF BLACK after the residue (finding F25):
     // caleb.ts fades its field out, this fades the room back in. The era's
@@ -2920,8 +2994,12 @@ export class DesktopOS {
     if (this.startOpen && this.phase === 'desktop' && !this.pauseOpen && !this.wotdOpen && !this.shutRefused) {
       this.drawStartMenu(W, H);
       this.hitsUnderStart = this.hits;
-      this.hits = [...this.startHits, ...this.hits.filter((h) => h.id === 'start-menu')];
+      this.hits = [...this.startHits, ...this.hits.filter((h) => h.id === 'start-menu' || h.id === 'taskbar-whattodo')];
     } else this.startHits = [];
+    if (!this.startOpen && this.startMap.active && !this.startMapSilent && !this.updateApp?.open && !this.pauseOpen && !this.wotdOpen && !this.shutRefused) {
+      const helpHits = this.hits.filter(h => h.id === 'taskbar-whattodo');
+      this.hits = [...this.startMap.draw(ctx, W, H, this.desktopEra, buildStartModel(this, this.desktopEra), false, this.iconsDrawn), ...helpHits];
+    }
     // ⚑ S208 — the screensaver covers everything; the whole glass is the one thing to press (it only wakes)
     if (this.saver) { this.saver.draw(ctx, W, H); this.hits = [{ x: 0, y: 0, w: W, h: H, id: 'saver-wake' }]; }
   }
@@ -3278,6 +3356,7 @@ export class DesktopOS {
     ctx.fillStyle = ERA1.grey;
     ctx.fillText(`(${opening.o3_name_note})`, L, c.y + 24);
 
+    if (!isSpeedrun() || this.profileGroup === 0) {
     // icon grid
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
@@ -3299,6 +3378,8 @@ export class DesktopOS {
       this.hits.push({ x: boxX, y: boxY, w: boxS, h: boxS, id: `picon:${ic.id}` });
     });
 
+    }
+    if (!isSpeedrun() || this.profileGroup === 1) {
     // chips — pick three
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
@@ -3330,6 +3411,8 @@ export class DesktopOS {
       this.hits.push({ x, y, w: chipW, h: chipH, id: `pchip:${ch.id}` });
     });
 
+    }
+    if (!isSpeedrun() || this.profileGroup === 2) {
     // goal — insisted; no neutral option; declining files too
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
@@ -3353,12 +3436,17 @@ export class DesktopOS {
     ctx.fillText(`— ${opening.o3_goal_decline}`, L + 18, declineY);
     this.hits.push({ x: L + 12, y: declineY - 2, w: 200, h: 14, id: 'pgoal:declined' });
 
+    }
     // confirm / leave
-    const armed = this.profileIcon !== '' && this.profileChips.length === 3 && this.profileGoal !== '';
-    ui.button(ctx, c.x + c.w - 92, c.y + c.h - 26, 84, 20, opening.o3_continue, {
+    const armed = !isSpeedrun() && this.profileIcon !== '' && this.profileChips.length === 3 && this.profileGoal !== '';
+    if (!isSpeedrun()) ui.button(ctx, c.x + c.w - 92, c.y + c.h - 26, 84, 20, opening.o3_continue, {
       disabled: !armed, hover: this.hover === 'r-continue' && armed
     });
     if (armed) this.hits.push({ x: c.x + c.w - 92, y: c.y + c.h - 26, w: 84, h: 20, id: 'r-continue' });
+    if (isSpeedrun() && this.profileGroup > 0) {
+      ui.button(ctx, c.x + c.w - 92, c.y + c.h - 26, 84, 20, guidedCopy.back);
+      this.hits.push({ x: c.x + c.w - 92, y: c.y + c.h - 26, w: 84, h: 20, id: 'profile-back' });
+    }
     ui.button(ctx, c.x, c.y + c.h - 26, 64, 20, opening.o3_leave, { hover: this.hover === 'r-leave' });
     this.hits.push({ x: c.x, y: c.y + c.h - 26, w: 64, h: 20, id: 'r-leave' });
   }
@@ -3419,9 +3507,11 @@ export class DesktopOS {
     if (this.phase === 'r_boot') { this.startReinterpSplash(); return; } // any click skips the crawl
     if (this.phase === 'r_splash') { this.setPhase('r_profile'); return; } // …and the splash
     if (this.phase === 'r_profile') {
+      if (id === 'profile-back') { this.profileGroup = Math.max(0, this.profileGroup - 1); this.dirty = true; return; }
       if (id.startsWith('picon:')) {
         this.fileFirstProfileTouch();
         this.profileIcon = id.slice(6);
+        if (isSpeedrun()) this.profileGroup = 1;
         this.emitOpeningProfile();
         this.dirty = true;
         return;
@@ -3432,12 +3522,14 @@ export class DesktopOS {
         const i = this.profileChips.indexOf(c);
         if (i >= 0) this.profileChips.splice(i, 1);
         else if (this.profileChips.length < 3) this.profileChips.push(c);
+        if (isSpeedrun() && this.profileChips.length === 3) this.profileGroup = 2;
         this.emitOpeningProfile();
         this.dirty = true; return;
       }
       if (id.startsWith('pgoal:')) {
         this.fileFirstProfileTouch();
         this.profileGoal = id.slice(6);
+        if (isSpeedrun()) this.commitProfile();
         this.emitOpeningProfile();
         this.dirty = true;
         return;
@@ -3487,6 +3579,7 @@ export class DesktopOS {
       case 'profile':
         ledger.name = opening.o3_prefilled_name;
         this.clearProfileTags();
+        this.profileGroup = 0;
         this.profileIcon = '';
         this.profileChips = [];
         this.profileGoal = '';
@@ -3882,6 +3975,11 @@ export class DesktopOS {
 
   handleClick(x: number, y: number): void {
     if (this.setup?.open) { if (!this.paused) this.setup.handleClick(x, y); return; }
+    this.idleSeconds = 0;
+    this.lambyGuide.activity();
+    this.updateLambyGuide(0);
+    const lg = this.hits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    if (lg && this.lambyGuide.press(lg.id)) { this.dirty = true; this.draw(); return; }
     this.idleSeconds = 0;   // S194 — the helpers wait for quiet
     if (this.saver) { this.saver = null; this.dirty = true; return; }   // S208 — a press wakes it, and does nothing else
     if (this.shutRefused) {   // S220 — the refusal owns the screen until OK
@@ -3891,7 +3989,7 @@ export class DesktopOS {
     }
     if (this.wotdOpen) {   // S209 / P7-47 — the Word of the Day owns the screen until OK
       const hw = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
-      if (hw?.id === 'wotd-ok') { this.wotdOpen = null; this.dirty = true; }
+      if (hw?.id === 'wotd-ok') { this.wotdOpen = null; this.modalCalm = 1; this.dirty = true; }
       return;
     }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
@@ -3916,16 +4014,24 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
+    if (hit?.id === 'taskbar-whattodo' && !this.startMapSilent && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
+      this.startMap.close(); this.startOpen = false;
+      this.startPanels[this.desktopEra].toggle(); this.dirty = true; return;
+    }
+    if (this.startMap.active && !this.startOpen && !this.startMapSilent) {
+      if (hit) this.startMap.press(hit.id, buildStartModel(this, this.desktopEra), false);
+      this.dirty = true; return;
+    }
     // ⚑ S219 / W1-B4 — LambyOS's Start menu: open, it owns the press (outside it closes it); MENU toggles it
     //   from anywhere on the desktop, whatever window is up
     if (this.phase === 'desktop' && this.startOpen) {
       const sh = this.startHits.find((h) => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
       // a closed menu publishes nothing: the walk reads every `…Hits` field, and a stale list read as live entries
-      this.startOpen = false; this.startHits = []; this.dirty = true;
+      this.startOpen = false; this.startMap.menu = false; this.startHits = []; this.dirty = true;
       if (sh) this.pressStart(sh.id);
       return;
     }
-    if (this.phase === 'desktop' && this.reinterp && hit?.id === 'start-menu') { this.startOpen = true; this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.reinterp && hit?.id === 'start-menu') { this.startMap.close(); this.startOpen = true; this.dirty = true; return; }
     // ⚑ S76 — E4's shell owns every press on this surface, because it IS the
     // surface. Closed: any press on the dark glass is THE ONE TOUCH (S1.0's
     // power-press grammar). Worn: nothing is pressable yet, and a press falls
@@ -3946,7 +4052,7 @@ export class DesktopOS {
     }
     // ⚑ S186 — the picture Rob sent owns the screen while it is open: only its close box answers
     if (this.phase === 'desktop' && this.pauseOpen) {   // S207 — the pause owns the screen until it is closed
-      if (hit?.id === 'pause-close') { this.pauseOpen = null; this.dirty = true; }
+      if (hit?.id === 'pause-close') { this.pauseOpen = null; this.modalCalm = 1; this.dirty = true; }
       return;
     }
     if (this.phase === 'desktop' && this.yesOpen) {
@@ -4136,10 +4242,27 @@ export class DesktopOS {
   private leave(): void {
     this.setup?.destroy(); this.setup = null;
     wipeLedger();
+    this.lambyGuide = this.makeLambyGuide();
     this.stopReadAloud(); // the voice does not outlive the session (S60)
     this.paused = false;
     this.setPhase('left');
     this.onLeave?.();
+  }
+
+  /** Put surfaces away without invoking story callbacks or recording a dismissal. */
+  closeForEraJump(): void {
+    this.setup?.destroy(); this.setup = null;
+    this.mapAtClose = false;
+    this.startOpen = false; this.startMap.close(); this.startHits = []; this.hits = [];
+    this.stopReadAloud(); stopOneShots(); releaseBus(); this.e2Jingle?.pause(); this.e2Jingle = null;
+    this.e4?.closeForEraJump();
+    this.restorify = null; this.caleb = null; this.accountability = null; this.netvision = null; this.mediaPlayer = null;
+    this.modalCalm = 0; this.pendingUpdate = null;
+    this.updateApp = null; this.pauseOpen = null; this.wotdOpen = null; this.shutRefused = false; this.saver = null;
+    this.toast = null; this.programSplash = null; this.desktopReturnAt = -1; this.residueDark = false;
+    this.messagePending = false; this.messageNoticeOpen = false; this.pureMailAt = Infinity;
+    this.startPanels.e1.close(); this.startPanels.e2.close();
+    this.retireEra1Windows(); this.dirty = true;
   }
 
   /** external Leave — the reinterp O1 start-screen overlay lives outside the

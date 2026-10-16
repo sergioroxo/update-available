@@ -67,6 +67,8 @@ class TypeStream {
 
 export class IrcApp {
   open = true;
+  onClose?: () => void;
+  private closeRect: Array<{ x: number; y: number; w: number; h: number; id: string }> = [];
   dmOpen = false;
   focus: 'channel' | 'dm' = 'channel';
 
@@ -323,7 +325,7 @@ export class IrcApp {
    *  publishes nothing (os.ts calls this after the windows are drawn). The
    *  walker kept aiming at a reply under the restored wizard and spent the
    *  reply's press cap on inert presses — a published rect must be a real one. */
-  covered(): void { this.replyRects = []; }
+  covered(): void { this.replyRects = []; this.closeRect = []; }
   /** S151 — a reply tray is live: the player is being talked to (the guide's soft lines wait) */
   get awaitingReply(): boolean { return this.chanAwaitingReply || this.escAwaitingReply || this.requestPending || this.sendPending; }
 
@@ -400,6 +402,7 @@ export class IrcApp {
   draw(ctx: CanvasRenderingContext2D, caretOn: boolean): void {
     // the channel is lurk-only — no input field; the chat fills the window
     const c = ui.windowFrame(ctx, 14, 30, 400, 290, `${dialog.channel} — IRC`, this.focus === 'channel', 'irc');
+    this.closeRect = [{ ...c.closeBox, id: 'irc-close' }];
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     const listW = 78;
     ui.px(ctx, c.x + c.w - listW, c.y, listW, c.h, ERA1.tealDark);
@@ -428,6 +431,7 @@ export class IrcApp {
     }
 
     if (this.dmOpen) {
+      // The DM close box is deliberately inert: the channel's X parks both windows.
       const d = ui.windowFrame(ctx, 170, 140, 300, 170, dialog.dmTitle, this.focus === 'dm');
       ui.px(ctx, d.x, d.y, d.w, d.h - 22, ERA1.paper);
       ui.setFont(ctx, 9);
@@ -456,6 +460,7 @@ export class IrcApp {
     }
     // R3-26 — the request: a small dialog over the channel, one live answer
     if (this.requestPending) {
+      // This required question's close box is deliberately inert; its answer owns the window.
       const q = ui.windowFrame(ctx, 150, 150, 260, 92, dialog.request.title, true);
       ui.px(ctx, q.x, q.y, q.w, q.h, ERA1.beige);
       ui.setFont(ctx, 10);
@@ -470,6 +475,7 @@ export class IrcApp {
     }
     // ⚑ S186 — the DCC send: the same grammar, one live answer (his "you have to accept")
     if (this.sendPending) {
+      // This required question's close box is deliberately inert; its answer owns the window.
       const q = ui.windowFrame(ctx, 160, 170, 270, 104, dialog.dcc.title, true);
       ui.px(ctx, q.x, q.y, q.w, q.h, ERA1.beige);
       ui.setFont(ctx, 10);
@@ -483,6 +489,7 @@ export class IrcApp {
       ui.button(ctx, q.x + q.w - 8 - 70 - 6 - 70, by, 70, 20, dialog.dcc.ignore, { disabled: true });
       this.replyRects = [{ x: q.x + q.w - 8 - 70, y: by, w: 70, h: 20, id: 'dcc-accept' }];
     }
+    if (this.replyRects.some(r => r.id === 'dm-accept' || r.id === 'dcc-accept' || r.id.startsWith('reply:'))) this.closeRect = [];
   }
 
   /** the line(s) the player can say, in the type area at the bottom of the DM */
@@ -508,6 +515,8 @@ export class IrcApp {
   }
 
   handleClick(x: number, y: number): void {
+    const close = this.closeRect.find(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
+    if (close && !this.replyRects.some(r => r.id === 'dm-accept' || r.id === 'dcc-accept' || r.id.startsWith('reply:'))) { this.onClose?.(); return; }
     // R3-26: the request owns the window while it stands
     if (this.requestPending) {
       const r = this.replyRects.find((r) => r.id === 'dm-accept');

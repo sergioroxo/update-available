@@ -138,6 +138,7 @@ export class UpdateApp {
   /** how many error windows have landed so far (drives the stack + the clock) */
   private cascadeShown = 0;
   private t = 0;
+  private calm = 0;
   private page = 0;
   private remindUsed = false;
   private completed = false;
@@ -194,7 +195,7 @@ export class UpdateApp {
 
   /** the notification is withdrawn while reminded; it returns once */
   get visible(): boolean {
-    return this.phase !== 'reminded';
+    return this.phase !== 'reminded' && this.calm <= 0;
   }
 
   /** S76: the last two stages paint the whole surface rather than a dialog.
@@ -230,6 +231,11 @@ export class UpdateApp {
     // player ever sees it render even once. Capping dt costs nothing on a
     // normal 60fps frame; it only changes behavior after a real stall/gap.
     const MAX_DT = 0.1;
+    if (this.calm > 0) {
+      this.calm = Math.max(0, this.calm - Math.min(dt, MAX_DT));
+      this.dirty = true;
+      return;
+    }
     this.t += Math.min(dt, MAX_DT);
     // ⚑ the stack builds on its own clock — one window every `everyMs` until
     //   `count` are up. Nothing is required of the player while it fills.
@@ -308,6 +314,7 @@ export class UpdateApp {
     const H = ERA1_CANVAS.height;
     // install, restart and the dispersal register nothing: they are not asks
     this.hits = [];
+    if (this.calm > 0) return;
 
     // ⚑ S61 — THE DEFERRAL IS NOT SILENT ANY MORE (Sérgio: *"Remind me later —
     // what does it do?"*). The notice withdraws, exactly as the law says, but
@@ -663,6 +670,7 @@ export class UpdateApp {
   handleClick(x: number, y: number): void {
     // ⚑ ONE LOOKUP, against the rects `draw` registered — see `hits` above for
     //   why the geometry is no longer written out a second time here.
+    if (this.calm > 0) return;
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y - 4 && y <= h.y + h.h);
     const id = hit?.id ?? '';
 
@@ -675,7 +683,7 @@ export class UpdateApp {
     //   two rects it registers are there to be found by an audit, not to become
     //   a choice the player has to make correctly.
     if (this.phase === 'cascade' && this.s.cascade) {
-      if (this.cascadeShown >= 1) { this.phase = 'notify'; this.t = 0; }
+      if (this.cascadeShown >= 1) { this.phase = 'notify'; this.t = 0; this.calm = 1; this.hits = []; }
       return;
     }
     if (this.phase === 'notify') {
@@ -686,7 +694,7 @@ export class UpdateApp {
           // this instance = the gathering window never opened at all (the
           // short path, spec §4). Fires before the phase changes.
           if (!this.remindUsed) this.onUpdateNowDirect?.();
-          if (this.s.eula) { this.phase = 'eula'; this.t = 0; } else { this.beginInstall(); }
+          if (this.s.eula) { this.phase = 'eula'; this.t = 0; this.calm = 1; this.hits = []; } else { this.beginInstall(); }
           return;
         case 'remind-later':
           // registered only while unspent, so this still works exactly once (v0.5 §1)

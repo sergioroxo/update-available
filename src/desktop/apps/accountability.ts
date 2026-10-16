@@ -515,6 +515,7 @@ export class AccountabilityApp {
    */
   /** the system's status list — cold, typed, each contact tried and lost */
   private drawNetworkFailing(ctx: CanvasRenderingContext2D): void {
+    // The X is deliberately inert: the network failure runs to its own conclusion.
     const c = ui.windowFrame(ctx, BAND.x, BAND.y - 20, BAND.w, BAND.h + 12, NET.title, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     ui.setFont(ctx, 10);
@@ -570,6 +571,7 @@ export class AccountabilityApp {
     const W = ERA1_CANVAS.width;
     const { w: dw, h: dh, y: dy } = AccountabilityApp.MAILBOX;
     const dx = Math.round((W - dw) / 2);
+    // The X is deliberately inert: this system notice is advanced by Open, not dismissed.
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, caleb.pureMail.inboxTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
     ui.setFont(ctx, 9);
@@ -596,6 +598,7 @@ export class AccountabilityApp {
     const W = ERA1_CANVAS.width;
     const dw = 430; const dh = 306;
     const dx = Math.round((W - dw) / 2); const dy = 2;
+    // The X is deliberately inert: the collapse letter's own continuation ends this beat.
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, caleb.pureMail.letterTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
     ui.setFont(ctx, 9);

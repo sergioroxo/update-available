@@ -430,6 +430,7 @@ export class NetVisionPlayerApp {
     this.hits = [];
     const dx = Math.round((ERA1_CANVAS.width - DW) / 2);
     const dy = Math.round((ERA1_CANVAS.height - DH) / 2);
+    // The X is deliberately inert: the film's own Skip control or automatic ending closes playback.
     const c = ui.windowFrame(ctx, dx, dy, DW, DH, M.windowTitle, true, 'netvision');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     const a: Rect = c;

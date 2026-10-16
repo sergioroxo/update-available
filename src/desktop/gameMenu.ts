@@ -1,3 +1,4 @@
+import about from '../../data/strings/about.json';
 /**
  * R28-4 — THE GAME MENU (CLAUDE.md REINTERP AMENDMENTS §4; docs/
  * REINTERP_RESTRUCTURE_R28_2026-07-10.md §4 layer 2).
@@ -43,6 +44,7 @@
  * plays" assertion above. See the import comment below for what these two
  * files are and why only their `debrief` half is ever read here.
  */
+import { restartVisit } from '../frame/restart';
 import closeMessage from '../../data/strings/close_message.json';
 import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
@@ -79,7 +81,7 @@ import e4Offers from '../../data/provotypes/e4_offers.json';
 // wiring below is what makes the card real rather than filed.
 import e3Day from '../../data/provotypes/e3_theday.json';
 
-type View = 'main' | 'sound' | 'leaveConfirm' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map';
+type View = 'about' | 'main' | 'sound' | 'leaveConfirm' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map' | 'jumpConfirm';
 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
@@ -378,6 +380,7 @@ export function mountGameMenu(): GameMenu {
    * Frame voice: it explains, because the frame never plays. Nothing files.
    */
   /** the era a player has opened on the map (its file, under the beats) — menu state, never filed */
+  let jumpTarget: { era: 'e1' | 'e2' | 'e3' | 'e4'; label: string } | null = null;
   const mapOpen = new Set<string>();
   function mapView(): void {
     heading(mapCopy.title);
@@ -422,6 +425,14 @@ export function mountGameMenu(): GameMenu {
         color: era.here ? DIALOG.titleBar : DIALOG.ink, background: 'transparent', border: 'none', padding: '0 0 6px', cursor: isAhead ? 'default' : 'pointer'
       } as CSSStyleDeclaration);
       col.appendChild(head);
+      if (era.id !== 'close' && gameMenuBus.jumpToEra) {
+        const go = document.createElement('button'); go.textContent = copy.goHere;
+        go.id = `go-here-${era.id}`; go.dataset.action = go.id;
+        Object.assign(go.style, { font: DIALOG.font, color: DIALOG.ink, background: DIALOG.panel, padding: '4px 8px', margin: '0 0 8px', cursor: 'pointer' });
+        domBevel(go, true);
+        go.onclick = () => { jumpTarget = { era: era.id as 'e1' | 'e2' | 'e3' | 'e4', label: era.label }; view = 'jumpConfirm'; render(); };
+        col.appendChild(go);
+      }
       if (era.here) line(col, mapCopy.hereLabel, DIALOG.titleBar, '10px');
       if (isAhead) { line(col, era.id === 'close' ? mapCopy.aheadLabel : mapCopy.aheadCount.replace('{n}', String(era.beats.length)), DIALOG.faint); continue; }
       const done = era.beats.filter((b) => b.state === 'done').length;
@@ -464,7 +475,7 @@ export function mountGameMenu(): GameMenu {
     // ⚑ Phase 7 (his: "the close sources need to be wider on PC as they are still in mobile size") —
     //   every reading view (the sources, the credits) takes the wide dialog too; the menu itself stays narrow
     const wide = view === 'map' || view === 'yourFile' || view === 'closeSources' || view === 'daySources'
-      || view === 'offersSources' || view === 'ballSources' || view === 'credits';
+      || view === 'about' || view === 'offersSources' || view === 'ballSources' || view === 'credits';
     dialog.style.width = wide ? 'min(860px, 94vw)' : 'min(440px, 92vw)';
     if (view === 'yourFile') { yourFileView(); return; }
     if (view === 'map') { mapView(); return; }
@@ -551,6 +562,13 @@ export function mountGameMenu(): GameMenu {
       row(copy.leaveStay, () => gameMenuBus.close());
       return;
     }
+    if (view === 'jumpConfirm' && jumpTarget) {
+      heading(copy.jumpConfirmTitle.replace('{era}', jumpTarget.label));
+      paragraph(copy.jumpConfirmBody);
+      row(copy.jumpConfirmYes, () => { const target = jumpTarget; jumpTarget = null; view = 'main'; if (target) gameMenuBus.jumpToEra?.(target.era); });
+      row(copy.jumpConfirmNo, () => { jumpTarget = null; view = 'map'; render(); });
+      return;
+    }
     if (view === 'restartConfirm') {
       heading(copy.restartConfirmTitle);
       paragraph(copy.restartConfirmBody);
@@ -564,8 +582,14 @@ export function mountGameMenu(): GameMenu {
       backRow();
       return;
     }
+    if (view === 'about') {
+      heading(about.title);
+      for (const p of about.paragraphs) paragraph(p);
+      backRow('credits'); return;
+    }
     if (view === 'credits') {
       heading(copy.creditsTitle);
+      row(about.title, () => { view = 'about'; render(); });
       paragraph(attributions.projectLine);
       if (attributions.entries.length === 0) {
         paragraph(copy.creditsNone);
@@ -635,13 +659,7 @@ export function mountGameMenu(): GameMenu {
    *  flagged in 01_SESSION_LOG.md Session 36 rather than an in-place engine
    *  teardown/rebuild, which would be far riskier to get right this session. */
   function doRestart(): void {
-    wipeLedger();
-    // ⚑ S227 — A RESTART IN THE SAME TAB RETURNS TO LAMBYOS HOME ALREADY ARMING (design §3, way 2): the visitor
-    //   read the notice minutes ago in this tab. Nothing can be stored, so the only carrier is the reload's own
-    //   URL: `#home-armed`, which Home reads once and strips at once (a later reload is a fresh visit). It carries
-    //   nothing about the person — the ledger is wiped above, as it always was.
-    try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search + '#home-armed'); } catch { /* restart unarmed */ }
-    window.location.reload();
+    restartVisit({ armed: true });
   }
 
   /** the existing leave flow (DesktopOS.leaveNow — wipes the ledger, shows

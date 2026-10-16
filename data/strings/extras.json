@@ -1,0 +1,73 @@
+{
+  "_doc": "One visitor version; optional full-cut branches. Labels are frame/machine voice. Internal cut and speedrun field names stay unchanged.",
+  "goOn": "Go on",
+  "back": "Back",
+  "e1": [
+    {
+      "id": "prayer",
+      "label": "The whole prayer",
+      "place": ""
+    },
+    {
+      "id": "programme",
+      "label": "The programme in full",
+      "place": ""
+    },
+    {
+      "id": "room",
+      "label": "Side trips in the room",
+      "place": "The racket, handheld and Root Cause Digger"
+    }
+  ],
+  "e2": [
+    {
+      "id": "tapes",
+      "label": "Play your takes",
+      "place": "Your Story: the tapes and the edit"
+    },
+    {
+      "id": "forum",
+      "label": "Harbor Forums",
+      "place": "On the desktop"
+    },
+    {
+      "id": "application",
+      "label": "The application",
+      "place": "In Harbor Forums"
+    },
+    {
+      "id": "clear",
+      "label": "CLEAR",
+      "place": "The phone on the desk"
+    }
+  ],
+  "e3": [
+    {
+      "id": "work",
+      "label": "More work on the board",
+      "place": "Before the phone rings"
+    },
+    {
+      "id": "jobs",
+      "label": "The other jobs",
+      "place": "On the board: Tag the video and Post to the group"
+    }
+  ],
+  "e4": [
+    {
+      "id": "session",
+      "label": "The whole session",
+      "place": "On the headset"
+    },
+    {
+      "id": "console",
+      "label": "The console",
+      "place": "MATCH MADE SIMPLE on the bed"
+    },
+    {
+      "id": "commons",
+      "label": "More of the Commons",
+      "place": "The full programme in the hall"
+    }
+  ]
+}

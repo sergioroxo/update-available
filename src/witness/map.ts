@@ -22,7 +22,8 @@ import type { DesktopOS } from '../desktop/os';
 import mapData from '../../data/strings/map.json';
 import { entriesByEra, practiceOf, type RecordEra, type Practice } from './record';
 import queue from '../../data/dialog/s3_queue.json';
-import { isSpeedrun } from '../state/cut';
+import { isSpeedrun, extraOn } from '../state/cut';
+import { extraForBeat } from '../state/extras';
 
 export interface MapBeat {
   id: string;
@@ -35,6 +36,8 @@ export interface MapBeat {
   /** ⚑ S227 — the Speedrun Version's own words for this beat, where its route differs (map.json `_docS227`) */
   labelSpeedrun?: string;
   hintSpeedrun?: string;
+  speedrun?: boolean;
+  doneSpeedrun?: string;
 }
 export interface MapEra { id: RecordEra; label: string; beats: MapBeat[] }
 export type BeatState = 'done' | 'current' | 'ahead';
@@ -100,7 +103,7 @@ const CONDITIONS: Record<string, Condition> = {
   diaryDone: () => has('diary-glitch'),
   updatedTo2: () => updatedTo(2),
   // ── 2003 ──
-  assistantMet: () => ledger.lamby.some((l) => l.id === 'first-greeting' || l.id === 'introduction'),
+  assistantMet: (os) => os.assistantReady || ledger.lamby.some((l) => l.id === 'first-greeting' || l.id === 'introduction'),
   checkinDone: () => ledger.checkins.some((c) => !c.id.startsWith('e3')),
   yourFileSeen: (os) => os.yourFileSeen === true,   // Phase 7
   // S205 — 2003's testimony
@@ -134,7 +137,9 @@ const CONDITIONS: Record<string, Condition> = {
   browserOpen: (os) => os.e4?.browser.isOpen === true || ledger.e4Space.some((e) => e.id === 'program'),
   resultsSeen: (os) => ['results', 'site', 'agent', 'program'].includes(os.e4?.browser.programMode ?? '') || ledger.e4Space.some((e) => e.id === 'program'),
   programBegun: () => ledger.e4Space.some((e) => e.id === 'program'),
-  stepsDone: () => ledger.e4Space.some((e) => e.id === 'step:search'),
+  // Step five is putting the headset on: it has no step:search button/filing.
+  // Use the same completed-turn gate as the device, so the frame call can offer it.
+  stepsDone: (os) => !!os.e4?.browser.programDone || ledger.e4Space.some((e) => e.id === 'step:search'),
   headsetWorn: () => ledger.e4Space.some((e) => e.id === 'headset'),
   commonsJoined: () => ledger.e4Space.some((e) => e.id === 'commons'),
   terminated: () => ledger.e4Space.some((e) => e.id === 'laptop'),
@@ -156,7 +161,7 @@ export function beatDone(key: string, os?: DesktopOS): boolean {
 /** which era the player is in, for the map: the OS's desktop era, unless the
  *  final restart is on the ledger (the Close has no desktop era) */
 export function mapEraNow(os: DesktopOS): RecordEra | 'close' {
-  if (updatedTo(0)) return 'close';
+  if (os.mapAtClose ?? updatedTo(0)) return 'close';
   return os.era;
 }
 
@@ -173,7 +178,13 @@ export function mapState(os: DesktopOS): MapState {
     // ⚑ S227 — the Speedrun Version reads its own label and hint where a beat has one
     const era = !speedrun ? rawEra : {
       ...rawEra,
-      beats: rawEra.beats.map((b) => ({ ...b, label: b.labelSpeedrun ?? b.label, hint: b.hintSpeedrun ?? b.hint }))
+      beats: rawEra.beats.filter(b => {
+        const extra = extraForBeat(rawEra.id, b.id);
+        return extra ? (!b.optional && b.speedrun !== false) || extraOn(extra) : b.speedrun !== false;
+      }).map(b => {
+        const extra = extraForBeat(rawEra.id, b.id);
+        return extra && extraOn(extra) ? b : { ...b, done: b.doneSpeedrun ?? b.done, label: b.labelSpeedrun ?? b.label, hint: b.hintSpeedrun ?? b.hint };
+      })
     };
     const eraIdx = ORDER.indexOf(era.id);
     const here = era.id === now;
@@ -182,7 +193,7 @@ export function mapState(os: DesktopOS): MapState {
     //   says: the map is a map of where you are, not an audit. (A review jump
     //   into 2016 never files the migration; the first tour showed it as the
     //   current beat under three ticked ones.)
-    const doneFlags = era.beats.map((beat) => cond(beat.done, os));
+    const doneFlags = era.beats.map((beat) => beatDone(beat.done, os));
     // ⚑ S151 — only a MAIN beat moves the line: a ○ sandbox beat done early (the
     //   racket, listed after the diary) must not read the whole era as past
     const lastDone = doneFlags.reduce((last, d, i) => (d && !era.beats[i].optional ? i : last), -1);

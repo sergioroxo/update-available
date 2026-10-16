@@ -1,3 +1,5 @@
+import { requestFullscreenSoft, reenterFullscreenIfMarked } from '../frame/fullscreen';
+import { restartVisit } from '../frame/restart';
 import { buildRoomSpecks } from '../room/specks';
 import { reducedMotion } from '../state/motion';
 import { startSetup } from '../desktop/setup/setup';
@@ -909,15 +911,47 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   while the menu is open.
     gameMenuBus.mapSource = () => mapState(os);
     witnessPulse.onGrow = () => witness.pulse();
+    const guideIdleScale = (): number => {
+      const review = Number(new URLSearchParams(location.search).get('idlescale'));
+      return (review > 0 ? review / 60 : 1) * (xr?.active ? 1 : window.matchMedia('(pointer: coarse)').matches ? 1 : 1.8);
+    };
+    os.guideIdleScale = guideIdleScale;
+    const queueGuide = era3Devices?.debugQueue();
+    os.guideExternal = () => {
+      if (queueGuide) queueGuide.lambyGuide = os.lambyGuide;
+      if (os.e4) os.e4.browser.lambyGuide = os.lambyGuide;
+      if (scriptedBusy()) return { silent: true, voice: false };
+      if (os.era === 'e3') return { silent: queueGuide?.guideSilent ?? true, voice: queueGuide?.guideVoice ?? false };
+      if (os.era === 'e4') return { silent: os.e4?.browser.guideSilent ?? true, voice: os.e4?.browser.guideVoice ?? false };
+      return { silent: false, voice: false };
+    };
+    os.onGuidePress = (id) => {
+      if (os.era === 'e3') queueGuide?.pressGuideTarget(id);
+      if (os.era === 'e4') os.e4?.browser.pressGuideTarget(id);
+    };
+    os.onGuideMove = (target) => {
+      if (scriptedBusy()) return;
+      if (target === 'phone' && os.era === 'e3' && era3Devices && !era3Devices.phoneInHand) {
+        era3Devices.noteSeat({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw });
+        era3Devices.holdDevice('phone', { x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw });
+      } else if (target === 'headset' && os.era === 'e4') os.e4?.wear();
+      else requestMove(target);
+    };
+    const guideActivity = (): void => { os.idleSeconds = 0; os.lambyGuide.activity(); };
+    window.addEventListener('pointerdown', guideActivity, true);
+    window.addEventListener('pointermove', (e) => { if (e.buttons) guideActivity(); }, true);
+    window.addEventListener('keydown', guideActivity, true);
+    window.addEventListener('wheel', guideActivity, { capture: true, passive: true });
     helper = mountHelper({
       hint: () => nextHint(os),
       // ⚑ S223 cloud / W1-D7 (walkthrough 1: "The helper keeps showing lines while your story's videos play") — the
       //   helper's clock only counts stillness, and a player watching a video is still. While the fiction is playing
       //   by its own clock (os.fictionPlaying: his story's clips and page, Caleb's song, Lamby's video, the alert's
       //   timed holds) the line stays down and the idle wait restarts when it stops.
-      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !os.fictionPlaying,
+      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !os.fictionPlaying
+        && !os.guideSilence.silent && !os.guideSilence.voice && !mapState(os).quiet && (!!xr?.active || !os.lambyGuide.active),
       // ⚑ S219 / W1-B6 — a mouse and a big screen: 1.8× the wait; a touch device or a headset: as written
-      idleScale: () => (xr?.active ? 1 : window.matchMedia('(pointer: coarse)').matches ? 1 : 1.8)
+      idleScale: guideIdleScale
     });
     // ⚑ S227 — THE CALL (src/frame/call.ts; his rule "take the viewer there"): the story's next thing, if it is away
     //   from the screen in front of her, is one press away. The phone comes to the eye; the headset goes on.
@@ -955,19 +989,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
      *  session (no storage, ever). In a headset the reload ends the immersive session, so it says so first, on the
      *  frame's own plate, and gives the visitor a moment to read it. Outside a headset it is immediate, as before. */
     function restartPiece(): void {
-      wipeLedger();
-      try { window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+'#home-armed'); } catch { /* restart unarmed */ }
-      if (!xr?.active) { window.location.reload(); return; }
+      if (!xr?.active) { restartVisit({ armed: true }); return; }
       xrFrame?.close();
       xrFrame?.setHint(menuStrings.xrRestartNote);
-      window.setTimeout(() => window.location.reload(), 3200);
+      window.setTimeout(() => restartVisit({ armed: true }), 3200);
     }
     xrFrame = mountXrFrame(app, camera, {
       onLeave: () => os.leaveNow(),
       onRestart: () => restartPiece()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (ray) => { if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(ray); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (ray) => { if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(ray); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); xrFrame?.press(ray); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
@@ -3481,7 +3513,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   //   page that arrived without one.
   if (options.reinterp === true && !options.restoreEntrance) startFirstBed();
 
+  const restoreFullscreen = reenterFullscreenIfMarked();
+  let wakeFullscreenPending = options.reinterp === true && !!options.restoreEntrance;
+  const wakeFullscreen = (): void => {
+    if (!wakeFullscreenPending || !restoreEntrance?.blocking) return;
+    wakeFullscreenPending = false;
+    // Marked reload OR first visit (S86). requestFullscreenSoft is a no-op without an API.
+    if (restoreFullscreen || !document.fullscreenElement) requestFullscreenSoft();
+  };
+
   canvasEl.addEventListener('pointerdown', (e) => {
+    if (!gameMenuBus.isOpen) wakeFullscreen();
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     // a second finger is a PINCH: not a look, not a tap. Both are cancelled
     // outright rather than resumed, so lifting one finger of a zoom can never
@@ -3649,7 +3691,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   window.addEventListener('keyup', (e) => { const l = LOOK_KEYS[e.key]; if (l) heldLook.delete(l); });
   window.addEventListener('blur', () => heldLook.clear());
   window.addEventListener('keydown', (e) => {
-    if (restoreEntrance?.blocking) { if (e.key !== 'Escape' && !gameMenuBus.isOpen) { startFirstBed(); restoreEntrance.press(); } return; }
+    if (restoreEntrance?.blocking) { if (e.key !== 'Escape' && !gameMenuBus.isOpen) { wakeFullscreen(); startFirstBed(); restoreEntrance.press(); } return; }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (!camMove && !gameMenuBus.isOpen && !os.paused && closeMonitor?.key(e.key,e.shiftKey)) { e.preventDefault(); return; }
     // S48: any key skips the descent too (Escape excepted — the game menu
@@ -3951,7 +3993,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           else camPitch = Math.max(-DRAG_PITCH_MAX, camPitch - LOOK_PITCH_RATE * dt);
         }
       }
-      helper?.tick(dt);
+
       call?.tick(dt);
 
       // R28-1 movement prototype: the blink timer + marker visibility. The
@@ -4166,6 +4208,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (motionBtn) motionBtn.style.display = 'none';
     }
     os.update(dt);
+    helper?.tick(dt);
     syncRacketDemo(); // the room mirrors the diagram's pose (see its doc)
     if (os.dirty) { frontTex.upload(); os.dirty = false; }
     /**
@@ -4785,7 +4828,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * as `?era=` does. *Start again* is `location.reload()`: the piece stores
    * nothing, so a reload IS the restart — nothing to wipe, nothing kept.
    */
-  function leaveClose(era: EraKey): void {
+  function leaveClose(era: EraKey, navigation = false): void {
     if (!cluster || !cloud) return;
     cloud.hide();
     closeMonitor?.hide();
@@ -4800,7 +4843,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     closeRoomPending = null;
     if (camera.camera) camera.camera.clearColor = ROOM_SKY.clone();
-    jumpToEraSettled(era);
+    jumpToEraSettled(era, navigation);
     spine?.reopen(era);   // S150: the piece may end again from here (R3-113)
   }
 
@@ -4817,11 +4860,30 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * was right. The panel calls THIS now, and calls it on its own before any
    * beat that belongs to another era.
    */
-  function jumpToEraSettled(era: EraKey): void {
+  gameMenuBus.jumpToEra = (era) => {
+    if (restoreEntrance?.blocking) {
+      restoreEntrance.cancel();
+      const resolve = restoreSeatDone; restoreSeatDone = null; resolve?.();
+      cluster?.setNeverBatch(['tennisRacketModel']);
+    }
+    wakeActive = false; descentActive = false;
+    relocLeg = null; relocKey = null; relocPlan = null; earlyRelocEra = null;
+    blinkPhase = null; blinkTargetNode = null; revealReturn = -1; revealConducted = false; morphDemoIn = -1;
+    timePassing?.settle(); pendingBed = undefined;
+    os.closeForEraJump();
+    era3Devices?.closeForEraJump();
+    setCommonsWorld(false);
+    if (closeStage || cloud?.visible) leaveClose(era, true);
+    else { jumpToEraSettled(era, true); spine?.reopen(era); }
+    gameMenuBus.close();
+  };
+
+  function jumpToEraSettled(era: EraKey, navigation = false): void {
     if (!cluster) return;
     // `settled`: a review jump wants the room's SETTLED state, not the
     // S2R.0/S2R.1 arrival narrative (silence → Lamby) — same spirit as
     // skipping O1/O3 at boot.
+    os.mapAtClose = false;
     os.setDesktopEra(era, true);
     // a review jump is already seated: the session begins after a short beat.
     // ⚑ S150 — and after the Close the shell is a stopped device: rebuild it
@@ -4832,7 +4894,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     cluster.morphToEra(era, false); // the era's open cluster + rig, settled
     // Session 37: review jumps era-gate the device screens too. S61: and
     // `settled` skips the arrival (dark → boot → install).
-    era3Devices?.setEra(era, true);
+    era3Devices?.setEra(era, true, !navigation);
     // seated at the era's home room (E4 boots already turned — the TURN)
     seatYaw = cluster.homeYaw;
     const sp = seatPose(seatYaw);
@@ -4844,11 +4906,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camYaw = sp.yaw;
     cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+    if (navigation) {
+      seatNodeId = null; heldDevice = null; era3Devices?.noteSeat(sp);
+      // A conducted cut is navigation, never a witnessed turn on the following frame.
+      facingBack = isBackYaw(); os.screenFacing = !facingBack;
+      roomBed.set(BED_FOR[era] ?? null, 0);
+    }
     spine?.onEra(era); // S58: seed the conductor to match the jump
   }
 
   function enterClose(): void {
     if (!cluster || !cloud || cloud.visible || closeStage) return;
+    os.mapAtClose = true;
     /**
      * ⚑ AND THE ROOM STAYS FOR A BEAT (S101). The rig snaps the lights out on
      * this frame, so what is left is a dark room with the glow-stars over the
@@ -4907,12 +4976,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (closeMonitor) {
     closeMonitor.onEra = (era) => leaveClose(era);
     closeMonitor.onAgain = () => {   // S209 / A24 — as the headset menu's Restart: in a headset, say so first
-      wipeLedger();
-      try { window.history.replaceState(window.history.state,'',window.location.pathname+window.location.search+'#home-armed'); } catch { /* restart unarmed */ }
-      if (!xr?.active) { window.location.reload(); return; }
+      if (!xr?.active) { restartVisit({ armed: true }); return; }
       xrFrame?.close();
       xrFrame?.setHint(menuStrings.xrRestartNote);
-      window.setTimeout(() => window.location.reload(), 3200);
+      window.setTimeout(() => restartVisit({ armed: true }), 3200);
     };
     closeMonitor.onGo = () => goToCloseMonitor();
     closeMonitor.onLeave = () => mountLeavePage().show(() => { wipeLedger(); os.leaveNow(); gameMenuBus.close(); });

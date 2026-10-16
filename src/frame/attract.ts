@@ -36,7 +36,7 @@
 import { starfield } from './leavePage';
 import copy from '../../data/strings/attract.json';
 import { gameMenuBus } from '../state/gameMenuBus';
-import { wipeLedger } from '../state/ledger';
+import { restartVisit } from './restart';
 import { roomBed, setOneShotsMuted } from '../audio/tapeAudio';
 import { Screensaver, type SaverKind } from '../desktop/apps/screensaver';
 import { faceEra, setFaceEra, type FaceEra } from '../desktop/theme/fonts';
@@ -66,7 +66,7 @@ export function setAdvert(a: AdvertSlide | null): void { advert = a; }
 interface XrSession { active(): boolean; end(): void }
 let xrSession: XrSession | null = null;
 /** app.ts hands over the immersive session once the engine exists (the same idiom as gameMenuBus.leaveEngine) */
-export function registerXrSession(s: XrSession | null): void { xrSession = s; }
+export function registerXrSession(s: XrSession | null): void { xrSession = s; gameMenuBus.xrSession = s; }
 
 let touched: (() => void) | null = null;
 /** a real human input the DOM cannot report: a headset select or squeeze (frame/xrInput.ts callbacks in app.ts) */
@@ -121,30 +121,14 @@ export function mountAttract(opts: { idleScale: number; debug?: boolean }): Attr
   function freshVisit(): void {
     if (leaving) return;
     leaving = true;
-    wipeLedger();
-    // Restore visits return to WAKE, including when a review URL had started at an era.
-    const freshQuery = new URLSearchParams(window.location.search);
-    const restoreVisit = freshQuery.get('entrance') !== 'home' && freshQuery.get('home') !== '0';
-    if (restoreVisit) {
-      for (const key of ['era', 'morph', 'close', 'reveal']) freshQuery.delete(key);
-    }
-    try { window.history.replaceState(window.history.state, '', window.location.pathname + (restoreVisit ? '?' + freshQuery.toString() : window.location.search)); } catch { /* keep the hash */ }
-    if (xrSession?.active()) {
-      // ⚑ a headset has no overlay to take down: end the immersive session, then the same reload
-      try { xrSession.end(); } catch { /* the reload ends it anyway */ }
-      window.setTimeout(() => window.location.reload(), 600);
-      return;
-    }
-    window.location.reload();
+    restartVisit();
   }
 
-  /** what the menu's Restart does (gameMenu.ts doRestart): wipe, `#home-armed`, reload */
+  /** A deliberate restart, with Home's arm hint only when Home is the entrance. */
   function startAgain(): void {
     if (leaving) return;
     leaving = true;
-    wipeLedger();
-    try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search + '#home-armed'); } catch { /* restart unarmed */ }
-    window.location.reload();
+    restartVisit({ armed: true });
   }
 
   // ── sound: silent while the cycle runs, and back as the person had it ──

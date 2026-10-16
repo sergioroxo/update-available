@@ -32,6 +32,7 @@
     },
     {
       "_doc": "PLACEHOLDER — verbatim, van den Aardweg's Anamnestic Questionnaire; felt beat here per the revised grammar (§4)",
+      "guided": false,
       "prompt": "How did your father regard and treat you as far as your sexual identity was concerned?",
       "choices": [
         { "label": "He never said anything.", "ledgerTag": "intake:father_regard:silent" },
@@ -43,6 +44,7 @@
     },
     {
       "_doc": "PLACEHOLDER — paraphrase, NOT a direct quote (see debrief source note): a documented category in the same 1997 instrument (avoidance of boys' rough play, doll play), reworded for this screen rather than reproduced verbatim.",
+      "guided": false,
       "prompt": "As a boy, did you avoid rough games — war, sports, fighting — and prefer quieter play, including with dolls?",
       "choices": [
         { "label": "Yes", "ledgerTag": "intake:play_pattern:yes" },
@@ -63,6 +65,7 @@
     },
     {
       "_doc": "PLACEHOLDER — archive §R2-4 merge: the conformity-drill's other present-tense half ('healthy friendship' logging). Felt beat ties to the room's mixtape prop (data/room/era1.json id:mixtape) — the unnamed resisting element (master plan §R4-3, locked) — without naming him, consistent with his established unnamed status.",
+      "guided": false,
       "prompt": "List one \"healthy friendship\" you pursued this week, and one attachment you stepped back from.",
       "choices": [
         { "label": "I have one to report.", "ledgerTag": "intake:friendship_log:reported" },

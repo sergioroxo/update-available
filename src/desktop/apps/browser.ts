@@ -1,3 +1,5 @@
+import { drawLambyGuide, type GuidePaint } from './lambyGuideDraw';
+import type { LambyGuide } from '../../narrative/lambyGuide';
 /**
  * ⚑ ERA 4'S BROWSER — S123, and it is the era's primary surface.
  *
@@ -39,6 +41,10 @@ import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 }
 import updates from '../../../data/strings/updates.json';
 import { ledger } from '../../state/ledger';
 import { pauseWords } from '../../narrative/pauses';
+import { buildStartModel } from '../../witness/startModel';
+import { StartMenuMap } from './startMenuMap';
+import { gameMenuBus } from '../../state/gameMenuBus';
+import startCopy from '../../../data/strings/slice.json';
 import { StartPanel, fakeOs } from './startPanel';   // S229 / W1-A6
 import { beatDone } from '../../witness/map';
 import { FloppySheep, FLOPPY_LABEL } from './floppysheep';
@@ -146,6 +152,14 @@ export interface Hit { x: number; y: number; w: number; h: number; id: string }
  */
 
 export class E4Browser {
+  lambyGuide: LambyGuide | null = null;
+  pressGuideTarget(id: string): void {
+    if (!['search-open', 'result-agent', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
+    const r = this.hits.find(h => h.id === id);
+    if (r) this.handleClick(r.x + r.w / 2, r.y + r.h / 2);
+  }
+  lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
+
   /**
    * ⚑ `dormant` FIRST (2026-09-12). The shell — and this browser with it — is
    * built at the update ritual's restart, MID-FLIGHT, so a clock that starts
@@ -166,8 +180,11 @@ export class E4Browser {
   /** ⚑ S229 / W1-A6 — GraceOS's welcome-back card: once, on the restored page before the search, under nothing and over
    *  nothing (the page's lower half is bare); the map's conditions are asked of THIS browser (browserOpen, resultsSeen) */
   private readonly startPanel = new StartPanel('e4', (k) => beatDone(k, fakeOs({ e4: { browser: this } } as never)));
+  private readonly startMap = new StartMenuMap();
+  private get startMapSilent(): boolean { return !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || (this.liveTab === 'chat' && this.threadOpen); }
+  private startModel() { return buildStartModel(fakeOs({ e4: { browser: this } } as never), 'e4'); }
   private startCalm(): boolean {
-    return this.phase === 'open' && this.mode === 'free' && this.liveTab === 'search' && this.pressable && !this.idleOrb;
+    return !this.startMap.active && this.phase === 'open' && this.mode === 'free' && this.liveTab === 'search' && this.pressable && !this.idleOrb;
   }
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
@@ -202,6 +219,8 @@ export class E4Browser {
   private freeQuietT = 0;
   private pauseSaid = false;
   /** S207 — the way back: L names the main path's next step (os.wayBack) */
+  get guideSilent(): boolean { return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || (this.liveTab === 'chat' && this.threadOpen); }
+  get guideVoice(): boolean { return !!this.nowLine || this.waitNow; }
   sayLine(line: string): void { this.nowLine = line; this.version++; }
   private stepDone = new Set<string>();
   /** seconds since the live step was completed — the agent moves on after a beat */
@@ -267,7 +286,7 @@ export class E4Browser {
   }
   /** ⚑ S208 — the laptop sleeps again only on the restored page at rest: nothing said, nothing playing, pressable */
   private updateIdleOrb(dt: number): void {
-    const quiet = this.phase === 'open' && this.mode === 'free' && this.pressable && !this.nowLine && !this.waitNow && !anythingPlaying();
+    const quiet = !this.startMap.active && this.phase === 'open' && this.mode === 'free' && this.pressable && !this.nowLine && !this.waitNow && !anythingPlaying();
     if (!this.idleOrb) {
       this.idleT = quiet ? this.idleT + dt : 0;
       if (this.idleT > SAVER_SECONDS) {
@@ -498,6 +517,22 @@ export class E4Browser {
    * The surface is the only thing that knows, so the surface says so.
    */
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, pressable = true): void {
+    this.drawSurfaceContent(ctx, W, H, pressable);
+    if (this.phase === 'open' && !this.idleOrb) {
+      const S = startCopy.desktop.startMenu;
+      px(ctx, W - 80, 3, 50, 20, CHROME.button);
+      setFont(ctx, 9); ctx.fillStyle = CHROME.buttonInk; ctx.fillText(S.paperMenu, W - 71, 9);
+      this.hits.unshift({ x: W - 80, y: 3, w: 50, h: 20, id: 'start-menu' });
+      if (!this.startMapSilent) {
+        px(ctx, W - 26, 3, 22, 20, CHROME.field); ctx.fillStyle = CHROME.ink; ctx.fillText(S.help, W - 19, 9);
+        this.hits.unshift({ x: W - 26, y: 3, w: 22, h: 20, id: 'whattodo' });
+      }
+      const nav = this.startMap.draw(ctx, W, H, 'e4', this.startModel(), this.startMapSilent);
+      if (nav.length) this.hits = [...nav, ...this.hits.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
+    }
+    if (pressable && this.lambyGuide && !this.guideSilent && !this.guideVoice && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H });
+  }
+  private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number, pressable: boolean): void {
     this.hits = [];
     this.pressable = pressable;
     const back = this.tabsBack();
@@ -563,7 +598,7 @@ export class E4Browser {
         lit: t.id === 'record' && lit
       };
     });
-    const rects = browserChrome(ctx, W, shown, this.live, addr, blink, looks);
+    const rects = browserChrome(ctx, W, shown, this.live, addr, blink, looks, 80);
     rects.forEach((r, i) => {
       // ⚑ in the program only the live step's tab (and the finished ones) are
       //   controls; a locked step publishes nothing, so nothing can be aimed at it
@@ -1512,6 +1547,10 @@ export class E4Browser {
   }
 
   handleClick(x: number, y: number): boolean {
+    const lg = this.hits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    this.lambyGuide?.activity();
+    if (lg && this.lambyGuide?.press(lg.id)) { this.version++; return true; }
+
     this.quietT = 0;
     this.freeQuietT = 0;
     this.idleT = 0;
@@ -1522,9 +1561,21 @@ export class E4Browser {
     if (this.phase === 'failed') return true;   // a dead page takes presses and does nothing
     if (this.phase === 'saver') { this.wake(); return true; }   // S160: the one press that restores
     if (this.phase !== 'open') return true;   // the restore takes presses and eats them
-    if (this.mode === 'typing') return true;  // the engine is busy finishing her sentence
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    if (!hit && this.startMap.menu) { this.startMap.close(); this.version++; return true; }
     if (hit) {
+      if (hit.id === 'start-menu') { this.startMap.toggle(); this.version++; return true; }
+      if (hit.id === 'whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.toggle(); this.version++; return true; }
+      if (this.startMap.press(hit.id, this.startModel(), this.startMapSilent)) { this.version++; return true; }
+      if (hit.id === 'sm-whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.reopen(); this.version++; return true; }
+      if (hit.id === 'sm-now' || hit.id.startsWith('sm-room:')) {
+        this.nowLine = hit.id === 'sm-now' ? this.startModel().now?.hint ?? null : this.startModel().room.find(b => b.id === hit.id.slice(8))?.hint ?? null;
+        this.startMap.close(); this.version++; return true;
+      }
+      if (hit.id === 'sm-shut') { this.startMap.close(); this.startMap.refused = true; this.version++; return true; }
+      if (hit.id === 'sm-leave') { this.startMap.close(); gameMenuBus.openLeave?.(); this.version++; return true; }
+      if (this.startMap.active && !this.startMapSilent) { this.startMap.close(); this.version++; return true; }
+      if (this.mode === 'typing') return true;
       if (hit.id === 'startpanel-close') { this.startPanel.close(); this.version++; return true; }   // S229 / W1-A6
       // S168 / R3-92: the game, one press away
       if (hit.id === 'bm-floppy' && this.mode === 'free') { this.mode = 'game'; this.floppy.openGame(); this.version++; return true; }

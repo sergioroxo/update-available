@@ -1,3 +1,5 @@
+import { requestFullscreenSoft } from '../../frame/fullscreen';
+import { restartVisit } from '../../frame/restart';
 import { reducedMotion } from '../../state/motion';
 /**
  * ⚑ S227 — LAMBYOS HOME, first pass: the programme's front door, the way Bob was Windows'
@@ -25,11 +27,10 @@ import { reducedMotion } from '../../state/motion';
  *
  * THE HANDOVER (design §3). Each device's enter button does exactly what the orienting card's did: the same
  * `onContinue(choice)` from src/main.ts, the fullscreen request inside the click stack, the iOS orientation
- * request on the phone's press, `requestImmersiveVrEntry()` on the headset's. Before it, `chooseCut()` records the
- * one quiet choice (the full piece / the Speedrun Version — his 2026-10-10 "both"), in memory only.
+ * request on the phone's press, `requestImmersiveVrEntry()` on the headset's. All devices enter the same guided version.
  *
  * HOME RECORDS NOTHING (his "Record? no"). No witness entry, no ledger record. The only things that carry over are
- * the two view settings the old door already carried (`ledger.view.captions`, `ledger.view.motion`) and the cut.
+ * the two view settings the old door already carried (`ledger.view.captions`, `ledger.view.motion`).
  *
  * LAMBY speaks only in bubbles (his "only speech bubbles like BOB"): short, dismissible, hidden whenever a card is
  * open (so never over the content note), and never on a timer — a bubble appears on arrival and on a press.
@@ -47,7 +48,6 @@ import menuCopy from '../../../data/strings/gameMenu.json';
 import { prepareImmersiveVrEntry, requestImmersiveVrEntry, preparedHomeShell, enterImmersiveHome } from '../../engine/entry';
 import { ledger, wipeLedger } from '../../state/ledger';
 import { gameMenuBus } from '../../state/gameMenuBus';
-import { chooseCut, currentCut, type Cut } from '../../state/cut';
 import { DIALOG, domBevel } from '../theme/chrome';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../theme/era1';
 import { HOME } from '../theme/home';
@@ -91,7 +91,6 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   let armed = isReturn;   // a return admits nobody: there is nothing to arm
   let armTimer = 0;
   let arming = false;
-  let cut: Cut = currentCut();
   let vrReady = false;
   let immersive = false;
   let xrFace: HomeXr | null = null;
@@ -542,21 +541,10 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   }
 
   // ── the handover: exactly the orienting card's ──
-  const goFullscreen = (): void => {
-    const d = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void };
-    try {
-      if (document.fullscreenElement) return;
-      const req = d.requestFullscreen?.bind(d) ?? d.webkitRequestFullscreen?.bind(d);
-      if (!req) return;
-      const p = req();
-      if (p && typeof (p as Promise<void>).catch === 'function') (p as Promise<void>).catch(() => { /* play windowed */ });
-    } catch { /* same */ }
-  };
   const enterWith = (choice: DoorChoice): void => {
     if (entered || destroyed) return;
     entered = true;
     for (const b of enterButtons) b.disabled = true;
-    chooseCut(cut);
     for (const input of root.querySelectorAll<HTMLInputElement>('input')) input.disabled = true;
     if (cardBody) cardBody.appendChild(para(copy.xr.loading));
     xrFace?.invalidate();
@@ -564,26 +552,6 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   };
 
   // ── the device cards: controls, the one quiet choice of cut, the way in ──
-  function cutChoice(body: HTMLDivElement): void {
-    const fs = document.createElement('fieldset');
-    Object.assign(fs.style, { border: `1px solid ${DIALOG.dark}`, margin: '0 0 12px', padding: '4px 10px 6px' } as CSSStyleDeclaration);
-    fs.appendChild(el('legend', copy.cut.legend, { fontSize: '12px', padding: '0 4px', color: DIALOG.dim }));
-    for (const c of ['full', 'speedrun'] as Cut[]) {
-      const lab = document.createElement('label');
-      Object.assign(lab.style, { display: 'flex', alignItems: 'center', gap: '8px', minHeight: '40px', cursor: 'pointer', fontSize: '13px' } as CSSStyleDeclaration);
-      const rb = document.createElement('input');
-      rb.type = 'radio';
-      rb.name = 'home-cut';
-      rb.value = c;
-      rb.checked = cut === c;
-      Object.assign(rb.style, { width: '18px', height: '18px', margin: '0', accentColor: DIALOG.titleBar } as CSSStyleDeclaration);
-      rb.addEventListener('change', () => { if (rb.checked) cut = c; });
-      lab.appendChild(rb);
-      lab.appendChild(document.createTextNode(c === 'full' ? copy.cut.full : copy.cut.speedrun));
-      fs.appendChild(lab);
-    }
-    body.appendChild(fs);
-  }
   function deviceFoot(body: HTMLDivElement, enter: HTMLButtonElement | null, note?: HTMLElement): void {
     const foot = document.createElement('div');
     Object.assign(foot.style, { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px', margin: '0 0 6px' } as CSSStyleDeclaration);
@@ -614,10 +582,9 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     const c = door.cards.desktop;
     openCard('computer', c.heading, (body) => {
       controls(body, c.lines);
-      cutChoice(body);
       const enter = btn(c.button, () => {
         if (!armed || destroyed) return;
-        goFullscreen(); // must happen INSIDE the click stack
+        requestFullscreenSoft(); // must happen INSIDE the click stack
         enterWith('desktop');
       });
       deviceFoot(body, immersive ? null : enter);
@@ -628,11 +595,10 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
     const c = door.cards.phone;
     openCard('tablet', c.heading, (body) => {
       controls(body, c.lines);
-      cutChoice(body);
       const note = el('div', '', { fontSize: '12px', color: DIALOG.dim, display: 'none' });
       const enter = btn(c.button, () => {
         if (!armed || destroyed || entered) return;
-        goFullscreen();
+        requestFullscreenSoft();
         type Requestable = { requestPermission?: () => Promise<PermissionState | string> };
         const req = (window.DeviceOrientationEvent as unknown as Requestable | undefined)?.requestPermission;
         if (typeof req !== 'function') {
@@ -665,7 +631,6 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
         return;
       }
       if (!immersive) body.appendChild(btn(copy.xr.preview, () => enterImmersiveHome()));
-      cutChoice(body);
       const enter = btn(c.button, () => {
         if (!armed || destroyed) return;
         if (!immersive) { enterImmersiveHome(); return; }
@@ -682,9 +647,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   function startAgain(): void {
     if (entered || destroyed) return;
     entered = true;
-    wipeLedger();
-    try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search + '#home-armed'); } catch { /* start unarmed */ }
-    window.location.reload();
+    restartVisit({ armed: true });
   }
   function openAgain(k: 'computer' | 'tablet' | 'headset'): void {
     const c = door.cards[k === 'computer' ? 'desktop' : k === 'tablet' ? 'phone' : 'headset'];

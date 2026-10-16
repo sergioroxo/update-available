@@ -1,3 +1,5 @@
+import { drawLambyGuide, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
+import type { LambyGuide } from '../narrative/lambyGuide';
 /**
  * THE CORRECTION LIST — the workstation, Era 3 (Session 64, E3-iii).
  * Spec: `docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` (revision 4).
@@ -127,7 +129,11 @@ import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 import pauseCopy from '../../data/strings/pauses.json';
-import { isSpeedrun } from '../state/cut';
+import { isSpeedrun, extraOn, markExtraPassed } from '../state/cut';
+import { buildStartModel } from '../witness/startModel';
+import { StartMenuMap } from '../desktop/apps/startMenuMap';
+import { gameMenuBus } from '../state/gameMenuBus';
+import startCopy from '../../data/strings/slice.json';
 import { StartPanel } from '../desktop/apps/startPanel';   // S229 / W1-A6
 
 /** re-exported from its Session-64 home so `era3Devices.ts` keeps its import;
@@ -210,7 +216,7 @@ const MALTA_AFTER_TASKS = 2;
 /** ⚑ S227 — the Speedrun Version (src/state/cut.ts): Lambient sends her straight to Annette, and ONE finished job lights
  *  the phone (his 2026-10-10: "to speed up the narrative"). Read when asked, never at module load: the front door may
  *  choose the cut after this file is imported. */
-function maltaAfter(): number { return isSpeedrun() ? 1 : MALTA_AFTER_TASKS; }
+function maltaAfter(): number { return isSpeedrun() && !extraOn('work') ? 1 : MALTA_AFTER_TASKS; }
 
 type Outcome = 'applied' | 'skipped';
 
@@ -340,12 +346,23 @@ export type PhoneView = {
 };
 
 export class GraceQueueLite {
+  lambyGuide: LambyGuide | null = null;
+  pressGuideTarget(id: string): void {
+    if (!['signin', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
+    const r = this.rects.find(h => h.id === id);
+    if (r) this.handleClick(r.x + r.w / 2, r.y + r.h / 2);
+  }
+  lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
+
+  get guideSilent(): boolean { return this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
+    || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
+  get guideVoice(): boolean { return false; }
   /** bumped on every state-changing action — era3Devices compares this to
    *  know when the workstation/tablet screens need a redraw + re-upload (dirty
    *  discipline: never re-dirtied by a ticking clock, only real state, or by
    *  a beat that is genuinely animating). */
   private ownVersion = 0;
-  get version(): number { return this.ownVersion + this.surfaceVersion(); }
+  get version(): number { return this.ownVersion + this.surfaceVersion() + (this.lambyGuide?.version ?? 0); }
   /** the phone's own counter — the caret blink must not re-upload the workstation */
   private phoneV = 0;
 
@@ -496,6 +513,16 @@ export class GraceQueueLite {
     }
   }
 
+  /** Navigation never calls a job's completion or dismissal callback. */
+  closeForEraJump(): void {
+    this.startMap.close(); this.startPanel.close(); this.rects = [];
+    this.playing = false; stopClip(this.roomTone); this.roomTone = null;
+    this.openSurface = null; this.chipReturn = null; this.pauseOpen = false;
+    this.saver = null; this.phoneInHand = false; this.minimised = false;
+    if (this.mode === 'list' || this.mode === 'done') this.mode = 'board';
+    this.bump();
+  }
+
   /** called every frame by era3Devices.tick — see the class header on why this
    *  does not break the dirty-upload law */
   /** ⚑ S201 — seconds of quiet on the board (Lambient's "while you wait", once) */
@@ -508,8 +535,10 @@ export class GraceQueueLite {
   /** ⚑ S229 / W1-A6 — GracePlatform's "getting started" card: once, on the sign-in screen and then the board while it
    *  is still a short board; under the pause card, away on a job / the consent question / the phone in her hand */
   private readonly startPanel = new StartPanel('e3');
+  private readonly startMap = new StartMenuMap();
+  private get startMapSilent(): boolean { return this.phoneInHand || this.mode === 'list' || this.playing; }
   private startPanelCalm(): boolean {
-    if (this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface) return false;
+    if (this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface) return false;
     if (this.mode === 'signin') return true;
     return this.mode === 'board' && this.tasks().length <= 3;   // one row of tiles: the strip fits under them
   }
@@ -535,7 +564,7 @@ export class GraceQueueLite {
     this.updateGate();
     this.updateJobReturn(dt);
     if (this.startPanel.tick(dt, this.startPanelCalm())) this.bump();
-    if (this.phoneInHand) this.boardQuietT = 0;
+    if (this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
     else if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
@@ -896,7 +925,7 @@ export class GraceQueueLite {
     //   lines, which is the cap.
     // ⚑ S227 — and the second line is the ORDER of the day's three (his: "the order of the three is Lambient's");
     //   in the Speedrun Version it sends her straight to Annette
-    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, isSpeedrun() ? LAMBIENT.firstOrderSpeedrun : LAMBIENT.firstOrder]);
+    this.lambSay([allow ? LAMBIENT.acceptReply : LAMBIENT.declineReply, isSpeedrun() && !extraOn('work') ? LAMBIENT.firstOrderSpeedrun : LAMBIENT.firstOrder]);
     this.lambLine = LAMBIENT.greet;
     this.seenBoard = true;
     this.mode = 'board';
@@ -914,7 +943,7 @@ export class GraceQueueLite {
   /** S155 / R3-68 — Lambient speaks: the lines, and the platform's chime with them */
   private lambSay(lines: string[]): void {
     this.lambLines = lines;
-    if (lines.length) playOnce('lambient_chime.mp3');
+    // The programme guide is text-only, including its Lambient skin.
   }
 
   /** ⚑ THE TILES. One per submission today — the three women whose testimony
@@ -945,7 +974,9 @@ export class GraceQueueLite {
   }
 
   private unlockedIds(): string[] {
-    if (!this.unlocked) this.unlocked = [...(isSpeedrun() ? TOOLS.startersSpeedrun : TOOLS.starters)];
+    if (!this.unlocked) this.unlocked = [...(isSpeedrun() && !extraOn('jobs') ? TOOLS.startersSpeedrun : TOOLS.starters)];
+    // Late opt-in widens the board without replacing installed tools or completed jobs.
+    if (extraOn('jobs')) for (const id of TOOLS.starters) if (!this.unlocked.includes(id)) this.unlocked.push(id);
     return this.unlocked;
   }
   private isUnlocked(id: string): boolean { return this.unlockedIds().includes(id); }
@@ -1123,6 +1154,7 @@ export class GraceQueueLite {
    *  voice for the beat (NARRATIVE_FLOW 2016 #6, R3-81): the phone is the way the
    *  era ends now, so the player must be told it exists and that it can be put down. */
   armMalta(): void {
+    markExtraPassed('work');
     if (this.maltaArrived) return;
     this.maltaArrived = true;
     this.maltaWork = this.workDone();
@@ -1253,6 +1285,21 @@ export class GraceQueueLite {
 
   // ── draw ─────────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.drawSurfaceContent(ctx, W, H);
+    if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver) {
+      const S = startCopy.desktop.startMenu;
+      aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });
+      this.rects.unshift({ x: 3, y: H - 25, w: 51, h: 22, id: 'start-menu' });
+      if (!this.startMapSilent) {
+        aero.button(ctx, 58, H - 25, 23, 22, S.help, { size: 11 });
+        this.rects.unshift({ x: 58, y: H - 25, w: 23, h: 22, id: 'whattodo' });
+      }
+      const nav = this.startMap.draw(ctx, W, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
+      if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
+    }
+    if (this.lambyGuide && !this.guideSilent && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
+  }
+  private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
     // S61 — the arrival owns the WHOLE panel: no wallpaper, no taskbar, no
     // window chrome. A machine that is off or booting has no desktop yet, and
@@ -1471,7 +1518,7 @@ export class GraceQueueLite {
     //   phone, the wait line, the way back, the cascade's "Everything on your board is still there…") was being
     //   wiped here before it was ever drawn; they now stay until she acts.
     //   The first-task beat itself closes on her next press on the board (handleClick).
-    this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
+    if (!this.lambyGuide?.active) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
     //   it fits between them and Lambient's lane
@@ -1725,7 +1772,7 @@ export class GraceQueueLite {
     ctx: CanvasRenderingContext2D, H: number, active: boolean
   ): void {
     const bh = 28; const ty = H - bh;
-    const bx = 34; const bw = 150;
+    const bx = 88; const bw = 150;
     px(ctx, bx, ty + 4, bw, bh - 8, active ? ERA3.tray : ERA3.taskBot);
     px(ctx, bx, ty + 4, bw, 1, active ? ERA3.glassEdge : ERA3.tray);
     setFont(ctx, 11); ctx.fillStyle = ERA3.white;
@@ -2155,12 +2202,26 @@ export class GraceQueueLite {
 
   // ── input ────────────────────────────────────────────────────────────────
   handleClick(x: number, y: number): void {
+    const lg = this.rects.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    this.lambyGuide?.activity();
+    if (lg && this.lambyGuide?.press(lg.id)) { this.bump(); return; }
+
     this.boardQuietT = 0;
     if (this.saver) { this.saver = null; this.bump(); return; }   // S208 — a press wakes it, and does nothing else
     // S208 / A3 — the first-task beat, once seen on the board, closes when she acts there
     if (this.mode === 'board' && this.lambLines?.[0] === LAMBIENT.firstTask1) { this.lambLines = null; this.lambLine = LAMBIENT.greet; this.bump(); }
     const r = this.rects.find(rr => hit(rr, x, y));
-    if (!r) return;
+    if (!r) { if (this.startMap.menu) { this.startMap.close(); this.bump(); } return; }
+    const model = buildStartModel(undefined, 'e3');
+    if (r.id === 'start-menu') { this.startMap.toggle(); this.bump(); return; }
+    if (r.id === 'whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.toggle(); this.bump(); return; }
+    if (this.startMap.press(r.id, model, this.startMapSilent || this.pauseOpen)) { this.bump(); return; }
+    if (r.id === 'sm-whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.reopen(); this.bump(); return; }
+    if (r.id === 'sm-now') { this.startMap.close(); this.bump(); return; }
+    if (r.id.startsWith('sm-room:')) { this.lambSay([model.room.find(b => b.id === r.id.slice(8))?.hint ?? '']); this.startMap.close(); this.bump(); return; }
+    if (r.id === 'sm-shut') { this.startMap.close(); this.startMap.refused = true; this.bump(); return; }
+    if (r.id === 'sm-leave') { this.startMap.close(); gameMenuBus.openLeave?.(); this.bump(); return; }
+    if (this.startMap.active && !this.startMapSilent && !this.pauseOpen) { this.startMap.close(); this.bump(); return; }
     // ⚑ the taskbar button is tested FIRST and is the only live control while
     //   the window is down — a minimised window can never be a dead end.
     if (r.id === 'task-restore') { if (this.minimised) this.toggleMinimised(); return; }

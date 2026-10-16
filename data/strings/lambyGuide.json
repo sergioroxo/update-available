@@ -1,0 +1,254 @@
+{
+  "ui": {
+    "show": "Show me",
+    "later": "No thanks",
+    "take": "Take me there",
+    "ok": "Got it",
+    "tray": "Lamby",
+    "trayTip": "Need a hand? Press me.",
+    "here": "It's right here!",
+    "nothing": "You're doing fine. Carry on!",
+    "startNudge": "Have you checked the Start menu?",
+    "close": "×"
+  },
+  "timing": {
+    "cueSeconds": 25,
+    "tipSeconds": 50,
+    "againSeconds": 90,
+    "capPerEra": 5
+  },
+  "form": {
+    "text": "Rob mentioned the Family Form! Want me to open the form for you?",
+    "yes": "Open it",
+    "no": "No thanks",
+    "act": "open:form"
+  },
+  "witness": {
+    "dismissed": "guide declined: {beat}",
+    "begun": "guide requested: {beat}",
+    "acknowledged": "guide acknowledged: {beat}"
+  },
+  "eras": {
+    "e1": {
+      "kit": {
+        "tip": "There's a disk on your desktop! Press the A:\\ icon to start.",
+        "here": "That's the one. The A:\\ icon.",
+        "again": "The disk is still waiting. Shall I point to it?",
+        "target": [
+          "icon-a"
+        ],
+        "act": "press:icon-a"
+      },
+      "read": {
+        "tip": "Read the programme, then press Done.",
+        "here": "Done is at the bottom of the window.",
+        "again": "Take your time. When you've read it, press Done.",
+        "target": [
+          "done",
+          "step:read",
+          "next"
+        ],
+        "act": "press:done"
+      },
+      "pray": {
+        "tip": "Next is the tape. Press Play and follow the words.",
+        "here": "Play is right here.",
+        "again": "The words stay on screen. You can start whenever you like.",
+        "target": [
+          "play",
+          "step:pray"
+        ],
+        "act": "press:play"
+      },
+      "pledge": {
+        "tip": "A pledge card! Sign it, or set it aside — either way you can go on.",
+        "here": "Sign it here, or set it aside.",
+        "again": "Not sure? Setting it aside is fine.",
+        "target": [
+          "sign",
+          "pledge-notnow"
+        ]
+      },
+      "connect": {
+        "tip": "Now we go online. Press Connect and the wizard will dial.",
+        "here": "Connect is the big button.",
+        "again": "The wizard is ready when you are.",
+        "target": [
+          "connect",
+          "setup-next",
+          "step:connect"
+        ],
+        "act": "press:connect"
+      },
+      "web": {
+        "tip": "This is the fellowship's page. Press Join to go to the channel.",
+        "here": "Join is right here.",
+        "again": "Look around first if you like. Join will still be here.",
+        "target": [
+          "web-join"
+        ],
+        "act": "press:web-join"
+      },
+      "channel": {
+        "tip": "The chat is waiting. Press the line at the bottom to answer.",
+        "here": "That's your answer line.",
+        "again": "Or just read on — the chat moves by itself.",
+        "target": [
+          "reply:0"
+        ],
+        "noAgain": true
+      }
+    },
+    "e2": {
+      "checkin": {
+        "tip": "Restorify's daily check-in is on the desktop. Press the Restorify icon.",
+        "here": "It's the icon in the top corner.",
+        "again": "A tick or two is all it takes.",
+        "target": [
+          "icon-restorify"
+        ],
+        "act": "press:icon-restorify"
+      },
+      "story": {
+        "tip": "There's a new video waiting: Your Story. Press it to begin.",
+        "here": "Your Story is the icon with the little dot.",
+        "again": "Your Story is waiting. Shall I point?",
+        "target": [
+          "icon-story"
+        ],
+        "act": "press:icon-story"
+      },
+      "release": {
+        "tip": "Nearly there! Read the release, then press Agree.",
+        "here": "Agree is at the bottom.",
+        "again": "The release is already filled in for you.",
+        "target": [
+          "ts-agree"
+        ]
+      },
+      "tapes": {
+        "tip": "Play your take through to the end, then send it to editing.",
+        "here": "Play is here. Editing is the next button.",
+        "again": "I'll wait. Press Play when you're ready.",
+        "target": [
+          "ts-play",
+          "ts-file:daniel",
+          "ts-send"
+        ]
+      },
+      "cut": {
+        "tip": "The programme is cutting your story. Sit tight!",
+        "target": [],
+        "once": true
+      },
+      "online": {
+        "tip": "Your story is ready. Press Watch to see it online.",
+        "here": "Watch is here.",
+        "again": "Your story is waiting for you.",
+        "target": [
+          "ts-watch",
+          "ts-see"
+        ]
+      },
+      "send": {
+        "tip": "You have a summons. Press the envelope on the desktop.",
+        "here": "The envelope is on the left.",
+        "again": "It won't take long. The envelope is on the left.",
+        "target": [
+          "icon-send"
+        ],
+        "act": "press:icon-send"
+      }
+    },
+    "e3": {
+      "signin": {
+        "tip": "Welcome to GracePlatform! Press Sign in to begin your first shift.",
+        "here": "Sign in is right here.",
+        "again": "Your shift starts when you sign in.",
+        "target": [
+          "signin"
+        ],
+        "act": "press:signin"
+      },
+      "consent": {
+        "tip": "Lambient has a quick question. Answer it and we're off.",
+        "here": "Your answer goes here.",
+        "again": "Either answer works — Lambient carries on.",
+        "target": [
+          "consent-allow",
+          "consent-decline"
+        ]
+      },
+      "work": {
+        "tip": "Pick a card on the board and work it through to the end.",
+        "here": "Any card will do. Start with the first.",
+        "again": "One card at a time. The first one is fine.",
+        "target": [
+          "task-0"
+        ]
+      },
+      "phone": {
+        "tip": "Your phone has a message. Pick it up from its stand.",
+        "here": "It's on its stand, to your left.",
+        "again": "Shall I take you to the phone?",
+        "target": [],
+        "act": "move:phone"
+      },
+      "vote": {
+        "tip": "The group sent a link. Open it when you're ready.",
+        "here": "The link is on the phone.",
+        "again": "The link is waiting.",
+        "target": [
+          "link",
+          "link2"
+        ]
+      }
+    },
+    "e4": {
+      "browser": {
+        "tip": "Your session is back. Press the browser to look around.",
+        "here": "The browser is on your desktop.",
+        "again": "Your session is waiting in the browser.",
+        "target": [
+          "search-open"
+        ]
+      },
+      "results": {
+        "tip": "Press Search and let the engine finish it.",
+        "here": "Search is right here.",
+        "again": "It finishes by itself. You only press once.",
+        "target": [
+          "search-open"
+        ],
+        "act": "press:search-open"
+      },
+      "program": {
+        "tip": "Open the first result to begin.",
+        "here": "That's the first result.",
+        "again": "The first result is the one to open.",
+        "target": [
+          "result-agent",
+          "site-start",
+          "agent-begin"
+        ],
+        "act": "press:result-agent"
+      },
+      "steps": {
+        "tip": "L has a question. Answer it one step at a time.",
+        "here": "Your answer goes here.",
+        "again": "One step, then the next.",
+        "target": [
+          "turn-0",
+          "turn-1"
+        ]
+      },
+      "headset": {
+        "tip": "Time for the headset. It's on the desk — shall I take you there?",
+        "here": "It's on the desk.",
+        "again": "Shall I take you to the headset?",
+        "target": [],
+        "act": "move:headset"
+      }
+    }
+  }
+}

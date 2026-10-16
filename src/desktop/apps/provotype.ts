@@ -20,6 +20,7 @@
 import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
+import { isSpeedrun } from '../../state/cut';
 import chrome from '../../../data/strings/reinterp.json';
 import words from '../../../data/strings/status_words.json';
 
@@ -42,6 +43,7 @@ export interface ProvotypeChoice {
   goto?: number | 'debrief' | 'close';
 }
 export interface ProvotypeState {
+  guided?: boolean;
   prompt: string;
   /** legacy simple confirm buttons (R1 dummy) — no tagging, no goto */
   buttons?: string[];
@@ -151,6 +153,11 @@ export class ProvotypeApp {
 
   /** move to a state by index; states with no options reveal their response immediately */
   private enterState(idx: number): void {
+    // Also resolves numeric goto targets; no skipped answer/tag/witness is ever filed.
+    while (isSpeedrun() && this.data.states[idx]?.guided === false) idx++;
+    if (idx >= this.data.states.length) {
+      this.phase = 'close'; this.reachedDebrief = true; this.dirty = true; return;
+    }
     this.stateIndex = idx;
     this.lastResponse = undefined;
     this.feltRevealed = false;

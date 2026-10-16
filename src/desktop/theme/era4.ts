@@ -807,7 +807,7 @@ export interface TabLook { state?: 'normal' | 'locked' | 'done'; badge?: string;
 export function browserChrome(
   ctx: CanvasRenderingContext2D, W: number,
   tabs: { title: string }[], live: number, address: string, showCursor: boolean,
-  looks: TabLook[] = []
+  looks: TabLook[] = [], rightSpace = 0
 ): Rect[] {
   /**
    * ⚑ 2026-09-12 — RE-CUT AGAIN, and this time against the thing itself.
@@ -831,7 +831,7 @@ export function browserChrome(
   px(ctx, 0, stripH, W, barH - stripH, CHROME.toolbar);
   px(ctx, 0, barH - 1, W, 1, CHROME.fieldEdge);
   const rects: Rect[] = [];
-  const tw = Math.min(TAB.w, Math.floor((W - TAB.x * 2 - 28 - (tabs.length - 1) * TAB.gap) / Math.max(1, tabs.length)));
+  const tw = Math.min(TAB.w, Math.floor((W - rightSpace - TAB.x * 2 - 28 - (tabs.length - 1) * TAB.gap) / Math.max(1, tabs.length)));
   for (let i = 0; i < tabs.length; i++) {
     const x = TAB.x + i * (tw + TAB.gap);
     const look = looks[i] ?? {};

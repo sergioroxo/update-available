@@ -1,3 +1,4 @@
+import { requestFullscreenSoft } from '../frame/fullscreen';
 /**
  * THE INTERIM LOG-IN PANEL — the front door (docs/
  * REINTERP_OPENING_DECISION_2026-07-24.md §2, which supersedes R28 §4's
@@ -335,21 +336,6 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
    * would surface as a console error on every phone that lacks the API, and
    * `npm run audit` counts console errors.
    */
-  const goFullscreen = (): void => {
-    const el = document.documentElement as HTMLElement & {
-      webkitRequestFullscreen?: () => Promise<void> | void;
-    };
-    try {
-      if (document.fullscreenElement) return;
-      const req = el.requestFullscreen?.bind(el) ?? el.webkitRequestFullscreen?.bind(el);
-      if (!req) return; // iPhone Safari: no API. Not an error, just not offered.
-      const r = req();
-      if (r && typeof (r as Promise<void>).catch === 'function') {
-        (r as Promise<void>).catch(() => { /* denied or unsupported — play windowed */ });
-      }
-    } catch { /* same */ }
-  };
-
   const enterWith = (choice: DoorChoice): void => {
     if (entered || destroyed) return;
     entered = true;
@@ -359,7 +345,7 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
 
   desktop.btn!.addEventListener('click', () => {
     if (!armed || destroyed) return;
-    goFullscreen(); // must happen INSIDE the click stack, before any await
+    requestFullscreenSoft(); // must happen INSIDE the click stack, before any await
     enterWith('desktop');
   });
 
@@ -375,7 +361,7 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
    */
   phoneCard.btn!.addEventListener('click', () => {
     if (!armed || destroyed || entered) return;
-    goFullscreen();
+    requestFullscreenSoft();
     type Requestable = { requestPermission?: () => Promise<PermissionState | string> };
     const req = (window.DeviceOrientationEvent as unknown as Requestable | undefined)?.requestPermission;
     if (typeof req !== 'function') {

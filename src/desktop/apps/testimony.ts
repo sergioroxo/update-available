@@ -27,7 +27,7 @@
  *
  * Drawn in 2003's desktop chrome (ERA1's, as Restorify's windows are); the footage in theme/calendar.ts's FOOTAGE.
  */
-import { isSpeedrun } from '../../state/cut';
+import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { FOOTAGE as F } from '../theme/calendar';
@@ -35,6 +35,7 @@ import { entriesByEra } from '../../witness/record';
 import { ledger } from '../../state/ledger';
 import { playLoop, stopClip } from '../../audio/tapeAudio';
 import T from '../../../data/dialog/s2_testimony.json';
+import guidedCopy from '../../../data/strings/extras.json';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 type Stage = 'prep' | 'release' | 'tapes' | 'player' | 'cut' | 'online';
@@ -65,6 +66,7 @@ export class TestimonyApp {
   onDone?: () => void;
   private stage: Stage = 'prep';
   private topics = 1;
+  private prepT = 0;
   private clip: ClipId = 'daniel';
   private clipT = 0;
   private playing = false;
@@ -106,6 +108,10 @@ export class TestimonyApp {
   update(dt: number): void {
     this.tick += dt;
     let moving = false;
+    if (isSpeedrun() && this.open && this.stage === 'prep' && this.topics < T.prep.topics.length) {
+      this.prepT += dt;
+      if (this.prepT >= 3.5) { this.prepT = 0; this.topics++; this.dirty = true; }
+    }
     if (this.stage === 'player' && this.playing) {
       this.clipT += dt; moving = true;
       if (this.clipT >= CLIPS[this.clip].seconds) {
@@ -155,16 +161,18 @@ export class TestimonyApp {
       case 'ts-next': this.topics = Math.min(T.prep.topics.length, this.topics + 1); return true;
       case 'ts-prep-done': this.onFile?.('testimony-prep'); this.stage = 'release'; return true;
       case 'ts-agree':
+        markExtraPassed('tapes');
         this.onFile?.('testimony-release');
         // ⚑ S227 — the Speedrun Version: the programme assembles his story itself (the tapes and the edit are its
         //   work, W1-D11 "too confusing and unnecessary"); the same three filings, then straight to his story online
-        if (isSpeedrun()) { this.onFile?.('testimony-tapes'); this.onFile?.('testimony-cut'); this.exported = true; this.stage = 'online'; this.web = 'notice'; return true; }
+        if (isSpeedrun() && !extraOn('tapes')) { this.onFile?.('testimony-tapes'); this.onFile?.('testimony-cut'); this.exported = true; this.stage = 'online'; this.web = 'notice'; return true; }
         this.stage = 'tapes'; return true;
       case 'ts-play': if (this.clipT >= CLIPS[this.clip].seconds) this.clipT = 0; this.playing = true; return true;
       case 'ts-stop': this.playing = false; return true;
       case 'ts-folder': this.playing = false; this.stage = 'tapes'; return true;
       case 'ts-send':
         this.onFile?.('testimony-tapes');
+        if (extraOn('tapes')) { this.stage = 'cut'; return true; }
         // ⚑ S227 / W1-D11 (walkthrough 1, his: "The editing system is too confusing and unnecessary. Submit the videos
         //   and get the final version.") — the programme makes the cut itself: the same filing, then his story online.
         //   The editor (stage 'cut') stays in the file, unreached.
@@ -253,7 +261,8 @@ export class TestimonyApp {
       ui.setFont(ctx, 8); ctx.fillStyle = ERA1.navy;
       ui.wrapText(ctx, `${T.prep.fromFile} ${frag(i)}`, c.w - 60).slice(0, 2).forEach((ln, k) => ctx.fillText(ln, c.x + 30, y + 23 + k * 9));
     }
-    const label = this.topics < T.prep.topics.length ? T.prep.next : T.prep.done;
+    if (isSpeedrun() && this.topics < T.prep.topics.length) return;
+    const label = isSpeedrun() ? guidedCopy.goOn : this.topics < T.prep.topics.length ? T.prep.next : T.prep.done;
     const bid = this.topics < T.prep.topics.length ? 'ts-next' : 'ts-prep-done';
     ui.setFont(ctx, 10);
     const bw = Math.max(76, Math.ceil(ctx.measureText(label).width) + 18);

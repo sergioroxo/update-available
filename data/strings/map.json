@@ -1,5 +1,5 @@
 {
-  "_docF4cut": "cut for W1-B1, cloud F4, 2026-10-15: four Era-4 route hints (wake, l, site, steps).",
+ "_docF4cut": "cut for W1-B1, cloud F4, 2026-10-15: four Era-4 route hints (wake, l, site, steps).",
  "_doc": "⚑ THE MAP (S145, 2026-09-16 — docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md §3A). FRAME VOICE: this is the game menu's 'Where you are' and the idle helper's one line — the frame explaining the piece, which it may, because the frame never plays. Four eras; each a list of beats in the order the spine walks them. `done` is a condition key resolved in src/witness/map.ts against the ledger and the OS (conditions in code, content in data — the guide's own pattern); `hint` is the plain line for what to do; `where` the plain direction; `optional` beats are shown but are never 'current' (the piece does not require them); `quiet` beats never raise the helper (felt / respite / the Close: nothing plain is allowed to speak over them). Nothing here is display text in the fiction and nothing here files.",
  "title": "Where you are",
  "row": "Where you are — and what is next",
@@ -13,10 +13,30 @@
  "optionalMark": "optional",
  "_docCloseBeats": "⚑ S209 / B27 (REVIEW_ROUND_5, ERA26-10): the Close's own optional beats, in the frame's plain voice — so the panels, the card on Daniel's machine and the way out are on the map rather than found by luck. Optional (○): the map lists them, nothing pushes.",
  "closeBeats": [
-  { "id": "close-panels", "label": "The panels in the sky", "hint": "Look up. Press a panel to read it; press it again to turn it to its sources.", "where": "above you" },
-  { "id": "close-machine", "label": "Daniel's machine", "hint": "Behind you, on the desk: the receipt, Start again, and the dossier.", "where": "the desk" },
-  { "id": "close-makers", "label": "Who made this", "hint": "One of the stars is the makers' — how this was made, and with what.", "where": "above you" },
-  { "id": "close-leave", "label": "Leave", "hint": "The menu has Leave, whenever you are ready.", "where": "the menu" }
+  {
+   "id": "close-panels",
+   "label": "The panels in the sky",
+   "hint": "Look up. Press a panel to read it; press it again to turn it to its sources.",
+   "where": "above you"
+  },
+  {
+   "id": "close-machine",
+   "label": "Daniel's machine",
+   "hint": "Behind you, on the desk: the receipt, Start again, and the dossier.",
+   "where": "the desk"
+  },
+  {
+   "id": "close-makers",
+   "label": "Who made this",
+   "hint": "One of the stars is the makers' — how this was made, and with what.",
+   "where": "above you"
+  },
+  {
+   "id": "close-leave",
+   "label": "Leave",
+   "hint": "The menu has Leave, whenever you are ready.",
+   "where": "the menu"
+  }
  ],
  "closeLabel": "The Close",
  "closeHint": "Look up. Then read the four panels, and the screen on the desk.",
@@ -214,14 +234,16 @@
      "label": "The tapes",
      "done": "testimonyTapes",
      "hint": "Play Daniel's take on the tape through to the end, then send it to editing.",
-     "where": "the monitor"
+     "where": "the monitor",
+     "speedrun": false
     },
     {
      "id": "cut",
      "label": "The edit",
      "done": "testimonyCut",
      "hint": "The programme cuts your story for you once the tapes are sent (W1-D11).",
-     "where": "the monitor"
+     "where": "the monitor",
+     "speedrun": false
     },
     {
      "id": "online",
@@ -341,7 +363,8 @@
      "hint": "Work a story through to its end — apply or skip, your choice — then another story, or another job. Annette's family calls are on the board.",
      "labelSpeedrun": "One piece of work",
      "hintSpeedrun": "Return the family calls on the board — Annette's is the last of the three. One job is enough today.",
-     "where": "the workstation"
+     "where": "the workstation",
+     "doneSpeedrun": "oneJobDone"
     },
     {
      "id": "record",

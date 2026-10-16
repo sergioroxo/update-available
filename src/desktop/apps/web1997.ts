@@ -161,14 +161,19 @@ export class Web1997App {
     this.heading(ctx, b, T.heading);
     ui.setFont(ctx, 10);
     ctx.fillStyle = P.text;
-    ctx.fillText(T.welcome, b.x + Math.round((b.w - ctx.measureText(T.welcome).width) / 2), b.y + 34);
+    ctx.fillText(T.welcome, b.x + Math.round((b.w - ctx.measureText(T.welcome).width) / 2), b.y + 30);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.navy;
+    const startW = Math.ceil(ctx.measureText(T.start).width);
+    const startX = b.x + Math.round((b.w - startW) / 2);
+    ctx.fillText(T.start, startX, b.y + 43);
     // the one big button
-    const bw = 200, bx = b.x + Math.round((b.w - bw) / 2), by = b.y + 50;
+    const bw = 200, bx = b.x + Math.round((b.w - bw) / 2), by = b.y + 58;
     ui.button(ctx, bx, by, bw, 24, T.join, { hover: this.hover === 'web-join' });
-    this.hits.push({ x: bx, y: by, w: bw, h: 24, id: 'web-join' });
+    this.hits.push({ x: Math.min(bx, startX), y: b.y + 41, w: Math.max(bx + bw, startX + startW) - Math.min(bx, startX), h: 41, id: 'web-join' });
     ui.setFont(ctx, 9);
     ctx.fillStyle = P.dim;
-    ctx.fillText(T.joinSub, b.x + Math.round((b.w - ctx.measureText(T.joinSub).width) / 2), by + 30);
+    ctx.fillText(T.joinSub, b.x + Math.round((b.w - ctx.measureText(T.joinSub).width) / 2), by + 27);
     ui.px(ctx, b.x + 20, b.y + 96, b.w - 40, 1, P.rule);
     // the search, tonight's query already in the field (no free typing — the law), the nights before under it
     const fx = b.x + 24, fy = b.y + 104;

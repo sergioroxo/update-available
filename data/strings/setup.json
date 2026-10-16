@@ -5,32 +5,30 @@
   "startMenu": "Start",
   "icons": [
     "My Computer",
-    "About this project",
     "LambyOS Setup"
   ],
-  "balloons": [
-    {
+  "balloons": {
+    "greet": {
       "text": "Hi! It looks like you're restoring a session. Want a hand?",
       "buttons": [
         "Yes, please",
         "I know what to do"
       ]
     },
-    {
-      "text": "Want to know what this place is?",
+    "wip": {
+      "text": "Quick heads-up: I'm still being finished! If something gets stuck, press Esc for the menu, or reload the page.",
       "buttons": [
-        "Show me",
-        "Later"
+        "Got it"
       ]
     },
-    {
+    "whose": {
       "text": "You'll be restoring someone's session. Three of them, actually!",
       "buttons": [
         "Whose?",
         "Later"
       ]
     },
-    {
+    "sound": {
       "text": "Things sound better with headphones! Want a test sound?",
       "buttons": [
         "Play a test sound",
@@ -38,55 +36,35 @@
         "Keep it quiet"
       ]
     },
-    {
+    "look": {
       "text": "You won't need to walk. Just turn!",
       "buttons": [
         "Show me how"
       ]
     },
-    {
+    "note": {
       "text": "One more thing before we start.",
       "buttons": []
     },
-    {
-      "text": "Which version would you like?",
-      "buttons": [
-        "The full piece",
-        "The Speedrun Version"
-      ]
-    },
-    {
+    "advert": {
       "text": "Before we begin, let me show you what we do!",
       "buttons": [
         "Show me"
       ]
     },
-    {
+    "allset": {
       "text": "All set! See you later!",
       "buttons": [
         "Start"
       ]
+    },
+    "start": {
+      "text": "This is the Start button. It lists everything you can do, in order, with ticks as you go — and lets you jump to any year. Try it!",
+      "buttons": [
+        "Show me",
+        "Later"
+      ]
     }
-  ],
-  "about": {
-    "title": "About this project",
-    "paragraphs": [
-      "This is a piece about how organised “conversion” networks (SOGICE) targeted queer people online, from 1997 to 2026. Four updates, thirty years: none of them changed who anyone was.",
-      "It is part of SurvivingSOGICE, a research project at the University of Bergen's Center for Digital Narrative. Everything in it rests on that research: at the end you will find a Library with the Lexicon — the words these networks used and the reasons they gave — and the full list of sources is in the menu, under Credits & attributions.",
-      "It was directed by the project, and written and built in collaboration with Claude (Anthropic).",
-      "More to be added soon."
-    ],
-    "toolbar": [
-      "Back",
-      "Forward",
-      "Reload",
-      "Home",
-      "Search",
-      "Print"
-    ],
-    "location": "Location:",
-    "address": "lambyos://about",
-    "status": "Document: Done"
   },
   "look": {
     "title": "How to look",
@@ -131,5 +109,13 @@
   "session": {
     "title": "Whose session?",
     "body": "On this one machine: three people's sessions, four updates, thirty years of care. Their user profiles are still pending: you fill them in as you go, and the programme keeps what you give it."
-  }
+  },
+  "startTried": {
+    "text": "That's it. Everything you can do is in there.",
+    "buttons": [
+      "Got it"
+    ]
+  },
+  "report": "[ADDRESS TO COME FROM THE LEAD]",
+  "reportLine": "Found a problem? Tell us: {report}"
 }

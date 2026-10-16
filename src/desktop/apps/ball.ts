@@ -101,7 +101,7 @@ import { setCommonsLamps, pulseCommonsLamps } from '../../room/commonsLamps';
 import { setCommonsFigures, greetCommonsFigures, setCommonsShow, inviteCommonsFigures, answerCommonsFigures } from '../../room/commonsFigures';
 import { setHerLamp, raiseHerLamp, herLampRaised, turnToStage } from '../../room/commonsWorld';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
-import { isSpeedrun } from '../../state/cut';
+import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import script from '../../../data/dialog/s4_ball.json';
 
 /**
@@ -199,9 +199,9 @@ const SPEEDRUN = (script as unknown as { speedrun: {
 } }).speedrun;
 
 /**
- * ⚑ S227 — THE COMPOSITION, chosen once per visit (the cut is chosen at the front door or by `?cut=speedrun`,
- * before the fiction starts, so it is read when the beat begins, not at module load). The full piece is every
- * line; the Speedrun Version is a subset of the same lines, in the same order (`script.speedrun`). Opening →
+ * ⚑ S227 — THE COMPOSITION, chosen at invitation, never at module load. The guided default uses the authored
+ * subset in `script.speedrun`; opting into commons before invitation or reviewing `?cut=full` uses every line.
+ * Both preserve the authored order. Opening →
  * categories → closing stay one continuous run: the category boundaries are a fact about the writing, and the
  * intrusions are hung on them.
  */
@@ -210,7 +210,7 @@ function compose(): Composition {
   const greet = script.ball.greeting.lines as unknown as BLine[];
   const opening = script.ball.opening.lines as unknown as BLine[];
   const closing = script.ball.closing.lines as unknown as BLine[];
-  if (!isSpeedrun()) {
+  if (!(isSpeedrun() && !extraOn('commons'))) {
     return {
       arrival: ALL_ARRIVAL, greeting: greet, cats: ALL_CATS, intrusions: SYSTEM.intrusions,
       lines: [...opening, ...ALL_CATS.flatMap((c) => c.lines), ...closing]
@@ -357,6 +357,7 @@ export class E4Ball {
   invite(): void {
     if (this.phase !== 'idle') return;
     this.comp = compose();
+    markExtraPassed('commons');
     this.phase = 'invited';
     this.hits = [{ ...JOIN, id: 'commons-join' }];
     this.version++;

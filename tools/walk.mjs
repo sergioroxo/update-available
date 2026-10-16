@@ -150,12 +150,13 @@ const FROM_ERA = Number(flag('from-era', '0')) || 0;
  *  Era 4). With `--from-era` that makes each of tools/walk-eras.mjs's four walks one era long. */
 const ONE_ERA = process.argv.includes('--one-era');
 const SETUP = process.argv.includes('--setup');
-/** ⚑ `--cut speedrun` (S227): walk the Speedrun Version (`?cut=speedrun`, src/state/cut.ts) instead of the full piece */
+/** One guided visitor version by default; --cut full reviews the retained full route; --explore audits optional doors. */
 /** ⚑ S240 — the restore entrance (stars → setup → Daniel's room) is the DEFAULT front door; `--entrance home` walks
  *  the older LambyOS Home door instead (`?entrance=home`). */
 const HOME_DOOR = flag('entrance', '') === 'home';
 const ENTRANCE = HOME_DOOR ? '' : 'restore';
-const CUT = flag('cut', '') === 'speedrun' ? 'speedrun' : '';
+const CUT = flag('cut', '') === 'full' ? 'full' : 'speedrun';
+const GUIDED_WALK = CUT === 'speedrun' && !process.argv.includes('--explore');
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
 const OUT_DIR = join(ROOT, SETUP || process.argv.includes('--from-era') || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp');
@@ -223,7 +224,8 @@ const PREFER = [
  * menu's; `pause_yes` is the era's, and the difference between them is the
  * difference between quitting the piece and playing it.
  */
-const FORBIDDEN = /^setup-vol-(down|up|thumb|track)$|^setup-dismiss$|^setup-device$|^setup-test$|^setup-choice-[12]$|^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
+// Guide controls are optional assistance. Never spend a narrative press on them.
+const FORBIDDEN = /^profile-back$|^sm-extra:|^(sm-jump.*|jump-.*|go-here.*|steps-close|sm-allsteps|sm-whattodo|sm-programs|taskbar-whattodo|whattodo)$|^lg-|^setup-vol-(down|up|thumb|track)$|^setup-dismiss$|^setup-device$|^setup-test$|^setup-choice-[12]$|^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
 
 /** ⚑ see the launch below — order: --chrome, the environment, the platform */
 function resolveChrome() {
@@ -436,18 +438,19 @@ async function main() {
       note('press', { target: id, what: 'floating setup: projected quad / real mouse ray' });
       await wait(350);
     };
-    await pressSetup('setup-choice-0'); // welcome → About offer
-    await pressSetup('setup-choice-0'); // open About
-    await pressSetup('setup-close');
+    await pressSetup('setup-choice-0'); // greet → WIP
+    await pressSetup('setup-choice-0'); // Got it → whose
     await pressSetup('setup-choice-0'); // Whose session?
     await pressSetup('setup-close');
     await pressSetup('setup-test'); // chime in the same balloon
     await pressSetup('setup-sound-on');
     await pressSetup('setup-choice-0'); // How to look
     await pressSetup('setup-close');
+    await pressSetup('setup-choice-0'); // Start lesson: Show me
+    await pressSetup('setup-start');
+    await pressSetup('setup-choice-0'); // Got it → note
     await page.waitForFunction(() => document.getElementById('restore-entrance')?.dataset.setupStage === 'note', { timeout: 30000 });
     await pressSetup('setup-close'); // the only gate, including its existing arm
-    await pressSetup('setup-choice-0'); // Full piece
     // ⚑ S245 — the opening film: mandatory, no Skip. Press Show me, then SIT THE WHOLE FILM OUT (~96 s; no seeking, ever)
     //   until the setup moves on by itself to "All set". This is a wait on a film that is playing, not a stall.
     await pressSetup('setup-advert-play-0');
@@ -689,6 +692,16 @@ const LAP = { w: 224, h: 140 };
 
     const targets = [];
     const dropped = [];
+    // The frame's ordinary call button is a real visitor door too. Read its
+    // visible bounds and press through mouse down/up, like the canvas targets.
+    const call = document.getElementById('reinterp-call');
+    if (call && !call.disabled) {
+      const style = getComputedStyle(call), r = call.getBoundingClientRect();
+      const pt = [r.x + r.width / 2, r.y + r.height / 2];
+      if (style.pointerEvents !== 'none' && Number(style.opacity) > 0.5 &&
+          r.width && r.height && document.elementFromPoint(...pt) === call)
+        targets.push({ id: 'reinterp-call', surface: 'frame', logical: pt, pt });
+    }
     const add = (id, surface, r, pt) => {
       const logical = [Math.round(r.x + r.w / 2), Math.round(r.y + r.h / 2)];
       if (pt) targets.push({ id, surface, logical, pt });
@@ -1187,7 +1200,7 @@ const LAP = { w: 224, h: 140 };
   //   the monitor 90°+ behind, which is exactly when a person turns right round.
   //   The 80° cap still holds whenever something is in front of the walker.
   const turnable = (st, sig) => (st.dropped || [])
-    .filter((d) => d.turn && !FORBIDDEN.test(d.id) &&
+    .filter((d) => d.turn && !FORBIDDEN.test(d.id) && guidedAllows(d, st, seen) &&
       Math.abs(d.turn.yaw) <= ((st.targets || []).length ? TURN_YAW_MAX : 180) &&
       Math.abs(d.turn.pitch) <= TURN_PITCH_MAX &&
       (pressed.get(keyOf(sig, d)) || 0) < PRESS_CAP &&
@@ -1402,9 +1415,31 @@ const LAP = { w: 224, h: 140 };
    * caller must then WAIT, because that is what a player does while a scripted,
    * unpressable beat runs.
    */
+  /** The default visit follows the guided spine. --explore retains the old exhaustive audit policy.
+   * These are navigation decisions only: no time seeking, synthetic answers, debug steps or ledger writes.
+   * Optional doors remain available to visitors and are exercised separately by the extras probes.
+   */
+  const guidedAllows = (t, st, seen) => {
+    if (!GUIDED_WALK) return true;
+    const id = t.id, led = st?.ledger, has = key => led?.records?.includes(key);
+    // L has finished all five turns. The headset call is now the door onward;
+    // reopening completed tabs adds no story and can hide that door from an audit.
+    if (st?.era === 'e4' && st?.bstate?.done && t.surface === 'e4.browser') return false;
+    if (/^start-menu$|^sm-|^icon-(?:provotype|lambyrig|rootcause|forum|your-file|found-file|era-1)$|^irc-close$|^record-chip$/.test(id)) return false;
+    if (/^min-|^taskbar-/.test(id)) return false;
+    if (has('channel-joined') && /^web-/.test(id) && id !== 'web-close') return false;
+    if (id === 'cancel' && t.surface === 'kit' && !has('went-online')) return false;
+    if (/^dm-(?:up|down)$/.test(id) && (seen?.get(id) || 0) >= 1) return false;
+    if (id === 'icon-a' && has('went-online')) return false;
+    if (id === 'icon-restorify' && led?.checkins?.some(c => !c.id.startsWith('e3'))) return false;
+    if (id === 'icon-story' && has('testimony-online')) return false;
+    if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
+    if (st?.era === 'e3' && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
+    return true;
+  };
   const pick = (targets, sig, seen, dismissFirst) => {
     let live = targets.filter((t) =>
-      t.surface !== 'prop' && !FORBIDDEN.test(t.id) && !capped(sig, t));
+      t.surface !== 'prop' && !FORBIDDEN.test(t.id) && guidedAllows(t, lastState, seen) && !capped(sig, t));
     /**
      * ⚑ THE TAB BUDGET (see MIN_TABS). Counted from the LEDGER, not from this
      * tool's own memory of what it pressed — `e4Space:tab:*` is filed once per
@@ -1423,6 +1458,10 @@ const LAP = { w: 224, h: 140 };
     }
     // a bare plane is a last-resort press: prefer any real control that exists
     if (!live.length) return null;
+    if (GUIDED_WALK) {
+      const call = live.find(t => t.id === 'reinterp-call');
+      if (call) return call;
+    }
     /**
      * ⚑ IF SOMETHING IS IN THE WAY, CLOSE IT — the one move a person makes
      * without thinking and the walker had no way to reach. When a press lands
@@ -1702,6 +1741,9 @@ const LAP = { w: 224, h: 140 };
 
   const startEraSeen = s.era;
   for (let i = 0; i < MAX_STEPS; i++) {
+    if (await page.evaluate(() => { const t = window.__os?.testimony; return t?.open && t.stage === 'prep' && !t.hits.some(h => h.id === 'ts-next' || h.id === 'ts-prep-done'); })) {
+      await wait(1600); s = await probe(); continue;
+    }
     if (s.driven) { await wait(1600); s = await probe(); continue; }   // a travelling is playing
     // ⚑ S226 — the Close's cards wait for a press now (his, 2026-10-10): a press anywhere turns one, as the card says
     {
@@ -2130,7 +2172,7 @@ const LAP = { w: 224, h: 140 };
   const now = new Date();
   const pad = (n) => String(n).padStart(2, '0');
   const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
-    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '') + (CUT ? '_' + CUT.toUpperCase() : '') + (HOME_DOOR ? '_ENTRANCE_HOME' : '') + (false ? '_ENTRANCE_RESTORE' : '') + (ONE_ERA ? '_ONE_ERA' : '');
+    + (JUMP ? '_JUMPED_' + JUMP : '') + (MIN_TABS !== null ? '_MIN' + MIN_TABS : '') + (FROM_ERA > 1 ? '_FROM_e' + FROM_ERA : '') + (CUT ? '_' + CUT.toUpperCase() : '') + (GUIDED_WALK ? '_GUIDED' : '') + (HOME_DOOR ? '_ENTRANCE_HOME' : '') + (false ? '_ENTRANCE_RESTORE' : '') + (ONE_ERA ? '_ONE_ERA' : '');
   const presses = log.filter((l) => l.kind === 'press' || l.kind === 'sweep-hit' || l.kind === 'move');
   const dead = presses.filter((p) => p.changed === false);
   const silentFound = [...new Set(log.filter((l) => l.kind === 'silent-surface')
@@ -2175,6 +2217,7 @@ const LAP = { w: 224, h: 140 };
     jumpedTo: JUMP || null,
     setupEntrance: SETUP,
     isReachabilityProof: !SETUP && !JUMP && FROM_ERA <= 1,
+    walkPolicy: GUIDED_WALK ? 'guided' : 'explore',
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,
     ledger: final.ledger, console: noise, log
@@ -2238,6 +2281,7 @@ const LAP = { w: 224, h: 140 };
       '> minimum player, 2026-09-11: *"opens two, then wears."* Every other era is walked exhaustively,',
       '> as always, so the eras stay comparable. Read beside the same day\'s exhaustive walk.', ''
     ] : []),
+    ...(GUIDED_WALK ? ['*Walk policy: guided. Optional doors are verified separately; use --explore for an exhaustive audit. This differs from older exploratory press counts.*', ''] : []),
     '## MINUTES PER ERA', '',
     '*Wall-clock from the log\'s own timestamps, each era counted to its last step and the piece',
     'counted to `spine: done`. The tool\'s press settles and holds are summed and shown; the piece',

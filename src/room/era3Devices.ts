@@ -667,7 +667,8 @@ export interface Era3Devices {
    *  S61 `settled`: a review jump wants the workstation already signed-in-ready,
    *  not the arrival narrative (dark → boot → install) — the same distinction
    *  os.ts's `setDesktopEra(era, settled)` draws for the E2 arrival. */
-  setEra(era: EraKey, settled?: boolean): void;
+  setEra(era: EraKey, settled?: boolean, fileArrival?: boolean): void;
+  closeForEraJump(): void;
   /** S61: the relocation has landed and the player is in Vera's seat — start
    *  her machine. Called by app.ts's endRelocation(), never by setEra: the
    *  boot belongs to the moment you ARRIVE, not to the moment the era flips
@@ -1319,7 +1320,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         if (s.dirty) { s.tex.upload(); s.dirty = false; }
       }
     },
-    setEra(era: EraKey, settled = false): void {
+    closeForEraJump(): void {
+      graceQueueLite.closeForEraJump();
+      if (lastSeat) this.holdDevice(null, lastSeat);
+    },
+    setEra(era: EraKey, settled = false, fileArrival = true): void {
       eraNow = era;
       const visible = era === 'e3' || era === 'e4';
       // ⚑ S76: the visor is created here and not before — this module is built
@@ -1356,7 +1361,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       if (visible && (settled || era === 'e4')) graceQueueLite.settleArrival();
       if (visible && !arrived) {
         arrived = true;
-        if (ledger.era3Arrival.length === 0) {
+        if (fileArrival && ledger.era3Arrival.length === 0) {
           ledger.era3Arrival.push({ witness: d.witnessArrival });
         }
       }

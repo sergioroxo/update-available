@@ -42,6 +42,7 @@ export class PacketApp {
   draw(ctx: CanvasRenderingContext2D): void {
     const { dx, dy } = this.geom;
     const jitter = this.deadPressT > 0 ? (Math.random() * 2 - 1) : 0;
+    // The X is deliberately inert: this compulsory placement notice advances through its own button.
     const c = ui.windowFrame(ctx, dx + jitter, dy, DW, DH, end.packet.windowTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
 

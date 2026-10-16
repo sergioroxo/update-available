@@ -366,9 +366,12 @@ const fresh = (): Ledger => ({
 });
 
 export let ledger: Ledger = fresh();
+/** Reset generation; consumers can discard session-only state without retaining the old ledger. */
+export let ledgerGeneration = 0;
 
 export function wipeLedger(): void {
   ledger = fresh();
+  ledgerGeneration++;
 }
 
 // The wipe is a hard guarantee, not a courtesy.

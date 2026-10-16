@@ -209,6 +209,7 @@
  "portal": {
   "heading": "The Fellowship Network",
   "welcome": "Others like you are online tonight.",
+  "start": "If you are struggling, start here.",
   "join": "Join #stillstruggling",
   "joinSub": "A mentor will find you there.",
   "searchLabel": "Search the web:",
