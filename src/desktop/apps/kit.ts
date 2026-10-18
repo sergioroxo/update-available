@@ -462,8 +462,8 @@ export class KitApp {
     if (this.setupPage === 'connecting') {
       const dw = 300; const dh = 130;
       const dx = Math.round((W - dw) / 2); const dy = Math.round((ERA1_CANVAS.height - dh) / 2);
-      // The X is deliberately inert during dial-up; the connection hands back to the browser.
       const c = ui.windowFrame(ctx, dx, dy, dw, dh, s.connecting.title, true);
+      this.hits.push({ ...c.closeBox, id: 'cancel' });
       ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
       this.drawModem(ctx, c.x + 10, c.y + 14);
       ui.setFont(ctx, 10);

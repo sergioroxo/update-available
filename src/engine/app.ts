@@ -544,7 +544,7 @@ interface AppOptions {
   nobatch?: boolean;
   /** Opt-in E1 frame entrance; Home and the short door keep their existing paths. */
   restoreEntrance?: boolean;
-  /** Legacy DOM Home return hook, retained for callers. The Close now ends on its monitor's Library. */
+  /** Legacy DOM Home return hook, retained for callers. The Close now ends on its monitor's Restart card. */
   onReturnHome?: () => void;
 }
 
@@ -748,7 +748,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let cluster: ClusterShell | null = null;
   let cloud: PointCloud | null = null;
   let closeMonitor: CloseMonitor | null = null;
-  let closeLibraryDistance = 0.95;
+  let closeMonitorDistance = 0.95;
   let sendRt: SendRuntime | null = null;
   let movementNodes: MovementNodes | null = null;
   // R28-2b: the tape system's pure logic (src/narrative/tapes.ts, mirrors
@@ -1052,12 +1052,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (era === 'close') return;
       beginEraRelocation(era);
     };
+    os.onMessageReady = () => { messageSeatPending = true; };
     os.onSendResolve = (id, outcome) => {
       sendRt?.fire(id, outcome);
       if (outcome === 'visited') {
         const yaw = sendRt?.targetYaw(id);
         // the summons resolves as a TURN — the dolly carries you to the
-        // named room (takeable: not conducted; the player keeps the camera)
+        // named room. Looking stays free; the position must finish at its seat.
         // ⚑ 2026-08-17: this literal was 2.4 and CAMERA_POSES.dollySeconds — the
         // constant whose own comment says "how long a scripted send's dolly
         // takes (app.ts's onSendResolve)" — was DEAD CONFIG, appearing exactly
@@ -1066,7 +1067,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // feel, which is the whole reason this line now READS it. A tuning knob
         // wired to nothing is worse than no knob: it invites a fix that lands
         // nowhere and reports success.
-        if (yaw !== null && yaw !== undefined) dollyTo(yaw, CAMERA_POSES.dollySeconds, false);
+        if (yaw !== null && yaw !== undefined) dollyTo(yaw, CAMERA_POSES.dollySeconds, true);
       }
     };
     if (new URLSearchParams(window.location.search).get('debug') === '1') {
@@ -2184,6 +2185,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // Head-drag past a room boundary re-seats on release; arrow keys step rooms;
   // R homes. Sealed E1 keeps the shipped single-seat behavior. Browser only —
   // in VR the head is the camera and the rooms simply surround you. ──
+  let messageSeatPending = false;
   let seatYaw = 0;                        // current seat (0 = R1 | 90 = R2 west | 270 = R3 east)
   /** ⚑ S80: the movement node the player is actually sitting in, or null for a
    *  base room seat. Device seats author their own pose (nodes.json), which
@@ -2796,7 +2798,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     flipBtn.style.display = 'none';
     closeMonitor?.hide();
-    stopClip(libraryLoop); libraryLoop = null;
     if (xr?.active) xr.end();
   };
 
@@ -3232,7 +3233,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   `panelAt` — so the machine stays pressable through the gap the corridor opens.)
       const glassHit = closeMonitor?.on ? closeMonitor.hitTest(ray.p0, ray.p1) : null;
       // At the reading seat the glass owns its visible controls, including XR rays.
-      // A drifting sky panel must not steal a Library press while the visitor reads it.
+      // A drifting sky panel must not steal a monitor press while the visitor reads it.
       if (glassHit && closeMonitor?.near) {
         closeMonitor.press(glassHit.x, glassHit.y); cloud?.holdDrift(3); return;
       }
@@ -3896,8 +3897,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // C-02 / R3-112: has the eye come to the machine; is it resting on a panel
       if (closeMonitor?.on) {
         const g = closeMonitor.glass;
-        const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + closeLibraryDistance)) < 0.25;
-        if (near && !closeMonitor.near) startLibraryMusic();
+        const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + closeMonitorDistance)) < 0.25;
         closeMonitor.setNear(near);
         // S167: while the card is read, nothing of the sky sits between the eye and the glass.
         // ⚑ S174 / R4-15: and while it is FAR too — the sight-line from the eye to the
@@ -3931,6 +3931,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // across all three legs rather than snapping back at each boundary.)
       if (!camMove) commitLookOffset();
       cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    }
+    // A look never cancels a send halfway through a wall. Once it lands, the
+    // next message takes us back to its monitor; the visitor need not find it.
+    if (messageSeatPending && !camMove && !relocLeg && os.era === 'e2') {
+      messageSeatPending = false;
+      clearLookOffset();
+      dollyTo(cluster?.homeYaw ?? 0, CAMERA_POSES.dollySeconds, true);
     }
     cluster?.updateTravelClearance(camPos, !!camMove);
     browserDeskActive = browserDesk();
@@ -4454,6 +4461,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     } else if (seatYaws().length > 1 && seatYaw !== cluster.homeYaw) {
       dollyTo(cluster.homeYaw, 2.4, false); // era jumps re-seat at the lead room
     }
+    // Every undriven arrival starts the shell, including non-adjacent review arrivals.
+    // A real flight owns its later start in endRelocation. beginSession is idempotent.
+    if (!plan && era === 'e4') os.e4?.beginSession(3.0);
   }
 
   /** the Close: the room goes dark and gives way to the constellation —
@@ -4783,14 +4793,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (closeStage === 'open') { closeStage = 'settled'; closeHoldT = 0; return; }
     if (closeStage === 'settled') {
       closeStage = null;
-      // The Library lights on Daniel's glass and the piece brings the eye to it.
+      // The Restart card lights on Daniel's glass and the piece brings the eye to it.
       // Its destination is authored; no look or press is needed to reach the ending.
       closeMonitor?.setNear(false);
       closeMonitor?.show();
       // (S159: the POST beep that played here is gone — Sérgio: "the beep on the computer at the end is unnecessary")
       const g = closeMonitor!.glass;
-      closeLibraryDistance = libraryDistance();
-      startCamMove({ x:g.x, y:g.y, z:g.z+closeLibraryDistance, pitch:0, yaw:0 },
+      closeMonitorDistance = monitorDistance();
+      startCamMove({ x:g.x, y:g.y, z:g.z+closeMonitorDistance, pitch:0, yaw:0 },
         CLOSE_LIBRARY_APPROACH_SECONDS, true);
       roomBed.set(null,3.5);
     }
@@ -4802,19 +4812,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function goToCloseMonitor(): void {
     if (!closeMonitor?.on || closeMonitor.near || camMove) return;
     const g = closeMonitor.glass;
-    closeLibraryDistance = libraryDistance();
-    startCamMove({ x: g.x, y: g.y, z: g.z + closeLibraryDistance, pitch: 0, yaw: 0 },
+    closeMonitorDistance = monitorDistance();
+    startCamMove({ x: g.x, y: g.y, z: g.z + closeMonitorDistance, pitch: 0, yaw: 0 },
       CLOSE_GO_SECONDS, true);
   }
 
-  /** The shared Home loop, supplied by Claude’s S235. The registry keeps this missing-file-safe.
-   * The shared one-shot bus carries pause/mute/Leave; leaving the Close stops the loop. */
-  let libraryLoop: HTMLAudioElement | null = null;
-  function startLibraryMusic(): void {
-    if (!libraryLoop) { libraryLoop=playLoop('lambyos_home_loop.mp3'); if (libraryLoop) libraryLoop.volume=0.18; }
-  }
-  /** Fit the whole 4:3 glass in portrait too; the Library backdrop covers it while its object layers stay inside. */
-  function libraryDistance(): number {
+  /** Fit the whole 4:3 glass in portrait too; the Restart card stays within its glass. */
+  function monitorDistance(): number {
     const aspect=app.graphicsDevice.width / app.graphicsDevice.height;
     const fov=(camera.camera?.fov ?? 42)*Math.PI/180;
     const g=closeMonitor!.glass;
@@ -4832,7 +4836,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!cluster || !cloud) return;
     cloud.hide();
     closeMonitor?.hide();
-    stopClip(libraryLoop); libraryLoop=null;
     closeStage = null;
     closeMorphBegun = false;
     skyLerp = null;
@@ -4866,6 +4869,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       const resolve = restoreSeatDone; restoreSeatDone = null; resolve?.();
       cluster?.setNeverBatch(['tennisRacketModel']);
     }
+    messageSeatPending = false;
     wakeActive = false; descentActive = false;
     relocLeg = null; relocKey = null; relocPlan = null; earlyRelocEra = null;
     blinkPhase = null; blinkTargetNode = null; revealReturn = -1; revealConducted = false; morphDemoIn = -1;
@@ -4983,7 +4987,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     };
     closeMonitor.onGo = () => goToCloseMonitor();
     closeMonitor.onLeave = () => mountLeavePage().show(() => { wipeLedger(); os.leaveNow(); gameMenuBus.close(); });
-    closeMonitor.onDossier = () => gameMenuBus.openCloseSources?.(-1);
+    closeMonitor.onDossier = () => gameMenuBus.openCloseSources?.(0);
     // read-only probe, like __os: the walk aims at the card's rects through it
     (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;
   }
@@ -5099,7 +5103,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ 2026-09-12: the SETTLED jump (see jumpToEraSettled), not onEraShift —
       //   the transition path only relocates between adjacent eras and left
       //   every non-adjacent jump standing in Room 1.
-      onEra: (era) => jumpToEraSettled(era),
+      // Use the same complete cancellation/reset as a visitor's Start jump:
+      // an entrance, relocation or modal must not keep writing over the review.
+      onEra: (era) => gameMenuBus.jumpToEra?.(era),
       roomEra: () => cluster?.era ?? 'e1',
       // dev camera jump (?debug=1 only): window.__camProbe(yaw, pitch) teleports
       // to that facing's SEAT pose — how review screenshots are taken

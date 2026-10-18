@@ -331,6 +331,10 @@ export function mountGameMenu(): GameMenu {
       } as CSSStyleDeclaration);
       h.textContent = `${pn.years} · ${pn.title}`;
       panel.appendChild(h);
+      if (i === 0) {
+        const title = document.createElement('strong'); title.textContent = about.title; panel.appendChild(title);
+        for (const text of about.paragraphs) paragraph(text);
+      }
       paragraph(`${copy.yourFilePractice}: ${statusLong(pn.status)}`);
       for (const kind of pn.practices ?? []) {
         const pr = practiceOf(kind);

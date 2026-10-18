@@ -327,6 +327,7 @@ export class AccountabilityApp {
       ledger.assistant.dismissals += 1;
     }
     this.step = 'closed';
+    this.liftStamp();
     this.dirty = true;
     this.onAlertDone?.(dismissed);
   }
@@ -353,7 +354,9 @@ export class AccountabilityApp {
    */
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
-    if (this.stamped) this.drawStamp(ctx);
+    // One operable alert at a time: the band carries the intervention while
+    // it runs; a second stamp must not compete across the transcript.
+    if (this.stamped && !this.alertRunning && !this.mailOpen) this.drawStamp(ctx);
     if (this.alertRunning) this.drawBand(ctx);
     if (this.mail === 'failing') this.drawNetworkFailing(ctx);
     if (this.mail === 'arriving') this.drawMailArrival(ctx);
@@ -571,8 +574,8 @@ export class AccountabilityApp {
     const W = ERA1_CANVAS.width;
     const { w: dw, h: dh, y: dy } = AccountabilityApp.MAILBOX;
     const dx = Math.round((W - dw) / 2);
-    // The X is deliberately inert: this system notice is advanced by Open, not dismissed.
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, caleb.pureMail.inboxTitle, true);
+    if (interactive) this.hits.push({ ...c.closeBox, id: 'mail-continue' });
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.warnDark;
@@ -598,8 +601,8 @@ export class AccountabilityApp {
     const W = ERA1_CANVAS.width;
     const dw = 430; const dh = 306;
     const dx = Math.round((W - dw) / 2); const dy = 2;
-    // The X is deliberately inert: the collapse letter's own continuation ends this beat.
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, caleb.pureMail.letterTitle, true);
+    this.hits.push({ ...c.closeBox, id: 'mail-continue' });
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.greyDark;

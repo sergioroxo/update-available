@@ -732,7 +732,7 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
   /** press an OS beat with the ROOM brought to its era first — see eraOfBeat */
   const jumpBeat = (id: string): void => {
     const era = eraOfBeat(id);
-    if (era && opts.onEra && opts.roomEra && opts.roomEra() !== era) opts.onEra(era);
+    if (era && opts.onEra) opts.onEra(era);
     os.debugJump(id);
   };
 

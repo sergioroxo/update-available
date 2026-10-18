@@ -14,6 +14,7 @@
  * cohort study (Fenway)" onto Era 4's practices under its own name would imply a
  * link the data never makes (close_restart.json `_docSource`).
  */
+import about from '../../data/strings/about.json';
 import closeNetwork from '../../data/strings/close_network.json';
 import menuCopy from '../../data/strings/gameMenu.json';
 import card from '../../data/strings/close_restart.json';
@@ -77,6 +78,10 @@ export function dossierLines(era: number, label: string | null): { title: string
     if (key && (links.links as Record<string, unknown[]>)[key]?.length) lines.push({ t: words.linkedNote, k: 'link' });
   }
   refBlock();
+  if (era === 1) {
+    lines.push({ t: about.title, k: 'head' });
+    for (const text of about.paragraphs) lines.push({ t: text, k: 'body' });
+  }
   return { title: SRC.windowTitle.replace('{years}', pn.years).replace('{title}', pn.title), lines };
 }
 

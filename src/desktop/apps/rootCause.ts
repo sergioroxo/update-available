@@ -473,8 +473,8 @@ export class RootCauseApp {
   }
 
   private dialog(ctx: CanvasRenderingContext2D, c: ui.ContentRect, title: string, w: number, h: number): { x: number; y: number; w: number; h: number } {
-    // The X is deliberately inert: the in-game modal resolves through its own answer.
     const f = ui.windowFrame(ctx, c.x + Math.round((c.w - w) / 2), c.y + 36, w, h, title, true);
+    this.hits.push({ ...f.closeBox, id: 'rootcause-close' });
     ui.px(ctx, f.x, f.y, f.w, f.h, ERA1.beige);
     return { x: f.x + 6, y: f.y + 6, w: f.w - 12, h: f.h - 12 };
   }

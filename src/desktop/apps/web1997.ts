@@ -39,6 +39,7 @@ export class Web1997App {
   private hover = '';
   /** the first search, filed by os */
   onSearch?: () => void;
+  onClose?: () => void;
   /** Join: the channel opens */
   onJoin?: () => void;
 
@@ -53,6 +54,7 @@ export class Web1997App {
     const h = this.hits.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
     if (!h) return;
     const id = h.id;
+    if (id === 'web-close') { if (this.onClose) this.onClose(); else this.open = false; return; }
     if (id === 'web-back') { const b = this.back.pop(); if (b) { this.fwd.push(this.view); this.view = b; } return; }
     if (id === 'web-fwd') { const f = this.fwd.pop(); if (f) { this.back.push(this.view); this.view = f; } return; }
     if (id === 'web-reload') return;   // the same page, again
@@ -126,8 +128,7 @@ export class Web1997App {
     else if (this.view.kind === 'list') this.drawList(ctx, body);
     else if (this.view.kind === 'dir') this.drawDir(ctx, body);
     else this.drawPage(ctx, body, this.view.id);
-    // (its close box answers nothing: the network does not let go — the channel is the way on;
-    //  its minimise box and its taskbar button are the way to put it down)
+    this.hits.push({ ...c.closeBox, id: 'web-close' });
   }
 
   private address(): string {

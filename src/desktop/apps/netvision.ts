@@ -430,9 +430,9 @@ export class NetVisionPlayerApp {
     this.hits = [];
     const dx = Math.round((ERA1_CANVAS.width - DW) / 2);
     const dy = Math.round((ERA1_CANVAS.height - DH) / 2);
-    // The X is deliberately inert: the film's own Skip control or automatic ending closes playback.
     const c = ui.windowFrame(ctx, dx, dy, DW, DH, M.windowTitle, true, 'netvision');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
+    this.hits.push({ ...c.closeBox, id: 'netvision-close' });
     const a: Rect = c;
 
     // S60 (finding D15, "each image needs more animation"): the TAPE moves.
@@ -2065,6 +2065,7 @@ export class NetVisionPlayerApp {
 
   handleClick(x: number, y: number): void {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    if (hit?.id === 'netvision-close') { this.fileOutcome('skipped'); this.close('skipped'); return; }
     if (hit?.id === 'skip') this.skip();
   }
 }

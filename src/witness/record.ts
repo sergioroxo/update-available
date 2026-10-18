@@ -149,7 +149,7 @@ export function recordEntries(): RecordEntry[] {
     const w = u.toEra === 0 ? 'the final restart' : `update to era ${u.toEra} — remind later ×${u.remindLaterCount}, terms read ${u.eulaScrollPct}%`;
     push(era, 'update', `update-${i}`, u.remindLaterCount ? 'deferred once' : 'accepted', w, false);
   });
-  return out;
+  return out.filter((entry) => ledger.reachedEras.includes(entry.era));
 }
 
 export function entriesByEra(): Record<RecordEra, RecordEntry[]> {

@@ -56,7 +56,7 @@ export class RestorifyApp {
     this.hits = [];
     const { dx, dy } = this.geom;
     const c = ui.windowFrame(ctx, dx, dy, DW, DH, lamby.restorifyTitle, true, 'restorify');
-    // The X is deliberately inert: Close dismisses the question; Continue acknowledges the programme's reply.
+    this.hits.push({ ...c.closeBox, id: this.lastChip ? 'checkin-continue' : 'restorify-close' });
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     const L = c.x + 10;
 

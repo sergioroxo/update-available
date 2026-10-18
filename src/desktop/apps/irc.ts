@@ -431,8 +431,9 @@ export class IrcApp {
     }
 
     if (this.dmOpen) {
-      // The DM close box is deliberately inert: the channel's X parks both windows.
+      // Park the conversation without losing its pending reply.
       const d = ui.windowFrame(ctx, 170, 140, 300, 170, dialog.dmTitle, this.focus === 'dm');
+      this.closeRect.push({ ...d.closeBox, id: 'irc-dm-close' });
       ui.px(ctx, d.x, d.y, d.w, d.h - 22, ERA1.paper);
       ui.setFont(ctx, 9);
       // the transcript scrolls; the reply takes the type area at the bottom (press-
@@ -460,8 +461,8 @@ export class IrcApp {
     }
     // R3-26 — the request: a small dialog over the channel, one live answer
     if (this.requestPending) {
-      // This required question's close box is deliberately inert; its answer owns the window.
       const q = ui.windowFrame(ctx, 150, 150, 260, 92, dialog.request.title, true);
+      this.closeRect.push({ ...q.closeBox, id: 'irc-request-close' });
       ui.px(ctx, q.x, q.y, q.w, q.h, ERA1.beige);
       ui.setFont(ctx, 10);
       ctx.fillStyle = ERA1.black;
@@ -475,8 +476,8 @@ export class IrcApp {
     }
     // ⚑ S186 — the DCC send: the same grammar, one live answer (his "you have to accept")
     if (this.sendPending) {
-      // This required question's close box is deliberately inert; its answer owns the window.
       const q = ui.windowFrame(ctx, 160, 170, 270, 104, dialog.dcc.title, true);
+      this.closeRect.push({ ...q.closeBox, id: 'irc-dcc-close' });
       ui.px(ctx, q.x, q.y, q.w, q.h, ERA1.beige);
       ui.setFont(ctx, 10);
       ctx.fillStyle = ERA1.black;
@@ -489,7 +490,6 @@ export class IrcApp {
       ui.button(ctx, q.x + q.w - 8 - 70 - 6 - 70, by, 70, 20, dialog.dcc.ignore, { disabled: true });
       this.replyRects = [{ x: q.x + q.w - 8 - 70, y: by, w: 70, h: 20, id: 'dcc-accept' }];
     }
-    if (this.replyRects.some(r => r.id === 'dm-accept' || r.id === 'dcc-accept' || r.id.startsWith('reply:'))) this.closeRect = [];
   }
 
   /** the line(s) the player can say, in the type area at the bottom of the DM */
@@ -516,7 +516,7 @@ export class IrcApp {
 
   handleClick(x: number, y: number): void {
     const close = this.closeRect.find(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
-    if (close && !this.replyRects.some(r => r.id === 'dm-accept' || r.id === 'dcc-accept' || r.id.startsWith('reply:'))) { this.onClose?.(); return; }
+    if (close) { this.onClose?.(); return; }
     // R3-26: the request owns the window while it stands
     if (this.requestPending) {
       const r = this.replyRects.find((r) => r.id === 'dm-accept');

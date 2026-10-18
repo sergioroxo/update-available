@@ -409,6 +409,8 @@ export class DesktopOS {
    *  decides which transitions take it; the OS only reports the press. */
   onEraRelocate?: (era: string) => void;
   /** engine listens: the player answered a summons (visit dollies the camera) */
+  /** The next story action is back on Daniel's monitor. */
+  onMessageReady?: () => void;
   onSendResolve?: (id: string, outcome: 'visited' | 'declined') => void;
   /** `act`: a toast that is also a door (W1-D17 — Caleb's message): a press on it does the thing it names */
   private _toast: { text: string; t: number; act?: 'message-open' } | null = null;
@@ -705,6 +707,7 @@ export class DesktopOS {
       //   (Phase 5; data/dialog/s1_browser.json); the channel opens from any page's Join
       if (!ledger.records.includes('went-online')) ledger.records.push('went-online');
       this.web = new Web1997App();
+      this.web.onClose = () => this.minimiseWindow('web');
       this.web.onSearch = () => { if (!ledger.records.includes('search-1997')) ledger.records.push('search-1997'); this.dirty = true; };
       this.web.onJoin = () => { this.minimiseWindow('web'); this.joinChannel(); this.dirty = true; };
       this.dirty = true;
@@ -947,6 +950,7 @@ export class DesktopOS {
     this.clearExternalSendHits();
     const entering = this.desktopEra !== era;
     this.desktopEra = era;
+    if (!ledger.reachedEras.includes(era)) ledger.reachedEras.push(era);
     setFaceEra(era);   // 2026-09-13: the era's face (theme/fonts.ts)
     this.retireEra1Windows();
     // ⚑ E4 HAS NO DESKTOP (docs/REINTERP_E4_THE_SPACE_2026-08-06.md §6). E1, E2
@@ -1425,6 +1429,7 @@ export class DesktopOS {
     //   programme's pull before Caleb reaches through it (a player who went straight to Caleb used to never see it)
     if (!ledger.sends.some((s) => s.id === 's1' && (s.outcome === 'visited' || s.outcome === 'declined'))) return;
     this.messagePending = true;
+    this.onMessageReady?.();
     this.dirty = true;
   }
 
@@ -1489,6 +1494,7 @@ export class DesktopOS {
   /** the player opens the message — from Lamby's notice, or from the unread
    *  Messenger icon if they dismissed him. Same door either way. */
   private openMessenger(): void {
+    if (this.caleb) { this.caleb.open = true; this.dirty = true; return; }
     if (this.calebOpenedThisSession) return;
     this.calebOpenedThisSession = true;
     this.messagePending = false;
@@ -1504,6 +1510,7 @@ export class DesktopOS {
     const thread = new CalebThreadApp();
     this.caleb = thread;
     this.startProgram(calebStrings.window.title);   // S157 / R3-50: the messenger loads first
+    thread.onClose = () => { thread.open = false; this.dirty = true; };
     thread.onCommit = () => this.openAccountabilityAlert();
     // S60 (finding E20): he pressed the notification. The felt module reports
     // the press and learns nothing; the apparatus answers it, by re-asserting
@@ -1560,6 +1567,9 @@ export class DesktopOS {
     if (this.caleb) alert.setChatRect(this.caleb.windowRect);
     alert.onRedactionStart = () => this.caleb?.beginRedaction();
     alert.onAlertDone = (dismissed) => {
+      // Closing an alert returns the person's words. The later letter keeps
+      // its own chronology and does not hold the transcript hostage.
+      this.caleb?.beginRestore();
       // S2R.4: "I found something that helped others like you." If Lamby was
       // dismissed instead, the offer never comes — the era does not chase —
       // but the collapse still arrives: it was never the player's to trigger.
@@ -1826,7 +1836,7 @@ export class DesktopOS {
     //   message lands at `testimony-online`, and in the same frame the spine offered the Route sheet. While Caleb's
     //   door-toast is up the summons now waits; if the toast passes unanswered the summons arrives after it, and if
     //   the player presses it the Caleb thread holds the spine as before (W1-D17 made the toast a door).
-    return this.sendOffer !== null || this.caleb !== null || this.e4HoldsTheSpine
+    return this.sendOffer !== null || this.messagePending || this.caleb !== null || this.e4HoldsTheSpine
       || this.toast?.act === 'message-open';
   }
 
@@ -2774,7 +2784,7 @@ export class DesktopOS {
     // …and the Messenger, once a message has landed and not yet been read
     // (finding B8): the door stays visible whether or not Lamby's notice was
     // taken, so nothing depends on having said yes to him.
-    if (this.desktopEra === 'e2' && this.messagePending) {
+    if (this.desktopEra === 'e2' && (this.messagePending || (this.caleb && !this.caleb.open))) {
       this.drawIcon(12, 236, lambyStrings.messengerIcon, true, 'icon-messenger', true);
     }
     // ⚑ S229 / W1-A6 — "what you can do here": a desktop object, so UNDER every window (and drawn only while the

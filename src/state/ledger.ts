@@ -6,6 +6,8 @@
  *   - wiped on exit, idle reset, and refusal-path endings
  */
 export interface Ledger {
+  /** Actual room arrivals, in memory only; constructors are not visits. */
+  reachedEras: ('e1' | 'e2' | 'e3' | 'e4')[];
   name: string; // typed at boot; display only
   tags: string[];
   records: string[];
@@ -331,6 +333,7 @@ export interface Ledger {
 }
 
 const fresh = (): Ledger => ({
+  reachedEras: ['e1'],
   name: '—',
   tags: [],
   records: [],

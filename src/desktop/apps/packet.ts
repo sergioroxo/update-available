@@ -42,7 +42,6 @@ export class PacketApp {
   draw(ctx: CanvasRenderingContext2D): void {
     const { dx, dy } = this.geom;
     const jitter = this.deadPressT > 0 ? (Math.random() * 2 - 1) : 0;
-    // The X is deliberately inert: this compulsory placement notice advances through its own button.
     const c = ui.windowFrame(ctx, dx + jitter, dy, DW, DH, end.packet.windowTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
 
@@ -65,6 +64,7 @@ export class PacketApp {
     //   the beat — you cannot ask. A control that answers is a control an audit
     //   should be able to see, whatever it does or refuses to do.
     this.hits = [
+      { ...c.closeBox, id: 'ok' },
       { x: c.x + 10, y: by, w: 110, h: 20, id: 'dead' },
       { x: c.x + c.w - 70, y: by, w: 60, h: 20, id: 'ok' }
     ];

@@ -527,12 +527,16 @@ export class ProvotypeApp {
     out.push({ kind: 'rule', h: 7 });
     out.push({ kind: 'text', text: chrome.debriefHeading, size: 8, color: ERA1.greyDark, dx: 0, h: 12 });
     for (const src of this.data.debrief.sources) {
+      ui.setFont(ctx, 8);
+      const status = (words.short as Record<string, string>)[src.status] ?? src.status;
+      const tail = wrap(ctx, `· ${src.confidence} confidence`, maxW - ctx.measureText(status).width - 6);
       out.push({
         // ⚑ S177 — the public words here too (S175, status_words.json): this card was the
         //   one place a visitor still read the in-house "documentary" and "[VERIFY SOURCE]".
         kind: 'status', text: (words.short as Record<string, string>)[src.status] ?? src.status, size: 8, color: STATUS_COLOR[src.status], dx: 0, h: 10,
-        tail: `· ${src.confidence} confidence`
+        tail: tail.shift() ?? ''
       });
+      for (const line of tail) out.push({ kind: 'text', text: line, size: 8, color: ERA1.greyDark, dx: 0, h: 10 });
       ui.setFont(ctx, 8);
       for (const w of wrap(ctx, src.text.split(words._verifyMarker).join(words.verifyPublic), maxW - 8)) {
         out.push({ kind: 'text', text: w, size: 8, color: ERA1.black, dx: 8, h: 10 });

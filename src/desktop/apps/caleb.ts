@@ -213,6 +213,7 @@ function glitchWash(
 export type CalebPhase = 'chat' | 'sealed' | 'restoring' | 'returning' | 'residue' | 'done';
 
 export class CalebThreadApp {
+  onClose?: () => void;
   open = true;
   dirty = true;
   phase: CalebPhase = 'chat';
@@ -511,6 +512,7 @@ export class CalebThreadApp {
     if (!this.windowVisible) return;
 
     const c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, caleb.window.title, true);
+    this.hits.push({ ...c.closeBox, id: 'caleb-close' });
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
 
     // S157 / R3-51 — THE 2003 IM LOOK. The contact strip with the messenger's own mark,
@@ -799,6 +801,7 @@ export class CalebThreadApp {
   handleClick(x: number, y: number): void {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit) return;
+    if (hit.id === 'caleb-close') { this.onClose?.(); this.dirty = true; return; }
     if (hit.id === 'residue') { this.commitResidue(); return; }
     if (hit.id === 'toast') { this.onNotificationPressed?.(); return; }
     if (hit.id === 'attachment') {
