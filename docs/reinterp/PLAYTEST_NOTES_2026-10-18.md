@@ -43,3 +43,33 @@ the HUMAN path (headless probes), plus one full walk at the end.*
     visitors who want to go quicker.
 23. **"Your file — what the system recorded"**: add it as a research finding (dossier wording his), with image
     examples.
+
+## Added later on 18 Oct (his second message and the second playtest)
+24. **P0 · 2026 ends at once after a route that used Start → Jump** (both playtests; his screenshot shows "update to
+    era 5" filed with 2 of 9 beats done): the laptop shows the Close's "Your update has failed… L will be waiting for
+    the next update — coming soon." Under investigation by Claude (a walk from 2003 to the Close is reproducing it).
+    One cause fixed (S254: a jump left the 2026 shell marked handed-off — now a fresh shell after every jump).
+25. **"About this" belongs at the END, with the era-1 dossier** (see browser-playtest/10-dossier-overflow.png — it also
+    overflows there; fix the overflow).
+26. **"LambyOS Home still appears at the end"** — the Library on Daniel's monitor uses the Bob art and the sign
+    "LambyOS Home — Library". His call: keep the Library, or return the end to the retro OS look until the Bob version.
+27. **Mute**: in the "muted" version the room tone and system sounds were still audible — fixed by Claude (S254: the
+    setup's "Keep it quiet" now uses the menu's full mute — tapes, room beds, one-shots).
+28. **2003: too much camera adjusting** by the system — when the visitor moves, the system forces the view back. Only
+    move the camera when the story needs it (the C4 desk lean-in/out is the likely cause; make it gentler and never
+    fight a drag).
+29. From Codex's second playtest (browser-playtest-continuation-2026-10-18/review.md): (1) Caleb's chat stays redacted
+    after the first alert is closed and the alerts stack — one alert at a time, and the conversation readable after;
+    (2) the media release: preselected channels + one "I Agree" — keep it as the coercion it depicts, but make the
+    decline visible (his call); (3) "Your file" shows entries from UNPLAYED eras (spoiler) — only show what was met;
+    (4) posting the group message silently attaches Renata's story — show the attachment before posting; (5) Lamby says
+    "Annette first" but the family calls open on Ruth — open Annette; (6) "no template matches" beside four replies —
+    reword; (7) the queue card says "done" and "four waiting" — fix the count; (8) the story page's BROADBAND option and
+    "Start here" do nothing — wire or disable.
+30. **Research findings logged** (docs/reinterp/ARTICLE_EVIDENCE_LOG.md): F-EXH-1 Lamby as Clippy; F-EXH-2 "Your file".
+31. **⚑ His decision (18 Oct): the END gets the retro OS look again, and the old Lexicon.** Replace the Library on
+    Daniel's monitor (the Bob-art "LambyOS Home — Library", commits "CODEX: library — end the Close on Daniel's monitor"
+    186faf4 and "CODEX: library-2 …" f5ae2bc) with the Close's earlier retro ending on that monitor: the Restart card in
+    the era's OS style (Go back to a room · Start again · the receipt · the Lexicon) and the Lexicon as it was at the
+    Close (The Words, The Reasons, Your Words, with the Sources tab kept). Keep the Bob art and library code in the repo
+    (unused) for the later Bob version; "About this" moves here with the era-1 dossier (item 25).

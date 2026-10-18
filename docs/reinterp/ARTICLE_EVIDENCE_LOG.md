@@ -164,6 +164,26 @@ assumed a Trans person to have purple hair (make note of that)"**. The default a
 trans woman is a subcultural signifier (dyed hair), not an ordinary person: a stereotype surfacing in co-authorship, kept
 in the work and logged here as evidence. (Prototype: ~/Pc_Simulation/2026-screen-prototypes/v2_match_made_simple/.)
 
+## Findings from the exhibition (After Virtual Reality, CDN, opened 15 Oct 2026)
+
+**F-EXH-1 · Visitors need the apparatus to guide them — Lamby as Clippy (his ruling, 2026-10-15; confirmed 2026-10-18).**
+At the opening, visitors got lost and blocked: rich content to explore, but no reminder of what to do next. His
+finding: *"We need to reinstate Lamby as the connection point of the correction and forcing you to do stuff."* After
+Lamby was rebuilt as a Clippy-style guide from 1997 (a balloon with Yes/No, hints when you stall, an offer to take you
+to the thing to press), his verdict on watching a playthrough: *"The Lamby functioning like Clippy is awesome,
+really."* The research point: the piece's own critique (an assistant that corrects and steers) turned out to be the
+interaction design the audience needed — the guide and the apparatus are the same figure, and the visitor feels the
+pull of being "helped" while being moved through the programme. CLAUDE.md R28 §2 was revised for it.
+Evidence: docs/reinterp/OPENING_NOTES_2026-10-15.md (G2); docs/reinterp/LAMBY_GUIDE_REPORT_2026-10-16.md;
+screenshots to add (the Lamby balloon in each era).
+
+**F-EXH-2 · "Your file — what the system recorded" (his, 2026-10-18).** The piece keeps an in-memory record of what the
+visitor did in each era, read back as the system's file ("What it did here — entries", "Read your file — the entries
+and their sources"). Watching the playtests, he asked for it to be logged as a research finding with image examples:
+the visitor sees their own choices turned into the programme's entries, each tied to a source. Evidence: the Start
+menu's "Where you are" panel and the file view (screenshots to add to docs/reinterp/article-evidence/: the 2003 and
+2026 columns of "Where you are", the file view). Dossier wording for any public text stays his.
+
 ## Open items (Sérgio's, not Claude's)
 
 - The abstract itself (500 words max, bio 200 words max, cc `DCsubmit@gmail.com`) is his to write —
