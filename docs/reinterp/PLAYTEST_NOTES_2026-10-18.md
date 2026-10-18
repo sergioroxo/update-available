@@ -73,3 +73,17 @@ the HUMAN path (headless probes), plus one full walk at the end.*
     the era's OS style (Go back to a room · Start again · the receipt · the Lexicon) and the Lexicon as it was at the
     Close (The Words, The Reasons, Your Words, with the Sources tab kept). Keep the Bob art and library code in the repo
     (unused) for the later Bob version; "About this" moves here with the era-1 dossier (item 25).
+32. **Evidence for item 24 (Claude, 18 Oct, for Codex):**
+    - `src/desktop/os.ts closeForEraJump()` called `e4.closeForEraJump()` → `debugStopDevice()`, which sets
+      `handedOff = true` on the live 2026 shell; any later arrival found a finished session → `finishHandOff`-like end
+      state and the close update. FIXED in S254 (a fresh `newE4Shell()` after every jump). Re-test the playtester's
+      route: Start → Jump to 2003 → play to 2026 normally → 2026 must begin (screensaver → restore → L) and run to the
+      Close.
+    - A second, separate stall: `node tools/walk.mjs --from-era 2 --require-close` (review boot `?era=2&descent=0`)
+      reaches 2026 with the browser DORMANT and the laptop off, forever (out/walks/WALK_2026-10-18_FROM_e2_SPEEDRUN_GUIDED.md,
+      out/walk-shots-e2/walk_end.png). `os.e4.beginSession()` is only called from app.ts `endRelocation` (key 'e3-e4') and
+      `jumpToEraSettled`; under `descent=0` (no relocation flight) the E3→E4 arrival seems never to call it. Earlier
+      from-era walks (14 Oct) passed, so check whether G4 (one guided version) changed the e3→e4 arrival. Fix so the
+      session begins on EVERY arrival path (flight, no flight, reduced motion, jump).
+    - The playtester's own symptom (the laptop's END face right after arriving, "update to era 5" filed with 2 of 9
+      beats) still needs reproducing from the human route; S254's fix may cover it.

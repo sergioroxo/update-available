@@ -4255,7 +4255,10 @@ export class DesktopOS {
     this.mapAtClose = false;
     this.startOpen = false; this.startMap.close(); this.startHits = []; this.hits = [];
     this.stopReadAloud(); stopOneShots(); releaseBus(); this.e2Jingle?.pause(); this.e2Jingle = null;
-    this.e4?.closeForEraJump();
+    // ⚑ S254 (playtest 2026-10-18: arriving in 2026 after any Start → Jump showed the era's END — the laptop's
+    // "Your update has failed" and the close update already filed): closeForEraJump() marks the shell handed off,
+    // so a later NORMAL arrival in 2026 found a finished session. Put the device away, then start a fresh shell.
+    if (this.e4) { this.e4.closeForEraJump(); this.e4 = this.newE4Shell(); }
     this.restorify = null; this.caleb = null; this.accountability = null; this.netvision = null; this.mediaPlayer = null;
     this.modalCalm = 0; this.pendingUpdate = null;
     this.updateApp = null; this.pauseOpen = null; this.wotdOpen = null; this.shutRefused = false; this.saver = null;

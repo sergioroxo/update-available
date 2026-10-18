@@ -1,5 +1,6 @@
 import { reducedMotion, setReducedMotion } from '../../state/motion';
-import { setOneShotsMuted } from '../../audio/tapeAudio';
+import { setOneShotsMuted, roomBed } from '../../audio/tapeAudio';
+import { gameMenuBus } from '../../state/gameMenuBus';
 import { getMaster, setMaster } from '../../audio/mix';
 /** Pre-story setup, on the same desktop canvas and hit rectangles as the OS.
  * The restore entrance calls startSetup() in the stars, before restoring the seat.
@@ -198,7 +199,13 @@ export class LambySetup {
       setMaster(Math.round(Math.max(0, Math.min(1, (x - gx - tw / 2) / (gw - tw))) * 10) / 10); this.hits = []; this.dirty = true; return;
     }
     if (id === 'setup-sound-on' || id === 'setup-sound-quiet') {
-      ledger.view.captions = id === 'setup-sound-quiet'; setOneShotsMuted(ledger.view.captions); this.sound?.pause(); this.advance('look'); return;
+      // ⚑ S254 (playtest 2026-10-18: "in the muted version you can still hear the room tone and some sounds from the
+      // system"): "Keep it quiet" is the menu's ONE mute (tapes, room beds, one-shots), not one-shots only; captions on.
+      const quiet = id === 'setup-sound-quiet';
+      ledger.view.captions = quiet;
+      if (gameMenuBus.toggleSound && gameMenuBus.soundMuted && !!gameMenuBus.soundMuted() !== quiet) gameMenuBus.toggleSound();
+      setOneShotsMuted(quiet); roomBed.setMuted(quiet);   // also directly, in case the tape bus does not exist yet
+      this.sound?.pause(); this.advance('look'); return;
     }
     if (id === 'setup-dismiss') { this.dismissed = true; if (STEPS.indexOf(this.step) < STEPS.indexOf('advert')) this.advance('note'); this.dirty = true; return; }
     if (id === 'setup-note-open') { this.window = 'note'; this.noteOpened = true; this.dirty = true; return; }
