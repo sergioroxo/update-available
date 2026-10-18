@@ -44,10 +44,24 @@ screenshots of each fix.
 ```
 TASK = playtest-polish. Read CLAUDE.md (R28 §2: Lamby the guide), docs/reinterp/PLAYTEST_NOTES_2026-10-18.md and the
 two playtest folders. Do these, each checked by a short headless probe on the visitor's path (out/playtest-polish/):
+0. FIRST — ONE WAY OF SAYING WHAT TO DO (his note, 2026-10-19: "we have repetitive ways of explaining what to do").
+   Audit every channel that tells the visitor what to do next — Lamby's guide balloons (src/narrative/lambyGuide.ts),
+   the era start panels ("what you can do here", src/desktop/apps/startPanel.ts), the Start menu's map
+   (startMenuMap.ts / src/witness/startModel.ts), the frame helper's corner hints (src/frame/helper.ts), Era 1's
+   side-messages, the taskbar status line, the game menu's "Where you are", the call button (src/frame/call.ts), the
+   Word of the Day — and list, per era, where the SAME instruction appears twice or more (a table in the report).
+   Then apply this hierarchy (Claude's recommendation, pending his OK — implement it, he reviews):
+   - LAMBY is the one voice that says what to do next (balloon + pointer + "take me there"), on stall and on its symbol.
+   - The START MENU is the list (every step in order, ticks, the era jumps) — reference, silent.
+   - REMOVE the era start panels (their content already lives in the Start menu), and remove "next step" wording from
+     the frame helper, the taskbar line and the game menu's map (they keep only what is theirs: controls like "Esc
+     opens the menu", the OS's own status, the frame's plain map). Keep the call button for its moments only, and
+     never at the same time as a Lamby balloon. Era 1's impersonal side-messages stay only where Lamby has nothing to say.
+   Never two instructions on screen at once; one voice at a time (CLAUDE.md R28 §2).
 1. Lamby is ALWAYS available: its symbol always on screen in every era; shrink its balloon so it never covers the
    symbol (item 6). The setup teaches the symbol as the helper, beside the Start-menu lesson (item 7).
 2. "What to do" stops being its own button: it lives in the Start menu (already the map) and on Lamby's symbol, and
-   reopens every time (item 3).
+   reopens every time (item 3) — consistent with step 0.
 3. Camera: no automatic zoom unless the visitor zooms (item 8); in 2003 the system stops pulling the view back while the
    visitor looks around (item 28 — the desk lean-in/out from the "screen-and-cues" commit: make it gentle, and never
    fight a drag).
