@@ -10,7 +10,7 @@ export interface GuideView {
   targets: string[]; act?: string; frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  formAvailable?: boolean; formOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -40,7 +40,7 @@ export class LambyGuide {
   tick(dt: number, input: GuideInput): void {
     this.input = input;
     const alias: Record<string, string> = { l: 'browser', search: 'results', site: 'program' };
-    const beat = input.map.current?.beat.id ?? '';
+    const beat = input.deferredUpdate ? 'update' : input.map.current?.beat.id ?? '';
     const step = input.era === 'e4' ? alias[beat] ?? beat : input.era === 'e3' && beat === 'migrate' ? 'signin' : beat;
     const key = `${input.era}:${step}`;
     if (key !== this.key) {

@@ -32,3 +32,5 @@ console.log('An unanswered second line reaches the final Start nudge once, then 
 const queued=make();queued.tick(0,input('checkin',{voice:true}));assert(queued.press('lg-tray'));queued.tick(0,input());assert(queued.active);assert.equal(queued.view.rung,'tip');
 const cancelled=make();cancelled.tick(0,input('checkin',{voice:true}));cancelled.press('lg-tray');cancelled.tick(0,input('checkin',{silent:true}));cancelled.tick(0,input());assert(!cancelled.active);
 console.log('Requested help waits for one voice; a quiet scene cancels the pending request.');
+
+const deferred=make();deferred.tick(0,input('',{era:'e1',map:{current:null,quiet:false},deferredUpdate:true}));deferred.press('lg-tray');assert.equal(deferred.view.beat,'update');assert.equal(deferred.view.text,copy.eras.e1.update.tip);console.log('Deferred update help follows actual update state after the map is ticked.');

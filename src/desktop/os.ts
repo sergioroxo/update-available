@@ -538,6 +538,7 @@ export class DesktopOS {
     if (this.guideLedger !== ledgerGeneration) { this.lambyGuide = this.makeLambyGuide(); this.guideLedger = ledgerGeneration; }
     const before = this.lambyGuide.version;
     const input: GuideInput = { era: this.desktopEra, map: mapState(this), ...this.guideSilence,
+      deferredUpdate: this.desktopEra === 'e1' && !!this.updateApp?.deferred,
       formAvailable: this.formAvailable && ledger.records.includes('enrollment-acknowledged'), formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);

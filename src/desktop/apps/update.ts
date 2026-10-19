@@ -193,6 +193,9 @@ export class UpdateApp {
     if (this.s.cascade) this.phase = 'cascade';
   }
 
+  /** Actual deferral state, including when the reference map has already ticked the update. */
+  get deferred(): boolean { return this.phase === 'reminded'; }
+
   /** the notification is withdrawn while reminded; it returns once */
   get visible(): boolean {
     return this.phase !== 'reminded' && this.calm <= 0;

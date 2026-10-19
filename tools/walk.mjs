@@ -420,14 +420,15 @@ async function main() {
   };
 
   if (flag('motion', '') === 'reduced') await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
-  const startQuery = (SETUP ? '?reinterp=1&setup=1&home=0&kiosk=0&debug=1&descent=0' : FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '') + (HOME_DOOR && !SETUP ? '&entrance=home' : '');
+  const formOfferProbe = process.argv.includes('--form-offer-probe');
+  const startQuery = (formOfferProbe ? '?reinterp=1&kiosk=0&era=1&debug=1&descent=0&home=0' : SETUP ? '?reinterp=1&setup=1&home=0&kiosk=0&debug=1&descent=0' : FROM_ERA > 1 ? `?reinterp=1&kiosk=0&era=${FROM_ERA}&debug=1&descent=0` : '?reinterp=1&kiosk=0&debug=1') + (CUT ? '&cut=' + CUT : '') + (HOME_DOOR && !SETUP ? '&entrance=home' : '');
   // S223: wait for the page's own load, not for "network idle", and give a COLD dev server time: on a fresh machine
   //   Vite transforms every module on first request (the cloud's first run spent its whole minute there)
   await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'load', timeout: 240000 });
   note('open', { what: startQuery + (FROM_ERA > 1 ? ' — ⚑ FROM ERA ' + FROM_ERA + ': not a reachability proof' : ' — debug is READ-ONLY here; no panel button, no jump, no __requestMove') });
 
   // ── the front door is real DOM, not canvas (4 s ethics delay honoured) ──
-  if (FROM_ERA <= 1 && ENTRANCE) {
+  if (FROM_ERA <= 1 && ENTRANCE && !formOfferProbe) {
     await page.waitForSelector('#restore-entrance[data-phase="wake"]', { timeout: 180000 });
     await page.mouse.click(VIEW.width / 2, VIEW.height / 2);
     note('dom', { target: 'wake', what: 'restore entrance: real press; no reload' });
@@ -1191,10 +1192,11 @@ async function main() {
   const blockerName = flag('blocker-probe', process.env.PLAYTEST_BLOCKER_AUDIT === '1' ? 'audit' : '');
   const blockerProbe = blockerName
     ? (await import('./playtest-blockers-probe.mjs')).createBlockerProbe(blockerName, join(ROOT, process.env.PLAYTEST_BLOCKER_DIR || 'out/playtest-blockers')) : null;
-  const polishProbe = process.argv.includes('--polish-probe') ? (await import('./playtest-polish-walk-probe.mjs')).createPolishProbe(join(ROOT, 'out/playtest-polish')) : null;
+  const polishProbe = process.argv.includes('--polish-probe') ? (await import('./playtest-polish-walk-probe.mjs')).createPolishProbe(join(ROOT, flag('polish-probe-out', 'out/playtest-polish')), formOfferProbe) : null;
   const startEraSeen = s.era;
   for (let i = 0; i < MAX_STEPS; i++) {
-    if (polishProbe) { const result = await polishProbe({page, s, press, probe}); if (result.handled) { s = await probe(); continue; } }
+    if (formOfferProbe && !await page.evaluate(()=>window.__ledger().records.includes('enrollment-acknowledged'))) s.targets=s.targets.filter(t=>t.id!=='icon-provotype-intake');
+    if (polishProbe) { const result = await polishProbe({page, s, press, probe}); if (result.stop) break; if (result.handled) { s = await probe(); continue; } }
     if (blockerProbe) {
       const result = await blockerProbe({page, s, press, probe});
       if (result.stop) break;
