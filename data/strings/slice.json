@@ -72,7 +72,7 @@
   "_docTaskbar": "S165 / W-E2 (a): the taskbar buttons of the program windows (≤ 9 characters at the 9 px face; 64 px buttons). Period-true 1997/2003: pressed in while the window is up, raised while it waits.",
   "kitToast": "The parcel on your desk holds a companion disk. Insert it to begin.",
   "logToast": "Logging to C:\\mirc\\logs\\#stillstruggling.log",
-  "behindToast": "Record filed. (see behind you)",
+  "behindToast": "Record filed.",
   "eraSkins": {
    "_doc": "PLACEHOLDER — minimal per-era desktop shells after updates. Labels only; no mechanics or final copy. Uses existing Era-1 palette colors until the full per-era theme pass lands. Session 60: the third icon in every list was 'Dossier' — the served card. It is gone from the shelf; see `dossier._doc` for where it went and why it is now found rather than advertised.",
    "e2": {

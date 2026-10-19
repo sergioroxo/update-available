@@ -38,6 +38,7 @@ export class StartMenuMap {
       this.menu = true;
       return true;
     }
+    if (id === 'sm-whattodo') { this.menu = false; this.steps = !silent; return true; }
     if (id === 'sm-allsteps') { this.menu = false; this.steps = !silent; return true; }
     if (id === 'sm-jump') { if (!silent) { this.menu = true; this.view = 'jump'; } return true; }
     if (id === 'sm-programs') { this.menu = true; this.view = 'programs'; return true; }
@@ -88,11 +89,10 @@ export class StartMenuMap {
     } else {
       head(S.now);
       if (model.now) {
-        item(model.now.label, 'sm-now'); ui.setFont(ctx, 9);
+        item(model.now.label, ''); ui.setFont(ctx, 9);
         ui.wrapText(ctx, model.now.hint, tw - 10).forEach(text => rows.push({ text, hint: true }));
       }
       head(S.next); model.next.forEach(b => item(b.label, '', true));
-      item(S.whatToDo, 'sm-whattodo', silent, silent ? S.notNow : undefined);
       item(S.allSteps, 'sm-allsteps', silent, silent ? S.notNow : undefined);
       if (legacy) {
         const expanded: Row[] = [{ text: S.programs, head: true }, ...(programs.length ? programs.map(v => ({ text: v.label, id: `sm-prog:${v.id}` })) : [{ text: S.nothing, dim: true }])];
@@ -100,7 +100,7 @@ export class StartMenuMap {
         if ((rows.length + expanded.length + tailCount) * row + 16 > H - 30) item(S.programsMore, 'sm-programs');
         else rows.push(...expanded);
       }
-      if (model.room.length) { head(S.room); model.room.forEach(b => item(b.label, `sm-room:${b.id}`)); }
+      if (model.room.length) { head(S.room); model.room.forEach(b => item(b.label, '')); }
       head(S.more);
       ui.setFont(ctx, 10);
       model.extras.forEach(e => {

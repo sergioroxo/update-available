@@ -33,7 +33,7 @@ export function drawGuidePointer(ctx: CanvasRenderingContext2D, r: GuideHit, fro
 }
 export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, state: GuideView, hits: GuideHit[], size = { w: 512, h: 384 }): GuidePaint {
   const out: GuidePaint = { rings: [], balloon: false };
-  if (state.hidden || state.era !== skin) return out;
+  if (state.era !== skin) return out;
   const W = size.w, H = size.h, tx = W - (skin === 'e3' ? 182 : 108), ty = H - 20;
   const accent = skin === 'e3' ? ERA3.accent : skin === 'e4' ? CHROME.accent : ERA1.navy;
   const ink = skin === 'e4' ? CHROME.ink : skin === 'e3' ? ERA3.ink : ERA1.black;
@@ -45,14 +45,14 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   if (skin === 'e3') aero.drawLambMark(ctx, tx + 10, headY, 0.55);
   else drawLambyChar(ctx, tx + 10, headY + 4, { mood: 'cheerful', action: 'idle', scale: 0.24, headOnly: true, t: state.rung === 'cue' ? state.time : 0, moodStart: 0 }); ctx.restore();
   ui.setFont(ctx, 9); ctx.fillStyle = skin === 'e3' ? ERA3.white : ink; ctx.fillText(copy.ui.tray, tx + 22, ty + 5);
-  hits.push({ id: 'lg-tray', label: copy.ui.tray, tip: copy.ui.trayTip, x: tx, y: ty - 3, w: 60, h: 21 });
-  if (!state.text) return out;
+  hits.push({ id: 'lg-tray', label: copy.ui.tray, tip: state.hidden ? undefined : copy.ui.trayTip, x: tx, y: ty - 3, w: 60, h: 21 });
+  if (state.hidden || !state.text) return out;
   out.balloon = true;
   const targets = state.targets.flatMap(id => hits.filter(h => h.id === id));
   const multiple = state.beat === 'pledge' || state.beat === 'consent' || state.beat === 'steps';
   const selected = multiple ? targets : targets.slice(0, 1);
   const pointing = state.rung === 'show' || state.rung === 'start';
-  const w = 294, h = 112, x = W - w - 12;
+  const w = 272, h = 112, x = W - w - 12;
   let y = H - 22 - h - 70;
   if (pointing && selected.some(r => r.x < x + w && r.x + r.w > x && r.y < y + h && r.y + r.h > y)) y = 26;
   const cx = skin === 'e3' ? tx + 10 : W - 48, cy = H - 59;

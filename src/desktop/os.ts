@@ -1,3 +1,4 @@
+import polish from '../../data/strings/playtestPolish.json';
 import { reducedMotion } from '../state/motion';
 import { LambyGuide, type GuideInput } from '../narrative/lambyGuide';
 import { drawLambyGuide, type GuideHit, type GuidePaint } from './apps/lambyGuideDraw';
@@ -525,11 +526,11 @@ export class DesktopOS {
       silent: !this.reinterp || this.phase !== 'desktop' || this.paused || gameMenuBus.isOpen || !!this.setup?.open
         || !!this.caleb?.open || this.residueDark || this.desktopReturnAt >= 0 || !!this.testimony?.playbackActive
         || !!this.provotype?.open || !!this.diary?.open || !!this.packet?.open || this.dossierOpen || !!this.accountability || this.yesOpen || !!this.pauseOpen
-        || !!this.updateApp || !!this.sendOffer?.open || !!this.saver || this.startOpen || !!this.wotdOpen
+        || !!this.updateApp?.visible || !!this.sendOffer?.open || !!this.saver || this.startOpen || !!this.wotdOpen
         || this.shutRefused || this.startMap.active || !!this.netvision?.open || !!this.mediaPlayer?.open
         || (this.desktopEra === 'e2' && this.e2Stage !== 'active') || !!external?.silent,
       voice: !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!external?.voice
-        || (this.desktopEra === 'e1' && !!this.guide?.activeText && (this.guideTipAt >= 0 || this.guideTipPinned))
+        || (this.desktopEra === 'e1' && !this.lambyGuide.hasStep && !!this.guide?.activeText && (this.guideTipAt >= 0 || this.guideTipPinned))
     };
   }
   private updateLambyGuide(dt: number): void {
@@ -537,7 +538,7 @@ export class DesktopOS {
     if (this.guideLedger !== ledgerGeneration) { this.lambyGuide = this.makeLambyGuide(); this.guideLedger = ledgerGeneration; }
     const before = this.lambyGuide.version;
     const input: GuideInput = { era: this.desktopEra, map: mapState(this), ...this.guideSilence,
-      formAvailable: this.formAvailable, formOpened: !!this.provotype || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
+      formAvailable: this.formAvailable && ledger.records.includes('enrollment-acknowledged'), formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
     if (before !== this.lambyGuide.version) { this.dirty = true; if (this.e4) this.e4.browser.version++; }
@@ -720,9 +721,9 @@ export class DesktopOS {
       this.irc.onLine = () => playOnce('irc_1997.mp3');
       this.irc.onImage = () => { this.yesOpen = true; this.dirty = true; };
       this.irc.onHooked = () => {
-        this.toast = { text: strings.desktop.logToast, t: 6 };
+        this.toast = { text: strings.desktop.logToast, t: 10 };
         this.hasUnseenWitness = true; // the cold side begins to creep in
-        this.behindToastAt = this.t + 7; // a beat later: a reason to look back
+        this.behindToastAt = this.t + 11; // a beat later: a reason to look back
         this.onFlipReady?.();
         // the flip EARNS the escalation (main's resolved design): Rob only
         // pushes the residential program after you've turned and witnessed the
@@ -1221,7 +1222,7 @@ export class DesktopOS {
     //   unseen Word of the Day swallowed every press on the dark glass (the walk stopped at "Welcome back")
     if ((era === 'e2' && this.e2Stage !== 'active') || this.caleb?.ownsScreen || this.updateApp?.open) return;
     if (this.idleSeconds < 15 || !this.desktopIdle() || this.toast) return;
-    if (!this.startPanels[era].everShown) return;   // S229 / W1-A6 — one thing at a time: the era's "what you can do here" card comes first
+    if (this.lambyGuide.active || this.lambyGuide.hasStep) return;   // Lamby owns the current step; vocabulary waits.
     this.wotdShown.add(era);
     this.wotdOpen = era;
     meetWord((lexStrings.wotdApps as Record<string, { word: string }>)[era].word);
@@ -1360,7 +1361,7 @@ export class DesktopOS {
   private flushTestimonyToast(): void {
     if (!this.testimonyToastPending || this.restorify?.open) return;
     this.testimonyToastPending = false;
-    this.toast = { text: testimonyStrings.offer, t: 9 };
+    // The Your Story icon and Lamby’s stall/requested hint own this invitation.
     this.dirty = true;
   }
   private openTestimony(): void {
@@ -1962,7 +1963,7 @@ export class DesktopOS {
     // IN E3 UNDER THE THREE-ROOM MODEL, verified by arriving at them.
     const allowVisit = this.sendOffer.id !== 's3' && this.sendOffer.id !== 's4';
     if (allowVisit) {
-      ui.button(ctx, c.x + c.w - 110, c.y + c.h - 26, 102, 18, def.offer.go, {});
+      ui.button(ctx, c.x + c.w - 110, c.y + c.h - 26, 102, 18, polish.sendGo, {});
       hits.push({ x: c.x + c.w - 110, y: c.y + c.h - 26, w: 102, h: 18, id: 'send-go' });
     }
     const declineW = allowVisit ? 70 : dw - 16;
@@ -2236,6 +2237,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
       const e2Before = this.e2StageT;
       this.e2StageT += dt;
+      if (this.e2Stage === 'silence' && !reducedMotion() && Math.floor(this.e2StageT) !== Math.floor(e2Before)) this.dirty = true;
       // ⚑ S166: the machine boots in SILENCE — post → the crawl; the jingle is the
       //   software's now and plays over Lamby's cartoon (`lambyCartoon`, below).
       //   The CD-ROM splash (S116) is retired from play; `e2Splash` reviews it.
@@ -2867,15 +2869,10 @@ export class DesktopOS {
     //   way a window did: pressed in while it is up, raised while it waits
     //   (S151's wizard button, generalised — see `minimiseWindow`)
     let wellX = 58;
-    if (this.reinterp && !this.startMapSilent && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
-      ui.button(ctx, wellX, H - 19, 76, 16, strings.desktop.startMenu.whatToDo);
-      this.hits.push({ x: wellX, y: H - 19, w: 76, h: 16, id: 'taskbar-whattodo' });
-      wellX += 80;
-    }
     if (this.reinterp && this.phase === 'desktop' && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
       const bw = 64;
       for (const w of this.taskbarWindows()) {
-        if (wellX + bw > W - 50 - 40) break;   // the well keeps at least its stub
+        if (wellX + bw > W - 116) break;   // the well keeps at least its stub
         ui.button(ctx, wellX, H - 19, bw, 16, '', {});
         if (this.windowOpen(w.key)) ui.bevel(ctx, wellX, H - 19, bw, 16, false);
         ui.setFont(ctx, 9);
@@ -2886,9 +2883,9 @@ export class DesktopOS {
       }
     }
     if (this.reinterp && this.desktopEra === 'e1') {
-      const wellW = W - 50 - wellX;
+      const wellW = Math.max(0, W - 116 - wellX);
       ui.bevel(ctx, wellX, H - 19, wellW, 16, false);
-      const guideLine = this.lambyGuide.active ? null : this.guide?.activeText;
+      const guideLine = this.lambyGuide.active || this.lambyGuide.hasStep || this.guideSilence.silent || this.guideSilence.voice ? null : this.guide?.activeText;
       if (guideLine) {
         // ⚑ Phase 7 (his: "the suggestion flows over in the menu bar") — the line is kept inside its
         //   well; when it does not fit, the well shows its start and the whole line rises above the bar
@@ -3062,7 +3059,8 @@ export class DesktopOS {
       ctx.fillText(lambyStrings.returnLine1, 30, Math.round(H / 2) - 18);
       ui.setFont(ctx, 11);
       ctx.fillStyle = ERA1.grey;
-      ctx.fillText(lambyStrings.returnLine2, 30, Math.round(H / 2) + 8);
+      ctx.fillText(polish.returnLine, 30, Math.round(H / 2) + 8);
+      ui.px(ctx, W - 20, H - 18, 5, 5, reducedMotion() || Math.floor(this.e2StageT) % 2 === 0 ? ERA1.titleBlue : ERA1.navy);
       return;
     }
     if (this.e2Stage === 'post') return;   // black: the machine is starting (the sound says so)

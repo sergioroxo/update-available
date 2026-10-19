@@ -202,11 +202,6 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     } else if (view === 'map') {
       const st: MapState | null = gameMenuBus.mapSource ? gameMenuBus.mapSource() : null;
       font(30, true); ctx.fillStyle = FRAME.bright; ctx.fillText(mapCopy.title, 64, y); y += 48;
-      if (st?.current) {
-        for (const l of wrap(`${mapCopy.nextLabel}: ${st.current.beat.hint}${st.current.beat.where ? `  (${st.current.beat.where})` : ''}`, 20, W - 128)) {
-          ctx.fillStyle = FRAME.dim; ctx.fillText(l, 64, y); y += 26;
-        }
-      }
       y += 16;
       if (st) {
         const cols = st.eras.length;

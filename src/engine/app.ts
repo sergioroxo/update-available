@@ -918,7 +918,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.guideIdleScale = guideIdleScale;
     const queueGuide = era3Devices?.debugQueue();
     os.guideExternal = () => {
-      if (queueGuide) queueGuide.lambyGuide = os.lambyGuide;
+      if (queueGuide) {
+        queueGuide.lambyGuide = os.lambyGuide;
+        queueGuide.callPending = os.era === 'e3' && ['phone', 'vote', 'cascade'].includes(mapState(os).current?.beat.id ?? '');
+      }
       if (os.e4) os.e4.browser.lambyGuide = os.lambyGuide;
       if (scriptedBusy()) return { silent: true, voice: false };
       if (os.era === 'e3') return { silent: queueGuide?.guideSilent ?? true, voice: queueGuide?.guideVoice ?? false };
@@ -949,7 +952,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   by its own clock (os.fictionPlaying: his story's clips and page, Caleb's song, Lamby's video, the alert's
       //   timed holds) the line stays down and the idle wait restarts when it stops.
       enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !os.fictionPlaying
-        && !os.guideSilence.silent && !os.guideSilence.voice && !mapState(os).quiet && (!!xr?.active || !os.lambyGuide.active),
+        && !os.guideSilence.silent && !os.guideSilence.voice && !mapState(os).quiet && !os.lambyGuide.active,
       // ⚑ S219 / W1-B6 — a mouse and a big screen: 1.8× the wait; a touch device or a headset: as written
       idleScale: guideIdleScale
     });
@@ -957,7 +960,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   from the screen in front of her, is one press away. The phone comes to the eye; the headset goes on.
     timePassing = createTimePassing(app, () => !!app.xr?.active);
     call = mountCall({
-      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !gameMenuBus.isOpen && !os.testimony?.playbackActive,   // W1-D7: the call waits while his story plays
+      enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !gameMenuBus.isOpen && !os.testimony?.playbackActive && !os.lambyGuide.active && !os.guideSilence.voice && !mapState(os).quiet,   // W1-D7: the call waits while his story plays
       current: () => {
         const cur = mapState(os).current;
         if (!cur) return null;
@@ -3041,35 +3044,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const FOV_MIN = 30;
   const FOV_MAX = 80;
   const FOV_HOME = 42; // createAppShell's authored value, and CAMERA_POSES.fov
-  // W1-B9: browser desk framing only. XR keeps the authored rig and tracked head.
-  const DESK_VIEW = {
-    e1: { fov: 32, halfWidth: 18, pitch: -6.5, yaw: 0 },
-    e2: { fov: 32, halfWidth: 18, pitch: -6.5, yaw: 0 },
-    e3: { fov: 32, halfWidth: 20.6, pitch: 0, yaw: -3 },
-    e4: { fov: 30, halfWidth: 17, pitch: -5, yaw: 0 }
-  };
-  let deskPitch = 0;
-  let deskYaw = 0;
-  let browserDeskActive = false;
-  function browserDesk(): boolean {
-    const seat = seatPose(os.era === 'e3' ? 90 : os.era === 'e4' ? 270 : 0);
-    return options.reinterp === true && !xr?.active && os.inDesktop && !camMove
-      && !closeStage && (!seatNodeId || ['r1-desk', 'r2-desk', 'r3-desk'].includes(seatNodeId))
-      && Math.hypot(camPos.x - seat.x, camPos.y - seat.y, camPos.z - seat.z) < 0.1
-      && !heldDevice && !era3Devices?.phoneInHand
-      && !(os.era === 'e3' && era3Devices?.phoneStoryActive)
-      && !(os.era === 'e4' && os.e4?.stage !== 'closed')
-      && !facingBack && !descentActive && revealReturn <= 0;
-  }
+  // Browser FOV stays authored until the visitor zooms or recentres.
   /** ⚑ S209 / A23 (REVIEW_ROUND_5, PLATFORM-04) — a portrait phone held the landscape's vertical 42°, which left
    *  ~20° across: the monitor was cropped at the seat. The home view now keeps at least the landscape's width of the
    *  desk (22° either side of centre), within the pinch's own 80° ceiling. A pinch or a wheel wins until Recentre. */
   function homeFov(): number {
     const aspect = canvasEl.clientWidth / Math.max(1, canvasEl.clientHeight);
-    const desk = browserDeskActive ? DESK_VIEW[os.era] : null;
-    const base = desk?.fov ?? FOV_HOME;
-    if (!desk && aspect >= 1) return base;
-    const v = 2 * Math.atan(Math.tan(((desk?.halfWidth ?? 22) * Math.PI) / 180) / aspect) * 180 / Math.PI;
+    const base = FOV_HOME;
+    if (aspect >= 1) return base;
+    const v = 2 * Math.atan(Math.tan((22 * Math.PI) / 180) / aspect) * 180 / Math.PI;
     return Math.max(base, Math.min(FOV_MAX, v));
   }
   let fovTouched = false;
@@ -3824,12 +3807,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       camPitch += (0 - camPitch) * Math.min(1, dt * 6); // level out during the swing
     }
-    // The room moves and the witness wall use the wider room view; the desk eases back in.
-    browserDeskActive = browserDesk();
-    if (options.reinterp && !xr?.active && !fovTouched && camera.camera && os.inDesktop) {
-      const want = facingBack ? Math.min(FOV_MAX, homeFov() + 14) : homeFov();
-      if (Math.abs(camera.camera.fov - want) > 0.05) camera.camera.fov += (want - camera.camera.fov) * Math.min(1, dt * 1.6);
-    }
     if (options.reinterp) {
       // the descent owns the camera outright while it runs — it is the one
       // move in the piece the player did not ask for, so it is also the one
@@ -3940,13 +3917,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       dollyTo(cluster?.homeYaw ?? 0, CAMERA_POSES.dollySeconds, true);
     }
     cluster?.updateTravelClearance(camPos, !!camMove);
-    browserDeskActive = browserDesk();
-    const deskView = browserDeskActive ? DESK_VIEW[os.era] : null;
-    deskPitch += ((deskView?.pitch ?? 0) - deskPitch) * Math.min(1, dt * 1.3);
-    deskYaw += ((deskView?.yaw ?? 0) - deskYaw) * Math.min(1, dt * 1.3);
-    const browserFrame = options.reinterp && !xr?.active;
-    cameraRig.setLocalEulerAngles(camPitch + lookOffPitch + (browserFrame ? deskPitch : 0),
-      camYaw + lookOffYaw + (browserFrame ? deskYaw : 0), 0);
+    cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
     // ⚑ S80: …and then the head, if the player is turning a device. The rig is
     // the seat; this is the look. Nothing above it changes, in any era.
     applyMotionLook();

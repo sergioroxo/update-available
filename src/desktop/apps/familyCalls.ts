@@ -1,3 +1,4 @@
+import polish from '../../../data/strings/playtestPolish.json';
 /**
  * ⚑ ERA 3, THE FAMILY LINE — the job that the research rewrote.
  *
@@ -62,7 +63,7 @@ export class FamilyCallsApp implements TaskSurface {
   readonly beats = ['open', 'quiet', 'replied', 'handled', 'done'] as const;
 
   private v = 0;
-  private sel = 0;
+  private sel = Math.max(0, PARENTS.findIndex(p => p.id === 'p_annette'));
   private outcomes = new Map<string, Outcome>();
   /** which reply was sent, for the row's own "sent" line */
   private sent = new Map<string, string>();
@@ -207,7 +208,7 @@ export class FamilyCallsApp implements TaskSurface {
     //   same flat voice it uses for everything else.
     if (p.id === QUIET.id && !done) {
       setFont(ctx, 9); ctx.fillStyle = ERA3.alarm;
-      ctx.fillText(QUIET.noteLabel, readX + 12, area.y + 132);
+      wrapText(ctx, polish.familyNote, readW - 24).forEach((line, i) => ctx.fillText(line, readX + 12, area.y + 132 + i * 10));
     }
 
     // ── the verbs ──────────────────────────────────────────────────────────

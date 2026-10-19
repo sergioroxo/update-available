@@ -17,7 +17,7 @@ interface Line { from: string; text: string }
 const CPS_CHANNEL = 22;       // the room chatters at a livelier clip
 const CPS_DM = 19;            // Rob types deliberately, not slowly (R3-28: "faster")
 const HOLD_CHANNEL = 1.5;     // short pause between room lines
-const HOLD_DM = 2.6;          // a pause after a DM line — time to read Rob, not to wait for him
+const HOLD_DM = 3.6;          // a pause after a DM line — time to read Rob, not to wait for him
 const AMBIENT_START = 1.4;    // s before the room starts talking
 // Rob does NOT message until the room's ambient chatter has finished (the last
 // line is the x-files exchange); otherwise his window covers the channel mid-

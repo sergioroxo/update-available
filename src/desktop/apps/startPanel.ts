@@ -1,3 +1,5 @@
+/** RETIRED audience UI: StartMenuMap owns the reusable reference list.
+ * This historical layout/data adapter never opens; its types and fakeOs helper are still shared. */
 /**
  * ⚑ S229 / W1-A6 — "WHAT YOU CAN DO HERE", at the start of every era.
  *
@@ -39,17 +41,12 @@ interface StepDef { text: string; done: string; speedrun?: boolean; textSpeedrun
 interface EraDef { title: string; lead: string; steps: StepDef[]; close: string }
 const DEFS = strings as unknown as Record<PanelEra, EraDef>;
 
-/** how long the screen must stay calm before the card first opens — "after the arrival settles" */
-const CALM_SECONDS = 1.5;
-
 export class StartPanel {
   /** the card has been shown and not yet closed. (The surface still draws it only while its screen is calm.) */
   open = false;
   private seen = false;
   /** the card has opened at least once this era (closed or not) */
   get everShown(): boolean { return this.seen; }
-  private calmT = 0;
-  private sig = '';
 
   /** `done(key)` answers a witness-map condition for this surface (see map.ts `beatDone`) */
   constructor(readonly era: PanelEra, private readonly done: (key: string) => boolean = (k) => beatDone(k)) {}
@@ -70,21 +67,13 @@ export class StartPanel {
    * the card needs redrawing (it just opened, or a tick changed).
    */
   tick(dt: number, calm: boolean): boolean {
-    if (this.seen && !this.open) return false;
-    let changed = false;
-    if (!this.seen) {
-      this.calmT = calm ? this.calmT + dt : 0;
-      if (this.calmT >= CALM_SECONDS) { this.seen = true; this.open = true; changed = true; }
-    }
-    if (this.open) {
-      const sig = this.steps().map((s) => (s.done ? '1' : '0')).join('');
-      if (sig !== this.sig) { this.sig = sig; changed = true; }
-    }
-    return changed;
+    // Playtest polish: Start owns the reference list; no arrival card.
+    void dt; void calm;
+    return false;
   }
 
-  /** Explicit help never depends on the first-arrival timer. */
-  reopen(): void { this.open = true; this.seen = true; }
+  /** Compatibility no-op: help routes to the shared Start list. */
+  reopen(): void { this.open = false; this.seen = true; }
   toggle(): void { if (this.open) this.close(); else this.reopen(); }
 
   /** the close box, or the card's own Close */

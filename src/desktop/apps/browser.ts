@@ -1,3 +1,4 @@
+import polish from '../../../data/strings/playtestPolish.json';
 import { drawLambyGuide, type GuidePaint } from './lambyGuideDraw';
 import type { LambyGuide } from '../../narrative/lambyGuide';
 /**
@@ -220,7 +221,7 @@ export class E4Browser {
   private pauseSaid = false;
   /** S207 — the way back: L names the main path's next step (os.wayBack) */
   get guideSilent(): boolean { return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || (this.liveTab === 'chat' && this.threadOpen); }
-  get guideVoice(): boolean { return !!this.nowLine || this.waitNow; }
+  get guideVoice(): boolean { return this.mode !== 'free' && (!!this.nowLine || this.waitNow); }
   sayLine(line: string): void { this.nowLine = line; this.version++; }
   private stepDone = new Set<string>();
   /** seconds since the live step was completed — the agent moves on after a beat */
@@ -240,6 +241,7 @@ export class E4Browser {
   /** the line L's console on the laptop shows — see E4Shell.drawLaptop */
   get consoleLine(): string {
     const c = PROGRAM.console;
+    if (this.lambyGuide?.active) return polish.sessionStatus;
     if (this.nowLine) return this.nowLine;
     if (this.waitNow) return (c as unknown as { wait: string }).wait;
     if (this.phase === 'restoring') return c.restoring;   // S160 / R3-91: the laptop says what it is doing
@@ -523,14 +525,10 @@ export class E4Browser {
       px(ctx, W - 80, 3, 50, 20, CHROME.button);
       setFont(ctx, 9); ctx.fillStyle = CHROME.buttonInk; ctx.fillText(S.paperMenu, W - 71, 9);
       this.hits.unshift({ x: W - 80, y: 3, w: 50, h: 20, id: 'start-menu' });
-      if (!this.startMapSilent) {
-        px(ctx, W - 26, 3, 22, 20, CHROME.field); ctx.fillStyle = CHROME.ink; ctx.fillText(S.help, W - 19, 9);
-        this.hits.unshift({ x: W - 26, y: 3, w: 22, h: 20, id: 'whattodo' });
-      }
       const nav = this.startMap.draw(ctx, W, H, 'e4', this.startModel(), this.startMapSilent);
       if (nav.length) this.hits = [...nav, ...this.hits.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
-    if (pressable && this.lambyGuide && !this.guideSilent && !this.guideVoice && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H });
+    if (pressable && this.lambyGuide && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H });
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number, pressable: boolean): void {
     this.hits = [];
@@ -1549,6 +1547,8 @@ export class E4Browser {
   handleClick(x: number, y: number): boolean {
     const lg = this.hits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     this.lambyGuide?.activity();
+    // An explicit help request yields this operable console line to Lamby. Quiet scenes remain gated.
+    if (lg?.id === 'lg-tray') { this.nowLine = null; this.waitNow = false; }
     if (lg && this.lambyGuide?.press(lg.id)) { this.version++; return true; }
 
     this.quietT = 0;

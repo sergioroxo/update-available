@@ -471,7 +471,7 @@ class RoomBed {
    *  the intended 10–14 (the sound review's measurements). Each bed now has its own level, chosen to put
    *  it back where make_tones.sh meant it; LEVEL stays for anything unnamed. Tune by ear. */
   private static readonly LEVELS: Record<string, number> = {
-    'bed_1997.mp3': 0.5, 'bed_2003.mp3': 0.5, 'bed_2016.mp3': 0.5, 'bed_2026.mp3': 0.5,
+    'bed_1997.mp3': 0.5, 'bed_2003.mp3': 0.22, 'bed_2016.mp3': 0.5, 'bed_2026.mp3': 0.5,
     'passage_wind.mp3': 0.5, 'passage_building.mp3': 0.5,
     'close_score.mp3': 0.55,
     'ball_room_bed.mp3': 0.35, 'ball_room_landing.mp3': 0.35

@@ -27,3 +27,8 @@ console.log('Channel has no fourth rung; edit info appears once; reduced-motion 
 
 const unattended=make();unattended.tick(50,input());unattended.press('lg-later');unattended.tick(90,input());assert.equal(unattended.view.rung,'again');unattended.tick(90,input());assert.equal(unattended.view.rung,'start');unattended.press('lg-x');unattended.tick(1000,input());assert(!unattended.active);
 console.log('An unanswered second line reaches the final Start nudge once, then stops.');
+
+// Requested help survives an operable voice, but must not cross a felt/respite silence gate.
+const queued=make();queued.tick(0,input('checkin',{voice:true}));assert(queued.press('lg-tray'));queued.tick(0,input());assert(queued.active);assert.equal(queued.view.rung,'tip');
+const cancelled=make();cancelled.tick(0,input('checkin',{voice:true}));cancelled.press('lg-tray');cancelled.tick(0,input('checkin',{silent:true}));cancelled.tick(0,input());assert(!cancelled.active);
+console.log('Requested help waits for one voice; a quiet scene cancels the pending request.');

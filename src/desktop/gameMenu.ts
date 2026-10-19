@@ -392,9 +392,6 @@ export function mountGameMenu(): GameMenu {
     if (!src) { paragraph(mapCopy.soFarEmpty); backRow(); return; }
     const st = src();
     const by = entriesByEra();
-    if (st.current) {
-      paragraph(`${mapCopy.nextLabel}: ${st.current.beat.hint}${st.current.beat.where ? `  (${st.current.beat.where})` : ''}`);
-    }
     // ⚑ S146 — THE MAP AS A MAP: five columns across, one per era and the
     //   Close, the beats down each as a line of marks; the era you are in has
     //   the bright rule and "you are here". Eras not yet reached show only

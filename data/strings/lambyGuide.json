@@ -31,7 +31,7 @@
   "eras": {
     "e1": {
       "kit": {
-        "tip": "There's a disk on your desktop! Press the A:\\ icon to start.",
+        "tip": "Press A:\\ to open Un-Walk. You can close it with X and return through Start. The game and other songs are optional extras!",
         "here": "That's the one. The A:\\ icon.",
         "again": "The disk is still waiting. Shall I point to it?",
         "target": [
@@ -90,13 +90,22 @@
         "act": "press:web-join"
       },
       "channel": {
-        "tip": "The chat is waiting. Press the line at the bottom to answer.",
-        "here": "That's your answer line.",
-        "again": "Or just read on — the chat moves by itself.",
+        "tip": "Watch the channel for now! When an answer line appears at the bottom, press it to reply.",
+        "here": "The answer line appears here when it's your turn.",
+        "again": "Take your time — the channel plays by itself.",
         "target": [
           "reply:0"
         ],
         "noAgain": true
+      },
+      "update": {
+        "tip": "Time to explore! The game and other songs are optional. Close Un-Walk with X; Start opens it again. Update when ready.",
+        "here": "Start lists the extras and brings Un-Walk back.",
+        "target": [
+          "start-menu"
+        ],
+        "act": "press:start-menu",
+        "once": true
       }
     },
     "e2": {

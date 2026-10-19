@@ -1,3 +1,4 @@
+import polish from '../../../data/strings/playtestPolish.json';
 /**
  * ⚑ S205 — YOUR STORY (2003): the network turns you into media.
  *
@@ -158,6 +159,7 @@ export class TestimonyApp {
     this.dirty = true;
     switch (h.id) {
       case 'ts-close': this.open = false; return true;
+      case 'ts-faster': this.topics = T.prep.topics.length; return true;
       case 'ts-next': this.topics = Math.min(T.prep.topics.length, this.topics + 1); return true;
       case 'ts-prep-done': this.onFile?.('testimony-prep'); this.stage = 'release'; return true;
       case 'ts-agree':
@@ -261,6 +263,7 @@ export class TestimonyApp {
       ui.setFont(ctx, 8); ctx.fillStyle = ERA1.navy;
       ui.wrapText(ctx, `${T.prep.fromFile} ${frag(i)}`, c.w - 60).slice(0, 2).forEach((ln, k) => ctx.fillText(ln, c.x + 30, y + 23 + k * 9));
     }
+    if (this.topics < T.prep.topics.length) this.button(ctx, c.x + 12, c.y + c.h - 28, polish.faster, 'ts-faster', 70);
     if (isSpeedrun() && this.topics < T.prep.topics.length) return;
     const label = isSpeedrun() ? guidedCopy.goOn : this.topics < T.prep.topics.length ? T.prep.next : T.prep.done;
     const bid = this.topics < T.prep.topics.length ? 'ts-next' : 'ts-prep-done';
@@ -484,11 +487,11 @@ export class TestimonyApp {
     };
     const watchable = this.web === 'page';
     link(O.watch56, watchable ? 'ts-watch' : null);
-    link(O.watchBB, watchable ? 'ts-watch' : null);
+    link(polish.broadbandDisabled, null);
     ui.setFont(ctx, 8); ctx.fillStyle = ERA1.grey; ctx.fillText(O.requires, tx, y); y += 18;
     if (this.web === 'done') {
       ui.setFont(ctx, 10); ctx.fillStyle = ERA1.warnDark;
-      for (const l of ui.wrapText(ctx, O.start, px0 + pw - 12 - vx)) { ctx.fillText(l, vx, vy + vh + 12); }
+      for (const l of ui.wrapText(ctx, polish.startDisabled, px0 + pw - 12 - vx)) { ctx.fillText(l, vx, vy + vh + 12); }
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark;
       ctx.fillText(O.count.replace('{n}', '3'), vx, vy + vh + 28);
     }

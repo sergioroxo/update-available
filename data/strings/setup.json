@@ -59,7 +59,7 @@
       ]
     },
     "start": {
-      "text": "This is the Start button. It lists everything you can do, in order, with ticks as you go — and lets you jump to any year. Try it!",
+      "text": "This is Start: every step in order, ticks and jumps to each year. My Lamby symbol stays on the screen — press it whenever you want a hand! Try Start?",
       "buttons": [
         "Show me",
         "Later"
@@ -117,5 +117,6 @@
     ]
   },
   "report": "[ADDRESS TO COME FROM THE LEAD]",
-  "reportLine": "Found a problem? Tell us: {report}"
+  "reportLine": "Found a problem? Tell us: {report}",
+  "helperSymbol": "Lamby"
 }

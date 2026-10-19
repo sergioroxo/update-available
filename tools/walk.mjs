@@ -1191,8 +1191,10 @@ async function main() {
   const blockerName = flag('blocker-probe', process.env.PLAYTEST_BLOCKER_AUDIT === '1' ? 'audit' : '');
   const blockerProbe = blockerName
     ? (await import('./playtest-blockers-probe.mjs')).createBlockerProbe(blockerName, join(ROOT, process.env.PLAYTEST_BLOCKER_DIR || 'out/playtest-blockers')) : null;
+  const polishProbe = process.argv.includes('--polish-probe') ? (await import('./playtest-polish-walk-probe.mjs')).createPolishProbe(join(ROOT, 'out/playtest-polish')) : null;
   const startEraSeen = s.era;
   for (let i = 0; i < MAX_STEPS; i++) {
+    if (polishProbe) { const result = await polishProbe({page, s, press, probe}); if (result.handled) { s = await probe(); continue; } }
     if (blockerProbe) {
       const result = await blockerProbe({page, s, press, probe});
       if (result.stop) break;

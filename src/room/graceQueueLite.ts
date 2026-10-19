@@ -1,3 +1,4 @@
+import polish from '../../data/strings/playtestPolish.json';
 import { drawLambyGuide, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
 import type { LambyGuide } from '../narrative/lambyGuide';
 /**
@@ -357,6 +358,8 @@ export class GraceQueueLite {
   get guideSilent(): boolean { return this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
     || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
   get guideVoice(): boolean { return false; }
+  private _callPending = false;
+  set callPending(value: boolean) { if (value !== this._callPending) { this._callPending = value; this.bump(); } }
   /** bumped on every state-changing action — era3Devices compares this to
    *  know when the workstation/tablet screens need a redraw + re-upload (dirty
    *  discipline: never re-dirtied by a ticking clock, only real state, or by
@@ -1290,14 +1293,10 @@ export class GraceQueueLite {
       const S = startCopy.desktop.startMenu;
       aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });
       this.rects.unshift({ x: 3, y: H - 25, w: 51, h: 22, id: 'start-menu' });
-      if (!this.startMapSilent) {
-        aero.button(ctx, 58, H - 25, 23, 22, S.help, { size: 11 });
-        this.rects.unshift({ x: 58, y: H - 25, w: 23, h: 22, id: 'whattodo' });
-      }
       const nav = this.startMap.draw(ctx, W, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
-    if (this.lambyGuide && !this.guideSilent && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
+    if (this.lambyGuide && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
@@ -1518,7 +1517,7 @@ export class GraceQueueLite {
     //   phone, the wait line, the way back, the cascade's "Everything on your board is still there…") was being
     //   wiped here before it was ever drawn; they now stay until she acts.
     //   The first-task beat itself closes on her next press on the board (handleClick).
-    if (!this.lambyGuide?.active) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
+    if (!this.lambyGuide?.active && !this._callPending) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
     //   it fits between them and Lambient's lane
@@ -1645,7 +1644,7 @@ export class GraceQueueLite {
     setFont(ctx, 12); ctx.fillStyle = ERA3.titleText;
     ctx.fillText(t.label, x + padX, y + thumbH + 4);
     setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
-    ctx.fillText(t.note, x + padX, y + thumbH + 22);
+    ctx.fillText(t.id === 'testimony' ? polish.queueWaiting.replace('{n}', String(SUBMISSIONS.filter(sb => !this.subComplete(sb)).length)) : t.note, x + padX, y + thumbH + 22);
     ctx.restore();
 
     if (done) {

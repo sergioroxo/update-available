@@ -20,10 +20,12 @@ export class LambyGuide {
   private memory = new Map<string, StepMemory>();
   private counts: Record<GuideEra, number> = { e1: 0, e2: 0, e3: 0, e4: 0 };
   private formOffered = false;
+  private requested = false;
   private input: GuideInput | null = null;
   private spec: GuideStep | undefined;
   constructor(private effects: { log: (outcome: 'begun' | 'dismissed', beat: string, countDismissal: boolean, acknowledged: boolean) => void;
     act: (act: string) => void }) {}
+  get hasStep(): boolean { return !!this.spec || (this.input?.era === 'e1' && !!this.input.formAvailable); }
   get waiting(): boolean { return !!this.spec && !this.spec.noAgain && !this.mem().finished && this.mem().dismissed > 0 && this.canOffer(); }
   get active(): boolean { return !this.view.hidden && this.view.text !== null; }
   activity(): void { this.idle = 0; if (this.view.rung === 'cue') this.set('silent'); }
@@ -39,7 +41,7 @@ export class LambyGuide {
     this.input = input;
     const alias: Record<string, string> = { l: 'browser', search: 'results', site: 'program' };
     const beat = input.map.current?.beat.id ?? '';
-    const step = input.era === 'e4' ? alias[beat] ?? beat : beat;
+    const step = input.era === 'e4' ? alias[beat] ?? beat : input.era === 'e3' && beat === 'migrate' ? 'signin' : beat;
     const key = `${input.era}:${step}`;
     if (key !== this.key) {
       this.key = key; this.idle = 0;
@@ -49,7 +51,11 @@ export class LambyGuide {
     }
     const hidden = input.silent || input.map.quiet || input.map.current?.era === 'close' || input.voice;
     if (hidden !== this.view.hidden) { this.view.hidden = hidden; this.version++; }
-    if (hidden) { this.idle = 0; if (this.view.rung === 'cue') this.set('silent'); return; }
+    if (hidden) {
+      if (input.silent || input.map.quiet) this.requested = false;
+      this.idle = 0; if (this.view.rung === 'cue') this.set('silent'); return;
+    }
+    if (this.requested) { this.requested = false; this.press('lg-tray'); return; }
     this.view.time += dt;
     const frame = input.reducedMotion ? 0 : Math.floor(this.view.time * 3) % 3;
     if (frame !== this.view.frame && this.view.rung !== 'silent') { this.view.frame = frame; this.version++; }
@@ -87,11 +93,16 @@ export class LambyGuide {
     this.counts[this.view.era]++; this.idle = 0; this.set(rung, text, targets, act);
   }
   press(id: string): boolean {
-    if (!id.startsWith('lg-') || this.view.hidden || !this.input) return false;
+    if (!id.startsWith('lg-') || !this.input) return false;
+    // Requested help waits for the current operable voice; it never queues across a quiet scene.
+    if (id === 'lg-tray' && this.input.voice && !this.input.silent && !this.input.map.quiet) { this.requested = true; return true; }
+    if (this.view.hidden) return false;
     const s = this.spec, m = this.mem();
     if (id === 'lg-tray') {
       this.idle = 0;
-      if (this.active && this.view.rung !== 'form') this.point();
+      if (this.input.era === 'e1' && this.input.formAvailable && !this.input.formOpened) { this.set('form', copy.form.text, [], copy.form.act); return true; }
+      if (this.view.rung === 'form') return true;
+      if (this.active) this.point();
       else this.set('tip', s?.tip ?? copy.ui.nothing);
       return true;
     }

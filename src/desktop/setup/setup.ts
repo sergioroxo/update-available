@@ -260,6 +260,13 @@ export class LambySetup {
     if (this.step === 'start' && this.startTeaching) this.hits.push({ id: 'setup-start', x: 4, y: 360, w: 54, h: 21 });
     ui.bevel(ctx, 64, 360, 190, 21, false); ui.setFont(ctx, 10); ctx.fillStyle = P.black; ctx.fillText(copy.title, 72, 365);
     if (this.window) { this.drawWindow(ctx); return; }
+    // The same tray mark the visitor can press in every era, beside the Start lesson.
+    if (this.step === 'start') {
+      ctx.save(); ctx.beginPath(); ctx.rect(404, 361, 20, 21); ctx.clip();
+      drawLambyChar(ctx, 414, 376, { mood: 'cheerful', action: 'idle', scale: 0.24, headOnly: true, t: 0, moodStart: 0 });
+      ctx.restore(); ui.setFont(ctx, 9); ctx.fillStyle = P.black;
+      ctx.fillText(copy.helperSymbol, 426, 369);
+    }
     if (this.mobile) { this.drawMobileBalloon(ctx); this.drawStartDemo(ctx); return; }
     if (!this.dismissed) {
       ui.bevel(ctx, 359, 304, 122, 29, true); ui.px(ctx, 366, 310, 108, 16, P.paper);

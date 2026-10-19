@@ -1,3 +1,4 @@
+import polish from '../../../data/strings/playtestPolish.json';
 /**
  * ⚑ S200 — POST TO THE GROUP (2016). Data and grounding: data/dialog/s3_group.json. A job on Vera's board (TaskSurface).
  *
@@ -55,14 +56,15 @@ export class GroupTask implements TaskSurface {
     const colW = Math.round(b.w * 0.62), fx = b.x + 6, sx = fx + colW + 8, sw = b.w - colW - 20;
     let y = b.y + 64;
     // the composer — written for her
-    px(ctx, fx, y, colW, 40, G.card);
+    px(ctx, fx, y, colW, this.posted ? 40 : 57, G.card);
     setFont(ctx, 8); ctx.fillStyle = ERA3.grey; ctx.fillText(this.posted ? D.composerEmpty : D.composerLabel, fx + 6, y + 4);
     if (!this.posted) {
       setFont(ctx, 9); ctx.fillStyle = ERA3.ink; ctx.fillText(D.post.text, fx + 6, y + 16);
-      button(ctx, fx + colW - 56, y + 22, 50, 14, D.postButton, { primary: true, size: 9 });
-      hit({ x: fx + colW - 56, y: y + 22, w: 50, h: 14, id: 'group-post' });
+      setFont(ctx, 8); ctx.fillStyle = ERA3.greyDk; ctx.fillText(polish.attachment, fx + 6, y + 30);
+      button(ctx, fx + colW - 56, y + 39, 50, 14, D.postButton, { primary: true, size: 9 });
+      hit({ x: fx + colW - 56, y: y + 39, w: 50, h: 14, id: 'group-post' });
     }
-    y += 46;
+    y += this.posted ? 46 : 63;
     // the feed: hers on top once posted, then the others
     const posts = this.posted ? [{ who: D.post.who, when: D.post.when, text: D.post.text, link: D.post.link, stats: D.post.seen }, ...D.feed] : D.feed;
     for (const p of posts) {

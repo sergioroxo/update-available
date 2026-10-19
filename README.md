@@ -10,6 +10,8 @@ reinterpretation, including the scripted era journeys and the Close. Browser
 and WebXR share the 3D room and monitor; headset verification is still pending
 for the changes documented below.
 
+The October 19 playtest polish gives next-action guidance to Lamby and keeps the reusable step list in Start. Era arrival cards and standalone help buttons are retired. Browser zoom stays under visitor control. Focused probes: `node tools/playtest-polish.mjs --port 3215` and `node tools/playtest-polish-setup.mjs --port 3215`; the full visitor walk accepts `--polish-probe` to capture guidance checks. Evidence and wording review: `out/playtest-polish/REPORT.md`. These camera/UI changes still need physical headset and phone verification.
+
 ## Run
 
 ```bash

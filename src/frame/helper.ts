@@ -1,24 +1,5 @@
-/**
- * ⚑ THE HELPER — the map's current hint, in frame chrome, when the player has
- * stalled (S145, 2026-09-16; docs/reinterp/THE_WITNESS_SYSTEM_PLAN_2026-09-16.md §3C).
- *
- * Sérgio: "there should be a helper system for people to know what to do
- * next." The piece already has two guiding voices and both are the
- * apparatus's (Era 1's side-messages, Lamby's conduction) — they can only say
- * what the apparatus wants. This is the frame's: one plain line, the same
- * idiom as `moveHint` (fixed DOM, never on the monitor texture), that says
- * what the piece is waiting on. It appears when
- *   (i)  nothing has been pressed or dragged for `idleSeconds` (data) while
- *        the current beat is not `quiet`, or
- *   (ii) the player resumes from the menu's map (`gameMenuBus.showHint`).
- * Any press, drag or key hides it and restarts the clock; a beat change
- * hides it. It never appears during a `quiet` beat (felt / respite / the
- * Close), never while the menu is open, and it files nothing.
- *
- * ⚑ The click/tap law's "no timers" forbids PRESSURE on the clock. An idle
- * helper is the opposite: it waits for the player to stop, then offers. It is
- * documented as the one clock in the frame, and it never counts down at anyone.
- */
+/** Controls-only frame reminder. Narrative directions belong to Lamby; the Start menu holds the list.
+ * Existing silence/idle/menu gates still apply, including the XR frame plate. */
 import { gameMenuBus } from '../state/gameMenuBus';
 import mapData from '../../data/strings/map.json';
 import { FRAME } from '../desktop/theme/chrome';
@@ -71,10 +52,7 @@ export function mountHelper(opts: {
     el.style.opacity = '0';
   };
   const show = (h: HelperHint): void => {
-    // ⚑ S220 (his, 2026-10-08: "(the monitor)… we dont need to announce") — the place is named only when it is
-    //   somewhere ELSE in the room; "the monitor" is where the player is already looking, 36 of the map's beats
-    const where = h.where && h.where !== 'the monitor' ? `  (${h.where})` : '';
-    el.textContent = `${H.prefix} ${h.text}${where}`;
+    el.textContent = mapData.controlsHint;
     shownKey = h.key;
     shown = true;
     el.style.opacity = '1';
