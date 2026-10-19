@@ -425,7 +425,7 @@ async function main() {
   // S223: wait for the page's own load, not for "network idle", and give a COLD dev server time: on a fresh machine
   //   Vite transforms every module on first request (the cloud's first run spent its whole minute there)
   await page.goto(`http://localhost:${PORT}/${startQuery}`, { waitUntil: 'load', timeout: 240000 });
-  note('open', { what: startQuery + (FROM_ERA > 1 ? ' — ⚑ FROM ERA ' + FROM_ERA + ': not a reachability proof' : ' — debug is READ-ONLY here; no panel button, no jump, no __requestMove') });
+  note('open', { what: startQuery + (formOfferProbe ? ' — 1997 review boot; focused form offer, not a reachability proof' : FROM_ERA > 1 ? ' — ⚑ FROM ERA ' + FROM_ERA + ': not a reachability proof' : ' — debug is READ-ONLY here; no panel button, no jump, no __requestMove') });
 
   // ── the front door is real DOM, not canvas (4 s ethics delay honoured) ──
   if (FROM_ERA <= 1 && ENTRANCE && !formOfferProbe) {
@@ -1677,7 +1677,8 @@ async function main() {
     when: new Date().toISOString(), port: PORT, viewport: VIEW,
     jumpedTo: JUMP || null,
     setupEntrance: SETUP,
-    isReachabilityProof: !SETUP && !JUMP && FROM_ERA <= 1,
+    isReachabilityProof: !SETUP && !JUMP && FROM_ERA <= 1 && !formOfferProbe,
+    reviewBoot: formOfferProbe ? 1 : null,
     walkPolicy: GUIDED_WALK ? 'guided' : 'explore',
     steps: log.length, presses: presses.length, turns,
     reachedEra: final.era, spine: final.spine,
