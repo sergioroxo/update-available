@@ -28,7 +28,7 @@ STATUS: live
   note (the only gate; a **Reduce motion** box is there) → full piece or Speedrun Version → **the LambyOS advert (1:33,
   plays in full)** → Start → the stars become Daniel's room → 1997.
 - **Esc** (or the small corner button) opens the menu at any time: pause, controls, credits, **Leave**.
-- At the end: the Library on Daniel's monitor (the Lexicon with its sources, the four era computers, Start again).
+- At the end: the Restart card on Daniel's monitor (the four eras, the receipt, Start again) and the Lexicon with its sources.
 
 ## 3 · When nobody touches it
 - **5 minutes** untouched → the screensavers fill the screen (stars, pipes, flock, the Lexicon words, the marquee, the
