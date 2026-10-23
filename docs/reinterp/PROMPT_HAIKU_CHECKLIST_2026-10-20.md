@@ -2,8 +2,9 @@ STATUS: live
 
 # Haiku checker — confirm the 18–19 Oct fixes, item by item (2026-10-20)
 *Open a new Claude Code session in /Users/sergiogalvaoroxo/update-available-reinterp, model **Haiku 5.5, effort
-medium**. It plays the piece in the built-in browser (or Claude in Chrome) and only CHECKS — it changes nothing. Paste
-everything below the line. Expect ~45–60 minutes.*
+medium** for the checks alone — or **Sonnet 5.5, effort medium** if you also want Parts 2 and 3 done well (judging what is
+missing needs a stronger model). It plays the piece in the built-in browser (or Claude in Chrome) and only CHECKS — it changes nothing. Paste
+everything below the line. Expect ~45–60 minutes for Part 1, ~1.5–2 hours for all three.*
 
 ---
 
@@ -53,7 +54,24 @@ for every FAIL (save screenshots to ~/Pc_Simulation/GPTPlaysIT/haiku-check-2026-
 18. **Idle:** leave the piece untouched for 5 minutes — screensavers appear; touch → "Start from the beginning?".
     (Optional: leave 10 minutes untouched → back to the stars.)
 
+## Part 2 — the map of the project (as you play)
+Build a map of the whole visit as a visitor meets it. For each era (the setup, 1997, 2003, 2016, 2026, the Close), list
+in order every step: what is on screen, what you must press (or wait for), what is optional, where it leads, and about
+how long it took. Use each era's **Start** list as the spine (it names every step in order), and add what Start does not
+show: optional windows, games, songs, extras, and any place you got stuck. Write it as:
+- a Mermaid flowchart (`flowchart TD`) of the main path with optional branches as dashed side nodes;
+- a table per era: step · what you do · optional? · time · notes.
+Save it as ~/Pc_Simulation/GPTPlaysIT/haiku-check-2026-10-20/MAP.md.
+
+## Part 3 — what seems missing (a visitor's view)
+While you play, note everything that felt MISSING or unclear — not bugs, but gaps: a moment with no reason to act, a
+place you did not know what to do (even with Lamby), something mentioned but never shown, a choice with no visible
+consequence, a reward or ending that felt absent, text that explains what the screen should show instead, anything you
+expected to be able to do and could not. For each: where (era + step), what was missing, why it mattered, and one
+suggestion. Mark how sure you are (sure / maybe). Do not invent content or facts about the subject; describe gaps in the
+EXPERIENCE only. Save as ~/Pc_Simulation/GPTPlaysIT/haiku-check-2026-10-20/MISSING.md.
+
 ## The report
-Write it to ~/Pc_Simulation/GPTPlaysIT/haiku-check-2026-10-20/REPORT.md: a table of the 18 checks (number, result,
+Write it to ~/Pc_Simulation/GPTPlaysIT/haiku-check-2026-10-20/REPORT.md (Parts 2 and 3 go in MAP.md and MISSING.md): a table of the 18 checks (number, result,
 one line, screenshot name), then "Other problems I noticed" (short, with screenshots), then "Could not check" with why.
 Be literal and honest; do not guess; do not fix anything.
