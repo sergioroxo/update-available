@@ -6,6 +6,14 @@ medium** for the checks alone — or **Sonnet 5.5, effort medium** if you also w
 missing needs a stronger model). It plays the piece in the built-in browser (or Claude in Chrome) and only CHECKS — it changes nothing. Paste
 everything below the line. Expect ~45–60 minutes for Part 1, ~1.5–2 hours for all three.*
 
+**Split run (his choice, 2026-10-23):** two sessions, one after the other.
+- **Session 1 — Haiku 5.5, medium:** paste the prompt below, then add this line at the end:
+  `Do ONLY Part 1 (the checks) and Part 2 (the map). Skip Part 3.`
+- **Session 2 — Sonnet 5.5, medium** (after Session 1 has finished): paste the prompt below, then add:
+  `Do ONLY Part 3 (what seems missing). First read ~/Pc_Simulation/GPTPlaysIT/haiku-check-2026-10-20/REPORT.md and
+  MAP.md, which an earlier session wrote: use MAP.md as your route through the piece, and do not re-check Part 1's
+  items. Spend your time playing and noticing gaps.`
+
 ---
 
 You are checking an interactive art piece, "YOUR UPDATE HAS FAILED", for a list of fixes. You CHANGE NOTHING: never edit
