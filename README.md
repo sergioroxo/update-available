@@ -191,3 +191,5 @@ results go to `out/more-screensavers/`. Headset and physical-phone checks remain
 pending; browser screenshots do not verify either device.
 
 Playtest-blocker checks (port 3214): `node tools/playtest-blockers.mjs --case windows --port 3214` (short-door profile → disk → Netpoint → IRC), `--case caleb` (2003 visitor route, mid-flight drag, chat/alert), `--case file`, `--case ending`, `--case ending-controls`, and `--case debug`. Review-era URLs used for focused checks are recorded in the probe source. `tools/walk.mjs --port 3214 --blocker-probe visitor-jump` uses the actual Start → Jump to 2003 after the normal entrance and plays forward to L. Results and screenshots: `out/playtest-blockers/`. Physical headset and phone verification is pending.
+
+CX3A visitor fixes (2026-10-24): Root Cause is reachable from the 1997 desktop, Start and NetPilot; profile setup is one page; Start lists close on a step press; skipped eras remain unplayed. Targeted Chrome probe evidence is in `out/cx3a/`; the task report is `out/cx3a-bugs/REPORT.md`. XR, phone hardware and audio playback still need device checks.

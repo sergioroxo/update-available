@@ -1,0 +1,12 @@
+{
+ "dossier": "See also, in your dossier: {item}",
+ "questionnaire": "the questionnaire you filled in",
+ "rootLink": "Open ROOTCAUSE.EXE",
+ "continue": "Continue",
+ "diary": "The entry continues by itself.",
+ "unmute": "Unmute",
+ "unmuted": "Unmuted",
+ "channel": "The channel",
+ "privateMessage": "The private message",
+ "waitMessage": "The conversation continues by itself. A request will appear here when it is ready."
+}

@@ -50,6 +50,7 @@ export class LambySetup {
   private noteOpened = false;
   private noteClosedAt: number | null = null;
   private clock = 0;
+  private answerAfter = 0;
   private dismissed = false;
   private window: WindowKind | null = null;
   private hover = '';
@@ -79,6 +80,7 @@ export class LambySetup {
     if (text !== this.deviceStatus) { this.deviceStatus = text; this.dirty = true; }
   }
   private advance(step: SetupStep): void {
+    this.answerAfter = this.clock + 0.4;
     this.step = step; this.window = null; this.noteT = 0; this.hits = []; this.dirty = true;
     if (step === 'advert') this.prepareFilm();   // start fetching while the offer is on screen
   }
@@ -121,7 +123,9 @@ export class LambySetup {
   }
   update(dt: number): void {
     if (!this.open) return;
+    const before = this.clock;
     this.clock += dt;
+    if (before < this.answerAfter && this.clock >= this.answerAfter) this.dirty = true;
     if (this.step === 'note' && !this.window) {
       this.noteT += dt;
       if (this.noteT >= 0.8) { this.window = 'note'; this.noteOpened = true; this.hits = []; this.dirty = true; }
@@ -181,7 +185,7 @@ export class LambySetup {
   }
   handleClick(x: number, y: number): void {
     const id = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h)?.id;
-    if (!id) return;
+    if (!id || this.clock < this.answerAfter) return;
     if (id === 'setup-compact-close') {
       if (STEPS.indexOf(this.step) < STEPS.indexOf('advert')) this.advance('note');
       else if (this.step === 'advert') this.advance('allset');
@@ -212,6 +216,7 @@ export class LambySetup {
     const n = Number(id.substring(id.lastIndexOf('-') + 1));
     if (id === 'setup-start' && this.step === 'start' && this.startTeaching) { this.demoOpen = !this.demoOpen; this.startTried = true; this.dirty = true; return; }
     if (id === 'setup-start-close') { this.demoOpen = false; this.dirty = true; return; }
+    if (!/^setup-choice-\d+$/.test(id) && id !== 'setup-advert-play-0') return;
     if (this.step === 'greet') { if (n === 1) this.dismissed = true; this.advance(n === 0 ? 'wip' : 'note'); }
     else if (this.step === 'wip') this.advance('whose');
     else if (this.step === 'start') {
@@ -233,6 +238,7 @@ export class LambySetup {
     return y;
   }
   private button(ctx: CanvasRenderingContext2D, id: string, label: string, x: number, y: number, w: number, disabled = false): void {
+    disabled = disabled || this.clock < this.answerAfter;
     const h = this.mobile ? 36 : 27;
     ui.button(ctx, x, y, w, h, label, { disabled, hover: this.hover === id });
     if (this.mobile) {

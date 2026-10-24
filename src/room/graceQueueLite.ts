@@ -539,7 +539,7 @@ export class GraceQueueLite {
    *  is still a short board; under the pause card, away on a job / the consent question / the phone in her hand */
   private readonly startPanel = new StartPanel('e3');
   private readonly startMap = new StartMenuMap();
-  private get startMapSilent(): boolean { return this.phoneInHand || this.mode === 'list' || this.playing; }
+  private get startMapSilent(): boolean { return this.phoneInHand || this.playing; }
   private startPanelCalm(): boolean {
     if (this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface) return false;
     if (this.mode === 'signin') return true;
@@ -1558,7 +1558,7 @@ export class GraceQueueLite {
   /** ⚑ S207 — "This week": the platform's own card over the board, in its glass; the only thing pressable while up */
   private drawPauseCard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     const P = pauseWords('e3');
-    this.rects = this.rects.filter((r) => r.id === 'task-restore');
+    // Preserve the board's task hit targets below this quiet note.
     const cw = Math.min(520, c.w - 80);
     setFont(ctx, 12);
     const rows = this.pauseLines.map((l) => wrapText(ctx, l, cw - 64));
@@ -2212,7 +2212,7 @@ export class GraceQueueLite {
     const r = this.rects.find(rr => hit(rr, x, y));
     if (!r) { if (this.startMap.menu) { this.startMap.close(); this.bump(); } return; }
     const model = buildStartModel(undefined, 'e3');
-    if (r.id === 'start-menu') { this.startMap.toggle(); this.bump(); return; }
+    if (r.id === 'start-menu') { this.lambyGuide?.press('lg-x'); this.pauseOpen = false; this.startMap.toggle(); this.bump(); return; }
     if (r.id === 'whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.toggle(); this.bump(); return; }
     if (this.startMap.press(r.id, model, this.startMapSilent || this.pauseOpen)) { this.bump(); return; }
     if (r.id === 'sm-whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.reopen(); this.bump(); return; }
@@ -2225,7 +2225,7 @@ export class GraceQueueLite {
     //   the window is down — a minimised window can never be a dead end.
     if (r.id === 'task-restore') { if (this.minimised) this.toggleMinimised(); return; }
     if (this.minimised) return;
-    if (this.pauseOpen) { if (r.id === 'pause-close') { this.pauseOpen = false; this.bump(); } return; }   // S207
+    if (this.pauseOpen) { this.pauseOpen = false; this.bump(); if (r.id === 'pause-close') return; }   // S207
     if (r.id === 'startpanel-close') { this.startPanel.close(); this.bump(); return; }   // S229 / W1-A6
     if (r.id === 'win-min') { this.toggleMinimised(); return; }
     if (r.id === 'signin') { this.beginList(); return; }

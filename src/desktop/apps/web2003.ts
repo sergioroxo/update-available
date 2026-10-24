@@ -15,6 +15,7 @@ import * as ui from '../theme/chrome';
 import { ERA1 } from '../theme/era1';
 import { WEB2003 as P } from '../theme/web1997';
 import D from '../../../data/dialog/s2_forum.json';
+import fixes from '../../../data/strings/visitorFixes.json';
 import { ledger } from '../../state/ledger';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -284,7 +285,7 @@ export class Web2003App {
     ui.setFont(ctx, 10); ctx.fillStyle = P.text;
     pg.lines.forEach((l, i) => ctx.fillText(l, x0, b.y + 70 + i * 14));
     ui.setFont(ctx, 8); ctx.fillStyle = P.dim;
-    ctx.fillText(`${D.dossierMark} ${CARD_LABEL[pg.card.file] ?? pg.card.file} — source ${pg.card.index + 1}`, x0, b.y + b.h - 30);
+    ctx.fillText(fixes.dossier.replace('{item}', CARD_LABEL[pg.card.file] ?? pg.card.file), x0, b.y + b.h - 30);
     this.link(ctx, D.index.back, x0, b.y + b.h - 16, 'forum-index');
   }
 

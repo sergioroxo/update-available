@@ -259,5 +259,6 @@
         "act": "move:headset"
       }
     }
-  }
+  },
+  "root": {"here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.", "text": "ROOTCAUSE.EXE is on your desktop and in Start → Programs. It came with the disk. Want me to point it out?"}
 }

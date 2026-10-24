@@ -2,6 +2,7 @@
 import { mapState } from './map';
 import type { DesktopOS } from '../desktop/os';
 import type { PanelEra } from '../desktop/apps/startPanel';
+import fixes from '../../data/strings/visitorFixes.json';
 import copy from '../../data/strings/slice.json';
 import extras from '../../data/strings/extras.json';
 import { extraOn, extraPassed, isSpeedrun } from '../state/cut';
@@ -21,9 +22,15 @@ export function buildStartModel(os: Partial<DesktopOS> | undefined, era: PanelEr
       ? `${copy.desktop.startMenu.room}: ${copy.desktop.startMenu.roomPrefix.replace('{where}', beat.where).replace(': {hint}', '')}` : '',
     where: beat.where
   }));
+  if (era === 'e1' && index >= 0) {
+    const id = steps[index].id;
+    if ((id === 'request' && !os?.irc?.requestPending) || (id === 'image' && !os?.irc?.sendPending)) {
+      steps[index] = { ...steps[index], label: id === 'request' ? fixes.channel : fixes.privateMessage, hint: fixes.waitMessage };
+    }
+  }
   return {
     now: index < 0 ? null : steps[index],
-    next: index < 0 ? [] : steps.slice(index + 1, index + 3),
+    next: index < 0 ? [] : steps.slice(index + 1, index + 3).filter(b => !['request', 'image'].includes(b.id)),
     steps,
     extras: extras[era].map(e => ({ ...e, on: !isSpeedrun() || extraOn(e.id), passed: extraPassed(e.id) })),
     room: steps.filter(b => b.optional && b.state !== 'done' && b.place),

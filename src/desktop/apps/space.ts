@@ -676,19 +676,19 @@ export class E4Shell {
     if (done) {
       const line = this.worn || this.stageNow === 'ball' ? this.browser.consoleLineWorn : this.browser.consoleLine;
       this.laptopBar(ctx, W, this.browser.consoleMark);
-      setFont(ctx, 11);
+      setFont(ctx, 9);
       ctx.fillStyle = ERA4.textHi;
-      let y = LAPTOP_BAR + 18;
-      for (const row of wrapLaptop(ctx, line, W - 24)) { ctx.fillText(row, 12, y); y += 16; }
+      let y = LAPTOP_BAR + 8;
+      for (const row of wrapLaptop(ctx, line, W - 56)) { ctx.fillText(row, 12, y); y += 12; }
       return;
     }
     this.laptopBar(ctx, W, '');
     if (!done) {
-      setFont(ctx, 11);
+      setFont(ctx, 9);
       ctx.fillStyle = ERA4.textHi;
       const line = space.laptop.lines[this.laptopLine];
-      let y = LAPTOP_BAR + 18;
-      for (const row of wrapLaptop(ctx, line, W - 24)) { ctx.fillText(row, 12, y); y += 16; }
+      let y = LAPTOP_BAR + 8;
+      for (const row of wrapLaptop(ctx, line, W - 56)) { ctx.fillText(row, 12, y); y += 12; }
       /**
        * ⚑ THE PROMPT SITS UNDER THE LINE, NOT AT THE BOTTOM OF THE LID (S107).
        *

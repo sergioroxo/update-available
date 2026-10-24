@@ -37,6 +37,7 @@ export function mountCall(opts: { current: () => CallSpec | null; enabled: () =>
     el,
     tick(dt: number): void {
       // Yield in the same frame that a balloon or quiet scene takes the voice.
+      if (shown && !opts.current()) { want = null; since = 0; hide(); }
       if (!opts.enabled()) { want = null; since = 0; hide(); return; }
       poll += dt;
       if (poll >= 0.5) {

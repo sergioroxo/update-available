@@ -19,6 +19,7 @@ import { ERA1 } from '../theme/era1';
 import { WEB97 as P } from '../theme/web1997';
 import { practiceOf } from '../../witness/record';
 import D from '../../../data/dialog/s1_browser.json';
+import fixes from '../../../data/strings/visitorFixes.json';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 type PageId = keyof typeof D.pages;
@@ -39,6 +40,7 @@ export class Web1997App {
   private hover = '';
   /** the first search, filed by os */
   onSearch?: () => void;
+  onRootCause?: () => void;
   onClose?: () => void;
   /** Join: the channel opens */
   onJoin?: () => void;
@@ -54,6 +56,7 @@ export class Web1997App {
     const h = this.hits.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
     if (!h) return;
     const id = h.id;
+    if (id === 'web-rootcause') { this.onRootCause?.(); return; }
     if (id === 'web-close') { if (this.onClose) this.onClose(); else this.open = false; return; }
     if (id === 'web-back') { const b = this.back.pop(); if (b) { this.fwd.push(this.view); this.view = b; } return; }
     if (id === 'web-fwd') { const f = this.fwd.pop(); if (f) { this.back.push(this.view); this.view = f; } return; }
@@ -71,6 +74,7 @@ export class Web1997App {
       this.visited.add(rid);
       if (rid === 'chat') { this.onJoin?.(); return; }
       this.go({ kind: 'page', id: rid as PageId });
+      if (rid === 'root') this.onRootCause?.();
       return;
     }
     if (id === 'web-join') { this.onJoin?.(); return; }
@@ -184,7 +188,7 @@ export class Web1997App {
     ui.px(ctx, sx + 2, fy + 2, sw - 4, 14, P.searchBg);
     ctx.fillStyle = ERA1.black; ctx.fillText(D.query, sx + 5, fy + 4);
     ui.button(ctx, sx + sw + 4, fy, 52, 18, D.searchButton, { hover: this.hover === 'web-search' });
-    this.hits.push({ x: sx + sw + 4, y: fy, w: 52, h: 18, id: 'web-search' });
+    this.hits.push({ x: sx, y: fy, w: sw + 56, h: 18, id: 'web-search' });
     ctx.fillStyle = P.dim; ctx.fillText(D.historyLabel, fx, fy + 26);
     let hx = fx + ctx.measureText(D.historyLabel).width + 10;
     D.history.forEach((q, i) => { this.link(ctx, q, hx, fy + 26, `web-hist:${i}`, true); hx += ctx.measureText(q).width + 12; });
@@ -294,6 +298,7 @@ export class Web1997App {
       ui.setFont(ctx, 9); ctx.fillStyle = P.dim;
       ctx.fillText(m.note, b.x + 220, y);
     });
+    if (this.view.kind === 'page' && this.view.id === 'root') this.link(ctx, fixes.rootLink, b.x + 24, b.y + b.h - 76, 'web-rootcause');
     this.ringBar(ctx, b);
   }
 
@@ -322,9 +327,10 @@ export class Web1997App {
     const pr = pg.practice ? practiceOf(pg.practice) : undefined;
     if (pr) {
       ui.setFont(ctx, 8); ctx.fillStyle = P.dim;
-      const t = `${D.dossierMark} ${pr.title.toLowerCase()} — ${pr.did}`;
+      const t = fixes.dossier.replace('{item}', pg.practice === 'profile' ? fixes.questionnaire : pr.title.toLowerCase());
       ui.wrapText(ctx, t, b.w - 48).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, b.x + 24, b.y + b.h - 60 + i * 10));
     }
+    if (this.view.kind === 'page' && this.view.id === 'root') this.link(ctx, fixes.rootLink, b.x + 24, b.y + b.h - 76, 'web-rootcause');
     this.ringBar(ctx, b);
   }
 

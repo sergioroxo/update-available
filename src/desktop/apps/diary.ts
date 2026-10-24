@@ -13,6 +13,7 @@
 import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
+import fixes from '../../../data/strings/visitorFixes.json';
 import end from '../../../data/dialog/s1_end.json';
 import pauseCopy from '../../../data/strings/pauses.json';
 import { playOnce } from '../../audio/tapeAudio';
@@ -134,6 +135,7 @@ export class DiaryApp {
       this.drawNote(ctx);
     }
     this.drawNotepad(ctx);
+    if (this.phase === 'writing') { ui.setFont(ctx, 9); ctx.fillStyle = ERA1.paper; ctx.fillText(fixes.diary, PAD.x, PAD.y + PAD.h + 12); }
   }
 
   private drawNote(ctx: CanvasRenderingContext2D): void {

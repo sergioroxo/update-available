@@ -959,16 +959,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S227 — THE CALL (src/frame/call.ts; his rule "take the viewer there"): the story's next thing, if it is away
     //   from the screen in front of her, is one press away. The phone comes to the eye; the headset goes on.
     timePassing = createTimePassing(app, () => !!app.xr?.active);
+    const phoneCallsPicked = new Set<string>();
     call = mountCall({
       enabled: () => !os.isOff && !os.paused && !os.hasLeft && !scriptedBusy() && !gameMenuBus.isOpen && !os.testimony?.playbackActive && !os.lambyGuide.active && !os.guideSilence.voice && !mapState(os).quiet,   // W1-D7: the call waits while his story plays
       current: () => {
         const cur = mapState(os).current;
         if (!cur) return null;
         const id = cur.beat.id;
-        if (cur.era === 'e3' && (id === 'phone' || id === 'vote' || id === 'cascade') && era3Devices && !era3Devices.phoneInHand) {
+        if (cur.era === 'e3' && era3Devices?.phoneInHand) phoneCallsPicked.add(id);
+        if (cur.era === 'e3' && (id === 'phone' || id === 'vote' || id === 'cascade') && era3Devices && !era3Devices.phoneInHand && !phoneCallsPicked.has(id)) {
           return {
             id: 'phone', text: id === 'phone' ? callStrings.phone : callStrings.phoneLink,
             act: () => {
+              phoneCallsPicked.add(id);
               const sp = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw };
               era3Devices?.noteSeat(sp);
               era3Devices?.holdDevice('phone', sp);
@@ -1070,7 +1073,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // feel, which is the whole reason this line now READS it. A tuning knob
         // wired to nothing is worse than no knob: it invites a fix that lands
         // nowhere and reports success.
-        if (yaw !== null && yaw !== undefined) dollyTo(yaw, CAMERA_POSES.dollySeconds, true);
+        // In 2003 the referral is read at Daniel's live desk. The neighbouring
+        // rooms have no active screen yet; sending the reader there strands them.
+        if (os.era === 'e2') { recentreView(); }
+        else if (yaw !== null && yaw !== undefined) dollyTo(yaw, CAMERA_POSES.dollySeconds, true);
       }
     };
     if (new URLSearchParams(window.location.search).get('debug') === '1') {
@@ -2673,18 +2679,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // a review switch so this path can be exercised on a desktop browser.
     const forced = new URLSearchParams(window.location.search).get('motion') === '1';
     const hasEvent = typeof window.DeviceOrientationEvent !== 'undefined';
-    const needsPermission = typeof (window.DeviceOrientationEvent as unknown as
-      { requestPermission?: unknown } | undefined)?.requestPermission === 'function';
     const touchy = navigator.maxTouchPoints > 0 ||
       window.matchMedia?.('(pointer: coarse)')?.matches === true;
-    if (hasEvent && (forced || needsPermission || touchy)) motionState = 'idle';
+    if (hasEvent && (forced || touchy)) motionState = 'idle';
     // ⚑ S162 / F-01 — CHOSEN AT THE DOOR. The front door's phone card asked the
     //   device inside its own gesture (orientingCard.ts) and left the answer in
     //   the ledger: granted → attach now, no second press; denied → say so.
-    if (hasEvent && ledger.view.motion === 'granted') {
+    if (hasEvent && (forced || touchy) && ledger.view.motion === 'granted') {
       motionState = 'asking';
       attachMotion();
-    } else if (hasEvent && ledger.view.motion === 'denied') {
+    } else if (hasEvent && (forced || touchy) && ledger.view.motion === 'denied') {
       motionState = 'denied';
     }
     paintMotionBtn();
@@ -4151,6 +4155,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // cold creep: pulse the witness side into the edges while it goes unseen
     if (os.hasUnseenWitness && !facingBack) {
       coldPhase += dt;
+      if (coldPhase >= 8) os.hasUnseenWitness = false;
       const pulse = 0.55 + 0.25 * Math.sin(coldPhase * 2.0); // 0.30–0.80, clearly felt
       coldCreep.style.opacity = pulse.toFixed(3);
       // R3-33 (S151): the turn control itself glows while the wall holds

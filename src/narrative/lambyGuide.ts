@@ -20,6 +20,7 @@ export class LambyGuide {
   private memory = new Map<string, StepMemory>();
   private counts: Record<GuideEra, number> = { e1: 0, e2: 0, e3: 0, e4: 0 };
   private formOffered = false;
+  private rootOffered = false;
   private requested = false;
   private input: GuideInput | null = null;
   private spec: GuideStep | undefined;
@@ -62,6 +63,11 @@ export class LambyGuide {
     // The only immediate offer. Once surfaced, it never repeats, including after closing the form.
     if (input.era === 'e1' && input.formAvailable && !input.formOpened && !this.formOffered && this.canOffer()) {
       this.formOffered = true; this.counts.e1++; this.set('form', copy.form.text, [], copy.form.act); return;
+    }
+    if (!this.active && input.era === 'e1' && !this.rootOffered && step === 'read' && this.canOffer()) {
+      this.rootOffered = true;
+      this.spec = { tip: copy.root.text, here: copy.root.here, target: ['icon-rootcause'], act: 'open:rootcause', once: true };
+      this.offer('tip', copy.root.text); return;
     }
     if (this.active) {
       if (this.view.rung === 'again') {

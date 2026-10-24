@@ -26,6 +26,7 @@ export class StartMenuMap {
 
   press(id: string, model: StartModel, silent: boolean): boolean {
     this.hits = [];
+    if (id === 'steps-row') { this.close(); return true; }
     if (id === 'steps-close') { this.steps = false; return true; }
     if (id === 'jump-stay') { this.confirm = null; return true; }
     if (id === 'jump-confirm') {
@@ -162,6 +163,7 @@ export class StartMenuMap {
     model.steps.forEach((b, i) => {
       ctx.fillStyle = b.state === 'done' ? p.dim : p.ink;
       ctx.fillText(b.state === 'done' ? '✓' : b.state === 'current' ? '▸' : '·', x + 12, cy);
+      this.hits.push({ x: x + 10, y: cy - 2, w: w - 20, h: lines[i].length * 11 + 2, id: b.id === 'rootcause' ? 'sm-prog:icon-rootcause' : 'steps-row' });
       lines[i].forEach((line, j) => ctx.fillText(line, x + 26, cy + j * 11));
       cy += lines[i].length * 11 + 2;
     });

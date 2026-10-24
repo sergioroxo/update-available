@@ -180,6 +180,7 @@ export function mapState(os: DesktopOS): MapState {
       ...rawEra,
       beats: rawEra.beats.filter(b => {
         const extra = extraForBeat(rawEra.id, b.id);
+        if (b.id === 'rootcause') return true;
         return extra ? (!b.optional && b.speedrun !== false) || extraOn(extra) : b.speedrun !== false;
       }).map(b => {
         const extra = extraForBeat(rawEra.id, b.id);
@@ -189,20 +190,16 @@ export function mapState(os: DesktopOS): MapState {
     const eraIdx = ORDER.indexOf(era.id);
     const here = era.id === now;
     let currentFound = false;
-    // ⚑ a beat the piece has moved PAST reads as done, whatever its own condition
-    //   says: the map is a map of where you are, not an audit. (A review jump
-    //   into 2016 never files the migration; the first tour showed it as the
-    //   current beat under three ticked ones.)
+    // Completion is evidence from this visit, never a consequence of navigation.
     const doneFlags = era.beats.map((beat) => beatDone(beat.done, os));
-    // ⚑ S151 — only a MAIN beat moves the line: a ○ sandbox beat done early (the
-    //   racket, listed after the diary) must not read the whole era as past
-    const lastDone = doneFlags.reduce((last, d, i) => (d && !era.beats[i].optional ? i : last), -1);
+    // An answered later beat can move the current cursor without ticking skipped work.
+    const lastDone = doneFlags.reduce((last, done, i) => done && !era.beats[i].optional ? i : last, -1);
     const beats = era.beats.map((beat, idx) => {
-      const done = doneFlags[idx] || idx < lastDone;
+      const done = doneFlags[idx];
       let state: BeatState;
       if (done) state = 'done';
-      else if (eraIdx < nowIdx) state = 'done';           // an era left behind is over, whatever was skipped
-      else if (here && !currentFound && !beat.optional) { state = 'current'; currentFound = true; }
+      else if (eraIdx < nowIdx) state = 'ahead'; // skipped is still unplayed
+      else if (here && idx > lastDone && !currentFound && !beat.optional) { state = 'current'; currentFound = true; }
       else state = 'ahead';
       if (state === 'current') { current = { era: era.id, beat }; if (beat.quiet) quiet = true; }
       return { beat, state };

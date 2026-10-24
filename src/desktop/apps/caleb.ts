@@ -29,6 +29,7 @@
  */
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
+import fixes from '../../../data/strings/visitorFixes.json';
 import { ledger } from '../../state/ledger';
 import caleb from '../../../data/dialog/s2_caleb.json';
 import { playOnce, isAudioAvailable, stopClip } from '../../audio/tapeAudio';
@@ -256,7 +257,6 @@ export class CalebThreadApp {
   private residueAt = Infinity;
   private residueDoneAt = Infinity;
   private residueCommitted = false;
-  private residueCommittedAt = Infinity;
   private toasts: { text: string; life: number }[] = [];
   private hits: Hit[] = [];
   private hover = '';
@@ -443,7 +443,7 @@ export class CalebThreadApp {
     }
     // the dissolve, the line's fade-in and the commit cross-fade all need
     // every frame; nothing else in this beat does
-    if (this.phase === 'residue' && this.t < this.residueAt + LINE_FADE) this.dirty = true;
+    if (this.phase === 'residue' && this.t < this.residueAt + LINE_FADE + 0.1) this.dirty = true;
     // the commit's cross-fade AND the exit fade both need every frame
     if (this.residueCommitted) this.dirty = true;
     if (this.t >= this.residueDoneAt) {
@@ -498,10 +498,9 @@ export class CalebThreadApp {
   private commitResidue(): void {
     if (this.residueCommitted) return;
     this.residueCommitted = true;
-    this.residueCommittedAt = this.t;
     // the record shows a GAP it could not classify — never the line itself
     this.file('residue', 'residue', caleb.witness.residue);
-    this.residueDoneAt = this.t + RES.holdSeconds;
+    this.residueDoneAt = this.t;
     this.dirty = true;
   }
 
@@ -722,73 +721,18 @@ export class CalebThreadApp {
 
     const line = caleb.residue.line;
     const up = Math.min(1, (this.t - this.residueAt) / LINE_FADE);
-    // THE PRESS, RE-STAGED (S60, finding F25). Sérgio: on click the line
-    // *"appeared repeated on the screen"*. It was: the offered line (11px, in
-    // a button at H/2-12) and the standing line (13px, at H/2-6) cross-faded
-    // over the same 1.1s at different sizes and different baselines, so for a
-    // beat there were visibly TWO copies of the era's most important sentence,
-    // one sliding out from under the other. They are now the same words in the
-    // same place at the same size — what changes is the FRAME AROUND THEM: the
-    // button falls away and the line is left standing on its own. And the two
-    // halves are sequenced, not overlapped: the button goes first, then the
-    // line settles. One sentence, always.
-    const pressed = this.residueCommitted
-      ? Math.min(1, (this.t - this.residueCommittedAt) / LINE_FADE) : 0;
-    const chromeOut = Math.min(1, pressed / 0.45);   // the button leaves first
-    const settle = Math.max(0, (pressed - 0.45) / 0.55); // then the line settles
-
-    ui.setFont(ctx, 12);
-    const tw = ctx.measureText(line).width;
-    const bw = Math.round(tw) + 40;
-    const bx = Math.round((W - bw) / 2);
-    const by = Math.round(H / 2) - 13;
-    const textX = bx + 20;
-    const textY = by + 8;
-
-    if (chromeOut < 1) {
-      ctx.save();
-      ctx.globalAlpha = up * (1 - chromeOut);
-      // A DROP SHADOW (finding F24). Sérgio loved the beat and could not tell
-      // the line was a button. The bevel alone was too quiet on this field; a
-      // hard offset shadow is the era's own way of saying "this is raised, and
-      // you may press it" — the same object, finally legible as one.
-      ui.px(ctx, bx + 3, by + 3, bw, 26, ERA1.black);
-      ui.button(ctx, bx, by, bw, 26, '', { hover: this.hover === 'residue' });
-      ctx.restore();
-      // it only takes a click once it is actually legible
-      if (!this.residueCommitted && up > 0.5) {
-        this.hits.push({ x: bx, y: by, w: bw, h: 26, id: 'residue' });
-      }
-    }
-    // the SAME words, in the SAME place, twice over: dark while they sit on
-    // the button, pale once they are standing on the field. Two draws of one
-    // sentence at one baseline — never two sentences.
-    ui.setFont(ctx, 12);
-    if (chromeOut < 1) {
-      ctx.save();
-      ctx.globalAlpha = up * (1 - chromeOut);
-      ctx.fillStyle = this.hover === 'residue' && !this.residueCommitted ? ERA1.navy : ERA1.black;
-      ctx.fillText(line, textX, textY);
-      ctx.restore();
-    }
-    if (settle > 0) {
-      ctx.save();
-      ctx.globalAlpha = settle;
-      ctx.fillStyle = ERA1.paper;
-      ctx.fillText(line, textX, textY);
-      ctx.restore();
+    ctx.save();
+    ctx.globalAlpha = up;
+    ui.setFont(ctx, 12); ctx.fillStyle = ERA1.paper;
+    const rows = ui.wrapText(ctx, line, W - 64);
+    rows.forEach((row, i) => ctx.fillText(row, 32, H / 2 - rows.length * 8 + i * 16));
+    ctx.restore();
+    if (!this.residueCommitted && up >= 1) {
+      const r = { x: Math.round(W / 2) - 42, y: H - 64, w: 84, h: 24, id: 'residue' };
+      ui.button(ctx, r.x, r.y, r.w, r.h, fixes.continue);
+      this.hits.push(r);
     }
 
-    // …and then it goes out. The hold's last seconds fade the whole field to
-    // black so the desktop can come back UP out of it (os.ts owns that half)
-    // rather than replacing this on one frame — see `pacing.residue._doc_exit`.
-    const toGo = this.residueDoneAt - this.t;
-    if (toGo < RES.exitFadeSeconds) {
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, Math.max(0, 1 - toGo / RES.exitFadeSeconds));
-      ui.px(ctx, 0, 0, W, H, ERA1.black);
-      ctx.restore();
-    }
   }
 
   // ── input ──────────────────────────────────────────────────────────────

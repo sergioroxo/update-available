@@ -40,6 +40,7 @@ import { entriesByEra } from '../../witness/record';
 import { pulse as witnessPulse } from '../../witness/pulse';
 import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 } from '../theme/era4';
 import updates from '../../../data/strings/updates.json';
+import fixes from '../../../data/strings/visitorFixes.json';
 import { ledger } from '../../state/ledger';
 import { pauseWords } from '../../narrative/pauses';
 import { buildStartModel } from '../../witness/startModel';
@@ -1489,7 +1490,10 @@ export class E4Browser {
     ctx.fillText(`${body.care.invite.from} — "${body.care.invite.text}"`, lx + 18, y);
     setFont(ctx, 8);
     ctx.fillStyle = WEB.muted;
-    ctx.fillText(body.care.invite.when, lx + 18, y + 13);
+    ctx.fillText(this.undone.has(4) ? fixes.unmuted : body.care.invite.when, lx + 18, y + 13);
+    if (!this.undone.has(4) && this.mode !== 'program') {
+      const r = webButton(ctx, cx + cw - 86, y - 4, fixes.unmute, 'quiet', 70); this.publish({ ...r, id: 'care4' });
+    }
     ctx.fillText(body.care.footer, cx + 16, H - 28);
   }
 
@@ -1564,7 +1568,7 @@ export class E4Browser {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit && this.startMap.menu) { this.startMap.close(); this.version++; return true; }
     if (hit) {
-      if (hit.id === 'start-menu') { this.startMap.toggle(); this.version++; return true; }
+      if (hit.id === 'start-menu') { this.lambyGuide?.press('lg-x'); this.startMap.toggle(); this.version++; return true; }
       if (hit.id === 'whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.toggle(); this.version++; return true; }
       if (this.startMap.press(hit.id, this.startModel(), this.startMapSilent)) { this.version++; return true; }
       if (hit.id === 'sm-whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.reopen(); this.version++; return true; }

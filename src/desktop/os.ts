@@ -15,7 +15,6 @@ import { registerSetupHost, type LambySetup } from './setup/setup';
  */
 import { buildStartModel } from '../witness/startModel';
 import { isSpeedrun } from '../state/cut';
-import guidedCopy from '../../data/strings/extras.json';
 import { StartMenuMap } from './apps/startMenuMap';
 import { mapState, beatDone } from '../witness/map';
 import { gameMenuBus as startMenuBus } from '../state/gameMenuBus';
@@ -504,6 +503,7 @@ export class DesktopOS {
   /** Only navigational acts are allowed. This list deliberately excludes every answer/release/take. */
   private performGuideAct(act: string): void {
     if (this.guideSilence.silent || this.guideSilence.voice) return;
+    if (act === 'open:rootcause') { this.openRootCause(); return; }
     if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
     if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
     if (this.desktopEra === 'e3' || this.desktopEra === 'e4') { this.onGuidePress?.(act.slice(6)); return; }
@@ -710,6 +710,7 @@ export class DesktopOS {
       if (!ledger.records.includes('went-online')) ledger.records.push('went-online');
       this.web = new Web1997App();
       this.web.onClose = () => this.minimiseWindow('web');
+      this.web.onRootCause = () => this.openRootCause();
       this.web.onSearch = () => { if (!ledger.records.includes('search-1997')) ledger.records.push('search-1997'); this.dirty = true; };
       this.web.onJoin = () => { this.minimiseWindow('web'); this.joinChannel(); this.dirty = true; };
       this.dirty = true;
@@ -851,7 +852,9 @@ export class DesktopOS {
   /** S153 — the game on the disk: opened like the rig file, never rewarded,
    *  filed once on opening; its endings file themselves (rootCause.ts) */
   private openRootCause(): void {
-    if (this.rootCause || !this.e1DesktopIdle()) return;
+    if (!this.reinterp || this.desktopEra !== 'e1') return;
+    if (this.rootCause) { this.rootCause.open = true; this.dirty = true; return; }
+    this.minimiseWindow('web'); this.minimiseWindow('kit'); this.minimiseWindow('irc');
     this.rootCause = new RootCauseApp();
     this.rootCause.onClose = () => { this.rootCause = null; this.dirty = true; this.wayBack(this.desktopEra); };   // S207
     if (!ledger.records.includes('rootcause-opened')) ledger.records.push('rootcause-opened');
@@ -2461,7 +2464,9 @@ export class DesktopOS {
   private drawStartMenu(W: number, H: number): void {
     const era = this.desktopEra;
     this.startMap.menu = this.startOpen;
-    this.startHits = this.startMap.draw(this.ctx, W, H, era, buildStartModel(this, era), this.startMapSilent, this.iconsDrawn);
+    const programs = [...this.iconsDrawn];
+    if (era === 'e1' && !programs.some(p => p.id === 'icon-rootcause')) programs.push({ id: 'icon-rootcause', label: rootCauseStrings.icon });
+    this.startHits = this.startMap.draw(this.ctx, W, H, era, buildStartModel(this, era), this.startMapSilent, programs);
   }
 
   private pressStart(id: string): void {
@@ -2484,6 +2489,7 @@ export class DesktopOS {
     if (id.startsWith('sm-prog:')) {
       // the same press its desktop icon answers: find the icon's rect and press it
       const iid = id.slice(8);
+      if (iid === 'icon-rootcause') { this.openRootCause(); return; }
       const ih = this.hitsUnderStart.find((h) => h.id === iid);
       if (ih) { this.hits = this.hitsUnderStart; this.handleClick(ih.x + ih.w / 2, ih.y + ih.h / 2); }
     }
@@ -2621,7 +2627,9 @@ export class DesktopOS {
     //   in its own voice; the next thing on the monitor is the system noticing
     //   its own end (u3's notice, the one window drawn here), out of the black.
     if (this.residueDark) {
-      ui.px(this.ctx, 0, 0, W, H, ERA1.black);
+      ui.px(this.ctx, 0, 0, W, H, ERA1.tealDark);
+      ui.setFont(this.ctx, 12); this.ctx.fillStyle = ERA1.paper;
+      ui.wrapText(this.ctx, calebStrings.residue.line, W - 64).forEach((line, i) => this.ctx.fillText(line, 32, H / 2 + i * 16));
       if (this.updateApp?.open) this.updateApp.draw(this.ctx);
       return;
     }
@@ -2717,7 +2725,7 @@ export class DesktopOS {
       if (this.reinterp && this.e1DesktopIdle()) {
         this.drawIcon(10, 200, 'lamby_rig.exe', true, 'icon-lambyrig');
         // S153 — the game came with the disk: on the desktop from the moment it is in (○ sandbox)
-        if (ledger.records.includes('kit-inserted')) this.drawIcon(10, 248, rootCauseStrings.icon, true, 'icon-rootcause');
+        this.drawIcon(10, 248, rootCauseStrings.icon, true, 'icon-rootcause');
       }
     } else {
       this.drawEraDesktopChrome(W, skin, colors);
@@ -3365,7 +3373,7 @@ export class DesktopOS {
     ctx.fillStyle = ERA1.grey;
     ctx.fillText(`(${opening.o3_name_note})`, L, c.y + 24);
 
-    if (!isSpeedrun() || this.profileGroup === 0) {
+    {
     // icon grid
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
@@ -3388,7 +3396,7 @@ export class DesktopOS {
     });
 
     }
-    if (!isSpeedrun() || this.profileGroup === 1) {
+    {
     // chips — pick three
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
@@ -3421,7 +3429,7 @@ export class DesktopOS {
     });
 
     }
-    if (!isSpeedrun() || this.profileGroup === 2) {
+    {
     // goal — insisted; no neutral option; declining files too
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
@@ -3447,15 +3455,12 @@ export class DesktopOS {
 
     }
     // confirm / leave
-    const armed = !isSpeedrun() && this.profileIcon !== '' && this.profileChips.length === 3 && this.profileGoal !== '';
-    if (!isSpeedrun()) ui.button(ctx, c.x + c.w - 92, c.y + c.h - 26, 84, 20, opening.o3_continue, {
+    const armed = this.profileIcon !== '' && this.profileChips.length === 3 && this.profileGoal !== '';
+    ui.button(ctx, c.x + c.w - 92, c.y + c.h - 26, 84, 20, opening.o3_continue, {
       disabled: !armed, hover: this.hover === 'r-continue' && armed
     });
     if (armed) this.hits.push({ x: c.x + c.w - 92, y: c.y + c.h - 26, w: 84, h: 20, id: 'r-continue' });
-    if (isSpeedrun() && this.profileGroup > 0) {
-      ui.button(ctx, c.x + c.w - 92, c.y + c.h - 26, 84, 20, guidedCopy.back);
-      this.hits.push({ x: c.x + c.w - 92, y: c.y + c.h - 26, w: 84, h: 20, id: 'profile-back' });
-    }
+
     ui.button(ctx, c.x, c.y + c.h - 26, 64, 20, opening.o3_leave, { hover: this.hover === 'r-leave' });
     this.hits.push({ x: c.x, y: c.y + c.h - 26, w: 64, h: 20, id: 'r-leave' });
   }
@@ -3538,7 +3543,7 @@ export class DesktopOS {
       if (id.startsWith('pgoal:')) {
         this.fileFirstProfileTouch();
         this.profileGoal = id.slice(6);
-        if (isSpeedrun()) this.commitProfile();
+        // Confirmation is explicit on the single profile page.
         this.emitOpeningProfile();
         this.dirty = true;
         return;
@@ -3984,6 +3989,10 @@ export class DesktopOS {
 
   handleClick(x: number, y: number): void {
     if (this.setup?.open) { if (!this.paused) this.setup.handleClick(x, y); return; }
+    if (this.reinterp && !this.paused && !gameMenuBus.isOpen && this.phase === 'desktop' && this.desktopEra !== 'e4' && x >= 3 && x <= 53 && y >= ERA1_CANVAS.height - 19) {
+      this.lambyGuide.press('lg-x'); this.pauseOpen = null; this.wotdOpen = null;
+      const opening = !this.startOpen; this.startMap.close(); this.startOpen = opening; this.dirty = true; return;
+    }
     this.idleSeconds = 0;
     this.lambyGuide.activity();
     this.updateLambyGuide(0);
@@ -4028,7 +4037,8 @@ export class DesktopOS {
       this.startPanels[this.desktopEra].toggle(); this.dirty = true; return;
     }
     if (this.startMap.active && !this.startOpen && !this.startMapSilent) {
-      if (hit) this.startMap.press(hit.id, buildStartModel(this, this.desktopEra), false);
+      if (hit?.id === 'sm-prog:icon-rootcause') { this.startMap.close(); this.openRootCause(); }
+      else if (hit) this.startMap.press(hit.id, buildStartModel(this, this.desktopEra), false);
       this.dirty = true; return;
     }
     // ⚑ S219 / W1-B4 — LambyOS's Start menu: open, it owns the press (outside it closes it); MENU toggles it

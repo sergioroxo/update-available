@@ -467,13 +467,6 @@ export class PhoneE3 {
 
     // the composer, and it is the emptiest thing on the device
     const cy = H - 30;
-    ctx.fillStyle = PHONE.bar; ctx.fillRect(0, cy, W, 30);
-    ctx.fillStyle = PHONE.hairline; ctx.fillRect(0, cy, W, 1);
-    roundRect(ctx, 10, cy + 6, W - 46, 18, 9, PHONE.surface);
-    phoneFont(ctx, 10);
-    ctx.fillStyle = PHONE.faint;
-    ctx.fillText(m.group.composerHint, 18, cy + 10);
-    roundRect(ctx, W - 30, cy + 6, 20, 18, 9, PHONE.bubbleIn);
 
     // ⚑ bottom-up fill, and the guard tests the PROSPECTIVE position so the
     //   topmost bubble can never slide under the bar above it.
