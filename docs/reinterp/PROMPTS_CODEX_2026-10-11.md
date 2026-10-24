@@ -29,8 +29,11 @@ WORKSPACE RULES (strict):
 3. Never edit src/, data/ or public/ while one of your own walks runs (it reloads the page and kills the walk).
 4. Debug URL: http://localhost:<PORT>/?reinterp=1&debug=1&descent=0&home=0&kiosk=0 (&era=1..4 jumps to an era).
 5. Checks before you finish: `npx tsc --noEmit` and `npm test` pass; screenshots of your change (headless Chrome via
-   puppeteer-core, see tools/stills.mjs) saved under out/<TASK>/ and LOOKED AT; the walk named in the task passes
-   (read its report in out/walks/ — "spine: done", console clean).
+   puppeteer-core, see tools/stills.mjs) saved under out/<TASK>/ — look at ONLY the few that prove your change, at
+   reduced size (images cost the most). ⚑ THE WALK IS EXPENSIVE ONLY IF YOU WATCH IT: run the walk named in the task
+   ONCE, at the end, in the background (`caffeinate -i node tools/walk.mjs … > out/<TASK>/walk.log 2>&1`), do NOT poll
+   or tail its log while it runs, then read only its last 3 lines (`grep -E "reachability|REGRESSION|wrote" walk.log`).
+   Open the walk report or its screenshots only if it FAILED. Prefer short targeted probes for checking your fixes.
 6. Commit on your branch with explicit paths (never `git add -A`); message starts with "CODEX: <TASK> —" and ends with
    the line: Co-Authored-By: Codex (OpenAI) <noreply@openai.com>
    Append one line to BUILD_LOG.md.
