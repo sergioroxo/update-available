@@ -1,0 +1,83 @@
+{
+ "_doc": "Claude's draft, for the lead's approval; resources verified in VERIFY_SUPPORT_RESOURCES_2026-10-24.md. The Support page (S258, his ask 2026-10-24: a playtest found no support resources anywhere). Frame voice: plain, calm, no satire, no fiction, not Lamby's voice, undecorated. Opened from the game menu's Support row (src/desktop/gameMenu.ts). Addresses and numbers are printed as selectable text only; the page makes no request. Every entry's address, number and hours are exactly as read on the organisation's own page on 2026-10-24; if one changes, change it here and in the verification doc. Hours are printed only where the organisation's page gave them.",
+ "row": "Support",
+ "title": "If this touched something for you",
+ "intro": [
+  "This piece shows how organised conversion networks targeted queer people online. What was done to people in those networks was not their fault.",
+  "Help is available, and you do not have to be in a crisis to ask for it. The services below are run by other people, outside this piece. Nothing you do here is recorded.",
+  "You can leave at any time: the menu has a Leave row."
+ ],
+ "lawLine": "In Norway, carrying out and marketing conversion therapy has been a criminal offence since 1 January 2024.",
+ "phoneLabel": "Phone",
+ "groups": [
+  {
+   "heading": "If you are in danger now (Norway)",
+   "items": [
+    {
+     "name": "113 and Legevakt 116 117",
+     "line": "Call 113 if the situation is about life or death. For urgent help that is less critical, the out-of-hours medical service (legevakt) is 116 117. Helsenorge is the public health portal.",
+     "address": "helsenorge.no",
+     "phone": "113 · 116 117"
+    }
+   ]
+  },
+  {
+   "heading": "In Norway",
+   "items": [
+    {
+     "name": "Hjelpetelefonen (Mental Helse)",
+     "line": "A free, anonymous phone line for anyone who needs someone to talk to. Open at every hour, every day. The website is in Norwegian.",
+     "address": "mentalhelse.no",
+     "phone": "116 123"
+    },
+    {
+     "name": "FRI – foreningen for kjønns- og seksualitetsmangfold",
+     "line": "The national organisation for sexual and gender diversity. Information, local groups and events, and a phone line on weekdays, 09:00–15:00.",
+     "address": "foreningenfri.no",
+     "phone": "23 10 39 39"
+    },
+    {
+     "name": "Ungdomstelefonen (Skeiv Ungdom)",
+     "line": "For young people: someone to talk to about sexuality, gender and identity, by phone, chat or text. Answered by volunteers aged 18 to 30, in the evenings.",
+     "address": "ungdomstelefonen.no",
+     "phone": "400 00 777"
+    },
+    {
+     "name": "Regnbuetelefonen (Regnbuevenn)",
+     "line": "A nationwide phone-friend service for LGBTI+ people and people living with HIV. Weekdays, 09:00–16:00.",
+     "address": "regnbuevenn.no/regnbuetelefonen",
+     "phone": "94 00 36 29"
+    },
+    {
+     "name": "Skeivt kristent nettverk",
+     "line": "A network of queer Christians and supporters. It has no counselling service, but you can write to it to be put in touch with someone from the network. Please do not send sensitive details by e-mail: post@skeivtkristentnettverk.no",
+     "address": "skeivtkristentnettverk.no"
+    },
+    {
+     "name": "Skeiv Verden",
+     "line": "A national organisation for LGBTIQ+ people with minority backgrounds. It offers counselling and therapy, and social meetings.",
+     "address": "skeivverden.no",
+     "phone": "950 93 293"
+    }
+   ]
+  },
+  {
+   "heading": "Elsewhere in Europe",
+   "items": [
+    {
+     "name": "ILGA-Europe",
+     "line": "A network of LGBTI organisations across Europe and Central Asia. It does not give support to individuals; its membership page lists organisations country by country, which may help you find one near you.",
+     "address": "ilga-europe.org"
+    },
+    {
+     "name": "Galop (United Kingdom)",
+     "line": "The UK's LGBT+ anti-abuse charity. A national helpline for LGBT+ people who have experienced abuse or violence. Closed at weekends.",
+     "address": "galop.org.uk",
+     "phone": "0800 999 5428"
+    }
+   ]
+  }
+ ],
+ "closing": "Numbers and opening hours were checked on 24 October 2026 and can change. If one does not answer, try another.",
+ "back": "Back to menu"
+}

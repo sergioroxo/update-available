@@ -98,6 +98,8 @@ class GameMenuBus {
   openCredits: (() => void) | null = null;
   /** ⚑ S237 — LambyOS Home's window bar has a Controls button: it opens the menu at the controls help (frame voice, files nothing). Set when the menu mounts. */
   openControls: (() => void) | null = null;
+  /** ⚑ S258 — opens the Support page directly (the menu's Support row does the same) */
+  openSupport: (() => void) | null = null;
 
   get isOpen(): boolean {
     return this._open;

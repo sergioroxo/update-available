@@ -49,6 +49,7 @@ import closeMessage from '../../data/strings/close_message.json';
 import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import copy from '../../data/strings/gameMenu.json';
+import support from '../../data/strings/support.json';
 import attributions from '../../data/strings/attributions.json';
 import { entriesByEra, practiceOf, type RecordEra } from '../witness/record';
 import { SOURCE_FILES } from '../witness/sources';
@@ -81,7 +82,7 @@ import e4Offers from '../../data/provotypes/e4_offers.json';
 // wiring below is what makes the card real rather than filed.
 import e3Day from '../../data/provotypes/e3_theday.json';
 
-type View = 'about' | 'main' | 'sound' | 'leaveConfirm' | 'controls' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map' | 'jumpConfirm';
+type View = 'about' | 'main' | 'sound' | 'leaveConfirm' | 'controls' | 'support' | 'credits' | 'ballSources' | 'offersSources' | 'daySources' | 'closeSources' | 'restartConfirm' | 'yourFile' | 'map' | 'jumpConfirm';
 
 interface DossierSource { status: string; confidence: string; text: string }
 interface DossierCard { debrief: { body: string[]; sources: DossierSource[] } }
@@ -256,6 +257,42 @@ export function mountGameMenu(): GameMenu {
     }
     note(copy.soundMixNote);
     backRow();
+  }
+
+  /** ⚑ S258 — the Support page: frame voice, plain text. Addresses and numbers are printed as selectable text, never
+   *  as links (the piece makes no request; a visitor types or copies what they choose). Files nothing. */
+  function supportView(): void {
+    heading(support.title);
+    for (const p of support.intro) paragraph(p);
+    paragraph(support.lawLine);
+    for (const g of support.groups) {
+      const h = document.createElement('div');
+      Object.assign(h.style, {
+        fontSize: '12.5px', fontWeight: '700', color: DIALOG.ink,
+        margin: '10px 0 6px', paddingTop: '8px', borderTop: `1px solid ${DIALOG.dark}`
+      } as CSSStyleDeclaration);
+      h.textContent = g.heading;
+      panel.appendChild(h);
+      for (const it of g.items as { name: string; line: string; address: string; phone?: string }[]) {
+        const box = document.createElement('div');
+        Object.assign(box.style, { margin: '0 0 12px', userSelect: 'text', webkitUserSelect: 'text' } as CSSStyleDeclaration);
+        const mk = (text: string, bold = false): void => {
+          const d = document.createElement('div');
+          Object.assign(d.style, {
+            fontSize: '12px', lineHeight: '1.55', color: DIALOG.ink, fontWeight: bold ? '700' : '400', overflowWrap: 'anywhere'
+          } as CSSStyleDeclaration);
+          d.textContent = text;
+          box.appendChild(d);
+        };
+        mk(it.name, true);
+        mk(it.line);
+        mk(it.address);
+        if (it.phone) mk(`${support.phoneLabel}: ${it.phone}`);
+        panel.appendChild(box);
+      }
+    }
+    paragraph(support.closing);
+    row(support.back, () => { view = 'main'; render(); });
   }
 
   function row(label: string, onClick: () => void, emphasis = false): void {
@@ -476,7 +513,7 @@ export function mountGameMenu(): GameMenu {
     // ⚑ Phase 7 (his: "the close sources need to be wider on PC as they are still in mobile size") —
     //   every reading view (the sources, the credits) takes the wide dialog too; the menu itself stays narrow
     const wide = view === 'map' || view === 'yourFile' || view === 'closeSources' || view === 'daySources'
-      || view === 'about' || view === 'offersSources' || view === 'ballSources' || view === 'credits';
+      || view === 'about' || view === 'offersSources' || view === 'ballSources' || view === 'credits' || view === 'support';
     dialog.style.width = wide ? 'min(860px, 94vw)' : 'min(440px, 92vw)';
     if (view === 'yourFile') { yourFileView(); return; }
     if (view === 'map') { mapView(); return; }
@@ -549,6 +586,9 @@ export function mountGameMenu(): GameMenu {
       row(copy.restart, () => { view = 'restartConfirm'; render(); });
       row(copy.controls, () => { view = 'controls'; render(); });
       row(copy.credits, () => { view = 'credits'; render(); });
+      // ⚑ S258 — SUPPORT (his ask 2026-10-24: a playtest found no support resources anywhere). A plain frame-voice
+      //   page, data/strings/support.json; verified in docs/reinterp/VERIFY_SUPPORT_RESOURCES_2026-10-24.md
+      row(support.row, () => { view = 'support'; render(); });
       row(copy.leave, () => doLeave());
       // ⚑ S220 (his, 2026-10-08: "leave needs a small message saying that it will [go to] a different space") — said
       //   UNDER the row, not asked after it: this Leave is the quick way out of a shared room, and a confirm would
@@ -583,6 +623,7 @@ export function mountGameMenu(): GameMenu {
       backRow();
       return;
     }
+    if (view === 'support') { supportView(); return; }
     if (view === 'about') {
       heading(about.title);
       for (const p of about.paragraphs) paragraph(p);
@@ -701,6 +742,7 @@ export function mountGameMenu(): GameMenu {
   // (open first — opening resets the view to main — then land on the sources)
   gameMenuBus.openLeave = () => { gameMenuBus.open(); view = 'leaveConfirm'; render(); };
   gameMenuBus.openCredits = () => { gameMenuBus.open(); view = 'credits'; render(); };
+  gameMenuBus.openSupport = () => { gameMenuBus.open(); view = 'support'; render(); };
   gameMenuBus.openControls = () => { gameMenuBus.open(); view = 'controls'; render(); };
   gameMenuBus.openCloseSources = (i) => { gameMenuBus.open(); closeFocus = i; view = 'closeSources'; render(); };
   const unsubscribe = gameMenuBus.onChange(setOpenVisual);
