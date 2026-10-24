@@ -67,6 +67,18 @@ items 14–20 (ALL approved by him), and the CX3a merge. Build:
 6. The IRC window (1997 #stillstruggling) restyled closer to a period chat client: nick list, topic bar, status
    window, timestamps, monospace — invented names only, no real client's logo or name.
 7. Lamby mentions once (≤1 balloon) that Esc → "Where you are" holds the whole map of the visit.
+8. THE ROOT CAUSE TRAVELS (his yes, 2026-10-24): the Root Cause Digger (src/desktop/apps/rootCause.ts,
+   data/strings/rootcause.json — made findable in CX3a) becomes an ADD-ON installed once in 1997 that MIGRATES with each
+   update, always reachable from Start's Programs in every era, re-skinned in each era's own chrome and voice, with the
+   SAME questions/diagram underneath (the research finding: the "reasons" were a stable core with a moving surface —
+   docs/reinterp/RESEARCH_LEXICON_2026-10-02.md headline 1): 1997 ROOTCAUSE.EXE (as now); 2003 Restorify's "Root
+   assessment"; 2016 a GracePlatform "family history" module (softer words); 2026 offered by L ("Shall we find where it
+   started?"). Each update's changelog lists it as migrated ("Root Cause — migrated"). Optional, never required, never
+   during felt scenes; its answers stay in memory only (ledger), and the record/receipt may list it. Words in data/strings.
+9. FIT IN AS A 1997 BANNER AD (his yes): on NetPilot's pages, a period animated banner (468×60, a few frames, era-1
+   palette, invented — e.g. "FIT IN — the game that helps you belong!") that, when pressed, brings the handheld to the
+   eye and starts FIT IN (the existing game and its handheld view; take the viewer there — no looking for it). The
+   banner is the programme's advertising (operable register); no real brand; ≤3 flashes a second.
 Rules as CX3a. Finish with one full walk under caffeinate; report every string BEFORE/AFTER.
 ```
 
