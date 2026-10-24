@@ -19,9 +19,8 @@ short headless probe on the VISITOR's path (tools/, results in out/cx3a/), scree
    Reword the cross-reference "in the dossier: the questionnaire — asked you to describe yourself, then filed the
    answers as a case" to "See also, in your dossier: the questionnaire you filled in" (same pattern wherever
    `dossierMark` is used).
-2. "Lamby Rig Lab" (the "placeholder test surface") stays, in its proper context (his, 2026-10-24): a developer/review
-   tool — shown only in review mode (`?debug=1`), labelled plainly as such, never on a visitor's 1997 desktop or in
-   Start's Programs.
+2. Leave "Lamby Rig Lab" exactly as it is (his decision pending, 2026-10-24: it may become part of the experience —
+   a separate build).
 3. "Look with your device" only where device orientation exists (touch/mobile); never on a desktop without a gyro.
 4. The 1997 profile setup: ONE step again, not three (his).
 5. Setup: Lamby's balloons come one at a time, each waiting for the visitor (no pile-up before the advert).
