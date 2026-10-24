@@ -1,0 +1,42 @@
+{
+  "caleb": {
+    "_draft": "for his approval",
+    "sharedRoom": "we shared a room at New Morning. i still remember you being there."
+  },
+  "irc": {
+    "topic": "Topic: #stillstruggling · one day at a time",
+    "status": "Status — connected · fellowship relay",
+    "nicks": "Nicks"
+  },
+  "tapes": {
+    "title": "Cassette Player",
+    "play": "Play",
+    "stop": "Stop",
+    "close": "Close",
+    "labels": [
+      "The prayer",
+      "The broadcast jingle",
+      "The mixtape"
+    ]
+  },
+  "restorify": {
+    "today": "Restorify — Today",
+    "checkin": "Daily check-in",
+    "back": "Today"
+  },
+  "banner": {
+    "frames": [
+      "FIT IN",
+      "The game that helps you belong!",
+      "Press here to play FIT IN"
+    ],
+    "ad": "Fellowship games · advertisement"
+  },
+  "helper": {
+    "e1": "Lamby",
+    "e2": "Lamby",
+    "e3": "Lambient",
+    "e4": "L",
+    "map": "Esc → “Where you are” holds the whole map of your visit."
+  }
+}

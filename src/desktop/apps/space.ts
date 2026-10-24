@@ -493,7 +493,7 @@ export class E4Shell {
     //   forever, because the cursor blinks even after the browser has stood
     //   down — S105's dirty-only discipline broken by a getter.
     // ⚑ the console reads the browser's state, so the lid follows its version
-    return this.laptopV + this.browser.version;
+    return this.laptopV + this.browser.version + (this.browser.lambyGuide?.version ?? 0);
   }
 
   /** ⚑ S123's interim flag — the browser briefly lived on the lid. It does not
@@ -529,6 +529,8 @@ export class E4Shell {
     // ⚑ after the hand-off the laptop reports and offers nothing: the Close has
     //   already begun (`finishHandOff`). A press here is a press on a report.
     if (this.handedOff) return;
+    const guideHit = x === undefined || y === undefined ? undefined : this.laptopHits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    if (guideHit) { this.browser.pressLaptopGuide(guideHit.id); return; }
     if (this.stageNow !== 'laptop') return;
     // ⚑ S123 — while the browser owns the lid, a press is a TAB, not the next
     //   line. The laptop beat has not begun yet and must not be advanced by
@@ -673,6 +675,15 @@ export class E4Shell {
      * place), one line saying what to do next, in the machine's voice. Nothing
      * on it is pressable. When the device is worn it says so and nothing else.
      */
+    if (done && this.stageNow === 'closed' && !this.worn) {
+      // Keep L's existing console lines; a balloon owns the lid only while it is speaking.
+      if (!this.browser.lambyGuide?.active) {
+        this.laptopBar(ctx, W, this.browser.consoleMark);
+        setFont(ctx, 9); ctx.fillStyle = ERA4.textHi;
+        wrapLaptop(ctx, this.browser.consoleLine, W - 24).forEach((row, i) => ctx.fillText(row, 12, LAPTOP_BAR + 8 + i * 12));
+      }
+      this.browser.drawLaptopGuide(ctx, W, H, this.laptopHits); return;
+    }
     if (done) {
       const line = this.worn || this.stageNow === 'ball' ? this.browser.consoleLineWorn : this.browser.consoleLine;
       this.laptopBar(ctx, W, this.browser.consoleMark);

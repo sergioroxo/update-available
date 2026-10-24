@@ -3,7 +3,8 @@ import ts from 'typescript';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const copy = JSON.parse(fs.readFileSync('data/strings/lambyGuide.json','utf8'));
-const js = ts.transpileModule(fs.readFileSync('src/narrative/lambyGuide.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2020}}).outputText.replace(/import copy from .*?;/,`const copy = ${JSON.stringify(copy)};`);
+const decisions = JSON.parse(fs.readFileSync('data/strings/cx3b.json','utf8'));
+const js = ts.transpileModule(fs.readFileSync('src/narrative/lambyGuide.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2020}}).outputText.replace(/import copy from .*?;/,`const copy = ${JSON.stringify(copy)};`).replace(/import decisions from .*?;/, `const decisions = ${JSON.stringify(decisions)};`);
 const { LambyGuide } = await import('data:text/javascript;base64,'+Buffer.from(js).toString('base64'));
 let logs=[],acts=[];
 const make=()=>new LambyGuide({log:(...x)=>logs.push(x),act:x=>acts.push(x)});
@@ -16,7 +17,7 @@ g.tick(500,input('send'));assert.equal(g.view.text,null);assert(g.press('lg-tray
 for(const [era,beat] of [['e2','release'],['e3','consent'],['e1','pledge'],['e1','channel']]){const h=make();h.tick(50,input(beat,{era,map:{current:{era,beat:{id:beat}},quiet:false}}));h.press('lg-show');assert.equal(h.view.act,undefined);assert.equal(h.press('lg-take'),false);}
 // Silence wins over requested and unsolicited help, including a currently visible pointer.
 const h=make();h.tick(50,input());h.press('lg-show');h.tick(0,input('checkin',{silent:true}));assert(h.view.hidden);assert(!h.active);assert(!h.press('lg-tray'));h.tick(90,input('checkin',{map:{current:{era:'e2',beat:{id:'checkin'}},quiet:true}}));assert(h.view.hidden);
-const f=make(),fi=input('channel',{era:'e1',map:{current:{era:'e1',beat:{id:'channel'}},quiet:false},formAvailable:true});f.tick(0,fi);assert.equal(f.view.rung,'form');f.press('lg-take');assert.equal(acts.at(-1),'open:form');f.tick(0,{...fi,silent:true,formOpened:true});f.tick(0,fi);assert.notEqual(f.view.rung,'form');
+const f=make(),fi=input('channel',{era:'e1',map:{current:{era:'e1',beat:{id:'channel'}},quiet:false},formAvailable:true});f.tick(0,fi);assert.notEqual(f.view.rung,'form');f.tick(49,fi);assert.notEqual(f.view.rung,'form');f.tick(1,fi);assert.equal(f.view.rung,'form');f.press('lg-take');assert.equal(acts.at(-1),'open:form');f.tick(0,{...fi,silent:true,formOpened:true});f.tick(0,fi);assert.notEqual(f.view.rung,'form');
 const v=make();v.tick(500,input('checkin',{voice:true}));assert(v.view.hidden);v.tick(49,input());assert(!v.active);v.tick(1,input());assert(v.active);
 console.log('Lamby guide: escalation terminates; caps/requested help; answer protection; silence/voice gates; one-time form offer OK.');
 
@@ -34,3 +35,7 @@ const cancelled=make();cancelled.tick(0,input('checkin',{voice:true}));cancelled
 console.log('Requested help waits for one voice; a quiet scene cancels the pending request.');
 
 const deferred=make();deferred.tick(0,input('',{era:'e1',map:{current:null,quiet:false},deferredUpdate:true}));deferred.press('lg-tray');assert.equal(deferred.view.beat,'update');assert.equal(deferred.view.text,copy.eras.e1.update.tip);console.log('Deferred update help follows actual update state after the map is ticked.');
+
+const rootMap=make(), rootInput=input('read',{era:'e1',map:{current:{era:'e1',beat:{id:'read'}},quiet:false}});
+rootMap.tick(0,rootInput);assert(rootMap.view.text.includes(decisions.helper.map));rootMap.press('lg-later');rootMap.tick(500,rootInput);assert(!rootMap.active);rootMap.press('lg-tray');assert(!rootMap.view.text.includes(decisions.helper.map));
+console.log('Whole-map mention shares the one-time optional add-on balloon and never repeats.');

@@ -18,7 +18,7 @@
     "capPerEra": 5
   },
   "form": {
-    "text": "Rob mentioned the Family Form! Want me to open the form for you?",
+    "text": "Want me to open the form?",
     "yes": "Open it",
     "no": "No thanks",
     "act": "open:form"
@@ -260,5 +260,5 @@
       }
     }
   },
-  "root": {"here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.", "text": "ROOTCAUSE.EXE is on your desktop and in Start → Programs. It came with the disk. Want me to point it out?"}
+  "root": {"here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.", "text": "Root Cause came with the disk. Find it in Start → Programs."}
 }

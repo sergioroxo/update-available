@@ -55,6 +55,7 @@ export interface DeviceSpec {
 export interface HeldDevice {
   readonly spec: DeviceSpec;
   readonly held: boolean;
+  take(cam: pc.Entity): void;
   tick(dt: number, era: string, has: (id: string) => boolean, fileSize: number): string | null;
   /** can this ray press it, and what would it be called */
   aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): 'pick' | 'drop' | 'screen' | GameKey | null;
@@ -150,6 +151,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     const raise = Math.max(0, Math.min(spec.view.raise ?? 0, 0.44 - gf / 2));
     return { d, raise: raise * 2 * d * tanV };
   };
+  let startOnReady = false;
   const heldPose = (cam: pc.Entity): void => {
     const fwd = cam.forward.clone(), up = cam.up.clone();
     const v = viewDist(cam);
@@ -198,6 +200,11 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       if (game && glassAt(ray)) return 'screen';
       return bodyHit(ray) ? 'drop' : null;
     },
+    take(cam) {
+      if (holding) return;
+      from.pos.copy(wrap.getPosition()); from.rot.copy(wrap.getRotation());
+      holding = true; heldPose(cam); t = 0; startOnReady = true;
+    },
     press(ray, cam) {
       const what = this.aim(ray);
       if (!what) return false;
@@ -234,6 +241,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
         if (t >= 1 && !holding && rest) { wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
       }
       if (!game && spec.available(has, fileSize)) game = spec.game();
+      if (holding && game && startOnReady) { game.key?.('start'); startOnReady = false; }
       let filing: string | null = null;
       if (game) { if (holding) game.tick(dt); filing = game.takeFiling(); }
       if (!ctx || !tex) return filing;

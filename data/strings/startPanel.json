@@ -14,7 +14,7 @@
   "close": "Close"
  },
  "e2": {
-  "title": "Restorify 2003 - Today",
+  "title": "Restorify — Today",
   "lead": "Today's steps, in order:",
   "steps": [
    { "text": "Answer the daily check-in.", "done": "checkinDone" },

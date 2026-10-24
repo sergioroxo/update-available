@@ -6,6 +6,7 @@
  *   - wiped on exit, idle reset, and refusal-path endings
  */
 export interface Ledger {
+  rootCause: { kept: { kind: 'answer' | 'memory'; text: string }[]; descents: number; keptFiled: boolean };
   /** Actual room arrivals, in memory only; constructors are not visits. */
   reachedEras: ('e1' | 'e2' | 'e3' | 'e4')[];
   name: string; // typed at boot; display only
@@ -347,6 +348,7 @@ const fresh = (): Ledger => ({
   sends: [],
   guidance: [],
   tapes: [],
+  rootCause: { kept: [], descents: 0, keptFiled: false },
   belongings: [],
   lamby: [],
   checkins: [],

@@ -1,3 +1,4 @@
+import decisions from '../../../data/strings/cx3b.json';
 /**
  * THE CALEB THREAD — the FELT half (S2R.3–S2R.6, Session 45).
  *
@@ -44,7 +45,8 @@ interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 // ⚑ S143: a step that needs a file it does not have is not in the thread —
 //   the song he sends exists only when the track is registered and on disk
-const THREAD = (caleb.thread as unknown as ThreadStep[]).filter((s) => !s.requiresAudio || isAudioAvailable(s.audio));
+const threadWithRoom = (caleb.thread as unknown as ThreadStep[]).flatMap(s => s.id === 'c01' ? [s, { id: 'c01-room', from: 'them', text: decisions.caleb.sharedRoom }] : [s]);
+const THREAD = threadWithRoom.filter((s) => !s.requiresAudio || isAudioAvailable(s.audio));
 
 // ── PACING — ALL OF IT LIVES IN data/dialog/s2_caleb.json's `pacing` BLOCK ──
 // Session 48 moved every timing constant out of here so Sérgio can tune the

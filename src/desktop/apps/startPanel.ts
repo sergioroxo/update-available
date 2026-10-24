@@ -43,6 +43,8 @@ const DEFS = strings as unknown as Record<PanelEra, EraDef>;
 
 export class StartPanel {
   /** the card has been shown and not yet closed. (The surface still draws it only while its screen is calm.) */
+  footerAction: string | null = null;
+  actionRect: Rect | null = null;
   open = false;
   private seen = false;
   /** the card has opened at least once this era (closed or not) */
@@ -147,6 +149,8 @@ export class StartPanel {
     // her own Close: the title bar's box is small, the button is not
     const bw = 56, bh = 16, bx = c.x + c.w - bw - 8, by = c.y + c.h - bh - 6;
     ui.button(ctx, bx, by, bw, bh, D.close);
+    this.actionRect = this.footerAction ? { x: c.x + 8, y: by, w: 140, h: bh } : null;
+    if (this.actionRect && this.footerAction) ui.button(ctx, this.actionRect.x, by, 140, bh, this.footerAction);
     return [c.closeBox, { x: bx, y: by, w: bw, h: bh }];
   }
 

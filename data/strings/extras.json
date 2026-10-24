@@ -17,6 +17,11 @@
       "id": "room",
       "label": "Side trips in the room",
       "place": "The racket, handheld and Root Cause Digger"
+    },
+    {
+      "id": "cassettes",
+      "label": "Cassette Player",
+      "place": "The prayer, broadcast jingle and mixtape"
     }
   ],
   "e2": [

@@ -19,6 +19,8 @@ import { ERA1 } from '../theme/era1';
 import { WEB97 as P } from '../theme/web1997';
 import { practiceOf } from '../../witness/record';
 import D from '../../../data/dialog/s1_browser.json';
+import decisions from '../../../data/strings/cx3b.json';
+import { reducedMotion } from '../../state/motion';
 import fixes from '../../../data/strings/visitorFixes.json';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -40,6 +42,13 @@ export class Web1997App {
   private hover = '';
   /** the first search, filed by os */
   onSearch?: () => void;
+  onFitIn?: () => void;
+  private bannerTime = 0;
+  update(dt: number): boolean {
+    const before = Math.floor(this.bannerTime * 2) % decisions.banner.frames.length;
+    this.bannerTime += dt;
+    return !reducedMotion() && before !== Math.floor(this.bannerTime * 2) % decisions.banner.frames.length;
+  }
   onRootCause?: () => void;
   onClose?: () => void;
   /** Join: the channel opens */
@@ -56,6 +65,7 @@ export class Web1997App {
     const h = this.hits.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
     if (!h) return;
     const id = h.id;
+    if (id === 'web-fitin') { this.onFitIn?.(); return; }
     if (id === 'web-rootcause') { this.onRootCause?.(); return; }
     if (id === 'web-close') { if (this.onClose) this.onClose(); else this.open = false; return; }
     if (id === 'web-back') { const b = this.back.pop(); if (b) { this.fwd.push(this.view); this.view = b; } return; }
@@ -127,11 +137,23 @@ export class Web1997App {
     const top = TOOL_H + LOC_H + 4;
     const body = { x: c.x, y: c.y + top, w: c.w, h: c.h - top - STATUS_H };
     ui.px(ctx, body.x, body.y, body.w, body.h, this.view.kind === 'results' || this.view.kind === 'dir' ? ERA1.white : P.page);
+    const docHits = this.hits.length;
+    const docScale = (body.h - 64) / body.h;
+    ctx.save(); ctx.translate(0, body.y * (1 - docScale)); ctx.scale(1, docScale);
     if (this.view.kind === 'portal') this.drawPortal(ctx, body);
     else if (this.view.kind === 'results') this.drawResults(ctx, body, this.view.page);
     else if (this.view.kind === 'list') this.drawList(ctx, body);
     else if (this.view.kind === 'dir') this.drawDir(ctx, body);
     else this.drawPage(ctx, body, this.view.id);
+    ctx.restore();
+    for (const h of this.hits.slice(docHits)) { h.y = body.y + (h.y - body.y) * docScale; h.h *= docScale; }
+    const ax = body.x + Math.round((body.w - 468) / 2), ay = body.y + body.h - 60;
+    ui.px(ctx, ax, ay, 468, 60, ERA1.navy); ui.px(ctx, ax + 2, ay + 2, 464, 56, ERA1.tooltip);
+    ui.setFont(ctx, 17); ctx.fillStyle = ERA1.navy;
+    const frame = reducedMotion() ? 0 : Math.floor(this.bannerTime * 2) % decisions.banner.frames.length;
+    ctx.fillText(decisions.banner.frames[frame], ax + 18, ay + 12);
+    ui.setFont(ctx, 9); ctx.fillText(decisions.banner.ad, ax + 18, ay + 40);
+    this.hits.push({ x: ax, y: ay, w: 468, h: 60, id: 'web-fitin' });
     this.hits.push({ ...c.closeBox, id: 'web-close' });
   }
 

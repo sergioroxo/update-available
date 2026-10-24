@@ -1,4 +1,8 @@
 /** Shared menu layout; each machine supplies its palette, screen and published hits. */
+import { TapePlayerApp, tapePlayerBus } from './tapePlayer';
+import decisions from '../../../data/strings/cx3b.json';
+import { rootCauseForEra, type RootCauseApp } from './rootCause';
+import rootCopy from '../../../data/strings/rootcause.json';
 import * as ui from '../theme/chrome';
 import { ERA1 } from '../theme/era1';
 import * as aero from '../theme/era3';
@@ -14,18 +18,36 @@ export interface StartHit extends Rect { id: string; title?: string }
 type Program = { id: string; label: string };
 
 export class StartMenuMap {
+  private tapes: TapePlayerApp | null = null;
+  private tapePaint = '';
+  openTapes(): void { this.close(); this.tapes = new TapePlayerApp(); }
+  private root: RootCauseApp | null = null;
+  openRoot(era: PanelEra): void { this.close(); this.era = era; this.root = rootCauseForEra(era); this.root.onClose = () => { this.root = null; }; }
+  private era: PanelEra = 'e1';
   menu = false;
   steps = false;
   view: 'main' | 'jump' | 'programs' = 'main';
   confirm: { era: PanelEra; label: string } | null = null;
   refused = false;
   hits: StartHit[] = [];
-  get active(): boolean { return this.menu || this.steps || !!this.confirm || this.refused; }
-  close(): void { this.menu = this.steps = this.refused = false; this.confirm = null; this.view = 'main'; this.hits = []; }
+  get active(): boolean { return !!this.tapes || !!this.root || this.menu || this.steps || !!this.confirm || this.refused; }
+  close(): void { this.tapes = null; this.root = null; this.menu = this.steps = this.refused = false; this.confirm = null; this.view = 'main'; this.hits = []; }
+  update(dt: number): boolean {
+    if (this.root) { this.root.update(dt); return true; }
+    if (!this.tapes) return false;
+    const s = tapePlayerBus.probe?.();
+    const key = `${s?.inserted}|${s?.playing}|${s?.caption}|${this.tapes.selected}`;
+    if (key === this.tapePaint) return false;
+    this.tapePaint = key; return true;
+  }
   toggle(): void { const open = !this.menu; this.close(); this.menu = open; }
 
   press(id: string, model: StartModel, silent: boolean): boolean {
     this.hits = [];
+    if ((id === 'sm-extra:cassettes' || id === 'sm-prog:icon-tapes') && !silent && this.era === 'e1') { this.openTapes(); return true; }
+    if (id.startsWith('tape-') && this.tapes) { if (id === 'tape-close') this.tapes = null; else this.tapes.press(id); return true; }
+    if (id === 'sm-prog:icon-rootcause' && !silent) { this.openRoot(this.era); return true; }
+    if (id.startsWith('sm-root:') && this.root && !silent) { const r = this.root.hits.find(h => h.id === id.slice(8)); if (r) this.root.handleClick(r.x + r.w / 2, r.y + r.h / 2); return true; }
     if (id === 'steps-row') { this.close(); return true; }
     if (id === 'steps-close') { this.steps = false; return true; }
     if (id === 'jump-stay') { this.confirm = null; return true; }
@@ -54,7 +76,17 @@ export class StartMenuMap {
   }
 
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, era: PanelEra, model: StartModel, silent: boolean, programs: Program[] = []): StartHit[] {
-    this.hits = [];
+    this.hits = []; this.era = era;
+    programs = [...programs.filter(p => p.id !== 'icon-rootcause'), { id: 'icon-rootcause', label: rootCopy.skins[era].label }];
+    if (era === 'e1' && !programs.some(p => p.id === 'icon-tapes')) programs.push({ id: 'icon-tapes', label: decisions.tapes.title });
+    if (this.tapes && !silent) { this.tapes.draw(ctx); this.hits = this.tapes.hits; return this.hits; }
+    if (this.root && !silent) {
+      ui.px(ctx, 0, 0, W, H, era === 'e3' ? aero.ERA3.glass : era === 'e4' ? CHROME.page : ERA1.teal);
+      const scale = Math.min(W / 512, H / 384); const x = Math.round((W - 512 * scale) / 2), y = Math.round((H - 384 * scale) / 2);
+      ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale); this.root.draw(ctx); ctx.restore();
+      this.hits = this.root.hits.map(r => ({ ...r, id: `sm-root:${r.id}`, x: x + r.x * scale, y: y + r.y * scale, w: r.w * scale, h: r.h * scale }));
+      return this.hits;
+    }
     if (this.menu) this.drawMenu(ctx, W, H, era, model, silent, programs);
     if (this.steps && !silent) this.drawSteps(ctx, W, H, era, model);
     if (this.confirm && !silent) this.drawConfirm(ctx, W, H);
@@ -101,6 +133,7 @@ export class StartMenuMap {
         if ((rows.length + expanded.length + tailCount) * row + 16 > H - 30) item(S.programsMore, 'sm-programs');
         else rows.push(...expanded);
       }
+      if (!legacy) item(S.programs, 'sm-programs', silent);
       if (model.room.length) { head(S.room); model.room.forEach(b => item(b.label, '')); }
       head(S.more);
       ui.setFont(ctx, 10);
@@ -108,7 +141,7 @@ export class StartMenuMap {
         const suffix = e.on ? S.on : e.passed ? S.alreadyPassed : '';
         const label = `${e.label}${suffix ? ` ${suffix}` : ''}`;
         const lines = ui.wrapText(ctx, label, tw - 8);
-        lines.forEach(text => item(text, `sm-extra:${e.id}`, silent || e.on || e.passed, e.place || undefined));
+        lines.forEach(text => item(text, `sm-extra:${e.id}`, silent || (e.id !== 'cassettes' && (e.on || e.passed)), e.place || undefined));
         if (e.place) ui.wrapText(ctx, e.place, tw - 14).forEach(text => rows.push({ text, hint: true }));
       });
       item(silent ? `${S.jump} — ${S.notNow}` : S.jump, 'sm-jump', silent, silent ? S.notNow : undefined);

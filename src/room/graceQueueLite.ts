@@ -563,6 +563,7 @@ export class GraceQueueLite {
   private floppyOpened = false;
 
   update(dt: number): void {
+    if (this.startMap.update(dt)) this.bump();
     this.updateSaver(dt);
     this.updateGate();
     this.updateJobReturn(dt);

@@ -8,6 +8,7 @@ import { drawLambyChar } from './lambyChar';
 import { reducedMotion } from '../../state/motion';
 import type { GuideEra, GuideView } from '../../narrative/lambyGuide';
 import copy from '../../../data/strings/lambyGuide.json';
+import decisions from '../../../data/strings/cx3b.json';
 export interface GuideHit { id: string; x: number; y: number; w: number; h: number; label?: string; tip?: string }
 export interface GuidePaint { rings: GuideHit[]; balloon: boolean }
 /** Extracted from Lamblippy's tooltip: 1px border and a stepped tail toward the lamb. */
@@ -31,7 +32,7 @@ export function drawGuidePointer(ctx: CanvasRenderingContext2D, r: GuideHit, fro
   for (let n = 0; n < 4; n++) ui.px(ctx, tx - n, fy - dir * n, 2 * n + 1, 1, colour);
   return ring;
 }
-export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, state: GuideView, hits: GuideHit[], size = { w: 512, h: 384 }): GuidePaint {
+export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, state: GuideView, hits: GuideHit[], size = { w: 512, h: 384 }, remoteActions: string[] = []): GuidePaint {
   const out: GuidePaint = { rings: [], balloon: false };
   if (state.era !== skin) return out;
   const W = size.w, H = size.h, tx = W - (skin === 'e3' ? 182 : 108), ty = H - 20;
@@ -42,18 +43,21 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   if (skin === 'e3') { ui.px(ctx, tx - 2, ty - 3, 64, 21, ERA3.tray); ui.px(ctx, tx - 2, ty - 3, 64, 1, ERA3.glassEdge); }
   const headY = ty + 8 - (state.rung === 'cue' ? state.frame % 2 : 0);
   ctx.save(); ctx.beginPath(); ctx.rect(tx, ty - 3, 20, 21); ctx.clip();
-  if (skin === 'e3') aero.drawLambMark(ctx, tx + 10, headY, 0.55);
+  if (skin === 'e4') { ui.setFont(ctx, 16); ctx.fillStyle = accent; ctx.fillText(decisions.helper.e4, tx + 5, ty); }
+  else if (skin === 'e3') aero.drawLambMark(ctx, tx + 10, headY, 0.55);
   else drawLambyChar(ctx, tx + 10, headY + 4, { mood: 'cheerful', action: 'idle', scale: 0.24, headOnly: true, t: state.rung === 'cue' ? state.time : 0, moodStart: 0 }); ctx.restore();
-  ui.setFont(ctx, 9); ctx.fillStyle = skin === 'e3' ? ERA3.white : ink; ctx.fillText(copy.ui.tray, tx + 22, ty + 5);
-  hits.push({ id: 'lg-tray', label: copy.ui.tray, tip: state.hidden ? undefined : copy.ui.trayTip, x: tx, y: ty - 3, w: 60, h: 21 });
+  ui.setFont(ctx, 9); ctx.fillStyle = skin === 'e3' ? ERA3.white : ink; if (skin !== 'e4') ctx.fillText(decisions.helper[skin], tx + 22, ty + 5);
+  hits.push({ id: 'lg-tray', label: decisions.helper[skin], tip: state.hidden ? undefined : copy.ui.trayTip, x: tx, y: ty - 3, w: 60, h: 21 });
   if (state.hidden || !state.text) return out;
   out.balloon = true;
   const targets = state.targets.flatMap(id => hits.filter(h => h.id === id));
   const multiple = state.beat === 'pledge' || state.beat === 'consent' || state.beat === 'steps';
   const selected = multiple ? targets : targets.slice(0, 1);
   const pointing = state.rung === 'show' || state.rung === 'start';
-  const w = 272, h = 112, x = W - w - 12;
-  let y = H - 22 - h - 70;
+  const w = Math.min(272, W - 8), x = W - w - 4;
+  ui.setFont(ctx, 11);
+  const h = Math.max(112, 58 + ui.wrapText(ctx, state.text, w - (skin === 'e4' ? 66 : 36)).length * 15);
+  let y = W < 300 ? 2 : H - 22 - h - 70;
   if (pointing && selected.some(r => r.x < x + w && r.x + r.w > x && r.y < y + h && r.y + r.h > y)) y = 26;
   const cx = skin === 'e3' ? tx + 10 : W - 48, cy = H - 59;
   if (skin === 'e1' || skin === 'e2') drawLambyChar(ctx, cx, cy, { mood: 'cheerful', action: pointing ? 'point' : 'idle', scale: 0.48, t: state.frame / 3, moodStart: 0 });
@@ -68,8 +72,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   }
   let textX = x + 12, textW = w - 36;
   if (skin === 'e4') {
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 8, y + 9, 29, 28); ctx.clip();
-    drawLambyChar(ctx, x + 22, y + 32, { mood: 'cheerful', action: 'idle', scale: 0.4, headOnly: true, t: 0, moodStart: 0 }); ctx.restore();
+    ui.setFont(ctx, 18); ctx.fillStyle = accent; ctx.fillText(decisions.helper.e4, x + 16, y + 14);
     textX += 30; textW -= 30;
   }
   ui.setFont(ctx, 11); ctx.fillStyle = ink;
@@ -77,9 +80,9 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   ui.setFont(ctx, 11); ctx.fillText(copy.ui.close, x + w - 16, y + 5);
   hits.push({ id: 'lg-x', x: x + w - 23, y: y + 2, w: 21, h: 20 });
   let buttons: [string, string][];
-  if (state.text === copy.ui.nothing) buttons = [['lg-ok', copy.ui.ok]];
+  if (state.text === copy.ui.nothing || state.text === decisions.helper.map) buttons = [['lg-ok', copy.ui.ok]];
   else if (state.rung === 'form') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
-  else if (pointing) buttons = [...(state.act && (!state.act.startsWith('press:') || hits.some(h => h.id === state.act?.slice(6))) ? [['lg-take', copy.ui.take] as [string, string]] : []), ['lg-ok', copy.ui.ok]];
+  else if (pointing) buttons = [...(state.act && (!state.act.startsWith('press:') || hits.some(h => h.id === state.act?.slice(6)) || remoteActions.includes(state.act)) ? [['lg-take', copy.ui.take] as [string, string]] : []), ['lg-ok', copy.ui.ok]];
   else buttons = [...(state.targets.length || state.beat !== 'cut' ? [['lg-show', copy.ui.show] as [string, string]] : []), ['lg-later', copy.ui.later]];
   let bx = x + 12;
   buttons.forEach(([id, label], i) => {

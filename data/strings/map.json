@@ -144,17 +144,17 @@
      "where": "the monitor"
     },
     {
-     "id": "packet",
-     "label": "The placement letter",
-     "done": "packetAcked",
-     "hint": "A letter has arrived on the screen — read it and press Ok.",
-     "where": "the monitor"
-    },
-    {
      "id": "form",
      "label": "The Family Form",
      "done": "formDone",
      "hint": "Your mentor's form is on the desktop now. Open it.",
+     "where": "the monitor"
+    },
+    {
+     "id": "packet",
+     "label": "The placement letter",
+     "done": "packetAcked",
+     "hint": "A letter has arrived on the screen — read it and press Ok.",
      "where": "the monitor"
     },
     {

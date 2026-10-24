@@ -92,7 +92,7 @@ const CONDITIONS: Record<string, Condition> = {
   tagged: () => ledger.era3Jobs.some((j) => j.id === 'recommend'),
   grouped: () => ledger.era3Jobs.some((j) => j.id === 'group'),
   matchmadePlayed: () => ledger.games.some((g) => g.id === 'matchmade'),   // ⚑ S227: MATCH MADE SIMPLE replaced TIDY on the 2026 console
-  formDone: () => ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
+  formDone: () => ledger.provotypes.some((p) => p.id === 'origin_intake_e1' && p.outcome === 'completed'),
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
   rootCauseOpened: () => has('rootcause-opened'),
   spokeInChannel: () => ledger.records.some((r) => r.startsWith('channel-reply:')),

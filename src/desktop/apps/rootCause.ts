@@ -2,7 +2,7 @@
  * ROOTCAUSE.EXE — Root Cause Digger (W-L1, Sérgio's pick 2026-09-20; his
  * design: `Pc_Simulation/Lamby Games/Mini-Games_LAmby.md` §1, "Dig Dug").
  *
- * The second file on the companion disk, beside lamby_rig.exe: the fellowship's
+ * Installed from the companion disk and migrated across every era: the fellowship's
  * own shovelware. Lamby digs down through the layers of a life — Childhood,
  * School, Father… Body — because the programme says the ROOT CAUSE is buried
  * there. The things that chase him are not monsters, they are DIAGNOSES; a
@@ -34,7 +34,9 @@
  */
 import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
-import { ledger } from '../../state/ledger';
+import { ERA3 } from '../theme/era3';
+import { CHROME } from '../theme/era4';
+import { ledger, ledgerGeneration } from '../../state/ledger';
 import copy from '../../../data/strings/rootcause.json';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -57,14 +59,13 @@ const PUMPS_BASE = 3;
 /** the progress ceiling — in the code, not an accident of the numbers */
 const CEILING = 99;
 
-/** the KEPT shelf: survives every report, every descent and every reopening — memory only, wiped with the page */
-const kept: Kept[] = [];
-let descents = 0;
-let keptFiled = false;
+/** The KEPT shelf lives in ledger.rootCause and is wiped with the visit. */
+
 
 type Phase = 'intro' | 'play' | 'modal';
 
 export class RootCauseApp {
+  era: 'e1' | 'e2' | 'e3' | 'e4' = 'e1';
   open = true;
   dirty = true;
   /** the OS listens: the window closed */
@@ -91,7 +92,7 @@ export class RootCauseApp {
   private messageT = 0;
   private shake = 0;
   private sparkles: Sparkle[] = [];
-  private hits: Hit[] = [];
+  hits: Hit[] = [];
   private filedMemory = false;
   private filedReport = false;
 
@@ -100,8 +101,8 @@ export class RootCauseApp {
   private rnd(): number { this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff; return this.seed / 0x7fffffff; }
 
   private newDescent(): void {
-    descents += 1;
-    this.seed = 1997 + descents * 31;
+    ledger.rootCause.descents += 1;
+    this.seed = 1997 + ledger.rootCause.descents * 31;
     this.dug = [];
     for (let r = 0; r < ROWS; r++) this.dug.push(new Array(COLS).fill(false));
     this.dug[0][5] = true;   // Lamby's own pocket on the surface layer
@@ -154,8 +155,8 @@ export class RootCauseApp {
     // the memory: flagged, and it stays
     if (!this.memoryFound && to.r === this.memory.r && to.c === this.memory.c) {
       this.memoryFound = true;
-      const n = kept.filter((k) => k.kind === 'memory').length;
-      this.keep({ kind: 'memory', text: copy.memories[(descents - 1 + n) % copy.memories.length] });
+      const n = ledger.rootCause.kept.filter((k) => k.kind === 'memory').length;
+      this.keep({ kind: 'memory', text: copy.memories[(ledger.rootCause.descents - 1 + n) % copy.memories.length] });
       this.say(copy.memoryFound, 6);
       this.modal = { kind: 'flag', stage: 0 }; this.phase = 'modal';
       this.file('memory');
@@ -280,10 +281,10 @@ export class RootCauseApp {
     } else {
       this.keep({ kind: 'answer', text: copy.quiz[m.layer][1] });
       m.answered = 'no';
-      if (!keptFiled) { keptFiled = true; ledger.records.push(`rootcause-kept:${copy.witness.kept}`); }
+      if (!ledger.rootCause.keptFiled) { ledger.rootCause.keptFiled = true; ledger.records.push(`rootcause-kept:${copy.witness.kept}`); }
     }
   }
-  private keep(item: Kept): void { kept.push(item); this.sparkles.push({ t: 0, col: ERA1.tooltip }); }
+  private keep(item: Kept): void { ledger.rootCause.kept.push(item); this.sparkles.push({ t: 0, col: ERA1.tooltip }); }
   private closeQuiz(): void {
     const m = this.modal;
     if (!m || m.kind !== 'quiz') return;
@@ -343,19 +344,31 @@ export class RootCauseApp {
     this.hits = [];
     const ox = this.shake > 0 ? Math.round(Math.sin(this.t * 90) * 2) : 0;
     ctx.save(); ctx.translate(ox, 0);
-    const c = ui.windowFrame(ctx, WIN_X, WIN_Y, WIN_W, WIN_H, copy.title, true, 'rootcause');
+    const modern = this.era === 'e3' || this.era === 'e4';
+    const c = modern ? { x: WIN_X + 4, y: WIN_Y + 25, w: WIN_W - 8, h: WIN_H - 29, closeBox: { x: WIN_X + WIN_W - 44, y: WIN_Y + 3, w: 40, h: 19 } }
+      : ui.windowFrame(ctx, WIN_X, WIN_Y, WIN_W, WIN_H, copy.skins[this.era].title, true, 'rootcause');
+    if (modern) {
+      const edge = this.era === 'e3' ? ERA3.glassEdge : CHROME.fieldEdge;
+      ui.px(ctx, WIN_X, WIN_Y, WIN_W, WIN_H, edge);
+    }
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     // ⚑ the close box is registered LAST (see the end of draw): the walker takes
     //   the first untried control, and a game whose first control is its exit
     //   is a game the walk never plays
+    if (this.era === 'e3' || this.era === 'e4') {
+      const p = this.era === 'e3' ? { bg: ERA3.titleA, ink: ERA3.ink } : { bg: CHROME.field, ink: CHROME.ink };
+      ui.px(ctx, WIN_X + 3, WIN_Y + 3, WIN_W - 6, 18, p.bg);
+      ui.setFont(ctx, 10); ctx.fillStyle = p.ink; ctx.fillText(copy.skins[this.era].title, WIN_X + 8, WIN_Y + 6);
+      ctx.fillText(copy.close, c.closeBox.x + 4, WIN_Y + 6);
+    }
     const closeBox = { ...c.closeBox, id: 'rootcause-close' };
 
     if (this.phase === 'intro') {
       ui.setFont(ctx, 12);
       ctx.fillStyle = ERA1.tooltip;
-      ctx.fillText(copy.title.split(' — ')[1] ?? copy.title, c.x + 20, c.y + 16);
+      ctx.fillText(copy.skins[this.era].label, c.x + 20, c.y + 16);
       ui.setFont(ctx, 10);
-      copy.intro.forEach((line, i) => { ctx.fillStyle = ERA1.silver; ctx.fillText(line, c.x + 20, c.y + 40 + i * 14); });
+      copy.skins[this.era].intro.forEach((line, i) => { ctx.fillStyle = ERA1.silver; ctx.fillText(line, c.x + 20, c.y + 40 + i * 14); });
       // how to play, in the disk's own voice
       ui.setFont(ctx, 9);
       ui.px(ctx, c.x + 20, c.y + 128, 8, 6, ERA1.paper); ui.px(ctx, c.x + 21, c.y + 130, 6, 1, ERA1.grey);
@@ -365,7 +378,7 @@ export class RootCauseApp {
       ui.px(ctx, c.x + 20, c.y + 171, 8, 8, ERA1.tooltip);
       ui.setFont(ctx, 8); ctx.fillStyle = ERA1.black; ctx.fillText('?', c.x + 22, c.y + 171);
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.silver; ctx.fillText(copy.howTo[2], c.x + 34, c.y + 170);
-      ctx.fillStyle = ERA1.grey; ctx.fillText(copy.disk, c.x + 20, c.y + c.h - 14);
+      ctx.fillStyle = ERA1.grey; ctx.fillText(copy.skins[this.era].footer, c.x + 20, c.y + c.h - 14);
       // a cross-section of the life: Lamby on top, the strata under him
       const ix = c.x + 296; const iy = c.y + 100;
       ui.px(ctx, ix, iy, 156, 26, ERA1.teal);
@@ -449,7 +462,7 @@ export class RootCauseApp {
     ctx.fillStyle = this.zeal ? ERA1.tooltip : ERA1.grey; ctx.fillText(B.strength.replace('{n}', String(this.zeal)), c.x + 290, by);
     ctx.fillStyle = ERA1.grey;
     ctx.fillText(B.applied.replace('{n}', String(this.applied.length)).replace('{of}', String(APPLIED_TO_REPORT)), c.x + 370, by);
-    ctx.fillText(B.descent.replace('{n}', String(descents)), c.x + 6, by + 13);
+    ctx.fillText(B.descent.replace('{n}', String(ledger.rootCause.descents)), c.x + 6, by + 13);
     ctx.fillText(B.leaflets.replace('{n}', String(this.leaflet.filter((l) => l.taken).length)).replace('{of}', String(ROWS)), c.x + 104, by + 13);
 
     // the shelf the programme has no field for
@@ -457,15 +470,15 @@ export class RootCauseApp {
     ui.bevel(ctx, c.x + 6, ky, c.w - 12, 54, false);
     ui.px(ctx, c.x + 7, ky + 1, c.w - 14, 52, ERA1.black);
     ui.setFont(ctx, 8);
-    ctx.fillStyle = ERA1.tooltip; ctx.fillText(B.kept, c.x + 12, ky + 3); ctx.fillText(String(kept.length), c.x + c.w - 30, ky + 3);
-    kept.slice(-6).forEach((k, i) => {
+    ctx.fillStyle = ERA1.tooltip; ctx.fillText(B.kept, c.x + 12, ky + 3); ctx.fillText(String(ledger.rootCause.kept.length), c.x + c.w - 30, ky + 3);
+    ledger.rootCause.kept.slice(-6).forEach((k, i) => {
       const col = i % 2; const row = Math.floor(i / 2);
       const kx = c.x + 12 + col * 222; const kyy = ky + 14 + row * 12;
       ui.px(ctx, kx, kyy + 1, 4, 4, k.kind === 'memory' ? ERA1.tooltip : ERA1.white);
       ctx.fillStyle = k.kind === 'memory' ? ERA1.tooltip : ERA1.silver;
       ctx.fillText(k.text.length > 36 ? `${k.text.slice(0, 35)}…` : k.text, kx + 8, kyy);
     });
-    if (!kept.length) { ctx.fillStyle = ERA1.grey; ctx.fillText(B.nothing, c.x + 12, ky + 20); }
+    if (!ledger.rootCause.kept.length) { ctx.fillStyle = ERA1.grey; ctx.fillText(B.nothing, c.x + 12, ky + 20); }
 
     if (this.modal) this.drawModal(ctx, c);
     ctx.restore();
@@ -521,7 +534,7 @@ export class RootCauseApp {
       ui.setFont(ctx, 10);
       let y = f.y;
       for (const raw of R.lines) {
-        const l = raw.replace('{n}', String(descents)).replace('{p}', String(this.progress))
+        const l = raw.replace('{n}', String(ledger.rootCause.descents)).replace('{p}', String(this.progress))
           .replace('{list}', this.applied.length ? this.applied.join(', ') : R.none);
         for (const w of (l ? ui.wrapText(ctx, l, f.w) : [''])) { ctx.fillStyle = ERA1.black; ctx.fillText(w, f.x, y); y += 13; }
       }
@@ -571,4 +584,15 @@ export class RootCauseApp {
       if (d) this.pump(d);
     }
   }
+}
+
+let installed: RootCauseApp | null = null;
+let generation = -1;
+/** One add-on per visit. Updates replace its casing, never its questions or answers. */
+export function rootCauseForEra(era: 'e1' | 'e2' | 'e3' | 'e4'): RootCauseApp {
+  if (generation !== ledgerGeneration || !installed) { installed = new RootCauseApp(); generation = ledgerGeneration; }
+  installed.era = era; installed.open = true;
+  if (!ledger.records.includes('rootcause-installed')) ledger.records.push('rootcause-installed');
+  if (!ledger.records.includes('rootcause-opened')) ledger.records.push('rootcause-opened');
+  return installed;
 }

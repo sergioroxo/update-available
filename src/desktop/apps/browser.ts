@@ -1,5 +1,5 @@
 import polish from '../../../data/strings/playtestPolish.json';
-import { drawLambyGuide, type GuidePaint } from './lambyGuideDraw';
+import { drawLambyGuide, drawGuidePointer, type GuidePaint } from './lambyGuideDraw';
 import type { LambyGuide } from '../../narrative/lambyGuide';
 /**
  * ⚑ ERA 4'S BROWSER — S123, and it is the era's primary surface.
@@ -155,6 +155,7 @@ export interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 export class E4Browser {
   lambyGuide: LambyGuide | null = null;
+  onGuideLook: (() => void) | null = null;
   pressGuideTarget(id: string): void {
     if (!['search-open', 'result-agent', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
     const r = this.hits.find(h => h.id === id);
@@ -360,6 +361,7 @@ export class E4Browser {
   }
 
   update(dt: number): void {
+    if (this.startMap.update(dt)) this.version++;
     // ⚑ a surface that has stopped being pressable publishes nothing, even if
     //   nothing redraws it: the walk found a stale `tab0` still advertised
     //   through the whole finale and pressed it forty-five times (2026-09-12)
@@ -521,6 +523,11 @@ export class E4Browser {
    */
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, pressable = true): void {
     this.drawSurfaceContent(ctx, W, H, pressable);
+    const guide = this.lambyGuide?.view;
+    if (pressable && guide && !guide.hidden && guide.rung === 'show' && !this.startMap.active) {
+      const targets = this.hits.filter(h => guide.targets.includes(h.id));
+      for (const r of targets) drawGuidePointer(ctx, r, { x: W - 24, y: H - 24 }, CHROME.accent, guide.frame);
+    }
     if (this.phase === 'open' && !this.idleOrb) {
       const S = startCopy.desktop.startMenu;
       px(ctx, W - 80, 3, 50, 20, CHROME.button);
@@ -529,7 +536,17 @@ export class E4Browser {
       const nav = this.startMap.draw(ctx, W, H, 'e4', this.startModel(), this.startMapSilent);
       if (nav.length) this.hits = [...nav, ...this.hits.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
-    if (pressable && this.lambyGuide && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H });
+
+  }
+  drawLaptopGuide(ctx: CanvasRenderingContext2D, W: number, H: number, hits: import('./lambyGuideDraw').GuideHit[]): void {
+    if (this.lambyGuide?.canRequest && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, hits, { w: W, h: H }, this.hits.map(h => `press:${h.id}`));
+  }
+  pressLaptopGuide(id: string): boolean {
+    if (id === 'lg-tray') { this.nowLine = null; this.waitNow = false; }
+    this.lambyGuide?.activity();
+    const took = this.lambyGuide?.press(id) ?? false;
+    if (took) { this.version++; if (id === 'lg-show') this.onGuideLook?.(); }
+    return took;
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number, pressable: boolean): void {
     this.hits = [];

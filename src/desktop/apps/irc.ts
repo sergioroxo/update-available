@@ -4,6 +4,7 @@
  * human speed and WRAP (nothing is cut); Rob's DM arrives by name and even for
  * lurkers. Script in data/dialog/s1_irc.json; this file is mechanics only.
  */
+import decisions from '../../../data/strings/cx3b.json';
 import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
@@ -364,7 +365,7 @@ export class IrcApp {
     const p = stream.partial;
     if (p) all.push(p);
     all.forEach((l, idx) => {
-      const prefix = `<${l.from}> `;
+      const prefix = `[21:${String(40 + idx).padStart(2, '0')}] <${l.from}> `;
       const pw = ctx.measureText(prefix).width;
       const lines = this.wrap(ctx, l.text, bodyW - pw);
       const typingTail = caret && p && idx === all.length - 1;
@@ -406,16 +407,21 @@ export class IrcApp {
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     const listW = 78;
     ui.px(ctx, c.x + c.w - listW, c.y, listW, c.h, ERA1.tealDark);
-    ui.setFont(ctx, 9);
-    ctx.fillStyle = ERA1.silver;
+    ui.px(ctx, c.x, c.y, c.w, 18, ERA1.silver);
+    ctx.font = '9px monospace'; ctx.fillStyle = ERA1.navy;
+    ctx.fillText(decisions.irc.topic, c.x + 4, c.y + 4);
+    ui.px(ctx, c.x, c.y + c.h - 34, c.w, 14, ERA1.beige);
+    ctx.fillStyle = ERA1.greyDark; ctx.fillText(decisions.irc.status, c.x + 4, c.y + c.h - 31);
+    ctx.fillStyle = ERA1.silver; ctx.fillText(decisions.irc.nicks, c.x + c.w - listW + 4, c.y + 22);
     [...dialog.users, ledger.name].forEach((u, i) => {
-      ctx.fillText(u.slice(0, 11), c.x + c.w - listW + 4, c.y + 4 + i * 11);
+      ctx.fillText(u.slice(0, 11), c.x + c.w - listW + 4, c.y + 36 + i * 11);
     });
 
     ui.setFont(ctx, 9);
+    ctx.font = '9px monospace';
     const chRows = this.rows(ctx, this.channel, c.w - listW - 12,
-      (f) => (f === ledger.name ? ERA1.tooltip : ERA1.ok), ERA1.silver, caretOn).slice(-22);
-    this.renderRows(ctx, chRows, c.x + 4, c.y + 4);
+      (f) => (f === ledger.name ? ERA1.tooltip : ERA1.ok), ERA1.silver, caretOn).slice(-17);
+    this.renderRows(ctx, chRows, c.x + 4, c.y + 24);
     // ⚑ a tray that is not live publishes NOTHING — the first cut left the
     //   channel's rect standing after his line was said, and the walk pressed
     //   the phantom eight times, spending the cap the escalation needed
@@ -440,6 +446,7 @@ export class IrcApp {
       // only, no type box — Sérgio). When Rob is mid-line, the area is just empty.
       // R3-28 — SCROLLBACK: the window shows a page of the thread and two arrows
       //   page it; a new line always brings the view back to the end
+      ctx.font = '9px monospace';
       const all = this.rows(ctx, this.dm, d.w - 24,
         (f) => (f === ledger.name ? ERA1.navy : ERA1.warnDark), ERA1.black, caretOn);
       const PAGE = 9;

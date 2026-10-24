@@ -1437,7 +1437,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         const onLaptop = test('laptop');
         if (onLaptop) { shell.pressLaptop(onLaptop.x, onLaptop.y); return true; }
       }
-      if (shell && shell.stage === 'laptop') {
+      if (shell && (shell.stage === 'laptop' || shell.stage === 'closed')) {
         const lap = screens.find(sc => sc.name === 'laptop');
         if (lap?.entity.enabled) {
           const onLaptop = test('laptop');

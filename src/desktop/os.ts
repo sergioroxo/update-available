@@ -2,6 +2,7 @@ import polish from '../../data/strings/playtestPolish.json';
 import { reducedMotion } from '../state/motion';
 import { LambyGuide, type GuideInput } from '../narrative/lambyGuide';
 import { drawLambyGuide, type GuideHit, type GuidePaint } from './apps/lambyGuideDraw';
+import decisions from '../../data/strings/cx3b.json';
 import lambyGuideCopy from '../../data/strings/lambyGuide.json';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { registerSetupHost, type LambySetup } from './setup/setup';
@@ -429,7 +430,7 @@ export class DesktopOS {
   mapAtClose?: boolean;
   /** The same felt silence as the guide, without its operable/modal gates. */
   get startMapSilent(): boolean {
-    return !!this.caleb?.open || this.residueDark || this.desktopReturnAt >= 0 || !!this.testimony?.playbackActive
+    return !!this.irc?.open || !!this.caleb?.open || this.residueDark || this.desktopReturnAt >= 0 || !!this.testimony?.playbackActive
       || !!this.accountability || !!this.diary?.open || !!this.packet?.open || !!this.netvision?.open || !!this.mediaPlayer?.open;
   }
   private startHits: Hit[] = [];
@@ -443,6 +444,7 @@ export class DesktopOS {
   /** ⚑ S226 / W1-C8 (cadence study 1.12, his "sounds okay") — the fallback's 24 s are counted only while the player is
    *  quiet with the channel open: a player turning slowly, or reading Rob's last line, is not left behind by a clock */
   private escalationQuietT = 0;
+  private packetAfterForm = false;
   /** ⚑ S226 — set by the frame loop each frame (engine/app.ts): false while she is turned away from the desk */
   screenFacing = true;
   private diaryPendingAt = Infinity; // soft beat between the packet and the diary
@@ -451,7 +453,6 @@ export class DesktopOS {
    *  dismissal always works). The diary waits for it, so the MAIN beat can never be skipped past and lost. */
   /** S209 / B18 — the ad waits on the desktop after a dismissed alert */
   private netvisionIcon = false;
-  private formOpenedOnce = false;
   /** ⚑ S209 / P7-47 — each update's own Word of the Day (data/strings/lexicon.json wotdApps): once per era, on a quiet
    *  desktop after the pause; the word is met (ledger.lexicon) and the Lexicon will turn it over at the Close */
   private wotdOpen: 'e1' | 'e2' | null = null;
@@ -525,7 +526,7 @@ export class DesktopOS {
     return {
       silent: !this.reinterp || this.phase !== 'desktop' || this.paused || gameMenuBus.isOpen || !!this.setup?.open
         || !!this.caleb?.open || this.residueDark || this.desktopReturnAt >= 0 || !!this.testimony?.playbackActive
-        || !!this.provotype?.open || !!this.diary?.open || !!this.packet?.open || this.dossierOpen || !!this.accountability || this.yesOpen || !!this.pauseOpen
+        || !!this.irc?.open || !!this.provotype?.open || !!this.diary?.open || !!this.packet?.open || this.dossierOpen || !!this.accountability || this.yesOpen || !!this.pauseOpen
         || !!this.updateApp?.visible || !!this.sendOffer?.open || !!this.saver || this.startOpen || !!this.wotdOpen
         || this.shutRefused || this.startMap.active || !!this.netvision?.open || !!this.mediaPlayer?.open
         || (this.desktopEra === 'e2' && this.e2Stage !== 'active') || !!external?.silent,
@@ -539,7 +540,7 @@ export class DesktopOS {
     const before = this.lambyGuide.version;
     const input: GuideInput = { era: this.desktopEra, map: mapState(this), ...this.guideSilence,
       deferredUpdate: this.desktopEra === 'e1' && !!this.updateApp?.deferred,
-      formAvailable: this.formAvailable && ledger.records.includes('enrollment-acknowledged'), formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
+      formAvailable: this.formAvailable, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
     if (before !== this.lambyGuide.version) { this.dirty = true; if (this.e4) this.e4.browser.version++; }
@@ -559,7 +560,12 @@ export class DesktopOS {
   /** engine listens: hide the physical floppy once it is in the drive */
   onKitInserted?: () => void;
   /** S151 — the Un-Walk's pray step presses play on Tape A (app.ts owns the boombox) */
+  openTapePlayer(): boolean {
+    if (!this.reinterp || this.desktopEra !== 'e1' || this.startMapSilent || mapState(this).quiet) return false;
+    this.startOpen = false; this.startMap.openTapes(); this.dirty = true; return true;
+  }
   onPlayTape?: () => void;
+  onFitIn?: () => void;
   /** …and Amen before the end takes it off */
   onStopTape?: () => void;
   /** S151 — what the boombox is doing, for the prayer's words (app.ts) */
@@ -692,6 +698,7 @@ export class DesktopOS {
     this.toast = null;
     playOnce('floppy_1997.mp3');   // S141: the disk goes in, the drive reads it
     if (!ledger.records.includes('kit-inserted')) ledger.records.push('kit-inserted');
+    if (this.reinterp && !ledger.records.includes('rootcause-installed')) ledger.records.push('rootcause-installed');
     this.onKitInserted?.();
     // S151 — the programme's steps reach into the room and the desktop
     this.kit.onCancel = () => this.minimiseWindow('kit');   // W1-C3: Cancel is the minimise box, with its taskbar button
@@ -711,6 +718,7 @@ export class DesktopOS {
       this.web = new Web1997App();
       this.web.onClose = () => this.minimiseWindow('web');
       this.web.onRootCause = () => this.openRootCause();
+      this.web.onFitIn = () => this.onFitIn?.();
       this.web.onSearch = () => { if (!ledger.records.includes('search-1997')) ledger.records.push('search-1997'); this.dirty = true; };
       this.web.onJoin = () => { this.minimiseWindow('web'); this.joinChannel(); this.dirty = true; };
       this.dirty = true;
@@ -735,7 +743,10 @@ export class DesktopOS {
       };
       // S1.7 → S1.8: the chosen reply summons the placement packet. The diary
       // glitch, not the IRC, is the true E1 → T1 trigger.
-      this.irc.onEscalationDone = () => this.openPacket();
+      this.irc.onEscalationDone = () => {
+        if (!this.reinterp || ledger.provotypes.some(p => p.id === 'origin_intake_e1' && p.outcome === 'completed')) { this.openPacket(); return; }
+        this.packetAfterForm = true; this.minimiseWindow('irc'); this.dirty = true;
+      };
     };
     this.dirty = true;
   }
@@ -754,7 +765,7 @@ export class DesktopOS {
     this.packet.onAck = () => {
       this.packet = null;
       // S208 / A4 — the form first, if it has been sent and not yet opened; the diary follows its closing
-      if (this.formAvailable && !this.formOpenedOnce) this.diaryAfterForm = true;
+      if (this.formAvailable && !ledger.provotypes.some(p => p.id === 'origin_intake_e1' && p.outcome === 'completed')) this.diaryAfterForm = true;
       else { this.diaryPendingFromForm = false; this.diaryPendingAt = this.t + 1.0; }
       this.dirty = true;
     };
@@ -806,11 +817,13 @@ export class DesktopOS {
     if (!this.reinterp || this.provotype) return;
     this.provotype = new ProvotypeApp(data);
     const isForm = data === (originIntakeProvotypeData as unknown as Provotype);
-    if (isForm) this.formOpenedOnce = true;
     this.provotype.onClose = () => {
       this.provotype = null; this.dirty = true;
-      // S208 / A4 — the form was the beat the diary was waiting on: it follows now, and no "back to it" toast over it
-      if (isForm && this.diaryAfterForm) {
+      if (isForm && this.packetAfterForm && ledger.provotypes.some(p => p.id === 'origin_intake_e1' && p.outcome === 'completed')) {
+        this.packetAfterForm = false; this.openPacket(); return;
+      }
+      // The diary follows a filed form when the placement was already acknowledged.
+      if (isForm && this.diaryAfterForm && ledger.provotypes.some(p => p.id === 'origin_intake_e1' && p.outcome === 'completed')) {
         this.diaryAfterForm = false; this.diaryPendingFromForm = true; this.diaryPendingAt = this.t + 1.0; return;
       }
       this.wayBack(this.desktopEra);   // S207
@@ -852,13 +865,10 @@ export class DesktopOS {
   /** S153 — the game on the disk: opened like the rig file, never rewarded,
    *  filed once on opening; its endings file themselves (rootCause.ts) */
   private openRootCause(): void {
-    if (!this.reinterp || this.desktopEra !== 'e1') return;
-    if (this.rootCause) { this.rootCause.open = true; this.dirty = true; return; }
+    if (!this.reinterp || this.startMapSilent || mapState(this).quiet) return;
     this.minimiseWindow('web'); this.minimiseWindow('kit'); this.minimiseWindow('irc');
-    this.rootCause = new RootCauseApp();
-    this.rootCause.onClose = () => { this.rootCause = null; this.dirty = true; this.wayBack(this.desktopEra); };   // S207
-    if (!ledger.records.includes('rootcause-opened')) ledger.records.push('rootcause-opened');
-    meetWord('roots');   // S209 / P7-47
+    this.startOpen = false; this.startMap.openRoot(this.desktopEra);
+    meetWord('roots');
     this.dirty = true;
   }
 
@@ -994,6 +1004,7 @@ export class DesktopOS {
   private retireEra1Windows(): void {
     this.kit = null;
     this.irc = null;
+    this.packetAfterForm = false;
     this.packet = null;
     this.diary = null;
     this.provotype = null;
@@ -1005,7 +1016,8 @@ export class DesktopOS {
     this.testimonyOffered = false;
     this.testimonyToastPending = false;
     this.lambyWaitShown = false;
-    this.rootCause = null;    // S153 — the same: the disk stays in 1997
+    this.rootCause = null;
+    this.startOpen = false; this.startMap.close(); // add-on instance survives in session memory
     this.sendOffer = null;
     this.clearExternalSendHits();
     this.dossierOpen = false;
@@ -2086,6 +2098,7 @@ export class DesktopOS {
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
     if (this.paused) this.updateLambyGuide(0);
+    if (!this.paused && this.startMap.update(dt)) this.dirty = true;
     if (this.setup?.open) {
       if (!this.paused) this.setup.update(dt);
       if (this.setup.dirty) { this.setup.dirty = false; this.dirty = true; this.draw(); }
@@ -2159,6 +2172,7 @@ export class DesktopOS {
       if (this.programSplash.t >= PROGRAM_SPLASH_SECONDS) this.programSplash = null;
     }
     if (this.mediaPlayer) this.mediaPlayer.update(dt);
+    if (this.phase === 'desktop' && this.web?.open && this.web.update(dt)) this.dirty = true;
     if (this.phase === 'desktop' && this.rootCause) this.rootCause.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
     if (this.phase === 'desktop' && this.packet) this.packet.update(dt);
@@ -2465,6 +2479,7 @@ export class DesktopOS {
     const era = this.desktopEra;
     this.startMap.menu = this.startOpen;
     const programs = [...this.iconsDrawn];
+    if (era === 'e2') programs.push({ id: 'icon-restorify-today', label: decisions.restorify.today });
     if (era === 'e1' && !programs.some(p => p.id === 'icon-rootcause')) programs.push({ id: 'icon-rootcause', label: rootCauseStrings.icon });
     this.startHits = this.startMap.draw(this.ctx, W, H, era, buildStartModel(this, era), this.startMapSilent, programs);
   }
@@ -2489,6 +2504,7 @@ export class DesktopOS {
     if (id.startsWith('sm-prog:')) {
       // the same press its desktop icon answers: find the icon's rect and press it
       const iid = id.slice(8);
+      if (iid === 'icon-restorify-today') { this.openRestorify(); this.restorify?.showToday(); return; }
       if (iid === 'icon-rootcause') { this.openRootCause(); return; }
       const ih = this.hitsUnderStart.find((h) => h.id === iid);
       if (ih) { this.hits = this.hitsUnderStart; this.handleClick(ih.x + ih.w / 2, ih.y + ih.h / 2); }

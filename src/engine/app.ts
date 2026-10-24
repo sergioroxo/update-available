@@ -1,3 +1,4 @@
+import { tapePlayerBus } from '../desktop/apps/tapePlayer';
 import { requestFullscreenSoft, reenterFullscreenIfMarked } from '../frame/fullscreen';
 import { restartVisit } from '../frame/restart';
 import { buildRoomSpecks } from '../room/specks';
@@ -917,20 +918,33 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     };
     os.guideIdleScale = guideIdleScale;
     const queueGuide = era3Devices?.debugQueue();
+    let guideAtLaptop = false;
+    const faceGuideSurface = (name: 'monitor' | 'laptop'): void => {
+      const surface = app.root.findByName(`era3-device-${name}`) as pc.Entity | null;
+      if (!surface || scriptedBusy()) return;
+      const p = surface.getPosition(), dx = p.x - camPos.x, dy = p.y - camPos.y, dz = p.z - camPos.z;
+      startCamMove({ ...camPos, pitch: Math.atan2(dy, Math.hypot(dx, dz)) * pc.math.RAD_TO_DEG, yaw: Math.atan2(-dx, -dz) * pc.math.RAD_TO_DEG }, 1.8, true);
+    };
     os.guideExternal = () => {
       if (queueGuide) {
         queueGuide.lambyGuide = os.lambyGuide;
         queueGuide.callPending = os.era === 'e3' && ['phone', 'vote', 'cascade'].includes(mapState(os).current?.beat.id ?? '');
       }
-      if (os.e4) os.e4.browser.lambyGuide = os.lambyGuide;
+      if (os.e4) { os.e4.browser.lambyGuide = os.lambyGuide; os.e4.browser.onGuideLook = () => faceGuideSurface('monitor'); }
       if (scriptedBusy()) return { silent: true, voice: false };
       if (os.era === 'e3') return { silent: queueGuide?.guideSilent ?? true, voice: queueGuide?.guideVoice ?? false };
-      if (os.era === 'e4') return { silent: os.e4?.browser.guideSilent ?? true, voice: os.e4?.browser.guideVoice ?? false };
+      if (os.era === 'e4') {
+        const active = os.lambyGuide.active;
+        if (active && !guideAtLaptop && os.e4?.stage === 'closed') faceGuideSurface('laptop');
+        guideAtLaptop = active;
+        return { silent: os.e4?.browser.guideSilent ?? true, voice: os.e4?.browser.guideVoice ?? false };
+      }
+      guideAtLaptop = false;
       return { silent: false, voice: false };
     };
     os.onGuidePress = (id) => {
       if (os.era === 'e3') queueGuide?.pressGuideTarget(id);
-      if (os.era === 'e4') os.e4?.browser.pressGuideTarget(id);
+      if (os.era === 'e4') { os.e4?.browser.pressGuideTarget(id); faceGuideSurface('monitor'); }
     };
     os.onGuideMove = (target) => {
       if (scriptedBusy()) return;
@@ -3195,7 +3209,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         }
         if (tapeHandled) return;
         if (rayHitsPointR(ray, BOOMBOX_HIT, BOOMBOX_HIT_RADIUS)) {
-          tapes.togglePlay();
+          if (os.openTapePlayer()) recentreView();
           // ⚑ S86: STOP IS NOW AN EJECT (tapes.ts), so this press changes which
           // props exist and must re-sync them HERE. The loop watcher below is
           // for the tape that ends by ITSELF; leaving this press to the watcher
@@ -3304,6 +3318,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** ⚑ S188/S189 — the devices you can pick up and play (src/room/handheld.ts, src/games/) */
   const devices = options.reinterp === true ? buildDevices(room) : null;
   devices?.tick(0, 'e1', () => false, 0); // initialise its glass before entrance captures the image
+  os.onFitIn = () => { if (os.era === 'e1') devices?.take('e1', camera); };
+  tapePlayerBus.play = (id) => { os.onStopTape?.(); tapes?.insert(id); syncTapeProps(); syncTapeAudio(); };
+  tapePlayerBus.stop = () => { if (tapes?.isPlaying) tapes.togglePlay(); syncTapeProps(); syncTapeAudio(); };
+  tapePlayerBus.probe = () => tapes?.snapshot() ?? { inserted: null, playing: false, caption: null };
   const specks = options.reinterp ? buildRoomSpecks(app, camera) : null;
   if (debugOn) {
     const round = (n: number): number => Math.round(n * 1e5) / 1e5;

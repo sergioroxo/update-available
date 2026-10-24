@@ -12,6 +12,8 @@
  * reply to your answer (finding B7: it used to resolve into nothing). See
  * `onCheckinAcknowledged` and `drawResponse` below.
  */
+import decisions from '../../../data/strings/cx3b.json';
+import { StartPanel } from './startPanel';
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
@@ -25,6 +27,9 @@ const DW = 300; const DH = 210;
 
 export class RestorifyApp {
   open = true;
+  today = true;
+  private readonly todayPanel = new StartPanel('e2');
+  showToday(): void { this.today = true; this.open = true; this.dirty = true; }
   dirty = true;
   /** R28-2d-iv (S2R.4): fires once, right after a check-in chip is filed —
    *  os.ts uses this to decide whether Lamby's video offer should surface
@@ -54,11 +59,19 @@ export class RestorifyApp {
 
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
+    if (this.today) {
+      this.todayPanel.footerAction = decisions.restorify.checkin;
+      this.hits.push(...this.todayPanel.draw(ctx, 88, 50, 336).map(r => ({ ...r, id: 'restorify-close' })));
+      if (this.todayPanel.actionRect) this.hits.push({ ...this.todayPanel.actionRect, id: 'today-checkin' });
+      return;
+    }
     const { dx, dy } = this.geom;
     const c = ui.windowFrame(ctx, dx, dy, DW, DH, lamby.restorifyTitle, true, 'restorify');
     this.hits.push({ ...c.closeBox, id: this.lastChip ? 'checkin-continue' : 'restorify-close' });
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     const L = c.x + 10;
+    ui.button(ctx, c.x + c.w - 76, c.y + 5, 66, 18, decisions.restorify.back);
+    this.hits.push({ x: c.x + c.w - 76, y: c.y + 5, w: 66, h: 18, id: 'restorify-today' });
 
     // the purity streak — front and center; it counted while he was away
     ui.setFont(ctx, 18);
@@ -143,6 +156,8 @@ export class RestorifyApp {
   handleClick(x: number, y: number): void {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit) return;
+    if (hit.id === 'restorify-today') { this.showToday(); return; }
+    if (hit.id === 'today-checkin') { this.today = false; this.dirty = true; return; }
     if (hit.id === 'restorify-close') { this.open = false; this.dirty = true; return; }
     if (hit.id === 'checkin-continue') {
       // the card closes on the player's press, never underneath them

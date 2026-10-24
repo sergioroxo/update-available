@@ -1,6 +1,7 @@
 /** One programme guide, four skins. Pure state machine: callers supply the map,
  * silence/voice gates and effects. No canvas, DOM, storage, timers or input choices. */
 import copy from '../../data/strings/lambyGuide.json';
+import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
 export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form';
@@ -21,6 +22,7 @@ export class LambyGuide {
   private counts: Record<GuideEra, number> = { e1: 0, e2: 0, e3: 0, e4: 0 };
   private formOffered = false;
   private rootOffered = false;
+  private formWait = 0;
   private requested = false;
   private input: GuideInput | null = null;
   private spec: GuideStep | undefined;
@@ -28,6 +30,7 @@ export class LambyGuide {
     act: (act: string) => void }) {}
   get hasStep(): boolean { return !!this.spec || (this.input?.era === 'e1' && !!this.input.formAvailable); }
   get waiting(): boolean { return !!this.spec && !this.spec.noAgain && !this.mem().finished && this.mem().dismissed > 0 && this.canOffer(); }
+  get canRequest(): boolean { return !!this.input && !this.input.silent && !this.input.map.quiet; }
   get active(): boolean { return !this.view.hidden && this.view.text !== null; }
   activity(): void { this.idle = 0; if (this.view.rung === 'cue') this.set('silent'); }
   private mem(): StepMemory {
@@ -60,14 +63,15 @@ export class LambyGuide {
     this.view.time += dt;
     const frame = input.reducedMotion ? 0 : Math.floor(this.view.time * 3) % 3;
     if (frame !== this.view.frame && this.view.rung !== 'silent') { this.view.frame = frame; this.version++; }
-    // The only immediate offer. Once surfaced, it never repeats, including after closing the form.
-    if (input.era === 'e1' && input.formAvailable && !input.formOpened && !this.formOffered && this.canOffer()) {
+    // Available form waits through free exploration; only one unsolicited offer.
+    if (input.era === 'e1' && input.formAvailable && !input.formOpened) this.formWait += dt;
+    if (input.era === 'e1' && input.formAvailable && !input.formOpened && !this.formOffered && this.formWait >= copy.timing.tipSeconds * (input.idleScale ?? 1) && !this.active && this.canOffer()) {
       this.formOffered = true; this.counts.e1++; this.set('form', copy.form.text, [], copy.form.act); return;
     }
     if (!this.active && input.era === 'e1' && !this.rootOffered && step === 'read' && this.canOffer()) {
       this.rootOffered = true;
       this.spec = { tip: copy.root.text, here: copy.root.here, target: ['icon-rootcause'], act: 'open:rootcause', once: true };
-      this.offer('tip', copy.root.text); return;
+      this.offer('tip', `${copy.root.text} ${decisions.helper.map}`); return;
     }
     if (this.active) {
       if (this.view.rung === 'again') {
