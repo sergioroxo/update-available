@@ -9,7 +9,7 @@ port, commit, never merge). Suggested: CX3a Luna 6 High; CX3b Luna 6 Extra High 
 
 ## CX3a · Bugs and visibility (port 3216)
 ```
-TASK = cx3a-bugs. Read CLAUDE.md, docs/reinterp/PLAYTEST_NOTES_2026-10-24.md, docs/reinterp/MISSING_SONNET_2026-10-24.md
+TASK = cx3a-bugs. PORT = 3216. Read CLAUDE.md, docs/reinterp/PLAYTEST_NOTES_2026-10-24.md, docs/reinterp/MISSING_SONNET_2026-10-24.md
 and the checker's REPORT.md/MAP.md (~/Pc_Simulation/GPTPlaysIT/haiku-check-2026-10-20/). Fix each item, verified by a
 short headless probe on the VISITOR's path (tools/, results in out/cx3a/), screenshots looked at:
 1. THE ROOT CAUSE MUST BE FINDABLE (his ask: neither checker could find it). The 1997 "Did you know" tip promises
@@ -51,7 +51,7 @@ the piece's coercion (his rulings); the NetPilot search box stays non-typing (CL
 
 ## CX3b · His seven decisions (port 3217) — after CX3a is merged
 ```
-TASK = cx3b-decisions. Read CLAUDE.md (R28 §2: Lamby one guide, four skins), docs/reinterp/PLAYTEST_NOTES_2026-10-24.md
+TASK = cx3b-decisions. PORT = 3217. Read CLAUDE.md (R28 §2: Lamby one guide, four skins), docs/reinterp/PLAYTEST_NOTES_2026-10-24.md
 items 14–20 (ALL approved by him), and the CX3a merge. Build:
 1. Free exploration after Rob asks for the form: the visitor may do other things; the story picks up when they file the
    form on the desktop; Lamby nudges (≤1 unsolicited balloon) after a while with "Want me to open the form?".
@@ -86,7 +86,7 @@ Rules as CX3a. Finish with one full walk under caffeinate; report every string B
 *His choice (2026-10-24), from the Haiku agent's three options: option 3 — "it sounds quite powerful". A separate run
 because it is large. Luna 6, Extra High.*
 ```
-TASK = cx3c-tune-lamby. Read CLAUDE.md (tone laws: satire only of the programme's self-presentation; never a joke at the
+TASK = cx3c-tune-lamby. PORT = 3218. Read CLAUDE.md (tone laws: satire only of the programme's self-presentation; never a joke at the
 person; felt scenes bare; Lamby the one guide), then the Rig Lab: src/lambyrig/lambyRig.ts (LambyRigPanel),
 src/desktop/apps/lambyRigFile.ts (the 1997 window, lamby_rig.exe), src/desktop/apps/lambyChar.ts (the puppet),
 data/strings/lamby_rig.json; and 2003's check-in: src/desktop/apps/restorify.ts, data/dialog/s2_lamby.json (the Purity
