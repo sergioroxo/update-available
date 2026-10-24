@@ -273,6 +273,9 @@ export function mountGameMenu(): GameMenu {
       } as CSSStyleDeclaration);
       h.textContent = g.heading;
       panel.appendChild(h);
+      // S259 — an optional plain line under the section heading (emergency number, dialling prefix, language).
+      const lead = (g as { lead?: string }).lead;
+      if (lead) paragraph(lead);
       for (const it of g.items as { name: string; line: string; address: string; phone?: string }[]) {
         const box = document.createElement('div');
         Object.assign(box.style, { margin: '0 0 12px', userSelect: 'text', webkitUserSelect: 'text' } as CSSStyleDeclaration);

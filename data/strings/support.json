@@ -1,5 +1,5 @@
 {
- "_doc": "Claude's draft, for the lead's approval; resources verified in VERIFY_SUPPORT_RESOURCES_2026-10-24.md. The Support page (S258, his ask 2026-10-24: a playtest found no support resources anywhere). Frame voice: plain, calm, no satire, no fiction, not Lamby's voice, undecorated. Opened from the game menu's Support row (src/desktop/gameMenu.ts). Addresses and numbers are printed as selectable text only; the page makes no request. Every entry's address, number and hours are exactly as read on the organisation's own page on 2026-10-24; if one changes, change it here and in the verification doc. Hours are printed only where the organisation's page gave them.",
+ "_doc": "Claude's draft, for the lead's approval; resources verified in VERIFY_SUPPORT_RESOURCES_2026-10-24.md. The Support page (S258, his ask 2026-10-24: a playtest found no support resources anywhere; S259 same day: international, because the piece will travel to festivals). Sections in this order: danger now (general + a helpline directory), Europe, International, Norway, Portugal (the two producing countries). Frame voice: plain, calm, no satire, no fiction, not Lamby's voice, undecorated. Opened from the game menu's Support row (src/desktop/gameMenu.ts). Addresses and numbers are printed as selectable text only; the page makes no request. Every entry's address, number and hours are exactly as read on the organisation's own page on 2026-10-24; if one changes, change it here and in the verification doc. Hours are printed only where the organisation's page gave them. 'lead' is an optional plain line under a section heading.",
  "row": "Support",
  "title": "If this touched something for you",
  "intro": [
@@ -7,23 +7,72 @@
   "Help is available, and you do not have to be in a crisis to ask for it. The services below are run by other people, outside this piece. Nothing you do here is recorded.",
   "You can leave at any time: the menu has a Leave row."
  ],
- "lawLine": "In Norway, carrying out and marketing conversion therapy has been a criminal offence since 1 January 2024.",
+ "lawLine": "Conversion practices are a criminal offence in Norway (carrying out and marketing them, since 1 January 2024) and in Portugal (practices aimed at forced conversion of sexual orientation, gender identity or gender expression, since 1 March 2024).",
  "phoneLabel": "Phone",
  "groups": [
   {
-   "heading": "If you are in danger now (Norway)",
+   "heading": "If you are in danger now",
+   "lead": "Call your local emergency number. In every EU country 112 reaches the emergency services, free of charge, and it works in many countries beyond. The directory below lists helplines by country and by topic, including gender and sexual identity.",
+   "items": [
+    {
+     "name": "Find A Helpline (ThroughLine)",
+     "line": "A free directory of crisis and emotional-support helplines in more than 175 countries, searchable by country and topic. Run by ThroughLine; it is not itself a helpline.",
+     "address": "findahelpline.com"
+    }
+   ]
+  },
+  {
+   "heading": "Europe",
+   "items": [
+    {
+     "name": "ILGA-Europe",
+     "line": "A network of LGBTI organisations across Europe and Central Asia. It does not give support to individuals; its membership page lists organisations country by country, which may help you find one near you.",
+     "address": "ilga-europe.org"
+    },
+    {
+     "name": "TGEU – Trans Europe and Central Asia",
+     "line": "A network of trans organisations. It supports its member organisations rather than individuals; its members page lists them country by country, which may help you find a trans organisation near you.",
+     "address": "tgeu.org/our-members"
+    },
+    {
+     "name": "Galop (United Kingdom)",
+     "line": "The UK's LGBT+ anti-abuse charity. A national helpline for LGBT+ people who have experienced abuse or violence. Closed at weekends.",
+     "address": "galop.org.uk",
+     "phone": "0800 999 5428"
+    }
+   ]
+  },
+  {
+   "heading": "International",
+   "items": [
+    {
+     "name": "Rainbow Railroad",
+     "line": "Helps LGBTQI+ people facing violence and persecution to reach safety, through an online request form. It is not an emergency line.",
+     "address": "rainbowrailroad.org/request-help"
+    },
+    {
+     "name": "ILGA World",
+     "line": "A global federation of LGBTI organisations. It campaigns rather than offers support to individuals; its member list is by region and country, and may help you find an organisation near you.",
+     "address": "ilga.org/member-organisations"
+    },
+    {
+     "name": "The Trevor Project (United States only)",
+     "line": "Crisis support for LGBTQ+ young people, by phone, text or chat, day and night. Its page describes the service as available from anywhere in the U.S.; it is not an international service.",
+     "address": "thetrevorproject.org/get-help",
+     "phone": "1-866-488-7386 · text 678-678 (United States)"
+    }
+   ]
+  },
+  {
+   "heading": "Norway",
+   "lead": "Numbers are as dialled inside Norway; from abroad add +47. Most websites are in Norwegian.",
    "items": [
     {
      "name": "113 and Legevakt 116 117",
      "line": "Call 113 if the situation is about life or death. For urgent help that is less critical, the out-of-hours medical service (legevakt) is 116 117. Helsenorge is the public health portal.",
      "address": "helsenorge.no",
      "phone": "113 · 116 117"
-    }
-   ]
-  },
-  {
-   "heading": "In Norway",
-   "items": [
+    },
     {
      "name": "Hjelpetelefonen (Mental Helse)",
      "line": "A free, anonymous phone line for anyone who needs someone to talk to. Open at every hour, every day. The website is in Norwegian.",
@@ -62,18 +111,44 @@
    ]
   },
   {
-   "heading": "Elsewhere in Europe",
+   "heading": "Portugal",
+   "lead": "Numbers are as dialled inside Portugal; from abroad add +351. In danger now, call 112. Most websites are in Portuguese.",
    "items": [
     {
-     "name": "ILGA-Europe",
-     "line": "A network of LGBTI organisations across Europe and Central Asia. It does not give support to individuals; its membership page lists organisations country by country, which may help you find one near you.",
-     "address": "ilga-europe.org"
+     "name": "SNS 24 – psychological counselling",
+     "line": "The national health line's psychological counselling: call and press 4. Open at every hour, every day. It is a health service, not an LGBTQ+ one.",
+     "address": "sns24.gov.pt",
+     "phone": "808 24 24 24 (press 4)"
     },
     {
-     "name": "Galop (United Kingdom)",
-     "line": "The UK's LGBT+ anti-abuse charity. A national helpline for LGBT+ people who have experienced abuse or violence. Closed at weekends.",
-     "address": "galop.org.uk",
-     "phone": "0800 999 5428"
+     "name": "Linha 1411 – national suicide prevention line",
+     "line": "For anyone thinking about suicide, or worried about someone who is. Free, with psychologists and specialist nurses, open at every hour, every day. It is not an LGBTQ+ service.",
+     "address": "portugal.gov.pt (announcement of 10 September 2025)",
+     "phone": "1411"
+    },
+    {
+     "name": "SOS Voz Amiga",
+     "line": "An association whose volunteers listen to people in distress, anonymously. Every day, 15:30 to 00:30. Not an LGBTQ+ service.",
+     "address": "sosvozamiga.org",
+     "phone": "213 544 545 · 912 802 669"
+    },
+    {
+     "name": "ILGA Portugal",
+     "line": "The LGBTI+ association in Lisbon. A listening and support line on Thursdays and Fridays, 20:00–23:00, and a victim support service (violence, discrimination, hate crimes) on weekdays, 09:30–16:30. Not an emergency line.",
+     "address": "ilga-portugal.pt/associacao/contactos",
+     "phone": "969 239 229 (support line) · 927 247 468 (victim support)"
+    },
+    {
+     "name": "Casa Qui",
+     "line": "A Lisbon association with a victim support office for LGBTI people who face bullying, family violence or being put out of home.",
+     "address": "casa-qui.pt",
+     "phone": "96 008 11 11"
+    },
+    {
+     "name": "Opus Diversidades",
+     "line": "A Lisbon LGBTQI+ association. Free psychology consultations, social support and legal support, booked by phone or e-mail. Phone line weekdays, 10:00–18:00.",
+     "address": "opusdiversidades.org",
+     "phone": "924 467 485"
     }
    ]
   }
