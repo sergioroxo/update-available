@@ -69,3 +69,35 @@ items 14–20 (ALL approved by him), and the CX3a merge. Build:
 7. Lamby mentions once (≤1 balloon) that Esc → "Where you are" holds the whole map of the visit.
 Rules as CX3a. Finish with one full walk under caffeinate; report every string BEFORE/AFTER.
 ```
+
+## CX3c · "Tune your Lamby" — the Rig Lab inside 2003 (port 3218) — after CX3b is merged
+*His choice (2026-10-24), from the Haiku agent's three options: option 3 — "it sounds quite powerful". A separate run
+because it is large. Luna 6, Extra High.*
+```
+TASK = cx3c-tune-lamby. Read CLAUDE.md (tone laws: satire only of the programme's self-presentation; never a joke at the
+person; felt scenes bare; Lamby the one guide), then the Rig Lab: src/lambyrig/lambyRig.ts (LambyRigPanel),
+src/desktop/apps/lambyRigFile.ts (the 1997 window, lamby_rig.exe), src/desktop/apps/lambyChar.ts (the puppet),
+data/strings/lamby_rig.json; and 2003's check-in: src/desktop/apps/restorify.ts, data/dialog/s2_lamby.json (the Purity
+Streak, "How is your walk today?" Steady / Struggling / Grateful / Tired).
+BUILD, in 2003 (Restorify), "PERSONALISE YOUR GUIDE" — the programme's own settings page, reusing LambyRigPanel and the
+puppet unchanged (one Lamby):
+1. After the FIRST daily check-in, Restorify offers it (one Lamby balloon, dismissable, counts toward the era's cap):
+   "Make Lamby yours! Choose how I answer each kind of day."
+2. The page lists the four check-in answers (Steady, Struggling, Grateful, Tired). For each, the visitor picks which of
+   Lamby's four moods answers it (Cheer / Clinical / Sterile / Sad), previewed live on the puppet. The DEFAULTS are the
+   programme's (Steady → Cheer, Grateful → Cheer, Tired → Clinical, Struggling → Sad), shown as "recommended".
+3. The next check-ins play the visitor's choices back: Lamby answers each day with the mood the visitor set.
+4. The reveal — how the system makes you train yourself — is said by the SYSTEM's own words, never against the person:
+   the settings page's small print reads like a product feature ("Your guide learns what keeps you on your walk"), and
+   at the Close the receipt / the record lists it as an entry the system filed: "guide personalised — correction set by
+   the user". The record already exists (src/witness/record.ts); add one entry type.
+5. Safeguards (CLAUDE.md): only the programme's four moods, nothing harsher; never during a felt scene (Caleb's
+   thread, the diary, the testimony); the "Sad" pose is the existing shame-hold, unchanged; a visitor who skips the
+   page gets the programme's defaults and nothing is lost; no storage (memory only); the 1997 lamby_rig.exe stays where
+   it is, unexplained (the 1997 precursor the docs rely on).
+6. Words: draft every new line in the programme's cheerful voice (Restorify / Lamby), in data/strings/lamby_rig.json and
+   s2_lamby.json; replace the "placeholder test surface" subtitle with a programme label; list all strings BEFORE/AFTER.
+Checks: tsc, npm test, short headless probes (offer appears after the first check-in; choices play back; skipping keeps
+defaults; never during felt scenes; the record entry appears at the Close), a few screenshots looked at; one full walk at
+the end in the background, read only its last lines (PREAMBLE rule 5).
+```
