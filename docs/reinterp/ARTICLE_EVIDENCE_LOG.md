@@ -184,6 +184,22 @@ the visitor sees their own choices turned into the programme's entries, each tie
 menu's "Where you are" panel and the file view (screenshots to add to docs/reinterp/article-evidence/: the 2003 and
 2026 columns of "Where you are", the file view). Dossier wording for any public text stays his.
 
+**F-EXH-3 · The record system is itself a finding (his, 2026-10-24).** Extends F-EXH-2: the piece's record — every
+choice filed as the programme's entry, read back at the end — "serves as a way to keep track and symbolically be the
+system of oppression". The interface that remembers for you is the apparatus.
+
+**F-EXH-4 · Caleb as the connection point (his, 2026-10-24).** Caleb appears on Daniel's 1997 form (the friend the
+programme notes) and returns in 2003 as the voice whose message the system intercepts — the person the programme
+tried to remove is what makes its 2003 "update" fail. The narrative's failure point is a relationship, not a bug.
+
+**F-EXH-5 · Failure as the piece's grammar (his, 2026-10-24).** The failure is not only that generative AI "failed"
+in the making; failure became the connecting language of the whole work — each era ends in an update that fails, and the
+title ("Your update has failed") names the programme's promise breaking against the people it targeted.
+
+**F-EXH-6 · Many organisation names as method (his, 2026-10-24).** The piece uses many different (invented and, where
+documented, real) organisation names across the eras to show the DIVERSITY of the networks — not one villain, but an
+ecosystem of ministries, programmes, platforms and apps that hand people on to one another.
+
 ## Open items (Sérgio's, not Claude's)
 
 - The abstract itself (500 words max, bio 200 words max, cc `DCsubmit@gmail.com`) is his to write —
