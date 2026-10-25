@@ -41,6 +41,6 @@ Do these IN ORDER:
 Rules: no new storage; era palettes; no DOM in XR; list every new string BEFORE/AFTER. Verify with WebXR emulation in
 headless Chrome where possible (a mocked XR session: dissolve instead of camera moves, rays and hover, hand pinch, grab)
 and say exactly what still needs the real headset. Re-run the flat-screen behaviour once (the laptop build unchanged).
-Finish with one full walk on the flat build in the background, read only its last lines (PREAMBLE rule 5), and write
+Finish with one full walk on the flat build in the background (`caffeinate -i node tools/walk.mjs --port 3219 --max 2600 --require-close`), read only its last lines (PREAMBLE rule 5), and write
 docs/reinterp/HEADSET_CHECKLIST_CX4.md: what he should try on the Quest 3 to confirm each item.
 ```

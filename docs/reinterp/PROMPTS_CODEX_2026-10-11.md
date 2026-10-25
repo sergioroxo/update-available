@@ -31,7 +31,8 @@ WORKSPACE RULES (strict):
 5. Checks before you finish: `npx tsc --noEmit` and `npm test` pass; screenshots of your change (headless Chrome via
    puppeteer-core, see tools/stills.mjs) saved under out/<TASK>/ — look at ONLY the few that prove your change, at
    reduced size (images cost the most). ⚑ THE WALK IS EXPENSIVE ONLY IF YOU WATCH IT: run the walk named in the task
-   ONCE, at the end, in the background (`caffeinate -i node tools/walk.mjs … > out/<TASK>/walk.log 2>&1`), do NOT poll
+   ONCE, at the end, in the background (`caffeinate -i node tools/walk.mjs --port <PORT> --max 2600 --require-close > out/<TASK>/walk.log 2>&1` — ⚑ ALWAYS
+   `--max 2600`: without it the walker stops at its 320-step default inside 2003 and reports a false failure), do NOT poll
    or tail its log while it runs, then read only its last 3 lines (`grep -E "reachability|REGRESSION|wrote" walk.log`).
    Open the walk report or its screenshots only if it FAILED. Prefer short targeted probes for checking your fixes.
 6. Commit on your branch with explicit paths (never `git add -A`); message starts with "CODEX: <TASK> —" and ends with

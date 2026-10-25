@@ -2025,3 +2025,4 @@ R4-24…R4-32 opened; R4-23 dropped.
 2026-10-25 · S263 — CX3b merged (581c7174 + Join fix f215952c) with Caleb's approved shared-room line; local guided walk: 256 presses, Close reached, Restart card showing; pushed.
 
 2026-10-25 · CODEX cx3c-tune-lamby — Restorify guide personalisation: one capped/dismissable first-check-in invitation, shared rig preview, four memory-only day/mood choices and playback, default-safe skip, felt-scene suppression, record + Close receipt filing; checks and walk evidence in out/cx3c-tune-lamby/REPORT.md. Headset/phone verification not performed.
+2026-10-25 · S264 — CX3c (Tune your Lamby) merged as b8840d30; local guided walk: 257 presses, Close reached, Restart card showing; preamble rule 5 and CX4 now spell out --max 2600 (Codex's walk had stopped at the 320-step default); pushed.
