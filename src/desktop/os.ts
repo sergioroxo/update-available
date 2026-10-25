@@ -724,7 +724,7 @@ export class DesktopOS {
       this.dirty = true;
     };
     this.joinChannel = () => {
-      if (this.irc) return;
+      if (this.irc) { this.restoreWindow('irc'); return; }
       if (!ledger.records.includes('channel-joined')) ledger.records.push('channel-joined');
       this.irc = new IrcApp();
       this.irc.onClose = () => this.minimiseWindow('irc');
@@ -3034,6 +3034,12 @@ export class DesktopOS {
     }
     // ⚑ S208 — the screensaver covers everything; the whole glass is the one thing to press (it only wakes)
     if (this.saver) { this.saver.draw(ctx, W, H); this.hits = [{ x: 0, y: 0, w: W, h: H, id: 'saver-wake' }]; }
+    // Match the click routing above: a modal must not publish the browser's covered controls.
+    if (this.web?.open && (this.pauseOpen || this.wotdOpen || this.shutRefused || this.saver
+        || this.startOpen || this.startMap.active || this.yesOpen || this.dossierOpen || this.yourFileOpen
+        || this.provotype?.open || this.lambyRigFile?.open || this.diary?.open || this.packet?.open
+        || this.programSplash || this.updateApp?.visible)) this.web.covered();
+
   }
 
   private drawEraDesktopChrome(

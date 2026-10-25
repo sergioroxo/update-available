@@ -196,6 +196,8 @@ CX3A visitor fixes (2026-10-24): Root Cause is reachable from the 1997 desktop, 
 
 ### CX3b decisions (2026-10-24)
 
-In `?reinterp=1`, Rob’s request leaves the desktop free until the Family Form is filed. Start’s extras and the boombox open the three-tape Cassette Player; Restorify owns its Today view. Root Cause is installed with the 1997 disk and migrates through Start’s Programs in all four eras, retaining its questions and in-memory answers. NetPilot’s FIT IN advertisement brings the handheld to the eye. The 2026 helper is L on the laptop; its accepted offers conduct the view back to the monitor. Caleb’s single shared-room recollection is marked for approval in `data/strings/cx3b.json`.
+In `?reinterp=1`, Rob’s request leaves the desktop free until the Family Form is filed. Start’s extras and the boombox open the three-tape Cassette Player; Restorify owns its Today view. Root Cause is installed with the 1997 disk and migrates through Start’s Programs in all four eras, retaining its questions and in-memory answers. NetPilot’s FIT IN advertisement brings the handheld to the eye. The 2026 helper is L on the laptop; its accepted offers conduct the view back to the monitor. Caleb’s single shared-room recollection uses Sérgio’s approved wording in `data/strings/cx3b.json`.
 
 XR note: these device and camera handoffs require an in-headset pass on Quest 3; this round verifies browser behavior only. Task evidence and the string inventory are in `out/cx3b-decisions/REPORT.md`.
+
+CX3b Join follow-up (2026-10-25): NetPilot clears covered controls while the desktop pause or another modal owns input; its FIT IN banner settles after three cycles. `node tools/cx3b-join-probe.mjs --port 3217` checks OS-routed Join/Close and normal guided form completion. Follow-up evidence: `out/cx3b-decisions/join-fix/REPORT.md`.

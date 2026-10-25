@@ -44,11 +44,17 @@ export class Web1997App {
   onSearch?: () => void;
   onFitIn?: () => void;
   private bannerTime = 0;
-  update(dt: number): boolean {
-    const before = Math.floor(this.bannerTime * 2) % decisions.banner.frames.length;
-    this.bannerTime += dt;
-    return !reducedMotion() && before !== Math.floor(this.bannerTime * 2) % decisions.banner.frames.length;
+  private get bannerFrame(): number {
+    return Math.min(Math.floor(this.bannerTime * 2), decisions.banner.frames.length * 3 - 1) % decisions.banner.frames.length;
   }
+  update(dt: number): boolean {
+    if (reducedMotion()) return false;
+    const before = this.bannerFrame;
+    this.bannerTime = Math.min(this.bannerTime + dt, decisions.banner.frames.length * 1.5);
+    return before !== this.bannerFrame;
+  }
+  /** Covered controls are not live, even though their window remains open underneath. */
+  covered(): void { this.hits = []; }
   onRootCause?: () => void;
   onClose?: () => void;
   /** Join: the channel opens */
@@ -150,7 +156,7 @@ export class Web1997App {
     const ax = body.x + Math.round((body.w - 468) / 2), ay = body.y + body.h - 60;
     ui.px(ctx, ax, ay, 468, 60, ERA1.navy); ui.px(ctx, ax + 2, ay + 2, 464, 56, ERA1.tooltip);
     ui.setFont(ctx, 17); ctx.fillStyle = ERA1.navy;
-    const frame = reducedMotion() ? 0 : Math.floor(this.bannerTime * 2) % decisions.banner.frames.length;
+    const frame = reducedMotion() ? 0 : this.bannerFrame;
     ctx.fillText(decisions.banner.frames[frame], ax + 18, ay + 12);
     ui.setFont(ctx, 9); ctx.fillText(decisions.banner.ad, ax + 18, ay + 40);
     this.hits.push({ x: ax, y: ay, w: 468, h: 60, id: 'web-fitin' });
