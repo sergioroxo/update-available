@@ -85,6 +85,11 @@ export interface Ledger {
    * In-memory only, like everything here.
    */
   checkins: { id: string; witness: string }[];
+  /** Restorify settings: session memory only; the programme supplies the defaults. */
+  guidePersonalisation: {
+    moods: Record<string, 'cheerful' | 'clinical' | 'sterile' | 'sad'>;
+    personalised: boolean;
+  };
   /**
    * S2R.4 (R28-2d-iv, Session 35): Lamby's video offer (the NetVision Player,
    * "The New You Program") + the video's own outcome. `declined` files when
@@ -352,6 +357,10 @@ const fresh = (): Ledger => ({
   belongings: [],
   lamby: [],
   checkins: [],
+  guidePersonalisation: {
+    moods: { steady: 'cheerful', grateful: 'cheerful', tired: 'clinical', struggling: 'sad' },
+    personalised: false
+  },
   media: [],
   caleb: [],
   games: [],

@@ -39,3 +39,17 @@ const deferred=make();deferred.tick(0,input('',{era:'e1',map:{current:null,quiet
 const rootMap=make(), rootInput=input('read',{era:'e1',map:{current:{era:'e1',beat:{id:'read'}},quiet:false}});
 rootMap.tick(0,rootInput);assert(rootMap.view.text.includes(decisions.helper.map));rootMap.press('lg-later');rootMap.tick(500,rootInput);assert(!rootMap.active);rootMap.press('lg-tray');assert(!rootMap.view.text.includes(decisions.helper.map));
 console.log('Whole-map mention shares the one-time optional add-on balloon and never repeats.');
+
+// Restorify's one-time invitation uses the existing cap and silence/voice gates.
+const personaliseText=JSON.parse(fs.readFileSync('data/dialog/s2_lamby.json','utf8')).personaliseOffer;
+const pi=input('story',{personaliseOffer:personaliseText});
+const pg=make();pg.tick(0,{...pi,voice:true});assert(!pg.active);
+pg.tick(0,{...pi,silent:true});assert(!pg.active);
+pg.tick(0,pi);assert.equal(pg.view.rung,'personalise');assert.equal(pg.view.text,personaliseText);
+pg.tick(0,{...pi,silent:true});assert(!pg.active);assert(!pg.press('lg-take'));
+pg.tick(0,pi);pg.press('lg-later');assert.equal(logs.at(-1)[0],'dismissed');assert.equal(logs.at(-1)[1],'personalise');
+pg.tick(1000,pi);assert(!pg.active);
+const pc=make();pc.tick(0,pi);pc.press('lg-take');assert.equal(acts.at(-1),'open:personalise');
+const capped=make();for(const beat of ['checkin','story','release','tapes','online']){capped.tick(50,input(beat));capped.press('lg-ok');}
+capped.tick(0,pi);assert(!capped.active);
+console.log('Restorify personalisation: one balloon; silence and voice gates; dismissal logged; navigation only; era cap respected.');

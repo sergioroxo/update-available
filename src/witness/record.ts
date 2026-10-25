@@ -20,6 +20,7 @@ import { ledger } from '../state/ledger';
 import practicesData from '../../data/dossier/practices.json';
 import slice from '../../data/strings/slice.json';
 import opening from '../../data/strings/opening.json';
+import rigCopy from '../../data/strings/lamby_rig.json';
 
 export type RecordEra = 'e1' | 'e2' | 'e3' | 'e4';
 export type Status = 'documentary' | 'contested' | 'speculative';
@@ -124,6 +125,7 @@ export function recordEntries(): RecordEntry[] {
   for (const b of ledger.belongings) push('e2', 'belongings', b.id, b.outcome, b.witness);
   for (const l of ledger.lamby) push(l.id.startsWith('e3') ? 'e3' : 'e2', 'assistant', l.id, l.outcome, l.witness);   // Lambient's consent files here too
   for (const c of ledger.checkins) push(c.id.startsWith('e3') ? 'e3' : 'e2', c.id.startsWith('e3') ? 'contact' : 'checkin', c.id, 'answered', c.witness, false);
+  if (ledger.guidePersonalisation.personalised) push('e2', 'assistant', 'guide-personalised', 'personalised', rigCopy.personalise.record, false);
   for (const m of ledger.media) push('e2', 'media', m.id, m.outcome, m.witness);
   for (const cb of ledger.caleb) push('e2', 'contact', cb.id, cb.outcome, cb.witness);
   // ── 2016 ──
@@ -164,5 +166,5 @@ export function recordCount(): number {
     + ledger.tapes.length + ledger.belongings.length + ledger.lamby.length + ledger.checkins.length
     + ledger.media.length + ledger.caleb.length + ledger.era3Arrival.length + ledger.graceQueue.length
     + ledger.comments.length + ledger.e4Space.length + ledger.updates.length + ledger.tags.length
-    + ledger.games.length + ledger.era3Jobs.length;
+    + ledger.games.length + ledger.era3Jobs.length + Number(ledger.guidePersonalisation.personalised);
 }

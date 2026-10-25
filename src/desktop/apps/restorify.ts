@@ -18,18 +18,69 @@ import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import lamby from '../../../data/dialog/s2_lamby.json';
+import rigCopy from '../../../data/strings/lamby_rig.json';
+import { LambyRigPanel, type Mood } from '../../lambyrig/lambyRig';
+import { drawLambyChar } from './lambyChar';
 
 interface Chip { id: string; label: string; witness: string }
 interface Response { id: string; line1: string; line2: string }
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
-const DW = 300; const DH = 210;
+const DW = 400; const DH = 256;
 
 export class RestorifyApp {
   open = true;
   today = true;
   private readonly todayPanel = new StartPanel('e2');
-  showToday(): void { this.today = true; this.open = true; this.dirty = true; }
+  showToday(): void { this.settings = false; this.lastChip = null; this.today = true; this.open = true; this.dirty = true; }
+  offerPending = false;
+  private settings = false;
+  private selectedDay = 'steady';
+  private readonly panel = new LambyRigPanel();
+  private readonly preview = document.createElement('canvas');
+  private t = 0;
+  private moodStart = 0;
+  showPersonalise(): void {
+    this.settings = true; this.open = true; this.offerPending = false;
+    this.panel.handleClick(`mood:${ledger.guidePersonalisation.moods[this.selectedDay]}`, this.t);
+    this.dirty = true;
+  }
+  update(dt: number): void { this.t += dt; if (this.settings || this.lastChip) this.dirty = true; }
+  private drawPersonalise(ctx: CanvasRenderingContext2D): void {
+    const c = ui.windowFrame(ctx, 24, 10, 464, 344, rigCopy.personalise.title, true, 'restorify');
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
+    this.hits.push({ ...c.closeBox, id: 'personalise-done' });
+    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.navy;
+    ctx.fillText(rigCopy.personalise.intro, c.x + 10, c.y + 10);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black;
+    ctx.fillText(rigCopy.personalise.selected, c.x + 10, c.y + 28);
+    const defaults: Record<string, Mood> = { steady: 'cheerful', grateful: 'cheerful', tired: 'clinical', struggling: 'sad' };
+    lamby.checkinChips.forEach((day, i) => {
+      const x = c.x + 10, y = c.y + 55 + i * 44, w = 132;
+      ui.button(ctx, x, y, w, 24, day.label, { disabled: this.selectedDay === day.id });
+      this.hits.push({ x, y, w, h: 24, id: `day:${day.id}` });
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark;
+      const mood = ledger.guidePersonalisation.moods[day.id];
+      ctx.fillText(rigCopy.moods[mood] + (mood === defaults[day.id] ? ` · ${rigCopy.personalise.recommended}` : ''), x + 2, y + 27);
+    });
+    // Render the SAME panel at its authored coordinates. This host crops out
+    // animation controls: only the programme's four moods are configurable.
+    this.preview.width = 512; this.preview.height = 384;
+    const pctx = this.preview.getContext('2d')!;
+    ui.px(pctx, 0, 0, 512, 384, ERA1.tealDark);
+    const panelHits = this.panel.draw(pctx, { ...c, x: 28, y: 32, w: 456, h: 318 }, this.t, '');
+    const x = c.x + 150, y = c.y + 52, controlsY = c.y + 212;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(this.preview, 28, 32, 456, 200, x, y, 296, 130);
+    // Keep the shared mood controls at their native, readable size.
+    ctx.drawImage(this.preview, 48, 272, 300, 36, x, controlsY, 300, 36);
+    for (const h of panelHits.filter(h => h.id.startsWith('mood:'))) this.hits.push({ ...h,
+      x: x + h.x - 48, y: controlsY + h.y - 272 });
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(rigCopy.personalise.smallPrint, c.x + 10, c.y + 255);
+    ui.button(ctx, c.x + c.w - 70, c.y + c.h - 28, 60, 20, rigCopy.personalise.done);
+    this.hits.push({ x: c.x + c.w - 70, y: c.y + c.h - 28, w: 60, h: 20, id: 'personalise-done' });
+  }
   dirty = true;
   /** R28-2d-iv (S2R.4): fires once, right after a check-in chip is filed —
    *  os.ts uses this to decide whether Lamby's video offer should surface
@@ -59,6 +110,7 @@ export class RestorifyApp {
 
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
+    if (this.settings) { this.drawPersonalise(ctx); return; }
     if (this.today) {
       this.todayPanel.footerAction = decisions.restorify.checkin;
       this.hits.push(...this.todayPanel.draw(ctx, 88, 50, 336).map(r => ({ ...r, id: 'restorify-close' })));
@@ -106,6 +158,10 @@ export class RestorifyApp {
       this.hits.push({ x, y, w: chipW, h: chipH, id: `checkin:${ch.id}` });
     });
 
+    if (ledger.checkins.some(ch => !ch.id.startsWith('e3'))) {
+      ui.button(ctx, L, c.y + 152, 164, 20, rigCopy.personalise.edit);
+      this.hits.push({ x: L, y: c.y + 152, w: 164, h: 20, id: 'personalise-open' });
+    }
     const bx = c.x + c.w - 70; const by = c.y + c.h - 22;
     ui.button(ctx, bx, by, 60, 18, lamby.closeLabel, { hover: this.hover === 'restorify-close' });
     this.hits.push({ x: bx, y: by, w: 60, h: 18, id: 'restorify-close' });
@@ -132,12 +188,16 @@ export class RestorifyApp {
     ctx.fillStyle = ERA1.black;
     let row = 0;
     for (const line of [reply?.line1 ?? '', reply?.line2 ?? '']) {
-      for (const wrapped of ui.wrapText(ctx, line, c.w - 20)) {
+      for (const wrapped of ui.wrapText(ctx, line, c.w - 120)) {
         ctx.fillText(wrapped, L, c.y + 104 + row * 13);
         row++;
       }
     }
 
+    drawLambyChar(ctx, c.x + c.w - 55, c.y + 148, {
+      mood: ledger.guidePersonalisation.moods[this.lastChip!] ?? 'cheerful', action: 'idle',
+      t: this.t, moodStart: this.moodStart, scale: 0.48
+    });
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.grey;
     ctx.fillText(lamby.checkinFiledNote, L, c.y + c.h - 30);
@@ -156,8 +216,20 @@ export class RestorifyApp {
   handleClick(x: number, y: number): void {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit) return;
+    if (hit.id === 'personalise-done') { this.showToday(); return; }
+    if (hit.id === 'personalise-open') { this.showPersonalise(); return; }
+    if (this.settings && hit.id.startsWith('day:')) {
+      this.selectedDay = hit.id.slice(4);
+      this.panel.handleClick(`mood:${ledger.guidePersonalisation.moods[this.selectedDay]}`, this.t);
+      this.dirty = true; return;
+    }
+    if (this.settings && hit.id.startsWith('mood:') && this.panel.handleClick(hit.id, this.t)) {
+      ledger.guidePersonalisation.moods[this.selectedDay] = this.panel.mood;
+      ledger.guidePersonalisation.personalised = true;
+      this.dirty = true; return;
+    }
     if (hit.id === 'restorify-today') { this.showToday(); return; }
-    if (hit.id === 'today-checkin') { this.today = false; this.dirty = true; return; }
+    if (hit.id === 'today-checkin') { this.lastChip = null; this.today = false; this.dirty = true; return; }
     if (hit.id === 'restorify-close') { this.open = false; this.dirty = true; return; }
     if (hit.id === 'checkin-continue') {
       // the card closes on the player's press, never underneath them
@@ -171,6 +243,8 @@ export class RestorifyApp {
       const chip = (lamby.checkinChips as Chip[]).find(c => c.id === id);
       if (chip) {
         this.lastChip = chip.id;
+        this.moodStart = this.t;
+        if (!ledger.checkins.some(ch => !ch.id.startsWith('e3'))) this.offerPending = true;
         ledger.checkins.push({ id: chip.id, witness: chip.witness });
         this.dirty = true;
         this.onCheckinFiled?.();

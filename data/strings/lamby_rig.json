@@ -1,7 +1,7 @@
 {
-  "_doc": "PLACEHOLDER — Sérgio voice pass pending. Standalone Lamby rig prototype copy for ?lambyrig=1 only; not production dialogue and not integrated into the OS.",
+  "_doc": "Shared programme rig copy: the unexplained 1997 file and Restorify’s 2003 guide settings. One panel, one puppet.",
   "title": "Lamby Rig Lab",
-  "subtitle": "procedural canvas rig — placeholder test surface",
+  "subtitle": "Restorify · guide response preview",
   "moodHeading": "Mood",
   "actionHeading": "Animation",
   "moods": {
@@ -27,5 +27,15 @@
     "point": "gesture test: Lamby points without sprite frames",
     "appear": "appear test: pixel reveal mask",
     "disappear": "disappear test: reverse reveal mask"
+  },
+  "personalise": {
+    "title": "PERSONALISE YOUR GUIDE",
+    "intro": "A little guidance for every kind of day!",
+    "recommended": "recommended",
+    "smallPrint": "Your guide learns what keeps you on your walk",
+    "done": "Done",
+    "edit": "Personalise your guide",
+    "selected": "Choose a day, then a mood below.",
+    "record": "guide personalised — correction set by the user"
   }
 }

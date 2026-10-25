@@ -4,14 +4,14 @@ import copy from '../../data/strings/lambyGuide.json';
 import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
-export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form';
+export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise';
 export interface GuideStep { tip: string; here?: string; again?: string; target: string[]; act?: string; noAgain?: boolean; once?: boolean }
 export interface GuideView {
   era: GuideEra; beat: string; rung: GuideRung; hidden: boolean; text: string | null;
   targets: string[]; act?: string; frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -45,12 +45,12 @@ export class LambyGuide {
     this.input = input;
     const alias: Record<string, string> = { l: 'browser', search: 'results', site: 'program' };
     const beat = input.deferredUpdate ? 'update' : input.map.current?.beat.id ?? '';
-    const step = input.era === 'e4' ? alias[beat] ?? beat : input.era === 'e3' && beat === 'migrate' ? 'signin' : beat;
+    const step = input.era === 'e2' && input.personaliseOffer ? 'personalise' : input.era === 'e4' ? alias[beat] ?? beat : input.era === 'e3' && beat === 'migrate' ? 'signin' : beat;
     const key = `${input.era}:${step}`;
     if (key !== this.key) {
       this.key = key; this.idle = 0;
       this.view.era = input.era; this.view.beat = step;
-      this.spec = (copy.eras[input.era] as Record<string, GuideStep>)[step];
+      this.spec = step === 'personalise' ? { tip: input.personaliseOffer!, target: [], act: 'open:personalise', once: true } : (copy.eras[input.era] as Record<string, GuideStep>)[step];
       this.set('silent');
     }
     const hidden = input.silent || input.map.quiet || input.map.current?.era === 'close' || input.voice;
@@ -58,6 +58,9 @@ export class LambyGuide {
     if (hidden) {
       if (input.silent || input.map.quiet) this.requested = false;
       this.idle = 0; if (this.view.rung === 'cue') this.set('silent'); return;
+    }
+    if (step === 'personalise' && !this.mem().offered && this.canOffer()) {
+      this.mem().offered = true; this.offer('personalise', input.personaliseOffer!, [], 'open:personalise'); return;
     }
     if (this.requested) { this.requested = false; this.press('lg-tray'); return; }
     this.view.time += dt;

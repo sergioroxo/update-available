@@ -12,6 +12,8 @@ for the changes documented below.
 
 The October 19 playtest polish gives next-action guidance to Lamby and keeps the reusable step list in Start. Era arrival cards and standalone help buttons are retired. Browser zoom stays under visitor control. Focused probes: `node tools/playtest-polish.mjs --port 3215` and `node tools/playtest-polish-setup.mjs --port 3215`; the full visitor walk accepts `--polish-probe` to capture guidance checks. Evidence and wording review: `out/playtest-polish/REPORT.md`. These camera/UI changes still need physical headset and phone verification.
 
+Restorify (2003) offers **Personalise your guide** after the first completed check-in. Each kind of day can use one of Lamby’s four existing moods; skipping keeps the programme’s defaults. Choices last only for this session, and the system files personalisation in the record and Close receipt. Verification: `out/cx3c-tune-lamby/REPORT.md`.
+
 ## Run
 
 ```bash

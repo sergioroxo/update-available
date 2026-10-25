@@ -2023,3 +2023,5 @@ R4-24…R4-32 opened; R4-23 dropped.
 
 2026-10-25 · CODEX cx3b-decisions Join fix — covered NetPilot hit rectangles withdrew under the pause modal; banner settles after three cycles; existing IRC restores on Join. Short OS-routed Join + normal guided form probe passes; single guided require-close walk recorded in out/cx3b-decisions/join-fix/REPORT.md. No display-string or Caleb-line changes.
 2026-10-25 · S263 — CX3b merged (581c7174 + Join fix f215952c) with Caleb's approved shared-room line; local guided walk: 256 presses, Close reached, Restart card showing; pushed.
+
+2026-10-25 · CODEX cx3c-tune-lamby — Restorify guide personalisation: one capped/dismissable first-check-in invitation, shared rig preview, four memory-only day/mood choices and playback, default-safe skip, felt-scene suppression, record + Close receipt filing; checks and walk evidence in out/cx3c-tune-lamby/REPORT.md. Headset/phone verification not performed.

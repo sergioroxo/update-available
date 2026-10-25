@@ -494,6 +494,7 @@ export class DesktopOS {
   private makeLambyGuide(): LambyGuide {
     return new LambyGuide({
       log: (outcome, beat, countDismissal, acknowledged) => {
+        if (beat === 'personalise' && this.restorify) this.restorify.offerPending = false;
         if (countDismissal) ledger.assistant.dismissals++;
         const line = acknowledged ? lambyGuideCopy.witness.acknowledged : lambyGuideCopy.witness[outcome];
         this.fileLambyRecord(outcome, `guide:${beat}`, line.replace('{beat}', beat));
@@ -504,6 +505,7 @@ export class DesktopOS {
   /** Only navigational acts are allowed. This list deliberately excludes every answer/release/take. */
   private performGuideAct(act: string): void {
     if (this.guideSilence.silent || this.guideSilence.voice) return;
+    if (act === 'open:personalise') { this.openRestorify(); this.restorify?.showPersonalise(); return; }
     if (act === 'open:rootcause') { this.openRootCause(); return; }
     if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
     if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
@@ -530,7 +532,7 @@ export class DesktopOS {
         || !!this.updateApp?.visible || !!this.sendOffer?.open || !!this.saver || this.startOpen || !!this.wotdOpen
         || this.shutRefused || this.startMap.active || !!this.netvision?.open || !!this.mediaPlayer?.open
         || (this.desktopEra === 'e2' && this.e2Stage !== 'active') || !!external?.silent,
-      voice: !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!external?.voice
+      voice: !!this.restorify?.open || !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!external?.voice
         || (this.desktopEra === 'e1' && !this.lambyGuide.hasStep && !!this.guide?.activeText && (this.guideTipAt >= 0 || this.guideTipPinned))
     };
   }
@@ -539,6 +541,7 @@ export class DesktopOS {
     if (this.guideLedger !== ledgerGeneration) { this.lambyGuide = this.makeLambyGuide(); this.guideLedger = ledgerGeneration; }
     const before = this.lambyGuide.version;
     const input: GuideInput = { era: this.desktopEra, map: mapState(this), ...this.guideSilence,
+      personaliseOffer: this.desktopEra === 'e2' && this.restorify?.offerPending && !this.restorify.open ? lambyStrings.personaliseOffer : undefined,
       deferredUpdate: this.desktopEra === 'e1' && !!this.updateApp?.deferred,
       formAvailable: this.formAvailable, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
@@ -1172,7 +1175,7 @@ export class DesktopOS {
       this.restorify.onCheckinFiled = () => { this.offerTestimony(); this.recommendForum(true); };
       this.restorify.onCheckinAcknowledged = () => this.maybeAnnounceMessage();
       this.startProgram(lambyStrings.restorifyTitle);
-    }
+    } else if (!this.restorify.open) this.restorify.showToday();
     this.restorify.open = true;
     this.dirty = true;
   }
@@ -2188,6 +2191,7 @@ export class DesktopOS {
       if (this.escalationQuietT >= ESCALATION_FALLBACK) this.escalate();
     }
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
+    if (this.phase === 'desktop' && this.restorify?.open && !this.startMapSilent) this.restorify.update(dt);
     if (this.phase === 'desktop' && this.lambyRigFile?.open) this.lambyRigFile.update(dt);
     // ⚑ S76: the ritual and the era's shell tick regardless of the phase, and
     // the two other phase gates around them are gone. Every other window here
@@ -2843,7 +2847,7 @@ export class DesktopOS {
       this.drawYesViewer(W, H);
       this.irc?.covered();
     }
-    if (this.restorify?.open) this.restorify.draw(ctx);
+    if (this.restorify?.open && !this.startMapSilent) this.restorify.draw(ctx);
     // the summons is a DESKTOP object, so it belongs under the windows. It was
     // drawn after them, and a real playthrough caught it: the s1 "Route sheet"
     // icon sat on top of the Caleb transcript, inside the felt window, next to
