@@ -2022,3 +2022,4 @@ R4-24…R4-32 opened; R4-23 dropped.
 2026-10-24 · CODEX cx3b-decisions — free exploration until form filing; three-tape player; Restorify-owned Today; laptop L; draft Caleb shared-room line; period IRC; one map mention; migrating Root Cause; FIT IN banner/handheld handoff. Browser probes + type/invariant/licence checks; full-route walk and XR limitations in out/cx3b-decisions/REPORT.md.
 
 2026-10-25 · CODEX cx3b-decisions Join fix — covered NetPilot hit rectangles withdrew under the pause modal; banner settles after three cycles; existing IRC restores on Join. Short OS-routed Join + normal guided form probe passes; single guided require-close walk recorded in out/cx3b-decisions/join-fix/REPORT.md. No display-string or Caleb-line changes.
+2026-10-25 · S263 — CX3b merged (581c7174 + Join fix f215952c) with Caleb's approved shared-room line; local guided walk: 256 presses, Close reached, Restart card showing; pushed.
