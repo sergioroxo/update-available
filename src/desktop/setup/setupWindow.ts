@@ -1,3 +1,5 @@
+import { gameMenuBus } from '../../state/gameMenuBus';
+import { xrTarget, xrOutline } from '../../frame/xrTargets';
 /** One world-space canvas, unfolding from a pixel star. Browser/XR share rays. */
 import * as pc from 'playcanvas';
 import { makeScreenEntity, makeScreenTexture } from '../../engine/screenTexture';
@@ -18,7 +20,7 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
   const plane = makeScreenEntity('setup-in-stars', tex, 2, 1.5, true);
   app.root.addChild(plane);
   const material = plane.render!.material as pc.StandardMaterial;
-  material.opacity = 0; material.update();
+  material.opacity = 0; material.depthTest = !app.xr?.active; material.update();
   const starCanvas = document.createElement('canvas'); starCanvas.width = starCanvas.height = 32;
   const g = starCanvas.getContext('2d')!; g.fillStyle = PLACE.sun;
   for (let y = 0; y < 32; y++) {
@@ -31,16 +33,20 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
   const starMat = star.render!.material as pc.StandardMaterial;
   let width = 2, height = 1.5, size = '', immersive = !!app.xr?.active, unfolded = false;
   let position = new pc.Vec3();
+  let xrHoverKey = '';
+  let xrHover: ReturnType<typeof xrTarget> = null;
   function hang(): void {
-    position = camera.getPosition().clone().add(camera.forward.clone().mulScalar(DIST));
+    const distance = app.xr?.active ? 1 : DIST;
+    position = camera.getPosition().clone().add(camera.forward.clone().mulScalar(distance));
     for (const e of [plane, star]) { e.setPosition(position); e.setRotation(camera.getRotation()); e.rotateLocal(90, 0, 0); }
   }
   hang();
+  const unsubscribeMenu = gameMenuBus.onChange(open => { if (!open && app.xr?.active) hang(); });
   function fit(): void {
     const rect = app.graphicsDevice.canvas.getBoundingClientRect();
     const next = `${rect.width}:${rect.height}:${camera.camera!.fov}:${!!app.xr?.active}`;
     if (next === size) return; size = next;
-    width = app.xr?.active ? 2 : 2 * DIST * Math.tan(camera.camera!.fov * Math.PI / 360)
+    width = app.xr?.active ? 1 : 2 * DIST * Math.tan(camera.camera!.fov * Math.PI / 360)
       * rect.width / rect.height * (rect.width < 600 ? 0.92 : 0.80);
     height = width * H / W * (app.xr?.active || rect.width < 600 ? 1 : 0.80);
   }
@@ -67,11 +73,20 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
   }
   const offset = (side: number): pc.Vec3 => position.clone().add(camera.right.clone().mulScalar(side * width));
   return {
-    press(ray) { const p = point(ray); if (p) opts.setup()?.handleClick(p.x, p.y); },
-    hover(ray) { const p = point(ray); opts.setup()?.handleMove(p?.x ?? -1, p?.y ?? -1); },
+    press(ray) { const p = point(ray); if (p) {
+      const r = app.xr?.active ? xrTarget(opts.setup()?.hits ?? [], p.x, p.y, W * 0.04 / width) : null;
+      opts.setup()?.handleClick(r ? r.x + r.w / 2 : p.x, r ? r.y + r.h / 2 : p.y);
+    } },
+    hover(ray) {
+      const p = point(ray);
+      xrHover = p && app.xr?.active ? xrTarget(opts.setup()?.hits ?? [], p.x, p.y, W * 0.04 / width) : null;
+      const key = JSON.stringify(xrHover);
+      if (key !== xrHoverKey) { xrHoverKey = key; const setup = opts.setup(); if (setup) setup.dirty = true; }
+      opts.setup()?.handleMove(xrHover ? xrHover.x + xrHover.w / 2 : p?.x ?? -1, xrHover ? xrHover.y + xrHover.h / 2 : p?.y ?? -1);
+    },
     update(dt, progress) {
-      if (immersive !== !!app.xr?.active) { immersive = !!app.xr?.active; hang(); }
-      fit(); if (opts.update(dt)) tex.upload();
+      if (immersive !== !!app.xr?.active) { immersive = !!app.xr?.active; material.depthTest = !immersive; material.update(); hang(); }
+      fit(); if (opts.update(dt)) { if (app.xr?.active) xrOutline(opts.canvas.getContext('2d')!, xrHover); tex.upload(); }
       const k = reducedMotion() ? 1 : progress;
       // First the single star crosses from the left; then it opens over 1.8 s.
       const arrive = Math.min(1, k / 0.22), open = Math.max(0, (k - 0.22) / 0.78);
@@ -96,6 +111,7 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
       frame.dataset.setupHits = '[]';
     },
     destroy() {
+      unsubscribeMenu();
       delete frame.dataset.setupHits; delete frame.dataset.setupStage;
       plane.destroy(); material.destroy(); tex.destroy(); star.destroy(); starMat.destroy(); starTex.destroy();
     }

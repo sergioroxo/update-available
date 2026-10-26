@@ -1,34 +1,12 @@
-/**
- * ⚑ THE CONTROLLER — the headset's one input, wired (S147, 2026-09-16).
- *
- * Until this file the immersive build could LOOK and could not PRESS: every
- * hit test in the engine began from a mouse event (`screenRay(e)`), and an
- * immersive session raises none. CLAUDE.md's input amendment names the
- * headset's grammar — "thumbstick-select + trigger-confirm", never gaze — and
- * app.ts's `requestMove` comment has said "tomorrow's Quest trigger routes
- * through here" since R28. This is that tomorrow, kept to the law:
- *
- *   · TRIGGER (`select`) = the tap. The controller's ray goes through the same
- *     `resolveTapRay` a mouse tap does — the monitor, the workstation, the
- *     visor, the markers, the props, in the same order, with the same guards.
- *     While the menu is open the ray goes to the frame's plane instead.
- *   · GRIP (`squeezestart`) = Esc. It toggles the game menu through the bus,
- *     so the engine pauses exactly as it does for the DOM menu.
- *   · A thin WAND from each controller along its ray, so the player can see
- *     what they are pointing at. One box per hand, one material, unlit.
- *   · NOTHING is gaze-driven. Looking at a marker, a row or a screen for any
- *     length of time does nothing; only the trigger presses.
- *
- * Driven moves are not skippable by trigger any more than by pointer (app.ts
- * S86): the select is swallowed while a leg is flying.
- *
- * ⚑ Never run in a headset here — the sandbox has none. Every event name and
- * accessor is PlayCanvas 2.6's own (XrInput 'select' / 'squeezestart',
- * XrInputSource.getOrigin() / getDirection()), and the ray path it feeds is
- * the desktop's, which the walk proves. The in-headset pass is Sérgio's.
+/** XR pointing: controllers and tracked hands share the existing ray resolver.
+ * One palette-coloured mesh per source contains its ray, pixel cursor and
+ * low-poly joint cubes. Native controller select; hand pinch hysteresis and
+ * latched near-touch; grip/pinch-hold delegates pickup to the shared devices.
+ * Gaze never selects. All gesture and pickup state is memory-only.
  */
 import * as pc from 'playcanvas';
 import type { Ray } from './xrFrame';
+import { playOnce } from '../audio/tapeAudio';
 
 const WAND_LENGTH = 1.6;
 const WAND_THICK = 0.004;
@@ -53,8 +31,19 @@ export function mountXrInput(app: pc.Application, opts: {
   wandColor: pc.Color;
   /** Home keeps the wand and its window in one layer above the loading room. */
   layers?: number[];
+  toSceneRay?: (ray: Ray) => Ray;
+  fromScenePoint?: (point: pc.Vec3) => pc.Vec3;
+  onGrab?: (source: pc.XrInputSource, ray: Ray) => boolean;
+  onHold?: (source: pc.XrInputSource, ray: Ray) => void;
+  onRelease?: (source: pc.XrInputSource) => void;
+  canPoke?: (ray: Ray) => boolean;
+  onKey?: (key: 'a' | 'b' | 'start' | 'left' | 'right' | 'up' | 'down') => void;
 }): XrInput {
   const xr = app.xr;
+  const meshes = new Map<pc.XrInputSource, pc.Mesh>();
+  const dots = new Map<pc.XrInputSource, pc.Entity>();
+  const hands = new Map<pc.XrInputSource, { entity: pc.Entity; mesh: pc.Mesh }>();
+  const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[] }>();
   const wands = new Map<pc.XrInputSource, pc.Entity>();
   const mat = new pc.StandardMaterial();
   mat.useLighting = false;
@@ -78,36 +67,104 @@ export function mountXrInput(app: pc.Application, opts: {
   const onAdd = (src: pc.XrInputSource): void => {
     if (src.targetRayMode === pc.XRTARGETRAY_GAZE) return;
     const e = new pc.Entity('xr-wand');
-    e.addComponent('render', { type: 'box', ...(opts.layers ? { layers: opts.layers } : {}) });
-    if (e.render) e.render.material = mat;
-    e.setLocalScale(WAND_THICK, WAND_THICK, WAND_LENGTH);
+    const mesh = new pc.Mesh(app.graphicsDevice); meshes.set(src, mesh);
+    e.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)], ...(opts.layers ? { layers: opts.layers } : {}) });
     e.enabled = false;
     app.root.addChild(e);
     wands.set(src, e);
+    const dot = new pc.Entity('xr-cursor'); dot.setLocalScale(0.009, 0.009, 0.009); app.root.addChild(dot); dot.enabled = false; dots.set(src, dot);
+    gestures.set(src, { pinch: false, since: 0, held: false, near: false, buttons: [] });
+    if (src.hand) {
+      const entity = new pc.Entity('xr-hand');
+      app.root.addChild(entity); entity.enabled = false; hands.set(src, { entity, mesh });
+    }
     primary ??= src;
   };
   const onRemove = (src: pc.XrInputSource): void => {
+    opts.onRelease?.(src); dots.get(src)?.destroy(); dots.delete(src); hands.get(src)?.entity.destroy(); meshes.get(src)?.destroy(); meshes.delete(src); hands.delete(src); gestures.delete(src);
     wands.get(src)?.destroy();
     wands.delete(src);
     if (primary === src) primary = wands.keys().next().value ?? null;
   };
   const onSelect = (src: pc.XrInputSource): void => {
+    if (src.hand) return; // pinch hysteresis below owns hand selects, never double-fire native select
     primary = src;
     const r = rayOf(src);
     if (!r) return;
-    if (opts.menuOpen()) opts.onMenuSelect(r); else opts.onSelect(r);
+    choose(r);
   };
-  const onSqueeze = (src: pc.XrInputSource): void => { primary = src; opts.onSqueeze(); };
-  const onEnd = (): void => { for (const e of wands.values()) e.enabled = false; };
+  const choose = (r: Ray): void => {
+    if (opts.menuOpen()) opts.onMenuSelect(r); else opts.onSelect(r);
+    playOnce('key_1997.mp3');
+  };
+  const onSqueeze = (src: pc.XrInputSource): void => {
+    primary = src; const r = rayOf(src); const state = gestures.get(src);
+    if (!opts.menuOpen() && r && opts.onGrab?.(src, r)) { if (state) state.held = true; return; }
+    opts.onSqueeze();
+  };
+  const release = (src: pc.XrInputSource): void => { const state = gestures.get(src); if (state?.held) opts.onRelease?.(src); if (state) state.held = false; };
+  const onEnd = (): void => { for (const src of wands.keys()) { release(src); const state = gestures.get(src); if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; };
 
   if (xr) {
     xr.input.on('add', onAdd);
     xr.input.on('remove', onRemove);
     xr.input.on('select', onSelect);
     xr.input.on('squeezestart', onSqueeze);
+    xr.input.on('squeezeend', release);
     xr.on('end', onEnd);
     // Home hands the same live session to the room: its controllers already exist.
     for (const src of xr.input.inputSources) onAdd(src);
+  }
+
+  function landing(ray: Ray): { point: pc.Vec3; distance: number } | null {
+    const r = opts.menuOpen() ? ray : opts.toSceneRay?.(ray) ?? ray;
+    let best: { point: pc.Vec3; distance: number } | null = null;
+    app.root.forEach(node => {
+      const e = node as pc.Entity;
+      if (!e.enabled || e.name === 'xr-frame-hint' || (opts.menuOpen() && e.name !== 'xr-frame-menu') || e.render?.type !== 'plane' || !/screen|era3-device|setup-in-stars|xr-frame|lambyos-home/.test(e.name)) return;
+      if (!e.render.meshInstances.some(mi => mi.visible)) return;
+      const physical = e.name.startsWith('xr-') || e.name.startsWith('lambyos-home') || e.name.startsWith('setup-');
+      const test = physical ? ray : r;
+      const inv = e.getWorldTransform().clone().invert();
+      const a = inv.transformPoint(test.p0), b = inv.transformPoint(test.p1);
+      const t = -a.y / (b.y - a.y);
+      if (!Number.isFinite(t) || t < 0 || t > 1) return;
+      const point = new pc.Vec3().lerp(a, b, t);
+      if (Math.abs(point.x) > 0.5 || Math.abs(point.z) > 0.5) return;
+      let world = e.getWorldTransform().transformPoint(point);
+      if (!physical) world = opts.fromScenePoint?.(world) ?? world;
+      const distance = world.distance(ray.p0);
+      if (!best || distance < best.distance) best = { point: world, distance };
+    });
+    return best;
+  }
+  /** One mesh per source: ray, pixel cursor and all hand joints share a draw call. */
+  function drawSource(src: pc.XrInputSource, ray: Ray, length: number, cursor: pc.Vec3 | null): void {
+    const vertices: number[] = [], indices: number[] = [];
+    function box(at: pc.Vec3, size: pc.Vec3, rotation?: pc.Quat): void {
+      const base = vertices.length / 3;
+      for (let i = 0; i < 8; i++) {
+        const p = new pc.Vec3(i & 1 ? size.x : -size.x, i & 2 ? size.y : -size.y, i & 4 ? size.z : -size.z);
+        if (rotation) rotation.transformVector(p, p);
+        vertices.push(at.x + p.x, at.y + p.y, at.z + p.z);
+      }
+      for (const i of [0,2,1,1,2,3,4,5,6,5,7,6,0,1,4,1,5,4,2,6,3,3,6,7,0,4,2,2,4,6,1,3,5,3,7,5]) indices.push(base + i);
+    }
+    const dir = ray.p1.clone().sub(ray.p0).normalize();
+    const pose = new pc.Mat4().setLookAt(ray.p0, ray.p1, pc.Vec3.UP);
+    // A vertical pointer still needs a valid basis.
+    if (Math.abs(dir.y) > 0.99) pose.setLookAt(ray.p0, ray.p1, pc.Vec3.RIGHT);
+    box(ray.p0.clone().add(dir.mulScalar(length / 2)), new pc.Vec3(WAND_THICK/2, WAND_THICK/2, length/2), new pc.Quat().setFromMat4(pose));
+    if (cursor) box(cursor, new pc.Vec3(0.0045,0.0045,0.0045));
+    const h = hands.get(src);
+    if (h && src.hand) {
+      h.entity.enabled = !!src.hand.tracking;
+      if (h.entity.enabled) for (const j of src.hand.joints) {
+        const r = Math.min(0.012, Math.max(0.005, j.radius)); box(j.getPosition(), new pc.Vec3(r,r,r));
+      }
+    }
+    const mesh = meshes.get(src)!;
+    mesh.setPositions(vertices); mesh.setIndices(indices); mesh.update(pc.PRIMITIVE_TRIANGLES);
   }
 
   return {
@@ -119,12 +176,45 @@ export function mountXrInput(app: pc.Application, opts: {
       const active = !!xr?.active;
       for (const [src, e] of wands) {
         const r = active ? rayOf(src) : null;
-        if (!r) { e.enabled = false; continue; }
+        const dot = dots.get(src)!; dot.enabled = false;
+        if (!active && hands.has(src)) hands.get(src)!.entity.enabled = false;
+        if (!r || (src.hand && !src.hand.tracking)) {
+          e.enabled = false; if (hands.has(src)) hands.get(src)!.entity.enabled = false;
+          release(src); const state = gestures.get(src); if (state) { state.pinch = false; state.near = false; }
+          continue;
+        }
         e.enabled = true;
-        const dir = new pc.Vec3().sub2(r.p1, r.p0).normalize();
-        const mid = new pc.Vec3().copy(dir).mulScalar(WAND_LENGTH / 2).add(r.p0);
-        e.setPosition(mid);
-        e.lookAt(new pc.Vec3().copy(mid).sub(dir));   // the box's -Z looks back along the ray: its length lies on it
+        const hit = landing(r);
+        if (hit) { dot.enabled = true; dot.setPosition(hit.point); primary = src; }
+        const length = hit ? hit.distance : WAND_LENGTH;
+
+        const state = gestures.get(src)!;
+        const now = performance.now();
+        if (src.hand) {
+
+          const thumb = src.hand.getJointById('thumb-tip'), index = src.hand.getJointById('index-finger-tip');
+          if (thumb && index && src.hand.tracking) {
+            const separation = thumb.getPosition().distance(index.getPosition());
+            if (!state.pinch && separation < 0.022) { state.pinch = true; state.since = now; primary = src; }
+            if (state.pinch && !state.held && now - state.since > 350 && !opts.menuOpen()) state.held = opts.onGrab?.(src, r) ?? false;
+            if (state.pinch && separation > 0.032) { if (state.held) release(src); else choose(r); state.pinch = false; }
+            // Poke is a short fingertip segment along the pointing direction. Latch until withdrawn.
+            const tip = index.getPosition();
+            const direction = r.p1.clone().sub(r.p0).normalize();
+            const poke = { p0: tip.clone().sub(direction.clone().mulScalar(0.018)), p1: tip.clone().add(direction.mulScalar(0.025)) };
+            const near = !!landing(poke) || !!opts.canPoke?.(poke);
+            if (near && !state.near && !state.pinch && !state.held) { primary = src; choose(poke); }
+            state.near = near;
+          }
+        }
+        if (state.held) opts.onHold?.(src, r);
+        const buttons = src.gamepad?.buttons ?? [];
+        buttons.forEach((b, i) => { if (b.pressed && !state.buttons[i] && i >= 4) opts.onKey?.(i === 4 ? 'a' : 'b'); state.buttons[i] = b.pressed; });
+        const axes = src.gamepad?.axes ?? [];
+        const keys = ['left', 'right', 'up', 'down'] as const;
+        const directions = [(axes[2] ?? 0) < -0.6, (axes[2] ?? 0) > 0.6, (axes[3] ?? 0) < -0.6, (axes[3] ?? 0) > 0.6];
+        directions.forEach((pressed, i) => { if (pressed && !state.buttons[8 + i]) opts.onKey?.(keys[i]); state.buttons[8 + i] = pressed; });
+        drawSource(src, r, length, hit?.point ?? null);
       }
     },
     destroy(): void {
@@ -133,9 +223,10 @@ export function mountXrInput(app: pc.Application, opts: {
         xr.input.off('remove', onRemove);
         xr.input.off('select', onSelect);
         xr.input.off('squeezestart', onSqueeze);
+        xr.input.off('squeezeend', release);
         xr.off('end', onEnd);
       }
-      for (const e of wands.values()) e.destroy();
+      for (const src of [...wands.keys()]) onRemove(src);
       wands.clear();
       mat.destroy();
     }

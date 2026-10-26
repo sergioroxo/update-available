@@ -102,6 +102,9 @@ export interface Devices {
   tick(dt: number, era: string, has: (id: string) => boolean, fileSize: number): Array<{ id: string; era: string; witness: string }>;
   aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string): string | null;
   take(era: string, cam: pc.Entity): void;
+  grab(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string, hand: pc.Entity): boolean;
+  follow(era: string, hand: pc.Entity): void;
+  release(era: string): void;
   press(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string, cam: pc.Entity): boolean;
   /** ⚑ S219 / W1-B7 — the keyboard reaches the device in hand before it reaches the camera */
   key(k: GameKey, era: string): boolean;
@@ -142,6 +145,12 @@ export function buildDevices(room: RoomHandles): Devices {
       const a = d?.aim(ray);
       return a ? `${d!.spec.gameId}:${a}` : null;
     },
+    grab(ray, era, hand) {
+      const d = current(era); if (!d?.aim(ray)) return false;
+      d.take(hand); d.follow(hand); return true;
+    },
+    follow(era, hand) { current(era)?.follow(hand); },
+    release(era) { current(era)?.release(); },
     take(era, cam) { current(era)?.take(cam); },
     press(ray, era, cam) { return current(era)?.press(ray, cam) ?? false; },
     key(k, era) { return current(era)?.key(k) ?? false; }

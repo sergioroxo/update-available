@@ -66,6 +66,7 @@ import { createTimePassing, type TimePassing } from '../room/timePassing';
 import { drawPrint, PRINT_SIZE } from '../room/printArt';
 import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
+import { mountXrComfort } from '../frame/xrComfort';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
@@ -559,8 +560,8 @@ interface AppOptions {
  *
  * The authored camera pose lives on a parent rig. In desktop mode the child is
  * identity, so this is exactly the old camera transform. In XR, PlayCanvas owns
- * the child's tracked head pose while the existing entrance/relocation/TURN
- * choreography continues to move the rig.
+ * the child's tracked head pose. XR choreography changes a separate authored
+ * seat; xrComfort re-forms the world under pixels without moving this rig.
  */
 export interface AppShell {
   canvasEl: HTMLCanvasElement;
@@ -604,6 +605,14 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
     nearClip: 0.05
   });
   cameraRig.addChild(camera);
+  app.xr?.on('start', () => {
+    const xr = app.xr;
+    if (!xr?.session || !(app.graphicsDevice instanceof pc.WebglGraphicsDevice)) return;
+    const layer = new XRWebGLLayer(xr.session, app.graphicsDevice.gl, {
+      antialias: true, alpha: true, depth: true, stencil: true, framebufferScaleFactor: 1
+    });
+    xr.session.updateRenderState({ baseLayer: layer });
+  });
   // Home can end XR before the story starts; clear its last tracked child pose too.
   app.xr?.on('end', () => {
     camera.setLocalPosition(0, 0, 0); camera.setLocalEulerAngles(0, 0, 0); app.resizeCanvas();
@@ -687,8 +696,23 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   immersiveVrRequested = false;
   const { app, cameraRig, camera } = shell;
   const xr = app.xr;
+  const xrComfort = mountXrComfort(app, cameraRig, camera, reducedMotion);
+  const authoredRig = xrComfort.authored;
+  xrComfort.setWorldReady(!options.restoreEntrance);
   let xrFrame: XrFrame | null = null;
   let xrInput: XrInput | null = null;
+  let grabbingSource: pc.XrInputSource | null = null;
+  let grabbingEra: string | null = null;
+  const sceneHead = new pc.Entity('logical-head');
+  function logicalHead(): pc.Entity {
+    const p = camera.getPosition(); const ray = xrComfort.logicalRay({ p0: p, p1: p.clone().add(camera.forward) });
+    const upRay = xrComfort.logicalRay({ p0: p, p1: p.clone().add(camera.up) });
+    sceneHead.setPosition(ray.p0); sceneHead.lookAt(ray.p1, upRay.p1.sub(upRay.p0).normalize()); return sceneHead;
+  }
+  const grabHand = new pc.Entity('logical-grip');
+  function poseGrabHand(ray: { p0: pc.Vec3; p1: pc.Vec3 }): void {
+    grabHand.setPosition(ray.p0); grabHand.lookAt(ray.p1);
+  }
 
   /** PlayCanvas leaves its last tracked local pose on the camera when a
    * session ends. Restore the identity child so the authored rig is once again
@@ -718,7 +742,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (options.reinterp === true) app.scene.ambientLight = new pc.Color(0.17, 0.14, 0.11);
 
   if (new URLSearchParams(window.location.search).get('debug') === '1') {
-    (window as { __app?: pc.Application }).__app = app; // ?debug=1 scene-graph probe
+    (window as { __app?: pc.Application }).__app = app;
+    (window as unknown as { __xrComfort: unknown }).__xrComfort = xrComfort; // ?debug=1 scene-graph probe
     // ?debug=1 ledger probe (read-only review aid): prior sessions could only
     // verify filings via the witness surface as a proxy — this closes that gap.
     // Debug-gated; the in-memory-only invariant is about persistence, and this
@@ -768,7 +793,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ S108: see ClusterShell.setNeverBatch — handed over below, once
     //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
 
-    cloud = buildPointCloud(app);
+    cloud = buildPointCloud(app, () => xr?.active ? logicalHead() : camera);
     // ⚑ 2026-09-12: Daniel's monitor, lit in the Close — wired below, once
     //   `jumpToEraSettled` and the room lists exist (`leaveClose`)
     closeMonitor = mountCloseMonitor(app);
@@ -1016,13 +1041,35 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     xrFrame = mountXrFrame(app, camera, {
       onLeave: () => os.leaveNow(),
-      onRestart: () => restartPiece()
+      onRestart: () => restartPiece(),
+      onRecentre: () => xrComfort.calibrate()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (ray) => { if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(ray); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (xrFrame?.pressTab(ray)) return; if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); xrFrame?.press(ray); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
+      layers: [xrFrame.layerId],
+      toSceneRay: ray => xrComfort.logicalRay(ray),
+      fromScenePoint: point => xrComfort.physicalPoint(point),
+      onGrab: (source, physical) => {
+        if (xrComfort.busy || !xrComfort.calibrated || !cluster || !os.inDesktop || grabbingSource) return false;
+        const ray = xrComfort.logicalRay(physical); poseGrabHand(ray);
+        if (!devices?.grab(ray, cluster.era, grabHand)) return false;
+        grabbingSource = source; grabbingEra = cluster.era; return true;
+      },
+      onHold: (source, physical) => {
+        if (source !== grabbingSource || !grabbingEra) return;
+        if (xrComfort.busy || cluster?.era !== grabbingEra || gameMenuBus.isOpen) { devices?.release(grabbingEra); grabbingSource = null; return; }
+        poseGrabHand(xrComfort.logicalRay(physical)); devices?.follow(grabbingEra, grabHand);
+      },
+      onRelease: source => { if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
+      canPoke: physical => {
+        if (!cluster || !os.inDesktop || xrComfort.busy || gameMenuBus.isOpen) return false;
+        const target = devices?.aim(xrComfort.logicalRay(physical), cluster.era);
+        return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
+      },
+      onKey: key => { if (cluster && !gameMenuBus.isOpen) devices?.key(key, cluster.era); },
       wandColor: new pc.Color().fromString(FRAME.ink)
     });
     // ⚑ S232 — the exhibition's idle clock (frame/attract.ts): a headset has no DOM events, so the select/squeeze above
@@ -1964,6 +2011,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
                         yawTurn?: number): void {
     // shortest signed rotation — unless the leg says which way round (S163 / C-01:
     // the Close's sweep turns LEFT the long way so the building is seen)
+    if (xr?.active) { dur = reducedMotion() ? 0.001 : 2; via = undefined; }
     const dyaw = yawTurn ?? ((to.yaw - camYaw + 540) % 360) - 180;
     const fx = camPos.x, fy = camPos.y, fz = camPos.z;
     // `via` is the bezier CONTROL point (raised, back from center): the path bows
@@ -2006,8 +2054,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camPos.set(EYE.x, EYE.y, EYE.z);
     camPitch = 0;
     camYaw = 0;
-    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
-    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+    authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
     wakeActive = true;
     wakeT = Math.max(0, wakeT);
     if (wakeT >= WAKE_DARK_SECONDS + WAKE_RAMP_SECONDS) finishWake();
@@ -2191,8 +2239,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, sp.pitch + ridePitch));
     camYaw = sp.yaw + rideYaw;
-    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
-    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+    authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
   }
 
   /** grabbing/keying the view cancels a non-conducted move (the player left it) */
@@ -2267,8 +2315,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = sp.pitch;
     camYaw = sp.yaw;
-    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
-    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+    authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
     camMove = null;
     tween = null;
     clearLookOffset(); // S85: same law as seatCut — an authored pose lands clean
@@ -2780,7 +2828,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // at Maya's (270°) or Vera's (90°) seat this most likely reports the
     // wrong hemisphere in-headset too, the same way the flip button did here.
     if (heldDevice) return false;
-    if (xr?.active || motionState === 'live') return camera.forward.z > 0;
+    if (xr?.active) { const p = camera.getPosition(); const r = xrComfort.logicalRay({ p0: p, p1: p.clone().add(camera.forward) }); return r.p1.z > r.p0.z; }
+    if (motionState === 'live') return camera.forward.z > 0;
     // ⚑ S88 fix — was `((camYaw % 360) + 360) % 360` (i.e. hardcoded to a
     // seatYaw-0 forward), so at Maya's (270°) or Vera's (90°) seat "back" was
     // measured from the wrong zero point. Made seat-relative: back is now
@@ -2814,7 +2863,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       restoreEntrance.cancel(); camMove = null; clearLookOffset();
       const resolve = restoreSeatDone; restoreSeatDone = null; resolve?.();
       camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
-      cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
+      authoredRig.setLocalPosition(camPos); authoredRig.setLocalEulerAngles(0, 0, 0);
       cluster?.setNeverBatch(['tennisRacketModel']);
     }
     flipBtn.style.display = 'none';
@@ -3268,7 +3317,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
-        os.handleClick(p.x, p.y);
+        const target = xr?.active ? os.xrPoint(p.x, p.y) : p;
+        os.handleClick(target.x, target.y);
         return;
       }
       // Session 38 (E3-ii): the workstation's own screen (Room 2's era3Devices
@@ -3302,7 +3352,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S183 — the institution's corner answers a press with its own movement
       //   (src/room/institution.ts). Last, so a marker or a screen always wins.
       // S189 — the device in this era (1997's handheld, 2003's phone, 2026's console): pick it up, play it
-      if (devices && cluster && os.inDesktop && devices.press(ray, cluster.era, camera)) return;
+      if (devices && cluster && os.inDesktop && devices.press(ray, cluster.era, xr?.active ? logicalHead() : camera)) return;
       const inst = institutionUnderRay(ray);
       if (inst) {
         institution?.press(inst.key);
@@ -3318,11 +3368,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** ⚑ S188/S189 — the devices you can pick up and play (src/room/handheld.ts, src/games/) */
   const devices = options.reinterp === true ? buildDevices(room) : null;
   devices?.tick(0, 'e1', () => false, 0); // initialise its glass before entrance captures the image
-  os.onFitIn = () => { if (os.era === 'e1') devices?.take('e1', camera); };
+  os.onFitIn = () => { if (os.era === 'e1') devices?.take('e1', xr?.active ? logicalHead() : camera); };
   tapePlayerBus.play = (id) => { os.onStopTape?.(); tapes?.insert(id); syncTapeProps(); syncTapeAudio(); };
   tapePlayerBus.stop = () => { if (tapes?.isPlaying) tapes.togglePlay(); syncTapeProps(); syncTapeAudio(); };
   tapePlayerBus.probe = () => tapes?.snapshot() ?? { inserted: null, playing: false, caption: null };
-  const specks = options.reinterp ? buildRoomSpecks(app, camera) : null;
+  const specks = options.reinterp ? buildRoomSpecks(app, camera, {
+    head: () => xr?.active ? logicalHead() : camera,
+    point: p => xr?.active ? xrComfort.physicalPoint(p) : p
+  }) : null;
   if (debugOn) {
     const round = (n: number): number => Math.round(n * 1e5) / 1e5;
     (window as { __roomAppearance?: () => unknown }).__roomAppearance = () => {
@@ -3422,7 +3475,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** the aim's ray this frame: the headset's, the gyro's centre, or the mouse's */
   function aimRay(): Ray | null {
     const xrRay = xrInput?.ray();
-    if (xr?.active) return xrRay ?? null;
+    if (xr?.active) return xrRay ? xrComfort.logicalRay(xrRay) : null;
     if (!camera.camera) return null;
     if (motionState === 'live') {
       return { p0: camera.camera.screenToWorld(canvasEl.clientWidth / 2, canvasEl.clientHeight / 2, camera.camera.nearClip),
@@ -3796,8 +3849,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S147 — the headset's frame ticks even while the menu holds the piece: the
     //   wands follow the hands and the plane's cursor follows the ray
     xrInput?.tick();
-    if (xrFrame?.isOpen) xrFrame.tick(xrInput?.ray() ?? null);
-    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(aimName ?? helper?.text() ?? null);
+    if (xr?.active) { const ray = aimRay(); era3Devices?.hoverXr(ray); const at = ray && toDesktopR(ray); if (at) { const target = os.xrPoint(at.x, at.y); os.handleMove(target.x, target.y); } else os.xrPoint(-100, -100); }
+    if (xrFrame && xr?.active) xrFrame.tick(xrInput?.ray() ?? null);
+    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : aimName ?? helper?.text() ?? null);
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
     //   menu ("The frame never plays"). Pause them once on the way in, give them back once on the way out.
@@ -3814,12 +3868,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const entranceRay = xrInput?.ray();
     if (entranceRay) restoreEntrance?.hover(entranceRay);
     restoreEntrance?.update(dt);
+    xrComfort.setWorldReady(!restoreEntrance?.blocking || !!restoreEntrance.flying);
     specks?.update(dt, cluster?.era ?? 'e1', cloud?.visible || closeStage ? 0 : restoreEntrance?.blocking ? restoreEntrance.roomVisibility : 1);
     if (restoreEntrance?.blocking && !restoreEntrance.flying) {
       publishNow();
-      cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
+      authoredRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
       applyMotionLook(); return;
     }
+    if (tween !== null && xr?.active) { camYaw = tween; camPitch = 0; tween = null; }
     if (tween !== null) {
       const dir = Math.sign(tween - camYaw);
       camYaw += dir * (180 / FLIP_SECONDS) * dt;
@@ -3835,7 +3891,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // that yields instantly to any input (endDescent). S53: it IS a camMove
       // now, so it needs no clock of its own; it is landed below, the frame
       // the arc resolves.
-      if (camMove && reducedMotion()) {
+      if (camMove && xr?.active) {
+        camMove.t += dt;
+        camPos.set(camMove.tx, camMove.ty, camMove.tz); camPitch = camMove.tp; camYaw = camMove.tyaw;
+        if (camMove.t >= camMove.dur) camMove = null;
+      } else if (camMove && reducedMotion()) {
         // the cut: dark by RM_FADE, the pose set at the bottom of the fade, light again by 2×RM_FADE
         const before = camMove.t;
         camMove.t += dt;
@@ -3907,7 +3967,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: near ? 0.12 : 1 });
       }
       if (cloud?.visible && !camMove) {
-        const cp = camera.getPosition(), cf = camera.forward;
+        const view = xr?.active ? logicalHead() : camera;
+        const cp = view.getPosition(), cf = view.forward;
         cloud.gazeOnPanel(cloud.panelAt(cp, { x: cp.x + cf.x * 8, y: cp.y + cf.y * 8, z: cp.z + cf.z * 8 }) !== null);
       }
       // ⚑ the sky is LERPED, never cut (2026-09-12, "the light transition from
@@ -3929,7 +3990,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // relocation's handover leaves camMove set, so the ride carries unbroken
       // across all three legs rather than snapping back at each boundary.)
       if (!camMove) commitLookOffset();
-      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     }
     // A look never cancels a send halfway through a wall. Once it lands, the
     // next message takes us back to its monitor; the visitor need not find it.
@@ -3939,11 +4000,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       dollyTo(cluster?.homeYaw ?? 0, CAMERA_POSES.dollySeconds, true);
     }
     cluster?.updateTravelClearance(camPos, !!camMove);
-    cameraRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
+    authoredRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);
     // ⚑ S80: …and then the head, if the player is turning a device. The rig is
     // the seat; this is the look. Nothing above it changes, in any era.
     applyMotionLook();
-    if (restoreSeatDone && !camMove) { const resolve = restoreSeatDone; restoreSeatDone = null; clearLookOffset(); cameraRig.setLocalEulerAngles(0, 0, 0); resolve(); }
+    if (restoreSeatDone && !camMove) { const resolve = restoreSeatDone; restoreSeatDone = null; clearLookOffset(); authoredRig.setLocalEulerAngles(0, 0, 0); resolve(); }
     if (restoreEntrance?.blocking) return;
     publishNow(); // ?debug=1 live "you are here" readout
 
@@ -4523,10 +4584,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * stage happens only on her press of the room's call (ball.ts). From wherever she is actually looking (the
    * drag folded in), to the spot's authored facing, a plain tween under the comfort law: smoothstep peaks at
    * 1.5× its mean, so 20° in 3.6 s is 8.3 °/s against the 9.1 °/s envelope, and a larger turn takes longer.
-   * Never in a headset, where the head is the camera.
+   * In a headset the same destination is presented through the pixel dissolve; the head stays free.
    */
   onTurnToStage(() => {
-    if (app.xr?.active) return;
     const node = movementNodes?.find(COMMONS_SPOT);
     if (!node?.pose) return;
     commitLookOffset();
@@ -4556,10 +4616,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
      */
     if (hidden) {
       performSeatCut(COMMONS_SPOT);
-      if (!app.xr?.active) {
-        camYaw += COMMONS_ARRIVE_OFF;
-        cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
-      }
+      camYaw += COMMONS_ARRIVE_OFF;
+      authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
     }
     if (camera.camera) {
       if (hidden) { roomClearColor = camera.camera.clearColor.clone(); camera.camera.clearColor = new pc.Color().fromString(WORLD_SKY); }
@@ -4902,8 +4960,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camPos.set(sp.x, sp.y, sp.z);
     camPitch = sp.pitch;
     camYaw = sp.yaw;
-    cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
-    cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+    authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+    authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
     if (navigation) {
       seatNodeId = null; heldDevice = null; era3Devices?.noteSeat(sp);
       // A conducted cut is navigation, never a witnessed turn on the following frame.
@@ -4994,8 +5052,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // No review jump seeds the story or ledger before setup finishes.
       applyLightsOn();
       camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
-      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
-      cameraRig.setLocalEulerAngles(0, 0, 0);
+      authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      authoredRig.setLocalEulerAngles(0, 0, 0);
       void startSetup().then(() => { os.setup = null; paintMotionBtn(); os.beginReinterpOpening(); });
     } else if (options.close && cluster && cloud) {
       enterClose();
@@ -5009,16 +5067,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camPos.set(ESTABLISH.x, ESTABLISH.y, ESTABLISH.z);
       camPitch = ESTABLISH.pitch;
       camYaw = 0;
-      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else if (options.restoreEntrance) {
-      camPos.set(drivenMoves && !reducedMotion() ? DESCENT_FROM.x : EYE.x,
-        drivenMoves && !reducedMotion() ? DESCENT_FROM.y : EYE.y,
-        drivenMoves && !reducedMotion() ? DESCENT_FROM.z : EYE.z);
-      camPitch = drivenMoves && !reducedMotion() ? DESCENT_FROM.pitch : 0;
-      camYaw = drivenMoves && !reducedMotion() ? DESCENT_FROM.yaw : 0;
-      cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+      camPos.set(drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.x : EYE.x,
+        drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.y : EYE.y,
+        drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.z : EYE.z);
+      camPitch = drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.pitch : 0;
+      camYaw = drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.yaw : 0;
+      authoredRig.setLocalPosition(camPos); authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
       applyLightsOn();
       restoreEntrance = buildRestoreEntrance(app, room, cameraRig, camera, {
+        viewCamera: () => xr?.active ? logicalHead() : camera,
         points: specks?.landingPoints() ?? [], setupCanvas: os.canvas, setup: () => os.setup,
         updateSetup: (dt) => { os.update(dt); const dirty = os.dirty; os.dirty = false; return dirty; },
         clearSetup: () => {
@@ -5035,13 +5094,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           startBed(true);   // S246: the room is heard as it is seen
           if (!drivenMoves || reducedMotion()) {
             clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
-            cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
+            authoredRig.setLocalPosition(camPos); authoredRig.setLocalEulerAngles(0, 0, 0);
           }
         },
         flyToSeat: () => {
           if (!drivenMoves || reducedMotion()) {
             clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
-            cameraRig.setLocalPosition(camPos); cameraRig.setLocalEulerAngles(0, 0, 0);
+            authoredRig.setLocalPosition(camPos); authoredRig.setLocalEulerAngles(0, 0, 0);
             return Promise.resolve();
           }
           return new Promise<void>((resolve) => {
@@ -5078,8 +5137,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       // the facing is committed HERE, not left to the first per-frame pass —
       // otherwise the opening frame renders level and the pitch snaps on frame 2
-      cameraRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
-      cameraRig.setLocalEulerAngles(camPitch, camYaw, 0);
+      authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
     }
   }
 

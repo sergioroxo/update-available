@@ -1,3 +1,4 @@
+import { xrRects, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
 /**
  * THE THREE-SCREEN ROOM (Session 37, E3-i foundation; Session 38, E3-ii wires
  * the workstation + tablet). docs/REINTERP_E3_ADAPTATION_SPEC_2026-07-12.md's
@@ -661,6 +662,7 @@ export interface Era3Devices {
    *  each tick and redraw+re-upload ONLY when it has actually moved (a real
    *  queue action) — never on a ticking clock, per Quest budget discipline. */
   tick(dt: number): void;
+  hoverXr(ray: { p0: pc.Vec3; p1: pc.Vec3 } | null): void;
   /** era-gate the three screens (and fire the once-only arrival witness
    *  line the first time era reaches e3+). Call from driveMorph() and the
    *  ?era= review-jump path alongside the room's own era toggles.
@@ -813,10 +815,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     /** the pose it is travelling toward, and how far along it is (0 = rest) */
     heldPos?: pc.Vec3;
     heldEuler?: pc.Vec3;
+    xrHover?: XrRect | null;
+    xrScale?: boolean;
     holdK: number;      // 0 = on the furniture, 1 = in the hand
     holdTo: number;     // the target for holdK
   };
   const screens: Screen[] = [];
+  let xrRay: { p0: pc.Vec3; p1: pc.Vec3 } | null = null;
   /** ⚑ the phone is IN HER HAND — the one piece of state that decides whether a
    *  press on it means "pick it up" or "use it". Nothing else in the era
    *  branches on it, and putting it down is always available. */
@@ -1183,7 +1188,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (worn) shell.setLook(((bearing() - wornYaw + 540) % 360) - 180);
   }
 
+  function xrRoot(name: string): unknown { return name === 'workstation' ? graceQueueLite : e4Bridge()?.shell(); }
   return {
+    hoverXr(ray) { xrRay = ray; },
     tick(dt: number): void {
       // S76: the last update's own frames — see `drawWorkstation`
       if (e4Bridge()?.update()?.open) ritualTick++;
@@ -1223,6 +1230,25 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // moving a screen through the room does not change a pixel on it, so
       // this cannot dirty a canvas and the upload law below is untouched.
       for (const s of screens) {
+        const immersive = !!app.xr?.active;
+        if (immersive !== !!s.xrScale && s.draw) {
+          s.xrScale = immersive;
+          const base = LOGICAL[s.name as keyof typeof LOGICAL];
+          if (base) {
+            const scale = immersive ? Math.max(4, base.scale) : base.scale;
+            s.canvas.width = s.logical.w * scale; s.canvas.height = s.logical.h * scale;
+            s.ctx.setTransform(scale, 0, 0, scale, 0, 0); s.lastVersion = undefined;
+            s.draw(s.ctx, s.logical.w, s.logical.h); s.dirty = true;
+          }
+        }
+        if (immersive && s.draw && s.entity.enabled) {
+          const place = PLACEMENT[s.name];
+          const p = xrRay && hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, xrRay);
+          const hover = p ? xrTarget(xrRects(xrRoot(s.name)), p.x, p.y, s.logical.w * 0.04 / place.size.w) : null;
+          if (JSON.stringify(hover) !== JSON.stringify(s.xrHover)) {
+            s.xrHover = hover; s.draw(s.ctx, s.logical.w, s.logical.h); xrOutline(s.ctx, hover); s.dirty = true;
+          }
+        }
         if (s.holdK === s.holdTo) continue;
         const step = dt / HOLD_SECONDS;
         s.holdK = s.holdTo > s.holdK ? Math.min(s.holdTo, s.holdK + step) : Math.max(s.holdTo, s.holdK - step);
@@ -1313,7 +1339,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
           // the callback this screen was registered with — see `draw` on Screen
-          if (s.draw) s.draw(s.ctx, s.logical.w, s.logical.h);
+          if (s.draw) { s.draw(s.ctx, s.logical.w, s.logical.h); if (app.xr?.active) xrOutline(s.ctx, s.xrHover ?? null); }
           s.dirty = true;
           drawCounts[s.name] = (drawCounts[s.name] ?? 0) + 1;   // S149: a review probe (debugDraws)
         }
@@ -1413,7 +1439,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         const s = screens.find(sc => sc.name === name);
         if (!s || !s.entity.enabled) return null;
         const place = PLACEMENT[name];
-        return hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
+        const p = hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
+        const h = p && app.xr?.active ? xrTarget(xrRects(xrRoot(name)), p.x, p.y, s.logical.w * 0.04 / place.size.w) : null;
+        return h ? { x: h.x + h.w / 2, y: h.y + h.h / 2 } : p;
       };
       // ⚑ S76 — THE ONE TOUCH, and it is checked first because in Era 4 there
       // is nothing else on this route. Two ways to land it, both a press on the

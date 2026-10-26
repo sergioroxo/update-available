@@ -176,7 +176,7 @@ export interface SightCorridor {
   dim: number;
 }
 
-export function buildPointCloud(app: pc.Application): PointCloud {
+export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entity): PointCloud {
   const rng = makeRng(19970704);
   const [ox, oy, oz] = P.center as number[];
 
@@ -1176,7 +1176,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
   function updateBillboards(): void {
     const vertexData = labelVertexData;
     const vertexBuffer = labelMesh?.vertexBuffer;
-    const camera = app.systems.camera?.cameras[0]?.entity;
+    const camera = viewCamera?.() ?? app.systems.camera?.cameras[0]?.entity;
     if (!vertexData || !vertexBuffer || !camera) return;
 
     /**
@@ -1351,7 +1351,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       return null;
     },
     labelAt(p0, p1, tMax = Infinity): { era: number; text: string } | null {
-      const camera = app.systems.camera?.cameras[0]?.entity;
+      const camera = viewCamera?.() ?? app.systems.camera?.cameras[0]?.entity;
       if (!visible || !camera || fadeLevel < 0.5 || labels.length === 0) return null;
       const M = root.getWorldTransform();
       const sc = root.getLocalScale().x;
@@ -1379,7 +1379,7 @@ export function buildPointCloud(app: pc.Application): PointCloud {
       let i = panelEra.indexOf(era);
       if (i < 0) {
         // no room of its own: the panel nearest the camera's forward, in the cloud's space
-        const camera = app.systems.camera?.cameras[0]?.entity;
+        const camera = viewCamera?.() ?? app.systems.camera?.cameras[0]?.entity;
         if (!camera) return;
         invRoot.copy(root.getWorldTransform()).invert();
         const f = camera.forward;

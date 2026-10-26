@@ -16,6 +16,7 @@ import { dressDeviceHardware } from './deviceHardware';
  * - Every prop it moves is never-batched (the caller hands `ids` to the batcher).
  */
 import * as pc from 'playcanvas';
+import { makeScreenTexture } from '../engine/screenTexture';
 import type { RoomHandles } from './era1room';
 import type { Painter } from './calendarArt';
 import type { DeviceGame, GameKey } from '../games/types';
@@ -56,6 +57,8 @@ export interface HeldDevice {
   readonly spec: DeviceSpec;
   readonly held: boolean;
   take(cam: pc.Entity): void;
+  follow(hand: pc.Entity): void;
+  release(): void;
   tick(dt: number, era: string, has: (id: string) => boolean, fileSize: number): string | null;
   /** can this ray press it, and what would it be called */
   aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): 'pick' | 'drop' | 'screen' | GameKey | null;
@@ -100,12 +103,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   let tex: pc.Texture | null = null;
   const plane = new pc.Entity(`${spec.propId}-screen`);
   if (app && ctx) {
-    tex = new pc.Texture(app.graphicsDevice, {
-      width: w, height: h, format: pc.PIXELFORMAT_RGBA8, mipmaps: false,
-      minFilter: pc.FILTER_NEAREST, magFilter: pc.FILTER_NEAREST,
-      addressU: pc.ADDRESS_CLAMP_TO_EDGE, addressV: pc.ADDRESS_CLAMP_TO_EDGE
-    });
-    tex.setSource(canvas);
+    tex = makeScreenTexture(app, canvas);
     const sm = new pc.StandardMaterial();
     sm.diffuse.set(0, 0, 0); sm.emissiveMap = tex; sm.emissive.set(1, 1, 1); sm.update();
     plane.addComponent('render', { type: 'plane' });
@@ -196,9 +194,22 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     aim(ray) {
       if (!wrap.enabled) return null;
       if (!holding) return bodyHit(ray) ? 'pick' : null;
-      for (const b of spec.buttons ?? []) if (rayDist(ray.p0, ray.p1, worldOf(b.at)) < b.r) return b.key;
+      const buttons = (spec.buttons ?? []).map(b => ({ b, p: worldOf(b.at) }));
+      const button = buttons.filter(({ b, p }) => rayDist(ray.p0, ray.p1, p) < (app?.xr?.active ? Math.max(b.r, ray.p0.distance(p) * 0.02) : b.r))
+        .sort((a, b) => rayDist(ray.p0, ray.p1, a.p) - rayDist(ray.p0, ray.p1, b.p))[0];
+      if (button) return button.b.key;
       if (game && glassAt(ray)) return 'screen';
       return bodyHit(ray) ? 'drop' : null;
+    },
+    follow(hand) {
+      if (!holding) this.take(hand);
+      heldPose(hand);
+      to.pos.sub(hand.forward.clone().mulScalar(viewDist(hand).d - 0.08));
+      wrap.setPosition(to.pos); wrap.setRotation(to.rot); t = 1;
+    },
+    release() {
+      if (rest) { wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
+      holding = false; t = 1;
     },
     take(cam) {
       if (holding) return;

@@ -53,6 +53,7 @@ const TAB_W = 0.12, TAB_H = TAB_W * 64 / 256, TAB_DIST = 0.6, TAB_DROP = 0.36, T
 const FONT = '"Courier New", monospace';
 
 export interface XrFrame {
+  readonly layerId: number;
   /** once per frame; `ray` is the controller's, for the cursor */
   tick(ray: Ray | null): void;
   /** the menu opened: hang the plane in front of the head */
@@ -74,7 +75,11 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   onLeave: () => void;
   /** Restart, confirmed */
   onRestart: () => void;
+  onRecentre: () => void;
 }): XrFrame {
+  const layer = new pc.Layer({ name: 'XR Frame', clearDepthBuffer: true });
+  app.scene.layers.pushOpaque(layer); app.scene.layers.pushTransparent(layer);
+  head.camera!.layers = [...head.camera!.layers, layer.id];
   // ── the menu plane ──
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -84,6 +89,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   const plane = makeScreenEntity('xr-frame-menu', tex, PLANE_W, PLANE_H, true);
   // the frame draws OVER the room: never hidden by a desk, a wall or a screen
   const overRoom = (e: pc.Entity): void => {
+    if (e.render) e.render.layers = [layer.id];
     const m = e.render?.material;
     if (m instanceof pc.StandardMaterial) { m.depthTest = false; m.update(); }
   };
@@ -181,6 +187,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       font(30, true); ctx.fillStyle = FRAME.bright; ctx.fillText(copy.title, 64, y); y += 64;
       y = drawRow(copy.resume, 'resume', y, true);
       if (gameMenuBus.mapSource) y = drawRow(mapCopy.row, 'map', y);
+      y = drawRow(copy.recentre, 'recentre', y);
       y = drawRow(copy.controls, 'controls', y);
       y = drawRow(copy.restart, 'restart', y);
       y = drawRow(copy.leave, 'leave', y);
@@ -303,6 +310,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
 
   const act = (id: string): void => {
     switch (id) {
+      case 'recentre': opts.onRecentre(); gameMenuBus.close(); return;
       case 'resume': gameMenuBus.close(); gameMenuBus.showHint?.(); return;
       case 'map': view = 'map'; break;
       case 'controls': view = 'controls'; break;
@@ -316,6 +324,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   };
 
   return {
+    layerId: layer.id,
     get isOpen(): boolean { return open; },
     open(): void {
       open = true; view = 'main'; hover = null; cursor = null;

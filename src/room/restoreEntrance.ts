@@ -35,7 +35,7 @@ export interface RestoreEntrance {
 }
 
 export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig: pc.Entity, camera: pc.Entity,
-  opts: { points: pc.Vec3[]; setupCanvas: HTMLCanvasElement; setup(): LambySetup | null; updateSetup(dt: number): boolean; clearSetup(): void; reduced(): boolean; crossFade(): boolean; prepareRestore(): void; flyToSeat(): Promise<void>; beginStory(): void; lights(k: number): void }): RestoreEntrance {
+  opts: { viewCamera?(): pc.Entity; points: pc.Vec3[]; setupCanvas: HTMLCanvasElement; setup(): LambySetup | null; updateSetup(dt: number): boolean; clearSetup(): void; reduced(): boolean; crossFade(): boolean; prepareRestore(): void; flyToSeat(): Promise<void>; beginStory(): void; lights(k: number): void }): RestoreEntrance {
   type Phase = 'wake' | 'restore' | 'flight' | 'setup' | 'fold' | 'typing' | 'glitch' | 'done';
   let phase: Phase = 'wake', clock = 0, elapsed = 0, releaseTime = 0, flash = 0;
   let resolveFlash: (() => void) | null = null;
@@ -62,7 +62,7 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   }));
   // Capture the live layer meshes, including the cluster's settled batches.
   // Never toggle batched nodes: visibility belongs to their actual MeshInstances.
-  const instances = [...new Set(app.scene.layers.layerList.flatMap((layer) => layer.meshInstances))].filter(mi => mi.node.name !== 'room-specks');
+  const instances = [...new Set(app.scene.layers.layerList.flatMap((layer) => layer.meshInstances))].filter(mi => mi.node.name !== 'room-specks' && !mi.node.name.startsWith('xr-'));
   const visible = instances.map((mi) => mi.visible);
   const materials = [...new Set(instances.map((mi) => mi.material))].filter((m): m is pc.StandardMaterial => m instanceof pc.StandardMaterial);
   const delays = new Map(materials.map((m, i) => [m, (i % 7) * 0.4]));
@@ -247,7 +247,8 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
         if (music) music.volume = 0.28 * (1 - k);
       }
       if (phase === 'restore' && opts.crossFade()) { ink.opacity = 1 - smooth(Math.min(1, elapsed / RESTORE)); ink.update(); }
-      right.copy(camera.right); up.copy(camera.up);
+      const viewCamera = opts.viewCamera?.() ?? camera;
+      right.copy(viewCamera.right); up.copy(viewCamera.up);
       for (let i = 0; i < N; i++) {
         const s = stars[i]; let half = 0.010;
         if (phase === 'wake') {

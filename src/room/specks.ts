@@ -5,7 +5,7 @@ import { PLACE } from '../desktop/theme/era4';
 import { hex } from './era1room';
 import { reducedMotion } from '../state/motion';
 
-export function buildRoomSpecks(app: pc.Application, camera: pc.Entity): {
+export function buildRoomSpecks(app: pc.Application, camera: pc.Entity, view?: { head(): pc.Entity; point(p: pc.Vec3): pc.Vec3 }): {
   update(dt: number, era: string, visibility: number): void;
   landingPoints(): pc.Vec3[];
 } {
@@ -50,22 +50,23 @@ export function buildRoomSpecks(app: pc.Application, camera: pc.Entity): {
       if (screenEra !== era) { screenEra = era; collectScreens(); }
       if (!reducedMotion()) clock += dt;
       mat.opacity = visibility; mat.update();
+      const eye = view?.head() ?? camera;
       mask.length = 0;
       for (const screen of screens) {
-        if (!screen.visible || !(screen.node as pc.Entity).enabled || screen.aabb.center.distance(camera.getPosition()) > 5) continue;
+        if (!screen.visible || !(screen.node as pc.Entity).enabled || screen.aabb.center.distance(eye.getPosition()) > 5) continue;
         const b = screen.aabb, lo = { x: Infinity, y: Infinity }, hi = { x: -Infinity, y: -Infinity };
         for (let v = 0; v < 8; v++) {
           corner.set(b.center.x + (v & 1 ? 1 : -1) * b.halfExtents.x, b.center.y + (v & 2 ? 1 : -1) * b.halfExtents.y, b.center.z + (v & 4 ? 1 : -1) * b.halfExtents.z);
-          camera.camera!.worldToScreen(corner, at);
+          camera.camera!.worldToScreen(view?.point(corner) ?? corner, at);
           if (at.z <= 0) continue;
           lo.x = Math.min(lo.x, at.x); lo.y = Math.min(lo.y, at.y); hi.x = Math.max(hi.x, at.x); hi.y = Math.max(hi.y, at.y);
         }
         mask.push({ x: lo.x - 20, y: lo.y - 20, w: hi.x - lo.x + 40, h: hi.y - lo.y + 40 });
       }
-      const right = camera.right, up = camera.up;
+      const right = eye.right, up = eye.up;
       points.forEach((s, i) => {
         p.set(s.x + Math.sin(clock * 0.06 + i) * 0.06, s.y + Math.sin(clock * 0.045 + i * 2) * 0.08, s.z + Math.cos(clock * 0.04 + i) * 0.05);
-        camera.camera!.worldToScreen(p, at);
+        camera.camera!.worldToScreen(view?.point(p) ?? p, at);
         const hidden = (s.r > 0 && (era === 'e1' || era === 'e2')) || mask.some(b => at.x >= b.x && at.x <= b.x + b.w && at.y >= b.y && at.y <= b.y + b.h);
         const lampDistance = Math.min(...lamps.filter(l => (l.light?.intensity ?? 0) > 0.1).map(l => p.distance(l.getPosition())), 3);
         const alpha = hidden ? 0 : 0.46 * Math.max(0.08, Math.min(1, (lampDistance - 0.65) / 1.3));

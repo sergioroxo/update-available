@@ -14,7 +14,7 @@ import * as pc from 'playcanvas';
  * 2026-09-26: "the quality of the phone screen is terrible, super pixelated"). Smooth
  * = mipmaps + trilinear; the upload stays on-dirty-only, the mip chain rides with it.
  */
-export function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement, smooth: boolean | 'minify' = false): pc.Texture {
+export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, smooth: boolean | 'minify' = false): pc.Texture {
   /**
    * ⚑ W1-F1 — `'minify'`: A PIXEL SCREEN SEEN FROM FAR, WHICH IS EVERY ROOM-3 SCREEN. The 2026 monitor is drawn at
    * ×3 (2130 × 1152) and, from the seat, covers ~500 screen px: 4 texels to a pixel. Plain FILTER_NEAREST keeps one
@@ -38,6 +38,21 @@ export function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement
     addressV: pc.ADDRESS_CLAMP_TO_EDGE
   });
   tex.setSource(source);
+  // Session-only quality; restore the exact browser sampler on exit.
+  const xrQuality = (immersive: boolean): void => {
+    tex.mipmaps = immersive || mips;
+    tex.minFilter = immersive || mips ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST;
+    tex.magFilter = immersive || smooth === true ? pc.FILTER_LINEAR : pc.FILTER_NEAREST;
+    tex.anisotropy = immersive ? Math.min(8, app.graphicsDevice.maxAnisotropy) : minify ? 8 : 1;
+    tex.setSource(source); tex.upload();
+  };
+  const onXrStart = (): void => xrQuality(true);
+  // PlayCanvas fires end before clearing its session; active is still true in that callback.
+  const onXrEnd = (): void => xrQuality(false);
+  app.xr?.on('start', onXrStart); app.xr?.on('end', onXrEnd);
+  if (app.xr?.active) xrQuality(true);
+  const dispose = tex.destroy.bind(tex);
+  tex.destroy = (): void => { app.xr?.off('start', onXrStart); app.xr?.off('end', onXrEnd); dispose(); };
   /**
    * ⚑ S105 — EVERY SCREEN UPLOAD IS COUNTED, so the law can be checked instead
    * of believed. CLAUDE.md's Quest budget says "render-texture uploads on dirty
@@ -52,7 +67,10 @@ export function makeScreenTexture(app: pc.Application, source: HTMLCanvasElement
    * GPU — and nothing else. Read it as `window.__uploads` under `?debug=1`.
    */
   const raw = tex.upload.bind(tex);
-  tex.upload = (): void => { screenUploads++; raw(); };
+  tex.upload = (): void => {
+    if (tex.width !== source.width || tex.height !== source.height) tex.setSource(source);
+    screenUploads++; raw();
+  };
   return tex;
 }
 

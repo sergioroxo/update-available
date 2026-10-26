@@ -1,3 +1,5 @@
+import { xrRects, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
+import * as pc from 'playcanvas';
 import polish from '../../data/strings/playtestPolish.json';
 import { reducedMotion } from '../state/motion';
 import { LambyGuide, type GuideInput } from '../narrative/lambyGuide';
@@ -2408,13 +2410,28 @@ export class DesktopOS {
     return Math.floor(this.t * 2.2) % 2 === 0;
   }
 
+  private xrScale = false;
+  private xrHover: XrRect | null = null;
+  xrPoint(x: number, y: number): { x: number; y: number } {
+    const rect = xrTarget(xrRects(this), x, y, 40);
+    if (JSON.stringify(rect) !== JSON.stringify(this.xrHover)) { this.xrHover = rect; this.dirty = true; }
+    return rect ? { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 } : { x, y };
+  }
   private draw(): void {
+    const immersive = !!pc.Application.getApplication()?.xr?.active;
+    if (immersive !== this.xrScale) {
+      this.xrScale = immersive;
+      const scale = immersive ? Math.max(4, RENDER_SCALE) : RENDER_SCALE;
+      this.canvas.width = ERA1_CANVAS.width * scale; this.canvas.height = ERA1_CANVAS.height * scale;
+      this.ctx.setTransform(scale, 0, 0, scale, 0, 0); this.ctx.imageSmoothingEnabled = false;
+      this.dirty = true;
+    }
     const W = ERA1_CANVAS.width;
     const H = ERA1_CANVAS.height;
     this.hits = [];
     this.lambyGuidePaint = { rings: [], balloon: false };
     this.iconsDrawn = [];
-    if (this.setup?.open) { this.setup.draw(this.ctx); return; }
+    if (this.setup?.open) { this.setup.draw(this.ctx); if (this.xrScale) xrOutline(this.ctx, this.xrHover); return; }
 
     switch (this.phase) {
       case 'warning': this.drawWarning(W, H); break;
@@ -2435,6 +2452,7 @@ export class DesktopOS {
     //   is gone from the player's screen; kept for review under ?debug=1 only
     if (this.reinterp && /[?&]debug=1/.test(location.search)) this.drawReinterpMarker(W);
     if (this.paused) this.drawPause(W, H);
+    if (this.xrScale) xrOutline(this.ctx, this.xrHover);
   }
 
   /** the line being sung (index) and how many of its words are lit — '' when none is up */
