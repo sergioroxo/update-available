@@ -179,3 +179,19 @@ Portugal since 1 March 2024 (Lei n.º 15/2024, de 29 de janeiro)."
 - **Trevor Project outside the US**: nothing on its pages describes a non-US service except a link to the Mexico site.
 - **A survivor-led conversion-practices network in Europe, a trans-specific Norwegian service, Choices (NL)**: still not read.
 - **Opening hours of any line** may have changed since 2026-10-24.
+
+## Added 2026-10-27 (his yes: a trans-specific Norwegian service and Kirkens SOS)
+Same method: each organisation's own page, read in the built-in browser on 2026-10-27. Norway now has 9 entries; the
+page has 22.
+
+| # | Section | Name (exact) | Printed address | Phone as printed | Verified page · date | Quote from its own page |
+|---|---|---|---|---|---|---|
+| 22 | Norway | **Kirkens SOS** | kirkens-sos.no | 22 40 00 40 | https://www.kirkens-sos.no/ and https://www.kirkens-sos.no/telefon · 2026-10-27 | "Telefonnummeret til vår krisetelefon er: 22 40 00 40." · "Telefonen vår er døgnåpen hver dag" · "Deres oppgave er ikke å forkynne eller gi råd, men å lytte" · "landets største døgnåpne krisetjeneste på telefon og nett, bemannet av frivillige" |
+| 23 | Norway | **HKS-chatten** (PKI and Helsestasjonen for kjønn og seksualitet) | hksoslo.no/chat | none | https://pkinorge.no/ (its link "Ta kontakt med HKS-chatten" → https://www.hksoslo.no/chat) · 2026-10-27 | "PKI driver HKS-chatten i samarbeid med Helsestasjonen for Kjønn og Seksualitet i Oslo." · "prate anonymt med fagpersoner med sexologisk videreutdanning eller transkompetanse" · "Mandag 17:00 - 20:00 / Torsdag 17:00 - 20:00" · PKI: "En pasientorganisasjon for personer med kjønnsinkongruens og deres familie og nære." |
+
+- **22.** The name means "the Church's SOS". Its "Om" page does not state its church link in a sentence, so the printed
+  line does not claim one; it quotes only what the service says it does (listen, not preach or advise). A church-named
+  service on this page is the lead's call; its own home page carries an affirming article about a Christian lesbian
+  woman ("Redd for å velge kjærligheten"). Calls limited to three per day (its page).
+- **23.** https://www.hksoslo.no/chat also read on 2026-10-27: "Fagfolk svarer på alle typer spørsmål om kjønn.", the same
+  hours ("Mandag 17:00 - 20:00", "Torsdag 17:00 - 20:00"), "Du er anonym når du chatter med oss." Trans-specific: PKI describes itself as being for people with gender incongruence and their families.

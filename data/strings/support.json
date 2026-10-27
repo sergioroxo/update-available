@@ -80,10 +80,21 @@
      "phone": "116 123"
     },
     {
+     "name": "Kirkens SOS",
+     "line": "A crisis line on the phone and online, answered by volunteers, open day and night every day. You can call anonymously; the volunteers are there to listen, not to preach or give advice.",
+     "address": "kirkens-sos.no",
+     "phone": "22 40 00 40"
+    },
+    {
      "name": "FRI – foreningen for kjønns- og seksualitetsmangfold",
      "line": "The national organisation for sexual and gender diversity. Information, local groups and events, and a phone line on weekdays, 09:00–15:00.",
      "address": "foreningenfri.no",
      "phone": "23 10 39 39"
+    },
+    {
+     "name": "HKS-chatten (PKI and Helsestasjonen for kjønn og seksualitet)",
+     "line": "An anonymous chat with professionals trained in sexology or in trans health, run by PKI, the Norwegian patient organisation for people with gender incongruence. Mondays and Thursdays, 17:00–20:00.",
+     "address": "hksoslo.no/chat"
     },
     {
      "name": "Ungdomstelefonen (Skeiv Ungdom)",
