@@ -200,6 +200,22 @@ title ("Your update has failed") names the programme's promise breaking against 
 documented, real) organisation names across the eras to show the DIVERSITY of the networks — not one villain, but an
 ecosystem of ministries, programmes, platforms and apps that hand people on to one another.
 
+**F-EXH-7 · Refusal shown, and shown taken away (his, 2026-10-27).** In 2003's media release (Your Story) the
+form is filled in for Daniel and offers one live button, "I agree". Beside it there is now a greyed "Decline" that takes
+no press, with the small print "Declining is not available for participants in active programmes." He chose this over
+leaving refusal out entirely or making Decline reopen the same form: "I like the element of the system telling and
+confirming you that you don't have a choice." His note for the article: the constant refusal in these places works as
+an emotional connection for the visitor, so they understand the mental strain of these practices. It belongs with the
+other "dead buttons" in the piece: 2003's greyed "Not now" on the accountability alert (finding C12), 2016's Lambient
+consent with its "not yet available" decline. Evidence: s2_testimony.json `release.decline`/
+`declineNote`; screenshot to add.
+
+**F-EXH-2 evidence, 2026-10-27:** eleven pages of "Your file" at the Close after a full guided playthrough (104
+entries, 8 flagged), with no debug readouts, in `Claude outputs/your-file-2026-10-27/`, plus the full text in
+`your_file.txt`. `node tools/walk.mjs --port 3000 --max 2600 --require-close --your-file <dir>` takes them again.
+These were taken BEFORE S267's fixes (era headings, 2016's map marks filed under 1997, the ⚑ marks), so a new set
+should be taken for the article.
+
 ## Open items (Sérgio's, not Claude's)
 
 - The abstract itself (500 words max, bio 200 words max, cc `DCsubmit@gmail.com`) is his to write —

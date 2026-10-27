@@ -28,7 +28,10 @@
   "web": "website",
   "webNote": "(included in ministry communications)",
   "status": "DISTRIBUTION: APPROVED",
-  "agree": "I agree"
+  "agree": "I agree",
+  "decline": "Decline",
+  "declineNote": "Declining is not available for participants in active programmes.",
+  "_docDecline": "⚑ S267 — his (B), 2026-10-27: 'I like the element of the system telling and confirming you that you don't have a choice.' Decline is drawn greyed and never takes a press."
  },
  "tapes": {
   "folder": "TAPE_04_CAPTURE",
@@ -61,14 +64,15 @@
     ]
    },
    "caleb": {
-    "seconds": 20,
+    "_docCX5": "⚑ S267 (his yes, 2026-10-27): his own webcam at night since F1, so no producer in the room — he starts the recording himself, and the SOFTWARE asks for the second take (no speaker: the programme's voice, drawn in silver).",
+    "seconds": 21,
     "lines": [
-     { "t": 0.6, "who": "PRODUCER", "text": "Rolling. Caleb, from the top." },
+     { "t": 0.6, "who": "CALEB", "text": "is it… okay. it's recording." },
      { "t": 3.0, "who": "CALEB", "text": "I came to New Morning angry." },
      { "t": 6.8, "who": "CALEB", "text": "I left it with a family." },
      { "t": 10.6, "who": "CALEB", "text": "If you're watching this — it can be you too." },
-     { "t": 14.6, "who": "PRODUCER", "text": "Good. Once more, slower?" },
-     { "t": 17.4, "who": "CALEB", "text": "…Once more." }
+     { "t": 14.6, "text": "Take 1 saved. New Morning recommends a second take: slower, with feeling." },
+     { "t": 18.2, "who": "CALEB", "text": "…once more." }
     ]
    },
    "tone": { "seconds": 8, "lines": [] }

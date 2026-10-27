@@ -228,8 +228,10 @@
    "prayer-said": "companion prayer followed to the end — said",
    "prayer-cut": "companion prayer stopped at the chorus — said early; noted",
    "rob-spoke-mother": "parent contacted by mentor — placement prepared",
-   "rootcause-opened": "root cause digger opened by subject",
-   "yes-received": "testimony image accepted from mentor — delivered"
+  "rootcause-installed": "root cause digger installed with the companion disk",
+  "rootcause-opened": "root cause digger opened by subject",
+  "harbor-partner": "accountability partner requested — matched by the board",
+  "yes-received": "testimony image accepted from mentor — delivered"
   }
  },
  "dossier": {

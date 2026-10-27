@@ -38,7 +38,8 @@ export function statusLong(s: string): string {
 }
 /** a source's text as the public reads it: the in-house marker made plain */
 export function publicText(t: string): string {
-  return t.split(words._verifyMarker).join(words.verifyPublic);
+  // S267: the ⚑ is the docs' own flag; a visitor reads the sentence, not the mark
+  return t.split(words._verifyMarker).join(words.verifyPublic).replace(/⚑\s*/g, '');
 }
 
 export type DossierLine = { t: string; k: 'head' | 'body' | 'dim' | 'ref' | 'mine' | 'link' };

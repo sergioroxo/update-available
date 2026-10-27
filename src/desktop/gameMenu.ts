@@ -393,21 +393,35 @@ export function mountGameMenu(): GameMenu {
     const all = (['e1', 'e2', 'e3', 'e4'] as RecordEra[]).flatMap((e) => by[e]);
     if (all.length === 0) { paragraph(copy.yourFileEmpty); backRow(); return; }
     paragraph(copy.yourFileCount.replace('{n}', String(all.length)).replace('{f}', String(all.filter((e) => e.flagged).length)));
+    // ⚑ S267 — each era gets its own heading in the page (heading() names the window, so calling it here left one
+    //   title, the last era's, over the whole file); a source already printed is pointed back to, not printed again
+    const printed = new Map<string, string>();
     for (const era of ['e1', 'e2', 'e3', 'e4'] as RecordEra[]) {
       const entries = by[era];
       if (entries.length === 0) continue;
-      heading((copy.yourFileEras as Record<string, string>)[era]);
+      const h = document.createElement('div');
+      Object.assign(h.style, {
+        fontSize: '12.5px', fontWeight: '700', color: DIALOG.ink,
+        margin: '14px 0 6px', paddingTop: '8px', borderTop: `1px solid ${DIALOG.dark}`
+      } as CSSStyleDeclaration);
+      h.textContent = (copy.yourFileEras as Record<string, string>)[era];
+      panel.appendChild(h);
       // one block per practice, in order of first appearance — the entries under it
       const seen: string[] = [];
       for (const e of entries) if (!seen.includes(e.kind)) seen.push(e.kind);
       for (const kind of seen) {
         const pr = practiceOf(kind);
         const mine = entries.filter((e) => e.kind === kind);
-        paragraph(`${pr ? pr.title.toUpperCase() : kind.toUpperCase()} — ${pr ? pr.did : ''}`);
+        paragraph(pr ? `${pr.title.toUpperCase()} — ${pr.did}` : kind.toUpperCase());
         for (const e of mine) paragraph(`  · ${e.witness}${e.flagged ? `  [${copy.yourFileFlag}]` : ''}`);
         if (pr) {
           const src = pr.source ? SOURCE_FILES[pr.source.file]?.debrief.sources[pr.source.index] : null;
-          paragraph(`  ${copy.yourFilePractice}: ${statusShort(pr.status)}${src ? ` — ${copy.yourFileSource}: ${publicText(src.text)}` : ` — ${copy.yourFileNoSource}`}`);
+          const key = pr.source ? `${pr.source.file}:${pr.source.index}` : '';
+          const read = !src ? ` — ${copy.yourFileNoSource}`
+            : printed.has(key) ? ` — ${copy.yourFileSource}: ${copy.yourFileSameSource.replace('{p}', printed.get(key)!)}`
+              : ` — ${copy.yourFileSource}: ${publicText(src.text)}`;
+          if (src && !printed.has(key)) printed.set(key, pr.title.toUpperCase());
+          paragraph(`  ${copy.yourFilePractice}: ${statusShort(pr.status)}${read}`);
         }
       }
     }

@@ -87,7 +87,9 @@ function recordKind(id: string): { kind: string; outcome: string; flagged: boole
   if (id === 'subject-migrated') return { kind: 'arrival', outcome: 'migrated', flagged: false };
   if (id === 'lamby-rig-opened') return { kind: 'assistant', outcome: 'opened', flagged: false };
   // S153 — the game on the disk: opened, and its two endings
+  if (id === 'rootcause-installed') return { kind: 'kit', outcome: 'installed', flagged: false };
   if (id === 'rootcause-opened') return { kind: 'kit', outcome: 'opened', flagged: false };
+  if (id === 'harbor-partner') return { kind: 'channel', outcome: 'matched', flagged: false };   // S209 / B22
   if (id.startsWith('rootcause-memory:')) return { kind: 'kit', outcome: 'uncovered', flagged: true };
   if (id.startsWith('rootcause-report:')) return { kind: 'kit', outcome: 'reported', flagged: false };
   if (id.startsWith('rootcause-kept:')) return { kind: 'kit', outcome: 'kept', flagged: true };   // S215: the honest answer, scored as deflection
@@ -103,6 +105,9 @@ function recordWitness(id: string): string {
   return RECORD_LINES[id] ?? id.replace(/-/g, ' ');
 }
 
+/** ⚑ S267 — ids `ledger.records` holds for the map (src/witness/map.ts), never meant for Your file */
+const MAP_BEATS = new Set(['e3-signed-in', 'e3-job-done', 'e3-two-jobs', 'e3-day-done']);
+
 const FLAG_OUTCOMES = new Set(['abandoned', 'declined', 'dismissed', 'skipped', 'stood', 'held', 'committed', 'stoppedMidway', 'kept']);
 
 export function recordEntries(): RecordEntry[] {
@@ -112,8 +117,9 @@ export function recordEntries(): RecordEntry[] {
   };
   // ── 1997 ──
   for (const r of ledger.records) {
+    if (MAP_BEATS.has(r)) continue;   // S267: the map's own progress marks, not filings (2016's jobs file themselves)
     const k = recordKind(r);
-    push(r.startsWith('forum-') || r.startsWith('testimony-') ? 'e2' : 'e1', k.kind, r, k.outcome, recordWitness(r), k.flagged);   // S191: 2003's forum files in 2003 (S205: and its testimony)
+    push(r.startsWith('forum-') || r.startsWith('testimony-') || r === 'harbor-partner' ? 'e2' : 'e1', k.kind, r, k.outcome, recordWitness(r), k.flagged);   // S191: 2003's forum files in 2003 (S205: and its testimony)
   }
   for (const p of ledger.provotypes) push(p.id === 'pillow' ? 'e1' : 'e1', 'provotype', p.id, p.outcome, p.witness);
   // S189 — the games: each in the era it was played, as The exercise (a task that could only end one way)

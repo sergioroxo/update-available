@@ -1,6 +1,7 @@
 {
  "_doc": "PLACEHOLDER-draft — Sérgio voice pass pending on EVERY line below (submissions, rules, rationales, manual refs, verses, chips, witness lines). Session 64 (E3-iii, THE CORRECTION LIST), per docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md revision 4. ⚑ RETIREMENT: this file's Session-38 shape — `cards` (8 testimony cards), `order`, `miraId`, `miraGateFlags`, and the verbs `approve` / `moveToReview` / `letStand` / `systemSuggestsTag` / `yourCallTag` / `keepWholeNote` — is GONE, not deprecated-in-place. Reason, from the spec's §1 and the research it cites (REVAMP_BRIEF rev 3, correction 2): peer forum MODERATION is rated CONTESTED ('records are largely private or unarchived'), so Vera judging whether a story is allowed was a claim the piece would have had to mark contested. Testimony PRODUCTION — narratives edited and published by the network — is FULLY DOCUMENTED. So the submissions below are ALREADY ACCEPTED, and the verb is APPLY / SKIP against a style guide. `lambient.miraNote` and `tablet.miraCommentsTeaser` went with the cards (Mira is no longer load-bearing; the spec keeps her only as a name).",
  "_docF2cut": "cut for W1-E1, cloud F2, 2026-10-14: Lambient's small print and wait line, three rule rationales, the record footer. Submissions, manual and verse lines untouched.",
+ "_docS267cut": "⚑ S267 — his (c), 2026-10-27: the framing around the four testimonies shortened (four rule reasons, six places); the testimonies, the manual and verse lines (the doubling device) untouched.",
  "_docS223cut": "cut for W1-E1 / W1-B1, cloud, 2026-10-09 ('far too much reading in 2016'). The submissions (felt) are cut with the most care and only where the screen already SHOWS what the sentence told: Marisol's description of the four lines goes because her picture is beside it, labelled; Noa's 'I sent a video' goes because the video is attached; Renata loses only her opening line. Every `edit.find` still matches its text word for word. Four rule rationales (`why`) shortened in the platform's voice; `manual` and `verse` untouched. Lambient's small print keeps every item the era later uses, in fewer words. The Today notes shortened to a few words each. ⚑ HIS REVIEW (2026-10-09): the four-lines sentence restored (the four dimensions taught in LGBTQ+ education, e.g. the Genderbread Person / Gender Unicorn models; the fiction attributes it to 'someone in another group', no citation); 'a picture' kept.",
  "_docScripture": "PLACEHOLDER-draft. §2 of the spec, the doubling: the manual is `The Ordering`, and it cites `Household`. Both invented — NO real scripture is ever quoted as the apparatus's justification, and no real manual is named. Three rules govern every `manual`/`verse` pair below and they are the whole design: (1) same weight, same colour, same size, same citation shape — the player's eye cannot tell which authority is which, because the interface does not distinguish them either; (2) never quoted aloud, never argued — it is furniture, the small print under a rule; (3) THE VERSE NEVER JUSTIFIES CRUELTY IN WORDS. Every verse below is gentle and is about care, belonging, or keeping. The cruelty is entirely in what it is footnoting. Household 6:2 is deliberately cited TWICE — under correction 7 (route for mentorship) and under correction 9 (gender clarity review) — because to the apparatus a routing is a routing; the interface never notices it is sending a person to the same door for two opposite reasons.",
  "_docRegister": "Register calls, enforced by hand and stated in the session log: the CORRECTION COLUMN, the chips, the manual/verse lines and the `n of m applied` counter are `operable` — the tool may be tidy and charming, and the satire lives THERE. The SUBMISSIONS (`submissions[].text`) are `felt`: bare, sincere, never the joke. The submitters are never satirised; the target is the apparatus that is editing them. E3 has NO respite — deliberate, confirmed by Sérgio.",
@@ -215,7 +216,7 @@
   {
    "id": 3,
    "rule": "Clip for the broadcast",
-   "why": "forty seconds for the conference audio",
+   "why": "forty seconds for the conference",
    "manual": "The Ordering §3.2 — selected audio",
    "verse": "Household 9:6 — “what is said in the room is carried to the road”",
    "edit": {
@@ -266,7 +267,7 @@
   {
    "id": 7,
    "rule": "Route for mentorship",
-   "why": "personal follow-up contact within 48 hours",
+   "why": "follow-up contact within 48 hours",
    "manual": "The Ordering §4.2 — personal follow-up",
    "verse": "Household 6:2 — “and the lost one was not sent a letter, but a neighbour”",
    "chip": "follow-up assigned",
@@ -314,7 +315,7 @@
   {
    "id": 11,
    "rule": "Clip for the broadcast",
-   "why": "forty seconds for the conference audio",
+   "why": "forty seconds for the conference",
    "manual": "The Ordering §3.2 — selected audio",
    "verse": "Household 9:6 — “what is said in the room is carried to the road”",
    "edit": {
@@ -328,7 +329,7 @@
   {
    "id": 12,
    "rule": "Route for mentorship",
-   "why": "personal follow-up contact within 48 hours",
+   "why": "follow-up contact within 48 hours",
    "manual": "The Ordering §4.2 — personal follow-up",
    "verse": "Household 6:2 — “and the lost one was not sent a letter, but a neighbour”",
    "chip": "follow-up assigned",
@@ -339,7 +340,7 @@
   {
    "id": 13,
    "rule": "Apply the house look",
-   "why": "the room's own light — keeps the set consistent",
+   "why": "one light, so the set matches",
    "manual": "The Ordering §3.1 — house look",
    "verse": "Household 1:5 — “one lamp for the whole room, so that no face is lit differently from another”",
    "grade": {
@@ -365,7 +366,7 @@
   {
    "id": 15,
    "rule": "Remove the outside source",
-   "why": "the words can stay; the picture is not the house's",
+   "why": "the words can stay; the picture can't",
    "manual": "The Ordering §1.7 — provenance",
    "verse": "Household 2:4 — “bring nothing in from the road that the house did not make”",
    "edit": {

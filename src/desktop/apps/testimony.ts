@@ -294,6 +294,15 @@ export class TestimonyApp {
     y += 30;
     ui.setFont(ctx, 10); ctx.fillStyle = ERA1.ok; ctx.fillText(T.release.status, bx + 4, y);
     this.rightButton(ctx, c, T.release.agree, 'ts-agree');
+    // ⚑ S267 (his (B), 2026-10-27) — the refusal is drawn, and drawn taken away: a greyed Decline that takes no press,
+    //   left of the one live button, with the programme's reason in the small print above them
+    ui.setFont(ctx, 10);
+    const aw = Math.max(76, Math.ceil(ctx.measureText(T.release.agree).width) + 18);
+    const dw = Math.max(76, Math.ceil(ctx.measureText(T.release.decline).width) + 18);
+    this.button(ctx, c.x + c.w - 10 - aw - 8 - dw, c.y + c.h - 30, T.release.decline, null, dw);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.greyDark;
+    const nw = ctx.measureText(T.release.declineNote).width;
+    ctx.fillText(T.release.declineNote, c.x + c.w - 10 - Math.ceil(nw), c.y + c.h - 42);
   }
 
   private drawTapes(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
@@ -329,10 +338,14 @@ export class TestimonyApp {
     if (cur && this.clipT - cur.t < 6) {
       ui.setFont(ctx, 10);
       const text = cur.who ? `${cur.who}:  ${cur.text}` : cur.text;
-      const tw = ctx.measureText(text).width;
-      ui.px(ctx, vx + Math.round((vw - tw) / 2) - 6, vy + vh + 6, Math.ceil(tw) + 12, 16, ERA1.black);
-      ctx.fillStyle = cur.who ? ERA1.white : ERA1.silver;
-      ctx.fillText(text, vx + Math.round((vw - tw) / 2), vy + vh + 9);
+      const ink = cur.who ? ERA1.white : ERA1.silver;
+      // a long line (the software's own prompt on Caleb's tape) takes a second row rather than running off the picture
+      ui.wrapText(ctx, text, vw - 12).slice(0, 2).forEach((ln, k) => {
+        const tw = ctx.measureText(ln).width;
+        ui.px(ctx, vx + Math.round((vw - tw) / 2) - 6, vy + vh + 6 + k * 14, Math.ceil(tw) + 12, k ? 14 : 16, ERA1.black);
+        ctx.fillStyle = ink;
+        ctx.fillText(ln, vx + Math.round((vw - tw) / 2), vy + vh + 9 + k * 14);
+      });
     }
     // the transport: play / stop, and back to the folder
     const by = c.y + c.h - 30;
