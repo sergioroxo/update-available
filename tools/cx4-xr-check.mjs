@@ -184,13 +184,17 @@ try {
   const c=window.__xrComfort,before=c.status().cuts;
   c.authored.setLocalPosition(1.1,1.16,0.7);c.authored.setLocalEulerAngles(0,100,0);
   for(let i=0;i<15;i++)c.reviewStep(0.1);const first=c.status().cuts;
-  c.authored.setLocalPosition(1.2,1.16,0.7);c.authored.setLocalEulerAngles(0,110,0);
+  // S268: a nudge under 0.35 m / 20° no longer re-forms the room (it re-aimed the world at the gaze), so the queued
+  //   destination is a real second move
+  c.authored.setLocalPosition(1.7,1.16,0.7);c.authored.setLocalEulerAngles(0,140,0);
   for(let i=0;i<2;i++)c.reviewStep(0.1);const during=c.status().cuts;
   for(let i=0;i<50;i++)c.reviewStep(0.1);const after=c.status();
-  window.__camFree(1.2,1.16,0.7,0,110);return {before,first,during,after};
+  c.authored.setLocalPosition(1.75,1.16,0.7);c.authored.setLocalEulerAngles(0,145,0);
+  for(let i=0;i<30;i++)c.reviewStep(0.1);const nudged=c.status().cuts;
+  window.__camFree(1.75,1.16,0.7,0,145);return {before,first,during,after,nudged};
  });
- assert.equal(queue.first,queue.before+1);assert.equal(queue.during,queue.first);assert.equal(queue.after.cuts,queue.before+2);assert.equal(queue.after.elapsed,-1);
- checks.push('Deterministic review: a destination queued during re-form waits for the next fully covered dissolve; no uncovered late cut.');
+ assert.equal(queue.first,queue.before+1);assert.equal(queue.during,queue.first);assert.equal(queue.after.cuts,queue.before+2);assert.equal(queue.after.elapsed,-1);assert.equal(queue.nudged,queue.after.cuts);
+ checks.push('Deterministic review: a destination queued during re-form waits for the next fully covered dissolve; no uncovered late cut; a small nudge re-forms nothing.');
  const reduced = await page.evaluate(async () => {
   const {ledger}=await import('/src/state/ledger.ts');ledger.view.reduceMotion=true;
   window.__camFree(0,1.16,0.7,0,0);

@@ -297,10 +297,11 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   }
   const hangTab = (): void => {
     hang(tabPlane, TAB_DIST, TAB_DROP);
-    // a little to the right of the gaze, so it is never in the way of the work
+    // ⚑ S268 (his: "The floating menu button just sits in front of the screen") — well to the right and low, clear of
+    //   the monitor (about ±20° of the seat's gaze): ~34° right, ~30° down
     const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, -1); fwd.normalize();
     const right = new pc.Vec3(-fwd.z, 0, fwd.x);
-    tabPlane.setPosition(tabPlane.getPosition().add(right.mulScalar(0.18)));
+    tabPlane.setPosition(tabPlane.getPosition().add(right.mulScalar(0.40)));
   };
   const tabOffAxis = (): boolean => {
     const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) return false; fwd.normalize();

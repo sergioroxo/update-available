@@ -2011,7 +2011,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
                         yawTurn?: number): void {
     // shortest signed rotation — unless the leg says which way round (S163 / C-01:
     // the Close's sweep turns LEFT the long way so the building is seen)
-    if (xr?.active) { dur = reducedMotion() ? 0.001 : 2; via = undefined; }
+    // ⚑ S268 — in a headset the move is ONE cut under the pixel dissolve (xrComfort), never a 2 s glide: a glide's
+    //   mid-path pose was what the dissolve committed, and the remainder re-formed the room a second time
+    if (xr?.active) { dur = 0.001; via = undefined; }
     const dyaw = yawTurn ?? ((to.yaw - camYaw + 540) % 360) - 180;
     const fx = camPos.x, fy = camPos.y, fz = camPos.z;
     // `via` is the bezier CONTROL point (raised, back from center): the path bows
@@ -5069,11 +5071,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       camYaw = 0;
       authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
     } else if (options.restoreEntrance) {
-      camPos.set(drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.x : EYE.x,
-        drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.y : EYE.y,
-        drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.z : EYE.z);
-      camPitch = drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.pitch : 0;
-      camYaw = drivenMoves && !reducedMotion() && !xr?.active ? DESCENT_FROM.yaw : 0;
+      // ⚑ S268 (his headset check, 27 Oct: "lopsided", "minuscule stuff floating", the stars off to the side) —
+      //   xr.start() is asynchronous, so on the ENTER VR path xr.active is still false here and the headset used to
+      //   begin at the browser's descent pose: 1.5 m aside, 2.2 m up, pitched 30° and turned 44°. VR starts AT the seat.
+      const descend = drivenMoves && !reducedMotion() && !xr?.active && !startInVr;
+      camPos.set(descend ? DESCENT_FROM.x : EYE.x, descend ? DESCENT_FROM.y : EYE.y, descend ? DESCENT_FROM.z : EYE.z);
+      camPitch = descend ? DESCENT_FROM.pitch : 0;
+      camYaw = descend ? DESCENT_FROM.yaw : 0;
       authoredRig.setLocalPosition(camPos); authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
       applyLightsOn();
       restoreEntrance = buildRestoreEntrance(app, room, cameraRig, camera, {
@@ -5098,7 +5102,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           }
         },
         flyToSeat: () => {
-          if (!drivenMoves || reducedMotion()) {
+          if (!drivenMoves || reducedMotion() || xr?.active || startInVr) {
             clearLookOffset(); camPos.set(EYE.x, EYE.y, EYE.z); camPitch = 0; camYaw = 0;
             authoredRig.setLocalPosition(camPos); authoredRig.setLocalEulerAngles(0, 0, 0);
             return Promise.resolve();

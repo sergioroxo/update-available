@@ -1,5 +1,16 @@
 STATUS: live
 
+> ⚑ **S268 (27 Oct): Claude did this round itself, at his ask ("Can I run it on Claude instead?").** Built: VR now
+> starts AT the seat (the entry had used the browser's descent pose — 1.5 m aside, 2.2 m up, pitched 30°, turned 44° —
+> the cause of notes 1, 3, 8); the XR world is only ever turned, never tilted; a nudge under 0.35 m / 20° no longer
+> re-forms the room at the gaze (notes 8, 9: "the camera was locked with my movement"); camera moves in XR are one cut
+> under the dissolve; Meta's long-press recentre (reference-space `reset`) resets the mapping; the menu's Recentre uses
+> the head as it was when the menu opened (note 6); the dissolve's cells 64 → 192 (his: "too big of squares"); pinch
+> presses where the hand aimed when the pinch closed (note 2); no click sound, a light controller pulse (note 7); the
+> Menu tab ~34° right, clear of the monitor (note 5); the seat line teaches pinch, trigger AND touch (note 2). Emulated
+> XR check passes (60 draw calls). NOT yet done: per-era reach/centre measurement (1d), the XR menu's Win95 restyle,
+> the fingertip ring, the 80-draw-call free pose, sharper screens (6ii–iv). Next: his headset check.
+
 # Codex prompt CX5 — the VR fix round (Quest 3, Meta Browser) — after CX4 (211778e7) and S267 (9e7bef8c)
 *His first headset check of CX4 (27 Oct, Quest 3, Meta Browser, the live Pages build). His notes, verbatim, are the
 brief; the diagnosis under each is Claude's reading of the code, to be CONFIRMED or overturned, not trusted. New Codex

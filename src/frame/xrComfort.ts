@@ -12,8 +12,14 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   const authored = new pc.Entity('authored-seat');
   authored.setLocalPosition(rig.getLocalPosition()); authored.setLocalRotation(rig.getLocalRotation());
   const stage = new pc.Entity('xr-world'); app.root.addChild(stage);
-  const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64;
+  // ⚑ S268 (his: "the pixels need to be smaller… too big of squares, it gives a more scary look") — 64 → 192 cells,
+  //   written as one ImageData per coverage step rather than a fillRect per cell
+  const CELLS = 192;
+  const canvas = document.createElement('canvas'); canvas.width = CELLS; canvas.height = CELLS;
   const ctx = canvas.getContext('2d')!;
+  const img = ctx.createImageData(CELLS, CELLS);
+  const rgb = (hex: string): [number, number, number] => { const n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const INKS = [REFERENCE.saverSky, FRAME.rule, PLACE.ink, REFERENCE.saverDim].map(rgb);
   const tex = makeScreenTexture(app, canvas);
   const veil = makeScreenEntity('xr-pixel-dissolve', tex, 6, 6, true);
   const layer = new pc.Layer({ name: 'XR comfort', clearDepthBuffer: true });
@@ -30,20 +36,50 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   const pos = authored.getLocalPosition().clone(), rot = authored.getLocalRotation().clone();
   const destinationPos = pos.clone(), destinationRot = rot.clone();
   const key = () => [...authored.getLocalPosition().toArray(), ...authored.getLocalRotation().toArray()].map(n => n.toFixed(4)).join(',');
+  /** a change worth re-forming the room for: ≥ 0.35 m of place, or ≥ 20° of facing (pitch and roll never count) */
+  const meaningful = (): boolean => {
+    const p = authored.getLocalPosition(), yaw = authored.getLocalRotation().getEulerAngles().y;
+    const dy = Math.abs(((yaw - level(rot).getEulerAngles().y) % 360 + 540) % 360 - 180);
+    return p.distance(pos) >= 0.35 || dy >= 20 || calibrationPending;
+  };
   const identity = () => { stage.setLocalPosition(0, 0, 0); stage.setLocalEulerAngles(0, 0, 0); };
+  // ⚑ S268 — the world is only ever TURNED for the viewer, never tilted: an authored pitch (a lean to the desk, a
+  //   look down) is the browser camera's, and in a headset it tipped the whole room ("lopsided"). Yaw only.
+  const level = (q: pc.Quat): pc.Quat => new pc.Quat().setFromEulerAngles(0, q.getEulerAngles().y, 0);
   const updateMapping = () => {
-    view.setTRS(pos, rot, pc.Vec3.ONE); inverse.copy(view).invert();
+    view.setTRS(pos, level(rot), pc.Vec3.ONE); inverse.copy(view).invert();
     physicalMap.mul2(fixed, inverse); logicalMap.copy(physicalMap).invert();
   };
   const matrix = () => {
     stage.setLocalPosition(physicalMap.getTranslation()); stage.setLocalRotation(new pc.Quat().setFromMat4(physicalMap));
   };
+  // ⚑ S268 (his: "how can I recenter if it forces me to look to the panel, it always makes it worse") — the menu's
+  //   Recentre uses the head as it was when the menu OPENED, before the visitor turned to the panel
+  const menuHead = { p: new pc.Vec3(), yaw: 0, held: false };
+  gameMenuBus.onChange((open) => {
+    if (open && app.xr?.active) { menuHead.p.copy(head.getPosition()); menuHead.yaw = head.getEulerAngles().y; menuHead.held = true; }
+    if (!open) menuHead.held = false;
+  });
   function calibrate() {
-    // Physical head pose is untouched. Map the current seated head to the authored eye.
-    const yaw = head.getEulerAngles().y;
-    calibration.setTRS(head.getPosition().clone(), new pc.Quat().setFromEulerAngles(0, yaw, 0), pc.Vec3.ONE);
+    // Physical head pose is untouched. Map the seated head to the authored eye.
+    const p = menuHead.held ? menuHead.p : head.getPosition(), yaw = menuHead.held ? menuHead.yaw : head.getEulerAngles().y;
+    calibration.setTRS(p.clone(), new pc.Quat().setFromEulerAngles(0, yaw, 0), pc.Vec3.ONE);
     calibrationPending = true; calibrated = true; elapsed = 0; committed = false;
   }
+  // ⚑ S268 (his: "The Meta recenter system of long press… should work here") — the headset's own recentre re-origins
+  //   the reference space and fires 'reset'; any calibration made before it is stale, so the mapping goes back to the
+  //   seat itself (the head's new origin IS the authored eye), at once, with no dissolve
+  let resetSpace: { addEventListener(t: string, f: () => void): void; removeEventListener(t: string, f: () => void): void } | null = null;
+  const onSpaceReset = (): void => {
+    rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(level(authored.getLocalRotation()));
+    fixed.setTRS(rig.getPosition().clone(), rig.getRotation().clone(), pc.Vec3.ONE);
+    calibrated = false; calibrationPending = false; updateMapping();
+  };
+  app.xr?.on('start', () => {
+    const space = (app.xr as unknown as { _referenceSpace?: typeof resetSpace })._referenceSpace ?? null;
+    resetSpace?.removeEventListener('reset', onSpaceReset); resetSpace = space; space?.addEventListener('reset', onSpaceReset);
+  });
+  app.xr?.on('end', () => { resetSpace?.removeEventListener('reset', onSpaceReset); resetSpace = null; });
   function tick(dt: number) {
     identity();
     if (!app.xr?.active) {
@@ -52,12 +88,18 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
       return;
     }
     if (!active) {
+      // the tracked space hangs from the rig: keep it level, at the seat, or every head move is skewed
+      rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(level(authored.getLocalRotation()));
       active = true; fixed.setTRS(rig.getPosition().clone(), rig.getRotation().clone(), pc.Vec3.ONE);
       pos.copy(authored.getLocalPosition()); rot.copy(authored.getLocalRotation()); applied = key(); updateMapping();
     }
     // The menu remains above an unobscured, paused world; the dissolve resumes with the story.
     if (gameMenuBus.isOpen) { veil.enabled = false; return; }
     const next = key();
+    // ⚑ S268 (his: "the camera was locked with my movement… I couldn't escape") — a re-formed room is aimed where the
+    //   head faces, so every authored nudge (a lean, a look offset, a pitch) re-aimed the world at the gaze, over and
+    //   over. Only a real change of place or of facing (a send, a seat jump, a conducted turn) re-forms the room now.
+    if (next !== pending && !meaningful()) { pending = next; applied = next; }
     if (next !== pending) { pending = next; destinationPos.copy(authored.getLocalPosition()); destinationRot.copy(authored.getLocalRotation()); }
     if (pending !== applied && elapsed < 0) { elapsed = 0; committed = false; }
     if (elapsed >= 0) {
@@ -80,13 +122,14 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
       const bucket = Math.floor(Math.max(0, coverage) * 257);
       if (bucket === maskBucket) return;
       maskBucket = bucket;
-      ctx.clearRect(0, 0, 64, 64);
-      for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) {
-        const noise = ((x * 73 + y * 151 + x * y * 17) % 257) / 257;
-        if (noise > coverage) continue;
-        ctx.fillStyle = noise < 0.72 ? REFERENCE.saverSky : noise < 0.90 ? FRAME.rule : (x + y) % 2 ? PLACE.ink : REFERENCE.saverDim;
-        ctx.fillRect(x, y, 1, 1);
+      const d = img.data;
+      for (let y = 0; y < CELLS; y++) for (let x = 0; x < CELLS; x++) {
+        const noise = ((x * 73 + y * 151 + x * y * 17) % 257) / 257, o = (y * CELLS + x) * 4;
+        if (noise > coverage) { d[o + 3] = 0; continue; }
+        const c = INKS[noise < 0.72 ? 0 : noise < 0.90 ? 1 : (x + y) % 2 ? 2 : 3];
+        d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
       }
+      ctx.putImageData(img, 0, 0);
       tex.upload();
     }
   }

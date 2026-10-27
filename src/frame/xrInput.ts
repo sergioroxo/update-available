@@ -6,7 +6,6 @@
  */
 import * as pc from 'playcanvas';
 import type { Ray } from './xrFrame';
-import { playOnce } from '../audio/tapeAudio';
 
 const WAND_LENGTH = 1.6;
 const WAND_THICK = 0.004;
@@ -43,7 +42,7 @@ export function mountXrInput(app: pc.Application, opts: {
   const meshes = new Map<pc.XrInputSource, pc.Mesh>();
   const dots = new Map<pc.XrInputSource, pc.Entity>();
   const hands = new Map<pc.XrInputSource, { entity: pc.Entity; mesh: pc.Mesh }>();
-  const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[] }>();
+  const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[]; aim: Ray | null }>();
   const wands = new Map<pc.XrInputSource, pc.Entity>();
   const mat = new pc.StandardMaterial();
   mat.useLighting = false;
@@ -73,7 +72,7 @@ export function mountXrInput(app: pc.Application, opts: {
     app.root.addChild(e);
     wands.set(src, e);
     const dot = new pc.Entity('xr-cursor'); dot.setLocalScale(0.009, 0.009, 0.009); app.root.addChild(dot); dot.enabled = false; dots.set(src, dot);
-    gestures.set(src, { pinch: false, since: 0, held: false, near: false, buttons: [] });
+    gestures.set(src, { pinch: false, since: 0, held: false, near: false, buttons: [], aim: null });
     if (src.hand) {
       const entity = new pc.Entity('xr-hand');
       app.root.addChild(entity); entity.enabled = false; hands.set(src, { entity, mesh });
@@ -91,11 +90,14 @@ export function mountXrInput(app: pc.Application, opts: {
     primary = src;
     const r = rayOf(src);
     if (!r) return;
-    choose(r);
+    choose(r, src);
   };
-  const choose = (r: Ray): void => {
+  // ⚑ S268 (his: "the beeping of the input is a bit annoying") — no sound on a press in the headset: a controller
+  //   gets a short, light pulse; a hand gets nothing (the button's own pressed state is the feedback)
+  const choose = (r: Ray, src?: pc.XrInputSource): void => {
     if (opts.menuOpen()) opts.onMenuSelect(r); else opts.onSelect(r);
-    playOnce('key_1997.mp3');
+    const pad = src?.gamepad as (Gamepad & { hapticActuators?: { pulse?(v: number, ms: number): void }[] }) | null | undefined;
+    try { pad?.hapticActuators?.[0]?.pulse?.(0.25, 12); } catch { /* no actuator: nothing */ }
   };
   const onSqueeze = (src: pc.XrInputSource): void => {
     primary = src; const r = rayOf(src); const state = gestures.get(src);
@@ -195,15 +197,17 @@ export function mountXrInput(app: pc.Application, opts: {
           const thumb = src.hand.getJointById('thumb-tip'), index = src.hand.getJointById('index-finger-tip');
           if (thumb && index && src.hand.tracking) {
             const separation = thumb.getPosition().distance(index.getPosition());
-            if (!state.pinch && separation < 0.022) { state.pinch = true; state.since = now; primary = src; }
+            // ⚑ S268 (his: "the pinch to press is not always working") — the press goes where the hand was AIMING when
+            //   the pinch closed: closing and opening the fingers swings the hand's ray, and the release-time ray missed
+            if (!state.pinch && separation < 0.022) { state.pinch = true; state.since = now; primary = src; state.aim = { p0: r.p0.clone(), p1: r.p1.clone() }; }
             if (state.pinch && !state.held && now - state.since > 350 && !opts.menuOpen()) state.held = opts.onGrab?.(src, r) ?? false;
-            if (state.pinch && separation > 0.032) { if (state.held) release(src); else choose(r); state.pinch = false; }
+            if (state.pinch && separation > 0.032) { if (state.held) release(src); else choose(state.aim ?? r); state.pinch = false; state.aim = null; }
             // Poke is a short fingertip segment along the pointing direction. Latch until withdrawn.
             const tip = index.getPosition();
             const direction = r.p1.clone().sub(r.p0).normalize();
             const poke = { p0: tip.clone().sub(direction.clone().mulScalar(0.018)), p1: tip.clone().add(direction.mulScalar(0.025)) };
             const near = !!landing(poke) || !!opts.canPoke?.(poke);
-            if (near && !state.near && !state.pinch && !state.held) { primary = src; choose(poke); }
+            if (near && !state.near && !state.pinch && !state.held) { primary = src; choose(poke, src); }
             state.near = near;
           }
         }
