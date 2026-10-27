@@ -64,7 +64,7 @@
  * as broken.
  */
 
-import { writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readVisitorState } from './harness/visitor-state.mjs';
@@ -1616,6 +1616,27 @@ async function main() {
   const final = await probe();
   note('end', { what: 'walk finished', era: final.era, phase: final.phase, spine: final.spine });
   await page.screenshot({ path: join(SHOT_DIR, 'walk_end.png') });
+  // `--your-file <dir>`: at the Close, open Esc → Your file and photograph every scroll of it (article evidence, F-EXH-2)
+  const YOUR_FILE = flag('your-file', '');
+  if (YOUR_FILE && final.spine === 'done') {
+    const dir = join(ROOT, YOUR_FILE); mkdirSync(dir, { recursive: true });
+    const label = JSON.parse(readFileSync(join(ROOT, 'data/strings/gameMenu.json'), 'utf8')).yourFile;
+    await page.keyboard.press('Escape'); await wait(600);
+    for (const b of await page.$$('#reinterp-game-menu button')) if ((await b.evaluate((e) => e.textContent)) === label) { await b.click(); break; }
+    await wait(800);
+    // the review readouts (debug panel, its era pill, the motion diagnostic) are not part of what a visitor sees
+    await page.evaluate(() => { for (const e of document.querySelectorAll('body > *')) if (e.id === 'motion-diagnostic' || getComputedStyle(e).zIndex === '9999') e.style.display = 'none'; });
+    writeFileSync(join(dir, 'your_file.txt'), await page.$eval('#reinterp-game-menu', (e) => e.innerText));
+    for (let i = 0; i < 12; i++) {
+      await page.screenshot({ path: join(dir, `your_file_${String(i + 1).padStart(2, '0')}.png`) });
+      const moved = await page.$eval('#reinterp-game-menu', (m) => {
+        const box = [m, ...m.querySelectorAll('*')].find((e) => e.scrollHeight > e.clientHeight + 4 && getComputedStyle(e).overflowY !== 'visible');
+        if (!box) return false; const was = box.scrollTop; box.scrollTop += box.clientHeight * 0.85; return box.scrollTop > was;
+      });
+      if (!moved) break; await wait(400);
+    }
+    console.log('your file: photographed into ' + YOUR_FILE);
+  }
 
   // ── the deliverable ──
   /**
