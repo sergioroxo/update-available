@@ -144,13 +144,6 @@
      "where": "the monitor"
     },
     {
-     "id": "form",
-     "label": "The Family Form",
-     "done": "formDone",
-     "hint": "Your mentor's form is on the desktop now. Open it.",
-     "where": "the monitor"
-    },
-    {
      "id": "packet",
      "label": "The placement letter",
      "done": "packetAcked",
@@ -165,20 +158,27 @@
      "where": "the monitor"
     },
     {
-     "id": "racket",
-     "label": "The racket on the wall",
-     "done": "pillowDone",
-     "optional": true,
-     "hint": "The racket and the Release Work sheet hang on the wall by the bed. Press either.",
-     "where": "the wall by the bed, to your left"
+     "id": "form",
+     "label": "The Family Form",
+     "done": "formDone",
+     "hint": "Your mentor's form is on the desktop now — the questions about your father. Open it.",
+     "where": "the monitor"
     },
     {
      "id": "rootcause",
      "label": "Root Cause Digger",
      "done": "rootCauseOpened",
      "optional": true,
-     "hint": "A game came with the disk — ROOTCAUSE.EXE on the desktop. Dig, if you like.",
+     "hint": "A game came with the disk — ROOTCAUSE.EXE on the desktop. It digs for the root cause. Dig, if you like.",
      "where": "the monitor"
+    },
+    {
+     "id": "racket",
+     "label": "The racket on the wall",
+     "done": "pillowDone",
+     "optional": true,
+     "hint": "The racket and the Release Work sheet hang on the wall by the bed. Press either.",
+     "where": "the wall by the bed, to your left"
     },
     {
      "id": "handheld",

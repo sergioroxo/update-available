@@ -55,6 +55,7 @@ import reinterpStrings from '../../data/strings/reinterp.json';
  *  menu's string file because the recentre row beside it does too — one file
  *  for the frame voice, none of it on the monitor texture. */
 import menuStrings from '../../data/strings/gameMenu.json';
+import { controlsHint as mapControlsHint } from '../../data/strings/map.json';
 import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { createInstitution, INSTITUTION_IDS } from '../room/institution';
@@ -703,6 +704,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let xrInput: XrInput | null = null;
   let grabbingSource: pc.XrInputSource | null = null;
   let grabbingEra: string | null = null;
+  // ⚑ S269 — the frame helper's desktop line ("Esc opens the menu.") has no Esc in a headset; it says the headset's way
+  const xrHelperText = (t: string | null): string | null => t === mapControlsHint ? menuStrings.xrMenuHint : t;
   const sceneHead = new pc.Entity('logical-head');
   function logicalHead(): pc.Entity {
     const p = camera.getPosition(); const ray = xrComfort.logicalRay({ p0: p, p1: p.clone().add(camera.forward) });
@@ -3853,7 +3856,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     xrInput?.tick();
     if (xr?.active) { const ray = aimRay(); era3Devices?.hoverXr(ray); const at = ray && toDesktopR(ray); if (at) { const target = os.xrPoint(at.x, at.y); os.handleMove(target.x, target.y); } else os.xrPoint(-100, -100); }
     if (xrFrame && xr?.active) xrFrame.tick(xrInput?.ray() ?? null);
-    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : aimName ?? helper?.text() ?? null);
+    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : aimName ?? xrHelperText(helper?.text() ?? null));
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
     //   menu ("The frame never plays"). Pause them once on the way in, give them back once on the way out.

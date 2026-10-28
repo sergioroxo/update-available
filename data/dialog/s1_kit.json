@@ -60,16 +60,16 @@
         "after": "after step 3"
       },
       {
-        "id": "form",
-        "label": "Family Form",
-        "desc": "Your mentor will send it",
-        "after": "your mentor sends it"
-      },
-      {
         "id": "diary",
         "label": "Journal",
         "desc": "A first entry, DIARY.TXT",
         "after": "after your placement"
+      },
+      {
+        "id": "form",
+        "label": "Family Form",
+        "desc": "Your mentor will send it",
+        "after": "after your journal"
       }
     ],
     "doneMark": "done",

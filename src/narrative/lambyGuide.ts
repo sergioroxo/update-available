@@ -11,7 +11,7 @@ export interface GuideView {
   targets: string[]; act?: string; frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formFiled?: boolean; rootOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -71,7 +71,9 @@ export class LambyGuide {
     if (input.era === 'e1' && input.formAvailable && !input.formOpened && !this.formOffered && this.formWait >= copy.timing.tipSeconds * (input.idleScale ?? 1) && !this.active && this.canOffer()) {
       this.formOffered = true; this.counts.e1++; this.set('form', copy.form.text, [], copy.form.act); return;
     }
-    if (!this.active && input.era === 'e1' && !this.rootOffered && step === 'read' && this.canOffer()) {
+    // ⚑ S268 (his (C)) — Root Cause is offered once the Family Form is filed: the father questions, then the dig for
+    //   "the root cause", then the racket. Ignorable, once, inside the era's cap.
+    if (!this.active && input.era === 'e1' && !this.rootOffered && input.formFiled && !input.rootOpened && this.canOffer()) {
       this.rootOffered = true;
       this.spec = { tip: copy.root.text, here: copy.root.here, target: ['icon-rootcause'], act: 'open:rootcause', once: true };
       this.offer('tip', `${copy.root.text} ${decisions.helper.map}`); return;

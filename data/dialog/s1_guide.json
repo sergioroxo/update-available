@@ -140,28 +140,28 @@
       "witness": {"followed": "guidance: Un-Walk — set aside, then online", "declined": "guidance: Un-Walk — set aside"}
     },
     {
-      "id": "racket",
-      "soft": true,
-      "emphasis": "pillow",
-      "trigger": "roomQuiet",
-      "done": "pillowDone",
-      "expire": "eraShifted",
-      "text": "the racket on the wall by the bed — the first exercise.",
-      "witness": {
-        "followed": "guidance: racket — followed",
-        "declined": "guidance: racket — no response"
-      }
-    },
-    {
       "id": "rootcause",
       "soft": true,
-      "trigger": "roomQuiet",
+      "trigger": "formFiledQuiet",
       "done": "rootCauseOpened",
       "expire": "eraShifted",
-      "text": "a game came with the disk. ROOTCAUSE.EXE.",
+      "text": "a game came with the disk. ROOTCAUSE.EXE digs for the root cause.",
       "witness": {
         "followed": "guidance: game — opened",
         "declined": "guidance: game — no response"
+      }
+    },
+    {
+      "id": "racket",
+      "soft": true,
+      "emphasis": "pillow",
+      "trigger": "racketQuiet",
+      "done": "pillowDone",
+      "expire": "eraShifted",
+      "text": "the racket on the wall by the bed — the next exercise.",
+      "witness": {
+        "followed": "guidance: racket — followed",
+        "declined": "guidance: racket — no response"
       }
     }
   ]

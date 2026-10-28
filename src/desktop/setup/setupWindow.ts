@@ -37,6 +37,18 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
   let xrHover: ReturnType<typeof xrTarget> = null;
   function hang(): void {
     const distance = app.xr?.active ? 1 : DIST;
+    // ⚑ S269 (his 28 Oct headset session: the setup sat to one side, rolled 5–30°) — in a headset the window was hung
+    //   on the head's whole rotation, so a tilted or turned-down head left it tilted for good. In XR it hangs level, at
+    //   eye height, straight ahead of where the head FACES (its yaw); the browser keeps its exact framing.
+    if (app.xr?.active) {
+      const f = camera.forward.clone(); f.y = 0;
+      if (f.lengthSq() < 1e-4) f.set(0, 0, -1);
+      f.normalize();
+      position = camera.getPosition().clone().add(f.clone().mulScalar(distance));
+      const level = new pc.Quat().setFromEulerAngles(0, Math.atan2(-f.x, -f.z) * 180 / Math.PI, 0);
+      for (const e of [plane, star]) { e.setPosition(position); e.setRotation(level); e.rotateLocal(90, 0, 0); }
+      return;
+    }
     position = camera.getPosition().clone().add(camera.forward.clone().mulScalar(distance));
     for (const e of [plane, star]) { e.setPosition(position); e.setRotation(camera.getRotation()); e.rotateLocal(90, 0, 0); }
   }

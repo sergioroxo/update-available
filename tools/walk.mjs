@@ -415,7 +415,7 @@ async function main() {
     const d = detail.target ?? detail.what ?? '';
     console.log(
       `${String(log.length).padStart(3)} ${kind.padEnd(10)} ${String(d).slice(0, 40).padEnd(40)} ` +
-      `${(detail.era ?? '').padEnd(3)} ${(detail.phase ?? '').padEnd(9)} ${detail.qMode ?? ''}`
+      `${(detail.era ?? '').padEnd(3)} ${(detail.phase ?? '').padEnd(9)} ${detail.qMode ?? ''} ${detail.spine?.step ?? detail.spine ?? ''} ${detail.busy ?? ''}`
     );
   };
 
@@ -558,7 +558,7 @@ async function main() {
     note('press', {
       target: t.id, surface: t.surface, logical: t.logical,
       page: [Math.round(t.pt[0]), Math.round(t.pt[1])],
-      era: after.era, phase: after.phase, spine: after.spine, qMode: after.qMode,
+      era: after.era, phase: after.phase, spine: after.spine, qMode: after.qMode, busy: after.busy,
       ledgerDelta: after.ledCount - before.ledCount,
       ledgerNew: ledgerNew(before, after),
       changed: moved(before, after),

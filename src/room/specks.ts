@@ -39,7 +39,7 @@ export function buildRoomSpecks(app: pc.Application, camera: pc.Entity, view?: {
   function collectScreens(): void {
     screens.length = 0;
     app.root.forEach(n => { const e = n as pc.Entity; for (const m of e.render?.meshInstances ?? []) {
-      if ((m.material as pc.StandardMaterial).emissiveMap) screens.push(m);
+      if (m.mesh && (m.material as pc.StandardMaterial).emissiveMap) screens.push(m);
     } });
   }
   return {
@@ -52,7 +52,12 @@ export function buildRoomSpecks(app: pc.Application, camera: pc.Entity, view?: {
       mat.opacity = visibility; mat.update();
       const eye = view?.head() ?? camera;
       mask.length = 0;
+      // ⚑ S269 (his 28 Oct headset session: the room formed, then "nothing moves", the menu, the session gone) — a
+      //   screen in this list can be destroyed after it was collected (in XR the floating Setup and hint planes are),
+      //   and reading a dead mesh's aabb threw on EVERY frame, so nothing drew again. Skip it and collect afresh.
+      let stale = false;
       for (const screen of screens) {
+        if (!screen.mesh || !screen.node?.parent) { stale = true; continue; }
         if (!screen.visible || !(screen.node as pc.Entity).enabled || screen.aabb.center.distance(eye.getPosition()) > 5) continue;
         const b = screen.aabb, lo = { x: Infinity, y: Infinity }, hi = { x: -Infinity, y: -Infinity };
         for (let v = 0; v < 8; v++) {
@@ -63,6 +68,7 @@ export function buildRoomSpecks(app: pc.Application, camera: pc.Entity, view?: {
         }
         mask.push({ x: lo.x - 20, y: lo.y - 20, w: hi.x - lo.x + 40, h: hi.y - lo.y + 40 });
       }
+      if (stale) collectScreens();
       const right = eye.right, up = eye.up;
       points.forEach((s, i) => {
         p.set(s.x + Math.sin(clock * 0.06 + i) * 0.06, s.y + Math.sin(clock * 0.045 + i * 2) * 0.08, s.z + Math.cos(clock * 0.04 + i) * 0.05);

@@ -546,6 +546,7 @@ export class DesktopOS {
       personaliseOffer: this.desktopEra === 'e2' && this.restorify?.offerPending && !this.restorify.open ? lambyStrings.personaliseOffer : undefined,
       deferredUpdate: this.desktopEra === 'e1' && !!this.updateApp?.deferred,
       formAvailable: this.formAvailable, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
+      formFiled: !this.provotype?.open && ledger.provotypes.some(p => p.id === 'origin_intake_e1'), rootOpened: ledger.records.includes('rootcause-opened'),
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
     if (before !== this.lambyGuide.version) { this.dirty = true; if (this.e4) this.e4.browser.version++; }
@@ -672,7 +673,8 @@ export class DesktopOS {
    *  (irc.ts files the turn's `record`); read by the desktop icon, the wizard's
    *  fourth step and the guide's `form` message */
   get formAvailable(): boolean {
-    return ledger.records.includes('rob-spoke-mother');
+    // ⚑ S268 — and only once the journal is written: the father questions lead into Root Cause and the racket
+    return ledger.records.includes('rob-spoke-mother') && (!this.reinterp || ledger.records.includes('diary-glitch'));
   }
 
   /** S1.0 power-on beat: the machine waits dark until the player acts */
@@ -748,10 +750,9 @@ export class DesktopOS {
       };
       // S1.7 → S1.8: the chosen reply summons the placement packet. The diary
       // glitch, not the IRC, is the true E1 → T1 trigger.
-      this.irc.onEscalationDone = () => {
-        if (!this.reinterp || ledger.provotypes.some(p => p.id === 'origin_intake_e1' && p.outcome === 'completed')) { this.openPacket(); return; }
-        this.packetAfterForm = true; this.minimiseWindow('irc'); this.dirty = true;
-      };
+      // ⚑ S268 (his (C), 2026-10-27: diary → the father questionnaire → Root Cause → the racket) — the letter no
+      //   longer waits for the Family Form; the form arrives after the journal (formAvailable, below)
+      this.irc.onEscalationDone = () => { this.openPacket(); };
     };
     this.dirty = true;
   }
@@ -769,9 +770,8 @@ export class DesktopOS {
     this.packet = new PacketApp();
     this.packet.onAck = () => {
       this.packet = null;
-      // S208 / A4 — the form first, if it has been sent and not yet opened; the diary follows its closing
-      if (this.formAvailable && !ledger.provotypes.some(p => p.id === 'origin_intake_e1' && p.outcome === 'completed')) this.diaryAfterForm = true;
-      else { this.diaryPendingFromForm = false; this.diaryPendingAt = this.t + 1.0; }
+      // S268: the journal follows the letter directly (the form comes after it now)
+      this.diaryPendingFromForm = false; this.diaryPendingAt = this.t + 1.0;
       this.dirty = true;
     };
     this.dirty = true;
@@ -817,6 +817,15 @@ export class DesktopOS {
 
   /** the room asks before it offers the racket — same law, exposed */
   desktopIdleForProps(): boolean { return this.desktopIdle(); }
+
+  /** ⚑ S269 — what 1997's notice waits for: the era's beats (the form, the racket, the journal, the packet, the
+   *  game on the disk), not the channel or the browser. Once he is online the browser is never null (closing it
+   *  minimises it), so `desktopIdle()` could not come true again and the walk sat in 1997 for hours. */
+  e1BeatsQuiet(): boolean {
+    return !this.kit?.open && !this.packet?.open && !this.diary?.open && !this.provotype && !this.lambyRigFile
+      && !this.rootCause && !this.startMap.active && !this.dossierOpen && !this.yourFileOpen && !this.yesOpen
+      && !this.updateApp && !this.sendOffer?.open;
+  }
 
   private openProvotype(data: Provotype): void {
     if (!this.reinterp || this.provotype) return;

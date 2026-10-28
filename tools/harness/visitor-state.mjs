@@ -547,6 +547,8 @@ const LAP = { w: 224, h: 140 };
       qMode: q ? q.mode : null,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
+      // S269: what keeps the desktop from being idle (the spine waits on it in 1997 and 2003)
+      busy: ["kit","irc","packet","diary","dossierOpen","yourFileOpen","yesOpen","forum","testimony","restorify","netvision","sendOffer"].filter(k => { const v = os[k]; return v === true || (v && typeof v === "object" && v.open); }).concat(["provotype","lambyRigFile","rootCause","web","caleb","accountability","updateApp"].filter(k => !!os[k]), os.netvisionOfferOpen ? ["netvisionOffer"] : [], os.messageNoticeOpen ? ["messageNotice"] : [], os.sendOfferPending ? ["sendPending"] : []).join(","),
       screenHash, domText, audio, surfaces, silent, quiet, roomDesync, pose, program, bstate,
       targets, dropped, moves, ledCount, ledList, ledger: led,
       // S178: the phone is in her hand (app.ts carries a copy of its body while it is)

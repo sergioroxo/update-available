@@ -9,6 +9,7 @@ import type { Ray } from './xrFrame';
 
 const WAND_LENGTH = 1.6;
 const WAND_THICK = 0.004;
+const DOT = 0.009, DOT_FLASH = 0.026, FLASH_MS = 220;
 
 export interface XrInput {
   /** the primary controller's ray this frame, or null (no session / no controller) */
@@ -71,7 +72,7 @@ export function mountXrInput(app: pc.Application, opts: {
     e.enabled = false;
     app.root.addChild(e);
     wands.set(src, e);
-    const dot = new pc.Entity('xr-cursor'); dot.setLocalScale(0.009, 0.009, 0.009); app.root.addChild(dot); dot.enabled = false; dots.set(src, dot);
+    const dot = new pc.Entity('xr-cursor'); dot.setLocalScale(DOT, DOT, DOT); app.root.addChild(dot); dot.enabled = false; dots.set(src, dot);
     gestures.set(src, { pinch: false, since: 0, held: false, near: false, buttons: [], aim: null });
     if (src.hand) {
       const entity = new pc.Entity('xr-hand');
@@ -94,7 +95,10 @@ export function mountXrInput(app: pc.Application, opts: {
   };
   // ⚑ S268 (his: "the beeping of the input is a bit annoying") — no sound on a press in the headset: a controller
   //   gets a short, light pulse; a hand gets nothing (the button's own pressed state is the feedback)
+  // ⚑ S269 (his: "need a better confirmation of the action") — every press swells the cursor dot for a moment
+  const flashUntil = new Map<pc.XrInputSource, number>();
   const choose = (r: Ray, src?: pc.XrInputSource): void => {
+    const who = src ?? primary; if (who) flashUntil.set(who, performance.now() + FLASH_MS);
     if (opts.menuOpen()) opts.onMenuSelect(r); else opts.onSelect(r);
     const pad = src?.gamepad as (Gamepad & { hapticActuators?: { pulse?(v: number, ms: number): void }[] }) | null | undefined;
     try { pad?.hapticActuators?.[0]?.pulse?.(0.25, 12); } catch { /* no actuator: nothing */ }
@@ -102,6 +106,9 @@ export function mountXrInput(app: pc.Application, opts: {
   const onSqueeze = (src: pc.XrInputSource): void => {
     primary = src; const r = rayOf(src); const state = gestures.get(src);
     if (!opts.menuOpen() && r && opts.onGrab?.(src, r)) { if (state) state.held = true; return; }
+    // ⚑ S269 (his: "if I move my hands quickly the menu appears") — a tracked hand reports a squeeze for a fist or a
+    //   fast closing hand; the menu opens from a controller's grip or from the Menu tab, never from a hand
+    if (src.hand) return;
     opts.onSqueeze();
   };
   const release = (src: pc.XrInputSource): void => { const state = gestures.get(src); if (state?.held) opts.onRelease?.(src); if (state) state.held = false; };
@@ -188,6 +195,8 @@ export function mountXrInput(app: pc.Application, opts: {
         e.enabled = true;
         const hit = landing(r);
         if (hit) { dot.enabled = true; dot.setPosition(hit.point); primary = src; }
+        const flashing = performance.now() < (flashUntil.get(src) ?? 0);
+        dot.setLocalScale(flashing ? DOT_FLASH : DOT, flashing ? DOT_FLASH : DOT, flashing ? DOT_FLASH : DOT);
         const length = hit ? hit.distance : WAND_LENGTH;
 
         const state = gestures.get(src)!;
@@ -201,7 +210,7 @@ export function mountXrInput(app: pc.Application, opts: {
             //   the pinch closed: closing and opening the fingers swings the hand's ray, and the release-time ray missed
             if (!state.pinch && separation < 0.022) { state.pinch = true; state.since = now; primary = src; state.aim = { p0: r.p0.clone(), p1: r.p1.clone() }; }
             if (state.pinch && !state.held && now - state.since > 350 && !opts.menuOpen()) state.held = opts.onGrab?.(src, r) ?? false;
-            if (state.pinch && separation > 0.032) { if (state.held) release(src); else choose(state.aim ?? r); state.pinch = false; state.aim = null; }
+            if (state.pinch && separation > 0.032) { if (state.held) release(src); else choose(state.aim ?? r, src); state.pinch = false; state.aim = null; }
             // Poke is a short fingertip segment along the pointing direction. Latch until withdrawn.
             const tip = index.getPosition();
             const direction = r.p1.clone().sub(r.p0).normalize();

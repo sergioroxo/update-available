@@ -22,7 +22,7 @@
  * gather" — the per-item `kept: <label>` lines are filed separately by
  * BelongingsSystem.closeWindow(), not through this thread.
  */
-import { ledger } from '../state/ledger';
+import { ledger, ledgerGeneration } from '../state/ledger';
 import type { DesktopOS } from '../desktop/os';
 import guideData from '../../data/dialog/s1_guide.json';
 
@@ -45,6 +45,16 @@ type Condition = (os: DesktopOS) => boolean;
 /** W1-C3 — the programme was set aside (Cancel or the minimise box) before the line was ever opened */
 const programmeSetAside = (os: DesktopOS): boolean => ledger.records.includes('kit-inserted') && !!os.kit && !os.kit.open
   && !ledger.records.includes('went-online') && !os.web;
+
+/** S268 — seconds since the Family Form was first seen filed in this visit (-1 before) */
+let formFiledAt = -1, formFiledGen = -1;
+const formFiledSince = (): number => {
+  const filed = ledger.provotypes.some((p) => p.id === 'origin_intake_e1');
+  if (formFiledGen !== ledgerGeneration) { formFiledGen = ledgerGeneration; formFiledAt = -1; }
+  if (!filed) return -1;
+  if (formFiledAt < 0) formFiledAt = performance.now();
+  return (performance.now() - formFiledAt) / 1000;
+};
 
 /**
  * The thin condition registry (brief: conditions in code, content in data).
@@ -82,7 +92,7 @@ const CONDITIONS: Record<string, Condition> = {
   // ⚑ S227 / W1-C9 (walkthrough 1: "'The form is on the desk' should come after the person says yes, so they can
   //   continue and not worry where") — the line waits for the conversation to end in its yes (the placement packet
   //   acknowledged); the form itself is on the desktop from Rob's 'i spoke with your mother', as before
-  formAvailable: (os) => os.formAvailable && !os.provotype && ledger.records.includes('enrollment-acknowledged'),
+  formAvailable: (os) => os.formAvailable && !os.provotype && ledger.records.includes('enrollment-acknowledged'),   // S268: os.formAvailable now waits for the journal too
   formOpened: (os) => os.provotype?.id === 'origin_intake_e1'
     || ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
   // R3-38 — the racket's line fills the quiet: the disk is in, no window is up
@@ -90,6 +100,10 @@ const CONDITIONS: Record<string, Condition> = {
     && !programmeSetAside(os)   // W1-C3: the line that says how to get the programme back is the only one then (two soft lines trade places every frame)
     && !os.provotype && !os.packet?.open && !os.diary?.open && !os.updateArmed
     && !(os.irc?.open && os.irc.awaitingReply) && !os.web,
+  // ⚑ S268 (his (C)) — the game and the racket come after the Family Form: Root Cause first, then the racket (once the
+  //   game has been opened, or half a minute after the form if the visitor passes on it)
+  formFiledQuiet: (os) => formFiledSince() >= 0 && CONDITIONS.roomQuiet(os),
+  racketQuiet: (os) => CONDITIONS.roomQuiet(os) && (ledger.records.includes('rootcause-opened') || formFiledSince() >= 30),
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),
   rootCauseOpened: () => ledger.records.includes('rootcause-opened'),
   packetOpen: (os) => os.packet?.open === true,

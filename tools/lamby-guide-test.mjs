@@ -36,7 +36,8 @@ console.log('Requested help waits for one voice; a quiet scene cancels the pendi
 
 const deferred=make();deferred.tick(0,input('',{era:'e1',map:{current:null,quiet:false},deferredUpdate:true}));deferred.press('lg-tray');assert.equal(deferred.view.beat,'update');assert.equal(deferred.view.text,copy.eras.e1.update.tip);console.log('Deferred update help follows actual update state after the map is ticked.');
 
-const rootMap=make(), rootInput=input('read',{era:'e1',map:{current:{era:'e1',beat:{id:'read'}},quiet:false}});
+// S268: the Root Cause offer comes once the Family Form is filed (his (C): the questionnaire → Root Cause → the racket)
+const rootMap=make(), rootInput=input('rootcause',{era:'e1',map:{current:{era:'e1',beat:{id:'rootcause'}},quiet:false},formFiled:true,rootOpened:false});
 rootMap.tick(0,rootInput);assert(rootMap.view.text.includes(decisions.helper.map));rootMap.press('lg-later');rootMap.tick(500,rootInput);assert(!rootMap.active);rootMap.press('lg-tray');assert(!rootMap.view.text.includes(decisions.helper.map));
 console.log('Whole-map mention shares the one-time optional add-on balloon and never repeats.');
 

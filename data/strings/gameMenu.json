@@ -105,7 +105,7 @@
  "yourFileSameSource": "the same source as {p}, above",
  "yourFileSourcesRow": "All sources, by era",
  "_docYourFile": "⚑ S144 — THE DOSSIER'S READING (docs/reinterp/THE_RECORD_PLAN_2026-09-15.md §2–3B). Frame voice: the game menu is the one place the piece may explain itself, because the frame never plays and a player who opens it is reading, not being played to. `yourFileEras` are the frame's names for the four people, plain.",
- "xrHow": "Point and pinch, or pull the trigger, to press, or touch a button with your fingertip. Grip away from a device opens the menu.",
+ "xrHow": "Point and pinch, or pull the trigger, to press, or touch a button with your fingertip. A controller's grip, away from a device, opens the menu.",
  "controlsHeadsetLines": [
   "Turn your head to look around the room. You never walk.",
   "Point and pull the trigger, or pinch, to press.",
@@ -122,5 +122,6 @@
  "jumpConfirmBody": "You will go straight there and skip what comes between. You can jump back the same way.",
  "jumpConfirmYes": "Jump",
  "jumpConfirmNo": "Stay here",
- "xrSeat": "Sit comfortably. To press: point and pinch, pull the trigger, or touch it with a fingertip."
+ "xrSeat": "Sit comfortably. To press: point and pinch, pull the trigger, or touch it with a fingertip.",
+ "xrMenuHint": "The Menu tab, low on your right, opens the menu. A controller's grip opens it too."
 }
