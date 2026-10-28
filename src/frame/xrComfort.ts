@@ -137,12 +137,28 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   app.on('prerender', () => {
     if (!app.xr?.active) { rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(authored.getLocalRotation()); return; }
     // New room roots (including late era props) join the same presentation space.
+    let moved = false;
     for (const child of [...app.root.children]) {
       if (child === stage || child === rig || child.name.startsWith('xr-') || child.name.startsWith('lambyos-home') || child.name.startsWith('setup-')) continue;
       // Reparenting room batches invalidates their captured hidden instances.
       // During the pre-story entrance only its stars need the rebased space.
       if (!worldReady && child.name !== 'restore-pixels') continue;
-      stage.addChild(child);
+      stage.addChild(child); moved = true;
+    }
+    // ⚑ S270 (his headset, 28 Oct: the room forms at the desk, then cuts to the ceiling; a black box in front; the
+    //   plant flies on Recentre) — the static batches (walls, ceiling, desk: ~55 meshes) hang from app.root, not from
+    //   this stage, so they never followed the rebase and sat a tracked head-height (~1.2 m) low. And reparenting a
+    //   batched prop puts its hidden originals back on screen. So: rebuild the batches here, while the stage is still
+    //   identity (baked in room coordinates), and hang every batch from the stage, its bounds following it.
+    const batcher = app.batcher as unknown as { _batchList: { meshInstance: { node: pc.GraphNode; _updateAabb: boolean } | null }[];
+      _batchGroups: Record<string, { id: number }>; _dirtyGroups: number[]; markGroupDirty(id: number): void; updateAll(): void } | null;
+    if (batcher) {
+      if (moved) for (const g of Object.values(batcher._batchGroups)) batcher.markGroupDirty(g.id);
+      if (batcher._dirtyGroups.length) { app.root.syncHierarchy(); batcher.updateAll(); }
+      for (const b of batcher._batchList) {
+        const mi = b.meshInstance;
+        if (mi && mi.node !== stage) { mi.node = stage; mi._updateAabb = true; }
+      }
     }
     matrix();
   });
@@ -157,5 +173,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     /** Available to the existing debug-only global; deterministic transition review, not a runtime input. */
     reviewStep: tick,
     get busy() { return elapsed >= 0; }, get calibrated() { return calibrated; },
-    status: () => ({ active, calibrated, elapsed, cuts, authored: authored.getLocalPosition().toArray(), head: head.getLocalPosition().toArray(), rig: rig.getPosition().toArray() }) };
+    status: () => ({ active, calibrated, elapsed, cuts, worldReady, shift: physicalMap.getTranslation().toArray(), shiftYaw: new pc.Quat().setFromMat4(physicalMap).getEulerAngles().y,
+      batchesOnStage: ((app.batcher as unknown as { _batchList?: { meshInstance: { node: pc.GraphNode } | null }[] } | null)?._batchList ?? []).filter(b => b.meshInstance?.node === stage).length,
+      batches: ((app.batcher as unknown as { _batchList?: unknown[] } | null)?._batchList ?? []).length, authored: authored.getLocalPosition().toArray(), head: head.getLocalPosition().toArray(), rig: rig.getPosition().toArray() }) };
 }

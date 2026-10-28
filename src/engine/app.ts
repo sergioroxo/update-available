@@ -68,6 +68,7 @@ import { drawPrint, PRINT_SIZE } from '../room/printArt';
 import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrComfort } from '../frame/xrComfort';
+import { mountXrDebug } from '../frame/xrDebug';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
@@ -1083,6 +1084,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (isOpen) xrFrame?.open(); else xrFrame?.close();
     });
     if (new URLSearchParams(window.location.search).get('debug') === '1') {
+      // ⚑ S270 — the debug panel's read-only half, in the headset (his: "I cannot see the debug panel inside of the VR")
+      mountXrDebug(app, camera, { lines: () => {
+        const c = xrComfort.status(), f = (n: number) => n.toFixed(2), h = camera.getLocalPosition();
+        return [`${os.era} · ${os.inDesktop ? "desktop" : "screen"} · ${spine?.step ?? "-"}`,
+          `seat: ${c.calibrated ? 'set' : 'NOT SET'} · cuts ${c.cuts}${c.elapsed >= 0 ? ' · dissolving' : ''}${c.worldReady ? '' : ' · entrance'}`,
+          `head ${f(h.x)} ${f(h.y)} ${f(h.z)} · yaw ${Math.round(camera.getLocalEulerAngles().y)}`,
+          `room shift ${c.shift.map(f).join(' ')} · ${Math.round(c.shiftYaw)}°`,
+          `batches ${c.batchesOnStage}/${c.batches} follow · menu ${gameMenuBus.isOpen ? 'open' : 'shut'}`,
+          `${Math.round(app.stats.frame.fps)} fps · ${app.stats.drawCalls.total} draws`];
+      } });
       // the desktop review of the headset's frame: hang the plane in front of the
       // desktop camera and press it with a world ray (no headset in the sandbox)
       (window as { __xrFrame?: unknown }).__xrFrame = {

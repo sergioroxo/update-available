@@ -20,9 +20,13 @@ try {
   await page.goto(`http://localhost:${port}/?reinterp=1&debug=1&descent=0&kiosk=0`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForSelector('#restore-entrance[data-phase="wake"]', { timeout: 180000 });
   await page.addStyleTag({ content: 'body > *:not(canvas) { visibility:hidden !important; }' });
+  if (process.env.HEAD_Y) await page.evaluate((y) => { window.__headY = y; }, Number(process.env.HEAD_Y));
   await page.evaluate(() => {
     const app = window.__app, head = app.root.findByName('camera');
     Object.defineProperty(app.xr, 'active', { configurable: true, get: () => true });
+    // S270: a real headset's tracked head sits ~1.2 m above the rig (local-floor); the mock's sat at 0, which hid
+    //   every bug that only shows when the world is really rebased
+    if (window.__headY) head.setLocalPosition(0, window.__headY, 0);
     const origin = head.getPosition().clone(), direction = head.forward.clone();
     const src = { targetRayMode: 'tracked-pointer', hand: null, gamepad: { buttons: [], axes: [] }, getOrigin: () => origin, getDirection: () => direction };
     window.__src = src; app.xr.input.fire('add', src); app.xr.input.fire('select', src);
@@ -97,6 +101,24 @@ try {
     const after = { head: head.getPosition().toArray(), room: chair?.getPosition().toArray() };
     return { roomRoot: chair?.name, before, after };
   });
+  // S270: his "every time I open the menu, it jumps back the image" — the world's placement around a menu open/close,
+  //   with the head turned 40° aside first (a re-form aims the room at the head's yaw)
+  if (process.env.MENU) log.push({ menu: await page.evaluate(async () => {
+    const app = window.__app, head = app.root.findByName('camera'), st = app.root.findByName('xr-world');
+    let last = null;
+    // the mocked session stops presenting frames (CX5), so step the comfort tick and the prerender by hand
+    const w = async (ms) => { for (let t = 0; t < ms; t += 50) { window.__xrComfort.reviewStep(0.05); app.fire('prerender'); last = [...st.getPosition().toArray(), st.getEulerAngles().y].map(n => +n.toFixed(3)); app.fire('postrender'); await new Promise(r => setTimeout(r, 5)); } };
+    const { gameMenuBus } = await import('/src/state/gameMenuBus.ts');
+    const out = [];
+    await w(500); out.push(['before', last]);
+    head.setLocalEulerAngles(0, 40, 0); await w(2500); out.push(['head turned 40', last]);
+    gameMenuBus.open(); await w(1500); out.push(['menu open', last]);
+    gameMenuBus.close(); await w(3000); out.push(['menu closed', last, window.__xrComfort.status().cuts]);
+    return out; }) });
+  const batches = await page.evaluate(() => { const app = window.__app, st = app.root.findByName('xr-world');
+    return { stage: st?.getPosition().toArray().map(n => +n.toFixed(2)), head: app.root.findByName('camera').getPosition().toArray().map(n => +n.toFixed(2)),
+      list: (app.batcher._batchList ?? []).map(b => ({ node: b.meshInstance?.node?.name, tris: b.meshInstance?.mesh?.primitive?.[0]?.count })) }; });
+  log.push({ batches });
   fs.writeFileSync(`${out}/probe.json`, JSON.stringify({ log, samples, sixDof, errors }, null, 2));
   console.log(JSON.stringify({ setupPresses: log.map(l => l.pressed || l.note).join(' → '), samples: samples.map(s => ({ k: s.k, maxMs: s.maxMs, meanMs: s.meanMs, draws: s.draws, busy: s.busy, entrance: s.entrance, phase: s.phase, outside: s.outside.length, under: s.underStage, cuts: s.comfort.cuts, rig: s.comfort.rig.map(n => +n.toFixed(2)) })), sixDof, errors: errors.slice(0, 12) }, null, 1));
 } catch (error) {
