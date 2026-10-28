@@ -8,6 +8,10 @@ import { PLACE } from '../desktop/theme/era4';
 import type { Ray } from './xrFrame';
 import { gameMenuBus } from '../state/gameMenuBus';
 
+type Batch = { _aabb: pc.BoundingBox; meshInstance: { node: pc.GraphNode; _aabb: pc.BoundingBox } | null };
+type Batcher = { _batchList: Batch[]; _batchGroups: Record<string, { id: number }>; _dirtyGroups: number[];
+  markGroupDirty(id: number): void; updateAll(): void };
+
 export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Entity, reduced: () => boolean) {
   const authored = new pc.Entity('authored-seat');
   authored.setLocalPosition(rig.getLocalPosition()); authored.setLocalRotation(rig.getLocalRotation());
@@ -30,6 +34,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   let calibrationPending = false, committed = false;
   const fixed = new pc.Mat4(), view = new pc.Mat4(), inverse = new pc.Mat4();
   const physicalMap = new pc.Mat4(), logicalMap = new pc.Mat4();
+  const physicalBounds = new WeakMap<Batch, pc.BoundingBox>();
   let worldReady = true;
   let maskBucket = -1;
   let active = false, elapsed = -1, applied = '', pending = '', calibrated = false, cuts = 0;
@@ -46,8 +51,13 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   // ⚑ S268 — the world is only ever TURNED for the viewer, never tilted: an authored pitch (a lean to the desk, a
   //   look down) is the browser camera's, and in a headset it tipped the whole room ("lopsided"). Yaw only.
   const level = (q: pc.Quat): pc.Quat => new pc.Quat().setFromEulerAngles(0, q.getEulerAngles().y, 0);
+  // ⚑ S270b (his: "I'm on top of the backrest of the armchair… I want to put my elbows on the table") — the authored
+  //   eye is the BROWSER camera's, set back 0.45 m from the desk edge so a flat screen frames the monitor. A seated
+  //   head in the headset leans in: the eye the head is mapped to sits 0.15 m further forward, over the seat.
+  const LEAN = 0.15;
   const updateMapping = () => {
-    view.setTRS(pos, level(rot), pc.Vec3.ONE); inverse.copy(view).invert();
+    const facing = level(rot);
+    view.setTRS(pos.clone().add(facing.transformVector(new pc.Vec3(0, 0, -LEAN))), facing, pc.Vec3.ONE); inverse.copy(view).invert();
     physicalMap.mul2(fixed, inverse); logicalMap.copy(physicalMap).invert();
   };
   const matrix = () => {
@@ -70,10 +80,18 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   //   the reference space and fires 'reset'; any calibration made before it is stale, so the mapping goes back to the
   //   seat itself (the head's new origin IS the authored eye), at once, with no dissolve
   let resetSpace: { addEventListener(t: string, f: () => void): void; removeEventListener(t: string, f: () => void): void } | null = null;
+  // ⚑ S270b — and the new origin is NOT the authored eye: the tracked head sits wherever the space says (his headset
+  //   showed the room from the ceiling until a press). So the seat is taken from the head itself, a moment after the
+  //   reset, once the pose has caught up; the same happens on entering VR, so nothing waits for a press.
+  let seatIn = -1;
+  const seatFromHead = (): void => {
+    fixed.setTRS(head.getPosition().clone(), new pc.Quat().setFromEulerAngles(0, head.getEulerAngles().y, 0), pc.Vec3.ONE);
+    calibrated = true; calibrationPending = false; updateMapping();
+  };
   const onSpaceReset = (): void => {
     rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(level(authored.getLocalRotation()));
     fixed.setTRS(rig.getPosition().clone(), rig.getRotation().clone(), pc.Vec3.ONE);
-    calibrated = false; calibrationPending = false; updateMapping();
+    calibrationPending = false; updateMapping(); seatIn = 0.15;
   };
   app.xr?.on('start', () => {
     const space = (app.xr as unknown as { _referenceSpace?: typeof resetSpace })._referenceSpace ?? null;
@@ -92,7 +110,9 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
       rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(level(authored.getLocalRotation()));
       active = true; fixed.setTRS(rig.getPosition().clone(), rig.getRotation().clone(), pc.Vec3.ONE);
       pos.copy(authored.getLocalPosition()); rot.copy(authored.getLocalRotation()); applied = key(); updateMapping();
+      seatIn = 0.5;
     }
+    if (seatIn >= 0 && (seatIn -= dt) < 0) seatFromHead();
     // The menu remains above an unobscured, paused world; the dissolve resumes with the story.
     if (gameMenuBus.isOpen) { veil.enabled = false; return; }
     const next = key();
@@ -150,19 +170,30 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     //   this stage, so they never followed the rebase and sat a tracked head-height (~1.2 m) low. And reparenting a
     //   batched prop puts its hidden originals back on screen. So: rebuild the batches here, while the stage is still
     //   identity (baked in room coordinates), and hang every batch from the stage, its bounds following it.
-    const batcher = app.batcher as unknown as { _batchList: { meshInstance: { node: pc.GraphNode; _updateAabb: boolean } | null }[];
-      _batchGroups: Record<string, { id: number }>; _dirtyGroups: number[]; markGroupDirty(id: number): void; updateAll(): void } | null;
+    const batcher = app.batcher as unknown as Batcher | null;
     if (batcher) {
       if (moved) for (const g of Object.values(batcher._batchGroups)) batcher.markGroupDirty(g.id);
       if (batcher._dirtyGroups.length) { app.root.syncHierarchy(); batcher.updateAll(); }
-      for (const b of batcher._batchList) {
-        const mi = b.meshInstance;
-        if (mi && mi.node !== stage) { mi.node = stage; mi._updateAabb = true; }
-      }
     }
     matrix();
+    // ⚑ S270b (his: "if I turn around, it just jumps into the stars… the racket and the Game Boy floating in space") —
+    //   a static batch's mesh has no bounds of its own (built from raw streams), so letting the engine derive them put
+    //   every wall at the floor's centre and culled it whenever that point left the view. The batch keeps its true
+    //   bounds in room coordinates; for the draw they are carried into the presentation space, and put back after.
+    if (batcher) for (const b of batcher._batchList) {
+      const mi = b.meshInstance;
+      if (!mi) continue;
+      if (mi.node !== stage) mi.node = stage;
+      let box = physicalBounds.get(b);
+      if (!box) { box = new pc.BoundingBox(); physicalBounds.set(b, box); }
+      box.setFromTransformedAabb(b._aabb, physicalMap); mi._aabb = box;
+    }
   });
-  app.on('postrender', identity);
+  app.on('postrender', () => {
+    identity();
+    const batcher = app.batcher as unknown as Batcher | null;
+    if (batcher) for (const b of batcher._batchList) if (b.meshInstance) b.meshInstance._aabb = b._aabb;
+  });
   const logicalRay = (ray: Ray): Ray => {
     if (!app.xr?.active) return ray;
     return { p0: logicalMap.transformPoint(ray.p0), p1: logicalMap.transformPoint(ray.p1) };

@@ -80,6 +80,8 @@ try {
         monitor: mon ? { name: mon.name, enabled: mon.enabled } : null };
     });
     samples.push({ k, ...s });
+    // S270b: his "if I turn around, it just jumps into the stars" — look aside before the last frames
+    if (process.env.TURN && k === 9) await page.evaluate((y) => window.__app.root.findByName('camera').setLocalEulerAngles(0, y, 0), Number(process.env.TURN));
     if (!process.env.NO_SHOTS && (k === 2 || k === 8 || k === 15)) await shot(`03-room-${k}`);
     await wait(500);
   }
@@ -115,6 +117,13 @@ try {
     gameMenuBus.open(); await w(1500); out.push(['menu open', last]);
     gameMenuBus.close(); await w(3000); out.push(['menu closed', last, window.__xrComfort.status().cuts]);
     return out; }) });
+  if (!process.env.SCREEN) {} else
+  // S270: his "I cannot see whatever is on the screen. It's all black" — is the desk monitor drawing, uploading, enabled?
+  log.push({ screen: await page.evaluate(() => { const app = window.__app, os = window.__os, e = app.root.findByName('desktop-screen');
+    const c = os.canvas, d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let lit = 0; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 30) lit++;
+    let p = e, chain = []; while (p) { chain.push(p.name + (p.enabled ? '' : '(off)')); p = p.parent; }
+    const mi = e?.render?.meshInstances?.[0], t = mi?.material?.emissiveMap;
+    return { phase: os.phase, canvas: [c.width, c.height], litPx: lit, chain, visible: mi?.visible, layers: e?.render?.layers, tex: t ? { w: t.width, h: t.height, mips: t.mipmaps, src: t.getSource?.() === c } : null, pos: e?.getPosition().toArray().map(n => +n.toFixed(2)) }; }) });
   const batches = await page.evaluate(() => { const app = window.__app, st = app.root.findByName('xr-world');
     return { stage: st?.getPosition().toArray().map(n => +n.toFixed(2)), head: app.root.findByName('camera').getPosition().toArray().map(n => +n.toFixed(2)),
       list: (app.batcher._batchList ?? []).map(b => ({ node: b.meshInstance?.node?.name, tris: b.meshInstance?.mesh?.primitive?.[0]?.count })) }; });
