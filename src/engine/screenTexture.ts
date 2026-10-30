@@ -44,7 +44,7 @@ export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, sm
     tex.minFilter = immersive || mips ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST;
     tex.magFilter = immersive || smooth === true ? pc.FILTER_LINEAR : pc.FILTER_NEAREST;
     tex.anisotropy = immersive ? Math.min(8, app.graphicsDevice.maxAnisotropy) : minify ? 8 : 1;
-    tex.setSource(source); tex.upload();
+    tex.upload();
   };
   const onXrStart = (): void => xrQuality(true);
   // PlayCanvas fires end before clearing its session; active is still true in that callback.
@@ -67,8 +67,16 @@ export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, sm
    * GPU — and nothing else. Read it as `window.__uploads` under `?debug=1`.
    */
   const raw = tex.upload.bind(tex);
+  // ⚑ S270d (his headset: "the screen… black blank screen", every pass) — a screen's canvas is redrawn at ×4 in a
+  //   headset (os.ts, era3Devices.ts). setSource() alone records the new size but keeps the GPU texture at the old
+  //   one, so the engine wrote every later frame with texSubImage2D into a texture too small for it: refused, every
+  //   time, and the monitor showed its first (black) frame for the rest of the session. resize() rebuilds it.
+  let allocW = source.width, allocH = source.height;
   tex.upload = (): void => {
-    if (tex.width !== source.width || tex.height !== source.height) tex.setSource(source);
+    if (allocW !== source.width || allocH !== source.height) {
+      allocW = source.width; allocH = source.height;
+      tex.resize(1, 1); tex.resize(allocW, allocH); tex.setSource(source);
+    }
     screenUploads++; raw();
   };
   return tex;

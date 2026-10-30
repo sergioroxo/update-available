@@ -305,6 +305,10 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, -1); fwd.normalize();
     const right = new pc.Vec3(-fwd.z, 0, fwd.x);
     tabPlane.setPosition(tabPlane.getPosition().add(right.mulScalar(0.40)));
+    // ⚑ S270d (his: "the menu button is always kind of lopsided… pointed more to the left") — moved aside, it still
+    //   faced the old gaze, ~34° askew; turn it to face the head from where it now hangs
+    const d = tabPlane.getPosition().clone().sub(head.getPosition()); d.y = 0; d.normalize();
+    tabPlane.setEulerAngles(90, Math.atan2(-d.x, -d.z) * 180 / Math.PI, 0);
   };
   const tabOffAxis = (): boolean => {
     const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) return false; fwd.normalize();

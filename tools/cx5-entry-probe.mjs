@@ -21,8 +21,11 @@ try {
   await page.waitForSelector('#restore-entrance[data-phase="wake"]', { timeout: 180000 });
   await page.addStyleTag({ content: 'body > *:not(canvas) { visibility:hidden !important; }' });
   if (process.env.HEAD_Y) await page.evaluate((y) => { window.__headY = y; }, Number(process.env.HEAD_Y));
+  if (process.env.KEEP_SCALE) await page.evaluate(() => { window.__keepScale = true; });
   await page.evaluate(() => {
     const app = window.__app, head = app.root.findByName('camera');
+    // S270d bisect: keep the desk screen at the browser's ×3 under XR (no ×4 resize)
+    if (window.__keepScale) window.__os.xrScale = true;
     Object.defineProperty(app.xr, 'active', { configurable: true, get: () => true });
     // S270: a real headset's tracked head sits ~1.2 m above the rig (local-floor); the mock's sat at 0, which hid
     //   every bug that only shows when the world is really rebased

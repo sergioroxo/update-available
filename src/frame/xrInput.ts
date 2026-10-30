@@ -6,7 +6,8 @@
  */
 import * as pc from 'playcanvas';
 import type { Ray } from './xrFrame';
-import { FRAME, REFERENCE } from '../desktop/theme/chrome';
+import { FRAME } from '../desktop/theme/chrome';
+import { ERA1 } from '../desktop/theme/era1';
 
 const WAND_LENGTH = 1.6;
 const WAND_THICK = 0.004;
@@ -45,9 +46,12 @@ export function mountXrInput(app: pc.Application, opts: {
   const dots = new Map<pc.XrInputSource, pc.Entity>();
   const hands = new Map<pc.XrInputSource, { entity: pc.Entity; mesh: pc.Mesh }>();
   const tips = new Map<pc.XrInputSource, { entity: pc.Entity; mat: pc.StandardMaterial; state: string }>();
-  const TIP = { rest: { color: new pc.Color().fromString(FRAME.faint), size: 0.007 },
-    touch: { color: new pc.Color().fromString(REFERENCE.saverSky), size: 0.010 },
-    press: { color: new pc.Color().fromString(FRAME.bright), size: 0.014 } };
+  // ⚑ S270d (his: "a very subtle change from grayish to whitish… this probably needs a little bit more") — rest is
+  //   small and dim; touch is the frame's blue at twice the size; a registered press is a big bright pop
+  //   (the first "blue" was the screensaver's sky — near black, which is why only grey→white showed)
+  const TIP = { rest: { color: new pc.Color().fromString(FRAME.faint), size: 0.006 },
+    touch: { color: new pc.Color().fromString(ERA1.titleBlue), size: 0.013 },
+    press: { color: new pc.Color().fromString(FRAME.bright), size: 0.022 } };
   const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[]; aim: Ray | null }>();
   const wands = new Map<pc.XrInputSource, pc.Entity>();
   const mat = new pc.StandardMaterial();
