@@ -49,7 +49,9 @@ const PLANE_DIST = 0.62, PLANE_DROP = 0.04;
 const HINT_W = 0.5, HINT_H = HINT_W * 136 / 1024;
 const HINT_DIST = 0.6, HINT_DROP = 0.2;
 /** ⚑ S209 / A22 — the menu tab: small, low, a little to the side; the headset's second way to the menu */
-const TAB_W = 0.12, TAB_H = TAB_W * 64 / 256, TAB_DIST = 0.6, TAB_DROP = 0.36, TAB_TURN = 0.9;
+// ⚑ S270c (his: "the menu button is running away from me") — it re-hung itself past ~52° off the gaze while it sits
+//   ~34° to the right, so a small turn moved it; now it stays until it is well out of view (~75°), and is a third bigger
+const TAB_W = 0.16, TAB_H = TAB_W * 64 / 256, TAB_DIST = 0.6, TAB_DROP = 0.36, TAB_TURN = 1.3;
 const FONT = '"Courier New", monospace';
 
 export interface XrFrame {
@@ -295,6 +297,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     tctx.fillText(`\u2261 ${copy.menuTab}`, 24, 33);
     tabTex.upload();
   }
+  let closedAt = 0;
   const hangTab = (): void => {
     hang(tabPlane, TAB_DIST, TAB_DROP);
     // ⚑ S268 (his: "The floating menu button just sits in front of the screen") — well to the right and low, clear of
@@ -339,9 +342,11 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     close(): void {
       open = false;
       plane.enabled = false;
+      closedAt = performance.now();
     },
     pressTab(ray: Ray): boolean {
-      if (open || !tabPlane.enabled) return false;
+      // the press that closed the menu (Resume, Recentre) must not land on the tab and open it again
+      if (open || !tabPlane.enabled || performance.now() - closedAt < 700) return false;
       if (!planeHit(tabPlane, ray, TAB_W, TAB_H, 256, 64)) return false;
       gameMenuBus.open();
       return true;

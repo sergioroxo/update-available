@@ -20,7 +20,7 @@ export function mountXrDebug(app: pc.AppBase, head: pc.Entity, source: XrDebugSo
   const layer = new pc.Layer({ name: 'XR debug', clearDepthBuffer: true });
   app.scene.layers.pushTransparent(layer); head.camera!.layers = [...head.camera!.layers, layer.id];
   plate.render!.layers = [layer.id];
-  head.addChild(plate); plate.setLocalPosition(-0.3, -0.26, -0.85); plate.setLocalEulerAngles(90, 0, 0);
+  head.addChild(plate); plate.setLocalPosition(-0.17, -0.22, -0.8); plate.setLocalEulerAngles(90, 0, 0);
   plate.enabled = false;
   let wait = 0, last = '';
   app.on('update', (dt: number) => {

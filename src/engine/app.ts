@@ -610,9 +610,14 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
   app.xr?.on('start', () => {
     const xr = app.xr;
     if (!xr?.session || !(app.graphicsDevice instanceof pc.WebglGraphicsDevice)) return;
+    // ⚑ S270c (his Quest 3, 28 Oct: "the text… kind of blurry, almost out of focus", the debug plate at the left edge
+    //   worst) — 30 % more pixels than the headset's default, capped at its native resolution, and fixed foveation off
+    //   (it softens the edge of the view on purpose). He read 90 fps with room to spare.
+    const native = (XRWebGLLayer as unknown as { getNativeFramebufferScaleFactor?: (s: XRSession) => number }).getNativeFramebufferScaleFactor?.(xr.session) ?? 1;
     const layer = new XRWebGLLayer(xr.session, app.graphicsDevice.gl, {
-      antialias: true, alpha: true, depth: true, stencil: true, framebufferScaleFactor: 1
+      antialias: true, alpha: true, depth: true, stencil: true, framebufferScaleFactor: Math.max(1, Math.min(1.3, native))
     });
+    if ('fixedFoveation' in layer) (layer as unknown as { fixedFoveation: number }).fixedFoveation = 0;
     xr.session.updateRenderState({ baseLayer: layer });
   });
   // Home can end XR before the story starts; clear its last tracked child pose too.

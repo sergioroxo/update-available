@@ -83,7 +83,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   // ⚑ S270b — and the new origin is NOT the authored eye: the tracked head sits wherever the space says (his headset
   //   showed the room from the ceiling until a press). So the seat is taken from the head itself, a moment after the
   //   reset, once the pose has caught up; the same happens on entering VR, so nothing waits for a press.
-  let seatIn = -1;
+  let seatIn = -1, offFor = 0;
   const seatFromHead = (): void => {
     fixed.setTRS(head.getPosition().clone(), new pc.Quat().setFromEulerAngles(0, head.getEulerAngles().y, 0), pc.Vec3.ONE);
     calibrated = true; calibrationPending = false; updateMapping();
@@ -112,7 +112,14 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
       pos.copy(authored.getLocalPosition()); rot.copy(authored.getLocalRotation()); applied = key(); updateMapping();
       seatIn = 0.5;
     }
-    if (seatIn >= 0 && (seatIn -= dt) < 0) seatFromHead();
+    // ⚑ S270c (his third pass: still "on top of the room" on entering VR) — the first frames of a session can carry no
+    //   tracked pose yet, so the countdown only runs once the head has really been placed; and a head more than 0.45 m
+    //   above or below its seat for 1.5 s (a late pose, standing up) is seated again. Leaning and stepping stay free.
+    const tracked = head.getLocalPosition().lengthSq() > 1e-6 || Math.abs(head.getLocalRotation().w) < 0.99999;
+    if (seatIn >= 0 && tracked && (seatIn -= dt) < 0) seatFromHead();
+    const off = calibrated && !gameMenuBus.isOpen && elapsed < 0 && Math.abs(head.getPosition().y - fixed.getTranslation().y) > 0.45;
+    offFor = off ? offFor + dt : 0;
+    if (offFor > 1.5) { offFor = 0; seatFromHead(); }
     // The menu remains above an unobscured, paused world; the dissolve resumes with the story.
     if (gameMenuBus.isOpen) { veil.enabled = false; return; }
     const next = key();
@@ -157,13 +164,16 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   app.on('prerender', () => {
     if (!app.xr?.active) { rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(authored.getLocalRotation()); return; }
     // New room roots (including late era props) join the same presentation space.
-    let moved = false;
+    const moved = new Set<number>();
     for (const child of [...app.root.children]) {
       if (child === stage || child === rig || child.name.startsWith('xr-') || child.name.startsWith('lambyos-home') || child.name.startsWith('setup-')) continue;
       // Reparenting room batches invalidates their captured hidden instances.
       // During the pre-story entrance only its stars need the rebased space.
       if (!worldReady && child.name !== 'restore-pixels') continue;
-      stage.addChild(child); moved = true;
+      stage.addChild(child);
+      // only a batched prop's move needs its batch rebuilt (S270c: rebuilding every group when the stars moved in
+      //   made fresh, visible batches — the room showed through the opening's stars, which had hidden the old ones)
+      child.forEach((n) => { const g = (n as pc.Entity).render?.batchGroupId; if (g !== undefined && g >= 0) moved.add(g); });
     }
     // ⚑ S270 (his headset, 28 Oct: the room forms at the desk, then cuts to the ceiling; a black box in front; the
     //   plant flies on Recentre) — the static batches (walls, ceiling, desk: ~55 meshes) hang from app.root, not from
@@ -172,7 +182,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     //   identity (baked in room coordinates), and hang every batch from the stage, its bounds following it.
     const batcher = app.batcher as unknown as Batcher | null;
     if (batcher) {
-      if (moved) for (const g of Object.values(batcher._batchGroups)) batcher.markGroupDirty(g.id);
+      for (const g of moved) batcher.markGroupDirty(g);
       if (batcher._dirtyGroups.length) { app.root.syncHierarchy(); batcher.updateAll(); }
     }
     matrix();

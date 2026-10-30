@@ -6,6 +6,7 @@
  */
 import * as pc from 'playcanvas';
 import type { Ray } from './xrFrame';
+import { FRAME, REFERENCE } from '../desktop/theme/chrome';
 
 const WAND_LENGTH = 1.6;
 const WAND_THICK = 0.004;
@@ -43,6 +44,10 @@ export function mountXrInput(app: pc.Application, opts: {
   const meshes = new Map<pc.XrInputSource, pc.Mesh>();
   const dots = new Map<pc.XrInputSource, pc.Entity>();
   const hands = new Map<pc.XrInputSource, { entity: pc.Entity; mesh: pc.Mesh }>();
+  const tips = new Map<pc.XrInputSource, { entity: pc.Entity; mat: pc.StandardMaterial; state: string }>();
+  const TIP = { rest: { color: new pc.Color().fromString(FRAME.faint), size: 0.007 },
+    touch: { color: new pc.Color().fromString(REFERENCE.saverSky), size: 0.010 },
+    press: { color: new pc.Color().fromString(FRAME.bright), size: 0.014 } };
   const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[]; aim: Ray | null }>();
   const wands = new Map<pc.XrInputSource, pc.Entity>();
   const mat = new pc.StandardMaterial();
@@ -77,11 +82,18 @@ export function mountXrInput(app: pc.Application, opts: {
     if (src.hand) {
       const entity = new pc.Entity('xr-hand');
       app.root.addChild(entity); entity.enabled = false; hands.set(src, { entity, mesh });
+      // ⚑ S270c (his: "maybe a small color change in the tip of the fingers… to understand that it is registering the
+      //   touch") — the index fingertip carries a cube: dim at rest, blue when it is on something pressable or the
+      //   pinch is closed, bright for the moment a press registers
+      const tip = new pc.Entity('xr-tip'), tipMat = new pc.StandardMaterial();
+      tipMat.useLighting = false; tipMat.diffuse = new pc.Color(0, 0, 0); tipMat.update();
+      tip.addComponent('render', { type: 'box', material: tipMat, ...(opts.layers ? { layers: opts.layers } : {}) });
+      app.root.addChild(tip); tip.enabled = false; tips.set(src, { entity: tip, mat: tipMat, state: '' });
     }
     primary ??= src;
   };
   const onRemove = (src: pc.XrInputSource): void => {
-    opts.onRelease?.(src); dots.get(src)?.destroy(); dots.delete(src); hands.get(src)?.entity.destroy(); meshes.get(src)?.destroy(); meshes.delete(src); hands.delete(src); gestures.delete(src);
+    opts.onRelease?.(src); dots.get(src)?.destroy(); dots.delete(src); hands.get(src)?.entity.destroy(); tips.get(src)?.entity.destroy(); tips.delete(src); meshes.get(src)?.destroy(); meshes.delete(src); hands.delete(src); gestures.delete(src);
     wands.get(src)?.destroy();
     wands.delete(src);
     if (primary === src) primary = wands.keys().next().value ?? null;
@@ -112,7 +124,7 @@ export function mountXrInput(app: pc.Application, opts: {
     opts.onSqueeze();
   };
   const release = (src: pc.XrInputSource): void => { const state = gestures.get(src); if (state?.held) opts.onRelease?.(src); if (state) state.held = false; };
-  const onEnd = (): void => { for (const src of wands.keys()) { release(src); const state = gestures.get(src); if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; };
+  const onEnd = (): void => { for (const src of wands.keys()) { release(src); const state = gestures.get(src); if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
 
   if (xr) {
     xr.input.on('add', onAdd);
@@ -189,6 +201,7 @@ export function mountXrInput(app: pc.Application, opts: {
         if (!active && hands.has(src)) hands.get(src)!.entity.enabled = false;
         if (!r || (src.hand && !src.hand.tracking)) {
           e.enabled = false; if (hands.has(src)) hands.get(src)!.entity.enabled = false;
+          const t = tips.get(src); if (t) t.entity.enabled = false;
           release(src); const state = gestures.get(src); if (state) { state.pinch = false; state.near = false; }
           continue;
         }
@@ -218,6 +231,15 @@ export function mountXrInput(app: pc.Application, opts: {
             const near = !!landing(poke) || !!opts.canPoke?.(poke);
             if (near && !state.near && !state.pinch && !state.held) { primary = src; choose(poke, src); }
             state.near = near;
+            const t = tips.get(src);
+            if (t) {
+              const kind = performance.now() < (flashUntil.get(src) ?? 0) ? 'press' : near || state.pinch ? 'touch' : 'rest';
+              t.entity.enabled = true; t.entity.setPosition(tip);
+              if (kind !== t.state) {
+                t.state = kind; const k = TIP[kind];
+                t.mat.emissive = k.color; t.mat.update(); t.entity.setLocalScale(k.size, k.size, k.size);
+              }
+            }
           }
         }
         if (state.held) opts.onHold?.(src, r);
