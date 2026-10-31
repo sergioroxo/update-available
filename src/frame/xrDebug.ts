@@ -20,7 +20,8 @@ export function mountXrDebug(app: pc.AppBase, head: pc.Entity, source: XrDebugSo
   const layer = new pc.Layer({ name: 'XR debug', clearDepthBuffer: true });
   app.scene.layers.pushTransparent(layer); head.camera!.layers = [...head.camera!.layers, layer.id];
   plate.render!.layers = [layer.id];
-  head.addChild(plate); plate.setLocalPosition(-0.17, -0.22, -0.8); plate.setLocalEulerAngles(90, 0, 0);
+  // S271 (the 31 Oct cast: the plate sat over the helper's tooltip and window text) — lower and further left, still readable
+  head.addChild(plate); plate.setLocalPosition(-0.27, -0.31, -0.8); plate.setLocalEulerAngles(90, 0, 0);
   plate.enabled = false;
   let wait = 0, last = '';
   app.on('update', (dt: number) => {

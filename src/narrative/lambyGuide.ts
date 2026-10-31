@@ -118,7 +118,9 @@ export class LambyGuide {
       if (this.input.era === 'e1' && this.input.formAvailable && !this.input.formOpened) { this.set('form', copy.form.text, [], copy.form.act); return true; }
       if (this.view.rung === 'form') return true;
       if (this.active) this.point();
-      else this.set('tip', s?.tip ?? copy.ui.nothing);
+      // ⚑ S271 (his 31 Oct: "You're doing fine, carry on. Thank you, Lamby. But it doesn't tell me where do I need
+      //   to go") — with no beat of its own, Lamby reads the Start map's next step before it says "carry on"
+      else this.set('tip', s?.tip ?? this.input.map.current?.beat.hint ?? copy.ui.nothing);
       return true;
     }
     if (!this.active) return false;

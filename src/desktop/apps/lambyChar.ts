@@ -56,6 +56,9 @@ export interface LambyPose {
   /** the rig lab LOOPS the appear pop so it can be watched over and over;
    *  production plays it once and settles. Lab-only. */
   loopAppear?: boolean;
+  /** S271 (his 31 Oct: "the Lamby arm should be on the other side because it's pointing to the wrong direction") —
+   *  point to the LEFT: the guide sits bottom-right, and most of what it shows is to its left */
+  pointLeft?: boolean;
 }
 
 const CYCLE = 3.2; // s — the lab's animation cycle (blink phase + appear pop)
@@ -245,13 +248,15 @@ function drawFace(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: L
   }
 }
 
-function drawGesture(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: LambyMood, action: LambyAction, point: number): void {
+function drawGesture(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: LambyMood, action: LambyAction, point: number, left = false): void {
   const arm = mood === 'sterile' ? ERA1.grey : ERA1.silver;
   const hoof = mood === 'sterile' ? ERA1.greyDark : ERA1.black;
   if (action === 'point') {
-    ui.px(ctx, cx + 38, cy - 9, 38 + point, 5, arm);
-    ui.px(ctx, cx + 76 + point, cy - 12, 8, 11, hoof);
-    ui.px(ctx, cx + 84 + point, cy - 9, 14, 3, hoof);
+    // drawn rightwards; pointing left mirrors each block about the centre
+    const at = (x: number, w: number): number => left ? 2 * cx - x - w : x;
+    ui.px(ctx, at(cx + 38, 38 + point), cy - 9, 38 + point, 5, arm);
+    ui.px(ctx, at(cx + 76 + point, 8), cy - 12, 8, 11, hoof);
+    ui.px(ctx, at(cx + 84 + point, 14), cy - 9, 14, 3, hoof);
     return;
   }
   if (mood === 'sad') {
@@ -297,6 +302,6 @@ export function drawLambyChar(ctx: CanvasRenderingContext2D, cx: number, cy: num
   }
   drawEars(ctx, x, y, pose.mood);   // roots go behind the face patch
   drawFace(ctx, x, y, pose.mood, phase);
-  if (!pose.headOnly) drawGesture(ctx, x, y, pose.mood, pose.action, point);
+  if (!pose.headOnly) drawGesture(ctx, x, y, pose.mood, pose.action, point, pose.pointLeft);
   ctx.restore();
 }

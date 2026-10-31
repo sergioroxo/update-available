@@ -38,6 +38,8 @@ export interface XrLayerDeps {
   era(): string;
   /** the guide's balloon is up this frame */
   guideShowing(): boolean;
+  /** S271 — Lamby is out in the room (true) or back in the screen (false) */
+  bodyOut(out: boolean): void;
   /** the balloon's Yes (take me there / show me) */
   guideYes(): void;
   visorWorn(): boolean;
@@ -64,7 +66,9 @@ export interface XrLayer {
 type Spot = { rest: pc.Vec3; from: pc.Vec3 | null; w: number; h: number };
 const LAMBY: Record<string, Spot> = {
   e1: { rest: new pc.Vec3(-0.30, 0.81, 0.18), from: new pc.Vec3(0, 1.08, 0.05), w: 0.11, h: 0.137 },
-  e2: { rest: new pc.Vec3(0.13, 1.30, -0.02), from: null, w: 0.08, h: 0.10 },
+  // S271 (his 31 Oct: "Lamby now appears on the top of the screen and should not be there") — 2003 steps out as 1997
+  //   does, from the glass onto the desk, left of the keyboard (the mouse and the phone have the right)
+  e2: { rest: new pc.Vec3(-0.27, 0.81, 0.08), from: new pc.Vec3(0, 1.08, 0.05), w: 0.10, h: 0.125 },
   e3: { rest: new pc.Vec3(-5.21, 0.99, 1.1), from: null, w: 0.055, h: 0.055 },
   e4: { rest: new pc.Vec3(5.2, 1.18, 0.9), from: null, w: 0.09, h: 0.09 }
 };
@@ -90,7 +94,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   const drawLamby = (era: string, t: number): void => {
     lctx.clearRect(0, 0, 128, 160);
     if (era === 'e1' || era === 'e2') {
-      drawLambyChar(lctx, 64, 92, { mood: 'cheerful', action: era === 'e1' ? 'point' : 'idle', t, moodStart: 0, scale: 0.95 });
+      drawLambyChar(lctx, 64, 92, { mood: 'cheerful', action: 'point', t, moodStart: 0, scale: 0.95 });   // towards the screen, on his right
     } else if (era === 'e3') {
       // a notification: a round badge with the head, pulsing
       lctx.fillStyle = ERA1.white; lctx.beginPath(); lctx.arc(64, 80, 56, 0, Math.PI * 2); lctx.fill();
@@ -107,6 +111,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   const tickLamby = (dt: number, eyeL: pc.Vec3): void => {
     const era = deps.era(), spot = LAMBY[era] as Spot | undefined;
     const show = live() && deps.inRoom() && !!spot && (deps.guideShowing() || forced.lamby);
+    deps.bodyOut(show && (era === 'e1' || era === 'e2'));
     if (!show || !spot) { lamby.enabled = false; lambyShown = false; return; }
     if (!lambyShown || era !== lambyEra) { lambyShown = true; lambyEra = era; lambyT = 0; lamby.setLocalScale(spot.w, 1, spot.h); }
     lambyT += dt;
@@ -147,6 +152,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   };
 
   // ── VR-04 the table ──
+  const TABLE_GRACE = 3, TABLE_HOLD = 1.5;
   let table: { t: number; hist: { t: number; p: pc.Vec3 }[][] } | null = null;
   let offered = false, inRoomFor = 0;
   const tickTable = (dt: number): void => {
@@ -157,12 +163,15 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     }
     if (!table) return;
     table.t += dt;
-    if (table.t > 20) { table = null; deps.frame.notice(deps.strings.none, 4); return; }
+    if (table.t > 24) { table = null; deps.frame.notice(deps.strings.none, 4); return; }
+    // ⚑ S271 (his 31 Oct: "Okay, no, that's too fast. I wasn't even able to try") — the hand that pressed the menu row
+    //   was still, so it was taken at once. The first 3 s only ask; then a fingertip must stay still for 1.5 s.
+    if (table.t < TABLE_GRACE) return;
     const eyeY = head.getPosition().y;
     deps.input.points().forEach((p, i) => {
       const h = (table!.hist[i] ??= []);
-      h.push({ t: table!.t, p }); while (h.length && table!.t - h[0].t > 1.0) h.shift();
-      if (!table || table.t - h[0].t < 0.95) return;
+      h.push({ t: table!.t, p }); while (h.length && table!.t - h[0].t > TABLE_HOLD) h.shift();
+      if (!table || table.t - h[0].t < TABLE_HOLD - 0.05) return;
       const still = h.every((s) => s.p.distance(p) < 0.012);
       const below = eyeY - p.y;
       if (still && below > 0.2 && below < 0.85) { deps.comfort.matchDesk(p.y); table = null; deps.frame.notice(deps.strings.done, 4); }
@@ -272,7 +281,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   app.xr?.on('end', () => { grip = null; cursorE.enabled = false; if (rest) deps.mouse.prop()?.setPosition(rest); endDoll(); lamby.enabled = false; lens.enabled = false; lensK = 0; table = null; deps.input.setStyle('own'); });
 
   return {
-    matchTable() { if (!live()) return; table = { t: 0, hist: [] }; deps.frame.notice(deps.strings.ask, 20); },
+    matchTable() { if (!live()) return; table = { t: 0, hist: [] }; deps.frame.notice(deps.strings.ask, 24); },
     dollhouse() {
       if (!live() || !batches().length) return;
       endDoll();

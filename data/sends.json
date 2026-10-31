@@ -31,13 +31,14 @@
       },
       "offer": {
         "_doc": "PLACEHOLDER — Sérgio voice pass pending; the guide-voiced summons (§4: names a reason rooted in the shared infrastructure)",
-        "icon": "Route sheet",
+        "_docS271": "⚑ S271 — his 31 Oct headset: 'What is the route sheet? And why are we talking about women's track? This needs to be rethinked.' Said plainly now: the same programme runs a women's group, and the system sends you to see it.",
+        "icon": "Next task",
         "lines": [
-          "A companion module exists for the",
-          "women's track. The same conference,",
-          "translated for entry.",
+          "Restorify runs a women's group too:",
+          "the same conference, the same steps,",
+          "reworded for women.",
           "",
-          "It is already on your route sheet."
+          "Next task: see how it is done there."
         ],
         "go": "Turn and look",
         "decline": "Not now"

@@ -32,6 +32,9 @@ export function drawGuidePointer(ctx: CanvasRenderingContext2D, r: GuideHit, fro
   for (let n = 0; n < 4; n++) ui.px(ctx, tx - n, fy - dir * n, 2 * n + 1, 1, colour);
   return ring;
 }
+/** S271 (his 31 Oct: "plenty of multiple lambies that need to be fixed") — in a headset Lamby steps OUT of the
+ *  screen into the room (VR-05); while he is out there, the balloon on the glass is drawn without him */
+export const guideBody = { inRoom: false };
 export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, state: GuideView, hits: GuideHit[], size = { w: 512, h: 384 }, remoteActions: string[] = []): GuidePaint {
   const out: GuidePaint = { rings: [], balloon: false };
   if (state.era !== skin) return out;
@@ -60,8 +63,9 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   let y = W < 300 ? 2 : H - 22 - h - 70;
   if (pointing && selected.some(r => r.x < x + w && r.x + r.w > x && r.y < y + h && r.y + r.h > y)) y = 26;
   const cx = skin === 'e3' ? tx + 10 : W - 48, cy = H - 59;
-  if (skin === 'e1' || skin === 'e2') drawLambyChar(ctx, cx, cy, { mood: 'cheerful', action: pointing ? 'point' : 'idle', scale: 0.48, t: state.frame / 3, moodStart: 0 });
-  if (pointing) for (const r of selected) out.rings.push(drawGuidePointer(ctx, r, skin === 'e3' ? { x: cx, y: ty - 4 } : { x: cx - 26, y: cy }, accent, state.frame));
+  const left = selected.length > 0 && selected[0].x + selected[0].w / 2 < cx;
+  if ((skin === 'e1' || skin === 'e2') && !guideBody.inRoom) drawLambyChar(ctx, cx, cy, { mood: 'cheerful', action: pointing ? 'point' : 'idle', scale: 0.48, t: state.frame / 3, moodStart: 0, pointLeft: left });
+  if (pointing) for (const r of selected) out.rings.push(drawGuidePointer(ctx, r, skin === 'e3' ? { x: cx, y: ty - 4 } : { x: left ? cx - 44 : cx - 26, y: cy }, accent, state.frame));
   if (skin === 'e1' || skin === 'e2') drawLambyTooltip(ctx, x, y, w, h, ground);
   else {
     const edge = skin === 'e3' ? ERA3.glassEdge : CHROME.fieldEdge;

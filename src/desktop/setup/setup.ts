@@ -284,7 +284,7 @@ export class LambySetup {
     if (this.mobile) { this.drawMobileBalloon(ctx); this.drawStartDemo(ctx); return; }
     if (!this.dismissed) {
       ui.bevel(ctx, 359, 304, 122, 29, true); ui.px(ctx, 366, 310, 108, 16, P.paper);
-      drawLambyChar(ctx, 420, 260, { mood: 'cheerful', action: 'point', t: 0, moodStart: 0, scale: 0.7 });
+      drawLambyChar(ctx, 420, 260, { mood: 'cheerful', action: 'point', t: 0, moodStart: 0, scale: 0.7, pointLeft: true });   // S271: towards his balloon and Start, both to his left
 
     }
     if (this.dismissed) {
@@ -329,7 +329,7 @@ export class LambySetup {
   }
   private drawMobileBalloon(ctx: CanvasRenderingContext2D): void {
     const b = this.step === 'start' && this.startTried ? copy.startTried : copy.balloons[this.step];
-    if (!this.dismissed) drawLambyChar(ctx, 414, 308, { mood: 'cheerful', action: 'point', t: 0, moodStart: 0, scale: 0.52 });
+    if (!this.dismissed) drawLambyChar(ctx, 414, 308, { mood: 'cheerful', action: 'point', t: 0, moodStart: 0, scale: 0.52, pointLeft: true });
     if (this.dismissed) {
       const c = ui.windowFrame(ctx, 20, 26, 472, 246, copy.title);
       if (this.step !== 'advert' && (this.step !== 'allset' || this.ready)) this.hits.push({ ...c.closeBox, id: 'setup-compact-close' });

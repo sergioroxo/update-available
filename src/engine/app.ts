@@ -70,6 +70,7 @@ import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrComfort } from '../frame/xrComfort';
 import { mountXrDebug } from '../frame/xrDebug';
 import { mountXrTextures } from '../frame/xrTextures';
+import { guideBody } from '../desktop/apps/lambyGuideDraw';
 import { mountXrLayer, type XrLayer } from '../frame/xrLayer';
 import { e4Bridge } from '../desktop/apps/space';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
@@ -1070,7 +1071,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     });
     xrInput = mountXrInput(app, {
       onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
-      onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); xrFrame?.press(ray); },
+      // ⚑ S271 (his 31 Oct: "I entered the menu, but I cannot get out") — a press that misses the menu closes it, as
+      //   Resume does; the menu is never a room you have to find the door of
+      onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
       layers: [xrFrame.layerId],
@@ -1123,7 +1126,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
       },
       onKey: key => { if (cluster && !gameMenuBus.isOpen) devices?.key(key, cluster.era); },
-      wandColor: new pc.Color().fromString(FRAME.ink)
+      // S271 (his 31 Oct: the hands are "a bit too white… a little bit too garish for your headset") — the frame's
+      //   mid grey, not its near-white ink
+      wandColor: new pc.Color().fromString(FRAME.faint)
     });
     // ⚑ S270g — the headset's own layer: the table, Lamby in the room, the visor's lens, the dollhouse
     xrLayer = mountXrLayer(app, {
@@ -1131,6 +1136,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       strings: { ask: menuStrings.xrDeskAsk, done: menuStrings.xrDeskDone, none: menuStrings.xrDeskNone, offer: menuStrings.xrDeskOffer },
       era: () => cluster?.era ?? os.era,
       guideShowing: () => os.lambyGuidePaint.balloon,
+      bodyOut: (out) => { if (guideBody.inRoom !== out) { guideBody.inRoom = out; os.dirty = true; } },
       guideYes: () => { os.lambyGuide.press(os.lambyGuide.view.act ? 'lg-take' : 'lg-show'); os.dirty = true; },
       visorWorn: () => (cluster?.era ?? os.era) === 'e4' && !!e4Bridge()?.shell()?.pinned,
       inRoom: () => !restoreEntrance?.blocking && !os.setup?.open && !document.getElementById('lambyos-home'),
@@ -3293,7 +3299,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         os.openPillowFromRoom?.();
         return;
       }
-      if (os.inDesktop && !os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) {
+      // ⚑ S271 (his 31 Oct: "Unwalk is still present here, and I don't know why") — 2003 retires the kit, and the disk
+      //   on the desk put it back: a press aimed at the 2003 keyboard re-ran 1997's programme. The disk is 1997's.
+      if (os.inDesktop && os.era === 'e1' && !os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) {
         os.insertKit(); // S1.2 — you put the disk in yourself
         return;
       }

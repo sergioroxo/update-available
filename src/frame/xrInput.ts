@@ -25,7 +25,7 @@ export interface XrInput {
   /** S270g / VR-08 — 'own' or 'programme': the programme redraws the visitor's hands while the visor is on */
   setStyle(style: 'own' | 'programme'): void;
   /** S270f — the left wrist (hand) or left grip (controller), where the Menu tab rides; null when not tracked */
-  wrist(): pc.Vec3 | null;
+  wrist(): { at: pc.Vec3; palm: pc.Vec3 | null } | null;
   /** once per frame: the wands follow the hands */
   tick(): void;
   destroy(): void;
@@ -63,7 +63,7 @@ export function mountXrInput(app: pc.Application, opts: {
   // ⚑ S270d (his: "a very subtle change from grayish to whitish… this probably needs a little bit more") — rest is
   //   small and dim; touch is the frame's blue at twice the size; a registered press is a big bright pop
   //   (the first "blue" was the screensaver's sky — near black, which is why only grey→white showed)
-  const TIP = { rest: { color: new pc.Color().fromString(FRAME.faint), size: 0.006 },
+  const TIP = { rest: { color: new pc.Color().fromString(FRAME.dim), size: 0.006 },
     touch: { color: new pc.Color().fromString(ERA1.titleBlue), size: 0.013 },
     press: { color: new pc.Color().fromString(FRAME.bright), size: 0.022 } };
   const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[]; aim: Ray | null }>();
@@ -248,12 +248,20 @@ export function mountXrInput(app: pc.Application, opts: {
       mat.emissive = next === 'programme' ? PROGRAMME_HAND : opts.wandColor; mat.update();
       for (const t of tips.values()) t.state = '';   // re-colour on the next frame
     },
-    wrist(): pc.Vec3 | null {
+    wrist(): { at: pc.Vec3; palm: pc.Vec3 | null } | null {
       if (!xr?.active) return null;
       for (const src of wands.keys()) {
         if (src.handedness !== pc.XRHAND_LEFT) continue;
-        if (src.hand) { const w = src.hand.tracking ? src.hand.getJointById('wrist') : null; return w ? w.getPosition().clone() : null; }
-        const g = src.getPosition?.(); return g ? g.clone() : null;
+        if (src.hand) {
+          const w = src.hand.tracking ? src.hand.getJointById('wrist') : null;
+          if (!w) return null;
+          // S271 — the palm's normal, from the wrist and the index and little-finger roots: for a LEFT hand,
+          //   (index − wrist) × (little − wrist) points out of the back of the hand, so the palm faces the other way
+          const a = src.hand.getJointById('index-finger-metacarpal'), b = src.hand.getJointById('pinky-finger-metacarpal');
+          const palm = a && b ? new pc.Vec3().cross(a.getPosition().clone().sub(w.getPosition()), b.getPosition().clone().sub(w.getPosition())).normalize().mulScalar(-1) : null;
+          return { at: w.getPosition().clone(), palm };
+        }
+        const g = src.getPosition?.(); return g ? { at: g.clone(), palm: null } : null;
       }
       return null;
     },

@@ -37,7 +37,7 @@ import { ERA1 } from '../desktop/theme/era1';
 
 export interface Ray { p0: pc.Vec3; p1: pc.Vec3 }
 
-type View = 'main' | 'map' | 'controls' | 'restartConfirm';
+type View = 'main' | 'map' | 'controls' | 'restartConfirm' | 'jumpConfirm';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 const W = 1024, H = 768;
@@ -54,11 +54,13 @@ const HINT_DIST = 0.6, HINT_DROP = 0.3;
 // ⚑ S270c (his: "the menu button is running away from me") — it re-hung itself past ~52° off the gaze while it sits
 //   ~34° to the right, so a small turn moved it; now it stays until it is well out of view (~75°), and is a third bigger
 const TAB_W = 0.16, TAB_H = TAB_W * 64 / 256, TAB_DIST = 0.6, TAB_DROP = 0.36, TAB_TURN = 1.3;
+/** S271 — on the wrist the tab is a watch face: about 6 cm wide */
+const WRIST_SCALE = 0.4;
 
 export interface XrFrame {
   readonly layerId: number;
   /** once per frame; `ray` is the controller's, for the cursor */
-  tick(ray: Ray | null, wrist?: pc.Vec3 | null): void;
+  tick(ray: Ray | null, wrist?: { at: pc.Vec3; palm: pc.Vec3 | null } | null): void;
   /** the menu opened: hang the plane in front of the head */
   open(): void;
   close(): void;
@@ -118,6 +120,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   app.root.addChild(hintPlane);
 
   let view: View = 'main';
+  let jumpTarget: { era: 'e1' | 'e2' | 'e3' | 'e4'; label: string } | null = null;
   let hits: Hit[] = [];
   let cursor: { x: number; y: number } | null = null;
   let hover: string | null = null;
@@ -197,7 +200,8 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     ctx.fillStyle = DIALOG.panel; ctx.fillRect(0, 0, W, H);
     bevel(ctx, 0, 0, W, H, false, 4);
     // the title bar carries the view's title; the body starts under it
-    const title = view === 'main' ? copy.title : view === 'controls' ? copy.controlsTitle : view === 'restartConfirm' ? copy.restartConfirmTitle : mapCopy.title;
+    const title = view === 'main' ? copy.title : view === 'controls' ? copy.controlsTitle : view === 'restartConfirm' ? copy.restartConfirmTitle
+      : view === 'jumpConfirm' ? copy.jumpConfirmTitle.replace('{era}', jumpTarget?.label ?? '') : mapCopy.title;
     ctx.fillStyle = DIALOG.titleBar; ctx.fillRect(8, 8, W - 16, 48);
     uiFont(26, true); ctx.fillStyle = DIALOG.titleInk; ctx.fillText(title, 24, 18);
     let y = 84;
@@ -222,6 +226,11 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       y += 24;
       y = drawRow(copy.restartConfirmYes, 'restart-yes', y);
       drawRow(copy.restartConfirmNo, 'back', y);
+    } else if (view === 'jumpConfirm') {
+      for (const l of wrap(copy.jumpConfirmBody, 22, W - 128)) { ctx.fillStyle = DIALOG.ink; ctx.fillText(l, 64, y); y += 30; }
+      y += 24;
+      y = drawRow(copy.jumpConfirmYes, 'jump-yes', y);
+      drawRow(copy.jumpConfirmNo, 'map', y);
     } else if (view === 'map') {
       const st: MapState | null = gameMenuBus.mapSource ? gameMenuBus.mapSource() : null;
       y -= 8;
@@ -234,6 +243,15 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
           ctx.fillStyle = era.here ? DIALOG.titleBar : DIALOG.dark;
           ctx.fillRect(x, y, colW, era.here ? 4 : 2);
           let cy = y + 16;
+          // ⚑ S271 (his 31 Oct: "we need to know if there's a way to jump… on the headset") — the browser map's
+          //   "Go here", here too: a button at the head of each year's column, then the same confirm
+          if (era.id !== 'close' && gameMenuBus.jumpToEra) {
+            const id = `go-${era.id}`, on = hover === id, bh = 40;
+            ctx.fillStyle = DIALOG.panel; ctx.fillRect(x, cy, colW, bh); bevel(ctx, x, cy, colW, bh, on);
+            uiFont(18, true); ctx.fillStyle = DIALOG.ink; ctx.fillText(copy.goHere, x + 12 + (on ? 1 : 0), cy + 10 + (on ? 1 : 0));
+            hits.push({ x, y: cy, w: colW, h: bh, id });
+            cy += bh + 12;
+          }
           const isAhead = ahead;
           if (era.here) ahead = true;
           uiFont(19, true); ctx.fillStyle = isAhead ? DIALOG.faint : era.here ? DIALOG.titleBar : DIALOG.ink;
@@ -324,6 +342,15 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     const d = tabPlane.getPosition().clone().sub(head.getPosition()); d.y = 0; d.normalize();
     tabPlane.setEulerAngles(90, Math.atan2(-d.x, -d.z) * 180 / Math.PI, 0);
   };
+  /** S271 — the watch gesture: a hand's palm turned to the eyes (within ~50°), or a controller raised within 55 cm
+   *  and looked at (within ~30° of the gaze) */
+  const watching = (w: { at: pc.Vec3; palm: pc.Vec3 | null }): boolean => {
+    const to = head.getPosition().clone().sub(w.at), dist = to.length();
+    if (dist > 0.55 || dist < 1e-4) return false;
+    to.mulScalar(1 / dist);
+    if (w.palm) return w.palm.dot(to) > Math.cos(50 * Math.PI / 180);
+    return head.forward.dot(to.mulScalar(-1)) > Math.cos(30 * Math.PI / 180);
+  };
   const tabOffAxis = (): boolean => {
     const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) return false; fwd.normalize();
     const to = tabPlane.getPosition().clone().sub(head.getPosition()); to.y = 0; to.normalize();
@@ -331,6 +358,12 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   };
 
   const act = (id: string): void => {
+    if (id.startsWith('go-')) {
+      const era = gameMenuBus.mapSource?.().eras.find((e) => `go-${e.id}` === id);
+      if (era && era.id !== 'close') { jumpTarget = { era: era.id, label: era.label }; view = 'jumpConfirm'; dirty = true; }
+      return;
+    }
+    if (id === 'jump-yes') { const t = jumpTarget; jumpTarget = null; view = 'main'; if (t) gameMenuBus.jumpToEra?.(t.era); return; }
     switch (id) {
       case 'recentre': opts.onRecentre(); gameMenuBus.close(); return;
       case 'desk': gameMenuBus.close(); opts.onDesk?.(); return;
@@ -396,7 +429,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       drawHint();
     },
     debugHit(ray: Ray): { x: number; y: number } | null { return planeHit(plane, ray, PLANE_W, PLANE_H, W, H); },
-    tick(ray: Ray | null, wrist?: pc.Vec3 | null): void {
+    tick(ray: Ray | null, wrist?: { at: pc.Vec3; palm: pc.Vec3 | null } | null): void {
       if (!open) {
         // the tab: shown while immersive and closed; re-hung when the head has turned away from it
         const immersive = !!app.xr?.active;
@@ -404,14 +437,20 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
         // ⚑ S270f (his: "the menu button is running away from me… it overlaps the laptop" — the tour put it on 2026's
         //   laptop) — with a left hand or controller in view, the tab rides above the left wrist, facing the head:
         //   it never covers the room and it is always where the hand is. Without one it hangs low on the right.
-        if (wrist) {
-          const at = wrist.clone().add(new pc.Vec3(0, 0.07, 0));
-          const d = at.clone().sub(head.getPosition()); d.y = 0;
-          if (d.lengthSq() > 1e-6) { d.normalize(); tabPlane.setPosition(at); tabPlane.setEulerAngles(90, Math.atan2(-d.x, -d.z) * 180 / Math.PI, 0); }
+        // ⚑ S271 (his 31 Oct: the wrist tab "comes up huge and sideways"; "if I use this hand… it changes this screen")
+        //   — it rode the left wrist all the time, 16 cm wide, so a left hand reaching for the screen carried it into
+        //   the press. Now it is a watch: it shows only when the wrist is turned to the face (a hand's palm towards the
+        //   eyes, or a controller raised and looked at), small, and square to the eye.
+        if (wrist && watching(wrist)) {
+          const at = wrist.at.clone().add(new pc.Vec3(0, 0.06, 0));
+          tabPlane.setPosition(at);
+          tabPlane.lookAt(at.clone().add(at.clone().sub(head.getPosition())));   // −Z away from the eye; +Y (the face) back at it
+          tabPlane.rotateLocal(90, 0, 0);
+          if (!onWrist) tabPlane.setLocalScale(TAB_W * WRIST_SCALE, 1, TAB_H * WRIST_SCALE);
           tabPlane.enabled = true; onWrist = true;
           return;
         }
-        if (onWrist) { onWrist = false; tabPlane.enabled = false; }
+        if (onWrist) { onWrist = false; tabPlane.enabled = false; tabPlane.setLocalScale(TAB_W, 1, TAB_H); }
         if (!tabPlane.enabled || tabOffAxis()) { hangTab(); tabPlane.enabled = true; }
         return;
       }

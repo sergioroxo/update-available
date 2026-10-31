@@ -232,7 +232,12 @@ export class TestimonyApp {
   private drawPrep(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     this.heading(ctx, c, T.prep.title, T.prep.intro);
     const entries = entriesByEra().e1.filter((e) => e.witness);
-    const filed = entries.map((e) => e.witness);
+    // ⚑ S271 — the coach's plain words for what he did (T.prep.yourFile), never the apparatus's cold log line
+    const said = (e: { id: string; kind: string }): string => {
+      const book = T.prep.yourFile as Record<string, string>;
+      return book[e.id] ?? Object.entries(book).find(([k]) => (k.endsWith(':') || k === 'diary') && e.id.startsWith(k))?.[1] ?? T.prep.fallback[0];
+    };
+    const filed = entries.map(said);
     // ⚑ S209h / ERA03-11 — each topic takes the file line that MEANS it (the institution building his story
     //   out of what it holds), first unused match in order; the old arithmetic only when nothing matches
     const WANT: string[][] = [
@@ -247,7 +252,7 @@ export class TestimonyApp {
     const picks = WANT.map((kinds) => {
       for (const k of kinds) {
         const j = entries.findIndex((e, n) => e.kind === k && !used.has(n));
-        if (j >= 0) { used.add(j); return entries[j].witness; }
+        if (j >= 0) { used.add(j); return said(entries[j]); }
       }
       return null;
     });
@@ -261,7 +266,7 @@ export class TestimonyApp {
       ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(`${i + 1}. ${tp.h}`, c.x + 14, y + 1);
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(tp.note, c.x + 30, y + 12);
       ui.setFont(ctx, 8); ctx.fillStyle = ERA1.navy;
-      ui.wrapText(ctx, `${T.prep.fromFile} ${frag(i)}`, c.w - 60).slice(0, 2).forEach((ln, k) => ctx.fillText(ln, c.x + 30, y + 23 + k * 9));
+      ui.wrapText(ctx, `${T.prep.fromFile} ${frag(i)}.`, c.w - 60).slice(0, 2).forEach((ln, k) => ctx.fillText(ln, c.x + 30, y + 23 + k * 9));
     }
     if (this.topics < T.prep.topics.length) this.button(ctx, c.x + 12, c.y + c.h - 28, polish.faster, 'ts-faster', 70);
     if (isSpeedrun() && this.topics < T.prep.topics.length) return;
@@ -502,11 +507,15 @@ export class TestimonyApp {
     link(O.watch56, watchable ? 'ts-watch' : null);
     link(polish.broadbandDisabled, null);
     ui.setFont(ctx, 8); ctx.fillStyle = ERA1.grey; ctx.fillText(O.requires, tx, y); y += 18;
+    // ⚑ S271 (his 31 Oct: "Applications available in this restore page… What is this information?") — the frame's
+    //   own refusal ("unavailable in this restored page") read as the ministry's words. Now the page simply shows its
+    //   call to apply, greyed and not pressable, and what his story is doing: bringing others in.
     if (this.web === 'done') {
-      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.warnDark;
-      for (const l of ui.wrapText(ctx, polish.startDisabled, px0 + pw - 12 - vx)) { ctx.fillText(l, vx, vy + vh + 12); }
-      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark;
-      ctx.fillText(O.count.replace('{n}', '3'), vx, vy + vh + 28);
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.grey;
+      ctx.fillText(O.start, vx, vy + vh + 12);
+      ui.px(ctx, vx, vy + vh + 22, Math.ceil(ctx.measureText(O.start).width), 1, ERA1.grey);
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.warnDark;
+      ui.wrapText(ctx, O.count.replace('{n}', '3'), px0 + pw - 12 - vx).forEach((l, i) => ctx.fillText(l, vx, vy + vh + 30 + i * 11));
     }
     this.rightButton(ctx, c, O.close, this.web === 'done' ? 'ts-done' : null);
   }

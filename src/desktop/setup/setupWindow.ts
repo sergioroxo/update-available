@@ -1,9 +1,9 @@
-import { gameMenuBus } from '../../state/gameMenuBus';
 import { xrTarget, xrOutline } from '../../frame/xrTargets';
 /** One world-space canvas, unfolding from a pixel star. Browser/XR share rays. */
 import * as pc from 'playcanvas';
 import { makeScreenEntity, makeScreenTexture } from '../../engine/screenTexture';
 import type { Ray } from '../../frame/xrFrame';
+import { xrRecentred } from '../../frame/xrComfort';
 import type { LambySetup } from './setup';
 import { PLACE } from '../theme/era4';
 import { ERA1_CANVAS } from '../theme/era1';
@@ -35,16 +35,16 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
   let position = new pc.Vec3();
   let xrHoverKey = '';
   let xrHover: ReturnType<typeof xrTarget> = null;
-  function hang(): void {
+  function hang(from?: { head: pc.Vec3; yaw: number }): void {
     const distance = app.xr?.active ? 1 : DIST;
     // ⚑ S269 (his 28 Oct headset session: the setup sat to one side, rolled 5–30°) — in a headset the window was hung
     //   on the head's whole rotation, so a tilted or turned-down head left it tilted for good. In XR it hangs level, at
     //   eye height, straight ahead of where the head FACES (its yaw); the browser keeps its exact framing.
     if (app.xr?.active) {
-      const f = camera.forward.clone(); f.y = 0;
+      const f = from ? new pc.Vec3(-Math.sin(from.yaw * Math.PI / 180), 0, -Math.cos(from.yaw * Math.PI / 180)) : camera.forward.clone(); f.y = 0;
       if (f.lengthSq() < 1e-4) f.set(0, 0, -1);
       f.normalize();
-      position = camera.getPosition().clone().add(f.clone().mulScalar(distance));
+      position = (from?.head ?? camera.getPosition()).clone().add(f.clone().mulScalar(distance));
       const level = new pc.Quat().setFromEulerAngles(0, Math.atan2(-f.x, -f.z) * 180 / Math.PI, 0);
       for (const e of [plane, star]) { e.setPosition(position); e.setRotation(level); e.rotateLocal(90, 0, 0); }
       return;
@@ -53,7 +53,11 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
     for (const e of [plane, star]) { e.setPosition(position); e.setRotation(camera.getRotation()); e.rotateLocal(90, 0, 0); }
   }
   hang();
-  const unsubscribeMenu = gameMenuBus.onChange(open => { if (!open && app.xr?.active) hang(); });
+  // ⚑ S271 (his 31 Oct: "I press resume and it changed the position") — closing the menu no longer re-hangs the
+  //   window at the head (which was turned to the menu); only Recentre moves it, to where the head faced before
+  const onRecentred = (head: pc.Vec3, yaw: number): void => { if (app.xr?.active) hang({ head, yaw }); };
+  xrRecentred.add(onRecentred);
+  const unsubscribeMenu = (): void => { xrRecentred.delete(onRecentred); };
   function fit(): void {
     const rect = app.graphicsDevice.canvas.getBoundingClientRect();
     const next = `${rect.width}:${rect.height}:${camera.camera!.fov}:${!!app.xr?.active}`;

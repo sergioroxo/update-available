@@ -62,9 +62,11 @@ export class Web1997App {
 
   private go(v: View): void { this.back.push(this.view); this.fwd = []; this.view = v; }
 
-  handleMove(x: number, y: number): void {
+  /** true when what is under the pointer changed (S271: only then does the screen repaint) */
+  handleMove(x: number, y: number): boolean {
     const h = this.hits.find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
-    this.hover = h ? h.id : '';
+    const was = this.hover; this.hover = h ? h.id : '';
+    return this.hover !== was;
   }
 
   handleClick(x: number, y: number): void {

@@ -2422,7 +2422,7 @@ export class DesktopOS {
   private xrScale = false;
   private xrHover: XrRect | null = null;
   xrPoint(x: number, y: number): { x: number; y: number } {
-    const rect = xrTarget(xrRects(this), x, y, 40);
+    const rect = xrTarget(xrRects(this), x, y, 56);   // S271 (his 31 Oct: "it feels like it needs a target") — a wider catch: ~4° from the seat
     if (JSON.stringify(rect) !== JSON.stringify(this.xrHover)) { this.xrHover = rect; this.dirty = true; }
     return rect ? { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 } : { x, y };
   }
@@ -4030,9 +4030,11 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
-    if (this.phase === 'desktop' && this.web?.open) { this.web.handleMove(x, y); this.dirty = true; return; }
+    // ⚑ S271 (the 31 Oct cast: ~70 full-screen uploads a second in a headset) — a headset hover moves every frame;
+    //   the browser windows repaint only when what is under the pointer changes
+    if (this.phase === 'desktop' && this.web?.open) { if (this.web.handleMove(x, y)) this.dirty = true; return; }
     if (this.phase === 'desktop' && this.testimony?.open) { this.testimony.handleMove(x, y); if (this.testimony.dirty) this.dirty = true; return; }
-    if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleMove(x, y); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.forum?.open) { if (this.forum.handleMove(x, y)) this.dirty = true; return; }
     if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);

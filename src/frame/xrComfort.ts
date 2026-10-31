@@ -12,6 +12,12 @@ type Batch = { _aabb: pc.BoundingBox; meshInstance: { node: pc.GraphNode; _aabb:
 type Batcher = { _batchList: Batch[]; _batchGroups: Record<string, { id: number }>; _dirtyGroups: number[];
   markGroupDirty(id: number): void; updateAll(): void };
 
+/** ⚑ S271 (his 31 Oct headset: "I want to recenter, but it doesn't recenter the image… now is to the side") — the
+ *  opening's panels (the setup window, the frame's words) hang in the headset's own space, outside the rebased world,
+ *  so Recentre never reached them; and they re-hung wherever the head pointed when the menu closed — at the menu, off
+ *  to the side. They listen here instead: Recentre hands them the head as it was when the menu opened. */
+export const xrRecentred = new Set<(head: pc.Vec3, yaw: number) => void>();
+
 export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Entity, reduced: () => boolean) {
   const authored = new pc.Entity('authored-seat');
   authored.setLocalPosition(rig.getLocalPosition()); authored.setLocalRotation(rig.getLocalRotation());
@@ -82,6 +88,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     const p = menuHead.held ? menuHead.p : head.getPosition(), yaw = menuHead.held ? menuHead.yaw : head.getEulerAngles().y;
     calibration.setTRS(p.clone(), new pc.Quat().setFromEulerAngles(0, yaw, 0), pc.Vec3.ONE);
     calibrationPending = true; calibrated = true; elapsed = 0; committed = false;
+    for (const f of xrRecentred) f(p.clone(), yaw);
   }
   // ⚑ S268 (his: "The Meta recenter system of long press… should work here") — the headset's own recentre re-origins
   //   the reference space and fires 'reset'; any calibration made before it is stale, so the mapping goes back to the

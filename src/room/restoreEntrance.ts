@@ -19,6 +19,7 @@ import type { Ray } from '../frame/xrFrame';
 import type { LambySetup } from '../desktop/setup/setup';
 import { playLoop, stopClip } from '../audio/tapeAudio';
 import { gameMenuBus } from '../state/gameMenuBus';
+import { xrRecentred } from '../frame/xrComfort';
 
 let glitch: (() => Promise<void>) | null = null;
 /** A single 0.65 s material/light state; no strobe, no second flash. */
@@ -41,19 +42,29 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   let resolveFlash: (() => void) | null = null;
   const N = 900, RESTORE = 9, EVERY = attractCopy.secondsCard * 3, HOLD = EVERY - 11, MOVE = 4.5;
   const smooth = (k: number): number => k * k * (3 - 2 * k);
+  // ⚑ S271 (his 31 Oct headset: the title "is off to the right, and it should be front and center where the click and
+  //   press any key") — the title was laid out once, around the browser's descent pose (1.5 m aside, turned 44°);
+  //   entering VR from that page seats the headset elsewhere. The layout is kept in the rig's own frame and follows
+  //   the rig, which in a headset is the level seat the world is mapped to.
   const origin = rig.getWorldTransform().clone();
   const world = (p: pc.Vec3): pc.Vec3 => origin.transformPoint(p);
+  const localTargets: pc.Vec3[] = [];
   const targets: pc.Vec3[] = [];
   const aspect = app.graphicsDevice.width / app.graphicsDevice.height;
   const CELL = Math.min(0.07, Math.tan((camera.camera?.fov ?? 42) * Math.PI / 360) * aspect * 6 * 0.82 / 43);
   copy.title.forEach((line, li) => {
     [...line].forEach((ch, ci) => {
       const glyph = DOT[ch] ?? DOT[' '];
-      for (let i = 0; i < 15; i++) if (glyph[i] === '1') targets.push(world(new pc.Vec3(
+      for (let i = 0; i < 15; i++) if (glyph[i] === '1') localTargets.push((new pc.Vec3(
         -(line.length * 4 - 1) * CELL / 2 + (ci * 4 + i % 3) * CELL,
         0.40 - li * 7 * CELL - Math.floor(i / 3) * CELL, -3)));
     });
   });
+  localTargets.forEach((p) => targets.push(world(p)));
+  const follow = (): void => {
+    origin.copy(rig.getWorldTransform());
+    localTargets.forEach((p, i) => origin.transformPoint(p, targets[i]));
+  };
   const land = sampleRoomSurfaces(room, N);
   opts.points.forEach((point, i) => { land[i].point = point; }); // these opening stars remain as room specks
   const stars = Array.from({ length: N }, (_, i) => ({
@@ -118,6 +129,13 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   const texture = makeScreenTexture(app, cvs);
   const panel = makeScreenEntity('restore-frame-words', texture, 2.4, 0.4, true);
   rig.addChild(panel); panel.setLocalPosition(0, -0.64, -3); panel.setLocalEulerAngles(90, 0, 0);
+  // S271 — Recentre brings the frame's words back in front, with the title (see xrRecentred)
+  const onRecentred = (head: pc.Vec3, yaw: number): void => {
+    const inv = rig.getWorldTransform().clone().invert(), at = inv.transformPoint(head);
+    const local = yaw - rig.getEulerAngles().y, r = local * Math.PI / 180;
+    panel.setLocalPosition(at.x - Math.sin(r) * 3, at.y - 0.64, at.z - Math.cos(r) * 3); panel.setLocalEulerAngles(90, local, 0);
+  };
+  xrRecentred.add(onRecentred);
   let text = '';
   function words(next: string): void {
     if (text === next) return; text = next; status.textContent = next;
@@ -174,6 +192,7 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
     originalPaint(); instances.forEach((mi, i) => { mi.visible = visible[i]; });
     app.xr?.off(`available:${pc.XRTYPE_VR}`, availableVr);
     floating?.destroy(); floating = null; opts.setup()?.destroy(); opts.clearSetup();
+    xrRecentred.delete(onRecentred);
     frame.remove(); root.destroy(); mesh.destroy(); ink.destroy(); panel.destroy(); texture.destroy(); glitch = null;
   }
   async function handover(): Promise<void> {
@@ -221,6 +240,7 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
         flight = opts.flyToSeat();
       }
       if (phase !== 'wake' && phase !== 'restore' && phase !== 'setup' && phase !== 'fold') return;
+      if (phase === 'wake') follow();
       if (phase === 'setup' || phase === 'fold') releaseTime += dt;
       if (phase === 'setup') floating?.update(dt, smooth(Math.min(1, elapsed / 2.3)));
       // ⚑ S245 — the opening film has its own music: the setup's loop steps aside for it and comes back after
