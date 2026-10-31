@@ -1206,7 +1206,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // restart. `close` has no room to age into; it takes the constellation.
     os.onEraRelocate = (era) => {
       if (era === 'close') return;
-      if (xr?.active) xrLayer?.dollhouse();   // S270g / VR-06
+      if (xr?.active) xrLayer?.dollhouse(era);   // S270g / VR-06; P7-68 the lamps by the era moved to
       beginEraRelocation(era);
     };
     os.onMessageReady = () => { messageSeatPending = true; };

@@ -394,3 +394,36 @@ RULES: no real private individuals named (public organisations are fine); no lon
 
 When finished, reply with an 8-line summary, including the paths of the 5 most useful screenshots.
 ```
+
+---
+
+## Later on 31 Oct (after his rulings on STORIES_VERA_MAYA)
+
+- **Haiku: source check** → SOURCES_CHECK_VERA_MAYA_2026-10-31.md. Checks every citation and [VERIFY SOURCE] mark in
+  STORIES_VERA_MAYA, gives a verdict per claim (supported / partly / not found / contradicted), never invents a source.
+- **Sonnet: the LGB refusal** → RESEARCH_LGB_REFUSAL_2026-10-31.md. The documented 2019–2026 pattern of LGB-only groups
+  that exclude trans people (dated and sourced), how the refusals read, the data, and the inclusive groups as
+  counter-examples. Then three ways the refusal could reach Maya, with invented names, and the risks.
+
+### Prompt for him to give Gemini (a picture of the red thread)
+
+```
+Make one simple picture that explains an idea for an art piece. Plain, calm, easy to read. Keep the text short.
+
+The piece: one small house, the same three rooms, seen in three years: 1997, 2016 and 2026.
+Three different people live there, one in each time. They never meet.
+
+The idea, "the red thread": one small mended thing in red thread appears once in each time.
+Nobody in the piece ever says they are linked. The visitor may notice, or not.
+
+Draw three panels side by side, one for each time, the same house each time, drawn very simply:
+1. 1997, a boy's room: a toy monkey on the bed, one ear sewn back on with red thread.
+2. 2016, a woman's room: a house key on a loop of red thread, sent back by the woman she used to live with.
+3. 2026, a young woman's room: a coat whose torn shoulder a friend has sewn up with red thread.
+
+Make everything grey and soft except the red thread, so the eye finds the red in each panel.
+Under each panel, one short caption: the year and the object.
+Under the whole picture, one line: "The same colour, three times. Never explained."
+
+No faces. No real people. No logos. No words inside the picture except the captions.
+```

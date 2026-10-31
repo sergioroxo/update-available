@@ -18,6 +18,7 @@ import { drawLambyChar } from '../desktop/apps/lambyChar';
 import { FRAME } from '../desktop/theme/chrome';
 import { ERA1 } from '../desktop/theme/era1';
 import { ERA4 } from '../desktop/theme/era4';
+import { TIDY } from '../desktop/theme/calendar';
 import type { Ray } from './xrFrame';
 
 export interface XrLayerDeps {
@@ -51,7 +52,7 @@ export interface XrLayer {
   /** VR-04 — start listening for a fingertip on a table */
   matchTable(): void;
   /** VR-06 — the house in the hands, for one change of era */
-  dollhouse(): void;
+  dollhouse(era?: string): void;
   /** VR-05 — a press (physical ray) on Lamby; true if it took it */
   pressLamby(physical: Ray, toLogical: (r: Ray) => Ray): boolean;
   /** VR-01 — a hand is on the mouse: a press is a click at the desktop pointer (true if it took it) */
@@ -184,10 +185,28 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   // the model fits ~45 cm across whatever the era holds (one room in 1997, the three-room house from 2016)
   const FIT = 0.45, HOLD = 4.2;
   let SCALE = 0.06;
-  let doll: { root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3 } | null = null;
+  let doll: { root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[] } | null = null;
   const markMat = new pc.StandardMaterial(); markMat.useLighting = false; markMat.diffuse = new pc.Color(0, 0, 0);
   markMat.emissive = new pc.Color().fromString(FRAME.bright); markMat.update();
-  const buildGeo = (root: pc.Entity): { geo: pc.Entity; meshes: pc.Mesh[]; centre: pc.Vec3 } => {
+  // ⚑ P7-68 — D4 WHO'S HOME (his yes 31 Oct: "I like the rooms lighting one at a time"; DOLLHOUSE_IDEAS_SONNET §D4).
+  // A warm glow over each room the model holds: the room you are going to rises, the one you leave dims and holds,
+  // a room left earlier stays low. Rooms dim, they NEVER go out — a dark room reads as death, and the real rooms
+  // already keep one light on (cluster.json `_docE4RoomsHeldNotDark`). The house's lamp, not anyone's soul.
+  type GlowRole = 'stay' | 'to' | 'from' | 'held';
+  /** room centres, just under the ceiling: Room 1's roomFill, Rooms 2 and 3 their zone lights (cluster.ts) */
+  const ROOMS: [number, number, number][] = [[0, 2.1, 0.9], [-3.88, 2.1, 0.7], [3.88, 2.1, 0.7]];
+  const GLOW = 0.8, LOW = 0.4;
+  const glowMat = new pc.StandardMaterial(); glowMat.useLighting = false; glowMat.diffuse = new pc.Color(0, 0, 0);
+  glowMat.emissive = new pc.Color().fromString(TIDY.lamp); glowMat.update();   // the lamp's own warm, from the theme
+  const ease = (k: number): number => { const c = Math.max(0, Math.min(1, k)); return c * c * (3 - 2 * c); };
+  const glowLevel = (role: GlowRole, t: number): number =>
+    role === 'stay' ? 1 : role === 'held' ? LOW : role === 'from' ? 1 - (1 - LOW) * ease(t / 1.5) : ease((t - 0.6) / 1.2);
+  /** which room each glow plays, by the era being moved to */
+  const glowPlan = (era?: string): { room: number; role: GlowRole }[] =>
+    era === 'e3' ? [{ room: 0, role: 'from' }, { room: 1, role: 'to' }]
+      : era === 'e4' ? [{ room: 0, role: 'held' }, { room: 1, role: 'from' }, { room: 2, role: 'to' }]
+        : [{ room: 0, role: 'stay' }];
+  const buildGeo = (root: pc.Entity): { geo: pc.Entity; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3 } => {
     // a dollhouse has no roof: the ceilings (thin, high slabs) are left out so the eye falls into the rooms
     const list = batches().filter((b) => b.meshInstance && !(b._aabb.center.y > 2.2 && b._aabb.halfExtents.y < 0.2));
     const box = new pc.BoundingBox(); list.forEach((b, i) => i === 0 ? box.copy(b._aabb) : box.add(b._aabb));
@@ -198,7 +217,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     geo.setLocalScale(SCALE, SCALE, SCALE);
     geo.setLocalPosition(-box.center.x * SCALE, -box.center.y * SCALE, -box.center.z * SCALE);
     root.addChild(geo);
-    return { geo, meshes: list.map((b) => b.meshInstance!.mesh), centre: box.center.clone() };
+    return { geo, meshes: list.map((b) => b.meshInstance!.mesh), centre: box.center.clone(), half: box.halfExtents.clone() };
   };
   const endDoll = (): void => { if (doll) { doll.root.destroy(); doll = null; } };
   const tickDoll = (dt: number): void => {
@@ -213,6 +232,15 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     const s = 1 + Math.abs(Math.sin(doll.t * 6)) * 0.6;
     doll.mark.setLocalPosition((seat.x - doll.centre.x) * SCALE, (seat.y - doll.centre.y) * SCALE + 0.02, (seat.z - doll.centre.z) * SCALE);
     doll.mark.setLocalScale(0.012 * s, 0.012 * s, 0.012 * s);
+    // the lamps: a glow shows only over a room the model holds now (one room until the house re-forms)
+    for (const g of doll.glows) {
+      const [x, y, z] = ROOMS[g.room];
+      const inside = Math.abs(x - doll.centre.x) < doll.half.x && Math.abs(z - doll.centre.z) < doll.half.z;
+      const w = inside ? GLOW * SCALE * glowLevel(g.role, doll.t) : 0;
+      g.e.enabled = w > 1e-4;
+      g.e.setLocalPosition((x - doll.centre.x) * SCALE, (y - doll.centre.y) * SCALE, (z - doll.centre.z) * SCALE);
+      g.e.setLocalScale(w, 0.002, w);
+    }
   };
   // the batches can be rebuilt mid-change (the next era's room batches): never draw a mesh the batcher has let go
   app.on('prerender', () => {
@@ -220,7 +248,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     const now = new Set(batches().map((b) => b.meshInstance?.mesh));
     if (doll.meshes.some((m) => !now.has(m))) {
       doll.geo.destroy();
-      const g = buildGeo(doll.root); doll.geo = g.geo; doll.meshes = g.meshes; doll.centre = g.centre;
+      const g = buildGeo(doll.root); doll.geo = g.geo; doll.meshes = g.meshes; doll.centre = g.centre; doll.half = g.half;
     }
   });
 
@@ -282,7 +310,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
 
   return {
     matchTable() { if (!live()) return; table = { t: 0, hist: [] }; deps.frame.notice(deps.strings.ask, 24); },
-    dollhouse() {
+    dollhouse(era) {
       if (!live() || !batches().length) return;
       endDoll();
       const root = new pc.Entity('xr-dollhouse');
@@ -295,8 +323,14 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
       const mark = new pc.Entity('xr-dollhouse-seat');
       mark.addComponent('render', { type: 'box', material: markMat, layers: [deps.frame.layerId] });
       root.addChild(mark);
+      const glows = glowPlan(era).map(({ room, role }) => {
+        const e = new pc.Entity('xr-dollhouse-lamp');
+        e.addComponent('render', { type: 'box', material: glowMat, layers: [deps.frame.layerId] });
+        e.enabled = false; root.addChild(e);
+        return { e, room, role };
+      });
       root.setLocalScale(0, 0, 0);
-      doll = { root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre };
+      doll = { root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre, half: g.half, glows };
     },
     mouseClick() { if (!grip) return false; deps.mouse.click(cursor.x, cursor.y); return true; },
     get mouseEngaged() { return !!grip; },

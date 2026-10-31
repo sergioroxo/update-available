@@ -341,8 +341,10 @@ used to prove the system wrong. They are people.*
 - **Register.** Mostly felt (the thread and the files). The coat caption is operable, and it is L getting it wrong in
   the plainest way.
 - **Cross-house.** The red thread (section 5). The seam is the whole thing.
-- **Documented pattern.** Chosen family and mutual aid among trans people: Kath Weston, *Families We Choose* (Columbia
-  UP, 1991) [VERIFY SOURCE: edition and page]. The house/mother structure in ballroom is already documented in
+- **Documented pattern.** Chosen family and mutual aid among queer and trans young adults: Levin et al., "We Just Take
+  Care of Each Other", *IJERPH* 17(19):7346, 2020, https://pmc.ncbi.nlm.nih.gov/articles/PMC7579626/ (qualitative, n=11).
+  The term comes from Kath Weston, *Families We Choose: Lesbians, Gays, Kinship* (1991), which is about lesbians and gay
+  men, not trans people (corrected by SOURCES_CHECK_VERA_MAYA_2026-10-31.md, row 8). The house/mother structure in ballroom is already documented in
   `e4_ball.json`. The coat as a "false image" box rule is in `e4_offers.json` (Love in Action women's manual, 2001).
 - **Risks.**
   - Do not make Junie a saviour or a fixer. She mends a coat. She is also tired.
@@ -458,7 +460,7 @@ used to prove the system wrong. They are people.*
 - **Register.** Felt (the thread). The care log is operable.
 - **Cross-house.** None.
 - **Documented pattern.** Peer support among trans people; the cost of nighttime-only care. The existing line on the
-  3 a.m. offer comes from Pastor.AI-style products [VERIFY SOURCE: the product claim; check `e4_offers.json`].
+  3 a.m. offer comes from Pastor.AI-style products [NO SOURCE: Pastor.AI is an invented mark; the card is in `s4_offers.json`; SOURCES_CHECK row 15].
 - **Risks.**
   - Do not make Junie exhausted for effect.
   - Do not use "she nearly didn't make it" framing.
@@ -535,3 +537,26 @@ the windows' geometry, so I rank it second. [CHECK: window frames in Rooms 1–3
    (M3, M4), then V2, then the thread across the three eras.
 
 *No file other than this one was edited.*
+
+---
+
+## 8. His rulings (31 Oct 2026, his words first)
+
+1. **V2, her own testimony:** "this could potentially be really good if well done." → YES, with the most care.
+2. **Nuala:** "Nuala can be a former partner yes, but no clothed elements as memories." → Former partner. **No
+   clothing as a memory object**: the jumper's mended elbow (V1 sample 3) and the red wool on it are OUT. The existing
+   jumper line in `s3_maiden.json` stays as it is; nothing new is built on it.
+3. **Objects:** "We can have objects yes." → One small object in Vera's room is allowed (mug, stamp card).
+4. **Mum:** "Just Mum." → No name in her messages, and no slip shown.
+5. **Felt before the Commons:** "Lets do felt beat before the Commons, that way it makes the commons more important as
+   an escape. Please make sure to be quite current and critical, I think it is importsnt that MAYA reaches out to a LGB
+   organization thinking they were there to help but gets denied support." → YES: felt threads before the Commons
+   (`e4_offers.json`'s "no felt beat until the ball" changes), PLUS a new beat: Maya asks an LGB organisation for help
+   and is refused. Research: RESEARCH_LGB_REFUSAL_2026-10-31.md (agent running).
+6. **Sketchbook:** "After the commons is the end, so it should be stuff for before." → The pages come BEFORE the
+   Commons; no page 47 after.
+7. **The red thread:** he asked for a plainer explanation (given in chat, 31 Oct) and a prompt for a visualiser.
+   Note: ruling 2 removes the jumper, so Vera's era needs a non-clothing carrier if the thread goes ahead.
+8. **Sources:** "make the research validation send a Haiku 5.5 to check" → SOURCES_CHECK_VERA_MAYA_2026-10-31.md
+   (done 31 Oct: 4 supported, 9 partly, 1 contradicted and corrected above, 2 not found; rewordings in that file).
+9. **Build order:** "will depend." → Not fixed yet.

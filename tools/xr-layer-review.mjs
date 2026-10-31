@@ -50,6 +50,12 @@ try {
       await page.evaluate(() => window.__xrLayer.dollhouse());
       await wait(1500); shots.push(await shot(page, 'e1-dollhouse'));
     }
+    // P7-68 — the lamps: the room left dims and holds, the room moved to rises (photographed at the rise's end)
+    if (era === 3 || era === 4) {
+      await look(page, 0, -10);
+      await page.evaluate((e) => window.__xrLayer.dollhouse(e), `e${era}`);
+      await wait(2600); shots.push(await shot(page, `e${era}-dollhouse-lamps`));
+    }
     // a fake controller, placed in the presentation space at a room point (VR-01 mouse, VR-03 phone)
     const addPad = (name, lx, ly, lz) => page.evaluate((name, lx, ly, lz) => {
       const app = window.__app, c = window.__xrComfort, head = app.root.findByName('camera');
