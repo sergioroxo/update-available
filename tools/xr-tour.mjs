@@ -11,11 +11,11 @@ const port = Number(arg('port', 0));
 if (!port) throw Error('Pass --port');
 const eras = arg('eras', '1,2,3,4').split(',').map(Number);
 const mock = !process.argv.includes('--no-mock');   // --no-mock: the same views in the browser, for comparison
-const out = 'out/xr-tour'; fs.mkdirSync(out, { recursive: true });
+const out = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : 'out/xr-tour'; fs.mkdirSync(out, { recursive: true });
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const report = [];
 const browser = await puppeteer.launch({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true, protocolTimeout: 300000,
-  args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox', '--disable-background-networking'], defaultViewport: { width: 960, height: 600 } });
+  args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox', '--disable-background-networking'], defaultViewport: process.argv.includes('--hires') ? { width: 1280, height: 720, deviceScaleFactor: 2 } : { width: 960, height: 600 } });   // --hires: figures (2560 × 1440)
 try {
   for (const era of eras) {
     const page = await browser.newPage(), errors = [];
@@ -26,12 +26,13 @@ try {
     await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /Log in/i.test(x.textContent || '')); b?.click(); });
     await page.waitForFunction(() => window.__os && window.__app && window.__xrComfort, { timeout: 180000 });
     await wait(9000);   // the arrival settles (seat, era props, the desktop's first frames)
-    await page.evaluate((m) => { window.__mock = m; }, mock);
+    await page.evaluate((m, h) => { window.__mock = m; window.__hires = h; }, mock, process.argv.includes('--hires'));
     await page.addStyleTag({ content: 'body > *:not(canvas) { visibility:hidden !important; }' });
     await page.evaluate(() => {
       const app = window.__app, head = app.root.findByName('camera');
       if (window.__mock) { Object.defineProperty(app.xr, 'active', { configurable: true, get: () => true }); head.setLocalPosition(0, 1.2, 0); }
-      head.camera.fov = 75;   // vertical; ~100° across at 960 × 600
+      head.camera.fov = 75;
+      if (window.__hires) app.root.findByName('xr-debug')?.setLocalScale(0, 0, 0);   // figures: no debug plate   // vertical; ~100° across at 960 × 600
     });
     await page.waitForFunction(() => window.__xrComfort.calibrated && !window.__xrComfort.busy, { timeout: 20000 }).catch(() => {});
     await wait(2500);

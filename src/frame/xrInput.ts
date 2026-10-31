@@ -20,6 +20,8 @@ export interface XrInput {
   ray(): Ray | null;
   /** S270g / VR-04 — every tracked index fingertip (hands) and controller grip, in physical space */
   points(): pc.Vec3[];
+  /** S270h / VR-01 — each hand's palm (it does not move when the fingers pinch) and each controller's grip */
+  palms(): pc.Vec3[];
   /** S270g / VR-08 — 'own' or 'programme': the programme redraws the visitor's hands while the visor is on */
   setStyle(style: 'own' | 'programme'): void;
   /** S270f — the left wrist (hand) or left grip (controller), where the Menu tab rides; null when not tracked */
@@ -227,7 +229,16 @@ export function mountXrInput(app: pc.Application, opts: {
       if (!xr?.active) return out;
       for (const src of wands.keys()) {
         if (src.hand) { const t = src.hand.tracking ? src.hand.getJointById('index-finger-tip') : null; if (t) out.push(t.getPosition().clone()); }
-        else { const g = src.getPosition(); if (g) out.push(g.clone()); }
+        else { const g = src.getPosition?.(); if (g) out.push(g.clone()); }
+      }
+      return out;
+    },
+    palms(): pc.Vec3[] {
+      const out: pc.Vec3[] = [];
+      if (!xr?.active) return out;
+      for (const src of wands.keys()) {
+        if (src.hand) { const m = src.hand.tracking ? src.hand.getJointById('middle-finger-metacarpal') : null; if (m) out.push(m.getPosition().clone()); }
+        else { const g = src.getPosition?.(); if (g) out.push(g.clone()); }
       }
       return out;
     },
@@ -242,7 +253,7 @@ export function mountXrInput(app: pc.Application, opts: {
       for (const src of wands.keys()) {
         if (src.handedness !== pc.XRHAND_LEFT) continue;
         if (src.hand) { const w = src.hand.tracking ? src.hand.getJointById('wrist') : null; return w ? w.getPosition().clone() : null; }
-        const g = src.getPosition(); return g ? g.clone() : null;
+        const g = src.getPosition?.(); return g ? g.clone() : null;
       }
       return null;
     },

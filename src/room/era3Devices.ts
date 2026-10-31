@@ -693,6 +693,12 @@ export interface Era3Devices {
   /** ⚑ S270g / VR-08 — the visor carried in a hand (a room point), or null to let it go. Only while it can be put
    *  on (the laptop read, nothing failing); false when it cannot be taken. */
   carryVisor(at: pc.Vec3 | null): boolean;
+  /** ⚑ S270h / VR-03 — Vera's phone in a hand (a room point), or null to set it down on its stand */
+  carryPhone(at: pc.Vec3 | null): boolean;
+  /** counts the phone's new content (a message landing): the hand that holds it feels it */
+  readonly phoneBuzz: number;
+  /** S270h — the head to place things at, in room coordinates (the engine's logical head in a headset) */
+  setHeadProvider(fn: () => pc.Entity | null): void;
   /** the visor's resting place (room coordinates) — where a hand must close to take it */
   readonly visorRest: pc.Vec3 | null;
   holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
@@ -1069,13 +1075,19 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   let visor: Screen | null = null;
   let visorK = 0;            // 0 = on the stand, 1 = on your face
   let visorCarry: pc.Vec3 | null = null;   // S270g: in a hand (VR), before it reaches the face
+  let phoneCarry: pc.Vec3 | null = null, phoneBuzz = 0;   // S270h / VR-03
   let camEntity: pc.Entity | null = null;
   /** the camera's yaw at the moment the device went on — every later yaw is
    *  measured against it, and that difference is the whole of the turn. */
   let wornYaw = 0;
   let wasWorn = false;
 
+  // ⚑ S270h — in a headset the head named 'camera' is the TRACKED one, in the presentation space; the room is in
+  //   its own coordinates, shifted to meet it. The engine lends a head in room coordinates (`setHeadProvider`), so
+  //   a worn visor or a carried phone is placed at the eyes and not a tracked head-height away from them.
+  let headFn: (() => pc.Entity | null) | null = null;
   function camera(): pc.Entity | null {
+    if (headFn) { const h = headFn(); if (h) return h; }
     if (!camEntity) {
       const found = app.root.findByName('camera');
       if (found instanceof pc.Entity) camEntity = found;
@@ -1170,7 +1182,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (visorK === 0 && visorCarry && cam) {
       // in the hand: held at the carry point, its glass turned to the eyes
       visor.entity.setPosition(visorCarry);
-      visor.entity.lookAt(cam.getPosition()); visor.entity.rotateLocal(90, 0, 0);
+      visor.entity.lookAt(cam.getPosition()); visor.entity.rotateLocal(-90, 0, 0);   // its glass turned to the eyes
       return;
     }
     if (visorK === 0 || !cam) {
@@ -1208,6 +1220,19 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       visorCarry = at ? at.clone() : null;
       return true;
     },
+    carryPhone(at) {
+      const s = screens.find((x) => x.name === 'phone');
+      if (!s || !s.entity.enabled) { phoneCarry = null; return false; }
+      if (at) { phoneCarry = at.clone(); phoneHeld = true; return true; }
+      if (phoneCarry) {
+        // set down: it eases back to its stand from where the hand left it
+        s.heldPos = s.entity.getLocalPosition().clone(); s.heldEuler = s.entity.getLocalEulerAngles().clone();
+        s.holdK = 1; s.holdTo = 0; phoneHeld = false;
+      }
+      phoneCarry = null; return true;
+    },
+    get phoneBuzz() { return phoneBuzz; },
+    setHeadProvider(fn) { headFn = fn; },
     get visorRest() { return visor ? new pc.Vec3(visor.restPos.x, visor.restPos.y, visor.restPos.z) : null; },
     hoverXr(ray) { xrRay = ray; },
     tick(dt: number): void {
@@ -1268,6 +1293,14 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
             s.xrHover = hover; s.draw(s.ctx, s.logical.w, s.logical.h); xrOutline(s.ctx, hover); s.dirty = true;
           }
         }
+        if (s.name === 'phone' && phoneCarry) {
+          // in the hand: the glass faces the eyes, the body rides it (phoneLift 1)
+          const cam = camera();
+          s.entity.setPosition(phoneCarry);
+          if (cam) { s.entity.lookAt(cam.getPosition()); s.entity.rotateLocal(-90, 0, 0); s.entity.rotateLocal(0, 180, 0); }   // upright, facing the eyes
+          s.holdK = 1; s.holdTo = 1;
+          continue;
+        }
         if (s.holdK === s.holdTo) continue;
         const step = dt / HOLD_SECONDS;
         s.holdK = s.holdTo > s.holdK ? Math.min(s.holdTo, s.holdK + step) : Math.max(s.holdTo, s.holdK - step);
@@ -1319,6 +1352,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           }
         }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
+            if (s.name === 'phone' && s.lastVersion !== undefined) phoneBuzz++;
             s.lastVersion = s.versionOf();
             s.dirty = true;
           }
@@ -1355,6 +1389,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           }
         }
         if (s.versionOf && s.lastVersion !== s.versionOf()) {
+          if (s.name === 'phone' && s.lastVersion !== undefined) phoneBuzz++;
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
           // the callback this screen was registered with — see `draw` on Screen

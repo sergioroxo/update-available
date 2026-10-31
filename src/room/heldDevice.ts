@@ -43,6 +43,9 @@ export interface DeviceSpec {
   gameId: string;
   /** in a headset: how far in front of the eyes it is held (metres) */
   holdDist?: number;
+  /** ⚑ S270h / VR-02 — a clamshell: in a headset it rests SHUT and opens in the hand. `node` is the half that
+   *  swings, `pivot` the hinge in that node's parent space, `closed` the shut angle about the hinge's X (degrees) */
+  fold?: { node: string; pivot: V3; closed: number };
   /**
    * ⚑ S222 / W1-B8, W1-K4 — on a FLAT screen the device is placed by the view, not by a distance: the glass
    * takes `fill` of the frame's height (and never more than 90% of its width), so a game pixel is at least about
@@ -183,6 +186,22 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   const bodyHit = (ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean =>
     wrap.enabled && rayDist(ray.p0, ray.p1, plane.getPosition()) < (holding ? 0.13 : 0.12);
 
+  // ⚑ S270h / VR-02 — the hinge: kept at its authored (open) pose and swung about the hinge from there
+  const hinge = spec.fold ? wrap.findByName(spec.fold.node) as pc.Entity | null : null;
+  const hingeP = hinge?.getLocalPosition().clone(), hingeQ = hinge?.getLocalRotation().clone();
+  let foldK = 1;
+  const fold = (dt: number): void => {
+    if (!hinge || !spec.fold || !hingeP || !hingeQ) return;
+    const open = !app?.xr?.active || holding ? 1 : 0;
+    if (foldK === open) return;
+    foldK = open > foldK ? Math.min(1, foldK + dt / 0.35) : Math.max(0, foldK - dt / 0.35);
+    const k = foldK * foldK * (3 - 2 * foldK);
+    const r = new pc.Quat().setFromEulerAngles((1 - k) * spec.fold.closed, 0, 0);
+    const pv = new pc.Vec3(...spec.fold.pivot);
+    hinge.setLocalRotation(new pc.Quat().mul2(r, hingeQ));
+    hinge.setLocalPosition(r.transformVector(hingeP.clone().sub(pv)).add(pv));
+    plane.enabled = foldK > 0.5;   // the glass is inside a shut phone
+  };
   return {
     spec,
     get held() { return holding; },
@@ -238,6 +257,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     },
     tick(dt, era, has, fileSize) {
       clock += dt;
+      fold(dt);
       if (era !== spec.era) {                            // another era is the fold's
         if ((holding || t < 1) && rest) { wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
         holding = false; t = 1;

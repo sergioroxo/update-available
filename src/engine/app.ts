@@ -715,6 +715,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let grabbingSource: pc.XrInputSource | null = null;
   let grabbingEra: string | null = null;
   let carryingVisor = false;         // S270g / VR-08 — the visor in a hand, on its way to the face
+  let carryingPhone = false, phoneBuzzSeen = 0;   // S270h / VR-03 — Vera's phone in a hand
   let xrLayer: XrLayer | null = null;
   // ⚑ S269 — the frame helper's desktop line ("Esc opens the menu.") has no Esc in a headset; it says the headset's way
   // ⚑ S270b (his: "the menu tab low on your right, it's still like appearing, it doesn't leave") — said for 12 s, once
@@ -834,6 +835,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // data/room/nodes.json) share this module's DEVICE_SEAT_POSES as their
     // authored source.
     era3Devices = buildEra3Devices(app);
+    era3Devices.setHeadProvider(() => xr?.active ? logicalHead() : null);   // S270h: place things at the eyes in room coordinates
     // S149 — the held phone comes to where she is looking (R3-76): the seat's pose plus the drag
     era3Devices.setLookProvider(() => ({ pitch: camPitch + lookOffPitch, yaw: camYaw + lookOffYaw }));
   }
@@ -1067,7 +1069,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onDesk: () => xrLayer?.matchTable()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); xrFrame?.press(ray); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
@@ -1079,6 +1081,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const ray = xrComfort.logicalRay(physical); poseGrabHand(ray);
         // ⚑ S270g / VR-08 — 2026's visor is taken by hand (a grip or a held pinch within reach of it), carried, and
         //   put on by bringing it to the face. The press near it still works as before.
+        // ⚑ S270h / VR-03 — 2016: Vera's phone is taken in the hand the same way, and is the era's main surface there
+        const phone = cluster.era === 'e3' ? era3Devices?.phoneScreen : null;
+        if (phone?.enabled && ray.p0.distance(phone.getPosition()) < 0.3 && era3Devices?.carryPhone(ray.p0.clone().add(ray.p1.clone().sub(ray.p0).normalize().mulScalar(0.07)))) {
+          grabbingSource = source; carryingPhone = true; phoneBuzzSeen = era3Devices.phoneBuzz; return true;
+        }
         const rest = cluster.era === 'e4' ? era3Devices?.visorRest : null;
         if (rest && ray.p0.distance(rest) < 0.35 && era3Devices?.carryVisor(ray.p0.clone().add(ray.p1.clone().sub(ray.p0).normalize().mulScalar(0.08)))) {
           grabbingSource = source; carryingVisor = true; return true;
@@ -1087,6 +1094,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         grabbingSource = source; grabbingEra = cluster.era; return true;
       },
       onHold: (source, physical) => {
+        if (carryingPhone && source === grabbingSource) {
+          const r = xrComfort.logicalRay(physical);
+          era3Devices?.carryPhone(r.p0.clone().add(r.p1.clone().sub(r.p0).normalize().mulScalar(0.07)));
+          // the group writes: the hand holding it feels it
+          if (era3Devices && era3Devices.phoneBuzz !== phoneBuzzSeen) {
+            phoneBuzzSeen = era3Devices.phoneBuzz;
+            const pad = source.gamepad as (Gamepad & { hapticActuators?: { pulse?(v: number, ms: number): void }[] }) | null;
+            try { pad?.hapticActuators?.[0]?.pulse?.(0.6, 90); } catch { /* no actuator */ }
+          }
+          return;
+        }
         if (carryingVisor && source === grabbingSource) {
           const r = xrComfort.logicalRay(physical), at = r.p0.clone().add(r.p1.clone().sub(r.p0).normalize().mulScalar(0.08));
           const eye = xrComfort.logicalPoint(camera.getPosition());
@@ -1097,7 +1115,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (xrComfort.busy || cluster?.era !== grabbingEra || gameMenuBus.isOpen) { devices?.release(grabbingEra); grabbingSource = null; return; }
         poseGrabHand(xrComfort.logicalRay(physical)); devices?.follow(grabbingEra, grabHand);
       },
-      onRelease: source => { if (carryingVisor && source === grabbingSource) { era3Devices?.carryVisor(null); carryingVisor = false; grabbingSource = null; return; } if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
+      onRelease: source => { if (carryingPhone && source === grabbingSource) { era3Devices?.carryPhone(null); carryingPhone = false; grabbingSource = null; return; } if (carryingVisor && source === grabbingSource) { era3Devices?.carryVisor(null); carryingVisor = false; grabbingSource = null; return; } if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
       canPoke: physical => {
         if (xrFrame?.touches(physical)) return true;   // S270f: the wrist tab and the open menu take a fingertip too
         if (!cluster || !os.inDesktop || xrComfort.busy || gameMenuBus.isOpen) return false;
@@ -1115,7 +1133,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       guideShowing: () => os.lambyGuidePaint.balloon,
       guideYes: () => { os.lambyGuide.press(os.lambyGuide.view.act ? 'lg-take' : 'lg-show'); os.dirty = true; },
       visorWorn: () => (cluster?.era ?? os.era) === 'e4' && !!e4Bridge()?.shell()?.pinned,
-      inRoom: () => !restoreEntrance?.blocking && !os.setup?.open && !document.getElementById('lambyos-home')
+      inRoom: () => !restoreEntrance?.blocking && !os.setup?.open && !document.getElementById('lambyos-home'),
+      mouse: {
+        active: () => !!cluster && (cluster.era === 'e1' || cluster.era === 'e2') && os.inDesktop && !gameMenuBus.isOpen && !scriptedBusy(),
+        prop: () => room.props.get('mouse')?.entity ?? null,
+        move: (x, y) => { const t = os.xrPoint(x, y); os.handleMove(t.x, t.y); },
+        click: (x, y) => { noteHumanInput(); os.lambyGuide.activity(); os.handleClick(x, y); },
+        screenPoint: (x, y) => new pc.Vec3(SCREEN.x + (x / ERA1_CANVAS.width - 0.5) * SCREEN.w, SCREEN.y + (0.5 - y / ERA1_CANVAS.height) * SCREEN.h, SCREEN.z + 0.012)
+      }
     });
     // ⚑ S232 — the exhibition's idle clock (frame/attract.ts): a headset has no DOM events, so the select/squeeze above
     //   feed it, and at 30 min untouched it ends the session here before the fresh-visit reload
@@ -1864,7 +1889,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   // Apply the authored tilt before the entrance takes its snapshot; rebuild below.
   syncRacketDemo();
-  cluster?.setNeverBatch(['tennisRacketModel']); // the demonstration moves it
+  cluster?.setNeverBatch(['tennisRacketModel', 'mouse']); // the demonstration moves it; S270h / VR-01: the hand moves the mouse
   /** ⚑ S183 — the institution's corner: named, pressable, and pulling with the file */
   const institution = options.reinterp === true ? createInstitution(room) : null;
   if (institution) {
@@ -3908,7 +3933,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S147 — the headset's frame ticks even while the menu holds the piece: the
     //   wands follow the hands and the plane's cursor follows the ray
     xrInput?.tick();
-    if (xr?.active) { const ray = aimRay(); era3Devices?.hoverXr(ray); const at = ray && toDesktopR(ray); if (at) { const target = os.xrPoint(at.x, at.y); os.handleMove(target.x, target.y); } else os.xrPoint(-100, -100); }
+    if (xr?.active && !xrLayer?.mouseEngaged) { const ray = aimRay(); era3Devices?.hoverXr(ray); const at = ray && toDesktopR(ray); if (at) { const target = os.xrPoint(at.x, at.y); os.handleMove(target.x, target.y); } else os.xrPoint(-100, -100); }
     if (xrFrame && xr?.active) xrFrame.tick(xrInput?.ray() ?? null, xrInput?.wrist() ?? null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : aimName ?? xrHelperText(helper?.text() ?? null, dt));
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the

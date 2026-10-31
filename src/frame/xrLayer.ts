@@ -26,7 +26,13 @@ export interface XrLayerDeps {
     logicalPoint(p: pc.Vec3): pc.Vec3; matchDesk(tableY: number): number; stageYaw(): number;
     readonly calibrated: boolean; readonly busy: boolean; readonly authored: pc.Entity;
   };
-  input: { points(): pc.Vec3[]; setStyle(style: 'own' | 'programme'): void };
+  input: { points(): pc.Vec3[]; palms(): pc.Vec3[]; setStyle(style: 'own' | 'programme'): void };
+  /** VR-01 — the 1997/2003 desk: the mouse prop, the desktop's pointer, and where a desktop pixel is on the glass */
+  mouse: {
+    active(): boolean; prop(): pc.Entity | null;
+    move(x: number, y: number): void; click(x: number, y: number): void;
+    screenPoint(x: number, y: number): pc.Vec3;
+  };
   frame: { notice(text: string | null, seconds?: number): void; readonly layerId: number };
   strings: { ask: string; done: string; none: string; offer: string };
   era(): string;
@@ -46,6 +52,9 @@ export interface XrLayer {
   dollhouse(): void;
   /** VR-05 — a press (physical ray) on Lamby; true if it took it */
   pressLamby(physical: Ray, toLogical: (r: Ray) => Ray): boolean;
+  /** VR-01 — a hand is on the mouse: a press is a click at the desktop pointer (true if it took it) */
+  mouseClick(): boolean;
+  readonly mouseEngaged: boolean;
   /** ?debug=1 review only: force the balloon / the worn visor, to photograph Lamby and the lens without a story */
   review(what: { lamby?: boolean; worn?: boolean }): void;
 }
@@ -206,11 +215,61 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     }
   });
 
+  // ── VR-01 the desk mouse (1997, 2003) ──
+  // A palm or a controller resting on the mouse takes it: sliding it on the desk moves the desktop's pointer (about
+  // 20 cm of travel crosses the screen) and the mouse with it; the pinch or the trigger clicks. Lift away and it
+  // stays where it was left. Pointing at the screen still works whenever no hand is on the mouse.
+  const GAIN = 512 / 0.20;
+  const cc = document.createElement('canvas'); cc.width = 32; cc.height = 48;
+  const cctx = cc.getContext('2d')!;
+  // the 1997 arrow, white with a black edge, drawn once
+  cctx.fillStyle = ERA1.black; cctx.beginPath(); [[2, 2], [2, 38], [11, 29], [18, 44], [24, 41], [17, 27], [29, 27]].forEach(([x, y], i) => i ? cctx.lineTo(x, y) : cctx.moveTo(x, y)); cctx.closePath(); cctx.fill();
+  cctx.fillStyle = ERA1.white; cctx.beginPath(); [[5, 8], [5, 31], [11, 25], [18, 40], [21, 39], [14, 24], [23, 24]].forEach(([x, y], i) => i ? cctx.lineTo(x, y) : cctx.moveTo(x, y)); cctx.closePath(); cctx.fill();
+  const ctex = makeScreenTexture(app, cc); ctex.upload();
+  const cursorE = makeScreenEntity('vr-mouse-cursor', ctex, 0.016, 0.024, true);
+  cursorE.enabled = false; app.root.addChild(cursorE);
+  const cursor = { x: 256, y: 192 };
+  let grip: { idx: number; last: pc.Vec3; propFrom: pc.Vec3; handFrom: pc.Vec3; away: number } | null = null;
+  let rest: pc.Vec3 | null = null, cursorFor = 0;
+  const tickMouse = (dt: number): void => {
+    const m = deps.mouse, prop = live() && m.active() ? m.prop() : null;
+    if (!prop) { grip = null; cursorE.enabled = false; return; }
+    rest ??= prop.getPosition().clone();
+    const at = prop.getPosition();
+    const palms = deps.input.palms().map((p) => deps.comfort.logicalPoint(p));
+    if (!grip) {
+      const idx = palms.findIndex((p) => p.distance(at) < 0.10);
+      if (idx >= 0) grip = { idx, last: palms[idx].clone(), propFrom: at.clone(), handFrom: palms[idx].clone(), away: 0 };
+    }
+    if (grip) {
+      const p = palms[grip.idx];
+      if (!p) { grip = null; return; }
+      const dx = p.x - grip.last.x, dz = p.z - grip.last.z;
+      if (Math.abs(dx) + Math.abs(dz) > 0.0015) {   // below 1.5 mm is the hand's own tremor
+        cursor.x = Math.max(0, Math.min(511, cursor.x + dx * GAIN));
+        cursor.y = Math.max(0, Math.min(383, cursor.y + dz * GAIN));
+        m.move(cursor.x, cursor.y);
+        grip.last.copy(p);
+      }
+      const want = grip.propFrom.clone().add(new pc.Vec3(p.x - grip.handFrom.x, 0, p.z - grip.handFrom.z));
+      want.x = Math.max(rest.x - 0.12, Math.min(rest.x + 0.12, want.x)); want.z = Math.max(rest.z - 0.10, Math.min(rest.z + 0.10, want.z));
+      prop.setPosition(want.x, rest.y, want.z);
+      grip.away = p.distance(prop.getPosition()) > 0.14 ? grip.away + dt : 0;
+      if (grip.away > 0.4) grip = null;
+      cursorFor = 2;
+    } else cursorFor -= dt;
+    cursorE.enabled = cursorFor > 0;
+    if (cursorE.enabled) {
+      const tip = m.screenPoint(cursor.x, cursor.y);
+      cursorE.setPosition(tip.x + 0.008, tip.y - 0.012, tip.z); cursorE.setEulerAngles(90, 0, 0);
+    }
+  };
+
   app.on('update', (dt: number) => {
     const eyeL = deps.comfort.logicalPoint(head.getPosition());
-    tickLamby(dt, eyeL); tickLens(dt); tickTable(dt); tickDoll(dt);
+    tickLamby(dt, eyeL); tickLens(dt); tickTable(dt); tickDoll(dt); tickMouse(dt);
   });
-  app.xr?.on('end', () => { endDoll(); lamby.enabled = false; lens.enabled = false; lensK = 0; table = null; deps.input.setStyle('own'); });
+  app.xr?.on('end', () => { grip = null; cursorE.enabled = false; if (rest) deps.mouse.prop()?.setPosition(rest); endDoll(); lamby.enabled = false; lens.enabled = false; lensK = 0; table = null; deps.input.setStyle('own'); });
 
   return {
     matchTable() { if (!live()) return; table = { t: 0, hist: [] }; deps.frame.notice(deps.strings.ask, 20); },
@@ -230,6 +289,8 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
       root.setLocalScale(0, 0, 0);
       doll = { root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre };
     },
+    mouseClick() { if (!grip) return false; deps.mouse.click(cursor.x, cursor.y); return true; },
+    get mouseEngaged() { return !!grip; },
     review(what) { if (what.lamby !== undefined) forced.lamby = what.lamby; if (what.worn !== undefined) forced.worn = what.worn; },
     pressLamby(physical, toLogical) {
       if (!lamby.enabled) return false;

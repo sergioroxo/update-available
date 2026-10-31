@@ -5,7 +5,7 @@ STATUS: live
 *Written after his fifth headset pass and his ask: "there is a lot of creativity that I feel like you need to bring
 here". Until now VR has been treated as the browser build made to survive in a headset. This proposes treating it as a
 **layer of the work with its own meaning**: what the body does, what the hands touch, what the headset itself says.
-Built on his go (31 Oct): VR-04, VR-05, VR-06, VR-08 — S270g, `src/frame/xrLayer.ts`; VR-01–03 liked, not yet built. Every proposal has an id (VR-nn) and says whether it needs his call.*
+Built on his go (31 Oct): VR-04, VR-05, VR-06, VR-08 — S270g, `src/frame/xrLayer.ts`; VR-01, VR-02, VR-03 — S270h (below, §2). Every proposal has an id (VR-nn) and says whether it needs his call.*
 
 *Fixed ground (his rulings, VR_NOTES_2026-10-24): the piece never moves or turns the view by itself in a headset; a
 change of place is the pixel dissolve; hands and controllers always both work; seated; a native Quest app is phase 2.
@@ -32,6 +32,20 @@ The browser build has one input for thirty years: a click on a screen. VR can gi
 | 2003 | optical mouse, flip phone, the media player's tape | the same mouse, lighter; the **flip phone opens** when you pick it up | VR-02 the flip phone opens in the hand |
 | 2016 | Vera's smartphone | the phone is the surface: pick it up, **thumb** the screen (poke), it buzzes in the hand when the group writes | VR-03 the phone in the hand is the era's main input — the monitor is secondary |
 | 2026 | Maya's laptop and **the visor** | the visor is worn: bring it to your face to enter the programme (see §4) | VR-08 |
+
+**Built (S270h):**
+- **VR-01 the desk mouse** (1997 and 2003): a palm or a controller resting on the mouse takes it; sliding it on the
+  desk moves a 1997 arrow pointer on the monitor (about 20 cm of travel crosses the screen) and the mouse moves with
+  the hand; the pinch or the trigger clicks where the pointer is. The palm drives it, not the fingertip, so the pinch
+  that clicks does not move the pointer. Pointing at the screen still works whenever no hand is on the mouse. (The
+  keys' clack is not built: there is no key sound in the piece yet.)
+- **VR-02 the flip phone opens in the hand**: in a headset Daniel's flip phone rests shut on the desk (its screen half
+  swings about the hinge measured from the model) and opens when it is picked up; the browser keeps it open.
+- **VR-03 Vera's phone in the hand**: a grip or a held pinch near it takes it; it follows the hand, glass to the eyes,
+  its body riding with it; the story counts it as in her hand; a new message is felt as a pulse in the controller that
+  holds it; let go and it eases back to its stand. Pressing its glass works as before (pointing or a fingertip).
+- Found on the way: in a headset the devices used the tracked head for "the eyes", a head-height away from the room
+  they sit in — the worn 2026 visor would have hung in the wrong place. They now use the head in room coordinates.
 
 **Why it matters for the piece:** the intimacy of each period's technology is *how close it sits to the body* — a
 desk, then a pocket, then a hand, then the face. VR is the only mode that can make the visitor feel that distance

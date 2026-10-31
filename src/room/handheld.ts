@@ -82,6 +82,9 @@ const SPECS: DeviceSpec[] = [
     },
     game: () => new Clear(),
     holdDist: 0.19,
+    // ⚑ S270h / VR-02 (his: "the flip phone opens when you pick it up") — the screen half ('Cube.001') swings
+    //   shut over the keypad about the hinge where the two halves meet (measured from the GLB's node matrices)
+    fold: { node: 'Cube.001', pivot: [0, 3, 0], closed: 172 },
     view: { fill: 0.75, maxW: 0.8 }   // S222 / W1-K4: the glass is the game; the keypad is never pressed
   },
   {

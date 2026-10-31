@@ -139,6 +139,10 @@ body.
   criticises.
 - **The dollhouse** (VR-06): at a change of era the house appears as a roofless model on the desk, the seat marked,
   while the room re-forms; the view never moves (his comfort law).
+- **Each era's hardware, held** (VR-01–03, S270h): in 1997 and 2003 a hand on the desk mouse moves the pointer on the
+  monitor and the pinch clicks; Daniel's flip phone rests shut and opens in the hand; in 2016 Vera's phone is taken in
+  the hand, glass to the eyes, and a new message is felt as a pulse. The history becomes the interface moving onto the
+  body — a desk, a pocket, a hand, the face.
 - Also: the menu as the Win95 dialog, the Menu tab on the wrist, hands drawn as blocks, a fingertip that changes colour
   when it touches something pressable.
 
@@ -195,9 +199,14 @@ body.
 - **No survivor review exists**, and the trans reader gate was retired by the lead's ruling (compilation §5, §9).
 - **The VR layer (§5) is days old** and has not been in a headset yet.
 
-## 9. Where to look
+## 9. Figures
+
+26 figures at 2560 × 1440 — the piece through the four eras and the Close (figs 1–14), and the headset with every
+VR-layer feature (figs 15–26): `ARTICLE_FIGURES_2026-10-31.md`, images in `output/article-figures-2026-10-31/`.
+
+## 10. Where to look
 
 `BUILD_LOG.md` (every session) · `ARTICLE_COMPILATION_2026-10-03.md` (the evidence file to 3 Oct) ·
 `ARTICLE_EVIDENCE_LOG.md` (his own notes for the article) · `ARTICLE_RESTRUCTURE_IDEA_2026-10-31.md` (the one argument) ·
-`VR_AS_A_LAYER_2026-10-31.md` (the headset) · `HEADSET_SESSION_2026-10-28.md` (the watched session) ·
+`VR_AS_A_LAYER_2026-10-31.md` (the headset) · `ARTICLE_FIGURES_2026-10-31.md` (the figures) · `HEADSET_SESSION_2026-10-28.md` (the watched session) ·
 `docs/reinterp/OPEN_ITEMS.md` (what is still owed).
