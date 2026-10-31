@@ -543,6 +543,10 @@ export class CalebThreadApp {
     ui.px(ctx, lx + 6, c.y + 33, 5, 5, ERA1.ok);
     ctx.fillStyle = ERA1.black;
     ctx.fillText(caleb.window.contact, lx + 14, c.y + 31);
+    // S273 — his personal message: half of the 1997 pledge, cut at the same word (DESIGN_MISSING_YEARS §4)
+    ctx.fillStyle = ERA1.grey; let pm = CT.personal as string;
+    while (pm.length > 4 && ctx.measureText(pm).width > LIST_W - 18) pm = `${pm.slice(0, -2)}…`;
+    ctx.fillText(pm, lx + 14, c.y + 39);
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(CT.offline, lx + 6, c.y + 48);
     (CT.offlineNames as string[]).forEach((n, i) => {

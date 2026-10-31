@@ -416,6 +416,9 @@ export class TestimonyApp {
       ui.px(ctx, ux + 6, uy, uw - 12, 18, ERA1.silver);
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black; ctx.fillText(f, ux + 10, uy + 4);
       uy += 22;
+      // S273 — the bin's note on a fragment: who it is, and that it is cut
+      const note = (T.cut.fragmentNotes as string[])[i];
+      if (note) { ui.setFont(ctx, 8); ctx.fillStyle = ERA1.warnDark; ui.wrapText(ctx, note, uw - 16).forEach((l) => { ctx.fillText(l, ux + 8, uy); uy += 10; }); uy += 4; }
     });
     // the timeline
     const ty = py0 + ph + 14;

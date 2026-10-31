@@ -2,7 +2,9 @@ STATUS: live
 
 # The missing years, Caleb, and the pocket pet: a design note (31 Oct 2026)
 
-*From his rulings on the research (31 Oct, evening). It reads both research versions:
+*⚑ HIS ANSWERS, 31 Oct night: the folder is **"1997"**; the card is option **(b)**; **yes to Daniel's three leaving acts** ("So 2003 also becomes an act of defiance against the system? I like that"). Still open: the pet's choices (§9.3) and the handle (§9.2).*
+
+*From his rulings on the research (31 Oct, evening), with GPT's cassette and early-leaving ideas added on his yes (§4b). It reads both research versions:
 `RESEARCH_CALEB_AND_TIME_2026-10-31_CLAUDE.md` (Claude) and `RESEARCH_CALEB_AND_TIME_2026-10-31.md` (his GPT run).
 Nothing here is built yet. Decisions are in §8. Builds on `RESTRUCTURE_1997_2003_2026-10-31.md`.*
 
@@ -50,8 +52,9 @@ fourteen days or the years after (the survey: "happened rather suddenly").
   1. **ROLL_01: a scanned disposable-camera roll** (Claude §6.6). Twenty-six frames are what a programme lets you
      photograph: a group on steps, a chapel, a dining hall, a lake. They show places and backs only, never a face.
      **Frame 27** is dark: a door ajar, corridor light across two beds, no people. It is the find.
-  2. **The New Morning certificate**, scanned. Staff signatures, and in the margin a pencilled **"C."** and a date.
-     That is the only handwriting on it (Claude §6.8).
+  2. **The New Morning certificate**, scanned, front and back. The front has staff signatures. The back has
+     **Caleb's own line, signed the way people signed yearbooks**: a short sentence, "Room 3, Bed B", and his name
+     (GPT §6.7, his "awww", 31 Oct). It is the only personal handwriting on it, and it replaces the pencilled "C.".
   3. **A cassette J-card**: a mixtape's track list in someone else's handwriting (GPT: "one cassette across six
      years"). The songs are invented titles, and the last one is "last night". It plants the song Caleb sends in 2003.
   4. **An unsent postcard** to "C.", addressed and stamped, never posted (GPT). Short, plain, and bare; it never
@@ -83,6 +86,20 @@ It is the same fourteen days seen by the institution. The visitor who finds both
 night is the respite: never shown, never revealed as anything. The sheet's wording keeps it the staff's observation,
 never Daniel informing.
 
+### 2c. Is the card seen? (his question, 31 Oct)
+
+As designed, the unsent postcard is a **find**: the visitor sees it only by opening the "1997" folder or the shoebox.
+He likes it, so here are three ways to make sure more visitors meet it, without breaking the law that no beat may
+depend on looking. Pick one:
+
+- **(a) The folder opens itself once.** On the first quiet moment of 2003 (felt, no Lamby), the folder window
+  opens on the postcard alone and can be closed. *Sure, but it takes the find away.*
+- **(b) Caleb's thread leads to it.** When the song arrives, the folder's icon gains a small pip, as an unread item
+  does, and the card is first in the folder. *Gentle; it uses the story's own moment.* **Recommended.**
+- **(c) The card is on the desk too.** A small physical postcard leans against the monitor in 2003. In the browser a
+  press brings it up, and in the headset you can pick it up. *The most visible, and it is in the room in every
+  version.*
+
 ## 3. The boot line (idea 2, approved)
 
 The 2003 boot text gains one line after "JOURNEY FILE ...... MIGRATED":
@@ -106,6 +123,43 @@ It runs by itself (type 4). It explains six years of silence before Caleb says a
 5. **2003, the song arrives as a file:** `lastnight_B.mp3`. That is the same B as `Caleb_B.avi` and Bed B.
 
 Seen together: the visitor learns "B" once and reads it four times.
+
+### 4b. GPT's two ideas, added on his yes (31 Oct)
+
+**One cassette across the years** (GPT §6.3):
+
+- **1997:** on the last night at New Morning, Caleb gives Daniel a tape. The visitor never sees that night. The tape
+  is in the 1997 room only after the update: it is already on Daniel's shelf at the start of 2003, beside the old
+  player, labelled in Caleb's hand.
+- **2003:** Caleb's attachment "last night_B (rip).mp3" is **that tape**, ripped to a file. It is the same song, now
+  in a new format. The format change is itself the visual-culture point: cassette → CD-R → MP3, 1997 → 2003.
+- **In each version:**
+  - The tape is a room object, a second door to the same song.
+  - Browser and phone: press it to play it on the shelf player, with the song's existing caption.
+  - Headset: pick it up, and put it in the player.
+  - The J-card's track list is also a file in the "1997" folder (§2a.3), so the two meet.
+- **Register:** felt. No Lamby, nothing scored.
+
+**Daniel starts leaving before the programme lets him** (GPT §6.9; it answers the survey's "the abandonment of the
+therapy happened rather suddenly"):
+
+- **Today**, 2003 ends with Caleb's thread, then the intervention, then the collapse, then the residue. The exit
+  arrives as the system's failure, and fast.
+- **Proposed:** Daniel's leaving begins earlier and in his own small acts, before the programme gives permission,
+  spread over the end of 2003:
+  1. After Caleb's first message, the daily check-in has one new chip, **"I don't know"**, which the programme
+     files as "non-responsive".
+  2. After the song, he **minimises** Restorify's next reminder rather than answering it. The taskbar shows it
+     waiting, and the streak counts it.
+  3. Before the intervention, he **opens the "1997" folder** himself. That is the first time the piece makes the
+     folder part of the path.
+- Then the intervention and collapse happen as now. When the system "lets him go", he has already gone. The exit is
+  his, not the system's.
+- **Caleb keeps him company. He does not rescue or cure him.** (GPT's caution; it is right.)
+- **Register:** each act is in the system's surface (operable), but small and quiet. The thread itself stays felt.
+- **The open conflict GPT names:** Caleb's thread has reply chips, and felt scenes are meant to have no mechanics.
+  The chips were his own design (S45). This note does not change them; he may want to rule on it.
+- **His call:** yes to the three acts? This is the structural one.
 
 ## 5. The dollhouse (idea 4: no annex)
 
@@ -202,8 +256,10 @@ Before any of these is cited on the sources page, its link goes verbatim into a 
 
 ## 9. Decisions for him
 
-1. **The folder.** Name it "1997", or "Old stuff", or another name? Do the five files (roll, certificate, J-card,
-   postcard, 1999 photo) feel right, or are there too many?
+1. **The folder.** Name it "1997", or "Old stuff", or another name? Do the five files (roll, certificate with
+   Caleb's signed line, J-card, postcard, 1999 photo) feel right, or are there too many? And for the card: (a), (b)
+   or (c) in §2c?
+1b. **Daniel leaving first** (§4b): yes to the three acts?
 2. **The handle.** "bedB_03" or "He knows you from: Room 3"?
 3. **The pet:**
    - (a) keychain in the room, as proposed, or only on screen?

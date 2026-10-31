@@ -24,6 +24,8 @@ export class PacketApp {
   private deadPressT = 0; // a tiny shudder when the dead button is pressed
   private hits: Hit[] = [];
   private acked = false;
+  /** S273 — two pages: the letter, then the room slip and the house rules; the signature is on the second */
+  private page = 0;
 
   private get geom() {
     const dx = Math.round((ERA1_CANVAS.width - DW) / 2);
@@ -46,11 +48,11 @@ export class PacketApp {
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
 
     ui.setFont(ctx, 10);
-    end.packet.lines.forEach((line, i) => {
+    (this.page === 0 ? end.packet.lines : end.packet.page2).forEach((line, i) => {
       const filled = this.fill(line);
       // the signed-consent line and the title read darker; the rest is the form
       ctx.fillStyle = line.includes('already signed') ? ERA1.warnDark
-        : line.startsWith('TRIEDPATH') ? ERA1.navy
+        : line.startsWith('TRIEDPATH') || line === 'ROOM ASSIGNMENT' || line === 'HOUSE RULES' ? ERA1.navy
         : ERA1.black;
       ctx.fillText(filled, c.x + 10, c.y + 8 + i * 14);
     });
@@ -58,15 +60,16 @@ export class PacketApp {
     // buttons: the dead one first (left), the live OK on the right
     const by = c.y + c.h - 26;
     ui.button(ctx, c.x + 10, by, 110, 20, end.packet.deadButton, { disabled: true });
-    ui.button(ctx, c.x + c.w - 70, by, 60, 20, end.packet.ok, {});
+    ui.button(ctx, c.x + c.w - 70, by, 60, 20, this.page === 0 ? end.packet.next : end.packet.ok, {});
     // ⚑ THE DEAD BUTTON REGISTERS TOO, and deliberately. It is drawn disabled
     //   and leads nowhere, but it is not inert: pressing it shudders, which is
     //   the beat — you cannot ask. A control that answers is a control an audit
     //   should be able to see, whatever it does or refuses to do.
     this.hits = [
-      { ...c.closeBox, id: 'ok' },
+      // S273 — the box turns the page first: the room slip (Caleb, the rules) cannot be closed past unread
+      { ...c.closeBox, id: this.page === 0 ? 'next' : 'ok' },
       { x: c.x + 10, y: by, w: 110, h: 20, id: 'dead' },
-      { x: c.x + c.w - 70, y: by, w: 60, h: 20, id: 'ok' }
+      { x: c.x + c.w - 70, y: by, w: 60, h: 20, id: this.page === 0 ? 'next' : 'ok' }
     ];
   }
 
@@ -82,6 +85,7 @@ export class PacketApp {
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     // the dead button: a small shudder, then nothing — you cannot ask
     if (hit?.id === 'dead') { this.deadPressT = 0.25; this.dirty = true; return; }
+    if (hit?.id === 'next') { this.page = 1; this.dirty = true; return; }
     // OK — the only way out, and it is forward
     if (hit?.id === 'ok') {
       this.acked = true;

@@ -287,7 +287,8 @@ async function main() {
     // R3-13: the Family Form exists only now — Rob has spoken with his mother
     await pressWhen('taskbar-kit', 5000); await wait(800); await shot('look-kit-steps-4', 'the programme after the channel: connect ticked, the Family Form live (R3-13)');
     await pressWhen('cancel', 3000);
-    await pressWhen('ok', 120000); await wait(800); await shot('look-packet', 'the placement packet, acknowledged');
+    await pressWhen('next', 120000); await wait(400); await pressWhen('ok', 120000);   // S273: the room slip, then Sign
+    await wait(800); await shot('look-packet', 'the placement packet, acknowledged');
     // the diary: one press writes the line; the system flags and erases it; each time it stops
     // ('resist') the player's press holds the truth — the second hold is the glitch
     await page.waitForFunction(() => window.__os.diary && window.__os.diary.open !== false, { timeout: 30000 }).catch(() => warn('the diary never opened'));

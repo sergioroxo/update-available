@@ -101,6 +101,39 @@ knowledge base documents them. File names are where it is drawn.*
 - **The wall behind the seat** — the record, sharp where life is soft (the witness side).
 - **Time passing:** the calendar turns a page a year between 1997 and 2003 (S229).
 
+### 3b. A finding from the archive (31 Oct): the testimony ad was scripted image by image
+
+His find. In 1999 the "Truth in Love" campaign's sponsor published its television spots online:
+
+- an index page (https://web.archive.org/web/20011204191826/http://www.cwfa.org/library/family/truthinlove/);
+- a **script page with images** for each spot, e.g. the "mom" spot
+  (https://web.archive.org/web/20011126031813/http://www.cwfa.org/library/family/truthinlove/mom.shtml);
+- the spots themselves as RealMedia files, e.g. families.rm and mom.rm (2002 captures).
+
+**Why it matters for the argument.**
+
+- The campaign's sponsor published its own **storyboard**: the persuasion was designed frame by frame and offered as
+  a document.
+- The media form (the spot, then its script, then a streaming file on a 56k page) is itself period interface
+  culture.
+- The 2003 Story Editor in the piece, which cuts Daniel's testimony by BEFORE / THE PROGRAM / AFTER / CALL NOW, is
+  the piece's critical re-making of that document.
+- Its "mother's point of view" spot belongs with the piece's parent channel: Rob calls Daniel's mother in 1997, and
+  2016 has the parents' track.
+
+The detailed reading (structure and shots, never the script verbatim) is in `SOURCES_AD_CAMPAIGNS_2026-10-31.md`.
+Related leads he collected: `/Users/sergiogalvaoroxo/Pc_Simulation/Terra_Search/` (the 1998 newspaper ads, the
+1998–99 TV spots, the Love Won Out conference, the 2005 billboards and their parody, the web rings of around 2000).
+Also his finds of the same day:
+
+- "I Chose To Change", a transit ad, its PDF metadata dated 24 Mar 2006;
+- the "EX-GAY IS OK" inverted pink triangle;
+- a 2000 ministry bookshop catalogue;
+- a GeoCities ex-gay links directory (a 2008 capture);
+- a 2001 page about the ad campaigns.
+
+Each is listed in DESIGN_MISSING_YEARS §8 or the sources record.
+
 ## 4. Failure as the mechanism
 
 | failure | where | what it shows |

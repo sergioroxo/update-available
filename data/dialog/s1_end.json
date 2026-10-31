@@ -51,7 +51,6 @@
       "PROGRAMME ........... “New Morning” residential · 14 days",
       "LOCATION ............ partner house, abroad",
       "DEPARTURE ........... Saturday",
-  "ROOM SHARED WITH .... Caleb",
       "",
       "CONSENT",
       "Parent / guardian signature ...... [ already signed ]",
@@ -60,6 +59,23 @@
       "BRING: bible · modest clothing · this page.",
       "Leave behind: music, journals, anything from “before”."
     ],
+    "_docPage2": "⚑ S273 (his yes, 31 Oct, to the research's Caleb traces — DESIGN_MISSING_YEARS_2026-10-31.md §4) — the letter's second page: the room slip and the house rules, read before the signature. The four rules are DOCUMENTED patterns of a 2005 youth programme (RESEARCH_CALEB_AND_TIME_2026-10-31_CLAUDE.md §2.2, S1/S2), composite here: New Morning is invented. 'Bed B' is read again in 2003 (the handle, Caleb_B.avi, lastnight_B).",
+    "page2": [
+      "ROOM ASSIGNMENT",
+      "----------------------------------------------",
+      "ROOM 3",
+      "  Bed A ............. {name}",
+      "  Bed B ............. Caleb",
+      "",
+      "HOUSE RULES",
+      "  1. Bedroom doors stay open.",
+      "  2. No speech after lights-out.",
+      "  3. No exclusive friendships.",
+      "  4. Post is held for review.",
+      "",
+      "Your roommate is your first accountability."
+    ],
+    "next": "Next >",
     "ok": "Sign",
     "deadButton": "Ask a question"
   },

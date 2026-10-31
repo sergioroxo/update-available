@@ -58,6 +58,8 @@
    "_doc": "S157 / R3-51 — the 2003 IM look: a contact list beside the transcript (invented names; the one online is him), a dead nudge/wink/font toolbar, the messenger's own mark.",
    "online": "Online (1)",
    "offline": "Offline (3)",
+   "_docPersonal": "S273 (his yes to the Caleb traces) — Caleb's personal message is the first half of the pledge card's line (s1_kit.json cardLines), cut at 'my': to the programme it reads devout; Daniel knows it as theirs. FELT: not a joke.",
+   "personal": "my eyes and my",
    "offlineNames": [
     "jessa_k",
     "mark_t",
@@ -350,7 +352,7 @@
  },
  "attachment": {
   "_doc": "S157 / R3-52 — the attachment chip under Caleb's line: press it and the player opens. The label has a space in it on purpose: check-spec's C10 reads any bare `name.mp3` string in data as a file the piece must ship, and this is a NAME on a chip, not a file — the file is the step's own `audio`.",
-  "label": "last night (rip).mp3",
+  "label": "last night_B (rip).mp3",
   "size": "2.1 MB",
   "open": "open"
  }

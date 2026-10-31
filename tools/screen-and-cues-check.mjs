@@ -98,6 +98,8 @@ try {
   await wait(500);
   await page.evaluate(() => {
     const packet = window.__os.packet;
+    const n = packet.hits.find(h => h.id === 'next');   // S273: page two (the room slip), then Sign
+    packet.handleClick(n.x + n.w / 2, n.y + n.h / 2); packet.draw(window.__os.ctx);
     const h = packet.hits.find(h => h.id === 'ok');
     packet.handleClick(h.x + h.w / 2, h.y + h.h / 2);
   });
