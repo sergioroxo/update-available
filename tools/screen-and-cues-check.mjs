@@ -103,7 +103,7 @@ try {
   });
   await page.waitForFunction(() => window.__os.diary?.open);
   const packetDiary = await page.evaluate(() => window.__os.diary.arrivalLine);
-  assert.equal(packetDiary, 'Placement acknowledged. Next: DIARY.TXT.');
+  assert.equal(packetDiary, 'Placement signed. Next: DIARY.TXT.');   // S272: the letter is signed
   checks.push({ name: 'Placement acknowledgement names itself even when the Family Form was closed earlier', result: packetDiary });
   await wait(400);
   await shot(page, 'cue-e1-diary-from-packet');

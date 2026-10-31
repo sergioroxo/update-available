@@ -118,6 +118,9 @@ type E2Stage = 'silence' | 'post' | 'splash' | 'osBoot' | 'lambyBoot' | 'lambyCa
 const E2_POST_SECONDS = 2.0;
 /** ⚑ Phase 7 (his: "the song needs a fade-out, not a drop cut") — the jingle at half (S155), fading to nothing over its last seconds */
 const JINGLE_VOLUME = 0.5;
+/** S272 — between the filed Family Form and the placement letter: the game and the racket's turn (was the spine's
+ *  RACKET_WAIT, after the journal, S268) */
+const PACKET_WAIT = 60, PACKET_WAIT_SPEEDRUN = 20;
 const JINGLE_FADE_SECONDS = 3.5;
 type LyricLine = { t: number; words: Array<[number, string]> };
 const JINGLE_LINES = (jingleLyrics as unknown as { lines: LyricLine[] }).lines;
@@ -450,6 +453,9 @@ export class DesktopOS {
   /** ⚑ S226 — set by the frame loop each frame (engine/app.ts): false while she is turned away from the desk */
   screenFacing = true;
   private diaryPendingAt = Infinity; // soft beat between the packet and the diary
+  /** S272 — the form is filed: the letter comes once the desk is quiet, after the racket or a while (packetWait) */
+  private packetDueFrom = Infinity;
+  private packetQuiet = 0;
   private diaryPendingFromForm = false;
   /** ⚑ S208 / A4 (REVIEW_ROUND_5, ERA97-02) — the Family Form has been opened (finished or abandoned: both count —
    *  dismissal always works). The diary waits for it, so the MAIN beat can never be skipped past and lost. */
@@ -543,7 +549,9 @@ export class DesktopOS {
     if (this.guideLedger !== ledgerGeneration) { this.lambyGuide = this.makeLambyGuide(); this.guideLedger = ledgerGeneration; }
     const before = this.lambyGuide.version;
     const input: GuideInput = { era: this.desktopEra, map: mapState(this), ...this.guideSilence,
-      personaliseOffer: this.desktopEra === 'e2' && this.restorify?.offerPending && !this.restorify.open ? lambyStrings.personaliseOffer : undefined,
+      // ⚑ S272 (his 31 Oct: 2003's "cascade of events is bizarre because it all at the same time") — Lamby no longer
+      //   offers his own personalisation over the story's request; it is a button beside the streak (Restorify)
+      personaliseOffer: undefined,
       deferredUpdate: this.desktopEra === 'e1' && !!this.updateApp?.deferred,
       formAvailable: this.formAvailable, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       formFiled: !this.provotype?.open && ledger.provotypes.some(p => p.id === 'origin_intake_e1'), rootOpened: ledger.records.includes('rootcause-opened'),
@@ -673,9 +681,12 @@ export class DesktopOS {
    *  (irc.ts files the turn's `record`); read by the desktop icon, the wizard's
    *  fourth step and the guide's `form` message */
   get formAvailable(): boolean {
-    // ⚑ S268 — and only once the journal is written: the father questions lead into Root Cause and the racket
-    return ledger.records.includes('rob-spoke-mother') && (!this.reinterp || ledger.records.includes('diary-glitch'));
+    // ⚑ S272 (his 31 Oct, superseding S268's journal-first order) — the form comes straight after Rob's call to your
+    //   mother: you answer it, THEN the placement is drawn up from it and you sign, and the journal is the last thing
+    return ledger.records.includes('rob-spoke-mother');
   }
+  /** S272 — Rob has finished: the Family Form is what 1997 waits on (the letter is drawn up from it) */
+  get formDue(): boolean { return this.packetAfterForm; }
 
   /** S1.0 power-on beat: the machine waits dark until the player acts */
   get isOff(): boolean {
@@ -750,9 +761,14 @@ export class DesktopOS {
       };
       // S1.7 → S1.8: the chosen reply summons the placement packet. The diary
       // glitch, not the IRC, is the true E1 → T1 trigger.
-      // ⚑ S268 (his (C), 2026-10-27: diary → the father questionnaire → Root Cause → the racket) — the letter no
-      //   longer waits for the Family Form; the form arrives after the journal (formAvailable, below)
-      this.irc.onEscalationDone = () => { this.openPacket(); };
+      // ⚑ S272 (his 31 Oct: "the signing of the document only comes after you fill out the form… and the diary txt
+      //   can be the element that makes the transition") — Rob's call to your mother → the Family Form → a quiet
+      //   while for the game and the racket → the placement letter, drawn up from the form, to sign → DIARY.TXT,
+      //   whose failed erase IS the update. (S268's diary-first order is superseded.)
+      this.irc.onEscalationDone = () => {
+        if (ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.packetDueFrom = this.t;
+        else this.packetAfterForm = true;
+      };
     };
     this.dirty = true;
   }
@@ -833,8 +849,9 @@ export class DesktopOS {
     const isForm = data === (originIntakeProvotypeData as unknown as Provotype);
     this.provotype.onClose = () => {
       this.provotype = null; this.dirty = true;
-      if (isForm && this.packetAfterForm && ledger.provotypes.some(p => p.id === 'origin_intake_e1' && p.outcome === 'completed')) {
-        this.packetAfterForm = false; this.openPacket(); return;
+      // S272 — a filed form (finished or set aside: dismissal always works) brings the letter, after a quiet while
+      if (isForm && this.packetAfterForm && ledger.provotypes.some(p => p.id === 'origin_intake_e1')) {
+        this.packetAfterForm = false; this.packetDueFrom = this.t; this.wayBack(this.desktopEra); return;
       }
       // The diary follows a filed form when the placement was already acknowledged.
       if (isForm && this.diaryAfterForm && ledger.provotypes.some(p => p.id === 'origin_intake_e1' && p.outcome === 'completed')) {
@@ -1019,6 +1036,7 @@ export class DesktopOS {
     this.kit = null;
     this.irc = null;
     this.packetAfterForm = false;
+    this.packetDueFrom = Infinity;
     this.packet = null;
     this.diary = null;
     this.provotype = null;
@@ -2192,6 +2210,13 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.packet) this.packet.update(dt);
     if (this.phase === 'desktop' && this.diary) this.diary.update(dt);
     if (this.phase === 'desktop' && !this.diary && this.t >= this.diaryPendingAt) this.openDiary();
+    // S272 — the letter: the extras (Root Cause, the racket) have their turn between the form and the signature
+    if (this.phase === 'desktop' && this.packetDueFrom !== Infinity && this.desktopEra === 'e1') {
+      this.packetQuiet = this.e1BeatsQuiet() ? this.packetQuiet + dt : 0;
+      const racket = ledger.provotypes.some(p => p.id === 'pillow');
+      const waited = racket || this.t - this.packetDueFrom >= (isSpeedrun() ? PACKET_WAIT_SPEEDRUN : PACKET_WAIT);
+      if (waited && this.packetQuiet >= 1.2) { this.packetDueFrom = Infinity; this.packetQuiet = 0; this.openPacket(); }
+    }
     // the fallback: if the player never turns to witness the record, Rob
     // escalates anyway once the deadline passes (main-parity — the flip is
     // the earned path, not a hard gate)
@@ -2911,12 +2936,34 @@ export class DesktopOS {
     //   uncovered ones, by geometry; the press itself resolves by `topFrameAt`
     for (const mb of ui.minBoxesVisible()) this.hits.push({ x: mb.x, y: mb.y, w: mb.w, h: mb.h, id: `min-${mb.key}` });
     // taskbar
-    ui.bevel(ctx, 0, H - 22, W, 22, true);
-    ui.button(ctx, 3, H - 19, 50, 16, strings.desktop.startMenu.button, { hover: this.startOpen });
-    if (this.reinterp) this.hits.push({ x: 3, y: H - 19, w: 50, h: 16, id: 'start-menu' });
-    ui.setFont(ctx, 10);
-    ctx.fillStyle = ERA1.black;
-    ctx.fillText(skin.clock, W - 44, H - 16);
+    // ⚑ S272 (his 31 Oct: "the design of the start bar… it should be different from 1997, so there is more clear
+    //   understanding of the evolution of the systems") — 2003 is a newer machine and its bar says so at a glance: a
+    //   dark blue bar, a rounded green start, a teal clock tray. Built from the period palette (no invented colours).
+    const xp = this.desktopEra === 'e2';
+    if (xp) {
+      ui.px(ctx, 0, H - 22, W, 22, ERA1.navy);
+      ui.px(ctx, 0, H - 22, W, 1, ERA1.white); ui.px(ctx, 0, H - 21, W, 1, ERA1.titleBlue);
+      // the start button: green, its right end rounded in pixel steps
+      const sw = 54;
+      ui.px(ctx, 0, H - 20, sw - 3, 20, this.startOpen ? ERA1.tealDark : ERA1.ok);
+      ui.px(ctx, sw - 3, H - 19, 1, 18, this.startOpen ? ERA1.tealDark : ERA1.ok);
+      ui.px(ctx, sw - 2, H - 18, 1, 16, this.startOpen ? ERA1.tealDark : ERA1.ok);
+      ui.px(ctx, sw - 1, H - 16, 1, 12, this.startOpen ? ERA1.tealDark : ERA1.ok);
+      ui.setFont(ctx, 11); ctx.fillStyle = ERA1.white;
+      ctx.fillText(strings.desktop.startMenu.button.toLowerCase(), 10, H - 17);
+      if (this.reinterp) this.hits.push({ x: 0, y: H - 20, w: sw, h: 20, id: 'start-menu' });
+      // the tray: the clock in a darker well
+      ui.px(ctx, W - 47, H - 20, 47, 20, ERA1.tealDark); ui.px(ctx, W - 47, H - 20, 1, 20, ERA1.titleBlue);
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.white;
+      ctx.fillText(skin.clock, W - 42, H - 16);
+    } else {
+      ui.bevel(ctx, 0, H - 22, W, 22, true);
+      ui.button(ctx, 3, H - 19, 50, 16, strings.desktop.startMenu.button, { hover: this.startOpen });
+      if (this.reinterp) this.hits.push({ x: 3, y: H - 19, w: 50, h: 16, id: 'start-menu' });
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = ERA1.black;
+      ctx.fillText(skin.clock, W - 44, H - 16);
+    }
     // R28-2a: the side-message guide line (data/dialog/s1_guide.json) — the
     // apparatus's own status voice (register: operable), NOT frame chrome.
     // It lives in the taskbar's sunken status well, one terse line at a time,
@@ -2929,10 +2976,17 @@ export class DesktopOS {
       const bw = 64;
       for (const w of this.taskbarWindows()) {
         if (wellX + bw > W - 116) break;   // the well keeps at least its stub
-        ui.button(ctx, wellX, H - 19, bw, 16, '', {});
-        if (this.windowOpen(w.key)) ui.bevel(ctx, wellX, H - 19, bw, 16, false);
-        ui.setFont(ctx, 9);
-        ctx.fillStyle = ERA1.black;
+        if (xp) {
+          // 2003: flat blue tabs, the window that is up a shade darker, white type
+          ui.px(ctx, wellX, H - 19, bw, 16, this.windowOpen(w.key) ? ERA1.tealDark : ERA1.titleBlue);
+          ui.px(ctx, wellX, H - 19, bw, 1, this.windowOpen(w.key) ? ERA1.black : ERA1.white);
+          ui.setFont(ctx, 9); ctx.fillStyle = ERA1.white;
+        } else {
+          ui.button(ctx, wellX, H - 19, bw, 16, '', {});
+          if (this.windowOpen(w.key)) ui.bevel(ctx, wellX, H - 19, bw, 16, false);
+          ui.setFont(ctx, 9);
+          ctx.fillStyle = ERA1.black;
+        }
         ctx.fillText(w.label, wellX + 8, H - 16);
         this.hits.push({ x: wellX, y: H - 19, w: bw, h: 16, id: `taskbar-${w.key}` });
         wellX += bw + 4;

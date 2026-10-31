@@ -24,13 +24,11 @@
  *
  * All pacing constants are PLACEHOLDER — Sérgio tunes by feel.
  */
-import { isSpeedrun } from '../state/cut';
 import { ledger } from '../state/ledger';
 import type { DesktopOS } from '../desktop/os';
 import type { UpdateKey } from '../desktop/apps/update';
 
 /** S268: how long the notice waits on a quiet desktop for the racket before it comes anyway, and the form's ceiling */
-const RACKET_WAIT = 60, RACKET_WAIT_SPEEDRUN = 20, FORM_WAIT_MAX = 300;
 const T1_DELAY = 1.2;   // s after DIARY.TXT's breakout hold before the notice
 /** How many corrections Vera has resolved — applied or skipped, both count,
  *  because the record is symmetric and so is the interruption. */
@@ -77,7 +75,7 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
   let step: SpineStep = 'e1';
   let t = 0;
   let closed = false;
-  let e1Quiet = 0, e1Since = 0;
+  let e1Quiet = 0;
 
   const sendResolved = (id: string): boolean =>
     ledger.sends.some(s => s.id === id && (s.outcome === 'visited' || s.outcome === 'declined'));
@@ -162,20 +160,12 @@ export function createSpine(os: DesktopOS, opts: { onClose: () => void }): Spine
           }
           break;
         case 'e1_armed': {
-          // ⚑ S268 (his (C), 2026-10-27) — after the journal, the father questionnaire, Root Cause and the racket get
-          //   their turn before the notice. The diary's failure is still the trigger; the notice only waits: for the
-          //   Family Form (a required beat), then for the racket, or for a quiet desktop when the visitor passes on
-          //   it. The wait counts from the filed form, whatever the visitor does meanwhile (opening and leaving the
-          //   racket must not restart it — the S269 walk looped there); the notice then takes the next quiet moment,
-          //   with no window open, so it never lands on a game or a session.
-          const formDue = ledger.records.includes('rob-spoke-mother') && !ledger.provotypes.some(p => p.id === 'origin_intake_e1');
-          if (formDue && t < FORM_WAIT_MAX) { e1Quiet = 0; e1Since = 0; break; }
-          e1Since += dt;
+          // ⚑ S272 (his 31 Oct: the diary "should be the moment that make the update to 2003") — the form, the
+          //   extras and the signed letter all come BEFORE the journal now (os.ts), so its failed erase arms the notice
+          //   at once: only the next quiet moment, so it never lands on a window
           if (!os.e1BeatsQuiet()) { e1Quiet = 0; break; }
           e1Quiet += dt;
-          const racketDone = ledger.provotypes.some(p => p.id === 'pillow');
-          const waited = racketDone || e1Since >= (isSpeedrun() ? RACKET_WAIT_SPEEDRUN : RACKET_WAIT);
-          if (waited && e1Quiet >= T1_DELAY) arm('u2', 'e2');
+          if (e1Quiet >= T1_DELAY) arm('u2', 'e2');
           break;
         }
 

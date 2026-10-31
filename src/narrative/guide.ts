@@ -92,7 +92,7 @@ const CONDITIONS: Record<string, Condition> = {
   // ⚑ S227 / W1-C9 (walkthrough 1: "'The form is on the desk' should come after the person says yes, so they can
   //   continue and not worry where") — the line waits for the conversation to end in its yes (the placement packet
   //   acknowledged); the form itself is on the desktop from Rob's 'i spoke with your mother', as before
-  formAvailable: (os) => os.formAvailable && !os.provotype && ledger.records.includes('enrollment-acknowledged'),   // S268: os.formAvailable now waits for the journal too
+  formAvailable: (os) => os.formAvailable && !os.provotype && os.formDue,   // S272: once Rob's talk has ended (the form now comes before the letter)
   formOpened: (os) => os.provotype?.id === 'origin_intake_e1'
     || ledger.provotypes.some((p) => p.id === 'origin_intake_e1'),
   // R3-38 — the racket's line fills the quiet: the disk is in, no window is up

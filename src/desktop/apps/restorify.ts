@@ -135,6 +135,13 @@ export class RestorifyApp {
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(`(${lamby.streakNote})`, L, c.y + 44);
 
+    // ⚑ S272 (his 31 Oct: "the personalising Lamby can be also a button [on] the Streak") — after the first check-in
+    //   the guide's settings live beside the streak they serve, never as a popup of their own
+    if (ledger.checkins.some(ch => !ch.id.startsWith('e3'))) {
+      const bw = 150, bx = c.x + c.w - bw - 10;
+      ui.button(ctx, bx, c.y + 32, bw, 18, rigCopy.personalise.edit, { hover: this.hover === 'personalise-open' });
+      this.hits.push({ x: bx, y: c.y + 32, w: bw, h: 18, id: 'personalise-open' });
+    }
     ui.px(ctx, L, c.y + 60, c.w - 20, 1, ERA1.grey);
 
     if (this.lastChip) { this.drawResponse(ctx, c, L); return; }
@@ -158,10 +165,7 @@ export class RestorifyApp {
       this.hits.push({ x, y, w: chipW, h: chipH, id: `checkin:${ch.id}` });
     });
 
-    if (ledger.checkins.some(ch => !ch.id.startsWith('e3'))) {
-      ui.button(ctx, L, c.y + 152, 164, 20, rigCopy.personalise.edit);
-      this.hits.push({ x: L, y: c.y + 152, w: 164, h: 20, id: 'personalise-open' });
-    }
+
     const bx = c.x + c.w - 70; const by = c.y + c.h - 22;
     ui.button(ctx, bx, by, 60, 18, lamby.closeLabel, { hover: this.hover === 'restorify-close' });
     this.hits.push({ x: bx, y: by, w: 60, h: 18, id: 'restorify-close' });

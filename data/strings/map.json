@@ -144,20 +144,6 @@
      "where": "the monitor"
     },
     {
-     "id": "packet",
-     "label": "The placement letter",
-     "done": "packetAcked",
-     "hint": "A letter has arrived on the screen — read it and press Ok.",
-     "where": "the monitor"
-    },
-    {
-     "id": "diary",
-     "label": "DIARY.TXT",
-     "done": "diaryDone",
-     "hint": "Open DIARY.TXT and write.",
-     "where": "the monitor"
-    },
-    {
      "id": "form",
      "label": "The Family Form",
      "done": "formDone",
@@ -187,6 +173,20 @@
      "optional": true,
      "hint": "Your handheld is on the bed. Pick it up; once the disk has come, it has a game.",
      "where": "the bed"
+    },
+    {
+     "id": "packet",
+     "label": "The placement letter",
+     "done": "packetAcked",
+     "hint": "A placement letter has arrived, drawn up from your form. Read it and sign.",
+     "where": "the monitor"
+    },
+    {
+     "id": "diary",
+     "label": "DIARY.TXT",
+     "done": "diaryDone",
+     "hint": "Open DIARY.TXT and write.",
+     "where": "the monitor"
     },
     {
      "id": "update",

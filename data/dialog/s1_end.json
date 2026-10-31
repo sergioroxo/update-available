@@ -47,7 +47,7 @@
       "----------------------------------------------",
       "PARTICIPANT ......... {name}",
       "AGE ................. 16",
-      "REFERRED BY ......... pastoral contact (online)",
+      "REFERRED BY ......... your mentor, from your Family Form",
       "PROGRAMME ........... “New Morning” residential · 14 days",
       "LOCATION ............ partner house, abroad",
       "DEPARTURE ........... Saturday",
@@ -60,7 +60,7 @@
       "BRING: bible · modest clothing · this page.",
       "Leave behind: music, journals, anything from “before”."
     ],
-    "ok": "OK",
+    "ok": "Sign",
     "deadButton": "Ask a question"
   },
 

@@ -49,7 +49,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   if (skin === 'e4') { ui.setFont(ctx, 16); ctx.fillStyle = accent; ctx.fillText(decisions.helper.e4, tx + 5, ty); }
   else if (skin === 'e3') aero.drawLambMark(ctx, tx + 10, headY, 0.55);
   else drawLambyChar(ctx, tx + 10, headY + 4, { mood: 'cheerful', action: 'idle', scale: 0.24, headOnly: true, t: state.rung === 'cue' ? state.time : 0, moodStart: 0 }); ctx.restore();
-  ui.setFont(ctx, 9); ctx.fillStyle = skin === 'e3' ? ERA3.white : ink; if (skin !== 'e4') ctx.fillText(decisions.helper[skin], tx + 22, ty + 5);
+  ui.setFont(ctx, 9); ctx.fillStyle = skin === 'e3' || skin === 'e2' ? ERA3.white : ink; if (skin !== 'e4') ctx.fillText(decisions.helper[skin], tx + 22, ty + 5);   // S272: 2003's bar is blue
   hits.push({ id: 'lg-tray', label: decisions.helper[skin], tip: state.hidden ? undefined : copy.ui.trayTip, x: tx, y: ty - 3, w: 60, h: 21 });
   if (state.hidden || !state.text) return out;
   out.balloon = true;

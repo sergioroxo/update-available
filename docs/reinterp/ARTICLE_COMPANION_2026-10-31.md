@@ -109,6 +109,7 @@ knowledge base documents them. File names are where it is drawn.*
 | **Creative: games that cannot be won** | FIT IN's heap, ROOTCAUSE's bar stuck at 99 (NOT FOUND), CLEAR, FloppySheep, MATCH MADE SIMPLE | his law: "a rhetoric of failure… the queer side always wins" |
 | **The refusal to let go** | Shut Down → *"You are not authorised to leave your treatment."* (S220); the diary that will not delete | the interface as enclosure |
 | **The glitch** | the Enter glitch (S239b), the 2026 visor failing on her face | "she wasn't supposed to see it" |
+| **The diary that forces the update** (his, 31 Oct; built S272) | 1997 now ends on DIARY.TXT: Daniel writes the truth the night before New Morning, the programme flags it and tries to erase it, the erase fails, and *that* failure is the update to 2003 | his words: the refusal to go "forced the system", and it is "a poetic connection to the fact that it is not possible to change". The system's next version is born from what it could not delete. |
 | **The production's own failures** | content a player could not reach though every check was green (see the 3 Oct compilation §4); in October, a whole headset build that rendered but could not be used (§5) | critical making as finding out what the system you build does, not what you meant |
 
 ## 5. The headset as the newest interface in the history (28–31 Oct)

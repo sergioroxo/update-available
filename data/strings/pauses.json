@@ -10,7 +10,7 @@
  "returnCues": {
   "diaryTitle": "Un-Walk - Before departure",
   "diaryFromForm": "Family Form closed. Next: DIARY.TXT.",
-  "diaryFromPacket": "Placement acknowledged. Next: DIARY.TXT.",
+  "diaryFromPacket": "Placement signed. Next: DIARY.TXT.",
   "diaryAssignment": ["Press the diary to begin the entry.", "Wait for the entry to finish.", "Tell him it was the right decision."],
   "minimise": "Minimise",
   "kitSetupBack": "< Un-Walk",
