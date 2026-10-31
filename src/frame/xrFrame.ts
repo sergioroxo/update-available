@@ -65,6 +65,8 @@ export interface XrFrame {
   press(ray: Ray): boolean;
   /** the helper's line, or null */
   setHint(text: string | null): void;
+  /** S270g — a line that wins over the helper's for `seconds` (the table match, its result) */
+  notice(text: string | null, seconds?: number): void;
   /** ⚑ S209 / A22 — a select on the ≡ Menu tab opens the menu (true if the tab took it) */
   pressTab(ray: Ray): boolean;
   /** S270f — does this fingertip segment touch the tab (menu closed) or the menu plane (open)? */
@@ -80,6 +82,8 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   /** Restart, confirmed */
   onRestart: () => void;
   onRecentre: () => void;
+  /** S270g / VR-04 — Match my table */
+  onDesk?: () => void;
 }): XrFrame {
   const layer = new pc.Layer({ name: 'XR Frame', clearDepthBuffer: true });
   app.scene.layers.pushOpaque(layer); app.scene.layers.pushTransparent(layer);
@@ -200,6 +204,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       y = drawRow(copy.resume, 'resume', y, true);
       if (gameMenuBus.mapSource) y = drawRow(mapCopy.row, 'map', y);
       y = drawRow(copy.recentre, 'recentre', y);
+      y = drawRow(copy.xrDesk, 'desk', y);   // S270g / VR-04
       y = drawRow(copy.controls, 'controls', y);
       y = drawRow(copy.restart, 'restart', y);
       y = drawRow(copy.leave, 'leave', y);
@@ -305,7 +310,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     tctx.fillText(`\u2261 ${copy.menuTab}`, 28, 33);
     tabTex.upload();
   }
-  let closedAt = 0, onWrist = false;
+  let closedAt = 0, onWrist = false, noticeText: string | null = null, noticeUntil = 0;
   const hangTab = (): void => {
     hang(tabPlane, TAB_DIST, TAB_DROP);
     // ⚑ S268 (his: "The floating menu button just sits in front of the screen") — well to the right and low, clear of
@@ -327,6 +332,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   const act = (id: string): void => {
     switch (id) {
       case 'recentre': opts.onRecentre(); gameMenuBus.close(); return;
+      case 'desk': gameMenuBus.close(); opts.onDesk?.(); return;
       case 'resume': gameMenuBus.close(); gameMenuBus.showHint?.(); return;
       case 'map': view = 'map'; break;
       case 'controls': view = 'controls'; break;
@@ -375,7 +381,13 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       if (h) act(h.id);
       return true;
     },
+    notice(text: string | null, seconds = 6): void {
+      noticeUntil = text ? performance.now() + seconds * 1000 : 0;
+      noticeText = null; this.setHint(text); noticeText = text;
+    },
     setHint(text: string | null): void {
+      if (noticeText && performance.now() < noticeUntil) text = noticeText;
+      else noticeText = null;
       if (text === hint) return;
       hint = text;
       if (hint && !open) { hang(hintPlane, HINT_DIST, HINT_DROP); hintPlane.enabled = true; }

@@ -5,7 +5,7 @@ STATUS: live
 *Written after his fifth headset pass and his ask: "there is a lot of creativity that I feel like you need to bring
 here". Until now VR has been treated as the browser build made to survive in a headset. This proposes treating it as a
 **layer of the work with its own meaning**: what the body does, what the hands touch, what the headset itself says.
-Nothing here is built unless marked BUILT. Every proposal has an id (VR-nn) and says whether it needs his call.*
+Built on his go (31 Oct): VR-04, VR-05, VR-06, VR-08 — S270g, `src/frame/xrLayer.ts`; VR-01–03 liked, not yet built. Every proposal has an id (VR-nn) and says whether it needs his call.*
 
 *Fixed ground (his rulings, VR_NOTES_2026-10-24): the piece never moves or turns the view by itself in a headset; a
 change of place is the pixel dissolve; hands and controllers always both work; seated; a native Quest app is phase 2.
@@ -137,7 +137,7 @@ appear on it as the ring turns (the ring turns, not the visitor). The glitch at 
 - **2003 (blue house, broadband, MSN):** Restorify, the photo "restoration" filter (`restorify.ts`); the messenger
   conversation with Caleb (`caleb.ts`) and its accountability alert (`accountability.ts`); NetVision, the streamed
   ministry TV (`netvision.ts`); the media player and the recorded testimony tape (`mediaPlayer.ts`, `testimony.ts`);
-  the 2003 web (`web2003.ts`); the snake game "Reach"; the "Hope for Tomorrow" conference poster.
+  the 2003 web (`web2003.ts`); CLEAR on Daniel's flip phone (it replaced the snake game REACH, S221); the "Hope for Tomorrow" conference poster.
 - **2016 (platforms, phones):** the moderation board and its correction queue — APPLY / SKIP, both captions kept
   (`taskSurface.ts`, the grace queue); Vera's phone with the group chat and the cascade (`phoneE3.ts`); the comments
   to clear (`comments.ts`, `clearComments.ts`); the recommendation task (`recommendTask.ts`); the podcast order

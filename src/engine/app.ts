@@ -70,6 +70,8 @@ import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrComfort } from '../frame/xrComfort';
 import { mountXrDebug } from '../frame/xrDebug';
 import { mountXrTextures } from '../frame/xrTextures';
+import { mountXrLayer, type XrLayer } from '../frame/xrLayer';
+import { e4Bridge } from '../desktop/apps/space';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
@@ -712,6 +714,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let xrInput: XrInput | null = null;
   let grabbingSource: pc.XrInputSource | null = null;
   let grabbingEra: string | null = null;
+  let carryingVisor = false;         // S270g / VR-08 — the visor in a hand, on its way to the face
+  let xrLayer: XrLayer | null = null;
   // ⚑ S269 — the frame helper's desktop line ("Esc opens the menu.") has no Esc in a headset; it says the headset's way
   // ⚑ S270b (his: "the menu tab low on your right, it's still like appearing, it doesn't leave") — said for 12 s, once
   let xrMenuHintLeft = 12;
@@ -1059,10 +1063,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     xrFrame = mountXrFrame(app, camera, {
       onLeave: () => os.leaveNow(),
       onRestart: () => restartPiece(),
-      onRecentre: () => xrComfort.calibrate()
+      onRecentre: () => xrComfort.calibrate(),
+      onDesk: () => xrLayer?.matchTable()
     });
     xrInput = mountXrInput(app, {
-      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); xrFrame?.press(ray); },
       onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
@@ -1072,15 +1077,27 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onGrab: (source, physical) => {
         if (xrComfort.busy || !xrComfort.calibrated || !cluster || !os.inDesktop || grabbingSource) return false;
         const ray = xrComfort.logicalRay(physical); poseGrabHand(ray);
+        // ⚑ S270g / VR-08 — 2026's visor is taken by hand (a grip or a held pinch within reach of it), carried, and
+        //   put on by bringing it to the face. The press near it still works as before.
+        const rest = cluster.era === 'e4' ? era3Devices?.visorRest : null;
+        if (rest && ray.p0.distance(rest) < 0.35 && era3Devices?.carryVisor(ray.p0.clone().add(ray.p1.clone().sub(ray.p0).normalize().mulScalar(0.08)))) {
+          grabbingSource = source; carryingVisor = true; return true;
+        }
         if (!devices?.grab(ray, cluster.era, grabHand)) return false;
         grabbingSource = source; grabbingEra = cluster.era; return true;
       },
       onHold: (source, physical) => {
+        if (carryingVisor && source === grabbingSource) {
+          const r = xrComfort.logicalRay(physical), at = r.p0.clone().add(r.p1.clone().sub(r.p0).normalize().mulScalar(0.08));
+          const eye = xrComfort.logicalPoint(camera.getPosition());
+          if (at.distance(eye) < 0.24) { era3Devices?.carryVisor(null); carryingVisor = false; grabbingSource = null; e4Bridge()?.shell()?.wear(); return; }
+          era3Devices?.carryVisor(at); return;
+        }
         if (source !== grabbingSource || !grabbingEra) return;
         if (xrComfort.busy || cluster?.era !== grabbingEra || gameMenuBus.isOpen) { devices?.release(grabbingEra); grabbingSource = null; return; }
         poseGrabHand(xrComfort.logicalRay(physical)); devices?.follow(grabbingEra, grabHand);
       },
-      onRelease: source => { if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
+      onRelease: source => { if (carryingVisor && source === grabbingSource) { era3Devices?.carryVisor(null); carryingVisor = false; grabbingSource = null; return; } if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
       canPoke: physical => {
         if (xrFrame?.touches(physical)) return true;   // S270f: the wrist tab and the open menu take a fingertip too
         if (!cluster || !os.inDesktop || xrComfort.busy || gameMenuBus.isOpen) return false;
@@ -1089,6 +1106,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       },
       onKey: key => { if (cluster && !gameMenuBus.isOpen) devices?.key(key, cluster.era); },
       wandColor: new pc.Color().fromString(FRAME.ink)
+    });
+    // ⚑ S270g — the headset's own layer: the table, Lamby in the room, the visor's lens, the dollhouse
+    xrLayer = mountXrLayer(app, {
+      head: camera, comfort: xrComfort, input: xrInput, frame: xrFrame,
+      strings: { ask: menuStrings.xrDeskAsk, done: menuStrings.xrDeskDone, none: menuStrings.xrDeskNone, offer: menuStrings.xrDeskOffer },
+      era: () => cluster?.era ?? os.era,
+      guideShowing: () => os.lambyGuidePaint.balloon,
+      guideYes: () => { os.lambyGuide.press(os.lambyGuide.view.act ? 'lg-take' : 'lg-show'); os.dirty = true; },
+      visorWorn: () => (cluster?.era ?? os.era) === 'e4' && !!e4Bridge()?.shell()?.pinned,
+      inRoom: () => !restoreEntrance?.blocking && !os.setup?.open && !document.getElementById('lambyos-home')
     });
     // ⚑ S232 — the exhibition's idle clock (frame/attract.ts): a headset has no DOM events, so the select/squeeze above
     //   feed it, and at 30 min untouched it ends the session here before the fresh-visit reload
@@ -1108,6 +1135,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           `batches ${c.batchesOnStage}/${c.batches} follow · menu ${gameMenuBus.isOpen ? 'open' : 'shut'}`,
           `${Math.round(app.stats.frame.fps)} fps · ${app.stats.drawCalls.total} draws · screen ${(window as { __uploads?: number }).__uploads ?? '-'} uploads`];
       } });
+      (window as { __xrLayer?: unknown }).__xrLayer = xrLayer;   // S270g review: dollhouse(), review({ lamby, worn }), matchTable()
       // the desktop review of the headset's frame: hang the plane in front of the
       // desktop camera and press it with a world ray (no headset in the sandbox)
       (window as { __xrFrame?: unknown }).__xrFrame = {
@@ -1145,6 +1173,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // restart. `close` has no room to age into; it takes the constellation.
     os.onEraRelocate = (era) => {
       if (era === 'close') return;
+      if (xr?.active) xrLayer?.dollhouse();   // S270g / VR-06
       beginEraRelocation(era);
     };
     os.onMessageReady = () => { messageSeatPending = true; };

@@ -55,10 +55,17 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   //   eye is the BROWSER camera's, set back 0.45 m from the desk edge so a flat screen frames the monitor. A seated
   //   head in the headset leans in: the eye the head is mapped to sits 0.15 m further forward, over the seat.
   const LEAN = 0.15;
+  // ⚑ S270g / VR-04 — the desk meets the visitor's own table: a vertical shift of the whole presentation space, kept
+  //   through re-seats and re-forms (the table does not move when the head does). Set by matchDesk().
+  let lift = 0;
+  /** the authored desk sits this far below the authored eye in every room (Room 1: eye 1.16, desk top 0.74) */
+  const DESK_BELOW_EYE = 0.42;
   const updateMapping = () => {
     const facing = level(rot);
     view.setTRS(pos.clone().add(facing.transformVector(new pc.Vec3(0, 0, -LEAN))), facing, pc.Vec3.ONE); inverse.copy(view).invert();
-    physicalMap.mul2(fixed, inverse); logicalMap.copy(physicalMap).invert();
+    physicalMap.mul2(fixed, inverse);
+    physicalMap.data[13] += lift;
+    logicalMap.copy(physicalMap).invert();
   };
   const matrix = () => {
     stage.setLocalPosition(physicalMap.getTranslation()); stage.setLocalRotation(new pc.Quat().setFromMat4(physicalMap));
@@ -209,7 +216,16 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     return { p0: logicalMap.transformPoint(ray.p0), p1: logicalMap.transformPoint(ray.p1) };
   };
   const physicalPoint = (p: pc.Vec3): pc.Vec3 => physicalMap.transformPoint(p);
-  return { authored, calibrate, logicalRay, physicalPoint,
+  const logicalPoint = (p: pc.Vec3): pc.Vec3 => app.xr?.active ? logicalMap.transformPoint(p) : p.clone();
+  /** VR-04: put the desk top at this physical height (a fingertip on a real table). Returns the shift applied. */
+  const matchDesk = (tableY: number): number => {
+    const desk = physicalMap.transformPoint(new pc.Vec3(pos.x, pos.y - DESK_BELOW_EYE, pos.z)).y;
+    lift = Math.max(-0.3, Math.min(0.3, lift + tableY - desk)); updateMapping();
+    return lift;
+  };
+  const stageYaw = (): number => new pc.Quat().setFromMat4(physicalMap).getEulerAngles().y;
+  return { authored, calibrate, logicalRay, physicalPoint, logicalPoint, matchDesk, stageYaw,
+    get deskLift() { return lift; },
     setWorldReady(ready: boolean) { worldReady = ready; },
     /** Available to the existing debug-only global; deterministic transition review, not a runtime input. */
     reviewStep: tick,

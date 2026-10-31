@@ -8,6 +8,7 @@ import * as pc from 'playcanvas';
 import type { Ray } from './xrFrame';
 import { FRAME } from '../desktop/theme/chrome';
 import { ERA1 } from '../desktop/theme/era1';
+import { ERA4 } from '../desktop/theme/era4';
 
 /** S270f: the stub when the ray lands on nothing — hand, controller */
 const STUB_HAND = 0.12, STUB_PAD = 0.25;
@@ -17,6 +18,10 @@ const DOT = 0.009, DOT_FLASH = 0.026, FLASH_MS = 220;
 export interface XrInput {
   /** the primary controller's ray this frame, or null (no session / no controller) */
   ray(): Ray | null;
+  /** S270g / VR-04 — every tracked index fingertip (hands) and controller grip, in physical space */
+  points(): pc.Vec3[];
+  /** S270g / VR-08 — 'own' or 'programme': the programme redraws the visitor's hands while the visor is on */
+  setStyle(style: 'own' | 'programme'): void;
   /** S270f — the left wrist (hand) or left grip (controller), where the Menu tab rides; null when not tracked */
   wrist(): pc.Vec3 | null;
   /** once per frame: the wands follow the hands */
@@ -49,6 +54,10 @@ export function mountXrInput(app: pc.Application, opts: {
   const dots = new Map<pc.XrInputSource, pc.Entity>();
   const hands = new Map<pc.XrInputSource, { entity: pc.Entity; mesh: pc.Mesh }>();
   const tips = new Map<pc.XrInputSource, { entity: pc.Entity; mat: pc.StandardMaterial; state: string }>();
+  // ⚑ S270g / VR-08 — inside the visor the programme draws the visitor's hands in its own colours: the glass's
+  //   mint (era4's ERA4.l, L's own colour), not the frame's grey. It says nothing about it.
+  let style: 'own' | 'programme' = 'own';
+  const PROGRAMME_HAND = new pc.Color().fromString(ERA4.l);
   // ⚑ S270d (his: "a very subtle change from grayish to whitish… this probably needs a little bit more") — rest is
   //   small and dim; touch is the frame's blue at twice the size; a registered press is a big bright pop
   //   (the first "blue" was the screensaver's sky — near black, which is why only grey→white showed)
@@ -213,6 +222,21 @@ export function mountXrInput(app: pc.Application, opts: {
   }
 
   return {
+    points(): pc.Vec3[] {
+      const out: pc.Vec3[] = [];
+      if (!xr?.active) return out;
+      for (const src of wands.keys()) {
+        if (src.hand) { const t = src.hand.tracking ? src.hand.getJointById('index-finger-tip') : null; if (t) out.push(t.getPosition().clone()); }
+        else { const g = src.getPosition(); if (g) out.push(g.clone()); }
+      }
+      return out;
+    },
+    setStyle(next) {
+      if (next === style) return;
+      style = next;
+      mat.emissive = next === 'programme' ? PROGRAMME_HAND : opts.wandColor; mat.update();
+      for (const t of tips.values()) t.state = '';   // re-colour on the next frame
+    },
     wrist(): pc.Vec3 | null {
       if (!xr?.active) return null;
       for (const src of wands.keys()) {
@@ -269,10 +293,11 @@ export function mountXrInput(app: pc.Application, opts: {
             const t = tips.get(src);
             if (t) {
               const kind = performance.now() < (flashUntil.get(src) ?? 0) ? 'press' : near || state.pinch ? 'touch' : 'rest';
+              const key = style + kind;
               t.entity.enabled = true; t.entity.setPosition(tip);
-              if (kind !== t.state) {
-                t.state = kind; const k = TIP[kind];
-                t.mat.emissive = k.color; t.mat.update(); t.entity.setLocalScale(k.size, k.size, k.size);
+              if (key !== t.state) {
+                t.state = key; const k = TIP[kind];
+                t.mat.emissive = style === 'programme' && kind !== 'press' ? PROGRAMME_HAND : k.color; t.mat.update(); t.entity.setLocalScale(k.size, k.size, k.size);
               }
             }
           }

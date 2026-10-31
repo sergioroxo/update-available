@@ -690,6 +690,11 @@ export interface Era3Devices {
   readonly phoneLift: number;
   /** S149 — the engine lends its current look so the held phone comes to the eyes (R3-76) */
   setLookProvider(fn: () => { pitch: number; yaw: number }): void;
+  /** ⚑ S270g / VR-08 — the visor carried in a hand (a room point), or null to let it go. Only while it can be put
+   *  on (the laptop read, nothing failing); false when it cannot be taken. */
+  carryVisor(at: pc.Vec3 | null): boolean;
+  /** the visor's resting place (room coordinates) — where a hand must close to take it */
+  readonly visorRest: pc.Vec3 | null;
   holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void;
   /** screen px → world ray (from app.ts's own screenRay()) → the workstation
    *  plane's logical canvas coords, generalized for ANY plane orientation
@@ -1063,6 +1068,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    *  OS's own canvas. Nothing about it exists in E1–E3. */
   let visor: Screen | null = null;
   let visorK = 0;            // 0 = on the stand, 1 = on your face
+  let visorCarry: pc.Vec3 | null = null;   // S270g: in a hand (VR), before it reaches the face
   let camEntity: pc.Entity | null = null;
   /** the camera's yaw at the moment the device went on — every later yaw is
    *  measured against it, and that difference is the whole of the turn. */
@@ -1161,6 +1167,12 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       const step = dt / WEAR_SECONDS;
       visorK = target > visorK ? Math.min(1, visorK + step) : Math.max(0, visorK - step);
     }
+    if (visorK === 0 && visorCarry && cam) {
+      // in the hand: held at the carry point, its glass turned to the eyes
+      visor.entity.setPosition(visorCarry);
+      visor.entity.lookAt(cam.getPosition()); visor.entity.rotateLocal(90, 0, 0);
+      return;
+    }
     if (visorK === 0 || !cam) {
       visor.entity.setPosition(visor.restPos.x, visor.restPos.y, visor.restPos.z);
       visor.entity.setEulerAngles(visor.restEuler.x, visor.restEuler.y, visor.restEuler.z);
@@ -1190,6 +1202,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
 
   function xrRoot(name: string): unknown { return name === 'workstation' ? graceQueueLite : e4Bridge()?.shell(); }
   return {
+    carryVisor(at) {
+      const shell = e4Bridge()?.shell();
+      if (at && (!visor || !shell || shell.stage !== 'closed' || visorK > 0)) { visorCarry = null; return false; }
+      visorCarry = at ? at.clone() : null;
+      return true;
+    },
+    get visorRest() { return visor ? new pc.Vec3(visor.restPos.x, visor.restPos.y, visor.restPos.z) : null; },
     hoverXr(ray) { xrRay = ray; },
     tick(dt: number): void {
       // S76: the last update's own frames — see `drawWorkstation`
