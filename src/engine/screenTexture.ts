@@ -66,6 +66,7 @@ export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, sm
    * It counts exactly what the law is about — OUR screens being re-sent to the
    * GPU — and nothing else. Read it as `window.__uploads` under `?debug=1`.
    */
+  (tex as unknown as { __screen: boolean }).__screen = true;   // S270e: xrTextures.ts leaves the screens to xrQuality
   const raw = tex.upload.bind(tex);
   // ⚑ S270d (his headset: "the screen… black blank screen", every pass) — a screen's canvas is redrawn at ×4 in a
   //   headset (os.ts, era3Devices.ts). setSource() alone records the new size but keeps the GPU texture at the old

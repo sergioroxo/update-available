@@ -69,6 +69,7 @@ import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { mountXrComfort } from '../frame/xrComfort';
 import { mountXrDebug } from '../frame/xrDebug';
+import { mountXrTextures } from '../frame/xrTextures';
 import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
@@ -704,6 +705,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const { app, cameraRig, camera } = shell;
   const xr = app.xr;
   const xrComfort = mountXrComfort(app, cameraRig, camera, reducedMotion);
+  mountXrTextures(app);
   const authoredRig = xrComfort.authored;
   xrComfort.setWorldReady(!options.restoreEntrance);
   let xrFrame: XrFrame | null = null;
