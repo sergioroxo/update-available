@@ -1,4 +1,6 @@
 STATUS: live
+
+*Written by GPT (his separate run, 31 Oct; it may have edited the Haiku report in place). Two runs of the same prompt wrote to one path; the other version is `RESEARCH_JEV_2026-10-31_CLAUDE.md` (the Claude Haiku agent). Both kept; DESIGN_MISSING_YEARS_2026-10-31.md reads both.*
 # Jev: research for the project
 
 Research date: 31 October 2026. Prices and model features can change. This is a desk study, not a test of Jev on this project.

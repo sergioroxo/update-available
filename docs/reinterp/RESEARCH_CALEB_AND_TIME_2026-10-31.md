@@ -1,5 +1,7 @@
 STATUS: live
 
+*Written by GPT (his separate run of the same prompt, 31 Oct). Two runs of the same prompt wrote to one path; the other version is `RESEARCH_CALEB_AND_TIME_2026-10-31_CLAUDE.md` (the Claude Sonnet agent). Both kept; DESIGN_MISSING_YEARS_2026-10-31.md reads both.*
+
 # Research: Caleb, the missing years, and Lamby
 
 31 October 2026. For Sérgio. Research and proposals only. Nothing is built.
