@@ -267,3 +267,46 @@ Before any of these is cited on the sources page, its link goes verbatim into a 
    - (c) "11 resets" under the streak, yes or no?
 4. **Build order** (recommended): the boot line and the Caleb traces first (small, approved), then the folder and
    the conduct record, then the pet.
+
+
+## 10. S274: built, and corrected against the canon (31 Oct, night)
+
+**Built (S274):**
+
+- **The "1997" folder** on the 2003 desktop (`src/desktop/apps/folder1997.ts`, `data/strings/folder1997.json`).
+  Five pictures drawn in the ERA1 palette: the postcard (first, option (b)), the roll and its frame 27, the
+  certificate (front, and back with Caleb's line), the tape's card, and the room in 1999.
+- **The unread pip** appears when Caleb's song arrives.
+- Nothing is filed when the folder is opened. It is felt, with no Lamby.
+- **The conduct record** is a second page of "Your file (read only)": "New Morning, 1997 >" leads to the fourteen
+  days, ending "Last night: no entry".
+
+**Corrected against the thread (`s2_caleb.json`, step 8):** Caleb already says he "still has the tape from that night"
+and ripped it. So **the tape is Caleb's**. GPT's "one cassette across the years" stays, as Caleb's cassette, and
+Daniel's side is:
+
+- the programme **held Daniel's copy** when he left (the conduct record's last line);
+- **Daniel kept only the card**, the J-card in Caleb's hand (the folder);
+- his postcard says so ("They kept the tape. I kept the card.");
+- Caleb's line on the certificate's back no longer says "keep the tape".
+
+There is no tape on Daniel's 2003 shelf. If a room object is wanted, it is the **empty cassette case**.
+
+## 11. The three leaving acts: how they will work (for S275)
+
+The thread is FELT and contains his own lines. It must not gain mechanics. So the three acts happen on the
+**programme's surfaces**, around the thread, never inside it:
+
+1. **"I don't know".** The 2003 story already has Caleb's own chip "I don't know." (step 10). After Caleb's first
+   message, Restorify opens a second daily check-in (once, when the Messenger is put down). Its chips gain
+   **"I don't know"**, which files *"non-responsive"* in the cold voice. The other chips still work: register,
+   not branch. The visitor can choose it. The record notes the choice either way.
+2. **The reminder, minimised.** After the song, Restorify's reminder ("Your streak needs you tonight") appears
+   **only as a taskbar button that blinks**, never over the Messenger. Leaving it is the act. If it is still unopened
+   when the thread reaches its next chip, it files *"reminder unanswered"*. The streak shows a notch.
+3. **The folder, opened by him.** The folder's pip appears with the song (built). If the visitor opens it before the
+   commit-press, the record files nothing, because it is felt. But the intervention's alert then says one line more,
+   in the system's voice: *"Unapproved files opened: 1997."* The system has seen him look back.
+
+These make the intervention arrive at someone already leaving. A visitor who complies with everything still meets
+the same ending; the record shows the difference. This is register, not branch, and Caleb's lines are untouched.

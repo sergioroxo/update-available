@@ -84,6 +84,9 @@ import mediaStrings from '../../data/dialog/s2_media.json';
 import calebStrings from '../../data/dialog/s2_caleb.json';
 import pillowProvotypeData from '../../data/provotypes/pillow.json';
 import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.json';
+import { Folder1997App } from './apps/folder1997';
+import { CompanionApp, type CompanionStage } from './apps/companion';
+import folderStrings from '../../data/strings/folder1997.json';
 
 /**
  * S2R.0/S2R.1 (R28-2d-i/ii): the E2 arrival sub-state machine, only
@@ -482,6 +485,39 @@ export class DesktopOS {
   private dossierOpen = false;
   /** ⚑ S183f / R5-04 — 2003's "Your file (read only)" (drawYourFile) */
   private yourFileOpen = false;
+  /** ⚑ S274 — the "1997" folder (felt; DESIGN_MISSING_YEARS §2a) and its unread pip, set when Caleb's song arrives */
+  folder1997: Folder1997App | null = null;
+  private folder1997Unread = false;
+  /** S274 — he has opened it himself (S275's third leaving act reads this) */
+  folder1997Seen = false;
+  /** ⚑ S275 — the pocket pet (companion.ts): one per visit, its LCD shared with the keychain on the 2003 desk */
+  readonly companion = new CompanionApp({
+    mood: () => {
+      const last = [...ledger.checkins].reverse().find((ch) => !ch.id.startsWith('e3'))?.id ?? '';
+      return last === 'struggling' ? 'sad' : last === 'tired' ? 'sterile' : last === 'idontknow' || last === 'reminder' ? 'clinical' : 'cheerful';
+    },
+    fed: () => ledger.checkins.some((ch) => !ch.id.startsWith('e3')),
+    stage: () => this.companionStage(),
+    streakDays: () => 412
+  });
+  private companionBroke = false;
+  /** ⚑ S275 — the three leaving acts (DESIGN_MISSING_YEARS §11): the evening check-in, the reminder left waiting */
+  private eveningCheckin: 'none' | 'due' | 'done' = 'none';
+  private restorifyReminder = false;
+  private companionStill = false;
+  /** alive until Caleb's commit-press; broken through the intervention; still once it has collapsed */
+  companionStage(): CompanionStage {
+    const p = this.caleb?.phase;
+    if (p === 'sealed' || p === 'restoring' || p === 'returning') this.companionBroke = true;
+    if (p === 'residue' || p === 'done') this.companionStill = true;
+    return this.companionStill ? 'still' : this.companionBroke ? 'broken' : 'alive';
+  }
+  openCompanion(): void {
+    if (this.desktopEra !== 'e2' || this.caleb?.open) return;   // never over the felt thread
+    if (this.restorify) this.restorify.open = false;   // one window at a time: the pet stands alone on the desk
+    this.companion.open = true; this.dirty = true;
+  }
+  private yourFilePage: 'record' | 'conduct' = 'record';
   /** ⚑ Phase 7 — the map's ○ beat: the folder has been opened once (menu state, never filed) */
   yourFileSeen = false;
   /** ⚑ S190 — the 1997 browser: the search, between the dial-up and the channel */
@@ -884,7 +920,7 @@ export class DesktopOS {
    *  Messenger, the residue) are windows, and a window means not idle. */
   private desktopIdle(): boolean {
     return this.e1DesktopIdle()
-      && !this.dossierOpen && !this.yourFileOpen && !this.yesOpen && !this.forum?.open && !this.testimony?.open
+      && !this.dossierOpen && !this.yourFileOpen && !this.folder1997?.open && !this.yesOpen && !this.forum?.open && !this.testimony?.open
       && !this.restorify?.open && !this.caleb && !this.accountability
       && !this.netvision && !this.netvisionOfferOpen && !this.messageNoticeOpen
       && !this.updateApp && !this.sendOffer?.open;
@@ -1054,6 +1090,8 @@ export class DesktopOS {
     this.clearExternalSendHits();
     this.dossierOpen = false;
     this.yourFileOpen = false;
+    this.folder1997 = null; this.folder1997Unread = false; this.folder1997Seen = false;
+    this.eveningCheckin = 'none'; this.restorifyReminder = false; this.companion.open = false;   // S275
     this.kitToastShown = true;
     this.behindToastShown = true;
     this.behindToastAt = Infinity;
@@ -1203,6 +1241,7 @@ export class DesktopOS {
       // ⚑ S205 — the first check-in brings the testimony request; Caleb's message waits for the story to be out
       this.restorify.onCheckinFiled = () => { this.offerTestimony(); this.recommendForum(true); };
       this.restorify.onCheckinAcknowledged = () => this.maybeAnnounceMessage();
+      this.restorify.onOpenCompanion = () => this.openCompanion();
       this.startProgram(lambyStrings.restorifyTitle);
     } else if (!this.restorify.open) this.restorify.showToday();
     this.restorify.open = true;
@@ -1477,7 +1516,20 @@ export class DesktopOS {
     //   his message lands only once the first summons has been answered or set aside, so every player meets the
     //   programme's pull before Caleb reaches through it (a player who went straight to Caleb used to never see it)
     if (!ledger.sends.some((s) => s.id === 's1' && (s.outcome === 'visited' || s.outcome === 'declined'))) return;
+    // ⚑ S275 — the first leaving act: the programme asks once more, in the evening, before he writes. Every chip
+    //   works ("I don't know" files as non-responsive); closing it works too. Then the message lands.
+    if (this.eveningCheckin !== 'done') {
+      // dismissal always works: however the evening window went away (closed, answered, put down for the pet), it counts
+      if (this.eveningCheckin === 'due' && !this.restorify?.open) { this.eveningCheckin = 'done'; if (this.restorify) this.restorify.evening = false; }
+      else if (this.eveningCheckin === 'none' && this.desktopIdle()) {
+        this.eveningCheckin = 'due'; this.openRestorify();
+        if (this.restorify) { this.restorify.onEveningDone = () => { this.eveningCheckin = 'done'; this.dirty = true; }; this.restorify.startEvening(); }
+      }
+      return;
+    }
     this.messagePending = true;
+    // the second act's set-up: the programme's reminder waits on Restorify's icon; the third's: his folder is marked
+    this.restorifyReminder = true; this.folder1997Unread = true;
     this.onMessageReady?.();
     this.dirty = true;
   }
@@ -1501,6 +1553,8 @@ export class DesktopOS {
     if (this.restorify?.open) this.restorify.open = false;
     if (this.forum?.open) this.forum.open = false;
     this.yourFileOpen = false;
+    if (this.folder1997) this.folder1997.open = false;   // put down, its pip kept: the song re-marks it (option (b))
+    this.companion.open = false;   // S275: the pet is the programme's — never beside the person's window
     this.startPanels.e2.close();   // the era's "what you can do here" card: the Start menu opens it again
     this.dirty = true;
   }
@@ -1558,6 +1612,8 @@ export class DesktopOS {
     if (this.restorify) this.restorify.open = false;
     const thread = new CalebThreadApp();
     this.caleb = thread;
+    // ⚑ S275 — the second act: he opened the private message and left the programme's reminder waiting
+    if (this.restorifyReminder) { this.restorifyReminder = false; ledger.checkins.push({ id: 'reminder', witness: lambyStrings.reminderWitness }); }
     this.startProgram(calebStrings.window.title);   // S157 / R3-50: the messenger loads first
     thread.onClose = () => { thread.open = false; this.dirty = true; };
     thread.onCommit = () => this.openAccountabilityAlert();
@@ -1568,6 +1624,7 @@ export class DesktopOS {
     // block lifts on the apparatus's own failure, never on a player's press.)
     thread.onNotificationPressed = () => this.accountability?.pingStamp();
     // S157 / R3-52: the file he sent opens in a player, by a press
+    thread.onSongArrived = () => { if (!this.folder1997?.open) { this.folder1997Unread = true; this.dirty = true; } };
     thread.onOpenAttachment = (file) => {
       if (this.mediaPlayer) return;
       this.mediaPlayer = new MediaPlayerApp(file);
@@ -1611,6 +1668,8 @@ export class DesktopOS {
     if (this.accountability) return;
     const alert = new AccountabilityApp();
     this.accountability = alert;
+    // ⚑ S275 — the third act: if he opened his own folder, the system says it saw (a line after the ⟨S⟩ ones, never in them)
+    if (this.folder1997Seen) alert.extraSystemLine = lambyStrings.folderAlertLine;
     this.mediaPlayer?.close();   // S157: the block cuts the song — the player goes with it
     playOnce('alert_2003.mp3');   // S141: the messenger's chime, lower — care and surveillance share a voice
     if (this.caleb) alert.setChatRect(this.caleb.windowRect);
@@ -2204,6 +2263,8 @@ export class DesktopOS {
       if (this.programSplash.t >= PROGRAM_SPLASH_SECONDS) this.programSplash = null;
     }
     if (this.mediaPlayer) this.mediaPlayer.update(dt);
+    // S275 — the pet's LCD runs in 2003 whether its window is up or not (the keychain on the desk shows it)
+    if (this.desktopEra === 'e2') { this.companion.update(dt); if (this.companion.dirty) { this.companion.dirty = false; if (this.companion.open) this.dirty = true; } }
     if (this.phase === 'desktop' && this.web?.open && this.web.update(dt)) this.dirty = true;
     if (this.phase === 'desktop' && this.rootCause) this.rootCause.update(dt);
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
@@ -2845,6 +2906,8 @@ export class DesktopOS {
         this.drawIcon(100, 140, reinterpStrings.launcherIconIntake2003, true, 'icon-provotype-intake');
         // ⚑ S183f / R5-04 — and his own file, which came with him too
         this.drawIcon(100, 188, institutionStrings.yourFile.icon, true, 'icon-your-file');
+        // ⚑ S274 — Daniel's own folder of the years between (felt; nothing points to it but the song's pip)
+        this.drawIcon(190, 140, folderStrings.icon, true, 'icon-folder1997', this.folder1997Unread);
         // ⚑ S191 — the forum, once a thread has been recommended; unread until he opens it
         if (this.forumRecommended) this.drawIcon(100, 236, forumStrings.icon, true, 'icon-forum', !this.forum);
         // ⚑ S205 — his story, once it has been asked for; unread until it is out
@@ -2888,6 +2951,8 @@ export class DesktopOS {
     if (this.diary?.open) this.diary.draw(ctx);
     if (this.dossierOpen) this.drawDossier(W, H);
     if (this.yourFileOpen) this.drawYourFile(W, H);
+    if (this.folder1997?.open) { this.folder1997.draw(this.ctx, W, H); this.hits.push(...this.folder1997.hits); }
+    if (this.companion.open && this.desktopEra === 'e2') { this.companion.draw(this.ctx, W, H); this.hits.push(...this.companion.hits); }
     if (this.provotype?.open) this.provotype.draw(ctx);
     if (this.lambyRigFile?.open) this.lambyRigFile.draw(ctx);
     if (this.rootCause?.open) this.rootCause.draw(ctx);
@@ -3150,7 +3215,8 @@ export class DesktopOS {
       // "Dossier" card. It is not on this shelf any more — see drawDesktop's
       // found-file block and data/strings/slice.json's `dossier._doc`.
       const id = this.desktopEra === 'e2' && i === 0 ? 'icon-restorify' : `icon-era-${i}`;
-      this.drawIcon(12, 92 + i * 48, label, true, id);
+      // S275 — the second act: when Caleb's message lands, the programme's evening reminder waits on its icon
+      this.drawIcon(12, 92 + i * 48, label, true, id, id === 'icon-restorify' && this.restorifyReminder);
     });
   }
 
@@ -3314,9 +3380,17 @@ export class DesktopOS {
    * 2003 — newest first, each with the practice it belongs to (practices.json's title). Nothing
    * in it answers a press but the close box: it is a copy, and it says so.
    */
+  /** S274 — the "1997" folder: opened from its icon (and, in the room, the shoebox); never filed, never announced */
+  openFolder1997(): void {
+    if (!this.folder1997) this.folder1997 = new Folder1997App();
+    this.folder1997.open = true; this.folder1997Unread = false; this.folder1997Seen = true;   // felt: nothing is filed
+    this.dirty = true;
+  }
+
   private drawYourFile(W: number, H: number): void {
     const { ctx } = this;
     const S = institutionStrings.yourFile;
+    if (this.yourFilePage === 'conduct') { this.drawConductRecord(W, H); return; }
     const dw = 400; const dh = 236;
     const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2) - 8;
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, S.title, true);
@@ -3348,6 +3422,35 @@ export class DesktopOS {
     }
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(S.footer, c.x + 10, c.y + c.h - 14);
+    // S274 — the second page, for the visitor who looks: the fourteen days as the institution kept them
+    const bw = 116, bx = c.x + c.w - bw - 8, bby = c.y + c.h - 20;
+    ui.button(ctx, bx, bby, bw, 16, S.conductButton, { hover: this.hover === 'your-file-conduct' });
+    this.hits.push({ x: bx, y: bby, w: bw, h: 16, id: 'your-file-conduct' });
+    this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'your-file-close' });
+  }
+
+  /** S274 — "New Morning · conduct record · 14 days": a page of the read-only file (operable; the staff's voice) */
+  private drawConductRecord(W: number, H: number): void {
+    const { ctx } = this;
+    const S = institutionStrings.yourFile;
+    const dw = 400; const dh = 286;
+    const dx = Math.round((W - dw) / 2); const dy = Math.max(4, Math.round((H - dh) / 2) - 10);
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, S.title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.navy;
+    ctx.fillText(S.conductTitle, c.x + 10, c.y + 8);
+    ui.px(ctx, c.x + 8, c.y + 22, c.w - 16, 1, ERA1.grey);
+    (S.conductRows as string[][]).forEach(([day, line], i) => {
+      const y = c.y + 28 + i * 14;
+      const last = i === S.conductRows.length - 1;
+      ctx.fillStyle = ERA1.greyDark; ctx.fillText(day, c.x + 10, y);
+      ctx.fillStyle = last ? ERA1.grey : ERA1.black; ctx.fillText(line, c.x + 84, y);
+    });
+    ctx.fillStyle = ERA1.navy;
+    ctx.fillText(S.conductEnd, c.x + 10, c.y + 28 + S.conductRows.length * 14 + 6);
+    const bby = c.y + c.h - 20;
+    ui.button(ctx, c.x + 8, bby, 90, 16, S.conductBack, { hover: this.hover === 'your-file-record' });
+    this.hits.push({ x: c.x + 8, y: bby, w: 90, h: 16, id: 'your-file-record' });
     this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'your-file-close' });
   }
 
@@ -4090,6 +4193,8 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.testimony?.open) { this.testimony.handleMove(x, y); if (this.testimony.dirty) this.dirty = true; return; }
     if (this.phase === 'desktop' && this.forum?.open) { if (this.forum.handleMove(x, y)) this.dirty = true; return; }
     if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleMove(x, y); return; }
+    if (this.phase === 'desktop' && this.folder1997?.open) { this.folder1997.handleMove(x, y); if (this.folder1997.dirty) { this.folder1997.dirty = false; this.dirty = true; } return; }
+    if (this.phase === 'desktop' && this.companion.open && this.desktopEra === 'e2') { this.companion.handleMove(x, y); if (this.companion.dirty) { this.companion.dirty = false; this.dirty = true; } return; }
     if (this.phase === 'desktop' && this.restorify?.open) { this.restorify.handleMove(x, y); return; }
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     const id = hit ? hit.id : '';
@@ -4258,6 +4363,8 @@ export class DesktopOS {
     // S55 — lamby_rig.exe is modal while open, same pattern as the provotype
     if (this.phase === 'desktop' && this.lambyRigFile?.open) { this.lambyRigFile.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.rootCause?.open) { this.rootCause.handleClick(x, y); return; }
+    if (this.phase === 'desktop' && this.folder1997?.open) { this.folder1997.handleClick(x, y); if (!this.folder1997.open) this.wayBack('e2'); this.dirty = true; return; }
+    if (this.phase === 'desktop' && this.companion.open && this.desktopEra === 'e2') { this.companion.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.diary?.open) { this.diary.press(); return; }
     if (this.phase === 'desktop' && this.packet?.open) { this.packet.handleClick(x, y); return; }
     // ⚑ S199 — the browsers are windows over the desktop: asked AFTER the modal windows that draw above them
@@ -4279,10 +4386,13 @@ export class DesktopOS {
         case 'icon-found-file': this.dossierOpen = true; break;
         case 'found-file-close': this.dossierOpen = false; break;
         case 'icon-your-file': this.yourFileOpen = true; this.yourFileSeen = true; break;
+        case 'icon-folder1997': this.openFolder1997(); break;   // S274
         case 'icon-story': this.openTestimony(); break;   // S205
         case 'icon-netvision': if (!this.netvision) { this.netvisionOfferedThisSession = true; this.openNetVision(); } break;   // S209 / B18
         case 'icon-forum': this.openForum(); break;
-        case 'your-file-close': this.yourFileOpen = false; this.wayBack('e2'); break;   // S207
+        case 'your-file-close': this.yourFileOpen = false; this.yourFilePage = 'record'; this.wayBack('e2'); break;   // S207
+        case 'your-file-conduct': this.yourFilePage = 'conduct'; break;   // S274
+        case 'your-file-record': this.yourFilePage = 'record'; break;
         case 'icon-messenger': this.openMessenger(); break;
         case 'icon-provotype': this.openProvotype(pillowProvotypeData as unknown as Provotype); break;
         case 'icon-provotype-intake': this.openProvotype(originIntakeProvotypeData as unknown as Provotype); break;
@@ -4290,7 +4400,7 @@ export class DesktopOS {
         case 'icon-rootcause': this.openRootCause(); break;
         case 'icon-era-0':
         case 'icon-era-1': this.toast = { text: this.eraSkin().status, t: 5 }; break;
-        case 'icon-restorify': this.openRestorify(); break;
+        case 'icon-restorify': this.restorifyReminder = false; this.openRestorify(); break;   // S275: the reminder answered
         case 'icon-send':
           if (this.sendOffer) { this.sendOffer.open = true; this.toast = null; this.sendOfferVersion++; }
           break;

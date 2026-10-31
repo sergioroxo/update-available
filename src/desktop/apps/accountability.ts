@@ -455,13 +455,17 @@ export class AccountabilityApp {
     let row = 0;
     for (const line of lines) {
       for (const wrapped of ui.wrapText(ctx, line, w)) {
-        if (row >= 3) return;
+        if (row >= 3) break;
         ctx.fillStyle = color;
         ctx.fillText(wrapped, x, y + row * 13);
         row++;
       }
     }
+    // ⚑ S275 — the third leaving act: the system saw him open his own folder (a line of its own, after the ⟨S⟩ lines)
+    if (this.step === 'system' && this.extraSystemLine) { ctx.fillStyle = ERA1.warnDark; ctx.fillText(this.extraSystemLine, x, y + row * 13 + 4); }
   }
+  /** S275 — set by os.ts when he opened the "1997" folder before the commit-press */
+  extraSystemLine: string | null = null;
 
   /** 412 → 0, on screen, during the alert. The collapse's version of this
    *  field (the one that comes apart) now lives in the letter's own footer —

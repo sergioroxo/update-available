@@ -267,6 +267,8 @@ export class CalebThreadApp {
   private renderedRows = 0;
   private sealPending = false;
 
+  /** S274 — the song's file has arrived in the thread */
+  onSongArrived?: () => void;
   constructor() {
     this.stream.onLine = (text) => {
       this.msgs.push({ from: 'them', text });
@@ -276,6 +278,7 @@ export class CalebThreadApp {
       if (st && st.text === text && st.audio && st.attachment) {
         const last = this.msgs[this.msgs.length - 1];
         last.attachment = { name: caleb.attachment.label, audio: st.audio, size: caleb.attachment.size };
+        this.onSongArrived?.();   // S274: the "1997" folder takes its unread pip (his option (b))
       } else if (st && st.text === text && st.audio) { this.song = playOnce(st.audio); if (this.song) this.song.volume = 0.55; }
       this.dirty = true;
     };

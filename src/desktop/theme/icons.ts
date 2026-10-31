@@ -110,6 +110,14 @@ const ICONS: Record<string, (ctx: Ctx, x: number, y: number) => void> = {
     px(ctx, x + 14, y + 6, 1, 3, ERA1.greyDark); px(ctx, x + 17, y + 6, 1, 3, ERA1.greyDark);
     px(ctx, x + 15, y + 11, 2, 2, ERA1.tooltip); // its keyhole
   },
+  // ⚑ S274 — "1997": Daniel's own folder, a manila folder with a photo's corner showing
+  'icon-folder1997': (ctx, x, y) => {
+    px(ctx, x + 1, y + 2, 8, 3, ERA1.olive);    // the tab
+    px(ctx, x + 1, y + 4, 20, 13, ERA1.olive);
+    px(ctx, x + 2, y + 5, 18, 11, ERA1.tooltip);
+    px(ctx, x + 11, y + 3, 8, 6, ERA1.white);   // a print, sticking out
+    px(ctx, x + 12, y + 4, 6, 2, ERA1.titleBlue); px(ctx, x + 12, y + 6, 6, 2, ERA1.teal);
+  },
   // Harbor Forums — an anchor on a page, the board's own mark
   'icon-forum': (ctx, x, y) => {
     px(ctx, x + 2, y, 18, 18, ERA1.greyDark);

@@ -13,6 +13,7 @@
  * `onCheckinAcknowledged` and `drawResponse` below.
  */
 import decisions from '../../../data/strings/cx3b.json';
+import companionCopy from '../../../data/strings/companion.json';
 import { StartPanel } from './startPanel';
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
@@ -34,6 +35,13 @@ export class RestorifyApp {
   private readonly todayPanel = new StartPanel('e2');
   showToday(): void { this.settings = false; this.lastChip = null; this.today = true; this.open = true; this.dirty = true; }
   offerPending = false;
+  /** ⚑ S275 — Daniel's first leaving act: the evening check-in (its chips gain "I don't know") */
+  evening = false;
+  onEveningDone?: () => void;
+  startEvening(): void { this.evening = true; this.settings = false; this.today = false; this.lastChip = null; this.open = true; this.dirty = true; }
+  private chips(): Chip[] { return this.evening ? [...(lamby.checkinChips as Chip[]), lamby.eveningChip as Chip] : lamby.checkinChips as Chip[]; }
+  /** S275 — the button by the streak opens the pocket pet (os.ts owns it) */
+  onOpenCompanion?: () => void;
   private settings = false;
   private selectedDay = 'steady';
   private readonly panel = new LambyRigPanel();
@@ -138,9 +146,10 @@ export class RestorifyApp {
     // ⚑ S272 (his 31 Oct: "the personalising Lamby can be also a button [on] the Streak") — after the first check-in
     //   the guide's settings live beside the streak they serve, never as a popup of their own
     if (ledger.checkins.some(ch => !ch.id.startsWith('e3'))) {
-      const bw = 150, bx = c.x + c.w - bw - 10;
-      ui.button(ctx, bx, c.y + 32, bw, 18, rigCopy.personalise.edit, { hover: this.hover === 'personalise-open' });
-      this.hits.push({ x: bx, y: c.y + 32, w: bw, h: 18, id: 'personalise-open' });
+      // ⚑ S275 — the settings are gone: the companion grows from the answers (companion.ts)
+      const bw = 110, bx = c.x + c.w - bw - 10;
+      ui.button(ctx, bx, c.y + 32, bw, 18, companionCopy.open, { hover: this.hover === 'companion-open' });
+      this.hits.push({ x: bx, y: c.y + 32, w: bw, h: 18, id: 'companion-open' });
     }
     ui.px(ctx, L, c.y + 60, c.w - 20, 1, ERA1.grey);
 
@@ -149,9 +158,9 @@ export class RestorifyApp {
     // the daily realignment — every answer accepted, none "correct"
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
-    ctx.fillText(lamby.checkinPrompt, L, c.y + 70);
+    ctx.fillText(this.evening ? lamby.eveningPrompt : lamby.checkinPrompt, L, c.y + 70);
 
-    const chips = lamby.checkinChips as Chip[];
+    const chips = this.chips();
     const chipW = 128; const chipH = 20; const gapX = 8; const gapY = 8;
     chips.forEach((ch, i) => {
       const col = i % 2; const row = Math.floor(i / 2);
@@ -178,15 +187,15 @@ export class RestorifyApp {
    * the reply is where the player can see that something was.
    */
   private drawResponse(ctx: CanvasRenderingContext2D, c: ui.ContentRect, L: number): void {
-    const chip = (lamby.checkinChips as Chip[]).find(ch => ch.id === this.lastChip);
-    const reply = (lamby.checkinResponses as Response[]).find(r => r.id === this.lastChip);
+    const chip = this.chips().find(ch => ch.id === this.lastChip);
+    const reply = [...(lamby.checkinResponses as Response[]), lamby.eveningResponse as Response].find(r => r.id === this.lastChip);
 
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.grey;
     ctx.fillText(lamby.checkinResponseHeading, L, c.y + 68);
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.navy;
-    ctx.fillText(`${lamby.checkinPrompt} ${chip?.label ?? ''}`, L, c.y + 82);
+    ctx.fillText(`${this.evening ? lamby.eveningPrompt : lamby.checkinPrompt} ${chip?.label ?? ''}`, L, c.y + 82);
 
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
@@ -222,6 +231,7 @@ export class RestorifyApp {
     if (!hit) return;
     if (hit.id === 'personalise-done') { this.showToday(); return; }
     if (hit.id === 'personalise-open') { this.showPersonalise(); return; }
+    if (hit.id === 'companion-open') { this.onOpenCompanion?.(); return; }
     if (this.settings && hit.id.startsWith('day:')) {
       this.selectedDay = hit.id.slice(4);
       this.panel.handleClick(`mood:${ledger.guidePersonalisation.moods[this.selectedDay]}`, this.t);
@@ -234,7 +244,8 @@ export class RestorifyApp {
     }
     if (hit.id === 'restorify-today') { this.showToday(); return; }
     if (hit.id === 'today-checkin') { this.lastChip = null; this.today = false; this.dirty = true; return; }
-    if (hit.id === 'restorify-close') { this.open = false; this.dirty = true; return; }
+    if (hit.id === 'restorify-close') { this.open = false; this.dirty = true; if (this.evening) { this.evening = false; this.onEveningDone?.(); } return; }
+    if (hit.id === 'checkin-continue' && this.evening) { this.evening = false; this.open = false; this.dirty = true; this.onEveningDone?.(); return; }
     if (hit.id === 'checkin-continue') {
       // the card closes on the player's press, never underneath them
       this.open = false;
@@ -244,7 +255,7 @@ export class RestorifyApp {
     }
     if (hit.id.startsWith('checkin:')) {
       const id = hit.id.slice(8);
-      const chip = (lamby.checkinChips as Chip[]).find(c => c.id === id);
+      const chip = this.chips().find(c => c.id === id);
       if (chip) {
         this.lastChip = chip.id;
         this.moodStart = this.t;

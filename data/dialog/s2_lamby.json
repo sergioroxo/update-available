@@ -56,6 +56,13 @@
  "streakNote": "includes supervised period",
  "checkinPrompt": "How is your walk today?",
  "checkinFiledNote": "recorded.",
+ "_docEvening": "⚑ S275 — Daniel's first leaving act (DESIGN_MISSING_YEARS_2026-10-31.md §11; his yes 31 Oct, 'So 2003 also becomes an act of defiance against the system? I like that'). Once his story is online and the summons answered, Restorify asks again, before Caleb's message lands: an evening check-in whose chips gain 'I don't know' (Caleb's own phrase in the thread). Register, not branch: every chip works; the record shows which.",
+ "eveningPrompt": "How is your walk tonight?",
+ "eveningTitle": "Evening check-in",
+ "eveningChip": { "id": "idontknow", "label": "I don't know", "witness": "evening check-in: non-responsive" },
+ "eveningResponse": { "id": "idontknow", "line1": "'I don't know' is not something we can file.", "line2": "Recorded as non-responsive. Your coach will follow up." },
+ "reminderWitness": "evening reminder: unanswered — opened a private message instead",
+ "folderAlertLine": "Unapproved files opened: 1997.",
  "checkinChips": [
   {
    "id": "steady",

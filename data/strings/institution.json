@@ -30,6 +30,27 @@
     "sub": "Daniel  ·  drawer 12  ·  scanned 2003  ·  entries: {n}",
     "empty": "Nothing on file yet.",
     "more": "… and {n} earlier",
-    "footer": "Read only. The original is kept elsewhere."
+    "footer": "Read only. The original is kept elsewhere.",
+    "_docConduct": "⚑ S274 (DESIGN_MISSING_YEARS_2026-10-31.md §2b; his: the conduct sheet is 'an interesting detail if the person is able to find' it) — the fourteen days as the institution kept them, a second page of the read-only file. OPERABLE: the staff's flat observation, never Daniel informing. Its practices (safekeeping, searches, moral inventories, held post, open doors) are DOCUMENTED patterns of a later (2005) youth programme, composite here (RESEARCH_CALEB_AND_TIME_2026-10-31_CLAUDE.md §2.2, S1/S2); New Morning is invented. The blank last night is the respite: never shown, never explained.",
+    "conductButton": "New Morning, 1997 >",
+    "conductBack": "< Your file",
+    "conductTitle": "NEW MORNING · CONDUCT RECORD · 14 DAYS",
+    "conductRows": [
+      ["Day 1", "Arrival. Belongings held. Safekeeping."],
+      ["Day 2", "Safekeeping. No speech with peers."],
+      ["Day 3", "Safekeeping ends. Moral inventory 1 filed."],
+      ["Day 4", "Search, Room 3. Nothing held."],
+      ["Day 5", "Group. Participant quiet."],
+      ["Day 6", "Call home, supervised. 10 min."],
+      ["Day 7", "Moral inventory 2 filed."],
+      ["Day 8", "Room 3: speech after lights-out. Noted."],
+      ["Day 9", "Seating changed at meals."],
+      ["Day 10", "Group. Participant spoke."],
+      ["Day 11", "Moral inventory 3 filed."],
+      ["Day 12", "Post held for review: 1 item."],
+      ["Day 13", "Parent visit. Placement judged effective."],
+      ["Last night", "no entry"]
+    ],
+    "conductEnd": "Completed. Certificate issued. One cassette held. File kept."
   }
 }

@@ -94,6 +94,8 @@ const ROOM_SKY = new pc.Color(0.05, 0.04, 0.03);
 const POWER_BTN = { x: 0.19, y: 0.895, z: 0.03 };
 /** the Starter Kit floppy on the desk (S1.2 insert beat) — in the leaflet pocket */
 const KIT_FLOPPY = { x: -0.34, y: 0.762, z: 0.12 };
+/** ⚑ S275 — the pocket pet's keychain on the 2003 desk (reinterp_deltas r2 `companionKeychain`) */
+const KEYCHAIN_HIT = { x: 0.57, y: 0.765, z: 0.06 };
 const DRAG_PITCH_MAX = 55;
 /** O1 establishing framing (reinterp): pulled back, room-wide, window-lit */
 const ESTABLISH = { x: 0, y: 1.62, z: 2.55, pitch: -7 };
@@ -1895,7 +1897,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   // Apply the authored tilt before the entrance takes its snapshot; rebuild below.
   syncRacketDemo();
-  cluster?.setNeverBatch(['tennisRacketModel', 'mouse']); // the demonstration moves it; S270h / VR-01: the hand moves the mouse
+  cluster?.setNeverBatch(['tennisRacketModel', 'mouse', 'companionKeychain']);   // S275: the keychain carries the pet's LCD // the demonstration moves it; S270h / VR-01: the hand moves the mouse
   /** ⚑ S183 — the institution's corner: named, pressable, and pulling with the file */
   const institution = options.reinterp === true ? createInstitution(room) : null;
   if (institution) {
@@ -3301,6 +3303,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       }
       // ⚑ S271 (his 31 Oct: "Unwalk is still present here, and I don't know why") — 2003 retires the kit, and the disk
       //   on the desk put it back: a press aimed at the 2003 keyboard re-ran 1997's programme. The disk is 1997's.
+      // ⚑ S275 — the keychain opens the pocket pet on the monitor (a second door to the Companion window)
+      if (os.inDesktop && os.era === 'e2' && os.desktopIdleForProps?.() && rayHitsPointR(ray, KEYCHAIN_HIT, 0.07)) {
+        os.openCompanion();
+        return;
+      }
       if (os.inDesktop && os.era === 'e1' && !os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) {
         os.insertKit(); // S1.2 — you put the disk in yourself
         return;
@@ -3528,7 +3535,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!os.inDesktop) return null;
     if (options.reinterp && os.desktopIdleForProps?.() && rayHitsPointR(ray, RACKET_HIT, 0.3)) return A.racket;
     if (options.reinterp && os.desktopIdleForProps?.() && rayHitsPointR(ray, RELEASE_POSTER_HIT, 0.24)) return A.releasePoster;
-    if (!os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) return A.disk;
+    if (os.era === 'e1' && !os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) return A.disk;   // S271: 1997's only
+    if (os.era === 'e2' && rayHitsPointR(ray, KEYCHAIN_HIT, 0.07)) return A.companion ?? null;   // S275
     const belongings = os.belongings;
     if (belongings?.windowOpen) {
       const offered = belongings.offered;
@@ -3929,6 +3937,22 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   });
 
   // ── frame loop ──
+  // ⚑ S275 — the pocket pet's keychain on the 2003 desk: its LCD is the Companion window's own canvas, on a small
+  //   nearest-filtered plane on the egg's face, uploaded only when the pet redraws it (the law: uploads on dirty)
+  let keychainScreen: pc.Entity | null = null, keychainTex: pc.Texture | null = null, keychainDrawn = -1;
+  function tickKeychain(): void {
+    const egg = room.props.get('companionKeychain')?.entity;
+    if (!egg || !egg.enabled) return;
+    if (!keychainScreen || keychainScreen.parent !== egg) {
+      keychainTex = makeScreenTexture(app, os.companion.lcd);
+      keychainScreen = makeScreenEntity('keychain-lcd', keychainTex, 1, 1);
+      egg.addChild(keychainScreen);
+      // the egg is a unit box scaled to its size: the LCD sits on its top face, 70 % wide, facing up
+      keychainScreen.setLocalPosition(0, 0.51, 0.05); keychainScreen.setLocalScale(0.7, 1, 0.7 * 40 / 64);
+      keychainDrawn = -1;
+    }
+    if (keychainTex && os.companion.lcdVersion !== keychainDrawn) { keychainDrawn = os.companion.lcdVersion; keychainTex.upload(); }
+  }
   app.on('update', (dt: number) => {
     // R28-4 — THE GAME MENU hard-freezes the whole per-frame body: camera
     // tweens/dollies, the era-morph cascade, movement blink, tape/NetVision
@@ -3943,6 +3967,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     xrInput?.tick();
     if (xr?.active && !xrLayer?.mouseEngaged) { const ray = aimRay(); era3Devices?.hoverXr(ray); const at = ray && toDesktopR(ray); if (at) { const target = os.xrPoint(at.x, at.y); os.handleMove(target.x, target.y); } else os.xrPoint(-100, -100); }
     if (xrFrame && xr?.active) xrFrame.tick(xrInput?.ray() ?? null, xrInput?.wrist() ?? null);
+    tickKeychain();
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : aimName ?? xrHelperText(helper?.text() ?? null, dt));
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the

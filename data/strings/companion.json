@@ -1,0 +1,27 @@
+{
+ "_doc": "⚑ S275 — THE POCKET PET (DESIGN_MISSING_YEARS_2026-10-31.md §6; his yes 31 Oct: 'keychain in the room and screen', 'show the resets'). Restorify's keychain companion, 2003: a virtual-pet reference (the 1996–2004 keychain pets: feed, play, clean, discipline; guilt; the morning check). OPERABLE: the programme's self-presentation, which may charm and must collapse. Its needs are the programme's duties (WORD, FELLOWSHIP, CONFESS; CORRECT is the coach's, greyed). The daily check-in feeds it; Lamby's face is the streak's mood and grows from the answers (no settings — 'Personalise your guide' is gone). It never mocks Daniel, never dies, has no timer and no sound. At Caleb's commit-press the streak breaks; after the intervention it goes still: 'no needs recorded'. Absent from felt scenes (it is a window on the programme's surface). Invented mark only. Text is Claude's under the 2026-08-17 norm; his edit wins.",
+ "title": "Restorify Companion",
+ "open": "Companion",
+ "streak": "{n} days · 11 resets",
+ "streakNote": "(includes supervised period)",
+ "week": "THIS WEEK",
+ "staff": "S",
+ "staffNote": "S = filled in by staff",
+ "buttons": { "word": "WORD", "fellowship": "FELLOWSHIP", "confess": "CONFESS", "correct": "CORRECT" },
+ "correctNote": "coach only",
+ "words": ["SURRENDER", "PURITY", "OBEDIENCE", "WHOLENESS", "RESTORED"],
+ "fed": "Word for today: {w}",
+ "played": "Fellowship logged.",
+ "swept": "3 thoughts swept.",
+ "moods": {
+  "cheerful": "Lamby is proud of you.",
+  "sad": "Lamby is worried about you.",
+  "sterile": "Lamby is resting.",
+  "clinical": "Lamby is noting this."
+ },
+ "hungry": "Lamby hasn't had today's check-in.",
+ "broken": "Streak reset. Lamby is waiting.",
+ "brokenStreak": "0 days · 12 resets",
+ "still": "Companion process: no needs recorded.",
+ "keychain": "LAMBY"
+}

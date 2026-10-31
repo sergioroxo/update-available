@@ -1,0 +1,31 @@
+{
+ "_doc": "⚑ S274 — the \"1997\" folder on the 2003 desktop (DESIGN_MISSING_YEARS_2026-10-31.md §2a; his yes 31 Oct: the name \"1997\", the card shown by option (b)). FELT: Daniel's own folder, the years between. No Lamby, nothing filed when it is opened, no witness line. Pictures are drawn by code in the ERA1 palette (src/desktop/apps/folder1997.ts): places and objects only, never a face, never a programme interior. Text is Claude's under the 2026-08-17 norm; his edit wins.",
+ "icon": "1997",
+ "title": "1997",
+ "back": "< Back",
+ "turn": "Turn over",
+ "open27": "Open frame 27",
+ "files": [
+  { "id": "card", "name": "card_unsent.jpg", "caption": "A postcard. Stamped. Never posted." },
+  { "id": "roll", "name": "ROLL_01.jpg", "caption": "27 exposures. Developed in 1998." },
+  { "id": "certificate", "name": "certificate.jpg", "caption": "New Morning, 1997. Both sides." },
+  { "id": "jcard", "name": "tape_card.jpg", "caption": "The card from his tape. They kept the tape." },
+  { "id": "room", "name": "room_1999.jpg", "caption": "My room, 1999." }
+ ],
+ "card": {
+  "to": "C.",
+  "address": ["(no address)"],
+  "message": ["Two years now.", "They kept the tape.", "I kept the card.", "I don't know where", "to send this.", "D."],
+  "front": "GREETINGS FROM THE LAKE"
+ },
+ "roll": { "frame27": "IMG0027.jpg" },
+ "certificate": {
+  "front": ["NEW MORNING", "Certificate of Completion", "awarded to", "{name}", "for fourteen days", "on the tried path", "1997"],
+  "back": ["Don't let them", "keep all of it.", "", "C.", "Room 3, Bed B"]
+ },
+ "jcard": {
+  "title": "for D.",
+  "side": "SIDE A",
+  "tracks": ["1. the long drive", "2. open door", "3. lights out", "4. quiet hours", "5. the lake", "6. bed B", "7. don't tell", "8. last night"]
+ }
+}

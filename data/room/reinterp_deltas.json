@@ -666,6 +666,7 @@
     "partColors": {"Material.001": "#A9ADB4", "Material.003": "#2E3036", "Material.006": "#5E7A86", "Material.007": "#15151A"},
     "_docS177": "⚑ S177 / R4-29 (his D2, 2026-09-26: 'yes do the separate colors') — a silver 2003 flip phone: silver shell, dark keypad and bezel, the screen's grey-blue, the speaker slot."
    },
+   {"id": "companionKeychain", "pos": [0.57, 0.752, 0.06], "size": [0.05, 0.024, 0.06], "color": "#F5F4ED", "_docS275": "⚑ S275 — Restorify's keychain companion (his 31 Oct: 'keychain in the room and screen'): a cream egg on the desk beside the flip phone, its LCD the same live pet as the Companion window (src/desktop/apps/companion.ts; the screen plane is added in engine/app.ts). Pressing it opens the window on the monitor — a room object as a second door. 2003 only."},
    {
     "id": "cdSpindle",
     "pos": [-0.4, 0.74, -0.26],
@@ -2644,6 +2645,7 @@
    "w_pen",
    "w_phoneCradle",
    "flipPhone",
+   "companionKeychain",
    "cdSpindle",
    "modem",
    "modemLed",

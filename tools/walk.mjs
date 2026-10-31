@@ -294,10 +294,15 @@ async function main() {
   const browser = await puppeteer.launch({
     executablePath: chrome,
     headless: true,
+    // S275: the film wait is one browser call of up to 200 s; Puppeteer's own default (180 s) cut it short on a busy
+    //   machine (three walks in a row failed at "the opening film" on 31 Oct, the film itself being fine)
+    protocolTimeout: 420000,
     // S223: and none of Chromium's own background traffic (update checks, field trials, safe browsing). A cloud
     //   sandbox rejects it, the browser keeps retrying, and the page never reached "network idle" (the first cloud
     //   run timed out on www.google.com, which is the browser calling home, never the piece: src/ names no host)
-    args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox',
+    // S275: and a fake audio sink — with the Mac's own output stalled (31 Oct) a headless video's clock never moved,
+    //   so the opening film "played" at 0:00 for ever and every walk stopped there; a null sink keeps its own clock
+    args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox', '--disable-audio-output',
       '--disable-background-networking', '--disable-component-update', '--disable-default-apps', '--no-first-run',
       '--disable-sync', '--disable-domain-reliability', '--disable-features=OptimizationHints,MediaRouter,Translate',
       '--metrics-recording-only'],
