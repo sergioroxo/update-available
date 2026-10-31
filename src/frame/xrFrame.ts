@@ -32,7 +32,8 @@ import { gameMenuBus } from '../state/gameMenuBus';
 import type { MapState } from '../witness/map';
 import copy from '../../data/strings/gameMenu.json';
 import mapCopy from '../../data/strings/map.json';
-import { FRAME } from '../desktop/theme/chrome';
+import { DIALOG } from '../desktop/theme/chrome';
+import { ERA1 } from '../desktop/theme/era1';
 
 export interface Ray { p0: pc.Vec3; p1: pc.Vec3 }
 
@@ -52,12 +53,11 @@ const HINT_DIST = 0.6, HINT_DROP = 0.2;
 // ⚑ S270c (his: "the menu button is running away from me") — it re-hung itself past ~52° off the gaze while it sits
 //   ~34° to the right, so a small turn moved it; now it stays until it is well out of view (~75°), and is a third bigger
 const TAB_W = 0.16, TAB_H = TAB_W * 64 / 256, TAB_DIST = 0.6, TAB_DROP = 0.36, TAB_TURN = 1.3;
-const FONT = '"Courier New", monospace';
 
 export interface XrFrame {
   readonly layerId: number;
   /** once per frame; `ray` is the controller's, for the cursor */
-  tick(ray: Ray | null): void;
+  tick(ray: Ray | null, wrist?: pc.Vec3 | null): void;
   /** the menu opened: hang the plane in front of the head */
   open(): void;
   close(): void;
@@ -67,6 +67,8 @@ export interface XrFrame {
   setHint(text: string | null): void;
   /** ⚑ S209 / A22 — a select on the ≡ Menu tab opens the menu (true if the tab took it) */
   pressTab(ray: Ray): boolean;
+  /** S270f — does this fingertip segment touch the tab (menu closed) or the menu plane (open)? */
+  touches(ray: Ray): boolean;
   readonly isOpen: boolean;
   /** ?debug=1 review: where a ray lands on the menu plane, in canvas px */
   debugHit(ray: Ray): { x: number; y: number } | null;
@@ -152,23 +154,29 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   };
 
   // ── drawing ──
-  const font = (px: number, bold = false): void => { ctx.font = `${bold ? '700 ' : ''}${px}px ${FONT}`; ctx.textBaseline = 'top'; };
-  const rowH = 58;
+  // ⚑ S270f (the report's 3.5b: "XR menu is the old dark plate, not the Win95 dialog style") — the headset's menu is
+  //   the browser's Esc dialog, drawn: a beige panel, a navy title bar, raised buttons that sink under the cursor. The
+  //   frame stays functional and undecorated; only its chrome matches the menu it is a copy of.
+  const UI = '"Tahoma", "Verdana", sans-serif';
+  const uiFont = (px: number, bold = false): void => { ctx.font = `${bold ? '700 ' : ''}${px}px ${UI}`; ctx.textBaseline = 'top'; };
+  const bevel = (g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, sunk = false, t = 3): void => {
+    g.fillStyle = sunk ? DIALOG.darker : DIALOG.light; g.fillRect(x, y, w, t); g.fillRect(x, y, t, h);
+    g.fillStyle = sunk ? DIALOG.light : DIALOG.darker; g.fillRect(x, y + h - t, w, t); g.fillRect(x + w - t, y, t, h);
+  };
+  const rowH = 76;   // big targets: a pinch at arm's length (~6 cm a button at 0.62 m)
   const drawRow = (label: string, id: string, y: number, emphasis = false): number => {
-    const x = 64, w = W - 128;
+    const x = 64, w = W - 128, h = rowH - 12;
     const on = hover === id;
-    ctx.fillStyle = on ? FRAME.rule : 'transparent';
-    if (on) ctx.fillRect(x, y, w, rowH - 8);
-    ctx.strokeStyle = on ? FRAME.dim : FRAME.edge;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x + 1, y + 1, w - 2, rowH - 10);
-    font(24); ctx.fillStyle = emphasis ? FRAME.bright : FRAME.text;
-    ctx.fillText(label, x + 22, y + 14);
-    hits.push({ x, y, w, h: rowH - 8, id });
+    ctx.fillStyle = DIALOG.panel; ctx.fillRect(x, y, w, h);
+    bevel(ctx, x, y, w, h, on);
+    if (emphasis) { ctx.strokeStyle = DIALOG.ink; ctx.lineWidth = 2; ctx.strokeRect(x - 3, y - 3, w + 6, h + 6); }
+    uiFont(30, emphasis); ctx.fillStyle = DIALOG.ink;
+    ctx.fillText(label, x + 24 + (on ? 2 : 0), y + 16 + (on ? 2 : 0));
+    hits.push({ x, y, w, h, id });
     return y + rowH;
   };
   const wrap = (text: string, px: number, maxW: number): string[] => {
-    font(px);
+    uiFont(px);
     const out: string[] = []; let line = '';
     for (const word of text.split(' ')) {
       const t = line ? `${line} ${word}` : word;
@@ -181,66 +189,65 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   const draw = (): void => {
     hits = [];
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(16,16,20,0.96)';
-    ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = FRAME.rule; ctx.lineWidth = 3; ctx.strokeRect(1.5, 1.5, W - 3, H - 3);
-    let y = 44;
+    ctx.fillStyle = DIALOG.panel; ctx.fillRect(0, 0, W, H);
+    bevel(ctx, 0, 0, W, H, false, 4);
+    // the title bar carries the view's title; the body starts under it
+    const title = view === 'main' ? copy.title : view === 'controls' ? copy.controlsTitle : view === 'restartConfirm' ? copy.restartConfirmTitle : mapCopy.title;
+    ctx.fillStyle = DIALOG.titleBar; ctx.fillRect(8, 8, W - 16, 48);
+    uiFont(26, true); ctx.fillStyle = DIALOG.titleInk; ctx.fillText(title, 24, 18);
+    let y = 84;
     if (view === 'main') {
-      font(30, true); ctx.fillStyle = FRAME.bright; ctx.fillText(copy.title, 64, y); y += 64;
       y = drawRow(copy.resume, 'resume', y, true);
       if (gameMenuBus.mapSource) y = drawRow(mapCopy.row, 'map', y);
       y = drawRow(copy.recentre, 'recentre', y);
       y = drawRow(copy.controls, 'controls', y);
       y = drawRow(copy.restart, 'restart', y);
       y = drawRow(copy.leave, 'leave', y);
-      font(18); ctx.fillStyle = FRAME.faint;
-      ctx.fillText(copy.xrHow, 64, H - 60);
+      ctx.fillStyle = DIALOG.dim;
+      wrap(copy.xrHow, 19, W - 128).forEach((l, i) => ctx.fillText(l, 64, H - 70 + i * 24));
     } else if (view === 'controls') {
-      font(30, true); ctx.fillStyle = FRAME.bright; ctx.fillText(copy.controlsTitle, 64, y); y += 60;
       for (const line of copy.controlsHeadsetLines) {
-        for (const l of wrap(line, 22, W - 128)) { ctx.fillStyle = FRAME.dim; ctx.fillText(l, 64, y); y += 30; }
+        for (const l of wrap(line, 22, W - 128)) { ctx.fillStyle = DIALOG.ink; ctx.fillText(l, 64, y); y += 30; }
         y += 8;
       }
       drawRow(copy.back, 'back', H - 44 - rowH);
     } else if (view === 'restartConfirm') {
-      font(30, true); ctx.fillStyle = FRAME.bright; ctx.fillText(copy.restartConfirmTitle, 64, y); y += 60;
-      for (const l of wrap(copy.restartConfirmBody, 22, W - 128)) { ctx.fillStyle = FRAME.dim; ctx.fillText(l, 64, y); y += 30; }
+      for (const l of wrap(copy.restartConfirmBody, 22, W - 128)) { ctx.fillStyle = DIALOG.ink; ctx.fillText(l, 64, y); y += 30; }
       y += 24;
       y = drawRow(copy.restartConfirmYes, 'restart-yes', y);
       drawRow(copy.restartConfirmNo, 'back', y);
     } else if (view === 'map') {
       const st: MapState | null = gameMenuBus.mapSource ? gameMenuBus.mapSource() : null;
-      font(30, true); ctx.fillStyle = FRAME.bright; ctx.fillText(mapCopy.title, 64, y); y += 48;
-      y += 16;
+      y -= 8;
       if (st) {
         const cols = st.eras.length;
         const colW = Math.floor((W - 128 - (cols - 1) * 16) / cols);
         let ahead = false;
         st.eras.forEach((era, i) => {
           const x = 64 + i * (colW + 16);
-          ctx.fillStyle = era.here ? FRAME.bright : FRAME.rule;
+          ctx.fillStyle = era.here ? DIALOG.titleBar : DIALOG.dark;
           ctx.fillRect(x, y, colW, era.here ? 4 : 2);
           let cy = y + 16;
           const isAhead = ahead;
           if (era.here) ahead = true;
-          font(19, true); ctx.fillStyle = isAhead ? FRAME.faint : era.here ? FRAME.bright : FRAME.text;
+          uiFont(19, true); ctx.fillStyle = isAhead ? DIALOG.faint : era.here ? DIALOG.titleBar : DIALOG.ink;
           for (const l of wrap(era.label, 19, colW)) { ctx.fillText(l, x, cy); cy += 24; }
-          font(16);
-          if (era.here) { ctx.fillStyle = FRAME.bright; ctx.fillText(mapCopy.hereLabel, x, cy); cy += 24; }
+          uiFont(16);
+          if (era.here) { ctx.fillStyle = DIALOG.titleBar; ctx.fillText(mapCopy.hereLabel, x, cy); cy += 24; }
           if (isAhead) {
-            ctx.fillStyle = FRAME.faint;
+            ctx.fillStyle = DIALOG.faint;
             ctx.fillText(era.id === 'close' ? mapCopy.aheadLabel : mapCopy.aheadCount.replace('{n}', String(era.beats.length)), x, cy);
             return;
           }
           for (const b of era.beats) {
             const mark = b.state === 'done' ? '✓' : b.state === 'current' ? '▸' : b.beat.optional ? '○' : '·';
-            ctx.fillStyle = b.state === 'current' ? FRAME.bright : b.state === 'done' ? FRAME.dim : FRAME.faint;
+            ctx.fillStyle = b.state === 'current' ? DIALOG.titleBar : b.state === 'done' ? DIALOG.ink : DIALOG.dim;
             const lines = wrap(`${mark} ${b.beat.label}`, 16, colW);
             for (const l of lines) { ctx.fillText(l, x, cy); cy += 21; }
           }
           if (era.id !== 'close') {
             const done = era.beats.filter((b) => b.state === 'done').length;
-            ctx.fillStyle = FRAME.faint;
+            ctx.fillStyle = DIALOG.dim;
             ctx.fillText(mapCopy.progress.replace('{d}', String(done)).replace('{n}', String(era.beats.length)), x, cy + 6);
           }
         });
@@ -251,7 +258,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     }
     // the cursor: a ring where the controller's ray meets the plane
     if (cursor) {
-      ctx.strokeStyle = FRAME.bright; ctx.lineWidth = 3;
+      ctx.strokeStyle = DIALOG.ink; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.arc(cursor.x, cursor.y, 9, 0, Math.PI * 2); ctx.stroke();
     }
     tex.upload();
@@ -261,9 +268,10 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   const drawHint = (): void => {
     hctx.clearRect(0, 0, 1024, 136);
     if (!hint) { hintTex.upload(); return; }
-    hctx.fillStyle = FRAME.glass;
-    hctx.fillRect(0, 0, 1024, 136);
-    hctx.font = `24px ${FONT}`; hctx.textBaseline = 'middle'; hctx.fillStyle = FRAME.ink;
+    // a 1997 tooltip: pale yellow, a black line, black type — dark-on-light reads best in a headset
+    hctx.fillStyle = ERA1.tooltip; hctx.fillRect(0, 0, 1024, 136);
+    hctx.strokeStyle = ERA1.black; hctx.lineWidth = 3; hctx.strokeRect(1.5, 1.5, 1021, 133);
+    hctx.font = `26px "Tahoma", "Verdana", sans-serif`; hctx.textBaseline = 'middle'; hctx.fillStyle = ERA1.black;
     hctx.textAlign = 'center';
     // two lines at most; a hint that needs a third is cut with a mark, not clipped
     const lines: string[] = []; let line = '';
@@ -291,20 +299,20 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   tabPlane.enabled = false;
   app.root.addChild(tabPlane);
   if (tctx) {
-    tctx.fillStyle = FRAME.glass; tctx.fillRect(0, 0, 256, 64);
-    tctx.strokeStyle = FRAME.edge; tctx.lineWidth = 3; tctx.strokeRect(1.5, 1.5, 253, 61);
-    tctx.fillStyle = FRAME.bright; tctx.font = '28px monospace'; tctx.textBaseline = 'middle';
-    tctx.fillText(`\u2261 ${copy.menuTab}`, 24, 33);
+    tctx.fillStyle = DIALOG.panel; tctx.fillRect(0, 0, 256, 64);
+    bevel(tctx, 0, 0, 256, 64, false, 4);
+    tctx.fillStyle = DIALOG.ink; tctx.font = '700 28px "Tahoma", "Verdana", sans-serif'; tctx.textBaseline = 'middle';
+    tctx.fillText(`\u2261 ${copy.menuTab}`, 28, 33);
     tabTex.upload();
   }
-  let closedAt = 0;
+  let closedAt = 0, onWrist = false;
   const hangTab = (): void => {
     hang(tabPlane, TAB_DIST, TAB_DROP);
     // ⚑ S268 (his: "The floating menu button just sits in front of the screen") — well to the right and low, clear of
     //   the monitor (about ±20° of the seat's gaze): ~34° right, ~30° down
     const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, -1); fwd.normalize();
     const right = new pc.Vec3(-fwd.z, 0, fwd.x);
-    tabPlane.setPosition(tabPlane.getPosition().add(right.mulScalar(0.40)));
+    tabPlane.setPosition(tabPlane.getPosition().add(right.mulScalar(0.62)));   // S270f: clear of 2026's laptop (the tour)
     // ⚑ S270d (his: "the menu button is always kind of lopsided… pointed more to the left") — moved aside, it still
     //   faced the old gaze, ~34° askew; turn it to face the head from where it now hangs
     const d = tabPlane.getPosition().clone().sub(head.getPosition()); d.y = 0; d.normalize();
@@ -348,6 +356,10 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       plane.enabled = false;
       closedAt = performance.now();
     },
+    touches(ray: Ray): boolean {
+      if (open) return !!planeHit(plane, ray, PLANE_W, PLANE_H, W, H);
+      return tabPlane.enabled && !!planeHit(tabPlane, ray, TAB_W, TAB_H, 256, 64);
+    },
     pressTab(ray: Ray): boolean {
       // the press that closed the menu (Resume, Recentre) must not land on the tab and open it again
       if (open || !tabPlane.enabled || performance.now() - closedAt < 700) return false;
@@ -371,11 +383,22 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       drawHint();
     },
     debugHit(ray: Ray): { x: number; y: number } | null { return planeHit(plane, ray, PLANE_W, PLANE_H, W, H); },
-    tick(ray: Ray | null): void {
+    tick(ray: Ray | null, wrist?: pc.Vec3 | null): void {
       if (!open) {
         // the tab: shown while immersive and closed; re-hung when the head has turned away from it
         const immersive = !!app.xr?.active;
         if (!immersive) { tabPlane.enabled = false; return; }
+        // ⚑ S270f (his: "the menu button is running away from me… it overlaps the laptop" — the tour put it on 2026's
+        //   laptop) — with a left hand or controller in view, the tab rides above the left wrist, facing the head:
+        //   it never covers the room and it is always where the hand is. Without one it hangs low on the right.
+        if (wrist) {
+          const at = wrist.clone().add(new pc.Vec3(0, 0.07, 0));
+          const d = at.clone().sub(head.getPosition()); d.y = 0;
+          if (d.lengthSq() > 1e-6) { d.normalize(); tabPlane.setPosition(at); tabPlane.setEulerAngles(90, Math.atan2(-d.x, -d.z) * 180 / Math.PI, 0); }
+          tabPlane.enabled = true; onWrist = true;
+          return;
+        }
+        if (onWrist) { onWrist = false; tabPlane.enabled = false; }
         if (!tabPlane.enabled || tabOffAxis()) { hangTab(); tabPlane.enabled = true; }
         return;
       }

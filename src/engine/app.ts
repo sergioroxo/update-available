@@ -1082,6 +1082,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       },
       onRelease: source => { if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
       canPoke: physical => {
+        if (xrFrame?.touches(physical)) return true;   // S270f: the wrist tab and the open menu take a fingertip too
         if (!cluster || !os.inDesktop || xrComfort.busy || gameMenuBus.isOpen) return false;
         const target = devices?.aim(xrComfort.logicalRay(physical), cluster.era);
         return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
@@ -3879,7 +3880,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   wands follow the hands and the plane's cursor follows the ray
     xrInput?.tick();
     if (xr?.active) { const ray = aimRay(); era3Devices?.hoverXr(ray); const at = ray && toDesktopR(ray); if (at) { const target = os.xrPoint(at.x, at.y); os.handleMove(target.x, target.y); } else os.xrPoint(-100, -100); }
-    if (xrFrame && xr?.active) xrFrame.tick(xrInput?.ray() ?? null);
+    if (xrFrame && xr?.active) xrFrame.tick(xrInput?.ray() ?? null, xrInput?.wrist() ?? null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : aimName ?? xrHelperText(helper?.text() ?? null, dt));
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the

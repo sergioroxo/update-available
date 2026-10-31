@@ -131,6 +131,9 @@ export class LambySetup {
       if (this.noteT >= 0.8) { this.window = 'note'; this.noteOpened = true; this.hits = []; this.dirty = true; }
     }
     if (this.noteClosedAt !== null && this.clock - this.noteClosedAt >= 4 && !this.readyDrawn) { this.readyDrawn = true; this.dirty = true; }
+    // ⚑ S270f (the report's 3.4: "the start was pre selected and very hard to see when I am supposed to click") — once
+    //   the closing button is live it pulses (twice a second), so the moment it can be pressed is visible
+    if (this.step === 'allset' && this.ready) { const k = Math.floor(this.clock * 2); if (k !== this.pulseK) { this.pulseK = k; this.dirty = true; } }
     if (this.film && this.window === 'advert') {
       // redraw (and so re-upload the XR texture) only when the film has a new frame — never while it is paused
       const v = this.film;
@@ -149,6 +152,7 @@ export class LambySetup {
     }
   }
   private readyDrawn = false;
+  private pulseK = -1;
   destroy(): void { this.open = false; this.hits = []; this.sound?.pause(); this.dropFilm(); }
   /** S248: a clear chime, not the startup swell (that one is mostly sub-bass and says little about the headphones) —
    *  it plays in place and answers the trackbar live, so the volume can be set by ear. */
@@ -247,6 +251,10 @@ export class LambySetup {
       ui.px(ctx, x + 2, y + 2, w - 4, h - 4, P.beige);
       ctx.fillStyle = disabled ? P.grey : this.hover === id ? P.navy : P.black;
       ctx.fillText(label, Math.round(x + (w - ctx.measureText(label).width) / 2), y + 10);
+    }
+    if (!disabled && this.step === 'allset') {
+      ctx.strokeStyle = this.pulseK % 2 === 0 ? P.navy : P.black; ctx.lineWidth = 2;
+      ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
     }
     if (!disabled) this.hits.push({ id, x, y, w, h });
   }

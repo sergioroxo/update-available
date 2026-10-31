@@ -9,13 +9,16 @@ import type { Ray } from './xrFrame';
 import { FRAME } from '../desktop/theme/chrome';
 import { ERA1 } from '../desktop/theme/era1';
 
-const WAND_LENGTH = 1.6;
+/** S270f: the stub when the ray lands on nothing — hand, controller */
+const STUB_HAND = 0.12, STUB_PAD = 0.25;
 const WAND_THICK = 0.004;
 const DOT = 0.009, DOT_FLASH = 0.026, FLASH_MS = 220;
 
 export interface XrInput {
   /** the primary controller's ray this frame, or null (no session / no controller) */
   ray(): Ray | null;
+  /** S270f — the left wrist (hand) or left grip (controller), where the Menu tab rides; null when not tracked */
+  wrist(): pc.Vec3 | null;
   /** once per frame: the wands follow the hands */
   tick(): void;
   destroy(): void;
@@ -184,8 +187,25 @@ export function mountXrInput(app: pc.Application, opts: {
     const h = hands.get(src);
     if (h && src.hand) {
       h.entity.enabled = !!src.hand.tracking;
-      if (h.entity.enabled) for (const j of src.hand.joints) {
-        const r = Math.min(0.012, Math.max(0.005, j.radius)); box(j.getPosition(), new pc.Vec3(r,r,r));
+      // ⚑ S270f (his: "the hand marker… needs more block so people don't think it is skeleton hand") — not a cube at
+      //   every joint but a block along every bone: each finger a chain of chunky segments, the palm the segments from
+      //   the wrist to each finger's root. Reads as a pixel-art hand, not an X-ray. Still one mesh, one draw call.
+      const bone = (a: pc.Vec3, b: pc.Vec3, r: number): void => {
+        const len = a.distance(b);
+        if (len < 1e-4) return;
+        const m = new pc.Mat4().setLookAt(a, b, Math.abs(b.clone().sub(a).normalize().y) > 0.99 ? pc.Vec3.RIGHT : pc.Vec3.UP);
+        box(a.clone().add(b).mulScalar(0.5), new pc.Vec3(r, r, len / 2 + r * 0.5), new pc.Quat().setFromMat4(m));
+      };
+      const wrist = src.hand.wrist, fingers = src.hand.fingers as pc.XrFinger[] | undefined;
+      // a hand without finger chains (an emulator's) keeps the joint cubes
+      if (h.entity.enabled && !fingers?.length) for (const j of src.hand.joints ?? []) {
+        const r = Math.min(0.012, Math.max(0.005, j.radius)); box(j.getPosition(), new pc.Vec3(r, r, r));
+      }
+      if (h.entity.enabled) for (const finger of fingers ?? []) {
+        const js = finger.joints;
+        const r = (j: pc.XrJoint): number => Math.min(0.012, Math.max(0.007, j.radius * 1.1));
+        if (wrist && js[0]) bone(wrist.getPosition(), js[0].getPosition(), 0.011);
+        for (let i = 0; i + 1 < js.length; i++) bone(js[i].getPosition(), js[i + 1].getPosition(), r(js[i]));
       }
     }
     const mesh = meshes.get(src)!;
@@ -193,6 +213,15 @@ export function mountXrInput(app: pc.Application, opts: {
   }
 
   return {
+    wrist(): pc.Vec3 | null {
+      if (!xr?.active) return null;
+      for (const src of wands.keys()) {
+        if (src.handedness !== pc.XRHAND_LEFT) continue;
+        if (src.hand) { const w = src.hand.tracking ? src.hand.getJointById('wrist') : null; return w ? w.getPosition().clone() : null; }
+        const g = src.getPosition(); return g ? g.clone() : null;
+      }
+      return null;
+    },
     ray(): Ray | null {
       if (!xr?.active || !primary) return null;
       return rayOf(primary);
@@ -214,7 +243,9 @@ export function mountXrInput(app: pc.Application, opts: {
         if (hit) { dot.enabled = true; dot.setPosition(hit.point); primary = src; }
         const flashing = performance.now() < (flashUntil.get(src) ?? 0);
         dot.setLocalScale(flashing ? DOT_FLASH : DOT, flashing ? DOT_FLASH : DOT, flashing ? DOT_FLASH : DOT);
-        const length = hit ? hit.distance : WAND_LENGTH;
+        // ⚑ S270f (the report's 3.8: "a white ray line is drawn across the view… distracting") — the full ray only
+        //   when it lands on something pressable; otherwise a short stub that says where the hand points
+        const length = hit ? hit.distance : src.hand ? STUB_HAND : STUB_PAD;
 
         const state = gestures.get(src)!;
         const now = performance.now();
