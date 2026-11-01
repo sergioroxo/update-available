@@ -117,3 +117,15 @@ Marks: **FIXED S277** = changed this session (walked before commit) · **CHECK**
 | G5 | The Lexicon is crisp and beautiful; other text should be as good | note: the Lexicon draws its text large; carry that to A6 |
 | G6 | The Lexicon needs a song; the receipt has no sound | TODO (needs his choice of music) |
 | G7 | The receipt cannot scroll back; "Back to library" out of place | TODO |
+
+## His answers, 1 Nov (after S279)
+
+- **Rob → the form:** not an auto-open. An intermission: Lamby pops in with a fake defiance ("you might not want to file Rob's form, so I can give you a bit of time, but to carry on you'll have to. It's on the desktop, or talk to me if you need help"). → TODO S280.
+- **Dollhouse:** at least 13 s ("you need more time to digest that the space around you is morphing"); at 2003 → 2016 the visitor should see the next room BUILD in the dollhouse, slowly, the same as the space. → TODO S280 (13 s); the build-in-the-model is DESIGN+build.
+- **Glow logic, the whole piece:** FloppySheep and the message app "should slightly glow differently so we can understand where we need to go". One logic for "where to go next" vs "you may", everywhere. → TODO.
+- **Draw calls:** "we may need to no longer have the rooms open… deploy an agent to eval that" → agent running → DRAWCALLS_ROOMS_EVAL_2026-11-01.md.
+- **1. Era 4 middle:** Google steering to conversion sites; LGB groups against trans people; purity influencers; the pressures on trans people, compiled creatively (speculative, like the AI image generator); Maya starts pushed into male presentation, and reversing the system with Junie lets her "pass" to her true self; the Commons needs INTENTION; TransJesus = the dance-stream the algorithm cannot bury or caption; community saves her, not the AI. → deep research running → RESEARCH_2026_PRESSURES_2026-11-01.md.
+- **2. 2016:** the contributor tools have no narrative point; "Vera has no story, no emotional connecting points, it's just erasure of the lesbian — not good". → HIS ruling to act on: rebuild 2016 around Vera (STORIES_VERA_MAYA §3/§8). DESIGN next.
+- **3. The fades:** not the circular pixel pattern ("ugly and bothersome"); smoother, particle-based, things morph into each other. (He does not know the "lamp" — the report's word; drop it.) → TODO.
+- **4. "About this" → the sources:** every "About this" panel moves to the menu's Sources and to the Close; the panels become WEBSITES OF THE TIME, one per era, with tabs holding the texts, the sources, the images, the video — everything that got lost; later the project website. Add to the research document. → TODO (design + build).
+- **5. Caleb:** yes, rewrite so Caleb is trying to find Daniel. → TODO S280.

@@ -185,7 +185,9 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   // the model fits ~45 cm across whatever the era holds (one room in 1997, the three-room house from 2016)
   // ⚑ P8 A8 (headset B, 1 Nov: "way too fast… I didn't have any time to understand that the room morphed. It needs
   //   to be like a clock with the time passing") — 4.2 s → 9 s, and the years count on the model's base
-  const FIT = 0.45, HOLD = 9;
+  // ⚑ S280 (his, 1 Nov: "9 seconds is not enough… at least 13, you need more time to digest that the space around you is
+  //   morphing as it is on the dollhouse") — 13 s
+  const FIT = 0.45, HOLD = 13;
   let SCALE = 0.06;
   let doll: { root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[]; years: [number, number]; shown: number } | null = null;
   const markMat = new pc.StandardMaterial(); markMat.useLighting = false; markMat.diffuse = new pc.Color(0, 0, 0);

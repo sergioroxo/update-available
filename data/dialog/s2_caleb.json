@@ -1,5 +1,6 @@
 {
  "_doc": "S2R.3–S2R.6 — THE CALEB THREAD (Session 45), built from docs/REINTERP_E2_CALEB_SCRIPT_DRAFT_2026-07-24.md (THE SPEC, Sérgio's revised pass) with docs/REINTERP_E2_HOMECOMING_SCRIPT_2026-07-12.md for the beat context. ALL display text is PLACEHOLDER-draft under the co-creation norm (Claude drafts, Sérgio reviews/rewrites — his edit wins) EXCEPT the lines marked `_s` below, which are Sérgio's own wording carried VERBATIM from the spec's ⟨S⟩ marks and must never be paraphrased: `alert.systemLines`, `alert.caughtLine`, `residue.line`. REGISTER MAP (do not violate): `window`/`thread`/`toasts`/`return`/`residue` are FELT — Lamby is absent from every one of them, no satire, no mechanics, nothing scored; `alert` and `pureMail` are OPERABLE — the apparatus may charm, and it collapses. Chips carry `ledgerTag` and NEVER `goto`: they register HOW Daniel engaged, they never fork the story (register-not-branch). The last chip is the COMMIT-PRESS: one chip, no alternative — the player must say the bigger word, and that press is what the apparatus files as conduct (the conduct is the wanting; nothing happened, nobody met). It rhymes on purpose with `residue.line`, the second commit-press, which the system is no longer there to file. Caleb is INVENTED and INFORMED BY the documented pattern in docs/REINTERP_LOVE_AS_LIBERATION_SOURCES_2026-07-24.md — never a replication of any real person; real names live on the Close's provenance cards only, never in his mouth. The placement he names — 'New Morning', the TriedPath Fellowship residential — is Era-1 canon (data/dialog/s1_kit.json / s1_end.json). `pureMail.heading`/`lines`/`closing` are PORTED VERBATIM from the shipped build's data/dialog/s2.json `collapse` block (the perpetrators-as-fellow-victims composite, already Sérgio-steered from ERA2_RESEARCH §A) — the spec says render the existing text, do not rewrite it. `witness.*` are the cold-side lines filed to ledger.caleb, resolved here and never composed in TS; they are witness-SYMMETRIC (engagement and reticence both file, the residue files only as a gap the record could not classify). `video.skipDelaySeconds` = 15 supersedes data/dialog/s2_media.json's 5, per the spec's revision (Lamby is SHOWING you this; leaving is a social act, not a UI convenience) — s2_media.json was outside this session's file fence, so its stale value stays there unread by this path. `pureMail.readAloudTrack` is a HOOK ONLY: S46's build-time TTS pipeline (Supertonic, apparatus voice) has not landed, no audio file exists, nothing is ever requested.",
+ "_docS280": "⚑ S280 (his, 1 Nov, headset B: the exchange read as if they had been talking all along, so the closing 'i want to be with you too' had nothing under it; \"it needs to be a message from Caleb trying to reach out to Daniel, because they know that the system keeps on… trying to make these love connections not happen\"; his yes to the rewrite) — c01-room, c02, c02b, c03 and c06 now carry six years of searching: three requests declined (the 2003 boot line's \"CONTACT REQUESTS 3 · DECLINED ON YOUR BEHALF\"), the name and the settings changed under him, an account made at a library so it would get through. Ids, chips, ledger tags, the tape and the commit-press are unchanged.",
  "pacing": {
   "_doc": "⏱ THE ONE TIMING BLOCK (Session 48). EVERY number the Caleb thread waits on lives here, in seconds, so the pace can be tuned WITHOUT reading TypeScript — src/desktop/apps/caleb.ts and src/desktop/apps/accountability.ts both read this object and hold no timing constants of their own. WHY IT WAS RETIMED: Session 45 set these to make each beat VERIFIABLE — a session driving the thread with scripted clicks wants it brisk — and Sérgio's 2026-07-25 playthrough found the whole thread runs too fast to be READ. These values are for a FIRST-TIME HUMAN READER whose English is often a second language. Rule of thumb used while watching it at real speed: a line needs roughly 12–13 characters of dwell per second to be read comfortably, PLUS a beat afterwards to feel it — so a 70-character line wants ~6s on screen, not ~3s. NOTHING HERE IS A DEADLINE: the player is never asked to answer within a time, the chips wait forever, and Leave/pause stay live throughout (ethics #4). Raise any number freely; the only ones that interact are `chat.lineGapSeconds` (the pause between his lines) and `chat.replyGapSeconds` (the longer pause after the player answers), which stack when he replies to a chip.",
   "chat": {
@@ -80,13 +81,13 @@
   {
    "id": "c02",
    "from": "them",
-   "text": "saw they put yours up.",
+   "text": "i tried to add you three times since we got out. every time it said you weren't taking requests.",
    "_docS205": "⚑ S205 — they met again at the shoot (s2_testimony.json, his answers 2026-10-01): his first lines are about the page the ministry made of Daniel, and his own. Was: 'i wasn't sure the username would still be yours.'"
   },
   {
    "id": "c02b",
    "from": "them",
-   "text": "mine too. i got your username off the sign-in sheet at the shoot."
+   "text": "then they put your video up. mine's up too. i got your username off the sign-in sheet at the shoot."
   },
   {
    "id": "r01",
@@ -114,7 +115,7 @@
   {
    "id": "c03",
    "from": "them",
-   "text": "they gave us computers at the new place. you're the first thing i typed."
+   "text": "every time i get close they change something. my name, your settings. i made this account at the library so it would get through."
   },
   {
    "id": "c04",
@@ -154,7 +155,7 @@
   {
    "id": "c06",
    "from": "them",
-   "text": "btw i'm now two towns over. i could get a bus?"
+   "text": "six years, d. i'm two towns over now. i could get a bus?"
   },
   {
    "id": "r03",

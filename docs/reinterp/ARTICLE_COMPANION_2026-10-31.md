@@ -223,6 +223,19 @@ body.
 | 24–27 Oct | the Support page; CX3a–c (Root Cause findable, Tune your Lamby); the first headset tests; Your file fixed | S258–S267 |
 | 28–31 Oct | the headset rounds: the room that split, the black monitor, the seat, the hands; 1997's order finished; VR as its own layer | S268–S270g |
 
+## 7b. From panels to period websites (1 Nov 2026)
+
+A design move for the article. Until S280 the piece explained its practices in "About this" panels inside the
+experience, and its sources lived in the menu and on the Close's panels. The headset sessions showed the panels
+interrupt the experience ("not for here") and the Close's panels were too small to read. So the explanatory layer
+moves out of the experience and **evolves into four websites of their own time** — a 1997 home page, a 2003 portal,
+a 2016 platform, a 2026 app-site — each with tabs for the era's story, its practices (every former "About this"
+text), its verified sources, its images, its media (the period video and audio, playable where licensed) and the
+beats a visitor may have missed. They open from the menu and from the Close. The design argument: the documentary
+layer takes the *form* of the period web it documents, so the visitor reads the evidence through the same media
+grammar the practices used; and the layer gives a second, slower reading — people can relive what they missed — which
+also becomes the project's public website. (Design: DESIGN_S280_GLOW_SITES_VERA_FADES_2026-11-01.md §2.)
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

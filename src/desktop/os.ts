@@ -128,6 +128,8 @@ const PACKET_WAIT = 60, PACKET_WAIT_SPEEDRUN = 20;
 const LEAVE_CONFIRM_SECONDS = 4;
 /** P8 — after Rob's last line, the chat holds this long before the Family Form opens */
 const FORM_AUTO_SECONDS = 3.5;
+/** S280 (his: "an intermission space… I can give you a bit of time") — the room is free this long before the form opens itself */
+const FORM_INTERMISSION = 60, FORM_INTERMISSION_SPEEDRUN = 25;
 const JINGLE_FADE_SECONDS = 3.5;
 type LyricLine = { t: number; words: Array<[number, string]> };
 const JINGLE_LINES = (jingleLyrics as unknown as { lines: LyricLine[] }).lines;
@@ -464,6 +466,10 @@ export class DesktopOS {
   private leaveArmedAt = -Infinity;
   /** P8 — Rob has finished and the form is not filed: the Family Form opens itself at this time (the piece takes you there) */
   private formAutoAt = Infinity;
+  /** P8 — the chat closes this long after Rob's last line, so Lamby can offer the intermission */
+  private chatCloseAt = Infinity;
+  /** S280 — is a 1997 exercise window up (the racket's Release Work or Session): the form waits for it */
+  private provotypeBusy(): boolean { return !!this.provotype?.open; }
   /** ⚑ S226 — set by the frame loop each frame (engine/app.ts): false while she is turned away from the desk */
   screenFacing = true;
   private diaryPendingAt = Infinity; // soft beat between the packet and the diary
@@ -814,7 +820,7 @@ export class DesktopOS {
       //   whose failed erase IS the update. (S268's diary-first order is superseded.)
       this.irc.onEscalationDone = () => {
         if (ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.packetDueFrom = this.t;
-        else { this.packetAfterForm = true; this.formAutoAt = this.t + FORM_AUTO_SECONDS; }
+        else { this.packetAfterForm = true; this.chatCloseAt = this.t + FORM_AUTO_SECONDS; this.formAutoAt = this.t + FORM_AUTO_SECONDS + (isSpeedrun() ? FORM_INTERMISSION_SPEEDRUN : FORM_INTERMISSION); }
       };
     };
     this.dirty = true;
@@ -2297,10 +2303,17 @@ export class DesktopOS {
     // escalates anyway once the deadline passes (main-parity — the flip is
     // the earned path, not a hard gate)
     // ⚑ P8 (headset B, 1 Nov: after Rob's "i don't want to go." — "it stopped… I don't know what to do"): the chat
-    //   closes itself and the Family Form opens. No rule asks the visitor to find the next thing (2026-10-10).
+    //   closes itself, so Lamby can speak. ⚑ S280 (his, 1 Nov: "we want to give space for people to try out… an
+    //   intermission… a fake defiance") — Lamby's 'form' line now offers time ("you might not want to file Rob's
+    //   form…"), and only when the time is up does the form open itself. No rule asks the visitor to find the next
+    //   thing (2026-10-10): the piece takes them there, after a breath.
+    if (this.chatCloseAt !== Infinity && this.t >= this.chatCloseAt && this.phase === 'desktop' && this.desktopEra === 'e1') {
+      this.chatCloseAt = Infinity;
+      if (this.irc && !this.provotype) { this.irc.open = false; this.dirty = true; }
+    }
     if (this.formAutoAt !== Infinity && this.t >= this.formAutoAt && this.phase === 'desktop' && this.desktopEra === 'e1') {
       if (this.provotype || ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formAutoAt = Infinity;
-      else if (!this.packet?.open && !this.diary?.open && !this.kit?.open) {
+      else if (!this.packet?.open && !this.diary?.open && !this.kit?.open && !this.rootCause?.open && !this.provotypeBusy()) {
         this.formAutoAt = Infinity;
         if (this.irc) this.irc.open = false;
         this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
