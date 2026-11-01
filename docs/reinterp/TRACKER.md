@@ -19,7 +19,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 - ❓ **2026 v2 and weaponised care** — agent writing RESEARCH_2026_V2_WEAPONISED_CARE_2026-11-01.md (search "the default" → a detrans.ai-like agent, mostly chatbot-conducted; the cycle trap through Meridian; the face-swap composite; the Commons removed and rethought; weaponised care audited across every era) + WEAPONISED_CARE_NOTE for the article. Then his read.
 - ❓ **2016 rebuilt around Vera and one digital risk** — agent writing RESEARCH_2016_VERA_APPARATUS_2026-11-01.md (reads his GPT notes; the testimony chain 2003 → 2016 → 2026). Then his read.
-- ◐ **The Dykas "Model"** — Haiku reading the book → RESEARCH_DYKAS_MODEL_2026-11-01.md.
+- ☑ **The Dykas "Model"** — the Tree Model (fruit, seed, roots, soil, shoots): sin as the fruit of a heart; one session on women's same-sex attraction; care as the register that carries correction. Three 2016 ideas (a "My Tree" intake, a Two Trees sort that cannot be won, a habit log that never completes) → feeds the 2016 rebuild. RESEARCH_DYKAS_MODEL_2026-11-01.md
 
 - ❓ **Era 4 middle redesign** — read RESEARCH_2026_PRESSURES_2026-11-01.md (beats B0–B8: the push to male presentation,
   the Meridian refusal, the steering search, the feed, the AI "restore", Junie's hack, the Commons with intention,
