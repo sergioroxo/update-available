@@ -35,8 +35,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S282 **Particle transitions** in the headset (the circle grid is gone) 🥽 · ☐ the Close's fades still to do
 - ☐ **The dollhouse shows the next room build**, slowly, as the space does (2003 → 2016). Waits on the draw-call
   agent's answer about batching per room.
-- ◐ **Draw calls** — 144 looking west from Maya's seat (budget 75). Agent evaluating closed walls / per-room batches →
-  DRAWCALLS_ROOMS_EVAL_2026-11-01.md.
+- ☑ S288 **Draw calls** — 2026 west view 144 → 66 (removed props were still drawn at scale 0); closing walls would not help. ☐ if the headset is still over: one vertex-coloured batch (≈ 25). DRAWCALLS_ROOMS_EVAL_2026-11-01.md
 
 ## To build (from the headset session; detail in the triage file)
 
@@ -44,23 +43,23 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ◐ S283 distances: held devices ≥ 0.42 m and larger; the visor screen 0.55 m; Close labels upright 🥽 · ☐ Recentre after a jump; the sources too far
 - ☐ Hands on the games: bigger touch targets (the controller already plays)
 - ☐ Lamby's message lost when a window opens on top (one voice at a time)
-- ☐ A skip-the-film button in the debug panel
+- ☑ S285 A skip-the-film button (debug only)
 - ☐ Jagged text in the headset: needs a headset check of the current build first
 
 **1997**
 - ☑ S284 "Show me" opens NetPilot / the chat when it is shut, then points 🥽
 - ☐ "Press here to play FIT IN" in the game's own style
 - ☐ The three-dots button on the desktop (identify)
-- ☐ Lamby, pressed while Rob's picture is open, says "close the picture to continue"
+- ☑ S285 Lamby over Rob's picture says to close it first
 - ☐ Release Work / the racket explained better; the racket on his side (DESIGN)
 - ☐ The drawer does more (DESIGN)
 
 **2003**
 - ☑ S284 The daily check-in comes first: a grace while, then whatever is pressed opens Restorify 🥽
-- ☐ The start menu in 2003's style (the bar already is)
-- ☐ Lamby's eyes ("looks dead")
-- ☐ Frame 27 redrawn; the roll shows which frame opens
-- ☐ The pet's timing (appears "out of the blue", then goes)
+- ☑ S286 The start menu in 2003's style
+- ☑ S286 Lamby's eyes: taller, two catchlights
+- ☑ S285 Frame 27 redrawn (two beds, the door, "room 3, the last night"); circled in red on the roll
+- ☑ S287 The pet closes back into Restorify
 - ☐ "Your file" wording and design; the testimony's sound and "Start here"
 - ☐ The summons: one name, 2003's window design, "Go to next task"
 - ☐ Why "daily realignment" comes back; errors over the accountability content; the blank window outside
@@ -72,7 +71,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ◐ S281 FloppySheep and the messages glow · ☐ the messages open in sequence
 - ☐ The GracePlatform button that cannot be pressed; the "Your record" button always there; Lambient working
 - ☐ The vote link too fast; "Nuala, I still have your jumper" not reading as the update (with Vera's rebuild)
-- ☐ The pen and the paper (DESIGN: an emotional link); the pen cup unpainted; stars visible behind
+- ☐ Vera's desk redesign (DESIGN): the pen and the paper as an emotional link; the one-colour pen cup → Nuala's mug / the key on red thread; stars visible behind (check)
 - ☐ The video ("two hands") (DESIGN)
 
 **2026**
@@ -81,9 +80,14 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 **The Close**
 - ☑ S283 the terminated card at 0.55 m; labels upright · ☐ sources hard to point at
-- ☐ The receipt scrolls back; "Back to library" placed right; sound for the receipt and the Lexicon (his music choice)
+- ☑ S287 The receipt scrolls back; "Back to Library" fits · ❓ sound for the receipt and the Lexicon (his music choice)
 
 ## Done since the headset session (newest first)
+
+- ☑ S288 — 2026 west view 144 → 66 draw calls
+- ☑ S287 — the pet returns to Restorify; the receipt scrolls back; Back to Library fits
+- ☑ S286 — 2003's start menu; Lamby's eyes
+- ☑ S285 — Lamby over Rob's picture; debug film skip; frame 27
 
 - ☑ S284 — Show me opens the shut window; Back to today at the end of 2016 jobs; 2003's check-in comes first
 - ☑ S283 — held devices further and larger; the visor screen at 0.55 m; upright Close labels
