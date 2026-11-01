@@ -236,6 +236,29 @@ layer takes the *form* of the period web it documents, so the visitor reads the 
 grammar the practices used; and the layer gives a second, slower reading — people can relive what they missed — which
 also becomes the project's public website. (Design: DESIGN_S280_GLOW_SITES_VERA_FADES_2026-11-01.md §2.)
 
+## 7c. Weaponised care, the testimony chain, and one digital risk per era (his, 1 Nov 2026)
+
+**Weaponised care is the piece's spine.** His PhD concept, in his words: "the usage of language of care and love …
+turned into an instrument of violence". From his article on ex-gay documentaries: weaponised care is a cycle — *injury
+judged, correction offered, testimony used as evidence* — and "a self-feeding cycle": it draws on truthful elements
+(loneliness, secrecy, faith, the pain of rejection) and repackages them as coercive reasons for correction. He uses
+"weaponisation" for care made to deliver correction, *whatever its makers intend, even if through love*. Every era of
+the piece is to stage that cycle in its own medium (audit: RESEARCH_2026_V2_WEAPONISED_CARE_2026-11-01.md; note:
+WEAPONISED_CARE_NOTE_2026-11-01.md).
+
+**The testimony chain (a research finding of the structure).** In 2003 Daniel is asked to *produce* his testimony.
+In 2016 Vera is the person *transforming* testimony into institutional evidence. In 2026 Maya meets a technology that
+performs some of that interpretive work *automatically*. The same act — a life turned into proof of change — moves
+from the person, to an editor, to a machine. (2016 detail: RESEARCH_2016_VERA_APPARATUS_2026-11-01.md.)
+
+**One digital risk per era.** Each era teaches one risk of a digital application of SOGICE — 1997 the mentor channel
+and the intake form; 2003 accountability software and testimony production; 2016 the platform that turns testimony
+into evidence (to be fixed by the 2016 research); 2026 the detransition agent and automated interpretation (search
+steering, the refusing "LGB" group, the face-swap reversal).
+
+**Naming as method: "Meridian LGB Trust".** The invented group's name almost reads as LGBT and is not — the missing
+letter is the refusal. The mark does the argument before the auto-reply does (RESEARCH_LGB_REFUSAL_2026-10-31.md).
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

@@ -5183,6 +5183,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     closeMonitor.onGo = () => goToCloseMonitor();
     closeMonitor.onLeave = () => mountLeavePage().show(() => { wipeLedger(); os.leaveNow(); gameMenuBus.close(); });
     closeMonitor.onDossier = () => gameMenuBus.openCloseSources?.(0);
+    // ⚑ S290 (his, 1 Nov: "The music for the Lexicon and the Receipt … could be the music you make for the Close") — the
+    //   Close's score stays under the receipt and the Lexicon (headset B: "This needs a song"; "the receipt has no sound")
+    closeMonitor.onFace = (f) => { if (f !== 'card') roomBed.set('close_score.mp3', 2.5); };
     // read-only probe, like __os: the walk aims at the card's rects through it
     (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;
   }

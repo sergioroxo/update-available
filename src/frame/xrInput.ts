@@ -17,6 +17,7 @@ const DOT = 0.009, DOT_FLASH = 0.026, FLASH_MS = 220;
 
 export interface XrInput {
   /** the primary controller's ray this frame, or null (no session / no controller) */
+  stick(): { x: number; y: number };
   ray(): Ray | null;
   /** S270g / VR-04 — every tracked index fingertip (hands) and controller grip, in physical space */
   points(): pc.Vec3[];
@@ -223,6 +224,7 @@ export function mountXrInput(app: pc.Application, opts: {
     mesh.setPositions(vertices); mesh.setIndices(indices); mesh.update(pc.PRIMITIVE_TRIANGLES);
   }
 
+  const stickNow = { x: 0, y: 0 }, stickLast = { x: 0, y: 0 };
   return {
     points(): pc.Vec3[] {
       const out: pc.Vec3[] = [];
@@ -265,11 +267,14 @@ export function mountXrInput(app: pc.Application, opts: {
       }
       return null;
     },
+    /** S290 — the strongest thumbstick deflection this frame (x: right +, y: down +), zero with no controller */
+    stick(): { x: number; y: number } { return { x: stickLast.x, y: stickLast.y }; },
     ray(): Ray | null {
       if (!xr?.active || !primary) return null;
       return rayOf(primary);
     },
     tick(): void {
+      stickLast.x = stickNow.x; stickLast.y = stickNow.y; stickNow.x = 0; stickNow.y = 0;
       const active = !!xr?.active;
       for (const [src, e] of wands) {
         const r = active ? rayOf(src) : null;
@@ -325,6 +330,9 @@ export function mountXrInput(app: pc.Application, opts: {
         const buttons = src.gamepad?.buttons ?? [];
         buttons.forEach((b, i) => { if (b.pressed && !state.buttons[i] && i >= 4) opts.onKey?.(i === 4 ? 'a' : 'b'); state.buttons[i] = b.pressed; });
         const axes = src.gamepad?.axes ?? [];
+        // S290 — the strongest thumbstick this frame, for the dollhouse's turntable (xrLayer.ts)
+        const sx = axes[2] ?? 0, sy = axes[3] ?? 0;
+        if (Math.hypot(sx, sy) > Math.hypot(stickNow.x, stickNow.y)) { stickNow.x = sx; stickNow.y = sy; }
         const keys = ['left', 'right', 'up', 'down'] as const;
         const directions = [(axes[2] ?? 0) < -0.6, (axes[2] ?? 0) > 0.6, (axes[3] ?? 0) < -0.6, (axes[3] ?? 0) > 0.6];
         directions.forEach((pressed, i) => { if (pressed && !state.buttons[8 + i]) opts.onKey?.(keys[i]); state.buttons[8 + i] = pressed; });

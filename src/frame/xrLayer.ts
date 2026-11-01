@@ -27,7 +27,7 @@ export interface XrLayerDeps {
     logicalPoint(p: pc.Vec3): pc.Vec3; matchDesk(tableY: number): number; stageYaw(): number;
     readonly calibrated: boolean; readonly busy: boolean; readonly authored: pc.Entity;
   };
-  input: { points(): pc.Vec3[]; palms(): pc.Vec3[]; setStyle(style: 'own' | 'programme'): void };
+  input: { points(): pc.Vec3[]; palms(): pc.Vec3[]; setStyle(style: 'own' | 'programme'): void; stick?(): { x: number; y: number } };
   /** VR-01 — the 1997/2003 desk: the mouse prop, the desktop's pointer, and where a desktop pixel is on the glass */
   mouse: {
     active(): boolean; prop(): pc.Entity | null;
@@ -189,7 +189,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   //   morphing as it is on the dollhouse") — 13 s
   const FIT = 0.45, HOLD = 13;
   let SCALE = 0.06;
-  let doll: { root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[]; years: [number, number]; shown: number } | null = null;
+  let doll: { root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[]; years: [number, number]; shown: number; baseYaw: number; turn: number; zoom: number; touched: number; palm: pc.Vec3 | null } | null = null;
   const markMat = new pc.StandardMaterial(); markMat.useLighting = false; markMat.diffuse = new pc.Color(0, 0, 0);
   markMat.emissive = new pc.Color().fromString(FRAME.bright); markMat.update();
   // ⚑ P7-68 — D4 WHO'S HOME (his yes 31 Oct: "I like the rooms lighting one at a time"; DOLLHOUSE_IDEAS_SONNET §D4).
@@ -244,8 +244,26 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     if (!live()) { endDoll(); return; }
     doll.t += dt;
     if (doll.t > HOLD) { endDoll(); return; }
+    // ⚑ S290 — THE TURNTABLE (his, 1 Nov: "The doll house slide lets you zoom in and turn it around like a turn table and
+    //   that allows you to move to see where all the stuff in miniature version"): a controller's stick turns it (left /
+    //   right) and brings it closer (up / down); a hand near the house turns it by moving sideways. While it is being
+    //   handled it stays, and it goes 2.5 s after the last touch.
+    const st = deps.input.stick?.() ?? { x: 0, y: 0 };
+    if (Math.abs(st.x) > 0.15) { doll.turn += st.x * dt * 90; doll.touched = 0; }
+    if (Math.abs(st.y) > 0.15) { doll.zoom = Math.max(1, Math.min(2.6, doll.zoom - st.y * dt * 1.2)); doll.touched = 0; }
+    const at = doll.root.getPosition();
+    const palm = deps.input.palms().find((p) => p.distance(at) < 0.3) ?? null;
+    if (palm && doll.palm) {
+      const right = head.right.clone(); right.y = 0; if (right.lengthSq() > 1e-6) right.normalize();
+      const dx = palm.clone().sub(doll.palm).dot(right);
+      if (Math.abs(dx) > 0.001) { doll.turn += dx * 420; doll.touched = 0; }
+    }
+    doll.palm = palm ? palm.clone() : null;
+    doll.touched += dt;
+    if (doll.touched < 2.5) doll.t = Math.min(doll.t, HOLD - 0.5);
+    doll.root.setEulerAngles(0, doll.baseYaw + doll.turn, 0);
     const k = Math.min(1, doll.t / 0.4, (HOLD - doll.t) / 0.4);
-    doll.root.setLocalScale(k, k, k);
+    doll.root.setLocalScale(k * doll.zoom, k * doll.zoom, k * doll.zoom);
     // the seat, wherever it is now: it jumps to the new room when the room re-forms under the dissolve
     const seat = deps.comfort.authored.getLocalPosition();
     const s = 1 + Math.abs(Math.sin(doll.t * 6)) * 0.6;
@@ -363,7 +381,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
         return { e, room, role };
       });
       root.setLocalScale(0, 0, 0);
-      doll = { root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre, half: g.half, glows, years: YEARS[era ?? ''] ?? [0, 0], shown: 0 };
+      doll = { root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre, half: g.half, glows, years: YEARS[era ?? ''] ?? [0, 0], shown: 0, baseYaw: deps.comfort.stageYaw(), turn: 0, zoom: 1, touched: 99, palm: null };
     },
     mouseClick() { if (!grip) return false; deps.mouse.click(cursor.x, cursor.y); return true; },
     get mouseEngaged() { return !!grip; },

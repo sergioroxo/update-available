@@ -194,28 +194,55 @@ function drawRoll(g: CanvasRenderingContext2D): void {
   for (let i = 0; i < 27; i++) text(g, String(i + 1), Math.round((i % 9) * fw) + 3, Math.round(Math.floor(i / 9) * fh) + Math.round(fh) - 7, ERA1.olive, 5);   // edge numbers
 }
 
-/** frame 27: room 3 at night — two beds side by side seen from their foot (pillows, turned-down blankets), the door
- *  ajar with its "3", the corridor's light across the floor. No one. ⚑ S284 (headset B: the first drawing read as "two
- *  coffins and a cigarette") — the beds now carry what only beds have: pillows and a turned-down sheet. */
+/** frame 27: room 3 on the last night, after his Gemini reference (1 Nov: "not clear that is two beds, the perspective
+ *  are all off"): a brick back wall and a ceiling light, two brass beds in one-point perspective under blue blankets,
+ *  a nightstand and lamp at each, and the door open on the right with the corridor's warm light across the floor.
+ *  No one. One vanishing point, centre-right; every shape is a filled polygon in the picture's own 200 × 130 space. */
 function drawFrame27Into(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-  const X = (f: number): number => x + Math.round(w * f), Y = (f: number): number => y + Math.round(h * f);
-  const R = (fx: number, fy: number, fw: number, fh: number, c: string): void => px(g, X(fx), Y(fy), Math.max(1, Math.round(w * fw)), Math.max(1, Math.round(h * fh)), c);
-  dither(g, x, y, w, h, ERA1.black, ERA1.greyDark, 5);
-  R(0, 0.78, 1, 0.22, ERA1.greyDark);                                  // the floor
-  // the door, ajar: its frame, the gap of light, the room number
-  R(0.74, 0.08, 0.2, 0.72, ERA1.black); R(0.74, 0.08, 0.2, 0.02, ERA1.grey); R(0.74, 0.08, 0.015, 0.72, ERA1.grey);
-  R(0.9, 0.08, 0.035, 0.72, ERA1.tooltip);                              // the corridor's light in the gap
-  R(0.8, 0.2, 0.05, 0.07, ERA1.silver); R(0.81, 0.215, 0.03, 0.04, ERA1.black);   // the plate: "3"
-  // the light across the floor, widening towards the beds
-  for (let i = 0; i < 12; i++) R(0.9 - i * 0.05, 0.8 + i * 0.012, 0.05, 0.02 + i * 0.008, i % 2 ? ERA1.olive : ERA1.tooltip);
-  // two beds, foot towards us: headboard, pillow, sheet turned down over the blanket, the frame's end
-  for (const bx of [0.06, 0.38]) {
-    R(bx, 0.3, 0.26, 0.06, ERA1.olive);                                // the headboard
-    R(bx + 0.02, 0.36, 0.22, 0.42, ERA1.silver);                       // the mattress
-    R(bx + 0.05, 0.38, 0.16, 0.08, ERA1.white);                        // the pillow
-    R(bx + 0.02, 0.5, 0.22, 0.05, ERA1.paper);                         // the sheet, turned down
-    R(bx + 0.02, 0.55, 0.22, 0.23, ERA1.navy);                         // the blanket
-    R(bx, 0.76, 0.26, 0.05, ERA1.olive);                               // the frame's end
+  const P = (pts: number[][], c: string): void => {
+    g.fillStyle = c; g.beginPath();
+    pts.forEach(([u, v], i) => { const X = Math.round(x + u * w), Y = Math.round(y + v * h); if (i) g.lineTo(X, Y); else g.moveTo(X, Y); });
+    g.closePath(); g.fill();
+  };
+  const R = (u: number, v: number, uw: number, vh: number, c: string): void => px(g, Math.round(x + u * w), Math.round(y + v * h), Math.max(1, Math.round(uw * w)), Math.max(1, Math.round(vh * h)), c);
+  // the room: ceiling, back wall (brick), left wall, floor — the back wall spans u .14–.78, v .14–.62
+  P([[0, 0], [1, 0], [0.78, 0.14], [0.14, 0.14]], ERA1.greyDark);
+  P([[0, 0], [0.14, 0.14], [0.14, 0.62], [0, 1]], ERA1.grey);
+  P([[0.14, 0.62], [0.78, 0.62], [1, 1], [0, 1]], ERA1.greyDark);
+  R(0.14, 0.14, 0.64, 0.48, ERA1.paper);
+  for (let r = 0; r < 12; r++) {                                       // the brick courses and their staggered joints
+    const vy = 0.14 + r * 0.04; R(0.14, vy, 0.64, 0.004, ERA1.silver);
+    for (let c = 0; c < 9; c++) R(0.14 + (c + (r % 2) * 0.5) * 0.072, vy, 0.004, 0.04, ERA1.silver);
+  }
+  P([[0.42, 0.14], [0.52, 0.14], [0.5, 0.18], [0.44, 0.18]], ERA1.tooltip);   // the ceiling light
+  R(0.14, 0.18, 0.64, 0.04, ERA1.beige);                               // its wash on the wall
+  // the door, open towards us on the right: the dark doorway, the lit corridor, the leaf
+  P([[0.78, 0.14], [1, 0], [1, 1], [0.78, 0.62]], ERA1.black);
+  P([[0.86, 0.2], [0.94, 0.16], [0.94, 0.86], [0.86, 0.7]], ERA1.tooltip);
+  P([[0.8, 0.18], [0.86, 0.2], [0.86, 0.7], [0.8, 0.64]], ERA1.olive);
+  R(0.83, 0.42, 0.012, 0.03, ERA1.beige);                              // the handle
+  P([[0.86, 0.7], [0.94, 0.86], [0.7, 0.98], [0.5, 0.86]], ERA1.olive);   // the light across the floor
+  for (let i = 0; i < 6; i++) R(0.56 + i * 0.06, 0.88 - i * 0.02, 0.03, 0.012, ERA1.tooltip);
+  // two beds, heads against the back wall, feet towards us (one-point perspective)
+  const bed = (l: number, r: number, fl: number, fr: number): void => {
+    const L = l, Rr = r;                                                // head corners at the wall; foot corners towards us
+    R(L - 0.01, 0.4, Rr - L + 0.02, 0.16, ERA1.olive);                  // the brass headboard …
+    for (let b = 0; b < 5; b++) R(L + 0.01 + b * (Rr - L - 0.02) / 4, 0.42, 0.008, 0.13, ERA1.tooltip);   // … its rails
+    P([[L, 0.56], [Rr, 0.56], [Rr + (fr - Rr) * 0.2, 0.62], [L + (fl - L) * 0.2, 0.62]], ERA1.silver);   // the mattress at the head
+    P([[L + 0.025, 0.565], [Rr - 0.025, 0.565], [Rr - 0.02, 0.61], [L + 0.02, 0.61]], ERA1.white);   // the pillow
+    const hl = L + (fl - L) * 0.2, hr = Rr + (fr - Rr) * 0.2;
+    P([[hl, 0.62], [hr, 0.62], [fr, 0.86], [fl, 0.86]], ERA1.titleBlue);  // the blanket
+    P([[hl, 0.62], [hr, 0.62], [hr + (fr - Rr) * 0.1, 0.65], [hl + (fl - L) * 0.1, 0.65]], ERA1.white);   // the sheet turned over it
+    P([[fl, 0.86], [fr, 0.86], [fr, 0.92], [fl, 0.92]], ERA1.navy);      // the blanket's fall at the foot
+    R(fl, 0.92, fr - fl, 0.02, ERA1.olive);                              // the foot rail
+    R(fl, 0.94, 0.01, 0.05, ERA1.olive); R(fr - 0.01, 0.94, 0.01, 0.05, ERA1.olive);   // its legs
+  };
+  bed(0.23, 0.39, 0.1, 0.34); bed(0.53, 0.69, 0.58, 0.84);   // each bed's foot spreads away from the middle
+  // a nightstand and a small lamp beside each bed, against the wall
+  for (const u of [0.15, 0.42, 0.7]) {
+    if (u === 0.42) continue;   // only at the outer sides, as in the reference
+    R(u, 0.5, 0.06, 0.1, ERA1.olive); R(u + 0.005, 0.53, 0.05, 0.004, ERA1.tealDark);
+    R(u + 0.02, 0.45, 0.02, 0.05, ERA1.teal); P([[u + 0.01, 0.4], [u + 0.05, 0.4], [u + 0.055, 0.45], [u + 0.005, 0.45]], ERA1.beige);
   }
 }
 /** S284 — on the contact sheet, frame 27 is circled in red grease pencil: the one somebody marked */

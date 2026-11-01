@@ -47,6 +47,8 @@ export interface CloseMonitor {
   onGo?: () => void;
   /** S167: the card's "The dossier" — the frame opens its reading of the panels */
   onDossier?: () => void;
+  /** S290 — the glass turned to the receipt or the Lexicon (the app keeps the Close's music under both) */
+  onFace?: (face: 'card' | 'receipt' | 'lexicon') => void;
   /** ⚑ S209 / P7-47 — open the Lexicon on the glass (from its star, or the card's button) */
   openLexicon(): void;
   /** Legacy hook retained for the unused Library prototype. */
@@ -479,7 +481,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       return { x: u * W, y: v * H, t };   // W1-G2: how far along the ray the glass is, so a nearer panel can win
     },
     openLexicon(): void {
-      face = 'lexicon'; lexicon.face = 'title';
+      face = 'lexicon'; api.onFace?.(face); lexicon.face = 'title';
       if (on && near) drawLexicon();
     },
     show(): void {
@@ -521,9 +523,9 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         if (x < h.x || x > h.x + h.w || y < h.y || y > h.y + h.h) continue;
         if (h.id === 'close-go') { api.onGo?.(); return true; }
         if (h.id === 'close-again') { api.onAgain?.(); return true; }
-        if (h.id === 'close-receipt') { face = 'receipt'; printLines = []; printT = 0; drawReceipt(); return true; }
+        if (h.id === 'close-receipt') { face = 'receipt'; api.onFace?.(face); printLines = []; printT = 0; drawReceipt(); return true; }
         // ⚑ S209 / P7-47 — the Lexicon: its own presses, and its Close back to the card
-        if (h.id === 'close-lexicon') { face = 'lexicon'; lexicon.face = 'title'; drawLexicon(); return true; }
+        if (h.id === 'close-lexicon') { face = 'lexicon'; api.onFace?.(face); lexicon.face = 'title'; drawLexicon(); return true; }
         if (h.id === 'lex-close') { face = 'card'; drawCard(); return true; }
         if (lexicon.press(h.id)) { drawLexicon(); return true; }
         if (h.id === 'close-back') { face = 'card'; receiptScroll = 0; drawCard(); return true; }
