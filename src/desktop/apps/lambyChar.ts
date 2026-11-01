@@ -215,10 +215,14 @@ function drawFace(ctx: CanvasRenderingContext2D, cx: number, cy: number, mood: L
     ui.px(ctx, cx - 12, cy - 8, 8, 2, ink);
     ui.px(ctx, cx + 5, cy - 8, 8, 2, ink);
   } else {
-    ui.px(ctx, cx - 11, cy - 11, 5, 5, ink);
-    ui.px(ctx, cx + 7, cy - 11, 5, 5, ink);
-    ui.px(ctx, cx - 10, cy - 10, 2, 2, ERA1.white);
-    ui.px(ctx, cx + 8, cy - 10, 2, 2, ERA1.white);
+    // ⚑ S285 (headset B, 1 Nov, 2003: "the shading is very good, but the eyes, it looks just dead") — taller eyes, a
+    //   softer pupil and two catchlights: the light in an eye is what makes it look back
+    for (const ex of [cx - 12, cx + 6]) {
+      ui.px(ctx, ex, cy - 13, 7, 8, ink);
+      ui.px(ctx, ex + 2, cy - 10, 4, 4, ERA1.greyDark);
+      ui.px(ctx, ex + 1, cy - 12, 3, 3, ERA1.white);
+      ui.px(ctx, ex + 5, cy - 7, 1, 1, ERA1.white);
+    }
   }
   // S48 — THE MUZZLE. A pale rounded snout below the eyes, carrying the nose
   // and the mouth: with the ears, it is what turns a face into an animal's.

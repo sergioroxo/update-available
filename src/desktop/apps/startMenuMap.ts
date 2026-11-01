@@ -150,7 +150,16 @@ export class StartMenuMap {
     // Fixed-height rows, no scrolling menus; PROGRAMS collapses above before this cap is needed.
     const h = Math.min(H - (era === 'e4' ? 36 : 26), rows.length * row + 12);
     const x = 3, y = era === 'e4' ? 30 : H - (era === 'e3' ? 28 : 22) - h;
-    if (legacy) {
+    if (era === 'e2') {
+      // ⚑ S285 (headset B, 1 Nov: "I like the new bar of inspired by XP, but the start menu … is still in the old style")
+      //   — 2003's menu matches its bar: a navy frame with the start button's green along the top, white rows, and the
+      //   banner on a blue band (colours from the 2003 taskbar: ERA1 navy, ok, titleBlue)
+      ui.px(ctx, x, y, w, h, ERA1.navy);
+      ui.px(ctx, x + 2, y + 2, w - 4, h - 4, ERA1.white);
+      ui.px(ctx, x + 2, y + 2, w - 4, 3, ERA1.ok);
+      ui.px(ctx, x + 2, y + 5, 20, h - 7, ERA1.titleBlue);
+      ctx.save(); ctx.translate(x + 7, y + h - 8); ctx.rotate(-Math.PI / 2); ui.setFont(ctx, 12); ctx.fillStyle = ERA1.white; ctx.fillText(S.banner, 0, 0); ctx.restore();
+    } else if (legacy) {
       ui.bevel(ctx, x, y, w, h, true);
       ui.px(ctx, x + 3, y + 3, 20, h - 6, ERA1.navy);
       ctx.save(); ctx.translate(x + 7, y + h - 8); ctx.rotate(-Math.PI / 2); ui.setFont(ctx, 12); ctx.fillStyle = ERA1.white; ctx.fillText(S.banner, 0, 0); ctx.restore();
@@ -163,9 +172,9 @@ export class StartMenuMap {
     const rh = Math.min(row, Math.floor((h - 12) / rows.length));
     rows.forEach(r => {
       if (legacy && r.id === 'sm-shut') {
-        ui.px(ctx, x + tx, cy, tw, 1, ERA1.grey); ui.px(ctx, x + tx, cy + 1, tw, 1, ERA1.white);
+        ui.px(ctx, x + tx, cy, tw, 1, ERA1.grey); ui.px(ctx, x + tx, cy + 1, tw, 1, era === 'e2' ? ERA1.silver : ERA1.white);
       }
-      ui.setFont(ctx, r.head || r.hint ? 9 : 10); ctx.fillStyle = r.head ? p.accent : r.hint && legacy ? ERA1.greyDark : r.dim || r.hint ? p.dim : p.ink;
+      ui.setFont(ctx, r.head || r.hint ? 9 : 10); ctx.fillStyle = r.head ? (era === 'e2' ? ERA1.titleBlue : p.accent) : r.hint && legacy ? ERA1.greyDark : r.dim || r.hint ? p.dim : p.ink;
       let text = r.head && legacy ? r.text.toUpperCase() : r.text;
       while (ctx.measureText(text).width > tw - 4 && text.length > 3) text = text.slice(0, -2) + '…';
       ctx.fillText(text, x + tx + (r.head ? 0 : r.hint ? 10 : 4), cy + 2);
