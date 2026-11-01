@@ -27,13 +27,12 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ## Building now
 
-- ◐ **Lamby's intermission after Rob** (his 1 Nov): the room is free for a while; then Lamby says it is time to go;
-  even after "no", any press opens Rob's form.
-- ◐ **One glow logic** — the path (warm ring, the next thing) and "you may" (cooler shimmer, optional things); first on
+- ☑ S280–S281 **Lamby's intermission after Rob**: the room is free 60 s; then "Time's up. It's time for Rob's form."; even after "no", any press opens it 🥽
+- ☑ S281 **One glow logic** — the path (warm ring, the next thing) and "you may" (cooler shimmer, optional things); first on
   the 1997/2003 desktop and Vera's phone (FloppySheep, the messages). DESIGN_S280 §1.
 - ☐ **Era websites** from the "About this" panels: four sites of their time with tabs (story, practices, sources,
   images, media, missed it?); open from the menu and the Close; the panels leave the experience. DESIGN_S280 §2.
-- ☐ **Particle transitions** instead of the circle grid and the flat fades. DESIGN_S280 §4.
+- ☑ S282 **Particle transitions** in the headset (the circle grid is gone) 🥽 · ☐ the Close's fades still to do
 - ☐ **The dollhouse shows the next room build**, slowly, as the space does (2003 → 2016). Waits on the draw-call
   agent's answer about batching per room.
 - ◐ **Draw calls** — 144 looking west from Maya's seat (budget 75). Agent evaluating closed walls / per-room batches →
@@ -42,14 +41,14 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 ## To build (from the headset session; detail in the triage file)
 
 **Everywhere**
-- ☐ One pass on every panel's distance in the headset (too close / too far / in the face; Recentre after a jump)
+- ◐ S283 distances: held devices ≥ 0.42 m and larger; the visor screen 0.55 m; Close labels upright 🥽 · ☐ Recentre after a jump; the sources too far
 - ☐ Hands on the games: bigger touch targets (the controller already plays)
 - ☐ Lamby's message lost when a window opens on top (one voice at a time)
 - ☐ A skip-the-film button in the debug panel
 - ☐ Jagged text in the headset: needs a headset check of the current build first
 
 **1997**
-- ☐ "Show me" opens NetPilot when it is closed, then points
+- ☑ S284 "Show me" opens NetPilot / the chat when it is shut, then points 🥽
 - ☐ "Press here to play FIT IN" in the game's own style
 - ☐ The three-dots button on the desktop (identify)
 - ☐ Lamby, pressed while Rob's picture is open, says "close the picture to continue"
@@ -57,7 +56,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☐ The drawer does more (DESIGN)
 
 **2003**
-- ☐ The daily check-in comes first, and is pressed for
+- ☑ S284 The daily check-in comes first: a grace while, then whatever is pressed opens Restorify 🥽
 - ☐ The start menu in 2003's style (the bar already is)
 - ☐ Lamby's eyes ("looks dead")
 - ☐ Frame 27 redrawn; the roll shows which frame opens
@@ -69,8 +68,8 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☐ Restorify's update screen in 2003's style; the modem's colour
 
 **2016**
-- ☐ "Back to today" as a button at the end of the sequence
-- ☐ The messages open in sequence; FloppySheep and the messages glow (with the glow logic)
+- ☑ S284 "Back to today" as a button at the end of each finished job 🥽
+- ◐ S281 FloppySheep and the messages glow · ☐ the messages open in sequence
 - ☐ The GracePlatform button that cannot be pressed; the "Your record" button always there; Lambient working
 - ☐ The vote link too fast; "Nuala, I still have your jumper" not reading as the update (with Vera's rebuild)
 - ☐ The pen and the paper (DESIGN: an emotional link); the pen cup unpainted; stars visible behind
@@ -78,13 +77,18 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 **2026**
 - ☐ Confirm "resets the image" / pop-ins
-- ☐ The session screen out of focus and too close (with the distance pass)
+- ☑ S283 The session screen at 0.55 m and larger 🥽
 
 **The Close**
-- ☐ Session-terminated panels too close; text moving to the face; sources hard to point at
+- ☑ S283 the terminated card at 0.55 m; labels upright · ☐ sources hard to point at
 - ☐ The receipt scrolls back; "Back to library" placed right; sound for the receipt and the Lexicon (his music choice)
 
 ## Done since the headset session (newest first)
+
+- ☑ S284 — Show me opens the shut window; Back to today at the end of 2016 jobs; 2003's check-in comes first
+- ☑ S283 — held devices further and larger; the visor screen at 0.55 m; upright Close labels
+- ☑ S282 — particle transitions
+- ☑ S281 — Lamby's time's up + any press opens Rob's form; one glow logic in all four years
 
 - ☑ S280 — Caleb looks for Daniel (three requests declined, names changed, a library account; "six years, d."); dollhouse 13 s; Lamby's intermission line
 - ☑ S279 — Root Cause icon always on the 1997 desktop; Rob's chat minimises; no old taskbar during the update; darker 2016 greys
