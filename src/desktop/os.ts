@@ -3246,7 +3246,7 @@ export class DesktopOS {
     }
     // ⚑ S186 — the picture Rob sent owns the screen (the click routing says so): the taskbar and the
     //   minimise boxes drawn after it are not pressable while it is up, so they are not published
-    if (this.yesOpen) this.hits = this.hits.filter((h) => h.id === 'yes-close');
+    if (this.yesOpen) this.hits = this.hits.filter((h) => h.id === 'yes-close' || h.id === 'lg-tray');   // S284: Lamby can still be asked
     // ⚑ S207 — the pause is modal: drawn last, and the only thing pressable while it is up
     if (this.pauseOpen) { this.hits = []; this.drawPauseDialog(W, H); }
     if (this.wotdOpen) { this.hits = []; this.drawWotd(W, H); }   // S209 / P7-47 — modal, like the pause
@@ -4303,6 +4303,9 @@ export class DesktopOS {
     this.lambyGuide.activity();
     this.updateLambyGuide(0);
     const lg = this.hits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    // ⚑ S284 (headset B: "if I press Lambi, it should … tell me that I can close off the image to continue") — Rob's
+    //   picture owns the screen: asked for help over it, Lamby says how to get past it
+    if (lg?.id === 'lg-tray' && this.yesOpen) { this.lambyGuide.tell(lambyGuideCopy.ui.closePicture); this.dirty = true; this.draw(); return; }
     if (lg && this.lambyGuide.press(lg.id)) { this.dirty = true; this.draw(); return; }
     this.idleSeconds = 0;   // S194 — the helpers wait for quiet
     if (this.saver) { this.saver = null; this.dirty = true; return; }   // S208 — a press wakes it, and does nothing else

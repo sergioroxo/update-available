@@ -114,6 +114,8 @@ export class LambyGuide {
   private offer(rung: GuideRung, text: string, targets: string[] = [], act?: string): void {
     this.counts[this.view.era]++; this.idle = 0; this.set(rung, text, targets, act);
   }
+  /** S284 — a requested answer that is not a beat: Lamby says one plain line (the visitor asked; it is not unsolicited) */
+  tell(text: string): void { this.idle = 0; this.set('tip', text); }
   press(id: string): boolean {
     if (!id.startsWith('lg-') || !this.input) return false;
     // Requested help waits for the current operable voice; it never queues across a quiet scene.

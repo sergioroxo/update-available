@@ -197,6 +197,7 @@ export class LambySetup {
       return;
     }
     if (id === 'setup-close') { this.closeWindow(); return; }
+    if (id === 'setup-skip-film' && this.film && /[?&]debug=1/.test(location.search)) { this.endFilm(); return; }
     if (id === 'setup-device') { this.requestDeviceLook?.(); return; }
     if (id === 'setup-reduce-motion') { setReducedMotion(!reducedMotion()); this.dirty = true; return; }
     if (id === 'setup-test') { this.testSound(); return; }
@@ -361,6 +362,9 @@ export class LambySetup {
         ctx.drawImage(v, c.x, c.y, 480, 270);
         ctx.imageSmoothingEnabled = false;
       }
+      // ⚑ S284 (headset B: "a jump ahead button just for inside of debug … so it would not have to wait the full
+      //   video") — under ?debug=1 only: a review tool, never in play (the film stays mandatory for visitors)
+      if (/[?&]debug=1/.test(location.search)) this.button(ctx, 'setup-skip-film', 'Skip film (debug)', c.x + c.w - 130, c.y + 4, 124);
       return;
     }
     if (kind === 'asterisk') {

@@ -176,7 +176,7 @@ function drawRoll(g: CanvasRenderingContext2D): void {
   const fw = PW / 9, fh = PH / 3;
   for (let i = 0; i < 27; i++) {
     const x = Math.round((i % 9) * fw) + 2, y = Math.round(Math.floor(i / 9) * fh) + 6, w = Math.round(fw) - 4, h = Math.round(fh) - 12;
-    if (i === 26) { drawFrame27Into(g, x, y, w, h); continue; }
+    if (i === 26) { drawFrame27Into(g, x, y, w, h); circle27(g, x, y, w, h); continue; }
     const k = i % 6, horizon = y + Math.round(h * (k === 4 ? 0.4 : 0.58));
     dither(g, x, y, w, horizon - y, k === 5 ? ERA1.warn : ERA1.titleBlue, k === 5 ? ERA1.tooltip : ERA1.silver, 3);   // sky (one at sunset)
     if (k === 0 || k === 3) { dither(g, x, horizon, w, y + h - horizon, ERA1.teal, ERA1.titleBlue, 2); px(g, x + 2, horizon, w - 4, 1, ERA1.white); }   // the lake
@@ -194,17 +194,34 @@ function drawRoll(g: CanvasRenderingContext2D): void {
   for (let i = 0; i < 27; i++) text(g, String(i + 1), Math.round((i % 9) * fw) + 3, Math.round(Math.floor(i / 9) * fh) + Math.round(fh) - 7, ERA1.olive, 5);   // edge numbers
 }
 
-/** frame 27: dark; a door ajar, the corridor's light across the floor and the ends of two beds. No one. */
+/** frame 27: room 3 at night — two beds side by side seen from their foot (pillows, turned-down blankets), the door
+ *  ajar with its "3", the corridor's light across the floor. No one. ⚑ S284 (headset B: the first drawing read as "two
+ *  coffins and a cigarette") — the beds now carry what only beds have: pillows and a turned-down sheet. */
 function drawFrame27Into(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  const X = (f: number): number => x + Math.round(w * f), Y = (f: number): number => y + Math.round(h * f);
+  const R = (fx: number, fy: number, fw: number, fh: number, c: string): void => px(g, X(fx), Y(fy), Math.max(1, Math.round(w * fw)), Math.max(1, Math.round(h * fh)), c);
   dither(g, x, y, w, h, ERA1.black, ERA1.greyDark, 5);
-  const door = x + Math.round(w * 0.62);
-  px(g, door, y + Math.round(h * 0.12), Math.max(1, Math.round(w * 0.05)), Math.round(h * 0.7), ERA1.tooltip);   // the gap
-  const fy = y + Math.round(h * 0.82);
-  for (let i = 0; i < Math.round(w * 0.6); i++) px(g, door - i, fy + Math.round(i * 0.22), 1, Math.max(1, Math.round(i * 0.07)), ERA1.olive);   // the light, widening across the floor
-  px(g, x + Math.round(w * 0.06), y + Math.round(h * 0.6), Math.round(w * 0.3), Math.round(h * 0.16), ERA1.greyDark);   // a bed's end
-  px(g, x + Math.round(w * 0.06), y + Math.round(h * 0.6), Math.round(w * 0.3), Math.max(1, Math.round(h * 0.02)), ERA1.grey);
-  px(g, x + Math.round(w * 0.4), y + Math.round(h * 0.64), Math.round(w * 0.18), Math.round(h * 0.12), ERA1.greyDark);   // the other
-  px(g, x + Math.round(w * 0.4), y + Math.round(h * 0.64), Math.round(w * 0.18), Math.max(1, Math.round(h * 0.02)), ERA1.grey);
+  R(0, 0.78, 1, 0.22, ERA1.greyDark);                                  // the floor
+  // the door, ajar: its frame, the gap of light, the room number
+  R(0.74, 0.08, 0.2, 0.72, ERA1.black); R(0.74, 0.08, 0.2, 0.02, ERA1.grey); R(0.74, 0.08, 0.015, 0.72, ERA1.grey);
+  R(0.9, 0.08, 0.035, 0.72, ERA1.tooltip);                              // the corridor's light in the gap
+  R(0.8, 0.2, 0.05, 0.07, ERA1.silver); R(0.81, 0.215, 0.03, 0.04, ERA1.black);   // the plate: "3"
+  // the light across the floor, widening towards the beds
+  for (let i = 0; i < 12; i++) R(0.9 - i * 0.05, 0.8 + i * 0.012, 0.05, 0.02 + i * 0.008, i % 2 ? ERA1.olive : ERA1.tooltip);
+  // two beds, foot towards us: headboard, pillow, sheet turned down over the blanket, the frame's end
+  for (const bx of [0.06, 0.38]) {
+    R(bx, 0.3, 0.26, 0.06, ERA1.olive);                                // the headboard
+    R(bx + 0.02, 0.36, 0.22, 0.42, ERA1.silver);                       // the mattress
+    R(bx + 0.05, 0.38, 0.16, 0.08, ERA1.white);                        // the pillow
+    R(bx + 0.02, 0.5, 0.22, 0.05, ERA1.paper);                         // the sheet, turned down
+    R(bx + 0.02, 0.55, 0.22, 0.23, ERA1.navy);                         // the blanket
+    R(bx, 0.76, 0.26, 0.05, ERA1.olive);                               // the frame's end
+  }
+}
+/** S284 — on the contact sheet, frame 27 is circled in red grease pencil: the one somebody marked */
+function circle27(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  g.save(); g.strokeStyle = ERA1.warn; g.lineWidth = 2; g.beginPath();
+  g.ellipse(x + w / 2, y + h / 2, w / 2 + 3, h / 2 + 3, -0.08, 0, Math.PI * 2); g.stroke(); g.restore();
 }
 function drawFrame27(g: CanvasRenderingContext2D): void { drawFrame27Into(g, 0, 0, PW, PH); scanLines(g); }
 
