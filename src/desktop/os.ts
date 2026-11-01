@@ -133,6 +133,8 @@ const LEAVE_CONFIRM_SECONDS = 4;
 const FORM_AUTO_SECONDS = 3.5;
 /** S280 (his: "an intermission space… I can give you a bit of time") — the room is free this long before the form opens itself */
 const FORM_INTERMISSION = 60, FORM_INTERMISSION_SPEEDRUN = 25;
+/** S283 — 2003: the desktop is free this long before the daily check-in comes first */
+const CHECKIN_GRACE = 45, CHECKIN_GRACE_SPEEDRUN = 15;
 const JINGLE_FADE_SECONDS = 3.5;
 type LyricLine = { t: number; words: Array<[number, string]> };
 const JINGLE_LINES = (jingleLyrics as unknown as { lines: LyricLine[] }).lines;
@@ -475,6 +477,9 @@ export class DesktopOS {
   private chatCloseAt = Infinity;
   /** S281 — the intermission is over: any desktop press opens the form until it is filed */
   formForced = false;
+  /** S283 — 2003's daily check-in, the same grammar: a grace while, then whatever is pressed opens Restorify first */
+  private checkinForced = false;
+  private checkinWaitT = 0;
   /** S280 — is a 1997 exercise window up (the racket's Release Work or Session): the form waits for it */
   private provotypeBusy(): boolean { return !!this.provotype?.open; }
   /** ⚑ S226 — set by the frame loop each frame (engine/app.ts): false while she is turned away from the desk */
@@ -617,6 +622,14 @@ export class DesktopOS {
       formFiled: !this.provotype?.open && ledger.provotypes.some(p => p.id === 'origin_intake_e1'), rootOpened: ledger.records.includes('rootcause-opened'),
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
+    // ⚑ S283 (headset B: "I pressed show me, and it didn't show me because the NetPilot window is closed, so it needs to
+    //   show me to open the NetPilot and then take me there") — Lamby is pointing at something on a window that is
+    //   shut or minimised: open that window first, then the ring has something to land on
+    const v = this.lambyGuide.view;
+    if (v.rung === 'show' && v.targets.length && !v.targets.some((t) => this.hits.some((h) => h.id === t))) {
+      const owner = v.targets.some((t) => t.startsWith('web-')) ? 'web' : v.targets.some((t) => t.startsWith('reply:')) ? 'irc' : null;
+      if (owner && this.windowPresent(owner) && !this.windowOpen(owner)) this.restoreWindow(owner);
+    }
     if (before !== this.lambyGuide.version) { this.dirty = true; if (this.e4) this.e4.browser.version++; }
   }
   idleSeconds = 0;
@@ -2402,6 +2415,16 @@ export class DesktopOS {
     // pressed (no timer — click-only, rail); 'lambyBoot' is a brief system
     // beat ("Restorify — finishing installation…") that resolves on its own,
     // same pacing family as the BIOS/LambyOS boot holds above.
+    // ⚑ S283 (headset B, 1 Nov: "the daily check-in, it should be forced, so person can try, but it's still forced";
+    //   "this Restorify today should appear in the beginning") — after a grace while on the 2003 desktop, the check-in is
+    //   due: a line says so, and whatever is pressed next opens Restorify first (the same grammar as Rob's form)
+    if (this.reinterp && this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage === 'active' && !this.checkinForced
+      && !ledger.checkins.some((c) => !c.id.startsWith('e3'))) {
+      if (!this.restorify?.open && this.desktopIdle()) this.checkinWaitT += dt;
+      if (this.checkinWaitT >= (isSpeedrun() ? CHECKIN_GRACE_SPEEDRUN : CHECKIN_GRACE)) {
+        this.checkinForced = true; this.toast = { text: lambyStrings.checkinDue, t: 8 }; this.dirty = true;
+      }
+    }
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage !== 'active') {
       const e2Before = this.e2StageT;
       this.e2StageT += dt;
@@ -4337,6 +4360,10 @@ export class DesktopOS {
     // ⚑ S281 — the intermission is over and Lamby has said so: whatever is pressed, the form is what opens. Lamby's own
     //   buttons, Start and the frame's menu were answered above; the form itself can still be set aside (dismissal
     //   always works), and a set-aside form is a filed form, so this ends there.
+    if (this.checkinForced && this.phase === 'desktop' && this.desktopEra === 'e2') {
+      if (ledger.checkins.some((c) => !c.id.startsWith('e3'))) this.checkinForced = false;
+      else if (!this.restorify?.open && !this.caleb?.open) { this.openRestorify(); this.dirty = true; return; }
+    }
     if (this.formForced && this.phase === 'desktop' && this.desktopEra === 'e1') {
       if (ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formForced = false;
       else if (!this.provotype) { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); this.dirty = true; return; }

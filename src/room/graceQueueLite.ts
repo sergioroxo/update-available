@@ -297,7 +297,9 @@ const LIFT_DELAY_SECONDS = 1.4;
 const LIFT_SECONDS = 5.0;
 const CARET_SECONDS = 0.53;
 /** ⚑ S219 / W1-E3 — a job worked to its end holds this long, finished and readable, and then the day comes back */
-const JOB_RETURN_SECONDS = 2.0;
+// ⚑ S283 (headset B: he wanted the way back as a button at the end, not a jump) — the finished job now holds with
+//   "Back to today" at its foot (ringed by the glow logic); the board only comes back by itself after a long while
+const JOB_RETURN_SECONDS = 20.0;
 
 /** ⚑ THE PLAYER (S69). `PLAYER_S` device pixels per frame unit → a 176×100
  *  picture on the workstation's 676×390 panel; the small "as sent" frame beside it
@@ -1294,6 +1296,7 @@ export class GraceQueueLite {
     // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
     if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active) {
       const ids = stepTargets('e3', buildStartModel(undefined, 'e3').now?.id);
+      if (this.doneT >= 0) ids.add('board-back');   // S283: a finished job's one way on
       if (ids.size) for (const r of this.rects) if (ids.has(r.id)) drawGlow(ctx, r, 'path', aero.ERA3.amber, aero.ERA3.glassEdge);
     }
     if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver) {
@@ -1608,6 +1611,14 @@ export class GraceQueueLite {
     //   the register law keeps the assistant off them. Its lines wait for the board.
 
     surface.draw(ctx, area, r => this.rects.push(r));
+    // ⚑ S283 (headset B, 1 Nov: "you press from the waiting, you read it, and then it suggests a reply, and then it should
+    //   be a button down there going says back to today") — a finished job ends in the way back, at the foot of the
+    //   column, where the reading ends (the small one at the top stays: leaving half-way is always allowed)
+    if (this.doneT >= 0) {
+      const bw = 160, bh = 26, bx = area.x + area.w - bw, by = area.y + area.h - bh - 4;
+      aero.button(ctx, bx, by, bw, bh, this.boardBackLabel(), { primary: true, size: 11 });
+      this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'board-back' });
+    }
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
   }
 
