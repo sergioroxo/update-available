@@ -1,0 +1,369 @@
+{
+ "_doc": "⚑ S283 (2026-11-01) — THE WORDS OF THE FOUR ERA WEBSITES (tools/gen_era_sites.mjs → public/sites/). His ask, 1 Nov: 'make them into webpages of the time, and the multiple tabs can contain all the information … think like that, it includes all the ideas, the texts, the information, the sources, images all of it that we wanted to add but got lost.' This file holds only what the sites SAY IN THEIR OWN VOICE (the frame's plain voice: short sentences). Everything that already lives elsewhere is read from there, not copied: the practices and their sources from data/provotypes + data/dossier, the status words from status_words.json, the beats from map.json, the terms from lexicon.json, the references from close_network.json, the links from links.json + era_links.json. Build-time input only: nothing here is read by src/ (check-spec C9 skips it by name). Frame voice, never the fiction's: no joke at anyone in it. Every organisation and product named inside the piece is invented; real organisations are named only where the knowledge base documents them.",
+ "siteName": "YOUR UPDATE HAS FAILED",
+ "projectLine": "SurvivingSOGICE · University of Bergen · Center for Digital Narrative",
+ "updated": "1 November 2026",
+ "playLabel": "Play the piece",
+ "hubLabel": "All four years",
+ "skipLabel": "Skip to the page",
+ "tabsLabel": "Tabs of this website",
+ "tabs": {
+  "story": "The story",
+  "practices": "The practices",
+  "sources": "Sources",
+  "images": "Images",
+  "media": "Media",
+  "words": "The words",
+  "missed": "Missed it?"
+ },
+ "common": {
+  "contentNote": "This site is about conversion practices — efforts to change a person's sexual orientation or gender identity. It describes what they did and says plainly that they harm. Nobody in the piece is real. Every organisation and product in it is invented. The practices they perform are documented.",
+  "records": "This page has no scripts. It records nothing and asks nothing of you.",
+  "statusKey": "How well each thing is documented",
+  "storyFromPanel": "In one paragraph, as the Close's panel says it",
+  "whatYouMeet": "What you meet in this year",
+  "whatYouMeetLead": "Each thing in the piece is an invented mark in the style of a real kind of interface.",
+  "endsTitle": "How this year ends",
+  "endsLead": "A software update closes every year. It is started by the system after a failure, never by you. This is its changelog, as the piece prints it.",
+  "practicesLead": "Each practice below is something the software does to the person in this year. The status is how well the practice is documented. The sentence under it is the source.",
+  "aboutTitle": "About this part of the piece",
+  "aboutLead": "This is the text that used to open as “About this” inside the piece, in the window of the exercise. It lives here now.",
+  "everySource": "Every source on this year's cards",
+  "everySourceLead": "Each source says how well documented it is and how sure the project is. Links appear only where the project has checked them.",
+  "noLink": "No verified link yet.",
+  "noSource": "No source: this beat is the piece's own.",
+  "sourcesOnOtherCards": "These sources sit on cards that belong to other years. They back what this year does.",
+  "refsTitle": "References this year drew on",
+  "periodTitle": "Pages of the time",
+  "periodLead": "Archived pages and contemporary reports, so that you can see how the period looked. This site shows no picture from them. Each link opens in a new tab. They come from organisations that promoted conversion practices. Read them as evidence of what was said, never as advice.",
+  "periodNone": "No archived reference is listed for this year yet. The verified sources are on the Sources tab.",
+  "imagesLead": "Pictures made for this project. Nothing here is a photograph of a real person or a real place.",
+  "mediaLead": "Sound and film made for this project. They play only when you press play. Nothing loads before that.",
+  "mediaNone": "No file is published for this year. What the piece plays on its screens is described here instead.",
+  "lyricsTitle": "The words of the song",
+  "creditLabel": "Credit",
+  "wordsLead": "The words these networks used in this year, and what they mean. A word marked “not supported” is a claim that health bodies and research do not support.",
+  "wordsNone": "No word in the Lexicon is tied to this year alone.",
+  "missedLead": "Short notes on what happens in this year, in the order it happens. Optional things are marked. Nothing here is required: the piece never needs you to look anywhere.",
+  "missedOptional": "optional",
+  "missedWhere": "Where",
+  "ringTitle": "THE FOUR YEARS WEB RING",
+  "ringPrev": "← previous year",
+  "ringNext": "next year →",
+  "ringHub": "all four",
+  "creditLib": "Image generation by GPT (OpenAI) at the project's direction, 2026. Made for this project; no third-party work reproduced.",
+  "creditPlate": "Rendered by the project from its own room model. Project-owned.",
+  "reasonsTitle": "The reasons they gave",
+  "counterNote": "This counter does not count. This page records nothing.",
+  "bestViewed1997": "Best viewed in any browser you have. Pages of this year said Netscape, or Explorer. This one says: whichever you like.",
+  "tip2003": "Press a tab to change what this page shows. Nothing you press is saved.",
+  "sourcesLead": "Every source says how well documented it is. Links appear only where the project has checked them. A source marked “{verify}” has not been fully checked yet.",
+  "sameSource": "Same source as the practice above."
+ },
+ "hub": {
+  "title": "Four years, four websites",
+  "lede": "YOUR UPDATE HAS FAILED is a browser and headset piece about how organised conversion practices reached queer people online, from 1997 to 2026. Each year has a website of its own here. Each one holds everything about that year: the story, the practices, the sources, the pictures, the sound, and the words.",
+  "choose": "Choose a year",
+  "doors": {
+   "1997": "A home page of the early web. Daniel is sixteen.",
+   "2003": "A portal of the broadband years. Daniel is an adult, in the same room.",
+   "2016": "A flat platform. Vera edits other women's words.",
+   "2026": "An app-like page of cards. Maya's session is restored before she touches it."
+  },
+  "doorAria": "Open the website for {year}",
+  "alsoTitle": "Also here",
+  "oldSources": "The full sources list, on one long page",
+  "oldSourcesNote": "Every dossier card, every verified link, and the credits for the models and sound.",
+  "playNote": "Opens the piece from the beginning.",
+  "filmTitle": "The opening film",
+  "filmWhat": "“LambyOS — Welcome Home” (1 minute 33). The mandatory opening of the piece: an infomercial that sells thirty years of “care”, and falls apart into its own small print. The captions are burned into the picture.",
+  "filmCredit": "Made for this project by Claude (Anthropic), from the project director's design. The jingle and every sound in it were synthesised for the project; no samples. The narrator is Kokoro-82M (voice am_michael, Apache-2.0). The models shown and the type in the picture are credited on the sources page. Project-owned.",
+  "lexiconTitle": "The Lexicon's sources",
+  "lexiconLead": "The Lexicon is the piece's dictionary of the words these networks used. These are the verified pages behind it.",
+  "aboutTitle": "About the project",
+  "howTitle": "How these sites work",
+  "how": [
+   "Each year's website is built from the same data the piece reads. When the piece changes, the sites are rebuilt, so the two cannot disagree.",
+   "The sites are plain pages. They have no scripts and no fonts from anywhere else. They make no requests and record nothing.",
+   "A link to an outside page opens in a new tab. That is your choice, never the site's."
+  ]
+ },
+ "eras": {
+  "1997": {
+   "heading": "1997 — Daniel, sixteen",
+   "tagline": "A boy, a beige computer, and a programme that has already decided.",
+   "story": [
+    "It is 1997. Daniel is sixteen. He lives in a small room with a beige computer on the desk. His mother has found a “family companion” programme on a message board. She has printed its questionnaire for him.",
+    "The programme is called Un-Walk. It comes on a disk. It asks him questions, teaches him a prayer, and gives him a pledge card to sign in his own name. Whatever he answers, the questionnaire reaches the same referral. It is not listening. It is confirming a conclusion it had already reached.",
+    "Then he goes online. A web ring leads from one ministry page to the next. In a chat channel, a mentor called MentorRob asks to talk to him in private. A form arrives with questions about his father. Then a placement letter arrives, drawn up from his own answers.",
+    "He writes in a diary file that will not delete. An update notice arrives. The update does not change him. It moves his file to a new service."
+   ],
+   "inventedNote": "The programme, the chat channel, MentorRob, the tapes and the software are invented. The practices they perform are documented, and the Practices tab says how well.",
+   "interfaces": [
+    [
+     "The operating system's setup wizard",
+     "LambyOS Setup, with Lamblippy (a lamb in the manner of a paper-clip helper), and the pledge card"
+    ],
+    [
+     "The infomercial",
+     "“Welcome Home”: thirty years of “care” sold on tape, falling apart into its small print"
+    ],
+    [
+     "Search, web rings, ex-gay sites, banner ads",
+     "The 1997 browser, the web ring and the FIT IN banner"
+    ],
+    [
+     "Chat rooms",
+     "A channel in the style of mIRC, private messages, a picture sent direct"
+    ],
+    [
+     "Intake paperwork",
+     "The enrolment packet and the Family Form questionnaire"
+    ],
+    [
+     "Shareware games on the disk",
+     "ROOTCAUSE.EXE: a quiz where only the programme's answer scores and the honest one is kept"
+    ],
+    [
+     "The journal",
+     "A diary that will not delete"
+    ],
+    [
+     "Ritual “release work”",
+     "The racket and its exercise card (Exercise One: The Father Wound)"
+    ],
+    [
+     "Handheld games",
+     "FIT IN on the handheld: whatever does not fit the mould stays on a heap that never goes away"
+    ],
+    [
+     "The update",
+     "The first update notice, its agreement and its changelog"
+    ]
+   ],
+   "imageAlt": {
+    "lib": "A cartoon of a 1990s beige computer, a tower and a keyboard on a small wooden desk.",
+    "plate": "A low-poly room in warm light. A beige computer on a desk, a lamp, a July 1997 calendar on the wall, a window."
+   },
+   "imageCaption": {
+    "lib": "1997's computer, as the Library on Daniel's monitor draws it.",
+    "plate": "Daniel's room, as the Close shows it."
+   },
+   "media": [
+    {
+     "file": "assets/audio/fold_my_hands_tape97.mp3",
+     "type": "audio",
+     "title": "“Fold My Hands” — the prayer tape",
+     "what": "Step 2 of the programme: Daniel is asked to play the companion tape and follow the words to the end. It is a song of the invented programme. It is worn on purpose, like a copied cassette.",
+     "credit": "Made by the project lead with Suno. Project-original; credited to Suno."
+    },
+    {
+     "file": "assets/audio/family_design_solutions_tape97.mp3",
+     "type": "audio",
+     "title": "“Family Design Solutions” — a mixtape track",
+     "what": "A track on the programme's mixtape, selling a family service. Worn like a copied cassette.",
+     "credit": "Made by the project lead with Suno. Project-original; credited to Suno."
+    },
+    {
+     "file": "assets/audio/discover_the_new_you_tape97_radio.mp3",
+     "type": "audio",
+     "title": "“Discover the New You” — the broadcast jingle",
+     "what": "The jingle as a radio plays it, with tuning static at the head and the tail.",
+     "credit": "Made by the project lead with Suno. Project-original; credited to Suno."
+    }
+   ]
+  },
+  "2003": {
+   "heading": "2003 — Daniel, an adult",
+   "tagline": "The programme is software now. It asks how he is every morning.",
+   "story": [
+    "It is 2003. Daniel is an adult, in the same room. The programme now lives on his computer as software, called Restorify. A helper waits on the screen. Every morning it asks how he is: Steady, Struggling, Grateful or Tired. It keeps the answer.",
+    "Restorify wants him in its new video. He is asked to go through topics, to agree to a release that is already filled in, and to play a tape. Then the programme cuts his story for him: before, the programme, after, call now. He sees where his story went.",
+    "A phone on the desk has a game on it. A forum thread has been recommended to him. A file came with him from 1997, read only. None of it is required.",
+    "Then a message arrives from someone outside. The programme sees it before he does. An accountability alert follows. Peer accountability, and software that logged browsing and reported it to a partner, are documented. The streak, and the machine that reads his messages, are the piece's own compression of them. They carry the demand to change without anyone saying it out loud."
+   ],
+   "inventedNote": "Restorify, its helper, the forum and the people in this year are invented. Peer accountability and logging software are documented.",
+   "interfaces": [
+    [
+     "Photo “restoration” software",
+     "Restorify and its “Today” panel"
+    ],
+    [
+     "Instant messaging",
+     "The conversation with Caleb, and his message as a door"
+    ],
+    [
+     "Accountability software",
+     "The accountability alert"
+    ],
+    [
+     "Streaming ministry TV",
+     "NetVision"
+    ],
+    [
+     "Testimony tapes and story-making",
+     "The media player; the programme assembles Daniel's story for him"
+    ],
+    [
+     "Phone games",
+     "CLEAR, on Daniel's flip phone"
+    ]
+   ],
+   "imageAlt": {
+    "lib": "A cartoon of an early-2000s computer: a grey tower, a flat blue screen with a webcam on top, a keyboard and mouse on a small desk.",
+    "plate": "A low-poly room in warm light. A blue screen with Restorify on it, a mug with a faded flag, a calendar with the days crossed off in red, a phone on the desk."
+   },
+   "imageCaption": {
+    "lib": "2003's computer, as the Library on Daniel's monitor draws it.",
+    "plate": "Daniel's room in 2003, as the Close shows it."
+   },
+   "media": [
+    {
+     "file": "assets/audio/chase_the_clouds.mp3",
+     "type": "audio",
+     "title": "“Chase the Clouds” — the Restorify jingle",
+     "what": "The song that plays under the helper's cartoon when the machine boots. It is bright on purpose. The words are below.",
+     "credit": "Composed by the project lead. Project-original.",
+     "lyrics": "s2_jingle_lyrics"
+    },
+    {
+     "file": "assets/audio/discover_the_new_you_infomercial_tape03.mp3",
+     "type": "audio",
+     "title": "“Discover the New You” — the infomercial jingle",
+     "what": "The same jingle as 1997's radio, worn for 2003's infomercial.",
+     "credit": "Made by the project lead with Suno. Project-original; credited to Suno."
+    },
+    {
+     "title": "The “Truth in Love” television spots (1999) — described, not played",
+     "what": "In 1999 a campaign called “Truth in Love” made two television spots. Its sponsor published the spots, and the script of each, on its own website. The script of the mother's spot is a table of what is on screen and what is heard, in nine rows, with a small still for each. Its shape: a childhood photograph, a family room, “bad choices”, the cost of not changing, a mother speaking to other parents, one line from her son, and then a black end card with a number to call. The spot does not show a programme. It shows only the way in. The 2003 story editor in the piece, which cuts Daniel's testimony into before, the programme, after and call now, is the piece's answer to that document. No file of the spots is published here. The archived pages are listed under Pages of the time on the Images tab.",
+     "credit": "Described from the sponsor's own published scripts, as archived by the Internet Archive. Nothing is reproduced."
+    }
+   ]
+  },
+  "2016": {
+   "heading": "2016 — Vera, at her desk",
+   "tagline": "Nobody in this room is treated. The writing is edited.",
+   "story": [
+    "It is 2016. Vera works from her room. She corrects other women's writing for a platform called GracePlatform. They are lesbian women, writing about their own lives. She works one rule at a time: remove anything unresolved, add the scripture. Apply, or skip. Both choices are kept, and neither is marked right.",
+    "A friendly voice called Lambient asks her one question. Either answer works. The board offers more jobs as updates: answer families' calls, post to the group, tag a video. She may take them or leave them.",
+    "One afternoon the group chat on her phone is about a law. Malta has just made practices like hers an offence, by a unanimous vote of its parliament. It was the first country in Europe to do so. That is a real fact, and it is not ours. The newspaper that reports it in the piece is invented. The law is not.",
+    "Nobody in the room says anything. Content rules and moderation work were among the tools these networks used to reach people at scale. Then the platform announces that it is joining a larger service, and an update arrives."
+   ],
+   "inventedNote": "GracePlatform, Lambient, the group and every person in this year are invented. Malta's Act LV of 2016 is real. The record is thin on the private messages of accountability groups in 2016. The group in the piece is written into that gap openly: an invented name, invented members, invented sentences, and a documented shape.",
+   "interfaces": [
+    [
+     "Moderation boards and correction queues",
+     "GracePlatform: APPLY or SKIP, both captions kept, unresolved"
+    ],
+    [
+     "The group chat",
+     "Vera's phone, and the way a link spreads in the group"
+    ],
+    [
+     "Content jobs",
+     "Vera's three jobs: testimony, post to the group, tag the video. Each arrives as an update"
+    ],
+    [
+     "Comment management",
+     "Pinned answers, and comments to clear"
+    ],
+    [
+     "Recommendation, podcasts, courses",
+     "The recommend job, the podcast order, the course builder"
+    ],
+    [
+     "Mobile games",
+     "FloppySheep, on Vera's phone"
+    ],
+    [
+     "The assistant",
+     "Lambient"
+    ]
+   ],
+   "imageAlt": {
+    "lib": "A cartoon of a 2010s desk: a wide flat monitor, a black tower with a green light, a keyboard, a mouse on a mat, a phone in a stand, a drawer.",
+    "plate": "A low-poly room in warm light. A monitor with a sign-in screen, a desk lamp, a phone in a holder, a December calendar with the 13th ringed, a window with snow light, a sofa at the edge."
+   },
+   "imageCaption": {
+    "lib": "2016's computer, as the Library on Daniel's monitor draws it.",
+    "plate": "Vera's room, as the Close shows it."
+   },
+   "media": [
+    {
+     "file": "assets/audio/floppysheep_song.mp3",
+     "type": "audio",
+     "title": "“FloppySheep — Out of Bounds” — the game's song",
+     "what": "The song behind FloppySheep's music button, on Vera's phone. The platform's cheerful lamb ships delight while its serious arm has become a workflow. The words are below.",
+     "credit": "Made by the project lead with Treblo. Project-original.",
+     "lyrics": "s3_floppysheep_lyrics"
+    },
+    {
+     "title": "The forty-second testimony video — described, not played",
+     "what": "In the job “Tag the video”, Vera sees a forty-second testimony video and chooses its tags. The tags are the house vocabulary of the network. The explicit word is greyed out: “not used in house style”. Documented audits found that euphemistic terms surface providers, where explicit terms surface critical information. The video exists only inside the piece, on its screens, so no file is published here.",
+     "credit": "Invented for the piece. Nothing is reproduced."
+    }
+   ]
+  },
+  "2026": {
+   "heading": "2026 — Maya, and the update that fails",
+   "tagline": "Care that finishes your sentence. And one room the system cannot classify.",
+   "story": [
+    "It is 2026. Maya's session is restored for her before she has touched anything. Her laptop has a companion called L. L finishes her search for her, and suggests that what she wants is to stop. A site called Second Thoughts offers a session with an agent.",
+    "L asks. Maya answers. Each step has its own press. Her record keeps her old name “for continuity of care”. Her photographs come back improved. A headset on the desk offers an immersive session.",
+    "Then a friend's invitation, inside the headset, leads her somewhere the system cannot classify: the Commons, a room where being trans is fine. The lamp there is hers to raise. This is the one place in the piece that is never a trap, and is never revealed as false.",
+    "Then the update fails. The room extends patterns that are already documented, such as autocomplete, retained records, photo enhancement and “support” agents, into a system that presents itself as care. What it cannot classify is other people."
+   ],
+   "inventedNote": "This room is inferred: Maya, L, the sites and the headset are invented. Around it, the record is not. In May 2026 the European Commission answered more than a million people who had asked for a ban on conversion practices with a non-binding recommendation, and declined to propose a law. Organised campaigns against trans people's care run across Europe.",
+   "interfaces": [
+    [
+     "The browser, tabs and the answer box",
+     "GraceOS's browser, with “People also ask”: confident answers from one network's sources"
+    ],
+    [
+     "Targeted ads",
+     "The offers"
+    ],
+    [
+     "The AI companion",
+     "L, the programme's voice"
+    ],
+    [
+     "The headset and the social world",
+     "The visor and the Commons: the ball, lamps rising into stars, the crowd. The respite: never a trap, never revealed as fake"
+    ],
+    [
+     "Console games",
+     "MATCH MADE SIMPLE"
+    ],
+    [
+     "The data subject's file",
+     "Your file: the record read back across all four people"
+    ]
+   ],
+   "imageAlt": {
+    "lib": "A cartoon of a modern desk: a wide purple-lit monitor, a keyboard, a mouse and a white and purple VR headset beside it.",
+    "plate": "A low-poly room in dim evening light. A headset on a box, a monitor with a pale screen, an open laptop, an October calendar with party lights on its picture, a dark window, a bed at the edge."
+   },
+   "imageCaption": {
+    "lib": "2026's computer and headset, as the Library on Daniel's monitor draws them.",
+    "plate": "Maya's room, as the Close shows it."
+   },
+   "media": [
+    {
+     "file": "assets/audio/ball_room_landing.mp3",
+     "type": "audio",
+     "title": "The Commons — the landing",
+     "what": "What the Commons sounds like when Maya arrives. About two minutes, made to loop.",
+     "credit": "Made by the project lead. Project-original."
+    },
+    {
+     "file": "assets/audio/ball_room_bed.mp3",
+     "type": "audio",
+     "title": "The Commons — through the wall",
+     "what": "The music of the ball, heard as if through a wall. About two minutes, made to loop.",
+     "credit": "Made by the project lead. Project-original."
+    }
+   ]
+  }
+ }
+}

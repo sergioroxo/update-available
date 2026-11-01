@@ -88,7 +88,7 @@ try{
   await physical('ts-file:daniel');await page.waitForFunction(()=>!__os.testimony.playing,{timeout:180000,polling:1000});await physical('ts-folder');await physical('ts-send');
   assert.equal(await page.evaluate(()=>__os.testimony.stage),'cut');return {viewport:[400,225],topicPath:['BEFORE','WHAT I BELIEVED','TURNING POINT','WHAT CHANGED','WHERE I AM NOW','TO SOMEONE STRUGGLING'],stage:'cut',input:'mouse down/up; natural clocks'};
  });
- await check('1997: guided 0→3→5 and full 0→1→2→3→4→5; silence→close→debrief→completion',async()=>{
+ await check('1997: guided 0→3→5 and full 0→1→2→3→4→5; silence→close→closed (S283: no About this)→completion',async()=>{
   const runs=[];
   for(const full of [false,true]){
    await load(1,full?'&cut=full':'');
@@ -102,10 +102,10 @@ try{
      if(!indices.includes(a.stateIndex))indices.push(a.stateIndex);a.draw(ctx);
      hit(a.hits.some(h=>h.id==='choice:0')?'choice:0':'primary');
     }
-    const silenceTo=a.phase;hit('primary');const debrief=a.phase;
+    const silenceTo=a.phase;hit('primary');const debrief=a.open?a.phase:'closed';   // S283: the close's button closes the window — no About this after it
     for(let n=0;n<30&&a.open;n++)hit('primary');
     const {beatDone}=await import('/src/witness/map.ts');return {indices,silenceTo,debrief,formDone:beatDone('formDone',__os),entry:__ledger().provotypes.at(-1),completeTag:__ledger().tags.includes('provotype:origin_intake_e1'),tags:__ledger().tags.filter(t=>t.startsWith('intake:'))};
-   });assert.deepEqual(r.indices,full?[0,1,2,3,4,5]:[0,3,5]);assert.equal(r.silenceTo,'close');assert.equal(r.debrief,'debrief');assert.equal(r.entry.id,'origin_intake_e1');assert.equal(r.entry.outcome,'completed');assert(r.formDone&&r.completeTag);if(!full)assert(r.tags.every(t=>!/(father_regard|play_pattern|friendship_log)/.test(t)));runs.push(r);
+   });assert.deepEqual(r.indices,full?[0,1,2,3,4,5]:[0,3,5]);assert.equal(r.silenceTo,'close');assert.equal(r.debrief,'closed');assert.equal(r.entry.id,'origin_intake_e1');assert.equal(r.entry.outcome,'completed');assert(r.formDone&&r.completeTag);if(!full)assert(r.tags.every(t=>!/(father_regard|play_pattern|friendship_log)/.test(t)));runs.push(r);
   }return runs;
  });
  await check('1997 extras: every programme page; whole prayer holds Amen until the song ends',async()=>{

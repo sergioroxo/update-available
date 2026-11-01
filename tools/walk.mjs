@@ -864,7 +864,7 @@ async function main() {
    * from a cycle — run 4 alternated between two screens seventy times, taking
    * the repeat branch every single time. Remembering per SIGNATURE instead
    * means the second visit to a screen tries the option the first visit did
-   * not, which is what a person does and what eventually reaches the debrief.
+   * not, which is what a person does and what eventually reaches the end of the exercise (S283: the About this window is gone).
    *
    * ⚑ Returns null when everything left is refused or already tried — and the
    * caller must then WAIT, because that is what a player does while a scripted,

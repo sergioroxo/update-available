@@ -17,7 +17,7 @@ export function createBlockerProbe(name, directory) {
       return {era:os.desktopEra,browser:os.e4?.browser?.phase,mode:os.e4?.browser?.programMode,
         messenger:!!os.caleb?.open,settle:os.e4?.browser?.settleT,browserTime:os.e4?.browser?.t,handedOff:os.e4?.handedOff,pose:window.__camPose(), reached:window.__ledger().reachedEras,
         records:window.__ledger().e4Space,
-        dossier:p?.open&&p.phase==='debrief'?{id:p.data.id,page:p.debriefPage}:null,
+        dossier:null,   // S283: the About this dossier left the experience (public/sites/)
         alert:a?{running:a.alertRunning,stamp:a.stampVisible,mail:a.mailOpen,redacted:c?.redaction.blackedRows??0}:null};
     });
     if(read.era==='e2'&&read.messenger&&!s.driven&&Math.hypot(read.pose.x,read.pose.y-1.16,read.pose.z-0.7)>0.12)throw Error('Messenger opened away from Daniel’s room seat');

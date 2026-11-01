@@ -559,7 +559,11 @@ const UNREACHED_BASELINE = 0;
  *  is not player-facing content in the sense this check cares about. */
 const UNREACHED_SKIP = new Set([
   join(ROOT, 'data/audio/tts_manifest.json'),
-  join(ROOT, 'data/paths.json')
+  join(ROOT, 'data/paths.json'),
+  // S283: build-time inputs of tools/gen_era_sites.mjs — what the era WEBSITES (public/sites/) say in their own
+  // voice, and their period references. Their player-facing output is the generated pages, not src/.
+  join(ROOT, 'data/strings/era_sites.json'),
+  join(ROOT, 'data/dossier/era_links.json')
 ]);
 
 let strippedSrcCache = null;

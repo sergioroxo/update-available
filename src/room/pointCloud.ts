@@ -139,6 +139,12 @@ export interface PointCloud {
   /** ⚑ S163 / R3-111 — which panel a world-space ray lands on (0..3), or null.
    *  A press on a panel is the way to its sources (the frame's menu). */
   panelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }, tMax?: number): number | null;
+  /** ⚑ S283 — which panel's SOURCES BUTTON a world-space ray lands on (0..3), or null. Only on the story face (the
+   *  button is drawn there). The button opens that era's website (sites/<year>/index.html); a press elsewhere
+   *  on the panel still turns it to its in-room dossier. */
+  panelSourcesAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }, tMax?: number): number | null;
+  /** the era (1..4) of panel `i`, for the site that its Sources button opens */
+  panelEraOf(i: number): number;
   /** ⚑ S163 / R3-112 — the drift pauses while the gaze rests on a panel
    *  ("the constellation should travel only when I am not moving… hard to
    *  read"): the caller says each frame whether the eye line is on one. */
@@ -1357,6 +1363,31 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       }
       return null;
     },
+    panelSourcesAt(p0, p1, tMax = 1): number | null {
+      if (!visible || panelFrames.length === 0) return null;
+      invRoot.copy(root.getWorldTransform()).invert();
+      invRoot.transformPoint(lp0.set(p0.x, p0.y, p0.z), lp0);
+      invRoot.transformPoint(lp1.set(p1.x, p1.y, p1.z), lp1);
+      ld.sub2(lp1, lp0);
+      for (let i = 0; i < panelFrames.length; i++) {
+        if (panelK[i] > 0.5 || panelFace[i] >= 0) continue;   // folded away, or already turned to its dossier
+        const f = panelFrames[i];
+        const denom = ld.dot(f.n);
+        if (Math.abs(denom) < 1e-6) continue;
+        const t = (f.c.dot(f.n) - lp0.dot(f.n)) / denom;
+        if (t < 0 || t > tMax) continue;
+        lh.copy(ld).mulScalar(t).add(lp0).sub(f.c);
+        const hx = lh.dot(f.r), hy = lh.dot(f.u);
+        if (Math.abs(hx) > f.hw || Math.abs(hy) > f.hh) continue;
+        // the button's rect in the cell (px) → panel-local metres, with a little give for a thumb or a wand
+        const bx = ((SRC_BTN.x + SRC_BTN.w / 2) / CELL_W - 0.5) * 2 * f.hw;
+        const by = (0.5 - (SRC_BTN.y + SRC_BTN.h / 2) / CELL_H) * 2 * f.hh;
+        const bw = (SRC_BTN.w / CELL_W) * f.hw * 1.15, bh = (SRC_BTN.h / CELL_H) * f.hh * 1.3;
+        return Math.abs(hx - bx) <= bw && Math.abs(hy - by) <= bh ? i : null;
+      }
+      return null;
+    },
+    panelEraOf(i: number): number { return panelEra[i] ?? i + 1; },
     labelAt(p0, p1, tMax = Infinity): { era: number; text: string } | null {
       const camera = viewCamera?.() ?? app.systems.camera?.cameras[0]?.entity;
       if (!visible || !camera || fadeLevel < 0.5 || labels.length === 0) return null;

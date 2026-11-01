@@ -683,7 +683,7 @@ export function mountGameMenu(): GameMenu {
       //   visitor follows into a new tab — a navigation they choose, never a request
       //   the piece makes.
       const a = document.createElement('a');
-      a.href = 'sources/index.html';
+      a.href = 'sites/index.html';   // S283: the four era websites (the hub links the old long list)
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
       a.textContent = copy.creditsSourcesPage;

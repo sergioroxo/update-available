@@ -316,6 +316,9 @@ const RELOC_POSES: Record<string, RelocPoses | undefined> = {
  *  the rooms sit on the x-axis. Module scope since S72 (see CAMERA_POSES). */
 const DOLLY_CTRL = { x: 0, y: 1.98, z: 1.15 };
 
+/** ⚑ S283 — era number (1..4) → the year of its website under public/sites/ */
+const ERA_SITE_YEAR: Record<number, string> = { 1: '1997', 2: '2003', 3: '2016', 4: '2026' };
+
 export interface CameraPose { x: number; y: number; z: number; pitch: number; yaw: number }
 
 /** each room's SEAT — the desk framed at E1 intimacy (eye ~0.8 m from the
@@ -3411,6 +3414,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           closeMonitor.openLexicon();
           if (!closeMonitor.on) { closeMonitor.setNear(false); closeMonitor.show(); }
           goToCloseMonitor();
+          return;
+        }
+        // ⚑ S283 — a press on a panel's SOURCES BUTTON opens that era's website (public/sites/<year>/index.html), the
+        //   "About this" panels' new home. A plain link followed in a new tab: a navigation the visitor chose, never a
+        //   request the piece makes. In a headset a page cannot open over the session, so there the press falls through
+        //   and turns the panel to its in-room dossier, as before. A press elsewhere on the panel still turns it.
+        const si = cloud.panelSourcesAt(ray.p0, ray.p1, tGlass);
+        if (si !== null && !xr?.active) {
+          const a = document.createElement('a');
+          a.href = `sites/${ERA_SITE_YEAR[cloud.panelEraOf(si)] ?? '1997'}/index.html`;
+          a.target = '_blank'; a.rel = 'noopener noreferrer';
+          a.click();
           return;
         }
         if (lb && lb.text !== lexStrings.star) { cloud.openDossierFor(lb.era, lb.text); return; }

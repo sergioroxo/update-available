@@ -1,0 +1,137 @@
+{
+ "_doc": "⚑ S283 (2026-11-01) — PERIOD REFERENCES for the four era websites (tools/gen_era_sites.mjs → public/sites/). The same rule as links.json and the same refusal: every `url` below must appear VERBATIM in the document named in its `verifiedIn`, or the generator and `npm test` fail. Every row here is one that docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md marks 'Works. HTTP 200' (the pages marked BLOCKED, FAIL, dead or [VERIFY SOURCE] are left out). They are archived pages and contemporary articles to LOOK AT — the sites show no picture from them and make no request to them; a visitor who follows a link opens it in a new tab. `n` is the row number in that document. Nothing here is a claim of the piece: these are where the period looked like this.",
+ "links": {
+  "1997": [
+   {
+    "n": 44,
+    "label": "NARTH home page, December 1997 (Internet Archive capture)",
+    "note": "A clinical-looking page. Grey background, a coin logo, a long list, two “NEW” starbursts.",
+    "url": "https://web.archive.org/web/19971222054508/http://narth.com/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 45,
+    "label": "Love in Action home page, December 1998 (Internet Archive capture)",
+    "note": "A cream page with one big link: “Click here to continue”. The page is marked 1997.",
+    "url": "https://web.archive.org/web/19981212030643/http://www.loveinaction.org/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 46,
+    "label": "PFOX home page, November 1998 (Internet Archive capture)",
+    "note": "A plain white page with a green hit counter at the bottom left.",
+    "url": "https://web.archive.org/web/19981111184246/http://pfox.org/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 47,
+    "label": "Exodus home page, April 1999 (Internet Archive capture)",
+    "note": "A light yellow page, two rainbow-coloured rules and a plain bullet list.",
+    "url": "https://web.archive.org/web/19990417133357/http://www.exodusintl.org/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 48,
+    "label": "New Direction (Canada) home page, January 2000 (Internet Archive capture)",
+    "note": "A white page with green bold text and a row of text links at the foot.",
+    "url": "https://web.archive.org/web/20000115202914/http://www.newdirection.ca/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 19,
+    "label": "Christianity Today, September 1998 — a report on the newspaper ad campaign",
+    "note": "A contemporary report. The site shows a cookie banner first.",
+    "url": "https://www.christianitytoday.com/1998/09/ad-campaign-ignites-firestorm/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 21,
+    "label": "Dignity USA, 1998 — gay Catholics answer the ex-gay ads",
+    "note": "A short response from a Catholic LGBT group, on a plain page.",
+    "url": "https://www.dignityusa.org/articles/gay-catholics-denounce-latest-round-of-ex-gay-ads",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   }
+  ],
+  "2003": [
+   {
+    "n": 53,
+    "label": "Exodus home page, July 2003 (Internet Archive capture)",
+    "note": "Two large smiling portraits, a round logo and an orange image-button menu.",
+    "url": "https://web.archive.org/web/20030722041109/http://exodus-international.org/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 55,
+    "label": "Exodus North America home page, February 2003 (Internet Archive capture)",
+    "note": "A crimson swoosh, a “Top News” box and a footer of image buttons.",
+    "url": "https://web.archive.org/web/20030209000114/http://www.exodusnorthamerica.org/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 56,
+    "label": "Love in Action home page, July 2003 (Internet Archive capture)",
+    "note": "A blue banner and a strip of fourteen smiling faces across the page.",
+    "url": "https://web.archive.org/web/20030720052225/http://loveinaction.org/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 57,
+    "label": "NARTH home page, July 2003 (Internet Archive capture)",
+    "note": "Centred text, red underlined headline links and a small left menu.",
+    "url": "https://web.archive.org/web/20030720194858/http://www.narth.com/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 59,
+    "label": "PFOX home page, July 2003 (Internet Archive capture)",
+    "note": "A “Best Viewed With Internet Explorer” line and a tell-a-friend form.",
+    "url": "https://web.archive.org/web/20030719100031/http://www.pfox.org/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 60,
+    "label": "Regeneration home page, June 2003 (Internet Archive capture)",
+    "note": "A waterfall photograph and four menu words drawn as images.",
+    "url": "https://web.archive.org/web/20030620061457/http://regenerationministries.org/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 40,
+    "label": "Exodus North America, “Regeneration Books” catalogue, June 2001 (Internet Archive capture)",
+    "note": "A book catalogue with a dark blue left menu of sixteen categories.",
+    "url": "https://web.archive.org/web/20010605015624/http://www.exodusnorthamerica.org/resources/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 41,
+    "label": "An ex-gay links directory, “as of 4-23-2003” (GeoCities page, captured 2008)",
+    "note": "A huge hand-made link list with a colour legend and web rings.",
+    "url": "https://web.archive.org/web/20080516071642/http://geocities.com/exgaylinks/links.html",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 42,
+    "label": "“Truth in Love” campaign page, December 2001 (Internet Archive capture)",
+    "note": "The sponsor's own page for its 1999 television spots. Two video stills and a call line.",
+    "url": "https://web.archive.org/web/20011204191826/http://www.cwfa.org/library/family/truthinlove/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 43,
+    "label": "“Truth in Love”, the script of one spot, November 2001 (Internet Archive capture)",
+    "note": "A two-column table, On Screen and Audio, with the end card on black.",
+    "url": "https://web.archive.org/web/20011126031813/http://www.cwfa.org/library/family/truthinlove/mom.shtml",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   },
+   {
+    "n": 20,
+    "label": "Christianity Today, September 1999 — a report on television stations refusing the ads",
+    "note": "A contemporary report. The site shows a cookie banner first.",
+    "url": "https://www.christianitytoday.com/1999/09/tv-stations-turn-down-exodus-ads/",
+    "verifiedIn": "docs/reinterp/REFERENCE_LINKS_CHECKED_2026-10-31.md"
+   }
+  ],
+  "2016": [],
+  "2026": []
+ }
+}

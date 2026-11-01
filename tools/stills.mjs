@@ -322,7 +322,7 @@ async function main() {
           // S177 / R4-30: the story face first, with its era's Sources button …
           await shot(`10a-panel-${tag}`, `the ${tag} panel: its room, and its Sources button in that room's OS`);
           // … then the press lands ON the button (its published point), with the real mouse
-          await aim(q.button ?? q);
+          await aim(q);   // S283: the button now opens the era's website; the in-room dossier is a press elsewhere on the panel
           await page.mouse.move(640, 360); await page.mouse.down(); await wait(70); await page.mouse.up();
           await aim(q);
           await wait(1200);

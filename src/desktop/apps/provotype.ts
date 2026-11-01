@@ -22,7 +22,6 @@ import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import { isSpeedrun } from '../../state/cut';
 import chrome from '../../../data/strings/reinterp.json';
-import words from '../../../data/strings/status_words.json';
 
 export interface ProvotypeSource {
   status: 'documentary' | 'contested' | 'speculative';
@@ -78,18 +77,8 @@ export interface Provotype {
   wizard?: { title: string; heading: string; frameHeading: string; step: string; round: string; steps: string[] };
 }
 
-type Phase = 'invitation' | 'frame' | 'vignette' | 'close' | 'debrief';
+type Phase = 'invitation' | 'frame' | 'vignette' | 'close';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
-/** S86: one laid-out row of the debrief, so the body can be cut into pages
- *  that fit the frame instead of running off the bottom of it. `h` is the
- *  vertical advance this row costs, which is the only thing paging needs. */
-type DebriefLine =
-  | { kind: 'gap'; h: number }
-  | { kind: 'rule'; h: number }
-  | { kind: 'text'; h: number; text: string; size: number; color: string; dx: number }
-  /** 'status' carries `tail` — the "· high confidence" run after the status word */
-  | { kind: 'status'; h: number; text: string; size: number; color: string; dx: number; tail: string };
-
 // window geometry — one modal on the era desktop; constant so the fixed
 // Leave/Pause row never moves between phases.
 // h=336 (was 300) — the pillow's 4-source debrief needs the room; no scroll
@@ -98,12 +87,6 @@ type DebriefLine =
 // taskbar (H=384, taskbar from H-22) so the window never overlaps it.
 const WIN = { x: 36, y: 24, w: 440, h: 336 } as const;
 const ROW_Y = WIN.y + WIN.h - 28; // the fixed button row
-const STATUS_COLOR: Record<ProvotypeSource['status'], string> = {
-  documentary: ERA1.ok,
-  contested: ERA1.olive,
-  speculative: ERA1.grey
-};
-
 function wrap(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
   const words = text.split(' ');
   const lines: string[] = [];
@@ -135,9 +118,6 @@ export class ProvotypeApp {
   private paused = false;
   private hover = '';
   private hits: Hit[] = [];
-  /** S86: which page of the debrief is showing, and how many there are */
-  private debriefPage = 0;
-  private debriefPageCount = 1;
   /** internal only — never rendered as a score (master plan §R2-2) */
   private reps = 0;
   private readonly hasAnim: boolean;
@@ -214,7 +194,6 @@ export class ProvotypeApp {
         if (this.hasAnim) this.drawFigure(ctx, c.x + c.w - FIGURE_W - 4, bodyTop);
         break;
       case 'close': this.drawClose(ctx, bodyX, bodyTop, bodyMaxW); break;
-      case 'debrief': this.drawDebrief(ctx, bodyX, bodyTop, bodyMaxW); break;
     }
 
     this.drawFixedRow(ctx);
@@ -360,7 +339,8 @@ export class ProvotypeApp {
       for (const w of wrap(ctx, line, maxW)) { ctx.fillText(w, x, y); y += 15; }
       y += 4;
     }
-    this.primary(ctx, cl?.continue ?? chrome.next);
+    // S283: this button closes the window now (nothing follows the close) — the card's own 'Return' where it has one
+    this.primary(ctx, this.data.debrief.close ?? cl?.continue ?? chrome.next);
   }
 
   /**
@@ -486,157 +466,9 @@ export class ProvotypeApp {
     }
   }
 
-  /**
-   * ⚑⚑ S86 — THE DOSSIER USED TO OVERFLOW ITS OWN WINDOW, AND THAT IS WORSE
-   * THAN UGLY.
-   *
-   * Sérgio, on an iPad: *"what is this mess of text on the Family form??"* —
-   * the body ran past the frame and underneath the Leave / Pause / Return row.
-   * This method simply accumulated `y` through every source's wrapped text with
-   * no clamp and no scroll, while `drawFixedRow()` painted the buttons at a
-   * fixed `ROW_Y` on top of whatever had got there. `WIN.h` was sized (336, up
-   * from 300) *for the pillow's four-source debrief* — its own comment says so
-   * — and `origin_intake_e1.json` carries four sources of 300–380 characters,
-   * which wrap far past the ~271 px of content height. Two real citations lived
-   * under the buttons: the Flentje/Heck/Cochran entry and the APA / UK MoU one.
-   *
-   * ⚑ THE DOSSIER IS THE PIECE'S EVIDENCE SURFACE. It is where
-   * `documentary | contested | speculative`, the confidence ratings and the
-   * `[VERIFY SOURCE]` marks live — the thing that makes this research rather
-   * than assertion. Citations spilling over their own buttons read as
-   * unmaintained, which is exactly the impression the piece cannot afford.
-   *
-   * The fix is PAGING, not a scrollbar: this build is click/tap only by law
-   * (R28 amendment 3 — no wheel, no drag-scroll), and the EULA has already
-   * taught the player this exact idiom (Read on → the live button on the last
-   * page). The body is laid out once as a flat run of drawable lines, cut into
-   * pages that fit the real content box, and the care row is untouched and
-   * always reachable. A window sized to one card's content was the bug; the
-   * body being unbounded was the cause.
-   */
-  private debriefLines(ctx: CanvasRenderingContext2D, maxW: number): DebriefLine[] {
-    const out: DebriefLine[] = [];
-    ui.setFont(ctx, 10);
-    for (const line of this.data.debrief.body) {
-      for (const w of wrap(ctx, line, maxW)) {
-        out.push({ kind: 'text', text: w, size: 10, color: ERA1.black, dx: 0, h: 12 });
-      }
-      out.push({ kind: 'gap', h: 2 });
-    }
-    out.push({ kind: 'gap', h: 2 });
-    out.push({ kind: 'rule', h: 7 });
-    out.push({ kind: 'text', text: chrome.debriefHeading, size: 8, color: ERA1.greyDark, dx: 0, h: 12 });
-    for (const src of this.data.debrief.sources) {
-      ui.setFont(ctx, 8);
-      const status = (words.short as Record<string, string>)[src.status] ?? src.status;
-      const tail = wrap(ctx, `· ${src.confidence} confidence`, maxW - ctx.measureText(status).width - 6);
-      out.push({
-        // ⚑ S177 — the public words here too (S175, status_words.json): this card was the
-        //   one place a visitor still read the in-house "documentary" and "[VERIFY SOURCE]".
-        kind: 'status', text: (words.short as Record<string, string>)[src.status] ?? src.status, size: 8, color: STATUS_COLOR[src.status], dx: 0, h: 10,
-        tail: tail.shift() ?? ''
-      });
-      for (const line of tail) out.push({ kind: 'text', text: line, size: 8, color: ERA1.greyDark, dx: 0, h: 10 });
-      ui.setFont(ctx, 8);
-      for (const w of wrap(ctx, src.text.split(words._verifyMarker).join(words.verifyPublic), maxW - 8)) {
-        out.push({ kind: 'text', text: w, size: 8, color: ERA1.black, dx: 8, h: 10 });
-      }
-      out.push({ kind: 'gap', h: 2 });
-    }
-    return out;
-  }
-
-  /**
-   * Cut the run into pages that fit `availH`; never returns fewer than one.
-   *
-   * ⚑ A CITATION IS NOT ALLOWED TO BE SPLIT FROM ITS STATUS. Naive paging put
-   * "documentary · high confidence" at the foot of one page and the sentence it
-   * qualifies at the head of the next, which is a worse failure than the
-   * overflow it replaced — the status enum IS the claim's warrant, and orphaned
-   * from its text it reads as decoration. So a break that would land inside a
-   * source rewinds to that source's own first line, whenever the source fits on
-   * a page by itself. One longer than a whole page still splits: better a split
-   * long entry than an unreachable one.
-   */
-  private debriefPages(lines: DebriefLine[], availH: number): number[][] {
-    const pages: number[][] = [];
-    let cur: number[] = [];
-    let h = 0;
-    /** height of the source block that starts at `s`, up to the next status */
-    const blockHeight = (s: number): number => {
-      let t = 0;
-      for (let j = s; j < lines.length; j++) {
-        if (j > s && lines[j].kind === 'status') break;
-        t += lines[j].h;
-      }
-      return t;
-    };
-    for (let i = 0; i < lines.length; i++) {
-      const lh = lines[i].h;
-      if (h + lh > availH && cur.length) {
-        // rewind to the start of the source we are in the middle of, if it can
-        // live on a page of its own
-        let back = -1;
-        for (let k = cur.length - 1; k >= 0; k--) {
-          if (lines[cur[k]].kind === 'status') { back = k; break; }
-        }
-        if (back > 0 && blockHeight(cur[back]) <= availH) {
-          i = cur[back] - 1;          // re-emit the block on the next page
-          cur = cur.slice(0, back);
-        }
-        pages.push(cur);
-        cur = [];
-        h = 0;
-        continue;
-      }
-      // a gap that lands at the top of a page is dead space — drop it
-      if (!cur.length && lines[i].kind === 'gap') continue;
-      cur.push(i);
-      h += lh;
-    }
-    if (cur.length) pages.push(cur);
-    return pages.length ? pages : [[]];
-  }
-
-  private drawDebrief(ctx: CanvasRenderingContext2D, x: number, top: number, maxW: number): void {
-    const lines = this.debriefLines(ctx, maxW);
-    const availH = ROW_Y - 8 - top;
-    const pages = this.debriefPages(lines, availH);
-    this.debriefPageCount = pages.length;
-    if (this.debriefPage >= pages.length) this.debriefPage = pages.length - 1;
-    let y = top;
-    for (const i of pages[this.debriefPage]) {
-      const l = lines[i];
-      if (l.kind === 'rule') {
-        ui.px(ctx, x, y, maxW, 1, ERA1.silver);
-      } else if (l.kind === 'text' || l.kind === 'status') {
-        ui.setFont(ctx, l.size);
-        ctx.fillStyle = l.color;
-        ctx.fillText(l.text, x + l.dx, y);
-        if (l.kind === 'status') {
-          const sw = ctx.measureText(l.text).width;
-          ctx.fillStyle = ERA1.greyDark;
-          ctx.fillText(l.tail, x + l.dx + sw + 6, y);
-        }
-      }
-      y += l.h;
-    }
-    // the page indicator sits in the row's own empty middle — between Pause and
-    // the forward buttons — where it cannot land on a line of the dossier
-    if (pages.length > 1) {
-      ui.setFont(ctx, 8);
-      ctx.fillStyle = ERA1.greyDark;
-      ctx.fillText(
-        chrome.pageOf.replace('{n}', String(this.debriefPage + 1)).replace('{total}', String(pages.length)),
-        WIN.x + 166, ROW_Y + 13
-      );
-    }
-    // exactly the EULA's grammar: Read on until the last page, then the card's
-    // own close label. Back appears only once there is something to go back to.
-    const last = this.debriefPage >= pages.length - 1;
-    if (this.debriefPage > 0) this.secondary(ctx, chrome.backPage, 'backPage');
-    this.primary(ctx, last ? (this.data.debrief.close ?? chrome.next) : chrome.readOn);
-  }
+  // ⚑ S283 — the 'About this' dossier window (drawDebrief and its paging) LEFT the experience: the card's
+  //   `debrief` text and sources now live on the era websites (public/sites/, tools/gen_era_sites.mjs). The data
+  //   stays in data/provotypes/*.json; nothing here draws it any more.
 
   /** the fixed care row — Leave + Pause, present every phase, never moves */
   private drawFixedRow(ctx: CanvasRenderingContext2D): void {
@@ -654,17 +486,6 @@ export class ProvotypeApp {
     const x = WIN.x + WIN.w - 8 - w;
     ui.button(ctx, x, ROW_Y, w, 20, label, { hover: this.hover === 'primary' });
     this.hits.push({ x, y: ROW_Y, w, h: 20, id: 'primary' });
-  }
-
-  /** S86: an optional second button, immediately left of `primary`, in the
-   *  same pinned row. Used by the paged debrief for Back; the row's Leave and
-   *  Pause are untouched and stay where they have always been. */
-  private secondary(ctx: CanvasRenderingContext2D, label: string, id: string): void {
-    if (this.paused) return;
-    const w = 70;
-    const x = WIN.x + WIN.w - 8 - 110 - 8 - w;
-    ui.button(ctx, x, ROW_Y, w, 20, label, { hover: this.hover === id });
-    this.hits.push({ x, y: ROW_Y, w, h: 20, id });
   }
 
   private drawPaused(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
@@ -695,11 +516,6 @@ export class ProvotypeApp {
     if (hit.id === 'leave') { this.exit(); return; }
     if (hit.id === 'pause') { this.paused = true; this.dirty = true; return; }
     if (hit.id === 'primary') { this.advance(); return; }
-    if (hit.id === 'backPage') { // S86 — paging back through the dossier
-      this.debriefPage = Math.max(0, this.debriefPage - 1);
-      this.dirty = true;
-      return;
-    }
     if (hit.id.startsWith('choice:')) { this.choose(Number(hit.id.split(':')[1])); return; }
   }
 
@@ -711,9 +527,8 @@ export class ProvotypeApp {
       // the meaningful choice (e.g. Repeat/Finish) — no choice is "correct";
       // this only decides how much longer the same content repeats.
       if (chosen.goto === 'debrief' || chosen.goto === 'close') {
-        this.phase = chosen.goto;
-        this.debriefPage = 0; // S86: a direct jump starts at page one too
-        this.reachedDebrief = true; // finishing the vignette is "completed" whether or not the debrief is opened next
+        this.phase = 'close';   // S283: a 'debrief' target lands on the close — the dossier is no longer a phase
+        this.reachedDebrief = true; // finishing the vignette is "completed"
         this.dirty = true;
       } else {
         if (chosen.goto <= this.stateIndex) this.reps++; // internal only — never shown as a score
@@ -756,15 +571,10 @@ export class ProvotypeApp {
         break;
       }
       case 'close':
-        this.phase = 'debrief';
-        this.debriefPage = 0;
-        break;
-      case 'debrief':
-        // S86: Read on walks the pages; only the LAST page's button closes, so
-        // no citation can be left behind a button the way it used to be.
-        if (this.debriefPage < this.debriefPageCount - 1) this.debriefPage += 1;
-        else this.exit();
-        break;
+        // ⚑ S283 — the narrative close is the last thing in the window: its button closes it. The 'About this'
+        //   dossier that used to follow lives on the era websites now.
+        this.exit();
+        return;
     }
     this.dirty = true;
   }

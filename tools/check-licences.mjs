@@ -81,6 +81,9 @@ const rows = [];
 for (const f of [...walk('public'), ...walk('assets')].sort()) {
   const rel = relative(ROOT, join(ROOT, f));
   if (GENERATED.has(rel)) { rows.push([rel, `generated — ${GENERATED.get(rel)}`]); continue; }
+  // S283: the four era websites + their hub — plain pages written by the project (tools/gen_era_sites.mjs); the
+  // pictures and sound they show are other files, each claimed on its own row (and checked by check-era-sites.mjs)
+  if (/^public\/sites\/(\d{4}\/)?index\.html$/.test(rel)) { rows.push([rel, 'generated — tools/gen_era_sites.mjs']); continue; }
   const name = basename(rel), stem = basename(rel, extname(rel));
   // a degraded / stripped master (`x_tape97.mp3`, `x_tape97_radio.mp3`) is claimed with its source row
   const root = stem.replace(/_tape97(_radio)?$/, '');

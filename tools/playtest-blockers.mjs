@@ -38,7 +38,8 @@ try {
   const panelPoint=()=>page.evaluate(()=>{
     const app=window.__app;let cam;app.root.forEach(e=>{if(e.camera&&e.enabled)cam=e;});
     const p=window.__closePanels().find(p=>p.era===1);if(!p)return null;
-    const world=p.face<0?p.button:p;if(!world)return null;
+    const world=p;   // S283: the Sources BUTTON now opens the era's website in a new tab — the in-room dossier is a press elsewhere on the panel
+    if(!world)return null;
     const V=app.root.getPosition().constructor,eye=cam.getPosition(),f=cam.forward;
     const dx=world.x-eye.x,dy=world.y-eye.y,dz=world.z-eye.z;
     const yaw=(Math.atan2(-dx,-dz)-Math.atan2(-f.x,-f.z))*180/Math.PI;
