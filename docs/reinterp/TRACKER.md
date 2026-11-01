@@ -17,6 +17,10 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ## Waiting for Sérgio
 
+- ❓ **2026 v2 and weaponised care** — agent writing RESEARCH_2026_V2_WEAPONISED_CARE_2026-11-01.md (search "the default" → a detrans.ai-like agent, mostly chatbot-conducted; the cycle trap through Meridian; the face-swap composite; the Commons removed and rethought; weaponised care audited across every era) + WEAPONISED_CARE_NOTE for the article. Then his read.
+- ❓ **2016 rebuilt around Vera and one digital risk** — agent writing RESEARCH_2016_VERA_APPARATUS_2026-11-01.md (reads his GPT notes; the testimony chain 2003 → 2016 → 2026). Then his read.
+- ◐ **The Dykas "Model"** — Haiku reading the book → RESEARCH_DYKAS_MODEL_2026-11-01.md.
+
 - ❓ **Era 4 middle redesign** — read RESEARCH_2026_PRESSURES_2026-11-01.md (beats B0–B8: the push to male presentation,
   the Meridian refusal, the steering search, the feed, the AI "restore", Junie's hack, the Commons with intention,
   TransJesus). Say yes / change. Ethics gate 16 (a user test before TransJesus content) is still open.
@@ -26,6 +30,12 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ❓ **The dollhouse slider** ("we should be able to slide it") — what should sliding do?
 
 ## Building now
+
+- ◐ **Websites inside the experience** (his 1 Nov): an agent is building a site viewer — the era sites drawn into a period window with minimise, close and scroll, in the browser and floating in the headset; opened from the menu's Sources and the Close; Truth in Love added to 1997's sources.
+- ☑ S291 **The dollhouse turntable**: stick turns and zooms; a hand turns it; it stays while handled 🥽
+- ☑ S291 **The Close's score under the receipt and the Lexicon**
+- ☑ S291 **Frame 27 redrawn in perspective** after his Gemini reference
+- ☑ **Meta WebXR notes**: FFR stays at 0; Space Warp not feasible; quad layers are the way to sharp text (META_WEBXR_NOTES_2026-11-01.md) · ☐ try quad layers after the next headset session
 
 - ☑ S280–S281 **Lamby's intermission after Rob**: the room is free 60 s; then "Time's up. It's time for Rob's form."; even after "no", any press opens it 🥽
 - ☑ S281 **One glow logic** — the path (warm ring, the next thing) and "you may" (cooler shimmer, optional things); first on
