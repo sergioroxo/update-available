@@ -30,8 +30,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S280–S281 **Lamby's intermission after Rob**: the room is free 60 s; then "Time's up. It's time for Rob's form."; even after "no", any press opens it 🥽
 - ☑ S281 **One glow logic** — the path (warm ring, the next thing) and "you may" (cooler shimmer, optional things); first on
   the 1997/2003 desktop and Vera's phone (FloppySheep, the messages). DESIGN_S280 §1.
-- ☐ **Era websites** from the "About this" panels: four sites of their time with tabs (story, practices, sources,
-  images, media, missed it?); open from the menu and the Close; the panels leave the experience. DESIGN_S280 §2.
+- ☑ S290 **Era websites**: public/sites/ — a hub and four sites of their time (1997 GeoCities, 2003 portal, 2016 platform, 2026 app), tabs: story, practices (every former "About this"), sources (verified only), images, media, the words, missed it?; the menu's Sources opens the hub; a Close panel's Sources opens its year's site (in a headset: the in-room dossier); the "About this" window is gone from the experience. ERA_SITES_2026-11-01.md · ☐ not yet checked at phone width (1997, 2003); the 2016 video and Truth in Love spots are described only
 - ☑ S282 **Particle transitions** in the headset (the circle grid is gone) 🥽 · ☐ the Close's fades still to do
 - ☐ **The dollhouse shows the next room build**, slowly, as the space does (2003 → 2016). Waits on the draw-call
   agent's answer about batching per room.
@@ -83,6 +82,9 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S287 The receipt scrolls back; "Back to Library" fits · ❓ sound for the receipt and the Lexicon (his music choice)
 
 ## Done since the headset session (newest first)
+
+- ☑ S290 — the four era websites
+- ☑ S289 — the path ring shows; Lambient's 2016 steps; a readable flood
 
 - ☑ S288 — 2026 west view 144 → 66 draw calls
 - ☑ S287 — the pet returns to Restorify; the receipt scrolls back; Back to Library fits
