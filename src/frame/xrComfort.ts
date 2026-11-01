@@ -30,6 +30,28 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   const img = ctx.createImageData(CELLS, CELLS);
   const rgb = (hex: string): [number, number, number] => { const n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
   const INKS = [REFERENCE.saverSky, FRAME.rule, PLACE.ink, REFERENCE.saverDim].map(rgb);
+  // the particles: a fixed, seeded field (no pattern in it — a hash, not a formula in x and y), each with the coverage
+  //   at which it appears, a size and a drift. At full coverage a wash underneath closes every gap.
+  const hash = (n: number): number => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  const PARTS = Array.from({ length: 1600 }, (_, i) => ({
+    x: hash(i) * CELLS, y: hash(i + 1000) * CELLS, at: hash(i + 2000) * 0.85, size: 2 + hash(i + 3000) * 5,
+    dx: (hash(i + 4000) - 0.5) * 14, dy: -4 - hash(i + 5000) * 10, ink: hash(i + 6000) < 0.85 ? 0 : hash(i + 6000) < 0.97 ? 1 : 2 + (i % 2)
+  }));
+  const drawParticles = (c: number, leaving: boolean): void => {
+    ctx.clearRect(0, 0, CELLS, CELLS);
+    const wash = Math.max(0, Math.min(1, (c - 0.62) / 0.3));
+    if (wash > 0) { const [r, g, b] = INKS[0]; ctx.fillStyle = `rgba(${r},${g},${b},${wash})`; ctx.fillRect(0, 0, CELLS, CELLS); }
+    for (const p of PARTS) {
+      if (p.at > c) continue;
+      const k = Math.min(1, (c - p.at) / 0.25), grow = 1 + (c - p.at) * 3.5;
+      const drift = (leaving ? 1 - c : c) * (leaving ? 1.6 : 1);
+      const sz = p.size * grow, x = p.x + p.dx * drift - sz / 2, y = p.y + p.dy * drift - sz / 2;
+      const [r, g, b] = INKS[p.ink];
+      ctx.fillStyle = `rgba(${r},${g},${b},${0.35 * k})`; ctx.fillRect(x - 2, y - 2, sz + 4, sz + 4);
+      ctx.fillStyle = `rgba(${r},${g},${b},${0.85 * k})`; ctx.fillRect(x, y, sz, sz);
+    }
+  };
+  void img;
   const tex = makeScreenTexture(app, canvas);
   const veil = makeScreenEntity('xr-pixel-dissolve', tex, 6, 6, true);
   const layer = new pc.Layer({ name: 'XR comfort', clearDepthBuffer: true });
@@ -158,19 +180,16 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     }
     veil.enabled = elapsed >= 0;
     if (veil.enabled) {
-      tex.minFilter = pc.FILTER_NEAREST; tex.magFilter = pc.FILTER_NEAREST; tex.mipmaps = false;
+      // ⚑ S281 (his, 1 Nov: "not the ones … with the circular pattern, it is ugly and bothersome visually. It needs to
+      //   not be roughcut, smoother, more particle based. stuff morphs into") — the old mask's noise had an x·y term,
+      //   which draws rings. Now: soft particles drift in, swell and merge until the room is covered (the cut happens
+      //   under full cover, as before), then thin out and drift on. Linear filtering: the veil is the frame, not a room.
+      tex.minFilter = pc.FILTER_LINEAR; tex.magFilter = pc.FILTER_LINEAR; tex.mipmaps = false;
       const coverage = Math.min(1, elapsed < 1 ? elapsed / 0.8 : (2 - elapsed) / 0.8);
-      const bucket = Math.floor(Math.max(0, coverage) * 257);
+      const bucket = Math.floor(Math.max(0, coverage) * 120) * 2 + (elapsed < 1 ? 0 : 1);
       if (bucket === maskBucket) return;
       maskBucket = bucket;
-      const d = img.data;
-      for (let y = 0; y < CELLS; y++) for (let x = 0; x < CELLS; x++) {
-        const noise = ((x * 73 + y * 151 + x * y * 17) % 257) / 257, o = (y * CELLS + x) * 4;
-        if (noise > coverage) { d[o + 3] = 0; continue; }
-        const c = INKS[noise < 0.72 ? 0 : noise < 0.90 ? 1 : (x + y) % 2 ? 2 : 3];
-        d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
-      }
-      ctx.putImageData(img, 0, 0);
+      drawParticles(Math.max(0, coverage), elapsed >= 1);
       tex.upload();
     }
   }
