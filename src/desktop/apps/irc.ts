@@ -438,7 +438,8 @@ export class IrcApp {
 
     if (this.dmOpen) {
       // Park the conversation without losing its pending reply.
-      const d = ui.windowFrame(ctx, 170, 140, 300, 170, dialog.dmTitle, this.focus === 'dm');
+      // ⚑ P8 B3 (headset B: "we still don't have a minimizing button on the mentor Rob message") — the DM minimises with the channel
+      const d = ui.windowFrame(ctx, 170, 140, 300, 170, dialog.dmTitle, this.focus === 'dm', 'irc');
       this.closeRect.push({ ...d.closeBox, id: 'irc-dm-close' });
       ui.px(ctx, d.x, d.y, d.w, d.h - 22, ERA1.paper);
       ui.setFont(ctx, 9);

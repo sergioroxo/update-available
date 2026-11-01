@@ -94,7 +94,7 @@ export class StartMenuMap {
     return this.hits;
   }
   private palette(era: PanelEra) {
-    return era === 'e3' ? { paper: aero.ERA3.white, edge: aero.ERA3.glassEdge, ink: aero.ERA3.ink, dim: aero.ERA3.grey, accent: aero.ERA3.accent }
+    return era === 'e3' ? { paper: aero.ERA3.white, edge: aero.ERA3.glassEdge, ink: aero.ERA3.ink, dim: aero.ERA3.greyDk, accent: aero.ERA3.accent }
       : era === 'e4' ? { paper: CHROME.field, edge: CHROME.fieldEdge, ink: CHROME.ink, dim: CHROME.hint, accent: CHROME.accent }
       : { paper: ERA1.silver, edge: ERA1.grey, ink: ERA1.black, dim: ERA1.grey, accent: ERA1.navy };
   }

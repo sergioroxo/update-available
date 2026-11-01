@@ -1438,7 +1438,7 @@ export class GraceQueueLite {
     const cx = c.x + (c.w - CONTENT_W) / 2;
     setFont(ctx, 26); ctx.fillStyle = ERA3.titleText;
     ctx.fillText(q.app.signInGreeting, cx, c.y + 40);
-    setFont(ctx, 15); ctx.fillStyle = ERA3.grey;
+    setFont(ctx, 15); ctx.fillStyle = ERA3.greyDk;   // P8 E6 (headset B: "the text color is too light for this type of background")
     ctx.fillText(q.app.signInSub, cx, c.y + 78);
     this.drawStartPanel(ctx, c);
     const bx = cx; const by = c.y + c.h - 70; const bw = 220; const bh = 42;

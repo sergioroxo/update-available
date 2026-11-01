@@ -400,6 +400,9 @@ export class DesktopOS {
       { key: 'media', label: strings.desktop.taskbarMedia },
       { key: 'netvision', label: strings.desktop.taskbarNetvision }
     ];
+    // ⚑ P8 C1 (headset B: "The start menu mIRC, NetPilot was still showing there") — while the update owns the
+    //   machine, the old year's windows are not on its taskbar
+    if (this.updateApp) return [];
     return all.filter((w) => this.windowPresent(w.key) && (this.windowOpen(w.key) || this.minimised.has(w.key)));
   }
   /** a live send OFFER (master script §4) — icon + summons window on the desktop */
@@ -2879,9 +2882,11 @@ export class DesktopOS {
       // why that gate exists, not just click-priority).
       if (this.reinterp && this.e1DesktopIdle()) {
         this.drawIcon(10, 200, 'lamby_rig.exe', true, 'icon-lambyrig');
-        // S153 — the game came with the disk: on the desktop from the moment it is in (○ sandbox)
-        this.drawIcon(10, 248, rootCauseStrings.icon, true, 'icon-rootcause');
       }
+      // S153 — the game came with the disk: on the desktop from the moment it is in (○ sandbox).
+      // ⚑ P8 B8 (headset B: "there's no root cause game here") — it sat inside lamby_rig's bare-desktop gate, so
+      //   with Rob's chat open it vanished; it is a program, and stays on the desktop with the others
+      if (this.reinterp && this.irc) this.drawIcon(10, 248, rootCauseStrings.icon, true, 'icon-rootcause');
     } else {
       this.drawEraDesktopChrome(W, skin, colors);
       /**

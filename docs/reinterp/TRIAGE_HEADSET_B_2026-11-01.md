@@ -34,12 +34,12 @@ Marks: **FIXED S277** = changed this session (walked before commit) · **CHECK**
 |---|---|---|
 | B1 | Rob's chat stops after "i don't want to go." — "I don't know what to do" | FIXED S277: the chat closes itself and the Family Form opens 3.5 s later |
 | B2 | Rob's messages too slow ("this is always going to be fake") | FIXED S278: 19 → 30 characters a second, 3.6 → 2.6 s between lines |
-| B3 | No minimise button on Rob's chat | TODO |
+| B3 | No minimise button on Rob's chat | FIXED S279: Rob's DM window has the minimise box (it minimises the chat with the channel) |
 | B4 | "About this" panels on the form and the pillow: "not for here — for the Lexicon" (the anamnestic questionnaire, the treatment's real name, origins) | HIS yes given in the session → TODO: move to the Lexicon |
 | B5 | Release Work / the racket: unclear; the racket should be on his side, "as if I was the one at the pillow" | DESIGN |
 | B6 | The drawer opens and nothing else happens | DESIGN |
 | B7 | "Show me" did nothing when NetPilot was closed — it should open it, then take him there | TODO |
-| B8 | Root cause game missing on the desktop | TODO: check its condition after the S272 reorder |
+| B8 | Root cause game missing on the desktop | FIXED S279: it only showed on a bare desktop (lamby_rig's gate); it stays with the other programs now |
 | B9 | "Press here to play FIT IN" needs the game's own style | TODO |
 | B10 | The three-dots button still on the desktop | TODO: identify (likely the frame helper) |
 | B11 | Pressing Lamby while the Yes image is open should say "close the image to continue" | TODO |
@@ -48,7 +48,7 @@ Marks: **FIXED S277** = changed this session (walked before commit) · **CHECK**
 
 | # | What he said | Status |
 |---|---|---|
-| C1 | The taskbar still shows mIRC and NetPilot during the update | TODO |
+| C1 | The taskbar still shows mIRC and NetPilot during the update | FIXED S279: while the update owns the machine, the taskbar has no old windows |
 | C2 | Restorify's update screen should look like 2003 | DESIGN |
 | C3 | The modem should be a different colour | TODO (palette) |
 | C4 | The flip phone is too close to the face | TODO (A9) |
@@ -82,7 +82,7 @@ Marks: **FIXED S277** = changed this session (walked before commit) · **CHECK**
 | E3 | Stars visible behind | TODO: check |
 | E4 | The pen does nothing — wants an emotional link with the paper | DESIGN (his: "ask for a model to run something here") |
 | E5 | The pen cup with the ruler is unpainted | TODO |
-| E6 | Sign-in and Start too light to read | TODO (contrast) |
+| E6 | Sign-in and Start too light to read | FIXED S279 (CHECK): the sign-in line and the Start menu's grey text use the darker grey |
 | E7 | A GracePlatform button in the middle cannot be pressed | TODO |
 | E8 | "Back to today" should be a button at the end of the sequence | TODO |
 | E9 | The video ("two hands") is unclear and ugly | DESIGN |
