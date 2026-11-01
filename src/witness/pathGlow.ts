@@ -13,18 +13,19 @@ import { mapState } from './map';
 import type { DesktopOS } from '../desktop/os';
 
 type Steps = Record<string, { target?: string[] }>;
-const ERAS = guide.eras as unknown as Record<string, { steps?: Steps }>;
+/** lambyGuide.json `eras.eN` is the beat map itself (eN.<beat>.target) */
+const ERAS = guide.eras as unknown as Record<string, Steps>;
 
 /** the hit ids the story is waiting on now, for this era's surfaces (empty in a quiet scene) */
 export function pathTargets(os: DesktopOS, era: string): Set<string> {
   const st = mapState(os);
   if (st.quiet || !st.current || st.current.era !== era) return new Set();
-  return new Set(ERAS[era]?.steps?.[st.current.beat.id]?.target ?? []);
+  return new Set(ERAS[era]?.[st.current.beat.id]?.target ?? []);
 }
 
 /** the same, for a surface that has no os of its own: the Start model's current beat id, read through Lamby's targets */
 export function stepTargets(era: string, beatId: string | undefined | null): Set<string> {
-  return new Set(beatId ? ERAS[era]?.steps?.[beatId]?.target ?? [] : []);
+  return new Set(beatId ? ERAS[era]?.[beatId]?.target ?? [] : []);
 }
 
 export type GlowKind = 'path' | 'may';

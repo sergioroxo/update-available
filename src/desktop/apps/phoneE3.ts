@@ -72,7 +72,9 @@ type Card = null | 'opened' | 'ignored';
  *  as more-than-one-person, slow enough that a player can watch names arrive.
  *  ⚑ This is the ONE clocked beat in this module and it bumps only the phone's
  *  version, so it never re-uploads the workstation panel beside it. */
-const CASCADE_STEP = 0.45;
+// ⚑ S288 (headset B: "This needs to be a little bit slower because I couldn't read what it was") — 0.45 → 0.9 s a message:
+//   still a flood, now one you can read
+const CASCADE_STEP = 0.9;
 /** ⚑ S219 / W1-B13 — at most one message sound per this many seconds, the repeats at a fraction of the first */
 const CASCADE_SOUND_GAP = 1.5;
 const CASCADE_REPEAT_VOLUME = 0.4;

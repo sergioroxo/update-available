@@ -214,6 +214,19 @@
           "link",
           "link2"
         ]
+      },
+      "cascade": {
+        "tip": "The group is answering. Read what they say — it is on the phone.",
+        "here": "The thread is on the phone.",
+        "again": "The group is still answering.",
+        "target": ["group", "inbox", "notification"],
+        "_docS288": "⚑ S288 (headset B: \"Lambient doesn't work … completely non-functional here\") — Lambient had no line for the cascade or the update, so a request there said nothing."
+      },
+      "update": {
+        "tip": "There is an update waiting. Return to Today and press Install on the banner.",
+        "here": "The banner is at the top of Today.",
+        "again": "The update is still waiting.",
+        "target": ["update-accept", "board-back"]
       }
     },
     "e4": {
