@@ -21,7 +21,7 @@
 import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
 import { ClusterMorph } from './clusterMorph';
-import { bakeBatch, clearBatch, type BatchHandle } from './batching';
+import { bakeBatch, clearBatch, cullAbsentProps, type BatchHandle } from './batching';
 import clusterData from '../../data/room/cluster.json';
 import nicheData from '../../data/room/fluid_niche.json';
 import belongingsData from '../../data/room/belongings.json';
@@ -1130,6 +1130,9 @@ export function buildClusterShell(
         applyLayout();
         rebuildSettled();
       }
+      // ⚑ S287 — DRAWCALLS_ROOMS_EVAL_2026-11-01 option Z: a prop the era has removed is scaled to 0, not switched
+      //   off, and the engine still drew each one (84 of the 144 draws west from Maya's seat). Hidden while at 0.
+      if (batch) cullAbsentProps(room, roomBatch?.idSet ?? null);
       if (rigT < 1) {
         rigT = Math.min(1, rigT + dt / rigFadeSeconds);
         const k = rigT * rigT * (3 - 2 * rigT);

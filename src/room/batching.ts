@@ -74,6 +74,8 @@ import * as pc from 'playcanvas';
 import type { RoomHandles } from './era1room';
 
 const GROUP = 'room-batch';
+/** mesh instances hidden because their prop's scale is 0 — see cullAbsentProps at the foot */
+const hiddenAbsent = new Set<pc.MeshInstance>();
 
 /**
  * ⚑ THE ENGINE'S OWN ONE-SHOT IS THE THING THAT WAS DOUBLING THE BATCHES.
@@ -113,6 +115,8 @@ export interface BatchHandle {
   joined: number;
   /** every prop in the batch, so the tear-down can give each its material back */
   ids: string[];
+  /** the same ids as a Set, for the per-frame cullAbsentProps skip */
+  idSet: ReadonlySet<string>;
 }
 
 /**
@@ -173,6 +177,8 @@ export function bakeBatch(
   const batcher = app.batcher;
   if (!batcher) return null;
   disableEngineFirstBatch(app);
+  for (const mi of hiddenAbsent) mi.visible = true; // a re-shown prop must batch as itself; cullAbsentProps re-hides next frame
+  hiddenAbsent.clear();
   const old = batcher.getGroupByName(GROUP);
   if (old) batcher.removeGroup(old.id);
   const group = batcher.addGroup(GROUP, false, 100);
@@ -210,7 +216,7 @@ export function bakeBatch(
   if (joined === 0) { batcher.removeGroup(group.id); return null; }
   // ⚑ ALWAYS the numeric id, never a bare generate() — see the header.
   batcher.generate([group.id]);
-  return { groupId: group.id, joined, ids };
+  return { groupId: group.id, joined, ids, idSet: new Set(ids) };
 }
 
 /**
@@ -245,4 +251,37 @@ export function clearBatch(
     if (h.materials[0]) h.material = h.materials[0];
   }
   return null;
+}
+
+/**
+ * ⚑ DRAWCALLS_ROOMS_EVAL_2026-11-01 — ABSENT PROPS WERE STILL DRAWN.
+ *
+ * `clusterMorph.ts` marks a prop that does not exist in the current space state
+ * by `setLocalScale(0,0,0)` (box props; models/composites use `.enabled`), and
+ * `bakeBatch()` rightly leaves those out of the batch. But they stay ENABLED and
+ * VISIBLE, so every one is still a culled-in mesh instance: a degenerate,
+ * zero-area draw call. Measured at Era 4 from Room 3's seat looking west:
+ * 144 draws, 84 of them zero-scale boxes (Room 1's 1997 CRT/keyboard/kit/desk
+ * set that era 4 has "removed"). Frustum culling cannot drop them because their
+ * AABB is a point and the point is in view.
+ *
+ * Fix: hide the mesh instance (`mi.visible = false`, the flag the culler reads)
+ * while its entity's scale is 0, show it again the moment the scale is back.
+ * Touches NO render component, NO layer membership, NO batch — joined props are
+ * skipped, so it is safe beside batch bake/clear and the morph's grow-in.
+ * ROLLBACK: delete this function and its call in cluster.ts update().
+ */
+export function cullAbsentProps(room: RoomHandles, joined: ReadonlySet<string> | null): number {
+  let hidden = 0;
+  for (const [id, h] of room.props) {
+    if (h.model || h.composite || joined?.has(id)) continue;
+    const mis = h.entity.render?.meshInstances;
+    if (!mis) continue;
+    const absent = !hasDrawableScale(h.entity);
+    for (const mi of mis) {
+      if (absent) { if (mi.visible) { mi.visible = false; hiddenAbsent.add(mi); } hidden++; }
+      else if (hiddenAbsent.delete(mi)) mi.visible = true;
+    }
+  }
+  return hidden;
 }
