@@ -288,6 +288,8 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
    */
   type PLine = { t: string; right?: string; col?: string; rightCol?: string; rule?: boolean };
   let printLines: PLine[] = [];
+  /** S286 — lines the printed receipt has been fed back down, to read its top again */
+  let receiptScroll = 0;
   let printT = 0;
   const PRINT_LPS = 7;          // lines a second — a 1990s dot matrix at draft speed
   const LH = 10;
@@ -351,8 +353,11 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     // the printer: a beige body across the foot of the glass, its slot, its light
     const bodyY = H - 58, slotY = bodyY + 6;
     const pw = 372, pl = Math.round((W - pw) / 2), pr = pl + pw;
-    // the paper rises out of the slot: the newest line sits just above the head
-    const paperTop = slotY - 8 - shown * LH - 16;
+    // the paper rises out of the slot: the newest line sits just above the head. ⚑ S286 (headset B: "there's no way to
+    //   scroll back") — once printed, ▲ / ▼ on the printer feed the paper back down and up again
+    const overflow = Math.max(0, Math.ceil((16 + shown * LH + 24 - slotY) / LH));
+    receiptScroll = Math.max(0, Math.min(overflow, receiptScroll));
+    const paperTop = slotY - 8 - shown * LH - 16 + receiptScroll * LH;
     const y0 = Math.max(0, paperTop);
     px(ctx, pl, y0, pw, slotY - y0, PRINTOUT.paper);
     for (let i = 0; i < printLines.length + 4; i += 4) {   // green bars, two lines in every four
@@ -393,13 +398,23 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     px(ctx, pl - 10, bodyY + 14, 6, 6, done ? PRINTOUT.led : PRINTOUT.failed);
     // Back, on the printer, once the page is out
     if (done) {
-      const bw = 80, bh = 22, bx = Math.round((W - bw) / 2), byy = H - 32;
+      // S286 (headset B: "the back to library is out of place") — the button is as wide as its words
+      setFont(ctx, 10);
+      const bw = Math.max(80, Math.ceil(ctx.measureText(R.back).width) + 24), bh = 22, bx = Math.round((W - bw) / 2), byy = H - 32;
       bevel(ctx, bx, byy, bw, bh, true);
       setFont(ctx, 10);
       ctx.fillStyle = ERA1.black;
       const tw = ctx.measureText(R.back).width;
       ctx.fillText(R.back, Math.round(bx + (bw - tw) / 2), byy + 6);
       hits.push({ x: bx, y: byy, w: bw, h: bh, id: 'close-back' });
+      if (overflow > 0) {
+        const arrow = (label: string, x: number, id: string): void => {
+          bevel(ctx, x, byy, 30, bh, true); setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(label, x + 10, byy + 6);
+          hits.push({ x, y: byy, w: 30, h: bh, id });
+        };
+        arrow('▲', bx - 44, 'receipt-up');
+        arrow('▼', bx + bw + 14, 'receipt-down');
+      }
     }
     tex.upload();
   }
@@ -511,7 +526,9 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         if (h.id === 'close-lexicon') { face = 'lexicon'; lexicon.face = 'title'; drawLexicon(); return true; }
         if (h.id === 'lex-close') { face = 'card'; drawCard(); return true; }
         if (lexicon.press(h.id)) { drawLexicon(); return true; }
-        if (h.id === 'close-back') { face = 'card'; drawCard(); return true; }
+        if (h.id === 'close-back') { face = 'card'; receiptScroll = 0; drawCard(); return true; }
+        if (h.id === 'receipt-up') { receiptScroll += 6; drawReceipt(); return true; }
+        if (h.id === 'receipt-down') { receiptScroll -= 6; drawReceipt(); return true; }
         if (h.id === 'close-dossier') { api.onDossier?.(); return true; }
         const era = card.eras.find((e) => `close-era-${e.era}` === h.id)?.era;
         if (era) { api.onEra?.(era as EraKey); return true; }

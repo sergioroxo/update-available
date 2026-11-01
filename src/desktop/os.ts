@@ -544,6 +544,9 @@ export class DesktopOS {
   openCompanion(): void {
     if (this.desktopEra !== 'e2' || this.caleb?.open) return;   // never over the felt thread
     if (this.restorify) this.restorify.open = false;   // one window at a time: the pet stands alone on the desk
+    // ⚑ S286 (headset B: "the companion appears out of the blue… then it disappeared") — it came out of Restorify, so
+    //   closing it goes back into Restorify: a window you opened from somewhere returns you there
+    this.companion.onClose = () => { if (this.restorify && this.desktopEra === 'e2' && !this.caleb?.open) this.restorify.open = true; this.dirty = true; };
     this.companion.open = true; this.dirty = true;
   }
   private yourFilePage: 'record' | 'conduct' = 'record';
