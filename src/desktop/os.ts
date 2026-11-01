@@ -2925,7 +2925,8 @@ export class DesktopOS {
        */
       if (this.reinterp && this.desktopEra === 'e2' && this.desktopIdle()) {
         this.drawIcon(100, 92, reinterpStrings.launcherIcon2003, true, 'icon-provotype');   // ⚑ S209h / ERA03-15 — 1997's files, named as such
-        this.drawIcon(100, 140, reinterpStrings.launcherIconIntake2003, true, 'icon-provotype-intake');
+        // ⚑ P8 D4 (headset B, 1 Nov: "Why is the … Family Form still here?"; "the release work, it's okay") — the
+        //   Family Form stays in 1997; Release Work '97, Your file and the "1997" folder come with him
         // ⚑ S183f / R5-04 — and his own file, which came with him too
         this.drawIcon(100, 188, institutionStrings.yourFile.icon, true, 'icon-your-file');
         // ⚑ S274 — Daniel's own folder of the years between (felt; nothing points to it but the song's pip)

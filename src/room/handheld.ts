@@ -111,6 +111,8 @@ export interface Devices {
   press(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string, cam: pc.Entity): boolean;
   /** ⚑ S219 / W1-B7 — the keyboard reaches the device in hand before it reaches the camera */
   key(k: GameKey, era: string): boolean;
+  /** P8 A10 — is this era's device in the hand right now */
+  held(era: string): boolean;
 }
 
 export function buildDevices(room: RoomHandles): Devices {
@@ -156,7 +158,8 @@ export function buildDevices(room: RoomHandles): Devices {
     release(era) { current(era)?.release(); },
     take(era, cam) { current(era)?.take(cam); },
     press(ray, era, cam) { return current(era)?.press(ray, cam) ?? false; },
-    key(k, era) { return current(era)?.key(k) ?? false; }
+    key(k, era) { return current(era)?.key(k) ?? false; },
+    held(era) { return !!current(era)?.held; }
   };
 }
 

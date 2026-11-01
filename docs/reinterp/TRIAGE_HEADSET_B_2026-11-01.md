@@ -20,20 +20,20 @@ Marks: **FIXED S277** = changed this session (walked before commit) · **CHECK**
 | A5 | The ending song is missing | the Close's score is the room bed; the leaking song likely covered it | CHECK after A4 |
 | A6 | Text jagged ("serrated knife"), blurry when moving away | the screens are drawn with nearest filtering and no mipmaps, so they shimmer when small | TODO: mipmaps for minification, nearest kept for close-up |
 | A7 | Transitions: the circle grid, the fades in the Close "horrible" | design | DESIGN |
-| A8 | Dollhouse too fast — "like a clock with the time passing", a slider | S270g's 4.2 s hold | TODO: slower, with the years counting on its base; slider is DESIGN |
+| A8 | Dollhouse too fast — "like a clock with the time passing", a slider | S270g's 4.2 s hold | FIXED S278 (CHECK): held 9 s (was 4.2), and a plate over the house counts the years (1997→2003, 2003→2016, 2016→2026); the slider is DESIGN |
 | A9 | Elements open in his face; should know where the head is; screens too close or too far; Recentre wrong after a jump | XR placement | TODO (one pass on every held/opened panel's distance) |
-| A10 | Games unplayable with hands; Start/Begin/Pause in front; too small; no glow when aimed | held devices, 7 mm buttons, the sentence line over the device | TODO: in a headset the controller plays (stick = d-pad, trigger = A); hands get bigger targets; no caption over a held device |
+| A10 | Games unplayable with hands; Start/Begin/Pause in front; too small; no glow when aimed | held devices, 7 mm buttons, the sentence line over the device | PART FIXED S278 (CHECK): the controller already plays (stick = d-pad, A/B); the "start — begin, or pause" caption he saw was the hint plate, which now stays down while a device is in the hand. Hands: bigger targets still TODO |
 | A11 | Lamby's message lost when a window opened on top | the one-voice queue | TODO |
 | A12 | "Match my table" says fingertip | copy | FIXED S277: "Rest your hand flat on your table" |
 | A13 | A skip button for the opening film, in the debug panel | — | TODO (debug only) |
-| A14 | Performance: 2026 wide view 408 draws / 48 fps | measured S277: looking back west from Maya's seat = 145 draws (×2 per eye) | TODO: hide the left rooms' small props from Maya's seat |
+| A14 | Performance: 2026 wide view 408 draws / 48 fps | measured S277: looking back west from Maya's seat = 145 draws (×2 per eye) | TODO: measured S278 — 144 draws facing west from Maya's seat; switching whole room groups off changes nothing, the cost is the 84 merged batches over all three rooms. Needs a batching session |
 
 ## 1997
 
 | # | What he said | Status |
 |---|---|---|
 | B1 | Rob's chat stops after "i don't want to go." — "I don't know what to do" | FIXED S277: the chat closes itself and the Family Form opens 3.5 s later |
-| B2 | Rob's messages too slow ("this is always going to be fake") | TODO: faster typing |
+| B2 | Rob's messages too slow ("this is always going to be fake") | FIXED S278: 19 → 30 characters a second, 3.6 → 2.6 s between lines |
 | B3 | No minimise button on Rob's chat | TODO |
 | B4 | "About this" panels on the form and the pillow: "not for here — for the Lexicon" (the anamnestic questionnaire, the treatment's real name, origins) | HIS yes given in the session → TODO: move to the Lexicon |
 | B5 | Release Work / the racket: unclear; the racket should be on his side, "as if I was the one at the pillow" | DESIGN |
@@ -60,7 +60,7 @@ Marks: **FIXED S277** = changed this session (walked before commit) · **CHECK**
 | D1 | Lamby's face "looks dead" (the eyes) | TODO (art) |
 | D2 | The daily check-in should be forced, and come first | TODO |
 | D3 | The start menu is still the old style (the bar is new) | TODO |
-| D4 | The 1997 Family Form / Family Companion still on the 2003 desktop | TODO: take the two 1997 launchers off (the folder and Your file carry 1997 now) |
+| D4 | The 1997 Family Form / Family Companion still on the 2003 desktop | FIXED S278: the Family Form '97 icon is gone from 2003 (Release Work '97 stays — his "the release work, it's okay") |
 | D5 | ROLL_01: not clear that frames are pressable; frame 27 reads as "two coffins and a cigarette" | TODO: redraw frame 27, mark the pressable frame |
 | D6 | The pet appears "out of the blue", then disappears | TODO: check the logic |
 | D7 | "Your file" still says "Your file profile" in the story; old design | TODO |
@@ -99,8 +99,8 @@ Marks: **FIXED S277** = changed this session (walked before commit) · **CHECK**
 
 | # | What he said | Status |
 |---|---|---|
-| F1 | Daniel's screens "just in the air" | TODO: a screen plane left on after its monitor was removed |
-| F2 | The caption says "suitcase… youth weekend" with no suitcase there | TODO |
+| F1 | Daniel's screens "just in the air" | FIXED S278: Daniel's monitor screen was still lit at (0, 1.08, 0) after r4 removed the monitor; it is off in 2026 |
+| F2 | The caption says "suitcase… youth weekend" with no suitcase there | FIXED S278: the corner's objects only name themselves where the era's fold keeps them |
 | F3 | The "Five steps" page: "needs a profound redesign"; "nothing about the actual aspects of conversion therapy" | DESIGN + HIS |
 | F4 | Confirm "resets the image"; pop-ins | TODO |
 | F5 | The session screen out of focus and too close | TODO (A9) |

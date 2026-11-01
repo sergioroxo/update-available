@@ -54,7 +54,7 @@ try {
     if (era === 3 || era === 4) {
       await look(page, 0, -10);
       await page.evaluate((e) => window.__xrLayer.dollhouse(e), `e${era}`);
-      await wait(2600); shots.push(await shot(page, `e${era}-dollhouse-lamps`));
+      await wait(5000); shots.push(await shot(page, `e${era}-dollhouse-lamps`));
     }
     // a fake controller, placed in the presentation space at a room point (VR-01 mouse, VR-03 phone)
     const addPad = (name, lx, ly, lz) => page.evaluate((name, lx, ly, lz) => {

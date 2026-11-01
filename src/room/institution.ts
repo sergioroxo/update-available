@@ -331,7 +331,9 @@ export function createInstitution(room: RoomHandles): Institution {
     const out: Target[] = [];
     const add = (key: string, prop: string, r: number, practice: string, dy = 0): void => {
       const e = ent(prop);
-      if (!e) return;
+      // ⚑ P8 F2 (headset B: "the suitcase… youth weekend. No, there's no suitcase there", 2026) — a thing the era's fold
+      //   has taken out names nothing, whatever its entity says
+      if (!e || !base(prop, era)) return;
       const p = e.getPosition();
       out.push({ key, prop, at: { x: p.x, y: p.y + dy, z: p.z }, r, practice });
     };

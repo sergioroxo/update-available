@@ -183,9 +183,11 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   type BatchLike = { meshInstance: pc.MeshInstance | null; _aabb: pc.BoundingBox };
   const batches = (): BatchLike[] => ((app.batcher as unknown as { _batchList?: BatchLike[] } | null)?._batchList ?? []);
   // the model fits ~45 cm across whatever the era holds (one room in 1997, the three-room house from 2016)
-  const FIT = 0.45, HOLD = 4.2;
+  // ⚑ P8 A8 (headset B, 1 Nov: "way too fast… I didn't have any time to understand that the room morphed. It needs
+  //   to be like a clock with the time passing") — 4.2 s → 9 s, and the years count on the model's base
+  const FIT = 0.45, HOLD = 9;
   let SCALE = 0.06;
-  let doll: { root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[] } | null = null;
+  let doll: { root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[]; years: [number, number]; shown: number } | null = null;
   const markMat = new pc.StandardMaterial(); markMat.useLighting = false; markMat.diffuse = new pc.Color(0, 0, 0);
   markMat.emissive = new pc.Color().fromString(FRAME.bright); markMat.update();
   // ⚑ P7-68 — D4 WHO'S HOME (his yes 31 Oct: "I like the rooms lighting one at a time"; DOLLHOUSE_IDEAS_SONNET §D4).
@@ -206,6 +208,21 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     era === 'e3' ? [{ room: 0, role: 'from' }, { room: 1, role: 'to' }]
       : era === 'e4' ? [{ room: 0, role: 'held' }, { room: 1, role: 'from' }, { room: 2, role: 'to' }]
         : [{ room: 0, role: 'stay' }];
+  // the clock: one small plate under the house, the year counting from the one you leave to the one you reach
+  const YEARS: Record<string, [number, number]> = { e2: [1997, 2003], e3: [2003, 2016], e4: [2016, 2026] };
+  const yc = document.createElement('canvas'); yc.width = 128; yc.height = 32;
+  const yctx = yc.getContext('2d')!;
+  const ytex = makeScreenTexture(app, yc);
+  const yearPlate = makeScreenEntity('xr-dollhouse-year', ytex, 0.12, 0.03, true);
+  yearPlate.render!.layers = [deps.frame.layerId];
+  yearPlate.enabled = false; app.root.addChild(yearPlate);
+  const drawYear = (y: number): void => {
+    yctx.clearRect(0, 0, 128, 32);
+    yctx.fillStyle = FRAME.glass; yctx.fillRect(0, 0, 128, 32);
+    yctx.fillStyle = FRAME.bright; yctx.font = 'bold 22px monospace'; yctx.textAlign = 'center'; yctx.textBaseline = 'middle';
+    yctx.fillText(String(y), 64, 17);
+    ytex.upload();
+  };
   const buildGeo = (root: pc.Entity): { geo: pc.Entity; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3 } => {
     // a dollhouse has no roof: the ceilings (thin, high slabs) are left out so the eye falls into the rooms
     const list = batches().filter((b) => b.meshInstance && !(b._aabb.center.y > 2.2 && b._aabb.halfExtents.y < 0.2));
@@ -219,7 +236,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     root.addChild(geo);
     return { geo, meshes: list.map((b) => b.meshInstance!.mesh), centre: box.center.clone(), half: box.halfExtents.clone() };
   };
-  const endDoll = (): void => { if (doll) { doll.root.destroy(); doll = null; } };
+  const endDoll = (): void => { if (doll) { doll.root.destroy(); doll = null; } yearPlate.enabled = false; };
   const tickDoll = (dt: number): void => {
     if (!doll) return;
     if (!live()) { endDoll(); return; }
@@ -232,6 +249,20 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     const s = 1 + Math.abs(Math.sin(doll.t * 6)) * 0.6;
     doll.mark.setLocalPosition((seat.x - doll.centre.x) * SCALE, (seat.y - doll.centre.y) * SCALE + 0.02, (seat.z - doll.centre.z) * SCALE);
     doll.mark.setLocalScale(0.012 * s, 0.012 * s, 0.012 * s);
+    // the clock: the plate hangs just over the house, square to the eye; the year moves over the hold
+    const [y0, y1] = doll.years;
+    if (y1 > y0) {
+      const year = Math.round(y0 + (y1 - y0) * ease((doll.t - 0.8) / (HOLD - 2.4)));
+      if (year !== doll.shown) { doll.shown = year; drawYear(year); }
+      const base = doll.root.getPosition().clone();
+      const toEye = head.getPosition().clone().sub(base); toEye.y = 0; if (toEye.lengthSq() > 1e-6) toEye.normalize();
+      const at = base.add(toEye.mulScalar(0.06 * k)).add(new pc.Vec3(0, 0.16 * k, 0));   // just over the house, its near side
+      yearPlate.setPosition(at);
+      yearPlate.lookAt(at.clone().add(at.clone().sub(head.getPosition())));
+      yearPlate.rotateLocal(90, 0, 0);
+      yearPlate.setLocalScale(0.12 * k, 1, 0.03 * k);
+      yearPlate.enabled = k > 0.05;
+    }
     // the lamps: a glow shows only over a room the model holds now (one room until the house re-forms)
     for (const g of doll.glows) {
       const [x, y, z] = ROOMS[g.room];
@@ -330,7 +361,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
         return { e, room, role };
       });
       root.setLocalScale(0, 0, 0);
-      doll = { root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre, half: g.half, glows };
+      doll = { root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre, half: g.half, glows, years: YEARS[era ?? ''] ?? [0, 0], shown: 0 };
     },
     mouseClick() { if (!grip) return false; deps.mouse.click(cursor.x, cursor.y); return true; },
     get mouseEngaged() { return !!grip; },

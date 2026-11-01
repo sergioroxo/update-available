@@ -16,9 +16,9 @@ interface Line { from: string; text: string }
 // pacing tuned for reading, not speed — most of the audience reads English as
 // a second language (Sérgio). Slow type, generous holds so each line can land.
 const CPS_CHANNEL = 22;       // the room chatters at a livelier clip
-const CPS_DM = 19;            // Rob types deliberately, not slowly (R3-28: "faster")
+const CPS_DM = 30;            // Rob types deliberately, not slowly (R3-28: "faster"; ⚑ P8 B2, headset B: "always going to be fake… we don't need to wait realistically" — 19 → 30)
 const HOLD_CHANNEL = 1.5;     // short pause between room lines
-const HOLD_DM = 3.6;          // a pause after a DM line — time to read Rob, not to wait for him
+const HOLD_DM = 2.6;          // a pause after a DM line — time to read Rob, not to wait for him (P8 B2: 3.6 → 2.6)
 const AMBIENT_START = 1.4;    // s before the room starts talking
 // Rob does NOT message until the room's ambient chatter has finished (the last
 // line is the x-files exchange); otherwise his window covers the channel mid-

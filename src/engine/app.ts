@@ -1258,6 +1258,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   front.setLocalPosition(SCREEN.x, SCREEN.y, SCREEN.z);
   front.setLocalEulerAngles(90, 0, 0); // faces +Z (the chair)
   app.root.addChild(front);
+  // ⚑ P8 F1 (headset B, 1 Nov: "I can still see the screen from Daniel. They're just in the air") — Daniel's monitor
+  //   leaves the room at r4 and its screen stayed lit where the glass had been. In 2026 the screen goes with it; it
+  //   comes back only if this switched it off (the Close and the Restart keep their own say over it).
+  let frontHeldOff = false;
+  app.on('update', () => {
+    if (os.era === 'e4' && front.enabled) { front.enabled = false; frontHeldOff = true; }
+    else if (frontHeldOff && os.era !== 'e4') { front.enabled = true; frontHeldOff = false; }
+  });
 
   const backTex = makeScreenTexture(app, witness.canvas);
   const back = makeScreenEntity('witness-screen', backTex, WITNESS.w, WITNESS.h, options.reinterp === true);
@@ -3968,7 +3976,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (xr?.active && !xrLayer?.mouseEngaged) { const ray = aimRay(); era3Devices?.hoverXr(ray); const at = ray && toDesktopR(ray); if (at) { const target = os.xrPoint(at.x, at.y); os.handleMove(target.x, target.y); } else os.xrPoint(-100, -100); }
     if (xrFrame && xr?.active) xrFrame.tick(xrInput?.ray() ?? null, xrInput?.wrist() ?? null);
     tickKeychain();
-    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : aimName ?? xrHelperText(helper?.text() ?? null, dt));
+    // ⚑ P8 A10 (headset B: "the message appears in front of the console"; "impossible to play") — the hint plate hangs
+    //   exactly where a held device is held, so while a device is in the hand the plate stays down
+    const deviceInHand = !!(devices && cluster && devices.held(cluster.era));
+    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ?? xrHelperText(helper?.text() ?? null, dt));
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
     //   menu ("The frame never plays"). Pause them once on the way in, give them back once on the way out.
