@@ -645,7 +645,9 @@ void TOTAL_CORRECTIONS;   // S149: no longer the era's trigger (see tick); kept 
  *  width — so the room is still there at the edges, sliding past, while the
  *  place stays exactly where it is. That margin is not a compromise; it is
  *  where the turn that does not work becomes visible. */
-const WORN = { distance: 0.30, w: 0.28, h: 0.21 } as const;
+// ⚑ S282 (headset B, 1 Nov: the session "is out of focus… should be a little bit bigger and further from my screen, because
+//   it's too close to my eyes") — 0.30 m → 0.55 m, and a touch larger in the view (≈ 54° wide, was ≈ 50°)
+const WORN = { distance: 0.55, w: 0.56, h: 0.42 } as const;
 /** the touch is not a movement (Sérgio, 2026-08-06) — no donning animation.
  *  This is only the picture arriving, and it is short enough not to be one. */
 const WEAR_SECONDS = 0.55;

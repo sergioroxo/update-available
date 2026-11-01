@@ -84,6 +84,15 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   const handle = room.props.get(spec.propId);
   if (!handle) return null;
   const wrap = handle.entity;
+  // ⚑ S282 (headset B, 1 Nov: "the phone is too close to my face"; the game "should be bigger"; "too close to my eyes")
+  //   — in a headset a held device comes no nearer than XR_HOLD (an easy focus for a seated reader) and grows to make up
+  //   for it, and a little more: the glass ends up larger in the view and further from the eye. Restored on release.
+  const baseScale = wrap.getLocalScale().clone();
+  const XR_HOLD = 0.42;
+  const bigInHand = (on: boolean): void => {
+    const k = on && app?.xr?.active ? Math.max(1.3, (XR_HOLD / (spec.holdDist ?? 0.37)) * 0.8) : 1;
+    wrap.setLocalScale(baseScale.x * k, baseScale.y * k, baseScale.z * k);
+  };
   const meshRoot = (wrap.findByName(`model-${spec.modelKey}-tilt`) as pc.Entity | null)?.children[0] as pc.Entity | undefined
     ?? (wrap.children[0] as pc.Entity | undefined);
   if (!meshRoot) return null;
@@ -139,7 +148,8 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   const viewDist = (cam: pc.Entity): { d: number; raise: number } => {
     const dHead = spec.holdDist ?? 0.37;
     const c = cam.camera;
-    if (!spec.view || !c || app?.xr?.active) return { d: dHead, raise: -0.03 };   // the old small drop below the eye line
+    if (app?.xr?.active) return { d: Math.max(XR_HOLD, dHead), raise: -0.03 };   // S282: an easy focus, the old small drop
+    if (!spec.view || !c) return { d: dHead, raise: -0.03 };   // the old small drop below the eye line
     const sc = plane.getWorldTransform().getScale();
     const gw = Math.abs(sc.x), gh = Math.abs(sc.z);               // the glass's world size (the plane's local X and Z)
     const tanV = Math.tan((c.fov * Math.PI) / 360);
@@ -227,13 +237,14 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       wrap.setPosition(to.pos); wrap.setRotation(to.rot); t = 1;
     },
     release() {
+      bigInHand(false);
       if (rest) { wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
       holding = false; t = 1;
     },
     take(cam) {
       if (holding) return;
       from.pos.copy(wrap.getPosition()); from.rot.copy(wrap.getRotation());
-      holding = true; heldPose(cam); t = 0; startOnReady = true;
+      holding = true; bigInHand(true); heldPose(cam); t = 0; startOnReady = true;
     },
     press(ray, cam) {
       const what = this.aim(ray);
@@ -246,6 +257,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       }
       from.pos.copy(wrap.getPosition()); from.rot.copy(wrap.getRotation());
       holding = !holding;
+      bigInHand(holding);
       if (holding) heldPose(cam);
       else if (rest) {
         const parent = wrap.parent as pc.Entity | null;
@@ -259,7 +271,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       clock += dt;
       fold(dt);
       if (era !== spec.era) {                            // another era is the fold's
-        if ((holding || t < 1) && rest) { wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
+        if ((holding || t < 1) && rest) { bigInHand(false); wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
         holding = false; t = 1;
         return null;
       }

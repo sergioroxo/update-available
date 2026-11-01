@@ -1190,8 +1190,15 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
      * viewer squarely from any angle, and it also drops the local-space position
      * maths the root's new scale would otherwise have invalidated.
      */
-    const camRight = camera.right;
-    const camUp = camera.up;
+    let camRight = camera.right;
+    let camUp = camera.up;
+    // ⚑ S282 (headset B, 1 Nov: "the text moves to my face. It doesn't need to… they don't need to be moving in my
+    //   angle. It's a bit trippy") — in a headset the labels stand upright and turn only about the vertical: a head's
+    //   tilt and roll no longer swing every word in the sky with it. The browser keeps the S101 screen-aligned frame.
+    if (app.xr?.active) {
+      const h = new pc.Vec3(camRight.x, 0, camRight.z);
+      if (h.lengthSq() > 1e-6) { camRight = h.normalize(); camUp = pc.Vec3.UP; }
+    }
     const radians = yaw * Math.PI / 180;
     const cosine = Math.cos(radians);
     const sine = Math.sin(radians);
