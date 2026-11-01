@@ -784,6 +784,8 @@
   },
   "remove": [
    "wallWest",
+   "tennisRacketModel",
+   "releasePoster",
    "bedModel2003",
    "bookcaseModel",
    "calendar2003",
@@ -2019,23 +2021,6 @@
     "_docS177": "⚑ S177 / R4-29 (his D2, 2026-09-26: 'yes do the separate colors') — a navy cover, cream pages, the red elastic."
    },
    {"id": "w_pen", "model": "pen", "pos": [-4.94, 0.764, 1.1], "size": [0.14, 0.012, 0.012], "yaw": 90, "color": "#2C2C34", "partColors": {"1A1A1A": "#1E1E24", "455A64": "#3C4A66", "039BE5": "#5B7FB8"}, "_docS177": "⚑ S177 / R4-28 — 'Pen' by jeremy (CC-BY 3.0), lying on Vera's notebook (its top at y 0.764), along the notebook's length: a blue barrel, a lighter grip, a black cap. Was a thin box."},
-   {
-    "id": "w_slippers",
-    "pos": [
-     -3.6,
-     0.0,
-     0.26
-    ],
-    "size": [
-     0.28,
-     0.06,
-     0.22
-    ],
-    "color": "#A07B52",
-    "yaw": 90,
-    "model": "slippers",
-    "_docS175": "⚑ S175 (2026-09-24) — 'Slippers' by Isa Lousberg (Poly Pizza) — the unmarked box by the bed, which he answered with a model."
-   },
    {"id": "w_calendar", "model": "calendar", "page": "e3", "pos": [-5.665, 1.45, 0.78], "size": [0.24, 0.455, 0.02], "yaw": 90, "color": "#F4F4F2", "partColors": {"FFFFFF": "#F4F4F2", "1A1A1A": "#8C8C94"}, "_docS177": "⚑ S177 / R4-27 — was a brown box with a white box on it. Vera's work planner from the platform, December 2016: the 13th ringed in her biro (her phone's lock screen), the shift's quota on a sticky note. Stays through r4: the emptied room keeps its calendar on December 2016."},
    {"id": "w_marchFlyer", "print": "march2016", "pos": [-5.668, 1.45, 0.35], "size": [0.21, 0.3, 0.004], "color": "#FFFFFF", "yaw": 90, "_docS179": "⚑ S179 / R5-02 (Sérgio, 2026-09-27: posters that 'reflect the culture of SOGICE… movie posters for SOGICE movies, religious elements, secular marches… stuff that helps set the tone of the time'; the 2016 one 'more related to X-out-Loud — they even have music videos'). A pixel-art print on the face (src/room/printArt.ts); every title invented. 2016: a 'MARCH FOR THE FAMILY' flyer — the secular-march genre of 2012–16, pinned by the monitor. An A5 sheet, 4 mm proud of the wall."},
    {"id": "inst_router", "pos": [-0.7, 0.66, 3.5], "size": [0.2, 0.04, 0.14], "color": "#1E1E24", "_docS181": "⚑ S181 / R5-03 — THE VIEW TO THE SYSTEM. Sérgio, 2026-09-27: in the pre-reinterp version 'the wall behind us had a symbolic representation of the institutional side, like a desk with a computer, a filing cabinet… I kinda miss that connection'; 'can we make the pressure for the fact Daniel is going to be sent out to a camp more visible? Does it make sense to add suitcases?'. The institution's corner returns around the record on the back wall — the record's own card already reads 'index · era 1 · drawer 12' — and it ages with the eras: paper (1997), scanned (2003), networked (2016), a light (2026). 2016: the cabinet is gone; a router on the desk, its lights on — the file is on a network now."},
@@ -2580,8 +2565,6 @@
    "w_flatPanelBody",
    "w_keyboard",
    "w_mouse",
-   "releasePoster",
-   "tennisRacketModel",
    "movingBox1",
    "movingBox2",
    "e_flagA",

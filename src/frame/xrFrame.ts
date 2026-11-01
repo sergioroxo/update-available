@@ -53,7 +53,7 @@ const HINT_DIST = 0.6, HINT_DROP = 0.3;
 /** ⚑ S209 / A22 — the menu tab: small, low, a little to the side; the headset's second way to the menu */
 // ⚑ S270c (his: "the menu button is running away from me") — it re-hung itself past ~52° off the gaze while it sits
 //   ~34° to the right, so a small turn moved it; now it stays until it is well out of view (~75°), and is a third bigger
-const TAB_W = 0.16, TAB_H = TAB_W * 64 / 256, TAB_DIST = 0.6, TAB_DROP = 0.36, TAB_TURN = 1.3;
+const TAB_W = 0.16, TAB_H = TAB_W * 64 / 256;
 /** S271 — on the wrist the tab is a watch face: about 6 cm wide */
 const WRIST_SCALE = 0.4;
 
@@ -330,18 +330,6 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     tabTex.upload();
   }
   let closedAt = 0, onWrist = false, noticeText: string | null = null, noticeUntil = 0;
-  const hangTab = (): void => {
-    hang(tabPlane, TAB_DIST, TAB_DROP);
-    // ⚑ S268 (his: "The floating menu button just sits in front of the screen") — well to the right and low, clear of
-    //   the monitor (about ±20° of the seat's gaze): ~34° right, ~30° down
-    const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, -1); fwd.normalize();
-    const right = new pc.Vec3(-fwd.z, 0, fwd.x);
-    tabPlane.setPosition(tabPlane.getPosition().add(right.mulScalar(0.62)));   // S270f: clear of 2026's laptop (the tour)
-    // ⚑ S270d (his: "the menu button is always kind of lopsided… pointed more to the left") — moved aside, it still
-    //   faced the old gaze, ~34° askew; turn it to face the head from where it now hangs
-    const d = tabPlane.getPosition().clone().sub(head.getPosition()); d.y = 0; d.normalize();
-    tabPlane.setEulerAngles(90, Math.atan2(-d.x, -d.z) * 180 / Math.PI, 0);
-  };
   /** S271 — the watch gesture: a hand's palm turned to the eyes (within ~50°), or a controller raised within 55 cm
    *  and looked at (within ~30° of the gaze) */
   const watching = (w: { at: pc.Vec3; palm: pc.Vec3 | null }): boolean => {
@@ -350,11 +338,6 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     to.mulScalar(1 / dist);
     if (w.palm) return w.palm.dot(to) > Math.cos(50 * Math.PI / 180);
     return head.forward.dot(to.mulScalar(-1)) > Math.cos(30 * Math.PI / 180);
-  };
-  const tabOffAxis = (): boolean => {
-    const fwd = head.forward.clone(); fwd.y = 0; if (fwd.lengthSq() < 1e-4) return false; fwd.normalize();
-    const to = tabPlane.getPosition().clone().sub(head.getPosition()); to.y = 0; to.normalize();
-    return fwd.dot(to) < Math.cos(TAB_TURN);
   };
 
   const act = (id: string): void => {
@@ -450,8 +433,11 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
           tabPlane.enabled = true; onWrist = true;
           return;
         }
-        if (onWrist) { onWrist = false; tabPlane.enabled = false; tabPlane.setLocalScale(TAB_W, 1, TAB_H); }
-        if (!tabPlane.enabled || tabOffAxis()) { hangTab(); tabPlane.enabled = true; }
+        if (onWrist) { onWrist = false; tabPlane.setLocalScale(TAB_W, 1, TAB_H); }
+        // ⚑ P8 (headset B, 1 Nov: the tab "in front of the screen… on a different layer perspective", in 2003, 2016 and
+        //   2026, after four placements) — the floating tab is gone. The menu is the watch (above), the controller
+        //   raised and looked at, or Esc: nothing of the frame hangs in the room any more.
+        tabPlane.enabled = false;
         return;
       }
       const p = ray ? planeHit(plane, ray, PLANE_W, PLANE_H, W, H) : null;

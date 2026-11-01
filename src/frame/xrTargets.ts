@@ -8,7 +8,10 @@ export function xrRects(root: unknown): XrRect[] {
     visited.add(value);
     if (value instanceof Map) { for (const child of value.values()) visit(child, depth + 1); return; }
     const obj = value as Record<string, unknown>;
-    if (obj.open === false) return;
+    // ⚑ P8 (headset B, 1 Nov: "invisible hit boxes", "it keeps pressing the family companion") — below the root,
+    //   only a window that says it is OPEN may lend the ray its rects. A closed, finished or never-shown app keeps
+    //   its last hits array; walking it made the ray outline and snap to things that were not on the screen.
+    if (depth > 0 && obj.open !== true) return;
     for (const [key, child] of Object.entries(obj)) {
       if (/(hits|rects|buttons)$/i.test(key) && Array.isArray(child)) {
         for (const h of child) if (h && [h.x, h.y, h.w, h.h].every(Number.isFinite) && h.w > 0 && h.h > 0) out.push(h);

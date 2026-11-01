@@ -112,7 +112,7 @@
   "Near a screen or handheld button, touch it with your fingertip.",
   "Point at a marker on the floor and press to move there.",
   "Grip a handheld, or pinch and hold, to carry it. Release to put it back.",
-  "Grip away from a device, or press the Menu tab, to open this menu.",
+  "Grip away from a device, or turn your wrist to your face and press the Menu tab there, to open this menu.",
   "Rooms change through pixels. To recentre, hold the headset's Meta button, or use Recentre here.",
   "Nothing here is timed. Take it off whenever you want."
  ],
@@ -123,9 +123,9 @@
  "jumpConfirmYes": "Jump",
  "jumpConfirmNo": "Stay here",
  "xrSeat": "Sit comfortably. To press: point and pinch, pull the trigger, or touch it with a fingertip.",
- "xrMenuHint": "The Menu tab rides above your left wrist, or hangs low on your right. A controller's grip opens it too.",
+ "xrMenuHint": "Turn your left wrist to your face: the Menu tab is there. A controller's grip opens it too.",
  "xrDesk": "Match my table",
- "xrDeskAsk": "Rest one fingertip on your table and hold it still.",
+ "xrDeskAsk": "Rest your hand flat on your table and hold it still.",
  "xrDeskDone": "Done. The desk now sits at your table.",
  "xrDeskNone": "No table found. The desk stays where it was.",
  "xrDeskOffer": "Sitting at a table? Open the Menu and choose Match my table."

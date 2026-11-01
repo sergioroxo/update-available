@@ -121,6 +121,11 @@ async function main() {
   await untilPhase('open', 30000); await wait(1200);
   await shot('browser-open', 'the browser as she arrives at it');
   await cam(...CLOSE);
+  // P7-66 — her enquiry to Meridian LGB Trust, then the auto-reply (his yes to B, 1 Nov)
+  await shot('look-enquiry-draft', 'her draft to Meridian LGB Trust — the only control on the page');
+  await pressWhen('enq-send'); await wait(4200);
+  await shot('look-enquiry-reply', "Meridian's auto-reply: declined, \"not a judgement\", no appeal; the directory line");
+  await pressWhen('enq-close'); await wait(800);
   await shot('look-browser-open', 'closer: the six tabs, the search half-typed, the ☆ FloppySheep bookmark');
   await press('bm-floppy'); await wait(800);
   await shot('look-floppysheep', 'FloppySheep, the computer version — one press away (R3-92)');

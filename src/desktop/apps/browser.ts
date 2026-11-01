@@ -108,6 +108,10 @@ void RESULT_HOLD_SECONDS;
 
 /** under four seconds. E2's splash is 23.7 because 2003 made you watch it. */
 const RESTORE_SECONDS = 2.4;
+/** P7-66: an auto-reply is fast — that is part of what it says */
+const ENQUIRY_REPLY_SECONDS = 3.2;
+const ENQ = body.enquiry as { draftLabel: string; to: string; subject: string; message: string[]; send: string; sent: string;
+  replyFrom: string; replySubject: string; reply: string[]; directory: string; close: string; witness: string };
 /**
  * ⚑ THE BOOT LINE, BEFORE THE RESTORE (2026-09-12). Sérgio: "it needs a boot
  * up moment of the OS, just aesthetically stating like 'L — Is booting up for
@@ -187,7 +191,7 @@ export class E4Browser {
   private get startMapSilent(): boolean { return !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || (this.liveTab === 'chat' && this.threadOpen); }
   private startModel() { return buildStartModel(fakeOs({ e4: { browser: this } } as never), 'e4'); }
   private startCalm(): boolean {
-    return !this.startMap.active && this.phase === 'open' && this.mode === 'free' && this.liveTab === 'search' && this.pressable && !this.idleOrb;
+    return !this.startMap.active && this.phase === 'open' && this.mode === 'free' && this.liveTab === 'search' && this.pressable && !this.idleOrb && !this.enquiryOpen;
   }
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
@@ -208,6 +212,11 @@ export class E4Browser {
   private turnDone = new Set<string>();
   /** S160 / R3-101: the chat step, after access — the threads list, then the one opened */
   private threadOpen = false;
+  /** ⚑ P7-66 — her enquiry to Meridian, the first thing on the laptop (s4_browser.json `enquiry`):
+   *  her draft, one press to send it, the auto-reply seconds later, and Close. L is absent from it. */
+  private enquiry: 'draft' | 'sending' | 'replied' | 'closed' = 'draft';
+  private enquiryT = 0;
+  private get enquiryOpen(): boolean { return this.phase === 'open' && this.mode === 'free' && this.enquiry !== 'closed'; }
   private typeT = 0;
   /** seconds since the agent's page opened — its bubbles arrive on this */
   private agentT = 0;
@@ -222,7 +231,7 @@ export class E4Browser {
   private freeQuietT = 0;
   private pauseSaid = false;
   /** S207 — the way back: L names the main path's next step (os.wayBack) */
-  get guideSilent(): boolean { return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || (this.liveTab === 'chat' && this.threadOpen); }
+  get guideSilent(): boolean { return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || (this.liveTab === 'chat' && this.threadOpen) || this.enquiryOpen; }
   get guideVoice(): boolean { return this.mode !== 'free' && (!!this.nowLine || this.waitNow); }
   sayLine(line: string): void { this.nowLine = line; this.version++; }
   private stepDone = new Set<string>();
@@ -475,6 +484,11 @@ export class E4Browser {
       }
       return;
     }
+    // P7-66: the enquiry's own clock — "Sent", then the reply, a few seconds later
+    if (this.enquiry === 'sending') {
+      this.enquiryT += dt;
+      if (this.enquiryT >= ENQUIRY_REPLY_SECONDS) { this.enquiry = 'replied'; this.version++; }
+    }
     // the address bar's cursor is the only thing that moves on a settled page
     // ⚑ …and it stops moving the moment the device is on her face. The blink
     //   is a version bump, the version is a texture upload, and a monitor that
@@ -671,6 +685,7 @@ export class E4Browser {
       case 'extra': this.drawExtra(ctx, W, H); break;
       case 'photos': this.drawPhotos(ctx, W, H); break;
     }
+    if (this.enquiryOpen) this.drawEnquiry(ctx, W, H);
     // ⚑ S229 / W1-A6 — the welcome-back card, over the page's bare lower half (never over the completions or the tabs)
     if (this.startPanel.open && this.startCalm()) {
       for (const b of this.startPanel.draw(ctx, 24, 176, 300)) this.publish({ ...b, id: 'startpanel-close' });
@@ -1538,6 +1553,44 @@ export class E4Browser {
     ctx.fillText(body.extra.opened, ADDR.x + 14, H - 18);
   }
 
+  /**
+   * ⚑ P7-66 — SHE ASKED HER OWN FIRST. Her draft to Meridian LGB Trust, over the restored page: one press sends it,
+   * and the auto-reply lands under it a few seconds later — polite, procedural, final. Then Close, and the session
+   * is hers again. While it is open it is the only control on the page (the page under it publishes nothing).
+   */
+  private drawEnquiry(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.hits = this.hits.filter((h) => h.id === 'start-menu' || h.id.startsWith('lg-') || h.id.startsWith('sm-'));
+    const top = ADDR.y + ADDR.h + 8;
+    ctx.save(); ctx.globalAlpha = 0.7; px(ctx, 0, top, W, H - top, WEB.bg); ctx.restore();
+    const x = 40, w = W - 80, inner = w - 28;
+    const replied = this.enquiry === 'replied';
+    const h = replied ? Math.min(H - top - 12, 292) : 150;
+    webCard(ctx, x, top + 4, w, h);
+    let y = top + 14;
+    const line = (t: string, size: number, ink: string, gap: number): void => {
+      setFont(ctx, size); ctx.fillStyle = ink;
+      for (const l of wrapText(ctx, t, inner)) { ctx.fillText(l, x + 14, y); y += gap; }
+    };
+    line(this.enquiry === 'draft' ? ENQ.draftLabel : ENQ.sent, 8, WEB.muted, 11);
+    line(ENQ.to, 8, WEB.muted, 13);
+    line(ENQ.subject, 10, WEB.ink, 15);
+    for (const m of ENQ.message) line(m, 9, WEB.ink, 12);
+    if (this.enquiry === 'draft') {
+      const b = webButton(ctx, x + w - 84, top + h - 26, ENQ.send, 'primary', 70);
+      this.publish({ ...b, id: 'enq-send' });
+      return;
+    }
+    if (!replied) return;
+    y += 4; px(ctx, x + 14, y, inner, 1, WEB.cardEdge); y += 8;
+    line(ENQ.replyFrom, 8, WEB.muted, 11);
+    line(ENQ.replySubject, 10, WEB.ink, 15);
+    for (const m of ENQ.reply) line(m, 9, WEB.ink, 12);
+    y += 2;
+    line(ENQ.directory, 8, WEB.muted, 11);
+    const b = webButton(ctx, x + w - 84, top + h - 26, ENQ.close, 'quiet', 70);
+    this.publish({ ...b, id: 'enq-close' });
+  }
+
   /** the library: the original, and the one she never made, with its date. */
   private drawPhotos(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const top = ADDR.y + ADDR.h + 12;
@@ -1584,6 +1637,16 @@ export class E4Browser {
     if (this.phase !== 'open') return true;   // the restore takes presses and eats them
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit && this.startMap.menu) { this.startMap.close(); this.version++; return true; }
+    // P7-66: while her enquiry is open it is the only thing on the page that takes a press (Start still works)
+    if (this.enquiryOpen && !(hit && (hit.id === 'start-menu' || hit.id.startsWith('sm-')))) {
+      if (hit?.id === 'enq-send' && this.enquiry === 'draft') { this.enquiry = 'sending'; this.enquiryT = 0; }
+      else if (hit?.id === 'enq-close' && this.enquiry === 'replied') {
+        this.enquiry = 'closed';
+        ledger.e4Space.push({ id: 'enquiry', outcome: 'read', witness: ENQ.witness });
+      }
+      this.version++;
+      return true;
+    }
     if (hit) {
       if (hit.id === 'start-menu') { this.lambyGuide?.press('lg-x'); this.startMap.toggle(); this.version++; return true; }
       if (hit.id === 'whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.toggle(); this.version++; return true; }

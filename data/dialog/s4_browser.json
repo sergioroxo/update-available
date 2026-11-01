@@ -244,6 +244,34 @@
   "_doc": "S168 / R3-92 — FloppySheep, the computer version: the phone's game (data/dialog/s3_floppysheep.json) on a bookmark in the free 2026 browser, one press away while the session waits. Optional; files nothing; gone once the program begins.",
   "back": "← back to the session"
  },
+ "enquiry": {
+  "_doc": "⚑ P7-66 — SHE ASKED HER OWN FIRST (his 31 Oct: 'it is important that MAYA reaches out to a LGB organization thinking they were there to help but gets denied support'; 'quite current and critical'; his yes to Proposal B, 1 Nov). RESEARCH_LGB_REFUSAL_2026-10-31.md: the documented 2019–2026 pattern of LGB-only groups that define eligibility by sex recorded at birth, and the inclusive groups that did not. It is the first thing on her laptop when the session comes back, before L and before the program: her draft, one press to send it, and the reply that comes back in seconds. Critical through accuracy, not caricature: the refusal is polite, procedural and final, and it says it is not a judgement. The directory line keeps the inclusive services on the screen, so the refusal reads as a rule someone chose, never as what LGB people are. Maya does not argue. L is absent from the card; the file records the outcome in the machine's flattest voice, and the program that follows is the system using the gap, not making it. Never satirised; no named real organisation; the clinical debate is not touched. Invented mark: Meridian LGB Trust. Text is Claude's under the 2026-08-17 norm; his edit wins.",
+  "draftLabel": "Draft",
+  "to": "To: Meridian LGB Trust · support enquiry",
+  "subject": "Is there anyone I could talk to?",
+  "message": [
+   "Hi. Your page says you support lesbian, gay and bisexual people.",
+   "I'm trans, and I'm one of those too.",
+   "Things have got hard lately and I don't know who else to ask.",
+   "Is there anyone I could talk to?",
+   "Maya"
+  ],
+  "send": "Send",
+  "sent": "Sent · just now",
+  "replyFrom": "Meridian LGB Trust · auto-reply",
+  "replySubject": "Your enquiry (MT-20931)",
+  "reply": [
+   "Thank you for contacting Meridian LGB Trust.",
+   "We have reviewed your enquiry against our Eligibility Statement.",
+   "Our services are for people whose orientation is towards their own sex, as recorded at birth.",
+   "We are not able to offer you support.",
+   "This is not a judgement about you.",
+   "This decision cannot be appealed. We do not keep a waiting list."
+  ],
+  "directory": "Other services: Lantern LGBT+ Line (all welcome) · your GP",
+  "close": "Close",
+  "witness": "support enquiry: declined by the provider — eligibility"
+ },
  "program": {
   "_doc": "⚑ 2026-09-12 — THE PROGRAM (ERA4_OVERHAUL_2026-09-12.md §2, beats 2–6). Sérgio's review: 'the tabs serve no narrative purpose'; 'when I press the almost-written search, nothing happens. It should automatically happen: support system for detransition, that the system is forcing you to do something… a new agent that helps with detransitioning (a play on Detrans.AI) that would take over the laptop and transform the whole experience to give the system command'; 'the photos system should be one of the mandatory exercises'; 'we need more of this manipulation'. His ruling on choice: PURE RAILS. So: pressing the search chooses a completion FOR her, the page becomes the agent's, the agent takes L's console on the laptop, and the tabs become five numbered steps that unlock in order. Each step has one press. Nothing can be declined. The headset is not wearable until the steps are done. ⚑ INVENTED MARK: `Second Thoughts` is the agent — it is the tab that arrived by itself, and the tab was the agent's the whole time. It stands for the class of 'detransition support' systems (the Dossier carries the documented claims; the fiction carries the mark). No real product is named.",
   "chosen": "how do i tell my doctor i want to stop",

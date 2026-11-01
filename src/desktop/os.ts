@@ -124,6 +124,10 @@ const JINGLE_VOLUME = 0.5;
 /** S272 — between the filed Family Form and the placement letter: the game and the racket's turn (was the spine's
  *  RACKET_WAIT, after the journal, S268) */
 const PACKET_WAIT = 60, PACKET_WAIT_SPEEDRUN = 20;
+/** P8 — how long the opening's Leave waits for its second press */
+const LEAVE_CONFIRM_SECONDS = 4;
+/** P8 — after Rob's last line, the chat holds this long before the Family Form opens */
+const FORM_AUTO_SECONDS = 3.5;
 const JINGLE_FADE_SECONDS = 3.5;
 type LyricLine = { t: number; words: Array<[number, string]> };
 const JINGLE_LINES = (jingleLyrics as unknown as { lines: LyricLine[] }).lines;
@@ -453,6 +457,10 @@ export class DesktopOS {
    *  quiet with the channel open: a player turning slowly, or reading Rob's last line, is not left behind by a clock */
   private escalationQuietT = 0;
   private packetAfterForm = false;
+  /** P8 — the opening's Leave, pressed once: a second press inside LEAVE_CONFIRM_SECONDS leaves */
+  private leaveArmedAt = -Infinity;
+  /** P8 — Rob has finished and the form is not filed: the Family Form opens itself at this time (the piece takes you there) */
+  private formAutoAt = Infinity;
   /** ⚑ S226 — set by the frame loop each frame (engine/app.ts): false while she is turned away from the desk */
   screenFacing = true;
   private diaryPendingAt = Infinity; // soft beat between the packet and the diary
@@ -803,7 +811,7 @@ export class DesktopOS {
       //   whose failed erase IS the update. (S268's diary-first order is superseded.)
       this.irc.onEscalationDone = () => {
         if (ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.packetDueFrom = this.t;
-        else this.packetAfterForm = true;
+        else { this.packetAfterForm = true; this.formAutoAt = this.t + FORM_AUTO_SECONDS; }
       };
     };
     this.dirty = true;
@@ -982,6 +990,10 @@ export class DesktopOS {
           { id: 'companion', outcome: 'installed', witness: s4update.witness.arrived }
         );
       }
+      // ⚑ P8 (headset B, 1 Nov: the 2003 song "kept playing into 2016", "the new you program" over 2026) — a new
+      //   year ends the last one's clips: songs, jingles, read-alouds, and anything the menu was holding. Only the
+      //   jump did this before; the update ritual itself never did.
+      this.stopReadAloud(); stopOneShots(); this.e2Jingle?.pause(); this.e2Jingle = null;
       this.setDesktopEra(toEra);
       this.dirty = true;
       this.onEraShift?.(toEra);
@@ -2281,6 +2293,16 @@ export class DesktopOS {
     // the fallback: if the player never turns to witness the record, Rob
     // escalates anyway once the deadline passes (main-parity — the flip is
     // the earned path, not a hard gate)
+    // ⚑ P8 (headset B, 1 Nov: after Rob's "i don't want to go." — "it stopped… I don't know what to do"): the chat
+    //   closes itself and the Family Form opens. No rule asks the visitor to find the next thing (2026-10-10).
+    if (this.formAutoAt !== Infinity && this.t >= this.formAutoAt && this.phase === 'desktop' && this.desktopEra === 'e1') {
+      if (this.provotype || ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formAutoAt = Infinity;
+      else if (!this.packet?.open && !this.diary?.open && !this.kit?.open) {
+        this.formAutoAt = Infinity;
+        if (this.irc) this.irc.open = false;
+        this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
+      }
+    }
     if (this.escalationFallbackAt !== Infinity) {
       // quiet time counts in full, busy time at half (a player who keeps clicking is never left without the
       //   escalation: the S226 four-era walk stalled 1997 here), and nothing counts while Rob's picture is open
@@ -3509,8 +3531,9 @@ export class DesktopOS {
   // ── reinterp opening (O2/O3) ────────────────────────────────────────────
   /** a small Leave, drawn from the first frame of every opening beat (rail) */
   private drawOpeningLeave(W: number, H: number): void {
-    ui.button(this.ctx, W - 70, H - 26, 60, 18, opening.o1_leave, { hover: this.hover === 'r-leave' });
-    this.hits.push({ x: W - 70, y: H - 26, w: 60, h: 18, id: 'r-leave' });
+    const armed = this.t - this.leaveArmedAt < LEAVE_CONFIRM_SECONDS;
+    ui.button(this.ctx, armed ? W - 130 : W - 70, H - 26, armed ? 120 : 60, 18, armed ? opening.leaveConfirm : opening.o1_leave, { hover: this.hover === 'r-leave' });
+    this.hits.push({ x: armed ? W - 130 : W - 70, y: H - 26, w: armed ? 120 : 60, h: 18, id: 'r-leave' });
   }
 
   /** O2 — the LambyOS boot: this computer was made FOR you (spec §1 O2) */
@@ -3671,8 +3694,9 @@ export class DesktopOS {
     });
     if (armed) this.hits.push({ x: c.x + c.w - 92, y: c.y + c.h - 26, w: 84, h: 20, id: 'r-continue' });
 
-    ui.button(ctx, c.x, c.y + c.h - 26, 64, 20, opening.o3_leave, { hover: this.hover === 'r-leave' });
-    this.hits.push({ x: c.x, y: c.y + c.h - 26, w: 64, h: 20, id: 'r-leave' });
+    { const armed = this.t - this.leaveArmedAt < LEAVE_CONFIRM_SECONDS;
+    ui.button(ctx, c.x, c.y + c.h - 26, armed ? 120 : 64, 20, armed ? opening.leaveConfirm : opening.o3_leave, { hover: this.hover === 'r-leave' });
+    this.hits.push({ x: c.x, y: c.y + c.h - 26, w: armed ? 120 : 64, h: 20, id: 'r-leave' }); }
   }
 
   /** O3 close — the picks come back RE-CAPTIONED in the system's categories */
@@ -3721,13 +3745,19 @@ export class DesktopOS {
       hover: this.hover === 'r-enter'
     });
     this.hits.push({ x: c.x + c.w - 84, y: c.y + c.h - 26, w: 76, h: 20, id: 'r-enter' });
-    ui.button(ctx, c.x, c.y + c.h - 26, 64, 20, opening.o3_leave, { hover: this.hover === 'r-leave' });
-    this.hits.push({ x: c.x, y: c.y + c.h - 26, w: 64, h: 20, id: 'r-leave' });
+    { const armed = this.t - this.leaveArmedAt < LEAVE_CONFIRM_SECONDS;
+    ui.button(ctx, c.x, c.y + c.h - 26, armed ? 120 : 64, 20, armed ? opening.leaveConfirm : opening.o3_leave, { hover: this.hover === 'r-leave' });
+    this.hits.push({ x: c.x, y: c.y + c.h - 26, w: armed ? 120 : 64, h: 20, id: 'r-leave' }); }
   }
 
   /** click routing for the reinterp opening beats (O2/O3) */
   private handleOpeningClick(id: string): void {
-    if (id === 'r-leave') { this.leave(); return; }
+    // ⚑ P8 (headset B: he left the session from the boot screen by accident) — the opening's Leave asks once:
+    //   the first press turns the button into "Leave? Press again", the second leaves. Dismissal still always works.
+    if (id === 'r-leave') {
+      if (this.t - this.leaveArmedAt < LEAVE_CONFIRM_SECONDS) { this.leave(); return; }
+      this.leaveArmedAt = this.t; this.dirty = true; return;
+    }
     if (this.phase === 'r_boot') { this.startReinterpSplash(); return; } // any click skips the crawl
     if (this.phase === 'r_splash') { this.setPhase('r_profile'); return; } // …and the splash
     if (this.phase === 'r_profile') {
