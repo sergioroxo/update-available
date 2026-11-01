@@ -42,6 +42,7 @@ import { browserChrome, restoring, photograph, glitchBands, CHROME, ADDR, ERA4 }
 import updates from '../../../data/strings/updates.json';
 import fixes from '../../../data/strings/visitorFixes.json';
 import { ledger } from '../../state/ledger';
+import { drawGlow } from '../../witness/pathGlow';
 import { pauseWords } from '../../narrative/pauses';
 import { buildStartModel } from '../../witness/startModel';
 import { StartMenuMap } from './startMenuMap';
@@ -110,6 +111,9 @@ void RESULT_HOLD_SECONDS;
 const RESTORE_SECONDS = 2.4;
 /** P7-66: an auto-reply is fast — that is part of what it says */
 const ENQUIRY_REPLY_SECONDS = 3.2;
+/** S281 — the presses the 2026 page conducts, one at a time (the walk's own order: Send, Close, the search, the result,
+ *  the site's start, Begin, each step's button, Continue, the first file) */
+const PATH_IDS = /^(enq-send|enq-close|search-open|result-agent|site-start|agent-begin|step-next|step-[a-z]+|file-0)$/;
 const ENQ = body.enquiry as { draftLabel: string; to: string; subject: string; message: string[]; send: string; sent: string;
   replyFrom: string; replySubject: string; reply: string[]; directory: string; close: string; witness: string };
 /**
@@ -686,6 +690,12 @@ export class E4Browser {
       case 'photos': this.drawPhotos(ctx, W, H); break;
     }
     if (this.enquiryOpen) this.drawEnquiry(ctx, W, H);
+    // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on the one press the page is waiting for, the
+    //   pale shimmer on the game's bookmark. A choice (L's two chips) is never ringed: either answer is the path.
+    if (!this.startMap.active) for (const h of this.hits) {
+      const k = PATH_IDS.test(h.id) ? 'path' : h.id === 'bm-floppy' ? 'may' : null;
+      if (k) drawGlow(ctx, h, k, CHROME.accent, WEB.faint);
+    }
     // ⚑ S229 / W1-A6 — the welcome-back card, over the page's bare lower half (never over the completions or the tabs)
     if (this.startPanel.open && this.startCalm()) {
       for (const b of this.startPanel.draw(ctx, 24, 176, 300)) this.publish({ ...b, id: 'startpanel-close' });

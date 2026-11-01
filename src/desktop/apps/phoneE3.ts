@@ -45,6 +45,7 @@ import { entriesByEra } from '../../witness/record';
 import m from '../../../data/dialog/s3_maiden.json';
 import d from '../../../data/strings/era3_devices.json';
 import { playOnce } from '../../audio/tapeAudio';
+import { drawGlow } from '../../witness/pathGlow';
 
 type Msg = { from: string; time: string; text?: string; kind?: string };
 type Rect = { x: number; y: number; w: number; h: number; id: string };
@@ -264,8 +265,28 @@ export class PhoneE3 {
     else if (this.screen === 'message') { this.drawMessage(ctx, W, H); }
     else if (this.screen === 'walk') { this.drawWalk(ctx, W, H); }
     else { this.drawHome(ctx, W, H); }
+    // ⚑ S281 — THE GLOW LOGIC on her phone (his 1 Nov: "FloppySheep and the message app should slightly glow
+    //   differently so we can understand where we need to go"): the warm ring on the one thing the phone is waiting
+    //   on, the pale shimmer on the game that is only ever hers to open. Drawn with the screen (no animation).
+    const path = this.pathIds();
+    for (const r of this.rects) {
+      const k = path.has(r.id) ? 'path' : r.id === 'floppy' ? 'may' : null;
+      if (k) drawGlow(ctx, r, k, PHONE.tileGame, PHONE.faint);
+    }
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
     if (this.card) this.drawCard(ctx, W, H);
+  }
+
+  /** S281 — what the phone is waiting on, screen by screen: the notification, then Messages, then the group, then the
+   *  live link. Nothing once the group's news is all seen and the link is spent. */
+  private pathIds(): Set<string> {
+    if (this.stage === 'quiet') return new Set();
+    const live = this.stage === 'first' ? 'link' : this.stage === 'voted' ? 'link2' : null;
+    const waiting = this.groupUnread() > 0 || (live !== null && !(this.stage === 'first' ? this.opened : false));
+    if (!waiting) return new Set();
+    if (this.screen === 'lock') return new Set(['notification']);
+    if (this.screen === 'group') return new Set(live ? [live] : []);
+    return new Set(['inbox', 'group']);
   }
 
   /** S64's law, unchanged: before anything happens the lock screen is EMPTY.

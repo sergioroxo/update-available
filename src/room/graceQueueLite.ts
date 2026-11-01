@@ -132,6 +132,7 @@ import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 import pauseCopy from '../../data/strings/pauses.json';
 import { isSpeedrun, extraOn, markExtraPassed } from '../state/cut';
 import { buildStartModel } from '../witness/startModel';
+import { stepTargets, drawGlow } from '../witness/pathGlow';
 import { StartMenuMap } from '../desktop/apps/startMenuMap';
 import { gameMenuBus } from '../state/gameMenuBus';
 import startCopy from '../../data/strings/slice.json';
@@ -1290,6 +1291,11 @@ export class GraceQueueLite {
   // ── draw ─────────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.drawSurfaceContent(ctx, W, H);
+    // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
+    if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active) {
+      const ids = stepTargets('e3', buildStartModel(undefined, 'e3').now?.id);
+      if (ids.size) for (const r of this.rects) if (ids.has(r.id)) drawGlow(ctx, r, 'path', aero.ERA3.amber, aero.ERA3.glassEdge);
+    }
     if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver) {
       const S = startCopy.desktop.startMenu;
       aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });

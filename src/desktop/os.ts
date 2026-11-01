@@ -1,4 +1,7 @@
 import { xrRects, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
+import { pathTargets, drawGlow } from '../witness/pathGlow';
+/** S281 — the desktop's free things: they shimmer, they never ring (the glow logic's `may`) */
+const GLOW_MAY = new Set(['icon-folder1997', 'icon-rootcause', 'icon-provotype', 'icon-netvision']);
 import * as pc from 'playcanvas';
 import polish from '../../data/strings/playtestPolish.json';
 import { reducedMotion } from '../state/motion';
@@ -349,6 +352,8 @@ export class DesktopOS {
    * (CLAUDE.md: felt = no mechanics) — and not the ritual's dialogs.
    */
   private minimised = new Set<string>();
+  /** S281 — the ids the story waits on now (pathGlow.ts); rebuilt on every draw */
+  private glowPath = new Set<string>();
   private windowOf(key: string): { open: boolean; hits?: unknown[]; restore?: () => void } | null {
     type Win = { open: boolean; hits?: unknown[]; restore?: () => void };
     switch (key) {
@@ -468,6 +473,8 @@ export class DesktopOS {
   private formAutoAt = Infinity;
   /** P8 — the chat closes this long after Rob's last line, so Lamby can offer the intermission */
   private chatCloseAt = Infinity;
+  /** S281 — the intermission is over: any desktop press opens the form until it is filed */
+  formForced = false;
   /** S280 — is a 1997 exercise window up (the racket's Release Work or Session): the form waits for it */
   private provotypeBusy(): boolean { return !!this.provotype?.open; }
   /** ⚑ S226 — set by the frame loop each frame (engine/app.ts): false while she is turned away from the desk */
@@ -606,7 +613,7 @@ export class DesktopOS {
       //   offers his own personalisation over the story's request; it is a button beside the streak (Restorify)
       personaliseOffer: undefined,
       deferredUpdate: this.desktopEra === 'e1' && !!this.updateApp?.deferred,
-      formAvailable: this.formAvailable, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
+      formAvailable: this.formAvailable, formForced: this.formForced, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       formFiled: !this.provotype?.open && ledger.provotypes.some(p => p.id === 'origin_intake_e1'), rootOpened: ledger.records.includes('rootcause-opened'),
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
@@ -2314,9 +2321,13 @@ export class DesktopOS {
     if (this.formAutoAt !== Infinity && this.t >= this.formAutoAt && this.phase === 'desktop' && this.desktopEra === 'e1') {
       if (this.provotype || ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formAutoAt = Infinity;
       else if (!this.packet?.open && !this.diary?.open && !this.kit?.open && !this.rootCause?.open && !this.provotypeBusy()) {
+        // ⚑ S281 (his, 1 Nov: "instead of opening itself … a message from lamby … that it is time for you to go, and
+        //   even you say no, it forces you to by always opening the file when you touch something, that helps create
+        //   space for refusal and breakage of the system") — Lamby says it (lambyGuide formForced); from here every
+        //   press on the desktop that is not Lamby's own, Start, the menu or Leave opens the form instead
         this.formAutoAt = Infinity;
         if (this.irc) this.irc.open = false;
-        this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
+        this.formForced = true; this.dirty = true;
       }
     }
     if (this.escalationFallbackAt !== Infinity) {
@@ -2564,6 +2575,7 @@ export class DesktopOS {
     this.hits = [];
     this.lambyGuidePaint = { rings: [], balloon: false };
     this.iconsDrawn = [];
+    this.glowPath = this.reinterp && this.phase === 'desktop' && this.desktopEra !== 'e4' ? pathTargets(this, this.desktopEra) : new Set();
     if (this.setup?.open) { this.setup.draw(this.ctx); if (this.xrScale) xrOutline(this.ctx, this.xrHover); return; }
 
     switch (this.phase) {
@@ -2585,6 +2597,11 @@ export class DesktopOS {
     //   is gone from the player's screen; kept for review under ?debug=1 only
     if (this.reinterp && /[?&]debug=1/.test(location.search)) this.drawReinterpMarker(W);
     if (this.paused) this.drawPause(W, H);
+    // S281 — Start, when the story waits on it (the update): the taskbar is always on top, so its ring is drawn last
+    if (this.phase === 'desktop' && this.glowPath.has('start-menu')) {
+      const st = this.hits.find((h) => h.id === 'start-menu');
+      if (st) drawGlow(this.ctx, st, 'path', ERA1.tooltip, ERA1.silver);
+    }
     if (this.xrScale) xrOutline(this.ctx, this.xrHover);
   }
 
@@ -3359,6 +3376,9 @@ export class DesktopOS {
     x: number, y: number, label: string, id: string, enabled = true, unread = false
   ): void {
     // S169 / R3-09: each launcher has its own picture (theme/icons.ts); the box stands in for an id without one
+    // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the icon the story waits on, or one that is free to open
+    const glow = enabled ? (this.glowPath.has(id) ? 'path' : GLOW_MAY.has(id) ? 'may' : null) : null;
+    if (glow) drawGlow(ctx, { x: x + 4, y: y - 3, w: 30, h: 34 }, glow, ERA1.tooltip, ERA1.silver);
     if (enabled && hasPixelIcon(id)) drawPixelIcon(ctx, x + 7, y - 1, id);
     else {
       ui.px(ctx, x + 8, y, 20, 16, enabled ? ERA1.beige : ERA1.tealDark);
@@ -4314,6 +4334,13 @@ export class DesktopOS {
       return;
     }
     if (this.phase === 'desktop' && this.reinterp && hit?.id === 'start-menu') { this.startMap.close(); this.startOpen = true; this.dirty = true; return; }
+    // ⚑ S281 — the intermission is over and Lamby has said so: whatever is pressed, the form is what opens. Lamby's own
+    //   buttons, Start and the frame's menu were answered above; the form itself can still be set aside (dismissal
+    //   always works), and a set-aside form is a filed form, so this ends there.
+    if (this.formForced && this.phase === 'desktop' && this.desktopEra === 'e1') {
+      if (ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formForced = false;
+      else if (!this.provotype) { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); this.dirty = true; return; }
+    }
     // ⚑ S76 — E4's shell owns every press on this surface, because it IS the
     // surface. Closed: any press on the dark glass is THE ONE TOUCH (S1.0's
     // power-press grammar). Worn: nothing is pressable yet, and a press falls

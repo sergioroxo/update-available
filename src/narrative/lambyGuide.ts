@@ -11,7 +11,7 @@ export interface GuideView {
   targets: string[]; act?: string; frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formFiled?: boolean; rootOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -21,6 +21,8 @@ export class LambyGuide {
   private memory = new Map<string, StepMemory>();
   private counts: Record<GuideEra, number> = { e1: 0, e2: 0, e3: 0, e4: 0 };
   private formOffered = false;
+  /** S281 — the intermission is over: Lamby says it is time, once ("no" is allowed; the next press opens the form) */
+  private formDueOffered = false;
   private rootOffered = false;
   private formWait = 0;
   private requested = false;
@@ -70,6 +72,11 @@ export class LambyGuide {
     if (input.era === 'e1' && input.formAvailable && !input.formOpened) this.formWait += dt;
     if (input.era === 'e1' && input.formAvailable && !input.formOpened && !this.formOffered && this.formWait >= copy.timing.tipSeconds * (input.idleScale ?? 1) && !this.active && this.canOffer()) {
       this.formOffered = true; this.counts.e1++; this.set('form', copy.form.text, [], copy.form.act); return;
+    }
+    // ⚑ S281 (his, 1 Nov: "a message from lamby … that it is time for you to go, and even you say no, it forces you
+    //   to by always opening the file when you touch something") — said once, over anything else Lamby was saying
+    if (input.era === 'e1' && input.formForced && !input.formOpened && !this.formDueOffered && this.canOffer()) {
+      this.formDueOffered = true; this.counts.e1++; this.set('form', copy.form.due, [], copy.form.act); return;
     }
     // ⚑ S268 (his (C)) — Root Cause is offered once the Family Form is filed: the father questions, then the dig for
     //   "the root cause", then the racket. Ignorable, once, inside the era's cap.
