@@ -241,7 +241,12 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   const endDoll = (): void => { if (doll) { doll.root.destroy(); doll = null; } yearPlate.enabled = false; };
   const tickDoll = (dt: number): void => {
     if (!doll) return;
-    if (!live()) { endDoll(); return; }
+    if (!live()) {
+      // Browser audiences receive the same miniature, carried in front of their camera.
+      const at = head.getPosition().clone().add(head.forward.clone().mulScalar(0.8)).add(head.up.clone().mulScalar(-0.14));
+      doll.root.setPosition(at);
+      doll.baseYaw = head.getEulerAngles().y;
+    }
     doll.t += dt;
     if (doll.t > HOLD) { endDoll(); return; }
     // ⚑ S290 — THE TURNTABLE (his, 1 Nov: "The doll house slide lets you zoom in and turn it around like a turn table and
@@ -261,7 +266,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     doll.palm = palm ? palm.clone() : null;
     doll.touched += dt;
     if (doll.touched < 2.5) doll.t = Math.min(doll.t, HOLD - 0.5);
-    doll.root.setEulerAngles(0, doll.baseYaw + doll.turn, 0);
+    doll.root.setEulerAngles(live() ? 0 : 25, doll.baseYaw + doll.turn, 0);
     const k = Math.min(1, doll.t / 0.4, (HOLD - doll.t) / 0.4);
     doll.root.setLocalScale(k * doll.zoom, k * doll.zoom, k * doll.zoom);
     // the seat, wherever it is now: it jumps to the new room when the room re-forms under the dissolve
@@ -362,7 +367,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   return {
     matchTable() { if (!live()) return; table = { t: 0, hist: [] }; deps.frame.notice(deps.strings.ask, 24); },
     dollhouse(era) {
-      if (!live() || !batches().length) return;
+      if (!batches().length) return;
       endDoll();
       const root = new pc.Entity('xr-dollhouse');
       const f = head.forward.clone(); f.y = 0; if (f.lengthSq() < 1e-4) f.set(0, 0, -1); f.normalize();

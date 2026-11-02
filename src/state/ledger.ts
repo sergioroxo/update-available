@@ -335,6 +335,8 @@ export interface Ledger {
     /** S162 / F-01 — the sound NAMES in the caption strip (W-G2); chosen at the front door, changeable in the menu. Spoken words always show. */
     captions: boolean;
     reduceMotion: boolean | null;
+    /** Optional navigation rings; session-only and off until requested. */
+    highlights?: boolean;
   };
 }
 

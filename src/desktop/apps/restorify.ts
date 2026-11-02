@@ -249,9 +249,8 @@ export class RestorifyApp {
     if (hit.id === 'restorify-close') { this.open = false; this.dirty = true; if (this.evening) { this.evening = false; this.onEveningDone?.(); } return; }
     if (hit.id === 'checkin-continue' && this.evening) { this.evening = false; this.open = false; this.dirty = true; this.onEveningDone?.(); return; }
     if (hit.id === 'checkin-continue') {
-      // the card closes on the player's press, never underneath them
-      this.open = false;
-      this.dirty = true;
+      // Return to Today's overview immediately after acknowledging the check-in.
+      this.showToday();
       this.onCheckinAcknowledged?.();
       return;
     }

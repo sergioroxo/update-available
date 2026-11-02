@@ -1,5 +1,4 @@
-/** RETIRED audience UI: StartMenuMap owns the reusable reference list.
- * This historical layout/data adapter never opens; its types and fakeOs helper are still shared. */
+/** The 1997 arrival instructions open once; later eras retain their own programme overviews. */
 /**
  * ⚑ S229 / W1-A6 — "WHAT YOU CAN DO HERE", at the start of every era.
  *
@@ -47,6 +46,8 @@ export class StartPanel {
   actionRect: Rect | null = null;
   open = false;
   private seen = false;
+  private calmT = 0;
+  private sig = '';
   /** the card has opened at least once this era (closed or not) */
   get everShown(): boolean { return this.seen; }
 
@@ -69,13 +70,19 @@ export class StartPanel {
    * the card needs redrawing (it just opened, or a tick changed).
    */
   tick(dt: number, calm: boolean): boolean {
-    // Playtest polish: Start owns the reference list; no arrival card.
-    void dt; void calm;
-    return false;
+    if (this.era !== 'e1' || (this.seen && !this.open)) return false;
+    let changed = false;
+    if (!this.seen) {
+      this.calmT = calm ? this.calmT + dt : 0;
+      if (this.calmT >= 1.5) { this.seen = true; this.open = true; changed = true; }
+    }
+    const sig = this.steps().map(s => s.done ? '1' : '0').join('');
+    if (this.open && sig !== this.sig) { this.sig = sig; changed = true; }
+    return changed;
   }
 
-  /** Compatibility no-op: help routes to the shared Start list. */
-  reopen(): void { this.open = false; this.seen = true; }
+  /** 1997's instructions remain reopenable after dismissal. */
+  reopen(): void { this.open = this.era === 'e1'; this.seen = true; }
   toggle(): void { if (this.open) this.close(); else this.reopen(); }
 
   /** the close box, or the card's own Close */

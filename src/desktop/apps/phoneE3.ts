@@ -149,7 +149,8 @@ export class PhoneE3 {
    *  having opened the link: Lambient arrives anyway, with the same news, in
    *  the same voice. No timer does this — her own next action does. */
   onWorkDone(): void {
-    if (this.card) return;
+    // Work can notify the phone; it cannot answer messages the visitor has never opened.
+    if (this.groupSeen === 0 || this.card) return;
     if (this.stage === 'first' && !this.carded) { this.showCard('ignored'); return; }
     if (this.stage === 'voted' && !this.carded) { this.showCard('ignored'); }
   }
@@ -160,8 +161,8 @@ export class PhoneE3 {
   /** the era asks: is it finished? Used to arm the update that ends Era 3. */
   get broken(): boolean { return this.stage === 'after'; }
 
-  tick(dt: number): void {
-    if (this.stage !== 'cascade') return;
+  tick(dt: number, visible = true): void {
+    if (!visible || this.screen !== 'group' || this.stage !== 'cascade') return;
     this.cascadeT += dt;
     while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
       this.cascadeT -= CASCADE_STEP;

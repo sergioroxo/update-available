@@ -131,5 +131,7 @@
  "xrDeskAsk": "Rest your hand flat on your table and hold it still.",
  "xrDeskDone": "Done. The desk now sits at your table.",
  "xrDeskNone": "No table found. The desk stays where it was.",
- "xrDeskOffer": "Sitting at a table? Open the Menu and choose Match my table."
+ "xrDeskOffer": "Sitting at a table? Open the Menu and choose Match my table.",
+ "highlightsOn": "Navigation highlights: on",
+ "highlightsOff": "Navigation highlights: off"
 }

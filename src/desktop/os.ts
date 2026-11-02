@@ -1339,7 +1339,8 @@ export class DesktopOS {
     if (!this.reinterp || this.phase !== 'desktop' || (era !== 'e1' && era !== 'e2')) return false;
     if (era === 'e2' && this.e2Stage !== 'active') return false;
     return this.desktopIdle() && !this.pauseOpen && !this.wotdOpen && !this.shutRefused && !this.startOpen && !this.startMap.active && !this.saver
-      && !this.programSplash && !this.e2Jingle && this.desktopReturnAt < 0 && !this.residueDark;
+      && !this.programSplash && !this.e2Jingle && this.desktopReturnAt < 0 && !this.residueDark
+      && !this.lambyGuide.active && !mapState(this).quiet;
   }
   private updateStartPanel(dt: number): void {
     const era = this.desktopEra;
@@ -1727,9 +1728,8 @@ export class DesktopOS {
     if (this.caleb) alert.setChatRect(this.caleb.windowRect);
     alert.onRedactionStart = () => this.caleb?.beginRedaction();
     alert.onAlertDone = (dismissed) => {
-      // Closing an alert returns the person's words. The later letter keeps
-      // its own chronology and does not hold the transcript hostage.
-      this.caleb?.beginRestore();
+      // The transcript stays blocked through the offered video.
+      // Only closing the later system letter restores Caleb's words.
       // S2R.4: "I found something that helped others like you." If Lamby was
       // dismissed instead, the offer never comes — the era does not chase —
       // but the collapse still arrives: it was never the player's to trigger.
@@ -1943,6 +1943,7 @@ export class DesktopOS {
     this.e2StageT = 0;
     // S150 — the system says where the program went (R3-49); Lamby stays quiet
     this.toast = { text: lambyStrings.dismissedToast, t: 7 };
+    this.openRestorify();
     this.dirty = true;
   }
 
@@ -2403,7 +2404,7 @@ export class DesktopOS {
     const calebMoment = !this.caleb?.breakToastUp
       || this.caleb.breakToastAge >= 12
       || (this.caleb.breakToastPressed && this.idleSeconds >= 3);
-    if (this.t >= this.pureMailAt && !this.caleb?.blackingOut && calebMoment) {
+    if (this.t >= this.pureMailAt && !this.netvisionOfferOpen && !this.netvision?.open && !this.caleb?.blackingOut && calebMoment) {
       this.pureMailAt = Infinity;
       this.accountability?.beginNetworkFailure();   // S157 / R3-58: seen failing, then the mail
       this.dirty = true;

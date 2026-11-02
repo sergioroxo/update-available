@@ -601,6 +601,8 @@ export function mountGameMenu(): GameMenu {
         ledger.view.captions ? copy.captionsOn : copy.captionsOff,
         () => { ledger.view.captions = !ledger.view.captions; render(); }
       );
+      row(ledger.view.highlights ? copy.highlightsOn : copy.highlightsOff,
+        () => { ledger.view.highlights = !ledger.view.highlights; render(); });
       row(copy.yourFile, () => { view = 'yourFile'; render(); });
       row(copy.restart, () => { view = 'restartConfirm'; render(); });
       row(copy.controls, () => { view = 'controls'; render(); });

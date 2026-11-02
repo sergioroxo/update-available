@@ -1233,7 +1233,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // restart. `close` has no room to age into; it takes the constellation.
     os.onEraRelocate = (era) => {
       if (era === 'close') return;
-      if (xr?.active) xrLayer?.dollhouse(era);   // S270g / VR-06; P7-68 the lamps by the era moved to
+      xrLayer?.dollhouse(era);   // S270g / VR-06; P7-68 the lamps by the era moved to
       beginEraRelocation(era);
     };
     os.onMessageReady = () => { messageSeatPending = true; };
@@ -1253,7 +1253,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // nowhere and reports success.
         // In 2003 the referral is read at Daniel's live desk. The neighbouring
         // rooms have no active screen yet; sending the reader there strands them.
-        if (os.era === 'e2') { recentreView(); }
+        if (os.era === 'e2') { /* Next task is read here; it never moves the view. */ }
         else if (yaw !== null && yaw !== undefined) dollyTo(yaw, CAMERA_POSES.dollySeconds, true);
       }
     };
@@ -3455,6 +3455,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const cp = glassHit;
         if (cp) { closeMonitor.press(cp.x, cp.y); cloud?.holdDrift(3); return; }
       }
+      // A held game is in front of the monitor and owns the input, including misses.
+      if (devices && cluster && devices.held(cluster.era)) {
+        devices.press(ray, cluster.era, xr?.active ? logicalHead() : camera);
+        return;
+      }
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
         const target = xr?.active ? os.xrPoint(p.x, p.y) : p;
@@ -5039,7 +5044,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       closeMonitorDistance = monitorDistance();
       startCamMove({ x:g.x, y:g.y, z:g.z+closeMonitorDistance, pitch:0, yaw:0 },
         CLOSE_LIBRARY_APPROACH_SECONDS, true);
-      roomBed.set(null,3.5);
+      roomBed.set('close_score.mp3', 2.5);
     }
   }
 

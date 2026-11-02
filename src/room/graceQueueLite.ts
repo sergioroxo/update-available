@@ -608,7 +608,7 @@ export class GraceQueueLite {
       this.idleT += dt;
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
-    this.phone.tick(dt); // ⚑ the cascade's own clock, and the only one on the phone
+    this.phone.tick(dt, this.phoneInHand); // ⚑ the cascade's own clock, and the only one on the phone
     // ⚑ S145 — the record chip lights on every filing (witness/pulse.ts): the
     //   one texture upload this costs is quantised to the pulse's own steps
     const step = Math.ceil(witnessPulse.k() * 6);
