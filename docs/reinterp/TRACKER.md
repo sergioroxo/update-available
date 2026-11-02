@@ -34,7 +34,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 - ◐ **2026 v2 + the TransJesus ending** (his yes, 2 Nov: "sure we can try. Make this good and storytelling"; V0–V12 "yes") — a build agent (worktree) is writing and building it end to end, photographing it with the tour and walking it to the Close → ERA4_V2_BUILT_2026-11-02.md. No trigger-safe mode in 2016 (his 2 Nov).
 
-- ◐ **Websites inside the experience** (his 1 Nov): an agent is building a site viewer — the era sites drawn into a period window with minimise, close and scroll, in the browser and floating in the headset; opened from the menu's Sources and the Close; Truth in Love added to 1997's sources.
+- ☑ S294 **Websites inside the experience**: the four era sites drawn into a period window (Win95 / XP / Aero / dark app) with minimise, close, ▲▼, scroll track, wheel, touch and thumbstick; in the browser over the view, in the headset a panel at 0.8 m; from the menu ("Sources — the four websites"), Credits and the Close's Sources; outside links show their address (new tab in the browser); Truth in Love's archived pages on the 1997 Sources tab. SITE_VIEWER_2026-11-01.md 🥽 · ☐ the film plays only on the web page; pinch-drag scroll not built
 - ☑ S291 **The dollhouse turntable**: stick turns and zooms; a hand turns it; it stays while handled 🥽
 - ☑ S291 **The Close's score under the receipt and the Lexicon**
 - ☑ S291 **Frame 27 redrawn in perspective** after his Gemini reference
