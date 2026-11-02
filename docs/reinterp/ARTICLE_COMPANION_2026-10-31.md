@@ -259,6 +259,17 @@ steering, the refusing "LGB" group, the face-swap reversal).
 **Naming as method: "Meridian LGB Trust".** The invented group's name almost reads as LGBT and is not — the missing
 letter is the refusal. The mark does the argument before the auto-reply does (RESEARCH_LGB_REFUSAL_2026-10-31.md).
 
+## 7d. The visual culture of ex-gay websites, 2002–2007 (his finds, 2 Nov 2026)
+
+Archived pages he found, verified in SOURCES_ARCHIVE_FINDS_2026-11-02.md: a ministry home page that sets its credo
+("WE BELIEVE THAT …") in the rainbow's own bands, beside family photographs and a page-view counter (International
+Healing Foundation, 2002–2004 captures); a change programme sold as a twenty-lesson interactive CD ("The Map", 2007);
+a worship song page with a downloadable mp3, the prodigal son as the ministry's invitation (becomingreal.org, 2004);
+a Flash slideshow "movie" sold on DVD and shared by link (2004); a question page for teenage girls (2004). Together:
+the rainbow co-opted, care offered as a product (CD, DVD, mp3), testimony as proof, and the period's web grammar
+(frayed photo frames, counters, Flash) as the ministry's own aesthetics. They now sit on the 2003 and 2016 sites'
+Sources tabs.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

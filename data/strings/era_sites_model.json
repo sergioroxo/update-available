@@ -1655,6 +1655,49 @@
      },
      {
       "k": "h3",
+      "t": "Pages of the time, from the Internet Archive"
+     },
+     {
+      "k": "p",
+      "t": "Ministry websites as they looked between 2002 and 2007: the rainbow used for a credo, a change programme sold on CD, worship songs and slideshow films as invitations, testimonies offered as proof. Kept in the Internet Archive. Each link opens in a new tab. Read them as evidence of what was said, never as advice."
+     },
+     {
+      "k": "links",
+      "items": [
+       {
+        "label": "International Healing Foundation home page, July 2003 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20030725151157/http://www.gaytostraight.org/",
+        "note": "A teal page with family photos and a rainbow-banded list that begins “WE BELIEVE THAT”: the movement's credo set in the rainbow's own colours."
+       },
+       {
+        "label": "International Healing Foundation home page, October 2002, with its page-view counter (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20021012123343/http://www.gaytostraight.org/",
+        "note": "The same site a year earlier, counting its visitors since March 2001."
+       },
+       {
+        "label": "International Healing Foundation, its “Institute” page, October 2002 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20021012224430/http://www.gaytostraight.org/html/institute.shtml",
+        "note": "Training to “help” homosexuality change, offered as a therapy institute."
+       },
+       {
+        "label": "“The Map”, a twenty-lesson change curriculum on CD, its Journey page, 2007 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20070811234619/http://www.reachtruth.com/journey.html",
+        "note": "A conversion programme sold as an interactive CD, with printable journals and an audio introduction."
+       },
+       {
+        "label": "A worship song page, “A Father's Love”, on becomingreal.org, April 2004 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20040413152750/http://becomingreal.org/jesus/fathers_love.htm",
+        "note": "A song of the prodigal son set beside a painting, with an mp3 to download: worship used as the ministry's invitation."
+       },
+       {
+        "label": "“Interview With Jesus”, a Flash “movie” site, June 2004 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20040607072651/http://www.interviewwithgod.com/theoriginal.htm",
+        "note": "A slideshow film sold on DVD and shared by link: the visual grammar of the period's Christian web."
+       }
+      ]
+     },
+     {
+      "k": "h3",
       "t": "References this year drew on"
      },
      {
@@ -2798,6 +2841,29 @@
        }
       ],
       "nolink": ""
+     },
+     {
+      "k": "h3",
+      "t": "Pages of the time, from the Internet Archive"
+     },
+     {
+      "k": "p",
+      "t": "Ministry websites as they looked between 2002 and 2007: the rainbow used for a credo, a change programme sold on CD, worship songs and slideshow films as invitations, testimonies offered as proof. Kept in the Internet Archive. Each link opens in a new tab. Read them as evidence of what was said, never as advice."
+     },
+     {
+      "k": "links",
+      "items": [
+       {
+        "label": "“For girls”, becomingreal.org, April 2004 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20040404164032/http://www.becomingreal.org/main/4girls.htm",
+        "note": "A question page for teenage girls: “I think I might be…”, each answered by the ministry. The lineage of the women's material Vera edits."
+       },
+       {
+        "label": "“The Map”, its Stories page: video testimonies as proof, 2007 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20070722165457/http://www.reachtruth.com/stories.html",
+        "note": "Testimonies offered as downloads, as hope and “deliverance”: the testimony economy before the platforms."
+       }
+      ]
      },
      {
       "k": "h3",

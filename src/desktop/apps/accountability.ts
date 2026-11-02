@@ -462,7 +462,9 @@ export class AccountabilityApp {
       }
     }
     // ⚑ S275 — the third leaving act: the system saw him open his own folder (a line of its own, after the ⟨S⟩ lines)
-    if (this.step === 'system' && this.extraSystemLine) { ctx.fillStyle = ERA1.warnDark; ctx.fillText(this.extraSystemLine, x, y + row * 13 + 4); }
+    //   ⚑ S297 (headset B: "a lot of error message there on top of the homosexual content") — after three wrapped ⟨S⟩
+    //   lines it landed on the classification row; it is the charge that comes with the streak's reset now, alone
+    if (this.step === 'streak' && this.extraSystemLine) { ctx.fillStyle = ERA1.warnDark; ctx.fillText(this.extraSystemLine, x, y); }
   }
   /** S275 — set by os.ts when he opened the "1997" folder before the commit-press */
   extraSystemLine: string | null = null;
