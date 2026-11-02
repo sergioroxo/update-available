@@ -40,7 +40,7 @@
           "",
           "Next task: see how it is done there."
         ],
-        "go": "Turn and look",
+        "go": "Go there",
         "decline": "Not now"
       }
     },
@@ -85,7 +85,7 @@
           "The counselling diagram is available",
           "for review in the adjoining room."
         ],
-        "go": "Turn and look",
+        "go": "Go there",
         "decline": "Not now"
       }
     },
@@ -127,7 +127,7 @@
           "The source is filed in the room",
           "next to yours."
         ],
-        "go": "Turn and look",
+        "go": "Go there",
         "decline": "Not now"
       }
     },
@@ -155,7 +155,7 @@
           "It has been routed for manual",
           "inspection. You may inspect it."
         ],
-        "go": "Turn and look",
+        "go": "Go there",
         "decline": "Not now"
       }
     }

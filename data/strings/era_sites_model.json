@@ -2103,7 +2103,7 @@
         "where": "Where: the desk."
        },
        {
-        "label": "A summons",
+        "label": "Your next task",
         "opt": "",
         "hint": "When the screen sends you somewhere, a marker appears on the floor. Press it to go — or stay.",
         "where": "Where: the floor."

@@ -73,10 +73,10 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S285 Frame 27 redrawn (two beds, the door, "room 3, the last night"); circled in red on the roll
 - ☑ S287 The pet closes back into Restorify
 - ☐ "Your file" wording and design; the testimony's sound and "Start here"
-- ☐ The summons: one name, 2003's window design, "Go to next task"
+- ☑ S295–S296 The task has one name ("Next task"), its button "Go there"; 2003's windows and buttons in XP style
 - ☐ Why "daily realignment" comes back; errors over the accountability content; the blank window outside
 - ☐ A small sound when the messenger pops in (needs a sound)
-- ☐ Restorify's update screen in 2003's style; the modem's colour
+- ◐ S295 2003 windows in XP style (Restorify included) · ☐ the modem's colour
 
 **2016**
 - ☑ S284 "Back to today" as a button at the end of each finished job 🥽
@@ -95,6 +95,12 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S287 The receipt scrolls back; "Back to Library" fits · ❓ sound for the receipt and the Lexicon (his music choice)
 
 ## Done since the headset session (newest first)
+
+- ☑ S296 — one name for the 2003 task
+- ☑ S295 — 2003's windows and buttons in XP style
+- ☑ S294 — the site viewer
+- ☑ S292 — 1.4× eye buffer (?xrscale=)
+- ☑ S291 — frame 27 in perspective; the Close's score; the dollhouse turntable
 
 - ☑ S290 — the four era websites
 - ☑ S289 — the path ring shows; Lambient's 2016 steps; a readable flood

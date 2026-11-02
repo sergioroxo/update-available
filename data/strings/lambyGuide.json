@@ -163,9 +163,9 @@
         ]
       },
       "send": {
-        "tip": "You have a summons. Press the envelope on the desktop.",
-        "here": "The envelope is on the left.",
-        "again": "It won't take long. The envelope is on the left.",
+        "tip": "There's a new task for you. Press Next task on the desktop.",
+        "here": "Next task is on the left of the desktop.",
+        "again": "It won't take long. Next task is on the left.",
         "target": [
           "icon-send"
         ],
