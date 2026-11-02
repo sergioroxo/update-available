@@ -911,7 +911,7 @@ export class E4Shell {
    *  on every seat cut (`app.ts`), and the ball reads it for the second refusal */
   /** ⚑ S209g / I1 — a press in the hall during the ball raises her lamp (ball.handleClick); false outside it */
   pressHall(): boolean {
-    if (this.stageNow !== 'ball' || this.ball.phaseId !== 'ball') return false;
+    if (this.stageNow !== 'ball' || this.ball.phaseId !== 'stream') return false;   // ⚑ S293: inside the stream, a press is her dance while her chips wait
     this.ball.handleClick();
     return true;
   }

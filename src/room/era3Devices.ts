@@ -1606,7 +1606,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // goes to it, because there is nothing else to press. It consumes them
       // even where it has nothing to do, so a press cannot fall through the
       // place onto the room behind it. S77's chips answer inside `handleClick`.
-      if (visor?.entity.enabled && shell?.worn) {
+      if (visor?.entity.enabled && (shell?.worn || shell?.stage === 'ball')) {   // ⚑ S293: the clear glass in the stream still carries her chips
         const onVisor = hitPlane(
           visor.entity, WORN.w, WORN.h, visor.logical.w, visor.logical.h, ray
         );
