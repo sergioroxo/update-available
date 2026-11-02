@@ -69,7 +69,7 @@ const JOIN = { x: INVITE.x + 14, y: INVITE.y + INVITE.h - 34, w: 104, h: 22 } as
 /** the player frame the link opens in, before it grows */
 const PLAYER = { x: 40, y: 54, w: 300, h: 190 } as const;
 /** her two chips, low on the clear glass, in the room's pink */
-const CHIPS_Y = 300;
+const CHIPS_Y = 262;
 const CHIP_W = 92;
 /** ⚑ the room ducks by this while a system sound plays (≈ 9 dB), as before */
 const DUCK_DB = -9;
@@ -106,6 +106,8 @@ export class E4Ball {
   /** the frame's rows that have failed so far */
   private rowsShown = 0;
   private worldIn = false;
+  /** the stream's place is on (from the glass clearing until the device stops) — it outlives the system's session */
+  private worldOn = false;
   /** the chat so far, and the count */
   private chat: (Line & { sys?: boolean })[] = [];
   private count = ST.count;
@@ -138,7 +140,7 @@ export class E4Ball {
   }
   private get growK(): number { const k = Math.min(1, this.t / FRAME.growSeconds); return k * k * (3 - 2 * k); }
   /** the stream's screen in the world is on from the moment she is inside */
-  get streaming(): boolean { return this.phase === 'stream' || this.phase === 'after'; }
+  get streaming(): boolean { return this.worldOn; }
   /** the stream is VIDEO: its screen repaints twelve times a second while it is on */
   get streamVersion(): number { return this.streaming ? 1 + Math.floor(this.streamT * 12) : 0; }
   /** true from the moment the glass clears — `E4Shell` reads it */
@@ -176,7 +178,7 @@ export class E4Ball {
   }
 
   update(dt: number): void {
-    if (this.phase === 'idle' || this.phase === 'done' || this.phase === 'invited') return;
+    if (this.phase === 'idle' || this.phase === 'invited' || (this.phase === 'done' && !this.worldOn)) return;
     const b4 = this.t;
     this.t += dt;
     if (this.phase === 'frame') {
@@ -193,6 +195,7 @@ export class E4Ball {
         // ⚑ at full cover the world behind the glass becomes the stream's place (app.ts's room hook cuts her to the
         //   spot in the same frame; in a headset that cut is presented through the particle veil)
         this.worldIn = true;
+        this.worldOn = true;
         setCommonsWorld(true);
         setCommonsFigures(true);
         setCommonsDance(true);
@@ -215,6 +218,7 @@ export class E4Ball {
     // the stage light walks the floor with the dancer, slowly; a landing lifts it
     const flare = this.answeredAt >= 0 && this.streamT - this.answeredAt < 2 ? 1 : 0;
     setBallLight({ level: 1, station: 2.5 + 1.2 * Math.sin(this.streamT * 0.25), flare });
+    // ⚑ the stream keeps going under the failure: its clock, its chat and its screen run on after the session ends
     // the chat, a line at a time (it waits on her chips; it never waits on a clock to let her in)
     if (!this.asking && this.streamT >= this.nextLineAt && this.queue.length) {
       const l = this.queue.shift()!;
@@ -292,7 +296,6 @@ export class E4Ball {
     this.hits = [];
     this.asking = false;
     stopClip(this.reconnect); this.reconnect = null;
-    this.removeCaption();
     this.version++;
     this.onOver?.();
   }
@@ -301,6 +304,7 @@ export class E4Ball {
   clearLamps(): void { /* the lamps are gone (ENDING_TRANSJESUS) */ }
   /** the device has stopped: the stream's place goes and the room she was in comes back */
   leaveWorld(): void {
+    this.worldOn = false;
     setCommonsWorld(false); setCommonsFigures(false); setCommonsDance(false); greetCommonsFigures(false);
     setBallLight(null);
     this.removeCaption();

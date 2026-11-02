@@ -341,7 +341,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     // ⚑ S293 — TRANSJESUS, dancing on the floor: a step side to side, a sway, the arms rising and opening on the
     //   beat, a gown and a crown in the stream's own colours. Faceless like everyone; the brightest thing in the place.
     const tjBeat = t * Math.PI * 2 * (122 / 60) / 2;
-    const tjX = STAGE.x - 0.35 + 0.18 * Math.sin(t * 0.7), tjZ = STAGE.z + 0.75 * Math.sin(t * 0.45);
+    const tjX = STAGE.x - 0.35 + 0.18 * Math.sin(t * 0.7), tjZ = STAGE.z - 0.65 + 0.35 * Math.sin(t * 0.45);   // under the picture, clear of the chat
     for (let i = 0; i < PERFORMERS; i++) {
       if (i === 0 && danceK > 0 && !sunk) {
         const h = 1.72, w = 0.31, base = STAGE.y + STAGE.h + 0.01 + (danceK - 1) * 2.2;
@@ -373,7 +373,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     }
     // the light under them — a flat pale patch, on the floor, where they are
     if (nWalk > 0) box(px, pBase - 0.008, RUNWAY.z, 0.55, 0.004, 0.35 + nWalk * 0.28);
-    else if (danceK > 0 && !sunk) box(tjX, STAGE.y + STAGE.h + 0.006, tjZ, 0.6, 0.004, 0.7);
+    else if (danceK > 0 && !sunk) box(tjX, STAGE.y + STAGE.h + 0.006, tjZ, 0.42, 0.004, 0.46);
     else sinkBox(px, RUNWAY.z);
     // (the stage itself is the hall's — commonsWorld.ts; this box is spare and sunk)
     box(STAGE.x, SUNK_Y, STAGE.z, 0.1, 0.1, 0.1); void stageK;
@@ -410,7 +410,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   perfMat.diffuseVertexColor = true;
   perfMat.specular = new pc.Color(0, 0, 0);
   perfMat.emissiveVertexColor = true;
-  perfMat.emissive = new pc.Color(0.92, 0.92, 0.92);
+  perfMat.emissive = new pc.Color(0.62, 0.62, 0.62);   // ⚑ S293: 0.92 washed TransJesus to white under the stage light
   perfMat.update();
   ent.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat), new pc.MeshInstance(perfMesh, perfMat)] });
   ent.render!.meshInstances[0].cull = false;

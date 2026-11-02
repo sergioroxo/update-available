@@ -36,7 +36,7 @@ export const WORLD = {
   /** the screen behind it — big, and six metres off. ⚑ 2026-09-13: raised to
    *  y 2.75 and widened to 3.2 m: at 2.2 the walker on the stage stood in front
    *  of the stream and covered the category caption from the seat. */
-  screen: { x: 11.4, y: 2.75, z: 0.7, w: 3.4, h: 1.9 },
+  screen: { x: 11.4, y: 2.45, z: 0.7, w: 3.4, h: 1.9 },   // ⚑ S293: 2.75 → 2.45 so the stream's title and count are in the seat's frame
   /** ⚑ S209g (his, 2026-10-03: "it boxes off the space, instead of letting it breathe") — NO WALLS.
    *  The hall is an open platform under the sky, the way a social-VR world floats: a slab with a rim of
    *  light at its edge, the dusk all the way round the horizon, the stars overhead. (The walls of

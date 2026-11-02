@@ -1174,9 +1174,9 @@ export class E4Browser {
       for (const it of body.care.items as Array<{ what: string; when: string; why: string }>) {
         roundRect(ctx, x, y + 3, 6, 6, 3, WEB.accent);
         ctx.fillStyle = WEB.ink; ctx.fillText(it.what, x + 12, y);
-        setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(`${it.when}  ·  ${it.why}`, x + 150, y + 1);
+        setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(`${it.when}  ·  ${it.why}`, x + 12, y + 11);
         setFont(ctx, 9);
-        y += 14;
+        y += 24;
       }
       ctx.fillStyle = WEB.muted; ctx.fillText(`${body.care.invite.from} — “${body.care.invite.text}”  ·  ${body.care.invite.when}`, x + 12, y); y += 18;
       // her story, beside the one the session will play her
@@ -1989,7 +1989,7 @@ export class E4Browser {
   handOverLid(): void { this.phase = 'handed'; this.version++; }
   /** ⚑ 2026-09-13: the device has stopped — the agent's page cannot be reached
    *  any more, and the monitor says so (see `body.failed`). */
-  fail(): void { if (this.phase !== 'failed') { this.phase = 'failed'; this.failT = 0; this.version++; } }
+  fail(): void { if (this.phase !== 'failed') { this.phase = 'failed'; this.failT = 0; if (this.streamOpen) this.live = 0; this.version++; } }
   private failT = 0;
   /** ⚑ S293 — the link she opened is open on this machine too: when the device stops, the monitor shows the stream */
   private streamOpen = false;
