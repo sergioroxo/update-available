@@ -877,8 +877,9 @@ async function main() {
   const guidedAllows = (t, st, seen) => {
     if (!GUIDED_WALK) return true;
     const id = t.id, led = st?.ledger, has = key => led?.records?.includes(key);
-    // L has finished all five turns. The headset call is now the door onward;
-    // reopening completed tabs adds no story and can hide that door from an audit.
+    // ⚑ S293 — the agent's conversation is over (the original confirmed, "Put the headset on."). The headset is
+    // now the door onward; reopening tabs adds no story and can hide that door from an audit. Inside the stream the
+    // glass publishes her two chips (stream-dance / stream-stay); either is the way on.
     if (st?.era === 'e4' && st?.bstate?.done && t.surface === 'e4.browser') return false;
     if (/^start-menu$|^sm-|^icon-(?:provotype|lambyrig|rootcause|forum|your-file|found-file|era-1)$|^irc-close$|^record-chip$/.test(id)) return false;
     if (/^min-|^taskbar-/.test(id)) return false;
