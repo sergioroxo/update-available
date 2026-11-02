@@ -74,7 +74,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S287 The pet closes back into Restorify
 - ☐ "Your file" wording and design; the testimony's sound and "Start here"
 - ☑ S295–S296 The task has one name ("Next task"), its button "Go there"; 2003's windows and buttons in XP style
-- ☑ S297 the evening check-in titled and announced as the evening's · ☐ errors over the accountability content; the blank window outside
+- ☑ S297 the evening check-in titled and announced as the evening's · ☑ S298 the 1997 charge no longer covers the classification · ☑ S299 a view in every window
 - ☐ A small sound when the messenger pops in (needs a sound)
 - ◐ S295 2003 windows in XP style (Restorify included) · ☐ the modem's colour
 
@@ -95,6 +95,10 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S287 The receipt scrolls back; "Back to Library" fits · ❓ sound for the receipt and the Lexicon (his music choice)
 
 ## Done since the headset session (newest first)
+
+- ☑ S299 — a view in every window (2003 dusk, 2016 rain, 2026 city)
+- ☑ S298 — the alert's lines no longer overlap; his archive finds on the 2003/2016 sites and in the article
+- ☑ S297 — the evening check-in reads as the evening's
 
 - ☑ S296 — one name for the 2003 task
 - ☑ S295 — 2003's windows and buttons in XP style

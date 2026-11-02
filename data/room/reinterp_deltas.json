@@ -491,6 +491,7 @@
    "danielHandheld"
   ],
   "add": [
+   {"id": "winView2003", "pos": [-0.95, 1.55, -0.672], "size": [0.72, 0.82, 0.004], "color": "#C9A07A", "emissive": true, "print": "dusk2003", "_docS299": "⚑ S299 (headset B: \"the window outside is blank\") — the 2003 view: dusk over the street (his S179: never daylight), a thin plate in front of the pane, so 1997's night and its moon are untouched."},
    {
     "id": "crtLcdPanel",
     "pos": [
@@ -991,7 +992,7 @@
     "color": "#E6D2BC",
     "yaw": 90
    },
-   {"id": "w_winPane", "pos": [-5.67, 1.62, 1.55], "size": [0.7, 0.62, 0.03], "color": "#6C7BA8", "emissive": true, "yaw": 90, "_docS179": "⚑ S179 / R5-01: Vera's window in the EARLY EVENING, a dusk blue — not the daylight grey-blue it was."},
+   {"id": "w_winPane", "print": "evening2016", "pos": [-5.67, 1.62, 1.55], "size": [0.7, 0.62, 0.03], "color": "#6C7BA8", "emissive": true, "yaw": 90, "_docS179": "⚑ S179 / R5-01: Vera's window in the EARLY EVENING, a dusk blue — not the daylight grey-blue it was."},
    {
     "id": "w_winTop",
     "pos": [
@@ -1478,7 +1479,7 @@
     "yaw": 270
    },
    {
-    "id": "e_winPane",
+    "id": "e_winPane", "print": "night2026",
     "pos": [
      5.67,
      1.62,

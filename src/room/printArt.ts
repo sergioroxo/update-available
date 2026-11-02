@@ -21,18 +21,65 @@
 import { px, text, textW, disc, line, sprite, gradient, hand, type Ctx } from './calendarArt';
 import { PRINT as P } from '../desktop/theme/calendar';
 
-export type PrintId = 'release1997' | 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard';
+export type PrintId = 'release1997' | 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard' | 'dusk2003' | 'evening2016' | 'night2026';
 
 /** each print's pixel size, ~2 px per centimetre of the prop it hangs on */
 export const PRINT_SIZE: Record<PrintId, [number, number]> = {
   release1997: [60, 90], rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
   tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100],
-  drawer12: [24, 12], campTag: [36, 22], referral1997: [60, 80], rules2003: [42, 56], indexCard: [26, 16]
+  drawer12: [24, 12], campTag: [36, 22], referral1997: [60, 80], rules2003: [42, 56], indexCard: [26, 16],
+  dusk2003: [72, 82], evening2016: [70, 62], night2026: [70, 62]
 };
 
 const centre = (c: Ctx, s: string, y: number, col: string, W: number, sc = 1): void => {
   text(c, s, Math.round((W - textW(s, sc)) / 2), y, col, sc);
 };
+
+/**
+ * ⚑ S299 — THE VIEWS (headset B, 2003: "I just noticed that the window outside is blank"). Each room's window gets
+ * the outside of its own year, drawn from the prints' existing palette: 2003 at dusk (his S179 ruling: never daylight,
+ * "the intimacy of later in day"), 2016 a December evening in the rain, 2026 a city at night. Nothing in them moves.
+ */
+/** a sky in flat bands (the prints' dithered gradient read as a grid behind window glass) */
+function bands(c: Ctx, H: number, W: number, stops: [string, number][]): void {
+  let y = 0;
+  for (const [col, frac] of stops) { const h = Math.round(H * frac); px(c, 0, y, col, W, h); y += h; }
+  if (y < H) px(c, 0, y, stops[stops.length - 1][0], W, H - y);
+}
+function dusk2003(c: Ctx, W: number, H: number): void {
+  bands(c, H, W, [[P.filmSky, 0.38], [P.rallyNight, 0.14], [P.filmDawn, 0.16], [P.filmSun, 0.32]]);
+  disc(c, Math.round(W * 0.7), Math.round(H * 0.74), 7, P.filmSun);                 // the sun going down
+  for (let x = 0; x < W; x++) {                                                    // the rooftops across the street
+    const roof = Math.round(H * 0.7 - 8 * (((Math.floor(x / 14) * 7) % 3) / 2) - (x % 14 < 3 ? 3 : 0));
+    px(c, x, roof, P.filmMan, 1, H - roof);
+  }
+  for (let i = 0; i < 5; i++) px(c, 6 + i * 15, Math.round(H * 0.74), P.filmRoadLit, 2, 2);   // a lit window or two
+  px(c, 10, Math.round(H * 0.3), P.rallyHill, 3, Math.round(H * 0.7));             // the tree in front: trunk …
+  disc(c, 11, Math.round(H * 0.32), 11, P.rallyHill);                              // … and crown
+  px(c, W - 14, Math.round(H * 0.5), P.filmMan, 1, Math.round(H * 0.5));            // the streetlight
+  px(c, W - 17, Math.round(H * 0.5), P.filmSun, 5, 2);
+}
+function evening2016(c: Ctx, W: number, H: number): void {
+  bands(c, H, W, [[P.tourDark, 0.3], [P.tourGrain, 0.25], [P.tourHaze, 0.45]]);
+  for (let x = 0; x < W; x++) {                                                    // the terrace opposite
+    const top = Math.round(H * 0.45 + ((Math.floor(x / 10) % 3) * 3));
+    px(c, x, top, P.tourHands, 1, H - top);
+  }
+  for (let r = 0; r < 3; r++) for (let i = 0; i < 6; i++) if ((r * 5 + i * 3) % 4 !== 0) px(c, 4 + i * 11, Math.round(H * 0.55) + r * 8, P.tourSpot, 3, 3);   // its windows, lit
+  for (let i = 0; i < 12; i++) {                                                   // the rain on the glass
+    const x = (i * 29 + 7) % W, y = (i * 23) % (H - 4);
+    px(c, x, y, P.tourHaze, 1, 3);
+  }
+}
+function night2026(c: Ctx, W: number, H: number): void {
+  bands(c, H, W, [[P.ballBg, 0.6], [P.ballGlow, 0.4]]);
+  for (let b = 0; b < 7; b++) {                                                    // the towers
+    const x = b * 10, top = Math.round(H * (0.35 + ((b * 7) % 4) * 0.08));
+    px(c, x, top, P.tourHands, 9, H - top);
+    for (let y = top + 3; y < H - 2; y += 5) for (let k = 0; k < 2; k++) if ((x + y + k) % 3) px(c, x + 2 + k * 4, y, (y + b) % 4 ? P.ballGold : P.ballBlue, 2, 2);
+  }
+  px(c, 33, Math.round(H * 0.32), P.ballPink, 2, 2);                               // a mast's light
+}
 
 function rally1997(c: Ctx, W: number, H: number): void {
   gradient(c, 0, 70, [P.rallyNight, P.rallyNight, P.rallyDawn, P.rallyGlow], W);
@@ -299,7 +346,8 @@ function indexCard(c: Ctx, W: number, H: number): void {
 }
 
 const DRAW: Record<PrintId, (c: Ctx, W: number, H: number) => void> = {
-  release1997, rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard
+  release1997, rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard,
+  dusk2003, evening2016, night2026
 };
 
 export function drawPrint(c: Ctx, id: PrintId): void {
