@@ -1572,6 +1572,9 @@ export class DesktopOS {
       return;
     }
     this.messagePending = true;
+    // ⚑ S300 (headset B: "now the messenger appeared. Like this needs like a pop-in sound … like a small, like cute sound")
+    //   — the messenger's own ping (caleb.ts plays it per line), once, as its icon lands on the desk
+    playOnce('notify_2003.mp3');
     // the second act's set-up: the programme's reminder waits on Restorify's icon; the third's: his folder is marked
     this.restorifyReminder = true; this.folder1997Unread = true;
     this.onMessageReady?.();
