@@ -436,7 +436,7 @@
    "curtainRight": {
     "color": "#8FA3B8"
    },
-   "modem": {
+   "modem": { "color": "#1E1E22", "_docS300": "⚑ S300 (headset B: \"that modem should be probably in a different color\") — 2003's box is dark, as the decade's modems were; the crtLcdPanel's own charcoal.",
     "pos": [0.34, 0.77, -0.25],
     "_docS177": "⚑ S177 / R4-26 — THE MODEM IS BACK. Sérgio, 2026-09-24: 'the one we had was fine, it was just poorly positioned.' S174 had retired it from 2003 with his crosses; it returns as the same 1997 box, moved off the desk's front-right (where it sat against the phone and the mouse) to the back, between the monitor's foot and the tower, its light facing the seat. Removed at r4 with the rest of the desk."
    },

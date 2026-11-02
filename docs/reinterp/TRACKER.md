@@ -75,8 +75,8 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☐ "Your file" wording and design; the testimony's sound and "Start here"
 - ☑ S295–S296 The task has one name ("Next task"), its button "Go there"; 2003's windows and buttons in XP style
 - ☑ S297 the evening check-in titled and announced as the evening's · ☑ S298 the 1997 charge no longer covers the classification · ☑ S299 a view in every window
-- ☐ A small sound when the messenger pops in (needs a sound)
-- ◐ S295 2003 windows in XP style (Restorify included) · ☐ the modem's colour
+- ☑ S300 the messenger pings when it lands
+- ☑ S295 2003 windows in XP style (Restorify included) · ☑ S301 the modem dark
 
 **2016**
 - ☑ S284 "Back to today" as a button at the end of each finished job 🥽
