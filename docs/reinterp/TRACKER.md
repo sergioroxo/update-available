@@ -17,7 +17,6 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ## Waiting for Sérgio
 
-- ❓ **The 2026 ending is the TransJesus stream** (his 2 Nov: "why isn't this the TransJesus?"; the ballroom and the lamps go) — ENDING_TRANSJESUS_2026-11-02.md. Needs his yes, then build. No trigger-safe mode in 2016 (his 2 Nov).
 
 - ❓ **2026 v2 and weaponised care** — RESEARCH_2026_V2_WEAPONISED_CARE_2026-11-01.md is in: beats V0–V12 (the update installs the defaults + the agent as recommended assistant; search from "the default"; the agent chat; the loop through Meridian, whose refusal now reads "Referred by Second Thoughts", back to the agent quoting it; the face-swap composite marked speculative; a "story" card made from her own chips; Junie's thread asks for nothing; "original kept" is the lever); the weaponised-care audit of all four eras; three ending spaces for the Commons (The Table / The Floor, described / The Making — the agent's pick: The Making ending on The Table; food replaces the lamp motif); what moves to 2016 (a "trigger-safe" mode that hides identity words). WEAPONISED_CARE_NOTE_2026-11-01.md for the article. Needs his read + his pick of the ending space. Do NOT stage the real influencer case (living person; mechanism only).
 - ❓ **2016 rebuilt around Vera and one digital risk** — RESEARCH_2016_VERA_APPARATUS_2026-11-01.md is in: the apparatus 2016 teaches is the TESTIMONY PIPELINE (template → house-style edit → four places at once → reused in a campaign, the raw kept); 8 beats with her own 2014 story at the centre ("Story Record" replaces the contributor tools, offered before Malta); Nuala felt, The Wick respite (mug + stamp card on the desk, replacing the dead pen); Malta breaks it by outnumbering it; an optional "Take my story down" that shows the copies. Needs his yes + three calls: the trans-as-trigger metrics row (Target boycott 2016) yes/no; keep the take-down press; the marks "Story Record" etc. (The flagged Malta date is fine: the phone reads Tuesday 6 December 2016.)
@@ -32,6 +31,8 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ❓ **The dollhouse slider** ("we should be able to slide it") — what should sliding do?
 
 ## Building now
+
+- ◐ **2026 v2 + the TransJesus ending** (his yes, 2 Nov: "sure we can try. Make this good and storytelling"; V0–V12 "yes") — a build agent (worktree) is writing and building it end to end, photographing it with the tour and walking it to the Close → ERA4_V2_BUILT_2026-11-02.md. No trigger-safe mode in 2016 (his 2 Nov).
 
 - ◐ **Websites inside the experience** (his 1 Nov): an agent is building a site viewer — the era sites drawn into a period window with minimise, close and scroll, in the browser and floating in the headset; opened from the menu's Sources and the Close; Truth in Love added to 1997's sources.
 - ☑ S291 **The dollhouse turntable**: stick turns and zooms; a hand turns it; it stays while handled 🥽
