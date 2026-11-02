@@ -74,7 +74,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S287 The pet closes back into Restorify
 - ☐ "Your file" wording and design; the testimony's sound and "Start here"
 - ☑ S295–S296 The task has one name ("Next task"), its button "Go there"; 2003's windows and buttons in XP style
-- ☐ Why "daily realignment" comes back; errors over the accountability content; the blank window outside
+- ☑ S297 the evening check-in titled and announced as the evening's · ☐ errors over the accountability content; the blank window outside
 - ☐ A small sound when the messenger pops in (needs a sound)
 - ◐ S295 2003 windows in XP style (Restorify included) · ☐ the modem's colour
 

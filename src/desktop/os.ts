@@ -1567,7 +1567,7 @@ export class DesktopOS {
       if (this.eveningCheckin === 'due' && !this.restorify?.open) { this.eveningCheckin = 'done'; if (this.restorify) this.restorify.evening = false; }
       else if (this.eveningCheckin === 'none' && this.desktopIdle()) {
         this.eveningCheckin = 'due'; this.openRestorify();
-        if (this.restorify) { this.restorify.onEveningDone = () => { this.eveningCheckin = 'done'; this.dirty = true; }; this.restorify.startEvening(); }
+        if (this.restorify) { this.restorify.onEveningDone = () => { this.eveningCheckin = 'done'; this.dirty = true; }; this.restorify.startEvening(); this.toast = { text: lambyStrings.eveningToast, t: 6 }; }
       }
       return;
     }

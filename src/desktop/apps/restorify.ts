@@ -126,7 +126,9 @@ export class RestorifyApp {
       return;
     }
     const { dx, dy } = this.geom;
-    const c = ui.windowFrame(ctx, dx, dy, DW, DH, lamby.restorifyTitle, true, 'restorify');
+    // ⚑ S296 (headset B: "we're back to the daily realignment. Why?") — the evening's own title, so it reads as the second
+    //   check-in of the day (Daniel's first leaving act), not the morning's coming round again
+    const c = ui.windowFrame(ctx, dx, dy, DW, DH, this.evening ? `Restorify — ${lamby.eveningTitle}` : lamby.restorifyTitle, true, 'restorify');
     this.hits.push({ ...c.closeBox, id: this.lastChip ? 'checkin-continue' : 'restorify-close' });
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     const L = c.x + 10;
