@@ -90,6 +90,12 @@ export function topFrameAt(x: number, y: number): FrameRec | null {
   return null;
 }
 
+/** ⚑ S295 (headset B: 2003 "the start bar … inspired by XP" but the windows "still the old design of 1997"; "Restorify
+ *  should be more in tune with the style of 2003") — the frame's skin: 'classic' (1997) or 'xp' (2003). os.ts sets it
+ *  for each draw; the geometry (content rect, close and minimise boxes) is identical in both, so no layout moves. */
+let frameSkin: 'classic' | 'xp' = 'classic';
+export function setFrameSkin(skin: 'classic' | 'xp'): void { frameSkin = skin; }
+
 /** Window frame with two-tone title bar + close box. Returns content rect.
  *  `minKey` (S165): the window minimises — a `_` box beside the close box, and
  *  a taskbar button under that key (os.ts). */
@@ -97,8 +103,9 @@ export function windowFrame(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, title: string, active = true, minKey?: string
 ): ContentRect {
-  bevel(ctx, x, y, w, h, true);
   const barH = 16;
+  if (frameSkin === 'xp') return xpFrame(ctx, x, y, w, h, barH, title, active, minKey);
+  bevel(ctx, x, y, w, h, true);
   // banded "gradient" (period-true: hard bands, no smooth ramps)
   const half = Math.floor((w - 6) / 2);
   px(ctx, x + 3, y + 3, half, barH, active ? ERA1.navy : ERA1.grey);
@@ -127,7 +134,13 @@ export function button(
   x: number, y: number, w: number, h: number, label: string,
   opts: { disabled?: boolean; hover?: boolean } = {}
 ): void {
-  bevel(ctx, x, y, w, h, true);
+  if (frameSkin === 'xp') {
+    // S295 — 2003's button: a pale face in a navy outline, its corners knocked off, the hover a blue edge
+    px(ctx, x + 1, y, w - 2, h, opts.hover && !opts.disabled ? ERA1.titleBlue : ERA1.navy);
+    px(ctx, x, y + 1, w, h - 2, opts.hover && !opts.disabled ? ERA1.titleBlue : ERA1.navy);
+    px(ctx, x + 1, y + 1, w - 2, h - 2, ERA1.paper);
+    px(ctx, x + 1, y + h - 3, w - 2, 2, ERA1.beige);
+  } else bevel(ctx, x, y, w, h, true);
   setFont(ctx, 10);
   ctx.fillStyle = opts.disabled ? ERA1.grey : opts.hover ? ERA1.navy : ERA1.black;
   const tw = ctx.measureText(label).width;
@@ -225,3 +238,32 @@ export const FRAME = {
   rule: '#383840',
   edge: '#303038'
 } as const;
+
+/** the 2003 window: a blue frame, a deep title bar with a light top edge, the red close box — ERA1 colours only */
+function xpFrame(
+  ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, barH: number,
+  title: string, active: boolean, minKey?: string
+): ContentRect {
+  const blue = active ? ERA1.titleBlue : ERA1.grey, deep = active ? ERA1.navy : ERA1.greyDark;
+  px(ctx, x, y, w, h, deep);                                   // the frame
+  px(ctx, x + 3, y + 3 + barH + 2, w - 6, h - barH - 8, ERA1.beige);   // the body
+  px(ctx, x + 1, y + 1, w - 2, barH + 3, blue);                // the title bar
+  px(ctx, x + 1, y + barH + 2, w - 2, 2, deep);                // its deeper foot
+  ctx.save(); ctx.globalAlpha = 0.45; px(ctx, x + 2, y + 1, w - 4, 2, ERA1.white); ctx.restore();   // its light top edge
+  px(ctx, x, y, 2, 2, ERA1.black); px(ctx, x + w - 2, y, 2, 2, ERA1.black);   // rounded-looking corners
+  setFont(ctx, 10);
+  ctx.fillStyle = ERA1.white;
+  ctx.fillText(title, x + 8, y + 6);
+  const cb = { x: x + w - 17, y: y + 5, w: 12, h: 12 };
+  px(ctx, cb.x, cb.y, cb.w, cb.h, active ? ERA1.warn : ERA1.grey);
+  px(ctx, cb.x, cb.y, cb.w, 1, ERA1.white);
+  ctx.fillStyle = ERA1.white; ctx.fillText('x', cb.x + 3, cb.y + 1);
+  let mb: Rect | undefined;
+  if (minKey) {
+    mb = { x: cb.x - 14, y: cb.y, w: 12, h: 12 };
+    px(ctx, mb.x, mb.y, mb.w, mb.h, ERA1.navy); px(ctx, mb.x, mb.y, mb.w, 1, ERA1.white);
+    px(ctx, mb.x + 3, mb.y + 8, 6, 2, ERA1.white);
+  }
+  framesDrawn.push({ key: minKey, x, y, w, h, minBox: mb });
+  return { x: x + 4, y: y + 3 + barH + 2, w: w - 8, h: h - barH - 9, closeBox: cb, minBox: mb };
+}

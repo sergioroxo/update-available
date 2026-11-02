@@ -2601,6 +2601,7 @@ export class DesktopOS {
     this.hits = [];
     this.lambyGuidePaint = { rings: [], balloon: false };
     this.iconsDrawn = [];
+    ui.setFrameSkin(this.phase === 'desktop' && this.desktopEra === 'e2' ? 'xp' : 'classic');   // S295: 2003's windows
     this.glowPath = this.reinterp && this.phase === 'desktop' && this.desktopEra !== 'e4' ? pathTargets(this, this.desktopEra) : new Set();
     if (this.setup?.open) { this.setup.draw(this.ctx); if (this.xrScale) xrOutline(this.ctx, this.xrHover); return; }
 
