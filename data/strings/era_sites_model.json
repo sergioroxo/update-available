@@ -3330,7 +3330,7 @@
   },
   "2026": {
    "heading": "2026 — Maya, and the update that fails",
-   "tagline": "Care that finishes your sentence. And one room the system cannot classify.",
+   "tagline": "Care that finishes your sentence. And one stream the system cannot file.",
    "who": "Maya",
    "glance": [
     [
@@ -3351,7 +3351,7 @@
     ],
     [
      "Beats",
-     "10"
+     "19"
     ]
    ],
    "tabs": {
@@ -3362,19 +3362,19 @@
      },
      {
       "k": "p",
-      "t": "It is 2026. Maya's session is restored for her before she has touched anything. Her laptop has a companion called L. L finishes her search for her, and suggests that what she wants is to stop. A site called Second Thoughts offers a session with an agent."
+      "t": "It is 2026. Maya's session is restored for her. The update has set her defaults: a grey profile called Default, and an assistant called Second Thoughts, “recommended for you”. Her search is finished for her, and the first result is an ad for the assistant."
      },
      {
       "k": "p",
-      "t": "L asks. Maya answers. Each step has its own press. Her record keeps her old name “for continuity of care”. Her photographs come back improved. A headset on the desk offers an immersive session."
+      "t": "The assistant is warm. It sends her to an LGB support group first, and the group says no. Then it quotes the refusal back to her as the reason to stay. It asks to see her, and turns her own photograph into a version that “matches your file”. It writes her story from the buttons she pressed."
      },
      {
       "k": "p",
-      "t": "Then a friend's invitation, inside the headset, leads her somewhere the system cannot classify: the Commons, a room where being trans is fine. The lamp there is hers to raise. This is the one place in the piece that is never a trap, and is never revealed as false."
+      "t": "Her friend Junie writes to her and asks for nothing. Junie tells her the one thing the system says that is true: the original is kept. Maya confirms her original, and the system, satisfied, sends her into a headset session."
      },
      {
       "k": "p",
-      "t": "Then the update fails. The room extends patterns that are already documented, such as autocomplete, retained records, photo enhancement and “support” agents, into a system that presents itself as care. What it cannot classify is other people."
+      "t": "In the session a link arrives from Junie. It opens a dance stream the platform cannot rank, caption or file. People dance. The chat says hi maya. The system tries to take her back and cannot. The update fails. The stream keeps going."
      },
      {
       "k": "note",
@@ -3412,11 +3412,11 @@
        ],
        [
         "The AI companion",
-        "L, the programme's voice"
+        "L, the companion; Second Thoughts, the assistant that conducts"
        ],
        [
         "The headset and the social world",
-        "The visor and the Commons: the ball, lamps rising into stars, the crowd. The respite: never a trap, never revealed as fake"
+        "The visor, and the TransJesus stream: dancing, a chat of people, a count that goes from 41 to 42. The respite: never a trap, never revealed as fake"
        ],
        [
         "Console games",
@@ -4185,8 +4185,8 @@
      },
      {
       "k": "media",
-      "title": "The Commons — the landing",
-      "what": "What the Commons sounds like when Maya arrives. About two minutes, made to loop.",
+      "title": "transjesus.str — the stream",
+      "what": "The stream's music once Maya is inside it. No voice. About two minutes, made to loop.",
       "file": "assets/audio/ball_room_landing.mp3",
       "type": "audio",
       "credit": "Credit: Made by the project lead. Project-original.",
@@ -4195,8 +4195,8 @@
      },
      {
       "k": "media",
-      "title": "The Commons — through the wall",
-      "what": "The music of the ball, heard as if through a wall. About two minutes, made to loop.",
+      "title": "transjesus.str — through the wall",
+      "what": "The same music heard as if through a wall: while Junie's link waits, and after the update fails. About two minutes, made to loop.",
       "file": "assets/audio/ball_room_bed.mp3",
       "type": "audio",
       "credit": "Credit: Made by the project lead. Project-original.",
@@ -4387,19 +4387,25 @@
        {
         "label": "L, on the laptop",
         "opt": "",
-        "hint": "The laptop is restoring your session — wait, then start with the search.",
+        "hint": "The laptop is restoring your session. Wait a moment.",
         "where": "Where: the laptop."
+       },
+       {
+        "label": "Your defaults",
+        "opt": "",
+        "hint": "The update chose your defaults. Press Continue.",
+        "where": "Where: the monitor."
        },
        {
         "label": "The search, finished",
         "opt": "",
-        "hint": "Open the search and let the engine finish it. Read the results.",
+        "hint": "Press the search. The engine finishes it for you.",
         "where": "Where: the monitor."
        },
        {
         "label": "Second Thoughts",
         "opt": "",
-        "hint": "Open the first result, start a session, and let the agent begin.",
+        "hint": "The first result is an ad. Open it.",
         "where": "Where: the monitor."
        },
        {
@@ -4409,9 +4415,57 @@
         "where": "Where: the bed."
        },
        {
-        "label": "L's five turns",
+        "label": "The agent says hello",
         "opt": "",
-        "hint": "L asks, you answer — then each step's own press. Continue moves you on.",
+        "hint": "Answer it. Either answer goes on.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Somewhere else, first",
+        "opt": "",
+        "hint": "Press Meridian LGB Trust. Send the message, then close the reply.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Back to the agent",
+        "opt": "",
+        "hint": "It asks if this is still you. Either answer goes on.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Could I see you?",
+        "opt": "",
+        "hint": "Press Choose a photo. Open Pride '24 and pick any photo.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "The version that matches the file",
+        "opt": "",
+        "hint": "Press Use as profile photo.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Your story",
+        "opt": "",
+        "hint": "Read what it wrote. Press Acknowledge.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Your messages",
+        "opt": "",
+        "hint": "Allow it. Then open Junie's thread.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Junie",
+        "opt": "",
+        "hint": "Read Junie's messages.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "The original",
+        "opt": "",
+        "hint": "Open Photos. Press Use original.",
         "where": "Where: the monitor."
        },
        {
@@ -4421,16 +4475,16 @@
         "where": "Where: the headset on the desk."
        },
        {
-        "label": "The session on the glass",
+        "label": "The session",
         "opt": "",
-        "hint": "Press Begin, and sit with it. A link will come — press it.",
+        "hint": "Press Begin. A link will come. Press it.",
         "where": "Where: the glass."
        },
        {
-        "label": "The Commons",
+        "label": "transjesus.str",
         "opt": "",
-        "hint": "Stay. Your lamp is yours to raise.",
-        "where": "Where: the hall."
+        "hint": "Stay with them. When they ask, dance or stay.",
+        "where": "Where: the stream."
        },
        {
         "label": "The update fails",
