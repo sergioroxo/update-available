@@ -1,3 +1,4 @@
+import { runtimeQuery, festivalEdition } from './edition';
 import { REFERENCE } from './desktop/theme/chrome';
 /**
  * YOUR UPDATE HAS FAILED — entry point.
@@ -16,8 +17,8 @@ import './state/ledger'; // installs the beforeunload wipe
 const canvas = document.getElementById('app') as HTMLCanvasElement | null;
 if (!canvas) throw new Error('missing #app canvas');
 
-const query = new URLSearchParams(window.location.search);
-const reinterp = query.get('reinterp') === '1';
+const query = runtimeQuery();
+const reinterp = festivalEdition || query.get('reinterp') === '1';
 if (reinterp) {
   document.documentElement.dataset.reinterp = '1';
   if (query.get('entrance') !== 'home' && query.get('home') !== '0') {

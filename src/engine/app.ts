@@ -1,3 +1,5 @@
+import { xrAccessAllowed } from '../frame/xrAccess';
+import { runtimeQuery, festivalEdition } from '../edition';
 import { tapePlayerBus } from '../desktop/apps/tapePlayer';
 import { requestFullscreenSoft, reenterFullscreenIfMarked } from '../frame/fullscreen';
 import { restartVisit } from '../frame/restart';
@@ -584,8 +586,16 @@ let preparedXrShell: AppShell | null = null;
 let preparedXrReady: Promise<boolean> | null = null;
 let immersiveVrRequested = false;
 
+/** PlayCanvas otherwise probes immersive sessions even when the host forbids them. */
+class AudienceApplication extends pc.Application {
+  override init(options: pc.AppOptions): void {
+    if (festivalEdition && !xrAccessAllowed()) Reflect.deleteProperty(options, 'xr');
+    super.init(options);
+  }
+}
+
 function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
-  const app = new pc.Application(canvasEl, {
+  const app = new AudienceApplication(canvasEl, {
     graphicsDeviceOptions: { antialias: false, alpha: false }
   });
   app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
@@ -627,7 +637,7 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
       //   through an intermediate target, so the layer's MSAA reaches every pixel). `?xrscale=1.6` tries other values
       //   in the headset without a build.
       antialias: true, alpha: true, depth: true, stencil: true,
-      framebufferScaleFactor: Math.max(1, Math.min(1.6, Number(new URLSearchParams(location.search).get('xrscale')) || Math.max(1.4, Math.min(1.5, native))))
+      framebufferScaleFactor: Math.max(1, Math.min(1.6, Number(runtimeQuery().get('xrscale')) || Math.max(1.4, Math.min(1.5, native))))
     });
     if ('fixedFoveation' in layer) (layer as unknown as { fixedFoveation: number }).fixedFoveation = 0;
     xr.session.updateRenderState({ baseLayer: layer });
@@ -773,7 +783,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // read cozy under the lamp's dominance — baseline ambient is untouched.
   if (options.reinterp === true) app.scene.ambientLight = new pc.Color(0.17, 0.14, 0.11);
 
-  if (new URLSearchParams(window.location.search).get('debug') === '1') {
+  if (runtimeQuery().get('debug') === '1') {
     (window as { __app?: pc.Application }).__app = app;
     (window as unknown as { __xrComfort: unknown }).__xrComfort = xrComfort; // ?debug=1 scene-graph probe
     // ?debug=1 ledger probe (read-only review aid): prior sessions could only
@@ -800,7 +810,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // ?layout=x — the disposition of the 360° space (Sérgio, Round 24). T (default)
   // keeps the back as a WALL (door + record spine). X opens that back into a 4th
   // ARM toward the ending. Same three room interiors; only the back changes.
-  const layout: 'x' | 't' = new URLSearchParams(window.location.search).get('layout') === 'x' ? 'x' : 't';
+  const layout: 'x' | 't' = runtimeQuery().get('layout') === 'x' ? 'x' : 't';
   let niche: FluidNiche | null = null;
   let ceiling: CeilingWitness | null = null;
   let cluster: ClusterShell | null = null;
@@ -861,7 +871,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // gameMenuBus.leaveEngine is null and the menu falls back to a reload
   // (src/desktop/gameMenu.ts).
   if (options.reinterp === true) gameMenuBus.leaveEngine = () => os.leaveNow();
-  if (new URLSearchParams(window.location.search).get('debug') === '1') {
+  if (runtimeQuery().get('debug') === '1') {
     // ?debug=1 OS probe (review aid, like __ledger): drive monitor clicks in
     // logical canvas coords without the world→screen projection dance
     (window as { __os?: DesktopOS }).__os = os;
@@ -971,7 +981,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     gameMenuBus.mapSource = () => mapState(os);
     witnessPulse.onGrow = () => witness.pulse();
     const guideIdleScale = (): number => {
-      const review = Number(new URLSearchParams(location.search).get('idlescale'));
+      const review = Number(runtimeQuery().get('idlescale'));
       return (review > 0 ? review / 60 : 1) * (xr?.active ? 1 : window.matchMedia('(pointer: coarse)').matches ? 1 : 1.8);
     };
     os.guideIdleScale = guideIdleScale;
@@ -1172,7 +1182,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (!xr?.active) return;
       if (isOpen) xrFrame?.open(); else { xrFrame?.close(); siteViewerXr?.onMenuClosed(); }
     });
-    if (new URLSearchParams(window.location.search).get('debug') === '1') {
+    if (runtimeQuery().get('debug') === '1') {
       // ⚑ S270 — the debug panel's read-only half, in the headset (his: "I cannot see the debug panel inside of the VR")
       mountXrDebug(app, camera, { lines: () => {
         const c = xrComfort.status(), f = (n: number) => n.toFixed(2), h = camera.getLocalPosition();
@@ -1247,7 +1257,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         else if (yaw !== null && yaw !== undefined) dollyTo(yaw, CAMERA_POSES.dollySeconds, true);
       }
     };
-    if (new URLSearchParams(window.location.search).get('debug') === '1') {
+    if (runtimeQuery().get('debug') === '1') {
       // S58 spine probe (read-only, like __os/__wake): the conductor's own
       // step, so a review can confirm the era buttons and `?era=` jumps
       // actually advance the narrative and not just the room/desktop era.
@@ -1615,7 +1625,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   // ?debug=1: publish "where am I" (era + which room the view is in) so the
   // debug panel can show a live readout — the answer to "which version/room?".
-  const debugOn = new URLSearchParams(window.location.search).get('debug') === '1';
+  const debugOn = runtimeQuery().get('debug') === '1';
   const ROOM_LABEL: Record<number, string> = {
     0: 'Room 1 · front (gay)', 90: 'Room 2 · west (lesbian)',
     270: 'Room 3 · east (trans)'
@@ -1683,7 +1693,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  out of one must opt out of the other. With it off, an era shift ages the
    *  room and cuts you to the destination seat — no driven motion anywhere in
    *  the piece. Read once: the URL cannot change mid-session. */
-  const drivenMoves = new URLSearchParams(window.location.search).get('descent') !== '0';
+  const drivenMoves = runtimeQuery().get('descent') !== '0';
   // THE WAKE (decision doc §3): true from the moment the player logs in at
   // the interim panel until the light has finished coming up and the machine
   // has booted itself. It replaces S40's LOOK/INTERACT pre-boot window and
@@ -2856,7 +2866,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // affordance is offered where a sensor is PLAUSIBLE — iOS (which announces
     // itself by needing permission) or a coarse/touch pointer — plus `?motion=1`,
     // a review switch so this path can be exercised on a desktop browser.
-    const forced = new URLSearchParams(window.location.search).get('motion') === '1';
+    const forced = runtimeQuery().get('motion') === '1';
     const hasEvent = typeof window.DeviceOrientationEvent !== 'undefined';
     const touchy = navigator.maxTouchPoints > 0 ||
       window.matchMedia?.('(pointer: coarse)')?.matches === true;
@@ -3713,7 +3723,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   };
 
   canvasEl.addEventListener('pointerdown', (e) => {
-    if (!gameMenuBus.isOpen) wakeFullscreen();
+    if (!festivalEdition && !gameMenuBus.isOpen) wakeFullscreen();
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     // a second finger is a PINCH: not a look, not a tap. Both are cancelled
     // outright rather than resumed, so lifting one finger of a zoom can never
@@ -3834,7 +3844,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!p || p.id !== e.pointerId) return;
     if (p.moved > TAP_SLOP_PX) return;                 // it travelled: a look
     if (performance.now() - p.t > TAP_MS) return;      // it lingered: not a tap
-    if (restoreEntrance?.blocking) { const ray = screenRay(e); if (ray) restoreEntrance.press(ray); return; }
+    if (restoreEntrance?.blocking) {
+      const ray = screenRay(e);
+      if (ray) restoreEntrance.press(ray);
+      // Audio starts on release before fullscreen consumes transient activation.
+      if (festivalEdition) wakeFullscreen();
+      return;
+    }
     if (p.opening) {
       // ⚑⚑ THE DRIVEN MOVES ARE NOT SKIPPABLE BY POINTER. FIXED 2026-08-15.
       //
@@ -3881,7 +3897,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   window.addEventListener('keyup', (e) => { const l = LOOK_KEYS[e.key]; if (l) heldLook.delete(l); });
   window.addEventListener('blur', () => heldLook.clear());
   window.addEventListener('keydown', (e) => {
-    if (restoreEntrance?.blocking) { if (e.key !== 'Escape' && !gameMenuBus.isOpen) { wakeFullscreen(); startFirstBed(); restoreEntrance.press(); } return; }
+    if (restoreEntrance?.blocking) { if (e.key !== 'Escape' && !gameMenuBus.isOpen) {
+      if (!festivalEdition) wakeFullscreen();
+      startFirstBed(); restoreEntrance.press();
+      if (festivalEdition) wakeFullscreen();
+    } return; }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (!camMove && !gameMenuBus.isOpen && !os.paused && closeMonitor?.key(e.key,e.shiftKey)) { e.preventDefault(); return; }
     // S48: any key skips the descent too (Escape excepted — the game menu
@@ -5203,7 +5223,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (options.reinterp) {
     // review tools (?close / ?era / ?reveal / ?morph) bypass the O1 overlay —
     // they exist to look at 3D states, not to play the opening
-    if (new URLSearchParams(location.search).get('setup') === '1') {
+    if (runtimeQuery().get('setup') === '1') {
       // Review entrance: Daniel's lit 1997 room at the authored monitor seat.
       // No review jump seeds the story or ledger before setup finishes.
       applyLightsOn();

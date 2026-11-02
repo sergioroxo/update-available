@@ -1,3 +1,4 @@
+import { runtimeQuery } from '../edition';
 /**
  * ONE version for visitors (2026-10-15, the lead);
  * the full cut is kept for review behind ?cut=full.
@@ -8,7 +9,7 @@ export type Cut = 'full' | 'speedrun';
 let chosen: Cut | null = null;
 export function currentCut(): Cut {
   if (chosen) return chosen;
-  try { chosen = new URLSearchParams(window.location.search).get('cut') === 'full' ? 'full' : 'speedrun'; }
+  try { chosen = runtimeQuery().get('cut') === 'full' ? 'full' : 'speedrun'; }
   catch { chosen = 'speedrun'; }
   return chosen;
 }

@@ -1,3 +1,4 @@
+import { runtimeQuery } from '../edition';
 import { xrRects, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
 import { pathTargets, drawGlow } from '../witness/pathGlow';
 /** S281 — the desktop's free things: they shimmer, they never ring (the glow logic's `may`) */
@@ -2634,7 +2635,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Jingle) this.drawJingleLyrics(W, H);
     // ⚑ S219 / W1-B10 (walkthrough 1: "those bars" sat against the windows' close boxes) — the build's dev marker
     //   is gone from the player's screen; kept for review under ?debug=1 only
-    if (this.reinterp && /[?&]debug=1/.test(location.search)) this.drawReinterpMarker(W);
+    if (this.reinterp && runtimeQuery().get('debug') === '1') this.drawReinterpMarker(W);
     if (this.paused) this.drawPause(W, H);
     // S281 — Start, when the story waits on it (the update): the taskbar is always on top, so its ring is drawn last
     if (this.phase === 'desktop' && this.glowPath.has('start-menu')) {

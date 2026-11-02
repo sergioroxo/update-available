@@ -14,7 +14,8 @@
     "gen-sites": "node tools/gen_era_sites.mjs",
     "gen-attributions": "node tools/gen_attributions.mjs",
     "export-atlases": "bash tools/export-atlases.sh",
-    "tts": "python3 tools/tts/render.py --manifest data/audio/tts_manifest.json"
+    "tts": "python3 tools/tts/render.py --manifest data/audio/tts_manifest.json",
+    "build:itch": "tsc --noEmit && VITE_EDITION=festival vite build --outDir dist-itch"
   },
   "dependencies": {
     "playcanvas": "^2.6.0"
