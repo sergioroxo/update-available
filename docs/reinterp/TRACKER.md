@@ -54,7 +54,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 **Everywhere**
 - ◐ S283 distances: held devices ≥ 0.42 m and larger; the visor screen 0.55 m; Close labels upright 🥽 · ☐ Recentre after a jump; the sources too far
 - ☐ Hands on the games: bigger touch targets (the controller already plays)
-- ☐ Lamby's message lost when a window opens on top (one voice at a time)
+- ◐ S304 the placement letter waits for Lamby's balloon (≤ 20 s) · ☐ the same rule for other pop-ups
 - ☑ S285 A skip-the-film button (debug only)
 - ☐ Jagged text in the headset: needs a headset check of the current build first
 

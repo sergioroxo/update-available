@@ -127,6 +127,8 @@ const JINGLE_VOLUME = 0.5;
 /** S272 — between the filed Family Form and the placement letter: the game and the racket's turn (was the spine's
  *  RACKET_WAIT, after the journal, S268) */
 const PACKET_WAIT = 60, PACKET_WAIT_SPEEDRUN = 20;
+/** S303 — the letter waits for Lamby's balloon at most this long */
+const PACKET_LAMBY_WAIT = 20;
 /** P8 — how long the opening's Leave waits for its second press */
 const LEAVE_CONFIRM_SECONDS = 4;
 /** P8 — after Rob's last line, the chat holds this long before the Family Form opens */
@@ -488,6 +490,8 @@ export class DesktopOS {
   /** S272 — the form is filed: the letter comes once the desk is quiet, after the racket or a while (packetWait) */
   private packetDueFrom = Infinity;
   private packetQuiet = 0;
+  /** S303 — how long Lamby has been speaking while the letter waits */
+  private packetLambyT = 0;
   private diaryPendingFromForm = false;
   /** ⚑ S208 / A4 (REVIEW_ROUND_5, ERA97-02) — the Family Form has been opened (finished or abandoned: both count —
    *  dismissal always works). The diary waits for it, so the MAIN beat can never be skipped past and lost. */
@@ -2320,7 +2324,12 @@ export class DesktopOS {
     if (this.phase === 'desktop' && !this.diary && this.t >= this.diaryPendingAt) this.openDiary();
     // S272 — the letter: the extras (Root Cause, the racket) have their turn between the form and the signature
     if (this.phase === 'desktop' && this.packetDueFrom !== Infinity && this.desktopEra === 'e1') {
-      this.packetQuiet = this.e1BeatsQuiet() ? this.packetQuiet + dt : 0;
+      // ⚑ S303 (headset B: "There was a message from Lamby now before the form appeared, and it just disappeared because
+      //   the placement just appeared in front of it") — one voice at a time: the letter waits while Lamby is speaking
+      //   (never more than PACKET_LAMBY_WAIT: an unanswered balloon must not hold the story)
+      this.packetLambyT = this.lambyGuide.active ? this.packetLambyT + dt : 0;
+      const lambySpeaking = this.lambyGuide.active && this.packetLambyT < PACKET_LAMBY_WAIT;
+      this.packetQuiet = this.e1BeatsQuiet() && !lambySpeaking ? this.packetQuiet + dt : 0;
       const racket = ledger.provotypes.some(p => p.id === 'pillow');
       const waited = racket || this.t - this.packetDueFrom >= (isSpeedrun() ? PACKET_WAIT_SPEEDRUN : PACKET_WAIT);
       if (waited && this.packetQuiet >= 1.2) { this.packetDueFrom = Infinity; this.packetQuiet = 0; this.openPacket(); }
