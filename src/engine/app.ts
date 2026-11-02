@@ -624,7 +624,12 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
     //   (it softens the edge of the view on purpose). He read 90 fps with room to spare.
     const native = (XRWebGLLayer as unknown as { getNativeFramebufferScaleFactor?: (s: XRSession) => number }).getNativeFramebufferScaleFactor?.(xr.session) ?? 1;
     const layer = new XRWebGLLayer(xr.session, app.graphicsDevice.gl, {
-      antialias: true, alpha: true, depth: true, stencil: true, framebufferScaleFactor: Math.max(1, Math.min(1.3, native))
+      // ⚑ S292 (his, 2 Nov, on the "serrated knife" edges: 1.4–1.5 is the Quest 3 sweet spot) — 1.4× the default eye
+      //   buffer, never below 1 and never past 1.6, whatever the native factor reports; MSAA stays on (nothing renders
+      //   through an intermediate target, so the layer's MSAA reaches every pixel). `?xrscale=1.6` tries other values
+      //   in the headset without a build.
+      antialias: true, alpha: true, depth: true, stencil: true,
+      framebufferScaleFactor: Math.max(1, Math.min(1.6, Number(new URLSearchParams(location.search).get('xrscale')) || Math.max(1.4, Math.min(1.5, native))))
     });
     if ('fixedFoveation' in layer) (layer as unknown as { fixedFoveation: number }).fixedFoveation = 0;
     xr.session.updateRenderState({ baseLayer: layer });
