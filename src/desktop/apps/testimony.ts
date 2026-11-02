@@ -185,6 +185,8 @@ export class TestimonyApp {
       case 'ts-continue': this.stage = 'online'; this.web = 'notice'; return true;
       case 'ts-see': this.web = 'page'; return true;
       case 'ts-watch': this.web = 'buffer'; this.webT = 0; return true;
+      case 'ts-apply': this.applyOpen = true; return true;   // nothing is filed: it is the next family's form, not his
+      case 'ts-apply-close': this.applyOpen = false; return true;
       case 'ts-done': this.open = false; this.onFile?.('testimony-online'); this.onDone?.(); return true;
     }
     if (h.id.startsWith('ts-file:')) {
@@ -515,14 +517,40 @@ export class TestimonyApp {
     //   own refusal ("unavailable in this restored page") read as the ministry's words. Now the page simply shows its
     //   call to apply, greyed and not pressable, and what his story is doing: bringing others in.
     if (this.web === 'done') {
-      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.grey;
+      // ⚑ S302 (headset B: "Start here … It has a arrow pointing there and no [button] … what am I supposed to do?") —
+      //   the call is a link now: it opens the ministry's application, and the application is the 1997 Family Form,
+      //   addressed to the next family, with "Daniel's story" already ticked as how they heard. His story recruits.
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.navy;
       ctx.fillText(O.start, vx, vy + vh + 12);
-      ui.px(ctx, vx, vy + vh + 22, Math.ceil(ctx.measureText(O.start).width), 1, ERA1.grey);
+      const sw = Math.ceil(ctx.measureText(O.start).width);
+      ui.px(ctx, vx, vy + vh + 22, sw, 1, ERA1.navy);
+      this.hits.push({ x: vx - 2, y: vy + vh + 8, w: sw + 4, h: 16, id: 'ts-apply' });
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.warnDark;
       ui.wrapText(ctx, O.count.replace('{n}', '3'), px0 + pw - 12 - vx).forEach((l, i) => ctx.fillText(l, vx, vy + vh + 30 + i * 11));
     }
-    this.rightButton(ctx, c, O.close, this.web === 'done' ? 'ts-done' : null);
+    this.rightButton(ctx, c, O.close, this.web === 'done' && !this.applyOpen ? 'ts-done' : null);
+    if (this.applyOpen) this.drawApply(ctx, c);
   }
+
+  /** S302 — the application behind "Start here": the 1997 Family Form, online, for the next son */
+  private drawApply(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
+    this.hits = this.hits.filter((h) => !h.id.startsWith('ts-'));
+    const A = T.online.apply, w = 300, h = 168, x = c.x + Math.round((c.w - w) / 2), y = c.y + 34;
+    const f = ui.windowFrame(ctx, x, y, w, h, A.title, true);
+    ui.px(ctx, f.x, f.y, f.w, f.h, ERA1.white);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(A.lead, f.x + 8, f.y + 6);
+    let yy = f.y + 24;
+    for (const fl of A.fields) {
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black; ctx.fillText(fl, f.x + 8, yy);
+      ui.px(ctx, f.x + 8, yy + 11, f.w - 16, 1, ERA1.silver); yy += 18;
+    }
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black; ctx.fillText(A.heard, f.x + 8, yy + 2);
+    ui.px(ctx, f.x + 10, yy + 16, 8, 8, ERA1.white); ui.px(ctx, f.x + 10, yy + 16, 8, 1, ERA1.grey); ui.px(ctx, f.x + 10, yy + 16, 1, 8, ERA1.grey);
+    ui.px(ctx, f.x + 12, yy + 18, 4, 4, ERA1.black);
+    ctx.fillText(A.heardTicked, f.x + 24, yy + 16);
+    this.hits.push({ ...f.closeBox, id: 'ts-apply-close' });
+  }
+  private applyOpen = false;
 }
 
 // ── the footage ──────────────────────────────────────────────────────────────

@@ -144,6 +144,14 @@
   "requires": "Requires MediaPlay 9",
   "buffering": "Buffering… {p}%",
   "start": "Are you struggling too? Start here →",
+  "apply": {
+   "_doc": "⚑ S302 — what 'Start here' opens: the 1997 Family Form, online, addressed to the next family; 'Daniel's story' is already ticked as how they heard of New Morning. No line says what it means. Text is Claude's (2026-08-17 norm); his edit wins.",
+   "title": "New Morning — apply online",
+   "lead": "For parents. It takes five minutes. Everything is confidential.",
+   "fields": ["Your son's first name:", "His age:", "When did you first notice a change in him?", "Who does he spend his time with?"],
+   "heard": "How did you hear about New Morning?",
+   "heardTicked": "Daniel's story"
+  },
   "count": "This week, {n} people applied to New Morning after watching Daniel's story.",
   "close": "Close"
  }
