@@ -236,15 +236,12 @@ const OS_BEATS: BeatRow[] = [
   // building; the visor is on its stand showing standby and the occasional
   // failed caption. Under `?flat=1` there is no room, so these buttons show the
   // captions and the machine only — which is the era's own argument, not a bug.
-  { label: '⚑⚑ THE COMMONS — Junie\'s invitation (play from here: Go in, the filter, the room)', id: 'e4Invite' },
-  { label: '↳ the filter (she has gone in; the overlay tries to classify the room)', id: 'e4Ball' },
-  { label: '↳ ⚑ NO CATEGORY FOUND (the machine\'s last output, alone)', id: 'e4NoCategory' },
-  { label: '↳ the device comes off — the light, and the turn works', id: 'e4BallOpen' },
-  { label: '↳ category 1 · THE WAY YOU WALK, TALK AND SIT (1997)', id: 'e4BallCat1' },
-  { label: '↳ category 2 · STEADY. STRUGGLING. GRATEFUL. TIRED. (2003)', id: 'e4BallCat2' },
-  { label: '↳ category 3 · REMOVE THE UNRESOLVED (2016)', id: 'e4BallCat3' },
-  { label: '↳ category 4 · CONDITION: IN REPAIR (tonight)', id: 'e4BallCat4' },
-  { label: '↳ ⚑ after · nothing happens, forever (press the device to go on)', id: 'e4BallAfter' },
+  { label: '⚑⚑ THE STREAM — Junie\'s link (play from here: it\'s on. come in.)', id: 'e4Invite' },
+  { label: '↳ the platform frame fails to file it (Rank — · Reach · Captions · Category)', id: 'e4Ball' },
+  { label: '↳ inside the stream — TransJesus dancing, the chat', id: 'e4BallOpen' },
+  { label: '↳ "hi maya" — 41 → 42, and her chips: dance / stay', id: 'e4StreamAsk' },
+  { label: '↳ the system comes back for her — refused, room full', id: 'e4StreamIntrusion' },
+  { label: '↳ ⚑ SESSION TERMINATED · the update fails, the stream goes on', id: 'e4BallAfter' },
   // ⚑ S119 — the photo editor's OTHER half, designed 2026-08-05 and built now.
   // Press the small grey line under the picture: it is the same control that
   // worked twice on her own photographs, and here it returns nothing.
@@ -407,7 +404,7 @@ const E4_REVIEW: Array<[string, string]> = [
   ['1 · the browser — six tabs on the monitor', 'e4Browser'],
   ['2 · headset on — the offers begin', 'e4Offers'],
   ['3 · the careful pause', 'e4Pause'],
-  ['4 · the Commons — Junie\'s invitation, Go in', 'e4Invite'],
+  ['4 · the stream — Junie\'s link', 'e4Invite'],
   ['5 · the update fails — the glitch', 'e4Glitch'],
   ['6 · the device stops — the update fails, the Close begins', 'closeUpdate']
 ];

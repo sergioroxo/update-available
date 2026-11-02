@@ -156,7 +156,10 @@ const HAND: Record<string, string[]> = {
   p: ['##.', '#.#', '#.#', '#.#', '##.', '#..', '#..'],
   o: ['.#.', '#.#', '#.#', '#.#', '.#.'],
   n: ['##.', '#.#', '#.#', '#.#', '#.#'],
-  s: ['.##', '#..', '.#.', '..#', '##.']
+  s: ['.##', '#..', '.#.', '..#', '##.'],
+  t: ['.#.', '###', '.#.', '.#.', '..#'],
+  r: ['#.#', '##.', '#..', '#..', '#..'],
+  e: ['.#.', '#.#', '###', '#..', '.##']
 };
 /** a word in someone's hand, letters a pixel apart, each with its own small lift */
 export function hand(c: Ctx, word: string, x: number, y: number, col: string): number {
@@ -457,11 +460,11 @@ function page2026(c: Ctx): void {
   binding(c, P);
   const g = monthGrid(c, { name: 'OCTOBER', year: 2026, first: 4, days: 31, mondayFirst: true }, P, [5, 6]);
   // ⚑ HER FELT-TIP — Friday the 23rd ringed, and the word under it running into the
-  //   weekend: the Commons. The page's one mark, and it is for something she wants.
+  //   weekend. ⚑ S293: it was 'commons'; the ending is the stream now (ENDING_TRANSJESUS), so the word is 'stream'.
   const { x, y } = g.at(23);
   const ring = ['..######.', '.#......#', '#........', '#.......#', '#.......#', '.#.....#.', '..#####..'];
   sprite(c, x + 1, y, ring, { '#': P.felt });
-  const w = hand(c, 'commons', x + 2, y + 8, P.felt);
+  const w = hand(c, 'stream', x + 2, y + 8, P.felt);
   // and a small heart after it
   sprite(c, x + 2 + w + 2, y + 9, ['#.#', '###', '.#.'], { '#': P.felt });
 }

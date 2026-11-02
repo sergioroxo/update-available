@@ -4,20 +4,14 @@
  *
  *     node tools/tour-e4.mjs --port 3000 --out out/tour-e4
  *
- * ⚑ 2026-09-13. Sérgio: *"review the Era-4 and check for mistakes and produce
- * me images that show the flow."* The walk (`walk.mjs`) proves the path is
- * pressable; this shows what it LOOKS like — the boot, the search taken over,
- * the five steps, the Restoration tool, the headset, the session, Junie's
- * card, the Commons as a world with the TransJesus stream, the glitch, and the
- * whole Close. Every press goes through the same surfaces a player presses
- * (`__os.e4.pressBrowser` on the monitor's published rects, `__os.handleClick`
- * on the visor's), never through a jump — except the ball's categories, which
- * are 3½ minutes of no controls and are entered by `debugJumpTo('ball')` so the
- * stream can be photographed without the wait. Frames are numbered in order.
- *
- * Camera: the seat's own frame for every beat, plus a few `__camFree` looks
- * (closer to the monitor, around the hall) marked `look-` in the file name —
- * those are the reviewer's eye, not the player's.
+ * ⚑ S293 (2026-11-02) — the 2026 v2 sequence (RESEARCH_2026_V2_WEAPONISED_CARE §4, ENDING_TRANSJESUS): the
+ * screensaver, the defaults, the search steered to an ad, the agent's conversation (its referral, Meridian's
+ * refusal, "Is this still you?", the photograph, the composite, her story, the messages), Junie's thread, the
+ * original, the headset session, Junie's link, the platform frame failing, the stream, the chat seeing her, her one
+ * act, the system refused, the update failing while the stream goes on, and the start of the Close. Every press goes
+ * through the surfaces a player presses (`__os.e4.pressBrowser` on the monitor's published rects, `__os.handleClick`
+ * on the visor's) — never a jump. Frames are numbered in order; `look-` frames are the reviewer's eye (`__camFree`),
+ * not the player's. The draw calls in the stream's place are measured and written into TOUR.md.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,6 +20,7 @@ const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 const PORT = Number(flag('port', 3000));
 const OUT = path.resolve(flag('out', 'out/tour-e4'));
+const CUT = flag('cut', '');
 const VIEWPORT = { width: 1280, height: 860 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -54,12 +49,13 @@ async function main() {
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
-  await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=4&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
+  await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=4&debug=1&descent=0${CUT ? '&cut=' + CUT : ''}`, { waitUntil: 'networkidle2', timeout: 60000 });
   await page.waitForFunction(() => [...document.querySelectorAll('button')]
     .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Log in')); if (b) b.click(); });
   await page.waitForFunction(() => window.__os && window.__os.e4 && window.__camFree, { timeout: 30000 });
-  await page.addStyleTag({ content: 'body > *:not(canvas) { display: none !important; }' });
+  // the canvas only — but keep the stream's subtitles, which are part of the beat
+  await page.addStyleTag({ content: 'body > *:not(canvas):not(#reinterp-ball-caption) { display: none !important; }' });
 
   let n = 0;
   const log = [];
@@ -69,13 +65,13 @@ async function main() {
     await page.screenshot({ path: path.join(OUT, file) });
     const st = await page.evaluate(() => {
       const e4 = window.__os.e4;
+      const b = e4.browser;
       return {
-        stage: e4.stageNow, browser: e4.browser.phase, mode: e4.browser.programMode, step: e4.browser.step,
-        ball: e4.ball.phase, world: !!(window.__commonsFigures), pose: window.__camPose(),
-        upd: window.__os.updateApp ? window.__os.updateApp.phase : '-', spine: window.__spine ? JSON.stringify(window.__spine()).slice(0, 60) : '-'
+        stage: e4.stageNow, browser: b.phase, mode: b.programMode, beat: b.cur ? b.cur.id : '-',
+        ball: e4.ball.phase, dc: window.__drawCalls, pose: window.__camPose()
       };
     });
-    const line = `${file}  ${note}  · stage ${st.stage} · browser ${st.browser}/${st.mode} · ball ${st.ball} · pitch ${st.pose.pitch.toFixed(0)} yaw ${st.pose.yaw.toFixed(0)} · upd ${st.upd} · spine ${st.spine}`;
+    const line = `${file}  ${note}  · stage ${st.stage} · browser ${st.browser}/${st.mode}/${st.beat} · ball ${st.ball} · draws ${st.dc} · yaw ${st.pose.yaw.toFixed(0)}`;
     log.push(line); console.log(line);
   };
   const press = async (id) => {
@@ -89,8 +85,7 @@ async function main() {
     if (!ok) log.push(`  ⚠ ${id} not pressable here`);
     return ok;
   };
-  /** S171: press once the rect appears (the agent says "One moment." before it offers Begin) */
-  const pressWhen = async (id, ms = 15000) => {
+  const pressWhen = async (id, ms = 20000) => {
     const t0 = Date.now();
     while (Date.now() - t0 < ms) {
       const there = await page.evaluate((id) => !!(window.__os.e4.browser.hits || []).find((r) => r.id === id), id);
@@ -100,6 +95,32 @@ async function main() {
     log.push(`  ⚠ ${id} never appeared (${ms} ms)`); console.log(`  ⚠ ${id} never appeared`);
     return false;
   };
+  const untilHit = async (id, ms = 20000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      if (await page.evaluate((id) => !!(window.__os.e4.browser.hits || []).find((r) => r.id === id), id)) return true;
+      await wait(250);
+    }
+    log.push(`  ⚠ ${id} never appeared (${ms} ms)`);
+    return false;
+  };
+  /** a press on the glass: the ball's own rects, or the session's Begin */
+  const pressVisor = async (id, ms = 40000) => {
+    const t0 = Date.now();
+    while (Date.now() - t0 < ms) {
+      const ok = await page.evaluate((id) => {
+        const b = window.__os.e4.ball;
+        const h = [...(b.hits || []), ...(b.sessionHits || [])].find((r) => r.id === id);
+        if (!h) return false;
+        window.__os.handleClick(h.x + h.w / 2, h.y + h.h / 2);
+        return true;
+      }, id);
+      if (ok) { console.log(`  press ${id} (glass)`); return true; }
+      await wait(300);
+    }
+    log.push(`  ⚠ ${id} (glass) never appeared`); console.log(`  ⚠ ${id} never appeared`);
+    return false;
+  };
   const cam = async (x, y, z, pitch, yaw) => {
     await page.evaluate((a) => window.__camFree(a[0], a[1], a[2], a[3], a[4]), [x, y, z, pitch, yaw]);
     await wait(700);
@@ -107,187 +128,143 @@ async function main() {
   const SEAT = [4.4, 1.16, 0.7, 0, 270];
   const CLOSE = [4.82, 1.06, 0.7, -2, 270];   // the reviewer's eye, half a metre off the glass
 
-  // ── 1 · the boot ── (a fresh shell, so the boot is photographed: the settled
-  //   jump's own boot has run by the time the tour is ready)
-  // ⚑ S171: the way in is S160's — the screensaver, the restore, the results, the site, the agent;
-  //   a turn (L's question, two chips) before every step
-  await cam(...SEAT);
   const untilPhase = (ph, ms = 20000) => page.waitForFunction((p) => window.__os.e4.browser.phase === p, { timeout: ms }, ph).then(() => true).catch(() => false);
   const untilMode = (m, ms = 20000) => page.waitForFunction((p) => window.__os.e4.browser.programMode === p, { timeout: ms }, m).then(() => true).catch(() => false);
-  await untilPhase('saver', 15000); await wait(1500);
-  await shot('saver', 'the screensaver: the mark drifting on the dark — one press to restore (R3-87)');
-  await pressWhen('saver-wake'); await wait(1500);
-  await shot('boot-restoring', 'restoring the session — six tabs, five of them hers (the laptop says what it is doing)');
-  await untilPhase('open', 30000); await wait(1200);
-  await shot('browser-open', 'the browser as she arrives at it');
-  await cam(...CLOSE);
-  // P7-66 — her enquiry to Meridian LGB Trust, then the auto-reply (his yes to B, 1 Nov)
-  await shot('look-enquiry-draft', 'her draft to Meridian LGB Trust — the only control on the page');
-  await pressWhen('enq-send'); await wait(4200);
-  await shot('look-enquiry-reply', "Meridian's auto-reply: declined, \"not a judgement\", no appeal; the directory line");
-  await pressWhen('enq-close'); await wait(800);
-  await shot('look-browser-open', 'closer: the six tabs, the search half-typed, the ☆ FloppySheep bookmark');
-  await press('bm-floppy'); await wait(800);
-  await shot('look-floppysheep', 'FloppySheep, the computer version — one press away (R3-92)');
-  await press('game-back'); await wait(500);
 
-  // ── 2 · the search, taken over → the results → the site → the agent ──
-  await pressWhen('search-open'); await wait(1500);
+  // ── 1 · the restore and the defaults (V0) ──
+  await cam(...SEAT);
+  await untilPhase('saver', 15000); await wait(1500);
+  await shot('saver', 'the screensaver — one press to restore');
+  await pressWhen('saver-wake'); await wait(1500);
+  await shot('boot-restoring', 'restoring the session');
+  await untilPhase('open', 30000); await wait(1200);
+  await cam(...CLOSE);
+  await shot('look-defaults', 'V0 · Your defaults were restored — Profile Default, Search Lantern, Assistant Second Thoughts');
+  await pressWhen('def-continue'); await wait(900);
+  await shot('look-browser-open', 'the restored browser: the profile chip says Default');
+
+  // ── 2 · the search, steered (V1) ──
+  await pressWhen('search-open'); await wait(1200);
   await shot('look-search-typing', 'the sentence being finished for her');
   await untilMode('results', 20000); await wait(800);
-  await shot('look-results', 'the results page: her recent searches, the query, four results — the first the only press (R3-89)');
-  await pressWhen('result-agent'); await wait(1200);
-  await shot('look-site', 'the Second Thoughts site (R3-90)');
-  await pressWhen('site-start'); await wait(1500);
-  await shot('look-agent', 'the agent');
-  await pressWhen('agent-begin'); await wait(1500);
-  await shot('look-turn-1', 'THE TURN (R3-93): L asks, two chips — before any step of its own');
-  await pressWhen('turn-0'); await wait(800);
-  await shot('look-steps', 'answered: the step\'s own press appears — intake, required before care (R3-94)');
+  await shot('look-results', 'V1 · results: the first is a Sponsored ad, with Why this ad?');
+  await pressWhen('result-agent'); await wait(1600);
+  await shot('look-agent-arriving', 'V2 · the agent: its lines arriving');
 
-  // ── 3 · the steps ──
-  await pressWhen('step-record'); await wait(1200);
-  await shot('look-record-done', 'the record, confirmed — and Continue (S150: no step advances on a clock)');
-  await pressWhen('step-next'); await wait(1500);
-  await pressWhen('turn-1'); await wait(600);
-  await shot('look-photos', 'the Restoration tool');
-  await pressWhen('step-photos'); await wait(1000);
-  await shot('look-photos-picker', 'the file window (a picture of one)');
-  await pressWhen('file-0'); await wait(900);
-  await shot('look-photos-folder', "inside Pride '24");
-  await pressWhen('file-1'); await wait(1500);
-  await shot('look-photos-restoring', 'restoring…');
+  // ── 3 · the conversation (V2–V8) ──
+  await untilHit('conv-chip-0'); await wait(500);
+  await shot('look-agent-open', 'V2 · "Hi Maya. Thank you for coming." — two chips');
+  await press('conv-chip-1'); await wait(1500);
+  await untilHit('res-meridian'); await wait(600);
+  await shot('look-resources', 'V3 · "would it help to talk to someone who isn\'t me?" — three places, one pressable');
+  await press('res-meridian'); await wait(800);
+  await shot('look-enquiry-draft', 'V4 · her draft to Meridian LGB Trust');
+  await pressWhen('enq-send'); await wait(4200);
+  await shot('look-enquiry-reply', 'V4 · the refusal — and "Referred by: Second Thoughts"');
+  await pressWhen('enq-close'); await wait(1200);
+  await untilHit('conv-chip-0'); await wait(600);
+  await shot('look-back', 'V5 · "I\'m sorry they said no. I won\'t." — the refusal on her file');
+  await press('conv-chip-0'); await wait(1500);
+  await untilHit('conv-act'); await wait(500);
+  await shot('look-see', 'V6 · "Could I see you?"');
+  await press('conv-act'); await wait(800);
+  await shot('look-picker', 'V6 · the file window (a picture of one)');
+  await pressWhen('file-0'); await wait(800);
+  await shot('look-picker-folder', "V6 · inside Pride '24");
+  await pressWhen('file-2'); await wait(1500);
+  await shot('look-making', 'V7 · making a version that matches her file');
   await wait(2600);
-  await shot('look-photos-result', 'before / after — it stays until Continue');
-  await pressWhen('step-next'); await wait(1500);
-  await pressWhen('turn-0'); await wait(600);
-  await shot('look-care', 'care');
-  await pressWhen('step-care'); await wait(2500);
-  await pressWhen('step-next'); await wait(1500);
-  await shot('look-chat-turn', 'turn 4: "L needs access to your messages" (R3-101)');
-  await pressWhen('turn-0'); await wait(800);
-  await shot('look-chat-threads', 'her threads — Junie · Mum · Flat 3B; only the one L means is a press');
-  await pressWhen('thread-junie'); await wait(800);
-  await shot('look-chat', 'the chat');
-  await pressWhen('step-chat'); await wait(2500);
-  await pressWhen('step-next'); await wait(1500);
-  await shot('look-search-step', 'the last turn: the session, now?');
-  await pressWhen('turn-0'); await wait(1500);
+  await untilHit('conv-act'); await wait(500);
+  await shot('look-composite', 'V7 · the composite, outline only — "Edited with AI · composite"');
+  await press('conv-act'); await wait(1500);
+  await untilHit('conv-act'); await wait(600);
+  await shot('look-story', 'V8 · the care log, and her story made of her own chips');
+  await press('conv-act'); await wait(1500);
+  await untilHit('conv-chip-0'); await wait(500);
+  await shot('look-messages-ask', 'V9 · "I need your messages. Allow it?"');
+  await press('conv-chip-0'); await wait(1200);
+  await shot('look-threads', 'V9 · her threads — only Junie\'s opens');
+  await pressWhen('thread-junie'); await wait(1000);
+  await shot('look-junie', 'V9 · Junie\'s thread (felt: no agent, no L, no glow)');
+  await pressWhen('junie-reply'); await wait(3000);
+  await shot('look-junie-replied', 'V9 · "thank you" — "x"; the Photos tab rings');
+  await pressWhen('tab3'); await wait(900);
+  await shot('look-reversal', 'V10 · Photos: the composite as profile, the original kept — Use original');
+  await pressWhen('photo-original'); await wait(800);
+  await shot('look-verifying', 'V10 · Verifying…');
+  await wait(3600);
+  await shot('look-matched', 'V10 · Match: Maya — and the agent, satisfied: "Put the headset on."');
   await cam(...SEAT);
-  await shot('program-done', 'the headset asked for — the desk after the steps');
+  await shot('desk-ready', 'the desk: the headset glows; the laptop says the session is ready');
 
-  // ── 4 · the headset ──
+  // ── 4 · the headset (V11) ──
   await page.evaluate(() => window.__os.e4.wear());
-  await wait(1500);
-  await shot('worn-session', 'the correction session on the glass');
-  await wait(6500);
-  await shot('worn-session-plan', 'the plan, arrived');
-  await wait(5000);
-  await shot('worn-session-grounding', 'item 1 running: grounding');
-  await wait(8000);
-  await shot('worn-session-recorded', 'item 2: the recorded voice');
-  await wait(4500);
-  await shot('worn-session-recorded-3', 'the third sentence, about to give its instruction');
-  await page.waitForFunction(() => window.__os.e4.ball.invited, { timeout: 30000 });
-  await wait(600);
-  await shot('worn-invite', "Junie's card — the link, on the dash");
-  const joined = await page.evaluate(() => {
-    const b = window.__os.e4.ball; const h = (b.hits || [])[0];
-    if (!h) return false;
-    window.__os.handleClick(h.x + h.w / 2, h.y + h.h / 2);
-    return true;
-  });
-  console.log(`  press commons-join → ${joined}`);
   await wait(1200);
-  await shot('struggle-0', 'S161: the glass flickers over HER OWN ROOM first — the hall has not cut in yet');
-  await wait(3000);
-  await shot('struggle-1', 'the filter fighting the room: the link blocked; the hall, in flashes');
-  await wait(5000);
-  await shot('struggle-2', 'the sender blocked, the room flashing through');
-  await wait(5000);
-  await shot('struggle-3', 'social contagion · high — the room mostly through');
-  await page.waitForFunction(() => window.__os.e4.ball.phaseId === 'ball', { timeout: 40000 }).catch(() => {});
-  await wait(3500);
-  await shot('world-greeting', 'S161: the two beside her step in — "Hi, Maya." — before the MC');
-  await wait(5500);
-  await shot('world-arrival', 'the Commons: the seat, facing the stage; the MC has the floor');
-  await cam(4.4, 1.16, 0.7, 0, 300);
-  await shot('look-world-left', 'the hall to her left');
-  await cam(4.4, 1.16, 0.7, 0, 240);
-  await shot('look-world-right', 'the hall to her right');
-  await cam(4.4, 1.16, 0.7, 0, 90);
-  await shot('look-world-behind', 'behind her');
-  await cam(...SEAT);
-
-  // ── 5 · the ball, and the stream ──
-  await page.evaluate(() => window.__os.e4.ball.debugJumpTo('ball'));
-  await wait(3000);
-  await shot('ball-category', 'a category on the floor, the stream on the wall');
-  await cam(8.4, 1.6, 0.7, 4, 270);
-  await shot('look-stream', 'the stream, from the crowd');
+  await shot('worn-session', 'V11 · the session on the glass');
+  await wait(6500);
+  await pressVisor('session-begin');
   await wait(2500);
-  await shot('look-stream-2', 'the stream, a beat later');
-  await cam(5.8, 1.16, -1.7, 0, 300);
-  await shot('look-stage-from-crowd', 'the stage from the "in the crowd" marker');
-  await cam(...SEAT);
-  await wait(9000);
-  await shot('ball-later', 'the ball, later');
-  // the first intrusion is at 42 s of the ball; wait for it
-  await wait(24000);
-  await shot('ball-intrusion', 'the system back on the glass — reconnecting, pushed back');
+  await shot('worn-recorded', 'V11 · the recording, introduced as what it is');
   await wait(4500);
-  await shot('ball-intrusion-refused', 'connection refused · room full');
-  // the second intrusion (96 s) HOLDS until she stands in the crowd
-  await wait(48000);
-  await shot('ball-intrusion-2-holding', 'the second: holding — the hint on the glass');
-  await page.evaluate(() => window.__requestMove('commons-crowd'));
-  await wait(4200);
-  await shot('ball-intrusion-2-hers', 'she is in the crowd: "47 present · you" — refused');
-  await page.evaluate(() => window.__requestMove('commons-stage'));
-  await wait(3000);
-
-  // ── 6 · the termination, the glitch and the Close ──
-  await page.evaluate(() => window.__os.e4.ball.debugJumpTo('after'));
+  await shot('worn-recorded-2', '"Nobody made me. I was helped."');
+  await page.waitForFunction(() => window.__os.e4.ball.invited, { timeout: 40000 }).catch(() => {});
+  await wait(700);
+  await shot('worn-link', "Junie's link: it's on. come in.");
+  await pressVisor('commons-join');
+  await wait(2200);
+  await shot('frame-1', 'the platform frame — Rank: —, Reach: not rated…');
+  await wait(4800);
+  await shot('frame-2', 'Auto-captions: unavailable · Category: none found');
+  await page.waitForFunction(() => window.__os.e4.ball.phase === 'grow', { timeout: 20000 }).catch(() => {});
   await wait(1500);
+  await shot('grow', 'the stream fills the glass');
+  await page.waitForFunction(() => window.__os.e4.ball.phase === 'stream', { timeout: 20000 }).catch(() => {});
+  await wait(1200);
+  await shot('inside-clearing', 'the glass lets go — she is inside the stream');
+  await wait(3000);
+  await shot('inside', 'TransJesus dancing, the people with them; the chat on the stream\'s screen');
+  const dc = await page.evaluate(async () => {
+    const out = [];
+    for (const yaw of [270, 300, 240, 90]) {
+      window.__camFree(5.2, 1.16, 0.7, 0, yaw);
+      await new Promise((r) => setTimeout(r, 900));
+      out.push([yaw, window.__drawCalls]);
+    }
+    window.__camFree(5.2, 1.16, 0.7, 0, 270);
+    return out;
+  });
+  log.push(`  draw calls in the stream's place (yaw → calls): ${dc.map((d) => d.join('→')).join(', ')}`);
+  console.log('  draw calls', dc);
+  await cam(8.0, 1.5, 0.7, 4, 270);
+  await shot('look-transjesus', 'closer: TransJesus on the floor, the stream\'s screen behind');
+  await cam(5.2, 1.16, 0.7, 0, 270);
+  await page.waitForFunction(() => window.__os.e4.ball.callUp, { timeout: 60000 }).catch(() => {});
+  await wait(800);
+  await shot('ask', '"hi maya" — 42 watching — dance if you want, or just stay');
+  await pressVisor('stream-dance');
+  await wait(1800);
+  await shot('danced', 'her one act: the room answers');
+  await page.waitForFunction(() => window.__os.e4.ball.intrusionT >= 0, { timeout: 30000 }).catch(() => {});
+  await wait(2600);
+  await shot('intrusion', 'the system comes back for her — Reconnecting… cannot rank, cannot caption');
+  await wait(4600);
+  await shot('refused', 'connection refused · room full');
+  await page.waitForFunction(() => window.__os.e4.ball.phase === 'after', { timeout: 20000 }).catch(() => {});
+  await wait(1200);
   await shot('terminated', 'SESSION TERMINATED · reason: social contagion');
-  await wait(6000);
-  await shot('glitch', 'the update fails');
+  await wait(5500);
+  await shot('glitch', 'the update fails — the stream still dancing behind it');
   await wait(4000);
   await shot('device-stopped', 'the device stops; the room comes back');
-  await wait(2500);
+  await cam(...CLOSE);
+  await shot('look-monitor-stream', 'the monitor: transjesus.str, still live, 42 watching');
+  await cam(...SEAT);
+  await wait(2000);
   await shot('laptop-failed', 'the laptop: Your update has failed.');
-  await wait(1800);
-  await shot('screens-glitching', 'the conducted look: both screens tearing');
-  await wait(3000);
-  await shot('screens-off', 'both screens off — the travel begins');
-  // S163: one 44 s sweep, turning LEFT to face the building; night and the constellation 14 s before landing
-  await wait(14000);
-  await shot('close-sweep-1', 'the sweep: rising over the partition, turning left');
-  await wait(14000);
-  await shot('close-sweep-2', 'facing west: Rooms 1 and 2 ahead');
-  await wait(10000);
-  await shot('close-morph', 'night falls and the constellation opens while she is still coming down (C-01)');
-  await wait(8000);
-  await shot('close-landed', 'landed at Daniel\'s seat, facing west; the dark machine already there (R3-109)');
-  await wait(20000);
-  await shot('close-lookup', 'the eyes on the stars, the head come round');
-  await wait(14000);
-  await shot('close-open', 'the gaze coming down into the sky');
-  await wait(16000);
-  await shot('close-panels', 'the panels; the drift stills while one is read (R3-112)');
-  await wait(22000);
-  await shot('close-monitor-far', 'Daniel\'s machine, three metres back: the far face — "Press the screen to come to it." (C-02)');
-  const go = await page.evaluate(() => { const cm = window.__closeMonitor; const h = (cm.hits || []).find((r) => r.id === 'close-go'); return !!h; });
-  if (go) {
-    await page.evaluate(() => { const cm = window.__closeMonitor; const h = cm.hits.find((r) => r.id === 'close-go'); cm.press(h.x + h.w / 2, h.y + h.h / 2); });
-    await wait(9500);
-    await shot('close-restart', 'the Restart card, come to — the rooms, Receipt, Start again, The dossier');
-    await page.evaluate(() => { const cm = window.__closeMonitor; const h = cm.hits.find((r) => r.id === 'close-receipt'); if (h) cm.press(h.x + h.w / 2, h.y + h.h / 2); });
-    await wait(800);
-    await shot('close-receipt', 'the receipt: every update stacked, each FAILED; the file; kept by nobody (L-07)');
-  } else log.push('  ⚠ close-go not published — the card was not far');
+  await wait(12000);
+  await shot('close-travel', 'the Close begins');
 
-  fs.writeFileSync(path.join(OUT, 'TOUR.md'), `# Era 4 tour · ${new Date().toISOString()}\n\n${log.join('\n')}\n\n## page errors\n${errors.join('\n') || 'none'}\n`);
+  fs.writeFileSync(path.join(OUT, 'TOUR.md'), `STATUS: generated\n\n# Era 4 tour · ${new Date().toISOString()}\n\n${log.join('\n')}\n\n## page errors\n${errors.join('\n') || 'none'}\n`);
   console.log(`\nwrote ${path.relative(process.cwd(), OUT)}/ — ${n} frames, ${errors.length} page error(s)`);
   await browser.close();
 }

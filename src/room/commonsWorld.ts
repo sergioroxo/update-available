@@ -25,9 +25,6 @@
  */
 import * as pc from 'playcanvas';
 import { PLACE, ERA4, BALL, COMMONS_SKY } from '../desktop/theme/era4';
-import { setFont } from '../desktop/theme/chrome';
-import { roundRect } from '../desktop/theme/era4';
-import script from '../../data/dialog/s4_ball.json';
 
 /** the world is laid out round the E4 seat, facing +x like the seat does */
 export const WORLD = {
@@ -138,13 +135,8 @@ export function mountCommonsWorld(app: pc.Application): CommonsWorld {
     const tz = SC.z + side * (SC.w / 2 + 0.05), ty = (SC.y - SC.h / 2) / 2;
     pushBox(pos, idx, SC.x + 0.06, ty, tz, 0.05, ty, 0.05); paint(WORLD.frameColor, 8);
   }
-  // ⚑ S209g / L3 — the words stand in the open: banner poles and a crossbar, and the boards' legs
-  const B = WORLD.boards;
-  for (const bx of B.banners.xs) { pushBox(pos, idx, bx, 2.2, B.banners.z, 0.025, 2.2, 0.025); paint(PLACE.floorLo, 8); }
-  pushBox(pos, idx, (B.banners.xs[0] + B.banners.xs[3]) / 2, 4.28, B.banners.z, (B.banners.xs[3] - B.banners.xs[0]) / 2 + 0.6, 0.025, 0.025); paint(PLACE.floorLo, 8);
-  // (the house rules float: a world's sign, no legs — S209i)
-  // ⚑ S227 — the board of firsts faces her now (it spans x, like the rules), so its legs stand along x
-  for (const dx of [-1.6, 1.6]) { pushBox(pos, idx, B.firsts.x + dx, 0.45, B.firsts.z, 0.04, 0.45, 0.04); paint(PLACE.floorLo, 8); }
+  // ⚑ S293 — the banners, the house rules and the wall of firsts are gone with the ballroom (ENDING_TRANSJESUS): the
+  //   place is a floor, a stage, the stream's screen and the sky. Nothing on it says who anybody is.
   const mesh = new pc.Mesh(app.graphicsDevice);
   mesh.setPositions(pos);
   mesh.setIndices(idx);
@@ -203,9 +195,6 @@ export function mountCommonsWorld(app: pc.Application): CommonsWorld {
   // ── ⚑ S209g — THE SKY, ALL THE WAY ROUND: a dusk glow on the horizon, and the far stars ──
   entity.addChild(mountSky(app));
 
-  // ── ⚑ S209g / L3 — THE WALLS SAY PEOPLE MADE THIS PLACE: one canvas, one mesh, one draw call ──
-  //   her right: the four houses' banners; her left: the house rules; behind her: a wall of firsts
-  entity.addChild(mountHallWalls(app));
 
   let on = false;
   let t = 0;
@@ -214,7 +203,6 @@ export function mountCommonsWorld(app: pc.Application): CommonsWorld {
     get on() { return on; },
     setOn(v: boolean): void { on = v; entity.enabled = v; },
     update(dt: number): void {
-      updateHerLamp(app, dt, on);   // ⚑ S209g / I1
       if (!on) return;
       t += dt;
       // the stage light breathes with the room, slowly
@@ -229,206 +217,11 @@ export function mountCommonsWorld(app: pc.Application): CommonsWorld {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ⚑ S209g / L3 — THE HALL'S WORDS (his ticks, 2026-10-03). A ball's hall is a
-// place people made: banners for the houses, the rules they keep, photographs
-// of the nights they had. One 512² canvas drawn once, one mesh of quads mapped
-// onto it, one draw call, nearest filtering. The words are s4_ball.json's
-// `ball.hall`; the colours the theme's. Invented throughout — no real house,
-// no real ball's rules.
-// ═══════════════════════════════════════════════════════════════════════════
-const HALL = (script as unknown as { ball: { hall: { rulesTitle: string; rulesPin: string; rules: string[]; banners: string[]; firstsTitle: string } } }).ball.hall;
-const ATLAS = 512;
-const RULES = { x: 0, y: 0, w: 256, h: 160 };
-const BANNER = { x: 256, y: 0, w: 64, h: 184 };
-const FIRSTS = { x: 0, y: 256, w: 320, h: 196 };
-
-function drawHallAtlas(): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = ATLAS; c.height = ATLAS;
-  const g = c.getContext('2d')!;
-  const rect = (x: number, y: number, w: number, h: number, col: string): void => { g.fillStyle = col; g.fillRect(x, y, w, h); };
-  // ⚑ S209i (his, 2026-10-03: "very basic and not aesthetical, make it more for the time") — the house rules
-  //   as a 2026 social-VR world posts them: a floating glass card, a glowing edge, a gradient header with the
-  //   house's lamp, each rule on its own chip with a coloured mark, and the pin at the foot
-  const R0 = RULES;
-  roundRect(g, R0.x, R0.y, R0.w, R0.h, 12, ERA4.l);                         // the glow edge
-  roundRect(g, R0.x + 2, R0.y + 2, R0.w - 4, R0.h - 4, 10, ERA4.panel);     // the glass
-  const HDR = 30;
-  roundRect(g, R0.x + 4, R0.y + 4, R0.w - 8, HDR - 2, 8, PLACE.textileHi);   // the header band
-  rect(R0.x + 4, R0.y + HDR - 6, R0.w - 8, 4, PLACE.textileHi);
-  rect(R0.x + 12, R0.y + 9, 9, 14, PLACE.ink); rect(R0.x + 14, R0.y + 11, 5, 10, PLACE.sunHi);   // the lamp
-  setFont(g, 14);
-  g.fillStyle = ERA4.panel;
-  g.fillText(HALL.rulesTitle, R0.x + 28, R0.y + 10);
-  const mark = [PLACE.textileHi, PLACE.sunHi, ERA4.l, PLACE.book, PLACE.sky];
-  setFont(g, 9);
-  let ry = R0.y + HDR + 5;
-  HALL.rules.forEach((rule, i) => {
-    const text = rule.replace(/^\d+\.\s*/, '');
-    roundRect(g, R0.x + 8, ry, R0.w - 16, 18, 6, ERA4.panelHi);
-    rect(R0.x + 14, ry + 5, 8, 8, mark[i % mark.length]);
-    g.fillStyle = ERA4.textHi;
-    let line = text;
-    while (g.measureText(line).width > R0.w - 44 && line.includes(' ')) line = line.slice(0, line.lastIndexOf(' '));
-    g.fillText(line, R0.x + 28, ry + 4);
-    ry += 21;
-  });
-  setFont(g, 8);
-  g.fillStyle = ERA4.dim;
-  g.fillText(HALL.rulesPin, R0.x + 12, R0.y + R0.h - 13);
-  // the four banners: a house's colour, its name down the cloth, a lamp at the head, a swallowtail
-  const cloth = [PLACE.sunHi, ERA4.l, PLACE.textileHi, PLACE.bookAlt];
-  const ink = [PLACE.ink, PLACE.ink, PLACE.ink, PLACE.mug];
-  HALL.banners.slice(0, 4).forEach((name, i) => {
-    const bx = BANNER.x + i * BANNER.w;
-    rect(bx + 4, BANNER.y, BANNER.w - 8, BANNER.h, cloth[i]);
-    rect(bx + 4, BANNER.y, BANNER.w - 8, 6, PLACE.floorLo);                 // the pole's sleeve
-    rect(bx + 26, BANNER.y + 14, 12, 16, ink[i]); rect(bx + 28, BANNER.y + 16, 8, 12, PLACE.sunHi);   // the lamp
-    for (let k = 0; k < 14; k++) g.clearRect(bx + 32 - k, BANNER.y + BANNER.h - 14 + k, k * 2, 1); // the swallowtail
-    g.save();
-    g.translate(bx + 40, BANNER.y + 40);
-    g.rotate(Math.PI / 2);                                                  // a 90° step, the only kind
-    setFont(g, 13);
-    g.fillStyle = ink[i];
-    g.fillText(name, 0, 0);
-    g.restore();
-  });
-  // the wall of firsts: a cork board of polaroids, people with their arms up
-  rect(FIRSTS.x, FIRSTS.y, FIRSTS.w, FIRSTS.h, PLACE.floorLo);
-  rect(FIRSTS.x + 4, FIRSTS.y + 4, FIRSTS.w - 8, FIRSTS.h - 8, PLACE.floorHi);
-  setFont(g, 13);
-  g.fillStyle = PLACE.mug;
-  const fw = Math.ceil(g.measureText(HALL.firstsTitle).width);
-  g.fillText(HALL.firstsTitle, FIRSTS.x + Math.round((FIRSTS.w - fw) / 2), FIRSTS.y + 10);
-  const grounds = [PLACE.sky, PLACE.textileHi, ERA4.l, PLACE.sunHi, PLACE.bookAlt, PLACE.rugHi, PLACE.skyLo, PLACE.textile];
-  const bodies = [PLACE.book, PLACE.sunHi, PLACE.bookAlt, PLACE.mug, ERA4.l, PLACE.textileHi];
-  let seed = 7;
-  const rnd = (): number => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-  for (let r = 0; r < 2; r++) for (let q = 0; q < 4; q++) {
-    const x = FIRSTS.x + 24 + q * 72 + Math.round((rnd() - 0.5) * 6), y = FIRSTS.y + 34 + r * 78 + Math.round((rnd() - 0.5) * 6);
-    rect(x, y, 56, 66, PLACE.mug);
-    rect(x + 4, y + 4, 48, 46, grounds[(r * 4 + q) % grounds.length]);
-    const n = 1 + Math.floor(rnd() * 3);
-    for (let k = 0; k < n; k++) {
-      const fx = x + 10 + k * 14 + Math.round(rnd() * 4), top = y + 18 + Math.round(rnd() * 6);
-      const col = bodies[Math.floor(rnd() * bodies.length)];
-      rect(fx, top + 8, 8, 24 - (top - y - 18), col);                      // a body
-      rect(fx + 1, top, 6, 6, PLACE.wallHi);                                // a head (no face)
-      rect(fx - 3, top - 6, 2, 12, col); rect(fx + 9, top - 6, 2, 12, col);  // arms up
-    }
-    rect(x + 4, y + 54, 48, 2, PLACE.wallLo);                               // the caption line nobody wrote
-  }
-  return c;
-}
-
-function mountHallWalls(app: pc.Application): pc.Entity {
-  const pos: number[] = [], uv: number[] = [], idx: number[] = [];
-  const quad = (cx: number, cy: number, cz: number, rx: number, rz: number, hw: number, hh: number,
-    r: { x: number; y: number; w: number; h: number }): void => {
-    const b = pos.length / 3;
-    // ⚑ a canvas source is not flipped here: v 0 is the canvas top (measured: the first cut hung the walls upside down)
-    const u0 = r.x / ATLAS, u1 = (r.x + r.w) / ATLAS, v0 = (r.y + r.h) / ATLAS, v1 = r.y / ATLAS;
-    pos.push(cx - rx * hw, cy - hh, cz - rz * hw, cx + rx * hw, cy - hh, cz + rz * hw,
-      cx + rx * hw, cy + hh, cz + rz * hw, cx - rx * hw, cy + hh, cz - rz * hw);
-    uv.push(u0, v0, u1, v0, u1, v1, u0, v1);
-    idx.push(b, b + 1, b + 2, b, b + 2, b + 3);
-  };
-  const B = WORLD.boards;
-  // ⚑ S227 — front-left of the stage (−z, ahead): the house rules, floating at eye height
-  quad(B.rules.x, 2.0, B.rules.z, 1, 0, 1.4, 0.88, RULES);
-  // front-right of the stage (+z, ahead): the four banners, hung from their crossbar
-  B.banners.xs.forEach((x, i) => quad(x + 0.3, 2.95, B.banners.z - 0.04, -1, 0, 0.42, 1.2, { ...BANNER, x: BANNER.x + i * BANNER.w }));
-  // out to her left (−z, a little ahead), facing her: the board of firsts, on legs
-  quad(B.firsts.x, 1.75, B.firsts.z + 0.05, 1, 0, 1.6, 0.98, FIRSTS);
-  const mesh = new pc.Mesh(app.graphicsDevice);
-  mesh.setPositions(pos);
-  mesh.setUvs(0, uv);
-  mesh.setIndices(idx);
-  mesh.update(pc.PRIMITIVE_TRIANGLES);
-  const tex = new pc.Texture(app.graphicsDevice, {
-    width: ATLAS, height: ATLAS, format: pc.PIXELFORMAT_RGBA8, mipmaps: false,
-    minFilter: pc.FILTER_NEAREST, magFilter: pc.FILTER_NEAREST,
-    addressU: pc.ADDRESS_CLAMP_TO_EDGE, addressV: pc.ADDRESS_CLAMP_TO_EDGE
-  });
-  tex.setSource(drawHallAtlas());
-  const mat = new pc.StandardMaterial();
-  mat.useLighting = false;
-  mat.diffuse = new pc.Color(0, 0, 0);
-  mat.emissive = new pc.Color(0.92, 0.92, 0.92);
-  mat.emissiveMap = tex;
-  mat.opacityMap = tex;
-  mat.opacityMapChannel = 'a';
-  mat.alphaTest = 0.5;
-  mat.cull = pc.CULLFACE_NONE;
-  mat.update();
-  const e = new pc.Entity('commons-walls');
-  e.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)] });
-  e.render!.meshInstances[0].cull = false;
-  return e;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ⚑ S209g / I1 — HER LAMP (his tick, "we can try"). The MC says "the rest of you
-// make the noise". She holds a lamp like everyone else in the hall, low at the
-// edge of her view; a press raises it, and the room answers (ball.ts →
-// pulseCommonsLamps). Never scored, never filed: the respite files nothing.
-// It rides the camera, so it is in her hand in every look-mode, the headset's too.
-// ═══════════════════════════════════════════════════════════════════════════
-let herLamp: pc.Entity | null = null;
-let herShown = false;
-let herRaiseT = -1;
-const HER_RAISE_SECONDS = 2.6;
-export function setHerLamp(shown: boolean): void { herShown = shown; }
-export function raiseHerLamp(): void { if (herShown) herRaiseT = 0; }
-export function herLampRaised(): boolean { return herRaiseT >= 0; }
-
-export function updateHerLamp(app: pc.Application, dt: number, worldOn: boolean): void {
-  const show = herShown && worldOn;
-  if (!herLamp) {
-    if (!show) return;
-    const cam = app.root.findByName('camera') as pc.Entity | null;
-    if (!cam) return;
-    // a small lantern: a lit body, a dark cap and base — the hall's lamps, held
-    herLamp = new pc.Entity('commons-her-lamp');
-    const part = (name: string, hex: string, y: number, sx: number, sy: number): void => {
-      const e = new pc.Entity(name);
-      e.addComponent('render', { type: 'box' });
-      const m = new pc.StandardMaterial();
-      m.useLighting = false;
-      m.diffuse = new pc.Color(0, 0, 0);
-      m.emissive = new pc.Color().fromString(hex);
-      m.update();
-      e.render!.material = m;
-      e.render!.castShadows = false;
-      e.setLocalPosition(0, y, 0);
-      e.setLocalScale(sx, sy, sx);
-      herLamp!.addChild(e);
-    };
-    part('her-lamp-glow', PLACE.sunHi, 0, 0.022, 0.03);
-    part('her-lamp-cap', PLACE.floorLo, 0.019, 0.026, 0.008);
-    part('her-lamp-base', PLACE.floorLo, -0.019, 0.026, 0.008);
-    cam.addChild(herLamp);
-  }
-  herLamp.enabled = show;
-  if (!show) { herRaiseT = -1; return; }
-  let k = 0;
-  if (herRaiseT >= 0) {
-    herRaiseT += dt;
-    const u = herRaiseT / HER_RAISE_SECONDS;
-    k = u < 0.2 ? u / 0.2 : u > 0.75 ? Math.max(0, (1 - u) / 0.25) : 1;
-    k = k * k * (3 - 2 * k);
-    if (u >= 1) herRaiseT = -1;
-  }
-  // low at the right edge of her view → up into it
-  herLamp.setLocalPosition(0.16 - 0.04 * k, -0.125 + 0.15 * k, -0.42 - 0.04 * k);
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
 // ⚑ S209g — THE SKY (his, 2026-10-03: no string lights, "so it can look more
 // like a starry sky"; and the walls boxed the space in). One unlit mesh: a ring
 // of dusk round the horizon, far enough that it never meets the platform, its
 // colours the late-day haze fading up into the night; and a few hundred far
-// stars, still. The 41 lamps (commonsLamps.ts) are the near stars: they rise
+// stars, still. (S293: the 41 lamps that rose here are gone with the ballroom; the stream's light is the stage's.)
 // out of the crowd as people arrive, and they twinkle.
 // ═══════════════════════════════════════════════════════════════════════════
 function mountSky(app: pc.Application): pc.Entity {

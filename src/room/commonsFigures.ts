@@ -74,6 +74,10 @@ let inviteHook: ((on: boolean) => void) | null = null;
 /** ⚑ S209g / I3 — the room makes space round the crowd's ring (ball.ts, while `wantsHer`) */
 export function inviteCommonsFigures(on: boolean): void { inviteHook?.(on); }
 let answerHook: (() => void) | null = null;
+let danceHook: ((on: boolean) => void) | null = null;
+/** ⚑ S293 — THE STREAM (ENDING_TRANSJESUS): TransJesus dances on the floor — the one lit from within, on the stage,
+ *  wordless — and the people dance with them, arms rising on the beat. Not contestants: nobody walks a runway. */
+export function setCommonsDance(on: boolean): void { danceHook?.(on); }
 /** ⚑ S209g / I1 — she raised her lamp: the two beside her raise their arms with her */
 export function answerCommonsFigures(): void { answerHook?.(); }
 /** ⚑ S211 — where she stands in the hall: at "by the stage" she is ON the runway's line, and the
@@ -199,6 +203,9 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     }
   };
   let t = 0;
+  // ⚑ S293 — the stream's dance (setCommonsDance): declared before the first build, which reads it
+  let danceWant = false;
+  let danceK = 0;
   // Phase 7 — the show's state: who is walking (and since when), how high the arms are
   let show: CommonsShow = { performers: 0, category: -1, cheer: false };
   let walkT = 0;
@@ -276,6 +283,8 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     const sunk = k <= 0;
     figures.forEach((f, n) => {
       if (sunk) { sinkPerson(f.x, f.z); return; }
+      // ⚑ S293 — while the stream dances, the floor is TransJesus's (drawn below, lit from within)
+      if (f.onStage && danceK > 0) { sinkPerson(f.x, f.z); return; }
       // rising from the floor, then the dance — ⚑ S209g / M1 (his tick): a bounce on the beat (two a
       //   second, each a little out of step with the next), a side-to-side sway on the bar, a lean; it was
       //   a 2 cm sway nobody could see, and the crowd read as boxes
@@ -313,12 +322,14 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       // head's SIZE as its half-size and rendered 0.38 m heads on 0.26 m bodies
       // the arms: the crowd's go up when the room answers (not the one on the stage, not the two beside her mid-greeting)
       const answer = f.beside ? answerK : 0;
-      const up = f.onStage || (f.beside && greetK > 0) ? 0 : Math.max(armK * (0.75 + 0.25 * Math.sin(f.phase)), inviteArms, answer);
+      // ⚑ S293 — dancing: arms rise and fall on the bar, each a little out of step; some keep them low
+      const danceArms = danceK * (Math.sin(f.phase * 3.1) > -0.2 ? Math.max(0, Math.sin(t * Math.PI * 1.0 + f.phase)) * 0.9 : 0.15);
+      const up = f.onStage || (f.beside && greetK > 0) ? 0 : Math.max(armK * (0.75 + 0.25 * Math.sin(f.phase)), inviteArms, answer, danceArms);
       person(x, base, z, f.w, f.h, bob, lean, up, f.style ?? 0, f.build ?? 0.5);
       void n;
     });
     // ⚑ Phase 7 — the performers: down the runway and back, abreast, for as long as their category is called
-    const nWalk = sunk ? 0 : Math.min(PERFORMERS, show.performers);
+    const nWalk = sunk || danceK > 0 ? 0 : Math.min(PERFORMERS, show.performers);
     const cycle = WALK_OUT * 2 + WALK_HOLD * 2;
     const ph = walkT % cycle;
     const leg = ph < WALK_OUT ? ph / WALK_OUT : ph < WALK_OUT + WALK_HOLD ? 1
@@ -327,7 +338,25 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     // she is at the stage's edge: they perform up ON the stage, to her, and do not come down the runway
     const px = herAtStage ? WORLD.stage.x - 0.5 : RUNWAY.from + (RUNWAY.to - RUNWAY.from) * e;
     const pBase = herAtStage ? WORLD.stage.h + 0.02 : 0.02;
+    // ⚑ S293 — TRANSJESUS, dancing on the floor: a step side to side, a sway, the arms rising and opening on the
+    //   beat, a gown and a crown in the stream's own colours. Faceless like everyone; the brightest thing in the place.
+    const tjBeat = t * Math.PI * 2 * (122 / 60) / 2;
+    const tjX = STAGE.x - 0.35 + 0.18 * Math.sin(t * 0.7), tjZ = STAGE.z + 0.75 * Math.sin(t * 0.45);
     for (let i = 0; i < PERFORMERS; i++) {
+      if (i === 0 && danceK > 0 && !sunk) {
+        const h = 1.72, w = 0.31, base = STAGE.y + STAGE.h + 0.01 + (danceK - 1) * 2.2;
+        const bob = 0.05 * Math.abs(Math.sin(tjBeat));
+        const lean = 0.06 * Math.sin(tjBeat / 2);
+        const arms = 0.55 + 0.45 * Math.sin(tjBeat / 2 + 0.6) + answerK * 0.4;
+        person(tjX, base, tjZ, w, h, bob, lean, Math.min(1, arms), 1, 0.5);
+        costume('gown', tjX, base, tjZ, w, h, bob);
+        const [ca, cb] = COSTUME_COLOURS.gown;
+        for (const [slot, c] of [[PER, ca], [PER + 1, cb]] as const) {
+          const o = (i * PERF_PER + slot) * 32;
+          for (let v = 0; v < 8; v++) { colorsB[o + v * 4] = c.r; colorsB[o + v * 4 + 1] = c.g; colorsB[o + v * 4 + 2] = c.b; colorsB[o + v * 4 + 3] = 1; }
+        }
+        continue;
+      }
       if (i >= nWalk) { sinkPerson(px, RUNWAY.z); sinkBox(px, RUNWAY.z); sinkBox(px, RUNWAY.z); continue; }
       const z = RUNWAY.z + (i - (nWalk - 1) / 2) * 0.55;
       const h = perfH[i], w = 0.3;
@@ -344,6 +373,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     }
     // the light under them — a flat pale patch, on the floor, where they are
     if (nWalk > 0) box(px, pBase - 0.008, RUNWAY.z, 0.55, 0.004, 0.35 + nWalk * 0.28);
+    else if (danceK > 0 && !sunk) box(tjX, STAGE.y + STAGE.h + 0.006, tjZ, 0.6, 0.004, 0.7);
     else sinkBox(px, RUNWAY.z);
     // (the stage itself is the hall's — commonsWorld.ts; this box is spare and sunk)
     box(STAGE.x, SUNK_Y, STAGE.z, 0.1, 0.1, 0.1); void stageK;
@@ -402,6 +432,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   greetHook = (on) => { greetWant = on; };
   inviteHook = (on) => { inviteWant = on; };
   answerHook = () => { answerT = 0; };
+  danceHook = (on) => { danceWant = on; };
   showHook = (s) => { if (s.category !== show.category) walkT = 0; show = s; };
   return {
     update(dt: number): void {
@@ -411,6 +442,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       k = want ? Math.min(1, k + dt / RISE_SECONDS) : Math.max(0, k - dt / RISE_SECONDS);
       greetK = greetWant ? Math.min(1, greetK + dt / GREET_SECONDS) : Math.max(0, greetK - dt / GREET_SECONDS);
       inviteK = inviteWant ? Math.min(1, inviteK + dt / INVITE_SECONDS) : Math.max(0, inviteK - dt / INVITE_SECONDS);
+      danceK = danceWant ? Math.min(1, danceK + dt / RISE_SECONDS) : Math.max(0, danceK - dt / RISE_SECONDS);
       if (answerT >= 0) { answerT += dt; answerK = answerT < 0.4 ? answerT / 0.4 : answerT > 2.2 ? Math.max(0, 1 - (answerT - 2.2) / 0.5) : 1; if (answerT > 2.7) { answerT = -1; answerK = 0; } }
       if (show.performers > 0) walkT += dt;
       armK = show.cheer ? Math.min(1, armK + dt / ARM_EASE) : Math.max(0, armK - dt / (ARM_EASE * 3));

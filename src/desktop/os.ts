@@ -4215,13 +4215,11 @@ export class DesktopOS {
       // ⚑ The ROOM's light follows these; the visor does not, because the ball
       // is not on the visor and never will be.
       case 'e4Invite': this.e4BallJump('invited'); break;   // S133: Junie's card, Go in
-      case 'e4Ball': this.e4BallJump('arrival'); break;
-      case 'e4NoCategory': this.e4BallJump('noCategory'); break;
-      case 'e4BallOpen': this.e4BallJump('ball'); break;
-      case 'e4BallCat1': this.e4BallJump('category', 0); break;
-      case 'e4BallCat2': this.e4BallJump('category', 1); break;
-      case 'e4BallCat3': this.e4BallJump('category', 2); break;
-      case 'e4BallCat4': this.e4BallJump('category', 3); break;
+      // ⚑ S293 — the stream (ENDING_TRANSJESUS): the link, the frame failing, inside, her chips, the system, the end
+      case 'e4Ball': this.e4BallJump('frame'); break;
+      case 'e4BallOpen': this.e4BallJump('stream'); break;
+      case 'e4StreamAsk': this.e4BallJump('ask'); break;
+      case 'e4StreamIntrusion': this.e4BallJump('intrusion'); break;
       case 'e4BallAfter': this.e4BallJump('after'); break;
       case 'closeUpdate': this.setPhase('desktop'); this.armUpdate('close'); break;
       case 'send-s1': this.setPhase('desktop'); this.offerSend('s1'); break;
@@ -4281,11 +4279,11 @@ export class DesktopOS {
    * `resumeAfterBreak()`, so a review jump that skipped the hold would end the
    * ball into nothing and the era's finale would never play. Never in play.
    */
-  private e4BallJump(where: 'invited' | 'arrival' | 'noCategory' | 'ball' | 'category' | 'after', index = 0): void {
+  private e4BallJump(where: 'invited' | 'frame' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
     this.debugJump('e4Place');
     this.e4?.voice.debugFinish();
     this.e4?.offers.debugHoldForBreak();
-    this.e4?.ball.debugJumpTo(where, index);
+    this.e4?.ball.debugJumpTo(where);
   }
 
   // ── input ──────────────────────────────────────────────────────────────

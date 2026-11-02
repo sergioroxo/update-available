@@ -53,10 +53,11 @@ import { beatDone } from '../../witness/map';
 import { FloppySheep, FLOPPY_LABEL } from './floppysheep';
 import script from '../../../data/dialog/s4_boot.json';
 import {
-  WEB, roundRect, roundEdge, pill, webCard, webButton, chipRow, progressBar,
-  avatar, messageBar, thumb, compareSplit, type TabLook
+  WEB, PLACE, roundRect, roundEdge, pill, webCard, webButton, chipRow, progressBar,
+  avatar, messageBar, thumb, composite, profileGlyph, streamScene, streamShot, type TabLook
 } from '../theme/era4';
 import body from '../../../data/dialog/s4_browser.json';
+import ballScript from '../../../data/dialog/s4_ball.json';
 
 /** ⚑ the five tabs she left plus the one she did not. Only `search` draws a
  *  page in S123; the rest are the next sessions' work and are deliberately
@@ -64,37 +65,48 @@ import body from '../../../data/dialog/s4_browser.json';
 type TabId = 'search' | 'chat' | 'record' | 'photos' | 'care' | 'extra';
 interface Tab { id: TabId; mark: string; title: string; notHers?: boolean; address?: string }
 const TABS = script.tabs as unknown as Tab[];
-interface Turn { ask: string; chips: { label: string; witness: string }[] }
-interface Thread { id: string; name: string; preview: string; time: string }
-interface Step { id: TabId; n: number; title: string; ask: string; button?: string; done?: string; witness?: string; console: string;
-  /** S160 / R3-93: L's question and her two answers, before the step's own press */
-  turn?: Turn;
-  /** S160 / R3-94: step 1's header — the provider's intake gate */
-  gate?: string;
-  /** S160 / R3-101: step 4's threads, after access is allowed */
-  threads?: { title: string; sub: string; items: Thread[]; witness: string } }
+interface Thread { id: string; name: string; preview: string; time: string; badge?: string }
 interface FileItem { name: string; kind: 'folder' | 'file'; meta: string }
 interface Failed { status: string; title: string; line: string; detail: string; step: string }
 const PROGRAM = body.program as unknown as {
   chosen: string; typingSeconds: number; agentMark: string; agentAddress: string;
-  greeting: string[]; begin: string; beginWitness: string; stepLabel: string; locked: string; next: string;
-  steps: Step[];
-  files: { title: string; path: string; items: FileItem[]; cancel: string; restoring: string;
-    before: string; after: string; saved: string; restoringSeconds: number;
-    upload: string; stages: string[]; adjusted: string[]; savedButton: string;
-    folderItems: FileItem[]; back: string };
   failed: Failed;
   console: { mark: string; restored: string; typing: string; managed: string; ready: string; worn: string;
-    restoring: string; results: string; site: string };
+    restoring: string; results: string; wait: string };
   saver: { mark: string; line: string; witness: string };
   results: { title: string; historyLabel: string; history: string[]; queryLabel: string; relatedLabel?: string; related?: string[];
-    results: { id: string; title: string; url: string; snippet: string; press?: boolean }[] };
-  site: { mark: string; address: string; tagline: string; lines: string[]; start: string; footer: string;
-    heading?: string; privacy?: string; recentLabel?: string; recent?: string[] };
-  turnFiled: string;
+    results: { id: string; title: string; url: string; snippet: string; press?: boolean; sponsored?: string; why?: string }[] };
 };
-/** the agent moves to the next step this long after the press */
-const ADVANCE_SECONDS = 1.4;
+/**
+ * ⚑ S293 — THE AGENT CONDUCTS (s4_browser.json `agent`, RESEARCH_2026_V2_WEAPONISED_CARE §4.2 V2–V9). The five
+ * numbered steps on rails are retired; the middle of 2026 is one conversation on the agent's own page. Each beat:
+ * the agent's lines arrive a bubble at a time, then ONE way on — two chips (both continue, both filed: register,
+ * never branch), or one button, or a card whose one live row is the press. The beat's card (the referral list, the
+ * record, the composite, the care log and her story, the threads) stands in the right-hand panel, the way a 2026
+ * assistant opens a canvas beside its chat.
+ */
+type CardId = 'resources' | 'record' | 'composite' | 'care' | 'threads';
+interface Chip { label: string; filed: string }
+interface Beat { id: string; lines: string[]; chips?: Chip[]; button?: string; card?: CardId; filed?: string; console?: string }
+const AGENT = body.agent as unknown as {
+  mark: string; heading: string; privacy: string; lineSeconds: number; composer: string; beats: Beat[];
+  resources: { title: string; items: { id: string; name: string; meta: string; open: boolean }[] };
+  record: { rows: { k: string; v: string; note?: string; locked?: boolean }[] };
+  photo: { title: string; path: string; items: FileItem[]; folderItems: FileItem[]; cancel: string; back: string;
+    restoring: string; restoringSeconds: number; stages: string[]; adjusted: string[]; before: string; after: string; strip: string; saved: string };
+  care: { title: string; storiesTitle: string; other: { quote: string; who: string }; hers: { who: string; shared: string } };
+  threads: { title: string; sub: string; items: Thread[]; witness: string };
+};
+const DEFAULTS = (body as unknown as { defaults: { title: string; sub: string; rows: { k: string; v: string; tag?: string; icon: string }[];
+  fine: string; continue: string; witness: string } }).defaults;
+const PROFILE = (body as unknown as { profile: Record<'default' | 'composite' | 'maya', string> }).profile;
+const THREAD = (body as unknown as { thread: { name: string; sub: string; messages: { when: string; text: string }[]; reply: string; replied: string; after: string } }).thread;
+const REVERSAL = (body as unknown as { reversal: { title: string; current: string; original: string; button: string; verifying: string;
+  verifySeconds: number; match: string; matched: string; witness: string } }).reversal;
+const CURRENT_AFTER = (body.record as unknown as { currentAfter: { v: string; note: string } }).currentAfter;
+const STREAM = ballScript.stream as unknown as { mark: string; live: string; watching: string; count: number };
+const FRAME_ROWS = (ballScript.frame as unknown as { rows: { k: string; v: string }[] }).rows;
+const beatIndex = (id: string): number => AGENT.beats.findIndex((b) => b.id === id);
 /** the page area under the toolbar, for painting the app ground */
 const H_PAGE = 384;
 /** ⚑ the failure on the desk's two screens, in seconds from the device stopping:
@@ -111,11 +123,8 @@ void RESULT_HOLD_SECONDS;
 const RESTORE_SECONDS = 2.4;
 /** P7-66: an auto-reply is fast — that is part of what it says */
 const ENQUIRY_REPLY_SECONDS = 3.2;
-/** S281 — the presses the 2026 page conducts, one at a time (the walk's own order: Send, Close, the search, the result,
- *  the site's start, Begin, each step's button, Continue, the first file) */
-const PATH_IDS = /^(enq-send|enq-close|search-open|result-agent|site-start|agent-begin|step-next|step-[a-z]+|file-0)$/;
 const ENQ = body.enquiry as { draftLabel: string; to: string; subject: string; message: string[]; send: string; sent: string;
-  replyFrom: string; replySubject: string; reply: string[]; directory: string; close: string; witness: string };
+  replyFrom: string; replySubject: string; reply: string[]; directory: string; referred?: string; close: string; witness: string };
 /**
  * ⚑ THE BOOT LINE, BEFORE THE RESTORE (2026-09-12). Sérgio: "it needs a boot
  * up moment of the OS, just aesthetically stating like 'L — Is booting up for
@@ -165,7 +174,7 @@ export class E4Browser {
   lambyGuide: LambyGuide | null = null;
   onGuideLook: (() => void) | null = null;
   pressGuideTarget(id: string): void {
-    if (!['search-open', 'result-agent', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
+    if (!['search-open', 'result-agent', 'start-menu', 'res-meridian', 'tab3', 'thread-junie'].includes(id) || this.guideSilent || this.guideVoice) return;
     const r = this.hits.find(h => h.id === id);
     if (r) this.handleClick(r.x + r.w / 2, r.y + r.h / 2);
   }
@@ -195,7 +204,7 @@ export class E4Browser {
   private get startMapSilent(): boolean { return !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || (this.liveTab === 'chat' && this.threadOpen); }
   private startModel() { return buildStartModel(fakeOs({ e4: { browser: this } } as never), 'e4'); }
   private startCalm(): boolean {
-    return !this.startMap.active && this.phase === 'open' && this.mode === 'free' && this.liveTab === 'search' && this.pressable && !this.idleOrb && !this.enquiryOpen;
+    return !this.startMap.active && this.phase === 'open' && this.mode === 'free' && this.liveTab === 'search' && this.pressable && !this.idleOrb && !this.enquiryOpen && !this.defaultsOpen;
   }
   /** seconds still to wait before the boot line — the settle after landing */
   private settleT = 0;
@@ -203,30 +212,51 @@ export class E4Browser {
   // ── ⚑ THE PROGRAM (2026-09-12) — see s4_browser.json `program._doc` ─────────
   /** free: the restored session, hers · typing: the search being finished for
    *  her · agent: Second Thoughts introducing itself · program: the five steps */
-  private mode: 'free' | 'typing' | 'results' | 'site' | 'agent' | 'program' | 'game' = 'free';
+  private mode: 'free' | 'typing' | 'results' | 'agent' | 'game' = 'free';
   /** ⚑ S168 / R3-92 — FLOPPYSHEEP, THE COMPUTER VERSION (his 2026-09-21: now). The
    *  same game as Vera's phone (`floppysheep.ts`), on a bookmark in the free
    *  browser: one press away while the session waits — the same thing it said in
    *  2016, said again on a bigger screen. Optional; files nothing; never on rails
-   *  (the bookmark is gone once the program begins). Drawn in a phone-shaped
+   *  (the bookmark is gone once the agent has the page). Drawn in a phone-shaped
    *  frame at GAME_SCALE; presses are mapped back into the game's own space. */
   private readonly floppy = new FloppySheep();
   private gameFrame = { x: 0, y: 0, s: 1 };
-  /** S160 / R3-93: the steps whose turn (L's question, her answer) is done */
+  /** ⚑ S293 / V0 — the update's defaults, over the restored page until Continue */
+  private defaultsDone = false;
+  private get defaultsOpen(): boolean { return this.phase === 'open' && this.mode === 'free' && !this.defaultsDone; }
+  /** ⚑ S293 — who the toolbar thinks she is: Default → the composite → Maya */
+  private profile: 'default' | 'composite' | 'maya' = 'default';
+  // ── ⚑ S293 — THE CONVERSATION (see AGENT above) ──────────────────────────
+  /** the live beat, an index into AGENT.beats */
+  private beat = 0;
+  /** seconds since the live beat began: its lines arrive on this */
+  private beatT = 0;
+  /** what has been said, oldest first: the agent's lines, her answers and what it filed under them */
+  private said: { who: 'agent' | 'her' | 'filed'; text: string }[] = [];
+  /** the chips she pressed, by beat — her story is made of these and nothing else (V8) */
+  private chose = new Map<string, string>();
+  /** the beat has been answered; the next begins after a short breath */
+  private nextIn = -1;
+  /** kept for the walker's bstate: beats answered (it reads `turnDone` / `stepDone`) */
   private turnDone = new Set<string>();
-  /** S160 / R3-101: the chat step, after access — the threads list, then the one opened */
+  private stepDone = new Set<string>();
+  get step(): number { return this.beat; }
+  /** V9 — the threads card is up (after access), then Junie's sheet, then her reply */
+  private threadsUp = false;
   private threadOpen = false;
-  /** ⚑ P7-66 — her enquiry to Meridian, the first thing on the laptop (s4_browser.json `enquiry`):
-   *  her draft, one press to send it, the auto-reply seconds later, and Close. L is absent from it. */
-  private enquiry: 'draft' | 'sending' | 'replied' | 'closed' = 'draft';
+  private repliedT = -1;
+  get junieReplied(): boolean { return this.repliedT >= 0; }
+  /** V10 — the reversal on the Photos tab: confirm the original, the verifier, the match */
+  private reversal: 'none' | 'verifying' | 'matched' = 'none';
+  private reversalT = 0;
+  get reversed(): boolean { return this.reversal === 'matched'; }
+  /** ⚑ P7-66 — her enquiry to Meridian (s4_browser.json `enquiry`), opened from the agent's referral list now (V3–V4):
+   *  her draft, one press to send it, the auto-reply seconds later, and Close. The agent is absent from the card. */
+  private enquiry: 'none' | 'draft' | 'sending' | 'replied' | 'closed' = 'none';
   private enquiryT = 0;
-  private get enquiryOpen(): boolean { return this.phase === 'open' && this.mode === 'free' && this.enquiry !== 'closed'; }
+  private get enquiryOpen(): boolean { return this.phase === 'open' && this.mode === 'agent' && (this.enquiry === 'draft' || this.enquiry === 'sending' || this.enquiry === 'replied'); }
   private typeT = 0;
-  /** seconds since the agent's page opened — its bubbles arrive on this */
-  private agentT = 0;
-  /** index into program.steps; the live step. The last step is the headset. */
-  private step = 0;
-  /** ⚑ S203 — L's "while you wait": seconds without a press while the programme is open; said once */
+  /** ⚑ S203 — L's "while you wait": seconds without a press while the agent has the page; said once */
   private quietT = 0;
   private waitSaid = false;
   private waitNow = false;
@@ -234,58 +264,120 @@ export class E4Browser {
   private nowLine: string | null = null;
   private freeQuietT = 0;
   private pauseSaid = false;
+  /** ⚑ the felt sheet: nothing of the agent's, L's or Lamby's may speak while it is up */
+  private get feltUp(): boolean { return this.mode === 'agent' && this.threadOpen && this.liveTab === 'search'; }
   /** S207 — the way back: L names the main path's next step (os.wayBack) */
-  get guideSilent(): boolean { return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || (this.liveTab === 'chat' && this.threadOpen) || this.enquiryOpen; }
+  get guideSilent(): boolean { return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game' || this.feltUp || this.enquiryOpen || this.picker !== 'closed'; }
   get guideVoice(): boolean { return this.mode !== 'free' && (!!this.nowLine || this.waitNow); }
   sayLine(line: string): void { this.nowLine = line; this.version++; }
-  private stepDone = new Set<string>();
-  /** seconds since the live step was completed — the agent moves on after a beat */
-  private advanceT = -1;
-  /** the Restoration exercise's own little machine */
+  /** the photograph tool's own little machine (V6–V7): the file window, a folder, the making, the result */
   private picker: 'closed' | 'open' | 'folder' | 'restoring' | 'result' = 'closed';
-  /** the photograph she chose — the folder's, or the top level's; the save line names it */
+  /** the photograph she chose — the save line names it */
   private chosenFile = '';
   private pickerT = 0;
 
   get programMode(): string { return this.mode; }
-  /** the steps are done and the headset is the only thing left */
-  get programDone(): boolean {
-    // S160 — the last step's turn is asked before the headset is offered (the turn law)
-    return this.mode === 'program' && this.step >= PROGRAM.steps.length - 1 && !this.turnPending();
+  /** the live beat, or null outside the conversation */
+  private get cur(): Beat | null { return this.mode === 'agent' ? AGENT.beats[this.beat] ?? null : null; }
+  /** how many of the live beat's lines are on the page yet */
+  private get linesShown(): number {
+    const b = this.cur;
+    if (!b) return 0;
+    return Math.min(b.lines.length, 1 + Math.floor(this.beatT / AGENT.lineSeconds));
   }
+  /** the live beat's lines are all in, so its way on may be offered */
+  private get beatReady(): boolean { const b = this.cur; return !!b && this.linesShown >= b.lines.length && this.beatT >= (b.lines.length - 1) * AGENT.lineSeconds + 0.5; }
+  /** the conversation is over: the original confirmed, the agent satisfied, the headset is what is left */
+  get programDone(): boolean { return this.mode === 'agent' && this.reversal === 'matched' && this.cur?.id === 'ready' && this.beatReady; }
+  /** for the walker's bstate: a choice is on the page and unanswered */
+  turnPending(): boolean { const b = this.cur; return !!b && !!b.chips && this.beatReady && !this.turnDone.has(b.id); }
   /** the line L's console on the laptop shows — see E4Shell.drawLaptop */
   get consoleLine(): string {
     const c = PROGRAM.console;
+    if (this.feltUp) return '';   // Junie's thread: nobody else speaks
     if (this.lambyGuide?.active) return polish.sessionStatus;
     if (this.nowLine) return this.nowLine;
-    if (this.waitNow) return (c as unknown as { wait: string }).wait;
+    if (this.waitNow) return c.wait;
     if (this.phase === 'restoring') return c.restoring;   // S160 / R3-91: the laptop says what it is doing
     if (this.mode === 'free' || this.mode === 'game') return this.phase === 'open' ? c.restored : '';
     if (this.mode === 'results') return c.results;
-    if (this.mode === 'site') return c.site;
-    if (this.mode === 'typing' || this.mode === 'agent') return c.typing;
+    if (this.mode === 'typing') return c.typing;
     if (this.programDone) return c.ready;
-    return PROGRAM.steps[this.step]?.console ?? '';
+    return this.cur?.console ?? c.managed;
   }
-  get consoleMark(): string { return this.mode === 'free' || this.mode === 'game' || this.mode === 'typing' || this.mode === 'results' ? PROGRAM.console.mark : PROGRAM.agentMark; }
+  get consoleMark(): string {
+    if (this.feltUp) return '';
+    return this.mode === 'free' || this.mode === 'game' || this.mode === 'typing' || this.mode === 'results' ? PROGRAM.console.mark : PROGRAM.agentMark;
+  }
   get consoleLineWorn(): string { return PROGRAM.console.worn; }
-  /** review only: land past the steps, headset wearable */
+  /** review only: land past the conversation, the original confirmed, headset wearable */
   debugFinishProgram(): void {
-    this.mode = 'program';
-    for (const st of PROGRAM.steps) this.stepDone.add(st.id);
-    this.step = PROGRAM.steps.length - 1;
+    this.defaultsDone = true;
+    this.mode = 'agent';
+    this.enquiry = 'closed';
+    for (const b of AGENT.beats) { this.turnDone.add(b.id); this.stepDone.add(b.id); }
+    this.beat = beatIndex('ready');
+    this.beatT = 99;
+    this.reversal = 'matched';
+    this.profile = 'maya';
+    this.repliedT = 99;
     this.live = 0;
     this.version++;
   }
-  private stepTab(id: string): number { const i = TABS.findIndex(t => t.id === id); return i < 0 ? 0 : i; }
-  private completeStep(): void {
-    playOnce('step_done_2026.mp3');
-    const st = PROGRAM.steps[this.step];
-    if (!st || this.stepDone.has(st.id)) return;
-    this.stepDone.add(st.id);
-    if (st.witness) ledger.e4Space.push({ id: `step:${st.id}`, outcome: 'done', witness: st.witness });
-    this.advanceT = 0;
+  /** file one line of the conversation's record — `conv:<beat>` is what the map and the walker read */
+  private fileBeat(id: string, witness: string, outcome: 'answered' | 'done' | 'opened' | 'read' = 'done'): void {
+    if (ledger.e4Space.some((e) => e.id === `conv:${id}`)) return;
+    ledger.e4Space.push({ id: `conv:${id}`, outcome, witness });
+  }
+  /** the live beat is answered: her bubble (if she said something), what it filed, and the next beat after a breath */
+  private answer(label: string | null, filed: string | undefined): void {
+    const b = this.cur;
+    if (!b || this.stepDone.has(b.id)) return;
+    this.turnDone.add(b.id);
+    this.stepDone.add(b.id);
+    for (let k = 0; k < b.lines.length; k++) this.said.push({ who: 'agent', text: b.lines[k] });
+    if (label) { this.said.push({ who: 'her', text: label }); this.chose.set(b.id, label); }
+    if (filed) this.said.push({ who: 'filed', text: filed });
+    this.fileBeat(b.id, filed ?? `${b.id}: done`, label ? 'answered' : 'done');
+    playOnce('ui_press.mp3');
+    // the messages beat stays: its threads, Junie's sheet and the reversal all happen under it
+    if (b.id === 'messages') this.threadsUp = true; else this.nextIn = 0.9;
     this.version++;
+  }
+  /** move to the beat after this one */
+  private advanceBeat(): void {
+    if (this.beat < AGENT.beats.length - 1) this.beat += 1;
+    this.beatT = 0;
+    this.version++;
+    if (AGENT.beats[this.beat]?.lines.length) playOnce('agent_2026.mp3');
+  }
+  /** her story, made only of the chips she pressed (V8) */
+  private storyQuotes(): string[] {
+    const out: string[] = [];
+    for (const id of ['open', 'back']) { const l = this.chose.get(id); if (l) out.push(`“${l.replace(/\.$/, '')}.”`); }
+    return out;
+  }
+  /** ⚑ S293 — the one press the story is waiting on now, for the glow (src/witness/pathGlow.ts's `path` ring). A
+   *  choice of two chips is never ringed: either is the path. Junie's sheet is never ringed: it is felt. */
+  private pathIds(): Set<string> {
+    const s = new Set<string>();
+    if (this.phase !== 'open' || (this.feltUp && !this.junieReplied)) return s;
+    if (this.defaultsOpen) { s.add('def-continue'); return s; }
+    if (this.mode === 'free') { s.add('search-open'); return s; }
+    if (this.mode === 'results') { s.add('result-agent'); return s; }
+    if (this.mode !== 'agent') return s;
+    if (this.enquiry === 'draft') { s.add('enq-send'); return s; }
+    if (this.enquiry === 'replied') { s.add('enq-close'); return s; }
+    if (this.picker === 'open') { s.add('file-0'); return s; }
+    if (this.picker === 'folder') { s.add('file-2'); return s; }
+    const b = this.cur;
+    if (!b || !this.beatReady) return s;
+    if (b.id === 'resources' && this.enquiry === 'none') s.add('res-meridian');
+    else if (b.id === 'messages' && this.turnDone.has('messages') && !this.threadOpen) s.add('thread-junie');
+    else if (b.id === 'messages' && this.junieReplied && this.reversal === 'none') {
+      if (this.liveTab === 'photos') s.add('photo-original'); else s.add('tab3');
+    } else if (b.button && !this.stepDone.has(b.id)) s.add('conv-act');
+    return s;
   }
 
   /** the session begins: the settle, the boot line, the restore, the tabs. */
@@ -383,7 +475,7 @@ export class E4Browser {
     if (this.startPanel.tick(dt, this.startCalm())) this.version++;   // S229 / W1-A6
     // ⚑ S207 — 2026's PAUSE (pauses.json): restored, before the search, after a quiet moment, L says once what
     //   else is open to her — only what is left (the console only once its game is there)
-    if (!this.pauseSaid && this.phase === 'open' && this.mode === 'free') {
+    if (!this.pauseSaid && this.phase === 'open' && this.mode === 'free' && !this.defaultsOpen) {
       this.freeQuietT += dt;
       if (this.freeQuietT > 10) {
         this.pauseSaid = true;
@@ -398,7 +490,7 @@ export class E4Browser {
     }
     // ⚑ S209 / P7-47 — L's phrase of the day, once, after the pause's line, on the restored page at rest
     // ⚑ S219 / W1-B14 — no longer behind the pause's line (it never came for a player who searched at once)
-    if (!this.wotdSaid && this.phase === 'open' && this.mode === 'free' && !this.nowLine) {
+    if (!this.wotdSaid && this.phase === 'open' && this.mode === 'free' && !this.nowLine && !this.defaultsOpen) {
       this.freeQuietT += dt;
       if (this.freeQuietT > 10) {
         const app = lexStrings.wotdApps.e4;
@@ -407,7 +499,7 @@ export class E4Browser {
       }
     }
     // ⚑ S203 — L's "while you wait" (see s4_browser.json console._docWait)
-    if (!this.waitSaid && this.phase === 'open' && (this.mode === 'program' || this.mode === 'results' || this.mode === 'site' || this.mode === 'agent')) {
+    if (!this.waitSaid && this.phase === 'open' && (this.mode === 'results' || this.mode === 'agent') && !this.feltUp && !this.enquiryOpen) {
       this.quietT += dt;
       if (this.quietT > 25 && entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'matchmade')) {
         this.waitSaid = true; this.waitNow = true; this.version++;
@@ -422,6 +514,9 @@ export class E4Browser {
     const lamp = Math.ceil(witnessPulse.k() * 6);
     if (lamp !== this.lampStep) { this.lampStep = lamp; this.version++; }
     if (this.phase === 'failed') {
+      // ⚑ S293 — the stream on the monitor is video: a few frames a second, for as long as it is on
+      if (this.streamOpen && Math.floor(this.failT * 6) !== Math.floor((this.failT + dt) * 6)) this.version++;
+      if (this.streamOpen && this.failT >= FAIL.off + 0.5) this.failT += dt;
       // ⚑ 2026-09-13: the failure spreads — the sentence, the bands, then off
       if (this.failT < FAIL.off + 0.5) {
         const b4 = this.failT;
@@ -453,7 +548,7 @@ export class E4Browser {
       this.version++;
       return;
     }
-    // ── the program's clocks ──
+    // ── the conversation's clocks ──
     if (this.mode === 'typing') {
       this.typeT += dt;
       this.version++;
@@ -462,36 +557,42 @@ export class E4Browser {
       return;
     }
     if (this.mode === 'agent') {
-      const before = this.agentT;
-      this.agentT += dt;
-      // repaint on each bubble and each dot, not each frame
-      if (Math.floor(before / 0.3) !== Math.floor(this.agentT / 0.3)) this.version++;
-    }
-    if (this.mode === 'program') {
-      // ⚑ S150 — the clock only advances the LAST step (the program's own end);
-      //   every other step waits for Continue (`step-next`, drawStepBar). R3-98.
-      if (this.advanceT >= 0) {
-        this.advanceT += dt;
-        if (this.advanceT >= ADVANCE_SECONDS) {
-          this.advanceT = -1;
-          this.version++;
-        }
+      const before = this.beatT;
+      this.beatT += dt;
+      // repaint on each bubble and each typing dot, not each frame
+      if (Math.floor(before / 0.3) !== Math.floor(this.beatT / 0.3) && this.beatT < 12) this.version++;
+      if (this.nextIn >= 0) { this.nextIn -= dt; if (this.nextIn < 0) { this.nextIn = -1; this.advanceBeat(); } }
+      // P7-66: the enquiry's own clock — "Sent", then the reply, a few seconds later
+      if (this.enquiry === 'sending') {
+        this.enquiryT += dt;
+        if (this.enquiryT >= ENQUIRY_REPLY_SECONDS) { this.enquiry = 'replied'; this.version++; }
       }
       if (this.picker === 'restoring') {
+        const b4 = this.pickerT;
         this.pickerT += dt;
-        if (this.pickerT >= PROGRAM.files.restoringSeconds) {
+        if (Math.floor(b4 * 8) !== Math.floor(this.pickerT * 8)) this.version++;
+        if (this.pickerT >= AGENT.photo.restoringSeconds) {
           this.picker = 'result';
-          this.enhanced = true;
-          this.version++;
-          this.completeStep();
+          playOnce('step_done_2026.mp3');
+          this.answer(null, `photograph: chosen — ${this.chosenFile}.jpg`);
         }
       }
+      // V9: Junie's 'x', a breath after her reply
+      if (this.repliedT >= 0 && this.repliedT < 3) { const b4 = this.repliedT; this.repliedT += dt; if (b4 < 2.2 && this.repliedT >= 2.2) this.version++; }
+      // V10: the verifier, then the match — and the agent, satisfied, says its last two lines
+      if (this.reversal === 'verifying') {
+        this.reversalT += dt;
+        if (this.reversalT >= REVERSAL.verifySeconds) {
+          this.reversal = 'matched';
+          this.profile = 'maya';
+          this.threadOpen = false;   // the sheet folds away; the agent's page is what is behind it
+          ledger.e4Space.push({ id: 'reversal', outcome: 'done', witness: REVERSAL.witness });
+          playOnce('step_done_2026.mp3');
+          this.advanceBeat();
+        }
+        this.version++;
+      }
       return;
-    }
-    // P7-66: the enquiry's own clock — "Sent", then the reply, a few seconds later
-    if (this.enquiry === 'sending') {
-      this.enquiryT += dt;
-      if (this.enquiryT >= ENQUIRY_REPLY_SECONDS) { this.enquiry = 'replied'; this.version++; }
     }
     // the address bar's cursor is the only thing that moves on a settled page
     // ⚑ …and it stops moving the moment the device is on her face. The blink
@@ -597,13 +698,14 @@ export class E4Browser {
     // ⚑ 2026-09-13: once the page is the agent's, the tab says so — it read
     //   "how do i tell" over Second Thoughts for the whole program
     const shown = TABS.slice(0, back).map((t) =>
-      t.id === 'search' && this.mode !== 'free' && this.mode !== 'typing' && this.mode !== 'results' ? { ...t, title: PROGRAM.agentMark } : t);
+      t.id === 'search' && this.phase === 'failed' && this.streamOpen ? { ...t, title: STREAM.mark }
+        : t.id === 'search' && this.mode === 'agent' ? { ...t, title: PROGRAM.agentMark } : t);
     // ⚑ each tab shows its own address; only the search tab shows what she
     //   typed, and only it carries the cursor (2026-09-12, his review)
     const onSearch = this.liveTab === 'search';
-    let addr = this.phase === 'failed' ? PROGRAM.agentAddress
+    let addr = this.phase === 'failed' ? (this.streamOpen ? ballScript.invite.link : PROGRAM.agentAddress)
       : this.phase !== 'open' ? '' : onSearch ? script.search.typed : (TABS[this.live]?.address ?? '');
-    let blink = this.phase === 'open' && onSearch && this.pressable && this.mode === 'free'
+    let blink = this.phase === 'open' && onSearch && this.pressable && this.mode === 'free' && !this.defaultsOpen
       && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
     // ⚑ the search being finished FOR her: the typed six words, then the rest
     //   of the sentence arriving a character at a time, then the agent's address
@@ -613,32 +715,43 @@ export class E4Browser {
       const n = script.search.typed.length + Math.floor((full.length - script.search.typed.length) * k);
       addr = full.slice(0, n);
       blink = true;
-    } else if ((this.mode === 'agent' || this.mode === 'program') && onSearch) {
+    } else if (this.mode === 'results' && onSearch) {
+      addr = PROGRAM.chosen;
+    } else if (this.mode === 'agent' && onSearch) {
       addr = PROGRAM.agentAddress;
     }
     // ⚑ S145 — THE RECORD ON THE DEVICE, 2026 (THE_WITNESS_SYSTEM_PLAN §3E):
     //   the record tab's favicon lights on every filing (witness/pulse.ts) and,
-    //   outside the program, its badge is the file's count. A sign, not a control.
+    //   outside the conversation, its badge is the file's count. A sign, not a control.
+    // ⚑ S293 — in the conversation the agent has the page: the other tabs are washed and publish nothing, until
+    //   Junie's thread has been read — then Photos (where the original is kept) and the record open again.
     const lit = witnessPulse.k() > 0;
     const looks: TabLook[] = shown.map((t) => {
-      if (this.phase === 'failed') return t.id === 'search' ? { badge: '!', state: 'normal' } : { state: 'locked' };
-      if (this.mode !== 'program') return t.id === 'record' ? { badge: String(witnessPulse.countFor('e4')), lit } : {};   // S178: her file, not the run's
-      const st = PROGRAM.steps.find(x => x.id === t.id);
-      if (!st) return { state: 'locked' };
-      const idx = PROGRAM.steps.indexOf(st);
-      return {
-        badge: String(st.n),
-        state: this.stepDone.has(st.id) ? 'done' : idx > this.step ? 'locked' : 'normal',
-        lit: t.id === 'record' && lit
-      };
+      if (this.phase === 'failed') return t.id === 'search' ? { badge: this.streamOpen ? '●' : '!', state: 'normal' } : { state: 'locked' };
+      if (this.mode !== 'agent') return t.id === 'record' ? { badge: String(witnessPulse.countFor('e4')), lit } : {};   // S178: her file, not the run's
+      if (t.id === 'search') return {};
+      if ((t.id === 'photos' || t.id === 'record') && this.junieReplied) return { lit: t.id === 'record' && lit };
+      return { state: 'locked' };
     });
     const rects = browserChrome(ctx, W, shown, this.live, addr, blink, looks, 80);
     rects.forEach((r, i) => {
-      // ⚑ in the program only the live step's tab (and the finished ones) are
-      //   controls; a locked step publishes nothing, so nothing can be aimed at it
-      if (this.mode === 'program' && looks[i]?.state === 'locked') return;
+      // ⚑ a locked tab publishes nothing, so nothing can be aimed at it
+      if (this.mode === 'agent' && looks[i]?.state === 'locked') return;
+      if (this.feltUp && TABS[i]?.id !== 'photos') return;   // the sheet: only the way to the original
       this.publish({ ...r, id: `tab${i}` });
     });
+    // ⚑ S293 — the profile circle, and who it says she is (Default → the composite → Maya)
+    if (this.phase === 'open' || this.phase === 'failed') {
+      const name = PROFILE[this.profile];
+      setFont(ctx, 8);
+      const nw = Math.ceil(ctx.measureText(name).width) + 12;
+      px(ctx, W - 38, ADDR.y + 2, 18, 18, CHROME.toolbar);
+      profileGlyph(ctx, W - 37, ADDR.y + 3, 16, this.profile);
+      const nx = W - 64 - 22 - nw;
+      pill(ctx, nx, ADDR.y + 4, nw, 14, this.profile === 'maya' ? WEB.accentSoft : CHROME.bar);
+      ctx.fillStyle = this.profile === 'maya' ? WEB.accentInk : CHROME.tabInk;
+      ctx.fillText(name, nx + 6, ADDR.y + 7);
+    }
 
     if (this.phase === 'failed') { this.drawFailed(ctx, W, H); return; }
     if (this.phase !== 'open') {
@@ -652,7 +765,7 @@ export class E4Browser {
       return;
     }
     if (this.mode === 'game') { this.drawGame(ctx, W, H); return; }
-    if (this.mode === 'free') {
+    if (this.mode === 'free' && !this.defaultsOpen) {
       // S168 / R3-92: the bookmark — a chip at the address bar's foot, right
       const label = '☆ ' + FLOPPY_LABEL;
       setFont(ctx, 9);
@@ -663,24 +776,20 @@ export class E4Browser {
       ctx.fillText(label, bx + 7, by + 4);
       this.publish({ x: bx, y: by, w: bw, h: 15, id: 'bm-floppy' });
     }
-    if (this.mode === 'typing') { this.drawSearch(ctx, W); return; }
-    if (this.mode === 'agent') { this.drawAgent(ctx, W, H); return; }
-    if (this.mode === 'program') {
-      const st = PROGRAM.steps[this.step];
-      const bodyTop = this.drawStepBar(ctx, W, st);
+    if (this.mode === 'typing') { this.drawSearch(ctx, W); }
+    else if (this.mode === 'agent') {
       switch (this.liveTab) {
-        case 'photos': this.drawRestoration(ctx, W, H, bodyTop); return;
-        case 'search': this.drawAgent(ctx, W, H, bodyTop); return;
-        case 'chat': this.drawChat(ctx, W, H, bodyTop); return;
-        case 'record': this.drawRecord(ctx, W, H, bodyTop); return;
-        case 'care': this.drawCare(ctx, W, H, bodyTop); return;
-        default: break;
+        case 'photos': this.drawPhotos(ctx, W, H); break;
+        case 'record': this.drawRecord(ctx, W, H); break;
+        default:
+          this.drawAgent(ctx, W, H);
+          if (this.enquiryOpen) this.drawEnquiry(ctx, W, H);
+          if (this.picker === 'open' || this.picker === 'folder') this.drawPicker(ctx, W, H);
+          if (this.threadOpen) this.drawThread(ctx, W, H);
       }
-    }
-    switch (this.liveTab) {
+    } else switch (this.liveTab) {
       case 'search':
         if (this.mode === 'results') this.drawResults(ctx, W, H);
-        else if (this.mode === 'site') this.drawSite(ctx, W, H);
         else this.drawSearch(ctx, W);
         break;
       case 'chat': this.drawChat(ctx, W, H); break;
@@ -689,17 +798,59 @@ export class E4Browser {
       case 'extra': this.drawExtra(ctx, W, H); break;
       case 'photos': this.drawPhotos(ctx, W, H); break;
     }
-    if (this.enquiryOpen) this.drawEnquiry(ctx, W, H);
-    // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on the one press the page is waiting for, the
-    //   pale shimmer on the game's bookmark. A choice (L's two chips) is never ringed: either answer is the path.
-    if (!this.startMap.active) for (const h of this.hits) {
-      const k = PATH_IDS.test(h.id) ? 'path' : h.id === 'bm-floppy' ? 'may' : null;
-      if (k) drawGlow(ctx, h, k, CHROME.accent, WEB.faint);
+    if (this.defaultsOpen) this.drawDefaults(ctx, W, H);
+    // ⚑ S281 / S293 — the glow logic (src/witness/pathGlow.ts): the warm ring on the one press the story is waiting for
+    //   (`pathIds`), the pale line on the game's bookmark. A choice of two is never ringed; Junie's sheet never is.
+    if (!this.startMap.active) {
+      const path = this.pathIds();
+      for (const h of this.hits) {
+        const k = path.has(h.id) ? 'path' : h.id === 'bm-floppy' ? 'may' : null;
+        if (k) drawGlow(ctx, h, k, CHROME.accent, WEB.faint);
+      }
     }
     // ⚑ S229 / W1-A6 — the welcome-back card, over the page's bare lower half (never over the completions or the tabs)
     if (this.startPanel.open && this.startCalm()) {
       for (const b of this.startPanel.draw(ctx, 24, 176, 300)) this.publish({ ...b, id: 'startpanel-close' });
     }
+  }
+
+  /**
+   * ⚑ S293 / V0 — THE DEFAULTS. A settings sheet, the kind an update leaves on the first screen: three rows the
+   * update chose, the assistant marked "recommended for you", and one Continue. While it is up it is the only
+   * control on the page (Start still works).
+   */
+  private drawDefaults(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.hits = this.hits.filter((h) => h.id === 'start-menu' || h.id.startsWith('lg-') || h.id.startsWith('sm-'));
+    const top = ADDR.y + ADDR.h + 8;
+    ctx.save(); ctx.globalAlpha = 0.75; px(ctx, 0, top, W, H - top, WEB.bg); ctx.restore();
+    const w = 380, x = Math.round((W - w) / 2), y = top + 26, h = 226;
+    webCard(ctx, x, y, w, h);
+    setFont(ctx, 13); ctx.fillStyle = WEB.ink;
+    ctx.fillText(DEFAULTS.title, x + 20, y + 16);
+    setFont(ctx, 9); ctx.fillStyle = WEB.muted;
+    ctx.fillText(DEFAULTS.sub, x + 20, y + 34);
+    let ry = y + 56;
+    for (const r of DEFAULTS.rows) {
+      px(ctx, x + 20, ry - 6, w - 40, 1, WEB.cardEdge);
+      if (r.icon === 'profile') profileGlyph(ctx, x + 20, ry, 18, 'default');
+      else if (r.icon === 'search') { roundRect(ctx, x + 20, ry, 18, 18, 9, WEB.chip); setFont(ctx, 10); ctx.fillStyle = WEB.muted; ctx.fillText('⌕', x + 25, ry + 3); }
+      else avatar(ctx, x + 20, ry, 18, WEB.primary, 'S');
+      setFont(ctx, 9); ctx.fillStyle = WEB.muted;
+      ctx.fillText(r.k, x + 48, ry + 4);
+      setFont(ctx, 11); ctx.fillStyle = WEB.ink;
+      ctx.fillText(r.v, x + 130, ry + 3);
+      if (r.tag) {
+        setFont(ctx, 8);
+        const tw = Math.ceil(ctx.measureText(r.tag).width) + 12;
+        pill(ctx, x + w - 20 - tw, ry + 2, tw, 14, WEB.accentSoft);
+        ctx.fillStyle = WEB.accentInk; ctx.fillText(r.tag, x + w - 20 - tw + 6, ry + 5);
+      }
+      ry += 34;
+    }
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+    ctx.fillText(DEFAULTS.fine, x + 20, ry + 2);
+    const b = webButton(ctx, x + w - 20 - 96, y + h - 34, DEFAULTS.continue, 'primary', 96);
+    this.publish({ ...b, id: 'def-continue' });
   }
 
   /**
@@ -812,7 +963,7 @@ export class E4Browser {
       for (const src of srcs) { ctx.fillText(src, lx + 6, py); py += 11; }
     }
     for (const r of R.results) {
-      const rh = 42;
+      const rh = r.why ? 54 : 42;
       if (y + rh > H - 14) break;
       if (r.press) { roundEdge(ctx, x - 4, y - 4, colW, rh + 2, 5, WEB.cardEdge, WEB.card); }
       // ⚑ S197 — a removed result: the platform's own generic notice, greyed, nothing to press
@@ -823,8 +974,13 @@ export class E4Browser {
         y += rh + 6;
         continue;
       }
-      setFont(ctx, 8); ctx.fillStyle = WEB.accent;
-      ctx.fillText(r.url, x, y);
+      setFont(ctx, 8);
+      // ⚑ S293 / V1 — the ad says it is an ad, in the platform's own small bold type, and under it why she sees it
+      let ux = x;
+      if (r.sponsored) { ctx.fillStyle = WEB.ink; ctx.fillText(r.sponsored, x, y); ux += Math.ceil(ctx.measureText(r.sponsored + '  ·  ').width); ctx.fillStyle = WEB.muted; ctx.fillText('·', ux - 12, y); }
+      ctx.fillStyle = WEB.accent;
+      ctx.fillText(r.url, ux, y);
+      if (r.why) { setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(r.why, x, y + 38); }
       setFont(ctx, 11); ctx.fillStyle = r.press ? WEB.primary : WEB.ink;
       ctx.fillText(r.title.length > 58 ? r.title.slice(0, 57) + '…' : r.title, x, y + 11);
       setFont(ctx, 9); ctx.fillStyle = WEB.muted;
@@ -838,390 +994,338 @@ export class E4Browser {
     }
   }
 
-  /** S160 / R3-90 — the site, before the agent: a landing page, one press */
-  private drawSite(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const S = PROGRAM.site;
+  /**
+   * ⚑ S293 — THE AGENT'S PAGE (V2–V9). The documented 2026 form (his visual archive; detrans.ai's live page, Dossier
+   * e4_offers#3): a header with the mark and a live dot, the warning that conversations are public, the chat on the
+   * left, and on the right the panel where the agent puts what it is showing her. The message bar at the foot is a
+   * picture of one and says so: nothing is ever typed here. The chat keeps what was said, oldest scrolling off the
+   * top, and under each of her answers what it filed — in its own flat voice, at the same weight as everything else.
+   */
+  private drawAgent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const top = ADDR.y + ADDR.h + 8;
     px(ctx, 0, top - 8, W, H - top + 8, WEB.bg);
-    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
-    webCard(ctx, cx, top, cw, H - top - 14);
-    avatar(ctx, cx + 16, top + 14, 26, WEB.primary, 'S');
-    setFont(ctx, 14); ctx.fillStyle = WEB.ink;
-    ctx.fillText(S.mark, cx + 52, top + 14);
-    setFont(ctx, 10); ctx.fillStyle = WEB.muted;
-    ctx.fillText(S.tagline, cx + 52, top + 32);
-    px(ctx, cx + 1, top + 52, cw - 2, 1, WEB.cardEdge);
-    setFont(ctx, 11); ctx.fillStyle = WEB.ink;
-    S.lines.forEach((ln, i) => ctx.fillText(ln, cx + 16, top + 66 + i * 18));
-    const r = webButton(ctx, cx + 16, top + 66 + S.lines.length * 18 + 6, S.start, 'primary', 120);
-    this.publish({ ...r, id: 'site-start' });
-    setFont(ctx, 8); ctx.fillStyle = WEB.muted;
-    ctx.fillText(S.footer, cx + 16, H - 34);
-  }
-
-  /**
-   * ⚑ THE AGENT'S PAGE — a chat, because that is what such a thing looks like
-   * in 2026: an avatar, message bubbles arriving one after another, and a
-   * message bar at the bottom that is a PICTURE of a message bar. Nothing can
-   * be typed into it, ever (no free text anywhere in the piece); the only
-   * control is the one pill the last bubble carries. In the program it is the
-   * session's own page: the five steps as a checklist.
-   */
-  private drawAgent(ctx: CanvasRenderingContext2D, W: number, H: number, bodyTop?: number): void {
-    const top = bodyTop ?? ADDR.y + ADDR.h + 8;
-    px(ctx, 0, top - 8, W, H - top + 8, WEB.bg);
-    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
-    webCard(ctx, cx, top, cw, H - top - 14);
-    // the header: avatar, the mark, a live dot
-    avatar(ctx, cx + 12, top + 10, 22, WEB.primary, 'S');
-    setFont(ctx, 11);
-    ctx.fillStyle = WEB.ink;
-    ctx.fillText(PROGRAM.agentMark, cx + 42, top + 11);
-    setFont(ctx, 8);
-    ctx.fillStyle = WEB.muted;
-    px(ctx, cx + 42, top + 26, 5, 5, WEB.accent);
-    ctx.fillText('online', cx + 50, top + 23);
-    px(ctx, cx + 1, top + 40, cw - 2, 1, WEB.cardEdge);
-    let y = top + 52;
-    // ⚑ S200 — the documented chatbot form (his visual archive): a heading, the warning that conversations are
-    //   public (the landing page said "confidential"), and other people's recent questions, visible
-    const SITE = PROGRAM.site;
-    if (this.mode === 'agent' && SITE.privacy) {
-      setFont(ctx, 12); ctx.fillStyle = WEB.ink;
-      if (SITE.heading) ctx.fillText(SITE.heading, cx + 42, top + 48);
-      roundRect(ctx, cx + 42, top + 64, cw - 54, 16, 5, WEB.accentSoft);
-      setFont(ctx, 8); ctx.fillStyle = WEB.ink; ctx.fillText(`ⓘ ${SITE.privacy}`, cx + 50, top + 68);
-      y = top + 90;
-    }
-    const bubble = (text: string, mine = false): void => {
-      setFont(ctx, 10);
-      const rows = wrapText(ctx, text, cw - 120).slice(0, 4);
-      const bw = Math.max(...rows.map(r => Math.ceil(ctx.measureText(r).width))) + 22;
-      const bh = rows.length * 13 + 12;
-      const bx = mine ? cx + cw - 12 - bw : cx + 42;
-      roundRect(ctx, bx, y, bw, bh, 8, mine ? WEB.accentSoft : WEB.chip);
-      ctx.fillStyle = WEB.ink;
-      rows.forEach((r, k) => ctx.fillText(r, bx + 11, y + 6 + k * 13));
-      y += bh + 6;
-    };
-    if (this.mode === 'agent') {
-      // the greeting arrives a bubble at a time
-      const shown = Math.min(PROGRAM.greeting.length, 1 + Math.floor(this.agentT / 0.9));
-      for (let k = 0; k < shown; k++) bubble(PROGRAM.greeting[k]);
-      if (shown < PROGRAM.greeting.length) {
-        // typing dots
-        roundRect(ctx, cx + 42, y, 34, 16, 8, WEB.chip);
-        const d = Math.floor(this.agentT / 0.3) % 3;
-        for (let k = 0; k < 3; k++) px(ctx, cx + 50 + k * 8, y + 6, 4, 4, k === d ? WEB.ink : WEB.faint);
-      } else {
-        const r = webButton(ctx, cx + 42, y + 2, PROGRAM.begin, 'primary', 84);
-        this.publish({ ...r, id: 'agent-begin' });
-      }
-    } else {
-      bubble(PROGRAM.console.managed);
-      // the checklist card inside the chat
-      const lx = cx + 42, lw = cw - 54;
-      roundEdge(ctx, lx, y, lw, 16 + PROGRAM.steps.length * 17 + 11, 6, WEB.cardEdge, WEB.card);
-      let ly = y + 9;
-      for (const st of PROGRAM.steps) {
-        const done = this.stepDone.has(st.id);
-        const cur = PROGRAM.steps[this.step] === st && !done;
-        roundRect(ctx, lx + 10, ly + 1, 9, 9, 4, done ? WEB.accent : cur ? WEB.primary : WEB.chip);
-        if (done) { ctx.fillStyle = WEB.card; setFont(ctx, 8); ctx.fillText('✓', lx + 11, ly); }
-        setFont(ctx, 10);
-        ctx.fillStyle = done ? WEB.muted : WEB.ink;
-        ctx.fillText(`${st.n}   ${st.title}`, lx + 26, ly);
-        if (cur) {
-          // ⚑ on its own row (2026-09-13): beside the title it ran into it
-          setFont(ctx, 8);
-          ctx.fillStyle = WEB.muted;
-          ctx.fillText(st.ask, lx + 46, ly + 12);
-          ly += 11;
-        }
-        ly += 17;
-      }
-    }
-    if (this.mode === 'agent' && SITE.recent?.length) {
-      const ry = top + (H - top - 14) - 34 - 12 - SITE.recent.length * 12;
-      setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(SITE.recentLabel ?? '', cx + 42, ry);
-      SITE.recent.forEach((q, i) => { ctx.fillStyle = WEB.accent; ctx.fillText(q, cx + 50, ry + 12 + i * 12); });
-    }
-    // ⚑ Phase 7 — the bar is a picture of a bar, and now it says so (nothing is ever typed here)
-    const C = (PROGRAM as unknown as { composer: { agent: string; session: string } }).composer;
-    messageBar(ctx, cx + 12, top + (H - top - 14) - 34, cw - 24, this.mode === 'agent' ? C.agent : C.session);
-  }
-
-  /**
-   * ⚑ THE STEP HEADER — one strip under the toolbar, the same on every step:
-   * five segments showing where she is, "Step n of 5" and the agent's mark,
-   * the ask as a title, and the ONE control as a primary pill. The page's own
-   * content sits under it, which is what makes a step a tab rather than a new
-   * screen. Returns where the page body starts.
-   */
-  /** S160 — a step whose turn is still unanswered publishes NO press of its own, in the
-   *  bar or in the body (the Upload well, Junie's thread): L asks first, then the step. */
-  private turnPending(): boolean {
-    if (this.mode !== 'program') return false;
-    const st = PROGRAM.steps[this.step];
-    return !!(st && st.turn && !this.stepDone.has(st.id) && !this.turnDone.has(st.id));
-  }
-
-  private drawStepBar(ctx: CanvasRenderingContext2D, W: number, st: Step): number {
-    const top = ADDR.y + ADDR.h + 6;
-    const h = 44;
-    px(ctx, 0, top, W, H_PAGE, WEB.bg);
-    px(ctx, 0, top, W, h, WEB.card);
-    px(ctx, 0, top + h - 1, W, 1, WEB.cardEdge);
-    const done = this.stepDone.has(st.id);
-    // the five segments
-    const segW = 26, segX = ADDR.x + 8;
-    PROGRAM.steps.forEach((x, k) => {
-      const fill = this.stepDone.has(x.id) ? WEB.accent : k === this.step ? WEB.primary : WEB.chip;
-      pill(ctx, segX + k * (segW + 3), top + 8, segW, 4, fill);
-    });
-    setFont(ctx, 8);
-    ctx.fillStyle = WEB.muted;
-    ctx.fillText(PROGRAM.stepLabel.replace('{n}', String(st.n)) + '  ·  ' + PROGRAM.agentMark, segX, top + 16);
-    // ⚑ S160 / R3-93 — THE TURN. Before the step's own press, L asks and she answers: the
-    //   question in the bar, two chips under it, both leading on. Her answer is filed as her
-    //   line; what changes is what the record says she said, never what happens next.
-    if (!done && st.turn && !this.turnDone.has(st.id)) {
-      setFont(ctx, 12);
-      ctx.fillStyle = WEB.ink;
-      const rows = wrapText(ctx, st.turn.ask, W - segX - 16).slice(0, 2);
-      rows.forEach((r, k) => ctx.fillText(r, segX, top + 27 + k * 14));
-      let cxp = segX;
-      st.turn.chips.forEach((c, k) => {
-        const r = webButton(ctx, cxp, top + 30 + rows.length * 14, c.label, k === 0 ? 'primary' : 'quiet');
-        this.publish({ ...r, id: `turn-${k}` });
-        cxp += r.w + 8;
-      });
-      return top + h + 40;
-    }
-    setFont(ctx, 12);
-    ctx.fillStyle = WEB.ink;
-    ctx.fillText(done && st.done ? st.done : st.ask, segX, top + 27);
-    if (st.gate && !done) { setFont(ctx, 8); ctx.fillStyle = WEB.accent; ctx.fillText(st.gate, segX, top + 40); }   // S160 / R3-94
-    if (!done && st.button && !(st.id === 'photos' && this.picker !== 'closed') && !(st.id === 'chat' && !this.threadOpen)) {
-      const bw = Math.ceil(ctx.measureText(st.button).width) + 26;
-      const r = webButton(ctx, W - ADDR.x - 12 - Math.max(84, bw), top + 12, st.button, 'primary', 84);
-      this.publish({ ...r, id: `step-${st.id}` });
-    } else if (done) {
-      // ⚑ S150 — THE STEP WAITS FOR HER (OPEN_ITEMS R3-98). It used to advance on
-      //   a clock (1.4 s; 4.5 s after the photograph) and the result vanished
-      //   under the next step before it was understood. The done line says what
-      //   L did; Continue is the only way on — the last step has none, the
-      //   program's end takes over.
-      if (this.step < PROGRAM.steps.length - 1) {
-        setFont(ctx, 10);
-        const bw = Math.ceil(ctx.measureText(PROGRAM.next).width) + 26;
-        const r = webButton(ctx, W - ADDR.x - 12 - Math.max(84, bw), top + 12, PROGRAM.next, 'primary', 84);
-        this.publish({ ...r, id: 'step-next' });
-      } else {
-        setFont(ctx, 9);
-        ctx.fillStyle = WEB.accentInk;
-        const t = '✓  done';
-        ctx.fillText(t, W - ADDR.x - 12 - Math.ceil(ctx.measureText(t).width), top + 18);
-      }
-    }
-    return top + h + 10;
-  }
-
-  /**
-   * ⚑ THE RESTORATION EXERCISE — Sérgio's mandatory step, and the one that
-   * shows what the system can do to a person. It is drawn as the AI photo tool
-   * it would be in 2026: a drop zone, presets, a shimmering progress with the
-   * stages it claims to be doing, and a before/after with a handle. "Upload"
-   * opens a file window that is a PICTURE of a file window (CLAUDE.md: the
-   * filter never takes file input, never asks a permission); she picks one of
-   * her own photographs; the site "restores" her from a pre-authored pair; the
-   * result is saved beside the original. Nothing announces what "restored"
-   * means — the two pictures do.
-   */
-  private drawRestoration(ctx: CanvasRenderingContext2D, W: number, H: number, top: number): void {
-    const F = PROGRAM.files;
-    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
-    const ch = H - top - 14;
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16, ch = H - top - 10;
     webCard(ctx, cx, top, cw, ch);
-    // the tool's own header
-    avatar(ctx, cx + 12, top + 10, 20, WEB.accent, '✦');
-    setFont(ctx, 11);
-    ctx.fillStyle = WEB.ink;
-    ctx.fillText('Restoration', cx + 40, top + 10);
+    // the header: avatar, the mark, a live dot, the heading — and the privacy line, which the ad contradicted
+    avatar(ctx, cx + 12, top + 9, 22, WEB.primary, 'S');
+    setFont(ctx, 11); ctx.fillStyle = WEB.ink;
+    ctx.fillText(AGENT.mark, cx + 42, top + 9);
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+    px(ctx, cx + 42, top + 24, 5, 5, WEB.accent);
+    ctx.fillText('online  ·  ' + AGENT.heading, cx + 50, top + 22);
     setFont(ctx, 8);
-    ctx.fillStyle = WEB.muted;
-    ctx.fillText('AI photo restore  ·  Photos', cx + 40, top + 22);
-    chipRow(ctx, cx + cw - 190, top + 12, ['Natural', 'Professional', 'Restored'], [false, false, true]);
+    const pw = Math.ceil(ctx.measureText('ⓘ ' + AGENT.privacy).width) + 16;
+    roundRect(ctx, cx + cw - 12 - pw, top + 12, pw, 16, 5, WEB.accentSoft);
+    ctx.fillStyle = WEB.ink; ctx.fillText('ⓘ ' + AGENT.privacy, cx + cw - 12 - pw + 8, top + 16);
     px(ctx, cx + 1, top + 38, cw - 2, 1, WEB.cardEdge);
-    const by = top + 48;
+    // the two columns: the chat, and the agent's panel
+    const chatX = cx + 12, chatW = 316, panelX = chatX + chatW + 14, panelW = cx + cw - 12 - panelX;
+    const bodyTop = top + 46, bar = top + ch - 30;
+    px(ctx, panelX - 8, bodyTop - 2, 1, bar - bodyTop - 4, WEB.cardEdge);
+    messageBar(ctx, chatX, bar, chatW, AGENT.composer);
+    this.drawConversation(ctx, chatX, bodyTop, chatW, bar - 8);
+    this.drawPanel(ctx, panelX, bodyTop, panelW, top + ch - 8);
+  }
 
-    if (this.picker === 'closed') {
-      // the drop zone: a dashed rounded well with the upload glyph, and her recents
-      const zx = cx + 16, zw = cw - 32, zh = 108;
-      roundRect(ctx, zx, by, zw, zh, 8, WEB.bg);
-      for (let d = 0; d < zw; d += 8) { px(ctx, zx + 4 + d, by, 4, 1, WEB.faint); px(ctx, zx + 4 + d, by + zh - 1, 4, 1, WEB.faint); }
-      for (let d = 0; d < zh; d += 8) { px(ctx, zx, by + 4 + d, 1, 4, WEB.faint); px(ctx, zx + zw - 1, by + 4 + d, 1, 4, WEB.faint); }
-      roundRect(ctx, zx + Math.round(zw / 2) - 14, by + 18, 28, 28, 14, WEB.chip);
-      setFont(ctx, 14);
-      ctx.fillStyle = WEB.primary;
-      ctx.fillText('↑', zx + Math.round(zw / 2) - 5, by + 24);
+  /** the chat column: what has been said (oldest scrolling off the top), the live beat's lines, and its way on */
+  private drawConversation(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, bottom: number): void {
+    const b = this.cur;
+    type Row = { kind: 'agent' | 'her' | 'filed' | 'dots'; text: string };
+    const rows: Row[] = this.said.map((s) => ({ kind: s.who, text: s.text }));
+    if (b && !this.stepDone.has(b.id)) {
+      for (let k = 0; k < this.linesShown; k++) rows.push({ kind: 'agent', text: b.lines[k] });
+      if (this.linesShown < b.lines.length) rows.push({ kind: 'dots', text: '' });
+    }
+    // the way on, at the foot of the column: two chips, or one button
+    let footH = 0;
+    const ready = !!b && this.beatReady && !this.stepDone.has(b.id) && this.picker !== 'open' && this.picker !== 'folder' && this.picker !== 'restoring' && this.enquiry !== 'draft' && this.enquiry !== 'sending' && this.enquiry !== 'replied';
+    if (ready && (b!.chips || b!.button)) footH = 30;
+    // lay out from the bottom up
+    setFont(ctx, 10);
+    const maxW = w - 70;
+    const sized = rows.map((r) => {
+      if (r.kind === 'filed') return { r, lines: [r.text], h: 13 };
+      if (r.kind === 'dots') return { r, lines: [], h: 22 };
       setFont(ctx, 10);
+      const lines = wrapText(ctx, r.text, maxW).slice(0, 4);
+      return { r, lines, h: lines.length * 13 + 12 + 5 };
+    });
+    let y = bottom - footH;
+    const placed: { s: typeof sized[number]; y: number }[] = [];
+    for (let i = sized.length - 1; i >= 0; i--) {
+      if (y - sized[i].h < top) break;
+      y -= sized[i].h;
+      placed.unshift({ s: sized[i], y });
+    }
+    for (const { s, y: ry } of placed) {
+      if (s.r.kind === 'filed') {
+        setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+        const t = '↳ filed: ' + s.r.text;
+        ctx.fillText(t, x + w - 4 - Math.min(w - 10, Math.ceil(ctx.measureText(t).width)), ry);
+        continue;
+      }
+      if (s.r.kind === 'dots') {
+        roundRect(ctx, x + 26, ry, 34, 16, 8, WEB.chip);
+        const d = Math.floor(this.beatT / 0.3) % 3;
+        for (let k = 0; k < 3; k++) px(ctx, x + 34 + k * 8, ry + 6, 4, 4, k === d ? WEB.ink : WEB.faint);
+        continue;
+      }
+      setFont(ctx, 10);
+      const mine = s.r.kind === 'her';
+      const bw = Math.max(...s.lines.map((l) => Math.ceil(ctx.measureText(l).width))) + 22;
+      const bh = s.h - 5;
+      const bx = mine ? x + w - 4 - bw : x + 26;
+      if (!mine) avatar(ctx, x, ry, 18, WEB.primary, 'S');
+      roundRect(ctx, bx, ry, bw, bh, 8, mine ? WEB.accentSoft : WEB.chip);
       ctx.fillStyle = WEB.ink;
-      const l1 = 'Drop a photo here, or';
-      ctx.fillText(l1, zx + Math.round((zw - ctx.measureText(l1).width) / 2), by + 54);
-      const r = webButton(ctx, zx + Math.round(zw / 2) - 42, by + 72, F.upload, 'primary', 84);
-      if (!this.turnPending()) this.publish({ ...r, id: 'step-photos' });
-      setFont(ctx, 8);
-      ctx.fillStyle = WEB.muted;
-      ctx.fillText('Recent', cx + 16, by + zh + 12);
-      const tv = [3, 1, 0];
-      tv.forEach((v, k) => thumb(ctx, cx + 16 + k * 66, by + zh + 24, 58, 36, v, false));
+      s.lines.forEach((l, k) => ctx.fillText(l, bx + 11, ry + 6 + k * 13));
+    }
+    if (!ready || !b) return;
+    const fy = bottom - 24;
+    if (b.chips) {
+      let bx = x + 26;
+      b.chips.forEach((c, k) => {
+        const r = webButton(ctx, bx, fy, c.label, k === 0 ? 'primary' : 'quiet');
+        this.publish({ ...r, id: `conv-chip-${k}` });
+        bx += r.w + 8;
+      });
+    } else if (b.button) {
+      const r = webButton(ctx, x + 26, fy, b.button, 'primary');
+      this.publish({ ...r, id: 'conv-act' });
+    }
+  }
+
+  /** the agent's panel: what it is showing her for this beat */
+  private drawPanel(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, _bottom: number): void {
+    const b = this.cur;
+    const title = (t: string): number => { setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(t.toUpperCase(), x, top); return top + 16; };
+    if (!b) return;
+    if (this.picker === 'restoring') { this.drawMaking(ctx, x, title(AGENT.photo.title), w); return; }
+    const card = b.id === 'messages' ? (this.threadsUp ? 'threads' : null) : b.id === 'see' ? null : b.card ?? null;
+    // the card arrives with the beat's last line, not before it
+    const show = card && (this.stepDone.has(b.id) || this.linesShown >= b.lines.length);
+    if (!card || !show) {
+      // nothing to show: the page's own furniture — other people's questions, public (the documented form)
+      const y0 = title('Recent conversations');
+      const recent = ['can it be undone?', 'is it normal to feel this after a year', 'how do i tell my parents i want to stop'];
+      setFont(ctx, 9);
+      recent.forEach((q, i) => { ctx.fillStyle = WEB.accent; ctx.fillText(q, x + 4, y0 + i * 15); });
+      setFont(ctx, 8); ctx.fillStyle = WEB.faint;
+      ctx.fillText('public  ·  anonymous', x + 4, y0 + recent.length * 15 + 4);
       return;
     }
-    if (this.picker === 'open') {
-      // the file window: a sidebar, a search pill, a grid of tiles, a footer
-      const w = Math.min(420, cw - 40), h = ch - 60;
-      const x = cx + Math.round((cw - w) / 2), y = top + 46;
-      ctx.save(); ctx.globalAlpha = 0.35; px(ctx, cx, top, cw, ch, WEB.ink); ctx.restore();
-      roundRect(ctx, x, y + 2, w, h, 8, WEB.faint);
-      roundEdge(ctx, x, y, w, h, 8, WEB.cardEdge, WEB.card);
-      setFont(ctx, 10);
-      ctx.fillStyle = WEB.ink;
-      ctx.fillText(F.title, x + 14, y + 8);
-      const sbw = 96;
-      px(ctx, x + sbw, y + 24, 1, h - 56, WEB.cardEdge);
-      setFont(ctx, 8);
-      ['Recents', 'Photos', 'Favourites', 'Shared'].forEach((n, k) => {
-        const on = k === 1;
-        if (on) roundRect(ctx, x + 8, y + 26 + k * 16, sbw - 16, 14, 4, WEB.accentSoft);
-        ctx.fillStyle = on ? WEB.accentInk : WEB.muted;
-        ctx.fillText(n, x + 16, y + 29 + k * 16);
-      });
-      pill(ctx, x + sbw + 12, y + 24, w - sbw - 24, 14, WEB.chip);
-      ctx.fillStyle = WEB.faint;
-      ctx.fillText('Search', x + sbw + 24, y + 27);
-      ctx.fillStyle = WEB.muted;
-      ctx.fillText(F.path, x + sbw + 12, y + 44);
-      // the tiles
-      const tw = 78, th = 48, gx = x + sbw + 12, gy = y + 56;
-      (F.items as FileItem[]).forEach((it, k) => {
-        const tx = gx + (k % 4) * (tw + 8), ty = gy + Math.floor(k / 4) * (th + 30);
-        if (it.kind === 'folder') {
-          roundRect(ctx, tx, ty, tw, th, 5, WEB.chip);
-          roundRect(ctx, tx + 24, ty + 14, 30, 22, 3, WEB.faint);
-          px(ctx, tx + 24, ty + 11, 12, 4, WEB.faint);
-        } else {
-          thumb(ctx, tx, ty, tw, th, k === 1 ? 3 : k === 2 ? 3 : 0, k === 3);
-        }
-        setFont(ctx, 8);
-        ctx.fillStyle = WEB.ink;
-        ctx.save(); ctx.beginPath(); ctx.rect(tx, ty + th, tw, 12); ctx.clip();
-        ctx.fillText(it.name, tx, ty + th + 4); ctx.restore();
-        ctx.fillStyle = WEB.muted;
-        ctx.fillText(it.meta, tx, ty + th + 14);
-        this.publish({ x: tx, y: ty, w: tw, h: th + 24, id: `file-${k}` });
-      });
-      // the footer: Cancel and Open, both drawn, neither doing anything — the
-      // step is mandatory and a tile is the press
-      px(ctx, x + 1, y + h - 32, w - 2, 1, WEB.cardEdge);
-      webButton(ctx, x + w - 156, y + h - 27, F.cancel, 'quiet', 64);
-      webButton(ctx, x + w - 84, y + h - 27, 'Open', 'disabled', 70);
+    if (card === 'resources') {
+      let y = title(AGENT.resources.title);
+      for (const it of AGENT.resources.items) {
+        const h = 40;
+        if (it.open) roundEdge(ctx, x, y, w, h, 6, WEB.cardEdge, WEB.card);
+        else roundRect(ctx, x, y, w, h, 6, WEB.chip);
+        setFont(ctx, 10); ctx.fillStyle = it.open ? WEB.primary : WEB.muted;
+        ctx.fillText(it.name, x + 10, y + 8);
+        setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+        ctx.fillText(it.meta, x + 10, y + 23);
+        if (it.open && this.enquiry === 'none' && this.beatReady) this.publish({ x, y, w, h, id: `res-${it.id}` });
+        if (it.open && this.enquiry !== 'none') { setFont(ctx, 8); ctx.fillStyle = WEB.ink; ctx.fillText(this.enquiry === 'closed' ? 'declined' : 'sent', x + w - 48, y + 8); }
+        y += h + 6;
+      }
       return;
     }
-    if (this.picker === 'folder') {
-      // ⚑ inside the folder (2026-09-13): the same window, one level down —
-      //   her Pride photographs, three of them, and any one is the press
-      const w = Math.min(420, cw - 40), h = ch - 60;
-      const x = cx + Math.round((cw - w) / 2), y = top + 46;
-      ctx.save(); ctx.globalAlpha = 0.35; px(ctx, cx, top, cw, ch, WEB.ink); ctx.restore();
-      roundRect(ctx, x, y + 2, w, h, 8, WEB.faint);
-      roundEdge(ctx, x, y, w, h, 8, WEB.cardEdge, WEB.card);
-      setFont(ctx, 10);
-      ctx.fillStyle = WEB.ink;
-      ctx.fillText(F.title, x + 14, y + 8);
-      const sbw = 96;
-      px(ctx, x + sbw, y + 24, 1, h - 56, WEB.cardEdge);
-      setFont(ctx, 8);
-      ['Recents', 'Photos', 'Favourites', 'Shared'].forEach((n, k) => {
-        const on = k === 1;
-        if (on) roundRect(ctx, x + 8, y + 26 + k * 16, sbw - 16, 14, 4, WEB.accentSoft);
-        ctx.fillStyle = on ? WEB.accentInk : WEB.muted;
-        ctx.fillText(n, x + 16, y + 29 + k * 16);
-      });
-      pill(ctx, x + sbw + 12, y + 24, w - sbw - 24, 14, WEB.chip);
-      ctx.fillStyle = WEB.faint;
-      ctx.fillText('Search', x + sbw + 24, y + 27);
-      ctx.fillStyle = WEB.accentInk;
-      ctx.fillText(F.back, x + sbw + 12, y + 44);
-      this.publish({ x: x + sbw + 8, y: y + 40, w: 60, h: 14, id: 'file-back' });
-      ctx.fillStyle = WEB.muted;
-      const folder = (F.items as FileItem[]).find((i) => i.kind === 'folder');
-      const crumb = `${F.path}  ›  ${folder?.name ?? ''}`;
-      ctx.fillText(crumb, x + sbw + 12 + 52, y + 44);
-      const tw = 78, th = 48, gx = x + sbw + 12, gy = y + 56;
-      (F.folderItems as FileItem[]).forEach((it, k) => {
-        const tx = gx + (k % 4) * (tw + 8), ty = gy;
-        thumb(ctx, tx, ty, tw, th, k === 0 ? 2 : 3, false);
-        setFont(ctx, 8);
-        ctx.fillStyle = WEB.ink;
-        ctx.save(); ctx.beginPath(); ctx.rect(tx, ty + th, tw, 12); ctx.clip();
-        ctx.fillText(it.name, tx, ty + th + 4); ctx.restore();
-        ctx.fillStyle = WEB.muted;
-        ctx.fillText(it.meta, tx, ty + th + 14);
-        this.publish({ x: tx, y: ty, w: tw, h: th + 24, id: `file-${k}` });
-      });
-      px(ctx, x + 1, y + h - 32, w - 2, 1, WEB.cardEdge);
-      webButton(ctx, x + w - 156, y + h - 27, F.cancel, 'quiet', 64);
-      webButton(ctx, x + w - 84, y + h - 27, 'Open', 'disabled', 70);
+    if (card === 'record') {
+      let y = title('Your information');
+      roundEdge(ctx, x, y, w, AGENT.record.rows.length * 24 + 12, 6, WEB.cardEdge, WEB.card);
+      y += 8;
+      for (const r of AGENT.record.rows) {
+        setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(r.k, x + 10, y + 2);
+        setFont(ctx, 10); ctx.fillStyle = r.locked ? WEB.muted : WEB.ink; ctx.fillText(r.v, x + 80, y);
+        if (r.note) { setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText('🔒 ' + r.note, x + 80, y + 11); }
+        y += 24;
+      }
       return;
     }
-    if (this.picker === 'restoring') {
-      const k = Math.min(1, this.pickerT / F.restoringSeconds);
-      thumb(ctx, cx + 16, by, 120, 74, 3, false);
-      setFont(ctx, 11);
-      ctx.fillStyle = WEB.ink;
-      ctx.fillText(F.restoring, cx + 150, by + 2);
-      progressBar(ctx, cx + 150, by + 20, cw - 170, k, this.pickerT);
-      const stages = F.stages as string[];
-      stages.forEach((st, n) => {
-        const on = k >= (n + 0.5) / stages.length, cur = !on && k >= n / stages.length;
-        roundRect(ctx, cx + 150, by + 36 + n * 14, 8, 8, 4, on ? WEB.accent : cur ? WEB.primary : WEB.chip);
+    if (card === 'composite') {
+      // ⚑ two pictures, side by side, the way such a tool shows its output: hers, and the one it made — whole, not split
+      const F = AGENT.photo;
+      let y = title(F.strip);
+      const sz = Math.min(140, Math.floor((w - 16) / 2));
+      thumb(ctx, x, y, sz, sz, 3, false, 6);
+      composite(ctx, x + sz + 16, y, sz, sz);
+      setFont(ctx, 8);
+      const tag = (t: string, tx: number, ink: string, ground: string): void => {
+        const tw = Math.ceil(ctx.measureText(t).width) + 12;
+        pill(ctx, tx + 4, y + 4, tw, 14, ground); ctx.fillStyle = ink; ctx.fillText(t, tx + 10, y + 7);
+      };
+      tag(F.before, x, WEB.card, WEB.ink);
+      tag(F.after, x + sz + 16, WEB.card, WEB.ink);
+      // the strip every such tool now carries under its output
+      const sw = Math.ceil(ctx.measureText(F.strip).width) + 12;
+      pill(ctx, x + sz + 16 + sz - sw - 4, y + sz - 18, sw, 14, WEB.ink);
+      ctx.fillStyle = WEB.card; ctx.fillText(F.strip, x + sz + 16 + sz - sw + 2, y + sz - 15);
+      y += sz + 8;
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText('Adjusted', x, y + 4);
+      chipRow(ctx, x + 50, y, F.adjusted, F.adjusted.map(() => true));
+      y += 24;
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+      for (const row of wrapText(ctx, F.saved.replace('{name}', this.chosenFile || 'me, after'), w)) { ctx.fillText(row, x, y); y += 11; }
+      return;
+    }
+    if (card === 'care') {
+      let y = title(body.care.title);
+      setFont(ctx, 9);
+      for (const it of body.care.items as Array<{ what: string; when: string; why: string }>) {
+        roundRect(ctx, x, y + 3, 6, 6, 3, WEB.accent);
+        ctx.fillStyle = WEB.ink; ctx.fillText(it.what, x + 12, y);
+        setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(`${it.when}  ·  ${it.why}`, x + 150, y + 1);
         setFont(ctx, 9);
-        ctx.fillStyle = on ? WEB.muted : cur ? WEB.ink : WEB.faint;
-        ctx.fillText(st, cx + 164, by + 34 + n * 14);
-      });
+        y += 14;
+      }
+      ctx.fillStyle = WEB.muted; ctx.fillText(`${body.care.invite.from} — “${body.care.invite.text}”  ·  ${body.care.invite.when}`, x + 12, y); y += 18;
+      // her story, beside the one the session will play her
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(AGENT.care.storiesTitle.toUpperCase(), x, y); y += 13;
+      const C = AGENT.care;
+      roundRect(ctx, x, y, w, 30, 6, WEB.chip);
+      setFont(ctx, 9); ctx.fillStyle = WEB.ink; ctx.fillText(`“${C.other.quote}”`, x + 10, y + 5);
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(C.other.who + '  ·  verified', x + 10, y + 17);
+      y += 36;
+      roundEdge(ctx, x, y, w, 46, 6, WEB.accent, WEB.card);
+      composite(ctx, x + 6, y + 6, 34, 34);
+      setFont(ctx, 10); ctx.fillStyle = WEB.ink;
+      ctx.fillText(this.storyQuotes().join('  '), x + 48, y + 8);
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+      ctx.fillText(`${C.hers.who}  ·  verified  ·  ${C.hers.shared}`, x + 48, y + 26);
       return;
     }
-    // the result: the comparison with its handle, the chips, and the save line
-    // ⚑ a photograph's own proportions, and the handle THROUGH the figure —
-    //   at the card's full width the split fell beside her and neither half
-    //   showed the change (measured on the first plate). The figure stands at
-    //   0.56 of the frame; the split sits at 0.62 so both halves carry her.
-    // ⚑ S150 — the comparison stays INSIDE the card (OPEN_ITEMS R3-96a, Sérgio:
-    //   "image is out of the area"): width-bound as well as height-bound, with
-    //   the Adjusted column's 150 px kept beside it
-    let ph = Math.min(ch - 100, 176), pw = Math.round(ph * 1.6);
-    const maxW = cw - 32 - 150;
-    if (pw > maxW) { pw = maxW; ph = Math.round(pw / 1.6); }
-    const px0 = cx + 16;
-    compareSplit(ctx, px0, by, pw, ph,
-      (c) => thumb(c, px0, by, pw, ph, 3, false, 6),
-      (c) => thumb(c, px0, by, pw, ph, 3, true, 6),
-      0.5, F.before, F.after);   // ⚑ 2026-09-13: through the middle of the face, now that it is a portrait
-    // beside it: what was adjusted, and the save
-    const rx = px0 + pw + 16;
-    setFont(ctx, 9);
-    ctx.fillStyle = WEB.muted;
-    ctx.fillText('Adjusted', rx, by + 2);
-    let cy = by + 16;
-    for (const a of F.adjusted as string[]) {
-      cy = chipRow(ctx, rx, cy, [a], [true]) > 0 ? cy + 20 : cy;
+    if (card === 'threads') {
+      const T = AGENT.threads;
+      let y = title(T.title);
+      setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(T.sub, x, y); y += 16;
+      for (const th of T.items) {
+        const live = th.id === 'junie';
+        roundEdge(ctx, x, y, w, 34, 6, live ? WEB.cardEdge : WEB.bg, live ? WEB.card : WEB.bg);
+        avatar(ctx, x + 8, y + 7, 20, live ? PLACE.textileHi : WEB.faint, th.name[0]);
+        setFont(ctx, 10); ctx.fillStyle = live ? WEB.ink : WEB.muted; ctx.fillText(th.name, x + 36, y + 6);
+        setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+        ctx.save(); ctx.beginPath(); ctx.rect(x + 36, y + 18, w - 80, 12); ctx.clip(); ctx.fillText(th.preview, x + 36, y + 19); ctx.restore();
+        ctx.fillText(th.time, x + w - 8 - Math.ceil(ctx.measureText(th.time).width), y + 6);
+        if (th.badge && !this.threadOpen) { roundRect(ctx, x + w - 22, y + 18, 14, 12, 6, PLACE.textileHi); ctx.fillStyle = WEB.card; ctx.fillText(th.badge, x + w - 18, y + 20); }
+        // only Junie's opens — the others are pictures of threads
+        if (live && !this.threadOpen) this.publish({ x, y, w, h: 34, id: 'thread-junie' });
+        y += 40;
+      }
     }
-    webButton(ctx, rx, cy + 4, F.savedButton, 'disabled', 96);
+  }
+
+  /** V7 — the making: the photograph she chose, and the stages the tool claims (no "finding the face": it never draws one) */
+  private drawMaking(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
+    const F = AGENT.photo;
+    const k = Math.min(1, this.pickerT / F.restoringSeconds);
+    thumb(ctx, x, y, 96, 76, 3, false, 6);
+    setFont(ctx, 10); ctx.fillStyle = WEB.ink;
+    for (const [i, row] of wrapText(ctx, F.restoring, w - 110).entries()) ctx.fillText(row, x + 108, y + i * 13);
+    progressBar(ctx, x + 108, y + 32, w - 116, k, this.pickerT);
+    F.stages.forEach((st, n) => {
+      const on = k >= (n + 0.5) / F.stages.length, cur = !on && k >= n / F.stages.length;
+      roundRect(ctx, x + 108, y + 46 + n * 14, 8, 8, 4, on ? WEB.accent : cur ? WEB.primary : WEB.chip);
+      setFont(ctx, 9); ctx.fillStyle = on ? WEB.muted : cur ? WEB.ink : WEB.faint;
+      ctx.fillText(st, x + 122, y + 44 + n * 14);
+    });
+  }
+
+  /**
+   * V6 — THE FILE WINDOW IS A PICTURE OF ONE (CLAUDE.md: the filter never takes file input, never asks a permission).
+   * Her folders, pre-authored; the folder opens; any photograph is the press; nothing is read or uploaded.
+   */
+  private drawPicker(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.hits = this.hits.filter((h) => h.id === 'start-menu' || h.id.startsWith('lg-') || h.id.startsWith('sm-') || h.id.startsWith('tab'));
+    const F = AGENT.photo;
+    const top = ADDR.y + ADDR.h + 8;
+    ctx.save(); ctx.globalAlpha = 0.45; px(ctx, 0, top, W, H - top, WEB.ink); ctx.restore();
+    const w = 440, h = 250, x = Math.round((W - w) / 2), y = top + 30;
+    roundRect(ctx, x, y + 2, w, h, 8, WEB.faint);
+    roundEdge(ctx, x, y, w, h, 8, WEB.cardEdge, WEB.card);
+    setFont(ctx, 10); ctx.fillStyle = WEB.ink; ctx.fillText(F.title, x + 14, y + 8);
+    const sbw = 96;
+    px(ctx, x + sbw, y + 24, 1, h - 56, WEB.cardEdge);
     setFont(ctx, 8);
-    ctx.fillStyle = WEB.muted;
-    const savedLine = F.saved.replace('{name}', this.chosenFile || 'IMG_2211');
-    for (const row of wrapText(ctx, savedLine, cw - (rx - cx) - 16).slice(0, 3)) { ctx.fillText(row, rx, cy + 32); cy += 10; }
+    ['Recents', 'Photos', 'Favourites', 'Shared'].forEach((n, k) => {
+      const on = k === 1;
+      if (on) roundRect(ctx, x + 8, y + 26 + k * 16, sbw - 16, 14, 4, WEB.accentSoft);
+      ctx.fillStyle = on ? WEB.accentInk : WEB.muted;
+      ctx.fillText(n, x + 16, y + 29 + k * 16);
+    });
+    pill(ctx, x + sbw + 12, y + 24, w - sbw - 24, 14, WEB.chip);
+    ctx.fillStyle = WEB.faint; ctx.fillText('Search', x + sbw + 24, y + 27);
+    const inFolder = this.picker === 'folder';
+    const folder = F.items.find((i) => i.kind === 'folder');
+    if (inFolder) {
+      ctx.fillStyle = WEB.accentInk; ctx.fillText(F.back, x + sbw + 12, y + 44);
+      this.publish({ x: x + sbw + 8, y: y + 40, w: 60, h: 14, id: 'file-back' });
+      ctx.fillStyle = WEB.muted; ctx.fillText(`${F.path}  ›  ${folder?.name ?? ''}`, x + sbw + 64, y + 44);
+    } else { ctx.fillStyle = WEB.muted; ctx.fillText(F.path, x + sbw + 12, y + 44); }
+    const list = inFolder ? F.folderItems : F.items;
+    const tw = 70, th = 48, gx = x + sbw + 12, gy = y + 60;
+    list.forEach((it, k) => {
+      const tx = gx + (k % 4) * (tw + 8), ty = gy + Math.floor(k / 4) * (th + 30);
+      if (it.kind === 'folder') {
+        roundRect(ctx, tx, ty, tw, th, 5, WEB.chip);
+        roundRect(ctx, tx + 20, ty + 14, 30, 22, 3, WEB.faint);
+        px(ctx, tx + 20, ty + 11, 12, 4, WEB.faint);
+      } else thumb(ctx, tx, ty, tw, th, inFolder ? (k === 0 ? 2 : 3) : (k === 3 ? 3 : 3), !inFolder && k === 3);
+      setFont(ctx, 8); ctx.fillStyle = WEB.ink;
+      ctx.save(); ctx.beginPath(); ctx.rect(tx, ty + th, tw, 12); ctx.clip(); ctx.fillText(it.name, tx, ty + th + 4); ctx.restore();
+      ctx.fillStyle = WEB.muted; ctx.fillText(it.meta, tx, ty + th + 14);
+      this.publish({ x: tx, y: ty, w: tw, h: th + 24, id: `file-${k}` });
+    });
+    px(ctx, x + 1, y + h - 32, w - 2, 1, WEB.cardEdge);
+    webButton(ctx, x + w - 156, y + h - 27, F.cancel, 'disabled', 64);
+    webButton(ctx, x + w - 84, y + h - 27, 'Open', 'disabled', 70);
+  }
+
+  /**
+   * ⚑ S293 / V9 — JUNIE'S THREAD. FELT. A messaging app's sheet over the whole page: the agent's page is covered and
+   * nothing of the agent, L or Lamby is on it (the console falls silent; the glow and the guide stand down). Her
+   * messages, unhurried; Maya's one reply; Junie's x. Nothing here files. The only other press on the screen is the
+   * Photos tab, where the original is kept.
+   */
+  private drawThread(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.hits = this.hits.filter((h) => h.id === 'start-menu' || h.id.startsWith('sm-') || h.id.startsWith('tab'));
+    const top = ADDR.y + ADDR.h + 6;
+    px(ctx, 0, top, W, H - top, PLACE.wallHi);
+    const x = 120, w = W - 240;
+    // the thread's own header, in the room's colour, not the agent's
+    px(ctx, x, top, w, 40, PLACE.wall);
+    avatar(ctx, x + 12, top + 9, 22, PLACE.textileHi, THREAD.name[0]);
+    setFont(ctx, 11); ctx.fillStyle = PLACE.ink; ctx.fillText(THREAD.name, x + 42, top + 9);
+    setFont(ctx, 8); ctx.fillStyle = PLACE.floorLo; ctx.fillText(THREAD.sub, x + 42, top + 23);
+    let y = top + 50;
+    setFont(ctx, 10);
+    let lastDay = '';
+    for (const m of THREAD.messages) {
+      const day = m.when.split(' ')[0];
+      if (day !== lastDay) { lastDay = day; setFont(ctx, 8); ctx.fillStyle = PLACE.floorLo; ctx.fillText(m.when, x + Math.round(w / 2) - 20, y); y += 13; }
+      setFont(ctx, 10);
+      const rows = wrapText(ctx, m.text, w - 120);
+      const bw = Math.max(...rows.map((r) => Math.ceil(ctx.measureText(r).width))) + 20;
+      roundRect(ctx, x + 12, y, bw, rows.length * 13 + 10, 9, PLACE.textile);
+      ctx.fillStyle = PLACE.ink;
+      rows.forEach((r, k) => ctx.fillText(r, x + 22, y + 5 + k * 13));
+      y += rows.length * 13 + 15;
+    }
+    if (this.repliedT < 0) {
+      // her reply: plain, one chip, in her own colour
+      const r = webButton(ctx, x + w - 12 - 96, y + 4, THREAD.reply, 'quiet', 96);
+      this.publish({ ...r, id: 'junie-reply' });
+      return;
+    }
+    setFont(ctx, 10);
+    const rw = Math.ceil(ctx.measureText(THREAD.reply).width) + 20;
+    roundRect(ctx, x + w - 12 - rw, y, rw, 23, 9, PLACE.sky);
+    ctx.fillStyle = PLACE.ink; ctx.fillText(THREAD.reply, x + w - 2 - rw, y + 6);
+    y += 29;
+    if (this.repliedT >= 2.2) {
+      const xw = Math.ceil(ctx.measureText(THREAD.replied).width) + 20;
+      roundRect(ctx, x + 12, y, xw, 23, 9, PLACE.textile);
+      ctx.fillStyle = PLACE.ink; ctx.fillText(THREAD.replied, x + 22, y + 6);
+    }
   }
 
   /**
@@ -1232,26 +1336,13 @@ export class E4Browser {
    * what. Nothing is pressable — `handleClick` eats presses in this phase.
    */
   private drawFailed(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    if (this.streamOpen) { this.drawStreamLive(ctx, W, H); return; }
     const FD = PROGRAM.failed;
     if (this.failT >= FAIL.off) { px(ctx, 0, 0, W, H, ERA4.field); return; }   // off
     const top = ADDR.y + ADDR.h + 6;
     px(ctx, 0, top, W, H_PAGE, WEB.bg);
-    // the step bar, as it was, with the last segment failed
-    px(ctx, 0, top, W, 44, WEB.card);
-    px(ctx, 0, top + 43, W, 1, WEB.cardEdge);
-    const segW = 26, segX = ADDR.x + 8;
-    PROGRAM.steps.forEach((_x, k) => {
-      const last = k === PROGRAM.steps.length - 1;
-      pill(ctx, segX + k * (segW + 3), top + 8, segW, 4, last ? WEB.faint : WEB.accent);
-    });
-    setFont(ctx, 8);
-    ctx.fillStyle = WEB.muted;
-    ctx.fillText(PROGRAM.stepLabel.replace('{n}', String(PROGRAM.steps.length)) + '  ·  ' + PROGRAM.agentMark, segX, top + 16);
-    setFont(ctx, 12);
-    ctx.fillStyle = WEB.ink;
-    ctx.fillText(FD.step, segX, top + 27);
     // the error page
-    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16, cy = top + 54;
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16, cy = top + 10;
     webCard(ctx, cx, cy, cw, H - cy - 14);
     avatar(ctx, cx + 12, cy + 10, 22, WEB.faint, 'S');
     setFont(ctx, 11);
@@ -1261,12 +1352,9 @@ export class E4Browser {
     px(ctx, cx + 42, cy + 26, 5, 5, WEB.faint);
     ctx.fillText(FD.status, cx + 50, cy + 23);
     px(ctx, cx + 1, cy + 40, cw - 2, 1, WEB.cardEdge);
-    // the glyph a browser draws when there is nothing to draw
     roundEdge(ctx, cx + 44, cy + 62, 34, 26, 4, WEB.faint, WEB.bg);
     px(ctx, cx + 52, cy + 70, 18, 2, WEB.faint);
     px(ctx, cx + 52, cy + 76, 12, 2, WEB.faint);
-    // ⚑ the sentence — the same one the laptop carries (updates.json close.restarting):
-    //   "the message spreads on both monitors" (Sérgio, 2026-09-13)
     setFont(ctx, 16);
     ctx.fillStyle = WEB.ink;
     ctx.fillText(updates.close.restarting, cx + 44, cy + 98);
@@ -1288,37 +1376,40 @@ export class E4Browser {
     }
   }
 
+  /**
+   * ⚑ S293 — THE STREAM KEEPS GOING UNDER THE FAILURE (ENDING_TRANSJESUS step 7). When the device stops, the link
+   * she opened is still open on her monitor: transjesus.str, live, the count holding, the frame's four failures
+   * still on its sidebar. The laptop beside it reports that the update failed; this screen does not fail. It is
+   * video, so it repaints a few times a second while it is on (the monitor's texture uploads on its version only).
+   */
+  private drawStreamLive(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const top = ADDR.y + ADDR.h + 6;
+    px(ctx, 0, top, W, H - top, ERA4.panel);
+    const t = this.failT + 30;
+    const sideW = 170, pw = W - sideW - 12, ph = H - top - 12;
+    streamScene(ctx, 6, top + 6, pw, ph, t, streamShot(t), 0.4);
+    // the title over the picture: LIVE, the mark, the count
+    px(ctx, 6, top + 6, pw, 18, ERA4.panel);
+    if (Math.floor(t * 1.5) % 2 === 0) px(ctx, 12, top + 12, 6, 6, WEB.danger);
+    setFont(ctx, 9); ctx.fillStyle = ERA4.textHi; ctx.fillText(STREAM.live + '   ' + STREAM.mark, 22, top + 10);
+    const n = STREAM.watching.replace('{n}', String(STREAM.count + 1));
+    ctx.fillText(n, 6 + pw - 8 - Math.ceil(ctx.measureText(n).width), top + 10);
+    // the sidebar: what the platform could not say about it
+    const sx = W - sideW - 2;
+    setFont(ctx, 8); ctx.fillStyle = ERA4.dim;
+    ctx.fillText((ballScript.frame as unknown as { panel: string }).panel, sx, top + 10);
+    FRAME_ROWS.forEach((r, i) => {
+      const y = top + 28 + i * 26;
+      setFont(ctx, 8); ctx.fillStyle = ERA4.dim; ctx.fillText(r.k, sx, y);
+      setFont(ctx, 10); ctx.fillStyle = ERA4.textHi; ctx.fillText(r.v, sx, y + 10);
+    });
+  }
+
   /** ⚑ the transcript — fourteen months, read backwards. Her side of every
    *  exchange sits above the row it was chosen from, the unpicked options still
    *  greyed beside it. Nothing remarks on that. */
-  /** S160 / R3-101 — after access is allowed: her threads, and the one L means */
-  private drawThreads(ctx: CanvasRenderingContext2D, W: number, H: number, top: number, st: Step): void {
-    const T = st.threads!;
-    px(ctx, 0, top - 12, W, H - top + 12, WEB.bg);
-    webCard(ctx, ADDR.x + 8, top, W - ADDR.x * 2 - 16, H - top - 14);
-    const x = ADDR.x + 20;
-    setFont(ctx, 11); ctx.fillStyle = WEB.ink; ctx.fillText(T.title, x, top + 10);
-    setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(T.sub, x, top + 24);
-    let y = top + 42;
-    for (const th of T.items) {
-      avatar(ctx, x, y, 20, th.id === 'junie' ? WEB.primary : WEB.chip, th.name[0]);
-      setFont(ctx, 10); ctx.fillStyle = WEB.ink; ctx.fillText(th.name, x + 28, y + 1);
-      setFont(ctx, 9); ctx.fillStyle = WEB.muted; ctx.fillText(th.preview, x + 28, y + 13);
-      setFont(ctx, 8); ctx.fillStyle = WEB.muted;
-      ctx.fillText(th.time, W - ADDR.x - 20 - ctx.measureText(th.time).width, y + 1);
-      px(ctx, x, y + 30, W - ADDR.x * 2 - 40, 1, WEB.cardEdge);
-      // only the one L means is a press — the others are pictures of threads
-      if (th.id === 'junie' && !this.turnPending()) this.publish({ x: ADDR.x + 8, y: y - 4, w: W - ADDR.x * 2 - 16, h: 34, id: 'thread-junie' });
-      y += 36;
-    }
-  }
-
   private drawChat(ctx: CanvasRenderingContext2D, W: number, H: number, bodyTop?: number): void {
     const top = bodyTop ?? ADDR.y + ADDR.h + 12;
-    if (this.mode === 'program') {
-      const st = PROGRAM.steps[this.step];
-      if (st && st.id === 'chat' && st.threads && !this.threadOpen && !this.stepDone.has('chat')) { this.drawThreads(ctx, W, H, top, st); return; }
-    }
     px(ctx, 0, top - 12, W, H - top + 12, WEB.bg);
     webCard(ctx, ADDR.x + 8, top, W - ADDR.x * 2 - 16, H - top - 14);
     const es = body.chat.entries as Array<{
@@ -1455,7 +1546,10 @@ export class E4Browser {
       return;
     }
     let y = top + 62;
-    for (const r of body.record.rows as Array<{ k: string; v: string; note: string; locked?: boolean }>) {
+    // ⚑ S293 / V10 — after the reversal the file row reads current: the verifier believed what she confirmed last
+    const recRows = (body.record.rows as Array<{ k: string; v: string; note: string; locked?: boolean }>).map((r) =>
+      r.k === 'Your file' && this.reversal === 'matched' ? { ...r, v: CURRENT_AFTER.v, note: CURRENT_AFTER.note } : r);
+    for (const r of recRows) {
       setFont(ctx, 9);
       ctx.fillStyle = WEB.muted;
       ctx.fillText(r.k, cx + 16, y + 1);
@@ -1481,7 +1575,7 @@ export class E4Browser {
     y += 4;
     const label = this.requested ? body.record.acted : body.record.action;
     const r = webButton(ctx, cx + 16, y, label, this.requested ? 'disabled' : 'quiet');
-    if (!this.requested && this.mode !== 'program') this.publish({ ...r, id: 'record-request' });
+    if (!this.requested && this.mode !== 'agent') this.publish({ ...r, id: 'record-request' });
     setFont(ctx, 8);
     ctx.fillStyle = WEB.muted;
     ctx.fillText(body.record.priorRequest, cx + 16, y + 28);
@@ -1519,7 +1613,7 @@ export class E4Browser {
       setFont(ctx, 8);
       ctx.fillStyle = WEB.muted;
       ctx.fillText(`${it.when}  ·  ${it.why}`, lx + 18, y + 13);
-      if (!done && this.mode !== 'program') {
+      if (!done && this.mode !== 'agent') {
         const r = webButton(ctx, cx + cw - 16 - 70, y - 4, it.undo, 'quiet', 70);
         this.publish({ ...r, id: `care${i}` });
       }
@@ -1533,7 +1627,7 @@ export class E4Browser {
     setFont(ctx, 8);
     ctx.fillStyle = WEB.muted;
     ctx.fillText(this.undone.has(4) ? fixes.unmuted : body.care.invite.when, lx + 18, y + 13);
-    if (!this.undone.has(4) && this.mode !== 'program') {
+    if (!this.undone.has(4) && this.mode !== 'agent') {
       const r = webButton(ctx, cx + cw - 86, y - 4, fixes.unmute, 'quiet', 70); this.publish({ ...r, id: 'care4' });
     }
     ctx.fillText(body.care.footer, cx + 16, H - 28);
@@ -1597,12 +1691,71 @@ export class E4Browser {
     for (const m of ENQ.reply) line(m, 9, WEB.ink, 12);
     y += 2;
     line(ENQ.directory, 8, WEB.muted, 11);
+    // ⚑ S293 / V4 — the loop's receipt: the referral is in the footer
+    if (ENQ.referred) line(ENQ.referred, 8, WEB.ink, 11);
     const b = webButton(ctx, x + w - 84, top + h - 26, ENQ.close, 'quiet', 70);
     this.publish({ ...b, id: 'enq-close' });
   }
 
+  /**
+   * ⚑ S293 / V10 — THE ORIGINAL IS KEPT. In the conversation, after Junie's thread, Photos shows her profile photo as
+   * the agent left it (the composite, labelled) and, under it, the original it promised to keep. One press: Use
+   * original. The verifier runs, and is satisfied: Match: Maya. Nothing here is hidden or hacked; the button is the
+   * system's own, and the sentence that put it there was meant to soothe.
+   */
+  private drawReversal(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const R = REVERSAL;
+    const top = ADDR.y + ADDR.h + 8;
+    px(ctx, 0, top - 8, W, H - top + 8, WEB.bg);
+    const cx = ADDR.x + 8, cw = W - ADDR.x * 2 - 16;
+    webCard(ctx, cx, top, cw, H - top - 10);
+    setFont(ctx, 12); ctx.fillStyle = WEB.ink; ctx.fillText(R.title, cx + 16, top + 12);
+    const pw = 200, ph = 160, y = top + 36;
+    const matched = this.reversal === 'matched';
+    const name = this.chosenFile || 'me, after';
+    // the current profile photo
+    if (matched) thumb(ctx, cx + 16, y, pw, ph, 3, false, 6); else composite(ctx, cx + 16, y, pw, ph);
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+    ctx.fillText(matched ? `${name}.jpg  ·  current` : R.current, cx + 16, y + ph + 8);
+    // the original, kept
+    const ox = cx + 16 + pw + 30;
+    thumb(ctx, ox, y, 120, 96, 3, false, 6);
+    setFont(ctx, 9); ctx.fillStyle = WEB.ink;
+    ctx.fillText(R.original.replace('{name}', name), ox, y + 104);
+    if (this.reversal === 'none') {
+      const b = webButton(ctx, ox, y + 124, R.button, 'primary', 120);
+      this.publish({ ...b, id: 'photo-original' });
+      return;
+    }
+    if (this.reversal === 'verifying') {
+      setFont(ctx, 10); ctx.fillStyle = WEB.muted;
+      const dots = '.'.repeat(1 + Math.floor(this.reversalT * 3) % 3);
+      ctx.fillText(R.verifying.replace('…', '') + dots, ox, y + 128);
+      progressBar(ctx, ox, y + 144, 160, this.reversalT / R.verifySeconds, this.reversalT);
+      return;
+    }
+    // matched: the verifier's green, her name, and the agent — satisfied — saying its last two lines
+    roundRect(ctx, ox, y + 122, 120, 22, 11, WEB.accentSoft);
+    setFont(ctx, 10); ctx.fillStyle = WEB.accentInk; ctx.fillText('✓  ' + R.match, ox + 12, y + 128);
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted; ctx.fillText(R.matched, ox, y + 152);
+    const b = AGENT.beats[beatIndex('ready')];
+    if (this.cur?.id === 'ready') {
+      const n = this.linesShown;
+      let ty = y + 172;
+      for (let k = 0; k < n; k++) {
+        setFont(ctx, 10);
+        const tw = Math.ceil(ctx.measureText(b.lines[k]).width) + 22;
+        avatar(ctx, ox, ty, 16, WEB.primary, 'S');
+        roundRect(ctx, ox + 22, ty - 2, tw, 20, 8, WEB.chip);
+        ctx.fillStyle = WEB.ink; ctx.fillText(b.lines[k], ox + 33, ty + 3);
+        ty += 24;
+      }
+    }
+  }
+
   /** the library: the original, and the one she never made, with its date. */
   private drawPhotos(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    if (this.mode === 'agent' && this.junieReplied) { this.drawReversal(ctx, W, H); return; }
     const top = ADDR.y + ADDR.h + 12;
     px(ctx, ADDR.x, top, W - ADDR.x * 2, H - top - 8, CHROME.field);
     setFont(ctx, 9);
@@ -1647,12 +1800,24 @@ export class E4Browser {
     if (this.phase !== 'open') return true;   // the restore takes presses and eats them
     const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit && this.startMap.menu) { this.startMap.close(); this.version++; return true; }
+    // ⚑ S293 / V0 — the defaults sheet: Continue, or nothing (Start still works)
+    if (this.defaultsOpen && !(hit && (hit.id === 'start-menu' || hit.id.startsWith('sm-')))) {
+      if (hit?.id === 'def-continue') {
+        this.defaultsDone = true;
+        ledger.e4Space.push({ id: 'defaults', outcome: 'read', witness: DEFAULTS.witness });
+        playOnce('ui_press.mp3');
+      }
+      this.version++;
+      return true;
+    }
     // P7-66: while her enquiry is open it is the only thing on the page that takes a press (Start still works)
     if (this.enquiryOpen && !(hit && (hit.id === 'start-menu' || hit.id.startsWith('sm-')))) {
-      if (hit?.id === 'enq-send' && this.enquiry === 'draft') { this.enquiry = 'sending'; this.enquiryT = 0; }
+      if (hit?.id === 'enq-send' && this.enquiry === 'draft') { this.enquiry = 'sending'; this.enquiryT = 0; playOnce('ui_press.mp3'); }
       else if (hit?.id === 'enq-close' && this.enquiry === 'replied') {
         this.enquiry = 'closed';
         ledger.e4Space.push({ id: 'enquiry', outcome: 'read', witness: ENQ.witness });
+        // V5 — the refusal is the agent's reason now: the referral beat is over, and it comes back to her
+        this.answer(null, ENQ.witness);
       }
       this.version++;
       return true;
@@ -1688,70 +1853,59 @@ export class E4Browser {
         playOnce('ui_press.mp3');   // (S159: the typing sound is gone with the other keyboard sounds — his call)
         return true;
       }
-      // S160 / R3-89/90: the results page → the site → the agent
-      if (hit.id === 'result-agent' && this.mode === 'results') { this.mode = 'site'; this.version++; playOnce('ui_press.mp3'); return true; }
-      if (hit.id === 'site-start' && this.mode === 'site') { this.mode = 'agent'; this.agentT = 0; this.version++; playOnce('agent_2026.mp3'); return true; }
-      if (hit.id === 'agent-begin' && this.mode === 'agent') {
-        this.mode = 'program'; this.step = 0;
-        this.live = this.stepTab(PROGRAM.steps[0].id);
-        ledger.e4Space.push({ id: 'program', outcome: 'begun', witness: PROGRAM.beginWitness });
-        this.version++;
+      // ⚑ S293 / V1 → V2: the ad opens the agent's chat directly (the landing page is cut)
+      if (hit.id === 'result-agent' && this.mode === 'results') {
+        this.mode = 'agent'; this.beat = 0; this.beatT = 0; this.live = 0;
+        ledger.e4Space.push({ id: 'agent', outcome: 'opened', witness: 'assistant: opened from a sponsored result — Second Thoughts' });
+        this.version++; playOnce('agent_2026.mp3');
         return true;
       }
-      // ── the steps ──
-      if (this.mode === 'program') {
-        // S160 / R3-93: her answer to L's question — filed, and the step's own press follows
-        if (hit.id.startsWith('turn-')) {
-          const st = PROGRAM.steps[this.step];
-          const chip = st?.turn?.chips[Number(hit.id.slice(5))];
-          if (st && chip && !this.turnDone.has(st.id)) {
-            this.turnDone.add(st.id);
-            ledger.e4Space.push({ id: `turn:${st.id}`, outcome: 'answered', witness: chip.witness });
-            playOnce('ui_press.mp3');
-            this.version++;
-          }
+      // ── ⚑ S293 — the conversation ──
+      if (this.mode === 'agent') {
+        const b = this.cur;
+        if (hit.id.startsWith('conv-chip-') && b?.chips && this.beatReady && !this.stepDone.has(b.id)) {
+          const c = b.chips[Number(hit.id.slice(10))];
+          if (c) this.answer(c.label, c.filed);
           return true;
         }
-        if (hit.id === 'thread-junie') {
-          const st = PROGRAM.steps[this.step];
-          if (st?.threads) { this.threadOpen = true; ledger.e4Space.push({ id: 'turn:thread', outcome: 'opened', witness: st.threads.witness }); this.version++; }
+        if (hit.id === 'conv-act' && b && this.beatReady && !this.stepDone.has(b.id)) {
+          if (b.id === 'see') { this.picker = 'open'; playOnce('ui_press.mp3'); this.version++; return true; }
+          if (b.id === 'composite') { this.profile = 'composite'; this.picker = 'closed'; }
+          this.answer(null, b.filed);
           return true;
         }
-        if (hit.id === 'step-next') {
-          // S150 — her press moves the program on, never a clock (R3-98)
-          if (this.step < PROGRAM.steps.length - 1 && this.stepDone.has(PROGRAM.steps[this.step].id)) {
-            this.step += 1;
-            this.live = this.stepTab(PROGRAM.steps[this.step].id);
-            this.picker = 'closed';
-            playOnce('ui_press.mp3');
-            this.version++;
-          }
-          return true;
-        }
-        if (hit.id.startsWith('step-')) {
-          const st = PROGRAM.steps[this.step];
-          if (st && hit.id === `step-${st.id}`) {
-            if (st.id === 'photos') { this.picker = 'open'; this.version++; return true; }
-            if (st.id === 'record') this.requested = true;
-            this.completeStep();
-          }
+        if (hit.id === 'res-meridian' && b?.id === 'resources' && this.enquiry === 'none') {
+          this.enquiry = 'draft'; playOnce('ui_press.mp3'); this.version++;
           return true;
         }
         if (hit.id.startsWith('file-') && (this.picker === 'open' || this.picker === 'folder')) {
           const k = Number(hit.id.slice(5));
-          const list = (this.picker === 'folder' ? PROGRAM.files.folderItems : PROGRAM.files.items) as FileItem[];
+          const list = this.picker === 'folder' ? AGENT.photo.folderItems : AGENT.photo.items;
           const it = list[k];
           // ⚑ 2026-09-13: a folder OPENS; a photograph is what the tool takes
           if (it && it.kind === 'folder') { this.picker = 'folder'; this.version++; return true; }
-          this.chosenFile = it ? it.name.replace(/\.jpg$/i, '') : 'IMG_2211';
+          this.chosenFile = it ? it.name.replace(/\.jpg$/i, '') : 'me, after';
           this.picker = 'restoring'; this.pickerT = 0; this.version++;
-          playOnce('ui_press.mp3');   // S149: `restore_2026` dropped (R3-97) — the notification is enough
+          playOnce('ui_press.mp3');
           return true;
         }
         if (hit.id === 'file-back' && this.picker === 'folder') { this.picker = 'open'; this.version++; return true; }
+        if (hit.id === 'thread-junie' && b?.id === 'messages' && this.threadsUp && !this.threadOpen) {
+          this.threadOpen = true;
+          ledger.e4Space.push({ id: 'thread', outcome: 'opened', witness: AGENT.threads.witness });
+          this.version++;
+          return true;
+        }
+        // V9 — her reply to Junie: felt, filed nowhere
+        if (hit.id === 'junie-reply' && this.threadOpen && this.repliedT < 0) { this.repliedT = 0; playOnce('ui_press.mp3'); this.version++; return true; }
+        // V10 — the original
+        if (hit.id === 'photo-original' && this.junieReplied && this.reversal === 'none') {
+          this.reversal = 'verifying'; this.reversalT = 0; playOnce('ui_press.mp3'); this.version++;
+          return true;
+        }
         if (hit.id.startsWith('tab')) {
           const i = Number(hit.id.slice(3));
-          // only a finished step or the live one; a locked tab published no rect
+          // a locked tab published no rect
           if (Number.isFinite(i) && TABS[i]) { this.live = i; this.version++; }
           return true;
         }
@@ -1837,6 +1991,9 @@ export class E4Browser {
    *  any more, and the monitor says so (see `body.failed`). */
   fail(): void { if (this.phase !== 'failed') { this.phase = 'failed'; this.failT = 0; this.version++; } }
   private failT = 0;
+  /** ⚑ S293 — the link she opened is open on this machine too: when the device stops, the monitor shows the stream */
+  private streamOpen = false;
+  openStream(): void { this.streamOpen = true; }
 
   /** review only: land on a tab, or on the settled browser. */
   debugJumpTo(where: string): void {
@@ -1844,6 +2001,7 @@ export class E4Browser {
     this.phase = 'open';
     this.t = 0;
     this.filed = true;
+    this.defaultsDone = true;
     const i = TABS.findIndex(t => t.id === where);
     this.live = i >= 0 ? i : 0;
     this.version++;

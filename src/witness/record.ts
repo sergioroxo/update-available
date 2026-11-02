@@ -143,9 +143,9 @@ export function recordEntries(): RecordEntry[] {
   // ── 2026 ──
   for (const e of ledger.e4Space) {
     const kind = e.id === 'update' || e.id === 'companion' ? 'update'
-      : e.id === 'record' || e.id === 'step:record' || e.id === 'legacy' ? 'record'
-        : e.id === 'step:photos' || e.id === 'photos' ? 'photos'
-          : e.id === 'step:care' || e.id.startsWith('care') || e.id === 'turn:care' ? 'care'   // S160 / R3-94: the care assignment has its own practice and source
+      : e.id === 'record' || e.id === 'step:record' || e.id === 'legacy' || e.id === 'conv:back' ? 'record'
+        : e.id === 'step:photos' || e.id === 'photos' || e.id === 'conv:see' || e.id === 'conv:composite' || e.id === 'reversal' ? 'photos'
+          : e.id === 'step:care' || e.id.startsWith('care') || e.id === 'turn:care' || e.id === 'conv:care' ? 'care'   // S160 / R3-94: the care assignment has its own practice and source
           : e.id === 'program' || e.id === 'session' || e.id === 'saver' || e.id.startsWith('step:') || e.id.startsWith('tab:') || e.id.startsWith('turn:') ? 'session'
             : e.id === 'headset' || e.id === 'commons' || e.id === 'turn' ? 'headset'
               : e.id === 'laptop' ? 'termination' : 'session';

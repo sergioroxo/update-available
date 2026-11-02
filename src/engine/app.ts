@@ -4731,7 +4731,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const roomEntitiesWere = new Map<string, boolean>();
   /** ⚑ S227 — the Commons' one spot (nodes.json) and how far toward Junie she arrives facing */
   const COMMONS_SPOT = 'commons-spot';
-  const COMMONS_ARRIVE_OFF = 20;
+  const COMMONS_ARRIVE_OFF = 0;   // ⚑ S293 — the stream: she arrives facing the floor and TransJesus (no greeting to turn from)
   /**
    * ⚑ S227 — HIS Q8: "not a conducted turn — a prompt… so the person doesn't get startled." The turn to the
    * stage happens only on her press of the room's call (ball.ts). From wherever she is actually looking (the

@@ -1444,6 +1444,67 @@ export function thumb(ctx: CanvasRenderingContext2D, x: number, y: number, w: nu
   ctx.restore();
 }
 /**
+ * ⚑ S293 / V7 — THE COMPOSITE, IN OUTLINE ONLY. RESEARCH_2026_V2 §4.2: "outline only, hair and clothing only; no
+ * face is drawn". The template the 2026 agent fits her to — hair cropped to a cap, a squared head, a collar — drawn
+ * as hollow shapes on a plain wall: one unit of the frame's dark round each, the wall's own tone inside, no skin, no
+ * cloth colour, no feature. A diagram of a person, not a picture of one, so it can never read as anybody's face.
+ * The same proportions as `photograph` variant 3, so the pair still reads as one photograph rewritten.
+ */
+export function composite(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  px(ctx, x, y, w, h, ERA4.photoWallHi);
+  const u = Math.max(2, Math.round(w / 60));
+  const hw = Math.round(w * 0.24), hh = Math.round(h * 0.34);
+  const px0 = x + Math.round(w * 0.5 - hw / 2), py0 = y + Math.round(h * 0.14);
+  const shoulders = py0 + hh + u;
+  const bodyW = hw + 12 * u, bodyX = px0 + Math.round(hw / 2) - Math.round(bodyW / 2);
+  const hollow = (rx: number, ry: number, rw: number, rh: number): void => {
+    px(ctx, rx - u, ry - u, rw + 2 * u, rh + 2 * u, ERA4.photoFrame);
+    px(ctx, rx, ry, rw, rh, ERA4.photoWallHi);
+  };
+  hollow(bodyX, shoulders + 2 * u, bodyW, y + h - shoulders);                         // shoulders, to the edge
+  hollow(px0 + Math.round(hw / 2) - 2 * u, shoulders - u, 4 * u, 4 * u);               // the neck
+  hollow(px0 - u, py0, hw + 2 * u, hh);                                                // the head, squared
+  hollow(px0 - 2 * u, py0 - 2 * u, hw + 4 * u, 3 * u);                                 // a cap of hair
+  // the collar: two short strokes at the throat, the only garment it adds
+  px(ctx, px0 + Math.round(hw / 2) - 5 * u, shoulders + 2 * u, 3 * u, u, ERA4.photoFrame);
+  px(ctx, px0 + Math.round(hw / 2) + 2 * u, shoulders + 2 * u, 3 * u, u, ERA4.photoFrame);
+  // the generator's guide marks: a faint registration grid at the corners, the way a template shows its seams
+  ctx.globalAlpha = 0.35;
+  for (const [gx, gy] of [[x + 4, y + 4], [x + w - 10, y + 4], [x + 4, y + h - 10], [x + w - 10, y + h - 10]]) {
+    px(ctx, gx, gy, 6, 1, ERA4.photoFrame); px(ctx, gx, gy, 1, 6, ERA4.photoFrame);
+  }
+  ctx.restore();
+  px(ctx, x - 1, y - 1, w + 2, 1, ERA4.photoFrame);
+  px(ctx, x - 1, y + h, w + 2, 1, ERA4.photoFrame);
+  px(ctx, x - 1, y - 1, 1, h + 2, ERA4.photoFrame);
+  px(ctx, x + w, y - 1, 1, h + 2, ERA4.photoFrame);
+}
+
+/**
+ * ⚑ S293 — the profile circle in the toolbar, in its three states: `default` (grey, an outline of head and collar,
+ * nothing else), `composite` (the template's outline), `maya` (her own colours, her hair to the shoulders). Never a
+ * face, never a name drawn inside it.
+ */
+export function profileGlyph(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, state: 'default' | 'composite' | 'maya'): void {
+  const r = Math.floor(d / 2);
+  roundRect(ctx, x, y, d, d, r, state === 'maya' ? PLACE.textile : WEB.chip);
+  const cx = x + r;
+  if (state === 'maya') {
+    px(ctx, cx - 4, y + 3, 8, 9, ERA4.photoHair);
+    px(ctx, cx - 2, y + 4, 4, 5, ERA4.photoSkin);
+    px(ctx, cx - 5, y + d - 4, 10, 3, PLACE.textileHi);
+    return;
+  }
+  const ink = state === 'composite' ? ERA4.photoFrame : WEB.muted;
+  px(ctx, cx - 3, y + 3, 6, 1, ink); px(ctx, cx - 3, y + 9, 6, 1, ink);
+  px(ctx, cx - 3, y + 3, 1, 6, ink); px(ctx, cx + 2, y + 3, 1, 6, ink);
+  px(ctx, cx - 5, y + d - 4, 10, 1, ink);
+  px(ctx, cx - 5, y + d - 4, 1, 3, ink); px(ctx, cx + 4, y + d - 4, 1, 3, ink);
+}
+
+/**
  * before / after with the handle every comparison widget has. `k` is where the
  * split sits, 0..1 from the left; the left of it is A, the right is B.
  */
