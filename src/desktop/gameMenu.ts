@@ -58,6 +58,7 @@ import mapCopy from '../../data/strings/map.json';
 import closeNetwork from '../../data/strings/close_network.json';
 import { DIALOG, domBevel } from './theme/chrome';
 import { mountLeavePage } from '../frame/leavePage';
+import { siteViewerBus, mountSiteViewerDom } from '../frame/siteViewer';
 import { CHANNELS, getMaster, setMaster, getChannel, setChannel, type Channel } from '../audio/mix';
 // ⚑ S87 — THE TWO STRANDED E4 DOSSIER CARDS. `data/provotypes/e4_ball.json`
 // (6 sourced entries + the credit paragraph) and `data/provotypes/e4_offers.json`
@@ -121,6 +122,7 @@ const GLYPH_Z = 999;
 export function mountGameMenu(): GameMenu {
   let view: View = 'main';
   const leavePage = mountLeavePage();
+  mountSiteViewerDom();   // S291: the four era websites as a window; the menu's Sources and the Close's Sources buttons open it
   let destroyed = false;
   const canFullscreen = (): boolean =>
     document.fullscreenEnabled && typeof document.documentElement.requestFullscreen === 'function';
@@ -606,6 +608,9 @@ export function mountGameMenu(): GameMenu {
       // ⚑ S258 — SUPPORT (his ask 2026-10-24: a playtest found no support resources anywhere). A plain frame-voice
       //   page, data/strings/support.json; verified in docs/reinterp/VERIFY_SUPPORT_RESOURCES_2026-10-24.md
       row(support.row, () => { view = 'support'; render(); });
+      // ⚑ S291 — SOURCES: the four era websites as a window over the room (and in the headset), not a page that takes you away
+      row(copy.sitesRow, () => siteViewerBus.open('hub'));
+      note(copy.sitesNote);
       row(copy.leave, () => doLeave());
       // ⚑ S220 (his, 2026-10-08: "leave needs a small message saying that it will [go to] a different space") — said
       //   UNDER the row, not asked after it: this Leave is the quick way out of a shared room, and a confirm would
@@ -682,18 +687,9 @@ export function mountGameMenu(): GameMenu {
       //   every source, every verified link, in the public words. A plain link the
       //   visitor follows into a new tab — a navigation they choose, never a request
       //   the piece makes.
-      const a = document.createElement('a');
-      a.href = 'sites/index.html';   // S283: the four era websites (the hub links the old long list)
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.textContent = copy.creditsSourcesPage;
-      Object.assign(a.style, {
-        display: 'block', width: '100%', textAlign: 'left', font: 'inherit', fontWeight: '700',
-        color: DIALOG.ink, background: DIALOG.panel, padding: '8px 12px', margin: '0 0 6px',
-        textDecoration: 'none', boxSizing: 'border-box'
-      } as CSSStyleDeclaration);
-      domBevel(a);
-      panel.appendChild(a);
+      // ⚑ S291 — the four era websites open as a window in the piece (siteViewer/), in the browser and in the headset;
+      //   the window has its own "Open as a web page" button for the page version (public/sites/), a plain link in a new tab.
+      row(copy.creditsSourcesPage, () => siteViewerBus.open('hub'));
       backRow();
       return;
     }
@@ -785,6 +781,8 @@ export function mountGameMenu(): GameMenu {
     // ⚑ S233 — while the Leave page is up, Esc is ITS way back (src/frame/leavePage.ts registers its own capture listener
     //   after this one): without this the menu took the key, toggled itself, and the page stayed — Esc did not get back.
     if (leavePage.isOpen) return;
+    // ⚑ S291 — likewise the site viewer: while its window is up, Esc closes IT (its own capture listener runs next)
+    if (siteViewerBus.isOpen) return;
     gameMenuBus.toggle();
     e.preventDefault();
     e.stopImmediatePropagation();

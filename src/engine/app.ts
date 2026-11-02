@@ -67,6 +67,7 @@ import { createTimePassing, type TimePassing } from '../room/timePassing';
 import { drawPrint, PRINT_SIZE } from '../room/printArt';
 import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
+import { siteViewerBus, ERA_TARGET, mountSiteViewerDom, mountSiteViewerXr, type XrViewer } from '../frame/siteViewer';
 import { mountXrComfort } from '../frame/xrComfort';
 import { mountXrDebug } from '../frame/xrDebug';
 import { mountXrTextures } from '../frame/xrTextures';
@@ -315,9 +316,6 @@ const RELOC_POSES: Record<string, RelocPoses | undefined> = {
  *  directly as the bezier control, not as a pass-through — clean arcs now that
  *  the rooms sit on the x-axis. Module scope since S72 (see CAMERA_POSES). */
 const DOLLY_CTRL = { x: 0, y: 1.98, z: 1.15 };
-
-/** ⚑ S283 — era number (1..4) → the year of its website under public/sites/ */
-const ERA_SITE_YEAR: Record<number, string> = { 1: '1997', 2: '2003', 3: '2016', 4: '2026' };
 
 export interface CameraPose { x: number; y: number; z: number; pitch: number; yaw: number }
 
@@ -723,6 +721,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   xrComfort.setWorldReady(!options.restoreEntrance);
   let xrFrame: XrFrame | null = null;
   let xrInput: XrInput | null = null;
+  let siteViewerXr: XrViewer | null = null;   // S291: the four era websites as a window, in the headset
   let grabbingSource: pc.XrInputSource | null = null;
   let grabbingEra: string | null = null;
   let carryingVisor = false;         // S270g / VR-08 — the visor in a hand, on its way to the face
@@ -755,7 +754,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camera.setLocalEulerAngles(0, 0, 0);
     app.resizeCanvas();
   };
-  xr?.on('end', () => { xrFrame?.setHint(null); xrFrame?.close(); });
+  xr?.on('end', () => { xrFrame?.setHint(null); xrFrame?.close(); siteViewerXr?.close(); });
 
   // This must remain before the first await in this async function: WebXR
   // accepts requestSession only inside ENTER VR's original click stack.
@@ -1077,14 +1076,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onLeave: () => os.leaveNow(),
       onRestart: () => restartPiece(),
       onRecentre: () => xrComfort.calibrate(),
-      onDesk: () => xrLayer?.matchTable()
+      onDesk: () => xrLayer?.matchTable(),
+      onSources: () => siteViewerBus.open('hub')
     });
+    // ⚑ S291 — the era websites, in the headset: a window that comes to the visitor (frame/siteViewer/xrMount.ts)
+    siteViewerXr = mountSiteViewerXr(app, camera, {
+      layerId: xrFrame.layerId, suspendMenu: (on) => xrFrame?.suspend(on), note: (t, sec) => xrFrame?.notice(t, sec), minimisedNote: menuStrings.xrSitesMinimised
+    });
+    siteViewerBus.xrActive = () => !!xr?.active;
     xrInput = mountXrInput(app, {
-      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
       // ⚑ S271 (his 31 Oct: "I entered the menu, but I cannot get out") — a press that misses the menu closes it, as
       //   Resume does; the menu is never a room you have to find the door of
-      onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
-      onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); gameMenuBus.toggle(); },
+      onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; if (siteViewerXr?.pressRay(ray)) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
+      onSqueeze: () => { if (document.getElementById('lambyos-home')) return; noteHumanInput(); if (siteViewerXr?.isOpen) { siteViewerXr.close(); return; } gameMenuBus.toggle(); },
       menuOpen: () => gameMenuBus.isOpen,
       layers: [xrFrame.layerId],
       toSceneRay: ray => xrComfort.logicalRay(ray),
@@ -1130,12 +1135,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       },
       onRelease: source => { if (carryingPhone && source === grabbingSource) { era3Devices?.carryPhone(null); carryingPhone = false; grabbingSource = null; return; } if (carryingVisor && source === grabbingSource) { era3Devices?.carryVisor(null); carryingVisor = false; grabbingSource = null; return; } if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
       canPoke: physical => {
+        if (siteViewerXr?.touches(physical)) return true;   // S291: the site window and its tab take a fingertip too
         if (xrFrame?.touches(physical)) return true;   // S270f: the wrist tab and the open menu take a fingertip too
         if (!cluster || !os.inDesktop || xrComfort.busy || gameMenuBus.isOpen) return false;
         const target = devices?.aim(xrComfort.logicalRay(physical), cluster.era);
         return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
       },
-      onKey: key => { if (cluster && !gameMenuBus.isOpen) devices?.key(key, cluster.era); },
+      onKey: key => { if (cluster && !gameMenuBus.isOpen && !siteViewerXr?.isOpen) devices?.key(key, cluster.era); },
+      onStick: (_x, y) => siteViewerXr?.stick(y),
       // S271 (his 31 Oct: the hands are "a bit too white… a little bit too garish for your headset") — the frame's
       //   mid grey, not its near-white ink
       wandColor: new pc.Color().fromString(FRAME.faint)
@@ -1163,7 +1170,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     registerXrSession({ active: () => !!xr?.active, end: () => { if (xr?.active) xr.end(); } });
     gameMenuBus.onChange((isOpen) => {
       if (!xr?.active) return;
-      if (isOpen) xrFrame?.open(); else xrFrame?.close();
+      if (isOpen) xrFrame?.open(); else { xrFrame?.close(); siteViewerXr?.onMenuClosed(); }
     });
     if (new URLSearchParams(window.location.search).get('debug') === '1') {
       // ⚑ S270 — the debug panel's read-only half, in the headset (his: "I cannot see the debug panel inside of the VR")
@@ -1176,6 +1183,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           `batches ${c.batchesOnStage}/${c.batches} follow · menu ${gameMenuBus.isOpen ? 'open' : 'shut'}`,
           `${Math.round(app.stats.frame.fps)} fps · ${app.stats.drawCalls.total} draws · screen ${(window as { __uploads?: number }).__uploads ?? '-'} uploads`];
       } });
+      // ⚑ S291 review hooks: open the site viewer (browser or mocked headset), read its state, press at a logical px
+      (window as { __siteViewer?: unknown }).__siteViewer = { open: (t: string) => siteViewerBus.open(t as 'hub'), close: () => siteViewerBus.close(), dom: mountSiteViewerDom(), xr: siteViewerXr, bus: siteViewerBus };
       (window as { __xrLayer?: unknown }).__xrLayer = xrLayer;   // S270g review: dollhouse(), review({ lamby, worn }), matchTable()
       // the desktop review of the headset's frame: hang the plane in front of the
       // desktop camera and press it with a world ray (no headset in the sandbox)
@@ -3421,18 +3430,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           goToCloseMonitor();
           return;
         }
-        // ⚑ S283 — a press on a panel's SOURCES BUTTON opens that era's website (public/sites/<year>/index.html), the
-        //   "About this" panels' new home. A plain link followed in a new tab: a navigation the visitor chose, never a
-        //   request the piece makes. In a headset a page cannot open over the session, so there the press falls through
-        //   and turns the panel to its in-room dossier, as before. A press elsewhere on the panel still turns it.
+        // ⚑ S283/S291 — a press on a panel's SOURCES BUTTON opens that era's website. S291: IN THE PIECE — the site viewer
+        //   (frame/siteViewer/): a window over the 3D view in the browser, a plane that comes to the visitor in the headset.
+        //   (S283 opened a new tab, which a headset cannot do; the window has its own "Open as a web page" for that.)
+        //   A press elsewhere on the panel still turns it to the in-room dossier, as before.
         const si = cloud.panelSourcesAt(ray.p0, ray.p1, tGlass);
-        if (si !== null && !xr?.active) {
-          const a = document.createElement('a');
-          a.href = `sites/${ERA_SITE_YEAR[cloud.panelEraOf(si)] ?? '1997'}/index.html`;
-          a.target = '_blank'; a.rel = 'noopener noreferrer';
-          a.click();
-          return;
-        }
+        if (si !== null) { siteViewerBus.open(ERA_TARGET[cloud.panelEraOf(si)] ?? '1997'); return; }
         if (lb && lb.text !== lexStrings.star) { cloud.openDossierFor(lb.era, lb.text); return; }
         if (pi !== null) { cloud.pressPanel(pi); return; }
       }
@@ -3995,11 +3998,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     xrInput?.tick();
     if (xr?.active && !xrLayer?.mouseEngaged) { const ray = aimRay(); era3Devices?.hoverXr(ray); const at = ray && toDesktopR(ray); if (at) { const target = os.xrPoint(at.x, at.y); os.handleMove(target.x, target.y); } else os.xrPoint(-100, -100); }
     if (xrFrame && xr?.active) xrFrame.tick(xrInput?.ray() ?? null, xrInput?.wrist() ?? null);
+    if (siteViewerXr) siteViewerXr.tick(xr?.active ? xrInput?.ray() ?? null : null, xr?.active ? xrInput?.wrist() ?? null : null);
     tickKeychain();
     // ⚑ P8 A10 (headset B: "the message appears in front of the console"; "impossible to play") — the hint plate hangs
     //   exactly where a held device is held, so while a device is in the hand the plate stays down
     const deviceInHand = !!(devices && cluster && devices.held(cluster.era));
-    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(!xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ?? xrHelperText(helper?.text() ?? null, dt));
+    // S291: while the site window is up, the helper's plate stays down (it would hang over the window's foot)
+    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ?? xrHelperText(helper?.text() ?? null, dt));
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
     //   menu ("The frame never plays"). Pause them once on the way in, give them back once on the way out.

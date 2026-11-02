@@ -58,7 +58,13 @@
   "bestViewed1997": "Best viewed in any browser you have. Pages of this year said Netscape, or Explorer. This one says: whichever you like.",
   "tip2003": "Press a tab to change what this page shows. Nothing you press is saved.",
   "sourcesLead": "Every source says how well documented it is. Links appear only where the project has checked them. A source marked “{verify}” has not been fully checked yet.",
-  "sameSource": "Same source as the practice above."
+  "sameSource": "Same source as the practice above.",
+  "groups": {
+   "truthinlove": {
+    "title": "Truth in Love: the 1998–99 campaign",
+    "lead": "A coalition of organisations ran newspaper ads in 1998 and television spots in 1999 under this name. These are the sponsor’s own pages, kept in the Internet Archive. They say what the campaign said about itself. This site shows no picture from them, no film and no phone number. Each link opens in a new tab. Read them as evidence of what was said, never as advice."
+   }
+  }
  },
  "hub": {
   "title": "Four years, four websites",

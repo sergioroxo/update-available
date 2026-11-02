@@ -51,6 +51,8 @@ export function mountXrInput(app: pc.Application, opts: {
   onRelease?: (source: pc.XrInputSource) => void;
   canPoke?: (ray: Ray) => boolean;
   onKey?: (key: 'a' | 'b' | 'start' | 'left' | 'right' | 'up' | 'down') => void;
+  /** S291 — the thumbstick, continuous (x right, y down, −1…1), once a frame per tracked source that has one; the site viewer scrolls with it */
+  onStick?: (x: number, y: number) => void;
 }): XrInput {
   const xr = app.xr;
   const meshes = new Map<pc.XrInputSource, pc.Mesh>();
@@ -161,7 +163,7 @@ export function mountXrInput(app: pc.Application, opts: {
     let best: { point: pc.Vec3; distance: number } | null = null;
     app.root.forEach(node => {
       const e = node as pc.Entity;
-      if (!e.enabled || e.name === 'xr-frame-hint' || (opts.menuOpen() && e.name !== 'xr-frame-menu') || e.render?.type !== 'plane' || !/screen|era3-device|setup-in-stars|xr-frame|lambyos-home/.test(e.name)) return;
+      if (!e.enabled || e.name === 'xr-frame-hint' || (opts.menuOpen() && e.name !== 'xr-frame-menu' && e.name !== 'xr-frame-site') || e.render?.type !== 'plane' || !/screen|era3-device|setup-in-stars|xr-frame|lambyos-home/.test(e.name)) return;
       if (!e.render.meshInstances.some(mi => mi.visible)) return;
       const physical = e.name.startsWith('xr-') || e.name.startsWith('lambyos-home') || e.name.startsWith('setup-');
       const test = physical ? ray : r;
@@ -334,6 +336,7 @@ export function mountXrInput(app: pc.Application, opts: {
         const sx = axes[2] ?? 0, sy = axes[3] ?? 0;
         if (Math.hypot(sx, sy) > Math.hypot(stickNow.x, stickNow.y)) { stickNow.x = sx; stickNow.y = sy; }
         const keys = ['left', 'right', 'up', 'down'] as const;
+        if (opts.onStick && axes.length >= 4) opts.onStick(axes[2] ?? 0, axes[3] ?? 0);
         const directions = [(axes[2] ?? 0) < -0.6, (axes[2] ?? 0) > 0.6, (axes[3] ?? 0) < -0.6, (axes[3] ?? 0) > 0.6];
         directions.forEach((pressed, i) => { if (pressed && !state.buttons[8 + i]) opts.onKey?.(keys[i]); state.buttons[8 + i] = pressed; });
         drawSource(src, r, length, hit?.point ?? null);

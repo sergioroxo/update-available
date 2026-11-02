@@ -138,6 +138,13 @@ const reasonsOf = (year) => Object.entries(lex.reasons).map(([g, rows]) => [g, r
   const m = /^(\d{4})-(\d{4})$/.exec(r.era);
   return m && Number(m[1]) <= Number(year) && Number(year) <= Number(m[2]);
 })]).filter(([, rows]) => rows.length);
+/** period references with no group are "pages of the time" (Images tab); grouped ones (a campaign) sit on the Sources tab */
+const plainLinksOf = (year) => (eraLinks[year] ?? []).filter((l) => !l.group);
+const groupsOf = (year) => {
+  const m = new Map();
+  for (const l of eraLinks[year] ?? []) if (l.group) m.set(l.group, [...(m.get(l.group) ?? []), l]);
+  return [...m];
+};
 const people = { 1997: 'Daniel', 2003: 'Daniel', 2016: 'Vera', 2026: 'Maya' };
 const lyricsOf = (name) => read(`data/dialog/${name}.json`).lines.map((ln) => ln.words.map((w) => w[1]).join(' '));
 
@@ -201,6 +208,10 @@ ${abouts ? `<h3>${esc(C.aboutTitle)}</h3><p>${esc(C.aboutLead)}</p>${abouts}` : 
     }
     src += `<h3>${esc(C.everySource)}</h3><p>${esc(C.sourcesOnOtherCards)}</p>${blocks.join('\n')}`;
   }
+  for (const [g, rows] of groupsOf(year)) {
+    const G = S.common.groups[g];
+    src += `<h3>${esc(G.title)}</h3><p>${esc(G.lead)}</p><ul class="period">${rows.map((l) => `<li>${ext(l)}<br><span class="refnote">${esc(l.note)}</span></li>`).join('')}</ul>`;
+  }
   const refs = refsOf(year);
   src += `<h3>${esc(C.refsTitle)}</h3><ul class="refs">${refs.map((r) => `<li>${esc(r.text)}${r.note ? `<br><span class="refnote">${esc(r.note)}${r.src ? ` (${esc(r.src)})` : ''}</span>` : ''}</li>`).join('')}</ul>`;
   out.sources = `<h2 id="h-sources">${esc(S.tabs.sources)}</h2>
@@ -209,7 +220,7 @@ ${src}
 <p class="more"><a href="${up}sources/index.html">${esc(S.hub.oldSources)}</a> — ${esc(S.hub.oldSourcesNote)}</p>`;
 
   // IMAGES
-  const period = eraLinks[year] ?? [];
+  const period = plainLinksOf(year);
   out.images = `<h2 id="h-images">${esc(S.tabs.images)}</h2>
 <p class="lede">${esc(C.imagesLead)}</p>
 <div class="figs">
@@ -616,13 +627,132 @@ a{color:${c.price}}
   return head(`${H.title} | ${S.siteName}`, H.lede, css) + body;
 }
 
+// ══ the VIEWER MODEL — the same content as the pages, as data, for the in-piece site viewer ═══════════════════
+// ⚑ S291 (2026-11-01, his: "open the website page inside of the VR headset and the experience on the browser").
+// A headset cannot show DOM, and an iframe is no answer inside the piece, so src/frame/siteViewer/ DRAWS these sites on a
+// canvas. It reads THIS file (data/strings/era_sites_model.json), built here from the very same data the HTML pages are
+// built from, so the page and the in-piece window cannot disagree. Text only: plain strings, no markup; the viewer owns
+// the look. Every link in it is a row of links.json / era_links.json that already passed the verbatim refusal above.
+const plain = (t) => String(t).split(words._verifyMarker).join(words.verifyPublic).replace(/⚑ ?/g, '').replace(/\*([^*]+)\*/g, '$1');
+const linkRows = (key) => (links[key] ?? []).map((l) => ({ label: l.label, url: l.url }));
+const srcModel = (file, index) => {
+  const s = cards[file]?.debrief?.sources?.[index];
+  if (!s) return null;
+  const ls = linkRows(`${file}#${index}`);
+  return { k: 'src', status: s.status, tag: short(s.status), conf: s.confidence || '', t: plain(s.text), links: ls, nolink: ls.length ? '' : S.common.noLink };
+};
+function panelsModel(year) {
+  const E = S.eras[year];
+  const C = S.common;
+  const pn = panelOf(year);
+  const out = {};
+  const changelog = year === '1997' ? updates.u2.changelog : year === '2003' ? updates.u3.changelog : year === '2016' ? updates.u4.changelog : null;
+  const endLines = changelog ?? [updates.close.notify.filter(Boolean).join(' '), updates.close.restarting];
+  out.story = [
+    { k: 'h2', t: S.tabs.story },
+    ...E.story.map((t) => ({ k: 'p', t })),
+    { k: 'note', t: E.inventedNote },
+    { k: 'h3', t: C.storyFromPanel },
+    { k: 'quote', t: pn.text, status: pn.status, tag: short(pn.status), long: long(pn.status) },
+    { k: 'h3', t: C.whatYouMeet }, { k: 'p', t: C.whatYouMeetLead },
+    { k: 'dl', rows: E.interfaces },
+    { k: 'h3', t: C.endsTitle }, { k: 'p', t: C.endsLead }, { k: 'mono', lines: endLines }
+  ];
+  const shown = new Set();
+  const prac = [];
+  for (const p of practicesOf(year)) {
+    const key = p.source ? `${p.source.file}#${p.source.index}` : '';
+    prac.push({ k: 'h3', t: p.title, status: p.status, tag: short(p.status) }, { k: 'p', t: `It ${p.did}.` });
+    if (!p.source) prac.push({ k: 'small', t: C.noSource });
+    else if (shown.has(key)) prac.push({ k: 'small', t: C.sameSource });
+    else prac.push(srcModel(p.source.file, p.source.index));
+    if (key) shown.add(key);
+  }
+  const abouts = CARDS_OF[year].flatMap((f) => [{ k: 'h4', t: CARD_FILES[f] }, ...(cards[f].debrief.body ?? []).map((l) => ({ k: 'p', t: plain(l) }))]);
+  out.practices = [
+    { k: 'h2', t: S.tabs.practices }, { k: 'lede', t: C.practicesLead },
+    { k: 'key', t: C.statusKey, rows: ['documentary', 'contested', 'speculative'].map((s) => ({ status: s, tag: short(s), long: long(s) })) },
+    ...prac,
+    ...(abouts.length ? [{ k: 'h3', t: C.aboutTitle }, { k: 'p', t: C.aboutLead }, ...abouts] : [])
+  ];
+  const src = [{ k: 'h2', t: S.tabs.sources }, { k: 'lede', t: C.sourcesLead.replace('{verify}', words.verifyPublic) }, { k: 'h3', t: C.everySource }];
+  if (CARDS_OF[year].length) {
+    src.push({ k: 'p', t: C.everySourceLead });
+    for (const f of CARDS_OF[year]) src.push({ k: 'h4', t: CARD_FILES[f] }, ...cards[f].debrief.sources.map((_, i) => srcModel(f, i)));
+  } else {
+    src.push({ k: 'p', t: C.sourcesOnOtherCards });
+    const seen = new Set();
+    for (const p of practicesOf(year)) {
+      if (!p.source) continue;
+      const k = `${p.source.file}#${p.source.index}`;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      src.push(srcModel(p.source.file, p.source.index));
+    }
+  }
+  for (const [g, rows] of groupsOf(year)) {
+    src.push({ k: 'h3', t: C.groups[g].title }, { k: 'p', t: C.groups[g].lead }, { k: 'links', items: rows.map((l) => ({ label: l.label, url: l.url, note: l.note })) });
+  }
+  src.push({ k: 'h3', t: C.refsTitle }, { k: 'ul', items: refsOf(year).map((r) => ({ t: r.text, sub: r.note ? `${r.note}${r.src ? ` (${r.src})` : ''}` : '' })) });
+  src.push({ k: 'pagelink', label: S.hub.oldSources, note: S.hub.oldSourcesNote, href: 'sources/index.html' });
+  out.sources = src;
+  const period = plainLinksOf(year);
+  out.images = [
+    { k: 'h2', t: S.tabs.images }, { k: 'lede', t: C.imagesLead },
+    { k: 'fig', img: `library/lib_era-${year}.webp`, w: 384, h: 304, alt: E.imageAlt.lib, caption: E.imageCaption.lib, credit: `${C.creditLabel}: ${C.creditLib}` },
+    { k: 'fig', img: `assets/close/era${ERA_NO[year]}.jpg`, w: 980, h: 860, alt: E.imageAlt.plate, caption: E.imageCaption.plate, credit: `${C.creditLabel}: ${C.creditPlate}` },
+    { k: 'h3', t: C.periodTitle },
+    ...(period.length ? [{ k: 'p', t: C.periodLead }, { k: 'links', items: period.map((l) => ({ label: l.label, url: l.url, note: l.note })) }] : [{ k: 'p', t: C.periodNone }])
+  ];
+  out.media = [
+    { k: 'h2', t: S.tabs.media }, { k: 'lede', t: C.mediaLead },
+    ...E.media.map((m) => ({ k: 'media', title: m.title, what: m.what, file: m.file || '', type: m.type || 'audio', credit: `${C.creditLabel}: ${m.credit}`, lyrics: m.lyrics ? lyricsOf(m.lyrics) : [], lyricsTitle: C.lyricsTitle }))
+  ];
+  const terms = wordsOf(year);
+  const reasons = reasonsOf(year);
+  out.words = [
+    { k: 'h2', t: S.tabs.words }, { k: 'lede', t: C.wordsLead }, { k: 'note', t: lex.arc[ERA_NO[year] - 1] },
+    ...(terms.length ? [{ k: 'terms', rows: terms.map((t) => ({ term: t.term, status: lex.statusLabels[t.status] ?? t.status, def: t.close })) }] : [{ k: 'p', t: C.wordsNone }]),
+    ...(reasons.length ? [{ k: 'h3', t: C.reasonsTitle }, { k: 'p', t: lex.reasonsIntro }, ...reasons.flatMap(([g, rows]) => [{ k: 'h4', t: lex.groups[g] ?? g }, { k: 'ul', items: rows.map((r) => ({ t: r.reason, sub: `${r.status} · ${r.era}` })) }])] : [])
+  ];
+  out.missed = [
+    { k: 'h2', t: S.tabs.missed }, { k: 'lede', t: C.missedLead },
+    { k: 'beats', items: beatsOf(year).map((b) => ({ label: b.label, opt: b.optional ? C.missedOptional : '', hint: b.hint, where: `${C.missedWhere}: ${b.where}.` })) }
+  ];
+  return out;
+}
+function viewerModel() {
+  const eras = {};
+  for (const y of YEARS) {
+    eras[y] = {
+      heading: S.eras[y].heading, tagline: S.eras[y].tagline, who: people[y],
+      glance: glance(y), tabs: panelsModel(y)
+    };
+  }
+  const H = S.hub;
+  return {
+    _doc: 'GENERATED by tools/gen_era_sites.mjs from the same data as public/sites/ — do not edit. Read by src/frame/siteViewer/ (the in-piece site viewer, browser and headset).',
+    siteName: S.siteName, projectLine: S.projectLine, updated: S.updated, tabIds: TABS,
+    tabs: S.tabs, tabsLabel: S.tabsLabel, contentNote: S.common.contentNote, records: S.common.records,
+    hub: {
+      title: H.title, lede: H.lede, choose: H.choose, doors: YEARS.map((y) => ({ year: y, who: people[y], text: H.doors[y] })),
+      alsoTitle: H.alsoTitle, oldSources: H.oldSources, oldSourcesNote: H.oldSourcesNote,
+      filmTitle: H.filmTitle, filmWhat: H.filmWhat, filmCredit: `${S.common.creditLabel}: ${H.filmCredit}`,
+      lexiconTitle: H.lexiconTitle, lexiconLead: H.lexiconLead, lexiconLinks: (links['lexicon#sources'] ?? []).map((l) => ({ label: l.label, url: l.url })),
+      aboutTitle: H.aboutTitle, about: about.paragraphs, howTitle: H.howTitle, how: H.how
+    },
+    eras
+  };
+}
+
 // ── build, write or check ───────────────────────────────────────────────────────────────────────────────────
 const files = new Map([
   ['public/sites/index.html', hub()],
   ['public/sites/1997/index.html', site1997()],
   ['public/sites/2003/index.html', site2003()],
   ['public/sites/2016/index.html', site2016()],
-  ['public/sites/2026/index.html', site2026()]
+  ['public/sites/2026/index.html', site2026()],
+  ['data/strings/era_sites_model.json', JSON.stringify(viewerModel(), null, 1) + '\n']
 ]);
 
 if (CHECK) {
@@ -635,6 +765,6 @@ if (CHECK) {
     writeFileSync(join(ROOT, p), html);
   }
   const nLinks = Object.values(links).reduce((a, l) => a + l.length, 0) + Object.values(eraLinks).reduce((a, l) => a + l.length, 0);
-  console.log(`wrote ${files.size} pages under public/sites/ — ${nLinks} verified links on file`);
+  console.log(`wrote ${files.size} files (5 pages under public/sites/ + the viewer model) — ${nLinks} verified links on file`);
   for (const [year, spec] of used) console.log(`  ${year}: ${Object.entries(spec).map(([k, v]) => `${k}=${v}`).join(' ')}`);
 }

@@ -75,8 +75,50 @@ export interface XrFrame {
   /** S270f — does this fingertip segment touch the tab (menu closed) or the menu plane (open)? */
   touches(ray: Ray): boolean;
   readonly isOpen: boolean;
+  /** S291 — hide the menu plane while the site viewer is up (the menu stays open underneath, the piece stays held) */
+  suspend(on: boolean): void;
   /** ?debug=1 review: where a ray lands on the menu plane, in canvas px */
   debugHit(ray: Ray): { x: number; y: number } | null;
+}
+
+
+/** ⚑ S291 — shared with the site viewer (siteViewer/xrMount.ts): hang a plane `dist` ahead of the head at eye height minus
+ *  `drop`, facing it (the plane primitive faces +Y; stood up, its face must point back at the head) */
+export function hangAhead(head: pc.Entity, e: pc.Entity, dist: number, drop: number): void {
+  const pos = head.getPosition();
+  const fwd = head.forward.clone();
+  fwd.y = 0;
+  if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, -1);
+  fwd.normalize();
+  e.setPosition(new pc.Vec3(pos.x + fwd.x * dist, pos.y - drop, pos.z + fwd.z * dist));
+  e.setEulerAngles(90, Math.atan2(-fwd.x, -fwd.z) * 180 / Math.PI, 0);
+}
+
+/** where a ray meets a stood-up plane, as canvas px — or null */
+export function rayOnPlane(e: pc.Entity, ray: Ray, cw: number, ch: number): { x: number; y: number } | null {
+  const n = e.up;            // the plane's normal (local +Y)
+  const P = e.getPosition();
+  const d = new pc.Vec3().sub2(ray.p1, ray.p0);
+  const denom = d.dot(n);
+  if (Math.abs(denom) < 1e-6) return null;
+  const t = new pc.Vec3().sub2(P, ray.p0).dot(n) / denom;
+  if (t < 0 || t > 1) return null;
+  const hit = new pc.Vec3().copy(d).mulScalar(t).add(ray.p0);
+  const local = new pc.Vec3();
+  e.getWorldTransform().clone().invert().transformPoint(hit, local);
+  const u = local.x + 0.5, v = local.z + 0.5;
+  if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+  return { x: u * cw, y: v * ch };
+}
+
+/** ⚑ S291 — the watch gesture, shared: a hand's palm turned to the eyes (within ~50 deg), or a controller raised within
+ *  55 cm and looked at (within ~30 deg of the gaze) */
+export function wristWatched(head: pc.Entity, w: { at: pc.Vec3; palm: pc.Vec3 | null }): boolean {
+  const to = head.getPosition().clone().sub(w.at), dist = to.length();
+  if (dist > 0.55 || dist < 1e-4) return false;
+  to.mulScalar(1 / dist);
+  if (w.palm) return w.palm.dot(to) > Math.cos(50 * Math.PI / 180);
+  return head.forward.dot(to.mulScalar(-1)) > Math.cos(30 * Math.PI / 180);
 }
 
 export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
@@ -87,6 +129,8 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   onRecentre: () => void;
   /** S270g / VR-04 — Match my table */
   onDesk?: () => void;
+  /** S291 — the menu's Sources row: open the site viewer */
+  onSources?: () => void;
 }): XrFrame {
   const layer = new pc.Layer({ name: 'XR Frame', clearDepthBuffer: true });
   app.scene.layers.pushOpaque(layer); app.scene.layers.pushTransparent(layer);
@@ -126,39 +170,16 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   let hover: string | null = null;
   let dirty = true;
   let open = false;
+  let suspended = false;
   let hint: string | null = null;
 
   /** hang a plane `dist` ahead of the head at eye height minus `drop`, facing it */
-  const hang = (e: pc.Entity, dist: number, drop: number): void => {
-    const pos = head.getPosition();
-    const fwd = head.forward.clone();
-    fwd.y = 0;
-    if (fwd.lengthSq() < 1e-4) fwd.set(0, 0, -1);
-    fwd.normalize();
-    const at = new pc.Vec3(pos.x + fwd.x * dist, pos.y - drop, pos.z + fwd.z * dist);
-    e.setPosition(at);
-    // the plane primitive faces +Y; stood up, its face must point back at the head
-    const yaw = Math.atan2(-fwd.x, -fwd.z) * 180 / Math.PI;
-    e.setEulerAngles(90, yaw, 0);
-  };
+  const hang = (e: pc.Entity, dist: number, drop: number): void => hangAhead(head, e, dist, drop);
 
   /** where a ray meets a stood-up plane, as canvas px — or null */
   const planeHit = (e: pc.Entity, ray: Ray, w: number, h: number, cw: number, ch: number): { x: number; y: number } | null => {
-    const n = e.up;            // the plane's normal (local +Y)
-    const P = e.getPosition();
-    const d = new pc.Vec3().sub2(ray.p1, ray.p0);
-    const denom = d.dot(n);
-    if (Math.abs(denom) < 1e-6) return null;
-    const t = new pc.Vec3().sub2(P, ray.p0).dot(n) / denom;
-    if (t < 0 || t > 1) return null;
-    const hit = new pc.Vec3().copy(d).mulScalar(t).add(ray.p0);
-    const local = new pc.Vec3();
-    e.getWorldTransform().clone().invert().transformPoint(hit, local);
-    // local x/z are in the plane's own units (scaled by the entity's scale → already ±0.5 after the inverse)
-    const u = local.x + 0.5, v = local.z + 0.5;
-    if (u < 0 || u > 1 || v < 0 || v > 1) return null;
     void w; void h;
-    return { x: u * cw, y: v * ch };
+    return rayOnPlane(e, ray, cw, ch);
   };
 
   // ── drawing ──
@@ -210,6 +231,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       if (gameMenuBus.mapSource) y = drawRow(mapCopy.row, 'map', y);
       y = drawRow(copy.recentre, 'recentre', y);
       y = drawRow(copy.xrDesk, 'desk', y);   // S270g / VR-04
+      y = drawRow(copy.sitesRow, 'sources', y);   // S291
       y = drawRow(copy.controls, 'controls', y);
       y = drawRow(copy.restart, 'restart', y);
       y = drawRow(copy.leave, 'leave', y);
@@ -330,15 +352,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     tabTex.upload();
   }
   let closedAt = 0, onWrist = false, noticeText: string | null = null, noticeUntil = 0;
-  /** S271 — the watch gesture: a hand's palm turned to the eyes (within ~50°), or a controller raised within 55 cm
-   *  and looked at (within ~30° of the gaze) */
-  const watching = (w: { at: pc.Vec3; palm: pc.Vec3 | null }): boolean => {
-    const to = head.getPosition().clone().sub(w.at), dist = to.length();
-    if (dist > 0.55 || dist < 1e-4) return false;
-    to.mulScalar(1 / dist);
-    if (w.palm) return w.palm.dot(to) > Math.cos(50 * Math.PI / 180);
-    return head.forward.dot(to.mulScalar(-1)) > Math.cos(30 * Math.PI / 180);
-  };
+  const watching = (w: { at: pc.Vec3; palm: pc.Vec3 | null }): boolean => wristWatched(head, w);
 
   const act = (id: string): void => {
     if (id.startsWith('go-')) {
@@ -350,6 +364,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     switch (id) {
       case 'recentre': opts.onRecentre(); gameMenuBus.close(); return;
       case 'desk': gameMenuBus.close(); opts.onDesk?.(); return;
+      case 'sources': opts.onSources?.(); return;
       case 'resume': gameMenuBus.close(); gameMenuBus.showHint?.(); return;
       case 'map': view = 'map'; break;
       case 'controls': view = 'controls'; break;
@@ -365,8 +380,9 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   return {
     layerId: layer.id,
     get isOpen(): boolean { return open; },
+    suspend(on: boolean): void { suspended = on; plane.enabled = open && !on; if (!on) dirty = true; },
     open(): void {
-      open = true; view = 'main'; hover = null; cursor = null;
+      open = true; suspended = false; view = 'main'; hover = null; cursor = null;
       tabPlane.enabled = false;
       hang(plane, PLANE_DIST, PLANE_DROP);
       plane.enabled = true;
@@ -375,11 +391,12 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       draw();
     },
     close(): void {
-      open = false;
+      open = false; suspended = false;
       plane.enabled = false;
       closedAt = performance.now();
     },
     touches(ray: Ray): boolean {
+      if (suspended) return false;
       if (open) return !!planeHit(plane, ray, PLANE_W, PLANE_H, W, H);
       return tabPlane.enabled && !!planeHit(tabPlane, ray, TAB_W, TAB_H, 256, 64);
     },
@@ -391,7 +408,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       return true;
     },
     press(ray: Ray): boolean {
-      if (!open) return false;
+      if (!open || suspended) return false;
       const p = planeHit(plane, ray, PLANE_W, PLANE_H, W, H);
       if (!p) return false;
       const h = hits.find((r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h);
@@ -440,6 +457,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
         tabPlane.enabled = false;
         return;
       }
+      if (suspended) return;
       const p = ray ? planeHit(plane, ray, PLANE_W, PLANE_H, W, H) : null;
       const h = p ? hits.find((r) => p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h)?.id ?? null : null;
       const moved = !!p !== !!cursor || (p && cursor && (Math.abs(p.x - cursor.x) > 2 || Math.abs(p.y - cursor.y) > 2));
