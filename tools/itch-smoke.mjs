@@ -54,7 +54,7 @@ try {
     await frame.waitForSelector('#restore-entrance[data-phase="wake"]', { timeout:60000 });
     assert.equal(await frame.evaluate(() => document.documentElement.dataset.reinterp), '1');
     assert.equal(await frame.evaluate(() => window.__mediaAudit.length), 0, 'silent before gesture');
-    assert.equal(await frame.evaluate(() => ['__os','__ledger','__camProbe','__setup'].filter(k => k in window).length), 0, 'no diagnostic probes');
+    assert.equal(await frame.evaluate(() => ['__os','__ledger','__camProbe','__setup','__heldDevices'].filter(k => k in window).length), 0, 'no diagnostic probes');
     assert.equal(await frame.evaluate(() => [...document.querySelectorAll('button')].some(b => b.textContent === 'Enter VR' && getComputedStyle(b).display !== 'none')), false);
     await page.screenshot({ path:path.join(out, `${name}-opening.png`) });
     if (name === 'keyboard') {

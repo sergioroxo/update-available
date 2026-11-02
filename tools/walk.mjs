@@ -1877,7 +1877,9 @@ async function main() {
     '## STOPPED BECAUSE', '',
     log.filter((l) => l.kind === 'stop')
       .map((l) => '- ' + l.what + ' (at `' + l.era + '` / `' + l.phase + '` / `' + l.spine + '`)').join('\n')
-      || '- ran to the step limit without stopping'
+      || (final.spine === 'done' && final.endingShowing
+        ? '- reached the Close, with the Restart card showing on Daniel’s monitor'
+        : '- ran to the step limit without stopping')
   ].join('\n');
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.md'), md + '\n');
 

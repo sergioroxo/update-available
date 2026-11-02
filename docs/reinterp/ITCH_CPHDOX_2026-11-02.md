@@ -107,7 +107,7 @@ Screenshots and machine-readable evidence are in `out/itch/` (ignored by Git).
 Package measurements are recorded in `out/itch/package.json`; screenshots end in `-opening.png` and `-setup.png`.
 The initial package measured about 48.73 MB compressed, 53.81 MB extracted, 265 files;
 the largest file was 13.36 MB. Repackaging reports the exact current byte counts.
-A static audit resolved 943 relative source imports with exact case and found no root-relative asset URLs.
+The packager checks relative source imports with exact case and rejects root-relative asset URLs; its current counts are in `out/itch/package.json`.
 Normal builds still build into `dist/`. No README changes are part of this work.
 
 ## Uploaded-page checklist before sending
@@ -125,3 +125,7 @@ Normal builds still build into `dist/`. No README changes are part of this work.
 
 In-headset note: the new policy check and session-failure path have only been tested in desktop Chrome.
 A real Quest pass on the uploaded page is still required before promising immersive entry to jurors.
+
+## Browser playtest revision
+
+The initial zip was superseded after Sérgio’s browser playtest. See [ITCH_PLAYTEST_REPAIRS_2026-11-02.md](ITCH_PLAYTEST_REPAIRS_2026-11-02.md): the rebuilt festival copy includes the completed 2026 v2 and the documented input, pacing, guidance, transition and Close-audio repairs. Re-upload the regenerated zip; existing itch uploads do not change when this local file is rebuilt.

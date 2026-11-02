@@ -359,6 +359,7 @@ export class DesktopOS {
   private minimised = new Set<string>();
   /** S281 — the ids the story waits on now (pathGlow.ts); rebuilt on every draw */
   private glowPath = new Set<string>();
+  private highlightPreference = false;
   private windowOf(key: string): { open: boolean; hits?: unknown[]; restore?: () => void } | null {
     type Win = { open: boolean; hits?: unknown[]; restore?: () => void };
     switch (key) {
@@ -2241,6 +2242,11 @@ export class DesktopOS {
 
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
+    const highlights = ledger.view.highlights === true;
+    if (highlights !== this.highlightPreference) {
+      this.highlightPreference = highlights; this.dirty = true;
+      if (this.e4) this.e4.browser.version++;
+    }
     if (this.paused) this.updateLambyGuide(0);
     if (!this.paused && this.startMap.update(dt)) this.dirty = true;
     if (this.setup?.open) {

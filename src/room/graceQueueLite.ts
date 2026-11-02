@@ -368,6 +368,7 @@ export class GraceQueueLite {
    *  discipline: never re-dirtied by a ticking clock, only real state, or by
    *  a beat that is genuinely animating). */
   private ownVersion = 0;
+  private highlightPreference = false;
   get version(): number { return this.ownVersion + this.surfaceVersion() + (this.lambyGuide?.version ?? 0); }
   /** the phone's own counter — the caret blink must not re-upload the workstation */
   private phoneV = 0;
@@ -566,6 +567,10 @@ export class GraceQueueLite {
   private floppyOpened = false;
 
   update(dt: number): void {
+    const highlights = ledger.view.highlights === true;
+    if (highlights !== this.highlightPreference) {
+      this.highlightPreference = highlights; this.bump(); this.phoneV++;
+    }
     if (this.startMap.update(dt)) this.bump();
     this.updateSaver(dt);
     this.updateGate();
@@ -608,7 +613,7 @@ export class GraceQueueLite {
       this.idleT += dt;
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
-    this.phone.tick(dt, this.phoneInHand); // ⚑ the cascade's own clock, and the only one on the phone
+    this.phone.tick(dt, this.phoneInHand && !this.floppy.open); // ⚑ the cascade's own clock, and the only one on the phone
     // ⚑ S145 — the record chip lights on every filing (witness/pulse.ts): the
     //   one texture upload this costs is quantised to the pulse's own steps
     const step = Math.ceil(witnessPulse.k() * 6);

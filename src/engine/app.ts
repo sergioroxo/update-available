@@ -3317,6 +3317,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  controller's select (xrInput.ts) both arrive here as a ray. */
   function resolveTapRay(ray: Ray): void {
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
+    // Foreground games own the press before every room prop and monitor behind them.
+    if (devices && cluster && devices.held(cluster.era)) {
+      devices.press(ray, cluster.era, xr?.active ? logicalHead() : camera);
+      return;
+    }
     // ⚑ S227 / W1-C11 — the referral printout on the record wall comes up close when pressed (no zooming to read it)
     {
       const sheet = room?.props.get('inst_referral')?.entity;
@@ -3454,11 +3459,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (closeMonitor?.on) {
         const cp = glassHit;
         if (cp) { closeMonitor.press(cp.x, cp.y); cloud?.holdDrift(3); return; }
-      }
-      // A held game is in front of the monitor and owns the input, including misses.
-      if (devices && cluster && devices.held(cluster.era)) {
-        devices.press(ray, cluster.era, xr?.active ? logicalHead() : camera);
-        return;
       }
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
