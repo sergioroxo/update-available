@@ -444,21 +444,28 @@
      "id": "l",
      "label": "L, on the laptop",
      "done": "browserOpen",
-     "hint": "The laptop is restoring your session — wait, then start with the search.",
+     "hint": "The laptop is restoring your session. Wait a moment.",
      "where": "the laptop"
+    },
+    {
+     "id": "defaults",
+     "label": "Your defaults",
+     "done": "defaultsSeen",
+     "hint": "The update chose your defaults. Press Continue.",
+     "where": "the monitor"
     },
     {
      "id": "search",
      "label": "The search, finished",
      "done": "resultsSeen",
-     "hint": "Open the search and let the engine finish it. Read the results.",
+     "hint": "Press the search. The engine finishes it for you.",
      "where": "the monitor"
     },
     {
-     "id": "site",
+     "id": "agent",
      "label": "Second Thoughts",
-     "done": "programBegun",
-     "hint": "Open the first result, start a session, and let the agent begin.",
+     "done": "agentOpened",
+     "hint": "The first result is an ad. Open it.",
      "where": "the monitor"
     },
     {
@@ -470,10 +477,67 @@
      "where": "the bed"
     },
     {
-     "id": "steps",
-     "label": "L's five turns",
-     "done": "stepsDone",
-     "hint": "L asks, you answer — then each step's own press. Continue moves you on.",
+     "id": "open",
+     "label": "The agent says hello",
+     "done": "convOpen",
+     "hint": "Answer it. Either answer goes on.",
+     "where": "the monitor"
+    },
+    {
+     "id": "meridian",
+     "label": "Somewhere else, first",
+     "done": "enquiryDone",
+     "hint": "Press Meridian LGB Trust. Send the message, then close the reply.",
+     "where": "the monitor"
+    },
+    {
+     "id": "back",
+     "label": "Back to the agent",
+     "done": "convBack",
+     "hint": "It asks if this is still you. Either answer goes on.",
+     "where": "the monitor"
+    },
+    {
+     "id": "photo",
+     "label": "Could I see you?",
+     "done": "convSee",
+     "hint": "Press Choose a photo. Open Pride '24 and pick any photo.",
+     "where": "the monitor"
+    },
+    {
+     "id": "composite",
+     "label": "The version that matches the file",
+     "done": "convComposite",
+     "hint": "Press Use as profile photo.",
+     "where": "the monitor"
+    },
+    {
+     "id": "story",
+     "label": "Your story",
+     "done": "convCare",
+     "hint": "Read what it wrote. Press Acknowledge.",
+     "where": "the monitor"
+    },
+    {
+     "id": "messages",
+     "label": "Your messages",
+     "done": "threadOpened",
+     "hint": "Allow it. Then open Junie's thread.",
+     "where": "the monitor"
+    },
+    {
+     "id": "junie",
+     "label": "Junie",
+     "done": "junieRead",
+     "quiet": true,
+     "hint": "Read Junie's messages.",
+     "where": "the monitor"
+    },
+    {
+     "id": "reversal",
+     "label": "The original",
+     "done": "reversed",
+     "hint": "Open Photos. Press Use original.",
      "where": "the monitor"
     },
     {
@@ -485,31 +549,30 @@
     },
     {
      "id": "session",
-     "label": "The session on the glass",
+     "label": "The session",
      "done": "commonsJoined",
      "quiet": true,
-     "hint": "Press Begin, and sit with it. A link will come — press it.",
-     "where": "the glass",
-     "_docS227": "⚑ S227 — the session begins on her press (his Q7, COMMONS_STREAMLINE_2026-10-10.md §8: the card follows an action, never a clock alone)."
+     "hint": "Press Begin. A link will come. Press it.",
+     "where": "the glass"
     },
     {
-     "id": "commons",
-     "label": "The Commons",
-     "done": "terminated",
+     "id": "stream",
+     "label": "transjesus.str",
+     "done": "streamAnswered",
      "quiet": true,
-     "hint": "Stay. Your lamp is yours to raise.",
-     "where": "the hall",
-     "_docS227": "⚑ S227 — T10 (COMMONS_STREAMLINE §3, his §8): one spot, no markers; the piece takes her there, so nothing here says turn or move."
+     "hint": "Stay with them. When they ask, dance or stay.",
+     "where": "the stream"
     },
     {
      "id": "close",
      "label": "The update fails",
-     "done": "closed",
+     "done": "terminated",
      "quiet": true,
      "hint": "Watch the screens.",
      "where": "the desk"
     }
-   ]
+   ],
+   "_docS293": "⚑ S293 — 2026 v2 (RESEARCH_2026_V2_WEAPONISED_CARE §4, his yes; ENDING_TRANSJESUS, his 'make this good and storytelling'): the defaults, the search steered to an ad, the agent's conversation (its referral, Meridian's refusal, the composite, her story, the messages), Junie's thread (felt — quiet), the original, the headset, the stream (respite — quiet), the update failing. Each beat's `done` is a condition in src/witness/map.ts; each beat's target ids are in lambyGuide.json (the glow reads the same ids)."
   }
  ],
  "aheadCount": "ahead: {n}",

@@ -1,6 +1,6 @@
 {
   "ui": {
-  "closePicture": "Close the picture first — the little x in its corner — and we carry on.",
+    "closePicture": "Close the picture first — the little x in its corner — and we carry on.",
     "show": "Show me",
     "later": "No thanks",
     "take": "Take me there",
@@ -20,8 +20,8 @@
   },
   "form": {
     "text": "Want me to open the form?",
-  "due": "Time's up. It's time for Rob's form.",
-  "_docDue": "⚑ S281 (his, 1 Nov) — said once when the intermission ends (os.ts FORM_INTERMISSION). Open it / No thanks both work, and are logged; after it, any press on the desktop opens the form (os.ts formForced): refusal is allowed and the system breaks in anyway.",
+    "due": "Time's up. It's time for Rob's form.",
+    "_docDue": "⚑ S281 (his, 1 Nov) — said once when the intermission ends (os.ts FORM_INTERMISSION). Open it / No thanks both work, and are logged; after it, any press on the desktop opens the form (os.ts formForced): refusal is allowed and the system breaks in anyway.",
     "yes": "Open it",
     "no": "No thanks",
     "act": "open:form"
@@ -219,14 +219,21 @@
         "tip": "The group is answering. Read what they say — it is on the phone.",
         "here": "The thread is on the phone.",
         "again": "The group is still answering.",
-        "target": ["group", "inbox", "notification"],
+        "target": [
+          "group",
+          "inbox",
+          "notification"
+        ],
         "_docS288": "⚑ S288 (headset B: \"Lambient doesn't work … completely non-functional here\") — Lambient had no line for the cascade or the update, so a request there said nothing."
       },
       "update": {
         "tip": "There is an update waiting. Return to Today and press Install on the banner.",
         "here": "The banner is at the top of Today.",
         "again": "The update is still waiting.",
-        "target": ["update-accept", "board-back"]
+        "target": [
+          "update-accept",
+          "board-back"
+        ]
       }
     },
     "e4": {
@@ -238,6 +245,14 @@
           "search-open"
         ]
       },
+      "defaults": {
+        "tip": "The update picked your defaults. Continue is on the card.",
+        "here": "Continue is right here.",
+        "again": "The card waits for Continue.",
+        "target": [
+          "def-continue"
+        ]
+      },
       "results": {
         "tip": "Press Search and let the engine finish it.",
         "here": "Search is right here.",
@@ -247,25 +262,90 @@
         ],
         "act": "press:search-open"
       },
-      "program": {
-        "tip": "Open the first result to begin.",
+      "agent": {
+        "tip": "The first result is the one to open.",
         "here": "That's the first result.",
-        "again": "The first result is the one to open.",
+        "again": "The first result is the ad. Open it.",
         "target": [
-          "result-agent",
-          "site-start",
-          "agent-begin"
+          "result-agent"
         ],
         "act": "press:result-agent"
       },
-      "steps": {
-        "tip": "L has a question. Answer it one step at a time.",
+      "open": {
+        "tip": "It asked you something. Either answer goes on.",
         "here": "Your answer goes here.",
-        "again": "One step, then the next.",
+        "again": "Pick either answer.",
         "target": [
-          "turn-0",
-          "turn-1"
+          "conv-chip-0",
+          "conv-chip-1"
         ]
+      },
+      "meridian": {
+        "tip": "Meridian LGB Trust is in the list on the right. Shall I open it?",
+        "here": "It's the first place on the list.",
+        "again": "Shall I open Meridian for you?",
+        "target": [
+          "res-meridian",
+          "enq-send",
+          "enq-close"
+        ],
+        "act": "press:res-meridian"
+      },
+      "back": {
+        "tip": "It asks if this is still you. Either answer goes on.",
+        "here": "Your answer goes here.",
+        "again": "Pick either answer.",
+        "target": [
+          "conv-chip-0",
+          "conv-chip-1"
+        ]
+      },
+      "photo": {
+        "tip": "Press Choose a photo. Any photo will do.",
+        "here": "Choose a photo is under the chat.",
+        "again": "Any photo leads on.",
+        "target": [
+          "conv-act",
+          "file-0",
+          "file-2"
+        ]
+      },
+      "composite": {
+        "tip": "Press Use as profile photo to go on.",
+        "here": "It's under the chat.",
+        "again": "The button is under the chat.",
+        "target": [
+          "conv-act"
+        ]
+      },
+      "story": {
+        "tip": "Read what it wrote, then Acknowledge.",
+        "here": "Acknowledge is under the chat.",
+        "again": "The button is under the chat.",
+        "target": [
+          "conv-act"
+        ]
+      },
+      "messages": {
+        "tip": "It wants your messages. Then open Junie's thread.",
+        "here": "Junie's thread is on the right.",
+        "again": "Shall I open Junie's thread?",
+        "target": [
+          "conv-chip-0",
+          "conv-chip-1",
+          "thread-junie"
+        ],
+        "act": "press:thread-junie"
+      },
+      "reversal": {
+        "tip": "Your original is in Photos. Shall I take you there?",
+        "here": "Photos is the tab at the top.",
+        "again": "Shall I open Photos?",
+        "target": [
+          "tab3",
+          "photo-original"
+        ],
+        "act": "press:tab3"
       },
       "headset": {
         "tip": "Time for the headset. It's on the desk — shall I take you there?",
@@ -276,5 +356,8 @@
       }
     }
   },
-  "root": {"here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.", "text": "Your answers are in. Root Cause came with the disk: it digs for where it all started. Find it in Start → Programs."}
+  "root": {
+    "here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.",
+    "text": "Your answers are in. Root Cause came with the disk: it digs for where it all started. Find it in Start → Programs."
+  }
 }

@@ -320,12 +320,12 @@
   },
   "2026": {
    "heading": "2026 — Maya, and the update that fails",
-   "tagline": "Care that finishes your sentence. And one room the system cannot classify.",
+   "tagline": "Care that finishes your sentence. And one stream the system cannot file.",
    "story": [
-    "It is 2026. Maya's session is restored for her before she has touched anything. Her laptop has a companion called L. L finishes her search for her, and suggests that what she wants is to stop. A site called Second Thoughts offers a session with an agent.",
-    "L asks. Maya answers. Each step has its own press. Her record keeps her old name “for continuity of care”. Her photographs come back improved. A headset on the desk offers an immersive session.",
-    "Then a friend's invitation, inside the headset, leads her somewhere the system cannot classify: the Commons, a room where being trans is fine. The lamp there is hers to raise. This is the one place in the piece that is never a trap, and is never revealed as false.",
-    "Then the update fails. The room extends patterns that are already documented, such as autocomplete, retained records, photo enhancement and “support” agents, into a system that presents itself as care. What it cannot classify is other people."
+    "It is 2026. Maya's session is restored for her. The update has set her defaults: a grey profile called Default, and an assistant called Second Thoughts, “recommended for you”. Her search is finished for her, and the first result is an ad for the assistant.",
+    "The assistant is warm. It sends her to an LGB support group first, and the group says no. Then it quotes the refusal back to her as the reason to stay. It asks to see her, and turns her own photograph into a version that “matches your file”. It writes her story from the buttons she pressed.",
+    "Her friend Junie writes to her and asks for nothing. Junie tells her the one thing the system says that is true: the original is kept. Maya confirms her original, and the system, satisfied, sends her into a headset session.",
+    "In the session a link arrives from Junie. It opens a dance stream the platform cannot rank, caption or file. People dance. The chat says hi maya. The system tries to take her back and cannot. The update fails. The stream keeps going."
    ],
    "inventedNote": "This room is inferred: Maya, L, the sites and the headset are invented. Around it, the record is not. In May 2026 the European Commission answered more than a million people who had asked for a ban on conversion practices with a non-binding recommendation, and declined to propose a law. Organised campaigns against trans people's care run across Europe.",
    "interfaces": [
@@ -339,11 +339,11 @@
     ],
     [
      "The AI companion",
-     "L, the programme's voice"
+     "L, the companion; Second Thoughts, the assistant that conducts"
     ],
     [
      "The headset and the social world",
-     "The visor and the Commons: the ball, lamps rising into stars, the crowd. The respite: never a trap, never revealed as fake"
+     "The visor, and the TransJesus stream: dancing, a chat of people, a count that goes from 41 to 42. The respite: never a trap, never revealed as fake"
     ],
     [
      "Console games",
@@ -366,15 +366,15 @@
     {
      "file": "assets/audio/ball_room_landing.mp3",
      "type": "audio",
-     "title": "The Commons — the landing",
-     "what": "What the Commons sounds like when Maya arrives. About two minutes, made to loop.",
+     "title": "transjesus.str — the stream",
+     "what": "The stream's music once Maya is inside it. No voice. About two minutes, made to loop.",
      "credit": "Made by the project lead. Project-original."
     },
     {
      "file": "assets/audio/ball_room_bed.mp3",
      "type": "audio",
-     "title": "The Commons — through the wall",
-     "what": "The music of the ball, heard as if through a wall. About two minutes, made to loop.",
+     "title": "transjesus.str — through the wall",
+     "what": "The same music heard as if through a wall: while Junie's link waits, and after the update fails. About two minutes, made to loop.",
      "credit": "Made by the project lead. Project-original."
     }
    ]

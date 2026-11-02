@@ -30,7 +30,6 @@ import type { CeilingWitness } from './ceilingWitness';
 // ⚑ S79: the ball borrows two colours and adds no palette of its own — the
 // colour law's one home is the theme, and both of these are era1.json's own.
 import { BALL } from '../desktop/theme/era4';
-import { mountCommonsLamps } from './commonsLamps';
 import { mountCommonsFigures } from './commonsFigures';
 import { mountCommonsWorld, WORLD, type CommonsWorld } from './commonsWorld';
 
@@ -662,7 +661,7 @@ export function buildClusterShell(
   const ballAttention = mkLight('light-ballAttention', BALL_STATIONS[3], BALL.attention, 6.5);
   const ballRoom = mkLight('light-ballRoom', [-1.0, 2.3, 0.9], BALL.room, 12.0);
   // ⚑ S133 — and the community itself, visible: forty-one lamps in the open
-  // building, one procedural mesh, driven by `setCommonsLamps` from ball.ts.
+  // building — S293: gone; the stream's place has no lamps (ENDING_TRANSJESUS).
   /**
    * ⚑ 2026-09-12 — THE COMMONS IS A WORLD, not an overlay. The crowd and the
    * lamps hang under it, so they exist only while it does; and it hangs under
@@ -670,7 +669,6 @@ export function buildClusterShell(
    * switched OFF while she is there. See commonsWorld.ts.
    */
   const commonsWorld = mountCommonsWorld(app);
-  const commonsLamps = mountCommonsLamps(app, commonsWorld.entity);
   const commonsFigures = mountCommonsFigures(app, commonsWorld.entity);
   worldRef = commonsWorld;
 
@@ -1156,7 +1154,6 @@ export function buildClusterShell(
       // whatever the era's light is doing rather than replacing it, so a
       // crossfade and a ball can run in the same frame without a fight.
       updateBall(dt);
-      commonsLamps.update(dt);
       commonsFigures.update(dt);
       commonsWorld.update(dt);
     }

@@ -45,7 +45,7 @@ export class LambyGuide {
   }
   tick(dt: number, input: GuideInput): void {
     this.input = input;
-    const alias: Record<string, string> = { l: 'browser', search: 'results', site: 'program' };
+    const alias: Record<string, string> = { l: 'browser', search: 'results' };   // ⚑ S293: 2026's other beats are their own ids
     const beat = input.deferredUpdate ? 'update' : input.map.current?.beat.id ?? '';
     const step = input.era === 'e2' && input.personaliseOffer ? 'personalise' : input.era === 'e4' ? alias[beat] ?? beat : input.era === 'e3' && beat === 'migrate' ? 'signin' : beat;
     const key = `${input.era}:${step}`;

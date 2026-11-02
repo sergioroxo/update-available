@@ -73,7 +73,7 @@ import ballScript from '../../../data/dialog/s4_ball.json';
 import updates from '../../../data/strings/updates.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
-import { E4Ball, SPEEDRUN_CARD_AFTER } from './ball';
+import { E4Ball, groundSeconds, linkAfterBegin } from './ball';
 import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import type { UpdateApp } from './update';
 
@@ -281,6 +281,8 @@ export class E4Shell {
     // ball.ts holds — that file still imports no ledger.)
     this.ball.onJoin = () => {
       ledger.e4Space.push({ id: 'commons', outcome: 'joined', witness: ballScript.commons.witness });
+      // ⚑ S293 — the link is hers now: it is open on her monitor too, and still live there when the device stops
+      this.browser.openStream();
     };
     // ⚑ S133 — THE DEVICE STAYS ON (Sérgio: "Stay-on!"). The overlay drops and
     // the shared space opens over her room; `pinned` keeps the visor on her
@@ -375,7 +377,6 @@ export class E4Shell {
       if (Math.floor(before * 4) !== Math.floor(this.sessionT * 4)) this.version++;
       // ⚑ 2026-09-13: the session is HEARD — grounding breathes (a loop), the
       //   "recording" plays with nobody in it, and both stop when the card lands
-      const S = ballScript.session as { seconds: number };
       // ⚑ S227 (his Q7) — the plan arrives, Begin is offered once it is up, and nothing runs until she presses
       //   it (`beginCorrection`). From the press: one breath of grounding (a finished thing), the recording (a
       //   playback keeps its own clock, CADENCE_STUDY §9.1), and the card on its third sentence's dash —
@@ -385,12 +386,14 @@ export class E4Shell {
         const b4 = this.sessionBegunT;
         this.sessionBegunT += dt;
         if (Math.floor(b4 * 4) !== Math.floor(this.sessionBegunT * 4)) this.version++;
-        if (!(isSpeedrun() && !extraOn('session')) && b4 < 8 && this.sessionBegunT >= 8) {
+        // ⚑ S293 — the recording begins after the grounding (review cut) or at once (the visitors' version)
+        const g = groundSeconds();
+        if ((g > 0 ? b4 < g && this.sessionBegunT >= g : b4 <= 0.05 && this.sessionBegunT > 0) && !this.hiss) {
           stopClip(this.breath); this.breath = null;
           this.hiss = playOnce('playback_hiss.mp3');
           if (this.hiss) this.hiss.volume = 0.5;   // S155 / R3-102: under the introduction, not over it
         }
-        const cardAt = isSpeedrun() && !extraOn('session') ? SPEEDRUN_CARD_AFTER : space.sessionSeconds - S.seconds;
+        const cardAt = linkAfterBegin();   // ⚑ S293 — Junie's link lands on the third sentence's dash
         if (this.sessionBegunT >= cardAt) {
           stopClip(this.breath); this.breath = null; stopClip(this.hiss); this.hiss = null;
           this.ball.invite();
@@ -894,7 +897,10 @@ export class E4Shell {
     // ⚑ S214 — the party does not play on through the place coming apart. ⚑ S227 (his §8 Q5: "yes, end the
     //   party at the glitch") — and it does not go back behind a wall either: it ends here, under the glitch,
     //   and the Close's own score (`close_score.mp3`) has the room alone when the night comes.
-    roomBed.set(null, 1.2);
+    // ⚑ S293 — ENDING_TRANSJESUS step 7 supersedes S227's Q5 for the stream: "the update fails outside her; the
+    //   stream keeps going under the failure". The music plays on under the glitch (ducked), and when the device
+    //   stops it goes back behind a wall — the monitor's speaker — until the Close's own score takes the night.
+    roomBed.duck(-6, GLITCH_SECONDS);
     this.glitchT = 0;
     this.glitchStep = -1;
     this.version++;
@@ -905,7 +911,7 @@ export class E4Shell {
    *  on every seat cut (`app.ts`), and the ball reads it for the second refusal */
   /** ⚑ S209g / I1 — a press in the hall during the ball raises her lamp (ball.handleClick); false outside it */
   pressHall(): boolean {
-    if (this.stageNow !== 'ball' || this.ball.phaseId !== 'ball') return false;
+    if (this.stageNow !== 'ball' || this.ball.phaseId !== 'stream') return false;   // ⚑ S293: inside the stream, a press is her dance while her chips wait
     this.ball.handleClick();
     return true;
   }
@@ -931,7 +937,8 @@ export class E4Shell {
      * one is not. Nobody takes it off — it stops.
      */
     this.stageNow = 'closed';
-    this.ball.clearLamps();   // the era is over; the lamps go with the picture
+    this.ball.clearLamps();
+    roomBed.set(ballScript.room.bed, 2.0);   // ⚑ S293 — the stream, still on, through the monitor
     this.laptopV++;
     this.version++;
     this.failT = 0;

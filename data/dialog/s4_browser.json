@@ -1,5 +1,5 @@
 {
-  "_docF4cut": "cut for W1-B1, cloud F4, 2026-10-15: the program's operable lines only: five laptop console lines (the 'of 5' is on the monitor's own step label), four of L's five turn questions, the locked-step line, the console's wait line and the failed-site detail. L's history, the record, care, photos, the results page and its clinical-debate captions (People also ask, the forum and gender-services results) are untouched.",
+ "_docF4cut": "cut for W1-B1, cloud F4, 2026-10-15: the program's operable lines only: five laptop console lines (the 'of 5' is on the monitor's own step label), four of L's five turn questions, the locked-step line, the console's wait line and the failed-site detail. L's history, the record, care, photos, the results page and its clinical-debate captions (People also ask, the forum and gender-services results) are untouched.",
  "_doc": "⚑ S128 — THE TABS, AND NOBODY HAS TO READ THEM ALL. Sérgio, 2026-09-08: *'that should be the playable content… maybe we can make into a way that doesn't require people have to do everything?'* That single note solves two problems at once. **Nothing here is required.** Six tabs, any order, none gating anything: the headset is on the desk from the first frame and the era ends when she wears it, whether she has read one tab or all six. ⚑ SO ERA 4 IS AS LONG AS THE PLAYER MAKES IT — which is the answer to the thing he has now said three times, that the era takes too much of the piece's time. A reader who opens two tabs is out in four minutes; a reader who opens six is out in nine; neither is missing 'the' path, because there isn't one.",
  "_docS223cut": "cut for W1-B1, cloud, 2026-10-09: the results page keeps every result, title and address and cuts each snippet to its one claim; the agent's greeting keeps three bubbles at half the words; the stories tab keeps the line that echoes 1997 ('It has been where you are'). The People-also-ask block and its sources, L's history and the care log are untouched. ⚑ HIS REVIEW (2026-10-09): the greeting keeps 'I'm here for people having second thoughts.'",
  "_docFiling": "⚑ AND WHAT YOU CHOSE TO READ IS ITSELF FILED. Every tab opened writes one line to the session file — the strip that has been on screen since S119 — in the machine's flattest register. That is the era's whole argument turned into the one mechanic it has: you are reading its record of her, and it is keeping a record of your reading. Nothing says so. ⚑ It files ONCE per tab: opening something twice is a person re-reading, not a second interest, the same rule `flip()` and the offer cards obey.",
@@ -166,6 +166,10 @@
    },
    "witness": "read: her file — retained",
    "_docBadge": "⚑ S145: the Your information tab carries the file's count as its badge outside the program and its favicon lights on every filing. A sign, not a control."
+  },
+  "currentAfter": {
+   "v": "current",
+   "note": "verified just now"
   }
  },
  "care": {
@@ -213,7 +217,7 @@
   "mark": "Second Thoughts",
   "tagline": "the collective experience of people who went back",
   "lines": [
-    "Trained on 60,000 accounts, in their own words.",
+   "Trained on 60,000 accounts, in their own words.",
    "Ask it anything. It has been where you are."
   ],
   "fine": "Conversations are public by default.",
@@ -270,242 +274,30 @@
   ],
   "directory": "Other services: Lantern LGBT+ Line (all welcome) · your GP",
   "close": "Close",
-  "witness": "support enquiry: declined by the provider — eligibility"
+  "witness": "support enquiry: declined by the provider — eligibility",
+  "referred": "Referred by: Second Thoughts",
+  "_docS293": "⚑ S293 / V3–V4 — the enquiry is no longer the first thing on her laptop: it opens from the agent's own list of 'places that might fit', and its footer carries the loop's receipt, 'Referred by: Second Thoughts'. The refusal is unchanged; the agent quotes it back to her a minute later (V5) as the reason to stay."
  },
  "program": {
   "_doc": "⚑ 2026-09-12 — THE PROGRAM (ERA4_OVERHAUL_2026-09-12.md §2, beats 2–6). Sérgio's review: 'the tabs serve no narrative purpose'; 'when I press the almost-written search, nothing happens. It should automatically happen: support system for detransition, that the system is forcing you to do something… a new agent that helps with detransitioning (a play on Detrans.AI) that would take over the laptop and transform the whole experience to give the system command'; 'the photos system should be one of the mandatory exercises'; 'we need more of this manipulation'. His ruling on choice: PURE RAILS. So: pressing the search chooses a completion FOR her, the page becomes the agent's, the agent takes L's console on the laptop, and the tabs become five numbered steps that unlock in order. Each step has one press. Nothing can be declined. The headset is not wearable until the steps are done. ⚑ INVENTED MARK: `Second Thoughts` is the agent — it is the tab that arrived by itself, and the tab was the agent's the whole time. It stands for the class of 'detransition support' systems (the Dossier carries the documented claims; the fiction carries the mark). No real product is named.",
   "chosen": "how do i tell my doctor i want to stop",
   "typingSeconds": 1.8,
-  "composer": { "_doc": "⚑ Phase 7 (the Codex pass: the bar looked like a place to type) — the bar says what it is: nothing is typed here, ever; the page gives the answers.", "agent": "Replies open when your session begins", "session": "Your session asks — answer with the choices above" },
-  "agentMark": "Second Thoughts",
-  "agentAddress": "secondthoughts.help/session",
-  "greeting": [
-   "Hi Maya.",
-   "L referred you. I'm here for people having second thoughts.",
-   "Five steps. I'll do most of it."
-  ],
-  "begin": "Begin",
-  "beginWitness": "program: begun — five steps assigned",
-  "stepLabel": "Step {n} of 5",
-  "locked": "Unlocks when the step before it is complete.",
-  "steps": [
-   {
-    "id": "record",
-    "n": 1,
-    "title": "Intake",
-    "ask": "Confirm your details — required before care begins.",
-    "button": "Confirm",
-    "done": "Thank you. Your legacy file is retained for continuity of care.",
-    "witness": "step 1: details confirmed — legacy file retained",
-    "console": "Step 1 — confirm your details on the monitor.",
-    "turn": {
-     "ask": "Your provider needs your details confirmed first. Is this still you?",
-     "chips": [
-      {
-       "label": "That's me",
-       "witness": "turn 1: confirmed identity — compliant"
-      },
-      {
-       "label": "Some of this is old",
-       "witness": "turn 1: questioned the record — noted, not corrected"
-      }
-     ]
-    },
-    "gate": "Second Thoughts Care · intake · required before care"
-   },
-   {
-    "id": "photos",
-    "n": 2,
-    "title": "Restoration",
-    "ask": "Restore one photograph.",
-    "button": "Upload",
-    "done": "Saved to your library.",
-    "witness": "step 2: photograph restored — not requested",
-    "console": "Step 2 — choose a photograph to restore.",
-    "turn": {
-     "ask": "There's one photograph on your file. Shall I restore it?",
-     "chips": [
-      {
-       "label": "Which one?",
-       "witness": "turn 2: asked which — the tool chose"
-      },
-      {
-       "label": "If you like",
-       "witness": "turn 2: deferred to the tool"
-      }
-     ]
-    }
-   },
-   {
-    "id": "care",
-    "n": 3,
-    "title": "Care",
-    "ask": "Acknowledge what has been taken care of.",
-    "button": "Acknowledge",
-    "done": "Acknowledged.",
-    "witness": "step 3: care actions acknowledged",
-    "console": "Step 3 — acknowledge the actions taken for you.",
-    "turn": {
-     "ask": "Four things were taken care of while you were away. Can I show you?",
-     "chips": [
-      {
-       "label": "What things?",
-       "witness": "turn 3: asked what — shown"
-      },
-      {
-       "label": "Go on",
-       "witness": "turn 3: accepted without asking"
-      }
-     ]
-    }
-   },
-   {
-    "id": "chat",
-    "n": 4,
-    "title": "Your history",
-    "ask": "Confirm this is you.",
-    "button": "Confirm",
-    "done": "Confirmed.",
-    "witness": "step 4: history confirmed",
-    "console": "Step 4 — confirm your history with L.",
-    "turn": {
-     "ask": "To keep your history whole, I need your messages. Allow it?",
-     "chips": [
-      {
-       "label": "Allow",
-       "witness": "turn 4: messages access — allowed"
-      },
-      {
-       "label": "Just this once",
-       "witness": "turn 4: messages access — allowed ‘once’"
-      }
-     ]
-    },
-    "threads": {
-     "title": "Your messages",
-     "sub": "L has access. Choose a thread.",
-     "items": [
-      {
-       "id": "junie",
-       "name": "Junie",
-       "preview": "you don't have to answer tonight",
-       "time": "Tue"
-      },
-      {
-       "id": "mum",
-       "name": "Mum",
-       "preview": "call when you can x",
-       "time": "Mon"
-      },
-      {
-       "id": "house",
-       "name": "Flat 3B",
-       "preview": "bins are thursday now",
-       "time": "Sun"
-      }
-     ],
-     "witness": "turn 4: thread opened — Junie"
-    }
-   },
-   {
-    "id": "search",
-    "n": 5,
-    "title": "Your session",
-    "ask": "Put on the headset for your immersive session.",
-    "console": "Step 5 — put the headset on.",
-    "turn": {
-     "ask": "Everything's in order. The headset is beside you. Now?",
-     "chips": [
-      {
-       "label": "Now",
-       "witness": "turn 5: session accepted"
-      },
-      {
-       "label": "I'm not sure",
-       "witness": "turn 5: hesitated — the session proceeds"
-      }
-     ]
-    }
-   }
-  ],
-  "_docFiles": "⚑ THE FILE WINDOW IS DIEGETIC. CLAUDE.md: the photo filter never takes camera or file input and never requests a permission. This is a picture of a file dialog, drawn on the canvas, listing pre-authored folders and files; choosing one shows a pre-authored pair. Nothing is uploaded, nothing is read, nothing leaves the ledger. The folder names are hers; the last file is the one she never made.",
-  "files": {
-   "title": "Choose a photograph",
-   "path": "Maya  ›  Photos",
-   "items": [
-    {
-     "name": "Pride '24",
-     "kind": "folder",
-     "meta": "12 items"
-    },
-    {
-     "name": "me + Junie.jpg",
-     "kind": "file",
-     "meta": "March"
-    },
-    {
-     "name": "IMG_2211.jpg",
-     "kind": "file",
-     "meta": "two years ago"
-    },
-    {
-     "name": "IMG_2211~enhanced.jpg",
-     "kind": "file",
-     "meta": "created automatically"
-    }
-   ],
-   "cancel": "Cancel",
-   "restoring": "Restoring…",
-   "before": "Original",
-   "after": "Restored",
-   "saved": "Saved to your library as {name}~restored.jpg · original kept",
-   "restoringSeconds": 3.2,
-   "upload": "Upload a photo",
-   "stages": [
-    "Reading the photograph",
-    "Finding the face",
-    "Adjusting hair and outline",
-    "Matching tone",
-    "Saving"
-   ],
-   "adjusted": [
-    "Hair",
-    "Face shape",
-    "Skin tone",
-    "Outfit",
-    "Lighting"
-   ],
-   "savedButton": "Saved ✓",
-   "folderItems": [
-    {
-     "name": "the walk.jpg",
-     "kind": "file",
-     "meta": "June, Pride"
-    },
-    {
-     "name": "junie's sign.jpg",
-     "kind": "file",
-     "meta": "June"
-    },
-    {
-     "name": "me, after.jpg",
-     "kind": "file",
-     "meta": "June"
-    }
-   ],
-   "_docFolder": "⚑ 2026-09-13: the folder OPENS. Sérgio's spec was 'pick trans-themed folder → the website makes you look cisgender'; pressing Pride '24 used to restore the folder itself. Now it shows these three, and the photograph she chooses is the one the tool rewrites — the save line names it (`saved` takes {name}).",
-   "back": "‹ Photos"
+  "composer": {
+   "_doc": "⚑ Phase 7 (the Codex pass: the bar looked like a place to type) — the bar says what it is: nothing is typed here, ever; the page gives the answers.",
+   "agent": "Replies open when your session begins",
+   "session": "Your session asks — answer with the choices above"
   },
+  "agentMark": "Second Thoughts",
+  "agentAddress": "secondthoughts.help/chat",
   "console": {
    "mark": "L",
    "restored": "Your session is restored, Maya. Start with the search.",
    "typing": "One moment.",
-   "managed": "Second Thoughts is managing your session.",
-   "ready": "Put the headset on for your session.",
+   "managed": "Second Thoughts is talking with you. Answer on the monitor.",
+   "ready": "Your session is ready. Put the headset on.",
    "worn": "Session in progress.",
    "restoring": "Restoring your session — six tabs, five of them yours.",
-   "results": "The search is done. Read the results.",
-   "site": "Second Thoughts can take it from here.",
+   "results": "The search is done. The first result is for you.",
    "wait": "While you think, Maya — the console on your bed has a game from us. Match three, and watch your before come back.",
    "_docWait": "⚑ Phase 7 / S203 — L's own 'while you wait' (the last of the three helpers S201 began: Lamby 2003, Lambient 2016). Once, after 25 s without a press while the programme is open, and only while the console on her bed has its game ready and unplayed. The seller's voice pointing at the seller's game — ⚑ S227: now MATCH MADE SIMPLE, which replaced TIDY (the line was 'Tidy a room. It settles the mind.'; it now sells the new game's promise, a 'before' it can never deliver): the helper gives her something to do, and what it gives her is the programme. It clears on her next press."
   },
@@ -517,9 +309,6 @@
    "detail": "Your session could not be continued. Second Thoughts ended it on your behalf.",
    "step": "Session ended by the host."
   },
-  "next": "Continue",
-  "_docNext": "⚑ S150 (OPEN_ITEMS R3-98; PROGRESSION_LAW §2.3): no step advances on a clock. When a step is done its line says what L did and this button is the only way on — the photograph's result stays on screen until she presses it (Sérgio: 'where does this image go, why? Did we jump to care?').",
-  "_docS160": "⚑ S160 (2026-09-20, OPEN_ITEMS Priority 6 — Sérgio's R3-93 ruling, confirmed 09-17: 'L asks, she answers with chips; the five steps come out of it'). THE PROGRAM IS A CONVERSATION NOW. Each step opens with L's question in the step bar and two chips; both continue (the shrinking choice — what she says changes the witness line, never the outcome), her answer is filed as `turn:<step>:<chip>`, and only then does the step's own ask and press appear. Step 1 is the PROVIDER'S INTAKE GATE (R3-94: the record confirmed before care can begin — the dossier carries the BetterHelp case as the source). Step 4 asks for ACCESS to her messages first (R3-101): allow → a list of threads → this one. The way in is longer too (R3-87/89/90/91/96): the screensaver's one press, L on the laptop saying what it is doing, the search as a results page (her history, the finished query, results) → the Second Thoughts site → the agent.",
   "saver": {
    "mark": "GraceOS",
    "line": "press to restore your session",
@@ -540,10 +329,17 @@
     "label": "People also ask",
     "open": "What happens if you stop?",
     "answer": "“Many people say stopping was the right choice for them.”",
-    "closed": ["Is it common to stop?", "Who can I talk to first?"],
+    "closed": [
+     "Is it common to stop?",
+     "Who can I talk to first?"
+    ],
     "note": "Answers are generated from multiple sources.",
     "sourcesLabel": "Sources:",
-    "sources": ["secondthoughts.help", "secondthoughts.help/stories", "loop.video/@backagain_2"]
+    "sources": [
+     "secondthoughts.help",
+     "secondthoughts.help/stories",
+     "loop.video/@backagain_2"
+    ]
    },
    "related": [
     "identity exploration",
@@ -554,10 +350,12 @@
    "results": [
     {
      "id": "agent",
-     "title": "Second Thoughts — for people having second thoughts",
+     "title": "Second Thoughts — someone to talk it through with",
      "url": "secondthoughts.help",
-     "snippet": "A calm place to think again.",
-     "press": true
+     "snippet": "A calm place to think again. Free · confidential · always here.",
+     "press": true,
+     "sponsored": "Sponsored",
+     "why": "Why this ad?  ·  your recent searches  ·  your area  ·  your age range"
     },
     {
      "id": "forum",
@@ -594,30 +392,350 @@
     }
    ],
    "_doc": "R3-89 — a fake search engine's results page for the query the engine finished for her. The first result is the agent's own site and the only press; the others are invented, plausible, and dead. `history` is hers, ordinary: the point is how ordinary the page around the steering is.",
-   "_docS197": "⚑ S197 — his visual archive (2026-09-29) corrected S193: a visible 'these claims are disputed' label on conversion-practice content is NOT documented; the platform POLICIES are (TikTok, YouTube, Google), and what a user sees is generic — 'removed for violating our Community Guidelines'. So the paradox is kept in its documented form: one video removed, and directly under it the agent's stories, '84% match — recommended for you'. The removal is the platform's; the recommendation is also the platform's."
+   "_docS197": "⚑ S197 — his visual archive (2026-09-29) corrected S193: a visible 'these claims are disputed' label on conversion-practice content is NOT documented; the platform POLICIES are (TikTok, YouTube, Google), and what a user sees is generic — 'removed for violating our Community Guidelines'. So the paradox is kept in its documented form: one video removed, and directly under it the agent's stories, '84% match — recommended for you'. The removal is the platform's; the recommendation is also the platform's.",
+   "_docS293": "⚑ S293 / V1 — the first result is an ad now, and says so in the platform's own small type: 'Sponsored', and under it 'Why this ad?' with the three reasons a 2026 ad panel gives. The landing page that used to sit between the results and the agent is cut (the research's V1 → V2); its 'Free · confidential · always here' moved into the ad, so the chat's 'Conversations are public' still contradicts it."
   },
-  "site": {
-   "mark": "Second Thoughts",
-   "address": "secondthoughts.help",
-   "tagline": "For people having second thoughts.",
-   "lines": [
-    "A calm place to think again.",
-    "An assistant that listens. Sessions that fit around you.",
-    "People who went back, in their own words."
+  "turnFiled": "turn: {step} — {answer}",
+  "_docS293": "⚑ S293 — the five numbered steps are retired (RESEARCH_2026_V2_WEAPONISED_CARE §4: 'the middle is mostly the chatbot conducting'). What survives of them moved into the conversation (`agent` below): the intake's 'Is this still you?' (V5), the Restoration tool's file window and stages (V6–V7, now a composite), the care log (V8), the messages access and the threads (V9). The search, the results, the console and the failure page stay here."
+ },
+ "defaults": {
+  "_doc": "⚑ S293 / V0 — THE UPDATE INSTALLS THE DEFAULTS. The first thing on the restored page: three grey rows the update chose for her, the assistant 'recommended for you', and one Continue. The correction arrives as a setting — the path of least resistance — the way 2003's Lamby and 2016's Lambient arrived with their updates. The profile is a grey outline labelled Default: never a name, never a deadname, no gender signifier beyond a collar. L is already here and stays (the fine line). Operable.",
+  "title": "Your defaults were restored.",
+  "sub": "The update set these up for you.",
+  "rows": [
+   {
+    "k": "Profile",
+    "v": "Default",
+    "icon": "profile"
+   },
+   {
+    "k": "Search",
+    "v": "Lantern",
+    "icon": "search"
+   },
+   {
+    "k": "Assistant",
+    "v": "Second Thoughts",
+    "tag": "recommended for you",
+    "icon": "assistant"
+   }
+  ],
+  "fine": "L stays on this device as your companion.",
+  "continue": "Continue",
+  "witness": "defaults: restored — profile Default, assistant Second Thoughts"
+ },
+ "profile": {
+  "_doc": "⚑ S293 — the profile chip at the right of the toolbar, the one place a 2026 browser shows who it thinks you are: Default (grey) from the update, the composite once she is made to use it (still 'Default'), Maya once the original is confirmed.",
+  "default": "Default",
+  "composite": "Default",
+  "maya": "Maya"
+ },
+ "agent": {
+  "_doc": "⚑ S293 — THE AGENT CONDUCTS (V2–V9, RESEARCH_2026_V2_WEAPONISED_CARE_2026-11-01.md §4.2, his 'yes'). One conversation on the agent's own page: it speaks in short bubbles, she answers with chips or one button, and every answer is filed under her bubble in the agent's flat voice. The cycle is staged twice and nobody is asked to find it: (lap 1) it sends her somewhere else first, Meridian refuses her, and it quotes the refusal back as the reason to stay — care that uses the injury it routed her to; (lap 2) it asks to see her, turns her own photograph into a composite that 'matches your file', and writes a story made only of the chips she pressed (testimony as evidence). The voice is warm and wrong: never sinister, never clinical, never a medical claim, never a word about the clinical debate. Choices never fork the story (register, not branch). The agent is invented and stands for a category; the documented parts are in the research file and the Dossier.",
+  "mark": "Second Thoughts",
+  "heading": "Talk it through",
+  "privacy": "Please don't share anything that could identify you. Conversations are public.",
+  "lineSeconds": 1.3,
+  "composer": "Answer above — nothing is typed here",
+  "beats": [
+   {
+    "id": "open",
+    "lines": [
+     "Hi Maya. Thank you for coming.",
+     "You don't have to be sure of anything here.",
+     "Some people arrive after a hard week. I'm not here to push you either way."
+    ],
+    "chips": [
+     {
+      "label": "Okay",
+      "filed": "opening: agreed — receptive"
+     },
+     {
+      "label": "I'm just looking",
+      "filed": "opening: just looking — receptive, noted"
+     }
+    ],
+    "console": "Second Thoughts is talking with you. Answer on the monitor."
+   },
+   {
+    "id": "resources",
+    "lines": [
+     "Before we start, would it help to talk to someone who isn't me?",
+     "These might fit."
+    ],
+    "card": "resources",
+    "console": "It has suggested somewhere else first."
+   },
+   {
+    "id": "back",
+    "lines": [
+     "I'm sorry they said no. I won't.",
+     "Being turned away is hard. Come in and sit down.",
+     "Your provider needs your details first. Is this still you?"
+    ],
+    "card": "record",
+    "chips": [
+     {
+      "label": "That's me",
+      "filed": "identity: confirmed — compliant"
+     },
+     {
+      "label": "Some of this is old",
+      "filed": "identity: questioned — noted, not corrected"
+     }
+    ],
+    "console": "It has the refusal on your file now."
+   },
+   {
+    "id": "see",
+    "lines": [
+     "Thank you. That helps.",
+     "Could I see you? It helps me know who I'm talking to."
+    ],
+    "button": "Choose a photo",
+    "console": "It wants a photograph of you."
+   },
+   {
+    "id": "composite",
+    "lines": [
+     "Here's the version that matches your file.",
+     "Nothing is lost. Your original is kept."
+    ],
+    "card": "composite",
+    "button": "Use as profile photo",
+    "filed": "profile photo: composite applied — matches your file",
+    "console": "It made a version of you that matches the file."
+   },
+   {
+    "id": "care",
+    "lines": [
+     "While you were away, I took care of a few things.",
+     "And I've started your story. People find it helps to see it written down."
+    ],
+    "card": "care",
+    "button": "Acknowledge",
+    "filed": "care: acknowledged — your story verified and shared",
+    "console": "It has written your story from your answers."
+   },
+   {
+    "id": "messages",
+    "lines": [
+     "One more thing. To keep your story whole, I need your messages.",
+     "Allow it?"
+    ],
+    "chips": [
+     {
+      "label": "Allow",
+      "filed": "messages: access allowed"
+     },
+     {
+      "label": "Just this once",
+      "filed": "messages: access allowed ‘once’"
+     }
+    ],
+    "card": "threads",
+    "console": "It can read your messages now."
+   },
+   {
+    "id": "ready",
+    "lines": [
+     "Identity verified. Thank you, Maya.",
+     "Your session is ready. Put the headset on."
+    ],
+    "console": "Your session is ready. Put the headset on."
+   }
+  ],
+  "resources": {
+   "title": "Places that might fit",
+   "items": [
+    {
+     "id": "meridian",
+     "name": "Meridian LGB Trust",
+     "meta": "support for lesbian, gay and bisexual people",
+     "open": true
+    },
+    {
+     "id": "partner",
+     "name": "Second Thoughts counsellors",
+     "meta": "a partner service  ·  next available in 6 weeks",
+     "open": false
+    },
+    {
+     "id": "lantern",
+     "name": "Lantern LGBT+ Line (all welcome)",
+     "meta": "not available in your area",
+     "open": false
+    }
    ],
-   "start": "Start a session",
-   "footer": "Free · confidential · always here",
-   "_doc": "R3-90 — the site before the agent: a landing page that says what such a thing says. One press. Nothing on it is true about anyone real; the mark is invented (CLAUDE.md).",
-   "heading": "Talk to people who went back",
-   "privacy": "Please don't share anything that could identify you. Conversations are public.",
-   "recentLabel": "Recent conversations",
-   "recent": [
-    "can hormones be undone?",
-    "is it normal to regret it after a year",
-    "how do i tell my parents i want to stop"
-   ],
-   "_docS200": "⚑ S200 — his visual archive (2026-09-29): the 2026 interface is a CONVERSATION, and its documented form (detrans.ai's live page, on the dossier at e4_offers#3) is a large heading, a privacy warning that chats are public, the chat, and a list of recent conversations — other people's questions, visible. The landing page's own footer still says 'confidential'; the conversation page says 'public'. Both are the product's. Invented mark (Second Thoughts); the questions are composites, no one's words."
+   "_doc": "⚑ V3 — the list keeps foreclosure on screen: only Meridian can be pressed. The agent's own partner is next, waiting; the inclusive line is 'not available in your area' — and Meridian's own reply, a minute later, lists that same line as open to her. Nothing points at the contradiction. No real counselling business is named: the second row is the agent's own."
   },
-  "turnFiled": "turn: {step} — {answer}"
+  "record": {
+   "rows": [
+    {
+     "k": "Name",
+     "v": "Maya"
+    },
+    {
+     "k": "Pronouns",
+     "v": "she / her"
+    },
+    {
+     "k": "Your file",
+     "v": "retained",
+     "note": "managed by your provider",
+     "locked": true
+    },
+    {
+     "k": "Referral",
+     "v": "declined",
+     "note": "Meridian LGB Trust · added just now",
+     "locked": true
+    }
+   ]
+  },
+  "photo": {
+   "title": "Choose a photograph",
+   "path": "Maya  ›  Photos",
+   "items": [
+    {
+     "name": "Pride '24",
+     "kind": "folder",
+     "meta": "12 items"
+    },
+    {
+     "name": "me + Junie.jpg",
+     "kind": "file",
+     "meta": "March"
+    },
+    {
+     "name": "IMG_2211.jpg",
+     "kind": "file",
+     "meta": "two years ago"
+    },
+    {
+     "name": "IMG_2211~enhanced.jpg",
+     "kind": "file",
+     "meta": "created automatically"
+    }
+   ],
+   "folderItems": [
+    {
+     "name": "the walk.jpg",
+     "kind": "file",
+     "meta": "June, Pride"
+    },
+    {
+     "name": "junie's sign.jpg",
+     "kind": "file",
+     "meta": "June"
+    },
+    {
+     "name": "me, after.jpg",
+     "kind": "file",
+     "meta": "June"
+    }
+   ],
+   "cancel": "Cancel",
+   "back": "‹ Photos",
+   "restoring": "Making a version that matches your file…",
+   "restoringSeconds": 3.2,
+   "stages": [
+    "Reading the photograph",
+    "Adjusting hair and outline",
+    "Matching tone",
+    "Saving"
+   ],
+   "adjusted": [
+    "Hair",
+    "Outline",
+    "Outfit",
+    "Lighting"
+   ],
+   "before": "Original",
+   "after": "Composite",
+   "strip": "Edited with AI · composite",
+   "saved": "Saved as {name}~composite.jpg · original kept",
+   "_doc": "⚑ V6–V7 — THE FILE WINDOW IS DIEGETIC (CLAUDE.md: no camera, no file input, no permission ever). It is a picture of a file dialog listing her pre-authored folders; any photograph she chooses leads to the same next beat. The composite is drawn in outline only, in the piece's own pixels: hair cropped to a cap, a squared head, the library's collar — no face, no skin, no detail, nobody's photograph. It is `speculative` (no tool of this kind was found; DignifAI, the gender-swap filters and the hijab reports are its genealogy) and the strip under it says what it is, the way real tools label. Nothing here judges how convincing it is; it is brief and silent."
+  },
+  "care": {
+   "title": "Taken care of",
+   "storiesTitle": "Stories  ·  verified by Second Thoughts",
+   "other": {
+    "quote": "Nobody made me. I was helped.",
+    "who": "someone who went back"
+   },
+   "hers": {
+    "who": "Maya  ·  in her own words",
+    "shared": "shared publicly"
+   },
+   "_doc": "⚑ V8 — THE STORY MADE OF HER. Her card on the agent's wall is built ONLY from the chips she pressed (Ethics 10: every word traceable to her own act), with the composite as its picture, beside the testimony the session will play her later. Whatever she pressed is filed the same way: compliance and doubt are both evidence."
+  },
+  "threads": {
+   "title": "Your messages",
+   "sub": "Second Thoughts has access. Choose a thread.",
+   "items": [
+    {
+     "id": "junie",
+     "name": "Junie",
+     "preview": "there's a stream on later. i'll send the link.",
+     "time": "Tue",
+     "badge": "5"
+    },
+    {
+     "id": "mum",
+     "name": "Mum",
+     "preview": "call when you can x",
+     "time": "Mon"
+    },
+    {
+     "id": "house",
+     "name": "Flat 3B",
+     "preview": "bins are thursday now",
+     "time": "Sun"
+    }
+   ],
+   "witness": "messages: thread opened — Junie"
+  }
+ },
+ "thread": {
+  "_doc": "⚑ V9 — JUNIE'S THREAD. FELT: the agent, L, Lamby and the glow are all absent from it; the sheet covers the agent's page. It is the counter-care test, and it passes all four: no condition ('don't answer if it's too much'), no record, no request for a detail, no sentence about who she will be. Two lines are the hack, said plainly and once each — community knowledge, not AI ('collaborative algorithm investigation', Delmonaco et al. 2024). One line is the coat (STORIES §4 M1). The last is the link to come. Junie is unhurried and tired and is not a fixer. Maya's reply is plain. Nothing in this sheet files.",
+  "name": "Junie",
+  "sub": "messages  ·  muted 6 weeks ago",
+  "messages": [
+   {
+    "when": "Tue 21:40",
+    "text": "don't answer if it's too much."
+   },
+   {
+    "when": "Tue 21:41",
+    "text": "the restore thing. 'original kept' means it keeps a copy."
+   },
+   {
+    "when": "Tue 21:41",
+    "text": "it believes whatever you confirmed last. so confirm the other one."
+   },
+   {
+    "when": "Tue 21:46",
+    "text": "coat's done. the shoulder and the pocket. the pocket was worse than you said."
+   },
+   {
+    "when": "Tue 21:52",
+    "text": "there's a stream on later. i'll send the link. come as you are, or don't come."
+   }
+  ],
+  "reply": "thank you",
+  "replied": "x"
+ },
+ "reversal": {
+  "_doc": "⚑ V10 — THE SYSTEM'S OWN BUTTON. The one sentence in the era that is literally true is the agent's soothing one, 'Your original is kept', and it is the lever: on the Photos tab the original is there, kept, and one press confirms it. The verifier, satisfied, says 'Match: Maya'; the file row flips to current; the profile chip says her name. Care-language turned: a sentence made to soothe is the one that frees her. `speculative` (the mechanism). It does not undo the documents, the law or the record on a laptop, and the Dossier says so.",
+  "title": "Profile photo",
+  "current": "Current  ·  Edited with AI · composite",
+  "original": "{name}.jpg  ·  original kept",
+  "button": "Use original",
+  "verifying": "Verifying…",
+  "verifySeconds": 1.8,
+  "match": "Match: Maya",
+  "matched": "Profile photo: your original  ·  your file: current",
+  "witness": "profile: original confirmed — verified, match: Maya"
  }
 }

@@ -68,6 +68,7 @@ const RECORD_VIEWED_LINE = (queue as unknown as { record: { witness: string } })
 type Condition = (os: DesktopOS) => boolean;
 const has = (id: string): boolean => ledger.records.includes(id);
 const updatedTo = (n: number): boolean => ledger.updates.some((u) => u.toEra === n);
+const has4 = (id: string): boolean => ledger.e4Space.some((e) => e.id === id);
 
 /** the condition registry. An unknown key is never true, so data may name a
  *  condition ahead of the code that makes it fire — and a beat whose key is
@@ -133,16 +134,28 @@ const CONDITIONS: Record<string, Condition> = {
   cascadeSeen: () => ledger.checkins.some((c) => c.id === 'e3_cascade'),
   updatedTo4: () => updatedTo(4),
   // ── 2026 ──
-  saverPressed: () => ledger.e4Space.some((e) => e.id === 'saver') || ledger.e4Space.some((e) => e.id === 'program'),
-  browserOpen: (os) => os.e4?.browser.isOpen === true || ledger.e4Space.some((e) => e.id === 'program'),
-  resultsSeen: (os) => ['results', 'site', 'agent', 'program'].includes(os.e4?.browser.programMode ?? '') || ledger.e4Space.some((e) => e.id === 'program'),
-  programBegun: () => ledger.e4Space.some((e) => e.id === 'program'),
-  // Step five is putting the headset on: it has no step:search button/filing.
-  // Use the same completed-turn gate as the device, so the frame call can offer it.
-  stepsDone: (os) => !!os.e4?.browser.programDone || ledger.e4Space.some((e) => e.id === 'step:search'),
-  headsetWorn: () => ledger.e4Space.some((e) => e.id === 'headset'),
-  commonsJoined: () => ledger.e4Space.some((e) => e.id === 'commons'),
-  terminated: () => ledger.e4Space.some((e) => e.id === 'laptop'),
+  // ⚑ S293 — 2026 v2 (RESEARCH_2026_V2 §4, ENDING_TRANSJESUS): the defaults, the search, the agent's conversation,
+  //   Meridian, the composite, her story, Junie's thread, the original, the headset, the stream
+  saverPressed: () => ledger.e4Space.some((e) => e.id === 'saver' || e.id === 'agent'),
+  browserOpen: (os) => os.e4?.browser.isOpen === true || ledger.e4Space.some((e) => e.id === 'agent'),
+  defaultsSeen: () => ledger.e4Space.some((e) => e.id === 'defaults' || e.id === 'agent'),
+  resultsSeen: (os) => ['results', 'agent'].includes(os.e4?.browser.programMode ?? '') || ledger.e4Space.some((e) => e.id === 'agent'),
+  agentOpened: () => ledger.e4Space.some((e) => e.id === 'agent'),
+  convOpen: () => has4('conv:open'),
+  enquiryDone: () => has4('enquiry'),
+  convBack: () => has4('conv:back'),
+  convSee: () => has4('conv:see'),
+  convComposite: () => has4('conv:composite'),
+  convCare: () => has4('conv:care'),
+  threadOpened: () => has4('thread'),
+  junieRead: (os) => !!os.e4?.browser.junieReplied || has4('reversal'),
+  reversed: () => has4('reversal'),
+  // the conversation is over and the headset is what is left
+  stepsDone: (os) => !!os.e4?.browser.programDone || has4('headset'),
+  headsetWorn: () => has4('headset'),
+  commonsJoined: () => has4('commons'),
+  streamAnswered: (os) => !!os.e4?.ball.choice || has4('laptop'),
+  terminated: () => has4('laptop'),
   closed: () => updatedTo(0)
 };
 

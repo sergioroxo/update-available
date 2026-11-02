@@ -3512,6 +3512,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   /** ⚑ S188/S189 — the devices you can pick up and play (src/room/handheld.ts, src/games/) */
   const devices = options.reinterp === true ? buildDevices(room) : null;
+  if (debugOn) (window as unknown as { __heldDevices: unknown }).__heldDevices = devices;
   devices?.tick(0, 'e1', () => false, 0); // initialise its glass before entrance captures the image
   os.onFitIn = () => { if (os.era === 'e1') devices?.take('e1', xr?.active ? logicalHead() : camera); };
   tapePlayerBus.play = (id) => { os.onStopTape?.(); tapes?.insert(id); syncTapeProps(); syncTapeAudio(); };
@@ -4768,7 +4769,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const roomEntitiesWere = new Map<string, boolean>();
   /** ⚑ S227 — the Commons' one spot (nodes.json) and how far toward Junie she arrives facing */
   const COMMONS_SPOT = 'commons-spot';
-  const COMMONS_ARRIVE_OFF = 20;
+  const COMMONS_ARRIVE_OFF = 0;   // ⚑ S293 — the stream: she arrives facing the floor and TransJesus (no greeting to turn from)
   /**
    * ⚑ S227 — HIS Q8: "not a conducted turn — a prompt… so the person doesn't get startled." The turn to the
    * stage happens only on her press of the room's call (ball.ts). From wherever she is actually looking (the

@@ -68,11 +68,6 @@
       "id": "console",
       "label": "The console",
       "place": "MATCH MADE SIMPLE on the bed"
-    },
-    {
-      "id": "commons",
-      "label": "More of the Commons",
-      "place": "The full programme in the hall"
     }
   ]
 }
