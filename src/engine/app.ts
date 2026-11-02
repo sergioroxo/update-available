@@ -3762,8 +3762,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     press = { id: e.pointerId, t: performance.now(), moved: 0, opening: false };
     drag = { x: e.clientX, y: e.clientY };
-    tween = null; // grabbing the view cancels the assist
-    nudgeCamera(); // …and a non-conducted O2/reset move
+    // A mouse click is still a possible selection. Only a deliberate drag grabs the view.
+    if (!options.reinterp || e.pointerType !== 'mouse') {
+      tween = null; // grabbing the view cancels the assist
+      nudgeCamera(); // …and a non-conducted O2/reset move
+    }
     hoveredTapeId = testTapeHover(e); // S89: name the tape the instant a finger lands, before release inserts it
     try { canvasEl.setPointerCapture(e.pointerId); } catch { /* synthetic pointers */ }
   });
@@ -3795,9 +3798,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       return;
     }
     if (drag && (e.buttons & 1)) {
-      const dx = e.clientX - drag.x;
-      const dy = e.clientY - drag.y;
+      let dx = e.clientX - drag.x;
+      let dy = e.clientY - drag.y;
+      const movedBefore = press?.moved ?? 0;
       if (press) press.moved += Math.hypot(dx, dy); // path length, not displacement
+      if (options.reinterp && e.pointerType === 'mouse' && press && movedBefore <= TAP_SLOP_PX) {
+        drag = { x: e.clientX, y: e.clientY };
+        if (press.moved <= TAP_SLOP_PX) return; // click jitter never turns the view
+        // Discard the dead zone, so crossing it does not make the camera jump.
+        const beyond = (press.moved - TAP_SLOP_PX) / Math.hypot(dx, dy);
+        dx *= beyond; dy *= beyond;
+        if (!press.opening) { tween = null; nudgeCamera(); }
+      }
       if (camMove) {
         // ⚑ S85: a curve owns camYaw/camPitch this frame, so writing them here
         // is erased before it is drawn. Ride on top of it at the same rate and
