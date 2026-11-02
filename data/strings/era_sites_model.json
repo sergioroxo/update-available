@@ -4086,6 +4086,24 @@
      },
      {
       "k": "h3",
+      "t": "What researchers found"
+     },
+     {
+      "k": "p",
+      "t": "Reports on how today's AI systems answer questions about sexuality and gender. Each link opens in a new tab."
+     },
+     {
+      "k": "links",
+      "items": [
+       {
+        "label": "GLAAD, “Build for Everyone” (2026 AI report): the case study on AI and conversion “therapy”",
+        "url": "https://glaad.org/2026-ai-report-build-for-everyone/lgbtq-impacts/#case-study-misinformation",
+        "note": "In April 2025 a major AI model, built to give “both sides”, suggested conversion therapy to someone asking about “unwanted same-sex attraction”. The documented ground under Second Thoughts."
+       }
+      ]
+     },
+     {
+      "k": "h3",
       "t": "References this year drew on"
      },
      {

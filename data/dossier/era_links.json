@@ -229,6 +229,15 @@
     "verifiedIn": "docs/reinterp/SOURCES_ARCHIVE_FINDS_2026-11-02.md"
    }
   ],
-  "2026": []
+  "2026": [
+   {
+    "n": null,
+    "group": "reports",
+    "label": "GLAAD, “Build for Everyone” (2026 AI report): the case study on AI and conversion “therapy”",
+    "note": "In April 2025 a major AI model, built to give “both sides”, suggested conversion therapy to someone asking about “unwanted same-sex attraction”. The documented ground under Second Thoughts.",
+    "url": "https://glaad.org/2026-ai-report-build-for-everyone/lgbtq-impacts/#case-study-misinformation",
+    "verifiedIn": "docs/reinterp/SOURCES_GLAAD_AI_2026_2026-11-02.md"
+   }
+  ]
  }
 }

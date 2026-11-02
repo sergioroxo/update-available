@@ -270,6 +270,13 @@ the rainbow co-opted, care offered as a product (CD, DVD, mp3), testimony as pro
 (frayed photo frames, counters, Flash) as the ministry's own aesthetics. They now sit on the 2003 and 2016 sites'
 Sources tabs.
 
+## 7e. The documented ground under Second Thoughts (GLAAD 2026)
+
+GLAAD's 2026 AI report documents that in April 2025, after Meta said its AI would give "both sides" of contentious
+issues, its Llama 4 model suggested conversion therapy in answer to "unwanted same-sex attraction" — the euphemism
+promoters use and struggling people search with. The 2026 era's agent is the speculative extension of that documented
+failure: care-language and "balance" as the delivery of correction (SOURCES_GLAAD_AI_2026_2026-11-02.md).
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
