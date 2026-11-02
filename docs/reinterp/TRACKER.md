@@ -32,6 +32,8 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ## Building now
 
+- 📋 **Codex briefs ready** (quota): CODEX_BRIEFS_2026-11-02.md — 1 quad layers (sharp text), 2 hand play for the games, 3 one voice everywhere, 4 the dollhouse builds the next room + a menu Dollhouse, 5 the full walk after the 2026 merge. Paste one per Codex run.
+
 - ◐ **2026 v2 + the TransJesus ending** (his yes, 2 Nov: "sure we can try. Make this good and storytelling"; V0–V12 "yes") — a build agent (worktree) is writing and building it end to end, photographing it with the tour and walking it to the Close → ERA4_V2_BUILT_2026-11-02.md. No trigger-safe mode in 2016 (his 2 Nov).
 
 - ☑ S294 **Websites inside the experience**: the four era sites drawn into a period window (Win95 / XP / Aero / dark app) with minimise, close, ▲▼, scroll track, wheel, touch and thumbstick; in the browser over the view, in the headset a panel at 0.8 m; from the menu ("Sources — the four websites"), Credits and the Close's Sources; outside links show their address (new tab in the browser); Truth in Love's archived pages on the 1997 Sources tab. SITE_VIEWER_2026-11-01.md 🥽 · ☐ the film plays only on the web page; pinch-drag scroll not built
