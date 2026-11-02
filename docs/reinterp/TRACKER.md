@@ -72,7 +72,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 - ☑ S286 Lamby's eyes: taller, two catchlights
 - ☑ S285 Frame 27 redrawn (two beds, the door, "room 3, the last night"); circled in red on the roll
 - ☑ S287 The pet closes back into Restorify
-- ☐ "Your file" wording and design; the testimony's sound and "Start here"
+- ☑ S302 Your Story without the "Your file says" lines · ☐ the testimony's sound and "Start here"
 - ☑ S295–S296 The task has one name ("Next task"), its button "Go there"; 2003's windows and buttons in XP style
 - ☑ S297 the evening check-in titled and announced as the evening's · ☑ S298 the 1997 charge no longer covers the classification · ☑ S299 a view in every window
 - ☑ S300 the messenger pings when it lands

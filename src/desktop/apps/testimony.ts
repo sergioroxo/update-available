@@ -265,8 +265,9 @@ export class TestimonyApp {
       ui.px(ctx, c.x + 12, y - 2, c.w - 24, 1, ERA1.silver);
       ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(`${i + 1}. ${tp.h}`, c.x + 14, y + 1);
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(tp.note, c.x + 30, y + 12);
-      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.navy;
-      ui.wrapText(ctx, `${T.prep.fromFile} ${frag(i)}.`, c.w - 60).slice(0, 2).forEach((ln, k) => ctx.fillText(ln, c.x + 30, y + 23 + k * 9));
+      // ⚑ S301 (headset B, twice: "this still has the your file … profile. This is to be deleted from the your story") —
+      //   the "Your file says:" line is gone; the topics stand on their own (frag stays computed for the review tools)
+      void frag;
     }
     if (this.topics < T.prep.topics.length) this.button(ctx, c.x + 12, c.y + c.h - 28, polish.faster, 'ts-faster', 70);
     if (isSpeedrun() && this.topics < T.prep.topics.length) return;
