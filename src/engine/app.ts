@@ -4070,6 +4070,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const entranceRay = xrInput?.ray();
     if (entranceRay) restoreEntrance?.hover(entranceRay);
     restoreEntrance?.update(dt);
+    // The machine starts while the room restores, including the seated XR entrance.
+    // Keep this cue ahead of the entrance returns; the game-menu pause still holds it.
+    if (options.reinterp && machineBootDue >= 0) {
+      machineBootDue -= dt;
+      if (machineBootDue < 0) playOnce('boot_1997_machine.mp3');
+    }
     xrComfort.setWorldReady(!restoreEntrance?.blocking || !!restoreEntrance.flying);
     specks?.update(dt, cluster?.era ?? 'e1', cloud?.visible || closeStage ? 0 : restoreEntrance?.blocking ? restoreEntrance.roomVisibility : 1);
     if (restoreEntrance?.blocking && !restoreEntrance.flying) {
@@ -4311,10 +4317,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // unlike the guide thread's pure condition polling) — os.paused freezes
       // it exactly like it freezes everything else (Esc/pause law).
       syncKitLoop();
-      if (machineBootDue >= 0) {
-        machineBootDue -= dt;
-        if (machineBootDue < 0) playOnce('boot_1997_machine.mp3');
-      }
       if (tapes) {
         tapes.update(dt, os.paused);
         syncTapeAudio();

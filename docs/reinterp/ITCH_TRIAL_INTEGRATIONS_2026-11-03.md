@@ -30,7 +30,7 @@ The mocked-headset review renders all four eras without page errors. Dollhouse p
 
 Original task reports describe their source branches; this document records the combined trial. Real Quest hand accuracy, comfort, stereo performance and the actual itch-hosted XR permissions still need testing. No headset validation is claimed. Nothing is pushed or merged into the original working version.
 
-Updated release: `release/your-update-has-failed_itch_2026-11-03.zip`, 48,730,628 bytes, 263 files (53,799,842 bytes extracted). Packaging checks exact-case imports and relative literal resource URLs.
+Updated release: `release/your-update-has-failed_itch_2026-11-03.zip`, 48,738,079 bytes, 263 files (53,821,994 bytes extracted). Packaging checks exact-case imports and relative literal resource URLs.
 
 ## Vera 2016 v2 follow-on
 
@@ -41,3 +41,11 @@ The combined full front-door walk reached the Close and retro Restart card with 
 The normal and ignored-offer tours pass with 33 and 31 frames, no page errors, and a 45-draw-call peak. Their screenshots and actual surface canvases are in `out/itch/vera-tour/` and `out/itch/vera-ignored-tour/`. The imported tour needed an ordinary mouse pickup before reading the group again: the trial correctly freezes the cascade when its phone is put down. This was a tour adjustment, not a removal of that protection. The original build/visual reports are preserved separately and describe their source branch.
 
 TypeScript, npm test, the three-game mocked-hand probe, all thirteen festival regressions, both edition builds and the sandboxed-iframe smoke check also pass with the new 2016 sequence. Original working files remain untouched; real headset verification is still outstanding.
+
+## First machine boot cue
+
+The four-second machine-start countdown used to run after both entrance early returns. `prepareRestore()` scheduled it while the room began rebuilding, but the countdown could not advance until that entrance had finished. This delayed the sound past its intended visual beat, including the seated VR entrance.
+
+The countdown now runs immediately after the entrance update, ahead of its early returns and after the game-menu pause gate. It remains reinterp-only, and still fires once four seconds into restoration. The existing startup splash/chime and first-gesture audio policy are unchanged.
+
+`node tools/itch-boot-audio-probe.mjs --port 5191` passes through the actual setup dismissal/care-note route, diagnostically seeks the setup film, then measures real entrance updates and HTML media playback. Browser cue: 3.998 seconds after restoration begins, playback about 40 ms after the request. Mocked XR with a 1.5-second menu hold: 5.485 seconds including that hold, playback about 9 ms after the request. Both cues fire once during `restore`, with no page errors. Evidence: `out/itch/boot-audio.json` and two screenshots. These measurements check program timing, not Quest audio-output latency; listening on a real headset remains required.
