@@ -1,4 +1,8 @@
 import { GuideWait } from '../narrative/guideWait';
+import { drawVeraArchive, drawVeraDistribution, drawRetainedCopies, studioFont } from '../desktop/apps/veraSurfaces';
+import { drawTestimonyFilm } from '../desktop/theme/renataFilm';
+import vera from '../../data/dialog/s3_vera.json';
+import { veraDay, resetVeraDay } from '../state/veraDay';
 import polish from '../../data/strings/playtestPolish.json';
 import { drawLambyGuide, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
 import type { LambyGuide } from '../narrative/lambyGuide';
@@ -49,7 +53,7 @@ import type { LambyGuide } from '../narrative/lambyGuide';
  *     Bare: no Lambient lane on any screen showing a person's words, no
  *     mechanics drawn over them, no satire. The submitters are sincere and are
  *     NEVER the joke; the target is the apparatus editing them.
- *   E3 has NO respite. Deliberate, confirmed by Sérgio — do not add one.
+ *   S307: The Wick is respite under the approved November 2016 rebuild.
  *
  * THE COERCION is that a list with items unticked is simply incomplete. No
  * metrics, no threats, no view counts, nobody comments. Every item is skippable,
@@ -297,10 +301,7 @@ const LIFT_DELAY_SECONDS = 1.4;
  *  arrive lit at the same moment */
 const LIFT_SECONDS = 5.0;
 const CARET_SECONDS = 0.53;
-/** ⚑ S219 / W1-E3 — a job worked to its end holds this long, finished and readable, and then the day comes back */
-// ⚑ S283 (headset B: he wanted the way back as a button at the end, not a jump) — the finished job now holds with
-//   "Back to today" at its foot (ringed by the glow logic); the board only comes back by itself after a long while
-const JOB_RETURN_SECONDS = 20.0;
+// S307: finished work holds until Back to today; reading never expires.
 
 /** ⚑ THE PLAYER (S69). `PLAYER_S` device pixels per frame unit → a 176×100
  *  picture on the workstation's 676×390 panel; the small "as sent" frame beside it
@@ -361,7 +362,7 @@ export class GraceQueueLite {
   }
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
 
-  get guideSilent(): boolean { return this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
+  get guideSilent(): boolean { return !!this.veraPage || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
     || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
   private lambPriority = false;
   private lambSequence = 0;
@@ -420,6 +421,16 @@ export class GraceQueueLite {
    */
   private idleT = 0;
   private mode: Mode = 'dark';
+  private veraPage: 'send' | 'record' | 'kit' | null = null;
+  private recordSent = false;
+  private storyOffer = false;
+  private recordAdmin = false;
+  private kitApproved = false;
+  private takenDown = false;
+  private sendReceipt = false;
+  /** Consumed by the room: the phone is brought to the eye, never gaze-triggered. */
+  inboxLiftPending = false;
+
   /** ⚑ the window is PUT DOWN, not closed. Minimising reveals the desktop the
    *  maximise covers; the taskbar button always brings it back. Never a trap,
    *  never a state a player can be stuck in — the same law the Assistant's
@@ -496,6 +507,7 @@ export class GraceQueueLite {
   private readonly onLight: (on: boolean) => void;
 
   constructor(opts: { onLight?: (on: boolean) => void } = {}) {
+    resetVeraDay();
     this.lambLine = q.lambient.greet;
     this.onLight = opts.onLight ?? ((): void => { /* no room to light (flat mode) */ });
   }
@@ -531,6 +543,7 @@ export class GraceQueueLite {
     this.playing = false; stopClip(this.roomTone); this.roomTone = null;
     this.openSurface = null; this.chipReturn = null; this.pauseOpen = false;
     this.saver = null; this.phoneInHand = false; this.minimised = false;
+    this.veraPage = null; veraDay.quiet = false; this.inboxLiftPending = false;
     if (this.mode === 'list' || this.mode === 'done') this.mode = 'board';
     this.bump();
   }
@@ -550,7 +563,7 @@ export class GraceQueueLite {
   private readonly startMap = new StartMenuMap();
   private get startMapSilent(): boolean { return this.phoneInHand || this.playing; }
   private startPanelCalm(): boolean {
-    if (this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface || !this.guideReady('start-panel')) return false;
+    if (this.veraPage || this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface || !this.guideReady('start-panel')) return false;
     if (this.mode === 'signin') return true;
     return this.mode === 'board' && this.tasks().length <= 3;   // one row of tiles: the strip fits under them
   }
@@ -577,12 +590,13 @@ export class GraceQueueLite {
       this.highlightPreference = highlights; this.bump(); this.phoneV++;
     }
     this.guideWait.tick(dt, !!this.lambyGuide?.active);
+    veraDay.quiet = this.veraPage === 'record' || (this.phoneInHand && this.phone.quietReading);
     if (this.startMap.update(dt)) this.bump();
     this.updateSaver(dt);
     this.updateGate();
     this.updateJobReturn(dt);
     if (this.startPanel.tick(dt, this.startPanelCalm())) this.bump();
-    if (this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
+    if (this.veraPage || this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
     else if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
@@ -656,7 +670,7 @@ export class GraceQueueLite {
     if (this.playing) {
       const before = Math.floor(this.playT / TICK);
       this.playT += dt;
-      if (this.playT >= NOA_SECONDS) { this.playT = NOA_SECONDS; this.playing = false; stopClip(this.roomTone); this.roomTone = null; this.bump(); }
+      if (this.playT >= this.filmSeconds()) { this.playT = this.filmSeconds(); this.playing = false; stopClip(this.roomTone); this.roomTone = null; this.bump(); }
       else if (Math.floor(this.playT / TICK) !== before) this.bump();
     }
 
@@ -702,11 +716,16 @@ export class GraceQueueLite {
    *  either way: if she finishes another job after the phone lit without opening Bea's link, the phone's own
    *  "ignored" card comes (phoneE3.onWorkDone). Her next action triggers it, never a clock. */
   private updateGate(): void {
-    if (this.mode !== 'board' && this.mode !== 'done') return;
+    if (this.mode !== 'board' && this.mode !== 'done' || this.veraPage) return;
     const wd = this.workDone();
+    // A completed piece of work opens the pipeline before Malta, in either cut.
+    if (this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed) { this.veraPage = 'send'; this.bump(); return; }
+    if (veraDay.distributed && !veraDay.recordOpened) { this.storyOffer = true; }
+    if (veraDay.recordClosed && !veraDay.kitClosed) return;
+
     if (!this.maltaArrived) {
       if (wd >= 1 && !ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
-      if (wd >= maltaAfter()) {
+      if (veraDay.kitClosed) {
         if (!ledger.records.includes('e3-two-jobs')) ledger.records.push('e3-two-jobs');
         this.armMalta();
       }
@@ -742,6 +761,7 @@ export class GraceQueueLite {
 
   /** she pressed Install: the tile is appended to the board (nothing already there moves) and that is all */
   private installOffer(): void {
+    if (this.storyOffer) { this.openVeraRecord(); return; }
     if (!this.offer) return;
     this.guideWait.cancel('tool-offer');
     this.unlockedIds().push(this.offer.id);
@@ -756,7 +776,7 @@ export class GraceQueueLite {
    *  surface, never "worked") and anything opened from the chip (Back owns that road). A story that is not the last
    *  keeps its Next story / Back pair — the job is not finished. */
   private updateJobReturn(dt: number): void {
-    if (this.mode !== 'list' || this.chipReturn || this.openSurface?.id === 'record') { this.doneKey = null; this.doneT = -1; return; }
+    if (this.veraPage || this.mode !== 'list' || this.chipReturn || this.openSurface?.id === 'record') { this.doneKey = null; this.doneT = -1; return; }
     const key = this.openSurface ? this.openSurface.id : 'testimony';
     const done = this.openSurface
       ? this.openSurface.complete()
@@ -764,17 +784,13 @@ export class GraceQueueLite {
     if (this.doneKey !== key) { this.doneKey = key; this.doneAtOpen = done; this.doneT = -1; return; }
     if (!done || this.doneAtOpen || this.minimised || this.pauseOpen) { if (!done) this.doneT = -1; return; }
     this.doneT = this.doneT < 0 ? 0 : this.doneT + dt;
-    if (this.doneT >= JOB_RETURN_SECONDS && this.guideReady('job-return')) {
-      this.guideWait.cancel('job-return');
-      this.doneT = -1; this.doneKey = null; this.storyDone = false;
-      this.backToBoard();
-    }
+
   }
 
   /** ⚑ S208 — the lock screen (screensaver.ts 'lock'): only on the board, nothing open, no card up, nothing playing;
    *  anything that opens or plays wakes it. The corrections counter starts from the board's open jobs. */
   private updateSaver(dt: number): void {
-    const quiet = this.mode === 'board' && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying() && !this.lambyGuide?.active;
+    const quiet = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying() && !this.lambyGuide?.active;
     if (!this.saver) {
       if (quiet && this.boardQuietT > SAVER_SECONDS) {
         this.saver = new Screensaver('lock', 2016).rotate('e3');
@@ -900,9 +916,14 @@ export class GraceQueueLite {
   /** press the picture. It plays, or it stops. That is the entire contract:
    *  nothing asks for it, nothing waits for it, nothing is unlocked by it, and
    *  ⚑ NOTHING IS FILED — the apparatus did not ask you to watch her. */
+  private filmSeconds(): number {
+    const [m, sec] = (this.submission()?.video?.duration ?? '0:24').split(':').map(Number);
+    return m * 60 + sec;
+  }
+
   togglePlay(): void {
     if (!this.submission()?.video) return;
-    if (this.playT >= NOA_SECONDS) this.playT = 0; // finished: pressing plays it again
+    if (this.playT >= this.filmSeconds()) this.playT = 0; // finished: pressing plays it again
     this.playing = !this.playing;
     // the room tone follows the picture: starts where it is, stops when she is paused
     stopClip(this.roomTone); this.roomTone = null;
@@ -1104,6 +1125,8 @@ export class GraceQueueLite {
     }
     this.openSurface = null;
     this.mode = this.caughtUp() ? 'done' : 'board';
+    if (this.storyOffer && !veraDay.recordOpened) { this.recordAdmin = true; this.openVeraRecord(); }
+
     this.bump();
   }
 
@@ -1176,6 +1199,7 @@ export class GraceQueueLite {
    *  voice for the beat (NARRATIVE_FLOW 2016 #6, R3-81): the phone is the way the
    *  era ends now, so the player must be told it exists and that it can be put down. */
   armMalta(): void {
+    if (!veraDay.recordClosed) return;
     markExtraPassed('work');
     if (this.maltaArrived) return;
     this.maltaArrived = true;
@@ -1196,7 +1220,7 @@ export class GraceQueueLite {
   /** ⚑ S149 — "nothing is open": a job on the workstation, or a card on the phone's
    *  glass. The era's exit (era3Devices.tick) waits on this. */
   get busy(): boolean {
-    return this.mode === 'list' || this.phone.cardOpen;
+    return !!this.veraPage || this.mode === 'list' || this.phone.cardOpen;
   }
 
   /** she picks it up. Two lines, and then — a beat later — the light. */
@@ -1309,9 +1333,13 @@ export class GraceQueueLite {
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.drawSurfaceContent(ctx, W, H);
     // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
-    if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active) {
+    if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active && this.veraPage !== 'record' && !veraDay.quiet) {
       const ids = stepTargets('e3', buildStartModel(undefined, 'e3').now?.id);
-      if (this.doneT >= 0) ids.add('board-back');   // S283: a finished job's one way on
+      if (this.doneT >= 0 || this.storyDone) ids.add('board-back');
+      if (this.mode === 'list' && !this.openSurface && this.current()) ids.delete('board-back');
+      if (this.veraPage === 'send') ids.add(this.sendReceipt ? 'vera-send-close' : 'vera-send');
+      if (this.storyOffer) ids.add('update-accept');
+      if (this.veraPage === 'kit') ids.add(this.kitApproved ? 'vera-kit-close' : 'vera-kit-approve');   // S283: a finished job's one way on
       if (ids.size) for (const r of this.rects) if (ids.has(r.id)) drawGlow(ctx, r, 'path', aero.ERA3.amber, aero.ERA3.glassEdge);
     }
     if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver) {
@@ -1321,7 +1349,7 @@ export class GraceQueueLite {
       const nav = this.startMap.draw(ctx, W, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
-    if (this.lambyGuide && !this.startMap.active && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
+    if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
@@ -1360,7 +1388,7 @@ export class GraceQueueLite {
     //   the whole picture, and it is worth the beat: the machine has a life
     //   that is not the shift, and she has put the shift down to look at it.
     if (this.minimised) { this.drawTaskButton(ctx, H, false); return; }
-    const title = this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
+    const title = this.veraPage === 'record' ? vera.record.title : this.veraPage === 'kit' ? vera.kit.title : this.veraPage === 'send' ? vera.send.title : this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
       : this.mode === 'board' || this.mode === 'done' ? q.app.boardTitle
         : this.openSurface ? this.openSurface.windowTitle
           : q.app.title;
@@ -1376,7 +1404,8 @@ export class GraceQueueLite {
     const GUTTER = 9;
     const body = { ...c, x: c.x + GUTTER, w: c.w - GUTTER * 2 };
 
-    if (this.mode === 'signin') this.drawSignIn(ctx, body);
+    if (this.veraPage) this.drawVeraPage(ctx, body);
+    else if (this.mode === 'signin') this.drawSignIn(ctx, body);
     else if (this.mode === 'consent') this.drawConsent(ctx, body);
     else if (this.mode === 'board' || this.mode === 'done') this.drawBoard(ctx, body);
     else if (this.openSurface) this.drawSurface(ctx, body, this.openSurface);
@@ -1464,6 +1493,8 @@ export class GraceQueueLite {
     ctx.fillText(q.app.signInGreeting, cx, c.y + 40);
     setFont(ctx, 15); ctx.fillStyle = ERA3.greyDk;   // P8 E6 (headset B: "the text color is too light for this type of background")
     ctx.fillText(q.app.signInSub, cx, c.y + 78);
+    setFont(ctx, 12); ctx.fillStyle = ERA3.greyDk;
+    ctx.fillText(q.app.roleBadge, cx, c.y + 110);
     this.drawStartPanel(ctx, c);
     const bx = cx; const by = c.y + c.h - 70; const bw = 220; const bh = 42;
     aero.button(ctx, bx, by, bw, bh, q.app.signInButton, { primary: true, tone: 'good', size: 16 });
@@ -1489,13 +1520,71 @@ export class GraceQueueLite {
    * variable that does not matter. Everything the board can be arranged into
    * ends the same way.
    */
+  private openVeraRecord(): void {
+    this.storyOffer = false; this.veraPage = 'record'; this.recordSent = false;
+    veraDay.recordOpened = true; veraDay.quiet = true;
+    this.lambyGuide?.press('lg-x'); this.startPanel.close(); this.pauseOpen = false;
+    this.bump();
+  }
+
+  private drawStoryOffer(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const x = c.x + 160, y = c.y, w = c.w - 160;
+    px(ctx, x, y, w, 36, ERA3.white);
+    setFont(ctx, 12); ctx.fillStyle = ERA3.titleText; ctx.fillText(vera.offer.title, x + 8, y + 1);
+    setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(vera.offer.sub, x + 8, y + 19);
+    aero.button(ctx, x + w - 76, y + 4, 70, 26, vera.offer.install, { primary: true, size: 12 });
+    this.rects.push({ x: x + w - 76, y: y + 4, w: 70, h: 26, id: 'update-accept' });
+  }
+
+  /** All copy is data. Reading her record is felt: no guide, glow, audio, or witness entry. */
+  private drawVeraPage(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const hit = (r: Rect): void => { this.rects.push(r); };
+    if (this.veraPage === 'record') { drawVeraArchive(ctx, c, this.recordSent, this.recordAdmin, hit); return; }
+    if (this.veraPage === 'send') {
+      drawVeraDistribution(ctx, c, this.runs(SUBMISSIONS[0], false).map(r => r.text).join(''), this.sendReceipt, hit); return;
+    }
+    if (this.takenDown) { drawRetainedCopies(ctx, c, this.kitApproved, hit); return; }
+    const x = c.x + 24, y = c.y + 18, w = c.w - 48;
+    px(ctx, c.x, c.y, c.w, c.h, ERA3.white);
+    const paragraph = (text: string, yy: number, size = 15, width = w): number => {
+      setFont(ctx, size); ctx.fillStyle = ERA3.ink;
+      const lines = wrapText(ctx, text, width);
+      lines.forEach((line, i) => ctx.fillText(line, x, yy + i * (size + 7)));
+      return yy + lines.length * (size + 7) + 12;
+    };
+    const button = (id: string, label: string, bx: number, by: number, bw: number, primary = false): void => {
+      aero.button(ctx, bx, by, bw, 30, label, { primary, size: 13 });
+      this.rects.push({ x: bx, y: by, w: bw, h: 30, id });
+    };
+    {
+      const k = vera.kit;
+      let yy = paragraph(k.title, y, 18);
+      if (this.takenDown) {
+        yy = paragraph(k.takeDown, yy + 8, 16);
+        for (const line of k.receipt) yy = paragraph(line, yy + 6, 16);
+        yy = paragraph(this.kitApproved ? k.approved : k.consent, yy + 8, 12);
+      } else {
+        yy = paragraph(this.kitApproved ? k.approved : k.intro, yy, 13);
+        for (const story of k.stories) yy = paragraph(story, yy, 13);
+        yy = paragraph(k.consent, yy, 11); yy = paragraph(k.terms, yy, 11);
+        yy = paragraph(k.footer, yy, 11);
+
+      }
+      const by = c.y + c.h - 48;
+      if (!this.takenDown) button('vera-take-down', k.takeDown, x, by, 180);
+      if (!this.kitApproved) button('vera-kit-approve', k.approve, x + w - 300, by, 140, true);
+      button('vera-kit-close', k.back, x + w - 150, by, 150);
+    }
+  }
+
   private drawBoard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
     ctx.fillText(q.app.boardHeading, c.x, c.y + 2);
     setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
     ctx.fillText(q.app.boardSub, c.x, c.y + 18);
     px(ctx, c.x, c.y + 36, c.w, 1, ERA3.glassEdge);
-    if (this.offer) this.drawOffer(ctx, c, this.offer);
+    if (this.storyOffer) this.drawStoryOffer(ctx, c);
+    else if (this.offer) this.drawOffer(ctx, c, this.offer);
 
     const tasks = this.tasks();
     const GAP = 14;
@@ -1517,6 +1606,14 @@ export class GraceQueueLite {
       const y = top + Math.floor(i / COLS) * (tileH + GAP);
       this.drawTile(ctx, x, y, tileW, tileH, t, i);
     });
+
+    if (this.phone.broken) {
+      const x = c.x + 2 * (tileW + GAP), y = top + tileH + GAP;
+      px(ctx, x, y, tileW, tileH, ERA3.white);
+      setFont(ctx, 12); ctx.fillStyle = ERA3.greyDk;
+      wrapText(ctx, vera.kit.waiting, tileW - 20).forEach((ln, i) => ctx.fillText(ln, x + 10, y + 16 + i * 18));
+      setFont(ctx, 10); ctx.fillText(vera.kit.original, x + 10, y + tileH - 18);
+    }
 
     // ⚑ the caught-up line does NOT replace the board. §7.2: after the break the
     // tasks are "still there, still working, still greyable" — a screen that
@@ -1711,8 +1808,9 @@ export class GraceQueueLite {
     const fw = w - behind * 5; const fh = h - behind * 5;
     if (front.video) {
       const fs = Math.min(fw / NOA_FRAME.w, fh / NOA_FRAME.h);
-      drawNoaFrame(ctx, x + (fw - NOA_FRAME.w * fs) / 2, y + (fh - NOA_FRAME.h * fs) / 2, fs,
-        { graded: this.graded(front) });
+      const vx = Math.round(x + (fw - NOA_FRAME.w * fs) / 2), vy = Math.round(y + (fh - NOA_FRAME.h * fs) / 2);
+      drawTestimonyFilm(ctx, vx, vy, Math.round(NOA_FRAME.w * fs), Math.round(NOA_FRAME.h * fs), 0, front.id === 2);
+      if (this.graded(front)) honestLight(ctx, vx, vy, Math.round(NOA_FRAME.w * fs), Math.round(NOA_FRAME.h * fs));
     } else {
       this.drawPageThumb(ctx, x, y, fw, fh, front);
     }
@@ -1849,10 +1947,114 @@ export class GraceQueueLite {
    * showing a person's own words (the `felt` law). It keeps its badge in the
    * window corner, which is what Lambient is now: a mark, not a mouth.
    */
+  /** A media workbench. The recording and complete testimony stay bare; the tool sits around them.
+   * The current rule has one Apply / Skip pair. No dragging, extra grading controls or text input. */
+  private drawTestimonyStudio(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): void {
+    const V = vera.visual, video = sub.video!;
+    const back = { x: c.x, y: c.y, w: 106, h: 23 };
+    aero.button(ctx, back.x, back.y, back.w, back.h, this.boardBackLabel(), { size: 10 });
+    this.rects.push({ ...back, id: 'board-back' });
+    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(V.studioLabel, c.x + 120, c.y + 5);
+    studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+    const sourceMeta = `${sub.author} · ${video.duration}`;
+    ctx.fillText(sourceMeta, c.x + c.w - ctx.measureText(sourceMeta).width, c.y + 5);
+    const top = c.y + 32, leftW = 268, rightX = c.x + leftW + 18, rightW = c.w - leftW - 18;
+    const filmW = 256, filmH = 144;
+    px(ctx, c.x - 1, top - 1, filmW + 2, filmH + 2, ERA3.glassEdge);
+    ctx.save(); ctx.beginPath(); ctx.rect(c.x, top, filmW, filmH); ctx.clip();
+    if (this.graded(sub)) drawTestimonyFilm(ctx, c.x - 31, top - 25, 318, 179, this.playT, sub.id === 2);
+    else drawTestimonyFilm(ctx, c.x, top, filmW, filmH, this.playT, sub.id === 2);
+    ctx.restore();
+    if (this.graded(sub)) honestLight(ctx, c.x, top, filmW, filmH);
+    this.rects.push({ x: c.x, y: top, w: filmW, h: filmH, id: 'video' });
+    const ty = top + filmH + 5;
+    aero.button(ctx, c.x, ty, 63, 22, this.playing ? (video.pause ?? 'Pause') : (video.play ?? 'Play'), { size: 10 });
+    this.rects.push({ x: c.x, y: ty, w: 63, h: 22, id: 'video' });
+    const trackX = c.x + 73, trackW = filmW - 73;
+    px(ctx, trackX, ty + 9, trackW, 4, ERA3.glassEdge);
+    px(ctx, trackX, ty + 9, Math.round(trackW * this.playT / this.filmSeconds()), 4, ERA3.accent);
+    // Four actual frames of this recording. The house's cut makes a gap in the publication strip.
+    const sy = ty + 27, tw = 56, th = 31;
+    const cut = this.items(sub).some(i => i.edit?.kind === 'cut' && this.decisions.get(i.id) === 'applied');
+    for (let i = 0; i < 4; i++) {
+      const xx = c.x + i * 64;
+      if (cut && i === 1) {
+        px(ctx, xx, sy, tw, th, ERA3.sysBand); px(ctx, xx + 26, sy + 2, 1, th - 4, ERA3.grey);
+      } else drawTestimonyFilm(ctx, xx, sy, tw, th, i * 8, sub.id === 2);
+    }
+    // The whole testimony is readable in its own column. No fixed line slice or decoration over her words.
+    const transcriptH = 204;
+    px(ctx, rightX, top, rightW, transcriptH, ERA3.white);
+    px(ctx, rightX, top, 3, transcriptH, ERA3.memberSpine);
+    studioFont(ctx, 17, true); ctx.fillStyle = ERA3.ink; ctx.fillText(sub.author, rightX + 13, top + 9);
+    studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+    const edited = this.items(sub).some(i => i.edit && this.decisions.get(i.id) === 'applied');
+    const version = edited ? V.trackedVersion : V.originalVersion;
+    ctx.fillText(version, rightX + rightW - 12 - ctx.measureText(version).width, top + 12);
+    const runs = this.runs(sub, true);
+    let size = 14, lines: TextRun[][] = [];
+    for (; size >= 11; size--) {
+      studioFont(ctx, size); lines = this.wrapRuns(ctx, runs, rightW - 28);
+      if (lines.length * (size + 4) <= transcriptH - (sub.id === 2 ? 82 : 48)) break;
+    }
+    lines.forEach((line, i) => {
+      let xx = rightX + 13; const yy = top + 37 + i * (size + 4);
+      for (const part of line) {
+        const ww = ctx.measureText(part.text).width;
+        ctx.fillStyle = part.state === 'cut' ? ERA3.greyDk : ERA3.ink;
+        ctx.fillText(part.text, xx, yy);
+        if (part.state === 'cut') px(ctx, xx, yy + Math.round(size / 2), ww, 1, ERA3.greyDk);
+        if (part.state === 'added') px(ctx, xx, yy + size + 1, ww, 1, ERA3.accent);
+        xx += ww;
+      }
+    });
+    if (sub.id === 2) {
+      studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+      // Both institutional readings remain visible together, with identical treatment and no verdict.
+      for (const [n, id] of [8, 9].entries()) {
+        ctx.fillText(CORRECTIONS.get(id)!.why, rightX + 13, top + transcriptH - 30 + n * 14);
+      }
+    }
+    const by = top + 216, bh = c.y + c.h - by - 2;
+    px(ctx, c.x, by, c.w, bh, ERA3.lambBand);
+    px(ctx, c.x, by, c.w, 1, ERA3.glassEdge);
+    const current = this.current();
+    if (current) {
+      const copyW = c.w - 190;
+      studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(current.rule, c.x + 10, by + 7);
+      studioFont(ctx, 11); ctx.fillStyle = ERA3.greyDk;
+      const why = wrapText(ctx, current.why, copyW);
+      why.forEach((ln, i) => ctx.fillText(ln, c.x + 10, by + 25 + i * 13));
+      const refsY = by + 28 + why.length * 13, rw = Math.floor((copyW - 14) / 2);
+      // Manual and scripture keep exactly the same type, ink and treatment.
+      studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+      [current.manual, current.verse].forEach((ref, n) => {
+        wrapText(ctx, ref, rw).forEach((ln, i) => ctx.fillText(ln, c.x + 10 + n * (rw + 14), refsY + i * 11));
+      });
+      const bx = c.x + c.w - 170;
+      aero.button(ctx, bx, by + 12, 76, 29, q.verbs.apply, { primary: true, size: 12 });
+      aero.button(ctx, bx + 84, by + 12, 76, 29, q.verbs.skip, { size: 12 });
+      this.rects.push({ x: bx, y: by + 12, w: 76, h: 29, id: 'apply' }, { x: bx + 84, y: by + 12, w: 76, h: 29, id: 'skip' });
+      studioFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
+      wrapText(ctx, vera.provenance, 158).forEach((ln, i) => ctx.fillText(ln, bx, by + 52 + i * 11));
+    } else {
+      studioFont(ctx, 15, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(q.app.storyDone, c.x + 12, by + 12);
+      studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(vera.provenance, c.x + 12, by + 37);
+      const bw = 143, bx = c.x + c.w - bw - 10;
+      aero.button(ctx, bx, by + 12, bw, 28, this.boardBackLabel(), { primary: true, size: 11 });
+      this.rects.push({ x: bx, y: by + 12, w: bw, h: 28, id: 'board-back' });
+      if (SUBMISSIONS.some(sb => !this.subComplete(sb))) {
+        aero.button(ctx, bx, by + 46, bw, 25, q.app.nextStory, { size: 11 });
+        this.rects.push({ x: bx, y: by + 46, w: bw, h: 25, id: 'next-story' });
+      }
+    }
+  }
+
   private drawList(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     /* eslint-disable-next-line no-param-reassign */
     const sub = this.submission();
     if (!sub) return;
+    if (sub.video) { this.drawTestimonyStudio(ctx, c, sub); return; }
     // ⚑ THE WAY BACK, and it is unconditional. Under a board, a task you cannot
     //   put down is not a task you chose — "any order" is only true if leaving
     //   one half-finished is allowed. Nothing is lost by pressing it: every
@@ -2040,7 +2242,9 @@ export class GraceQueueLite {
 
     // ⚑ THE CHANNELS, attaching. Outside her card, in the tool's own colours —
     // the marks are the apparatus's, not hers.
-    let cx = x; let cy = y + cardH + 10;
+    setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+    ctx.fillText(vera.provenance, x, y + cardH + 8);
+    let cx = x; let cy = y + cardH + 26;
     setFont(ctx, 10);
     for (const chip of chips) {
       const cw = ctx.measureText(chip).width + 14;
@@ -2239,6 +2443,30 @@ export class GraceQueueLite {
     this.lambyGuide?.activity();
     if (lg && this.lambyGuide?.press(lg.id)) { this.bump(); return; }
 
+    const vh = this.rects.find(rr => hit(rr, x, y));
+    if (vh?.id === 'vera-as-sent' || vh?.id === 'vera-as-published') {
+      this.recordSent = vh.id === 'vera-as-sent'; this.bump(); return;
+    }
+    if (vh?.id === 'vera-record-close') {
+      veraDay.recordClosed = true; veraDay.quiet = false;
+      this.veraPage = 'kit'; this.mode = 'board';
+      this.armMalta(); this.phone.presentInbox(); this.inboxLiftPending = true; this.bump(); return;
+    }
+    if (vh?.id === 'vera-send') {
+      veraDay.distributed = true; this.sendReceipt = true;
+      this.surfaces.get('group')?.press('group-post');
+      ledger.era3Jobs.push({ id: 'pipeline', witness: vera.send.sent }); this.bump(); return;
+    }
+    if (vh?.id === 'vera-send-close') {
+      this.veraPage = null; this.storyOffer = true; this.bump(); return;
+    }
+    if (vh?.id === 'vera-kit-approve') { this.kitApproved = true; ledger.era3Jobs.push({ id: 'kit', witness: vera.kit.witnessApproved }); this.bump(); return; }
+    if (vh?.id === 'vera-take-down') { this.takenDown = true; ledger.era3Jobs.push({ id: 'take-down', witness: vera.kit.witnessRemoved }); this.bump(); return; }
+    if (vh?.id === 'vera-kit-close') {
+      veraDay.kitClosed = true; this.veraPage = null; this.mode = 'board';
+      if (!this.kitApproved) { this.kitApproved = true; ledger.era3Jobs.push({ id: 'kit', witness: vera.kit.witnessAdmin }); }
+      this.armMalta(); this.bump(); return;
+    }
     this.boardQuietT = 0;
     if (this.saver) { this.saver = null; this.bump(); return; }   // S208 — a press wakes it, and does nothing else
     // S208 / A3 — the first-task beat, once seen on the board, closes when she acts there

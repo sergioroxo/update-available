@@ -1,3 +1,4 @@
+import vera from '../../data/dialog/s3_vera.json';
 /**
  * ⚑ S179 / R5-02 — THE WALLS' PRINTS: the posters of each era, drawn as pixel art.
  *
@@ -21,11 +22,11 @@
 import { px, text, textW, disc, line, sprite, gradient, hand, type Ctx } from './calendarArt';
 import { PRINT as P } from '../desktop/theme/calendar';
 
-export type PrintId = 'release1997' | 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard' | 'dusk2003' | 'evening2016' | 'night2026';
+export type PrintId = 'release1997' | 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard' | 'dusk2003' | 'evening2016' | 'night2026' | 'wickCard' | 'mugN';
 
 /** each print's pixel size, ~2 px per centimetre of the prop it hangs on */
 export const PRINT_SIZE: Record<PrintId, [number, number]> = {
-  release1997: [60, 90], rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
+  wickCard: [96, 64], mugN: [24, 32], release1997: [60, 90], rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
   tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100],
   drawer12: [24, 12], campTag: [36, 22], referral1997: [60, 80], rules2003: [42, 56], indexCard: [26, 16],
   dusk2003: [72, 82], evening2016: [70, 62], night2026: [70, 62]
@@ -345,8 +346,25 @@ function indexCard(c: Ctx, W: number, H: number): void {
   text(c, '12', W - 9, H - 6, P.cardInk);
 }
 
+function mugN(c: Ctx, W: number, H: number): void {
+  px(c, 0, 0, P.cardStock, W, H);
+  text(c, vera.desk.mug, 7, 8, P.motherInk, 3);
+}
+function wickCard(c: Ctx, W: number, H: number): void {
+  px(c, 0, 0, P.cardStock, W, H);
+  centre(c, vera.desk.card, 4, P.motherInk, W, 2);
+  for (let i = 0; i < 8; i++) {
+    const x = 8 + i * 10;
+    if (i < 7) disc(c, x, 25, 3, P.motherInk);
+    else { line(c, x - 3, 22, x + 3, 22, P.motherInk); line(c, x - 3, 28, x + 3, 28, P.motherInk); }
+  }
+  centre(c, vera.desk.stamps, 35, P.cardInk, W);
+  centre(c, vera.desk.free, 45, P.motherInk, W);
+  centre(c, vera.desk.expiry, 55, P.cardInk, W);
+}
+
 const DRAW: Record<PrintId, (c: Ctx, W: number, H: number) => void> = {
-  release1997, rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard,
+  wickCard, mugN, release1997, rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard,
   dusk2003, evening2016, night2026
 };
 

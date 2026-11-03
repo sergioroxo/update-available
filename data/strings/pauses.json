@@ -11,7 +11,11 @@
   "diaryTitle": "Un-Walk - Before departure",
   "diaryFromForm": "Family Form closed. Next: DIARY.TXT.",
   "diaryFromPacket": "Placement signed. Next: DIARY.TXT.",
-  "diaryAssignment": ["Press the diary to begin the entry.", "Wait for the entry to finish.", "Tell him it was the right decision."],
+  "diaryAssignment": [
+   "Press the diary to begin the entry.",
+   "Wait for the entry to finish.",
+   "Tell him it was the right decision."
+  ],
   "minimise": "Minimise",
   "kitSetupBack": "< Un-Walk",
   "today": "Back to Today",
@@ -52,12 +56,13 @@
    "items": {
     "record": "Your record — the chip at the bottom of the screen.",
     "jobs": "More jobs on the board, in any order.",
-    "recommend": "Tag the video — coming to Contributor tools.",
+    "recommend": "Kindredraft — offered after a story is sent.",
     "group": "Post to the group.",
-    "floppy": "FloppySheep — on your phone. A little reward."
+    "floppy": "FloppySheep — on your phone."
    },
    "outro": "Small steps count.",
-   "close": "Close"
+   "close": "Close",
+   "_docS307": "S307: the legacy video-tool offer is retired. The notice names the one story-record offer."
   },
   "e4": {
    "line": "While it settles, Maya — {items}. Or start with the search.",

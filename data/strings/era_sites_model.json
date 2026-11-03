@@ -2209,7 +2209,7 @@
     ],
     [
      "Beats",
-     "12"
+     "15"
     ]
    ],
    "tabs": {
@@ -2301,6 +2301,8 @@
      {
       "k": "mono",
       "lines": [
+       "= your 2014 story: published (as sent: restricted)",
+       "= the campaign kit: waiting for approval",
        "CONTINUITY — WHAT IS NEW",
        "+ GraceOS, with L: one companion on every screen",
        "+ your session, restored before you arrive",
@@ -2311,7 +2313,7 @@
        "= the record: thirty years, intact",
        "= Vera's file: archived · a new file: Maya",
        "= the goal: unchanged, on file",
-       "- contributor tools: retired",
+       "- Kindredraft: archived",
        "- the moderation queue: retired",
        "- the waiting: retired",
        "Root Cause — migrated"
@@ -2387,7 +2389,7 @@
       "status": "speculative",
       "tag": "inferred",
       "conf": "none — this is our inference, and it says so",
-      "t": "VERA'S JOB IS OURS. No source documents a platform worker editing women's testimonies to a house style, rule by rule. What is documented is what her rules are made of: the movement's vocabulary that separates a person from her sexuality, the women's strand's own words, and platforms whose recommendation and moderation shaped what people saw. The job puts those in one pair of hands.",
+      "t": "VERA'S JOB IS OURS. No source documents a platform worker editing women's testimonies to a house style, rule by rule. What is documented is what her rules are made of: the movement's vocabulary that separates a person from her sexuality, the women's strand's own words, and platforms whose recommendation and moderation shaped what people saw. The job puts those in one pair of hands. Kindredraft, Vera’s 2014 account, the four-way distribution, the reach and copy counts, the retained original and the campaign kit responding to Malta are invented. No evidence was found of a ministry testimony campaign tied to Malta in 2016.",
       "links": [],
       "nolink": "No verified link yet."
      },
@@ -2824,7 +2826,7 @@
       "status": "speculative",
       "tag": "inferred",
       "conf": "none — this is our inference, and it says so",
-      "t": "VERA'S JOB IS OURS. No source documents a platform worker editing women's testimonies to a house style, rule by rule. What is documented is what her rules are made of: the movement's vocabulary that separates a person from her sexuality, the women's strand's own words, and platforms whose recommendation and moderation shaped what people saw. The job puts those in one pair of hands.",
+      "t": "VERA'S JOB IS OURS. No source documents a platform worker editing women's testimonies to a house style, rule by rule. What is documented is what her rules are made of: the movement's vocabulary that separates a person from her sexuality, the women's strand's own words, and platforms whose recommendation and moderation shaped what people saw. The job puts those in one pair of hands. Kindredraft, Vera’s 2014 account, the four-way distribution, the reach and copy counts, the retained original and the campaign kit responding to Malta are invented. No evidence was found of a ministry testimony campaign tied to Malta in 2016.",
       "links": [],
       "nolink": "No verified link yet."
      },
@@ -3270,9 +3272,33 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "Two pieces of work",
+        "label": "A story, corrected",
         "opt": "",
-        "hint": "Work a story through to its end — apply or skip, your choice — then another story, or another job. Annette's family calls are on the board.",
+        "hint": "Correct Renata’s testimony: apply or skip each rule. Then return to Today.",
+        "where": "Where: the workstation."
+       },
+       {
+        "label": "Four places, one story",
+        "opt": "",
+        "hint": "Send the story to all four destinations.",
+        "where": "Where: the workstation."
+       },
+       {
+        "label": "Kindredraft",
+        "opt": "",
+        "hint": "Install Kindredraft. It opens Vera’s own 2014 story.",
+        "where": "Where: the workstation."
+       },
+       {
+        "label": "Vera · 2014",
+        "opt": "",
+        "hint": "As sent shows her earlier account. Close record returns to the day.",
+        "where": "Where: the workstation."
+       },
+       {
+        "label": "The campaign kit",
+        "opt": "",
+        "hint": "Put the phone down when ready. Approve the kit or return to Today. Take my story down is optional.",
         "where": "Where: the workstation."
        },
        {
@@ -3284,13 +3310,7 @@
        {
         "label": "The other jobs",
         "opt": "optional",
-        "hint": "The board has more, and the platform offers more as updates — install them, in any order, or none.",
-        "where": "Where: the workstation."
-       },
-       {
-        "label": "Tag the video",
-        "opt": "optional",
-        "hint": "Tag the video arrives as an update to Contributor tools — on the board, after a finished job. Install it if you like.",
+        "hint": "The family calls, story clip and flagged replies stay on the board.",
         "where": "Where: the workstation."
        },
        {
@@ -3320,7 +3340,7 @@
        {
         "label": "The update",
         "opt": "",
-        "hint": "After posting to the group, return to Today and press Install on the update banner.",
+        "hint": "Put the phone down. The system update follows the group’s cascade.",
         "where": "Where: the workstation."
        }
       ]

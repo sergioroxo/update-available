@@ -55,7 +55,7 @@ const MALTA_ONE = m.maltaOne as Msg[];
 const MALTA_TWO = m.maltaTwo as Msg[];
 const CASCADE = m.cascade as Msg[];
 const LINK_VOTE = m.linkVote as { masthead: string; headline: string };   // S227 / M1: the never-drawn standfirst and tapHint are gone
-const BACKLOG = m.backlog as { from: string; time: string; text: string }[];
+const BACKLOG = m.backlog as { from: string; time: string; text: string; register?: string; stampCard?: string; thread?: { time: string; text: string }[] }[];
 const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
 const HOME = m.home as unknown as Record<string, string>;
 
@@ -113,6 +113,9 @@ export class PhoneE3 {
   private get clockText(): string { return this.opts.clock ? this.opts.clock() : d.phone.lockClock; }
 
   private bump(): void { this.version++; }
+  get quietReading(): boolean { return this.screen === 'message' || this.screen === 'inbox'; }
+  presentInbox(): void { this.screen = 'inbox'; this.openMessage = null; this.bump(); }
+
 
   /** ⚑ S219 — every message of the group's thread that has landed, past the history she already had */
   private groupLanded(): number {
@@ -283,7 +286,7 @@ export class PhoneE3 {
   /** S281 — what the phone is waiting on, screen by screen: the notification, then Messages, then the group, then the
    *  live link. Nothing once the group's news is all seen and the link is spent. */
   private pathIds(): Set<string> {
-    if (this.stage === 'quiet') return new Set();
+    if (this.quietReading || this.stage === 'quiet') return new Set();
     const live = this.stage === 'first' ? 'link' : this.stage === 'voted' ? 'link2' : null;
     const waiting = this.groupUnread() > 0 || (live !== null && !(this.stage === 'first' ? this.opened : false));
     if (!waiting) return new Set();
@@ -685,7 +688,7 @@ export class PhoneE3 {
       case 'group': this.screen = 'group'; this.openGroup(); return true;
       case 'inbox':
         this.screen = 'inbox';
-        ledger.checkins.push({ id: 'e3_backlog', witness: m.witness.backlogOpened });
+        // The optional inbox never files a reading event.
         this.bump(); return true;
       // S158: the chat goes back to Messages; S177: so does an open message
       case 'back': this.screen = this.screen === 'group' || this.screen === 'message' ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
@@ -756,17 +759,26 @@ export class PhoneE3 {
     const top = appBar(ctx, W, y0, b ? b.from : m.home.messagesLabel);
     this.pushBack(y0, top);
     if (!b) return;
-    phoneFont(ctx, 11);
-    const lines = phoneWrap(ctx, b.text, W - 64);
-    const bw = Math.min(W - 40, Math.max(...lines.map((ln) => ctx.measureText(ln).width)) + 20);
-    const bh = lines.length * 14 + 14;
-    const by = top + 16;
-    bubble(ctx, 16, by, bw, bh, 'in');
-    ctx.fillStyle = PHONE.ink;
-    lines.forEach((ln, i) => ctx.fillText(ln, 26, by + 8 + i * 14));
-    phoneFont(ctx, 9);
-    ctx.fillStyle = PHONE.dim;
-    ctx.fillText(b.time, 20, Math.min(by + bh + 8, H - 14));
+    const entries = b.thread ?? [{ time: b.time, text: b.text }];
+    let by = top + 8;
+    for (const entry of entries) {
+      phoneFont(ctx, 10);
+      const lines = phoneWrap(ctx, entry.text, W - 42);
+      const bh = lines.length * 13 + 14;
+      bubble(ctx, 10, by, W - 22, bh, 'in');
+      ctx.fillStyle = PHONE.ink;
+      lines.forEach((ln, i) => ctx.fillText(ln, 19, by + 7 + i * 13));
+      by += bh + 3;
+      phoneFont(ctx, 8); ctx.fillStyle = PHONE.dim;
+      ctx.fillText(entry.time, 14, by); by += 15;
+    }
+    if (b.stampCard) {
+      phoneFont(ctx, 12, 600); ctx.fillStyle = PHONE.ink;
+      const lines = phoneWrap(ctx, b.stampCard, W - 40);
+      ctx.fillStyle = PHONE.surface; ctx.fillRect(12, by + 4, W - 24, 74);
+      ctx.fillStyle = PHONE.ink;
+      lines.forEach((ln, i) => ctx.fillText(ln, 20, by + 14 + i * 17));
+    }
   }
 
   /** ⚑ S181 / R5-04 — WALK WITH, the accountability app: her own file, newest first, in the

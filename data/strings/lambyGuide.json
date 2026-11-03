@@ -196,7 +196,10 @@
         "here": "Any card will do. Start with the first.",
         "again": "One card at a time. The first one is fine.",
         "target": [
-          "task-0"
+          "task-0",
+          "apply",
+          "skip",
+          "board-back"
         ]
       },
       "phone": {
@@ -227,12 +230,32 @@
         "_docS288": "⚑ S288 (headset B: \"Lambient doesn't work … completely non-functional here\") — Lambient had no line for the cascade or the update, so a request there said nothing."
       },
       "update": {
-        "tip": "There is an update waiting. Return to Today and press Install on the banner.",
+        "tip": "Put the phone down. The system has an update waiting.",
         "here": "The banner is at the top of Today.",
         "again": "The update is still waiting.",
         "target": [
-          "update-accept",
           "board-back"
+        ]
+      },
+      "pipeline": {
+        "tip": "One story, four destinations. Send it when ready.",
+        "target": [
+          "vera-send",
+          "vera-send-close",
+          "board-back"
+        ]
+      },
+      "vera-install": {
+        "tip": "Kindredraft has your own story ready. Install opens it.",
+        "target": [
+          "update-accept"
+        ]
+      },
+      "vera-kit": {
+        "tip": "The campaign kit is on the workstation. Put the phone down when ready.",
+        "target": [
+          "vera-kit-approve",
+          "vera-kit-close"
         ]
       }
     },
