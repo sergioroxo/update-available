@@ -1,12 +1,12 @@
 STATUS: live
 
-# Codex build brief, 3 Nov 2026: E3-B (the mirrored message), plus a note on E4
+# Codex build brief, 3 Nov 2026: E3-B (the mirrored message)
 
 *This follows on from `CODEX_BRIEFS_OWN_THING_2026-11-03.md` Brief 7 and uses its format. It builds the
 E3-B plan in Codex's options doc `docs/reinterp/E3_E4_OPENERS_2026-11-03.md` (branch
 `codex/e3-e4-openers`). The placement, mirror and notification decisions below are Sérgio's
 (revision, 3 Nov). Where they differ from the options doc, they win. Paste Brief 8 into Codex. It
-starts from `origin/reinterp` on its own branch. Brief 9 was dropped. In its place is a note.*
+starts from `origin/reinterp` on its own branch. The E4-B brief was dropped (see the last line).*
 
 Names checked against `origin/reinterp` @ `7ccf737`. Things found while checking that the options doc
 did not say are marked **[checked]** where they change what Codex must do.
@@ -31,32 +31,28 @@ did not say are marked **[checked]** where they change what Codex must do.
 
 `<name>` = `e3-mirrored-message`. Plan of record: `E3_E4_OPENERS_2026-11-03.md` § "E3-B", amended here.
 
-**Why.** Before Vera opens the platform, an ordinary message from her life arrives on the workstation's
-OS layer and on the phone beside the monitor at the same moment. The two arriving together is the cue
-that they are separate. Signing in is the player's own act. Lambient lives only inside the platform
-window and is silent while the message is open. `felt`, never respite.
+**Why.** Before Vera opens the platform, an ordinary message from her life shows on the workstation's
+existing sign-in screen and on the phone beside the monitor at the same moment. The two arriving
+together is the cue that the phone is a separate device. Signing in is the player's own act. Lambient
+speaks only once GracePlatform is open, and is silent while the message is open. `felt`, never respite.
 
 **Decided by Sérgio (do not reopen).** Mirror ON. Notification clears on the next real navigation:
 no clock, no expiry, no repeat. (A phone-only variant was considered and set aside. Do not build it.)
 
-**[checked] What the workstation actually has, and the placement it forces.**
-- `graceQueueLite.draw()` paints `dark → boot → install` as the whole panel. Comment S61: "a machine that
-  is off or booting has no desktop yet." From `signin` on, it paints `aero.wallpaper` + `aero.taskbar`
-  (clock, Start button) as the OS layer. Over that sits ONE maximised `aero.windowFrame` for
-  `signin`/`consent` (title `s3_queue.json` `app.shellTitle` "SisterSignal") and then `board`
-  (`app.boardTitle` "GracePlatform · Today"). Minimise (`win-min`) reveals the bare desktop.
-- So **a desktop layer exists but is never bare before sign-in**. A bare-desktop moment would need a
-  new `Mode` and new arrival timing. That is out of scope; do not build it. The always-visible OS surface is the taskbar.
-- **Placement: move it from "after consent" to "on entering `signin`"** (the arrival is done,
-  `arrivalT = -1`, and `settleArrival()` is the jump path). Reasons: it is the first frame where an OS
-  layer exists; Lambient has not spoken yet, because `decideConsent()`'s two `lambSay` lines come only
-  after the sign-in press, so nothing has to drain and no voices overlap (S304); and sign-in then stays
-  the player's own later act. Draw the notification in `draw()` AFTER `drawSurfaceContent` (where the
-  Start button is drawn), anchored above the taskbar's right end by the clock. Use OS chrome from
-  `src/desktop/theme/era3`, never window chrome. That way it reads as the OS, outside the platform
-  window. ⚑ The sign-in screen already draws Lambient's mark (`drawLambMark` in `drawSignIn`). Report
-  whether that mark reads as Lambient "watching" the notification. Do not remove it without
-  Sérgio's say.
+**[checked] Placement: the existing sign-in screen. Nothing new is built for the workstation.**
+- `graceQueueLite.draw()` paints `dark → boot → install` as the whole panel. Then comes `signin`: the
+  maximised `aero.windowFrame` titled `s3_queue.json` `app.shellTitle` "SisterSignal", with
+  `aero.taskbar` under it. Then `consent` (Lambient's question) and `board` ("GracePlatform · Today").
+- **Why `signin`** (entered when the arrival ends, `arrivalT = -1`; jump path `settleArrival()`): it is
+  the earliest existing screen that takes input, and it comes before any platform work. Lambient has not
+  spoken yet, because `decideConsent()`'s two `lambSay` lines follow the sign-in press, so nothing has
+  to drain and no voices overlap (S304). Signing in stays the player's own later act. "After consent"
+  would land inside Lambient's live two-line beat.
+- Draw the notice in `draw()` after `drawSurfaceContent` (where the Start button is drawn), as a small
+  card over the sign-in screen's lower right, clear of the `signin` button rect. Use existing
+  `src/desktop/theme/era3` primitives. **Do not add or cost a new desktop layer, Mode or arrival
+  timing.** ⚑ `drawSignIn` already draws Lambient's mark (`drawLambMark`). Report whether it reads as
+  Lambient "watching". Do not remove it without Sérgio's say.
 - The phone: on its stand left of the monitor (`map.json` `phone.where`), not on the nightstand. Before
   `phone.arm()`, the lock screen (`stage === 'quiet'`) shows only an unlock pill, so the personal card
   can sit there. `arm()` (Malta, after the work) resets to `lock` and takes the screen, and that is
@@ -81,8 +77,8 @@ no clock, no expiry, no repeat. (A phone-only variant was considered and set asi
    quiet-stage lock card, and a small API (e.g. `openPersonalThread()`, `personalSeen`,
    `drawThreadView(ctx,w,h)`) on the one shared `PhoneE3`. Read-only: no "Type a message", no reply
    chips, no send (24 Oct bug 7).
-3. `src/room/graceQueueLite.ts`: a one-shot notification state, armed on entering `signin`. It is the
-   desktop thread view (an OS-layer panel, not a platform widget, drawn from `drawThreadView`).
+3. `src/room/graceQueueLite.ts`: a one-shot notification state, armed on entering `signin`. Opening it
+   shows the phone's own thread over the sign-in screen (drawn from `drawThreadView`, not a platform widget).
    Routing does not block: outside its rect, a tap reaches the sign-in/board control **on the same
    release** (24 Oct bug 6). **Clearing:** the desktop notification and its rects clear on the next
    real navigation (sign-in press, Start, minimise, dismiss, opening the thread, picking up the
@@ -115,7 +111,7 @@ no clock, no expiry, no repeat. (A phone-only variant was considered and set asi
   if they are over the budget you state in the report.
 
 **Acceptance checks by feel.**
-- When the sign-in screen appears, one small OS notice (sender + first words) sits by the taskbar clock as the phone lights. Nobody speaks.
+- When the sign-in screen appears, one small notice (sender + first words) shows on it as the phone lights. Nobody speaks.
 - Pressing Sign in with the notice up signs in on that press. The notice goes, and the phone keeps its message.
 - Either surface opens the same thread, with the same read state and no reply box. Lambient, guide,
   toast and glow are all silent.
@@ -128,27 +124,18 @@ desktop, open on phone, dismiss, miss, sign in at once, both consent answers, me
 transition (target +0). One BUILD_LOG line. Report:
 `docs/reinterp/CODEX_E3_MIRRORED_MESSAGE_REPORT_2026-11-03.md`, with each commit hash.
 
-**What needs a real Quest.** Whether the taskbar notice and lit phone read as two devices, not "the platform sees my
+**What needs a real Quest.** Whether the notice and the lit phone read as two devices, not "the platform sees my
 phone". Reading both from the seat. Phone pick-up/put-down. Silence on both screens. Lamb mark. Transition peak.
 
 ---
 
-## 9 · E4-B: dropped (note only, no brief)
-
-Sérgio's playtest screenshot, confirmed in the data, shows that E4 already opens on Maya's own
-unfinished query. `s4_boot.json` `search.typed` "how do i tell my", with `tabs[0].title` and the
-address bar to match. Its four `completions` include her own "…parents i'm trans". The laptop
-says `s4_browser.json` `program.console.restored`: "Your session is restored, Maya. Start with the search." The
-mechanism exists, so **E4 needs no new beat.** The only open question for Sérgio is whether L/Lamby
-(the boot's `bootLine` and the laptop line) and the opening's ledger writes (`browser.ts` `wake()` →
-`saver`, `file()` → `session`) should be silent during that existing opening. If he says yes, that
-is a small, separate brief. Do not write fragment or completion text.
-
 ## Order of operations and decisions still owed by Sérgio
 
-1. Confirm the guard-2 reading in `E3_E4_OPENERS_2026-11-03.md` and approve E3-B against this brief's placement (on sign-in, not after consent).
+1. Confirm the guard-2 reading in `E3_E4_OPENERS_2026-11-03.md` and approve E3-B with this brief's placement (sign-in screen, not after consent).
 2. Say whether the Lamb mark on the sign-in screen may stay while the personal notice is up.
 3. Paste Brief 8. Review the core, then (a) → (b) → (c), one commit each. (c) waits on its asset-budget number.
 4. Write the copy: the personal message, the group details, the Mam draft, the photo set (all `⚑ TEXT PENDING`).
-5. E4: decide whether L/Lamby and the ledger writes go silent during the existing opening (a separate small brief if yes).
+5. Decide what "silent" covers on the sign-in screen: the Start menu map and the guide glow (`stepTargets`) as well as Lambient.
 6. After the build, run a headset session on the "What needs a real Quest" list before anything is called final.
+
+E4 deferred by Sérgio, 3 Nov 2026.
