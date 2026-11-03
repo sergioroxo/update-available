@@ -255,34 +255,44 @@ can judge.
 
 ---
 
-## 7 · E3 and E4 "first minutes" — options doc (`codex/e3-e4-openers`) — after Sérgio reads the two candidates below
+## 7 · E3 and E4 "first minutes" — options doc (`codex/e3-e4-openers`) — REVISED after Sérgio's notes
 
-*Codex writes `docs/reinterp/E3_E4_OPENERS_2026-11-03.md`: feasibility, cost, risks, exact files, and a
-step list for each candidate. No build, no final copy. Both candidates are Claude's proposals,
-⚑ Sérgio decides.*
+*Codex writes `docs/reinterp/E3_E4_OPENERS_2026-11-03.md`: feasibility, cost, risks, exact files, a step
+list per candidate. No build, no final copy. Candidates are Claude's proposals; ⚑ Sérgio decides.
+Sérgio's rules: no interactions through clothes (the coat is OUT); E4's opener must relate to the real
+mechanism of the system steering a person toward detransition (apparatus and AI use only, never
+detransitioners, never satirising the gender-exploratory clinical debate — both captions, unresolved).*
 
-**Candidate E3-A · The phone before the queue.** Vera's era opens on her phone's lock screen, not the
-platform sign-in. The unread backlog (`data/dialog/s3_maiden.json` `backlog`, already authored and
-reachable via `src/desktop/apps/phoneE3.ts`) is visible as **lock-screen previews** — the player
-glimpses the top message without being forced to open it. Then the system's own welcome notification
-arrives and pushes the stack down the screen (the system arrives *around* it). Constraints from the
-build: opening is never forced and **nothing is filed either way** (`s3_maiden` `_docBacklog`); the
-messages **do not argue, ask, or announce acceptance** — they stay mundane (a freezer bag with her
-name on it, a jumper "not held hostage"); **E3 stays `felt`, not respite**; do not move the 14 March
-birthday date (the vote is nine months later) — the system's banner should be an anniversary/queue
-notice, not a birthday. Open question to resolve in the doc: the audit noted `phoneE3.ts` files
-`e3_backlog` when the inbox is opened although the data comment says nothing is filed — reconcile.
-"Blocked numbers" is an option only if the programme's no-contact practice is sourced
-(`[VERIFY SOURCE]`); the unread framing is already built and needs no claim.
+**Candidate E3-B · The mirrored message (after Lambient's question, before the work).** E3 is already a
+three-screen room (workstation, tablet, phone: `src/room/era3Devices.ts`, "every screen you own").
+After the `consent` beat and before `work`, a message notification arrives on the workstation as a
+mirrored copy of her phone (period-correct device continuity; generic wording, no real brand), and the
+phone on the nightstand lights at the same moment. The player may open it on the desktop or turn to the
+phone, or ignore it and work. Rules: ONE notification, one voice at a time (S304), it never swallows a
+click and clears itself (24 Oct playtest bugs 6 and 7 are exactly this failure); sender + first words
+only; the platform and Lambient **never comment** and file nothing; opening it opens the phone's own
+thread, not a platform widget; **E3 stays `felt`, not respite**; messages stay mundane (guard: no
+declared acceptance); do not move the 14 March birthday. Reconcile: `phoneE3.ts` files `e3_backlog` on
+opening the inbox while `s3_maiden` says nothing is filed. Surveillance reading to decide: a work
+desktop showing a personal phone's messages makes the platform look like it can see them; say how the
+notification avoids implying that, or whether Sérgio wants that implication.
+Extra E3 "reality" elements to cost (data-first, small): (a) a long reply to Mam composed in a notes app
+and never sent (bank 2016-06); (b) a friends' group muted with a large unread count beside a work group
+with a small one (bank 2016-04); (c) a few near-duplicate camera-roll photos and a screenshot of a
+timetable, as pre-authored sprites (bank 2016-01/02) — NOT a "folder of her past" (E2 already has the
+1997 folder; do not repeat the device) and no photo that explains a backstory or signals identity.
 
-**Candidate E4-A · The ringed Friday, then Junie.** Maya's room already has `calendar2026` on the wall
-(one Friday ringed, "commons"). Before the system's `wake`/`l` beats take over, let the player see and
-click it (a one-line room caption, no UI), and show Junie's thread as a lock-screen preview. The
-ringed Friday pays off at the stream ("same time next week"); the coat Junie repaired
-(`s4_browser.json:719`) becomes a thing the player has *seen* before the agent's composite edits the
-photo. Constraints: `register`: the opener is `felt`; L absent; nothing filed; the Close must not turn
-the stream or the calendar into a loss (it is respite); never treat the calendar as an identity sign.
+**Candidate E4-B · The unfinished search (the system finishes her sentence).** Before `defaults`, the
+restored session (`wake`/`l` beats) shows a search she typed herself the night before, left unfinished:
+small, practical, hers, and NOT clinical or identity-debate content (it must not render either side of the
+clinical question). Then the existing `search` beat ("The engine finishes it for you") finishes it
+differently and steers to the sponsored result. The player sees the gap between what she asked and what
+the system completed — the mechanism of steering, shown without a word of explanation. Reuses
+`data/dialog/s4_browser.json` search and `s4_l.json`; check `docs/reinterp/ERA4_V2_BUILT_2026-11-02.md`
+and `RESEARCH_2026_V2_WEAPONISED_CARE` for what is documented vs `[VERIFY SOURCE]`. Rules: L absent in the
+opener; `felt`; nothing filed; no deadname; no clothing/prop interactions; the stream and ringed-Friday
+calendar (optional, a wall prop, not clothing) must never become a loss at the Close.
 
 For each candidate say: which existing files/props/data it reuses, what new code is needed, exact
-effect on beat order in `data/strings/map.json`, effect on draw calls and the E3/E4 transitions,
-whether it passes guards 1 and 2, and what to cut if the era runs long.
+effect on beat order in `data/strings/map.json`, effect on draw calls and the transitions, whether it
+passes guards 1 and 2, and what to cut if the era runs long.
