@@ -45,7 +45,7 @@ which is why Brief 1 is an audit. (I did not play the build; I read the docs, da
 > docs/ETHICS_CONSTRAINTS.md before anything — their laws bind you: no runtime network calls; no storage;
 > colours only from src/desktop/theme/*; click/tap only, no free text, no timers that punish, no scores;
 > respite is never a trap and never revealed as fake; the system targets AROUND it, never through it;
-> E3 has no respite (Sérgio, confirmed). Every docs/**.md starts with `STATUS:`. All new display text is
+> E3 has no respite (Sérgio, confirmed). GUARD 1: nothing may read as one person's identity trajectory (Daniel E1→E2 is one person; Vera and Maya are different people; no inherited private files or biography). GUARD 2: a person's own thing is an ordinary private object or act, never an identity signal, and no one declares acceptance of her in order to make the scene work. Every docs/**.md starts with `STATUS:`. All new display text is
 > a draft: `_doc: "PLACEHOLDER — Sérgio voice pass pending"` and marked ⚑ — you do NOT write final
 > survivor-adjacent text or make ethics calls; you flag them. Uncited facts carry `[VERIFY SOURCE]`.
 > One line in BUILD_LOG.md (next session number after the last one — check). Commit with explicit paths,
