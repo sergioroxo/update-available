@@ -315,6 +315,7 @@ const deltas = {
   // beside it in code (cluster.ts migrateTerminal).
   r4: {
     props: {
+      e_chair: { pos: [4.68, 0, 0.7] },
       windowPane: { color: '#15151F' },
       w_winPane: { color: '#15151F' },
       e_winPane: { color: '#15151F' },
