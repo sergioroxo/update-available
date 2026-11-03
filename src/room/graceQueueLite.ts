@@ -1,3 +1,4 @@
+import { GuideWait } from '../narrative/guideWait';
 import polish from '../../data/strings/playtestPolish.json';
 import { drawLambyGuide, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
 import type { LambyGuide } from '../narrative/lambyGuide';
@@ -351,6 +352,8 @@ export type PhoneView = {
 
 export class GraceQueueLite {
   lambyGuide: LambyGuide | null = null;
+  private guideWait = new GuideWait();
+  private guideReady(key: string): boolean { return this.guideWait.ready(key, !!this.lambyGuide?.active); }
   pressGuideTarget(id: string): void {
     if (!['signin', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
     const r = this.rects.find(h => h.id === id);
@@ -360,7 +363,9 @@ export class GraceQueueLite {
 
   get guideSilent(): boolean { return this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
     || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
-  get guideVoice(): boolean { return false; }
+  private lambPriority = false;
+  private lambSequence = 0;
+  get guideVoice(): boolean { return this.lambPriority; }
   private _callPending = false;
   set callPending(value: boolean) { if (value !== this._callPending) { this._callPending = value; this.bump(); } }
   /** bumped on every state-changing action — era3Devices compares this to
@@ -545,7 +550,7 @@ export class GraceQueueLite {
   private readonly startMap = new StartMenuMap();
   private get startMapSilent(): boolean { return this.phoneInHand || this.playing; }
   private startPanelCalm(): boolean {
-    if (this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface) return false;
+    if (this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface || !this.guideReady('start-panel')) return false;
     if (this.mode === 'signin') return true;
     return this.mode === 'board' && this.tasks().length <= 3;   // one row of tiles: the strip fits under them
   }
@@ -571,6 +576,7 @@ export class GraceQueueLite {
     if (highlights !== this.highlightPreference) {
       this.highlightPreference = highlights; this.bump(); this.phoneV++;
     }
+    this.guideWait.tick(dt, !!this.lambyGuide?.active);
     if (this.startMap.update(dt)) this.bump();
     this.updateSaver(dt);
     this.updateGate();
@@ -581,25 +587,25 @@ export class GraceQueueLite {
       this.boardQuietT += dt;
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
       //   "This week" card lists what else is open to her (only what is left); once
-      if (!this.pauseShown && !this.minimised && ledger.records.includes('e3-job-done') && this.boardQuietT > 6) {
+      if (!this.pauseShown && !this.minimised && ledger.records.includes('e3-job-done') && this.boardQuietT > 6 && this.guideReady('pause')) {
         this.pauseShown = true;
         this.pauseLines = pauseItems('e3', this.floppyOpened ? ['floppy'] : []);
         if (this.pauseLines.length) { this.pauseOpen = true; this.waitSaid = true; this.bump(); }
       }
       // ⚑ S209 / P7-47 — GracePlatform's Today's language: once, after the "This week" card, on a quiet board
       // ⚑ S219 / W1-B14 — no longer behind the pause (it never came for a busy player); a quiet board is enough
-      if (!this.wotdSaid && !this.pauseOpen && this.boardQuietT > 12) {
+      if (!this.wotdSaid && !this.pauseOpen && this.boardQuietT > 12 && this.guideReady('wotd')) {
         const app = lexStrings.wotdApps.e3;
         const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
-        if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? '']); this.bump(); }
+        if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? ''], 'wotd'); this.bump(); }
       }
-      if (!this.waitSaid && this.boardQuietT > 25) {
+      if (!this.waitSaid && this.boardQuietT > 25 && this.guideReady('waiting')) {
         // ⚑ S227 (VERA_OPTIONS §4c.2) — only a job that is ON the board and unfinished is named: mounted is not enough
         //   now that most of the day arrives by update
         const waiting = ([['group', LAMBIENT.waitLine1], ['family', LAMBIENT.waitFamily], ['recommend', LAMBIENT.waitLine2]] as const)
           .filter(([id]) => { const s = this.surfaces.get(id); return this.isUnlocked(id) && !!s && !s.complete(); })
           .map(([, line]) => line).slice(0, 2);
-        if (waiting.length) { this.waitSaid = true; this.lambSay(waiting); this.bump(); }
+        if (waiting.length) { this.waitSaid = true; this.lambSay(waiting, 'waiting'); this.bump(); }
       }
     }
     // S158: the one clock — both faces re-upload only when the minute turns
@@ -620,9 +626,9 @@ export class GraceQueueLite {
     if (step !== this.chipStep) { this.chipStep = step; this.bump(); }
     // ⚑ and when it has been outnumbered, Lambient says the thing about the
     //   board. Once, on the frame the phone reports `broken`.
-    if (this.phone.broken && !this.afterSaid) {
+    if (this.phone.broken && !this.afterSaid && this.guideReady('after-phone')) {
       this.afterSaid = true;
-      this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2]);
+      this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2], 'after-phone');
       this.bump();
     }
     if (this.arrivalT >= 0) {
@@ -724,19 +730,20 @@ export class GraceQueueLite {
     if (wd > this.offerWork) {
       const phoneTurn = this.maltaAt >= 0 && this.offerWork < this.maltaAt && wd <= this.maltaAt;
       if (phoneTurn) { this.offerWork = wd; return; }
-      if (blocked) return;
+      if (blocked || !this.guideReady('tool-offer')) return;
       this.offerWork = wd;
       this.offer = next;
       this.bump();
       return;
     }
     const allGrey = this.tasks().every((t) => this.taskComplete(t));
-    if (allGrey && !blocked && (wd !== this.maltaAt || this.phone.pastFirst)) { this.offer = next; this.bump(); }
+    if (allGrey && !blocked && (wd !== this.maltaAt || this.phone.pastFirst) && this.guideReady('tool-offer')) { this.offer = next; this.bump(); }
   }
 
   /** she pressed Install: the tile is appended to the board (nothing already there moves) and that is all */
   private installOffer(): void {
     if (!this.offer) return;
+    this.guideWait.cancel('tool-offer');
     this.unlockedIds().push(this.offer.id);
     this.offer = null;
     if (this.mode === 'done') this.mode = 'board';
@@ -757,7 +764,8 @@ export class GraceQueueLite {
     if (this.doneKey !== key) { this.doneKey = key; this.doneAtOpen = done; this.doneT = -1; return; }
     if (!done || this.doneAtOpen || this.minimised || this.pauseOpen) { if (!done) this.doneT = -1; return; }
     this.doneT = this.doneT < 0 ? 0 : this.doneT + dt;
-    if (this.doneT >= JOB_RETURN_SECONDS) {
+    if (this.doneT >= JOB_RETURN_SECONDS && this.guideReady('job-return')) {
+      this.guideWait.cancel('job-return');
       this.doneT = -1; this.doneKey = null; this.storyDone = false;
       this.backToBoard();
     }
@@ -766,7 +774,7 @@ export class GraceQueueLite {
   /** ⚑ S208 — the lock screen (screensaver.ts 'lock'): only on the board, nothing open, no card up, nothing playing;
    *  anything that opens or plays wakes it. The corrections counter starts from the board's open jobs. */
   private updateSaver(dt: number): void {
-    const quiet = this.mode === 'board' && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying();
+    const quiet = this.mode === 'board' && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying() && !this.lambyGuide?.active;
     if (!this.saver) {
       if (quiet && this.boardQuietT > SAVER_SECONDS) {
         this.saver = new Screensaver('lock', 2016).rotate('e3');
@@ -953,8 +961,10 @@ export class GraceQueueLite {
   }
 
   /** S155 / R3-68 — Lambient speaks: the lines, and the platform's chime with them */
-  private lambSay(lines: string[]): void {
-    this.lambLines = lines;
+  private lambSay(lines: string[], key = `lambient-${this.lambSequence++}`): void {
+    this.guideWait.run(key, !!this.lambyGuide?.active, () => {
+      this.lambLines = lines; this.lambPriority = true; this.bump();
+    });
     // The programme guide is text-only, including its Lambient skin.
   }
 
@@ -1311,7 +1321,7 @@ export class GraceQueueLite {
       const nav = this.startMap.draw(ctx, W, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
-    if (this.lambyGuide && !this.startMap.active) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
+    if (this.lambyGuide && !this.startMap.active && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
@@ -1532,7 +1542,7 @@ export class GraceQueueLite {
     //   phone, the wait line, the way back, the cascade's "Everything on your board is still there…") was being
     //   wiped here before it was ever drawn; they now stay until she acts.
     //   The first-task beat itself closes on her next press on the board (handleClick).
-    if (!this.lambyGuide?.active && !this._callPending) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
+    if ((this.lambPriority || !this.lambyGuide?.active) && !this._callPending) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
     //   it fits between them and Lambient's lane
@@ -2225,6 +2235,7 @@ export class GraceQueueLite {
   // ── input ────────────────────────────────────────────────────────────────
   handleClick(x: number, y: number): void {
     const lg = this.rects.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    if (this.lambPriority) { this.lambPriority = false; this.bump(); }
     this.lambyGuide?.activity();
     if (lg && this.lambyGuide?.press(lg.id)) { this.bump(); return; }
 
@@ -2414,7 +2425,7 @@ export class GraceQueueLite {
       case 'phoneCascade': this.phone.debugBeat('cascade'); this.phoneV++; break;
       case 'phoneAfter':
         this.phone.debugBeat('after');
-        this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2]);
+        this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2], 'after-phone');
         this.phoneV++; this.bump();
         break;
       case 'floppy': case 'floppyPlay': case 'floppyFinale': case 'floppyOver':

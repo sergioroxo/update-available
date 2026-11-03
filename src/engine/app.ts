@@ -1087,6 +1087,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRestart: () => restartPiece(),
       onRecentre: () => xrComfort.calibrate(),
       onDesk: () => xrLayer?.matchTable(),
+      onDollhouse: () => xrLayer?.dollhouse(os.era, true),
       onSources: () => siteViewerBus.open('hub')
     });
     // ⚑ S291 — the era websites, in the headset: a window that comes to the visitor (frame/siteViewer/xrMount.ts)
@@ -1144,10 +1145,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         poseGrabHand(xrComfort.logicalRay(physical)); devices?.follow(grabbingEra, grabHand);
       },
       onRelease: source => { if (carryingPhone && source === grabbingSource) { era3Devices?.carryPhone(null); carryingPhone = false; grabbingSource = null; return; } if (carryingVisor && source === grabbingSource) { era3Devices?.carryVisor(null); carryingVisor = false; grabbingSource = null; return; } if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
+      onTouch: (source, physical) => {
+        if (!devices || !cluster) return null;
+        const ready = os.inDesktop && xrComfort.calibrated && !xrComfort.busy && !gameMenuBus.isOpen
+          && !siteViewerXr?.isOpen && !restoreEntrance?.blocking && !descentActive && !scriptedBusy() && !os.paused
+          && !document.getElementById('lambyos-home');
+        const contact = devices.touch(source, ready && physical ? xrComfort.logicalPoint(physical) : null, cluster.era);
+        if (contact) { noteHumanInput(); os.lambyGuide.activity(); }
+        return ready && devices.held(cluster.era) ? contact : null;
+      },
       canPoke: physical => {
         if (siteViewerXr?.touches(physical)) return true;   // S291: the site window and its tab take a fingertip too
         if (xrFrame?.touches(physical)) return true;   // S270f: the wrist tab and the open menu take a fingertip too
         if (!cluster || !os.inDesktop || xrComfort.busy || gameMenuBus.isOpen) return false;
+        if (devices?.held(cluster.era)) return false; // S306: direct touch owns the held game, never an earlier ray poke
         const target = devices?.aim(xrComfort.logicalRay(physical), cluster.era);
         return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
       },

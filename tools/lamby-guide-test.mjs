@@ -54,3 +54,42 @@ const pc=make();pc.tick(0,pi);pc.press('lg-take');assert.equal(acts.at(-1),'open
 const capped=make();for(const beat of ['checkin','story','release','tapes','online']){capped.tick(50,input(beat));capped.press('lg-ok');}
 capped.tick(0,pi);assert(!capped.active);
 console.log('Restorify personalisation: one balloon; silence and voice gates; dismissal logged; navigation only; era cap respected.');
+
+// S306: a timed surface must retain its pending action while the real guide speaks.
+const waitJs = ts.transpileModule(fs.readFileSync('src/narrative/guideWait.ts', 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 }
+}).outputText;
+const { GuideWait } = await import('data:text/javascript;base64,' + Buffer.from(waitJs).toString('base64'));
+const handoff = new GuideWait(), speaking = make();
+speaking.tick(50, input());
+let opened = [];
+handoff.run('letter', speaking.active, () => opened.push('letter'));
+handoff.tick(19, speaking.active);
+assert.deepEqual(opened, []);
+// A second opener gets its own full allowance, rather than inheriting the letter's elapsed wait.
+handoff.run('evening', speaking.active, () => opened.push('evening'));
+handoff.tick(1, speaking.active);
+assert.deepEqual(opened, ['letter']);
+handoff.tick(0, speaking.active);
+assert.deepEqual(opened, ['letter']); // delivery happens exactly once
+speaking.press('lg-x');
+handoff.tick(0, speaking.active);
+assert.deepEqual(opened, ['letter', 'evening']); // dismissal releases immediately
+// Repeated retries neither restart the cap nor duplicate a queued forced open.
+const forced = new GuideWait();
+for (let second = 0; second < 20; second++) {
+  forced.run('form', true, () => opened.push('form'));
+  forced.tick(1, true);
+}
+assert.equal(opened.filter(x => x === 'form').length, 1);
+forced.run('old-era', true, () => assert.fail('retired action delivered'));
+forced.clear();
+forced.tick(20, false);
+assert(forced.ready('new-era', false));
+const polling = new GuideWait();
+assert(!polling.ready('checkin', true));
+polling.tick(19.9, true);
+assert(!polling.ready('checkin', true));
+polling.tick(.1, true);
+assert(polling.ready('checkin', true));
+console.log('System hand-offs: per-opener 20 s cap, immediate dismissal, retained actions, retry deduplication, era/exit cancellation OK.');

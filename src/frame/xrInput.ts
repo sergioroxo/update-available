@@ -49,6 +49,9 @@ export function mountXrInput(app: pc.Application, opts: {
   onGrab?: (source: pc.XrInputSource, ray: Ray) => boolean;
   onHold?: (source: pc.XrInputSource, ray: Ray) => void;
   onRelease?: (source: pc.XrInputSource) => void;
+  /** Direct hand contact takes precedence over pinch and ray poke; null tip clears tracking; null result keeps legacy poke.
+   * A boolean result reserves room pokes for direct touch (frame pokes still work). */
+  onTouch?: (source: pc.XrInputSource, tip: pc.Vec3 | null) => boolean | null;
   canPoke?: (ray: Ray) => boolean;
   onKey?: (key: 'a' | 'b' | 'start' | 'left' | 'right' | 'up' | 'down') => void;
   /** S291 — the thumbstick, continuous (x right, y down, −1…1), once a frame per tracked source that has one; the site viewer scrolls with it */
@@ -114,6 +117,7 @@ export function mountXrInput(app: pc.Application, opts: {
     primary ??= src;
   };
   const onRemove = (src: pc.XrInputSource): void => {
+    opts.onTouch?.(src, null);
     opts.onRelease?.(src); dots.get(src)?.destroy(); dots.delete(src); hands.get(src)?.entity.destroy(); tips.get(src)?.entity.destroy(); tips.delete(src); meshes.get(src)?.destroy(); meshes.delete(src); hands.delete(src); gestures.delete(src);
     wands.get(src)?.destroy();
     wands.delete(src);
@@ -145,7 +149,7 @@ export function mountXrInput(app: pc.Application, opts: {
     opts.onSqueeze();
   };
   const release = (src: pc.XrInputSource): void => { const state = gestures.get(src); if (state?.held) opts.onRelease?.(src); if (state) state.held = false; };
-  const onEnd = (): void => { for (const src of wands.keys()) { release(src); const state = gestures.get(src); if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
+  const onEnd = (): void => { for (const src of wands.keys()) { opts.onTouch?.(src, null); release(src); const state = gestures.get(src); if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
 
   if (xr) {
     xr.input.on('add', onAdd);
@@ -285,6 +289,7 @@ export function mountXrInput(app: pc.Application, opts: {
         if (!r || (src.hand && !src.hand.tracking)) {
           e.enabled = false; if (hands.has(src)) hands.get(src)!.entity.enabled = false;
           const t = tips.get(src); if (t) t.entity.enabled = false;
+          opts.onTouch?.(src, null);
           release(src); const state = gestures.get(src); if (state) { state.pinch = false; state.near = false; }
           continue;
         }
@@ -302,19 +307,21 @@ export function mountXrInput(app: pc.Application, opts: {
         if (src.hand) {
 
           const thumb = src.hand.getJointById('thumb-tip'), index = src.hand.getJointById('index-finger-tip');
+          const contact = opts.onTouch?.(src, !opts.menuOpen() && index && src.hand.tracking ? index.getPosition() : null) ?? null;
+          if (contact && !state.held) { state.pinch = false; state.aim = null; }
           if (thumb && index && src.hand.tracking) {
             const separation = thumb.getPosition().distance(index.getPosition());
             // ⚑ S268 (his: "the pinch to press is not always working") — the press goes where the hand was AIMING when
             //   the pinch closed: closing and opening the fingers swings the hand's ray, and the release-time ray missed
-            if (!state.pinch && separation < 0.022) { state.pinch = true; state.since = now; primary = src; state.aim = { p0: r.p0.clone(), p1: r.p1.clone() }; }
+            if (!contact && !state.pinch && separation < 0.022) { state.pinch = true; state.since = now; primary = src; state.aim = { p0: r.p0.clone(), p1: r.p1.clone() }; }
             if (state.pinch && !state.held && now - state.since > 350 && !opts.menuOpen()) state.held = opts.onGrab?.(src, r) ?? false;
             if (state.pinch && separation > 0.032) { if (state.held) release(src); else choose(state.aim ?? r, src); state.pinch = false; state.aim = null; }
             // Poke is a short fingertip segment along the pointing direction. Latch until withdrawn.
             const tip = index.getPosition();
             const direction = r.p1.clone().sub(r.p0).normalize();
             const poke = { p0: tip.clone().sub(direction.clone().mulScalar(0.018)), p1: tip.clone().add(direction.mulScalar(0.025)) };
-            const near = !!landing(poke) || !!opts.canPoke?.(poke);
-            if (near && !state.near && !state.pinch && !state.held) { primary = src; choose(poke, src); }
+            const near = contact === true || (contact === null && !!landing(poke)) || !!opts.canPoke?.(poke);
+            if (!contact && near && !state.near && !state.pinch && !state.held) { primary = src; choose(poke, src); }
             state.near = near;
             const t = tips.get(src);
             if (t) {

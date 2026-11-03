@@ -52,7 +52,7 @@ export interface XrLayer {
   /** VR-04 — start listening for a fingertip on a table */
   matchTable(): void;
   /** VR-06 — the house in the hands, for one change of era */
-  dollhouse(era?: string): void;
+  dollhouse(era?: string, onDemand?: boolean): void;
   /** VR-05 — a press (physical ray) on Lamby; true if it took it */
   pressLamby(physical: Ray, toLogical: (r: Ray) => Ray): boolean;
   /** VR-01 — a hand is on the mouse: a press is a click at the desktop pointer (true if it took it) */
@@ -189,7 +189,8 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   //   morphing as it is on the dollhouse") — 13 s
   const FIT = 0.45, HOLD = 13;
   let SCALE = 0.06;
-  let doll: { root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[]; years: [number, number]; shown: number; baseYaw: number; turn: number; zoom: number; touched: number; palm: pc.Vec3 | null } | null = null;
+  type Growth = { node: pc.Entity; floor: number };
+  let doll: { growth: Growth[]; growthAge: number; owned: pc.Mesh[]; era?: string; onDemand: boolean; root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[]; years: [number, number]; shown: number; baseYaw: number; turn: number; zoom: number; touched: number; palm: pc.Vec3 | null } | null = null;
   const markMat = new pc.StandardMaterial(); markMat.useLighting = false; markMat.diffuse = new pc.Color(0, 0, 0);
   markMat.emissive = new pc.Color().fromString(FRAME.bright); markMat.update();
   // ⚑ P7-68 — D4 WHO'S HOME (his yes 31 Oct: "I like the rooms lighting one at a time"; DOLLHOUSE_IDEAS_SONNET §D4).
@@ -225,20 +226,52 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     yctx.fillText(String(y), 64, 17);
     ytex.upload();
   };
-  const buildGeo = (root: pc.Entity): { geo: pc.Entity; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3 } => {
+  const dollMat = new pc.StandardMaterial();
+  dollMat.useLighting = false;
+  dollMat.emissive = new pc.Color().fromString(ERA1.white); dollMat.emissiveVertexColor = true; dollMat.update();
+  const buildGeo = (root: pc.Entity, era?: string, onDemand = false): { geo: pc.Entity; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; growth: Growth[]; owned: pc.Mesh[] } => {
     // a dollhouse has no roof: the ceilings (thin, high slabs) are left out so the eye falls into the rooms
     const list = batches().filter((b) => b.meshInstance && !(b._aabb.center.y > 2.2 && b._aabb.halfExtents.y < 0.2));
     const box = new pc.BoundingBox(); list.forEach((b, i) => i === 0 ? box.copy(b._aabb) : box.add(b._aabb));
     SCALE = Math.min(0.06, FIT / Math.max(0.1, 2 * box.halfExtents.x, 2 * box.halfExtents.z));
     const geo = new pc.Entity('xr-dollhouse-geo');
-    const mis = list.map((b) => new pc.MeshInstance(b.meshInstance!.mesh, b.meshInstance!.material, geo));
+    // S307: merged material batches can cross room boundaries. In that case grow the
+    // whole copied house; splitting triangles would add draws and duplicate batch ownership.
+    const room = (x: number): number => x < -2.13 ? 1 : x > 2.13 ? 2 : 0;
+    const spans = list.some((b) => room(b._aabb.center.x - b._aabb.halfExtents.x) !== room(b._aabb.center.x + b._aabb.halfExtents.x));
+    const target = era === 'e3' ? 1 : era === 'e4' ? 2 : -1;
+    const growth: Growth[] = [];
+    const floor = Math.min(...list.map((b) => b._aabb.center.y - b._aabb.halfExtents.y));
+    // The miniature shares geometry shape, not one draw per source material. Bake the
+    // source palette into vertex colours, with separate growing / held groups only.
+    const owned: pc.Mesh[] = [];
+    const mis: pc.MeshInstance[] = [];
+    for (const growing of [false, true]) {
+      const group = list.filter((b) => (!onDemand && target >= 0 && (spans || room(b._aabb.center.x) === target)) === growing);
+      if (!group.length) continue;
+      const positions: number[] = [], normals: number[] = [], colours: number[] = [], indices: number[] = [];
+      for (const b of group) {
+        const source = b.meshInstance!, p: number[] = [], n: number[] = [], idx: number[] = [];
+        source.mesh.getPositions(p); source.mesh.getNormals(n); source.mesh.getIndices(idx);
+        const offset = positions.length / 3;
+        for (const v of p) positions.push(v); for (const v of n) normals.push(v);
+        const mat = source.material as pc.StandardMaterial;
+        for (let i = 0; i < p.length / 3; i++) colours.push(mat.diffuse.r, mat.diffuse.g, mat.diffuse.b, 1);
+        for (const i of idx) indices.push(i + offset);
+      }
+      const mesh = new pc.Mesh(app.graphicsDevice);
+      mesh.setPositions(positions); mesh.setNormals(normals); mesh.setColors(colours); mesh.setIndices(indices); mesh.update(); owned.push(mesh);
+      const node = new pc.Entity('xr-dollhouse-batch'); geo.addChild(node);
+      if (growing) growth.push({ node, floor });
+      mis.push(new pc.MeshInstance(mesh, dollMat, node));
+    }
     geo.addComponent('render', { meshInstances: mis, layers: [deps.frame.layerId] });
     geo.setLocalScale(SCALE, SCALE, SCALE);
     geo.setLocalPosition(-box.center.x * SCALE, -box.center.y * SCALE, -box.center.z * SCALE);
     root.addChild(geo);
-    return { geo, meshes: list.map((b) => b.meshInstance!.mesh), centre: box.center.clone(), half: box.halfExtents.clone() };
+    return { geo, meshes: list.map((b) => b.meshInstance!.mesh), centre: box.center.clone(), half: box.halfExtents.clone(), growth, owned };
   };
-  const endDoll = (): void => { if (doll) { doll.root.destroy(); doll = null; } yearPlate.enabled = false; };
+  const endDoll = (): void => { if (doll) { doll.root.destroy(); doll.owned.forEach((m) => m.destroy()); doll = null; } yearPlate.enabled = false; };
   const tickDoll = (dt: number): void => {
     if (!doll) return;
     if (!live()) {
@@ -247,8 +280,8 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
       doll.root.setPosition(at);
       doll.baseYaw = head.getEulerAngles().y;
     }
-    doll.t += dt;
-    if (doll.t > HOLD) { endDoll(); return; }
+    doll.t += dt; doll.growthAge += dt;
+    if (doll.t > HOLD && (doll.growth.length === 0 || doll.growthAge > 8.5)) { endDoll(); return; }
     // ⚑ S290 — THE TURNTABLE (his, 1 Nov: "The doll house slide lets you zoom in and turn it around like a turn table and
     //   that allows you to move to see where all the stuff in miniature version"): a controller's stick turns it (left /
     //   right) and brings it closer (up / down); a hand near the house turns it by moving sideways. While it is being
@@ -267,8 +300,15 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     doll.touched += dt;
     if (doll.touched < 2.5) doll.t = Math.min(doll.t, HOLD - 0.5);
     doll.root.setEulerAngles(live() ? 0 : 25, doll.baseYaw + doll.turn, 0);
-    const k = Math.min(1, doll.t / 0.4, (HOLD - doll.t) / 0.4);
+    const remaining = doll.growth.length ? Math.max(HOLD - doll.t, 8.5 - doll.growthAge) : HOLD - doll.t;
+    const k = Math.max(0, Math.min(1, doll.t / 0.4, remaining / 0.4));
     doll.root.setLocalScale(k * doll.zoom, k * doll.zoom, k * doll.zoom);
+    // Flatten at the floor, then raise over eight seconds. Shared meshes/materials stay untouched.
+    const rise = ease(doll.growthAge / 8);
+    for (const g of doll.growth) {
+      g.node.setLocalScale(1, Math.max(0.001, rise), 1);
+      g.node.setLocalPosition(0, g.floor * (1 - Math.max(0.001, rise)), 0);
+    }
     // the seat, wherever it is now: it jumps to the new room when the room re-forms under the dissolve
     const seat = deps.comfort.authored.getLocalPosition();
     const s = 1 + Math.abs(Math.sin(doll.t * 6)) * 0.6;
@@ -301,10 +341,12 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
   // the batches can be rebuilt mid-change (the next era's room batches): never draw a mesh the batcher has let go
   app.on('prerender', () => {
     if (!doll) return;
-    const now = new Set(batches().map((b) => b.meshInstance?.mesh));
-    if (doll.meshes.some((m) => !now.has(m))) {
-      doll.geo.destroy();
-      const g = buildGeo(doll.root); doll.geo = g.geo; doll.meshes = g.meshes; doll.centre = g.centre; doll.half = g.half;
+    const now = new Set(batches().filter((b) => b.meshInstance && !(b._aabb.center.y > 2.2 && b._aabb.halfExtents.y < 0.2)).map((b) => b.meshInstance!.mesh));
+    if (now.size !== doll.meshes.length || doll.meshes.some((m) => !now.has(m))) {
+      doll.geo.destroy(); doll.owned.forEach((m) => m.destroy());
+      const g = buildGeo(doll.root, doll.era, doll.onDemand);
+      doll.owned = g.owned; doll.growth = g.growth; doll.growthAge = 0;
+      doll.geo = g.geo; doll.meshes = g.meshes; doll.centre = g.centre; doll.half = g.half;
     }
   });
 
@@ -366,7 +408,7 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
 
   return {
     matchTable() { if (!live()) return; table = { t: 0, hist: [] }; deps.frame.notice(deps.strings.ask, 24); },
-    dollhouse(era) {
+    dollhouse(era, onDemand = false) {
       if (!batches().length) return;
       endDoll();
       const root = new pc.Entity('xr-dollhouse');
@@ -375,18 +417,18 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
       root.setPosition(head.getPosition().clone().add(f.mulScalar(0.45)).add(new pc.Vec3(0, -0.38, 0)));
       root.setEulerAngles(0, deps.comfort.stageYaw(), 0);   // the house turned as the room around the visitor is
       app.root.addChild(root);
-      const g = buildGeo(root);
+      const g = buildGeo(root, era, onDemand);
       const mark = new pc.Entity('xr-dollhouse-seat');
       mark.addComponent('render', { type: 'box', material: markMat, layers: [deps.frame.layerId] });
       root.addChild(mark);
-      const glows = glowPlan(era).map(({ room, role }) => {
+      const glows = (onDemand ? glowPlan(era).map((g) => ({ ...g, role: 'stay' as GlowRole })) : glowPlan(era)).map(({ room, role }) => {
         const e = new pc.Entity('xr-dollhouse-lamp');
         e.addComponent('render', { type: 'box', material: glowMat, layers: [deps.frame.layerId] });
         e.enabled = false; root.addChild(e);
         return { e, room, role };
       });
       root.setLocalScale(0, 0, 0);
-      doll = { root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre, half: g.half, glows, years: YEARS[era ?? ''] ?? [0, 0], shown: 0, baseYaw: deps.comfort.stageYaw(), turn: 0, zoom: 1, touched: 99, palm: null };
+      doll = { owned: g.owned, growth: g.growth, growthAge: 0, era, onDemand, root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre, half: g.half, glows, years: onDemand ? [0, 0] : YEARS[era ?? ''] ?? [0, 0], shown: 0, baseYaw: deps.comfort.stageYaw(), turn: 0, zoom: 1, touched: 99, palm: null };
     },
     mouseClick() { if (!grip) return false; deps.mouse.click(cursor.x, cursor.y); return true; },
     get mouseEngaged() { return !!grip; },
