@@ -264,7 +264,11 @@ mechanism of the system steering a person toward detransition (apparatus and AI 
 detransitioners, never satirising the gender-exploratory clinical debate — both captions, unresolved).*
 
 **Candidate E3-B · The mirrored message (after Lambient's question, before the work).** E3 is already a
-three-screen room (workstation, tablet, phone: `src/room/era3Devices.ts`, "every screen you own").
+multi-device room: the workstation (desk) and the phone (nightstand), "every screen you own".
+⚑ Sérgio says the TABLET is gone from Era 3 in his current worktree, but `origin/reinterp` (7ccf737)
+and the header of `src/room/era3Devices.ts` still describe it: **verify against the current worktree
+and do not assume a tablet exists or does not; if the tablet's removal is not pushed, say so in the
+report.**
 After the `consent` beat and before `work`, a message notification arrives on the workstation as a
 mirrored copy of her phone (period-correct device continuity; generic wording, no real brand), and the
 phone on the nightstand lights at the same moment. The player may open it on the desktop or turn to the
