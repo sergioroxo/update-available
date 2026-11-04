@@ -1,0 +1,17 @@
+STATUS: live
+
+# Audio gaps — Step A report, 2026-11-03
+
+Branch: `codex/audio-gaps`, created after `git fetch` from `origin/reinterp` at `7ccf737dc8abae341cd9583b594648a62d4ae9f9`. Step A is complete; Step B is stopped for review under the user's explicit instruction.
+
+Changed only `docs/reinterp/AUDIO_GAPS_2026-11-03.md`, this report, and one BUILD_LOG entry (S307: highest existing session was S306, although the previous final line was a later-appended S293). No runtime, narrative, audio, registry, manifest, attribution or README edits. Pre-existing README changes and unrelated untracked files were left alone and are excluded from the commit. No push.
+
+The inventory enumerates 126 shipped MP3s and 126 registry entries with exact set equality; none is missing or unregistered. It separately records 132 archive/source files (258 physical audio files across both trees; 250 unique on-disk basenames), nine provenance/example/label names with no exact local file, live synthesized sound names, and the welcome film's embedded soundtrack. There are 259 distinct filename/label entries, each with era, beat/caller, contextual register, kind, status, production route and evidence. Archive masters are not a request to register more files or delete them.
+
+Checks: recursively counted both audio trees; parsed data values, keys and metadata; scanned TypeScript string literals with the installed TypeScript AST and comments separately; compared the real REGISTRY keys to shipping filenames; cross-checked scanned names against the report; manually checked source titles with spaces, attachment aliases, `requiresAudio`, internal hiss playback, live Web Audio, TTS/degradation boundaries and production provenance. `npx tsc --noEmit -p .` passed. `npm test` passed (including its narrower data-audio result, 63/63). `npm run dev -- --host 127.0.0.1 --port 3137` started Vite successfully. No audio-generation or TTS tool was run; `tools/volume-check.mjs` was read but not executed.
+
+Review findings: Caleb's instrumental and E4's two stream tracks are delivered. E4's 47 legacy L clips are delivered too, but the ordinary wear/session path bypasses the old conversation/offers; this is not 47 missing files. Eighteen registered names have no non-maintenance literal playback reference, including the broken E2 jingle, retired intro and staging sounds. The TTS manifest still describes an unrendered L batch and points its Tape A intro entry at deleted segment ids. The inventory ranks felt/respite listening first, then the broken-jingle/era-turn and E4 speech decisions, then UI/metadata. It does not prescribe reintroducing removed material.
+
+Sérgio's decisions: whether the broken E2 jingle still belongs in the current collapse; whether the current E4 browser agent should be voiced; which retained assets/production metadata should eventually be archived or corrected. No human voice may be synthesized by the apparatus pipeline. Current TransJesus is explicitly wordless, and E3 has no respite. No new display text or ethics judgment was introduced.
+
+Still needs actual listening and a real headset: attachment play/stop and accountability boundary; E4 music transition, ducking and persistence through failure; ritual continuity; balance, localization, caption correspondence, mute/pause/resume and comfort on Quest/Vision Pro. Static file presence and passing tests establish none of those acoustic qualities. No headset, phone, codec decode or timing comparison is claimed.
