@@ -2,6 +2,8 @@ STATUS: live
 
 # Handoff to the orchestrator — the "own-thing" session (3–4 Nov 2026)
 
+*Bundle contents: this file, `install.sh`, and `files/` (11 documents). Links below are relative to this folder.*
+
 *From: a Claude Code cloud session with Sérgio (branch `claude/quirky-mccarthy-ceuzox`, cut from `main`,
 docs only). To: the Claude orchestrating `reinterp`. Read this to know what was asked, what was learned,
 what was decided, what exists, and what is still owed. Nothing here changed `src/`, `data/` or any
@@ -9,16 +11,23 @@ player-facing text.*
 
 ## 0 · Where things live (important)
 
-- **This branch** (`origin/claude/quirky-mccarthy-ceuzox`) holds the documents below. It is NOT
-  `reinterp`; the files should be copied onto `reinterp` by Sérgio or by you. They are all new files, so
-  no conflict is expected.
+- **Everything is in this folder**, `handoff/own_thing_2026-11-03/`, on branch
+  `origin/claude/quirky-mccarthy-ceuzox` (a convenience zip, `../own_thing_2026-11-03.zip`, holds the same).
+  `files/` mirrors the `reinterp` repo layout (`files/docs/reinterp/…`, `files/docs/research/…`).
+- **Install into the reinterp worktree** (never overwrites; reports files that already exist):
+  `bash install.sh /Users/sergiogalvaoroxo/update-available-reinterp`, then `git status --short` and commit.
+  Sérgio's working copy is **`update-available-reinterp`**, not `update-available` (the original folder is
+  the read-only reference, per `docs/reinterp/00_START_HERE.md`).
 - **What I read of the code** was `origin/reinterp` at `7ccf737` (3 Nov 2026), via `git show`. I did not
   run the build. Early in the session I wrongly read `main` (an old Era 1-only slice) — see §6.
 - **Codex's work branches are on Sérgio's machine and unpushed** (`codex/own-thing-audit`,
   `codex/register-timeline`, `codex/audio-gaps`, `codex/e3-e4-openers`; the period-research doc was run
-  separately). Only their documents were uploaded to me and copied here. The following are **not** in this
-  repo: `tools/register-timeline.mjs` and `tools/register-timeline.test.mjs`, the `BUILD_LOG.md` lines
-  (S307 audit/audio, S308 openers) and the README edit Codex reported. Do not assume they exist.
+  separately). Only their documents were uploaded to me and are in `files/`. The following are **not** in
+  this bundle: `tools/register-timeline.mjs` and `tools/register-timeline.test.mjs`, the `BUILD_LOG.md`
+  lines (S307 audit/audio, S308 openers) and the README edit Codex reported. They exist only on those
+  Codex branches.
+- **Not read by anyone end to end:** Brief 8 (written by an Opus subagent; verified only that it exists
+  and ends with "E4 deferred").
 
 ## 1 · What Sérgio asked and why
 
@@ -53,25 +62,25 @@ to build. He liked three ideas, which became the spine of everything:
 ## 3 · What exists now (all links relative to this folder)
 
 **Briefs for Codex (written by me / an Opus subagent):**
-- [CODEX_BRIEFS_OWN_THING_2026-11-03.md](CODEX_BRIEFS_OWN_THING_2026-11-03.md) — Briefs 1–7 + shared rules +
+- [CODEX_BRIEFS_OWN_THING_2026-11-03.md](files/docs/reinterp/CODEX_BRIEFS_OWN_THING_2026-11-03.md) — Briefs 1–7 + shared rules +
   guards: 1 audit, 2 register timeline, 3 spec, 4 period research, 5 build template, 6 sound (inventory
   first), 7 E3/E4 openers (revised after Sérgio's notes).
-- [CODEX_BRIEFS_BUILD_E3_E4_2026-11-03.md](CODEX_BRIEFS_BUILD_E3_E4_2026-11-03.md) — **Brief 8**, the E3-B
+- [CODEX_BRIEFS_BUILD_E3_E4_2026-11-03.md](files/docs/reinterp/CODEX_BRIEFS_BUILD_E3_E4_2026-11-03.md) — **Brief 8**, the E3-B
   build (mirrored message at the sign-in screen, three gated increments: muted group → unsent reply to Mam →
   camera roll). Written by an Opus 5.5 subagent at medium effort; **I verified only that it exists, is
   pushed, and ends with "E4 deferred"** — nobody has read it end to end. Its text/stubs are `⚑ TEXT PENDING`.
 
 **Codex results (uploaded by Sérgio, copied here verbatim):**
-- Own-thing audit: [OWN_THING_AUDIT_2026-11-03.md](OWN_THING_AUDIT_2026-11-03.md),
-  [report](CODEX_OWN_THING_AUDIT_REPORT_2026-11-03.md)
-- Register timeline: [REGISTER_TIMELINE_2026-11-03.md](REGISTER_TIMELINE_2026-11-03.md),
-  [report](CODEX_REGISTER_TIMELINE_REPORT_2026-11-03.md)
+- Own-thing audit: [OWN_THING_AUDIT_2026-11-03.md](files/docs/reinterp/OWN_THING_AUDIT_2026-11-03.md),
+  [report](files/docs/reinterp/CODEX_OWN_THING_AUDIT_REPORT_2026-11-03.md)
+- Register timeline: [REGISTER_TIMELINE_2026-11-03.md](files/docs/reinterp/REGISTER_TIMELINE_2026-11-03.md),
+  [report](files/docs/reinterp/CODEX_REGISTER_TIMELINE_REPORT_2026-11-03.md)
 - Period practices bank (research, every row `[VERIFY SOURCE]`):
-  [../research/OWN_THING_PERIOD_PRACTICES_2026-11-03.md](../research/OWN_THING_PERIOD_PRACTICES_2026-11-03.md)
-- Audio inventory: [AUDIO_GAPS_2026-11-03.md](AUDIO_GAPS_2026-11-03.md),
-  [report](CODEX_AUDIO_GAPS_REPORT_2026-11-03.md)
-- E3/E4 openers options doc: [E3_E4_OPENERS_2026-11-03.md](E3_E4_OPENERS_2026-11-03.md),
-  [report](CODEX_E3_E4_OPENERS_REPORT_2026-11-03.md)
+  [OWN_THING_PERIOD_PRACTICES_2026-11-03.md](files/docs/research/OWN_THING_PERIOD_PRACTICES_2026-11-03.md)
+- Audio inventory: [AUDIO_GAPS_2026-11-03.md](files/docs/reinterp/AUDIO_GAPS_2026-11-03.md),
+  [report](files/docs/reinterp/CODEX_AUDIO_GAPS_REPORT_2026-11-03.md)
+- E3/E4 openers options doc: [E3_E4_OPENERS_2026-11-03.md](files/docs/reinterp/E3_E4_OPENERS_2026-11-03.md),
+  [report](files/docs/reinterp/CODEX_E3_E4_OPENERS_REPORT_2026-11-03.md)
 
 ## 4 · Findings that matter
 
@@ -112,7 +121,7 @@ does not exist). Autocomplete-diversion claims for E4 are fictional extrapolatio
 ## 5 · What is planned / what is owed
 
 **Next, in order (from this session):**
-1. Sérgio (or you) puts these docs on `reinterp` and pushes the Codex branches' content he wants kept.
+1. Run `install.sh`, commit on `reinterp`; decide which Codex branches' content to keep (the timeline tool lives only there).
 2. Sérgio reads **Brief 8** and confirms: guard 2; the sign-in-screen placement; whether the Lambient mark
    already drawn on that screen reads as Lambient "watching" the notification (the subagent flagged this and
    told Codex not to remove the mark); clear-on-navigation policy; and supplies/approves the one message the
