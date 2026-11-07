@@ -343,15 +343,6 @@
      "where": "the workstation on the desk"
     },
     {
-     "id": "personal-message",
-     "label": "Orla's message",
-     "hint": "An ordinary message on her phone.",
-     "done": "personalMessageSeen",
-     "optional": true,
-     "quiet": true,
-     "where": "the phone"
-    },
-    {
      "id": "signin",
      "label": "Sign in",
      "done": "signedIn",
@@ -398,7 +389,7 @@
      "id": "vera-kit",
      "label": "The campaign kit",
      "done": "veraKitClosed",
-     "hint": "Put the phone down when ready. Approve the kit or return to Today. Take my story down is optional.",
+     "hint": "Approve the kit or return to Today. Take my story down is optional.",
      "where": "the workstation"
     },
     {
@@ -406,7 +397,7 @@
      "label": "Your record",
      "done": "recordViewed",
      "optional": true,
-     "hint": "Your record is on the platform — the chip at the bottom of the screen.",
+     "hint": "Your record is in the Start menu, under My account.",
      "where": "the workstation"
     },
     {
@@ -429,29 +420,29 @@
      "id": "phone",
      "label": "The phone",
      "done": "phoneAnswered",
-     "hint": "Pick up the phone — it has a message. Unlock it and open the thread.",
-     "where": "the phone on its stand, left of the monitor"
+     "hint": "Her phone is mirrored beside the platform. The news arrives there.",
+     "where": "the mirrored phone beside the platform"
     },
     {
      "id": "vote",
      "label": "The vote",
      "done": "voted",
-     "hint": "The group's link on the phone — open it, and the second one that follows.",
-     "where": "the phone"
+     "hint": "The vote arrives in the mirror while the campaign kit stays open.",
+     "where": "the mirrored phone beside the platform"
     },
     {
      "id": "cascade",
      "label": "The group",
      "done": "cascadeSeen",
      "quiet": true,
-     "hint": "Open the link on the phone. The group answers.",
-     "where": "the phone on its stand"
+     "hint": "The group’s messages arrive in the mirror.",
+     "where": "the mirrored phone beside the platform"
     },
     {
      "id": "update",
      "label": "The update",
      "done": "updatedTo4",
-     "hint": "Put the phone down. The system update follows the group’s cascade.",
+     "hint": "The system update follows the group’s cascade.",
      "where": "the workstation"
     }
    ]

@@ -990,7 +990,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.guideIdleScale = guideIdleScale;
     const queueGuide = era3Devices?.debugQueue();
     let guideAtLaptop = false;
-    const faceGuideSurface = (name: 'monitor' | 'laptop'): void => {
+    const faceGuideSurface = (name: 'monitor' | 'laptop' | 'workstation'): void => {
       const surface = app.root.findByName(`era3-device-${name}`) as pc.Entity | null;
       if (!surface || scriptedBusy()) return;
       const p = surface.getPosition(), dx = p.x - camPos.x, dy = p.y - camPos.y, dz = p.z - camPos.z;
@@ -999,7 +999,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.guideExternal = () => {
       if (queueGuide) {
         queueGuide.lambyGuide = os.lambyGuide;
-        queueGuide.callPending = os.era === 'e3' && ['phone', 'vote', 'cascade'].includes(mapState(os).current?.beat.id ?? '');
+        queueGuide.callPending = os.era === 'e3' && !queueGuide.mirrorAvailable && ['phone', 'vote', 'cascade'].includes(mapState(os).current?.beat.id ?? '');
       }
       if (os.e4) {
         const b = os.e4.browser;
@@ -1031,6 +1031,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       guideAtLaptop = false;
       return { silent: false, voice: false };
     };
+    os.onGuideFocus = id => { if (os.era === 'e3' && queueGuide?.focusGuideTarget(id)) faceGuideSurface('workstation'); };
     os.onGuidePress = (id) => {
       if (os.era === 'e3') queueGuide?.pressGuideTarget(id);
       if (os.era === 'e4') { const at = os.e4?.browser.pressGuideTarget(id); faceGuideSurface(at ?? 'monitor'); }
@@ -1070,7 +1071,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (!cur) return null;
         const id = cur.beat.id;
         if (cur.era === 'e3' && era3Devices?.phoneInHand) phoneCallsPicked.add(id);
-        if (cur.era === 'e3' && (id === 'phone' || id === 'vote' || id === 'cascade') && era3Devices && !era3Devices.phoneInHand && !phoneCallsPicked.has(id)) {
+        if (cur.era === 'e3' && !queueGuide?.mirrorAvailable && (id === 'phone' || id === 'vote' || id === 'cascade') && era3Devices && !era3Devices.phoneInHand && !phoneCallsPicked.has(id)) {
           return {
             id: 'phone', text: id === 'phone' ? callStrings.phone : callStrings.phoneLink,
             act: () => {

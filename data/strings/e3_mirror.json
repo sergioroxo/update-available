@@ -1,0 +1,59 @@
+{
+  "title": "Handset Window",
+  "reply": "Reply on your phone",
+  "disconnected": "This device is no longer supported. Phone disconnected.",
+  "account": "My account · activity",
+  "focus": [
+    "Your phone is connected. Focus mode can hold notifications while you work."
+  ],
+  "on": "Turn on",
+  "later": "Not now",
+  "events": [
+    {
+      "id": "arrival",
+      "time": "18:04",
+      "from": "Orla",
+      "text": "quiz at the wick tonight. dee's keeping the corner table. no pressure x"
+    },
+    {
+      "id": "stamp",
+      "time": "18:04",
+      "from": "Orla",
+      "text": "dee says you're one stamp off a free one x"
+    },
+    {
+      "id": "job",
+      "time": "18:31",
+      "from": "Maiden-to-be",
+      "text": "Tuesday check-in: one place you were tempted this week, and one place you walked away. Reply in the thread."
+    },
+    {
+      "id": "decision",
+      "time": "19:40",
+      "from": "Mam",
+      "text": "Pastor's wife was asking for you. Their women's group meets Tuesdays, just tea. No pressure love x"
+    },
+    {
+      "id": "send",
+      "time": "20:12",
+      "from": "Mentor",
+      "text": "I know Tuesday is that bar. You don't owe anyone an explanation for staying home x"
+    },
+    {
+      "id": "record-close",
+      "time": "21:30",
+      "from": "Mentor",
+      "text": "You and Orla text a lot. Remember the signs we talked about. Not a rule. Just love."
+    },
+    {
+      "id": "after",
+      "time": "22:51",
+      "from": "Orla",
+      "text": "missed you tonight x",
+      "photo": true
+    }
+  ],
+  "previous": "Previous",
+  "next": "Next",
+  "register": "felt"
+}

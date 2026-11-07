@@ -1,3 +1,4 @@
+import mirrorCopy from '../../../data/strings/e3_mirror.json';
 /** Shared menu layout; each machine supplies its palette, screen and published hits. */
 import { TapePlayerApp, tapePlayerBus } from './tapePlayer';
 import decisions from '../../../data/strings/cx3b.json';
@@ -133,6 +134,7 @@ export class StartMenuMap {
         if ((rows.length + expanded.length + tailCount) * row + 16 > H - 30) item(S.programsMore, 'sm-programs');
         else rows.push(...expanded);
       }
+      if (era === 'e3') item(mirrorCopy.account, 'account-activity', silent);
       if (!legacy) item(S.programs, 'sm-programs', silent);
       if (model.room.length) { head(S.room); model.room.forEach(b => item(b.label, '')); }
       head(S.more);

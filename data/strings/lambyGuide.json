@@ -180,7 +180,7 @@
         "target": [
           "signin"
         ],
-        "act": "press:signin"
+        "act": "focus:signin"
       },
       "consent": {
         "tip": "Lambient has a quick question. Answer it and we're off.",
@@ -189,7 +189,8 @@
         "target": [
           "consent-allow",
           "consent-decline"
-        ]
+        ],
+        "act": "focus:consent-allow"
       },
       "work": {
         "tip": "Pick a card on the board and work it through to the end.",
@@ -200,14 +201,19 @@
           "apply",
           "skip",
           "board-back"
-        ]
+        ],
+        "act": "focus:task-0"
       },
       "phone": {
-        "tip": "Your phone has a message. Pick it up from its stand.",
-        "here": "It's on its stand, to your left.",
-        "again": "Shall I take you to the phone?",
-        "target": [],
-        "act": "move:phone"
+        "tip": "The campaign kit is on the platform. Either answer continues.",
+        "here": "The controls are below the kit.",
+        "again": "Approve the kit or return to Today.",
+        "target": [
+          "vera-kit-approve",
+          "vera-kit-close",
+          "board-back"
+        ],
+        "act": "focus:vera-kit-close"
       },
       "vote": {
         "tip": "The group sent a link. Open it when you're ready.",
@@ -219,15 +225,12 @@
         ]
       },
       "cascade": {
-        "tip": "The group is answering. Read what they say — it is on the phone.",
-        "here": "The thread is on the phone.",
-        "again": "The group is still answering.",
+        "tip": "The day can stay open while the messages arrive.",
+        "here": "Today is still on the platform.",
+        "again": "The next update will arrive here.",
         "target": [
-          "group",
-          "inbox",
-          "notification"
-        ],
-        "_docS288": "⚑ S288 (headset B: \"Lambient doesn't work … completely non-functional here\") — Lambient had no line for the cascade or the update, so a request there said nothing."
+          "board-back"
+        ]
       },
       "update": {
         "tip": "Put the phone down. The system has an update waiting.",
@@ -243,20 +246,24 @@
           "vera-send",
           "vera-send-close",
           "board-back"
-        ]
+        ],
+        "act": "focus:vera-send"
       },
       "vera-install": {
-        "tip": "Kindredraft has your own story ready. Install opens it.",
+        "tip": "Return to Today, then install Kindredraft to open your 2014 story.",
         "target": [
+          "vera-send-close",
           "update-accept"
-        ]
+        ],
+        "act": "focus:update-accept"
       },
       "vera-kit": {
-        "tip": "The campaign kit is on the workstation. Put the phone down when ready.",
+        "tip": "The campaign kit is on the platform. Either answer continues.",
         "target": [
           "vera-kit-approve",
           "vera-kit-close"
-        ]
+        ],
+        "act": "focus:vera-kit-close"
       }
     },
     "e4": {

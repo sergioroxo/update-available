@@ -86,7 +86,8 @@ const PORT = Number(flag('port', 3000));
  * run stamps itself, in the log, in the JSON and at the top of the report, and
  * writes to a different filename so it can never be mistaken for the real thing.
  */
-const JUMP = flag('jump', '');
+const ERA3_ALIAS = flag('jump', '') === 'e3';
+const JUMP = ERA3_ALIAS ? '' : flag('jump', '');
 /**
  * ⚑ `--min-tabs N` — THE MINIMUM PATH, defined narrowly enough to mean something
  * (2026-09-11). Sérgio has said three times that Era 4 takes too long, and every
@@ -146,7 +147,7 @@ const ALLOW_BROKEN_JUMP = process.argv.includes('--allow-broken-jump');
  * Close. It is NOT a reachability proof (the ledger has none of the earlier eras' choices in it), so it stamps
  * itself and writes to out/walks/, never over the real report. The full walk from the front door stays the gate.
  */
-const FROM_ERA = Number(flag('from-era', '0')) || 0;
+const FROM_ERA = Number(flag('from-era', ERA3_ALIAS ? '3' : '0')) || 0;
 /** ⚑ `--one-era` (S223): stop, successfully, the moment the walk arrives in the NEXT era (or at the Close, from
  *  Era 4). With `--from-era` that makes each of tools/walk-eras.mjs's four walks one era long. */
 const ONE_ERA = process.argv.includes('--one-era');
@@ -160,7 +161,7 @@ const CUT = flag('cut', '') === 'full' ? 'full' : 'speedrun';
 const GUIDED_WALK = CUT === 'speedrun' && !process.argv.includes('--explore');
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
-const OUT_DIR = flag('out') ? join(ROOT, flag('out')) : join(ROOT, SETUP || process.argv.includes('--from-era') || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp');
+const OUT_DIR = flag('out') ? join(ROOT, flag('out')) : join(ROOT, SETUP || FROM_ERA > 1 || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp');
 // S223: inside the project (a cloud machine has no /private/tmp of ours), one folder per era so side-by-side walks do not overwrite
 const SHOT_DIR = flag('shots', join(ROOT, 'out/walk-shots' + (FROM_ERA > 1 ? '-e' + FROM_ERA : '') + (HOME_DOOR ? '-entrance-home' : '')));
 
@@ -407,6 +408,25 @@ async function main() {
       }
     };
   }
+  if (process.argv.includes('--lambient-log')) await page.evaluateOnNewDocument(() => {
+    window.__lambientAudit = [];
+    const seen = new Set();
+    const log = (voice, screen, lines) => {
+      const key = `${voice}:${screen}:${JSON.stringify(lines)}`;
+      if (seen.has(key)) return; seen.add(key);
+      window.__lambientAudit.push({ seconds: +(performance.now() / 1000).toFixed(2), voice, screen, lines });
+    };
+    setInterval(() => {
+      const q = window.__graceQueue?.();
+      if (!q || q.__voiceAudit) return; q.__voiceAudit = true;
+      const lane = q.drawLambientLane.bind(q), draw = q.draw.bind(q);
+      q.drawLambientLane = (ctx, c, lines) => { if (!q.personalQuiet) log('lane', q.veraPage || q.mode, lines); return lane(ctx, c, lines); };
+      q.draw = (...args) => { const result = draw(...args), g = q.lambyGuide;
+        if (g?.active && !q.guideSilent && !q.guideVoice && !q.startMap.active) log('guide', q.veraPage || q.mode, g.view.text);
+        return result;
+      };
+    }, 100);
+  });
   page.on('pageerror', (e) => noise.push(`PAGEERROR ${String(e).slice(0, 180)}`));
   // S209 — a page that goes away under the walk says why: a crash or a navigation (the 2026-10-02 run lost its frame at the Close)
   page.on('error', (e) => process.stdout.write(`PAGE CRASH ${String(e).slice(0, 200)}\n`));
@@ -886,7 +906,7 @@ async function main() {
     // glass publishes her two chips (stream-dance / stream-stay); either is the way on.
     if (st?.era === 'e4' && st?.bstate?.done && t.surface === 'e4.browser') return false;
     if (/^start-menu$|^sm-|^icon-(?:provotype|lambyrig|rootcause|forum|your-file|found-file|era-1)$|^irc-close$|^record-chip$/.test(id)) return false;
-    if (/^min-|^taskbar-/.test(id)) return false;
+    if (/^min-|^taskbar-|^mirror-(?:enlarge|min|restore)$|^account-activity$/.test(id)) return false;
     if (has('channel-joined') && /^web-/.test(id) && id !== 'web-close') return false;
     if (id === 'cancel' && t.surface === 'kit' && !has('went-online')) return false;
     if (/^dm-(?:up|down)$/.test(id) && (seen?.get(id) || 0) >= 1) return false;
@@ -894,9 +914,15 @@ async function main() {
     if (id === 'icon-restorify' && led?.checkins?.some(c => !c.id.startsWith('e3'))) return false;
     if (id === 'icon-story' && has('testimony-online')) return false;
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
+    // The phone is private optional reading now. The minimum visitor never needs to press it.
+    if (st?.era === 'e3') {
+      if (t.surface === 'phone' || id.startsWith('mirror:') || /^win-min$|^task-restore$/.test(id)) return false;
+      const renata = [1,3,7].every(cardId => led?.graceQueue?.some(c => c.cardId === cardId));
+      if (/^task-\d+$/.test(id) && (!renata ? id !== 'task-0' : !!led?.era3Jobs?.some(j => j.id === 'pipeline'))) return false;
+    }
     if (st?.era === 'e3' && id === 'vera-as-published') return false;
     if (st?.era === 'e3' && id === 'next-story' && !led?.era3Jobs?.some(j => j.id === 'pipeline')) return false;
-    if (st?.era === 'e3' && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
+    if (st?.era === 'e3' && led?.era3Jobs?.some(j => j.id === 'pipeline') && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
     return true;
   };
   const pick = (targets, sig, seen, dismissFirst) => {
@@ -1626,6 +1652,7 @@ async function main() {
   }
 
   const final = await probe();
+  if (process.argv.includes('--lambient-log')) writeFileSync(join(OUT_DIR, 'LAMBIENT_LOG.json'), JSON.stringify(await page.evaluate(() => window.__lambientAudit ?? []), null, 2));
   note('end', { what: 'walk finished', era: final.era, phase: final.phase, spine: final.spine });
   await page.screenshot({ path: join(SHOT_DIR, 'walk_end.png') });
   // `--your-file <dir>`: at the Close, open Esc → Your file and photograph every scroll of it (article evidence, F-EXH-2)

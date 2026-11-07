@@ -76,7 +76,7 @@ const BELONGINGS_IDS = new Set(
  * excluded from both groups. Same remedy, same reason, and it costs at most one
  * draw call. ROLLBACK: delete this set and its two uses below.
  */
-const UNBATCHED_IDS = new Set(['terminalFrame']);
+const UNBATCHED_IDS = new Set(['terminalFrame', 'w_wickCard']);
 
 const RIG_FADE_SECONDS = 2.5;
 /**

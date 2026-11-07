@@ -186,7 +186,7 @@
    "from": "The Wick",
    "time": "today",
    "text": "Lesbian carol night on the 20th. Doors from seven. The heating is on. Nobody has to sing. Dee",
-   "register": "respite"
+   "register": "felt"
   },
   {
    "from": "Orla",
@@ -204,7 +204,7 @@
    "from": "The Wick",
    "time": "14 March",
    "text": "Happy birthday from all of us here. Your first one's on us any night this month, and the month after that if you're slow about it.",
-   "register": "respite",
+   "register": "felt",
    "stampCard": "7 of 8. The eighth is free. No expiry. D."
   },
   {
@@ -283,14 +283,14 @@
   "headline": "Malta outlaws conversion practices — unanimous vote"
  },
  "_docLinkVote": "⚑ S149 — THE SECOND CARD: the vote's result, shared into the thread with 'they voted.' (maltaTwo). The stage advances on the CARD's dismissal, and the second card needs its own press: this is it (`kind: 'link2'`). Same invented paper as `link`; the numbers are the Malta bill's public record (unanimous).",
- "_docS307": "S307: the built lock date is Tuesday 6 December. Bea reads news of the vote, then its unanimous result. Nuala is a former partner. No new clothing memory. Felt and respite threads are read only, memory only, no glow or guide.",
+ "_docS307": "S307: the built lock date is Tuesday 6 December. Bea reads news of the vote, then its unanimous result. Nuala is a former partner. No new clothing memory. Felt threads are read only, memory only, no glow or guide.",
  "personalMessage": {
   "_doc": "Approved 7 Nov 2026. Ordinary everyday message. No declared acceptance. Felt; nothing is filed.",
   "register": "felt",
   "from": "Orla",
-  "firstWords": "are you coming thursday? dee's keeping the corner table. no pressure x",
+  "firstWords": "quiz at the wick tonight. dee's keeping the corner table. no pressure x",
   "thread": [
-   "are you coming thursday? dee's keeping the corner table. no pressure x"
+   "quiz at the wick tonight. dee's keeping the corner table. no pressure x"
   ],
   "dismiss": "×"
  },
@@ -321,9 +321,6 @@
    },
    {
     "text": "shop: oat milk · bin bags · card for dee"
-   },
-   {
-    "text": "leisure centre car park free after 6"
    }
   ]
  },
@@ -334,7 +331,8 @@
    "14 March",
    "14 March",
    "14 March",
-   ""
+   "",
+   "6 December · 22:51"
   ],
   "busText": "46A · last bus 22:40"
  }

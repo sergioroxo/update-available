@@ -920,6 +920,27 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    * are never live at the same moment; `sendOfferPending` holds the spine's
    * breath while a summons is up, same law the felt window and E4 already use).
    */
+  // Felt conducted object: one lift, three seconds facing the authored seat, then home.
+  let wickT = -1, wickDone = false;
+  let wickRest: { p: pc.Vec3; q: pc.Quat } | null = null;
+  const tickWick = (dt: number, era: string): void => {
+    const card = app.root.findByName('w_wickCard') as pc.Entity | null;
+    if (!card) return;
+    // The printed paper is already a plane; its backing box would add a draw after unbatching.
+    if (card.render) card.render.enabled = false;
+    if (!wickDone && graceQueueLite.wickCue && era === 'e3') {
+      wickDone = true; wickT = 0; wickRest = { p: card.getPosition().clone(), q: card.getRotation().clone() };
+    }
+    if (wickT < 0 || !wickRest) return;
+    graceQueueLite.wickConducting = true;
+    wickT += dt;
+    const k = wickT < 0.5 ? wickT / 0.5 : wickT <= 3.5 ? 1 : Math.max(0, 1 - (wickT - 3.5) / 0.5);
+    const smooth = k * k * (3 - 2 * k), target = new pc.Vec3(-4.76, 1.11, 0.82);
+    card.setPosition(new pc.Vec3().lerp(wickRest.p, target, smooth));
+    card.lookAt(new pc.Vec3(-4.4, 1.16, 0.70)); card.rotateLocal(0, 180, 0);
+    const face = card.getRotation().clone(); card.setRotation(new pc.Quat().slerp(wickRest.q, face, smooth));
+    if (wickT >= 4 || era !== 'e3') { card.setPosition(wickRest.p); card.setRotation(wickRest.q); wickT = -1; graceQueueLite.wickConducting = false; }
+  };
   let ritualTick = 0;
   function drawWorkstation(ctx: CanvasRenderingContext2D, w: number, h: number): void {
     graceQueueLite.draw(ctx, w, h);
@@ -933,6 +954,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       ctx.translate(RITUAL_OFFSET.x, RITUAL_OFFSET.y);
       ritual.draw(ctx);
       ctx.restore();
+      graceQueueLite.drawDisconnected(ctx, w);
       return;
     }
     if (e4Bridge()?.sendOfferActive()) {
@@ -1242,6 +1264,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     tick(dt: number): void {
       // S76: the last update's own frames — see `drawWorkstation`
       if (e4Bridge()?.update()?.open) ritualTick++;
+      if (e4Bridge()?.update()?.installing) graceQueueLite.disconnectPhone();
       // ⚑ S149 — E3 ENDS WHEN THE GROUP HAS BEEN SEEN, AND NOTHING IS OPEN.
       //   It used to end when the WORK did (`ledger.graceQueue.length >=
       //   TOTAL_CORRECTIONS`), whatever the phone was doing — Sérgio, 2026-09-17:
@@ -1257,7 +1280,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       //   era, on the first clear moment after six clear seconds in all). The
       //   work count is no longer a trigger at all.
       if (eraNow === 'e3' && !finalArmed) {
-        const gate = ledger.checkins.some((c) => c.id === 'e3_cascade');
+        const gate = graceQueueLite.phone.broken;
         const clear = !phoneHeld && !graceQueueLite.busy;
         if (gate && clear) {
           finalT = finalT < 0 ? 0 : finalT + dt;
@@ -1274,6 +1297,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       if (eraNow !== 'e3' && graceQueueLite.floppy.open) graceQueueLite.floppy.closeGame();
       graceQueueLite.phoneInHand = phoneHeld;   // S226 — Lambient waits while the phone (and Bea) is in her hand
       graceQueueLite.update(dt);
+      tickWick(dt, eraNow);
       if (eraNow === 'e3' && graceQueueLite.inboxLiftPending) {
         graceQueueLite.inboxLiftPending = false;
         if (!phoneHeld && lastSeat) this.holdDevice('phone', lastSeat);

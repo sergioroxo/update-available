@@ -1,0 +1,22 @@
+/** Complete-word and return-route regressions for the narrow optional platform pages. */
+import fs from 'node:fs';import puppeteer from 'puppeteer-core';
+const port=process.argv[2]||3115,out='out/codex-e3-mirror/reading';fs.mkdirSync(out,{recursive:true});
+const b=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader','--use-gl=angle']});
+try{const p=await b.newPage();await p.goto(`http://localhost:${port}/?reinterp=1&era=3&debug=1&descent=0&kiosk=0`,{waitUntil:'networkidle2'});await p.waitForFunction(()=>window.__graceQueue?.());await new Promise(r=>setTimeout(r,4500));
+const result=await p.evaluate(async()=>{const q=window.__graceQueue(),{ledger}=await import('/src/state/ledger.ts'),family=(await import('/data/dialog/s3_family.json')).default;const checks=[],images={},c=document.createElement('canvas');c.width=676;c.height=390;const ctx=c.getContext('2d');
+const ok=(v,s)=>{if(!v)throw Error(s);checks.push(s);},paint=()=>q.draw(ctx,676,390),press=id=>{paint();const r=q.rects.find(r=>r.id===id);ok(r,'live '+id);q.handleClick(r.x+r.w/2,r.y+r.h/2);paint();};
+q.lambyGuide=null;q.wickConducting=false;q.mode='list';q.veraPage=null;q.openSurface=null;q.subIdx=3;q.submissionPage=0;q.decisions.clear();q.startMap.close();
+const words=[],draw=q.drawSubmission.bind(q),fill=ctx.fillText.bind(ctx);let capture=false,top=0;ctx.fillText=(s,x,y,...a)=>{if(capture&&ctx.font.includes('11px')&&y>=top+40)words.push(s);return fill(s,x,y,...a);};q.drawSubmission=(ctx,x,y,w,h,sub)=>{capture=true;top=y;const r=draw(ctx,x,y,w,h,sub);capture=false;return r;};
+const before=ledger.graceQueue.length;let pages=0;
+for(let i=0;i<12;i++){paint();images['marisol-'+pages]=c.toDataURL();pages++;const r=q.rects.find(r=>r.id==='testimony-next');if(!r)break;q.handleClick(r.x+r.w/2,r.y+r.h/2);}
+ok(pages>1,'long testimony has reader pages');const compact=s=>s.replace(/\s+/g,'');ok(compact(words.join(''))===compact(q.submission().text),'every original testimony word is readable');ok(ledger.graceQueue.length===before,'reader pages do not decide corrections');
+q.drawSubmission=draw;ctx.fillText=fill;
+for(const page of [null,'send','kit']){q.mode='board';q.veraPage=page;q.openSurface=null;q.startMap.close();const jobs=ledger.era3Jobs.length;press('start-menu');press('account-activity');ok(q.openSurface?.id==='record'&&q.veraPage===null,'account visible over '+page);images['account-from-'+page]=c.toDataURL();press('board-back');ok(q.mode==='board'&&q.veraPage===page,'account returns to '+page);ok(ledger.era3Jobs.length===jobs,'account navigation makes no job choice '+page);}
+q.veraPage=null;q.mode='list';q.openSurface=null;q.subIdx=1;q.storyDone=false;const captionText=[];
+ctx.fillText=(s,x,y,...a)=>{if(x>=250&&x<470&&y>=215&&y<263&&ctx.font.includes('10px'))captionText.push({s,x,y,w:ctx.measureText(s).width,font:ctx.font,ink:ctx.fillStyle});return fill(s,x,y,...a);};paint();images['noa-both-captions']=c.toDataURL();
+const rules=(await import('/data/dialog/s3_queue.json')).default.corrections,captionCopy=[8,9].map(id=>rules.find(r=>r.id===id).why).join('');
+ok(compact(captionText.map(t=>t.s).join(''))===compact(captionCopy),'both complete Noa captions');ok(captionText.every(t=>t.x+t.w<=470&&t.y+10<=263),'both captions fit their transcript panel');ok(captionText.every(t=>t.font===captionText[0].font&&t.ink===captionText[0].ink),'captions retain equal type and ink');
+q.veraPage=null;q.mode='list';q.openSurface=q.surfaces.get('family');const text=[];ctx.fillText=(s,x,y,...a)=>{text.push({s,x,y,w:ctx.measureText(s).width});return fill(s,x,y,...a);};paint();images['family-wrapped-replies']=c.toDataURL();
+for(const r of q.rects.filter(r=>r.id.startsWith('family-reply-'))){const lines=text.filter(t=>t.s&&t.x>=r.x&&t.x<r.x+r.w&&t.y>=r.y&&t.y<r.y+r.h);ok(lines.every(t=>t.x+t.w<=r.x+r.w&&t.y+10<=r.y+r.h),'reply label fits '+r.id);const copy=family.replies.find(x=>r.id==='family-reply-'+x.id);ok(compact(lines.map(x=>x.s).join(''))===compact(copy.label),'reply label complete '+r.id);}
+return {checks,pages,images};});for(const[n,u]of Object.entries(result.images))fs.writeFileSync(`${out}/${n}.png`,Buffer.from(u.split(',')[1],'base64'));delete result.images;fs.writeFileSync(out+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
+}finally{await b.close();}

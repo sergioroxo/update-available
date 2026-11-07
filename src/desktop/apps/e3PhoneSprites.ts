@@ -3,12 +3,25 @@ import { ERA3 } from '../theme/era3';
 import { phoneFont, phoneWrap } from '../theme/phone';
 
 export function makeE3PhotoSprites(busText: string): HTMLCanvasElement[] {
-  return [0, 1, 2, 3].map(index => {
+  return [0, 1, 2, 3, 4].map(index => {
     const c = document.createElement('canvas'); c.width = 72; c.height = 72;
     const ctx = c.getContext('2d')!; ctx.imageSmoothingEnabled = false;
     const rect = (x: number, y: number, w: number, h: number, color: string): void => {
       ctx.fillStyle = color; ctx.fillRect(x, y, w, h);
     };
+    if (index === 4) {
+      rect(0, 0, 72, 72, ERA3.greyDk);
+      rect(4, 18, 64, 32, ERA3.grey); rect(4, 48, 64, 4, ERA3.ink);
+      rect(13, 52, 3, 20, ERA3.ink); rect(57, 52, 3, 20, ERA3.ink);
+      // Two glasses at the corner table; the chair is empty.
+      for (const x of [21, 43]) {
+        rect(x, 24, 9, 13, ERA3.glassEdge); rect(x + 2, 27, 5, 8, ERA3.amber);
+        rect(x + 4, 37, 1, 6, ERA3.white); rect(x + 1, 43, 7, 1, ERA3.white);
+      }
+      rect(24, 51, 25, 4, ERA3.titleB); rect(23, 54, 3, 18, ERA3.ink); rect(47, 54, 3, 18, ERA3.ink);
+      rect(24, 57, 25, 3, ERA3.titleB);
+      return c;
+    }
     if (index === 3) {
       rect(0, 0, 72, 72, ERA3.white); rect(0, 0, 72, 12, ERA3.deskMid);
       rect(7, 20, 58, 1, ERA3.glassEdge); rect(7, 53, 58, 1, ERA3.glassEdge);

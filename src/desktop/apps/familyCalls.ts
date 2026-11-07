@@ -213,28 +213,30 @@ export class FamilyCallsApp implements TaskSurface {
 
     // ── the verbs ──────────────────────────────────────────────────────────
     setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
-    ctx.fillText(f.app.replyLabel, readX, area.y + 148);
-    px(ctx, readX, area.y + 162, readW, 1, ERA3.glassEdge);
+    ctx.fillText(f.app.replyLabel, readX, area.y + 154);
+    px(ctx, readX, area.y + 168, readW, 1, ERA3.glassEdge);
 
     const bw = Math.floor((readW - 10) / 2);
-    const bh = 22;
+    const bh = 32;
     REPLIES.forEach((r, i) => {
       const bx = readX + (i % 2) * (bw + 10);
-      const by = area.y + 170 + Math.floor(i / 2) * (bh + 6);
-      aero.button(ctx, bx, by, bw, bh, r.label, { disabled: done, size: 10 });
+      const by = area.y + 176 + Math.floor(i / 2) * (bh + 6);
+      aero.button(ctx, bx, by, bw, bh, '', { disabled: done, size: 10 });
+      setFont(ctx, 10); ctx.fillStyle = done ? ERA3.grey : ERA3.ink;
+      wrapText(ctx, r.label, bw - 12).forEach((line, n) => ctx.fillText(line, bx + 6, by + 4 + n * 12));
       if (!done) hit({ x: bx, y: by, w: bw, h: bh, id: 'family-reply-' + r.id });
     });
 
     // ⚑ and the row that is always available and never labelled as a refusal:
     //   marking a mother handled without a word. It files. Nothing objects.
-    const hy = area.y + 170 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
+    const hy = area.y + 176 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
     aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done, size: 10 });
     if (!done) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-handle' });
 
     if (done) {
       const label = this.sent.get(p.id);
       setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
-      ctx.fillText(label ?? f.app.handledTag, readX, hy + bh + 8);
+      wrapText(ctx, label ?? f.app.handledTag, listW).forEach((line, i) => ctx.fillText(line, area.x, area.y + area.h - 64 + i * 12));
     }
 
     if (this.complete()) {
