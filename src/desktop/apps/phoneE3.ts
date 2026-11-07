@@ -65,7 +65,7 @@ const HOME = m.home as unknown as Record<string, string>;
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
 type Stage = 'quiet' | 'first' | 'voted' | 'cascade' | 'after';
-type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal';
+type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal' | 'notes';
 /** Lambient's card, and it is the same card whichever way she got here */
 type Card = null | 'opened' | 'ignored';
 
@@ -138,7 +138,7 @@ export class PhoneE3 {
   private get clockText(): string { return this.opts.clock ? this.opts.clock() : d.phone.lockClock; }
 
   private bump(): void { this.version++; }
-  get quietReading(): boolean { return this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
+  get quietReading(): boolean { return this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
   presentInbox(): void { this.screen = 'inbox'; this.openMessage = null; this.bump(); }
 
 
@@ -291,6 +291,7 @@ export class PhoneE3 {
     ctx.fillRect(0, 0, W, H);
     if (this.screen === 'personal') { this.drawThreadView(ctx, W, H); this.pushBack(20, 62); }
     else if (this.screen === 'lock') { this.drawLock(ctx, W, H); }
+    else if (this.screen === 'notes') { this.drawNotes(ctx, W, H); }
     else if (this.screen === 'group') { this.drawGroup(ctx, W, H); }
     else if (this.screen === 'platform') { this.drawPlatform(ctx, W, H); }
     else if (this.screen === 'inbox') { this.drawInbox(ctx, W, H); }
@@ -394,6 +395,23 @@ export class PhoneE3 {
   /** ⚑ AN ICON GRID ON A WALLPAPER — the single thing that most makes a screen
    *  read as a phone rather than as a window with rows in it. Four apps, and
    *  only one of them wants anything from her. */
+  private drawNotes(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
+    const y0 = statusBar(ctx, W, this.clockText);
+    let y = appBar(ctx, W, y0, HOME.fNotes);
+    this.pushBack(y0, y);
+    for (const entry of m.notes.entries) {
+      y += 12;
+      if ('title' in entry) {
+        phoneFont(ctx, 12, 600); ctx.fillStyle = PHONE.ink;
+        ctx.fillText(entry.title ?? '', 12, y); y += 21;
+      }
+      phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink;
+      for (const line of phoneWrap(ctx, entry.text, W - 24)) { ctx.fillText(line, 12, y); y += 16; }
+      y += 12; ctx.fillStyle = PHONE.hairline; ctx.fillRect(12, y, W - 24, 1);
+    }
+  }
+
   private drawHome(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     wallpaper(ctx, W, H);
     statusBar(ctx, W, this.clockText);
@@ -474,6 +492,7 @@ export class PhoneE3 {
       // ⚑ S181 / R5-04 — the last tile is the accountability app: her file, on her phone
       const walk = kind === 'files';
       furnitureTile(ctx, col(i % 4), rowY(1 + Math.floor(i / 4)), s, kind, walk ? HOME.fWalk : label);
+      if (kind === 'notes') this.rects.push({ x: col(i % 4), y: rowY(1 + Math.floor(i / 4)), w: s, h: s + 12, id: 'notes' });
       if (walk) this.rects.push({ x: col(i % 4), y: rowY(1 + Math.floor(i / 4)), w: s, h: s + 12, id: 'walk' });
     });
 
@@ -707,6 +726,7 @@ export class PhoneE3 {
       // S158: the chat goes back to Messages; S177: so does an open message
       case 'back': this.screen = this.screen === 'group' || this.screen === 'message' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
+      case 'notes': this.screen = 'notes'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
       case 'dismiss': this.dismissCard(); return true;
       case 'link': case 'link2': this.openLink(r.id); return true;

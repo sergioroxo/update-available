@@ -376,7 +376,7 @@ export class GraceQueueLite {
   private personalNotice = false;
   private personalDesktop = false;
   private personalArmed = false;
-  get personalQuiet(): boolean { return this.personalNotice || this.personalDesktop || this.phone.personalOpen; }
+  get personalQuiet(): boolean { return this.personalNotice || this.personalDesktop || this.phone.personalOpen || (this.phoneInHand && this.phone.quietReading); }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
     this.personalArmed = true; this.personalNotice = true; this.phone.armPersonal(); this.bump();

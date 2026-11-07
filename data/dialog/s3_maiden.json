@@ -310,5 +310,21 @@
   "muted": "muted",
   "unread": "{n} unread",
   "_doc": "Authored constants, no live arrivals and no hidden messages. Period mute UI [VERIFY SOURCE]."
+ },
+ "notes": {
+  "register": "felt",
+  "_doc": "Approved 7 Nov. Read-only, newest first; no typing, send, preview or explanation. Period unsent notes practice [VERIFY SOURCE].",
+  "entries": [
+   {
+    "title": "Mam",
+    "text": "Mam — I won't make Sunday. It isn't you. It's"
+   },
+   {
+    "text": "shop: oat milk · bin bags · card for dee"
+   },
+   {
+    "text": "leisure centre car park free after 6"
+   }
+  ]
  }
 }
