@@ -70,6 +70,7 @@
         { "when": "10:21", "text": "You're an adult now. Adults pay their own way." }
       ],
       "banner": "Dad: Your mother's upset.",
+      "todayButton": "Today ›",
       "backToMum": "Back to Mum"
     },
     "junie": {
@@ -81,6 +82,7 @@
       ],
       "today": { "when": "08:14", "text": "happy birthday. don't answer if it's too much." },
       "mutedNote": "You muted this chat 6 weeks ago.",
+      "tuesday": "Tue · not seen",
       "unmute": "Unmute",
       "unmuted": "Unmuted",
       "reply": "thank you",

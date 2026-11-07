@@ -261,7 +261,7 @@ export class E4Browser {
     this.botBeat = ready; this.botT = 99;
     const m = this.messenger;
     m.houseShown = 3; m.houseHeart = true; m.houseOpenedBirthday = true; m.houseLeft = 2; m.houseOpenedLeft = true;
-    m.mumToday = 4; m.mumDraft = true; m.mumPage = 4; m.mumOpened = true; m.dadIn = true; m.dadRead = true; m.linkOpened = true;
+    m.mumToday = 4; m.mumDraft = true; m.mumPage = 4; m.mumOpened = true; m.dadIn = true; m.dadRead = true; m.dadPage = 1; m.linkOpened = true;
     m.junieOpenable = true; m.junieOpened = true; m.junieUnmuted = true; m.junieReplied = true; m.junieX = true;
     m.want = null; m.view = 'list'; m.wallpaper = 'goal';
     this.junieWarm = true;
@@ -588,6 +588,7 @@ export class E4Browser {
     } else if (c === 'dad') {
       if (m.dadIn && !m.dadRead) {
         m.dadRead = true;
+        m.dadPage = 0;
         markE4('dad');
         this.file('v3:dad', 'read', W3.dad);
         m.want = 'link';
@@ -603,6 +604,7 @@ export class E4Browser {
     const m = this.messenger;
     if (id.startsWith('row-') || id.startsWith('chat-')) { this.openChat(id.replace(/^(row|chat)-/, '') as ChatId); return; }
     if (id === 'back-chats') { m.view = 'list'; this.version++; return; }
+    if (id === 'dad-today' && m.view === 'dad') { m.dadPage = 1; playOnce('ui_press.mp3'); this.version++; return; }
     if (id === 'house-heart' && !m.houseHeart) {
       m.houseHeart = true; m.want = null;
       this.file('v3:house', 'answered', W3.house);

@@ -178,7 +178,9 @@ async function main() {
   await untilLid('chat-dad', 8000); await wait(300);
   await shot('lid-dad-banner', 'Dad: Your mother\'s upset.');
   await pressLid('chat-dad');
-  await shot('lid-dad', 'Dad · "Not while you\'re under this roof." · "Adults pay their own way."');
+  await shot('lid-dad', 'Dad · Sep 2025: "We need to talk about the appointments." "Not while you\'re under this roof."');
+  await pressLid('dad-today');
+  await shot('lid-dad-today', 'Dad · today: "Your mother\'s upset." "You\'re an adult now. Adults pay their own way."');
   await pressLid('chat-mum');
   await shot('lid-mum-link', 'Mum · today, Open link');
   await pressLid('msg-link'); await wait(1600);
@@ -234,7 +236,7 @@ async function main() {
   await pressLid('chat-junie');
   await shot('lid-junie', 'Junie (muted): "happy birthday. don\'t answer if it\'s too much."');
   await pressLid('junie-unmute');
-  await shot('lid-junie-unmuted', 'Junie unmuted');
+  await shot('lid-junie-unmuted', 'Junie unmuted: what the mute hid — Tuesday\'s lines (original kept; confirm the other one; the stream)');
   await pressLid('junie-reply'); await wait(2600);
   await shot('lid-junie-x', '"thank you" — "x"');
   await untilStep('confirm', 10000); await wait(2600);

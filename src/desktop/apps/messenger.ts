@@ -49,6 +49,8 @@ export class E4Messenger {
   mumOpened = false;
   dadIn = false;
   dadRead = false;
+  /** Dad's thread in two pages, like Mum's years: the time he set the rule, then today */
+  dadPage = 0;
   linkOpened = false;
   junieOpenable = false;
   junieOpened = false;
@@ -220,16 +222,19 @@ export class E4Messenger {
         if (this.mumDraft) out.push({ draft: true, mine: true, text: M.mum.draft });
       }
     } else if (id === 'dad') {
-      out.push({ sep: M.dad.before[0].when });
-      for (const m of M.dad.before) out.push({ text: m.text });
-      if (this.dadIn) { out.push({ sep: M.today }); for (const m of M.dad.today) out.push({ text: m.text }); }
-    } else {
-      if (!this.junieUnmuted) out.push({ sys: true, text: M.junie.mutedNote });
-      out.push({ sep: 'Tue' });
-      for (const m of M.junie.before) out.push({ text: m.text });
-      out.push({ sep: M.today });
+      // ⚑ two pages, the header naming each: what he said in September, and what he said today
+      if (this.dadPage === 0 || !this.dadIn) for (const m of M.dad.before) out.push({ text: m.text });
+      else for (const m of M.dad.today) out.push({ text: m.text });
+    } else if (!this.junieUnmuted) {
+      // muted: the one message of the morning, and the note that says why it was not seen
+      out.push({ sys: true, text: M.junie.mutedNote });
       out.push({ text: M.junie.today.text });
-      if (this.junieReplied) out.push({ mine: true, text: M.junie.reply });
+    } else if (!this.junieReplied) {
+      // ⚑ unmuting shows what the mute hid: her three lines from Tuesday (the lever, and the stream)
+      for (const m of M.junie.before) out.push({ text: m.text });
+    } else {
+      out.push({ text: M.junie.today.text });
+      out.push({ mine: true, text: M.junie.reply });
       if (this.junieX) out.push({ text: M.junie.replied });
     }
     return out;
@@ -246,7 +251,10 @@ export class E4Messenger {
       if (this.dadRead && !this.linkOpened && this.want === 'link') return { id: 'msg-link', label: M.mum.linkButton };
       return null;
     }
-    if (id === 'dad') return this.want === 'link' ? { id: 'chat-mum', label: M.dad.backToMum } : null;
+    if (id === 'dad') {
+      if (this.dadPage === 0 && this.dadIn) return { id: 'dad-today', label: M.dad.todayButton };
+      return this.want === 'link' ? { id: 'chat-mum', label: M.dad.backToMum } : null;
+    }
     if (!this.junieUnmuted) return { id: 'junie-unmute', label: M.junie.unmute };
     if (!this.junieReplied) return { id: 'junie-reply', label: M.junie.reply };
     return null;
@@ -260,8 +268,9 @@ export class E4Messenger {
     setFont(ctx, 10); ctx.fillStyle = KETTLE.headInk;
     ctx.fillText(C.name, 24, 4);
     // Mum's header says which year the page is (one press per year), so the year never scrolls away
-    const sub = id === 'junie' ? (this.junieUnmuted ? M.junie.unmuted : C.sub)
-      : id === 'mum' ? (this.mumPage < M.mum.years.length ? M.mum.years[this.mumPage].when : M.today) : C.sub;
+    const sub = id === 'junie' ? (!this.junieUnmuted ? C.sub : !this.junieReplied ? M.junie.tuesday : M.today)
+      : id === 'mum' ? (this.mumPage < M.mum.years.length ? M.mum.years[this.mumPage].when : M.today)
+        : id === 'dad' ? (this.dadPage === 0 || !this.dadIn ? M.dad.before[0].when : M.today) : C.sub;
     if (sub) {
       ctx.font = monoFor(8);
       const sw = Math.ceil(ctx.measureText(sub).width);
@@ -281,13 +290,13 @@ export class E4Messenger {
       ctx.fillText(M.dad.banner, 9, top + 6);
       bodyTop = top + 20;
     }
-    this.drawMessages(ctx, W, bodyTop, bottom - 2, this.messages(id));
+    this.drawMessages(ctx, W, bodyTop - 1, bottom - 1, this.messages(id));
     this.bar(ctx, W, H, true, this.threadPrimary(id));
   }
 
   /** lay the messages out from the bottom up; the oldest scroll off the top, the way a chat does */
   private drawMessages(ctx: CanvasRenderingContext2D, W: number, top: number, bottom: number, msgs: Msg[]): void {
-    const maxW = 178;
+    const maxW = W - 16;   // the lid is narrow: a bubble may take its width, so three of Junie's lines fit one page
     type Box = { m: Msg; h: number; lines: string[] };
     const boxes: Box[] = msgs.map((m) => {
       if (m.sep) return { m, h: 13, lines: [] };
@@ -297,7 +306,7 @@ export class E4Messenger {
       setFont(ctx, 10);
       // ⚑ a group's speaker sits on the same line as their words (two lines of name and text did not fit the lid)
       const lines = wrapText(ctx, (m.who ? `${m.who}  ` : '') + (m.text ?? ''), maxW - 12);
-      return { m, h: lines.length * 12 + 7 + (m.draft ? 10 : 0) + 3, lines };
+      return { m, h: lines.length * 12 + 4 + (m.draft ? 10 : 0) + 2, lines };
     });
     let y = bottom;
     const placed: { b: Box; y: number }[] = [];
@@ -352,10 +361,10 @@ export class E4Messenger {
       let textW = Math.max(...b.lines.map((l) => Math.ceil(ctx.measureText(l).width)));
       if (m.draft) { ctx.font = monoFor(8); textW = Math.max(textW, Math.ceil(ctx.measureText(M.mum.draftLabel).width)); setFont(ctx, 10); }
       const bw = Math.min(maxW, textW + 12);
-      const bh = b.h - 3;
+      const bh = b.h - 2;
       const bx = mine ? W - 6 - bw : 6;
       roundRect(ctx, bx, by, bw, bh, 6, m.draft ? KETTLE.draft : mine ? KETTLE.mine : KETTLE.theirs);
-      let ty = by + 4;
+      let ty = by + 2;
       if (m.draft) { ctx.font = monoFor(8); ctx.fillStyle = KETTLE.sub; ctx.fillText(M.mum.draftLabel, bx + 6, ty); ty += 10; }
       setFont(ctx, 10); ctx.fillStyle = KETTLE.ink;
       b.lines.forEach((ln, k) => {
