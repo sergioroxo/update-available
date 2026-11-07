@@ -38,6 +38,7 @@ import { reducedMotion } from '../../state/motion';
  * label field, the counter — exactly as the selective-fidelity law requires.
  */
 import { px, setFont, wrapText } from './chrome';
+import { monoFor } from './fonts';
 import { RENDER_SCALE } from './era1';
 
 export const ERA4 = {
@@ -851,10 +852,10 @@ export function browserChrome(
     } else {
       px(ctx, x + 9, TAB.y + 9, 5, 5, locked ? CHROME.barLo : on ? CHROME.tabInkLive : CHROME.hint);
     }
-    setFont(ctx, 8);
+    setFont(ctx, 11);   // ⚑ S321 — tab names that fit, at a size that reads from the seat (presentation rules 4, 6)
     ctx.fillStyle = ink;
     ctx.save(); ctx.beginPath(); ctx.rect(x + 19, TAB.y, tw - (look.badge ? 42 : 26), TAB.h); ctx.clip();   // the title stops a breath before the badge
-    ctx.fillText(tabs[i].title, x + 19, TAB.y + 8);
+    ctx.fillText(tabs[i].title, x + 19, TAB.y + 6);
     ctx.restore();
     if (look.badge) {
       // the step number, right-aligned in the tab, the size of a badge
@@ -893,10 +894,10 @@ export function browserChrome(
   setFont(ctx, 9);
   ctx.fillStyle = CHROME.hint;
   ctx.fillText('\u25CF', ax + 10, ADDR.y + 7);            // the lock, a dot at this size
-  setFont(ctx, 10);
+  ctx.font = monoFor(12); ctx.textBaseline = 'top';   // ⚑ S321 — the address is a system line: monospace, larger
   ctx.fillStyle = address ? CHROME.ink : CHROME.hint;
   ctx.save(); ctx.beginPath(); ctx.rect(ax + 22, ADDR.y, aw - 44, ADDR.h); ctx.clip();
-  ctx.fillText(address, ax + 22, ADDR.y + 6);
+  ctx.fillText(address, ax + 22, ADDR.y + 5);
   if (showCursor) {
     const w = Math.ceil(ctx.measureText(address).width);
     px(ctx, ax + 23 + w, ADDR.y + 5, 1, 12, CHROME.ink);
@@ -1663,3 +1664,92 @@ export function streamScene(
   ctx.restore();
   ctx.restore();
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ⚑ S321 — 2026 v3 (DESIGN_2026_V3_PRESSURE_2026-11-07.md). Three small blocks, every value taken from a block above
+// (nothing invented, the C4 ratchet unmoved): KETTLE, the messenger on her laptop (warm, hers — the room's own
+// colours, never the agent's mint); V3, the presentation rules' inks (dark ink on light, never pale on cream); and
+// GOAL / CLIP, the two painters the room and the headset reuse (goalPicture.ts, contagionClip.ts).
+// ═══════════════════════════════════════════════════════════════════════════
+export const KETTLE = {
+  head: CHROME.button,          // the app bar: her room's brown, not the system's green
+  headInk: CHROME.buttonInk,
+  ground: PLACE.wallHi,         // the list and the chat's ground
+  row: WEB.card,
+  rowEdge: WEB.cardEdge,
+  theirs: WEB.card,             // their bubbles
+  mine: PLACE.rugHi,            // hers: warm
+  ink: WEB.ink,
+  sub: CHROME.ink,              // secondary text — dark enough on cream (presentation rule 3)
+  badge: PLACE.book,            // an unread count
+  badgeInk: WEB.card,
+  mutedBadge: CHROME.ink,
+  primary: CHROME.button,
+  primaryInk: CHROME.buttonInk,
+  quietEdge: CHROME.fieldEdge,
+  sys: CHROME.barLo,            // a system line's pill ("Sam left the group.")
+  draft: WEB.chip,
+  avatarMum: PLACE.textileHi,
+  avatarDad: PLACE.sill,
+  avatarHouse: PLACE.plant,
+  avatarJunie: PLACE.sun,
+  banner: WEB.ink,
+  bannerInk: WEB.card,
+  link: WEB.card,
+  linkEdge: WEB.cardEdge
+} as const;
+
+/** the presentation rules' inks for every 2026 screen: body text is `ink`, secondary is `ink2`, never `WEB.muted` on cream */
+export const V3 = {
+  page: WEB.bg,
+  card: WEB.card,
+  edge: WEB.cardEdge,
+  ink: WEB.ink,
+  ink2: CHROME.ink,
+  bar: CHROME.toolbar,
+  barEdge: CHROME.fieldEdge,
+  primary: WEB.primary,
+  primaryInk: WEB.primaryInk,
+  sheetWash: WEB.ink,
+  ticket: PLACE.mug,
+  ticketEdge: PLACE.floorLo,
+  danger: WEB.danger,
+  warm: PLACE.sun,
+  bot: WEB.accent,
+  botInk: WEB.accentInk,
+  botSoft: WEB.accentSoft,
+  grey: WEB.faint,
+  greyInk: CHROME.ink
+} as const;
+
+/** the goal picture's palette — a stock photograph's: blue sky, a halo, sparkle, shirt and tie */
+export const GOAL = {
+  sky: PLACE.sky,
+  skyLo: PLACE.skyLo,
+  halo: PLACE.skyHaze,
+  sparkle: PLACE.sunHi,
+  sparkleHi: WEB.shimmer,
+  skin: ERA4.photoSkinHi,
+  skinLo: ERA4.photoSkin,
+  hair: ERA4.photoHair,
+  ink: WEB.ink,
+  teeth: WEB.shimmer,
+  shirt: PLACE.bookAlt,
+  collar: WEB.card,
+  tie: PLACE.book,
+  band: WEB.ink,
+  bandInk: WEB.card
+} as const;
+
+/** the clip's palette — dark, red, a stamp in warning yellow */
+export const CLIP = {
+  field: ERA4.field,
+  band: ERA4.panel,
+  ink: ERA4.textHi,
+  figure: PLACE.landLo,
+  caught: WEB.danger,
+  glow: PLACE.sky,
+  stamp: PLACE.sunHi,
+  stampInk: WEB.ink,
+  line: ERA4.ruleHi
+} as const;
