@@ -16,6 +16,7 @@ try {
   const { GraceQueueLite } = await import('/src/room/graceQueueLite.ts');
   const { ledger } = await import('/src/state/ledger.ts');
   const { veraDay } = await import('/src/state/veraDay.ts');
+  const { recordCount } = await import('/src/witness/record.ts');
   const { mapState } = await import('/src/witness/map.ts');
   const checks = [], photos = {};
   const assert = (v, label) => { if (!v) throw Error(label); checks.push(label); };
@@ -27,27 +28,29 @@ try {
   const phone = q => q.drawPhone(pctx,180,360);
   const press = (q,id) => { paint(q); const r=q.rects.find(r=>r.id===id); assert(r, 'live '+id); q.handleClick(r.x+r.w/2,r.y+r.h/2); };
   const ppress = (q,id) => { phone(q); const r=q.phone.rects.find(r=>r.id===id); assert(r,'phone live '+id); q.handlePhoneClick(r.x+r.w/2,r.y+r.h/2); };
-  let q=fresh(); paint(q); phone(q);
+  let q=new GraceQueueLite({onLight(){}}); q.beginArrival(); q.update(120);
+  assert(q.mode==='signin' && q.personalNotice,'normal arrival arms notice');
+  q=fresh(); paint(q); phone(q);
   photos['01-notice']=canvas.toDataURL(); photos['02-lock']=pc.toDataURL();
   assert(q.personalQuiet && q.guideSilent,'notice silences guide');
   assert(q.phoneVersion>0,'phone dirtied with notice');
   assert(!q.rects.some(r=>r.id.startsWith('lg-')),'no guide controls');
   q.handleClick(0,100); assert(q.personalNotice,'miss retains notice');
-  const before=JSON.stringify(ledger.checkins);
+  const before=JSON.stringify(ledger.checkins), count=recordCount();
   press(q,'personal-open'); paint(q); photos['03-thread']=canvas.toDataURL();
   assert(q.phone.personalOpen && q.phone.personalSeen && veraDay.personalMessageSeen,'desktop opens shared phone thread');
-  assert(JSON.stringify(ledger.checkins)===before,'personal thread files nothing');
+  assert(JSON.stringify(ledger.checkins)===before && recordCount()===count,'personal thread files nothing, including witness pulse');
   assert(mapState(window.__os).eras.find(e=>e.id==='e3').beats.find(b=>b.beat.id==='personal-message').state==='done','map reads memory');
   press(q,'signin'); assert(q.mode==='consent' && !q.phone.personalOpen && !q.personalQuiet,'sign in passes through thread on same release');
   for (const answer of [true,false]) { q=fresh(); press(q,'signin'); assert(q.mode==='consent' && !q.personalNotice,'sign in with notice'); q.decideConsent(answer); assert(q.mode==='board','consent '+answer); }
-  q=fresh(); press(q,'personal-dismiss'); assert(!q.personalQuiet && !q.phone.personalSeen,'dismiss keeps phone unread');
+  q=fresh(); press(q,'personal-dismiss'); assert(!q.personalQuiet && !q.phone.personalSeen,'dismiss keeps phone unread'); q.settleArrival(); assert(!q.personalNotice,'notice never repeats');
   q=fresh(); press(q,'start-menu'); assert(!q.personalNotice && q.startMap.active,'Start clears notice');
   q=fresh(); press(q,'win-min'); assert(q.minimised && !q.personalNotice,'minimise clears notice');
   q=fresh(); q.phoneInHand=true; q.update(0); assert(!q.personalNotice,'pickup clears notice'); ppress(q,'personal-notification'); assert(q.phone.personalSeen,'phone opens same thread');
   q.closeForEraJump(); assert(!q.personalQuiet && !q.phone.personalOpen,'exit closes thread');
   q=fresh(); assert(!q.phone.personalSeen && q.personalNotice,'restart fresh instance');
   ppress(q,'personal-notification'); ppress(q,'back');
-  const seen=[]; for(let i=0;i<4;i++){phone(q);seen.push(...q.phone.rects.map(r=>r.id)); const next=q.phone.rects.find(r=>r.id==='inbox-next');if(!next)break; q.handlePhoneClick(next.x+5,next.y+5);}
+  const seen=[]; for(let i=0;i<4;i++){phone(q);seen.push(...q.phone.rects.map(r=>r.id)); assert(q.phone.rects.some(r=>r.id==='group'),'required group remains on inbox page '+i); const next=q.phone.rects.find(r=>r.id==='inbox-next');if(!next)break; q.handlePhoneClick(next.x+5,next.y+5);}
   assert(seen.includes('read-NualaMay'),'all backlog reachable');
   if(increment!=='core') { q=fresh(); q.phone.presentInbox(); phone(q); photos['04-groups']=pc.toDataURL(); }
   if(['b','c'].includes(increment)) { q=fresh(); q.phone.debugBeat('home'); ppress(q,'notes'); phone(q);photos['05-notes']=pc.toDataURL(); assert(q.phone.quietReading,'notes felt'); }

@@ -545,6 +545,7 @@ const LAP = { w: 224, h: 140 };
       // A relocation owns the view through the blink between its camera curves too.
       driven: !!(pose && (pose.driven || pose.reloc)),
       qMode: q ? q.mode : null,
+      qFamilyComplete: q?.surfaces?.get('family')?.complete() ?? false,
       ritualOpen: !!(os.updateApp && os.updateApp.visible),
       rawOsHits: (os.hits || []).length,
       // S269: what keeps the desktop from being idle (the spine waits on it in 1997 and 2003)
