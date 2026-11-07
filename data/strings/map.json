@@ -470,7 +470,7 @@
      "label": "Eighteen",
      "done": "e4:v3:house",
      "quiet": true,
-     "hint": "Your friends wrote. Read the house chat on the laptop.",
+     "hint": "Your friends wrote. Read their chat on the laptop.",
      "where": "the laptop"
     },
     {

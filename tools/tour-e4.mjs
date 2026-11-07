@@ -161,7 +161,7 @@ async function main() {
   await lid();
   await shot('lid-birthday', 'eighteen · Kettle: the house chat, Mum, Dad, Junie (muted, a badge she cannot see)');
   await pressLid('chat-house');
-  await shot('lid-house', 'eighteen · the house: HAPPY BIRTHDAY MAYA · 18!!! · cake in the fridge. don\'t tell 3B');
+  await shot('lid-house', 'eighteen · the lot: HAPPY BIRTHDAY MAYA · 18!!! · cake at mine saturday');
   await pressLid('house-heart'); await wait(500);
   await shot('lid-house-heart', 'her reply: ❤ love you all (her own wallpaper behind the chat)');
   await untilStep('newyou', 8000); await wait(900);

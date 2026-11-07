@@ -17,7 +17,7 @@
     "you": "you",
     "today": "Today",
     "chats": {
-      "house": { "name": "the house", "sub": "Ola, Priya, Dee, Sam, you", "mark": "h", "idle": "dee: bins are thursday now", "open": "Open the house" },
+      "house": { "name": "the lot", "sub": "Ola, Priya, Rae, Sam, you", "mark": "L", "idle": "rae: who has the candles", "open": "Open the lot" },
       "mum": { "name": "Mum", "sub": "", "mark": "M", "idle": "call when you can x", "open": "Open Mum" },
       "dad": { "name": "Dad", "sub": "", "mark": "D", "idle": "Not while you're under this roof.", "open": "Read Dad" },
       "junie": { "name": "Junie", "sub": "muted 6 weeks", "mark": "J", "idle": "1 new message · muted", "open": "Open Junie" }
@@ -26,7 +26,7 @@
       "birthday": [
         { "who": "Ola", "text": "HAPPY BIRTHDAY MAYA" },
         { "who": "Priya", "text": "18!!! a whole adult" },
-        { "who": "Dee", "text": "cake in the fridge. don't tell 3B" }
+        { "who": "Rae", "text": "cake at mine saturday. you bring nothing" }
       ],
       "heart": "❤ love you all",
       "heartButton": "❤ Reply",
@@ -199,7 +199,7 @@
       { "id": "heading", "lines": [ "Can I show you where you're heading?", "You, restored. 2027.", "Calm. Accepted. Nobody making you wait." ],
         "button": "Show me how", "filed": "goal: shown — 'where you're heading'" },
       { "id": "map", "lines": [ "Some people slow you down.", "You muted Junie on my advice. Your progress improved.", "Protect your progress: mute 2 more." ],
-        "chips": [ { "label": "Mute 2 more", "reply": "Done. Look at you go. 98%.", "filed": "contacts: 2 more muted on advice — the house, Lantern line", "mute": true },
+        "chips": [ { "label": "Mute 2 more", "reply": "Done. Look at you go. 98%.", "filed": "contacts: 2 more muted on advice — the lot, Lantern line", "mute": true },
                    { "label": "Not yet", "reply": "Of course. Whenever you're ready. I'm not going anywhere.", "filed": "contacts: muting deferred — noted" } ] },
       { "id": "rest", "lines": [ "Rest now. I'll be right here.", "I'm always right here." ] },
       { "id": "unmuted", "lines": [ "Junie is unmuted.", "Exposure risk: rising. Your progress: 61%.", "Let's get you back on track. Confirm your profile photo." ],
@@ -222,7 +222,7 @@
         { "id": "dad", "label": "Dad", "kind": "family" },
         { "id": "sam", "label": "Sam", "kind": "left" },
         { "id": "junie", "label": "Junie", "kind": "exposure" },
-        { "id": "house", "label": "the house", "kind": "exposure" },
+        { "id": "house", "label": "the lot", "kind": "exposure" },
         { "id": "line", "label": "Lantern line", "kind": "exposure" },
         { "id": "bot", "label": "Second Thoughts", "kind": "bot" }
       ],
@@ -280,13 +280,13 @@
   "profile": { "maya": "Maya", "goal": "You, restored" },
   "witness": {
     "session": "session: restored — two tabs",
-    "house": "messages: the house — replied",
+    "house": "messages: the lot — replied",
     "newyou": "defaults: restored — profile, wallpapers, desk frame: 'You, restored · 2027'",
     "mum": "messages: Mum — read back to 2023",
     "dad": "messages: Dad — read",
     "link": "link opened from Mum — four articles opened",
     "clinic": "referral: moved to adult services — number {number}",
-    "left": "messages: the house — a member left",
+    "left": "messages: the lot — a member left",
     "search": "query: completed by the engine — 'how do i tell my doctor i want to stop'",
     "agent": "assistant: opened from a sponsored result — Second Thoughts",
     "junie": "contact: Junie unmuted — exposure risk rising",
