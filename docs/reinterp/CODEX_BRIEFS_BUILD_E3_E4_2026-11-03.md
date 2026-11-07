@@ -1,4 +1,4 @@
-STATUS: live
+STATUS: superseded-by docs/reinterp/CODEX_BRIEF8_PHONE_MIRROR_2026-11-07.md
 
 # Codex build brief, 3 Nov 2026: E3-B (the mirrored message)
 

@@ -1,4 +1,4 @@
-STATUS: live
+STATUS: superseded-by docs/reinterp/CODEX_BRIEF8_PHONE_MIRROR_2026-11-07.md
 
 # Brief 8, ready for Codex (7 Nov 2026) — Vera's ordinary message before the platform
 
