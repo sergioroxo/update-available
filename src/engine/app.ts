@@ -351,7 +351,10 @@ export function seatPose(yaw: number): CameraPose {
      * frame; it is a FRAMING fix, and the wall behind it is a separate one
      * (S115, the dressing).
      */
-    case 270: return { x: 4.4, y: EYE.y, z: 0.7, pitch: -3, yaw: 270 };  // Room 3 (east)
+    // ⚑ S321 — 2026 v3 reads TWO screens, the monitor (the system) and the laptop beside it (Kettle, the people):
+    //   the seat moves 0.14 m right and looks 3° right and 10° down so both sit in the frame together, whole
+    //   (photographed from the seat, out/tour-e4-v3; the laptop moved in beside the monitor, e_laptop).
+    case 270: return { x: 4.4, y: EYE.y, z: 0.84, pitch: -10, yaw: 267 };  // Room 3 (east)
     case 180: return { x: EYE.x, y: EYE.y, z: 0.7, pitch: 0, yaw: 180 }; // spine (door + record) — review only
     default:  return { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }; // Room 1 (front)
   }
@@ -998,7 +1001,25 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         queueGuide.lambyGuide = os.lambyGuide;
         queueGuide.callPending = os.era === 'e3' && ['phone', 'vote', 'cascade'].includes(mapState(os).current?.beat.id ?? '');
       }
-      if (os.e4) { os.e4.browser.lambyGuide = os.lambyGuide; os.e4.browser.onGuideLook = () => faceGuideSurface('monitor'); }
+      if (os.e4) {
+        const b = os.e4.browser;
+        b.lambyGuide = os.lambyGuide;
+        b.onGuideLook = () => faceGuideSurface(b.guideSurface());
+        // ⚑ S321 — 2026 v3: the screens turn her to the screen the story has moved to (no beat waits on a look)
+        b.onFace = (s) => {
+          if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
+          if (s === 'headset') {
+            const v = app.root.findByName('era4-visor') as pc.Entity | null;
+            if (!v) return true;
+            const p = v.getPosition(), dx = p.x - camPos.x, dy = p.y - camPos.y, dz = p.z - camPos.z;
+            startCamMove({ ...camPos, pitch: Math.atan2(dy, Math.hypot(dx, dz)) * pc.math.RAD_TO_DEG, yaw: Math.atan2(-dx, -dz) * pc.math.RAD_TO_DEG }, 1.8, true);
+            return true;
+          }
+          // ⚑ S321 — both screens sit in the seat's own frame now: a turn "to" either is a return to the seat's view
+          startCamMove(seatPose(270), 1.2, true);
+          return true;
+        };
+      }
       if (scriptedBusy()) return { silent: true, voice: false };
       if (os.era === 'e3') return { silent: queueGuide?.guideSilent ?? true, voice: queueGuide?.guideVoice ?? false };
       if (os.era === 'e4') {
@@ -1012,7 +1033,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     };
     os.onGuidePress = (id) => {
       if (os.era === 'e3') queueGuide?.pressGuideTarget(id);
-      if (os.era === 'e4') { os.e4?.browser.pressGuideTarget(id); faceGuideSurface('monitor'); }
+      if (os.era === 'e4') { const at = os.e4?.browser.pressGuideTarget(id); faceGuideSurface(at ?? 'monitor'); }
     };
     os.onGuideMove = (target) => {
       if (scriptedBusy()) return;

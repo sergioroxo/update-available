@@ -469,30 +469,83 @@
     },
     {
      "id": "l",
-     "label": "L, on the laptop",
+     "label": "Your session",
      "done": "browserOpen",
-     "hint": "The laptop is restoring your session. Wait a moment.",
+     "hint": "Your session is coming back. Wait a moment.",
+     "where": "the monitor"
+    },
+    {
+     "id": "eighteen",
+     "label": "Eighteen",
+     "done": "e4:v3:house",
+     "quiet": true,
+     "hint": "Your friends wrote. Read the house chat on the laptop.",
      "where": "the laptop"
     },
     {
-     "id": "defaults",
-     "label": "Your defaults",
-     "done": "defaultsSeen",
-     "hint": "The update chose your defaults. Press Continue.",
+     "id": "newyou",
+     "label": "The new you",
+     "done": "e4:newyou",
+     "hint": "The update restored your defaults. Press Continue.",
      "where": "the monitor"
+    },
+    {
+     "id": "mum",
+     "label": "Mum",
+     "done": "e4:v3:mum",
+     "quiet": true,
+     "hint": "Read Mum, one year at a time.",
+     "where": "the laptop"
+    },
+    {
+     "id": "dad",
+     "label": "Dad",
+     "done": "beat:dad",
+     "quiet": true,
+     "hint": "Dad wrote. Read him.",
+     "where": "the laptop"
+    },
+    {
+     "id": "link",
+     "label": "Mum's link",
+     "done": "beat:link",
+     "hint": "Open the link Mum sent.",
+     "where": "the laptop"
+    },
+    {
+     "id": "number",
+     "label": "The number",
+     "done": "beat:number",
+     "hint": "Your clinic wrote. Open the letter.",
+     "where": "the monitor"
+    },
+    {
+     "id": "meridian",
+     "label": "Support while you wait",
+     "done": "beat:meridian",
+     "hint": "Ask Meridian. Send, then close the reply.",
+     "where": "the monitor"
+    },
+    {
+     "id": "left",
+     "label": "Left",
+     "done": "beat:left",
+     "quiet": true,
+     "hint": "The house chat. Read it.",
+     "where": "the laptop"
     },
     {
      "id": "search",
      "label": "The search, finished",
-     "done": "resultsSeen",
+     "done": "beat:search",
      "hint": "Press the search. The engine finishes it for you.",
      "where": "the monitor"
     },
     {
-     "id": "agent",
+     "id": "bot",
      "label": "Second Thoughts",
-     "done": "agentOpened",
-     "hint": "The first result is an ad. Open it.",
+     "done": "beat:bot",
+     "hint": "The first result is an ad. Press Chat now.",
      "where": "the monitor"
     },
     {
@@ -504,67 +557,25 @@
      "where": "the bed"
     },
     {
-     "id": "open",
-     "label": "The agent says hello",
-     "done": "convOpen",
+     "id": "map",
+     "label": "The map",
+     "done": "e4:v3:mute",
      "hint": "Answer it. Either answer goes on.",
-     "where": "the monitor"
-    },
-    {
-     "id": "meridian",
-     "label": "Somewhere else, first",
-     "done": "enquiryDone",
-     "hint": "Press Meridian LGB Trust. Send the message, then close the reply.",
-     "where": "the monitor"
-    },
-    {
-     "id": "back",
-     "label": "Back to the agent",
-     "done": "convBack",
-     "hint": "It asks if this is still you. Either answer goes on.",
-     "where": "the monitor"
-    },
-    {
-     "id": "photo",
-     "label": "Could I see you?",
-     "done": "convSee",
-     "hint": "Press Choose a photo. Open Pride '24 and pick any photo.",
-     "where": "the monitor"
-    },
-    {
-     "id": "composite",
-     "label": "The version that matches the file",
-     "done": "convComposite",
-     "hint": "Press Use as profile photo.",
-     "where": "the monitor"
-    },
-    {
-     "id": "story",
-     "label": "Your story",
-     "done": "convCare",
-     "hint": "Read what it wrote. Press Acknowledge.",
-     "where": "the monitor"
-    },
-    {
-     "id": "messages",
-     "label": "Your messages",
-     "done": "threadOpened",
-     "hint": "Allow it. Then open Junie's thread.",
      "where": "the monitor"
     },
     {
      "id": "junie",
      "label": "Junie",
-     "done": "junieRead",
+     "done": "beat:junie",
      "quiet": true,
-     "hint": "Read Junie's messages.",
-     "where": "the monitor"
+     "hint": "Junie wrote this morning. Open her chat.",
+     "where": "the laptop"
     },
     {
-     "id": "reversal",
+     "id": "original",
      "label": "The original",
-     "done": "reversed",
-     "hint": "Open Photos. Press Use original.",
+     "done": "beat:original",
+     "hint": "Photos: press Use original.",
      "where": "the monitor"
     },
     {
@@ -575,11 +586,19 @@
      "where": "the headset on the desk"
     },
     {
+     "id": "tryon",
+     "label": "Try it on",
+     "done": "beat:tryon",
+     "quiet": true,
+     "hint": "The system starts it by itself. Nothing to press.",
+     "where": "the glass"
+    },
+    {
      "id": "session",
-     "label": "The session",
+     "label": "Junie's link",
      "done": "commonsJoined",
      "quiet": true,
-     "hint": "Press Begin. A link will come. Press it.",
+     "hint": "Junie's link breaks in. Press it.",
      "where": "the glass"
     },
     {
@@ -599,7 +618,7 @@
      "where": "the desk"
     }
    ],
-   "_docS293": "⚑ S293 — 2026 v2 (RESEARCH_2026_V2_WEAPONISED_CARE §4, his yes; ENDING_TRANSJESUS, his 'make this good and storytelling'): the defaults, the search steered to an ad, the agent's conversation (its referral, Meridian's refusal, the composite, her story, the messages), Junie's thread (felt — quiet), the original, the headset, the stream (respite — quiet), the update failing. Each beat's `done` is a condition in src/witness/map.ts; each beat's target ids are in lambyGuide.json (the glow reads the same ids)."
+   "_docS321": "⚑ S321 — 2026 v3 (DESIGN_2026_V3_PRESSURE_2026-11-07.md, four acts): eighteen, the new you, Mum, Dad, Mum's link, the number, Meridian, left, the search, Second Thoughts, the map, Junie, the original, the headset, the session, the stream, the update failing. `beat:<id>` reads the contract (src/narrative/e4Beats.ts); `e4:<id>` reads a 2026 filing. Felt beats are quiet (no helper, no Lamby, no ring). `tryon` is the screens' (mirror.ts, quiet: nothing to press); the room builder adds `room` (after left, done: beat:room) when it exists. v2's rows (_docS293) are retired."
   }
  ],
  "aheadCount": "ahead: {n}",

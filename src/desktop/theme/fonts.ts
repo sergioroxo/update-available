@@ -39,13 +39,15 @@ const MONO_2016 = `Menlo, Consolas, "DejaVu Sans Mono", "Courier New", monospace
 const SANS_2016 = `"${VENDORED.ui2016}", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif`;
 const SANS_2026 = `"${VENDORED.ui2026}", -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif`;
 
-export interface Face { family: string; /** weight for text at or under `boldBelow` px */ boldBelow: number }
+export interface Face { family: string; /** weight for text at or under `boldBelow` px */ boldBelow: number; /** the weight used under `boldBelow` (default bold) */ weight?: string }
 
 export const FACES: Record<FaceEra, Face> = {
   e1: { family: MONO_HEAVY, boldBelow: 13 },
   e2: { family: MONO_HEAVY, boldBelow: 13 },
   e3: { family: MONO_2016, boldBelow: 0 },
-  e4: { family: MONO_2016, boldBelow: 0 },
+  // ⚑ S321 — 2026 v3's presentation rules (DESIGN_2026_V3_PRESSURE §"Presentation rules" 5): "a bolder face. Replace
+  //   the thin monospace with the era's bolder UI face. Monospace only for system lines" (`monoFor` below).
+  e4: { family: SANS_2026, boldBelow: 99, weight: '600' },
   close: { family: MONO_HEAVY, boldBelow: 13 }
 };
 
@@ -57,9 +59,15 @@ export function faceEra(): FaceEra { return current; }
 /** the CSS font string for `size` px in the current era */
 export function fontFor(size: number, era: FaceEra = current): string {
   const f = FACES[era];
-  const weight = size <= f.boldBelow ? 'bold ' : '';
+  const weight = size <= f.boldBelow ? `${f.weight ?? 'bold'} ` : '';
   return `${weight}${size}px ${f.family}`;
 }
 
 /** the reading sans for prose surfaces (the Close's panels, Era 4 pages that want one) */
 export function sansFor(era: FaceEra): string { return era === 'e4' ? SANS_2026 : SANS_2016; }
+
+/** ⚑ S321 — the system's own lines in 2026 (addresses, filings, timestamps, the clinic's reference): monospace, kept
+ *  so the machine still sounds like a machine beside the bolder UI face */
+export function monoFor(size: number): string { return `${size}px ${MONO_2016}`; }
+/** ⚑ S321 — a newspaper's masthead and headline (the simulated articles): the platform's serif */
+export function newsFor(size: number, bold = true): string { return `${bold ? '700 ' : ''}${size}px Georgia, "Times New Roman", serif`; }

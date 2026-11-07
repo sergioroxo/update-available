@@ -260,115 +260,100 @@
       }
     },
     "e4": {
+      "_docS321": "⚑ S321 — 2026 v3. One step per map beat that is not quiet (felt beats — eighteen, Mum, Dad, left, Junie — are silent: Lamby never speaks over a person). Every target id is a live rect at that step (tools/lamby-guide-test.mjs checks the shape; the tour photographs each). `act` presses navigation only, never an answer.",
       "browser": {
-        "tip": "Your session is back. Press the browser to look around.",
-        "here": "The browser is on your desktop.",
-        "again": "Your session is waiting in the browser.",
+        "tip": "Your session is coming back. Give it a moment.",
+        "here": "It's on the monitor.",
+        "again": "Your session is waiting on the monitor.",
+        "target": []
+      },
+      "wake": {
+        "tip": "The monitor is asleep. Press it to restore your session.",
+        "here": "Press anywhere on the monitor.",
+        "again": "Press the monitor.",
         "target": [
-          "search-open"
+          "saver-wake"
         ]
       },
-      "defaults": {
-        "tip": "The update picked your defaults. Continue is on the card.",
-        "here": "Continue is right here.",
-        "again": "The card waits for Continue.",
+      "newyou": {
+        "tip": "The update restored your defaults. Continue is at the bottom.",
+        "here": "Continue is at the bottom.",
+        "again": "Shall I press Continue?",
         "target": [
-          "def-continue"
-        ]
-      },
-      "results": {
-        "tip": "Press Search and let the engine finish it.",
-        "here": "Search is right here.",
-        "again": "It finishes by itself. You only press once.",
-        "target": [
-          "search-open"
+          "ny-continue"
         ],
-        "act": "press:search-open"
+        "act": "press:ny-continue"
       },
-      "agent": {
-        "tip": "The first result is the one to open.",
-        "here": "That's the first result.",
-        "again": "The first result is the ad. Open it.",
+      "link": {
+        "tip": "Mum sent you a link. It's in her chat, on the laptop.",
+        "here": "Mum's chat is on the laptop.",
+        "again": "Shall I open Mum's chat?",
         "target": [
-          "result-agent"
+          "row-mum",
+          "chat-mum"
         ],
-        "act": "press:result-agent"
+        "act": "press:chat-mum"
       },
-      "open": {
-        "tip": "It asked you something. Either answer goes on.",
-        "here": "Your answer goes here.",
-        "again": "Pick either answer.",
+      "number": {
+        "tip": "Your clinic wrote. Open letter is at the bottom.",
+        "here": "Open letter is at the bottom.",
+        "again": "Shall I open the letter?",
         "target": [
-          "conv-chip-0",
-          "conv-chip-1"
-        ]
+          "clinic-open"
+        ],
+        "act": "press:clinic-open"
       },
       "meridian": {
-        "tip": "Meridian LGB Trust is in the list on the right. Shall I open it?",
-        "here": "It's the first place on the list.",
-        "again": "Shall I open Meridian for you?",
+        "tip": "Support while you wait is at the bottom of the clinic page.",
+        "here": "It's at the bottom.",
+        "again": "Shall I open it?",
         "target": [
-          "res-meridian",
+          "clinic-support",
           "enq-send",
           "enq-close"
         ],
-        "act": "press:res-meridian"
+        "act": "press:clinic-support"
       },
-      "back": {
-        "tip": "It asks if this is still you. Either answer goes on.",
-        "here": "Your answer goes here.",
+      "results": {
+        "tip": "Press Search. The engine finishes it for you.",
+        "here": "Search is at the bottom.",
+        "again": "Shall I press Search?",
+        "target": [
+          "search-go",
+          "search-open"
+        ],
+        "act": "press:search-go"
+      },
+      "bot": {
+        "tip": "The first result is an ad. Chat now is at the bottom.",
+        "here": "Chat now is at the bottom.",
+        "again": "Shall I open it?",
+        "target": [
+          "ad-chat",
+          "result-agent"
+        ],
+        "act": "press:ad-chat"
+      },
+      "map": {
+        "tip": "It wants an answer. Either answer goes on.",
+        "here": "The answers are at the bottom.",
         "again": "Pick either answer.",
         "target": [
           "conv-chip-0",
-          "conv-chip-1"
-        ]
-      },
-      "photo": {
-        "tip": "Press Choose a photo. Any photo will do.",
-        "here": "Choose a photo is under the chat.",
-        "again": "Any photo leads on.",
-        "target": [
-          "conv-act",
-          "file-0",
-          "file-2"
-        ]
-      },
-      "composite": {
-        "tip": "Press Use as profile photo to go on.",
-        "here": "It's under the chat.",
-        "again": "The button is under the chat.",
-        "target": [
-          "conv-act"
-        ]
-      },
-      "story": {
-        "tip": "Read what it wrote, then Acknowledge.",
-        "here": "Acknowledge is under the chat.",
-        "again": "The button is under the chat.",
-        "target": [
-          "conv-act"
-        ]
-      },
-      "messages": {
-        "tip": "It wants your messages. Then open Junie's thread.",
-        "here": "Junie's thread is on the right.",
-        "again": "Shall I open Junie's thread?",
-        "target": [
-          "conv-chip-0",
           "conv-chip-1",
-          "thread-junie"
-        ],
-        "act": "press:thread-junie"
+          "conv-act"
+        ]
       },
-      "reversal": {
-        "tip": "Your original is in Photos. Shall I take you there?",
-        "here": "Photos is the tab at the top.",
+      "original": {
+        "tip": "Your original is in Photos. Use original is at the bottom.",
+        "here": "Photos is a tab at the top.",
         "again": "Shall I open Photos?",
         "target": [
-          "tab3",
+          "conv-act",
+          "tab-photos",
           "photo-original"
         ],
-        "act": "press:tab3"
+        "act": "press:tab-photos"
       },
       "headset": {
         "tip": "Time for the headset. It's on the desk — shall I take you there?",

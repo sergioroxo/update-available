@@ -142,7 +142,12 @@ export function recordEntries(): RecordEntry[] {
   for (const j of ledger.era3Jobs) push('e3', 'recommendation', j.id, 'tagged', j.witness, false);   // S195: The recommendation
   // ── 2026 ──
   for (const e of ledger.e4Space) {
-    const kind = e.id === 'update' || e.id === 'companion' ? 'update'
+    // ⚑ S321 — 2026 v3's filings: the new you and the photograph are `photos`; the clinic's number is `record`; the
+    //   muting on advice and Junie unmuted are `care` (the system acting on her contacts); the rest are the session
+    const kind = e.id === 'newyou' || e.id === 'v3:keep' ? 'photos'
+      : e.id === 'v3:clinic' ? 'record'
+        : e.id === 'v3:mute' || e.id === 'v3:junie' ? 'care'
+          : e.id === 'update' || e.id === 'companion' ? 'update'
       : e.id === 'record' || e.id === 'step:record' || e.id === 'legacy' || e.id === 'conv:back' ? 'record'
         : e.id === 'step:photos' || e.id === 'photos' || e.id === 'conv:see' || e.id === 'conv:composite' || e.id === 'reversal' ? 'photos'
           : e.id === 'step:care' || e.id.startsWith('care') || e.id === 'turn:care' || e.id === 'conv:care' ? 'care'   // S160 / R3-94: the care assignment has its own practice and source

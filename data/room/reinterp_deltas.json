@@ -2859,9 +2859,10 @@
    },
    {
     "id": "e_laptop",
+    "_docS321": "⚑ S321 — 2026 v3: the laptop carries Kettle (the messenger) and must be READ beside the monitor from the seat (the coordinator's review of out/tour-e4-v3: half of it fell off the frame's right edge). x 5.24 → 5.12 (toward the seat, still on the desk: its front edge is 4.98), yaw 156 → 162 (its glass faces the moved seat). PLACEMENT.laptop in era3Devices.ts moves with it (the plane's +0.0948 offset rotated by the new yaw). The seat moved too (app.ts seatPose(270)).",
     "_doc": "⚑ S118: +0.25 on z, to hand the desk's sweet spot to the headset. The laptop is read ONCE, at the very start of the era, for three short lines, and then L moves to the visor and it is never used again; the headset is the era's one touch and the thing the whole tail depends on. The reading surface can sit 11° right of the bearing. PLACEMENT.laptop in era3Devices.ts moves by the same +0.25 — a pure translation, so every measurement in that block's long comment still holds without being re-derived.",
     "pos": [
-     5.24,
+     5.12,
      0.75,
      1.08
     ],
@@ -2872,7 +2873,7 @@
     ],
     "color": "#C9BFA6",
     "model": "laptop",
-    "yaw": 156
+    "yaw": 162
    },
    {
     "id": "e_monitor",
