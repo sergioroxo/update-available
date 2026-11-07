@@ -111,9 +111,10 @@ Verify:
 - `npx tsc --noEmit -p .` and `npm test`;
 - stills of each step from the seat (`tools/tour-e4.mjs` and `tools/stills.mjs`);
 - draw calls at the seat and in the stream;
-- `node tools/walk.mjs --port 3116 --max 2600 --require-close` reaching the Close. **Your walk is the first full run
-  of the combined build** (Codex's 2016 phone mirror + Claude's 2026 screens were merged into `reinterp` separately),
-  so report anything it finds in ANY era, not only 2026.
+- **Walk only 2026, to save your quota:** `node tools/walk.mjs --port 3116 --from-era 4 --max 900 --require-close`
+  must reach the Close. Run it in the background with its output sent to a file, and read only the final lines and
+  the WALK_*.md report it writes. Do not watch it step by step. **Do NOT run the full entrance walk.** Claude runs the
+  full walk of the combined build locally after merging.
 
 Report: `docs/reinterp/CODEX_E4_V3_ROOM_REPORT_2026-11-08.md`. One BUILD_LOG line. Reply with the branch, the commits,
 the walk result, draw calls, and an 8-line plain summary.
