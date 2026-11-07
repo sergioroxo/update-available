@@ -343,6 +343,15 @@
      "where": "the workstation on the desk"
     },
     {
+     "id": "personal-message",
+     "label": "Orla's message",
+     "hint": "An ordinary message on her phone.",
+     "done": "personalMessageSeen",
+     "optional": true,
+     "quiet": true,
+     "where": "the phone"
+    },
+    {
      "id": "signin",
      "label": "Sign in",
      "done": "signedIn",

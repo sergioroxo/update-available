@@ -40,6 +40,7 @@ import {
   appTile, wallpaper, sheet, pill, furnitureTile, dock, pageDots, dateWidget
 } from '../theme/phone';
 import { drawFloppyIcon } from './floppysheep';
+import { veraDay } from '../../state/veraDay';
 import { ledger } from '../../state/ledger';
 import { entriesByEra } from '../../witness/record';
 import m from '../../../data/dialog/s3_maiden.json';
@@ -64,7 +65,7 @@ const HOME = m.home as unknown as Record<string, string>;
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
 type Stage = 'quiet' | 'first' | 'voted' | 'cascade' | 'after';
-type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk';
+type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal';
 /** Lambient's card, and it is the same card whichever way she got here */
 type Card = null | 'opened' | 'ignored';
 
@@ -107,13 +108,37 @@ export class PhoneE3 {
   /** S177 — the backlog message open on its own screen (`from + time`), or null */
   private openMessage: string | null = null;
   private rects: Rect[] = [];
+  private inboxPage = 0;
+  private personalArmed = false;
+  get personalSeen(): boolean { return this.readMessages.has('personal'); }
+  get personalOpen(): boolean { return this.screen === 'personal'; }
+  armPersonal(): void { if (!this.personalArmed) { this.personalArmed = true; this.bump(); } }
+  openPersonalThread(): void {
+    this.readMessages.add('personal'); veraDay.personalMessageSeen = true;
+    this.screen = 'personal'; this.bump();
+  }
+  closePersonalThread(): void { if (this.personalOpen) { this.screen = 'inbox'; this.bump(); } }
+  /** Same phone-owned content on either surface; never installs phone hit rects on the desktop. */
+  drawThreadView(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
+    const y = appBar(ctx, W, statusBar(ctx, W, this.clockText), m.personalMessage.from);
+    phoneFont(ctx, 12); ctx.fillStyle = PHONE.ink;
+    let by = y + 18;
+    for (const text of m.personalMessage.thread) {
+      const lines = phoneWrap(ctx, text, W - 40);
+      bubble(ctx, 10, by, W - 20, lines.length * 17 + 20, 'in');
+      ctx.fillStyle = PHONE.ink;
+      lines.forEach((ln, i) => ctx.fillText(ln, 20, by + 10 + i * 17));
+      by += lines.length * 17 + 30;
+    }
+  }
 
   /** S158 / R3-66: the phone's clock is the workstation's — one clock for the room */
   constructor(private readonly opts: { onLift(): void; floppyOpen(): boolean; clock?: () => string }) {}
   private get clockText(): string { return this.opts.clock ? this.opts.clock() : d.phone.lockClock; }
 
   private bump(): void { this.version++; }
-  get quietReading(): boolean { return this.screen === 'message' || this.screen === 'inbox'; }
+  get quietReading(): boolean { return this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
   presentInbox(): void { this.screen = 'inbox'; this.openMessage = null; this.bump(); }
 
 
@@ -264,7 +289,8 @@ export class PhoneE3 {
     this.rects = [];
     ctx.fillStyle = PHONE.bg;
     ctx.fillRect(0, 0, W, H);
-    if (this.screen === 'lock') { this.drawLock(ctx, W, H); }
+    if (this.screen === 'personal') { this.drawThreadView(ctx, W, H); this.pushBack(20, 62); }
+    else if (this.screen === 'lock') { this.drawLock(ctx, W, H); }
     else if (this.screen === 'group') { this.drawGroup(ctx, W, H); }
     else if (this.screen === 'platform') { this.drawPlatform(ctx, W, H); }
     else if (this.screen === 'inbox') { this.drawInbox(ctx, W, H); }
@@ -276,7 +302,7 @@ export class PhoneE3 {
     //   on, the pale shimmer on the game that is only ever hers to open. Drawn with the screen (no animation).
     const path = this.pathIds();
     for (const r of this.rects) {
-      const k = path.has(r.id) ? 'path' : r.id === 'floppy' ? 'may' : null;
+      const k = this.quietReading ? null : path.has(r.id) ? 'path' : r.id === 'floppy' ? 'may' : null;
       if (k) drawGlow(ctx, r, k, PHONE.tileGame, PHONE.faint);
     }
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
@@ -324,6 +350,17 @@ export class PhoneE3 {
       ctx.fillText(UNLOCK_HINT, ux + 14, uy + 8);
     };
     if (this.stage === 'quiet') {
+      if (this.personalArmed && !this.personalSeen) {
+        const y = 140, w = W - 20;
+        phoneFont(ctx, 11);
+        const lines = phoneWrap(ctx, m.personalMessage.firstWords, w - 20);
+        const h = 32 + lines.length * 14;
+        roundRect(ctx, 10, y, w, h, 8, PHONE.surface);
+        ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600);
+        ctx.fillText(m.personalMessage.from, 20, y + 9); phoneFont(ctx, 11);
+        lines.forEach((ln, i) => ctx.fillText(ln, 20, y + 28 + i * 14));
+        this.rects.push({ x: 10, y, w, h, id: 'personal-notification' });
+      }
       unlockPill();
       this.rects.push({ x: 0, y: 130, w: W, h: H - 130, id: 'unlock' });
       return;
@@ -366,7 +403,7 @@ export class PhoneE3 {
     dateWidget(ctx, 10, 24, W - 20, HOME.widgetWeekday, HOME.widgetDate, HOME.widgetNote);
 
     const unread = this.groupUnread();
-    const unreadMail = BACKLOG.length - this.readMessages.size;
+    const unreadMail = BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length;
 
     // ⚑ FOUR COLUMNS AT PHONE DENSITY, not a 2×2 of billboards. The four apps
     //   that matter sit in the first row and everything under them is set
@@ -583,56 +620,29 @@ export class PhoneE3 {
     const y0 = statusBar(ctx, W, this.clockText);
     let y = appBar(ctx, W, y0, m.home.messagesLabel);
     this.pushBack(y0, y);
-    // S158 / R3-78 — the group's thread, first: the way into the chat is a thread like any other
-    {
-      const unread = this.groupUnread();
+    const rows = [
+      ...(this.personalArmed ? [{ from: m.personalMessage.from, text: m.personalMessage.firstWords, time: '', id: 'personal-notification', read: this.personalSeen }] : []),
+      { from: m.home.groupLabel, text: this.groupUnread() ? m.home.groupUnread.replace('{n}', String(this.groupUnread())) : m.home.groupQuiet, time: '', id: 'group', read: !this.groupUnread() },
+      ...BACKLOG.map(b => ({ ...b, id: 'read-' + b.from + b.time, read: this.readMessages.has(b.from + b.time) }))
+    ];
+    // The era's news stays reachable on every page; private threads can be paged independently.
+    const group = rows.splice(rows.findIndex(r => r.id === 'group'), 1)[0];
+    const pages = Math.max(1, Math.ceil(rows.length / 4));
+    this.inboxPage = Math.min(this.inboxPage, pages - 1);
+    for (const b of [group, ...rows.slice(this.inboxPage * 4, this.inboxPage * 4 + 4)]) {
       const h = 48;
-      ctx.fillStyle = PHONE.surface; ctx.fillRect(0, y, W, h);
-      if (unread) { ctx.fillStyle = PHONE.tint; ctx.beginPath(); ctx.arc(10, y + 14, 3, 0, Math.PI * 2); ctx.fill(); }
-      avatar(ctx, 18, y + 5, 24, m.home.groupLabel);
-      phoneFont(ctx, 11, 600);
-      ctx.fillStyle = PHONE.ink;
-      ctx.fillText(m.home.groupLabel, 48, y + 5);
+      if (!b.read) { ctx.fillStyle = PHONE.tint; ctx.fillRect(5, y + 13, 4, 4); }
+      phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.ink; ctx.fillText(b.from, 14, y + 5);
+      phoneFont(ctx, 8); ctx.fillStyle = PHONE.dim;
+      ctx.fillText(b.time, W - 10 - ctx.measureText(b.time).width, y + 20);
       phoneFont(ctx, 10);
-      ctx.fillStyle = unread ? PHONE.ink : PHONE.dim;
-      ctx.fillText(unread === 1 ? m.home.groupUnreadOne : unread ? m.home.groupUnread.replace('{n}', String(unread)) : m.home.groupQuiet, 48, y + 22);
-      ctx.fillStyle = PHONE.hairline; ctx.fillRect(48, y + h - 1, W - 48, 1);
-      this.rects.push({ x: 0, y, w: W, h, id: 'group' });
-      y += h;
+      ctx.fillText(phoneWrap(ctx, b.text, W - 28)[0], 14, y + 31);
+      ctx.fillStyle = PHONE.hairline; ctx.fillRect(14, y + h - 1, W - 14, 1);
+      this.rects.push({ x: 0, y, w: W, h, id: b.id }); y += h;
     }
-    // ⚑ S219 / W1-E7 — EVERY MESSAGE MUST BE REACHABLE. Six rows of two preview lines did not fit under the thread (the
-    //   loop `break`s at the glass's foot), so the sixth message could never be opened and "unread" could never reach
-    //   zero. When the two-line previews would not all fit, the previews are one line — the message opens whole on its
-    //   own screen anyway.
-    const previewLines = y + BACKLOG.length * (22 + 2 * 13) <= H - 16 ? 2 : 1;
-    for (const b of BACKLOG) {
-      const open = this.readMessages.has(b.from + b.time);
-      phoneFont(ctx, 10);
-      // S177: a preview, always — a press opens the message on its own screen
-      //   (his 2026-09-26: "I press on the messages and it just expands? weird")
-      const lines = phoneWrap(ctx, b.text, W - 50).slice(0, previewLines);
-      const h = 22 + lines.length * 13;
-      if (y + h > H - 16) break;
-      ctx.fillStyle = PHONE.surface; ctx.fillRect(0, y, W, h);
-      if (!open) { ctx.fillStyle = PHONE.tint; ctx.beginPath(); ctx.arc(10, y + 14, 3, 0, Math.PI * 2); ctx.fill(); }
-      avatar(ctx, 18, y + 5, 24, b.from);
-      phoneFont(ctx, 11, 600);
-      ctx.fillStyle = PHONE.ink;
-      ctx.fillText(b.from, 48, y + 5);
-      phoneFont(ctx, 9);
-      ctx.fillStyle = PHONE.dim;
-      const tw = ctx.measureText(b.time).width;
-      ctx.fillText(b.time, W - 10 - tw, y + 6);
-      phoneFont(ctx, 10);
-      ctx.fillStyle = open ? PHONE.ink : PHONE.dim;
-      lines.forEach((ln, i) => ctx.fillText(ln, 48, y + 19 + i * 13));
-      ctx.fillStyle = PHONE.hairline; ctx.fillRect(48, y + h - 1, W - 48, 1);
-      this.rects.push({ x: 0, y, w: W, h, id: 'read-' + b.from + b.time });
-      y += h;
-    }
-    phoneFont(ctx, 9);
-    ctx.fillStyle = PHONE.faint;
-    ctx.fillText(m.home.readNote, 12, Math.min(y + 6, H - 14));
+    phoneFont(ctx, 12); ctx.fillStyle = PHONE.dim;
+    if (this.inboxPage > 0) { ctx.fillText(m.home.previousPage, 12, H - 26); this.rects.push({ x: 0, y: H - 36, w: 50, h: 36, id: 'inbox-prev' }); }
+    if (this.inboxPage < pages - 1) { ctx.fillText(m.home.nextPage, W - 25, H - 26); this.rects.push({ x: W - 50, y: H - 36, w: 50, h: 36, id: 'inbox-next' }); }
   }
 
   /** ⚑ LAMBIENT'S CARD, as a SHEET from the bottom edge — the shape a phone of
@@ -683,6 +693,9 @@ export class PhoneE3 {
       x >= rr.x && x <= rr.x + rr.w && y >= rr.y && y <= rr.y + rr.h);
     if (!r) return false;
     switch (r.id) {
+      case 'inbox-prev': this.inboxPage--; this.bump(); return true;
+      case 'inbox-next': this.inboxPage++; this.bump(); return true;
+      case 'personal-notification': this.openPersonalThread(); return true;
       case 'unlock': this.screen = 'home'; this.bump(); return true;
       case 'notification': this.screen = 'group'; this.openGroup(); return true;
       case 'group': this.screen = 'group'; this.openGroup(); return true;
@@ -691,7 +704,7 @@ export class PhoneE3 {
         // The optional inbox never files a reading event.
         this.bump(); return true;
       // S158: the chat goes back to Messages; S177: so does an open message
-      case 'back': this.screen = this.screen === 'group' || this.screen === 'message' ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
+      case 'back': this.screen = this.screen === 'group' || this.screen === 'message' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
       case 'dismiss': this.dismissCard(); return true;

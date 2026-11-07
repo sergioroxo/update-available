@@ -75,6 +75,7 @@ const has4 = (id: string): boolean => ledger.e4Space.some((e) => e.id === id);
  *  condition ahead of the code that makes it fire — and a beat whose key is
  *  misspelt stays "current" forever, which a walk of the map will show. */
 const CONDITIONS: Record<string, Condition> = {
+  personalMessageSeen: () => veraDay.personalMessageSeen,
   // ── 1997 ──
   profileFiled: () => has('profile-initialized'),
   kitInserted: () => has('kit-inserted'),

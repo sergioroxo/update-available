@@ -354,7 +354,7 @@ export type PhoneView = {
 export class GraceQueueLite {
   lambyGuide: LambyGuide | null = null;
   private guideWait = new GuideWait();
-  private guideReady(key: string): boolean { return this.guideWait.ready(key, !!this.lambyGuide?.active); }
+  private guideReady(key: string): boolean { if (this.personalQuiet) return false; return this.guideWait.ready(key, !!this.lambyGuide?.active); }
   pressGuideTarget(id: string): void {
     if (!['signin', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
     const r = this.rects.find(h => h.id === id);
@@ -362,7 +362,7 @@ export class GraceQueueLite {
   }
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
 
-  get guideSilent(): boolean { return !!this.veraPage || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
+  get guideSilent(): boolean { return this.personalQuiet || !!this.veraPage || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
     || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
   private lambPriority = false;
   private lambSequence = 0;
@@ -373,9 +373,22 @@ export class GraceQueueLite {
    *  know when the workstation/tablet screens need a redraw + re-upload (dirty
    *  discipline: never re-dirtied by a ticking clock, only real state, or by
    *  a beat that is genuinely animating). */
+  private personalNotice = false;
+  private personalDesktop = false;
+  private personalArmed = false;
+  get personalQuiet(): boolean { return this.personalNotice || this.personalDesktop || this.phone.personalOpen; }
+  private armPersonalNotice(): void {
+    if (this.personalArmed) return;
+    this.personalArmed = true; this.personalNotice = true; this.phone.armPersonal(); this.bump();
+  }
+  private clearPersonalNotice(): void {
+    this.personalNotice = false; this.personalDesktop = false;
+    this.rects = this.rects.filter(r => !r.id.startsWith('personal-'));
+    this.bump();
+  }
   private ownVersion = 0;
   private highlightPreference = false;
-  get version(): number { return this.ownVersion + this.surfaceVersion() + (this.lambyGuide?.version ?? 0); }
+  get version(): number { return this.ownVersion + this.phone.version + this.surfaceVersion() + (this.lambyGuide?.version ?? 0); }
   /** the phone's own counter — the caret blink must not re-upload the workstation */
   private phoneV = 0;
 
@@ -531,7 +544,7 @@ export class GraceQueueLite {
   /** review jumps skip the arrival narrative, exactly as `?era=` skips E2's */
   settleArrival(): void {
     if (this.mode === 'dark' || this.mode === 'boot' || this.mode === 'install') {
-      this.mode = 'signin';
+      this.mode = 'signin'; this.armPersonalNotice();
       this.arrivalT = -1;
       this.bump();
     }
@@ -539,6 +552,7 @@ export class GraceQueueLite {
 
   /** Navigation never calls a job's completion or dismissal callback. */
   closeForEraJump(): void {
+    this.clearPersonalNotice(); this.phone.closePersonalThread();
     this.startMap.close(); this.startPanel.close(); this.rects = [];
     this.playing = false; stopClip(this.roomTone); this.roomTone = null;
     this.openSurface = null; this.chipReturn = null; this.pauseOpen = false;
@@ -561,9 +575,9 @@ export class GraceQueueLite {
    *  is still a short board; under the pause card, away on a job / the consent question / the phone in her hand */
   private readonly startPanel = new StartPanel('e3');
   private readonly startMap = new StartMenuMap();
-  private get startMapSilent(): boolean { return this.phoneInHand || this.playing; }
+  private get startMapSilent(): boolean { return this.personalQuiet || this.phoneInHand || this.playing; }
   private startPanelCalm(): boolean {
-    if (this.veraPage || this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface || !this.guideReady('start-panel')) return false;
+    if (this.personalQuiet || this.veraPage || this.startMap.active || this.minimised || this.saver || this.pauseOpen || this.phoneInHand || this.openSurface || !this.guideReady('start-panel')) return false;
     if (this.mode === 'signin') return true;
     return this.mode === 'board' && this.tasks().length <= 3;   // one row of tiles: the strip fits under them
   }
@@ -590,13 +604,17 @@ export class GraceQueueLite {
       this.highlightPreference = highlights; this.bump(); this.phoneV++;
     }
     this.guideWait.tick(dt, !!this.lambyGuide?.active);
-    veraDay.quiet = this.veraPage === 'record' || (this.phoneInHand && this.phone.quietReading);
+    if (this.phoneInHand || this.phone.personalSeen) {
+      if (this.personalNotice) { this.personalNotice = false; this.bump(); }
+      if (this.phoneInHand && this.personalDesktop) { this.personalDesktop = false; this.bump(); }
+    }
+    veraDay.quiet = this.personalQuiet || this.veraPage === 'record' || (this.phoneInHand && this.phone.quietReading);
     if (this.startMap.update(dt)) this.bump();
     this.updateSaver(dt);
     this.updateGate();
     this.updateJobReturn(dt);
     if (this.startPanel.tick(dt, this.startPanelCalm())) this.bump();
-    if (this.veraPage || this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
+    if (this.personalQuiet || this.veraPage || this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
     else if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
@@ -654,7 +672,7 @@ export class GraceQueueLite {
       if (want !== this.mode) {
         this.mode = want;
         if (want === 'boot') playOnce('boot_2016.mp3');   // S155 / R3-64: the 2016 machine coming on — no beep, a soft rising pair
-        if (want === 'signin') this.arrivalT = -1; // the clock's work is done
+        if (want === 'signin') { this.arrivalT = -1; this.armPersonalNotice(); } // the clock's work is done
         this.lastTick = tick;
         this.bump();
       } else if (tick !== this.lastTick) {
@@ -940,6 +958,7 @@ export class GraceQueueLite {
    *  press that starts the shift" — what changed is where the shift starts.) */
   beginList(): void {
     if (this.mode !== 'signin') return;
+    this.clearPersonalNotice(); this.phone.closePersonalThread();
     playOnce('login_2016.mp3');   // S141: Vera signs in
     if (!ledger.records.includes('e3-signed-in')) ledger.records.push('e3-signed-in');   // S158: the map's beat
     this.mode = this.consent ? 'board' : 'consent';
@@ -1137,7 +1156,7 @@ export class GraceQueueLite {
   }
 
   /** the window goes to the taskbar, and comes back from it. */
-  toggleMinimised(): void { this.minimised = !this.minimised; this.bump(); }
+  toggleMinimised(): void { this.clearPersonalNotice(); this.phone.closePersonalThread(); this.minimised = !this.minimised; this.bump(); }
 
   /** APPLY / SKIP — the only two verbs this era has. Both file; neither is
    *  weighted, tinted or answered. The counter only ever counts `applied`,
@@ -1333,7 +1352,7 @@ export class GraceQueueLite {
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.drawSurfaceContent(ctx, W, H);
     // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
-    if (!['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active && this.veraPage !== 'record' && !veraDay.quiet) {
+    if (!this.personalQuiet && !['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active && this.veraPage !== 'record' && !veraDay.quiet) {
       const ids = stepTargets('e3', buildStartModel(undefined, 'e3').now?.id);
       if (this.doneT >= 0 || this.storyDone) ids.add('board-back');
       if (this.mode === 'list' && !this.openSurface && this.current()) ids.delete('board-back');
@@ -1349,7 +1368,24 @@ export class GraceQueueLite {
       const nav = this.startMap.draw(ctx, W, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
+    this.drawPersonal(ctx, W, H);
     if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
+  }
+  private drawPersonal(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    if (!this.personalNotice && !this.personalDesktop) return;
+    const w = Math.min(340, Math.floor(W * 0.4)), x = W - w - 18;
+    const h = this.personalDesktop ? 230 : 112, y = H - h - 42;
+    if (this.personalDesktop) {
+      ctx.save(); ctx.translate(x, y); this.phone.drawThreadView(ctx, w, h); ctx.restore();
+    } else {
+      px(ctx, x, y, w, h, ERA3.white); px(ctx, x, y, w, 1, ERA3.glassEdge);
+      setFont(ctx, 14); ctx.fillStyle = ERA3.ink; ctx.fillText(maiden.personalMessage.from, x + 12, y + 12);
+      setFont(ctx, 13);
+      wrapText(ctx, maiden.personalMessage.firstWords, w - 32).forEach((ln, i) => ctx.fillText(ln, x + 12, y + 38 + i * 18));
+      this.rects.unshift({ x, y, w: w - 30, h, id: 'personal-open' });
+    }
+    setFont(ctx, 15); ctx.fillStyle = ERA3.greyDk; ctx.fillText(maiden.personalMessage.dismiss, x + w - 23, y + 8);
+    this.rects.unshift({ x: x + w - 30, y, w: 30, h: 30, id: 'personal-dismiss' });
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
@@ -1499,7 +1535,7 @@ export class GraceQueueLite {
     const bx = cx; const by = c.y + c.h - 70; const bw = 220; const bh = 42;
     aero.button(ctx, bx, by, bw, bh, q.app.signInButton, { primary: true, tone: 'good', size: 16 });
     this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'signin' });
-    drawLambMark(ctx, c.x + c.w - 20, c.y + 10, 1.6);
+    if (!this.personalQuiet) drawLambMark(ctx, c.x + c.w - 20, c.y + 10, 1.6);
   }
 
   /**
@@ -1640,7 +1676,7 @@ export class GraceQueueLite {
     //   wiped here before it was ever drawn; they now stay until she acts.
     //   The first-task beat itself closes on her next press on the board (handleClick).
     if ((this.lambPriority || !this.lambyGuide?.active) && !this._callPending) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
-    drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+    if (!this.personalQuiet) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
     //   it fits between them and Lambient's lane
     if (this.startPanel.open && this.startPanelCalm() && rows === 1) {
@@ -1731,7 +1767,7 @@ export class GraceQueueLite {
       aero.button(ctx, bx, by, bw, bh, this.boardBackLabel(), { primary: true, size: 11 });
       this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'board-back' });
     }
-    drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+    if (!this.personalQuiet) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
   }
 
   /** one tile: a picture, the job, what is waiting in it, and — when it is
@@ -1848,7 +1884,7 @@ export class GraceQueueLite {
     //   thing, not a glowing orb, and a bright bouncing circle here would be
     //   the piece playing along more eagerly than the piece should. The warmth
     //   on this card is in the words; the picture is allowed to be honest.
-    drawLambMark(ctx, cx + Math.round(cw / 2), c.y + 120, 9);
+    if (!this.personalQuiet) drawLambMark(ctx, cx + Math.round(cw / 2), c.y + 120, 9);
 
     // ⚑ the small print, at small-print size, unabridged. It is not decoration
     //   and it is not a joke: every clause is a thing the era uses later.
@@ -2090,7 +2126,7 @@ export class GraceQueueLite {
     // scribbled over the window's own controls, which is not a trust signal,
     // it is a rendering bug (Sérgio caught it: "there's a symbol on top of the
     // x button"). The caption buttons own the top-right; nothing goes there.
-    drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+    if (!this.personalQuiet) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
   }
 
   /**
@@ -2415,6 +2451,7 @@ export class GraceQueueLite {
   private drawLambientLane(
     ctx: CanvasRenderingContext2D, c: aero.AeroContent, line: string | string[]
   ): void {
+    if (this.personalQuiet) return;
     const raw = Array.isArray(line) ? line : [line];
     setFont(ctx, 11);
     const tagW = 22 + 60;
@@ -2438,6 +2475,18 @@ export class GraceQueueLite {
 
   // ── input ────────────────────────────────────────────────────────────────
   handleClick(x: number, y: number): void {
+    const personal = this.rects.find(r => r.id.startsWith('personal-') && hit(r, x, y));
+    if (personal) {
+      const open = personal.id === 'personal-open';
+      this.clearPersonalNotice();
+      if (open) { this.phone.openPersonalThread(); this.personalDesktop = true; }
+      else this.phone.closePersonalThread();
+      this.bump(); return;
+    }
+    // A miss passes through on this very release. Only a live navigation clears the notice.
+    if (this.rects.some(r => hit(r, x, y) && ['signin', 'start-menu', 'win-min'].includes(r.id))) {
+      this.clearPersonalNotice(); this.phone.closePersonalThread();
+    }
     const lg = this.rects.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (this.lambPriority) { this.lambPriority = false; this.bump(); }
     this.lambyGuide?.activity();
