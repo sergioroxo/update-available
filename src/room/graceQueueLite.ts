@@ -1,3 +1,4 @@
+import mirrorCopy from '../../data/strings/e3_mirror.json';
 import { GuideWait } from '../narrative/guideWait';
 import { drawVeraArchive, drawVeraDistribution, drawRetainedCopies, studioFont } from '../desktop/apps/veraSurfaces';
 import { drawTestimonyFilm } from '../desktop/theme/renataFilm';
@@ -377,10 +378,10 @@ export class GraceQueueLite {
   private personalDesktop = false;
   private personalArmed = false;
   private personalWasQuiet = false;
-  get personalQuiet(): boolean { return this.personalNotice || this.personalDesktop || this.phone.personalOpen || (this.phoneInHand && this.phone.quietReading); }
+  get personalQuiet(): boolean { return this.mirrorReading || this.phone.personalOpen || (this.phoneInHand && this.phone.quietReading); }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
-    this.personalArmed = true; this.personalNotice = true; this.phone.armPersonal(); this.bump();
+    this.personalArmed = true; this.phone.armPersonal(); this.bump();
   }
   private clearPersonalNotice(): void {
     this.personalNotice = false; this.personalDesktop = false;
@@ -389,7 +390,7 @@ export class GraceQueueLite {
   }
   private ownVersion = 0;
   private highlightPreference = false;
-  get version(): number { return this.ownVersion + this.surfaceVersion() + (this.lambyGuide?.version ?? 0); }
+  get version(): number { return this.ownVersion + this.surfaceVersion() + this.phoneVersion + (this.lambyGuide?.version ?? 0); }
   /** the phone's own counter — the caret blink must not re-upload the workstation */
   private phoneV = 0;
 
@@ -1353,7 +1354,9 @@ export class GraceQueueLite {
 
   // ── draw ─────────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.drawSurfaceContent(ctx, W, H);
+    const platformW = this.mirrorAvailable ? W - 192 : W;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, platformW, H); ctx.clip();
+    this.drawSurfaceContent(ctx, platformW, H);
     // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
     if (!this.personalQuiet && !['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active && this.veraPage !== 'record' && !veraDay.quiet) {
       const ids = stepTargets('e3', buildStartModel(undefined, 'e3').now?.id);
@@ -1368,28 +1371,45 @@ export class GraceQueueLite {
       const S = startCopy.desktop.startMenu;
       aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });
       this.rects.unshift({ x: 3, y: H - 25, w: 51, h: 22, id: 'start-menu' });
-      const nav = this.startMap.draw(ctx, W, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
+      const nav = this.startMap.draw(ctx, platformW, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
-    this.drawPersonal(ctx, W, H);
-    if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: W, h: H });
+
+    if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
+    ctx.restore();
+    this.drawMirror(ctx, W, H);
   }
-  private drawPersonal(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    if (!this.personalNotice && !this.personalDesktop) return;
-    const w = Math.min(340, Math.floor(W * 0.4)), x = W - w - 18;
-    const h = this.personalDesktop ? 230 : 112, y = H - h - 42;
-    if (this.personalDesktop) {
-      ctx.save(); ctx.translate(x, y); this.phone.drawThreadView(ctx, w, h); ctx.restore();
-      this.rects.unshift({ x, y: y + 20, w: 44, h: 28, id: 'personal-back' });
-    } else {
-      px(ctx, x, y, w, h, ERA3.white); px(ctx, x, y, w, 1, ERA3.glassEdge);
-      setFont(ctx, 14); ctx.fillStyle = ERA3.ink; ctx.fillText(maiden.personalMessage.from, x + 12, y + 12);
-      setFont(ctx, 13);
-      wrapText(ctx, maiden.personalMessage.firstWords, w - 32).forEach((ln, i) => ctx.fillText(ln, x + 12, y + 38 + i * 18));
-      this.rects.unshift({ x, y, w: w - 30, h, id: 'personal-open' });
-    }
-    setFont(ctx, 15); ctx.fillStyle = ERA3.greyDk; ctx.fillText(maiden.personalMessage.dismiss, x + w - 23, y + 8);
-    this.rects.unshift({ x: x + w - 30, y, w: 30, h: 30, id: 'personal-dismiss' });
+  private mirrorMin = false;
+  private mirrorLarge = false;
+  private mirrorReading = false;
+  private mirrorDisconnected = false;
+  private mirrorCanvas: HTMLCanvasElement | null = null;
+  private mirrorBox: { x: number; y: number; scale: number } | null = null;
+  get mirrorAvailable(): boolean { return !this.mirrorDisconnected && !['dark', 'boot', 'install'].includes(this.mode); }
+  disconnectPhone(): void { this.mirrorDisconnected = true; this.mirrorReading = false; this.phone.disconnect(); this.bump(); }
+  private drawMirror(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.mirrorBox = null;
+    if (!this.mirrorAvailable) return;
+    const tx = W - 184;
+    aero.button(ctx, tx, H - 24, 180, 21, `${mirrorCopy.title} · ${this.phone.unreadCount}`, { size: 10 });
+    this.rects.unshift({ x: tx, y: H - 24, w: 180, h: 21, id: 'mirror-restore' });
+    if (this.mirrorMin) return;
+    const w = this.mirrorLarge ? 280 : 188, x = this.mirrorLarge ? Math.round((W - w) / 2) : W - w;
+    const h = H - 30;
+    px(ctx, x, 0, w, h, ERA3.sysBand); px(ctx, x, 0, w, 25, ERA3.grey);
+    setFont(ctx, 12); ctx.fillStyle = ERA3.white; ctx.fillText(mirrorCopy.title, x + 9, 7);
+    ctx.fillText('−', x + w - 22, 7);
+    this.rects.unshift({ x, y: 0, w: w - 30, h: 25, id: 'mirror-enlarge' }, { x: x + w - 30, y: 0, w: 30, h: 25, id: 'mirror-min' });
+    this.mirrorCanvas ??= document.createElement('canvas');
+    this.mirrorCanvas.width = 180; this.mirrorCanvas.height = 360;
+    this.drawPhone(this.mirrorCanvas.getContext('2d')!, 180, 360);
+    const scale = Math.min((w - 8) / 180, (h - 29) / 360);
+    const px0 = Math.round(x + (w - 180 * scale) / 2), py = 27;
+    ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(this.mirrorCanvas, px0, py, Math.floor(180 * scale), Math.floor(360 * scale)); ctx.restore();
+    this.mirrorBox = { x: px0, y: py, scale };
+    // Phone-owned controls stay phone-owned. No guide/glow is drawn over this program.
+    const hits = this.phone.hitRects.map(r => ({ ...r, x: px0 + r.x * scale, y: py + r.y * scale, w: r.w * scale, h: r.h * scale, id: `mirror:${r.id}` }));
+    this.rects.unshift(...hits);
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
@@ -2479,18 +2499,16 @@ export class GraceQueueLite {
 
   // ── input ────────────────────────────────────────────────────────────────
   handleClick(x: number, y: number): void {
-    const personal = this.rects.find(r => r.id.startsWith('personal-') && hit(r, x, y));
-    if (personal) {
-      const open = personal.id === 'personal-open';
-      this.clearPersonalNotice();
-      if (open) { this.phone.openPersonalThread(); this.personalDesktop = true; }
-      else this.phone.closePersonalThread();
-      this.bump(); return;
+    const mh = this.rects.find(r => hit(r, x, y));
+    if (mh?.id === 'mirror-min') { this.mirrorMin = true; this.mirrorReading = false; this.bump(); return; }
+    if (mh?.id === 'mirror-restore') { this.mirrorMin = false; this.bump(); return; }
+    if (mh?.id === 'mirror-enlarge') { this.mirrorLarge = !this.mirrorLarge; this.bump(); return; }
+    if (mh?.id.startsWith('mirror:') && this.mirrorBox) {
+      const b = this.mirrorBox;
+      this.handlePhoneClick((x - b.x) / b.scale, (y - b.y) / b.scale);
+      this.mirrorReading = this.phone.quietReading; this.bump(); return;
     }
-    // A miss passes through on this very release. Only a live navigation clears the notice.
-    if (this.rects.some(r => hit(r, x, y) && ['signin', 'start-menu', 'win-min'].includes(r.id))) {
-      this.clearPersonalNotice(); this.phone.closePersonalThread();
-    }
+    this.mirrorReading = false;
     const lg = this.rects.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (this.lambPriority) { this.lambPriority = false; this.bump(); }
     this.lambyGuide?.activity();

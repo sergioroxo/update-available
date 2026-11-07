@@ -1,3 +1,4 @@
+import mirrorCopy from '../../../data/strings/e3_mirror.json';
 /**
  * ⚑ ERA 3'S PHONE — the group, the backlog, and the end of the era.
  *
@@ -47,7 +48,6 @@ import { entriesByEra } from '../../witness/record';
 import m from '../../../data/dialog/s3_maiden.json';
 import d from '../../../data/strings/era3_devices.json';
 import { playOnce } from '../../audio/tapeAudio';
-import { drawGlow } from '../../witness/pathGlow';
 
 type Msg = { from: string; time: string; text?: string; kind?: string };
 type Rect = { x: number; y: number; w: number; h: number; id: string };
@@ -138,6 +138,10 @@ export class PhoneE3 {
   constructor(private readonly opts: { onLift(): void; floppyOpen(): boolean; clock?: () => string }) {}
   private get clockText(): string { return this.opts.clock ? this.opts.clock() : d.phone.lockClock; }
 
+  disconnected = false;
+  disconnect(): void { this.disconnected = true; this.bump(); }
+  get hitRects(): Rect[] { return this.rects; }
+  get unreadCount(): number { return BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length + this.groupUnread() + (this.personalSeen ? 0 : 1); }
   private bump(): void { this.version++; }
   get quietReading(): boolean { return this.screen === 'photos' || this.screen === 'photo' || this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
   presentInbox(): void { this.screen = 'inbox'; this.openMessage = null; this.bump(); }
@@ -288,6 +292,7 @@ export class PhoneE3 {
    */
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.rects = [];
+    if (this.disconnected) { ctx.fillStyle = PHONE.ink; ctx.fillRect(0, 0, W, H); return; }
     ctx.fillStyle = PHONE.bg;
     ctx.fillRect(0, 0, W, H);
     if (this.screen === 'personal') { this.drawThreadView(ctx, W, H); this.pushBack(20, 62); }
@@ -303,32 +308,17 @@ export class PhoneE3 {
     // ⚑ S281 — THE GLOW LOGIC on her phone (his 1 Nov: "FloppySheep and the message app should slightly glow
     //   differently so we can understand where we need to go"): the warm ring on the one thing the phone is waiting
     //   on, the pale shimmer on the game that is only ever hers to open. Drawn with the screen (no animation).
-    const path = this.pathIds();
-    for (const r of this.rects) {
-      const k = this.quietReading ? null : path.has(r.id) ? 'path' : r.id === 'floppy' ? 'may' : null;
-      if (k) drawGlow(ctx, r, k, PHONE.tileGame, PHONE.faint);
-    }
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
     if (this.card) this.drawCard(ctx, W, H);
+    if (this.screen === 'personal' || this.screen === 'message' || this.screen === 'group') {
+      ctx.fillStyle = PHONE.surface; ctx.fillRect(0, H - 26, W, 26);
+      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(mirrorCopy.reply, 12, H - 18);
+    }
   }
 
   /** S281 — what the phone is waiting on, screen by screen: the notification, then Messages, then the group, then the
    *  live link. Nothing once the group's news is all seen and the link is spent. */
-  private pathIds(): Set<string> {
-    if (this.quietReading || this.stage === 'quiet') return new Set();
-    const live = this.stage === 'first' ? 'link' : this.stage === 'voted' ? 'link2' : null;
-    const waiting = this.groupUnread() > 0 || (live !== null && !(this.stage === 'first' ? this.opened : false));
-    if (!waiting) return new Set();
-    if (this.screen === 'lock') return new Set(['notification']);
-    if (this.screen === 'group') return new Set(live ? [live] : []);
-    return new Set(['inbox', 'group']);
-  }
 
-  /** S64's law, unchanged: before anything happens the lock screen is EMPTY.
-   *  The phone in this era is quiet, which is what makes one notification an
-   *  event. ⚑ It is now a real lock screen — wallpaper, a big clock, a date —
-   *  and the notification is a card sitting on the wallpaper rather than a
-   *  panel bolted to the bottom of a black rectangle. */
   private drawLock(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     wallpaper(ctx, W, H);
     statusBar(ctx, W, this.clockText);
