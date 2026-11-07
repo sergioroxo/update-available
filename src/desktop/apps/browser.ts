@@ -178,6 +178,11 @@ export class E4Browser {
   version = 0;
 
   // ── the surface the rest of the piece reads ───────────────────────────────
+  /** Read-only room presentation: never advance the screens from the room. */
+  get currentClinicNumber(): number { return this.clinicNumber; }
+  get roomArticleCount(): number { return this.newsOpened; }
+  get roomClipTime(): number { return this.clipTakeover ? this.botT + CLIP_TAKEOVER_SECONDS : this.t; }
+  get roomClipTakeover(): boolean { return this.clipTakeover; }
   get stageId(): string { return this.phase; }
   get isOpen(): boolean { return this.phase === 'open' || this.phase === 'handed' || this.phase === 'failed'; }
   get programMode(): string { return this.phase === 'open' ? this.step : 'free'; }

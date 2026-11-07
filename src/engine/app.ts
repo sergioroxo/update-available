@@ -4263,6 +4263,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (morphDemoIn <= 0 && cluster && options.morphDemo) driveMorph(options.morphDemo);
       }
       cluster?.update(dt);
+      if (os.e4) e4Room?.setScreenData({ number: os.e4.browser.currentClinicNumber,
+        articles: os.e4.browser.roomArticleCount, clipTime: os.e4.browser.roomClipTime,
+        takeover: os.e4.browser.roomClipTakeover });
       e4Room?.update(dt, os.era === 'e4');
       timePassing?.tick(dt);
       ceiling?.update(dt);

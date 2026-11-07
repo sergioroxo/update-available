@@ -5,6 +5,8 @@ import { ledgerGeneration } from '../state/ledger';
 import { type RoomHandles, type PropHandle, hex } from './era1room';
 import { cullAbsentProps } from './batching';
 import { ERA4, PLACE, photograph } from '../desktop/theme/era4';
+import V from '../../data/dialog/s4_v3.json';
+import { wrapText, setFont } from '../desktop/theme/chrome';
 import { drawGoalPicture } from '../desktop/apps/goalPicture';
 
 export function buildE4Room(app: pc.Application, building: RoomHandles) {
@@ -24,10 +26,10 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     const h = { entity, material, materials: [material], emissive: false };
     props.set(id, h); return h;
   }
-  function picture(id: string, pos: number[], w: number, h: number, paint: (c: CanvasRenderingContext2D) => void) {
-    const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+  function picture(id: string, pos: number[], w: number, h: number, paint: (c: CanvasRenderingContext2D) => void, resolution = [256, 256]) {
+    const canvas = document.createElement('canvas'); canvas.width = resolution[0]; canvas.height = resolution[1];
     const ctx = canvas.getContext('2d')!; ctx.imageSmoothingEnabled = false;
-    const texture = new pc.Texture(app.graphicsDevice, { width: 256, height: 256, mipmaps: false,
+    const texture = new pc.Texture(app.graphicsDevice, { width: canvas.width, height: canvas.height, mipmaps: false,
       minFilter: pc.FILTER_NEAREST, magFilter: pc.FILTER_NEAREST });
     const p = solid(id, pos, [0.004, h, w], ERA4.rule);
     // A plane's normal is +Y; face into the room (-X), upright, with no mirrored text.
@@ -35,7 +37,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     p.entity.setLocalScale(w, 1, h);
     p.material.useLighting = false; p.material.emissive = new pc.Color(1, 1, 1);
     p.material.emissiveMap = texture; p.material.cull = pc.CULLFACE_NONE; p.material.update();
-    function repaint(fn = paint) { ctx.clearRect(0, 0, 256, 256); fn(ctx); texture.setSource(canvas); }
+    function repaint(fn = paint) { ctx.clearRect(0, 0, canvas.width, canvas.height); fn(ctx); texture.setSource(canvas); }
     repaint();
     return { ...p, repaint, size: new pc.Vec3(w, 1, h) };
   }
@@ -55,14 +57,22 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     c => photograph(c, 0, 0, 256, 256, false, 3));
   const goal = picture('system-default-portrait', [5.66, 1.52, 2.15], .65, .72,
     c => drawGoalPicture(c, 0, 0, 256, 256));
+  const strips = V.news.articles.map((a, i) => picture(`news-strip-${a.id}`, [5.655, 2.28 - i * .29, 1.46], 1.02, .26, c => {
+    c.fillStyle = PLACE.mug; c.fillRect(0, 0, 512, 128);
+    c.fillStyle = ERA4.field; setFont(c, 25);
+    wrapText(c, a.head, 490).forEach((line, j) => c.fillText(line, 10, 12 + j * 29));
+  }, [512, 128]));
+  const ticket = picture('clinic-ticket', [5.65, 2.22, .25], .38, .3, () => {}, [256, 192]);
   const sizes = new Map([...props.values()].map(p => [p.entity, p.entity.getLocalScale().clone()]));
   function visible(p: PropHandle, on: boolean) { p.entity.setLocalScale(on ? sizes.get(p.entity)! : pc.Vec3.ZERO); }
   const originalMats = new Map<pc.StandardMaterial, pc.Color>();
-  let seen = '', generation = -1;
+  let seen = '', generation = -1, lastNumber = -1;
+  let data = { number: 4812, articles: 0, clipTime: 0, takeover: false };
+  function setScreenData(next: typeof data) { data = next; }
   function update(_dt: number, active: boolean) {
     root.enabled = active;
     if (!active) return;
-    const key = `${ledgerGeneration}:${e4BeatsVersion()}`;
+    const key = `${ledgerGeneration}:${e4BeatsVersion()}:${data.number}:${data.articles}`;
     if (key === seen) return;
     if (generation !== ledgerGeneration) { generation = ledgerGeneration; }
     seen = key;
@@ -78,7 +88,22 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     }
     const isGoal = e4Has('newyou') && !e4Has('original');
     frame.repaint(c => isGoal ? drawGoalPicture(c, 0, 0, 256, 256) : photograph(c, 0, 0, 256, 256, false, 3));
+    strips.forEach((p, i) => visible(p, e4Has('link') && i < data.articles));
+    visible(ticket, n);
+    if (lastNumber !== data.number || generation !== ledgerGeneration) {
+      lastNumber = data.number;
+      ticket.repaint(c => {
+        c.fillStyle = PLACE.mug; c.fillRect(0, 0, 256, 192);
+        c.fillStyle = ERA4.field; setFont(c, 19); c.fillText(V.clinic.numberLabel, 12, 12);
+        setFont(c, 48); c.fillText(data.number.toLocaleString('en-GB'), 12, 55);
+        setFont(c, 18); c.fillText(V.clinic.wait, 12, 128);
+      });
+    }
+    if (n) {
+      const growth = 1 + Math.max(0, data.number - V.clinic.start) * .045;
+      ticket.entity.setLocalScale(ticket.size.x * growth, 1, ticket.size.z * growth);
+    }
     cullAbsentProps(handles, null);
   }
-  return { update };
+  return { update, setScreenData };
 }
