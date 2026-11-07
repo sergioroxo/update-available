@@ -621,6 +621,7 @@ export class PhoneE3 {
     let y = appBar(ctx, W, y0, m.home.messagesLabel);
     this.pushBack(y0, y);
     const rows = [
+      ...m.groupPreviews.map(g => ({ from: g.name, text: (g.muted ? m.groupPreviewUI.muted + ' · ' : '') + m.groupPreviewUI.unread.replace('{n}', String(g.unread)), time: '', id: '', read: true })),
       ...(this.personalArmed ? [{ from: m.personalMessage.from, text: m.personalMessage.firstWords, time: '', id: 'personal-notification', read: this.personalSeen }] : []),
       { from: m.home.groupLabel, text: this.groupUnread() ? m.home.groupUnread.replace('{n}', String(this.groupUnread())) : m.home.groupQuiet, time: '', id: 'group', read: !this.groupUnread() },
       ...BACKLOG.map(b => ({ ...b, id: 'read-' + b.from + b.time, read: this.readMessages.has(b.from + b.time) }))
@@ -638,7 +639,7 @@ export class PhoneE3 {
       phoneFont(ctx, 10);
       ctx.fillText(phoneWrap(ctx, b.text, W - 28)[0], 14, y + 31);
       ctx.fillStyle = PHONE.hairline; ctx.fillRect(14, y + h - 1, W - 14, 1);
-      this.rects.push({ x: 0, y, w: W, h, id: b.id }); y += h;
+      if (b.id) this.rects.push({ x: 0, y, w: W, h, id: b.id }); y += h;
     }
     phoneFont(ctx, 12); ctx.fillStyle = PHONE.dim;
     if (this.inboxPage > 0) { ctx.fillText(m.home.previousPage, 12, H - 26); this.rects.push({ x: 0, y: H - 36, w: 50, h: 36, id: 'inbox-prev' }); }

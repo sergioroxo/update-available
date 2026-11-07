@@ -293,5 +293,22 @@
    "are you coming thursday? dee's keeping the corner table. no pressure x"
   ],
   "dismiss": "×"
+ },
+ "groupPreviews": [
+  {
+   "name": "The Wick lot",
+   "muted": true,
+   "unread": 87
+  },
+  {
+   "name": "SisterSignal team",
+   "muted": false,
+   "unread": 3
+  }
+ ],
+ "groupPreviewUI": {
+  "muted": "muted",
+  "unread": "{n} unread",
+  "_doc": "Authored constants, no live arrivals and no hidden messages. Period mute UI [VERIFY SOURCE]."
  }
 }
