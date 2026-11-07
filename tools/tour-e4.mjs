@@ -142,8 +142,10 @@ async function main() {
     await page.evaluate((a) => window.__camFree(a[0], a[1], a[2], a[3], a[4]), [x, y, z, pitch, yaw]);
     await wait(700);
   };
-  const SEAT = [4.4, 1.16, 0.7, -3, 270];       // the seat, facing the monitor
-  const LID = [4.4, 1.16, 0.7, -16, 246];       // the seat, turned to the laptop (the conducted turn's pose)
+  // ⚑ S321 (second pass) — the seat frames BOTH screens now (app.ts seatPose(270)): every frame is the player's view.
+  //   `lid-` frames name a beat on the laptop; they are taken from the same seat.
+  const SEAT = [4.4, 1.16, 0.84, -10, 267];
+  const LID = SEAT;
   const seat = () => cam(...SEAT);
   const lid = () => cam(...LID);
   const untilPhase = (ph, ms = 20000) => page.waitForFunction((p) => window.__os.e4.browser.phase === p, { timeout: ms }, ph).then(() => true).catch(() => false);
@@ -223,8 +225,11 @@ async function main() {
   await press('conv-chip-1'); await wait(1400);
   await untilHit('conv-act'); await wait(400);
   await shot('seat-bot-heading', 'where you\'re heading: You, restored · 2027 — Becoming 97%');
-  await press('conv-act'); await wait(1400);
-  await untilHit('conv-chip-0'); await wait(400);
+  await press('conv-act'); await wait(2400);
+  await shot('seat-clip-takeover', 'the clip takes the page: THE GREAT BECOMING, Made with AI');
+  await wait(5200);
+  await shot('seat-clip-takeover-2', 'the clip, a later frame (one loop, then it shrinks into the map panel)');
+  await untilHit('conv-chip-0', 30000); await wait(400);
   await shot('seat-bot-map', 'the map: Junie in red · "Protect your progress: mute 2 more." · the clip, Made with AI');
   await wait(4500);
   await shot('seat-bot-clip', 'the clip, a later frame');
@@ -256,9 +261,15 @@ async function main() {
   // ── the headset (as built), the stream, the update failing ──
   await page.evaluate(() => window.__os.e4.wear());
   await wait(1200);
-  await shot('worn-session', 'the session on the glass');
-  await wait(6500);
-  await pressVisor('session-begin');
+  await shot('worn-tryon-0', 'try it on: "See how it feels. No pressure. Just try it." — nobody asked');
+  await wait(7800);
+  await shot('worn-tryon-hair', 'the hair, cut from the ends');
+  await wait(5000);
+  await shot('worn-tryon-jaw', 'the jaw; "Look how natural that looks."');
+  await wait(6000);
+  await shot('worn-tryon-shoulders', 'the shoulders, the shirt and tie; the smile');
+  await wait(7500);
+  await shot('worn-tryon-hands', 'her hands, held up, changed');
   await page.waitForFunction(() => window.__os.e4.ball.invited, { timeout: 40000 }).catch(() => {});
   await wait(700);
   await shot('worn-link', "Junie's link: it's on. come in.");

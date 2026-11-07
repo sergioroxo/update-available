@@ -73,10 +73,11 @@ import ballScript from '../../../data/dialog/s4_ball.json';
 import updates from '../../../data/strings/updates.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
-import { E4Ball, groundSeconds, linkAfterBegin } from './ball';
+import { E4Ball } from './ball';
 import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import type { UpdateApp } from './update';
 import { markE4 } from '../../narrative/e4Beats';
+import { drawTryOn, TRYON } from './mirror';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
  *  every frame: −1…+1 in eight steps, and a full turn costs eight redraws.
@@ -227,7 +228,6 @@ export class E4Shell {
    *  (COMMONS_STREAMLINE_2026-10-10.md §8): Junie's card follows an action, never a clock alone. */
   private sessionBegunT = -1;
   private breath: HTMLAudioElement | null = null;
-  private hiss: HTMLAudioElement | null = null;
   /** ⚑ S79 — THE BALL. Made with the shell for the same reason the two above
    *  are (a `?debug=1` jump must reach it before the device is even worn), and
    *  started only by `E4Offers.onBreak` — the seam S78 left named and empty. */
@@ -374,32 +374,16 @@ export class E4Shell {
     //   agent's environment is on the glass, its bar is filling — and at
     //   `session.seconds` what arrives is not the session but Junie's card.
     if (this.stageNow === 'worn' && !this.ball.live) {
+      // ⚑ S321 — "TRY IT ON" (mirror.ts): the system starts it the moment the device is on, nothing to press; the
+      //   reveal runs on its own clock, `tryon` is marked when it completes, and Junie's link breaks in and ends it.
+      //   (v2's session — the plan, Begin, the recording — no longer plays; its code in ball.ts is kept, unused.)
       const before = this.sessionT;
       this.sessionT += dt;
-      if (Math.floor(before * 4) !== Math.floor(this.sessionT * 4)) this.version++;
-      // ⚑ 2026-09-13: the session is HEARD — grounding breathes (a loop), the
-      //   "recording" plays with nobody in it, and both stop when the card lands
-      // ⚑ S227 (his Q7) — the plan arrives, Begin is offered once it is up, and nothing runs until she presses
-      //   it (`beginCorrection`). From the press: one breath of grounding (a finished thing), the recording (a
-      //   playback keeps its own clock, CADENCE_STUDY §9.1), and the card on its third sentence's dash —
-      //   the same 21.5 s the old clock spent after its own 9.
-      if (before < E4Ball.PLAN_SECONDS && this.sessionT >= E4Ball.PLAN_SECONDS) this.version++;
-      if (this.sessionBegunT >= 0) {
-        const b4 = this.sessionBegunT;
-        this.sessionBegunT += dt;
-        if (Math.floor(b4 * 4) !== Math.floor(this.sessionBegunT * 4)) this.version++;
-        // ⚑ S293 — the recording begins after the grounding (review cut) or at once (the visitors' version)
-        const g = groundSeconds();
-        if ((g > 0 ? b4 < g && this.sessionBegunT >= g : b4 <= 0.05 && this.sessionBegunT > 0) && !this.hiss) {
-          stopClip(this.breath); this.breath = null;
-          this.hiss = playOnce('playback_hiss.mp3');
-          if (this.hiss) this.hiss.volume = 0.5;   // S155 / R3-102: under the introduction, not over it
-        }
-        const cardAt = linkAfterBegin();   // ⚑ S293 — Junie's link lands on the third sentence's dash
-        if (this.sessionBegunT >= cardAt) {
-          stopClip(this.breath); this.breath = null; stopClip(this.hiss); this.hiss = null;
-          this.ball.invite();
-        }
+      if (Math.floor(before * 8) !== Math.floor(this.sessionT * 8)) this.version++;
+      if (before < TRYON.done && this.sessionT >= TRYON.done) markE4('tryon');
+      if (this.sessionT >= TRYON.link) {
+        stopClip(this.breath); this.breath = null;
+        this.ball.invite();
       }
     }
     this.offers.update(dt);
@@ -687,6 +671,11 @@ export class E4Shell {
     if (done && this.stageNow === 'closed' && !this.worn) {
       // ⚑ S321 — 2026 v3: once the session is back the lid is Kettle, the messenger (the people); Lamby's balloon
       //   still owns it while Lamby speaks (one voice at a time), and never over an open thread (felt)
+      // before the session is back the lid is locked: her own wallpaper, the date
+      if (this.browser.stageId === 'saver' || this.browser.stageId === 'restoring') {
+        this.browser.messenger.drawLock(ctx, W, H, this.browser.consoleLine);
+        this.browser.drawLaptopGuide(ctx, W, H, this.laptopHits); return;
+      }
       if (this.browser.stageId === 'open') {
         for (const r of this.browser.drawMessenger(ctx, W, H, !this.handedOff)) this.laptopHits.push(r);
         this.browser.drawLaptopGuide(ctx, W, H, this.laptopHits); return;
@@ -843,11 +832,15 @@ export class E4Shell {
     //   runs on `sessionT`, and Junie's card arrives when it is up.
     this.sessionT = 0;
     this.sessionBegunT = -1;
+    // ⚑ S321 — the try-on begins unasked: the room's bed goes, the session breathes
+    roomBed.set(null, 3.0);
+    if (!this.breath && !(isSpeedrun() && !extraOn('session'))) this.breath = playLoop('session_breath.mp3');
   }
 
   /** ⚑ S227 — Begin is on the glass: the plan is up and she has not pressed it yet */
   get beginOffered(): boolean {
-    return this.stageNow === 'worn' && !this.ball.live && this.sessionBegunT < 0 && this.sessionT >= E4Ball.PLAN_SECONDS;
+    // ⚑ S321 — nothing is offered: the try-on starts without asking (kept so the old seam reads)
+    return false && this.stageNow === 'worn' && !this.ball.live && this.sessionBegunT < 0 && this.sessionT >= E4Ball.PLAN_SECONDS;
   }
   /** ⚑ S227 — her press on Begin: the session starts (S149 — the session is the only sound on the glass:
    *  the room's bed goes as it begins, R3-103; the grounding breathes) */
@@ -1114,7 +1107,7 @@ export class E4Shell {
     if (k > 0) {
       const was = ctx.globalAlpha;
       ctx.globalAlpha = k;
-      this.ball.drawSession(ctx, W, H, this.sessionT, this.sessionBegunT, this.beginOffered);
+      drawTryOn(ctx, W, H, Math.min(this.sessionT, TRYON.link));
       ctx.globalAlpha = was;
     }
     this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);

@@ -108,3 +108,15 @@ export function drawGoalPicture(ctx: CanvasRenderingContext2D, x: number, y: num
   ctx.restore();
   ctx.globalAlpha = was;
 }
+
+/** ⚑ S321 — the goal's figure by region, colours resolved, for the mirror ("try it on", mirror.ts), which rewrites her
+ *  reflection into exactly this figure a region at a time: [row, colFrom, colTo, colour] on the same 24-cell grid. */
+type Resolved = [number, number, number, string];
+const pick = (f: (r: Run) => boolean): Resolved[] => FIGURE.filter(f).map(([r, a, b, key]) => [r, a, b, GOAL[key]] as Resolved);
+export const GOAL_REGIONS = {
+  hair: pick(([r, , , key]) => key === 'hair' && r <= 5),
+  features: pick(([r, , , key]) => (key === 'hair' && r === 6) || (key === 'ink' && r === 8)),
+  mouth: pick(([r, , , key]) => r >= 10 && r <= 12 && (key === 'ink' || key === 'teeth')),
+  face: pick(([, , , key]) => key === 'skin' || key === 'skinLo'),
+  body: pick(([, , , key]) => key === 'shirt' || key === 'collar' || key === 'tie')
+};

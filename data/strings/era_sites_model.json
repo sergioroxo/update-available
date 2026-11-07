@@ -3420,7 +3420,7 @@
     ],
     [
      "Beats",
-     "20"
+     "21"
     ]
    ],
    "tabs": {
@@ -4550,9 +4550,15 @@
         "where": "Where: the headset on the desk."
        },
        {
-        "label": "The session",
+        "label": "Try it on",
         "opt": "",
-        "hint": "Press Begin. A link will come. Press it.",
+        "hint": "The system starts it by itself. Nothing to press.",
+        "where": "Where: the glass."
+       },
+       {
+        "label": "Junie's link",
+        "opt": "",
+        "hint": "Junie's link breaks in. Press it.",
         "where": "Where: the glass."
        },
        {
