@@ -98,6 +98,9 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ## Done since the headset session (newest first)
 
+- ☑ S317 — the itch festival trial merged into reinterp: 2026 v2, Vera's 2016 v2 (testimony pipeline, take-down, Malta), hand play, Lamby opener waits, the dollhouse build + menu row, the playtest repairs, build:itch (zip in the trial worktree). Its walk reached the Close; not re-walked after the merge.
+- ☑ S316 — his 7 Nov archive finds on the 1997/2003 sites; the own-thing handoff and Codex's documents merged
+
 - ☑ S299 — a view in every window (2003 dusk, 2016 rain, 2026 city)
 - ☑ S298 — the alert's lines no longer overlap; his archive finds on the 2003/2016 sites and in the article
 - ☑ S297 — the evening check-in reads as the evening's
