@@ -76,6 +76,7 @@ import { E4Offers } from './offers';
 import { E4Ball, groundSeconds, linkAfterBegin } from './ball';
 import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import type { UpdateApp } from './update';
+import { markE4 } from '../../narrative/e4Beats';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
  *  every frame: −1…+1 in eight steps, and a full turn costs eight redraws.
@@ -281,6 +282,7 @@ export class E4Shell {
     // ball.ts holds — that file still imports no ledger.)
     this.ball.onJoin = () => {
       ledger.e4Space.push({ id: 'commons', outcome: 'joined', witness: ballScript.commons.witness });
+      markE4('stream');   // ⚑ S321 — the contract (src/narrative/e4Beats.ts): Junie's link opened, the birthday stream begins
       // ⚑ S293 — the link is hers now: it is open on her monitor too, and still live there when the device stops
       this.browser.openStream();
     };
@@ -416,6 +418,8 @@ export class E4Shell {
     }
     if (!this.readyHeard && this.deviceReady && !this.handedOff) { this.readyHeard = true; playOnce('ready_e4.mp3'); }
     this.ball.update(dt);
+    // ⚑ S321 — the contract: SESSION TERMINATED is on the glass (the ball's `after`)
+    if (this.ball.phaseId === 'after') markE4('terminated');
     if (this.ball.version !== this.ballVersion) {
       this.ballVersion = this.ball.version;
       this.version++;
@@ -534,6 +538,8 @@ export class E4Shell {
     if (this.handedOff) return;
     const guideHit = x === undefined || y === undefined ? undefined : this.laptopHits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (guideHit) { this.browser.pressLaptopGuide(guideHit.id); return; }
+    // ⚑ S321 — the lid is Kettle, the messenger: a press with coordinates is a press on it (2026 v3)
+    if (this.stageNow === 'closed' && x !== undefined && y !== undefined && this.browser.pressMessenger(x, y)) { this.laptopV++; return; }
     if (this.stageNow !== 'laptop') return;
     // ⚑ S123 — while the browser owns the lid, a press is a TAB, not the next
     //   line. The laptop beat has not begun yet and must not be advanced by
@@ -679,7 +685,12 @@ export class E4Shell {
      * on it is pressable. When the device is worn it says so and nothing else.
      */
     if (done && this.stageNow === 'closed' && !this.worn) {
-      // Keep L's existing console lines; a balloon owns the lid only while it is speaking.
+      // ⚑ S321 — 2026 v3: once the session is back the lid is Kettle, the messenger (the people); Lamby's balloon
+      //   still owns it while Lamby speaks (one voice at a time), and never over an open thread (felt)
+      if (this.browser.stageId === 'open') {
+        for (const r of this.browser.drawMessenger(ctx, W, H, !this.handedOff)) this.laptopHits.push(r);
+        this.browser.drawLaptopGuide(ctx, W, H, this.laptopHits); return;
+      }
       if (!this.browser.lambyGuide?.active) {
         this.laptopBar(ctx, W, this.browser.consoleMark);
         setFont(ctx, 9); ctx.fillStyle = ERA4.textHi;

@@ -998,7 +998,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         queueGuide.lambyGuide = os.lambyGuide;
         queueGuide.callPending = os.era === 'e3' && ['phone', 'vote', 'cascade'].includes(mapState(os).current?.beat.id ?? '');
       }
-      if (os.e4) { os.e4.browser.lambyGuide = os.lambyGuide; os.e4.browser.onGuideLook = () => faceGuideSurface('monitor'); }
+      if (os.e4) {
+        const b = os.e4.browser;
+        b.lambyGuide = os.lambyGuide;
+        b.onGuideLook = () => faceGuideSurface(b.guideSurface());
+        // ⚑ S321 — 2026 v3: the screens turn her to the screen the story has moved to (no beat waits on a look)
+        b.onFace = (s) => { if (scriptedBusy() || os.e4?.stage !== 'closed') return false; faceGuideSurface(s); return true; };
+      }
       if (scriptedBusy()) return { silent: true, voice: false };
       if (os.era === 'e3') return { silent: queueGuide?.guideSilent ?? true, voice: queueGuide?.guideVoice ?? false };
       if (os.era === 'e4') {
@@ -1012,7 +1018,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     };
     os.onGuidePress = (id) => {
       if (os.era === 'e3') queueGuide?.pressGuideTarget(id);
-      if (os.era === 'e4') { os.e4?.browser.pressGuideTarget(id); faceGuideSurface('monitor'); }
+      if (os.era === 'e4') { const at = os.e4?.browser.pressGuideTarget(id); faceGuideSurface(at ?? 'monitor'); }
     };
     os.onGuideMove = (target) => {
       if (scriptedBusy()) return;
