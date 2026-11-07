@@ -69,7 +69,7 @@ act ends with one conducted turn to see what is gone.
 
 | # | Beat | Where | What happens | Register |
 |---|---|---|---|---|
-| 5 | **The number** | browser (clinic) → wall | At 18 she is moved to the adult list: **"You are number 4,812."** The ticket goes up on her wall. The clinic's letter: "Exploratory therapy is offered before any referral", **with two captions, never resolved** (careful assessment / more months of waiting). *Room: the plant goes.* | operable; the letter felt |
+| 5 | **The number** | browser (clinic) → wall | At 18 her referral is **handed over** to adult services. Her date is kept (NHS England; T1), but the adult queue is the problem: **"Your referral has moved to adult services. Your place is kept. You are number 4,812. Estimated first appointment: up to 15 years."** (Levy Review, 18 Dec 2025.) The ticket goes up on her wall, and the number climbs, because four people join for every one seen. The clinic's letter: "Exploratory therapy is offered before any referral", **with two captions, never resolved**. *Room: the plant goes.* | operable; the letter felt |
 | 6 | **Meridian** | browser | The LGB group says no (as built, V4). *Room: the pride flag goes.* | operable → felt |
 | 7 | **Left** | messenger | The house chat: "Sam left the group." A friend's "sorry, it's a lot right now". *Room: the photo strip goes, and a framed "You, restored" goes up in its place.* | felt |
 | 8 | **The room** | room (conducted turn) | The piece turns her once. The room is barer and more "male": the pink throw is grey now, the strips of news cover the walls, the ticket is bigger. That idea of "male" is the system's own, and it is crude on purpose: this is satire, and it will collapse. | operable |
@@ -91,6 +91,24 @@ act ends with one conducted turn to see what is gone.
 | 14 | **Try it on** | headset (the browser room: the mirror) | The system's last and worst offer: **"See how it feels. No pressure. Just try it."** Her hands and the mirror show her as the man in the picture: the embodiment illusion used as coercion. **Junie's link breaks in.** | operable |
 | 15 | **The stream** | the whole space | TransJesus's **birthday fundraiser for trans youth**. Every red dot on the map becomes a viewer, 41 → 42. Her one act: dance or stay. Her body is her own again. | **respite** |
 | 16 | **Terminated** | glass, desk | "SESSION TERMINATED · reason: social contagion." The update fails. The room comes back, and her things are where they were. | operable |
+
+## Corrections from the v3 research (T, 7 Nov)
+
+- **18 is a handover, not a restart.** Beat 5 is reworded: her place is kept, and the adult queue (waits of up to 15
+  years) is the injury. The rule on 17 versus 18 "has been changing" (T1, [VERIFY SOURCE] on which stands today).
+- **The pressure rising toward her 18th is the piece's invention.** No study shows it; estrangement among UK LGBTQ+
+  18–25s is the adjacent evidence (T1).
+- **"You, restored" and "try it on" are inventions.** No documented use of VR, AR or AI images in conversion or
+  detransition marketing was found (T2). Their Dossier cards are `speculative`. The body-swap science is real
+  (Petkova and Ehrsson 2008; the Proteus effect), and a trans writer warns that "gender swap" demos can harm as much
+  as help. So "try it on" stays short, stylised (pixel hands, the mirror), and interrupted by Junie, and the Esc menu
+  always works.
+- **detrans.ai is real** (a donation-funded chatbot by one developer, drawing on r/detrans; its page says its content
+  may mislead). Second Thoughts stays invented. detrans.ai goes in the research and Dossier sources only, never on
+  screen.
+- **Restoration language is documented** ("restoring sexual wholeness", GPAHE). "Your true self" and "the person God
+  made you" were not found, so they are never presented as the groups' words.
+- **The Mermaids fundraising stream was January 2019** (about 57 hours, at least $340,000), not 2021.
 
 ## The number, explained (his "don't understand" on beat 4)
 
