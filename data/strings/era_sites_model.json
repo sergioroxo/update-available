@@ -2252,7 +2252,7 @@
     ],
     [
      "Beats",
-     "15"
+     "16"
     ]
    ],
    "tabs": {
@@ -3301,6 +3301,12 @@
         "opt": "",
         "hint": "Continue on the screen — the file is being moved to the new service.",
         "where": "Where: the workstation on the desk."
+       },
+       {
+        "label": "Orla's message",
+        "opt": "optional",
+        "hint": "An ordinary message on her phone.",
+        "where": "Where: the phone."
        },
        {
         "label": "Sign in",

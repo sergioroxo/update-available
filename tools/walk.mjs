@@ -877,6 +877,8 @@ async function main() {
    * Optional doors remain available to visitors and are exercised separately by the extras probes.
    */
   const guidedAllows = (t, st, seen) => {
+    // Completed family rows remain readable. Revisiting selectors cannot advance the full-cut audit.
+    if (st?.qFamilyComplete && /^family-sel-/.test(t.id)) return false;
     if (!GUIDED_WALK) return true;
     const id = t.id, led = st?.ledger, has = key => led?.records?.includes(key);
     // ⚑ S293 — the agent's conversation is over (the original confirmed, "Put the headset on."). The headset is
