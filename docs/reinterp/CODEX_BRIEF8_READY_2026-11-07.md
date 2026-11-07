@@ -29,6 +29,8 @@ docs/reinterp/CODEX_BRIEFS_OWN_THING_2026-11-03.md. **Sérgio's decisions (7 Nov
    - (a) Groups: **"The Wick lot"** — muted, **87** unread; **"SisterSignal team"** — **3** unread.
    - (b) The unsent draft in Notes, titled **"Mam"**: **"Mam — I won't make Sunday. It isn't you. It's"** (it stops
      there; nothing explains why).
+     Two more of her own notes above it, ordinary (guard 2): **"shop: oat milk · bin bags · card for dee"** and
+     **"leisure centre car park free after 6"**. Read-only, newest first, the Mam draft at the top.
    - (c) Camera roll: three near-duplicate photos of the same slice of birthday cake on a saucer (14 March), one of
      them blurred; and one screenshot: **"46A · last bus 22:40"**. Drawn as pre-authored sprites in the era's
      palette; no faces, no people, no captions that explain. Measure the bytes/preload first, as the brief says.
