@@ -385,7 +385,7 @@ export class GraceQueueLite {
   wickConducting = false;
   get wickCue(): boolean { return this.personalArmed; }
   private personalWasQuiet = false;
-  get personalQuiet(): boolean { return this.wickConducting || this.phone.conductingNotes || this.mirrorReading || this.phone.personalOpen || (this.phoneInHand && this.phone.quietReading); }
+  get personalQuiet(): boolean { return this.wickConducting || this.phone.conductingNotes || this.mirrorReading || this.phone.personalOpen || this.phoneInHand; }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
     this.personalArmed = true; this.phone.armPersonal(); this.phone.arrive('arrival'); this.bump();
@@ -2531,7 +2531,7 @@ export class GraceQueueLite {
       const id = mh.id.slice(7);
       if (this.floppy.open) { const b = this.mirrorBox; this.floppy.tap((x - b.x) / b.scale, (y - b.y) / b.scale); }
       else if (id === 'floppy') this.floppy.openGame(); else this.phone.pressControl(id);
-      this.mirrorReading = this.phone.quietReading; this.bump(); return;
+      this.mirrorReading = true; this.bump(); return;
     }
     this.mirrorReading = false;
     if (mh?.id === 'focus-on' || mh?.id === 'focus-later') { this.focusOpen = false; this.lambPriority = false; this.lambLines = null; this.bump(); return; }

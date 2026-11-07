@@ -147,7 +147,7 @@ export class PhoneE3 {
   get hitRects(): Rect[] { return this.rects; }
   get unreadCount(): number { return BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length + this.groupUnread() + this.evening.filter(e => e.from !== m.group.name && !this.readMessages.has('evening:' + e.id)).length; }
   private bump(): void { this.version++; }
-  get quietReading(): boolean { return this.screen === 'article' || this.screen === 'evening' || this.screen === 'photos' || this.screen === 'photo' || this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
+  get quietReading(): boolean { return this.screen === 'group' || this.screen === 'walk' || this.screen === 'platform' || this.screen === 'article' || this.screen === 'evening' || this.screen === 'photos' || this.screen === 'photo' || this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
   presentInbox(): void { this.screen = 'inbox'; this.openMessage = null; this.bump(); }
 
 
