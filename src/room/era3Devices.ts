@@ -403,9 +403,11 @@ const PLACEMENT = {
      *  is not blocked out". The plane's offset from the prop's centre
      *  (+0.0948 on x) is rotated by the same −24° about the prop's own axis:
      *  (0.0948·cos24, 0.0948·sin24) = (+0.0866, +0.0386). Same rake, same size. */
-    pos: { x: 5.3266, y: 0.8700, z: 1.1186 },
+    /** ⚑ S321 — 2026 v3: in beside the monitor so both screens read from the seat. Prop (5.12, 0.75, 1.08) yaw 162;
+     *  the plane's +0.0948 offset rotated by −18°: (0.0902, 0.0293). Keep in step with `e_laptop`. */
+    pos: { x: 5.2102, y: 0.8700, z: 1.1093 },
     size: { w: 0.300, h: 0.188 },
-    euler: { x: 84.6, y: 246, z: 0 }
+    euler: { x: 84.6, y: 252, z: 0 }
   },
   /** ⚑ S124 — the monitor's screen plane. Upright (euler x 0), facing the seat
    *  (y 270, the same bearing the laptop lid uses), centred on the desk dead
@@ -1529,7 +1531,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         const lap = screens.find(sc => sc.name === 'laptop');
         if (lap?.entity.enabled) {
           const onLaptop = test('laptop');
-          if (onLaptop || rayNear(ray, PLACEMENT.laptop.pos, 0.22)) {
+          // ⚑ S321 — the sphere only when the ray is not on the monitor's glass: 2026 v3 keeps every primary button at
+          //   the monitor's bottom-right, inside this 0.22 m sphere, and the sphere (tested first) ate every one of
+          //   them — the walk pressed "Continue" twelve times and the era never moved.
+          if (onLaptop || (!test('monitor') && rayNear(ray, PLACEMENT.laptop.pos, 0.22))) {
             shell.pressLaptop(onLaptop?.x, onLaptop?.y);
             return true;
           }
