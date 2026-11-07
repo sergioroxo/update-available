@@ -566,6 +566,8 @@ export class GraceQueueLite {
    *  words. The board's quiet does not count while she holds it, and starts again when she puts it down. */
   phoneInHand = false;
   private waitSaid = false;
+  private focusOffered = false;
+  private focusOpen = false;
   /** ⚑ S229 / W1-A6 — GracePlatform's "getting started" card: once, on the sign-in screen and then the board while it
    *  is still a short board; under the pause card, away on a job / the consent question / the phone in her hand */
   private readonly startPanel = new StartPanel('e3');
@@ -615,6 +617,9 @@ export class GraceQueueLite {
     if (this.personalQuiet || this.veraPage || this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
     else if (this.mode === 'board' && !this.openSurface) {
       this.boardQuietT += dt;
+      if (!this.focusOffered && !this.lambPriority && !this.phoneInHand && this.guideReady('focus') && this.boardQuietT > 3) {
+        this.focusOffered = true; this.focusOpen = true; this.lambSay(mirrorCopy.focus, 'focus');
+      }
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
       //   "This week" card lists what else is open to her (only what is left); once
       if (!this.pauseShown && !this.minimised && ledger.records.includes('e3-job-done') && this.boardQuietT > 6 && this.guideReady('pause')) {
@@ -1360,10 +1365,6 @@ export class GraceQueueLite {
       aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });
       this.rects.unshift({ x: 3, y: H - 25, w: 51, h: 22, id: 'start-menu' });
       const nav = this.startMap.draw(ctx, platformW, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
-      if (this.startMap.menu && this.startMap.view === 'main' && !this.startMapSilent) {
-        const row = { x: 14, y: H - 58, w: 278, h: 24, id: 'account-activity' };
-        aero.button(ctx, row.x, row.y, row.w, row.h, mirrorCopy.account, { size: 11 }); nav.unshift(row);
-      }
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
 
@@ -1701,6 +1702,12 @@ export class GraceQueueLite {
     //   phone, the wait line, the way back, the cascade's "Everything on your board is still there…") was being
     //   wiped here before it was ever drawn; they now stay until she acts.
     //   The first-task beat itself closes on her next press on the board (handleClick).
+    if (this.focusOpen && !this.personalQuiet) {
+      const by = c.y + c.h - 82;
+      aero.button(ctx, c.x, by, 90, 24, mirrorCopy.on, { size: 11 });
+      aero.button(ctx, c.x + 100, by, 90, 24, mirrorCopy.later, { size: 11 });
+      this.rects.push({ x: c.x, y: by, w: 90, h: 24, id: 'focus-on' }, { x: c.x + 100, y: by, w: 90, h: 24, id: 'focus-later' });
+    }
     if ((this.lambPriority || !this.lambyGuide?.active) ) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     if (!this.personalQuiet) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
@@ -2496,6 +2503,7 @@ export class GraceQueueLite {
       this.mirrorReading = this.phone.quietReading; this.bump(); return;
     }
     this.mirrorReading = false;
+    if (mh?.id === 'focus-on' || mh?.id === 'focus-later') { this.focusOpen = false; this.lambPriority = false; this.lambLines = null; this.bump(); return; }
     const lg = this.rects.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (this.lambPriority) { this.lambPriority = false; this.bump(); }
     this.lambyGuide?.activity();
