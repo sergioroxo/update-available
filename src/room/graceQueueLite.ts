@@ -381,7 +381,7 @@ export class GraceQueueLite {
   get personalQuiet(): boolean { return this.mirrorReading || this.phone.personalOpen || (this.phoneInHand && this.phone.quietReading); }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
-    this.personalArmed = true; this.phone.armPersonal(); this.bump();
+    this.personalArmed = true; this.phone.armPersonal(); this.phone.arrive('arrival'); this.bump();
   }
   private clearPersonalNotice(): void {
     this.personalNotice = false; this.personalDesktop = false;
@@ -417,13 +417,8 @@ export class GraceQueueLite {
   });
   /** S158 / R3-66 — ONE CLOCK for the phone and the workstation: 9:41 at sign-in, ticking a
    *  minute a minute, both faces reading it. (The stated day stays the phone's lock date.) */
-  private dayT = 0;
-  private clockMinute = -1;
   private clockText(): string {
-    const base = q.app.clockStart as string;
-    const [h, m] = base.split(':').map(Number);
-    const total = h * 60 + m + Math.floor(this.dayT / 60);
-    return `${Math.floor(total / 60) % 24}:${String(total % 60).padStart(2, '0')}`;
+    return this.phone.eveningClock;
   }
 
   /**
@@ -644,18 +639,12 @@ export class GraceQueueLite {
         if (waiting.length) { this.waitSaid = true; this.lambSay(waiting, 'waiting'); this.bump(); }
       }
     }
-    // S158: the one clock — both faces re-upload only when the minute turns
-    if (this.mode !== 'dark' && this.mode !== 'boot' && this.mode !== 'install') {
-      this.dayT += dt;
-      const minute = Math.floor(this.dayT / 60);
-      if (minute !== this.clockMinute) { this.clockMinute = minute; this.bump(); this.phoneV++; }
-    }
     if (this.mode === 'dark') {
       const before = this.idleT;
       this.idleT += dt;
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
-    this.phone.tick(dt, this.phoneInHand && !this.floppy.open); // ⚑ the cascade's own clock, and the only one on the phone
+    this.phone.tick(dt, (this.phoneInHand || this.mirrorAvailable) && !this.floppy.open); // ⚑ the cascade's own clock, and the only one on the phone
     // ⚑ S145 — the record chip lights on every filing (witness/pulse.ts): the
     //   one texture upload this costs is quantised to the pulse's own steps
     const step = Math.ceil(witnessPulse.k() * 6);
@@ -663,6 +652,7 @@ export class GraceQueueLite {
     // ⚑ and when it has been outnumbered, Lambient says the thing about the
     //   board. Once, on the frame the phone reports `broken`.
     if (this.phone.broken && !this.afterSaid && this.guideReady('after-phone')) {
+      this.phone.arrive('after');
       this.afterSaid = true;
       this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2], 'after-phone');
       this.bump();
@@ -1105,6 +1095,7 @@ export class GraceQueueLite {
     if (this.mode !== 'board' && this.mode !== 'done') return;
     const t = this.tasks()[index];
     if (!t) return;
+    this.phone.arrive('job');
     const mounted = this.surfaces.get(t.id);
     this.chipReturn = null;
     if (mounted) {
@@ -1169,6 +1160,7 @@ export class GraceQueueLite {
     const sub = this.submission();
     const item = this.current();
     if (this.mode !== 'list' || !sub || !item) return;
+    this.phone.arrive('decision');
     playOnce('tick_task.mp3');   // S141: APPLY and SKIP share ONE tick — the record files both
     this.decisions.set(item.id, outcome);
     this.lambLines = null; // the beat is over the moment she uses either verb
@@ -1582,6 +1574,7 @@ export class GraceQueueLite {
    */
   private openVeraRecord(): void {
     this.storyOffer = false; this.veraPage = 'record'; this.recordSent = false;
+    this.phone.bannersHidden = true;
     veraDay.recordOpened = true; veraDay.quiet = true;
     this.lambyGuide?.press('lg-x'); this.startPanel.close(); this.pauseOpen = false;
     this.bump();
@@ -1816,6 +1809,7 @@ export class GraceQueueLite {
     const padX = 10;
     const LABELS = 44;
     const thumbH = Math.max(24, h - LABELS);
+    this.phone.arrive('job');
     const mounted = this.surfaces.get(t.id);
     // ⚑ S145 — the picture is CLIPPED to its well. With seven tiles on three rows
     //   the well is 24 px tall and three jobs' thumbs (comments, family calls,
@@ -2519,11 +2513,13 @@ export class GraceQueueLite {
       this.recordSent = vh.id === 'vera-as-sent'; this.bump(); return;
     }
     if (vh?.id === 'vera-record-close') {
+      this.phone.bannersHidden = false; this.phone.arrive('record-close');
       veraDay.recordClosed = true; veraDay.quiet = false;
       this.veraPage = 'kit'; this.mode = 'board';
       this.armMalta(); this.phone.presentInbox(); this.inboxLiftPending = true; this.bump(); return;
     }
     if (vh?.id === 'vera-send') {
+      this.phone.arrive('send');
       veraDay.distributed = true; this.sendReceipt = true;
       this.surfaces.get('group')?.press('group-post');
       ledger.era3Jobs.push({ id: 'pipeline', witness: vera.send.sent }); this.bump(); return;
