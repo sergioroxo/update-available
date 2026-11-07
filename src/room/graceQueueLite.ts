@@ -133,7 +133,6 @@ import d from '../../data/strings/era3_devices.json';
 import maiden from '../../data/dialog/s3_maiden.json';
 import { playOnce, anythingPlaying, stopClip } from '../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
-import { pulse as witnessPulse } from '../witness/pulse';
 import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 import pauseCopy from '../../data/strings/pauses.json';
 import { isSpeedrun, extraOn, markExtraPassed } from '../state/cut';
@@ -464,7 +463,6 @@ export class GraceQueueLite {
    *  (the board, or the job she had open) instead of always to the board */
   private chipReturn: { mode: Mode; surface: TaskSurface | null } | null = null;
   /** the chip's lit step as last drawn — the redraw clock moves only when it changes */
-  private chipStep = 0;
   private consent: 'allowed' | 'declined' | null = null;
   private wakeWord = false;
   private seenBoard = false;
@@ -646,10 +644,6 @@ export class GraceQueueLite {
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
     this.phone.tick(dt, (this.phoneInHand || this.mirrorAvailable) && !this.floppy.open); // ⚑ the cascade's own clock, and the only one on the phone
-    // ⚑ S145 — the record chip lights on every filing (witness/pulse.ts): the
-    //   one texture upload this costs is quantised to the pulse's own steps
-    const step = Math.ceil(witnessPulse.k() * 6);
-    if (step !== this.chipStep) { this.chipStep = step; this.bump(); }
     // ⚑ and when it has been outnumbered, Lambient says the thing about the
     //   board. Once, on the frame the phone reports `broken`.
     if (this.phone.broken && !this.afterSaid && this.guideReady('after-phone')) {
@@ -1366,6 +1360,10 @@ export class GraceQueueLite {
       aero.button(ctx, 3, H - 25, 51, 22, S.button, { size: 10 });
       this.rects.unshift({ x: 3, y: H - 25, w: 51, h: 22, id: 'start-menu' });
       const nav = this.startMap.draw(ctx, platformW, H, 'e3', buildStartModel(undefined, 'e3'), this.startMapSilent || this.pauseOpen);
+      if (this.startMap.menu && this.startMap.view === 'main' && !this.startMapSilent) {
+        const row = { x: 14, y: H - 58, w: 278, h: 24, id: 'account-activity' };
+        aero.button(ctx, row.x, row.y, row.w, row.h, mirrorCopy.account, { size: 11 }); nav.unshift(row);
+      }
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
 
@@ -1972,22 +1970,7 @@ export class GraceQueueLite {
     setFont(ctx, 11); ctx.fillStyle = ERA3.white;
     ctx.fillText(q.app.taskbarLabel, bx + 10, ty + 9);
     this.rects.push({ x: bx, y: ty + 4, w: bw, h: bh - 8, id: 'task-restore' });
-    // ⚑ S145 — THE RECORD ON THE DEVICE (THE_WITNESS_SYSTEM_PLAN §3D). From the
-    //   moment she is signed in, the taskbar carries the file: its count, live,
-    //   and lit for a moment each time it grows. The 2016 face of the wall's
-    //   pulse — the thing counting is the thing she is working inside. Pressable
-    //   from every signed-in screen; Back returns to wherever she was.
-    if (this.mode === 'dark' || this.mode === 'boot' || this.mode === 'install' || this.mode === 'signin') return;
-    const k = witnessPulse.k();
-    const label = q.app.recordChip.replace('{n}', String(witnessPulse.countFor('e3')));   // S178: her file, not the run's
-    setFont(ctx, 11);
-    const cw = Math.ceil(ctx.measureText(label).width) + 20;
-    const cx = bx + bw + 8;
-    px(ctx, cx, ty + 4, cw, bh - 8, k > 0 ? ERA3.accent : ERA3.taskBot);
-    px(ctx, cx, ty + 4, cw, 1, k > 0 ? ERA3.accentHi : ERA3.tray);
-    ctx.fillStyle = k > 0 ? ERA3.white : ERA3.grey;
-    ctx.fillText(label, cx + 10, ty + 9);
-    if (this.mode !== 'consent' && this.surfaces.has('record')) this.rects.push({ x: cx, y: ty + 4, w: cw, h: bh - 8, id: 'record-chip' });
+
   }
 
   /** ⚑ S145 — the chip pressed: the record opens over whatever is up, and
@@ -2551,6 +2534,7 @@ export class GraceQueueLite {
     const r = this.rects.find(rr => hit(rr, x, y));
     if (!r) { if (this.startMap.menu) { this.startMap.close(); this.bump(); } return; }
     const model = buildStartModel(undefined, 'e3');
+    if (r.id === 'account-activity') { this.startMap.close(); this.openRecordFromChip(); return; }
     if (r.id === 'start-menu') { this.lambyGuide?.press('lg-x'); this.pauseOpen = false; this.startMap.toggle(); this.bump(); return; }
     if (r.id === 'whattodo' && !this.startMapSilent) { this.startMap.close(); this.startPanel.toggle(); this.bump(); return; }
     if (this.startMap.press(r.id, model, this.startMapSilent || this.pauseOpen)) { this.bump(); return; }
@@ -2575,7 +2559,6 @@ export class GraceQueueLite {
     // keeps its "done" row; only Back to today from the story itself clears it
     if (r.id === 'board-back') { if (!this.chipReturn) this.storyDone = false; this.backToBoard(); return; }
     if (r.id === 'next-story') { this.nextSubmission(); this.bump(); return; }
-    if (r.id === 'record-chip') { this.openRecordFromChip(); return; }
     if (r.id === 'update-accept') { this.installOffer(); return; }   // S227 — she confirms the platform's update
     if (r.id.startsWith('task-')) { this.openTask(Number(r.id.slice(5))); return; }
     if (this.openSurface && this.openSurface.press(r.id)) { this.bump(); return; }

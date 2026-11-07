@@ -397,7 +397,7 @@
      "label": "Your record",
      "done": "recordViewed",
      "optional": true,
-     "hint": "Your record is on the platform — the chip at the bottom of the screen.",
+     "hint": "Your record is in the Start menu, under My account.",
      "where": "the workstation"
     },
     {
