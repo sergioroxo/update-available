@@ -98,6 +98,7 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ## Done since the headset session (newest first)
 
+- ☑ S318 — guard 1: the transition lines no longer carry one file from Daniel to Vera to Maya ("Your file stays with us."; "A file was opened for you."; "Records kept since 1997… inform your care today."). Itch ZIP checked: loads in an itch-style iframe, no errors, no outside requests.
 - ☑ S317 — the itch festival trial merged into reinterp: 2026 v2, Vera's 2016 v2 (testimony pipeline, take-down, Malta), hand play, Lamby opener waits, the dollhouse build + menu row, the playtest repairs, build:itch (zip in the trial worktree). Its walk reached the Close; not re-walked after the merge.
 - ☑ S316 — his 7 Nov archive finds on the 1997/2003 sites; the own-thing handoff and Codex's documents merged
 
