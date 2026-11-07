@@ -73,7 +73,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   function visible(p: PropHandle, on: boolean) { p.entity.setLocalScale(on ? sizes.get(p.entity)! : pc.Vec3.ZERO); }
   const originalMats = new Map<pc.StandardMaterial, pc.Color>();
   let seen = '', generation = -1, lastNumber = -1;
-  let data = { number: 4812, articles: 0, clipTime: 0, takeover: false };
+  let data = { number: 4812, articles: 0, clipTime: 0, takeover: false, viewers: 41 };
   function setScreenData(next: typeof data) { data = next; }
   let leftT = 0, revealT = -1;
   let conduct: (() => boolean) | null = null;
@@ -90,7 +90,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
       if (leftT >= 1.5 && revealT < 0 && conduct?.()) revealT = 0;
       if (revealT >= 0) { revealT += dt; if (revealT >= 9) markE4('room'); }
     }
-    const key = `${ledgerGeneration}:${e4BeatsVersion()}:${data.number}:${data.articles}:${e4Has('map') ? Math.floor(data.clipTime * 8) : 0}`;
+    const key = `${ledgerGeneration}:${e4BeatsVersion()}:${data.number}:${data.articles}:${data.viewers}:${e4Has('map') ? Math.floor(data.clipTime * 8) : 0}`;
     if (key === seen) return;
     if (generation !== ledgerGeneration) { generation = ledgerGeneration; }
     seen = key;
@@ -109,7 +109,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     if (e4Has('map')) ceiling.repaint(c => {
       if (data.takeover && !streaming) drawContagionClip(c, data.clipTime, 0, 0, 512, 512);
       else {
-        drawE4CeilingNetwork(c, e4Has('junie'), streaming ? 42 : 0);
+        drawE4CeilingNetwork(c, e4Has('junie'), streaming ? data.viewers : 0);
         if (!streaming) drawContagionClip(c, data.clipTime, 16, 410, 200, 90);
       }
     });

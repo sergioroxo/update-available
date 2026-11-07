@@ -1,3 +1,4 @@
+import V3 from '../../data/dialog/s4_v3.json';
 import vera from '../../data/dialog/s3_vera.json';
 /**
  * ⚑ S179 / R5-02 — THE WALLS' PRINTS: the posters of each era, drawn as pixel art.
@@ -246,18 +247,17 @@ function march2016(c: Ctx, W: number, H: number): void {
 
 function ball2026(c: Ctx, W: number, H: number): void {
   gradient(c, 0, H - 1, [P.ballBg, P.ballGlow, P.ballBg], W);
-  centre(c, 'THE COMMONS', 5, P.ballInk, W);
-  centre(c, 'BALL', 13, P.ballGold, W, 2);
+  centre(c, V3.fundraiser.poster[0], 5, P.ballInk, W);
+  centre(c, V3.fundraiser.poster[1], 16, P.ballGold, W);
   // a figure mid-vogue, arms framing the face, in the trans flag's light
   for (let y = 30; y < 80; y++) { const k = (y - 30) / 50; px(c, 0, y, k < 0.33 ? P.ballBlue : k < 0.66 ? P.ballPink : P.ballWhite, 3, 1); px(c, W - 3, y, k < 0.33 ? P.ballBlue : k < 0.66 ? P.ballPink : P.ballWhite, 3, 1); }
   sprite(c, 26, 32, [
     '#........#', '.#..##..#.', '..#####...', '...####...', '....##....', '...####...', '..######..', '..######..',
     '...####...', '...####...', '..##..##..', '.##....##.', '##......##'
   ], { '#': P.ballFigure });
-  disc(c, 35, 58, 5, P.ballGold); px(c, 33, 63, P.ballGold, 5, 6); px(c, 31, 69, P.ballGold, 9, 2);   // the trophy
-  centre(c, 'CATEGORY IS', 78, P.ballPink, W);
-  centre(c, 'ALL WELCOME', 86, P.ballInk, W);
-  centre(c, 'FRI 23 OCT', 93, P.ballBlue, W);
+  centre(c, V3.fundraiser.poster[2], 78, P.ballPink, W);
+  centre(c, V3.fundraiser.poster[3], 86, P.ballInk, W);
+  centre(c, V3.fundraiser.poster[4], 93, P.ballBlue, W);
 }
 
 /** ⚑ S181 / R5-03 — drawer 12's card: the index card on the record says "index · era 1 · drawer 12" */

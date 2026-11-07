@@ -4,6 +4,10 @@
     "_doc": "THE GOAL PICTURE (src/desktop/apps/goalPicture.ts). Not a composite of her: the picture of where the system is pushing her, a drawn stock young man, smiling. The room and the headset reuse the painter. Speculative in the Dossier (no documented use of such images was found; RESEARCH_2026_V3_THREADS thread 2).",
     "caption": "You, restored · 2027"
   },
+  "fundraiser": {
+    "poster": ["TRANSJESUS", "BIRTHDAY", "LIVE STREAM", "FOR TRANS YOUTH", "COME AS YOU ARE"],
+    "title": "birthday stream · for trans youth", "fund": "mutual aid · for trans youth", "fraction": 0.68
+  },
   "laptop": {
     "restoring": "Restoring your session.",
     "worn": "Session in progress."
