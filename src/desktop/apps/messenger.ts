@@ -269,6 +269,17 @@ export class E4Messenger {
   }
 
   private threadPrimary(id: ChatId): { id: string; label: string } | null {
+    const own = this.ownPrimary(id);
+    if (own) return own;
+    // ⚑ the story is waiting on another chat: this thread's one primary goes there (the walk found a player can sit in
+    //   Dad's thread after Sam left, with nothing but Back to press)
+    const w = this.want;
+    if (w && w !== 'link' && w !== id) return { id: `chat-${w}`, label: M.chats[w].open };
+    if (w === 'link' && id !== 'mum') return { id: 'chat-mum', label: M.chats.mum.open };
+    return null;
+  }
+
+  private ownPrimary(id: ChatId): { id: string; label: string } | null {
     if (id === 'house') return this.houseShown >= M.house.birthday.length && !this.houseHeart ? { id: 'house-heart', label: M.house.heartButton } : null;
     if (id === 'mum') {
       if (this.mumPage < M.mum.years.length) {
