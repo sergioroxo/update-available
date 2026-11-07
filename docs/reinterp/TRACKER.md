@@ -15,20 +15,20 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ---
 
-## Waiting for Sérgio
+## Waiting for Sérgio (cleaned 8 Nov; decided items moved to Done)
 
+- ❓ **The red thread** (monkey's ear / Nuala's key / Junie's seam): keep, or drop?
+- ❓ **E1's packet** ("Leave behind: music, journals…"): an institutional rule (generic is fine), or a consequence of
+  the player's own keep/leave choices (then the order changes)? (OWN_THING_AUDIT)
+- ❓ **E2's broken jingle**: still belongs, or cut? (AUDIO_GAPS)
+- ❓ **Quad layers experiment** (Codex: a small PlayCanvas patch behind `?quad=1`, the 1997 monitor first): yes / no.
+- ❓ **2016 "Focus mode"** (Lambient offers to hold her phone; changes nothing): keep or cut, once seen.
+- ❓ **2026 open questions** (E4_V3_SCREENS_BUILT): try-on length after the headset; the clip is approved.
+- ❓ **Itch / CPH:DOX**: rebuild the festival ZIP after Prompt B merges?
+- 🥽 **A headset session**: the 2016 mirror read from the seat, try-on, the clip, the ceiling map, the stream.
 
-- ❓ **2026 v2 and weaponised care** — RESEARCH_2026_V2_WEAPONISED_CARE_2026-11-01.md is in: beats V0–V12 (the update installs the defaults + the agent as recommended assistant; search from "the default"; the agent chat; the loop through Meridian, whose refusal now reads "Referred by Second Thoughts", back to the agent quoting it; the face-swap composite marked speculative; a "story" card made from her own chips; Junie's thread asks for nothing; "original kept" is the lever); the weaponised-care audit of all four eras; three ending spaces for the Commons (The Table / The Floor, described / The Making — the agent's pick: The Making ending on The Table; food replaces the lamp motif); what moves to 2016 (a "trigger-safe" mode that hides identity words). WEAPONISED_CARE_NOTE_2026-11-01.md for the article. Needs his read + his pick of the ending space. Do NOT stage the real influencer case (living person; mechanism only).
-- ❓ **2016 rebuilt around Vera and one digital risk** — RESEARCH_2016_VERA_APPARATUS_2026-11-01.md is in: the apparatus 2016 teaches is the TESTIMONY PIPELINE (template → house-style edit → four places at once → reused in a campaign, the raw kept); 8 beats with her own 2014 story at the centre ("Story Record" replaces the contributor tools, offered before Malta); Nuala felt, The Wick respite (mug + stamp card on the desk, replacing the dead pen); Malta breaks it by outnumbering it; an optional "Take my story down" that shows the copies. Needs his yes + three calls: the trans-as-trigger metrics row (Target boycott 2016) yes/no; keep the take-down press; the marks "Story Record" etc. (The flagged Malta date is fine: the phone reads Tuesday 6 December 2016.)
-- ☑ **The Dykas "Model"** — the Tree Model (fruit, seed, roots, soil, shoots): sin as the fruit of a heart; one session on women's same-sex attraction; care as the register that carries correction. Three 2016 ideas (a "My Tree" intake, a Two Trees sort that cannot be won, a habit log that never completes) → feeds the 2016 rebuild. RESEARCH_DYKAS_MODEL_2026-11-01.md
-
-- ❓ **Era 4 middle redesign** — read RESEARCH_2026_PRESSURES_2026-11-01.md (beats B0–B8: the push to male presentation,
-  the Meridian refusal, the steering search, the feed, the AI "restore", Junie's hack, the Commons with intention,
-  TransJesus). Say yes / change. Ethics gate 16 (a user test before TransJesus content) is still open.
-- ❓ **Vera's 2016 rebuilt around her** — DESIGN_S280_GLOW_SITES_VERA_FADES_2026-11-01.md §3 (Nuala, her own 2014
-  testimony, The Wick; Malta breaks the update; the contributor tools go).
-- ❓ **The red thread** (monkey's ear / Nuala's key / Junie's seam) — after the Gemini picture.
-- ❓ **The dollhouse slider** ("we should be able to slide it") — what should sliding do?
+Decided since 1 Nov (kept for the record): 2026 v2 → v3 (DESIGN_2026_V3_PRESSURE); Vera's 2016 rebuilt (merged S317) +
+the phone mirror (S323); the dollhouse turntable (S291); ethics gate 16 closed by him, never raise it again.
 
 ## Building now
 
