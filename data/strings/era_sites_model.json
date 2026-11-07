@@ -871,6 +871,39 @@
      },
      {
       "k": "h3",
+      "t": "Pages of the time, from the Internet Archive"
+     },
+     {
+      "k": "p",
+      "t": "Ministry websites as they looked between 2002 and 2007: the rainbow used for a credo, a change programme sold on CD, worship songs and slideshow films as invitations, testimonies offered as proof. Kept in the Internet Archive. Each link opens in a new tab. Read them as evidence of what was said, never as advice."
+     },
+     {
+      "k": "links",
+      "items": [
+       {
+        "label": "OUTPOST Inc., an Exodus International branch in Minnesota, January 1998 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/19980111045714/http://outpost-inc.com/",
+        "note": "A home page still being set up, whose first offer is a commercial to download: “HOPE for CHANGE”."
+       },
+       {
+        "label": "OUTPOST Inc., the “HOPE for CHANGE” commercial as a QuickTime file, 1998 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/19980111045714/http://outpost-inc.com/video/outpost.mov",
+        "note": "A television-style ad offered on a website. The file opens in a new tab; this site does not play it."
+       },
+       {
+        "label": "OUTPOST Inc., its links page, January 1998 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/19980111045832/http://outpost-inc.com/links.html",
+        "note": "Other ministry branches in the state, and an email address for “hope”."
+       },
+       {
+        "label": "Bridges Across, its mailing list, December 1998 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/19981206001012/http://www.bridges-across.org/ba/lists.htm",
+        "note": "A dialogue list between ex-gay and gay Christians, up to forty messages a day: what a 1990s list felt like."
+       }
+      ]
+     },
+     {
+      "k": "h3",
       "t": "References this year drew on"
      },
      {
@@ -1693,6 +1726,16 @@
         "label": "“Interview With Jesus”, a Flash “movie” site, June 2004 (Internet Archive capture)",
         "url": "https://web.archive.org/web/20040607072651/http://www.interviewwithgod.com/theoriginal.htm",
         "note": "A slideshow film sold on DVD and shared by link: the visual grammar of the period's Christian web."
+       },
+       {
+        "label": "Bridges Across, its web forums, December 2003 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20031203012836/http://www.bridges-across.org/ba/lists.htm",
+        "note": "The same community five years later, on registered-only web forums with a confidentiality page: what a 2003 forum looked like."
+       },
+       {
+        "label": "“Christians in Recovery” workbook software, Self-HelpSoftware.com, 2008 (Internet Archive capture)",
+        "url": "https://web.archive.org/web/20080430202223/http://self-helpsoftware.com/Workbook",
+        "note": "A faith-based 12-step workbook sold as desktop software for Windows, Mac and Palm — the shape of the piece’s own software."
        }
       ]
      },
