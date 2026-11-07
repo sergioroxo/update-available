@@ -1,3 +1,4 @@
+import { buildE4Room } from '../room/e4Room';
 import { xrAccessAllowed } from '../frame/xrAccess';
 import { runtimeQuery, festivalEdition } from '../edition';
 import { tapePlayerBus } from '../desktop/apps/tapePlayer';
@@ -817,6 +818,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let niche: FluidNiche | null = null;
   let ceiling: CeilingWitness | null = null;
   let cluster: ClusterShell | null = null;
+  let e4Room: ReturnType<typeof buildE4Room> | null = null;
   let cloud: PointCloud | null = null;
   let closeMonitor: CloseMonitor | null = null;
   let closeMonitorDistance = 0.95;
@@ -835,6 +837,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     niche.setFacet(options.facet ?? 'none');
     ceiling = buildCeilingWitness(app);
     cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
+    e4Room = buildE4Room(app, room);
     // ⚑ S108: see ClusterShell.setNeverBatch — handed over below, once
     //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
 
@@ -4260,6 +4263,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (morphDemoIn <= 0 && cluster && options.morphDemo) driveMorph(options.morphDemo);
       }
       cluster?.update(dt);
+      e4Room?.update(dt, os.era === 'e4');
       timePassing?.tick(dt);
       ceiling?.update(dt);
       cloud?.update(dt);
