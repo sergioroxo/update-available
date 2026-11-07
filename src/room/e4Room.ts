@@ -94,7 +94,8 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     if (key === seen) return;
     if (generation !== ledgerGeneration) { generation = ledgerGeneration; }
     seen = key;
-    const n = e4Has('number'), m = e4Has('meridian'), l = e4Has('left');
+    const restored = e4Has('terminated');
+    const n = !restored && e4Has('number'), m = !restored && e4Has('meridian'), l = !restored && e4Has('left');
     plant.forEach(p => visible(p, !n)); visible(flag, !m); visible(friends, !l); visible(goal, l);
     throwProp.material.diffuse = hex(l ? ERA4.text : PLACE.textileHi); throwProp.material.update();
     // The crude defaults spread to the bedding, curtains and rug; preserve the real per-model materials.
@@ -104,7 +105,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
         mat.diffuse.copy(m ? hex(ERA4.text) : originalMats.get(mat)!); mat.update();
       }
     }
-    const isGoal = e4Has('newyou') && !e4Has('original');
+    const isGoal = !restored && e4Has('newyou') && !e4Has('original');
     frame.repaint(c => isGoal ? drawGoalPicture(c, 0, 0, 256, 256) : photograph(c, 0, 0, 256, 256, false, 3));
     if (e4Has('map')) ceiling.repaint(c => {
       if (data.takeover && !streaming) drawContagionClip(c, data.clipTime, 0, 0, 512, 512);
@@ -113,7 +114,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
         if (!streaming) drawContagionClip(c, data.clipTime, 16, 410, 200, 90);
       }
     });
-    strips.forEach((p, i) => visible(p, e4Has('link') && i < data.articles));
+    strips.forEach((p, i) => visible(p, !restored && e4Has('link') && i < data.articles));
     visible(ticket, n);
     if (lastNumber !== data.number || generation !== ledgerGeneration) {
       lastNumber = data.number;
