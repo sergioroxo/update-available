@@ -11,6 +11,7 @@ try {
  const errors = []; page.on('pageerror', e => errors.push(String(e)));
  await page.goto('http://127.0.0.1:3114/?reinterp=1&era=3&debug=1&descent=0&kiosk=0', { waitUntil: 'networkidle2' });
  await page.waitForFunction(() => window.__graceQueue?.());
+ await page.screenshot({path:path.join(out,'00-room.png')});
  const result = await page.evaluate(async increment => {
   const { GraceQueueLite } = await import('/src/room/graceQueueLite.ts');
   const { ledger } = await import('/src/state/ledger.ts');
@@ -56,7 +57,6 @@ try {
   return {checks,photos};
  },increment);
  for(const [name,url] of Object.entries(result.photos)) fs.writeFileSync(path.join(out,name+'.png'), Buffer.from(url.split(',')[1],'base64'));
- await page.screenshot({path:path.join(out,'00-room.png')});
  if(errors.length)throw Error(errors.join('\n'));
  fs.writeFileSync(path.join(out,'checks.json'), JSON.stringify(result.checks,null,2));
  console.log(`${increment}: ${result.checks.length} checks; ${Object.keys(result.photos).length+1} photographs in ${out}`);

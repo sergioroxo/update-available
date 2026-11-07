@@ -376,6 +376,7 @@ export class GraceQueueLite {
   private personalNotice = false;
   private personalDesktop = false;
   private personalArmed = false;
+  private personalWasQuiet = false;
   get personalQuiet(): boolean { return this.personalNotice || this.personalDesktop || this.phone.personalOpen || (this.phoneInHand && this.phone.quietReading); }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
@@ -388,7 +389,7 @@ export class GraceQueueLite {
   }
   private ownVersion = 0;
   private highlightPreference = false;
-  get version(): number { return this.ownVersion + this.phone.version + this.surfaceVersion() + (this.lambyGuide?.version ?? 0); }
+  get version(): number { return this.ownVersion + this.surfaceVersion() + (this.lambyGuide?.version ?? 0); }
   /** the phone's own counter — the caret blink must not re-upload the workstation */
   private phoneV = 0;
 
@@ -604,10 +605,12 @@ export class GraceQueueLite {
       this.highlightPreference = highlights; this.bump(); this.phoneV++;
     }
     this.guideWait.tick(dt, !!this.lambyGuide?.active);
+    if (this.personalDesktop && !this.phone.personalOpen) { this.personalDesktop = false; this.bump(); }
     if (this.phoneInHand || this.phone.personalSeen) {
       if (this.personalNotice) { this.personalNotice = false; this.bump(); }
       if (this.phoneInHand && this.personalDesktop) { this.personalDesktop = false; this.bump(); }
     }
+    if (this.personalWasQuiet !== this.personalQuiet) { this.personalWasQuiet = this.personalQuiet; this.bump(); }
     veraDay.quiet = this.personalQuiet || this.veraPage === 'record' || (this.phoneInHand && this.phone.quietReading);
     if (this.startMap.update(dt)) this.bump();
     this.updateSaver(dt);
@@ -1377,6 +1380,7 @@ export class GraceQueueLite {
     const h = this.personalDesktop ? 230 : 112, y = H - h - 42;
     if (this.personalDesktop) {
       ctx.save(); ctx.translate(x, y); this.phone.drawThreadView(ctx, w, h); ctx.restore();
+      this.rects.unshift({ x, y: y + 20, w: 44, h: 28, id: 'personal-back' });
     } else {
       px(ctx, x, y, w, h, ERA3.white); px(ctx, x, y, w, 1, ERA3.glassEdge);
       setFont(ctx, 14); ctx.fillStyle = ERA3.ink; ctx.fillText(maiden.personalMessage.from, x + 12, y + 12);

@@ -39,6 +39,7 @@ import {
   PHONE, phoneFont, phoneWrap, roundRect, statusBar, appBar, bubble, avatar,
   appTile, wallpaper, sheet, pill, furnitureTile, dock, pageDots, dateWidget
 } from '../theme/phone';
+import { makeE3PhotoSprites } from './e3PhoneSprites';
 import { drawFloppyIcon } from './floppysheep';
 import { veraDay } from '../../state/veraDay';
 import { ledger } from '../../state/ledger';
@@ -65,7 +66,7 @@ const HOME = m.home as unknown as Record<string, string>;
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
 type Stage = 'quiet' | 'first' | 'voted' | 'cascade' | 'after';
-type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal' | 'notes';
+type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal' | 'notes' | 'photos' | 'photo';
 /** Lambient's card, and it is the same card whichever way she got here */
 type Card = null | 'opened' | 'ignored';
 
@@ -138,7 +139,7 @@ export class PhoneE3 {
   private get clockText(): string { return this.opts.clock ? this.opts.clock() : d.phone.lockClock; }
 
   private bump(): void { this.version++; }
-  get quietReading(): boolean { return this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
+  get quietReading(): boolean { return this.screen === 'photos' || this.screen === 'photo' || this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
   presentInbox(): void { this.screen = 'inbox'; this.openMessage = null; this.bump(); }
 
 
@@ -291,6 +292,7 @@ export class PhoneE3 {
     ctx.fillRect(0, 0, W, H);
     if (this.screen === 'personal') { this.drawThreadView(ctx, W, H); this.pushBack(20, 62); }
     else if (this.screen === 'lock') { this.drawLock(ctx, W, H); }
+    else if (this.screen === 'photos' || this.screen === 'photo') { this.drawPhotos(ctx, W, H); }
     else if (this.screen === 'notes') { this.drawNotes(ctx, W, H); }
     else if (this.screen === 'group') { this.drawGroup(ctx, W, H); }
     else if (this.screen === 'platform') { this.drawPlatform(ctx, W, H); }
@@ -395,6 +397,30 @@ export class PhoneE3 {
   /** ⚑ AN ICON GRID ON A WALLPAPER — the single thing that most makes a screen
    *  read as a phone rather than as a window with rows in it. Four apps, and
    *  only one of them wants anything from her. */
+  private photoSprites: HTMLCanvasElement[] | null = null;
+  private photoIndex = 0;
+  private drawPhotos(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText);
+    ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
+    const y0 = statusBar(ctx, W, this.clockText);
+    const top = appBar(ctx, W, y0, HOME.fPhotos); this.pushBack(y0, top);
+    ctx.save(); ctx.imageSmoothingEnabled = false;
+    if (this.screen === 'photo') {
+      const size = 144, x = Math.round((W - size) / 2), y = top + 20;
+      ctx.drawImage(this.photoSprites[this.photoIndex], x, y, size, size);
+      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
+      ctx.fillText(m.cameraRoll.dates[this.photoIndex], x, y + size + 12);
+    } else {
+      this.photoSprites.forEach((sprite, i) => {
+        const x = 12 + (i % 2) * 84, y = top + 12 + Math.floor(i / 2) * 100;
+        ctx.drawImage(sprite, x, y);
+        phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(m.cameraRoll.dates[i], x, y + 77);
+        this.rects.push({ x, y, w: 72, h: 90, id: 'photo-' + i });
+      });
+    }
+    ctx.restore();
+  }
+
   private drawNotes(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
     const y0 = statusBar(ctx, W, this.clockText);
@@ -492,6 +518,7 @@ export class PhoneE3 {
       // ⚑ S181 / R5-04 — the last tile is the accountability app: her file, on her phone
       const walk = kind === 'files';
       furnitureTile(ctx, col(i % 4), rowY(1 + Math.floor(i / 4)), s, kind, walk ? HOME.fWalk : label);
+      if (kind === 'photos') this.rects.push({ x: col(i % 4), y: rowY(1 + Math.floor(i / 4)), w: s, h: s + 12, id: 'photos' });
       if (kind === 'notes') this.rects.push({ x: col(i % 4), y: rowY(1 + Math.floor(i / 4)), w: s, h: s + 12, id: 'notes' });
       if (walk) this.rects.push({ x: col(i % 4), y: rowY(1 + Math.floor(i / 4)), w: s, h: s + 12, id: 'walk' });
     });
@@ -724,8 +751,9 @@ export class PhoneE3 {
         // The optional inbox never files a reading event.
         this.bump(); return true;
       // S158: the chat goes back to Messages; S177: so does an open message
-      case 'back': this.screen = this.screen === 'group' || this.screen === 'message' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
+      case 'back': if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
+      case 'photos': this.screen = 'photos'; this.bump(); return true;
       case 'notes': this.screen = 'notes'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
       case 'dismiss': this.dismissCard(); return true;
@@ -734,6 +762,7 @@ export class PhoneE3 {
       //   which is truer than making it play: nobody asked her to watch it.
       case 'stream': return true;
       default:
+        if (r.id.startsWith('photo-')) { this.photoIndex = Number(r.id.slice(6)); this.screen = 'photo'; this.bump(); return true; }
         if (r.id.startsWith('read-')) {
           this.readMessages.add(r.id.slice(5));
           this.openMessage = r.id.slice(5);

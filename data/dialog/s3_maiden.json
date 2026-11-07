@@ -326,5 +326,16 @@
     "text": "leisure centre car park free after 6"
    }
   ]
+ },
+ "cameraRoll": {
+  "register": "felt",
+  "_doc": "Approved 7 Nov. Three near-duplicate photos, one blurred; no people or explanatory captions. Pre-authored, read-only sprites, no camera or file input.",
+  "dates": [
+   "14 March",
+   "14 March",
+   "14 March",
+   ""
+  ],
+  "busText": "46A · last bus 22:40"
  }
 }
