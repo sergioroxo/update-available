@@ -245,6 +245,9 @@ const LAP = { w: 224, h: 140 };
         // a sub-app that says it is closed owns nothing on screen
         if (path && (obj.open === false || obj.visible === false)) return;
         for (const k of Object.keys(obj)) {
+          // ⚑ S321 — the 2026 lid's rects are the LAPTOP's (224 × 140), read below as their own surface; collected here
+          //   too they were projected onto the monitor and a press landed on whatever the monitor had there
+          if (k === 'laptopHits') continue;
           let v;
           try { v = obj[k]; } catch { continue; }
           if (RECTS_KEY.test(k) && looksLikeRects(v)) {

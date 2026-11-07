@@ -42,9 +42,10 @@
   "lead": "Here is what happens next",
   "steps": [
    { "text": "Your session is back.", "done": "browserOpen" },
-   { "text": "Search, and let the engine finish it.", "done": "resultsSeen" },
-   { "text": "Open the first result and begin.", "done": "programBegun" },
-   { "text": "Answer L, one step at a time.", "done": "stepsDone" },
+   { "text": "Your messages are on the laptop.", "done": "e4:v3:house" },
+   { "text": "Read Mum, then open her link.", "done": "beat:link" },
+   { "text": "Your clinic wrote.", "done": "beat:number" },
+   { "text": "Search, and let the engine finish it.", "done": "beat:search" },
    { "text": "Put the headset on.", "done": "headsetWorn" }
   ],
   "close": "Close"

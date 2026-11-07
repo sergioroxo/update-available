@@ -3420,7 +3420,7 @@
     ],
     [
      "Beats",
-     "19"
+     "20"
     ]
    ],
    "tabs": {
@@ -4454,16 +4454,58 @@
         "where": "Where: the monitor."
        },
        {
-        "label": "L, on the laptop",
+        "label": "Your session",
         "opt": "",
-        "hint": "The laptop is restoring your session. Wait a moment.",
+        "hint": "Your session is coming back. Wait a moment.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Eighteen",
+        "opt": "",
+        "hint": "Your friends wrote. Read the house chat on the laptop.",
         "where": "Where: the laptop."
        },
        {
-        "label": "Your defaults",
+        "label": "The new you",
         "opt": "",
-        "hint": "The update chose your defaults. Press Continue.",
+        "hint": "The update restored your defaults. Press Continue.",
         "where": "Where: the monitor."
+       },
+       {
+        "label": "Mum",
+        "opt": "",
+        "hint": "Read Mum, one year at a time.",
+        "where": "Where: the laptop."
+       },
+       {
+        "label": "Dad",
+        "opt": "",
+        "hint": "Dad wrote. Read him.",
+        "where": "Where: the laptop."
+       },
+       {
+        "label": "Mum's link",
+        "opt": "",
+        "hint": "Open the link Mum sent.",
+        "where": "Where: the laptop."
+       },
+       {
+        "label": "The number",
+        "opt": "",
+        "hint": "Your clinic wrote. Open the letter.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Support while you wait",
+        "opt": "",
+        "hint": "Ask Meridian. Send, then close the reply.",
+        "where": "Where: the monitor."
+       },
+       {
+        "label": "Left",
+        "opt": "",
+        "hint": "The house chat. Read it.",
+        "where": "Where: the laptop."
        },
        {
         "label": "The search, finished",
@@ -4474,7 +4516,7 @@
        {
         "label": "Second Thoughts",
         "opt": "",
-        "hint": "The first result is an ad. Open it.",
+        "hint": "The first result is an ad. Press Chat now.",
         "where": "Where: the monitor."
        },
        {
@@ -4484,57 +4526,21 @@
         "where": "Where: the bed."
        },
        {
-        "label": "The agent says hello",
+        "label": "The map",
         "opt": "",
         "hint": "Answer it. Either answer goes on.",
         "where": "Where: the monitor."
        },
        {
-        "label": "Somewhere else, first",
-        "opt": "",
-        "hint": "Press Meridian LGB Trust. Send the message, then close the reply.",
-        "where": "Where: the monitor."
-       },
-       {
-        "label": "Back to the agent",
-        "opt": "",
-        "hint": "It asks if this is still you. Either answer goes on.",
-        "where": "Where: the monitor."
-       },
-       {
-        "label": "Could I see you?",
-        "opt": "",
-        "hint": "Press Choose a photo. Open Pride '24 and pick any photo.",
-        "where": "Where: the monitor."
-       },
-       {
-        "label": "The version that matches the file",
-        "opt": "",
-        "hint": "Press Use as profile photo.",
-        "where": "Where: the monitor."
-       },
-       {
-        "label": "Your story",
-        "opt": "",
-        "hint": "Read what it wrote. Press Acknowledge.",
-        "where": "Where: the monitor."
-       },
-       {
-        "label": "Your messages",
-        "opt": "",
-        "hint": "Allow it. Then open Junie's thread.",
-        "where": "Where: the monitor."
-       },
-       {
         "label": "Junie",
         "opt": "",
-        "hint": "Read Junie's messages.",
-        "where": "Where: the monitor."
+        "hint": "Junie wrote this morning. Open her chat.",
+        "where": "Where: the laptop."
        },
        {
         "label": "The original",
         "opt": "",
-        "hint": "Open Photos. Press Use original.",
+        "hint": "Photos: press Use original.",
         "where": "Where: the monitor."
        },
        {

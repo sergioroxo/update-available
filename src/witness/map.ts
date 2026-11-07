@@ -141,23 +141,16 @@ const CONDITIONS: Record<string, Condition> = {
   cascadeSeen: () => ledger.checkins.some((c) => c.id === 'e3_cascade'),
   updatedTo4: () => updatedTo(4),
   // ── 2026 ──
-  // ⚑ S293 — 2026 v2 (RESEARCH_2026_V2 §4, ENDING_TRANSJESUS): the defaults, the search, the agent's conversation,
-  //   Meridian, the composite, her story, Junie's thread, the original, the headset, the stream
+  // ⚑ S321 — 2026 v3 (DESIGN_2026_V3_PRESSURE_2026-11-07.md): most beats are read through two prefixes in `cond`
+  //   below — `beat:<id>` (the contract's marks, src/narrative/e4Beats.ts) and `e4:<id>` (an e4Space filing). These
+  //   are the ones that need the OS.
   saverPressed: () => ledger.e4Space.some((e) => e.id === 'saver' || e.id === 'agent'),
   browserOpen: (os) => os.e4?.browser.isOpen === true || ledger.e4Space.some((e) => e.id === 'agent'),
-  defaultsSeen: () => ledger.e4Space.some((e) => e.id === 'defaults' || e.id === 'agent'),
-  resultsSeen: (os) => ['results', 'agent'].includes(os.e4?.browser.programMode ?? '') || ledger.e4Space.some((e) => e.id === 'agent'),
-  agentOpened: () => ledger.e4Space.some((e) => e.id === 'agent'),
-  convOpen: () => has4('conv:open'),
-  enquiryDone: () => has4('enquiry'),
-  convBack: () => has4('conv:back'),
-  convSee: () => has4('conv:see'),
-  convComposite: () => has4('conv:composite'),
-  convCare: () => has4('conv:care'),
-  threadOpened: () => has4('thread'),
+  resultsSeen: () => ledger.e4Beats.includes('search'),
+  agentOpened: () => ledger.e4Beats.includes('bot'),
   junieRead: (os) => !!os.e4?.browser.junieReplied || has4('reversal'),
   reversed: () => has4('reversal'),
-  // the conversation is over and the headset is what is left
+  // the screens are done and the headset is what is left
   stepsDone: (os) => !!os.e4?.browser.programDone || has4('headset'),
   headsetWorn: () => has4('headset'),
   commonsJoined: () => has4('commons'),
@@ -167,6 +160,9 @@ const CONDITIONS: Record<string, Condition> = {
 };
 
 function cond(key: string, os: DesktopOS): boolean {
+  // ⚑ S321 — 2026 v3's two prefixes: a contract beat reached, or a filing on the 2026 record
+  if (key.startsWith('beat:')) return ledger.e4Beats.includes(key.slice(5));
+  if (key.startsWith('e4:')) return has4(key.slice(3));
   const fn = CONDITIONS[key];
   return fn ? fn(os) : false;
 }
