@@ -1,3 +1,4 @@
+import { veraDay } from '../state/veraDay';
 /**
  * ⚑ THE MAP — where you are, what has happened, what is next (S145, 2026-09-16).
  *
@@ -123,6 +124,11 @@ const CONDITIONS: Record<string, Condition> = {
   migrated: () => has('subject-migrated'),
   signedIn: () => has('e3-signed-in') || ledger.lamby.some((l) => l.id === 'e3_lambient_consent'),
   consentAnswered: () => ledger.lamby.some((l) => l.id === 'e3_lambient_consent'),
+  renataWorked: () => [1, 3, 7].every(id => ledger.graceQueue.some(c => c.cardId === id)),
+  pipelineSent: () => veraDay.distributed,
+  veraRecordOpened: () => veraDay.recordOpened,
+  veraRecordClosed: () => veraDay.recordClosed,
+  veraKitClosed: () => veraDay.kitClosed,
   correctionsStarted: () => ledger.graceQueue.length >= 1,
   // S158 / R3-82 — 2016's beats as the flow of record has them: one job to its end, the vote
   oneJobDone: () => has('e3-job-done'),
@@ -185,7 +191,7 @@ export function mapState(os: DesktopOS): MapState {
   const nowIdx = ORDER.indexOf(now);
   const by = entriesByEra();
   let current: MapState['current'] = null;
-  let quiet = now === 'close';
+  let quiet = now === 'close' || (now === 'e3' && veraDay.quiet);
   const speedrun = isSpeedrun();
   const eras: MapEraState[] = M.eras.map((rawEra) => {
     // ⚑ S227 — the Speedrun Version reads its own label and hint where a beat has one

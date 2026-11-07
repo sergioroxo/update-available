@@ -1272,6 +1272,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       if (eraNow !== 'e3' && graceQueueLite.floppy.open) graceQueueLite.floppy.closeGame();
       graceQueueLite.phoneInHand = phoneHeld;   // S226 — Lambient waits while the phone (and Bea) is in her hand
       graceQueueLite.update(dt);
+      if (eraNow === 'e3' && graceQueueLite.inboxLiftPending) {
+        graceQueueLite.inboxLiftPending = false;
+        if (!phoneHeld && lastSeat) this.holdDevice('phone', lastSeat);
+      }
       // the held read's own easing — position/rotation only, never a redraw:
       // moving a screen through the room does not change a pixel on it, so
       // this cannot dirty a canvas and the upload law below is untouched.

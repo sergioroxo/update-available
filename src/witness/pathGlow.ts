@@ -1,3 +1,4 @@
+import { ledger } from '../state/ledger';
 /**
  * ⚑ S281 — ONE GLOW LOGIC FOR THE WHOLE PIECE (his, 1 Nov: "FloppySheep and the message app should slightly glow
  * differently so we can understand where we need to go, that is a logic that should be around the whole experience").
@@ -32,6 +33,7 @@ export type GlowKind = 'path' | 'may';
 
 /** a soft ring around a rect: `path` warm and 2 px, `may` cool and 1 px, a little further out */
 export function drawGlow(ctx: CanvasRenderingContext2D, r: { x: number; y: number; w: number; h: number }, kind: GlowKind, warm: string, cool: string): void {
+  if (ledger.view.highlights !== true) return;
   ctx.save();
   const pad = kind === 'path' ? 2 : 3;
   ctx.strokeStyle = kind === 'path' ? warm : cool;

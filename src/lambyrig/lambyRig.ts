@@ -1,3 +1,4 @@
+import { runtimeQuery } from '../edition';
 /**
  * Standalone Lamby rig lab (master plan R9-4).
  *
@@ -251,7 +252,7 @@ class LambyRig {
     private readonly canvasEl: HTMLCanvasElement,
     private readonly ctx: CanvasRenderingContext2D
   ) {
-    const params = new URLSearchParams(window.location.search);
+    const params = runtimeQuery();
     const moodParam = params.get('mood');
     const actionParam = params.get('action');
     this.panel = new LambyRigPanel(

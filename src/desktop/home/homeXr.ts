@@ -1,3 +1,4 @@
+import { runtimeQuery } from '../../edition';
 /** Home's XR renderer. The DOM remains the controller: every ray select clicks
  * the same object/button/input. No gate, cut or handover decisions live here.
  * Existing licensed Home layers are preloaded once; a single nearest-filtered
@@ -301,7 +302,7 @@ export function mountHomeXr(shell: AppShell, opts: {
   app.on('prerender', tick);
   // Review hook exercises the real texture, plane intersections and shared DOM
   // callbacks. It does not assert that an emulated ray is a physical headset.
-  if (new URLSearchParams(window.location.search).get('debug') === '1') {
+  if (runtimeQuery().get('debug') === '1') {
     (window as unknown as { __homeXr: unknown }).__homeXr = {
       canvas, ready, app,
       show: () => { review = true; hang(); dirty = true; },
@@ -323,7 +324,7 @@ export function mountHomeXr(shell: AppShell, opts: {
       input.destroy(); plane.destroy(); mat.destroy(); tex.destroy();
       camera.camera!.layers = camera.camera!.layers.filter((id) => id !== layer.id);
       app.scene.layers.remove(layer);
-      if (new URLSearchParams(window.location.search).get('debug') === '1') delete (window as unknown as { __homeXr?: unknown }).__homeXr;
+      if (runtimeQuery().get('debug') === '1') delete (window as unknown as { __homeXr?: unknown }).__homeXr;
     }
   };
 }

@@ -1,3 +1,4 @@
+import { runtimeQuery } from '../../edition';
 import { xrTarget, xrOutline } from '../../frame/xrTargets';
 /** One world-space canvas, unfolding from a pixel star. Browser/XR share rays. */
 import * as pc from 'playcanvas';
@@ -78,7 +79,7 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
     return u >= 0 && u <= 1 && v >= 0 && v <= 1 ? { x: Math.round(u * W), y: Math.round(v * H) } : null;
   }
   function publish(): void {
-    if (!new URLSearchParams(location.search).has('debug') || app.xr?.active) return;
+    if (!runtimeQuery().has('debug') || app.xr?.active) return;
     const screen = (x: number, y: number): pc.Vec3 => camera.camera!.worldToScreen(
       plane.getWorldTransform().transformPoint(new pc.Vec3(x / W - 0.5, 0, y / H - 0.5)));
     frame.dataset.setupStage = opts.setup()?.stage ?? '';

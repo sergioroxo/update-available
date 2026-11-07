@@ -1,3 +1,4 @@
+import { runtimeQuery } from '../../edition';
 import { requestFullscreenSoft } from '../../frame/fullscreen';
 import { restartVisit } from '../../frame/restart';
 import { reducedMotion } from '../../state/motion';
@@ -1022,7 +1023,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
   }
 
   // the headset: Enter VR only where this browser has confirmed an immersive session (as the orienting card did)
-  if (!isReturn && new URLSearchParams(window.location.search).get('flat') !== '1' && navigator.xr) {
+  if (!isReturn && runtimeQuery().get('flat') !== '1' && navigator.xr) {
     void navigator.xr.isSessionSupported('immersive-vr').then(async (supported) => {
       if (!supported || destroyed) return;
       const cv = document.getElementById('app');

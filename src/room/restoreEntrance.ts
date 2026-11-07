@@ -1,3 +1,5 @@
+import { festivalEdition } from '../edition';
+import { xrAccessAllowed } from '../frame/xrAccess';
 /** The frame's saver, in the scene: one merged pixel mesh + one XR text panel.
  * r1 has already been folded by ClusterMorph; the existing entrance arc owns the seat flight.
  * No narrative clocks run until setup/glitch have handed back to app.ts. */
@@ -119,10 +121,21 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   Object.assign(enterVr.style, { position: 'absolute', right: '24px', bottom: '24px', pointerEvents: 'auto',
     font: '14px monospace', background: FRAME.glass, color: FRAME.bright, border: `1px solid ${FRAME.dim}`, padding: '8px', display: 'none' });
   frame.appendChild(enterVr);
-  const availableVr = (): void => { if (app.xr?.isAvailable(pc.XRTYPE_VR)) enterVr.style.display = ''; };
+  const availableVr = (): void => {
+    if (festivalEdition) enterVr.style.display = xrAccessAllowed() && app.xr?.isAvailable(pc.XRTYPE_VR) ? '' : 'none';
+    else if (app.xr?.isAvailable(pc.XRTYPE_VR)) enterVr.style.display = '';
+  };
   availableVr(); app.xr?.on(`available:${pc.XRTYPE_VR}`, availableVr);
   enterVr.addEventListener('click', () => {
-    if (camera.camera && app.xr?.isAvailable(pc.XRTYPE_VR)) app.xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL);
+    if (!festivalEdition) {
+      if (camera.camera && app.xr?.isAvailable(pc.XRTYPE_VR)) app.xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL);
+      return;
+    }
+    if (camera.camera && xrAccessAllowed() && app.xr?.isAvailable(pc.XRTYPE_VR)) {
+      app.xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
+        callback: (error) => { if (error) enterVr.style.display = 'none'; }
+      });
+    }
   });
   // XR has the same plain frame words on a small, nearest-filtered world-space panel.
   const cvs = document.createElement('canvas'); cvs.width = 768; cvs.height = 128;

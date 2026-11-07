@@ -1,3 +1,4 @@
+import { runtimeQuery } from '../edition';
 import { requestFullscreenSoft } from '../frame/fullscreen';
 /**
  * THE INTERIM LOG-IN PANEL — the front door (docs/
@@ -404,7 +405,7 @@ export function mountOrientingCard(onContinue: (choice: DoorChoice) => void): Or
   // `?flat=1` is the canvas-only review tool: do not even probe or
   // prepare WebXR there. On every other path, unsupported browsers keep the
   // headset card as a listed way in that this browser cannot offer.
-  if (new URLSearchParams(window.location.search).get('flat') !== '1' && navigator.xr) {
+  if (runtimeQuery().get('flat') !== '1' && navigator.xr) {
     void navigator.xr.isSessionSupported('immersive-vr').then(async (supported) => {
       if (!supported || destroyed) return;
       const canvas = document.getElementById('app');

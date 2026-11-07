@@ -129,6 +129,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   onRecentre: () => void;
   /** S270g / VR-04 — Match my table */
   onDesk?: () => void;
+  onDollhouse?: () => void;
   /** S291 — the menu's Sources row: open the site viewer */
   onSources?: () => void;
 }): XrFrame {
@@ -192,7 +193,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     g.fillStyle = sunk ? DIALOG.darker : DIALOG.light; g.fillRect(x, y, w, t); g.fillRect(x, y, t, h);
     g.fillStyle = sunk ? DIALOG.light : DIALOG.darker; g.fillRect(x, y + h - t, w, t); g.fillRect(x + w - t, y, t, h);
   };
-  const rowH = 76;   // big targets: a pinch at arm's length (~6 cm a button at 0.62 m)
+  const rowH = 64;   // nine rows clear the footer; each target is 52 px high (~3 cm at 0.62 m)
   const drawRow = (label: string, id: string, y: number, emphasis = false): number => {
     const x = 64, w = W - 128, h = rowH - 12;
     const on = hover === id;
@@ -230,6 +231,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       y = drawRow(copy.resume, 'resume', y, true);
       if (gameMenuBus.mapSource) y = drawRow(mapCopy.row, 'map', y);
       y = drawRow(copy.recentre, 'recentre', y);
+      y = drawRow(copy.xrDollhouse, 'dollhouse', y);
       y = drawRow(copy.xrDesk, 'desk', y);   // S270g / VR-04
       y = drawRow(copy.sitesRow, 'sources', y);   // S291
       y = drawRow(copy.controls, 'controls', y);
@@ -363,6 +365,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     if (id === 'jump-yes') { const t = jumpTarget; jumpTarget = null; view = 'main'; if (t) gameMenuBus.jumpToEra?.(t.era); return; }
     switch (id) {
       case 'recentre': opts.onRecentre(); gameMenuBus.close(); return;
+      case 'dollhouse': gameMenuBus.close(); opts.onDollhouse?.(); return;
       case 'desk': gameMenuBus.close(); opts.onDesk?.(); return;
       case 'sources': opts.onSources?.(); return;
       case 'resume': gameMenuBus.close(); gameMenuBus.showHint?.(); return;

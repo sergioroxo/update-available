@@ -1,3 +1,4 @@
+import { runtimeQuery } from '../edition';
 /**
  * Debug panel (dev only, ?debug=1) — travel the reinterp build without playing
  * it through. Round 24: rebuilt for LEGIBILITY (Sérgio couldn't tell which
@@ -441,7 +442,7 @@ const LINKS: Array<[string, string]> = [
 ];
 
 export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
-  if (new URLSearchParams(window.location.search).get('debug') !== '1') return;
+  if (runtimeQuery().get('debug') !== '1') return;
   if (opts.onCamProbe) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).__camProbe = opts.onCamProbe;
@@ -717,9 +718,9 @@ export function mountDebugPanel(os: DesktopOS, opts: DebugOpts = {}): void {
     shotBtn.style.cssText += ';color:#8fffc0;flex:1';
   }
 
-  const isFlat = new URLSearchParams(window.location.search).get('flat') === '1';
+  const isFlat = runtimeQuery().get('flat') === '1';
   const modeBtn = mkBtn(actions, isFlat ? '🖥 3D' : '▭ flat', () => {
-    const p = new URLSearchParams(window.location.search);
+    const p = runtimeQuery();
     if (isFlat) p.delete('flat'); else p.set('flat', '1');
     p.set('debug', '1');
     window.location.search = p.toString();

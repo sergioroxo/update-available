@@ -193,6 +193,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * the piece in its first ten seconds, which is what the first run did.
  */
 const PREFER = [
+  /^vera-send$|^vera-as-sent$|^vera-kit-approve$|^vera-take-down$/i,
+  /^vera-send-close$|^vera-record-close$|^vera-kit-close$/i,
   // ⚑ S245 — the opening film (96 s) is MANDATORY and has no Skip: Show me is the only way on, and the walker sits
   //   the whole film out (stallCap below; the scripted entrance waits for the step after it).
   /^setup-choice-0$|^setup-advert-play-0$|^setup-sound-on$|^setup-close$/i,
@@ -890,6 +892,8 @@ async function main() {
     if (id === 'icon-restorify' && led?.checkins?.some(c => !c.id.startsWith('e3'))) return false;
     if (id === 'icon-story' && has('testimony-online')) return false;
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
+    if (st?.era === 'e3' && id === 'vera-as-published') return false;
+    if (st?.era === 'e3' && id === 'next-story' && !led?.era3Jobs?.some(j => j.id === 'pipeline')) return false;
     if (st?.era === 'e3' && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
     return true;
   };
@@ -1875,8 +1879,8 @@ async function main() {
     noise.length ? noise.map((c) => '- `' + c + '`').join('\n') : '- clean',
     '',
     '## STOPPED BECAUSE', '',
-    log.filter((l) => l.kind === 'stop')
-      .map((l) => '- ' + l.what + ' (at `' + l.era + '` / `' + l.phase + '` / `' + l.spine + '`)').join('\n')
+    log.filter((l) => l.kind === 'stop' || l.kind === 'era-done')
+      .map((l) => '- ' + l.what + ' (at `' + l.era + '` / `' + l.phase + '`' + (l.spine ? ' / `' + l.spine + '`' : '') + ')').join('\n')
       || '- ran to the step limit without stopping'
   ].join('\n');
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.md'), md + '\n');

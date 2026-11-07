@@ -17,3 +17,7 @@ docs/reinterp/review-*/img/
 
 # Local Welcome Home film exports; never commit the MP4
 /output/lambyos-advert/*.mp4
+
+# Local festival distribution
+dist-itch/
+release/

@@ -48,12 +48,13 @@ const gbHardware = (box: Box): void => {
 };
 const at = (x: number, y: number): [number, number, number] => [x, y, FACE_Z + 0.18];
 
-const SPECS: DeviceSpec[] = [
+export const DEVICE_SPECS: DeviceSpec[] = [
   {
     propId: 'danielHandheld', modelKey: 'handheld1997', era: 'e1', gameId: 'fitin',
     screen: { pos: [0.15, 8.25, FACE_Z + 0.07], euler: [90, 0, 0], scale: [3.9, 1, 3.5], w: 160, h: 144 },   // ⚑ 2026-10-04: FIT IN v4 is a 160 × 144 game (the real handheld's glass); same aspect, same plane
     dress: (_face, box) => gbHardware(box),
-    // ~7 mm targets at arm's length: the d-pad's four arms, A, B, START and SELECT (both start)
+    handGlassKeys: true,
+    // ~7 mm ray targets; held XR fingertip targets use 18 mm (S306). START and SELECT both start.
     buttons: [
       { key: 'left', at: at(-2.55, 3.65), r: 0.008 }, { key: 'right', at: at(-1.45, 3.65), r: 0.008 },
       { key: 'up', at: at(-2.0, 4.2), r: 0.008 }, { key: 'down', at: at(-2.0, 3.1), r: 0.008 },
@@ -103,6 +104,7 @@ const SPECS: DeviceSpec[] = [
 
 export interface Devices {
   tick(dt: number, era: string, has: (id: string) => boolean, fileSize: number): Array<{ id: string; era: string; witness: string }>;
+  touch(source: object, tip: pc.Vec3 | null, era: string): boolean;
   aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string): string | null;
   take(era: string, cam: pc.Entity): void;
   grab(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string, hand: pc.Entity): boolean;
@@ -117,7 +119,7 @@ export interface Devices {
 
 export function buildDevices(room: RoomHandles): Devices {
   const built = new Map<string, HeldDevice>();
-  const pending = [...SPECS];
+  const pending = [...DEVICE_SPECS];
   // ⚑ S188 — 2003's shelf copy: the same face, its screen dark (the fold adds it after start-up)
   let shelfDressed = false;
   const dressShelf = (): void => {
@@ -144,6 +146,13 @@ export function buildDevices(room: RoomHandles): Devices {
         if (f) out.push({ id: d.spec.gameId, era: d.spec.era, witness: f });
       }
       return out;
+    },
+    touch(source, tip, era) {
+      let contact = false;
+      for (const d of built.values()) {
+        if (d.touch(source, d.spec.era === era ? tip : null)) contact = true;
+      }
+      return contact;
     },
     aim(ray, era) {
       const d = current(era);

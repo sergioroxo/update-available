@@ -22,7 +22,7 @@ import { readFileSync } from 'node:fs';
 const PKG_VERSION = (JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string }).version;
 
 export default defineConfig({
-  define: { __BUILD_TAG__: JSON.stringify(buildTag()), __APP_VERSION__: JSON.stringify(PKG_VERSION) },
+  define: { __FESTIVAL__: process.env.VITE_EDITION === 'festival', __BUILD_TAG__: JSON.stringify(buildTag()), __APP_VERSION__: JSON.stringify(PKG_VERSION) },
   // Static deploy under https://<user>.github.io/update-available/
   base: './',
   server: {

@@ -34,6 +34,8 @@ export interface DeviceSpec {
   /** extra hardware on the face, in the same node's frame (the Game Boy's buttons) */
   dress?: (face: pc.Entity, box: (name: string, pos: V3, size: V3, hex: string) => void) => void;
   buttons?: Array<{ key: GameKey; at: V3; r: number }>;
+  /** FIT IN: direct hand touches on the glass provide left/right and upper-third A. */
+  handGlassKeys?: boolean;
   /** is the game there yet, in the story's order */
   available: (has: (id: string) => boolean, fileSize: number) => boolean;
   /** the screen before it is */
@@ -66,6 +68,8 @@ export interface HeldDevice {
   /** can this ray press it, and what would it be called */
   aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): 'pick' | 'drop' | 'screen' | GameKey | null;
   press(ray: { p0: pc.Vec3; p1: pc.Vec3 }, cam: pc.Entity): boolean;
+  /** S306: direct XR index-tip contact; source identity latches until withdrawn. Null clears tracking. */
+  touch(source: object, tip: pc.Vec3 | null): boolean;
   /** ⚑ S219 / W1-B7 — a keyboard key, while it is in hand: true when the game took it (so the camera does not) */
   key(k: GameKey): boolean;
 }
@@ -128,6 +132,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   }
   const painter = ctx as unknown as Painter;
 
+  const touching = new Set<object>();
   let game: DeviceGame | null = null;
   let drawn = '';
   let clock = 0;
@@ -215,6 +220,30 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   return {
     spec,
     get held() { return holding; },
+    touch(source, tip) {
+      if (!tip || !app?.xr?.active || !holding || !wrap.enabled || !game) {
+        touching.delete(source); return false;
+      }
+      // World metres, independent of the enlarged prop's native model units. Overlaps choose the nearest.
+      const button = (spec.buttons ?? []).map(b => ({ b, d: tip.distance(worldOf(b.at)) }))
+        .filter(({ d }) => d <= 0.018).sort((a, b) => a.d - b.d)[0];
+      const inv = plane.getWorldTransform().clone().invert();
+      const local = inv.transformPoint(tip);
+      const surface = plane.getWorldTransform().transformPoint(new pc.Vec3(local.x, 0, local.z));
+      const onGlass = plane.enabled && Math.abs(local.x) <= 0.5 && Math.abs(local.z) <= 0.5
+        && tip.distance(surface) <= 0.012 && (!!game.tap || !!spec.handGlassKeys);
+      if (!button && !onGlass) { touching.delete(source); return false; }
+      if (touching.has(source)) return true;
+      touching.add(source);
+      if (button) game.key?.(button.b.key);
+      else {
+        const u = spec.screen.flipU ? 0.5 - local.x : local.x + 0.5;
+        const v = spec.screen.flipV ? 0.5 - local.z : local.z + 0.5;
+        if (game.tap) game.tap(u * w, v * h);
+        else game.key?.(v < 1 / 3 ? 'a' : u < 0.5 ? 'left' : 'right');
+      }
+      return true;
+    },
     key(k) {
       if (!holding || !game) return false;
       game.key?.(k);
@@ -237,6 +266,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       wrap.setPosition(to.pos); wrap.setRotation(to.rot); t = 1;
     },
     release() {
+      touching.clear();
       bigInHand(false);
       if (rest) { wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
       holding = false; t = 1;
@@ -268,6 +298,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       return true;
     },
     tick(dt, era, has, fileSize) {
+      if (!app?.xr?.active || era !== spec.era) touching.clear();
       clock += dt;
       fold(dt);
       if (era !== spec.era) {                            // another era is the fold's

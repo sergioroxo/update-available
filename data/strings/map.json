@@ -358,13 +358,39 @@
     },
     {
      "id": "work",
-     "label": "Two pieces of work",
-     "done": "twoJobsDone",
-     "hint": "Work a story through to its end — apply or skip, your choice — then another story, or another job. Annette's family calls are on the board.",
-     "labelSpeedrun": "One piece of work",
-     "hintSpeedrun": "Return the family calls on the board — Annette's is the last of the three. One job is enough today.",
-     "where": "the workstation",
-     "doneSpeedrun": "oneJobDone"
+     "label": "A story, corrected",
+     "done": "renataWorked",
+     "hint": "Correct Renata’s testimony: apply or skip each rule. Then return to Today.",
+     "where": "the workstation"
+    },
+    {
+     "id": "pipeline",
+     "label": "Four places, one story",
+     "done": "pipelineSent",
+     "hint": "Send the story to all four destinations.",
+     "where": "the workstation"
+    },
+    {
+     "id": "vera-install",
+     "label": "Kindredraft",
+     "done": "veraRecordOpened",
+     "hint": "Install Kindredraft. It opens Vera’s own 2014 story.",
+     "where": "the workstation"
+    },
+    {
+     "id": "vera-story",
+     "label": "Vera · 2014",
+     "done": "veraRecordClosed",
+     "quiet": true,
+     "hint": "As sent shows her earlier account. Close record returns to the day.",
+     "where": "the workstation"
+    },
+    {
+     "id": "vera-kit",
+     "label": "The campaign kit",
+     "done": "veraKitClosed",
+     "hint": "Put the phone down when ready. Approve the kit or return to Today. Take my story down is optional.",
+     "where": "the workstation"
     },
     {
      "id": "record",
@@ -379,15 +405,7 @@
      "label": "The other jobs",
      "done": "allJobsDone",
      "optional": true,
-     "hint": "The board has more, and the platform offers more as updates — install them, in any order, or none.",
-     "where": "the workstation"
-    },
-    {
-     "id": "recommend",
-     "label": "Tag the video",
-     "done": "tagged",
-     "optional": true,
-     "hint": "Tag the video arrives as an update to Contributor tools — on the board, after a finished job. Install it if you like.",
+     "hint": "The family calls, story clip and flagged replies stay on the board.",
      "where": "the workstation"
     },
     {
@@ -424,7 +442,7 @@
      "id": "update",
      "label": "The update",
      "done": "updatedTo4",
-     "hint": "After posting to the group, return to Today and press Install on the update banner.",
+     "hint": "Put the phone down. The system update follows the group’s cascade.",
      "where": "the workstation"
     }
    ]

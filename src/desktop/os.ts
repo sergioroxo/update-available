@@ -1,3 +1,5 @@
+import { runtimeQuery } from '../edition';
+import { GuideWait } from '../narrative/guideWait';
 import { xrRects, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
 import { pathTargets, drawGlow } from '../witness/pathGlow';
 /** S281 — the desktop's free things: they shimmer, they never ring (the glow logic's `may`) */
@@ -127,8 +129,6 @@ const JINGLE_VOLUME = 0.5;
 /** S272 — between the filed Family Form and the placement letter: the game and the racket's turn (was the spine's
  *  RACKET_WAIT, after the journal, S268) */
 const PACKET_WAIT = 60, PACKET_WAIT_SPEEDRUN = 20;
-/** S303 — the letter waits for Lamby's balloon at most this long */
-const PACKET_LAMBY_WAIT = 20;
 /** P8 — how long the opening's Leave waits for its second press */
 const LEAVE_CONFIRM_SECONDS = 4;
 /** P8 — after Rob's last line, the chat holds this long before the Family Form opens */
@@ -358,6 +358,7 @@ export class DesktopOS {
   private minimised = new Set<string>();
   /** S281 — the ids the story waits on now (pathGlow.ts); rebuilt on every draw */
   private glowPath = new Set<string>();
+  private highlightPreference = false;
   private windowOf(key: string): { open: boolean; hits?: unknown[]; restore?: () => void } | null {
     type Win = { open: boolean; hits?: unknown[]; restore?: () => void };
     switch (key) {
@@ -490,8 +491,14 @@ export class DesktopOS {
   /** S272 — the form is filed: the letter comes once the desk is quiet, after the racket or a while (packetWait) */
   private packetDueFrom = Infinity;
   private packetQuiet = 0;
-  /** S303 — how long Lamby has been speaking while the letter waits */
-  private packetLambyT = 0;
+  /** S306 — independent, bounded waits; no clock dirties the desktop. */
+  private guideWait = new GuideWait();
+  private afterGuide(key: string, action: () => void): void {
+    this.guideWait.run(key, this.reinterp && this.lambyGuide.active, action);
+  }
+  private guideReady(key: string): boolean {
+    return this.guideWait.ready(key, this.reinterp && this.lambyGuide.active);
+  }
   private diaryPendingFromForm = false;
   /** ⚑ S208 / A4 (REVIEW_ROUND_5, ERA97-02) — the Family Form has been opened (finished or abandoned: both count —
    *  dismissal always works). The diary waits for it, so the MAIN beat can never be skipped past and lost. */
@@ -829,7 +836,7 @@ export class DesktopOS {
       this.irc.onLine = () => playOnce('irc_1997.mp3');
       this.irc.onImage = () => { this.yesOpen = true; this.dirty = true; };
       this.irc.onHooked = () => {
-        this.toast = { text: strings.desktop.logToast, t: 10 };
+        this.afterGuide('log-toast', () => { this.toast = { text: strings.desktop.logToast, t: 10 }; this.dirty = true; });
         this.hasUnseenWitness = true; // the cold side begins to creep in
         this.behindToastAt = this.t + 11; // a beat later: a reason to look back
         this.onFlipReady?.();
@@ -1079,6 +1086,7 @@ export class DesktopOS {
     //   offer is still live.
     this.clearExternalSendHits();
     const entering = this.desktopEra !== era;
+    this.guideWait.clear();
     this.desktopEra = era;
     if (!ledger.reachedEras.includes(era)) ledger.reachedEras.push(era);
     setFaceEra(era);   // 2026-09-13: the era's face (theme/fonts.ts)
@@ -1302,7 +1310,7 @@ export class DesktopOS {
     this.forumRecommended = true;
     if (!ledger.records.includes('forum-recommended')) ledger.records.push('forum-recommended');
     // S205: at the first check-in the testimony's request has the one toast; the forum's icon carries its pip
-    if (!quiet) this.toast = { text: forumStrings.toast, t: 6 };
+    if (!quiet) this.afterGuide('forum-toast', () => { this.toast = { text: forumStrings.toast, t: 6 }; this.dirty = true; });
     this.dirty = true;
   }
 
@@ -1338,7 +1346,8 @@ export class DesktopOS {
     if (!this.reinterp || this.phase !== 'desktop' || (era !== 'e1' && era !== 'e2')) return false;
     if (era === 'e2' && this.e2Stage !== 'active') return false;
     return this.desktopIdle() && !this.pauseOpen && !this.wotdOpen && !this.shutRefused && !this.startOpen && !this.startMap.active && !this.saver
-      && !this.programSplash && !this.e2Jingle && this.desktopReturnAt < 0 && !this.residueDark;
+      && !this.programSplash && !this.e2Jingle && this.desktopReturnAt < 0 && !this.residueDark
+      && !mapState(this).quiet && this.guideReady('start-panel');
   }
   private updateStartPanel(dt: number): void {
     const era = this.desktopEra;
@@ -1357,7 +1366,7 @@ export class DesktopOS {
     //   unseen Word of the Day swallowed every press on the dark glass (the walk stopped at "Welcome back")
     if ((era === 'e2' && this.e2Stage !== 'active') || this.caleb?.ownsScreen || this.updateApp?.open) return;
     if (this.idleSeconds < 15 || !this.desktopIdle() || this.toast) return;
-    if (this.lambyGuide.active || this.lambyGuide.hasStep) return;   // Lamby owns the current step; vocabulary waits.
+    if (!this.guideReady('wotd')) return;   // Lamby owns the current step; vocabulary waits.
     this.wotdShown.add(era);
     this.wotdOpen = era;
     meetWord((lexStrings.wotdApps as Record<string, { word: string }>)[era].word);
@@ -1423,7 +1432,7 @@ export class DesktopOS {
       due = this.e2Stage === 'active' && this.testimonyOffered && this.idleSeconds > 12 && this.desktopIdle()
         && this.toast?.act !== 'message-open';
     }
-    if (!due) return;
+    if (!due || !this.guideReady('pause')) return;
     this.pauseShown.add(era);
     const lines = pauseItems(era);
     if (!lines.length) return;
@@ -1442,7 +1451,7 @@ export class DesktopOS {
     if (!l || this.wayBackSaid.has(l) || this.t - this.wayBackAt < 90) return;
     this.wayBackSaid.add(l); this.wayBackAt = this.t;
     if (era === 'e4') this.e4?.browser.sayLine(l);
-    else { this.toast = { text: l, t: 7 }; this.dirty = true; }
+    else this.afterGuide('way-back', () => { this.toast = { text: l, t: 7 }; this.dirty = true; });
   }
   private wayBackSaid = new Set<string>();
   private wayBackAt = -Infinity;
@@ -1569,7 +1578,7 @@ export class DesktopOS {
     if (this.eveningCheckin !== 'done') {
       // dismissal always works: however the evening window went away (closed, answered, put down for the pet), it counts
       if (this.eveningCheckin === 'due' && !this.restorify?.open) { this.eveningCheckin = 'done'; if (this.restorify) this.restorify.evening = false; }
-      else if (this.eveningCheckin === 'none' && this.desktopIdle()) {
+      else if (this.eveningCheckin === 'none' && this.desktopIdle() && this.guideReady('evening')) {
         this.eveningCheckin = 'due'; this.openRestorify();
         if (this.restorify) { this.restorify.onEveningDone = () => { this.eveningCheckin = 'done'; this.dirty = true; }; this.restorify.startEvening(); this.toast = { text: lambyStrings.eveningToast, t: 6 }; }
       }
@@ -1613,7 +1622,7 @@ export class DesktopOS {
   /** …and THEN he tells you (one conduction beat, two lines, both answers
    *  work). Only ever on the ordinary desktop — never over a felt window. */
   private maybeAnnounceMessage(): void {
-    if (!this.messagePending || this.messageNoticeShown) return;
+    if (!this.messagePending || this.messageNoticeShown || !this.guideReady('message-notice')) return;
     if (this.caleb) return; // the person's window is already open: nothing to announce
     this.messageNoticeShown = true;
     this.clearDeskForCaleb();   // W1-D14
@@ -1667,7 +1676,7 @@ export class DesktopOS {
     if (this.restorifyReminder) { this.restorifyReminder = false; ledger.checkins.push({ id: 'reminder', witness: lambyStrings.reminderWitness }); }
     this.startProgram(calebStrings.window.title);   // S157 / R3-50: the messenger loads first
     thread.onClose = () => { thread.open = false; this.dirty = true; };
-    thread.onCommit = () => this.openAccountabilityAlert();
+    thread.onCommit = () => this.afterGuide('accountability', () => this.openAccountabilityAlert());
     // S60 (finding E20): he pressed the notification. The felt module reports
     // the press and learns nothing; the apparatus answers it, by re-asserting
     // the block it is holding. The affordance is real — the refusal is the
@@ -1689,6 +1698,7 @@ export class DesktopOS {
       // finding F25 had the desktop come back UP out of the residue's own
       // fade-to-black; ⚑ S164 / R3-61: it does not come back at all. The dark
       // holds and the notice rises out of it (drawDesktop's `residueDark` branch).
+      this.guideWait.clear();
       this.residueDark = true;
       // S2R.7 — THE RESIDUE LEADS SOMEWHERE. The thread's end is the era's
       // end: from here the spine (src/narrative/spine.ts) reads the residue
@@ -1726,9 +1736,8 @@ export class DesktopOS {
     if (this.caleb) alert.setChatRect(this.caleb.windowRect);
     alert.onRedactionStart = () => this.caleb?.beginRedaction();
     alert.onAlertDone = (dismissed) => {
-      // Closing an alert returns the person's words. The later letter keeps
-      // its own chronology and does not hold the transcript hostage.
-      this.caleb?.beginRestore();
+      // The transcript stays blocked through the offered video.
+      // Only closing the later system letter restores Caleb's words.
       // S2R.4: "I found something that helped others like you." If Lamby was
       // dismissed instead, the offer never comes — the era does not chase —
       // but the collapse still arrives: it was never the player's to trigger.
@@ -1942,6 +1951,7 @@ export class DesktopOS {
     this.e2StageT = 0;
     // S150 — the system says where the program went (R3-49); Lamby stays quiet
     this.toast = { text: lambyStrings.dismissedToast, t: 7 };
+    this.openRestorify();
     this.dirty = true;
   }
 
@@ -1981,7 +1991,7 @@ export class DesktopOS {
       .sends.find(s => s.id === id);
     if (!def) return;
     this.sendOffer = { id, open: false };
-    this.toast = { text: def.offer.icon, t: 6 };
+    this.afterGuide('send-toast', () => { this.toast = { text: def.offer.icon, t: 6 }; this.dirty = true; });
     this.dirty = true;
     this.sendOfferVersion++;
   }
@@ -2239,6 +2249,12 @@ export class DesktopOS {
 
   // ── update / draw ──────────────────────────────────────────────────────
   update(dt: number): void {
+    const highlights = ledger.view.highlights === true;
+    if (highlights !== this.highlightPreference) {
+      this.highlightPreference = highlights; this.dirty = true;
+      if (this.e4) this.e4.browser.version++;
+    }
+    if (!this.paused) this.guideWait.tick(dt, this.reinterp && this.lambyGuide.active);
     if (this.paused) this.updateLambyGuide(0);
     if (!this.paused && this.startMap.update(dt)) this.dirty = true;
     if (this.setup?.open) {
@@ -2247,7 +2263,7 @@ export class DesktopOS {
       return;
     }
     if (!this.paused) this.modalCalm = Math.max(0, this.modalCalm - dt);
-    if (this.pendingUpdate && !this.modalCalm && !this.pauseOpen && !this.wotdOpen) {
+    if (this.pendingUpdate && !this.modalCalm && !this.pauseOpen && !this.wotdOpen && this.guideReady('pending-update')) {
       const key = this.pendingUpdate; this.pendingUpdate = null; this.armUpdate(key);
     }
     this.idleSeconds += dt;
@@ -2260,7 +2276,7 @@ export class DesktopOS {
     this.updateStartPanel(dt);   // S229 / W1-A6
     // ⚑ S201 — Lamby's "while you wait": once, on a quiet 2003 desktop, after the thread was recommended
     if (!this.lambyWaitShown && this.desktopEra === 'e2' && this.e2Stage === 'active' && this.forumRecommended
-        && !this.forum && this.idleSeconds > 30 && this.desktopIdle() && !this.toast) {
+        && !this.forum && this.idleSeconds > 30 && this.desktopIdle() && !this.toast && this.guideReady('while-waiting')) {
       this.lambyWaitShown = true;
       this.toast = { text: forumStrings.lambyWait, t: 8 };
       this.lambyPoseT = 0;
@@ -2321,18 +2337,14 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.irc) this.irc.update(dt);
     if (this.phase === 'desktop' && this.packet) this.packet.update(dt);
     if (this.phase === 'desktop' && this.diary) this.diary.update(dt);
-    if (this.phase === 'desktop' && !this.diary && this.t >= this.diaryPendingAt) this.openDiary();
+    if (this.phase === 'desktop' && !this.diary && this.t >= this.diaryPendingAt && this.guideReady('diary')) this.openDiary();
     // S272 — the letter: the extras (Root Cause, the racket) have their turn between the form and the signature
     if (this.phase === 'desktop' && this.packetDueFrom !== Infinity && this.desktopEra === 'e1') {
-      // ⚑ S303 (headset B: "There was a message from Lamby now before the form appeared, and it just disappeared because
-      //   the placement just appeared in front of it") — one voice at a time: the letter waits while Lamby is speaking
-      //   (never more than PACKET_LAMBY_WAIT: an unanswered balloon must not hold the story)
-      this.packetLambyT = this.lambyGuide.active ? this.packetLambyT + dt : 0;
-      const lambySpeaking = this.lambyGuide.active && this.packetLambyT < PACKET_LAMBY_WAIT;
-      this.packetQuiet = this.e1BeatsQuiet() && !lambySpeaking ? this.packetQuiet + dt : 0;
+      // S306: count the balloon wait only once the letter is otherwise due.
+      this.packetQuiet = this.e1BeatsQuiet() ? this.packetQuiet + dt : 0;
       const racket = ledger.provotypes.some(p => p.id === 'pillow');
       const waited = racket || this.t - this.packetDueFrom >= (isSpeedrun() ? PACKET_WAIT_SPEEDRUN : PACKET_WAIT);
-      if (waited && this.packetQuiet >= 1.2) { this.packetDueFrom = Infinity; this.packetQuiet = 0; this.openPacket(); }
+      if (waited && this.packetQuiet >= 1.2 && this.guideReady('packet')) { this.packetDueFrom = Infinity; this.packetQuiet = 0; this.openPacket(); }
     }
     // the fallback: if the player never turns to witness the record, Rob
     // escalates anyway once the deadline passes (main-parity — the flip is
@@ -2348,7 +2360,7 @@ export class DesktopOS {
     }
     if (this.formAutoAt !== Infinity && this.t >= this.formAutoAt && this.phase === 'desktop' && this.desktopEra === 'e1') {
       if (this.provotype || ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formAutoAt = Infinity;
-      else if (!this.packet?.open && !this.diary?.open && !this.kit?.open && !this.rootCause?.open && !this.provotypeBusy()) {
+      else if (!this.packet?.open && !this.diary?.open && !this.kit?.open && !this.rootCause?.open && !this.provotypeBusy() && this.guideReady('form-forced')) {
         // ⚑ S281 (his, 1 Nov: "instead of opening itself … a message from lamby … that it is time for you to go, and
         //   even you say no, it forces you to by always opening the file when you touch something, that helps create
         //   space for refusal and breakage of the system") — Lamby says it (lambyGuide formForced); from here every
@@ -2362,7 +2374,7 @@ export class DesktopOS {
       // quiet time counts in full, busy time at half (a player who keeps clicking is never left without the
       //   escalation: the S226 four-era walk stalled 1997 here), and nothing counts while Rob's picture is open
       if (!this.yesOpen) this.escalationQuietT += this.idleSeconds > 4 ? dt : dt * 0.5;
-      if (this.escalationQuietT >= ESCALATION_FALLBACK) this.escalate();
+      if (this.escalationQuietT >= ESCALATION_FALLBACK && this.guideReady('escalation')) this.escalate();
     }
     if (this.phase === 'desktop' && this.provotype) this.provotype.update(dt);
     if (this.phase === 'desktop' && this.restorify?.open && !this.startMapSilent) this.restorify.update(dt);
@@ -2402,7 +2414,7 @@ export class DesktopOS {
     const calebMoment = !this.caleb?.breakToastUp
       || this.caleb.breakToastAge >= 12
       || (this.caleb.breakToastPressed && this.idleSeconds >= 3);
-    if (this.t >= this.pureMailAt && !this.caleb?.blackingOut && calebMoment) {
+    if (this.t >= this.pureMailAt && !this.netvisionOfferOpen && !this.netvision?.open && !this.caleb?.blackingOut && calebMoment && this.guideReady('pure-mail')) {
       this.pureMailAt = Infinity;
       this.accountability?.beginNetworkFailure();   // S157 / R3-58: seen failing, then the mail
       this.dirty = true;
@@ -2436,7 +2448,7 @@ export class DesktopOS {
     if (this.reinterp && this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage === 'active' && !this.checkinForced
       && !ledger.checkins.some((c) => !c.id.startsWith('e3'))) {
       if (!this.restorify?.open && this.desktopIdle()) this.checkinWaitT += dt;
-      if (this.checkinWaitT >= (isSpeedrun() ? CHECKIN_GRACE_SPEEDRUN : CHECKIN_GRACE)) {
+      if (this.checkinWaitT >= (isSpeedrun() ? CHECKIN_GRACE_SPEEDRUN : CHECKIN_GRACE) && this.guideReady('checkin-due')) {
         this.checkinForced = true; this.toast = { text: lambyStrings.checkinDue, t: 8 }; this.dirty = true;
       }
     }
@@ -2499,7 +2511,7 @@ export class DesktopOS {
     // screen, in any of his windows (the debut, the notice, the video offer).
     if (this.phase === 'desktop' && this.lambyOnScreen) this.lambyPoseT += dt;
     // ⚑ S226 (cadence study 1.11) — "look behind you" waits for the player to be quiet, not on Rob's last line or the picture
-    if (!this.behindToastShown && this.t >= this.behindToastAt && this.idleSeconds > 6 && !this.yesOpen) {
+    if (!this.behindToastShown && this.t >= this.behindToastAt && this.idleSeconds > 6 && !this.yesOpen && this.guideReady('behind-toast')) {
       this.behindToastShown = true;
       this.toast = { text: strings.desktop.behindToast, t: 7 };
       this.dirty = true;
@@ -2634,7 +2646,7 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Jingle) this.drawJingleLyrics(W, H);
     // ⚑ S219 / W1-B10 (walkthrough 1: "those bars" sat against the windows' close boxes) — the build's dev marker
     //   is gone from the player's screen; kept for review under ?debug=1 only
-    if (this.reinterp && /[?&]debug=1/.test(location.search)) this.drawReinterpMarker(W);
+    if (this.reinterp && runtimeQuery().get('debug') === '1') this.drawReinterpMarker(W);
     if (this.paused) this.drawPause(W, H);
     // S281 — Start, when the story waits on it (the update): the taskbar is always on top, so its ring is drawn last
     if (this.phase === 'desktop' && this.glowPath.has('start-menu')) {
@@ -4379,11 +4391,23 @@ export class DesktopOS {
     //   always works), and a set-aside form is a filed form, so this ends there.
     if (this.checkinForced && this.phase === 'desktop' && this.desktopEra === 'e2') {
       if (ledger.checkins.some((c) => !c.id.startsWith('e3'))) this.checkinForced = false;
-      else if (!this.restorify?.open && !this.caleb?.open) { this.openRestorify(); this.dirty = true; return; }
+      else if (!this.restorify?.open && !this.caleb?.open) {
+        this.afterGuide('checkin-open', () => {
+          if (this.checkinForced && !this.restorify?.open && !this.caleb?.open
+              && !ledger.checkins.some(c => !c.id.startsWith('e3'))) this.openRestorify();
+        });
+        return;
+      }
     }
     if (this.formForced && this.phase === 'desktop' && this.desktopEra === 'e1') {
       if (ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formForced = false;
-      else if (!this.provotype) { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); this.dirty = true; return; }
+      else if (!this.provotype) {
+        this.afterGuide('form-open', () => {
+          if (this.formForced && !this.provotype && !ledger.provotypes.some(p => p.id === 'origin_intake_e1'))
+            this.openProvotype(originIntakeProvotypeData as unknown as Provotype);
+        });
+        return;
+      }
     }
     // ⚑ S76 — E4's shell owns every press on this surface, because it IS the
     // surface. Closed: any press on the dark glass is THE ONE TOUCH (S1.0's
@@ -4600,6 +4624,7 @@ export class DesktopOS {
   private leave(): void {
     this.setup?.destroy(); this.setup = null;
     wipeLedger();
+    this.guideWait.clear();
     this.lambyGuide = this.makeLambyGuide();
     this.stopReadAloud(); // the voice does not outlive the session (S60)
     this.paused = false;

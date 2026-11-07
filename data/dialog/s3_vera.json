@@ -1,0 +1,107 @@
+{
+ "_doc": "S307. Invented people and platform practices, not survivor testimony. Research and limits: RESEARCH_2016_VERA_APPARATUS_2026-11-01.md. No trans engagement row. No trigger-safe mode. Story Record renamed Kindredraft after mark check. Felt reading files nothing.",
+ "offer": {
+  "title": "New: Kindredraft",
+  "sub": "Your 2014 story is ready for its first refresh.",
+  "install": "Install",
+  "admin": "An administrator has refreshed it for you."
+ },
+ "send": {
+  "title": "Ready to share · Renata",
+  "intro": "So she is not alone. One story, four places.",
+  "destinations": [
+   "Private group",
+   "Weekly email",
+   "Video page",
+   "Forty-second clip"
+  ],
+  "archive": "As sent · kept in archive · administrators only",
+  "press": "Send to all four",
+  "sent": "Sent to all four · seen by 1,211 · 0 comments",
+  "loop": "New story received. Awaiting review.",
+  "back": "Back to today"
+ },
+ "record": {
+  "title": "GracePlatform · Kindredraft · Vera",
+  "meta": "Vera · 2014 · Published",
+  "tag": "Filed as: emotional dependency",
+  "reviewer": "Volunteer mentor: Name the dependency, not the person. Close on hope.",
+  "published": "As published",
+  "sent": "As sent",
+  "publishedText": "I came to my first night with a heart that was looking for home in the wrong place. A dependency had taken the place of God in my life. Today I am walking in wholeness, and I want the same for you.",
+  "sentText": "I came to the first night because of Nuala, and because the quiet at home had got too loud. We had lived together. I think what I had with her is what the leaflet calls dependency. I don't have a word for the part that wasn't. I do pray. That part is true.",
+  "close": "Close record",
+  "footer": "2014 · source retained · restricted to administrators"
+ },
+ "kit": {
+  "title": "Campaign kit · Chosen Course Compact",
+  "intro": "Malta has voted to ban conversion practices. Three stories ready.",
+  "stories": [
+   "Renata · clip · 0:40",
+   "Vera · 2014 · refreshed",
+   "Deb M. · excerpt"
+  ],
+  "consent": "Consent on file: general · Terms §4",
+  "terms": "Perpetual licence: publish, adapt, reuse. Original kept.",
+  "footer": "These stories show that people can choose a different path. Used with permission under the Contributor Agreement.",
+  "approve": "Approve kit",
+  "approved": "Approved. Scheduled for tonight.",
+  "admin": "Approved by administrator. Scheduled for tonight.",
+  "takeDown": "Take my story down",
+  "receipt": [
+   "Unpublished from SisterSignal.",
+   "4 scheduled posts and 2 external copies remain.",
+   "Original retained under Terms §4."
+  ],
+  "back": "Back to today",
+  "waiting": "Campaign kit · review pending",
+  "witnessApproved": "campaign kit: approved — Vera’s 2014 story included under general consent",
+  "witnessRemoved": "story: take-down requested — scheduled posts, external copies and original retained",
+  "witnessAdmin": "campaign kit: left unapproved — administrator scheduled it under general consent",
+  "original": "2014 original · retained"
+ },
+ "provenance": "As sent · kept in archive · administrators only",
+ "desk": {
+  "card": "THE WICK",
+  "stamps": "7 OF 8",
+  "free": "THE EIGHTH IS FREE",
+  "expiry": "NO EXPIRY. D.",
+  "mug": "N"
+ },
+ "visual": {
+  "archiveBrand": "Kindredraft",
+  "archiveTitle": "Vera · 2014",
+  "publishedOnly": "Published only",
+  "groupHeader": "gather · private group",
+  "storyBy": "Renata",
+  "emailHeader": "GracePlatform · Weekly email",
+  "videoNote": "Her story · video page",
+  "clipNote": "0:40 · short clip",
+  "copyActive": "Scheduled copy",
+  "archiveSeparate": "Original retained separately · administrators only",
+  "retainedLabels": [
+   "Scheduled posts",
+   "External copies",
+   "Original account"
+  ],
+  "retainedStates": [
+   "STILL SCHEDULED",
+   "STILL OUTSIDE",
+   "RETAINED"
+  ],
+  "studioLabel": "TESTIMONY EDITOR",
+  "sourceLabel": "AS SENT",
+  "editLabel": "CURRENT EDIT",
+  "sourceFilm": "Source film",
+  "exportFilm": "Publication edit",
+  "fileLabel": "Renata · recorded account",
+  "sourceKept": "Original kept",
+  "reviewLabel": "HOUSE STYLE",
+  "editsComplete": "This story is done.",
+  "clipName": "renata_story_2016",
+  "resultLabel": "Current version",
+  "originalVersion": "As sent",
+  "reviewedVersion": "Publication edit",
+  "trackedVersion": "Tracked changes"
+ }
+}
