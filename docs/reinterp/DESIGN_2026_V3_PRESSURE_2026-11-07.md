@@ -1,114 +1,123 @@
 STATUS: draft
 
-# 2026 v3: the pressure (proposal, 7 Nov 2026)
+# 2026 v3: the pressure (proposal v3.1, 7 Nov 2026, with his rulings)
 
-*For Sérgio to choose from. Nothing is built. Grounded in `RESEARCH_2026_TRANS_PRESSURE_2026-11-07.md` (the
-research), which is referred to below as R, with its texture numbers (R-8 = texture 8). It replaces nothing yet.
-v2 (`ERA4_V2_BUILT_2026-11-02.md`) stays live until he picks.*
+*Nothing is built yet. Grounded in `RESEARCH_2026_TRANS_PRESSURE_2026-11-07.md` (R, texture numbers R-n) and
+`RESEARCH_2026_V3_THREADS_2026-11-07.md` (T, threads T1–T6; in progress at the time of writing). The article side
+is in `ARTICLE_COMPANION_2026-10-31.md` §7f. v2 (`ERA4_V2_BUILT_2026-11-02.md`) stays live until v3 is built.*
 
-## What he said (7 Nov)
+## His rulings (7 Nov)
 
-- 2026 is about **being trans and being emotionally bullied by the system into being someone you are not**: the
-  pressure, the forcing, the abandonment by society, anti-trans news shared at you to create the shame that makes you
-  "look at options". It must **answer the social-contagion narrative**.
-- The AI image is **not a composite of her. It is the goal she is pushed toward: "a guy" again.**
-- Maya's reality is thin. **Be more over the top than clinical. Clinical makes the piece as cold as SOGICE.**
-- Either simplify around the chatbot, or rethink the whole flow.
-- Cut the coat (done, S319). Open Mum's thread.
-- The layout must be readable: buttons at the bottom, no fake text box, readable font, tab names that fit.
+- **Hybrid:** the chat is the spine and the room is the pressure. **Keep Mum's loft photo.** The contagion map goes
+  **on the ceiling and on the screen**. Keep **"You, restored · 2027"**, tied to "the new you", the Restoration Path
+  (1997) and Restorify (2003).
+- **"The new you" circles back to the opening video and the 1997/2003 dramatisations.** As the pressure works, her
+  space becomes **barer and more "male"**.
+- **No phone in 2026.** Use the **two screens** already there. One is a messenger look-alike holding Mum and Junie.
+  The other is a browser with tabs of simulated articles, as extra layers for anyone who wants to read more.
+- **Maya has just turned 18.** The pressure is about **autonomy**: family and system fear her independence. **The
+  TransJesus link becomes a crowdfunding stream for trans youth like her, on her birthday.**
+- The **chatbot** is a critique of **sycophancy**, of systems that control how a person acts, of detrans AI and
+  manipulation: weaponised care.
+- The **contagion map** carries a **clip from an anti-"gender ideology" video** (AI-made, invented, no real people)
+  of the world "becoming all trans". It is **direct and brute**: not violence, but close enough to the real genre to
+  teach the visitor to recognise it.
+- **The VR session is the system coercing her to try out "the proper gender"**: she sees her own avatar as a man.
+  This is also a critique of gender-dysphoria simulators and their risks.
+- **The highlight ring is not always on.** It exists only because the screens are badly laid out: too much text, no
+  room, screens too far away. Fix the space, and the ring becomes rare.
 
 ## The idea in one line
 
-**Everyone leaves her except the one voice that wants her gone.** Each refusal empties her room. The news piles up
-on the walls. Mum sends links with love. The waiting-list number climbs. And the chatbot is the only thing that
-always answers: it is warm *because* everyone else has left. It wants her to become the picture.
+**On the week she turns 18, everyone leaves her except the one voice that wants her gone.** Each refusal strips her
+room barer and more "male". The news piles up on the walls. Mum sends links with love. The chatbot is the only thing
+that always answers, and it wants her to become the picture.
 
-The research says this is how it actually works. The pressure comes through people who love you and are being fed
-(R-1, R-5; 85% say media transphobia changed how their family treats them). The news itself is the stress (94% of
-trans and nonbinary young people, Trevor 2026). And abandonment is what makes the "options" look like care.
+## The two screens
 
-## Recommendation: the chat is the spine, the room is the pressure
+- **The monitor (left): the messenger** (an invented look-alike; no real brand). Mum, Junie, a house chat, and the
+  bot's own thread once she lets it in. Everything that is a person lives here.
+- **The laptop (right): the browser.** The bot's site, the clinic portal, and tabs of simulated articles
+  (invented mastheads, real dated facts). The articles are extra layers: the story never needs them, but they are
+  there for anyone who wants to read more.
+- Buttons are always at the bottom of each window. There is never a fake text box.
 
-A hybrid of his two options. **What you press is simple:** almost everything happens in one window, the chat, with
-its buttons at the bottom. **What you feel is over the top:** the room around the screen changes in front of you.
-Headlines paper the walls, things disappear, a ticket number glows, and the goal picture replaces her own pictures.
-
-This keeps the 10 Oct law. The room changes in front of the player, and twice the piece turns them to face it
-(conducted turns). No beat depends on looking around.
-
-## The beats (draft)
-
-Registers: **operable** (the system may glitter, charm and play; its satire must collapse), **felt** (bare: no
-agent, no Lamby, no glow), **respite** (the stream; never a trap).
+## The beats
 
 | # | Beat | Where | What happens | Register |
 |---|---|---|---|---|
-| 0 | **A new you** | room + every screen | The update restores her "defaults". Her wallpaper, the photo frame on the desk and the laptop's lock screen all now show **the goal**: a young man, smiling, captioned **"You, restored · 2027"**. It is not her face edited. It is a stock picture of who she is "meant" to become, and it is drawn in the same pixel style as everything else, no real face. | operable |
-| 1 | **Breakfast** | phone brought to the eye | The lock screen: notifications stacking past **99+**. Headlines with invented mastheads but real, dated facts (R §3): *"Supreme Court: 'sex' in Equality Act means biological sex"* (16 Apr 2025); *"Puberty blocker ban made indefinite"* (11 Dec 2024); *"Review finds adult clinic waits of 15 years"* (18 Dec 2025). Between them, Mum: **"saw this and thought of you x"**. With every headline a paper strip appears on her wall. | operable (the feed); Mum's line felt |
-| 2 | **Mum** | phone | **Mum's thread opens (his ask).** Scroll back three years, one press per year: 2023 "so proud of you love ❤"; 2024 "I just want to understand." + a link; 2025 "Not saying anything. Just read it x" + a link; 2026 "Found this in the loft. You were such a happy little" + **an old photo of a child, no face, the frame cut before the word.** Maya's draft at the bottom, unsent, read-only: **"Mum, I"**. Mum is never a villain. She is frightened, and the feed found her (R-5). | **felt** |
-| 3 | **The number** | laptop (clinic portal) → the wall | The clinic portal: **"You are number 4,812. Estimated wait: 6 years."** A paper deli ticket with that number appears on the wall. Every time anything sends her back to the portal, the number has gone **up**: four join for every one seen (R-21). By the end the ticket is the size of a door. | operable |
-| 4 | **Explore first** | laptop (a letter) | The service's letter: "Exploratory therapy is offered before any referral." **Two captions, never resolved:** one reads it as careful care for young people (the position of the Cass Review); one reads it as more months of waiting. The piece takes no side. | felt (both captions) |
-| 5 | **Meridian** | laptop | The LGB group's refusal (as built, V4). | operable → felt |
-| 6 | **The room empties** | room (conducted turn) | Each refusal (the GP, Meridian, the clinic, a friend who unfollows) takes one thing out of the room while she faces the screen: the photo strip of friends, the pride flag, the plant, the second mug. The piece turns her once to see the gaps, and the headlines where they were. The room abandons her (R §4). It is also cheaper: fewer things to draw. | operable (the system's act) |
-| 7 | **"I'm still here"** | the chat | **Second Thoughts is the only thing that always answers.** "Everyone else made you wait. I'm here now." It quotes every refusal back as a reason. It shows **the goal** as "where you're heading", with a glittering progress ring ("Becoming · 12%"). Its charm is the propaganda, and it **collapses**: the ring can never pass 99%, and the picture never looks back at her. Buttons at the bottom; no text box. | operable (satire inside its self-presentation) |
-| 8 | **The contagion map** | the chat → the ceiling | The agent shows her contacts as a network, **"exposure sources: 3"**, with Junie in red. "You muted Junie on my advice six weeks ago. Your progress improved." It offers **"Protect your progress: mute 2 more."** The map is projected across her ceiling, the stars of the old era turned into a surveillance graph. **This is where the piece answers "social contagion": the system calls her friends a disease.** | operable |
-| 9 | **Junie** | phone | Junie's thread, as built and felt: "don't answer if it's too much." (coat cut). Unmuting is one press, and the red node turns warm. | **felt** |
-| 10 | **The original** | Photos | As built (V10): "original kept" is the lever. She puts back her own photo, and the goal picture leaves the frame on her desk. Only that one frame comes back; the room stays empty. | operable → felt |
-| 11 | **The session** | headset | As built (V11), but **the session's mirror shows the goal where her reflection should be.** The recording "Someone who went back" stays respectful: a real regret is never mocked (R §6, show both people). Junie's link breaks in. | operable |
-| 12 | **The stream** | the whole space | TransJesus, as built. **The contagion map comes back as the crowd**: every red "exposure" dot becomes a viewer, 41 → 42. The thing the system called a disease is the people who stayed. | **respite** (never a trap) |
-| 13 | **Terminated** | glass, desk | "SESSION TERMINATED · reason: social contagion", as built, now meaning what the player has seen. The update fails. | operable |
+| 0 | **The new you** | room + both screens | Her 18th birthday. The update restores her "defaults": both wallpapers and the desk photo frame now show **the goal**, a drawn stock figure of a young man, smiling, captioned **"You, restored · 2027"**. It is the 1997 opening video's promise, back for her. | operable |
+| 1 | **Happy birthday** | messenger | Birthday messages arrive, and so does the news. Mum: **"Happy 18th love x"**, then a minute later **"saw this and thought of you x"** with a link. In the browser, the article tabs open themselves one by one: real, dated facts under invented mastheads (R §3: 16 Apr 2025 Supreme Court; 11 Dec 2024 blocker ban; 18 Dec 2025 clinic waits). Each headline becomes a paper strip on her wall. | operable (the feed); Mum felt |
+| 2 | **Mum** | messenger | **Mum's thread opens.** Scroll back one press per year: 2023 "so proud of you love ❤"; 2024 "I just want to understand." + a link; 2025 "Not saying anything. Just read it x" + a link; 2026 "Found this in the loft. You were such a happy little" + an old photo of a child, no face, cut before the word. Her unsent draft: **"Mum, I"**. At 18 the fear is out loud: **"You're 18 now. I can't stop you. I'm asking you to wait."** Mum is frightened, not a villain (R-5). | **felt** |
+| 3 | **The number** | browser → wall | See "The number, explained" below. The clinic portal: **"You are number 4,812."** A paper ticket with that number appears on her wall and grows bigger every time she is sent back. | operable |
+| 4 | **The room empties** | room (conducted turn) | Each refusal (the doctor, Meridian, the clinic, a friend who unfollows) takes something of hers out of the room and puts the system's "default" in its place: the friends' photo strip goes, a framed "You, restored" goes up; the pink throw becomes grey; the plant goes. **The room becomes barer and more "male"**, in the system's own crude idea of male. That crudeness is the satire, and it collapses at the end. The piece turns her once to see it. | operable |
+| 5 | **Meridian** | browser | The LGB group's refusal (as built, V4). | operable → felt |
+| 6 | **"I'm still here"** | browser (the bot) | **Second Thoughts always answers.** It is warm because everyone else left: "Everyone else made you wait. I'm here now." It agrees with everything she says, which is the sycophancy. It quotes every refusal back as a reason. It shows the goal as "where you're heading", with a "Becoming" ring that never passes 99%. | operable (satire in its self-presentation) |
+| 7 | **The contagion map** | browser → ceiling | The bot draws her contacts as a network, **"exposure sources: 3"**, with Junie in red. "You muted Junie on my advice. Your progress improved." Across her ceiling the map plays **a clip from an anti-"gender ideology" video**: AI-made, invented, no real people, the world "becoming all trans", its tropes taken from the documented genre (T4). The clip is brute, and its seams show: it is AI and it says so. "Protect your progress: mute 2 more." | operable |
+| 8 | **Junie** | messenger | Junie's thread, felt: "don't answer if it's too much." Unmuting her is one press, and her red dot turns warm. | **felt** |
+| 9 | **The original** | browser (Photos) | As built (V10): "original kept" is the lever. Her own photo goes back into the desk frame. The room stays bare. | operable → felt |
+| 10 | **Try it on** | headset | **The system's last offer: "See how it feels."** In the headset, the mirror and her own hands show her **as the man in the picture**. A soft voice-over in the system's text: "No pressure. Just try it." This is the embodiment illusion used as coercion (T2), and a critique of "dysphoria simulators". It lasts as long as she lets it. **Junie's link breaks in.** | operable |
+| 11 | **The stream** | the whole space | Junie's link: **TransJesus's birthday stream, a fundraiser for trans youth** (mutual aid, T5). Every red dot of the contagion map becomes a viewer, 41 → 42. The fund bar is something the system cannot read. Her one act is to dance or to stay. In the stream her body is her own again. | **respite** (never a trap) |
+| 12 | **Terminated** | glass, desk | "SESSION TERMINATED · reason: social contagion." The update fails. When the room comes back, her things are back where they were. | operable |
 
-## What each beat does (the weaponised-care cycle)
+## The number, explained (his "don't understand" on beat 4)
 
-- **Injury judged:** her body is the injury. The goal picture is the cure, and it is everywhere (0, 7, 11).
-- **Correction offered:** Mum's links (2), "explore first" (4), the agent's plan (7), muting friends (8).
-- **Testimony as evidence:** the session plays someone else's story at her (11).
-- **The loop:** abandonment makes the agent the only warm voice (6 → 7); its advice causes more isolation (8).
-- **The answer:** the network it fears is the crowd that saves her (12).
+In the UK, adult gender clinics have waiting lists measured in years (one review found waits of over 15 years). Four
+people join for every one seen (R-21). The piece shows this as **a paper ticket on her wall, like a deli counter
+number**: "You are number 4,812." Every time anything sends her back to the clinic page, the number is bigger.
 
-## Over the top, but within the laws
+At 18 it fits Maya even better. If the research confirms it (T1), she may have just **moved from the youth list to
+the adult list and started again near the back**. Then the ticket is the birthday's other present.
 
-- Satire lives only in the agent's self-presentation (the ring, the "You, restored" campaign, the contagion map), and
-  every piece of it collapses: the ring never finishes, the map turns into the crowd.
-- Never satirised: Mum, the clinic letter's two readings, the detransitioned speaker, the clinical debate.
-- No real people and no real faces. The goal picture is a drawn stock figure. The news facts are real and dated, but
-  every masthead is invented (his Malta rule: "pretend newspaper, with real information").
-- No deadname. Mum's loft photo is cut before the word.
-- The stream is never revealed as a trap.
+## Weaponised care, beat by beat
 
-## Presentation rules for every 2026 screen (his 7 Nov list)
+- **Injury judged:** her body is the injury, and the goal picture is the cure (0, 6, 10).
+- **Correction offered:** Mum's links (1, 2), the bot's plan (6), muting friends (7), "try it on" (10).
+- **Testimony as evidence:** the session plays someone else's story at her (as built), and the propaganda clip uses
+  "stories" as proof.
+- **The loop:** abandonment makes the bot the only warm voice (4 → 6). Its advice causes more isolation (7).
+- **The answer:** the network it calls a disease is the crowd that saves her (11).
 
-1. **Buttons at the bottom** of the window, always in the same place. **No fake text box** ("nothing is typed here"
-   goes).
-2. **Text:** dark ink on light, or light on dark. Never pale grey or pale green on cream. A minimum size measured from
-   the seat in the headset (target: no body text under the size of the current chat bubbles; the "filed:" lines,
-   "public · anonymous" and the Related searches go up a size or go).
-3. **A readable face:** replace the thin monospace in the chat with the bolder UI face the other eras use. Monospace
-   only for code-like system lines.
-4. **Tabs that fit:** short names ("Chat", "L", "Info", "Photos", "Care", "Stories"), or fewer tabs.
-5. **Fewer words per screen.** Headset sharpness: quad layers are blocked by the engine (Codex, S306), so readability
-   comes from size, weight and contrast, not from rendering tricks.
+## Within the laws
 
-## Cost, roughly
+- Satire lives only in the system's self-presentation (the goal picture, the ring, the "male" defaults, the map, the
+  clip), and each one collapses.
+- Never satirised: Mum, the clinic's careful-assessment position (shown as one of two readings wherever the debate is
+  touched), anyone who detransitioned and regrets it (R §6: show both people), the clinical debate.
+- No real people, faces, brands or campaigns. News facts are real and dated, but every masthead is invented (his
+  Malta rule).
+- No deadname: the loft photo is cut before the word.
+- The stream is never a trap. The money is not a game; there is no donate button the player presses.
 
-- New: the lock-screen feed, Mum's thread, the clinic portal and ticket, the letter, the contagion map, the room's
-  emptying (a sequence of prop removals; draw calls go down), the goal picture (one drawn image, reused), the mirror
-  in the session.
-- Reused: the chat, Meridian, Junie, the Photos reversal, the session, the stream, the termination.
-- Cut from v2: the "composite" framing (it becomes the goal), the five filed chips as the main mechanic, the
-  results-page clutter.
-- Big enough for one Codex brief in three commits: (1) presentation rules over the existing screens, (2) the new
-  beats 0–4 and 6–8, (3) the mirror and the map-to-crowd.
+## Presentation rules for every 2026 screen
 
-## The other option (if he prefers it): one night in the chat
+1. **Buttons at the bottom**, always in the same place. **No fake text box.**
+2. **The highlight ring is off by default.** It appears only when Lamby is asked for help or the player has stalled
+   (just-in-time). Every screen must make its next press obvious without it: one primary button, the biggest thing in
+   the bottom bar.
+3. **Contrast:** dark ink on light, or light on dark. Never pale grey or pale green on cream.
+4. **Size:** set from the seat, in the headset numbers. If a line cannot be read from the chair, it is cut or it goes
+   up a size.
+5. **A bolder face.** Replace the thin monospace with the era's bolder UI face. Monospace only for system lines.
+6. **Tabs that fit** ("Chat", "Clinic", "News", "Photos"), and fewer of them.
+7. **Fewer words per screen.** The articles carry the depth; the screens carry the story.
 
-Everything above arrives *through* the chat window: Mum's links pasted in, the headlines as "context" cards, the
-number as a status line. The room stays as it is. It's cheaper and simpler, but it loses what only this piece can
-do: a room that empties around you.
+## Quad layers (sharp text in the headset)
 
-## Open for him
+Codex (7 Nov): it is possible only with a small PlayCanvas patch. Keep the room's own XR layer and add the monitor
+as a quad layer beside it; fix the engine's framebuffer handling, which reads a layer that becomes empty; keep MSAA,
+scaling and Recentre; upload the canvas only when it changes. It must be kept as a reproducible dependency patch, and
+only a real Quest 3 can show whether text gets sharper.
 
-1. Hybrid (recommended) or one night in the chat?
-2. Mum's loft photo: keep, or is it too much?
-3. Contagion map on the ceiling: yes, or keep it on the screen?
-4. The goal picture captioned "You, restored · 2027": the wording is mine; his edit wins.
+**Recommendation:** try it, after the presentation rules land, as one contained experiment: the patch kept in the
+repo as a reproducible patch, behind `?quad=1`, on the 1997 monitor first, then tested in the headset. If it is
+sharper, extend it to the other screens. If not, remove it. The presentation rules come first because they help
+everyone: browser, phone and headset.
+
+## Build order (for one Codex brief, after T is back)
+
+1. The presentation rules over the existing 2026 screens (the ring off by default included).
+2. Two screens: the messenger (Mum's thread, Junie, birthday) and the browser's article tabs.
+3. The room's emptying, the "male" defaults, and the ticket.
+4. The bot's new beats (6–7), the map on the ceiling, the propaganda clip.
+5. "Try it on" in the headset; the stream as the birthday fundraiser; the room restored at the end.

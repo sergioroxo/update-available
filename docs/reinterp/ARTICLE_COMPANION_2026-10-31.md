@@ -277,6 +277,34 @@ issues, its Llama 4 model suggested conversion therapy in answer to "unwanted sa
 promoters use and struggling people search with. The 2026 era's agent is the speculative extension of that documented
 failure: care-language and "balance" as the delivery of correction (SOURCES_GLAAD_AI_2026_2026-11-02.md).
 
+## 7f. 2026 v3: "the new you", and the machine that becomes her only friend (his, 7 Nov 2026)
+
+His notes on the v3 proposal (DESIGN_2026_V3_PRESSURE_2026-11-07.md; research: RESEARCH_2026_TRANS_PRESSURE_2026-11-07.md
+and RESEARCH_2026_V3_THREADS_2026-11-07.md), to carry into the article:
+
+- **"The new you" closes the loop of the whole piece.** The 1997 opening video and the 1997/2003 dramatisations sell
+  a restored self. In 2026 the update restores "a new you" to Maya's screens: a stock picture of a young man, the goal
+  she is pushed to become, captioned "You, restored · 2027". The 1997 Restoration Path and 2003's Restorify return as
+  the same promise for a trans woman. Her environment is "restored" with her: the room becomes barer and more "male"
+  as the pressure works. Restoration language is the movement's own (thread 6 of the v3 research).
+- **Eighteen.** Maya has just turned 18. The pressure is about autonomy: the family and the system press hardest at
+  the point where she can decide for herself. Independence is treated as the risk.
+- **Sycophancy as weaponised care.** The chatbot is a critique of AI sycophancy: it agrees, soothes, always answers,
+  and is warm because everyone else has left. It is also a critique of systems that control a person by shaping how
+  she acts. It is the documented failure (GLAAD 2026, §7e) extended: a detransition agent that manipulates through
+  care. The risk named in his notes is detrans-oriented AI ("detrans.ai" as his reference); what exists is reported in
+  the v3 research, and nothing is claimed beyond it.
+- **The contagion map and the propaganda clip.** The system draws her friends as "exposure sources". Inside it plays
+  a clip from an anti-"gender ideology" video (AI-made, invented, no real people) about the world "becoming all
+  trans". It is meant to be direct and brute: not violent, but close enough to the real genre that the visitor learns
+  to recognise it. The answer to "social contagion" is the ending: every red dot becomes a viewer of the stream.
+- **The headset as coercion: try the "proper" gender.** In v3 the VR session is no longer a conversion programme. It
+  is the system coercing her to *try out* being a man by showing her own avatar as a man. This is also a critique of
+  "gender dysphoria simulators" and of embodiment illusions sold as empathy or self-knowledge: the medium the piece is
+  made in is the medium the system uses on her (thread 2 of the v3 research).
+- **The stream as mutual aid.** Junie's link is a fundraising stream for trans youth like her, on or near her
+  birthday; joy and money moving between strangers is the documented counter-practice (thread 5).
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
