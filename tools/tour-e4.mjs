@@ -72,6 +72,23 @@ async function main() {
     });
     const line = `${file}  ${note}  · stage ${st.stage} · browser ${st.browser}/${st.step} · ball ${st.ball} · draws ${st.dc} · yaw ${st.pose.yaw.toFixed(0)}`;
     log.push(line); console.log(line);
+    // Room pass: same seat, four cardinal bearings at the fullest opening; then the changed wall and ceiling.
+    const roomSteps = ['lid-birthday', 'seat-newyou', 'seat-article-a0', 'seat-article-a1', 'seat-clinic',
+      'seat-meridian-reply', 'seat-search', 'seat-matched', 'seat-monitor-stream'];
+    if (name === 'room-conducted') log.push(`  conducted pose: ${JSON.stringify(st.pose)}`);
+    if (roomSteps.includes(name) || name.includes('clip-takeover') || name === 'seat-bot-map' || name === 'lid-junie-unmuted') {
+      const poses = name === 'lid-birthday' ? [267, 357, 87, 177].map(yaw => [-10, yaw])
+        : (name.includes('clip') || name.includes('map') || name === 'lid-junie-unmuted') ? [[80, 267]] : [[-12, 215]];
+      for (const [pitch, yaw] of poses) {
+        await page.evaluate(p => window.__camFree(4.4, 1.16, .84, p[0], p[1]), [pitch, yaw]);
+        await wait(350);
+        await page.screenshot({ path: path.join(OUT, `${String(n).padStart(2, '0')}-room-${name}-${yaw}.png`) });
+        const calls = await page.evaluate(() => window.__drawCalls);
+        log.push(`  room ${name} pitch ${pitch} yaw ${yaw}: ${calls} draw calls`);
+      }
+      await page.evaluate(p => window.__camFree(p.x, p.y, p.z, p.pitch, p.yaw), st.pose);
+      await wait(250);
+    }
   };
   /** a press on the monitor's published rect */
   const press = async (id) => {
@@ -207,6 +224,8 @@ async function main() {
   await shot('lid-left-list', 'left · the house chat has news');
   await pressLid('chat-house'); await wait(400);
   await shot('lid-left', 'left · "Sam left the group." · "sorry, it\'s a lot right now"');
+  await page.waitForFunction(() => window.__ledger().e4Beats.includes('room'), { timeout: 11500 });
+  await shot('room-conducted', 'the authored turn, completed before the search');
   // ── Act III ──
   await untilStep('search', 20000); await wait(2000);
   await seat();

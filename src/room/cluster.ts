@@ -76,7 +76,8 @@ const BELONGINGS_IDS = new Set(
  * excluded from both groups. Same remedy, same reason, and it costs at most one
  * draw call. ROLLBACK: delete this set and its two uses below.
  */
-const UNBATCHED_IDS = new Set(['terminalFrame', 'w_wickCard']);
+// Maya's bedding, rug and curtains are tinted by the v3 room; keep their materials private too.
+const UNBATCHED_IDS = new Set(['terminalFrame', 'w_wickCard', 'e_bed', 'e_rug', 'e_curtL', 'e_curtR']);
 
 const RIG_FADE_SECONDS = 2.5;
 /**

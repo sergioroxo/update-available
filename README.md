@@ -14,6 +14,8 @@ The October 19 playtest polish gives next-action guidance to Lamby and keeps the
 
 Restorify (2003) offers **Personalise your guide** after the first completed check-in. Each kind of day can use one of Lamby’s four existing moods; skipping keeps the programme’s defaults. Choices last only for this session, and the system files personalisation in the record and Close receipt. Verification: `out/cx3c-tune-lamby/REPORT.md`.
 
+The 2026 v3 room now follows the screens’ beat contract: Maya’s belongings disappear through the refusals, the piece conducts the room reveal, and termination restores her room. The ceiling shares the monitor’s clip clock; the lot’s muted messages remain readable after the device returns. [Room report and verification](docs/reinterp/CODEX_E4_V3_ROOM_REPORT_2026-11-08.md).
+
 ## Run
 
 ```bash

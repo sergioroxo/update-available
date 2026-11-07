@@ -841,11 +841,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     e4Room.setConduct(() => {
       if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
       // The walls, stripped belongings and grey bedding are ahead at the end of this turn.
-      // 47 degrees in 8.4 s: smoothstep peak 8.4 degrees/s, inside the existing comfort envelope.
+      // 52 degrees in 9.2 s: smoothstep peak 8.5 degrees/s, inside the existing comfort envelope.
       commitLookOffset();
-      startCamMove({ ...camPos, pitch: 3, yaw: 220 }, 8.4, true);
+      startCamMove({ ...camPos, pitch: -12, yaw: 215 }, 9.2, true);
       return true;
-    });
+    }, () => !camMove && Math.abs(((camYaw - 215 + 540) % 360) - 180) < 1);
     // ⚑ S108: see ClusterShell.setNeverBatch — handed over below, once
     //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
 
@@ -4271,10 +4271,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (morphDemoIn <= 0 && cluster && options.morphDemo) driveMorph(options.morphDemo);
       }
       cluster?.update(dt);
-      if (os.e4) e4Room?.setScreenData({ number: os.e4.browser.currentClinicNumber,
-        articles: os.e4.browser.roomArticleCount, clipTime: os.e4.browser.roomClipTime,
-        takeover: os.e4.browser.roomClipTakeover, viewers: os.e4.ball.viewerCount });
-      e4Room?.update(dt, os.era === 'e4');
       timePassing?.tick(dt);
       ceiling?.update(dt);
       cloud?.update(dt);
@@ -4511,6 +4507,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (motionBtn) motionBtn.style.display = 'none';
     }
     os.update(dt);
+    if (os.e4) e4Room?.setScreenData({ number: os.e4.browser.currentClinicNumber,
+        articles: os.e4.browser.roomArticleCount, clipTime: os.e4.browser.roomClipTime,
+        takeover: os.e4.browser.roomClipTakeover, viewers: os.e4.ball.viewerCount });
+    e4Room?.update(dt, os.era === 'e4');
     helper?.tick(dt);
     syncRacketDemo(); // the room mirrors the diagram's pose (see its doc)
     if (os.dirty) { frontTex.upload(); os.dirty = false; }

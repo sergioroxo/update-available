@@ -143,8 +143,8 @@ export class E4Messenger {
   private preview(id: ChatId): { text: string; badge: number; muted: boolean; when: string } {
     const C = M.chats[id];
     if (id === 'house') {
-      if (this.eveningShown > 0) return { text: `${M.house.evening[this.eveningShown - 1].who}: ${M.house.evening[this.eveningShown - 1].text}`,
-        badge: this.eveningShown - this.eveningRead, muted: this.houseMuted, when: 'Tonight' };
+      if (this.eveningShown > 0) return { text: this.houseMuted ? M.muted : `${M.house.evening[this.eveningShown - 1].who}: ${M.house.evening[this.eveningShown - 1].text}`,
+        badge: this.eveningShown - this.eveningRead, muted: this.houseMuted, when: M.house.tonight };
       if (this.houseLeft > 0) {
         const l = M.house.left[this.houseLeft - 1];
         return { text: l.sys ? l.text : `${l.who}: ${l.text}`, badge: this.houseOpenedLeft ? 0 : this.houseLeft, muted: this.houseMuted, when: '13:40' };

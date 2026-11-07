@@ -39,7 +39,7 @@
         { "who": "Sam", "text": "sorry about earlier. i'm here if you want" },
         { "who": "Ola", "text": "love you. no pressure x" }
       ],
-      "unread": "{n} unread", "earlier": "‹ Earlier", "later": "Later ›",
+      "unread": "{n} unread", "tonight": "Tonight", "earlier": "‹ Earlier", "later": "Later ›",
       "heart": "❤ love you all",
       "heartButton": "❤ Reply",
       "left": [
