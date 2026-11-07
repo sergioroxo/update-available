@@ -65,11 +65,11 @@ Build the room, one commit each:
    a look the player must choose (the 10 Oct rule).
 4. **The ceiling map** at `map`: the contagion network projected across her ceiling (`src/room/ceilingWitness.ts` may
    be the place). Junie's dot is red until `junie` turns it warm. The ceiling plays the shared `drawContagionClip`.
-5. **"Try it on"** in the headset session, and on the browser room's equivalent glass or mirror. The system starts it
-   without asking. The mirror fills, and the reveal is slow: hair, jaw, shoulders, her hands in front of her, all
-   becoming the man in the goal picture, while the system's text says how natural it looks. It does not stop when she
-   looks away. **Junie's link breaks in and ends it**; the player does not. Mark `tryon`. Pixel-drawn, no real face.
-   The Esc menu always works.
+5. **"Try it on", the room side only.** Claude builds the mirror reveal on the worn session screen and marks
+   `tryon` (see the screens report). You add only what the 2D screen cannot do, if anything. For example, in XR the
+   player's own controller hands become the man's hands during the reveal. Do not duplicate the screen's reveal.
+   **Also replace the old ballroom poster** ("CATEGORY IS / ALL WELCOME / FRI 23 OCT") with the birthday fundraiser
+   stream's poster.
 6. **The stream as TransJesus's birthday fundraiser for trans youth** (mutual aid; research thread 5).
    - A fund bar the system cannot read.
    - Every red dot of the ceiling map becomes a viewer: 41 → 42.
