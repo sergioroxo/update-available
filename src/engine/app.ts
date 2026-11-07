@@ -987,7 +987,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.guideIdleScale = guideIdleScale;
     const queueGuide = era3Devices?.debugQueue();
     let guideAtLaptop = false;
-    const faceGuideSurface = (name: 'monitor' | 'laptop'): void => {
+    const faceGuideSurface = (name: 'monitor' | 'laptop' | 'workstation'): void => {
       const surface = app.root.findByName(`era3-device-${name}`) as pc.Entity | null;
       if (!surface || scriptedBusy()) return;
       const p = surface.getPosition(), dx = p.x - camPos.x, dy = p.y - camPos.y, dz = p.z - camPos.z;
@@ -1010,6 +1010,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       guideAtLaptop = false;
       return { silent: false, voice: false };
     };
+    os.onGuideFocus = id => { if (os.era === 'e3' && queueGuide?.focusGuideTarget(id)) faceGuideSurface('workstation'); };
     os.onGuidePress = (id) => {
       if (os.era === 'e3') queueGuide?.pressGuideTarget(id);
       if (os.era === 'e4') { os.e4?.browser.pressGuideTarget(id); faceGuideSurface('monitor'); }

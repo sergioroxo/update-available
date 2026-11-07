@@ -180,7 +180,7 @@
         "target": [
           "signin"
         ],
-        "act": "press:signin"
+        "act": "focus:signin"
       },
       "consent": {
         "tip": "Lambient has a quick question. Answer it and we're off.",
@@ -189,7 +189,8 @@
         "target": [
           "consent-allow",
           "consent-decline"
-        ]
+        ],
+        "act": "focus:consent-allow"
       },
       "work": {
         "tip": "Pick a card on the board and work it through to the end.",
@@ -200,7 +201,8 @@
           "apply",
           "skip",
           "board-back"
-        ]
+        ],
+        "act": "focus:task-0"
       },
       "phone": {
         "tip": "The campaign kit is on the platform. Either answer continues.",
@@ -210,7 +212,8 @@
           "vera-kit-approve",
           "vera-kit-close",
           "board-back"
-        ]
+        ],
+        "act": "focus:vera-kit-close"
       },
       "vote": {
         "tip": "The group sent a link. Open it when you're ready.",
@@ -243,20 +246,23 @@
           "vera-send",
           "vera-send-close",
           "board-back"
-        ]
+        ],
+        "act": "focus:vera-send"
       },
       "vera-install": {
         "tip": "Kindredraft has your own story ready. Install opens it.",
         "target": [
           "update-accept"
-        ]
+        ],
+        "act": "focus:update-accept"
       },
       "vera-kit": {
         "tip": "The campaign kit is on the platform. Either answer continues.",
         "target": [
           "vera-kit-approve",
           "vera-kit-close"
-        ]
+        ],
+        "act": "focus:vera-kit-close"
       }
     },
     "e4": {

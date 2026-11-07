@@ -577,6 +577,7 @@ export class DesktopOS {
   guideIdleScale: () => number = () => 1;
   guideExternal: (() => { silent: boolean; voice: boolean }) | null = null;
   onGuidePress: ((id: string) => void) | null = null;
+  onGuideFocus: ((id: string) => void) | null = null;
   onGuideMove: ((target: string) => void) | null = null;
   private makeLambyGuide(): LambyGuide {
     return new LambyGuide({
@@ -595,6 +596,7 @@ export class DesktopOS {
     if (act === 'open:personalise') { this.openRestorify(); this.restorify?.showPersonalise(); return; }
     if (act === 'open:rootcause') { this.openRootCause(); return; }
     if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
+    if (act.startsWith('focus:')) { this.onGuideFocus?.(act.slice(6)); return; }
     if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
     if (this.desktopEra === 'e3' || this.desktopEra === 'e4') { this.onGuidePress?.(act.slice(6)); return; }
     const allowed = ['icon-a', 'web-join', 'icon-restorify', 'icon-story', 'icon-send', 'start-menu', 'done', 'play', 'connect'];

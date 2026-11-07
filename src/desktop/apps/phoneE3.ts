@@ -143,7 +143,7 @@ export class PhoneE3 {
   }
   get eveningClock(): string { return this.storyClock; }
   disconnected = false;
-  disconnect(): void { this.disconnected = true; this.bump(); }
+  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); this.banner = null; this.openMessage = null; this.notesT = -1; this.screen = 'lock'; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
   get unreadCount(): number { return BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length + this.groupUnread() + this.evening.filter(e => e.from !== m.group.name && !this.readMessages.has('evening:' + e.id)).length; }
   private bump(): void { this.version++; }

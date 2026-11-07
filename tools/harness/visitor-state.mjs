@@ -312,7 +312,7 @@ const LAP = { w: 224, h: 140 };
     if (q) {
       // the workstation's own canvas, and every sub-surface drawn into it
       for (const grp of collect(q, 3)) {
-        const onPhone = grp.path === 'phone' || grp.path.indexOf('phone.') === 0;
+        const onPhone = grp.path === 'phone' || grp.path.indexOf('phone.') === 0 || grp.path === 'floppy';
         for (const r of grp.rects) {
           if (onPhone) {
             add(r.id, 'phone', r,

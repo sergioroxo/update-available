@@ -86,7 +86,8 @@ const PORT = Number(flag('port', 3000));
  * run stamps itself, in the log, in the JSON and at the top of the report, and
  * writes to a different filename so it can never be mistaken for the real thing.
  */
-const JUMP = flag('jump', '');
+const ERA3_ALIAS = flag('jump', '') === 'e3';
+const JUMP = ERA3_ALIAS ? '' : flag('jump', '');
 /**
  * ⚑ `--min-tabs N` — THE MINIMUM PATH, defined narrowly enough to mean something
  * (2026-09-11). Sérgio has said three times that Era 4 takes too long, and every
@@ -146,7 +147,7 @@ const ALLOW_BROKEN_JUMP = process.argv.includes('--allow-broken-jump');
  * Close. It is NOT a reachability proof (the ledger has none of the earlier eras' choices in it), so it stamps
  * itself and writes to out/walks/, never over the real report. The full walk from the front door stays the gate.
  */
-const FROM_ERA = Number(flag('from-era', '0')) || 0;
+const FROM_ERA = Number(flag('from-era', ERA3_ALIAS ? '3' : '0')) || 0;
 /** ⚑ `--one-era` (S223): stop, successfully, the moment the walk arrives in the NEXT era (or at the Close, from
  *  Era 4). With `--from-era` that makes each of tools/walk-eras.mjs's four walks one era long. */
 const ONE_ERA = process.argv.includes('--one-era');
@@ -160,7 +161,7 @@ const CUT = flag('cut', '') === 'full' ? 'full' : 'speedrun';
 const GUIDED_WALK = CUT === 'speedrun' && !process.argv.includes('--explore');
 const MAX_STEPS = Number(flag('max', 320));
 const VIEW = { width: 1280, height: 900 };
-const OUT_DIR = flag('out') ? join(ROOT, flag('out')) : join(ROOT, SETUP || process.argv.includes('--from-era') || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp');
+const OUT_DIR = flag('out') ? join(ROOT, flag('out')) : join(ROOT, SETUP || FROM_ERA > 1 || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp');
 // S223: inside the project (a cloud machine has no /private/tmp of ours), one folder per era so side-by-side walks do not overwrite
 const SHOT_DIR = flag('shots', join(ROOT, 'out/walk-shots' + (FROM_ERA > 1 ? '-e' + FROM_ERA : '') + (HOME_DOOR ? '-entrance-home' : '')));
 

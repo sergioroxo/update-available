@@ -5,7 +5,7 @@ import { drawTestimonyFilm } from '../desktop/theme/renataFilm';
 import vera from '../../data/dialog/s3_vera.json';
 import { veraDay, resetVeraDay } from '../state/veraDay';
 import polish from '../../data/strings/playtestPolish.json';
-import { drawLambyGuide, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
+import { drawLambyGuide, drawGuidePointer, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
 import type { LambyGuide } from '../narrative/lambyGuide';
 /**
  * THE CORRECTION LIST — the workstation, Era 3 (Session 64, E3-iii).
@@ -356,9 +356,14 @@ export class GraceQueueLite {
   private guideWait = new GuideWait();
   private guideReady(key: string): boolean { if (this.personalQuiet) return false; return this.guideWait.ready(key, !!this.lambyGuide?.active); }
   pressGuideTarget(id: string): void {
-    if (this.guideSilent || this.guideVoice) return;
+    if (!['signin', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
     const r = this.rects.find(h => h.id === id);
     if (r) this.handleClick(r.x + r.w / 2, r.y + r.h / 2);
+  }
+  private guideFocus: { id: string; t: number } | null = null;
+  focusGuideTarget(id: string): boolean {
+    if (this.guideSilent || this.guideVoice || !this.rects.some(r => r.id === id && !id.startsWith('mirror'))) return false;
+    this.guideFocus = { id, t: 0 }; this.bump(); return true;
   }
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
 
@@ -600,6 +605,7 @@ export class GraceQueueLite {
 
   update(dt: number): void {
     if (this.disconnectT >= 0 && this.disconnectT <= 3) { this.disconnectT += dt; if (this.disconnectT > 3) this.bump(); }
+    if (this.guideFocus) { this.guideFocus.t += dt; if (this.guideFocus.t >= 6) { this.guideFocus = null; this.bump(); } }
     const highlights = ledger.view.highlights === true;
     if (highlights !== this.highlightPreference) {
       this.highlightPreference = highlights; this.bump(); this.phoneV++;
@@ -1377,6 +1383,10 @@ export class GraceQueueLite {
     }
 
     if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
+    if (this.guideFocus && !this.guideSilent && !this.guideVoice) {
+      const r = this.rects.find(r => r.id === this.guideFocus!.id);
+      if (r) drawGuidePointer(ctx, r, { x: platformW - 172, y: H - 24 }, ERA3.accent, 0);
+    }
     ctx.restore();
     this.drawMirror(ctx, W, H);
   }
@@ -1419,7 +1429,7 @@ export class GraceQueueLite {
     ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(this.mirrorCanvas, px0, py, Math.floor(180 * scale), Math.floor(phoneH * scale)); ctx.restore();
     this.mirrorBox = { x: px0, y: py, scale };
     // Phone-owned controls stay phone-owned. No guide/glow is drawn over this program.
-    const hits = this.phone.hitRects.map(r => ({ ...r, x: px0 + r.x * scale, y: py + r.y * scale, w: r.w * scale, h: r.h * scale, id: `mirror:${r.id}` }));
+    const hits = (this.floppy.open ? this.floppy.rects : this.phone.hitRects).map(r => ({ ...r, x: px0 + r.x * scale, y: py + r.y * scale, w: r.w * scale, h: r.h * scale, id: `mirror:${r.id}` }));
     this.rects.unshift(...hits);
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
@@ -2506,7 +2516,8 @@ export class GraceQueueLite {
     if (mh?.id === 'mirror-enlarge') { this.mirrorLarge = !this.mirrorLarge; this.bump(); return; }
     if (mh?.id.startsWith('mirror:') && this.mirrorBox) {
       const id = mh.id.slice(7);
-      if (id === 'floppy') this.floppy.openGame(); else this.phone.pressControl(id);
+      if (this.floppy.open) { const b = this.mirrorBox; this.floppy.tap((x - b.x) / b.scale, (y - b.y) / b.scale); }
+      else if (id === 'floppy') this.floppy.openGame(); else this.phone.pressControl(id);
       this.mirrorReading = this.phone.quietReading; this.bump(); return;
     }
     this.mirrorReading = false;
