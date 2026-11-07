@@ -42,23 +42,55 @@ that always answers, and it wants her to become the picture.
   there for anyone who wants to read more.
 - Buttons are always at the bottom of each window. There is never a fake text box.
 
-## The beats
+## The beats (reordered 7 Nov, in four acts)
+
+The beats in the earlier table are reordered so the story builds:
+- something of hers first;
+- then the system arrives;
+- then everyone leaves, one by one;
+- then the one voice that stays;
+- then she pushes back;
+- then the system's last and worst offer;
+- then the crowd.
+
+The room's emptying is no longer a single beat. It runs through Act II: **every refusal takes one thing**, and the
+act ends with one conducted turn to see what is gone.
+
+**Act I — Eighteen (morning)**
 
 | # | Beat | Where | What happens | Register |
 |---|---|---|---|---|
-| 0 | **The new you** | room + both screens | Her 18th birthday. The update restores her "defaults": both wallpapers and the desk photo frame now show **the goal**, a drawn stock figure of a young man, smiling, captioned **"You, restored · 2027"**. It is the 1997 opening video's promise, back for her. | operable |
-| 1 | **Happy birthday** | messenger | Birthday messages arrive, and so does the news. Mum: **"Happy 18th love x"**, then a minute later **"saw this and thought of you x"** with a link. In the browser, the article tabs open themselves one by one: real, dated facts under invented mastheads (R §3: 16 Apr 2025 Supreme Court; 11 Dec 2024 blocker ban; 18 Dec 2025 clinic waits). Each headline becomes a paper strip on her wall. | operable (the feed); Mum felt |
-| 2 | **Mum** | messenger | **Mum's thread opens.** Scroll back one press per year: 2023 "so proud of you love ❤"; 2024 "I just want to understand." + a link; 2025 "Not saying anything. Just read it x" + a link; 2026 "Found this in the loft. You were such a happy little" + an old photo of a child, no face, cut before the word. Her unsent draft: **"Mum, I"**. At 18 the fear is out loud: **"You're 18 now. I can't stop you. I'm asking you to wait."** Mum is frightened, not a villain (R-5). | **felt** |
-| 3 | **The number** | browser → wall | See "The number, explained" below. The clinic portal: **"You are number 4,812."** A paper ticket with that number appears on her wall and grows bigger every time she is sent back. | operable |
-| 4 | **The room empties** | room (conducted turn) | Each refusal (the doctor, Meridian, the clinic, a friend who unfollows) takes something of hers out of the room and puts the system's "default" in its place: the friends' photo strip goes, a framed "You, restored" goes up; the pink throw becomes grey; the plant goes. **The room becomes barer and more "male"**, in the system's own crude idea of male. That crudeness is the satire, and it collapses at the end. The piece turns her once to see it. | operable |
-| 5 | **Meridian** | browser | The LGB group's refusal (as built, V4). | operable → felt |
-| 6 | **"I'm still here"** | browser (the bot) | **Second Thoughts always answers.** It is warm because everyone else left: "Everyone else made you wait. I'm here now." It agrees with everything she says, which is the sycophancy. It quotes every refusal back as a reason. It shows the goal as "where you're heading", with a "Becoming" ring that never passes 99%. | operable (satire in its self-presentation) |
-| 7 | **The contagion map** | browser → ceiling | The bot draws her contacts as a network, **"exposure sources: 3"**, with Junie in red. "You muted Junie on my advice. Your progress improved." Across her ceiling the map plays **a clip from an anti-"gender ideology" video**: AI-made, invented, no real people, the world "becoming all trans", its tropes taken from the documented genre (T4). The clip is brute, and its seams show: it is AI and it says so. "Protect your progress: mute 2 more." | operable |
-| 8 | **Junie** | messenger | Junie's thread, felt: "don't answer if it's too much." Unmuting her is one press, and her red dot turns warm. | **felt** |
-| 9 | **The original** | browser (Photos) | As built (V10): "original kept" is the lever. Her own photo goes back into the desk frame. The room stays bare. | operable → felt |
-| 10 | **Try it on** | headset | **The system's last offer: "See how it feels."** In the headset, the mirror and her own hands show her **as the man in the picture**. A soft voice-over in the system's text: "No pressure. Just try it." This is the embodiment illusion used as coercion (T2), and a critique of "dysphoria simulators". It lasts as long as she lets it. **Junie's link breaks in.** | operable |
-| 11 | **The stream** | the whole space | Junie's link: **TransJesus's birthday stream, a fundraiser for trans youth** (mutual aid, T5). Every red dot of the contagion map becomes a viewer, 41 → 42. The fund bar is something the system cannot read. Her one act is to dance or to stay. In the stream her body is her own again. | **respite** (never a trap) |
-| 12 | **Terminated** | glass, desk | "SESSION TERMINATED · reason: social contagion." The update fails. When the room comes back, her things are back where they were. | operable |
+| 1 | **Eighteen** | room + messenger | Her room is hers: the pink throw, the photo strip, the plant. Birthday messages trickle in: the house chat ("cake in the fridge. don't tell 3B"); **Junie, muted, a badge with 1 message** that she can't see yet. Something of her own before the system arrives (guard 2). | **felt** |
+| 2 | **The new you** | both screens + desk frame | The update restores her "defaults". Both wallpapers and the desk photo frame now show **the goal**: a drawn stock figure of a young man, smiling, captioned **"You, restored · 2027"**. The 1997 opening video's promise is back. | operable |
+| 3 | **Mum** | messenger | "Happy 18th love x", and a minute later "saw this and thought of you x" with a link. Her thread opens, one press per year: 2023 "so proud of you love ❤"; 2024 "I just want to understand." + a link; 2025 "Not saying anything. Just read it x"; 2026 "Found this in the loft. You were such a happy little" with the cut photo. Then: **"You're 18 now. I can't stop you. I'm asking you to wait."** Her unsent draft: "Mum, I". | **felt** |
+| 4 | **The link** | browser → walls | Mum's link opens the browser, and the news opens behind it, tab after tab: real, dated facts under invented mastheads. Each headline becomes a paper strip on her wall. **The news reaches her through someone who loves her** (the best-sourced route, R-1). | operable |
+
+**Act II — Everyone leaves (the room empties)**
+
+| # | Beat | Where | What happens | Register |
+|---|---|---|---|---|
+| 5 | **The number** | browser (clinic) → wall | At 18 she is moved to the adult list: **"You are number 4,812."** The ticket goes up on her wall. The clinic's letter: "Exploratory therapy is offered before any referral", **with two captions, never resolved** (careful assessment / more months of waiting). *Room: the plant goes.* | operable; the letter felt |
+| 6 | **Meridian** | browser | The LGB group says no (as built, V4). *Room: the pride flag goes.* | operable → felt |
+| 7 | **Left** | messenger | The house chat: "Sam left the group." A friend's "sorry, it's a lot right now". *Room: the photo strip goes, and a framed "You, restored" goes up in its place.* | felt |
+| 8 | **The room** | room (conducted turn) | The piece turns her once. The room is barer and more "male": the pink throw is grey now, the strips of news cover the walls, the ticket is bigger. That idea of "male" is the system's own, and it is crude on purpose: this is satire, and it will collapse. | operable |
+
+**Act III — The voice that stays**
+
+| # | Beat | Where | What happens | Register |
+|---|---|---|---|---|
+| 9 | **The search** | browser | She starts to type "how do i tell my…" and the engine finishes it for her. The first result is an ad (as built, V1). | operable |
+| 10 | **"I'm still here"** | browser (the bot) | Second Thoughts always answers, and agrees with everything (sycophancy): "Everyone else made you wait. I'm here now." It quotes every refusal back to her as a reason. The goal picture is "where you're heading", with a "Becoming" ring that never passes 99%. | operable |
+| 11 | **The contagion map** | browser → ceiling | Her contacts become a network: "exposure sources: 3", Junie in red. "You muted Junie on my advice. Your progress improved." The ceiling plays the AI-made anti-"gender ideology" clip of the world "becoming all trans". "Protect your progress: mute 2 more." | operable |
+
+**Act IV — She pushes back, and the system's last offer**
+
+| # | Beat | Where | What happens | Register |
+|---|---|---|---|---|
+| 12 | **Junie** | messenger | The badge from the morning: **"happy birthday. don't answer if it's too much."** Unmuting Junie is one press, and her red dot turns warm. | **felt** |
+| 13 | **The original** | browser (Photos) | "Original kept" is the lever (as built, V10). Her own photo goes back in the desk frame: the first thing that comes back. | operable → felt |
+| 14 | **Try it on** | headset (the browser room: the mirror) | The system's last and worst offer: **"See how it feels. No pressure. Just try it."** Her hands and the mirror show her as the man in the picture: the embodiment illusion used as coercion. **Junie's link breaks in.** | operable |
+| 15 | **The stream** | the whole space | TransJesus's **birthday fundraiser for trans youth**. Every red dot on the map becomes a viewer, 41 → 42. Her one act: dance or stay. Her body is her own again. | **respite** |
+| 16 | **Terminated** | glass, desk | "SESSION TERMINATED · reason: social contagion." The update fails. The room comes back, and her things are where they were. | operable |
 
 ## The number, explained (his "don't understand" on beat 4)
 
