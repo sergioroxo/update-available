@@ -139,6 +139,13 @@ export class PhoneE3 {
   private get clockText(): string { return this.storyClock; }
 
   private evening: typeof mirrorCopy.events = [];
+  private notesT = -1;
+  private notesDone = false;
+  get conductingNotes(): boolean { return this.notesT >= 0; }
+  conductNotes(): void {
+    if (this.notesDone) return;
+    this.notesDone = true; this.notesT = 0; this.screen = 'notes'; this.bump();
+  }
   private eveningFrom = '';
   private storyClock = '18:04';
   private banner: { from: string; time: string; text: string } | null = null;
@@ -212,6 +219,11 @@ export class PhoneE3 {
   get broken(): boolean { return this.stage === 'after'; }
 
   tick(dt: number, visible = true): void {
+    if (this.notesT >= 0) {
+      const old = Math.floor(this.notesT * 2); this.notesT += dt;
+      if (this.notesT >= 3) { this.notesT = -1; this.screen = 'home'; this.bump(); }
+      else if (old !== Math.floor(this.notesT * 2)) this.bump();
+    }
     if (!visible || this.stage !== 'cascade') return;
     this.cascadeT += dt;
     while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
@@ -328,7 +340,7 @@ export class PhoneE3 {
     //   on, the pale shimmer on the game that is only ever hers to open. Drawn with the screen (no animation).
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
     if (this.card) this.drawCard(ctx, W, H);
-    if (!this.card && this.screen !== 'evening') this.drawBanner(ctx, W);
+    if (!this.card && !this.conductingNotes && this.screen !== 'evening') this.drawBanner(ctx, W);
     if (this.screen === 'personal' || this.screen === 'message' || this.screen === 'group') {
       ctx.fillStyle = PHONE.surface; ctx.fillRect(0, H - 26, W, 26);
       phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(mirrorCopy.reply, 12, H - 18);
@@ -344,6 +356,7 @@ export class PhoneE3 {
     for (const e of this.evening.filter(e => e.from === this.eveningFrom)) {
       phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink;
       for (const line of phoneWrap(ctx, e.text, W - 24)) { ctx.fillText(line, 12, y); y += 15; }
+      if (e.photo) { this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 12, y, 144, 144); y += 154; }
       y += 18;
     }
     this.pushBack(y0, y0 + 40);
@@ -357,6 +370,9 @@ export class PhoneE3 {
     ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600); ctx.fillText(this.banner.from, 10, 28);
     phoneFont(ctx, 9); ctx.fillText(this.storyClock, W - 36, 28);
     phoneFont(ctx, 11); lines.forEach((line, i) => ctx.fillText(line, 10, 46 + i * 14));
+    if (this.evening.some(e => e.id === 'after') && this.banner.text === 'missed you tonight x') {
+      this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 10, 21 + h, 72, 72);
+    }
     this.rects = this.rects.filter(r => r.y >= 21 + h);
     this.rects.unshift({ x: 2, y: 21, w: W - 4, h, id: 'evening-banner' });
   }
@@ -443,7 +459,7 @@ export class PhoneE3 {
       phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
       ctx.fillText(m.cameraRoll.dates[this.photoIndex], x, y + size + 12);
     } else {
-      this.photoSprites.forEach((sprite, i) => {
+      this.photoSprites.slice(0, this.evening.some(e => e.id === 'after') ? 5 : 4).forEach((sprite, i) => {
         const x = 12 + (i % 2) * 84, y = top + 12 + Math.floor(i / 2) * 100;
         ctx.drawImage(sprite, x, y);
         phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(m.cameraRoll.dates[i], x, y + 77);
@@ -458,7 +474,7 @@ export class PhoneE3 {
     const y0 = statusBar(ctx, W, this.clockText);
     let y = appBar(ctx, W, y0, HOME.fNotes);
     this.pushBack(y0, y);
-    for (const entry of m.notes.entries) {
+    for (const entry of (this.conductingNotes ? m.notes.entries.slice(0, 1) : m.notes.entries)) {
       y += 12;
       if ('title' in entry) {
         phoneFont(ctx, 12, 600); ctx.fillStyle = PHONE.ink;
@@ -466,6 +482,10 @@ export class PhoneE3 {
       }
       phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink;
       for (const line of phoneWrap(ctx, entry.text, W - 24)) { ctx.fillText(line, 12, y); y += 16; }
+      if (this.conductingNotes && Math.floor(this.notesT * 2) % 2 === 0) {
+        const last = phoneWrap(ctx, entry.text, W - 24).slice(-1)[0];
+        ctx.fillStyle = PHONE.ink; ctx.fillRect(12 + Math.ceil(ctx.measureText(last).width), y - 16, 1, 13);
+      }
       y += 12; ctx.fillStyle = PHONE.hairline; ctx.fillRect(12, y, W - 24, 1);
     }
   }

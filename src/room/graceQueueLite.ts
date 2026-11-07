@@ -378,7 +378,7 @@ export class GraceQueueLite {
   private personalDesktop = false;
   private personalArmed = false;
   private personalWasQuiet = false;
-  get personalQuiet(): boolean { return this.mirrorReading || this.phone.personalOpen || (this.phoneInHand && this.phone.quietReading); }
+  get personalQuiet(): boolean { return this.phone.conductingNotes || this.mirrorReading || this.phone.personalOpen || (this.phoneInHand && this.phone.quietReading); }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
     this.personalArmed = true; this.phone.armPersonal(); this.phone.arrive('arrival'); this.bump();
@@ -1173,6 +1173,7 @@ export class GraceQueueLite {
       // S158 / R3-74 (Sérgio: "when I finish a section there should be a button at the bottom
       // to go back to the panel"): the story HOLDS, finished, with the way back and the way on
       // — nothing loads by itself. The break arms here, as before.
+      this.phone.conductNotes(); this.mirrorMin = false;
       this.storyDone = true;
       if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
       if (this.workDone() >= maltaAfter()) this.armMalta();
@@ -1809,7 +1810,6 @@ export class GraceQueueLite {
     const padX = 10;
     const LABELS = 44;
     const thumbH = Math.max(24, h - LABELS);
-    this.phone.arrive('job');
     const mounted = this.surfaces.get(t.id);
     // ⚑ S145 — the picture is CLIPPED to its well. With seven tiles on three rows
     //   the well is 24 px tall and three jobs' thumbs (comments, family calls,
