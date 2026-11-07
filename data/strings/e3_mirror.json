@@ -1,5 +1,5 @@
 {
-  "title": "PocketPane",
+  "title": "Handset Window",
   "reply": "Reply on your phone",
   "disconnected": "This device is no longer supported. Phone disconnected.",
   "account": "My account · activity",
@@ -14,6 +14,12 @@
       "time": "18:04",
       "from": "Orla",
       "text": "quiz at the wick tonight. dee's keeping the corner table. no pressure x"
+    },
+    {
+      "id": "stamp",
+      "time": "18:04",
+      "from": "Orla",
+      "text": "dee says you're one stamp off a free one x"
     },
     {
       "id": "job",
@@ -46,5 +52,8 @@
       "text": "missed you tonight x",
       "photo": true
     }
-  ]
+  ],
+  "previous": "Previous",
+  "next": "Next",
+  "register": "felt"
 }

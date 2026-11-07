@@ -996,7 +996,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     os.guideExternal = () => {
       if (queueGuide) {
         queueGuide.lambyGuide = os.lambyGuide;
-        queueGuide.callPending = os.era === 'e3' && ['phone', 'vote', 'cascade'].includes(mapState(os).current?.beat.id ?? '');
+        queueGuide.callPending = os.era === 'e3' && !queueGuide.mirrorAvailable && ['phone', 'vote', 'cascade'].includes(mapState(os).current?.beat.id ?? '');
       }
       if (os.e4) { os.e4.browser.lambyGuide = os.lambyGuide; os.e4.browser.onGuideLook = () => faceGuideSurface('monitor'); }
       if (scriptedBusy()) return { silent: true, voice: false };
@@ -1049,7 +1049,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (!cur) return null;
         const id = cur.beat.id;
         if (cur.era === 'e3' && era3Devices?.phoneInHand) phoneCallsPicked.add(id);
-        if (cur.era === 'e3' && (id === 'phone' || id === 'vote' || id === 'cascade') && era3Devices && !era3Devices.phoneInHand && !phoneCallsPicked.has(id)) {
+        if (cur.era === 'e3' && !queueGuide?.mirrorAvailable && (id === 'phone' || id === 'vote' || id === 'cascade') && era3Devices && !era3Devices.phoneInHand && !phoneCallsPicked.has(id)) {
           return {
             id: 'phone', text: id === 'phone' ? callStrings.phone : callStrings.phoneLink,
             act: () => {

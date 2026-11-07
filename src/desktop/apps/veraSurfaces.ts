@@ -1,3 +1,4 @@
+import mirrorCopy from '../../../data/strings/e3_mirror.json';
 /** 2016 documents and publication previews. Drawing only; the owner handles every press and ledger event. */
 import { px, wrapText } from '../theme/chrome';
 import { sansFor } from '../theme/fonts';
@@ -21,7 +22,7 @@ function paper(ctx: CanvasRenderingContext2D, a: SurfaceRect): void {
   px(ctx, a.x + 2, a.y + 2, a.w, a.h, P.glassEdge); px(ctx, a.x, a.y, a.w, a.h, P.white);
   px(ctx, a.x, a.y, a.w, 1, P.glassEdge);
 }
-export function drawVeraArchive(ctx: CanvasRenderingContext2D, a: SurfaceRect, compared: boolean, admin: boolean, hit: (r: SurfaceHit) => void): void {
+export function drawVeraArchive(ctx: CanvasRenderingContext2D, a: SurfaceRect, compared: boolean, admin: boolean, page: number, hit: (r: SurfaceHit) => void): void {
   const r = D.record, x = a.x + 12, w = a.w - 24;
   px(ctx, a.x, a.y, a.w, a.h, P.sysBand);
   px(ctx, a.x, a.y, a.w, 39, P.titleA);
@@ -34,13 +35,11 @@ export function drawVeraArchive(ctx: CanvasRenderingContext2D, a: SurfaceRect, c
   const doc = (xx: number, ww: number, label: string, value: string): void => {
     paper(ctx, { x: xx, y: py, w: ww, h: ph });
     studioFont(ctx, 11, true); ctx.fillStyle = P.greyDk; ctx.fillText(label, xx + 14, py + 10);
-    const available = ph - 44;
-    let size = compared ? 15 : 17;
-    for (; size > 12; size--) {
-      studioFont(ctx, size);
-      if (wrapText(ctx, value, ww - 28).length * (size + 5) <= available) break;
-    }
-    text(ctx, value, xx + 14, py + 34, ww - 28, size, size + 5);
+    const available = ph - 44, size = 13, lead = 18;
+    const fit = Math.max(1, Math.floor(available / lead));
+    studioFont(ctx, size); ctx.fillStyle = P.ink;
+    wrapText(ctx, value, ww - 28).slice(page * fit, (page + 1) * fit).forEach((line, i) => ctx.fillText(line, xx + 14, py + 34 + i * lead));
+
   };
   if (compared) {
     const dw = Math.floor((w - gap) / 2);
@@ -53,6 +52,12 @@ export function drawVeraArchive(ctx: CanvasRenderingContext2D, a: SurfaceRect, c
   text(ctx, r.reviewer, x, yy, w, 10, 12, P.greyDk);
   const by = a.y + a.h - 30;
   control(ctx, hit, compared ? 'vera-as-published' : 'vera-as-sent', compared ? D.visual.publishedOnly : r.sent, x, by, 132);
+  const docW = compared ? Math.floor((w - gap) / 2) : Math.min(500, w - 60);
+  studioFont(ctx, 13);
+  const fit = Math.max(1, Math.floor((ph - 44) / 18));
+  const pages = Math.ceil(Math.max(wrapText(ctx, r.publishedText, docW - 28).length, compared ? wrapText(ctx, r.sentText, docW - 28).length : 0) / fit);
+  if (page > 0) control(ctx, hit, 'vera-record-prev', mirrorCopy.previous, x + 140, by, 68);
+  if (page < pages - 1) control(ctx, hit, 'vera-record-next', mirrorCopy.next, x + 212, by, 60);
   control(ctx, hit, 'vera-record-close', r.close, x + w - 138, by, 138);
 }
 

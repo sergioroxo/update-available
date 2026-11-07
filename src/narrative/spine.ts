@@ -25,6 +25,7 @@
  * All pacing constants are PLACEHOLDER — Sérgio tunes by feel.
  */
 import { ledger } from '../state/ledger';
+import { veraDay } from '../state/veraDay';
 import type { DesktopOS } from '../desktop/os';
 import type { UpdateKey } from '../desktop/apps/update';
 
@@ -37,7 +38,7 @@ function correctionsDone(): number { return ledger.graceQueue.length; }
  *  message lands. The ledger is where the piece records what happened, so it is
  *  also where the spine asks; nothing keeps a second copy of this. */
 function cascadeSeen(): boolean {
-  return ledger.checkins.some(c => c.id === 'e3_cascade');
+  return veraDay.cascadeSeen;
 }
 
 const SEND_DELAY = 9;   // s into an era before its first summons

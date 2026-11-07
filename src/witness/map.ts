@@ -135,10 +135,10 @@ const CONDITIONS: Record<string, Condition> = {
   oneJobDone: () => has('e3-job-done'),
   twoJobsDone: () => has('e3-two-jobs'),   // S209 / B15
   allJobsDone: () => has('e3-day-done'),
-  voted: () => ledger.checkins.some((c) => c.id === 'e3_malta_voted'),
+  voted: () => veraDay.voted,
   recordViewed: () => ledger.era3Arrival.some((a) => a.witness === RECORD_VIEWED_LINE),
-  phoneAnswered: () => ledger.checkins.some((c) => c.id.startsWith('e3_malta_')),
-  cascadeSeen: () => ledger.checkins.some((c) => c.id === 'e3_cascade'),
+  phoneAnswered: () => veraDay.phoneAnswered,
+  cascadeSeen: () => veraDay.cascadeSeen,
   updatedTo4: () => updatedTo(4),
   // ── 2026 ──
   // ⚑ S293 — 2026 v2 (RESEARCH_2026_V2 §4, ENDING_TRANSJESUS): the defaults, the search, the agent's conversation,

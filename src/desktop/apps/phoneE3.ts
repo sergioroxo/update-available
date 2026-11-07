@@ -1,49 +1,17 @@
 import mirrorCopy from '../../../data/strings/e3_mirror.json';
-/**
- * ⚑ ERA 3'S PHONE — the group, the backlog, and the end of the era.
- *
- * `ERA3_NARRATIVE.md` §5 is explicit that the era does not end because Vera
- * becomes brave. **It ends because enough people stopped doing the work.** This
- * module is where that happens, and everything in it is built to keep the
- * ending collective and to keep Vera out of the middle of it: she sends
- * nothing here, she rescues nobody, and the beat that finishes the era is
- * other women's messages arriving faster than a block can process them.
- *
- * ⚑ THE FOUR LAWS, from §4 and §7.2, in the order they matter:
- *
- *  1. **CAPTURE EITHER WAY.** Open the link and Lambient knows. Ignore it and
- *     Lambient comes anyway. The two cards say nearly the same sentence and
- *     NEITHER IS A PUNISHMENT — nothing is threatened, nothing is withheld, it
- *     has simply been passed on. A player who behaves perfectly gets the same
- *     visit as one who does not, and learning that is what removes "keep your
- *     head down" from the strategies available.
- *  2. **THE CASCADE IS VOLUME, NOT DAMAGE.** No crash screen, no corruption
- *     glyphs, no error state, no red. The block keeps working, correctly, on
- *     message after message; there are simply more messages than blocks. **The
- *     software is not broken. It is outnumbered.** Lambient stays polite to the
- *     very end.
- *  3. **"YOU CAN'T UNSEE IT."** Afterwards the board is still there, still
- *     working, still greyable, and unusable in a way NOTHING ENFORCES.
- *  4. **The outcome never changes.** Register, never branch. Every route
- *     through this module reaches the same place; only the record differs.
- *
- * ⚑ AND THE GROUP IS NEVER SATIRISED. `docs/reinterp/RESEARCH_PULL_E3_...md`
- * names the caricature precisely — "the troubling quality of these systems is
- * that warmth, friendship, vulnerability and surveillance can be materially
- * genuine at the same time" — so the women in Maiden-to-be are good to each
- * other, and the facilitator who moved Thursday's call so Susan could get there
- * is the same woman who is in the middle of the cascade. Nothing here is a joke
- * at anyone's expense.
+/** One private, memory-only phone shared by the stand, held view and desktop mirror.
+ * Work beats deliver authored banners. Reading never files, sends or replies;
+ * the kit drives the news sequence even when the visitor never opens the phone.
+ * Everything here is felt. The platform cannot inspect message contents.
  */
 
 import {
   PHONE, phoneFont, phoneWrap, roundRect, statusBar, appBar, bubble, avatar,
-  appTile, wallpaper, sheet, pill, furnitureTile, dock, pageDots, dateWidget
+  appTile, wallpaper, furnitureTile, dock, pageDots, dateWidget
 } from '../theme/phone';
 import { makeE3PhotoSprites } from './e3PhoneSprites';
 import { drawFloppyIcon } from './floppysheep';
 import { veraDay } from '../../state/veraDay';
-import { ledger } from '../../state/ledger';
 import { entriesByEra } from '../../witness/record';
 import m from '../../../data/dialog/s3_maiden.json';
 import d from '../../../data/strings/era3_devices.json';
@@ -66,9 +34,8 @@ const HOME = m.home as unknown as Record<string, string>;
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
 type Stage = 'quiet' | 'first' | 'voted' | 'cascade' | 'after';
-type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal' | 'notes' | 'photos' | 'photo' | 'evening';
+type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal' | 'notes' | 'photos' | 'photo' | 'evening' | 'article';
 /** Lambient's card, and it is the same card whichever way she got here */
-type Card = null | 'opened' | 'ignored';
 
 /** the cascade's own clock. Messages land ~0.45 s apart — fast enough to read
  *  as more-than-one-person, slow enough that a player can watch names arrive.
@@ -85,14 +52,12 @@ export class PhoneE3 {
   version = 0;
   private screen: Screen = 'lock';
   private stage: Stage = 'quiet';
-  private card: Card = null;
   /** how many cascade messages have landed */
   private cascadeN = 0;
   private cascadeT = 0;
   /** she opened the link at least once — the record's only branch */
   private opened = false;
   /** the block has been shown for the current stage */
-  private carded = false;
   private readMessages = new Set<string>();
   /** ⚑ S219 / W1-E4·E7 — how many of the group's messages she has SEEN. The badge and the thread's "N new messages" were
    *  computed from the stage alone, so they never fell: opening the thread left "4 new messages", and the cascade's
@@ -100,12 +65,9 @@ export class PhoneE3 {
   private groupSeen = 0;
   /** ⚑ S219 / W1-E6 — the card on the glass is a SPENT link being answered, not the stage's own beat: it closes and
    *  moves nothing (no ledger, no lift, no stage) */
-  private spentCard = false;
   /** ⚑ S227 / M2·M7 (his 2026-10-10: "two sheets, the second shortened") — how many sheets this run has put on the
    *  glass, and whether the one up now is a later one: only the first shows its body; every later one is the title and
    *  the note alone. The ledger lines are untouched. */
-  private sheetsShown = 0;
-  private shortSheet = false;
   /** S177 — the backlog message open on its own screen (`from + time`), or null */
   private openMessage: string | null = null;
   private rects: Rect[] = [];
@@ -139,6 +101,17 @@ export class PhoneE3 {
   private get clockText(): string { return this.storyClock; }
 
   private evening: typeof mirrorCopy.events = [];
+  private eventQueue: typeof mirrorCopy.events = [];
+  private bannerAge = 3;
+  private articleVote = false;
+  advanceNews(): void {
+    if (this.stage === 'quiet') this.arm();
+    if (this.stage === 'after' || this.stage === 'cascade') return;
+    veraDay.phoneAnswered = true; veraDay.voted = true;
+    this.stage = 'cascade'; this.cascadeT = -4;
+    this.banner = { from: 'Bea', time: this.clockText, text: LINK_VOTE.headline };
+    this.bump();
+  }
   private notesT = -1;
   private notesDone = false;
   get conductingNotes(): boolean { return this.notesT >= 0; }
@@ -152,22 +125,29 @@ export class PhoneE3 {
   bannersHidden = false;
   arrive(id: string): void {
     const e = mirrorCopy.events.find(e => e.id === id);
-    if (!e || this.evening.some(a => a.id === id) || this.disconnected) return;
-    this.evening.push(e); this.storyClock = e.time; this.banner = e;
+    if (!e || [...this.evening, ...this.eventQueue].some(a => a.id === id) || this.disconnected) return;
+    this.eventQueue.push(e); this.deliverEvent();
+    if (id === 'arrival') this.arrive('stamp');
+  }
+  private deliverEvent(): void {
+    if (!this.eventQueue.length || this.bannerAge < 3 || this.bannersHidden) return;
+    const e = this.eventQueue.shift()!;
+    this.evening.push(e); this.storyClock = e.time; this.banner = e; this.bannerAge = 0;
     playOnce('phone_ping_2016.mp3'); this.bump();
   }
+
   private newsBanner(messages: Msg[]): void {
     const e = messages[messages.length - 1];
-    if (e) this.banner = { from: e.from, time: e.time, text: e.text ?? '' };
+    if (e) this.banner = { from: e.from, time: e.time, text: e.text ?? (e.kind === 'link2' ? LINK_VOTE.headline : e.kind === 'link' ? m.link.headline : '') };
     this.bump();
   }
   get eveningClock(): string { return this.storyClock; }
   disconnected = false;
   disconnect(): void { this.disconnected = true; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
-  get unreadCount(): number { return BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length + this.groupUnread() + (this.personalSeen ? 0 : 1); }
+  get unreadCount(): number { return BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length + this.groupUnread() + this.evening.filter(e => e.from !== m.group.name && !this.readMessages.has('evening:' + e.id)).length; }
   private bump(): void { this.version++; }
-  get quietReading(): boolean { return this.screen === 'evening' || this.screen === 'photos' || this.screen === 'photo' || this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
+  get quietReading(): boolean { return this.screen === 'article' || this.screen === 'evening' || this.screen === 'photos' || this.screen === 'photo' || this.screen === 'notes' || this.personalOpen || this.screen === 'message' || this.screen === 'inbox'; }
   presentInbox(): void { this.screen = 'inbox'; this.openMessage = null; this.bump(); }
 
 
@@ -190,8 +170,7 @@ export class PhoneE3 {
   /** Bea's first messages land. Called when the day's work reaches the gate. */
   arm(): void {
     if (this.stage !== 'quiet') return;
-    this.stage = 'first'; this.newsBanner(MALTA_ONE);
-    this.carded = false;
+    this.stage = 'first'; this.banner = { from: 'Bea', time: this.clockText, text: m.link.headline };
     // ⚑ S178 — THE NEWS FINDS HER WHEREVER THE PHONE WAS. The notification lives on the
     //   lock screen; a phone left open on Messages, on a message, or on the home grid
     //   never showed it (the S178 walk stalled on a message screen for 800 steps — and a
@@ -205,26 +184,22 @@ export class PhoneE3 {
    *  when the player finishes another piece of work on the workstation without
    *  having opened the link: Lambient arrives anyway, with the same news, in
    *  the same voice. No timer does this — her own next action does. */
-  onWorkDone(): void {
-    // Work can notify the phone; it cannot answer messages the visitor has never opened.
-    if (this.groupSeen === 0 || this.card) return;
-    if (this.stage === 'first' && !this.carded) { this.showCard('ignored'); return; }
-    if (this.stage === 'voted' && !this.carded) { this.showCard('ignored'); }
-  }
+  onWorkDone(): void { /* Private phone reading is never reported to work. */ }
 
   /** S149 — a card is on the glass (the era's exit waits for it to be dismissed) */
-  get cardOpen(): boolean { return this.card !== null; }
+  get cardOpen(): boolean { return false; }
 
   /** the era asks: is it finished? Used to arm the update that ends Era 3. */
   get broken(): boolean { return this.stage === 'after'; }
 
   tick(dt: number, visible = true): void {
+    if (!this.bannersHidden) { this.bannerAge += dt; this.deliverEvent(); }
     if (this.notesT >= 0) {
       const old = Math.floor(this.notesT * 2); this.notesT += dt;
       if (this.notesT >= 3) { this.notesT = -1; this.screen = 'home'; this.bump(); }
       else if (old !== Math.floor(this.notesT * 2)) this.bump();
     }
-    if (!visible || this.stage !== 'cascade') return;
+    if (!visible || this.eventQueue.length || this.bannerAge < 3 || this.stage !== 'cascade') return;
     this.cascadeT += dt;
     while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
       this.cascadeT -= CASCADE_STEP;
@@ -235,7 +210,7 @@ export class PhoneE3 {
     }
     if (this.cascadeN >= CASCADE.length) {
       this.stage = 'after';
-      ledger.checkins.push({ id: 'e3_cascade', witness: m.witness.cascadeSeen });
+      veraDay.cascadeSeen = true;
       this.bump();
     }
   }
@@ -260,38 +235,8 @@ export class PhoneE3 {
   }
 
   // ── the beats ────────────────────────────────────────────────────────────
-  private showCard(which: 'opened' | 'ignored'): void {
-    this.card = which;
-    this.carded = true;
-    this.countSheet();
-    ledger.checkins.push({
-      id: 'e3_malta_' + this.stage,
-      witness: which === 'opened' ? m.block.witnessOpened : m.block.witnessIgnored
-    });
-    // ⚑ THE LIFT — the room's own light answers the phone, once, on the first
-    //   card whichever card it is. Felt before it is understood: the beat holds,
-    //   and then the space around her changes. See cluster.ts's E3_LIFT.
-    this.opts.onLift();
-    this.bump();
-  }
-
-  private countSheet(): void { this.shortSheet = this.sheetsShown > 0; this.sheetsShown++; }
-
   /** ⚑ S227 — the phone has moved past Bea's first card (the board may offer an update again; see graceQueueLite) */
   get pastFirst(): boolean { return this.stage === 'voted' || this.stage === 'cascade' || this.stage === 'after'; }
-
-  private dismissCard(): void {
-    if (!this.card) return;
-    this.card = null;
-    // ⚑ S219 / W1-E6 — a spent link's sheet only closes; it moves nothing
-    if (this.spentCard) { this.spentCard = false; this.bump(); return; }
-    // ⚑ the era advances on the DISMISS, not on the choice — because the choice
-    //   was never the variable. first → voted → cascade.
-    if (this.stage === 'first') { this.stage = 'voted'; this.newsBanner(MALTA_TWO); this.carded = false; }
-    else if (this.stage === 'voted') { this.stage = 'cascade'; this.cascadeT = 0; }
-    if (this.screen === 'group') this.markGroupSeen();   // the vote's messages landed under her eyes
-    this.bump();
-  }
 
   /** ⚑ S219 / W1-E6 (his walkthrough: "clicking the link does nothing after the sequence ends") — a press ALWAYS answers.
    *  The live card does what it always did. A SPENT one (the bill once the vote is in, every forward in the cascade)
@@ -299,16 +244,7 @@ export class PhoneE3 {
    *  it re-filed the ledger and re-fired the light on every press, and pressing the old bill in `voted` could carry the
    *  era past the vote's own card. */
   private openLink(kind?: string): void {
-    if (this.card) return;
-    if (this.linkSpent(kind)) {
-      this.card = this.opened ? 'opened' : 'ignored';
-      this.spentCard = true;
-      this.countSheet();
-      this.bump();
-      return;
-    }
-    this.opened = true;
-    this.showCard('opened');
+    this.opened = true; this.articleVote = kind === 'link2'; this.screen = 'article'; this.bump();
   }
 
   // ── draw ─────────────────────────────────────────────────────────────────
@@ -324,24 +260,42 @@ export class PhoneE3 {
     if (this.disconnected) { ctx.fillStyle = PHONE.ink; ctx.fillRect(0, 0, W, H); return; }
     ctx.fillStyle = PHONE.bg;
     ctx.fillRect(0, 0, W, H);
-    if (this.screen === 'evening') { this.drawEvening(ctx, W, H); }
-    else if (this.screen === 'personal') { this.drawThreadView(ctx, W, H); this.pushBack(20, 62); }
-    else if (this.screen === 'lock') { this.drawLock(ctx, W, H); }
-    else if (this.screen === 'photos' || this.screen === 'photo') { this.drawPhotos(ctx, W, H); }
-    else if (this.screen === 'notes') { this.drawNotes(ctx, W, H); }
-    else if (this.screen === 'group') { this.drawGroup(ctx, W, H); }
-    else if (this.screen === 'platform') { this.drawPlatform(ctx, W, H); }
-    else if (this.screen === 'inbox') { this.drawInbox(ctx, W, H); }
-    else if (this.screen === 'message') { this.drawMessage(ctx, W, H); }
-    else if (this.screen === 'walk') { this.drawWalk(ctx, W, H); }
-    else { this.drawHome(ctx, W, H); }
+    const bannerH = this.banner && !this.bannersHidden && !this.conductingNotes && this.screen !== 'evening'
+      ? this.bannerHeight(W) : 0;
+    const bodyH = H - bannerH;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, bannerH, W, bodyH); ctx.clip(); ctx.translate(0, bannerH);
+    if (this.screen === 'article') {
+      ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, bodyH);
+      phoneFont(ctx, 12, 600); ctx.fillStyle = PHONE.ink;
+      const link = this.articleVote ? LINK_VOTE : m.link;
+      ctx.fillText(link.masthead, 10, 25);
+      phoneWrap(ctx, link.headline, W - 20).forEach((line, i) => ctx.fillText(line, 10, 60 + i * 18));
+    }
+    else if (this.screen === 'evening') { this.drawEvening(ctx, W, bodyH); }
+    else if (this.screen === 'personal') { this.drawThreadView(ctx, W, bodyH); this.pushBack(20, 62); }
+    else if (this.screen === 'lock') { this.drawLock(ctx, W, bodyH); }
+    else if (this.screen === 'photos' || this.screen === 'photo') { this.drawPhotos(ctx, W, bodyH); }
+    else if (this.screen === 'notes') { this.drawNotes(ctx, W, bodyH); }
+    else if (this.screen === 'group') { this.drawGroup(ctx, W, bodyH); }
+    else if (this.screen === 'platform') { this.drawPlatform(ctx, W, bodyH); }
+    else if (this.screen === 'inbox') { this.drawInbox(ctx, W, bodyH); }
+    else if (this.screen === 'message') { this.drawMessage(ctx, W, bodyH); }
+    else if (this.screen === 'walk') { this.drawWalk(ctx, W, bodyH); }
+    else { this.drawHome(ctx, W, bodyH); }
+    ctx.restore();
+    this.rects = this.rects.map(r => ({ ...r, y: r.y + bannerH }));
     // ⚑ S281 — THE GLOW LOGIC on her phone (his 1 Nov: "FloppySheep and the message app should slightly glow
     //   differently so we can understand where we need to go"): the warm ring on the one thing the phone is waiting
     //   on, the pale shimmer on the game that is only ever hers to open. Drawn with the screen (no animation).
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
-    if (this.card) this.drawCard(ctx, W, H);
-    if (!this.card && !this.conductingNotes && this.screen !== 'evening') this.drawBanner(ctx, W);
-    if (this.screen === 'personal' || this.screen === 'message' || this.screen === 'group') {
+    if (!this.conductingNotes && this.screen !== 'evening') this.drawBanner(ctx, W);
+    if (this.screen !== 'home' && this.screen !== 'lock' && !this.conductingNotes) {
+      this.rects = this.rects.filter(r => r.id !== 'back');
+      ctx.fillStyle = PHONE.surface; ctx.fillRect(0, H - 50, 48, 24);
+      phoneFont(ctx, 12); ctx.fillStyle = PHONE.tint; ctx.fillText('‹', 16, H - 45);
+      this.rects.unshift({ x: 0, y: H - 50, w: 48, h: 24, id: 'back' });
+    }
+    if (this.screen === 'personal' || this.screen === 'message' || this.screen === 'group' || this.screen === 'evening') {
       ctx.fillStyle = PHONE.surface; ctx.fillRect(0, H - 26, W, 26);
       phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(mirrorCopy.reply, 12, H - 18);
     }
@@ -350,17 +304,28 @@ export class PhoneE3 {
   /** S281 — what the phone is waiting on, screen by screen: the notification, then Messages, then the group, then the
    *  live link. Nothing once the group's news is all seen and the link is spent. */
 
+  private openEvening(from: string): void {
+    this.eveningFrom = from; this.screen = from === m.group.name ? 'group' : 'evening';
+    for (const e of this.evening.filter(e => e.from === from)) this.readMessages.add('evening:' + e.id);
+    if (from === m.personalMessage.from) { this.readMessages.add('personal'); veraDay.personalMessageSeen = true; }
+    if (this.screen === 'group') this.markGroupSeen();
+    this.bump();
+  }
   private drawEvening(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const y0 = statusBar(ctx, W, this.clockText);
     let y = appBar(ctx, W, y0, this.eveningFrom) + 12;
     for (const e of this.evening.filter(e => e.from === this.eveningFrom)) {
       phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink;
       for (const line of phoneWrap(ctx, e.text, W - 24)) { ctx.fillText(line, 12, y); y += 15; }
-      if (e.photo) { this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 12, y, 144, 144); y += 154; }
+      if (e.photo) { this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 12, y, 120, 120); y += 130; }
       y += 18;
     }
     this.pushBack(y0, y0 + 40);
     ctx.fillStyle = PHONE.dim; phoneFont(ctx, 10); ctx.fillText(mirrorCopy.reply, 12, H - 18);
+  }
+  private bannerHeight(W: number): number {
+    const c = document.createElement('canvas').getContext('2d')!; phoneFont(c, 11);
+    return 52 + phoneWrap(c, this.banner?.text ?? '', W - 20).length * 14 + (this.banner?.text === 'missed you tonight x' && (this.screen === 'lock' || this.screen === 'home') ? 76 : 0);
   }
   private drawBanner(ctx: CanvasRenderingContext2D, W: number): void {
     if (!this.banner || this.bannersHidden) return;
@@ -370,10 +335,10 @@ export class PhoneE3 {
     ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600); ctx.fillText(this.banner.from, 10, 28);
     phoneFont(ctx, 9); ctx.fillText(this.storyClock, W - 36, 28);
     phoneFont(ctx, 11); lines.forEach((line, i) => ctx.fillText(line, 10, 46 + i * 14));
-    if (this.evening.some(e => e.id === 'after') && this.banner.text === 'missed you tonight x') {
+    if ((this.screen === 'lock' || this.screen === 'home') && this.evening.some(e => e.id === 'after') && this.banner.text === 'missed you tonight x') {
       this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 10, 21 + h, 72, 72);
     }
-    this.rects = this.rects.filter(r => r.y >= 21 + h);
+
     this.rects.unshift({ x: 2, y: 21, w: W - 4, h, id: 'evening-banner' });
   }
 
@@ -401,16 +366,12 @@ export class PhoneE3 {
       ctx.fillText(UNLOCK_HINT, ux + 14, uy + 8);
     };
     if (this.stage === 'quiet') {
-      if (this.personalArmed && !this.personalSeen) {
-        const y = 140, w = W - 20;
-        phoneFont(ctx, 11);
-        const lines = phoneWrap(ctx, m.personalMessage.firstWords, w - 20);
-        const h = 32 + lines.length * 14;
-        roundRect(ctx, 10, y, w, h, 8, PHONE.surface);
-        ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600);
-        ctx.fillText(m.personalMessage.from, 20, y + 9); phoneFont(ctx, 11);
-        lines.forEach((ln, i) => ctx.fillText(ln, 20, y + 28 + i * 14));
-        this.rects.push({ x: 10, y, w, h, id: 'personal-notification' });
+      if (this.evening.some(e => e.id === 'arrival') && this.banner?.from !== 'Orla') {
+        const text = mirrorCopy.events[0].text;
+        phoneFont(ctx, 11); const lines = phoneWrap(ctx, text, W - 40);
+        roundRect(ctx, 10, 125, W - 20, 30 + lines.length * 14, 8, PHONE.surface);
+        ctx.fillStyle = PHONE.ink; ctx.fillText('Orla', 20, 132);
+        lines.forEach((line, i) => ctx.fillText(line, 20, 152 + i * 14));
       }
       unlockPill();
       this.rects.push({ x: 0, y: 130, w: W, h: H - 130, id: 'unlock' });
@@ -454,16 +415,17 @@ export class PhoneE3 {
     const top = appBar(ctx, W, y0, HOME.fPhotos); this.pushBack(y0, top);
     ctx.save(); ctx.imageSmoothingEnabled = false;
     if (this.screen === 'photo') {
-      const size = 144, x = Math.round((W - size) / 2), y = top + 20;
+      const size = Math.min(144, H - top - 40), x = Math.round((W - size) / 2), y = top + 20;
       ctx.drawImage(this.photoSprites[this.photoIndex], x, y, size, size);
       phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
       ctx.fillText(m.cameraRoll.dates[this.photoIndex], x, y + size + 12);
     } else {
       this.photoSprites.slice(0, this.evening.some(e => e.id === 'after') ? 5 : 4).forEach((sprite, i) => {
-        const x = 12 + (i % 2) * 84, y = top + 12 + Math.floor(i / 2) * 100;
-        ctx.drawImage(sprite, x, y);
-        phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(m.cameraRoll.dates[i], x, y + 77);
-        this.rects.push({ x, y, w: 72, h: 90, id: 'photo-' + i });
+        const size = H < 300 ? 56 : 72;
+        const x = 12 + (i % 2) * 84, y = top + 12 + Math.floor(i / 2) * (size + 18);
+        ctx.drawImage(sprite, x, y, size, size);
+        phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(m.cameraRoll.dates[i], x, y + size + 5);
+        this.rects.push({ x, y, w: size, h: size + 14, id: 'photo-' + i });
       });
     }
     ctx.restore();
@@ -496,7 +458,7 @@ export class PhoneE3 {
 
     // ⚑ the at-a-glance card, and it is quietly the worst line on the device:
     //   "No events today", on the day the era ends.
-    dateWidget(ctx, 10, 24, W - 20, HOME.widgetWeekday, HOME.widgetDate, HOME.widgetNote);
+    if (H >= 300) dateWidget(ctx, 10, 24, W - 20, HOME.widgetWeekday, HOME.widgetDate, HOME.widgetNote);
 
     const unread = this.groupUnread();
     const unreadMail = BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length;
@@ -508,7 +470,7 @@ export class PhoneE3 {
     const s = 32;
     const gap = Math.round((W - s * 4) / 5);
     const col = (i: number): number => gap + i * (s + gap);
-    const rowY = (r: number): number => 84 + r * (s + 22);
+    const rowY = (r: number): number => (H >= 300 ? 84 : 32) + r * (s + 22);
 
     // ⚑ S158 / R3-78 (Sérgio: "I need the home screen and a Messages app to enter the chat"):
     //   the first tile is THE PLATFORM's own app (it says she is signed in on the workstation
@@ -622,7 +584,7 @@ export class PhoneE3 {
       top += 18;
     }
 
-    const msgs: Msg[] = [...BEFORE];
+    const msgs: Msg[] = [...BEFORE, ...this.evening.filter(e => e.from === m.group.name).map(e => ({ from: e.from, time: e.time, text: e.text }))];
     if (this.stage !== 'quiet') msgs.push(...MALTA_ONE);
     if (this.stage === 'voted' || this.stage === 'cascade' || this.stage === 'after') msgs.push(...MALTA_TWO);
     if (this.stage === 'cascade' || this.stage === 'after') msgs.push(...CASCADE.slice(0, this.cascadeN));
@@ -719,17 +681,17 @@ export class PhoneE3 {
     let y = appBar(ctx, W, y0, m.home.messagesLabel);
     this.pushBack(y0, y);
     const rows = [
-      ...[...new Set(this.evening.map(e => e.from))].map(from => ({ from, text: this.evening.filter(e => e.from === from).slice(-1)[0].text, time: '', id: 'evening:' + from, read: false })),
+      ...[...new Set(this.evening.filter(e => e.from !== m.group.name).map(e => e.from))].map(from => ({ from, text: this.evening.filter(e => e.from === from).slice(-1)[0].text, time: '', id: 'evening:' + from, read: false })),
       ...m.groupPreviews.map(g => ({ from: g.name, text: (g.muted ? m.groupPreviewUI.muted + ' · ' : '') + m.groupPreviewUI.unread.replace('{n}', String(g.unread)), time: '', id: '', read: true })),
-      ...(this.personalArmed ? [{ from: m.personalMessage.from, text: m.personalMessage.firstWords, time: '', id: 'personal-notification', read: this.personalSeen }] : []),
       { from: m.home.groupLabel, text: this.groupUnread() ? m.home.groupUnread.replace('{n}', String(this.groupUnread())) : m.home.groupQuiet, time: '', id: 'group', read: !this.groupUnread() },
       ...BACKLOG.map(b => ({ ...b, id: 'read-' + b.from + b.time, read: this.readMessages.has(b.from + b.time) }))
     ];
     // The era's news stays reachable on every page; private threads can be paged independently.
     const group = rows.splice(rows.findIndex(r => r.id === 'group'), 1)[0];
-    const pages = Math.max(1, Math.ceil(rows.length / 4));
+    const perPage = Math.max(1, Math.floor((H - y - 36) / 48) - 1);
+    const pages = Math.max(1, Math.ceil(rows.length / perPage));
     this.inboxPage = Math.min(this.inboxPage, pages - 1);
-    for (const b of [group, ...rows.slice(this.inboxPage * 4, this.inboxPage * 4 + 4)]) {
+    for (const b of [group, ...rows.slice(this.inboxPage * perPage, this.inboxPage * perPage + perPage)]) {
       const h = 48;
       if (!b.read) { ctx.fillStyle = PHONE.tint; ctx.fillRect(5, y + 13, 4, 4); }
       phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.ink; ctx.fillText(b.from, 14, y + 5);
@@ -749,52 +711,20 @@ export class PhoneE3 {
    *  this period used for anything it wanted acknowledged. Both versions are
    *  polite; nothing is threatened, nothing is withheld, and the only difference
    *  between them is how she got here. */
-  private drawCard(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const opened = this.card === 'opened';
-    const title = opened ? m.block.openedTitle : m.block.ignoredTitle;
-    const body = opened ? m.block.openedBody : m.block.ignoredBody;
-    const note = opened ? m.block.openedNote : m.block.ignoredNote;
-    phoneFont(ctx, 11);
-    const bodyLines = this.shortSheet ? [] : phoneWrap(ctx, body, W - 32);   // S227 / M2: a later sheet has no body
-    const noteLines = phoneWrap(ctx, note, W - 32);
-    // ⚑ THE SHEET IS SIZED FROM ITS CONTENT AND THE BUTTON SITS UNDER IT. The
-    //   first build pinned the pill to `H - 40` and let the text run behind it,
-    //   which buried the note — and the note is the whole card. "I let the team
-    //   know it was shared in your group" is the capture; a version of this
-    //   screen where it is under a button is a version that does not say it.
-    const h = 118 + (bodyLines.length + noteLines.length) * 14;
-    let y = sheet(ctx, W, H, h);
-
-    // the mark, small and grey — it is not asking to be liked here
-    ctx.fillStyle = PHONE.dim;
-    for (const [dx, dy] of [[0, 0], [6, -4], [-5, 3], [4, 5], [-6, -3]]) {
-      ctx.fillRect(Math.round(W / 2) - 2 + dx * 2, y + 2 + dy * 2, 3, 3);
-    }
-    y += 24;
-    phoneFont(ctx, 13, 600);
-    ctx.fillStyle = PHONE.ink;
-    phoneWrap(ctx, title, W - 32).forEach(ln => { ctx.fillText(ln, 16, y); y += 17; });
-    y += 4;
-    phoneFont(ctx, 11);
-    ctx.fillStyle = PHONE.dim;
-    bodyLines.forEach(ln => { ctx.fillText(ln, 16, y); y += 14; });
-    if (bodyLines.length) y += 6;
-    ctx.fillStyle = PHONE.faint;
-    noteLines.forEach(ln => { ctx.fillText(ln, 16, y); y += 14; });
-
-    const by = Math.min(H - 34, y + 10);
-    pill(ctx, 16, by, W - 32, 26, m.block.dismiss);
-    this.rects.push({ x: 16, y: by, w: W - 32, h: 26, id: 'dismiss' });
-  }
-
   // ── press ────────────────────────────────────────────────────────────────
   press(x: number, y: number): boolean {
     const r = this.rects.find(rr =>
       x >= rr.x && x <= rr.x + rr.w && y >= rr.y && y <= rr.y + rr.h);
     if (!r) return false;
+    return this.pressControl(r.id);
+  }
+
+  pressControl(id: string): boolean {
+    const r = { id };
     switch (r.id) {
       case 'evening-banner':
-        if (this.banner && this.evening.some(e => e.from === this.banner!.from && e.text === this.banner!.text)) { this.eveningFrom = this.banner.from; this.screen = 'evening'; }
+        if (this.banner?.text === m.link.headline || this.banner?.text === LINK_VOTE.headline) { this.openLink(this.banner.text === LINK_VOTE.headline ? 'link2' : 'link'); return true; }
+        if (this.banner && this.evening.some(e => e.from === this.banner!.from && e.text === this.banner!.text)) { this.openEvening(this.banner.from); }
         else { this.screen = 'group'; this.openGroup(); }
         this.bump(); return true;
       case 'inbox-prev': this.inboxPage--; this.bump(); return true;
@@ -808,18 +738,17 @@ export class PhoneE3 {
         // The optional inbox never files a reading event.
         this.bump(); return true;
       // S158: the chat goes back to Messages; S177: so does an open message
-      case 'back': if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
+      case 'back': if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.screen === 'article' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
       case 'photos': this.screen = 'photos'; this.bump(); return true;
       case 'notes': this.screen = 'notes'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
-      case 'dismiss': this.dismissCard(); return true;
       case 'link': case 'link2': this.openLink(r.id); return true;
       // ⚑ the stream has no verb. Pressing it is consumed and does nothing,
       //   which is truer than making it play: nobody asked her to watch it.
       case 'stream': return true;
       default:
-        if (r.id.startsWith('evening:')) { this.eveningFrom = r.id.slice(8); this.screen = 'evening'; this.bump(); return true; }
+        if (r.id.startsWith('evening:')) { this.openEvening(r.id.slice(8)); return true; }
         if (r.id.startsWith('photo-')) { this.photoIndex = Number(r.id.slice(6)); this.screen = 'photo'; this.bump(); return true; }
         if (r.id.startsWith('read-')) {
           this.readMessages.add(r.id.slice(5));
@@ -848,15 +777,15 @@ export class PhoneE3 {
       case 'inbox': this.screen = 'inbox'; this.bump(); break;
       case 'blocked': this.arm(); this.screen = 'group'; this.openLink(); break;
       case 'ignored': this.arm(); this.onWorkDone(); break;
-      case 'voted': this.debugBeat('blocked'); this.dismissCard(); break;
+      case 'voted': this.arm(); this.stage = 'voted'; this.newsBanner(MALTA_TWO); this.bump(); break;
       case 'cascade':
-        this.debugBeat('voted'); this.openLink('link2'); this.dismissCard();
+        this.advanceNews();
         this.screen = 'group'; this.bump();
         break;
       case 'after':
         this.debugBeat('cascade');
         this.cascadeN = CASCADE.length; this.stage = 'after';
-        ledger.checkins.push({ id: 'e3_cascade', witness: m.witness.cascadeSeen });
+        veraDay.cascadeSeen = true;
         this.bump();
         break;
     }
@@ -947,7 +876,7 @@ export class PhoneE3 {
 
   private openGroup(): void {
     this.markGroupSeen();
-    ledger.checkins.push({ id: 'e3_group', witness: m.witness.groupOpened });
+    veraDay.phoneAnswered = true;
     this.bump();
   }
 

@@ -81,7 +81,15 @@ async function main() {
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e).slice(0, 160)));
     const query = n === 1 ? '?reinterp=1&kiosk=0&debug=1&home=0' : `?reinterp=1&kiosk=0&era=${n}&debug=1&descent=0`;
-    await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: n === 3 ? 'domcontentloaded' : 'networkidle2', timeout: 60000 });
+    if (n === 3) {
+      await page.waitForFunction(() => window.__graceQueue?.()?.mode === 'signin');
+      await page.addStyleTag({ content: HIDE_CHROME });
+      await wait(850);
+      await page.screenshot({ path: path.join(OUT, 'e3-lead-01-wick-conducted.png') });
+      await wait(2300);
+      await page.screenshot({ path: path.join(OUT, 'e3-lead-02-orla-stamp-banner.png') });
+    }
     if (n === 1) {
       await page.waitForFunction(() => [...document.querySelectorAll('button')]
         .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});

@@ -407,6 +407,25 @@ async function main() {
       }
     };
   }
+  if (process.argv.includes('--lambient-log')) await page.evaluateOnNewDocument(() => {
+    window.__lambientAudit = [];
+    const seen = new Set();
+    const log = (voice, screen, lines) => {
+      const key = `${voice}:${screen}:${JSON.stringify(lines)}`;
+      if (seen.has(key)) return; seen.add(key);
+      window.__lambientAudit.push({ seconds: +(performance.now() / 1000).toFixed(2), voice, screen, lines });
+    };
+    setInterval(() => {
+      const q = window.__graceQueue?.();
+      if (!q || q.__voiceAudit) return; q.__voiceAudit = true;
+      const lane = q.drawLambientLane.bind(q), draw = q.draw.bind(q);
+      q.drawLambientLane = (ctx, c, lines) => { if (!q.personalQuiet) log('lane', q.veraPage || q.mode, lines); return lane(ctx, c, lines); };
+      q.draw = (...args) => { const result = draw(...args), g = q.lambyGuide;
+        if (g?.active && !q.guideSilent && !q.guideVoice && !q.startMap.active) log('guide', q.veraPage || q.mode, g.view.text);
+        return result;
+      };
+    }, 100);
+  });
   page.on('pageerror', (e) => noise.push(`PAGEERROR ${String(e).slice(0, 180)}`));
   // S209 — a page that goes away under the walk says why: a crash or a navigation (the 2026-10-02 run lost its frame at the Close)
   page.on('error', (e) => process.stdout.write(`PAGE CRASH ${String(e).slice(0, 200)}\n`));
@@ -886,7 +905,7 @@ async function main() {
     // glass publishes her two chips (stream-dance / stream-stay); either is the way on.
     if (st?.era === 'e4' && st?.bstate?.done && t.surface === 'e4.browser') return false;
     if (/^start-menu$|^sm-|^icon-(?:provotype|lambyrig|rootcause|forum|your-file|found-file|era-1)$|^irc-close$|^record-chip$/.test(id)) return false;
-    if (/^min-|^taskbar-/.test(id)) return false;
+    if (/^min-|^taskbar-|^mirror-(?:enlarge|min|restore)$|^account-activity$/.test(id)) return false;
     if (has('channel-joined') && /^web-/.test(id) && id !== 'web-close') return false;
     if (id === 'cancel' && t.surface === 'kit' && !has('went-online')) return false;
     if (/^dm-(?:up|down)$/.test(id) && (seen?.get(id) || 0) >= 1) return false;
@@ -896,7 +915,7 @@ async function main() {
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
     if (st?.era === 'e3' && id === 'vera-as-published') return false;
     if (st?.era === 'e3' && id === 'next-story' && !led?.era3Jobs?.some(j => j.id === 'pipeline')) return false;
-    if (st?.era === 'e3' && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
+    if (st?.era === 'e3' && led?.era3Jobs?.some(j => j.id === 'pipeline') && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
     return true;
   };
   const pick = (targets, sig, seen, dismissFirst) => {
@@ -1626,6 +1645,7 @@ async function main() {
   }
 
   const final = await probe();
+  if (process.argv.includes('--lambient-log')) writeFileSync(join(OUT_DIR, 'LAMBIENT_LOG.json'), JSON.stringify(await page.evaluate(() => window.__lambientAudit ?? []), null, 2));
   note('end', { what: 'walk finished', era: final.era, phase: final.phase, spine: final.spine });
   await page.screenshot({ path: join(SHOT_DIR, 'walk_end.png') });
   // `--your-file <dir>`: at the Close, open Esc → Your file and photograph every scroll of it (article evidence, F-EXH-2)

@@ -2252,7 +2252,7 @@
     ],
     [
      "Beats",
-     "16"
+     "15"
     ]
    ],
    "tabs": {
@@ -2359,7 +2359,8 @@
        "- Kindredraft: archived",
        "- the moderation queue: retired",
        "- the waiting: retired",
-       "Root Cause — migrated"
+       "Root Cause — migrated",
+       "- phone link: not supported"
       ]
      }
     ],
@@ -3303,12 +3304,6 @@
         "where": "Where: the workstation on the desk."
        },
        {
-        "label": "Orla's message",
-        "opt": "optional",
-        "hint": "An ordinary message on her phone.",
-        "where": "Where: the phone."
-       },
-       {
         "label": "Sign in",
         "opt": "",
         "hint": "Sign in on the workstation.",
@@ -3347,13 +3342,13 @@
        {
         "label": "The campaign kit",
         "opt": "",
-        "hint": "Put the phone down when ready. Approve the kit or return to Today. Take my story down is optional.",
+        "hint": "Approve the kit or return to Today. Take my story down is optional.",
         "where": "Where: the workstation."
        },
        {
         "label": "Your record",
         "opt": "optional",
-        "hint": "Your record is on the platform — the chip at the bottom of the screen.",
+        "hint": "Your record is in the Start menu, under My account.",
         "where": "Where: the workstation."
        },
        {
@@ -3371,25 +3366,25 @@
        {
         "label": "The phone",
         "opt": "",
-        "hint": "Pick up the phone — it has a message. Unlock it and open the thread.",
-        "where": "Where: the phone on its stand, left of the monitor."
+        "hint": "Her phone is mirrored beside the platform. The news arrives there.",
+        "where": "Where: the mirrored phone beside the platform."
        },
        {
         "label": "The vote",
         "opt": "",
-        "hint": "The group's link on the phone — open it, and the second one that follows.",
-        "where": "Where: the phone."
+        "hint": "The vote arrives in the mirror while the campaign kit stays open.",
+        "where": "Where: the mirrored phone beside the platform."
        },
        {
         "label": "The group",
         "opt": "",
-        "hint": "Open the link on the phone. The group answers.",
-        "where": "Where: the phone on its stand."
+        "hint": "The group’s messages arrive in the mirror.",
+        "where": "Where: the mirrored phone beside the platform."
        },
        {
         "label": "The update",
         "opt": "",
-        "hint": "Put the phone down. The system update follows the group’s cascade.",
+        "hint": "The system update follows the group’s cascade.",
         "where": "Where: the workstation."
        }
       ]
