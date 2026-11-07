@@ -207,6 +207,8 @@ export class E4Browser {
 
   // ── conducted looks ──────────────────────────────────────────────────────
   private face(s: Surface): void {
+    // the story needs the monitor: the free game on its bookmark folds away (it is one press to reopen)
+    if (s === 'monitor' && this.mode === 'game') { this.floppy.closeGame(); this.mode = 'story'; this.version++; }
     this.faceOwed = s;
     this.tryFace();
   }
@@ -933,15 +935,15 @@ export class E4Browser {
     const cx = 40, cw = W - 80, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;
     roundEdge(ctx, cx, cy, cw, ch, 6, V3.edge, V3.card);
     const x = cx + 28;
-    ctx.font = newsFor(26); ctx.textBaseline = 'top'; ctx.fillStyle = V3.ink; ctx.fillText(a.mast, x, cy + 16);
-    px(ctx, x, cy + 50, cw - 56, 2, V3.ink);
-    ctx.font = monoFor(12); ctx.fillStyle = V3.ink2; ctx.fillText(a.date, x, cy + 58);
-    ctx.font = newsFor(23);
-    let y = cy + 82;
-    for (const ln of wrapText(ctx, a.head, cw - 56).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 28; }
+    ctx.font = newsFor(24); ctx.textBaseline = 'top'; ctx.fillStyle = V3.ink; ctx.fillText(a.mast, x, cy + 12);
+    px(ctx, x, cy + 42, cw - 56, 2, V3.ink);
+    ctx.font = monoFor(12); ctx.fillStyle = V3.ink2; ctx.fillText(a.date, x, cy + 49);
+    ctx.font = newsFor(21);
+    let y = cy + 70;
+    for (const ln of wrapText(ctx, a.head, cw - 56).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 25; }
     y += 6;
-    setFont(ctx, 18); ctx.fillStyle = V3.ink;
-    for (const p of a.body) { for (const ln of wrapText(ctx, p, cw - 56)) { ctx.fillText(ln, x, y); y += 24; } y += 6; }
+    setFont(ctx, 17); ctx.fillStyle = V3.ink;
+    for (const p of a.body) { for (const ln of wrapText(ctx, p, cw - 56)) { ctx.fillText(ln, x, y); y += 22; } y += 6; }
     ctx.font = monoFor(11); ctx.fillStyle = V3.ink2;
     ctx.fillText(a.source, x, Math.min(cy + ch - 18, y + 4));
     const opened = this.tabs.filter((t) => t.kind === 'news').length;
