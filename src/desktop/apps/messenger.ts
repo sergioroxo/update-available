@@ -1,3 +1,5 @@
+import { ledger, ledgerGeneration } from '../../state/ledger';
+import { e4Has } from '../../narrative/e4Beats';
 /**
  * ⚑ S321 — KETTLE, THE MESSENGER ON HER LAPTOP (DESIGN_2026_V3_PRESSURE_2026-11-07.md, "The two screens").
  *
@@ -59,6 +61,39 @@ export class E4Messenger {
   junieX = false;
   /** the bot's "mute 2 more", if she pressed it: the house goes grey on the list */
   houseMuted = false;
+  eveningShown = 0;
+  eveningRead = 0;
+  eveningPage = 0;
+  private eveningT = 0;
+  private generation = ledgerGeneration;
+  private eveningOpened = false;
+  private returned = false;
+  /** Friends keep writing; no sound, glow, filing or forced focus. Memory is wiped with the ledger. */
+  updateEvening(dt: number): boolean {
+    if (this.generation !== ledgerGeneration) {
+      this.generation = ledgerGeneration; this.eveningShown = this.eveningRead = this.eveningPage = this.eveningT = 0;
+      this.eveningOpened = false; this.returned = false; this.houseMuted = false; return true;
+    }
+    if (!ledger.e4Space.some(e => e.id === 'v3:mute')) return false;
+    if (e4Has('terminated') && !this.returned) { this.returned = true; this.view = 'list'; this.want = null; }
+    const before = this.eveningShown;
+    this.eveningT += dt;
+    this.eveningShown = e4Has('terminated') ? M.house.evening.length : Math.min(M.house.evening.length, Math.floor(this.eveningT / 7));
+    if (this.view === 'house' && !this.houseMuted && this.eveningShown > before) {
+      this.eveningOpened = true; this.eveningPage = Math.floor((this.eveningShown - 1) / 2);
+      this.eveningRead = this.eveningShown;
+    }
+    return before !== this.eveningShown;
+  }
+  /** Also used by the stopped device: reading friends never re-enters the system's browser. */
+  pressEvening(id: string): void {
+    if (id === 'back-chats') this.view = 'list';
+    if (id === 'row-house' || id === 'chat-house') {
+      this.view = 'house'; this.eveningOpened = true; this.eveningRead = this.eveningShown; this.eveningPage = 0;
+    }
+    if (id === 'evening-next') this.eveningPage = Math.min(Math.floor((this.eveningShown - 1) / 2), this.eveningPage + 1);
+    if (id === 'evening-prev') this.eveningPage = Math.max(0, this.eveningPage - 1);
+  }
   /** the lid's controls this frame (see the header: not `hits`) */
   targets: MRect[] = [];
   /** a clock for the sparkle on the goal wallpaper */
@@ -81,6 +116,7 @@ export class E4Messenger {
 
   press(x: number, y: number): string | null {
     const h = this.targets.find((r) => x >= r.x - 2 && x <= r.x + r.w + 2 && y >= r.y - 2 && y <= r.y + r.h + 2);
+    if (h && this.eveningShown > 0) this.pressEvening(h.id);
     return h ? h.id : null;
   }
 
@@ -107,6 +143,8 @@ export class E4Messenger {
   private preview(id: ChatId): { text: string; badge: number; muted: boolean; when: string } {
     const C = M.chats[id];
     if (id === 'house') {
+      if (this.eveningShown > 0) return { text: `${M.house.evening[this.eveningShown - 1].who}: ${M.house.evening[this.eveningShown - 1].text}`,
+        badge: this.eveningShown - this.eveningRead, muted: this.houseMuted, when: 'Tonight' };
       if (this.houseLeft > 0) {
         const l = M.house.left[this.houseLeft - 1];
         return { text: l.sys ? l.text : `${l.who}: ${l.text}`, badge: this.houseOpenedLeft ? 0 : this.houseLeft, muted: this.houseMuted, when: '13:40' };
@@ -176,7 +214,8 @@ export class E4Messenger {
       this.avatar(ctx, L + 3, y + 3, 15, id);
       setFont(ctx, 10); ctx.fillStyle = KETTLE.ink;
       let name = M.chats[id].name;
-      if (p.muted) name += `  · ${M.muted}`;
+      if (id === 'house' && this.eveningShown > this.eveningRead) name += ` · ${M.house.unread.replace('{n}', String(this.eveningShown - this.eveningRead))}`;
+      else if (p.muted) name += `  · ${M.muted}`;
       ctx.fillText(name, L + 23, y + 1);
       setFont(ctx, 9); ctx.fillStyle = KETTLE.sub;
       ctx.save(); ctx.beginPath(); ctx.rect(L + 23, y + 10, R - L - 23 - 26, 11); ctx.clip();
@@ -202,7 +241,7 @@ export class E4Messenger {
 
   private listPrimary(): { id: string; label: string } | null {
     const w = this.want;
-    if (!w) return null;
+    if (!w) return this.eveningShown > this.eveningRead ? { id: 'chat-house', label: M.chats.house.open } : null;
     if (w === 'link') return { id: 'chat-mum', label: M.chats.mum.open };
     return { id: `chat-${w}`, label: M.chats[w].open };
   }
@@ -235,6 +274,10 @@ export class E4Messenger {
   private messages(id: ChatId): Msg[] {
     const out: Msg[] = [];
     if (id === 'house') {
+      if (this.eveningShown && this.eveningOpened) {
+        for (const l of M.house.evening.slice(this.eveningPage * 2, Math.min(this.eveningShown, this.eveningPage * 2 + 2))) out.push(l);
+        return out;
+      }
       out.push({ sep: M.today });
       for (const l of M.house.birthday.slice(0, this.houseShown)) out.push({ who: l.who, text: l.text });
       if (this.houseHeart) out.push({ mine: true, text: M.house.heart });
@@ -327,7 +370,10 @@ export class E4Messenger {
       bodyTop = top + 20;
     }
     this.drawMessages(ctx, W, bodyTop - 1, bottom - 1, this.messages(id));
-    this.bar(ctx, W, H, true, this.threadPrimary(id));
+    if (id === 'house' && this.eveningShown && this.eveningOpened) {
+      this.bar(ctx, W, H, true, { id: this.eveningPage < Math.floor((this.eveningShown - 1) / 2) ? 'evening-next' : 'evening-prev',
+        label: this.eveningPage < Math.floor((this.eveningShown - 1) / 2) ? M.house.later : M.house.earlier });
+    } else this.bar(ctx, W, H, true, this.threadPrimary(id));
   }
 
   /** lay the messages out from the bottom up; the oldest scroll off the top, the way a chat does */

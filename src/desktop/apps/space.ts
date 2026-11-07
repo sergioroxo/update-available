@@ -76,7 +76,7 @@ import { E4Offers } from './offers';
 import { E4Ball } from './ball';
 import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import type { UpdateApp } from './update';
-import { markE4 } from '../../narrative/e4Beats';
+import { e4Has, markE4 } from '../../narrative/e4Beats';
 import { drawTryOn, TRYON } from './mirror';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
@@ -337,6 +337,7 @@ export class E4Shell {
 
   update(dt: number): void {
     this.browser.update(dt);
+    if (this.browser.messenger.updateEvening(dt)) this.laptopV++;
     this.t += dt;
     const step = Math.floor(((this.t % PULSE_SECONDS) / PULSE_SECONDS) * PULSE_STEPS);
     if (step !== this.pulseStep) { this.pulseStep = step; this.version++; }
@@ -519,6 +520,9 @@ export class E4Shell {
     // ⚑ after the hand-off the laptop is the CLOSE's surface, not L's
     // ⚑ after the hand-off the laptop reports and offers nothing: the Close has
     //   already begun (`finishHandOff`). A press here is a press on a report.
+    if (e4Has('terminated') && !this.worn && x !== undefined && y !== undefined) {
+      this.browser.messenger.press(x, y); this.laptopV++; return;
+    }
     if (this.handedOff) return;
     const guideHit = x === undefined || y === undefined ? undefined : this.laptopHits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (guideHit) { this.browser.pressLaptopGuide(guideHit.id); return; }
@@ -600,6 +604,9 @@ export class E4Shell {
   beginSession(settleSeconds = 0): void { this.browser.beginSession(settleSeconds); }
 
   drawLaptop(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    if (e4Has('terminated') && !this.worn) {
+      this.laptopHits = this.browser.messenger.draw(ctx, W, H); return;
+    }
     // ⚑ S123 — THE BROWSER IS BUILT AND IT DOES NOT LIVE HERE.
     //   It owned the lid for one session and cost the piece its ending: the
     //   walk reached `e4_armed` and stalled, because the lid is also where the

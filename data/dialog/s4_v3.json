@@ -28,6 +28,14 @@
         { "who": "Priya", "text": "18!!! a whole adult" },
         { "who": "Rae", "text": "cake at mine saturday. you bring nothing" }
       ],
+      "evening": [
+        { "who": "Ola", "text": "maya?? we're at rae's" },
+        { "who": "Rae", "text": "we did the candles anyway. 18 of them. the cake leans" },
+        { "who": "Priya", "text": "saving you the corner slice" },
+        { "who": "Sam", "text": "sorry about earlier. i'm here if you want" },
+        { "who": "Ola", "text": "love you. no pressure x" }
+      ],
+      "unread": "{n} unread", "earlier": "‹ Earlier", "later": "Later ›",
       "heart": "❤ love you all",
       "heartButton": "❤ Reply",
       "left": [
