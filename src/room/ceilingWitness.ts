@@ -27,6 +27,11 @@
  * all hues are existing era1.json values. Behind ?reinterp=1 only.
  */
 import * as pc from 'playcanvas';
+import { ERA4, PLACE, WEB } from '../desktop/theme/era4';
+import { setFont } from '../desktop/theme/chrome';
+import V from '../../data/dialog/s4_v3.json';
+import streamData from '../../data/dialog/s4_ball.json';
+const STREAM = streamData.stream;
 import cluster from '../../data/room/cluster.json';
 
 const CW = cluster.ceilingWitness;
@@ -113,4 +118,30 @@ export function buildCeilingWitness(app: pc.Application): CeilingWitness {
       }
     }
   };
+}
+
+/** 2026's apparatus remakes her contacts as a contagion network. The stream returns them as viewers. */
+export function drawE4CeilingNetwork(c: CanvasRenderingContext2D, warm: boolean, viewers = 0): void {
+  c.fillStyle = ERA4.field; c.fillRect(0, 0, 512, 512);
+  setFont(c, 26); c.fillStyle = ERA4.textHi;
+  c.fillText(viewers ? `${STREAM.watching.replace('{n}', String(viewers))}` : V.bot.map.title, 20, 18);
+  const nodes = V.bot.map.nodes;
+  if (viewers) {
+    for (let i = 0; i < viewers; i++) {
+      const x = 30 + (i % 7) * 72, y = 95 + Math.floor(i / 7) * 62;
+      c.fillStyle = i === viewers - 1 ? PLACE.textileHi : PLACE.sunHi;
+      c.fillRect(x, y, 12, 12);
+      c.fillRect(x - 4, y + 15, 20, 10);
+    }
+    return;
+  }
+  const coords = [[80, 120], [60, 270], [140, 390], [330, 100], [410, 250], [330, 390], [280, 230]];
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i], [x, y] = coords[i];
+    const color = n.id === 'junie' && warm ? PLACE.textileHi : n.kind === 'exposure' ? WEB.danger : n.kind === 'bot' ? ERA4.l : ERA4.text;
+    c.strokeStyle = color; c.lineWidth = 3; c.beginPath(); c.moveTo(240, 270); c.lineTo(x, y); c.stroke();
+    c.fillStyle = color; c.fillRect(x - 7, y - 7, 14, 14);
+    c.fillStyle = ERA4.textHi; setFont(c, 17); c.fillText(n.label, Math.max(8, x - 30), y + 13);
+  }
+  c.fillStyle = PLACE.mug; c.fillRect(230, 260, 20, 20);
 }

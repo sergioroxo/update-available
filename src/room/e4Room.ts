@@ -5,6 +5,8 @@ import { ledgerGeneration } from '../state/ledger';
 import { type RoomHandles, type PropHandle, hex } from './era1room';
 import { cullAbsentProps } from './batching';
 import { ERA4, PLACE, photograph } from '../desktop/theme/era4';
+import { drawE4CeilingNetwork } from './ceilingWitness';
+import { drawContagionClip } from '../desktop/apps/contagionClip';
 import V from '../../data/dialog/s4_v3.json';
 import { wrapText, setFont } from '../desktop/theme/chrome';
 import { drawGoalPicture } from '../desktop/apps/goalPicture';
@@ -63,6 +65,10 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     wrapText(c, a.head, 490).forEach((line, j) => c.fillText(line, 10, 12 + j * 29));
   }, [512, 128]));
   const ticket = picture('clinic-ticket', [5.65, 2.22, .25], .38, .3, () => {}, [256, 192]);
+  const ceiling = picture('maya-ceiling-network', [4.4, 2.66, .84], 2.0, 2.0, () => {}, [512, 512]);
+  // It survives the room being hidden, changing from red sources into the stream's audience.
+  app.root.addChild(ceiling.entity);
+  ceiling.entity.setLocalEulerAngles(180, 0, 0);
   const sizes = new Map([...props.values()].map(p => [p.entity, p.entity.getLocalScale().clone()]));
   function visible(p: PropHandle, on: boolean) { p.entity.setLocalScale(on ? sizes.get(p.entity)! : pc.Vec3.ZERO); }
   const originalMats = new Map<pc.StandardMaterial, pc.Color>();
@@ -74,6 +80,9 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   function setConduct(fn: () => boolean) { conduct = fn; }
   function update(dt: number, active: boolean) {
     root.enabled = active;
+    const streaming = e4Has('stream') && !e4Has('terminated');
+    ceiling.entity.enabled = active && e4Has('map') && !e4Has('terminated');
+    ceiling.entity.setLocalPosition(streaming ? 8 : 4.4, streaming ? 5 : 2.66, .84);
     if (!active) return;
     if (generation !== ledgerGeneration) { leftT = 0; revealT = -1; seen = ''; generation = ledgerGeneration; }
     if (e4Has('left') && !e4Has('room')) {
@@ -81,7 +90,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
       if (leftT >= 1.5 && revealT < 0 && conduct?.()) revealT = 0;
       if (revealT >= 0) { revealT += dt; if (revealT >= 9) markE4('room'); }
     }
-    const key = `${ledgerGeneration}:${e4BeatsVersion()}:${data.number}:${data.articles}`;
+    const key = `${ledgerGeneration}:${e4BeatsVersion()}:${data.number}:${data.articles}:${e4Has('map') ? Math.floor(data.clipTime * 8) : 0}`;
     if (key === seen) return;
     if (generation !== ledgerGeneration) { generation = ledgerGeneration; }
     seen = key;
@@ -97,6 +106,13 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     }
     const isGoal = e4Has('newyou') && !e4Has('original');
     frame.repaint(c => isGoal ? drawGoalPicture(c, 0, 0, 256, 256) : photograph(c, 0, 0, 256, 256, false, 3));
+    if (e4Has('map')) ceiling.repaint(c => {
+      if (data.takeover && !streaming) drawContagionClip(c, data.clipTime, 0, 0, 512, 512);
+      else {
+        drawE4CeilingNetwork(c, e4Has('junie'), streaming ? 42 : 0);
+        if (!streaming) drawContagionClip(c, data.clipTime, 16, 410, 200, 90);
+      }
+    });
     strips.forEach((p, i) => visible(p, e4Has('link') && i < data.articles));
     visible(ticket, n);
     if (lastNumber !== data.number || generation !== ledgerGeneration) {
