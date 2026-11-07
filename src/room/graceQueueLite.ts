@@ -596,6 +596,7 @@ export class GraceQueueLite {
   private floppyOpened = false;
 
   update(dt: number): void {
+    if (this.disconnectT >= 0 && this.disconnectT <= 3) { this.disconnectT += dt; if (this.disconnectT > 3) this.bump(); }
     const highlights = ledger.view.highlights === true;
     if (highlights !== this.highlightPreference) {
       this.highlightPreference = highlights; this.bump(); this.phoneV++;
@@ -1376,10 +1377,19 @@ export class GraceQueueLite {
   private mirrorLarge = false;
   private mirrorReading = false;
   private mirrorDisconnected = false;
+  private disconnectT = -1;
   private mirrorCanvas: HTMLCanvasElement | null = null;
   private mirrorBox: { x: number; y: number; scale: number } | null = null;
   get mirrorAvailable(): boolean { return !this.mirrorDisconnected && !['dark', 'boot', 'install'].includes(this.mode); }
-  disconnectPhone(): void { this.mirrorDisconnected = true; this.mirrorReading = false; this.phone.disconnect(); this.bump(); }
+  disconnectPhone(): void { if (this.mirrorDisconnected) return; this.disconnectT = 0; this.mirrorDisconnected = true; this.mirrorReading = false; this.phone.disconnect(); this.bump(); }
+  drawDisconnected(ctx: CanvasRenderingContext2D, W: number): void {
+    if (this.disconnectT < 0 || this.disconnectT > 3) return;
+    const x = W - 188;
+    px(ctx, x, 0, 188, 150, ERA3.sysBand); px(ctx, x, 0, 188, 25, ERA3.grey);
+    setFont(ctx, 12); ctx.fillStyle = ERA3.white; ctx.fillText(mirrorCopy.title, x + 9, 7);
+    setFont(ctx, 13); ctx.fillStyle = ERA3.ink;
+    wrapText(ctx, mirrorCopy.disconnected, 164).forEach((line, i) => ctx.fillText(line, x + 12, 45 + i * 20));
+  }
   private drawMirror(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.mirrorBox = null;
     if (!this.mirrorAvailable) return;

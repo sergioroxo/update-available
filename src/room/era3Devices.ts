@@ -931,6 +931,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       ctx.translate(RITUAL_OFFSET.x, RITUAL_OFFSET.y);
       ritual.draw(ctx);
       ctx.restore();
+      graceQueueLite.drawDisconnected(ctx, w);
       return;
     }
     if (e4Bridge()?.sendOfferActive()) {
@@ -1240,6 +1241,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     tick(dt: number): void {
       // S76: the last update's own frames — see `drawWorkstation`
       if (e4Bridge()?.update()?.open) ritualTick++;
+      if (e4Bridge()?.update()?.installing) graceQueueLite.disconnectPhone();
       // ⚑ S149 — E3 ENDS WHEN THE GROUP HAS BEEN SEEN, AND NOTHING IS OPEN.
       //   It used to end when the WORK did (`ledger.graceQueue.length >=
       //   TOTAL_CORRECTIONS`), whatever the phone was doing — Sérgio, 2026-09-17:

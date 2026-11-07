@@ -194,6 +194,7 @@ export class UpdateApp {
   }
 
   /** Actual deferral state, including when the reference map has already ticked the update. */
+  get installing(): boolean { return this.phase === 'install' || this.phase === 'restart'; }
   get deferred(): boolean { return this.phase === 'reminded'; }
 
   /** the notification is withdrawn while reminded; it returns once */
