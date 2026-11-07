@@ -79,16 +79,16 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   const throwProp = solid('maya-pink-throw', [4.1, .53, 2.2], [.9, .04, .35], PLACE.textileHi);
   const frame = picture('maya-desk-photo', [5.02, .88, .30], .17, .22,
     c => photograph(c, 0, 0, 256, 256, false, 3));
-  const goal = picture('system-default-portrait', [5.66, 1.52, 1.98], .65, .72,
+  const goal = picture('system-default-portrait', [5.66, 1.45, 1.98], .65, .64,
     c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); drawGoalPicture(c, 8, 8, 240, 240); });
   // Four paper strips share one texture/mesh; opening articles changes the paint, never the draw-call count.
-  const newsWall = picture('news-strips', [5.15, 1.89, 2.412], .88, 1.16, () => {}, [512, 512]);
-  newsWall.entity.setLocalEulerAngles(90, 0, 0);
+  const newsWall = picture('news-strips', [5.15, 1.38, 2.412], .88, .72, () => {}, [512, 512]);
+  newsWall.entity.setLocalEulerAngles(90, 180, 0);
   newsWall.material.opacityMap = newsWall.material.emissiveMap;
   newsWall.material.opacityMapChannel = 'a'; newsWall.material.blendType = pc.BLEND_NORMAL;
   newsWall.material.update();
-  const ticket = picture('clinic-ticket', [5.4, .94, 2.412], .38, .3, () => {}, [256, 192]);
-  ticket.entity.setLocalEulerAngles(90, 0, 0);
+  const ticket = picture('clinic-ticket', [5.4, .84, 2.412], .38, .3, () => {}, [256, 192]);
+  ticket.entity.setLocalEulerAngles(90, 180, 0);
   const ceiling = picture('maya-ceiling-network', [4.4, 2.64, .84], 2.0, 2.0, () => {}, [512, 512]);
   // It survives the room being hidden, changing from red sources into the stream's audience.
   app.root.addChild(ceiling.entity);

@@ -31,6 +31,8 @@ try {
  await page.evaluate(()=>window.__os.e4.browser.clinicNumber+=3);await wait();s=await snapshot();assert.ok(s['clinic-ticket'].scale[0]>before[0]);
  await mark('meridian');assert.equal((await snapshot())['maya-pride'].drawn,false);
  await mark('left');s=await snapshot();assert.equal(s['maya-friends'].drawn,false);assert.equal(s['system-default-portrait'].drawn,true);
+ await page.evaluate(()=>window.__camFree(4.4,1.16,.84,0,215));await wait();
+ await page.screenshot({path:'out/e4-room-readable.png'});
  await mark('original');
  const chat=await page.evaluate(()=>{
   const {state,Messenger}=window.roomChecks;

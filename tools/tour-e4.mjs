@@ -78,7 +78,7 @@ async function main() {
     if (name === 'room-conducted') log.push(`  conducted pose: ${JSON.stringify(st.pose)}`);
     if (roomSteps.includes(name) || name.includes('clip-takeover') || name === 'seat-bot-map' || name === 'lid-junie-unmuted') {
       const poses = name === 'lid-birthday' ? [267, 357, 87, 177].map(yaw => [-10, yaw])
-        : (name.includes('clip') || name.includes('map') || name === 'lid-junie-unmuted') ? [[80, 267]] : [[-12, 215]];
+        : (name.includes('clip') || name.includes('map') || name === 'lid-junie-unmuted') ? [[80, 267]] : [[0, 215]];
       for (const [pitch, yaw] of poses) {
         await page.evaluate(p => window.__camFree(4.4, 1.16, .84, p[0], p[1]), [pitch, yaw]);
         await wait(350);

@@ -843,7 +843,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // The walls, stripped belongings and grey bedding are ahead at the end of this turn.
       // 52 degrees in 9.2 s: smoothstep peak 8.5 degrees/s, inside the existing comfort envelope.
       commitLookOffset();
-      startCamMove({ ...camPos, pitch: -12, yaw: 215 }, 9.2, true);
+      startCamMove({ ...camPos, pitch: 0, yaw: 215 }, 9.2, true);
       return true;
     }, () => !camMove && Math.abs(((camYaw - 215 + 540) % 360) - 180) < 1);
     // ⚑ S108: see ClusterShell.setNeverBatch — handed over below, once
