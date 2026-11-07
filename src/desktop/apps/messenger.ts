@@ -67,9 +67,13 @@ export class E4Messenger {
   /** a thread is open: felt — nothing of the system speaks */
   get felt(): boolean { return this.view !== 'list'; }
 
+  /** seconds left on the lock screen (the update shows its new wallpaper there first) */
+  lockT = 0;
+
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): MRect[] {
     this.targets = [];
     px(ctx, 0, 0, W, H, KETTLE.ground);
+    if (this.lockT > 0) { this.drawLock(ctx, W, H); return this.targets; }
     if (this.view === 'list') this.drawList(ctx, W, H);
     else this.drawThread(ctx, W, H, this.view);
     return this.targets;
@@ -135,38 +139,62 @@ export class E4Messenger {
     return this.junieOpenable;
   }
 
+  /** the wallpaper: hers until the update restores "defaults", then the goal — on the lock screen and the list only */
+  private wall(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    if (this.wallpaper === 'goal') drawGoalPicture(ctx, x, y, w, h, { caption: false });
+    else photograph(ctx, x, y, w, h, false, 3);
+  }
+
+  /** the lock screen: the wallpaper, the date, the app's name (the restore, and the update's new wallpaper) */
+  drawLock(ctx: CanvasRenderingContext2D, W: number, H: number, line = ''): void {
+    this.wall(ctx, 0, 0, W, H);
+    px(ctx, 0, 0, W, 30, KETTLE.banner);
+    setFont(ctx, 16); ctx.fillStyle = KETTLE.bannerInk;
+    ctx.fillText(M.date, 8, 7);
+    ctx.font = monoFor(9);
+    const aw = Math.ceil(ctx.measureText(M.app).width);
+    ctx.fillText(M.app, W - aw - 8, 11);
+    const cap = line || (this.wallpaper === 'goal' ? V3.goal.caption : '');
+    if (cap) {
+      setFont(ctx, 11);
+      const cw = Math.ceil(ctx.measureText(cap).width) + 16;
+      px(ctx, Math.round((W - cw) / 2), H - 24, cw, 18, KETTLE.banner);
+      ctx.fillStyle = KETTLE.bannerInk; ctx.fillText(cap, Math.round((W - cw) / 2) + 8, H - 21);
+    }
+  }
+
   private drawList(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.wall(ctx, 0, HEAD_H, W, H - HEAD_H - BAR_H);
     this.header(ctx, W, M.app, M.date);
     const rows: ChatId[] = ['house', 'mum', 'dad', 'junie'];
-    const rh = 22;
-    let y = HEAD_H;
+    const rh = 21, L = 5, R = W - 5;
+    let y = HEAD_H + 3;
     for (const id of rows) {
       const p = this.preview(id);
       const live = this.canOpen(id);
-      px(ctx, 0, y, W, rh, KETTLE.row);
-      px(ctx, 0, y + rh - 1, W, 1, KETTLE.rowEdge);
-      this.avatar(ctx, 5, y + 3, 16, id);
+      roundRect(ctx, L, y, R - L, rh, 5, KETTLE.row);
+      this.avatar(ctx, L + 3, y + 3, 15, id);
       setFont(ctx, 10); ctx.fillStyle = KETTLE.ink;
       let name = M.chats[id].name;
       if (p.muted) name += `  · ${M.muted}`;
-      ctx.fillText(name, 26, y + 2);
+      ctx.fillText(name, L + 23, y + 1);
       setFont(ctx, 9); ctx.fillStyle = KETTLE.sub;
-      ctx.save(); ctx.beginPath(); ctx.rect(26, y + 11, W - 26 - 30, 11); ctx.clip();
-      ctx.fillText(p.text, 26, y + 12);
+      ctx.save(); ctx.beginPath(); ctx.rect(L + 23, y + 10, R - L - 23 - 26, 11); ctx.clip();
+      ctx.fillText(p.text, L + 23, y + 11);
       ctx.restore();
       ctx.font = monoFor(8); ctx.fillStyle = KETTLE.sub;
       const tw = Math.ceil(ctx.measureText(p.when).width);
-      ctx.fillText(p.when, W - tw - 5, y + 3);
+      ctx.fillText(p.when, R - tw - 4, y + 2);
       if (p.badge > 0) {
         const s = String(p.badge);
         setFont(ctx, 8);
         const bw = Math.max(12, Math.ceil(ctx.measureText(s).width) + 6);
-        pill(ctx, W - bw - 5, y + 11, bw, 10, p.muted ? KETTLE.mutedBadge : KETTLE.badge);
+        pill(ctx, R - bw - 4, y + 10, bw, 10, p.muted ? KETTLE.mutedBadge : KETTLE.badge);
         ctx.fillStyle = KETTLE.badgeInk;
-        ctx.fillText(s, W - bw - 5 + Math.round((bw - ctx.measureText(s).width) / 2), y + 12);
+        ctx.fillText(s, R - bw - 4 + Math.round((bw - ctx.measureText(s).width) / 2), y + 11);
       }
-      if (live) this.targets.push({ x: 0, y, w: W, h: rh - 1, id: `row-${id}` });
-      y += rh;
+      if (live) this.targets.push({ x: L, y, w: R - L, h: rh, id: `row-${id}` });
+      y += rh + 2;
     }
     // the foot of the window: one primary, the next thing the story waits on
     this.bar(ctx, W, H, false, this.listPrimary());
@@ -277,11 +305,8 @@ export class E4Messenger {
       ctx.fillText(sub, W - sw - 6, 5);
     }
     const top = HEAD_H + 2, bottom = H - BAR_H;
-    // the wallpaper behind the chat: hers, then — from the update on — the goal
-    ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, bottom - top); ctx.clip();
-    if (this.wallpaper === 'goal') drawGoalPicture(ctx, 0, top, W, bottom - top, { alpha: 0.42 });
-    else { const was = ctx.globalAlpha; ctx.globalAlpha = 0.28; photograph(ctx, 0, top, W, bottom - top, false, 3); ctx.globalAlpha = was; }
-    ctx.restore();
+    // ⚑ a thread's ground is plain: the wallpaper lives on the lock screen and the list (the review: it cluttered
+    //   every thread and sat on Mum's loft photo)
     // Dad's message arrives as a banner over Mum's thread
     let bodyTop = top + 2;
     if (id === 'mum' && this.dadIn && !this.dadRead) {

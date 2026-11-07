@@ -57,7 +57,7 @@ import ballScript from '../../../data/dialog/s4_ball.json';
 import V from '../../../data/dialog/s4_v3.json';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
-type Surface = 'monitor' | 'laptop';
+type Surface = 'monitor' | 'laptop' | 'headset';
 
 const PROGRAM = body.program as unknown as {
   chosen: string; typingSeconds: number; agentAddress: string;
@@ -98,10 +98,12 @@ const STALL_SECONDS = 35;
 /** after "left", the room's conducted turn has the floor: the search waits this long at least, and at most the longer
  *  figure if the room has not marked `room` yet (src/narrative/e4Beats.ts) */
 const ROOM_WAIT = { min: 5, max: 12 } as const;
+/** the clip plays over the whole page for this long when the map beat begins (one loop of its six frames) */
+const CLIP_TAKEOVER_SECONDS = 14.4;
 
 type Step = 'idle' | 'house' | 'newyou' | 'mum' | 'dad' | 'link' | 'news' | 'clinic' | 'meridian' | 'left' | 'pause'
   | 'search' | 'typing' | 'results' | 'bot' | 'junie' | 'confirm' | 'photos' | 'ready';
-interface Tab { id: string; kind: 'search' | 'news' | 'clinic' | 'photos'; title: string; address: string; article?: number }
+interface Tab { id: string; kind: 'search' | 'news' | 'clinic' | 'photos'; title: string; address: string }
 
 export class E4Browser {
   lambyGuide: LambyGuide | null = null;
@@ -201,7 +203,9 @@ export class E4Browser {
 
   private get bot(): BotBeat | null { return this.botBeat >= 0 ? BOT.beats[this.botBeat] ?? null : null; }
   private botLines(b: BotBeat): string[] { return b.lines.map((l) => l.replace('{number}', this.clinicNumber.toLocaleString('en-GB'))); }
-  private get botLinesShown(): number { const b = this.bot; return b ? Math.min(b.lines.length, 1 + Math.floor(this.botT / BOT.lineSeconds)) : 0; }
+  private get botLinesShown(): number { const b = this.bot; return b && this.botT >= 0 ? Math.min(b.lines.length, 1 + Math.floor(this.botT / BOT.lineSeconds)) : 0; }
+  /** ⚑ the clip owns the page before the map beat speaks (the review: "the over-the-top moment, direct and brute") */
+  private get clipTakeover(): boolean { return this.bot?.id === 'map' && this.botT < 0; }
   private get botBeatReady(): boolean { const b = this.bot; return !!b && this.botLinesShown >= b.lines.length && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 0.5; }
   private get enquiryOpen(): boolean { return this.enquiry === 'draft' || this.enquiry === 'sending' || this.enquiry === 'replied'; }
 
@@ -217,7 +221,7 @@ export class E4Browser {
     if (this.onFace(this.faceOwed)) this.faceOwed = null;
   }
   /** Lamby's "Show me": look at the screen the target is on */
-  guideSurface(): Surface {
+  guideSurface(): 'monitor' | 'laptop' {
     const t = this.lambyGuide?.view.targets ?? [];
     return t.some((id) => this.messenger.targets.some((r) => r.id === id)) ? 'laptop' : 'monitor';
   }
@@ -268,10 +272,15 @@ export class E4Browser {
     this.go('ready');
   }
   private allTabs(): Tab[] {
-    return [this.searchTab(), ...ARTICLES.map((_a, i) => this.newsTab(i)), this.clinicTab(), this.photosTab()];
+    this.newsOpened = ARTICLES.length;
+    return [this.searchTab(), this.newsTab(), this.clinicTab(), this.photosTab()];
   }
   private searchTab(): Tab { return { id: 'search', kind: 'search', title: SR.newTab, address: '' }; }
-  private newsTab(i: number): Tab { const a = ARTICLES[i]; return { id: a.id, kind: 'news', title: a.tab, address: a.address, article: i }; }
+  /** ⚑ ONE News tab (the review: seven tabs and their names cut off); its pager carries the articles */
+  private newsTab(): Tab { return { id: 'news', kind: 'news', title: V.news.tab, address: '' }; }
+  /** which article the News tab shows, and how many have arrived */
+  private newsIndex = 0;
+  private newsOpened = 0;
   private clinicTab(): Tab { return { id: 'clinic', kind: 'clinic', title: CL.tab, address: CL.address }; }
   private photosTab(): Tab { return { id: 'photos', kind: 'photos', title: PH.tab, address: PH.address }; }
   private addTab(t: Tab, live = false): void {
@@ -371,6 +380,7 @@ export class E4Browser {
     const m = this.messenger;
     // the messenger's own clock (the draft's caret)
     const mt = m.t; m.t += dt;
+    if (m.lockT > 0) { m.lockT = Math.max(0, m.lockT - dt); if (m.lockT === 0) this.version++; }
     if (m.view === 'mum' && m.mumDraft && Math.floor(mt * 2) !== Math.floor(m.t * 2)) this.version++;
     if (this.pathIds().size && !this.lambyGuide?.active) {
       const s4 = this.stallT; this.stallT += dt;
@@ -413,7 +423,8 @@ export class E4Browser {
         break;
       case 'news':
         // the news opens behind Mum's link, tab after tab; then the clinic writes
-        for (let i = 1; i < ARTICLES.length; i++) if (at(i * 0.9)) { this.addTab(this.newsTab(i)); playOnce('ui_press.mp3'); }
+        // the news arrives behind Mum's link, one article after another: the pager's count climbs
+        for (let i = 1; i < ARTICLES.length; i++) if (at(i * 0.9)) { this.newsOpened = i + 1; playOnce('ui_press.mp3'); this.version++; }
         if (at(ARTICLES.length * 0.9 + 3.6)) { this.clinicNotice = true; playOnce('ui_press.mp3'); this.version++; }
         break;
       case 'meridian':
@@ -454,6 +465,8 @@ export class E4Browser {
         break;
       case 'bot': case 'confirm': case 'photos': case 'ready':
         this.botClock(dt);
+        // the screens are done: the piece turns her to the headset, which is all that is left (no beat waits on a look)
+        if (this.step === 'ready' && this.programDone && !this.headsetFaced && this.stepT > 2.5) { this.headsetFaced = true; this.face('headset'); }
         if (this.step === 'photos' && this.reversal === 'verifying') {
           this.reversalT += dt;
           this.version++;
@@ -485,6 +498,7 @@ export class E4Browser {
     }
   }
   private heartT = -1;
+  private headsetFaced = false;
   private todayT = -1;
 
   private botClock(dt: number): void {
@@ -493,6 +507,7 @@ export class E4Browser {
     const before = this.botT;
     this.botT += dt;
     if (Math.floor(before / 0.3) !== Math.floor(this.botT / 0.3) && this.botT < 14) this.version++;
+    if (this.clipTakeover && Math.floor(before * 8) !== Math.floor(this.botT * 8)) this.version++;
     if (this.botNextIn >= 0) { this.botNextIn -= dt; if (this.botNextIn < 0) { this.botNextIn = -1; this.nextBot(); } }
     // the bot's "rest" ends the bot's act: the piece turns her to the laptop, where Junie's badge has waited all day
     if (b.id === 'rest' && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 2.4) {
@@ -508,7 +523,7 @@ export class E4Browser {
     if (was && !this.botDone.has(was.id)) { this.botDone.add(was.id); for (const l of this.botLines(was)) this.botSaid.push({ who: 'bot', text: l }); }
     this.botBeat = BOT.beats.findIndex((b) => b.id === id);
     this.botT = 0;
-    if (id === 'map') markE4('map');
+    if (id === 'map') { markE4('map'); this.botT = -CLIP_TAKEOVER_SECONDS; }
     if (id === 'heading') this.ring = 97;
     if (id === 'unmuted') this.ring = 61;
     if (BOT.beats[this.botBeat]?.lines.length) playOnce('agent_2026.mp3');
@@ -546,6 +561,7 @@ export class E4Browser {
     this.newyouUp = true;
     this.profile = 'goal';
     this.messenger.wallpaper = 'goal';
+    this.messenger.lockT = 3.5;   // the lid shows its new wallpaper on the lock screen first
     this.messenger.want = null;
     this.openTab('search');
     markE4('newyou');
@@ -622,7 +638,8 @@ export class E4Browser {
       m.linkOpened = true; m.want = null;
       markE4('link');
       this.file('v3:link', 'opened', W3.link);
-      this.addTab(this.newsTab(0), true);
+      this.newsIndex = 0; this.newsOpened = 1;
+      this.addTab(this.newsTab(), true);
       this.face('monitor');
       playOnce('ui_press.mp3');
       this.go('news');
@@ -679,7 +696,7 @@ export class E4Browser {
     return took;
   }
   /** Lamby's "Take me there": press the target for her (navigation only — never an answer) */
-  pressGuideTarget(id: string): Surface | null {
+  pressGuideTarget(id: string): 'monitor' | 'laptop' | null {
     if (this.guideSilent || this.guideVoice) return null;
     const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad'];
     if (!allowed.includes(id)) return null;
@@ -724,7 +741,8 @@ export class E4Browser {
     const addr = this.addressNow();
     const blink = this.phase === 'open' && this.liveTab === 'search' && this.pressable && !botOn && (this.step === 'search' && this.typedDone)
       && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
-    const looks: TabLook[] = shown.map((t) => this.phase === 'failed' ? (t.kind === 'search' ? { badge: this.streamOpen ? '●' : '!', state: 'normal' } : { state: 'locked' }) : {});
+    const looks: TabLook[] = shown.map((t) => this.phase === 'failed' ? (t.kind === 'search' ? { badge: this.streamOpen ? '●' : '!', state: 'normal' } : { state: 'locked' })
+      : t.kind === 'news' && this.newsOpened > 1 ? { badge: String(this.newsOpened) } : {});
     const rects = browserChrome(ctx, W, shown, live, addr, blink || this.step === 'typing', looks, 80);
     // a sheet or an open thread owns the moment; otherwise every tab is a tab
     const sheet = this.newyouUp || this.enquiryOpen;
@@ -773,6 +791,7 @@ export class E4Browser {
     if (this.phase !== 'open') return '';
     const tab = this.tabs.find((t) => t.id === this.liveId);
     if (!tab) return '';
+    if (tab.kind === 'news') return ARTICLES[this.newsIndex]?.address ?? '';
     if (tab.kind !== 'search') return tab.address;
     if (this.botBeat >= 0) return PROGRAM.agentAddress;
     if (this.step === 'search') return script.search.typed.slice(0, Math.floor(script.search.typed.length * Math.min(1, this.typedT / 1.4)));
@@ -931,8 +950,7 @@ export class E4Browser {
   // ── the news ──────────────────────────────────────────────────────────────
   private drawArticle(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.pageGround(ctx, W, H);
-    const tab = this.tabs.find((t) => t.id === this.liveId);
-    const i = tab?.article ?? 0;
+    const i = Math.min(this.newsIndex, ARTICLES.length - 1);
     const a = ARTICLES[i];
     const cx = 40, cw = W - 80, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;
     roundEdge(ctx, cx, cy, cw, ch, 6, V3.edge, V3.card);
@@ -948,7 +966,7 @@ export class E4Browser {
     for (const p of a.body) { for (const ln of wrapText(ctx, p, cw - 56)) { ctx.fillText(ln, x, y); y += 22; } y += 6; }
     ctx.font = monoFor(11); ctx.fillStyle = V3.ink2;
     ctx.fillText(a.source, x, Math.min(cy + ch - 18, y + 4));
-    const opened = this.tabs.filter((t) => t.kind === 'news').length;
+    const opened = this.newsOpened;
     const left = this.clinicNotice && this.step === 'news' ? V.news.notice : V.news.count.replace('{n}', String(i + 1)).replace('{of}', String(opened));
     const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
     if (i > 0) buttons.push({ id: 'news-prev', label: V.news.prev, kind: 'quiet' });
@@ -1028,6 +1046,20 @@ export class E4Browser {
   // ── the bot: Second Thoughts ──────────────────────────────────────────────
   private drawBot(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.pageGround(ctx, W, H);
+    if (this.clipTakeover) {
+      // the clip, as big as the page allows, the stamp always in its corner; then it shrinks back into the map panel
+      const top = PAGE_TOP + 22, avail = H - BAR_H - 8 - top;
+      const ch = avail, cw = Math.min(W - 32, Math.round(ch * 16 / 9));
+      const cx = Math.round((W - cw) / 2);
+      setFont(ctx, 13); ctx.fillStyle = V3.ink;
+      ctx.fillText(V.clip.title, cx, PAGE_TOP + 4);
+      const tw = Math.ceil(ctx.measureText(V.clip.title + '   ').width);
+      ctx.font = monoFor(11); ctx.fillStyle = V3.ink2;
+      ctx.fillText(`${V.clip.channel}  ·  ${V.clip.recommended}`, cx + tw, PAGE_TOP + 6);
+      drawContagionClip(ctx, this.botT + CLIP_TAKEOVER_SECONDS, cx, top, cw, ch);
+      this.bar(ctx, W, H, BOT.mark + ' · ' + V.clip.recommended, []);
+      return;
+    }
     const top = PAGE_TOP + 4;
     px(ctx, 0, top, W, 36, V3.card);
     px(ctx, 0, top + 36, W, 1, V3.edge);
@@ -1383,10 +1415,8 @@ export class E4Browser {
     }
     if (id.startsWith('tab-')) { this.openTab(id.slice(4)); return true; }
     if (id === 'news-prev' || id === 'news-next') {
-      const news = this.tabs.filter((t) => t.kind === 'news');
-      const i = news.findIndex((t) => t.id === this.liveId);
-      const j = Math.max(0, Math.min(news.length - 1, i + (id === 'news-next' ? 1 : -1)));
-      if (news[j]) this.openTab(news[j].id);
+      this.newsIndex = Math.max(0, Math.min(this.newsOpened - 1, this.newsIndex + (id === 'news-next' ? 1 : -1)));
+      this.openTab('news');
       return true;
     }
     if (id === 'clinic-open' && this.clinicNotice && this.step === 'news') {
@@ -1437,9 +1467,10 @@ export class E4Browser {
     if (!this.tabs.some((t) => t.id === id)) return;
     this.liveId = id;
     const t = this.tabs.find((x) => x.id === id)!;
-    if (t.kind === 'news' && !this.read.has(id)) {
-      this.read.add(id);
-      ledger.e4Space.push({ id: `tab:${id}`, outcome: 'read', witness: `read: ${ARTICLES[t.article ?? 0].mast} — ${ARTICLES[t.article ?? 0].head}` });
+    const art = ARTICLES[this.newsIndex];
+    if (t.kind === 'news' && art && !this.read.has(art.id)) {
+      this.read.add(art.id);
+      ledger.e4Space.push({ id: `tab:${art.id}`, outcome: 'read', witness: `read: ${art.mast} — ${art.head}` });
     }
     this.version++;
   }

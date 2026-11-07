@@ -101,6 +101,7 @@
   },
   "news": {
     "_doc": "THE SIMULATED ARTICLES — extra layers; the story never needs them. Invented mastheads (his Malta rule), real dated facts, one source line each. A and B are the SAME study read two ways (RESEARCH_2026_TRANS_PRESSURE S1, opened): the headline Mum sends, and the reason most people give. C: the Levy Review (S12 / T2, opened). D: the Trevor Project 2025 survey (S5, opened). Nobody who detransitioned is satirised: the numbers are reported as the study reports them.",
+    "tab": "News",
     "notice": "Adult Gender Service: a letter about your referral",
     "open": "Open letter",
     "prev": "‹",
@@ -111,7 +112,7 @@
         "id": "a0", "tab": "Weathervane", "mast": "The Weathervane", "address": "weathervane.example/health",
         "date": "Fri 23 Oct 2026 · Health",
         "head": "More than one in eight 'went back', study finds",
-        "body": [ "A US survey asked 27,715 trans adults about their lives.", "Of those who had transitioned, 13.1% said they had detransitioned at some point." ],
+        "body": [ "A US survey asked 27,715 trans adults about their lives. Of those who had transitioned, 13.1% said they had detransitioned at some point.", "Most named pressure from outside: 82.5% cited at least one external factor, led by pressure from family and stigma." ],
         "source": "Source: Turban et al., LGBT Health, 1 Jun 2021 (the 2015 US Transgender Survey)."
       },
       {
@@ -245,6 +246,20 @@
       "SHARE BEFORE IT'S TOO LATE."
     ],
     "frameSeconds": 2.4
+  },
+  "tryon": {
+    "_doc": "TRY IT ON (beat 14; src/desktop/apps/mirror.ts). His second ruling: harsher, not softer; the system starts it without asking; the mirror, the reveal of a male body; Junie's link breaks in and ends it; the player cannot. The system's voice only, flat and pleased with itself; it says how natural it looks. Speculative (no documented use of such a tool, RESEARCH_2026_V3_THREADS thread 2).",
+    "stamp": "Preview · made for you",
+    "fitting": "Fitting {n}%",
+    "lines": [
+      { "at": 0, "text": "See how it feels. No pressure. Just try it." },
+      { "at": 5, "text": "Hair first. Shorter suits you." },
+      { "at": 10, "text": "Look how natural that looks." },
+      { "at": 15, "text": "Broader. Stronger. There you are." },
+      { "at": 20, "text": "And a smile. Much better." },
+      { "at": 23, "text": "Now your hands. Hold them up. Those are yours." },
+      { "at": 29, "text": "You, restored. It already fits." }
+    ]
   },
   "photos": {
     "_doc": "THE ORIGINAL (beat 13; V10 as built). The bot sends her here to confirm the goal; Junie told her to confirm the other one. 'Keep current' is not a fork: the verifier cannot match the goal to anyone (the satire collapses), and only 'Use original' goes on.",
