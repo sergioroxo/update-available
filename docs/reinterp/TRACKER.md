@@ -15,20 +15,17 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ---
 
-## Waiting for Sérgio (cleaned 8 Nov; decided items moved to Done)
+## Waiting for Sérgio (cleaned 8 Nov)
 
-- ❓ **The red thread** (monkey's ear / Nuala's key / Junie's seam): keep, or drop?
-- ❓ **E1's packet** ("Leave behind: music, journals…"): an institutional rule (generic is fine), or a consequence of
-  the player's own keep/leave choices (then the order changes)? (OWN_THING_AUDIT)
-- ❓ **E2's broken jingle**: still belongs, or cut? (AUDIO_GAPS)
-- ❓ **Quad layers experiment** (Codex: a small PlayCanvas patch behind `?quad=1`, the 1997 monitor first): yes / no.
-- ❓ **2016 "Focus mode"** (Lambient offers to hold her phone; changes nothing): keep or cut, once seen.
-- ❓ **2026 open questions** (E4_V3_SCREENS_BUILT): try-on length after the headset; the clip is approved.
-- ❓ **Itch / CPH:DOX**: rebuild the festival ZIP after Prompt B merges?
-- 🥽 **A headset session**: the 2016 mirror read from the seat, try-on, the clip, the ceiling map, the stream.
+- 🥽 **A headset session**: the 2016 mirror read from the seat, try-on (length), the clip, the ceiling map, the stream.
+- ☐ **Codex Prompt C** (sharper headset text: the quad patch behind `?quad=1` + the cheap wins) — paste after Prompt B.
 
-Decided since 1 Nov (kept for the record): 2026 v2 → v3 (DESIGN_2026_V3_PRESSURE); Vera's 2016 rebuilt (merged S317) +
-the phone mirror (S323); the dollhouse turntable (S291); ethics gate 16 closed by him, never raise it again.
+His answers, 8 Nov: **the red thread is DROPPED**; **the "bring stuff" idea is dropped** (the 1997 packet stays a
+generic programme rule); **the 2003 broken jingle FIXED** (S324: it plays under the diary's collapse); **text quality
+must improve** → Prompt C; **2016 Focus mode CUT** (S324: it removes the felt part); **rebuild the itch ZIP after
+Prompt B merges** (so programmers who check the file see the new 2016 and 2026).
+Decided since 1 Nov: 2026 v2 → v3; Vera's 2016 rebuilt + the phone mirror; the dollhouse turntable; ethics gate 16
+closed by him, never raise it again.
 
 ## Building now
 

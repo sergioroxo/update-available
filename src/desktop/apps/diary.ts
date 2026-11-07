@@ -119,6 +119,7 @@ export class DiaryApp {
         // second hold: the deletion fails for good — the person's glitch
         this.phase = 'breakout'; this.breakT = 0;
         playOnce('glitch_e2.mp3');   // S141: the words flood back — the era's collapse, heard
+        playOnce('chase_the_clouds_broken.mp3');   // S324 (his 8 Nov: "fix"): the OS's own boot jingle breaks under the collapse (AUDIO_GAPS rank 3); the era shift stops it
         if (!ledger.records.includes('deletion-failed')) ledger.records.push('deletion-failed');
         this.onBreakout?.();   // the screen split fires as the truth wins
       } else {

@@ -575,7 +575,9 @@ export class GraceQueueLite {
    *  words. The board's quiet does not count while she holds it, and starts again when she puts it down. */
   phoneInHand = false;
   private waitSaid = false;
-  private focusOffered = false;
+  /** ⚑ S324 — Focus mode CUT (his 8 Nov: it removes the felt part). Born true so the offer never fires; the copy
+   *  stays in data/strings/e3_mirror.json `focus` only as a record. */
+  private focusOffered = true;
   private focusOpen = false;
   /** ⚑ S229 / W1-A6 — GracePlatform's "getting started" card: once, on the sign-in screen and then the board while it
    *  is still a short board; under the pause card, away on a job / the consent question / the phone in her hand */

@@ -118,3 +118,38 @@ Verify:
 
 Report: `docs/reinterp/CODEX_E4_V3_ROOM_REPORT_2026-11-08.md`. One BUILD_LOG line. Reply with the branch, the commits,
 the walk result, draw calls, and an 8-line plain summary.
+
+---
+
+## Prompt C — sharper text in the headset (after Prompt B; his 8 Nov: "We need better quality in the text, so we need to find a solution")
+
+Repository: sergioroxo/update-available, branch `reinterp`. From /Users/sergiogalvaoroxo/update-available-reinterp run
+`git fetch origin && git worktree add -b codex/xr-text ../codex-xr-text origin/reinterp`, then work only in
+/Users/sergiogalvaoroxo/codex-xr-text. Never `git checkout` in the main folder. Push your branch, not `reinterp`.
+
+Read your own report docs/reinterp/CODEX__REPORT_2026-11-02.md (quad layers blocked by PlayCanvas 2.19.6's WebGL
+base-layer handling) and docs/reinterp/META_WEBXR_NOTES_2026-11-01.md. **The lead now authorises the controlled
+engine patch you proposed:**
+- keep the room's own `XRWebGLLayer` and include it beside a monitor quad layer;
+- make PlayCanvas's framebuffer and viewport use that retained room layer instead of `renderState.baseLayer`;
+- keep MSAA, `?xrscale`, Recentre and session cleanup;
+- the monitor bridge: upload its canvas only when it changes, track its pose, and hide its ordinary plane while the
+  quad is active.
+
+Keep the patch reproducible (`patch-package` or an equivalent committed patch with a test that fails if the engine
+version changes). Put it all behind `?quad=1`, on the 1997 monitor first, and leave the default path untouched.
+
+**Also measure the cheap wins on the default path,** because they help every device, not only the Quest:
+- each screen canvas's real pixel size against its size on the glass at the seat (texels per degree);
+- the mipmap and filter settings of the screen textures (mipmaps off, `FILTER_NEAREST` or linear: what is sharper
+  at 0.55–0.8 m);
+- the smallest font size actually used on each era's screens.
+
+Report the numbers in a table, era by era, with a recommendation for the minimum font size per era.
+
+Verify: `npx tsc --noEmit -p .`, `npm test`, a headless emulated-XR check that `?quad=1` enters, shows the monitor,
+selects, exits and re-enters cleanly, and `?quad=0`/default unchanged. **Walk only era 1**:
+`node tools/walk.mjs --port 3117 --from-era 1 --one-era`, in the background, and read only the report. Only a real
+Quest 3 can say whether text is sharper, so write the exact test steps for the lead (what to compare, with and
+without `?quad=1`). Report: `docs/reinterp/CODEX_XR_TEXT_REPORT_2026-11-08.md`. One BUILD_LOG line. Reply with the
+branch, the commits, and an 8-line plain summary.
