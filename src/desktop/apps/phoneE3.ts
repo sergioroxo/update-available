@@ -109,7 +109,7 @@ export class PhoneE3 {
     if (this.stage === 'after' || this.stage === 'cascade') return;
     veraDay.phoneAnswered = true; veraDay.voted = true;
     this.stage = 'cascade'; this.cascadeT = -4;
-    this.banner = { from: 'Bea', time: this.clockText, text: LINK_VOTE.headline };
+    this.banner = { from: MALTA_ONE[0].from, time: this.clockText, text: LINK_VOTE.headline };
     this.bump();
   }
   private notesT = -1;
@@ -170,7 +170,7 @@ export class PhoneE3 {
   /** Bea's first messages land. Called when the day's work reaches the gate. */
   arm(): void {
     if (this.stage !== 'quiet') return;
-    this.stage = 'first'; this.banner = { from: 'Bea', time: this.clockText, text: m.link.headline };
+    this.stage = 'first'; this.banner = { from: MALTA_ONE[0].from, time: this.clockText, text: m.link.headline };
     // ⚑ S178 — THE NEWS FINDS HER WHEREVER THE PHONE WAS. The notification lives on the
     //   lock screen; a phone left open on Messages, on a message, or on the home grid
     //   never showed it (the S178 walk stalled on a message screen for 800 steps — and a
@@ -260,7 +260,7 @@ export class PhoneE3 {
     if (this.disconnected) { ctx.fillStyle = PHONE.ink; ctx.fillRect(0, 0, W, H); return; }
     ctx.fillStyle = PHONE.bg;
     ctx.fillRect(0, 0, W, H);
-    const bannerH = this.banner && !this.bannersHidden && !this.conductingNotes && this.screen !== 'evening'
+    const bannerH = this.banner && !this.bannersHidden && !this.conductingNotes
       ? this.bannerHeight(W) : 0;
     const bodyH = H - bannerH;
     ctx.save(); ctx.beginPath(); ctx.rect(0, bannerH, W, bodyH); ctx.clip(); ctx.translate(0, bannerH);
@@ -288,7 +288,7 @@ export class PhoneE3 {
     //   differently so we can understand where we need to go"): the warm ring on the one thing the phone is waiting
     //   on, the pale shimmer on the game that is only ever hers to open. Drawn with the screen (no animation).
     // ⚑ the sheet is drawn OVER whatever is behind it, the way a phone does it
-    if (!this.conductingNotes && this.screen !== 'evening') this.drawBanner(ctx, W);
+    if (!this.conductingNotes) this.drawBanner(ctx, W);
     if (this.screen !== 'home' && this.screen !== 'lock' && !this.conductingNotes) {
       this.rects = this.rects.filter(r => r.id !== 'back');
       ctx.fillStyle = PHONE.surface; ctx.fillRect(0, H - 50, 48, 24);
@@ -314,7 +314,7 @@ export class PhoneE3 {
   private drawEvening(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const y0 = statusBar(ctx, W, this.clockText);
     let y = appBar(ctx, W, y0, this.eveningFrom) + 12;
-    for (const e of this.evening.filter(e => e.from === this.eveningFrom)) {
+    for (const e of this.evening.filter(e => e.from === this.eveningFrom && (this.bannersHidden || e !== this.banner))) {
       phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink;
       for (const line of phoneWrap(ctx, e.text, W - 24)) { ctx.fillText(line, 12, y); y += 15; }
       if (e.photo) { this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 12, y, 120, 120); y += 130; }
@@ -323,9 +323,10 @@ export class PhoneE3 {
     this.pushBack(y0, y0 + 40);
     ctx.fillStyle = PHONE.dim; phoneFont(ctx, 10); ctx.fillText(mirrorCopy.reply, 12, H - 18);
   }
+  private get bannerPhoto(): boolean { return this.evening.some(e => e === this.banner && e.photo === true); }
   private bannerHeight(W: number): number {
     const c = document.createElement('canvas').getContext('2d')!; phoneFont(c, 11);
-    return 52 + phoneWrap(c, this.banner?.text ?? '', W - 20).length * 14 + (this.banner?.text === 'missed you tonight x' && (this.screen === 'lock' || this.screen === 'home') ? 76 : 0);
+    return 52 + phoneWrap(c, this.banner?.text ?? '', W - 20).length * 14 + (this.bannerPhoto ? 76 : 0);
   }
   private drawBanner(ctx: CanvasRenderingContext2D, W: number): void {
     if (!this.banner || this.bannersHidden) return;
@@ -335,7 +336,7 @@ export class PhoneE3 {
     ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600); ctx.fillText(this.banner.from, 10, 28);
     phoneFont(ctx, 9); ctx.fillText(this.storyClock, W - 36, 28);
     phoneFont(ctx, 11); lines.forEach((line, i) => ctx.fillText(line, 10, 46 + i * 14));
-    if ((this.screen === 'lock' || this.screen === 'home') && this.evening.some(e => e.id === 'after') && this.banner.text === 'missed you tonight x') {
+    if (this.bannerPhoto) {
       this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 10, 21 + h, 72, 72);
     }
 
@@ -370,7 +371,7 @@ export class PhoneE3 {
         const text = mirrorCopy.events[0].text;
         phoneFont(ctx, 11); const lines = phoneWrap(ctx, text, W - 40);
         roundRect(ctx, 10, 125, W - 20, 30 + lines.length * 14, 8, PHONE.surface);
-        ctx.fillStyle = PHONE.ink; ctx.fillText('Orla', 20, 132);
+        ctx.fillStyle = PHONE.ink; ctx.fillText(m.personalMessage.from, 20, 132);
         lines.forEach((line, i) => ctx.fillText(line, 20, 152 + i * 14));
       }
       unlockPill();
@@ -408,6 +409,7 @@ export class PhoneE3 {
    *  only one of them wants anything from her. */
   private photoSprites: HTMLCanvasElement[] | null = null;
   private photoIndex = 0;
+  private photoPage = 0;
   private drawPhotos(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText);
     ctx.fillStyle = PHONE.surface; ctx.fillRect(0, 0, W, H);
@@ -415,18 +417,25 @@ export class PhoneE3 {
     const top = appBar(ctx, W, y0, HOME.fPhotos); this.pushBack(y0, top);
     ctx.save(); ctx.imageSmoothingEnabled = false;
     if (this.screen === 'photo') {
-      const size = Math.min(144, H - top - 40), x = Math.round((W - size) / 2), y = top + 20;
+      const size = Math.max(20, Math.min(144, H - top - 70)), x = Math.round((W - size) / 2), y = top + 20;
       ctx.drawImage(this.photoSprites[this.photoIndex], x, y, size, size);
       phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
-      ctx.fillText(m.cameraRoll.dates[this.photoIndex], x, y + size + 12);
+      ctx.fillText(m.cameraRoll.dates[this.photoIndex], Math.max(52, x), y + size + 12);
     } else {
-      this.photoSprites.slice(0, this.evening.some(e => e.id === 'after') ? 5 : 4).forEach((sprite, i) => {
-        const size = H < 300 ? 56 : 72;
-        const x = 12 + (i % 2) * 84, y = top + 12 + Math.floor(i / 2) * (size + 18);
+      const sprites = this.photoSprites.slice(0, this.evening.some(e => e.id === 'after') ? 5 : 4);
+      const perPage = H < 260 ? 2 : 4, pages = Math.ceil(sprites.length / perPage);
+      this.photoPage = Math.min(this.photoPage, pages - 1);
+      sprites.slice(this.photoPage * perPage, (this.photoPage + 1) * perPage).forEach((sprite, n) => {
+        const i = this.photoPage * perPage + n;
+        const size = Math.max(20, Math.min(H < 300 ? 56 : 72, H - top - 76));
+        const x = 12 + (n % 2) * 84, y = top + 12 + Math.floor(n / 2) * (size + 18);
         ctx.drawImage(sprite, x, y, size, size);
         phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(m.cameraRoll.dates[i], x, y + size + 5);
         this.rects.push({ x, y, w: size, h: size + 14, id: 'photo-' + i });
       });
+      phoneFont(ctx, 12); ctx.fillStyle = PHONE.tint;
+      if (this.photoPage > 0) { ctx.fillText(m.home.previousPage, 62, H - 22); this.rects.push({ x: 50, y: H - 32, w: 50, h: 30, id: 'photos-prev' }); }
+      if (this.photoPage < pages - 1) { ctx.fillText(m.home.nextPage, W - 24, H - 22); this.rects.push({ x: W - 50, y: H - 32, w: 50, h: 30, id: 'photos-next' }); }
     }
     ctx.restore();
   }
@@ -740,7 +749,9 @@ export class PhoneE3 {
       // S158: the chat goes back to Messages; S177: so does an open message
       case 'back': if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.screen === 'article' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
-      case 'photos': this.screen = 'photos'; this.bump(); return true;
+      case 'photos-prev': this.photoPage--; this.bump(); return true;
+      case 'photos-next': this.photoPage++; this.bump(); return true;
+      case 'photos': this.photoPage = 0; this.screen = 'photos'; this.bump(); return true;
       case 'notes': this.screen = 'notes'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
       case 'link': case 'link2': this.openLink(r.id); return true;

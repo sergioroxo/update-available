@@ -26,7 +26,7 @@ try{const p=await b.newPage();await p.goto(`http://localhost:${port}/?reinterp=1
   return {checks,log,images};
  });for(const[n,u]of Object.entries(result.images))fs.writeFileSync(`${out}/${n}.png`,Buffer.from(u.split(',')[1],'base64'));delete result.images;fs.writeFileSync(`${out}/guide-check.json`,JSON.stringify(result,null,2));console.log(`${result.checks.length} guide checks passed`);
  await p.reload({waitUntil:'networkidle2'});await p.waitForFunction(()=>window.__graceQueue?.()?.mode==='signin');await new Promise(r=>setTimeout(r,4500));
- for(const id of ['lg-tray','lg-show','lg-take']){await p.evaluate(id=>{const q=window.__graceQueue(),r=q.rects.find(r=>r.id===id);if(!r)throw Error('engine guide missing '+id);q.handleClick(r.x+r.w/2,r.y+r.h/2);},id);await new Promise(r=>setTimeout(r,150));}
+ for(const id of ['lg-tray','lg-show','lg-take']){await p.waitForFunction(id=>{const o=window.__os;return !o.guideSilence.silent&&!o.guideSilence.voice&&window.__graceQueue().rects.some(r=>r.id===id);},{timeout:20000},id);await p.evaluate(id=>{const q=window.__graceQueue(),r=q.rects.find(r=>r.id===id);if(!r)throw Error('engine guide missing '+id);q.handleClick(r.x+r.w/2,r.y+r.h/2);},id);await new Promise(r=>setTimeout(r,150));}
  await new Promise(r=>setTimeout(r,2000));const engine=await p.evaluate(()=>({mode:window.__graceQueue().mode,target:window.__graceQueue().guideFocus?.id,pose:window.__camPose()}));
  if(engine.mode!=='signin'||engine.target!=='signin')throw Error('real engine focus did not preserve sign-in');
  await p.screenshot({path:out+'/guide-real-engine.png'});fs.writeFileSync(out+'/guide-real-engine.json',JSON.stringify(engine,null,2));console.log('Real engine Take me there focuses sign-in without pressing it.');

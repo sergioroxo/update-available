@@ -18,7 +18,7 @@ try {
   const paint=()=>q.draw(ctx,676,390);
   const shot=name=>{screen=name;paint();images[name]=c.toDataURL();};
   const press=id=>{paint();const r=q.rects.find(r=>r.id===id);assert(r,'live '+id);q.handleClick(r.x+r.w/2,r.y+r.h/2);q.phone.tick(3.1,true);paint();};
-  const ppress=id=>{q.phone.draw(document.createElement('canvas').getContext('2d'),180,360);const r=q.phone.hitRects.find(r=>r.id===id);assert(r,'phone live '+id);q.handlePhoneClick(r.x+r.w/2,r.y+r.h/2);paint();};
+  const ppress=id=>{q.phone.draw(document.createElement('canvas').getContext('2d'),180,360);for(let i=0;i<4&&id.startsWith('photo-')&&!q.phone.hitRects.some(r=>r.id===id);i++){const n=q.phone.hitRects.find(r=>r.id==='photos-next');if(!n)break;q.phone.press(n.x+n.w/2,n.y+n.h/2);q.phone.draw(document.createElement('canvas').getContext('2d'),180,360);}const r=q.phone.hitRects.find(r=>r.id===id);assert(r,'phone live '+id);q.handlePhoneClick(r.x+r.w/2,r.y+r.h/2);paint();};
   paint();assert(q.phone.eveningClock==='18:04','arrival clock');assert(!q.rects.some(r=>r.id.startsWith('personal-')),'notice retired');shot('01-signin');
   press('mirror-min');assert(q.mirrorMin&&!q.mirrorBox,'minimise');shot('02-minimised');press('mirror-restore');assert(!q.mirrorMin&&q.mirrorBox,'restore');
   press('mirror-enlarge');assert(q.mirrorLarge,'enlarge');shot('03-enlarged');press('mirror-enlarge');

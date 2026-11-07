@@ -470,7 +470,7 @@ export class GraceQueueLite {
   private openSurface: TaskSurface | null = null;
   /** ⚑ S145 — where the record chip was pressed FROM, so Back returns there
    *  (the board, or the job she had open) instead of always to the board */
-  private chipReturn: { mode: Mode; surface: TaskSurface | null } | null = null;
+  private chipReturn: { mode: Mode; surface: TaskSurface | null; page: 'send' | 'record' | 'kit' | null } | null = null;
   /** the chip's lit step as last drawn — the redraw clock moves only when it changes */
   private consent: 'allowed' | 'declined' | null = null;
   private wakeWord = false;
@@ -481,6 +481,7 @@ export class GraceQueueLite {
   private arrivalT = -1;   // < 0 = not running
   private lastTick = -1;
   private subIdx = 0;
+  private submissionPage = 0;
   /** S158 / R3-74: the open story is finished and holding — Back to today / Next story */
   private storyDone = false;
   /** ⚑ S219 / W1-E3 — the open job's finishing, watched: which job, whether it was already finished when she opened it,
@@ -1124,7 +1125,7 @@ export class GraceQueueLite {
     meetWord('ssa');   // S209 / P7-47 — her house rules begin by taking the word away
     this.openSurface = null;
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
-    this.subIdx = next < 0 ? 0 : next;
+    this.subIdx = next < 0 ? 0 : next; this.submissionPage = 0;
     this.mode = 'list';
     // ⚑ the second conduction beat, once only: what the two verbs are, and
     //   what happens either way. "Either way it's recorded, so you can't get
@@ -1147,7 +1148,7 @@ export class GraceQueueLite {
     if (this.chipReturn) {
       const r = this.chipReturn; this.chipReturn = null;
       this.openSurface = r.surface;
-      this.mode = r.mode;
+      this.mode = r.mode; this.veraPage = r.page;
       this.bump();
       return;
     }
@@ -1220,7 +1221,7 @@ export class GraceQueueLite {
     if (this.workDone() >= maltaAfter()) this.armMalta();
     // still stories in this job → the next one loads, because that IS the job
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
-    if (next >= 0) { this.subIdx = next; return; }
+    if (next >= 0) { this.subIdx = next; this.submissionPage = 0; return; }
     this.mode = this.caughtUp() ? 'done' : 'board';
   }
 
@@ -2005,7 +2006,8 @@ export class GraceQueueLite {
     const rec = this.surfaces.get('record');
     if (!rec || this.openSurface === rec) return;
     if (this.mode !== 'board' && this.mode !== 'done' && this.mode !== 'list') return;
-    this.chipReturn = { mode: this.mode, surface: this.openSurface };
+    this.chipReturn = { mode: this.mode, surface: this.openSurface, page: this.veraPage };
+    this.veraPage = null;
     this.openSurface = rec;
     this.mode = 'list';
     this.bump();
@@ -2274,14 +2276,23 @@ export class GraceQueueLite {
     const chipRoom = (chips.length ? 24 : 0) + (chips.length > 3 ? 18 : 0) + (partner ? 32 : 0) + 10;
     const runs = this.runs(sub, true);
     let size = 12; let lead = 17; let lines: TextRun[][] = [];
-    for (const trySize of [12, 11, 10, 9]) {
+    for (const trySize of [12, 11]) {
       size = trySize; lead = trySize + 5;
       setFont(ctx, size);
       lines = this.wrapRuns(ctx, runs, w - 36);
       if (40 + lines.length * lead + 14 <= h - chipRoom) break;
     }
-    const maxLines = Math.max(4, Math.floor((h - chipRoom - 54) / lead));
-    lines = lines.slice(0, maxLines);
+    let maxLines = Math.max(1, Math.floor((h - chipRoom - 54) / lead));
+    const needsPages = lines.length > maxLines;
+    if (needsPages) maxLines = Math.max(1, Math.floor((h - chipRoom - 92) / lead));
+    const pages = Math.ceil(lines.length / maxLines);
+    this.submissionPage = Math.min(this.submissionPage, Math.max(0, pages - 1));
+    lines = lines.slice(this.submissionPage * maxLines, (this.submissionPage + 1) * maxLines);
+    if (needsPages) {
+      const by = y + h - 24, bw = Math.floor((w - 10) / 2);
+      if (this.submissionPage > 0) { aero.button(ctx, x, by, bw, 22, mirrorCopy.previous, { size: 10 }); this.rects.push({ x, y: by, w: bw, h: 22, id: 'testimony-prev' }); }
+      if (this.submissionPage < pages - 1) { aero.button(ctx, x + bw + 10, by, bw, 22, mirrorCopy.next, { size: 10 }); this.rects.push({ x: x + bw + 10, y: by, w: bw, h: 22, id: 'testimony-next' }); }
+    }
     const cardH = 40 + lines.length * lead + 14;
     px(ctx, x, y, w, cardH, ERA3.memberBand);
     px(ctx, x, y, w, 1, ERA3.glassEdge);
@@ -2417,7 +2428,7 @@ export class GraceQueueLite {
     // the two cannot drift apart again. Changing BODY_PX here changes both.
     const BODY_PX = 11, LINE_H = 12;
     setFont(ctx, BODY_PX);
-    const why = wrapText(ctx, item.why, w).slice(0, 2);
+    const why = wrapText(ctx, item.why, w);
     // ⚑ 3 lines, not 2. The manual reference always fits in one; the VERSE is
     // the long one, and at 2 lines Household 2:11 rendered as "…so the young
     // could" and stopped. A scripture that trails off mid-phrase reads as a
@@ -2425,8 +2436,11 @@ export class GraceQueueLite {
     // doubling: a style guide and a holy book, set identically, doing the same
     // job. Half a verse cannot do that job. The height formula above counts
     // `refs[i].length`, so the card grows to fit rather than clipping.
-    const refs = [item.manual, item.verse].map(r => wrapText(ctx, r, w).slice(0, 3));
-    const h = 18 + why.length * LINE_H + 5
+    const refs = [item.manual, item.verse].map(r => wrapText(ctx, r, w));
+    setFont(ctx, 13); const ruleLines = wrapText(ctx, item.rule, w);
+    const preset = item.grade?.preset ?? item.figure?.preset;
+    const titleH = ruleLines.length * 16 + (preset ? 16 : 0);
+    const h = titleH + why.length * LINE_H + 5
       + refs[0].length * LINE_H + 3 + refs[1].length * LINE_H
       + (announce ? 13 : 0) + 40;
     px(ctx, x - 6, y - 6, w + 12, h, ERA3.glassHi);
@@ -2434,13 +2448,12 @@ export class GraceQueueLite {
     px(ctx, x - 6, y - 7 + h, w + 12, 1, ERA3.glassEdge);
     let ry = y;
     setFont(ctx, 13); ctx.fillStyle = ERA3.ink;
-    ctx.fillText(item.rule, x, ry);
+    ruleLines.forEach((line, i) => ctx.fillText(line, x, ry + i * 16));
     // ⚑ the preset wears its own name, and the name is the tell: a colour
     // grade that makes a person look ill is called `Honest Light`. It is the
     // only badge on this item, and it is on the TOOL, never on her.
-    if (item.grade) aero.tag(ctx, x + ctx.measureText(item.rule).width + 8, ry + 2, item.grade.preset, ERA3.white, ERA3.lambTag);
-    if (item.figure) aero.tag(ctx, x + ctx.measureText(item.rule).width + 8, ry + 2, item.figure.preset, ERA3.white, ERA3.lambTag);
-    ry += 18;
+    ry += ruleLines.length * 16;
+    if (preset) { aero.tag(ctx, x, ry, preset, ERA3.white, ERA3.lambTag); ry += 16; }
     // ⚑ 10 → 11px, and `grey` → `greyDk` for the refs. NOT a change to the
     // doubling — a rescue of it. The rationale and BOTH references are the best
     // writing in this era ("a sentence that does not land leaves the reader
@@ -2528,6 +2541,7 @@ export class GraceQueueLite {
     if (lg && this.lambyGuide?.press(lg.id)) { this.bump(); return; }
 
     const vh = this.rects.find(rr => hit(rr, x, y));
+    if (vh?.id === 'testimony-prev' || vh?.id === 'testimony-next') { this.submissionPage += vh.id === 'testimony-next' ? 1 : -1; this.bump(); return; }
     if (vh?.id === 'vera-as-sent' || vh?.id === 'vera-as-published') {
       this.recordPage = 0; this.recordSent = vh.id === 'vera-as-sent'; this.bump(); return;
     }
