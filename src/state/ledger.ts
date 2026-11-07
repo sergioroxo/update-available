@@ -214,6 +214,10 @@ export interface Ledger {
   /** ⚑ `read` added 2026-09-01 with the laptop: Era 4 now opens on her own
    *  machine and is SENT from it to the headset, so the first thing the record
    *  files in this era is having read what the update said, not having worn it. */
+  /** ⚑ S320 — 2026 v3's story beats, in the order they happened (src/narrative/e4Beats.ts). The ONE contract
+   *  between the screens (messenger + browser) and the room (restyle, ticket, wall strips, ceiling map, mirror):
+   *  the screens mark, the room reads. Memory only. */
+  e4Beats: string[];
   e4Space: { id: string; outcome: 'installed' | 'worn' | 'turned' | 'read' | 'joined' | 'begun' | 'done' | 'pressed' | 'answered' | 'opened'; witness: string }[];   // S160: the saver's press, L's turns answered, a thread opened
   /**
    * ⚑ L, ERA 4's CONVERSATION (Session 77 — `data/dialog/s4_l.json`,
@@ -371,6 +375,7 @@ const fresh = (): Ledger => ({
   era3Arrival: [],
   graceQueue: [],
   comments: [],
+  e4Beats: [],
   e4Space: [],
   l: [],
   e4Offers: [],

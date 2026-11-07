@@ -42,6 +42,29 @@ that always answers, and it wants her to become the picture.
   there for anyone who wants to read more.
 - Buttons are always at the bottom of each window. There is never a fake text box.
 
+## His second rulings (7 Nov, later)
+
+- **Beat 5 drops "your place is kept":** the audience never thought she would lose it, so it means nothing to them.
+- **The pressure rising toward 18 is his lived knowledge** (trans friends). It is a clear inference about the
+  pressures on teens, and it stays.
+- **"Try it on": not softer, harsher.** The system starts it. We see the mirror and the reveal of a male body, and
+  then Junie's link breaks in. Junie ends it; the player does not.
+- **Maya lives with Mum.** **Both parents** are there, so no one can blame divorce or anything else: Mum is the soft
+  voice, Dad the harder one, both frightened, both fed by the news.
+- **The "male" room: a full restyle**, as far as the impact needs.
+- **Division of work:** Claude builds the biggest changes (the screens: messenger, browser, bot, map, presentation
+  rules). Codex builds the room (the restyle, the strips, the ticket, the ceiling map and clip, the mirror, the stream
+  as fundraiser, the room restored). **The one contract between them is `src/narrative/e4Beats.ts`**: the screens
+  mark beats (`markE4('number')`), and the room reads them (`e4Has`, `e4Progress`, `e4BeatsVersion`). The room must
+  also re-apply when `ledgerGeneration` changes (a wipe empties the beats).
+
+## Dad (new)
+
+Dad writes rarely and short. He is frightened too, but his fear comes out as rules: "Your mother's upset." / "We
+need to talk about the appointments. Not while you're under this roof." / at 18: "You're an adult now. Adults pay
+their own way." No slurs, no violence. He is the threat to her independence that 18 should have given her. His
+thread is felt, and he is never satirised.
+
 ## The beats (reordered 7 Nov, in four acts)
 
 The beats in the earlier table are reordered so the story builds:
@@ -69,7 +92,7 @@ act ends with one conducted turn to see what is gone.
 
 | # | Beat | Where | What happens | Register |
 |---|---|---|---|---|
-| 5 | **The number** | browser (clinic) → wall | At 18 her referral is **handed over** to adult services. Her date is kept (NHS England; T1), but the adult queue is the problem: **"Your referral has moved to adult services. Your place is kept. You are number 4,812. Estimated first appointment: up to 15 years."** (Levy Review, 18 Dec 2025.) The ticket goes up on her wall, and the number climbs, because four people join for every one seen. The clinic's letter: "Exploratory therapy is offered before any referral", **with two captions, never resolved**. *Room: the plant goes.* | operable; the letter felt |
+| 5 | **The number** | browser (clinic) → wall | At 18 her referral is **handed over** to adult services. Her date is kept (NHS England; T1), but the adult queue is the problem: **"Your referral has moved to adult services. You are number 4,812. Estimated first appointment: up to 15 years."** (Levy Review, 18 Dec 2025.) The ticket goes up on her wall, and the number climbs, because four people join for every one seen. The clinic's letter: "Exploratory therapy is offered before any referral", **with two captions, never resolved**. *Room: the plant goes.* | operable; the letter felt |
 | 6 | **Meridian** | browser | The LGB group says no (as built, V4). *Room: the pride flag goes.* | operable → felt |
 | 7 | **Left** | messenger | The house chat: "Sam left the group." A friend's "sorry, it's a lot right now". *Room: the photo strip goes, and a framed "You, restored" goes up in its place.* | felt |
 | 8 | **The room** | room (conducted turn) | The piece turns her once. The room is barer and more "male": the pink throw is grey now, the strips of news cover the walls, the ticket is bigger. That idea of "male" is the system's own, and it is crude on purpose: this is satire, and it will collapse. | operable |
@@ -88,7 +111,7 @@ act ends with one conducted turn to see what is gone.
 |---|---|---|---|---|
 | 12 | **Junie** | messenger | The badge from the morning: **"happy birthday. don't answer if it's too much."** Unmuting Junie is one press, and her red dot turns warm. | **felt** |
 | 13 | **The original** | browser (Photos) | "Original kept" is the lever (as built, V10). Her own photo goes back in the desk frame: the first thing that comes back. | operable → felt |
-| 14 | **Try it on** | headset (the browser room: the mirror) | The system's last and worst offer: **"See how it feels. No pressure. Just try it."** Her hands and the mirror show her as the man in the picture: the embodiment illusion used as coercion. **Junie's link breaks in.** | operable |
+| 14 | **Try it on** | headset (the browser room: the mirror) | The system's last and worst offer, **and it starts it without asking**: "See how it feels. No pressure. Just try it." The mirror fills, and the reveal is slow: the hair, the jaw, the shoulders, her hands in front of her, all becoming the man in the picture, while the system says how natural it looks. It doesn't stop when she looks away. **Junie's link breaks in and ends it.** | operable |
 | 15 | **The stream** | the whole space | TransJesus's **birthday fundraiser for trans youth**. Every red dot on the map becomes a viewer, 41 → 42. Her one act: dance or stay. Her body is her own again. | **respite** |
 | 16 | **Terminated** | glass, desk | "SESSION TERMINATED · reason: social contagion." The update fails. The room comes back, and her things are where they were. | operable |
 
