@@ -78,8 +78,8 @@
    "",
    "Restorify is sunsetting. Thank you",
    "for your years of work.",
-   "Your file has been migrated to a",
-   "brighter place."
+   "Your file stays with us.",
+   "We move to a brighter place."
   ],
   "updateNow": "Update now",
   "remindLater": "Remind me later",
@@ -103,9 +103,9 @@
     "recirculated where they can help",
     "someone like you.",
     "",
-    "Files inherited from previous",
-    "providers remain available to",
-    "our care team. All of them."
+    "Records from past programmes",
+    "are kept by our care team.",
+    "Yours begins today."
    ]
   ],
   "readOn": "Read on",
@@ -116,8 +116,8 @@
    "RESTORIFY 2003 — SERVICE ENDING",
    "- accountability web: shut down",
    "- daily realignment: shut down",
-   "= your chart: exported, complete",
-   "= your file: transferred in full",
+   "= Daniel's chart: exported, complete",
+   "= the archive: transferred in full",
    "= Daniel's file: archived · a new file: Vera",
    "+ nothing has been deleted",
    "Root Cause — migrated"
@@ -137,7 +137,7 @@
    ]
   },
   "_migrationFilingDoc": "PLACEHOLDER — Sérgio voice pass pending. S2R.7 item 5: THE LAST FILING UNDER DANIEL'S NAME. Filed once, at the u3 restart (src/desktop/os.ts) and rendered in the record's own cold ink by src/witness/intake.ts. Not a choice, not a judgement, no player act anywhere near it — the record simply notes that the subject moved and the file did not.",
-  "migrationFiling": "subject migrated — file retained",
+  "migrationFiling": "subject left — file retained",
   "installSeconds": 13.5,
   "restarting": "Restarting…",
   "_sourceGrounding": {
@@ -164,7 +164,7 @@
    "a family of wellness services,",
    "and moving to GraceOS.",
    "",
-   "Your file comes with you."
+   "Your file stays with us."
   ],
   "updateNow": "Update now",
   "remindLater": "Remind me later",
@@ -185,9 +185,9 @@
    [
     "2. YOUR FILE",
     "",
-    "Your record (1997, 2003, 2016) is",
+    "Records kept since 1997 are",
     "carried forward without alteration",
-    "and informs your experience today.",
+    "and inform your care today.",
     "",
     "You agree that interest is consent.",
     "You agree that hesitation is",
@@ -236,7 +236,7 @@
    "+ support, in the tab that opens itself",
    "+ your photographs, restored",
    "+ immersive sessions · headset included",
-   "= the record: thirty years, intact",
+   "= the archive: thirty years, intact",
    "= Vera's file: archived · a new file: Maya",
    "= the goal: unchanged, on file",
    "- Kindredraft: archived",
@@ -281,12 +281,12 @@
    "GRACEPLATFORM — WHAT'S NEW",
    "+ softer colours, kinder words",
    "+ testimony polish queue",
-   "= the chart: complete",
-   "= your file: cross-referenced",
+   "= the archive: complete",
+   "= your file: new, cross-referenced",
    "- the questions are the same",
    "Root Cause — migrated"
   ],
-  "installedLine": "Installed. Your file arrived first."
+  "installedLine": "Installed. A file was opened for you."
  },
  "close": {
   "_doc": "S92 — THE CLOSE's two lines (REINTERP_THE_CLOSE_TREATMENT_2026-08-17.md §1/§5). `notify`'s 'Restart as you are.' is the person's restart, already bare, unchanged. `restarting` — rendered on the SAME dark 2.2s beat every era's own 'Restarting…' already uses (update.ts's `restart` phase), the one moment the desktop canvas still has the screen before enterClose() takes the room — carries the title itself: the machine's flat administrative report of its own defeat. Do not decorate it, do not explain it, no music sting; it is the one sentence in the piece that means the opposite of what it says.",

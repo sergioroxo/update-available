@@ -38,3 +38,9 @@ Verify as the brief says (`npx tsc --noEmit -p .`, `npm test`, photograph each i
 `node tools/walk.mjs --port 3114 --max 2600 --require-close` must reach the Close). Write
 docs/reinterp/CODEX_E3_MIRRORED_MESSAGE_REPORT_2026-11-07.md (STATUS: live) and one BUILD_LOG.md line. Reply with the
 branch, the commits, whether the walk reached the Close, and an 8-line plain summary.
+
+**Already done, do not redo (S318, 7 Nov):** the guard-1 transition lines from `OWN_THING_AUDIT_2026-11-03.md`
+§ "Jump legibility / guard 1" were rewritten on `reinterp` in `data/strings/updates.json` and `slice.json`. Rule
+they now follow: the file stays with the programme; the person does not carry it. "Your" never reaches across an
+era change (Daniel E1→E2 is the one exception). If you touch Vera's arrival, keep "Installed. A file was opened
+for you." and "= your file: new, cross-referenced".
