@@ -1,6 +1,6 @@
 /** 2026 v3 room pressure. Reads the screens' contract; only the room reveal writes a beat. */
 import * as pc from 'playcanvas';
-import { e4Has, e4BeatsVersion } from '../narrative/e4Beats';
+import { e4Has, e4BeatsVersion, markE4 } from '../narrative/e4Beats';
 import { ledgerGeneration } from '../state/ledger';
 import { type RoomHandles, type PropHandle, hex } from './era1room';
 import { cullAbsentProps } from './batching';
@@ -69,9 +69,18 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   let seen = '', generation = -1, lastNumber = -1;
   let data = { number: 4812, articles: 0, clipTime: 0, takeover: false };
   function setScreenData(next: typeof data) { data = next; }
-  function update(_dt: number, active: boolean) {
+  let leftT = 0, revealT = -1;
+  let conduct: (() => boolean) | null = null;
+  function setConduct(fn: () => boolean) { conduct = fn; }
+  function update(dt: number, active: boolean) {
     root.enabled = active;
     if (!active) return;
+    if (generation !== ledgerGeneration) { leftT = 0; revealT = -1; seen = ''; generation = ledgerGeneration; }
+    if (e4Has('left') && !e4Has('room')) {
+      leftT += dt;
+      if (leftT >= 1.5 && revealT < 0 && conduct?.()) revealT = 0;
+      if (revealT >= 0) { revealT += dt; if (revealT >= 9) markE4('room'); }
+    }
     const key = `${ledgerGeneration}:${e4BeatsVersion()}:${data.number}:${data.articles}`;
     if (key === seen) return;
     if (generation !== ledgerGeneration) { generation = ledgerGeneration; }
@@ -105,5 +114,5 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     }
     cullAbsentProps(handles, null);
   }
-  return { update, setScreenData };
+  return { update, setScreenData, setConduct };
 }

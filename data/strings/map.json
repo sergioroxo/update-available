@@ -526,6 +526,14 @@
      "where": "the laptop"
     },
     {
+     "id": "room",
+     "label": "The room",
+     "done": "beat:room",
+     "quiet": true,
+     "hint": "The piece turns you to the room. Nothing to press.",
+     "where": "the room"
+    },
+    {
      "id": "search",
      "label": "The search, finished",
      "done": "beat:search",

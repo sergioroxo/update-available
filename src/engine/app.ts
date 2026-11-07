@@ -838,6 +838,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     ceiling = buildCeilingWitness(app);
     cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
     e4Room = buildE4Room(app, room);
+    e4Room.setConduct(() => {
+      if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
+      // The walls, stripped belongings and grey bedding are ahead at the end of this turn.
+      // 47 degrees in 8.4 s: smoothstep peak 8.4 degrees/s, inside the existing comfort envelope.
+      commitLookOffset();
+      startCamMove({ ...camPos, pitch: 3, yaw: 220 }, 8.4, true);
+      return true;
+    });
     // ⚑ S108: see ClusterShell.setNeverBatch — handed over below, once
     //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
 
