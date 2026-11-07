@@ -206,7 +206,11 @@
         "tip": "Your phone has a message. Pick it up from its stand.",
         "here": "It's on its stand, to your left.",
         "again": "Shall I take you to the phone?",
-        "target": [],
+        "target": [
+          "notification",
+          "group",
+          "inbox"
+        ],
         "act": "move:phone"
       },
       "vote": {

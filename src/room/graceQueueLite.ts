@@ -356,7 +356,7 @@ export class GraceQueueLite {
   private guideWait = new GuideWait();
   private guideReady(key: string): boolean { if (this.personalQuiet) return false; return this.guideWait.ready(key, !!this.lambyGuide?.active); }
   pressGuideTarget(id: string): void {
-    if (!['signin', 'start-menu'].includes(id) || this.guideSilent || this.guideVoice) return;
+    if (this.guideSilent || this.guideVoice) return;
     const r = this.rects.find(h => h.id === id);
     if (r) this.handleClick(r.x + r.w / 2, r.y + r.h / 2);
   }
@@ -1005,8 +1005,8 @@ export class GraceQueueLite {
 
   /** S155 / R3-68 — Lambient speaks: the lines, and the platform's chime with them */
   private lambSay(lines: string[], key = `lambient-${this.lambSequence++}`): void {
-    this.guideWait.run(key, !!this.lambyGuide?.active, () => {
-      this.lambLines = lines; this.lambPriority = true; this.bump();
+    this.guideWait.run(key, false, () => {
+      this.lambyGuide?.activity(); this.lambLines = lines; this.lambPriority = true; this.bump();
     });
     // The programme guide is text-only, including its Lambient skin.
   }
@@ -1679,7 +1679,7 @@ export class GraceQueueLite {
     //   phone, the wait line, the way back, the cascade's "Everything on your board is still there…") was being
     //   wiped here before it was ever drawn; they now stay until she acts.
     //   The first-task beat itself closes on her next press on the board (handleClick).
-    if ((this.lambPriority || !this.lambyGuide?.active) && !this._callPending) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
+    if ((this.lambPriority || !this.lambyGuide?.active) ) this.drawLambientLane(ctx, c, this.lambLines ?? this.lambLine);
     if (!this.personalQuiet) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
     // ⚑ S229 / W1-A6 — on the board the card becomes a strip UNDER the day's tiles (never over one), and only where
     //   it fits between them and Lambient's lane
