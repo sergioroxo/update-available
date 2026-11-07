@@ -914,6 +914,12 @@ async function main() {
     if (id === 'icon-restorify' && led?.checkins?.some(c => !c.id.startsWith('e3'))) return false;
     if (id === 'icon-story' && has('testimony-online')) return false;
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
+    // The phone is private optional reading now. The minimum visitor never needs to press it.
+    if (st?.era === 'e3') {
+      if (t.surface === 'phone' || id.startsWith('mirror:') || /^win-min$|^task-restore$/.test(id)) return false;
+      const renata = [1,3,7].every(cardId => led?.graceQueue?.some(c => c.cardId === cardId));
+      if (/^task-\d+$/.test(id) && (!renata ? id !== 'task-0' : !!led?.era3Jobs?.some(j => j.id === 'pipeline'))) return false;
+    }
     if (st?.era === 'e3' && id === 'vera-as-published') return false;
     if (st?.era === 'e3' && id === 'next-story' && !led?.era3Jobs?.some(j => j.id === 'pipeline')) return false;
     if (st?.era === 'e3' && led?.era3Jobs?.some(j => j.id === 'pipeline') && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;

@@ -7,9 +7,13 @@ const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrom
 const data={checks:[],errors:[]},assert=(v,s)=>{if(!v)throw Error(s);data.checks.push(s);};
 async function fresh(query='?reinterp=1&era=3&debug=1&descent=0&kiosk=0'){
  const p=await browser.newPage();p.on('pageerror',e=>data.errors.push(String(e)));
- await p.goto(`http://127.0.0.1:${port}/${query}`,{waitUntil:'networkidle2'});await p.waitForFunction(()=>window.__os);return p;
+ await p.goto(`http://127.0.0.1:${port}/${query}`,{waitUntil:'networkidle2'});if(query.includes('&era=3'))await p.waitForFunction(()=>window.__os);else await p.waitForSelector('canvas');return p;
 }
 try{
+ if(process.argv.includes('--smoke-only')){
+  for(const query of ['?debug=1','?reinterp=1&flat=1&debug=1&home=0']){const s=await fresh(query);assert(await s.evaluate(()=>[...document.querySelectorAll('canvas')].some(c=>c.width>0&&c.height>0)),query+' renders');await s.close();}
+  assert(!data.errors.length,'no browser exceptions');fs.writeFileSync(out+'/smoke.json',JSON.stringify(data,null,2));console.log(JSON.stringify(data,null,2));
+ }else{
  const p=await fresh();await wait(4500);
  data.seat=await p.evaluate(()=>{
   const a=window.__app,c=a.root.findByName('camera'),e=a.root.findByName('era3-device-workstation'),V=a.root.getPosition().constructor,m=e.getWorldTransform();
@@ -49,4 +53,5 @@ try{
  data.exit=await p.evaluate(()=>({left:window.__os.hasLeft,off:window.__os.isOff}));assert(data.exit.left||data.exit.off,'frame Leave exits');await p.close();
  for(const query of ['?debug=1','?reinterp=1&flat=1&debug=1&home=0']){const s=await fresh(query);assert(await s.evaluate(()=>[...document.querySelectorAll('canvas')].some(c=>c.width>0&&c.height>0)),query+' renders');await s.close();}
  assert(!data.errors.length,'no browser exceptions');fs.writeFileSync(out+'/results.json',JSON.stringify(data,null,2));console.log(JSON.stringify(data,null,2));
+}
 }finally{fs.writeFileSync(out+'/partial.json',JSON.stringify(data,null,2));await browser.close();}
