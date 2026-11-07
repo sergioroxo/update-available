@@ -1383,6 +1383,7 @@ export class GraceQueueLite {
       if (nav.length) this.rects = [...nav, ...this.rects.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
 
+    this.lambyGuide?.resolveFocusTargets(new Set(this.rects.map(r => r.id)));
     if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
     if (this.guideFocus && !this.guideSilent && !this.guideVoice) {
       const r = this.rects.find(r => r.id === this.guideFocus!.id);
@@ -1422,15 +1423,17 @@ export class GraceQueueLite {
     ctx.fillText('−', x + w - 22, 7);
     this.rects.unshift({ x, y: 0, w: w - 30, h: 25, id: 'mirror-enlarge' }, { x: x + w - 30, y: 0, w: 30, h: 25, id: 'mirror-min' });
     this.mirrorCanvas ??= document.createElement('canvas');
-    const phoneH = this.mirrorLarge ? 240 : 360;
+    const phoneH = this.mirrorLarge && !this.floppy.open ? 240 : 360;
     this.mirrorCanvas.width = 180; this.mirrorCanvas.height = phoneH;
-    this.drawPhone(this.mirrorCanvas.getContext('2d')!, 180, phoneH);
+    let phoneRects: Rect[];
+    if (this.floppy.open) { this.floppy.draw(this.mirrorCanvas.getContext('2d')!, 180, phoneH); phoneRects = this.floppy.rects; }
+    else phoneRects = this.phone.drawMirrored(this.mirrorCanvas.getContext('2d')!, 180, phoneH);
     const scale = Math.min((w - 8) / 180, (h - 29) / phoneH);
     const px0 = Math.round(x + (w - 180 * scale) / 2), py = 27;
     ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(this.mirrorCanvas, px0, py, Math.floor(180 * scale), Math.floor(phoneH * scale)); ctx.restore();
     this.mirrorBox = { x: px0, y: py, scale };
     // Phone-owned controls stay phone-owned. No guide/glow is drawn over this program.
-    const hits = (this.floppy.open ? this.floppy.rects : this.phone.hitRects).map(r => ({ ...r, x: px0 + r.x * scale, y: py + r.y * scale, w: r.w * scale, h: r.h * scale, id: `mirror:${r.id}` }));
+    const hits = phoneRects.map(r => ({ ...r, x: px0 + r.x * scale, y: py + r.y * scale, w: r.w * scale, h: r.h * scale, id: `mirror:${r.id}` }));
     this.rects.unshift(...hits);
   }
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number): void {
@@ -2086,8 +2089,11 @@ export class GraceQueueLite {
     if (sub.id === 2) {
       studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
       // Both institutional readings remain visible together, with identical treatment and no verdict.
-      for (const [n, id] of [8, 9].entries()) {
-        ctx.fillText(CORRECTIONS.get(id)!.why, rightX + 13, top + transcriptH - 30 + n * 14);
+      const captions = [8, 9].map(id => wrapText(ctx, CORRECTIONS.get(id)!.why, rightW - 26));
+      let cy = top + transcriptH - captions.reduce((h, lines) => h + lines.length * 12 + 4, 0) - 2;
+      for (const lines of captions) {
+        lines.forEach((line, i) => ctx.fillText(line, rightX + 13, cy + i * 12));
+        cy += lines.length * 12 + 4;
       }
     }
     const by = top + 216, bh = c.y + c.h - by - 2;
@@ -2525,8 +2531,8 @@ export class GraceQueueLite {
   handleClick(x: number, y: number): void {
     const mh = this.rects.find(r => hit(r, x, y));
     if (mh?.id === 'mirror-min') { this.mirrorMin = true; this.mirrorReading = false; this.bump(); return; }
-    if (mh?.id === 'mirror-restore') { this.mirrorMin = false; this.bump(); return; }
-    if (mh?.id === 'mirror-enlarge') { this.mirrorLarge = !this.mirrorLarge; this.bump(); return; }
+    if (mh?.id === 'mirror-restore') { this.mirrorMin = false; this.mirrorReading = true; this.bump(); return; }
+    if (mh?.id === 'mirror-enlarge') { this.mirrorLarge = !this.mirrorLarge; this.mirrorReading = true; this.bump(); return; }
     if (mh?.id.startsWith('mirror:') && this.mirrorBox) {
       const id = mh.id.slice(7);
       if (this.floppy.open) { const b = this.mirrorBox; this.floppy.tap((x - b.x) / b.scale, (y - b.y) / b.scale); }

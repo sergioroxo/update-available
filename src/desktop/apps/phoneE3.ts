@@ -143,7 +143,7 @@ export class PhoneE3 {
   }
   get eveningClock(): string { return this.storyClock; }
   disconnected = false;
-  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); this.banner = null; this.openMessage = null; this.notesT = -1; this.screen = 'lock'; this.bump(); }
+  disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.notesT = -1; this.screen = 'lock'; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
   get unreadCount(): number { return BACKLOG.filter(b => !this.readMessages.has(b.from + b.time)).length + this.groupUnread() + this.evening.filter(e => e.from !== m.group.name && !this.readMessages.has('evening:' + e.id)).length; }
   private bump(): void { this.version++; }
@@ -299,11 +299,23 @@ export class PhoneE3 {
       ctx.fillStyle = PHONE.surface; ctx.fillRect(0, H - 26, W, 26);
       phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(mirrorCopy.reply, 12, H - 18);
     }
+    this.rects = this.rects.flatMap(r => {
+      const x = Math.max(0, r.x), y = Math.max(0, r.y), right = Math.min(W, r.x + r.w), bottom = Math.min(H, r.y + r.h);
+      return right > x && bottom > y ? [{ ...r, x, y, w: right - x, h: bottom - y }] : [];
+    });
   }
 
   /** S281 — what the phone is waiting on, screen by screen: the notification, then Messages, then the group, then the
    *  live link. Nothing once the group's news is all seen and the link is spent. */
 
+  /** A second viewport shares state, but must not replace the physical screen's hit geometry. */
+  drawMirrored(ctx: CanvasRenderingContext2D, W: number, H: number): Rect[] {
+    const physical = this.rects;
+    this.draw(ctx, W, H);
+    const mirrored = this.rects;
+    this.rects = physical;
+    return mirrored;
+  }
   private openEvening(from: string): void {
     this.eveningFrom = from; this.screen = from === m.group.name ? 'group' : 'evening';
     for (const e of this.evening.filter(e => e.from === from)) this.readMessages.add('evening:' + e.id);
@@ -365,9 +377,10 @@ export class PhoneE3 {
       roundRect(ctx, ux, uy, uw, 26, 13, PHONE.surface);
       ctx.fillStyle = PHONE.ink;
       ctx.fillText(UNLOCK_HINT, ux + 14, uy + 8);
+      this.rects.push({ x: ux, y: uy, w: uw, h: 26, id: 'unlock' });
     };
     if (this.stage === 'quiet') {
-      if (this.evening.some(e => e.id === 'arrival') && this.banner?.from !== 'Orla') {
+      if (this.evening.some(e => e.id === 'arrival') && this.banner !== this.evening.find(e => e.id === 'arrival')) {
         const text = mirrorCopy.events[0].text;
         phoneFont(ctx, 11); const lines = phoneWrap(ctx, text, W - 40);
         roundRect(ctx, 10, 125, W - 20, 30 + lines.length * 14, 8, PHONE.surface);
@@ -375,7 +388,6 @@ export class PhoneE3 {
         lines.forEach((line, i) => ctx.fillText(line, 20, 152 + i * 14));
       }
       unlockPill();
-      this.rects.push({ x: 0, y: 130, w: W, h: H - 130, id: 'unlock' });
       return;
     }
 
@@ -397,7 +409,6 @@ export class PhoneE3 {
     lines.slice(0, 3).forEach((ln, k) => ctx.fillText(ln, nx + 10, ny + 28 + k * 14));
     unlockPill();
     this.rects.push({ x: nx, y: ny, w: nw, h: nh, id: 'notification' });
-    this.rects.push({ x: 0, y: ny + nh, w: W, h: H - ny - nh, id: 'unlock' });
   }
 
   private previewText(): string {
@@ -423,10 +434,10 @@ export class PhoneE3 {
       ctx.fillText(m.cameraRoll.dates[this.photoIndex], Math.max(52, x), y + size + 12);
     } else {
       const sprites = this.photoSprites.slice(0, this.evening.some(e => e.id === 'after') ? 5 : 4);
-      const perPage = H < 260 ? 2 : 4, pages = Math.ceil(sprites.length / perPage);
+      const perPage = H < 260 ? 2 : 4, pages = sprites.length;
       this.photoPage = Math.min(this.photoPage, pages - 1);
-      sprites.slice(this.photoPage * perPage, (this.photoPage + 1) * perPage).forEach((sprite, n) => {
-        const i = this.photoPage * perPage + n;
+      sprites.slice(this.photoPage, this.photoPage + perPage).forEach((sprite, n) => {
+        const i = this.photoPage + n;
         const size = Math.max(20, Math.min(H < 300 ? 56 : 72, H - top - 76));
         const x = 12 + (n % 2) * 84, y = top + 12 + Math.floor(n / 2) * (size + 18);
         ctx.drawImage(sprite, x, y, size, size);
@@ -476,10 +487,11 @@ export class PhoneE3 {
     //   that matter sit in the first row and everything under them is set
     //   dressing — a phone is mostly things you are not opening right now, and
     //   that is what makes the four legible rather than what buries them.
-    const s = 32;
+    const compact = H < 230;
+    const s = compact ? 24 : 32;
     const gap = Math.round((W - s * 4) / 5);
     const col = (i: number): number => gap + i * (s + gap);
-    const rowY = (r: number): number => (H >= 300 ? 84 : 32) + r * (s + 22);
+    const rowY = (r: number): number => (H >= 300 ? 84 : compact ? 24 : 32) + r * (s + (compact ? 16 : 22));
 
     // ⚑ S158 / R3-78 (Sérgio: "I need the home screen and a Messages app to enter the chat"):
     //   the first tile is THE PLATFORM's own app (it says she is signed in on the workstation
@@ -546,6 +558,7 @@ export class PhoneE3 {
       if (walk) this.rects.push({ x: col(i % 4), y: rowY(1 + Math.floor(i / 4)), w: s, h: s + 12, id: 'walk' });
     });
 
+    if (compact) return;
     pageDots(ctx, W, H - 56, 2, 0);
     const dy = dock(ctx, W, H);
     ([['phone', 0], ['browser', 1], ['music', 2], ['maps', 3]] as const)
@@ -698,9 +711,9 @@ export class PhoneE3 {
     // The era's news stays reachable on every page; private threads can be paged independently.
     const group = rows.splice(rows.findIndex(r => r.id === 'group'), 1)[0];
     const perPage = Math.max(1, Math.floor((H - y - 36) / 48) - 1);
-    const pages = Math.max(1, Math.ceil(rows.length / perPage));
+    const pages = Math.max(1, rows.length);
     this.inboxPage = Math.min(this.inboxPage, pages - 1);
-    for (const b of [group, ...rows.slice(this.inboxPage * perPage, this.inboxPage * perPage + perPage)]) {
+    for (const b of [group, ...rows.slice(this.inboxPage, this.inboxPage + perPage)]) {
       const h = 48;
       if (!b.read) { ctx.fillStyle = PHONE.tint; ctx.fillRect(5, y + 13, 4, 4); }
       phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.ink; ctx.fillText(b.from, 14, y + 5);

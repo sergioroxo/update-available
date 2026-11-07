@@ -149,6 +149,13 @@ export class LambyGuide {
     } else return false;
     return true;
   }
+  /** A surface supplies its published controls; a focus offer must have a live destination. */
+  resolveFocusTargets(live: Set<string>): void {
+    if (this.view.rung !== 'show' || !this.spec?.act?.startsWith('focus:')) return;
+    const target = this.view.targets.find(id => live.has(id));
+    const act = target ? `focus:${target}` : undefined;
+    if (this.view.act !== act) { this.view.act = act; this.version++; }
+  }
   private point(): void {
     if (this.view.rung === 'start') return;
     this.set('show', this.spec?.here ?? copy.ui.here, this.spec?.target ?? [], this.spec?.act);

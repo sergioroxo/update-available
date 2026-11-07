@@ -250,8 +250,9 @@
         "act": "focus:vera-send"
       },
       "vera-install": {
-        "tip": "Kindredraft has your own story ready. Install opens it.",
+        "tip": "Return to Today, then install Kindredraft to open your 2014 story.",
         "target": [
+          "vera-send-close",
           "update-accept"
         ],
         "act": "focus:update-accept"
