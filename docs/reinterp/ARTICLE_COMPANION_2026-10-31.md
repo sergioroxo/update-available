@@ -302,6 +302,14 @@ and RESEARCH_2026_V3_THREADS_2026-11-07.md), to carry into the article:
   is the system coercing her to *try out* being a man by showing her own avatar as a man. This is also a critique of
   "gender dysphoria simulators" and of embodiment illusions sold as empathy or self-knowledge: the medium the piece is
   made in is the medium the system uses on her (thread 2 of the v3 research).
+- **Two parents, two registers (a design decision by Claude, 7 Nov, confirmed by the lead).** Maya lives with Mum and
+  Dad. **Mum is the soft voice; Dad is the harder one, with rules instead of slurs** ("Not while you're under this
+  roof." / "You're an adult now. Adults pay their own way."). Both parents are present so that no one can explain the
+  pressure away as a broken home. The split is Claude's choice, not a finding. Mum carries the news, links sent with
+  love, because the best-documented route of the pressure is a parent drawn into anti-trans media who keeps sending it.
+  In the main source that parent is a father (RESEARCH_2026_TRANS_PRESSURE §8, textures 1 and 5), so giving the links
+  to Mum is a deliberate inversion. Dad carries control at the age of autonomy: the house and the money, the two things
+  18 should have made hers.
 - **The stream as mutual aid.** Junie's link is a fundraising stream for trans youth like her, on or near her
   birthday; joy and money moving between strangers is the documented counter-practice (thread 5).
 
