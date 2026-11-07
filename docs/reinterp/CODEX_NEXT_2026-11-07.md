@@ -33,53 +33,87 @@ commits, the walk result and an 8-line plain summary.
 
 ---
 
-## Prompt B — 2026: the room half of v3 (after the screens are merged)
+## Prompt B — 2026: the room half of v3 (the screens are merged: S322; checked 8 Nov)
 
 Repository: sergioroxo/update-available, branch `reinterp`.
-**Work in your own folder:** `git worktree add -b codex/e4-v3-room ../codex-e4-room origin/reinterp` (from the main
-folder, after `git fetch origin`). Never `git checkout` in the main folder. Push your branch, not `reinterp`.
+**Work in your own folder:** from /Users/sergiogalvaoroxo/update-available-reinterp run `git fetch origin && git worktree add -b codex/e4-v3-room ../codex-e4-room origin/reinterp`,
+then work only in /Users/sergiogalvaoroxo/codex-e4-room (symlink node_modules). Never `git checkout` in the main
+folder. Push your branch, not `reinterp`.
 
-Read CLAUDE.md, docs/ETHICS_CONSTRAINTS.md, **docs/reinterp/DESIGN_2026_V3_PRESSURE_2026-11-07.md** (the plan,
-with the lead's rulings), **docs/reinterp/E4_V3_SCREENS_BUILT_2026-11-07.md** (what Claude built: the screens, the
-shared painters, where each beat is marked) and **src/narrative/e4Beats.ts** (the contract). The screens MARK beats;
-the room READS them with `e4Has` / `e4Progress` / `e4BeatsVersion`, and re-applies when `ledgerGeneration` changes.
-You mark `room` and `tryon`.
+Read first:
+- CLAUDE.md and docs/ETHICS_CONSTRAINTS.md;
+- **docs/reinterp/DESIGN_2026_V3_PRESSURE_2026-11-07.md** (the plan, with the lead's rulings);
+- **docs/reinterp/E4_V3_SCREENS_BUILT_2026-11-07.md**, above all its section "For the room builder (Codex)": what is
+  already built, the moved desk and seat, the shared painters, where each beat is marked, and the timing;
+- **src/narrative/e4Beats.ts** (the contract). The screens and the shell MARK beats. You READ them (`e4Has`,
+  `e4Progress`, `e4BeatsVersion`) and re-apply when `ledgerGeneration` changes. You mark only `room`.
+
+Since that doc was written, her friends' chat is called **"the lot"** (Ola, Priya, Rae, Sam), not "the house". The
+id stays `house`.
 
 Build the room, one commit each:
-1. **The restyle toward "male"**, a full restyle as the lead asked. Each refusal beat (`number`, `meridian`, `left`)
-   takes one of her things out of Maya's room and puts the system's crude "default" in its place:
+
+1. **The restyle toward "male"**, a full restyle as the lead asked. Find Maya's things in Room 3 (r4 in
+   `data/room/reinterp_deltas.json` and the 2026 room code). Each refusal beat (`number`, `meridian`, `left`) takes
+   one of her things out and puts the system's crude "default" in its place:
    - the plant goes;
    - the pride flag goes;
-   - the friends' photo strip goes, and a framed "You, restored" (the shared goal painter) goes up;
+   - the friends' photo strip goes, and a framed "You, restored" goes up (shared `drawGoalPicture`);
    - the pink throw turns grey;
+   - the desk photo frame shows the goal from `newyou` until `original`;
    - more, as far as the impact needs.
 
-   Apply each change while the player faces the screens ("sequence over presence"). Use `cullAbsentProps`, so a
-   removed prop is not drawn. Draw calls must go DOWN, never above 75.
+   The system's idea of "male" is crude on purpose: the satire, which collapses at the end. Apply each change while
+   the player faces the screens ("sequence over presence"). Use `cullAbsentProps`, so a removed prop is not drawn.
+   Draw calls must go DOWN, and never above 75 (the desk is 37 now).
 2. **The paper strips and the ticket.**
-   - A paper strip appears on her wall for each headline once `link` is marked.
-   - The deli-counter ticket appears at `number`. It shows the clinic's current number and grows each time the
-     number rises.
+   - One paper strip appears on her walls per news article as the articles open (from `link`). Headline-sized
+     words from the article data in `data/dialog/s4_v3.json`, painted, readable from the seat.
+   - The deli-counter ticket appears at `number` and shows the clinic's CURRENT number. It lives in `browser.ts`
+     (`clinicNumber`, private); add a read-only getter and change nothing else there. The ticket grows each time
+     the number rises.
    - Painted textures, `FILTER_NEAREST`, upload on dirty only.
-3. **The conducted turn** after `left`. The piece turns her once to see the room, then marks `room`. A real turn, not
-   a look the player must choose (the 10 Oct rule).
-4. **The ceiling map** at `map`: the contagion network projected across her ceiling (`src/room/ceilingWitness.ts` may
-   be the place). Junie's dot is red until `junie` turns it warm. The ceiling plays the shared `drawContagionClip`.
-5. **"Try it on", the room side only.** Claude builds the mirror reveal on the worn session screen and marks
-   `tryon` (see the screens report). You add only what the 2D screen cannot do, if anything. For example, in XR the
-   player's own controller hands become the man's hands during the reveal. Do not duplicate the screen's reveal.
-   **Also replace the old ballroom poster** ("CATEGORY IS / ALL WELCOME / FRI 23 OCT") with the birthday fundraiser
-   stream's poster.
-6. **The stream as TransJesus's birthday fundraiser for trans youth** (mutual aid; research thread 5).
-   - A fund bar the system cannot read.
-   - Every red dot of the ceiling map becomes a viewer: 41 → 42.
-   - There is NO donate button for the player.
-   - Mark `stream` where it begins if the screens did not.
-7. **The room restored after `terminated`:** her things come back where they were.
+3. **The conducted turn** after `left`: the piece turns her once to see the room, then marks `room`. A real turn, not
+   a look the player must choose. Respect the screens' `ROOM_WAIT` (5–12 s). Add the `room` row to
+   `data/strings/map.json` and `src/witness/map.ts` (the screens doc says how).
+4. **The ceiling map** at `map`: the contagion network across her ceiling (look at `src/room/ceilingWitness.ts`).
+   Junie's dot is red until `junie` turns it warm. While the monitor's clip takeover runs, the ceiling plays the same
+   `drawContagionClip`, in sync.
+5. **"The lot" keeps writing while muted** (the lead's answer, 8 Nov). If the player pressed the bot's "Mute 2 more",
+   her friends go on writing all evening, and she doesn't see it. The messages arrive into the muted chat as a grey
+   unread count that climbs on Kettle's list. Nobody pings or glows. Copy (exact, in `s4_v3.json`, Claude's
+   writing):
+   - Ola: "maya?? we're at rae's"
+   - Rae: "we did the candles anyway. 18 of them. the cake leans"
+   - Priya: "saving you the corner slice"
+   - Sam: "sorry about earlier. i'm here if you want"
+   - Ola: "love you. no pressure x"
 
-Laws: no network, no storage, invented marks, no real people/faces/brands, colours only from the theme, the stream
-never a trap, satire only in the system's self-presentation and it collapses. Verify: `npx tsc --noEmit -p .`,
-`npm test`, stills of each step, draw calls at the seat and in the stream, and
-`node tools/walk.mjs --port 3115 --max 2600 --require-close` reaching the Close. Report:
-`docs/reinterp/CODEX_E4_V3_ROOM_REPORT_2026-11-07.md`. One BUILD_LOG line. Reply with the branch, the commits, the
-walk result, draw calls, and an 8-line plain summary.
+   After `terminated`, when the room comes back, the muted chat shows its count ("the lot · 5 unread") and opens to
+   these lines. Nothing is filed and nothing is lost: they waited. If she did NOT press "Mute 2 more", she sees them
+   arrive normally.
+6. **"Try it on" is DONE on the glass** (`src/desktop/apps/mirror.ts`, timeline `TRYON`). Add only what a 2D screen
+   cannot do: in XR the player's own controller hands may become the man's hands, timed to `TRYON.hands`, with the
+   glass's pixel hands hidden while yours show. If that isn't clean, skip it and say so. Do not duplicate the reveal.
+7. **The stream as TransJesus's birthday fundraiser for trans youth** (mutual aid; research thread 5).
+   - Replace the old ballroom poster ("CATEGORY IS / ALL WELCOME / FRI 23 OCT") with the fundraiser's poster: her
+     birthday, the stream, "for trans youth".
+   - A fund bar the system can't read.
+   - Every red dot of the ceiling map becomes a viewer: 41 → 42.
+   - NO donate button for the player.
+8. **The room restored after `terminated`:** her things come back where they were, and the goal picture leaves the
+   frame and the wall.
+
+Laws: no network, no storage, invented marks, no real people/faces/brands, colours only from the theme, the stream is
+never a trap, and satire lives only in the system's self-presentation and collapses.
+
+Verify:
+- `npx tsc --noEmit -p .` and `npm test`;
+- stills of each step from the seat (`tools/tour-e4.mjs` and `tools/stills.mjs`);
+- draw calls at the seat and in the stream;
+- `node tools/walk.mjs --port 3116 --max 2600 --require-close` reaching the Close. **Your walk is the first full run
+  of the combined build** (Codex's 2016 phone mirror + Claude's 2026 screens were merged into `reinterp` separately),
+  so report anything it finds in ANY era, not only 2026.
+
+Report: `docs/reinterp/CODEX_E4_V3_ROOM_REPORT_2026-11-08.md`. One BUILD_LOG line. Reply with the branch, the commits,
+the walk result, draw calls, and an 8-line plain summary.
