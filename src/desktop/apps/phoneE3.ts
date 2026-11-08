@@ -286,8 +286,10 @@ export class PhoneE3 {
     if (this.disconnected) { ctx.fillStyle = PHONE.ink; ctx.fillRect(0, 0, W, H); return; }
     ctx.fillStyle = PHONE.bg;
     ctx.fillRect(0, 0, W, H);
-    const bannerH = this.banner && !this.bannersHidden && !this.conductingNotes
-      ? this.bannerHeight(W) : 0;
+    // ⚑ S330 (his 8 Nov, twice: "what is this notification box on top of this? … it should be pop in messages on the
+    //   phone") — the banner no longer pushes the screen down as a box above the phone. It is drawn OVER the screen,
+    //   under the status bar, the way a phone does it; on the lock screen the messages stack as cards instead.
+    const bannerH = 0;
     const bodyH = H - bannerH;
     ctx.save(); ctx.beginPath(); ctx.rect(0, bannerH, W, bodyH); ctx.clip(); ctx.translate(0, bannerH);
     if (this.screen === 'article') {
@@ -372,23 +374,50 @@ export class PhoneE3 {
     }
   }
   private get bannerPhoto(): boolean { return this.evening.some(e => e === this.banner && e.photo === true); }
-  private bannerHeight(W: number): number {
-    const c = document.createElement('canvas').getContext('2d')!; phoneFont(c, 11);
-    return 52 + phoneWrap(c, this.banner?.text ?? '', W - 20).length * 14 + (this.bannerPhoto ? 76 : 0);
-  }
   private drawBanner(ctx: CanvasRenderingContext2D, W: number): void {
     if (!this.banner || this.bannersHidden) return;
+    if (this.screen === 'lock') return;   // S330: the lock screen shows its messages as stacked cards (drawLock)
     phoneFont(ctx, 11);
-    const lines = phoneWrap(ctx, this.banner.text, W - 20), h = 31 + lines.length * 14;
-    ctx.fillStyle = PHONE.bubbleIn; ctx.fillRect(2, 21, W - 4, h);
-    ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600); ctx.fillText(this.banner.from, 10, 28);
-    phoneFont(ctx, 9); ctx.fillText(this.storyClock, W - 36, 28);
-    phoneFont(ctx, 11); lines.forEach((line, i) => ctx.fillText(line, 10, 46 + i * 14));
+    const x = 6, y = 22, w = W - 12;
+    const lines = phoneWrap(ctx, this.banner.text, w - 20).slice(0, 3);
+    const h = 30 + lines.length * 14 + (this.bannerPhoto ? 78 : 0);
+    roundRect(ctx, x, y + 1, w, h, 10, PHONE.dim);   // a hairline shadow under the card
+    roundRect(ctx, x, y, w, h, 10, PHONE.surface);
+    ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600); ctx.fillText(this.banner.from, x + 10, y + 8);
+    phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(this.storyClock, x + w - 34, y + 8);
+    phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, x + 10, y + 26 + i * 14));
     if (this.bannerPhoto) {
-      this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 10, 21 + h, 72, 72);
+      this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], x + 10, y + 30 + lines.length * 14, 72, 72);
     }
+    this.rects.unshift({ x, y, w, h, id: 'evening-banner' });
+  }
 
-    this.rects.unshift({ x: 2, y: 21, w: W - 4, h, id: 'evening-banner' });
+  /** S330 — the lock screen's messages, newest first, as cards on the wallpaper (one card per person). */
+  private drawLockCards(ctx: CanvasRenderingContext2D, W: number, H: number, top: number): number {
+    // one card per person, newest person first; the card shows that person's FIRST line (Orla's quiz, not her
+    // afterthought) and how many more wait, the way a lock screen groups a thread
+    const byFrom = new Map<string, { from: string; time: string; text: string; more: number; last: number }>();
+    this.evening.forEach((ev, i) => {
+      const e = ev as { from: string; time: string; text?: string };
+      const c = byFrom.get(e.from);
+      if (c) { c.more++; c.time = e.time; c.last = i; }
+      else byFrom.set(e.from, { from: e.from, time: e.time, text: e.text ?? '', more: 0, last: i });
+    });
+    const cards = [...byFrom.values()].sort((a, b) => b.last - a.last).slice(0, 3);
+    let y = top;
+    for (const c of cards) {
+      phoneFont(ctx, 11); const lines = phoneWrap(ctx, c.text, W - 40).slice(0, 2);
+      const h = 28 + lines.length * 14;
+      if (y + h > H - 48) break;
+      roundRect(ctx, 10, y, W - 20, h, 8, PHONE.surface);
+      ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600); ctx.fillText(c.from, 20, y + 7);
+      phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(c.time, W - 46, y + 8);
+      phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, 20, y + 24 + i * 14));
+      if (c.more) { phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(`+${c.more}`, W - 34, y + h - 14); }
+      this.rects.push({ x: 10, y, w: W - 20, h, id: `lock-card:${c.from}` });
+      y += h + 6;
+    }
+    return y;
   }
 
   private drawLock(ctx: CanvasRenderingContext2D, W: number, H: number): void {
@@ -416,13 +445,7 @@ export class PhoneE3 {
       this.rects.push({ x: ux, y: uy, w: uw, h: 26, id: 'unlock' });
     };
     if (this.stage === 'quiet') {
-      if (this.evening.some(e => e.id === 'arrival') && this.banner !== this.evening.find(e => e.id === 'arrival')) {
-        const text = mirrorCopy.events[0].text;
-        phoneFont(ctx, 11); const lines = phoneWrap(ctx, text, W - 40);
-        roundRect(ctx, 10, 125, W - 20, 30 + lines.length * 14, 8, PHONE.surface);
-        ctx.fillStyle = PHONE.ink; ctx.fillText(m.personalMessage.from, 20, 132);
-        lines.forEach((line, i) => ctx.fillText(line, 20, 152 + i * 14));
-      }
+      this.drawLockCards(ctx, W, H, 120);
       unlockPill();
       return;
     }
@@ -785,6 +808,7 @@ export class PhoneE3 {
 
   pressControl(id: string): boolean {
     const r = { id };
+    if (r.id.startsWith('lock-card:')) { this.openEvening(r.id.slice(10)); this.bump(); return true; }
     switch (r.id) {
       case 'evening-banner':
         if (this.banner?.text === m.link.headline || this.banner?.text === LINK_VOTE.headline) { this.openLink(this.banner.text === LINK_VOTE.headline ? 'link2' : 'link'); return true; }
