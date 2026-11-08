@@ -135,6 +135,10 @@ His answers, 8 Nov:
 | id | what | where | owner | size |
 |---|---|---|---|---|
 | T51 | Remove the red box beside the mouse on the 1997 desk | 1997 room | C | S |
+| T53 | 2016: retire Noa, Deb M. and Marisol from "Next story" (Deb M. stays a row in the campaign kit) — his 9 Nov | 2016 | C | S |
+| T54 | Noa's story moves to 2026 (his 9 Nov: "Noa can just exist in 2026") — a different person from Maya (guard 1); where she appears is to be designed | 2026 | C+S | M |
+| T55 | The 2016 Trending sources (US election, NPR; photo app hiding #lesbian, HuffPost UK; same-sex stickers removed, Jakarta Post) go on the 2016 site's Sources tab — his yes, 9 Nov | 2016 site | C | S |
+| T56 | A GracePlatform music loop, made by Claude in code (no licence question): calm 2016 "wellness app" pads + plucked melody, 60–90 s, seamless | 2016 | C | S |
 | T52 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
 
 ## Codex
