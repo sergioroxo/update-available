@@ -95,3 +95,51 @@ visible: injury judged, correction offered, testimony used as evidence.
 3. "Why this rule?" explained to him (see the chat). Pending his yes.
 4. **Story Record connects to the phone:** when she has seen her 2014 story "as sent" and "as published", Nuala's
    message arrives: "The second mug's still on the hook. I'm not making a thing of it."
+
+## His second answers (8 Nov), and the build spec they make
+
+- **Lambient teaches the rule (replaces the "Why this rule?" footer).** Lambient is the guide that teaches the
+  audience what the platform does: at each job it explains the rule in its own kind voice, the system explaining
+  itself. Sources stay on the era site (the frame), never in Lambient's mouth.
+- **No subtle objects as links.** An object connects only if something visibly HAPPENS to it.
+  - **The Wick card:** once The Wick is added to the places-to-avoid list, the stamp card on her desk gets a red
+    **BANNED** stamp across it.
+- **Refusing is possible, and the system does it anyway, aggressively.** Each job offers comply or refuse. Refusing
+  makes Lambient push, then reprimand, harder each time:
+  - "That's not how we keep the room gentle."
+  - "I've asked kindly."
+  - "Done for you. This has been noted."
+
+  Then "An administrator did it for you." His aim: people should try NOT to comply, and that refusal is what builds
+  toward the need for the update. No score, no counter shown.
+- **Just "Mentor".**
+- **Renata's edit is frontal, not subtle.** When Vera applies "name the dependency, not the person" to Renata, the
+  platform shows her own 2014 story beside it, with the same cut in the same red: "Your story was edited with this
+  rule too (2014)."
+- **Malta:** Vera is in Bea's thread on the phone, replying something positive (one press: "finally. about time x").
+  Then the system takes over GracePlatform and starts deleting by itself: the Malta posts, then her reply. The cascade
+  outnumbers it, and that is the reason for the update.
+- **Bea (decided by Claude):** a woman in the Maiden-to-be group who is quietly leaving the programme. She is the one
+  who shares the Malta news. That ties the group to Malta.
+- **Nuala (decided by Claude):** after the Story Record and before the campaign kit. When the kit uses Vera's 2014
+  story, the player has just met the person that story erased.
+- **The end (decided by Claude):** Orla's "missed you tonight x" stays the last human word; then the update.
+- **Sound:** no music per job. One loop for GracePlatform.
+- **Maiden-to-be:** very close to a 2016 private Facebook group (blue bar, cover photo, "Closed group", member count,
+  "Admin" badges), with an invented name and no real logo.
+- **What 2016 should leave you with (his):** even someone inside the system lives under a societal pressure that
+  agrees with the perpetrators against queer people. The platforms act against queer people, and **Trump won the US
+  election on 8 Nov 2016**, four weeks before this Tuesday (6 Dec). The election and platform takedowns of LGBTQ+
+  content appear as real, dated news on the phone and in the feed: documented facts only, with sources; anything not
+  verified is marked as the piece's inference.
+
+**Jobs (four, plus Malta), each with comply/refuse, Lambient's lesson, and the phone's answer:**
+1. Correct a testimony (Renata), with her own 2014 cut shown beside it → Mentor: "You and Orla text a lot…"
+2. The places list: add The Wick ("a lesbian bar, all welcome") to places to avoid → Orla: "quiz at the wick tonight…";
+   the card on her desk is stamped BANNED.
+3. Return the family calls → Mam: "Their women's group meets Tuesdays…"
+4. Post to the group (Maiden-to-be, the Facebook-like look) → the same check-in arrives on her own phone.
+5. Then the Story Record (her 2014 story, as sent and as published) → Nuala: "The second mug's still on the hook."
+   → the campaign kit uses her story.
+6. Malta: Bea's thread, her positive reply, the system deleting by itself, the cascade → Orla 22:51 "missed you
+   tonight x" → the update.
