@@ -75,3 +75,23 @@ visible: injury judged, correction offered, testimony used as evidence.
 2. Job 2: should Vera recognise the corner table? (The 22:51 photo makes the link for the player either way.)
 3. The "Why this rule?" footer: on every job, or only on the first time each rule appears?
 4. Keep the Story Record (her 2014 story) as it is, or connect it to the phone too (Nuala)?
+
+## His answers (8 Nov) and what changes
+
+1. **Fewer jobs.** The update's marker already exists: Malta's vote and the cascade, when the review queue is
+   outnumbered (S329 made the notice say so: "Tonight the review queue was outnumbered"). So job 6 is not a new job.
+   The cascade itself arrives on the platform as a removals queue, at the same moment as the forwards on the phone.
+   **Proposal: four jobs plus the existing Malta beat**:
+   - Correct a testimony ↔ the mentor;
+   - The places list (was Cut the Story) ↔ Orla;
+   - Return the family calls ↔ Mam;
+   - Post to the group ↔ the check-in.
+
+   "Clear the comments" folds into the Malta removals.
+2. **Job 2, made direct (his idea):** a user post names The Wick: "a lesbian bar, all welcome". The network keeps a
+   list of **places to avoid**. Vera must approve adding The Wick to it. Then Orla: "quiz at the wick tonight. dee's
+   keeping the corner table." Grounded in a documented practice (a ministry advising a woman to avoid lesbian venues,
+   2018); the list itself is the piece's inference.
+3. "Why this rule?" explained to him (see the chat). Pending his yes.
+4. **Story Record connects to the phone:** when she has seen her 2014 story "as sent" and "as published", Nuala's
+   message arrives: "The second mug's still on the hook. I'm not making a thing of it."
