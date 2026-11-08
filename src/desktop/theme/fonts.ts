@@ -44,7 +44,11 @@ export interface Face { family: string; /** weight for text at or under `boldBel
 export const FACES: Record<FaceEra, Face> = {
   e1: { family: MONO_HEAVY, boldBelow: 13 },
   e2: { family: MONO_HEAVY, boldBelow: 13 },
-  e3: { family: MONO_2016, boldBelow: 0 },
+  // ⚑ S327 (his 8 Nov headset session, 2016: "still like the issues with the lettering… now we have different styles of
+  //   fonts") — 2016 is ONE family: the platform sans its own pages (the testimony editor, the record, the send page)
+  //   already used, so the board, the buttons, the sign-in and the notices stop being monospace beside them. The
+  //   smallest sizes take a heavier weight so they hold up at headset distance.
+  e3: { family: SANS_2016, boldBelow: 10, weight: '600' },
   // ⚑ S321 — 2026 v3's presentation rules (DESIGN_2026_V3_PRESSURE §"Presentation rules" 5): "a bolder face. Replace
   //   the thin monospace with the era's bolder UI face. Monospace only for system lines" (`monoFor` below).
   e4: { family: SANS_2026, boldBelow: 99, weight: '600' },

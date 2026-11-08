@@ -224,6 +224,8 @@ const MALTA_AFTER_TASKS = 2;
  *  the phone (his 2026-10-10: "to speed up the narrative"). Read when asked, never at module load: the front door may
  *  choose the cut after this file is imported. */
 function maltaAfter(): number { return isSpeedrun() && !extraOn('work') ? 1 : MALTA_AFTER_TASKS; }
+/** ⚑ S327 — the evening's messages after Orla's, in story order (data/strings/e3_mirror.json `events`) */
+const EVENING_ORDER = ['job', 'decision', 'send', 'record-close'];
 
 type Outcome = 'applied' | 'skipped';
 
@@ -385,10 +387,40 @@ export class GraceQueueLite {
   wickConducting = false;
   get wickCue(): boolean { return this.personalArmed; }
   private personalWasQuiet = false;
-  get personalQuiet(): boolean { return this.wickConducting || this.phone.conductingNotes || this.mirrorReading || this.phone.personalOpen || this.phoneInHand; }
+  /** ⚑ S327 — a press on the Handset Window keeps the platform quiet only while that window is showing a person's
+   *  words (a thread, the inbox, the group). It used to stay quiet after ANY press there until the next press on the
+   *  platform, which is most of why "where is our guide?" (T25) had no answer: the tray was simply not drawn. */
+  get personalQuiet(): boolean { return this.wickConducting || this.phone.conductingNotes || (this.mirrorReading && this.phone.quietReading) || this.phone.personalOpen || this.phoneInHand || this.cascadeConduct; }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
-    this.personalArmed = true; this.phone.armPersonal(); this.phone.arrive('arrival'); this.bump();
+    // ⚑ S327 / T06 — the Wick card rises first (era3Devices, four seconds); Orla's message arrives after it settles
+    this.personalArmed = true; this.phone.armPersonal(); this.arrivalWait = 0; this.bump();
+  }
+  private arrivalWait = -1;
+  /** ⚑ S327 / T06 (his 8 Nov: "stories and the phone run by themselves… a Maiden-to-be message popped in while I pressed
+   *  the testimony editor") — the evening's other messages, in the order she EARNS them: each finished thing (a story,
+   *  the send, its receipt, her own record) earns the next, and the phone holds it until the platform is at rest. */
+  private earned = 0;
+  private earnNext(): void { const id = EVENING_ORDER[this.earned]; if (!id) return; this.earned++; this.phone.arrive(id); }
+  /** ⚑ S327 / T07 — the cascade, conducted: the Handset Window is brought forward over the board while the group fills */
+  private cascadeConduct = false;
+  private tailT = -1;
+  private afterQueued = false;
+  private afterT = -1;
+  /** ⚑ S327 / T07 — set each frame by era3Devices: the update notice is on this screen (nothing under it may glow or
+   *  speak), and whether it has been deferred (Remind me later) */
+  private _systemModal = false;
+  set systemModal(v: boolean) { if (v !== this._systemModal) { this._systemModal = v; this.bump(); } }
+  get systemModal(): boolean { return this._systemModal; }
+  private deferredSaid = false;
+  set updateDeferred(v: boolean) {
+    if (v && !this.deferredSaid) { this.deferredSaid = true; this.lambSay([LAMBIENT.updateDeferred], 'update-deferred'); this.bump(); }
+  }
+  /** ⚑ S327 / T07 — the update arrives for a STORY reason: the group's messages have outnumbered review (the cascade,
+   *  seen), Orla's last message has been delivered, and Lambient has said the board is still there. Then, and only
+   *  then, with nothing open and no other voice speaking (era3Devices adds its six quiet seconds). */
+  get updateReady(): boolean {
+    return this.afterSaid && this.afterT >= 5 && !this.cascadeConduct && !this.pauseOpen && !this.phone.voiceBusy && this.phone.queued === 0;
   }
   private clearPersonalNotice(): void {
     this.personalNotice = false; this.personalDesktop = false;
@@ -477,7 +509,6 @@ export class GraceQueueLite {
   private seenBoard = false;
   private seenTask = false;
   private afterSaid = false;
-  private phoneLinePending = false;
   private arrivalT = -1;   // < 0 = not running
   private lastTick = -1;
   private subIdx = 0;
@@ -617,6 +648,15 @@ export class GraceQueueLite {
       this.lambHoldT += dt; if (this.lambHoldT >= 10) { this.lambPriority = false; this.lambLines = null; this.bump(); }
     }
     this.guideWait.tick(dt, !!this.lambyGuide?.active);
+    // ⚑ S327 / T06 — ONE VOICE AT A TIME. The phone may deliver only while the platform is at rest: nothing open on it,
+    //   no Lambient line, no card, no guide balloon, no conducted beat, no system notice.
+    this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface))
+      && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this.focusOpen
+      && !this.wickConducting && !this.cascadeConduct && !this._systemModal && !this.lambyGuide?.active;
+    if (this.arrivalWait >= 0) {
+      this.arrivalWait += dt;
+      if (this.arrivalWait >= 4.2 && !this.wickConducting) { this.arrivalWait = -1; this.phone.arrive('arrival'); }
+    }
     if (this.personalDesktop && !this.phone.personalOpen) { this.personalDesktop = false; this.bump(); }
     if (this.phoneInHand || this.phone.personalSeen) {
       if (this.personalNotice) { this.personalNotice = false; this.bump(); }
@@ -637,19 +677,19 @@ export class GraceQueueLite {
       }
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
       //   "This week" card lists what else is open to her (only what is left); once
-      if (!this.pauseShown && !this.minimised && ledger.records.includes('e3-job-done') && this.boardQuietT > 6 && this.guideReady('pause')) {
+      if (!this.pauseShown && !this.minimised && !this.phone.voiceBusy && !this.maltaArrived && ledger.records.includes('e3-job-done') && this.boardQuietT > 6 && this.guideReady('pause')) {
         this.pauseShown = true;
         this.pauseLines = pauseItems('e3', this.floppyOpened ? ['floppy'] : []);
         if (this.pauseLines.length) { this.pauseOpen = true; this.waitSaid = true; this.bump(); }
       }
       // ⚑ S209 / P7-47 — GracePlatform's Today's language: once, after the "This week" card, on a quiet board
       // ⚑ S219 / W1-B14 — no longer behind the pause (it never came for a busy player); a quiet board is enough
-      if (!this.wotdSaid && !this.pauseOpen && this.boardQuietT > 12 && this.guideReady('wotd')) {
+      if (!this.wotdSaid && !this.pauseOpen && !this.phone.voiceBusy && !this.maltaArrived && this.boardQuietT > 12 && this.guideReady('wotd')) {
         const app = lexStrings.wotdApps.e3;
         const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
         if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? ''], 'wotd'); this.bump(); }
       }
-      if (!this.waitSaid && this.boardQuietT > 25 && this.guideReady('waiting')) {
+      if (!this.waitSaid && !this.phone.voiceBusy && !this.maltaArrived && this.boardQuietT > 25 && this.guideReady('waiting')) {
         // ⚑ S227 (VERA_OPTIONS §4c.2) — only a job that is ON the board and unfinished is named: mounted is not enough
         //   now that most of the day arrives by update
         const waiting = ([['group', LAMBIENT.waitLine1], ['family', LAMBIENT.waitFamily], ['recommend', LAMBIENT.waitLine2]] as const)
@@ -664,13 +704,22 @@ export class GraceQueueLite {
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
     this.phone.tick(dt, (this.phoneInHand || this.mirrorAvailable) && !this.floppy.open); // ⚑ the cascade's own clock, and the only one on the phone
-    // ⚑ and when it has been outnumbered, Lambient says the thing about the
-    //   board. Once, on the frame the phone reports `broken`.
-    if (this.phone.broken && !this.afterSaid && this.guideReady('after-phone')) {
-      this.phone.arrive('after');
-      this.afterSaid = true;
-      this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2], 'after-phone');
-      this.bump();
+    // ⚑ S327 / T07 — THE TAIL, one voice at a time: the cascade ends and holds a moment on the open thread; the
+    //   Handset Window goes back to its place; Orla's last message arrives (felt); then Lambient says the board is still
+    //   there; then — `updateReady` — the update. Nothing here waits on a press, and nothing here is on a timer the
+    //   visitor must beat: each step waits for the one before it to be read.
+    if (this.phone.broken) {
+      if (this.cascadeConduct) {
+        this.tailT = this.tailT < 0 ? 0 : this.tailT + dt;
+        if (this.tailT >= 2.5) { this.cascadeConduct = false; this.mirrorLarge = false; this.mirrorReading = false; this.bump(); }
+      } else if (!this.afterQueued) { this.afterQueued = true; this.phone.arrive('after'); }
+      if (this.afterQueued && !this.afterSaid && this.phone.delivered('after') && this.phone.queued === 0 && !this.phone.voiceBusy
+        && this.phone.atRest && this.guideReady('after-phone')) {
+        this.afterSaid = true; this.afterT = 0;
+        this.lambSay([LAMBIENT_AFTER1, LAMBIENT_AFTER2], 'after-phone');
+        this.bump();
+      }
+      if (this.afterSaid) this.afterT += dt;
     }
     if (this.arrivalT >= 0) {
       this.arrivalT += dt;
@@ -1112,7 +1161,6 @@ export class GraceQueueLite {
     if (!this.seenTask) {
       this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]); this.bump(); return;
     }
-    this.phone.arrive('job');
     const mounted = this.surfaces.get(t.id);
     this.chipReturn = null;
     if (mounted) {
@@ -1177,7 +1225,6 @@ export class GraceQueueLite {
     const sub = this.submission();
     const item = this.current();
     if (this.mode !== 'list' || !sub || !item) return;
-    this.phone.arrive('decision');
     playOnce('tick_task.mp3');   // S141: APPLY and SKIP share ONE tick — the record files both
     this.decisions.set(item.id, outcome);
     this.lambLines = null; // the beat is over the moment she uses either verb
@@ -1190,7 +1237,7 @@ export class GraceQueueLite {
       // S158 / R3-74 (Sérgio: "when I finish a section there should be a button at the bottom
       // to go back to the panel"): the story HOLDS, finished, with the way back and the way on
       // — nothing loads by itself. The break arms here, as before.
-      this.phone.conductNotes(); this.mirrorMin = false;
+      this.earnNext();   // S327: held until she is back on the board, at rest
       this.storyDone = true;
       if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
       if (this.workDone() >= maltaAfter()) this.armMalta();
@@ -1242,7 +1289,6 @@ export class GraceQueueLite {
     if (!ledger.records.includes('e3-two-jobs')) ledger.records.push('e3-two-jobs');
     playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk
     this.phone.arm();
-    this.phoneLinePending = true;
     this.phoneV++;
     this.bump();
   }
@@ -1368,7 +1414,7 @@ export class GraceQueueLite {
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, platformW, H); ctx.clip();
     this.drawSurfaceContent(ctx, platformW, H);
     // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
-    if (!this.personalQuiet && !['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active && this.veraPage !== 'record' && !veraDay.quiet) {
+    if (!this.personalQuiet && !this._systemModal && !['dark', 'boot', 'install'].includes(this.mode) && !this.saver && !this.startMap.active && this.veraPage !== 'record' && !veraDay.quiet) {
       const ids = stepTargets('e3', buildStartModel(undefined, 'e3').now?.id);
       if (this.doneT >= 0 || this.storyDone) ids.add('board-back');
       if (this.mode === 'list' && !this.openSurface && this.current()) ids.delete('board-back');
@@ -1386,8 +1432,13 @@ export class GraceQueueLite {
     }
 
     this.lambyGuide?.resolveFocusTargets(new Set(this.rects.map(r => r.id)));
-    if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this.lambPriority) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
-    if (this.guideFocus && !this.guideSilent && !this.guideVoice) {
+    // ⚑ S327 / T25 (his 8 Nov: "where is our guide?") — the guide's tray is drawn whenever the platform is not in a felt
+    //   scene, including while Lambient's lane is speaking (the guide's own state hides its balloon then: one voice);
+    //   under the system's update notice nothing of the platform's may glow or point (T07: "the highlight boxes from
+    //   the previous panel")
+    this.lambyGuidePaint = { rings: [], balloon: false };
+    if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this._systemModal) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
+    if (this.guideFocus && !this.guideSilent && !this.guideVoice && !this._systemModal) {
       const r = this.rects.find(r => r.id === this.guideFocus!.id);
       if (r) drawGuidePointer(ctx, r, { x: platformW - 172, y: H - 24 }, ERA3.accent, 0);
     }
@@ -1418,12 +1469,15 @@ export class GraceQueueLite {
     aero.button(ctx, tx, H - 24, 180, 21, `${mirrorCopy.title} · ${this.phone.unreadCount}`, { size: 10 });
     this.rects.unshift({ x: tx, y: H - 24, w: 180, h: 21, id: 'mirror-restore' });
     if (this.mirrorMin) return;
+    // S327: brought forward over the board (the cascade, or her own larger view), its usual place shows the desktop
+    if (this.mirrorLarge) { ctx.save(); ctx.beginPath(); ctx.rect(W - 192, 0, 192, H - 28); ctx.clip(); aero.wallpaper(ctx, W, H); ctx.restore(); }
     const w = this.mirrorLarge ? 280 : 188, x = this.mirrorLarge ? Math.round((W - w) / 2) : W - w;
     const h = H - 30;
     px(ctx, x, 0, w, h, ERA3.sysBand); px(ctx, x, 0, w, 25, ERA3.grey);
     setFont(ctx, 12); ctx.fillStyle = ERA3.white; ctx.fillText(mirrorCopy.title, x + 9, 7);
-    ctx.fillText('−', x + w - 22, 7);
-    this.rects.unshift({ x, y: 0, w: w - 30, h: 25, id: 'mirror-enlarge' }, { x: x + w - 30, y: 0, w: 30, h: 25, id: 'mirror-min' });
+    // ⚑ S327 / T31 (his 8 Nov: "it should not have a minimise button") — her phone does not go away; the title bar
+    //   still opens the larger reading view
+    this.rects.unshift({ x, y: 0, w, h: 25, id: 'mirror-enlarge' });
     this.mirrorCanvas ??= document.createElement('canvas');
     const phoneH = this.mirrorLarge && !this.floppy.open ? 240 : 360;
     this.mirrorCanvas.width = 180; this.mirrorCanvas.height = phoneH;
@@ -1632,37 +1686,38 @@ export class GraceQueueLite {
       drawVeraDistribution(ctx, c, this.runs(SUBMISSIONS[0], false).map(r => r.text).join(''), this.sendReceipt, hit); return;
     }
     if (this.takenDown) { drawRetainedCopies(ctx, c, this.kitApproved, hit); return; }
-    const x = c.x + 24, y = c.y + 18, w = c.w - 48;
-    px(ctx, c.x, c.y, c.w, c.h, ERA3.white);
-    const paragraph = (text: string, yy: number, size = 15, width = w): number => {
-      setFont(ctx, size); ctx.fillStyle = ERA3.ink;
-      const lines = wrapText(ctx, text, width);
-      lines.forEach((line, i) => ctx.fillText(line, x, yy + i * (size + 4)));
-      return yy + lines.length * (size + 4) + 8;
-    };
-    const button = (id: string, label: string, bx: number, by: number, bw: number, primary = false): void => {
-      aero.button(ctx, bx, by, bw, 30, label, { primary, size: 11 });
-      this.rects.push({ x: bx, y: by, w: bw, h: 30, id });
-    };
-    {
-      const k = vera.kit;
-      let yy = paragraph(k.title, y, 18);
-      if (this.takenDown) {
-        yy = paragraph(k.takeDown, yy + 8, 16);
-        for (const line of k.receipt) yy = paragraph(line, yy + 6, 16);
-        yy = paragraph(this.kitApproved ? k.approved : k.consent, yy + 8, 12);
-      } else {
-        yy = paragraph(this.kitApproved ? k.approved : k.intro, yy, 13);
-        for (const story of k.stories) yy = paragraph(story, yy, 13);
-        yy = paragraph(k.consent, yy, 11); yy = paragraph(k.terms, yy, 11);
-        yy = paragraph(k.footer, yy, 11);
-
-      }
-      const by = c.y + c.h - 88;
-      if (!this.takenDown) button('vera-take-down', k.takeDown, x, by, 132);
-      if (!this.kitApproved) button('vera-kit-approve', k.approve, x + 138, by, 116, true);
-      button('vera-kit-close', k.back, x + w - 144, by, 144);
+    // ⚑ S327 / T23 + T24 (his 8 Nov: "impossible to understand what this is… different fonts"; "the Malta thing, what's
+    //   happening?") — ONE family (the 2016 platform sans, as every other Vera page), a heading that says what it is,
+    //   ONE plain line saying why it is here (Malta's parliament voted; the network's campaign answers), the three
+    //   stories as three rows, the small print small, and one primary button.
+    const k = vera.kit, x = c.x + 16, w = c.w - 32;
+    px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
+    studioFont(ctx, 20, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(k.heading, x, c.y + 10);
+    studioFont(ctx, 14); ctx.fillStyle = ERA3.ink;
+    let yy = c.y + 42;
+    for (const line of wrapText(ctx, this.kitApproved ? k.approved : k.intro, w)) { ctx.fillText(line, x, yy); yy += 19; }
+    yy += 6;
+    for (const story of k.stories) {
+      const [who, ...what] = story.split(' · ');
+      px(ctx, x + 2, yy + 2, w, 34, ERA3.glassEdge); px(ctx, x, yy, w, 34, ERA3.white);
+      px(ctx, x, yy, 4, 34, ERA3.memberSpine);
+      studioFont(ctx, 14, true); ctx.fillStyle = ERA3.ink; ctx.fillText(who, x + 14, yy + 10);
+      studioFont(ctx, 13); ctx.fillStyle = ERA3.greyDk; ctx.fillText(what.join(' · '), x + 130, yy + 11);
+      yy += 40;
     }
+    yy += 4;
+    studioFont(ctx, 11); ctx.fillStyle = ERA3.greyDk;
+    for (const t of [`${k.consent} · ${k.terms}`, k.footer]) for (const line of wrapText(ctx, t, w)) { ctx.fillText(line, x, yy); yy += 14; }
+    const by = c.y + c.h - 40, bh = 30;
+    const button = (id: string, label: string, bx: number, bw: number, primary = false): void => {
+      aero.button(ctx, bx, by, bw, bh, label, { primary, size: 12 });
+      this.rects.push({ x: bx, y: by, w: bw, h: bh, id });
+    };
+    button('vera-take-down', k.takeDown, x, 136);
+    if (!this.kitApproved) {
+      button('vera-kit-close', k.back, x + w - 276, 118);
+      button('vera-kit-approve', k.approve, x + w - 150, 150, true);
+    } else button('vera-kit-close', k.back, x + w - 150, 150, true);
   }
 
   private drawBoard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
@@ -2507,7 +2562,7 @@ export class GraceQueueLite {
   private drawLambientLane(
     ctx: CanvasRenderingContext2D, c: aero.AeroContent, line: string | string[]
   ): void {
-    if (this.personalQuiet) return;
+    if (this.personalQuiet || this._systemModal) return;
     const raw = Array.isArray(line) ? line : [line];
     setFont(ctx, 11);
     const tagW = 22 + 60;
@@ -2555,26 +2610,36 @@ export class GraceQueueLite {
     }
     if (vh?.id === 'vera-record-next' || vh?.id === 'vera-record-prev') { this.recordPage += vh.id === 'vera-record-next' ? 1 : -1; this.bump(); return; }
     if (vh?.id === 'vera-record-close') {
-      this.phone.bannersHidden = false; this.phone.arrive('record-close');
+      this.phone.bannersHidden = false; this.earnNext();
       veraDay.recordClosed = true; veraDay.quiet = false;
       this.veraPage = 'kit'; this.mode = 'board';
-      this.phone.presentInbox(); this.bump(); return;
+      this.bump(); return;   // S327: the phone is not turned to its inbox by itself
     }
     if (vh?.id === 'vera-send') {
-      this.phone.arrive('send');
+      this.earnNext();
       veraDay.distributed = true; this.sendReceipt = true;
       this.surfaces.get('group')?.press('group-post');
       ledger.era3Jobs.push({ id: 'pipeline', witness: vera.send.sent }); this.bump(); return;
     }
     if (vh?.id === 'vera-send-close') {
+      this.earnNext();
       this.veraPage = null; this.storyOffer = true; this.bump(); return;
     }
-    if (vh?.id === 'vera-kit-approve') { this.armMalta(); this.kitApproved = true; ledger.era3Jobs.push({ id: 'kit', witness: vera.kit.witnessApproved }); this.bump(); return; }
+    // S327: approving changes the kit's own page only; the news waits for her to leave it (one voice at a time)
+    if (vh?.id === 'vera-kit-approve') { this.kitApproved = true; ledger.era3Jobs.push({ id: 'kit', witness: vera.kit.witnessApproved }); this.bump(); return; }
     if (vh?.id === 'vera-take-down') { this.takenDown = true; ledger.era3Jobs.push({ id: 'take-down', witness: vera.kit.witnessRemoved }); this.bump(); return; }
     if (vh?.id === 'vera-kit-close') {
       veraDay.kitClosed = true; this.veraPage = null; this.mode = 'board';
       if (!this.kitApproved) { this.kitApproved = true; ledger.era3Jobs.push({ id: 'kit', witness: vera.kit.witnessAdmin }); }
-      this.armMalta(); this.phone.advanceNews(); if (this.phoneLinePending) { this.phoneLinePending = false; this.lambSay([LAMBIENT.phone1, LAMBIENT.phone2]); } this.bump(); return;
+      // ⚑ S327 / T07 — MALTA, CONDUCTED. The kit is the network's answer to the vote; leaving it, the news arrives on
+      //   her phone and the piece TAKES HER THERE: the Handset Window comes forward over the board on the group's
+      //   thread, and the group fills faster than any review can. Lambient says nothing while it runs (the group is
+      //   felt). The window goes back to its place when the cascade has ended (see the tail in update()).
+      this.armMalta(); this.phone.advanceNews();
+      if (this.floppy.open) this.floppy.closeGame();
+      this.cascadeConduct = true; this.tailT = -1; this.mirrorMin = false; this.mirrorLarge = true; this.mirrorReading = true;
+      this.phone.showGroup(); this.lambPriority = false; this.lambLines = null;
+      this.bump(); return;
     }
     this.boardQuietT = 0;
     if (this.saver) { this.saver = null; this.bump(); return; }   // S208 — a press wakes it, and does nothing else

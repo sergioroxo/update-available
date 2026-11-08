@@ -154,8 +154,8 @@
   "toEra": "e4",
   "notifyTitle": "GracePlatform — Important Changes",
   "notify": [
-   "A submission could not be processed",
-   "as written.",
+   "Tonight the review queue was outnumbered.",
+   "Messages went out that nobody reviewed.",
    "",
    "Kindredraft is being archived.",
    "GracePlatform is joining Continuity,",
@@ -166,6 +166,8 @@
   ],
   "updateNow": "Update now",
   "remindLater": "Remind me later",
+  "remindedOnHost": true,
+  "_docS327": "⚑ S327 / T07 (his 8 Nov: 'nothing happened here in terms of storyline'): the notice's first two lines name the failure the era has just shown — the group's messages, forwarded faster than review can read them (the cascade, conducted on her phone). `remindedOnHost`: the deferral's standing line is the platform's own (Lambient, s3_queue.json `updateDeferred`), not the 1997 bevelled strip drawn over 2016's glass.",
   "eulaTitle": "Continuity of Care — Terms of Service",
   "eula": [
    [

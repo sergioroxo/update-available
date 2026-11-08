@@ -233,12 +233,10 @@
         ]
       },
       "update": {
-        "tip": "Put the phone down. The system has an update waiting.",
-        "here": "The banner is at the top of Today.",
+        "tip": "GracePlatform will ask about its update once more. Update now carries on.",
+        "here": "The notice comes back on this screen.",
         "again": "The update is still waiting.",
-        "target": [
-          "board-back"
-        ]
+        "target": []
       },
       "pipeline": {
         "tip": "One story, four destinations. Send it when ready.",
