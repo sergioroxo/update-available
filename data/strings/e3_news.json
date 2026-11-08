@@ -3,8 +3,20 @@
  "label": "Trending",
  "source": "The Continental Wire",
  "items": [
-  { "date": "10 Nov", "text": "After the US election result, LGBT rights groups fear federal protections will be undone" },
-  { "date": "26 May", "text": "Photo app hides recent posts tagged #lesbian, #gays and #bi" },
-  { "date": "13 Feb", "text": "Messaging app removes same-sex couple stickers after a government warning" }
- ]
+  {
+   "date": "10 Nov",
+   "text": "After the US election result, LGBT rights groups fear federal protections will be undone"
+  },
+  {
+   "date": "26 May",
+   "text": "Photo app hides recent posts tagged #lesbian, #gays and #bi"
+  }
+ ],
+ "_retiredItems": [
+  {
+   "date": "13 Feb",
+   "text": "Messaging app removes same-sex couple stickers after a government warning"
+  }
+ ],
+ "_docRetired": "Verified (Jakarta Post, 13 Feb 2016) but taken off screen: the Trending box never had room for a third item from the seat (S332 photographs). Kept here as a record."
 }
