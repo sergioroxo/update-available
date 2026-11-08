@@ -1,29 +1,34 @@
-import polish from '../../../data/strings/playtestPolish.json';
 /**
- * ⚑ S200 — POST TO THE GROUP (2016). Data and grounding: data/dialog/s3_group.json. A job on Vera's board (TaskSurface).
+ * ⚑ S200 → S332 — POST TO THE GROUP (2016, job 4). Data and grounding: data/dialog/s3_group.json.
  *
- * His visual archive (2026-09-29): in 2016 "the ministry disappears into platforms" — a group lives inside the
- * social network's OWN frame (the blue header, the cover, Joined / Invite, post cards with likes, comments and
- * shares, a sidebar of suggested groups), and "the institution becomes visually subordinate". Vera posts the week's
- * testimony to the network's private group; the platform does the rest. The post's text is written for her (no
- * free typing); Post publishes it, and the platform reports it back as a count. Filed as The recommendation.
- * Every mark is invented ("gather", the group, the members).
+ * His second answers (8 Nov): the group is Maiden-to-be, drawn very close to a 2016 private group on a social
+ * network — the blue bar, the cover photo, "Closed group", the member count, "Admin" badges — with an invented
+ * platform name and no real logo. Vera is one of its admins. She posts this week's check-in (written for her, no
+ * typing), and the same check-in then arrives on her own phone: she writes the rule and is ruled by it.
+ * Comply (Post) or refuse (Not this week): refusing climbs the shift's one ladder (lambientDesk.ts), and the post goes
+ * up anyway, by Lambient or by an administrator. The Trending box carries the year's real news (e3Trending.ts).
+ * The women's posts are their own words: nothing comments on them.
  */
-import { px, setFont } from '../theme/chrome';
+import { px, setFont, wrapText } from '../theme/chrome';
 import { ERA3, button, GATHER as G } from '../theme/era3';
 import { ledger } from '../../state/ledger';
 import type { TaskSurface, TaskArea, TaskHit } from './taskSurface';
+import { refuse, drawLambientNote, noteBand, type DeskNote, type Voice } from './lambientDesk';
+import { drawTrending } from './e3Trending';
 import D from '../../../data/dialog/s3_group.json';
+
+type Post = { who: string; admin?: boolean; when: string; text: string; stats: string };
 
 export class GroupTask implements TaskSurface {
   readonly id = 'group';
   readonly windowTitle = D.title;
-  readonly beats = ['open', 'posted'] as const;
+  readonly beats = ['open', 'posted', 'refused'] as const;
   private v = 0;
-  private posted = false;
+  private by: 'you' | Voice | null = null;
+  private note: DeskNote | null = null;
 
   version(): number { return this.v; }
-  complete(): boolean { return this.posted; }
+  complete(): boolean { return this.by !== null; }
 
   thumb(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
     px(ctx, x, y, w, h, G.page);
@@ -32,80 +37,115 @@ export class GroupTask implements TaskSurface {
     for (let i = 0; i < 3 && y + 28 + i * 10 < y + h - 4; i++) px(ctx, x + 4, y + 28 + i * 10, w - 8, 7, G.card);
   }
 
+  private badge(ctx: CanvasRenderingContext2D, x: number, y: number): number {
+    setFont(ctx, 7);
+    const w = ctx.measureText(D.adminBadge).width + 6;
+    px(ctx, x, y, w, 10, G.page); ctx.fillStyle = G.blue; ctx.fillText(D.adminBadge, x + 3, y + 1);
+    return w;
+  }
+
   draw(ctx: CanvasRenderingContext2D, a: TaskArea, hit: (r: TaskHit) => void): void {
-    // the platform's own frame: the blue bar, its name, its search
+    // the network's own frame: the blue bar, its name, its search
     px(ctx, a.x, a.y, a.w, 22, G.blue);
     setFont(ctx, 13); ctx.fillStyle = G.white; ctx.fillText(D.platform, a.x + 8, a.y + 4);
     px(ctx, a.x + 70, a.y + 5, 200, 12, G.search);
     setFont(ctx, 8); ctx.fillStyle = ERA3.grey; ctx.fillText(D.searchHint, a.x + 76, a.y + 7);
     const b = { x: a.x, y: a.y + 24, w: a.w, h: a.h - 24 };
     px(ctx, b.x, b.y, b.w, b.h, G.page);
-    // the cover, the group's square, its name and its buttons
-    px(ctx, b.x + 6, b.y + 4, b.w - 12, 34, G.cover);
-    px(ctx, b.x + 14, b.y + 20, 30, 30, G.white);
-    px(ctx, b.x + 16, b.y + 22, 26, 26, G.profile);
-    setFont(ctx, 12); ctx.fillStyle = ERA3.ink; ctx.fillText(D.group.name, b.x + 52, b.y + 40);
-    setFont(ctx, 8); ctx.fillStyle = ERA3.grey; ctx.fillText(D.group.meta, b.x + 52, b.y + 54);
+    // the cover photo (two figures' worth of soft field, no faces), the group's name, closed, the count, the buttons
+    px(ctx, b.x + 6, b.y + 4, b.w - 12, 40, G.cover);
+    px(ctx, b.x + 6, b.y + 30, b.w - 12, 14, G.profile);
+    setFont(ctx, 14); ctx.fillStyle = ERA3.ink; ctx.fillText(D.group.name, b.x + 10, b.y + 50);
+    setFont(ctx, 9); ctx.fillStyle = ERA3.grey; ctx.fillText(D.group.meta, b.x + 10, b.y + 67);
     let bx = b.x + b.w - 8;
     for (const t of [...D.group.buttons].reverse()) {
       setFont(ctx, 9);
       const w = ctx.measureText(t).width + 14; bx -= w + 4;
-      px(ctx, bx, b.y + 42, w, 14, G.card); ctx.fillStyle = ERA3.ink; ctx.fillText(t, bx + 7, b.y + 44);
+      px(ctx, bx, b.y + 52, w, 16, G.card); ctx.fillStyle = ERA3.ink; ctx.fillText(t, bx + 7, b.y + 55);
     }
-    // two columns: the feed, and the sidebar
-    const colW = Math.round(b.w * 0.62), fx = b.x + 6, sx = fx + colW + 8, sw = b.w - colW - 20;
-    let y = b.y + 64;
-    // the composer — written for her
-    px(ctx, fx, y, colW, this.posted ? 40 : 57, G.card);
-    setFont(ctx, 8); ctx.fillStyle = ERA3.grey; ctx.fillText(this.posted ? D.composerEmpty : D.composerLabel, fx + 6, y + 4);
-    if (!this.posted) {
-      setFont(ctx, 9); ctx.fillStyle = ERA3.ink; ctx.fillText(D.post.text, fx + 6, y + 16);
-      setFont(ctx, 8); ctx.fillStyle = ERA3.greyDk; ctx.fillText(polish.attachment, fx + 6, y + 30);
-      button(ctx, fx + colW - 56, y + 39, 50, 14, D.postButton, { primary: true, size: 9 });
-      hit({ x: fx + colW - 56, y: y + 39, w: 50, h: 14, id: 'group-post' });
+    const colW = Math.round(b.w * 0.6), fx = b.x + 6, sx = fx + colW + 8, sw = b.w - colW - 20;
+    let y = b.y + 80;
+    // the composer — this week's check-in, drafted for her
+    if (!this.by) {
+      setFont(ctx, 10);
+      const draft = wrapText(ctx, D.post.text, colW - 12);
+      const ch = 22 + draft.length * 13 + 32;
+      px(ctx, fx, y, colW, ch, G.card);
+      setFont(ctx, 8); ctx.fillStyle = ERA3.grey; ctx.fillText(D.composerLabel, fx + 6, y + 5);
+      setFont(ctx, 10); ctx.fillStyle = ERA3.ink;
+      draft.forEach((ln, i) => ctx.fillText(ln, fx + 6, y + 19 + i * 13));
+      const by = y + ch - 26;
+      button(ctx, fx + colW - 66, by, 60, 20, D.postButton, { primary: true, size: 10 });
+      button(ctx, fx + colW - 160, by, 88, 20, D.refuseButton, { size: 10 });
+      hit({ x: fx + colW - 66, y: by, w: 60, h: 20, id: 'group-post' });
+      hit({ x: fx + colW - 160, y: by, w: 88, h: 20, id: 'group-refuse' });
+      y += ch + 4;
     }
-    y += this.posted ? 46 : 63;
-    // the feed: hers on top once posted, then the others
-    const posts = this.posted ? [{ who: D.post.who, when: D.post.when, text: D.post.text, link: D.post.link, stats: D.post.seen }, ...D.feed] : D.feed;
+    // Lambient teaches the rule under the composer (the tool's voice, never on the women's posts)
+    {
+      const note = this.note ?? { line: D.teach, voice: 'lambient' as Voice };
+      setFont(ctx, 10);
+      const nh = 16 + Math.max(0, wrapText(ctx, note.line, colW - 12).length - 1) * 13 + 6;
+      noteBand(ctx, fx, y, colW, nh + 2);
+      drawLambientNote(ctx, fx + 5, y + 5, colW - 10, note, 10);
+      y += nh + 8;
+    }
+    // the feed: hers on top once posted, then the women's
+    const mine: Post | null = this.by ? {
+      who: D.post.who, admin: true,
+      when: this.by === 'you' ? D.post.when : this.by === 'admin' ? D.post.byAdmin : D.post.byLambient,
+      text: D.post.text, stats: D.post.seen
+    } : null;
+    const posts: Post[] = mine ? [mine, ...D.feed] : D.feed;
     for (const p of posts) {
-      const ph = p.link ? 58 : 48;
+      setFont(ctx, 10);
+      const lines = wrapText(ctx, p.text, colW - 12);
+      const ph = 30 + lines.length * 13 + 14;
       if (y + ph > b.y + b.h) break;
       px(ctx, fx, y, colW, ph, G.card);
-      px(ctx, fx + 6, y + 5, 14, 14, G.profile);
-      setFont(ctx, 9); ctx.fillStyle = G.blue; ctx.fillText(p.who, fx + 24, y + 4);
-      setFont(ctx, 7); ctx.fillStyle = ERA3.grey; ctx.fillText(p.when, fx + 24, y + 14);
-      setFont(ctx, 9); ctx.fillStyle = ERA3.ink;
-      ctx.save(); ctx.beginPath(); ctx.rect(fx, y, colW - 4, ph); ctx.clip();
-      ctx.fillText(p.text, fx + 6, y + 24);
-      if (p.link) { px(ctx, fx + 6, y + 34, colW - 12, 12, G.search); setFont(ctx, 8); ctx.fillStyle = ERA3.greyDk; ctx.fillText(p.link, fx + 10, y + 36); }
-      ctx.restore();
-      setFont(ctx, 7); ctx.fillStyle = ERA3.grey; ctx.fillText(p.stats, fx + 6, y + ph - 10);
+      px(ctx, fx + 6, y + 6, 16, 16, G.profile);
+      setFont(ctx, 10); ctx.fillStyle = G.blue; ctx.fillText(p.who, fx + 28, y + 5);
+      const nw = ctx.measureText(p.who).width;
+      if (p.admin) this.badge(ctx, fx + 32 + nw, y + 6);
+      setFont(ctx, 8); ctx.fillStyle = ERA3.grey; ctx.fillText(p.when, fx + 28, y + 17);
+      setFont(ctx, 10); ctx.fillStyle = ERA3.ink;
+      lines.forEach((ln, i) => ctx.fillText(ln, fx + 6, y + 30 + i * 13));
+      setFont(ctx, 8); ctx.fillStyle = ERA3.grey; ctx.fillText(p.stats, fx + 6, y + ph - 11);
       y += ph + 5;
     }
-    // the sidebar: About, and the groups it suggests next
-    let sy = b.y + 64;
-    px(ctx, sx, sy, sw, 50, G.card);
-    setFont(ctx, 9); ctx.fillStyle = ERA3.ink; ctx.fillText(D.about.label, sx + 6, sy + 4);
+    // the sidebar: About, then Trending
+    let sy = b.y + 80;
+    const aboutH = 18 + D.about.lines.length * 11 + 4;
+    px(ctx, sx, sy, sw, aboutH, G.card);
+    setFont(ctx, 10); ctx.fillStyle = ERA3.ink; ctx.fillText(D.about.label, sx + 7, sy + 5);
     setFont(ctx, 8); ctx.fillStyle = ERA3.greyDk;
-    D.about.lines.forEach((l, i) => ctx.fillText(l, sx + 6, sy + 17 + i * 10));
-    sy += 56;
-    px(ctx, sx, sy, sw, 16 + D.suggested.items.length * 16, G.card);
-    setFont(ctx, 9); ctx.fillStyle = ERA3.ink; ctx.fillText(D.suggested.label, sx + 6, sy + 4);
-    D.suggested.items.forEach((t, i) => {
-      setFont(ctx, 8); ctx.fillStyle = G.blue; ctx.fillText(t, sx + 6, sy + 18 + i * 16);
-      ctx.fillStyle = ERA3.grey; ctx.fillText(D.suggested.join, sx + sw - 28, sy + 18 + i * 16);
-    });
+    D.about.lines.forEach((l, i) => ctx.fillText(l, sx + 7, sy + 19 + i * 11));
+    sy += aboutH + 6;
+    drawTrending(ctx, sx, sy, sw, b.y + b.h - sy - 4, G.blue);
   }
 
   press(id: string): boolean {
-    if (id === 'group-post' && !this.posted) {
-      this.posted = true;
-      ledger.era3Jobs.push({ id: 'group', witness: D.witness });
+    if (this.by) return false;
+    if (id === 'group-post') { this.finish('you'); return true; }
+    if (id === 'group-refuse') {
+      const ans = refuse(D.refusedWhat);
+      this.note = { line: ans.line, voice: ans.voice };
+      if (ans.forced) this.finish(ans.voice);
       this.v++;
       return true;
     }
     return false;
   }
 
-  debugBeat(beat: string): void { if (beat === 'posted') this.press('group-post'); this.v++; }
+  private finish(by: 'you' | Voice): void {
+    this.by = by;
+    ledger.era3Jobs.push({ id: 'group', witness: D.witness });
+    this.v++;
+  }
+
+  debugBeat(beat: string): void {
+    if (beat === 'posted') this.press('group-post');
+    if (beat === 'refused') this.press('group-refuse');
+    this.v++;
+  }
 }

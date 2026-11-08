@@ -4,15 +4,18 @@
   "app": {
     "title": "GracePlatform · Family",
     "heading": "FAMILY LINE",
-    "sub": "Three parents waiting. Reply, or mark handled.",
+    "sub": "Three parents waiting. Send a reply, or don't.",
     "queueLabel": "WAITING",
     "replyLabel": "SUGGESTED REPLIES",
     "handledTag": "handled",
     "sentTag": "sent",
-    "noReplyLabel": "Mark handled without replying",
+    "noReplyLabel": "Don't send a script",
     "roleLine": "You are answering as Parents & Family Ministry.",
     "doneHeading": "The line is clear.",
-    "doneSub": "New messages arrive through the week."
+    "doneSub": "New messages arrive through the week.",
+    "noReplyLabelBeforeS332": "Mark handled without replying",
+    "sentByLambient": "sent by Lambient",
+    "sentByAdmin": "sent by an administrator"
   },
   "_docParents": "THREE MOTHERS, AND THE THIRD IS THE SCENE. The first two can be answered with something the tool actually has. The third asks a question no template on this screen can reach, and there is no field that could answer it — which is the whole finding, made playable. She is not asking for advice. She is asking for an address the organisation has and she does not.",
   "parents": [
@@ -75,6 +78,9 @@
   },
   "lambient": {
     "onOpen": "Four replies cover almost everything. Warmth first, then the truth.",
-    "onQuiet": "That one's outside what we send. Mark it handled."
-  }
+    "onQuiet": "That one's outside what we send. Mark it handled.",
+    "teach": "Families need words. We give them gentle ones: warmth first, then the truth."
+  },
+  "forcedReply": "r_boundaries",
+  "_docS332": "⚑ S332 — comply or refuse (his 8 Nov): a suggested reply is complying; \"Don't send a script\" is refusing, and it climbs the shift's one ladder (s3_queue.json `refusal`): Lambient asks again, then reprimands, then sends \"Affirm the boundaries\" itself, then an administrator does. Annette, who asked where her daughter is, can be sent \"grace and truth\" by the system after Vera refused to send her anything. `lambient.teach` is drawn in the list column, never on a mother's message."
 }

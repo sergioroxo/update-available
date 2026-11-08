@@ -2252,7 +2252,7 @@
     ],
     [
      "Beats",
-     "15"
+     "16"
     ]
    ],
    "tabs": {
@@ -2345,7 +2345,7 @@
       "k": "mono",
       "lines": [
        "= your 2014 story: published (as sent: restricted)",
-       "= the campaign kit: waiting for approval",
+       "= the campaign kit: scheduled",
        "CONTINUITY — WHAT IS NEW",
        "+ GraceOS, with L: one companion on every screen",
        "+ your session, restored before you arrive",
@@ -2358,6 +2358,7 @@
        "= the goal: unchanged, on file",
        "- Kindredraft: archived",
        "- the moderation queue: retired",
+       "- manual review: retired",
        "- the waiting: retired",
        "Root Cause — migrated",
        "- phone link: not supported"
@@ -3328,9 +3329,27 @@
         "where": "Where: the workstation."
        },
        {
+        "label": "The places list",
+        "opt": "",
+        "hint": "On the board: The places list. Add The Wick to the list, or leave it off.",
+        "where": "Where: the workstation."
+       },
+       {
+        "label": "The family calls",
+        "opt": "",
+        "hint": "On the board: Return the family calls. Send a reply to each parent, or don’t.",
+        "where": "Where: the workstation."
+       },
+       {
+        "label": "The group’s check-in",
+        "opt": "",
+        "hint": "On the board: Post to the group. Post this week’s check-in, or not.",
+        "where": "Where: the workstation."
+       },
+       {
         "label": "Kindredraft",
         "opt": "",
-        "hint": "Install Kindredraft. It opens Vera’s own 2014 story.",
+        "hint": "After the four jobs, install Kindredraft. It opens Vera’s own 2014 story.",
         "where": "Where: the workstation."
        },
        {
@@ -3342,7 +3361,7 @@
        {
         "label": "The campaign kit",
         "opt": "",
-        "hint": "Approve the kit or return to Today. Take my story down is optional.",
+        "hint": "After Nuala’s message, the campaign kit opens. Approve it or return to Today. Take my story down is optional.",
         "where": "Where: the workstation."
        },
        {
@@ -3352,33 +3371,21 @@
         "where": "Where: the workstation."
        },
        {
-        "label": "The other jobs",
-        "opt": "optional",
-        "hint": "The family calls, story clip and flagged replies stay on the board.",
-        "where": "Where: the workstation."
-       },
-       {
-        "label": "Post to the group",
-        "opt": "optional",
-        "hint": "On the board: Post to the group.",
-        "where": "Where: the workstation."
-       },
-       {
         "label": "The phone",
         "opt": "",
-        "hint": "Her phone is mirrored beside the platform. The news arrives there.",
+        "hint": "Her phone is mirrored beside the platform. Each finished job brings a message there.",
         "where": "Where: the mirrored phone beside the platform."
        },
        {
         "label": "The vote",
         "opt": "",
-        "hint": "When the campaign kit closes, the news from Malta arrives on her phone, beside the platform.",
+        "hint": "When the campaign kit closes, Bea shares the news from Malta in the group, beside the platform.",
         "where": "Where: the mirrored phone beside the platform."
        },
        {
         "label": "The group",
         "opt": "",
-        "hint": "The group’s messages arrive in the mirror.",
+        "hint": "GracePlatform removes the messages by itself. The group forwards them faster.",
         "where": "Where: the mirrored phone beside the platform."
        },
        {

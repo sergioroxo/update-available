@@ -94,6 +94,9 @@ const CONDITIONS: Record<string, Condition> = {
   clearPlayed: () => ledger.games.some((g) => g.id === 'clear'),   // ⚑ S222: CLEAR replaced REACH on the 2003 phone
   tagged: () => ledger.era3Jobs.some((j) => j.id === 'recommend'),
   grouped: () => ledger.era3Jobs.some((j) => j.id === 'group'),
+  // S332 — 2016's places list and family calls, finished (by her or for her)
+  placesDone: () => ledger.records.includes('e3-job:places'),
+  familyDone: () => ledger.records.includes('e3-job:family'),
   matchmadePlayed: () => ledger.games.some((g) => g.id === 'matchmade'),   // ⚑ S227: MATCH MADE SIMPLE replaced TIDY on the 2026 console
   formDone: () => ledger.provotypes.some((p) => p.id === 'origin_intake_e1' && p.outcome === 'completed'),
   pillowDone: () => ledger.provotypes.some((p) => p.id === 'pillow'),

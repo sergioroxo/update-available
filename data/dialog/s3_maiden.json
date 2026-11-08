@@ -45,23 +45,6 @@
  ],
  "_docMaltaOne": "BEA'S FIRST MESSAGE — 'it might happen'. She is not campaigning. She is a woman inside the same apparatus reading the news on her break, and the reason it matters to her is not political. ⚑ S149 — THE LINK CARD IS IN THE THREAD NOW. `phoneE3.ts` publishes the pressable `link` rect only while drawing a message of `kind: 'link'`, and no message carried that kind — so the article card (`link` below: masthead, headline, 'Tap to open') was never drawn, the card could never be opened, the stage could never leave `first`, and the group's cascade — the era's ending — was unreachable from the phone. Sérgio, 09-17 (R3-79): 'I opened the chat and nothing happened.' The era used to end on the work count instead, over her open job; it ends on the cascade now (era3Devices.tick), which this message makes reachable.",
  "_docS227MaltaOne": "⚑ S227 — M4 (docs/reinterp/VERA_OPTIONS_2026-10-09.md §3; his answers 2026-10-10, second round: 'Q7: M3, M4, M5 accepted'). Bea's first two messages are one now: the reading-cadence cut (W1-E1, W1-E5). Her voice and her words, in one bubble; it is also the lock screen's preview.",
- "maltaOne": [
-  {
-   "from": "Bea",
-   "time": "11:02",
-   "text": "is anyone else reading about malta. they voted to make it an offence to try to change somebody. i keep going back to it."
-  },
-  {
-   "from": "Bea",
-   "time": "11:03",
-   "kind": "link"
-  },
-  {
-   "from": "Bea",
-   "time": "11:04",
-   "text": "i'm not saying anything about us. i just read it four times."
-  }
- ],
  "link": {
   "masthead": "The Continental Wire",
   "headline": "Malta votes to outlaw conversion practices"
@@ -69,28 +52,6 @@
  "_docS227Link": "⚑ S227 — M1 (VERA_OPTIONS §3; the plan he approved 2026-10-10): the `standfirst` and `tapHint` fields are deleted from both cards (`link`, `linkVote`). phoneE3.ts never drew them (masthead and headline only), so nothing on screen changes.",
  "_docMaltaTwo": "AND THE SECOND — 'it happened somewhere'. Short, because it is.",
  "_docS227MaltaTwo": "⚑ S227 — M5 (VERA_OPTIONS §3; his 2026-10-10 answers, 'M3, M4, M5 accepted'): 'they voted. unanimous.' in one message. Susan's 'unanimous' and Hanne's 'read that again susan' still echo it.",
- "maltaTwo": [
-  {
-   "from": "Bea",
-   "time": "15:47",
-   "text": "the whole parliament. unanimous."
-  },
-  {
-   "from": "Bea",
-   "time": "15:48",
-   "kind": "link2"
-  },
-  {
-   "from": "Susan",
-   "time": "15:49",
-   "text": "unanimous"
-  },
-  {
-   "from": "Hanne",
-   "time": "15:50",
-   "text": "read that again susan"
-  }
- ],
  "_docBlock": "⚑ CAPTURE EITHER WAY (§4), AND IT IS THE ERA'S THESIS AS A MECHANIC. Open the link and Lambient knows. Ignore it and Lambient comes anyway. The two cards say very nearly the same sentence, and NEITHER IS A PUNISHMENT — no warning, no reprimand, no consequence offered or threatened. It has simply been passed on. A player who behaves perfectly gets the same visit as one who does not, which is what removes 'keep your head down' as a strategy. ⚑ Lambient stays polite to the very end (§7.2) — there is no version of these strings where it becomes hostile.",
  "block": {
   "openedTitle": "Not available on your work profile",
@@ -109,57 +70,57 @@
  "cascade": [
   {
    "from": "Susan",
-   "time": "15:51",
+   "time": "21:45",
    "kind": "link"
   },
   {
    "from": "Hanne",
-   "time": "15:51",
+   "time": "21:45",
    "kind": "link"
   },
   {
    "from": "Bea",
-   "time": "15:52",
+   "time": "21:46",
    "text": "putting it in the other group as well"
   },
   {
    "from": "Deirdre",
-   "time": "15:52",
+   "time": "21:46",
    "kind": "link"
   },
   {
    "from": "Susan",
-   "time": "15:52",
+   "time": "21:46",
    "text": "deirdre"
   },
   {
    "from": "Deirdre",
-   "time": "15:53",
+   "time": "21:47",
    "text": "I know."
   },
   {
    "from": "system",
-   "time": "15:53",
+   "time": "21:47",
    "text": "Aoife was added"
   },
   {
    "from": "Aoife",
-   "time": "15:54",
+   "time": "21:48",
    "kind": "link"
   },
   {
    "from": "system",
-   "time": "15:54",
+   "time": "21:48",
    "text": "Nell was added"
   },
   {
    "from": "system",
-   "time": "15:55",
+   "time": "21:49",
    "text": "3 people were added"
   },
   {
    "from": "Bea",
-   "time": "15:55",
+   "time": "21:49",
    "kind": "link"
   }
  ],
@@ -181,6 +142,11 @@
    "time": "yesterday",
    "text": "I made the ham. There's a bit in the freezer with your name on the bag if you want to come for it. No fuss either way.",
    "register": "felt"
+  },
+  {
+   "from": "Mentor",
+   "time": "Sunday",
+   "text": "I know Tuesday is that bar. You don't owe anyone an explanation for staying home x"
   },
   {
    "from": "The Wick",
@@ -227,7 +193,7 @@
     },
     {
      "time": "May",
-     "text": "The second mug is still on the hook. I'm starting the new job on Friday."
+     "text": "I'm starting the new job on Friday."
     }
    ]
   }
@@ -335,5 +301,39 @@
    "6 December · 22:51"
   ],
   "busText": "46A · last bus 22:40"
- }
+ },
+ "news": [
+  {
+   "from": "Bea",
+   "time": "21:41",
+   "text": "is anyone else reading about malta. they voted to make it an offence to try to change somebody. i keep going back to it."
+  },
+  {
+   "from": "Bea",
+   "time": "21:41",
+   "kind": "link2"
+  },
+  {
+   "from": "Bea",
+   "time": "21:42",
+   "text": "i'm not saying anything about us. i just read it four times."
+  },
+  {
+   "from": "Susan",
+   "time": "21:43",
+   "text": "the whole parliament. unanimous."
+  },
+  {
+   "from": "Hanne",
+   "time": "21:43",
+   "text": "read that again susan"
+  }
+ ],
+ "_docS332News": "⚑ S332 (his second answers): MALTA, in Bea's thread. The news lands in the Maiden-to-be thread on her phone, one message at a time (conducted: the Handset Window comes forward). Bea is a woman in the group who is quietly leaving the programme (her post in the group job: \"sitting it out\") and she is the one who shares it. Vera replies with ONE press (`reply`), positive. Then the system takes over GracePlatform and removes by itself: the Malta posts, then her reply (`removedLine`) — and the cascade outnumbers it. Act LV of 2016, passed 5 Dec 2016, is documented; the deletions are the piece's inference (ARTICLE_COMPANION §7g). `maltaOne` / `maltaTwo` (the morning's two-part version) are retired by this; `news` replaces them, retimed to the evening.",
+ "reply": {
+  "text": "finally. about time x",
+  "time": "21:44",
+  "hint": "Reply"
+ },
+ "removedLine": "Removed by GracePlatform · political content"
 }

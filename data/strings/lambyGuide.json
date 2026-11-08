@@ -262,6 +262,48 @@
           "vera-kit-close"
         ],
         "act": "focus:vera-kit-close"
+      },
+      "places": {
+        "tip": "Next on the board: the places list. Either answer is recorded.",
+        "here": "The places list is the second card.",
+        "again": "Add the place, or leave it off.",
+        "target": [
+          "task-1",
+          "places-add",
+          "places-refuse",
+          "board-back"
+        ],
+        "act": "focus:task-1"
+      },
+      "family": {
+        "tip": "Next: the family calls. Three parents are waiting.",
+        "here": "The family calls are the third card.",
+        "again": "Send a reply, or don’t send a script.",
+        "target": [
+          "task-2",
+          "family-reply-r_grief",
+          "family-reply-r_patience",
+          "family-reply-r_boundaries",
+          "family-reply-r_group",
+          "family-refuse",
+          "family-sel-0",
+          "family-sel-1",
+          "family-sel-2",
+          "board-back"
+        ],
+        "act": "focus:task-2"
+      },
+      "group": {
+        "tip": "Next: the group’s weekly check-in.",
+        "here": "Post to the group is the fourth card.",
+        "again": "Post it, or not this week.",
+        "target": [
+          "task-3",
+          "group-post",
+          "group-refuse",
+          "board-back"
+        ],
+        "act": "focus:task-3"
       }
     },
     "e4": {
