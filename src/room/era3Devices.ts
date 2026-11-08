@@ -715,6 +715,9 @@ export interface Era3Devices {
    *  straight into GraceQueueLite's own handleClick — the workstation is the
    *  ONLY device with verbs this session (tablet/phone have none yet). */
   handleWorkstationPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean;
+  /** ⚑ S328 — where a ray meets 2026's monitor, in the monitor's logical pixels (null off it, or off era 4): the
+   *  wheel and the drag ask this before they turn the view, so Kettle's thread scrolls under them */
+  monitorPoint(ray: { p0: pc.Vec3; p1: pc.Vec3 }): { x: number; y: number } | null;
   /** ?debug=1 review aid only (like __os/__tapes) — the raw offscreen
    *  canvases, for pixel-probing the shell content/lamb-marks without
    *  screenshot-chasing the 3D projection. */
@@ -1420,7 +1423,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
             s.entity.setLocalScale(W.w, 1, W.h);   // the plane's scale IS its size (makeScreenEntity)
           }
         }
-        if (s.versionOf && s.lastVersion !== s.versionOf()) {
+        if (s.versionOf && s.name !== 'laptop' && s.lastVersion !== s.versionOf()) {   // S328: the laptop is never drawn
           if (s.name === 'phone' && s.lastVersion !== undefined) phoneBuzz++;
           s.lastVersion = s.versionOf();
           s.ctx.clearRect(0, 0, s.logical.w, s.logical.h);
@@ -1463,7 +1466,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         //   bug. `setEra` is where a screen becomes visible, and a new one that
         //   does not say so here is invisible on purpose without meaning to be.
         const roomThreeScreen = s.name === 'visor' || s.name === 'laptop' || s.name === 'monitor';
-        s.entity.enabled = s.name === 'stream' ? false : roomThreeScreen ? era === 'e4'
+        // ⚑ S328 — AND THE LAPTOP IS NEVER ON (T03, his 8 Nov headset test: "remove the laptop"): 2026 has one screen,
+        //   the monitor, with Kettle as a window on it. Its prop is gone from r4; its plane stays registered and dark.
+        s.entity.enabled = s.name === 'stream' || s.name === 'laptop' ? false : roomThreeScreen ? era === 'e4'
           : roomTwoScreen ? era === 'e3'
           : visible;
       }
@@ -1519,6 +1524,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.holdTo = 0;
         }
       }
+    },
+    monitorPoint(ray: { p0: pc.Vec3; p1: pc.Vec3 }): { x: number; y: number } | null {
+      if (eraNow !== 'e4') return null;
+      const s = screens.find(sc => sc.name === 'monitor');
+      if (!s || !s.entity.enabled) return null;
+      const place = PLACEMENT.monitor;
+      return hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, ray);
     },
     handleWorkstationPointer(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
       const test = (name: 'workstation' | 'phone' | 'laptop' | 'monitor'): { x: number; y: number } | null => {

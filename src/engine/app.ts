@@ -352,10 +352,13 @@ export function seatPose(yaw: number): CameraPose {
      * frame; it is a FRAMING fix, and the wall behind it is a separate one
      * (S115, the dressing).
      */
-    // ⚑ S321 — 2026 v3 reads TWO screens, the monitor (the system) and the laptop beside it (Kettle, the people):
-    //   the seat moves 0.14 m right and looks 3° right and 10° down so both sit in the frame together, whole
-    //   (photographed from the seat, out/tour-e4-v3; the laptop moved in beside the monitor, e_laptop).
-    case 270: return { x: 4.4, y: EYE.y, z: 0.84, pitch: -10, yaw: 267 };  // Room 3 (east)
+    // ⚑ S321 moved this seat to (4.4, 0.84) to frame a laptop beside the monitor. ⚑ S328 (T02, his 8 Nov headset
+    //   test: "I'm outside of the chair", "very far away from the screen") — the laptop is gone, so the seat goes
+    //   back IN the chair and up to the desk: the chair's own centre line (z 0.70, `e_chair` at r4 spans x 4.44–4.93,
+    //   z 0.45–0.95), the eye over the back of its seat, 0.80 m from the monitor's glass, which then fills about
+    //   two thirds of a browser frame. In a headset xrComfort leans the eye 0.15 m further in (4.75: over the
+    //   front of the seat, 0.23 m from the desk's edge — elbows on the table). Recentre lands here in both.
+    case 270: return { x: 4.6, y: EYE.y, z: 0.70, pitch: -8, yaw: 270 };  // Room 3 (east)
     case 180: return { x: EYE.x, y: EYE.y, z: 0.7, pitch: 0, yaw: 180 }; // spine (door + record) — review only
     default:  return { x: EYE.x, y: EYE.y, z: EYE.z, pitch: 0, yaw: 0 }; // Room 1 (front)
   }
@@ -1029,8 +1032,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
             startCamMove({ ...camPos, pitch: Math.atan2(dy, Math.hypot(dx, dz)) * pc.math.RAD_TO_DEG, yaw: Math.atan2(-dx, -dz) * pc.math.RAD_TO_DEG }, 1.8, true);
             return true;
           }
-          // ⚑ S321 — both screens sit in the seat's own frame now: a turn "to" either is a return to the seat's view
-          startCamMove(seatPose(270), 1.2, true);
+          // ⚑ S328 — ONE SCREEN: Kettle is a window on the monitor, so a turn "to" either window is a return to the
+          //   seat's view — and none at all if she is already looking at the monitor (no needless conducted moves)
+          const seat = seatPose(270);
+          if (xr?.active) {
+            const f = logicalHead().forward;
+            if (angDist(Math.atan2(-f.x, -f.z) * pc.math.RAD_TO_DEG, seat.yaw) < 25) return true;
+          } else if (angDist(camYaw + lookOffYaw, seat.yaw) < 18 && Math.abs(camPitch + lookOffPitch - seat.pitch) < 18
+            && Math.hypot(camPos.x - seat.x, camPos.z - seat.z) < 0.05) return true;
+          startCamMove(seat, 1.2, true);
           return true;
         };
       }
@@ -1038,7 +1048,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (os.era === 'e3') return { silent: queueGuide?.guideSilent ?? true, voice: queueGuide?.guideVoice ?? false };
       if (os.era === 'e4') {
         const active = os.lambyGuide.active;
-        if (active && !guideAtLaptop && os.e4?.stage === 'closed') faceGuideSurface('laptop');
+        if (active && !guideAtLaptop && os.e4?.stage === 'closed') os.e4.browser.onFace?.('monitor');   // S328: L lives in the monitor's taskbar (no move if she is already facing it)
         guideAtLaptop = active;
         return { silent: os.e4?.browser.guideSilent ?? true, voice: os.e4?.browser.guideVoice ?? false };
       }
@@ -1199,7 +1209,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
       },
       onKey: key => { if (cluster && !gameMenuBus.isOpen && !siteViewerXr?.isOpen) devices?.key(key, cluster.era); },
-      onStick: (_x, y) => siteViewerXr?.stick(y),
+      // ⚑ S328 — and in 2026 the stick scrolls Kettle's open thread (time by scroll, his ruling) when the sites are shut
+      onStick: (_x, y) => { if (siteViewerXr?.isOpen) siteViewerXr.stick(y); else if (os.era === 'e4' && Math.abs(y) > 0.2) os.e4?.browser.scrollAt(null, null, y * 4); },
       // S271 (his 31 Oct: the hands are "a bit too white… a little bit too garish for your headset") — the frame's
       //   mid grey, not its near-white ink
       wandColor: new pc.Color().fromString(FRAME.faint)
@@ -1669,6 +1680,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let heldDevice: 'tablet' | 'phone' | null = null;
   let flipCount = 0;
   let drag: { x: number; y: number } | null = null;
+  /** ⚑ S328 — this drag began on Kettle's open thread in 2026: it scrolls the thread instead of turning the view */
+  let scrollGrab = false;
 
   // ?debug=1: publish "where am I" (era + which room the view is in) so the
   // debug panel can show a live readout — the answer to "which version/room?".
@@ -3815,8 +3828,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     press = { id: e.pointerId, t: performance.now(), moved: 0, opening: false };
     drag = { x: e.clientX, y: e.clientY };
+    // ⚑ S328 — a drag that starts on Kettle's open thread scrolls it (his: time "should all be in the scroll"); a
+    //   press that stays is still a tap on release, exactly as everywhere else
+    scrollGrab = kettlePoint(e, true) !== null;
     // A mouse click is still a possible selection. Only a deliberate drag grabs the view.
-    if (!options.reinterp || e.pointerType !== 'mouse') {
+    if (!scrollGrab && (!options.reinterp || e.pointerType !== 'mouse')) {
       tween = null; // grabbing the view cancels the assist
       nudgeCamera(); // …and a non-conducted O2/reset move
     }
@@ -3831,9 +3847,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * notches. Neither can select anything (CLAUDE.md: the pinch is a camera
    * control, not an input). The page itself never scrolls — the canvas owns it.
    */
+  /** ⚑ S328 — the monitor point under a page point, when it is on 2026's Kettle window with a thread that scrolls */
+  function kettlePoint(e: MouseEvent, scrollable: boolean): { x: number; y: number } | null {
+    if (!options.reinterp || os.era !== 'e4' || !era3Devices || xr?.active || !os.e4) return null;
+    const ray = screenRay(e);
+    const p = ray ? era3Devices.monitorPoint(ray) : null;
+    if (!p) return null;
+    return !scrollable || os.e4.browser.scrollsAt(p.x, p.y) ? p : null;
+  }
   canvasEl.addEventListener('wheel', (e) => {
     if (!camera.camera || xr?.active) return;
     e.preventDefault();
+    // ⚑ S328 — over Kettle's open thread the wheel scrolls it (through Mum's years to today); elsewhere it is the zoom
+    const kp = e.ctrlKey ? null : kettlePoint(e, true);
+    if (kp && os.e4?.browser.scrollAt(kp.x, kp.y, e.deltaY * (e.deltaMode === 1 ? 16 : 1) * 0.5)) return;
     const rate = e.ctrlKey ? 0.12 : (e.deltaMode === 1 ? 2.4 : 0.03);   // trackpad pinch · notches · pixels
     camera.camera.fov = Math.max(FOV_MIN, Math.min(FOV_MAX, camera.camera.fov + e.deltaY * rate));
     fovTouched = true;
@@ -3855,6 +3882,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       let dy = e.clientY - drag.y;
       const movedBefore = press?.moved ?? 0;
       if (press) press.moved += Math.hypot(dx, dy); // path length, not displacement
+      if (scrollGrab) {
+        // ⚑ S328 — the thread follows the finger (up reads on); the tap's own 10 px dead zone still applies
+        if (press && press.moved > TAP_SLOP_PX) os.e4?.browser.scrollAt(null, null, -dy * 0.9);
+        drag = { x: e.clientX, y: e.clientY };
+        return;
+      }
       if (options.reinterp && e.pointerType === 'mouse' && press && movedBefore <= TAP_SLOP_PX) {
         drag = { x: e.clientX, y: e.clientY };
         if (press.moved <= TAP_SLOP_PX) return; // click jitter never turns the view
@@ -3888,6 +3921,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   });
   canvasEl.addEventListener('pointerleave', () => { hoverPointer = null; });   // S152: nothing under a pointer that left
   canvasEl.addEventListener('pointerup', (e) => {
+    scrollGrab = false;
     pointers.delete(e.pointerId);
     hoveredTapeId = null; // S89: the press-preview ends at release either way (insert, if any, takes over the caption)
     if (pinch !== null) {
@@ -3947,6 +3981,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     resolveTap(e);
   });
   canvasEl.addEventListener('pointercancel', (e) => {
+    scrollGrab = false;
     pointers.delete(e.pointerId);
     press = null;
     drag = null;

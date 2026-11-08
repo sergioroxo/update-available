@@ -907,6 +907,8 @@ async function main() {
     if (st?.era === 'e4' && st?.bstate?.done && t.surface === 'e4.browser') return false;
     if (/^start-menu$|^sm-|^icon-(?:provotype|lambyrig|rootcause|forum|your-file|found-file|era-1)$|^irc-close$|^record-chip$/.test(id)) return false;
     if (/^min-|^taskbar-|^mirror-(?:enlarge|min|restore)$|^account-activity$/.test(id)) return false;
+    // ⚑ S328 — 2026's one screen: enlarging a window and scrolling BACK are a reader's choices, never the way on
+    if (/^win-(?:browser|kettle)$|^scroll-up$/.test(id)) return false;
     if (has('channel-joined') && /^web-/.test(id) && id !== 'web-close') return false;
     if (id === 'cancel' && t.surface === 'kit' && !has('went-online')) return false;
     if (/^dm-(?:up|down)$/.test(id) && (seen?.get(id) || 0) >= 1) return false;

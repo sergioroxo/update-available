@@ -76,7 +76,10 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
       }
     }
   });
-  const throwProp = solid('maya-pink-throw', [4.1, .53, 2.2], [.9, .04, .35], PLACE.textileHi);
+  // ⚑ S328 (T46, his 8 Nov: "a shelf on top of the bed, which makes no sense") — the throw was a 4 cm slab hung along
+  //   the wall side of the bed and read as a shelf. It lies folded across the FOOT of the bed now (bed spans x 3.21–5.26,
+  //   z 1.33–2.38, top 0.50; its pillow is at x 3.35), 1.4 cm thick, on the blanket: a throw, seen in the conducted turn.
+  const throwProp = solid('maya-pink-throw', [4.95, .509, 1.85], [.42, .014, 1.08], PLACE.textileHi);
   const frame = picture('maya-desk-photo', [5.02, .88, .30], .17, .22,
     c => photograph(c, 0, 0, 256, 256, false, 3));
   const goal = picture('system-default-portrait', [5.66, 1.45, 1.98], .65, .64,
@@ -89,7 +92,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   newsWall.material.update();
   const ticket = picture('clinic-ticket', [5.4, .84, 2.412], .38, .3, () => {}, [256, 192]);
   ticket.entity.setLocalEulerAngles(90, 180, 0);
-  const ceiling = picture('maya-ceiling-network', [4.4, 2.64, .84], 2.0, 2.0, () => {}, [512, 512]);
+  const ceiling = picture('maya-ceiling-network', [4.6, 2.64, .70]   /* S328: over the seat (app.ts seatPose 270) */, 2.0, 2.0, () => {}, [512, 512]);
   // It survives the room being hidden, changing from red sources into the stream's audience.
   app.root.addChild(ceiling.entity);
   ceiling.entity.setLocalEulerAngles(180, 270, 0);
@@ -109,7 +112,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     root.enabled = active;
     const streaming = e4Has('stream') && !e4Has('terminated');
     ceiling.entity.enabled = active && e4Has('map') && !e4Has('terminated');
-    ceiling.entity.setLocalPosition(streaming ? 8 : 4.4, streaming ? 5 : 2.64, .84);
+    ceiling.entity.setLocalPosition(streaming ? 8 : 4.6, streaming ? 5 : 2.64, streaming ? .84 : .70);
     if (!active) {
       for (const [mat, color] of originalMats) if (!mat.diffuse.equals(color)) { mat.diffuse.copy(color); mat.update(); }
       return;
