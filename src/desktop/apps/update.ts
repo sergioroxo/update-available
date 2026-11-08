@@ -478,10 +478,10 @@ export class UpdateApp {
       // one live I Agree — armed only on the last page (v0.5 §1)
       if (toE3) {
         aero.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 20, this.s.agree ?? 'I Agree', { disabled: !last, primary: last });
-        aero.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 20, this.s.readOn ?? 'Read on', { disabled: last });
+        aero.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 20, this.s.readOn ?? 'Read on', { disabled: last, primary: !last });
       } else {
         ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.agree ?? 'I Agree', { disabled: !last });
-        ui.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 18, this.s.readOn ?? 'Read on', { disabled: last });
+        ui.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 18, this.s.readOn ?? 'Read on', { disabled: last, primary: !last });
       }
       // only the armed one registers: one live "I Agree", on the last page (v0.5 §1)
       this.hits.push(last

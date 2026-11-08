@@ -1422,8 +1422,7 @@ export class GraceQueueLite {
     const h = H - 30;
     px(ctx, x, 0, w, h, ERA3.sysBand); px(ctx, x, 0, w, 25, ERA3.grey);
     setFont(ctx, 12); ctx.fillStyle = ERA3.white; ctx.fillText(mirrorCopy.title, x + 9, 7);
-    ctx.fillText('−', x + w - 22, 7);
-    this.rects.unshift({ x, y: 0, w: w - 30, h: 25, id: 'mirror-enlarge' }, { x: x + w - 30, y: 0, w: 30, h: 25, id: 'mirror-min' });
+    this.rects.unshift({ x, y: 0, w, h: 25, id: 'mirror-enlarge' });
     this.mirrorCanvas ??= document.createElement('canvas');
     const phoneH = this.mirrorLarge && !this.floppy.open ? 240 : 360;
     this.mirrorCanvas.width = 180; this.mirrorCanvas.height = phoneH;
@@ -1809,8 +1808,10 @@ export class GraceQueueLite {
     ctx: CanvasRenderingContext2D, c: aero.AeroContent, surface: TaskSurface
   ): void {
     const backW = 96; const backH = 18;
-    aero.button(ctx, c.x, c.y - 2, backW, backH, this.boardBackLabel());
-    this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
+    if (this.doneT < 0 && !this.storyDone) {
+      aero.button(ctx, c.x, c.y - 2, backW, backH, this.boardBackLabel());
+      this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
+    }
     let area = { x: c.x, y: c.y + backH + 8, w: c.w, h: c.h - backH - 8 };
 
     // ⚑ S208 / A18 (ERA16-03, ETHICS-02) — no Lambient lane on a job screen: jobs show people's own words, and
@@ -1967,7 +1968,7 @@ export class GraceQueueLite {
     // ⚑ S158 / R3-66 (Sérgio: 'Not now needs a sticker — "not yet available"'): the platform's
     //   own sticker on the option it would rather you did not take. The button still works
     //   — the dismissal law — and the sticker is the era telling on itself.
-    aero.tag(ctx, cx + cw - bw * 2 - 12 + bw - 4, by - 8, LAMBIENT.consentDeclineSticker, ERA3.ink, ERA3.amber);
+    aero.tag(ctx, cx, by - 18, LAMBIENT.consentDeclineSticker, ERA3.ink, ERA3.amber);
     aero.button(ctx, cx + cw - bw, by, bw, bh, LAMBIENT.consentAllow, { primary: true });
     this.rects.push({ x: cx + cw - bw * 2 - 12, y: by, w: bw, h: bh, id: 'consent-decline' });
     this.rects.push({ x: cx + cw - bw, y: by, w: bw, h: bh, id: 'consent-allow' });
@@ -2032,8 +2033,10 @@ export class GraceQueueLite {
   private drawTestimonyStudio(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): void {
     const V = vera.visual, video = sub.video!;
     const back = { x: c.x, y: c.y, w: 106, h: 23 };
-    aero.button(ctx, back.x, back.y, back.w, back.h, this.boardBackLabel(), { size: 10 });
-    this.rects.push({ ...back, id: 'board-back' });
+    if (!this.storyDone) {
+      aero.button(ctx, back.x, back.y, back.w, back.h, this.boardBackLabel(), { size: 10 });
+      this.rects.push({ ...back, id: 'board-back' });
+    }
     studioFont(ctx, 10, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(V.studioLabel, c.x + 120, c.y + 5);
     studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
     const sourceMeta = `${sub.author} · ${video.duration}`;
@@ -2142,8 +2145,10 @@ export class GraceQueueLite {
     //   decision already filed to the ledger stays filed, and the tile keeps
     //   whatever progress it has. Nothing warns her. Nothing asks if she is sure.
     const backW = 96; const backH = 18;
-    aero.button(ctx, c.x, c.y - 2, backW, backH, this.boardBackLabel());
-    this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
+    if (this.doneT < 0 && !this.storyDone) {
+      aero.button(ctx, c.x, c.y - 2, backW, backH, this.boardBackLabel());
+      this.rects.push({ x: c.x, y: c.y - 2, w: backW, h: backH, id: 'board-back' });
+    }
     c = { ...c, y: c.y + backH + 8, h: c.h - backH - 8 };
 
     // ⚑ THE LANE ONLY APPEARS WHEN LAMBIENT IS ACTUALLY SAYING SOMETHING. The

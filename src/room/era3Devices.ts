@@ -929,9 +929,15 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     // The printed paper is already a plane; its backing box would add a draw after unbatching.
     if (card.render) card.render.enabled = false;
     if (!wickDone && graceQueueLite.wickCue && era === 'e3') {
-      wickDone = true; wickT = 0; wickRest = { p: card.getPosition().clone(), q: card.getRotation().clone() };
+      wickDone = true; wickT = 0;
+      // T32: rest flat beside the notepad, rather than upright above it.
+      wickRest = { p: new pc.Vec3(-4.95, 0.752, 1.25), q: new pc.Quat().setFromEulerAngles(-90, 90, 0) };
     }
-    if (wickT < 0 || !wickRest) return;
+    if (wickT < 0) {
+      card.setPosition(-4.95, 0.752, 1.25); card.setEulerAngles(-90, 90, 0);
+      return;
+    }
+    if (!wickRest) return;
     graceQueueLite.wickConducting = true;
     wickT += dt;
     const k = wickT < 0.5 ? wickT / 0.5 : wickT <= 3.5 ? 1 : Math.max(0, 1 - (wickT - 3.5) / 0.5);

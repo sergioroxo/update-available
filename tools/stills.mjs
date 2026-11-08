@@ -76,13 +76,14 @@ async function main() {
   /** one era in its own page, so a still is never lit by the last era's state */
   const era = async (n, body) => {
     if (ONLY && ONLY !== `e${n}`) return;
+    if (has('small-fixes') && n === 4) return;
     const page = await browser.newPage();
     await page.setViewport(VIEW);
     const errors = [];
     page.on('pageerror', (e) => errors.push(String(e).slice(0, 160)));
     const query = n === 1 ? '?reinterp=1&kiosk=0&debug=1&home=0' : `?reinterp=1&kiosk=0&era=${n}&debug=1&descent=0`;
     await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: n === 3 ? 'domcontentloaded' : 'networkidle2', timeout: 60000 });
-    if (n === 3) {
+    if (n === 3 && !has('small-fixes')) {
       await page.waitForFunction(() => window.__graceQueue?.()?.mode === 'signin');
       await page.addStyleTag({ content: HIDE_CHROME });
       await wait(850);
@@ -151,7 +152,38 @@ async function main() {
     };
     const jump = async (beat, ms = 1800) => { await page.evaluate((b) => window.__os.debugJump(b), beat); await wait(ms); };
 
-    await body({ page, shot, free, seat, overlook, turn, jump, settled });
+    if (has('small-fixes')) {
+      if (n === 1) {
+        await jump('profile', 100); await free(0, 1.10, 0.55, -2, 0);
+        await shot('T30-profile', 'T30: wider profile chips at the original font size');
+        await jump('boot', 100); await shot('T33-boot', 'T33: LambyOS and startup sound start together (audio needs listening)');
+        await jump('intake', 100);
+        await page.evaluate(() => { const p = window.__os.provotype; p.phase = 'close'; window.__os.dirty=true; window.__os.update(0); });
+        await shot('T20-continue', 'T20: Family Form ends with Continue');
+        await jump('diary', 100);
+        await page.evaluate(() => { const d=window.__os.diary; d.phase='breakout'; d.shown=10000; d.erase=0; d.breakT=4; window.__os.dirty=true; window.__os.update(0); });
+        await shot('T19-diary', 'T19: the completed diary holds for Continue');
+        await jump('update2', 100);
+        await page.evaluate(() => { window.__os.updateApp.phase='eula'; window.__os.updateApp.page=0; window.__os.dirty=true; window.__os.update(0); });
+        await shot('T42-terms', 'T42: Agree unavailable, Read on primary');
+        await jump('desktop', 100); await free(0, 1.10, 0.7, -2, 0);
+        await shot('T27-controller', 'T27: wrist wording is now conditional on a tracked hand; static still cannot verify input mode');
+      } else if (n === 2) {
+        await jump('calebChat', 100); await free(0, 1.10, 0.45, -2, 0);
+        await page.evaluate(() => { window.__os.programSplash=null; window.__os.dirty=true; window.__os.update(0.1); });
+        await shot('T26-messages', 'T26: each messenger line arrives whole');
+        await jump('calebMail', 100);
+        await page.evaluate(() => { window.__os.accountability.mail='letter'; window.__os.accountability.step='closed'; window.__os.caleb=null; window.__os.programSplash=null; window.__os.dirty=true; window.__os.update(0); }); await shot('T14-puremail', 'T14: text-only PureMail with no Read aloud row');
+        await shot('T30-letter', 'T30: closing line above the footer rule');
+      } else {
+        await free(-4.4, 1.07, 0.7, -4, 90);
+        await page.evaluate(() => { const q=window.__graceQueue();q.seenTask=true;q.debugBeat('list');for(let i=0;i<32 && q.current();i++)q.apply();q.bump(); }); await wait(4500);
+        await shot('T31-back', 'T31: completed screen keeps the bottom Back; mirror has no minimise control');
+        await page.evaluate(() => { window.__graceQueue().wickCue = true; }); await wait(4500);
+        await free(-4.4, 1.25, 1.25, -44, 90);
+        await shot('T32-wick', 'T32: Wick card rests flat beside the notepad after the rise');
+      }
+    } else await body({ page, shot, free, seat, overlook, turn, jump, settled });
     if (errors.length) console.log(`  ⚠ page errors: ${errors.slice(0, 3).join(' · ')}`);
     await page.close();
   };

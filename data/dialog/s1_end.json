@@ -81,6 +81,7 @@
   },
 
   "diary": {
+    "continue": "Continue",
     "_doc": "PLACEHOLDER — Opens as TWO windows (Sérgio): a 'before departure' note (the system's assignment) + the DIARY.TXT notepad. The trap: you write the TRUTH instead of compliant encouragement, the system flags it 'dangerous' and tries to delete it (two steps: flag+wait, then a slow erase), the deletion FAILS near the end — freeze + screen split, the truth reasserts in green — and it jumps STRAIGHT into the update ritual (no quiet captions). All ⚑ DRAFT.",
     "fileTitle": "DIARY.TXT — Notepad",
     "noteTitle": "before you go",

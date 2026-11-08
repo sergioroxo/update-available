@@ -747,6 +747,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const xrHelperText = (t: string | null, dt: number): string | null => {
     if (t !== mapControlsHint) return t;
     if (xrMenuHintLeft <= 0) return null;
+    if (!xr?.input.inputSources.some(source => !!source.hand)) return null;
     xrMenuHintLeft -= dt; return menuStrings.xrMenuHint;
   };
   const sceneHead = new pc.Entity('logical-head');

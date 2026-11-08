@@ -755,6 +755,7 @@ export class DesktopOS {
     if (!this.reinterp || this.phase !== 'r_dark') return;
     ledger.name = opening.o3_prefilled_name; // "they already know your name"
     this.setPhase('r_boot');
+    playOnce('startup_1997.mp3'); // T33: heard with the first LambyOS screen
     // (S156: the machine's own start is heard EARLIER now — app.ts plays it during the
     //  descent, "as we travel", so the crawl arrives on a machine already running)
   }
@@ -763,7 +764,6 @@ export class DesktopOS {
   private startReinterpSplash(): void {
     if (this.phase !== 'r_boot') return;
     this.setPhase('r_splash');
-    playOnce('startup_1997.mp3');
   }
 
   /** R3-13 — the Family Form exists once Rob has said "i spoke with your mother"
@@ -1767,18 +1767,8 @@ export class DesktopOS {
       this.stopReadAloud();
       this.dirty = true;
     };
-    // ⚑ S46's VOICE, WIRED (S60, finding E21 — "built and not wired", the
-    // highest value-per-effort item in the review). os.ts owns the element so
-    // that Esc/pause and Leave can reach it; `isAudioAvailable` decides whether
-    // the row exists at all, so a missing WAV is silence and no button rather
-    // than a button that does nothing.
-    alert.readAloudAvailable = isAudioAvailable(calebStrings.pureMail.readAloudTrack);
-    alert.isReadingAloud = () => this.readAloudPlaying;
-    alert.onReadAloud = (track) => {
-      if (this.readAloudPlaying) { this.stopReadAloud(); return false; }
-      this.pureMailVoice = playOnce(track);
-      return this.readAloudPlaying;
-    };
+    // T14: PureMail is a text-only system letter.
+    alert.readAloudAvailable = false;
     this.dirty = true;
   }
 
@@ -2133,8 +2123,8 @@ export class DesktopOS {
     // IN E3 UNDER THE THREE-ROOM MODEL, verified by arriving at them.
     const allowVisit = this.sendOffer.id !== 's3' && this.sendOffer.id !== 's4';
     if (allowVisit) {
-      ui.button(ctx, c.x + c.w - 110, c.y + c.h - 26, 102, 18, polish.sendGo, {});
-      hits.push({ x: c.x + c.w - 110, y: c.y + c.h - 26, w: 102, h: 18, id: 'send-go' });
+      ui.button(ctx, c.x + c.w - 190, c.y + c.h - 26, 182, 18, polish.sendGo, {});
+      hits.push({ x: c.x + c.w - 190, y: c.y + c.h - 26, w: 182, h: 18, id: 'send-go' });
     }
     const declineW = allowVisit ? 70 : dw - 16;
     ui.button(ctx, c.x + 8, c.y + c.h - 26, declineW, 18, def.offer.decline, {});
@@ -3740,9 +3730,9 @@ export class DesktopOS {
       ctx.fillText(opening.o3_chip_count, px0 + 52, c.y + 108);
     }
     const chips = opening.o3_chips as { id: string; label: string }[];
-    const chipW = 142, chipH = 18, chipGap = 6;
+    const chipW = 216, chipH = 18, chipGap = 6;
     chips.forEach((ch, i) => {
-      const col = i % 3, row = Math.floor(i / 3);
+      const col = i % 2, row = Math.floor(i / 2);
       const x = L + col * (chipW + chipGap);
       const y = c.y + 124 + row * (chipH + 4);
       const on = this.profileChips.includes(ch.id);
@@ -3758,10 +3748,10 @@ export class DesktopOS {
     // goal — insisted; no neutral option; declining files too
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
-    ctx.fillText(opening.o3_goal_prompt, L, c.y + 176);
+    ctx.fillText(opening.o3_goal_prompt, L, c.y + 198);
     const goals = opening.o3_goals as { id: string; label: string }[];
     goals.forEach((g, i) => {
-      const y = c.y + 192 + i * 18;
+      const y = c.y + 214 + i * 18;
       const on = this.profileGoal === g.id;
       ui.px(ctx, L + 1, y + 1, 10, 10, ERA1.white);
       ui.px(ctx, L + 1, y + 1, 10, 1, ERA1.grey);
@@ -3772,7 +3762,7 @@ export class DesktopOS {
       ctx.fillText(g.label, L + 18, y + 1);
       this.hits.push({ x: L, y, w: 260, h: 14, id: `pgoal:${g.id}` });
     });
-    const declineY = c.y + 192 + goals.length * 18 + 2;
+    const declineY = c.y + 214 + goals.length * 18 + 2;
     ui.setFont(ctx, 9);
     ctx.fillStyle = this.profileGoal === 'declined' ? ERA1.navy : ERA1.grey;
     ctx.fillText(`— ${opening.o3_goal_decline}`, L + 18, declineY);
