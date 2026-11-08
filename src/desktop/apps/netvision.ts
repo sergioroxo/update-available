@@ -381,6 +381,7 @@ export class NetVisionPlayerApp {
 
   update(dt: number): void {
     if (!this.open) return;
+    const before = this.pictureVersion;
     if (this.stage === 'playing') {
       this.elapsed += dt;
       if (this.elapsed >= this.duration) {
@@ -394,7 +395,7 @@ export class NetVisionPlayerApp {
       this.staticHoldT += dt;
       if (this.staticHoldT >= STATIC_HOLD_SECONDS) this.close('interrupted');
     }
-    this.dirty = true;
+    if (before !== this.pictureVersion) this.dirty = true;
   }
 
   private fileOutcome(outcome: 'watched' | 'skipped'): void {
@@ -426,7 +427,36 @@ export class NetVisionPlayerApp {
 
   // ── drawing ──────────────────────────────────────────────────────────────
 
+  // Film and its noise belong to a 30 Hz tape clock, never to pointer paints.
+  private get pictureVersion(): string { return `${this.stage}:${Math.floor((this.elapsed + this.staticHoldT) * 30)}`; }
+  private picture: HTMLCanvasElement | null = null;
+  private painted = '';
   draw(ctx: CanvasRenderingContext2D): void {
+    const scale = Math.max(1, ctx.getTransform().a);
+    const key = `${this.pictureVersion}:${this.hover}:${scale}`;
+    if (!this.picture) this.picture = document.createElement('canvas');
+    if (key !== this.painted) {
+      this.painted = key;
+      if (this.picture.width !== ERA1_CANVAS.width * scale || this.picture.height !== ERA1_CANVAS.height * scale) {
+        this.picture.width = ERA1_CANVAS.width * scale; this.picture.height = ERA1_CANVAS.height * scale;
+      }
+      const film = this.picture.getContext('2d')!;
+      film.setTransform(scale, 0, 0, scale, 0, 0); film.clearRect(0, 0, ERA1_CANVAS.width, ERA1_CANVAS.height); film.imageSmoothingEnabled = false;
+      this.paint(film);
+    }
+    ctx.drawImage(this.picture, 0, 0, ERA1_CANVAS.width, ERA1_CANVAS.height);
+  }
+
+  private noiseSeed = 1;
+  private tapeRandom(): number {
+    this.noiseSeed = (Math.imul(this.noiseSeed, 1664525) + 1013904223) >>> 0;
+    return this.noiseSeed / 4294967296;
+  }
+
+  private paint(ctx: CanvasRenderingContext2D): void {
+    const time = this.elapsed;
+    this.elapsed = Math.floor(time * 30) / 30;
+    this.noiseSeed = 1 + Math.floor((this.elapsed + this.staticHoldT) * 30);
     this.hits = [];
     const dx = Math.round((ERA1_CANVAS.width - DW) / 2);
     const dy = Math.round((ERA1_CANVAS.height - DH) / 2);
@@ -487,6 +517,7 @@ export class NetVisionPlayerApp {
       ui.button(ctx, sx, sy, sw, sh, M.skip, { hover: this.hover === 'skip' });
       this.hits.push({ x: sx, y: sy, w: sw, h: sh, id: 'skip' });
     }
+    this.elapsed = time;
   }
 
   /** the tape's own vertical instability, in whole pixels (integer positions,
@@ -1953,9 +1984,9 @@ export class NetVisionPlayerApp {
     ui.px(ctx, a.x, a.y, a.w, a.h, ERA1.black);
     const dots = 700;
     for (let i = 0; i < dots; i++) {
-      const x = a.x + Math.floor(Math.random() * a.w);
-      const y = a.y + Math.floor(Math.random() * a.h);
-      ctx.fillStyle = Math.random() < 0.5 ? ERA1.white : ERA1.grey;
+      const x = a.x + Math.floor(this.tapeRandom() * a.w);
+      const y = a.y + Math.floor(this.tapeRandom() * a.h);
+      ctx.fillStyle = this.tapeRandom() < 0.5 ? ERA1.white : ERA1.grey;
       ctx.fillRect(x, y, 1, 1);
     }
   }
@@ -2007,10 +2038,10 @@ export class NetVisionPlayerApp {
     if (reducedMotion()) return;
     const count = Math.round(16 + amount * 260);
     for (let i = 0; i < count; i++) {
-      const x = a.x + Math.floor(Math.random() * a.w);
-      const y = a.y + Math.floor(Math.random() * a.h);
-      ctx.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
-      ctx.fillRect(x, y, 1, Math.random() < 0.3 ? 2 : 1);
+      const x = a.x + Math.floor(this.tapeRandom() * a.w);
+      const y = a.y + Math.floor(this.tapeRandom() * a.h);
+      ctx.fillStyle = this.tapeRandom() < 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
+      ctx.fillRect(x, y, 1, this.tapeRandom() < 0.3 ? 2 : 1);
     }
   }
 
