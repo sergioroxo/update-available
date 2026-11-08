@@ -3,19 +3,20 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "YOUR UPDATE HAS FAILED — PC Simulator (SurvivingSOGICE, University of Bergen CDN). Browser + WebXR narrative experience.",
+  "description": "YOUR UPDATE HAS FAILED \u2014 PC Simulator (SurvivingSOGICE, University of Bergen CDN). Browser + WebXR narrative experience.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node tools/check-invariants.mjs && node tools/check-rooms.mjs && node tools/check-spec.mjs && node tools/check-licences.mjs && node tools/check-era-sites.mjs && node tools/lamby-guide-test.mjs",
+    "test": "node tools/check-invariants.mjs && node tools/check-rooms.mjs && node tools/check-spec.mjs && node tools/check-licences.mjs && node tools/check-era-sites.mjs && node tools/lamby-guide-test.mjs && node tools/patch-playcanvas-xr.mjs --check && node tools/xr-room-layer-test.mjs",
     "audit": "npm test && node tools/room-audit.mjs && node tools/shots.mjs audit",
     "rooms": "node tools/gen_rooms.mjs",
     "gen-sites": "node tools/gen_era_sites.mjs",
     "gen-attributions": "node tools/gen_attributions.mjs",
     "export-atlases": "bash tools/export-atlases.sh",
     "tts": "python3 tools/tts/render.py --manifest data/audio/tts_manifest.json",
-    "build:itch": "tsc --noEmit && VITE_EDITION=festival vite build --outDir dist-itch"
+    "build:itch": "tsc --noEmit && VITE_EDITION=festival vite build --outDir dist-itch",
+    "postinstall": "node tools/patch-playcanvas-xr.mjs"
   },
   "dependencies": {
     "playcanvas": "^2.6.0"

@@ -1,3 +1,4 @@
+import { quadSessionOptions } from '../frame/xrMonitorQuad';
 import { festivalEdition } from '../edition';
 import { xrAccessAllowed } from '../frame/xrAccess';
 /** The frame's saver, in the scene: one merged pixel mesh + one XR text panel.
@@ -128,11 +129,12 @@ export function buildRestoreEntrance(app: pc.Application, room: RoomHandles, rig
   availableVr(); app.xr?.on(`available:${pc.XRTYPE_VR}`, availableVr);
   enterVr.addEventListener('click', () => {
     if (!festivalEdition) {
-      if (camera.camera && app.xr?.isAvailable(pc.XRTYPE_VR)) app.xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL);
+      if (camera.camera && app.xr?.isAvailable(pc.XRTYPE_VR)) app.xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, quadSessionOptions());
       return;
     }
     if (camera.camera && xrAccessAllowed() && app.xr?.isAvailable(pc.XRTYPE_VR)) {
       app.xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
+      ...quadSessionOptions(),
         callback: (error) => { if (error) enterVr.style.display = 'none'; }
       });
     }
