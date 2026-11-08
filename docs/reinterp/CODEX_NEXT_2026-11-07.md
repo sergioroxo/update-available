@@ -153,3 +153,38 @@ selects, exits and re-enters cleanly, and `?quad=0`/default unchanged. **Walk on
 Quest 3 can say whether text is sharper, so write the exact test steps for the lead (what to compare, with and
 without `?quad=1`). Report: `docs/reinterp/CODEX_XR_TEXT_REPORT_2026-11-08.md`. One BUILD_LOG line. Reply with the
 branch, the commits, and an 8-line plain summary.
+
+---
+
+## Prompt D — ten small fixes from the 8 Nov headset session (Codex quota is low: keep it small)
+
+Repository: sergioroxo/update-available, branch `reinterp`. From /Users/sergiogalvaoroxo/update-available-reinterp run
+`git fetch origin && git worktree add -b codex/small-fixes-8nov ../codex-small origin/reinterp`, then work only in
+/Users/sergiogalvaoroxo/codex-small. Never `git checkout` in the main folder. Push your branch, not `reinterp`.
+Read CLAUDE.md's laws only. The list is docs/reinterp/TODO.md; each id below is one row there, with the headset
+reports (docs/reinterp/HEADSET_SESSION_2026-11-08*.md) for detail.
+
+Fix, smallest change each, one commit for the lot:
+- **T14** PureMail is read aloud in Lamby's voice: stop that (text only).
+- **T19** 2003 diary: after "Removal stalled" the entry continues by itself. Remove the auto-continue.
+- **T20** 1997 Family Form: the last button says "Return". It leads on, so it says "Continue".
+- **T26** 2003 Caleb messenger: messages type in letter by letter. Show each message whole when it beeps.
+- **T27** A controller user sees the "look at your wrist" hint, which is meant for hands. Show it only with hand
+  tracking.
+- **T30** Clipped text. Make each fit its box (wrap or widen, never shrink below the era's size):
+  - "My family is religious" (1997 profile setup);
+  - "Go to the next task" outside its button;
+  - "Restorify is closing" under a bar;
+  - Caleb's "say nothing yet" cut at the bracket;
+  - "Not yet available" drawn over Allow / Not now on the Lambient dialog.
+- **T31** 2016: two Back buttons (top and bottom) on the same screen; keep the bottom one. The phone window (the
+  handset/mirror window) has no minimise button.
+- **T32** 2016: The Wick card's rise-once must end resting ON the table by the notepad. Today it stays floating.
+- **T33** 1997: the Lamby boot sound starts after LambyOS is already on screen. Start it with the screen.
+- **T42** 2003 Restorify "Terms of Continued Care": "Agree" looks greyed on page 1. It's live only on the last page,
+  so on page 1 it reads as plainly unavailable, not broken: one consistent disabled style, and "Read on" is the
+  primary button.
+
+Verify: `npx tsc --noEmit -p .` and `npm test`. One still per fix (tools/stills.mjs). NO full walk: run
+`node tools/walk.mjs --port 3118 --from-era 2 --one-era` in the background and read only its last lines. One
+BUILD_LOG line. Reply with the branch, the commit, and one line per id.

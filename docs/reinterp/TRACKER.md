@@ -15,6 +15,10 @@ Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio �
 
 ---
 
+## ⚑ THE LIST OF WHAT IS LEFT IS NOW docs/reinterp/TODO.md (8 Nov)
+
+One table, ids T01…, owner (Claude / Codex / Sérgio), size and priority. This file keeps the history.
+
 ## Waiting for Sérgio (cleaned 8 Nov)
 
 - 🥽 **A headset session**: the 2016 mirror read from the seat, try-on (length), the clip, the ceiling map, the stream.
