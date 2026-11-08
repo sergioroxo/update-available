@@ -95,6 +95,7 @@ closed by him, never raise it again.
 
 ## Done since the headset session (newest first)
 
+- ☑ His 8 Nov ruling: **no man's hands on the controllers in the headset** — not needed; the try-on stays on the glass only. Closed.
 - ☑ **S325 Codex's 2026 room merged** (CODEX_E4_V3_ROOM_REPORT_2026-11-08.md; his README untouched); **full walk reached the Close** (271 presses); **itch ZIP rebuilt**: release/your-update-has-failed_itch_2026-11-08.zip (48.7 MB, 265 files), loads clean in an itch-style iframe, no outside requests. ☐ upload it to itch.
 - ☑ **S324 full walk of the combined build** (2016 phone mirror + 2026 v3 screens + jingle + Focus cut): reached the Close, 277 presses, Restart card showing (WALK_2026-11-08_SPEEDRUN_GUIDED.md).
 - ☑ **S322 2026 v3 screens merged** (E4_V3_SCREENS_BUILT_2026-11-07.md): Kettle (laptop) + browser (monitor), Mum by year, Dad's rules, the clinic number, the bot, the contagion map + the clip takeover, Junie, the original, TRY IT ON (the mirror; Junie ends it). Walk reached the Close. ☐ Codex Prompt B (the room) is next. ☐ his open questions in the built doc.
