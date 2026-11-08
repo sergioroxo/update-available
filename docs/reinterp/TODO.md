@@ -97,6 +97,35 @@ His answers, 8 Nov:
 | T49 | Daniel's video upload → the platform → the DVD website's teaser clips, where Caleb's testimony almost says Daniel's name | 2003 + era site | C | M |
 | T50 | IRC (the mIRC-like app) gets its sound: join, message and DM sounds of the period | 1997/2003 | C | S |
 
+## His answers to the 20 questions (8 Nov) — they refine these rows
+
+| q | answer | row |
+|---|---|---|
+| 1 | The red box next to the mouse on the 1997 desk is strange: remove it. The black plate on the computer stays. | **T51** (new) |
+| 2 | FIT IN's "press to play" only on the Fellowship network page, smaller, designed, less basic | T38 |
+| 3 | Root Cause Digger's icon appears as soon as the Un-Walk is installed | T35 |
+| 4 | The summer-weekend wait is too long because the desktop version uses the blue "look behind" glow: add that same glow in VR (it teaches that you can look around) or remove the wait | T17 |
+| 5 | After Rob's chat: Lamby says what's next | T16 |
+| 6 | Family Form: ad-style and ministry decoration | T37 |
+| 7 | Remove the line "The entry continues by itself here." | T19 |
+| 8 | Closing a file in the 1997 folder returns to the folder's file list, not the preview. Daniel's 1997 video lives in that folder: you go there to upload it, and so learn the folder exists | T41, T49 |
+| 9 | Release Work shows the racket's movement and what it's meant to be. The racket in the room turns round (handle to the wall) and MOVES between positions instead of jumping | T36 |
+| 10 | "referral…" is cut on the icon, and the taskbar says "found": the taskbar shows the file's own name | T18 |
+| 11 | A short video: Caleb interviewed about the programme. Presenter: "What do you like most about the programme?" Caleb: "The people. Like my roommate, Daniel—" | T49 |
+| 12 | The parents' form leads to the webpage where the DVD is | T22 |
+| 13 | The Wait / two-step button belongs to the looping audio Caleb sends, not the NetVision player | T40 |
+| 14 | Retire the "It wasn't me that was broken" panel. It becomes something Daniel says to Caleb in the conversation, and that sparks the update | T13, T15 |
+| 15 | The update into 2003 in XP style | T44 |
+| 16 | (didn't understand the question: asked again) | — |
+| 17 | Remove the dollhouse; record it in the research | T08 |
+| 18 | The era change: an install sound with music | T08 |
+| 19 | (asked again: which screens follow the head) | T47 |
+| 20 | The pointer's box can stay, smaller, and visibly connected to the ray, not vague and floating | T29 |
+
+| id | what | where | owner | size |
+|---|---|---|---|---|
+| T51 | Remove the red box beside the mouse on the 1997 desk | 1997 room | C | S |
+
 ## Codex
 
 He can run ONE big Codex job now (8 Nov). → **Prompt C, widened** (sharper headset text, T09, plus the video tearing
