@@ -48,6 +48,8 @@ import { YourRecordApp } from '../desktop/apps/yourRecord';
 import { RecommendTask } from '../desktop/apps/recommendTask';
 import { GroupTask } from '../desktop/apps/groupTask';
 import { FamilyCallsApp } from '../desktop/apps/familyCalls';
+import { PlacesListApp } from '../desktop/apps/placesList';
+import { stampBanned } from './printArt';
 import { GraceQueueLite } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
@@ -866,6 +868,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   graceQueueLite.mountTask(new YourRecordApp());   // S144: the file inside the platform
   graceQueueLite.mountTask(new RecommendTask());   // S192: Tag the video — the recommendation event, 2016
   graceQueueLite.mountTask(new GroupTask());       // S200: Post to the group — the platform's own frame
+  graceQueueLite.mountTask(new PlacesListApp());   // S332: the places list — The Wick, added to the places to avoid
 
   function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);
@@ -927,6 +930,21 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   const WICK_TABLE = { x: -4.95, y: 0.758, z: 1.245 }, WICK_UP = new pc.Vec3(-1, 0, 0);   // S327 / T32: on the desk
   let wickT = -1, wickDone = false;
   let wickRest: { p: pc.Vec3; q: pc.Quat } | null = null;
+  /** ⚑ S332 — the second rise: The Wick has been added to the places to avoid, Orla's invitation has been read, and
+   *  the card is brought up to her eye and stamped BANNED at the top of the rise (one redraw, one upload). */
+  let wickBan = false, wickStamped = false;
+  const stampWick = (): void => {
+    if (wickStamped) return;
+    wickStamped = true;
+    const plane = app.root.findByName('w_wickCard-print') as pc.Entity | null;
+    const mat = plane?.render?.material as pc.StandardMaterial | undefined;
+    const tex = mat?.diffuseMap;
+    const src = tex?.getSource() as HTMLCanvasElement | undefined;
+    const c2 = src?.getContext?.('2d');
+    if (!tex || !src || !c2) return;
+    stampBanned(c2, src.width, src.height);
+    tex.upload();
+  };
   const tickWick = (dt: number, era: string): void => {
     const card = app.root.findByName('w_wickCard') as pc.Entity | null;
     if (!card) return;
@@ -945,6 +963,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       // T32: rest flat beside the notepad, rather than upright above it.
       wickRest = { p: new pc.Vec3(-4.95, 0.752, 1.25), q: new pc.Quat().setFromEulerAngles(-90, 90, 0) };
     }
+    if (wickDone && wickT < 0 && !wickBan && graceQueueLite.wickBanReady && era === 'e3') {
+      wickBan = true; graceQueueLite.takeWickBan(); wickT = 0; wickRest = { p: card.getPosition().clone(), q: card.getRotation().clone() };
+    }
+    if (wickBan && !wickStamped && wickT >= 0.9) stampWick();
+    // T32 (Codex): at rest the card lies flat on the table by the notepad
     if (wickT < 0) {
       card.setPosition(-4.95, 0.752, 1.25); card.setEulerAngles(-90, 90, 0);
       return;

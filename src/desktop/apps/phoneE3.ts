@@ -21,9 +21,14 @@ type Msg = { from: string; time: string; text?: string; kind?: string };
 type Rect = { x: number; y: number; w: number; h: number; id: string };
 
 const BEFORE = m.before as Msg[];
-const MALTA_ONE = m.maltaOne as Msg[];
-const MALTA_TWO = m.maltaTwo as Msg[];
+/** ⚑ S332 — Malta in Bea's thread (s3_maiden.json `news`), her one reply, and the removals */
+const NEWS = m.news as Msg[];
+const REPLY = m.reply as { text: string; time: string; hint: string };
+const REMOVED_LINE = m.removedLine as string;
+const VERA = 'Vera';
 const CASCADE = m.cascade as Msg[];
+const SLOTS = (mirrorCopy as unknown as { slots?: string[] }).slots ?? [];
+type Live = Msg & { key: string };
 const LINK_VOTE = m.linkVote as { masthead: string; headline: string };   // S227 / M1: the never-drawn standfirst and tapHint are gone
 const BACKLOG = m.backlog as { from: string; time: string; text: string; register?: string; stampCard?: string; thread?: { time: string; text: string }[] }[];
 const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
@@ -33,7 +38,7 @@ const HOME = m.home as unknown as Record<string, string>;
  *  with one game on it and no notifications at all, which is what makes ONE
  *  arriving an event. Every step after that is player-initiated except the
  *  cascade, which is other people. */
-type Stage = 'quiet' | 'first' | 'voted' | 'cascade' | 'after';
+type Stage = 'quiet' | 'news' | 'takeover' | 'after';
 type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'walk' | 'personal' | 'notes' | 'photos' | 'photo' | 'evening' | 'article';
 /** Lambient's card, and it is the same card whichever way she got here */
 
@@ -43,7 +48,13 @@ type Screen = 'lock' | 'home' | 'group' | 'inbox' | 'platform' | 'message' | 'wa
  *  version, so it never re-uploads the workstation panel beside it. */
 // ⚑ S288 (headset B: "This needs to be a little bit slower because I couldn't read what it was") — 0.45 → 0.9 s a message:
 //   still a flood, now one you can read
-const CASCADE_STEP = 0.9;
+const CASCADE_STEP = 0.75;
+/** ⚑ S332 — Bea's news lands a message at a time; the removals run slower than the forwards (the outnumbering) */
+const NEWS_STEP = 1.7;
+const REMOVE_STEP = 1.5;
+/** her reply is offered, never required: after this long unpressed, the platform begins anyway (it does not wait) */
+const REPLY_WAIT = 20;
+const TAKEOVER_HOLD = 2.2;
 /** ⚑ S219 / W1-B13 — at most one message sound per this many seconds, the repeats at a fraction of the first */
 const CASCADE_SOUND_GAP = 1.5;
 /** ⚑ S327 / T06 (his 8 Nov: "a Maiden-to-be message popped in while I pressed the testimony editor") — a held message
@@ -113,14 +124,44 @@ export class PhoneE3 {
   private notesPending = false;
   private notesReturn: Screen = 'home';
   private articleVote = false;
-  advanceNews(): void {
-    if (this.stage === 'quiet') this.arm();
-    if (this.stage === 'after' || this.stage === 'cascade') return;
+  /** ⚑ S332 — MALTA, conducted: Bea's news begins landing in the group thread (graceQueueLite brings the window forward) */
+  startNews(): void {
+    if (this.stage !== 'quiet' || this.disconnected) return;
     veraDay.phoneAnswered = true; veraDay.voted = true;
-    this.stage = 'cascade'; this.cascadeT = -4;
-    this.banner = { from: MALTA_ONE[0].from, time: this.clockText, text: LINK_VOTE.headline };
+    this.stage = 'news'; this.newsT = NEWS_STEP - 0.6; this.newsN = 0; this.banner = null;
     this.bump();
   }
+  private newsN = 0;
+  private newsT = 0;
+  private replied = false;
+  private replyWaitT = -1;
+  private holdT = -1;
+  private removeT = 0;
+  private cascadeOn = false;
+  private removed = new Set<string>();
+  /** the news has all landed and her one reply is on offer */
+  get replyOffered(): boolean { return this.stage === 'news' && this.newsN >= NEWS.length && !this.replied && this.replyWaitT < REPLY_WAIT; }
+  get inTakeover(): boolean { return this.stage === 'takeover' || this.stage === 'after'; }
+  private liveMsgs(): Live[] {
+    const out: Live[] = NEWS.slice(0, this.newsN).map((n, i) => ({ ...n, key: 'n' + i }));
+    if (this.replied) out.push({ from: VERA, time: REPLY.time, text: REPLY.text, key: 'v' });
+    CASCADE.slice(0, this.cascadeN).forEach((c, i) => out.push({ ...c, key: 'c' + i }));
+    return out;
+  }
+  private removalOrder(): string[] {
+    return [...NEWS.map((_, i) => 'n' + i), ...(this.replied ? ['v'] : []),
+      ...CASCADE.flatMap((c, i) => c.from === 'system' ? [] : ['c' + i])];
+  }
+  private nextRemoval(): string | undefined { return this.removalOrder().find(k => !this.removed.has(k)); }
+  /** what the platform shows while it reviews the group by itself (graceQueueLite's removals page) */
+  takeoverRows(): { who: string; text: string; link: boolean; state: 'removed' | 'removing' | 'pending' | 'missed' }[] {
+    const next = this.stage === 'takeover' ? this.nextRemoval() : undefined;
+    return this.liveMsgs().filter(x => x.from !== 'system').map(x => ({
+      who: x.from, text: x.text ?? '', link: x.kind === 'link' || x.kind === 'link2',
+      state: this.removed.has(x.key) ? 'removed' : x.key === next ? 'removing' : this.stage === 'after' ? 'missed' : 'pending'
+    }));
+  }
+  get unreviewed(): number { return this.liveMsgs().filter(x => x.from !== 'system' && !this.removed.has(x.key)).length; }
   private notesT = -1;
   private notesDone = false;
   get conductingNotes(): boolean { return this.notesT >= 0; }
@@ -134,6 +175,7 @@ export class PhoneE3 {
     this.screen = 'group'; this.openMessage = null; this.banner = null; this.markGroupSeen(); veraDay.phoneAnswered = true; this.bump();
   }
   private eveningFrom = '';
+  private slotN = 0;
   private storyClock = '18:04';
   private banner: { from: string; time: string; text: string } | null = null;
   bannersHidden = false;
@@ -148,11 +190,13 @@ export class PhoneE3 {
   delivered(id: string): boolean { return this.evening.some(e => e.id === id); }
   private deliverEvent(): void {
     if (!this.eventQueue.length || this.bannerAge < READ_HOLD || this.bannersHidden || !this.atRest || this.disconnected || this.notesPending || this.conductingNotes) return;
-    const e = this.eventQueue.shift()!;
+    const raw = this.eventQueue.shift()!;
+    // ⚑ S332 — jobs finish in her order, so each message takes the evening's next slot (the clock never runs back)
+    const e = { ...raw, time: raw.id === 'after' ? raw.time : SLOTS[this.slotN++] ?? raw.time };
     this.evening.push(e); this.storyClock = e.time; this.banner = e; this.bannerAge = 0;
     // ⚑ S327 / T04 (his 8 Nov: "two different messages from Orla, which doesn't make a lot of sense") — ONE banner for
     //   Orla's evening: the stamp line lands in the same thread, quietly, under the quiz message
-    if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push(st); }
+    if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push({ ...st, time: e.time }); }
     if (e.id === 'decision') this.notesPending = true;
     playOnce('phone_ping_2016.mp3'); this.bump();
   }
@@ -174,34 +218,15 @@ export class PhoneE3 {
 
 
   /** ⚑ S219 — every message of the group's thread that has landed, past the history she already had */
-  private groupLanded(): number {
-    return this.stage === 'first' ? MALTA_ONE.length
-      : this.stage === 'voted' ? MALTA_ONE.length + MALTA_TWO.length
-        : this.stage === 'cascade' || this.stage === 'after' ? MALTA_ONE.length + MALTA_TWO.length + this.cascadeN : 0;
-  }
+  private groupLanded(): number { return this.newsN + this.cascadeN; }
   private groupUnread(): number { return Math.max(0, this.groupLanded() - this.groupSeen); }
   /** the thread is on her screen: what has landed is seen */
   private markGroupSeen(): void { this.groupSeen = this.groupLanded(); }
   /** a link card is LIVE only at the stage it belongs to: Bea's bill at `first`, the vote's result at `voted`.
    *  Every other card (the bill again once the vote is in, the forwards in the cascade) is spent. */
-  private linkSpent(kind: string | undefined): boolean {
-    return kind === 'link2' ? this.stage !== 'voted' : this.stage !== 'first';
-  }
+  private linkSpent(_kind: string | undefined): boolean { return false; }
 
   // ── the era drives these ─────────────────────────────────────────────────
-  /** Bea's first messages land. Called when the day's work reaches the gate. */
-  arm(): void {
-    if (this.stage !== 'quiet') return;
-    this.stage = 'first'; this.banner = { from: MALTA_ONE[0].from, time: this.clockText, text: m.link.headline };
-    // ⚑ S178 — THE NEWS FINDS HER WHEREVER THE PHONE WAS. The notification lives on the
-    //   lock screen; a phone left open on Messages, on a message, or on the home grid
-    //   never showed it (the S178 walk stalled on a message screen for 800 steps — and a
-    //   player could too). A phone lights up with a notification whatever it was showing.
-    this.screen = 'lock';
-    this.openMessage = null;
-    this.bump();
-  }
-
   /** ⚑ IGNORING IS NOT A WAY OUT, and this is where that is enforced. Called
    *  when the player finishes another piece of work on the workstation without
    *  having opened the link: Lambient arrives anyway, with the same news, in
@@ -223,13 +248,40 @@ export class PhoneE3 {
       if (this.notesT >= 3) { this.notesT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.bump(); }
       else if (old !== Math.floor(this.notesT * 2)) this.bump();
     }
-    // ⚑ S327 — the cascade is the era's own beat and no longer waits on the evening's private queue (it is conducted:
-    //   the platform holds everything else while it runs); `cascadeT` starts at −4, the read of Bea's news first
-    if (!visible || this.stage !== 'cascade') return;
+    // ⚑ S332 — MALTA, the era's own beat (conducted: the platform holds every other voice while it runs).
+    //   news: Bea's messages land one at a time; then her one reply is offered (never required).
+    //   takeover: GracePlatform removes the Malta posts by itself, then her reply; the forwards begin once the posts
+    //   are gone and land faster than it can remove them. after: the cascade is in; what it missed stays.
+    if (!visible) return;
+    if (this.stage === 'news') {
+      if (this.newsN < NEWS.length) {
+        this.newsT += dt;
+        if (this.newsT >= NEWS_STEP) {
+          this.newsT = 0; this.newsN++; this.storyClock = NEWS[this.newsN - 1].time; this.newsBanner(NEWS.slice(0, this.newsN));
+          if (this.screen === 'group') this.markGroupSeen();
+          this.cascadeSound(); this.bump();
+        }
+        return;
+      }
+      if (this.replied) { this.holdT += dt; if (this.holdT >= TAKEOVER_HOLD) { this.stage = 'takeover'; this.removeT = 0; this.bump(); } return; }
+      const before = this.replyOffered;
+      this.replyWaitT = this.replyWaitT < 0 ? 0 : this.replyWaitT + dt;
+      if (before && !this.replyOffered) { this.stage = 'takeover'; this.removeT = 0; this.bump(); }
+      return;
+    }
+    if (this.stage !== 'takeover') return;
+    this.removeT += dt;
+    if (this.removeT >= REMOVE_STEP) {
+      const next = this.nextRemoval();
+      if (next && this.liveMsgs().some(x => x.key === next)) { this.removed.add(next); this.removeT = 0; this.bump(); }
+      else this.removeT = REMOVE_STEP;
+    }
+    if (!this.cascadeOn && NEWS.every((_, i) => this.removed.has('n' + i))) { this.cascadeOn = true; this.cascadeT = 0; }
+    if (!this.cascadeOn) return;
     this.cascadeT += dt;
     while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
       this.cascadeT -= CASCADE_STEP;
-      this.cascadeN++; this.newsBanner(CASCADE.slice(0, this.cascadeN));
+      this.cascadeN++; this.storyClock = CASCADE[this.cascadeN - 1].time; this.newsBanner(CASCADE.slice(0, this.cascadeN));
       this.cascadeSound();
       if (this.screen === 'group') this.markGroupSeen();   // it landed under her eyes
       this.bump();
@@ -262,7 +314,7 @@ export class PhoneE3 {
 
   // ── the beats ────────────────────────────────────────────────────────────
   /** ⚑ S227 — the phone has moved past Bea's first card (the board may offer an update again; see graceQueueLite) */
-  get pastFirst(): boolean { return this.stage === 'voted' || this.stage === 'cascade' || this.stage === 'after'; }
+  get pastFirst(): boolean { return this.stage !== 'quiet'; }
 
   /** ⚑ S219 / W1-E6 (his walkthrough: "clicking the link does nothing after the sequence ends") — a press ALWAYS answers.
    *  The live card does what it always did. A SPENT one (the bill once the vote is in, every forward in the cascade)
@@ -444,34 +496,8 @@ export class PhoneE3 {
       ctx.fillText(UNLOCK_HINT, ux + 14, uy + 8);
       this.rects.push({ x: ux, y: uy, w: uw, h: 26, id: 'unlock' });
     };
-    if (this.stage === 'quiet') {
-      this.drawLockCards(ctx, W, H, 120);
-      unlockPill();
-      return;
-    }
-
-    // ⚑ the one notification, as a card on the wallpaper
-    const ny = 140; const nx = 10; const nw = W - 20;
-    const lines = (() => { phoneFont(ctx, 11); return phoneWrap(ctx, this.previewText(), nw - 20); })();
-    const nh = 34 + Math.min(3, lines.length) * 14;
-    roundRect(ctx, nx, ny, nw, nh, 10, PHONE.surface);
-    avatar(ctx, nx + 8, ny + 8, 18, 'Bea');
-    phoneFont(ctx, 11, 600);
-    ctx.fillStyle = PHONE.ink;
-    ctx.fillText(m.group.name, nx + 32, ny + 9);
-    phoneFont(ctx, 9);
-    ctx.fillStyle = PHONE.dim;
-    const tw = ctx.measureText(d.phone.notificationTime).width;
-    ctx.fillText(d.phone.notificationTime, nx + nw - 10 - tw, ny + 10);
-    phoneFont(ctx, 11);
-    ctx.fillStyle = PHONE.ink;
-    lines.slice(0, 3).forEach((ln, k) => ctx.fillText(ln, nx + 10, ny + 28 + k * 14));
+    this.drawLockCards(ctx, W, H, 120);
     unlockPill();
-    this.rects.push({ x: nx, y: ny, w: nw, h: nh, id: 'notification' });
-  }
-
-  private previewText(): string {
-    return this.stage === 'first' ? MALTA_ONE[0].text ?? '' : MALTA_TWO[0].text ?? '';
   }
 
   /** ⚑ AN ICON GRID ON A WALLPAPER — the single thing that most makes a screen
@@ -634,7 +660,7 @@ export class PhoneE3 {
    *  "3 people were added"): the ending is people joining, and the group's own number should say so */
   private membersMeta(): string {
     let n = parseInt(m.group.meta, 10) || 0;
-    const shown = this.stage === 'cascade' || this.stage === 'after' ? CASCADE.slice(0, this.cascadeN) : [];
+    const shown = CASCADE.slice(0, this.cascadeN);
     for (const c of shown) {
       const t = (c as { text?: string }).text ?? '';
       const k = t.match(/^(\d+) people were added/);
@@ -649,11 +675,9 @@ export class PhoneE3 {
     let top = appBar(ctx, W, y0, m.group.name, this.membersMeta());
     this.pushBack(y0, top);
 
-    const counted = this.stage === 'cascade' || this.stage === 'after';
-    if (counted) {
-      const missed = Math.max(0, this.cascadeN - 2);
+    if (this.inTakeover) {
       const label = this.stage === 'after'
-        ? m.outnumbered.counter.replace('{n}', String(missed))
+        ? m.outnumbered.counter.replace('{n}', String(this.unreviewed))
         : m.outnumbered.stillWorking;
       ctx.fillStyle = PHONE.surface;
       ctx.fillRect(0, top, W, 18);
@@ -665,21 +689,32 @@ export class PhoneE3 {
       top += 18;
     }
 
-    const msgs: Msg[] = [...BEFORE, ...this.evening.filter(e => e.from === m.group.name).map(e => ({ from: e.from, time: e.time, text: e.text }))];
-    if (this.stage !== 'quiet') msgs.push(...MALTA_ONE);
-    if (this.stage === 'voted' || this.stage === 'cascade' || this.stage === 'after') msgs.push(...MALTA_TWO);
-    if (this.stage === 'cascade' || this.stage === 'after') msgs.push(...CASCADE.slice(0, this.cascadeN));
+    const msgs: Live[] = [
+      ...BEFORE.map((b, i) => ({ ...b, key: 'b' + i })),
+      ...this.evening.filter(e => e.from === m.group.name).map(e => ({ from: e.from, time: e.time, text: e.text, key: 'e' + e.id })),
+      ...this.liveMsgs()
+    ];
 
-    // the composer, and it is the emptiest thing on the device
+    // the composer's place: empty all era, except for the one reply she is offered (S332)
     const cy = H - 30;
+    if (this.replyOffered) {
+      phoneFont(ctx, 11);
+      const tw = Math.ceil(ctx.measureText(REPLY.text).width);
+      const cw = Math.min(W - 20, tw + 28), cx = W - 10 - cw;
+      ctx.fillStyle = PHONE.hairline; ctx.fillRect(0, cy - 6, W, 1);
+      phoneFont(ctx, 8); ctx.fillStyle = PHONE.dim; ctx.fillText(REPLY.hint, 10, cy + 5);
+      roundRect(ctx, cx, cy, cw, 24, 12, PHONE.bubbleOut);
+      phoneFont(ctx, 11); ctx.fillStyle = PHONE.surface; ctx.fillText(REPLY.text, cx + 14, cy + 6);
+      this.rects.push({ x: cx, y: cy, w: cw, h: 24, id: 'reply-bea' });
+    }
 
     // ⚑ bottom-up fill, and the guard tests the PROSPECTIVE position so the
     //   topmost bubble can never slide under the bar above it.
     let y = cy - 8;
-    const drawn: { y: number; h: number; msg: Msg }[] = [];
+    const drawn: { y: number; h: number; msg: Live }[] = [];
     for (let i = msgs.length - 1; i >= 0; i--) {
       const msg = msgs[i];
-      const h = this.msgHeight(ctx, msg, W);
+      const h = this.removed.has(msg.key) ? 18 : this.msgHeight(ctx, msg, W);
       const ny = y - h - 6;
       if (ny < top + 4) break;
       y = ny;
@@ -687,9 +722,31 @@ export class PhoneE3 {
     }
     let lastFrom = '';
     for (const { y: my, msg } of drawn) {
+      if (this.removed.has(msg.key)) {
+        // ⚑ the platform reached into her phone: the bubble stays, emptied, in the system's grey
+        phoneFont(ctx, 9);
+        const tw = Math.min(W - 44, ctx.measureText(REMOVED_LINE).width + 16);
+        const rx = msg.from === VERA ? W - 10 - tw : 30;
+        roundRect(ctx, rx, my, tw, 18, 9, PHONE.hairline);
+        ctx.fillStyle = PHONE.dim; ctx.fillText(REMOVED_LINE, rx + 8, my + 4);
+        lastFrom = msg.from; continue;
+      }
+      if (msg.from === VERA) { this.drawMine(ctx, msg, my, W); lastFrom = msg.from; continue; }
       this.drawMsg(ctx, msg, my, W, msg.from !== lastFrom);
       lastFrom = msg.from;
     }
+  }
+
+  /** ⚑ S332 — her one message in the era, on the right where her words would always have been */
+  private drawMine(ctx: CanvasRenderingContext2D, msg: Msg, y: number, W: number): void {
+    phoneFont(ctx, 11);
+    const lines = phoneWrap(ctx, msg.text ?? '', W - 74);
+    let widest = 0;
+    for (const ln of lines) widest = Math.max(widest, ctx.measureText(ln).width);
+    const bw = Math.min(W - 44, widest + 18), h = 14 + lines.length * 14, bx = W - 10 - bw;
+    bubble(ctx, bx, y, bw, h, 'out');
+    ctx.fillStyle = PHONE.surface;
+    lines.forEach((ln, i) => ctx.fillText(ln, bx + 9, y + 7 + i * 14));
   }
 
   private msgHeight(ctx: CanvasRenderingContext2D, msg: Msg, W: number): number {
@@ -834,6 +891,10 @@ export class PhoneE3 {
       case 'notes': this.screen = 'notes'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
       case 'link': case 'link2': this.openLink(r.id); return true;
+      // ⚑ S332 — her one reply, one press. It is real and it is sent; the platform removes it a moment later.
+      case 'reply-bea':
+        if (!this.replyOffered) return true;
+        this.replied = true; this.holdT = 0; this.storyClock = REPLY.time; playOnce('phone_msg_2016.mp3'); this.bump(); return true;
       // ⚑ the stream has no verb. Pressing it is consumed and does nothing,
       //   which is truer than making it play: nobody asked her to watch it.
       case 'stream': return true;
@@ -863,13 +924,13 @@ export class PhoneE3 {
     switch (beat) {
       case 'lock': this.screen = 'lock'; this.bump(); break;
       case 'home': this.screen = 'home'; this.bump(); break;
-      case 'group': this.arm(); this.screen = 'group'; this.openGroup(); break;
+      case 'group': this.screen = 'group'; this.openGroup(); break;
       case 'inbox': this.screen = 'inbox'; this.bump(); break;
-      case 'blocked': this.arm(); this.screen = 'group'; this.openLink(); break;
-      case 'ignored': this.arm(); this.onWorkDone(); break;
-      case 'voted': this.arm(); this.stage = 'voted'; this.newsBanner(MALTA_TWO); this.bump(); break;
+      case 'news': this.startNews(); this.newsN = NEWS.length; this.screen = 'group'; this.bump(); break;
+      case 'reply': this.debugBeat('news'); this.pressControl('reply-bea'); break;
       case 'cascade':
-        this.advanceNews();
+        this.debugBeat('reply'); this.stage = 'takeover';
+        NEWS.forEach((_, i) => this.removed.add('n' + i)); this.removed.add('v'); this.cascadeOn = true;
         this.screen = 'group'; this.bump();
         break;
       case 'after':

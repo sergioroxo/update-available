@@ -42,10 +42,11 @@
    "note": "four waiting"
   },
   {
-   "id": "comments",
-   "surface": null,
-   "label": "Clear the comments",
-   "note": "flagged replies"
+   "id": "places",
+   "surface": "places",
+   "label": "The places list",
+   "note": "one place to review",
+   "_docS332": "⚑ S332 (DESIGN_2016_CONNECTIONS, his second answers): job 2. A member post names The Wick; Vera is asked to add it to the network's places to avoid (src/desktop/apps/placesList.ts, data/dialog/s3_places.json)."
   },
   {
    "id": "family",
@@ -54,16 +55,10 @@
    "note": "from relatives"
   },
   {
-   "id": "story",
-   "surface": null,
-   "label": "Cut the Story",
-   "note": "forty seconds"
-  },
-  {
    "id": "group",
    "surface": "group",
    "label": "Post to the group",
-   "note": "this week's story",
+   "note": "this week's check-in",
    "_docS200": "⚑ S200 — the group, in the platform's own frame (src/desktop/apps/groupTask.ts)."
   },
   {
@@ -78,17 +73,15 @@
  "contributorTools": {
   "starters": [
    "testimony",
+   "places",
    "family",
-   "group",
-   "story",
-   "comments"
+   "group"
   ],
   "startersSpeedrun": [
    "testimony",
+   "places",
    "family",
-   "group",
-   "story",
-   "comments"
+   "group"
   ],
   "updates": []
  },
@@ -114,12 +107,12 @@
   "firstBoard1": "Open anything. They're all the same size to me.",
   "firstTask1": "Apply what fits. Skip what doesn't.",
   "firstTask2": "Either way it's recorded, so you can't get it wrong.",
-  "waitLine1": "The group still needs this week's story.",
+  "waitLine1": "The group still needs this week's check-in.",
   "waitLine2": "Renata's story is ready to send. No rush.",
   "waitFamily": "The family line still has parents waiting.",
   "_docWait": "⚑ S227 (VERA_OPTIONS §4c.2) — the waiting lines name only jobs that are ON the board and unfinished: the group (waitLine1), the family calls (waitFamily), the video once its update is installed (waitLine2, its 'And' dropped so it can stand first). At most two, the R28 cap; none if nothing named is open.",
-  "firstOrder": "A testimony first. Then the family calls, then the group's post.",
-  "firstOrderSpeedrun": "A testimony first. Then the family calls, then the group's post.",
+  "firstOrder": "A testimony first. Then the places list, the family calls and the group's check-in.",
+  "firstOrderSpeedrun": "A testimony first. Then the places list, the family calls and the group's check-in.",
   "_docFirstOrder": "⚑ S227 — LAMBIENT'S OPENING MESSAGE CALLS HER TO THE THREE IN ORDER (his 2026-10-10: 'the order of the three is Lambient's'; one short clause per job), said as the second line of the consent beat so the reply ('I'll keep the room tidy either way') is still heard first and the beat stays at two lines (R28). The board's own header still says 'Start anywhere. The order is yours.' — the platform offers a freedom and its assistant hands her an order in the same breath. In the Speedrun Version (`?cut=speedrun`) Lambient sends her straight to Annette's job ('to speed up the narrative').",
   "witnessAllowed": "assistant: introduced — Lambient permissions granted",
   "witnessDeclined": "assistant: dismissed — Lambient permissions declined, companion retained",
@@ -127,7 +120,8 @@
   "_docUpdateDeferred": "⚑ S327 / T07 (his 8 Nov: 'remind me later does not do anything') — Remind me later on the u4 notice returns her to the board with this ONE quiet line in Lambient's lane; the notice comes back once (update.ts REMIND_SECONDS) with the button spent.",
   "phone1": "Your phone's lit — someone's writing to you.",
   "phone2": "Pick it up when you like. You can always put it down.",
-  "_docPhone": "⚑ S149 (NARRATIVE_FLOW 2016 #6; OPEN_ITEMS R3-81): the era's voice for the phone beat, once, when the phone lights. The phone is the way 2016 ends now — the update never arms before the group has been seen there — so the player is told it exists and that it can be put down. ≤2 lines, the R28 cap."
+  "_docPhone": "⚑ S149 (NARRATIVE_FLOW 2016 #6; OPEN_ITEMS R3-81): the era's voice for the phone beat, once, when the phone lights. The phone is the way 2016 ends now — the update never arms before the group has been seen there — so the player is told it exists and that it can be put down. ≤2 lines, the R28 cap.",
+  "waitPlaces": "One place is waiting for the list."
  },
  "submissions": [
   {
@@ -212,7 +206,8 @@
     "with": "same-sex attracted"
    },
    "witnessApplied": "list: applied — renata (soften the term)",
-   "witnessSkipped": "list: skipped — renata (soften the term)"
+   "witnessSkipped": "list: skipped — renata (soften the term)",
+   "teach": "We say “same-sex attracted” because it names a feeling, not a person. Feelings can change."
   },
   {
    "id": 2,
@@ -229,7 +224,7 @@
   },
   {
    "id": 3,
-   "rule": "Keep the hope line",
+   "rule": "Name the dependency, not the person",
    "why": "Name the dependency, not the person. Leave room for the invitation.",
    "manual": "The Ordering §3.2 — selected audio",
    "verse": "Household 9:6 — “what is said in the room is carried to the road”",
@@ -239,7 +234,9 @@
    },
    "chip": "clipped · conference audio",
    "witnessApplied": "list: applied — renata (clip for the broadcast)",
-   "witnessSkipped": "list: skipped — renata (clip for the broadcast)"
+   "witnessSkipped": "list: skipped — renata (clip for the broadcast)",
+   "teach": "We say “dependency” because a name can hurt someone.",
+   "_ruleBeforeS332": "Keep the hope line"
   },
   {
    "id": 4,
@@ -287,7 +284,8 @@
    "chip": "follow-up assigned",
    "quiet": true,
    "witnessApplied": "list: applied — renata (route for mentorship)",
-   "witnessSkipped": "list: skipped — renata (route for mentorship)"
+   "witnessSkipped": "list: skipped — renata (route for mentorship)",
+   "teach": "Someone kind will check in within two days. Nobody should carry this alone."
   },
   {
    "id": 8,
@@ -439,5 +437,24 @@
   "witness": "record: viewed — profile and activity",
   "todayLabel": "events today: {n}",
   "todayEmpty": "no activity yet"
- }
+ },
+ "_docS332Board": "⚑ S332 — FOUR JOBS PLUS MALTA (his 8 Nov, second answers): Correct a testimony, The places list, Return the family calls, Post to the group. \"Cut the Story\" and \"Clear the comments\" are retired as tiles (their surfaces stay in the code, unmounted from the board); their moderation content folds into the places list (a place named in a post is the danger) and into Malta (the platform removing posts by itself).",
+ "refusal": {
+  "_doc": "⚑ S332 (his 8 Nov: \"Refusing is possible, and the system does it anyway, aggressively… people should try NOT to comply, and that refusal is what builds toward the need for the update. No score, no counter shown.\"). ONE ladder for the whole shift (src/desktop/apps/lambientDesk.ts): the 1st refusal Lambient pushes and the job stays open; the 2nd it reprimands and the job stays open; the 3rd it does the job itself; from the 4th an administrator does it. Every refusal is filed (the dismissal law: refusal is real and it is logged). Nothing on screen counts them. ⚑ The update is NOT triggered by this (ETHICS 11: updates are triggered by documented system failures): the trigger stays Malta, the review queue outnumbered. What the refusals build is the reason the next system will not need her hands (u4: \"manual review: retired\").",
+  "lines": [
+   "That's not how we keep the room gentle.",
+   "I've asked kindly.",
+   "Done for you. This has been noted.",
+   "An administrator did it for you."
+  ],
+  "lambientTag": "LAMBIENT",
+  "adminTag": "GRACEPLATFORM",
+  "doneByYou": "done by you",
+  "doneByLambient": "done by Lambient",
+  "doneByAdmin": "done by an administrator",
+  "witnessAsked": "{what}: refused — Lambient asked again",
+  "witnessLambient": "{what}: refused — Lambient did it anyway; noted",
+  "witnessAdmin": "{what}: refused — an administrator did it"
+ },
+ "_docTeach": "⚑ S332 (his second answers: \"Lambient teaches the rule… in its own kind voice, the system explaining itself\"; replaces the \"Why this rule?\" footer). `teach` on a correction is Lambient's line, drawn in the rule panel with its tag — the tool's side of the screen, never on her words. Sources stay on the era site, never in its mouth."
 }

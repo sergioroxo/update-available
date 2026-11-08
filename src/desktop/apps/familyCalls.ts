@@ -45,6 +45,7 @@ import { ERA3 } from '../theme/era3';
 import { ledger } from '../../state/ledger';
 import type { TaskSurface, TaskArea, TaskHit } from './taskSurface';
 import f from '../../../data/dialog/s3_family.json';
+import { refuse, drawLambientNote, measureLambientNote, noteBand, type DeskNote, type Voice } from './lambientDesk';
 
 type ParentDef = { id: string; from: string; meta: string; body: string; witnessOpened: string };
 type ReplyDef = { id: string; label: string; preview: string; witness: string };
@@ -68,6 +69,9 @@ export class FamilyCallsApp implements TaskSurface {
   /** which reply was sent, for the row's own "sent" line */
   private sent = new Map<string, string>();
   private opened = new Set<string>();
+  /** ⚑ S332 — who sent the reply when she refused (Lambient, or an administrator), and Lambient's last line */
+  private forcedBy = new Map<string, Voice>();
+  private note: DeskNote | null = null;
 
   version(): number { return this.v; }
   private bump(): void { this.v++; }
@@ -96,6 +100,7 @@ export class FamilyCallsApp implements TaskSurface {
 
   private reply(replyId: string): void {
     const p = this.current();
+    this.note = null;
     if (this.outcomes.has(p.id)) return;
     const r = REPLIES.find(rr => rr.id === replyId);
     if (!r) return;
@@ -108,14 +113,21 @@ export class FamilyCallsApp implements TaskSurface {
     this.bump();
   }
 
-  private handle(): void {
+  /** ⚑ S332 — SHE REFUSES TO SEND A SCRIPT. The shift's one ladder (lambientDesk.ts): Lambient asks again, then
+   *  reprimands, and from the third refusal the reply is sent for her ("Affirm the boundaries", the grace-and-truth
+   *  one) by Lambient, then by an administrator. Annette, who asked where her daughter is, can be sent it too. */
+  private refuseReply(): void {
     const p = this.current();
     if (this.outcomes.has(p.id)) return;
-    this.outcomes.set(p.id, 'handled');
-    ledger.checkins.push({
-      id: p.id,
-      witness: p.id === QUIET.id ? QUIET.witnessHandled : p.witnessOpened
-    });
+    const ans = refuse(`family: ${p.from}`);
+    this.note = { line: ans.line, voice: ans.voice };
+    if (ans.forced) {
+      const r = REPLIES.find(rr => rr.id === f.forcedReply) ?? REPLIES[0];
+      this.outcomes.set(p.id, 'replied');
+      this.sent.set(p.id, r.label);
+      this.forcedBy.set(p.id, ans.voice);
+      ledger.checkins.push({ id: p.id, witness: p.id === QUIET.id ? QUIET.witnessSentAnyway : r.witness });
+    }
     this.bump();
   }
 
@@ -179,7 +191,8 @@ export class FamilyCallsApp implements TaskSurface {
       ctx.fillText(p.meta, area.x + 10, ry + 22);
       if (done) {
         setFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
-        const tag = this.outcomes.get(p.id) === 'replied' ? f.app.sentTag : f.app.handledTag;
+        const fb = this.forcedBy.get(p.id);
+        const tag = fb ? (fb === 'admin' ? f.app.sentByAdmin : f.app.sentByLambient) : this.outcomes.get(p.id) === 'replied' ? f.app.sentTag : f.app.handledTag;
         ctx.fillText(tag, area.x + 10, ry + 33);
       }
       hit({ x: area.x, y: ry, w: listW, h: rowH, id: 'family-sel-' + i });
@@ -191,6 +204,15 @@ export class FamilyCallsApp implements TaskSurface {
     setFont(ctx, 9); ctx.fillStyle = ERA3.grey;
     wrapText(ctx, f.app.roleLine, listW).slice(0, 3).forEach((ln, i) =>
       ctx.fillText(ln, area.x, area.y + 22 + PARENTS.length * (rowH + 4) + 6 + i * 11));
+
+    // ⚑ S332 — Lambient teaches the rule here, in the list column (the tool's side), never on a mother's message
+    {
+      const ny = area.y + 22 + PARENTS.length * (rowH + 4) + 46;
+      const note = this.note ?? { line: f.lambient.teach, voice: 'lambient' as Voice };
+      const nh = measureLambientNote(ctx, listW - 10, note, 10);
+      noteBand(ctx, area.x, ny - 5, listW, nh + 9);
+      drawLambientNote(ctx, area.x + 5, ny, listW - 10, note, 10);
+    }
 
     // ── the message ────────────────────────────────────────────────────────
     const p = this.current();
@@ -230,14 +252,8 @@ export class FamilyCallsApp implements TaskSurface {
     // ⚑ and the row that is always available and never labelled as a refusal:
     //   marking a mother handled without a word. It files. Nothing objects.
     const hy = area.y + 176 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
-    aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done, size: 10 });
-    if (!done) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-handle' });
-
-    if (done) {
-      const label = this.sent.get(p.id);
-      setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
-      wrapText(ctx, label ?? f.app.handledTag, listW).forEach((line, i) => ctx.fillText(line, area.x, area.y + area.h - 64 + i * 12));
-    }
+    if (!this.complete()) aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done, size: 10 });
+    if (!done) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
 
     if (this.complete()) {
       setFont(ctx, 12); ctx.fillStyle = ERA3.titleText;
@@ -250,7 +266,7 @@ export class FamilyCallsApp implements TaskSurface {
   press(id: string): boolean {
     if (id.startsWith('family-sel-')) { this.select(Number(id.slice(11))); return true; }
     if (id.startsWith('family-reply-')) { this.reply(id.slice(13)); return true; }
-    if (id === 'family-handle') { this.handle(); return true; }
+    if (id === 'family-refuse' || id === 'family-handle') { this.refuseReply(); return true; }
     return false;
   }
 
@@ -259,9 +275,9 @@ export class FamilyCallsApp implements TaskSurface {
       case 'open': this.select(0); break;
       case 'quiet': this.select(PARENTS.findIndex(p => p.id === QUIET.id)); break;
       case 'replied': this.select(0); this.reply(REPLIES[0].id); break;
-      case 'handled': this.debugBeat('quiet'); this.handle(); break;
+      case 'handled': this.debugBeat('quiet'); this.refuseReply(); break;
       case 'done':
-        for (let i = 0; i < PARENTS.length; i++) { this.select(i); this.handle(); }
+        for (let i = 0; i < PARENTS.length; i++) { this.select(i); this.reply(REPLIES[0].id); }
         break;
     }
   }

@@ -363,6 +363,19 @@ function wickCard(c: Ctx, W: number, H: number): void {
   centre(c, vera.desk.expiry, 55, P.cardInk, W);
 }
 
+/** ⚑ S332 — THE WICK, BANNED: once The Wick is on the network's places to avoid, the stamp card on her desk gets a red
+ *  stamp across it, drawn over the card as it is (era3Devices redraws the print's own canvas once and uploads it).
+ *  Square to the card (90°-step law), a double rule and the word, in the prints' red. */
+export function stampBanned(c: Ctx, W: number, H: number): void {
+  const word = 'BANNED', sc = 2;
+  const tw = textW(word, sc), bw = tw + 14, bh = 22;
+  const x = Math.round((W - bw) / 2), y = Math.round((H - bh) / 2) + 2;
+  px(c, x, y, P.confRed, bw, 2); px(c, x, y + bh - 2, P.confRed, bw, 2);
+  px(c, x, y, P.confRed, 2, bh); px(c, x + bw - 2, y, P.confRed, 2, bh);
+  px(c, x + 3, y + 3, P.cardStock, bw - 6, bh - 6);
+  text(c, word, x + 7, y + 6, P.confRed, sc);
+}
+
 const DRAW: Record<PrintId, (c: Ctx, W: number, H: number) => void> = {
   wickCard, mugN, release1997, rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard,
   dusk2003, evening2016, night2026

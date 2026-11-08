@@ -7,6 +7,7 @@ import { veraDay, resetVeraDay } from '../state/veraDay';
 import polish from '../../data/strings/playtestPolish.json';
 import { drawLambyGuide, drawGuidePointer, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
 import type { LambyGuide } from '../narrative/lambyGuide';
+import { refuse, drawLambientNote, resetRefusals, type DeskNote } from '../desktop/apps/lambientDesk';
 /**
  * THE CORRECTION LIST — the workstation, Era 3 (Session 64, E3-iii).
  * Spec: `docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` (revision 4).
@@ -152,6 +153,8 @@ interface CorrectionDef {
   id: number;
   rule: string;
   why: string;
+  /** ⚑ S332 — Lambient's lesson: the rule explained in its own kind voice (drawn in the rule panel) */
+  teach?: string;
   /** the style-guide reference (`The Ordering §4.2 — …`) */
   manual: string;
   /** the proof-text (`Household 6:2 — "…"`). Same grey, same size, same
@@ -224,8 +227,12 @@ const MALTA_AFTER_TASKS = 2;
  *  the phone (his 2026-10-10: "to speed up the narrative"). Read when asked, never at module load: the front door may
  *  choose the cut after this file is imported. */
 function maltaAfter(): number { return isSpeedrun() && !extraOn('work') ? 1 : MALTA_AFTER_TASKS; }
-/** ⚑ S327 — the evening's messages after Orla's, in story order (data/strings/e3_mirror.json `events`) */
-const EVENING_ORDER = ['job', 'decision', 'send', 'record-close'];
+/** ⚑ S332 — EVERY JOB MEETS THE PHONE (DESIGN_2016_CONNECTIONS, his second answers): the message each finished job
+ *  earns (data/strings/e3_mirror.json `events`). The testimony's is earned when Renata's story is finished; the record's
+ *  when her 2014 record closes. Each is held until the platform is at rest, then delivered one at a time. */
+const JOB_EVENTS: [string, string][] = [['places', 'arrival'], ['family', 'decision'], ['group', 'job']];
+/** the four jobs before her own record (the board's order) */
+const FOUR_JOBS = ['testimony', 'places', 'family', 'group'];
 
 type Outcome = 'applied' | 'skipped';
 
@@ -369,7 +376,7 @@ export class GraceQueueLite {
   }
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
 
-  get guideSilent(): boolean { return this.personalQuiet || this.veraPage === 'record' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
+  get guideSilent(): boolean { return this.personalQuiet || this.veraPage === 'record' || this.veraPage === 'removals' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
     || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
   private lambPriority = false;
   private lambHoldT = 0;
@@ -393,15 +400,32 @@ export class GraceQueueLite {
   get personalQuiet(): boolean { return this.wickConducting || this.phone.conductingNotes || (this.mirrorReading && this.phone.quietReading) || this.phone.personalOpen || this.phoneInHand || this.cascadeConduct; }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
-    // ⚑ S327 / T06 — the Wick card rises first (era3Devices, four seconds); Orla's message arrives after it settles
-    this.personalArmed = true; this.phone.armPersonal(); this.arrivalWait = 0; this.bump();
+    // ⚑ S327 / T32 — the Wick card rises once at sign-in (era3Devices, four seconds). ⚑ S332: Orla's message no longer
+    //   follows it here; it is the places list's answer (JOB_EVENTS)
+    this.personalArmed = true; this.phone.armPersonal(); this.bump();
   }
-  private arrivalWait = -1;
   /** ⚑ S327 / T06 (his 8 Nov: "stories and the phone run by themselves… a Maiden-to-be message popped in while I pressed
    *  the testimony editor") — the evening's other messages, in the order she EARNS them: each finished thing (a story,
    *  the send, its receipt, her own record) earns the next, and the phone holds it until the platform is at rest. */
-  private earned = 0;
-  private earnNext(): void { const id = EVENING_ORDER[this.earned]; if (!id) return; this.earned++; this.phone.arrive(id); }
+  private earnedJobs = new Set<string>();
+  private earn(id: string): void { this.phone.arrive(id); }
+  /** ⚑ S332 — the four jobs, finished (a job finished for her by Lambient or an administrator counts: it is done) */
+  private jobDone(id: string): boolean {
+    if (id === 'testimony') return this.subComplete(SUBMISSIONS[0]) && veraDay.distributed;
+    return this.surfaces.get(id)?.complete() ?? false;
+  }
+  /** a job (or a story) is open on the platform: Malta's conducted clock waits for the board */
+  private get jobOpen(): boolean { return this.mode === 'list' || !!this.openSurface; }
+  private get fourJobsDone(): boolean { return FOUR_JOBS.every(id => this.jobDone(id)); }
+  /** ⚑ S332 — the Wick card is stamped BANNED once Orla's invitation has been read (era3Devices takes it) */
+  wickBanPending = false;
+  get wickBanReady(): boolean { return this.wickBanPending && this.phone.delivered('arrival') && !this.phone.voiceBusy && this.phone.atRest; }
+  takeWickBan(): void { this.wickBanPending = false; }
+  /** ⚑ S332 — the campaign kit is brought to her once Nuala's message has been read */
+  private kitPending = false;
+  private removalsShown = false;
+  /** ⚑ S332 — Lambient's answer to her last refusal on Renata's rules (lambientDesk.ts), drawn in the rule panel */
+  private deskNote: DeskNote | null = null;
   /** ⚑ S327 / T07 — the cascade, conducted: the Handset Window is brought forward over the board while the group fills */
   private cascadeConduct = false;
   private tailT = -1;
@@ -420,7 +444,7 @@ export class GraceQueueLite {
    *  seen), Orla's last message has been delivered, and Lambient has said the board is still there. Then, and only
    *  then, with nothing open and no other voice speaking (era3Devices adds its six quiet seconds). */
   get updateReady(): boolean {
-    return this.afterSaid && this.afterT >= 5 && !this.cascadeConduct && !this.pauseOpen && !this.phone.voiceBusy && this.phone.queued === 0;
+    return !this.veraPage && this.afterSaid && this.afterT >= 5 && !this.cascadeConduct && !this.pauseOpen && !this.phone.voiceBusy && this.phone.queued === 0;
   }
   private clearPersonalNotice(): void {
     this.personalNotice = false; this.personalDesktop = false;
@@ -470,7 +494,7 @@ export class GraceQueueLite {
    */
   private idleT = 0;
   private mode: Mode = 'dark';
-  private veraPage: 'send' | 'record' | 'kit' | null = null;
+  private veraPage: 'send' | 'record' | 'kit' | 'removals' | null = null;
   private recordSent = false;
   private recordPage = 0;
   private storyOffer = false;
@@ -502,7 +526,7 @@ export class GraceQueueLite {
   private openSurface: TaskSurface | null = null;
   /** ⚑ S145 — where the record chip was pressed FROM, so Back returns there
    *  (the board, or the job she had open) instead of always to the board */
-  private chipReturn: { mode: Mode; surface: TaskSurface | null; page: 'send' | 'record' | 'kit' | null } | null = null;
+  private chipReturn: { mode: Mode; surface: TaskSurface | null; page: 'send' | 'record' | 'kit' | 'removals' | null } | null = null;
   /** the chip's lit step as last drawn — the redraw clock moves only when it changes */
   private consent: 'allowed' | 'declined' | null = null;
   private wakeWord = false;
@@ -556,7 +580,7 @@ export class GraceQueueLite {
   private readonly onLight: (on: boolean) => void;
 
   constructor(opts: { onLight?: (on: boolean) => void } = {}) {
-    resetVeraDay();
+    resetVeraDay(); resetRefusals();
     this.onLight = opts.onLight ?? ((): void => { /* no room to light (flat mode) */ });
   }
 
@@ -650,13 +674,12 @@ export class GraceQueueLite {
     this.guideWait.tick(dt, !!this.lambyGuide?.active);
     // ⚑ S327 / T06 — ONE VOICE AT A TIME. The phone may deliver only while the platform is at rest: nothing open on it,
     //   no Lambient line, no card, no guide balloon, no conducted beat, no system notice.
-    this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface))
+    // ⚑ S332 — and not in the one frame between Renata's last rule and the send page the platform is about to open
+    this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface
+      && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed)))
       && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this.focusOpen
       && !this.wickConducting && !this.cascadeConduct && !this._systemModal && !this.lambyGuide?.active;
-    if (this.arrivalWait >= 0) {
-      this.arrivalWait += dt;
-      if (this.arrivalWait >= 4.2 && !this.wickConducting) { this.arrivalWait = -1; this.phone.arrive('arrival'); }
-    }
+    this.updateConnections();
     if (this.personalDesktop && !this.phone.personalOpen) { this.personalDesktop = false; this.bump(); }
     if (this.phoneInHand || this.phone.personalSeen) {
       if (this.personalNotice) { this.personalNotice = false; this.bump(); }
@@ -695,7 +718,7 @@ export class GraceQueueLite {
       if (!this.waitSaid && !this.phone.voiceBusy && !this.maltaArrived && this.boardQuietT > 25 && this.guideReady('waiting')) {
         // ⚑ S227 (VERA_OPTIONS §4c.2) — only a job that is ON the board and unfinished is named: mounted is not enough
         //   now that most of the day arrives by update
-        const waiting = ([['group', LAMBIENT.waitLine1], ['family', LAMBIENT.waitFamily], ['recommend', LAMBIENT.waitLine2]] as const)
+        const waiting = ([['places', LAMBIENT.waitPlaces], ['group', LAMBIENT.waitLine1], ['family', LAMBIENT.waitFamily], ['recommend', LAMBIENT.waitLine2]] as const)
           .filter(([id]) => { const s = this.surfaces.get(id); return this.isUnlocked(id) && !!s && !s.complete(); })
           .map(([, line]) => line).slice(0, 2);
         if (waiting.length) { this.waitSaid = true; this.lambSay(waiting, 'waiting'); this.bump(); }
@@ -706,7 +729,10 @@ export class GraceQueueLite {
       this.idleT += dt;
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
-    this.phone.tick(dt, (this.phoneInHand || this.mirrorAvailable) && !this.floppy.open); // ⚑ the cascade's own clock, and the only one on the phone
+    // ⚑ S332 (the S329 entrance walk: kit → another job → Malta never came, 0 rects) — MALTA WAITS FOR THE BOARD. Its
+    //   conducted clock (Bea's news, the takeover, the cascade) only runs while no job is open; a job opened during it
+    //   pauses it, and it resumes the moment she is back on the board. The board's tiles stay pressable throughout.
+    this.phone.tick(dt, (this.phoneInHand || this.mirrorAvailable) && !this.floppy.open && !this.jobOpen); // ⚑ the cascade's own clock, and the only one on the phone
     // ⚑ S327 / T07 — THE TAIL, one voice at a time: the cascade ends and holds a moment on the open thread; the
     //   Handset Window goes back to its place; Orla's last message arrives (felt); then Lambient says the board is still
     //   there; then — `updateReady` — the update. Nothing here waits on a press, and nothing here is on a timer the
@@ -714,7 +740,7 @@ export class GraceQueueLite {
     if (this.phone.broken) {
       if (this.cascadeConduct) {
         this.tailT = this.tailT < 0 ? 0 : this.tailT + dt;
-        if (this.tailT >= 2.5) { this.cascadeConduct = false; this.mirrorLarge = false; this.mirrorReading = false; this.bump(); }
+        if (this.tailT >= 5) { this.cascadeConduct = false; this.mirrorLarge = false; this.mirrorReading = false; if (this.veraPage === 'removals') this.veraPage = null; this.bump(); }
       } else if (!this.afterQueued) { this.afterQueued = true; this.phone.arrive('after'); }
       if (this.afterQueued && !this.afterSaid && this.phone.delivered('after') && this.phone.queued === 0 && !this.phone.voiceBusy
         && this.phone.atRest && this.guideReady('after-phone')) {
@@ -790,6 +816,34 @@ export class GraceQueueLite {
   // ── the list ─────────────────────────────────────────────────────────────
   private bump(): void { this.ownVersion++; }
 
+  /** ⚑ S332 — the connections, watched each frame (cheap: four booleans): a finished job earns its message; the places
+   *  list also arms the Wick card's BANNED stamp; all four finished open the offer of her own record (once the phone
+   *  is quiet); Nuala's message read brings the campaign kit; Malta's takeover puts the platform's removals on screen. */
+  private updateConnections(): void {
+    for (const id of FOUR_JOBS) {
+      if (this.earnedJobs.has(id) || !this.jobDone(id)) continue;
+      this.earnedJobs.add(id);
+      if (!ledger.records.includes('e3-job:' + id)) ledger.records.push('e3-job:' + id);
+      const ev = JOB_EVENTS.find(([j]) => j === id)?.[1];
+      if (ev) this.earn(ev);
+      if (id === 'places') this.wickBanPending = true;
+      this.bump();
+    }
+    if (this.fourJobsDone && !ledger.records.includes('e3-jobs-done')) ledger.records.push('e3-jobs-done');
+    if (this.fourJobsDone && !veraDay.recordOpened && !this.storyOffer && this.phone.queued === 0 && !this.phone.voiceBusy
+      && !this.wickBanPending && !this.wickConducting) { this.storyOffer = true; this.bump(); }
+    if (this.kitPending && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest && !this.wickConducting) {
+      this.kitPending = false; this.veraPage = 'kit'; this.mode = 'board'; this.bump();
+    }
+    // while Bea's news lands the window is brought forward over the board — but never over an open job
+    if (this.cascadeConduct && !this.removalsShown) { const large = !this.jobOpen; if (large !== this.mirrorLarge) { this.mirrorLarge = large; this.bump(); } }
+    if (!this.removalsShown && this.phone.inTakeover && !this.jobOpen) {
+      // the system takes over GracePlatform: the window goes back to its place, the platform shows what it removes
+      this.removalsShown = true; this.mirrorLarge = false; this.veraPage = 'removals'; this.bump();
+    }
+    if (this.veraPage === 'removals') this.bump();   // the queue moves with the phone's own clock (its version)
+  }
+
   /** ⚑ S208 / A2 (REVIEW_ROUND_5, ERA16-01) — ANY finished job moves the day on, not only the testimony: the board
    *  says "Start anywhere", so the phone lights after whichever job she finishes first. And A7 (ERA16-04) — capture
    *  either way: if she finishes another job after the phone lit without opening Bea's link, the phone's own
@@ -799,7 +853,6 @@ export class GraceQueueLite {
     const wd = this.workDone();
     // A completed piece of work opens the pipeline before Malta, in either cut.
     if (this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed) { this.veraPage = 'send'; this.bump(); return; }
-    if (veraDay.distributed && !veraDay.recordOpened) { this.storyOffer = true; }
     if (veraDay.recordClosed && !veraDay.kitClosed) return;
 
     if (!this.maltaArrived) {
@@ -1134,7 +1187,7 @@ export class GraceQueueLite {
 
   /** the whole job finished — the tile goes grey */
   private taskComplete(t: BoardTask): boolean {
-    if (t.surface === 'testimony') return SUBMISSIONS.every(sb => this.subComplete(sb));
+    if (t.surface === 'testimony') return this.jobDone('testimony');   // S332: today's job is Renata's story, sent; the others stay open behind Next story
     return this.surfaces.get(t.id)?.complete() ?? false;
   }
 
@@ -1225,23 +1278,37 @@ export class GraceQueueLite {
   /** APPLY / SKIP — the only two verbs this era has. Both file; neither is
    *  weighted, tinted or answered. The counter only ever counts `applied`,
    *  and nothing else on the screen responds to either. */
-  private decide(outcome: Outcome): void {
+  private decide(choice: Outcome): void {
+    let outcome = choice;
     const sub = this.submission();
     const item = this.current();
     if (this.mode !== 'list' || !sub || !item) return;
     playOnce('tick_task.mp3');   // S141: APPLY and SKIP share ONE tick — the record files both
+    let forcedBy: string | null = null;
+    // ⚑ S332 — REFUSING RENATA'S RULES (his second answers): Skip is a refusal, and the shift's one ladder answers it
+    //   (lambientDesk.ts). Lambient asks again, then reprimands — the rule stays open — then does it itself, then an
+    //   administrator does. Only on Renata (job 1): the other stories keep their plain Skip (Noa's two captions must
+    //   stay unresolved, and nothing may force one of them).
+    if (outcome === 'skipped' && sub.id === 1) {
+      const ans = refuse(`list: renata (${item.rule.toLowerCase()})`);
+      this.deskNote = { line: ans.line, voice: ans.voice };
+      if (!ans.forced) { this.bump(); return; }
+      outcome = 'applied'; forcedBy = ans.voice;
+      // the line now stands under the NEXT rule, so it says which one was done for her
+      this.deskNote = { line: `${item.rule}: ${ans.line}`, voice: ans.voice };
+    } else this.deskNote = null;
     this.decisions.set(item.id, outcome);
     this.lambLines = null; // the beat is over the moment she uses either verb
     ledger.graceQueue.push({
       cardId: item.id,
       outcome,
-      witness: outcome === 'applied' ? item.witnessApplied : item.witnessSkipped
+      witness: outcome === 'applied' ? item.witnessApplied + (forcedBy ? ` — ${forcedBy === 'admin' ? vera.forcedBy.admin : vera.forcedBy.lambient}` : '') : item.witnessSkipped
     });
     if (!this.current()) {
       // S158 / R3-74 (Sérgio: "when I finish a section there should be a button at the bottom
       // to go back to the panel"): the story HOLDS, finished, with the way back and the way on
       // — nothing loads by itself. The break arms here, as before.
-      this.earnNext();   // S327: held until she is back on the board, at rest
+      if (sub.id === 1) this.earn('mentor');   // S332: the testimony's answer, held until the send is done and she is at rest
       this.storyDone = true;
       if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
       if (this.workDone() >= maltaAfter()) this.armMalta();
@@ -1292,7 +1359,6 @@ export class GraceQueueLite {
     // the phone lights only after the two pieces of work (B15), whichever path armed it: the map's beat is ticked here
     if (!ledger.records.includes('e3-two-jobs')) ledger.records.push('e3-two-jobs');
     playOnce('phone_ping_2016.mp3');   // S141: the phone lights on the desk
-    this.phone.arm();
     this.phoneV++;
     this.bump();
   }
@@ -1533,7 +1599,7 @@ export class GraceQueueLite {
     //   the whole picture, and it is worth the beat: the machine has a life
     //   that is not the shift, and she has put the shift down to look at it.
     if (this.minimised) { this.drawTaskButton(ctx, H, false); return; }
-    const title = this.veraPage === 'record' ? vera.record.title : this.veraPage === 'kit' ? vera.kit.title : this.veraPage === 'send' ? vera.send.title : this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
+    const title = this.veraPage === 'removals' ? vera.removals.title : this.veraPage === 'record' ? vera.record.title : this.veraPage === 'kit' ? vera.kit.title : this.veraPage === 'send' ? vera.send.title : this.mode === 'signin' || this.mode === 'consent' ? q.app.shellTitle
       : this.mode === 'board' || this.mode === 'done' ? q.app.boardTitle
         : this.openSurface ? this.openSurface.windowTitle
           : q.app.title;
@@ -1686,6 +1752,7 @@ export class GraceQueueLite {
   private drawVeraPage(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     const hit = (r: Rect): void => { this.rects.push(r); };
     if (this.veraPage === 'record') { drawVeraArchive(ctx, c, this.recordSent, this.recordAdmin, this.recordPage, hit); return; }
+    if (this.veraPage === 'removals') { this.drawRemovals(ctx, c); return; }
     if (this.veraPage === 'send') {
       drawVeraDistribution(ctx, c, this.runs(SUBMISSIONS[0], false).map(r => r.text).join(''), this.sendReceipt, hit); return;
     }
@@ -1722,6 +1789,42 @@ export class GraceQueueLite {
       button('vera-kit-close', k.back, x + w - 276, 118);
       button('vera-kit-approve', k.approve, x + w - 150, 150, true);
     } else button('vera-kit-close', k.back, x + w - 150, 150, true);
+  }
+
+  /** ⚑ S332 — MALTA ON THE PLATFORM: GracePlatform reviewing Maiden-to-be by itself. Its own voice (no Lambient: a
+   *  person's group is on the screen). The rows are the group's messages as the phone has them; the platform removes
+   *  them one by one, the forwards arrive faster, and what it could not reach stays. Nothing here is pressable. */
+  private drawRemovals(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const R = vera.removals, x = c.x + 14, w = c.w - 28;
+    px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
+    studioFont(ctx, 18, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(R.heading, x, c.y + 8);
+    studioFont(ctx, 12); ctx.fillStyle = ERA3.greyDk; ctx.fillText(R.sub, x, c.y + 34);
+    studioFont(ctx, 11); ctx.fillStyle = ERA3.alarm; ctx.fillText(R.rule, x, c.y + 52);
+    const rows = this.phone.takeoverRows();
+    const top = c.y + 74, rh = 22, room = Math.max(1, Math.floor((c.h - (top - c.y) - 30) / (rh + 3)));
+    const shown = rows.slice(Math.max(0, rows.length - room));
+    shown.forEach((r, i) => {
+      const y = top + i * (rh + 3);
+      px(ctx, x, y, w, rh, r.state === 'removed' ? ERA3.sysBand : ERA3.white);
+      px(ctx, x, y, 3, rh, r.state === 'removed' ? ERA3.alarm : r.state === 'missed' ? ERA3.amber : ERA3.glassEdge);
+      studioFont(ctx, 11, true); ctx.fillStyle = r.state === 'removed' ? ERA3.grey : ERA3.ink; ctx.fillText(r.who, x + 10, y + 5);
+      const state = r.state === 'removed' ? R.removed : r.state === 'removing' ? R.removing : r.state === 'missed' ? R.waiting : '';
+      studioFont(ctx, 10, r.state !== 'pending'); const sw = ctx.measureText(state).width;
+      ctx.fillStyle = r.state === 'removed' || r.state === 'removing' ? ERA3.alarm : ERA3.greyDk; ctx.fillText(state, x + w - sw - 8, y + 6);
+      studioFont(ctx, 11); ctx.fillStyle = r.state === 'removed' ? ERA3.grey : ERA3.ink;
+      ctx.save(); ctx.beginPath(); ctx.rect(x + 70, y, w - 80 - sw - 12, rh); ctx.clip();
+      const t = r.link ? R.link : r.text;
+      ctx.fillText(t, x + 70, y + 5);
+      if (r.state === 'removed') px(ctx, x + 70, y + 11, Math.min(ctx.measureText(t).width, w - 92 - sw), 1, ERA3.grey);
+      ctx.restore();
+    });
+    const broken = this.phone.broken;
+    studioFont(ctx, 13, true); ctx.fillStyle = broken ? ERA3.alarm : ERA3.greyDk;
+    ctx.fillText(broken ? R.counter.replace('{n}', String(this.phone.unreviewed)) : R.stillWorking, x, c.y + c.h - 22);
+    // the review runs without her; she may leave it running and go back to the day (it is never a screen with no way on)
+    const bw = 130, bx = c.x + c.w - bw - 14, by = c.y + c.h - 30;
+    aero.button(ctx, bx, by, bw, 24, q.app.boardBack, { size: 11 });
+    this.rects.push({ x: bx, y: by, w: bw, h: 24, id: 'removals-back' });
   }
 
   private drawBoard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
@@ -2103,6 +2206,12 @@ export class GraceQueueLite {
     ctx.fillText(sourceMeta, c.x + c.w - ctx.measureText(sourceMeta).width, c.y + 5);
     const top = c.y + 32, leftW = Math.floor(c.w * 0.48), rightX = c.x + leftW + 18, rightW = c.w - leftW - 18;
     const filmW = leftW - 12, filmH = Math.round(filmW * 9 / 16);
+    // ⚑ S332 (his second answers: "Renata's edit is frontal, not subtle") — once "Name the dependency, not the person"
+    //   has been applied to Renata (by anyone), the left column becomes Vera's OWN 2014 story with the same cut in the
+    //   same red: "Your story was edited with this rule too (2014)". It stays for the rest of the job.
+    const ownCut = sub.id === 1 && this.decisions.get(3) === 'applied';
+    if (ownCut) this.drawOwnCut(ctx, c.x, top, filmW, 212);
+    else {
     px(ctx, c.x - 1, top - 1, filmW + 2, filmH + 2, ERA3.glassEdge);
     ctx.save(); ctx.beginPath(); ctx.rect(c.x, top, filmW, filmH); ctx.clip();
     if (this.graded(sub)) drawTestimonyFilm(ctx, c.x - 31, top - 25, 318, 179, this.playT, sub.id === 2);
@@ -2128,6 +2237,7 @@ export class GraceQueueLite {
         const cw = ctx.measureText(V.cutFrame).width; ctx.fillText(V.cutFrame, xx + Math.max(1, Math.round((tw - cw) / 2)), sy + Math.round(th / 2) - 5);
       } else drawTestimonyFilm(ctx, xx, sy, tw, th, i * 8, sub.id === 2);
     }
+    }
     // The whole testimony is readable in its own column. No fixed line slice or decoration over her words.
     const transcriptH = 204;
     px(ctx, rightX, top, rightW, transcriptH, ERA3.white);
@@ -2147,9 +2257,9 @@ export class GraceQueueLite {
       let xx = rightX + 13; const yy = top + 37 + i * (size + 4);
       for (const part of line) {
         const ww = ctx.measureText(part.text).width;
-        ctx.fillStyle = part.state === 'cut' ? ERA3.greyDk : ERA3.ink;
+        ctx.fillStyle = part.state === 'cut' ? ERA3.alarm : ERA3.ink;   // S332: the cut in the house's red
         ctx.fillText(part.text, xx, yy);
-        if (part.state === 'cut') px(ctx, xx, yy + Math.round(size / 2), ww, 1, ERA3.greyDk);
+        if (part.state === 'cut') px(ctx, xx, yy + Math.round(size / 2), ww, 1, ERA3.alarm);
         if (part.state === 'added') px(ctx, xx, yy + size + 1, ww, 1, ERA3.accent);
         xx += ww;
       }
@@ -2171,10 +2281,17 @@ export class GraceQueueLite {
     if (current) {
       const copyW = c.w - 190;
       studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(current.rule, c.x + 10, by + 7);
-      studioFont(ctx, 11); ctx.fillStyle = ERA3.greyDk;
-      const why = wrapText(ctx, current.why, copyW);
-      why.forEach((ln, i) => ctx.fillText(ln, c.x + 10, by + 25 + i * 13));
-      const refsY = by + 28 + why.length * 13, rw = copyW;
+      // ⚑ S332 — Lambient teaches the rule (its own kind voice), or answers her refusal; on the tool's band, never on her
+      const note: DeskNote | null = this.deskNote ?? (current.teach ? { line: current.teach, voice: 'lambient' } : null);
+      studioFont(ctx, 11);
+      let noteH = 0;
+      if (note) noteH = drawLambientNote(ctx, c.x + 10, by + 26, copyW, note);
+      else {   // a rule Lambient does not teach keeps the platform's own rationale, untagged
+        ctx.fillStyle = ERA3.greyDk;
+        const why = wrapText(ctx, current.why, copyW);
+        why.forEach((ln, i) => ctx.fillText(ln, c.x + 10, by + 26 + i * 13)); noteH = why.length * 13;
+      }
+      const refsY = by + 30 + noteH, rw = copyW;
       // Manual and scripture keep exactly the same type, ink and treatment.
       studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
       wrapText(ctx, `${current.manual} · ${current.verse}`, rw).forEach((ln, i) => ctx.fillText(ln, c.x + 10, refsY + i * 11));
@@ -2195,6 +2312,33 @@ export class GraceQueueLite {
         this.rects.push({ x: bx, y: by + 46, w: bw, h: 25, id: 'next-story' });
       }
     }
+  }
+
+  /** ⚑ S332 — Vera's own 2014 sentence, as sent, with the cut her mentor's rule made in it, in the same red as Renata's */
+  private drawOwnCut(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    const O = vera.ownCut;
+    px(ctx, x - 1, y - 1, w + 2, h + 2, ERA3.alarm);
+    px(ctx, x, y, w, h, ERA3.white);
+    px(ctx, x, y, w, 4, ERA3.alarm);
+    studioFont(ctx, 13, true); ctx.fillStyle = ERA3.alarm;
+    let yy = y + 12;
+    for (const ln of wrapText(ctx, O.heading, w - 20)) { ctx.fillText(ln, x + 10, yy); yy += 17; }
+    studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(O.meta, x + 10, yy + 2); yy += 20;
+    px(ctx, x + 10, yy, 3, h - (yy - y) - 32, ERA3.memberSpine);
+    const runs: TextRun[] = O.runs.map(r => ({ text: r.t, state: r.cut ? 'cut' : 'kept' }));
+    let size = 13, lines: TextRun[][] = [];
+    for (; size >= 10; size--) { studioFont(ctx, size); lines = this.wrapRuns(ctx, runs, w - 34); if (lines.length * (size + 5) <= h - (yy - y) - 36) break; }
+    lines.forEach((line, i) => {
+      let lx = x + 22; const ly = yy + 2 + i * (size + 5);
+      for (const part of line) {
+        const pw = ctx.measureText(part.text).width;
+        ctx.fillStyle = part.state === 'cut' ? ERA3.alarm : ERA3.ink;
+        ctx.fillText(part.text, lx, ly);
+        if (part.state === 'cut') px(ctx, lx, ly + Math.round(size / 2), pw, 1, ERA3.alarm);
+        lx += pw;
+      }
+    });
+    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.greyDk; ctx.fillText(O.rule, x + 10, y + h - 20);
   }
 
   private drawList(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
@@ -2391,9 +2535,9 @@ export class GraceQueueLite {
           px(ctx, lx, ly - 3, segW, lead, ERA3.lambBand);
           px(ctx, lx, ly - 3 + lead - 1, segW, 1, ERA3.lambTag);
         }
-        ctx.fillStyle = seg.state === 'cut' ? ERA3.grey : seg.state === 'added' ? ERA3.greyDk : ERA3.ink;
+        ctx.fillStyle = seg.state === 'cut' ? ERA3.alarm : seg.state === 'added' ? ERA3.greyDk : ERA3.ink;
         ctx.fillText(seg.text, lx, ly);
-        if (seg.state === 'cut') px(ctx, lx, ly + Math.round(size / 2), segW, 1, ERA3.grey);
+        if (seg.state === 'cut') px(ctx, lx, ly + Math.round(size / 2), segW, 1, ERA3.alarm);
         lx += segW;
       }
     });
@@ -2622,21 +2766,20 @@ export class GraceQueueLite {
       this.recordPage = 0; this.recordSent = vh.id === 'vera-as-sent'; this.bump(); return;
     }
     if (vh?.id === 'vera-record-next' || vh?.id === 'vera-record-prev') { this.recordPage += vh.id === 'vera-record-next' ? 1 : -1; this.bump(); return; }
+    if (vh?.id === 'removals-back') { if (this.veraPage === 'removals') this.veraPage = null; this.bump(); return; }
     if (vh?.id === 'vera-record-close') {
-      this.phone.bannersHidden = false; this.earnNext();
+      // ⚑ S332 — Nuala's message arrives, at rest; once it is read the campaign kit is brought to her (updateConnections)
+      this.phone.bannersHidden = false; this.earn('nuala'); this.kitPending = true;
       veraDay.recordClosed = true; veraDay.quiet = false;
-      this.veraPage = 'kit'; this.mode = 'board';
+      this.veraPage = null; this.mode = 'board';
       this.bump(); return;   // S327: the phone is not turned to its inbox by itself
     }
     if (vh?.id === 'vera-send') {
-      this.earnNext();
       veraDay.distributed = true; this.sendReceipt = true;
-      this.surfaces.get('group')?.press('group-post');
       ledger.era3Jobs.push({ id: 'pipeline', witness: vera.send.sent }); this.bump(); return;
     }
     if (vh?.id === 'vera-send-close') {
-      this.earnNext();
-      this.veraPage = null; this.storyOffer = true; this.bump(); return;
+      this.veraPage = null; this.bump(); return;   // S332: her record is offered after all four jobs
     }
     // S327: approving changes the kit's own page only; the news waits for her to leave it (one voice at a time)
     if (vh?.id === 'vera-kit-approve') { this.kitApproved = true; ledger.era3Jobs.push({ id: 'kit', witness: vera.kit.witnessApproved }); this.bump(); return; }
@@ -2648,7 +2791,7 @@ export class GraceQueueLite {
       //   her phone and the piece TAKES HER THERE: the Handset Window comes forward over the board on the group's
       //   thread, and the group fills faster than any review can. Lambient says nothing while it runs (the group is
       //   felt). The window goes back to its place when the cascade has ended (see the tail in update()).
-      this.armMalta(); this.phone.advanceNews();
+      this.armMalta(); this.phone.startNews();
       if (this.floppy.open) this.floppy.closeGame();
       this.cascadeConduct = true; this.tailT = -1; this.mirrorMin = false; this.mirrorLarge = true; this.mirrorReading = true;
       this.phone.showGroup(); this.lambPriority = false; this.lambLines = null;

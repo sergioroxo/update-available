@@ -56,7 +56,7 @@
    "Original retained under Terms §4."
   ],
   "back": "Back to today",
-  "waiting": "Campaign kit · review pending",
+  "waiting": "Campaign kit · scheduled",
   "witnessApproved": "campaign kit: approved — Vera’s 2014 story included under general consent",
   "witnessRemoved": "story: take-down requested — scheduled posts, external copies and original retained",
   "witnessAdmin": "campaign kit: left unapproved — administrator scheduled it under general consent",
@@ -107,5 +107,55 @@
   "trackedVersion": "Tracked changes",
   "cutFrame": "cut",
   "_docCutFrame": "⚑ S327 — the label on the frame the house edit removed from the publication strip (his 8 Nov: the empty frame read as an error)."
+ },
+ "ownCut": {
+  "_doc": "⚑ S332 (his second answers: \"Renata's edit is frontal, not subtle\"): when the house rule \"Name the dependency, not the person\" is applied to Renata (by Vera, by Lambient or by an administrator), the platform shows Vera's OWN 2014 story beside it with the same cut in the same red (ERA3.alarm). The words are her record's \"as sent\" (below, `record.sentText`); the cut is what the rule took. The full record is still met later, felt, in Kindredraft.",
+  "heading": "Your story was edited with this rule too (2014)",
+  "meta": "Vera · as sent · 2014",
+  "runs": [
+   {
+    "t": "I came to the first night "
+   },
+   {
+    "t": "because of Nuala, and ",
+    "cut": true
+   },
+   {
+    "t": "because the quiet at home had got too loud. "
+   },
+   {
+    "t": "We had lived together.",
+    "cut": true
+   },
+   {
+    "t": " I think what I had with "
+   },
+   {
+    "t": "her",
+    "cut": true
+   },
+   {
+    "t": " is what the leaflet calls dependency."
+   }
+  ],
+  "rule": "Name the dependency, not the person."
+ },
+ "removals": {
+  "_doc": "⚑ S332 — MALTA ON THE PLATFORM: GracePlatform reviews Maiden-to-be by itself and removes the posts about the vote, then Vera's reply, while the forwards arrive faster than it can remove them. The platform's own voice, not Lambient's (Lambient is silent while a person's group is on screen). The removals are the piece's inference (ARTICLE_COMPANION §7g); the vote is documented (Act LV of 2016).",
+  "title": "GracePlatform · Review",
+  "heading": "Automatic review is on",
+  "sub": "GracePlatform is reviewing Maiden-to-be by itself.",
+  "rule": "Political content is removed to keep the community calm.",
+  "removing": "removing…",
+  "removed": "removed",
+  "waiting": "not reviewed",
+  "counter": "{n} items could not be reviewed",
+  "stillWorking": "Review is still running.",
+  "link": "link · The Continental Wire"
+ },
+ "forcedBy": {
+  "_doc": "⚑ S332 — the suffix on a witness line when a rule she refused was applied for her (lambientDesk.ts ladder).",
+  "lambient": "applied by Lambient after she refused",
+  "admin": "applied by an administrator after she refused"
  }
 }

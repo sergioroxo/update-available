@@ -160,6 +160,9 @@ const ENTRANCE = HOME_DOOR ? '' : 'restore';
 const CUT = flag('cut', '') === 'full' ? 'full' : 'speedrun';
 const GUIDED_WALK = CUT === 'speedrun' && !process.argv.includes('--explore');
 const MAX_STEPS = Number(flag('max', 320));
+/** ⚑ S332 — `--refuse`: in 2016 the walker refuses every job (Skip, Leave it off, Don't send a script, Not this week,
+ *  the kit left unapproved) and never presses a comply control, to prove the system carries the day without her. */
+const REFUSE = process.argv.includes('--refuse');
 const VIEW = { width: 1280, height: 900 };
 const OUT_DIR = flag('out') ? join(ROOT, flag('out')) : join(ROOT, SETUP || FROM_ERA > 1 || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp');
 // S223: inside the project (a cloud machine has no /private/tmp of ours), one folder per era so side-by-side walks do not overwrite
@@ -204,7 +207,7 @@ const PREFER = [
   // ⚑ S209 / A25 (REVIEW_ROUND_5, ERA16-16) — 2016's other jobs, worked to their end: the tier below ranked
   //   `board-back` (via /^board/) as high as a job's own controls, so every job but the testimony was opened and
   //   left. Now a job's controls outrank leaving it.
-  /^family-sel-|^family-reply-|^family-handle|^group-post$|^story-seg-|^story-publish$|^podcast-publish$|^publish$|^mod:|^price:|^tag:|^preview$|^next:|^c:|^t:|^icon-netvision$/i,
+  /^family-sel-|^family-reply-|^family-handle|^group-post$|^places-add$|^story-seg-|^story-publish$|^podcast-publish$|^publish$|^mod:|^price:|^tag:|^preview$|^next:|^c:|^t:|^icon-netvision$/i,
   /^task-|^tile-|^consent|^board|^group$|^inbox$|^link\d*$/i   // S149: `link2`, the vote's card (a fresh id ranked under a spent `task-` for 270 presses)
 ];
 /**
@@ -257,6 +260,7 @@ function resolveChrome() {
 //   press of them changes the picture, so a novelty-ranked walker toggled them for
 //   a hundred steps (walk of 2026-09-21: 115 presses, three laps of the same three
 //   windows, the budget gone in Era 1). They are proved once and otherwise last.
+const REFUSE_RX = /^skip$|-refuse$|^vera-kit-close$/i;
 const LAST_RESORT = /^leave$|not.?now|remind|skip|cancel|^back|^dismiss$|^close$|^min-|^taskbar-|^close-src-/i;   // S174: the Close's dossier window pages; never lap it
 
 async function main() {
@@ -918,13 +922,18 @@ async function main() {
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
     // The phone is private optional reading now. The minimum visitor never needs to press it.
     if (st?.era === 'e3') {
-      if (t.surface === 'phone' || id.startsWith('mirror:') || /^win-min$|^task-restore$/.test(id)) return false;
-      const renata = [1,3,7].every(cardId => led?.graceQueue?.some(c => c.cardId === cardId));
-      if (/^task-\d+$/.test(id) && (!renata ? id !== 'task-0' : !!led?.era3Jobs?.some(j => j.id === 'pipeline'))) return false;
+      // her one reply to Bea is the only press on the phone the walk makes (it is optional: Malta runs on without it)
+      if ((t.surface === 'phone' || id.startsWith('mirror:')) && !(id === 'mirror:reply-bea' && !REFUSE)) return false;
+      if (/^win-min$|^task-restore$/.test(id)) return false;
+      // ⚑ S332 — the four jobs, in the board's order, each once (each finished job files `e3-job:<id>`)
+      const JOBS = ['testimony', 'places', 'family', 'group'];
+      const tm = /^task-(\d+)$/.exec(id);
+      if (tm) { const next = JOBS.find(j => !has('e3-job:' + j)); if (!next || JOBS[Number(tm[1])] !== next) return false; }
+      if (REFUSE && /^apply$|^places-add$|^family-reply-|^group-post$|^vera-kit-approve$/.test(id)) return false;
+      if (id === 'next-story') return false;
     }
     if (st?.era === 'e3' && id === 'vera-as-published') return false;
-    if (st?.era === 'e3' && id === 'next-story' && !led?.era3Jobs?.some(j => j.id === 'pipeline')) return false;
-    if (st?.era === 'e3' && led?.era3Jobs?.some(j => j.id === 'pipeline') && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
+    if (st?.era === 'e3' && has('e3-two-jobs') && (/^task-\d+$/.test(id) || id === 'update-accept')) return false;
     return true;
   };
   const pick = (targets, sig, seen, dismissFirst) => {
@@ -1019,6 +1028,7 @@ async function main() {
       if (onPhone.length) scoped = onPhone;
     }
     const tier = (t) => {
+      if (REFUSE && lastState?.era === 'e3' && REFUSE_RX.test(t.id)) return -1;
       if (LAST_RESORT.test(t.id)) return 90;
       const i = PREFER.findIndex((rx) => rx.test(t.id));
       return i >= 0 ? i : 50;
