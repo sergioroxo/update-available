@@ -139,6 +139,10 @@ engine patch you proposed:**
 Keep the patch reproducible (`patch-package` or an equivalent committed patch with a test that fails if the engine
 version changes). Put it all behind `?quad=1`, on the 1997 monitor first, and leave the default path untouched.
 
+**Also T10 (docs/reinterp/TODO.md): in the headset, the Lamby video "breaks up" when the hand moves**
+(HEADSET_SESSION_2026-11-08.md, 12:19). It isn't the frame rate. Find the cause (texture upload per frame? a video
+texture re-created? tearing against the XR frame loop?) and fix it, with before/after numbers.
+
 **Also measure the cheap wins on the default path,** because they help every device, not only the Quest:
 - each screen canvas's real pixel size against its size on the glass at the seat (texels per degree);
 - the mipmap and filter settings of the screen textures (mipmaps off, `FILTER_NEAREST` or linear: what is sharper

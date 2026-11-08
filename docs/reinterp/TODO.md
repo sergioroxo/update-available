@@ -58,7 +58,7 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T31 | Two Back buttons (top and bottom) in 2016; the phone window should have no minimise button | 2016 | X | S |
 | T32 | The Wick card still floats: it should sit on the table by the notepad (the rise-once must end on the table) | 2016 | X | S |
 | T33 | Lamby boot sound starts after LambyOS is already showing | 1997 boot | X | S |
-| T34 | Music: a MIDI track for the Fellowship network (1997) and one for Restorify (2003) | 1997, 2003 | C | M |
+| T34 | Music in EVERY program (his 8 Nov): a period MIDI loop each, e.g. the Fellowship network (1997), the Family Form, the racket, Restorify (2003) | 1997, 2003 | C | M |
 | T35 | Root Cause Digger: design, look, sound, clearer purpose; Lamby suggests it before the Family Form | 2003 | C | M |
 | T36 | Release Work: the figure is flipped, bare grey text area, animations/styling still broken | 2003 | C | M |
 | T37 | Family Form looks bare, stacked buttons overlap ("on hold") | 1997 | C | M |
@@ -85,17 +85,22 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 
 ## Waiting for Sérgio (decisions)
 
-| id | question |
-|---|---|
-| S01 | T03: confirm — remove the laptop in 2026, messenger as a window on the monitor (my recommendation: yes). |
-| S02 | T45: where should the upload of Caleb's video sit, and what does the player see after it? |
-| S03 | "The room gets quieter" (1997): is the quiet the point, or should there be sound before? |
-| S04 | "Mirk" (12:02): what needs a sound? |
+His answers, 8 Nov:
+- S01 ☑ Remove the laptop in BOTH versions (browser and headset), not only the headset → agent B.
+- S02 ☑ (T45) Daniel's video is uploaded to the platform. On the DVD website, among the clips to try out (teasers),
+  is Caleb's testimony, where he almost says Daniel's name. → new row T49.
+- S03 ☑ There should be sound in every program: on the form, on the racket, and so on → T34 widened.
+- S04 ☑ "Mirk" was mIRC: the IRC app needs its sound → T50.
 
-## Codex (small jobs, quota low)
+| id | what | where | owner | size |
+|---|---|---|---|---|
+| T49 | Daniel's video upload → the platform → the DVD website's teaser clips, where Caleb's testimony almost says Daniel's name | 2003 + era site | C | M |
+| T50 | IRC (the mIRC-like app) gets its sound: join, message and DM sounds of the period | 1997/2003 | C | S |
 
-Prompt D (one small batch): T14, T19, T20, T26, T27, T30, T31, T32, T33, T42. Bigger XR items (T10, T11, T28, T29)
-wait for Codex's quota, or come to Claude. Prompt C (text sharpness) waits for quota.
+## Codex
+
+He can run ONE big Codex job now (8 Nov). → **Prompt C, widened** (sharper headset text, T09, plus the video tearing
+when the hand moves, T10). The ten small fixes of Prompt D move to Claude.
 
 ## Done
 
