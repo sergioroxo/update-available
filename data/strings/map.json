@@ -522,8 +522,16 @@
      "label": "Left",
      "done": "beat:left",
      "quiet": true,
-     "hint": "The house chat. Read it.",
+     "hint": "Open the lot. Read it.",
      "where": "the laptop"
+    },
+    {
+     "id": "room",
+     "label": "The room",
+     "done": "beat:room",
+     "quiet": true,
+     "hint": "The piece turns you to the room. Nothing to press.",
+     "where": "the room"
     },
     {
      "id": "search",

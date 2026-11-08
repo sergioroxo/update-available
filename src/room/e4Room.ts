@@ -1,0 +1,180 @@
+/** 2026 v3 room pressure. Reads the screens' contract; only the room reveal writes a beat. */
+import * as pc from 'playcanvas';
+import { e4Has, e4BeatsVersion, markE4 } from '../narrative/e4Beats';
+import { ledgerGeneration } from '../state/ledger';
+import { type RoomHandles, type PropHandle, hex } from './era1room';
+import { cullAbsentProps } from './batching';
+import { ERA4, PLACE, photograph } from '../desktop/theme/era4';
+import { drawE4CeilingNetwork } from './ceilingWitness';
+import { drawContagionClip } from '../desktop/apps/contagionClip';
+import V from '../../data/dialog/s4_v3.json';
+import { wrapText, setFont } from '../desktop/theme/chrome';
+import { drawGoalPicture } from '../desktop/apps/goalPicture';
+
+export function buildE4Room(app: pc.Application, building: RoomHandles) {
+  const root = new pc.Entity('e4-room-pressure');
+  building.root.addChild(root);
+  // Separate from the static building batch: these props change presence at narrative beats.
+  const props = new Map<string, PropHandle>();
+  const handles: RoomHandles = { root, props, lights: new Map(), reinterp: true };
+  function solid(id: string, pos: number[], size: number[], color: string): PropHandle {
+    const entity = new pc.Entity(id);
+    entity.addComponent('render', { type: 'box' });
+    entity.setLocalPosition(...pos as [number, number, number]);
+    entity.setLocalScale(...size as [number, number, number]);
+    const material = new pc.StandardMaterial();
+    material.diffuse = hex(color); material.update();
+    entity.render!.material = material; root.addChild(entity);
+    const h = { entity, material, materials: [material], emissive: false };
+    props.set(id, h); return h;
+  }
+  function picture(id: string, pos: number[], w: number, h: number, paint: (c: CanvasRenderingContext2D) => void, resolution = [256, 256]) {
+    const canvas = document.createElement('canvas'); canvas.width = resolution[0]; canvas.height = resolution[1];
+    const ctx = canvas.getContext('2d')!; ctx.imageSmoothingEnabled = false;
+    const texture = new pc.Texture(app.graphicsDevice, { width: canvas.width, height: canvas.height, mipmaps: false,
+      minFilter: pc.FILTER_NEAREST, magFilter: pc.FILTER_NEAREST });
+    const p = solid(id, pos, [0.004, h, w], ERA4.rule);
+    // A plane's normal is +Y; face into the room (-X), upright, with no mirrored text.
+    p.entity.render!.type = 'plane'; p.entity.setLocalEulerAngles(90, 270, 0);
+    p.entity.setLocalScale(w, 1, h);
+    p.material.useLighting = false; p.material.emissive = new pc.Color(1, 1, 1);
+    p.material.emissiveMap = texture; p.material.cull = pc.CULLFACE_NONE; p.material.update();
+    function repaint(fn = paint) { ctx.clearRect(0, 0, canvas.width, canvas.height); fn(ctx); texture.setSource(canvas); }
+    repaint();
+    return { ...p, repaint, size: new pc.Vec3(w, 1, h) };
+  }
+  const plant = [solid('maya-pot', [5.5, .28, -.7], [.22, .26, .22], PLACE.ink),
+    solid('maya-leaves', [5.5, .55, -.7], [.32, .3, .32], PLACE.plant)];
+  plant[0].entity.render!.type = 'cylinder';
+  const leaves = new pc.Mesh(app.graphicsDevice);
+  const lp: number[] = [], li: number[] = [];
+  for (let i = 0; i < 7; i++) {
+    const a = i * Math.PI * 2 / 7, base = lp.length / 3;
+    const x = Math.cos(a), z = Math.sin(a);
+    lp.push(0, -.5, 0, x * .24 - z * .12, .05, z * .24 + x * .12,
+      x * .5, .5, z * .5, x * .24 + z * .12, .05, z * .24 - x * .12);
+    li.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  leaves.setPositions(lp); leaves.setIndices(li); leaves.setNormals(pc.calculateNormals(lp, li)); leaves.update();
+  plant[1].material.cull = pc.CULLFACE_NONE; plant[1].material.update();
+  plant[1].entity.render!.meshInstances = [new pc.MeshInstance(leaves, plant[1].material)];
+  const flag = picture('maya-pride', [5.665, 1.78, 1.98], .65, .38, c => {
+    [PLACE.sky, PLACE.textileHi, PLACE.mug, PLACE.textileHi, PLACE.sky].forEach((col, i) => {
+      c.fillStyle = col; c.fillRect(0, i * 52, 256, 52);
+    });
+  });
+  const friends = picture('maya-friends', [5.66, 1.28, 1.98], .5, .28, c => {
+    c.fillStyle = PLACE.mug; c.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 3; i++) {
+      const x = 6 + i * 84;
+      c.fillStyle = i === 1 ? PLACE.sky : PLACE.wallLo; c.fillRect(x, 10, 76, 236);
+      for (let j = 0; j < 4; j++) {
+        const px = x + 3 + j * 17, y = 60 + ((j + i) % 3) * 13;
+        c.fillStyle = ERA4.photoHair; c.fillRect(px, y, 13, 20);
+        c.fillStyle = ERA4.photoSkin; c.fillRect(px + 2, y + 5, 9, 13);
+        c.fillStyle = [PLACE.textileHi, PLACE.sky, PLACE.mug, PLACE.plant][j]; c.fillRect(px - 1, y + 20, 15, 75);
+      }
+    }
+  });
+  const throwProp = solid('maya-pink-throw', [4.1, .53, 2.2], [.9, .04, .35], PLACE.textileHi);
+  const frame = picture('maya-desk-photo', [5.02, .88, .30], .17, .22,
+    c => photograph(c, 0, 0, 256, 256, false, 3));
+  const goal = picture('system-default-portrait', [5.66, 1.45, 1.98], .65, .64,
+    c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); drawGoalPicture(c, 8, 8, 240, 240); });
+  // Four paper strips share one texture/mesh; opening articles changes the paint, never the draw-call count.
+  const newsWall = picture('news-strips', [5.15, 1.38, 2.412], .88, .72, () => {}, [512, 512]);
+  newsWall.entity.setLocalEulerAngles(90, 180, 0);
+  newsWall.material.opacityMap = newsWall.material.emissiveMap;
+  newsWall.material.opacityMapChannel = 'a'; newsWall.material.blendType = pc.BLEND_NORMAL;
+  newsWall.material.update();
+  const ticket = picture('clinic-ticket', [5.4, .84, 2.412], .38, .3, () => {}, [256, 192]);
+  ticket.entity.setLocalEulerAngles(90, 180, 0);
+  const ceiling = picture('maya-ceiling-network', [4.4, 2.64, .84], 2.0, 2.0, () => {}, [512, 512]);
+  // It survives the room being hidden, changing from red sources into the stream's audience.
+  app.root.addChild(ceiling.entity);
+  ceiling.entity.setLocalEulerAngles(180, 270, 0);
+  const sizes = new Map([...props.values()].map(p => [p.entity, p.entity.getLocalScale().clone()]));
+  function visible(p: PropHandle, on: boolean) { p.entity.setLocalScale(on ? sizes.get(p.entity)! : pc.Vec3.ZERO); }
+  const originalMats = new Map<pc.StandardMaterial, pc.Color>();
+  let seen = '', ceilingSeen = '', generation = -1, lastNumber = -1, frameSeen = '', newsSeen = -1;
+  let wasActive = false;
+  let data = { number: 4812, articles: 0, clipTime: 0, takeover: false, viewers: 41 };
+  function setScreenData(next: typeof data) { data = next; }
+  let leftT = 0, revealT = -1;
+  let conduct: (() => boolean) | null = null;
+  let revealed: (() => boolean) | null = null;
+  function setConduct(fn: () => boolean, done: () => boolean) { conduct = fn; revealed = done; }
+  function update(dt: number, active: boolean) {
+    if (wasActive !== active) { seen = ''; wasActive = active; }
+    root.enabled = active;
+    const streaming = e4Has('stream') && !e4Has('terminated');
+    ceiling.entity.enabled = active && e4Has('map') && !e4Has('terminated');
+    ceiling.entity.setLocalPosition(streaming ? 8 : 4.4, streaming ? 5 : 2.64, .84);
+    if (!active) {
+      for (const [mat, color] of originalMats) if (!mat.diffuse.equals(color)) { mat.diffuse.copy(color); mat.update(); }
+      return;
+    }
+    if (generation !== ledgerGeneration) { leftT = 0; revealT = -1; seen = ''; generation = ledgerGeneration; }
+    if (e4Has('left') && !e4Has('room') && !e4Has('terminated')) {
+      leftT += dt;
+      if (leftT >= 1.5 && revealT < 0 && conduct?.()) revealT = 0;
+      if (revealT >= 0) { revealT += dt; if (revealT >= 9.7 && revealed?.()) markE4('room'); }
+    }
+    const ceilingKey = `${ledgerGeneration}:${e4BeatsVersion()}:${data.takeover}:${data.viewers}:${streaming ? 0 : Math.floor(data.clipTime * 8)}`;
+    if (ceiling.entity.enabled && ceilingKey !== ceilingSeen) {
+      ceilingSeen = ceilingKey;
+      ceiling.repaint(c => {
+        if (data.takeover && !streaming) drawContagionClip(c, data.clipTime, 0, 0, 512, 512);
+        else {
+          drawE4CeilingNetwork(c, e4Has('junie'), streaming ? data.viewers : 0);
+          if (!streaming) drawContagionClip(c, data.clipTime, 16, 410, 200, 90);
+        }
+      });
+    }
+    const key = `${ledgerGeneration}:${e4BeatsVersion()}:${data.number}:${data.articles}`;
+    if (key === seen) return;
+    seen = key;
+    const restored = e4Has('terminated');
+    const n = !restored && e4Has('number'), m = !restored && e4Has('meridian'), l = !restored && e4Has('left');
+    plant.forEach(p => visible(p, !n)); visible(flag, !m); visible(friends, !l); visible(goal, l);
+    throwProp.material.diffuse = hex(l ? ERA4.text : PLACE.textileHi); throwProp.material.update();
+    // The crude defaults spread to the bedding, curtains and rug; preserve the real per-model materials.
+    for (const id of ['e_bed', 'e_rug', 'e_curtL', 'e_curtR']) {
+      for (const mat of building.props.get(id)?.materials ?? []) {
+        if (!originalMats.has(mat)) originalMats.set(mat, mat.diffuse.clone());
+        mat.diffuse.copy(m ? hex(ERA4.text) : originalMats.get(mat)!); mat.update();
+      }
+    }
+    const isGoal = !restored && e4Has('newyou') && !e4Has('original');
+    const frameKey = `${ledgerGeneration}:${isGoal}`;
+    if (frameKey !== frameSeen) {
+      frameSeen = frameKey;
+      frame.repaint(c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); if (isGoal) drawGoalPicture(c, 8, 8, 240, 240); else photograph(c, 8, 8, 240, 240, false, 3); });
+    }
+    visible(newsWall, !restored && e4Has('link') && data.articles > 0);
+    if (newsSeen !== data.articles) {
+      newsSeen = data.articles;
+      newsWall.repaint(c => V.news.articles.slice(0, data.articles).forEach((a, i) => {
+        c.fillStyle = PLACE.mug; c.fillRect(0, i * 128, 512, 120);
+        c.fillStyle = ERA4.field; setFont(c, 24);
+        wrapText(c, a.head, 490).forEach((line, j) => c.fillText(line, 10, i * 128 + 10 + j * 28));
+      }));
+    }
+    visible(ticket, n);
+    if (lastNumber !== data.number || generation !== ledgerGeneration) {
+      lastNumber = data.number;
+      ticket.repaint(c => {
+        c.fillStyle = PLACE.mug; c.fillRect(0, 0, 256, 192);
+        c.fillStyle = ERA4.field; setFont(c, 19); c.fillText(V.clinic.numberLabel, 12, 12);
+        setFont(c, 48); c.fillText(data.number.toLocaleString('en-GB'), 12, 55);
+        setFont(c, 18); wrapText(c, V.clinic.wait, 232).forEach((line, j) => c.fillText(line, 12, 116 + j * 22));
+      });
+    }
+    if (n) {
+      const growth = 1 + Math.max(0, data.number - V.clinic.start) * .045;
+      ticket.entity.setLocalScale(ticket.size.x * growth, 1, ticket.size.z * growth);
+    }
+    cullAbsentProps(handles, null);
+  }
+  return { update, setScreenData, setConduct };
+}

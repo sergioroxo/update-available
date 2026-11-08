@@ -1,3 +1,4 @@
+import { buildE4Room } from '../room/e4Room';
 import { xrAccessAllowed } from '../frame/xrAccess';
 import { runtimeQuery, festivalEdition } from '../edition';
 import { tapePlayerBus } from '../desktop/apps/tapePlayer';
@@ -817,6 +818,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let niche: FluidNiche | null = null;
   let ceiling: CeilingWitness | null = null;
   let cluster: ClusterShell | null = null;
+  let e4Room: ReturnType<typeof buildE4Room> | null = null;
+  let e4RoomTurnSeq = -1;
   let cloud: PointCloud | null = null;
   let closeMonitor: CloseMonitor | null = null;
   let closeMonitorDistance = 0.95;
@@ -835,6 +838,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     niche.setFacet(options.facet ?? 'none');
     ceiling = buildCeilingWitness(app);
     cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
+    e4Room = buildE4Room(app, room);
+    // Completion belongs to the scripted leg, never to the visitor's subsequent look direction.
+    e4Room.setConduct(() => {
+      if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
+      // The walls, stripped belongings and grey bedding are ahead at the end of this turn.
+      // 52 degrees in 9.2 s: smoothstep peak 8.5 degrees/s, inside the existing comfort envelope.
+      commitLookOffset();
+      startCamMove({ ...camPos, pitch: 0, yaw: 215 }, 9.2, true);
+      e4RoomTurnSeq = camMoveSeq;
+      return true;
+    }, () => !camMove || camMoveSeq !== e4RoomTurnSeq);
     // ⚑ S108: see ClusterShell.setNeverBatch — handed over below, once
     //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
 
@@ -4496,6 +4510,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (motionBtn) motionBtn.style.display = 'none';
     }
     os.update(dt);
+    if (os.e4) e4Room?.setScreenData({ number: os.e4.browser.currentClinicNumber,
+        articles: os.e4.browser.roomArticleCount, clipTime: os.e4.browser.roomClipTime,
+        takeover: os.e4.browser.roomClipTakeover, viewers: os.e4.ball.viewerCount });
+    e4Room?.update(dt, os.era === 'e4');
     helper?.tick(dt);
     syncRacketDemo(); // the room mirrors the diagram's pose (see its doc)
     if (os.dirty) { frontTex.upload(); os.dirty = false; }

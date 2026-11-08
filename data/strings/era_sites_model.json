@@ -3415,7 +3415,7 @@
     ],
     [
      "Beats",
-     "21"
+     "22"
     ]
    ],
    "tabs": {
@@ -4499,8 +4499,14 @@
        {
         "label": "Left",
         "opt": "",
-        "hint": "The house chat. Read it.",
+        "hint": "Open the lot. Read it.",
         "where": "Where: the laptop."
+       },
+       {
+        "label": "The room",
+        "opt": "",
+        "hint": "The piece turns you to the room. Nothing to press.",
+        "where": "Where: the room."
        },
        {
         "label": "The search, finished",

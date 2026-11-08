@@ -1,3 +1,4 @@
+import V3 from '../../../data/dialog/s4_v3.json';
 /**
  * ⚑ THE STREAM — transjesus.str (S293, 2026-11-02). Design of record: `docs/reinterp/ENDING_TRANSJESUS_2026-11-02.md`
  * (his: "To replace the Commons, why isn't this the TransJesus? … the Ballroom just didn't work"; "sure we can try.
@@ -142,6 +143,7 @@ export class E4Ball {
   /** the stream's screen in the world is on from the moment she is inside */
   get streaming(): boolean { return this.worldOn; }
   /** the stream is VIDEO: its screen repaints twelve times a second while it is on */
+  get viewerCount(): number { return this.count; }
   get streamVersion(): number { return this.streaming ? 1 + Math.floor(this.streamT * 12) : 0; }
   /** true from the moment the glass clears — `E4Shell` reads it */
   get deviceOff(): boolean { return this.phase === 'stream' || this.phase === 'after'; }
@@ -551,7 +553,7 @@ export class E4Ball {
     px(ctx, 0, 0, W, H, ERA4.field);
     if (!this.streaming) return;
     const t = this.streamT + 30;
-    const TB = 20, cw = 168, pw = W - cw - 6, ph = H - TB - 4;
+    const TB = 52, cw = 168, pw = W - cw - 6, ph = H - TB - 4;
     streamScene(ctx, 2, TB + 2, pw, ph, t, streamShot(t), this.answeredAt >= 0 && this.streamT - this.answeredAt < 3 ? 1 : 0);
     px(ctx, 0, 0, W, TB, ERA4.panel);
     if (Math.floor(t * 1.5) % 2 === 0) px(ctx, 8, 7, 6, 6, WEB.danger);
@@ -560,6 +562,13 @@ export class E4Ball {
     const watching = ST.watching.replace('{n}', String(this.count));
     ctx.fillStyle = this.count > ST.count ? PLACE.textileHi : ERA4.textHi;
     ctx.fillText(watching, W - 8 - Math.ceil(ctx.measureText(watching).width), 5);
+    // Mutual aid belongs to the broadcast. The apparatus neither measures nor files it.
+    px(ctx, 0, 20, W, 32, ERA4.panel);
+    setFont(ctx, 8); ctx.fillStyle = ERA4.textHi;
+    ctx.fillText(V3.fundraiser.title, 7, 23);
+    ctx.fillText(V3.fundraiser.fund, 7, 34);
+    px(ctx, 7, 46, W - 14, 4, ERA4.rule);
+    px(ctx, 7, 46, Math.round((W - 14) * V3.fundraiser.fraction), 4, PLACE.textileHi);
     // the chat column
     const x0 = W - cw - 2;
     px(ctx, x0, TB, cw + 2, H - TB, ERA4.panel);

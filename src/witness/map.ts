@@ -146,6 +146,7 @@ const CONDITIONS: Record<string, Condition> = {
   //   are the ones that need the OS.
   saverPressed: () => ledger.e4Space.some((e) => e.id === 'saver' || e.id === 'agent'),
   browserOpen: (os) => os.e4?.browser.isOpen === true || ledger.e4Space.some((e) => e.id === 'agent'),
+  roomSeen: () => ledger.e4Beats.includes('room'),
   resultsSeen: () => ledger.e4Beats.includes('search'),
   agentOpened: () => ledger.e4Beats.includes('bot'),
   junieRead: (os) => !!os.e4?.browser.junieReplied || has4('reversal'),

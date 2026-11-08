@@ -264,14 +264,14 @@ async function main() {
     await jump('e4Browser', 2000);
     await page.evaluate(() => window.__os.e4.browser.debugJumpTo('search'));
     await wait(2500);
-    await free(4.05, 1.08, 0.70, -2, 270);
-    await shot('02-seat-2026', 'the seat: the laptop she comes back to — six tabs, five of them hers');
+    await free(4.4, 1.16, .84, -10, 267);
+    await shot('02-seat-2026', 'the authored seat: Kettle beside the monitor, the 2026 v3 room');
     await free(4.62, 1.10, 0.70, -3, 270);
     await shot('02b-close-the-search', 'close: the search finished for her');
     // ⚑ Phase 7 (Codex F9): 'site' is a MODE of the browser, not a tab — debugJumpTo('site') landed on the search again
     await page.evaluate(() => { const b = window.__os.e4.browser; b.debugJumpTo('search'); b.mode = 'site'; b.version++; });
     await wait(2500);
-    await free(4.05, 1.08, 0.70, -2, 270);
+    await free(4.4, 1.16, .84, -10, 267);
     await shot('03-the-site', 'where the search led: one door, and an agent behind it');
     await free(4.62, 1.10, 0.70, -3, 270);
     await shot('03b-close-the-site', 'close: the door the search led to');

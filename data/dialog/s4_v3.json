@@ -4,6 +4,10 @@
     "_doc": "THE GOAL PICTURE (src/desktop/apps/goalPicture.ts). Not a composite of her: the picture of where the system is pushing her, a drawn stock young man, smiling. The room and the headset reuse the painter. Speculative in the Dossier (no documented use of such images was found; RESEARCH_2026_V3_THREADS thread 2).",
     "caption": "You, restored · 2027"
   },
+  "fundraiser": {
+    "poster": ["TRANSJESUS", "BIRTHDAY", "LIVE STREAM", "FOR TRANS YOUTH", "COME AS YOU ARE"],
+    "title": "birthday stream · for trans youth", "fund": "mutual aid · for trans youth", "fraction": 0.68
+  },
   "laptop": {
     "restoring": "Restoring your session.",
     "worn": "Session in progress."
@@ -28,6 +32,14 @@
         { "who": "Priya", "text": "18!!! a whole adult" },
         { "who": "Rae", "text": "cake at mine saturday. you bring nothing" }
       ],
+      "evening": [
+        { "who": "Ola", "text": "maya?? we're at rae's" },
+        { "who": "Rae", "text": "we did the candles anyway. 18 of them. the cake leans" },
+        { "who": "Priya", "text": "saving you the corner slice" },
+        { "who": "Sam", "text": "sorry about earlier. i'm here if you want" },
+        { "who": "Ola", "text": "love you. no pressure x" }
+      ],
+      "unread": "{n} unread", "tonight": "Tonight", "earlier": "‹ Earlier", "later": "Later ›",
       "heart": "❤ love you all",
       "heartButton": "❤ Reply",
       "left": [
