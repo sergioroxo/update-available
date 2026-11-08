@@ -553,7 +553,7 @@ export class E4Ball {
     px(ctx, 0, 0, W, H, ERA4.field);
     if (!this.streaming) return;
     const t = this.streamT + 30;
-    const TB = 20, cw = 168, pw = W - cw - 6, ph = H - TB - 4;
+    const TB = 52, cw = 168, pw = W - cw - 6, ph = H - TB - 4;
     streamScene(ctx, 2, TB + 2, pw, ph, t, streamShot(t), this.answeredAt >= 0 && this.streamT - this.answeredAt < 3 ? 1 : 0);
     px(ctx, 0, 0, W, TB, ERA4.panel);
     if (Math.floor(t * 1.5) % 2 === 0) px(ctx, 8, 7, 6, 6, WEB.danger);
@@ -563,12 +563,12 @@ export class E4Ball {
     ctx.fillStyle = this.count > ST.count ? PLACE.textileHi : ERA4.textHi;
     ctx.fillText(watching, W - 8 - Math.ceil(ctx.measureText(watching).width), 5);
     // Mutual aid belongs to the broadcast. The apparatus neither measures nor files it.
-    px(ctx, 2, H - 32, pw, 30, ERA4.panel);
+    px(ctx, 0, 20, W, 32, ERA4.panel);
     setFont(ctx, 8); ctx.fillStyle = ERA4.textHi;
-    ctx.fillText(V3.fundraiser.title, 7, H - 29);
-    ctx.fillText(V3.fundraiser.fund, 7, H - 18);
-    px(ctx, 7, H - 7, pw - 10, 4, ERA4.rule);
-    px(ctx, 7, H - 7, Math.round((pw - 10) * V3.fundraiser.fraction), 4, PLACE.textileHi);
+    ctx.fillText(V3.fundraiser.title, 7, 23);
+    ctx.fillText(V3.fundraiser.fund, 7, 34);
+    px(ctx, 7, 46, W - 14, 4, ERA4.rule);
+    px(ctx, 7, 46, Math.round((W - 14) * V3.fundraiser.fraction), 4, PLACE.textileHi);
     // the chat column
     const x0 = W - cw - 2;
     px(ctx, x0, TB, cw + 2, H - TB, ERA4.panel);

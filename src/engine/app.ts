@@ -819,6 +819,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let ceiling: CeilingWitness | null = null;
   let cluster: ClusterShell | null = null;
   let e4Room: ReturnType<typeof buildE4Room> | null = null;
+  let e4RoomTurnSeq = -1;
   let cloud: PointCloud | null = null;
   let closeMonitor: CloseMonitor | null = null;
   let closeMonitorDistance = 0.95;
@@ -838,14 +839,16 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     ceiling = buildCeilingWitness(app);
     cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
     e4Room = buildE4Room(app, room);
+    // Completion belongs to the scripted leg, never to the visitor's subsequent look direction.
     e4Room.setConduct(() => {
       if (scriptedBusy() || os.e4?.stage !== 'closed') return false;
       // The walls, stripped belongings and grey bedding are ahead at the end of this turn.
       // 52 degrees in 9.2 s: smoothstep peak 8.5 degrees/s, inside the existing comfort envelope.
       commitLookOffset();
       startCamMove({ ...camPos, pitch: 0, yaw: 215 }, 9.2, true);
+      e4RoomTurnSeq = camMoveSeq;
       return true;
-    }, () => !camMove && Math.abs(((camYaw - 215 + 540) % 360) - 180) < 1);
+    }, () => !camMove || camMoveSeq !== e4RoomTurnSeq);
     // ⚑ S108: see ClusterShell.setNeverBatch — handed over below, once
     //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
 

@@ -522,7 +522,7 @@
      "label": "Left",
      "done": "beat:left",
      "quiet": true,
-     "hint": "The house chat. Read it.",
+     "hint": "Open the lot. Read it.",
      "where": "the laptop"
     },
     {

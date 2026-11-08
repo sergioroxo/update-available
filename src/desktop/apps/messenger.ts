@@ -19,7 +19,7 @@ import { e4Has } from '../../narrative/e4Beats';
  * copies them into `laptopHits`, which is where the walker, XR and the room's pointer look for the lid's controls.
  */
 import V3 from '../../../data/dialog/s4_v3.json';
-import { KETTLE, roundRect, pill, photograph, PLACE } from '../theme/era4';
+import { ERA4, KETTLE, roundRect, pill, photograph, PLACE } from '../theme/era4';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { monoFor } from '../theme/fonts';
 import { drawGoalPicture } from './goalPicture';
@@ -88,6 +88,7 @@ export class E4Messenger {
   /** Also used by the stopped device: reading friends never re-enters the system's browser. */
   pressEvening(id: string): void {
     if (id === 'back-chats') this.view = 'list';
+    for (const chat of ['mum', 'dad', 'junie'] as const) if (id === `row-${chat}` || id === `chat-${chat}`) this.view = chat;
     if (id === 'row-house' || id === 'chat-house') {
       this.view = 'house'; this.eveningOpened = true; this.eveningRead = this.eveningShown; this.eveningPage = 0;
     }
@@ -228,7 +229,7 @@ export class E4Messenger {
         const s = String(p.badge);
         setFont(ctx, 8);
         const bw = Math.max(12, Math.ceil(ctx.measureText(s).width) + 6);
-        pill(ctx, R - bw - 4, y + 10, bw, 10, p.muted ? KETTLE.mutedBadge : KETTLE.badge);
+        pill(ctx, R - bw - 4, y + 10, bw, 10, p.muted ? ERA4.ruleHi : KETTLE.badge);
         ctx.fillStyle = KETTLE.badgeInk;
         ctx.fillText(s, R - bw - 4 + Math.round((bw - ctx.measureText(s).width) / 2), y + 11);
       }

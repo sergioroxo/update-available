@@ -50,9 +50,39 @@ try {
  await mark('terminated');s=await snapshot();
  assert.equal(s['maya-pot'].drawn,true);assert.equal(s['maya-pride'].drawn,true);assert.equal(s['maya-friends'].drawn,true);assert.equal(s['system-default-portrait'].drawn,false);assert.equal(s['news-strips'].drawn,false);assert.equal(s['clinic-ticket'].drawn,false);
  assert.equal(await page.evaluate(()=>window.__app.root.findByName('maya-pink-throw').render.material.diffuse.toString()),materialBefore);
+ // Exercise the stopped device's real press route; none of the waiting messages is filed.
+ await page.evaluate(()=>{
+   const e=window.__os.e4,m=e.browser.messenger;m.houseMuted=true;m.houseShown=3;m.view='list';m.eveningRead=0;e.laptopV++;
+   window.__camFree(4.4,1.16,.84,-10,267);
+ });await wait();
+ await page.addStyleTag({content:'body > *:not(canvas) { display:none !important; }'});
+ await page.screenshot({path:'out/e4-room-returned-release.png'});
+ const filesBefore=await page.evaluate(()=>window.__ledger().e4Space.length);
+ const pressStopped=async(id)=>{
+   await page.evaluate(id=>{const e=window.__os.e4,h=e.laptopHits.find(h=>h.id===id);if(!h)throw Error('missing stopped-device control '+id);e.pressLaptop(h.x+h.w/2,h.y+h.h/2);},id);
+   await wait();
+ };
+ await pressStopped('chat-house');const stoppedLines=[];
+ for(let i=0;i<3;i++){
+   stoppedLines.push(...await page.evaluate(()=>window.__os.e4.browser.messenger.messages('house').map(m=>m.text)));
+   if(i<2)await pressStopped('evening-next');
+ }
+ assert.equal(new Set(stoppedLines).size,5);
+ assert.equal(await page.evaluate(()=>window.__os.e4.browser.messenger.eveningRead),5);
+ assert.equal(await page.evaluate(()=>window.__ledger().e4Space.length),filesBefore);
  // A wipe changes generation without touching the beat module's version; room consumers must still restore.
  await page.evaluate(()=>window.roomChecks.state.wipeLedger());await wait();s=await snapshot();assert.equal(s['maya-pot'].drawn,true);assert.equal(s['system-default-portrait'].drawn,false);
+ // A real look immediately after the scripted leg must not become a completion condition.
+ await page.evaluate(()=>{window.__camFree(4.4,1.16,.84,-10,267);window.__os.e4.browser.phase='dormant';});
+ await mark('left');
+ await page.waitForFunction(()=>window.__camPose().driven,{timeout:5000});
+ await page.waitForFunction(()=>!window.__camPose().driven,{timeout:15000});
+ await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');
+ await page.waitForFunction(()=>window.__ledger().e4Beats.includes('room'),{timeout:2500});
+ const freeLook=await page.evaluate(()=>({pose:window.__camPose(),beats:window.__ledger().e4Beats}));
+ assert.ok(Math.abs(freeLook.pose.yaw-215)>1, 'the visitor actually looked away');
+ assert.ok(freeLook.beats.includes('room'));
  assert.equal(errors.length,0,errors.join('\n'));
- const result={initial,restored:s,chat,errors};fs.writeFileSync('out/e4-room-check.json',JSON.stringify(result,null,2));
- console.log('PASS: real renderer culls removed props, ticket grows, both chat choices preserve five messages, termination restores, ledger generation reapplies.');
+ const result={initial,restored:s,chat,stoppedLines,freeLook,errors};fs.writeFileSync('out/e4-room-check.json',JSON.stringify(result,null,2));
+ console.log('PASS: real renderer culls removed props, ticket grows, both chat choices preserve five messages, termination restores, ledger generation reapplies; free look cannot stall the conducted reveal.');
 } finally {await browser.close();}
