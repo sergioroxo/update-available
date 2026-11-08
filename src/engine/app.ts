@@ -73,6 +73,7 @@ import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { siteViewerBus, ERA_TARGET, mountSiteViewerDom, mountSiteViewerXr, type XrViewer } from '../frame/siteViewer';
 import { mountXrComfort } from '../frame/xrComfort';
 import { mountXrDebug } from '../frame/xrDebug';
+import { mountXrMonitorQuad, quadSessionOptions } from '../frame/xrMonitorQuad';
 import { mountXrTextures } from '../frame/xrTextures';
 import { guideBody } from '../desktop/apps/lambyGuideDraw';
 import { mountXrLayer, type XrLayer } from '../frame/xrLayer';
@@ -710,6 +711,7 @@ export function enterImmersiveHome(): void {
   const shell = preparedXrShell;
   if (!shell?.camera.camera || !shell.app.xr || shell.app.xr.active) return;
   shell.app.xr.start(shell.camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
+    ...quadSessionOptions(),
     callback: () => { /* Home stays available on desktop if entry is declined. */ }
   });
 }
@@ -774,6 +776,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // accepts requestSession only inside ENTER VR's original click stack.
   if (startInVr && xr && !xr.active && camera.camera) {
     xr.start(camera.camera, pc.XRTYPE_VR, pc.XRSPACE_LOCAL, {
+    ...quadSessionOptions(),
       callback: (error) => {
         if (!error) return;
         restoreDesktopCamera();
@@ -1332,6 +1335,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   front.setLocalPosition(SCREEN.x, SCREEN.y, SCREEN.z);
   front.setLocalEulerAngles(90, 0, 0); // faces +Z (the chair)
   app.root.addChild(front);
+  const monitorQuad = mountXrMonitorQuad(app, front, os.canvas, () => os.era, xrComfort.physicalPoint);
+  if (runtimeQuery().get('debug') === '1') (window as unknown as { __monitorQuad: unknown }).__monitorQuad = monitorQuad;
   // ⚑ P8 F1 (headset B, 1 Nov: "I can still see the screen from Daniel. They're just in the air") — Daniel's monitor
   //   leaves the room at r4 and its screen stayed lit where the glass had been. In 2026 the screen goes with it; it
   //   comes back only if this switched it off (the Close and the Restart keep their own say over it).
@@ -4516,7 +4521,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     e4Room?.update(dt, os.era === 'e4');
     helper?.tick(dt);
     syncRacketDemo(); // the room mirrors the diagram's pose (see its doc)
-    if (os.dirty) { frontTex.upload(); os.dirty = false; }
+    if (os.dirty) { frontTex.upload(); monitorQuad.changed(); os.dirty = false; }
     /**
      * ⚑ S106 — the record READS the era rather than being told it. Two
      * independent paths set the room's decade (the played `driveMorphSpace`
@@ -5334,7 +5339,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
             os.setup = null; os.dirty = true; os.update(0);
             // The floating texture holds its final uploaded frame through the
             // fold. Erase the shared CPU canvas before the monitor first draws.
-            frontTex.upload(); os.dirty = false;
+            frontTex.upload(); monitorQuad.changed(); os.dirty = false;
           }
           paintMotionBtn();
         },

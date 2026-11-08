@@ -1,0 +1,8 @@
+Applies to build/{playcanvas,playcanvas.dbg,playcanvas.prf}/src/platform/graphics/webgl/webgl-xr-bridge.js
+in beginFrame, getFramebufferSize and getViewport (three replacements):
+- const baseLayer = frame.session.renderState.baseLayer;
++ const baseLayer = frame.session.__yufRoomLayer ?? frame.session.renderState.baseLayer;
+
+Applied and version-guarded by tools/patch-playcanvas-xr.mjs on npm install.
+Only the ESM entry points used by Vite are patched. No global baseLayer fallback:
+the session property exists solely while our opt-in quad owns the retained layer.
