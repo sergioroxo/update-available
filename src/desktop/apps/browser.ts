@@ -1069,7 +1069,7 @@ export class E4Browser {
     this.pageGround(ctx, W, H);
     const i = Math.min(this.newsIndex, ARTICLES.length - 1);
     const a = ARTICLES[i];
-    const cx = 40, cw = W - 80, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;
+    const cx = 16, cw = W - 32, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;   // S328: the card takes the window's width
     roundEdge(ctx, cx, cy, cw, ch, 6, V3.edge, V3.card);
     const x = cx + 28;
     ctx.font = newsFor(24); ctx.textBaseline = 'top'; ctx.fillStyle = V3.ink; ctx.fillText(a.mast, x, cy + 12);
@@ -1079,10 +1079,11 @@ export class E4Browser {
     let y = cy + 70;
     for (const ln of wrapText(ctx, a.head, cw - 56).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 25; }
     y += 6;
-    setFont(ctx, 17); ctx.fillStyle = V3.ink;
-    for (const p of a.body) { for (const ln of wrapText(ctx, p, cw - 56)) { ctx.fillText(ln, x, y); y += 22; } y += 6; }
+    setFont(ctx, 16); ctx.fillStyle = V3.ink;
+    // S328: in the browser's window the body wraps longer; it stops above the source line rather than run under it
+    for (const p of a.body) { for (const ln of wrapText(ctx, p, cw - 56)) { if (y <= cy + ch - 42) ctx.fillText(ln, x, y); y += 20; } y += 5; }
     ctx.font = monoFor(11); ctx.fillStyle = V3.ink2;
-    ctx.fillText(a.source, x, Math.min(cy + ch - 18, y + 4));
+    { const src = wrapText(ctx, a.source, cw - 56).slice(0, 2); const sy = Math.min(cy + ch - 6 - src.length * 14, y + 4); src.forEach((ln, k) => ctx.fillText(ln, x, sy + k * 14)); }
     const opened = this.newsOpened;
     const left = this.clinicNotice && this.step === 'news' ? V.news.notice : V.news.count.replace('{n}', String(i + 1)).replace('{of}', String(opened));
     const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
