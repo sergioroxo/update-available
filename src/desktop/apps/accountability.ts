@@ -605,7 +605,7 @@ export class AccountabilityApp {
     // silent beside it — the inner watcher losing its outer god, inside the
     // notice that killed it.
     const W = ERA1_CANVAS.width;
-    const dw = 430; const dh = 306;
+    const dw = 430; const dh = 330;
     const dx = Math.round((W - dw) / 2); const dy = 2;
     const c = ui.windowFrame(ctx, dx, dy, dw, dh, caleb.pureMail.letterTitle, true);
     this.hits.push({ ...c.closeBox, id: 'mail-continue' });

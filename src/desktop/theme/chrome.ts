@@ -132,15 +132,21 @@ export function windowFrame(
 export function button(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, label: string,
-  opts: { disabled?: boolean; hover?: boolean } = {}
+  opts: { disabled?: boolean; hover?: boolean; primary?: boolean } = {}
 ): void {
-  if (frameSkin === 'xp') {
+  if (opts.disabled) {
+    px(ctx, x, y, w, h, ERA1.beige);
+    ctx.strokeStyle = ERA1.grey; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  } else if (frameSkin === 'xp') {
     // S295 — 2003's button: a pale face in a navy outline, its corners knocked off, the hover a blue edge
     px(ctx, x + 1, y, w - 2, h, opts.hover && !opts.disabled ? ERA1.titleBlue : ERA1.navy);
     px(ctx, x, y + 1, w, h - 2, opts.hover && !opts.disabled ? ERA1.titleBlue : ERA1.navy);
     px(ctx, x + 1, y + 1, w - 2, h - 2, ERA1.paper);
     px(ctx, x + 1, y + h - 3, w - 2, 2, ERA1.beige);
   } else bevel(ctx, x, y, w, h, true);
+  if (opts.primary && !opts.disabled) {
+    ctx.strokeStyle = ERA1.navy; ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
+  }
   setFont(ctx, 10);
   ctx.fillStyle = opts.disabled ? ERA1.grey : opts.hover ? ERA1.navy : ERA1.black;
   const tw = ctx.measureText(label).width;

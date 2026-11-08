@@ -98,11 +98,6 @@ export class DiaryApp {
       if (this.erase > 0) this.erase = Math.max(0, this.erase - dt / REASSERT_SECONDS);
       this.breakT += dt;
       this.dirty = true;
-      if (this.breakT >= BREAKOUT_HOLD && !this.doneFired) {
-        this.doneFired = true;
-        this.open = false;
-        this.onDone?.();
-      }
     }
     // 'resist' has no timer — it waits for the player's hand (press())
   }
@@ -112,6 +107,8 @@ export class DiaryApp {
   press(): void {
     if (this.phase === 'prompt') {
       this.phase = 'writing'; this.shown = 0; this.dirty = true;
+    } else if (this.phase === 'breakout' && this.breakT >= BREAKOUT_HOLD && !this.doneFired) {
+      this.doneFired = true; this.open = false; this.onDone?.();
     } else if (this.phase === 'resist') {
       this.attempts++;
       this.dirty = true;
@@ -209,6 +206,11 @@ export class DiaryApp {
       const bw = c.w - 20; const bx = c.x + 10; const by = c.y + c.h - 6;
       ui.px(ctx, bx, by, bw, 4, ERA1.beige);
       ui.px(ctx, bx, by, Math.round(bw * this.erase), 4, ERA1.warn);   // the jammed erase
+    }
+
+    if (this.phase === 'breakout' && this.breakT >= BREAKOUT_HOLD) {
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.navy;
+      ctx.fillText(end.diary.continue, c.x + 10, c.y + c.h - 24);
     }
 
     // step 1: flag + wait (no bar); step 2: deleting (slow bar)

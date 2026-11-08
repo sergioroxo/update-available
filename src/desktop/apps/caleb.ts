@@ -124,47 +124,30 @@ class Redaction {
   get cleared(): boolean { return this.n === 0; }
 }
 
-/**
- * A queue that types Caleb's lines out one character at a time — he is a
- * person at a keyboard, not a printer, so the rate is deliberately hand-speed
- * (`pacing.chat.typingCharsPerSecond`) and it doubles as the reader's pace.
- * `gap` is the pause AFTER a finished line and differs by beat: the chat
- * breathes at one rate, his four return lines at a slower one.
- */
+/** Whole messages arrive with their beep; the authored gaps preserve reading time. */
 class TypeStream {
   private queue: string[] = [];
-  private cur: string | null = null;
-  private shown = 0;
   private hold = 0;
   /** s of quiet after a finished line, before the next one starts typing */
   gap = CHAT.lineGapSeconds;
   onLine?: (text: string) => void;
 
   push(text: string): void { this.queue.push(text); }
-  reset(): void { this.queue = []; this.cur = null; this.shown = 0; this.hold = 0; }
+  reset(): void { this.queue = []; this.hold = 0; }
   /** an EXTRA beat before the next line — he takes a moment (after a reply) */
   pause(seconds: number): void { this.hold = Math.max(this.hold, seconds); }
-  get idle(): boolean { return !this.cur && this.queue.length === 0 && this.hold <= 0; }
+  get idle(): boolean { return this.queue.length === 0 && this.hold <= 0; }
   get partial(): string | null {
-    return this.cur ? this.cur.slice(0, Math.floor(this.shown)) : null;
+    return null;
   }
 
   update(dt: number): boolean {
-    if (this.cur) {
-      this.shown += CHAT.typingCharsPerSecond * dt;
-      if (this.shown >= this.cur.length) {
-        const done = this.cur;
-        this.cur = null;
-        this.hold = this.gap;
-        this.onLine?.(done);
-      }
-      return true;
-    }
     if (this.hold > 0) { this.hold -= dt; return false; }
-    if (this.queue.length > 0) {
-      this.cur = this.queue.shift() ?? null;
-        playOnce('notify_2003.mp3');   // S141: a line arrives — the messenger's ping
-      this.shown = 0;
+    const next = this.queue.shift();
+    if (next !== undefined) {
+      playOnce('notify_2003.mp3');
+      this.onLine?.(next); // T26: message arrives whole with its beep.
+      this.hold = this.gap;
       return true;
     }
     return false;
@@ -668,9 +651,13 @@ export class CalebThreadApp {
     ctx.fillText(caleb.window.hint, x, y - 1);
     const n = this.awaiting.length;
     const gap = 8;
-    const cw = Math.floor((w - gap * (n - 1)) / n);
+    ui.setFont(ctx, 10);
+    const widths = this.awaiting.map(chip => Math.ceil(ctx.measureText(chip.label).width) + 16);
+    const spare = Math.max(0, w - gap * (n - 1) - widths.reduce((a,b) => a+b, 0));
+    let offset = 0;
     this.awaiting.forEach((chip, i) => {
-      const bx = x + i * (cw + gap);
+      const cw = widths[i] + Math.floor(spare / n);
+      const bx = x + offset; offset += cw + gap;
       ui.button(ctx, bx, y + 10, cw, 18, chip.label, { hover: this.hover === `chip:${chip.id}` });
       this.hits.push({ x: bx, y: y + 10, w: cw, h: 18, id: `chip:${chip.id}` });
     });
