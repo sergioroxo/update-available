@@ -138,7 +138,10 @@ export class E4Messenger {
 
   /** Mum's thread drifts toward today if she has not scrolled for a while (the piece takes her there) */
   drift(dt: number): boolean {
-    if (this.view !== 'mum' || this.mumAtToday || this.lockT > 0) { this.idleT = 0; return false; }
+    // ⚑ S334 — RETIRED (his 8 Nov: "don't understand the need to have that action; we open the messages on the last
+    //   read, and there is a need to scroll down to get to the latest"): a thread never moves by itself. It opens where
+    //   she last read (first open: the oldest unread line) and she scrolls, or presses ▼, down to the newest.
+    if (this.view !== 'mum' || this.mumAtToday || this.lockT > 0 || DRIFT_AFTER > 0) { this.idleT = 0; return false; }
     this.idleT += dt;
     if (this.idleT < DRIFT_AFTER) return false;
     const was = this.scrollOf.mum;
@@ -461,12 +464,14 @@ export class E4Messenger {
     const boxes: Box[] = msgs.map((m) => {
       if (m.sep) return { m, h: 17, lines: [] };
       if (m.sys) { setFont(ctx, 9); return { m, h: 17, lines: wrapText(ctx, m.text ?? '', W - 24) }; }
-      if (m.link) { setFont(ctx, 10); const l = M.mum.links[m.link as LinkId]; const lines = wrapText(ctx, l.head, maxW - 14).slice(0, 3); return { m, h: 16 + lines.length * 13 + 8, lines }; }
+      // ⚑ S334 (his 8 Nov: "the size of the content is kinda big, so it can be quite less need for the scrolling") —
+      //   body text one step smaller, lines one px tighter: more of a thread fits, less to scroll
+      if (m.link) { setFont(ctx, 9); const l = M.mum.links[m.link as LinkId]; const lines = wrapText(ctx, l.head, maxW - 14).slice(0, 3); return { m, h: 16 + lines.length * 12 + 8, lines }; }
       if (m.photo) return { m, h: 54, lines: [] };
-      setFont(ctx, 10);
+      setFont(ctx, 9);
       // a group's speaker sits on the same line as their words
       const lines = wrapText(ctx, (m.who ? `${m.who}  ` : '') + (m.text ?? ''), maxW - 14);
-      return { m, h: lines.length * 13 + 6 + (m.draft ? 11 : 0) + 3, lines };
+      return { m, h: lines.length * 12 + 6 + (m.draft ? 11 : 0) + 3, lines };
     });
     const total = boxes.reduce((s, b) => s + b.h, 0);
     this.viewH = bottom - top;
@@ -512,8 +517,8 @@ export class E4Messenger {
       roundRect(ctx, 7, by + 1, cw - 2, ch - 2, 4, KETTLE.link);
       px(ctx, 7, by + 1, 3, ch - 2, KETTLE.head);
       ctx.font = monoFor(8); ctx.fillStyle = KETTLE.sub; ctx.fillText(l.mast, 14, by + 4);
-      setFont(ctx, 10); ctx.fillStyle = KETTLE.ink;
-      b.lines.forEach((ln, k) => ctx.fillText(ln, 14, by + 16 + k * 13));
+      setFont(ctx, 9); ctx.fillStyle = KETTLE.ink;
+      b.lines.forEach((ln, k) => ctx.fillText(ln, 14, by + 16 + k * 12));
       if (m.link === 'a0' && !this.linkOpened && this.dadRead && this.want === 'link') this.targets.push({ x: 6, y: by, w: cw, h: ch, id: 'msg-link' });
       return;
     }
@@ -531,16 +536,16 @@ export class E4Messenger {
       return;
     }
     const mine = !!m.mine;
-    setFont(ctx, 10);
+    setFont(ctx, 9);
     let textW = Math.max(...b.lines.map((l) => Math.ceil(ctx.measureText(l).width)));
-    if (m.draft) { ctx.font = monoFor(8); textW = Math.max(textW, Math.ceil(ctx.measureText(M.mum.draftLabel).width)); setFont(ctx, 10); }
+    if (m.draft) { ctx.font = monoFor(8); textW = Math.max(textW, Math.ceil(ctx.measureText(M.mum.draftLabel).width)); setFont(ctx, 9); }
     const bw = Math.min(maxW, textW + 14);
     const bh = b.h - 3;
     const bx = mine ? W - 4 - bw : 6;
     roundRect(ctx, bx, by, bw, bh, 6, m.draft ? KETTLE.draft : mine ? KETTLE.mine : KETTLE.theirs);
     let ty = by + 3;
     if (m.draft) { ctx.font = monoFor(8); ctx.fillStyle = KETTLE.sub; ctx.fillText(M.mum.draftLabel, bx + 7, ty); ty += 11; }
-    setFont(ctx, 10); ctx.fillStyle = KETTLE.ink;
+    setFont(ctx, 9); ctx.fillStyle = KETTLE.ink;
     b.lines.forEach((ln, k) => {
       if (k === 0 && m.who && ln.startsWith(m.who)) {
         // the speaker's name in the thread's second ink, then their words
@@ -549,7 +554,7 @@ export class E4Messenger {
         ctx.fillStyle = KETTLE.ink; ctx.fillText(ln.slice(m.who.length).trimStart(), bx + 7 + nw, ty);
         return;
       }
-      ctx.fillText(ln, bx + 7, ty + k * 13);
+      ctx.fillText(ln, bx + 7, ty + k * 12);
     });
     if (m.draft && Math.floor(this.t * 2) % 2 === 0) {
       const lw = Math.ceil(ctx.measureText(b.lines[b.lines.length - 1] ?? '').width);

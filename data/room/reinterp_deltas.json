@@ -2812,23 +2812,6 @@
     "yaw": 90
    },
    {
-    "id": "e_controller",
-    "_doc": "Set down beside the headset. Not interactive — the era spends its presses on the laptop and the visor; this is the other half of the kit lying where she left it. ⛑ z 0.50 -> 0.10: at 0.50 it stood inside the laptop's own footprint, behind its screen.",
-    "pos": [
-     5.5,
-     0.75,
-     0.2
-    ],
-    "size": [
-     0.08,
-     0.1,
-     0.09
-    ],
-    "color": "#3A3A44",
-    "model": "vr_controller",
-    "yaw": 90
-   },
-   {
     "id": "e_monitor",
     "_doc": "⚑ S126 — THE DOCKED MONITOR, and Era 4 finally has one. Poly Pizza, 'Monitor' by Zsky, CC-BY 3.0 (assets/LICENSES.md + docs/reinterp/ATTRIBUTIONS.md). It sits dead ahead of the r3 seat; the laptop docks beside it and the headset is out to one side, which is the arrangement Sérgio asked for on 2026-09-07: *'the laptop connected to a monitor, because we need a bigger area of interaction… push the headset more to the side.'* ⚑ The SCREEN is not this prop — it is the canvas plane in era3Devices PLACEMENT.monitor, derived from the model's own `Screen1Monitor1` material rather than guessed, and sitting proud of the glass so it can never end up inside the cabinet (S98's lesson, and S124 re-learned it on a placeholder box).",
     "pos": [
