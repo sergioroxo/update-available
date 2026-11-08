@@ -677,6 +677,9 @@ export class GraceQueueLite {
       }
       // ⚑ S207 — THE PAUSE, 2016: after her first job, back on the board, a quiet moment — the platform's own
       //   "This week" card lists what else is open to her (only what is left); once
+      if (!this.seenTask && this.consent && !this.lambPriority && this.guideReady('first-task')) {
+        this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2], 'first-task');
+      }
       if (!this.pauseShown && !this.minimised && !this.phone.voiceBusy && !this.maltaArrived && ledger.records.includes('e3-job-done') && this.boardQuietT > 6 && this.guideReady('pause')) {
         this.pauseShown = true;
         this.pauseLines = pauseItems('e3', this.floppyOpened ? ['floppy'] : []);
@@ -1158,9 +1161,10 @@ export class GraceQueueLite {
     if (this.mode !== 'board' && this.mode !== 'done') return;
     const t = this.tasks()[index];
     if (!t) return;
-    if (!this.seenTask) {
-      this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]); this.bump(); return;
-    }
+    // ⚑ S327 (his 8 Nov: "I pressed correct… there was an error") — the first press on a job used to open NOTHING and
+    //   only say Lambient's two lines, which reads as a press that failed. A press now always opens the job; Lambient
+    //   says how the two verbs work on the board beforehand (update(), once the consent beat has been read).
+    this.seenTask = true;
     const mounted = this.surfaces.get(t.id);
     this.chipReturn = null;
     if (mounted) {
@@ -2114,7 +2118,10 @@ export class GraceQueueLite {
     for (let i = 0; i < 4; i++) {
       const xx = c.x + i * (tw + 8);
       if (cut && i === 1) {
-        px(ctx, xx, sy, tw, th, ERA3.sysBand); px(ctx, xx + 26, sy + 2, 1, th - 4, ERA3.grey);
+        // ⚑ S327 — the gap says what made it: an empty frame with no word read as a broken video ("an error")
+        px(ctx, xx, sy, tw, th, ERA3.sysBand);
+        studioFont(ctx, 9, true); ctx.fillStyle = ERA3.greyDk;
+        const cw = ctx.measureText(V.cutFrame).width; ctx.fillText(V.cutFrame, xx + Math.max(1, Math.round((tw - cw) / 2)), sy + Math.round(th / 2) - 5);
       } else drawTestimonyFilm(ctx, xx, sy, tw, th, i * 8, sub.id === 2);
     }
     // The whole testimony is readable in its own column. No fixed line slice or decoration over her words.

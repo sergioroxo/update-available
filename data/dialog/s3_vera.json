@@ -104,6 +104,8 @@
   "resultLabel": "Current version",
   "originalVersion": "As sent",
   "reviewedVersion": "Publication edit",
-  "trackedVersion": "Tracked changes"
+  "trackedVersion": "Tracked changes",
+  "cutFrame": "cut",
+  "_docCutFrame": "⚑ S327 — the label on the frame the house edit removed from the publication strip (his 8 Nov: the empty frame read as an error)."
  }
 }

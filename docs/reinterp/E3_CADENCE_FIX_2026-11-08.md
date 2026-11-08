@@ -66,7 +66,23 @@ speaks while they run.
    next press on the platform. It is still never shown over a person's words.
 9. **The Wick card (T32).** It rests flat on the desk by the notepad, face up,
    readable from the chair. The rise-once starts and ends there.
-10. **Lettering.** All of 2016 now uses one family: the platform sans its own
+10. **The "error" in the testimony editor (his addition, 8 Nov).** No error
+    message exists in the 2016 code; two things read as one, and both are
+    fixed. (a) The first press on a job opened NOTHING and only showed
+    Lambient's two lines, a press that seemed to fail. A press now always
+    opens the job; Lambient says how Apply and Skip work on the board
+    beforehand, once the consent lines have been read. (b) The frame the
+    house edit removes from Renata's publication strip was an empty grey box,
+    like a broken video. It is now labelled "cut", the cause on screen.
+    The jobs' CONTENT (what is flagged, why, Malta among her removals) is not
+    rewritten here: the lead wants all of 2016's jobs reworked and connected
+    to the phone as one design (`docs/reinterp/DESIGN_2016_CONNECTIONS_2026-11-08.md`,
+    the orchestrator's). A first draft of a Malta "review queue" was built and
+    withdrawn for that design; its patch is in
+    `out/e3-cadence/review-queue-draft.patch` (git-ignored) for reference.
+11. **The held phone (T47).** Moot in 2016: there is no handset to pick up
+    any more (item 1). The desk monitors stay in the room.
+12. **Lettering.** All of 2016 now uses one family: the platform sans its own
     pages (editor, record, send page) already used. The board, buttons, sign-in
     and notices are no longer monospace beside them. The smallest sizes are
     semi-bold for the headset (`src/desktop/theme/fonts.ts`). This also touches
@@ -118,7 +134,7 @@ speaks while they run.
 - Photographs, driven with real presses on the platform's own rects, from the
   seat: `out/e3-cadence/01…23-*.png` (git-ignored). Also `tools/stills.mjs
   --only e3 --out out/e3-cadence/stills`.
-- Walk, 2016 only (`node tools/walk.mjs --port 3122 --from-era 3 --one-era --max 1200`): reached 2026 in 20 presses (`out/walks/WALK_2026-11-08_FROM_e3_SPEEDRUN_GUIDED_ONE_ERA.md`).
+- Walk, 2016 only (`node tools/walk.mjs --port 3122 --from-era 3 --one-era --max 1200`): reached 2026 in 19 presses (`out/walks/WALK_2026-11-08_FROM_e3_SPEEDRUN_GUIDED_ONE_ERA.md`).
 - Not verified: anything in a headset. The ray-aiming fix under the update
   notice is checked by code only.
 
@@ -133,7 +149,28 @@ speaks while they run.
    about 20–40 seconds with nothing to press (window back, one or two
    messages, Lambient's line, the update). Too long, or right for the ending?
 4. **Four seconds between messages.** Is that enough to read in the headset?
-5. **The video in the testimony editor** ("still not really perceptible") and
-   the "connect… error" you saw were not touched here.
+5. **The jobs' content** (testimony flags, the video, the comments, Malta
+   among her removals) waits for the 2016 connections design. Where each job
+   lives, for that build:
+   - Correct a testimony: `data/dialog/s3_queue.json` (`submissions`,
+     `corrections`: rule, why, manual, verse, edit, chip); drawn in
+     `src/room/graceQueueLite.ts` (`drawTestimonyStudio`, `drawList`,
+     `drawCorrections`, `drawCurrent`).
+   - Return the family calls: `data/dialog/s3_family.json` →
+     `src/desktop/apps/familyCalls.ts`.
+   - Post to the group: `data/dialog/s3_group.json` →
+     `src/desktop/apps/groupTask.ts`.
+   - Cut the Story: `data/dialog/s3_queue.json` (`story`, and correction 3's
+     `edit.find`) → `src/desktop/apps/storyCut.ts`.
+   - Clear the comments: `data/dialog/s3_flagged.json` (+ `s3_comments.json`)
+     → `src/desktop/apps/clearComments.ts`.
+   - Send / Kindredraft record / campaign kit: `data/dialog/s3_vera.json` →
+     `src/desktop/apps/veraSurfaces.ts` and `graceQueueLite.ts`
+     (`drawVeraPage`).
+   - The phone: `data/strings/e3_mirror.json` (the evening's messages, their
+     order is `EVENING_ORDER` in `graceQueueLite.ts`) and
+     `data/dialog/s3_maiden.json` (the group, Malta, the cascade, the backlog)
+     → `src/desktop/apps/phoneE3.ts`.
+   - The update notice: `data/strings/updates.json` `u4`.
 6. Codex's probes `tools/e3-mirror-*.mjs` that press the physical handset will
    now fail (they are not part of `npm test`).
