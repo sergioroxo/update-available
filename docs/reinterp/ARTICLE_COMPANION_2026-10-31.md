@@ -313,6 +313,21 @@ and RESEARCH_2026_V3_THREADS_2026-11-07.md), to carry into the article:
 - **The stream as mutual aid.** Junie's link is a fundraising stream for trans youth like her, on or near her
   birthday; joy and money moving between strangers is the documented counter-practice (thread 5).
 
+## 7g. Vera's job as a composite of platform moderation (his, 8 Nov 2026)
+
+Vera's work at GracePlatform is a **composite experience, inferred** from documented content moderation on large
+platforms (Facebook and others) and from the pressures of SOGICE networks to control the narrative. It is not a
+documented ministry job. The job's options must show moderation used for narrative control: what gets flagged, why
+(in the platform's own words), and what she is asked to remove. Among her removals are posts about **Malta's 2016 ban**.
+That is how the platform she works on and the phone in her hand connect: she deletes the news her own friends are
+sending her. Keep the line between documented and speculative as in RESEARCH_2016_VERA_APPARATUS_2026-11-01.md §4.
+
+**The dollhouse (retired 8 Nov).** The headset's era change through a miniature of the house (S288–S291, turntable,
+"the next room builds") was removed at the lead's ruling ("we just remove the dollhouse, we add that to the research"):
+in the headset it read as ugly and did not fully work. The era change becomes an install sound with music, with no
+fade to black. The idea worth keeping for the article: a domestic interior shown as a model is the institution's view
+of a life (a case file you can turn in your hand). On a body in a headset, it read as distance rather than critique.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
