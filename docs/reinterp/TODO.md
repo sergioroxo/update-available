@@ -16,12 +16,12 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | id | what | where | owner | size |
 |---|---|---|---|---|
 | T01 | The update line "records kept since 1997… carried forward" must go: the stories stay separate | 2016→2026 EULA | C | S ☑ S326 |
-| T02 | 2026 in the headset: the seat is outside the chair, the desk far away (the screens build moved the seat for the laptop) | 2026 room | C | M |
-| T03 | 2026 rethought: **remove the laptop** and put the messenger on the monitor beside the browser (as 2016's phone window); Mum's years by **scroll**, not a button; messages only after the update has landed; one clear thing to press at the start ("Restoring your session", "Open the lot" confused him) | 2026 screens | C | L |
-| T04 | 2016: TWO phones (the mirror window and the real phone in front of the monitor, covering Sign in). Keep the mirror; the real phone off the monitor's face | 2016 desk | C | S |
-| T05 | 2016: pressing a notification doesn't open it; "Reply on your phone" does nothing (remove it); the mentor's message isn't on the phone | 2016 mirror | C | M |
-| T06 | 2016: stories and the phone "run by themselves" while he works; a Maiden-to-be message pops in during the testimony editor | 2016 cadence | C | M |
-| T07 | 2016: the update prompt arrives with no story reason, and carries the previous panel's highlight boxes; "Remind me later" leads nowhere | 2016 → update | C | M |
+| T02 ◐ agent | 2026 in the headset: the seat is outside the chair, the desk far away (the screens build moved the seat for the laptop) | 2026 room | C | M |
+| T03 ◐ agent | 2026 rethought: **remove the laptop** and put the messenger on the monitor beside the browser (as 2016's phone window); Mum's years by **scroll**, not a button; messages only after the update has landed; one clear thing to press at the start ("Restoring your session", "Open the lot" confused him) | 2026 screens | C | L |
+| T04 ◐ agent | 2016: TWO phones (the mirror window and the real phone in front of the monitor, covering Sign in). Keep the mirror; the real phone off the monitor's face | 2016 desk | C | S |
+| T05 ◐ agent | 2016: pressing a notification doesn't open it; "Reply on your phone" does nothing (remove it); the mentor's message isn't on the phone | 2016 mirror | C | M |
+| T06 ◐ agent | 2016: stories and the phone "run by themselves" while he works; a Maiden-to-be message pops in during the testimony editor | 2016 cadence | C | M |
+| T07 ◐ agent | 2016: the update prompt arrives with no story reason, and carries the previous panel's highlight boxes; "Remind me later" leads nowhere | 2016 → update | C | M |
 | T08 | NO fades to black anywhere, before or after the eras; the era change needs more sound, more time, and a morph into the room; the dollhouse "doesn't fully work" and the miniatures look ugly | all transitions, XR | C | L |
 | T09 | Text in the headset is serrated and hard to read unless very close | everywhere, XR | X (Prompt C) + C | L |
 | T10 | Lamby video breaks up when the hand moves | 2003 video, XR | X | M |
@@ -42,8 +42,8 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T20 | Family Form's last button says "Return": should say "Continue" | 1997 | X | S |
 | T21 | "Next task" has two places to press; it doesn't say the desktop can be explored; "Today in Restorify" appears late | 2003 | C | S |
 | T22 | The parents' form ("your son's first name…"): not explained, no next step | 2003 | C | S |
-| T23 | Campaign kit: "impossible to understand", mixed fonts | 2016 | C | M |
-| T24 | "The Malta thing": what is happening is not clear | 2016 | C | M |
+| T23 ◐ agent | Campaign kit: "impossible to understand", mixed fonts | 2016 | C | M |
+| T24 ◐ agent | "The Malta thing": what is happening is not clear | 2016 | C | M |
 | T25 | Where is the guide (L) in 2016 and 2026? | 2016, 2026 | C | S |
 | T26 | Caleb's messages type letter by letter: too slow; show each message whole when it beeps | 2003 messenger | X | S |
 | T27 | Controller users see "look at your wrist" (that's for hands) | XR | X | S |
@@ -73,6 +73,15 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T46 | 2026: the shelf on the bed and a phone on the table make no sense | 2026 room | C | S |
 | T47 | Screen distance: the held/worn screens follow the headset, not the room; the 2016 monitor hangs over the desk edge | XR | C | M |
 | T48 | Hidden skip button: ~10 presses of the controller's back button (his note) — document for the team | XR | C | S |
+
+## Building now (8 Nov)
+
+- ◐ Claude agent A, branch `claude/e3-cadence-fix`: 2016, T04 T05 T06 T07 T23 T24 T25 T32 (two phones, notifications,
+  nothing runs by itself, the update with a reason, the campaign kit, Malta, the guide, the Wick card).
+- ◐ Claude agent B, branch `claude/e4-one-screen`: 2026, T02 T03 T25 T43 T46 (laptop removed, messenger on the
+  monitor, the seat back in the chair, time by scroll, one thing to press, fonts, the guide).
+- ☐ Codex Prompt D (ten small fixes): paste when ready.
+- After both: Claude merges, runs ONE full walk, and rebuilds the itch ZIP.
 
 ## Waiting for Sérgio (decisions)
 
