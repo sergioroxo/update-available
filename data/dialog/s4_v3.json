@@ -12,6 +12,15 @@
     "restoring": "Restoring your session.",
     "worn": "Session in progress."
   },
+  "oneScreen": {
+    "_doc": "⚑ S328 (T03/T02/T25) — ONE SCREEN. The monitor carries two windows side by side, never one behind the other: the browser (the system: news, clinic, search, the bot, Photos) and Kettle (the people). The window the story is on is the larger; pressing the other's title bar enlarges it instead. The taskbar holds the date and L, the guide. 'wake' is the sleeping monitor's one obvious first press (his: 'not totally sure where to press').",
+    "browserTitle": "Browser",
+    "kettleTitle": "Messages",
+    "enlarge": "⤢",
+    "taskbarDate": "Fri 23 Oct · 07:30",
+    "wake": "Press to wake the screen",
+    "askL": "Ask L for help"
+  },
   "messenger": {
     "_doc": "KETTLE — an invented messenger on her laptop (no real brand, no real look). Everything that is a person lives here. Felt: no glow, no Lamby, no system voice while a thread is open. The only presses are the next one, one at a time, at the foot of the window.",
     "app": "Kettle",
@@ -20,8 +29,10 @@
     "muted": "muted",
     "you": "you",
     "today": "Today",
+    "_docS328": "⚑ S328 (T03, his headset test of 8 Nov) — Kettle is a WINDOW on the monitor beside the browser now; the laptop is gone. Every thread is one scrolling thread (his: 'it should all be in the scroll'): no '2024 ›', no 'Today ›'. scrollHint is the bar's quiet line while there is more to read below. The lot's button names what it is ('What is open the lot?').",
+    "scrollHint": "Scroll down to read on",
     "chats": {
-      "house": { "name": "the lot", "sub": "Ola, Priya, Rae, Sam, you", "mark": "L", "idle": "rae: who has the candles", "open": "Open the lot" },
+      "house": { "name": "the lot", "sub": "Ola, Priya, Rae, Sam, you", "mark": "L", "idle": "rae: who has the candles", "open": "Read your friends" },
       "mum": { "name": "Mum", "sub": "", "mark": "M", "idle": "call when you can x", "open": "Open Mum" },
       "dad": { "name": "Dad", "sub": "", "mark": "D", "idle": "Not while you're under this roof.", "open": "Read Dad" },
       "junie": { "name": "Junie", "sub": "muted 6 weeks", "mark": "J", "idle": "1 new message · muted", "open": "Open Junie" }

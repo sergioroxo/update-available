@@ -3,7 +3,7 @@
  *
  *  VR-04  the desk meets the visitor's table — a fingertip held still on a real table sets the desk height.
  *  VR-05  Lamby in the room — 1997 a creature that hops out of the monitor onto the desk; 2003 a desk toy riding the
- *         monitor; 2016 a badge beside the phone; 2026 no body, a soft light near the laptop. Shown only while the
+ *         monitor; 2016 a badge beside the phone; 2026 no body, a soft light at the monitor's top-right corner (S328: the laptop is gone; L's tray is in the monitor's taskbar). Shown only while the
  *         guide's balloon is (so every guide law holds: ≤5 unsolicited, never felt or respite, dismissal logged);
  *         pressing it is the balloon's own Yes.
  *  VR-08  the visor's second frame — while the 2026 visor is on, a lens closes round the view and the programme

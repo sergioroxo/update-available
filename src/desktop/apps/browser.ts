@@ -55,9 +55,21 @@ import script from '../../../data/dialog/s4_boot.json';
 import body from '../../../data/dialog/s4_browser.json';
 import ballScript from '../../../data/dialog/s4_ball.json';
 import V from '../../../data/dialog/s4_v3.json';
+import closeMessage from '../../../data/strings/close_message.json';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
 type Surface = 'monitor' | 'laptop' | 'headset';
+/** ⚑ S328 — a window on the monitor: its frame (x, w), its content (cx, cy, cw, ch), the scale its page is drawn at,
+ *  and the page's own logical size. Each page keeps ONE logical width, so it is laid out once; enlarging a window
+ *  changes its scale, never its layout. */
+interface Win { x: number; w: number; cx: number; cy: number; cw: number; ch: number; s: number; lw: number; lh: number }
+interface Layout { b: Win; k: Win }
+/** ⚑ S328 — ONE SCREEN (T03/T43). The monitor is 710 × 384. The taskbar (L, the date) at the foot, a title bar on
+ *  each window. Sizes chosen so the larger window's body type reads at 15 px on the monitor (the browser's 17 px body
+ *  at 0.9, Kettle's 10 px at 1.53) and the smaller window's never drops under 11. */
+const WIN = { taskbar: 20, title: 18, gap: 4, kettleSmall: 206, kettleBig: 290, browserW: 556, kettleW: 190 } as const;
+const inside = (x: number, y: number, w: Win): boolean => x >= w.cx && x <= w.cx + w.cw && y >= w.cy && y <= w.cy + w.ch;
+const toMonitor = (h: Hit, w: Win): Hit => ({ id: h.id, x: w.cx + h.x * w.s, y: w.cy + h.y * w.s, w: h.w * w.s, h: h.h * w.s });
 
 const PROGRAM = body.program as unknown as {
   chosen: string; typingSeconds: number; agentAddress: string;
@@ -98,6 +110,9 @@ const STALL_SECONDS = 35;
 /** after "left", the room's conducted turn has the floor: the search waits this long at least, and at most the longer
  *  figure if the room has not marked `room` yet (src/narrative/e4Beats.ts) */
 const ROOM_WAIT = { min: 5, max: 12 } as const;
+/** ⚑ S328 — the birthday messages arrive one at a time after the screen has opened quietly (his 8 Nov test) */
+const HOUSE_FIRST = 2.2;
+const HOUSE_GAP = 2.4;
 /** the clip plays over the whole page for this long when the map beat begins (one loop of its six frames) */
 const CLIP_TAKEOVER_SECONDS = 14.4;
 
@@ -168,9 +183,18 @@ export class E4Browser {
   /** the surface a turn is still owed to (a camera move was busy when it was asked for) */
   private faceOwed: Surface | null = null;
   private t = 0;
-  private hits: Hit[] = [];
+  /** the browser page's own controls, in the PAGE's coordinates (named so the walker's collector skips them) */
+  private pageTargets: Hit[] = [];
+  /** ⚑ S328 — every control on the MONITOR, in the monitor's coordinates: the browser window's, Kettle's, the title
+   *  bars', the taskbar's L. This is what the walker, the tour, XR and the room's pointer aim at. */
+  hits: Hit[] = [];
+  /** ⚑ S328 — ONE SCREEN (T03). The window the story is on is the larger; `chosen` is the visitor's own enlarge, kept
+   *  until the story moves to the other window. Nothing is ever drawn behind the other. */
+  private focus: 'browser' | 'kettle' = 'browser';
+  private chosen: 'browser' | 'kettle' | null = null;
+  private lay: Layout | null = null;
   private pressable = true;
-  private publish(h: Hit): void { if (this.pressable) this.hits.push(h); }
+  private publish(h: Hit): void { if (this.pressable) this.pageTargets.push(h); }
   private filedSession = false;
   private read = new Set<string>();
   private failT = 0;
@@ -215,9 +239,19 @@ export class E4Browser {
   private get enquiryOpen(): boolean { return this.enquiry === 'draft' || this.enquiry === 'sending' || this.enquiry === 'replied'; }
 
   // ── conducted looks ──────────────────────────────────────────────────────
+  /** ⚑ S328 — one screen: 'laptop' names KETTLE'S WINDOW now. The story enlarges the window it has moved to and makes
+   *  sure she is facing the monitor (app.ts does nothing if she already is). */
   private face(s: Surface): void {
-    // the story needs the monitor: the free game on its bookmark folds away (it is one press to reopen)
+    // the story needs the browser: the free game on its bookmark folds away (it is one press to reopen)
     if (s === 'monitor' && this.mode === 'game') { this.floppy.closeGame(); this.mode = 'story'; this.version++; }
+    if (s !== 'headset') {
+      const f = s === 'laptop' ? 'kettle' : 'browser';
+      if (this.focus !== f || this.chosen) { this.focus = f; this.chosen = null; this.version++; }
+      // ⚑ the system takes the screen: Kettle goes back to its list, so a felt thread is never left open beside the
+      //   bot's voice (and L, silent over a felt thread, can be asked again)
+      if (f === 'browser' && this.messenger.view !== 'list') { this.messenger.view = 'list'; this.version++; }
+      s = 'monitor';
+    }
     this.faceOwed = s;
     this.tryFace();
   }
@@ -225,11 +259,33 @@ export class E4Browser {
     if (!this.faceOwed || !this.onFace) return;
     if (this.onFace(this.faceOwed)) this.faceOwed = null;
   }
-  /** Lamby's "Show me": look at the screen the target is on */
-  guideSurface(): 'monitor' | 'laptop' {
-    const t = this.lambyGuide?.view.targets ?? [];
-    return t.some((id) => this.messenger.targets.some((r) => r.id === id)) ? 'laptop' : 'monitor';
+  /** Lamby's "Show me": the one screen */
+  guideSurface(): 'monitor' { return 'monitor'; }
+  /** which window is the larger now */
+  private get enlarged(): 'browser' | 'kettle' { return this.chosen ?? this.focus; }
+  /** the two windows exist once the session is open (nothing arrives during the restore), and while it fails */
+  private get windowed(): boolean { return (this.phase === 'open' || this.phase === 'failed') && !this.idleOrb; }
+  private layout(W: number, H: number): Layout {
+    const kw = this.enlarged === 'kettle' ? WIN.kettleBig : WIN.kettleSmall;
+    const bw = W - WIN.gap - kw;
+    const ch = H - WIN.taskbar - WIN.title;
+    const sb = bw / WIN.browserW, sk = kw / WIN.kettleW;
+    return {
+      b: { x: 0, w: bw, cx: 0, cy: WIN.title, cw: bw, ch, s: sb, lw: WIN.browserW, lh: Math.round(ch / sb) },
+      k: { x: bw + WIN.gap, w: kw, cx: bw + WIN.gap, cy: WIN.title, cw: kw, ch, s: sk, lw: WIN.kettleW, lh: Math.round(ch / sk) }
+    };
   }
+  /** wheel, drag, thumbstick, touch on the monitor: Kettle's open thread scrolls (time by scroll, his ruling) */
+  scrollAt(x: number | null, y: number | null, dy: number): boolean {
+    const L = this.lay;
+    if (!L || this.phase !== 'open' && !e4Has('terminated')) return false;
+    if (x !== null && y !== null && !inside(x, y, L.k)) return false;
+    if (!this.messenger.canScroll) return false;
+    if (this.messenger.scrollBy(dy / L.k.s)) { this.lambyGuide?.activity(); this.stallT = 0; this.version++; }
+    return true;
+  }
+  /** is this monitor point on Kettle's scrollable thread (a drag that starts here scrolls instead of turning) */
+  scrollsAt(x: number, y: number): boolean { const L = this.lay; return !!L && inside(x, y, L.k) && this.messenger.canScroll; }
 
   private file(id: string, outcome: 'read' | 'opened' | 'answered' | 'done', witness: string): void {
     if (ledger.e4Space.some((e) => e.id === id)) return;
@@ -270,7 +326,7 @@ export class E4Browser {
     this.botBeat = ready; this.botT = 99;
     const m = this.messenger;
     m.houseShown = 3; m.houseHeart = true; m.houseOpenedBirthday = true; m.houseLeft = 2; m.houseOpenedLeft = true;
-    m.mumToday = 4; m.mumDraft = true; m.mumPage = 4; m.mumOpened = true; m.dadIn = true; m.dadRead = true; m.dadPage = 1; m.linkOpened = true;
+    m.mumToday = 4; m.mumDraft = true; m.mumAtToday = true; m.mumOpened = true; m.dadIn = true; m.dadRead = true; m.linkOpened = true;
     m.junieOpenable = true; m.junieOpened = true; m.junieUnmuted = true; m.junieReplied = true; m.junieX = true;
     m.want = null; m.view = 'list'; m.wallpaper = 'goal';
     this.junieWarm = true;
@@ -307,7 +363,7 @@ export class E4Browser {
     this.phase = 'saver';
     this.saverT = 0;
     this.orb = new Screensaver('orb', 2026);
-    this.orb.line = PROGRAM.saver.line;
+    this.orb.line = '';   // ⚑ S328: the wake button says it (drawSurfaceContent); the orb's own line would be a second voice
     this.tabs = [this.searchTab(), this.photosTab()];
     this.liveId = 'search';
     this.version++;
@@ -338,7 +394,7 @@ export class E4Browser {
   // ── the clock ─────────────────────────────────────────────────────────────
   update(dt: number): void {
     if (this.startMap.update(dt)) this.version++;
-    if (!this.pressable && this.hits.length) this.hits = [];
+    if (!this.pressable && (this.pageTargets.length || this.hits.length)) { this.pageTargets = []; this.hits = []; }
     if (this.phase === 'dormant') return;
     if (this.startPanel.tick(dt, false)) this.version++;
     this.tryFace();
@@ -387,6 +443,8 @@ export class E4Browser {
     const mt = m.t; m.t += dt;
     if (m.lockT > 0) { m.lockT = Math.max(0, m.lockT - dt); if (m.lockT === 0) this.version++; }
     if (m.view === 'mum' && m.mumDraft && Math.floor(mt * 2) !== Math.floor(m.t * 2)) this.version++;
+    // ⚑ S328 — Mum's thread drifts on toward today if she has not scrolled for a while (no beat waits on the gesture)
+    if (m.drift(dt)) this.version++;
     if (this.pathIds().size && !this.lambyGuide?.active) {
       const s4 = this.stallT; this.stallT += dt;
       if (s4 < STALL_SECONDS && this.stallT >= STALL_SECONDS) this.version++;
@@ -405,9 +463,10 @@ export class E4Browser {
     }
     switch (this.step) {
       case 'house':
-        // Act I · eighteen — her friends write first; the piece turns her to the laptop
-        if (at(0.05)) { markE4('eighteen'); this.face('laptop'); m.want = 'house'; }
-        for (let i = 0; i < 3; i++) if (at(1.0 + i * 0.9)) { m.houseShown = i + 1; playOnce('ui_press.mp3'); this.version++; }
+        // Act I · eighteen — her friends write first. ⚑ S328 (his: "the cascade of messages… this is not to appear
+        //   now") — the screen is open and quiet first; Kettle's window grows, then one message at a time
+        if (at(0.05)) { markE4('eighteen'); this.face('laptop'); }
+        for (let i = 0; i < 3; i++) if (at(HOUSE_FIRST + i * HOUSE_GAP)) { m.houseShown = i + 1; if (i === 0) m.want = 'house'; playOnce('ui_press.mp3'); this.version++; }
         if (m.houseHeart && this.stepT >= 0) {
           // the heart is sent; the update restores "defaults" a breath later — the system's act, not hers
           if (this.heartT < 0) this.heartT = 0; else this.heartT += dt;
@@ -416,9 +475,10 @@ export class E4Browser {
         break;
       case 'mum':
         if (at(1.2)) this.face('laptop');
-        if (at(1.4)) { m.mumToday = 1; m.want = 'mum'; if (m.view !== 'mum') m.view = 'list'; playOnce('ui_press.mp3'); this.version++; }
-        if (at(2.8)) { m.mumToday = 3; playOnce('ui_press.mp3'); this.version++; }
-        if (m.mumPage >= V.messenger.mum.years.length) {
+        if (at(1.6)) { m.mumToday = 1; m.want = 'mum'; if (m.view !== 'mum') m.view = 'list'; playOnce('ui_press.mp3'); this.version++; }
+        if (at(3.4)) { m.mumToday = 3; playOnce('ui_press.mp3'); this.version++; }
+        if (m.mumAtToday) {
+          if (this.todayT < 0) this.file('v3:mum', 'read', W3.mum);
           // she reached today: her last line, her unsent draft, then Dad
           if (this.todayT < 0) this.todayT = 0; else this.todayT += dt;
           if (this.todayT >= 1.2 && m.mumToday < 4) { m.mumToday = 4; this.version++; }
@@ -479,6 +539,7 @@ export class E4Browser {
             this.reversal = 'matched';
             this.profile = 'maya';
             markE4('original');
+            this.messenger.wallpaper = 'hers';   // S328: her own picture comes back on the one screen too
             this.file('reversal', 'done', W3.reversal);
             playOnce('step_done_2026.mp3');
             this.startBot('ready');
@@ -575,13 +636,7 @@ export class E4Browser {
     this.go('newyou');
   }
 
-  // ── the messenger, pressed (the laptop) ──────────────────────────────────
-  drawMessenger(ctx: CanvasRenderingContext2D, W: number, H: number, pressable: boolean): Hit[] {
-    const r = this.messenger.draw(ctx, W, H);
-    // ⚑ nothing on the lid is pressable once the screens are done (the headset is the way on), or while it is not hers
-    if (!pressable || this.programDone) { this.messenger.targets = []; return []; }
-    return r;
-  }
+  // ── the messenger, pressed (Kettle's window) ─────────────────────────────
   pressMessenger(x: number, y: number): boolean {
     if (this.phase !== 'open') return false;
     const id = this.messenger.press(x, y);
@@ -593,7 +648,9 @@ export class E4Browser {
   }
   private openChat(c: ChatId): void {
     const m = this.messenger;
-    m.view = c;
+    // ⚑ S328 — one scrolling thread: Mum's opens at 2023 the first time (she scrolls down through the years to today);
+    //   every other thread, and Mum's once she has reached today, opens at its latest line
+    m.opened(c, c === 'mum' && !m.mumOpened);
     if (c === 'house') {
       if (m.houseShown > 0) m.houseOpenedBirthday = true;
       if (m.houseLeft > 0 && !m.houseOpenedLeft) {
@@ -604,12 +661,10 @@ export class E4Browser {
         if (this.step === 'left') this.go('pause');
       }
     } else if (c === 'mum') {
-      if (!m.mumOpened) { m.mumOpened = true; m.mumPage = 0; markE4('mum'); }
-      if (m.want === 'link') m.mumPage = V.messenger.mum.years.length;
+      if (!m.mumOpened) { m.mumOpened = true; markE4('mum'); }
     } else if (c === 'dad') {
       if (m.dadIn && !m.dadRead) {
         m.dadRead = true;
-        m.dadPage = 0;
         markE4('dad');
         this.file('v3:dad', 'read', W3.dad);
         m.want = 'link';
@@ -625,19 +680,13 @@ export class E4Browser {
     const m = this.messenger;
     if (id.startsWith('row-') || id.startsWith('chat-')) { this.openChat(id.replace(/^(row|chat)-/, '') as ChatId); return; }
     if (id === 'back-chats') { m.view = 'list'; this.version++; return; }
-    if (id === 'dad-today' && m.view === 'dad') { m.dadPage = 1; playOnce('ui_press.mp3'); this.version++; return; }
     if (id === 'house-heart' && !m.houseHeart) {
       m.houseHeart = true; m.want = null;
       this.file('v3:house', 'answered', W3.house);
       playOnce('ui_press.mp3'); this.version++;
       return;
     }
-    if (id.startsWith('mum-') && m.view === 'mum') {
-      m.mumPage = Math.min(V.messenger.mum.years.length, m.mumPage + 1);
-      if (m.mumPage >= V.messenger.mum.years.length) this.file('v3:mum', 'read', W3.mum);
-      playOnce('ui_press.mp3'); this.version++;
-      return;
-    }
+    if (id === 'scroll-up' || id === 'scroll-down') { this.version++; return; }
     if (id === 'msg-link' && m.dadRead && !m.linkOpened) {
       // ⚑ beat 4 — Mum's link opens the browser, and the news opens behind it, tab after tab
       m.linkOpened = true; m.want = null;
@@ -652,6 +701,7 @@ export class E4Browser {
     }
     if (id === 'junie-unmute' && !m.junieUnmuted) {
       m.junieUnmuted = true; m.want = null;
+      m.opened('junie', true);   // S328: what the mute hid reads from its first line (Tuesday), down to today
       this.junieWarm = true;
       markE4('junie');
       this.file('v3:junie', 'answered', W3.junie);
@@ -664,6 +714,7 @@ export class E4Browser {
     }
   }
 
+
   // ── drawing the monitor ──────────────────────────────────────────────────
   private tabsBack(): number {
     if (this.phase === 'open') return this.tabs.length;
@@ -672,53 +723,112 @@ export class E4Browser {
     return Math.min(this.tabs.length, Math.floor(since / TAB_GAP) + 1);
   }
 
-  draw(ctx: CanvasRenderingContext2D, W: number, H: number, pressable = true): void {
+  /**
+   * ⚑ S328 — THE ONE SCREEN (T03). Before the session is open (the sleep, the restore) the page has the whole glass
+   * and nothing else arrives. From then on the monitor carries two windows side by side — the browser (the system)
+   * and Kettle (the people) — under one taskbar where L lives. Each window draws its page at its own logical size
+   * under a scale, so text stays one size per window; the larger window is the one the story is on.
+   */
+  draw(ctx: CanvasRenderingContext2D, W: number, H: number, pressable = true, kettlePressable = pressable): void {
+    this.hits = [];
+    this.pressable = pressable;
+    if (!this.windowed) {
+      this.lay = null;
+      this.drawPage(ctx, W, H, pressable);
+      this.hits = this.pageTargets.slice();
+      return;
+    }
+    const L = this.layout(W, H);
+    this.lay = L;
+    px(ctx, 0, 0, W, H, V3.desk);
+    // the browser's window
+    this.windowTitle(ctx, L.b, V.oneScreen.browserTitle, 'win-browser', pressable);
+    ctx.save(); ctx.beginPath(); ctx.rect(L.b.cx, L.b.cy, L.b.cw, L.b.ch); ctx.clip();
+    ctx.translate(L.b.cx, L.b.cy); ctx.scale(L.b.s, L.b.s);
+    this.drawPage(ctx, L.b.lw, L.b.lh, pressable);
+    ctx.restore();
+    for (const h of this.pageTargets) this.hits.push(toMonitor(h, L.b));
+    // Kettle's window: the people. Nothing on it is pressable once the screens are done (the headset is the way on),
+    //   except the lot's evening after the device has stopped (they keep writing)
+    this.windowTitle(ctx, L.k, V.oneScreen.kettleTitle, 'win-kettle', pressable);
+    ctx.save(); ctx.beginPath(); ctx.rect(L.k.cx, L.k.cy, L.k.cw, L.k.ch); ctx.clip();
+    ctx.translate(L.k.cx, L.k.cy); ctx.scale(L.k.s, L.k.s);
+    const k = this.messenger.draw(ctx, L.k.lw, L.k.lh);
+    ctx.restore();
+    const kettleLive = kettlePressable && (this.phase === 'open' ? !this.programDone : e4Has('terminated'));
+    if (kettleLive) for (const h of k) this.hits.push(toMonitor(h, L.k));
+    // the taskbar: the date, and L (T25: the guide is always one press away, and never over a felt thread)
+    const ty = H - WIN.taskbar;
+    px(ctx, 0, ty, W, WIN.taskbar, V3.bar); px(ctx, 0, ty, W, 1, V3.barEdge);
+    ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.fillText(V.oneScreen.taskbarDate, 8, ty + 5);
+    if (pressable && this.phase === 'open' && this.lambyGuide?.canRequest && !this.startMap.active && !this.messenger.felt) {
+      // drawLambyGuide pushes its own controls (the tray, the balloon's buttons) onto the list it is given; the tray's
+      //   L gets its words beside it (his: "where is our guide?")
+      setFont(ctx, 10); ctx.fillStyle = V3.ink2;
+      const ask = V.oneScreen.askL, aw = Math.ceil(ctx.measureText(ask).width);
+      ctx.fillText(ask, W - 112 - aw, ty + 5);
+      this.hits.push({ x: W - 116 - aw, y: ty + 1, w: aw + 8, h: WIN.taskbar - 2, id: 'lg-tray' });
+      this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, this.hits, { w: W, h: H }, this.hits.map(h => `press:${h.id}`));
+    } else this.lambyGuidePaint = { rings: [], balloon: false };
+    const view = this.lambyGuide?.view;
+    if (pressable && view && !view.hidden && view.rung === 'show' && !this.startMap.active) {
+      for (const r of this.hits.filter(h => view.targets.includes(h.id))) drawGuidePointer(ctx, r, { x: W - 24, y: H - 24 }, CHROME.accent, view.frame);
+    }
+  }
+  /** a window's title bar: its name, and (on the smaller window) the press that enlarges it */
+  private windowTitle(ctx: CanvasRenderingContext2D, w: Win, title: string, id: string, pressable: boolean): void {
+    const big = (id === 'win-kettle') === (this.enlarged === 'kettle');
+    px(ctx, w.x, 0, w.w, WIN.title, big ? V3.titleOn : V3.title);
+    setFont(ctx, 11); ctx.fillStyle = big ? V3.titleOnInk : V3.ink;
+    ctx.fillText(title, w.x + 8, 3);
+    if (!big) {
+      const g = V.oneScreen.enlarge;
+      const gw = Math.ceil(ctx.measureText(g).width);
+      ctx.fillText(g, w.x + w.w - gw - 8, 3);
+      if (pressable) this.hits.push({ x: w.x, y: 0, w: w.w, h: WIN.title, id });
+    }
+  }
+  /** the browser's own page, at whatever logical size it is given (the whole glass, or its window) */
+  private drawPage(ctx: CanvasRenderingContext2D, W: number, H: number, pressable: boolean): void {
     this.drawSurfaceContent(ctx, W, H, pressable);
     const guide = this.lambyGuide?.view;
-    if (pressable && guide && !guide.hidden && guide.rung === 'show' && !this.startMap.active) {
-      const targets = this.hits.filter(h => guide.targets.includes(h.id));
+    if (!this.windowed && pressable && guide && !guide.hidden && guide.rung === 'show' && !this.startMap.active) {
+      const targets = this.pageTargets.filter(h => guide.targets.includes(h.id));
       for (const r of targets) drawGuidePointer(ctx, r, { x: W - 24, y: H - 24 }, CHROME.accent, guide.frame);
     }
     if (this.phase === 'open' && !this.idleOrb) {
       const S = startCopy.desktop.startMenu;
       px(ctx, W - 80, 3, 50, 20, CHROME.button);
       setFont(ctx, 10); ctx.fillStyle = CHROME.buttonInk; ctx.fillText(S.paperMenu, W - 71, 7);
-      this.hits.unshift({ x: W - 80, y: 3, w: 50, h: 20, id: 'start-menu' });
+      this.pageTargets.unshift({ x: W - 80, y: 3, w: 50, h: 20, id: 'start-menu' });
       const nav = this.startMap.draw(ctx, W, H, 'e4', this.startModel(), this.startMapSilent);
-      if (nav.length) this.hits = [...nav, ...this.hits.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
+      if (nav.length) this.pageTargets = [...nav, ...this.pageTargets.filter(r => r.id === 'start-menu' || r.id === 'whattodo')];
     }
-  }
-  drawLaptopGuide(ctx: CanvasRenderingContext2D, W: number, H: number, hits: import('./lambyGuideDraw').GuideHit[]): void {
-    if (this.lambyGuide?.canRequest && !this.startMap.active && !this.messenger.felt) {
-      this.lambyGuidePaint = drawLambyGuide(ctx, 'e4', this.lambyGuide.view, hits, { w: W, h: H }, this.hits.map(h => `press:${h.id}`));
-    }
-  }
-  pressLaptopGuide(id: string): boolean {
-    if (id === 'lg-tray') { this.nowLine = null; this.waitNow = false; }
-    this.lambyGuide?.activity();
-    const took = this.lambyGuide?.press(id) ?? false;
-    if (took) { this.version++; if (id === 'lg-show') this.onGuideLook?.(); }
-    return took;
   }
   /** Lamby's "Take me there": press the target for her (navigation only — never an answer) */
-  pressGuideTarget(id: string): 'monitor' | 'laptop' | null {
+  pressGuideTarget(id: string): 'monitor' | null {
     if (this.guideSilent || this.guideVoice) return null;
-    const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad'];
+    const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad', 'row-house', 'chat-house', 'row-junie', 'chat-junie'];
     if (!allowed.includes(id)) return null;
-    const onLid = this.messenger.targets.find((h) => h.id === id);
-    if (onLid) { this.handleMessenger(id); return 'laptop'; }
     const r = this.hits.find(h => h.id === id);
     if (r) { this.handleClick(r.x + r.w / 2, r.y + r.h / 2); return 'monitor'; }
     return null;
   }
 
   private drawSurfaceContent(ctx: CanvasRenderingContext2D, W: number, H: number, pressable: boolean): void {
-    this.hits = [];
+    this.pageTargets = [];
     this.pressable = pressable;
     const back = this.tabsBack();
     if (this.phase === 'dormant' || this.settleT > 0) { px(ctx, 0, 0, W, H, CHROME.page); return; }
     if (this.phase === 'saver') {
       if (this.orb) this.orb.draw(ctx, W, H); else px(ctx, 0, 0, W, H, CHROME.page);
+      // ⚑ S328 — ONE OBVIOUS FIRST PRESS (his 8 Nov: "not totally sure where to press"): a button, not a whisper.
+      //   The whole glass still wakes it; the button says that it does.
+      setFont(ctx, 17);
+      const label = V.oneScreen.wake, bw = Math.ceil(ctx.measureText(label).width) + 44, bh = 36;
+      const bx = Math.round((W - bw) / 2), by = H - 60;
+      pill(ctx, bx, by, bw, bh, V3.primary);
+      ctx.fillStyle = V3.primaryInk; ctx.fillText(label, bx + 22, by + 9);
       this.publish({ x: 0, y: 0, w: W, h: H, id: 'saver-wake' });
       return;
     }
@@ -777,7 +887,7 @@ export class E4Browser {
       const stalled = this.stallT >= STALL_SECONDS && ledger.view.highlights !== false;
       if (asked || stalled) {
         const path = this.pathIds();
-        for (const h of this.hits) if (path.has(h.id)) this.ringAround(ctx, h);
+        for (const h of this.pageTargets) if (path.has(h.id)) this.ringAround(ctx, h);
       }
     }
     if (this.startPanel.open && !sheet) {
@@ -866,10 +976,10 @@ export class E4Browser {
   private drawSearch(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.pageGround(ctx, W, H);
     // the wallpaper: hers until the update, then the goal
-    const wx = W - 262, wy = PAGE_TOP + 10, ww = 244, wh = H - BAR_H - PAGE_TOP - 20;
+    // ⚑ S328 — laid out for the browser window's 556 logical px: the box keeps its width, the wallpaper takes the rest
+    const lx = 24, wx = lx + 380 + 20, wy = PAGE_TOP + 10, ww = Math.max(96, W - wx - 16), wh = H - BAR_H - PAGE_TOP - 20;
     if (this.profile === 'goal') drawGoalPicture(ctx, wx, wy, ww, wh);
     else thumb(ctx, wx, wy, ww, wh, 3, false, 8);
-    const lx = 40;
     setFont(ctx, 30); ctx.fillStyle = V3.ink;
     ctx.fillText(SR.brand, lx, PAGE_TOP + 40);
     const bx = lx, by = PAGE_TOP + 92, bw = 380, bh = 36;
@@ -932,21 +1042,23 @@ export class E4Browser {
 
   // ── the update's "defaults": the new you ─────────────────────────────────
   private drawNewYou(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.hits = this.hits.filter((h) => h.id === 'start-menu' || h.id.startsWith('lg-') || h.id.startsWith('sm-'));
+    this.pageTargets = this.pageTargets.filter((h) => h.id === 'start-menu' || h.id.startsWith('lg-') || h.id.startsWith('sm-'));
     ctx.save(); ctx.globalAlpha = 0.55; px(ctx, 0, PAGE_TOP, W, H - PAGE_TOP, V3.sheetWash); ctx.restore();
     const N = V.newyou;
-    const cw = 600, ch = H - BAR_H - PAGE_TOP - 20, cx = Math.round((W - cw) / 2), cy = PAGE_TOP + 10;
+    // ⚑ S328 — fitted to the browser window (556 logical px): the value sits under its row's name
+    const cw = Math.min(600, W - 24), ch = H - BAR_H - PAGE_TOP - 20, cx = Math.round((W - cw) / 2), cy = PAGE_TOP + 10;
     roundEdge(ctx, cx, cy, cw, ch, 8, V3.edge, V3.card);
-    drawGoalPicture(ctx, cx + 14, cy + 14, 220, ch - 28, { t: this.t });
-    const rx = cx + 256;
+    const gw = Math.min(220, Math.round(cw * 0.32));
+    drawGoalPicture(ctx, cx + 14, cy + 14, gw, ch - 28, { t: this.t });
+    const rx = cx + gw + 32;
     setFont(ctx, 24); ctx.fillStyle = V3.ink; ctx.fillText(N.title, rx, cy + 24);
     setFont(ctx, 17); ctx.fillStyle = V3.ink2; ctx.fillText(N.sub, rx, cy + 58);
     let y = cy + 100;
     for (const r of N.rows) {
       px(ctx, rx, y - 8, cw - (rx - cx) - 20, 1, V3.edge);
       setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(r, rx, y);
-      ctx.fillStyle = V3.botInk; ctx.fillText('✓ ' + N.value, rx + 150, y);
-      y += 34;
+      ctx.fillStyle = V3.botInk; ctx.fillText('✓ ' + N.value, rx, y + 18);
+      y += 46;
     }
     setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(N.fine, rx, y + 4);
     this.bar(ctx, W, H, N.bar, [{ id: 'ny-continue', label: N.continue, kind: 'primary' }], true);
@@ -957,7 +1069,7 @@ export class E4Browser {
     this.pageGround(ctx, W, H);
     const i = Math.min(this.newsIndex, ARTICLES.length - 1);
     const a = ARTICLES[i];
-    const cx = 40, cw = W - 80, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;
+    const cx = 16, cw = W - 32, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;   // S328: the card takes the window's width
     roundEdge(ctx, cx, cy, cw, ch, 6, V3.edge, V3.card);
     const x = cx + 28;
     ctx.font = newsFor(24); ctx.textBaseline = 'top'; ctx.fillStyle = V3.ink; ctx.fillText(a.mast, x, cy + 12);
@@ -967,10 +1079,11 @@ export class E4Browser {
     let y = cy + 70;
     for (const ln of wrapText(ctx, a.head, cw - 56).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 25; }
     y += 6;
-    setFont(ctx, 17); ctx.fillStyle = V3.ink;
-    for (const p of a.body) { for (const ln of wrapText(ctx, p, cw - 56)) { ctx.fillText(ln, x, y); y += 22; } y += 6; }
+    setFont(ctx, 16); ctx.fillStyle = V3.ink;
+    // S328: in the browser's window the body wraps longer; it stops above the source line rather than run under it
+    for (const p of a.body) { for (const ln of wrapText(ctx, p, cw - 56)) { if (y <= cy + ch - 42) ctx.fillText(ln, x, y); y += 20; } y += 5; }
     ctx.font = monoFor(11); ctx.fillStyle = V3.ink2;
-    ctx.fillText(a.source, x, Math.min(cy + ch - 18, y + 4));
+    { const src = wrapText(ctx, a.source, cw - 56).slice(0, 2); const sy = Math.min(cy + ch - 6 - src.length * 14, y + 4); src.forEach((ln, k) => ctx.fillText(ln, x, sy + k * 14)); }
     const opened = this.newsOpened;
     const left = this.clinicNotice && this.step === 'news' ? V.news.notice : V.news.count.replace('{n}', String(i + 1)).replace('{of}', String(opened));
     const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
@@ -1003,16 +1116,19 @@ export class E4Browser {
     setFont(ctx, 13); ctx.fillStyle = V3.ink2;
     for (const ln of wrapText(ctx, CL.joins, rw)) { ctx.fillText(ln, rx, y + 14); y += 18; }
     // the letter: one sentence, two readings, never resolved
-    const ly = ty + th + 10, lw = cw - 40;
-    setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(CL.letterTitle, tx, ly);
+    // ⚑ S328 — in the browser's window (556 logical px) the right column runs longer than the ticket: the letter starts
+    //   below whichever is lower, and its title line gives way when there is no room for it (the two readings never do)
+    const lw = cw - 40, low = Math.max(ty + th + 10, y + 18), titled = low <= ty + th + 10;
+    const ly = titled ? low : low - 18;
+    if (titled) { setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(CL.letterTitle, tx, ly); }
     setFont(ctx, 17); ctx.fillStyle = V3.ink; ctx.fillText(CL.letter, tx, ly + 18);
     const bw = Math.floor((lw - 12) / 2);
     CL.readings.forEach((r, k) => {
-      const bx = tx + k * (bw + 12), by = ly + 44;
-      roundEdge(ctx, bx, by, bw, cy + ch - 8 - by, 5, V3.edge, V3.page);
-      setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(r.label, bx + 10, by + 6);
-      setFont(ctx, 15); ctx.fillStyle = V3.ink;
-      wrapText(ctx, r.text, bw - 20).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, bx + 10, by + 23 + i * 19));
+      const bx = tx + k * (bw + 12), by = ly + 42;
+      roundEdge(ctx, bx, by, bw, cy + ch - 6 - by, 5, V3.edge, V3.page);
+      setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(r.label, bx + 10, by + 5);
+      setFont(ctx, 14); ctx.fillStyle = V3.ink;
+      wrapText(ctx, r.text, bw - 20).slice(0, 3).forEach((ln, i) => ctx.fillText(ln, bx + 10, by + 21 + i * 17));
     });
     const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = this.step === 'clinic' ? [{ id: 'clinic-support', label: CL.support, kind: 'primary' }] : [];
     this.bar(ctx, W, H, CL.source, buttons, true);
@@ -1020,7 +1136,7 @@ export class E4Browser {
 
   /** ⚑ V4 as built — her enquiry to Meridian, its auto-reply, and the loop's receipt (the clinic referred her) */
   private drawEnquiry(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    this.hits = this.hits.filter((h) => h.id === 'start-menu' || h.id.startsWith('lg-') || h.id.startsWith('sm-'));
+    this.pageTargets = this.pageTargets.filter((h) => h.id === 'start-menu' || h.id.startsWith('lg-') || h.id.startsWith('sm-'));
     ctx.save(); ctx.globalAlpha = 0.55; px(ctx, 0, PAGE_TOP, W, H - PAGE_TOP, V3.sheetWash); ctx.restore();
     const cw = W - 120, cx = 60, cy = PAGE_TOP + 6, ch = H - BAR_H - PAGE_TOP - 12, inner = cw - 40;
     roundEdge(ctx, cx, cy, cw, ch, 8, V3.edge, V3.card);
@@ -1073,7 +1189,8 @@ export class E4Browser {
     px(ctx, 52, top + 25, 6, 6, V3.bot);
     setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.online, 62, top + 22);
     const bodyTop = top + 44, bodyBottom = H - BAR_H - 6;
-    const chatX = 16, chatW = 318, panelX = chatX + chatW + 16, panelW = W - 16 - panelX;
+    // ⚑ S328 — the chat takes about half the window (556 logical px), the panel the rest
+    const chatX = 16, chatW = Math.min(318, Math.round((W - 48) * 0.52)), panelX = chatX + chatW + 16, panelW = W - 16 - panelX;
     px(ctx, panelX - 8, bodyTop, 1, bodyBottom - bodyTop, V3.edge);
     this.drawConversation(ctx, chatX, bodyTop, chatW, bodyBottom);
     this.drawBotPanel(ctx, panelX, bodyTop, panelW, bodyBottom);
@@ -1323,6 +1440,9 @@ export class E4Browser {
     setFont(ctx, 14); ctx.fillStyle = V3.ink;
     let yy = cy + 124;
     for (const row of wrapText(ctx, FD.detail, cw - 88).slice(0, 3)) { ctx.fillText(row, cx + 44, yy); yy += 18; }
+    // ⚑ S328 — the machine's last word moved here from the laptop (his P7-48), in L's own colour: not over, only deferred
+    yy += 8; setFont(ctx, 14); ctx.fillStyle = ERA4.l;
+    for (const row of wrapText(ctx, closeMessage.laptopLine, cw - 88).slice(0, 2)) { ctx.fillText(row, cx + 44, yy); yy += 18; }
     if (this.failT >= FAIL.bands) {
       const k = Math.min(1, (this.failT - FAIL.bands) / (FAIL.off - FAIL.bands));
       glitchBands(ctx, W, H, k);
@@ -1356,11 +1476,13 @@ export class E4Browser {
   }
 
   // ── presses on the monitor ───────────────────────────────────────────────
-  handleClick(x: number, y: number): boolean {
-    const lg = this.hits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+  /** ⚑ S328 — a press on the MONITOR (its own coordinates): L's controls first (the balloon sits over both windows),
+   *  then a title bar (enlarge), then Kettle's window, then the browser's page in its own coordinates. */
+  handleClick(mx: number, my: number): boolean {
+    const lg = this.hits.find(h => h.id.startsWith('lg-') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
     this.lambyGuide?.activity();
     if (lg?.id === 'lg-tray') { this.nowLine = null; this.waitNow = false; }
-    if (lg && this.lambyGuide?.press(lg.id)) { this.version++; return true; }
+    if (lg && this.lambyGuide?.press(lg.id)) { this.version++; if (lg.id === 'lg-show') this.onGuideLook?.(); return true; }
     this.quietT = 0;
     this.stallT = 0;
     this.idleT = 0;
@@ -1368,10 +1490,25 @@ export class E4Browser {
     if (this.waitNow) { this.waitNow = false; this.version++; }
     if (this.nowLine) { this.nowLine = null; this.version++; }
     if (this.phase === 'handed') return false;
+    let x = mx, y = my;
+    const L = this.lay;
+    if (L) {
+      const win = this.hits.find(h => (h.id === 'win-browser' || h.id === 'win-kettle') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
+      if (win) { this.chosen = win.id === 'win-kettle' ? 'kettle' : 'browser'; playOnce('ui_press.mp3'); this.version++; return true; }
+      if (inside(mx, my, L.k)) {
+        const kx = (mx - L.k.cx) / L.k.s, ky = (my - L.k.cy) / L.k.s;
+        if (this.phase === 'open') { if (!this.programDone) this.pressMessenger(kx, ky); }
+        else if (e4Has('terminated')) { this.messenger.press(kx, ky); }
+        this.version++;
+        return true;
+      }
+      if (!inside(mx, my, L.b)) return true;   // the desktop between the windows, the taskbar: nothing
+      x = (mx - L.b.cx) / L.b.s; y = (my - L.b.cy) / L.b.s;
+    }
     if (this.phase === 'failed') return true;
     if (this.phase === 'saver') { this.wake(); return true; }
     if (this.phase !== 'open') return true;
-    const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    const hit = this.pageTargets.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit && this.startMap.menu) { this.startMap.close(); this.version++; return true; }
     if (!hit) return true;
     const id = hit.id;

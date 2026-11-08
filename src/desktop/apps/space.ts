@@ -62,7 +62,6 @@
  */
 import { setCommonsHerSeat } from '../../room/commonsFigures';
 import { meetWord } from '../../room/lexicon';
-import closeMessage from '../../../data/strings/close_message.json';
 import { visorField, visorEdge, glitchBands, ERA4 } from '../theme/era4';
 import { E4Browser, FAIL } from './browser';
 import { setFont, px } from '../theme/chrome';
@@ -70,13 +69,12 @@ import { ledger } from '../../state/ledger';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import space from '../../../data/dialog/s4_space.json';
 import ballScript from '../../../data/dialog/s4_ball.json';
-import updates from '../../../data/strings/updates.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
 import { E4Ball } from './ball';
 import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import type { UpdateApp } from './update';
-import { e4Has, markE4 } from '../../narrative/e4Beats';
+import { markE4 } from '../../narrative/e4Beats';
 import { drawTryOn, TRYON } from './mirror';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
@@ -149,18 +147,6 @@ type Stage = 'laptop' | 'closed' | 'worn' | 'ball' | 'glitch';
  * the flat review tool can reach the same object — the mount points differ,
  * the surface does not.
  */
-/** the laptop's screen is small and its lines are short; this is all the
- *  wrapping it needs, and it keeps `theme/chrome`'s import surface unchanged */
-function wrapLaptop(ctx: CanvasRenderingContext2D, text: string, max: number): string[] {
-  const out: string[] = [];
-  let line = '';
-  for (const word of text.split(' ')) {
-    const next = line ? line + ' ' + word : word;
-    if (ctx.measureText(next).width > max && line) { out.push(line); line = word; } else line = next;
-  }
-  if (line) out.push(line);
-  return out;
-}
 
 /** the laptop screen's logical size — kept in step with `LOGICAL.laptop` in
  *  era3Devices.ts, which is where the canvas is actually made */
@@ -337,7 +323,7 @@ export class E4Shell {
 
   update(dt: number): void {
     this.browser.update(dt);
-    if (this.browser.messenger.updateEvening(dt)) this.laptopV++;
+    if (this.browser.messenger.updateEvening(dt)) { this.laptopV++; this.browser.version++; }   // ⚑ S328: Kettle is on the monitor
     this.t += dt;
     const step = Math.floor(((this.t % PULSE_SECONDS) / PULSE_SECONDS) * PULSE_STEPS);
     if (step !== this.pulseStep) { this.pulseStep = step; this.version++; }
@@ -517,18 +503,11 @@ export class E4Shell {
    *  press does not open anything — it simply stops, and the device across the
    *  desk is lit from then on. */
   pressLaptop(x?: number, y?: number): void {
-    // ⚑ after the hand-off the laptop is the CLOSE's surface, not L's
-    // ⚑ after the hand-off the laptop reports and offers nothing: the Close has
-    //   already begun (`finishHandOff`). A press here is a press on a report.
-    if (e4Has('terminated') && !this.worn && x !== undefined && y !== undefined) {
-      this.browser.messenger.press(x, y); this.laptopV++; return;
-    }
-    if (this.handedOff) return;
-    const guideHit = x === undefined || y === undefined ? undefined : this.laptopHits.find(h => h.id.startsWith('lg-') && x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
-    if (guideHit) { this.browser.pressLaptopGuide(guideHit.id); return; }
-    // ⚑ S321 — the lid is Kettle, the messenger: a press with coordinates is a press on it (2026 v3)
-    if (this.stageNow === 'closed' && x !== undefined && y !== undefined && this.browser.pressMessenger(x, y)) { this.laptopV++; return; }
-    if (this.stageNow !== 'laptop') return;
+    // ⚑ S328 — THERE IS NO LAPTOP IN 2026 (T03, his 8 Nov headset test: "I think we're just gonna have to remove the
+    //   laptop"). Kettle is a window on the monitor (`E4Browser.draw`) and L lives in the monitor's taskbar; the lid's
+    //   plane is never enabled (era3Devices `setEra`). A press that still arrives here (a stale review route) does
+    //   nothing at all.
+    if (this.handedOff || this.stageNow !== 'laptop') return;
     // ⚑ S123 — while the browser owns the lid, a press is a TAB, not the next
     //   line. The laptop beat has not begun yet and must not be advanced by
     //   somebody reading a browser.
@@ -603,137 +582,17 @@ export class E4Shell {
   /** the flight has landed: the settle, then the boot, then the session */
   beginSession(settleSeconds = 0): void { this.browser.beginSession(settleSeconds); }
 
+  /**
+   * ⚑ S328 — THE LAPTOP IS GONE FROM 2026 (T03; his 8 Nov headset test: "I think we're just gonna have to remove the
+   * laptop, and this is all has to be integrated on the computer"). Its prop is out of the room (reinterp_deltas r4)
+   * and its plane is never enabled (era3Devices `setEra`), so nothing calls this in play. What it carried moved:
+   * Kettle is a window on the monitor beside the browser, L lives in the monitor's taskbar, and the stopped
+   * machine's last sentence is the monitor's (`E4Browser.drawFailed`). It draws a dark lid and publishes nothing,
+   * so a stale review route cannot put a control anywhere.
+   */
   drawLaptop(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    if (e4Has('terminated') && !this.worn) {
-      this.laptopHits = this.browser.messenger.draw(ctx, W, H); return;
-    }
-    // ⚑ S123 — THE BROWSER IS BUILT AND IT DOES NOT LIVE HERE.
-    //   It owned the lid for one session and cost the piece its ending: the
-    //   walk reached `e4_armed` and stalled, because the lid is also where the
-    //   Close's ritual is mirrored and the walker's sweep does not know that
-    //   plane. Reverted rather than debugged, on the standing rule that the
-    //   piece stays playable end to end — and because the lid was never the
-    //   right home. Sérgio, 2026-09-07: the laptop docks to a MONITOR, the
-    //   browser goes there, and the headset moves to the periphery.
-    //   ⚑ `?debug=1`'s `e4Browser` routes still reach it, so the boot and the
-    //   chrome are reviewable while the monitor is built.
-    if (this.browserOwnsLid) {
-      this.laptopHits = [];
-      this.browser.draw(ctx, W, H);
-      return;
-    }
-    px(ctx, 0, 0, W, H, ERA4.field);
     this.laptopHits = [];
-    if (this.handedOff) {
-      /**
-       * ⚑ THE MACHINE'S REPORT OF ITS OWN DEFEAT (2026-09-12). The `Restart`
-       * card that sat here is gone from the path (the Close begins with the
-       * glitch — `finishHandOff`); what the lid says now is the title, in the
-       * words `data/strings/updates.json`'s close ritual has always carried on
-       * its dark beat — a beat that played on the visor, which by then is on
-       * its stand with its glass off. So the sentence moves to the one screen
-       * still lit on the desk, and stays there until the room goes. Nothing on
-       * it is pressable. The `closeButtonRect` code is kept, unused.
-       */
-      if (this.failT >= FAIL.off) { px(ctx, 0, 0, W, H, ERA4.field); return; }   // off
-      this.laptopBar(ctx, W, space.corrupt.sub);
-      // ⚑ 2026-09-13: LARGE, and in the top half — only the lid's top ~51% is
-      //   in the seat's frame (S107), and at 14 px the title was a whisper
-      setFont(ctx, 20);
-      ctx.fillStyle = ERA4.textHi;
-      let ny = LAPTOP_BAR + 14;
-      for (const row of wrapLaptop(ctx, updates.close.restarting, W - 20)) { ctx.fillText(row, 10, ny); ny += 24; }
-      setFont(ctx, 9);
-      ctx.fillStyle = ERA4.dim;
-      for (const row of wrapLaptop(ctx, space.corrupt.note, W - 20)) { ctx.fillText(row, 10, ny); ny += 12; }
-      // ⚑ S209 / P7-48 (his) — the machine's last word, in L's own colour: it is not over, it is only deferred
-      ny += 6;
-      setFont(ctx, 11);
-      ctx.fillStyle = ERA4.l;
-      for (const row of wrapLaptop(ctx, closeMessage.laptopLine, W - 20)) { ctx.fillText(row, 10, ny); ny += 14; }
-      if (this.failT >= FAIL.bands) {
-        // the bands tear it, and the light goes out of it
-        const k = Math.min(1, (this.failT - FAIL.bands) / (FAIL.off - FAIL.bands));
-        glitchBands(ctx, W, H, k);
-        const was = ctx.globalAlpha;
-        ctx.globalAlpha = k * k;
-        px(ctx, 0, 0, W, H, ERA4.field);
-        ctx.globalAlpha = was;
-      }
-      return;
-    }
-    const done = this.laptopLine >= space.laptop.lines.length;
-    // ⚑ while L is still talking on the lid, the whole lid is the control — three
-    //   presses, one per line. Publishing it is what let a click-only run find
-    //   Era 4's opening at all (A-5: the walker could not see this surface).
-    if (!done) this.laptopHits.push({ x: 0, y: 0, w: W, h: H, id: 'laptop-next' });
-    /**
-     * ⚑ 2026-09-12 — L'S CONSOLE. Sérgio: "the laptop doesn't make sense being
-     * mirrored"; "we need some guidance on what to do, so maybe the laptop should
-     * have an 'L' the agent living there giving you info." So the lid is where
-     * the guide lives: the mark in the bar (L, and then the agent that took L's
-     * place), one line saying what to do next, in the machine's voice. Nothing
-     * on it is pressable. When the device is worn it says so and nothing else.
-     */
-    if (done && this.stageNow === 'closed' && !this.worn) {
-      // ⚑ S321 — 2026 v3: once the session is back the lid is Kettle, the messenger (the people); Lamby's balloon
-      //   still owns it while Lamby speaks (one voice at a time), and never over an open thread (felt)
-      // before the session is back the lid is locked: her own wallpaper, the date
-      if (this.browser.stageId === 'saver' || this.browser.stageId === 'restoring') {
-        this.browser.messenger.drawLock(ctx, W, H, this.browser.consoleLine);
-        this.browser.drawLaptopGuide(ctx, W, H, this.laptopHits); return;
-      }
-      if (this.browser.stageId === 'open') {
-        for (const r of this.browser.drawMessenger(ctx, W, H, !this.handedOff)) this.laptopHits.push(r);
-        this.browser.drawLaptopGuide(ctx, W, H, this.laptopHits); return;
-      }
-      if (!this.browser.lambyGuide?.active) {
-        this.laptopBar(ctx, W, this.browser.consoleMark);
-        setFont(ctx, 9); ctx.fillStyle = ERA4.textHi;
-        wrapLaptop(ctx, this.browser.consoleLine, W - 24).forEach((row, i) => ctx.fillText(row, 12, LAPTOP_BAR + 8 + i * 12));
-      }
-      this.browser.drawLaptopGuide(ctx, W, H, this.laptopHits); return;
-    }
-    if (done) {
-      const line = this.worn || this.stageNow === 'ball' ? this.browser.consoleLineWorn : this.browser.consoleLine;
-      this.laptopBar(ctx, W, this.browser.consoleMark);
-      setFont(ctx, 9);
-      ctx.fillStyle = ERA4.textHi;
-      let y = LAPTOP_BAR + 8;
-      for (const row of wrapLaptop(ctx, line, W - 56)) { ctx.fillText(row, 12, y); y += 12; }
-      return;
-    }
-    this.laptopBar(ctx, W, '');
-    if (!done) {
-      setFont(ctx, 9);
-      ctx.fillStyle = ERA4.textHi;
-      const line = space.laptop.lines[this.laptopLine];
-      let y = LAPTOP_BAR + 8;
-      for (const row of wrapLaptop(ctx, line, W - 56)) { ctx.fillText(row, 12, y); y += 12; }
-      /**
-       * ⚑ THE PROMPT SITS UNDER THE LINE, NOT AT THE BOTTOM OF THE LID (S107).
-       *
-       * It was drawn at `H - 12` — twelve pixels off the bottom edge — and S107
-       * measured what that means from the seat the era is played from: the
-       * laptop's readable panel runs to −22.7° against a 21° half-frame, so its
-       * bottom **1.7° is outside the view**. Photographed both ways in one page
-       * load: at rest the lid shows *"Hi Maya. I'm L. I came with the update."*
-       * and nothing else. **Era 4's only instruction was off-screen at Era 4's
-       * seat**, which is this project's oldest bug wearing a new hat — content
-       * that exists and cannot be reached.
-       *
-       * ⚑ Moving the text is the fix that costs nothing else. The alternatives
-       * S107 measured all move the CAMERA — and a rig pitch is a world tilt in
-       * XR and gyro, where the rig holds the authored pose and the head turns
-       * the child camera. Tilting the horizon of a headset build by 3° to make
-       * a caption fit is the wrong end of the problem. The seat is still worth
-       * re-measuring (it is Sérgio's ruling, and S107 put the numbers in front
-       * of him), but the era does not have to stay unplayable while he decides.
-       */
-      setFont(ctx, 9);
-      ctx.fillStyle = ERA4.dim;
-      ctx.fillText(space.laptop.hint, 12, y + 6);
-    }
+    px(ctx, 0, 0, W, H, ERA4.field);
   }
 
   /**

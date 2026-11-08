@@ -8,11 +8,12 @@
  * birthday, the new you, Mum one year at a time, Dad, Mum's link and the news tabs, the clinic's number, Meridian,
  * Sam leaving, the search finished for her, Second Thoughts (her week, where she's heading, the map and the clip),
  * Junie unmuted, the original — then the headset, the stream and the update failing (as built). Every press goes
- * through a surface a player presses: the monitor's published rects (`__os.e4.pressBrowser`), the laptop's
- * (`__os.e4.laptopHits` → `__os.e4.pressLaptop`), the glass (`__os.handleClick`) — never a jump.
+ * through a surface a player presses: the monitor's published rects (`__os.e4.pressBrowser`) — the browser's window
+ * and, since S328, Kettle's window beside it (there is no laptop) — and the glass (`__os.handleClick`); never a jump.
+ * Mum's years and Dad's today are reached by SCROLLING Kettle's thread (`browser.scrollAt`), as a wheel would.
  *
- * ⚑ FRAMES ARE FROM THE SEAT: `seat-` frames face the monitor, `lid-` frames face the laptop the way the piece's own
- * conducted turn leaves the head (pitch −16°, yaw 246°). Legibility is judged from these, not from a reviewer's eye.
+ * ⚑ FRAMES ARE FROM THE SEAT (S328: in the chair, at the desk — app.ts seatPose(270)): `seat-` frames name a beat in
+ * the browser's window, `lid-` frames a beat in Kettle's window; both are the same view of the one monitor.
  * The draw calls in the stream's place and on Maya's desk are written into TOUR.md, with every beat the contract saw.
  */
 import fs from 'node:fs';
@@ -77,10 +78,10 @@ async function main() {
       'seat-meridian-reply', 'seat-search', 'seat-matched', 'seat-monitor-stream'];
     if (name === 'room-conducted') log.push(`  conducted pose: ${JSON.stringify(st.pose)}`);
     if (roomSteps.includes(name) || name.includes('clip-takeover') || name === 'seat-bot-map' || name === 'lid-junie-unmuted') {
-      const poses = name === 'lid-birthday' ? [267, 357, 87, 177].map(yaw => [-10, yaw])
+      const poses = name === 'lid-birthday' ? [270, 0, 90, 180].map(yaw => [-8, yaw])
         : (name.includes('clip') || name.includes('map') || name === 'lid-junie-unmuted') ? [[80, 267]] : [[0, 215]];
       for (const [pitch, yaw] of poses) {
-        await page.evaluate(p => window.__camFree(4.4, 1.16, .84, p[0], p[1]), [pitch, yaw]);
+        await page.evaluate(p => window.__camFree(4.6, 1.16, .70, p[0], p[1]), [pitch, yaw]);
         await wait(350);
         await page.screenshot({ path: path.join(OUT, `${String(n).padStart(2, '0')}-room-${name}-${yaw}.png`) });
         const calls = await page.evaluate(() => window.__drawCalls);
@@ -103,29 +104,19 @@ async function main() {
     return ok;
   };
   const hasHit = (id) => page.evaluate((id) => !!(window.__os.e4.browser.hits || []).find((r) => r.id === id), id);
-  const hasLid = (id) => page.evaluate((id) => !!(window.__os.e4.laptopHits || []).find((r) => r.id === id), id);
+  const hasLid = hasHit;   // S328: Kettle's controls are on the monitor
   const pressWhen = async (id, ms = 20000) => {
     const t0 = Date.now();
     while (Date.now() - t0 < ms) { if (await hasHit(id)) return press(id); await wait(300); }
     log.push(`  ⚠ ${id} never appeared (${ms} ms)`); console.log(`  ⚠ ${id} never appeared`);
     return false;
   };
-  /** a press on the laptop's published rect (Kettle) */
-  const pressLid = async (id, ms = 20000) => {
-    const t0 = Date.now();
-    while (Date.now() - t0 < ms) {
-      const ok = await page.evaluate((id) => {
-        const e4 = window.__os.e4;
-        const h = (e4.laptopHits || []).find((r) => r.id === id);
-        if (!h) return false;
-        e4.pressLaptop(h.x + h.w / 2, h.y + h.h / 2);
-        return true;
-      }, id);
-      if (ok) { console.log(`  press ${id} (laptop)`); await wait(400); return true; }
-      await wait(300);
-    }
-    log.push(`  ⚠ ${id} (laptop) never appeared (${ms} ms)`); console.log(`  ⚠ ${id} (laptop) never appeared`);
-    return false;
+  /** a press on Kettle's window (S328: on the monitor, beside the browser) */
+  const pressLid = async (id, ms = 20000) => { const ok = await pressWhen(id, ms); await wait(400); return ok; };
+  /** a wheel's worth of scroll on Kettle's open thread (dy > 0 reads on) */
+  const scrollLid = async (dy) => {
+    const ok = await page.evaluate((dy) => window.__os.e4.browser.scrollAt(null, null, dy), dy);
+    console.log(`  scroll ${dy} → ${ok}`); await wait(500); return ok;
   };
   const untilHit = async (id, ms = 20000) => {
     const t0 = Date.now();
@@ -161,7 +152,7 @@ async function main() {
   };
   // ⚑ S321 (second pass) — the seat frames BOTH screens now (app.ts seatPose(270)): every frame is the player's view.
   //   `lid-` frames name a beat on the laptop; they are taken from the same seat.
-  const SEAT = [4.4, 1.16, 0.84, -10, 267];
+  const SEAT = [4.6, 1.16, 0.70, -8, 270];   // ⚑ S328 — app.ts seatPose(270): in the chair, at the desk
   const LID = SEAT;
   const seat = () => cam(...SEAT);
   const lid = () => cam(...LID);
@@ -189,17 +180,18 @@ async function main() {
   await shot('lid-mum-arrives', 'Mum · "Happy 18th love x", "saw this and thought of you x"');
   await pressLid('chat-mum');
   await shot('lid-mum-2023', 'Mum · 2023: "so proud of you love ❤" — the goal is the chat wallpaper now');
-  await pressLid('mum-2024'); await shot('lid-mum-2024', 'Mum · 2024: "I just want to understand." + a link');
-  await pressLid('mum-2025'); await shot('lid-mum-2025', 'Mum · 2025: "Not saying anything. Just read it x" + a link');
-  await pressLid('mum-2026'); await shot('lid-mum-2026', 'Mum · 2026: "Found this in the loft. You were such a happy little" — cut');
-  await pressLid('mum-today'); await wait(3000);
+  await scrollLid(120); await shot('lid-mum-2024', 'Mum, scrolled · 2024: "I just want to understand." + a link');
+  await scrollLid(120); await shot('lid-mum-2025', 'Mum, scrolled · 2025: "Not saying anything. Just read it x" + a link');
+  await scrollLid(120); await shot('lid-mum-2026', 'Mum, scrolled · 2026: "Found this in the loft. You were such a happy little" — cut');
+  for (let i = 0; i < 4; i++) await scrollLid(160);
+  await wait(3000);
   await shot('lid-mum-today', 'Mum · today: "You\'re 18 now. I can\'t stop you. I\'m asking you to wait." — her draft "Mum, I"');
   await untilLid('chat-dad', 8000); await wait(300);
   await shot('lid-dad-banner', 'Dad: Your mother\'s upset.');
   await pressLid('chat-dad');
-  await shot('lid-dad', 'Dad · Sep 2025: "We need to talk about the appointments." "Not while you\'re under this roof."');
-  await pressLid('dad-today');
-  await shot('lid-dad-today', 'Dad · today: "Your mother\'s upset." "You\'re an adult now. Adults pay their own way."');
+  await shot('lid-dad', 'Dad · one thread: Sep 2025 "Not while you\'re under this roof." · today "Adults pay their own way."');
+  await scrollLid(-200);
+  await shot('lid-dad-scrolled', 'Dad, scrolled back to Sep 2025: "We need to talk about the appointments."');
   await pressLid('chat-mum');
   await shot('lid-mum-link', 'Mum · today, Open link');
   await pressLid('msg-link'); await wait(1600);

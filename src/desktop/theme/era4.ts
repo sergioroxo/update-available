@@ -1719,7 +1719,13 @@ export const V3 = {
   botInk: WEB.accentInk,
   botSoft: WEB.accentSoft,
   grey: WEB.faint,
-  greyInk: CHROME.ink
+  greyInk: CHROME.ink,
+  // ⚑ S328 — the one screen's frame: the desktop between the two windows, their title bars (the larger window's is
+  //   the warm brown Kettle's head already uses), and the taskbar (`bar`)
+  desk: CHROME.fieldEdge,
+  title: CHROME.toolbar,
+  titleOn: CHROME.button,
+  titleOnInk: CHROME.buttonInk
 } as const;
 
 /** the goal picture's palette — a stock photograph's: blue sky, a halo, sparkle, shirt and tie */

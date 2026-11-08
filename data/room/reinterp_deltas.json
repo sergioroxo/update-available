@@ -2685,6 +2685,7 @@
   "_docParkedS174": "⚑ S174 — Sérgio crossed the photo frame and the radio on the 2016 still. Parked, not deleted."
  },
  "r4": {
+  "_docS328": "⚑ S328 (T03/T46, his 8 Nov headset test) — three of Maya's r4 props removed: e_laptop (\"I think we're just gonna have to remove the laptop\": Kettle is a window on the monitor now) and e_phoneBody + e_phoneCam, the phone on her nightstand (\"a phone on top of the table there, which makes no sense\"; his 7 Nov ruling: no phone in 2026). All three were Maya's own and no other era used them (guard 1: nothing of Vera's or Daniel's touched).",
   "props": {
    "e_chair": {
     "pos": [
@@ -2794,37 +2795,6 @@
   ],
   "add": [
    {
-    "id": "e_phoneBody",
-    "_doc": "Session 74: THE PHONE GETS A REAL MODEL (fixture list item 4 — was a single untextured box; see w_phoneDevice's own _doc in r3 for why this is a primitive assembly rather than a GLB). Moved from the desk to the nightstand — bedside charging is the more honest place for it, and it frees the desk's front strip for the headset below, which the fixture list marks as the thing that actually needs to be within reach of the seat. Nothing in code keys off the literal id `e_phone` (checked: `app.ts`'s held-read list only covers Room 2's tablet/phone), so this rename is safe.",
-    "pos": [
-     2.98,
-     0.507,
-     1.85
-    ],
-    "size": [
-     0.09,
-     0.012,
-     0.17
-    ],
-    "color": "#15151F",
-    "yaw": 270
-   },
-   {
-    "id": "e_phoneCam",
-    "pos": [
-     2.98,
-     0.513,
-     1.795
-    ],
-    "size": [
-     0.014,
-     0.004,
-     0.014
-    ],
-    "color": "#9AA0A6",
-    "yaw": 270
-   },
-   {
     "id": "e_headset",
     "_doc": "⚑ S118 — THE HEADSET COMES TO THE PLAYER (Sérgio, 2026-09-04: \"You can put the VR headset closer to the user, ive asked for that already before, it needs a better placing, and maybe it can help with 'The Walk'?\"). He is right on all three counts, and the third one is the sharpest. MEASURED from the r3 seat (4.4, 1.16, 0.7) at pitch −3, against a 29.7° horizontal and 21° vertical half-FOV: the old pose (5.53, 0.75, 0.25) put this 24.1° off the seat bearing and 15.8° below the view centre — **81% and 75% of the way to the frame's own edges.** That is not 'a bit left', it is the corner, and the corner is where the frame keeps its chrome: S117 is the whole story of a chrome button landing on top of it and taking the era's one touch with it. A control at the corner of the frame is a control one small change away from being unreachable. ⚑ AND IT COULD NOT COME CLOSER WHILE IT SAT ON THE DESK: eye 1.16, desk 0.75, so anything on that surface drops 0.41 m, and closing the distance only steepens the angle — at 0.80 m it would sit 23° down, 96% of the half-FOV, effectively off the bottom. So it goes UP, onto a stand, which is what every comment in era3Devices.ts has called it for months (\"what you are pressing is a headset on a stand, not a button\") while no stand existed. New pose: 9.9° off the bearing, 10.7° below centre — 33% and 51% — and 0.83 m from the eye instead of 1.15 m.",
     "pos": [
@@ -2857,24 +2827,6 @@
     "color": "#3A3A44",
     "model": "vr_controller",
     "yaw": 90
-   },
-   {
-    "id": "e_laptop",
-    "_docS321": "⚑ S321 — 2026 v3: the laptop carries Kettle (the messenger) and must be READ beside the monitor from the seat (the coordinator's review of out/tour-e4-v3: half of it fell off the frame's right edge). x 5.24 → 5.12 (toward the seat, still on the desk: its front edge is 4.98), yaw 156 → 162 (its glass faces the moved seat). PLACEMENT.laptop in era3Devices.ts moves with it (the plane's +0.0948 offset rotated by the new yaw). The seat moved too (app.ts seatPose(270)).",
-    "_doc": "⚑ S118: +0.25 on z, to hand the desk's sweet spot to the headset. The laptop is read ONCE, at the very start of the era, for three short lines, and then L moves to the visor and it is never used again; the headset is the era's one touch and the thing the whole tail depends on. The reading surface can sit 11° right of the bearing. PLACEMENT.laptop in era3Devices.ts moves by the same +0.25 — a pure translation, so every measurement in that block's long comment still holds without being re-derived.",
-    "pos": [
-     5.12,
-     0.75,
-     1.08
-    ],
-    "size": [
-     0.25,
-     0.23,
-     0.34
-    ],
-    "color": "#C9BFA6",
-    "model": "laptop",
-    "yaw": 162
    },
    {
     "id": "e_monitor",

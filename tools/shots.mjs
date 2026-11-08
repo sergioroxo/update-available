@@ -248,7 +248,8 @@ const SEAT_SUBJECTS = {
     // `w_flatPanelScreen` note above records for Room 2.
     // ⚑ The CRT is not dropped — it is re-declared at `r3-shelf` below, on the
     // bearing S97 actually placed it for.
-    { what: "Maya's laptop", kind: 'prop', id: 'e_laptop' },
+    // ⚑ S328 — Maya's laptop is gone from 2026 (T03): Kettle is a window on her monitor
+    { what: "Maya's monitor", kind: 'prop', id: 'e_monitor' },
     { what: "Maya's desk", kind: 'prop', id: 'e_desk', required: false }
   ],
   /**
