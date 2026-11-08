@@ -427,7 +427,7 @@
      "id": "vote",
      "label": "The vote",
      "done": "voted",
-     "hint": "The vote arrives in the mirror while the campaign kit stays open.",
+     "hint": "When the campaign kit closes, the news from Malta arrives on her phone, beside the platform.",
      "where": "the mirrored phone beside the platform"
     },
     {

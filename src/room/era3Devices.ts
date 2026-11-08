@@ -921,6 +921,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
    * breath while a summons is up, same law the felt window and E4 already use).
    */
   // Felt conducted object: one lift, three seconds facing the authored seat, then home.
+  const WICK_TABLE = { x: -4.95, y: 0.758, z: 1.245 }, WICK_UP = new pc.Vec3(-1, 0, 0);   // S327 / T32: on the desk
   let wickT = -1, wickDone = false;
   let wickRest: { p: pc.Vec3; q: pc.Quat } | null = null;
   const tickWick = (dt: number, era: string): void => {
@@ -928,6 +929,14 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (!card) return;
     // The printed paper is already a plane; its backing box would add a draw after unbatching.
     if (card.render) card.render.enabled = false;
+    // ⚑ S327 / T32 (his 8 Nov: "the hick is still floating and it should be on the table next to the notepad") — the
+    //   card RESTS lying flat on the desk beside the notepad (notepad z 0.94–1.16; the card's 12 cm along z, just past
+    //   it), printed face up, its top edge away from the seat so it reads from the chair. The rise-once starts and ends
+    //   there. Held every frame while it is not rising, so no fold or morph can leave it standing in the air.
+    if (era === 'e3' && wickT < 0) {
+      card.setPosition(WICK_TABLE.x, WICK_TABLE.y, WICK_TABLE.z);
+      card.lookAt(new pc.Vec3(WICK_TABLE.x, WICK_TABLE.y - 1, WICK_TABLE.z), WICK_UP);
+    }
     if (!wickDone && graceQueueLite.wickCue && era === 'e3') {
       wickDone = true; wickT = 0; wickRest = { p: card.getPosition().clone(), q: card.getRotation().clone() };
     }
@@ -1238,7 +1247,17 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (worn) shell.setLook(((bearing() - wornYaw + 540) % 360) - 180);
   }
 
-  function xrRoot(name: string): unknown { return name === 'workstation' ? graceQueueLite : e4Bridge()?.shell(); }
+  function xrRoot(name: string): unknown {
+    // ⚑ S327 / T07 (his 8 Nov: the update "is showing the highlight boxes from the previous panel") — while the update
+    //   notice owns Vera's screen the ray aims at ITS buttons, not at the board's rects underneath it (which it outlined
+    //   and snapped presses to, so Remind me later landed on a tile and "did nothing")
+    if (name === 'workstation') {
+      const ritual = e4Bridge()?.update();
+      if (ritual?.open && ritual.visible) return { rects: xrRects(ritual).map((r) => ({ ...r, x: r.x + RITUAL_OFFSET.x, y: r.y + RITUAL_OFFSET.y })) };
+      return graceQueueLite;
+    }
+    return e4Bridge()?.shell();
+  }
   return {
     carryVisor(at) {
       const shell = e4Bridge()?.shell();
@@ -1279,8 +1298,13 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       //   (it does not reset: a player who keeps opening jobs still ends the
       //   era, on the first clear moment after six clear seconds in all). The
       //   work count is no longer a trigger at all.
+      // ⚑ S327 / T07 — the notice's two states, told to the platform: nothing of the board glows or speaks under it,
+      //   and a deferral returns her to the board with one quiet line
+      const rit = eraNow === 'e3' ? e4Bridge()?.update() : null;
+      graceQueueLite.systemModal = !!(rit?.open && rit.visible);
+      graceQueueLite.updateDeferred = !!rit?.deferred;
       if (eraNow === 'e3' && !finalArmed) {
-        const gate = graceQueueLite.phone.broken;
+        const gate = graceQueueLite.updateReady;   // S327: the cascade seen, Orla's last message, Lambient's line
         const clear = !phoneHeld && !graceQueueLite.busy;
         if (gate && clear) {
           finalT = finalT < 0 ? 0 : finalT + dt;
@@ -1455,7 +1479,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
          * go with them or a lit rectangle is left hanging where the monitor was
          * — the fault S61 found on the spine, and the one a removal always has.
          */
-        const roomTwoScreen = s.name === 'workstation' || s.name === 'phone';
+        // ⚑ S327 / T04 (his 8 Nov: "the phone here doesn't make a lot of sense"; TWO phones, the real one covering Sign
+        //   in) — the Handset Window on the workstation IS her phone now. Nothing in 2016 needs the handset in a hand
+        //   (the cascade runs while the window is up), so its screen stays off; its body and cradle left the desk in
+        //   data/room/reinterp_deltas.json.
+        const roomTwoScreen = s.name === 'workstation';
         // ⚑ S124 — `monitor` joins `visor` and `laptop` as a Room 3 / Era 4
         //   screen. It was added without this line and the plane sat in the
         //   room at exactly the right place, correctly sized, DISABLED — which
@@ -1463,7 +1491,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         //   bug. `setEra` is where a screen becomes visible, and a new one that
         //   does not say so here is invisible on purpose without meaning to be.
         const roomThreeScreen = s.name === 'visor' || s.name === 'laptop' || s.name === 'monitor';
-        s.entity.enabled = s.name === 'stream' ? false : roomThreeScreen ? era === 'e4'
+        s.entity.enabled = s.name === 'stream' || s.name === 'phone' ? false : roomThreeScreen ? era === 'e4'
           : roomTwoScreen ? era === 'e3'
           : visible;
       }
@@ -1499,6 +1527,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     setLookProvider(fn: () => { pitch: number; yaw: number }): void { lookNow = fn; },
     holdDevice(which: HeldDevice, seat: { x: number; y: number; z: number; pitch: number; yaw: number }): void {
       lastSeat = seat;
+      if (which === 'phone' && !screens.find((x) => x.name === 'phone')?.entity.enabled) which = null;   // S327: retired in 2016
       phoneHeld = which === 'phone';
       // ⚑ S149 — THE HELD PHONE COMES TO WHERE SHE IS LOOKING, not to the seat's
       //   authored bearing (the monitor). Sérgio, 2026-09-17: "when I touch the

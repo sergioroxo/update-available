@@ -53,6 +53,9 @@ interface UpdateStrings {
   eulaBrand?: string;
   /** S156 / R3-60: this update's own standing line while deferred (the shared one otherwise) */
   remindedStatus?: string;
+  /** ⚑ S327 / T07 — the surface the notice is composited onto says the deferral in its own voice (u4: Vera's
+   *  platform), so the ritual draws no standing line of its own */
+  remindedOnHost?: boolean;
   eulaTitle?: string;
   eula: string[][] | null;
   readOn?: string;
@@ -329,6 +332,7 @@ export class UpdateApp {
     // that is the belongings gathering window, which is the point of the
     // deferral in this build).
     if (this.phase === 'reminded') {
+      if (this.s.remindedOnHost) return;
       ui.setFont(ctx, 9);
       const line = this.s.remindedStatus ?? REMIND_STATUS;
       const tw = Math.ceil(ctx.measureText(line).width);
@@ -376,7 +380,9 @@ export class UpdateApp {
       //   ran under the Remind-me-later button. The window is sized from the lines it carries, the buttons under them.
       const toE3Early = !bare && (this.ledgerEntry.toEra === 3 || this.key === 'u4');
       const dw = 320;
-      const dh = bare ? 110 : toE3Early ? Math.max(150, this.s.notify.length * 12 + 64) : 150;
+      // ⚑ S327 — u4's notice is read in a headset on 2016's glass: larger type, the same lines
+      const lineH = this.key === 'u4' ? 15 : 12;
+      const dh = bare ? 110 : toE3Early ? Math.max(150, this.s.notify.length * lineH + 64) : 150;
       const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
       if (bare) {
         // felt register: no chrome cheer, one line, one button
@@ -400,10 +406,10 @@ export class UpdateApp {
         ? aero.windowFrame(ctx, dx, dy - 6, dw, dh + 12, this.s.notifyTitle, true)
         : ui.windowFrame(ctx, dx, dy, dw, dh, this.s.notifyTitle, true);
       if (toE3) ui.px(ctx, c.x, c.y, c.w, c.h, ERA3.glass);
-      ui.setFont(ctx, 9);
+      ui.setFont(ctx, this.key === 'u4' ? 12 : 9);
       this.s.notify.forEach((line, i) => {
         ctx.fillStyle = toE3 ? (i < 2 ? ERA3.amber : ERA3.ink) : (i < 2 ? ERA1.warnDark : ERA1.black);
-        ctx.fillText(line, c.x + 10, c.y + 6 + i * 12);
+        ctx.fillText(line, c.x + 10, c.y + 6 + i * lineH);
       });
       if (toE3) aero.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 20, this.s.updateNow, { primary: true });
       else ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.updateNow, {});

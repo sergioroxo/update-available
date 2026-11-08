@@ -35,7 +35,9 @@
  },
  "kit": {
   "title": "Campaign kit · Chosen Course Compact",
-  "intro": "Malta has voted to ban conversion practices. Three stories ready.",
+  "heading": "Campaign kit — your stories, for the law vote",
+  "intro": "Malta's parliament has voted to ban conversion practices. The network's campaign answers with three stories.",
+  "_docS327": "⚑ S327 / T23 + T24 (his 8 Nov headset session: 'impossible to understand what this is'; 'the Malta thing, what's happening?'): `heading` says what the page is; `intro` is the ONE plain line saying why it is here — the vote is documented (Malta, Act LV, December 2016), the campaign kit is the fiction answering it (the kit's own dossier card says so). The news itself arrives on her phone afterwards, as the pretend newspaper carrying the real law (s3_maiden.json `link`).",
   "stories": [
    "Renata · clip · 0:40",
    "Vera · 2014 · refreshed",
@@ -102,6 +104,8 @@
   "resultLabel": "Current version",
   "originalVersion": "As sent",
   "reviewedVersion": "Publication edit",
-  "trackedVersion": "Tracked changes"
+  "trackedVersion": "Tracked changes",
+  "cutFrame": "cut",
+  "_docCutFrame": "⚑ S327 — the label on the frame the house edit removed from the publication strip (his 8 Nov: the empty frame read as an error)."
  }
 }

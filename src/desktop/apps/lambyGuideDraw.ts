@@ -43,14 +43,16 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   const ink = skin === 'e4' ? CHROME.ink : skin === 'e3' ? ERA3.ink : ERA1.black;
   const ground = skin === 'e4' ? CHROME.field : skin === 'e3' ? ERA3.glass : skin === 'e2' ? ERA1.paper : ERA1.tooltip;
   // A head in the tray; cue lifts it by one pixel. Uses the same character, cropped to its head.
-  if (skin === 'e3') { ui.px(ctx, tx - 2, ty - 3, 64, 21, ERA3.tray); ui.px(ctx, tx - 2, ty - 3, 64, 1, ERA3.glassEdge); }
+  // ⚑ S327 / T25 (his 8 Nov headset session: "where is our guide?") — 2016's tray is wider, its name larger, so the
+  //   guide can be found on the taskbar from the seat in a headset
+  if (skin === 'e3') { ui.px(ctx, tx - 2, ty - 5, 84, 24, ERA3.tray); ui.px(ctx, tx - 2, ty - 5, 84, 1, ERA3.accentHi); }
   const headY = ty + 8 - (state.rung === 'cue' ? state.frame % 2 : 0);
   ctx.save(); ctx.beginPath(); ctx.rect(tx, ty - 3, 20, 21); ctx.clip();
   if (skin === 'e4') { ui.setFont(ctx, 16); ctx.fillStyle = accent; ctx.fillText(decisions.helper.e4, tx + 5, ty); }
-  else if (skin === 'e3') aero.drawLambMark(ctx, tx + 10, headY, 0.55);
+  else if (skin === 'e3') aero.drawLambMark(ctx, tx + 10, headY - 1, 0.7);
   else drawLambyChar(ctx, tx + 10, headY + 4, { mood: 'cheerful', action: 'idle', scale: 0.24, headOnly: true, t: state.rung === 'cue' ? state.time : 0, moodStart: 0 }); ctx.restore();
-  ui.setFont(ctx, 9); ctx.fillStyle = skin === 'e3' || skin === 'e2' ? ERA3.white : ink; if (skin !== 'e4') ctx.fillText(decisions.helper[skin], tx + 22, ty + 5);   // S272: 2003's bar is blue
-  hits.push({ id: 'lg-tray', label: decisions.helper[skin], tip: state.hidden ? undefined : copy.ui.trayTip, x: tx, y: ty - 3, w: 60, h: 21 });
+  ui.setFont(ctx, skin === 'e3' ? 12 : 9); ctx.fillStyle = skin === 'e3' || skin === 'e2' ? ERA3.white : ink; if (skin !== 'e4') ctx.fillText(decisions.helper[skin], tx + 22, skin === 'e3' ? ty + 1 : ty + 5);   // S272: 2003's bar is blue
+  hits.push({ id: 'lg-tray', label: decisions.helper[skin], tip: state.hidden ? undefined : copy.ui.trayTip, x: tx, y: skin === 'e3' ? ty - 5 : ty - 3, w: skin === 'e3' ? 82 : 60, h: skin === 'e3' ? 24 : 21 });
   if (state.hidden || !state.text) return out;
   out.balloon = true;
   const targets = state.targets.flatMap(id => hits.filter(h => h.id === id));
