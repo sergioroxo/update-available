@@ -61,6 +61,16 @@ export function drawLambientNote(ctx: CanvasRenderingContext2D, x: number, y: nu
   return (1 + rest.length) * (size + 3);
 }
 
+/** the height `drawLambientNote` will use, without drawing */
+export function measureLambientNote(ctx: CanvasRenderingContext2D, w: number, note: DeskNote, size = 11): number {
+  setFont(ctx, 8);
+  const tagW = ctx.measureText(note.voice === 'admin' ? R.adminTag : R.lambientTag).width + 8;
+  setFont(ctx, size);
+  const first = wrapText(ctx, note.line, Math.max(40, w - tagW - 2));
+  const rest = first.length > 1 ? wrapText(ctx, first.slice(1).join(' '), w) : [];
+  return (1 + rest.length) * (size + 3);
+}
+
 /** a plain band under a note, so it reads as the tool's voice and not as page text */
 export function noteBand(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
   px(ctx, x, y, w, h, ERA3.lambBand);

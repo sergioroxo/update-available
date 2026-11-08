@@ -13,7 +13,7 @@ import { px, setFont, wrapText } from '../theme/chrome';
 import { ERA3, button, GATHER as G } from '../theme/era3';
 import { ledger } from '../../state/ledger';
 import type { TaskSurface, TaskArea, TaskHit } from './taskSurface';
-import { refuse, drawLambientNote, noteBand, type DeskNote, type Voice } from './lambientDesk';
+import { refuse, drawLambientNote, measureLambientNote, noteBand, type DeskNote, type Voice } from './lambientDesk';
 import { drawTrending } from './e3Trending';
 import D from '../../../data/dialog/s3_group.json';
 
@@ -84,8 +84,7 @@ export class GroupTask implements TaskSurface {
     // Lambient teaches the rule under the composer (the tool's voice, never on the women's posts)
     {
       const note = this.note ?? { line: D.teach, voice: 'lambient' as Voice };
-      setFont(ctx, 10);
-      const nh = 16 + Math.max(0, wrapText(ctx, note.line, colW - 12).length - 1) * 13 + 6;
+      const nh = measureLambientNote(ctx, colW - 10, note, 10) + 8;
       noteBand(ctx, fx, y, colW, nh + 2);
       drawLambientNote(ctx, fx + 5, y + 5, colW - 10, note, 10);
       y += nh + 8;
@@ -121,7 +120,7 @@ export class GroupTask implements TaskSurface {
     setFont(ctx, 8); ctx.fillStyle = ERA3.greyDk;
     D.about.lines.forEach((l, i) => ctx.fillText(l, sx + 7, sy + 19 + i * 11));
     sy += aboutH + 6;
-    drawTrending(ctx, sx, sy, sw, b.y + b.h - sy - 4, G.blue);
+    drawTrending(ctx, sx, sy, sw, b.y + b.h - sy - 40, G.blue);   // the foot stays clear for the way back
   }
 
   press(id: string): boolean {

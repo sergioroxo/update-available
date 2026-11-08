@@ -94,19 +94,20 @@ export class PlacesListApp implements TaskSurface {
     setFont(ctx, 9); ctx.fillStyle = ERA3.grey; ctx.fillText(P.listSub, rx, a.y + 14);
     let ly = a.y + 30;
     const row = (label: string, state: 'on' | 'proposed' | 'new'): void => {
-      px(ctx, rx, ly, rw, 22, state === 'proposed' ? ERA3.sysBand : ERA3.white);
-      px(ctx, rx, ly, 3, 22, state === 'proposed' ? ERA3.amber : ERA3.alarm);
-      setFont(ctx, 10); ctx.fillStyle = state === 'proposed' ? ERA3.greyDk : ERA3.ink;
-      ctx.save(); ctx.beginPath(); ctx.rect(rx, ly, rw - 4, 22); ctx.clip();
-      ctx.fillText(label, rx + 10, ly + 6);
-      ctx.restore();
       const t = state === 'proposed' ? P.proposed : state === 'new' && this.by ? doneByLabel(this.by) : '';
-      if (t) { setFont(ctx, 8); ctx.fillStyle = state === 'new' ? ERA3.alarm : ERA3.grey; const tw = ctx.measureText(t).width; px(ctx, rx + rw - tw - 10, ly + 5, tw + 6, 12, ERA3.white); ctx.fillText(t, rx + rw - tw - 7, ly + 7); }
-      ly += 26;
+      const h = t ? 34 : 22;   // a row with a tag carries it on its own line, under the place
+      px(ctx, rx, ly, rw, h, state === 'proposed' ? ERA3.sysBand : ERA3.white);
+      px(ctx, rx, ly, 3, h, state === 'proposed' ? ERA3.amber : ERA3.alarm);
+      setFont(ctx, 10); ctx.fillStyle = state === 'proposed' ? ERA3.greyDk : ERA3.ink;
+      ctx.save(); ctx.beginPath(); ctx.rect(rx, ly, rw - 4, h); ctx.clip();
+      ctx.fillText(label, rx + 10, ly + 5);
+      if (t) { setFont(ctx, 8); ctx.fillStyle = state === 'new' ? ERA3.alarm : ERA3.greyDk; ctx.fillText(t, rx + 10, ly + 20); }
+      ctx.restore();
+      ly += h + 4;
     };
     for (const l of P.list) row(l, 'on');
     row(P.newRow, this.by ? 'new' : 'proposed');
-    drawTrending(ctx, rx, ly + 8, rw, a.y + a.h - ly - 10);
+    drawTrending(ctx, rx, ly + 8, rw, a.y + a.h - ly - 46);   // the foot stays clear for the finished job's way back
   }
 
   press(id: string): boolean {

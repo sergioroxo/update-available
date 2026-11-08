@@ -45,7 +45,7 @@ import { ERA3 } from '../theme/era3';
 import { ledger } from '../../state/ledger';
 import type { TaskSurface, TaskArea, TaskHit } from './taskSurface';
 import f from '../../../data/dialog/s3_family.json';
-import { refuse, drawLambientNote, noteBand, type DeskNote, type Voice } from './lambientDesk';
+import { refuse, drawLambientNote, measureLambientNote, noteBand, type DeskNote, type Voice } from './lambientDesk';
 
 type ParentDef = { id: string; from: string; meta: string; body: string; witnessOpened: string };
 type ReplyDef = { id: string; label: string; preview: string; witness: string };
@@ -209,9 +209,8 @@ export class FamilyCallsApp implements TaskSurface {
     {
       const ny = area.y + 22 + PARENTS.length * (rowH + 4) + 46;
       const note = this.note ?? { line: f.lambient.teach, voice: 'lambient' as Voice };
-      setFont(ctx, 10);
-      const nh = 14 + wrapText(ctx, note.line, listW - 12).length * 13 + 6;
-      noteBand(ctx, area.x, ny - 5, listW, nh + 4);
+      const nh = measureLambientNote(ctx, listW - 10, note, 10);
+      noteBand(ctx, area.x, ny - 5, listW, nh + 9);
       drawLambientNote(ctx, area.x + 5, ny, listW - 10, note, 10);
     }
 
@@ -253,14 +252,8 @@ export class FamilyCallsApp implements TaskSurface {
     // ⚑ and the row that is always available and never labelled as a refusal:
     //   marking a mother handled without a word. It files. Nothing objects.
     const hy = area.y + 176 + Math.ceil(REPLIES.length / 2) * (bh + 6) + 4;
-    aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done, size: 10 });
+    if (!this.complete()) aero.button(ctx, readX, hy, readW, bh, f.app.noReplyLabel, { disabled: done, size: 10 });
     if (!done) hit({ x: readX, y: hy, w: readW, h: bh, id: 'family-refuse' });
-
-    if (done) {
-      const label = this.sent.get(p.id);
-      setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
-      wrapText(ctx, label ?? f.app.handledTag, listW).forEach((line, i) => ctx.fillText(line, area.x, area.y + area.h - 64 + i * 12));
-    }
 
     if (this.complete()) {
       setFont(ctx, 12); ctx.fillStyle = ERA3.titleText;

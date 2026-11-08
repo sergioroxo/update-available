@@ -1,7 +1,10 @@
 {
  "_doc": "⚑ S332 — THE PLACES LIST (src/desktop/apps/placesList.ts), job 2 of 2016 (DESIGN_2016_CONNECTIONS_2026-11-08.md, his second answers: 'a user post names The Wick: \"a lesbian bar, all welcome\". The network keeps a list of places to avoid. Vera must approve adding The Wick to it.'). Then Orla's message arrives ('quiz at the wick tonight…') and the stamp card on her desk is stamped BANNED (room prop, texture redrawn once). ⚑ DOCUMENTED vs INFERRED: a ministry session advising a woman to avoid lesbian venues is documented (SMH, 9 Mar 2018, mirrored by ABBI; RESEARCH_2016_VERA_APPARATUS §4 row 4). A network-kept LIST of places, and a platform job that adds to it, are the piece's inference. The member's post is felt (her words are never commented on); the list and the rule are operable. Every place is invented.",
  "title": "GracePlatform · Places",
- "tile": { "label": "The places list", "note": "one place to review" },
+ "tile": {
+  "label": "The places list",
+  "note": "one place to review"
+ },
  "postLabel": "FLAGGED IN A MEMBER'S POST",
  "post": {
   "who": "Áine",
@@ -24,7 +27,7 @@
   "Late bar · Harbour Row",
   "Youth drop-in · Quay Street"
  ],
- "newRow": "The Wick · Fenn Street · Tuesdays",
+ "newRow": "The Wick · Fenn Street",
  "proposed": "proposed",
  "doneHeading": "The list is up to date.",
  "doneSub": "The post stays up. The place does not.",

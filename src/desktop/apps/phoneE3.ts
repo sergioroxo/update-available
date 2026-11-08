@@ -257,7 +257,7 @@ export class PhoneE3 {
       if (this.newsN < NEWS.length) {
         this.newsT += dt;
         if (this.newsT >= NEWS_STEP) {
-          this.newsT = 0; this.newsN++; this.newsBanner(NEWS.slice(0, this.newsN));
+          this.newsT = 0; this.newsN++; this.storyClock = NEWS[this.newsN - 1].time; this.newsBanner(NEWS.slice(0, this.newsN));
           if (this.screen === 'group') this.markGroupSeen();
           this.cascadeSound(); this.bump();
         }
@@ -281,7 +281,7 @@ export class PhoneE3 {
     this.cascadeT += dt;
     while (this.cascadeT >= CASCADE_STEP && this.cascadeN < CASCADE.length) {
       this.cascadeT -= CASCADE_STEP;
-      this.cascadeN++; this.newsBanner(CASCADE.slice(0, this.cascadeN));
+      this.cascadeN++; this.storyClock = CASCADE[this.cascadeN - 1].time; this.newsBanner(CASCADE.slice(0, this.cascadeN));
       this.cascadeSound();
       if (this.screen === 'group') this.markGroupSeen();   // it landed under her eyes
       this.bump();
@@ -894,7 +894,7 @@ export class PhoneE3 {
       // ⚑ S332 — her one reply, one press. It is real and it is sent; the platform removes it a moment later.
       case 'reply-bea':
         if (!this.replyOffered) return true;
-        this.replied = true; this.holdT = 0; playOnce('phone_msg_2016.mp3'); this.bump(); return true;
+        this.replied = true; this.holdT = 0; this.storyClock = REPLY.time; playOnce('phone_msg_2016.mp3'); this.bump(); return true;
       // ⚑ the stream has no verb. Pressing it is consumed and does nothing,
       //   which is truer than making it play: nobody asked her to watch it.
       case 'stream': return true;

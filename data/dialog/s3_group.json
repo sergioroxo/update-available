@@ -32,18 +32,18 @@
  },
  "feed": [
   {
-   "who": "Deirdre",
-   "admin": true,
-   "when": "Mon",
-   "text": "Thursday's call moves to eight so Susan can get there after the shop.",
-   "stats": "Seen by 4 · 2 likes"
-  },
-  {
    "who": "Bea",
    "admin": false,
    "when": "Sun",
    "text": "I'm going to sit this week's check-in out. Not going anywhere. Just sitting it out.",
    "stats": "Seen by 4 · 1 comment"
+  },
+  {
+   "who": "Deirdre",
+   "admin": true,
+   "when": "Mon",
+   "text": "Thursday's call moves to eight so Susan can get there after the shop.",
+   "stats": "Seen by 4 · 2 likes"
   },
   {
    "who": "Hanne",
