@@ -135,6 +135,7 @@ His answers, 8 Nov:
 | id | what | where | owner | size |
 |---|---|---|---|---|
 | T51 | Remove the red box beside the mouse on the 1997 desk | 1997 room | C | S |
+| T52 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
 
 ## Codex
 
