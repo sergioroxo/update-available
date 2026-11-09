@@ -5,7 +5,6 @@ import * as pc from 'playcanvas';
 import type { ViewMorph } from '../engine/viewMorph';
 import type { Ray } from './xrFrame';
 import { gameMenuBus } from '../state/gameMenuBus';
-import { LANDING } from '../engine/eraChange';
 
 type Batch = { _aabb: pc.BoundingBox; meshInstance: { node: pc.GraphNode; _aabb: pc.BoundingBox } | null };
 type Batcher = { _batchList: Batch[]; _batchGroups: Record<string, { id: number }>; _dirtyGroups: number[];
@@ -25,9 +24,10 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   //   under it: his 8 Nov "fades to black… I don't want fade to blacks in any of it". The cover is now the view from
   //   the destination itself (engine/viewMorph.ts): the room you are in turns into the room you are going to.
   /** the cover's two halves, in seconds: in (the destination arrives; the cut at its end) and out (the particles go).
-   *  An era change asks for a slower one through `slowNext()`. */
-  const QUICK = { cover: 1.0, reveal: 1.0 }, SLOW = { cover: LANDING.cover, reveal: LANDING.reveal };   // S347: one number (eraChange.ts)
-  let timing = QUICK, slowPending = false;
+   *  (S348: an era change no longer re-forms at all — it flies, and the world follows it; see `following`.) */
+  const timing = { cover: 1.0, reveal: 1.0 };
+  /** ⚑ S348 — an era change's flight: the world follows the authored seat continuously instead of re-forming */
+  let following = false;
   const pendingFixed = new pc.Mat4();
   const calibration = new pc.Mat4();
   let calibrationPending = false, committed = false;
@@ -129,6 +129,16 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     if (offFor > 1.5) { offFor = 0; seatFromHead(); }
     // The menu remains above an unobscured, paused world; the dissolve resumes with the story.
     if (gameMenuBus.isOpen) { if (elapsed >= 0) morph.hide(); return; }
+    // ⚑ S348 / UiB job 7 (his 9 Nov final word: the headset flies over the house like the computer) — while an era
+    //   change flies, the world simply FOLLOWS the authored seat every frame: no re-form, no dissolve, no cover. Only
+    //   its place and its yaw are followed (level(): the horizon never tilts — the flight's pitch is the browser
+    //   camera's alone); app.ts flies at a constant speed and turns the facing slowly across the whole flight.
+    if (following) {
+      if (elapsed >= 0) { elapsed = -1; morph.hide(); }
+      pos.copy(authored.getLocalPosition()); rot.copy(level(authored.getLocalRotation()));
+      applied = pending = key(); committed = true; updateMapping();
+      return;
+    }
     const next = key();
     // ⚑ S268 (his: "the camera was locked with my movement… I couldn't escape") — a re-formed room is aimed where the
     //   head faces, so every authored nudge (a lean, a look offset, a pitch) re-aimed the world at the gaze, over and
@@ -138,7 +148,6 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     if (pending !== applied && elapsed < 0) { elapsed = 0; committed = false; }
     if (elapsed === 0 && !committed) {
       // the start of a re-form: decide where the head will be mapped, and photograph the room from there
-      timing = slowPending ? SLOW : QUICK; slowPending = false;
       if (calibrationPending) pendingFixed.copy(calibration);
       else pendingFixed.setTRS(fixed.getTranslation(), new pc.Quat().setFromEulerAngles(0, head.getEulerAngles().y, 0), pc.Vec3.ONE);
       captureDestination();
@@ -146,16 +155,13 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     if (elapsed >= 0) {
       elapsed += dt;
       const total = timing.cover + timing.reveal;
-      // ⚑ S347 — reduced motion is no longer an instant cut here: it is the same clock as a plain soft dissolve (viewMorph
-      //   draws no particles and no sparks under reduced motion), so an era's landing still turns the room into the next one gently
-      const cutNow = reduced() && timing === QUICK;   // an ordinary re-form under reduced motion stays the instant cut
-      if (!committed && (cutNow || elapsed >= timing.cover) && (applied !== pending || calibrationPending)) {
+      if (!committed && (reduced() || elapsed >= timing.cover) && (applied !== pending || calibrationPending)) {
         // Keep the calibrated seated origin, re-formed in the heading the head had when the morph began (the picture
         // was made for that heading, so the live room behind it is the same room at the cut)
         fixed.copy(pendingFixed); calibrationPending = false;
         pos.copy(destinationPos); rot.copy(destinationRot); applied = pending; committed = true; cuts++; updateMapping();
       }
-      if (cutNow || elapsed >= total) { elapsed = -1; morph.hide(); return; }
+      if (reduced() || elapsed >= total) { elapsed = -1; morph.hide(); return; }
       // ⚑ S281's particles, kept (his: "smoother, more particle based. stuff morphs into") — now they are windows
       const leaving = elapsed >= timing.cover;
       const coverage = leaving ? (total - elapsed) / (timing.reveal * 0.8) : elapsed / (timing.cover * 0.8);
@@ -235,8 +241,9 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     /** Available to the existing debug-only global; deterministic transition review, not a runtime input. */
     reviewStep: tick,
     get busy() { return elapsed >= 0; }, get calibrated() { return calibrated; },
-    /** S346 — the next re-form is an era's landing: a slower morph (more time, his 8 Nov note) */
-    slowNext() { slowPending = true; },
+    /** S348 — follow the authored seat every frame (an era change's flight), or stop following */
+    setFollow(on: boolean) { following = on; },
+    get following() { return following; },
     status: () => ({ active, calibrated, elapsed, cuts, worldReady, shift: physicalMap.getTranslation().toArray(), shiftYaw: new pc.Quat().setFromMat4(physicalMap).getEulerAngles().y,
       batchesOnStage: ((app.batcher as unknown as { _batchList?: { meshInstance: { node: pc.GraphNode } | null }[] } | null)?._batchList ?? []).filter(b => b.meshInstance?.node === stage).length,
       batches: ((app.batcher as unknown as { _batchList?: unknown[] } | null)?._batchList ?? []).length, authored: authored.getLocalPosition().toArray(), head: head.getLocalPosition().toArray(), rig: rig.getPosition().toArray() }) };
