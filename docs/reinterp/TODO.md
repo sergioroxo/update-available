@@ -25,7 +25,7 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T08 | NO fades to black anywhere, before or after the eras; the era change needs more sound, more time, and a morph into the room; the dollhouse "doesn't fully work" and the miniatures look ugly | all transitions, XR | C | L |
 | T09 | Text in the headset is serrated and hard to read unless very close | everywhere, XR | X (Prompt C) + C | L |
 | T10 ◐ S333 (Codex: redraws 180→59; check in headset) | Lamby video breaks up when the hand moves | 2003 video, XR | X | M |
-| T11 ◐ S343 (1997/2003: a controller by the desk mouse took it and clicked at the hidden pointer — fixed; 2026 boxes still open) | Phantom presses on the wall in front of Root Cause, and on 2026 boxes | 2003, 2026, XR | X | M |
+| T11 ☑ S345 (1997/2003: a controller by the desk mouse took it — S343; 2026: a controller's press now goes where the ray was when the trigger began, not the release's dip — UIB_JOB4_BUILT; check in headset) | Phantom presses on the wall in front of Root Cause, and on 2026 boxes | 2003, 2026, XR | X | M |
 | T12 | Headset/Quest ran an OLD build in part 1 (the itch zip?). Check what the Quest loads before every session | process | S + C | S |
 
 ## ② Hard to follow
@@ -47,8 +47,8 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T25 ☑ S329/S331 | Where is the guide (L) in 2016 and 2026? | 2016, 2026 | C | S |
 | T26 ☑ S333 (Codex) | Caleb's messages type letter by letter: too slow; show each message whole when it beeps | 2003 messenger | X | S |
 | T27 ☑ S333 (Codex) | Controller users see "look at your wrist" (that's for hands) | XR | X | S |
-| T28 | Tapper (Game Boy) sits to the side, tiny hit range, vanishes when he moves | 2003 games, XR | X | M |
-| T29 | The pointer bar crosses his line of action: highlight what is being touched/picked | XR | X | M |
+| T28 ☑ S345 (in front, buttons catch at ~3 cm, a near miss on the case does nothing, the grip carries it; check in headset) | Tapper (Game Boy) sits to the side, tiny hit range, vanishes when he moves | 2003 games, XR | X | M |
+| T29 ☑ S345 (the 50 cm plate → a small tag pinned where the ray lands, a small square mark on the surface; check in headset) | The pointer bar crosses his line of action: highlight what is being touched/picked | XR | X | M |
 
 ## ③ Polish and design
 
@@ -168,7 +168,7 @@ His answers, 8 Nov:
 | T55 ☑ S337 | The 2016 Trending sources (US election, NPR; photo app hiding #lesbian, HuffPost UK; same-sex stickers removed, Jakarta Post) go on the 2016 site's Sources tab — his yes, 9 Nov | 2016 site | C | S |
 | T56 ☑ S337 | A GracePlatform music loop, made by Claude in code (no licence question): calm 2016 "wellness app" pads + plucked melody, 60–90 s, seamless | 2016 | C | S |
 | T57 | 🥽 Test Codex's sharper text (CODEX_XR_TEXT_REPORT_2026-11-08.md) on the Quest, on the GitHub Pages build (itch can't take URL options): compare https://sergioroxo.github.io/update-available/?reinterp=1 with …?reinterp=1&quad=1 on the 1997 monitor, following the report's steps. If sharper → extend to the other screens; if not → remove the patch | XR | S (headset) then C | S |
-| T52 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
+| T52 ☑ S345 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
 
 ## Codex
 
