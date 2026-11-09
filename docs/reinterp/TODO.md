@@ -172,6 +172,7 @@ His answers, 8 Nov:
 | T52 ☑ S345 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
 | T58 ☑ S346 | Desktop, his 9 Nov: lines and letters break into stair-steps when a screen is seen at an angle ("Welcome back, Daniel"). Screens only: mipmaps + max anisotropy (his approval); the room keeps FILTER_NEAREST | all screens | C | S |
 | T59 ☑ S346 | Desktop team skip, debug builds only: N ten times within 5 s → the next year (mirrors T48) | desktop | C | S |
+| T60 ☑ S347 | His 9 Nov notes on job 5 (UiB job 6): the era change "goes dark" (dark brown particles, the view dimming) → the shining space morph (clusterMorph) IS the change, seated, in the browser and the headset: warm glow + glints + a travelling light, no dimming (the dark 'hold' rig and ballast dips gone; the new year's light brighten-only, exact at the cut), one slow bright morph into the new seat; new era-change music, more dynamic and liquid, per change, + the morph's own sound layer (passage_install kept registered, unused) — check in headset | all transitions, XR | C | M |
 
 ## Codex
 

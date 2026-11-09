@@ -58,7 +58,14 @@ const REGISTRY: Record<string, string> = {
   'diary_flag.mp3': `${AUDIO_BASE}diary_flag.mp3`,
   'diary_erase.mp3': `${AUDIO_BASE}diary_erase.mp3`,
   'passage_wind.mp3': `${AUDIO_BASE}passage_wind.mp3`,
-  'passage_install.mp3': `${AUDIO_BASE}passage_install.mp3`, // S346 · the era change's music (tools/make_passage_install.py; T08)
+  'passage_install.mp3': `${AUDIO_BASE}passage_install.mp3`, // S346 · the era change's music until S347 (tools/make_passage_install.py; T08) — kept for another moment, his 9 Nov
+  // S347 · UiB job 6 — the era change's own music, one per change, and the morph's own sound layer (tools/make_era_change_audio.py)
+  'passage_1997_2003.mp3': `${AUDIO_BASE}passage_1997_2003.mp3`,
+  'passage_2003_2016.mp3': `${AUDIO_BASE}passage_2003_2016.mp3`,
+  'passage_2016_2026.mp3': `${AUDIO_BASE}passage_2016_2026.mp3`,
+  'morph_1997_2003.mp3': `${AUDIO_BASE}morph_1997_2003.mp3`,
+  'morph_2003_2016.mp3': `${AUDIO_BASE}morph_2003_2016.mp3`,
+  'morph_2016_2026.mp3': `${AUDIO_BASE}morph_2016_2026.mp3`,
   'boot_2003.mp3': `${AUDIO_BASE}boot_2003.mp3`,
   'boot_2016.mp3': `${AUDIO_BASE}boot_2016.mp3`,
   'lambient_chime.mp3': `${AUDIO_BASE}lambient_chime.mp3`,
@@ -487,6 +494,8 @@ class RoomBed {
   private static readonly LEVELS: Record<string, number> = {
     'bed_1997.mp3': 0.5, 'bed_2003.mp3': 0.22, 'bed_2016.mp3': 0.5, 'bed_2026.mp3': 0.5,
     'passage_wind.mp3': 0.5, 'passage_building.mp3': 0.5, 'passage_install.mp3': 0.5,
+    // S347: the era change's music sits UNDER the morph's own sounds (a one-shot at 1.0) — his "so the two balance"
+    'passage_1997_2003.mp3': 0.42, 'passage_2003_2016.mp3': 0.42, 'passage_2016_2026.mp3': 0.42,
     'close_score.mp3': 0.55,
     'ball_room_bed.mp3': 0.35, 'ball_room_landing.mp3': 0.35
   };

@@ -80,6 +80,8 @@ const BELONGINGS_IDS = new Set(
 const UNBATCHED_IDS = new Set(['terminalFrame', 'w_wickCard', 'e_bed', 'e_rug', 'e_curtL', 'e_curtR']);
 
 const RIG_FADE_SECONDS = 2.5;
+/** ⚑ S347 — the seated era change: the exact new rig settles in over this, from the cut into the new seat */
+const SEATED_RIG_SETTLE_SECONDS = 4.0;
 /**
  * ⚑ THE LIFT (Session 64) — Era 3's ONE INVERSION, and the era's ending.
  * `docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` §4.
@@ -290,6 +292,22 @@ export interface RelocationPlan {
   morphDelaySeconds?: number;
   /** the seat yaw the descent lands in (0 = Room 1, 90 = Room 2, 270 = Room 3) */
   seat: number;
+  /**
+   * ⚑ S347 (UiB job 6, his 9 Nov: "use that as the era change, in the browser and in the headset, while he sits in
+   * the chair. The room itself shines and transforms around him") — the SEATED change, set by app.ts on every plan:
+   *   · the space's cascade fills the whole build leg (the room is changing for as long as you sit through it);
+   *   · no 'hold' rig and no ballast dips (the near-black that made 2003 → 2016 "go dark");
+   *   · where the seat changes, the new year's rig arrives BRIGHTEN-ONLY at its authored moment (no light in the room
+   *     you are sitting in goes down), and lands exactly at `landCutSeconds` after the rise — the cut into the new
+   *     seat, under the landing's full cover — so the next room is photographed lit, and the room you leave never
+   *     dims around you. In the same chair (1997 → 2003, no `landCutSeconds`) the rig arrives during the fold.
+   */
+  seated?: boolean;
+  /** seconds after the rise at which the landing's cut happens (the build leg + the landing's cover) */
+  landCutSeconds?: number;
+  /** ⚑ S347 — the build leg when seated, where it differs from the flight's (a flight's length was distance at the
+   *  comfort envelope; a chair's is how long there is something to watch change) */
+  seatedBuildSeconds?: number;
 }
 
 /** keyed `${from}-${to}`; a transition absent here takes the plain morph path */
@@ -327,6 +345,10 @@ export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
     /** 2.0 s before the crossing ends, so the 2.5 s crossfade finishes just
      *  after the descent starts: the lights go out as you come down */
     rigDelaySeconds: 23.0,
+    /** ⚑ S347 — seated in Vera's chair, only her own desk folds in view (Rooms 1 and 3 change behind her): the
+     *  flight's 25 s was the 7.2 m crossing at 0.43 m/s, and with no crossing it was 20 s of a finished room.
+     *  tools/make_era_change_audio.py renders 2016 → 2026's music to this number. */
+    seatedBuildSeconds: 14.0,
     opensWalls: false, seat: 270
   }
 };
@@ -438,6 +460,11 @@ export interface ClusterShell {
   settleNow(): void;
   /** the era's niche facet table (fluid_niche.json), for the gaze resolver */
   eraTable(): NicheEraTable | undefined;
+  /** ⚑ S347 — called the moment a relocation's space starts to change, with the cascade's length (app.ts starts the
+   *  morph's own sound layer on it, so the place's shapeshifting is heard exactly as it is seen) */
+  onSpaceChange: ((cascadeSeconds: number) => void) | null;
+  /** for probes: the shine's travelling light and glints */
+  readonly shineState: { live: boolean; glints: number; light: number };
   /** R28-2c (the belongings beat): freeze these prop ids at their exact r1/
    *  E1 fold through every later morph — the payoff plumbing for the T1
    *  gathering window. Idempotent; safe to call before every era shift. */
@@ -796,6 +823,37 @@ export function buildClusterShell(
   /** true only between Malta and the next authored rig change — see liftE3() */
   let e3Lifted = false;
 
+  /** ⚑ S347 — a rig on its way in that may only ADD light: every light and the ambient go to the brighter of where
+   *  they are now and where the rig wants them. The seated era change uses it so the next room is lit before you
+   *  are taken there, and nothing around you dims while you sit; the exact rig follows at the cut. */
+  function applyRigBrightenOnly(name: string): void {
+    const rig = (clusterData.rigs as unknown as Record<string, Rig | undefined>)[name];
+    if (!rig) return;
+    const lights: Record<string, RigLight> = {};
+    for (const [id, target] of Object.entries(rig.lights)) {
+      const e = app.root.findByName(`light-${id}`);
+      const l = e instanceof pc.Entity ? e.light : null;
+      const now = l ? l.intensity : 0;
+      // a light already lit keeps its own colour and the longer reach until the cut (a cooler, shorter 2016 lamp
+      //   measured 5 levels darker at the end of 2003 → 2016's fold); a light coming up takes the new year's colour
+      const lit = now > 0.05 && !!l;
+      lights[id] = { intensity: Math.max(now, target.intensity),
+        range: Math.max(l?.range ?? 0, target.range ?? 0) || target.range,
+        color: lit ? undefined : target.color };
+    }
+    for (const zl of zoneLights) {
+      const key = zl.name.replace(/^light-/, '');
+      if (lights[key] === undefined) lights[key] = { intensity: Math.max(zl.light?.intensity ?? 0, rig.zoneFill) };
+    }
+    rigFadeSeconds = RIG_FADE_SECONDS;
+    e3Lifted = false;
+    fadeToRig({
+      ambient: rig.ambient.map((c, i) => Math.max(c, [ambNow.r, ambNow.g, ambNow.b][i])),
+      zoneFill: rig.zoneFill,
+      lights
+    }, true);
+  }
+
   function applyRig(name: string, animate: boolean, seconds?: number): void {
     if (name === '_note') return;
     const rig = (clusterData.rigs as unknown as Record<string, Rig | undefined>)[name];
@@ -974,7 +1032,9 @@ export function buildClusterShell(
 
   function seamsOff(): void { for (const s of seams) s.enabled = false; }
 
-  return {
+  const shell: ClusterShell = {
+    onSpaceChange: null,
+    get shineState() { return morph.shineState; },
     setEmphasisBatch(ids: Iterable<string>): void {
       const next = new Set(ids);
       if (next.size === emphasisBatch.size && [...next].every(id => emphasisBatch.has(id))) return;
@@ -1028,21 +1088,39 @@ export function buildClusterShell(
           if (e instanceof pc.Entity && e.light) e.light.intensity = i;
         };
         const R = reloc.riseSeconds;
-        const cascade = reloc.cascadeSeconds ?? reloc.buildSeconds;
+        const seated = !!reloc.seated;
+        // ⚑ S347: seated, the room changes for the whole leg — the flight's leftover travel time is gone with the flight
+        const cascade = seated ? reloc.buildSeconds - (reloc.morphDelaySeconds ?? 0) : (reloc.cascadeSeconds ?? reloc.buildSeconds);
         const pace = cascade / CASCADE_BASE_SECONDS;
-        const rigAt = reloc.rigDelaySeconds
+        const rigAuthored = reloc.rigDelaySeconds
           ?? (reloc.opensWalls ? cascade - 3.0 : Math.min(2.5, cascade * 0.35));
+        // seated, the new rig's brighten-only half must arrive inside the fold (before the next room is photographed)
+        const rigAt = seated ? Math.min(rigAuthored, cascade - 2.0) : rigAuthored;
         state = toIdx >= 1 ? 'open' : 'sealed';
         const events: { t: number; fn: () => void }[] = [
           { t: R + (reloc.morphDelaySeconds ?? 0), fn: () => {   // the space begins to change (Phase 7: E3→E4 later)
             beginMorphedStateBatch();
             morph.goToState(toIdx, true, pace);
+            shell.onSpaceChange?.(cascade);
             // S61: the record leaves the spine WITH the walls (see
             // setTerminalVisible) — one change, one moment, not two.
             if (reloc.opensWalls) setTerminalVisible(toEra !== 'e3' && toEra !== 'e4');
           } }
         ];
-        if (reloc.opensWalls) {
+        if (seated) {
+          // ⚑ S347 — seated: the light never goes down around the visitor. The 'hold' rig (ambient 0.05, roomFill 0)
+          //   and the ballast's dips to 0.05 were the darkness of 2003 → 2016. The other rooms still come up as the
+          //   walls go (they only add light); the new year's rig arrives brighten-only, and exactly at the cut.
+          if (reloc.opensWalls) events.push({ t: R + 2.0, fn: () => { for (const zl of zoneLights) if (zl.light) zl.light.intensity = Math.max(zl.light.intensity, 0.9); } });
+          // the same chair (no landing cut): the new year's light arrives in the fold itself, slowly, as the time cue
+          //   it was authored to be (1997's lamp-lit night into 2003's daylight while you watch), under the shine
+          if (reloc.landCutSeconds === undefined) events.push({ t: R + rigAt, fn: () => applyRig(toEra, true, SEATED_RIG_SETTLE_SECONDS) });
+          else events.push(
+            { t: R + rigAt, fn: () => applyRigBrightenOnly(toEra) },
+            { t: R + reloc.landCutSeconds, fn: () => applyRig(toEra, true, SEATED_RIG_SETTLE_SECONDS) }
+          );
+          events.push({ t: R + cascade, fn: () => applyLayout() });
+        } else if (reloc.opensWalls) {
           applyRig('hold', true); // Session 27 (item 11): animated, not an instant
           // snap — an un-eased jump straight to the 'hold' rig hit the CRT's own
           // screenGlow light (E2's 0.38 → hold's 0.1) in a single frame, right as
@@ -1159,4 +1237,5 @@ export function buildClusterShell(
       commonsWorld.update(dt);
     }
   };
+  return shell;
 }

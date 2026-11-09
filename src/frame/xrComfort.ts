@@ -5,6 +5,7 @@ import * as pc from 'playcanvas';
 import type { ViewMorph } from '../engine/viewMorph';
 import type { Ray } from './xrFrame';
 import { gameMenuBus } from '../state/gameMenuBus';
+import { LANDING } from '../engine/eraChange';
 
 type Batch = { _aabb: pc.BoundingBox; meshInstance: { node: pc.GraphNode; _aabb: pc.BoundingBox } | null };
 type Batcher = { _batchList: Batch[]; _batchGroups: Record<string, { id: number }>; _dirtyGroups: number[];
@@ -25,7 +26,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   //   the destination itself (engine/viewMorph.ts): the room you are in turns into the room you are going to.
   /** the cover's two halves, in seconds: in (the destination arrives; the cut at its end) and out (the particles go).
    *  An era change asks for a slower one through `slowNext()`. */
-  const QUICK = { cover: 1.0, reveal: 1.0 }, SLOW = { cover: 2.6, reveal: 1.8 };
+  const QUICK = { cover: 1.0, reveal: 1.0 }, SLOW = { cover: LANDING.cover, reveal: LANDING.reveal };   // S347: one number (eraChange.ts)
   let timing = QUICK, slowPending = false;
   const pendingFixed = new pc.Mat4();
   const calibration = new pc.Mat4();
@@ -145,13 +146,16 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     if (elapsed >= 0) {
       elapsed += dt;
       const total = timing.cover + timing.reveal;
-      if (!committed && (reduced() || elapsed >= timing.cover) && (applied !== pending || calibrationPending)) {
+      // ⚑ S347 — reduced motion is no longer an instant cut here: it is the same clock as a plain soft dissolve (viewMorph
+      //   draws no particles and no sparks under reduced motion), so an era's landing still turns the room into the next one gently
+      const cutNow = reduced() && timing === QUICK;   // an ordinary re-form under reduced motion stays the instant cut
+      if (!committed && (cutNow || elapsed >= timing.cover) && (applied !== pending || calibrationPending)) {
         // Keep the calibrated seated origin, re-formed in the heading the head had when the morph began (the picture
         // was made for that heading, so the live room behind it is the same room at the cut)
         fixed.copy(pendingFixed); calibrationPending = false;
         pos.copy(destinationPos); rot.copy(destinationRot); applied = pending; committed = true; cuts++; updateMapping();
       }
-      if (reduced() || elapsed >= total) { elapsed = -1; morph.hide(); return; }
+      if (cutNow || elapsed >= total) { elapsed = -1; morph.hide(); return; }
       // ⚑ S281's particles, kept (his: "smoother, more particle based. stuff morphs into") — now they are windows
       const leaving = elapsed >= timing.cover;
       const coverage = leaving ? (total - elapsed) / (timing.reveal * 0.8) : elapsed / (timing.cover * 0.8);
