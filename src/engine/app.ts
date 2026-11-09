@@ -46,6 +46,7 @@ import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
 import { noteHumanInput, registerXrSession } from '../frame/attract';
 import { mountViewMorph } from './viewMorph';
+import { SEATED_ERA_CHANGE, LANDING, LANDING_SECONDS } from './eraChange';
 import { TapeAudioBus, roomBed, setOneShotsMuted, setOneShotsPaused, playOnce, playLoop, stopClip, setCueListener } from '../audio/tapeAudio';
 import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
@@ -480,8 +481,9 @@ const BLINK_IN_SECONDS = 0.35;
 /** S346: the 2016 → 2026 turn at the top of the flight — part of an era change, so given more time */
 const TURN_OUT_SECONDS = 1.6;
 const TURN_IN_SECONDS = 1.0;
-/** S346: in a headset an era change lands with one slow morph (xrComfort's SLOW: 2.6 s in, 1.8 s out) */
-const XR_LANDING_SECONDS = 4.4;
+/** S346: in a headset an era change lands with one slow morph (xrComfort's SLOW: 2.6 s in, 1.8 s out).
+ *  ⚑ S347: and on the desktop too, the same two halves (eraChange.ts) */
+const XR_LANDING_SECONDS = LANDING_SECONDS;
 /** R28-2b: the three cassette shelf spots (tapeA/tapeB are new props; tapeC
  *  is the existing `mixtape` prop, repositioned in reinterp_deltas.json's r1
  *  override to sit beside them) and the boombox's own click zone — the
@@ -857,6 +859,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     niche.setFacet(options.facet ?? 'none');
     ceiling = buildCeilingWitness(app);
     cluster = buildClusterShell(app, room, niche, ceiling, layout, options.nobatch !== true);
+    cluster.onSpaceChange = () => { if (relocLeg) startMorphLayer(relocKey); };   // S347: the place's own sounds, as it changes
     e4Room = buildE4Room(app, room);
     // Completion belongs to the scripted leg, never to the visitor's subsequent look direction.
     e4Room.setConduct(() => {
@@ -974,7 +977,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       t: camMove?.t ?? 0,
       leg: relocLeg, reloc: relocKey, descent: descentActive,
       // S346: the view morph (no fade to black) and the bed under it — read by tools/era-morph-probe.mjs
-      blink: blinkPhase, morph: viewMorph.visible, morphCaptured: viewMorph.captured, bed: roomBed.current, xrBusy: xrComfort.busy,
+      blink: blinkPhase, morph: viewMorph.visible, morphCaptured: viewMorph.captured, bed: roomBed.current, shine: cluster?.shineState ?? null, layer: morphLayerName, xrBusy: xrComfort.busy,
       // ⚑ S85: the player's own look, reported SEPARATELY and deliberately so.
       // pitch/yaw above stay the curve's PRESCRIBED pose, which is the thing
       // the comfort law is about — folding a hand-drag into them would make
@@ -1772,7 +1775,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   interface CamMove { fx: number; fy: number; fz: number; fp: number; fyaw: number;
     tx: number; ty: number; tz: number; tp: number; tyaw: number;
     vx: number; vy: number; vz: number; arc: boolean;
-    t: number; dur: number; conducted: boolean; }
+    t: number; dur: number; conducted: boolean;
+    /** ⚑ S347 — a seated era change's leg: the camera does not move, the leg only keeps its clock */
+    hold?: boolean;
+    /** ⚑ S347 — the desktop's landing: hold the pose until this many seconds in (the morph's full cover), then cut */
+    cutAt?: number; }
   let camMove: CamMove | null = null;
   /** S72: monotonic id of the driven leg currently owning the camera — see
    *  startCamMove and the `__camPose` probe. Never resets; only ever compared. */
@@ -1801,6 +1808,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // S67: plus WHICH relocation — the key into RELOC_POSES / cluster.ts's
   // RELOCATIONS, and the plan itself, so a leg never has to ask what era it is.
   let relocLeg: 'rise' | 'turn' | 'build' | 'descend' | null = null;
+  /** ⚑ S347 — the morph's own sound layer (see MORPH_LAYER) */
+  let morphLayer: HTMLAudioElement | null = null;
+  let morphLayerName: string | null = null;
+  let morphLayerFade = -1, morphLayerFadeFrom = 1;
   let relocKey: string | null = null;
   let relocPlan: RelocationPlan | null = null;
   // O7 reveal choreography: seconds until the tilt returns to level; whether
@@ -2296,6 +2307,29 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // the Close's sweep turns LEFT the long way so the building is seen)
     // ⚑ S268 — in a headset the move is ONE cut under the pixel dissolve (xrComfort), never a 2 s glide: a glide's
     //   mid-path pose was what the dissolve committed, and the remainder re-formed the room a second time
+    let hold = false, cutAt: number | undefined;
+    if (!xr?.active && SEATED_ERA_CHANGE && relocLeg) {
+      // ⚑ S347 / UiB job 6 (his 9 Nov: "use that as the era change, in the browser and in the headset, while he sits in
+      //   the chair") — the desktop does not fly either. Rise and build keep their clocks and the camera stays in the
+      //   chair while the room shines and folds round it; the landing is ONE slow morph into the new seat (the new
+      //   seat's own picture arriving, the cut under its full cover) — or, where the seat is the one you are in
+      //   (1997 → 2003), simply the clock.
+      via = undefined;
+      if (relocLeg === 'rise' || relocLeg === 'build') {
+        to = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw };
+        hold = true;
+      } else if (relocLeg === 'descend') {
+        dur = LANDING_SECONDS;
+        const same = Math.hypot(to.x - camPos.x, to.y - camPos.y, to.z - camPos.z) < 0.35 && Math.abs((((to.yaw - camYaw) % 360) + 540) % 360 - 180) < 20;
+        if (same) { to = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw }; hold = true; }
+        else {
+          cutAt = LANDING.cover;
+          // the picture is made from where the eye will really be: the seat, with the look the visitor is holding
+          startBlink({ ...to, yaw: to.yaw + lookOffYaw, pitch: Math.max(-DRAG_PITCH_MAX, Math.min(DRAG_PITCH_MAX, to.pitch + lookOffPitch)) },
+            LANDING.cover, LANDING.reveal);
+        }
+      }
+    }
     if (xr?.active) {
       via = undefined;
       if (relocLeg === 'rise' || relocLeg === 'build') {
@@ -2321,7 +2355,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const vz = via ? via.z : 0;
     camMove = { fx, fy, fz, fp: camPitch, fyaw: camYaw,
       tx: to.x, ty: to.y, tz: to.z, tp: to.pitch, tyaw: camYaw + dyaw,
-      vx, vy, vz, arc: !!via, t: 0, dur, conducted };
+      vx, vy, vz, arc: !!via, t: 0, dur, conducted, hold, cutAt };
     // ⚑ S72: every start bumps the leg counter. The comfort assertion samples
     // the live rig and differentiates it, and a CUT is not locomotion — a blink
     // jump and endRelocation's own seat snap both move the camera metres in one
@@ -2332,7 +2366,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     camMoveSeq++;
     tween = null;
     // ⚑ S346 — reduced motion's cut is covered by the flight's end, photographed (the view morph), not by black
-    if (options.reinterp && !xr?.active && reducedMotion() && blinkPhase === null) viewMorph.capture(poseMat(to), null, { xr: false });
+    if (options.reinterp && !xr?.active && reducedMotion() && blinkPhase === null && !hold && cutAt === undefined) viewMorph.capture(poseMat(to), null, { xr: false });
   }
 
   /** the light ramp, as a 0..1 curve over the wake's own clock: a beat of the
@@ -2392,6 +2426,22 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // ⚑ S346 / T08 (his 8 Nov: "it needs a little bit more of sound… an emotional experience… flowing through time"):
   //   the install's own music now, from the I Agree press to the landing (tools/make_passage_install.py)
   const PASSAGE_BED = 'passage_install.mp3';
+  /**
+   * ⚑ S347 / UiB job 6 (his 9 Nov: "the music is too sweet and soft for the era change… make a new one… more dynamic:
+   * fluid, liquid sounds, a little experimental"). `passage_install` stays registered for another moment; the change
+   * now plays its own piece, one per change, each rendered to that change's own seconds (tools/make_era_change_audio.py)
+   * so its pulse quickens while the room is folding and slows as you land — and it leaves room for…
+   */
+  const PASSAGE_MUSIC: Record<string, string> = {
+    'e1-e2': 'passage_1997_2003.mp3', 'e2-e3': 'passage_2003_2016.mp3', 'e3-e4': 'passage_2016_2026.mp3'
+  };
+  /** …the place's own shapeshifting (soft whooshes, glassy creaks, a rising shimmer as the walls fold, the landing's
+   *  bloom), started the moment the room starts to change (cluster.onSpaceChange), mixed OVER the music */
+  const MORPH_LAYER: Record<string, string> = {
+    'e1-e2': 'morph_1997_2003.mp3', 'e2-e3': 'morph_2003_2016.mp3', 'e3-e4': 'morph_2016_2026.mp3'
+  };
+  /** the music sits under the morph's sounds (his: "mix the music under it so the two balance") */
+  const MORPH_LAYER_LEVEL = 1.0;
   /** set when an era lands mid-flight; consumed by `endRelocation` */
   let pendingBed: string | null | undefined;
 
@@ -2421,10 +2471,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     return { ...base, riseSeconds: Math.ceil(seconds * 10 - 1e-8) / 10 };
   }
 
+  /** ⚑ S347 — a relocation plan as the seated change runs it: its own build length, and the cut's moment for the room */
+  function seatedPlan(base: RelocationPlan, fromSeat: number): RelocationPlan {
+    const buildSeconds = base.seatedBuildSeconds ?? base.buildSeconds;
+    // the same chair (1997 → 2003): no cut, so the new year's light arrives during the fold as authored (the time cue)
+    const moves = base.seat !== fromSeat;
+    return { ...base, buildSeconds, seated: true, landCutSeconds: moves ? buildSeconds + LANDING.cover : undefined };
+  }
+
   function beginRelocation(key: string, plan: RelocationPlan): void {
     // ⚑ the building, for the length of the flight. `onEraShift` brings the
     //   destination's own bed up when the era actually lands.
-    roomBed.set(PASSAGE_BED, 2.0);
+    roomBed.set(PASSAGE_MUSIC[key] ?? PASSAGE_BED, 2.0);
+    stopMorphLayer(0);
     const poses = RELOC_POSES[key];
     if (!poses) return;
     // ⚑ A relocation owns the camera outright, so the front door cannot still
@@ -2445,7 +2504,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function advanceRelocation(): void {
     const poses = relocKey ? RELOC_POSES[relocKey] : undefined;
     if (!poses || !relocPlan) { endRelocation(); return; }
-    if (relocLeg === 'rise' && relocKey === 'e3-e4' && !xr?.active) {   // S346: a headset does not fly, so it does not turn mid-air
+    if (relocLeg === 'rise' && relocKey === 'e3-e4' && !xr?.active && !SEATED_ERA_CHANGE) {   // S346: a headset does not fly, so it does not turn mid-air (S347: nor does anyone, seated)
       /**
        * ⚑ Phase 7 — THE TURN, REDONE (his: "the turn inside of the flight from Vera to Maya is still to
        * be redone"; 08-21: "the fly over the camera should turn… pointing to the Era 4 room, makes no
@@ -2474,7 +2533,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       relocLeg = 'descend';
       startCamMove(seatPose(relocPlan.seat), relocPlan.descendSeconds, true, poses.descendVia);
     } else if (relocLeg === 'descend') {
-      endRelocation();
+      endRelocation(true);
     }
   }
   /** land it: in the seat, room settled, the era's machine free to start.
@@ -2482,7 +2541,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  all calls this, exactly as endDescent works, so a scripted move of this
    *  length can never trap anyone or make them sit through motion they don't
    *  want. It is also the whole ?descent=0 path (seatCut below). */
-  function endRelocation(): void {
+  /** ⚑ S347 — the morph's own sound layer: started with the space's change, faded out if the change is cut short */
+  function startMorphLayer(key: string | null): void {
+    const name = key ? MORPH_LAYER[key] : undefined;
+    if (!name) return;
+    stopMorphLayer(0);
+    morphLayer = playOnce(name);
+    morphLayerName = morphLayer ? name : null;
+    if (morphLayer) morphLayer.volume = MORPH_LAYER_LEVEL;
+    morphLayerFade = -1;
+  }
+  function stopMorphLayer(seconds: number): void {
+    if (!morphLayer) return;
+    if (seconds <= 0) { stopClip(morphLayer); morphLayer = null; morphLayerName = null; morphLayerFade = -1; return; }
+    morphLayerFade = seconds; morphLayerFadeFrom = morphLayer.volume;
+  }
+  function endRelocation(natural = false): void {
+    // ⚑ S347 — a natural landing lets the morph's sound ring out (it has its own tail); a skip fades it
+    if (!natural) stopMorphLayer(1.2);
     /**
      * ⚑ S109 — YOU ARRIVE, AND THE ROOM IS THERE. The building's drone has been
      * under the whole flight; this is where it gives way to the year you landed
@@ -2667,6 +2743,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     (window as { __requestMove?: (id: string) => void }).__requestMove = requestMove;
     (window as { __movementNodes?: () => string[] }).__movementNodes =
       () => (cluster && movementNodes ? movementNodes.available(cluster.era, seatYaw).map(n => n.id) : []);
+    // S347 ?debug=1: sit in a room's seat now (tools/era-change-probe.mjs starts 2016 → 2026 in Vera's chair, as play does)
+    (window as { __seatCut?: (yaw: number) => void }).__seatCut = (yaw: number) => seatCut(yaw);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -4344,9 +4422,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // that yields instantly to any input (endDescent). S53: it IS a camMove
       // now, so it needs no clock of its own; it is landed below, the frame
       // the arc resolves.
-      if (camMove && xr?.active) {
+      if (camMove && (xr?.active || camMove.hold)) {
         camMove.t += dt;
         camPos.set(camMove.tx, camMove.ty, camMove.tz); camPitch = camMove.tp; camYaw = camMove.tyaw;
+        if (camMove.t >= camMove.dur) camMove = null;
+      } else if (camMove && camMove.cutAt !== undefined) {
+        // ⚑ S347 — the desktop's seated landing: in the chair until the new seat's picture fully covers the view, then
+        //   the cut (the blink's morph is running over it, started with this move), then the clock runs out
+        camMove.t += dt;
+        if (camMove.t >= camMove.cutAt) { camPos.set(camMove.tx, camMove.ty, camMove.tz); camPitch = camMove.tp; camYaw = camMove.tyaw; }
         if (camMove.t >= camMove.dur) camMove = null;
       } else if (camMove && reducedMotion()) {
         // the cut: covered by RM_FADE, the pose set under the full cover, uncovered by 2×RM_FADE. ⚑ S346: the cover is
@@ -4581,6 +4665,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   keep playing silently; it stops. ("The frame never plays.")
         roomBed.setGamePaused(os.paused);
         roomBed.update(dt);
+        if (morphLayer && morphLayerFade > 0 && !os.paused) {
+          morphLayerFade = Math.max(0, morphLayerFade - dt);
+          morphLayer.volume = morphLayerFadeFrom * (morphLayerFade / 1.2);
+          if (morphLayerFade === 0) stopMorphLayer(0);
+        }
+        if (morphLayer && morphLayer.ended) { morphLayer = null; morphLayerName = null; }
         if (tapeCaption) {
           const cap = tapes.activeCaption;
           // ⚑ S89 — TAPE IDENTITY. No tape playing (nothing to caption) and the
@@ -4950,7 +5040,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // SAME morph beat as the room aging — see the note above applyLightsOn().
     const key = `${fromEra}-${era}`;
     const basePlan = drivenMoves ? relocationFor(fromEra, era) : undefined;
-    const plan = basePlan ? relocationPlanFromHere(key, basePlan) : undefined;
+    // ⚑ S347 — seated, nothing rises, so the rise is never re-fitted to a comfort envelope (and the music, rendered to
+    //   these exact seconds, stays in step); the room lands its new light at the landing's cut
+    const plan = basePlan
+      ? (SEATED_ERA_CHANGE ? seatedPlan(basePlan, seatYaw) : relocationPlanFromHere(key, basePlan))
+      : undefined;
     // the space's half is scheduled around the camera's legs; passing the plan
     // (or an explicit null) keeps the two halves reading the SAME numbers.
     cluster.morphToEra(era, true, plan ?? null);
@@ -5604,6 +5698,23 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
 
   // dev travel panel (?debug=1 — the shipped build's system, ported; Round 18)
   if (options.reinterp) {
+    /** S67's relocation replay (the debug panel's button), and S347's `__relocate` under ?debug=1 for the probe */
+    const replayRelocation = (from: EraKey, to: EraKey): void => {
+      if (!cluster) return;
+      const base = relocationFor(from, to);
+      if (!base) return;
+      const start = from === 'e3' ? 90 : 0; // where that era is actually seated
+      const plan = SEATED_ERA_CHANGE ? seatedPlan(base, start) : base;   // S347
+      os.setDesktopEra(from, true);
+      era3Devices?.setEra(from, true);
+      cluster.morphToEra(from, false, null); // put the space in the FROM state
+      seatCut(start);
+      os.setDesktopEra(to, true);
+      era3Devices?.setEra(to, true);
+      cluster.morphToEra(to, true, plan);
+      beginRelocation(`${from}-${to}`, plan);
+    };
+    if (debugOn) (window as { __relocate?: (from: EraKey, to: EraKey) => void }).__relocate = replayRelocation;
     mountDebugPanel(os, {
       app,
       // S58: route through the REAL transition path (os.onEraShift), not
@@ -5648,20 +5759,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // a relocation from its own starting seat and era WITHOUT needing the
       // update ritual that normally fires it — the only way to judge three
       // ~20-45 s camera moves by feel without playing thirty years first.
-      onRelocate: (from, to) => {
-        if (!cluster) return;
-        const plan = relocationFor(from, to);
-        if (!plan) return;
-        const start = from === 'e3' ? 90 : 0; // where that era is actually seated
-        os.setDesktopEra(from, true);
-        era3Devices?.setEra(from, true);
-        cluster.morphToEra(from, false, null); // put the space in the FROM state
-        seatCut(start);
-        os.setDesktopEra(to, true);
-        era3Devices?.setEra(to, true);
-        cluster.morphToEra(to, true, plan);
-        beginRelocation(`${from}-${to}`, plan);
-      },
+      onRelocate: (from, to) => replayRelocation(from, to),
       onClose: enterClose,
       onFacet: (f) => niche?.setFacet(f),
       onFlip: doFlip,

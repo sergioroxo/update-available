@@ -11,12 +11,21 @@
  * is by then the same room — and the particles thin out and drift on. What you see is the room turning into the next
  * room, never a dark frame.
  *
+ * ⚑ S347 (UiB job 6, his 9 Nov: "it goes dark… the particles carrying the next view are dark brown squares") — the
+ * darkness was the LIGHT, not this picture: the photograph matches the live room (measured 134 vs 133 of 255), but
+ * the rooms it photographed had been dimmed under the visitor (2003 → 2016's 'hold' rig, 2016 → 2026's early cold).
+ * cluster.ts now lights the destination before it is photographed and never dims the room you sit in. And the
+ * particles GLINT: each one arriving (or leaving) carries a warm spark at its edge, drawn additively on a second
+ * plane, so the morph can only add light to the view. Reduced motion: a plain soft dissolve, no particles, no sparks.
+ *
  * One render of the destination per cut (a second camera, enabled for one frame, into a render target), one small
  * mask upload per visible coverage step (bucketed). On the desktop the plane fills the camera's frustum; in a headset
  * it is a head-locked square covering 130° and the capture is made at that field of view.
  */
 import * as pc from 'playcanvas';
 import { TIDY } from '../desktop/theme/calendar';
+import { MORPH_SHINE } from '../desktop/theme/morph';
+import { reducedMotion } from '../state/motion';
 
 export interface ViewMorph {
   /** render the view from `pose` (a world transform in the parent's space; `parent` null = the scene root) into the
@@ -46,8 +55,37 @@ export function mountViewMorph(app: pc.AppBase, camera: pc.Entity): ViewMorph {
     x: hash(i) * CELLS, y: hash(i + 1000) * CELLS, at: hash(i + 2000) * 0.85, size: 2 + hash(i + 3000) * 5,
     dx: (hash(i + 4000) - 0.5) * 14, dy: -4 - hash(i + 5000) * 10
   }));
+  // ⚑ S347 — the sparks: a second, additive canvas over the same particle field
+  const glow = document.createElement('canvas'); glow.width = CELLS; glow.height = CELLS;
+  const gctx = glow.getContext('2d')!;
+  const sparkRgb = (() => { const c = new pc.Color().fromString(MORPH_SHINE.spark); return `${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)}`; })();
+  const warmRgb = (() => { const c = new pc.Color().fromString(MORPH_SHINE.warm); return `${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)}`; })();
+  const drawGlow = (c: number, leaving: boolean): void => {
+    gctx.clearRect(0, 0, CELLS, CELLS);
+    for (const p of PARTS) {
+      if (p.at > c) continue;
+      // a spark while the particle is new (arriving) or going (leaving); gone once it has merged
+      const k = Math.min(1, (c - p.at) / 0.25);
+      const life = leaving ? Math.min(1, (c - p.at) / 0.18) * (1 - c) * 1.6 : 1 - k;
+      if (life <= 0.02) continue;
+      const grow = 1 + (c - p.at) * 3.5, drift = (leaving ? 1 - c : c) * (leaving ? 1.6 : 1);
+      const sz = p.size * grow, x = p.x + p.dx * drift - sz / 2, y = p.y + p.dy * drift - sz / 2;
+      const a = Math.min(0.9, 0.8 * life);
+      // the rim (warm) and a small bright pixel-cross at one corner (the glint)
+      gctx.fillStyle = `rgba(${warmRgb},${a * 0.55})`;
+      gctx.fillRect(x - 1, y - 1, sz + 2, 1); gctx.fillRect(x - 1, y + sz, sz + 2, 1);
+      gctx.fillRect(x - 1, y, 1, sz); gctx.fillRect(x + sz, y, 1, sz);
+      gctx.fillStyle = `rgba(${sparkRgb},${a})`;
+      gctx.fillRect(x + sz - 1, y - 2, 1, 3); gctx.fillRect(x + sz - 2, y - 1, 3, 1);
+    }
+  };
   const drawMask = (c: number, leaving: boolean): void => {
     mctx.clearRect(0, 0, CELLS, CELLS);
+    if (reducedMotion()) {
+      // reduced motion: one soft dissolve, the whole picture at once — no particles, no drift, no sparks
+      mctx.fillStyle = `rgba(255,255,255,${Math.max(0, Math.min(1, c))})`; mctx.fillRect(0, 0, CELLS, CELLS);
+      return;
+    }
     const wash = Math.max(0, Math.min(1, (c - 0.62) / 0.3));
     if (wash > 0) { mctx.fillStyle = `rgba(255,255,255,${wash})`; mctx.fillRect(0, 0, CELLS, CELLS); }
     for (const p of PARTS) {
@@ -103,6 +141,30 @@ export function mountViewMorph(app: pc.AppBase, camera: pc.Entity): ViewMorph {
   plane.setLocalEulerAngles(90, 0, 0);
   plane.enabled = false;
   camera.addChild(plane);
+  // ⚑ S347 — the sparks' plane, just in front of the picture, ADDITIVE (it can only brighten)
+  const glowTex = new pc.Texture(app.graphicsDevice, {
+    width: CELLS, height: CELLS, format: pc.PIXELFORMAT_RGBA8, mipmaps: false,
+    minFilter: pc.FILTER_LINEAR, magFilter: pc.FILTER_LINEAR,
+    addressU: pc.ADDRESS_CLAMP_TO_EDGE, addressV: pc.ADDRESS_CLAMP_TO_EDGE
+  });
+  glowTex.setSource(glow);
+  const glowMat = new pc.StandardMaterial();
+  glowMat.useLighting = false;
+  glowMat.diffuse = new pc.Color(0, 0, 0);
+  glowMat.emissive = new pc.Color(1, 1, 1);
+  glowMat.emissiveMap = glowTex;
+  glowMat.opacityMap = glowTex;
+  glowMat.opacityMapChannel = 'a';
+  glowMat.blendType = pc.BLEND_ADDITIVEALPHA;
+  glowMat.depthTest = false; glowMat.depthWrite = false;
+  glowMat.cull = pc.CULLFACE_NONE;
+  glowMat.update();
+  const glowPlane = new pc.Entity('xr-view-morph-glow');
+  glowPlane.addComponent('render', { type: 'plane', layers: [layer.id] });
+  glowPlane.render!.material = glowMat;
+  glowPlane.setLocalEulerAngles(90, 0, 0);
+  glowPlane.enabled = false;
+  camera.addChild(glowPlane);
 
   // ── the capture camera: enabled for exactly one frame per capture ──
   const capCam = new pc.Entity('xr-view-morph-capture');
@@ -115,12 +177,17 @@ export function mountViewMorph(app: pc.AppBase, camera: pc.Entity): ViewMorph {
   });
 
   const fitPlane = (): void => {
-    if (xrMode) { const s = 2 * XR_DIST * Math.tan(XR_FOV / 2 * Math.PI / 180); plane.setLocalPosition(0, 0, -XR_DIST); plane.setLocalScale(s, 1, s); return; }
+    if (xrMode) {
+      const s = 2 * XR_DIST * Math.tan(XR_FOV / 2 * Math.PI / 180); plane.setLocalPosition(0, 0, -XR_DIST); plane.setLocalScale(s, 1, s);
+      const g = s * 0.99; glowPlane.setLocalPosition(0, 0, -XR_DIST * 0.99); glowPlane.setLocalScale(g, 1, g);
+      return;
+    }
     const cam = camera.camera!, d = Math.max(0.1, cam.nearClip * 2);
     const aspect = app.graphicsDevice.width / Math.max(1, app.graphicsDevice.height);
     const vfov = cam.horizontalFov ? 2 * Math.atan(Math.tan(cam.fov * Math.PI / 360) / aspect) : cam.fov * Math.PI / 180;
     const h = 2 * d * Math.tan(vfov / 2) * 1.02;
     plane.setLocalPosition(0, 0, -d); plane.setLocalScale(h * aspect, 1, h);
+    glowPlane.setLocalPosition(0, 0, -d * 0.99); glowPlane.setLocalScale(h * aspect * 0.99, 1, h * 0.99);
   };
 
   return {
@@ -149,13 +216,16 @@ export function mountViewMorph(app: pc.AppBase, camera: pc.Entity): ViewMorph {
       else if (material.emissiveMap !== rtTex) { material.emissiveMap = rtTex; material.emissive = new pc.Color(1, 1, 1); material.update(); }
       fitPlane();
       plane.enabled = true; visible = true;
+      const sparks = !reducedMotion();
+      glowPlane.enabled = sparks;
       const bucket = Math.floor(cov * 120) * 2 + (leaving ? 1 : 0);
       if (bucket === lastBucket) return;
       lastBucket = bucket;
       drawMask(cov, leaving);
       maskTex.upload();
+      if (sparks) { drawGlow(cov, leaving); glowTex.upload(); }
     },
-    hide() { plane.enabled = false; visible = false; lastBucket = -1; },
+    hide() { plane.enabled = false; glowPlane.enabled = false; visible = false; lastBucket = -1; },
     get visible() { return visible; },
     get captured() { return captured; },
     get layerId() { return layer.id; }

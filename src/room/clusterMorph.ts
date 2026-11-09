@@ -23,10 +23,18 @@ import * as pc from 'playcanvas';
 import { RoomHandles, PropHandle, PropDef, hex, spawnProp } from './era1room';
 import era1 from '../../data/room/era1.json';
 import deltas from '../../data/room/reinterp_deltas.json';
+import { MORPH_SHINE } from '../desktop/theme/morph';
+import { MorphShine, type ShineSource } from './morphShine';
 
 const CASCADE = 5.2;       // s for the sweep to cross the whole room
 const PROP_DUR = 1.3;      // s each element takes to resolve
 const GLITCH_FRAC = 0.42;  // fraction of a prop's transition spent glitching
+/** ⚑ S347 — reduced motion: one gentle cross-change of everything at once, this long (no glitch, no shine, no glints) */
+const REDUCED_SECONDS = 3.0;
+/** ⚑ S347 — the shine's twinkle: slow and smooth, well under 3 Hz, so a changing prop glows and breathes, never strobes */
+const TWINKLE_HZ = 2.4;
+/** ⚑ S347 — the glitch's scale jitter is stepped (it is a glitch), re-rolled this often; it moves, it never flashes */
+const JITTER_STEP = 0.075;
 
 interface Delta {
   // `model` here (Session 54): a baseline era1.json prop can now be upgraded
@@ -154,9 +162,25 @@ interface Plan {
   fromPos: pc.Vec3; toPos: pc.Vec3;
   fromScale: pc.Vec3; toScale: pc.Vec3;
   startT: number;
+  /** ⚑ S347 — a MODEL (or composite) prop folds too now: its wrapper's own scale × a factor 0…1, and back to exactly
+   *  `base` when the plan ends. They used to pop in and out at the sweep's start, which is most of the furniture. */
+  model?: { base: pc.Vec3; from: number; to: number };
+  /** per-plan seeds: the twinkle's phase and the jitter's stream */
+  phase: number; jitter: number; jitterAt: number;
 }
 
 const ease = (k: number): number => k * k * (3 - 2 * k);
+/** ⚑ S347 — the shine of one changing thing over its own change (0…1): a quick rise as it starts to change, then it
+ *  settles out by just past the glitch's end, so the room glows where the fold is passing and nowhere else */
+const shineOf = (k: number): number => {
+  if (k <= 0 || k >= GLITCH_FRAC + 0.18) return 0;
+  if (k < 0.07) return ease(k / 0.07);
+  const d = (k - 0.07) / (GLITCH_FRAC + 0.18 - 0.07);
+  return 1 - ease(d);
+};
+/** a fold arriving overshoots a little and settles (the 'fold into place'); a fold leaving just goes */
+const backOut = (k: number): number => { const c = 1.6; const u = k - 1; return 1 + (c + 1) * u * u * u + c * u * u; };
+const SHINE = hex(MORPH_SHINE.warm);
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 export class ClusterMorph {
@@ -180,10 +204,20 @@ export class ClusterMorph {
    *  retire exactly as the data already dictates — this is a pure ADDITIVE
    *  override, never touched unless the belongings beat sets it. */
   private keptIds = new Set<string>();
+  /** ⚑ S347 — this cascade is the gentle reduced-motion cross-change */
+  private reduced = false;
+  private endT = 0;
+  /** ⚑ S347 — the travelling light and the glints (morphShine.ts) */
+  private readonly shine: MorphShine;
+  private readonly sources: ShineSource[] = [];
 
-  constructor(private readonly room: RoomHandles) {}
+  constructor(private readonly room: RoomHandles) {
+    this.shine = new MorphShine(room.root);
+  }
 
   get running(): boolean { return this.active; }
+  /** for probes: the shine's light and glints right now */
+  get shineState(): { live: boolean; glints: number; light: number } { return this.shine.state; }
   get stateName(): SpaceState { return SPACE_STATES[this.state]; }
 
   setKeptIds(ids: ReadonlySet<string>): void {
@@ -256,6 +290,8 @@ export class ClusterMorph {
 
   /** snap the whole space to a state (debug jumps; deterministic, reversible) */
   snapTo(idx: number): void {
+    this.restoreModelScales();
+    this.shine.stop();
     this.active = false; this.plans = [];
     this.state = idx;
     const targets = this.targetsFor(idx);
@@ -299,10 +335,19 @@ export class ClusterMorph {
    * Bring the space to state `idx`. `animate` = the narrative cascade (from
    * state idx−1); otherwise SNAP. Deterministic and reversible either way.
    */
+  /** a model plan cut short (a skip, a snap) gives its wrapper back its own scale before anything else touches it */
+  private restoreModelScales(): void {
+    for (const pl of this.plans) if (pl.model) pl.h.entity.setLocalScale(pl.model.base);
+  }
+
   goToState(idx: number, animate: boolean, pace = 1): void {
+    this.restoreModelScales();
     this.active = false; this.plans = [];
     this.pace = Math.max(0.1, pace);
-    if (!animate || reducedMotion() || idx <= 0) { this.snapTo(Math.max(0, idx)); return; }
+    // ⚑ S347 — reduced motion no longer SNAPS the room (his: "reduced-motion still works (a gentle cross-change with no
+    //   flicker)"): everything changes at once, gently, with no glitch, no jitter, no shine and no glints
+    this.reduced = reducedMotion();
+    if (!animate || idx <= 0) { this.snapTo(Math.max(0, idx)); return; }
 
     this.snapTo(idx - 1);
     this.state = idx;
@@ -324,13 +369,27 @@ export class ClusterMorph {
         h = this.spawnTarget(id, seed);
         if (!h.model && !h.composite && !tp?.present) h.entity.setLocalScale(0, 0, 0); // grows in from nothing
       }
-      // MODEL (and composite) props don't animate (a wrapper the morph must
-      // not distort): snap their presence AND position (see applyTarget's own
-      // note — a model prop can still relocate across eras) to the target,
-      // skipping the pos/scale cascade.
+      // MODEL (and composite) props are a wrapper the morph must not distort — so
+      // ⚑ S347 they FOLD as a whole instead of popping: the wrapper's own scale
+      // × a factor (0 → 1 arriving, with a small overshoot; 1 → 0 leaving), its
+      // position travelling with it (a model prop can still relocate across
+      // eras — see applyTarget's note), and exactly its own scale back at the end.
       if (h.model || h.composite) {
-        h.entity.enabled = !!tn?.present;
-        if (tn?.present) h.entity.setLocalPosition(tn.pos[0], tn.pos[1], tn.pos[2]);
+        const was = !!tp?.present, will = !!tn?.present;
+        const at = h.entity.getLocalPosition().clone();
+        const moves = will && tn ? Math.hypot(tn.pos[0] - at.x, tn.pos[1] - at.y, tn.pos[2] - at.z) > 1e-4 : false;
+        if (!was && !will) { h.entity.enabled = false; continue; }
+        if (was && will && !moves) { h.entity.enabled = true; continue; }
+        const base = h.entity.getLocalScale().clone();
+        h.entity.enabled = true;
+        if (!was) h.entity.setLocalScale(0, 0, 0);
+        this.plans.push({
+          h, fromColor: new pc.Color(), toColor: new pc.Color(),
+          fromPos: at, toPos: will && tn ? new pc.Vec3(tn.pos[0], tn.pos[1], tn.pos[2]) : at.clone(),
+          fromScale: base.clone(), toScale: base.clone(),
+          startT: 0, model: { base, from: was ? 1 : 0, to: will ? 1 : 0 },
+          phase: Math.random() * Math.PI * 2, jitter: 1, jitterAt: 0
+        });
         continue;
       }
       const toPresent = !!tn?.present;
@@ -343,7 +402,7 @@ export class ClusterMorph {
         toColor,
         fromPos: h.entity.getLocalPosition().clone(), toPos,
         fromScale: h.entity.getLocalScale().clone(), toScale,
-        startT: 0
+        startT: 0, phase: Math.random() * Math.PI * 2, jitter: 1, jitterAt: 0
       });
     }
 
@@ -353,22 +412,71 @@ export class ClusterMorph {
       return (pa.x + pa.z) - (pb.x + pb.z);
     });
     const cascade = CASCADE * this.pace;
-    const propDur = PROP_DUR * this.pace;
-    sorted.forEach((pl, i) => { pl.startT = (i / Math.max(1, sorted.length - 1)) * (cascade - propDur); });
+    const propDur = this.propDur;
+    if (this.reduced) {
+      // one gentle cross-change: everything at once, over REDUCED_SECONDS (never longer than the leg it is part of)
+      for (const pl of sorted) pl.startT = 0;
+      this.endT = propDur;
+    } else {
+      sorted.forEach((pl, i) => { pl.startT = (i / Math.max(1, sorted.length - 1)) * (cascade - propDur); });
+      this.endT = (CASCADE + PROP_DUR) * this.pace;
+    }
 
     this.active = true; this.t = 0;
   }
 
+  /** how long one element takes to resolve in THIS cascade */
+  private get propDur(): number {
+    return this.reduced ? Math.min(REDUCED_SECONDS, (CASCADE + PROP_DUR) * this.pace) : PROP_DUR * this.pace;
+  }
+
   update(dt: number): void {
-    if (!this.active) return;
+    if (!this.active) {
+      // the glints thrown off the last things to change drift on and fade after the fold has passed
+      if (this.shine.state.live) this.shine.update(dt, []);
+      return;
+    }
     this.t += dt;
-    const propDur = PROP_DUR * this.pace;
+    const propDur = this.propDur;
+    this.sources.length = 0;
 
     for (const pl of this.plans) {
       const local = (this.t - pl.startT) / propDur;
       if (local <= 0) continue;
       const k = Math.min(1, local);
       const e = ease(k);
+      // ⚑ S347 — THE SHINE (his: "the one that shines and changes"). Where the old glitch flashed a prop's emissive on
+      //   and off at random every frame (a strobe, at the frame rate), a changing thing now GLOWS warm as the fold
+      //   reaches it and settles out as it lands, breathing at TWINKLE_HZ. Reduced motion: no shine at all.
+      const sh = this.reduced ? 0 : shineOf(k);
+      const tw = 0.8 + 0.2 * Math.sin(2 * Math.PI * TWINKLE_HZ * this.t + pl.phase);
+      // the glitch's scale jitter, stepped (it is a glitch) and only while it shines
+      if (!this.reduced && k < GLITCH_FRAC && this.t >= pl.jitterAt) {
+        pl.jitter = 1 + (Math.random() * 0.14 - 0.07) * (1 - k / GLITCH_FRAC);
+        pl.jitterAt = this.t + JITTER_STEP;
+      } else if (this.reduced || k >= GLITCH_FRAC) pl.jitter = 1;
+
+      const px = lerp(pl.fromPos.x, pl.toPos.x, e), py = lerp(pl.fromPos.y, pl.toPos.y, e), pz = lerp(pl.fromPos.z, pl.toPos.z, e);
+      pl.h.entity.setLocalPosition(px, py, pz);
+
+      if (pl.model) {
+        // a model folds as a whole: arriving it grows from nothing with a small overshoot, leaving it shrinks away
+        const m = pl.model;
+        const f = this.reduced
+          ? (m.to > m.from ? (k >= 0.5 ? 1 : 0) : (k >= 0.5 ? 0 : 1))   // reduced: present or not, swapped at the midpoint
+          : m.to > m.from ? Math.max(0, backOut(k)) : m.to < m.from ? 1 - e : 1;
+        const j = pl.jitter;
+        pl.h.entity.setLocalScale(m.base.x * f * j, m.base.y * f * j, m.base.z * f * j);
+        if (k >= 1) {
+          pl.h.entity.setLocalScale(m.base);
+          if (m.to === 0) pl.h.entity.enabled = false;
+        }
+        if (sh > 0) {
+          const s = pl.h.entity.getLocalScale();
+          this.sources.push({ x: px, y: py + 0.1, z: pz, hx: 0.18 * Math.max(0.3, f), hy: 0.16 * Math.max(0.3, f), hz: 0.18 * Math.max(0.3, f), w: sh * (s.x > 0 ? 1 : 0.5) });
+        }
+        continue;
+      }
 
       const col = pl.h.emissive ? pl.h.material.emissive : pl.h.material.diffuse;
       col.set(lerp(pl.fromColor.r, pl.toColor.r, k), lerp(pl.fromColor.g, pl.toColor.g, k), lerp(pl.fromColor.b, pl.toColor.b, k));
@@ -377,23 +485,27 @@ export class ClusterMorph {
       let sx = lerp(pl.fromScale.x, pl.toScale.x, e);
       let sy = lerp(pl.fromScale.y, pl.toScale.y, e);
       let sz = lerp(pl.fromScale.z, pl.toScale.z, e);
-      pl.h.entity.setLocalPosition(
-        lerp(pl.fromPos.x, pl.toPos.x, e), lerp(pl.fromPos.y, pl.toPos.y, e), lerp(pl.fromPos.z, pl.toPos.z, e)
-      );
-
-      // the glitch: a brief flicker + scale jitter as the element changes over
-      // (GLITCH_FRAC is a FRACTION of `k`, so it follows the pace for free)
-      if (k < GLITCH_FRAC && Math.random() < 0.55) {
-        const f = (1 - k / GLITCH_FRAC) * 0.7;
-        pl.h.material.emissive.set(col.r + f, col.g + f, col.b + f);
-        const j = 1 + (Math.random() * 0.14 - 0.07) * (1 - k / GLITCH_FRAC);
-        sx *= j; sy *= j; sz *= j;
+      if (sh > 0) {
+        // the glow: the prop's own colour lifted, and the lamp's warm over it
+        const g = sh * tw;
+        //   (S347: 0.3 / 0.5 — at 0.45 / 0.75 a monitor folding at arm's length lit the whole headset view to 169/255)
+        pl.h.material.emissive.set(col.r * 0.3 * g + SHINE.r * 0.5 * g + (pl.h.emissive ? col.r : 0),
+          col.g * 0.3 * g + SHINE.g * 0.5 * g + (pl.h.emissive ? col.g : 0),
+          col.b * 0.3 * g + SHINE.b * 0.5 * g + (pl.h.emissive ? col.b : 0));
+        // a big surface (a wall) shines as much as a small thing, so its weight is its size, capped
+        const area = Math.min(2.5, Math.max(0.25, Math.max(sx, sz) * sy));
+        this.sources.push({ x: px, y: py, z: pz, hx: sx / 2, hy: sy / 2, hz: sz / 2, w: sh * area });
       }
+      sx *= pl.jitter; sy *= pl.jitter; sz *= pl.jitter;
       pl.h.entity.setLocalScale(sx, sy, sz);
       pl.h.material.update();
     }
 
-    if (this.t > (CASCADE + PROP_DUR) * this.pace) this.active = false;
+    if (!this.reduced) this.shine.update(dt, this.sources);
+    if (this.t > this.endT) {
+      for (const pl of this.plans) if (pl.model) { pl.h.entity.setLocalScale(pl.model.base); if (pl.model.to === 0) pl.h.entity.enabled = false; }
+      this.active = false;
+    }
   }
 }
 
