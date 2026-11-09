@@ -2914,6 +2914,34 @@
      },
      {
       "k": "h3",
+      "t": "The year around Vera: 2016 in the news"
+     },
+     {
+      "k": "p",
+      "t": "The real, dated news behind the platform's \"Trending\" box in 2016. Even inside the system, the world outside agreed with the pressure: an election, and platforms hiding lesbian and gay content. Each link opens in a new tab."
+     },
+     {
+      "k": "links",
+      "items": [
+       {
+        "label": "NPR, 10 Nov 2016: LGBT rights activists fear the new administration will undo protections",
+        "url": "https://www.npr.org/2016/11/10/501610933/lgbt-rights-activists-fear-trump-will-undo-protections-created-under-obama",
+        "note": "Two days after the US election of 8 Nov 2016, four weeks before Vera's Tuesday."
+       },
+       {
+        "label": "HuffPost UK, 26 May 2016: a photo app hides recent posts tagged #lesbian, #gays and #bi",
+        "url": "https://www.huffingtonpost.co.uk/entry/instagram-censorhip-hashtag-lesbian-gays-bi_uk_574704fae4b03e9b9ed5724a",
+        "note": "The platform said the tags carried rule-breaking content; lesbian and gay posts disappeared from the most-recent view."
+       },
+       {
+        "label": "The Jakarta Post, 13 Feb 2016: a messaging app removes same-sex couple stickers after a government warning",
+        "url": "https://www.thejakartapost.com/news/2016/02/13/messaging-app-concedes-government-warnings-removes-same-sex-emoticons.html",
+        "note": "A platform removes queer content to keep a government calm."
+       }
+      ]
+     },
+     {
+      "k": "h3",
       "t": "References this year drew on"
      },
      {

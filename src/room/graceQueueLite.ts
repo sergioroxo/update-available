@@ -196,7 +196,10 @@ interface SubmissionDef {
   corrections: number[];
 }
 
-const SUBMISSIONS = q.submissions as SubmissionDef[];
+// ⚑ S337 (his 9 Nov: "if they aren't relevant let's retire them"; Noa "can just exist in 2026") — the day has ONE
+//   testimony, Renata's. Noa, Deb M. and Marisol stay in data/dialog/s3_queue.json as a record but are off the board:
+//   no "Next story" leads to them. (Deb M. remains a row in the campaign kit, which lists stories already published.)
+const SUBMISSIONS = (q.submissions as SubmissionDef[]).slice(0, 1);
 
 /** one job on the day's board. See `_docBoard` in data/dialog/s3_queue.json:
  *  ⚑ the tiles are TASK KINDS, not submissions (Sérgio, 2026-08-24: "it was 6
