@@ -74,6 +74,15 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T47 ☑ S329 (moot: no handset) | Screen distance: the held/worn screens follow the headset, not the room; the 2016 monitor hangs over the desk edge | XR | C | M |
 | T48 | Hidden skip button: ~10 presses of the controller's back button (his note) — document for the team | XR | C | S |
 
+## Built 9 Nov
+
+- ☑ S332–S337: 2016 connections merged; Codex's small fixes + headset text (?quad=1); 2026 one screen, smaller text,
+  no auto-scroll, no controller; the 2016 freeze fixed at its root (the 2003→2016 update was disconnecting her phone);
+  one testimony; the 2016 news sources on the site; GracePlatform's music. **Full entrance walk reaches the Close.**
+- ☑ itch ZIP rebuilt: release/your-update-has-failed_itch_2026-11-09.zip (49.0 MB, 266 files), loads clean in an
+  itch-style iframe. ☐ he uploads it.
+- 🥽 Next headset session: 2016 (four jobs, refuse, BANNED card, Malta, the music) and 2026 (one screen, the seat).
+
 ## Built 8 Nov (merged; awaiting the headset)
 
 - ☑ S329 2016 cadence (one phone, one voice at a time, the update with a reason, the kit, the guide, the Wick card).
@@ -135,10 +144,10 @@ His answers, 8 Nov:
 | id | what | where | owner | size |
 |---|---|---|---|---|
 | T51 | Remove the red box beside the mouse on the 1997 desk | 1997 room | C | S |
-| T53 | 2016: retire Noa, Deb M. and Marisol from "Next story" (Deb M. stays a row in the campaign kit) — his 9 Nov | 2016 | C | S |
+| T53 ☑ S337 | 2016: retire Noa, Deb M. and Marisol from "Next story" (Deb M. stays a row in the campaign kit) — his 9 Nov | 2016 | C | S |
 | T54 | Noa's story moves to 2026 (his 9 Nov: "Noa can just exist in 2026") — a different person from Maya (guard 1); where she appears is to be designed | 2026 | C+S | M |
-| T55 | The 2016 Trending sources (US election, NPR; photo app hiding #lesbian, HuffPost UK; same-sex stickers removed, Jakarta Post) go on the 2016 site's Sources tab — his yes, 9 Nov | 2016 site | C | S |
-| T56 | A GracePlatform music loop, made by Claude in code (no licence question): calm 2016 "wellness app" pads + plucked melody, 60–90 s, seamless | 2016 | C | S |
+| T55 ☑ S337 | The 2016 Trending sources (US election, NPR; photo app hiding #lesbian, HuffPost UK; same-sex stickers removed, Jakarta Post) go on the 2016 site's Sources tab — his yes, 9 Nov | 2016 site | C | S |
+| T56 ☑ S337 | A GracePlatform music loop, made by Claude in code (no licence question): calm 2016 "wellness app" pads + plucked melody, 60–90 s, seamless | 2016 | C | S |
 | T52 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
 
 ## Codex
