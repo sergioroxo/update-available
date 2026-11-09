@@ -90,6 +90,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   else if (state.rung === 'personalise') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'form') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'root') buttons = [['lg-take', copy.root.yes], ['lg-later', copy.form.no]];
+  else if (state.rung === 'harbor') buttons = [['lg-take', copy.harbor.yes], ['lg-later', copy.form.no]];   // S345
   else if (pointing) buttons = [...(state.act && (!state.act.startsWith('press:') || hits.some(h => h.id === state.act?.slice(6)) || remoteActions.includes(state.act)) ? [['lg-take', copy.ui.take] as [string, string]] : []), ['lg-ok', copy.ui.ok]];
   else buttons = [...(state.targets.length || state.beat !== 'cut' ? [['lg-show', copy.ui.show] as [string, string]] : []), ['lg-later', copy.ui.later]];
   let bx = x + 12;

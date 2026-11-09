@@ -19,6 +19,7 @@
   "dev_matchmade": "your console",
   "devAim_pick": "{name} — pick it up",
   "devAim_drop": "{name} — put it down",
+  "devAim_body": "{name} — point at a button or the screen",
   "devAim_screen": "{name} — the screen",
   "devAim_left": "the d-pad — left (choose the mould)",
   "devAim_right": "the d-pad — right (choose the mould)",

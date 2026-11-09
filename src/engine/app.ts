@@ -1171,7 +1171,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (rest && ray.p0.distance(rest) < 0.35 && era3Devices?.carryVisor(ray.p0.clone().add(ray.p1.clone().sub(ray.p0).normalize().mulScalar(0.08)))) {
           grabbingSource = source; carryingVisor = true; return true;
         }
-        if (!devices?.grab(ray, cluster.era, grabHand)) return false;
+        if (!devices?.grab(ray, cluster.era, grabHand, logicalHead().getPosition().clone())) return false;
         grabbingSource = source; grabbingEra = cluster.era; return true;
       },
       onHold: (source, physical) => {
@@ -1194,7 +1194,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         }
         if (source !== grabbingSource || !grabbingEra) return;
         if (xrComfort.busy || cluster?.era !== grabbingEra || gameMenuBus.isOpen) { devices?.release(grabbingEra); grabbingSource = null; return; }
-        poseGrabHand(xrComfort.logicalRay(physical)); devices?.follow(grabbingEra, grabHand);
+        poseGrabHand(xrComfort.logicalRay(physical)); devices?.follow(grabbingEra, grabHand, logicalHead().getPosition().clone());
       },
       onRelease: source => { if (carryingPhone && source === grabbingSource) { era3Devices?.carryPhone(null); carryingPhone = false; grabbingSource = null; return; } if (carryingVisor && source === grabbingSource) { era3Devices?.carryVisor(null); carryingVisor = false; grabbingSource = null; return; } if (source === grabbingSource && grabbingEra) { devices?.release(grabbingEra); grabbingSource = null; grabbingEra = null; } },
       onTouch: (source, physical) => {
@@ -3718,18 +3718,29 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   function aimNameUnderRay(ray: Ray): string | null {
     const A = aimStrings as unknown as Record<string, string>;
-    if (os.isOff) return rayHitsPointR(ray, POWER_BTN, 0.08) ? A.power : null;
+    aimAt = null;
+    if (os.isOff) return hitAt(ray, POWER_BTN, 0.08) ? A.power : null;
     if (!os.inDesktop) return null;
-    if (options.reinterp && os.desktopIdleForProps?.() && rayHitsPointR(ray, RACKET_HIT, 0.3)) return A.racket;
-    if (options.reinterp && os.desktopIdleForProps?.() && rayHitsPointR(ray, RELEASE_POSTER_HIT, 0.24)) return A.releasePoster;
-    if (os.era === 'e1' && !os.kit && rayHitsPointR(ray, KIT_FLOPPY, 0.13)) return A.disk;   // S271: 1997's only
-    if (os.era === 'e2' && rayHitsPointR(ray, KEYCHAIN_HIT, 0.07)) return A.companion ?? null;   // S275
+    const devName = (): string | null => {
+      const dev = devices && cluster ? devices.aim(ray, cluster.era) : null;
+      if (!dev) return null;
+      aimAt = devices?.aimedAt(cluster!.era) ?? null;
+      const [game, what] = dev.split(':');
+      const name = A[`dev_${game}`] ?? '';
+      return (A[`devAim_${what}`] ?? A.devAim_screen).replace('{name}', name);
+    };
+    // S345 / T28 — a device in the hand is in front of everything (as the press finds it, resolveTapRay)
+    if (devices && cluster && devices.held(cluster.era)) return devName();
+    if (options.reinterp && os.desktopIdleForProps?.() && hitAt(ray, RACKET_HIT, 0.3)) return A.racket;
+    if (options.reinterp && os.desktopIdleForProps?.() && hitAt(ray, RELEASE_POSTER_HIT, 0.24)) return A.releasePoster;
+    if (os.era === 'e1' && !os.kit && hitAt(ray, KIT_FLOPPY, 0.13)) return A.disk;   // S271: 1997's only
+    if (os.era === 'e2' && hitAt(ray, KEYCHAIN_HIT, 0.07)) return A.companion ?? null;   // S275
     const belongings = os.belongings;
     if (belongings?.windowOpen) {
       const offered = belongings.offered;
       for (const [id, hit] of Object.entries(BELONGINGS_HIT)) {
         if (!offered.has(id)) continue;
-        if (rayHitsPointR(ray, hit.p, hit.r)) {
+        if (hitAt(ray, hit.p, hit.r)) {
           return (belongings.isKept(id) ? A.putBack : A.keep).replace('{label}', belongings.labelOf(id));
         }
       }
@@ -3737,25 +3748,28 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (tapes && os.era === 'e1') {
       for (const id of Object.keys(TAPE_SHELF) as TapeId[]) {
         if (tapes.inserted === id) continue;
-        if (rayHitsPointR(ray, TAPE_SHELF[id], TAPE_HIT_RADIUS)) return `\u25c8 ${tapes.def(id).shelfLabel}`;
+        if (hitAt(ray, TAPE_SHELF[id], TAPE_HIT_RADIUS)) return `\u25c8 ${tapes.def(id).shelfLabel}`;
       }
-      if (tapes.inserted && rayHitsPointR(ray, BOOMBOX_HIT, BOOMBOX_HIT_RADIUS)) return tapes.isPlaying ? A.boomboxStop : A.boomboxPlay;
+      if (tapes.inserted && hitAt(ray, BOOMBOX_HIT, BOOMBOX_HIT_RADIUS)) return tapes.isPlaying ? A.boomboxStop : A.boomboxPlay;
     }
     if (toDesktopR(ray)) return null;   // the screen names its own controls
     if (movementNodes && cluster && !scriptedBusy()) {
       for (const n of movementNodes.available(cluster.era, seatYaw)) {
         if (!movementNodes.isVisible(n.id)) continue;
-        if (rayHitsPointR(ray, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) return A.move.replace('{label}', n.label);
+        if (hitAt(ray, { x: n.marker[0], y: n.marker[1], z: n.marker[2] }, MARKER_HIT_RADIUS)) return A.move.replace('{label}', n.label);
       }
     }
-    const dev = devices && cluster && os.inDesktop ? devices.aim(ray, cluster.era) : null;
-    if (dev) {
-      const [game, what] = dev.split(':');
-      const name = A[`dev_${game}`] ?? '';
-      return (A[`devAim_${what}`] ?? A.devAim_screen).replace('{name}', name);
-    }
+    const dev = devName();
+    if (dev) return dev;
     const inst = institutionUnderRay(ray);
+    if (inst) aimAt = (inst as { at?: { x: number; y: number; z: number } }).at ?? null;
     return inst ? A[inst.key] ?? null : null;
+  }
+  /** ⚑ S345 / T29 — the room point the last aim named (room coordinates), so the headset's ray can end on it */
+  let aimAt: { x: number; y: number; z: number } | null = null;
+  function hitAt(ray: Ray, p: { x: number; y: number; z: number }, radius: number): boolean {
+    if (!rayHitsPointR(ray, p, radius)) return false;
+    aimAt = p; return true;
   }
   /** the mouse's last resting place over the canvas (null once it leaves) */
   let hoverPointer: { x: number; y: number } | null = null;
@@ -4204,7 +4218,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   exactly where a held device is held, so while a device is in the hand the plate stays down
     const deviceInHand = !!(devices && cluster && devices.held(cluster.era));
     // S291: while the site window is up, the helper's plate stays down (it would hang over the window's foot)
-    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ?? xrHelperText(helper?.text() ?? null, dt));
+    // ⚑ S345 / T29 — what the ray is on is named at the ray's end (a small tag pinned to the mark, xrFrame.setAim), not
+    //   on the helper's plate; the plate keeps the helper's own lines, and stays down while a device is in the hand
+    const aimShown = xr?.active && !gameMenuBus.isOpen && !siteViewerXr?.isOpen && xrComfort.calibrated ? aimName : null;
+    xrInput?.setAimTarget(aimShown && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
+    xrFrame?.setAim(aimShown, aimShown ? xrInput?.end() ?? null : null, xrInput?.ray()?.p0 ?? null);
+    if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ? null : xrHelperText(helper?.text() ?? null, dt));
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
     //   menu ("The frame never plays"). Pause them once on the way in, give them back once on the way out.

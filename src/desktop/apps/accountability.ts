@@ -66,17 +66,11 @@ const ERR = caleb.network.error as { title: string; code: string; heading: strin
 // THE FLAG, and if its text cannot be read, the thesis is lost.
 const A = calebPacing.alert;
 const MAIL = calebPacing.mail;
-const HOLD: Record<Exclude<AlertStep, 'caught' | 'closed'>, number> = {
-  stop: A.stopSeconds,
-  block: A.blockSeconds,
-  wanting: A.wantingSeconds,
-  streak: A.streakSeconds,
-  system: A.systemSeconds,
-  sad: A.sadHoldSeconds
-};
 /** ⚑ S342 (his 9 Nov answer 1: "the accountability alert runs too fast… a Next button… if nobody presses, it moves on
  *  by itself after about 20 s. No visible countdown") — each step now waits for Next, or this many seconds */
 const AUTO_NEXT = (A as unknown as { autoNextSeconds: number }).autoNextSeconds;
+/** ⚑ S345 (his 9 Nov answer 5) — the silent steps (the falling streak, the sad hold) move on by themselves */
+const SILENT_NEXT = (A as unknown as { silentNextSeconds: number }).silentNextSeconds;
 const STREAK_FALL = A.streakFallSeconds;   // s for the counter to run 412 → 0
 const GLITCH_STEP = MAIL.streakGlitchStepSeconds; // s per state of the dying field (S2R.5)
 const MAIL_ARRIVE = MAIL.arriveGlitchSeconds;     // s of the envelope's glitch entrance
@@ -302,7 +296,8 @@ export class AccountabilityApp {
     this.stepT += dt;
     // ⚑ S342 — the player sets the pace: Next, or AUTO_NEXT of quiet (the authored HOLDs are the floor a press
     //   cannot undercut only for the falling streak, which finishes its fall before the step can go)
-    const hold = this.nextPressed ? (this.step === 'streak' ? Math.min(HOLD.streak, STREAK_FALL) : 0) : AUTO_NEXT;
+    //   ⚑ S345 — the silent steps have no Next: they go after SILENT_NEXT (the streak's fall fits inside it)
+    const hold = this.silentStep() ? Math.max(SILENT_NEXT, STREAK_FALL) : this.nextPressed ? 0 : AUTO_NEXT;
     if (this.stepT < hold) return;
     this.nextPressed = false;
     this.stepT = 0;
@@ -442,12 +437,17 @@ export class AccountabilityApp {
     }
     if (this.streakT >= 0) this.drawStreak(ctx, L, c.y + 66);
     if (this.step === 'caught') this.drawAlertButtons(ctx, c);
-    else if (this.step !== 'closed') {
+    else if (this.step !== 'closed' && !this.silentStep()) {
       // ⚑ S342 — Next, in the Messenger's Wait / Go on style (no countdown is shown)
       const by = c.y + c.h - 22, nx = c.x + c.w - 92;
       ui.button(ctx, nx, by, 88, 20, caleb.alert.nextLabel, { hover: this.hover === 'alert-next', primary: true });
       this.hits.push({ x: nx, y: by, w: 88, h: 20, id: 'alert-next' });
     }
+  }
+
+  /** ⚑ S345 — a step with no words: the falling streak (unless the system's extra line rides on it) and the sad hold */
+  private silentStep(): boolean {
+    return this.step === 'sad' || (this.step === 'streak' && !this.extraSystemLine);
   }
 
   /** ⚑ S342 — Next was pressed on this step */

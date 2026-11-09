@@ -14,6 +14,22 @@ import { ERA4 } from '../desktop/theme/era4';
 const STUB_HAND = 0.12, STUB_PAD = 0.25;
 const WAND_THICK = 0.004;
 const DOT = 0.009, DOT_FLASH = 0.026, FLASH_MS = 220;
+/**
+ * ⚑ S345 / T29 (his 8 Nov headset: "the box crosses over my line of interaction"; answer 20: "The pointer's box can stay,
+ * smaller, and visibly connected to the ray, not vague and floating") — the pointer's mark is a small square frame lying
+ * ON the surface the ray lands on (turned to it), the ray ending in its centre; on a room thing it is turned to the eye,
+ * with a short leader to the thing the ray is on. Its side grows with distance so it is the same size in the view
+ * (~0.7°), within these bounds; it swells for a moment on a press.
+ */
+const MARK = 0.012, MARK_MIN = 0.006, MARK_MAX = 0.02;
+/**
+ * ⚑ S345 / T11 (his 8 Nov headset: presses "on boxes" in 2026 he was not pointing at) — a controller's select arrives on
+ * the trigger's RELEASE, with the pose of that moment, and pulling a trigger dips the controller: a 2° dip is ~3.5 cm at
+ * 2026's monitor (~47 of its 384 px), three rows of its tabs and bars. The press now goes where the ray was when the
+ * trigger began (as the pinch already does, S268), unless the hand travelled further than this while it was held (then it
+ * was a deliberate re-aim, and the release is where it aimed).
+ */
+const PRESS_TRAVEL_DEG = 10;
 
 export interface XrInput {
   /** the primary controller's ray this frame, or null (no session / no controller) */
@@ -27,6 +43,11 @@ export interface XrInput {
   handPalms(): pc.Vec3[];
   /** S270g / VR-08 — 'own' or 'programme': the programme redraws the visitor's hands while the visor is on */
   setStyle(style: 'own' | 'programme'): void;
+  /** ⚑ S345 / T29 — the room thing the app's aim names this frame (physical point), or null: the ray ends on it */
+  setAimTarget(p: pc.Vec3 | null): void;
+  /** ⚑ S345 / T29 — where the primary ray ends this frame (physical): on a surface (with its normal), on the aimed thing,
+   *  or at the end of its short stub; null with no ray */
+  end(): { point: pc.Vec3; normal: pc.Vec3 | null; landed: boolean } | null;
   /** S270f — the left wrist (hand) or left grip (controller), where the Menu tab rides; null when not tracked */
   wrist(): { at: pc.Vec3; palm: pc.Vec3 | null } | null;
   /** once per frame: the wands follow the hands */
@@ -120,15 +141,29 @@ export function mountXrInput(app: pc.Application, opts: {
   };
   const onRemove = (src: pc.XrInputSource): void => {
     opts.onTouch?.(src, null);
-    opts.onRelease?.(src); dots.get(src)?.destroy(); dots.delete(src); hands.get(src)?.entity.destroy(); tips.get(src)?.entity.destroy(); tips.delete(src); meshes.get(src)?.destroy(); meshes.delete(src); hands.delete(src); gestures.delete(src);
+    opts.onRelease?.(src); selectStart.delete(src); ends.delete(src); dots.get(src)?.destroy(); dots.delete(src); hands.get(src)?.entity.destroy(); tips.get(src)?.entity.destroy(); tips.delete(src); meshes.get(src)?.destroy(); meshes.delete(src); hands.delete(src); gestures.delete(src);
     wands.get(src)?.destroy();
     wands.delete(src);
     if (primary === src) primary = wands.keys().next().value ?? null;
   };
+  const selectStart = new Map<pc.XrInputSource, Ray>();
+  const onSelectStart = (src: pc.XrInputSource): void => {
+    if (src.hand) return;
+    const r = rayOf(src);
+    if (r) selectStart.set(src, r); else selectStart.delete(src);
+  };
   const onSelect = (src: pc.XrInputSource): void => {
     if (src.hand) return; // pinch hysteresis below owns hand selects, never double-fire native select
     primary = src;
-    const r = rayOf(src);
+    const now = rayOf(src);
+    const start = selectStart.get(src) ?? null;
+    selectStart.delete(src);
+    // S345 / T11 — the aim when the trigger began, not the dip of its release
+    let r = now;
+    if (start && now) {
+      const a = start.p1.clone().sub(start.p0).normalize(), b = now.p1.clone().sub(now.p0).normalize();
+      if (Math.acos(Math.max(-1, Math.min(1, a.dot(b)))) * 180 / Math.PI <= PRESS_TRAVEL_DEG) r = start;
+    }
     if (!r) return;
     choose(r, src);
   };
@@ -151,11 +186,12 @@ export function mountXrInput(app: pc.Application, opts: {
     opts.onSqueeze();
   };
   const release = (src: pc.XrInputSource): void => { const state = gestures.get(src); if (state?.held) opts.onRelease?.(src); if (state) state.held = false; };
-  const onEnd = (): void => { for (const src of wands.keys()) { opts.onTouch?.(src, null); release(src); const state = gestures.get(src); if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
+  const onEnd = (): void => { selectStart.clear(); for (const src of wands.keys()) { opts.onTouch?.(src, null); release(src); const state = gestures.get(src); if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
 
   if (xr) {
     xr.input.on('add', onAdd);
     xr.input.on('remove', onRemove);
+    xr.input.on('selectstart', onSelectStart);
     xr.input.on('select', onSelect);
     xr.input.on('squeezestart', onSqueeze);
     xr.input.on('squeezeend', release);
@@ -164,9 +200,10 @@ export function mountXrInput(app: pc.Application, opts: {
     for (const src of xr.input.inputSources) onAdd(src);
   }
 
-  function landing(ray: Ray): { point: pc.Vec3; distance: number } | null {
+  type Landing = { point: pc.Vec3; distance: number; normal: pc.Vec3 | null; target?: pc.Vec3 };
+  function landing(ray: Ray): Landing | null {
     const r = opts.menuOpen() ? ray : opts.toSceneRay?.(ray) ?? ray;
-    let best: { point: pc.Vec3; distance: number } | null = null;
+    let best: Landing | null = null;
     app.root.forEach(node => {
       const e = node as pc.Entity;
       if (!e.enabled || e.name === 'xr-frame-hint' || (opts.menuOpen() && e.name !== 'xr-frame-menu' && e.name !== 'xr-frame-site') || e.render?.type !== 'plane' || !/screen|era3-device|setup-in-stars|xr-frame|lambyos-home/.test(e.name)) return;
@@ -180,14 +217,28 @@ export function mountXrInput(app: pc.Application, opts: {
       const point = new pc.Vec3().lerp(a, b, t);
       if (Math.abs(point.x) > 0.5 || Math.abs(point.z) > 0.5) return;
       let world = e.getWorldTransform().transformPoint(point);
-      if (!physical) world = opts.fromScenePoint?.(world) ?? world;
+      let tip = e.getWorldTransform().transformPoint(point.clone().add(new pc.Vec3(0, 1, 0)));
+      if (!physical) { world = opts.fromScenePoint?.(world) ?? world; tip = opts.fromScenePoint?.(tip) ?? tip; }
       const distance = world.distance(ray.p0);
-      if (!best || distance < best.distance) best = { point: world, distance };
+      // the surface's normal, turned to face the ray (a plane is seen from either side)
+      const normal = tip.sub(world).normalize();
+      if (normal.dot(ray.p1.clone().sub(ray.p0)) > 0) normal.mulScalar(-1);
+      if (!best || distance < best.distance) best = { point: world, distance, normal };
     });
     return best;
   }
+  /** S345 / T29 — the aimed room thing on this ray: the ray ends where it passes it */
+  let aimTarget: pc.Vec3 | null = null;
+  function onTarget(ray: Ray): Landing | null {
+    if (!aimTarget) return null;
+    const dir = ray.p1.clone().sub(ray.p0).normalize();
+    const t = aimTarget.clone().sub(ray.p0).dot(dir);
+    if (t < 0.05) return null;
+    return { point: ray.p0.clone().add(dir.mulScalar(t)), distance: t, normal: null, target: aimTarget.clone() };
+  }
+  const ends = new Map<pc.XrInputSource, { point: pc.Vec3; normal: pc.Vec3 | null; landed: boolean }>();
   /** One mesh per source: ray, pixel cursor and all hand joints share a draw call. */
-  function drawSource(src: pc.XrInputSource, ray: Ray, length: number, cursor: pc.Vec3 | null): void {
+  function drawSource(src: pc.XrInputSource, ray: Ray, length: number, cursor: Landing | null, swell = false): void {
     const vertices: number[] = [], indices: number[] = [];
     function box(at: pc.Vec3, size: pc.Vec3, rotation?: pc.Quat): void {
       const base = vertices.length / 3;
@@ -202,8 +253,27 @@ export function mountXrInput(app: pc.Application, opts: {
     const pose = new pc.Mat4().setLookAt(ray.p0, ray.p1, pc.Vec3.UP);
     // A vertical pointer still needs a valid basis.
     if (Math.abs(dir.y) > 0.99) pose.setLookAt(ray.p0, ray.p1, pc.Vec3.RIGHT);
-    box(ray.p0.clone().add(dir.mulScalar(length / 2)), new pc.Vec3(WAND_THICK/2, WAND_THICK/2, length/2), new pc.Quat().setFromMat4(pose));
-    if (cursor) box(cursor, new pc.Vec3(0.0045,0.0045,0.0045));
+    box(ray.p0.clone().add(dir.clone().mulScalar(length / 2)), new pc.Vec3(WAND_THICK/2, WAND_THICK/2, length/2), new pc.Quat().setFromMat4(pose));
+    if (cursor) {
+      // S345 / T29 — a small square frame where the ray lands, lying on the surface (or turned to the ray on a room thing)
+      const n = cursor.normal ?? dir.clone().mulScalar(-1);
+      const side = Math.min(MARK_MAX, Math.max(MARK_MIN, MARK * cursor.distance)) * (swell ? 1.8 : 1);
+      const bar = side * 0.2, half = side / 2, depth = 0.0008;
+      const at = cursor.point.clone().add(n.clone().mulScalar(0.002));
+      const m = new pc.Mat4().setLookAt(at, at.clone().sub(n), Math.abs(n.y) > 0.99 ? pc.Vec3.RIGHT : pc.Vec3.UP);
+      const q = new pc.Quat().setFromMat4(m);
+      const ax = q.transformVector(new pc.Vec3(1, 0, 0)), ay = q.transformVector(new pc.Vec3(0, 1, 0));
+      box(at.clone().add(ay.clone().mulScalar(half - bar / 2)), new pc.Vec3(half, bar / 2, depth), q);
+      box(at.clone().sub(ay.clone().mulScalar(half - bar / 2)), new pc.Vec3(half, bar / 2, depth), q);
+      box(at.clone().add(ax.clone().mulScalar(half - bar / 2)), new pc.Vec3(bar / 2, half - bar, depth), q);
+      box(at.clone().sub(ax.clone().mulScalar(half - bar / 2)), new pc.Vec3(bar / 2, half - bar, depth), q);
+      // …and on a room thing the ray only passes, a short leader from the mark to the thing itself
+      if (cursor.target && cursor.target.distance(cursor.point) > side) {
+        const a = cursor.point, b = cursor.target, len = a.distance(b);
+        const lm = new pc.Mat4().setLookAt(a, b, Math.abs(b.clone().sub(a).normalize().y) > 0.99 ? pc.Vec3.RIGHT : pc.Vec3.UP);
+        box(a.clone().add(b).mulScalar(0.5), new pc.Vec3(WAND_THICK / 4, WAND_THICK / 4, len / 2), new pc.Quat().setFromMat4(lm));
+      }
+    }
     const h = hands.get(src);
     if (h && src.hand) {
       h.entity.enabled = !!src.hand.tracking;
@@ -261,6 +331,8 @@ export function mountXrInput(app: pc.Application, opts: {
       }
       return out;
     },
+    setAimTarget(p) { aimTarget = p ? p.clone() : null; },
+    end() { return primary ? ends.get(primary) ?? null : null; },
     setStyle(next) {
       if (next === style) return;
       style = next;
@@ -298,6 +370,7 @@ export function mountXrInput(app: pc.Application, opts: {
         const dot = dots.get(src)!; dot.enabled = false;
         if (!active && hands.has(src)) hands.get(src)!.entity.enabled = false;
         if (!r || (src.hand && !src.hand.tracking)) {
+          ends.delete(src);
           e.enabled = false; if (hands.has(src)) hands.get(src)!.entity.enabled = false;
           const t = tips.get(src); if (t) t.entity.enabled = false;
           opts.onTouch?.(src, null);
@@ -305,13 +378,22 @@ export function mountXrInput(app: pc.Application, opts: {
           continue;
         }
         e.enabled = true;
-        const hit = landing(r);
-        if (hit) { dot.enabled = true; dot.setPosition(hit.point); primary = src; }
+        const surface = landing(r);
+        if (surface) { dot.enabled = true; dot.setPosition(surface.point); primary = src; }
+        // S345 / T29 — the ray of the hand that points ends on the room thing the aim names, when it is nearer than any
+        //   surface (a held device's buttons sit in front of the monitor)
+        const target = src === primary ? onTarget(r) : null;
+        const hit = target && (!surface || target.distance < surface.distance - 0.01) ? target : surface;
         const flashing = performance.now() < (flashUntil.get(src) ?? 0);
         dot.setLocalScale(flashing ? DOT_FLASH : DOT, flashing ? DOT_FLASH : DOT, flashing ? DOT_FLASH : DOT);
         // ⚑ S270f (the report's 3.8: "a white ray line is drawn across the view… distracting") — the full ray only
         //   when it lands on something pressable; otherwise a short stub that says where the hand points
         const length = hit ? hit.distance : src.hand ? STUB_HAND : STUB_PAD;
+        {
+          const d = r.p1.clone().sub(r.p0).normalize();
+          ends.set(src, hit ? { point: hit.point.clone(), normal: hit.normal ? hit.normal.clone() : null, landed: true }
+            : { point: r.p0.clone().add(d.mulScalar(length)), normal: null, landed: false });
+        }
 
         const state = gestures.get(src)!;
         const now = performance.now();
@@ -357,13 +439,14 @@ export function mountXrInput(app: pc.Application, opts: {
         if (opts.onStick && axes.length >= 4) opts.onStick(axes[2] ?? 0, axes[3] ?? 0);
         const directions = [(axes[2] ?? 0) < -0.6, (axes[2] ?? 0) > 0.6, (axes[3] ?? 0) < -0.6, (axes[3] ?? 0) > 0.6];
         directions.forEach((pressed, i) => { if (pressed && !state.buttons[8 + i]) opts.onKey?.(keys[i]); state.buttons[8 + i] = pressed; });
-        drawSource(src, r, length, hit?.point ?? null);
+        drawSource(src, r, length, hit, flashing);
       }
     },
     destroy(): void {
       if (xr) {
         xr.input.off('add', onAdd);
         xr.input.off('remove', onRemove);
+        xr.input.off('selectstart', onSelectStart);
         xr.input.off('select', onSelect);
         xr.input.off('squeezestart', onSqueeze);
         xr.input.off('squeezeend', release);
