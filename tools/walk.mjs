@@ -920,6 +920,11 @@ async function main() {
     if (id === 'icon-a' && has('went-online')) return false;
     if (id === 'icon-restorify' && led?.checkins?.some(c => !c.id.startsWith('e3'))) return false;
     if (id === 'icon-story' && has('testimony-online')) return false;
+    // ⚑ S339 — the "1997" folder is a reader's place; the guided path enters it from Your Story's "Open the folder"
+    //   and, inside, only the story and its Upload are the way on (the X on a file now returns to the list, so a
+    //   walker browsing the pictures never left)
+    if (id === 'icon-folder1997') return false;
+    if (/^f97-(?:open:(?!story$)|turn$|27$|back$)/.test(id)) return false;
     if (id === 'icon-provotype-intake' && (st?.era !== 'e1' || led?.provotypes?.some(p => p.id === 'origin_intake_e1'))) return false;
     // The phone is private optional reading now. The minimum visitor never needs to press it.
     if (st?.era === 'e3') {
