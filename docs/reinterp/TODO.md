@@ -148,6 +148,7 @@ His answers, 8 Nov:
 | T54 | Noa's story moves to 2026 (his 9 Nov: "Noa can just exist in 2026") — a different person from Maya (guard 1); where she appears is to be designed | 2026 | C+S | M |
 | T55 ☑ S337 | The 2016 Trending sources (US election, NPR; photo app hiding #lesbian, HuffPost UK; same-sex stickers removed, Jakarta Post) go on the 2016 site's Sources tab — his yes, 9 Nov | 2016 site | C | S |
 | T56 ☑ S337 | A GracePlatform music loop, made by Claude in code (no licence question): calm 2016 "wellness app" pads + plucked melody, 60–90 s, seamless | 2016 | C | S |
+| T57 | 🥽 Test Codex's sharper text (CODEX_XR_TEXT_REPORT_2026-11-08.md) on the Quest, on the GitHub Pages build (itch can't take URL options): compare https://sergioroxo.github.io/update-available/?reinterp=1 with …?reinterp=1&quad=1 on the 1997 monitor, following the report's steps. If sharper → extend to the other screens; if not → remove the patch | XR | S (headset) then C | S |
 | T52 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
 
 ## Codex
