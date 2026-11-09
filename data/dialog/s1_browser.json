@@ -81,7 +81,8 @@
     "Parents: please see the page for families."
    ],
    "counter": true,
-   "practice": "referral"
+   "practice": "referral",
+   "style": "dir"
   },
   "testimony": {
    "heading": "Can you change? YES!",
@@ -94,7 +95,9 @@
     "Read more stories. Or add your own:",
     "every testimony helps someone who is where you are."
    ],
-   "practice": "media"
+   "practice": "media",
+   "style": "geo",
+   "badge": true
   },
   "college": {
    "heading": "Christianity and Homosexuality",
@@ -107,7 +110,8 @@
     "We added links to ministries",
     "this year."
    ],
-   "practice": "referral"
+   "practice": "referral",
+   "style": "dir"
   },
   "ring": {
    "heading": "The Walking-Out Ring",
@@ -120,7 +124,8 @@
     "",
     "Every site in this ring is a ministry."
    ],
-   "practice": "referral"
+   "practice": "referral",
+   "style": "ring"
   },
   "faq": {
    "heading": "Healing FAQ",
@@ -134,7 +139,8 @@
     "Q: What does the Bible say?",
     "A: There IS hope for all of us!!"
    ],
-   "practice": "channel"
+   "practice": "channel",
+   "style": "ring"
   },
   "root": {
    "heading": "Understanding the Root",
@@ -149,7 +155,8 @@
     "",
     "Change is possible. Start with an honest self-inventory."
    ],
-   "practice": "profile"
+   "practice": "profile",
+   "style": "geo"
   },
   "parents": {
    "heading": "A Letter to Parents",
@@ -163,7 +170,8 @@
     "",
     "Call your pastor. He will know who to call."
    ],
-   "practice": "referral"
+   "practice": "referral",
+   "style": "geo"
   },
   "weekend": {
    "heading": "Summer Youth Weekend",
@@ -176,7 +184,9 @@
     "Parents: register your son by telephone.",
     "Scholarships through your church."
    ],
-   "practice": "placement"
+   "practice": "placement",
+   "style": "geo",
+   "badge": true
   },
   "intl": {
    "heading": "Ministries Worldwide",
@@ -189,7 +199,8 @@
     "Write to the nearest office.",
     "Our mailer does not send your name."
    ],
-   "practice": "referral"
+   "practice": "referral",
+   "style": "dir"
   }
  },
  "ringOrder": [
@@ -326,5 +337,19 @@
   ],
   "sitesLabel": "Site Listings",
   "address": "http://www.seekr.com/Society_and_Culture/Religion/Christianity/Ministries/Sexuality/Ex_Gay/"
+ },
+ "styles": {
+  "_docS343": "⚑ S343 / T38 (his 8 Nov: 'we need a little bit more space… more distance between them', and each page in a distinct period style). Three of the period's page grammars, all invented marks: GEO (a free-homepage personal page: tiled pastel background, centred heading with a shadow, a rainbow rule, a NEW! burst, an LED hit counter, the guestbook links that never load, 'best viewed with'), RING (a webring member's page: a night-sky background, yellow text, cyan links, the ring's linked-circles logo), DIR (a plain listing/directory: white page, left-aligned, a table of states, 'last updated'). The FIT IN advertisement is on the Fellowship Network's portal only (his answer 2).",
+  "geo": {
+   "new": "NEW!",
+   "guestbook": "Sign my Guestbook  ·  View my Guestbook",
+   "bestViewed": "Best viewed with NetPilot 3.0 at 800 x 600"
+  },
+  "ring": {
+   "member": "This site is a proud member of"
+  },
+  "dir": {
+   "updated": "Last updated: June 14, 1997  ·  send corrections to the webmaster"
+  }
  }
 }

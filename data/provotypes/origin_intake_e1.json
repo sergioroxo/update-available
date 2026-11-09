@@ -82,6 +82,23 @@
       "response": "Every answer here is recorded the same way.\nRecommendation: further support recommended."
     }
   ],
+  "ministry": {
+    "_doc": "⚑ S343 / T37 (his 8 Nov: 'this design is a little bit bare' — answer 6: 'ad-style and ministry decoration'). The form wears the ministry's own 1997 print look: a letterhead (the TriedPath mark — a sunrise and a path), a form number, the ad column every ministry mailing carried, and a verse at the foot. Invented marks only. The felt beat and the close stay bare (the law: felt = no decoration, no satire).",
+    "name": "TriedPath Fellowship",
+    "tagline": "Family Companion · walking the path together",
+    "formNo": "FORM FC-7",
+    "stamp": "CONFIDENTIAL",
+    "question": "QUESTION {n} OF {of}",
+    "ad": {
+      "heading": "FAMILIES IN CRISIS?",
+      "lines": ["You are not alone.", "Summer Youth", "Weekend · July", "Ask your pastor."],
+      "coupon": ["FREE TAPE", "for parents:", "tick, clip, mail"],
+      "foot": "Healing starts at home"
+    },
+    "verse": "\"Train up a child in the way he should go.\" Prov. 22:6",
+    "envelope": ["TriedPath Fellowship", "Family Companion Dept.", "P.O. Box 1997"],
+    "onHold": "On hold"
+  },
   "close": {
     "_doc": "PLACEHOLDER — Sérgio voice pass pending. Near-wordless, felt register, still in the room, per the revised grammar (§4) — the debrief's documentary function stays separate, after this.",
     "lines": [

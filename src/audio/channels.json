@@ -2,6 +2,7 @@
   "_note": "S248 - which mixer channel each shipped audio file belongs to. Read by src/audio/mix.ts and by tools/audio-levels.mjs. Anything not named here (and not matching voicePattern) is EFFECTS. Edit here, then re-run `node tools/audio-levels.mjs`.",
   "music": [
     "lambyos_home_loop.mp3", "unwalk_loop_1997.mp3", "grace_loop_2016.mp3", "restorify_loop_2003.mp3", "floppysheep_song.mp3",
+    "fellowship_loop_1997.mp3", "familyform_loop_1997.mp3", "rootcause_loop_1997.mp3",
     "family_design_solutions_tape97.mp3", "fold_my_hands_tape97.mp3",
     "discover_the_new_you_tape97_radio.mp3", "discover_the_new_you_infomercial_tape03.mp3",
     "caleb_last_night_2003.mp3", "chase_the_clouds.mp3", "chase_the_clouds_broken.mp3",

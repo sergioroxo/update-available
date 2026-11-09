@@ -24,6 +24,8 @@ export class StartMenuMap {
   openTapes(): void { this.close(); this.tapes = new TapePlayerApp(); }
   private root: RootCauseApp | null = null;
   openRoot(era: PanelEra): void { this.close(); this.era = era; this.root = rootCauseForEra(era); this.root.onClose = () => { this.root = null; }; }
+  /** S343 — the OS pauses 1997's form intermission while the game is open */
+  get rootOpen(): boolean { return !!this.root; }
   private era: PanelEra = 'e1';
   menu = false;
   steps = false;

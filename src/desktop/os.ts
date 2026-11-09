@@ -180,7 +180,10 @@ const R_BOOT_HOLD = 3.2;           // hold the LambyOS boot after the crawl comp
 const R_SPLASH_SECONDS = 4.2;
 
 const WARNING_ARM_DELAY = 4; // s before CONTINUE becomes active (ethics)
-const ESCALATION_FALLBACK = 24; // s after the hook: Rob escalates even if the player never flips (main-parity)
+// ⚑ S343 / T17 (his 8 Nov, answer 4: "the summer-weekend wait is too long because the desktop version uses the blue
+//   'look behind' glow… add that same glow in VR or remove the wait") — and the 10 Oct law: no beat may wait on a look.
+//   24 s → 8 s of quiet: the turn stays an invitation (the glow, the corner line), never the gate. Same in both builds.
+const ESCALATION_FALLBACK = 8; // s after the hook: Rob escalates even if the player never flips (main-parity)
 // display text lives in data/ — never in code (CLAUDE.md law)
 const BOOT_LINES: ReadonlyArray<string> = strings.boot.lines;
 
@@ -634,6 +637,7 @@ export class DesktopOS {
       deferredUpdate: this.desktopEra === 'e1' && !!this.updateApp?.deferred,
       formAvailable: this.formAvailable, formForced: this.formForced, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       formFiled: !this.provotype?.open && ledger.provotypes.some(p => p.id === 'origin_intake_e1'), rootOpened: ledger.records.includes('rootcause-opened'),
+      robDone: this.desktopEra === 'e1' && this.formAvailable && !this.irc?.open,   // S343 / T16
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
     // ⚑ S283 (headset B: "I pressed show me, and it didn't show me because the NetPilot window is closed, so it needs to
@@ -1627,6 +1631,26 @@ export class DesktopOS {
     else if (this.restorifyLoop && this.restorifyLoop.ended) this.restorifyLoop = null;
   }
 
+  /** ⚑ S343 / T34 + T35 — 1997's programme music, one at a time: Root Cause Digger's tune while the game is open, the
+   *  Family Form's music box while the form asks (never under a felt line or the close), the Fellowship Network's MIDI
+   *  while its pages are up (never with Rob's chat, the kit's hymn, or the picture open). The kit's own hymn (app.ts)
+   *  yields to these. Never under the pause menu, the screensaver or an update. */
+  private e1Loop: HTMLAudioElement | null = null;
+  e1LoopName: string | null = null;
+  private sync1997Loop(): void {
+    let want: string | null = null;
+    if (this.phase === 'desktop' && this.desktopEra === 'e1' && !this.paused && !this.pauseOpen && !this.saver && !this.updateApp?.visible) {
+      if (this.startMap.rootOpen) want = 'rootcause_loop_1997.mp3';
+      else if (this.provotype?.open && this.provotype.id === 'origin_intake_e1' && this.provotype.programmeVoice) want = 'familyform_loop_1997.mp3';
+      else if (this.web?.open && this.web.onFellowshipPage && !this.kit?.open && !this.irc?.open && !this.provotype && !this.yesOpen
+        && !this.packet?.open && !this.diary?.open) want = 'fellowship_loop_1997.mp3';
+    }
+    if (want === this.e1LoopName && (!this.e1Loop || !this.e1Loop.ended)) return;
+    if (this.e1Loop) { stopClip(this.e1Loop); this.e1Loop = null; }
+    this.e1LoopName = want;
+    if (want) { this.e1Loop = playLoop(want); if (this.e1Loop) this.e1Loop.volume = want === 'rootcause_loop_1997.mp3' ? 0.3 : 0.35; }
+  }
+
   /** Retry delivery as either prerequisite can arrive first; s1 still always precedes Caleb. */
   private deliverCaleb(): void {
     if (this.desktopEra === 'e2' && this.e2Stage === 'active') this.maybeLandMessage();
@@ -2353,6 +2377,7 @@ export class DesktopOS {
     }
     if (this.mediaPlayer) this.mediaPlayer.update(dt);
     this.syncRestorifyLoop();
+    this.sync1997Loop();
     // S275 — the pet's LCD runs in 2003 whether its window is up or not (the keychain on the desk shows it)
     if (this.desktopEra === 'e2') { this.companion.update(dt); if (this.companion.dirty) { this.companion.dirty = false; if (this.companion.open) this.dirty = true; } }
     if (this.phase === 'desktop' && this.web?.open && this.web.update(dt)) this.dirty = true;
@@ -2381,6 +2406,8 @@ export class DesktopOS {
       this.chatCloseAt = Infinity;
       if (this.irc && !this.provotype) { this.irc.open = false; this.dirty = true; }
     }
+    // ⚑ S343 / T35 — Root Cause comes BEFORE the Family Form: while the game is open, the intermission does not run
+    if (this.formAutoAt !== Infinity && this.startMap.rootOpen) this.formAutoAt += dt;
     if (this.formAutoAt !== Infinity && this.t >= this.formAutoAt && this.phase === 'desktop' && this.desktopEra === 'e1') {
       if (this.provotype || ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formAutoAt = Infinity;
       else if (!this.packet?.open && !this.diary?.open && !this.kit?.open && !this.rootCause?.open && !this.provotypeBusy() && this.guideReady('form-forced')) {
@@ -2968,7 +2995,9 @@ export class DesktopOS {
       // S153 — the game came with the disk: on the desktop from the moment it is in (○ sandbox).
       // ⚑ P8 B8 (headset B: "there's no root cause game here") — it sat inside lamby_rig's bare-desktop gate, so
       //   with Rob's chat open it vanished; it is a program, and stays on the desktop with the others
-      if (this.reinterp && this.irc) this.drawIcon(10, 248, rootCauseStrings.icon, true, 'icon-rootcause');
+      // ⚑ S343 / T35 (his answer 3: "its icon appears as soon as the Un-Walk is installed") — from the disk going in,
+      //   not from the channel
+      if (this.reinterp && ledger.records.includes('rootcause-installed')) this.drawIcon(10, 248, rootCauseStrings.icon, true, 'icon-rootcause');
     } else {
       this.drawEraDesktopChrome(W, skin, colors);
       /**

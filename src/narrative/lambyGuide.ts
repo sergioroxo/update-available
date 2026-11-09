@@ -4,14 +4,14 @@ import copy from '../../data/strings/lambyGuide.json';
 import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
-export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise';
+export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root';
 export interface GuideStep { tip: string; here?: string; again?: string; target: string[]; act?: string; noAgain?: boolean; once?: boolean }
 export interface GuideView {
   era: GuideEra; beat: string; rung: GuideRung; hidden: boolean; text: string | null;
   targets: string[]; act?: string; frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; robDone?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -68,10 +68,19 @@ export class LambyGuide {
     this.view.time += dt;
     const frame = input.reducedMotion ? 0 : Math.floor(this.view.time * 3) % 3;
     if (frame !== this.view.frame && this.view.rung !== 'silent') { this.view.frame = frame; this.version++; }
-    // Available form waits through free exploration; only one unsolicited offer.
+    // ⚑ S343 / T16 + T35 (his 8 Nov: "the chat with the mentor Rob, it closed itself, but then all disappeared… Lamby
+    //   should say something" — and "the suggestion from Lamby to be, before you jump into the family form, do you
+    //   want to play the root cause digger") — the moment Rob's chat has closed, Lamby says what is next: the game
+    //   first, the form after it. Once, ignorable, inside the era's cap.
+    if (input.era === 'e1' && input.robDone && input.formAvailable && !input.formOpened && !input.rootOpened && !this.rootOffered && !this.active && this.canOffer()) {
+      this.rootOffered = true; this.counts.e1++; this.set('root', copy.root.next, [], 'open:rootcause'); return;
+    }
+    // Available form waits through free exploration; only one unsolicited offer. ⚑ S343: once the game has been
+    //   played (or offered) and closed, the form is offered after a breath, not after the full tip wait.
     if (input.era === 'e1' && input.formAvailable && !input.formOpened) this.formWait += dt;
-    if (input.era === 'e1' && input.formAvailable && !input.formOpened && !this.formOffered && this.formWait >= copy.timing.tipSeconds * (input.idleScale ?? 1) && !this.active && this.canOffer()) {
-      this.formOffered = true; this.counts.e1++; this.set('form', copy.form.text, [], copy.form.act); return;
+    const formAfter = input.robDone && (this.rootOffered || input.rootOpened) ? copy.timing.formAfterRootSeconds : copy.timing.tipSeconds;
+    if (input.era === 'e1' && input.formAvailable && !input.formOpened && !this.formOffered && this.formWait >= formAfter * (input.idleScale ?? 1) && !this.active && this.canOffer()) {
+      this.formOffered = true; this.counts.e1++; this.set('form', input.rootOpened ? copy.form.next : copy.form.text, [], copy.form.act); return;
     }
     // ⚑ S281 (his, 1 Nov: "a message from lamby … that it is time for you to go, and even you say no, it forces you
     //   to by always opening the file when you touch something") — said once, over anything else Lamby was saying
@@ -125,7 +134,7 @@ export class LambyGuide {
     if (id === 'lg-tray') {
       this.idle = 0;
       if (this.input.era === 'e1' && this.input.formAvailable && !this.input.formOpened) { this.set('form', copy.form.text, [], copy.form.act); return true; }
-      if (this.view.rung === 'form') return true;
+      if (this.view.rung === 'form' || this.view.rung === 'root') return true;
       if (this.active) this.point();
       // ⚑ S271 (his 31 Oct: "You're doing fine, carry on. Thank you, Lamby. But it doesn't tell me where do I need
       //   to go") — with no beat of its own, Lamby reads the Start map's next step before it says "carry on"
@@ -136,11 +145,12 @@ export class LambyGuide {
     if (id === 'lg-show') { this.effects.log('begun', this.view.beat, false, false); this.point(); }
     else if (id === 'lg-take' && this.view.act) {
       const act = this.view.act;
-      this.effects.log('begun', this.view.rung === 'form' ? 'form' : this.view.beat, false, false);
+      this.effects.log('begun', this.view.rung === 'form' ? 'form' : this.view.rung === 'root' ? 'root' : this.view.beat, false, false);
       m.finished = true; this.set('silent'); this.idle = 0; this.effects.act(act);
     } else if (id === 'lg-later' || id === 'lg-x' || id === 'lg-ok') {
-      const form = this.view.rung === 'form';
-      this.effects.log('dismissed', form ? 'form' : this.view.beat, id !== 'lg-ok', id === 'lg-ok');
+      const form = this.view.rung === 'form' || this.view.rung === 'root';
+      this.effects.log('dismissed', form ? this.view.rung : this.view.beat, id !== 'lg-ok', id === 'lg-ok');
+      if (this.view.rung === 'root') this.formWait = 0;   // S343: "no" to the game → the form is offered after a breath
       if (!form) {
         if (id === 'lg-ok' || this.view.rung === 'show' || this.view.rung === 'start') m.finished = true;
         else m.dismissed++;

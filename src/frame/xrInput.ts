@@ -23,6 +23,8 @@ export interface XrInput {
   points(): pc.Vec3[];
   /** S270h / VR-01 — each hand's palm (it does not move when the fingers pinch) and each controller's grip */
   palms(): pc.Vec3[];
+  /** ⚑ S343 / T11 — tracked hands only (a controller is never a palm on the desk mouse) */
+  handPalms(): pc.Vec3[];
   /** S270g / VR-08 — 'own' or 'programme': the programme redraws the visitor's hands while the visor is on */
   setStyle(style: 'own' | 'programme'): void;
   /** S270f — the left wrist (hand) or left grip (controller), where the Menu tab rides; null when not tracked */
@@ -247,6 +249,15 @@ export function mountXrInput(app: pc.Application, opts: {
       for (const src of wands.keys()) {
         if (src.hand) { const m = src.hand.tracking ? src.hand.getJointById('middle-finger-metacarpal') : null; if (m) out.push(m.getPosition().clone()); }
         else { const g = src.getPosition?.(); if (g) out.push(g.clone()); }
+      }
+      return out;
+    },
+    handPalms(): pc.Vec3[] {
+      const out: pc.Vec3[] = [];
+      if (!xr?.active) return out;
+      for (const src of wands.keys()) {
+        if (!src.hand?.tracking) continue;
+        const m = src.hand.getJointById('middle-finger-metacarpal'); if (m) out.push(m.getPosition().clone());
       }
       return out;
     },
