@@ -30,7 +30,9 @@
       "The game that helps you belong!",
       "Press here to play FIT IN"
     ],
-    "ad": "Fellowship games · advertisement"
+    "ad": "Fellowship games · advertisement",
+    "play": "PLAY",
+    "tag": "AD"
   },
   "helper": {
     "e1": "Lamby",

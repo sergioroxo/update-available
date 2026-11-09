@@ -1147,7 +1147,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     siteViewerBus.xrActive = () => !!xr?.active;
     let teamSkipPresses: number[] = [];   // S339: the team skip (debug builds only)
     xrInput = mountXrInput(app, {
-      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
+      // ⚑ S343 / T11 — a ray that lands on the monitor presses where it lands, even with a hand on the desk mouse
+      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (!toDesktopR(ray) && xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
       // ⚑ S271 (his 31 Oct: "I entered the menu, but I cannot get out") — a press that misses the menu closes it, as
       //   Resume does; the menu is never a room you have to find the door of
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; if (siteViewerXr?.pressRay(ray)) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
@@ -3300,7 +3301,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let menuHeldAudio = false;
   function syncKitLoop(): void {
     const want = os.inDesktop && os.era === 'e1' && os.kit?.open === true && !os.paused && !(tapes?.isPlaying)
-      && !(pcPrayer && !pcPrayer.paused && !pcPrayer.ended);   // S219: and yields to the prayer the computer plays
+      && !(pcPrayer && !pcPrayer.paused && !pcPrayer.ended)   // S219: and yields to the prayer the computer plays
+      && !os.e1LoopName;   // S343: and to the game's, the form's or the fellowship's own music
     if (want && !kitLoop) { kitLoop = playLoop('unwalk_loop_1997.mp3'); if (kitLoop) kitLoop.volume = 0.45; }
     else if (!want && kitLoop) { stopClip(kitLoop); kitLoop = null; }
   }

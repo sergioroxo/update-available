@@ -27,7 +27,7 @@ export interface XrLayerDeps {
     logicalPoint(p: pc.Vec3): pc.Vec3; matchDesk(tableY: number): number; stageYaw(): number;
     readonly calibrated: boolean; readonly busy: boolean; readonly authored: pc.Entity;
   };
-  input: { points(): pc.Vec3[]; palms(): pc.Vec3[]; setStyle(style: 'own' | 'programme'): void; stick?(): { x: number; y: number } };
+  input: { points(): pc.Vec3[]; palms(): pc.Vec3[]; handPalms?(): pc.Vec3[]; setStyle(style: 'own' | 'programme'): void; stick?(): { x: number; y: number } };
   /** VR-01 — the 1997/2003 desk: the mouse prop, the desktop's pointer, and where a desktop pixel is on the glass */
   mouse: {
     active(): boolean; prop(): pc.Entity | null;
@@ -371,7 +371,11 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     if (!prop) { grip = null; cursorE.enabled = false; return; }
     rest ??= prop.getPosition().clone();
     const at = prop.getPosition();
-    const palms = deps.input.palms().map((p) => deps.comfort.logicalPoint(p));
+    // ⚑ S343 / T11 (his 8 Nov, with a controller: "phantom button presses on the wall in front of it for the root
+    //   cause") — a controller resting by the mouse used to TAKE it, and then every trigger press, wherever the ray
+    //   pointed (the wall), clicked at the hidden desktop pointer. A controller has its ray; only a tracked hand
+    //   takes the mouse now.
+    const palms = (deps.input.handPalms?.() ?? deps.input.palms()).map((p) => deps.comfort.logicalPoint(p));
     if (!grip) {
       const idx = palms.findIndex((p) => p.distance(at) < 0.10);
       if (idx >= 0) grip = { idx, last: palms[idx].clone(), propFrom: at.clone(), handFrom: palms[idx].clone(), away: 0 };

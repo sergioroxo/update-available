@@ -38,6 +38,9 @@ import { ERA3 } from '../theme/era3';
 import { CHROME } from '../theme/era4';
 import { ledger, ledgerGeneration } from '../../state/ledger';
 import copy from '../../../data/strings/rootcause.json';
+import { playOnce } from '../../audio/tapeAudio';
+/** ⚑ S343 / T35 — its own sounds (tools/make_rootcause_sounds.py, ours outright) */
+const sfx = (n: 'dig' | 'pump' | 'burst' | 'applied' | 'found' | 'report'): void => { playOnce(`rootcause_${n}.mp3`); };
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 interface Cell { r: number; c: number }
@@ -145,6 +148,7 @@ export class RootCauseApp {
     this.face = to.c < this.lamby.c ? -1 : to.c > this.lamby.c ? 1 : this.face;
     this.dug[to.r][to.c] = true;
     this.lamby = { ...to };
+    sfx('dig');
     // a leaflet? the programme's power-up
     const lf = this.leaflet[to.r];
     if (lf && !lf.taken && lf.c === to.c) {
@@ -157,7 +161,7 @@ export class RootCauseApp {
       this.memoryFound = true;
       const n = ledger.rootCause.kept.filter((k) => k.kind === 'memory').length;
       this.keep({ kind: 'memory', text: copy.memories[(ledger.rootCause.descents - 1 + n) % copy.memories.length] });
-      this.say(copy.memoryFound, 6);
+      this.say(copy.memoryFound, 6); sfx('found');
       this.modal = { kind: 'flag', stage: 0 }; this.phase = 'modal';
       this.file('memory');
       return;
@@ -180,8 +184,9 @@ export class RootCauseApp {
     d.pumps += 1;
     if (d.pumps >= this.pumpsToBurst()) {
       d.alive = false;
-      this.say(copy.burst.replace('{name}', d.name));
+      this.say(copy.burst.replace('{name}', d.name)); sfx('burst');
     } else {
+      sfx('pump');
       const word = copy.therapyWords[(d.pumps - 1) % copy.therapyWords.length];
       this.say(copy.pumped.replace('{name}', d.name).replace('{word}', word));
     }
@@ -204,7 +209,7 @@ export class RootCauseApp {
         const a = alive[i]; const b = alive[j];
         if (a.alive && b.alive && a.r === b.r && a.c === b.c) {
           a.alive = false; b.alive = false;
-          this.say(copy.glitched.replace('{a}', a.name).replace('{b}', b.name));
+          this.say(copy.glitched.replace('{a}', a.name).replace('{b}', b.name)); sfx('burst');
           this.sparkles.push({ t: 0, r: a.r, c: a.c, col: ERA1.warn });
         }
       }
@@ -213,7 +218,7 @@ export class RootCauseApp {
     for (const d of this.diagnoses) {
       if (!d.alive || d.r !== this.lamby.r || d.c !== this.lamby.c) continue;
       this.applied.push(d.name);
-      this.say(copy.applied.replace('{name}', d.name));
+      this.say(copy.applied.replace('{name}', d.name)); sfx('applied');
       this.shake = 0.35;
       d.r = d.home.r; d.c = d.home.c; d.pumps = 0;
       if (this.applied.length >= APPLIED_TO_REPORT) { this.openReport(); return; }
@@ -293,7 +298,7 @@ export class RootCauseApp {
     this.moveDiagnoses();
   }
   private openReport(): void {
-    this.modal = { kind: 'report' }; this.phase = 'modal';
+    this.modal = { kind: 'report' }; this.phase = 'modal'; sfx('report');
     this.file('report');
   }
 
@@ -306,11 +311,27 @@ export class RootCauseApp {
   // ── drawing ─────────────────────────────────────────────────────────────
   private drawEarth(ctx: CanvasRenderingContext2D, gx: number, gy: number, r: number, c: number): void {
     const x = gx + c * CELL_W; const y = gy + r * CELL_H;
-    if (this.dug[r][c]) { ui.px(ctx, x, y, CELL_W, CELL_H, ERA1.black); return; }
+    if (this.dug[r][c]) {
+      ui.px(ctx, x, y, CELL_W, CELL_H, ERA1.black);
+      // the tunnel's walls: a rim where it meets undug earth
+      const rim = ERA1.greyDark;
+      if (r > 0 && !this.dug[r - 1][c]) ui.px(ctx, x, y, CELL_W, 2, rim);
+      if (r < ROWS - 1 && !this.dug[r + 1][c]) ui.px(ctx, x, y + CELL_H - 2, CELL_W, 2, rim);
+      if (c > 0 && !this.dug[r][c - 1]) ui.px(ctx, x, y, 2, CELL_H, rim);
+      if (c < COLS - 1 && !this.dug[r][c + 1]) ui.px(ctx, x + CELL_W - 2, y, 2, CELL_H, rim);
+      return;
+    }
     const deep = r / ROWS;
     const base = deep < 0.35 ? ERA1.olive : deep < 0.7 ? ERA1.warnDark : ERA1.greyDark;
     const light = deep < 0.35 ? ERA1.tooltip : deep < 0.7 ? ERA1.warn : ERA1.grey;
     ui.px(ctx, x, y, CELL_W, CELL_H, base);
+    // ⚑ S343 / T35 — the strata have depth now: a darker seam at each layer's foot, and roots threading the earth
+    ui.px(ctx, x, y + CELL_H - 3, CELL_W, 2, r % 2 ? ERA1.black : (deep < 0.35 ? ERA1.tealDark : ERA1.greyDark));
+    if ((r * 7 + c * 3) % 5 === 0) {
+      let rx = x + 6 + ((r + c * 5) % 16);
+      for (let j = 2; j < CELL_H - 4; j += 2) { ui.px(ctx, rx, y + j, 1, 2, ERA1.beige); rx += ((j + c) % 6 === 0 ? 1 : (j + r) % 6 === 2 ? -1 : 0); }
+      ui.px(ctx, rx - 2, y + CELL_H - 6, 2, 1, ERA1.beige); ui.px(ctx, rx + 1, y + CELL_H - 5, 2, 1, ERA1.beige);
+    }
     for (let i = 0; i < CELL_W; i += 2) ui.px(ctx, x + i, y + 1 + (i % 4 === 0 ? 0 : 1), 1, 1, light);   // the stratum's lighter band
     const sx = 3 + ((r * 7 + c * 5) % 9); const sy = 5 + ((r * 3 + c * 11) % 11);
     ui.px(ctx, x + sx, y + sy, 2, 2, ERA1.black);
@@ -364,36 +385,52 @@ export class RootCauseApp {
     const closeBox = { ...c.closeBox, id: 'rootcause-close' };
 
     if (this.phase === 'intro') {
-      ui.setFont(ctx, 12);
-      ctx.fillStyle = ERA1.tooltip;
-      ctx.fillText(copy.skins[this.era].label, c.x + 20, c.y + 16);
-      ui.setFont(ctx, 10);
-      copy.skins[this.era].intro.forEach((line, i) => { ctx.fillStyle = ERA1.silver; ctx.fillText(line, c.x + 20, c.y + 40 + i * 14); });
+      // ⚑ S343 / T35 — a shareware title screen: the name, the programme's THEORY in its own words, the legend, START
+      const tx = c.x + 18;
+      ui.setFont(ctx, 20);
+      ctx.fillStyle = ERA1.warnDark; ctx.fillText(copy.titleBig, tx + 2, c.y + 14);
+      ctx.fillStyle = ERA1.tooltip; ctx.fillText(copy.titleBig, tx, c.y + 12);
+      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.grey; ctx.fillText(this.era === 'e1' ? copy.version : copy.skins[this.era].label, tx, c.y + 38);
+      // the theory, boxed like the period's README panel
+      const lines = this.era === 'e1' ? copy.theory : copy.skins[this.era].intro.filter(Boolean);
+      const bw = 262, bh = 24 + lines.length * 12;
+      ui.px(ctx, tx, c.y + 54, bw, bh, ERA1.tooltip); ui.px(ctx, tx + 1, c.y + 55, bw - 2, bh - 2, ERA1.black);
+      ui.px(ctx, tx + 1, c.y + 55, bw - 2, 13, ERA1.warnDark);
+      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.tooltip; ctx.fillText(copy.theoryLabel, tx + 6, c.y + 57);
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.white;
+      lines.forEach((line, i) => ctx.fillText(line, tx + 6, c.y + 72 + i * 12));
       // how to play, in the disk's own voice
+      const ly = c.y + 64 + bh;
       ui.setFont(ctx, 9);
-      ui.px(ctx, c.x + 20, c.y + 128, 8, 6, ERA1.paper); ui.px(ctx, c.x + 21, c.y + 130, 6, 1, ERA1.grey);
-      ctx.fillStyle = ERA1.silver; ctx.fillText(copy.howTo[0], c.x + 34, c.y + 126);
-      this.drawDiagnosis(ctx, c.x + 18, c.y + 142, 0, 'ROOT');
-      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.silver; ctx.fillText(copy.howTo[1], c.x + 54, c.y + 148);
-      ui.px(ctx, c.x + 20, c.y + 171, 8, 8, ERA1.tooltip);
-      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.black; ctx.fillText('?', c.x + 22, c.y + 171);
-      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.silver; ctx.fillText(copy.howTo[2], c.x + 34, c.y + 170);
-      ctx.fillStyle = ERA1.grey; ctx.fillText(copy.skins[this.era].footer, c.x + 20, c.y + c.h - 14);
-      // a cross-section of the life: Lamby on top, the strata under him
-      const ix = c.x + 296; const iy = c.y + 100;
+      ui.px(ctx, tx + 2, ly + 2, 8, 6, ERA1.paper); ui.px(ctx, tx + 3, ly + 4, 6, 1, ERA1.grey);
+      ctx.fillStyle = ERA1.silver; ctx.fillText(copy.howTo[0], tx + 16, ly);
+      this.drawDiagnosis(ctx, tx, ly + 12, 0, 'ROOT');
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.silver; ctx.fillText(copy.howTo[1], tx + 36, ly + 18);
+      ui.px(ctx, tx + 2, ly + 41, 8, 8, ERA1.tooltip);
+      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.black; ctx.fillText('?', tx + 4, ly + 41);
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.silver; ctx.fillText(copy.howTo[2], tx + 16, ly + 40);
+      const sy = ly + 62;
+      ui.button(ctx, tx, sy, 120, 24, copy.start, {});
+      this.hits.push({ x: tx, y: sy, w: 120, h: 24, id: 'rootcause-start' });
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.grey; ctx.fillText(copy.skins[this.era].footer, tx, c.y + c.h - 14);
+      // a cross-section of the life: Lamby on top, the strata under him, a root reaching down
+      const ix = c.x + 296; const iy = c.y + 70;
       ui.px(ctx, ix, iy, 156, 26, ERA1.teal);
       ui.px(ctx, ix + 100, iy + 6, 30, 4, ERA1.white); ui.px(ctx, ix + 106, iy + 2, 16, 4, ERA1.white);
+      ui.px(ctx, ix + 136, iy + 4, 10, 8, ERA1.tooltip);
       for (let r = 0; r < ROWS; r++) {
         const deep = r / ROWS; const base = deep < 0.35 ? ERA1.olive : deep < 0.7 ? ERA1.warnDark : ERA1.greyDark;
         ui.px(ctx, ix, iy + 26 + r * 15, 156, 15, base);
+        ui.px(ctx, ix, iy + 39 + r * 15, 156, 1, ERA1.black);
         for (let i = 0; i < 156; i += 6) ui.px(ctx, ix + i + (r % 3), iy + 28 + r * 15 + (i % 12 === 0 ? 0 : 5), 2, 1, ERA1.black);
         ui.setFont(ctx, 7); ctx.fillStyle = ERA1.paper; ctx.fillText(copy.layers[r].toUpperCase(), ix + 3, iy + 30 + r * 15);
       }
+      let rx = ix + 120;
+      for (let j = 0; j < ROWS * 15 - 4; j += 2) { ui.px(ctx, rx, iy + 28 + j, 1, 2, ERA1.beige); if (j % 10 === 4) rx += (j % 20 === 4 ? 1 : -1); }
       ui.px(ctx, ix + 70, iy + 26, 14, 45, ERA1.black);   // the shaft he is digging
       this.drawLamby(ctx, ix + 68, iy + 26, 1, Math.floor(this.t * 4) % 2, 2.2);
       this.drawDiagnosis(ctx, ix + 112, iy + 72, 1, copy.shortName[0]);
-      ui.button(ctx, c.x + 20, c.y + 200, 80, 22, copy.start, {});
-      this.hits.push({ x: c.x + 20, y: c.y + 200, w: 80, h: 22, id: 'rootcause-start' });
+      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.tooltip; ctx.fillText('?', ix + 121, iy + 26 + ROWS * 15 - 12);
       ctx.restore();
       this.hits.push(closeBox);
       return;
@@ -403,6 +440,7 @@ export class RootCauseApp {
     // the sky, a cloud, the hole he came down
     ui.px(ctx, gx, gy - 12, COLS * CELL_W, 12, ERA1.teal);
     ui.px(ctx, gx + 150, gy - 12, 40, 4, ERA1.white); ui.px(ctx, gx + 158, gy - 12, 24, 4, ERA1.white);
+    ui.px(ctx, gx + COLS * CELL_W - 30, gy - 10, 10, 8, ERA1.tooltip); ui.px(ctx, gx + COLS * CELL_W - 32, gy - 8, 14, 4, ERA1.tooltip);   // S343: a sun
     ui.px(ctx, gx + 5 * CELL_W + 8, gy - 8, 14, 8, ERA1.tealDark);
     for (let r = 0; r < ROWS; r++) {
       ui.setFont(ctx, 8);

@@ -71,8 +71,10 @@
    "boombox",
    "boomboxSpeakerL",
    "boomboxSpeakerR",
-   "boomboxDeck"
+   "boomboxDeck",
+   "sodaCan"
   ],
+  "_docT51": "⚑ S343 / T51 (his 8 Nov, answer 1: 'what is this red box on top of the table?… remove it. The black plate on the computer stays.') — the red box beside the mouse was sodaCan, a bare era1.json cube S86 kept only as 'the one judgement call… flagged for Sérgio'. He has judged: gone from 1997 too (r2 already retired it).",
   "add": [
    {
     "id": "spineWall",
@@ -467,7 +469,6 @@
    "kitFloppyShutter",
    "kitFloppyLabel",
    "homeworkPile",
-   "sodaCan",
    "crtBody",
    "crtBezelTop",
    "crtBezelBottom",

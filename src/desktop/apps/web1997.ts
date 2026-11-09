@@ -26,7 +26,15 @@ import fixes from '../../../data/strings/visitorFixes.json';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 type PageId = keyof typeof D.pages;
 type View = { kind: 'portal' } | { kind: 'results'; page: number } | { kind: 'page'; id: PageId } | { kind: 'list' } | { kind: 'dir' };
-type PageDef = { heading: string; byline?: string; lines: string[]; counter?: boolean; practice?: string };
+type PageDef = { heading: string; byline?: string; lines: string[]; counter?: boolean; practice?: string; style?: string; badge?: boolean };
+type Ink = { link: string; visited: string };
+/** ⚑ S343 / T38 — the three page grammars (data/dialog/s1_browser.json `styles`) */
+type Style = 'geo' | 'ring' | 'dir';
+const INK: Record<Style, Ink & { text: string; dim: string; heading: string; shade: string }> = {
+  geo: { link: P.link, visited: P.visited, text: P.geoText, dim: P.dim, heading: P.geoHeading, shade: P.geoShade },
+  ring: { link: P.ringLink, visited: P.ringVisited, text: P.ringText, dim: ERA1.silver, heading: P.ringHeading, shade: ERA1.black },
+  dir: { link: P.link, visited: P.visited, text: ERA1.black, dim: ERA1.greyDark, heading: P.dirHeading, shade: ERA1.white }
+};
 
 const WX = 4, WY = 3, WW = 504, WH = 356;
 /** ⚑ S197 — Netscape 4's grammar (his visual archive): picture buttons, the location field, a status bar */
@@ -44,15 +52,15 @@ export class Web1997App {
   onSearch?: () => void;
   onFitIn?: () => void;
   private bannerTime = 0;
-  private get bannerFrame(): number {
-    return Math.min(Math.floor(this.bannerTime * 2), decisions.banner.frames.length * 3 - 1) % decisions.banner.frames.length;
-  }
+  /** ⚑ S343 — the FIT IN advertisement's one moving part (the piece that does not fit blinks), on the portal only */
   update(dt: number): boolean {
     if (reducedMotion()) return false;
-    const before = this.bannerFrame;
-    this.bannerTime = Math.min(this.bannerTime + dt, decisions.banner.frames.length * 1.5);
-    return before !== this.bannerFrame;
+    const before = Math.floor(this.bannerTime * 2);
+    this.bannerTime = (this.bannerTime + dt) % 600;
+    return this.open && this.view.kind === 'portal' && Math.floor(this.bannerTime * 2) !== before;
   }
+  /** ⚑ S343 / T34 — the os plays the fellowship's MIDI while its own pages are up (not Seekr's) */
+  get onFellowshipPage(): boolean { return this.open && this.view.kind !== 'results' && this.view.kind !== 'dir'; }
   /** Covered controls are not live, even though their window remains open underneath. */
   covered(): void { this.hits = []; }
   onRootCause?: () => void;
@@ -145,23 +153,16 @@ export class Web1997App {
     const top = TOOL_H + LOC_H + 4;
     const body = { x: c.x, y: c.y + top, w: c.w, h: c.h - top - STATUS_H };
     ui.px(ctx, body.x, body.y, body.w, body.h, this.view.kind === 'results' || this.view.kind === 'dir' ? ERA1.white : P.page);
-    const docHits = this.hits.length;
-    const docScale = (body.h - 64) / body.h;
-    ctx.save(); ctx.translate(0, body.y * (1 - docScale)); ctx.scale(1, docScale);
+    // ⚑ S343 / T38 (his 8 Nov: "press here to play FIT IN… doesn't need to be on everything… we need a little bit
+    //   more space") — the full-width banner that sat under every page, and squeezed every page to make room for
+    //   itself, is gone; FIT IN is a small advertisement on the Fellowship Network's own page (drawPortal)
+    ctx.save(); ctx.beginPath(); ctx.rect(body.x, body.y, body.w, body.h); ctx.clip();
     if (this.view.kind === 'portal') this.drawPortal(ctx, body);
     else if (this.view.kind === 'results') this.drawResults(ctx, body, this.view.page);
     else if (this.view.kind === 'list') this.drawList(ctx, body);
     else if (this.view.kind === 'dir') this.drawDir(ctx, body);
     else this.drawPage(ctx, body, this.view.id);
     ctx.restore();
-    for (const h of this.hits.slice(docHits)) { h.y = body.y + (h.y - body.y) * docScale; h.h *= docScale; }
-    const ax = body.x + Math.round((body.w - 468) / 2), ay = body.y + body.h - 60;
-    ui.px(ctx, ax, ay, 468, 60, ERA1.navy); ui.px(ctx, ax + 2, ay + 2, 464, 56, ERA1.tooltip);
-    ui.setFont(ctx, 17); ctx.fillStyle = ERA1.navy;
-    const frame = reducedMotion() ? 0 : this.bannerFrame;
-    ctx.fillText(decisions.banner.frames[frame], ax + 18, ay + 12);
-    ui.setFont(ctx, 9); ctx.fillText(decisions.banner.ad, ax + 18, ay + 40);
-    this.hits.push({ x: ax, y: ay, w: 468, h: 60, id: 'web-fitin' });
     this.hits.push({ ...c.closeBox, id: 'web-close' });
   }
 
@@ -175,19 +176,22 @@ export class Web1997App {
     return `http://${r?.url ?? `members.homepage.com/fellowshiplinks/${id}.html`}`;
   }
 
-  private link(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, id: string, visited = false): void {
-    ctx.fillStyle = visited ? P.visited : P.link;
+  private link(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, id: string, visited = false, ink: Ink = P): void {
+    ctx.fillStyle = visited ? ink.visited : ink.link;
     ctx.fillText(text, x, y);
     const w = ctx.measureText(text).width;
-    ui.px(ctx, x, y + 10, w, 1, visited ? P.visited : P.link);
+    ui.px(ctx, x, y + 10, w, 1, visited ? ink.visited : ink.link);
     this.hits.push({ x: x - 2, y: y - 2, w: w + 4, h: 14, id });
   }
 
-  private heading(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number }, text: string, size = 22): void {
+  private heading(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number }, text: string, size = 22,
+    ink: { heading: string; shade: string } = { heading: P.heading, shade: P.headingShade }, left = false): number {
     ui.setFont(ctx, size);
-    const hx = b.x + Math.round((b.w - ctx.measureText(text).width) / 2);
-    ctx.fillStyle = P.headingShade; ctx.fillText(text, hx + 2, b.y + 10);
-    ctx.fillStyle = P.heading; ctx.fillText(text, hx, b.y + 8);
+    const tw = ctx.measureText(text).width;
+    const hx = left ? b.x + 24 : b.x + Math.round((b.w - tw) / 2);
+    ctx.fillStyle = ink.shade; ctx.fillText(text, hx + 2, b.y + 10);
+    ctx.fillStyle = ink.heading; ctx.fillText(text, hx, b.y + 8);
+    return hx;
   }
 
   /** the fellowship's portal — the kit's home page: the channel first, then the web */
@@ -196,20 +200,20 @@ export class Web1997App {
     this.heading(ctx, b, T.heading);
     ui.setFont(ctx, 10);
     ctx.fillStyle = P.text;
-    ctx.fillText(T.welcome, b.x + Math.round((b.w - ctx.measureText(T.welcome).width) / 2), b.y + 30);
+    ctx.fillText(T.welcome, b.x + Math.round((b.w - ctx.measureText(T.welcome).width) / 2), b.y + 33);
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.navy;
     const startW = Math.ceil(ctx.measureText(T.start).width);
     const startX = b.x + Math.round((b.w - startW) / 2);
-    ctx.fillText(T.start, startX, b.y + 43);
+    ctx.fillText(T.start, startX, b.y + 46);
     // the one big button
-    const bw = 200, bx = b.x + Math.round((b.w - bw) / 2), by = b.y + 58;
+    const bw = 200, bx = b.x + Math.round((b.w - bw) / 2), by = b.y + 60;
     ui.button(ctx, bx, by, bw, 24, T.join, { hover: this.hover === 'web-join' });
-    this.hits.push({ x: Math.min(bx, startX), y: b.y + 41, w: Math.max(bx + bw, startX + startW) - Math.min(bx, startX), h: 41, id: 'web-join' });
+    this.hits.push({ x: Math.min(bx, startX), y: b.y + 44, w: Math.max(bx + bw, startX + startW) - Math.min(bx, startX), h: 40, id: 'web-join' });
     ui.setFont(ctx, 9);
     ctx.fillStyle = P.dim;
-    ctx.fillText(T.joinSub, b.x + Math.round((b.w - ctx.measureText(T.joinSub).width) / 2), by + 27);
-    ui.px(ctx, b.x + 20, b.y + 96, b.w - 40, 1, P.rule);
+    ctx.fillText(T.joinSub, b.x + Math.round((b.w - ctx.measureText(T.joinSub).width) / 2), by + 26);
+    ui.px(ctx, b.x + 20, b.y + 98, b.w - 40, 1, P.rule);
     // the search, tonight's query already in the field (no free typing — the law), the nights before under it
     const fx = b.x + 24, fy = b.y + 104;
     ui.setFont(ctx, 9); ctx.fillStyle = P.text; ctx.fillText(T.searchLabel, fx, fy + 4);
@@ -223,55 +227,93 @@ export class Web1997App {
     let hx = fx + ctx.measureText(D.historyLabel).width + 10;
     D.history.forEach((q, i) => { this.link(ctx, q, hx, fy + 26, `web-hist:${i}`, true); hx += ctx.measureText(q).width + 12; });
     ui.px(ctx, b.x + 20, b.y + 146, b.w - 40, 1, P.rule);
-    // the Resources, and the ring's list
-    ui.setFont(ctx, 11); ctx.fillStyle = P.heading; ctx.fillText(T.resourcesLabel, fx, b.y + 152);
+    // the Resources (one column now, with room between them), the ring's list, and FIT IN's little advertisement
+    ui.setFont(ctx, 11); ctx.fillStyle = P.heading; ctx.fillText(T.resourcesLabel, fx, b.y + 154);
     ui.setFont(ctx, 10);
     T.resources.forEach((pid, i) => {
       const pg = D.pages[pid as PageId] as PageDef;
-      this.link(ctx, pg.heading, fx + 12 + (i % 2) * 220, b.y + 170 + Math.floor(i / 2) * 18, `web-res:${pid}`, this.visited.has(pid));
+      this.link(ctx, pg.heading, fx + 12, b.y + 170 + i * 16, `web-res:${pid}`, this.visited.has(pid));
     });
+    this.drawFitInAd(ctx, b.x + b.w - 24 - 184, b.y + 154);
     ui.setFont(ctx, 9);
-    this.link(ctx, T.ringLink, fx, b.y + 212, 'web-ring:list');
-    this.link(ctx, D.directory.label, fx + 260, b.y + 212, 'web-dir');
+    this.link(ctx, T.ringLink, fx, b.y + 236, 'web-ring:list');
+    this.link(ctx, D.directory.label, fx + 248, b.y + 236, 'web-dir');
     // the counter
     const cw = ctx.measureText(D.counter).width + 12;
-    ui.px(ctx, b.x + Math.round((b.w - cw) / 2), b.y + b.h - 22, cw, 16, P.counterBg);
-    ctx.fillStyle = P.text; ctx.fillText(D.counter, b.x + Math.round((b.w - cw) / 2) + 6, b.y + b.h - 18);
+    ui.px(ctx, b.x + Math.round((b.w - cw) / 2), b.y + b.h - 16, cw, 14, P.counterBg);
+    ctx.fillStyle = P.text; ctx.fillText(D.counter, b.x + Math.round((b.w - cw) / 2) + 6, b.y + b.h - 14);
+  }
+
+  /** ⚑ S343 / T38 (his answer 2: "only on the Fellowship network page, smaller, designed, less basic") — a 1997
+   *  button advertisement for FIT IN: its title, its promise, a PLAY button, and the game itself in miniature (a
+   *  block coming down onto a tapering stack; the piece that overhangs blinks — the piece that will be cut off) */
+  private drawFitInAd(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    const w = 184, h = 66, B = decisions.banner;
+    const hot = this.hover === 'web-fitin';
+    ui.px(ctx, x, y, w, h, ERA1.navy);
+    ui.px(ctx, x + 2, y + 2, w - 4, h - 4, P.adSky);
+    ui.px(ctx, x + 2, y + h - 14, w - 4, 12, P.adGrass);
+    for (let i = 4; i < w - 4; i += 6) ui.px(ctx, x + i, y + h - 15, 2, 1, P.adGrass);   // the grass's edge
+    // the words
+    ui.setFont(ctx, 18);
+    ctx.fillStyle = ERA1.white; ctx.fillText(B.frames[0], x + 9, y + 7);
+    ctx.fillStyle = ERA1.navy; ctx.fillText(B.frames[0], x + 8, y + 6);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.navy;
+    ui.wrapText(ctx, B.frames[1], 100).slice(0, 2).forEach((l, i) => ctx.fillText(l, x + 8, y + 26 + i * 9));
+    ui.button(ctx, x + 8, y + h - 18, 46, 15, `${B.play} >`, { hover: hot });
+    // the game in miniature: a dotted mould, the stack, the block coming down
+    const gx = x + 122, gy = y + h - 14;
+    for (let i = 0; i < 44; i += 3) { ui.px(ctx, gx + i, gy - 44, 1, 1, ERA1.navy); ui.px(ctx, gx + i, gy - 1, 1, 1, ERA1.navy); }
+    for (let j = 0; j < 44; j += 3) { ui.px(ctx, gx, gy - 44 + j, 1, 1, ERA1.navy); ui.px(ctx, gx + 43, gy - 44 + j, 1, 1, ERA1.navy); }
+    const rows: Array<[number, number, string]> = [[4, 36, P.geoHeading], [8, 28, ERA1.olive], [12, 20, P.dirHeading]];
+    rows.forEach(([ox, bw, col], i) => { ui.px(ctx, gx + ox, gy - 9 - i * 9, bw, 8, col); ui.px(ctx, gx + ox, gy - 9 - i * 9, bw, 1, ERA1.white); });
+    const blink = reducedMotion() || Math.floor(this.bannerTime * 2) % 2 === 0;
+    const by = gy - 40;
+    ui.px(ctx, gx + 16, by, 20, 8, ERA1.warnDark);
+    if (blink) { ui.px(ctx, gx + 36, by, 10, 8, ERA1.warn); ui.px(ctx, gx + 36, by, 10, 1, ERA1.white); }
+    ui.px(ctx, gx + 24, by - 6, 1, 4, ERA1.navy); ui.px(ctx, gx + 28, by - 7, 1, 5, ERA1.navy);   // it is falling
+    // the period's AD tag, and who paid for it
+    ui.setFont(ctx, 7);
+    ui.px(ctx, x + w - 17, y + 2, 15, 9, ERA1.silver); ctx.fillStyle = ERA1.black; ctx.fillText(B.tag, x + w - 15, y + 2);
+    ctx.fillStyle = P.dim; ctx.fillText(B.ad, x + w - ctx.measureText(B.ad).width, y + h + 1);
+    this.hits.push({ x, y, w, h, id: 'web-fitin' });
   }
 
   private drawResults(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }, page: number): void {
     ui.setFont(ctx, 16);
-    ctx.fillStyle = P.engine; ctx.fillText(D.engine, b.x + 8, b.y + 6);
+    ctx.fillStyle = P.engine; ctx.fillText(D.engine, b.x + 8, b.y + 4);
     ui.setFont(ctx, 10);
     ctx.fillStyle = ERA1.black;
-    ctx.fillText(D.resultsFor.replace('{q}', D.query), b.x + 70, b.y + 8);
+    ctx.fillText(D.resultsFor.replace('{q}', D.query), b.x + 70, b.y + 6);
     ui.setFont(ctx, 8);
     ctx.fillStyle = ERA1.greyDark;
     ctx.fillText(D.resultsCount.replace('1-6', page === 1 ? '1-6' : '7-12'), b.x + 8, b.y + 22);
-    // S198 — the category match, above the sites (Yahoo, 1998)
-    ctx.fillText(D.directory.resultsCategory, b.x + 8, b.y + 32);
+    // ⚑ S343 / T38 — Pages: 1 2 3 sit up here now (3 never loads), so every result has room under it
     ui.setFont(ctx, 9);
-    this.link(ctx, [...D.directory.path.slice(-3), D.directory.heading].join(' > '), b.x + 80, b.y + 32, 'web-dir');
+    const px = b.x + b.w - 150, py = b.y + 21;
+    ctx.fillStyle = ERA1.black; ctx.fillText(D.resultsPages, px, py);
+    ctx.fillStyle = page === 1 ? ERA1.black : P.link; ctx.fillText('1', px + 40, py);
+    ctx.fillStyle = page === 2 ? ERA1.black : P.link; ctx.fillText('2', px + 52, py);
+    ctx.fillStyle = ERA1.grey; ctx.fillText('3', px + 64, py);
+    if (page === 1) this.link(ctx, `${D.next} >`, px + 82, py, 'web-next');
+    // S198 — the category match, above the sites (Yahoo, 1998)
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(D.directory.resultsCategory, b.x + 8, b.y + 35);
+    ui.setFont(ctx, 9);
+    this.link(ctx, [...D.directory.path.slice(-3), D.directory.heading].join(' > '), b.x + 80, b.y + 35, 'web-dir');
+    ui.px(ctx, b.x + 8, b.y + 49, b.w - 16, 1, ERA1.silver);
     const rs = page === 1 ? D.results : [...D.results].reverse();   // page 2: the same network, again
     rs.forEach((r, i) => {
-      const y = b.y + 48 + i * 33;
+      const y = b.y + 55 + i * 35;
       ui.setFont(ctx, 10);
       this.link(ctx, r.title, b.x + 12, y, `web-res:${r.id}`, this.visited.has(r.id));
       ui.setFont(ctx, 9);
       ctx.fillStyle = ERA1.black;
-      ctx.fillText(r.snippet, b.x + 12, y + 14);
+      ctx.fillText(r.snippet, b.x + 20, y + 13);
+      ui.setFont(ctx, 8);
       ctx.fillStyle = ERA1.ok;
-      ctx.fillText(r.url, b.x + 12, y + 25);
+      ctx.fillText(r.url, b.x + 20, y + 23);
     });
-    // Pages: 1 2 3 — and 3 never loads
-    const py = b.y + b.h - 18;
-    ui.setFont(ctx, 9);
-    ctx.fillStyle = ERA1.black;
-    ctx.fillText(D.resultsPages, b.x + 12, py);
-    ctx.fillStyle = page === 1 ? ERA1.black : P.link; ctx.fillText('1', b.x + 50, py);
-    ctx.fillStyle = page === 2 ? ERA1.black : P.link; ctx.fillText('2', b.x + 62, py);
-    ctx.fillStyle = ERA1.grey; ctx.fillText('3', b.x + 74, py);
-    if (page === 1) this.link(ctx, `${D.next} >`, b.x + 90, py, 'web-next');
   }
 
   /** ⚑ S198 — the directory, Yahoo-style: the path, the sub-categories, the site listings */
@@ -315,7 +357,7 @@ export class Web1997App {
     ui.setFont(ctx, 9); ctx.fillStyle = P.dim;
     ctx.fillText(L.sub, b.x + Math.round((b.w - ctx.measureText(L.sub).width) / 2), b.y + 32);
     L.members.forEach((m, i) => {
-      const y = b.y + 44 + i * 18;
+      const y = b.y + 50 + i * 17;   // S343: clear of the subtitle
       ui.setFont(ctx, 10);
       if (m.page) this.link(ctx, m.name, b.x + 30, y, `web-res:${m.page}`, this.visited.has(m.page));
       else {
@@ -328,56 +370,126 @@ export class Web1997App {
       ui.setFont(ctx, 9); ctx.fillStyle = P.dim;
       ctx.fillText(m.note, b.x + 220, y);
     });
-    if (this.view.kind === 'page' && this.view.id === 'root') this.link(ctx, fixes.rootLink, b.x + 24, b.y + b.h - 76, 'web-rootcause');
     this.ringBar(ctx, b);
   }
 
+  /** ⚑ S343 / T38 — every page in one of three period grammars, with room between its parts */
   private drawPage(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }, id: PageId): void {
     const pg = D.pages[id] as PageDef;
-    this.heading(ctx, b, pg.heading);
-    let top = b.y + 42;
-    if (pg.byline) { ui.setFont(ctx, 9); ctx.fillStyle = P.dim; ctx.fillText(pg.byline, b.x + Math.round((b.w - ctx.measureText(pg.byline).width) / 2), b.y + 36); top += 8; }
-    ui.px(ctx, b.x + 20, top, b.w - 40, 1, P.rule);
+    const style: Style = pg.style === 'ring' || pg.style === 'dir' ? pg.style : 'geo';
+    const K = INK[style], S = D.styles;
+    this.pageBackground(ctx, b, style);
+    // the heading, in the page's own manner
+    const left = style === 'dir';
+    const hx = this.heading(ctx, b, pg.heading, style === 'dir' ? 18 : 22, K, left);
+    ui.setFont(ctx, style === 'dir' ? 18 : 22);
+    const hw = ctx.measureText(pg.heading).width;
+    if (style === 'geo' && pg.badge) this.newBurst(ctx, hx + hw + 10, b.y + 4, S.geo.new);
+    if (style === 'ring') { this.ringLogo(ctx, hx - 34, b.y + 6); this.ringLogo(ctx, hx + hw + 8, b.y + 6); }
+    let top = b.y + 36;
+    if (pg.byline) {
+      ui.setFont(ctx, 9); ctx.fillStyle = K.dim;
+      ctx.fillText(pg.byline, left ? b.x + 24 : b.x + Math.round((b.w - ctx.measureText(pg.byline).width) / 2), b.y + 34);
+      top += 12;
+    }
+    if (style === 'geo') this.beadRule(ctx, b.x + 40, top, b.w - 80);
+    else ui.px(ctx, b.x + 20, top, b.w - 40, 1, style === 'ring' ? P.ringHeading : P.dirEdge);
+    // the links block at the foot: the channel (every page), the game (the Root page), then the dossier mark and the ring
+    const links: Array<[string, string]> = [[D.join, 'web-join']];
+    if (id === 'root') links.push([fixes.rootLink, 'web-rootcause']);
+    const linksY = b.y + b.h - 62 - links.length * 17;
+    const room = linksY - (top + 10) - (pg.counter ? 22 : 0) - 4;
+    const step = Math.max(12, Math.min(16, Math.floor(room / Math.max(1, pg.lines.length))));
     ui.setFont(ctx, 10);
-    ctx.fillStyle = P.text;
-    pg.lines.forEach((l, i) => ctx.fillText(l, b.x + 30, top + 10 + i * 13));
-    let y = top + 10 + pg.lines.length * 13 + 6;
+    let y = top + 10;
+    for (const l of pg.lines) {
+      if (style === 'dir' && l.includes(' · ') && l === l.toUpperCase()) this.cellRow(ctx, b.x + 30, y - 2, l.split(' · '), step);
+      else {
+        ctx.fillStyle = K.text;
+        const lx = style === 'geo' ? b.x + Math.round((b.w - ctx.measureText(l).width) / 2) : b.x + 30;
+        ctx.fillText(l, lx, y);
+      }
+      y += step;
+    }
     if (pg.counter) {
       ui.setFont(ctx, 9);
-      const w = ctx.measureText(D.counter).width + 12;
-      ui.px(ctx, b.x + Math.round((b.w - w) / 2), y, w, 16, P.counterBg);
-      ctx.fillStyle = P.text; ctx.fillText(D.counter, b.x + Math.round((b.w - w) / 2) + 6, y + 4);
-      y += 22;
+      const w = ctx.measureText(D.counter).width + 12, cx = b.x + Math.round((b.w - w) / 2);
+      ui.px(ctx, cx, y, w, 16, style === 'dir' ? P.dirCell : P.counterBg);
+      ctx.fillStyle = K.text; ctx.fillText(D.counter, cx + 6, y + 4);
     }
-    // the channel, on every page
     ui.setFont(ctx, 10);
-    const jw = ctx.measureText(D.join).width;
-    this.link(ctx, D.join, b.x + Math.round((b.w - jw) / 2), Math.max(y, b.y + b.h - 80), 'web-join');
-    // the second reading: the practice this page is a trace of
+    links.forEach(([t, lid], i) => {
+      const tw = ctx.measureText(t).width;
+      this.link(ctx, t, b.x + Math.round((b.w - tw) / 2), linksY + i * 17, lid, false, K);
+    });
+    // the period's own small print, and the second reading: the practice this page is a trace of
+    ui.setFont(ctx, 8); ctx.fillStyle = K.dim;
+    const small = style === 'geo' ? `${S.geo.guestbook}   ·   ${S.geo.bestViewed}` : style === 'dir' ? S.dir.updated : `${S.ring.member} ${D.ringBar.name}`;
+    ctx.fillText(small, b.x + Math.round((b.w - ctx.measureText(small).width) / 2), b.y + b.h - 62);
     const pr = pg.practice ? practiceOf(pg.practice) : undefined;
     if (pr) {
-      ui.setFont(ctx, 8); ctx.fillStyle = P.dim;
       const t = fixes.dossier.replace('{item}', pg.practice === 'profile' ? fixes.questionnaire : pr.title.toLowerCase());
-      ui.wrapText(ctx, t, b.w - 48).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, b.x + 24, b.y + b.h - 60 + i * 10));
+      ctx.fillStyle = K.dim;
+      ui.wrapText(ctx, t, b.w - 48).slice(0, 1).forEach((ln) => ctx.fillText(ln, b.x + 24, b.y + b.h - 51));
     }
-    if (this.view.kind === 'page' && this.view.id === 'root') this.link(ctx, fixes.rootLink, b.x + 24, b.y + b.h - 76, 'web-rootcause');
-    this.ringBar(ctx, b);
+    this.ringBar(ctx, b, style);
+  }
+
+  private pageBackground(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }, style: Style): void {
+    if (style === 'geo') {
+      ui.px(ctx, b.x, b.y, b.w, b.h, P.geoBg);
+      for (let y = 4; y < b.h; y += 16) for (let x = (y / 16) % 2 ? 12 : 4; x < b.w; x += 16) { ui.px(ctx, b.x + x, b.y + y, 2, 2, P.geoTile); ui.px(ctx, b.x + x + 2, b.y + y + 2, 1, 1, P.geoTile); }
+    } else if (style === 'ring') {
+      ui.px(ctx, b.x, b.y, b.w, b.h, P.ringBg);
+      for (let i = 0; i < 70; i++) { const sx = (i * 97 + 13) % b.w, sy = (i * 53 + 7) % b.h; ui.px(ctx, b.x + sx, b.y + sy, 1, 1, i % 5 ? ERA1.grey : ERA1.white); }
+    } else ui.px(ctx, b.x, b.y, b.w, b.h, ERA1.white);
+  }
+  private beadRule(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
+    for (let i = 0, k = 0; i < w - 4; i += 6, k++) { const c = P.geoBeads[k % P.geoBeads.length]; ui.px(ctx, x + i + 1, y - 2, 3, 5, c); ui.px(ctx, x + i, y - 1, 5, 3, c); }
+  }
+  /** the period's NEW! burst, an eight-point star of pixels */
+  private newBurst(ctx: CanvasRenderingContext2D, x: number, y: number, text: string): void {
+    ui.px(ctx, x + 2, y + 4, 28, 12, P.construction); ui.px(ctx, x + 6, y, 20, 20, P.construction);
+    ui.px(ctx, x, y + 8, 32, 4, P.construction); ui.px(ctx, x + 14, y - 3, 4, 26, P.construction);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.warn; ctx.fillText(text, x + 5, y + 6);
+  }
+  /** the ring's mark: three linked rings */
+  private ringLogo(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+    const ring = (cx: number, cy: number, col: string): void => {
+      ui.px(ctx, cx - 3, cy - 6, 6, 2, col); ui.px(ctx, cx - 3, cy + 4, 6, 2, col);
+      ui.px(ctx, cx - 6, cy - 3, 2, 6, col); ui.px(ctx, cx + 4, cy - 3, 2, 6, col);
+      ui.px(ctx, cx - 5, cy - 5, 2, 2, col); ui.px(ctx, cx + 3, cy - 5, 2, 2, col); ui.px(ctx, cx - 5, cy + 3, 2, 2, col); ui.px(ctx, cx + 3, cy + 3, 2, 2, col);
+    };
+    ring(x + 6, y + 7, P.ringText); ring(x + 14, y + 7, P.ringLink); ring(x + 22, y + 7, P.ringHeading);
+  }
+  /** a directory's table row: one bordered cell per entry */
+  private cellRow(ctx: CanvasRenderingContext2D, x: number, y: number, cells: string[], h: number): void {
+    ui.setFont(ctx, 9);
+    let cx = x;
+    for (const t of cells) {
+      const w = Math.ceil(ctx.measureText(t).width) + 10;
+      ui.px(ctx, cx, y, w, h - 1, P.dirEdge); ui.px(ctx, cx + 1, y + 1, w - 2, h - 3, P.dirCell);
+      ctx.fillStyle = P.link; ctx.fillText(t, cx + 5, y + 2);
+      cx += w + 2;
+    }
+    ui.setFont(ctx, 10);
   }
 
   /** the ring's bar, on every page */
-  private ringBar(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }): void {
-    const ry = b.y + b.h - 40;
-    ui.px(ctx, b.x + 20, ry, b.w - 40, 30, P.ringBar);
-    ui.px(ctx, b.x + 20, ry, b.w - 40, 1, P.rule);
+  private ringBar(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }, style: Style = 'geo'): void {
+    const ry = b.y + b.h - 38;
+    const dark = style === 'ring';
+    ui.px(ctx, b.x + 20, ry, b.w - 40, 32, dark ? P.ringHeading : P.dirEdge);
+    ui.px(ctx, b.x + 21, ry + 1, b.w - 42, 30, dark ? P.ringPanel : P.ringBar);
     ui.setFont(ctx, 9);
-    ctx.fillStyle = P.ringInk;
+    ctx.fillStyle = dark ? P.ringText : P.ringInk;
     const name = D.ringBar.name;
     ctx.fillText(name, b.x + Math.round((b.w - ctx.measureText(name).width) / 2), ry + 3);
     const items: Array<[string, string]> = [[D.ringBar.prev, 'prev'], [D.ringBar.random, 'random'], [D.ringBar.list, 'list'], [D.ringBar.next, 'next']];
     const slot = (b.w - 40) / items.length;
     items.forEach(([t, k], i) => {
       const tw = ctx.measureText(t).width;
-      this.link(ctx, t, b.x + 20 + i * slot + Math.round((slot - tw) / 2), ry + 16, `web-ring:${k}`);
+      this.link(ctx, t, b.x + 20 + i * slot + Math.round((slot - tw) / 2), ry + 17, `web-ring:${k}`, false, dark ? INK.ring : P);
     });
   }
 }

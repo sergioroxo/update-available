@@ -10,8 +10,18 @@
     "",
     "Press the earth beside Lamby to dig."
   ],
-  "start": "Dig",
-  "hint": "press the earth beside Lamby to dig · a diagnosis beside you to inflate it",
+  "start": "Start digging",
+  "hint": "GOAL: dig down to the root. Press the earth beside Lamby to dig; press a diagnosis beside you to inflate it.",
+  "_docS343": "⚑ S343 / T35 (his 8 Nov: 'it needs to be more clear of the intentions… understand where your SSA comes from… connect to the educational aspects of the topic'). The title screen now states the programme's THEORY in its own voice (the 'root cause' / developmental-deficit claim the Lexicon's ROOT entry answers: no such root was ever found) and the one goal; the report's NOT FOUND is where the claim collapses. 'SSA' is the programme's own jargon.",
+  "titleBig": "ROOT CAUSE DIGGER",
+  "version": "v1.0 · fellowship shareware · 1997",
+  "theoryLabel": "THE PROGRAMME'S THEORY",
+  "theory": [
+    "Same-sex attraction (SSA) has a ROOT:",
+    "a hurt buried somewhere in your past.",
+    "Dig down through your life, layer by layer.",
+    "When you reach it, the programme names it."
+  ],
   "layers": [
     "Childhood",
     "School",

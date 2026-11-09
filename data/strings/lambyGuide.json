@@ -16,10 +16,12 @@
     "cueSeconds": 25,
     "tipSeconds": 50,
     "againSeconds": 90,
+    "formAfterRootSeconds": 6,
     "capPerEra": 5
   },
   "form": {
     "text": "Want me to open the form?",
+    "next": "Next is Rob's Family Form. Want me to open it?",
     "due": "Time's up. It's time for Rob's form.",
     "_docDue": "⚑ S281 (his, 1 Nov) — said once when the intermission ends (os.ts FORM_INTERMISSION). Open it / No thanks both work, and are logged; after it, any press on the desktop opens the form (os.ts formForced): refusal is allowed and the system breaks in anyway.",
     "yes": "Open it",
@@ -422,6 +424,9 @@
   },
   "root": {
     "here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.",
-    "text": "Your answers are in. Root Cause came with the disk: it digs for where it all started. Find it in Start → Programs."
+    "text": "Your answers are in. Root Cause came with the disk: it digs for where it all started. Find it in Start → Programs.",
+    "next": "Rob's done for now. Before his Family Form: want to dig for where your feelings come from? Root Cause Digger came with the disk.",
+    "yes": "Let's dig",
+    "_docS343": "⚑ S343 / T16 + T35 (his 8 Nov) — `next` is said the moment Rob's chat closes, before the Family Form; `yes` opens the game. When the game closes (or he says no), form.next comes after timing.formAfterRootSeconds."
   }
 }

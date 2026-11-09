@@ -8,7 +8,13 @@ export const WEB97 = {
   text: '#000033', dim: '#555577', rule: '#9999cc', ringBar: '#dddddd', ringInk: '#000080',
   counterBg: '#aaaadd', searchBg: '#ffffff', engine: '#cc0000', engineAlt: '#0033cc', join: '#008000',
   construction: '#ffdd33',   // S194 — the period's 'under construction' yellow
-  logoBg: '#1a2a6c', logoInk: '#e8e8f0', iconInk: '#1a2a6c'   // S197 — the browser's mark and its toolbar pictures
+  logoBg: '#1a2a6c', logoInk: '#e8e8f0', iconInk: '#1a2a6c',   // S197 — the browser's mark and its toolbar pictures
+  // ⚑ S343 / T38 — three period page grammars, web-safe colours of the free-homepage years
+  geoBg: '#ffffcc', geoTile: '#ffcc99', geoHeading: '#cc0066', geoShade: '#ff99cc', geoText: '#330033',
+  geoBeads: ['#cc0066', '#ff99cc', '#ffcc99'],   // a beaded rule (never a rainbow: these are ministry pages)
+  ringBg: '#000033', ringText: '#ffff00', ringLink: '#00ffff', ringVisited: '#ff99ff', ringHeading: '#ff9900', ringPanel: '#000066',
+  dirHeading: '#003366', dirCell: '#eeeeee', dirEdge: '#999999',
+  adSky: '#99ccff', adGrass: '#66cc33'   // the FIT IN advertisement's little field
 } as const;
 
 /** ⚑ S191 — the 2003 forum (src/desktop/apps/web2003.ts): a UBB/phpBB-era board, navy banner, pale panels */

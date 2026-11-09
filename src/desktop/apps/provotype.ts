@@ -78,6 +78,9 @@ export interface Provotype {
   wizard?: { title: string; heading: string; frameHeading: string; step: string; round: string; steps: string[];
     /** ⚑ T36 — the programme's own one-line claim of what the exercise is FOR, on the intro's note */
     purposeLabel?: string; purpose?: string };
+  /** ⚑ S343 / T37 — the Family Form in its ministry's own 1997 print look (origin_intake_e1.json `ministry`) */
+  ministry?: { name: string; tagline: string; formNo: string; stamp: string; question: string;
+    ad: { heading: string; lines: string[]; foot: string; coupon?: string[] }; verse: string; envelope: string[]; onHold: string };
 }
 
 type Pose = 'lift' | 'exhale' | 'strike';
@@ -256,7 +259,17 @@ export class ProvotypeApp {
       return;
     }
     let c: ui.ContentRect;
-    if (isRoomPhase) {
+    const Mn = this.data.ministry;
+    const stNow = this.data.states[this.stateIndex];
+    const feltBeat = this.phase === 'vignette' && this.showResponse && this.feltRevealed && !!stNow?.felt;
+    if (Mn && !feltBeat && this.phase !== 'close') {
+      c = this.drawMinistry(ctx, Mn, title);
+    } else if (Mn && this.phase === 'close') {
+      c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, title, true);
+      ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+      if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'leave' });
+      this.drawEnvelope(ctx, Mn, c.x + Math.round((c.w - 220) / 2), c.y + 112);
+    } else if (isRoomPhase) {
       this.drawRoomBackdrop(ctx, WIN.x, WIN.y, WIN.w, WIN.h);
       c = this.drawOverlayPanel(ctx, WIN.x, WIN.y, WIN.w, WIN.h);
     } else {
@@ -386,9 +399,16 @@ export class ProvotypeApp {
       return;
     }
 
+    let y = top;
+    const Mn = this.data.ministry;
+    if (Mn) {   // S343 — a printed form numbers its questions
+      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.warnDark;
+      ctx.fillText(Mn.question.replace('{n}', String(this.stateIndex + 1)).replace('{of}', String(this.data.states.length)), x, y);
+      ui.px(ctx, x, y + 11, maxW, 1, ERA1.silver);
+      y += 18;
+    }
     ui.setFont(ctx, 11);
     ctx.fillStyle = ERA1.black;
-    let y = top;
     for (const w of wrap(ctx, st.prompt, maxW)) { ctx.fillText(w, x, y); y += 15; }
     y += 8;
 
@@ -396,9 +416,12 @@ export class ProvotypeApp {
       // the options — each click-confirm registers; no choice is "right"
       const labels = st.choices ? st.choices.map(c => c.label) : (st.buttons ?? []);
       labels.forEach((label, i) => {
-        const bw = Math.min(220, Math.max(120, ctx.measureText(label).width + 28));
+        const bw = Math.min(Mn ? maxW : 220, Math.max(120, ctx.measureText(label).width + (Mn ? 40 : 28)));
         const by = y + i * 28;
-        ui.button(ctx, x, by, bw, 22, label, { hover: this.hover === `choice:${i}` });
+        ui.button(ctx, x, by, bw, 22, Mn ? `   ${label}` : label, { hover: this.hover === `choice:${i}` });
+        if (Mn) {   // the printed form's tick box, inside the button
+          ui.px(ctx, x + 7, by + 6, 10, 10, ERA1.greyDark); ui.px(ctx, x + 8, by + 7, 8, 8, ERA1.white);
+        }
         this.hits.push({ x, y: by, w: bw, h: 22, id: `choice:${i}` });
       });
       return;
@@ -422,7 +445,7 @@ export class ProvotypeApp {
     const cl = this.data.close;
     ui.setFont(ctx, 11);
     ctx.fillStyle = ERA1.grey;
-    let y = top + 30;
+    let y = top + (this.data.ministry ? 14 : 30);   // S343: the envelope sits under the lines
     for (const line of cl?.lines ?? []) {
       for (const w of wrap(ctx, line, maxW)) { ctx.fillText(w, x, y); y += 15; }
       y += 4;
@@ -452,6 +475,14 @@ export class ProvotypeApp {
    * swung well would make the practice feel good, and the practice is the
    * subject. It moves the way an instruction manual moves.
    */
+  /** ⚑ S343 — the programme is speaking (the invitation, the frame, a question or its reply): its music may play;
+   *  never under the person's own felt line, the close, or the hold */
+  get programmeVoice(): boolean {
+    if (this.paused || this.phase === 'close') return false;
+    const st = this.data.states[this.stateIndex];
+    return !(this.phase === 'vignette' && this.showResponse && this.feltRevealed && !!st?.felt);
+  }
+
   /** which provotype this is — the guide thread reads it (S151) */
   get id(): string { return this.data.id; }
 
@@ -642,13 +673,87 @@ export class ProvotypeApp {
     this.hits.push({ x, y: ROW_Y, w, h: 20, id: 'primary' });
   }
 
+  /** ⚑ S343 / T37 (his 8 Nov: the stacked text overlapped — "on hold" as its own box) — the hold is a small dialog of
+   *  its own over a veiled form, never words printed over the question */
   private drawPaused(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     ctx.fillStyle = 'rgba(212,208,200,0.82)'; // the era's chrome beige, veiled
-    ctx.fillRect(c.x, c.y, c.w, c.h - 24);
-    // S168 / R3-12: the hold says what it is, in one wrapped line
+    ctx.fillRect(c.x, c.y, c.w, Math.max(0, ROW_Y - 6 - c.y));
+    // S168 / R3-12: the hold says what it is
+    const w = 260, x = WIN.x + Math.round((WIN.w - w) / 2);
     ui.setFont(ctx, 11);
-    ctx.fillStyle = ERA1.greyDark;
-    ui.wrapText(ctx, chrome.paused, c.w - 24).forEach((ln, i) => ctx.fillText(ln, c.x + 12, c.y + 12 + i * 14));
+    const lines = ui.wrapText(ctx, chrome.paused, w - 24);
+    const h = 30 + lines.length * 14 + 12, y = WIN.y + Math.round((WIN.h - 28 - h) / 2);
+    const f = ui.windowFrame(ctx, x, y, w, h, this.data.ministry?.onHold ?? chrome.pause, false);
+    ui.px(ctx, f.x, f.y, f.w, f.h, ERA1.beige);
+    ctx.fillStyle = ERA1.black;
+    lines.forEach((ln, i) => ctx.fillText(ln, f.x + 10, f.y + 8 + i * 14));
+  }
+
+  /** ⚑ S343 / T37 — the ministry's 1997 print look: the letterhead, the ad column, the verse at the foot */
+  private drawMinistry(ctx: CanvasRenderingContext2D, M: NonNullable<Provotype['ministry']>, title: string): ui.ContentRect {
+    const f = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, title, true);
+    if (f.closeBox.w > 0) this.hits.push({ ...f.closeBox, id: 'leave' });
+    ui.px(ctx, f.x, f.y, f.w, f.h, ERA1.paper);
+    // the letterhead: the mark (a sunrise over a path), the name, the line under it
+    const lx = f.x + 10, ly = f.y + 6;
+    ui.px(ctx, lx, ly, 34, 30, ERA1.navy);
+    for (let r = 0; r < 7; r++) { const half = Math.round(Math.sqrt(49 - (7 - r) * (7 - r)) * 1.4); ui.px(ctx, lx + 17 - half, ly + 6 + r, half * 2, 1, ERA1.tooltip); }
+    for (let i = 0; i < 5; i++) ui.px(ctx, lx + 5 + i * 6, ly + 3, 2, 2, ERA1.tooltip);   // the rays
+    ui.px(ctx, lx + 2, ly + 14, 30, 14, ERA1.olive);
+    for (let r = 0; r < 14; r++) { const w = 2 + Math.round(r * 1.1); ui.px(ctx, lx + 17 - Math.floor(w / 2), ly + 14 + r, w, 1, ERA1.paper); }   // the path
+    ui.setFont(ctx, 15); ctx.fillStyle = ERA1.navy; ctx.fillText(M.name, lx + 42, ly + 1);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.warnDark; ctx.fillText(M.tagline, lx + 43, ly + 20);
+    // the form number and the stamp, top right
+    ui.setFont(ctx, 8);
+    const sw = ctx.measureText(M.stamp).width + 8;
+    ctx.fillStyle = ERA1.grey; ctx.fillText(M.formNo, f.x + f.w - 10 - ctx.measureText(M.formNo).width, ly);
+    ui.px(ctx, f.x + f.w - 10 - sw, ly + 13, sw, 13, ERA1.warn); ui.px(ctx, f.x + f.w - 9 - sw, ly + 14, sw - 2, 11, ERA1.paper);
+    ctx.fillStyle = ERA1.warn; ctx.fillText(M.stamp, f.x + f.w - 6 - sw, ly + 15);
+    // the double rule under the letterhead
+    ui.px(ctx, f.x + 8, ly + 34, f.w - 16, 2, ERA1.navy); ui.px(ctx, f.x + 8, ly + 38, f.w - 16, 1, ERA1.warnDark);
+    // the ad column: every mailing carried one
+    const aw = 112, ax = f.x + f.w - aw - 8, ay = ly + 46, ah = ROW_Y - 30 - ay;
+    ui.px(ctx, ax, ay, aw, ah, ERA1.warnDark); ui.px(ctx, ax + 2, ay + 2, aw - 4, ah - 4, ERA1.tooltip);
+    ui.px(ctx, ax + 2, ay + 2, aw - 4, 16, ERA1.warnDark);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.tooltip;
+    ctx.fillText(M.ad.heading, ax + Math.round((aw - ctx.measureText(M.ad.heading).width) / 2), ay + 5);
+    // a family under the sunrise, in the ministry's clip-art manner
+    const px0 = ax + 14, py0 = ay + 26, pw = aw - 28;
+    ui.px(ctx, px0, py0, pw, 40, ERA1.titleBlue);
+    for (let r = 0; r < 10; r++) { const half = Math.round(Math.sqrt(100 - (10 - r) * (10 - r)) * 1.6); ui.px(ctx, px0 + pw / 2 - half, py0 + 18 + r, half * 2, 1, ERA1.tooltip); }
+    ui.px(ctx, px0, py0 + 28, pw, 12, ERA1.olive);
+    const fig = (cx: number, h: number): void => { ui.px(ctx, cx - 2, py0 + 40 - h, 4, 4, ERA1.navy); ui.px(ctx, cx - 3, py0 + 44 - h, 6, h - 4, ERA1.navy); };
+    fig(px0 + 22, 18); fig(px0 + 34, 15); fig(px0 + 46, 11); fig(px0 + 60, 17);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.navy;
+    M.ad.lines.forEach((l, i) => ctx.fillText(l, ax + Math.round((aw - ctx.measureText(l).width) / 2), py0 + 48 + i * 12));
+    // the clip-out coupon, dashed, with its own tick box
+    if (M.ad.coupon) {
+      const cy = py0 + 48 + M.ad.lines.length * 12 + 6, cw = aw - 16, ch = M.ad.coupon.length * 10 + 8;
+      for (let i = 0; i < cw; i += 4) { ui.px(ctx, ax + 8 + i, cy, 2, 1, ERA1.greyDark); ui.px(ctx, ax + 8 + i, cy + ch, 2, 1, ERA1.greyDark); }
+      for (let j = 0; j < ch; j += 4) { ui.px(ctx, ax + 8, cy + j, 1, 2, ERA1.greyDark); ui.px(ctx, ax + 8 + cw - 1, cy + j, 1, 2, ERA1.greyDark); }
+      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.black;
+      M.ad.coupon.forEach((l, i) => ctx.fillText(l, ax + 14, cy + 5 + i * 10));
+      ui.px(ctx, ax + cw - 6, cy + 5, 8, 8, ERA1.greyDark); ui.px(ctx, ax + cw - 5, cy + 6, 6, 6, ERA1.white);
+    }
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.warnDark;
+    ctx.fillText(M.ad.foot, ax + Math.round((aw - ctx.measureText(M.ad.foot).width) / 2), ay + ah - 14);
+    // the verse at the foot of the page
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(M.verse, f.x + 12, ROW_Y - 22);
+    ui.px(ctx, f.x + 8, ROW_Y - 8, f.w - 16, 1, ERA1.silver);
+    return { x: f.x, y: ly + 46, w: f.w - aw - 12, h: ROW_Y - 30 - (ly + 46), closeBox: f.closeBox };
+  }
+
+  /** ⚑ S343 — the close: the envelope the form goes back into, addressed to the fellowship */
+  private drawEnvelope(ctx: CanvasRenderingContext2D, M: NonNullable<Provotype['ministry']>, x: number, y: number): void {
+    const w = 220, h = 108;
+    ui.px(ctx, x + 3, y + 3, w, h, ERA1.silver);
+    ui.px(ctx, x, y, w, h, ERA1.white); ui.px(ctx, x, y, w, 1, ERA1.grey); ui.px(ctx, x, y + h - 1, w, 1, ERA1.grey);
+    ui.px(ctx, x, y, 1, h, ERA1.grey); ui.px(ctx, x + w - 1, y, 1, h, ERA1.grey);
+    ui.px(ctx, x + w - 36, y + 8, 26, 30, ERA1.warnDark); ui.px(ctx, x + w - 33, y + 11, 20, 24, ERA1.tooltip);   // the stamp
+    ui.px(ctx, x + 10, y + 10, 16, 14, ERA1.navy); ui.px(ctx, x + 12, y + 18, 12, 6, ERA1.olive);   // the return mark
+    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black;
+    M.envelope.forEach((l, i) => ctx.fillText(l, x + 62, y + 52 + i * 13));
   }
 
   // ── input ─────────────────────────────────────────────────────────────
