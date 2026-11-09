@@ -26,7 +26,7 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
    them to the thing to press. Always ignorable; exploration stays free.
    This supersedes "Era 1 has NO assistant character". Era 1's impersonal
    side-messages stay; Era 2's conduction stays (≤2 lines per conduction beat).
-   ≤5 unsolicited guide balloons per era; visitor-requested help is uncapped.
+   ≤8 unsolicited guide balloons per era (⚑ raised from 5 by Sérgio, 2026-11-09: "we can have some leeway"); visitor-requested help is uncapped.
    One voice at a time: side-messages, conduction, toasts and guide wait for
    one another; the desktop frame helper yields to Lamby's balloon.
    Unchanged and non-negotiable: never during `felt` or `respite` scenes,
