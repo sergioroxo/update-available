@@ -76,6 +76,11 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 
 ## Built 9 Nov
 
+- ☑ S342 (UiB, `uib/work`): his 9 Nov answers to the 2003 questions — the alert waits for Next (or 20 s, no
+  countdown); Harbor posts his testimony; Caleb's "it never was, d. not once." for every player before the update;
+  the site, the form and the DVD collection in WebView (Harbor's browser, now with a status bar); the teaser in
+  MediaPlay 9 showing Caleb; Marcus and the empty chair drawn. docs/reinterp/UIB_2003B_BUILT_2026-11-09.md.
+
 - ☑ S339 (UiB session, branch `uib/work`): **2003 reworked** — the order (video → contacting → 404 → PureMail → the
   Messenger), Daniel says "Then it was never me that was broken…" to Caleb and the update pops in; Remind me later
   returns to Caleb; MSN Messenger + the song's Wait/Go on + player loop; the story uploaded from the 1997 folder → his
