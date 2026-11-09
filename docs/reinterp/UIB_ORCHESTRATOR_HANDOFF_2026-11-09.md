@@ -1,6 +1,6 @@
-STATUS: live
+STATUS: draft
 
-# Handoff: the UiB session becomes the orchestrator (9 Nov → Sat 14 Nov 2026)
+# Handoff (STANDBY — only if Sérgio switches; 9 Nov he chose to keep the personal session orchestrating): the UiB session becomes the orchestrator (9 Nov → Sat 14 Nov 2026)
 
 *Sérgio's personal account is at 78% of its week. Until Saturday 14 Nov the UiB (Enterprise) session leads. The
 personal session is kept for emergencies only.*
