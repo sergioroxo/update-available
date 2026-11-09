@@ -79,6 +79,7 @@
  "motionDenied": "Motion access declined. Drag to look.",
  "motionUnavailable": "No motion sensor here. Drag to look.",
  "creditsTitle": "Credits & attributions",
+ "buildLine": "Build {stamp}",
  "creditsNone": "No third-party assets to credit yet.",
  "creditsBallSources": "The ball — sources & further reading",
  "creditsOffersSources": "2026's offers — sources & further reading",

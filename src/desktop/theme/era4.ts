@@ -1417,6 +1417,21 @@ export function avatar(ctx: CanvasRenderingContext2D, x: number, y: number, d: n
   const w = Math.ceil(ctx.measureText(mark).width);
   ctx.fillText(mark, x + Math.round((d - w) / 2), y + Math.round(d * 0.24));
 }
+/** ⚑ S349 / T44 — the mark of a 2020s AI assistant: a soft disc with a four-point sparkle in it (the generic glyph of
+ *  the period's assistants; no real product's mark). Drawn, never typed. */
+export function assistantMark(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, fill: string, ink: string): void {
+  roundRect(ctx, x, y, d, d, Math.floor(d / 2), fill);
+  const cx = x + d / 2, cy = y + d / 2, r = d * 0.32, k = r * 0.22;
+  ctx.fillStyle = ink;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r);
+  ctx.quadraticCurveTo(cx + k, cy - k, cx + r, cy);
+  ctx.quadraticCurveTo(cx + k, cy + k, cx, cy + r);
+  ctx.quadraticCurveTo(cx - k, cy + k, cx - r, cy);
+  ctx.quadraticCurveTo(cx - k, cy - k, cx, cy - r);
+  ctx.closePath();
+  ctx.fill();
+}
 /** a message bar that cannot be typed into — a picture of an input, disabled */
 export function messageBar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, placeholder: string): void {
   pill(ctx, x, y, w, 24, WEB.cardEdge);

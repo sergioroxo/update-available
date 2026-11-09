@@ -105,6 +105,19 @@
    "line": "Struggling means you're trying. Good for you! (We'll tell you what you're trying to do.)"
   },
   {
+   "id": "struggler",
+   "term": "struggler",
+   "eras": [
+    1997,
+    2003,
+    2016
+   ],
+   "status": "moral",
+   "close": "What ministries call a gay person who resists their own desire. It makes the fight the person’s name, so the fight never ends. Members of these groups used it of themselves; the research records the word, it does not endorse it.",
+   "word": "STRUGGLER",
+   "line": "You fight it. That makes you one of us!"
+  },
+  {
    "id": "lifestyle",
    "term": "the lifestyle",
    "eras": [
@@ -566,5 +579,6 @@
     "status": "CONTESTED"
    }
   ]
- }
+ },
+ "_docS349": "⚑ S349 / T58 (his 9 Nov: the terms of 1997's Root Cause glossary all go to the Lexicon at the end) — 'struggler' added after 'the struggle', from RESEARCH_LEXICON §3 (Love in Action 2005, Erzen 2006: members call themselves 'strugglers'); its line is the glossary's own 'says', its close the glossary's 'does' made plain."
 }

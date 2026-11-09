@@ -119,6 +119,7 @@ import { meetWord } from './lexicon';
 import lexStrings from '../../data/strings/lexicon.json';
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
+import { PHONE } from '../desktop/theme/phone';   // S349: the Handset Window's bar is the phone's idiom
 import {
   ERA3, drawLambMark, warmGrade, drawNoaFrame, honestLight, NOA_FRAME, NOA_SECONDS, drawMemberFigure, MEMBER_FIGURE
 } from '../desktop/theme/era3';
@@ -1582,8 +1583,10 @@ export class GraceQueueLite {
     if (this.mirrorLarge) { ctx.save(); ctx.beginPath(); ctx.rect(W - 192, 0, 192, H - 28); ctx.clip(); aero.wallpaper(ctx, W, H); ctx.restore(); }
     const w = this.mirrorLarge ? 280 : 188, x = this.mirrorLarge ? Math.round((W - w) / 2) : W - w;
     const h = H - 30;
-    px(ctx, x, 0, w, h, ERA3.sysBand); px(ctx, x, 0, w, 25, ERA3.grey);
-    setFont(ctx, 12); ctx.fillStyle = ERA3.white; ctx.fillText(mirrorCopy.title, x + 9, 7);
+    // ⚑ S349 / T44 — her phone's window wears the PHONE's idiom, not her employer's: the light bar and hairline of a 2016
+    //   phone (iOS 7's flat grammar), dark title, the grouped grey ground — a different maker's software on the same desk
+    px(ctx, x, 0, w, h, PHONE.bg); px(ctx, x, 0, w, 25, PHONE.bar); px(ctx, x, 24, w, 1, PHONE.hairline);
+    setFont(ctx, 12); ctx.fillStyle = PHONE.ink; ctx.fillText(mirrorCopy.title, x + 9, 7);
     // ⚑ S327 / T31 (his 8 Nov: "it should not have a minimise button") — her phone does not go away; the title bar
     //   still opens the larger reading view
     this.rects.unshift({ x, y: 0, w, h: 25, id: 'mirror-enlarge' });
@@ -2040,11 +2043,10 @@ export class GraceQueueLite {
     t: BoardTask, index: number
   ): void {
     const done = this.taskComplete(t);
+    // ⚑ S349 / T44 — a 2016 flat card: white, no outline, lifted by a shadow line along its bottom and right edge
+    px(ctx, x + 1, y + h, w, 2, ERA3.glassEdge);
+    px(ctx, x + w, y + 1, 1, h, ERA3.glassEdge);
     px(ctx, x, y, w, h, ERA3.white);
-    px(ctx, x, y, w, 1, ERA3.glassHi);
-    px(ctx, x, y + h - 1, w, 1, ERA3.glassEdge);
-    px(ctx, x, y, 1, h, ERA3.glassEdge);
-    px(ctx, x + w - 1, y, 1, h, ERA3.glassEdge);
 
     // ⚑ the LABEL BLOCK is a fixed 44 px and the picture takes the rest. It used
     //   to be the other way round, and at six tiles on two rows that left the

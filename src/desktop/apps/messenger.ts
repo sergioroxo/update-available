@@ -262,7 +262,7 @@ export class E4Messenger {
     for (const id of rows) {
       const p = this.preview(id);
       const live = this.canOpen(id);
-      roundRect(ctx, L, y, R - L, rh, 5, KETTLE.row);
+      roundRect(ctx, L, y, R - L, rh, 10, KETTLE.row);   // S349 / T44: 2026's soft, round rows
       this.avatar(ctx, L + 3, y + 5, 20, id);
       setFont(ctx, 10); ctx.fillStyle = KETTLE.ink;
       let name = M.chats[id].name;
@@ -542,7 +542,7 @@ export class E4Messenger {
     const bw = Math.min(maxW, textW + 14);
     const bh = b.h - 3;
     const bx = mine ? W - 4 - bw : 6;
-    roundRect(ctx, bx, by, bw, bh, 6, m.draft ? KETTLE.draft : mine ? KETTLE.mine : KETTLE.theirs);
+    roundRect(ctx, bx, by, bw, bh, Math.min(11, Math.floor(bh / 2)), m.draft ? KETTLE.draft : mine ? KETTLE.mine : KETTLE.theirs);   // S349: rounder bubbles
     let ty = by + 3;
     if (m.draft) { ctx.font = monoFor(8); ctx.fillStyle = KETTLE.sub; ctx.fillText(M.mum.draftLabel, bx + 7, ty); ty += 11; }
     setFont(ctx, 9); ctx.fillStyle = KETTLE.ink;
