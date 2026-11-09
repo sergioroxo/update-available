@@ -357,7 +357,7 @@ export class Web1997App {
     ui.setFont(ctx, 9); ctx.fillStyle = P.dim;
     ctx.fillText(L.sub, b.x + Math.round((b.w - ctx.measureText(L.sub).width) / 2), b.y + 32);
     L.members.forEach((m, i) => {
-      const y = b.y + 44 + i * 18;
+      const y = b.y + 50 + i * 17;   // S343: clear of the subtitle
       ui.setFont(ctx, 10);
       if (m.page) this.link(ctx, m.name, b.x + 30, y, `web-res:${m.page}`, this.visited.has(m.page));
       else {

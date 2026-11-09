@@ -25,7 +25,7 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T08 | NO fades to black anywhere, before or after the eras; the era change needs more sound, more time, and a morph into the room; the dollhouse "doesn't fully work" and the miniatures look ugly | all transitions, XR | C | L |
 | T09 | Text in the headset is serrated and hard to read unless very close | everywhere, XR | X (Prompt C) + C | L |
 | T10 | Lamby video breaks up when the hand moves | 2003 video, XR | X | M |
-| T11 | Phantom presses on the wall in front of Root Cause, and on 2026 boxes | 2003, 2026, XR | X | M |
+| T11 ◐ S343 (1997/2003: a controller by the desk mouse took it and clicked at the hidden pointer — fixed; 2026 boxes still open) | Phantom presses on the wall in front of Root Cause, and on 2026 boxes | 2003, 2026, XR | X | M |
 | T12 | Headset/Quest ran an OLD build in part 1 (the itch zip?). Check what the Quest loads before every session | process | S + C | S |
 
 ## ② Hard to follow
@@ -35,11 +35,11 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T13 ☑ S339 | 2003 order: after the New You video → "contacting the system" box → glitch (404-style) → PureMail → THEN Caleb, inside the Messenger. Today Caleb arrives first | 2003 | C | M |
 | T14 | PureMail is read in Lamby's voice: not needed | 2003 | X | S |
 | T15 ☑ S339 | "It wasn't me that was broken" → the update must pop in at once (it takes too long) | 2003 → 2016 | C | S |
-| T16 | Mentor Rob's chat closes, the desktop empties, nothing says what next (bring back "your next steps", or Lamby says it) | 1997 | C | S |
-| T17 | The summer-weekend pause: the image needs the player to look behind; take him there, or shorten the gap | 1997 | C | S |
+| T16 ☑ S343 | Mentor Rob's chat closes, the desktop empties, nothing says what next (bring back "your next steps", or Lamby says it) | 1997 | C | S |
+| T17 ☑ S343 (shortened 24 → 8 s, both builds) | The summer-weekend pause: the image needs the player to look behind; take him there, or shorten the gap | 1997 | C | S |
 | T18 ☑ S339 | Daily realignment hides desktop icons until it closes; taskbar item "found" unclear; "the referral" needs another name | 2003 | C | S |
 | T19 | Diary entry "continues by itself" (the auto-continue after "Removal stalled"): remove | 2003 | X | S |
-| T20 | Family Form's last button says "Return": should say "Continue" | 1997 | X | S |
+| T20 ☑ (already Continue) | Family Form's last button says "Return": should say "Continue" | 1997 | X | S |
 | T21 ☑ S339 | "Next task" has two places to press; it doesn't say the desktop can be explored; "Today in Restorify" appears late | 2003 | C | S |
 | T22 ☑ S339 | The parents' form ("your son's first name…"): not explained, no next step | 2003 | C | S |
 | T23 ☑ S329 | Campaign kit: "impossible to understand", mixed fonts | 2016 | C | M |
@@ -58,11 +58,11 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T31 ☑ S329 | Two Back buttons (top and bottom) in 2016; the phone window should have no minimise button | 2016 | X | S |
 | T32 ☑ S329 | The Wick card still floats: it should sit on the table by the notepad (the rise-once must end on the table) | 2016 | X | S |
 | T33 | Lamby boot sound starts after LambyOS is already showing | 1997 boot | X | S |
-| T34 ◐ S339 (Restorify's loop done; Fellowship, Family Form, racket still to do) | Music in EVERY program (his 8 Nov): a period MIDI loop each, e.g. the Fellowship network (1997), the Family Form, the racket, Restorify (2003) | 1997, 2003 | C | M |
-| T35 | Root Cause Digger: design, look, sound, clearer purpose; Lamby suggests it before the Family Form | 2003 | C | M |
+| T34 ◐ S339/S343 (Restorify, Fellowship, Family Form, Root Cause done; the racket still to do) | Music in EVERY program (his 8 Nov): a period MIDI loop each, e.g. the Fellowship network (1997), the Family Form, the racket, Restorify (2003) | 1997, 2003 | C | M |
+| T35 ☑ S343 | Root Cause Digger: design, look, sound, clearer purpose; Lamby suggests it before the Family Form | 2003 | C | M |
 | T36 ☑ S339 (racket unseen in a headset) | Release Work: the figure is flipped, bare grey text area, animations/styling still broken | 2003 | C | M |
-| T37 | Family Form looks bare, stacked buttons overlap ("on hold") | 1997 | C | M |
-| T38 | Seekr / Fellowship pages: too cramped; "press to play FIT IN" on every page; more space, distinct page styles | 1997 web | C | M |
+| T37 ☑ S343 | Family Form looks bare, stacked buttons overlap ("on hold") | 1997 | C | M |
+| T38 ☑ S343 | Seekr / Fellowship pages: too cramped; "press to play FIT IN" on every page; more space, distinct page styles | 1997 web | C | M |
 | T39 ☑ S339 | Caleb's messenger: bigger, wider, MSN-style bubbles, scroll; the media player's loading error sits on top; add a loop button | 2003 | C | M |
 | T40 ☑ S339 (on Caleb's song, his answer 13) | The conducted beat (NetVision Player): a "wait" button and two-step timing | 2003 | C | S |
 | T41 ☑ S339 | The 1997 folder and the Harbor board are hard to read; closing the folder should return to the menu | 2003 | C | S |
@@ -75,6 +75,14 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T48 ☑ S340 | Team skip: in the test build (`?debug=1`) press the controller's B/Y button 10 times within 5 s → the next year, seated (1997 → 2003 → 2016 → 2026) | XR | C | S |
 
 ## Built 9 Nov
+
+- ☑ S343 (UiB session 2, branch `uib/1997`): **1997's design list** — the red box (a stand-in soda can) off the desk;
+  Root Cause from install, Lamby offers it as Rob's chat closes (before the form, which waits while it is played), a
+  title screen with the programme's theory, deeper earth, its own tune and sounds; the controller-on-the-mouse phantom
+  presses; the Family Form in its ministry's print look with On hold as its own box; FIT IN as a small ad on the
+  Fellowship portal only, unsqueezed pages in GeoCities / webring / directory styles, Seekr with room; the
+  summer-weekend wait 8 s; Fellowship + Family Form MIDI loops. See docs/reinterp/UIB_1997_BUILT_2026-11-09.md (§4:
+  five questions).
 
 - ☑ S339 (UiB session, branch `uib/work`): **2003 reworked** — the order (video → contacting → 404 → PureMail → the
   Messenger), Daniel says "Then it was never me that was broken…" to Caleb and the update pops in; Remind me later
@@ -150,7 +158,7 @@ His answers, 8 Nov:
 
 | id | what | where | owner | size |
 |---|---|---|---|---|
-| T51 | Remove the red box beside the mouse on the 1997 desk | 1997 room | C | S |
+| T51 ☑ S343 | Remove the red box beside the mouse on the 1997 desk | 1997 room | C | S |
 | T53 ☑ S337 | 2016: retire Noa, Deb M. and Marisol from "Next story" (Deb M. stays a row in the campaign kit) — his 9 Nov | 2016 | C | S |
 | T54 | Noa's story moves to 2026 (his 9 Nov: "Noa can just exist in 2026") — a different person from Maya (guard 1); where she appears is to be designed | 2026 | C+S | M |
 | T55 ☑ S337 | The 2016 Trending sources (US election, NPR; photo app hiding #lesbian, HuffPost UK; same-sex stickers removed, Jakarta Post) go on the 2016 site's Sources tab — his yes, 9 Nov | 2016 site | C | S |
