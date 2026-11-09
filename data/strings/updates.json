@@ -49,6 +49,18 @@
   "readOn": "Read on",
   "agree": "I Agree",
   "installTitle": "Installing Restorify 2003",
+  "setup": {
+   "_doc": "⚑ S339 (his answer 15: 'The update into 2003 in XP style') — the install drawn in the shape of the period's setup screen (src/desktop/apps/update.ts drawSetup2003): its steps down the left, the time it claims is left, the changelog in a panel. Restorify's words; no one's marks.",
+   "steps": [
+    "Collecting your file",
+    "Checking for updates",
+    "Preparing your journey",
+    "Installing Restorify",
+    "Finalizing"
+   ],
+   "remaining": "Restorify will be ready in approximately {n} minutes.",
+   "minutes": 34
+  },
   "changelog": [
    "RESTORIFY 2003 — WHAT'S NEW",
    "+ fresh look, brighter rooms",
@@ -85,6 +97,8 @@
   "remindLater": "Remind me later",
   "remindedStatus": "Restorify is being removed. It will ask again.",
   "_docRemindedStatus": "S156 / R3-60 (Sérgio: 'Update Later → the story app says continue; should say it is being removed'): u3's own deferral line — the shared one under `remindedStatus` at the root serves u2.",
+  "remindSeconds": 22,
+  "_docRemindS339": "⚑ S339 (his 8 Nov: 'remind me later, it doesn't work because there's no place to come back to') — the deferral now returns to the Messenger, where Caleb answers Daniel once (s2_caleb.json residue.answer); 22 s is enough to read it and sit with it, then the notice returns with its Remind spent.",
   "eulaTitle": "GracePlatform — Community Guidelines",
   "eula": [
    [

@@ -5,6 +5,12 @@
  "back": "< Back",
  "turn": "Turn over",
  "open27": "Open frame 27",
+ "story": {"id": "story", "name": "Daniel_1997.wmv", "caption": "Saved by Restorify Media."},
+ "storyNew": "NEW",
+ "upload": "Upload to New Morning",
+ "uploading": "Uploading Daniel_1997.wmv to restorify-media.org … {p}%",
+ "uploaded": "Upload complete.",
+ "_docS339": "⚑ S339 (his answer 8: 'Daniel's 1997 video lives in that folder: you go there to upload it, and so learns the folder exists'; T41) — once Restorify Media has cut his story it is saved HERE, in his private folder, named for the year it tells: the programme's file among his own things (the folder itself stays felt — the pictures, the card, nothing filed). `upload` sends it; the testimony window then shows his page. The X on an open file returns to the list. The pictures are painted at ×3 so their writing is readable.",
  "files": [
   { "id": "card", "name": "card_unsent.jpg", "caption": "A postcard. Stamped. Never posted." },
   { "id": "roll", "name": "ROLL_01.jpg", "caption": "27 exposures. Developed in 1998." },

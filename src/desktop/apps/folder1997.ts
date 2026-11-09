@@ -10,9 +10,17 @@ import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import F from '../../../data/strings/folder1997.json';
+import { drawFootage } from './testimony';
+
+/** ⚑ S339 (T41, his 8 Nov: "this is really difficult to read") — the pictures are painted at three times their
+ *  logical size, so the writing in them (the postcard, the certificate, the tape's card) is drawn as text at full
+ *  resolution instead of being blown up from 9 px; the shapes stay on the logical pixel grid */
+const ART_SCALE = 3;
+/** ⚑ S339 — the upload of his story (s, 56k) */
+const UPLOAD_SECONDS = 4.5;
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
-type View = 'list' | 'card' | 'roll' | 'frame27' | 'certificate' | 'jcard' | 'room';
+type View = 'list' | 'card' | 'roll' | 'frame27' | 'certificate' | 'jcard' | 'room' | 'story';
 
 const DW = 420, DH = 300;
 const PW = 200, PH = 130;   // a picture's own size, in logical px
@@ -26,13 +34,31 @@ export class Folder1997App {
   private hover = '';
   hits: Hit[] = [];
   private art = new Map<string, HTMLCanvasElement>();
+  /** ⚑ S339 (his answer 8; T45/T49) — the programme saved his story here; he sends it from here */
+  storyReady = false;
+  private uploadT = -1;
+  private uploadedDone = false;
+  /** os.ts: the upload finished — his page is next */
+  onUploaded?: () => void;
+  private t = 0;
+  update(dt: number): void {
+    this.t += dt;
+    if (this.uploadT >= 0 && !this.uploadedDone) {
+      this.uploadT += dt; this.dirty = true;
+      if (this.uploadT >= UPLOAD_SECONDS) { this.uploadedDone = true; this.onUploaded?.(); }
+    }
+  }
+  /** the files the list shows — his story first, once there is one */
+  private files(): { id: string; name: string; caption: string }[] {
+    return this.storyReady ? [F.story, ...F.files] : F.files;
+  }
 
   private picture(key: string, draw: (g: CanvasRenderingContext2D) => void): HTMLCanvasElement {
     let cv = this.art.get(key);
     if (!cv) {
-      cv = document.createElement('canvas'); cv.width = PW; cv.height = PH;
+      cv = document.createElement('canvas'); cv.width = PW * ART_SCALE; cv.height = PH * ART_SCALE;
       const g = cv.getContext('2d');
-      if (g) { g.imageSmoothingEnabled = false; draw(g); }
+      if (g) { g.imageSmoothingEnabled = false; g.scale(ART_SCALE, ART_SCALE); draw(g); }
       this.art.set(key, cv);
     }
     return cv;
@@ -45,6 +71,7 @@ export class Folder1997App {
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.white);
     this.hits.push({ ...c.closeBox, id: 'f97-close' });
     if (this.view === 'list') { this.drawList(ctx, c); return; }
+    if (this.view === 'story') { this.drawStory(ctx, c); return; }
     const file = F.files.find((f) => f.id === (this.view === 'frame27' ? 'roll' : this.view));
     const img = this.image(this.view);
     const S = 2, iw = PW * S - 40, ih = PH * S - 52;   // shown a little under ×2, nearest-neighbour
@@ -53,8 +80,8 @@ export class Folder1997App {
     const smooth = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
     ctx.drawImage(img, ix, iy, iw, ih);
     ctx.imageSmoothingEnabled = smooth;
-    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(this.view === 'frame27' ? F.roll.frame27 : `${file?.name ?? ''}: ${file?.caption ?? ''}`, c.x + 10, iy + ih + 8);
+    ui.setFont(ctx, 11); ctx.fillStyle = ERA1.black;
+    ctx.fillText(this.view === 'frame27' ? F.roll.frame27 : `${file?.name ?? ''}: ${file?.caption ?? ''}`, c.x + 10, iy + ih + 6);
     const by = c.y + c.h - 24;
     this.button(ctx, c.x + 10, by, 64, F.back, 'f97-back');
     if (this.view === 'certificate' || this.view === 'card') this.button(ctx, c.x + c.w - 90, by, 80, F.turn, 'f97-turn');
@@ -72,21 +99,54 @@ export class Folder1997App {
   }
 
   private drawList(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
-    // a 2003 folder in thumbnail view: five pictures, the card first (his option (b): the song brings you here)
-    F.files.forEach((f, i) => {
+    // a 2003 folder in thumbnail view: five pictures, the card first (his option (b): the song brings you here);
+    //   ⚑ S339 — and, once the programme has saved it, his story before them
+    this.files().forEach((f, i) => {
       const col = i % 3, row = Math.floor(i / 3);
-      const x = c.x + 14 + col * 132, y = c.y + 12 + row * 118;
-      const tw = 100, th = 65;
+      const x = c.x + 14 + col * 132, y = c.y + 10 + row * (this.storyReady ? 92 : 118);
+      const tw = 100, th = this.storyReady ? 58 : 65;
       const on = this.hover === `f97-open:${f.id}`;
       ui.px(ctx, x - 3, y - 3, tw + 6, th + 6, on ? ERA1.titleBlue : ERA1.silver);
       const smooth = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(this.image(f.id as View), x, y, tw, th);
+      if (f.id === 'story') {
+        drawFootage(ctx, 'daniel', 9, x, y, tw, th, 0, true);
+        ui.px(ctx, x + tw / 2 - 10, y + th / 2 - 8, 20, 16, ERA1.black);
+        for (let r = 0; r < 10; r++) ui.px(ctx, x + tw / 2 - 3, y + th / 2 - 5 + r, Math.round(8 * (1 - Math.abs(r - 5) / 5)) + 1, 1, ERA1.white);
+        if (!this.uploadedDone) { ui.px(ctx, x + tw - 26, y + 2, 24, 11, ERA1.warn); ui.setFont(ctx, 8); ctx.fillStyle = ERA1.white; ctx.fillText(F.storyNew, x + tw - 24, y + 3); }
+      } else ctx.drawImage(this.image(f.id as View), x, y, tw, th);
       ctx.imageSmoothingEnabled = smooth;
-      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black;
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black;
       const tw2 = ctx.measureText(f.name).width;
       ctx.fillText(f.name, Math.round(x + tw / 2 - tw2 / 2), y + th + 8);
       this.hits.push({ x: x - 3, y: y - 3, w: tw + 6, h: th + 22, id: `f97-open:${f.id}` });
     });
+  }
+
+  /** ⚑ S339 — his story, as a file: the still, its name, and the one thing to do with it */
+  private drawStory(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
+    const iw = 320, ih = 180, ix = c.x + Math.round((c.w - iw) / 2), iy = c.y + 8;
+    ui.px(ctx, ix - 2, iy - 2, iw + 4, ih + 4, ERA1.grey);
+    drawFootage(ctx, 'daniel', 9, ix, iy, iw, ih, 0, true);
+    ui.setFont(ctx, 11); ctx.fillStyle = ERA1.black;
+    ctx.fillText(`${F.story.name}: ${F.story.caption}`, c.x + 10, iy + ih + 6);
+    const by = c.y + c.h - 24;
+    if (this.uploadT < 0) {
+      this.button(ctx, c.x + 10, by, 64, F.back, 'f97-back');
+      ui.setFont(ctx, 10);
+      const uw = Math.ceil(ctx.measureText(F.upload).width) + 24;
+      ui.button(ctx, c.x + c.w - uw - 10, by - 2, uw, 22, F.upload, { hover: this.hover === 'f97-upload', primary: true });
+      this.hits.push({ x: c.x + c.w - uw - 10, y: by - 2, w: uw, h: 22, id: 'f97-upload' });
+      return;
+    }
+    // the upload, at 56k: a bar of blocks and the bytes
+    const k = Math.min(1, this.uploadT / UPLOAD_SECONDS);
+    const bw = c.w - 20, bx = c.x + 10, byy = by - 14;
+    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(this.uploadedDone ? F.uploaded : F.uploading.replace('{p}', String(Math.floor(k * 100))), bx, byy - 14);
+    ui.px(ctx, bx - 1, byy - 1, bw + 2, 14, ERA1.greyDark);
+    ui.px(ctx, bx, byy, bw, 12, ERA1.white);
+    const blocks = Math.floor((bw / 9) * k);
+    for (let i = 0; i < blocks; i++) ui.px(ctx, bx + 1 + i * 9, byy + 1, 7, 10, ERA1.navy);
   }
 
   private image(view: View): HTMLCanvasElement {
@@ -110,7 +170,13 @@ export class Folder1997App {
     const h = [...this.hits].reverse().find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
     if (!h) return;
     this.dirty = true;
-    if (h.id === 'f97-close') { this.open = false; this.onClose?.(); return; }
+    // ⚑ S339 (his answer 8: "Closing a file in the 1997 folder returns to the folder's file list, not the preview") —
+    //   the X on an open file puts the file down; on the list it closes the folder
+    if (h.id === 'f97-close') {
+      if (this.view !== 'list' && this.uploadT < 0) { this.view = 'list'; this.back = false; return; }
+      this.open = false; this.onClose?.(); return;
+    }
+    if (h.id === 'f97-upload') { if (this.uploadT < 0) this.uploadT = 0; return; }
     if (h.id === 'f97-back') { this.view = this.view === 'frame27' ? 'roll' : 'list'; this.back = false; return; }
     if (h.id === 'f97-turn') { this.back = !this.back; return; }
     if (h.id === 'f97-27') { this.view = 'frame27'; return; }
@@ -118,6 +184,7 @@ export class Folder1997App {
   }
 }
 
+// (S339) the story view lives on the class above — see drawStory
 // ── the pictures (ERA1 sixteen, integer rects) ──────────────────────────────
 // ⚑ S275 (his: "improve the content images of the 1997 folder") — scanned-photo texture (an ordered dither of two
 //   palette colours), more to each picture; still places and objects only, never a face, never a programme interior

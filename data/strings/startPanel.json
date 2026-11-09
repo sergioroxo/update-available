@@ -21,7 +21,7 @@
    { "text": "Open Your Story and go through the topics.", "done": "testimonyPrep" },
    { "text": "Agree to the release.", "done": "testimonyRelease" },
    { "text": "Play your take, then send it to editing.", "done": "testimonyTapes", "speedrun": false },
-   { "text": "Watch your story online.", "done": "testimonyOnline" }
+   { "text": "Upload your story from the \u201c1997\u201d folder, then watch it online.", "done": "testimonyOnline" }
   ],
   "close": "Close"
  },

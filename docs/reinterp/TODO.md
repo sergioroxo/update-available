@@ -32,16 +32,16 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 
 | id | what | where | owner | size |
 |---|---|---|---|---|
-| T13 | 2003 order: after the New You video → "contacting the system" box → glitch (404-style) → PureMail → THEN Caleb, inside the Messenger. Today Caleb arrives first | 2003 | C | M |
+| T13 ☑ S339 | 2003 order: after the New You video → "contacting the system" box → glitch (404-style) → PureMail → THEN Caleb, inside the Messenger. Today Caleb arrives first | 2003 | C | M |
 | T14 | PureMail is read in Lamby's voice: not needed | 2003 | X | S |
-| T15 | "It wasn't me that was broken" → the update must pop in at once (it takes too long) | 2003 → 2016 | C | S |
+| T15 ☑ S339 | "It wasn't me that was broken" → the update must pop in at once (it takes too long) | 2003 → 2016 | C | S |
 | T16 | Mentor Rob's chat closes, the desktop empties, nothing says what next (bring back "your next steps", or Lamby says it) | 1997 | C | S |
 | T17 | The summer-weekend pause: the image needs the player to look behind; take him there, or shorten the gap | 1997 | C | S |
-| T18 | Daily realignment hides desktop icons until it closes; taskbar item "found" unclear; "the referral" needs another name | 2003 | C | S |
+| T18 ☑ S339 | Daily realignment hides desktop icons until it closes; taskbar item "found" unclear; "the referral" needs another name | 2003 | C | S |
 | T19 | Diary entry "continues by itself" (the auto-continue after "Removal stalled"): remove | 2003 | X | S |
 | T20 | Family Form's last button says "Return": should say "Continue" | 1997 | X | S |
-| T21 | "Next task" has two places to press; it doesn't say the desktop can be explored; "Today in Restorify" appears late | 2003 | C | S |
-| T22 | The parents' form ("your son's first name…"): not explained, no next step | 2003 | C | S |
+| T21 ☑ S339 | "Next task" has two places to press; it doesn't say the desktop can be explored; "Today in Restorify" appears late | 2003 | C | S |
+| T22 ☑ S339 | The parents' form ("your son's first name…"): not explained, no next step | 2003 | C | S |
 | T23 ☑ S329 | Campaign kit: "impossible to understand", mixed fonts | 2016 | C | M |
 | T24 ☑ S329 | "The Malta thing": what is happening is not clear | 2016 | C | M |
 | T25 ☑ S329/S331 | Where is the guide (L) in 2016 and 2026? | 2016, 2026 | C | S |
@@ -58,23 +58,30 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T31 ☑ S329 | Two Back buttons (top and bottom) in 2016; the phone window should have no minimise button | 2016 | X | S |
 | T32 ☑ S329 | The Wick card still floats: it should sit on the table by the notepad (the rise-once must end on the table) | 2016 | X | S |
 | T33 | Lamby boot sound starts after LambyOS is already showing | 1997 boot | X | S |
-| T34 | Music in EVERY program (his 8 Nov): a period MIDI loop each, e.g. the Fellowship network (1997), the Family Form, the racket, Restorify (2003) | 1997, 2003 | C | M |
+| T34 ◐ S339 (Restorify's loop done; Fellowship, Family Form, racket still to do) | Music in EVERY program (his 8 Nov): a period MIDI loop each, e.g. the Fellowship network (1997), the Family Form, the racket, Restorify (2003) | 1997, 2003 | C | M |
 | T35 | Root Cause Digger: design, look, sound, clearer purpose; Lamby suggests it before the Family Form | 2003 | C | M |
-| T36 | Release Work: the figure is flipped, bare grey text area, animations/styling still broken | 2003 | C | M |
+| T36 ☑ S339 (racket unseen in a headset) | Release Work: the figure is flipped, bare grey text area, animations/styling still broken | 2003 | C | M |
 | T37 | Family Form looks bare, stacked buttons overlap ("on hold") | 1997 | C | M |
 | T38 | Seekr / Fellowship pages: too cramped; "press to play FIT IN" on every page; more space, distinct page styles | 1997 web | C | M |
-| T39 | Caleb's messenger: bigger, wider, MSN-style bubbles, scroll; the media player's loading error sits on top; add a loop button | 2003 | C | M |
-| T40 | The conducted beat (NetVision Player): a "wait" button and two-step timing | 2003 | C | S |
-| T41 | The 1997 folder and the Harbor board are hard to read; closing the folder should return to the menu | 2003 | C | S |
-| T42 | Restorify's "Terms of Continued Care": "Agree" looks greyed on page 1; the restore symbol should look more 2003 | 2003 | X | S |
+| T39 ☑ S339 | Caleb's messenger: bigger, wider, MSN-style bubbles, scroll; the media player's loading error sits on top; add a loop button | 2003 | C | M |
+| T40 ☑ S339 (on Caleb's song, his answer 13) | The conducted beat (NetVision Player): a "wait" button and two-step timing | 2003 | C | S |
+| T41 ☑ S339 | The 1997 folder and the Harbor board are hard to read; closing the folder should return to the menu | 2003 | C | S |
+| T42 ◐ S339 (2003 restore mark done; "Agree greyed on page 1" is the one-live-Agree law — asked) | Restorify's "Terms of Continued Care": "Agree" looks greyed on page 1; the restore symbol should look more 2003 | 2003 | X | S |
 | T43 ☑ S331 | 2026 fonts: some too big, some unreadable; one consistent size per screen | 2026 | C | (with T03) |
-| T44 | Visual culture: each era and OS should look more like its time (for his article too) | all | C | L |
-| T45 | The 1997 video of Caleb's submission → the platform → the site where the DVDs/testimonies live (his idea: connect the folder, the upload and the era website) | 2003, sites | S then C | M |
+| T44 ◐ S339 (the update into 2003 + Restorify's terms in the XP shape; the other eras open) | Visual culture: each era and OS should look more like its time (for his article too) | all | C | L |
+| T45 ☑ S339 | The 1997 video of Caleb's submission → the platform → the site where the DVDs/testimonies live (his idea: connect the folder, the upload and the era website) | 2003, sites | S then C | M |
 | T46 ☑ S331 | 2026: the shelf on the bed and a phone on the table make no sense | 2026 room | C | S |
 | T47 ☑ S329 (moot: no handset) | Screen distance: the held/worn screens follow the headset, not the room; the 2016 monitor hangs over the desk edge | XR | C | M |
 | T48 ☑ S340 | Team skip: in the test build (`?debug=1`) press the controller's B/Y button 10 times within 5 s → the next year, seated (1997 → 2003 → 2016 → 2026) | XR | C | S |
 
 ## Built 9 Nov
+
+- ☑ S339 (UiB session, branch `uib/work`): **2003 reworked** — the order (video → contacting → 404 → PureMail → the
+  Messenger), Daniel says "Then it was never me that was broken…" to Caleb and the update pops in; Remind me later
+  returns to Caleb; MSN Messenger + the song's Wait/Go on + player loop; the story uploaded from the 1997 folder → his
+  page → the parents' form → the DVD collection with Caleb's teaser; folder/Harbor readable; icons stay beside
+  Restorify; placement.txt; one-button Next task; Today sooner; Release Work + the racket's movement; Restorify music +
+  IRC sounds; the 1997→2003 update in the XP shape. See docs/reinterp/UIB_2003_BUILT_2026-11-09.md (§5: six questions).
 
 - ☑ S332–S337: 2016 connections merged; Codex's small fixes + headset text (?quad=1); 2026 one screen, smaller text,
   no auto-scroll, no controller; the 2016 freeze fixed at its root (the 2003→2016 update was disconnecting her phone);
@@ -113,8 +120,8 @@ His answers, 8 Nov:
 
 | id | what | where | owner | size |
 |---|---|---|---|---|
-| T49 | Daniel's video upload → the platform → the DVD website's teaser clips, where Caleb's testimony almost says Daniel's name | 2003 + era site | C | M |
-| T50 | IRC (the mIRC-like app) gets its sound: join, message and DM sounds of the period | 1997/2003 | C | S |
+| T49 ☑ S339 | Daniel's video upload → the platform → the DVD website's teaser clips, where Caleb's testimony almost says Daniel's name | 2003 + era site | C | M |
+| T50 ☑ S339 | IRC (the mIRC-like app) gets its sound: join, message and DM sounds of the period | 1997/2003 | C | S |
 
 ## His answers to the 20 questions (8 Nov) — they refine these rows
 

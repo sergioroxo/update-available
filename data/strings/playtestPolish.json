@@ -6,6 +6,8 @@
   "startDisabled": "Applications unavailable in this restored page.",
   "broadbandDisabled": "BROADBAND — unavailable",
   "returnLine": "Press on the screen to continue with reboot.",
-  "sendGo": "Go to the next task",
+  "sendGo": "Go there",
+  "sendExplore": "Or explore the desktop first: close this and it waits for you, on the left.",
+  "_docSendS339": "⚑ S339 (his 8 Nov / T21) — the task has ONE button (Go there, inside its box); the close box puts it down on the desktop, and sendExplore says so.",
   "sessionStatus": "Session restored."
 }

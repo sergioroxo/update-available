@@ -21,7 +21,10 @@
     "frameHeading": "Today's session",
     "step": "Step {n} of 3",
     "round": "round {r}",
-    "steps": ["Raise", "Exhale", "Strike"]
+    "steps": ["Raise", "Exhale", "Strike"],
+    "_docT36": "⚑ T36 (his, 8 Nov: 'Release Work shows the racket's movement and what it's meant to be') — the intro's note says what the exercise is FOR, in the programme's own confident voice (operable register: it is the programme's claim about the father wound, stated as fact, never a joke about the person doing it). The picture panel loops the three positions (raised, held, down) above the steps.",
+    "purposeLabel": "What it is for",
+    "purpose": "Anger you never let out at your father stays held in the body and keeps the old wound shut. Striking the pillow while you name him releases it, so the deeper layer can come up and heal."
   },
   "frame": {
     "_doc": "PLACEHOLDER — Sérgio voice pass pending; frame stays at most two sentences. Revised per embodiment analysis §4 (grounding stakes-line): names who 'Dad' is to Daniel and why today, in the system's own confident register — not a hedge, since the system's certainty about a false premise is the point.",

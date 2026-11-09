@@ -95,6 +95,8 @@ export function topFrameAt(x: number, y: number): FrameRec | null {
  *  for each draw; the geometry (content rect, close and minimise boxes) is identical in both, so no layout moves. */
 let frameSkin: 'classic' | 'xp' = 'classic';
 export function setFrameSkin(skin: 'classic' | 'xp'): void { frameSkin = skin; }
+/** ⚑ S339 — read the current skin (a ritual that wears the arriving era's look puts the old one back after) */
+export function getFrameSkin(): 'classic' | 'xp' { return frameSkin; }
 
 /** Window frame with two-tone title bar + close box. Returns content rect.
  *  `minKey` (S165): the window minimises — a `_` box beside the close box, and

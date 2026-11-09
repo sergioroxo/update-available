@@ -1842,10 +1842,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * beat: "a few blocky positions, no rhythm, no impact lines, no screen shake…
    * administrative, not kinaesthetic. It must NOT feel like a satisfying swing."
    * A racket that swung WELL would make the practice feel good, and the practice
-   * is the subject. So: three still positions, a hard cut between them, no
-   * easing, no follow-through, no sound. It moves the way an instruction manual
-   * moves — and the apparatus rehearsing a bodily violence in a calm diagram,
-   * using your own object, is more frightening than any animation of it.
+   * is the subject. So: three positions, no follow-through, no sound. It moves
+   * the way an instruction manual moves — and the apparatus rehearsing a bodily
+   * violence in a calm diagram, using your own object, is more frightening than
+   * any animation of it.
+   *
+   * ⚑ 8 NOV 2026 — THE HARD CUTS ARE RETIRED (his ruling, from the headset: "we
+   * still didn't fix yet the animations… it's still flipped"; answer 9: "the
+   * racket in the room turns round (handle to the wall) and MOVES between
+   * positions instead of jumping"). A cut read as a glitch, not as a manual. The
+   * racket now TWEENS between poses: one plain ease-in-out of position and
+   * rotation (quaternion slerp) over RACKET_TWEEN_SECONDS — no arc flourish, no
+   * overshoot, no follow-through, no sound, and Reduce motion still cuts. It is
+   * also no longer sent back to the wall between steps: it holds the last step
+   * the player pressed (provotype.ts roomPose) and goes home when the session ends.
    *
    * ⚑ AND IT NEVER TOUCHES THE PLAYER'S BODY. R28 §1: the only bodily ask is
    * the turn. The object demonstrates; the person is not asked to swing, mime,
@@ -1863,25 +1873,70 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   };
   /** ⚑ Phase 7 (his: the racket on the wall by the bed, "for the movement would be similar because the
    *  pillow is there") — it hangs on the wall, head up; the demonstration takes it off the wall to the
-   *  pillow under it: raised over the pillow, held, down on it. Same law as before — three still
-   *  positions, hard cuts, no swing. Positions are the prop root (its base centre), in the room's frame. */
+   *  pillow under it: raised over the pillow, held, down on it. Positions are the prop root, in the room's
+   *  frame.
+   *
+   *  ⚑ 8 Nov (T36) — TURNED ROUND, measured off the mesh, not a screenshot. The GLB (tennisRacket.glb,
+   *  models.json `tennisRacket`) has its long axis on native Z: the HANDLE is the narrow −Z end (x-width
+   *  15–18 units from z −264 to −150, where the grip material sits) and the strung HEAD is +Z (x-width up to
+   *  130 units, strings z −100…+63); native Y is the 0.037 m thickness. The wrapper's origin is the mid-length
+   *  point (cz −98.6) on the frame's underside plane, so the head's centre is +0.16 m along local Z and the
+   *  butt −0.33 m. Every pose below is the wall frame turned about the world Z axis (the line along the west
+   *  wall), so `pitch` alone is the head's angle in the vertical plane running out from the wall: −90 = head
+   *  straight up (on the wall, handle down), −60 = head up and back toward the room, −188 = head toward the wall
+   *  and lying just past flat. The old over-the-pillow poses (yaw 100–104, pitch −8 at the strike) laid the
+   *  head toward the PLAYER with the handle against the wall — the striker stood inside the wall. His ruling
+   *  (headset B5, "as if I was the one at the pillow") puts the striker on HIS side: raised, the butt points
+   *  down to the wall and the head back toward the room; down, the head lies on the pillow (bed GLB's own
+   *  `pillow` node → world x −1.76…−1.29, top y 0.38, z 0.34…0.69) and the handle comes back to the room side.
+   *  The width stays along the wall in every pose, so the tween is one turn about one axis — it never spins on
+   *  its own length. */
   const RACKET_WALL = { x: -2.07, y: 1.0, z: 0.86, pitch: -90, yaw: 90, roll: 0 };
   const RACKET_OVER: Record<string, { x: number; y: number; z: number; pitch: number; yaw: number; roll: number }> = {
-    lift:   { x: -1.78, y: 1.05, z: 0.66, pitch: -68, yaw: 100, roll: 0 },
-    exhale: { x: -1.78, y: 1.02, z: 0.66, pitch: -62, yaw: 100, roll: 0 },
-    strike: { x: -1.74, y: 0.5,  z: 0.7,  pitch: -8,  yaw: 104, roll: 0 }
+    // raised over the bed's near edge: the grip ~(−1.30, 1.25), the head up and back toward the room
+    lift:   { x: -1.18, y: 1.46, z: 0.52, pitch: -60, yaw: 90, roll: 0 },
+    // held there. the exhale is the person's, not the object's: it barely moves
+    exhale: { x: -1.19, y: 1.44, z: 0.52, pitch: -64, yaw: 90, roll: 0 },
+    // down: the head's centre on the pillow (−1.53, 0.42), the butt back at the bed's edge (−1.04, 0.49)
+    strike: { x: -1.37, y: 0.44, z: 0.52, pitch: -188, yaw: 90, roll: 0 }
   };
   void RACKET_REST; void RACKET_POSES;   // the floor-era poses, kept as the record of the S90 demonstration
+  /** one plain ease-in-out between poses (his 8 Nov ruling); Reduce motion cuts instead */
+  const RACKET_TWEEN_SECONDS = 0.8;
   let racketPose: string | null = 'init';
-  function syncRacketDemo(): void {
+  /** <0: at rest (nothing is written to the entity); 0…1: the tween's progress */
+  let racketT = -1;
+  const racketFromPos = new pc.Vec3(), racketToPos = new pc.Vec3();
+  const racketFromRot = new pc.Quat(), racketToRot = new pc.Quat();
+  const racketPos = new pc.Vec3(), racketRot = new pc.Quat();
+  function syncRacketDemo(dt = 0): void {
     const want = (os.provotype?.roomPose ?? null) as string | null;
-    if (want === racketPose) return;
+    if (want === racketPose && racketT < 0) return;
     const h = room.props.get('tennisRacketModel');
     if (!h) return;
-    racketPose = want;
-    const p = (want && RACKET_OVER[want]) || RACKET_WALL;
-    h.entity.setLocalPosition(p.x, p.y, p.z);
-    h.entity.setLocalEulerAngles(p.pitch, p.yaw, p.roll);
+    if (want !== racketPose) {
+      // the first placement (before the entrance's snapshot) and Reduce motion are cuts
+      const cut = racketPose === 'init' || reducedMotion();
+      racketPose = want;
+      const p = (want && RACKET_OVER[want]) || RACKET_WALL;
+      racketToPos.set(p.x, p.y, p.z);
+      racketToRot.setFromEulerAngles(p.pitch, p.yaw, p.roll);
+      if (cut) {
+        h.entity.setLocalPosition(racketToPos);
+        h.entity.setLocalRotation(racketToRot);
+        racketT = -1;
+        return;
+      }
+      // from wherever it is now — a tween redirected mid-way starts from its current pose, never jumps
+      racketFromPos.copy(h.entity.getLocalPosition());
+      racketFromRot.copy(h.entity.getLocalRotation());
+      racketT = 0;
+    }
+    racketT = Math.min(1, racketT + dt / RACKET_TWEEN_SECONDS);
+    const k = racketT * racketT * (3 - 2 * racketT);   // ease in-out: no overshoot, no follow-through
+    h.entity.setLocalPosition(racketPos.lerp(racketFromPos, racketToPos, k));
+    h.entity.setLocalRotation(racketRot.slerp(racketFromRot, racketToRot, k));
+    if (racketT >= 1) racketT = -1;
   }
 
   // R28-2a: prop emphasis follows the ACTIVE side-message (data key
@@ -4573,7 +4628,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         takeover: os.e4.browser.roomClipTakeover, viewers: os.e4.ball.viewerCount });
     e4Room?.update(dt, os.era === 'e4');
     helper?.tick(dt);
-    syncRacketDemo(); // the room mirrors the diagram's pose (see its doc)
+    syncRacketDemo(dt); // the room follows the pressed step, moving between poses (see its doc)
     if (os.dirty) { frontTex.upload(); monitorQuad.changed(); os.dirty = false; }
     /**
      * ⚑ S106 — the record READS the era rather than being told it. Two

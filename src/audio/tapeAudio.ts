@@ -42,6 +42,7 @@ const REGISTRY: Record<string, string> = {
   'lambyos_home_loop.mp3': `${AUDIO_BASE}lambyos_home_loop.mp3`, // S235 · LambyOS Home's ambient loop (his Suno generation, 20 s, loopable)
   'unwalk_loop_1997.mp3': `${AUDIO_BASE}unwalk_loop_1997.mp3`, // S151 · the Un-Walk's programme loop (tools/make_hymn.py)
   'grace_loop_2016.mp3': `${AUDIO_BASE}grace_loop_2016.mp3`, // S337 · GracePlatform's calm loop (tools/make_graceloop.py; his 9 Nov)
+  'restorify_loop_2003.mp3': `${AUDIO_BASE}restorify_loop_2003.mp3`, // S339 · Restorify's CD-ROM menu loop, a GM bossa (tools/make_restorify_loop.py; T34)
   'floppysheep_song.mp3': `${AUDIO_BASE}floppysheep_song.mp3`, // S189 · his song, behind FloppySheep's ♪ (off until pressed)
   // S155 · the sound redo (tools/make_tones.sh, the S155 block)
   'diary_key.mp3': `${AUDIO_BASE}diary_key.mp3`,
@@ -281,6 +282,8 @@ const REGISTRY: Record<string, string> = {
   'dialup_1997.mp3': `${AUDIO_BASE}dialup_1997.mp3`,         // the IRC connecting — the era's sound, finally
   'key_1997.mp3': `${AUDIO_BASE}key_1997.mp3`,               // a 1997 press: the PC speaker's click
   'irc_1997.mp3': `${AUDIO_BASE}irc_1997.mp3`,               // a line arriving in the channel
+  'irc_join.mp3': `${AUDIO_BASE}irc_join.mp3`,               // S339 · he joins the channel: a rising two-note blip (tools/make_irc_tones.py; T50)
+  'irc_dm.mp3': `${AUDIO_BASE}irc_dm.mp3`,                   // S339 · a private message arrives: a brighter, insistent chime (tools/make_irc_tones.py; T50)
   'floppy_1997.mp3': `${AUDIO_BASE}floppy_1997.mp3`,         // the Starter Kit going in, the drive reading
   'install_work.mp3': `${AUDIO_BASE}install_work.mp3`,       // every update: the machine working — loops
   'restart_dark.mp3': `${AUDIO_BASE}restart_dark.mp3`,       // every update: Restarting…

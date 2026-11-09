@@ -49,9 +49,14 @@ const calebPacing = caleb.pacing;
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 type AlertStep = 'stop' | 'block' | 'wanting' | 'streak' | 'system' | 'sad' | 'caught' | 'closed';
-type MailPhase = 'none' | 'failing' | 'arriving' | 'envelope' | 'letter' | 'closed';
+type MailPhase = 'none' | 'failing' | 'error' | 'arriving' | 'envelope' | 'letter' | 'closed';
 /** S157 / R3-58: the network's own status list, tried and failed before the mail */
 const NET = caleb.network as { title: string; heading: string; lines: { try: string; fail: string }[]; result: string; trySeconds: number; failSeconds: number; resultSeconds: number };
+/** ⚑ S339 (his 8 Nov: "trying to connect to the servers of the system, but there's an error, there's a glitch… a 404
+ *  or something error code message, and then through that glitch… appears the pure mail") — the system's own error
+ *  page, between the failing list and the letter; its last `tearSeconds` corrupt into the glitch the envelope comes
+ *  through. */
+const ERR = caleb.network.error as { title: string; code: string; heading: string; lines: string[]; address: string; seconds: number; tearSeconds: number };
 
 // ── PACING — ALL OF IT LIVES IN data/dialog/s2_caleb.json's `pacing` BLOCK ──
 // Session 48 moved every timing constant out of here so Sérgio can tune the
@@ -176,10 +181,10 @@ export class AccountabilityApp {
    *  network failing / the envelope tearing in. It is NOT true at `caught` (the player's two buttons) or on the
    *  envelope and the letter (the player's Open and Continue), so the helper may still speak there. */
   get autoRunning(): boolean {
-    return (this.step !== 'closed' && this.step !== 'caught') || this.mail === 'failing' || this.mail === 'arriving';
+    return (this.step !== 'closed' && this.step !== 'caught') || this.mail === 'failing' || this.mail === 'error' || this.mail === 'arriving';
   }
   get mailOpen(): boolean {
-    return this.mail === 'failing' || this.mail === 'arriving' || this.mail === 'envelope' || this.mail === 'letter';
+    return this.mail === 'failing' || this.mail === 'error' || this.mail === 'arriving' || this.mail === 'envelope' || this.mail === 'letter';
   }
 
   setChatRect(r: { x: number; y: number; w: number; h: number }): void { this.chat = { ...r }; }
@@ -250,7 +255,7 @@ export class AccountabilityApp {
   }
 
   openMail(): void {
-    if (this.mail !== 'none' && this.mail !== 'failing') return;
+    if (this.mail !== 'none' && this.mail !== 'failing' && this.mail !== 'error') return;
     this.mail = 'arriving';
     this.mailT = 0;
     this.step = 'closed'; // by the collapse the assistant has always finished talking
@@ -265,7 +270,13 @@ export class AccountabilityApp {
     if (this.mail === 'failing') {
       this.mailT += dt;
       this.dirty = true;
-      if (this.failingDone) this.openMail();
+      if (this.failingDone) { this.mail = 'error'; this.mailT = 0; playOnce('err_cascade_1997.mp3'); }
+      return;
+    }
+    if (this.mail === 'error') {
+      this.mailT += dt;
+      this.dirty = true;
+      if (this.mailT >= ERR.seconds) this.openMail();
       return;
     }
     if (this.stampPingT > 0) {
@@ -359,6 +370,7 @@ export class AccountabilityApp {
     if (this.stamped && !this.alertRunning && !this.mailOpen) this.drawStamp(ctx);
     if (this.alertRunning) this.drawBand(ctx);
     if (this.mail === 'failing') this.drawNetworkFailing(ctx);
+    if (this.mail === 'error') this.drawError(ctx);
     if (this.mail === 'arriving') this.drawMailArrival(ctx);
     if (this.mail === 'envelope') this.drawEnvelope(ctx, true);
     if (this.mail === 'letter') this.drawLetter(ctx);
@@ -551,6 +563,35 @@ export class AccountabilityApp {
       ctx.fillStyle = ERA1.warnDark;
       ctx.fillText(NET.result, c.x + 10, c.y + c.h - 18);
     }
+  }
+
+  /** ⚑ S339 — the server's error page, in the system's own window: a code, a plain sentence, the address it could not
+   *  reach. Its last seconds tear into the glitch the letter arrives through (never a flash, never a strobe). */
+  private drawError(ctx: CanvasRenderingContext2D): void {
+    const W = ERA1_CANVAS.width;
+    const dw = 340, dh = 150, dx = Math.round((W - dw) / 2), dy = 70;
+    const c = ui.windowFrame(ctx, dx, dy, dw, dh, ERR.title, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.white);
+    // the page's own error mark: a red disc with a white bar (drawn, not an OS icon)
+    ui.px(ctx, c.x + 12, c.y + 12, 20, 20, ERA1.warn);
+    ui.px(ctx, c.x + 12, c.y + 12, 2, 2, ERA1.white); ui.px(ctx, c.x + 30, c.y + 12, 2, 2, ERA1.white);
+    ui.px(ctx, c.x + 12, c.y + 30, 2, 2, ERA1.white); ui.px(ctx, c.x + 30, c.y + 30, 2, 2, ERA1.white);
+    ui.px(ctx, c.x + 16, c.y + 20, 12, 4, ERA1.white);
+    ui.setFont(ctx, 12);
+    ctx.fillStyle = ERA1.warnDark;
+    ctx.fillText(ERR.code, c.x + 42, c.y + 10);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    ctx.fillText(ERR.heading, c.x + 42, c.y + 26);
+    ui.setFont(ctx, 9);
+    ctx.fillStyle = ERA1.greyDark;
+    let y = c.y + 50;
+    for (const line of ERR.lines) for (const row of ui.wrapText(ctx, line, c.w - 28)) { ctx.fillText(row, c.x + 14, y); y += 12; }
+    ui.px(ctx, c.x + 10, c.y + c.h - 22, c.w - 20, 1, ERA1.silver);
+    ctx.fillStyle = ERA1.grey;
+    ctx.fillText(ERR.address, c.x + 14, c.y + c.h - 16);
+    const tear = ERR.seconds - this.mailT;
+    if (tear < ERR.tearSeconds) glitchWash(ctx, dx, dy, dw, dh, Math.min(1, 1 - tear / ERR.tearSeconds), this.t);
   }
 
   private drawMailArrival(ctx: CanvasRenderingContext2D): void {

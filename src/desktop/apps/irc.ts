@@ -8,6 +8,7 @@ import decisions from '../../../data/strings/cx3b.json';
 import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
+import { playOnce } from '../../audio/tapeAudio';
 import dialog from '../../../data/dialog/s1_irc.json';
 import end from '../../../data/dialog/s1_end.json';
 
@@ -84,6 +85,7 @@ export class IrcApp {
     this.dm.onStart = () => { this.dmScroll = 0; };   // R3-28: a new line shows the end
   }
   private t = 0;
+  private joinSounded = false;   // S339: the join blip has played
   private ambientFed = false;
   private dmReadyAt = Infinity; // set once the room's ambient chatter settles
   private dmFed = false;
@@ -147,6 +149,8 @@ export class IrcApp {
   }
 
   update(dt: number): void {
+    // ⚑ S339 / T50 — his first frame in the channel: the client's join blip (tools/make_irc_tones.py). Once.
+    if (!this.joinSounded) { this.joinSounded = true; const a = playOnce('irc_join.mp3'); if (a) a.volume = 0.5; }
     this.t += dt;
     // the room starts talking, then keeps a slow human rhythm
     if (!this.ambientFed && this.t >= AMBIENT_START) {
@@ -176,7 +180,7 @@ export class IrcApp {
     // R3-26: the room has settled — Rob ASKS first; the window opens on Accept
     if (!this.dmRequested && this.t >= this.dmReadyAt) {
       this.dmRequested = true;
-      this.tick?.();
+      this.privateChime();   // S339: a private message has its own sound, not the line tick
       this.dirty = true;
     }
     if (this.dmFed && this.dm.update(dt)) this.dirty = true;
@@ -184,7 +188,7 @@ export class IrcApp {
     // ⚑ S186 — his DM has landed: Rob sends the picture (the only answer is Accept)
     if (this.dmFed && !this.sendOffered && this.dm.idle && this.dm.done.length >= dialog.dm.length) {
       this.sendOffered = true;
-      this.tick?.();
+      this.privateChime();   // S339: …and so does his file
       this.dirty = true;
     }
     // the hook lands once the whole DM — and the picture, and Rob's line after it — has landed
@@ -250,6 +254,11 @@ export class IrcApp {
     for (const line of dialog.dm) this.dm.queueLine({ from: 'MentorRob', text: this.fill(line) });
     this.dirty = true;
   }
+
+  /** ⚑ S339 / T50 — something addressed to HIM privately (Rob's request, Rob's DCC send): the brighter, more
+   *  insistent chime (tools/make_irc_tones.py) INSTEAD of the line tick, never both. Rob's typed lines stay silent
+   *  (R3-25, "not on every message"); the tick stays for his own lines (os.ts wires it via onLine). */
+  private privateChime(): void { const a = playOnce('irc_dm.mp3'); if (a) a.volume = 0.6; }
 
   /** the request is on screen, unanswered — the guide's soft lines wait */
   get requestPending(): boolean { return this.dmRequested && !this.dmAccepted; }

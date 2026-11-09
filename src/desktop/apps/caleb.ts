@@ -1,6 +1,6 @@
 import decisions from '../../../data/strings/cx3b.json';
 /**
- * THE CALEB THREAD — the FELT half (S2R.3–S2R.6, Session 45).
+ * THE CALEB THREAD — the FELT half (S2R.3–S2R.6, Session 45; rebuilt S339).
  *
  * Two people who survived the same placement, talking. The window is `felt`:
  * bare, human, specific — no satire, no mechanics, nothing scored, and
@@ -10,30 +10,37 @@ import decisions from '../../../data/strings/cx3b.json';
  * in src/desktop/apps/accountability.ts, which draws over this window's rect
  * and never inside its transcript.
  *
+ * ⚑ S339 (his 8 Nov headset + answers 13/14; docs/reinterp/UIB_JOB_2003_2026-11-09.md):
+ *  - THE MSN LOOK. "This is too close to the Mirk, and it should be closer to MSN… the bubbles… we can scroll up and
+ *    down… this window could be bigger." The window nearly fills the monitor; each message is a bubble (his on the
+ *    left, Daniel's on the right, "caleb says:" over a run); the transcript scrolls by its own ▲ ▼ (a press, never a
+ *    gesture: the input law) and follows the newest line unless the visitor has scrolled up.
+ *  - THE SONG'S TWO-STEP (answer 13). When the file arrives the conversation holds: "Wait" keeps it holding while he
+ *    listens, "Go on" lets Caleb carry on — and if nothing is pressed for a while it carries on by itself.
+ *  - NO CORNER TOAST, NO "NEW MESSAGE" (answer 14 / T13). Caleb does not knock while the apparatus is running. The
+ *    Messenger comes back to life only after PureMail: the block lifts, his four lines arrive here, in this window.
+ *  - THE RESIDUE IS DANIEL'S REPLY (answer 14). The bare field with its Continue is retired. Sérgio's locked line
+ *    ("Then it was never me that was broken…", `_s`, verbatim) is now the one chip under Caleb's last line: Daniel
+ *    says it to him, and saying it is the moment the update arrives (os.ts arms u3 at once). The second commit-press
+ *    still rhymes with the first; the record still files it only as the gap it cannot classify.
+ *
  * What this file owns:
- *  - the messenger window and its typing transcript (data/dialog/s2_caleb.json)
+ *  - the messenger window and its transcript (data/dialog/s2_caleb.json)
  *  - reply chips that REGISTER and never BRANCH — each files a `ledgerTag` the
  *    moment it is pressed and none of them changes what Caleb says next
  *  - THE COMMIT-PRESS: one chip, no alternative ("i want to be with you too").
- *    The player must say the bigger word — and that press is what the
- *    apparatus files as conduct. Nothing happened. Nobody met.
  *  - THE REDACTION, one component run twice (`Redaction` below): forward at
  *    S2R.3B as Lamby explains that wanting is conducting, and the SAME object
  *    run in reverse at S2R.5 as the apparatus dies. No second grammar.
- *  - Caleb's return as MSN-style corner toasts during the video's break — the
- *    system's own nag-shape, now carrying the person back in
- *  - his four lines after the block lifts, and the residue commit-press, which
- *    rhymes with the first: the system is no longer there to file this one.
+ *  - his four lines after the block lifts, and Daniel's answer.
  *
- * Copy: data/dialog/s2_caleb.json, PLACEHOLDER-draft except the ⟨S⟩ residue
- * line, which is Sérgio's locked canon and is never paraphrased or re-wrapped.
+ * Copy: data/dialog/s2_caleb.json. The ⟨S⟩ residue line is Sérgio's locked canon, never paraphrased or re-wrapped.
  */
-import { ERA1, ERA1_CANVAS } from '../theme/era1';
+import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
-import fixes from '../../../data/strings/visitorFixes.json';
 import { ledger } from '../../state/ledger';
 import caleb from '../../../data/dialog/s2_caleb.json';
-import { playOnce, isAudioAvailable, stopClip } from '../../audio/tapeAudio';
+import { playOnce, isAudioAvailable } from '../../audio/tapeAudio';
 
 interface Chip { id: string; label: string; say: string; ledgerTag: string }
 interface ThreadStep { id: string; from?: string; text?: string; chips?: Chip[]; commit?: boolean;
@@ -49,51 +56,49 @@ const threadWithRoom = (caleb.thread as unknown as ThreadStep[]).flatMap(s => s.
 const THREAD = threadWithRoom.filter((s) => !s.requiresAudio || isAudioAvailable(s.audio));
 
 // ── PACING — ALL OF IT LIVES IN data/dialog/s2_caleb.json's `pacing` BLOCK ──
-// Session 48 moved every timing constant out of here so Sérgio can tune the
-// thread's breath without hunting through TypeScript. Read that block's `_doc`
-// before changing anything; this file deliberately holds NO numbers of its own.
-// Nothing here is a deadline — the player is never asked to answer within a
-// time, and the chips wait forever.
 const P = caleb.pacing;
 const CHAT = P.chat;
 const RET = P.return;
-const RES = P.residue;
-/** where in the dissolve the desktop gives way to the bare field — the noise
- *  is at its densest here, so the change of surface is never seen as a cut */
-const DISSOLVE_TEAR = 0.45;
-/** s for the residue line to fade up, and for the pressed line to replace it */
-const LINE_FADE = 1.1;
+const HOLD = caleb.songHold as { wait: string; go: string; listening: string; autoSeconds: number };
+const RESIDUE = caleb.residue as { line: string; answer: string };
 
-/** the messenger window (felt). The accountability stamp needs this rect.
- *  Sized so the WHOLE conversation fits without scrolling — the redaction has
- *  to be able to walk every line the player actually said. */
-const WIN = { x: 8, y: 10, w: 420, h: 225 } as const;
-const ROW_H = 10;
-const TRAY_H = 32;
+/** the messenger window (felt). The accountability stamp needs this rect. S339: MSN-sized — nearly the whole
+ *  monitor above the taskbar (his "this window could be bigger… it doesn't need to be this small in the corner"). */
+const WIN = { x: 10, y: 6, w: 492, h: 352 } as const;
+/** the right-hand column: the two display pictures, as the period's messenger had them */
+const SIDE_W = 100;
+/** the reply tray under the transcript */
+const TRAY_H = 38;
+/** the scroll bar's width and the step of one press */
+const SB_W = 12;
+const SCROLL_STEP = 36;
+/** the bubbles' type and spacing */
+const FONT = 10;
+const LINE_H = 13;
+const PAD = 5;
 
 /**
  * REDACTION ↔ UN-REDACTION — one component, run twice.
  *
- * Forward (S2R.3B): rows black out from the top, one at a time, while the
+ * Forward (S2R.3B): messages black out from the top, one at a time, while the
  * apparatus explains that the wanting was the conduct. Reverse (S2R.5): the
- * exact same walk undone — the last row blacked is the first row returned, so
+ * exact same walk undone — the last message blacked is the first returned, so
  * the sentence the system took last ("i just want to sit next to you and not
  * be watched") is the first one you get back, and the greeting comes home
- * last. The censorship is undone in front of you by the mechanism that made it.
+ * last. S339: it walks MESSAGES (bubbles), and the transcript scrolls with it.
  */
 class Redaction {
   private n = 0;
   private dir: -1 | 0 | 1 = 0;
   private t = 0;
   private total = 0;
-  /** s per row — slow enough to watch a sentence disappear, fast enough to hurt */
+  /** s per message — slow enough to watch a sentence disappear, fast enough to hurt */
   private static readonly STEP = P.redactionRowSeconds;
 
   start(total: number, dir: 1 | -1): void {
     this.total = total;
     this.dir = dir;
     this.t = 0;
-    if (dir === 1 && this.n === 0) this.n = 0;
     if (dir === -1) this.n = Math.min(this.n, total);
   }
 
@@ -113,11 +118,11 @@ class Redaction {
     return true;
   }
 
-  /** ?debug=1 — the blackout, already finished (skips the ~8s walk) */
+  /** ?debug=1 — the blackout, already finished */
   sealNow(total: number): void { this.total = total; this.n = total; this.dir = 0; }
 
-  /** rows [0, n) are blacked out */
-  hidden(row: number): boolean { return row < this.n; }
+  /** messages [0, n) are blacked out */
+  hidden(i: number): boolean { return i < this.n; }
   get running(): boolean { return this.dir !== 0; }
   get blackedRows(): number { return this.n; }
   get sealed(): boolean { return this.total > 0 && this.n >= this.total; }
@@ -128,7 +133,7 @@ class Redaction {
 class TypeStream {
   private queue: string[] = [];
   private hold = 0;
-  /** s of quiet after a finished line, before the next one starts typing */
+  /** s of quiet after a finished line, before the next one arrives */
   gap = CHAT.lineGapSeconds;
   onLine?: (text: string) => void;
 
@@ -137,9 +142,6 @@ class TypeStream {
   /** an EXTRA beat before the next line — he takes a moment (after a reply) */
   pause(seconds: number): void { this.hold = Math.max(this.hold, seconds); }
   get idle(): boolean { return this.queue.length === 0 && this.hold <= 0; }
-  get partial(): string | null {
-    return null;
-  }
 
   update(dt: number): boolean {
     if (this.hold > 0) { this.hold -= dt; return false; }
@@ -154,49 +156,9 @@ class TypeStream {
   }
 }
 
-/**
- * THE APPARATUS'S GLITCH GRAMMAR, borrowed for the residue's dissolve.
- *
- * Deliberately the SAME vocabulary as the video's break in
- * src/desktop/apps/netvision.ts — scanlines on a 3px cadence, sparse tape
- * noise, one slow rolling tracking band — and no new effect. Warm-corrupt,
- * never strobe: `amount` moves the DENSITY of the noise and the alpha of the
- * band, and both ramp monotonically. Nothing here ever changes the screen's
- * luminance abruptly, so there is no flicker-rate concern at any `amount`.
- *
- * WHY IT IS COPIED AND NOT IMPORTED: netvision.ts keeps this as private
- * methods and is outside this session's file fence, and this module is `felt`
- * — it may not import the operable side (see the header). accountability.ts
- * carries the same twelve lines for the PureMail entrance. If a third copy
- * ever appears, that is the moment to extract `src/desktop/theme/glitch.ts`
- * and have all three read it.
- */
-function glitchWash(
-  ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number,
-  amount: number, t: number
-): void {
-  if (amount <= 0.01) return;
-  ctx.fillStyle = `rgba(0,0,0,${(0.16 * amount).toFixed(3)})`;
-  for (let sy = y; sy < y + h; sy += 3) ctx.fillRect(x, sy, w, 1);
-  const count = Math.round(amount * amount * 900);
-  for (let i = 0; i < count; i++) {
-    const nx = x + Math.floor(Math.random() * w);
-    const ny = y + Math.floor(Math.random() * h);
-    // dark-dominant: the quietest moment in the piece stays dark, not bright
-    ctx.fillStyle = Math.random() < 0.66 ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
-    ctx.fillRect(nx, ny, 1, Math.random() < 0.3 ? 2 : 1);
-  }
-  const bandH = 6;
-  const frac = (t % 3.6) / 3.6; // slower than the video's 2.4s roll — this one settles
-  const by = y + Math.round(frac * (h - bandH));
-  ctx.fillStyle = `rgba(20,20,24,${(0.55 * amount).toFixed(3)})`;
-  ctx.fillRect(x, by, w, bandH);
-  ctx.fillStyle = `rgba(230,230,235,${(0.22 * amount).toFixed(3)})`;
-  ctx.fillRect(x + 3, by + bandH, Math.max(w - 6, 0), 1);
-}
-
-export type CalebPhase = 'chat' | 'sealed' | 'restoring' | 'returning' | 'residue' | 'done';
+/** S339: 'answer' = his four lines are in and Daniel's reply is offered; 'done' = Daniel has said it (the window
+ *  stays: the conversation is theirs, and the update arrives over it). */
+export type CalebPhase = 'chat' | 'sealed' | 'restoring' | 'returning' | 'answer' | 'done';
 
 export class CalebThreadApp {
   onClose?: () => void;
@@ -206,18 +168,12 @@ export class CalebThreadApp {
 
   /** fires on the commit-press — os.ts hands the beat to the apparatus */
   onCommit?: () => void;
-  /** fires once his four return lines have all landed and settled */
-  onReturnSettled?: () => void;
-  /** fires when the residue has been committed and held — the thread is over */
+  /** fires the moment Daniel says the residue line — os.ts arms the update at once (his answer 14) */
   onThreadDone?: () => void;
   /** S157 / R3-52: the OS opens the media player for the file he sent */
   onOpenAttachment?: (file: { name: string; audio: string; size: string }) => void;
-
-  /** S60 — the player pressed Caleb's notification while the block is on.
-   *  This module does not know and must not know what answers it: os.ts hands
-   *  the press to the apparatus, which re-asserts its own stamp. The felt side
-   *  only reports that he tried. */
-  onNotificationPressed?: () => void;
+  /** S274 — the song's file has arrived in the thread */
+  onSongArrived?: () => void;
 
   private readonly msgs: Msg[] = [];
   private readonly stream = new TypeStream();
@@ -225,8 +181,6 @@ export class CalebThreadApp {
   private step = -1;
   private awaiting: Chip[] | null = null;
   private awaitingCommit = false;
-  /** chips do not land the instant his line finishes — they arrive a beat
-   *  later, so the sentence is read before the answers are weighed */
   private pendingChips: Chip[] | null = null;
   private pendingCommit = false;
   private chipsAt = Infinity;
@@ -235,56 +189,44 @@ export class CalebThreadApp {
   private commitAt = Infinity;
   private returnSettleAt = Infinity;
   private returnStartAt = Infinity;
-  /** THE DISSOLVE (S2R.6): `t` at which the slow glitch dissolve began, or -1.
-   *  It starts while the chat is still on screen and runs THROUGH the change
-   *  of surface — see drawToasts()/drawResidue(). */
-  private dissolveAt = -1;
-  private residueAt = Infinity;
-  private residueDoneAt = Infinity;
+  private returnLineCount = 0;
   private residueCommitted = false;
-  private toasts: { text: string; life: number }[] = [];
+  private afterwordSent = false;
+  /** S339 — the song's two-step: 'none' → 'offered' (Wait · Go on, auto after HOLD.autoSeconds) → 'waiting' (Go on)
+   *  → 'released' */
+  private songHold: 'none' | 'offered' | 'waiting' | 'released' = 'none';
+  private songHoldUntil = Infinity;
   private hits: Hit[] = [];
   private hover = '';
-  private returnLineCount = 0;
-  /** the rows the transcript last rendered — what the redaction actually walks */
-  private renderedRows = 0;
+  /** the transcript's scroll: px from the top of the content; `stick` follows the newest line */
+  private scrollY = 0;
+  private stick = true;
+  private maxScroll = 0;
   private sealPending = false;
 
-  /** S274 — the song's file has arrived in the thread */
-  onSongArrived?: () => void;
   constructor() {
     this.stream.onLine = (text) => {
       this.msgs.push({ from: 'them', text });
       if (this.phase === 'returning') this.returnLineCount++;
-      // S143: the file he sent has arrived — it plays, low, under what follows
       const st = THREAD[this.step];
-      if (st && st.text === text && st.audio && st.attachment) {
+      if (this.phase === 'chat' && st && st.text === text && st.audio && st.attachment) {
         const last = this.msgs[this.msgs.length - 1];
         last.attachment = { name: caleb.attachment.label, audio: st.audio, size: caleb.attachment.size };
         this.onSongArrived?.();   // S274: the "1997" folder takes its unread pip (his option (b))
-      } else if (st && st.text === text && st.audio) { this.song = playOnce(st.audio); if (this.song) this.song.volume = 0.55; }
+        // S339 — the two-step: the conversation holds for the song
+        this.songHold = 'offered';
+        this.songHoldUntil = this.t + HOLD.autoSeconds;
+      }
       this.dirty = true;
     };
     this.file('opened', 'intervened', caleb.witness.contactOpened);
   }
 
-  /** the whole monitor belongs to the residue beat (respite: no UI, no chrome).
-   *  It flips at the dissolve's TEAR, not at its start — see DISSOLVE_TEAR. */
-  get ownsScreen(): boolean { return this.phase === 'residue'; }
-  /** ⚑ S223 cloud / W1-D13 — the conversation is still being walked out line by line (the redaction, ~8 s at most).
-   *  os.ts holds the PureMail's start until this is false. Reads state only; the felt module learns nothing. */
+  /** ⚑ S223 cloud / W1-D13 — the conversation is still being walked out message by message. os.ts holds the
+   *  network's failure until this is false. Reads state only; the felt module learns nothing. */
   get blackingOut(): boolean { return this.redaction.running; }
-  /** ⚑ S226 / W1-D13, reading A (his yes, 2026-10-10) — how long his break toast has been up, and whether the player
-   *  has pressed it: os.ts lets the mail take the screen only once the player has had their moment with it */
-  breakToastAge = 0;
-  breakToastPressed = false;
-  get breakToastUp(): boolean { return this.toasts.length > 0 && this.toasts[0].life === Infinity; }
   /** the felt window's rect — the operable stamp is positioned against it */
   get windowRect(): { x: number; y: number; w: number; h: number } { return { ...WIN }; }
-  get windowVisible(): boolean {
-    return this.phase === 'chat' || this.phase === 'sealed'
-      || this.phase === 'restoring' || this.phase === 'returning';
-  }
 
   private file(
     id: string,
@@ -295,85 +237,45 @@ export class CalebThreadApp {
   }
 
   // ── the beat seams os.ts drives ────────────────────────────────────────
-  /** S2R.3B — the apparatus starts blacking the conversation out */
-  /** S143: the song Caleb sent, while it plays; the block stops it */
-  private song: HTMLAudioElement | null = null;
+  /** S2R.3B — the apparatus starts blacking the conversation out (os.ts cuts the song's player) */
   beginRedaction(): void {
-    // ⚑ the apparatus silences the one thing that was theirs — no fade: a cut
-    stopClip(this.song); this.song = null;
     if (this.redaction.running || this.redaction.sealed) return;
-    this.redaction.start(Math.max(this.renderedRows, 1), 1);
+    this.songHold = 'released';
+    this.redaction.start(Math.max(this.msgs.length, 1), 1);
     this.file('redaction', 'intervened', caleb.witness.redacted);
     this.dirty = true;
   }
 
-  /** S2R.5 — the block lifts: the same walk, reversed */
+  /** S2R.5 — the block lifts: the same walk, reversed. S339: the Messenger comes back to life here, after PureMail. */
   beginRestore(): void {
     if (this.phase !== 'sealed') return;
     this.phase = 'restoring';
+    this.open = true;
     this.redaction.start(this.redaction.blackedRows, -1);
     this.file('restore', 'restored', caleb.witness.blockLifted);
     this.dirty = true;
   }
 
-  /**
-   * S2R.4 — he comes back through the system's own notification shape.
-   *
-   * S60 (finding D17): it PERSISTS. It used to carry `pacing.toastLifeSeconds`
-   * and vanish — Sérgio watched it cover the disclaimer crawl and then expire
-   * before he could do anything with it, which is the worst of both. A crack
-   * in the block does not heal on a countdown: this one stays until the block
-   * itself lifts (`clearToasts`, called at S2R.5's mail-close). os.ts also
-   * pushes it later now — after the crawl, not at the break's start.
-   */
-  pushBreakToast(): void {
-    if (this.toasts.length > 0) return;
-    const line = (caleb.toasts.lines as { id: string; text: string }[])[0];
-    if (!line) return;
-    this.toasts.push({ text: line.text, life: Infinity });
-    this.dirty = true;
-  }
-
-  /**
-   * The toast is drawn OVER everything (it is the felt module's over-everything
-   * pass), so it must be PRESSABLE over everything too — otherwise it is a
-   * button that only works when nothing is on top of it, which is the same
-   * lie in a new place. os.ts asks this before its window routing, exactly as
-   * it does for the taskbar mark. Returns true if the press was the toast's.
-   */
-  pressToastAt(x: number, y: number): boolean {
-    const hit = this.hits.find(h => h.id === 'toast');
-    if (!hit) return false;
-    if (x < hit.x || x > hit.x + hit.w || y < hit.y || y > hit.y + hit.h) return false;
-    this.breakToastPressed = true;
-    this.onNotificationPressed?.();
-    return true;
-  }
-
-  clearToasts(): void {
-    if (this.toasts.length === 0) return;
-    this.toasts = [];
+  /** S339 — the update was put off once ("Remind me later"): Caleb answers Daniel, and the deferral has somewhere to
+   *  be (his 8 Nov: "remind me later… there's no place to come back to"). Once. */
+  afterword(): void {
+    if (this.afterwordSent || this.phase !== 'done') return;
+    this.afterwordSent = true;
+    this.open = true;
+    this.stream.gap = CHAT.lineGapSeconds;
+    this.stream.pause(CHAT.replyGapSeconds);
+    this.stream.push(RESIDUE.answer);
+    this.stick = true;
     this.dirty = true;
   }
 
   // ── update ─────────────────────────────────────────────────────────────
   update(dt: number): void {
     this.t += dt;
-    if (this.breakToastUp) this.breakToastAge += dt;
-
-    if (this.toasts.length > 0) {
-      // a finite life still expires (the array is the seam for any future
-      // toast that should); the break toast's is Infinity and simply stays
-      for (const toast of this.toasts) toast.life -= dt;
-      const before = this.toasts.length;
-      this.toasts = this.toasts.filter(toast => toast.life > 0);
-      if (this.toasts.length !== before) this.dirty = true;
-    }
 
     if (this.redaction.update(dt)) this.dirty = true;
     if (this.phase === 'restoring' && !this.redaction.running && this.redaction.cleared) {
-      // the block has lifted — but he does not answer the instant it does.
-      // The lead-in is the quiet where you realise the words are back.
+      // the block has lifted — but he does not answer the instant it does
       this.phase = 'returning';
       this.returnStartAt = this.t + RET.leadInSeconds;
       this.dirty = true;
@@ -382,11 +284,15 @@ export class CalebThreadApp {
       this.returnStartAt = Infinity;
       this.stream.gap = RET.lineGapSeconds; // his four lines get more room than the chat did
       for (const line of caleb.return.lines as string[]) this.stream.push(line);
+      this.stick = true;
       this.dirty = true;
     }
 
     if (this.phase === 'chat' && this.step < 0 && this.t >= this.startAt) this.advance();
-    if (this.stream.update(dt)) this.dirty = true;
+    if (this.stream.update(dt)) { this.stick = this.stick || this.phase !== 'chat'; this.dirty = true; }
+
+    // the song's two-step: if nothing is pressed, the conversation carries on by itself
+    if (this.songHold === 'offered' && this.t >= this.songHoldUntil) { this.songHold = 'released'; this.dirty = true; }
 
     // the chips land a beat after the line they answer, never on the same frame
     if (this.pendingChips && this.t >= this.chipsAt) {
@@ -398,7 +304,7 @@ export class CalebThreadApp {
     }
 
     if (this.phase === 'chat' && this.step >= 0 && !this.awaiting && !this.awaitingCommit
-        && !this.pendingChips && this.stream.idle) {
+        && !this.pendingChips && this.stream.idle && !this.songHeld) {
       this.advance();
     }
 
@@ -415,42 +321,16 @@ export class CalebThreadApp {
       this.returnSettleAt = this.t + RET.settleSeconds;
     }
     if (this.t >= this.returnSettleAt) {
+      // S339 — Daniel's reply is offered: one chip, Sérgio's line, verbatim
       this.returnSettleAt = Infinity;
-      this.onReturnSettled?.();
-      // S2R.6 arrives as a slow glitch DISSOLVE, never a cut: the dissolve
-      // starts here, over the chat still on screen, and the surface changes
-      // underneath it at the tear (see drawToasts/drawResidue).
-      this.dissolveAt = this.t;
-      this.residueAt = this.t + RES.dissolveSeconds + RES.arriveSeconds;
-      this.dirty = true;
-    }
-    if (this.dissolveAt >= 0 && this.phase === 'returning'
-        && this.t - this.dissolveAt >= RES.dissolveSeconds * DISSOLVE_TEAR) {
-      this.phase = 'residue';
-      this.dirty = true;
-    }
-    // the dissolve, the line's fade-in and the commit cross-fade all need
-    // every frame; nothing else in this beat does
-    if (this.phase === 'residue' && this.t < this.residueAt + LINE_FADE + 0.1) this.dirty = true;
-    // the commit's cross-fade AND the exit fade both need every frame
-    if (this.residueCommitted) this.dirty = true;
-    if (this.t >= this.residueDoneAt) {
-      this.residueDoneAt = Infinity;
-      this.phase = 'done';
-      this.open = false;
-      this.onThreadDone?.();
+      this.phase = 'answer';
       this.dirty = true;
     }
   }
 
-  /** 0..1 across the whole dissolve; -1 when there isn't one running */
-  private get dissolveK(): number {
-    if (this.dissolveAt < 0) return -1;
-    const k = (this.t - this.dissolveAt) / RES.dissolveSeconds;
-    return k >= 1 ? -1 : Math.max(0, k);
-  }
+  private get songHeld(): boolean { return this.songHold === 'offered' || this.songHold === 'waiting'; }
 
-  /** walk the authored thread: his lines queue to type; a chip step waits */
+  /** walk the authored thread: his lines queue to arrive; a chip step waits */
   private advance(): void {
     this.step++;
     const s = THREAD[this.step];
@@ -470,10 +350,10 @@ export class CalebThreadApp {
     this.awaiting = null;
     this.awaitingCommit = false;
     if (chip.say) this.msgs.push({ from: 'you', text: chip.say });
+    this.stick = true;
     if (wasCommit) {
       this.file(chip.id, 'committed', chip.ledgerTag);
-      // it lands, warm, and is allowed to just sit there before anything
-      // answers it — the pause is what makes the flag land ON the wanting
+      // it lands, warm, and is allowed to just sit there before anything answers it
       this.commitAt = this.t + CHAT.commitLandsSeconds;
     } else {
       this.file(chip.id, chip.say ? 'replied' : 'held', chip.ledgerTag);
@@ -483,252 +363,258 @@ export class CalebThreadApp {
     this.dirty = true;
   }
 
+  /** S339 — Daniel says it, to Caleb. The record shows a GAP it could not classify — never the line itself. */
   private commitResidue(): void {
     if (this.residueCommitted) return;
     this.residueCommitted = true;
-    // the record shows a GAP it could not classify — never the line itself
+    this.msgs.push({ from: 'you', text: RESIDUE.line });
+    this.stick = true;
     this.file('residue', 'residue', caleb.witness.residue);
-    this.residueDoneAt = this.t;
+    this.phase = 'done';
+    this.onThreadDone?.();
     this.dirty = true;
   }
 
   // ── drawing ────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
-    if (this.phase === 'residue') { this.drawResidue(ctx); return; }
-    if (!this.windowVisible) return;
-
     const c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, caleb.window.title, true);
     this.hits.push({ ...c.closeBox, id: 'caleb-close' });
-    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
 
-    // S157 / R3-51 — THE 2003 IM LOOK. The contact strip with the messenger's own mark,
-    // a toolbar whose verbs are dead (Nudge · Wink · Font — the era's furniture, not
-    // this piece's inputs), and a contact list down the right: him online, the
-    // others not. The transcript keeps its whole grammar; only the frame is fuller.
+    // the "To:" strip and the dead toolbar (Nudge · Wink · Font — the era's furniture, not this piece's inputs)
     const CT = caleb.window.contacts;
-    ui.px(ctx, c.x, c.y, c.w, 14, ERA1.beige);
-    ui.setFont(ctx, 9);
-    ui.px(ctx, c.x + 4, c.y + 2, 12, 10, ERA1.navy);
-    ctx.fillStyle = ERA1.white;
-    ctx.fillText(CT.mark, c.x + 5, c.y + 3);
+    ui.setFont(ctx, 10);
+    ui.px(ctx, c.x + 4, c.y + 3, 14, 13, ERA1.navy);
+    ctx.fillStyle = ERA1.white; ui.setFont(ctx, 9);
+    ctx.fillText(CT.mark, c.x + 5, c.y + 5);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(caleb.window.to, c.x + 24, c.y + 5);
+    const toW = ctx.measureText(caleb.window.to).width;
     ctx.fillStyle = ERA1.navy;
-    ctx.fillText(caleb.window.contact, c.x + 20, c.y + 3);
+    ctx.fillText(caleb.window.contact, c.x + 28 + toW, c.y + 5);
+    const nameW = ctx.measureText(caleb.window.contact).width;
+    ui.px(ctx, c.x + 34 + toW + nameW, c.y + 8, 6, 6, ERA1.ok);
     ctx.fillStyle = ERA1.grey;
-    ctx.fillText(caleb.window.status, c.x + 20 + ctx.measureText(caleb.window.contact).width + 8, c.y + 3);
-    // the dead toolbar
-    [CT.nudge, CT.wink, CT.font].forEach((v, i) => ui.button(ctx, c.x + c.w - 172 + i * 56, c.y + 1, 52, 12, v, { disabled: true }));
-    // the contact list
-    const LIST_W = 92;
-    const lx = c.x + c.w - LIST_W;
-    ui.px(ctx, lx, c.y + 14, LIST_W, c.h - 14, ERA1.beige);
-    ui.px(ctx, lx, c.y + 14, 1, c.h - 14, ERA1.grey);
-    ui.setFont(ctx, 8);
-    ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(CT.online, lx + 6, c.y + 20);
-    ui.px(ctx, lx + 6, c.y + 33, 5, 5, ERA1.ok);
-    ctx.fillStyle = ERA1.black;
-    ctx.fillText(caleb.window.contact, lx + 14, c.y + 31);
-    // S273 — his personal message: half of the 1997 pledge, cut at the same word (DESIGN_MISSING_YEARS §4)
-    ctx.fillStyle = ERA1.grey; let pm = CT.personal as string;
-    while (pm.length > 4 && ctx.measureText(pm).width > LIST_W - 18) pm = `${pm.slice(0, -2)}…`;
-    ctx.fillText(pm, lx + 14, c.y + 39);
-    ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(CT.offline, lx + 6, c.y + 48);
-    (CT.offlineNames as string[]).forEach((n, i) => {
-      ui.px(ctx, lx + 6, c.y + 61 + i * 11, 5, 5, ERA1.grey);
-      ctx.fillStyle = ERA1.grey;
-      ctx.fillText(n, lx + 14, c.y + 59 + i * 11);
-    });
+    ctx.fillText(`(${caleb.window.status})`, c.x + 44 + toW + nameW, c.y + 5);
+    [CT.nudge, CT.wink, CT.font].forEach((v, i) => ui.button(ctx, c.x + c.w - SIDE_W - 168 + i * 56, c.y + 2, 52, 15, v, { disabled: true }));
 
-    const bodyX = c.x + 6;
-    const bodyY = c.y + 18;
-    const bodyW = c.w - 12 - LIST_W;
-    // S60 (finding F22, Sérgio: *"after Continue, Caleb's messages were
-    // cleared — did he say anything or not?"*). DIAGNOSED IN PLAY: the
-    // un-redaction worked perfectly and then the transcript ate it. The body
-    // is a tail window (`rows.slice(-maxRows)`), and with the reply tray's 32px
-    // permanently reserved it held only 15 rows — so the moment his four
-    // return lines started typing, the conversation the block had just handed
-    // back scrolled off the top, in front of him. The words came back and left
-    // again. The tray is only ever drawn during `chat`, so from the seal
-    // onwards the transcript takes that space and the restored conversation
-    // stays on screen while he answers.
-    const bodyH = c.h - 18 - (this.phase === 'chat' ? TRAY_H : 0);
-    this.drawTranscript(ctx, bodyX, bodyY, bodyW, bodyH);
+    // the right column: his display picture with his personal message, Daniel's below
+    this.drawSide(ctx, c.x + c.w - SIDE_W, c.y + 2, SIDE_W - 4, c.h - 4);
 
-    if (this.phase === 'chat') this.drawTray(ctx, c.x + 6, c.y + c.h - TRAY_H + 4, c.w - 12 - LIST_W);
+    // the transcript
+    const tx = c.x + 4, ty = c.y + 22;
+    const tw = c.w - SIDE_W - 8 - SB_W;
+    const th = c.h - 22 - TRAY_H - 4;
+    ui.px(ctx, tx - 1, ty - 1, tw + SB_W + 2, th + 2, ERA1.grey);
+    ui.px(ctx, tx, ty, tw, th, ERA1.white);
+    this.drawTranscript(ctx, tx, ty, tw, th);
+    this.drawScrollBar(ctx, tx + tw, ty, SB_W, th);
+
+    // the tray
+    this.drawTray(ctx, c.x + 4, c.y + c.h - TRAY_H - 2, c.w - SIDE_W - 8, TRAY_H);
   }
 
-  /** flatten the transcript into wrapped rows, then draw — the redaction walks
-   *  these ROWS, so what blacks out is exactly what is on screen */
-  private drawTranscript(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  /** two framed pictures, no faces (no likenesses): his is the window's own colour field, Daniel's the desk's */
+  private drawSide(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    const CT = caleb.window.contacts;
+    const pic = (px: number, py: number, s: number, ground: string, mark: string): void => {
+      ui.px(ctx, px - 1, py - 1, s + 2, s + 2, ERA1.grey);
+      ui.px(ctx, px, py, s, s, ERA1.white);
+      ui.px(ctx, px + 3, py + 3, s - 6, s - 6, ground);
+      // a plain sun over a horizon — a stock display picture of the period, not a person
+      const r = Math.round(s / 6);
+      ui.px(ctx, px + Math.round(s / 2) - r, py + Math.round(s / 3) - r, r * 2, r * 2, mark);
+      ui.px(ctx, px + 3, py + Math.round(s * 0.66), s - 6, Math.round(s * 0.34) - 3, ERA1.olive);
+    };
+    const s1 = Math.min(84, w - 8);
+    pic(x + Math.round((w - s1) / 2), y + 4, s1, ERA1.titleBlue, ERA1.tooltip);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.navy;
+    ctx.fillText(caleb.window.contact, x + 6, y + s1 + 10);
     ui.setFont(ctx, 9);
-    const rows: { prefix: string; prefixColor: string; body: string; indent: number; attachment?: Msg['attachment'] }[] = [];
-    const all: Msg[] = [...this.msgs];
-    const partial = this.stream.partial;
-    if (partial !== null) all.push({ from: 'them', text: partial });
-    for (const m of all) {
-      // finding C9 — his replies are HIS. `ledger.name` is authoritative when
-      // it holds a real name; `src/state/ledger.ts` initialises it to the
-      // placeholder "—", so any entry point that skips the opening (every
-      // review link, every debug jump — the path Sérgio played) attributed his
-      // side of the conversation to an em dash. Anything with no LETTER in it
-      // is not a name: fall back to the data's own `you`.
-      const typed = ledger.name.trim();
-      const you = /[a-zA-ZÀ-ɏ]/.test(typed) ? typed.toLowerCase() : caleb.window.you;
-      const nick = m.from === 'them' ? caleb.window.contact : you;
-      const prefix = `${nick}: `;
-      const pw = ctx.measureText(prefix).width;
-      const wrapped = ui.wrapText(ctx, m.text, w - pw);
-      wrapped.forEach((line, i) => rows.push({
-        prefix: i === 0 ? prefix : '',
-        prefixColor: m.from === 'them' ? ERA1.warnDark : ERA1.navy,
-        body: line,
-        indent: i === 0 ? 0 : pw
-      }));
-      // S157 / R3-52: the file, as a row of its own — a chip the player presses
-      if (m.attachment) rows.push({ prefix: '', prefixColor: ERA1.navy, body: '', indent: pw, attachment: m.attachment });
-    }
-    const maxRows = Math.floor(h / ROW_H);
-    const shown = rows.slice(-maxRows);
-    this.renderedRows = shown.length;
-    // a ?debug=1 seal resolves here, where the real row count is finally known
-    if (this.sealPending) { this.sealPending = false; this.redaction.sealNow(shown.length); }
+    ctx.fillStyle = ERA1.grey;
+    let pm = CT.personal as string;
+    while (pm.length > 4 && ctx.measureText(pm).width > w - 10) pm = `${pm.slice(0, -2)}…`;
+    ctx.fillText(pm, x + 6, y + s1 + 24);
+    const s2 = Math.min(60, w - 24);
+    pic(x + Math.round((w - s2) / 2), y + h - s2 - 22, s2, ERA1.teal, ERA1.paper);
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(this.youNick(), x + 6, y + h - 16);
+  }
 
-    shown.forEach((r, i) => {
-      const ry = y + i * ROW_H;
-      if (this.redaction.hidden(i)) {
-        // the censor bar: the row's own width, nothing else touched
-        const wide = ctx.measureText(r.prefix + r.body).width + r.indent;
-        ui.px(ctx, x, ry - 1, Math.min(wide + 4, w), ROW_H - 1, ERA1.black);
-        return;
+  private youNick(): string {
+    // finding C9 — his replies are HIS: a typed name with a letter in it, else the data's own `you`
+    const typed = ledger.name.trim();
+    return /[a-zA-ZÀ-ɏ]/.test(typed) ? typed.toLowerCase() : caleb.window.you;
+  }
+
+  /** lay the messages out as bubbles, then draw the slice in view — the redaction walks these MESSAGES */
+  private drawTranscript(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    ui.setFont(ctx, FONT);
+    const maxBubble = Math.round(w * 0.74);
+    type Item = { i: number; m: Msg; top: number; bh: number; bw: number; lines: string[]; head: string | null };
+    const items: Item[] = [];
+    let cy = 6;
+    let prev: Msg['from'] | null = null;
+    this.msgs.forEach((m, i) => {
+      const head = m.from !== prev ? caleb.window.says.replace('{name}', m.from === 'them' ? caleb.window.contact : this.youNick()) : null;
+      prev = m.from;
+      if (head) cy += 12;
+      ui.setFont(ctx, FONT);
+      const lines = m.text ? ui.wrapText(ctx, m.text, maxBubble - PAD * 2) : [];
+      let bw = Math.max(24, ...lines.map((l) => Math.ceil(ctx.measureText(l).width) + PAD * 2));
+      let bh = lines.length * LINE_H + PAD * 2 - 2;
+      if (m.attachment) {
+        const label = `${m.attachment.name}  ${m.attachment.size}`;
+        bw = Math.max(bw, Math.ceil(ctx.measureText(label).width) + 34 + PAD * 2);
+        bh += 20;
       }
-      let cx = x + r.indent;
-      if (r.attachment) {
-        // the attachment chip: an icon, the name, the size — pressable while the chat is live
-        const label = `${r.attachment.name}  ${r.attachment.size}  · ${caleb.attachment.open}`;
-        const lw = ctx.measureText(label).width + 22;
-        ui.bevel(ctx, cx, ry - 1, lw, ROW_H, true);
-        ui.px(ctx, cx + 4, ry + 1, 6, 7, ERA1.white); ui.px(ctx, cx + 5, ry + 4, 4, 2, ERA1.navy);
-        ctx.fillStyle = ERA1.navy;
-        ctx.fillText(label, cx + 14, ry);
-        if (this.phase === 'chat' && !this.redaction.hidden(i)) this.hits.push({ x: cx, y: ry - 1, w: lw, h: ROW_H, id: 'attachment' });
-        return;
-      }
-      if (r.prefix) {
-        ctx.fillStyle = r.prefixColor;
-        ctx.fillText(r.prefix, cx, ry);
-        cx += ctx.measureText(r.prefix).width;
-      }
-      ctx.fillStyle = ERA1.black;
-      ctx.fillText(r.body, cx, ry);
+      bw = Math.min(bw, maxBubble);
+      items.push({ i, m, top: cy, bh, bw, lines, head });
+      cy += bh + 5;
     });
+    const contentH = cy + 4;
+    this.maxScroll = Math.max(0, contentH - h);
+    // while the block walks, the transcript follows the walk; otherwise it follows the newest line unless scrolled up
+    if (this.redaction.running && items.length) {
+      const k = Math.min(items.length - 1, Math.max(0, this.redaction.blackedRows - 1));
+      this.scrollY = items[k].top - Math.round(h / 2);
+    } else if (this.stick) this.scrollY = this.maxScroll;
+    this.scrollY = Math.max(0, Math.min(this.maxScroll, this.scrollY));
+    if (this.sealPending) { this.sealPending = false; this.redaction.sealNow(this.msgs.length); }
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    for (const it of items) {
+      const top = y + it.top - this.scrollY;
+      if (top + it.bh < y - 14 || top > y + h) continue;
+      const mine = it.m.from === 'you';
+      const bx = mine ? x + w - it.bw - 6 : x + 6;
+      if (it.head) {
+        ui.setFont(ctx, 9);
+        ctx.fillStyle = ERA1.grey;
+        const hw = ctx.measureText(it.head).width;
+        ctx.fillText(it.head, mine ? x + w - 6 - hw : x + 6, top - 12);
+      }
+      if (this.redaction.hidden(it.i)) {
+        // the censor bar: the bubble's own shape, nothing else touched
+        this.bubble(ctx, bx, top, it.bw, it.bh, ERA1.black, ERA1.black);
+        continue;
+      }
+      this.bubble(ctx, bx, top, it.bw, it.bh, mine ? ERA1.tooltip : ERA1.paper, mine ? ERA1.olive : ERA1.titleBlue);
+      ui.setFont(ctx, FONT);
+      ctx.fillStyle = ERA1.black;
+      it.lines.forEach((l, r) => ctx.fillText(l, bx + PAD, top + PAD + r * LINE_H));
+      if (it.m.attachment) {
+        // the attachment: an icon, the name, the size — pressable while the chat is live
+        const ay = top + PAD + it.lines.length * LINE_H + 1;
+        const aw = it.bw - PAD * 2;
+        const hov = this.hover === 'attachment';
+        ui.px(ctx, bx + PAD, ay, aw, 17, hov ? ERA1.titleBlue : ERA1.navy);
+        ui.px(ctx, bx + PAD + 1, ay + 1, aw - 2, 15, ERA1.white);
+        ui.px(ctx, bx + PAD + 4, ay + 3, 9, 11, ERA1.silver); ui.px(ctx, bx + PAD + 6, ay + 7, 5, 4, ERA1.navy);
+        ui.setFont(ctx, 9);
+        ctx.fillStyle = ERA1.navy;
+        ctx.fillText(`${it.m.attachment.name}  ${it.m.attachment.size}  · ${caleb.attachment.open}`, bx + PAD + 18, ay + 4);
+        if (top >= y && ay + 17 <= y + h) this.hits.push({ x: bx + PAD, y: ay, w: aw, h: 17, id: 'attachment' });
+      }
+    }
+    ctx.restore();
+  }
+
+  /** a bubble with its corners knocked off (pixel-rounded), the period's IM shape */
+  private bubble(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string, edge: string): void {
+    ui.px(ctx, x + 2, y, w - 4, h, edge);
+    ui.px(ctx, x, y + 2, w, h - 4, edge);
+    ui.px(ctx, x + 1, y + 1, w - 2, h - 2, edge);
+    ui.px(ctx, x + 2, y + 1, w - 4, h - 2, fill);
+    ui.px(ctx, x + 1, y + 2, w - 2, h - 4, fill);
+  }
+
+  private drawScrollBar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    ui.px(ctx, x, y, w, h, ERA1.silver);
+    const arrow = (ay: number, up: boolean, id: string): void => {
+      ui.button(ctx, x, ay, w, w, '', { hover: this.hover === id, disabled: this.maxScroll <= 0 });
+      ctx.fillStyle = this.maxScroll <= 0 ? ERA1.grey : ERA1.black;
+      for (let r = 0; r < 3; r++) {
+        const yy = up ? ay + 4 + r : ay + w - 6 - r;
+        ctx.fillRect(x + 6 - r - 1, yy, r * 2 + 1, 1);
+      }
+      if (this.maxScroll > 0) this.hits.push({ x, y: ay, w, h: w, id });
+    };
+    arrow(y, true, 'scroll-up');
+    arrow(y + h - w, false, 'scroll-down');
+    const track = h - w * 2;
+    if (this.maxScroll > 0) {
+      const viewK = Math.min(1, h / (h + this.maxScroll));
+      const th = Math.max(10, Math.round(track * viewK));
+      const ty = y + w + Math.round((track - th) * (this.scrollY / this.maxScroll));
+      ui.bevel(ctx, x, ty, w, th, true);
+      // a press on the track above or below the thumb pages that way
+      if (ty > y + w) this.hits.push({ x, y: y + w, w, h: ty - (y + w), id: 'scroll-up' });
+      if (ty + th < y + h - w) this.hits.push({ x, y: ty + th, w, h: y + h - w - (ty + th), id: 'scroll-down' });
+    }
   }
 
   /** the reply chips — they register how he engaged, they never fork anything */
-  private drawTray(ctx: CanvasRenderingContext2D, x: number, y: number, w: number): void {
-    // finding C10 (Sérgio: *"'Click to Reply' appears while Caleb is still
-    // typing — you must wait for the boxes anyway, so the affordance lies"*).
-    // While he types, the tray is EMPTY: nothing is offered, so nothing is
-    // claimed. The hint now labels the chips at the moment they actually
-    // exist — it is true when it is on screen, and it is true about the thing
-    // directly under it.
-    if (!this.awaiting) return;
-    ui.px(ctx, x, y - 4, w, 1, ERA1.beige);
-    if (this.awaitingCommit) {
-      // THE COMMIT-PRESS: one chip, no alternative, and no hint over it — the
-      // beat is not asking him to learn an interface.
-      const chip = this.awaiting[0];
-      const bw = Math.min(300, w);
+  private drawTray(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    ui.px(ctx, x - 1, y - 1, w + 2, h + 2, ERA1.grey);
+    ui.px(ctx, x, y, w, h, ERA1.paper);
+    // ⚑ S339 — the song's two-step
+    if (this.phase === 'chat' && this.songHeld && !this.awaiting) {
+      const labels = this.songHold === 'offered' ? [['song-wait', HOLD.wait], ['song-go', HOLD.go]] : [['song-go', HOLD.go]];
+      ui.setFont(ctx, 10);
+      let bx = x + 8;
+      for (const [id, label] of labels) {
+        const bw = Math.ceil(ctx.measureText(label).width) + 28;
+        ui.button(ctx, bx, y + 9, bw, 20, label, { hover: this.hover === id });
+        this.hits.push({ x: bx, y: y + 9, w: bw, h: 20, id });
+        bx += bw + 10;
+      }
+      if (this.songHold === 'waiting') {
+        ui.setFont(ctx, 9); ctx.fillStyle = ERA1.grey;
+        ctx.fillText(HOLD.listening, bx + 4, y + 14);
+      }
+      return;
+    }
+    // ⚑ S339 — Daniel's reply to Caleb: Sérgio's locked line, one chip, no alternative
+    if (this.phase === 'answer') {
+      ui.setFont(ctx, 10);
+      const bw = Math.min(w - 16, Math.ceil(ctx.measureText(RESIDUE.line).width) + 40);
       const bx = x + Math.round((w - bw) / 2);
-      ui.button(ctx, bx, y + 6, bw, 20, chip.label, { hover: this.hover === `chip:${chip.id}` });
-      this.hits.push({ x: bx, y: y + 6, w: bw, h: 20, id: `chip:${chip.id}` });
+      ui.button(ctx, bx, y + 8, bw, 22, RESIDUE.line, { hover: this.hover === 'residue', primary: true });
+      this.hits.push({ x: bx, y: y + 8, w: bw, h: 22, id: 'residue' });
+      return;
+    }
+    // finding C10: while he types, the tray is EMPTY — nothing is offered, so nothing is claimed
+    if (!this.awaiting || this.phase !== 'chat') return;
+    if (this.awaitingCommit) {
+      // THE COMMIT-PRESS: one chip, no alternative, no hint over it
+      const chip = this.awaiting[0];
+      const bw = Math.min(300, w - 16);
+      const bx = x + Math.round((w - bw) / 2);
+      ui.button(ctx, bx, y + 8, bw, 22, chip.label, { hover: this.hover === `chip:${chip.id}` });
+      this.hits.push({ x: bx, y: y + 8, w: bw, h: 22, id: `chip:${chip.id}` });
       return;
     }
     ui.setFont(ctx, 9);
     ctx.fillStyle = ERA1.grey;
-    ctx.fillText(caleb.window.hint, x, y - 1);
+    ctx.fillText(caleb.window.hint, x + 6, y + 2);
     const n = this.awaiting.length;
     const gap = 8;
     ui.setFont(ctx, 10);
-    const widths = this.awaiting.map(chip => Math.ceil(ctx.measureText(chip.label).width) + 16);
-    const spare = Math.max(0, w - gap * (n - 1) - widths.reduce((a,b) => a+b, 0));
+    const widths = this.awaiting.map(chip => Math.ceil(ctx.measureText(chip.label).width) + 18);
+    const spare = Math.max(0, w - 12 - gap * (n - 1) - widths.reduce((a, b) => a + b, 0));
     let offset = 0;
     this.awaiting.forEach((chip, i) => {
       const cw = widths[i] + Math.floor(spare / n);
-      const bx = x + offset; offset += cw + gap;
-      ui.button(ctx, bx, y + 10, cw, 18, chip.label, { hover: this.hover === `chip:${chip.id}` });
-      this.hits.push({ x: bx, y: y + 10, w: cw, h: 18, id: `chip:${chip.id}` });
+      const bx = x + 6 + offset; offset += cw + gap;
+      ui.button(ctx, bx, y + 14, cw, 20, chip.label, { hover: this.hover === `chip:${chip.id}` });
+      this.hits.push({ x: bx, y: y + 14, w: cw, h: 20, id: `chip:${chip.id}` });
     });
-  }
-
-  /** the corner toasts — drawn LAST by os.ts, over the apparatus's own video.
-   *  This is also the felt module's ONLY over-everything pass, so the first
-   *  half of the residue's dissolve rides it: the desktop has to corrupt while
-   *  it is still on screen, and this is the one call that happens after it is
-   *  drawn (the second half lives in drawResidue, which owns the screen). */
-  drawToasts(ctx: CanvasRenderingContext2D): void {
-    const k = this.dissolveK;
-    if (k >= 0 && this.phase !== 'residue') {
-      glitchWash(ctx, 0, 0, ERA1_CANVAS.width, ERA1_CANVAS.height,
-        Math.min(1, k / DISSOLVE_TEAR), this.t);
-    }
-    if (this.toasts.length === 0) return;
-    const W = ERA1_CANVAS.width;
-    const H = ERA1_CANVAS.height;
-    const tw = 168;
-    const th = 58; // room for his line AND the affordance line under it
-    this.toasts.forEach((toast, i) => {
-      const tx = W - tw - 8;
-      const ty = H - 22 - th - 6 - i * (th + 4);
-      // it casts a shadow, like every other pressable thing in this era's
-      // chrome — the toast is an affordance now (finding E20's other half)
-      ui.px(ctx, tx + 2, ty + 2, tw, th, ERA1.black);
-      const c = ui.windowFrame(ctx, tx, ty, tw, th, caleb.toasts.windowTitle, true);
-      ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.paper);
-      ui.setFont(ctx, 9);
-      ctx.fillStyle = ERA1.black;
-      ui.wrapText(ctx, toast.text, c.w - 8).slice(0, 2)
-        .forEach((line, r) => ctx.fillText(line, c.x + 4, c.y + 3 + r * ROW_H));
-      ctx.fillStyle = this.hover === 'toast' ? ERA1.navy : ERA1.grey;
-      ctx.fillText(caleb.toasts.hint, c.x + 4, c.y + c.h - 10);
-      if (i === 0) this.hits.push({ x: tx, y: ty, w: tw, h: th, id: 'toast' });
-    });
-  }
-
-  /** S2R.6 — the quiet after. No guide, no UI, no apparatus: the monitor holds
-   *  one truth and the player commits it himself. Never revealed as a trap.
-   *
-   *  The beat ARRIVES rather than cuts: the second half of the dissolve plays
-   *  out over this bare field, the noise thinning to nothing — something
-   *  settling, not an effect — and only then, after a stretch of genuinely
-   *  empty screen, does the line fade up. */
-  private drawResidue(ctx: CanvasRenderingContext2D): void {
-    const W = ERA1_CANVAS.width;
-    const H = ERA1_CANVAS.height;
-    ui.px(ctx, 0, 0, W, H, ERA1.tealDark);
-    const k = this.dissolveK;
-    if (k >= 0) {
-      glitchWash(ctx, 0, 0, W, H,
-        Math.max(0, 1 - (k - DISSOLVE_TEAR) / (1 - DISSOLVE_TEAR)), this.t);
-    }
-    if (this.t < this.residueAt) return; // a beat of nothing at all first
-
-    const line = caleb.residue.line;
-    const up = Math.min(1, (this.t - this.residueAt) / LINE_FADE);
-    ctx.save();
-    ctx.globalAlpha = up;
-    ui.setFont(ctx, 12); ctx.fillStyle = ERA1.paper;
-    const rows = ui.wrapText(ctx, line, W - 64);
-    rows.forEach((row, i) => ctx.fillText(row, 32, H / 2 - rows.length * 8 + i * 16));
-    ctx.restore();
-    if (!this.residueCommitted && up >= 1) {
-      const r = { x: Math.round(W / 2) - 42, y: H - 64, w: 84, h: 24, id: 'residue' };
-      ui.button(ctx, r.x, r.y, r.w, r.h, fixes.continue);
-      this.hits.push(r);
-    }
-
   }
 
   // ── input ──────────────────────────────────────────────────────────────
@@ -743,10 +629,17 @@ export class CalebThreadApp {
     if (!hit) return;
     if (hit.id === 'caleb-close') { this.onClose?.(); this.dirty = true; return; }
     if (hit.id === 'residue') { this.commitResidue(); return; }
-    if (hit.id === 'toast') { this.onNotificationPressed?.(); return; }
+    if (hit.id === 'scroll-up' || hit.id === 'scroll-down') {
+      this.scrollY = Math.max(0, Math.min(this.maxScroll, this.scrollY + (hit.id === 'scroll-up' ? -SCROLL_STEP : SCROLL_STEP)));
+      this.stick = this.scrollY >= this.maxScroll;
+      this.dirty = true;
+      return;
+    }
+    if (hit.id === 'song-wait') { this.songHold = 'waiting'; this.dirty = true; return; }
+    if (hit.id === 'song-go') { this.songHold = 'released'; this.dirty = true; return; }
     if (hit.id === 'attachment') {
       const m = this.msgs.find((mm) => mm.attachment);
-      if (m?.attachment) this.onOpenAttachment?.(m.attachment);
+      if (m?.attachment && this.phase === 'chat') this.onOpenAttachment?.(m.attachment);
       return;
     }
     if (hit.id.startsWith('chip:') && this.awaiting) {
@@ -764,6 +657,7 @@ export class CalebThreadApp {
     this.msgs.length = 0;
     this.pendingChips = null;
     this.chipsAt = Infinity;
+    this.songHold = 'released';
     for (let i = 0; i < THREAD.length; i++) {
       const s = THREAD[i];
       this.step = i;
@@ -798,14 +692,12 @@ export class CalebThreadApp {
     this.dirty = true;
   }
 
-  /** ?debug=1 — straight to the quiet after (S2R.6). It arms the REAL
-   *  dissolve rather than cutting to the field, because the dissolve IS the
-   *  beat now: a jump that skipped it would show the one thing this beat is
-   *  not (a cut). */
+  /** ?debug=1 — straight to Daniel's reply (S339: the chip under his four lines) */
   debugResidue(): void {
-    this.phase = 'returning';
-    this.dissolveAt = this.t;
-    this.residueAt = this.t + RES.dissolveSeconds + RES.arriveSeconds;
+    this.awaiting = null; this.awaitingCommit = false;
+    for (const line of caleb.return.lines as string[]) this.msgs.push({ from: 'them', text: line });
+    this.phase = 'answer';
+    this.stick = true;
     this.dirty = true;
   }
 }

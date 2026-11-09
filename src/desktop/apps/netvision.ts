@@ -74,6 +74,8 @@ type Variant = 'original' | 'participant' | 'montage' | 'chorus';
 const montageOn = (): boolean => VARIANT === 'montage' || VARIANT === 'chorus';
 let VARIANT: Variant = ((media as unknown as { variant?: string }).variant ?? 'participant') as Variant;
 export function setNetVisionVariant(v: Variant): void { VARIANT = v; }
+/** ⚑ S339 — the "1 new message — C___" fragment in the static is retired (his answer 14); kept as a switch */
+const SHOW_BREAK_NOTICE = false;
 /** ⚑ S208 — the REAL STORIES montage (variant 'montage'; his, 2026-10-02: 'combine the Marcus one, so we can have a bit
  *  more time to see the montage and then transition to an image of a person clearly sad'): the montage runs at
  *  MONTAGE_PACE under Marcus's own line, then the shot cuts to him alone */
@@ -509,7 +511,8 @@ export class NetVisionPlayerApp {
     if (this.stage === 'playing' && tearing) this.drawDisclaimerCrawl(ctx, a);
     this.drawChrome(ctx, a);
 
-    if (this.stage === 'staticHold') this.drawNotificationFragment(ctx, a);
+    // ⚑ S339 (his answer 14) — Caleb's "1 new message" no longer surfaces through the static: he returns after PureMail
+    if (this.stage === 'staticHold' && SHOW_BREAK_NOTICE) this.drawNotificationFragment(ctx, a);
 
     if (this.stage === 'playing' && this.elapsed >= this.skipAt) {
       const sw = 88; const sh = 14; // S62: "(Don't) Skip" needs the width

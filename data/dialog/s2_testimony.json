@@ -131,6 +131,12 @@
   "note": "The editor assembles the story. Next cut moves on; nothing is dragged."
  },
  "online": {
+  "saved": {
+   "_doc": "⚑ S339 (his answer 8: 'Daniel's 1997 video lives in that folder: you go there to upload it, and so learns the folder exists'; T45/T49) — the programme's cut is a file now, saved into Daniel's own \"1997\" folder (the year it tells), and he sends it from there. OPERABLE: the programme's voice. Text is Claude's (2026-08-17 norm); his edit wins.",
+   "heading": "Your story is ready.",
+   "line": "We saved it as Daniel_1997.wmv in your “1997” folder. Open it there and upload it to New Morning, so others can see it.",
+   "open": "Open the folder"
+  },
   "notice": "Your testimony is reaching people.",
   "see": "See it",
   "browserTitle": "Stories of Hope — WebView",
@@ -150,9 +156,38 @@
    "lead": "For parents. It takes five minutes. Everything is confidential.",
    "fields": ["Your son's first name:", "His age:", "When did you first notice a change in him?", "Who does he spend his time with?"],
    "heard": "How did you hear about New Morning?",
-   "heardTicked": "Daniel's story"
+   "heardTicked": "Daniel's story",
+   "explain": "The form New Morning shows the next family. Your story is how they hear.",
+   "next": "Our stories on DVD →",
+   "_docS339": "⚑ S339 (his 8 Nov: 'What is this? … please do explain. Because there's no continuation'; answer 12: 'The parents' form leads to the webpage where the DVD is') — `explain` is the one line (the site's own voice, operable), `next` the form's button on to the collection."
   },
   "count": "This week, {n} people applied to New Morning after watching Daniel's story.",
+  "dvd": {
+   "_doc": "⚑ S339 / T49 (his answers 11 and 12; 12:26 'a collection of DVDs for the New You program… how they share the clips of the testimonies') — 'Discover the New You', the ministry's web shop of 2003: three DVDs and their teasers. Daniel's own story is the newest tile; Caleb's teaser is the one that plays, and it cuts on Daniel's name (answer 11, his words for the two lines, verbatim). OPERABLE: the programme's self-presentation may charm; the PEOPLE in it are never satirised. Invented marks only (Restorify Media, New Morning). Names: Marcus is the infomercial's own (s2_media.json); the third tile is unnamed.",
+   "address": "http://www.restorify-media.org/newyou/collection.html",
+   "header": "DISCOVER THE NEW YOU",
+   "sub": "The Collection · real stories of real change · Restorify Media",
+   "price": "3-DVD set $19.99",
+   "lead": "Watch a teaser. Then share the full stories with someone who is struggling.",
+   "soon": "coming soon",
+   "tiles": [
+    {"id": "caleb", "name": "Caleb", "line": "“What do you like most about the programme?”", "tag": "▶ Watch teaser"},
+    {"id": "daniel", "name": "Daniel", "line": "“I used to think I would always be this way.”", "tag": "NEW · just added"},
+    {"id": "marcus", "name": "Marcus", "line": "“My wife, my kids, my freedom.”", "tag": "on DVD 2"},
+    {"id": "next", "name": "Your story?", "line": "Share what God has done in your life.", "tag": "coming soon"}
+   ],
+   "teaser": {
+    "_doc": "Caleb's teaser. `question` and `answer` are his 8 Nov answer 11, verbatim: Presenter: \"What do you like most about the programme?\" Caleb: \"The people. Like my roommate, Daniel—\" It cuts there. Silent, subtitled, like all the 2003 footage (S205).",
+    "presenter": "PRESENTER",
+    "question": "What do you like most about the programme?",
+    "who": "CALEB",
+    "answer": "The people. Like my roommate, Daniel—",
+    "ended": "■  END OF TEASER · order the full story on DVD 3",
+    "questionSeconds": 3.2,
+    "cutSeconds": 6.6,
+    "endSeconds": 8.2
+   }
+  },
   "close": "Close"
  }
 }
