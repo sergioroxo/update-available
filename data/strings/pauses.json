@@ -44,8 +44,10 @@
     "yourfile": "Your file — read only, on the desktop.",
     "forum": "Harbor — a thread picked out for you.",
     "apply": "Harbor's application — already filled in from your file.",
-    "clear": "CLEAR — on your phone, on the desk."
+    "clear": "CLEAR — on your phone, on the desk.",
+    "explore": "And the rest of the desktop is yours to explore — open anything, in any order."
    },
+   "_docS339": "⚑ S339 (his 8 Nov / T21: 'if the … what to do at Restorify appears, it should also tell us that we can explore the desktop') — `items.explore` has no map beat, so it is always listed, last.",
    "outro": "Everything in Restorify counts toward your streak.",
    "close": "Okay"
   },

@@ -43,6 +43,8 @@ type Stage = 'prep' | 'release' | 'tapes' | 'player' | 'cut' | 'online';
 type ClipId = 'daniel' | 'caleb' | 'tone';
 interface Line { t: number; who: string; text: string }
 const CLIPS = T.tapes.clips as unknown as Record<ClipId, { seconds: number; lines: Line[] }>;
+/** ⚑ S339 — Caleb's teaser on the collection page (his answer 11) */
+const TEASER = T.online.dvd.teaser as { presenter: string; question: string; who: string; answer: string; ended: string; questionSeconds: number; cutSeconds: number; endSeconds: number };
 
 const DX = 24, DY = 12, DW = 464, DH = 346;
 /** the editor's blocks: S = a sentence, C = a chapter card, F = a fragment, by version */
@@ -65,6 +67,8 @@ export class TestimonyApp {
   onFile?: (id: string) => void;
   /** the page was closed: the story is out — Caleb's message may land */
   onDone?: () => void;
+  /** ⚑ S339 — "Open the folder": the story file waits in his "1997" folder; os.ts opens it there */
+  onOpenFolder?: () => void;
   private stage: Stage = 'prep';
   private topics = 1;
   private prepT = 0;
@@ -76,12 +80,19 @@ export class TestimonyApp {
   private previewT = -1;
   private exportT = -1;
   private exported = false;
-  private web: 'notice' | 'page' | 'buffer' | 'play' | 'done' = 'notice';
+  /** ⚑ S339 (his 8 Nov answers 8, 11, 12; T45/T49/T22): 'saved' — the cut is in his "1997" folder, to be uploaded
+   *  from there; 'notice'…'done' — his page; then the parents' form leads to 'dvd' — the "Discover the New You"
+   *  collection — where 'teaser' plays Caleb's interview, cut on Daniel's name */
+  private web: 'saved' | 'notice' | 'page' | 'buffer' | 'play' | 'done' | 'dvd' | 'teaser' = 'saved';
+  private teaserSeen = false;
+  /** os.ts — the folder's upload finished: his page is next */
+  uploaded(): void { if (this.web === 'saved') { this.web = 'notice'; this.stage = 'online'; this.dirty = true; } }
+  get awaitingUpload(): boolean { return this.stage === 'online' && this.web === 'saved'; }
   private webT = 0;
   private tick = 0;
   private hover = '';
 
-  get done(): boolean { return this.web === 'done' && this.stage === 'online'; }
+  get done(): boolean { return (this.web === 'done' || this.web === 'dvd') && this.stage === 'online'; }
 
   /** ⚑ S223 cloud / W1-D7 (walkthrough 1: "The helper keeps showing lines while your story's videos play") — true
    *  while a picture of his story is MOVING: a clip on the player, the editor's preview or its export, the page's
@@ -90,7 +101,7 @@ export class TestimonyApp {
     if (!this.open) return false;
     return (this.stage === 'player' && this.playing)
       || (this.stage === 'cut' && (this.previewT >= 0 || (this.exportT >= 0 && !this.exported)))
-      || (this.stage === 'online' && (this.web === 'buffer' || this.web === 'play'));
+      || (this.stage === 'online' && (this.web === 'buffer' || this.web === 'play' || this.web === 'teaser'));
   }
 
   /** ⚑ W1-D10 (walkthrough 1: "the room tone is not working") — ROOM_TONE was a waveform with no sound, and the
@@ -135,6 +146,10 @@ export class TestimonyApp {
       if (this.web === 'buffer' && this.webT >= BUFFER_SECONDS) { this.web = 'play'; this.webT = 0; }
       else if (this.web === 'play' && this.webT >= VERSIONS[2].length * BLOCK_SECONDS) { this.web = 'done'; this.webT = 0; this.dirty = true; }
     }
+    if (this.stage === 'online' && this.web === 'teaser') {
+      this.webT += dt; moving = true;
+      if (this.webT >= TEASER.endSeconds) { this.web = 'dvd'; this.webT = 0; this.teaserSeen = true; this.dirty = true; }
+    }
     // ⚑ W1-D12 — a moving picture redraws on EVERY frame: it used to repaint at 12 Hz (one frame in five or six at the
     //   monitor's rate), which read as a stutter on the story he made
     if (moving) this.dirty = true;
@@ -167,7 +182,7 @@ export class TestimonyApp {
         this.onFile?.('testimony-release');
         // ⚑ S227 — the Speedrun Version: the programme assembles his story itself (the tapes and the edit are its
         //   work, W1-D11 "too confusing and unnecessary"); the same three filings, then straight to his story online
-        if (isSpeedrun() && !extraOn('tapes')) { this.onFile?.('testimony-tapes'); this.onFile?.('testimony-cut'); this.exported = true; this.stage = 'online'; this.web = 'notice'; return true; }
+        if (isSpeedrun() && !extraOn('tapes')) { this.onFile?.('testimony-tapes'); this.onFile?.('testimony-cut'); this.exported = true; this.stage = 'online'; this.web = 'saved'; return true; }
         this.stage = 'tapes'; return true;
       case 'ts-play': if (this.clipT >= CLIPS[this.clip].seconds) this.clipT = 0; this.playing = true; return true;
       case 'ts-stop': this.playing = false; return true;
@@ -178,11 +193,14 @@ export class TestimonyApp {
         // ⚑ S227 / W1-D11 (walkthrough 1, his: "The editing system is too confusing and unnecessary. Submit the videos
         //   and get the final version.") — the programme makes the cut itself: the same filing, then his story online.
         //   The editor (stage 'cut') stays in the file, unreached.
-        this.onFile?.('testimony-cut'); this.exported = true; this.stage = 'online'; this.web = 'notice'; return true;
+        this.onFile?.('testimony-cut'); this.exported = true; this.stage = 'online'; this.web = 'saved'; return true;
       case 'ts-preview': this.previewT = 0; return true;
       case 'ts-nextcut': this.version = Math.min(VERSIONS.length - 1, this.version + 1); this.previewT = -1; return true;
       case 'ts-export': this.exportT = 0; this.previewT = -1; return true;
-      case 'ts-continue': this.stage = 'online'; this.web = 'notice'; return true;
+      case 'ts-continue': this.stage = 'online'; this.web = 'saved'; return true;
+      case 'ts-openfolder': this.onOpenFolder?.(); return true;
+      case 'ts-apply-next': this.applyOpen = false; this.web = 'dvd'; return true;
+      case 'ts-teaser': this.web = 'teaser'; this.webT = 0; return true;
       case 'ts-see': this.web = 'page'; return true;
       case 'ts-watch': this.web = 'buffer'; this.webT = 0; return true;
       case 'ts-apply': this.applyOpen = true; return true;   // nothing is filed: it is the next family's form, not his
@@ -201,6 +219,7 @@ export class TestimonyApp {
     this.hits = [];
     this.dirty = false;
     if (this.stage === 'online' && this.web === 'play') { this.drawFinal(ctx); return; }
+    if (this.stage === 'online' && this.web === 'teaser') { this.drawTeaser(ctx); return; }
     const c = ui.windowFrame(ctx, DX, DY, DW, DH, T.windowTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'ts-close' });
@@ -456,6 +475,19 @@ export class TestimonyApp {
 
   private drawOnline(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     const O = T.online;
+    if (this.web === 'saved') {
+      // ⚑ S339 — the cut is a FILE now, and it is in his own folder: he goes there to send it (his answer 8)
+      const nw = 340, nx = c.x + Math.round((c.w - nw) / 2), ny = c.y + 96;
+      ui.bevel(ctx, nx, ny, nw, 112, true);
+      ui.px(ctx, nx + 2, ny + 2, nw - 4, 14, ERA1.navy);
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.white; ctx.fillText('Restorify Media', nx + 6, ny + 4);
+      ui.setFont(ctx, 11); ctx.fillStyle = ERA1.black; ctx.fillText(O.saved.heading, nx + 14, ny + 24);
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.greyDark;
+      ui.wrapText(ctx, O.saved.line, nw - 28).forEach((l, i) => ctx.fillText(l, nx + 14, ny + 44 + i * 13));
+      this.button(ctx, nx + nw - 150, ny + 82, O.saved.open, 'ts-openfolder', 140);
+      return;
+    }
+    if (this.web === 'dvd') { this.drawDvd(ctx, c); return; }
     if (this.web === 'notice') {
       const nx = c.x + Math.round((c.w - 300) / 2), ny = c.y + 110;
       ui.bevel(ctx, nx, ny, 300, 80, true);
@@ -528,18 +560,19 @@ export class TestimonyApp {
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.warnDark;
       ui.wrapText(ctx, O.count.replace('{n}', '3'), px0 + pw - 12 - vx).forEach((l, i) => ctx.fillText(l, vx, vy + vh + 30 + i * 11));
     }
-    this.rightButton(ctx, c, O.close, this.web === 'done' && !this.applyOpen ? 'ts-done' : null);
+    this.rightButton(ctx, c, O.close, null);   // ⚑ S339: the page goes on — Start here → the form → the collection
     if (this.applyOpen) this.drawApply(ctx, c);
   }
 
   /** S302 — the application behind "Start here": the 1997 Family Form, online, for the next son */
   private drawApply(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     this.hits = this.hits.filter((h) => !h.id.startsWith('ts-'));
-    const A = T.online.apply, w = 300, h = 168, x = c.x + Math.round((c.w - w) / 2), y = c.y + 34;
+    const A = T.online.apply, w = 330, h = 238, x = c.x + Math.round((c.w - w) / 2), y = c.y + 34;
     const f = ui.windowFrame(ctx, x, y, w, h, A.title, true);
     ui.px(ctx, f.x, f.y, f.w, f.h, ERA1.white);
-    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(A.lead, f.x + 8, f.y + 6);
-    let yy = f.y + 24;
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark;
+    const leadRows = ui.wrapText(ctx, A.lead, f.w - 16); leadRows.forEach((l, i) => ctx.fillText(l, f.x + 8, f.y + 6 + i * 11));
+    let yy = f.y + 12 + leadRows.length * 11;
     for (const fl of A.fields) {
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black; ctx.fillText(fl, f.x + 8, yy);
       ui.px(ctx, f.x + 8, yy + 11, f.w - 16, 1, ERA1.silver); yy += 18;
@@ -549,8 +582,90 @@ export class TestimonyApp {
     ui.px(ctx, f.x + 12, yy + 18, 4, 4, ERA1.black);
     ctx.fillText(A.heardTicked, f.x + 24, yy + 16);
     this.hits.push({ ...f.closeBox, id: 'ts-apply-close' });
+    // ⚑ S339 (his 8 Nov: "this is not very well explained, please do explain… there's no continuation") — one line
+    //   says what the form is, in the site's own voice, and the form's own button goes on to the collection
+    ui.px(ctx, f.x + 8, yy + 32, f.w - 16, 1, ERA1.silver);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.navy;
+    ui.wrapText(ctx, A.explain, f.w - 16).forEach((l, i) => ctx.fillText(l, f.x + 8, yy + 38 + i * 11));
+    const nl = A.next; ui.setFont(ctx, 10);
+    const nw = Math.ceil(ctx.measureText(nl).width) + 18;
+    this.button(ctx, f.x + f.w - nw - 6, f.y + f.h - 24, nl, 'ts-apply-next', nw);
   }
   private applyOpen = false;
+
+  /** ⚑ S339 / T49 (his answers 11 and 12) — "Discover the New You", the collection: the DVDs and their teasers, the
+   *  ministry's web shop of 2003. His own story is the newest tile; Caleb's teaser is the one that plays. */
+  private drawDvd(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
+    const D = T.online.dvd;
+    ui.px(ctx, c.x + 4, c.y + 4, c.w - 8, 18, ERA1.white);
+    ui.px(ctx, c.x + 4, c.y + 4, c.w - 8, 1, ERA1.grey);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black; ctx.fillText(D.address, c.x + 10, c.y + 8);
+    const px0 = c.x + 4, py0 = c.y + 26, pw = c.w - 8, ph = c.h - 62;
+    ui.px(ctx, px0, py0, pw, ph, ERA1.white);
+    ui.px(ctx, px0, py0, pw, 40, F.banner);
+    ui.setFont(ctx, 14); ctx.fillStyle = F.bannerInk; ctx.fillText(D.header, px0 + 12, py0 + 5);
+    ui.setFont(ctx, 9); ctx.fillStyle = F.osd; ctx.fillText(D.sub, px0 + 12, py0 + 24);
+    ui.setFont(ctx, 10); ctx.fillStyle = F.bannerInk;
+    const pr = D.price, prw = ctx.measureText(pr).width; ctx.fillText(pr, px0 + pw - 12 - prw, py0 + 14);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(D.lead, px0 + 12, py0 + 48);
+    const tiles = D.tiles as { id: string; name: string; line: string; tag: string }[];
+    const tw = Math.floor((pw - 36) / 2), th = 92;
+    tiles.forEach((tl, i) => {
+      const tx = px0 + 12 + (i % 2) * (tw + 12), ty = py0 + 64 + Math.floor(i / 2) * (th + 8);
+      const live = tl.id === 'caleb', hov = live && this.hover === 'ts-teaser';
+      ui.px(ctx, tx, ty, tw, th, hov ? ERA1.titleBlue : ERA1.silver);
+      ui.px(ctx, tx + 1, ty + 1, tw - 2, th - 2, ERA1.paper);
+      const vx = tx + 6, vy = ty + 6, vw = 96, vh = 72;
+      if (tl.id === 'caleb') drawFootage(ctx, 'caleb', 4, vx, vy, vw, vh, 0, true);
+      else if (tl.id === 'daniel') drawFootage(ctx, 'daniel', 9, vx, vy, vw, vh, 0, true);
+      else { ui.px(ctx, vx, vy, vw, vh, F.black); ui.setFont(ctx, 9); ctx.fillStyle = F.osd; ctx.fillText(D.soon, vx + 14, vy + 30); }
+      if (live) {
+        const cx = vx + vw / 2, cy = vy + vh / 2;
+        ui.px(ctx, cx - 13, cy - 10, 26, 20, ERA1.black);
+        for (let r = 0; r < 12; r++) ui.px(ctx, cx - 4, cy - 6 + r, Math.round(10 * (1 - Math.abs(r - 6) / 6)) + 1, 1, ERA1.white);
+        this.hits.push({ x: tx, y: ty, w: tw, h: th, id: 'ts-teaser' });
+      }
+      const lx = vx + vw + 8, lw = tx + tw - 6 - lx;
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.navy; ctx.fillText(tl.name, lx, vy);
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black;
+      ui.wrapText(ctx, tl.line, lw).slice(0, 3).forEach((l, r) => ctx.fillText(l, lx, vy + 16 + r * 11));
+      ctx.fillStyle = live ? ERA1.navy : tl.id === 'daniel' ? ERA1.warnDark : ERA1.grey;
+      ctx.fillText(tl.tag, lx, vy + vh - 10);
+    });
+    this.rightButton(ctx, c, T.online.close, this.teaserSeen ? 'ts-done' : null);
+  }
+
+  /** the teaser, full screen as his own story was: the question on a card, then Caleb, then the cut */
+  private drawTeaser(ctx: CanvasRenderingContext2D): void {
+    const W = ERA1_CANVAS.width, H = ERA1_CANVAS.height - 22;
+    ui.px(ctx, 0, 0, W, H, ERA1.black);
+    const vh = Math.round(W * 9 / 16), vy = Math.round((H - vh) / 2);
+    const t = this.webT;
+    const sub = (who: string, line: string): void => {
+      ui.setFont(ctx, 12);
+      const rows = ui.wrapText(ctx, line, W - 80);
+      rows.forEach((r, i) => {
+        const rw = ctx.measureText(r).width, ry = vy + vh - 20 - (rows.length - i) * 16;
+        ui.px(ctx, Math.round((W - rw) / 2) - 4, ry - 2, Math.ceil(rw) + 8, 16, F.black);
+        ctx.fillStyle = F.sub; ctx.fillText(r, Math.round((W - rw) / 2), ry);
+      });
+      ui.setFont(ctx, 9); ctx.fillStyle = F.subWho; ctx.fillText(who, 40, vy + vh - 20 - rows.length * 16 - 14);
+    };
+    if (t < TEASER.questionSeconds) {
+      // the presenter's question, on the DVD's own title card
+      ui.px(ctx, 0, vy, W, vh, F.banner);
+      ui.setFont(ctx, 10); ctx.fillStyle = F.bannerInk; ctx.fillText(T.online.dvd.header, 40, vy + 24);
+      sub(TEASER.presenter, TEASER.question);
+    } else if (t < TEASER.cutSeconds) {
+      drawFootage(ctx, 'caleb', 2 + (t - TEASER.questionSeconds), 0, vy, W, vh, this.tick, false);
+      sub(TEASER.who, TEASER.answer);
+    } else {
+      // the cut: the clip ends on his word, and the shop's card takes the screen
+      ui.setFont(ctx, 10); ctx.fillStyle = F.osd;
+      const e = TEASER.ended, ew = ctx.measureText(e).width;
+      ctx.fillText(e, Math.round((W - ew) / 2), vy + Math.round(vh / 2) - 6);
+    }
+  }
 }
 
 // ── the footage ──────────────────────────────────────────────────────────────

@@ -21,6 +21,7 @@ import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
 import { isSpeedrun } from '../../state/cut';
+import { reducedMotion } from '../../state/motion';
 import chrome from '../../../data/strings/reinterp.json';
 
 export interface ProvotypeSource {
@@ -74,7 +75,48 @@ export interface Provotype {
   ledgerTags: string[];
   witness?: { completed?: string; abandoned?: string };
   /** ⚑ Phase 7 — when present, invitation/frame/vignette open in the Un-Walk wizard's look (pillow.json) */
-  wizard?: { title: string; heading: string; frameHeading: string; step: string; round: string; steps: string[] };
+  wizard?: { title: string; heading: string; frameHeading: string; step: string; round: string; steps: string[];
+    /** ⚑ T36 — the programme's own one-line claim of what the exercise is FOR, on the intro's note */
+    purposeLabel?: string; purpose?: string };
+}
+
+type Pose = 'lift' | 'exhale' | 'strike';
+/**
+ * ⚑ T36 (his, 8 Nov: "Release Work shows the racket's movement and what it's meant to be" — and "it's
+ * still flipped") — THE DIAGRAM'S POSTURES, in the figure card's own 74×92 logical pixels (drawn at ×2).
+ * The card is a side view as the seat sees the room: the wall on the LEFT (Room 1's west wall is on your
+ * left at the desk), the bed along it with the pillow at the wall end, the striker standing at the bed's
+ * near side and facing the wall. The old figure had its arm on the side AWAY from the pillow, so the
+ * racket was raised and laid down beside nothing: that was the flip. Now the arm reaches to the pillow.
+ * `sx,sy` the shoulder, `hx,hy` the hand, `ang` the racket's head direction in degrees (0 = right, 90 =
+ * up) — the SAME angles as the room's racket (app.ts RACKET_OVER: pitch −60 / −64 / −188), so the window
+ * and the room show one movement: raised with the head back, held, down with the head on the pillow.
+ */
+interface Posture { sx: number; sy: number; hx: number; hy: number; ang: number }
+const POSTURE: Record<Pose, Posture> = {
+  lift:   { sx: 55, sy: 42, hx: 49, hy: 24, ang: 60 },
+  exhale: { sx: 55, sy: 43, hx: 49, hy: 26, ang: 64 },
+  strike: { sx: 47, sy: 46, hx: 26, hy: 60, ang: 188 }
+};
+/** the intro's loop, as a manual would print it: hold, move, hold — never a rhythm to swing to.
+ *  `lit` is the step the list lights while that segment plays. */
+const LOOP: { from: Pose; to: Pose; secs: number; lit: number }[] = [
+  { from: 'lift',   to: 'lift',   secs: 1.2, lit: 0 },
+  { from: 'lift',   to: 'exhale', secs: 0.5, lit: 1 },
+  { from: 'exhale', to: 'exhale', secs: 1.0, lit: 1 },
+  { from: 'exhale', to: 'strike', secs: 0.9, lit: 2 },
+  { from: 'strike', to: 'strike', secs: 1.4, lit: 2 },
+  { from: 'strike', to: 'lift',   secs: 1.1, lit: 0 }
+];
+const LOOP_SECONDS = LOOP.reduce((a, l) => a + l.secs, 0);
+/** the vignette's move into the asked step — the room's racket takes the same 0.8 s */
+const FIG_TWEEN_SECONDS = 0.8;
+/** the diagram is redrawn at a period animation rate, and only while something moves */
+const FIG_FPS = 12;
+const ease = (k: number): number => k * k * (3 - 2 * k);
+function lerpPosture(a: Posture, b: Posture, k: number): Posture {
+  const l = (p: number, q: number): number => p + (q - p) * k;
+  return { sx: l(a.sx, b.sx), sy: l(a.sy, b.sy), hx: l(a.hx, b.hx), hy: l(a.hy, b.hy), ang: l(a.ang, b.ang) };
 }
 
 type Phase = 'invitation' | 'frame' | 'vignette' | 'close';
@@ -121,6 +163,16 @@ export class ProvotypeApp {
   /** internal only — never rendered as a score (master plan §R2-2) */
   private reps = 0;
   private readonly hasAnim: boolean;
+  /** the step the player last PRESSED — the room's racket holds it between steps (roomPose) */
+  private lastDone: Pose | null = null;
+  // ⚑ T36 — the wizard's diagram: where it is drawn now, and where it is going
+  private figNow: Posture = POSTURE.lift;
+  private figFrom: Posture = POSTURE.lift;
+  private figTarget: Pose | null = null;
+  private figK = 1;
+  private figLit = 0;
+  private loopT = 0;
+  private figKey = '';
 
   constructor(private readonly data: Provotype) {
     this.hasAnim = data.states.some(s => !!s.animPose);
@@ -145,9 +197,45 @@ export class ProvotypeApp {
     this.dirty = true;
   }
 
-  update(_dt: number): void {
-    // no timers, no animation loop in R1 — the framework is click-driven.
-    // (The pillow's restrained low-poly animation arrives with R2.)
+  /**
+   * Still click-driven: nothing here advances the session. ⚑ T36 — only the wizard's diagram moves: on
+   * the intro it loops the exercise (raised, held, down) so the window shows what is being asked before
+   * it is asked; in the steps it eases into the asked position. It marks the window dirty only when a
+   * drawn pixel would change (FIG_FPS while moving, nothing during a hold), pauses with Pause, and holds
+   * still under Reduce motion.
+   */
+  update(dt: number): void {
+    if (!this.data.wizard || !this.hasAnim) return;
+    const still = reducedMotion();
+    if (this.phase === 'invitation' || this.phase === 'frame') {
+      if (still) { this.figNow = POSTURE.lift; this.figLit = 0; }
+      else {
+        if (!this.paused) this.loopT = (this.loopT + dt) % LOOP_SECONDS;
+        let t = Math.floor(this.loopT * FIG_FPS) / FIG_FPS;
+        for (const seg of LOOP) {
+          if (t <= seg.secs) {
+            this.figNow = lerpPosture(POSTURE[seg.from], POSTURE[seg.to], ease(Math.min(1, t / seg.secs)));
+            this.figLit = seg.lit;
+            break;
+          }
+          t -= seg.secs;
+        }
+      }
+    } else if (this.phase === 'vignette') {
+      const want = this.data.states[this.stateIndex]?.animPose ?? this.figTarget;
+      if (want && want !== this.figTarget) {
+        this.figFrom = this.figNow; this.figTarget = want; this.figK = still ? 1 : 0;
+      }
+      if (this.figTarget) {
+        if (this.figK < 1 && !this.paused) this.figK = Math.min(1, this.figK + dt / FIG_TWEEN_SECONDS);
+        const steps = FIG_TWEEN_SECONDS * FIG_FPS;
+        const kq = this.figK >= 1 ? 1 : Math.floor(this.figK * steps) / steps;
+        this.figNow = lerpPosture(this.figFrom, POSTURE[this.figTarget], ease(kq));
+      }
+    }
+    const f = this.figNow;
+    const key = [f.sx, f.sy, f.hx, f.hy, f.ang].map(v => Math.round(v * 2)).join(',') + `:${this.figLit}`;
+    if (key !== this.figKey) { this.figKey = key; this.dirty = true; }
   }
 
   // ── draw ────────────────────────────────────────────────────────────────
@@ -367,10 +455,13 @@ export class ProvotypeApp {
   /** which provotype this is — the guide thread reads it (S151) */
   get id(): string { return this.data.id; }
 
-  get roomPose(): 'lift' | 'exhale' | 'strike' | null {
-    if (!this.hasAnim) return null;
+  /** ⚑ T36 (8 Nov) — the room shows the step the player PRESSED and holds it until the next press; it is
+   *  no longer sent back to the wall between steps (with the tween that would be the racket flying
+   *  wall↔pillow six times a round). Off the vignette — the close, or the window shut — it goes home. */
+  get roomPose(): Pose | null {
+    if (!this.hasAnim || this.phase !== 'vignette') return null;
     const st = this.data.states[this.stateIndex];
-    return (this.showResponse ? st.animPose : undefined) ?? null;
+    return (this.showResponse ? st.animPose : undefined) ?? this.lastDone;
   }
 
   /**
@@ -379,6 +470,11 @@ export class ProvotypeApp {
    * The panel is the visualizer: the figure performing the step being ASKED (a tutorial shows the move
    * before you make it), twice its old size, and the three steps with the current one lit. For a felt
    * line the panel empties and the heading goes: the programme has nothing to show there.
+   *
+   * ⚑ T36 (8 Nov, headset: "text sits on a bare grey area") — the words sit on a CARD now, the kit's own
+   * pledge-card look (paper, grey rule, navy caption), not on the window's beige; and the intro carries
+   * one note of what the exercise is FOR, in the programme's own words (pillow.json `wizard.purpose`).
+   * The felt line keeps the card but nothing else on it: bare is the line, not a grey void.
    */
   private drawWizard(ctx: CanvasRenderingContext2D, Wz: NonNullable<Provotype['wizard']>): ui.ContentRect {
     const c = ui.windowFrame(ctx, WIN.x, WIN.y, WIN.w, WIN.h, Wz.title, true);
@@ -392,20 +488,29 @@ export class ProvotypeApp {
     ui.px(ctx, px0, py0, PIC, 1, ERA1.tealDark); ui.px(ctx, px0, py0, 1, ph, ERA1.tealDark);
     const pose = this.phase === 'vignette' ? (st.animPose ?? null) : null;
     const k = pose === 'lift' ? 0 : pose === 'exhale' ? 1 : pose === 'strike' ? 2 : -1;
+    const intro = this.phase === 'invitation' || this.phase === 'frame';
+    // the lit step: the asked one in the steps; on the intro, the one the loop is showing
+    const lit = intro ? this.figLit : k;
     if (!felt) {
-      ctx.save(); ctx.translate(px0 + 1, py0 + 6); ctx.scale(2, 2); this.drawFigure(ctx, 0, 0, pose); ctx.restore();
+      ctx.save(); ctx.translate(px0 + 1, py0 + 6); ctx.scale(2, 2); this.drawDiagram(ctx, 0, 0, this.figNow); ctx.restore();
       Wz.steps.forEach((label, i) => {
         const ry = py0 + 198 + i * 16;
-        if (i === k) ui.px(ctx, px0 + 6, ry - 3, PIC - 12, 15, ERA1.navy);
+        if (i === lit) ui.px(ctx, px0 + 6, ry - 3, PIC - 12, 15, ERA1.navy);
         ui.setFont(ctx, 10);
-        ctx.fillStyle = i === k ? ERA1.white : ERA1.silver;
+        ctx.fillStyle = i === lit ? ERA1.white : ERA1.silver;
         ctx.fillText(`${i + 1}   ${label}`, px0 + 14, ry);
       });
     }
     ui.px(ctx, c.x + 8, ROW_Y - 6, c.w - 16, 1, ERA1.grey);
     ui.px(ctx, c.x + 8, ROW_Y - 5, c.w - 16, 1, ERA1.white);
-    const tx = px0 + PIC + 14, tw = c.w - PIC - 38;
-    let ty = c.y + 10;
+
+    // the card the words sit on — the kit's pledge card (kit.ts drawPledge): paper, a grey rule round it
+    const cx0 = px0 + PIC + 8, cw = c.x + c.w - 8 - cx0;
+    ui.px(ctx, cx0, py0, cw, ph, ERA1.paper);
+    ui.px(ctx, cx0, py0, cw, 1, ERA1.grey); ui.px(ctx, cx0, py0 + ph - 1, cw, 1, ERA1.grey);
+    ui.px(ctx, cx0, py0, 1, ph, ERA1.grey); ui.px(ctx, cx0 + cw - 1, py0, 1, ph, ERA1.grey);
+    const tx = cx0 + 10, tw = cw - 20;
+    let ty = py0 + 10;
     if (!felt) {
       ui.setFont(ctx, 14);
       ctx.fillStyle = ERA1.black;
@@ -417,7 +522,24 @@ export class ProvotypeApp {
         ctx.fillStyle = ERA1.greyDark;
         ctx.fillText(Wz.round.replace('{r}', String(Math.floor(this.stateIndex / 4) + 1)), tx, ty + 18);
       }
-      ty += 34;
+      ui.px(ctx, tx, ty + 29, tw, 1, ERA1.silver);
+      ty += 38;
+    }
+    // the programme's note of what this is for — the intro only, at the card's foot (a yellow help note)
+    if (intro && Wz.purpose) {
+      ui.setFont(ctx, 10);
+      const lines = ui.wrapText(ctx, Wz.purpose, tw - 16);
+      const nh = 22 + lines.length * 13 + 6;
+      const ny = py0 + ph - 8 - nh;
+      ui.px(ctx, tx, ny, tw, nh, ERA1.tooltip);
+      ui.px(ctx, tx, ny, tw, 1, ERA1.grey); ui.px(ctx, tx, ny + nh - 1, tw, 1, ERA1.grey);
+      ui.px(ctx, tx, ny, 1, nh, ERA1.grey); ui.px(ctx, tx + tw - 1, ny, 1, nh, ERA1.grey);
+      ui.setFont(ctx, 9);
+      ctx.fillStyle = ERA1.navy;
+      ctx.fillText(Wz.purposeLabel ?? '', tx + 8, ny + 6);
+      ui.setFont(ctx, 10);
+      ctx.fillStyle = ERA1.black;
+      lines.forEach((ln, i) => ctx.fillText(ln, tx + 8, ny + 22 + i * 13));
     }
     switch (this.phase) {
       case 'invitation': this.drawInvitation(ctx, tx, ty, tw); break;
@@ -427,43 +549,75 @@ export class ProvotypeApp {
     return c;
   }
 
-  private drawFigure(ctx: CanvasRenderingContext2D, x: number, top: number, poseArg?: 'lift' | 'exhale' | 'strike' | null): void {
+  /** the old card's figure (a non-wizard provotype with poses): the same diagram, standing still in a pose */
+  private drawFigure(ctx: CanvasRenderingContext2D, x: number, top: number): void {
     const st = this.data.states[this.stateIndex];
-    // Phase 7: the wizard's panel asks for the pose being taught; the old card showed the one just done
-    const pose = poseArg !== undefined ? (poseArg ?? undefined) : this.showResponse ? st.animPose : undefined;
+    const pose = this.showResponse ? st.animPose : undefined;
+    this.drawDiagram(ctx, x, top, POSTURE[pose ?? 'lift']);
+  }
+
+  /**
+   * ⚑ T36 — the racket over the pillow, in blocks: the wall, the bed with its pillow at the wall end, the
+   * striker at the near side, the arm, the racket (a grip, a throat, a strung oval). Every block lands on
+   * the logical pixel grid; the movement is the posture changing, never a rotated canvas.
+   *
+   * The ethic is drawFigure's, unchanged since R2: administrative, not kinaesthetic. No impact lines, no
+   * shake, no blur, no speed marks — the pillow gives by one pixel when the racket rests on it and that is
+   * all. The figure is a grey pictogram (anyone; the programme's diagram of "you"), never Daniel's face.
+   */
+  private drawDiagram(ctx: CanvasRenderingContext2D, x: number, top: number, p: Posture): void {
     const w = 74, h = 92;
-    ui.px(ctx, x, top, w, h, ERA1.paper);
-    ui.px(ctx, x, top, w, 1, ERA1.silver);
-    ui.px(ctx, x, top, 1, h, ERA1.silver);
-    ui.px(ctx, x, top + h - 1, w, 1, ERA1.silver);
-    ui.px(ctx, x + w - 1, top, 1, h, ERA1.silver);
+    const P = (bx: number, by: number, bw: number, bh: number, col: string): void =>
+      ui.px(ctx, x + bx, top + by, bw, bh, col);
+    P(0, 0, w, h, ERA1.paper);
+    P(0, 0, w, 1, ERA1.silver); P(0, 0, 1, h, ERA1.silver);
+    P(0, h - 1, w, 1, ERA1.silver); P(w - 1, 0, 1, h, ERA1.silver);
+    // the wall (left) and the floor
+    P(1, 1, 3, 88, ERA1.beige); P(4, 1, 1, 88, ERA1.grey);
+    P(1, 89, 72, 1, ERA1.grey);
+    // the bed along the wall: legs, frame, mattress, the navy blanket
+    P(7, 79, 2, 10, ERA1.grey); P(43, 79, 2, 10, ERA1.grey);
+    P(5, 77, 42, 2, ERA1.greyDark);
+    P(5, 71, 42, 6, ERA1.beige);
+    P(24, 69, 23, 6, ERA1.navy);
+    // the pillow at the wall end — it gives by one pixel under the resting racket, nothing more
+    const resting = p.ang > 180;
+    const pt = resting ? 66 : 65;
+    P(6, pt, 16, 71 - pt, ERA1.white);
+    P(6, pt, 16, 1, ERA1.silver); P(6, pt, 1, 71 - pt, ERA1.silver); P(21, pt, 1, 71 - pt, ERA1.silver);
 
-    const headX = x + 30, headY = top + 18;
-    const torsoX = x + 28, torsoY = top + 30, torsoW = 14, torsoH = 24;
-    ui.px(ctx, headX, headY, 10, 10, ERA1.greyDark);
-    ui.px(ctx, torsoX, torsoY, torsoW, torsoH, ERA1.greyDark);
-
-    // the pillow — a soft low block, never struck with force lines
-    const pillowX = x + 16, pillowY = top + 62;
-    const pillowH = pose === 'strike' ? 9 : 11; // the barest give, not an impact
-    ui.px(ctx, pillowX, pillowY, 26, pillowH, ERA1.beige);
-
-    // the arm — three still positions, no interpolation, no bounce
-    switch (pose) {
-      case 'lift':
-        ui.px(ctx, x + 44, top + 22, 4, 16, ERA1.greyDark);
-        ui.px(ctx, x + 46, top + 20, 12, 3, ERA1.grey); // the racket, raised
-        break;
-      case 'exhale':
-        ui.px(ctx, x + 44, top + 34, 4, 14, ERA1.greyDark);
-        break;
-      case 'strike':
-        ui.px(ctx, x + 40, top + 46, 4, 16, ERA1.greyDark);
-        ui.px(ctx, x + 38, top + 58, 12, 3, ERA1.grey); // the racket, at rest on the pillow
-        break;
-      default:
-        ui.px(ctx, x + 44, top + 34, 4, 14, ERA1.greyDark); // idle
+    const line = (x0: number, y0: number, x1: number, y1: number, t: number, col: string): void => {
+      const n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2));
+      for (let i = 0; i <= n; i++) {
+        P(Math.round(x0 + (x1 - x0) * i / n - t / 2), Math.round(y0 + (y1 - y0) * i / n - t / 2), t, t, col);
+      }
+    };
+    // the striker: legs, a torso leaning from a fixed hip to the shoulder, the arm, the head facing the wall
+    const hipX = 58, hipY = 62;
+    P(54, hipY, 3, 89 - hipY, ERA1.grey); P(59, hipY, 3, 89 - hipY, ERA1.grey);
+    line(hipX, hipY, p.sx, p.sy, 6, ERA1.grey);
+    line(p.sx, p.sy, p.hx, p.hy, 2, ERA1.grey);
+    const hx0 = Math.round(p.sx - 5), hy0 = Math.round(p.sy - 12);
+    P(hx0, hy0, 8, 8, ERA1.grey);
+    P(hx0 - 1, hy0 + 3, 1, 2, ERA1.grey);   // the nose: which way the figure faces
+    // the racket: from the hand, a grip behind and a throat ahead, the strung head at 12 px along `ang`
+    const a = p.ang * Math.PI / 180;
+    const dx = Math.cos(a), dy = -Math.sin(a);
+    line(p.hx - 3 * dx, p.hy - 3 * dy, p.hx + dx, p.hy + dy, 2, ERA1.greyDark);
+    line(p.hx + dx, p.hy + dy, p.hx + 6.5 * dx, p.hy + 6.5 * dy, 1, ERA1.black);
+    const cx = p.hx + 12 * dx, cy = p.hy + 12 * dy;
+    for (let j = Math.floor(cy - 7); j <= Math.ceil(cy + 7); j++) {
+      for (let i = Math.floor(cx - 7); i <= Math.ceil(cx + 7); i++) {
+        const ux = i + 0.5 - cx, uy = j + 0.5 - cy;
+        const u = ux * dx + uy * dy, v = -ux * dy + uy * dx;
+        if ((u / 6) ** 2 + (v / 4.5) ** 2 > 1) continue;
+        const rim = (u / 4.9) ** 2 + (v / 3.4) ** 2 > 1;
+        const ru = ((Math.round(u) % 3) + 3) % 3, rv = ((Math.round(v) % 3) + 3) % 3;
+        P(i, j, 1, 1, rim ? ERA1.black : (ru === 0 || rv === 0) ? ERA1.silver : ERA1.paper);
+      }
     }
+    // the hand closed on the grip
+    P(Math.round(p.hx - 1), Math.round(p.hy - 1), 2, 2, ERA1.greyDark);
   }
 
   // ⚑ S283 — the 'About this' dossier window (drawDebrief and its paging) LEFT the experience: the card's
@@ -537,6 +691,7 @@ export class ProvotypeApp {
       return;
     }
     // no choice is scored or "correct" — the confirm only surfaces the reply
+    if (st.animPose) this.lastDone = st.animPose;
     this.lastResponse = chosen?.response;
     this.showResponse = true;
     this.dirty = true;

@@ -63,7 +63,7 @@
   "iconA": "A:\\",
   "iconIrc": "mIRC",
   "taskbarIrc": "mIRC",
-  "taskbarDossier": "found",
+  "taskbarDossier": "placement.txt",
   "taskbarLambyRig": "lamby_rig",
   "taskbarRootCause": "ROOTCAUSE",
   "taskbarRestorify": "Restorify",
@@ -228,17 +228,17 @@
    "prayer-said": "companion prayer followed to the end — said",
    "prayer-cut": "companion prayer stopped at the chorus — said early; noted",
    "rob-spoke-mother": "parent contacted by mentor — placement prepared",
-  "rootcause-installed": "root cause digger installed with the companion disk",
-  "rootcause-opened": "root cause digger opened by subject",
-  "harbor-partner": "accountability partner requested — matched by the board",
-  "yes-received": "testimony image accepted from mentor — delivered"
+   "rootcause-installed": "root cause digger installed with the companion disk",
+   "rootcause-opened": "root cause digger opened by subject",
+   "harbor-partner": "accountability partner requested — matched by the board",
+   "yes-received": "testimony image accepted from mentor — delivered"
   }
  },
  "dossier": {
   "_doc": "THE FOUND FILE (Session 60) — was 'Dossier — card 1 of 1', an authored card served front-and-centre on the desktop. Sérgio, 2026-07-26: 'Why is there a Dossier on the Desktop? Makes no sense'… then, answering it: 'it can stay as like an easter egg with a different name and like an explainer of the program.' So: KEPT, RENAMED, REPOSITIONED. Same family as S55's lamby_rig.exe, and inheriting its rules — never advertised, never rewarded (no toast), never drawn while any window is open (so it can never surface during a felt scene), filed silently. What died is the AUTHORING VOICE (the TACTIC/LAYER/STATUS/ARCHIVE furniture and the researcher note that leaked in S58) and the front-and-centre placement; what survives is the tactic content Sérgio called interesting, re-voiced as what it would actually be inside the fiction: the program's own orientation copy, explaining its referral route to its own people. ⚑ THE NAME AND EVERY LINE BELOW ARE SÉRGIO'S TO WRITE — this is in-world text and this is a PLACEHOLDER-draft for him to react to. The data key stays `dossier` so the ledger's own `dossier: ['card1']` entry and src/engine/app.ts's unlock call (both outside this session's file fence) keep working unchanged.",
   "_provenance": "status: documentary — ex-gay-era referral routes (carried over unchanged from the card this file replaces; the enum lives here rather than on screen now that the window is diegetic). ⚑ ETHICS_CONSTRAINTS.md #13 says dossier cards carry a visible status — this file no longer renders one, because a STATUS line is the authoring voice Sérgio asked to have removed. Sérgio's call: keep provenance here (invisible, tracked), or restore a rendered line.",
-  "icon": "referral_notes.txt",
-  "title": "referral_notes.txt — Notes",
+  "icon": "placement.txt",
+  "title": "placement.txt — Notepad",
   "footer": "INTERNAL — ORIENTATION COPY. NOT FOR ENQUIRERS.",
   "body": [
    "How a placement begins.",
@@ -252,6 +252,7 @@
    "",
    "What is written to us in confidence becomes",
    "part of the file. Nothing is deleted."
-  ]
+  ],
+  "_docS339": "⚑ S339 (his 8 Nov: 'the referral needs a different name because it doesn't make a lot of sense… And what is the found? Oh, but in the bar, it's called found') — the file is named for what it is (its own first line, 'How a placement begins.'), and the taskbar shows that same name (desktop.taskbarDossier), not 'found'."
  }
 }

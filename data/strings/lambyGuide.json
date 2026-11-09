@@ -154,13 +154,22 @@
         "once": true
       },
       "online": {
-        "tip": "Your story is ready. Press Watch to see it online.",
-        "here": "Watch is here.",
-        "again": "Your story is waiting for you.",
+        "tip": "Your story is saved in your “1997” folder. Upload it from there, then watch it online.",
+        "here": "This is the next step.",
+        "again": "Your story is waiting in your “1997” folder.",
         "target": [
+          "ts-openfolder",
+          "f97-upload",
+          "f97-open:story",
+          "icon-folder1997",
+          "ts-see",
           "ts-watch",
-          "ts-see"
-        ]
+          "ts-apply",
+          "ts-apply-next",
+          "ts-teaser",
+          "ts-done"
+        ],
+        "_docS339": "⚑ S339 — the story is uploaded from the “1997” folder, then his page, the parents' form and the DVD collection (Caleb's teaser) follow; the targets are those steps in order (only the ones on screen are pointed at)."
       },
       "send": {
         "tip": "There's a new task for you. Press Next task on the desktop.",

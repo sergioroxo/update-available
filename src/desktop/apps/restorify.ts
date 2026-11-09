@@ -28,6 +28,8 @@ interface Response { id: string; line1: string; line2: string }
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 const DW = 400; const DH = 256;
+/** ⚑ S339 — "Today in Restorify" on the right too, clear of the icons */
+const TODAY_W = 336; const TODAY_X = 512 - TODAY_W - 10;
 
 export class RestorifyApp {
   open = true;
@@ -55,6 +57,7 @@ export class RestorifyApp {
   }
   update(dt: number): void { this.t += dt; if (this.settings || this.lastChip) this.dirty = true; }
   private drawPersonalise(ctx: CanvasRenderingContext2D): void {
+    this.rect = { x: 24, y: 10, w: 464, h: 344 };
     const c = ui.windowFrame(ctx, 24, 10, 464, 344, rigCopy.personalise.title, true, 'restorify');
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     this.hits.push({ ...c.closeBox, id: 'personalise-done' });
@@ -109,9 +112,14 @@ export class RestorifyApp {
   private hits: Hit[] = [];
   private hover = '';
   private lastChip: string | null = null;
+  /** ⚑ S339 — the frame last drawn: a press outside it goes to the desktop (os.ts) */
+  private rect = { x: 0, y: 0, w: 0, h: 0 };
+  contains(x: number, y: number): boolean { const r = this.rect; return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h; }
 
+  /** ⚑ S339 (his 8 Nov: "if I am looking at the daily realignment, then there's missing some programs on the
+   *  desktop") — the window sits to the RIGHT, so the two icon columns stay in view and pressable beside it */
   private get geom(): { dx: number; dy: number } {
-    const dx = Math.round((ERA1_CANVAS.width - DW) / 2);
+    const dx = ERA1_CANVAS.width - DW - 6;
     const dy = Math.round((ERA1_CANVAS.height - DH) / 2);
     return { dx, dy };
   }
@@ -121,13 +129,15 @@ export class RestorifyApp {
     if (this.settings) { this.drawPersonalise(ctx); return; }
     if (this.today) {
       this.todayPanel.footerAction = decisions.restorify.checkin;
-      this.hits.push(...this.todayPanel.draw(ctx, 88, 50, 336).map(r => ({ ...r, id: 'restorify-close' })));
+      this.hits.push(...this.todayPanel.draw(ctx, TODAY_X, 50, TODAY_W).map(r => ({ ...r, id: 'restorify-close' })));
+      this.rect = { x: TODAY_X, y: 50, w: TODAY_W, h: this.todayPanel.height(ctx, TODAY_W) };
       if (this.todayPanel.actionRect) this.hits.push({ ...this.todayPanel.actionRect, id: 'today-checkin' });
       return;
     }
     const { dx, dy } = this.geom;
     // ⚑ S296 (headset B: "we're back to the daily realignment. Why?") — the evening's own title, so it reads as the second
     //   check-in of the day (Daniel's first leaving act), not the morning's coming round again
+    this.rect = { x: dx, y: dy, w: DW, h: DH };
     const c = ui.windowFrame(ctx, dx, dy, DW, DH, this.evening ? `Restorify — ${lamby.eveningTitle}` : lamby.restorifyTitle, true, 'restorify');
     this.hits.push({ ...c.closeBox, id: this.lastChip ? 'checkin-continue' : 'restorify-close' });
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
