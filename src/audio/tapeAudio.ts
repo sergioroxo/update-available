@@ -41,6 +41,7 @@ const REGISTRY: Record<string, string> = {
   'fold_my_hands_tape97.mp3': `${AUDIO_BASE}fold_my_hands_tape97.mp3`, // Tape A's prayer segment
   'lambyos_home_loop.mp3': `${AUDIO_BASE}lambyos_home_loop.mp3`, // S235 · LambyOS Home's ambient loop (his Suno generation, 20 s, loopable)
   'unwalk_loop_1997.mp3': `${AUDIO_BASE}unwalk_loop_1997.mp3`, // S151 · the Un-Walk's programme loop (tools/make_hymn.py)
+  'grace_loop_2016.mp3': `${AUDIO_BASE}grace_loop_2016.mp3`, // S337 · GracePlatform's calm loop (tools/make_graceloop.py; his 9 Nov)
   'floppysheep_song.mp3': `${AUDIO_BASE}floppysheep_song.mp3`, // S189 · his song, behind FloppySheep's ♪ (off until pressed)
   // S155 · the sound redo (tools/make_tones.sh, the S155 block)
   'diary_key.mp3': `${AUDIO_BASE}diary_key.mp3`,
@@ -664,9 +665,9 @@ export function stopClip(a: HTMLMediaElement | null): void {
 
 /** ⚑ S208 — is anything audible playing: a tape or the ad on the bus, or any one-shot or loop (a song, a jingle,
  *  a read-aloud, the ball)? The room's ambient bed does not count. The screensavers come on only in silence. */
-export function anythingPlaying(): boolean {
+export function anythingPlaying(except: HTMLMediaElement | null = null): boolean {
   if (liveBus?.isPlaying()) return true;
-  for (const a of liveOneShots) if (!a.paused && !a.ended) return true;
+  for (const a of liveOneShots) if (a !== except && !a.paused && !a.ended) return true;   // S337: a programme's own bed loop may be excepted
   return false;
 }
 

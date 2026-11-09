@@ -132,7 +132,7 @@ import q from '../../data/dialog/s3_queue.json';
 import updates from '../../data/strings/updates.json';
 import d from '../../data/strings/era3_devices.json';
 import maiden from '../../data/dialog/s3_maiden.json';
-import { playOnce, anythingPlaying, stopClip } from '../audio/tapeAudio';
+import { playOnce, playLoop, anythingPlaying, stopClip } from '../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from '../desktop/apps/screensaver';
 import { pauseItems, pauseWords, wayBackLine } from '../narrative/pauses';
 import pauseCopy from '../../data/strings/pauses.json';
@@ -412,6 +412,18 @@ export class GraceQueueLite {
    *  the send, its receipt, her own record) earns the next, and the phone holds it until the platform is at rest. */
   private earnedJobs = new Set<string>();
   private offerWaitT = 0;
+  /** ⚑ S337 — GracePlatform's own music (tools/make_graceloop.py; his 9 Nov). The platform's voice: it plays under the
+   *  work and stops for anything that is a person's (the Story Record, her phone brought forward or a thread being
+   *  read), for the pause menu, the screensaver, the games, and from the moment the update starts installing. */
+  private graceLoop: HTMLAudioElement | null = null;
+  private syncGraceLoop(): void {
+    const signedIn = this.mode === 'board' || this.mode === 'list' || this.mode === 'done';
+    const want = signedIn && !this.pauseOpen && !this.saver && this.veraPage !== 'record' && !this.mirrorLarge
+      && !this.mirrorReading && !this.floppy.open && !this.mirrorDisconnected;
+    if (want && !this.graceLoop) { this.graceLoop = playLoop('grace_loop_2016.mp3'); if (this.graceLoop) this.graceLoop.volume = 0.35; }
+    else if (!want && this.graceLoop) { stopClip(this.graceLoop); this.graceLoop = null; }
+    else if (this.graceLoop && this.graceLoop.ended) this.graceLoop = null;
+  }
   private kitWaitT = 0;
   private kitWarned = false;
   private lastDt = 0;
@@ -690,7 +702,7 @@ export class GraceQueueLite {
     //   up because nothing was happening, and while it was up the phone was 'not at rest', so the message that would
     //   have moved the day on never came. One voice at a time still holds: the balloon now waits while the phone
     //   speaks (see the guide's draw gate below), instead of the phone waiting for the balloon forever.
-    this.lastDt = dt; this.updateConnections();
+    this.lastDt = dt; this.updateConnections(); this.syncGraceLoop();
     if (this.personalDesktop && !this.phone.personalOpen) { this.personalDesktop = false; this.bump(); }
     if (this.phoneInHand || this.phone.personalSeen) {
       if (this.personalNotice) { this.personalNotice = false; this.bump(); }
@@ -949,7 +961,7 @@ export class GraceQueueLite {
   /** ⚑ S208 — the lock screen (screensaver.ts 'lock'): only on the board, nothing open, no card up, nothing playing;
    *  anything that opens or plays wakes it. The corrections counter starts from the board's open jobs. */
   private updateSaver(dt: number): void {
-    const quiet = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying() && !this.lambyGuide?.active;
+    const quiet = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised && !anythingPlaying(this.graceLoop) && !this.lambyGuide?.active;
     if (!this.saver) {
       if (quiet && this.boardQuietT > SAVER_SECONDS) {
         this.saver = new Screensaver('lock', 2016).rotate('e3');
