@@ -62,11 +62,18 @@ export interface HeldDevice {
   readonly spec: DeviceSpec;
   readonly held: boolean;
   take(cam: pc.Entity): void;
-  follow(hand: pc.Entity): void;
+  /** ⚑ S345 / T28 — the grip closes on it: from the bed it comes to the hand; already in hand it keeps where it sits
+   *  relative to the hand, so it can be pulled anywhere. `eye` turns the glass to the eyes (never to the controller). */
+  grab(hand: pc.Entity, eye?: pc.Vec3): void;
+  follow(hand: pc.Entity, eye?: pc.Vec3): void;
+  /** the grip lets go: in a headset it stays where it was put (still in hand, still playable); on a flat screen it goes back */
   release(): void;
+  /** ⚑ S345 / T29 — the world point the last `aim` was about (a button, the glass, the case), for the pointer's mark */
+  readonly aimedAt: pc.Vec3 | null;
   tick(dt: number, era: string, has: (id: string) => boolean, fileSize: number): string | null;
-  /** can this ray press it, and what would it be called */
-  aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): 'pick' | 'drop' | 'screen' | GameKey | null;
+  /** can this ray press it, and what would it be called ('body': in a headset, on the case but on no control — a press
+   *  there does nothing, the safe margin round it) */
+  aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): 'pick' | 'drop' | 'screen' | 'body' | GameKey | null;
   press(ray: { p0: pc.Vec3; p1: pc.Vec3 }, cam: pc.Entity): boolean;
   /** S306: direct XR index-tip contact; source identity latches until withdrawn. Null clears tracking. */
   touch(source: object, tip: pc.Vec3 | null): boolean;
@@ -75,7 +82,19 @@ export interface HeldDevice {
 }
 
 const LIFT_SECONDS = 0.45;
-
+/**
+ * ⚑ S345 / T28 (his 8 Nov headset: "very hard to point … a very small range of interaction … if I move a little bit too
+ * much to the side, then it just disappears, the Game Boy … we need a safer boundary around it, so people, if they
+ * touches a little bit to the side, it doesn't run away … some sort of grabbing hand that I can just grab around and pull
+ * it to where I want to"). Measured in the emulated headset (out/xrjob4/probe-t28.mjs): a ray 25 mm off A, on the case
+ * under the buttons, or 4 cm off its edge was a press on the CASE — and a press on the case put the device back on the bed,
+ * 2 m behind him: it vanished. The grip's let-go did the same. In a headset now:
+ * - a button catches the ray within XR_BUTTON of it (the nearest wins; the d-pad's arms are 10 mm from its centre);
+ * - the case and a margin of XR_SAFE round the glass is the safe boundary: a press there does nothing;
+ * - only a press clearly away from the device (beyond XR_SAFE) puts it down;
+ * - the grip pulls it where the hand goes, and letting go leaves it there, still in hand.
+ */
+const XR_BUTTON = 0.022, XR_TOUCH = 0.024, XR_SAFE = 0.2;
 /** distance from a point to the forward segment of a ray */
 function rayDist(p0: pc.Vec3, p1: pc.Vec3, q: pc.Vec3): number {
   const d = new pc.Vec3().sub2(p1, p0);
@@ -169,7 +188,17 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   };
   let startOnReady = false;
   const heldPose = (cam: pc.Entity): void => {
-    const fwd = cam.forward.clone(), up = cam.up.clone();
+    let fwd = cam.forward.clone(), up = cam.up.clone();
+    if (app?.xr?.active) {
+      // ⚑ S345 / T28 — in FRONT of him: the head's heading, its pitch held between 30° down and level (a look down at
+      //   the bed or up at the shelf must not put the game in his lap or over his head), the top of the device up
+      const h = new pc.Vec3(fwd.x, 0, fwd.z);
+      if (h.lengthSq() < 1e-6) h.set(-up.x, 0, -up.z);
+      h.normalize();
+      const pitch = Math.max(-30, Math.min(0, Math.asin(Math.max(-1, Math.min(1, fwd.y))) * 180 / Math.PI)) * Math.PI / 180;
+      fwd = new pc.Vec3(h.x * Math.cos(pitch), Math.sin(pitch), h.z * Math.cos(pitch));
+      up = new pc.Vec3(0, 1, 0).sub(fwd.clone().mulScalar(fwd.y)).normalize();
+    }
     const v = viewDist(cam);
     to.pos.copy(cam.getPosition()).add(fwd.clone().mulScalar(v.d)).add(up.clone().mulScalar(v.raise));
     // the prop's frame: its face is local +Y (every device here lies tilted −90° about X), its top local −Z
@@ -179,9 +208,30 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     to.rot.setFromMat4(m);
     // ⚑ the SCREEN comes to the eye, not the body: the phone's glass is at one end of it, and centring the
     //   body put the glass above the frame. The screen's offset in the prop's own frame, carried by the pose.
-    const off = wrap.getWorldTransform().clone().invert().transformPoint(plane.getPosition());
-    to.pos.sub(to.rot.transformVector(off));
+    to.pos.sub(screenOffset());
   };
+  /** the glass's offset from the prop's origin in world metres, in the `to` pose — at the prop's CURRENT scale (S345: the
+   *  in-hand enlargement was left out, so the glass sat 30% of its offset away from where it was meant to be) */
+  const screenOffset = (): pc.Vec3 => {
+    const off = wrap.getWorldTransform().clone().invert().transformPoint(plane.getPosition());
+    const sc = wrap.getLocalScale();
+    return to.rot.transformVector(new pc.Vec3(off.x * sc.x, off.y * sc.y, off.z * sc.z));
+  };
+  /** S345 / T28 — the device faced to an eye from `at` (its glass's centre), top up */
+  const faceTo = (at: pc.Vec3, eye: pc.Vec3): void => {
+    const y = eye.clone().sub(at);
+    if (y.lengthSq() < 1e-8) y.set(0, 0, 1);
+    y.normalize();
+    const upP = new pc.Vec3(0, 1, 0).sub(y.clone().mulScalar(y.y));
+    if (upP.lengthSq() < 1e-6) upP.set(0, 0, -1);
+    const z = upP.normalize().mulScalar(-1), x = new pc.Vec3().cross(y, z);
+    const m = new pc.Mat4();
+    m.data.set([x.x, x.y, x.z, 0, y.x, y.y, y.z, 0, z.x, z.y, z.z, 0, 0, 0, 0, 1]);
+    to.rot.setFromMat4(m);
+    to.pos.copy(at).sub(screenOffset());
+  };
+  let grip: pc.Vec3 | null = null;   // S345: the glass's offset from the hand while the grip pulls it
+  let aimedAt: pc.Vec3 | null = null;
   const worldOf = (p: V3): pc.Vec3 => node.getWorldTransform().transformPoint(new pc.Vec3(p[0], p[1], p[2]));
   /** the glass under a ray, in screen pixels, or null */
   const glassAt = (ray: { p0: pc.Vec3; p1: pc.Vec3 }): [number, number] | null => {
@@ -199,7 +249,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     return [u * w, v * h];
   };
   const bodyHit = (ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean =>
-    wrap.enabled && rayDist(ray.p0, ray.p1, plane.getPosition()) < (holding ? 0.13 : 0.12);
+    wrap.enabled && rayDist(ray.p0, ray.p1, plane.getPosition()) < (holding ? (app?.xr?.active ? XR_SAFE : 0.13) : 0.12);
 
   // ⚑ S270h / VR-02 — the hinge: kept at its authored (open) pose and swung about the hinge from there
   const hinge = spec.fold ? wrap.findByName(spec.fold.node) as pc.Entity | null : null;
@@ -220,13 +270,14 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   return {
     spec,
     get held() { return holding; },
+    get aimedAt() { return aimedAt; },
     touch(source, tip) {
       if (!tip || !app?.xr?.active || !holding || !wrap.enabled || !game) {
         touching.delete(source); return false;
       }
       // World metres, independent of the enlarged prop's native model units. Overlaps choose the nearest.
       const button = (spec.buttons ?? []).map(b => ({ b, d: tip.distance(worldOf(b.at)) }))
-        .filter(({ d }) => d <= 0.018).sort((a, b) => a.d - b.d)[0];
+        .filter(({ d }) => d <= XR_TOUCH).sort((a, b) => a.d - b.d)[0];
       const inv = plane.getWorldTransform().clone().invert();
       const local = inv.transformPoint(tip);
       const surface = plane.getWorldTransform().transformPoint(new pc.Vec3(local.x, 0, local.z));
@@ -250,23 +301,47 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       return true;
     },
     aim(ray) {
+      aimedAt = null;
       if (!wrap.enabled) return null;
-      if (!holding) return bodyHit(ray) ? 'pick' : null;
+      const xrNow = !!app?.xr?.active;
+      if (!holding) { if (!bodyHit(ray)) return null; aimedAt = plane.getPosition().clone(); return 'pick'; }
       const buttons = (spec.buttons ?? []).map(b => ({ b, p: worldOf(b.at) }));
-      const button = buttons.filter(({ b, p }) => rayDist(ray.p0, ray.p1, p) < (app?.xr?.active ? Math.max(b.r, ray.p0.distance(p) * 0.02) : b.r))
+      const button = buttons.filter(({ b, p }) => rayDist(ray.p0, ray.p1, p) < (xrNow ? Math.max(b.r, XR_BUTTON) : b.r))
         .sort((a, b) => rayDist(ray.p0, ray.p1, a.p) - rayDist(ray.p0, ray.p1, b.p))[0];
-      if (button) return button.b.key;
-      if (game && glassAt(ray)) return 'screen';
+      if (button) { aimedAt = button.p; return button.b.key; }
+      if (game && glassAt(ray)) { aimedAt = null; return 'screen'; }   // the glass is a surface: the pointer lands on it
+      if (xrNow) {
+        // S345 / T28 — the safe boundary: on the case or near it, a press does nothing; well away, it puts it down
+        if (bodyHit(ray)) { aimedAt = plane.getPosition().clone(); return 'body'; }
+        return 'drop';
+      }
       return bodyHit(ray) ? 'drop' : null;
     },
-    follow(hand) {
+    grab(hand, eye) {
+      const fromRest = !holding;
+      if (fromRest) this.take(hand);
+      grip = fromRest ? null : plane.getPosition().clone().sub(hand.getPosition());
+      this.follow(hand, eye);
+    },
+    follow(hand, eye) {
       if (!holding) this.take(hand);
-      heldPose(hand);
-      to.pos.sub(hand.forward.clone().mulScalar(viewDist(hand).d - 0.08));
+      if (eye) {
+        // S345 / T28 — the device rides the hand (a hand's breadth ahead of a grip that closed on the bed, or where it
+        //   was when the grip closed on it in the air), its glass turned to the eyes
+        const at = grip ? hand.getPosition().clone().add(grip) : hand.getPosition().clone().add(hand.forward.clone().mulScalar(0.12));
+        faceTo(at, eye);
+      } else {
+        heldPose(hand);
+        to.pos.sub(hand.forward.clone().mulScalar(viewDist(hand).d - 0.08));
+      }
       wrap.setPosition(to.pos); wrap.setRotation(to.rot); t = 1;
     },
     release() {
       touching.clear();
+      grip = null;
+      // S345 / T28 — in a headset, letting go of the grip leaves it where it was put: still in hand, still playable.
+      //   Only a press away from it puts it down (and the end of the era, as before).
+      if (app?.xr?.active && holding) { t = 1; return; }
       bigInHand(false);
       if (rest) { wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
       holding = false; t = 1;
@@ -280,7 +355,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       const what = this.aim(ray);
       if (!what) return false;
       if (holding && what !== 'drop') {
-        if (!game) return true;
+        if (!game || what === 'body') return true;   // S345 / T28: the safe boundary — consumed, nothing moves
         if (what === 'screen') { const at = glassAt(ray); if (at) game.tap ? game.tap(at[0], at[1]) : game.key?.('start'); }
         else game.key?.(what as GameKey);
         return true;

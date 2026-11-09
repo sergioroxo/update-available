@@ -107,8 +107,11 @@ export interface Devices {
   touch(source: object, tip: pc.Vec3 | null, era: string): boolean;
   aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string): string | null;
   take(era: string, cam: pc.Entity): void;
-  grab(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string, hand: pc.Entity): boolean;
-  follow(era: string, hand: pc.Entity): void;
+  /** S345 / T28 — `eye` (room coordinates) turns the glass to the eyes while the hand carries it */
+  grab(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string, hand: pc.Entity, eye?: pc.Vec3): boolean;
+  follow(era: string, hand: pc.Entity, eye?: pc.Vec3): void;
+  /** S345 / T29 — the world point the last `aim` in this era was about (a button, the glass, the case), or null */
+  aimedAt(era: string): pc.Vec3 | null;
   release(era: string): void;
   press(ray: { p0: pc.Vec3; p1: pc.Vec3 }, era: string, cam: pc.Entity): boolean;
   /** ⚑ S219 / W1-B7 — the keyboard reaches the device in hand before it reaches the camera */
@@ -159,11 +162,14 @@ export function buildDevices(room: RoomHandles): Devices {
       const a = d?.aim(ray);
       return a ? `${d!.spec.gameId}:${a}` : null;
     },
-    grab(ray, era, hand) {
-      const d = current(era); if (!d?.aim(ray)) return false;
-      d.take(hand); d.follow(hand); return true;
+    grab(ray, era, hand, eye) {
+      // S345 / T28 — the grip closes on the device (or its safe margin), never on a ray that is pointing away from it
+      const d = current(era), a = d?.aim(ray);
+      if (!d || !a || a === 'drop') return false;
+      d.grab(hand, eye); return true;
     },
-    follow(era, hand) { current(era)?.follow(hand); },
+    follow(era, hand, eye) { current(era)?.follow(hand, eye); },
+    aimedAt(era) { return current(era)?.aimedAt ?? null; },
     release(era) { current(era)?.release(); },
     take(era, cam) { current(era)?.take(cam); },
     press(ray, era, cam) { return current(era)?.press(ray, cam) ?? false; },

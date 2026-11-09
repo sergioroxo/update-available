@@ -56,6 +56,15 @@ const HINT_DIST = 0.6, HINT_DROP = 0.3;
 const TAB_W = 0.16, TAB_H = TAB_W * 64 / 256;
 /** S271 — on the wrist the tab is a watch face: about 6 cm wide */
 const WRIST_SCALE = 0.4;
+/**
+ * ⚑ S345 / T29 — THE POINTER'S NAME TAG. What the ray is on was named on the helper's plate, a 50 cm yellow bar hung
+ * 60 cm out at keyboard height — between the hands and everything they reach for (his 8 Nov headset: "the box crosses
+ * over my line of interaction, so it feels like I'm touching a button"). His answer 20: "The pointer's box can stay,
+ * smaller, and visibly connected to the ray." Now it is a small tag pinned at the ray's end: its corner touches the mark
+ * where the ray lands (xrInput.ts), ~1.7° tall at any distance, beside the point and never over it. The helper's own
+ * lines keep the plate.
+ */
+const TAG_CW = 1024, TAG_CH = 96, TAG_H = 0.03, TAG_GAP = 0.008;
 
 export interface XrFrame {
   readonly layerId: number;
@@ -68,6 +77,9 @@ export interface XrFrame {
   press(ray: Ray): boolean;
   /** the helper's line, or null */
   setHint(text: string | null): void;
+  /** ⚑ S345 / T29 — the name of what the ray is on, pinned at the ray's end (physical). `from` is the ray's origin: the
+   *  tag hangs on the far side of the point from it, so the ray never runs through its own name */
+  setAim(text: string | null, end: { point: pc.Vec3 } | null, from?: pc.Vec3 | null): void;
   /** S270g — a line that wins over the helper's for `seconds` (the table match, its result) */
   notice(text: string | null, seconds?: number): void;
   /** ⚑ S209 / A22 — a select on the ≡ Menu tab opens the menu (true if the tab took it) */
@@ -163,6 +175,32 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   overRoom(hintPlane);
   hintPlane.enabled = false;
   app.root.addChild(hintPlane);
+
+  // ── S345 / T29 — the pointer's name tag ──
+  const tagCanvas = document.createElement('canvas');
+  tagCanvas.width = TAG_CW; tagCanvas.height = TAG_CH;
+  const tagCtx = tagCanvas.getContext('2d');
+  if (!tagCtx) throw new Error('2D context unavailable');
+  const tagTex = makeScreenTexture(app, tagCanvas);
+  const tagPlane = makeScreenEntity('xr-aim-tag', tagTex, TAG_H * TAG_CW / TAG_CH, TAG_H, true);
+  overRoom(tagPlane);
+  tagPlane.enabled = false;
+  app.root.addChild(tagPlane);
+  let tagText: string | null = null;
+  const drawTag = (text: string): void => {
+    const g = tagCtx;
+    g.clearRect(0, 0, TAG_CW, TAG_CH);
+    g.font = `40px "Tahoma", "Verdana", sans-serif`; g.textBaseline = 'middle';
+    let t = text;
+    while (t.length > 4 && g.measureText(t).width > TAG_CW - 40) t = t.slice(0, -2);
+    if (t !== text) t = t.slice(0, -1) + '…';
+    const w = Math.min(TAG_CW, Math.ceil(g.measureText(t).width) + 36);
+    // the 1997 tooltip, as the plate was: pale yellow, a black line, black type
+    g.fillStyle = ERA1.tooltip; g.fillRect(0, 0, w, TAG_CH);
+    g.strokeStyle = ERA1.black; g.lineWidth = 4; g.strokeRect(2, 2, w - 4, TAG_CH - 4);
+    g.fillStyle = ERA1.black; g.fillText(t, 18, TAG_CH / 2 + 2);
+    tagTex.upload();
+  };
 
   let view: View = 'main';
   let jumpTarget: { era: 'e1' | 'e2' | 'e3' | 'e4'; label: string } | null = null;
@@ -386,7 +424,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     suspend(on: boolean): void { suspended = on; plane.enabled = open && !on; if (!on) dirty = true; },
     open(): void {
       open = true; suspended = false; view = 'main'; hover = null; cursor = null;
-      tabPlane.enabled = false;
+      tabPlane.enabled = false; tagPlane.enabled = false;
       hang(plane, PLANE_DIST, PLANE_DROP);
       plane.enabled = true;
       hintPlane.enabled = false;
@@ -430,6 +468,22 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       if (hint && !open) { hang(hintPlane, HINT_DIST, HINT_DROP); hintPlane.enabled = true; }
       else hintPlane.enabled = false;
       drawHint();
+    },
+    setAim(text: string | null, end: { point: pc.Vec3 } | null, from?: pc.Vec3 | null): void {
+      if (!text || !end || open || !app.xr?.active) { tagPlane.enabled = false; return; }
+      if (text !== tagText) { tagText = text; drawTag(text); }
+      const eye = head.getPosition(), at = end.point;
+      const d = Math.max(0.25, at.distance(eye));
+      const h = TAG_H * d, w = h * TAG_CW / TAG_CH, gap = TAG_GAP * d;
+      tagPlane.setLocalScale(w, 1, h);
+      // turned square to the eye (its face +Y back at the eye, its −Z up the view), its near corner at the point
+      tagPlane.setPosition(at);
+      tagPlane.lookAt(at.clone().add(at.clone().sub(eye)), head.up);   // the head's up: level in the view, never rolled
+      tagPlane.rotateLocal(90, 0, 0);
+      const right = tagPlane.right.clone(), up = tagPlane.forward.clone();
+      const below = !!from && from.clone().sub(at).dot(up) > 0;   // a ray from above (rare) hangs it underneath
+      tagPlane.setPosition(at.clone().add(right.mulScalar(gap + w / 2)).add(up.mulScalar((below ? -1 : 1) * (gap + h / 2))));
+      tagPlane.enabled = true;
     },
     debugHit(ray: Ray): { x: number; y: number } | null { return planeHit(plane, ray, PLANE_W, PLANE_H, W, H); },
     tick(ray: Ray | null, wrist?: { at: pc.Vec3; palm: pc.Vec3 | null } | null): void {
