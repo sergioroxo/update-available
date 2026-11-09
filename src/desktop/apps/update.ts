@@ -56,6 +56,8 @@ interface UpdateStrings {
   /** ⚑ S327 / T07 — the surface the notice is composited onto says the deferral in its own voice (u4: Vera's
    *  platform), so the ritual draws no standing line of its own */
   remindedOnHost?: boolean;
+  /** ⚑ S339 — this update's own deferral length in seconds (REMIND_SECONDS otherwise) */
+  remindSeconds?: number;
   eulaTitle?: string;
   eula: string[][] | null;
   readOn?: string;
@@ -252,7 +254,7 @@ export class UpdateApp {
       if (due > this.cascadeShown) playOnce('err_cascade_1997.mp3');   // S141: one ding per window — they pile
       this.cascadeShown = due;
     }
-    if (this.phase === 'reminded' && this.t >= REMIND_SECONDS) {
+    if (this.phase === 'reminded' && this.t >= (this.s.remindSeconds ?? REMIND_SECONDS)) {
       this.phase = 'notify'; // it returns — and this time there is no later
       this.t = 0;
       playOnce(NOTIFY_CHIME[this.key]);   // S141: the same chime, again — there is no later

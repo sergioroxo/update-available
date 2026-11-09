@@ -75,7 +75,7 @@ import { setPauseOS, pauseItems, pauseWords, wayBackLine } from '../narrative/pa
 import pauseCopy from '../../data/strings/pauses.json';
 import { Screensaver, SAVER_SECONDS } from './apps/screensaver';
 import { StartPanel } from './apps/startPanel';   // S229 / W1-A6
-import { anythingPlaying, stopOneShots, releaseBus } from '../audio/tapeAudio';
+import { anythingPlaying, stopOneShots, releaseBus, playLoop, stopClip } from '../audio/tapeAudio';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
 import { ledger, wipeLedger, ledgerGeneration } from '../state/ledger';
@@ -326,11 +326,6 @@ export class DesktopOS {
   private calebOpenedThisSession = false;
   /** when the collapse's envelope lands (Infinity = not armed) */
   private pureMailAt = Infinity;
-  /** THE BREAK's residue: a small, non-interactive persistent mark once the
-   *  video tears to static and Caleb's message-fragment surfaces through it —
-   *  "the notification mark persisting quietly" (brief). The Caleb thread
-   *  proper stays gated/untouched; this is only the visual residue. */
-  private calebNotificationVisible = false;
   /** S46's WAV while it is sounding (S60). os.ts owns it so Esc/pause and
    *  Leave can reach it; null whenever nothing is playing. */
   private pureMailVoice: HTMLAudioElement | null = null;
@@ -549,7 +544,7 @@ export class DesktopOS {
   companionStage(): CompanionStage {
     const p = this.caleb?.phase;
     if (p === 'sealed' || p === 'restoring' || p === 'returning') this.companionBroke = true;
-    if (p === 'residue' || p === 'done') this.companionStill = true;
+    if (p === 'answer' || p === 'done') this.companionStill = true;
     return this.companionStill ? 'still' : this.companionBroke ? 'broken' : 'alive';
   }
   openCompanion(): void {
@@ -1052,6 +1047,8 @@ export class DesktopOS {
     // ⚑ S219 / W1-C10 (his, 2026-10-08: "drop the mechanic and drop it from the text") — the gathering is OFF:
     //   'Remind me later' defers the update once and opens nothing in the room. The beat's code stays (one flag)
     //   so it can return; its lines in data/ are gone.
+    // ⚑ S339 — u3's deferral has somewhere to be: the Messenger, where Caleb answers what Daniel just said
+    if (key === 'u3') this.updateApp.onRemindLaterUsed = () => { this.caleb?.afterword(); this.dirty = true; };
     const GATHERING = false;
     const pass = key === 'u2' ? 1 : key === 'u3' ? 2 : 0;
     if (GATHERING && pass !== 0 && this.belongings) {
@@ -1366,7 +1363,7 @@ export class DesktopOS {
     if ((era !== 'e1' && era !== 'e2') || this.wotdShown.has(era)) return;
     // ⚑ never over a screen something else owns: 2003's arrival draws without the desktop tail, so an
     //   unseen Word of the Day swallowed every press on the dark glass (the walk stopped at "Welcome back")
-    if ((era === 'e2' && this.e2Stage !== 'active') || this.caleb?.ownsScreen || this.updateApp?.open) return;
+    if ((era === 'e2' && this.e2Stage !== 'active') || this.updateApp?.open) return;
     if (this.idleSeconds < 15 || !this.desktopIdle() || this.toast) return;
     if (!this.guideReady('wotd')) return;   // Lamby owns the current step; vocabulary waits.
     this.wotdShown.add(era);
@@ -1596,6 +1593,20 @@ export class DesktopOS {
     this.dirty = true;
   }
 
+  /** ⚑ S339 / T34 — Restorify's own music (tools/make_restorify_loop.py; his 8 Nov: "Should we also have one for the
+   *  Restorify? I think we should"). The programme's voice: it plays only while Restorify's window is up and nothing
+   *  that is a person's is on screen (Caleb's Messenger, the song he sent, the video, the alert), never under the pause
+   *  menu, the screensaver or an update. */
+  private restorifyLoop: HTMLAudioElement | null = null;
+  private syncRestorifyLoop(): void {
+    const want = this.phase === 'desktop' && this.desktopEra === 'e2' && !!this.restorify?.open && !this.caleb?.open
+      && !this.mediaPlayer?.open && !this.netvision?.open && !this.accountability && !this.pauseOpen && !this.saver
+      && !this.updateApp && !this.testimony?.playbackActive;
+    if (want && !this.restorifyLoop) { this.restorifyLoop = playLoop('restorify_loop_2003.mp3'); if (this.restorifyLoop) this.restorifyLoop.volume = 0.35; }
+    else if (!want && this.restorifyLoop) { stopClip(this.restorifyLoop); this.restorifyLoop = null; }
+    else if (this.restorifyLoop && this.restorifyLoop.ended) this.restorifyLoop = null;
+  }
+
   /** Retry delivery as either prerequisite can arrive first; s1 still always precedes Caleb. */
   private deliverCaleb(): void {
     if (this.desktopEra === 'e2' && this.e2Stage === 'active') this.maybeLandMessage();
@@ -1684,40 +1695,26 @@ export class DesktopOS {
     // the block it is holding. The affordance is real — the refusal is the
     // content. (This is also the ONLY thing that could honestly happen: the
     // block lifts on the apparatus's own failure, never on a player's press.)
-    thread.onNotificationPressed = () => this.accountability?.pingStamp();
     // S157 / R3-52: the file he sent opens in a player, by a press
     thread.onSongArrived = () => { if (!this.folder1997?.open) { this.folder1997Unread = true; this.dirty = true; } };
     thread.onOpenAttachment = (file) => {
       if (this.mediaPlayer) return;
       this.mediaPlayer = new MediaPlayerApp(file);
       this.mediaPlayer.onClose = () => { this.mediaPlayer = null; this.dirty = true; };
-      this.startProgram(this.mediaPlayer ? MEDIA_PLAYER_TITLE : '');
+      void MEDIA_PLAYER_TITLE;   // ⚑ S339: no loading box over the player (his 8 Nov: "an error that goes on top of it")
       this.dirty = true;
     };
     thread.onThreadDone = () => {
-      this.caleb = null;
+      // ⚑ S339 (his answer 14: "It becomes something Daniel says to Caleb in the conversation, and that sparks the
+      //   update") — Daniel has said it. The Messenger STAYS (the conversation is theirs; the update arrives over it,
+      //   and if it is put off, Caleb answers there — see armUpdate's u3 deferral). No dark monitor, no wait: the
+      //   spine reads the residue filing and arms u3 at once (src/narrative/spine.ts RESIDUE_GAP). The update is still
+      //   the apparatus's documented failure (PureMail: "Restorify is closing"); the press only gives it its moment.
       this.accountability = null;
-      // finding F25 had the desktop come back UP out of the residue's own
-      // fade-to-black; ⚑ S164 / R3-61: it does not come back at all. The dark
-      // holds and the notice rises out of it (drawDesktop's `residueDark` branch).
       this.guideWait.clear();
-      this.residueDark = true;
-      // S2R.7 — THE RESIDUE LEADS SOMEWHERE. The thread's end is the era's
-      // end: from here the spine (src/narrative/spine.ts) reads the residue
-      // filing off the ledger and takes the era to its u3 close, exactly the
-      // way E1's `diary-glitch` record arms T1. Two things happen at this
-      // seam, and neither is the update itself — the update is armed by the
-      // apparatus's own documented failure (S2R.5's collapse), never here:
-      //   1. any UNANSWERED summons is withdrawn. The network that issued the
-      //      referral has just told the player it can no longer vouch for
-      //      itself; its errands do not outlive it. Nothing is filed for the
-      //      withdrawal because nothing was ever filed for the offer (offers
-      //      only file through src/room/sends.ts on an ANSWER) — so this
-      //      cannot put a decision in the record the player never made.
-      //   2. the desktop goes quiet. No toast, no assistant, no chrome event:
-      //      the era says nothing else in its own voice after the residue.
+      //   Any UNANSWERED summons is withdrawn: the network that issued it can no longer vouch for itself.
       this.sendOffer = null;
-    this.clearExternalSendHits();
+      this.clearExternalSendHits();
       this.toast = null;
       this.dirty = true;
     };
@@ -1759,11 +1756,9 @@ export class DesktopOS {
     alert.onMailClosed = () => {
       // S2R.5 — the block LIFTS: the same component, run in reverse
       this.accountability?.liftStamp();
-      this.caleb?.clearToasts();
+      // ⚑ S339 — the HopeRestored Messenger comes back to life: the same window, on top, its words returning
+      this.clearDeskForCaleb();
       this.caleb?.beginRestore();
-      // …and the taskbar's "1 new message" goes with it: the fragment has
-      // resolved into the real conversation coming back (finding E20).
-      this.calebNotificationVisible = false;
       this.stopReadAloud();
       this.dirty = true;
     };
@@ -1808,7 +1803,7 @@ export class DesktopOS {
     });
     this.netvision.onClosed = (result) => {
       this.netvision = null;
-      if (result === 'interrupted') this.calebNotificationVisible = true;
+      void result;   // S339: an interrupted video no longer raises Caleb's "1 new message"
       if (this.caleb) this.pureMailAt = this.t + PUREMAIL_DELAY;
       this.dirty = true;
     };
@@ -1997,7 +1992,8 @@ export class DesktopOS {
     //   message lands at `testimony-online`, and in the same frame the spine offered the Route sheet. While Caleb's
     //   door-toast is up the summons now waits; if the toast passes unanswered the summons arrives after it, and if
     //   the player presses it the Caleb thread holds the spine as before (W1-D17 made the toast a door).
-    return this.sendOffer !== null || this.messagePending || this.caleb !== null || this.e4HoldsTheSpine
+    // ⚑ S339: once Daniel has said it, the Messenger stays on screen but no longer holds the spine
+    return this.sendOffer !== null || this.messagePending || (this.caleb !== null && this.caleb.phase !== 'done') || this.e4HoldsTheSpine
       || this.toast?.act === 'message-open';
   }
 
@@ -2322,6 +2318,7 @@ export class DesktopOS {
       if (this.programSplash.t >= PROGRAM_SPLASH_SECONDS) this.programSplash = null;
     }
     if (this.mediaPlayer) this.mediaPlayer.update(dt);
+    this.syncRestorifyLoop();
     // S275 — the pet's LCD runs in 2003 whether its window is up or not (the keychain on the desk shows it)
     if (this.desktopEra === 'e2') { this.companion.update(dt); if (this.companion.dirty) { this.companion.dirty = false; if (this.companion.open) this.dirty = true; } }
     if (this.phase === 'desktop' && this.web?.open && this.web.update(dt)) this.dirty = true;
@@ -2388,25 +2385,9 @@ export class DesktopOS {
     // S2R.3–S2R.6: the person's window and the apparatus's answer to it
     if (this.phase === 'desktop' && this.caleb) this.caleb.update(dt);
     if (this.phase === 'desktop' && this.accountability) this.accountability.update(dt);
-    // THE BREAK (S2R.4): while the apparatus's own showpiece tears itself
-    // apart, Caleb arrives through the corner-toast shape the system uses to
-    // nag him. Pushed once — the toast object guards re-entry.
-    // S60 (finding D17): AFTER the disclaimer crawl, not at the break's start.
-    // He used to land on top of the fine print — "…not therapy, not a cure…
-    // your old self may not be recoverable…", the line Sérgio called a great
-    // text and never got to read. The tape gets to finish lying first.
-    if (this.phase === 'desktop' && this.netvision?.disclaimerDone) this.caleb?.pushBreakToast();
-    // ⚑ S223 cloud / W1-D13 (walkthrough 1: "'Read the Mail' should wait while the person is talking with Caleb") —
-    //   when Lamby is dismissed at the alert, the failing list armed 5 s later and could take the screen while the
-    //   conversation was still being walked out line by line (the redaction runs up to ~8 s). The mail now waits
-    //   until Caleb's chat is fully sealed; nothing is removed and the apparatus's failure is still not the player's.
-    // ⚑ S226 / W1-D13, reading A (his yes, 2026-10-10: "yes add the second mail wait") — and not while his break toast
-    //   is new: the mail used to take the whole screen 5 s after the video, just as the player might press Caleb's
-    //   toast. It waits until the toast has been pressed and the player is quiet again, or has been up for 12 s.
-    const calebMoment = !this.caleb?.breakToastUp
-      || this.caleb.breakToastAge >= 12
-      || (this.caleb.breakToastPressed && this.idleSeconds >= 3);
-    if (this.t >= this.pureMailAt && !this.netvisionOfferOpen && !this.netvision?.open && !this.caleb?.blackingOut && calebMoment && this.guideReady('pure-mail')) {
+    // ⚑ S339 (his answer 14 / T13) — Caleb no longer knocks during the video or the network's failure: no corner toast,
+    //   no "1 new message". The order is the video → the network tried → the 404 → PureMail → THEN the Messenger.
+    if (this.t >= this.pureMailAt && !this.netvisionOfferOpen && !this.netvision?.open && !this.caleb?.blackingOut && this.guideReady('pure-mail')) {
       this.pureMailAt = Infinity;
       this.accountability?.beginNetworkFailure();   // S157 / R3-58: seen failing, then the mail
       this.dirty = true;
@@ -2848,12 +2829,6 @@ export class DesktopOS {
       this.drawE2Arrival(W, H);
       return;
     }
-    // S2R.6 — THE RESIDUE (respite → felt): the quiet after owns the whole
-    // monitor. No guide, no UI, no apparatus — not even the taskbar.
-    if (this.caleb?.ownsScreen) {
-      this.caleb.draw(this.ctx);
-      return;
-    }
     // ⚑ S164 / R3-61 — and after it, the dark stays: the era says nothing else
     //   in its own voice; the next thing on the monitor is the system noticing
     //   its own end (u3's notice, the one window drawn here), out of the black.
@@ -3090,8 +3065,6 @@ export class DesktopOS {
     // still under the system-modal update ritual below)
     if (this.netvisionOfferOpen) this.drawNetvisionOffer(W, H);
     if (this.netvision?.open) this.netvision.draw(ctx);
-    // …and his toasts arrive OVER the video: the crack in the showpiece
-    if (this.caleb?.open) this.caleb.drawToasts(ctx);
     // the update ritual is SYSTEM-modal — it draws over everything.
     // S61: `.visible` is false only during a DEFERRAL, and the app now draws
     // one dim standing line there (Sérgio: "Remind me later — what does it
@@ -3191,24 +3164,6 @@ export class DesktopOS {
           }
         }
       }
-    }
-    // THE BREAK's residue (S2R.4), now a REAL AFFORDANCE (S60, finding E20 —
-    // Sérgio: *"'1 new message — C___' in the system bar is barely visible AND
-    // not clickable. He tried to open it and couldn't."*). Two fixes, one
-    // rule — it is an affordance or it is not there:
-    //   · legible: a raised taskbar button with the same unread pip the
-    //     Messenger icon carries, not pale text sunk in a well;
-    //   · clickable: pressing it does exactly what the corner toast does, and
-    //     the apparatus answers by re-asserting its block. The mark is cleared
-    //     the moment the block lifts, because then it is no longer true.
-    if (this.reinterp && this.desktopEra === 'e2' && this.calebNotificationVisible) {
-      const bw = W - 50 - wellX;   // S165: after the window buttons, if any
-      ui.button(ctx, wellX, H - 19, bw, 16, '', { hover: this.hover === 'taskbar-message' });
-      ui.px(ctx, wellX + 5, H - 15, 6, 6, ERA1.warn);
-      ui.setFont(ctx, 9);
-      ctx.fillStyle = this.hover === 'taskbar-message' ? ERA1.navy : ERA1.black;
-      ctx.fillText(mediaStrings.breakNoticeText, wellX + 16, H - 16);
-      this.hits.push({ x: wellX, y: H - 19, w: bw, h: 16, id: 'taskbar-message' });
     }
     if (this.reinterp && (this.desktopEra === 'e1' || this.desktopEra === 'e2')) {
       this.updateLambyGuide(0);
@@ -4295,6 +4250,7 @@ export class DesktopOS {
     if (this.setup?.open) { this.setup.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleMove(x, y); return; }
+    if (this.phase === 'desktop' && this.mediaPlayer?.open && this.mediaPlayer.contains(x, y)) { this.mediaPlayer.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleMove(x, y); return; }
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleMove(x, y); return; }
     // ⚑ S271 (the 31 Oct cast: ~70 full-screen uploads a second in a headset) — a headset hover moves every frame;
@@ -4437,22 +4393,11 @@ export class DesktopOS {
       this.dirty = true;
       return;
     }
-    if (this.phase === 'desktop' && hit?.id === 'taskbar-message') {
-      this.accountability?.pingStamp();
-      this.dirty = true;
-      return;
-    }
     // W1-D17 — the message toast is a door, drawn over every window like the taskbar: asked before them
     if (this.phase === 'desktop' && hit?.id === 'toast-act' && this.toast?.act === 'message-open') {
       this.toast = null;
       this.fileLambyRecord('begun', 'message-notice', lambyStrings.witness.messageOpened);
       this.openMessenger();
-      this.dirty = true;
-      return;
-    }
-    // …and Caleb's corner toast, for the same reason: it is drawn over every
-    // window, so it is asked before them (finding E20/D17).
-    if (this.phase === 'desktop' && this.caleb?.pressToastAt(x, y)) {
       this.dirty = true;
       return;
     }
@@ -4472,8 +4417,6 @@ export class DesktopOS {
         return;
       }
     }
-    // S2R.6: the residue owns the whole monitor while it is up
-    if (this.phase === 'desktop' && this.caleb?.ownsScreen) { this.caleb.handleClick(x, y); return; }
     // S2R.4: the video player, then Lamby's offer — both own every click
     // while present, ahead of Restorify sitting underneath either of them.
     if (this.phase === 'desktop' && this.netvision?.open) { this.netvision.handleClick(x, y); return; }
@@ -4492,7 +4435,8 @@ export class DesktopOS {
     if (this.phase === 'desktop' && this.accountability?.modal) { this.accountability.handleClick(x, y); return; }
     // S157: a program starting takes no press; the player, on top of the messenger, takes its own
     if (this.phase === 'desktop' && this.programSplash) return;
-    if (this.phase === 'desktop' && this.mediaPlayer?.open) { this.mediaPlayer.handleClick(x, y); return; }
+    // ⚑ S339 — the player takes only the presses that land on it: the Messenger's tray (Wait · Go on) stays live
+    if (this.phase === 'desktop' && this.mediaPlayer?.open && this.mediaPlayer.contains(x, y)) { this.mediaPlayer.handleClick(x, y); return; }
     if (this.phase === 'desktop' && this.caleb?.open) { this.caleb.handleClick(x, y); return; }
     // the provotype is modal while open — it owns the desktop's clicks
     if (this.phase === 'desktop' && this.provotype?.open) { this.provotype.handleClick(x, y); return; }

@@ -85,6 +85,8 @@
   "remindLater": "Remind me later",
   "remindedStatus": "Restorify is being removed. It will ask again.",
   "_docRemindedStatus": "S156 / R3-60 (Sérgio: 'Update Later → the story app says continue; should say it is being removed'): u3's own deferral line — the shared one under `remindedStatus` at the root serves u2.",
+  "remindSeconds": 22,
+  "_docRemindS339": "⚑ S339 (his 8 Nov: 'remind me later, it doesn't work because there's no place to come back to') — the deferral now returns to the Messenger, where Caleb answers Daniel once (s2_caleb.json residue.answer); 22 s is enough to read it and sit with it, then the notice returns with its Remind spent.",
   "eulaTitle": "GracePlatform — Community Guidelines",
   "eula": [
    [

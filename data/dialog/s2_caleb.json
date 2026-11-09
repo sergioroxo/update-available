@@ -70,7 +70,10 @@
    "wink": "Wink",
    "font": "Font",
    "mark": "HR"
-  }
+  },
+  "to": "To:",
+  "says": "{name} says:",
+  "_docS339": "⚑ S339 (his 8 Nov: 'closer to MSN… bubbles… scroll… bigger') — `to` heads the strip; `says` heads each run of bubbles ('caleb says:'). The contact list's offline names are retired with the list; the two display pictures replace it (no faces)."
  },
  "thread": [
   {
@@ -238,19 +241,6 @@
   "skipDelaySeconds": 34,
   "_docB19": "⚑ S209 / B19 (REVIEW_ROUND_5, ERA03-02): 15 → 34 s — the skip used to arm ten seconds before the REAL STORIES montage, so the first press skipped the one moment that holds his own tape. It now arms after the montage and Marcus alone (25.7 → 33.4 s)."
  },
- "toasts": {
-  "_doc": "FELT content in the system's own nag-grammar: MSN-style corner message popups, the same shape the apparatus used to nag him, now carrying the person back in. Sérgio: \"not too much\" — so the crack stays a crack. One toast; the array is the seam if a second is ever wanted. S60 RETIMED (finding D17): it used to fire at the START of the break and cover the end-of-video disclaimer scroll — the one piece of fine print Sérgio called 'a great text' — then expire unusably. It now arrives only once the crawl has finished (the video's own end), and it PERSISTS instead of counting down: the crack does not close on a timer, it closes when the block lifts. Clicking it is a real act — see `hint`.",
-  "windowTitle": "caleb",
-  "hint": "click to open",
-  "_doc_hint": "Finding E20's other half: the notification has to be an affordance or not be there. It is one — and pressing it is answered by the apparatus, not by this module (the felt side never learns what happens; os.ts routes the press to the block's own stamp, which re-asserts itself). The affordance works. The answer is no. That is the truth of this beat and it is not a dead button.",
-  "lines": [
-   {
-    "id": "break-1",
-    "text": "daniel are you still get"
-   }
-  ],
-  "_doc_cut": "The first toast cuts off mid-word, exactly as spec'd — it is not truncated at render time, it is authored cut."
- },
  "pureMail": {
   "_doc": "OPERABLE → the collapse. The envelope arrives on a documented failure of the apparatus, never on anything the player did (SCRIPT_UPDATE v0.5 §1). `heading`/`lines`/`closing` are PORTED VERBATIM from the shipped build's data/dialog/s2.json `collapse` (composite of the real ex-gay apologies, Sérgio-steered: perpetrators as fellow-victims, unrepentance relocated to 'them' above). The spec's instruction is explicit — render the existing text, do not rewrite it.",
   "appName": "PureMail",
@@ -302,7 +292,9 @@
  "residue": {
   "_doc": "RESPITE → FELT. The quiet after: no guide, no UI, no apparatus. One truth surfaces and is COMMITTED by the player — chip-press, never typed (input law). The era's two commit-presses rhyme: the first the system filed as conduct; this one it is no longer there to file. The respite is real and is never revealed as a trap.",
   "line": "Then it was never me that was broken…",
-  "_s_line": "⟨S — LOCKED LINE⟩ Sérgio's own wording, canon. VERBATIM, never paraphrase, never re-wrap into two chips."
+  "_s_line": "⟨S — LOCKED LINE⟩ Sérgio's own wording, canon. VERBATIM, never paraphrase, never re-wrap into two chips.",
+  "_docS339": "⚑ S339 (his answer 14: 'Retire the \"It wasn't me that was broken\" panel. It becomes something Daniel says to Caleb in the conversation, and that sparks the update') — `line` (⟨S⟩, verbatim, untouched) is now the label of the ONE chip under Caleb's four return lines and, once pressed, Daniel's own bubble. The update arms at once. `answer` is Caleb's one reply, sent only if the update is put off ('Remind me later'): the deferral has somewhere to be. Claude's line (2026-08-17 norm); felt, not a joke.",
+  "answer": "it never was, d. not once."
  },
  "witness": {
   "_doc": "The cold side, computed only from things the player actually did (Ethics #10) and symmetric by law: answering files, and so does reading without answering. The system's own acts file in its own cheerful vocabulary — that cheerfulness is the collapse-material later. The residue files ONLY as a gap: the record shows that something happened it could not classify, never the line itself (homecoming script S2R.6).",
@@ -341,7 +333,20 @@
   "result": "None reachable. Escalation failed.",
   "trySeconds": 2.0,
   "failSeconds": 1.3,
-  "resultSeconds": 3.0
+  "resultSeconds": 3.0,
+  "error": {
+   "_doc": "⚑ S339 (his 8 Nov, 12:40: 'trying to connect to the servers of the system, but there's an error, there's a glitch, like… a 404 or something error code message, and then through that glitch… appears the pure mail') — the system's own error page, shown after the failing list; its last `tearSeconds` corrupt into the glitch PureMail arrives through. OPERABLE (the apparatus's own surface). The address is invented (Restorify is an invented mark).",
+   "title": "Restorify — Care Server",
+   "code": "Error 404",
+   "heading": "The page cannot be found.",
+   "lines": [
+    "The care server you are trying to reach has been removed, had its name changed, or is temporarily unavailable.",
+    "Your accountability record could not be sent."
+   ],
+   "address": "http://care.restorify.net/accountability/escalate.asp",
+   "seconds": 5.5,
+   "tearSeconds": 2.2
+  }
  },
  "player": {
   "_doc": "S157 / R3-52 — the 2003 media player Caleb's rip opens in (src/desktop/apps/mediaPlayer.ts). His file arrives as an attachment on the line that sends it; the player is the only way it plays now (it used to start by itself under the thread).",
@@ -349,12 +354,24 @@
   "play": "Play",
   "stop": "Stop",
   "sizeLabel": "{size} · audio file",
-  "unavailable": "the file could not be opened"
+  "unavailable": "the file could not be opened",
+  "loop": "Loop",
+  "opening": "Opening file…",
+  "openingSeconds": 1.2,
+  "_docS339": "⚑ S339 (his 8 Nov) — the player opens with its own short 'Opening file…' line and then plays by itself (the press on the attachment was the press to play); `loop` labels the Loop toggle. The OS's loading box no longer covers it."
  },
  "attachment": {
   "_doc": "S157 / R3-52 — the attachment chip under Caleb's line: press it and the player opens. The label has a space in it on purpose: check-spec's C10 reads any bare `name.mp3` string in data as a file the piece must ship, and this is a NAME on a chip, not a file — the file is the step's own `audio`.",
   "label": "last night_B (rip).mp3",
   "size": "2.1 MB",
   "open": "open"
- }
+ },
+ "songHold": {
+  "_doc": "⚑ S339 — THE SONG'S TWO-STEP (his answer 13: 'the Wait / two-step button belongs to the looping audio Caleb sends'; 12:35: 'needs a button so people can take their time… but if a lot of time passes, then it continues'). When the file arrives the conversation holds. `wait` keeps it holding while Daniel listens (then only `go` is left); `go` lets Caleb carry on; untouched, it carries on by itself after `autoSeconds`. FELT: nothing here files.",
+  "wait": "Wait, I’m listening",
+  "go": "Go on",
+  "listening": "listening…",
+  "autoSeconds": 30
+ },
+ "_docS339toasts": "⚑ S339 (his answer 14 / T13: 'we don't need the notification to say that there's a new message from Caleb now') — the `toasts` block (the corner toast 'daniel are you still get' during the video's break) and the taskbar's '1 new message' are RETIRED. Caleb returns only after PureMail, inside the Messenger. `pacing.toastLifeSeconds` and `pacing.residue` are kept as the record and read by nothing."
 }
