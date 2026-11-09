@@ -1,6 +1,6 @@
-STATUS: draft
+STATUS: live
 
-# Handoff (STANDBY — only if Sérgio switches; 9 Nov he chose to keep the personal session orchestrating): the UiB session becomes the orchestrator (9 Nov → Sat 14 Nov 2026)
+# Handoff (LIVE from 9 Nov evening): the UiB session becomes the orchestrator (9 Nov → Sat 14 Nov 2026)
 
 *Sérgio's personal account is at 78% of its week. Until Saturday 14 Nov the UiB (Enterprise) session leads. The
 personal session is kept for emergencies only.*
@@ -42,6 +42,51 @@ You are on branch `reinterp`; GitHub Pages deploys every push. Before each commi
   docs/reinterp/DESIGN_* files.
 - **Codex** works on this machine too, with low quota: small jobs only. Its prompts must use `git worktree add`, and
   it walks only its own era.
+
+## ⚑ LIVE FROM 9 NOV (evening), Sérgio's decision
+
+The personal session is at 88% of its week. It stays for talking ideas through with him, not for building or
+merging. **You now orchestrate.** Run in ~/update-available-reinterp (the main folder). The ~/update-available-uib
+worktree is free for builder sub-jobs, or use sub-agents with worktree isolation, on model sonnet unless a task
+truly needs Opus.
+
+### State when you take over
+- `reinterp` includes UiB jobs 1–7 (S339–S348), all merged.
+- The personal session started a full walk after job 7 (port 3141). If `git log` shows no "S348 (walk)" line in
+  BUILD_LOG.md, run the full walk yourself first.
+
+### Your queue, in order (none of this needs the headset)
+1. **The full walk after job 7.** If it fails, fix it, then walk again.
+2. **The itch ZIP**, rebuilt from the walked build:
+   - run `npm run build:itch && python3 tools/package-itch.py <date>`;
+   - unzip it into a scratch folder and load it in a sandboxed iframe with out/probes/zipload.mjs (serve it with
+     `python3 -m http.server 3130` from that folder, and kill any old server on 3130 first);
+   - there must be no errors and no requests to other hosts;
+   - tell him the path and size. He uploads it to itch himself.
+3. **T12, "which build is the Quest running?":** show the short git commit and the build date on the game menu's
+   About/credits line and on the debug plate, so he can see at a glance whether the headset loaded today's build.
+   Inject it at build time with Vite `define` (no network). Then he never tests an old build by mistake again
+   (this happened on 8 Nov).
+4. **T58:** add "struggler" to the Lexicon at the end (data/strings/lexicon.json, in its own format; see 1997's
+   Root Cause glossary for the definition pair).
+5. **T44, the visual culture of 2016 and 2026** (1997 and 2003 got their pass in jobs 1–3). This is for his article
+   on visual culture: each era's OS and apps should look like their time.
+   - 2016: GracePlatform and the Handset Window in the flat "material/iOS 7" idiom of 2016.
+   - 2026: Kettle, the browser and the bot in today's soft, rounded, AI-assistant idiom.
+   - No real marks, colours only from the theme.
+   - Photograph before and after from the seat.
+6. **T54, Noa in 2026 (a proposal only, no build):** write docs/reinterp/DESIGN_NOA_2026_2026-11-09.md
+   (`STATUS: draft`). Use 2 or 3 options for where Noa (the trans woman whose story was 2016's, now retired there)
+   could appear in 2026. She is a different person from Maya (guard 1). Possible places: the "someone who went back"
+   recording, a viewer in the fundraiser stream, the bot's "stories" page. For each option, give what it adds, its
+   risk, and its cost. He picks.
+7. **Before any account switch or big milestone,** refresh the conversation archive:
+   ~/Documents/YUHF-conversations-archive/<date>/ (see the memory note conversation-archive.md). Make three tar.gz
+   files (personal ~/.claude/projects/*update-available*, UiB ~/.claude-uib/projects/*update-available*, and the
+   Codex sessions mentioning the project) plus a README.
+8. **When he sends a headset report,** turn it into TODO rows, then into jobs.
+
+The old "Open now" list below is history; items 2 and 3 there are done (UiB jobs 5–7).
 
 ## Open now
 
