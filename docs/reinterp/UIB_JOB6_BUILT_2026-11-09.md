@@ -1,4 +1,4 @@
-STATUS: live
+STATUS: superseded-by docs/reinterp/UIB_JOB7_BUILT_2026-11-09.md
 
 # UiB job 6, built (S347, 9 Nov 2026): the era change shines, seated; its own music and its own sounds
 

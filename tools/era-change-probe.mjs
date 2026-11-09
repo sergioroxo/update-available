@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ERA CHANGE PROBE (S347, UiB job 6) — the seated, shining era change, measured by its frames.
+ * ERA CHANGE PROBE (S347, UiB job 6; S348, job 7: the flyover with the glob morph, on both) — the era change, measured by its frames.
  *
  *     node tools/era-change-probe.mjs --port 3181 --out out/s347/change            # every change, desktop + headset
  *     node tools/era-change-probe.mjs --port 3181 --out out/s347/change --only e3 --mode xr
@@ -49,7 +49,7 @@ const lumOf = (page, b64) => page.evaluate(async (b) => {
   return Math.round(s / (d.length / 4));
 }, b64);
 const pose = (page) => page.evaluate(() => { const p = window.__camPose();
-  return { leg: p.leg, blink: p.blink ?? null, morph: p.morph ?? null, bed: p.bed ?? null, layer: p.layer ?? null, shine: p.shine ?? null, xrBusy: p.xrBusy ?? null,
+  return { leg: p.leg, blink: p.blink ?? null, morph: p.morph ?? null, bed: p.bed ?? null, layer: p.layer ?? null, shine: p.shine ?? null, xrBusy: p.xrBusy ?? null, xrFollow: p.xrFollow ?? null,
     x: +p.x.toFixed(2), y: +p.y.toFixed(2), z: +p.z.toFixed(2), yaw: Math.round(p.yaw) }; });
 
 async function open(c, xr) {
@@ -63,7 +63,8 @@ async function open(c, xr) {
   await page.addStyleTag({ content: 'body > *:not(canvas) { display: none !important; }' });
   if (xr) {
     await page.evaluate(() => { const app = window.__app, head = app.root.findByName('camera');
-      Object.defineProperty(app.xr, 'active', { configurable: true, get: () => true }); head.setLocalPosition(0, 1.2, 0); head.camera.fov = 90; });
+      // S348: the emulated head looks 20° down, as a seated visitor looking at the room below would (documented)
+      Object.defineProperty(app.xr, 'active', { configurable: true, get: () => true }); head.setLocalPosition(0, 1.2, 0); head.setLocalEulerAngles(-20, 0, 0); head.camera.fov = 90; });
     await page.waitForFunction(() => window.__xrComfort?.calibrated && !window.__xrComfort.busy, { timeout: 30000 }).catch(() => {});
   }
   const t0 = Date.now();
@@ -120,18 +121,28 @@ async function run(c, mode) {
     // never darker than the dimmer of the two rooms themselves (the one you sit in, the one you land in): the
     //   landing's reveal IS the next room, at its own light
     brightAsTheRoom: minDuring !== null && minDuring >= Math.min(sitLum, endLum ?? sitLum) - 3,
-    camMoved: during.some((f, k) => k > 0 && f.leg !== 'descend' && (Math.abs(f.x - during[0].x) > 0.02 || Math.abs(f.z - during[0].z) > 0.02)),
+    // S348: the change FLIES (the camera travels), and nothing covers the view while it does: no morph/veil frame, and
+    //   in a headset no re-form (xrBusy) — the world follows the flight (xrFollow)
+    flew: during.some((f) => Math.hypot(f.x - during[0].x, f.y - during[0].y, f.z - during[0].z) > 0.5),
+    overlayFrames: during.filter((f) => f.morph || f.blink || f.xrBusy).length,
+    followFrames: during.filter((f) => f.xrFollow).length,
     legs: [...new Set(frames.map((f) => f.leg))], beds: [...new Set(frames.map((f) => f.bed))], layers: [...new Set(frames.map((f) => f.layer))],
-    shinePeak: Math.max(0, ...frames.map((f) => f.shine?.light ?? 0)), glintPeak: Math.max(0, ...frames.map((f) => f.shine?.glints ?? 0)),
+
     landed: frames[frames.length - 1] ? { x: frames[frames.length - 1].x, z: frames[frames.length - 1].z, yaw: frames[frames.length - 1].yaw } : null,
     errors: errors.slice(0, 6),
-    rows: frames.map(({ file, ...r }) => ({ ...r, shine: r.shine ? `${r.shine.light}/${r.shine.glints}` : null }))
+    rows: frames.map(({ file, shine, ...r }) => r)
   };
   // the contact sheet: 12 frames spread over the change, labelled
-  const pick = [];
+  // the sheet: 2 frames of the rise, 6 inside the glob cascade (it starts as the rise ends and its events sit in its
+  //   first ~60 %), then the travel, the descent and the landing
   const span = frames.filter((f) => f.t <= landedAt + 5);
-  for (let k = 0; k < 12; k++) pick.push(span[Math.round((k / 11) * (span.length - 1))]);
-  const tiles = pick.filter(Boolean).map((f) => ({ src: `data:image/png;base64,${fs.readFileSync(f.file).toString('base64')}`, label: `${f.t.toFixed(1)} s · ${f.leg ?? 'landed'} · lum ${f.lum}${f.shine?.glints ? ` · ${f.shine.glints} glints` : ''}${f.morph ? ' · morph' : ''}` }));
+  const riseEnd = (span.find((f) => f.leg && f.leg !== 'rise') ?? span[0]).t;
+  const C = { e1: 7, e2: 11, e3: 11 }[c.from];
+  const descent = (span.find((f) => f.leg === 'descend') ?? span[span.length - 1]).t;
+  const want = [0.3, riseEnd * 0.6, riseEnd + 0.4, riseEnd + 0.12 * C, riseEnd + 0.24 * C, riseEnd + 0.36 * C, riseEnd + 0.48 * C,
+    riseEnd + 0.62 * C, (riseEnd + C + descent) / 2, descent + (landedAt - descent) * 0.5, landedAt - 0.5, landedAt + 4];
+  const pick = want.map((w) => span.reduce((a, f) => (Math.abs(f.t - w) < Math.abs(a.t - w) ? f : a), span[0]));
+  const tiles = pick.filter(Boolean).map((f) => ({ src: `data:image/png;base64,${fs.readFileSync(f.file).toString('base64')}`, label: `${f.t.toFixed(1)} s · ${f.leg ?? 'landed'} · lum ${f.lum}${f.morph || f.blink || f.xrBusy ? ' · COVER' : ''}` }));
   const sheet = await page.evaluate(async (tl, title) => {
     const W = 480, H = 270, cols = 3, rows = Math.ceil(tl.length / cols);
     const c = document.createElement('canvas'); c.width = W * cols; c.height = H * rows + 34; const g = c.getContext('2d');
@@ -162,7 +173,7 @@ try {
       if (MODE && MODE !== mode) continue;
       const r = await run(c, mode);
       report.results.push(r);
-      console.log(`${r.change} ${mode}: room ${r.roomLum} (seated at the change ${r.sitLum}), darkest during ${r.minDuring} (${r.darkestAt?.leg} @ ${r.darkestAt?.t}s), after ${r.endLum} — ${r.brightAsTheRoom ? 'as bright or brighter ✓' : 'DIMMER ✗'}; camera moved before the landing: ${r.camMoved}; shine peak ${r.shinePeak}, glints ${r.glintPeak}; beds ${r.beds.join(' → ')}; layer ${r.layers.filter(Boolean).join(',') || '—'}; errors ${r.errors.length}`);
+      console.log(`${r.change} ${mode}: flew ${r.flew}; cover frames ${r.overlayFrames}; headset follow frames ${r.followFrames}/${r.rows.filter((x) => x.leg).length}; room ${r.roomLum} (at the change ${r.sitLum}), darkest during ${r.minDuring} (${r.darkestAt?.leg} @ ${r.darkestAt?.t}s), after ${r.endLum}${r.brightAsTheRoom ? '' : ' (darker mid-flight than both rooms)'}; legs ${r.legs.join(' → ')}; beds ${r.beds.join(' → ')}; layer ${r.layers.filter(Boolean).join(',') || '—'}; errors ${r.errors.length}`);
     }
   }
 } finally {

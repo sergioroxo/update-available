@@ -12,11 +12,12 @@ in G major with a Lydian lift (C♯ is the home loop's fifth-strongest pitch cla
 between 400 Hz and 1.5 kHz), bright on top in "Chase the Clouds" (spectral centroid ~2.8 kHz). So this music lives in
 Lamby's key and tempo, and then moves: everything in it is FLUID — nothing is a fixed note for long.
 
-ONE PIECE PER CHANGE, rendered to that change's own seconds. The era change is a plan (src/room/cluster.ts
-RELOCATIONS, seated: `seatedBuildSeconds` where set): the install runs on the monitor for R seconds, the room folds for B seconds (the cascade), then one slow
-morph lands you in the new seat (2.6 s cover + 1.8 s reveal, src/engine/eraChange.ts). Rendering each change on its
-own clock is what lets the pulse quicken exactly while the room is changing and slow exactly as you land. If those
-numbers change in cluster.ts or eraChange.ts, change PLANS below and run this again.
+ONE PIECE PER CHANGE, rendered to that change's own seconds. ⚑ S348 (UiB job 7): the era change is the FLYOVER again,
+on the computer and in the headset (src/room/cluster.ts RELOCATIONS): the rise (R), on 2016 → 2026 a smooth turn at
+the top (T), the crossing (B) while the room's glob cascade runs (C, from the end of the rise), and the descent into the
+seat (D). The music's pulse quickens through the cascade, holds through the crossing and slows down the descent, and
+the morph layer's creaks and whooshes sit on the cascade's own glob events — computed here from the room data in
+clusterMorph's own order (glob_events). If RELOCATIONS or the room's deltas change, run this again.
 
   passage_<from>_<to>  — the MUSIC (the music channel, the room bed; starts at the press / the restart):
       · a liquid PULSE — "water-marimba" bloops (a sine that drops three semitones into its note in 25 ms), arpeggiating
@@ -54,13 +55,15 @@ SR = 32000
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 TAU = 2 * np.pi
 
-# the plans, in seconds (src/room/cluster.ts RELOCATIONS; src/engine/eraChange.ts LANDING)
-LAND_COVER, LAND_REVEAL = 2.6, 1.8
+# ⚑ S348 (UiB job 7) — the FLIGHT's plans, in seconds (src/room/cluster.ts RELOCATIONS): R the rise, T the turn at
+#   the top (E3→E4 only), B the build leg (the crossing), C the room's cascade (from the end of the rise; the glob
+#   events sit in its first 60 %), D the descent into the seat. idx = the space state the cascade folds INTO.
 PLANS = {
-    '1997_2003': dict(R=8.3, B=7.0, walls=False, moves=False),   # the same chair: no landing morph
-    '2003_2016': dict(R=8.3, B=11.0, walls=True, moves=True),    # the walls fold away; to Vera's seat
-    '2016_2026': dict(R=7.0, B=14.0, walls=False, moves=True),   # seatedBuildSeconds (the flight's 25 s was the crossing); to Maya's seat
+    '1997_2003': dict(R=8.3, T=0.0, B=7.0, C=7.0, D=13.0, walls=False, idx=1),
+    '2003_2016': dict(R=8.3, T=0.0, B=11.0, C=11.0, D=11.5, walls=True, idx=2),
+    '2016_2026': dict(R=7.0, T=6.0, B=25.0, C=11.0, D=11.5, walls=False, idx=3),
 }
+CASCADE, PROP_DUR, GLITCH_FRAC = 5.2, 1.3, 0.42      # src/room/clusterMorph.ts
 MUSIC_TAIL, MORPH_TAIL = 7.0, 4.5
 BPM = 66.0
 BEAT = 60.0 / BPM
@@ -183,21 +186,21 @@ def saw(freq_fn, n, rng):
     return out
 
 
-def music(name, R, B, moves, **_):
+def music(name, R, T, B, C, D, **_):
     rng = np.random.default_rng(1997 + int(B * 10))
-    total = R + B + LAND_COVER + LAND_REVEAL + MUSIC_TAIL
+    L0 = R + T + B                   # the descent starts
+    LE = L0 + D                      # you land in the seat
+    LC = LE - 0.8                    # the lead's ♯11 just before the landing, resolving on it
+    total = LE + MUSIC_TAIL
     n = int(total * SR)
     t = np.arange(n) / SR
     bus = np.zeros((2, n))
-    L0 = R + B                       # the landing starts
-    LC = L0 + LAND_COVER             # the cut
-    LE = L0 + LAND_COVER + LAND_REVEAL
 
     # the chord timeline: the install on Gmaj9, the fold through four chords, the landing on Gmaj9#11
     seq = [(0.0, 'Gmaj9')]
     fold = ['Em9', 'Cmaj7#11', 'D69']
     for i, c in enumerate(fold):
-        seq.append((R + B * (i + 1) / (len(fold) + 1), c))
+        seq.append((R + (L0 - R) * (i + 1) / (len(fold) + 1), c))
     seq.append((L0 + 0.4, 'Gmaj9#11'))
 
     def chord_at(time):
@@ -207,9 +210,9 @@ def music(name, R, B, moves, **_):
                 cur = c
         return CHORDS[cur]
 
-    # the fold's progress 0…1 (0 through the install, 1 from the landing on)
+    # the fold's progress 0…1 (0 through the rise, 1 once the room has changed, through the travel and the descent)
     def fold_k(time):
-        return float(np.clip((time - R) / max(0.1, B), 0, 1))
+        return float(np.clip((time - R) / max(0.1, C), 0, 1))
 
     # ── the PAD, through the resonant sweep ──
     pad = np.zeros(n)
@@ -418,64 +421,154 @@ def shimmer_cloud(t0, t1, f_lo, f_hi, dens_lo, dens_hi, vel, rng, bus, pan_from=
         place(bus, grain(f, vel * (0.4 + 0.8 * k) * rng.uniform(0.6, 1.0), dur, rng.uniform(20, 90), rng), time, pan)
 
 
-def morph_layer(name, R, B, walls, moves, **_):
+def load_json(rel):
+    import json
+    with open(os.path.join(ROOT, rel)) as f:
+        return json.load(f)
+
+
+def fold(idx):
+    """src/room/clusterMorph.ts foldTargets(idx): era1.json + reinterp_deltas r1…r(idx+1)"""
+    era1 = load_json('data/room/era1.json')
+    deltas = load_json('data/room/reinterp_deltas.json')
+    m = {}
+    for d in era1['props']:
+        m[d['id']] = dict(color=d['color'], pos=list(d['pos']), size=list(d['size']), yaw=d.get('yaw', 0), present=True,
+                          model=d.get('model'), parts=d.get('parts'))
+    for k in range(idx + 1):
+        dl = deltas.get(['r1', 'r2', 'r3', 'r4'][k]) or {}
+        for pid, o in (dl.get('props') or {}).items():
+            t = m.get(pid)
+            if not t:
+                continue
+            for f in ('color', 'pos', 'size', 'model', 'yaw'):
+                if f in o:
+                    t[f] = list(o[f]) if isinstance(o[f], list) else o[f]
+        for pid in dl.get('remove') or []:
+            if pid in m:
+                m[pid]['present'] = False
+        for d in dl.get('add') or []:
+            m[d['id']] = dict(color=d['color'], pos=list(d['pos']), size=list(d['size']), yaw=d.get('yaw', 0), present=True,
+                              model=d.get('model'), parts=d.get('parts'))
+    return m
+
+
+def static_ids():
+    """clusterMorph.ts constantPropIds(): identical in every space state (and its baseline), not a model"""
+    sig = lambda t: repr([t['color'], t['pos'], t['size'], t['yaw']]) if t and t['present'] else 'ABSENT'
+    base = fold(-1)
+    folds = [fold(i) for i in range(4)]
+    out = set()
+    for pid, t0 in folds[0].items():
+        if not t0['present'] or t0['model'] or t0['parts']:
+            continue
+        s0 = sig(t0)
+        if not all(sig(f.get(pid)) == s0 for f in folds):
+            continue
+        if pid in base and sig(base[pid]) != s0:
+            continue
+        out.add(pid)
+    return out
+
+
+def glob_events(idx, C):
+    """the moments objects vanish, appear and change in one cascade, in seconds from its start, in clusterMorph's own
+    order (the diagonal sweep by x + z, each box starting at i/(n−1) of the sweep; models swap at once at its start)"""
+    prev, nxt, st = fold(idx - 1), fold(idx), static_ids()
+    pace = C / (CASCADE + PROP_DUR)
+    boxes, events = [], []
+    for pid in set(prev) | set(nxt):
+        if pid in st:
+            continue
+        tp, tn = prev.get(pid), nxt.get(pid)
+        was, will = bool(tp and tp['present']), bool(tn and tn['present'])
+        if (tp or tn)['model'] or (tp or tn)['parts']:
+            if was != will or (was and will and tp['pos'] != tn['pos']):
+                events.append(dict(t=0.0, kind='appear' if will and not was else 'vanish' if was and not will else 'change',
+                                   x=(tn or tp)['pos'][0], big=False, model=True))
+            continue
+        pos = (tp if tp else tn)['pos']
+        kind = ('appear' if will and not was else 'vanish' if was and not will else
+                'change' if was and will and repr([tp['color'], tp['pos'], tp['size']]) != repr([tn['color'], tn['pos'], tn['size']]) else
+                'flicker' if was and will else None)
+        size = (tn if will else tp)['size']
+        boxes.append((pos[0] + pos[2], pid, kind, pos[0], max(size) >= 2.0 or 'wall' in pid.lower()))
+    boxes.sort(key=lambda b: b[0])
+    sweep, dur = CASCADE * pace, PROP_DUR * pace
+    for i, (_, pid, kind, x, big) in enumerate(boxes):
+        if kind:
+            events.append(dict(t=(i / max(1, len(boxes) - 1)) * (sweep - dur), kind=kind, x=x, big=big and kind != 'flicker', model=False))
+    return sorted(events, key=lambda e: e['t'])
+
+
+def morph_layer(name, R, T, B, C, D, walls, idx, **_):
+    """⚑ S348 — the same sounds he loved (job 6), now ON the glob events: a creak where things vanish (bending down),
+    appear (bending up) or change; a glass tick where they only glitch; a bigger, lower whoosh where a wall moves; the
+    rising shimmer following how much is changing; a long soft fall of air through the descent; the bloom on the
+    landing. Starts with the cascade (app.ts: cluster.onSpaceChange)."""
     rng = np.random.default_rng(2026 + int(B * 10) + (7 if walls else 0))
-    total = B + LAND_COVER + LAND_REVEAL + MORPH_TAIL
+    land = T + B + D                          # the landing, from the cascade's start (the cascade starts as the rise ends)
+    total = land + MORPH_TAIL
     n = int(total * SR)
     t = np.arange(n) / SR
     bus = np.zeros((2, n))
-    cut = B + LAND_COVER
+    ev = glob_events(idx, C)
+    pan_of = lambda x: float(np.clip(x / 6.0, -0.9, 0.9))
 
-    # the rising shimmer: the whole fold, pitch and density climbing, travelling left → right with the diagonal sweep
-    shimmer_cloud(0.2, B + (LAND_COVER if moves else 0.8), 1100, 2600, 6, 70 if moves else 46, 0.02, rng, bus)
+    # the events, binned (a cascade can fold a dozen things in a second: one sound per bin, scaled by how many)
+    BIN = 0.12
+    bins = {}
+    for e in ev:
+        bins.setdefault(int(e['t'] / BIN), []).append(e)
+    for b, es in sorted(bins.items()):
+        at = b * BIN + rng.uniform(0, 0.03)
+        weight = min(2.2, np.sqrt(len(es)))
+        kinds = [e['kind'] for e in es]
+        x = float(np.mean([e['x'] for e in es]))
+        main = 'vanish' if 'vanish' in kinds else 'appear' if 'appear' in kinds else 'change' if 'change' in kinds else 'flicker'
+        if main == 'flicker':
+            m = int(0.05 * SR)
+            tt = np.arange(m) / SR
+            tick = sum(np.sin(TAU * rng.uniform(1800, 3200) * r * tt) * np.exp(-tt / 0.01) / (1 + gi) for gi, r in enumerate(GLASS))
+            place(bus, tick * 0.012 * weight, at, pan_of(x))
+            continue
+        bend = {'vanish': -0.12, 'appear': 0.12, 'change': rng.uniform(-0.05, 0.05)}[main]
+        base = {'vanish': rng.uniform(600, 1300), 'appear': rng.uniform(1300, 2300), 'change': rng.uniform(800, 1900)}[main]
+        c = creak(base, rng.uniform(0.35, 0.8) + 0.15 * weight, rng, bend)
+        place(bus, c * (0.55 + 0.35 * weight), at, pan_of(x))
+        if any(e['big'] for e in es):
+            place(bus, whoosh(2.2, 180, 1100, rng) * 1.6, max(0.0, at - 0.3), pan_of(x))
 
-    # glassy creaks, scattered through the fold (denser in its middle)
-    time = 0.4
-    while time < B - 0.4:
-        k = time / B
-        dens = 0.45 + 0.9 * np.sin(np.pi * k)
-        time += rng.exponential(1.0 / dens)
-        if time >= B - 0.3:
-            break
-        c = creak(rng.uniform(700, 2300), rng.uniform(0.45, 1.2), rng, rng.uniform(-0.08, 0.08))
-        place(bus, c, time, -0.85 + 1.7 * k + rng.uniform(-0.3, 0.3))
-
-    # soft whooshes, crossing the room with the fold
+    # the rising shimmer: over the cascade, its density following the events
+    sweep_end = 0.6 * C + 0.42 * PROP_DUR * C / (CASCADE + PROP_DUR) + 0.8
+    shimmer_cloud(0.1, sweep_end, 1100, 2600, 8, 60, 0.02, rng, bus)
+    # soft whooshes, crossing the room with the sweep
     time = 0.0
-    while time < B - 0.6:
-        k = time / B
-        dur = rng.uniform(0.9, 1.7)
+    while time < sweep_end - 0.6:
+        k = time / sweep_end
         up = rng.random() < 0.6
         lo, hi = rng.uniform(300, 600), rng.uniform(1400, 3000)
-        place(bus, whoosh(dur, lo if up else hi, hi if up else lo, rng) * rng.uniform(0.7, 1.0), time, -0.8 + 1.6 * k)
-        time += rng.uniform(1.4, 2.6)
-    if walls:
-        # the walls folding away: three bigger, lower whooshes in the fold's first half
-        for i, at in enumerate([0.12, 0.3, 0.5]):
-            place(bus, whoosh(2.4, 180, 1100, rng) * 1.7, B * at, [-0.6, 0.6, 0.0][i])
+        place(bus, whoosh(rng.uniform(0.9, 1.7), lo if up else hi, hi if up else lo, rng) * rng.uniform(0.6, 0.9), time, -0.8 + 1.6 * k)
+        time += rng.uniform(1.6, 2.8)
 
-    if moves:
-        # the landing: a whoosh rising into the cover, a glass bloom at the cut, sparkle out through the reveal
-        place(bus, whoosh(LAND_COVER + 0.3, 260, 4200, rng) * 1.5, B, 0.0)
-        m = int(3.2 * SR)
-        tt = np.arange(m) / SR
-        bloom = np.zeros(m)
-        for gi, r in enumerate(GLASS):
-            for base in (hz(79), hz(86)):                            # G5 and D6: the new room in Lamby's key
-                bloom += np.sin(TAU * base * r * tt + rng.random() * TAU) * np.exp(-tt / (1.4 / (1 + gi))) / (1 + 1.5 * gi)
-        bloom *= (1 - np.exp(-tt / 0.004)) * 0.05
-        place(bus, bloom, cut - 0.05, -0.15)
-        place(bus, np.roll(bloom, 0) * 0.8, cut + 0.012, 0.15)
-        shimmer_cloud(cut, cut + LAND_REVEAL + 1.0, 2400, 1600, 50, 4, 0.016, rng, bus, 0.0, 0.0)
-    else:
-        # the same chair (1997 → 2003): the fold settles with one small glass chime
-        m = int(2.4 * SR)
-        tt = np.arange(m) / SR
-        chime = sum(np.sin(TAU * hz(83) * r * tt) * np.exp(-tt / (1.0 / (1 + gi))) / (1 + 1.5 * gi) for gi, r in enumerate(GLASS))
-        place(bus, chime * (1 - np.exp(-tt / 0.004)) * 0.035, B + 0.2, 0.1)
+    # the descent: a long soft fall of air, and the bloom as you land in the seat
+    place(bus, whoosh(D + 0.6, 2600, 240, rng) * 0.9, land - D, 0.0)
+    m = int(3.2 * SR)
+    tt = np.arange(m) / SR
+    bloom = np.zeros(m)
+    for gi, r in enumerate(GLASS):
+        for base in (hz(79), hz(86)):                                # G5 and D6: the new room in Lamby's key
+            bloom += np.sin(TAU * base * r * tt + rng.random() * TAU) * np.exp(-tt / (1.4 / (1 + gi))) / (1 + 1.5 * gi)
+    bloom *= (1 - np.exp(-tt / 0.004)) * 0.05
+    place(bus, bloom, land - 0.05, -0.15)
+    place(bus, bloom * 0.8, land + 0.012, 0.15)
+    shimmer_cloud(land, land + 2.6, 2400, 1600, 40, 4, 0.014, rng, bus, 0.0, 0.0)
 
     bus = hall(bus, 2.2, 0.36, seed=23)
     bus *= 1 - smooth((t - (total - 1.5)) / 1.5)
+    print(f'  {name}: {len(ev)} glob events ({sum(1 for e in ev if e["kind"] == "vanish")} vanish, '
+          f'{sum(1 for e in ev if e["kind"] == "appear")} appear, {sum(1 for e in ev if e["kind"] == "change")} change, '
+          f'{sum(1 for e in ev if e["big"])} walls) over {max(e["t"] for e in ev):.1f} s of a {C:.0f} s cascade')
     return bus
 
 
