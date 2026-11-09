@@ -2,9 +2,7 @@
  * Only the world is rebased, at full pixel coverage; the tracked camera is never written.
  * Restore identity after rendering so existing room hit tests retain their coordinates. */
 import * as pc from 'playcanvas';
-import { makeScreenEntity, makeScreenTexture } from '../engine/screenTexture';
-import { FRAME, REFERENCE } from '../desktop/theme/chrome';
-import { PLACE } from '../desktop/theme/era4';
+import type { ViewMorph } from '../engine/viewMorph';
 import type { Ray } from './xrFrame';
 import { gameMenuBus } from '../state/gameMenuBus';
 
@@ -18,54 +16,25 @@ type Batcher = { _batchList: Batch[]; _batchGroups: Record<string, { id: number 
  *  to the side. They listen here instead: Recentre hands them the head as it was when the menu opened. */
 export const xrRecentred = new Set<(head: pc.Vec3, yaw: number) => void>();
 
-export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Entity, reduced: () => boolean) {
+export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Entity, reduced: () => boolean, morph: ViewMorph) {
   const authored = new pc.Entity('authored-seat');
   authored.setLocalPosition(rig.getLocalPosition()); authored.setLocalRotation(rig.getLocalRotation());
   const stage = new pc.Entity('xr-world'); app.root.addChild(stage);
-  // ⚑ S268 (his: "the pixels need to be smaller… too big of squares, it gives a more scary look") — 64 → 192 cells,
-  //   written as one ImageData per coverage step rather than a fillRect per cell
-  const CELLS = 192;
-  const canvas = document.createElement('canvas'); canvas.width = CELLS; canvas.height = CELLS;
-  const ctx = canvas.getContext('2d')!;
-  const img = ctx.createImageData(CELLS, CELLS);
-  const rgb = (hex: string): [number, number, number] => { const n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
-  const INKS = [REFERENCE.saverSky, FRAME.rule, PLACE.ink, REFERENCE.saverDim].map(rgb);
-  // the particles: a fixed, seeded field (no pattern in it — a hash, not a formula in x and y), each with the coverage
-  //   at which it appears, a size and a drift. At full coverage a wash underneath closes every gap.
-  const hash = (n: number): number => { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-  const PARTS = Array.from({ length: 1600 }, (_, i) => ({
-    x: hash(i) * CELLS, y: hash(i + 1000) * CELLS, at: hash(i + 2000) * 0.85, size: 2 + hash(i + 3000) * 5,
-    dx: (hash(i + 4000) - 0.5) * 14, dy: -4 - hash(i + 5000) * 10, ink: hash(i + 6000) < 0.85 ? 0 : hash(i + 6000) < 0.97 ? 1 : 2 + (i % 2)
-  }));
-  const drawParticles = (c: number, leaving: boolean): void => {
-    ctx.clearRect(0, 0, CELLS, CELLS);
-    const wash = Math.max(0, Math.min(1, (c - 0.62) / 0.3));
-    if (wash > 0) { const [r, g, b] = INKS[0]; ctx.fillStyle = `rgba(${r},${g},${b},${wash})`; ctx.fillRect(0, 0, CELLS, CELLS); }
-    for (const p of PARTS) {
-      if (p.at > c) continue;
-      const k = Math.min(1, (c - p.at) / 0.25), grow = 1 + (c - p.at) * 3.5;
-      const drift = (leaving ? 1 - c : c) * (leaving ? 1.6 : 1);
-      const sz = p.size * grow, x = p.x + p.dx * drift - sz / 2, y = p.y + p.dy * drift - sz / 2;
-      const [r, g, b] = INKS[p.ink];
-      ctx.fillStyle = `rgba(${r},${g},${b},${0.35 * k})`; ctx.fillRect(x - 2, y - 2, sz + 4, sz + 4);
-      ctx.fillStyle = `rgba(${r},${g},${b},${0.85 * k})`; ctx.fillRect(x, y, sz, sz);
-    }
-  };
-  void img;
-  const tex = makeScreenTexture(app, canvas);
-  const veil = makeScreenEntity('xr-pixel-dissolve', tex, 6, 6, true);
-  const layer = new pc.Layer({ name: 'XR comfort', clearDepthBuffer: true });
-  app.scene.layers.pushTransparent(layer); head.camera!.layers = [...head.camera!.layers, layer.id];
-  veil.render!.layers = [layer.id];
-  head.addChild(veil); veil.setLocalPosition(0, 0, -1.2); veil.setLocalEulerAngles(90, 0, 0); veil.enabled = false;
+  // ⚑ S346 / T08 — the veil is gone. It covered the view with particles over a near-black wash (the saver sky) and cut
+  //   under it: his 8 Nov "fades to black… I don't want fade to blacks in any of it". The cover is now the view from
+  //   the destination itself (engine/viewMorph.ts): the room you are in turns into the room you are going to.
+  /** the cover's two halves, in seconds: in (the destination arrives; the cut at its end) and out (the particles go).
+   *  An era change asks for a slower one through `slowNext()`. */
+  const QUICK = { cover: 1.0, reveal: 1.0 }, SLOW = { cover: 2.6, reveal: 1.8 };
+  let timing = QUICK, slowPending = false;
+  const pendingFixed = new pc.Mat4();
   const calibration = new pc.Mat4();
   let calibrationPending = false, committed = false;
   const fixed = new pc.Mat4(), view = new pc.Mat4(), inverse = new pc.Mat4();
   const physicalMap = new pc.Mat4(), logicalMap = new pc.Mat4();
   const physicalBounds = new WeakMap<Batch, pc.BoundingBox>();
   let worldReady = true;
-  let maskBucket = -1;
-  let active = false, elapsed = -1, applied = '', pending = '', calibrated = false, cuts = 0;
+    let active = false, elapsed = -1, applied = '', pending = '', calibrated = false, cuts = 0;
   const pos = authored.getLocalPosition().clone(), rot = authored.getLocalRotation().clone();
   const destinationPos = pos.clone(), destinationRot = rot.clone();
   const key = () => [...authored.getLocalPosition().toArray(), ...authored.getLocalRotation().toArray()].map(n => n.toFixed(4)).join(',');
@@ -137,7 +106,8 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   function tick(dt: number) {
     identity();
     if (!app.xr?.active) {
-      active = false; calibrated = false; calibrationPending = false; veil.enabled = false; elapsed = -1;
+      if (active) morph.hide();
+      active = false; calibrated = false; calibrationPending = false; elapsed = -1;
       rig.setLocalPosition(authored.getLocalPosition()); rig.setLocalRotation(authored.getLocalRotation());
       return;
     }
@@ -157,7 +127,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     offFor = off ? offFor + dt : 0;
     if (offFor > 1.5) { offFor = 0; seatFromHead(); }
     // The menu remains above an unobscured, paused world; the dissolve resumes with the story.
-    if (gameMenuBus.isOpen) { veil.enabled = false; return; }
+    if (gameMenuBus.isOpen) { if (elapsed >= 0) morph.hide(); return; }
     const next = key();
     // ⚑ S268 (his: "the camera was locked with my movement… I couldn't escape") — a re-formed room is aimed where the
     //   head faces, so every authored nudge (a lean, a look offset, a pitch) re-aimed the world at the gaze, over and
@@ -165,33 +135,38 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     if (next !== pending && !meaningful()) { pending = next; applied = next; }
     if (next !== pending) { pending = next; destinationPos.copy(authored.getLocalPosition()); destinationRot.copy(authored.getLocalRotation()); }
     if (pending !== applied && elapsed < 0) { elapsed = 0; committed = false; }
+    if (elapsed === 0 && !committed) {
+      // the start of a re-form: decide where the head will be mapped, and photograph the room from there
+      timing = slowPending ? SLOW : QUICK; slowPending = false;
+      if (calibrationPending) pendingFixed.copy(calibration);
+      else pendingFixed.setTRS(fixed.getTranslation(), new pc.Quat().setFromEulerAngles(0, head.getEulerAngles().y, 0), pc.Vec3.ONE);
+      captureDestination();
+    }
     if (elapsed >= 0) {
       elapsed += dt;
-      if (!committed && (reduced() || elapsed >= 1) && (applied !== pending || calibrationPending)) {
-        if (calibrationPending) { fixed.copy(calibration); calibrationPending = false; }
-        else {
-          // Keep the calibrated seated origin, but re-form the destination in
-          // the current heading: a freely turned head must not miss the next beat.
-          fixed.setTRS(fixed.getTranslation(), new pc.Quat().setFromEulerAngles(0, head.getEulerAngles().y, 0), pc.Vec3.ONE);
-        }
+      const total = timing.cover + timing.reveal;
+      if (!committed && (reduced() || elapsed >= timing.cover) && (applied !== pending || calibrationPending)) {
+        // Keep the calibrated seated origin, re-formed in the heading the head had when the morph began (the picture
+        // was made for that heading, so the live room behind it is the same room at the cut)
+        fixed.copy(pendingFixed); calibrationPending = false;
         pos.copy(destinationPos); rot.copy(destinationRot); applied = pending; committed = true; cuts++; updateMapping();
       }
-      if (reduced() || elapsed >= 2) elapsed = -1;
+      if (reduced() || elapsed >= total) { elapsed = -1; morph.hide(); return; }
+      // ⚑ S281's particles, kept (his: "smoother, more particle based. stuff morphs into") — now they are windows
+      const leaving = elapsed >= timing.cover;
+      const coverage = leaving ? (total - elapsed) / (timing.reveal * 0.8) : elapsed / (timing.cover * 0.8);
+      morph.set(Math.min(1, coverage), leaving);
     }
-    veil.enabled = elapsed >= 0;
-    if (veil.enabled) {
-      // ⚑ S281 (his, 1 Nov: "not the ones … with the circular pattern, it is ugly and bothersome visually. It needs to
-      //   not be roughcut, smoother, more particle based. stuff morphs into") — the old mask's noise had an x·y term,
-      //   which draws rings. Now: soft particles drift in, swell and merge until the room is covered (the cut happens
-      //   under full cover, as before), then thin out and drift on. Linear filtering: the veil is the frame, not a room.
-      tex.minFilter = pc.FILTER_LINEAR; tex.magFilter = pc.FILTER_LINEAR; tex.mipmaps = false;
-      const coverage = Math.min(1, elapsed < 1 ? elapsed / 0.8 : (2 - elapsed) / 0.8);
-      const bucket = Math.floor(Math.max(0, coverage) * 120) * 2 + (elapsed < 1 ? 0 : 1);
-      if (bucket === maskBucket) return;
-      maskBucket = bucket;
-      drawParticles(Math.max(0, coverage), elapsed >= 1);
-      tex.upload();
-    }
+  }
+  /** the logical pose the head will have once the pending re-form commits, rendered into the morph's picture */
+  function captureDestination(): void {
+    const toPos = applied !== pending ? destinationPos : pos, toRot = applied !== pending ? destinationRot : rot;
+    const facing = level(toRot);
+    const viewAfter = new pc.Mat4().setTRS(toPos.clone().add(facing.transformVector(new pc.Vec3(0, 0, -LEAN))), facing, pc.Vec3.ONE);
+    const physAfter = new pc.Mat4().mul2(pendingFixed, viewAfter.clone().invert());
+    physAfter.data[13] += lift;
+    const logicalAfter = physAfter.clone().invert();
+    morph.capture(new pc.Mat4().mul2(logicalAfter, head.getWorldTransform()), stage, { xr: true });
   }
   app.on('update', tick);
   app.on('prerender', () => {
@@ -256,6 +231,8 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     /** Available to the existing debug-only global; deterministic transition review, not a runtime input. */
     reviewStep: tick,
     get busy() { return elapsed >= 0; }, get calibrated() { return calibrated; },
+    /** S346 — the next re-form is an era's landing: a slower morph (more time, his 8 Nov note) */
+    slowNext() { slowPending = true; },
     status: () => ({ active, calibrated, elapsed, cuts, worldReady, shift: physicalMap.getTranslation().toArray(), shiftYaw: new pc.Quat().setFromMat4(physicalMap).getEulerAngles().y,
       batchesOnStage: ((app.batcher as unknown as { _batchList?: { meshInstance: { node: pc.GraphNode } | null }[] } | null)?._batchList ?? []).filter(b => b.meshInstance?.node === stage).length,
       batches: ((app.batcher as unknown as { _batchList?: unknown[] } | null)?._batchList ?? []).length, authored: authored.getLocalPosition().toArray(), head: head.getLocalPosition().toArray(), rig: rig.getPosition().toArray() }) };

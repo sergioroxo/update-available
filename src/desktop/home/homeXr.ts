@@ -36,7 +36,7 @@ export function mountHomeXr(shell: AppShell, opts: {
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d')!;
-  const tex = makeScreenTexture(app, canvas);
+  const tex = makeScreenTexture(app, canvas, 'screen');
   const plane = makeScreenEntity('lambyos-home-xr', tex, WIDTH, WIDTH * H / W);
   // Render after the loading room with fresh depth. The window can never be
   // occluded by room geometry, but a controller wand in front remains visible.

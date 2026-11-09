@@ -22,7 +22,7 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T05 ☑ S329 | 2016: pressing a notification doesn't open it; "Reply on your phone" does nothing (remove it); the mentor's message isn't on the phone | 2016 mirror | C | M |
 | T06 ☑ S329 | 2016: stories and the phone "run by themselves" while he works; a Maiden-to-be message pops in during the testimony editor | 2016 cadence | C | M |
 | T07 ☑ S329 | 2016: the update prompt arrives with no story reason, and carries the previous panel's highlight boxes; "Remind me later" leads nowhere | 2016 → update | C | M |
-| T08 | NO fades to black anywhere, before or after the eras; the era change needs more sound, more time, and a morph into the room; the dollhouse "doesn't fully work" and the miniatures look ugly | all transitions, XR | C | L |
+| T08 ☑ S346 (the dollhouse removed; every cover is the destination's own picture arriving through particles — desktop blink, 2016→2026 turn, reduced motion, every headset re-form; in a headset the era change no longer flies: the room changes round the chair for the plan's full time, then one slow morph into the new seat; the install's own music, `passage_install`; check in headset) | NO fades to black anywhere, before or after the eras; the era change needs more sound, more time, and a morph into the room; the dollhouse "doesn't fully work" and the miniatures look ugly | all transitions, XR | C | L |
 | T09 | Text in the headset is serrated and hard to read unless very close | everywhere, XR | X (Prompt C) + C | L |
 | T10 ◐ S333 (Codex: redraws 180→59; check in headset) | Lamby video breaks up when the hand moves | 2003 video, XR | X | M |
 | T11 ☑ S345 (1997/2003: a controller by the desk mouse took it — S343; 2026: a controller's press now goes where the ray was when the trigger began, not the release's dip — UIB_JOB4_BUILT; check in headset) | Phantom presses on the wall in front of Root Cause, and on 2026 boxes | 2003, 2026, XR | X | M |
@@ -169,6 +169,8 @@ His answers, 8 Nov:
 | T56 ☑ S337 | A GracePlatform music loop, made by Claude in code (no licence question): calm 2016 "wellness app" pads + plucked melody, 60–90 s, seamless | 2016 | C | S |
 | T57 | 🥽 Test Codex's sharper text (CODEX_XR_TEXT_REPORT_2026-11-08.md) on the Quest, on the GitHub Pages build (itch can't take URL options): compare https://sergioroxo.github.io/update-available/?reinterp=1 with …?reinterp=1&quad=1 on the 1997 monitor, following the report's steps. If sharper → extend to the other screens; if not → remove the patch | XR | S (headset) then C | S |
 | T52 ☑ S345 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
+| T58 ☑ S346 | Desktop, his 9 Nov: lines and letters break into stair-steps when a screen is seen at an angle ("Welcome back, Daniel"). Screens only: mipmaps + max anisotropy (his approval); the room keeps FILTER_NEAREST | all screens | C | S |
+| T59 ☑ S346 | Desktop team skip, debug builds only: N ten times within 5 s → the next year (mirrors T48) | desktop | C | S |
 
 ## Codex
 

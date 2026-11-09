@@ -17,7 +17,7 @@ export function mountSetupWindow(app: pc.Application, camera: pc.Entity, frame: 
 }): { press(ray: Ray): void; hover(ray: Ray): void; update(dt: number, progress: number): void; fold(k: number, reduced: boolean, target: pc.Vec3): void; destroy(): void } {
   // Paint before the very first GPU upload: never present an uninitialised white map.
   opts.update(0);
-  const tex = makeScreenTexture(app, opts.canvas);
+  const tex = makeScreenTexture(app, opts.canvas, 'screen');
   const plane = makeScreenEntity('setup-in-stars', tex, 2, 1.5, true);
   app.root.addChild(plane);
   const material = plane.render!.material as pc.StandardMaterial;

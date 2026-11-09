@@ -171,7 +171,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
   canvas.height = ERA1_CANVAS.height * RENDER_SCALE;
   const ctx = canvas.getContext('2d')!;
   ctx.scale(canvas.width / ERA1_CANVAS.width, canvas.height / ERA1_CANVAS.height);
-  const tex = makeScreenTexture(app, canvas);
+  const tex = makeScreenTexture(app, canvas, 'screen');
   const glass = makeScreenEntity('close-monitor-screen', tex, SCREEN.w, SCREEN.h);
   glass.setLocalPosition(SCREEN.x, SCREEN.y, SCREEN.z);
   glass.setLocalEulerAngles(90, 0, 0);   // faces +Z, the chair — as desktop-screen does

@@ -115,6 +115,10 @@ Plan of record: `docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md`.
 ## Aesthetic laws
 - Pixel discipline: import era palettes from `src/desktop/theme/` — never
   invent colors. `FILTER_NEAREST`, integer positions, 90°-step rotations only.
+  ⚑ **Exception, SCREENS only (approved by Sérgio 9 Nov 2026):** the screen canvases (monitors, device screens,
+  the setup and Home windows) are sampled with mipmaps, trilinear and the device's maximum anisotropy, so lines
+  and letters stay straight from any angle (`makeScreenTexture(…, 'screen')`). The room's own textures keep
+  `FILTER_NEAREST`.
 - **Soft Lo-Fi doctrine:** rooms are cozy low-poly with underdefined edges —
   NOT horror-dark. Tone dial per scene `tone: -2…+2`; extremes forbidden.
   The **witness side is the sharp side** (surveillance is high-definition;

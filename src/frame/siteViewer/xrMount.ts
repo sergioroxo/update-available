@@ -57,7 +57,7 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   canvas.width = Math.round(LW * SCALE); canvas.height = Math.round(LH * SCALE);
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('2D context unavailable');
-  const tex = makeScreenTexture(app, canvas);
+  const tex = makeScreenTexture(app, canvas, 'screen');
   const plane = makeScreenEntity('xr-frame-site', tex, PLANE_W, PLANE_H, true);
   const overRoom = (e: pc.Entity): void => {
     if (e.render) e.render.layers = [opts.layerId];
