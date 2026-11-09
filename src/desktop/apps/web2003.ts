@@ -180,19 +180,23 @@ export class Web2003App {
     this.link(ctx, D.thread.title, x0 + 4, b.y + 64, 'forum-thread');
     // the forum summary: Topic · Author · Replies · Views · Last Post
     ui.setFont(ctx, 9); ctx.fillStyle = P.text; ctx.fillText(I.forumsLabel, x0, b.y + 84);
-    const cols = [0, w0 - 170, w0 - 110, w0 - 76, w0 - 42];
+    // ⚑ S339 (T41, his 8 Nov: the board "is really difficult to read") — the columns are measured, not guessed: each
+    //   cell is cut to its own column with an ellipsis, so a topic no longer runs under its author
+    const cols = [0, w0 - 198, w0 - 134, w0 - 90, w0 - 50];
+    const fit = (v: string, w: number): string => { if (ctx.measureText(v).width <= w) return v; let o = v; while (o.length > 1 && ctx.measureText(o + '…').width > w) o = o.slice(0, -1); return o + '…'; };
     ui.px(ctx, x0, b.y + 96, w0, 12, P.panelHead);
     ui.setFont(ctx, 8); ctx.fillStyle = P.bannerInk;
-    I.topicsHead.forEach((h, i) => ctx.fillText(h, x0 + 3 + cols[i], b.y + 98));
+    I.topicsHead.forEach((h, i) => ctx.fillText(fit(h, (cols[i + 1] ?? w0) - cols[i] - 6), x0 + 3 + cols[i], b.y + 98));
     I.topics.forEach((t, r) => {
       const y = b.y + 110 + r * 13;
       ui.px(ctx, x0, y - 1, w0, 12, r % 2 ? P.panel : P.white);
       ui.setFont(ctx, 8);
-      if (t.live) this.link(ctx, t.t.length > 44 ? t.t.slice(0, 43) + '…' : t.t, x0 + 3, y, 'forum-thread');
-      else if ((t as { page?: string }).page) this.link(ctx, t.t.length > 44 ? t.t.slice(0, 43) + '…' : t.t, x0 + 3, y, `forum-page:${(t as { page?: string }).page}`);   // S209 / B22
-      else { ctx.fillStyle = P.text; ctx.fillText(t.t, x0 + 3, y); }
+      ui.setFont(ctx, t.live || (t as { page?: string }).page ? 9 : 8); const topic = fit(t.t, cols[1] - 8);
+      if (t.live) this.link(ctx, topic, x0 + 3, y, 'forum-thread');
+      else if ((t as { page?: string }).page) this.link(ctx, topic, x0 + 3, y, `forum-page:${(t as { page?: string }).page}`);   // S209 / B22
+      else { ctx.fillStyle = P.text; ctx.fillText(topic, x0 + 3, y); }
       ui.setFont(ctx, 8); ctx.fillStyle = P.dim;
-      [t.a, t.r, t.v, t.l].forEach((v, i) => ctx.fillText(v, x0 + 3 + cols[i + 1], y));
+      [t.a, t.r, t.v, t.l].forEach((v, i) => ctx.fillText(fit(v, (cols[i + 2] ?? w0) - cols[i + 1] - 6), x0 + 3 + cols[i + 1], y));
     });
     // Resources, and the featured book
     const ry = b.y + 170;

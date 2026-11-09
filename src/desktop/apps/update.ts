@@ -59,6 +59,8 @@ interface UpdateStrings {
   /** ⚑ S339 — this update's own deferral length in seconds (REMIND_SECONDS otherwise) */
   remindSeconds?: number;
   eulaTitle?: string;
+  /** ⚑ S339 — the 2003 setup screen's own words (u2 only): its steps, the time-left line, the minutes it claims */
+  setup?: { steps: string[]; remaining: string; minutes: number };
   eula: string[][] | null;
   readOn?: string;
   agree?: string;
@@ -458,20 +460,24 @@ export class UpdateApp {
       //   (GracePlatform) arrive on glass.
       const toE3 = this.ledgerEntry.toEra === 3;
       const toE2 = this.ledgerEntry.toEra === 2;
+      // ⚑ S339 (his answer 15: "The update into 2003 in XP style") — Restorify's terms wear 2003's window even on the
+      //   1997 desktop: the arriving system's chrome, put back to the old one when the dialog is drawn
+      const skinBefore = ui.getFrameSkin();
+      if (toE2) ui.setFrameSkin('xp');
       const c = toE3
         ? aero.windowFrame(ctx, dx, dy, dw, dh, this.s.eulaTitle ?? '', true)
         : ui.windowFrame(ctx, dx, dy, dw, dh, this.s.eulaTitle ?? '', true);
       ui.px(ctx, c.x, c.y, c.w, c.h, toE3 ? ERA3.glass : ERA1.paper);
       let top = c.y + 10;
       if (toE2) {
-        // the band: Restorify's own, the house from its splash, the brand
+        // the band: Restorify's own, its RESTORE mark, the brand. ⚑ S339 (his 8 Nov: "the symbol here… needs to be a
+        //   little bit closer to 2003 design") — the glossy round "restore" arrow of the period's system tools
+        //   (shape only, no one's mark): a blue disc with a lit top, a white circling arrow, a soft shadow
         ui.px(ctx, c.x, c.y, c.w, 30, ERA1.navy);
-        ui.px(ctx, c.x + 12, c.y + 8, 14, 14, ERA1.titleBlue);
-        ui.px(ctx, c.x + 15, c.y + 4, 8, 5, ERA1.titleBlue);
-        ui.px(ctx, c.x + 17, c.y + 13, 4, 5, ERA1.tooltip);
+        drawRestoreMark(ctx, c.x + 10, c.y + 3);
         ui.setFont(ctx, 12);
         ctx.fillStyle = ERA1.white;
-        ctx.fillText(this.s.eulaBrand ?? '', c.x + 34, c.y + 9);
+        ctx.fillText(this.s.eulaBrand ?? '', c.x + 42, c.y + 9);
         top = c.y + 42;
       }
       ui.setFont(ctx, 10);
@@ -491,6 +497,7 @@ export class UpdateApp {
         ui.button(ctx, c.x + c.w - 96, c.y + c.h - 26, 88, 18, this.s.agree ?? 'I Agree', { disabled: !last });
         ui.button(ctx, c.x + c.w - 196, c.y + c.h - 26, 88, 18, this.s.readOn ?? 'Read on', { disabled: last, primary: !last });
       }
+      ui.setFrameSkin(skinBefore);
       // only the armed one registers: one live "I Agree", on the last page (v0.5 §1)
       this.hits.push(last
         ? { x: c.x + c.w - 96, y: c.y + c.h - 26, w: 88, h: 18, id: 'eula-agree' }
@@ -498,6 +505,7 @@ export class UpdateApp {
       return;
     }
 
+    if (this.phase === 'install' && this.s.changelog && this.s.setup) { this.drawSetup2003(ctx, W, H); return; }
     if (this.phase === 'install' && this.s.changelog) {
       ui.px(ctx, 0, 0, W, H, ERA1.black);
       ui.setFont(ctx, 11);
@@ -561,6 +569,60 @@ export class UpdateApp {
         ctx.fillText(this.s.restarting, Math.round(W / 2) - 30, Math.round(H / 2));
       }
     }
+  }
+
+  /**
+   * ⚑ S339 (his answer 15) — the 1997 → 2003 install in the SHAPE of the period's setup screen: a blue field, the
+   * setup's steps down the left with the current one lit, the time it says is left under them, the "what's new"
+   * changelog (the thesis) typing on in a pale panel on the right, and the progress bar at the foot. Shape and colour
+   * language only — the words are Restorify's, the colours ERA1's, no one's marks.
+   */
+  private drawSetup2003(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const S = this.s.setup!;
+    const total = this.s.installSeconds ?? INSTALL_SECONDS;
+    const k = Math.min(1, this.t / total);
+    ui.px(ctx, 0, 0, W, H, ERA1.titleBlue);
+    ui.px(ctx, 0, 0, W, 40, ERA1.navy);
+    ui.px(ctx, 0, 40, W, 2, ERA1.tooltip);
+    ui.px(ctx, 0, H - 40, W, 40, ERA1.navy);
+    ui.px(ctx, 0, H - 42, W, 2, ERA1.tooltip);
+    drawRestoreMark(ctx, 14, 8);
+    ui.setFont(ctx, 14); ctx.fillStyle = ERA1.white;
+    ctx.fillText(this.s.installTitle ?? '', 44, 12);
+    // the steps
+    const sx = 18, sy = 62;
+    const cur = Math.min(S.steps.length - 1, Math.floor(k * S.steps.length));
+    ui.setFont(ctx, 10);
+    S.steps.forEach((st, i) => {
+      const y = sy + i * 22;
+      ui.px(ctx, sx, y + 2, 8, 8, i < cur ? ERA1.ok : i === cur ? ERA1.tooltip : ERA1.navy);
+      ctx.fillStyle = i === cur ? ERA1.white : i < cur ? ERA1.paper : ERA1.silver;
+      ctx.fillText(st, sx + 14, y);
+    });
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.paper;
+    const mins = Math.max(1, Math.ceil((1 - k) * S.minutes));
+    ui.wrapText(ctx, S.remaining.replace('{n}', String(mins)), 150).forEach((l, i) => ctx.fillText(l, sx, sy + S.steps.length * 22 + 14 + i * 11));
+    // the panel: what's new — the changelog-as-thesis, typing on
+    const px0 = 186, py0 = 58, pw = W - px0 - 16, ph = H - py0 - 58;
+    ui.px(ctx, px0 + 3, py0 + 3, pw, ph, ERA1.navy);
+    ui.px(ctx, px0, py0, pw, ph, ERA1.paper);
+    ui.px(ctx, px0, py0, pw, 3, ERA1.tooltip);
+    const shown = Math.min(this.s.changelog!.length, Math.floor(this.t / 0.8));
+    let y = py0 + 14;
+    for (let i = 0; i < shown; i++) {
+      const line = this.s.changelog![i];
+      ui.setFont(ctx, i === 0 ? 12 : 10);
+      ctx.fillStyle = i === 0 ? ERA1.navy : line.startsWith('-') ? ERA1.warnDark : ERA1.black;
+      for (const row of ui.wrapText(ctx, line, pw - 24)) { ctx.fillText(row, px0 + 12, y); y += i === 0 ? 20 : 15; }
+    }
+    // the bar, at the foot, the period's green blocks
+    const bw = 150, bx = sx, by = sy + S.steps.length * 22 + 46;   // under the time-left line, clear of any bar below
+    ui.px(ctx, bx - 1, by - 1, bw + 2, 14, ERA1.paper);
+    ui.px(ctx, bx, by, bw, 12, ERA1.white);
+    let kk = k;
+    if (kk > 0.72 && kk < 0.96 && Math.random() < 0.3) kk -= 0.05 * Math.random(); // the stutter
+    const blocks = Math.floor((bw - 2) / 8 * kk);
+    for (let i = 0; i < blocks; i++) ui.px(ctx, bx + 2 + i * 8, by + 2, 6, 8, ERA1.ok);
   }
 
   /**
@@ -740,4 +802,21 @@ export class UpdateApp {
     //   and Era 4's arriving one — now answer the same two registered ids above,
     //   so the branch that used to live here is gone rather than kept in step.
   }
+}
+
+/** ⚑ S339 — Restorify's restore mark, 2003: a 24 px glossy disc (ERA1 blues), a white circling arrow, a lit top edge */
+function drawRestoreMark(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  const R = 12, cx = x + R, cy = y + R;
+  for (let yy = -R; yy < R; yy++) for (let xx = -R; xx < R; xx++) {
+    const d = Math.hypot(xx + 0.5, yy + 0.5);
+    if (d > R) continue;
+    ui.px(ctx, cx + xx, cy + yy, 1, 1, d > R - 1.5 ? ERA1.navy : yy < -R / 3 ? ERA1.titleBlue : yy < R / 3 ? ERA1.teal : ERA1.tealDark);
+  }
+  ctx.save(); ctx.globalAlpha = 0.5; ui.px(ctx, cx - 6, cy - 9, 12, 2, ERA1.white); ctx.restore();
+  // the arrow: three quarters of a ring, its head at the top
+  for (let a = 0.35; a < 5.3; a += 0.12) {
+    const ax = Math.round(cx + Math.cos(a) * 6.5), ay = Math.round(cy + Math.sin(a) * 6.5);
+    ui.px(ctx, ax - 1, ay - 1, 2, 2, ERA1.white);
+  }
+  ui.px(ctx, cx + 3, cy - 9, 2, 6, ERA1.white); ui.px(ctx, cx + 3, cy - 4, 6, 2, ERA1.white);
 }

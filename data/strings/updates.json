@@ -49,6 +49,18 @@
   "readOn": "Read on",
   "agree": "I Agree",
   "installTitle": "Installing Restorify 2003",
+  "setup": {
+   "_doc": "⚑ S339 (his answer 15: 'The update into 2003 in XP style') — the install drawn in the shape of the period's setup screen (src/desktop/apps/update.ts drawSetup2003): its steps down the left, the time it claims is left, the changelog in a panel. Restorify's words; no one's marks.",
+   "steps": [
+    "Collecting your file",
+    "Checking for updates",
+    "Preparing your journey",
+    "Installing Restorify",
+    "Finalizing"
+   ],
+   "remaining": "Restorify will be ready in approximately {n} minutes.",
+   "minutes": 34
+  },
   "changelog": [
    "RESTORIFY 2003 — WHAT'S NEW",
    "+ fresh look, brighter rooms",
