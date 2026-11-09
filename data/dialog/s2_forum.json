@@ -20,6 +20,9 @@
  ],
  "addressLabel": "Address",
  "go": "Go",
+ "statusDone": "Done",
+ "statusZone": "Internet",
+ "_docS342": "⚑ S342 — the browser's status bar (src/desktop/apps/web2003.ts drawWebView), shared by Harbor and Restorify Media's site.",
  "address": "http://www.harborforums.org/",
  "banner": "HARBOR",
  "bannerSub": "a confidential, free, moderated message board",
@@ -75,7 +78,22 @@
    }
   ],
   "reply": "Post reply",
-  "yourLine": "I'm back. I'll post every day.",
+  "yourLine": "I'm back. I'll post every day.", 
+  "postStory": "Post your story",
+  "notReady": "You can post it once your story is made.",
+  "preview": "Your post (filled in by Restorify Media):",
+  "story": {
+   "who": "daniel_97",
+   "meta": "New member · 1 post",
+   "metaPending": "New member · awaiting approval",
+   "lines": [
+    "My story, as seen in Discover the New You.",
+    "\u201cI used to think I would always be this way.\u201d",
+    "If you are struggling, watch it. It can be you too."
+   ],
+   "attachment": "Daniel_1997.wmv \u00b7 watch my story"
+  },
+  "_docS342": "⚑ S342 (his 9 Nov answer 2: 'Harbor: yes… instead of posting the reply, it's posting your testimony') — Post now posts Daniel's testimony, a card filled in by Restorify Media in the programme's words (OPERABLE: the programme's self-presentation; the person is not satirised). Until the story exists the button is greyed and says why. `yourLine` is kept as the record and read by nothing.",
   "pending": "Thank you. Your post will appear once a moderator approves it.",
   "praying": "3 people are praying for you.",
   "afterBoard": "Back to the board",

@@ -3086,7 +3086,7 @@ export class DesktopOS {
     // order. (Clicks were never affected — the chat takes them first.)
     this.drawSendOffer(W, H);
     // ⚑ S191 — 2003's forum: over the desktop's objects and Restorify, under the felt window and the intrusions
-    if (this.forum?.open) this.forum.draw(ctx);
+    if (this.forum?.open) { this.forum.storyReady = ledger.records.includes('testimony-cut'); this.forum.draw(ctx); }   // S342: Post posts his story
     if (this.testimony?.open) this.testimony.draw(ctx);   // S205
     // S2R.3: the person's window FIRST (felt), then every intrusion on it
     // (operable) drawn over it. Lamby lives only in the second of these two
@@ -4511,7 +4511,7 @@ export class DesktopOS {
     //   BEFORE Restorify and the desktop's own icons, which sit under their left columns
     if (this.phase === 'desktop' && this.web?.open) { this.web.handleClick(x, y); this.dirty = true; return; }
     if (this.phase === 'desktop' && this.testimony?.open) { this.testimony.handleClick(x, y); this.dirty = true; return; }
-    if (this.phase === 'desktop' && this.forum?.open) { this.forum.handleClick(x, y); this.dirty = true; if (!this.forum.open) this.wayBack('e2'); return; }   // S207: closed → the way back
+    if (this.phase === 'desktop' && this.forum?.open) { this.forum.storyReady = ledger.records.includes('testimony-cut'); this.forum.handleClick(x, y); this.dirty = true; if (!this.forum.open) this.wayBack('e2'); return; }   // S207: closed → the way back
     // ⚑ S339 — Restorify takes the presses on its own window; one beside it reaches the desktop's icons
     if (this.phase === 'desktop' && this.restorify?.open && (this.restorify.contains(x, y) || !hit?.id.startsWith('icon-'))) { this.restorify.handleClick(x, y); return; }
     if (hit) {

@@ -74,6 +74,9 @@ const HOLD: Record<Exclude<AlertStep, 'caught' | 'closed'>, number> = {
   system: A.systemSeconds,
   sad: A.sadHoldSeconds
 };
+/** ⚑ S342 (his 9 Nov answer 1: "the accountability alert runs too fast… a Next button… if nobody presses, it moves on
+ *  by itself after about 20 s. No visible countdown") — each step now waits for Next, or this many seconds */
+const AUTO_NEXT = (A as unknown as { autoNextSeconds: number }).autoNextSeconds;
 const STREAK_FALL = A.streakFallSeconds;   // s for the counter to run 412 → 0
 const GLITCH_STEP = MAIL.streakGlitchStepSeconds; // s per state of the dying field (S2R.5)
 const MAIL_ARRIVE = MAIL.arriveGlitchSeconds;     // s of the envelope's glitch entrance
@@ -297,8 +300,11 @@ export class AccountabilityApp {
     if (this.step === 'closed' || this.step === 'caught') return;
 
     this.stepT += dt;
-    const hold = HOLD[this.step];
+    // ⚑ S342 — the player sets the pace: Next, or AUTO_NEXT of quiet (the authored HOLDs are the floor a press
+    //   cannot undercut only for the falling streak, which finishes its fall before the step can go)
+    const hold = this.nextPressed ? (this.step === 'streak' ? Math.min(HOLD.streak, STREAK_FALL) : 0) : AUTO_NEXT;
     if (this.stepT < hold) return;
+    this.nextPressed = false;
     this.stepT = 0;
     switch (this.step) {
       case 'stop':
@@ -436,7 +442,16 @@ export class AccountabilityApp {
     }
     if (this.streakT >= 0) this.drawStreak(ctx, L, c.y + 66);
     if (this.step === 'caught') this.drawAlertButtons(ctx, c);
+    else if (this.step !== 'closed') {
+      // ⚑ S342 — Next, in the Messenger's Wait / Go on style (no countdown is shown)
+      const by = c.y + c.h - 22, nx = c.x + c.w - 92;
+      ui.button(ctx, nx, by, 88, 20, caleb.alert.nextLabel, { hover: this.hover === 'alert-next', primary: true });
+      this.hits.push({ x: nx, y: by, w: 88, h: 20, id: 'alert-next' });
+    }
   }
+
+  /** ⚑ S342 — Next was pressed on this step */
+  private nextPressed = false;
 
   /** the type area: Lamby's current beat, or the SYSTEM's own two lines, or —
    *  during the shame hold and the collapse — nothing at all. */
@@ -726,14 +741,16 @@ export class AccountabilityApp {
     //   press it finishes the message faster") — the alert still runs itself (his cadence answer: automatic), but a
     //   press anywhere hurries the step on screen to its end, and the falling streak with it. Nothing is skipped or
     //   filed differently: the same steps play, in order, only sooner.
+    // ⚑ S342 — a press beside the buttons no longer hurries the step (Next does that now); it only lets the falling
+    //   streak land
     if (!hit && this.step !== 'closed' && this.step !== 'caught') {
-      this.stepT = Math.max(this.stepT, HOLD[this.step] - 0.35);
       if (this.streakT >= 0 && this.streakT < STREAK_FALL) this.streakT = Math.max(this.streakT, STREAK_FALL - 0.3);
       this.dirty = true;
       return;
     }
     if (!hit) return;
     switch (hit.id) {
+      case 'alert-next': playOnce('ui_press.mp3'); this.nextPressed = true; this.dirty = true; break;
       case 'alert-ok': playOnce('ui_press.mp3'); this.closeAlert(false); break;
       case 'alert-dismiss': playOnce('ui_press.mp3'); this.closeAlert(true); break;
       case 'mail-open': this.mail = 'letter'; this.glitchT = 0; this.dirty = true; break;

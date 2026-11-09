@@ -138,6 +138,10 @@
    "open": "Open the folder"
   },
   "notice": "Your testimony is reaching people.",
+  "pageTitle": "Stories of Hope",
+  "statusBuffer": "Opening stream\u2026 56 kbps",
+  "statusOpening": "Opening page\u2026",
+  "_docS342": "⚑ S342 (his 9 Nov answer 4: \"doesn't even have the browser look, so it is not connected to the browser of the project\") — his page, the parents' form and the DVD collection open in WebView, the 2003 browser Harbor uses (web2003.ts drawWebView). `pageTitle` names the window; the status lines are the browser's.",
   "see": "See it",
   "browserTitle": "Stories of Hope — WebView",
   "address": "http://www.restorify-media.org/stories/daniel.html",
@@ -165,6 +169,9 @@
   "dvd": {
    "_doc": "⚑ S339 / T49 (his answers 11 and 12; 12:26 'a collection of DVDs for the New You program… how they share the clips of the testimonies') — 'Discover the New You', the ministry's web shop of 2003: three DVDs and their teasers. Daniel's own story is the newest tile; Caleb's teaser is the one that plays, and it cuts on Daniel's name (answer 11, his words for the two lines, verbatim). OPERABLE: the programme's self-presentation may charm; the PEOPLE in it are never satirised. Invented marks only (Restorify Media, New Morning). Names: Marcus is the infomercial's own (s2_media.json); the third tile is unnamed.",
    "address": "http://www.restorify-media.org/newyou/collection.html",
+   "pageTitle": "Discover the New You \u2014 The Collection",
+   "blank": "http://www.restorify-media.org/",
+   "done": "Close",
    "header": "DISCOVER THE NEW YOU",
    "sub": "The Collection · real stories of real change · Restorify Media",
    "price": "3-DVD set $19.99",
@@ -183,9 +190,12 @@
     "who": "CALEB",
     "answer": "The people. Like my roommate, Daniel—",
     "ended": "■  END OF TEASER · order the full story on DVD 3",
-    "questionSeconds": 3.2,
-    "cutSeconds": 6.6,
-    "endSeconds": 8.2
+    "questionSeconds": 3.8,
+    "cutSeconds": 8.2,
+    "endSeconds": 10.4,
+    "playerTitle": "caleb_teaser.wmv - MediaPlay 9",
+    "file": "Clip 2 of 9 \u00b7 Discover the New You, DVD 3 \u00b7 Restorify Media",
+    "_docS342": "⚑ S342 (his 9 Nov answer 4) — the teaser plays in MediaPlay 9 (the player his page says it requires) and shows Caleb in his room the whole time; the presenter is an off-camera subtitle. Longer timings so both lines can be read."
    }
   },
   "close": "Close"

@@ -37,6 +37,7 @@ import { ledger } from '../../state/ledger';
 import { playLoop, stopClip } from '../../audio/tapeAudio';
 import T from '../../../data/dialog/s2_testimony.json';
 import guidedCopy from '../../../data/strings/extras.json';
+import { drawWebView } from './web2003';
 
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 type Stage = 'prep' | 'release' | 'tapes' | 'player' | 'cut' | 'online';
@@ -44,7 +45,7 @@ type ClipId = 'daniel' | 'caleb' | 'tone';
 interface Line { t: number; who: string; text: string }
 const CLIPS = T.tapes.clips as unknown as Record<ClipId, { seconds: number; lines: Line[] }>;
 /** ⚑ S339 — Caleb's teaser on the collection page (his answer 11) */
-const TEASER = T.online.dvd.teaser as { presenter: string; question: string; who: string; answer: string; ended: string; questionSeconds: number; cutSeconds: number; endSeconds: number };
+const TEASER = T.online.dvd.teaser as { presenter: string; question: string; who: string; answer: string; ended: string; questionSeconds: number; cutSeconds: number; endSeconds: number; playerTitle: string; file: string };
 
 const DX = 24, DY = 12, DW = 464, DH = 346;
 /** the editor's blocks: S = a sentence, C = a chapter card, F = a fragment, by version */
@@ -201,6 +202,7 @@ export class TestimonyApp {
       case 'ts-openfolder': this.onOpenFolder?.(); return true;
       case 'ts-apply-next': this.applyOpen = false; this.web = 'dvd'; return true;
       case 'ts-teaser': this.web = 'teaser'; this.webT = 0; return true;
+      case 'ts-webback': this.web = 'done'; return true;
       case 'ts-see': this.web = 'page'; return true;
       case 'ts-watch': this.web = 'buffer'; this.webT = 0; return true;
       case 'ts-apply': this.applyOpen = true; return true;   // nothing is filed: it is the next family's form, not his
@@ -220,6 +222,7 @@ export class TestimonyApp {
     this.dirty = false;
     if (this.stage === 'online' && this.web === 'play') { this.drawFinal(ctx); return; }
     if (this.stage === 'online' && this.web === 'teaser') { this.drawTeaser(ctx); return; }
+    if (this.stage === 'online' && this.web !== 'saved') { this.drawSite(ctx); return; }
     const c = ui.windowFrame(ctx, DX, DY, DW, DH, T.windowTitle, true);
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.beige);
     if (c.closeBox.w > 0) this.hits.push({ ...c.closeBox, id: 'ts-close' });
@@ -489,7 +492,8 @@ export class TestimonyApp {
     }
     if (this.web === 'dvd') { this.drawDvd(ctx, c); return; }
     if (this.web === 'notice') {
-      const nx = c.x + Math.round((c.w - 300) / 2), ny = c.y + 110;
+      ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.white);
+      const nx = c.x + Math.round((c.w - 300) / 2), ny = c.y + 90;
       ui.bevel(ctx, nx, ny, 300, 80, true);
       ui.px(ctx, nx + 2, ny + 2, 296, 14, ERA1.navy);
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.white; ctx.fillText('Restorify Media', nx + 6, ny + 4);
@@ -497,11 +501,8 @@ export class TestimonyApp {
       this.button(ctx, nx + 300 - 90, ny + 50, O.see, 'ts-see', 80);
       return;
     }
-    // a 2003 browser: the address, then the ministry's page
-    ui.px(ctx, c.x + 4, c.y + 4, c.w - 8, 18, ERA1.white);
-    ui.px(ctx, c.x + 4, c.y + 4, c.w - 8, 1, ERA1.grey);
-    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black; ctx.fillText(O.address, c.x + 10, c.y + 8);
-    const px0 = c.x + 4, py0 = c.y + 26, pw = c.w - 8, ph = c.h - 62;
+    // ⚑ S342 — the ministry's page, inside WebView (drawSite draws the browser around this rect)
+    const px0 = c.x, py0 = c.y, pw = c.w, ph = c.h;
     ui.px(ctx, px0, py0, pw, ph, ERA1.white);
     ui.px(ctx, px0, py0, pw, 26, F.banner);
     ui.setFont(ctx, 14); ctx.fillStyle = F.bannerInk; ctx.fillText(O.header, px0 + 12, py0 + 6);
@@ -560,7 +561,6 @@ export class TestimonyApp {
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.warnDark;
       ui.wrapText(ctx, O.count.replace('{n}', '3'), px0 + pw - 12 - vx).forEach((l, i) => ctx.fillText(l, vx, vy + vh + 30 + i * 11));
     }
-    this.rightButton(ctx, c, O.close, null);   // ⚑ S339: the page goes on — Start here → the form → the collection
     if (this.applyOpen) this.drawApply(ctx, c);
   }
 
@@ -597,10 +597,7 @@ export class TestimonyApp {
    *  ministry's web shop of 2003. His own story is the newest tile; Caleb's teaser is the one that plays. */
   private drawDvd(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     const D = T.online.dvd;
-    ui.px(ctx, c.x + 4, c.y + 4, c.w - 8, 18, ERA1.white);
-    ui.px(ctx, c.x + 4, c.y + 4, c.w - 8, 1, ERA1.grey);
-    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black; ctx.fillText(D.address, c.x + 10, c.y + 8);
-    const px0 = c.x + 4, py0 = c.y + 26, pw = c.w - 8, ph = c.h - 62;
+    const px0 = c.x, py0 = c.y, pw = c.w, ph = c.h;
     ui.px(ctx, px0, py0, pw, ph, ERA1.white);
     ui.px(ctx, px0, py0, pw, 40, F.banner);
     ui.setFont(ctx, 14); ctx.fillStyle = F.bannerInk; ctx.fillText(D.header, px0 + 12, py0 + 5);
@@ -609,16 +606,19 @@ export class TestimonyApp {
     const pr = D.price, prw = ctx.measureText(pr).width; ctx.fillText(pr, px0 + pw - 12 - prw, py0 + 14);
     ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(D.lead, px0 + 12, py0 + 48);
     const tiles = D.tiles as { id: string; name: string; line: string; tag: string }[];
-    const tw = Math.floor((pw - 36) / 2), th = 92;
+    const tw = Math.floor((pw - 36) / 2), th = 74;
     tiles.forEach((tl, i) => {
-      const tx = px0 + 12 + (i % 2) * (tw + 12), ty = py0 + 64 + Math.floor(i / 2) * (th + 8);
+      const tx = px0 + 12 + (i % 2) * (tw + 12), ty = py0 + 62 + Math.floor(i / 2) * (th + 6);
       const live = tl.id === 'caleb', hov = live && this.hover === 'ts-teaser';
       ui.px(ctx, tx, ty, tw, th, hov ? ERA1.titleBlue : ERA1.silver);
       ui.px(ctx, tx + 1, ty + 1, tw - 2, th - 2, ERA1.paper);
-      const vx = tx + 6, vy = ty + 6, vw = 96, vh = 72;
+      const vx = tx + 5, vy = ty + 5, vw = 84, vh = 63;
+      // ⚑ S342 (his 9 Nov answer 4) — every tile has its picture: Caleb's room, Daniel's set, Marcus in a room of his
+      //   own (faceless, invented), and for "Your story?" the empty chair under the studio light
       if (tl.id === 'caleb') drawFootage(ctx, 'caleb', 4, vx, vy, vw, vh, 0, true);
       else if (tl.id === 'daniel') drawFootage(ctx, 'daniel', 9, vx, vy, vw, vh, 0, true);
-      else { ui.px(ctx, vx, vy, vw, vh, F.black); ui.setFont(ctx, 9); ctx.fillStyle = F.osd; ctx.fillText(D.soon, vx + 14, vy + 30); }
+      else if (tl.id === 'marcus') drawPixelScene(ctx, 'marcus', vx, vy, vw, vh);
+      else drawPixelScene(ctx, 'chair', vx, vy, vw, vh);
       if (live) {
         const cx = vx + vw / 2, cy = vy + vh / 2;
         ui.px(ctx, cx - 13, cy - 10, 26, 20, ERA1.black);
@@ -632,39 +632,79 @@ export class TestimonyApp {
       ctx.fillStyle = live ? ERA1.navy : tl.id === 'daniel' ? ERA1.warnDark : ERA1.grey;
       ctx.fillText(tl.tag, lx, vy + vh - 10);
     });
-    this.rightButton(ctx, c, T.online.close, this.teaserSeen ? 'ts-done' : null);
+    // the page's own way out once the teaser has played (the window's X does the same)
+    if (this.teaserSeen) {
+      ui.setFont(ctx, 10);
+      const lw = Math.ceil(ctx.measureText(D.done).width) + 24;
+      this.button(ctx, px0 + pw - lw - 12, py0 + ph - 26, D.done, 'ts-done', lw);
+    }
   }
 
-  /** the teaser, full screen as his own story was: the question on a card, then Caleb, then the cut */
+  /** ⚑ S342 — Restorify Media's site, in the 2003 browser (WebView, the one Harbor uses: web2003.ts drawWebView) */
+  private drawSite(ctx: CanvasRenderingContext2D): void {
+    const O = T.online;
+    const dvd = this.web === 'dvd';
+    const wv = drawWebView(ctx, {
+      title: dvd ? O.dvd.pageTitle : O.pageTitle,
+      address: this.web === 'notice' ? O.dvd.blank : dvd ? O.dvd.address : O.address,
+      closeId: dvd && this.teaserSeen ? 'ts-done' : 'ts-close',
+      backId: dvd && !this.applyOpen ? 'ts-webback' : null,
+      status: this.web === 'buffer' ? O.statusBuffer : this.web === 'notice' ? O.statusOpening : undefined,
+      hover: this.hover
+    });
+    this.hits.push(...wv.hits);
+    const b = wv.page;
+    const rect = { x: b.x, y: b.y, w: b.w, h: b.h, closeBox: { x: 0, y: 0, w: 0, h: 0 } } as ui.ContentRect;
+    this.drawOnline(ctx, rect);
+  }
+
+  /** ⚑ S342 (his 9 Nov answer 4: "while Caleb speaks, it must show Caleb… in a 2003 video-player look") — the teaser
+   *  plays in MediaPlay 9, the player his page says it requires: Caleb in his room the whole time, the presenter's
+   *  question as an off-camera subtitle, his answer, and the cut — the frame freezes, the tape tears, END OF TEASER. */
   private drawTeaser(ctx: CanvasRenderingContext2D): void {
     const W = ERA1_CANVAS.width, H = ERA1_CANVAS.height - 22;
-    ui.px(ctx, 0, 0, W, H, ERA1.black);
-    const vh = Math.round(W * 9 / 16), vy = Math.round((H - vh) / 2);
+    ui.px(ctx, 0, 0, W, H, ERA1.tealDark);
+    const ww = 472, wh = 330, wx = Math.round((W - ww) / 2), wy = Math.round((H - wh) / 2);
+    const c = ui.windowFrame(ctx, wx, wy, ww, wh, TEASER.playerTitle, true);
+    ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.greyDark);
+    const vw = c.w - 12, vh = Math.round(vw * 9 / 16), vx = c.x + 6, vy = c.y + 6;
     const t = this.webT;
-    const sub = (who: string, line: string): void => {
-      ui.setFont(ctx, 12);
-      const rows = ui.wrapText(ctx, line, W - 80);
-      rows.forEach((r, i) => {
-        const rw = ctx.measureText(r).width, ry = vy + vh - 20 - (rows.length - i) * 16;
-        ui.px(ctx, Math.round((W - rw) / 2) - 4, ry - 2, Math.ceil(rw) + 8, 16, F.black);
-        ctx.fillStyle = F.sub; ctx.fillText(r, Math.round((W - rw) / 2), ry);
-      });
-      ui.setFont(ctx, 9); ctx.fillStyle = F.subWho; ctx.fillText(who, 40, vy + vh - 20 - rows.length * 16 - 14);
-    };
-    if (t < TEASER.questionSeconds) {
-      // the presenter's question, on the DVD's own title card
-      ui.px(ctx, 0, vy, W, vh, F.banner);
-      ui.setFont(ctx, 10); ctx.fillStyle = F.bannerInk; ctx.fillText(T.online.dvd.header, 40, vy + 24);
-      sub(TEASER.presenter, TEASER.question);
-    } else if (t < TEASER.cutSeconds) {
-      drawFootage(ctx, 'caleb', 2 + (t - TEASER.questionSeconds), 0, vy, W, vh, this.tick, false);
-      sub(TEASER.who, TEASER.answer);
-    } else {
-      // the cut: the clip ends on his word, and the shop's card takes the screen
-      ui.setFont(ctx, 10); ctx.fillStyle = F.osd;
+    const cut = t >= TEASER.cutSeconds;
+    // the picture: Caleb, live until the cut, then held on the frame where the word stopped
+    drawFootage(ctx, 'caleb', 2 + Math.min(t, TEASER.cutSeconds), vx, vy, vw, vh, cut ? 2 + TEASER.cutSeconds : this.tick, cut);
+    if (cut) {
+      // the tear: a band of black across the held frame and the card over it
+      ui.px(ctx, vx, vy + Math.round(vh * 0.42), vw, Math.round(vh * 0.16), F.black);
+      ui.setFont(ctx, 11); ctx.fillStyle = F.osd;
       const e = TEASER.ended, ew = ctx.measureText(e).width;
-      ctx.fillText(e, Math.round((W - ew) / 2), vy + Math.round(vh / 2) - 6);
+      ctx.fillText(e, vx + Math.round((vw - ew) / 2), vy + Math.round(vh / 2) - 6);
+    } else {
+      const who = t < TEASER.questionSeconds ? TEASER.presenter : TEASER.who;
+      const line = t < TEASER.questionSeconds ? TEASER.question : TEASER.answer;
+      ui.setFont(ctx, 11);
+      const rows = ui.wrapText(ctx, line, vw - 40);
+      rows.forEach((r, i) => {
+        const rw = ctx.measureText(r).width, ry = vy + vh - 12 - (rows.length - i) * 15;
+        ui.px(ctx, vx + Math.round((vw - rw) / 2) - 4, ry - 2, Math.ceil(rw) + 8, 15, F.black);
+        ctx.fillStyle = F.sub; ctx.fillText(r, vx + Math.round((vw - rw) / 2), ry);
+      });
+      ui.setFont(ctx, 9); ctx.fillStyle = F.subWho; ctx.fillText(who, vx + 10, vy + vh - 12 - rows.length * 15 - 14);
     }
+    // the transport: play/pause, the seek bar, the time, the volume — the period's player, nothing pressable
+    const ty = vy + vh + 8;
+    ui.px(ctx, c.x, ty - 2, c.w, c.y + c.h - ty + 2, ERA1.beige);
+    ui.button(ctx, c.x + 8, ty + 4, 26, 18, cut ? '\u25b6' : '\u275a\u275a', {});
+    ui.button(ctx, c.x + 38, ty + 4, 26, 18, '\u25a0', {});
+    const sx = c.x + 72, sw = c.w - 170;
+    ui.px(ctx, sx, ty + 11, sw, 4, ERA1.grey);
+    const k = Math.min(1, t / TEASER.endSeconds);
+    ui.px(ctx, sx, ty + 11, Math.round(sw * k), 4, ERA1.titleBlue);
+    ui.px(ctx, sx + Math.round(sw * k) - 3, ty + 7, 6, 12, ERA1.navy);
+    const mmss = (v: number): string => `0:${String(Math.floor(v)).padStart(2, '0')}`;
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black;
+    ctx.fillText(`${mmss(Math.min(t, TEASER.endSeconds))} / ${mmss(TEASER.endSeconds)}`, sx + sw + 8, ty + 8);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.greyDark;
+    ctx.fillText(TEASER.file, c.x + 8, ty + 28);
   }
 }
 
@@ -968,4 +1008,55 @@ function drawBlock(ctx: CanvasRenderingContext2D, b: ['S' | 'C' | 'F', number], 
     for (let yy = y; yy < y + h; yy += 8) for (let xx = x + ((yy / 8) % 2) * 8; xx < x + w; xx += 16) ui.px(ctx, xx, yy, 8, 8, ERA1.black);
     ctx.globalAlpha = was;
   }
+}
+
+/**
+ * ⚑ S342 (his 9 Nov answer 4) — the two DVD tiles that were black boxes. Painted at a third of their size and shown
+ * nearest-neighbour, like Caleb's webcam: MARCUS, an invented man in a daytime room of his own (a window, a framed
+ * picture, a sofa), faceless as every body in the piece; and for "Your story?", the EMPTY CHAIR under the studio's
+ * softbox — the set waiting for the next one. FOOTAGE's colours (theme/calendar.ts) and ERA1's only.
+ */
+const sceneBufs = new Map<string, HTMLCanvasElement>();
+function drawPixelScene(ctx: CanvasRenderingContext2D, which: 'marcus' | 'chair', x: number, y: number, w: number, h: number): void {
+  const lw = Math.max(32, Math.round(w / 3)), lh = Math.max(24, Math.round(h / 3));
+  const key = `${which}:${lw}x${lh}`;
+  let cv = sceneBufs.get(key);
+  if (!cv) {
+    cv = document.createElement('canvas'); cv.width = lw; cv.height = lh;
+    const b = cv.getContext('2d');
+    if (b) {
+      const R = (col: string, rx: number, ry: number, rw: number, rh: number, a = 1): void => { b.globalAlpha = a; b.fillStyle = col; b.fillRect(Math.round(rx), Math.round(ry), Math.max(1, Math.round(rw)), Math.max(1, Math.round(rh))); };
+      const E = (col: string, cx: number, cy: number, rx: number, ry: number, a = 1): void => { b.globalAlpha = a; b.fillStyle = col; b.beginPath(); b.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); b.fill(); };
+      if (which === 'marcus') {
+        R(F.wallHi, 0, 0, lw, lh); R(F.wall, 0, lh * 0.55, lw, lh * 0.45);
+        // the window, daylight; the framed picture
+        R(F.door, lw * 0.06 - 1, lh * 0.1 - 1, lw * 0.24 + 2, lh * 0.4 + 2); R(F.cool, lw * 0.06, lh * 0.1, lw * 0.24, lh * 0.4); R(F.door, lw * 0.18, lh * 0.1, 1, lh * 0.4);
+        R(F.panelDk, lw * 0.74, lh * 0.14, lw * 0.16, lh * 0.2); R(F.calebJacket, lw * 0.76, lh * 0.17, lw * 0.12, lh * 0.14, 0.8);
+        // the sofa behind him
+        R(F.chair, lw * 0.12, lh * 0.62, lw * 0.76, lh * 0.22); R(F.panelDk, lw * 0.12, lh * 0.84, lw * 0.76, lh * 0.06);
+        // Marcus: shoulders and head, faceless; a pale blue shirt
+        const cx = lw * 0.5, shY = lh * 0.6, sw = lw * 0.24, rx = lh * 0.12, ry = lh * 0.15;
+        b.globalAlpha = 1; b.fillStyle = F.danielShirt; b.beginPath(); b.moveTo(cx - sw, lh); b.lineTo(cx - sw + 2, shY + 5); b.lineTo(cx - sw * 0.5, shY); b.lineTo(cx + sw * 0.5, shY); b.lineTo(cx + sw - 2, shY + 5); b.lineTo(cx + sw, lh); b.closePath(); b.fill();
+        R(F.skin2, cx - 1.5, shY - 3, 4, 4);
+        const hy = shY - 3 - ry * 0.9;
+        E(F.skin2, cx, hy, rx, ry);
+        E(F.hair, cx, hy - ry * 0.55, rx + 0.4, ry * 0.5);
+        R(F.key, 0, 0, lw, lh, 0.06);
+      } else {
+        // the studio, dark, and the set's one light on an empty chair
+        R(F.black, 0, 0, lw, lh); R(ERA1.greyDark, 0, lh * 0.8, lw, lh * 0.2);
+        for (let i = 0; i < 6; i++) E(F.key, lw * 0.5, lh * 0.72, lw * (0.1 + i * 0.05), lh * (0.05 + i * 0.03), 0.08);
+        b.globalAlpha = 0.12; b.fillStyle = F.key; b.beginPath(); b.moveTo(lw * 0.28, lh * 0.12); b.lineTo(lw * 0.4, lh * 0.12); b.lineTo(lw * 0.68, lh * 0.8); b.lineTo(lw * 0.32, lh * 0.8); b.closePath(); b.fill();
+        R(F.stand, lw * 0.18, lh * 0.18, 1, lh * 0.62); R(F.softbox, lw * 0.12, lh * 0.06, lw * 0.2, lh * 0.12);
+        // the chair: seat, back, legs
+        R(F.chair, lw * 0.44, lh * 0.42, lw * 0.03, lh * 0.26); R(F.chair, lw * 0.44, lh * 0.6, lw * 0.16, lh * 0.04);
+        R(F.chair, lw * 0.45, lh * 0.64, 1, lh * 0.16); R(F.chair, lw * 0.58, lh * 0.64, 1, lh * 0.16);
+        R(F.wallHi, lw * 0.44, lh * 0.42, lw * 0.03, 1, 0.7);
+      }
+    }
+    sceneBufs.set(key, cv);
+  }
+  const smooth = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(cv, x, y, w, h);
+  ctx.imageSmoothingEnabled = smooth;
 }
