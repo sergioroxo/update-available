@@ -58,6 +58,7 @@ const REGISTRY: Record<string, string> = {
   'diary_flag.mp3': `${AUDIO_BASE}diary_flag.mp3`,
   'diary_erase.mp3': `${AUDIO_BASE}diary_erase.mp3`,
   'passage_wind.mp3': `${AUDIO_BASE}passage_wind.mp3`,
+  'passage_install.mp3': `${AUDIO_BASE}passage_install.mp3`, // S346 · the era change's music (tools/make_passage_install.py; T08)
   'boot_2003.mp3': `${AUDIO_BASE}boot_2003.mp3`,
   'boot_2016.mp3': `${AUDIO_BASE}boot_2016.mp3`,
   'lambient_chime.mp3': `${AUDIO_BASE}lambient_chime.mp3`,
@@ -485,7 +486,7 @@ class RoomBed {
    *  it back where make_tones.sh meant it; LEVEL stays for anything unnamed. Tune by ear. */
   private static readonly LEVELS: Record<string, number> = {
     'bed_1997.mp3': 0.5, 'bed_2003.mp3': 0.22, 'bed_2016.mp3': 0.5, 'bed_2026.mp3': 0.5,
-    'passage_wind.mp3': 0.5, 'passage_building.mp3': 0.5,
+    'passage_wind.mp3': 0.5, 'passage_building.mp3': 0.5, 'passage_install.mp3': 0.5,
     'close_score.mp3': 0.55,
     'ball_room_bed.mp3': 0.35, 'ball_room_landing.mp3': 0.35
   };

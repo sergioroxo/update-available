@@ -432,7 +432,7 @@ export function mountXrInput(app: pc.Application, opts: {
         const buttons = src.gamepad?.buttons ?? [];
         buttons.forEach((b, i) => { if (b.pressed && !state.buttons[i] && i >= 4) opts.onKey?.(i === 4 ? 'a' : 'b'); state.buttons[i] = b.pressed; });
         const axes = src.gamepad?.axes ?? [];
-        // S290 — the strongest thumbstick this frame, for the dollhouse's turntable (xrLayer.ts)
+        // S290 — the strongest thumbstick this frame, (the dollhouse's turntable used it until S346)
         const sx = axes[2] ?? 0, sy = axes[3] ?? 0;
         if (Math.hypot(sx, sy) > Math.hypot(stickNow.x, stickNow.y)) { stickNow.x = sx; stickNow.y = sy; }
         const keys = ['left', 'right', 'up', 'down'] as const;

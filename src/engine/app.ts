@@ -45,6 +45,7 @@ import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
 import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
 import { noteHumanInput, registerXrSession } from '../frame/attract';
+import { mountViewMorph } from './viewMorph';
 import { TapeAudioBus, roomBed, setOneShotsMuted, setOneShotsPaused, playOnce, playLoop, stopClip, setCueListener } from '../audio/tapeAudio';
 import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
@@ -460,8 +461,10 @@ export const CAMERA_POSES = {
   dollySeconds: 39
 };
 // R28-1 movement prototype (docs/REINTERP_RESTRUCTURE_R28_2026-07-10.md §2):
-// the blink is a CUT, never a tween: fade to black, THEN move the camera,
-// THEN fade back — no smooth travel (Sérgio's explicit law: gaze must stay
+// the blink is a CUT, never a tween: cover, THEN move the camera, THEN
+// uncover — no smooth travel. ⚑ S346 / T08: the cover is the VIEW MORPH now
+// (viewMorph.ts), the destination's own picture arriving through particles,
+// never black (his 8 Nov: "I don't want fade to blacks in any of it") (Sérgio's explicit law: gaze must stay
 // free, and a blink can never look like a dolly).
 // R28-0c (item 4) fix: this used to be 0.32 — bigger than the visual disc's
 // own 0.22m radius (movementNodes.ts's MARKER_DIAMETER/2) — so a click aimed
@@ -471,8 +474,14 @@ export const CAMERA_POSES = {
 // the visible disc exactly: a click only arms a marker if it actually lands
 // on the disc you can see.
 const MARKER_HIT_RADIUS = 0.22;
-const BLINK_OUT_SECONDS = 0.13;
-const BLINK_IN_SECONDS = 0.22;
+/** S346: a seat jump's morph — long enough to SEE the room become the other room, short enough to stay a blink */
+const BLINK_OUT_SECONDS = 0.45;
+const BLINK_IN_SECONDS = 0.35;
+/** S346: the 2016 → 2026 turn at the top of the flight — part of an era change, so given more time */
+const TURN_OUT_SECONDS = 1.6;
+const TURN_IN_SECONDS = 1.0;
+/** S346: in a headset an era change lands with one slow morph (xrComfort's SLOW: 2.6 s in, 1.8 s out) */
+const XR_LANDING_SECONDS = 4.4;
 /** R28-2b: the three cassette shelf spots (tapeA/tapeB are new props; tapeC
  *  is the existing `mixtape` prop, repositioned in reinterp_deltas.json's r1
  *  override to sit beside them) and the boombox's own click zone — the
@@ -734,7 +743,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   immersiveVrRequested = false;
   const { app, cameraRig, camera } = shell;
   const xr = app.xr;
-  const xrComfort = mountXrComfort(app, cameraRig, camera, reducedMotion);
+  // ⚑ S346 / T08 — the view morph: every cut arrives as the destination's own picture, never black (viewMorph.ts)
+  const viewMorph = mountViewMorph(app, camera);
+  const xrComfort = mountXrComfort(app, cameraRig, camera, reducedMotion, viewMorph);
   mountXrTextures(app);
   const authoredRig = xrComfort.authored;
   xrComfort.setWorldReady(!options.restoreEntrance);
@@ -797,6 +808,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   if (runtimeQuery().get('debug') === '1') {
     (window as { __app?: pc.Application }).__app = app;
     (window as unknown as { __xrComfort: unknown }).__xrComfort = xrComfort; // ?debug=1 scene-graph probe
+    (window as unknown as { __viewMorph: unknown }).__viewMorph = viewMorph; // S346 ?debug=1: the morph, for probes
     // ?debug=1 ledger probe (read-only review aid): prior sessions could only
     // verify filings via the witness surface as a proxy — this closes that gap.
     // Debug-gated; the in-memory-only invariant is about persistence, and this
@@ -961,6 +973,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // PRESCRIBES — what a player at a steady frame rate actually receives.
       t: camMove?.t ?? 0,
       leg: relocLeg, reloc: relocKey, descent: descentActive,
+      // S346: the view morph (no fade to black) and the bed under it — read by tools/era-morph-probe.mjs
+      blink: blinkPhase, morph: viewMorph.visible, morphCaptured: viewMorph.captured, bed: roomBed.current, xrBusy: xrComfort.busy,
       // ⚑ S85: the player's own look, reported SEPARATELY and deliberately so.
       // pitch/yaw above stay the curve's PRESCRIBED pose, which is the thing
       // the comfort law is about — folding a hand-drag into them would make
@@ -1137,7 +1151,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRestart: () => restartPiece(),
       onRecentre: () => xrComfort.calibrate(),
       onDesk: () => xrLayer?.matchTable(),
-      onDollhouse: () => xrLayer?.dollhouse(os.era, true),
       onSources: () => siteViewerBus.open('hub')
     });
     // ⚑ S291 — the era websites, in the headset: a window that comes to the visitor (frame/siteViewer/xrMount.ts)
@@ -1237,7 +1250,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   mid grey, not its near-white ink
       wandColor: new pc.Color().fromString(FRAME.faint)
     });
-    // ⚑ S270g — the headset's own layer: the table, Lamby in the room, the visor's lens, the dollhouse
+    // ⚑ S270g — the headset's own layer: the table, Lamby in the room, the visor's lens (the dollhouse went in S346)
     xrLayer = mountXrLayer(app, {
       head: camera, comfort: xrComfort, input: xrInput, frame: xrFrame,
       strings: { ask: menuStrings.xrDeskAsk, done: menuStrings.xrDeskDone, none: menuStrings.xrDeskNone, offer: menuStrings.xrDeskOffer },
@@ -1275,7 +1288,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       } });
       // ⚑ S291 review hooks: open the site viewer (browser or mocked headset), read its state, press at a logical px
       (window as { __siteViewer?: unknown }).__siteViewer = { open: (t: string) => siteViewerBus.open(t as 'hub'), close: () => siteViewerBus.close(), dom: mountSiteViewerDom(), xr: siteViewerXr, bus: siteViewerBus };
-      (window as { __xrLayer?: unknown }).__xrLayer = xrLayer;   // S270g review: dollhouse(), review({ lamby, worn }), matchTable()
+      (window as { __xrLayer?: unknown }).__xrLayer = xrLayer;   // S270g review: review({ lamby, worn }), matchTable()
       // the desktop review of the headset's frame: hang the plane in front of the
       // desktop camera and press it with a world ray (no headset in the sandbox)
       (window as { __xrFrame?: unknown }).__xrFrame = {
@@ -1313,7 +1326,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // restart. `close` has no room to age into; it takes the constellation.
     os.onEraRelocate = (era) => {
       if (era === 'close') return;
-      xrLayer?.dollhouse(era);   // S270g / VR-06; P7-68 the lamps by the era moved to
       beginEraRelocation(era);
     };
     os.onMessageReady = () => { messageSeatPending = true; };
@@ -1360,7 +1372,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     witness.setOpeningProfile(os.openingProfileSnapshot());
   }
 
-  const frontTex = makeScreenTexture(app, os.canvas);
+  const frontTex = makeScreenTexture(app, os.canvas, 'screen');   // S346: straight lines at any angle (screens only)
   const front = makeScreenEntity('desktop-screen', frontTex, SCREEN.w, SCREEN.h);
   front.setLocalPosition(SCREEN.x, SCREEN.y, SCREEN.z);
   front.setLocalEulerAngles(90, 0, 0); // faces +Z (the chair)
@@ -1376,7 +1388,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     else if (frontHeldOff && os.era !== 'e4') { front.enabled = true; frontHeldOff = false; }
   });
 
-  const backTex = makeScreenTexture(app, witness.canvas);
+  const backTex = makeScreenTexture(app, witness.canvas, 'screen');
   const back = makeScreenEntity('witness-screen', backTex, WITNESS.w, WITNESS.h, options.reinterp === true);
   back.setLocalPosition(WITNESS.x, WITNESS.y, WITNESS.z);
   back.setLocalEulerAngles(90, 180, 0); // faces -Z (the chair, once turned)
@@ -1450,7 +1462,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // it can never race the per-frame camera cut it straddles); and the
   // one-time, dismissable, non-diegetic movement hint (frame voice, plain —
   // "the frame never plays" still holds: this is chrome, not the fiction).
-  let blinkOverlay: HTMLDivElement | null = null;
   let moveHint: HTMLDivElement | null = null;
   let tapeCaption: HTMLDivElement | null = null;
   let tapeMuteBtn: HTMLButtonElement | null = null;
@@ -1465,12 +1476,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     moveHint.style.pointerEvents = 'none';
   }
   if (options.reinterp === true) {
-    blinkOverlay = document.createElement('div');
-    Object.assign(blinkOverlay.style, {
-      position: 'fixed', inset: '0', zIndex: '8', pointerEvents: 'none', opacity: '0',
-      background: '#000'
-    } as CSSStyleDeclaration);
-    document.body.appendChild(blinkOverlay);
+    // (S346: the black blink overlay that lived here is gone — every cover is the view morph)
 
     // moveHint's own chrome, kept as one shared literal (spec-law C4 palette
     // ratchet) — the tape caption below reuses the pattern, not the object.
@@ -1812,6 +1818,19 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let blinkTargetNode: string | null = null;
   /** ⚑ Phase 7 — something to do at the bottom of a blink other than a seat cut (the E3→E4 turn) */
   let blinkAction: (() => void) | null = null;
+  /** S346: this blink's two halves (a seat jump's, or the era turn's longer ones) */
+  let blinkOutSeconds = BLINK_OUT_SECONDS, blinkInSeconds = BLINK_IN_SECONDS;
+  /** a camera pose as the world transform the morph photographs it from */
+  const poseMat = (p: { x: number; y: number; z: number; pitch: number; yaw: number }): pc.Mat4 =>
+    new pc.Mat4().setTRS(new pc.Vec3(p.x, p.y, p.z), new pc.Quat().setFromEulerAngles(p.pitch, p.yaw, 0), pc.Vec3.ONE);
+  /** S346 — start a blink whose cover is the destination's picture. In a headset the comfort layer morphs the
+   *  re-form itself (xrComfort), so the blink only keeps its clock there. */
+  function startBlink(to: { x: number; y: number; z: number; pitch: number; yaw: number }, outS: number, inS: number): void {
+    blinkOutSeconds = outS; blinkInSeconds = inS;
+    if (!xr?.active) viewMorph.capture(poseMat(to), null, { xr: false });
+    blinkPhase = 'out';
+    blinkT = 0;
+  }
   let moveHintShown = false;
   let moveHintDismissed = false;
   /** Session 65 (Sérgio: *"there's a 'click a marker to move' always on, we
@@ -2277,7 +2296,21 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // the Close's sweep turns LEFT the long way so the building is seen)
     // ⚑ S268 — in a headset the move is ONE cut under the pixel dissolve (xrComfort), never a 2 s glide: a glide's
     //   mid-path pose was what the dissolve committed, and the remainder re-formed the room a second time
-    if (xr?.active) { dur = 0.001; via = undefined; }
+    if (xr?.active) {
+      via = undefined;
+      if (relocLeg === 'rise' || relocLeg === 'build') {
+        // ⚑ S346 / T08 (his 8 Nov headset: "instead of the flyover, it needs to morph into the space… see stuff
+        //   morphing and changing and transforming themselves") — in a headset an era change does not fly. The
+        //   visitor stays in the chair and the room ages AROUND them for the legs' full time (the cascade is timed
+        //   by the same plan); the legs keep their clocks, the camera stays where it is.
+        to = { x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw };
+      } else if (relocLeg === 'descend') {
+        // …and the landing is ONE slow view morph into the new seat (the new room's own picture arriving through
+        //   the particles), held for the morph's length before the era's machine starts
+        xrComfort.slowNext();
+        dur = XR_LANDING_SECONDS;
+      } else dur = 0.001;
+    }
     const dyaw = yawTurn ?? ((to.yaw - camYaw + 540) % 360) - 180;
     const fx = camPos.x, fy = camPos.y, fz = camPos.z;
     // `via` is the bezier CONTROL point (raised, back from center): the path bows
@@ -2298,6 +2331,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // set of frames a driven curve owns.
     camMoveSeq++;
     tween = null;
+    // ⚑ S346 — reduced motion's cut is covered by the flight's end, photographed (the view morph), not by black
+    if (options.reinterp && !xr?.active && reducedMotion() && blinkPhase === null) viewMorph.capture(poseMat(to), null, { xr: false });
   }
 
   /** the light ramp, as a 0..1 curve over the wake's own clock: a beat of the
@@ -2353,8 +2388,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     e1: 'bed_1997.mp3', e2: 'bed_2003.mp3', e3: 'bed_2016.mp3', e4: 'bed_2026.mp3'
   };
   // S155 / R3-43/63 (Sérgio: "the flying sound is terrible"): low wind, no whoosh — the
-  // building's rumble stays on disk, unasked for
-  const PASSAGE_BED = 'passage_wind.mp3';
+  // building's rumble stays on disk, unasked for.
+  // ⚑ S346 / T08 (his 8 Nov: "it needs a little bit more of sound… an emotional experience… flowing through time"):
+  //   the install's own music now, from the I Agree press to the landing (tools/make_passage_install.py)
+  const PASSAGE_BED = 'passage_install.mp3';
   /** set when an era lands mid-flight; consumed by `endRelocation` */
   let pendingBed: string | null | undefined;
 
@@ -2408,7 +2445,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function advanceRelocation(): void {
     const poses = relocKey ? RELOC_POSES[relocKey] : undefined;
     if (!poses || !relocPlan) { endRelocation(); return; }
-    if (relocLeg === 'rise' && relocKey === 'e3-e4') {
+    if (relocLeg === 'rise' && relocKey === 'e3-e4' && !xr?.active) {   // S346: a headset does not fly, so it does not turn mid-air
       /**
        * ⚑ Phase 7 — THE TURN, REDONE (his: "the turn inside of the flight from Vera to Maya is still to
        * be redone"; 08-21: "the fly over the camera should turn… pointing to the Era 4 room, makes no
@@ -2425,8 +2462,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         relocLeg = 'build';
         startCamMove(poses.hold, relocPlan.buildSeconds, true);
       };
-      blinkPhase = 'out';
-      blinkT = 0;
+      startBlink({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: RELOC_OVERLOOK_C.yaw }, TURN_OUT_SECONDS, TURN_IN_SECONDS);
       return;
     }
     if (relocLeg === 'rise') {
@@ -2623,8 +2659,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (!movementNodes.available(cluster.era, seatYaw).some(n => n.id === nodeId)) return; // not offered
     dismissMoveHint();
     blinkTargetNode = nodeId;
-    blinkPhase = 'out';
-    blinkT = 0;
+    startBlink(node.pose ?? seatPose(node.seatYaw), BLINK_OUT_SECONDS, BLINK_IN_SECONDS);
   }
   if (debugOn) {
     // ?debug=1 review aid (like __camProbe): drive a marker move from the
@@ -4090,6 +4125,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const heldLook = new Map<'l' | 'r' | 'u' | 'd', number>();
   window.addEventListener('keyup', (e) => { const l = LOOK_KEYS[e.key]; if (l) heldLook.delete(l); });
   window.addEventListener('blur', () => heldLook.clear());
+  /** S346: the computer's team skip (debug builds only) — the presses in the last five seconds, and its one-line note */
+  let deskSkipPresses: number[] = [];
+  let deskSkipNote: HTMLDivElement | null = null;
+  function showDeskSkip(text: string): void {
+    if (!deskSkipNote) {
+      deskSkipNote = document.createElement('div');
+      Object.assign(deskSkipNote.style, {
+        position: 'fixed', left: '12px', top: '12px', zIndex: '20', pointerEvents: 'none',
+        background: FRAME.glass, color: FRAME.bright, font: '12px monospace', padding: '4px 8px', borderRadius: '3px',
+        opacity: '0', transition: 'opacity 0.3s'
+      } as CSSStyleDeclaration);
+      document.body.appendChild(deskSkipNote);
+    }
+    deskSkipNote.textContent = text;
+    deskSkipNote.style.opacity = '1';
+    const note = deskSkipNote;
+    window.setTimeout(() => { note.style.opacity = '0'; }, 2000);
+  }
   window.addEventListener('keydown', (e) => {
     if (restoreEntrance?.blocking) { if (e.key !== 'Escape' && !gameMenuBus.isOpen) {
       if (!festivalEdition) wakeFullscreen();
@@ -4097,6 +4150,28 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (festivalEdition) wakeFullscreen();
     } return; }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    // ⚑ S346 — THE TEAM'S SKIP ON THE COMPUTER (his 9 Nov note; the headset's 10× B/Y is S340's, "TEAM'S SKIP"
+    //   above): in the test build only (`?debug=1`), N pressed ten times within five seconds jumps to the start of
+    //   the NEXT year (1997 → 2003 → 2016 → 2026), seated. Visitors' builds never have it. The first nine presses
+    //   fall through as before; only the tenth is taken.
+    if (debugOn && (e.key === 'n' || e.key === 'N') && cluster && !os.isCapturingText && !e.repeat) {
+      const now = performance.now();
+      deskSkipPresses = deskSkipPresses.filter(t => now - t < 5000); deskSkipPresses.push(now);
+      if (deskSkipPresses.length >= 10) {
+        deskSkipPresses = [];
+        const order: EraKey[] = ['e1', 'e2', 'e3', 'e4'];
+        const i = order.indexOf(cluster.era);
+        if (i >= 0 && i < order.length - 1) {
+          const year = ['1997', '2003', '2016', '2026'][i + 1];
+          console.info(`[debug] team skip → ${year}`);
+          showDeskSkip(`Team skip → ${year}`);
+          if (gameMenuBus.isOpen) gameMenuBus.close();
+          gameMenuBus.jumpToEra?.(order[i + 1]);
+        }
+        e.preventDefault();
+        return;
+      }
+    }
     if (!camMove && !gameMenuBus.isOpen && !os.paused && closeMonitor?.key(e.key,e.shiftKey)) { e.preventDefault(); return; }
     // S48: any key skips the descent too (Escape excepted — the game menu
     // intercepts that in the capture phase and never reaches here)
@@ -4274,21 +4349,23 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         camPos.set(camMove.tx, camMove.ty, camMove.tz); camPitch = camMove.tp; camYaw = camMove.tyaw;
         if (camMove.t >= camMove.dur) camMove = null;
       } else if (camMove && reducedMotion()) {
-        // the cut: dark by RM_FADE, the pose set at the bottom of the fade, light again by 2×RM_FADE
+        // the cut: covered by RM_FADE, the pose set under the full cover, uncovered by 2×RM_FADE. ⚑ S346: the cover is
+        //   the view morph (the flight's end, photographed), never black
         const before = camMove.t;
         camMove.t += dt;
         if (before < RM_FADE && camMove.t >= RM_FADE) {
           camPos.x = camMove.tx; camPos.y = camMove.ty; camPos.z = camMove.tz;
           camPitch = camMove.tp; camYaw = camMove.tyaw;
         }
-        if (blinkPhase === null && blinkOverlay) {
-          const o = camMove.t < RM_FADE ? camMove.t / RM_FADE : Math.max(0, 1 - (camMove.t - RM_FADE) / RM_FADE);
-          blinkOverlay.style.opacity = o.toFixed(3);
+        if (blinkPhase === null) {
+          const leaving = camMove.t >= RM_FADE;
+          const o = !leaving ? camMove.t / RM_FADE : Math.max(0, 1 - (camMove.t - RM_FADE) / RM_FADE);
+          if (leaving && o <= 0) viewMorph.hide(); else viewMorph.set(o / 0.8, leaving);
         }
         if (camMove.t >= camMove.dur) {
           camPos.x = camMove.tx; camPos.y = camMove.ty; camPos.z = camMove.tz;
           camPitch = camMove.tp; camYaw = camMove.tyaw;
-          if (blinkPhase === null && blinkOverlay) blinkOverlay.style.opacity = '0';
+          if (blinkPhase === null) viewMorph.hide();
           camMove = null;
         }
       } else if (camMove) {
@@ -4440,8 +4517,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // never mid-fade — no smooth travel, ever.
       if (blinkPhase === 'out') {
         blinkT += dt;
-        const k = Math.min(1, blinkT / BLINK_OUT_SECONDS);
-        if (blinkOverlay) blinkOverlay.style.opacity = k.toFixed(3);
+        const k = Math.min(1, blinkT / blinkOutSeconds);
+        if (!xr?.active) viewMorph.set(k / 0.8, false);
         if (k >= 1) {
           if (blinkTargetNode) performSeatCut(blinkTargetNode);
           blinkTargetNode = null;
@@ -4451,11 +4528,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         }
       } else if (blinkPhase === 'in') {
         blinkT += dt;
-        const k = Math.min(1, blinkT / BLINK_IN_SECONDS);
-        if (blinkOverlay) blinkOverlay.style.opacity = (1 - k).toFixed(3);
+        const k = Math.min(1, blinkT / blinkInSeconds);
+        if (!xr?.active) viewMorph.set((1 - k) / 0.8, true);
         if (k >= 1) {
           blinkPhase = null;
-          if (blinkOverlay) blinkOverlay.style.opacity = '0';
+          if (!xr?.active) viewMorph.hide();
         }
       }
       if (cluster && movementNodes) {

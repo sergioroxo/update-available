@@ -96,11 +96,6 @@ try {
  await page.evaluate(()=>{const o=window.__os;const h=o.hits.find(h=>h.id==='send-go');if(!h)throw Error('Next task control missing');o.handleClick(h.x+h.w/2,h.y+h.h/2);});
  await new Promise(r=>setTimeout(r,300));
  assert.deepEqual(await pose(),before,'Next task must not move or zoom the camera');results.push({name:'Next task',cameraUnchanged:true});
- // Browser dollhouse: use the same transition surface as the live era handover.
- await page.evaluate(()=>{window.__heldDevices.release('e2');window.__xrLayer.dollhouse('e3');});
- await new Promise(r=>setTimeout(r,1200));
- assert.equal(await page.evaluate(()=>!!window.__app.root.findByName('xr-dollhouse')),true);
- await page.screenshot({path:path.join(out,'browser-dollhouse.png')});results.push({name:'browser dollhouse',visible:true});
  // Advance the Close's own clocks through its cards and monitor approach.
  await page.evaluate(()=>{
    const b=[...document.querySelectorAll('button')].find(b=>b.dataset.baseLabel==='Close · point cloud');

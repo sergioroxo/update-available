@@ -14,7 +14,16 @@ import * as pc from 'playcanvas';
  * 2026-09-26: "the quality of the phone screen is terrible, super pixelated"). Smooth
  * = mipmaps + trilinear; the upload stays on-dirty-only, the mip chain rides with it.
  */
-export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, smooth: boolean | 'minify' = false): pc.Texture {
+export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, smooth: boolean | 'minify' | 'screen' = false): pc.Texture {
+  /**
+   * ⚑ S346 / T-desk (a) — `'screen'`: STRAIGHT LINES FROM ANY ANGLE, for the SCREENS only (his approval, 9 Nov 2026).
+   * "When I move and see a screen at an angle, lines and letters break into stair-steps" ("Welcome back, Daniel" in
+   * Profile setup). The cause was nearest sampling: at a slant one axis of the glass is squeezed, nearest keeps one
+   * texel in several, and every edge that is not square to the view steps. So a screen is sampled the way a real
+   * display is seen: a mip chain (rebuilt by the GPU on every upload; uploads stay on-dirty only), trilinear, and the
+   * most anisotropy the device allows, with linear magnify. The canvases are drawn at ×3 (×4 in a headset), so a
+   * screen seen head-on is still crisp. THE ROOM'S OWN TEXTURES KEEP FILTER_NEAREST (CLAUDE.md, the dated exception).
+   */
   /**
    * ⚑ W1-F1 — `'minify'`: A PIXEL SCREEN SEEN FROM FAR, WHICH IS EVERY ROOM-3 SCREEN. The 2026 monitor is drawn at
    * ×3 (2130 × 1152) and, from the seat, covers ~500 screen px: 4 texels to a pixel. Plain FILTER_NEAREST keeps one
@@ -24,16 +33,19 @@ export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, sm
    * FILTER_NEAREST kept for the magnify — close up, in a headset, a pixel is still a hard square. Still one
    * upload on dirty; the chain is built by the GPU with it.
    */
+  const screen = smooth === 'screen';
   const minify = smooth === 'minify';
-  const mips = smooth === true || minify;
+  const mips = smooth === true || minify || screen;
+  /** the most the device allows (WebGL reports 1 where there is no extension) */
+  const maxAniso = Math.max(1, Math.min(16, app.graphicsDevice.maxAnisotropy || 1));
   const tex = new pc.Texture(app.graphicsDevice, {
     width: source.width,
     height: source.height,
     format: pc.PIXELFORMAT_RGBA8,
     mipmaps: mips,
     minFilter: mips ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST,
-    magFilter: smooth === true ? pc.FILTER_LINEAR : pc.FILTER_NEAREST,
-    anisotropy: minify ? 8 : 1,
+    magFilter: smooth === true || screen ? pc.FILTER_LINEAR : pc.FILTER_NEAREST,
+    anisotropy: screen ? maxAniso : minify ? 8 : 1,
     addressU: pc.ADDRESS_CLAMP_TO_EDGE,
     addressV: pc.ADDRESS_CLAMP_TO_EDGE
   });
@@ -42,8 +54,8 @@ export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, sm
   const xrQuality = (immersive: boolean): void => {
     tex.mipmaps = immersive || mips;
     tex.minFilter = immersive || mips ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST;
-    tex.magFilter = immersive || smooth === true ? pc.FILTER_LINEAR : pc.FILTER_NEAREST;
-    tex.anisotropy = immersive ? Math.min(8, app.graphicsDevice.maxAnisotropy) : minify ? 8 : 1;
+    tex.magFilter = immersive || smooth === true || screen ? pc.FILTER_LINEAR : pc.FILTER_NEAREST;
+    tex.anisotropy = screen ? maxAniso : immersive ? Math.min(8, app.graphicsDevice.maxAnisotropy) : minify ? 8 : 1;
     tex.upload();
   };
   const onXrStart = (): void => xrQuality(true);

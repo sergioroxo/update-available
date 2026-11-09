@@ -171,8 +171,13 @@ body.
 - **VR in VR** (VR-08): in 2026 the visitor picks up Maya's visor and brings it to their face; a second lens closes round
   the view, and the programme redraws the visitor's own hands in L's colour. The visitor is wearing the interface the piece
   criticises.
-- **The dollhouse** (VR-06): at a change of era the house appears as a roofless model on the desk, the seat marked,
-  while the room re-forms; the view never moves (his comfort law).
+- **The dollhouse** (VR-06, retired S346 — see §7g): at a change of era the house appeared as a roofless model on the
+  desk, the seat marked, while the room re-formed; the view never moves (his comfort law). Replaced by the morph below.
+- **The morph** (S346): no change of place in the piece covers the view with black any more. The cover is the
+  destination itself: the view from where the visitor is going is rendered once and arrives through drifting pixel
+  particles until it has replaced the room they are in. In a headset an era change no longer flies: the room ages
+  around the seated visitor for the full time of the change, under the install's own music, and then turns into the
+  next room. Time passing is shown in the place, not by moving the body through it.
 - **Each era's hardware, held** (VR-01–03, S270h): in 1997 and 2003 a hand on the desk mouse moves the pointer on the
   monitor and the pinch clicks; Daniel's flip phone rests shut and opens in the hand; in 2016 Vera's phone is taken in
   the hand, glass to the eyes, and a new message is felt as a pulse. The history becomes the interface moving onto the
@@ -186,7 +191,7 @@ body.
 | the body | a hand on a mouse, eyes on a frame | the device held up, the body turns | seated; the head is the camera |
 | looking | drag; the piece may move the camera | turn the device | the head only; the piece never moves the view |
 | pressing | click | tap (decided on release) | pinch at a distance, touch up close, trigger |
-| changing place | a flight | a flight | the pixel dissolve, the dollhouse |
+| changing place | a flight (the turn and the seat jumps: the morph) | a flight | the room ages round the chair, then the morph |
 | the record behind you | a turn performed for you | a turn you make | a turn you make — the most natural |
 | what the medium says | a desktop simulator | a surveillance object in the hand | the newest interface in the history it tells |
 
@@ -325,7 +330,7 @@ sending her. Keep the line between documented and speculative as in RESEARCH_201
 **The dollhouse (retired 8 Nov).** The headset's era change through a miniature of the house (S288–S291, turntable,
 "the next room builds") was removed at the lead's ruling ("we just remove the dollhouse, we add that to the research"):
 in the headset it read as ugly and did not fully work. The era change becomes an install sound with music, with no
-fade to black. The idea worth keeping for the article: a domestic interior shown as a model is the institution's view
+fade to black (built S346: the morph, `src/engine/viewMorph.ts`). The idea worth keeping for the article: a domestic interior shown as a model is the institution's view
 of a life (a case file you can turn in your hand). On a body in a headset, it read as distance rather than critique.
 
 ## 8. What the article must not overclaim

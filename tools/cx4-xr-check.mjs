@@ -44,14 +44,14 @@ try {
  await page.evaluate(()=>window.__xrFrame.open());
  const paused=await page.evaluate(()=>window.__xrComfort.status().elapsed);
  await wait(200);
- const menuPause=await page.evaluate(()=>({elapsed:window.__xrComfort.status().elapsed,veil:window.__app.root.findByName('xr-pixel-dissolve').enabled,menu:window.__app.root.findByName('xr-frame-menu').enabled}));
+ const menuPause=await page.evaluate(()=>({elapsed:window.__xrComfort.status().elapsed,veil:window.__app.root.findByName('xr-view-morph').enabled,menu:window.__app.root.findByName('xr-frame-menu').enabled}));
  assert.equal(menuPause.elapsed,paused);assert.equal(menuPause.veil,false);assert.equal(menuPause.menu,true);
  checks.push('Menu pauses the dissolve and remains unobscured; Resume continues it.');
  await page.screenshot({path:`${out}/05-xr-menu-during-dissolve.png`});
  await page.evaluate(()=>window.__xrFrame.close()); console.error('probe: menu closed');
  await page.waitForFunction(() => window.__xrComfort.status().elapsed > 0.82 && window.__xrComfort.status().elapsed < 1.15, { timeout: 15000, polling: 'raf' });
  const identicalMaskUploads=await page.evaluate(()=>{
-  const tex=window.__app.root.findByName('xr-pixel-dissolve').render.material.emissiveMap;
+  const tex=window.__app.root.findByName('xr-view-morph').render.material.opacityMap;
   const upload=tex.upload;let count=0;tex.upload=()=>{count++;upload.call(tex);};
   window.__app.fire('update',0);window.__app.fire('update',0);tex.upload=upload;return count;
  });
@@ -199,7 +199,7 @@ try {
   const {ledger}=await import('/src/state/ledger.ts');ledger.view.reduceMotion=true;
   window.__camFree(0,1.16,0.7,0,0);
   await new Promise(r=>setTimeout(r,700));
-  const status=window.__xrComfort.status(), visible=window.__app.root.findByName('xr-pixel-dissolve').enabled;
+  const status=window.__xrComfort.status(), visible=window.__app.root.findByName('xr-view-morph').enabled;
   ledger.view.reduceMotion=false;return {status,visible};
  });
  assert.equal(reduced.visible,false);assert.equal(reduced.status.elapsed,-1);checks.push('Reduced motion changes the room instantly without a dissolve or physical rig motion.');

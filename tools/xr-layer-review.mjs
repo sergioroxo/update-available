@@ -1,5 +1,5 @@
 /** S270g — photographs the headset's own layer (src/frame/xrLayer.ts) in a mocked headset: Lamby in each era
- *  (the balloon forced up), the 2026 lens (the visor forced on), the dollhouse, and the table match. Review only —
+ *  (the balloon forced up), the 2026 lens (the visor forced on), and the table match (the dollhouse went in S346). Review only —
  *  the forcing hooks exist under ?debug=1 and prove drawing, not reachability.
  *  node tools/xr-layer-review.mjs --port 3000 */
 import fs from 'node:fs';
@@ -22,8 +22,6 @@ const open = async (era) => {
   await page.addStyleTag({ content: 'body > *:not(canvas) { visibility:hidden !important; }' });
   await page.evaluate((h) => { window.__hires = h; }, process.argv.includes('--hires'));
   await page.evaluate(() => { const app = window.__app, head = app.root.findByName('camera');
-    window.__dollMaxDraws = 0;
-    app.on('postrender', () => { if (app.root.findByName('xr-dollhouse')) window.__dollMaxDraws = Math.max(window.__dollMaxDraws, window.__drawCalls ?? 0); });
     Object.defineProperty(app.xr, 'active', { configurable: true, get: () => true }); head.setLocalPosition(0, 1.2, 0); head.camera.fov = 75;
     if (window.__hires) app.root.findByName('xr-debug')?.setLocalScale(0, 0, 0); });
   await page.waitForFunction(() => window.__xrComfort.calibrated && !window.__xrComfort.busy, { timeout: 20000 }).catch(() => {});
@@ -47,31 +45,7 @@ try {
       const after = await page.evaluate(() => { const y = window.__app.root.findByName('camera').getPosition().y - 0.35; window.__xrComfort.matchDesk(y); return window.__xrComfort.status().shift[1]; });
       await look(page, 0, -30); await wait(800); shots.push(await shot(page, 'e1-table-matched'));
       shots.push({ name: 'table', before, after });
-      // the dollhouse
-      await look(page, 0, -10);
-      await page.evaluate(() => window.__xrLayer.dollhouse());
-      await wait(1500); shots.push(await shot(page, 'e1-dollhouse'));
     }
-    // P7-68 — the lamps: the room left dims and holds, the room moved to rises (photographed at the rise's end)
-    if (era === 3 || era === 4) {
-      await look(page, 0, -10);
-      await page.evaluate((e) => window.__xrLayer.dollhouse(e), `e${era}`);
-      await wait(4000); shots.push(await shot(page, `e${era}-dollhouse-half-build`));
-      shots.push(await page.evaluate(() => {
-        const app = window.__app, root = app.root.findByName('xr-dollhouse');
-        const batches = app.batcher._batchList.map(b => ({ centre: b._aabb.center.toArray(), half: b._aabb.halfExtents.toArray() }));
-        const nodes = root.findByName('xr-dollhouse-geo').children;
-        return { name: 'half-build', draws: window.__drawCalls, batches, heights: nodes.map(n => n.getLocalScale().y) };
-      }));
-      await wait(4500); shots.push(await shot(page, `e${era}-dollhouse-lamps`));
-    }
-    // The menu's on-demand view: current geometry, no clock, no growth.
-    await page.evaluate(e => window.__xrLayer.dollhouse(e, true), `e${era}`);
-    await wait(800);
-    shots.push({ name: 'on-demand', ...await page.evaluate(() => ({ draws: window.__drawCalls, heights: window.__app.root.findByName('xr-dollhouse-geo').children.map(n => n.getLocalScale().y), yearVisible: window.__app.root.findByName('xr-dollhouse-year').enabled })) });
-    shots.push(await shot(page, `e${era}-dollhouse-on-demand`));
-    const demand = shots.find(s => s.name === 'on-demand');
-    if (demand.yearVisible || demand.heights.some(h => h !== 1)) throw Error('On-demand model must be complete with no clock');
     // a fake controller, placed in the presentation space at a room point (VR-01 mouse, VR-03 phone)
     const addPad = (name, lx, ly, lz) => page.evaluate((name, lx, ly, lz) => {
       const app = window.__app, c = window.__xrComfort, head = app.root.findByName('camera');
@@ -113,9 +87,8 @@ try {
       await look(page, 0, 0); await wait(1500); shots.push(await shot(page, 'e4-lens'));
       await page.evaluate(() => window.__xrLayer.review({ worn: false }));
     }
-    const maxDollDraws = await page.evaluate(() => window.__dollMaxDraws);
-    report.push({ era, shots, maxDollDraws, errors: errors.slice(0, 6) });
-    if (maxDollDraws > 75 || errors.length) process.exitCode = 1;
+    report.push({ era, shots, errors: errors.slice(0, 6) });
+    if (errors.length) process.exitCode = 1;
     console.log('era', era, JSON.stringify(shots), errors.length ? errors.slice(0, 3) : 'no errors');
     await page.close();
   }

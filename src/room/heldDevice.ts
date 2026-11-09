@@ -138,7 +138,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   let tex: pc.Texture | null = null;
   const plane = new pc.Entity(`${spec.propId}-screen`);
   if (app && ctx) {
-    tex = makeScreenTexture(app, canvas);
+    tex = makeScreenTexture(app, canvas, 'screen');
     const sm = new pc.StandardMaterial();
     sm.diffuse.set(0, 0, 0); sm.emissiveMap = tex; sm.emissive.set(1, 1, 1); sm.update();
     plane.addComponent('render', { type: 'plane' });

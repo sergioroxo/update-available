@@ -141,7 +141,6 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   onRecentre: () => void;
   /** S270g / VR-04 — Match my table */
   onDesk?: () => void;
-  onDollhouse?: () => void;
   /** S291 — the menu's Sources row: open the site viewer */
   onSources?: () => void;
 }): XrFrame {
@@ -269,7 +268,6 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       y = drawRow(copy.resume, 'resume', y, true);
       if (gameMenuBus.mapSource) y = drawRow(mapCopy.row, 'map', y);
       y = drawRow(copy.recentre, 'recentre', y);
-      y = drawRow(copy.xrDollhouse, 'dollhouse', y);
       y = drawRow(copy.xrDesk, 'desk', y);   // S270g / VR-04
       y = drawRow(copy.sitesRow, 'sources', y);   // S291
       y = drawRow(copy.controls, 'controls', y);
@@ -403,7 +401,6 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     if (id === 'jump-yes') { const t = jumpTarget; jumpTarget = null; view = 'main'; if (t) gameMenuBus.jumpToEra?.(t.era); return; }
     switch (id) {
       case 'recentre': opts.onRecentre(); gameMenuBus.close(); return;
-      case 'dollhouse': gameMenuBus.close(); opts.onDollhouse?.(); return;
       case 'desk': gameMenuBus.close(); opts.onDesk?.(); return;
       case 'sources': opts.onSources?.(); return;
       case 'resume': gameMenuBus.close(); gameMenuBus.showHint?.(); return;

@@ -8,17 +8,14 @@
  *         pressing it is the balloon's own Yes.
  *  VR-08  the visor's second frame — while the 2026 visor is on, a lens closes round the view and the programme
  *         draws the visitor's own hands in L's colour. (Putting it on by hand lives in app.ts's grab.)
- *  VR-06  the dollhouse — at a change of era, the house held in front of the visitor for a few seconds, the seat
- *         marked, while the room re-forms under the dissolve. The world comes to the visitor; the view never moves.
+ *  (VR-06, the dollhouse, was removed in S346: the era change is the room's own morph now.)
  *
  *  Nothing here runs outside an immersive session. No storage, no network, no new input kinds. */
 import * as pc from 'playcanvas';
 import { makeScreenEntity, makeScreenTexture } from '../engine/screenTexture';
 import { drawLambyChar } from '../desktop/apps/lambyChar';
-import { FRAME } from '../desktop/theme/chrome';
 import { ERA1 } from '../desktop/theme/era1';
 import { ERA4 } from '../desktop/theme/era4';
-import { TIDY } from '../desktop/theme/calendar';
 import type { Ray } from './xrFrame';
 
 export interface XrLayerDeps {
@@ -51,8 +48,6 @@ export interface XrLayerDeps {
 export interface XrLayer {
   /** VR-04 — start listening for a fingertip on a table */
   matchTable(): void;
-  /** VR-06 — the house in the hands, for one change of era */
-  dollhouse(era?: string, onDemand?: boolean): void;
   /** VR-05 — a press (physical ray) on Lamby; true if it took it */
   pressLamby(physical: Ray, toLogical: (r: Ray) => Ray): boolean;
   /** VR-01 — a hand is on the mouse: a press is a click at the desktop pointer (true if it took it) */
@@ -179,176 +174,9 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
     });
   };
 
-  // ── VR-06 the dollhouse ──
-  type BatchLike = { meshInstance: pc.MeshInstance | null; _aabb: pc.BoundingBox };
-  const batches = (): BatchLike[] => ((app.batcher as unknown as { _batchList?: BatchLike[] } | null)?._batchList ?? []);
-  // the model fits ~45 cm across whatever the era holds (one room in 1997, the three-room house from 2016)
-  // ⚑ P8 A8 (headset B, 1 Nov: "way too fast… I didn't have any time to understand that the room morphed. It needs
-  //   to be like a clock with the time passing") — 4.2 s → 9 s, and the years count on the model's base
-  // ⚑ S280 (his, 1 Nov: "9 seconds is not enough… at least 13, you need more time to digest that the space around you is
-  //   morphing as it is on the dollhouse") — 13 s
-  const FIT = 0.45, HOLD = 13;
-  let SCALE = 0.06;
-  type Growth = { node: pc.Entity; floor: number };
-  let doll: { growth: Growth[]; growthAge: number; owned: pc.Mesh[]; era?: string; onDemand: boolean; root: pc.Entity; geo: pc.Entity; mark: pc.Entity; t: number; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; glows: { e: pc.Entity; room: number; role: GlowRole }[]; years: [number, number]; shown: number; baseYaw: number; turn: number; zoom: number; touched: number; palm: pc.Vec3 | null } | null = null;
-  const markMat = new pc.StandardMaterial(); markMat.useLighting = false; markMat.diffuse = new pc.Color(0, 0, 0);
-  markMat.emissive = new pc.Color().fromString(FRAME.bright); markMat.update();
-  // ⚑ P7-68 — D4 WHO'S HOME (his yes 31 Oct: "I like the rooms lighting one at a time"; DOLLHOUSE_IDEAS_SONNET §D4).
-  // A warm glow over each room the model holds: the room you are going to rises, the one you leave dims and holds,
-  // a room left earlier stays low. Rooms dim, they NEVER go out — a dark room reads as death, and the real rooms
-  // already keep one light on (cluster.json `_docE4RoomsHeldNotDark`). The house's lamp, not anyone's soul.
-  type GlowRole = 'stay' | 'to' | 'from' | 'held';
-  /** room centres, just under the ceiling: Room 1's roomFill, Rooms 2 and 3 their zone lights (cluster.ts) */
-  const ROOMS: [number, number, number][] = [[0, 2.1, 0.9], [-3.88, 2.1, 0.7], [3.88, 2.1, 0.7]];
-  const GLOW = 0.8, LOW = 0.4;
-  const glowMat = new pc.StandardMaterial(); glowMat.useLighting = false; glowMat.diffuse = new pc.Color(0, 0, 0);
-  glowMat.emissive = new pc.Color().fromString(TIDY.lamp); glowMat.update();   // the lamp's own warm, from the theme
-  const ease = (k: number): number => { const c = Math.max(0, Math.min(1, k)); return c * c * (3 - 2 * c); };
-  const glowLevel = (role: GlowRole, t: number): number =>
-    role === 'stay' ? 1 : role === 'held' ? LOW : role === 'from' ? 1 - (1 - LOW) * ease(t / 1.5) : ease((t - 0.6) / 1.2);
-  /** which room each glow plays, by the era being moved to */
-  const glowPlan = (era?: string): { room: number; role: GlowRole }[] =>
-    era === 'e3' ? [{ room: 0, role: 'from' }, { room: 1, role: 'to' }]
-      : era === 'e4' ? [{ room: 0, role: 'held' }, { room: 1, role: 'from' }, { room: 2, role: 'to' }]
-        : [{ room: 0, role: 'stay' }];
-  // the clock: one small plate under the house, the year counting from the one you leave to the one you reach
-  const YEARS: Record<string, [number, number]> = { e2: [1997, 2003], e3: [2003, 2016], e4: [2016, 2026] };
-  const yc = document.createElement('canvas'); yc.width = 128; yc.height = 32;
-  const yctx = yc.getContext('2d')!;
-  const ytex = makeScreenTexture(app, yc);
-  const yearPlate = makeScreenEntity('xr-dollhouse-year', ytex, 0.12, 0.03, true);
-  yearPlate.render!.layers = [deps.frame.layerId];
-  yearPlate.enabled = false; app.root.addChild(yearPlate);
-  const drawYear = (y: number): void => {
-    yctx.clearRect(0, 0, 128, 32);
-    yctx.fillStyle = FRAME.glass; yctx.fillRect(0, 0, 128, 32);
-    yctx.fillStyle = FRAME.bright; yctx.font = 'bold 22px monospace'; yctx.textAlign = 'center'; yctx.textBaseline = 'middle';
-    yctx.fillText(String(y), 64, 17);
-    ytex.upload();
-  };
-  const dollMat = new pc.StandardMaterial();
-  dollMat.useLighting = false;
-  dollMat.emissive = new pc.Color().fromString(ERA1.white); dollMat.emissiveVertexColor = true; dollMat.update();
-  const buildGeo = (root: pc.Entity, era?: string, onDemand = false): { geo: pc.Entity; meshes: pc.Mesh[]; centre: pc.Vec3; half: pc.Vec3; growth: Growth[]; owned: pc.Mesh[] } => {
-    // a dollhouse has no roof: the ceilings (thin, high slabs) are left out so the eye falls into the rooms
-    const list = batches().filter((b) => b.meshInstance && !(b._aabb.center.y > 2.2 && b._aabb.halfExtents.y < 0.2));
-    const box = new pc.BoundingBox(); list.forEach((b, i) => i === 0 ? box.copy(b._aabb) : box.add(b._aabb));
-    SCALE = Math.min(0.06, FIT / Math.max(0.1, 2 * box.halfExtents.x, 2 * box.halfExtents.z));
-    const geo = new pc.Entity('xr-dollhouse-geo');
-    // S307: merged material batches can cross room boundaries. In that case grow the
-    // whole copied house; splitting triangles would add draws and duplicate batch ownership.
-    const room = (x: number): number => x < -2.13 ? 1 : x > 2.13 ? 2 : 0;
-    const spans = list.some((b) => room(b._aabb.center.x - b._aabb.halfExtents.x) !== room(b._aabb.center.x + b._aabb.halfExtents.x));
-    const target = era === 'e3' ? 1 : era === 'e4' ? 2 : -1;
-    const growth: Growth[] = [];
-    const floor = Math.min(...list.map((b) => b._aabb.center.y - b._aabb.halfExtents.y));
-    // The miniature shares geometry shape, not one draw per source material. Bake the
-    // source palette into vertex colours, with separate growing / held groups only.
-    const owned: pc.Mesh[] = [];
-    const mis: pc.MeshInstance[] = [];
-    for (const growing of [false, true]) {
-      const group = list.filter((b) => (!onDemand && target >= 0 && (spans || room(b._aabb.center.x) === target)) === growing);
-      if (!group.length) continue;
-      const positions: number[] = [], normals: number[] = [], colours: number[] = [], indices: number[] = [];
-      for (const b of group) {
-        const source = b.meshInstance!, p: number[] = [], n: number[] = [], idx: number[] = [];
-        source.mesh.getPositions(p); source.mesh.getNormals(n); source.mesh.getIndices(idx);
-        const offset = positions.length / 3;
-        for (const v of p) positions.push(v); for (const v of n) normals.push(v);
-        const mat = source.material as pc.StandardMaterial;
-        for (let i = 0; i < p.length / 3; i++) colours.push(mat.diffuse.r, mat.diffuse.g, mat.diffuse.b, 1);
-        for (const i of idx) indices.push(i + offset);
-      }
-      const mesh = new pc.Mesh(app.graphicsDevice);
-      mesh.setPositions(positions); mesh.setNormals(normals); mesh.setColors(colours); mesh.setIndices(indices); mesh.update(); owned.push(mesh);
-      const node = new pc.Entity('xr-dollhouse-batch'); geo.addChild(node);
-      if (growing) growth.push({ node, floor });
-      mis.push(new pc.MeshInstance(mesh, dollMat, node));
-    }
-    geo.addComponent('render', { meshInstances: mis, layers: [deps.frame.layerId] });
-    geo.setLocalScale(SCALE, SCALE, SCALE);
-    geo.setLocalPosition(-box.center.x * SCALE, -box.center.y * SCALE, -box.center.z * SCALE);
-    root.addChild(geo);
-    return { geo, meshes: list.map((b) => b.meshInstance!.mesh), centre: box.center.clone(), half: box.halfExtents.clone(), growth, owned };
-  };
-  const endDoll = (): void => { if (doll) { doll.root.destroy(); doll.owned.forEach((m) => m.destroy()); doll = null; } yearPlate.enabled = false; };
-  const tickDoll = (dt: number): void => {
-    if (!doll) return;
-    if (!live()) {
-      // Browser audiences receive the same miniature, carried in front of their camera.
-      const at = head.getPosition().clone().add(head.forward.clone().mulScalar(0.8)).add(head.up.clone().mulScalar(-0.14));
-      doll.root.setPosition(at);
-      doll.baseYaw = head.getEulerAngles().y;
-    }
-    doll.t += dt; doll.growthAge += dt;
-    if (doll.t > HOLD && (doll.growth.length === 0 || doll.growthAge > 8.5)) { endDoll(); return; }
-    // ⚑ S290 — THE TURNTABLE (his, 1 Nov: "The doll house slide lets you zoom in and turn it around like a turn table and
-    //   that allows you to move to see where all the stuff in miniature version"): a controller's stick turns it (left /
-    //   right) and brings it closer (up / down); a hand near the house turns it by moving sideways. While it is being
-    //   handled it stays, and it goes 2.5 s after the last touch.
-    const st = deps.input.stick?.() ?? { x: 0, y: 0 };
-    if (Math.abs(st.x) > 0.15) { doll.turn += st.x * dt * 90; doll.touched = 0; }
-    if (Math.abs(st.y) > 0.15) { doll.zoom = Math.max(1, Math.min(2.6, doll.zoom - st.y * dt * 1.2)); doll.touched = 0; }
-    const at = doll.root.getPosition();
-    const palm = deps.input.palms().find((p) => p.distance(at) < 0.3) ?? null;
-    if (palm && doll.palm) {
-      const right = head.right.clone(); right.y = 0; if (right.lengthSq() > 1e-6) right.normalize();
-      const dx = palm.clone().sub(doll.palm).dot(right);
-      if (Math.abs(dx) > 0.001) { doll.turn += dx * 420; doll.touched = 0; }
-    }
-    doll.palm = palm ? palm.clone() : null;
-    doll.touched += dt;
-    if (doll.touched < 2.5) doll.t = Math.min(doll.t, HOLD - 0.5);
-    doll.root.setEulerAngles(live() ? 0 : 25, doll.baseYaw + doll.turn, 0);
-    const remaining = doll.growth.length ? Math.max(HOLD - doll.t, 8.5 - doll.growthAge) : HOLD - doll.t;
-    const k = Math.max(0, Math.min(1, doll.t / 0.4, remaining / 0.4));
-    doll.root.setLocalScale(k * doll.zoom, k * doll.zoom, k * doll.zoom);
-    // Flatten at the floor, then raise over eight seconds. Shared meshes/materials stay untouched.
-    const rise = ease(doll.growthAge / 8);
-    for (const g of doll.growth) {
-      g.node.setLocalScale(1, Math.max(0.001, rise), 1);
-      g.node.setLocalPosition(0, g.floor * (1 - Math.max(0.001, rise)), 0);
-    }
-    // the seat, wherever it is now: it jumps to the new room when the room re-forms under the dissolve
-    const seat = deps.comfort.authored.getLocalPosition();
-    const s = 1 + Math.abs(Math.sin(doll.t * 6)) * 0.6;
-    doll.mark.setLocalPosition((seat.x - doll.centre.x) * SCALE, (seat.y - doll.centre.y) * SCALE + 0.02, (seat.z - doll.centre.z) * SCALE);
-    doll.mark.setLocalScale(0.012 * s, 0.012 * s, 0.012 * s);
-    // the clock: the plate hangs just over the house, square to the eye; the year moves over the hold
-    const [y0, y1] = doll.years;
-    if (y1 > y0) {
-      const year = Math.round(y0 + (y1 - y0) * ease((doll.t - 0.8) / (HOLD - 2.4)));
-      if (year !== doll.shown) { doll.shown = year; drawYear(year); }
-      const base = doll.root.getPosition().clone();
-      const toEye = head.getPosition().clone().sub(base); toEye.y = 0; if (toEye.lengthSq() > 1e-6) toEye.normalize();
-      const at = base.add(toEye.mulScalar(0.06 * k)).add(new pc.Vec3(0, 0.16 * k, 0));   // just over the house, its near side
-      yearPlate.setPosition(at);
-      yearPlate.lookAt(at.clone().add(at.clone().sub(head.getPosition())));
-      yearPlate.rotateLocal(90, 0, 0);
-      yearPlate.setLocalScale(0.12 * k, 1, 0.03 * k);
-      yearPlate.enabled = k > 0.05;
-    }
-    // the lamps: a glow shows only over a room the model holds now (one room until the house re-forms)
-    for (const g of doll.glows) {
-      const [x, y, z] = ROOMS[g.room];
-      const inside = Math.abs(x - doll.centre.x) < doll.half.x && Math.abs(z - doll.centre.z) < doll.half.z;
-      const w = inside ? GLOW * SCALE * glowLevel(g.role, doll.t) : 0;
-      g.e.enabled = w > 1e-4;
-      g.e.setLocalPosition((x - doll.centre.x) * SCALE, (y - doll.centre.y) * SCALE, (z - doll.centre.z) * SCALE);
-      g.e.setLocalScale(w, 0.002, w);
-    }
-  };
-  // the batches can be rebuilt mid-change (the next era's room batches): never draw a mesh the batcher has let go
-  app.on('prerender', () => {
-    if (!doll) return;
-    const now = new Set(batches().filter((b) => b.meshInstance && !(b._aabb.center.y > 2.2 && b._aabb.halfExtents.y < 0.2)).map((b) => b.meshInstance!.mesh));
-    if (now.size !== doll.meshes.length || doll.meshes.some((m) => !now.has(m))) {
-      doll.geo.destroy(); doll.owned.forEach((m) => m.destroy());
-      const g = buildGeo(doll.root, doll.era, doll.onDemand);
-      doll.owned = g.owned; doll.growth = g.growth; doll.growthAge = 0;
-      doll.geo = g.geo; doll.meshes = g.meshes; doll.centre = g.centre; doll.half = g.half;
-    }
-  });
+  // ── VR-06 the dollhouse: REMOVED (S346, his ruling 9 Nov: "we just remove the dollhouse, we add that to the research").
+  //   The era change is a morph of the room itself now (xrComfort's view morph). The design history is in
+  //   docs/ARTICLE_COMPANION §7g; the code is in git before S346.
 
   // ── VR-01 the desk mouse (1997, 2003) ──
   // A palm or a controller resting on the mouse takes it: sliding it on the desk moves the desktop's pointer (about
@@ -406,34 +234,12 @@ export function mountXrLayer(app: pc.AppBase, deps: XrLayerDeps): XrLayer {
 
   app.on('update', (dt: number) => {
     const eyeL = deps.comfort.logicalPoint(head.getPosition());
-    tickLamby(dt, eyeL); tickLens(dt); tickTable(dt); tickDoll(dt); tickMouse(dt);
+    tickLamby(dt, eyeL); tickLens(dt); tickTable(dt); tickMouse(dt);
   });
-  app.xr?.on('end', () => { grip = null; cursorE.enabled = false; if (rest) deps.mouse.prop()?.setPosition(rest); endDoll(); lamby.enabled = false; lens.enabled = false; lensK = 0; table = null; deps.input.setStyle('own'); });
+  app.xr?.on('end', () => { grip = null; cursorE.enabled = false; if (rest) deps.mouse.prop()?.setPosition(rest); lamby.enabled = false; lens.enabled = false; lensK = 0; table = null; deps.input.setStyle('own'); });
 
   return {
     matchTable() { if (!live()) return; table = { t: 0, hist: [] }; deps.frame.notice(deps.strings.ask, 24); },
-    dollhouse(era, onDemand = false) {
-      if (!batches().length) return;
-      endDoll();
-      const root = new pc.Entity('xr-dollhouse');
-      const f = head.forward.clone(); f.y = 0; if (f.lengthSq() < 1e-4) f.set(0, 0, -1); f.normalize();
-      // on the desk in front of the visitor, low enough to look down into it
-      root.setPosition(head.getPosition().clone().add(f.mulScalar(0.45)).add(new pc.Vec3(0, -0.38, 0)));
-      root.setEulerAngles(0, deps.comfort.stageYaw(), 0);   // the house turned as the room around the visitor is
-      app.root.addChild(root);
-      const g = buildGeo(root, era, onDemand);
-      const mark = new pc.Entity('xr-dollhouse-seat');
-      mark.addComponent('render', { type: 'box', material: markMat, layers: [deps.frame.layerId] });
-      root.addChild(mark);
-      const glows = (onDemand ? glowPlan(era).map((g) => ({ ...g, role: 'stay' as GlowRole })) : glowPlan(era)).map(({ room, role }) => {
-        const e = new pc.Entity('xr-dollhouse-lamp');
-        e.addComponent('render', { type: 'box', material: glowMat, layers: [deps.frame.layerId] });
-        e.enabled = false; root.addChild(e);
-        return { e, room, role };
-      });
-      root.setLocalScale(0, 0, 0);
-      doll = { owned: g.owned, growth: g.growth, growthAge: 0, era, onDemand, root, geo: g.geo, mark, t: 0, meshes: g.meshes, centre: g.centre, half: g.half, glows, years: onDemand ? [0, 0] : YEARS[era ?? ''] ?? [0, 0], shown: 0, baseYaw: deps.comfort.stageYaw(), turn: 0, zoom: 1, touched: 99, palm: null };
-    },
     mouseClick() { if (!grip) return false; deps.mouse.click(cursor.x, cursor.y); return true; },
     get mouseEngaged() { return !!grip; },
     review(what) { if (what.lamby !== undefined) forced.lamby = what.lamby; if (what.worn !== undefined) forced.worn = what.worn; },

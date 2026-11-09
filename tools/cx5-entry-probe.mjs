@@ -64,7 +64,7 @@ try {
   if (process.env.NO_DRAW) await page.evaluate(() => { window.__os.draw = () => {}; });
   if (process.env.FREEZE_OS) await page.evaluate(() => { window.__os.update = () => {}; });
   if (process.env.HIDE_SPECKS) await page.evaluate(() => { const e = window.__app.root.findByName('room-specks'); if (e) e.enabled = false; window.__hid = !!e; });
-  if (process.env.NO_VEIL) await page.evaluate(() => { const e = window.__app.root.findByName('xr-pixel-dissolve'); if (e) e.destroy(); });
+  if (process.env.NO_VEIL) await page.evaluate(() => { const e = window.__app.root.findByName('xr-view-morph'); if (e) e.destroy(); });
   if (process.env.NO_MIPS) log.push({ noMips: await page.evaluate(() => { let n = 0; window.__app.root.forEach(e => { for (const m of e.render?.meshInstances ?? []) { const t = m.material?.emissiveMap; if (t && t.getSource?.() === window.__os.canvas) { t.mipmaps = false; t.minFilter = 1; t.anisotropy = 1; n++; } } }); return n; }) });
   // the first seconds in the room
   const samples = [];
