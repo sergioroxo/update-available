@@ -1214,7 +1214,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
       },
       onKey: key => {
-        // ⚑ S339 — THE TEAM'S SKIP (his 8 Nov headset note, T48): in the test build only (`?debug=1`), pressing the
+        // ⚑ S340 — THE TEAM'S SKIP (his 8 Nov headset note, T48): in the test build only (`?debug=1`), pressing the
         //   controller's upper face button (B/Y) ten times within five seconds jumps to the start of the NEXT era
         //   (1997 → 2003 → 2016 → 2026), seated. A visitor's build never has it.
         if (key === 'b' && cluster && runtimeQuery().get('debug') === '1') {
