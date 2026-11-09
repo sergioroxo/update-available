@@ -1145,6 +1145,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       layerId: xrFrame.layerId, suspendMenu: (on) => xrFrame?.suspend(on), note: (t, sec) => xrFrame?.notice(t, sec), minimisedNote: menuStrings.xrSitesMinimised
     });
     siteViewerBus.xrActive = () => !!xr?.active;
+    let teamSkipPresses: number[] = [];   // S339: the team skip (debug builds only)
     xrInput = mountXrInput(app, {
       onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
       // ⚑ S271 (his 31 Oct: "I entered the menu, but I cannot get out") — a press that misses the menu closes it, as
@@ -1212,7 +1213,23 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const target = devices?.aim(xrComfort.logicalRay(physical), cluster.era);
         return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
       },
-      onKey: key => { if (cluster && !gameMenuBus.isOpen && !siteViewerXr?.isOpen) devices?.key(key, cluster.era); },
+      onKey: key => {
+        // ⚑ S339 — THE TEAM'S SKIP (his 8 Nov headset note, T48): in the test build only (`?debug=1`), pressing the
+        //   controller's upper face button (B/Y) ten times within five seconds jumps to the start of the NEXT era
+        //   (1997 → 2003 → 2016 → 2026), seated. A visitor's build never has it.
+        if (key === 'b' && cluster && runtimeQuery().get('debug') === '1') {
+          const now = performance.now();
+          teamSkipPresses = teamSkipPresses.filter(t => now - t < 5000); teamSkipPresses.push(now);
+          if (teamSkipPresses.length >= 10) {
+            teamSkipPresses = [];
+            const order: EraKey[] = ['e1', 'e2', 'e3', 'e4'];
+            const i = order.indexOf(cluster.era);
+            if (i >= 0 && i < order.length - 1) { xrFrame?.notice(`Team skip → ${['1997', '2003', '2016', '2026'][i + 1]}`, 2); gameMenuBus.jumpToEra?.(order[i + 1]); }
+            return;
+          }
+        }
+        if (cluster && !gameMenuBus.isOpen && !siteViewerXr?.isOpen) devices?.key(key, cluster.era);
+      },
       // ⚑ S328 — and in 2026 the stick scrolls Kettle's open thread (time by scroll, his ruling) when the sites are shut
       onStick: (_x, y) => { if (siteViewerXr?.isOpen) siteViewerXr.stick(y); else if (os.era === 'e4' && Math.abs(y) > 0.2) os.e4?.browser.scrollAt(null, null, y * 4); },
       // S271 (his 31 Oct: the hands are "a bit too white… a little bit too garish for your headset") — the frame's

@@ -72,7 +72,7 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T45 | The 1997 video of Caleb's submission → the platform → the site where the DVDs/testimonies live (his idea: connect the folder, the upload and the era website) | 2003, sites | S then C | M |
 | T46 ☑ S331 | 2026: the shelf on the bed and a phone on the table make no sense | 2026 room | C | S |
 | T47 ☑ S329 (moot: no handset) | Screen distance: the held/worn screens follow the headset, not the room; the 2016 monitor hangs over the desk edge | XR | C | M |
-| T48 | Hidden skip button: ~10 presses of the controller's back button (his note) — document for the team | XR | C | S |
+| T48 ☑ S339 | Team skip: in the test build (`?debug=1`) press the controller's B/Y button 10 times within 5 s → the next year, seated (1997 → 2003 → 2016 → 2026) | XR | C | S |
 
 ## Built 9 Nov
 
