@@ -55,9 +55,19 @@ You are on branch `reinterp`; GitHub Pages deploys every push. Before each commi
    - Desktop and headset both. Look at src/frame/xrLayer.ts (the dollhouse), src/frame/xrComfort.ts (the particle
      veil) and the desktop transition in src/engine/app.ts.
 3. **Desktop, his 9 Nov notes:**
-   - **(a)** On the computer, the 1997 monitor is raked back 8° and seen a little from the side, so straight lines
-     look tilted (his screenshot of "Welcome back, Daniel"). Square the browser camera so it faces each monitor
-     straight on, without changing the headset.
+   - **(a) Straight lines from any angle (NOT a camera change).** When he moves and sees a screen at an angle, in the
+     headset or on the computer, lines and letters break into stair-steps ("Welcome back, Daniel" in Profile setup).
+     The view must stay free.
+     - The cause is the screens' `FILTER_NEAREST` sampling (CLAUDE.md's pixel law).
+     - The fix, which he approves for SCREENS only (9 Nov): sample the screen canvases with mipmaps and anisotropic
+       filtering (linear-mipmap, max anisotropy the device allows), so edges stay straight at oblique angles. The
+       canvases are already drawn at 3×, so head-on text stays crisp.
+     - The 3D room's own textures keep `FILTER_NEAREST`.
+     - Codex's density table in CODEX_XR_TEXT_REPORT_2026-11-08.md has the numbers; src/engine/screenTexture.ts and
+       src/frame/xrTextures.ts are where the screen textures are made.
+     - Uploads stay on-change only. Check that the mip chain is rebuilt on each upload.
+     - Photograph a monitor at 0°, 30° and 60° before and after.
+     - Add one line to CLAUDE.md's Aesthetic laws noting the screens-only exception, dated 9 Nov.
    - **(b)** Add the team skip on the computer too, debug builds only (`?debug=1`): press the N key ten times within
      5 s to jump to the next year. It mirrors the headset's 10× B/Y (S340, src/engine/app.ts, search "TEAM'S SKIP").
      Visitors' builds never have it.
