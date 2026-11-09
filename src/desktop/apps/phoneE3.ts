@@ -187,6 +187,12 @@ export class PhoneE3 {
   /** ⚑ S327 — a message is waiting, or the last one is still being read: the platform's other voices wait for it */
   get voiceBusy(): boolean { return this.bannerAge < READ_HOLD || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes; }
   get queued(): number { return this.eventQueue.length; }
+  /** S336 — diagnosis only: why a queued message is not being delivered */
+  debugState(): Record<string, unknown> {
+    return { queue: this.eventQueue.map(e => e.id), bannerAge: Math.round(this.bannerAge * 10) / 10, bannersHidden: this.bannersHidden,
+      atRest: this.atRest, disconnected: this.disconnected, notesPending: this.notesPending, conductingNotes: this.conductingNotes,
+      screen: this.screen, stage: this.stage, delivered: this.evening.map(e => e.id) };
+  }
   delivered(id: string): boolean { return this.evening.some(e => e.id === id); }
   private deliverEvent(): void {
     if (!this.eventQueue.length || this.bannerAge < READ_HOLD || this.bannersHidden || !this.atRest || this.disconnected || this.notesPending || this.conductingNotes) return;

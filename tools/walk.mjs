@@ -438,6 +438,7 @@ async function main() {
   page.on('console', (m) => {
     const t = m.text();
     if (/ASSERT|Invalid batch|Uncaught|TypeError/i.test(t)) noise.push(t.slice(0, 180));
+    if (t.startsWith('[e3]')) process.stdout.write(`PAGE NOTE ${t.slice(0, 900)}\n`);   // S336: the 2016 stall diagnostics
   });
 
   const log = [];

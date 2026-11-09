@@ -408,6 +408,10 @@ export class GraceQueueLite {
    *  the testimony editor") — the evening's other messages, in the order she EARNS them: each finished thing (a story,
    *  the send, its receipt, her own record) earns the next, and the phone holds it until the platform is at rest. */
   private earnedJobs = new Set<string>();
+  private offerWaitT = 0;
+  private kitWaitT = 0;
+  private kitWarned = false;
+  private lastDt = 0;
   private earn(id: string): void { this.phone.arrive(id); }
   /** ⚑ S332 — the four jobs, finished (a job finished for her by Lambient or an administrator counts: it is done) */
   private jobDone(id: string): boolean {
@@ -678,8 +682,12 @@ export class GraceQueueLite {
     this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface
       && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed)))
       && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this.focusOpen
-      && !this.wickConducting && !this.cascadeConduct && !this._systemModal && !this.lambyGuide?.active;
-    this.updateConnections();
+      && !this.wickConducting && !this.cascadeConduct && !this._systemModal;
+    // ⚑ S336 — the guide no longer holds the phone back. The full entrance walk deadlocked here: the guide balloon came
+    //   up because nothing was happening, and while it was up the phone was 'not at rest', so the message that would
+    //   have moved the day on never came. One voice at a time still holds: the balloon now waits while the phone
+    //   speaks (see the guide's draw gate below), instead of the phone waiting for the balloon forever.
+    this.lastDt = dt; this.updateConnections();
     if (this.personalDesktop && !this.phone.personalOpen) { this.personalDesktop = false; this.bump(); }
     if (this.phoneInHand || this.phone.personalSeen) {
       if (this.personalNotice) { this.personalNotice = false; this.bump(); }
@@ -832,6 +840,22 @@ export class GraceQueueLite {
     if (this.fourJobsDone && !ledger.records.includes('e3-jobs-done')) ledger.records.push('e3-jobs-done');
     if (this.fourJobsDone && !veraDay.recordOpened && !this.storyOffer && this.phone.queued === 0 && !this.phone.voiceBusy
       && !this.wickBanPending && !this.wickConducting) { this.storyOffer = true; this.bump(); }
+    // ⚑ S336 — A FAILSAFE, because the full entrance walk stalled here twice (four jobs done, the board in 'done', the
+    //   offer of her own record never armed): if the day has been sitting still with every job done for 8 s, the offer
+    //   comes anyway. Whatever was holding it (a queued message that never got its quiet moment, a ban that never got its
+    //   cue) must not be able to end the era. The blockers are written to the console once, for diagnosis.
+    if (this.fourJobsDone && !veraDay.recordOpened && !this.storyOffer && !this.jobOpen && !this.veraPage
+      && !this.phone.voiceBusy && this.phone.queued === 0 && !this.wickConducting) {
+      // only truly idle time counts: messages still arriving, or the card still rising, are the day moving on
+      this.offerWaitT += this.lastDt;
+      if (this.offerWaitT > 12) {
+        console.warn('[e3] offer failsafe ' + JSON.stringify({ voiceBusy: this.phone.voiceBusy, wickBanPending: this.wickBanPending,
+          wickConducting: this.wickConducting, mode: this.mode, phone: this.phone.debugState() }));
+        this.wickBanPending = false; this.storyOffer = true; this.offerWaitT = 0; this.bump();
+      }
+    } else this.offerWaitT = 0;
+    if (this.kitPending) { this.kitWaitT += this.lastDt; if (this.kitWaitT > 10 && !this.kitWarned) { this.kitWarned = true;
+      console.warn('[e3] kit waiting ' + JSON.stringify({ wickConducting: this.wickConducting, phone: this.phone.debugState() })); } }
     if (this.kitPending && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest && !this.wickConducting) {
       this.kitPending = false; this.veraPage = 'kit'; this.mode = 'board'; this.bump();
     }
@@ -1507,7 +1531,7 @@ export class GraceQueueLite {
     //   under the system's update notice nothing of the platform's may glow or point (T07: "the highlight boxes from
     //   the previous panel")
     this.lambyGuidePaint = { rings: [], balloon: false };
-    if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this._systemModal) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
+    if (this.lambyGuide && !this.startMap.active && !this.guideSilent && !this._systemModal && !this.phone.voiceBusy) this.lambyGuidePaint = drawLambyGuide(ctx, 'e3', this.lambyGuide.view, this.rects, { w: platformW, h: H });
     if (this.guideFocus && !this.guideSilent && !this.guideVoice && !this._systemModal) {
       const r = this.rects.find(r => r.id === this.guideFocus!.id);
       if (r) drawGuidePointer(ctx, r, { x: platformW - 172, y: H - 24 }, ERA3.accent, 0);

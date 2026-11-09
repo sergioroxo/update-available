@@ -1315,7 +1315,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     tick(dt: number): void {
       // S76: the last update's own frames — see `drawWorkstation`
       if (e4Bridge()?.update()?.open) ritualTick++;
-      if (e4Bridge()?.update()?.installing) graceQueueLite.disconnectPhone();
+      // ⚑ S336 — ONLY the 2016 → 2026 update disconnects Vera's phone. The same update app also runs 2003 → 2016, and
+      //   without this guard her phone arrived in 2016 already disconnected: no message could ever be delivered, and
+      //   the era froze for any player who came from 2003 (the jump straight into 2016 never runs that update, so
+      //   every 2016-only test passed). Found by the full entrance walk, 9 Nov.
+      if (eraNow === 'e3' && e4Bridge()?.update()?.installing) graceQueueLite.disconnectPhone();
       // ⚑ S149 — E3 ENDS WHEN THE GROUP HAS BEEN SEEN, AND NOTHING IS OPEN.
       //   It used to end when the WORK did (`ledger.graceQueue.length >=
       //   TOTAL_CORRECTIONS`), whatever the phone was doing — Sérgio, 2026-09-17:
