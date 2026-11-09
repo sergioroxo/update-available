@@ -28,6 +28,8 @@ export class Web2003App {
   hits: Hit[] = [];
   /** S196 — the board is a place: its index, its pages; Back returns along the way he came */
   private stage: string = 'rules';   // 'rules' | 'thread' | 'index' | 'page:<id>'
+  /** ⚑ S345 — Lamby's "Share it" opens Harbor at the thread, where Post your story is the next press */
+  showThread(): void { this.stage = 'thread'; this.trail = []; }
   private trail: string[] = [];
   private posted = false;
   private hover = '';

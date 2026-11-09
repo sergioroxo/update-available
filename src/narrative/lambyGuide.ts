@@ -4,14 +4,14 @@ import copy from '../../data/strings/lambyGuide.json';
 import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
-export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root';
+export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor';
 export interface GuideStep { tip: string; here?: string; again?: string; target: string[]; act?: string; noAgain?: boolean; once?: boolean }
 export interface GuideView {
   era: GuideEra; beat: string; rung: GuideRung; hidden: boolean; text: string | null;
   targets: string[]; act?: string; frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; robDone?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; robDone?: boolean; harborDue?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -24,6 +24,8 @@ export class LambyGuide {
   /** S281 — the intermission is over: Lamby says it is time, once ("no" is allowed; the next press opens the form) */
   private formDueOffered = false;
   private rootOffered = false;
+  /** ⚑ S345 — 2003: Lamby has said to share the story on Harbor */
+  private harborOffered = false;
   private formWait = 0;
   private requested = false;
   private input: GuideInput | null = null;
@@ -74,6 +76,12 @@ export class LambyGuide {
     //   first, the form after it. Once, ignorable, inside the era's cap.
     if (input.era === 'e1' && input.robDone && input.formAvailable && !input.formOpened && !input.rootOpened && !this.rootOffered && !this.active && this.canOffer()) {
       this.rootOffered = true; this.counts.e1++; this.set('root', copy.root.next, [], 'open:rootcause'); return;
+    }
+    // ⚑ S345 (his 9 Nov answer 4: "after the upload, Lamby says to share it on Harbor … Lamby, not Today in
+    //   Restorify") — once his story is online and not yet posted: one line, and Yes opens Harbor at the thread whose
+    //   next press is Post your story. Once, ignorable, inside the era's cap.
+    if (input.era === 'e2' && input.harborDue && !this.harborOffered && !this.active && this.canOffer()) {
+      this.harborOffered = true; this.counts.e2++; this.set('harbor', copy.harbor.text, [], 'open:harbor'); return;
     }
     // Available form waits through free exploration; only one unsolicited offer. ⚑ S343: once the game has been
     //   played (or offered) and closed, the form is offered after a breath, not after the full tip wait.
@@ -134,7 +142,7 @@ export class LambyGuide {
     if (id === 'lg-tray') {
       this.idle = 0;
       if (this.input.era === 'e1' && this.input.formAvailable && !this.input.formOpened) { this.set('form', copy.form.text, [], copy.form.act); return true; }
-      if (this.view.rung === 'form' || this.view.rung === 'root') return true;
+      if (this.view.rung === 'form' || this.view.rung === 'root' || this.view.rung === 'harbor') return true;
       if (this.active) this.point();
       // ⚑ S271 (his 31 Oct: "You're doing fine, carry on. Thank you, Lamby. But it doesn't tell me where do I need
       //   to go") — with no beat of its own, Lamby reads the Start map's next step before it says "carry on"
@@ -145,10 +153,10 @@ export class LambyGuide {
     if (id === 'lg-show') { this.effects.log('begun', this.view.beat, false, false); this.point(); }
     else if (id === 'lg-take' && this.view.act) {
       const act = this.view.act;
-      this.effects.log('begun', this.view.rung === 'form' ? 'form' : this.view.rung === 'root' ? 'root' : this.view.beat, false, false);
+      this.effects.log('begun', this.view.rung === 'form' || this.view.rung === 'root' || this.view.rung === 'harbor' ? this.view.rung : this.view.beat, false, false);
       m.finished = true; this.set('silent'); this.idle = 0; this.effects.act(act);
     } else if (id === 'lg-later' || id === 'lg-x' || id === 'lg-ok') {
-      const form = this.view.rung === 'form' || this.view.rung === 'root';
+      const form = this.view.rung === 'form' || this.view.rung === 'root' || this.view.rung === 'harbor';
       this.effects.log('dismissed', form ? this.view.rung : this.view.beat, id !== 'lg-ok', id === 'lg-ok');
       if (this.view.rung === 'root') this.formWait = 0;   // S343: "no" to the game → the form is offered after a breath
       if (!form) {

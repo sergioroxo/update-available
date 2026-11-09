@@ -2028,7 +2028,9 @@ export class GraceQueueLite {
       aero.button(ctx, bx, by, bw, bh, this.boardBackLabel(), { primary: true, size: 11 });
       this.rects.push({ x: bx, y: by, w: bw, h: bh, id: 'board-back' });
     }
-    if (!this.personalQuiet) drawLambMark(ctx, c.x + 8, c.y + c.h - 10, 1.2);
+    // ⚑ S345 / T52 — the mark sits top right, on the back button's row: at the foot it touched the family job's
+    //   "done" lines (familyCalls draws them at the column's bottom left)
+    if (!this.personalQuiet) drawLambMark(ctx, c.x + c.w - 14, c.y + 7, 1.0);
   }
 
   /** one tile: a picture, the job, what is waiting in it, and — when it is

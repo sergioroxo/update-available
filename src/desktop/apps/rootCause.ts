@@ -75,6 +75,9 @@ export class RootCauseApp {
   onClose?: () => void;
 
   private phase: Phase = 'intro';
+  /** ⚑ S345 (his 9 Nov answer 1) — 1997's title opens on the programme's words, each said twice: its own definition,
+   *  and beside it what the word does to the one who hears it. Next → the theory and Start. */
+  private wordsPage = true;
   private modal: Modal | null = null;
   private t = 0;
   private seed = 1997;
@@ -387,6 +390,7 @@ export class RootCauseApp {
     if (this.phase === 'intro') {
       // ⚑ S343 / T35 — a shareware title screen: the name, the programme's THEORY in its own words, the legend, START
       const tx = c.x + 18;
+      if (this.era === 'e1' && this.wordsPage) { this.drawWords(ctx, c, tx); ctx.restore(); this.hits.push(closeBox); return; }
       ui.setFont(ctx, 20);
       ctx.fillStyle = ERA1.warnDark; ctx.fillText(copy.titleBig, tx + 2, c.y + 14);
       ctx.fillStyle = ERA1.tooltip; ctx.fillText(copy.titleBig, tx, c.y + 12);
@@ -523,6 +527,41 @@ export class RootCauseApp {
     this.hits.push(closeBox);
   }
 
+  /** ⚑ S345 — the two-layer glossary: on the left the programme's own definition (its glow, its certainty), on the
+   *  right one plain line on paper, what the word does to the person who hears it. Terms and usage are the ones the
+   *  Lexicon research documents (docs/reinterp/RESEARCH_LEXICON_2026-10-02.md entries 1, 3, 7, 8, 9, 17). */
+  private drawWords(ctx: CanvasRenderingContext2D, c: ui.ContentRect, tx: number): void {
+    const W = copy.words as { label: string; plainLabel: string; note: string; next: string; terms: { term: string; says: string; does: string }[] };
+    ui.setFont(ctx, 20);
+    ctx.fillStyle = ERA1.warnDark; ctx.fillText(copy.titleBig, tx + 2, c.y + 14);
+    ctx.fillStyle = ERA1.tooltip; ctx.fillText(copy.titleBig, tx, c.y + 12);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.grey; ctx.fillText(copy.version, tx, c.y + 38);
+    const pw = c.w - 36, ROW = 30, top = c.y + 52;
+    const lw = Math.round(pw * 0.58), rx = tx + lw + 6, rw = pw - lw - 6;
+    const bh = 15 + W.terms.length * ROW + 4;
+    // the programme's panel, boxed like the theory: yellow rule, dark field
+    ui.px(ctx, tx, top, lw, bh, ERA1.tooltip); ui.px(ctx, tx + 1, top + 1, lw - 2, bh - 2, ERA1.black);
+    ui.px(ctx, tx + 1, top + 1, lw - 2, 13, ERA1.warnDark);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.tooltip; ctx.fillText(W.label, tx + 6, top + 3);
+    // the plain column: paper, black ink, no glow
+    ui.px(ctx, rx, top, rw, bh, ERA1.paper);
+    ui.px(ctx, rx, top + 14, rw, 1, ERA1.silver);
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.greyDark; ctx.fillText(W.plainLabel, rx + 6, top + 3);
+    W.terms.forEach((t, i) => {
+      const y = top + 19 + i * ROW;
+      if (i > 0) { ui.px(ctx, tx + 6, y - 4, lw - 12, 1, ERA1.greyDark); ui.px(ctx, rx + 6, y - 4, rw - 12, 1, ERA1.silver); }
+      ui.setFont(ctx, 8); ctx.fillStyle = ERA1.tooltip; ctx.fillText(t.term, tx + 6, y);
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.white;
+      ui.wrapText(ctx, t.says, lw - 12).slice(0, 1).forEach((ln) => ctx.fillText(ln, tx + 6, y + 11));
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.black;
+      ui.wrapText(ctx, t.does, rw - 12).slice(0, 2).forEach((ln, j) => ctx.fillText(ln, rx + 6, y + 1 + j * 11));
+    });
+    ui.setFont(ctx, 8); ctx.fillStyle = ERA1.grey; ctx.fillText(W.note, tx, top + bh + 6);
+    const sy = c.y + c.h - 34;
+    ui.button(ctx, tx, sy, 120, 24, W.next, {});
+    this.hits.push({ x: tx, y: sy, w: 120, h: 24, id: 'rootcause-words-next' });
+  }
+
   private dialog(ctx: CanvasRenderingContext2D, c: ui.ContentRect, title: string, w: number, h: number): { x: number; y: number; w: number; h: number } {
     const f = ui.windowFrame(ctx, c.x + Math.round((c.w - w) / 2), c.y + 36, w, h, title, true);
     this.hits.push({ ...f.closeBox, id: 'rootcause-close' });
@@ -596,6 +635,7 @@ export class RootCauseApp {
     this.dirty = true;
     const id = hit.id;
     if (id === 'rootcause-close') { this.open = false; this.onClose?.(); return; }
+    if (id === 'rootcause-words-next') { this.wordsPage = false; return; }   // S345
     if (id === 'rootcause-start') { this.phase = 'play'; return; }
     const m = this.modal;
     if (m && m.kind === 'quiz') {

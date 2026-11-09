@@ -15,6 +15,21 @@
   "_docS343": "⚑ S343 / T35 (his 8 Nov: 'it needs to be more clear of the intentions… understand where your SSA comes from… connect to the educational aspects of the topic'). The title screen now states the programme's THEORY in its own voice (the 'root cause' / developmental-deficit claim the Lexicon's ROOT entry answers: no such root was ever found) and the one goal; the report's NOT FOUND is where the claim collapses. 'SSA' is the programme's own jargon.",
   "titleBig": "ROOT CAUSE DIGGER",
   "version": "v1.0 · fellowship shareware · 1997",
+  "_docS345": "⚑ S345 (his 9 Nov answer 1: 'a two-layer teaching moment… each term is shown twice: in the programme's own voice… beside it, in one plain line, what the word does to the person who hears it'). 1997's title opens on `words` (Next → the theory and Start). `says` is the programme's voice, warm and certain (the satire stays in its self-presentation); `does` is the plain line. Usage documented in docs/reinterp/RESEARCH_LEXICON_2026-10-02.md: SSA §1 (Courage 2004, Evergreen 2012), struggler §3 (Love in Action 2005, Exodus manual, Erzen 2006), brokenness §7 (Desert Stream 2005, Love in Action 2005), root cause §8 (Exodus 2003 FAQ 'root issues', People Can Change 2005 'Root Problems', Exodus 1998 booklet), the wound §9 (People Can Change 2005 'unhealed wounds', 'father hunger'), healing/freedom §17 (Exodus 2003 tagline 'Freedom from homosexuality…', Desert Stream).",
+  "words": {
+    "label": "WORDS OF HEALING · a glossary",
+    "plainLabel": "WHAT THE WORD DOES",
+    "note": "Real terms, as 1990s ex-gay ministries used them.",
+    "next": "Next",
+    "terms": [
+      { "term": "SSA · SAME-SEX ATTRACTION", "says": "A feeling you have. It is not who you are.", "does": "Splits you from your own love, so it can be treated." },
+      { "term": "STRUGGLER", "says": "You fight it. That makes you one of us!", "does": "Makes the fight your name, and the fight never ends." },
+      { "term": "BROKENNESS", "says": "We're all broken, and broken can mend!", "does": "Teaches you that you are something to repair." },
+      { "term": "ROOT CAUSE", "says": "A hurt buried deep. Dig it up, and heal!", "does": "Sends you through your own past, looking for a fault." },
+      { "term": "THE WOUND", "says": "Often a distant father. Not your fault!", "does": "Makes your family the reason you are 'wrong'." },
+      { "term": "HEALING · FREEDOM", "says": "Waiting at the bottom. You can be free!", "does": "Promises a cure for what was never an illness." }
+    ]
+  },
   "theoryLabel": "THE PROGRAMME'S THEORY",
   "theory": [
     "Same-sex attraction (SSA) has a ROOT:",

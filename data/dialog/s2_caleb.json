@@ -24,6 +24,8 @@
    "sadHoldSeconds": 5.5,
    "streakFallSeconds": 2.2,
    "autoNextSeconds": 20,
+   "silentNextSeconds": 6,
+   "_docS345": "⚑ S345 (his 9 Nov answer 5) — the silent steps (`streak` without the system's extra line, `sad`) show no Next and move on after `silentNextSeconds`; the steps with text keep Next and `autoNextSeconds`.",
    "_docS342": "⚑ S342 (his 9 Nov answer 1: 'Give it a Next button… If nobody presses, it moves on by itself after about 20 s. No visible countdown') — every step of the alert now waits for Next (alert.nextLabel) or `autoNextSeconds`; the *Seconds above are no longer dwell times except streakFallSeconds (the counter's fall)."
   },
   "mail": {

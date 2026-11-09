@@ -422,7 +422,12 @@
       }
     }
   },
-  "root": {
+  "harbor": {
+  "text": "Your story is online! Share it on Harbor, so others who struggle can find it too.",
+  "yes": "Share it",
+  "_docS345": "\u2691 S345 (his 9 Nov answer 4) \u2014 said once after the upload, while the story is not yet posted; `yes` opens Harbor at the thread, where Post your story is the next press."
+ },
+ "root": {
     "here": "ROOTCAUSE.EXE is here on the desktop. You can also open it through Start → Programs.",
     "text": "Your answers are in. Root Cause came with the disk: it digs for where it all started. Find it in Start → Programs.",
     "next": "Rob's done for now. Before his Family Form: want to dig for where your feelings come from? Root Cause Digger came with the disk.",

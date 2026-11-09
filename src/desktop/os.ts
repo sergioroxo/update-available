@@ -596,6 +596,7 @@ export class DesktopOS {
     if (this.guideSilence.silent || this.guideSilence.voice) return;
     if (act === 'open:personalise') { this.openRestorify(); this.restorify?.showPersonalise(); return; }
     if (act === 'open:rootcause') { this.openRootCause(); return; }
+    if (act === 'open:harbor') { this.recommendForum(true); this.openForum(); this.forum?.showThread(); return; }   // S345
     if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
     if (act.startsWith('focus:')) { this.onGuideFocus?.(act.slice(6)); return; }
     if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
@@ -638,6 +639,7 @@ export class DesktopOS {
       formAvailable: this.formAvailable, formForced: this.formForced, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       formFiled: !this.provotype?.open && ledger.provotypes.some(p => p.id === 'origin_intake_e1'), rootOpened: ledger.records.includes('rootcause-opened'),
       robDone: this.desktopEra === 'e1' && this.formAvailable && !this.irc?.open,   // S343 / T16
+      harborDue: this.desktopEra === 'e2' && ledger.records.includes('testimony-online') && !ledger.records.includes('forum-posted') && !this.forum?.open,   // S345
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
     // ⚑ S283 (headset B: "I pressed show me, and it didn't show me because the NetPilot window is closed, so it needs to
