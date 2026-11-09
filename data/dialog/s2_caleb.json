@@ -22,7 +22,9 @@
    "streakSeconds": 4.5,
    "systemSeconds": 8.5,
    "sadHoldSeconds": 5.5,
-   "streakFallSeconds": 2.2
+   "streakFallSeconds": 2.2,
+   "autoNextSeconds": 20,
+   "_docS342": "⚑ S342 (his 9 Nov answer 1: 'Give it a Next button… If nobody presses, it moves on by itself after about 20 s. No visible countdown') — every step of the alert now waits for Next (alert.nextLabel) or `autoNextSeconds`; the *Seconds above are no longer dwell times except streakFallSeconds (the counter's fall)."
   },
   "mail": {
    "_doc": "S2R.5 — the collapse. `arriveGlitchSeconds` is the envelope's ENTRANCE: it no longer just appears, it tears in through the apparatus's own warm-corrupt glitch grammar (the same vocabulary as the video's break — scanlines, tape noise, one rolling tracking band; density ramps, never a flash, never a strobe). `streakGlitchStepSeconds` paces the dying streak field while the letter is open — '0 days' → '— days' → '412 days · for nothing' — and the last state is the punchline, so each one has to be legible on its own.",
@@ -233,6 +235,7 @@
   "streakUnit": "days",
   "_doc_streak": "Must stay in step with data/dialog/s2_lamby.json's `streakValue` (\"412 days\") — that file was outside this session's fence, so the number is repeated here rather than parsed out of a display string.",
   "okLabel": "Okay",
+  "nextLabel": "Next",
   "dismissLabel": "Not now",
   "_doc_dismissLabel": "THE DEAD BUTTON, ON PURPOSE (finding C12 — Sérgio: 'the not now either should be greyed out or just do the same as continue'). At THIS beat — the reassurance, 'we'll get the days back together' — it renders GREYED and takes no press: the apparatus displays an option that is not one. That is the thesis as UI, and it costs the player nothing, because the window's own close box stays live at every step of the alert and files the dismissal exactly as before (DISMISSAL LAW, CLAUDE.md). No branch was invented and no ledger path diverges."
  },
@@ -294,7 +297,8 @@
   "line": "Then it was never me that was broken…",
   "_s_line": "⟨S — LOCKED LINE⟩ Sérgio's own wording, canon. VERBATIM, never paraphrase, never re-wrap into two chips.",
   "_docS339": "⚑ S339 (his answer 14: 'Retire the \"It wasn't me that was broken\" panel. It becomes something Daniel says to Caleb in the conversation, and that sparks the update') — `line` (⟨S⟩, verbatim, untouched) is now the label of the ONE chip under Caleb's four return lines and, once pressed, Daniel's own bubble. The update arms at once. `answer` is Caleb's one reply, sent only if the update is put off ('Remind me later'): the deferral has somewhere to be. Claude's line (2026-08-17 norm); felt, not a joke.",
-  "answer": "it never was, d. not once."
+  "answer": "it never was, d. not once.",
+  "_docS342": "⚑ S342 (his 9 Nov answer 3: \"an emotional and good line to keep\"; every player must see it) — `answer` now arrives for everyone, right after Daniel's line, and only then does the update pop in. Remind me later brings the Messenger back with nothing new."
  },
  "witness": {
   "_doc": "The cold side, computed only from things the player actually did (Ethics #10) and symmetric by law: answering files, and so does reading without answering. The system's own acts file in its own cheerful vocabulary — that cheerfulness is the collapse-material later. The residue files ONLY as a gap: the record shows that something happened it could not classify, never the line itself (homecoming script S2R.6).",

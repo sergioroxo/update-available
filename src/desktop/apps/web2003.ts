@@ -37,6 +37,9 @@ export class Web2003App {
   /** S199 — the pre-filled application, submitted */
   onApply?: () => void;
   private applied = false;
+  /** ⚑ S342 (his 9 Nov answer 2: "instead of posting the reply, it's posting your testimony") — os.ts sets this once
+   *  Restorify Media has made his story; Harbor's Post then posts it, in the programme's words */
+  storyReady = false;
   private ordered = new Set<number>();
 
   /** true when what is under the pointer changed (S271: only then does the screen repaint) */
@@ -63,7 +66,7 @@ export class Web2003App {
       if (h.id === 'forum-page:wound') meetWord('wound');
       return;
     }
-    if (h.id === 'forum-post' && !this.posted) { this.posted = true; this.onPost?.(); }
+    if (h.id === 'forum-post' && !this.posted && this.storyReady) { this.posted = true; this.onPost?.(); }
     if (h.id.startsWith('forum-go:')) { this.trail.push(this.stage); this.stage = h.id.slice(9); return; }
     if (h.id.startsWith('forum-order:')) { this.ordered.add(Number(h.id.slice(12))); return; }
     if (h.id === 'forum-submit' && !this.applied) { this.applied = true; this.onApply?.(); }
@@ -71,38 +74,17 @@ export class Web2003App {
 
   draw(ctx: CanvasRenderingContext2D): void {
     this.hits = [];
-    const c = ui.windowFrame(ctx, WX, WY, WW, WH, `Harbor — ${D.bannerSub} - ${D.browser}`, true);
-    this.hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: 'forum-close' });
-    // the menu bar
-    ui.px(ctx, c.x, c.y, c.w, 58, ERA1.beige);
-    ui.setFont(ctx, 9);
-    ctx.fillStyle = ERA1.black;
-    let mx = c.x + 6;
-    for (const m of D.menus) { ctx.fillText(m, mx, c.y + 3); mx += ctx.measureText(m).width + 12; }
-    ui.px(ctx, c.x, c.y + 15, c.w, 1, ERA1.grey);
-    // the toolbar: Back · Forward · Stop · Refresh · Home (only Back is ever live in the period's grey)
-    let tx = c.x + 4;
-    D.toolbar.forEach((t, i) => {
-      const w = ctx.measureText(t).width + 14;
-      const live = i === 0 && this.trail.length > 0;
-      ui.button(ctx, tx, c.y + 18, w, 18, t, { disabled: i === 1 || i === 2 || (i === 0 && !live) });
-      if (live) this.hits.push({ x: tx, y: c.y + 18, w, h: 18, id: 'forum-back' });
-      // W1-D3 — Home is the front page, as in every browser of the period; before, it was drawn live and did nothing
-      if (i === 4 && this.stage !== 'index' && this.stage !== 'rules') this.hits.push({ x: tx, y: c.y + 18, w, h: 18, id: 'forum-index' });
-      tx += w + 3;
-    });
-    // the address bar
-    ctx.fillStyle = ERA1.greyDark;
-    ctx.fillText(D.addressLabel, c.x + 6, c.y + 43);
-    ui.bevel(ctx, c.x + 50, c.y + 40, c.w - 90, 15, false);
-    ui.px(ctx, c.x + 52, c.y + 42, c.w - 94, 11, ERA1.white);
-    ctx.fillStyle = ERA1.black;
-    ctx.fillText(this.stage === 'rules' ? `${D.address}join.asp` : this.stage === 'index' ? `${D.address}default.asp`
+    const addr = this.stage === 'rules' ? `${D.address}join.asp` : this.stage === 'index' ? `${D.address}default.asp`
       : this.stage === 'apply' ? `${D.address}anchor/apply.asp` : this.stage === 'books' ? `${D.address}store/default.asp`
-      : this.stage.startsWith('page:') ? `${D.address}resources/${this.stage.slice(5)}.asp` : `${D.address}thread.asp?t=4471`, c.x + 55, c.y + 43);
-    ui.button(ctx, c.x + c.w - 36, c.y + 40, 32, 15, D.go, {});
+      : this.stage.startsWith('page:') ? `${D.address}resources/${this.stage.slice(5)}.asp` : `${D.address}thread.asp?t=4471`;
+    const wv = drawWebView(ctx, {
+      title: `Harbor — ${D.bannerSub}`, address: addr, closeId: 'forum-close', hover: this.hover,
+      backId: this.trail.length > 0 ? 'forum-back' : null,
+      homeId: this.stage !== 'index' && this.stage !== 'rules' ? 'forum-index' : null
+    });
+    this.hits.push(...wv.hits);
     // the page
-    const b = { x: c.x, y: c.y + 60, w: c.w, h: c.h - 60 };
+    const b = wv.page;
     ui.px(ctx, b.x, b.y, b.w, b.h, P.page);
     // the board's banner
     ui.px(ctx, b.x, b.y, b.w, 30, P.banner);
@@ -315,7 +297,8 @@ export class Web2003App {
     ctx.fillStyle = P.text;
     ctx.fillText(T.title, x0, b.y + 36);
     let y = b.y + 54;
-    for (const p of T.posts) {
+    // ⚑ S342 — once his story is in play, the thread shows the post that asks for it (Gareth's) and his card under it
+    for (const p of this.storyReady ? T.posts.slice(0, 1) : T.posts) {
       const h = 14 + p.lines.length * 12 + 6;
       ui.px(ctx, x0, y, w0, h, ERA1.white);
       ui.px(ctx, x0, y, w0, 12, P.postHead);
@@ -326,13 +309,38 @@ export class Web2003App {
       p.lines.forEach((l, i) => ctx.fillText(l, x0 + 6, y + 16 + i * 12));
       y += h + 4;
     }
-    if (!this.posted) {
-      ui.button(ctx, x0, y + 4, 80, 18, T.reply, { hover: this.hover === 'forum-post' });
-      this.hits.push({ x: x0, y: y + 4, w: 80, h: 18, id: 'forum-post' });
+    // ⚑ S342 — what Post posts is his testimony: the programme's own card for it, filled in from Restorify Media
+    const S = T.story;
+    const card = (yy: number, pending: boolean): number => {
+      const h = 14 + S.lines.length * 12 + 22;
+      ui.px(ctx, x0, yy, w0, h, pending ? P.pending : ERA1.white);
+      ui.px(ctx, x0, yy, w0, 12, P.postHead);
       ui.setFont(ctx, 9);
-      ctx.fillStyle = P.dim;
-      ctx.fillText(`"${T.yourLine}"`, x0 + 88, y + 8);
+      ctx.fillStyle = P.link; ctx.fillText(S.who, x0 + 4, yy + 1);
+      ctx.fillStyle = P.dim; ctx.fillText(pending ? S.metaPending : S.meta, x0 + 4 + ctx.measureText(S.who).width + 8, yy + 1);
+      ctx.fillStyle = P.text;
+      S.lines.forEach((l, i) => ctx.fillText(l, x0 + 6, yy + 16 + i * 12));
+      // the attachment: the file he uploaded
+      const ay = yy + 18 + S.lines.length * 12;
+      ui.px(ctx, x0 + 6, ay, 9, 9, P.banner); ui.px(ctx, x0 + 9, ay + 2, 3, 5, P.bannerInk);
+      ctx.fillStyle = P.link; ctx.fillText(S.attachment, x0 + 20, ay);
+      return h;
+    };
+    if (!this.posted) {
+      ui.setFont(ctx, 9);
+      if (!this.storyReady) {
+        ui.button(ctx, x0, y + 4, 110, 18, T.postStory, { disabled: true });
+        ctx.fillStyle = P.dim;
+        ctx.fillText(T.notReady, x0 + 118, y + 8);
+      } else {
+        ctx.fillStyle = P.dim;
+        ctx.fillText(T.preview, x0, y + 2);
+        const h = card(y + 14, false);
+        ui.button(ctx, x0, y + 20 + h, 110, 18, T.postStory, { hover: this.hover === 'forum-post', primary: true });
+        this.hits.push({ x: x0, y: y + 20 + h, w: 110, h: 18, id: 'forum-post' });
+      }
     } else {
+      y += card(y, true) + 4;
       ui.px(ctx, x0, y, w0, 30, P.pending);
       ui.setFont(ctx, 9);
       ctx.fillStyle = P.text;
@@ -348,4 +356,53 @@ export class Web2003App {
       this.hits.push({ x: x0 + bw + 8, y: by, w: bw, h: 18, id: 'forum-close' });
     }
   }
+}
+
+/**
+ * ⚑ S342 — THE 2003 BROWSER'S CHROME, one function (his 9 Nov: the DVD page "doesn't even have the browser look, so it
+ * is not connected to the browser of the project"). WebView 6, as Harbor has always drawn it — title bar, the menu
+ * bar, Back · Forward · Stop · Refresh · Home, the address bar with Go — and now a status bar at the foot. Harbor
+ * (Web2003App) and Restorify Media's site (testimony.ts: Daniel's page, the parents' form, the DVD collection) both
+ * draw through it, in the same window, so the 2003 web is one browser. Returns the page's rect and the live controls.
+ */
+export function drawWebView(ctx: CanvasRenderingContext2D, o: {
+  title: string; address: string; closeId: string; backId?: string | null; homeId?: string | null; status?: string;
+  hover?: string;
+}): { page: { x: number; y: number; w: number; h: number }; hits: Hit[] } {
+  const hits: Hit[] = [];
+  const c = ui.windowFrame(ctx, WX, WY, WW, WH, `${o.title} - ${D.browser}`, true);
+  hits.push({ x: c.closeBox.x, y: c.closeBox.y, w: c.closeBox.w, h: c.closeBox.h, id: o.closeId });
+  // the menu bar
+  ui.px(ctx, c.x, c.y, c.w, 58, ERA1.beige);
+  ui.setFont(ctx, 9);
+  ctx.fillStyle = ERA1.black;
+  let mx = c.x + 6;
+  for (const m of D.menus) { ctx.fillText(m, mx, c.y + 3); mx += ctx.measureText(m).width + 12; }
+  ui.px(ctx, c.x, c.y + 15, c.w, 1, ERA1.grey);
+  // the toolbar: Back · Forward · Stop · Refresh · Home (Back and Home live only where they lead somewhere)
+  let tx = c.x + 4;
+  D.toolbar.forEach((t, i) => {
+    const w = ctx.measureText(t).width + 14;
+    const id = i === 0 ? o.backId : i === 4 ? o.homeId : null;
+    ui.button(ctx, tx, c.y + 18, w, 18, t, { disabled: i === 1 || i === 2 || (i === 0 && !id), hover: !!id && o.hover === id });
+    if (id) hits.push({ x: tx, y: c.y + 18, w, h: 18, id });
+    tx += w + 3;
+  });
+  // the address bar
+  ctx.fillStyle = ERA1.greyDark;
+  ctx.fillText(D.addressLabel, c.x + 6, c.y + 43);
+  ui.bevel(ctx, c.x + 50, c.y + 40, c.w - 90, 15, false);
+  ui.px(ctx, c.x + 52, c.y + 42, c.w - 94, 11, ERA1.white);
+  ctx.fillStyle = ERA1.black;
+  ctx.fillText(o.address, c.x + 55, c.y + 43);
+  ui.button(ctx, c.x + c.w - 36, c.y + 40, 32, 15, D.go, {});
+  // the status bar
+  const sy = c.y + c.h - 13;
+  ui.px(ctx, c.x, sy, c.w, 13, ERA1.beige);
+  ui.bevel(ctx, c.x + 2, sy + 1, c.w - 70, 11, false);
+  ui.bevel(ctx, c.x + c.w - 66, sy + 1, 64, 11, false);
+  ui.setFont(ctx, 8); ctx.fillStyle = ERA1.black;
+  ctx.fillText(o.status ?? D.statusDone, c.x + 6, sy + 2);
+  ctx.fillText(D.statusZone, c.x + c.w - 62, sy + 2);
+  return { page: { x: c.x, y: c.y + 60, w: c.w, h: c.h - 60 - 13 }, hits };
 }

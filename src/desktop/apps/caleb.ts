@@ -191,7 +191,8 @@ export class CalebThreadApp {
   private returnStartAt = Infinity;
   private returnLineCount = 0;
   private residueCommitted = false;
-  private afterwordSent = false;
+  /** ⚑ S342 — Caleb's answer to Daniel's line has arrived; the thread ends (and the update arms) after it */
+  private answerLanded = false;
   /** S339 — the song's two-step: 'none' → 'offered' (Wait · Go on, auto after HOLD.autoSeconds) → 'waiting' (Go on)
    *  → 'released' */
   private songHold: 'none' | 'offered' | 'waiting' | 'released' = 'none';
@@ -207,6 +208,7 @@ export class CalebThreadApp {
   constructor() {
     this.stream.onLine = (text) => {
       this.msgs.push({ from: 'them', text });
+      if (this.residueCommitted && text === RESIDUE.answer) this.answerLanded = true;
       if (this.phase === 'returning') this.returnLineCount++;
       const st = THREAD[this.step];
       if (this.phase === 'chat' && st && st.text === text && st.audio && st.attachment) {
@@ -256,15 +258,11 @@ export class CalebThreadApp {
     this.dirty = true;
   }
 
-  /** S339 — the update was put off once ("Remind me later"): Caleb answers Daniel, and the deferral has somewhere to
-   *  be (his 8 Nov: "remind me later… there's no place to come back to"). Once. */
+  /** S339 / ⚑ S342 — the update was put off once ("Remind me later"): the deferral returns to the Messenger, where
+   *  Caleb's answer already stands (his 9 Nov answer 3: every player sees it, before the update; nothing new here). */
   afterword(): void {
-    if (this.afterwordSent || this.phase !== 'done') return;
-    this.afterwordSent = true;
+    if (this.phase !== 'done') return;
     this.open = true;
-    this.stream.gap = CHAT.lineGapSeconds;
-    this.stream.pause(CHAT.replyGapSeconds);
-    this.stream.push(RESIDUE.answer);
     this.stick = true;
     this.dirty = true;
   }
@@ -320,6 +318,14 @@ export class CalebThreadApp {
         && this.returnLineCount >= (caleb.return.lines as string[]).length) {
       this.returnSettleAt = this.t + RET.settleSeconds;
     }
+    // ⚑ S342 — Caleb has answered Daniel and the line has had its moment: NOW the record files the gap and the
+    //   update is free to arrive (his 9 Nov answer 3: "Caleb answers with this line, and THEN the update pops in")
+    if (this.residueCommitted && this.answerLanded && this.phase === 'answer' && this.stream.idle) {
+      this.file('residue', 'residue', caleb.witness.residue);
+      this.phase = 'done';
+      this.onThreadDone?.();
+      this.dirty = true;
+    }
     if (this.t >= this.returnSettleAt) {
       // S339 — Daniel's reply is offered: one chip, Sérgio's line, verbatim
       this.returnSettleAt = Infinity;
@@ -363,15 +369,17 @@ export class CalebThreadApp {
     this.dirty = true;
   }
 
-  /** S339 — Daniel says it, to Caleb. The record shows a GAP it could not classify — never the line itself. */
+  /** S339 — Daniel says it, to Caleb. ⚑ S342 — Caleb answers ("it never was, d. not once."), for every player, and
+   *  only then is the gap filed (the record shows a GAP it could not classify — never the line itself) and the update
+   *  allowed in (update(), above). */
   private commitResidue(): void {
     if (this.residueCommitted) return;
     this.residueCommitted = true;
     this.msgs.push({ from: 'you', text: RESIDUE.line });
     this.stick = true;
-    this.file('residue', 'residue', caleb.witness.residue);
-    this.phase = 'done';
-    this.onThreadDone?.();
+    this.stream.gap = CHAT.lineGapSeconds + 0.6;   // a beat after his answer before the system speaks
+    this.stream.pause(CHAT.replyGapSeconds);
+    this.stream.push(RESIDUE.answer);
     this.dirty = true;
   }
 
@@ -581,7 +589,7 @@ export class CalebThreadApp {
       return;
     }
     // ⚑ S339 — Daniel's reply to Caleb: Sérgio's locked line, one chip, no alternative
-    if (this.phase === 'answer') {
+    if (this.phase === 'answer' && !this.residueCommitted) {
       ui.setFont(ctx, 10);
       const bw = Math.min(w - 16, Math.ceil(ctx.measureText(RESIDUE.line).width) + 40);
       const bx = x + Math.round((w - bw) / 2);
