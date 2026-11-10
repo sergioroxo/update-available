@@ -393,6 +393,33 @@ From DESIGN_COMMONS_REVAMP_2026-11-10.md §2b (UiB session, approved by the lead
 - **Two refusals** (approved): first by naming, then by presence. The people answer the script once, on its stage,
   then never again.
 
+## 7j. A beat cut, and where medical fear comes from (his ruling, 10 Nov 2026)
+
+From DESIGN_COMMONS_REVAMP_2026-11-10.md §4, answer 3, and UIB_JOB_11_2026-11-10.md (S353):
+
+- **What was cut.** Since 13 Sept, the 2026 headset session had a plan of three items, and item 2 was **"Someone who
+  went back"**, a "recorded conversation" that the system vouched for: "verified by Second Thoughts", "11 min. The
+  speaker's name has been removed." It showed a still pixel portrait, a progress bar and three invented sentences
+  ("I just wanted things to be simple again." / "Nobody made me. I was helped." / "I'd tell anyone in my position:
+  the discomfort passes. You just have to—"), with tape hiss and no voice. Junie's message landed on the last dash,
+  so the genre collapsed just before its instruction. The lead cut it on 10 Nov: the AI host's conversation
+  replaces it. Photos of the beat as it was: `research/article-images-2026-11-10/cut-recording/` (taken 2 Nov).
+- **Why.** It was the piece's closest brush with the clinical debate, which the piece never satirises (CLAUDE.md
+  tone laws). A detransition testimonial in the system's mouth sits too near that line, even as parody of a genre.
+- **His framing, with the cut:** *"the medical fear etc is more related to the trends of the Anti-gender movement and
+  the Anti-trans 'Anti-gender-ideology'"*. The piece now keeps two things apart:
+  - **the clinical debate**, shown with both captions and left unresolved;
+  - **medical fear used as a campaign tool** against trans people, shown as the anti-gender movement's tactic and
+    sourced at the Close (the 2026 era website).
+- **The ground in the knowledge base.** *The Hate Review: How the Anti-Gender Movement Spread Across Europe,
+  2000–2025* (Forbidden Colours, Sept 2026; RESEARCH_CLOSE_MESSAGE S1, RESEARCH_LEXICON S21) documents the movement's
+  spread and its move "from street to state" (litigation, legislation, regulation). The Lexicon's "gender ideology"
+  entry traces the term (RESEARCH_LEXICON).
+- **Method point for §6.** A cut is also evidence of the method: the ethics laws act on the build by removal, not
+  only by addition. The cut beat is kept in the data, marked retired, so the history stays readable.
+- **Do not overclaim:** the article needs its own source for the specific tie between medical fear and the
+  anti-gender movement's campaigns [VERIFY SOURCE]. The two documents above establish the movement, not that tie.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
@@ -414,3 +441,6 @@ VR-layer feature (figs 15–26): `ARTICLE_FIGURES_2026-10-31.md`, images in `out
 `ARTICLE_EVIDENCE_LOG.md` (his own notes for the article) · `ARTICLE_RESTRUCTURE_IDEA_2026-10-31.md` (the one argument) ·
 `VR_AS_A_LAYER_2026-10-31.md` (the headset) · `ARTICLE_FIGURES_2026-10-31.md` (the figures) · `HEADSET_SESSION_2026-10-28.md` (the watched session) ·
 `docs/reinterp/OPEN_ITEMS.md` (what is still owed).
+
+**Since 10 Nov:** `ARTICLE_MATERIALS.md` is the index of every document, image folder and source for the article, kept
+current each session.
