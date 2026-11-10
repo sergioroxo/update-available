@@ -136,15 +136,15 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   //   side of a gap down the middle, the way a crowd faces a stage.
   // ⚑ S227 — she is AT THE FRONT of the crowd now, so the crowd is beside and behind her: a flank either
   //   side of the stage's axis, framing the stage at the edges of her view, and the rest at her back.
+  // ⚑ S359 / H24 (his D2, 10 Nov: the raid "should not force you to look behind you. It should be on the side") — the
+  //   nine that stood at her back now rise AT HER SIDES, level with the desk seat (x 4.8–6.6), 2.6–3.8 m out left and
+  //   right: the raid arrives in the edges of her view, and nobody is behind her.
   while (figures.length < FIGURES) {
-    const behind = figures.length >= FIGURES - 9;
-    const x = behind ? SEAT.x - 0.8 - rng() * 2.4 : SEAT.x + 0.2 + rng() * 2.2;
+    const flank = figures.length >= FIGURES - 9;
     const side = rng() < 0.5 ? -1 : 1;
-    const z = behind ? SEAT.z + (rng() - 0.5) * 5.0 : SEAT.z + side * (1.7 + rng() * 0.9);
+    const x = flank ? SEAT.x - 0.4 + rng() * 1.8 : SEAT.x + 0.2 + rng() * 2.2;
+    const z = flank ? SEAT.z + side * (2.6 + rng() * 1.2) : SEAT.z + side * (1.7 + rng() * 0.9);
     if (Math.hypot(x - SEAT.x, z - SEAT.z) < 1.5) continue;
-    // ⚑ S356 — the ones at her back stand left and right of a lane: behind her is the host's operator view
-    //   (commonsWorld.ts WORLD.backstage), and the crowd that rises while she faces it must not stand in front of it
-    if (behind && Math.abs(z - SEAT.z) < 1.35) continue;
     if (figures.some((g) => g.beside && Math.hypot(g.x - x, g.z - z) < 0.7)) continue;   // ⚑ S227: nobody inside Junie or Ade
     if (x > STAGE.x - STAGE.d / 2 - 0.4) continue;
     figures.push({

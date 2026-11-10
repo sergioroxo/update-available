@@ -53,11 +53,13 @@ export function mountCommonsHost(app: pc.Application, parent: pc.Entity): { upda
   // the floor laid over the dance tiles (they run x 5.0–9.4, z stage.z −2.2…+1.7, partly under the runway — the
   // 'stage' is a runway 2.2 m wide coming toward her, x 6.9–11.9). Well clear of the tiles' tops (0.042): at 0.052
   // their edges showed through on the first plate.
-  const fx0 = 4.8, fx1 = 9.6, fz0 = S.z - 2.4, fz1 = S.z + 2.6;
+  const fx0 = 4.8, fx1 = 9.6, fz0 = S.z - 2.4, fz1 = WORLD.screen.z + WORLD.screen.w / 2 + 1.4;   // S359: to the host, at the side
   pushBox(pos, idx, col, C(PALE.floor), (fx0 + fx1) / 2, 0.07, (fz0 + fz1) / 2, (fx1 - fx0) / 2, 0.02, (fz1 - fz0) / 2);
   // the host: at stage left, beside the screen like a presenter beside its own broadcast (centred, it stood in front
   // of the screen and hid the numbers — measured on the first plate), facing her (−x). Life-size.
-  const hx = S.x + 1.0, hz = S.z + 2.2, base = 0.26;   // ~21° right of her line of sight, just clear of the screen
+  // ⚑ S359 / H24 (his D2) — with its screen, to his SIDE: just beyond the screen's right edge (~52° right of the desk
+  //   seat, 7 m), so it never stands in front of the broadcast's numbers and nothing of the host is straight ahead
+  const hx = WORLD.screen.x - 0.6, hz = WORLD.screen.z + WORLD.screen.w / 2 + 0.7, base = 0.26;
   // ⚑ S355 (his choice, 10 Nov, via the orchestrator): A PRODUCT, NOT A STATUE. The stone figure on a plinth pointed
   //   at church statuary (faith); the host is the system's projection. So: a PROJECTOR PAD where the plinth stood —
   //   a dark body, the glowing disc on top at the same height — and above it the figure as a hologram (below).

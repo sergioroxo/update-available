@@ -36,16 +36,21 @@ export const WORLD = {
   /** the screen behind it — big, and six metres off. ⚑ 2026-09-13: raised to
    *  y 2.75 and widened to 3.2 m: at 2.2 the walker on the stage stood in front
    *  of the stream and covered the category caption from the seat. */
-  screen: { x: 11.4, y: 2.45, z: 0.7, w: 3.4, h: 1.9 },   // ⚑ S293: 2.75 → 2.45 so the stream's title and count are in the seat's frame
+  // ⚑ S359 / H24 (his D2, 10 Nov: the host's stream "should not appear on the screen in front of me… a little bit
+  //   violent just to be in front of me") — TO HIS SIDE: off the stage's axis to the right, still facing −x (90° steps),
+  //   ~17°–44° right of the desk seat's line of sight (centre ~33°, 5.9 m), clear of the stage (z ≤ 1.8) — inside the
+  //   view from the seat, so nothing asks him to turn. It was dead ahead, 6.8 m off.
+  screen: { x: 9.6, y: 2.45, z: 3.9, w: 3.4, h: 1.9 },   // ⚑ S293: y 2.45 so the stream's title and count are in the seat's frame
   /** ⚑ S209g (his, 2026-10-03: "it boxes off the space, instead of letting it breathe") — NO WALLS.
    *  The hall is an open platform under the sky, the way a social-VR world floats: a slab with a rim of
    *  light at its edge, the dusk all the way round the horizon, the stars overhead. (The walls of
    *  2026-09-13 were there because the far floor read as a beige horizon; the rim and the horizon's
    *  own glow answer that now.) */
   floor: { x: 5.0, z: 0.7, w: 30, d: 26 },
-  /** ⚑ S356 — the host's operator view, BEHIND her (−x from the spot), facing her: 2.5 m off, 1.7 × 0.96 m
-   *  (≈ 37° × 22° from the spot), its centre a little below the eye. Shown only while she faces it. */
-  backstage: { x: 2.7, y: 1.12, z: 0.7, w: 1.7, h: 0.96 },
+  /** ⚑ S356 — the host's operator view, 1.7 × 0.96 m, its centre a little below the eye.
+   *  ⚑ S359 / H20 (his D1: no turns, no moves) — it no longer stands BEHIND her for a half-turn: "Show me" hangs it IN
+   *  FRONT of the desk seat, 2.4 m off (≈ 39° × 23°), facing her (−x), and "Back" takes it away (era3Devices.ts). */
+  backstage: { x: 7.0, y: 1.12, z: 0.7, w: 1.7, h: 0.96 },
   sky: COMMONS_SKY,
   // ⚑ S209 / B24 (REVIEW_ROUND_5, ERA26-05; his "Warm it please!") — the one respite was the darkest room in the piece:
   //   near-black interface panels for walls and floor. Now the warm wall and wood of the rooms themselves (PLACE),

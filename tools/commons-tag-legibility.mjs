@@ -12,7 +12,7 @@
  *   · the tag's font size in canvas px (read from the real fillText calls while the tags draw),
  *   · the surface's angular size and source texels per degree from the eye,
  *   · the ANGULAR HEIGHT of the tag's font (px × degrees per px),
- * at the browser seat (the Commons spot) and at the headset seat (XR forced active, the head leaned 0.15 m forward,
+ * at the browser seat (the desk seat since S359; the Commons spot before) and at the headset seat (XR forced active, the head leaned 0.15 m forward,
  * as Codex's report did). PASS: ≥ 0.5° (Codex's 12-px reading minimum on the 2026 monitor); aim 0.65°.
  *
  * Geometry, not optics: degrees are from the eye point to the plane's corners; a real headset's lenses, its
@@ -46,12 +46,13 @@ try {
       return raw.apply(this, a);
     };
   });
-  await page.goto(`http://127.0.0.1:${PORT}/?reinterp=1&kiosk=0&era=4&debug=1&descent=0`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=4&debug=1&descent=0`, { waitUntil: 'domcontentloaded', timeout: 90000 });
   await page.waitForFunction(() => window.__os && window.__camFree && window.__camPose, { timeout: 90000 });
   await wait(6000);
   await page.evaluate(() => window.__os.debugJump('e4Naming'));
   await page.waitForFunction(() => window.__os.e4.ball.tagsShown >= 3, { timeout: 30000 });
-  await page.evaluate(() => window.__camFree(5.2, 1.16, 0.7, 1, 270));
+  // ⚑ S359 / H20 (his D1) — the stream is watched from the DESK seat now (app.ts seatPose(270)), not the Commons spot
+  await page.evaluate(() => window.__camFree(4.6, 1.16, 0.7, 1, 270));
   await wait(1500);
   report = await page.evaluate(async ({ LEAN }) => {
     const pc = await import('/node_modules/.vite/deps/playcanvas.js');
@@ -62,7 +63,7 @@ try {
     const measure = (xr) => {
       let cam = null; a.root.forEach((e) => { if (e.camera && e.enabled) cam = e; });
       const eye = cam.getPosition().clone();
-      if (xr) eye.x += LEAN;   // the XR seat leans toward the stage (+x is forward at the spot)
+      if (xr) eye.x += LEAN;   // the XR seat leans toward the stage (+x is forward at the desk seat)
       const ang = (p, q) => Math.acos(Math.max(-1, Math.min(1, p.clone().sub(eye).normalize().dot(q.clone().sub(eye).normalize())))) * 180 / Math.PI;
       const out = {};
       for (const [name, s] of Object.entries(surfaces)) {

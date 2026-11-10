@@ -99,6 +99,8 @@ closed by him, never raise it again.
 
 ## Done since the headset session (newest first)
 
+- ☑ **S359 UiB job 12 Part A2** — comfort: 2026 keeps the desk seat (no move to the stream, no turn for Show me/Back, plain cuts, no particles), the host's stream and the raid to the side, the Wick on the table, the turn on the way up to 2026, a flight into the Close, the grip icon. BUILD_LOG S359.
+
 - ☑ **S358 UiB job 12 Part A1** — the 10 Nov headset session's bugs H01–H19 (phantom buttons, NetVision close, check-in, Caleb's teaser sound, the 1997 folder, the diary line, the Handset Window number, Soften the term, the sticker, the link that was not there, Live, the window that grew, phone scroll + the song, the search box, window sizes, the try-on's silence, the 2026 room's props, wake vs breathing, the Close's panels). BUILD_LOG S358.
 
 - ☑ His 8 Nov ruling: **no man's hands on the controllers in the headset** — not needed; the try-on stays on the glass only. Closed.

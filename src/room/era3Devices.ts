@@ -236,11 +236,12 @@ const PLACEMENT = {
    * — and turns. 0.80 x 0.45 m at 1.78 m up on the desk wall, the same
    * facing as the monitor (y 270, −x).
    */
-  /** ⚑ S356 — placed in the world each frame from `COMMONS.backstage` (behind the spot, facing her: +x) */
+  /** ⚑ S356 — placed in the world each frame from `COMMONS.backstage`. ⚑ S359 / H20: in FRONT of the desk seat now,
+   *  facing her (−x, like the stream and the monitor) — brought to her, never a turn */
   backstage: {
-    pos: { x: 2.7, y: 1.12, z: 0.70 },
+    pos: { x: 7.0, y: 1.12, z: 0.70 },
     size: { w: 1.7, h: 0.96 },
-    euler: { x: 90, y: 90, z: 0 }
+    euler: { x: 90, y: 270, z: 0 }
   },
   stream: {
     /** ⚑ measured: at y 1.78 the window sat 26°–38° above the eye against a
@@ -938,6 +939,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   // Felt conducted object: one lift, three seconds facing the authored seat, then home.
   const WICK_TABLE = { x: -4.95, y: 0.758, z: 1.245 }, WICK_UP = new pc.Vec3(-1, 0, 0);   // S327 / T32: on the desk
   let wickT = -1, wickDone = false;
+  let wickScale: pc.Vec3 | null = null;   // S359 / H21: the card's own size, restored after the hold
   let wickRest: { p: pc.Vec3; q: pc.Quat } | null = null;
   /** ⚑ S332 — the second rise: The Wick has been added to the places to avoid, Orla's invitation has been read, and
    *  the card is brought up to her eye and stamped BANNED at the top of the rise (one redraw, one upload). */
@@ -985,11 +987,17 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     graceQueueLite.wickConducting = true;
     wickT += dt;
     const k = wickT < 0.5 ? wickT / 0.5 : wickT <= 3.5 ? 1 : Math.max(0, 1 - (wickT - 3.5) / 0.5);
-    const smooth = k * k * (3 - 2 * k), target = new pc.Vec3(-4.76, 1.11, 0.82);
-    card.setPosition(new pc.Vec3().lerp(wickRest.p, target, smooth));
+    // ⚑ S359 / H21 (his headset, 10 Nov: the Wick "just jumped to my face… it can happen there on the table") — it no
+    //   longer flies to the eye: it stays ON THE DESK where it lies, lifts 3 cm, tips half-way up toward the seat (a card
+    //   propped to be read) and grows by half for the hold, so it reads at 0.9 m; then lies down again. Same 4 s, same
+    //   stamp at 0.9 s, same quiet for the platform while it is up.
+    const smooth = k * k * (3 - 2 * k);
+    wickScale ??= card.getLocalScale().clone();
+    card.setPosition(wickRest.p.x, wickRest.p.y + 0.03 * smooth, wickRest.p.z);
     card.lookAt(new pc.Vec3(-4.4, 1.16, 0.70)); card.rotateLocal(0, 180, 0);
-    const face = card.getRotation().clone(); card.setRotation(new pc.Quat().slerp(wickRest.q, face, smooth));
-    if (wickT >= 4 || era !== 'e3') { card.setPosition(wickRest.p); card.setRotation(wickRest.q); wickT = -1; graceQueueLite.wickConducting = false; }
+    const face = card.getRotation().clone(); card.setRotation(new pc.Quat().slerp(wickRest.q, face, 0.55 * smooth));
+    card.setLocalScale(wickScale.x * (1 + 0.5 * smooth), wickScale.y * (1 + 0.5 * smooth), wickScale.z * (1 + 0.5 * smooth));
+    if (wickT >= 4 || era !== 'e3') { card.setPosition(wickRest.p); card.setRotation(wickRest.q); card.setLocalScale(wickScale); wickT = -1; graceQueueLite.wickConducting = false; }
   };
   let ritualTick = 0;
   function drawWorkstation(ctx: CanvasRenderingContext2D, w: number, h: number): void {

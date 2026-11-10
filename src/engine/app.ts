@@ -758,7 +758,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const xr = app.xr;
   // ⚑ S346 / T08 — the view morph: every cut arrives as the destination's own picture, never black (viewMorph.ts)
   const viewMorph = mountViewMorph(app, camera);
-  const xrComfort = mountXrComfort(app, cameraRig, camera, reducedMotion, viewMorph);
+  /** ⚑ S359 / H20 (his D1, 10 Nov: "The fade is horrible", "please don't move around") — in 2026 every re-form of the
+   *  room in a headset, and every blink on the computer, is a PLAIN INSTANT CUT: no particles, no fade. Set each frame
+   *  from the era (the frame loop, beside the cloud's update). */
+  let plainCutEra = false;
+  const xrComfort = mountXrComfort(app, cameraRig, camera, () => reducedMotion() || plainCutEra, viewMorph);
   mountXrTextures(app);
   const authoredRig = xrComfort.authored;
   xrComfort.setWorldReady(!options.restoreEntrance);
@@ -1848,11 +1852,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   /** S346 — start a blink whose cover is the destination's picture. In a headset the comfort layer morphs the
    *  re-form itself (xrComfort), so the blink only keeps its clock there. */
   function startBlink(to: { x: number; y: number; z: number; pitch: number; yaw: number }, outS: number, inS: number): void {
-    blinkOutSeconds = outS; blinkInSeconds = inS;
-    if (!xr?.active) viewMorph.capture(poseMat(to), null, { xr: false });
+    // ⚑ S359 / H20 — 2026's blinks are plain cuts: the cut lands on the next frame, nothing covers it
+    blinkPlain = plainCutEra;
+    blinkOutSeconds = blinkPlain ? 1e-4 : outS; blinkInSeconds = blinkPlain ? 1e-4 : inS;
+    if (!xr?.active && !blinkPlain) viewMorph.capture(poseMat(to), null, { xr: false });
     blinkPhase = 'out';
     blinkT = 0;
   }
+  let blinkPlain = false;
   let moveHintShown = false;
   let moveHintDismissed = false;
   /** Session 65 (Sérgio: *"there's a 'click a marker to move' always on, we
@@ -2324,8 +2331,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   only ever turned, never tilted — xrComfort's follow), the facing turning slowly across the whole flight. Under
     //   reduced motion the computer flies the same way (his: "the flight becomes a slow drift"). Every other scripted
     //   move in a headset stays ONE cut under the dissolve.
-    const fly = !!relocLeg && (!!xr?.active || reducedMotion());
-    if (fly) via = undefined;
+    // ⚑ S359 / H23 (his headset, 10 Nov: "no flyover into the Close — it should have") — the way in (the sweep from
+    //   Maya's desk up over the partition to Daniel's seat) flies too, on its own arc, the facing held (yawTurn 0)
+    const closeIn = closeStage === 'travel' || closeStage === 'lookUp';   // …and the eyes rising to the stars (45° over 20 s)
+    const fly = (!!relocLeg || closeIn) && (!!xr?.active || reducedMotion());
+    if (fly) { if (!closeIn) via = undefined; }   // era legs fly straight; the Close's way in keeps its arc
     else if (xr?.active) { dur = 0.001; via = undefined; }
     const dyaw = yawTurn ?? ((to.yaw - camYaw + 540) % 360) - 180;
     const fx = camPos.x, fy = camPos.y, fz = camPos.z;
@@ -2425,7 +2435,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const MORPH_LAYER_LEVEL = 1.0;
   /** ⚑ S348 — the whole flight's slow turn (headset, reduced motion): from the facing you left with to the seat's */
   let flightT = 0, flightTotal = 1, flightYaw0 = 0, flightYaw1 = 0;
-  function flightYaw(): number { return flightYaw0 + (flightYaw1 - flightYaw0) * flyEase(Math.min(1, flightT / flightTotal)); }
+  /** ⚑ S359 / H22 (his headset, 10 Nov: "the camera needs to turn around by itself… on the first rise it should also
+   *  turn so he can see the room change") — 2016 → 2026 turns over its first 24 s, from the rise on, instead of across
+   *  the whole 49.5 s flight (12° by the top of the rise): 177° × 1.22 / 24 s ≈ 9.0 °/s at the trapezoid's peak, inside
+   *  the comfort law's 9.1. The other era changes keep the whole-flight turn. */
+  let flightTurnTotal = 1;
+  function flightYaw(): number { return flightYaw0 + (flightYaw1 - flightYaw0) * flyEase(Math.min(1, flightT / flightTurnTotal)); }
   /** set when an era lands mid-flight; consumed by `endRelocation` */
   let pendingBed: string | null | undefined;
 
@@ -2462,6 +2477,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     stopMorphLayer(0);
     flightT = 0;
     flightTotal = Math.max(1, plan.riseSeconds + (plan.turnSeconds ?? 0) + plan.buildSeconds + plan.descendSeconds);
+    flightTurnTotal = key === 'e3-e4' ? Math.min(flightTotal, 24) : flightTotal;   // S359 / H22
     flightYaw0 = camYaw;
     flightYaw1 = camYaw + ((((seatPose(plan.seat).yaw - camYaw) % 360) + 540) % 360 - 180);
     const poses = RELOC_POSES[key];
@@ -3813,7 +3829,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    */
   function aimNameUnderRay(ray: Ray): string | null {
     const A = aimStrings as unknown as Record<string, string>;
-    aimAt = null;
+    aimAt = null; aimPick = false;
     // ⚑ S358 / H19 (his headset, 10 Nov, in the Close: "there's still no way to point to stuff"; "he cannot see where he
     //   is pressing") — the panels took a press but published nothing a ray could land on: the ray stayed a stub and
     //   nothing named what it was on. The same tests as the press (resolveTapRay), in its order: a panel names itself,
@@ -3835,6 +3851,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (!dev) return null;
       aimAt = devices?.aimedAt(cluster!.era) ?? null;
       const [game, what] = dev.split(':');
+      aimPick = what === 'pick';   // S359 / H51: on a device that can be picked up (never while it is held)
       const name = A[`dev_${game}`] ?? '';
       return (A[`devAim_${what}`] ?? A.devAim_screen).replace('{name}', name);
     };
@@ -3876,6 +3893,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
   /** ⚑ S345 / T29 — the room point the last aim named (room coordinates), so the headset's ray can end on it */
   let aimAt: { x: number; y: number; z: number } | null = null;
+  /** ⚑ S359 / H51 — the last aim was a holdable device that is not held: the grip icon goes beside it */
+  let aimPick = false;
   function hitAt(ray: Ray, p: { x: number; y: number; z: number }, radius: number): boolean {
     if (!rayHitsPointR(ray, p, radius)) return false;
     aimAt = p; return true;
@@ -4372,6 +4391,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const aimShown = xr?.active && !gameMenuBus.isOpen && !siteViewerXr?.isOpen && xrComfort.calibrated ? aimName : null;
     xrInput?.setAimTarget(aimShown && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
     xrFrame?.setAim(aimShown, aimShown ? xrInput?.end() ?? null : null, xrInput?.ray()?.p0 ?? null);
+    // ⚑ S359 / H51 — the grip icon: only while the controller's ray is on a device that can be picked up
+    xrFrame?.setGrip(aimShown && aimPick && aimAt ? xrComfort.physicalPoint(new pc.Vec3(aimAt.x, aimAt.y, aimAt.z)) : null);
     if (xrFrame && xr?.active && !gameMenuBus.isOpen) xrFrame.setHint(siteViewerXr?.isOpen ? null : !xrComfort.calibrated ? menuStrings.xrSeat : deviceInHand ? null : aimName ? null : xrHelperText(helper?.text() ?? null, dt));
     // ⚑ S208 / A1 (REVIEW_ROUND_5) — the menu holds the SOUND as well as the clock. This early return used to skip the
     //   frame's own audio sync below, so tapes, the bed, L's voice, the songs and the ad all played on behind the
@@ -4420,7 +4441,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // the arc resolves.
       if (relocLeg) flightT += dt;
       // ⚑ S348 — while an era change flies in a headset, the comfort layer follows the flight (no re-forming)
-      xrComfort.setFollow(!!relocLeg && !!xr?.active);
+      xrComfort.setFollow((!!relocLeg || !!camMove?.fly) && !!xr?.active);   // S359 / H23: the Close's way in too
       if (camMove && xr?.active && !camMove.fly) {
         camMove.t += dt;
         camPos.set(camMove.tx, camMove.ty, camMove.tz); camPitch = camMove.tp; camYaw = camMove.tyaw;
@@ -4430,11 +4451,18 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   flight's slow turn (xrComfort follows this pose without re-forming the room; it never tilts the world)
         camMove.t += dt;
         const s = flyEase(Math.min(1, camMove.t / camMove.dur));
-        camPos.x = camMove.fx + (camMove.tx - camMove.fx) * s;
-        camPos.y = camMove.fy + (camMove.ty - camMove.fy) * s;
-        camPos.z = camMove.fz + (camMove.tz - camMove.fz) * s;
+        if (camMove.arc) {   // S359 / H23 — the Close's way in keeps its up-and-over arc (era legs are straight)
+          const u = 1 - s;
+          camPos.x = u * u * camMove.fx + 2 * u * s * camMove.vx + s * s * camMove.tx;
+          camPos.y = u * u * camMove.fy + 2 * u * s * camMove.vy + s * s * camMove.ty;
+          camPos.z = u * u * camMove.fz + 2 * u * s * camMove.vz + s * s * camMove.tz;
+        } else {
+          camPos.x = camMove.fx + (camMove.tx - camMove.fx) * s;
+          camPos.y = camMove.fy + (camMove.ty - camMove.fy) * s;
+          camPos.z = camMove.fz + (camMove.tz - camMove.fz) * s;
+        }
         camPitch = camMove.fp + (camMove.tp - camMove.fp) * s;
-        camYaw = flightYaw();
+        camYaw = relocLeg ? flightYaw() : camMove.fyaw + (camMove.tyaw - camMove.fyaw) * s;
         if (camMove.t >= camMove.dur) camMove = null;
       } else if (camMove && reducedMotion()) {
         // the cut: covered by RM_FADE, the pose set under the full cover, uncovered by 2×RM_FADE. ⚑ S346: the cover is
@@ -4579,6 +4607,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   read a panel, the panel does not leave. (In the browser the drift still brings each panel to a visitor who
       //   does not drag — the law that the piece takes the viewer there.)
       if (xr?.active) cloud?.holdDrift(0.5);
+      plainCutEra = (cluster?.era ?? os.era) === 'e4';   // S359 / H20
       cloud?.update(dt);
       // ⚑ S101 — the room goes once the sky is on its way (see `enterClose`).
       if (closeRoomPending && cloud && cloud.open >= 0.45) {
@@ -4610,7 +4639,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (blinkPhase === 'out') {
         blinkT += dt;
         const k = Math.min(1, blinkT / blinkOutSeconds);
-        if (!xr?.active) viewMorph.set(k / 0.8, false);
+        if (!xr?.active && !blinkPlain) viewMorph.set(k / 0.8, false);
         if (k >= 1) {
           if (blinkTargetNode) performSeatCut(blinkTargetNode);
           blinkTargetNode = null;
@@ -4621,10 +4650,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       } else if (blinkPhase === 'in') {
         blinkT += dt;
         const k = Math.min(1, blinkT / blinkInSeconds);
-        if (!xr?.active) viewMorph.set((1 - k) / 0.8, true);
+        if (!xr?.active && !blinkPlain) viewMorph.set((1 - k) / 0.8, true);
         if (k >= 1) {
           blinkPhase = null;
-          if (!xr?.active) viewMorph.hide();
+          if (!xr?.active && !blinkPlain) viewMorph.hide();
         }
       }
       if (cluster && movementNodes) {
@@ -5146,7 +5175,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * the view fades, the facing is cut at the bottom, the view comes back (the seat-jump grammar; in a headset the
    * comfort layer's dissolve). `atCut` runs at that bottom, while nothing is visible — the stage changes then.
    */
+  /**
+   * ⚑ S359 / H20 (his D1: "please don't move around") — and now NO turn at all: "Show me" brings the host's operator
+   * view to HIM (commonsWorld.ts WORLD.backstage hangs in front of the desk seat while it is shown) and "Back" takes it
+   * away; the stage changes (`atCut`) at once, round the view he is reading. The turn below is kept for nothing but a
+   * review route that asks for it outside 2026.
+   */
   onTurnTo((target, atCut) => {
+    if (plainCutEra || (cluster?.era ?? os.era) === 'e4') { atCut?.(); return; }
     const node = movementNodes?.find(COMMONS_SPOT);
     if (!node?.pose) { atCut?.(); return; }
     const to = { ...node.pose, yaw: node.pose.yaw + (target === 'backstage' ? 180 : 0) };
@@ -5178,6 +5214,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ the hall's markers on, the rooms' off — and leaving the world puts her
     //   back in Maya's seat, wherever in the hall she had blinked to
     movementNodes?.setCommons(hidden);
+    // ⚑ S359 / H20 (his D1, 10 Nov: "keep the seat") — the hall comes to the desk seat: no cut to the spot, no marker
+    //   offered in the hall (its one node would be a floor disc 0.6 m ahead), and leaving it changes nothing
+    movementNodes?.setOnly(hidden ? '-none-' : null);
     if (!hidden && seatNodeId && seatNodeId.startsWith('commons-')) performSeatCut('r3-desk');
     /**
      * ⚑ S227 — TAKEN THERE (R28 amendment 1 as revised 2026-10-10, "take the viewer there"; his answers to
@@ -5188,7 +5227,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
      * cut lands her facing the stage and the turn is hers.
      */
     if (hidden) {
-      performSeatCut(COMMONS_SPOT);
+      // the desk seat, facing the stage; on the computer the eyes come level (the spot's pitch): a look, not a move
+      if (seatNodeId !== 'r3-desk') performSeatCut('r3-desk');
+      camPitch = movementNodes?.find(COMMONS_SPOT)?.pose?.pitch ?? camPitch;
       camYaw += COMMONS_ARRIVE_OFF;
       authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
     }
@@ -5595,7 +5636,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // ⚑ Phase 7 (his: "no need to 'look to the right'") — the conducted turn to the laptop is gone.
     //   The eyes stay where she was facing and the seat eases back 30 cm, so the monitor and the
     //   laptop are both in frame while they die (0.08 m/s at the crest; no yaw at all)
-    if (Math.hypot(camPos.x - EYE.x, camPos.z - EYE.z) > 0.5) {
+    // ⚑ S359 / H20 (his D1) — not in a headset: there a 30 cm ease is a 30 cm jump of the world (under the re-form
+    //   threshold, so it lands with no cover at all); the head sees the screens die from where it is
+    if (Math.hypot(camPos.x - EYE.x, camPos.z - EYE.z) > 0.5 && !xr?.active) {
       const r = camYaw * Math.PI / 180;
       const back = { x: camPos.x + Math.sin(r) * 0.3, y: camPos.y + 0.04, z: camPos.z + Math.cos(r) * 0.3, pitch: -8, yaw: camYaw };
       startCamMove(back, 6, true);

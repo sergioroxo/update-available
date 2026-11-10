@@ -80,6 +80,8 @@ export interface XrFrame {
   /** ⚑ S345 / T29 — the name of what the ray is on, pinned at the ray's end (physical). `from` is the ray's origin: the
    *  tag hangs on the far side of the point from it, so the ray never runs through its own name */
   setAim(text: string | null, end: { point: pc.Vec3 } | null, from?: pc.Vec3 | null): void;
+  /** ⚑ S359 / H51 — the grip icon beside a holdable thing the ray is on (null: none). `extent` = its half-size, m. */
+  setGrip(at: pc.Vec3 | null, extent?: number): void;
   /** S270g — a line that wins over the helper's for `seconds` (the table match, its result) */
   notice(text: string | null, seconds?: number): void;
   /** ⚑ S209 / A22 — a select on the ≡ Menu tab opens the menu (true if the tab took it) */
@@ -200,6 +202,38 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     g.fillStyle = ERA1.black; g.fillText(t, 18, TAG_CH / 2 + 2);
     tagTex.upload();
   };
+
+  // ── ⚑ S359 / H51 (his 10 Nov answer: "when the controller points at the handheld, an icon appears beside it that
+  //   shows it can be held and moved") — the GRIP ICON: a hand closing on a handle, in the frame's own tooltip idiom
+  //   (the 1997 tooltip: pale yellow, a black line), drawn ONCE (no per-frame upload), one plane = one draw call. It
+  //   hangs at the device's left (the name tag takes its upper right), turned square to the eye, and shows only
+  //   while the ray is on a device that can be picked up — never on a look, gone once it is held. ──
+  const GRIP_PX = 96, GRIP_SIZE = 0.05;   // the icon's side: 5 cm at a metre (≈ 2.9°), scaled with distance like the tag
+  const gripCanvas = document.createElement('canvas');
+  gripCanvas.width = GRIP_PX; gripCanvas.height = GRIP_PX;
+  const gctx = gripCanvas.getContext('2d');
+  if (!gctx) throw new Error('2D context unavailable');
+  {
+    const g = gctx, u = GRIP_PX / 24;   // a 24-cell glyph, integer cells
+    const cell = (x: number, y: number, w: number, h: number): void => g.fillRect(Math.round(x * u), Math.round(y * u), Math.round(w * u), Math.round(h * u));
+    g.imageSmoothingEnabled = false;
+    g.fillStyle = ERA1.tooltip; g.fillRect(0, 0, GRIP_PX, GRIP_PX);
+    g.fillStyle = ERA1.black;
+    cell(0, 0, 24, 1); cell(0, 23, 24, 1); cell(0, 0, 1, 24); cell(23, 0, 1, 24);   // the tooltip's black line
+    cell(10, 3, 4, 18);   // the handle (a controller's grip, upright)
+    g.fillStyle = ERA1.tooltip; cell(11, 4, 2, 16);
+    g.fillStyle = ERA1.black;
+    for (let i = 0; i < 4; i++) { cell(6, 6 + i * 3.5, 9, 2.5); }   // four fingers closed round it
+    cell(5, 6, 2, 14);    // the back of the hand
+    cell(14, 7, 4, 3);    // the thumb over the top
+    cell(17, 13, 3, 1); cell(19, 12, 1, 3);   // a small arrow: it moves with the hand
+  }
+  const gripTex = makeScreenTexture(app, gripCanvas);
+  gripTex.upload();
+  const gripPlane = makeScreenEntity('xr-grip-icon', gripTex, GRIP_SIZE, GRIP_SIZE, true);
+  overRoom(gripPlane);
+  gripPlane.enabled = false;
+  app.root.addChild(gripPlane);
 
   let view: View = 'main';
   let jumpTarget: { era: 'e1' | 'e2' | 'e3' | 'e4'; label: string } | null = null;
@@ -481,6 +515,19 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       const below = !!from && from.clone().sub(at).dot(up) > 0;   // a ray from above (rare) hangs it underneath
       tagPlane.setPosition(at.clone().add(right.mulScalar(gap + w / 2)).add(up.mulScalar((below ? -1 : 1) * (gap + h / 2))));
       tagPlane.enabled = true;
+    },
+    setGrip(at: pc.Vec3 | null, extent = 0.12): void {
+      if (!at || open || !app.xr?.active) { gripPlane.enabled = false; return; }
+      const eye = head.getPosition();
+      const d = Math.max(0.25, at.distance(eye));
+      const side = GRIP_SIZE * d, gap = TAG_GAP * d;
+      gripPlane.setLocalScale(side, 1, side);
+      gripPlane.setPosition(at);
+      gripPlane.lookAt(at.clone().add(at.clone().sub(eye)), head.up);   // square to the eye, never rolled
+      gripPlane.rotateLocal(90, 0, 0);
+      const left = gripPlane.right.clone().mulScalar(-(extent + gap + side / 2));
+      gripPlane.setPosition(at.clone().add(left));
+      gripPlane.enabled = true;
     },
     debugHit(ray: Ray): { x: number; y: number } | null { return planeHit(plane, ray, PLANE_W, PLANE_H, W, H); },
     tick(ray: Ray | null, wrist?: { at: pc.Vec3; palm: pc.Vec3 | null } | null): void {
