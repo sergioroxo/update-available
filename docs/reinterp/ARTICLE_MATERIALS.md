@@ -119,7 +119,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 3. ☑ S353c (10 Nov): ~~Images are local only~~ **backed up to the UiB OneDrive** (his choice): see §8.
 4. The rights to each reference image in `output/reference-shots-2026-10-31/` before anything is printed.
 5. **Later (his 10 Nov):** a profound before and after through time (TODO T63). The 8 Nov headset frames wait for it.
-6. **His approval:** the Dossier card "The AI host" and its source text (Claude's draft; companion §7k).
+6. **His approval:** the Dossier card "The AI host": ☑ line chosen 10 Nov ("listened to you like a friend, and filed you as a lead"); its source text still awaits his read (companion §7k).
 
 ## 8. The backup on OneDrive (since 10 Nov)
 

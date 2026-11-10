@@ -466,3 +466,5 @@ deeper analysis on the Close's era website and its explainers; 9 yes.
 5. **Inside the stream: none** of C-light, A or B. The raid (§2b) is the whole idea.
 
 Build brief: docs/reinterp/UIB_JOB_11_2026-11-10.md.
+
+⚑ **10 Nov (S356b), his ruling:** the "The AI host" card line is now *"listened to you like a friend, and filed you as a lead"* (his choice from four drafts); the first draft ("talked to you as Jesus, for a fee, …") is rejected.

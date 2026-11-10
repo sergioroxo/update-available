@@ -466,6 +466,9 @@ From UIB_JOB_11_2026-11-10.md and the builder's reports, merged at 4795d979. Pho
   the authorship model, also when the drafter is another AI session.
 - **For his approval:** the Dossier card "The AI host" (speculative): *"talked to you as Jesus, for a fee, and could
   not file the people who came"*, and its source text. Dossier phrasing is his.
+- **His ruling on the card (10 Nov, later):** he rejected that line. Chosen from four drafts in the other cards'
+  pattern ("the system did X to you, and filed Y"): *"listened to you like a friend, and filed you as a lead"*. It
+  points at the backstage reveal, and keeps Jesus out of the card. The source text under it still awaits his read.
 
 ## 8. What the article must not overclaim
 
