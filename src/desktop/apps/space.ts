@@ -976,8 +976,9 @@ export class E4Shell {
       // ⚑ S133: while the invitation is up it owns the press — one chip, or
       //   nothing, consumed either way, exactly as L's chips were.
       if (this.ball.invited) return this.ball.handleClick(x, y);
-      // ⚑ S354 — the host's studio and its mirror own the press: her chips, or nothing (consumed either way)
-      if (this.ball.hosting || this.ball.phaseId === 'tryon') return this.ball.handleClick(x, y);
+      // ⚑ S354/S355 — the host's studio, its mirror, the raid and the naming own the press: her chips, or nothing
+      //   (consumed either way)
+      if (this.ball.live) return this.ball.handleClick(x, y);
       // ⚑ the offers get first refusal, because by the time they are on screen L
       // has finished and its chips are gone. Two of the era's three presses land
       // here — the memories undo and the careful pause — and everything else on

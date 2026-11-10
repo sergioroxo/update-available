@@ -13,11 +13,11 @@
  * stream's warm one; `freeCommonsHost('key')` the key light. The rest of the six live on the screen's canvas (ball.ts).
  * `setCommonsHost(false)` puts the space back as the stream's (Part C: while her back is turned).
  *
- * Budget: two draw calls while it is up (the figure + the floor in one vertex-coloured mesh; the halo, whose colour
- * changes, in its own) — and it is only up while the crowd is not, so the world's peak does not rise.
+ * Budget: three draw calls while it is up (the floor + the projector's body; the see-through hologram; the halo,
+ * whose colour changes) — and it is only up while the crowd is not, so the world's peak does not rise.
  */
 import * as pc from 'playcanvas';
-import { PLACE, ERA4, WEB, BALL } from '../desktop/theme/era4';
+import { PLACE, ERA4, BALL } from '../desktop/theme/era4';
 import { WORLD } from './commonsWorld';
 
 export type HostSurface = 'always' | 'halo' | 'friends' | 'key' | 'safety' | 'metrics' | 'picture';
@@ -30,7 +30,7 @@ export function setCommonsHost(on: boolean): void { hook?.(on); }
 export function freeCommonsHost(s: HostSurface): void { freeHook?.(s); }
 
 /** the host's cold light and pale things; the people's warm light (all era-4 tokens) */
-const PALE = { floor: ERA4.photoSkyHi, robe: WEB.card, sash: ERA4.glow, head: ERA4.photoSkyHi, halo: ERA4.glow, key: ERA4.glow };
+const PALE = { floor: ERA4.photoSkyHi, halo: ERA4.glow, key: ERA4.glow };
 const WARM = { halo: PLACE.textileHi, key: BALL.attention };
 
 function pushBox(pos: number[], idx: number[], col: number[], c: pc.Color, x: number, y: number, z: number, hx: number, hy: number, hz: number): void {
@@ -56,23 +56,13 @@ export function mountCommonsHost(app: pc.Application, parent: pc.Entity): { upda
   const fx0 = 4.8, fx1 = 9.6, fz0 = S.z - 2.4, fz1 = S.z + 2.6;
   pushBox(pos, idx, col, C(PALE.floor), (fx0 + fx1) / 2, 0.07, (fz0 + fz1) / 2, (fx1 - fx0) / 2, 0.02, (fz1 - fz0) / 2);
   // the host: at stage left, beside the screen like a presenter beside its own broadcast (centred, it stood in front
-  // of the screen and hid the numbers — measured on the first plate), facing her (−x). Life-size. A robe that falls
-  // to the floor in steps, long sleeves hanging a little open, a head; no face.
-  const hx = S.x + 1.0, hz = S.z + 2.0, base = 0.26;   // ~21° right of her line of sight, just clear of the screen
-  // its own pale riser: the runway is the people's (TransJesus dances on it later); the product brought a plinth
-  pushBox(pos, idx, col, C(PALE.floor), hx, 0.13, hz, 0.42, 0.13, 0.42);
-  const robe = C(PALE.robe), sash = C(PALE.sash), head = C(PALE.head);
-  pushBox(pos, idx, col, robe, hx, base + 0.22, hz, 0.17, 0.22, 0.27);   // the hem, widest
-  pushBox(pos, idx, col, robe, hx, base + 0.62, hz, 0.14, 0.2, 0.22);
-  pushBox(pos, idx, col, robe, hx, base + 1.0, hz, 0.12, 0.2, 0.19);
-  pushBox(pos, idx, col, sash, hx - 0.01, base + 0.86, hz, 0.125, 0.025, 0.195);   // a sash, the product's one accent
-  pushBox(pos, idx, col, robe, hx, base + 1.32, hz, 0.11, 0.13, 0.2);    // the shoulders
-  for (const side of [-1, 1]) {
-    // the sleeves, hanging a little open: the welcome the product sells
-    pushBox(pos, idx, col, robe, hx - 0.03, base + 1.08, hz + side * 0.25, 0.07, 0.22, 0.06);
-    pushBox(pos, idx, col, head, hx - 0.07, base + 0.84, hz + side * 0.29, 0.035, 0.045, 0.035);   // the hands, open
-  }
-  pushBox(pos, idx, col, head, hx, base + 1.58, hz, 0.09, 0.12, 0.085);  // the head: faceless
+  // of the screen and hid the numbers — measured on the first plate), facing her (−x). Life-size.
+  const hx = S.x + 1.0, hz = S.z + 2.2, base = 0.26;   // ~21° right of her line of sight, just clear of the screen
+  // ⚑ S355 (his choice, 10 Nov, via the orchestrator): A PRODUCT, NOT A STATUE. The stone figure on a plinth pointed
+  //   at church statuary (faith); the host is the system's projection. So: a PROJECTOR PAD where the plinth stood —
+  //   a dark body, the glowing disc on top at the same height — and above it the figure as a hologram (below).
+  pushBox(pos, idx, col, C(ERA4.panelHi), hx, 0.105, hz, 0.3, 0.105, 0.3);
+  pushBox(pos, idx, col, C(ERA4.ruleHi), hx, 0.205, hz, 0.36, 0.01, 0.36);   // the pad's rim
   const mesh = new pc.Mesh(app.graphicsDevice);
   mesh.setPositions(pos); mesh.setIndices(idx); mesh.setColors(col);
   mesh.setNormals(pc.calculateNormals(pos, idx));
@@ -81,17 +71,65 @@ export function mountCommonsHost(app: pc.Application, parent: pc.Entity): { upda
   mat.diffuse = new pc.Color(1, 1, 1);
   mat.diffuseVertexColor = true;
   mat.emissiveVertexColor = true;
-  mat.emissive = new pc.Color(0.55, 0.55, 0.55);   // soft-lit from within: the product glows a little
+  mat.emissive = new pc.Color(0.55, 0.55, 0.55);
   mat.specular = new pc.Color(0, 0, 0);
   mat.update();
+  const floor = new pc.Entity('commons-host-floor');
+  floor.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)] });
+  floor.render!.meshInstances[0].cull = false;
+  root.addChild(floor);
+
+  /**
+   * ⚑ S355 — THE HOLOGRAM. Pale and glowing (era-4 tokens), a little see-through, and its scan lines are its own
+   * geometry: every part is cut into horizontal slices 2 cm thick with 1.2 cm of air between them, so the lines hold
+   * still and need no texture. Arms open, as in its own picture on the screen: the product looks like its advert.
+   * No face, no voice; it never moves toward her. Its only motion is a slow shimmer of its opacity (no flicker).
+   */
+  const gp: number[] = [], gi: number[] = [], gc: number[] = [];
+  const glow = C(ERA4.glow), bright = C(ERA4.photoSkyHi), sashC = C(ERA4.l), padC = C(ERA4.l);
+  const SLICE = 0.02, PITCH = 0.032;
+  /** a part from y0 to y1 (above the pad), its half-depth (x) and half-width (z) easing from bottom to top */
+  const part = (y0: number, y1: number, dx0: number, dx1: number, dz0: number, dz1: number, oz = 0, c = glow, ox = 0): void => {
+    for (let y = y0; y < y1 - 0.004; y += PITCH) {
+      const t = (y - y0) / Math.max(0.001, y1 - y0);
+      const h = Math.min(SLICE, y1 - y) / 2;
+      const sashBand = c === glow && Math.abs(base + y - (base + 0.84)) < 0.03;
+      pushBox(gp, gi, gc, sashBand ? sashC : c, hx + ox, base + y + h, hz + oz, dx0 + (dx1 - dx0) * t, h, dz0 + (dz1 - dz0) * t);
+    }
+  };
+  part(0, 1.2, 0.17, 0.11, 0.28, 0.17);            // the robe, falling wide to the pad
+  part(1.2, 1.42, 0.11, 0.1, 0.2, 0.19);           // the shoulders
+  part(1.42, 1.47, 0.04, 0.04, 0.045, 0.045, 0, bright);   // the neck
+  part(1.47, 1.71, 0.09, 0.08, 0.085, 0.08, 0, bright);    // the head: faceless
+  for (const side of [-1, 1]) {
+    // arms open, as on the screen: out from the shoulder, a little down, the hands open at the end
+    part(1.27, 1.39, 0.06, 0.06, 0.12, 0.12, side * 0.33);
+    part(1.18, 1.3, 0.055, 0.055, 0.09, 0.09, side * 0.53, glow, -0.02);
+    part(1.06, 1.2, 0.035, 0.035, 0.04, 0.04, side * 0.64, bright, -0.04);
+  }
+  // the pad's glowing disc, the light the figure stands in
+  pushBox(gp, gi, gc, padC, hx, 0.235, hz, 0.34, 0.02, 0.34);
+  const holo = new pc.Mesh(app.graphicsDevice);
+  holo.setPositions(gp); holo.setIndices(gi); holo.setColors(gc);
+  holo.update(pc.PRIMITIVE_TRIANGLES);
+  const holoMat = new pc.StandardMaterial();
+  holoMat.useLighting = false;
+  holoMat.diffuse = new pc.Color(0, 0, 0);
+  holoMat.emissive = new pc.Color(1, 1, 1);
+  holoMat.emissiveVertexColor = true;
+  holoMat.opacity = 0.58;
+  holoMat.blendType = pc.BLEND_NORMAL;
+  holoMat.depthWrite = false;
+  holoMat.cull = pc.CULLFACE_NONE;
+  holoMat.update();
   const body = new pc.Entity('commons-host-figure');
-  body.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)] });
+  body.addComponent('render', { meshInstances: [new pc.MeshInstance(holo, holoMat)] });
   body.render!.meshInstances[0].cull = false;
   root.addChild(body);
 
   // ── the halo: a flat ring behind the head, facing her; its own material so its colour can be taken back ──
   const hp: number[] = [], hi: number[] = [];
-  const R0 = 0.2, R1 = 0.25, SEG = 28, cy = base + 1.62, cxr = hx + 0.1;
+  const R0 = 0.2, R1 = 0.25, SEG = 28, cy = base + 1.6, cxr = hx + 0.12;
   for (let i = 0; i <= SEG; i++) {
     const a = (i / SEG) * Math.PI * 2;
     hp.push(cxr, cy + Math.sin(a) * R0, hz + Math.cos(a) * R0, cxr, cy + Math.sin(a) * R1, hz + Math.cos(a) * R1);
@@ -143,10 +181,12 @@ export function mountCommonsHost(app: pc.Application, parent: pc.Entity): { upda
     update(dt: number): void {
       if (!on) return;
       t += dt;
-      // the product's glow breathes, slowly (never a flicker)
+      // the product's glow breathes, slowly (never a flicker): the halo's light, and the hologram's opacity
       const k = 0.9 + 0.1 * Math.sin(t * 0.8);
       haloMat.emissiveIntensity = k;
       haloMat.update();
+      holoMat.opacity = 0.54 + 0.06 * Math.sin(t * 0.55);
+      holoMat.update();
     }
   };
 }

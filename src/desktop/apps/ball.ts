@@ -41,7 +41,7 @@ import { ERA4, PLACE, WEB, BALL, CLIP, roundRect, pill, avatar, streamScene, str
 import { px, setFont, wrapText } from '../theme/chrome';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
 import { setCommonsFigures, setCommonsDance, answerCommonsFigures, greetCommonsFigures } from '../../room/commonsFigures';
-import { setCommonsHost, type HostSurface } from '../../room/commonsHost';
+import { setCommonsHost, freeCommonsHost, type HostSurface } from '../../room/commonsHost';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import { drawTryOn, TRYON } from './mirror';
 import script from '../../../data/dialog/s4_ball.json';
@@ -61,13 +61,18 @@ const SYS = script.system as unknown as {
 interface HostChip { label: string; reply: string }
 const HOST = script.host as unknown as {
   mark: string; title: string; speaker: string;
-  studio: { live: string; viewers: string; always: string; verified: string; safety: string; partner: string };
+  studio: { live: string; viewers: string; viewersMany: string; always: string; verified: string; safety: string; partner: string };
   friends: { who: string; lines: string[]; seconds: number };
   metrics: { restored: string; peace: string; you: string; p: number };
   open: string[]; exchanges: { chips: HostChip[]; then: string[] }[];
   recap: { title: string; from: string; to: string; p0: number; p1: number; barSeconds: number; lines: string[] };
   readBase: number; readPerChar: number; readMin: number; readMax: number;
 };
+/** ⚑ S355 — the raid and the naming (s4_ball.json `raid`, `naming`) */
+interface Said { who: string; text: string }
+const RAID = script.raid as unknown as { notice: string; n: number; panel: string; climbSeconds: number; lineSeconds: number; lines: Said[]; settleSeconds: number };
+interface NameRow { host: string; tag: string; who: string; surface: HostSurface; answer?: string; move: string }
+const NAMING = script.naming as unknown as { rowSeconds: number; tagAt: number; answerAt: number; rows: NameRow[]; after: number };
 /** how long a host line stays in the caption band: long enough to read, never a held look */
 const readSeconds = (t: string): number => Math.max(HOST.readMin, Math.min(HOST.readMax, HOST.readBase + HOST.readPerChar * t.length));
 /** one step of the host's script: a line, a question with her two chips, the recap's start, or the try-on */
@@ -77,7 +82,6 @@ type HostStep = { say: string } | { ask: number } | { recap: true } | { tryon: t
 const INVITE = { x: 108, y: 104, w: 296, h: 150 } as const;
 const JOIN = { x: INVITE.x + 14, y: INVITE.y + INVITE.h - 34, w: 104, h: 22 } as const;
 /** the player frame the link opens in, before it grows */
-const PLAYER = { x: 40, y: 54, w: 300, h: 190 } as const;
 /** her two chips, low on the clear glass, in the room's pink */
 const CHIPS_Y = 262;
 const CHIP_W = 92;
@@ -89,7 +93,7 @@ const HOST_CHIP_H = 24;
 /** how many chat lines the screen and the subtitles carry */
 const CHAT_SHOWN = 9;
 
-type Phase = 'idle' | 'host' | 'tryon' | 'invited' | 'frame' | 'grow' | 'stream' | 'after' | 'done';
+type Phase = 'idle' | 'host' | 'tryon' | 'invited' | 'raid' | 'naming' | 'stream' | 'after' | 'done';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 export class E4Ball {
@@ -105,7 +109,6 @@ export class E4Ball {
   hits: Hit[] = [];
 
   private phase: Phase = 'idle';
-  private t = 0;
   /** the stream's own clock, from the moment the glass starts to clear */
   private streamT = 0;
   /** the frame's rows that have failed so far */
@@ -143,7 +146,16 @@ export class E4Ball {
   /** what she pressed, in the host's conversation (probes; the shell files nothing from here either) */
   hostPressed: string[] = [];
   /** the product's audience on the screen: its lines so far, and when the next is due */
-  private friendsChat: string[] = [];
+  private friendsChat: Said[] = [];
+  // ── ⚑ S355 — the raid and the naming (Part B) ──
+  private raidT = 0;
+  private raidLines = 0;
+  /** the naming's clock, and the tags stamped so far (newest last) */
+  private nameT = 0;
+  private nameRow = -1;
+  private tags: { who: string; text: string; sys?: boolean }[] = [];
+  /** the metrics panel has answered its own question */
+  private noSource = false;
   private friendsAt = 0;
   private friendsN = 0;
   /** the recap's clock on the screen (<0: not yet) */
@@ -164,21 +176,25 @@ export class E4Ball {
   /** the host's chips are on the glass, waiting */
   get hostAsking(): boolean { return this.hostAsk >= 0; }
   /** the try-on has run to its end (E4Shell marks the contract's `tryon`) */
-  get tryOnDone(): boolean { return (this.phase === 'tryon' && this.tryT >= TRYON.done) || this.phase === 'invited' || this.phase === 'frame' || this.phase === 'grow'; }
-  /** the studio stands (the host, its halo, its screen) until the people's stream fills the glass */
-  private get studio(): boolean { return this.phase === 'host' || this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'frame' || this.phase === 'grow'; }
+  get tryOnDone(): boolean { return (this.phase === 'tryon' && this.tryT >= TRYON.done) || this.phase === 'invited' || this.phase === 'raid' || this.phase === 'naming'; }
+  /** the studio stands (the host, its halo, its screen) until the people have taken it */
+  private get studio(): boolean { return this.phase === 'host' || this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'raid' || this.phase === 'naming'; }
+  /** ⚑ S355 — the people are naming the script (probes read it; the tags are on the glass) */
+  get naming(): boolean { return this.phase === 'naming'; }
+  /** the tags stamped so far (probes, the legibility check) */
+  get tagsShown(): number { return this.tags.filter((t) => !t.sys).length; }
   get phaseId(): string { return this.phase; }
   /** her chips are on the glass, waiting (a probe reads it; the walker reads `hits`) */
   get callUp(): boolean { return this.asking; }
   /** how much of the agent's environment is still on the glass: all of it until the stream fills the glass */
   get environmentK(): number {
     // ⚑ S354 — in the studio the glass is clear (the world is the host's); the try-on fills it again
-    if (this.phase === 'host') return 0;
-    if (this.phase === 'idle' || this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'frame') return 1;
-    if (this.phase === 'grow') return this.growK < 1 ? 1 : 0;
+    if (this.phase === 'host' || this.phase === 'naming') return 0;
+    if (this.phase === 'idle' || this.phase === 'tryon' || this.phase === 'invited') return 1;
+    // ⚑ S355 — the raid: the mirror lets go of the glass in its first second, and the studio is there again
+    if (this.phase === 'raid') return Math.max(0, 1 - this.raidT / 1.0);
     return 0;
   }
-  private get growK(): number { const k = Math.min(1, this.t / FRAME.growSeconds); return k * k * (3 - 2 * k); }
   /** the stream's screen in the world is on from the moment she is inside */
   get streaming(): boolean { return this.worldOn; }
   /** the stream is VIDEO: its screen repaints twelve times a second while it is on */
@@ -204,6 +220,7 @@ export class E4Ball {
   startHost(): void {
     if (this.phase !== 'idle') return;
     this.phase = 'host';
+    this.worldIn = false;
     this.hostT = 0;
     this.hostLine = '';
     this.hostAsk = -1;
@@ -235,7 +252,7 @@ export class E4Ball {
     this.hostT += dt;
     // the product's audience: the same few lines at an even pace, while the count says 1 viewer
     if (this.hostT >= this.friendsAt) {
-      this.friendsChat.push(HOST.friends.lines[this.friendsN % HOST.friends.lines.length]);
+      if (this.phase === 'host' || this.phase === 'tryon') this.friendsChat.push({ who: '', text: HOST.friends.lines[this.friendsN % HOST.friends.lines.length] });
       if (this.friendsChat.length > 20) this.friendsChat.shift();
       this.friendsN++;
       this.friendsAt = this.hostT + HOST.friends.seconds;
@@ -308,15 +325,100 @@ export class E4Ball {
     roomBed.set(script.room.bed, 4.0);
   }
 
-  /** her press on the link: the platform frame opens and starts failing at its job */
+  /**
+   * ⚑ S355 — her press, "Let them in": THE RAID. The mirror lets go of the glass; the host's screen says
+   * "transjesus.str is raiding · 41 viewers"; the host's own frame tries to file it and fails, row by row (the four
+   * rows the frame always failed with, now under the host's mark); the count climbs 1 → 42; the handles arrive in
+   * the host's chat and the Friends' 🙏 is buried. Nobody narrates it. Then the naming.
+   */
   begin(): void {
     if (this.phase !== 'idle' && this.phase !== 'invited') return;
     this.hits = [];
-    this.phase = 'frame';
-    this.t = 0;
+    this.phase = 'raid';
+    this.raidT = 0; this.raidLines = 0;
     this.rowsShown = 0;
     playOnce('ui_press.mp3');
     roomBed.set(script.room.bed, 2.0);
+    this.version++; this.studioV++;
+  }
+
+  private updateRaid(dt: number): void {
+    const r4 = this.raidT;
+    this.raidT += dt;
+    if (Math.floor(r4 * 8) !== Math.floor(this.raidT * 8)) { this.version++; this.studioV++; }
+    // the count climbs: 1 → 1 + 41
+    const k = Math.min(1, Math.max(0, (this.raidT - 0.8) / RAID.climbSeconds));
+    this.count = 1 + Math.round(RAID.n * k * k * (3 - 2 * k));
+    // the handles arrive in the host's chat
+    while (this.raidLines < RAID.lines.length && this.raidT >= 1.0 + this.raidLines * RAID.lineSeconds) {
+      this.friendsChat.push(RAID.lines[this.raidLines++]);
+      if (this.friendsChat.length > 20) this.friendsChat.shift();
+    }
+    // the host's frame fails to file it, one row at a time
+    const due = Math.min(FRAME.rows.length, Math.floor(Math.max(0, this.raidT - 1.0) / FRAME.rowSeconds));
+    if (due > this.rowsShown) { this.rowsShown = due; this.sys('filter_deny.mp3', 0.6); this.version++; }
+    const end = Math.max(1.0 + FRAME.rows.length * FRAME.rowSeconds + FRAME.holdSeconds * 0.5, 0.8 + RAID.climbSeconds) + RAID.settleSeconds;
+    if (this.raidT >= end) {
+      this.phase = 'naming';
+      this.nameT = 0; this.nameRow = -1; this.tags = []; this.noSource = false;
+      this.version++; this.studioV++;
+    }
+  }
+
+  /**
+   * ⚑ S355 — THE NAMING. The host runs its script again in the caption band; a beat later one of the people stamps a
+   * tag on it, and the tag takes one of the host's surfaces into the stream's warm light (the badge, the halo, the
+   * Friends' column, the key light, the safety banner, the numbers, the picture). Naming is the takeover.
+   */
+  private updateNaming(dt: number): void {
+    const n4 = this.nameT;
+    this.nameT += dt;
+    if (this.freed.has('picture') && Math.floor(n4 * 8) !== Math.floor(this.nameT * 8)) this.studioV++;
+    const row = Math.floor(this.nameT / NAMING.rowSeconds);
+    const inRow = this.nameT - row * NAMING.rowSeconds;
+    const was = Math.floor(n4 / NAMING.rowSeconds), wasIn = n4 - was * NAMING.rowSeconds;
+    if (row < NAMING.rows.length) {
+      const R = NAMING.rows[row];
+      if (row !== this.nameRow) { this.nameRow = row; this.hostLine = R.host; this.version++; }
+      if ((row !== was || wasIn < NAMING.tagAt) && inRow >= NAMING.tagAt) {
+        // the stamp: the tag on the glass, the same line in the chat, and the surface taken back
+        this.tags.push({ who: R.who, text: R.tag });
+        this.friendsChat.push({ who: R.who, text: R.tag });
+        if (!R.answer) { this.freed.add(R.surface); freeCommonsHost(R.surface); }
+        this.version++; this.studioV++;
+      }
+      if (R.answer && (row !== was || wasIn < NAMING.answerAt) && inRow >= NAMING.answerAt) {
+        // the panel answers itself; nobody else does
+        this.tags.push({ who: '', text: R.answer, sys: true });
+        this.noSource = true;
+        this.freed.add(R.surface); freeCommonsHost(R.surface);
+        this.version++; this.studioV++;
+      }
+      return;
+    }
+    if (this.hostLine) { this.hostLine = ''; this.version++; }
+    if (this.nameT >= NAMING.rows.length * NAMING.rowSeconds + NAMING.after) this.enterStream();
+  }
+
+  /** ⚑ the people's stream fills the space (S293's worldIn, from the naming now: S355) */
+  private enterStream(): void {
+    if (this.worldIn) return;
+    this.worldIn = true;
+    this.worldOn = true;
+    this.tags = [];
+    setCommonsHost(false);
+    setCommonsWorld(true);
+    setCommonsFigures(true);
+    setCommonsDance(true);
+    roomBed.set(script.room.landing, 1.5);
+    setBallLight({ level: 1, station: 2.5, flare: 0 });
+    this.phase = 'stream';
+    this.streamT = FRAME.clearSeconds;   // the glass is already clear: no picture to let go of
+    this.count = ST.count;
+    this.onDeviceOff?.();
+    this.queue = [...ST.before.map((l) => ({ ...l })), { who: '', text: ST.joined, sys: true, mark: 'joined' as const },
+      ...ST.welcome.map((l) => ({ ...l })), { ...ST.ask, mark: 'ask' as const }];
+    this.nextLineAt = FRAME.clearSeconds + 0.6;
     this.version++;
   }
 
@@ -336,40 +438,9 @@ export class E4Ball {
       if (this.tryT >= TRYON.link) this.invite();
       return;
     }
+    if (this.phase === 'raid') { this.updateRaid(dt); return; }
+    if (this.phase === 'naming') { this.updateNaming(dt); return; }
     if (this.phase === 'idle' || this.phase === 'invited' || (this.phase === 'done' && !this.worldOn)) return;
-    const b4 = this.t;
-    this.t += dt;
-    if (this.phase === 'frame') {
-      // the picture inside the frame moves, so the glass repaints a few times a second
-      if (Math.floor(b4 * 8) !== Math.floor(this.t * 8)) this.version++;
-      const due = Math.min(FRAME.rows.length, Math.floor(this.t / FRAME.rowSeconds));
-      if (due > this.rowsShown) { this.rowsShown = due; this.sys('filter_deny.mp3', 0.6); this.version++; }
-      if (this.t >= FRAME.rows.length * FRAME.rowSeconds + FRAME.holdSeconds) { this.phase = 'grow'; this.t = 0; }
-      return;
-    }
-    if (this.phase === 'grow') {
-      if (Math.floor(b4 * 12) !== Math.floor(this.t * 12)) this.version++;
-      if (!this.worldIn && this.t >= FRAME.growSeconds) {
-        // ⚑ at full cover the world behind the glass becomes the stream's place (app.ts's room hook cuts her to the
-        //   spot in the same frame; in a headset that cut is presented through the particle veil)
-        this.worldIn = true;
-        this.worldOn = true;
-        setCommonsHost(false);   // ⚑ S354 — the host's studio goes as the people's stream fills the glass
-        setCommonsWorld(true);
-        setCommonsFigures(true);
-        setCommonsDance(true);
-        roomBed.set(script.room.landing, 1.5);
-        setBallLight({ level: 1, station: 2.5, flare: 0 });
-        this.phase = 'stream';
-        this.streamT = 0;
-        this.onDeviceOff?.();
-        this.queue = [...ST.before.map((l) => ({ ...l })), { who: '', text: ST.joined, sys: true, mark: 'joined' as const },
-          ...ST.welcome.map((l) => ({ ...l })), { ...ST.ask, mark: 'ask' as const }];
-        this.nextLineAt = FRAME.clearSeconds + 0.6;
-        this.version++;
-      }
-      return;
-    }
     // ── inside the stream ──
     const s4 = this.streamT;
     this.streamT += dt;
@@ -504,7 +575,7 @@ export class E4Ball {
     if (this.phase === 'host') { this.drawHostGlass(ctx, W, H); return; }
     // ⚑ S354 — the try-on is the host's mirror now: it fills the glass from "who you could be" until the stream does
     const k = this.environmentK;
-    if (k > 0 && (this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'frame' || this.phase === 'grow')) {
+    if (k > 0 && (this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'raid')) {
       const was = ctx.globalAlpha;
       ctx.globalAlpha = was * k;
       drawTryOn(ctx, W, H, Math.min(this.tryT, TRYON.link), HOST.speaker);
@@ -512,14 +583,8 @@ export class E4Ball {
     }
     if (this.phase === 'tryon') return;
     if (this.phase === 'invited') { this.drawInvite(ctx); return; }
-    if (this.phase === 'frame') { this.drawFrame(ctx, W, H, PLAYER.x, PLAYER.y, PLAYER.w, PLAYER.h, true); return; }
-    if (this.phase === 'grow') {
-      const k = this.growK;
-      const x = Math.round(PLAYER.x * (1 - k)), y = Math.round(PLAYER.y * (1 - k));
-      const w = Math.round(PLAYER.w + (W - PLAYER.w) * k), h = Math.round(PLAYER.h + (H - PLAYER.h) * k);
-      this.drawFrame(ctx, W, H, x, y, w, h, false);
-      return;
-    }
+    if (this.phase === 'raid') { this.drawRaidPanel(ctx, W, H); return; }
+    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); this.drawTags(ctx, W, H); return; }
     if (this.phase === 'stream' && this.streamT < FRAME.clearSeconds) {
       // the picture lets go of the glass and the place is there
       const was = ctx.globalAlpha;
@@ -552,29 +617,49 @@ export class E4Ball {
     ctx.fillText(INV.chip, JOIN.x + Math.round((JOIN.w - cw) / 2), JOIN.y + 6);
   }
 
-  /** the player frame: the picture (already moving), its title bar, and the platform's panel failing row by row */
-  private drawFrame(ctx: CanvasRenderingContext2D, W: number, H: number, x: number, y: number, w: number, h: number, panel: boolean): void {
-    const t = this.t + 20;
-    // the device's own frame round the player
-    roundRect(ctx, x - 4, y - 22, w + 8, h + 26, 8, ERA4.panel);
-    streamScene(ctx, x, y, w, h, t, streamShot(t), 0.2);
-    if (Math.floor(t * 1.5) % 2 === 0) px(ctx, x + 2, y - 15, 6, 6, WEB.danger);
-    setFont(ctx, 9); ctx.fillStyle = ERA4.textHi; ctx.fillText(ST.live + '   ' + ST.mark, x + 12, y - 17);
-    const n = ST.watching.replace('{n}', String(ST.count));
-    ctx.fillText(n, x + w - Math.ceil(ctx.measureText(n).width), y - 17);
-    if (!panel) return;
-    // the panel: the platform's account of the stream, which it cannot give
-    const px0 = x + w + 16, pw = W - px0 - 24;
-    roundRect(ctx, px0, y - 22, pw, h + 26, 8, ERA4.panel);
-    setFont(ctx, 8); ctx.fillStyle = ERA4.dim; ctx.fillText(FRAME.panel, px0 + 10, y - 14);
+  /** ⚑ S355 — the host's own frame, trying to file the raid and failing, row by row: compact, low on the glass, so
+   *  the screen — the count climbing, the chat filling — stays in view above it */
+  private drawRaidPanel(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const pw = 320, ph = 74, px0 = Math.round((W - pw) / 2), y0 = H - 46 - ph - 6;
+    roundRect(ctx, px0, y0 + 2, pw, ph, 8, ERA4.panelEdge);
+    roundRect(ctx, px0, y0, pw, ph, 8, ERA4.panel);
+    setFont(ctx, 9); ctx.fillStyle = ERA4.glow; ctx.fillText(RAID.panel, px0 + 10, y0 + 7);
     FRAME.rows.forEach((r, i) => {
       if (i >= this.rowsShown) return;
-      const ry = y + 6 + i * 40;
-      setFont(ctx, 8); ctx.fillStyle = ERA4.meta; ctx.fillText(r.k, px0 + 10, ry);
-      setFont(ctx, 12); ctx.fillStyle = ERA4.textHi; ctx.fillText(r.v, px0 + 10, ry + 12);
-      px(ctx, px0 + 10, ry + 30, pw - 20, 1, ERA4.rule);
+      const cx = px0 + 10 + (i % 2) * 156, ry = y0 + 24 + Math.floor(i / 2) * 25;
+      setFont(ctx, 9); ctx.fillStyle = ERA4.meta; ctx.fillText(r.k, cx, ry);
+      const kw = Math.ceil(ctx.measureText(r.k + '  ').width);
+      setFont(ctx, 12); ctx.fillStyle = ERA4.textHi; ctx.fillText(r.v, cx + kw, ry - 2);
     });
-    void H;
+  }
+
+  /**
+   * ⚑ S355 — THE TAGS, stamped above the host's caption band: the handle in its colour, the words in the caption's
+   * ink, on the band's dark — the same size as the host's own line, because these few words are the lesson. The
+   * newest sits nearest the band; two older ones above it, dimmer. The panel's own answer ("source: none") is
+   * stamped in the host's pale, with no handle: it is the product answering itself.
+   */
+  private drawTags(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const bandY = H - 46;
+    const shown = this.tags.slice(-3);
+    shown.forEach((t, i) => {
+      const fromNewest = shown.length - 1 - i;
+      const y = bandY - 22 - 32 - fromNewest * 32;
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = was * (fromNewest === 0 ? 1 : 0.62);
+      setFont(ctx, 16);
+      const tw = Math.ceil(ctx.measureText(t.text).width);
+      setFont(ctx, 12);
+      const hw = t.who ? Math.ceil(ctx.measureText(t.who).width) + 10 : 0;
+      const w = tw + hw + 24, x = Math.round((W - w) / 2);
+      roundRect(ctx, x, y, w, 26, 6, CLIP.band);
+      px(ctx, x, y, 3, 26, t.sys ? ERA4.glow : t.who === 'junie' ? BALL.whoFriend : BALL.whoMC);
+      if (t.who) { ctx.fillStyle = t.who === 'junie' ? BALL.whoFriend : BALL.whoMC; ctx.fillText(t.who, x + 12, y + 8); }
+      setFont(ctx, 16);
+      ctx.fillStyle = t.sys ? ERA4.glow : CLIP.ink;
+      ctx.fillText(t.text, x + 12 + hw, y + 5);
+      ctx.globalAlpha = was;
+    });
   }
 
   /** her two chips, low on the clear glass in the room's pink — the line above them asked for nothing */
@@ -683,7 +768,7 @@ export class E4Ball {
     ctx.fillText(HOST.mark, 45, 4);
     const mw = Math.ceil(ctx.measureText(HOST.mark).width);
     ctx.fillStyle = WEB.muted; ctx.fillText('·  ' + HOST.title, 52 + mw, 4);
-    const v = HOST.studio.viewers.replace('{n}', String(this.count));
+    const v = (this.count === 1 ? HOST.studio.viewers : HOST.studio.viewersMany).replace('{n}', String(this.count));
     ctx.fillStyle = this.count > 1 ? PLACE.textileHi : WEB.ink;
     ctx.fillText(v, W - 7 - Math.ceil(ctx.measureText(v).width), 4);
     px(ctx, 0, 18, W, 1, WEB.cardEdge);
@@ -703,7 +788,8 @@ export class E4Ball {
     ctx.fillText(pt, W - 7 - Math.ceil(ctx.measureText(pt).width), 24);
     // the picture (left) and the Friends' column (right)
     const top = 38, foot = 22, cw = 136, pw = W - cw - 10, ph = H - top - foot - 4;
-    if (this.recapT >= 0) this.drawRecap(ctx, 4, top, pw, ph);
+    // the recap is the host's highlight while it talks and through its mirror; after that the picture is the host again
+    if (this.recapT >= 0 && (this.phase === 'host' || this.phase === 'tryon' || this.phase === 'invited')) this.drawRecap(ctx, 4, top, pw, ph);
     else this.drawHostPicture(ctx, 4, top, pw, ph, F);
     const x0 = W - cw - 4;
     px(ctx, x0, top, cw, ph, F.has('friends') ? ERA4.panel : WEB.card);
@@ -715,8 +801,16 @@ export class E4Ball {
     setFont(ctx, 9);
     const lines = this.friendsChat.slice(-Math.max(1, Math.floor((ph - 26) / 13)));
     let y = top + ph - 4 - lines.length * 13;
+    const dark = F.has('friends');
     for (const l of lines) {
-      ctx.fillStyle = F.has('friends') ? ERA4.dim : WEB.ink; ctx.fillText(l, x0 + 6, y);
+      let x = x0 + 6;
+      if (l.who) {
+        // ⚑ S355 — the people, arrived: their handles in their colours (warm ink on the product's pale column)
+        ctx.fillStyle = dark ? (l.who === 'junie' ? BALL.whoFriend : BALL.whoMC) : PLACE.ink;
+        ctx.fillText(l.who, x, y); x += Math.ceil(ctx.measureText(l.who + ' ').width);
+        ctx.fillStyle = dark ? ERA4.textHi : WEB.ink;
+      } else ctx.fillStyle = dark ? ERA4.dim : WEB.ink;   // the Friends' lines: buried, and dim once the column is theirs
+      ctx.fillText(l.text, x, y);
       y += 13;
     }
     // the numbers, along the foot
@@ -728,12 +822,29 @@ export class E4Ball {
       const row = `${m.restored}   ·   ${m.peace}   ·   ${m.you.replace('{p}', String(m.p))}`;
       setFont(ctx, 9); ctx.fillStyle = WEB.ink;
       ctx.fillText(row, Math.round((W - ctx.measureText(row).width) / 2), fy + 6);
+    } else if (this.noSource) {
+      // ⚑ S355 — the panel answers its own question, and empties: nothing else is said about its numbers
+      const row = NAMING.rows.find((r) => r.answer)?.answer ?? '';
+      setFont(ctx, 9); ctx.fillStyle = ERA4.glow;
+      ctx.fillText(row, Math.round((W - ctx.measureText(row).width) / 2), fy + 6);
+    }
+    // ⚑ S355 — the raid's notice, across the top of the picture, until the picture is theirs
+    if ((this.phase === 'raid' || this.phase === 'naming') && !F.has('picture')) {
+      const t = RAID.notice.replace('{n}', String(RAID.n));
+      setFont(ctx, 9);
+      const tw = Math.ceil(ctx.measureText(t).width) + 16;
+      px(ctx, 4, top, Math.min(pw, tw), 15, PLACE.textileHi);
+      ctx.fillStyle = PLACE.ink; ctx.fillText(t, 12, top + 3);
     }
   }
 
   /** the host on its pale set: a faceless robed figure, the halo (warm once the people take it), the lower third */
   private drawHostPicture(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, F: Set<HostSurface>): void {
-    if (F.has('picture')) return;
+    if (F.has('picture')) {
+      // ⚑ S355 — junie's "she's right here": the host's picture gives way to the people's broadcast
+      streamScene(ctx, x, y, w, h, this.nameT + 30, streamShot(this.nameT + 30), 0.3);
+      return;
+    }
     px(ctx, x, y, w, h, PLACE.sky);
     px(ctx, x, y, w, Math.round(h * 0.45), PLACE.skyLo);
     px(ctx, x, y + h - 26, w, 26, ERA4.photoSkyHi);   // the set's floor
@@ -881,9 +992,10 @@ export class E4Ball {
 
   // ── review (?debug=1) ────────────────────────────────────────────────────
   /** land on a point in the beat directly (review only; in play everything runs forward from the session) */
-  debugJumpTo(where: 'host' | 'recap' | 'tryon' | 'invited' | 'frame' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
+  debugJumpTo(where: 'host' | 'recap' | 'tryon' | 'invited' | 'raid' | 'naming' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
     this.removeCaption();
     this.phase = 'idle';
+    this.worldIn = false;
     if (where === 'host' || where === 'recap' || where === 'tryon') {
       this.startHost();
       if (where === 'host') return;
@@ -899,13 +1011,20 @@ export class E4Ball {
     this.hits = [];
     this.asking = false; this.answered = null; this.answeredAt = -1;
     this.intrusionT = -1; this.intrusionDone = false; this.refusedOnce = false;
-    this.chat = []; this.count = ST.count;
-    if (where === 'invited') { this.invite(); return; }
+    this.chat = [];
+    // ⚑ S355 — every later point begins in the host's studio and runs forward through it
+    this.startHost();
+    for (let i = 0; i < 400 && this.phaseId === 'host'; i++) {
+      this.hostNextAt = 0; this.update(0.01);
+      if (this.hostAsk >= 0) this.answerHost(0);
+    }
+    this.tryT = TRYON.link; this.update(0.01);
+    if (where === 'invited') return;
     this.begin();
-    if (where === 'frame') return;
-    this.rowsShown = FRAME.rows.length;
-    this.phase = 'grow'; this.t = FRAME.growSeconds;
-    this.update(0.01);
+    if (where === 'raid') return;
+    this.raidT = 60; this.update(0.01);
+    if (where === 'naming') return;
+    for (let i = 0; i < 2000 && this.phaseId === 'naming'; i++) this.update(0.05);
     if (where === 'stream') return;
     // the chat up to her chips
     this.streamT = FRAME.clearSeconds + 0.5;

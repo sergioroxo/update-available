@@ -24,6 +24,7 @@
   "studio": {
    "live": "LIVE",
    "viewers": "{n} viewer",
+   "viewersMany": "{n} viewers",
    "always": "24/7",
    "verified": "verified ✓",
    "safety": "for your safety",
@@ -127,10 +128,113 @@
  "invite": {
   "_beat": "⚑ JUNIE'S LINK (V11 → the ending's step 1). It lands on the glass on the recording's third sentence, inside the agent's session: a message, the way one arrives in 2026, with the system's own admission that the mute did not hold. One chip. No decline exists, and nothing narrates the choice. After the reversal her profile matches her, and the filter built for the old file lets her friend through.",
   "from": "Junie",
-  "line": "it's on. come in.",
+  "line": "it's on. we're coming to you.",
   "meta": "muted 6 weeks  ·  delivered",
-  "chip": "Open link",
-  "link": "transjesus.str/live"
+  "chip": "Let them in",
+  "link": "transjesus.str/live",
+  "_docS355": "⚑ S355 (UiB job 11 Part B, his 10 Nov answer 6): 'Let them in'. Today she left the system's room for the people's; now she OPENS the system's room to the people — the 'exposure sources' the bot told her to mute (s4_v3.json `bot.beats.map`) are exactly who arrive. Her one press is the resistance, and nothing narrates it. The link breaks into the try-on (the host's mirror), as before."
+ },
+ "raid": {
+  "_doc": "⚑ S355 — THE RAID (UiB job 11 Part B; DESIGN_COMMONS_REVAMP §2b beat 4). A raid is ordinary streaming practice — one stream sends its viewers to another, and they arrive in its chat together; the word is generic, the notice and its look are invented, no platform is named. The host's screen says it; the host's frame tries to file it and fails with the four rows the frame always failed with, now under the host's mark; the count climbs 1 → 42; the handles arrive in the host's chat and the Friends' 🙏 is buried. No narration. Register: operable (the system's surface), collapsing.",
+  "notice": "transjesus.str is raiding  ·  {n} viewers",
+  "n": 41,
+  "panel": "Shepherd Live™  ·  about this raid",
+  "climbSeconds": 5.0,
+  "lineSeconds": 0.55,
+  "lines": [
+   {
+    "who": "junie",
+    "text": "we're here"
+   },
+   {
+    "who": "fen",
+    "text": "raid!!"
+   },
+   {
+    "who": "okra",
+    "text": "❤❤"
+   },
+   {
+    "who": "pip",
+    "text": "o/"
+   },
+   {
+    "who": "mira",
+    "text": "my first raid"
+   },
+   {
+    "who": "lark",
+    "text": "everyone in"
+   },
+   {
+    "who": "rowan",
+    "text": "came with the whole floor"
+   },
+   {
+    "who": "deebee",
+    "text": "❤"
+   }
+  ],
+  "settleSeconds": 1.6
+ },
+ "naming": {
+  "_doc": "⚑ S355 — THE NAMING (UiB job 11 Part B, the core; DESIGN_COMMONS_REVAMP §2b beat 5 and its table; his 10 Nov answers 7–9). The host keeps talking — a stream has no stop button — and runs its script again on its caption strip; under each line one of the people STAMPS a tag (3–5 words, lowercase, in the handle's colour), and the tag takes one of the host's surfaces from its pale light to the stream's warm one. Naming IS the takeover. ⚑ RULES: recognition, not explanation (half are names, half are 'I know this one'); no tag mentions God, Jesus or prayer (the 'sign' is answered with the waiting list, a material fact); no tag argues, explains, or is addressed to Maya as a lesson; ALL the naming is the people's (Maya does not tag; the last tag is junie's); no numbers but the panel's own 'source: none' (his ruling: only 'source?' in the stream; the evidence is at the Close). This is the FIRST of two refusals: the people answer the script once, while it is on the stage, and never again (his answer 9). Every handle and line is invented.",
+  "rowSeconds": 4.2,
+  "tagAt": 1.7,
+  "answerAt": 3.0,
+  "rows": [
+   {
+    "host": "I'm here. I'm always here.",
+    "tag": "it's a subscription",
+    "who": "okra",
+    "surface": "always",
+    "move": "always-on"
+   },
+   {
+    "host": "Every door closed at once. That's a sign.",
+    "tag": "that's a waiting list",
+    "who": "sib",
+    "surface": "halo",
+    "move": "the sign"
+   },
+   {
+    "host": "Some people slow you down.",
+    "tag": "first they cut your friends",
+    "who": "lark",
+    "surface": "friends",
+    "move": "cutting you off"
+   },
+   {
+    "host": "Who hurt you, Maya?",
+    "tag": "the old root cause one",
+    "who": "fen",
+    "surface": "key",
+    "move": "root cause"
+   },
+   {
+    "host": "I just want you safe.",
+    "tag": "fear, dressed as care",
+    "who": "mira",
+    "surface": "safety",
+    "move": "fear as care"
+   },
+   {
+    "host": "12,408 lives restored.",
+    "tag": "source?",
+    "who": "pip",
+    "surface": "metrics",
+    "answer": "source: none",
+    "move": "invented numbers"
+   },
+   {
+    "host": "Let me show you who you could be.",
+    "tag": "she's right here",
+    "who": "junie",
+    "surface": "picture",
+    "move": "the after"
+   }
+  ],
+  "after": 2.2
  },
  "session": {
   "_beat": "⚑ V11 (RESEARCH_2026_V2 §4.2) — THE SESSION IN THE HEADSET, SHORTENED. The agent's own environment on the glass, its plan, one Begin. From her press: (review cut only) one breath of grounding, then the recording — introduced as what it is, three flat sentences it vouches for — and Junie's link lands on the third one's dash. The correction is interrupted by a friend, never by the player and never by a clock alone.",
