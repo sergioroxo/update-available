@@ -193,6 +193,7 @@
    },
    {
     "t": "For parents: when he comes home",
+    "page": "parents",
     "a": "hopeful1",
     "r": "9",
     "v": "166",
@@ -211,6 +212,27 @@
   "forumsLabel": "Forum summary"
  },
  "pages": {
+  "parents": {
+   "_doc": "⚑ S357e (his \"Yes, build it\", 10 Nov 2026; DRAFT_2003_HOME_RULES_2026-11-10.md; RESEARCH_CONLEY_LIA §4). The programme's rules reach the family. The rules are paraphrased from the sheet Love in Action's teen programme Refuge gave families, posted online by a teenager in June 2005 (never named) — two years after 2003, stated on the card. The posts are invented; the parents are not mocked; only the moderator speaks in the system's voice. `status` (the browser's status bar, where IE said 'Done') is the irony: he reads the ban on the approved connection. Opening it files harbor-parents.",
+   "heading": "For parents: when he comes home",
+   "lines": [
+    "hopeful1: Our son finished the programme in March. They gave us a sheet",
+    "of rules for the house. Most are fine. The computer is the hard one. The",
+    "sheet says: no computer of his own, no email, no internet, unless it is",
+    "approved. We moved the computer to the living room. He says he needs it",
+    "for college. How do other parents do it?",
+    "",
+    "pray4mine: We did the music first. Christian only. Even the classical had",
+    "to go. That was hard. It got easier.",
+    "",
+    "Harbor moderator: Approved means approved: his daily check-in, this",
+    "forum, his college work with the door open. Anything else, ask his",
+    "counsellor first. You are not spying on him. You are standing guard."
+   ],
+   "lineH": 12,
+   "status": "You are viewing this page from an approved connection.",
+   "card": { "file": "e3_theday", "index": 23 }
+  },
   "partner": {
    "_doc": "⚑ S209 / B22 (REVIEW_ROUND_5, ERA03-06; his \"I think so\"): 2003's documented core act — a newcomer asking a hosted board for an accountability partner, a veteran telling him to stay off the computer (sogice-social-media-layer.md, 2003 §3, Weiss et al. 2010). Opening it files harbor-partner; it is how Mark T. stops arriving from nowhere.",
    "heading": "Accountability partner wanted (under 27)",

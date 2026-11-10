@@ -75,5 +75,6 @@ knowledge base (e3_theday source 21, its 2008 website; `research/love-in-action-
 **What this allows (for his decision).**
 1. **2003 can use the rules, not the leak.** The ban on computers, email and the internet is the programme's own paper, documented. In 2003 that is a family receiving those rules. It is grounded and fits the era.
 2. **The leak itself is 2005.** It could appear only at the Close, or in a note dated 2005: the first time a programme's rules were seen by everyone because a teenager posted them online.
-3. **Never name or show the teenager.** Still [VERIFY SOURCE]: the NYT text, the CNN claim, the date of the first post.
+3. **Built S357e (his yes):** point 1, as the 2003 forum's parents' thread (DRAFT_2003_HOME_RULES_2026-11-10.md; s2_forum.json pages.parents; e3_theday source 23).
+4. **Never name or show the teenager.** Still [VERIFY SOURCE]: the NYT text, the CNN claim, the date of the first post.
 

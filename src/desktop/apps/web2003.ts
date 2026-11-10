@@ -62,6 +62,8 @@ export class Web2003App {
       this.trail.push(this.stage); this.stage = 'page:' + h.id.slice(11);
       // S209 / B22 — asking for a partner is the board's act; Harbor files the match
       if (h.id === 'forum-page:partner' && !ledger.records.includes('harbor-partner')) ledger.records.push('harbor-partner');
+      // S357e — the programme's house rules, read on the approved connection
+      if (h.id === 'forum-page:parents' && !ledger.records.includes('harbor-parents')) ledger.records.push('harbor-parents');
       // S209 / P7-47 — the words met where the board uses them
       if (h.id === 'forum-page:partner') meetWord('accountability');
       if (h.id === 'forum-page:process') { meetWord('ssa'); meetWord('struggle'); }
@@ -82,7 +84,9 @@ export class Web2003App {
     const wv = drawWebView(ctx, {
       title: `Harbor — ${D.bannerSub}`, address: addr, closeId: 'forum-close', hover: this.hover,
       backId: this.trail.length > 0 ? 'forum-back' : null,
-      homeId: this.stage !== 'index' && this.stage !== 'rules' ? 'forum-index' : null
+      homeId: this.stage !== 'index' && this.stage !== 'rules' ? 'forum-index' : null,
+      // S357e — a page's `status` takes the browser's status bar (the parents' thread: "an approved connection")
+      status: this.stage.startsWith('page:') ? (D.pages as Record<string, { status?: string }>)[this.stage.slice(5)]?.status : undefined
     });
     this.hits.push(...wv.hits);
     // the page
@@ -267,13 +271,15 @@ export class Web2003App {
 
   /** a Resources page: the seller's voice, and at its foot the dossier card it stands on (the second reading) */
   private drawPage(ctx: CanvasRenderingContext2D, b: { x: number; y: number; w: number; h: number }, id: string): void {
-    const pg = (D.pages as Record<string, { heading: string; lines: string[]; card: { file: string; index: number } }>)[id];
+    const pg = (D.pages as Record<string, { heading: string; lines: string[]; lineH?: number; card: { file: string; index: number } }>)[id];
     if (!pg) return;
     const x0 = b.x + 24;
     ui.setFont(ctx, 14); ctx.fillStyle = P.banner; ctx.fillText(pg.heading, x0, b.y + 40);
     ui.px(ctx, x0, b.y + 60, b.w - 48, 1, P.panelHead);
     ui.setFont(ctx, 10); ctx.fillStyle = P.text;
-    pg.lines.forEach((l, i) => ctx.fillText(l, x0, b.y + 70 + i * 14));
+    // S357e — a page may set `lineH` (a thread of posts): its lines sit closer, a blank line is half a line
+    if (pg.lineH) { let y = b.y + 70; for (const l of pg.lines) { if (l) { ctx.fillText(l, x0, y); y += pg.lineH; } else y += pg.lineH / 2; } }
+    else pg.lines.forEach((l, i) => ctx.fillText(l, x0, b.y + 70 + i * 14));
     ui.setFont(ctx, 8); ctx.fillStyle = P.dim;
     ctx.fillText(fixes.dossier.replace('{item}', CARD_LABEL[pg.card.file] ?? pg.card.file), x0, b.y + b.h - 30);
     this.link(ctx, D.index.back, x0, b.y + b.h - 16, 'forum-index');
