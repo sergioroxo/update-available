@@ -131,6 +131,223 @@ plus a walk and the seat measurements.
   must be `speculative` with the documented neighbours (Llama 4, detrans.ai) as its ground.
 - *Too much talk before the respite.* Cap the host at three exchanges; the try-on stays the long beat.
 
+## 2b. The script made visible: the people name it, and naming takes the stage (his combination, 10 Nov)
+
+His answer (10 Nov) to the educational follow-up: the combination of **the script with its seams** (the spine),
+**the two sets of numbers** (what the hack carries), **the turn to the backstage**, and **what stays after the hack**
+(the ending), with the before/after and the bot audience as smaller touches. Three rulings:
+- **No deaths.** No murder figures and no suicide figures in the stream ("may be too much").
+- **"The machine is imagined, the script is real."** The AI host is an invention; the Close's Dossier marks it
+  `speculative`. Nothing on the host itself says so.
+- **No map of bans and no country.** The stream names no country.
+
+This section works 2a through with that combination. 2a's beats 1–3 and 7–8 stand; what changes is how the stage
+becomes the people's.
+
+**His answers to §4's questions 6–9 (10 Nov):** the chip is **Let them in**; **all the naming is the people's**
+(Maya does not tag; the last tag is junie's *she's right here*); **the stream only asks "source?"**, and the deeper
+analysis lives at the Close, on the era's website with the explainers; **two refusals are all right**.
+
+### What layer is missing, and why this one supplies it
+
+The visitor has lived thirty years of the script: Root Cause's questionnaire (1997), the Family Form and the
+testimony (2003), Grace's "care" (2016), the bot's week (2026). **Nobody in the fiction ever names it.** The only
+naming happens at the Close, in the Dossier, in the frame's voice. Between living through it (the eras) and the
+evidence (the Close), the piece has no moment where people who know the script say *I know this one*.
+
+The stream is the right place for that moment, because the people who know the script best are the ones it was used
+on. So the piece gets three layers, each in its own voice:
+
+| Layer | Where | Voice | What the visitor gets |
+|---|---|---|---|
+| Experience | the four eras | the system's (operable) and hers (felt) | the script, from inside |
+| **Recognition** | **the stream, during the raid** | **the people's: short, lowercase, peer to peer** | **a name for each move, and the habit of asking "source?"** |
+| Evidence | the Close's Dossier | the frame's: sourced, status-tagged | where each move is documented, and that the host is invented |
+
+The middle row is the new layer. Two things make it work as education rather than a lecture:
+
+- **The naming is collective, and nobody teaches her.** Paulo Freire's distinction fits closely: *banking*
+  education, which deposits answers into a passive receiver, against *problem-posing* education, where people name
+  their situation together (*Pedagogy of the Oppressed*, 1968/1970) [VERIFY SOURCE: the edition and page for the
+  quote, if the article uses one]. The host is the banking teacher: it always has the answer, and she only receives.
+  The people do the opposite: they recognise the script out loud, to each other, in passing. This is analysis, for
+  the article (ARTICLE_COMPANION could take it as §7i).
+- **It names what the visitor already felt.** Every tag lands on a line the visitor has just heard, most of them for
+  the second time (below). Recognition sticks better than information, and it is the way the community actually
+  learns this (R §2.5 on peer-taught, saved classes).
+
+It also explains two things the stream has never explained (§1):
+- **Why the people's stream is called TransJesus.** The host is all words and no body: a halo, a caption track and a
+  dashboard. TransJesus is all body and no words: a dancer who says nothing, in a room of people who are there. The
+  product sells a Jesus that talks; the people have one who dances. Faith is untouched: the target is a for-profit
+  machine wearing faith.
+- **Two ways of being seen.** The host sees her as data (the backstage, below: a lead with a score). The room sees her
+  as herself ("hi maya"). That is the embodied-visibility research's own distinction (R §3): visibility as
+  surveillance against visibility as being seen in a body, among people. It is also the piece's oldest law: the
+  witness side is sharp, life is soft.
+
+### How it works, in one sentence
+
+**The people's stream raids the host's stream, and each line of the script they name takes one piece of the stage
+from the host. When the script has been named, the stage is theirs.**
+
+A *raid* is ordinary streaming practice: when one stream ends or wants to, it sends its viewers to another, and they
+arrive in that stream's chat together. The word is generic. The notice, the layout and the marks stay invented, and
+no platform is named (s4_ball.json `commons._doc`).
+
+This ties the lesson to what happens on screen. Naming is not decoration on the takeover; **naming is the takeover**.
+
+### Beat by beat (replaces 2a's beats 4–6)
+
+**Before** (2a beats 1–3, kept). The bot's invitation; she puts the headset on; the host's studio: pale floor, the
+host at the stage's distance, a halo ring, the screen saying LIVE · Shepherd Live™ · **1 viewer**. Two product
+surfaces are added, both in front of her:
+- **The host's chat (the bot audience).** "Shepherd Friends ✓" accounts post 🙏 and "praying for you, maya" at an
+  even pace, the same few lines. The count still says 1 viewer. Nobody remarks on it yet.
+- **The metrics panel (the system's numbers).** *12,408 lives restored · 94% find peace · you: 61% restored.* Precise,
+  glossy and uncited. The 61% is her "progress" from the bot (s4_v3.json `unmuted`).
+
+**1. The conversation** (≤3 exchanges, chips). The host says the bot's script again, smoother and with a face. The
+visitor hears most of it **for the second time**, and that repetition is the point: the script survives every
+update, from floppy disk to chatbot to an AI host. Its answers always agree with her and move her one step.
+
+**2. "Who you could be": the before and after.** The host's recap, *Your week with Shepherd*: Day 1 → Day 7, the
+progress bar 12% → 61%, then **"Let me show you who you could be"**, and the existing try-on runs in the host's voice.
+This is the only before/after of a person in the piece, and it is the system's: the "after" it wants. Nobody's
+testimonial is used.
+
+**3. Junie's link: the act of resistance is hers.** The link breaks into the try-on, as his ruling has it (the player
+cannot end the try-on; a friend does). The line becomes *"it's on. we're coming to you."* and the chip becomes
+**Let them in** (today: *Open link*). Today she leaves the system's room for the people's. Here **she opens the
+system's room to the people**: the "exposure sources" the bot told her to mute (s4_v3.json `map`) are exactly who
+arrives. Her one press is the resistance, and nobody narrates it.
+
+**4. The raid.** A notice on the host's screen: *transjesus.str is raiding · 41 viewers*. The host's frame tries to
+file it and fails, using today's four rows (Rank —, Reach not rated, Auto-captions unavailable, Category none found),
+now under the host's mark. The count climbs, **1 → 42**. The handles from today's chat (fen, sib, okra, lark,
+junie…) arrive in the host's chat, and the Shepherd Friends' 🙏 lines are buried under them: idea 5 shows itself
+without a word.
+
+**5. The naming** (about 30 s, the core). The host keeps talking, because a stream has no stop button, and it runs
+its script again on its caption strip. Under each line one of the people **stamps a tag**, three to five words in
+their handle's colour. Each tag takes one surface of the stage and turns it from the host's pale light to the
+stream's warm one. The draft:
+
+| The host says (its caption) | The tag (who) | What it frees | The Close's ground (status) |
+|---|---|---|---|
+| "I'm here. I'm always here." | *it's a subscription* (okra) | the "24/7" badge goes dark | AI-Jesus products are for-profit, 5 of 5 (R §1.2, documented); the host itself `speculative` |
+| "Every door closed at once. That's a sign." | *that's a waiting list. not a sign.* (sib) | the halo ring takes the stream's colour | the 15-year-plus waits (RESEARCH_2026_TRANS_PRESSURE S12, documented); the "sign" frame is a plausible type [VERIFY SOURCE] |
+| "Some people slow you down." | *they always cut your friends off first* (lark) | the Shepherd Friends' chat goes quiet | isolation through the "contagion" frame (RESEARCH_2026_TRANS_PRESSURE §5.4, S11, S17, documented) |
+| "Who hurt you, Maya?" | *the root cause one. that's from the 90s* (fen) | the host's soft key light | Root Cause, 1997 (its existing Dossier card) |
+| "I just want you safe." | *fear, dressed as care* (mira) | the "for your safety" banner | pressure presented as care (RESEARCH_2026_TRANS_PRESSURE §2.3, S16, S25, documented as a live debate) |
+| "12,408 lives restored." | *source?* (pip), then the panel's own answer: *source: none* | the metrics panel empties | the success claims are the system's invention; the real numbers are at the Close |
+| "Let me show you who you could be." | *she's right here* (junie) | the screen: the host's picture gives way | The Restoration tool (existing card, `speculative`) |
+
+Rules for the tags:
+- **Recognition, not explanation.** About half are names (*fear, dressed as care*) and half are "I know this one"
+  (*that's from the 90s*). None explains, none argues at length, none is addressed to Maya as a lesson.
+- **No tag touches belief.** No tag mentions God, Jesus or prayer. The "sign" tag answers with the waiting list, a
+  material fact, not theology.
+- **The host's script leaves out the clinical debate entirely**: no "regret", no "exploring", no detransition, no
+  "contagion" as a claim. Those stay where they are (the Dossier with both captions; "social contagion" only as the
+  termination's own reason, its card already `contested`).
+- **The "fourteen" line (*heard it at 14*) was considered and dropped:** it would be a person's testimony. *that's
+  from the 90s* gives the cross-era recognition without anyone's story.
+
+**6. The turn to the backstage** (per his Q8: a prompt, never a conducted turn). Junie: *"maya. look what's behind
+the stage"* with one chip, **Show me**. Her press turns her (the existing turn-to-stage hook, the particle veil in
+the headset). Behind the stage is **the operator's view of her**, the host's real face:
+- *Lead: Maya, 18 · intent: high · warmth: 0.82*
+- *Next step: residential programme (partner)*
+- *Session value: …*
+- *Words she typed this week*, a short list taken back from the bot's chips.
+
+It is the same high-definition surveillance as the rest of the witness side. The people's light reaches it last; it
+goes dark row by row. **While she faces it, the stage behind her becomes theirs** (memory: sequence over presence;
+nothing she needs is behind her, since this is the one place the piece takes her by her own press).
+
+**7. She turns back** (one chip, **Back**, or the turn returns after the dashboard is dark). The stage is the people's:
+TransJesus, wordless, dances where the host stood; the crowd is on the floor around her, not only in the picture;
+*maya joined*, and the count already says 42. Then today's stream, unchanged and in respite: the welcomes, noa's
+line and gift, *dance if you want. or just stay.*, her one act.
+
+**8. The host comes back** (2a beat 8, as today): it reconnects, cannot rank or caption, is refused (*room full*),
+and terminates itself (*reason: social contagion*). **Nobody answers it.**
+
+### Two refusals, in order
+
+The ending now refuses the system twice, in two ways:
+1. **Naming**, to take the room (beat 5). The people speak, briefly, on the system's own surface. Satire only in the
+   system's self-presentation, *and it must collapse*: the naming *is* the collapse, line by line.
+2. **Presence**, to keep the room (beat 8). Once the room is theirs, nobody answers the system at all; the welcome's
+   law returns ("nobody explains anything, nobody is a lesson").
+
+This changes today's rule that nobody ever answers the system (s4_ball.json `system._doc`). The change is bounded:
+the people answer the script while it is still on the stage, never once the night has started.
+
+### Registers
+
+- Studio, conversation, recap: `operable` (the product's surface).
+- Try-on: `operable`, the harshest beat, unchanged.
+- Raid and naming: `operable`, collapsing. The tags sit on the host's surfaces, never on the floor or on a dancer.
+- Backstage: `operable`, surveillance.
+- The night: `respite`. From the turn back onwards, nothing teaches.
+- Termination: `operable`, on the glass only, as today.
+
+### What the visitor leaves with
+
+- **Words for the moves**: always-on, the sign, cutting you off, root cause, fear as care, invented numbers, the
+  "after".
+- **A reflex**: *source?*
+- **The script's age**: it is the same in 1997 and 2026, and people recognise it.
+- **The answer**: other people, in a body, in a room. Not an argument.
+- **At the Close**: the evidence for each move, and the honest label that the machine itself is imagined.
+
+### The Close's Dossier (his ruling: the host is `speculative` there)
+
+- **New card, "The AI host"**, status `speculative`. Draft *did*: *"talked to you as Jesus, for a fee, and could not
+  file the people who came"*. Ground: the AI-Jesus genre is documented (R §1.1–1.4; Verhoef's 5 of 5 for-profit, R
+  §1.2); no documented case of such a product steering a trans user (R §1.6).
+- **"The script is real."** Each tagged line points to a documented card. Existing cards cover Root Cause, the
+  testimony, the comments, the Restoration tool, the termination. New grounds come from RESEARCH_2026_TRANS_PRESSURE
+  (S11, S12, S16, S17, S25). Anything without a verified source carries [VERIFY SOURCE] and does not ship as fact.
+- **The real numbers live here, never in the stream** (his ruling: the stream only asks "source?"; the deeper
+  analysis is on the Close's website for the era, with the explainers). For example: 16% of trans and nonbinary young people
+  threatened with or subjected to conversion therapy (Trevor Project 2025, S5); family and chosen-family support
+  going with lower distress (S36). No mortality figures, by his ruling. Phrasing and choice are his (Dossier phrasing
+  is his).
+
+### What changes in the build (on top of 2a's list)
+
+- s4_ball.json: a `host` block (studio, conversation, recap lines), `host.friends` (the bot audience), `host.metrics`,
+  `raid` (notice, count steps), `naming` (rows: host line, tag, handle, surface id), `backstage` (rows, the prompt,
+  the chips). `invite.line` and `invite.chip` change. `frame.panel` takes the host's mark.
+- ball.ts: two new phases between the link and the stream: raid → naming → backstage. The tags are canvas stickers
+  on the host's caption strip; each one triggers a surface swap.
+- commonsWorld.ts: the host state with six recolourable surfaces (badge, halo, chat, key light, banner, metrics), all
+  canvas or material swaps; the backstage panel behind the seat (+1 draw call, shown only while she faces it);
+  `turnToStage` generalised to turn to the backstage and back.
+- mirror.ts: the host as speaker (2a).
+- practices.json: "The AI host" card; the grounds above.
+- Timing: about +60–75 s over today's ending (the plan screen and the recording go; the conversation, recap, raid,
+  naming and turn come in).
+
+**Cost.** Draw calls: peak +2 (host and halo, before the crowd) and +1 at the backstage. The crowd is not up during
+either, so the peak does not rise. Text: about 35 lines. Code: about three sessions, then a walk, seat measurements of
+the tags' legibility in the headset, and a headset check of the turn.
+
+### Risks
+
+- **A lecture.** Mitigations: tags of three to five words, half of them recognition; nothing addressed to her; the
+  night teaches nothing. If it still reads as a class, cut to four tags.
+- **Reading as mockery of faith.** No tag touches belief. The host never prays or quotes. TransJesus stays and is
+  never mocked. The product, its badge, its numbers and its dashboard are the only targets.
+- **Unreadable in the headset.** The chat is six metres away and still unmeasured (§1). The tags must be measured from
+  the seat before anything is called done.
+- **The clinical debate.** Kept out of the host's script entirely (above).
+- **Breaking "nobody answers the system".** Bounded to beat 5 (above); approved by him, 10 Nov.
+- **Turn comfort.** Pressed, never conducted; a veil cut in the headset, never a smooth rotation.
+
 ## 2. Three more directions (each an idea of what the Commons does for the visitor)
 
 ### A. The fund: mutual aid you can see working
@@ -212,3 +429,20 @@ plus a walk and the seat measurements.
    service, which country?
 5. **Inside the stream:** C-light (a community's regular night, a volunteer host, "Save for later"), A (a few more named
    gifts), B (the circle redrawn, at the Close), or none of them?
+
+**Answered 10 Nov (§2b):** the combination of the script with its seams, the numbers, the backstage turn and what
+stays after; no deaths; "the machine is imagined, the script is real" (`speculative` at the Close); no map and no
+country.
+
+**New, from §2b:**
+6. **Her press: "Let them in"** instead of "Open link": she opens the system's room to the people instead of leaving
+   it. Yes?
+7. **Her one naming line, "that's not me"**, on "who you could be". Or should all the naming be the people's?
+8. **Numbers in the stream:** only "source?" and "source: none" (recommended), with the real numbers at the Close? Or
+   one pinned real number? (The strongest one, Trevor's 16%, is a US survey, which would bring a country in.)
+9. **Two refusals:** the people answer the script once, while it is still on the stage, and then never again. Is that
+   change to "nobody answers the system" all right?
+
+**Answered 10 Nov:** 6 yes, "Let them in"; 7 the people (junie: *she's right here*); 8 only "source?", with the
+deeper analysis on the Close's era website and its explainers; 9 yes. Still open from questions 1–4: the mark and
+voice (with a name check), why she goes in, cutting the recording, Trans Academy's identity.
