@@ -357,6 +357,42 @@ services like Trans Academy". Ground: docs/reinterp/RESEARCH_COMMONS_STREAM_2026
 - A proposal to rebuild the Commons around his idea (Maya goes into the headset to talk with the system's AI Jesus,
   and Junie's message turns its stream into the people's) is DESIGN_COMMONS_REVAMP_2026-11-10.md (draft).
 
+## 7i. The raid: experience, recognition, evidence (his ruling, 10 Nov 2026)
+
+From DESIGN_COMMONS_REVAMP_2026-11-10.md §2b (UiB session, approved by the lead with his four answers):
+
+- **The missing layer.** The visitor lives thirty years of the same script: Root Cause's questionnaire in 1997, the
+  testimony in 2003, Grace's "care" in 2016, the bot's week in 2026. Nobody inside the story names what is being
+  done; the naming came only at the Close, in the frame's voice. So the piece now has three layers, each in its own
+  voice:
+  - **experience** (the four eras, felt from inside);
+  - **recognition** (the stream: peers name the script in passing, "I know this one");
+  - **evidence** (the Close: sources, statuses, the honest label that the machine is imagined).
+- **The raid as the act of naming.** In 2026 the system's AI host (Shepherd Live™, an invented for-profit product
+  wearing faith; it has no voice) repeats the bot's script with a face. Junie's link: Maya presses **"Let them in"**,
+  and she opens the system's room to the friends it told her to mute. The people's stream raids the host's (ordinary
+  streaming practice). Each line of the script they tag takes a piece of the stage from it:
+  - "I'm always here" → "it's a subscription";
+  - "Every door closed. That's a sign." → "that's a waiting list. not a sign.";
+  - "12,408 lives restored" → "source? → source: none".
+
+  Naming is the takeover. All the naming is the people's; Maya tags nothing. Real numbers live only on the Close's
+  era website, with its explainers.
+- **Two ways of being seen.** Backstage, the host sees her as data ("Lead: Maya, 18 · intent: high · next step:
+  residential programme"); the room sees her as herself ("hi maya"). This is Freeman and Acena's **embodied
+  visibility** (Freeman & Acena, "Acting Out" Queer Identity: The Embodied Visibility in Social Virtual Reality, ACM
+  CSCW 2022) turned into a scene.
+- **Two pedagogies.** The host is Freire's "banking" education: it deposits answers into her. The people name their
+  situation together, which is also the Trans Academy idea of peers teaching peers (the VRChat community and US
+  non-profit; RESEARCH_COMMONS_STREAM_2026-11-10.md).
+- **What TransJesus now means.** The product has a talking Jesus with no body (a halo, captions, a dashboard). The
+  people have one who dances and says nothing. Faith is not touched: the target is a for-profit machine wearing
+  faith. AI-Jesus products are real (a 24/7 stream from 2023; a 2025 study: four of five bots claim to be Jesus,
+  and all are for-profit). No documented case was found of one steering users toward "change", so the host's
+  conduct is the piece's speculation and is labelled so.
+- **Two refusals** (approved): first by naming, then by presence. The people answer the script once, on its stage,
+  then never again.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
