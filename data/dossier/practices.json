@@ -217,6 +217,16 @@
         "index": 4
       }
     },
+    "places": {
+      "_doc": "⚑ S357 (his find, 10 Nov 2026: Conley on Love in Action's map of safe places; e3_theday source 22). The 2016 places list (s3_places.json): Vera adds The Wick to the network's places to avoid. DOSSIER PHRASING IS SÉRGIO'S: the `did` line is Claude's draft, for his review.",
+      "title": "The places list",
+      "did": "kept a list of places you should not go, and had you add a bar to it",
+      "status": "documentary",
+      "source": {
+        "file": "e3_theday",
+        "index": 22
+      }
+    },
     "host": {
       "_doc": "⚑ S356 (UiB job 11 Part C) — Shepherd Live™, the system's AI host in the headset (s4_ball.json `host`). Filed by the shell as e4Space `host` when its studio begins (record.ts → kind `host`). His ruling (10 Nov): 'the machine is imagined, the script is real' — speculative. DOSSIER PHRASING IS SÉRGIO'S: the `did` line is HIS CHOICE (10 Nov, S356b), replacing Claude's first draft ('talked to you as Jesus, for a fee, and could not file the people who came'), which he rejected.",
       "title": "The AI host",
