@@ -32,7 +32,7 @@ import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
 import { buildCeilingWitness, type CeilingWitness } from '../room/ceilingWitness';
 import { onCommonsRoom, setCommonsWorld } from '../room/cluster';
-import { WORLD as COMMONS_WORLD, onTurnToStage } from '../room/commonsWorld';
+import { WORLD as COMMONS_WORLD, onTurnTo } from '../room/commonsWorld';
 const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
@@ -5121,13 +5121,33 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * 1.5× its mean, so 20° in 3.6 s is 8.3 °/s against the 9.1 °/s envelope, and a larger turn takes longer.
    * In a headset the same destination is presented through the pixel dissolve; the head stays free.
    */
-  onTurnToStage(() => {
+  /**
+   * ⚑ S356 — GENERALISED (UiB job 11 Part C): a turn to a named target and back — 'backstage' is the spot's facing
+   * turned round (the host's operator view stands behind her), 'stage' is the spot's own facing. A half-turn under
+   * the comfort envelope would take half a minute, and a headset must never be rotated smoothly, so it is a BLINK:
+   * the view fades, the facing is cut at the bottom, the view comes back (the seat-jump grammar; in a headset the
+   * comfort layer's dissolve). `atCut` runs at that bottom, while nothing is visible — the stage changes then.
+   */
+  onTurnTo((target, atCut) => {
     const node = movementNodes?.find(COMMONS_SPOT);
-    if (!node?.pose) return;
-    commitLookOffset();
-    const d = Math.abs((((node.pose.yaw - camYaw) % 360) + 540) % 360 - 180);
-    const dur = Math.max(3.6, (1.5 * d) / 8.5);
-    startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: node.pose.pitch, yaw: node.pose.yaw }, dur, true);
+    if (!node?.pose) { atCut?.(); return; }
+    const to = { ...node.pose, yaw: node.pose.yaw + (target === 'backstage' ? 180 : 0) };
+    const land = (): void => {
+      camPos.set(to.x, to.y, to.z);
+      camPitch = to.pitch;
+      camYaw = to.yaw;
+      authoredRig.setLocalPosition(camPos.x, camPos.y, camPos.z);
+      authoredRig.setLocalEulerAngles(camPitch, camYaw, 0);
+      camMove = null;
+      tween = null;
+      clearLookOffset();
+      atCut?.();
+    };
+    // a blink already running (only a review jump can ask twice that fast): the facing is cut at once, under it,
+    // and a turn still waiting for that blink's bottom is dropped — the later ask wins
+    if (blinkPhase !== null) { blinkAction = null; land(); return; }
+    blinkAction = land;
+    startBlink(to, BLINK_OUT_SECONDS * 1.6, BLINK_IN_SECONDS * 1.8);
   });
   onCommonsRoom((hidden) => {
     for (const id of ROOM_ENTITIES) {

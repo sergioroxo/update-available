@@ -4275,7 +4275,9 @@ export class DesktopOS {
       // is not on the visor and never will be.
       case 'e4Invite': this.e4BallJump('invited'); break;   // S133: Junie's card, Go in
       // ⚑ S293 — the stream (ENDING_TRANSJESUS): the link, the frame failing, inside, her chips, the system, the end
-      case 'e4Ball': this.e4BallJump('frame'); break;
+      case 'e4Ball': this.e4BallJump('raid'); break;   // S355: Let them in → the raid
+      case 'e4Studio': this.e4BallJump('host'); break;   // S354: Shepherd Live™'s studio
+      case 'e4Naming': this.e4BallJump('naming'); break;   // S355: the people name the script
       case 'e4BallOpen': this.e4BallJump('stream'); break;
       case 'e4StreamAsk': this.e4BallJump('ask'); break;
       case 'e4StreamIntrusion': this.e4BallJump('intrusion'); break;
@@ -4338,7 +4340,7 @@ export class DesktopOS {
    * `resumeAfterBreak()`, so a review jump that skipped the hold would end the
    * ball into nothing and the era's finale would never play. Never in play.
    */
-  private e4BallJump(where: 'invited' | 'frame' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
+  private e4BallJump(where: 'host' | 'invited' | 'raid' | 'naming' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
     this.debugJump('e4Place');
     this.e4?.voice.debugFinish();
     this.e4?.offers.debugHoldForBreak();

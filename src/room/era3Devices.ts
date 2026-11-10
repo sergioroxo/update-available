@@ -94,6 +94,8 @@ const LOGICAL = {
   /** ⚑ 2026-09-12 — THE STREAM: `transjesus.str`, a window hung in the space
    *  above the desk while the Commons is on. 16:9, drawn by `E4Ball.drawStream`. */
   stream: { w: 352, h: 198, scale: 2 },   // scale 2: it repaints 12x a second now
+  /** ⚑ S356 — the host's operator view, behind her in the Commons (drawn by `E4Ball.drawBackstage`) */
+  backstage: { w: 352, h: 198, scale: 2 },
   /** ⚑ the laptop (2026-09-01): a small screen carrying two short lines and a
    *  hint, so it needs pixels for text and nothing else. */
   /** ⚑ S123 tried 320x200 and reverted the same hour — see `space.ts`'s
@@ -234,6 +236,12 @@ const PLACEMENT = {
    * — and turns. 0.80 x 0.45 m at 1.78 m up on the desk wall, the same
    * facing as the monitor (y 270, −x).
    */
+  /** ⚑ S356 — placed in the world each frame from `COMMONS.backstage` (behind the spot, facing her: +x) */
+  backstage: {
+    pos: { x: 2.7, y: 1.12, z: 0.70 },
+    size: { w: 1.7, h: 0.96 },
+    euler: { x: 90, y: 90, z: 0 }
+  },
   stream: {
     /** ⚑ measured: at y 1.78 the window sat 26°–38° above the eye against a
      *  21° half-frame — out of the picture from the seat. y 1.40 / 0.64 × 0.36
@@ -1129,6 +1137,10 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     const sh = e4Bridge()?.shell();
     if (sh) sh.ball.drawStream(ctx, w, h);
   }, { versionOf: () => e4Bridge()?.shell()?.ball.streamVersion ?? 0 });
+  add('backstage', LOGICAL.backstage, (ctx, w, h) => {
+    const sh = e4Bridge()?.shell();
+    if (sh) sh.ball.drawBackstage(ctx, w, h);
+  }, { versionOf: () => e4Bridge()?.shell()?.ball.backstageVersion ?? 0 });
 
   let arrived = false;
   let eraNow: EraKey = 'e1';
@@ -1433,6 +1445,16 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.entity.enabled = !!sh && !sh.handedOffToClose
             && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
         }
+        if (s.name === 'backstage') {
+          // ⚑ S356 — only while she faces it (one draw call, never while the crowd is up in front of her)
+          const sh = e4Bridge()?.shell();
+          s.entity.enabled = eraNow === 'e4' && !!sh && sh.ball.backstageOn;
+          if (s.entity.enabled) {
+            const B = COMMONS.backstage;
+            s.entity.setLocalPosition(B.x, B.y, B.z);
+            s.entity.setLocalScale(B.w, 1, B.h);
+          }
+        }
         if (s.name === 'stream') {
           const sh = e4Bridge()?.shell();
           s.entity.enabled = eraNow === 'e4' && !!sh && sh.ball.streaming;
@@ -1469,6 +1491,16 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           const sh = e4Bridge()?.shell();
           s.entity.enabled = !!sh && !sh.handedOffToClose
             && (sh.pinned || sh.deviceReady || sh.deviceReturnable);
+        }
+        if (s.name === 'backstage') {
+          // ⚑ S356 — only while she faces it (one draw call, never while the crowd is up in front of her)
+          const sh = e4Bridge()?.shell();
+          s.entity.enabled = eraNow === 'e4' && !!sh && sh.ball.backstageOn;
+          if (s.entity.enabled) {
+            const B = COMMONS.backstage;
+            s.entity.setLocalPosition(B.x, B.y, B.z);
+            s.entity.setLocalScale(B.w, 1, B.h);
+          }
         }
         if (s.name === 'stream') {
           const sh = e4Bridge()?.shell();
@@ -1531,7 +1563,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         // ⚑ S328 — AND THE LAPTOP IS NEVER ON (T03, his 8 Nov headset test: "remove the laptop"): 2026 has one screen,
         //   the monitor, with Kettle as a window on it. Its prop is gone from r4; its plane stays registered and dark.
         //   S327 — and 2016's handset screen stays off too (the Handset Window is her phone).
-        s.entity.enabled = s.name === 'stream' || s.name === 'phone' || s.name === 'laptop' ? false : roomThreeScreen ? era === 'e4'
+        s.entity.enabled = s.name === 'stream' || s.name === 'backstage' || s.name === 'phone' || s.name === 'laptop' ? false : roomThreeScreen ? era === 'e4'
           : roomTwoScreen ? era === 'e3'
           : visible;
       }

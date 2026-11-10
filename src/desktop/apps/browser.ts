@@ -165,6 +165,8 @@ export class E4Browser {
   private botBeat = -1;
   private botT = 0;
   private botSaid: { who: 'bot' | 'her'; text: string }[] = [];
+  /** ⚑ S356 — the chips she pressed in the bot, in order (memory only): the host's operator view quotes them back */
+  get herWords(): string[] { return this.botSaid.filter((s) => s.who === 'her').map((s) => s.text); }
   private botDone = new Set<string>();
   private botNextIn = -1;
   private ring = 94;

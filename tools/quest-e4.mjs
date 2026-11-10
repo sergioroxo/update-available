@@ -200,17 +200,41 @@ async function main() {
 
   // ── 2 · the visor ──
   await beat('visor · session', 'the correction session on the glass');
-  await page.evaluate(() => window.__os.e4.wear());
+  // ⚑ S355 — the desk steps above are an older 2026 flow and no longer finish the program, so `wear()` refused and
+  //   the run waited out its timeout: the device goes on the way the review route puts it on (os.ts `e4Place`)
+  await page.evaluate(() => window.__os.debugJump('e4Place'));
   await wait(4000);
   visor = await measureVisor();
-  await page.waitForFunction(() => window.__os.e4.ball.invited, { timeout: 45000 });
+  // ⚑ S355 — the host's studio first (S354): its chips are pressed as a player would, until Junie's link lands
+  await beat('studio · Shepherd Live™', 'the host (hologram), its screen, the conversation, the recap, the try-on');
+  {
+    const t0 = Date.now();
+    while (Date.now() - t0 < 120000) {
+      const st = await page.evaluate(() => { const b = window.__os.e4.ball; return { invited: b.invited, ask: b.hostAsking }; });
+      if (st.invited) break;
+      if (st.ask) await page.evaluate(() => { const b = window.__os.e4.ball; const h = b.hits[0]; if (h) window.__os.handleClick(h.x + h.w / 2, h.y + h.h / 2); });
+      await wait(700);
+    }
+  }
   await wait(600);
-  await beat('visor · the struggle', "Junie's link, the filter fighting the room");
+  await beat('visor · Let them in', "Junie's link over the host's mirror");
   await page.evaluate(() => {
     const b = window.__os.e4.ball; const h = (b.hits || [])[0];
     if (h) window.__os.handleClick(h.x + h.w / 2, h.y + h.h / 2);
   });
-  await wait(16000);
+  await wait(1500);
+  await beat('studio · the raid + the naming', 'the count 1 → 42, the host\'s frame failing, seven tags taking the stage');
+  // ⚑ S356 — then junie's "look what's behind the stage": Show me (a blink to the backstage), the operator view going
+  //   dark while the stage behind her becomes the people's, and Back (a blink to the stage)
+  const pressBall = (id) => page.evaluate((id) => { const b = window.__os.e4.ball; const h = b.hits.find((r) => r.id === id); if (h) window.__os.handleClick(h.x + h.w / 2, h.y + h.h / 2); return !!h; }, id);
+  await page.waitForFunction(() => window.__os.e4.ball.phase === 'turnAsk', { timeout: 90000 });
+  await wait(800);
+  await pressBall('backstage-show');
+  await beat('backstage · the operator view', 'the blink to the back; the dashboard going dark; the crowd rising behind her');
+  await page.waitForFunction(() => window.__os.e4.ball.hits.some((h) => h.id === 'backstage-back'), { timeout: 30000 });
+  await pressBall('backstage-back');
+  await page.waitForFunction(() => window.__os.e4.ball.phase === 'stream', { timeout: 30000 });
+  await wait(4000);
   await beat('world · seat, facing the stage', 'hall + crowd + stream, the seat frame');
   await wait(4000);
   await cam(4.4, 1.16, 0.7, 0, 300);

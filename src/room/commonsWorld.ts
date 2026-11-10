@@ -43,6 +43,9 @@ export const WORLD = {
    *  2026-09-13 were there because the far floor read as a beige horizon; the rim and the horizon's
    *  own glow answer that now.) */
   floor: { x: 5.0, z: 0.7, w: 30, d: 26 },
+  /** ⚑ S356 — the host's operator view, BEHIND her (−x from the spot), facing her: 2.5 m off, 1.7 × 0.96 m
+   *  (≈ 37° × 22° from the spot), its centre a little below the eye. Shown only while she faces it. */
+  backstage: { x: 2.7, y: 1.12, z: 0.7, w: 1.7, h: 0.96 },
   sky: COMMONS_SKY,
   // ⚑ S209 / B24 (REVIEW_ROUND_5, ERA26-05; his "Warm it please!") — the one respite was the darkest room in the piece:
   //   near-black interface panels for walls and floor. Now the warm wall and wood of the rooms themselves (PLACE),
@@ -66,12 +69,18 @@ export const WORLD = {
   }
 } as const;
 
-/** ⚑ S227 — HIS Q8 ("not a conducted turn — a prompt"): the room's call is pressed on the glass (ball.ts), and
- *  the turn to the stage is the camera's, so it is the engine's (app.ts registers it). One hook, like
- *  cluster.ts's `onCommonsRoom`, because the shell that presses it is rebuilt on every return to 2026. */
-let turnHook: (() => void) | null = null;
-export function onTurnToStage(fn: () => void): void { turnHook = fn; }
-export function turnToStage(): void { turnHook?.(); }
+/** ⚑ S227 — HIS Q8 ("not a conducted turn — a prompt"): the turn is pressed on the glass (ball.ts), and carried
+ *  out by the camera, so it is the engine's (app.ts registers it). One hook, like cluster.ts's `onCommonsRoom`,
+ *  because the shell that presses it is rebuilt on every return to 2026.
+ *  ⚑ S356 — GENERALISED to a named target and back: 'backstage' (behind her, where the host's operator view stands)
+ *  and 'stage' (the spot's own facing). The engine carries it out as a blink with the facing cut at its bottom (in a
+ *  headset the particle veil) — never a smooth rotation — and calls `atCut` at that bottom, while nothing is
+ *  visible, so what changes behind her back changes then. */
+export type TurnTarget = 'stage' | 'backstage';
+let turnHook: ((target: TurnTarget, atCut?: () => void) => void) | null = null;
+export function onTurnTo(fn: (target: TurnTarget, atCut?: () => void) => void): void { turnHook = fn; }
+export function turnTo(target: TurnTarget, atCut?: () => void): void { if (turnHook) turnHook(target, atCut); else atCut?.(); }
+export function turnToStage(): void { turnTo('stage'); }
 
 function pushBox(pos: number[], idx: number[], x: number, y: number, z: number, hx: number, hy: number, hz: number): void {
   const base = pos.length / 3;

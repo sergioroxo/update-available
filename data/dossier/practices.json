@@ -216,6 +216,16 @@
         "file": "e4_offers",
         "index": 4
       }
+    },
+    "host": {
+      "_doc": "⚑ S356 (UiB job 11 Part C) — Shepherd Live™, the system's AI host in the headset (s4_ball.json `host`). Filed by the shell as e4Space `host` when its studio begins (record.ts → kind `host`). His ruling (10 Nov): 'the machine is imagined, the script is real' — speculative. DOSSIER PHRASING IS SÉRGIO'S: the `did` line is Claude's draft (DESIGN_COMMONS_REVAMP §2b), for his review.",
+      "title": "The AI host",
+      "did": "talked to you as Jesus, for a fee, and could not file the people who came",
+      "status": "speculative",
+      "source": {
+        "file": "e4_offers",
+        "index": 11
+      }
     }
   }
 }

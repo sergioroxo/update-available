@@ -239,7 +239,9 @@ const OS_BEATS: BeatRow[] = [
   // failed caption. Under `?flat=1` there is no room, so these buttons show the
   // captions and the machine only — which is the era's own argument, not a bug.
   { label: '⚑⚑ THE STREAM — Junie\'s link (play from here: it\'s on. come in.)', id: 'e4Invite' },
-  { label: '↳ the platform frame fails to file it (Rank — · Reach · Captions · Category)', id: 'e4Ball' },
+  { label: '↳ Shepherd Live™\'s studio: the host, its screen, the conversation (S354)', id: 'e4Studio' },
+  { label: '↳ Let them in: the raid — the host\'s frame fails to file it (S355)', id: 'e4Ball' },
+  { label: '↳ the naming: the people tag the script, the stage is taken back (S355)', id: 'e4Naming' },
   { label: '↳ inside the stream — TransJesus dancing, the chat', id: 'e4BallOpen' },
   { label: '↳ "hi maya" — 41 → 42, and her chips: dance / stay', id: 'e4StreamAsk' },
   { label: '↳ the system comes back for her — refused, room full', id: 'e4StreamIntrusion' },
