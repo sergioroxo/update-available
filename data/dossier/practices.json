@@ -51,25 +51,34 @@
       }
     },
     "diary": {
+      "_docS357c": "⚑ S357c (his yes, 10 Nov 2026): source → Conley (origin_intake_e1 11); status now documentary (was contested, sourced to e3_theday 7, accountability software sold as care).",
       "title": "The diary",
       "did": "read what you wrote to yourself, and tried to delete it",
-      "status": "contested",
+      "status": "documentary",
       "source": {
-        "file": "e3_theday",
-        "index": 7
+        "file": "origin_intake_e1",
+        "index": 11
       }
     },
     "tapes": {
+      "_docS357c": "⚑ S357c (his yes, 10 Nov 2026): source → Conley (origin_intake_e1 10); status now speculative.",
       "title": "The tapes",
       "did": "logged what you listened to, and for how long",
       "status": "speculative",
-      "source": null
+      "source": {
+        "file": "origin_intake_e1",
+        "index": 10
+      }
     },
     "belongings": {
+      "_docS357c": "⚑ S357c (his yes, 10 Nov 2026): source → Conley (origin_intake_e1 9); status now documentary.",
       "title": "What you were allowed to take",
       "did": "asked what you would keep, and filed the choice",
-      "status": "speculative",
-      "source": null
+      "status": "documentary",
+      "source": {
+        "file": "origin_intake_e1",
+        "index": 9
+      }
     },
     "checkin": {
       "title": "The daily check-in",

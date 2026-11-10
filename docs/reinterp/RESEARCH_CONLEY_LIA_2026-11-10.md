@@ -20,6 +20,16 @@ knowledge base (e3_theday source 21, its 2008 website; `research/love-in-action-
 |---|---|---|
 | 4:01–4:25 | On entry, a map of the city with zones and places "marked … safe, and everything else was evil"; members barred from certain restaurants and anywhere secular; a bookshop or store not explicitly Christian was off limits | **2016's places list** (The Wick): e3_theday source 22, Dossier `places` "The places list" (his yes, 10 Nov), the Close's 2016 panel, RESEARCH_2016_VERA_APPARATUS §4 row 20 |
 
+## 1b. Used after his yes (10 Nov, S357c)
+
+| time | where it went |
+|---|---|
+| 1:22–1:41, 31:21–31:35 | Dossier `belongings` → **documentary**, source origin_intake_e1 9 |
+| 6:06–6:15 | Dossier `tapes` stays **speculative** (the log is ours), gains source origin_intake_e1 10 |
+| 1:41–2:09 | Dossier `diary` contested → **documentary**, source origin_intake_e1 11 |
+| 13:01–13:23, 25:41–26:18 | added to origin_intake_e1 7 (LIA's The Source application, 2001): Conley went through that programme |
+| 11:36–11:50, 24:40–24:51 | 2026 site, 'The script is real': Root cause (the genogram), Invented numbers ('a high success rate') |
+
 ## 2. What else it documents, and the beat each one touches (for his decision; nothing changed)
 
 | time | what he says (paraphrase) | the piece | possible use |

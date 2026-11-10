@@ -230,7 +230,7 @@
     ],
     [
      "Sources on its cards",
-     "13"
+     "16"
     ],
     [
      "Beats",
@@ -539,22 +539,32 @@
       "t": "It logged what you listened to, and for how long."
      },
      {
-      "k": "small",
-      "t": "No source: this beat is the piece's own."
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "the restriction documented by one survivor (2004); the listening log is ours",
+      "t": "Controlling what members heard is documented. At Love in Action in 2004 there was no singing, and no music but Mozart and Bach (Garrard Conley, Insider, 2025). A log of what Daniel listened to, and for how long, is the piece's own.",
+      "links": [],
+      "nolink": "No verified link yet."
      },
      {
       "k": "h3",
       "t": "What you were allowed to take",
-      "status": "speculative",
-      "tag": "inferred"
+      "status": "documentary",
+      "tag": "documented"
      },
      {
       "k": "p",
       "t": "It asked what you would keep, and filed the choice."
      },
      {
-      "k": "small",
-      "t": "No source: this beat is the piece's own."
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "medium — one survivor's account of one programme (2004)",
+      "t": "Searching what a person brings is documented. Garrard Conley, who entered Love in Action's two-week programme The Source in 2004, recalls being patted down while staff went through every belonging, pulled cards from his wallet and asked about the phone numbers he carried. His phone was kept in an office, returned only in an emergency (Insider, 2025). Asking Daniel what he will keep, and filing the choice, is the piece's form of it.",
+      "links": [],
+      "nolink": "No verified link yet."
      },
      {
       "k": "h3",
@@ -747,7 +757,7 @@
       "status": "documentary",
       "tag": "documented",
       "conf": "high",
-      "t": "The application Daniel is handed in 2003 follows a documented form: Love in Action's The Source application (2001), in the Smithsonian's Love in Action Collection — an $80 processing fee; references from the applicant's parents; \"Have you told your pastor about your struggles?\"; relationships with male and female \"authority figures\" rated from appreciative to fearful; three spiritual and three practical reasons \"why you want to overcome\"; and a youth programme attended with a parent, $1,500 for two weeks or $2,500 for eight. The piece renames the programme and fills the form in from his 1997 file. The reasons stay blank.",
+      "t": "The application Daniel is handed in 2003 follows a documented form: Love in Action's The Source application (2001), in the Smithsonian's Love in Action Collection — an $80 processing fee; references from the applicant's parents; \"Have you told your pastor about your struggles?\"; relationships with male and female \"authority figures\" rated from appreciative to fearful; three spiritual and three practical reasons \"why you want to overcome\"; and a youth programme attended with a parent, $1,500 for two weeks or $2,500 for eight. The piece renames the programme and fills the form in from his 1997 file. The reasons stay blank. Garrard Conley, who went through The Source in 2004, recalls its application asking whether he had played Dungeons and Dragons or done yoga, and what fantasies he had, and needing a letter from a preacher. The two weeks were built to lead into three months, then a year, then two (Insider, 2025).",
       "links": [
        {
         "label": "Love in Action, The Source Program application (2001) — Smithsonian",
@@ -762,6 +772,33 @@
       "tag": "inferred",
       "conf": "none — this is our inference, and it says so",
       "t": "1997'S CHANNEL IS OURS. No source documents a fellowship's live chat room in 1997, or a mentor messaging a teenager privately, speaking to his mother and arranging his placement. What is documented for those years: printed advertisements and touring conferences pointing to addresses and phone lines, referral directories, anonymous mailers, and ministry websites from about 1998; hosted online boards appear from about 2001. The channel compresses those into one room, and the mentor into one voice.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "medium — one survivor's account of one programme (2004)",
+      "t": "Searching what a person brings is documented. Garrard Conley, who entered Love in Action's two-week programme The Source in 2004, recalls being patted down while staff went through every belonging, pulled cards from his wallet and asked about the phone numbers he carried. His phone was kept in an office, returned only in an emergency (Insider, 2025). Asking Daniel what he will keep, and filing the choice, is the piece's form of it.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "the restriction documented by one survivor (2004); the listening log is ours",
+      "t": "Controlling what members heard is documented. At Love in Action in 2004 there was no singing, and no music but Mozart and Bach (Garrard Conley, Insider, 2025). A log of what Daniel listened to, and for how long, is the piece's own.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "medium — one survivor's account of one programme (2004)",
+      "t": "Reading a young person's private writing is documented. When Garrard Conley entered Love in Action in 2004, staff read his notebook of short stories, called them a 'false image' and tore the pages out unread. They said he identified too strongly with a female character (Insider, 2025). The software that reads Daniel's diary and tries to delete it is the piece's form of it.",
       "links": [],
       "nolink": "No verified link yet."
      },
@@ -1545,16 +1582,21 @@
      {
       "k": "h3",
       "t": "The diary",
-      "status": "contested",
-      "tag": "disputed"
+      "status": "documentary",
+      "tag": "documented"
      },
      {
       "k": "p",
       "t": "It read what you wrote to yourself, and tried to delete it."
      },
      {
-      "k": "small",
-      "t": "Same source as the practice above."
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "medium — one survivor's account of one programme (2004)",
+      "t": "Reading a young person's private writing is documented. When Garrard Conley entered Love in Action in 2004, staff read his notebook of short stories, called them a 'false image' and tore the pages out unread. They said he identified too strongly with a female character (Insider, 2025). The software that reads Daniel's diary and tries to delete it is the piece's form of it.",
+      "links": [],
+      "nolink": "No verified link yet."
      },
      {
       "k": "h3",
@@ -1662,6 +1704,15 @@
        }
       ],
       "nolink": ""
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "medium — one survivor's account of one programme (2004)",
+      "t": "Reading a young person's private writing is documented. When Garrard Conley entered Love in Action in 2004, staff read his notebook of short stories, called them a 'false image' and tore the pages out unread. They said he identified too strongly with a female character (Insider, 2025). The software that reads Daniel's diary and tries to delete it is the piece's form of it.",
+      "links": [],
+      "nolink": "No verified link yet."
      },
      {
       "k": "src",
@@ -3644,7 +3695,7 @@
      },
      {
       "k": "p",
-      "t": "The idea that being gay or trans has a cause to be found and undone is decades old: 1997's Root Cause draws on the ex-gay literature of the 1990s (see 1997). Forbidden Colours documents the narrative of homosexuality “as illness and as curable” in 21 European countries, “present throughout and stable” (The Hate Review, p. 24)."
+      "t": "The idea that being gay or trans has a cause to be found and undone is decades old: 1997's Root Cause draws on the ex-gay literature of the 1990s (see 1997). Forbidden Colours documents the narrative of homosexuality “as illness and as curable” in 21 European countries, “present throughout and stable” (The Hate Review, p. 24). In 2004 Love in Action had members draw a genogram, a family tree with an ‘H’ for homosexuality beside their own name (Garrard Conley, Insider, 2025)."
      },
      {
       "k": "h3",
@@ -3672,7 +3723,7 @@
      },
      {
       "k": "p",
-      "t": "Shepherd Live™'s numbers are the piece's invention, and the stream answers them with one question, not with other numbers. The documented numbers for 2026 are in this site's sources, each with who counted it."
+      "t": "Shepherd Live™'s numbers are the piece's invention, and the stream answers them with one question, not with other numbers. The documented numbers for 2026 are in this site's sources, each with who counted it. The claim has an ancestor: in 2004 a large church told Conley's father the programme had ‘a high success rate’ (Insider, 2025)."
      },
      {
       "k": "h3",
