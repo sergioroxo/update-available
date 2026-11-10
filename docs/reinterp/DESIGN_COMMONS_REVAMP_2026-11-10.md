@@ -115,8 +115,8 @@ quotes her week back to her). It never quotes scripture and never claims to judg
 - commonsWorld.ts: a "host" state of the same space (pale floor, the halo ring, the screen's host layout) that the
   existing grow/cut turns into the stream; no new geometry beyond the halo ring and the host figure.
 - commonsFigures.ts: the crowd on the floor around her spot (today mostly behind the stage and in the picture).
-- Sound: the host has a synthesized voice (build-time TTS is allowed for the apparatus; never for a person); the
-  stream's music takes over at the cut, as now.
+- Sound: ~~the host has a synthesized voice~~ **struck, his answer to Q1 (10 Nov): the host has NO voice** — text,
+  captions and a dashboard only. The stream's music takes over at the cut, as now.
 
 **Cost.** Draw calls: +2 (host figure, halo ring) during the host's stream, which is shown before the crowd, so the
 peak does not rise. Text: ~15 lines. Code: one new phase in ball.ts, a state in commonsWorld.ts. About two sessions,
@@ -444,5 +444,20 @@ country.
    change to "nobody answers the system" all right?
 
 **Answered 10 Nov:** 6 yes, "Let them in"; 7 the people (junie: *she's right here*); 8 only "source?", with the
-deeper analysis on the Close's era website and its explainers; 9 yes. Still open from questions 1–4: the mark and
-voice (with a name check), why she goes in, cutting the recording, Trans Academy's identity.
+deeper analysis on the Close's era website and its explainers; 9 yes.
+
+**Answered 10 Nov (questions 1–5, relayed by the handoff; S353):**
+1. **The host has NO voice.** Text, captions and a dashboard only. The mark *Shepherd Live™* stands for now.
+   **Name check (S353, 10 Nov, WebSearch, listings only, L):** no product called "Shepherd Live" was found. Two near
+   neighbours exist: *Shepherd*, an iOS Bible app with an AI study partner (paragraph.xyz/@sean07.eth/shepherd;
+   producthunt.com/products/shepherd-5), and *Shepherd's Stream*, a free Christian video platform
+   (shepherdsstream.org). So the mark is always written in full, **"Shepherd Live™"**, never "Shepherd" alone, and
+   nothing in the host's surfaces (an AI study partner, sermons) should echo either product.
+2. **(a)** The bot sends her: *"Someone is waiting to talk with you."*
+3. **The recording "Someone who went back":** the build brief (UIB_JOB_11) assumes it is cut and the host's
+   conversation replaces it, as recommended. Put to him on 10 Nov; if he keeps it, the brief changes before it runs.
+4. **Trans Academy: yes,** the VRChat community and non-profit (for the research and the article; nothing of it is
+   built into the stream, per 5).
+5. **Inside the stream: none** of C-light, A or B. The raid (§2b) is the whole idea.
+
+Build brief: docs/reinterp/UIB_JOB_11_2026-11-10.md.
