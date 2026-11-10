@@ -454,8 +454,13 @@ deeper analysis on the Close's era website and its explainers; 9 yes.
    (shepherdsstream.org). So the mark is always written in full, **"Shepherd Live™"**, never "Shepherd" alone, and
    nothing in the host's surfaces (an AI study partner, sermons) should echo either product.
 2. **(a)** The bot sends her: *"Someone is waiting to talk with you."*
-3. **The recording "Someone who went back":** the build brief (UIB_JOB_11) assumes it is cut and the host's
-   conversation replaces it, as recommended. Put to him on 10 Nov; if he keeps it, the brief changes before it runs.
+3. **The recording "Someone who went back": CUT** (his yes, 10 Nov). The host's conversation replaces it. His
+   framing, with it: *"the medical fear etc is more related to the trends of the Anti-gender movement and the
+   Anti-trans 'Anti-gender-ideology'"*. So the fear of medical transition, where the piece shows it, is the
+   anti-gender movement's tactic, a campaign aimed at trans people. It is not a clinical position the piece weighs.
+   This places it at the Close (the 2026 era site), with the movement's documented sources (RESEARCH_CLOSE_MESSAGE
+   S1 and RESEARCH_LEXICON S21: *The Hate Review*, Forbidden Colours, Sept 2026; the Lexicon's "gender ideology"
+   entry). The clinical debate itself still has both captions and is never satirised.
 4. **Trans Academy: yes,** the VRChat community and non-profit (for the research and the article; nothing of it is
    built into the stream, per 5).
 5. **Inside the stream: none** of C-light, A or B. The raid (§2b) is the whole idea.
