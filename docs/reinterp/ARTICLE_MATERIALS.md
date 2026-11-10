@@ -112,6 +112,16 @@ ARTICLE_COMPANION; this file only says where things are.*
 
 1. Reshoot figs 10–14 once the Commons revamp (UIB_JOB_11) is built.
 2. §7j: a source for the specific tie between medical fear and the anti-gender movement's campaigns [VERIFY SOURCE].
-3. Images are **local only** (not in git, not backed up by GitHub). Ask him whether to back up `research/` and
-   `output/` somewhere (a drive, or the UiB OneDrive).
+3. ☑ S353c (10 Nov): ~~Images are local only~~ **backed up to the UiB OneDrive** (his choice): see §8.
 4. The rights to each reference image in `output/reference-shots-2026-10-31/` before anything is printed.
+
+## 8. The backup on OneDrive (since 10 Nov)
+
+`~/Library/CloudStorage/OneDrive-UniversityofBergen/Literature Review/Interactive Digital Narrative/Material for Article/`
+(his folder). Its README says what came from where. First copy 10 Nov (S353c): 344 files, 98 MB, checked by
+checksum: `figures-2026-10-31/`, `reference-shots-2026-10-31/`, `research/` (all of it),
+`notes/PROJECT_TIMELINE_FOR_ARTICLE.md`, `notes/docs-snapshot-2026-11-10/` (the article docs as of that day).
+**Not copied:** the 8 Nov cast frames (792 MB), on his word only.
+
+**Rule:** whenever a session copies new photos into `research/article-images-<date>/`, it also copies them here
+(`rsync -a`, never `--delete`), and adds a line to the README there. Add only; never delete or overwrite his files.
