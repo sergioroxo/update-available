@@ -16,7 +16,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | document | what it is | in git? |
 |---|---|---|
 | `docs/reinterp/ARTICLE_RESTRUCTURE_IDEA_2026-10-31.md` | his one argument for the article (31 Oct) | yes |
-| `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` | **the main companion**: what the piece is, by section (§1–§10), with dated additions §7–§7k | yes |
+| `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` | **the main companion**: what the piece is, by section (§1–§10), with dated additions §7–§7l | yes |
 | `docs/reinterp/ARTICLE_COMPILATION_2026-10-03.md` | the full evidence file up to 3 Oct: authorship model, his overrides, the ethics regime, numbers | yes |
 | `docs/reinterp/ARTICLE_EVIDENCE_LOG.md` | **his own notes** for the article (his file: Claude reads, never rewrites) | yes |
 | `docs/reinterp/ARTICLE_FIGURES_2026-10-31.md` | the 26 figures, captions and how they were made | yes |
@@ -39,11 +39,13 @@ ARTICLE_COMPANION; this file only says where things are.*
 | 7i | the raid: experience, recognition, evidence; two pedagogies | 10 Nov |
 | 7j | a beat cut ("Someone who went back"); medical fear as the anti-gender movement's tactic | 10 Nov |
 | 7k | the Commons revamp as built: hologram, raid, the seven tags, the backstage, "The script is real" | 10 Nov |
+| 7l | Conley's map of safe places grounds 2016's places list; a survivor on "gender ideology fear" | 10 Nov |
 
 ## 2. Research documents (sourced; each says what was opened and what was only listed)
 
 | document | topic |
 |---|---|
+| `docs/reinterp/RESEARCH_CONLEY_LIA_2026-11-10.md` | Garrard Conley on Love in Action (Insider, 2025; transcript read): the map of safe places, and 18 other points mapped to the piece's beats |
 | `docs/reinterp/RESEARCH_COMMONS_STREAM_2026-11-10.md` | AI-Jesus livestreams, Trans Academy, Freeman & Acena's embodied visibility |
 | `docs/reinterp/RESEARCH_2026_TRANS_PRESSURE_2026-11-07.md` | the pressure on trans people, 2020–2026 (Era 4) |
 | `docs/reinterp/RESEARCH_2026_V3_THREADS_2026-11-07.md` | six threads for 2026 v3 (incl. mutual aid, thread 5) |

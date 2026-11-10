@@ -470,6 +470,27 @@ From UIB_JOB_11_2026-11-10.md and the builder's reports, merged at 4795d979. Pho
   pattern ("the system did X to you, and filed Y"): *"listened to you like a friend, and filed you as a lead"*. It
   points at the backstage reveal, and keeps Jesus out of the card. The source text under it still awaits his read.
 
+## 7l. A survivor's account grounds an invented list (his find, 10 Nov 2026)
+
+From RESEARCH_CONLEY_LIA_2026-11-10.md (S357):
+
+- **The find.** Garrard Conley (Insider, 2025) recalls that Love in Action, in 2004, showed new members a map of the
+  city: a few zones and places marked safe, everything else forbidden. 2016's places list (Vera adds The Wick, a
+  lesbian bar, to the network's places to avoid) had been labelled the piece's inference. The list is now
+  documented in a residential programme; only its move online, and the moderator's job, remain inference.
+- **Method point.** The lead heard it in a video and asked for it to be added; the orchestrator read the full
+  transcript before putting it at the Close. Evidence keeps arriving after a beat is built, and the status labels
+  (documentary / contested / speculative) move with it. The same transcript corroborates several other beats that
+  are still marked speculative (belongings searched, a notebook's pages torn out, music limited to two composers,
+  an intake form about Dungeons and Dragons and yoga); those changes wait for his decision.
+- **For §7j.** At 42:38 Conley says that in the present anti-trans moment conversion therapy is used mainly against
+  trans people, and parents are recruited through anti-trans rhetoric or "gender ideology fear". One expert
+  survivor's statement of the tie, not data: it supports §7j's reading; keep the [VERIFY SOURCE] for a documentary
+  source.
+- **The web across 21 years.** At 43:30 he says his mother's 2004 search found sites recommending conversion
+  therapy for a child, and the same search in 2025 shows warnings: a first-person before/after of the search page,
+  relevant to T63 and to the piece's argument that the web is the way in.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
