@@ -93,6 +93,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | `research/article-images-2026-11-10/noa-2026/` | Noa in 2026 (S350) | 6 | 10 Nov | the "as she wrote it" views were removed in S351 |
 | `research/article-images-2026-11-10/commons-revamp-mockups/` | rough mock-ups of the Commons directions (2a host and takeover, A, B, C) | 5 | 10 Nov | proposals, not the build |
 | `research/article-images-2026-11-10/cut-recording/` | the cut beat "Someone who went back", and Junie's message cutting it off | 4 | 2 Nov | companion §7j |
+| `research/article-images-2026-11-10/commons-host-S354/` | the Commons revamp, Part A: Shepherd Live™'s studio, the host, the conversation, the recap, the try-on | 20 | 10 Nov | the a* set predates the Friends-header fix; d* shows it. Also on OneDrive |
 | `out/tour-e4-v2/`, `out/tour-e4/` … | era tours (regenerable with tools/tour-e4.mjs, tools/stills.mjs) | many | various | working photos; copy anything chosen into `research/` |
 | `~/update-available-uib/out/s347/`, `s348/` | era-change and headset probe frames (66 MB) | 284 | 9 Nov | indexed only, not copied |
 
