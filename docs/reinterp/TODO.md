@@ -164,7 +164,7 @@ His answers, 8 Nov:
 |---|---|---|---|---|
 | T51 ☑ S343 | Remove the red box beside the mouse on the 1997 desk | 1997 room | C | S |
 | T53 ☑ S337 | 2016: retire Noa, Deb M. and Marisol from "Next story" (Deb M. stays a row in the campaign kit) — his 9 Nov | 2016 | C | S |
-| T54 ◐ S349 (proposal written: docs/reinterp/DESIGN_NOA_2026_2026-11-09.md, three options, recommends the stream viewer; he picks) | Noa's story moves to 2026 (his 9 Nov: "Noa can just exist in 2026") — a different person from Maya (guard 1); where she appears is to be designed | 2026 | C+S | M |
+| T54 ☑ S350 (his choice 10 Nov: options 1 AND 3, built — the bot's "Stories like yours" with Noa's card and "as she wrote it", and noa's line + donation tick in the birthday stream; UIB_JOB9_BUILT_2026-11-10.md) | Noa's story moves to 2026 (his 9 Nov: "Noa can just exist in 2026") — a different person from Maya (guard 1); where she appears is to be designed | 2026 | C+S | M |
 | T55 ☑ S337 | The 2016 Trending sources (US election, NPR; photo app hiding #lesbian, HuffPost UK; same-sex stickers removed, Jakarta Post) go on the 2016 site's Sources tab — his yes, 9 Nov | 2016 site | C | S |
 | T56 ☑ S337 | A GracePlatform music loop, made by Claude in code (no licence question): calm 2016 "wellness app" pads + plucked melody, 60–90 s, seamless | 2016 | C | S |
 | T57 | 🥽 Test Codex's sharper text (CODEX_XR_TEXT_REPORT_2026-11-08.md) on the Quest, on the GitHub Pages build (itch can't take URL options): compare https://sergioroxo.github.io/update-available/?reinterp=1 with …?reinterp=1&quad=1 on the 1997 monitor, following the report's steps. If sharper → extend to the other screens; if not → remove the patch | XR | S (headset) then C | S |
