@@ -142,6 +142,9 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     const side = rng() < 0.5 ? -1 : 1;
     const z = behind ? SEAT.z + (rng() - 0.5) * 5.0 : SEAT.z + side * (1.7 + rng() * 0.9);
     if (Math.hypot(x - SEAT.x, z - SEAT.z) < 1.5) continue;
+    // ⚑ S356 — the ones at her back stand left and right of a lane: behind her is the host's operator view
+    //   (commonsWorld.ts WORLD.backstage), and the crowd that rises while she faces it must not stand in front of it
+    if (behind && Math.abs(z - SEAT.z) < 1.35) continue;
     if (figures.some((g) => g.beside && Math.hypot(g.x - x, g.z - z) < 0.7)) continue;   // ⚑ S227: nobody inside Junie or Ade
     if (x > STAGE.x - STAGE.d / 2 - 0.4) continue;
     figures.push({

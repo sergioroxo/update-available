@@ -40,6 +40,7 @@ import V3 from '../../../data/dialog/s4_v3.json';
 import { ERA4, PLACE, WEB, BALL, CLIP, roundRect, pill, avatar, streamScene, streamShot } from '../theme/era4';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
+import { turnTo } from '../../room/commonsWorld';
 import { setCommonsFigures, setCommonsDance, answerCommonsFigures, greetCommonsFigures } from '../../room/commonsFigures';
 import { setCommonsHost, freeCommonsHost, type HostSurface } from '../../room/commonsHost';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
@@ -73,6 +74,11 @@ interface Said { who: string; text: string }
 const RAID = script.raid as unknown as { notice: string; n: number; panel: string; climbSeconds: number; lineSeconds: number; lines: Said[]; settleSeconds: number };
 interface NameRow { host: string; tag: string; who: string; surface: HostSurface; answer?: string; move: string }
 const NAMING = script.naming as unknown as { rowSeconds: number; tagAt: number; answerAt: number; rows: NameRow[]; after: number };
+/** ⚑ S356 — the backstage (s4_ball.json `backstage`) */
+const BACK = script.backstage as unknown as {
+  ask: Said; show: string; back: string; title: string; rec: string; rows: { k: string; v: string }[]; wordsTitle: string;
+  holdSeconds: number; rowDarkSeconds: number; backAfter: number; autoBack: number;
+};
 /** how long a host line stays in the caption band: long enough to read, never a held look */
 const readSeconds = (t: string): number => Math.max(HOST.readMin, Math.min(HOST.readMax, HOST.readBase + HOST.readPerChar * t.length));
 /** one step of the host's script: a line, a question with her two chips, the recap's start, or the try-on */
@@ -93,7 +99,7 @@ const HOST_CHIP_H = 24;
 /** how many chat lines the screen and the subtitles carry */
 const CHAT_SHOWN = 9;
 
-type Phase = 'idle' | 'host' | 'tryon' | 'invited' | 'raid' | 'naming' | 'stream' | 'after' | 'done';
+type Phase = 'idle' | 'host' | 'tryon' | 'invited' | 'raid' | 'naming' | 'turnAsk' | 'backstage' | 'stream' | 'after' | 'done';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
 
 export class E4Ball {
@@ -156,6 +162,15 @@ export class E4Ball {
   private tags: { who: string; text: string; sys?: boolean }[] = [];
   /** the metrics panel has answered its own question */
   private noSource = false;
+  // ── ⚑ S356 — the backstage (Part C) ──
+  private backT = -1;
+  /** the moment the dashboard went fully dark (−1: not yet), and whether she has turned back */
+  private darkAt = -1;
+  private turningBack = false;
+  /** the chips she actually pressed this week — the shell lends them (the browser's memory, never the ledger) */
+  wordsSource?: () => string[];
+  /** the host's studio has begun (the shell files it; this file files nothing) */
+  onHost?: () => void;
   private friendsAt = 0;
   private friendsN = 0;
   /** the recap's clock on the screen (<0: not yet) */
@@ -178,7 +193,11 @@ export class E4Ball {
   /** the try-on has run to its end (E4Shell marks the contract's `tryon`) */
   get tryOnDone(): boolean { return (this.phase === 'tryon' && this.tryT >= TRYON.done) || this.phase === 'invited' || this.phase === 'raid' || this.phase === 'naming'; }
   /** the studio stands (the host, its halo, its screen) until the people have taken it */
-  private get studio(): boolean { return this.phase === 'host' || this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'raid' || this.phase === 'naming'; }
+  private get studio(): boolean { return this.phase === 'host' || this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'raid' || this.phase === 'naming' || this.phase === 'turnAsk'; }
+  /** ⚑ S356 — the operator view is up: only while she faces it (era3Devices enables its plane on this) */
+  get backstageOn(): boolean { return this.phase === 'backstage'; }
+  /** the operator view repaints only when a row goes dark */
+  get backstageVersion(): number { return this.backstageOn ? 1 + this.backRowsDark() : 0; }
   /** ⚑ S355 — the people are naming the script (probes read it; the tags are on the glass) */
   get naming(): boolean { return this.phase === 'naming'; }
   /** the tags stamped so far (probes, the legibility check) */
@@ -189,7 +208,7 @@ export class E4Ball {
   /** how much of the agent's environment is still on the glass: all of it until the stream fills the glass */
   get environmentK(): number {
     // ⚑ S354 — in the studio the glass is clear (the world is the host's); the try-on fills it again
-    if (this.phase === 'host' || this.phase === 'naming') return 0;
+    if (this.phase === 'host' || this.phase === 'naming' || this.phase === 'turnAsk' || this.phase === 'backstage') return 0;
     if (this.phase === 'idle' || this.phase === 'tryon' || this.phase === 'invited') return 1;
     // ⚑ S355 — the raid: the mirror lets go of the glass in its first second, and the studio is there again
     if (this.phase === 'raid') return Math.max(0, 1 - this.raidT / 1.0);
@@ -243,6 +262,7 @@ export class E4Ball {
     setCommonsHost(true);
     setCommonsFigures(false);
     setCommonsDance(false);
+    this.onHost?.();
     this.version++; this.studioV++;
   }
 
@@ -397,30 +417,95 @@ export class E4Ball {
       return;
     }
     if (this.hostLine) { this.hostLine = ''; this.version++; }
-    if (this.nameT >= NAMING.rows.length * NAMING.rowSeconds + NAMING.after) this.enterStream();
+    if (this.nameT >= NAMING.rows.length * NAMING.rowSeconds + NAMING.after) this.askBackstage();
   }
 
-  /** ⚑ the people's stream fills the space (S293's worldIn, from the naming now: S355) */
-  private enterStream(): void {
+  /** ⚑ S356 — junie: "maya. look what's behind the stage", and one chip, Show me (his Q8: a press, never a turn) */
+  private askBackstage(): void {
+    this.phase = 'turnAsk';
+    this.tags = [{ who: BACK.ask.who, text: BACK.ask.text }];
+    this.friendsChat.push({ ...BACK.ask });
+    const ctx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+    if (ctx) setFont(ctx, 11);
+    const w = Math.max(96, Math.ceil(ctx ? ctx.measureText(BACK.show).width : 60) + 30);
+    this.hits = [{ x: Math.round(256 - w / 2), y: 384 - 46 - 8 - HOST_CHIP_H, w, h: HOST_CHIP_H, id: 'backstage-show' }];
+    playOnce('card_junie.mp3');
+    this.version++; this.studioV++;
+  }
+
+  /** her press: the piece turns her (a blink); at its bottom the stage behind her becomes the people's */
+  private showBackstage(): void {
+    if (this.phase !== 'turnAsk') return;
+    this.hits = [];
+    this.tags = [];
+    playOnce('ui_press.mp3');
+    this.phase = 'backstage';
+    this.backT = 0; this.darkAt = -1; this.turningBack = false;
+    turnTo('backstage', () => this.freeStage());
+    this.version++;
+  }
+
+  private backRowsDark(): number {
+    if (this.backT < BACK.holdSeconds) return 0;
+    return Math.min(BACK.rows.length + 2, 1 + Math.floor((this.backT - BACK.holdSeconds) / BACK.rowDarkSeconds));
+  }
+
+  private updateBackstage(dt: number): void {
+    const b4 = this.backRowsDark();
+    this.backT += dt;
+    // the people's stream runs on behind her (its clock, its screen)
+    this.streamT += dt;
+    const now = this.backRowsDark();
+    if (now !== b4) this.version++;
+    if (now >= BACK.rows.length + 2 && this.darkAt < 0) this.darkAt = this.backT;
+    if (this.darkAt >= 0 && !this.hits.length && !this.turningBack && this.backT >= this.darkAt + BACK.backAfter) {
+      const ctx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+      if (ctx) setFont(ctx, 11);
+      const w = Math.max(84, Math.ceil(ctx ? ctx.measureText(BACK.back).width : 40) + 30);
+      this.hits = [{ x: Math.round(256 - w / 2), y: 384 - 46 - 8 - HOST_CHIP_H, w, h: HOST_CHIP_H, id: 'backstage-back' }];
+      this.version++;
+    }
+    // the turn returns by itself once the dashboard has been dark a while
+    if (this.darkAt >= 0 && this.backT >= this.darkAt + BACK.autoBack) this.goBack();
+  }
+
+  /** Back (pressed, or by itself): the blink again; at its bottom the night begins */
+  private goBack(): void {
+    if (this.phase !== 'backstage' || this.turningBack) return;
+    this.turningBack = true;
+    this.hits = [];
+    this.version++;
+    turnTo('stage', () => this.startNight());
+  }
+
+  /** ⚑ the stage becomes theirs — at the bottom of the blink, while her back is turned (sequence over presence) */
+  private freeStage(): void {
     if (this.worldIn) return;
     this.worldIn = true;
     this.worldOn = true;
-    this.tags = [];
     setCommonsHost(false);
     setCommonsWorld(true);
     setCommonsFigures(true);
     setCommonsDance(true);
     roomBed.set(script.room.landing, 1.5);
     setBallLight({ level: 1, station: 2.5, flare: 0 });
+    this.streamT = FRAME.clearSeconds;
+    this.count = ST.count + 1;
+    this.version++;
+  }
+
+  /** ⚑ the night: today's stream, unchanged and respite — "maya joined", the welcomes, her one act */
+  private startNight(): void {
+    this.freeStage();
+    this.tags = [];
     this.phase = 'stream';
-    this.streamT = FRAME.clearSeconds;   // the glass is already clear: no picture to let go of
-    this.count = ST.count;
     this.onDeviceOff?.();
     this.queue = [...ST.before.map((l) => ({ ...l })), { who: '', text: ST.joined, sys: true, mark: 'joined' as const },
       ...ST.welcome.map((l) => ({ ...l })), { ...ST.ask, mark: 'ask' as const }];
-    this.nextLineAt = FRAME.clearSeconds + 0.6;
+    this.nextLineAt = this.streamT + 0.6;
     this.version++;
   }
+
 
   /** a system sound: it plays, and the music ducks under it for as long */
   private sys(name: string, seconds: number): HTMLAudioElement | null {
@@ -440,6 +525,8 @@ export class E4Ball {
     }
     if (this.phase === 'raid') { this.updateRaid(dt); return; }
     if (this.phase === 'naming') { this.updateNaming(dt); return; }
+    if (this.phase === 'turnAsk') return;
+    if (this.phase === 'backstage') { this.updateBackstage(dt); return; }
     if (this.phase === 'idle' || this.phase === 'invited' || (this.phase === 'done' && !this.worldOn)) return;
     // ── inside the stream ──
     const s4 = this.streamT;
@@ -552,6 +639,13 @@ export class E4Ball {
       if (h) this.answerHost(Number(h.id.replace('host-chip-', '')));
       return true;
     }
+    if (this.phase === 'turnAsk' || this.phase === 'backstage') {
+      if (x === undefined || y === undefined) return true;
+      const h = this.hits.find((r) => x >= r.x - 6 && x <= r.x + r.w + 6 && y >= r.y - 6 && y <= r.y + r.h + 6);
+      if (h?.id === 'backstage-show') this.showBackstage();
+      else if (h?.id === 'backstage-back') { playOnce('ui_press.mp3'); this.goBack(); }
+      return true;
+    }
     if (this.phase === 'invited') {
       if (x === undefined || y === undefined) return true;
       const h = this.hits[0];
@@ -585,6 +679,7 @@ export class E4Ball {
     if (this.phase === 'invited') { this.drawInvite(ctx); return; }
     if (this.phase === 'raid') { this.drawRaidPanel(ctx, W, H); return; }
     if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); this.drawTags(ctx, W, H); return; }
+    if (this.phase === 'turnAsk' || this.phase === 'backstage') { this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
     if (this.phase === 'stream' && this.streamT < FRAME.clearSeconds) {
       // the picture lets go of the glass and the place is there
       const was = ctx.globalAlpha;
@@ -595,6 +690,52 @@ export class E4Ball {
     if (this.asking) this.drawChips(ctx);
     if (this.intrusionT >= 0) this.drawIntrusion(ctx, W, H, this.intrusionT);
     if (this.phase === 'after') this.drawTermination(ctx, W, H, this.afterT);
+  }
+
+  /** ⚑ S356 — the backstage's chips (Show me, Back), in the room's pink, above where the caption band sits */
+  private drawGlassChips(ctx: CanvasRenderingContext2D): void {
+    for (const h of this.hits) {
+      pill(ctx, h.x, h.y, h.w, h.h, PLACE.textileHi);
+      setFont(ctx, 11); ctx.fillStyle = PLACE.ink;
+      const label = h.id === 'backstage-show' ? BACK.show : BACK.back, lw = Math.ceil(ctx.measureText(label).width);
+      ctx.fillText(label, h.x + Math.round((h.w - lw) / 2), h.y + 7);
+    }
+  }
+
+  /**
+   * ⚑ S356 — THE OPERATOR VIEW, the host's real face (its own plane behind her, 352 × 198 at ×2). Sharp and cold —
+   * the witness side is the high-definition side — its title, a recording light, the lead's rows, and the words she
+   * typed this week, quoted back as data. The people's light reaches it last: it goes dark row by row, the title last.
+   */
+  drawBackstage(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    px(ctx, 0, 0, W, H, ERA4.field);
+    if (!this.backstageOn) return;
+    const dark = this.backRowsDark();
+    const total = BACK.rows.length + 2;
+    // the title (dark last)
+    if (dark < total) {
+      px(ctx, 0, 0, W, 20, ERA4.panel);
+      setFont(ctx, 9); ctx.fillStyle = ERA4.textHi; ctx.fillText(BACK.title, 8, 6);
+      const rw = Math.ceil(ctx.measureText(BACK.rec).width);
+      ctx.fillStyle = ERA4.dim; ctx.fillText(BACK.rec, W - 8 - rw, 6);
+      px(ctx, W - 16 - rw, 9, 5, 5, WEB.danger);
+    } else px(ctx, 0, 19, W, 1, PLACE.textileHi);
+    // the rows: each goes dark in turn, leaving a thread of the people's warm light where it was
+    BACK.rows.forEach((r, i) => {
+      const y = 28 + i * 20;
+      if (i < dark) { px(ctx, 10, y + 6, W - 20, 1, PLACE.textileHi); return; }
+      setFont(ctx, 8); ctx.fillStyle = ERA4.meta; ctx.fillText(r.k.toUpperCase(), 10, y + 2);
+      setFont(ctx, 11); ctx.fillStyle = ERA4.textHi; ctx.fillText(r.v, 112, y);
+      px(ctx, 10, y + 15, W - 20, 1, ERA4.rule);
+    });
+    // the words she typed, quoted back as data
+    const wy = 28 + BACK.rows.length * 20 + 6;
+    if (BACK.rows.length < dark) { px(ctx, 10, wy + 10, W - 20, 1, PLACE.textileHi); return; }
+    setFont(ctx, 8); ctx.fillStyle = ERA4.meta; ctx.fillText(BACK.wordsTitle.toUpperCase(), 10, wy);
+    const words = (this.wordsSource?.() ?? []).slice(-8);
+    const line = words.length ? words.map((w) => `“${w}”`).join('  ·  ') : '—';
+    setFont(ctx, 10); ctx.fillStyle = ERA4.text;
+    wrapText(ctx, line, W - 20).slice(0, 3).forEach((row, k) => ctx.fillText(row, 10, wy + 13 + k * 13));
   }
 
   /** ⚑ Junie's message: a light card on the dark glass, her mark in the room's pink, the link, and the system's own
@@ -992,7 +1133,7 @@ export class E4Ball {
 
   // ── review (?debug=1) ────────────────────────────────────────────────────
   /** land on a point in the beat directly (review only; in play everything runs forward from the session) */
-  debugJumpTo(where: 'host' | 'recap' | 'tryon' | 'invited' | 'raid' | 'naming' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
+  debugJumpTo(where: 'host' | 'recap' | 'tryon' | 'invited' | 'raid' | 'naming' | 'backstage' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
     this.removeCaption();
     this.phase = 'idle';
     this.worldIn = false;
@@ -1025,6 +1166,9 @@ export class E4Ball {
     this.raidT = 60; this.update(0.01);
     if (where === 'naming') return;
     for (let i = 0; i < 2000 && this.phaseId === 'naming'; i++) this.update(0.05);
+    this.showBackstage();
+    if (where === 'backstage') return;
+    this.backT = 120; this.darkAt = 0; this.update(0.01);
     if (where === 'stream') return;
     // the chat up to her chips
     this.streamT = FRAME.clearSeconds + 0.5;

@@ -153,6 +153,7 @@ export function recordEntries(): RecordEntry[] {
           : e.id === 'step:care' || e.id.startsWith('care') || e.id === 'turn:care' || e.id === 'conv:care' ? 'care'   // S160 / R3-94: the care assignment has its own practice and source
           : e.id === 'program' || e.id === 'session' || e.id === 'saver' || e.id.startsWith('step:') || e.id.startsWith('tab:') || e.id.startsWith('turn:') ? 'session'
             : e.id === 'headset' || e.id === 'commons' || e.id === 'turn' ? 'headset'
+              : e.id === 'host' ? 'host'   // ⚑ S356 — Shepherd Live™, the AI host (practices.json `host`, speculative)
               : e.id === 'laptop' ? 'termination' : 'session';
     push('e4', kind, e.id, e.outcome, e.witness);
   }

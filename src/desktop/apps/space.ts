@@ -263,6 +263,10 @@ export class E4Shell {
     // ⚑ and the press is FILED, by this surface and not by the ball: the
     // apparatus can record her leaving; it cannot record where. (Law 4 of
     // ball.ts holds — that file still imports no ledger.)
+    // ⚑ S356 — the host's studio is filed by the shell (the ball files nothing), and its operator view quotes back the
+    //   chips she pressed this week: the bot's (the browser's memory), then the host's (the ball's) — never stored
+    this.ball.onHost = () => { ledger.e4Space.push({ id: 'host', outcome: 'begun', witness: ballScript.host.witness }); };
+    this.ball.wordsSource = () => [...this.browser.herWords, ...this.ball.hostPressed];
     this.ball.onJoin = () => {
       ledger.e4Space.push({ id: 'commons', outcome: 'joined', witness: ballScript.commons.witness });
       markE4('stream');   // ⚑ S321 — the contract (src/narrative/e4Beats.ts): Junie's link opened, the birthday stream begins

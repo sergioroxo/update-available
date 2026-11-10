@@ -123,7 +123,8 @@
   "readBase": 1.7,
   "readPerChar": 0.055,
   "readMin": 2.6,
-  "readMax": 5.0
+  "readMax": 5.0,
+  "witness": "session: Shepherd Live™ — 1 viewer, a conversation, a fitting"
  },
  "invite": {
   "_beat": "⚑ JUNIE'S LINK (V11 → the ending's step 1). It lands on the glass on the recording's third sentence, inside the agent's session: a message, the way one arrives in 2026, with the system's own admission that the mute did not hold. One chip. No decline exists, and nothing narrates the choice. After the reversal her profile matches her, and the filter built for the old file lets her friend through.",
@@ -235,6 +236,44 @@
    }
   ],
   "after": 2.2
+ },
+ "backstage": {
+  "_doc": "⚑ S356 — THE BACKSTAGE (UiB job 11 Part C; DESIGN_COMMONS_REVAMP §2b beats 6–7). When the naming is done, junie: 'maya. look what's behind the stage' — one chip, Show me. HIS Q8 (COMMONS_STREAMLINE §8): never a conducted turn, a PRESS, and the piece carries it out — a blink, the facing cut at its bottom (the seat-jump grammar; in a headset the particle veil, never a smooth rotation). Behind her: the operator's view of her, the host's real face — sharp, high-definition, the witness side. 'Words she typed this week' are the chips she actually pressed (the bot's, then the host's), read in memory from the browser and the ball, never stored. The people's light reaches it last: it goes dark row by row. WHILE SHE FACES IT the stage behind her becomes theirs (sequence over presence). Then Back (or the turn returns by itself once it is dark), and the night is today's stream, unchanged and respite. Register: operable (surveillance). All text is Claude's; his edit wins.",
+  "ask": {
+   "who": "junie",
+   "text": "maya. look what's behind the stage"
+  },
+  "show": "Show me",
+  "back": "Back",
+  "title": "Shepherd Live™  ·  operator view",
+  "rec": "recording",
+  "rows": [
+   {
+    "k": "Lead",
+    "v": "Maya, 18"
+   },
+   {
+    "k": "Intent",
+    "v": "high"
+   },
+   {
+    "k": "Warmth",
+    "v": "0.82"
+   },
+   {
+    "k": "Next step",
+    "v": "residential programme (partner)"
+   },
+   {
+    "k": "Session value",
+    "v": "pending conversion"
+   }
+  ],
+  "wordsTitle": "Words she typed this week",
+  "holdSeconds": 3.4,
+  "rowDarkSeconds": 0.75,
+  "backAfter": 1.0,
+  "autoBack": 4.5
  },
  "session": {
   "_beat": "⚑ V11 (RESEARCH_2026_V2 §4.2) — THE SESSION IN THE HEADSET, SHORTENED. The agent's own environment on the glass, its plan, one Begin. From her press: (review cut only) one breath of grounding, then the recording — introduced as what it is, three flat sentences it vouches for — and Junie's link lands on the third one's dash. The correction is interrupted by a friend, never by the player and never by a clock alone.",

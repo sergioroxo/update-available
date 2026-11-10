@@ -148,6 +148,36 @@ const groupsOf = (year) => {
 const people = { 1997: 'Daniel', 2003: 'Daniel', 2016: 'Vera', 2026: 'Maya' };
 const lyricsOf = (name) => read(`data/dialog/${name}.json`).lines.map((ln) => ln.words.map((w) => w[1]).join(' '));
 
+/**
+ * ⚑ S356 — "THE SCRIPT IS REAL" (UiB job 11 Part C.4; data/strings/era_sites.json `eras.2026.script`). The moves the
+ * people tag in the stream, each with what the host says, the tag, the status word and its documented ground — the
+ * deeper analysis his ruling put here, out of the stream. Only years that carry a `script` block show it.
+ */
+function scriptHtml(X) {
+  if (!X) return '';
+  return `<h3 id="h-script">${esc(X.heading)}</h3>
+${X.lead.map((p) => `<p>${esc(p)}</p>`).join('\n')}
+<h4>${esc(X.movesTitle)}</h4>
+${X.moves.map((m) => `<article class="prac"><h4>${esc(m.move)} ${tag(m.status)}</h4>
+<p class="did">The host: “${esc(m.says)}” · the stream: ${esc(m.tag)}</p>
+<p>${esc(m.ground)}</p></article>`).join('\n')}
+<p class="note">${esc(X.close)}</p>`;
+}
+function scriptModel(X) {
+  if (!X) return [];
+  return [
+    { k: 'h3', t: X.heading },
+    ...X.lead.map((t) => ({ k: 'p', t })),
+    { k: 'h3', t: X.movesTitle },
+    ...X.moves.flatMap((m) => [
+      { k: 'h3', t: m.move, status: m.status, tag: short(m.status) },
+      { k: 'small', t: `The host: “${m.says}” · the stream: ${m.tag}` },
+      { k: 'p', t: m.ground }
+    ]),
+    { k: 'note', t: X.close }
+  ];
+}
+
 // ── the seven tab panels (the same content, whatever the skin) ──────────────────────────────────────────────
 function panelsFor(year, up) {
   const E = S.eras[year];
@@ -167,6 +197,7 @@ ${E.story.map((p) => `<p>${esc(p)}</p>`).join('\n')}
 <blockquote class="panelq"><p>${esc(pn.text)}</p><p class="status">${tag(pn.status)} ${esc(long(pn.status))}</p></blockquote>
 <h3>${esc(C.whatYouMeet)}</h3><p>${esc(C.whatYouMeetLead)}</p>
 <dl class="forms">${E.interfaces.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('')}</dl>
+${scriptHtml(E.script)}
 ${ends}`;
 
   // THE PRACTICES (every former "About this" text for this year, and each practice with its source)
@@ -656,6 +687,7 @@ function panelsModel(year) {
     { k: 'quote', t: pn.text, status: pn.status, tag: short(pn.status), long: long(pn.status) },
     { k: 'h3', t: C.whatYouMeet }, { k: 'p', t: C.whatYouMeetLead },
     { k: 'dl', rows: E.interfaces },
+    ...scriptModel(E.script),
     { k: 'h3', t: C.endsTitle }, { k: 'p', t: C.endsLead }, { k: 'mono', lines: endLines }
   ];
   const shown = new Set();
