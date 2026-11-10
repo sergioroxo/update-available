@@ -1,6 +1,6 @@
-STATUS: draft
+STATUS: live
 
-# Handoff (STANDBY again — 9 Nov evening he kept the personal session as orchestrator; UiB builds jobs): the UiB session becomes the orchestrator (9 Nov → Sat 14 Nov 2026)
+# Handoff: the UiB session becomes the orchestrator (LIVE from 10 Nov 2026; the personal session is at 95% and logs out)
 
 *Sérgio's personal account is at 78% of its week. Until Saturday 14 Nov the UiB (Enterprise) session leads. The
 personal session is kept for emergencies only.*
@@ -42,6 +42,53 @@ You are on branch `reinterp`; GitHub Pages deploys every push. Before each commi
   docs/reinterp/DESIGN_* files.
 - **Codex** works on this machine too, with low quota: small jobs only. Its prompts must use `git worktree add`, and
   it walks only its own era.
+
+## ⚑⚑ LIVE FROM 10 NOV: you are THE MAIN CHAT now
+
+Sérgio logs out of the personal account in the desktop app and works only with the UiB account. **You are the
+orchestrator: the main chat he talks to.** You:
+- keep BUILD_LOG.md, docs/reinterp/TODO.md (the one list), TRACKER.md (history), the research docs and
+  ARTICLE_COMPANION (his article's notes);
+- talk ideas through with him;
+- write the build briefs;
+- run your own helper agents (model sonnet unless Opus is truly needed; worktree isolation for anything that edits);
+- **send him to run build sessions** in a second UiB terminal (~/update-available-uib, branch `uib/work`), one
+  self-contained brief at a time, docs/reinterp/UIB_JOB_<n>_<date>.md, exactly as jobs 1–10 were done. He pastes
+  "Read docs/reinterp/UIB_JOB_<n>… and do it", after a `/clear`;
+- merge their branch, run the full walk, rebuild the itch ZIP when he asks.
+
+How the personal session did it, to copy: the merge recipe and walk rules below; short, plain answers with numbered
+questions (he is dyslexic); photos sent to him before he is asked to judge; never a fact without a source; his
+rulings saved to memory (the memory folder is shared: read MEMORY.md first).
+
+### State on handover (10 Nov, midday)
+- `reinterp` is at 99e5433f or later. Jobs 1–10 are merged; the last full walk after job 10 passed.
+- itch ZIP: release/your-update-has-failed_itch_2026-11-10.zip (286 files), loads clean. He uploads it himself.
+- **Not yet merged:** `uib/work` 35661a48 (DESIGN_COMMONS_REVAMP §2b, the raid; his four answers; BUILD_LOG S352).
+  Merge it first, keeping both sides of the conflicts in BUILD_LOG and ARTICLE_COMPANION (the personal session added
+  §7i, the raid, for the article).
+- The conversation archive was refreshed today: ~/Documents/YUHF-conversations-archive/2026-11-10/.
+
+### The Commons revamp: his answers so far (put them into DESIGN_COMMONS_REVAMP §4, then brief the build)
+1. **The host has NO voice.** Text, captions and a dashboard only. The name Shepherd Live™ stands for now; check
+   that no real product uses it before building.
+2. **Why Maya goes in: (a)** the chatbot sends her: "Someone is waiting to talk with you."
+3. **The "Someone who went back" recording:** he asked what it is. It is v2's headset session item (`s4_ball.json`
+   `recorded`), a detransition testimonial the system plays at Maya ("11 min. The speaker's name has been removed."),
+   cut off by Junie's card. Explain it to him in two lines and ask: cut it, with the AI host's conversation replacing
+   it (recommended)?
+4. **Trans Academy: yes,** the VRChat community and non-profit.
+5. **Inside the stream: none** of C-light, A or B. The raid (§2b) is the whole idea.
+6. **§2b's four answers** (already in the doc): "Let them in"; all the naming is the people's; the stream only asks
+   "source?", with the analysis on the Close's era website; two refusals are fine.
+
+Then write UIB_JOB_11 for the revamp build (about three sessions, per the doc), including a check of how readable the
+tags are from the seat in the headset numbers.
+
+### Still open on the list
+- His headset session, using docs/reinterp/PROMPT_CAST_WATCH_2026-11-08.md: the flyovers and glob morph, the
+  sounds, 2016's jobs, 2026 on one screen, 1997/2003, the quad text (T57), the team skip, the build stamp.
+- TODO.md has the rest.
 
 ## ⚑ LIVE FROM 9 NOV (evening), Sérgio's decision
 
