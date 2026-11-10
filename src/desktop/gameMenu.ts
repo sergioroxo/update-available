@@ -1,4 +1,5 @@
 import about from '../../data/strings/about.json';
+import { BUILD_STAMP } from '../state/buildStamp';
 /**
  * R28-4 — THE GAME MENU (CLAUDE.md REINTERP AMENDMENTS §4; docs/
  * REINTERP_RESTRUCTURE_R28_2026-07-10.md §4 layer 2).
@@ -651,11 +652,13 @@ export function mountGameMenu(): GameMenu {
     if (view === 'about') {
       heading(about.title);
       for (const p of about.paragraphs) paragraph(p);
+      paragraph(copy.buildLine.replace('{stamp}', BUILD_STAMP));   // S349 / T12: which build this is
       backRow('credits'); return;
     }
     if (view === 'credits') {
       heading(copy.creditsTitle);
       row(about.title, () => { view = 'about'; render(); });
+      paragraph(copy.buildLine.replace('{stamp}', BUILD_STAMP));   // S349 / T12: which build this is
       paragraph(attributions.projectLine);
       if (attributions.entries.length === 0) {
         paragraph(copy.creditsNone);

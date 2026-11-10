@@ -36,7 +36,7 @@ import SAVERS from '../../../data/strings/screensavers.json';
 import lexStrings from '../../../data/strings/lexicon.json';
 import { meetWord } from '../../room/lexicon';
 import { entriesByEra } from '../../witness/record';
-import { browserChrome, restoring, glitchBands, CHROME, ADDR, ERA4, V3, WEB, roundRect, roundEdge, pill, avatar, thumb,
+import { browserChrome, restoring, glitchBands, CHROME, ADDR, ERA4, V3, WEB, roundRect, roundEdge, pill, avatar, thumb, assistantMark,
   profileGlyph, streamScene, streamShot, progressBar, type TabLook } from '../theme/era4';
 import { ledger } from '../../state/ledger';
 import { buildStartModel } from '../../witness/startModel';
@@ -1184,7 +1184,8 @@ export class E4Browser {
     const top = PAGE_TOP + 4;
     px(ctx, 0, top, W, 36, V3.card);
     px(ctx, 0, top + 36, W, 1, V3.edge);
-    avatar(ctx, 16, top + 5, 26, V3.primary, 'S');
+    // ⚑ S349 / T44 — 2026's AI-assistant idiom: the soft disc with the sparkle (not a letter), the name beside it
+    assistantMark(ctx, 16, top + 5, 26, V3.primary, V3.primaryInk);
     setFont(ctx, 17); ctx.fillStyle = V3.ink; ctx.fillText(BOT.mark, 52, top + 4);
     px(ctx, 52, top + 25, 6, 6, V3.bot);
     setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.online, 62, top + 22);
@@ -1229,20 +1230,22 @@ export class E4Browser {
     }
     for (const { s, y: ry } of placed) {
       if (s.r.who === 'dots') {
-        roundRect(ctx, x + 30, ry, 46, 20, 10, V3.botSoft);
+        assistantMark(ctx, x, ry, 22, V3.primary, V3.primaryInk);
         const d = Math.floor(this.botT / 0.3) % 3;
-        for (let k = 0; k < 3; k++) px(ctx, x + 41 + k * 10, ry + 8, 5, 5, k === d ? V3.ink : V3.grey);
+        for (let k = 0; k < 3; k++) roundRect(ctx, x + 32 + k * 10, ry + 8, 6, 6, 3, k === d ? V3.ink : V3.grey);
         continue;
       }
       setFont(ctx, 16);
       const mine = s.r.who === 'her';
       const bw = Math.max(...s.lines.map((l) => Math.ceil(ctx.measureText(l).width))) + 24;
       const bh = s.h - 6;
+      // ⚑ S349 / T44 — today's assistant idiom: the assistant speaks as plain text on the page beside its sparkle mark;
+      //   only HER words sit in a soft, round bubble on the right. Same type, same size, same place.
       const bx = mine ? x + w - 4 - bw : x + 30;
-      if (!mine) avatar(ctx, x, ry, 22, V3.primary, 'S');
-      roundRect(ctx, bx, ry, bw, bh, 9, mine ? KETTLE_MINE : V3.botSoft);
+      if (!mine) assistantMark(ctx, x, ry, 22, V3.primary, V3.primaryInk);
+      if (mine) roundRect(ctx, bx, ry, bw, bh, Math.min(16, Math.floor(bh / 2)), KETTLE_MINE);
       setFont(ctx, 16); ctx.fillStyle = V3.ink;
-      s.lines.forEach((l, k) => ctx.fillText(l, bx + 12, ry + 7 + k * 20));
+      s.lines.forEach((l, k) => ctx.fillText(l, mine ? bx + 12 : bx + 2, ry + 7 + k * 20));
     }
   }
 
@@ -1262,7 +1265,7 @@ export class E4Browser {
       ];
       let y = top + 22;
       for (const [k, v] of rows) {
-        roundEdge(ctx, x, y, w, 46, 6, V3.edge, V3.card);
+        roundEdge(ctx, x, y, w, 46, 12, V3.edge, V3.card);   // S349: the soft, round card of a 2026 assistant
         setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(k, x + 12, y + 7);
         setFont(ctx, 14); ctx.fillStyle = V3.ink;
         ctx.save(); ctx.beginPath(); ctx.rect(x + 12, y + 20, w - 24, 20); ctx.clip(); ctx.fillText(v, x + 12, y + 24); ctx.restore();

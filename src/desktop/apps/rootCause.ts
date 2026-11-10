@@ -32,6 +32,7 @@
  *
  * All wording in data/strings/rootcause.json.
  */
+import { meetWord } from '../../room/lexicon';
 import { ERA1 } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ERA3 } from '../theme/era3';
@@ -78,6 +79,8 @@ export class RootCauseApp {
   /** ⚑ S345 (his 9 Nov answer 1) — 1997's title opens on the programme's words, each said twice: its own definition,
    *  and beside it what the word does to the one who hears it. Next → the theory and Start. */
   private wordsPage = true;
+  /** ⚑ S349 / T58 — the glossary's words count as met in the Lexicon at the Close (★), once */
+  private wordsMet = false;
   private modal: Modal | null = null;
   private t = 0;
   private seed = 1997;
@@ -532,6 +535,7 @@ export class RootCauseApp {
    *  Lexicon research documents (docs/reinterp/RESEARCH_LEXICON_2026-10-02.md entries 1, 3, 7, 8, 9, 17). */
   private drawWords(ctx: CanvasRenderingContext2D, c: ui.ContentRect, tx: number): void {
     const W = copy.words as { label: string; plainLabel: string; note: string; next: string; terms: { term: string; says: string; does: string }[] };
+    if (!this.wordsMet) { this.wordsMet = true; for (const id of ['ssa', 'struggler', 'brokenness', 'roots', 'wound', 'freedom']) meetWord(id); }
     ui.setFont(ctx, 20);
     ctx.fillStyle = ERA1.warnDark; ctx.fillText(copy.titleBig, tx + 2, c.y + 14);
     ctx.fillStyle = ERA1.tooltip; ctx.fillText(copy.titleBig, tx, c.y + 12);

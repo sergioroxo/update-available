@@ -46,6 +46,7 @@ import { createSpine, type Spine } from '../narrative/spine';
 import { TapeSystem, type TapeId } from '../narrative/tapes';
 import { noteHumanInput, registerXrSession } from '../frame/attract';
 import { mountViewMorph } from './viewMorph';
+import { BUILD_STAMP } from '../state/buildStamp';
 import { TapeAudioBus, roomBed, setOneShotsMuted, setOneShotsPaused, playOnce, playLoop, stopClip, setCueListener } from '../audio/tapeAudio';
 import captionsData from '../../data/strings/captions.json';
 import aimStrings from '../../data/strings/aim.json';
@@ -1292,7 +1293,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S270 — the debug panel's read-only half, in the headset (his: "I cannot see the debug panel inside of the VR")
       mountXrDebug(app, camera, { lines: () => {
         const c = xrComfort.status(), f = (n: number) => n.toFixed(2), h = camera.getLocalPosition();
-        return [`${os.era} · ${os.inDesktop ? "desktop" : "screen"} · ${spine?.step ?? "-"}`,
+        return [`build ${BUILD_STAMP}`,   // S349 / T12: which build the headset loaded
+          `${os.era} · ${os.inDesktop ? "desktop" : "screen"} · ${spine?.step ?? "-"}`,
           `seat: ${c.calibrated ? 'set' : 'NOT SET'} · cuts ${c.cuts}${c.elapsed >= 0 ? ' · dissolving' : ''}${c.worldReady ? '' : ' · entrance'}`,
           `head ${f(h.x)} ${f(h.y)} ${f(h.z)} · yaw ${Math.round(camera.getLocalEulerAngles().y)}`,
           `room shift ${c.shift.map(f).join(' ')} · ${Math.round(c.shiftYaw)}°`,

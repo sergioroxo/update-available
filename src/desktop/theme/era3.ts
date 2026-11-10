@@ -100,15 +100,15 @@ export function wallpaper(ctx: CanvasRenderingContext2D, W: number, H: number): 
 
 /** Win7 taskbar: dark glass strip + a round orb (invented, not the MS logo). */
 export function taskbar(ctx: CanvasRenderingContext2D, W: number, H: number, clock: string): void {
+  // ⚑ S349 / T44 (his article: "each era's OS and apps should look like their time") — 2016 is FLAT: one solid dark
+  //   strip and a 1 px line, no glass gradient, no gloss. The start control is a flat accent disc with a white ring
+  //   (invented; no real product's mark). Sizes and positions unchanged.
   const bh = 28; const ty = H - bh;
-  px(ctx, 0, ty, W, 1, ERA3.taskTopB);
-  px(ctx, 0, ty + 1, W, 7, '#34547d');
-  px(ctx, 0, ty + 8, W, bh - 8, ERA3.taskBot);
-  // round orb
+  px(ctx, 0, ty, W, bh, ERA3.taskBot);
+  px(ctx, 0, ty, W, 1, ERA3.taskMid);
   const ox = 16; const oy = ty + bh / 2;
-  ctx.fillStyle = ERA3.orbC; ctx.beginPath(); ctx.arc(ox, oy, 11, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = ERA3.orbB; ctx.beginPath(); ctx.arc(ox, oy, 9, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = ERA3.orbA; ctx.beginPath(); ctx.arc(ox - 2, oy - 2, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = ERA3.accent; ctx.beginPath(); ctx.arc(ox, oy, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = ERA3.white; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ox, oy, 4.5, 0, Math.PI * 2); ctx.stroke();
   // ⚑ PINNED BUTTONS — 2026-08-24, from Sérgio's Windows 7 reference sheets.
   //   A period taskbar is not an orb and a clock: it is the orb, a row of
   //   pinned launchers, a notification tray and a TWO-LINE clock. These three
@@ -118,8 +118,7 @@ export function taskbar(ctx: CanvasRenderingContext2D, W: number, H: number, clo
   const pinX = 190;
   for (let i = 0; i < 3; i++) {
     const bx = pinX + i * 34;
-    px(ctx, bx, ty + 4, 30, bh - 8, ERA3.taskMid);
-    px(ctx, bx, ty + 4, 30, 1, ERA3.taskTopB);
+    px(ctx, bx, ty + 4, 30, bh - 8, ERA3.taskMid);   // S349: flat, no top highlight
     // a browser ring, a folder, a disc — generic shapes, no real product's mark
     if (i === 0) {
       ctx.strokeStyle = ERA3.accentHi; ctx.lineWidth = 1;
@@ -145,8 +144,7 @@ export function taskbar(ctx: CanvasRenderingContext2D, W: number, H: number, clo
   for (let i = 0; i < 3; i++) px(ctx, W - cw - 38 + i * 3, oy + 2 - i * 2, 2, 3 + i * 2, ERA3.glassHi);
   px(ctx, W - cw - 24, oy - 2, 3, 5, ERA3.glassHi);
   px(ctx, W - cw - 21, oy - 4, 2, 9, ERA3.glassHi);
-  px(ctx, W - cw - 6, ty + 4, cw, bh - 8, ERA3.tray);
-  px(ctx, W - cw - 6, ty + 4, cw, 1, '#0a1c30');
+  px(ctx, W - cw - 6, ty + 4, cw, bh - 8, ERA3.tray);   // S349: flat
   ctx.fillStyle = ERA3.white;
   setFont(ctx, 10);
   const tw2 = ctx.measureText(clock).width;
@@ -176,47 +174,31 @@ export interface AeroContent {
   minBox: { x: number; y: number; w: number; h: number };
 }
 
-/** Aero glass window: light translucent body, soft gradient title bar, dark caption. */
+/** ⚑ S349 / T44 — the window, 2016-FLAT (it was Windows 7 Aero glass: a glow frame, a two-tone glass title bar and
+ *  bevelled caption boxes). 2016's idiom is flat: a 1 px border, a solid accent title bar with the title in white, and
+ *  the two caption glyphs drawn as thin white strokes with no box. Same bar height, same title size, same hit boxes. */
 export function windowFrame(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, title: string, active = true
 ): AeroContent {
   const barH = 22;
-  // glassy outer frame + body
-  px(ctx, x - 2, y - 2, w + 4, h + 4, ERA3.frame);
-  px(ctx, x - 1, y - 1, w + 2, h + 2, ERA3.glassHi);
+  px(ctx, x - 1, y - 1, w + 2, h + 2, ERA3.glassEdge);
   px(ctx, x, y, w, h, ERA3.glass);
-  // title bar (light glass gradient, dark text)
-  px(ctx, x, y, w, barH, active ? ERA3.titleA : '#dfe5ec');
-  px(ctx, x, y, w, 2, ERA3.titleHi);
-  px(ctx, x, y + barH - 7, w, 7, active ? ERA3.titleB : '#d2d8df');
-  px(ctx, x, y + barH - 1, w, 1, ERA3.glassEdge);
+  px(ctx, x, y, w, barH, active ? ERA3.accent : ERA3.sysBand);
   setFont(ctx, 12);
-  ctx.fillStyle = active ? ERA3.titleText : ERA3.grey;
+  ctx.fillStyle = active ? ERA3.white : ERA3.grey;
   ctx.fillText(title, x + 9, y + 6);
-  // caption buttons: min, max, close(red)
+  // ⚑ TWO CONTROLS, NOT THREE — 2026-08-24: the window is maximised by decision (Sérgio) and has two states, up and
+  //   put down on the taskbar; a control that cannot do what it depicts is worse than none.
   const by = y + 4; const bs = 14;
-  // ⚑ TWO BUTTONS, NOT THREE — 2026-08-24. The restore-down (□) was drawn and
-  // dead, the same fault minimise had until this session, and it is now a lie
-  // as well: Era 3's window is MAXIMISED by decision (Sérgio) and has exactly
-  // two states — up, and put down on the taskbar. A control that cannot do the
-  // thing it depicts is worse than an absent one, because a player who presses
-  // it and gets nothing learns that pressing things here does nothing.
-  capBtn(ctx, x + w - 18, by, bs, ERA3.bury, ERA3.rose, 'x');
-  capBtn(ctx, x + w - 36, by, bs, '#cfe0f2', ERA3.glassHi, '_');
-  const cb = { x: x + w - 18, y: by, w: bs, h: bs };
-  const mb = { x: x + w - 36, y: by, w: bs, h: bs };
+  const ink = active ? ERA3.white : ERA3.greyDk;
+  ctx.strokeStyle = ink; ctx.lineWidth = 1.5;
+  const cx = x + w - 18, mx = x + w - 36;
+  ctx.beginPath(); ctx.moveTo(cx + 3, by + 3); ctx.lineTo(cx + bs - 3, by + bs - 3); ctx.moveTo(cx + bs - 3, by + 3); ctx.lineTo(cx + 3, by + bs - 3); ctx.stroke();
+  px(ctx, mx + 3, by + bs - 4, bs - 6, 2, ink);
+  const cb = { x: cx, y: by, w: bs, h: bs };
+  const mb = { x: mx, y: by, w: bs, h: bs };
   return { x: x + 5, y: y + barH + 5, w: w - 10, h: h - barH - 10, closeBox: cb, minBox: mb };
-}
-
-function capBtn(ctx: CanvasRenderingContext2D, x: number, y: number, s: number, base: string, hi: string, glyph: string): void {
-  px(ctx, x, y, s, s, base);
-  px(ctx, x, y, s, 1, hi);
-  px(ctx, x, y, 1, s, hi);
-  px(ctx, x, y + s - 1, s, 1, ERA3.glassEdge);
-  setFont(ctx, 10);
-  ctx.fillStyle = glyph === 'x' ? ERA3.white : ERA3.titleText;
-  ctx.fillText(glyph, x + 4, y + 2);
 }
 
 /** Aero pill button (glassy light blue, optional accent/hover ring). */
@@ -225,24 +207,26 @@ export function button(
   x: number, y: number, w: number, h: number, label: string,
   opts: { disabled?: boolean; hover?: boolean; primary?: boolean; size?: number; tone?: 'good' | 'bury' | 'amber' } = {}
 ): void {
-  let fill = opts.primary ? '#cfe6ff' : '#eaf1f9';
+  // ⚑ S349 / T44 — a 2016 flat ("material") button: a solid fill, square-ish, raised by a 2 px shadow line under it —
+  //   no glass highlight, no bevel. The primary is the accent with white text; the tones keep their soft fills (their
+  //   meaning and their legibility from the seat are unchanged). Same size, same label size, same place.
+  let fill: string = opts.primary ? ERA3.accent : ERA3.white;
   if (opts.tone === 'good') fill = '#d7efdc';
   if (opts.tone === 'bury') fill = '#f0d8e0';
   if (opts.tone === 'amber') fill = '#f6e6c4';
-  px(ctx, x, y, w, h, fill);
-  px(ctx, x, y, w, 1, ERA3.glassHi);
-  px(ctx, x, y, 1, h, ERA3.glassHi);
-  px(ctx, x, y + h - 1, w, 1, ERA3.glassEdge);
-  px(ctx, x + w - 1, y, 1, h, ERA3.glassEdge);
+  if (opts.disabled) fill = ERA3.sysBand;
+  px(ctx, x, y + h - 1, w, 2, opts.disabled ? ERA3.sysBand : ERA3.glassEdge);
+  px(ctx, x, y, w, h - 1, fill);
+  if (!opts.primary && !opts.tone) { px(ctx, x, y, w, 1, ERA3.sysBand); px(ctx, x, y, 1, h - 1, ERA3.sysBand); px(ctx, x + w - 1, y, 1, h - 1, ERA3.sysBand); }
   if (opts.hover && !opts.disabled) {
     px(ctx, x - 1, y - 1, w + 2, 1, ERA3.accent);
-    px(ctx, x - 1, y + h, w + 2, 1, ERA3.accent);
-    px(ctx, x - 1, y - 1, 1, h + 2, ERA3.accent);
-    px(ctx, x + w, y - 1, 1, h + 2, ERA3.accent);
+    px(ctx, x - 1, y + h + 1, w + 2, 1, ERA3.accent);
+    px(ctx, x - 1, y - 1, 1, h + 3, ERA3.accent);
+    px(ctx, x + w, y - 1, 1, h + 3, ERA3.accent);
   }
   const fs = opts.size ?? 11;
   setFont(ctx, fs);
-  ctx.fillStyle = opts.disabled ? ERA3.grey : ERA3.ink;
+  ctx.fillStyle = opts.disabled ? ERA3.grey : opts.primary && !opts.tone ? ERA3.white : ERA3.ink;
   const tw = ctx.measureText(label).width;
   ctx.fillText(label, Math.round(x + (w - tw) / 2), Math.round(y + (h - fs) / 2));
 }
@@ -255,8 +239,7 @@ export function tag(
 ): number {
   setFont(ctx, 8);
   const w = ctx.measureText(label).width + 8;
-  px(ctx, x, y, w, 12, fill);
-  px(ctx, x, y, w, 1, ERA3.glassHi);
+  px(ctx, x, y, w, 12, fill);   // S349: flat, no highlight
   ctx.fillStyle = ink;
   ctx.fillText(label, x + 4, y + 2);
   return x + w + 4;

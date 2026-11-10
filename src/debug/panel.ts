@@ -9,6 +9,7 @@ import { runtimeQuery } from '../edition';
  */
 import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
+import { BUILD_DATE } from '../state/buildStamp';
 
 /** bump this each build so the panel says which version is on screen */
 /**
@@ -21,7 +22,7 @@ import { DesktopOS } from '../desktop/os';
  * is a version stamp that lies. Now it cannot.
  */
 declare const __BUILD_TAG__: string;
-const BUILD_TAG = typeof __BUILD_TAG__ === 'string' ? __BUILD_TAG__ : 'dev';
+const BUILD_TAG = (typeof __BUILD_TAG__ === 'string' ? __BUILD_TAG__ : 'dev') + (BUILD_DATE ? ` · built ${BUILD_DATE}` : '');   // S349 / T12
 
 interface MotionDiagnostic {
   state: string;

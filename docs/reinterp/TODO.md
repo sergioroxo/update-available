@@ -26,7 +26,7 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T09 | Text in the headset is serrated and hard to read unless very close | everywhere, XR | X (Prompt C) + C | L |
 | T10 ◐ S333 (Codex: redraws 180→59; check in headset) | Lamby video breaks up when the hand moves | 2003 video, XR | X | M |
 | T11 ☑ S345 (1997/2003: a controller by the desk mouse took it — S343; 2026: a controller's press now goes where the ray was when the trigger began, not the release's dip — UIB_JOB4_BUILT; check in headset) | Phantom presses on the wall in front of Root Cause, and on 2026 boxes | 2003, 2026, XR | X | M |
-| T12 | Headset/Quest ran an OLD build in part 1 (the itch zip?). Check what the Quest loads before every session | process | S + C | S |
+| T12 ☑ S349 (the commit and build date on the game menu's About/Credits line and on the headset's debug plate; vite define, no network) | Headset/Quest ran an OLD build in part 1 (the itch zip?). Check what the Quest loads before every session | process | S + C | S |
 
 ## ② Hard to follow
 
@@ -68,7 +68,7 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T41 ☑ S339 | The 1997 folder and the Harbor board are hard to read; closing the folder should return to the menu | 2003 | C | S |
 | T42 ◐ S339 (2003 restore mark done; "Agree greyed on page 1" is the one-live-Agree law — asked) | Restorify's "Terms of Continued Care": "Agree" looks greyed on page 1; the restore symbol should look more 2003 | 2003 | X | S |
 | T43 ☑ S331 | 2026 fonts: some too big, some unreadable; one consistent size per screen | 2026 | C | (with T03) |
-| T44 ◐ S339 (the update into 2003 + Restorify's terms in the XP shape; the other eras open) | Visual culture: each era and OS should look more like its time (for his article too) | all | C | L |
+| T44 ☑ S349 (S339: 2003; S349: 2016 GracePlatform flat 'material' + the Handset Window in the phone's iOS 7 bar; 2026 the bot in today's assistant idiom, Kettle and cards rounder; before/after out/s349/vc-*; the inventory docs/reinterp/VISUAL_CULTURE_INVENTORY_2026-11-09.md) | Visual culture: each era and OS should look more like its time (for his article too) | all | C | L |
 | T45 ☑ S339 | The 1997 video of Caleb's submission → the platform → the site where the DVDs/testimonies live (his idea: connect the folder, the upload and the era website) | 2003, sites | S then C | M |
 | T46 ☑ S331 | 2026: the shelf on the bed and a phone on the table make no sense | 2026 room | C | S |
 | T47 ☑ S329 (moot: no handset) | Screen distance: the held/worn screens follow the headset, not the room; the 2016 monitor hangs over the desk edge | XR | C | M |
@@ -164,11 +164,11 @@ His answers, 8 Nov:
 |---|---|---|---|---|
 | T51 ☑ S343 | Remove the red box beside the mouse on the 1997 desk | 1997 room | C | S |
 | T53 ☑ S337 | 2016: retire Noa, Deb M. and Marisol from "Next story" (Deb M. stays a row in the campaign kit) — his 9 Nov | 2016 | C | S |
-| T54 | Noa's story moves to 2026 (his 9 Nov: "Noa can just exist in 2026") — a different person from Maya (guard 1); where she appears is to be designed | 2026 | C+S | M |
+| T54 ◐ S349 (proposal written: docs/reinterp/DESIGN_NOA_2026_2026-11-09.md, three options, recommends the stream viewer; he picks) | Noa's story moves to 2026 (his 9 Nov: "Noa can just exist in 2026") — a different person from Maya (guard 1); where she appears is to be designed | 2026 | C+S | M |
 | T55 ☑ S337 | The 2016 Trending sources (US election, NPR; photo app hiding #lesbian, HuffPost UK; same-sex stickers removed, Jakarta Post) go on the 2016 site's Sources tab — his yes, 9 Nov | 2016 site | C | S |
 | T56 ☑ S337 | A GracePlatform music loop, made by Claude in code (no licence question): calm 2016 "wellness app" pads + plucked melody, 60–90 s, seamless | 2016 | C | S |
 | T57 | 🥽 Test Codex's sharper text (CODEX_XR_TEXT_REPORT_2026-11-08.md) on the Quest, on the GitHub Pages build (itch can't take URL options): compare https://sergioroxo.github.io/update-available/?reinterp=1 with …?reinterp=1&quad=1 on the 1997 monitor, following the report's steps. If sharper → extend to the other screens; if not → remove the patch | XR | S (headset) then C | S |
-| T58 | The Lexicon at the end lacks "struggler" (used in 1997's Root Cause glossary); add it in the Lexicon's own format. The glossary stays in Root Cause Digger only (his 9 Nov: the terms all go to the Lexicon at the end) | Close | C (UiB) | S |
+| T58 ☑ S349 ("struggler" in lexicon.json after "the struggle"; Root Cause's glossary marks its six words as met) | The Lexicon at the end lacks "struggler" (used in 1997's Root Cause glossary); add it in the Lexicon's own format. The glossary stays in Root Cause Digger only (his 9 Nov: the terms all go to the Lexicon at the end) | Close | C (UiB) | S |
 | T52 ☑ S345 | 2016 board: Lambient's small mark (bottom left) touches the family job's "done" line | 2016 | C | S |
 | T58 ☑ S346 | Desktop, his 9 Nov: lines and letters break into stair-steps when a screen is seen at an angle ("Welcome back, Daniel"). Screens only: mipmaps + max anisotropy (his approval); the room keeps FILTER_NEAREST | all screens | C | S |
 | T59 ☑ S346 | Desktop team skip, debug builds only: N ten times within 5 s → the next year (mirrors T48) | desktop | C | S |
