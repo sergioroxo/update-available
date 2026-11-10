@@ -61,7 +61,7 @@ cascade a little slower.
 ## 4. Design and content he asked for
 
 **1997** — H33 after the Root Cause Digger, offer a choice (Release Work or the forum), not a jump to the forum.
-H34 the Digger: different design and questions per level, and ask at each level whether to go on. H35 Release Work:
+H34 the Digger: **three levels at most** (his 10 Nov), each with its own design and questions; after each level he can stop or continue. H35 Release Work:
 the handle should face him. H36 the Lamby song in 1997 is 2003's; use a song from one of the tapes.
 
 **2003** — H37 Restorify Media: its own song; Daniel's testimony needs a song; the media release form redesigned in
@@ -70,7 +70,7 @@ companion and the phone. H39 the phone: an explainer, and its buttons should hel
 H40 text quality: the monitor is better than the phone; the phone and Floppy Sheep text are out of focus (T09 goes
 on here: larger type on the small screens before any compositor work).
 
-**2016** — H41 the campaign kit arrives as an "urgent" pop-in. H42 Kindred Heart's draft appears differently; the
+**2016** — H41 the campaign kit arrives as an "urgent" pop-in. H42 (family calls open on Ruth — his yes) Kindred Heart's draft appears differently; the
 Mam → pastor's wife hand-over checked. H43 at Malta, GracePlatform jumps in: "we need to intervene immediately".
 H44 the song keeps playing in the handset window. H45 the photo message ("Somebody sent me a photo of you") opens
 the files with the photos.
@@ -100,6 +100,18 @@ Lexicon and the rest. Music is missing now (said twice).
 6. **The tape in 1997:** one of Daniel's tapes (the mixtape, the companion tape, the broadcast tape) — the
    belongings he can take, and the cassette that carries into 2003.
 7. **Root Cause Digger levels:** his call (H34).
+
+**His replies (10 Nov, later):**
+1. Q1 — he asked what the question was. It was his own at 20:48 ("is the evening check-in the same as the first?").
+   The piece already does his idea: one check-in at the start, a second one later. What looked like a repeat is the
+   daily button staying live (H03).
+2. Q2 — yes, and more: **when the controller points at the handheld, an icon appears beside it that shows it can be
+   held and moved** → new **H51** (job 12, Part A2).
+3. Q3 — okay.
+4. Q4 — **yes, open on Ruth**, "so we can see the system" → H42 (job 13).
+5. Q5 — **remove the number**; and the app's name shows twice — show it once → H07 (job 12, Part A1).
+6. Q6 — sure.
+7. Q7 — **three levels at most, each different; after each level he can stop or continue** → H34 (job 13).
 
 ## 6. Decisions for him
 
