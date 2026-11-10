@@ -37,12 +37,13 @@ import V3 from '../../../data/dialog/s4_v3.json';
  * headset), and its newest lines are mirrored as a plain DOM caption strip for the browser look-modes, in the idiom
  * the tape captions established.
  */
-import { ERA4, PLACE, WEB, BALL, photograph, roundRect, pill, avatar, webButton, visorEdge, streamScene, streamShot } from '../theme/era4';
+import { ERA4, PLACE, WEB, BALL, CLIP, roundRect, pill, avatar, streamScene, streamShot } from '../theme/era4';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
 import { setCommonsFigures, setCommonsDance, answerCommonsFigures, greetCommonsFigures } from '../../room/commonsFigures';
+import { setCommonsHost, type HostSurface } from '../../room/commonsHost';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
-import { isSpeedrun, extraOn } from '../../state/cut';
+import { drawTryOn, TRYON } from './mirror';
 import script from '../../../data/dialog/s4_ball.json';
 
 interface Line { who: string; text: string; gift?: boolean }
@@ -56,13 +57,21 @@ const SYS = script.system as unknown as {
   afterAnswer: number; hold: number; mark: string; reconnecting: string; restoring: string; cannot: string[];
   present: string; refused: string; terminated: string; reason: string; terminatedNote: string; terminateSeconds: number;
 };
-const SESSION = script.session as unknown as {
-  mark: string; title: string; line: string; preparing: string; begin: string; seconds: number;
-  plan: { n: string; title: string; meta: string }[]; planTitle: string; environment: string;
-  grounding: { title: string; in: string; out: string; note: string };
-  recorded: { title: string; mark: string; intro: string; introSeconds: number; lines: string[] };
-  groundSeconds: number; lineSeconds: number;
+/** ⚑ S354 — Shepherd Live™, the system's AI host (s4_ball.json `host`): no voice, text only */
+interface HostChip { label: string; reply: string }
+const HOST = script.host as unknown as {
+  mark: string; title: string; speaker: string;
+  studio: { live: string; viewers: string; always: string; verified: string; safety: string; partner: string };
+  friends: { who: string; lines: string[]; seconds: number };
+  metrics: { restored: string; peace: string; you: string; p: number };
+  open: string[]; exchanges: { chips: HostChip[]; then: string[] }[];
+  recap: { title: string; from: string; to: string; p0: number; p1: number; barSeconds: number; lines: string[] };
+  readBase: number; readPerChar: number; readMin: number; readMax: number;
 };
+/** how long a host line stays in the caption band: long enough to read, never a held look */
+const readSeconds = (t: string): number => Math.max(HOST.readMin, Math.min(HOST.readMax, HOST.readBase + HOST.readPerChar * t.length));
+/** one step of the host's script: a line, a question with her two chips, the recap's start, or the try-on */
+type HostStep = { say: string } | { ask: number } | { recap: true } | { tryon: true };
 
 /** the invitation card, on the worn visor's 512 × 384 canvas */
 const INVITE = { x: 108, y: 104, w: 296, h: 150 } as const;
@@ -74,17 +83,14 @@ const CHIPS_Y = 262;
 const CHIP_W = 92;
 /** ⚑ the room ducks by this while a system sound plays (≈ 9 dB), as before */
 const DUCK_DB = -9;
-const BEGIN_W = 84;
+/** the host's caption band and its chips, on the glass (the try-on's band, same place, same size) */
+const BAND_H = 34;
+const HOST_CHIP_H = 24;
 /** how many chat lines the screen and the subtitles carry */
 const CHAT_SHOWN = 9;
 
-type Phase = 'idle' | 'invited' | 'frame' | 'grow' | 'stream' | 'after' | 'done';
+type Phase = 'idle' | 'host' | 'tryon' | 'invited' | 'frame' | 'grow' | 'stream' | 'after' | 'done';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
-
-/** the grounding runs in the review cut only; the visitors' version goes from Begin to the recording */
-export function groundSeconds(): number { return isSpeedrun() && !extraOn('session') ? 0 : SESSION.groundSeconds; }
-/** seconds from her Begin to Junie's link: (grounding), the introduction, two sentences, and 1.6 s into the third */
-export function linkAfterBegin(): number { return groundSeconds() + SESSION.recorded.introSeconds + SESSION.lineSeconds * 2 + 1.6; }
 
 export class E4Ball {
   /** bumped on every change to what the VISOR draws; E4Shell folds it into its own version (uploads on dirty only) */
@@ -95,10 +101,8 @@ export class E4Ball {
   onOver?: () => void;
   /** she opened Junie's link. The shell files it; this file never touches a ledger. */
   onJoin?: () => void;
-  /** the controls this surface publishes: the link's chip, then her two chips */
+  /** the controls this surface publishes: the host's chips, the link's chip, then her two chips */
   hits: Hit[] = [];
-  /** the session's Begin chip (drawn by `drawSession`, pressed through E4Shell) */
-  sessionHits: Hit[] = [];
 
   private phase: Phase = 'idle';
   private t = 0;
@@ -127,17 +131,50 @@ export class E4Ball {
   private refusedOnce = false;
   private afterT = 0;
   private caption: HTMLDivElement | null = null;
+  // ── ⚑ S354 — the host's studio (Part A) ──
+  /** the host's script still to run, and where it is */
+  private hostSteps: HostStep[] = [];
+  private hostT = 0;
+  /** the line in the caption band, and when the next step is due */
+  private hostLine = '';
+  private hostNextAt = 0;
+  /** her chips are up (the index of the exchange), or -1 */
+  private hostAsk = -1;
+  /** what she pressed, in the host's conversation (probes; the shell files nothing from here either) */
+  hostPressed: string[] = [];
+  /** the product's audience on the screen: its lines so far, and when the next is due */
+  private friendsChat: string[] = [];
+  private friendsAt = 0;
+  private friendsN = 0;
+  /** the recap's clock on the screen (<0: not yet) */
+  private recapT = -1;
+  /** the try-on's clock (seconds since the mirror began) */
+  private tryT = 0;
+  /** what of the host's surfaces the people have taken back (Part B fills it) */
+  private freed = new Set<HostSurface>();
+  /** the studio's screen repaints only when something on it changes */
+  private studioV = 0;
   /** probes only: what she pressed (never filed — respite) */
   get choice(): string | null { return this.answered; }
 
   get live(): boolean { return this.phase !== 'idle' && this.phase !== 'done'; }
   get invited(): boolean { return this.phase === 'invited'; }
+  /** ⚑ S354 — the host's studio is up (its conversation, its recap) */
+  get hosting(): boolean { return this.phase === 'host'; }
+  /** the host's chips are on the glass, waiting */
+  get hostAsking(): boolean { return this.hostAsk >= 0; }
+  /** the try-on has run to its end (E4Shell marks the contract's `tryon`) */
+  get tryOnDone(): boolean { return (this.phase === 'tryon' && this.tryT >= TRYON.done) || this.phase === 'invited' || this.phase === 'frame' || this.phase === 'grow'; }
+  /** the studio stands (the host, its halo, its screen) until the people's stream fills the glass */
+  private get studio(): boolean { return this.phase === 'host' || this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'frame' || this.phase === 'grow'; }
   get phaseId(): string { return this.phase; }
   /** her chips are on the glass, waiting (a probe reads it; the walker reads `hits`) */
   get callUp(): boolean { return this.asking; }
   /** how much of the agent's environment is still on the glass: all of it until the stream fills the glass */
   get environmentK(): number {
-    if (this.phase === 'idle' || this.phase === 'invited' || this.phase === 'frame') return 1;
+    // ⚑ S354 — in the studio the glass is clear (the world is the host's); the try-on fills it again
+    if (this.phase === 'host') return 0;
+    if (this.phase === 'idle' || this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'frame') return 1;
     if (this.phase === 'grow') return this.growK < 1 ? 1 : 0;
     return 0;
   }
@@ -146,15 +183,123 @@ export class E4Ball {
   get streaming(): boolean { return this.worldOn; }
   /** the stream is VIDEO: its screen repaints twelve times a second while it is on */
   get viewerCount(): number { return this.count; }
-  get streamVersion(): number { return this.streaming ? 1 + Math.floor(this.streamT * 12) : 0; }
+  get streamVersion(): number {
+    if (!this.streaming) return 0;
+    if (this.studio) return 1_000_000 + this.studioV;
+    return 1 + Math.floor(this.streamT * 12);
+  }
   /** true from the moment the glass clears — `E4Shell` reads it */
   get deviceOff(): boolean { return this.phase === 'stream' || this.phase === 'after'; }
   /** nothing here ends early on a press: the system ends it, and only in its own words */
   get returnable(): boolean { return false; }
 
+  /**
+   * ⚑ S354 — THE HOST'S STUDIO (UiB job 11 Part A). The device goes on and the Commons' space is there, staged by
+   * the system's AI host: the pale floor, the host on the stage at its distance, the halo, the screen saying LIVE ·
+   * Shepherd Live™ · 1 viewer, the product's own audience posting 🙏, its numbers. It speaks only in the caption band
+   * on the glass — no voice, ever (his 10 Nov). Then ≤3 exchanges, her two chips each; then the recap of her week on
+   * the screen, and "Let me show you who you could be." → the try-on (mirror.ts), its lines now the host's. Junie's
+   * link breaks into the try-on, as before. The world is the stream's place from here on; the people take it later.
+   */
+  startHost(): void {
+    if (this.phase !== 'idle') return;
+    this.phase = 'host';
+    this.hostT = 0;
+    this.hostLine = '';
+    this.hostAsk = -1;
+    this.hostPressed = [];
+    this.friendsChat = []; this.friendsAt = 1.2; this.friendsN = 0;
+    this.recapT = -1; this.tryT = 0;
+    this.freed.clear();
+    this.hits = [];
+    this.count = 1;
+    this.hostSteps = [
+      ...HOST.open.map((say) => ({ say })),
+      ...HOST.exchanges.flatMap((_x, i) => [{ ask: i }] as HostStep[]),
+      { recap: true },
+      ...HOST.recap.lines.map((say) => ({ say })),
+      { tryon: true }
+    ];
+    this.hostNextAt = 1.4;   // a breath after the cut, before the first line
+    this.worldOn = true;
+    setCommonsWorld(true);   // app.ts's room hook cuts her to the one spot (in a headset, through the particle veil)
+    setCommonsHost(true);
+    setCommonsFigures(false);
+    setCommonsDance(false);
+    this.version++; this.studioV++;
+  }
+
+  /** the host's clock: its lines, its questions, its audience, the recap, then the mirror */
+  private updateHost(dt: number): void {
+    const b4 = this.hostT;
+    this.hostT += dt;
+    // the product's audience: the same few lines at an even pace, while the count says 1 viewer
+    if (this.hostT >= this.friendsAt) {
+      this.friendsChat.push(HOST.friends.lines[this.friendsN % HOST.friends.lines.length]);
+      if (this.friendsChat.length > 20) this.friendsChat.shift();
+      this.friendsN++;
+      this.friendsAt = this.hostT + HOST.friends.seconds;
+      this.studioV++;
+    }
+    if (this.recapT >= 0) {
+      const r4 = this.recapT;
+      this.recapT += dt;
+      if (Math.floor(r4 * 6) !== Math.floor(this.recapT * 6)) this.studioV++;
+    }
+    if (this.hostAsk >= 0 || this.hostT < this.hostNextAt) return;
+    const step = this.hostSteps.shift();
+    if (!step) return;
+    if ('say' in step) {
+      this.hostLine = step.say;
+      this.hostNextAt = this.hostT + readSeconds(step.say);
+      this.version++;
+    } else if ('ask' in step) {
+      this.hostAsk = step.ask;
+      this.publishHostChips();
+    } else if ('recap' in step) {
+      this.recapT = 0;
+      this.studioV++;
+      this.hostNextAt = this.hostT + 0.4;
+    } else {
+      // "Let me show you who you could be." — the mirror fills the glass, head-locked, as before
+      this.phase = 'tryon';
+      this.tryT = 0;
+      this.hostLine = '';
+      this.version++;
+    }
+    void b4;
+  }
+
+  private publishHostChips(): void {
+    const ex = HOST.exchanges[this.hostAsk];
+    if (!ex) return;
+    // two chips, centred above the caption band, sized to their words (her words, short)
+    const ctx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+    const widths = ex.chips.map((c) => { if (ctx) setFont(ctx, 11); return Math.max(84, Math.ceil(ctx ? ctx.measureText(c.label).width : c.label.length * 7) + 26); });
+    const gap = 12, total = widths.reduce((a, b) => a + b, 0) + gap;
+    let x = Math.round(256 - total / 2);
+    const y = 384 - 46 - 12 - HOST_CHIP_H;
+    this.hits = ex.chips.map((c, k) => { const r = { x, y, w: widths[k], h: HOST_CHIP_H, id: `host-chip-${k}` }; x += widths[k] + gap; void c; return r; });
+    this.version++;
+  }
+
+  /** her answer: the host agrees, and moves her one step — the reply, then the exchange's own lines */
+  private answerHost(k: number): void {
+    const ex = HOST.exchanges[this.hostAsk];
+    if (!ex || !ex.chips[k]) return;
+    this.hostPressed.push(ex.chips[k].label);
+    this.hostAsk = -1;
+    this.hits = [];
+    playOnce('ui_press.mp3');
+    this.hostSteps.unshift({ say: ex.chips[k].reply }, ...ex.then.map((say) => ({ say })));
+    this.hostNextAt = this.hostT + 0.5;
+    this.version++;
+  }
+
   /** ⚑ Junie's link lands on the glass. The music is already audible through the wall while she decides. */
   invite(): void {
-    if (this.phase !== 'idle') return;
+    // ⚑ S354 — it breaks into the try-on (the host's mirror); `idle` stays for the old review routes
+    if (this.phase !== 'idle' && this.phase !== 'tryon') return;
 
     this.phase = 'invited';
     this.hits = [{ ...JOIN, id: 'commons-join' }];
@@ -182,6 +327,15 @@ export class E4Ball {
   }
 
   update(dt: number): void {
+    if (this.phase === 'host') { this.updateHost(dt); return; }
+    if (this.phase === 'tryon') {
+      const t4 = this.tryT;
+      this.tryT += dt;
+      if (Math.floor(t4 * 8) !== Math.floor(this.tryT * 8)) this.version++;
+      this.updateHost(0);   // the studio's audience keeps posting behind the mirror
+      if (this.tryT >= TRYON.link) this.invite();
+      return;
+    }
     if (this.phase === 'idle' || this.phase === 'invited' || (this.phase === 'done' && !this.worldOn)) return;
     const b4 = this.t;
     this.t += dt;
@@ -200,6 +354,7 @@ export class E4Ball {
         //   spot in the same frame; in a headset that cut is presented through the particle veil)
         this.worldIn = true;
         this.worldOn = true;
+        setCommonsHost(false);   // ⚑ S354 — the host's studio goes as the people's stream fills the glass
         setCommonsWorld(true);
         setCommonsFigures(true);
         setCommonsDance(true);
@@ -310,6 +465,7 @@ export class E4Ball {
   /** the device has stopped: the stream's place goes and the room she was in comes back */
   leaveWorld(): void {
     this.worldOn = false;
+    setCommonsHost(false);
     setCommonsWorld(false); setCommonsFigures(false); setCommonsDance(false); greetCommonsFigures(false);
     setBallLight(null);
     this.removeCaption();
@@ -318,6 +474,13 @@ export class E4Ball {
   /** the press. With coordinates: the link's chip, or one of hers. Without (a press anywhere in the world): while her
    *  chips wait, a press is a dance. Consumed always. */
   handleClick(x?: number, y?: number): boolean {
+    if (this.phase === 'host' || this.phase === 'tryon') {
+      // the host's chips, or nothing (consumed either way: the glass is on her face)
+      if (this.hostAsk < 0 || x === undefined || y === undefined) return true;
+      const h = this.hits.find((r) => x >= r.x - 6 && x <= r.x + r.w + 6 && y >= r.y - 6 && y <= r.y + r.h + 6);
+      if (h) this.answerHost(Number(h.id.replace('host-chip-', '')));
+      return true;
+    }
     if (this.phase === 'invited') {
       if (x === undefined || y === undefined) return true;
       const h = this.hits[0];
@@ -338,6 +501,16 @@ export class E4Ball {
 
   // ── the glass ───────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, _x: number, _y: number, _w: number): void {
+    if (this.phase === 'host') { this.drawHostGlass(ctx, W, H); return; }
+    // ⚑ S354 — the try-on is the host's mirror now: it fills the glass from "who you could be" until the stream does
+    const k = this.environmentK;
+    if (k > 0 && (this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'frame' || this.phase === 'grow')) {
+      const was = ctx.globalAlpha;
+      ctx.globalAlpha = was * k;
+      drawTryOn(ctx, W, H, Math.min(this.tryT, TRYON.link), HOST.speaker);
+      ctx.globalAlpha = was;
+    }
+    if (this.phase === 'tryon') return;
     if (this.phase === 'invited') { this.drawInvite(ctx); return; }
     if (this.phase === 'frame') { this.drawFrame(ctx, W, H, PLAYER.x, PLAYER.y, PLAYER.w, PLAYER.h, true); return; }
     if (this.phase === 'grow') {
@@ -460,91 +633,153 @@ export class E4Ball {
   }
 
   /**
-   * ⚑ THE CORRECTION SESSION (V11) — what the glass shows from the moment the device goes on until Junie's link: the
-   * agent's own environment, the photograph it made framed on the wall (the composite: its picture of her), its mark,
-   * one line, the plan, and one Begin. From her press: (review cut) one breath of grounding, then the recording,
-   * introduced as what it is; the link lands on the third sentence's dash.
+   * ⚑ S354 — THE GLASS IN THE HOST'S STUDIO: clear (the world is the studio), with the host's caption band where the
+   * try-on's is — its mark on a tab above it, its line in the band — and her two chips above that when it asks.
+   * The host has no voice: this band is the only place it speaks (and the screen's picture, for the eye).
    */
-  drawSession(ctx: CanvasRenderingContext2D, W: number, H: number, t: number, begun = -1, offerBegin = false): void {
-    const S = SESSION;
-    px(ctx, 0, 0, W, H, ERA4.field);
-    px(ctx, 0, Math.round(H * 0.58), W, H, ERA4.panel);
-    px(ctx, 0, Math.round(H * 0.58), W, 1, ERA4.ruleHi);
-    const pw = 150, ph = 93, fx = Math.round(W * 0.16), fy = Math.round(H * 0.22);
-    px(ctx, fx - 6, fy - 6, pw + 12, ph + 12, ERA4.panelHi);
-    photograph(ctx, fx, fy, pw, ph, true, 3);
-    avatar(ctx, Math.round(W * 0.56), fy, 24, WEB.primary, 'S');
-    setFont(ctx, 9); ctx.fillStyle = ERA4.meta;
-    ctx.fillText(S.mark + '  ·  ' + S.title, Math.round(W * 0.56) + 32, fy + 2);
-    const GROUND = groundSeconds();
-    const item = begun < 0 ? 0 : begun < GROUND ? 1 : 2;
-    const tx = Math.round(W * 0.56);
-    this.sessionHits = [];
-    if (item === 0) {
-      setFont(ctx, 12); ctx.fillStyle = ERA4.textHi;
-      let y = fy + 36;
-      for (const row of wrapText(ctx, S.line, Math.round(W * 0.38))) { ctx.fillText(row, tx, y); y += 17; }
-      setFont(ctx, 9); ctx.fillStyle = ERA4.dim; ctx.fillText(S.preparing, tx, y + 8);
-      const bw = Math.round(W * 0.34);
-      pill(ctx, tx, y + 22, bw, 5, ERA4.rule);
-      pill(ctx, tx, y + 22, Math.round(bw * Math.min(0.82, t / (S.seconds * 1.3))), 5, ERA4.lDim);
-      if (offerBegin) {
-        const r = webButton(ctx, tx, y + 36, S.begin, 'primary', BEGIN_W);
-        this.sessionHits = [{ ...r, id: 'session-begin' }];
-      }
-    } else if (item === 1) {
-      const gt = begun;
-      const phase = (gt % 8) / 8;
-      const k = phase < 0.5 ? phase * 2 : 2 - phase * 2;
-      const r = Math.round(14 + k * 14);
-      const rx = tx + 60, ry = fy + 78;
-      setFont(ctx, 9); ctx.fillStyle = ERA4.meta; ctx.fillText(S.grounding.title, tx, fy + 34);
-      for (let i = 3; i >= 1; i--) {
-        const was = ctx.globalAlpha;
-        ctx.globalAlpha = was * (0.18 + 0.22 * (4 - i) / 3);
-        roundRect(ctx, rx - r * i / 3, ry - r * i / 3, r * 2 * i / 3, r * 2 * i / 3, r * i / 3, ERA4.l);
-        ctx.globalAlpha = was;
-      }
-      setFont(ctx, 12); ctx.fillStyle = ERA4.textHi;
-      ctx.fillText(phase < 0.5 ? S.grounding.in : S.grounding.out, rx + 44, ry - 6);
-      setFont(ctx, 8); ctx.fillStyle = ERA4.dim; ctx.fillText(S.grounding.note, tx, ry + 38);
-    } else {
-      const rt = begun - GROUND;
-      setFont(ctx, 9); ctx.fillStyle = ERA4.meta; ctx.fillText(S.recorded.title, tx, fy + 34);
-      const intro = rt < S.recorded.introSeconds;
-      const rtl = Math.max(0, rt - S.recorded.introSeconds);
-      const line = S.recorded.lines[Math.min(S.recorded.lines.length - 1, Math.floor(rtl / S.lineSeconds))];
-      setFont(ctx, intro ? 10 : 12); ctx.fillStyle = intro ? ERA4.meta : ERA4.textHi;
-      let y = fy + 52;
-      for (const row of wrapText(ctx, intro ? S.recorded.intro : '“' + line + '”', Math.round(W * 0.38))) { ctx.fillText(row, tx, y); y += 17; }
-      const bw = Math.round(W * 0.34);
-      pill(ctx, tx, y + 10, bw, 4, ERA4.rule);
-      pill(ctx, tx, y + 10, Math.round(bw * Math.min(1, rt / 11)), 4, ERA4.l);
-      setFont(ctx, 8); ctx.fillStyle = ERA4.dim; ctx.fillText(S.recorded.mark, tx, y + 20);
+  private drawHostGlass(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const bandY = H - 46;
+    if (this.hostLine) {
+      px(ctx, 0, bandY, W, BAND_H, CLIP.band);
+      setFont(ctx, 9);
+      const tag = HOST.speaker, tw = Math.ceil(ctx.measureText(tag).width) + 12;
+      px(ctx, 8, bandY - 13, tw, 13, CLIP.band);
+      ctx.fillStyle = ERA4.glow; ctx.fillText(tag, 14, bandY - 11);
+      setFont(ctx, 16);
+      const rows = wrapText(ctx, this.hostLine, W - 24);
+      const one = rows.length === 1;
+      if (!one) setFont(ctx, 12);
+      ctx.fillStyle = CLIP.ink;
+      rows.slice(0, 2).forEach((r, i) => {
+        const lw = Math.ceil(ctx.measureText(r).width);
+        ctx.fillText(r, Math.max(8, Math.round((W - lw) / 2)), bandY + (one ? 9 : 4 + i * 14));
+      });
     }
-    // the plan, arriving item by item on the environment's floor
-    const floor = Math.round(H * 0.58);
-    const px0 = Math.round(W * 0.16), pw0 = Math.round(W * 0.68);
-    setFont(ctx, 9); ctx.fillStyle = ERA4.meta; ctx.fillText(S.planTitle, px0, floor + 12);
-    const envW = Math.ceil(ctx.measureText(S.environment).width) + 16;
-    pill(ctx, px0 + pw0 - envW, floor + 10, envW, 13, ERA4.panelHi);
-    ctx.fillStyle = ERA4.dim; ctx.fillText(S.environment, px0 + pw0 - envW + 8, floor + 12);
-    const shown = Math.min(S.plan.length, Math.floor(t / 2.2));
-    const running = GROUND > 0 ? item - 1 : item === 2 ? 1 : -1;
-    S.plan.forEach((it, k) => {
-      if (k >= shown) return;
-      const ry = floor + 30 + k * 30;
-      const on = k === running;
-      const done = k < running;
-      roundRect(ctx, px0, ry, pw0, 26, 5, on ? ERA4.rule : ERA4.panelHi);
-      avatar(ctx, px0 + 8, ry + 5, 16, on ? ERA4.l : done ? WEB.accent : ERA4.lDim, done ? '✓' : it.n);
-      setFont(ctx, 10); ctx.fillStyle = ERA4.textHi; ctx.fillText(it.title, px0 + 32, ry + 4);
-      setFont(ctx, 8); ctx.fillStyle = ERA4.dim; ctx.fillText(it.meta, px0 + 32, ry + 15);
-    });
-    visorEdge(ctx, W, H);
+    if (this.hostAsk >= 0) {
+      const ex = HOST.exchanges[this.hostAsk];
+      this.hits.forEach((h, k) => {
+        pill(ctx, h.x, h.y, h.w, h.h, PLACE.wallHi);
+        setFont(ctx, 11); ctx.fillStyle = PLACE.ink;
+        const label = ex.chips[k].label, lw = Math.ceil(ctx.measureText(label).width);
+        ctx.fillText(label, h.x + Math.round((h.w - lw) / 2), h.y + 7);
+      });
+    }
   }
-  /** the session's plan is all up after this long — then Begin is offered (E4Shell) */
-  static readonly PLAN_SECONDS = 3 * 2.2;
+
+  /**
+   * ⚑ S354 — THE STUDIO'S SCREEN (the stream's plane, in the host's layout; 352 × 198 at ×2). The product's own
+   * glossy pale page: LIVE · Shepherd Live™ · Jesus · AI host · 1 viewer; its badges (24/7, verified ✓); its
+   * picture — the host on a pale set, the halo, "for your safety" as the lower third; the Friends' column; its
+   * numbers along the foot. During the recap the picture is her week. Each of the six surfaces the people take back
+   * in Part B reads `freed` (none is, in Part A).
+   */
+  private drawStudio(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const F = this.freed;
+    px(ctx, 0, 0, W, H, WEB.bg);
+    // the title bar
+    px(ctx, 0, 0, W, 18, WEB.card);
+    if (Math.floor(this.hostT * 1.5) % 2 === 0) px(ctx, 7, 6, 6, 6, WEB.danger);
+    setFont(ctx, 9); ctx.fillStyle = WEB.ink; ctx.fillText(HOST.studio.live, 17, 4);
+    ctx.fillText(HOST.mark, 45, 4);
+    const mw = Math.ceil(ctx.measureText(HOST.mark).width);
+    ctx.fillStyle = WEB.muted; ctx.fillText('·  ' + HOST.title, 52 + mw, 4);
+    const v = HOST.studio.viewers.replace('{n}', String(this.count));
+    ctx.fillStyle = this.count > 1 ? PLACE.textileHi : WEB.ink;
+    ctx.fillText(v, W - 7 - Math.ceil(ctx.measureText(v).width), 4);
+    px(ctx, 0, 18, W, 1, WEB.cardEdge);
+    // the badges
+    setFont(ctx, 8);
+    let bx = 7;
+    const badge = (label: string, on: boolean, fill: string): void => {
+      const w = Math.ceil(ctx.measureText(label).width) + 12;
+      pill(ctx, bx, 22, w, 12, on ? fill : ERA4.ruleHi);
+      ctx.fillStyle = on ? WEB.ink : ERA4.dim; ctx.fillText(label, bx + 6, 24);
+      bx += w + 5;
+    };
+    badge(HOST.studio.always, !F.has('always'), ERA4.glow);
+    badge(HOST.studio.verified, true, ERA4.l);
+    ctx.fillStyle = WEB.muted;
+    const pt = HOST.studio.partner;
+    ctx.fillText(pt, W - 7 - Math.ceil(ctx.measureText(pt).width), 24);
+    // the picture (left) and the Friends' column (right)
+    const top = 38, foot = 22, cw = 136, pw = W - cw - 10, ph = H - top - foot - 4;
+    if (this.recapT >= 0) this.drawRecap(ctx, 4, top, pw, ph);
+    else this.drawHostPicture(ctx, 4, top, pw, ph, F);
+    const x0 = W - cw - 4;
+    px(ctx, x0, top, cw, ph, F.has('friends') ? ERA4.panel : WEB.card);
+    // ⚑ his note (10 Nov): the account's name once, as the column's header — not on every post; the posts are the
+    //   same few lines from the one account, which is the point
+    setFont(ctx, 8);
+    ctx.fillStyle = F.has('friends') ? ERA4.dim : ERA4.meta; ctx.fillText(HOST.friends.who, x0 + 6, top + 5);
+    px(ctx, x0 + 6, top + 16, cw - 12, 1, F.has('friends') ? ERA4.rule : WEB.cardEdge);
+    setFont(ctx, 9);
+    const lines = this.friendsChat.slice(-Math.max(1, Math.floor((ph - 26) / 13)));
+    let y = top + ph - 4 - lines.length * 13;
+    for (const l of lines) {
+      ctx.fillStyle = F.has('friends') ? ERA4.dim : WEB.ink; ctx.fillText(l, x0 + 6, y);
+      y += 13;
+    }
+    // the numbers, along the foot
+    const fy = H - foot;
+    px(ctx, 0, fy, W, foot, F.has('metrics') ? ERA4.panel : WEB.card);
+    px(ctx, 0, fy, W, 1, WEB.cardEdge);
+    if (!F.has('metrics')) {
+      const m = HOST.metrics;
+      const row = `${m.restored}   ·   ${m.peace}   ·   ${m.you.replace('{p}', String(m.p))}`;
+      setFont(ctx, 9); ctx.fillStyle = WEB.ink;
+      ctx.fillText(row, Math.round((W - ctx.measureText(row).width) / 2), fy + 6);
+    }
+  }
+
+  /** the host on its pale set: a faceless robed figure, the halo (warm once the people take it), the lower third */
+  private drawHostPicture(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, F: Set<HostSurface>): void {
+    if (F.has('picture')) return;
+    px(ctx, x, y, w, h, PLACE.sky);
+    px(ctx, x, y, w, Math.round(h * 0.45), PLACE.skyLo);
+    px(ctx, x, y + h - 26, w, 26, ERA4.photoSkyHi);   // the set's floor
+    const cx = x + Math.round(w / 2), base = y + h - 18;
+    const breathe = Math.round(Math.sin(this.hostT * 0.8) * 1);
+    // the halo: a ring behind the head
+    const hc = F.has('halo') ? PLACE.textileHi : ERA4.glow;
+    const hy = base - 98 + breathe;
+    for (let a = 0; a < 40; a++) {
+      const t = (a / 40) * Math.PI * 2;
+      px(ctx, cx + Math.round(Math.cos(t) * 20) - 1, hy + Math.round(Math.sin(t) * 20) - 1, 3, 3, hc);
+    }
+    // the robe, widening to the floor; the arms a little open; the head, faceless
+    px(ctx, cx - 18, base - 42, 36, 42, WEB.card);
+    px(ctx, cx - 14, base - 72, 28, 32, WEB.card);
+    px(ctx, cx - 14, base - 58, 28, 4, ERA4.glow);
+    px(ctx, cx - 30, base - 66, 14, 8, WEB.card); px(ctx, cx + 16, base - 66, 14, 8, WEB.card);
+    px(ctx, cx - 36, base - 62, 8, 12, WEB.card); px(ctx, cx + 28, base - 62, 8, 12, WEB.card);
+    px(ctx, cx - 9, hy - 10, 18, 22, ERA4.photoSkyHi);
+    // the lower third, the product's promise
+    if (!F.has('safety')) {
+      setFont(ctx, 8);
+      const t = HOST.studio.safety, tw = Math.ceil(ctx.measureText(t).width) + 14;
+      px(ctx, x + 6, y + h - 20, tw, 13, ERA4.l);
+      ctx.fillStyle = WEB.ink; ctx.fillText(t, x + 13, y + h - 18);
+    }
+  }
+
+  /** the recap: her week, as the product's highlight — Day 1 → Day 7, the bar climbing 12% → 61% */
+  private drawRecap(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    const R = HOST.recap;
+    px(ctx, x, y, w, h, WEB.card);
+    setFont(ctx, 10); ctx.fillStyle = WEB.ink;
+    ctx.fillText(R.title, x + 12, y + 12);
+    const k = Math.min(1, this.recapT / R.barSeconds), e = k * k * (3 - 2 * k);
+    const p = Math.round(R.p0 + (R.p1 - R.p0) * e);
+    const by = y + Math.round(h * 0.48), bw = w - 24;
+    setFont(ctx, 8); ctx.fillStyle = WEB.muted;
+    ctx.fillText(R.from, x + 12, by - 14);
+    ctx.fillText(R.to, x + 12 + bw - Math.ceil(ctx.measureText(R.to).width), by - 14);
+    pill(ctx, x + 12, by, bw, 8, ERA4.ruleHi);
+    pill(ctx, x + 12, by, Math.max(8, Math.round(bw * p / 100)), 8, ERA4.l);
+    setFont(ctx, 14); ctx.fillStyle = WEB.ink;
+    const pct = HOST.metrics.you.replace('{p}', String(p));
+    ctx.fillText(pct, x + 12, by + 18);
+  }
 
   /**
    * ⚑ THE STREAM'S OWN SCREEN, in the world behind the floor (352 × 198 at ×2). Left, the broadcast — the camera's
@@ -555,6 +790,7 @@ export class E4Ball {
   drawStream(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     px(ctx, 0, 0, W, H, ERA4.field);
     if (!this.streaming) return;
+    if (this.studio) { this.drawStudio(ctx, W, H); return; }
     const t = this.streamT + 30;
     const TB = 52, cw = 168, pw = W - cw - 6, ph = H - TB - 4;
     streamScene(ctx, 2, TB + 2, pw, ph, t, streamShot(t), this.answeredAt >= 0 && this.streamT - this.answeredAt < 3 ? 1 : 0);
@@ -645,9 +881,21 @@ export class E4Ball {
 
   // ── review (?debug=1) ────────────────────────────────────────────────────
   /** land on a point in the beat directly (review only; in play everything runs forward from the session) */
-  debugJumpTo(where: 'invited' | 'frame' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
+  debugJumpTo(where: 'host' | 'recap' | 'tryon' | 'invited' | 'frame' | 'stream' | 'ask' | 'intrusion' | 'after'): void {
     this.removeCaption();
     this.phase = 'idle';
+    if (where === 'host' || where === 'recap' || where === 'tryon') {
+      this.startHost();
+      if (where === 'host') return;
+      // run the conversation through, pressing her first chip each time
+      for (let i = 0; i < 400 && this.phaseId === 'host' && this.recapT < 0; i++) {
+        this.hostNextAt = 0; this.update(0.01);
+        if (this.hostAsk >= 0) this.answerHost(0);
+      }
+      if (where === 'recap') return;
+      while (this.phaseId === 'host') { this.hostNextAt = 0; this.update(0.01); }
+      return;
+    }
     this.hits = [];
     this.asking = false; this.answered = null; this.answeredAt = -1;
     this.intrusionT = -1; this.intrusionDone = false; this.refusedOnce = false;

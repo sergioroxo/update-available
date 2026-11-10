@@ -72,10 +72,9 @@ import ballScript from '../../../data/dialog/s4_ball.json';
 import { LVoice } from './lVoice';
 import { E4Offers } from './offers';
 import { E4Ball } from './ball';
-import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
+import { isSpeedrun, extraOn } from '../../state/cut';
 import type { UpdateApp } from './update';
 import { markE4 } from '../../narrative/e4Beats';
-import { drawTryOn, TRYON } from './mirror';
 
 /** the parallax is quantised so a drag cannot re-upload the visor texture on
  *  every frame: −1…+1 in eight steps, and a full turn costs eight redraws.
@@ -208,11 +207,9 @@ export class E4Shell {
   /** the offers' old gate — retired 2026-09-12, kept so the seam is legible */
   private offersPending = false;
   get offersRetired(): boolean { return !this.offersPending; }
-  /** seconds since the device went on — the correction session's clock */
-  private sessionT = 0;
-  /** ⚑ S227 — seconds since she pressed Begin on the session (−1: not yet). His Q7
-   *  (COMMONS_STREAMLINE_2026-10-10.md §8): Junie's card follows an action, never a clock alone. */
-  private sessionBegunT = -1;
+  /** ⚑ S354 — the contract's `tryon` is marked once, when the host's mirror has run to its end */
+  private triedOn = false;
+  /** the session's breathing, under the studio and the mirror until Junie's link lands */
   private breath: HTMLAudioElement | null = null;
   /** ⚑ S79 — THE BALL. Made with the shell for the same reason the two above
    *  are (a `?debug=1` jump must reach it before the device is even worn), and
@@ -360,19 +357,15 @@ export class E4Shell {
     // ⚑ 2026-09-12 — THE SESSION THAT NEVER BEGINS. The device is on, the
     //   agent's environment is on the glass, its bar is filling — and at
     //   `session.seconds` what arrives is not the session but Junie's card.
-    if (this.stageNow === 'worn' && !this.ball.live) {
-      // ⚑ S321 — "TRY IT ON" (mirror.ts): the system starts it the moment the device is on, nothing to press; the
-      //   reveal runs on its own clock, `tryon` is marked when it completes, and Junie's link breaks in and ends it.
-      //   (v2's session — the plan, Begin, the recording — no longer plays; its code in ball.ts is kept, unused.)
-      const before = this.sessionT;
-      this.sessionT += dt;
-      if (Math.floor(before * 8) !== Math.floor(this.sessionT * 8)) this.version++;
-      if (before < TRYON.done && this.sessionT >= TRYON.done) markE4('tryon');
-      if (this.sessionT >= TRYON.link) {
-        stopClip(this.breath); this.breath = null;
-        this.ball.invite();
-      }
+    if (this.stageNow === 'worn' && this.ball.phaseId === 'idle') {
+      // ⚑ S354 (UiB job 11 Part A) — THE HOST'S STUDIO first: the device goes on and Shepherd Live™'s studio is there
+      //   (ball.ts `startHost`): its conversation, the recap of her week, then "Let me show you who you could be." and
+      //   the try-on (S321's mirror, its lines now the host's); Junie's link breaks into it, as before. The plan, Begin
+      //   and the recording ("Someone who went back") are cut (his yes, 10 Nov).
+      this.ball.startHost();
     }
+    if (this.ball.tryOnDone && !this.triedOn) { this.triedOn = true; markE4('tryon'); }
+    if (this.breath && this.ball.invited) { stopClip(this.breath); this.breath = null; }
     this.offers.update(dt);
     if (this.offers.version !== this.offersVersion) {
       this.offersVersion = this.offers.version;
@@ -694,31 +687,14 @@ export class E4Shell {
      * speaks in the sell — the offers' own lines are untouched. What is gone is
      * the middle, and the middle is now hers to read or not.
      */
-    // ⚑ 2026-09-12: the offers do not open any more. The correction session
-    //   runs on `sessionT`, and Junie's card arrives when it is up.
-    this.sessionT = 0;
-    this.sessionBegunT = -1;
+    // ⚑ 2026-09-12: the offers do not open any more. ⚑ S354: the host's studio begins (ball.ts `startHost`, from
+    //   `update`), and Junie's card breaks into its mirror.
+    this.triedOn = false;
     // ⚑ S321 — the try-on begins unasked: the room's bed goes, the session breathes
     roomBed.set(null, 3.0);
     if (!this.breath && !(isSpeedrun() && !extraOn('session'))) this.breath = playLoop('session_breath.mp3');
   }
 
-  /** ⚑ S227 — Begin is on the glass: the plan is up and she has not pressed it yet */
-  get beginOffered(): boolean {
-    // ⚑ S321 — nothing is offered: the try-on starts without asking (kept so the old seam reads)
-    return false && this.stageNow === 'worn' && !this.ball.live && this.sessionBegunT < 0 && this.sessionT >= E4Ball.PLAN_SECONDS;
-  }
-  /** ⚑ S227 — her press on Begin: the session starts (S149 — the session is the only sound on the glass:
-   *  the room's bed goes as it begins, R3-103; the grounding breathes) */
-  private beginCorrection(): void {
-    if (!this.beginOffered) return;
-    markExtraPassed('session');
-    this.sessionBegunT = 0;
-    playOnce('ui_press.mp3');
-    roomBed.set(null, 3.0);
-    if (!(isSpeedrun() && !extraOn('session'))) this.breath = playLoop('session_breath.mp3');
-    this.version++;
-  }
 
   /**
    * The room reports how far the head has turned since the device went on.
@@ -970,16 +946,12 @@ export class E4Shell {
     //   was not supposed to see comes through the glass a step at a time
     const k = this.ball.environmentK;
     ctx.clearRect(0, 0, W, H);
-    if (k > 0) {
-      const was = ctx.globalAlpha;
-      ctx.globalAlpha = k;
-      drawTryOn(ctx, W, H, Math.min(this.sessionT, TRYON.link));
-      ctx.globalAlpha = was;
-    }
+    // ⚑ S354 — the ball draws the try-on itself now (the host's mirror, on its own clock)
     this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
     // ⚑ W1-F6 — the edge fades WITH the environment (k) and is gone when the room is through: it used to hold at
     //   0.35 in the Commons, a hard square floating in the world. The session's own rectangle still has its edge.
     if (!this.ball.live) visorEdge(ctx, W, H);
+    else if (this.ball.hosting) { /* the studio: the glass is clear, the world is the host's */ }
     else if (k > 0) visorEdge(ctx, W, H, k);
   }
 
@@ -1004,12 +976,8 @@ export class E4Shell {
       // ⚑ S133: while the invitation is up it owns the press — one chip, or
       //   nothing, consumed either way, exactly as L's chips were.
       if (this.ball.invited) return this.ball.handleClick(x, y);
-      // ⚑ S227 (his Q7) — Begin: the chip, or nothing (consumed either way, like every press on the worn glass)
-      if (this.beginOffered) {
-        const h = this.ball.sessionHits[0];
-        if (h && x >= h.x - 6 && x <= h.x + h.w + 6 && y >= h.y - 6 && y <= h.y + h.h + 6) this.beginCorrection();
-        return true;
-      }
+      // ⚑ S354 — the host's studio and its mirror own the press: her chips, or nothing (consumed either way)
+      if (this.ball.hosting || this.ball.phaseId === 'tryon') return this.ball.handleClick(x, y);
       // ⚑ the offers get first refusal, because by the time they are on screen L
       // has finished and its chips are gone. Two of the era's three presses land
       // here — the memories undo and the careful pause — and everything else on

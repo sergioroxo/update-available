@@ -70,7 +70,9 @@ function hand(ctx: CanvasRenderingContext2D, x: number, y: number, c: number, br
   }
 }
 
-export function drawTryOn(ctx: CanvasRenderingContext2D, W: number, H: number, t: number): void {
+/** ⚑ S354 — `speaker`: the lines gain a speaker (UiB job 11 Part A: the try-on is Shepherd Live™'s — "Let me show
+ *  you who you could be." — so its mark sits on a tab above the caption band; the lines and the timing are as they were) */
+export function drawTryOn(ctx: CanvasRenderingContext2D, W: number, H: number, t: number, speaker = ''): void {
   ctx.textBaseline = 'top';
   // the session's room: cold, hard-lit, nowhere
   px(ctx, 0, 0, W, H, CLIP.field);
@@ -124,6 +126,12 @@ export function drawTryOn(ctx: CanvasRenderingContext2D, W: number, H: number, t
   let line = T.lines[0].text;
   for (const l of T.lines) if (t >= l.at) line = l.text;
   px(ctx, 0, bandY, W, 34, CLIP.band);
+  if (speaker) {
+    ctx.font = monoFor(9);
+    const tw = Math.ceil(ctx.measureText(speaker).width) + 12;
+    px(ctx, 8, bandY - 13, tw, 13, CLIP.band);
+    ctx.fillStyle = ERA4.glow; ctx.fillText(speaker, 14, bandY - 11);
+  }
   ctx.font = fontFor(16, 'e4');
   const lw = Math.ceil(ctx.measureText(line).width);
   ctx.fillStyle = CLIP.ink;
