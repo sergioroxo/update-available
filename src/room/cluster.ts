@@ -31,6 +31,7 @@ import type { CeilingWitness } from './ceilingWitness';
 // colour law's one home is the theme, and both of these are era1.json's own.
 import { BALL } from '../desktop/theme/era4';
 import { mountCommonsFigures } from './commonsFigures';
+import { mountCommonsHost } from './commonsHost';
 import { mountCommonsWorld, WORLD, type CommonsWorld } from './commonsWorld';
 
 export type EraKey = 'e1' | 'e2' | 'e3' | 'e4';
@@ -678,6 +679,8 @@ export function buildClusterShell(
    */
   const commonsWorld = mountCommonsWorld(app);
   const commonsFigures = mountCommonsFigures(app, commonsWorld.entity);
+  // ⚑ S354 — Shepherd Live™'s studio: the same space, staged by the host before the people take it
+  const commonsHost = mountCommonsHost(app, commonsWorld.entity);
   worldRef = commonsWorld;
 
   // ── the O7 light-leak seams: thin pale strips at the base of the walls —
@@ -1166,6 +1169,7 @@ export function buildClusterShell(
       // crossfade and a ball can run in the same frame without a fight.
       updateBall(dt);
       commonsFigures.update(dt);
+      commonsHost.update(dt);
       commonsWorld.update(dt);
     }
   };

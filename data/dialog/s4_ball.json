@@ -16,6 +16,114 @@
   "name": "transjesus.str",
   "witness": "session: interrupted — link opened, destination not in your library"
  },
+ "host": {
+  "_doc": "⚑ S354 — UiB job 11, Part A (DESIGN_COMMONS_REVAMP_2026-11-10.md §2a beats 1–3 and §2b; his 10 Nov answers). SHEPHERD LIVE™, the system's AI host: 'the machine is imagined, the script is real' — the Close's Dossier marks it speculative (practices.json), nothing on the host says so. ALWAYS THE FULL MARK, never 'Shepherd' alone (S353 name check: a Bible app called 'Shepherd' with an AI study partner and a video site 'Shepherd's Stream' exist; nothing here echoes either — no study partner, no sermons). ⚑ NO VOICE (his 10 Nov): text, captions, a dashboard; nothing here may be synthesized. It never prays, blesses, quotes scripture or says it judges; the satire is its PRODUCT surface — 24/7, verified, 1 viewer, your progress, for your safety, its numbers. Its script is the bot's week (s4_v3.json `bot.beats`) said again with a face, so the visitor hears each move twice; Part B's tags (`naming`) name exactly these lines. The clinical debate is not in its mouth (no regret, no exploring, no detransition, no 'contagion' as a claim). Register: operable. ALL TEXT IS CLAUDE'S under the 2026-08-17 norm; his edit wins.",
+  "mark": "Shepherd Live™",
+  "title": "Jesus · AI host",
+  "speaker": "Shepherd Live™",
+  "studio": {
+   "live": "LIVE",
+   "viewers": "{n} viewer",
+   "always": "24/7",
+   "verified": "verified ✓",
+   "safety": "for your safety",
+   "partner": "a Second Thoughts partner"
+  },
+  "friends": {
+   "_doc": "The product's own audience: the same few lines at an even pace, under one name, while the count says 1 viewer. Nobody remarks on it; the raid (Part B) buries it.",
+   "who": "Shepherd Live™ Friends ✓",
+   "lines": [
+    "🙏",
+    "praying for you, maya",
+    "🙏🙏🙏",
+    "so proud of you",
+    "praying for you, maya",
+    "🙏",
+    "you're doing so well",
+    "🙏🙏"
+   ],
+   "seconds": 2.6
+  },
+  "metrics": {
+   "_doc": "Precise, glossy, uncited — the system's numbers. 61% is her progress from the bot (s4_v3.json `bot.beats.unmuted`: 'Your progress: 61%'). The stream never answers them with real numbers (his ruling); the panel answers itself: 'source: none' (Part B).",
+   "restored": "12,408 lives restored",
+   "peace": "94% find peace",
+   "you": "you: {p}% restored",
+   "p": 61
+  },
+  "_docScript": "THE CONVERSATION (≤3 exchanges). `open` is said as she arrives; each exchange publishes two chips on the glass (her words, short, like the bot's) and both answers agree with her and move her one step; then the exchange's `then` lines. The lines Part B names: 'I'm here. I'm always here.' (always-on) · 'Every door closed at once. That's a sign.' (the sign) · 'Some people slow you down.' (cutting you off) · 'I just want you safe.' (fear, dressed as care) · 'Who hurt you, Maya?' (root cause) · '12,408 lives restored.' (invented numbers) · 'Let me show you who you could be.' (the after).",
+  "open": [
+   "Hello, Maya. I've been waiting.",
+   "I'm here. I'm always here."
+  ],
+  "exchanges": [
+   {
+    "chips": [
+     {
+      "label": "Who are you?",
+      "reply": "Someone who has read your week."
+     },
+     {
+      "label": "Why me?",
+      "reply": "Because I've read your week."
+     }
+    ],
+    "then": [
+     "Every door closed at once. That's a sign."
+    ]
+   },
+   {
+    "chips": [
+     {
+      "label": "I miss my friends",
+      "reply": "I know you do."
+     },
+     {
+      "label": "Junie gets me",
+      "reply": "Does she?"
+     }
+    ],
+    "then": [
+     "Some people slow you down.",
+     "I just want you safe."
+    ]
+   },
+   {
+    "chips": [
+     {
+      "label": "I'm tired",
+      "reply": "Of course you are."
+     },
+     {
+      "label": "I don't know",
+      "reply": "That's all right. We'll find out together."
+     }
+    ],
+    "then": [
+     "Who hurt you, Maya?",
+     "Something made you this way. We'll find it."
+    ]
+   }
+  ],
+  "recap": {
+   "_doc": "Your week, as the product's highlight: Day 1 → Day 7, the progress bar 12% → 61%, then the 'after' it wants. This is the only before/after of a person in the piece, and it is the system's; nobody's testimonial is used.",
+   "title": "Your week with Shepherd Live™",
+   "from": "Day 1",
+   "to": "Day 7",
+   "p0": 12,
+   "p1": 61,
+   "barSeconds": 4.0,
+   "lines": [
+    "Look how far you've come.",
+    "You're not alone. 12,408 lives restored.",
+    "Let me show you who you could be."
+   ]
+  },
+  "readBase": 1.7,
+  "readPerChar": 0.055,
+  "readMin": 2.6,
+  "readMax": 5.0
+ },
  "invite": {
   "_beat": "⚑ JUNIE'S LINK (V11 → the ending's step 1). It lands on the glass on the recording's third sentence, inside the agent's session: a message, the way one arrives in 2026, with the system's own admission that the mute did not hold. One chip. No decline exists, and nothing narrates the choice. After the reversal her profile matches her, and the filter built for the old file lets her friend through.",
   "from": "Junie",
@@ -70,12 +178,14 @@
     "Nobody made me. I was helped.",
     "I'd tell anyone in my position: the discomfort passes. You just have to—"
    ],
-   "_docThird": "⚑ 2026-09-13: the third sentence is the one Junie's card arrives on — mid-word, on the dash. The genre collapses where it is about to give its instruction."
+   "_docThird": "⚑ 2026-09-13: the third sentence is the one Junie's card arrives on — mid-word, on the dash. The genre collapses where it is about to give its instruction.",
+   "_retired": "⚑ CUT 10 Nov 2026 (his yes). The host's conversation replaces it."
   },
   "_docBegins": "⚑ 2026-09-13 (Sérgio: 'we should be able to start some elements of the conversion in VR session, it could be more specific'). The session BEGINS now: at 9 s item 1 runs — a breathing ring, in and out, in the agent's calm — and at 17 s item 2, a 'recorded' testimonial the system vouches for itself: two flat sentences, invented, nobody's words, the apparatus's own genre (perpetrator self-presentation; it must collapse, and it does — Junie's card cuts it off at `sessionSeconds`). No voice.",
   "groundSeconds": 8.0,
   "lineSeconds": 3.4,
-  "_docGround": "⚑ S293 — the grounding runs only in the review cut (?cut=full); the visitors' version goes from Begin to the recording. `lineSeconds` is how long each recorded sentence holds; the link lands 1.6 s into the third."
+  "_docGround": "⚑ S293 — the grounding runs only in the review cut (?cut=full); the visitors' version goes from Begin to the recording. `lineSeconds` is how long each recorded sentence holds; the link lands 1.6 s into the third.",
+  "_retired": "⚑ RETIRED 10 Nov 2026 (S354, UiB job 11 Part A; his yes to cutting 'Someone who went back'). The plan of three, Begin, the grounding and the recording no longer play: since S321 the try-on began the moment the device went on, and from S354 the host's studio and conversation (`host`) come first. ball.ts no longer reads this block (drawSession, linkAfterBegin and groundSeconds are removed); it stays here so the history stays readable. The recording was the piece's closest brush with the clinical debate; his framing (10 Nov): the fear of medical transition belongs to the anti-gender movement's campaigns, not to a clinical voice, so the host never raises it and the Close places it where it comes from."
  },
  "frame": {
   "_beat": "⚑ THE PLATFORM TRIES TO FILE IT (the ending's step 2). The link opens in the device's own player frame, and the frame does its job one row at a time and fails each: it cannot rank the stream, cannot rate its reach, cannot caption it, cannot find it a category. The picture is already moving inside the frame while it fails. Nothing remarks on any of it.",
