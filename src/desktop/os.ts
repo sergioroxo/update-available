@@ -1627,7 +1627,7 @@ export class DesktopOS {
   private syncRestorifyLoop(): void {
     const want = this.phase === 'desktop' && this.desktopEra === 'e2' && !!this.restorify?.open && !this.caleb?.open
       && !this.mediaPlayer?.open && !this.netvision?.open && !this.accountability && !this.pauseOpen && !this.saver
-      && !this.updateApp && !this.testimony?.playbackActive;
+      && !this.updateApp && !this.testimony?.playbackActive && !this.releaseWorkUp;
     if (want && !this.restorifyLoop) { this.restorifyLoop = playLoop('restorify_loop_2003.mp3'); if (this.restorifyLoop) this.restorifyLoop.volume = 0.35; }
     else if (!want && this.restorifyLoop) { stopClip(this.restorifyLoop); this.restorifyLoop = null; }
     else if (this.restorifyLoop && this.restorifyLoop.ended) this.restorifyLoop = null;
@@ -1639,9 +1639,19 @@ export class DesktopOS {
    *  yields to these. Never under the pause menu, the screensaver or an update. */
   private e1Loop: HTMLAudioElement | null = null;
   e1LoopName: string | null = null;
+  /** ⚑ S351 / T34 — Release Work (the racket, pillow.json) is up and its programme is speaking: never under the
+   *  person's felt line, the close or the hold (provotype.programmeVoice) */
+  private get releaseWorkUp(): boolean { return !!this.provotype?.open && this.provotype.id === 'pillow' && this.provotype.programmeVoice; }
   private sync1997Loop(): void {
     let want: string | null = null;
-    if (this.phase === 'desktop' && this.desktopEra === 'e1' && !this.paused && !this.pauseOpen && !this.saver && !this.updateApp?.visible) {
+    const quiet = this.phase === 'desktop' && !this.paused && !this.pauseOpen && !this.saver && !this.updateApp?.visible;
+    // ⚑ S351 / T34 — Release Work's own tape (tools/make_releasework_loop.py), in 1997 and in 2003 where "Release Work
+    //   '97" came with him; it owns this channel while it is up, and Restorify's loop yields to it
+    if (quiet && this.releaseWorkUp && (this.desktopEra === 'e1'
+      || (this.desktopEra === 'e2' && !this.caleb?.open && !this.mediaPlayer?.open && !this.netvision?.open && !this.testimony?.playbackActive))) {
+      want = 'releasework_loop_1997.mp3';
+    }
+    else if (quiet && this.desktopEra === 'e1') {
       if (this.startMap.rootOpen) want = 'rootcause_loop_1997.mp3';
       else if (this.provotype?.open && this.provotype.id === 'origin_intake_e1' && this.provotype.programmeVoice) want = 'familyform_loop_1997.mp3';
       else if (this.web?.open && this.web.onFellowshipPage && !this.kit?.open && !this.irc?.open && !this.provotype && !this.yesOpen

@@ -88,8 +88,8 @@ const BOT = V.bot as unknown as { tab: string; mark: string; online: string; lin
   week: { title: string; meridian: string; declined: string };
   heading: { title: string; ring: string; streak: string; stamp: string };
   map: { title: string; exposure: string; you: string; nodes: { id: string; label: string; kind: string }[]; mutedTag: string; leftTag: string };
-  stories: { title: string; stamp: string; cards: { id: string; name: string; line: string }[]; link: string;
-    original: { label: string; text: string }; holdSeconds: number; readSeconds: number } };
+  stories: { title: string; stamp: string; cards: { id: string; name: string; line: string }[];
+    holdSeconds: number } };
 const ARTICLES = V.news.articles;
 const PH = V.photos;
 const CL = V.clinic;
@@ -170,8 +170,6 @@ export class E4Browser {
   private ring = 94;
   private mapMuted = false;
   private junieWarm = false;
-  /** ⚑ S350 — Noa's own words, opened from her card (the page clock when they opened; <0: not opened). Optional. */
-  private noaOpenT = -1;
   // Junie's x, and the turn back to the monitor after it
   private junieT = -1;
   // Photos
@@ -585,9 +583,7 @@ export class E4Browser {
       return;
     }
     // the bot's "rest" ends the bot's act: the piece turns her to the laptop, where Junie's badge has waited all day
-    //   (if she has just opened Noa's own words, she gets a moment to read them before the turn)
-    if (b.id === 'rest' && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 2.4
-        && (this.noaOpenT < 0 || this.t - this.noaOpenT >= BOT.stories.readSeconds)) {
+    if (b.id === 'rest' && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 2.4) {
       const m = this.messenger;
       m.junieOpenable = true; m.want = 'junie'; m.view = 'list';
       this.go('junie');
@@ -1314,46 +1310,26 @@ export class E4Browser {
 
   /**
    * ⚑ S350 / T54 — NOA IN 2026, option 3: "Stories like yours". Three cards the system curated, each a first name, an
-   * age and one smoothed sentence in ITS voice, under its own stamp. Noa's card carries "as she wrote it": one press
-   * (the whole card is the target) opens her own words below the smoothed one — plain ink on the plain page, no card,
-   * no stamp — and they stay open. Optional; nothing waits on it. The satire is the smoothing's, and it collapses here.
-   * Nothing on this panel connects her to Maya (guard 1).
+   * age and one smoothed sentence in ITS voice, under its own stamp. Nothing here is pressable and nothing waits on it.
+   * ⚑ S351 (his 10 Nov) — the "as she wrote it" link and her own sentence are gone: her card stays as the system filed
+   * her, and her line in the birthday stream (ball.ts) is where she turns up as herself. Nothing on this panel
+   * connects her to Maya (guard 1). The three cards are one size and always all fit.
    */
   private drawStories(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, bottom: number): void {
     const S = BOT.stories;
     setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(S.title.toUpperCase(), x, top);
     setFont(ctx, 11); ctx.fillStyle = V3.botInk; ctx.fillText(S.stamp, x, top + 16);
     let y = top + 36;
-    const open = this.noaOpenT >= 0;
     for (const c of S.cards) {
-      const noa = c.id === 'noa';
       setFont(ctx, 15);
       const said = wrapText(ctx, `“${c.line}”`, w - 24).slice(0, 2);
-      let h = 26 + said.length * 19;
-      let mine: string[] = [];
-      if (noa && !open) h += 20;
-      if (noa && open) { setFont(ctx, 14); mine = wrapText(ctx, S.original.text, w - 24).slice(0, 3); h += 26 + mine.length * 18; }
+      const h = 26 + said.length * 19;
       if (y + h > bottom) break;
       roundEdge(ctx, x, y, w, h, 12, V3.edge, V3.card);   // the 2026 assistant's soft card (S349)
       roundRect(ctx, x + 12, y + 8, 14, 14, 7, V3.grey);   // faceless: a plain disc, no initial, no likeness
       setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(c.name, x + 32, y + 8);
       setFont(ctx, 15); ctx.fillStyle = V3.ink;
       said.forEach((l, k) => ctx.fillText(l, x + 12, y + 28 + k * 19));
-      let ly = y + 28 + said.length * 19;
-      if (noa && !open) {
-        setFont(ctx, 13); ctx.fillStyle = V3.botInk;
-        const lw = Math.ceil(ctx.measureText(S.link).width);
-        ctx.fillText(S.link, x + w - 12 - lw, ly);
-        px(ctx, x + w - 12 - lw, ly + 15, lw, 1, V3.botInk);
-        this.publish({ x, y, w, h, id: 'story-noa' });
-      }
-      if (noa && open) {
-        // her own words: off the system's card style — the page's own ground, plain ink, her own sentence
-        px(ctx, x + 8, ly + 2, w - 16, h - (ly - y) - 10, V3.page);
-        setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(S.original.label, x + 12, ly + 6);
-        setFont(ctx, 14); ctx.fillStyle = V3.ink;
-        mine.forEach((l, k) => ctx.fillText(l, x + 12, ly + 24 + k * 18));
-      }
       y += h + 8;
     }
   }
@@ -1653,14 +1629,6 @@ export class E4Browser {
       return true;
     }
     if (id === 'conv-act' && (this.step === 'bot' || this.step === 'confirm')) { this.answerBot(null); return true; }
-    if (id === 'story-noa' && this.noaOpenT < 0 && this.step === 'bot') {
-      // ⚑ S350 — her own words, one press; filed as part of the bot's offer, never a score
-      this.noaOpenT = this.t;
-      this.file('v3:noa', 'opened', W3.noa);
-      playOnce('ui_press.mp3');
-      this.version++;
-      return true;
-    }
     if (id === 'photo-keep' && this.step === 'photos' && !this.keepTried) {
       this.keepTried = true;
       this.file('v3:keep', 'answered', W3.keep);
