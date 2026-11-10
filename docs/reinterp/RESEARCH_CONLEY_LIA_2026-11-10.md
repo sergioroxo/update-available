@@ -50,7 +50,7 @@ knowledge base (e3_theday source 21, its 2008 website; `research/love-in-action-
 | 29:53–31:00 | The "lie chair" (empty-chair exercise): told his love for his father was not what he "really" felt | "that's not what you really feel" is the piece's correction logic (E3) | at 17:35 he names it: "the correction was the point" |
 | 31:21–31:35 | Belongings, including his phone, held in an office; "not unless it's an emergency" | `belongings`; 2026 "for your safety" | as above |
 | 38:30 | Focus on the Family among the funders (his claim) | not used | [VERIFY SOURCE] before any use; organisations may be named only where the KB documents them |
-| ~39:50–40:10 | A 16-year-old (Zach Stark) posted LIA's rules for his family on MySpace (2005); it became national news | **2003 (Era 2)**: the programme's rules leaking online | a documented digital beat for 2003 — check against the KB first [VERIFY SOURCE]; a real minor, so name never used in the piece |
+| ~39:50–40:10 | A 16-year-old posted on MySpace the rules Love in Action sent his family; it became big news (he does not say the year, "Refuge" or "internet" here) | **2003 (Era 2)**: the programme's rules | **checked S357d, see §4**: the rules are documented (they ban computers, email and the internet); the leak is June 2005, so it cannot happen in 2003; a real minor, never named or shown |
 | 40:41 | LIA ended around 2012; Exodus a year later; the director apologised to him online | the close of Era 2/3 | Exodus 2013 already in RESEARCH_2016 §4 row 1 |
 | 42:38–43:00 | Now, "in the very anti-trans moment", conversion therapy is used mainly against trans people; parents are recruited through anti-trans rhetoric or "gender ideology fear" | **companion §7j's [VERIFY SOURCE]** (medical fear as the movement's tactic) | one expert survivor's statement of the tie; an opinion, not data. Supports, does not prove |
 | 43:30–43:51 | In 2004 his mother's web search found sites saying conversion therapy was good for a child; in 2025 the same search shows warnings | the whole piece: the web as the way in (1997/2003 sites; 2026's "People also ask") | a first-person before/after of the search page across 21 years |
@@ -61,3 +61,19 @@ knowledge base (e3_theday source 21, its 2008 website; `research/love-in-action-
 2. Several people in it are real and private or were minors (his roommate, Zach Stark): never named or depicted in
    the piece.
 3. The assault he describes (23:00–23:20) and the suicide question (31:50–32:10) are his; the piece never borrows them.
+
+## 4. The MySpace leak, checked (10 Nov, S357d, a Sonnet agent, read-only; for his decision, nothing changed)
+
+| point | verdict | sources |
+|---|---|---|
+| Year and platform | **Confirmed**: MySpace, June 2005 (reposted on blogs 19–20 June; his update 14 Aug). Exact first-post date not found | Wikipedia "Love in Action"; Daily Kos 20 Jun 2005 (weak) |
+| What was posted | **Confirmed**: the teen programme's rules. No personal computers, mobile phones, email or internet at home unless approved by the "Chain of Command"; Phase 1 no internet, Phase 2 only for work; Christian music only (even classical counts as secular); no TV; one G/PG video a week; dress rules and "False Image" clothing; no talk of the therapy at home; "campy" talk banned; first days of silent "safekeeping" | Box Turtle Bulletin (rules reprinted); Truth Wins Out archive 2008 — already KB S1/S2 in RESEARCH_CALEB_AND_TIME_2026-10-31_CLAUDE.md |
+| Coverage, consequences | **Partly**: NYT "Gay Teenager Stirs a Storm", 17 Jul 2005; Salon, ABC, Washington Blade; daily protests outside (Queer Action Coalition). The state's child-abuse probe dropped by 28 Jun 2005; Dept of Mental Health (12 Sep 2005) found two unlicensed facilities; LIA stopped taking mentally ill clients and giving medication; settled Oct 2006 (no licence needed). Conley's "CNN headline" not found | Wikipedia; SIECUS; Memphis Flyer Feb 2006 (KB) |
+| "Refuge" | **Confirmed**: the teen programme, outpatient, families in nearby hotels; ended June 2007. Start year differs in the KB (2004 here, 2002 in another row) — [VERIFY SOURCE] | Wikipedia; Pride Source 30 Jun 2005; LGBTQ Religious Archives |
+| Against Conley | No serious contradiction. Unconfirmed: the CNN headline, "the story came and went", LIA "ended in 2012". The director is John Smid | — |
+
+**What this allows (for his decision).**
+1. **2003 can use the rules, not the leak.** The ban on computers, email and the internet is the programme's own paper, documented. In 2003 that is a family receiving those rules. It is grounded and fits the era.
+2. **The leak itself is 2005.** It could appear only at the Close, or in a note dated 2005: the first time a programme's rules were seen by everyone because a teenager posted them online.
+3. **Never name or show the teenager.** Still [VERIFY SOURCE]: the NYT text, the CNN claim, the date of the first post.
+
