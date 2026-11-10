@@ -420,6 +420,53 @@ From DESIGN_COMMONS_REVAMP_2026-11-10.md §4, answer 3, and UIB_JOB_11_2026-11-1
 - **Do not overclaim:** the article needs its own source for the specific tie between medical fear and the
   anti-gender movement's campaigns [VERIFY SOURCE]. The two documents above establish the movement, not that tie.
 
+## 7k. The Commons revamp as built: hologram, raid, naming, backstage (S354–S356, 10 Nov 2026)
+
+From UIB_JOB_11_2026-11-10.md and the builder's reports, merged at 4795d979. Photos:
+`research/article-images-2026-11-10/commons-host-S354/`, `commons-raid-S355/`, `commons-backstage-S356/`.
+
+- **The figure changed on review.** Part A built the host as a grey low-poly statue on a stone plinth. Seen in the
+  photos, it read as church statuary, which put faith itself in the frame. The lead chose a **hologram on a pad**
+  (see-through, scan-line slices, arms open like its own screen picture, no face, no voice). The parody is aimed at
+  the product, not at belief, and the figure now says so too: it is visibly a projection.
+- **The naming, as built.** Seven tags, each by one person in the raid, each taking back one part of the stage:
+
+  | tag | who | takes back |
+  |---|---|---|
+  | it's a subscription | okra | the "24/7" badge |
+  | that's a waiting list | sib | the halo |
+  | first they cut your friends | lark | the Friends' column |
+  | the old root cause one | fen | the cold studio light |
+  | fear, dressed as care | mira | "for your safety" |
+  | source? | pip | the numbers (the panel answers itself: "source: none") |
+  | she's right here | junie | the host's picture, which becomes the people's broadcast |
+
+  The host's own frame fails to file the raid ("about this raid · Rank —"). This is the companion §7i's
+  "recognition" pedagogy made literal: the people name the move while it is still on stage; the analysis lives
+  elsewhere.
+- **The backstage: two ways of being seen.** Junie: "maya. look what's behind the stage" (one button, *Show me*;
+  a blink-turn, nobody is slowly rotated). Behind her is the operator view: *Lead: Maya, 18 · Intent: high ·
+  Warmth: 0.82 · Next step: residential programme (partner) · Session value: pending conversion*, and "words she
+  typed this week", which are the buttons the player actually pressed, quoted back from memory and never stored. While
+  she faces it, the stage behind her becomes the people's. The surveillance side is sharp; life is soft (the
+  aesthetic law).
+- **Where the analysis went: "The script is real".** The stream only asks "source?". The deeper reading is a new
+  section of the 2026 era website, framed within the anti-gender movement and claiming only what *The Hate Review*
+  says (Europe; "protect the children" in 42 countries, p. 23; "legal gender recognition and healthcare" grown to the
+  third-largest topic, the frontier moved to trans people's rights, pp. 21–22). The seven moves are listed with what
+  the host says, the tag, a status and a source. The clinical debate keeps both readings (Cass, HHS 2025 / AAP).
+  Closing line: *"The machine is imagined. The script is real."*
+- **Partial answer to §7j's [VERIFY SOURCE].** pp. 21–23 document healthcare and legal recognition as the movement's
+  growing target and child protection as its widest narrative. That fear of medical transition is the *tactic*
+  connecting them is still the piece's reading, not the report's sentence; keep the [VERIFY SOURCE] until a source
+  says it.
+- **A correction on merge (method point).** The builder's draft said all five Jesus chatbots in the 2025 study were
+  "funded by ads or subscriptions"; the knowledge base says advertising (subscriptions were the author's forecast).
+  The orchestrator corrected it before merge. Checking every factual line against the research files is part of
+  the authorship model, also when the drafter is another AI session.
+- **For his approval:** the Dossier card "The AI host" (speculative): *"talked to you as Jesus, for a fee, and could
+  not file the people who came"*, and its source text. Dossier phrasing is his.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

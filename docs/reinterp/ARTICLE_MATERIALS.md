@@ -16,7 +16,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | document | what it is | in git? |
 |---|---|---|
 | `docs/reinterp/ARTICLE_RESTRUCTURE_IDEA_2026-10-31.md` | his one argument for the article (31 Oct) | yes |
-| `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` | **the main companion**: what the piece is, by section (§1–§10), with dated additions §7–§7j | yes |
+| `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` | **the main companion**: what the piece is, by section (§1–§10), with dated additions §7–§7k | yes |
 | `docs/reinterp/ARTICLE_COMPILATION_2026-10-03.md` | the full evidence file up to 3 Oct: authorship model, his overrides, the ethics regime, numbers | yes |
 | `docs/reinterp/ARTICLE_EVIDENCE_LOG.md` | **his own notes** for the article (his file: Claude reads, never rewrites) | yes |
 | `docs/reinterp/ARTICLE_FIGURES_2026-10-31.md` | the 26 figures, captions and how they were made | yes |
@@ -38,6 +38,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | 7h | the stream as parody and homage: AI-Jesus livestreams, Trans Academy, embodied visibility | 10 Nov |
 | 7i | the raid: experience, recognition, evidence; two pedagogies | 10 Nov |
 | 7j | a beat cut ("Someone who went back"); medical fear as the anti-gender movement's tactic | 10 Nov |
+| 7k | the Commons revamp as built: hologram, raid, the seven tags, the backstage, "The script is real" | 10 Nov |
 
 ## 2. Research documents (sourced; each says what was opened and what was only listed)
 
@@ -94,6 +95,8 @@ ARTICLE_COMPANION; this file only says where things are.*
 | `research/article-images-2026-11-10/commons-revamp-mockups/` | rough mock-ups of the Commons directions (2a host and takeover, A, B, C) | 5 | 10 Nov | proposals, not the build |
 | `research/article-images-2026-11-10/cut-recording/` | the cut beat "Someone who went back", and Junie's message cutting it off | 4 | 2 Nov | companion §7j |
 | `research/article-images-2026-11-10/commons-host-S354/` | the Commons revamp, Part A: Shepherd Live™'s studio, the host, the conversation, the recap, the try-on | 20 | 10 Nov | the a* set predates the Friends-header fix; d* shows it. Also on OneDrive |
+| `research/article-images-2026-11-10/commons-raid-S355/` | Part B: the host as a hologram on a pad (statue before / hologram after, desktop and emulated headset), the raid, the seven tags, "source: none", "she's right here" | 20 | 10 Nov | companion §7k; headset frames are emulation only. Also on OneDrive |
+| `research/article-images-2026-11-10/commons-backstage-S356/` | Part C: Junie's ask, the operator view, the view gone dark, the turn back, the night | 8 | 10 Nov | companion §7k. Also on OneDrive |
 | `out/tour-e4-v2/`, `out/tour-e4/` … | era tours (regenerable with tools/tour-e4.mjs, tools/stills.mjs) | many | various | working photos; copy anything chosen into `research/` |
 | `~/update-available-uib/out/s347/`, `s348/` | era-change and headset probe frames (66 MB) | 284 | 9 Nov | indexed only, not copied |
 
@@ -116,6 +119,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 3. ☑ S353c (10 Nov): ~~Images are local only~~ **backed up to the UiB OneDrive** (his choice): see §8.
 4. The rights to each reference image in `output/reference-shots-2026-10-31/` before anything is printed.
 5. **Later (his 10 Nov):** a profound before and after through time (TODO T63). The 8 Nov headset frames wait for it.
+6. **His approval:** the Dossier card "The AI host" and its source text (Claude's draft; companion §7k).
 
 ## 8. The backup on OneDrive (since 10 Nov)
 
