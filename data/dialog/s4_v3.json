@@ -6,7 +6,9 @@
   },
   "fundraiser": {
     "poster": ["TRANSJESUS", "BIRTHDAY", "LIVE STREAM", "FOR TRANS YOUTH", "COME AS YOU ARE"],
-    "title": "birthday stream · for trans youth", "fund": "mutual aid · for trans youth", "fraction": 0.68
+    "title": "birthday stream · for trans youth", "fund": "mutual aid · for trans youth", "fraction": 0.68,
+    "tick": "✓ noa", "tickFraction": 0.69,
+    "_docTick": "⚑ S350 — when noa's line arrives in the stream's chat (s4_ball.json, 'gift'), a small tick by the fund bar and the bar a hair longer: one viewer's gift, no total, no thanks, no score."
   },
   "laptop": {
     "restoring": "Restoring your session.",
@@ -224,6 +226,7 @@
       { "id": "map", "lines": [ "Some people slow you down.", "You muted Junie on my advice. Your progress improved.", "Protect your progress: mute 2 more." ],
         "chips": [ { "label": "Mute 2 more", "reply": "Done. Look at you go. 98%.", "filed": "contacts: 2 more muted on advice — the lot, Lantern line", "mute": true },
                    { "label": "Not yet", "reply": "Of course. Whenever you're ready. I'm not going anywhere.", "filed": "contacts: muting deferred — noted" } ] },
+      { "id": "stories", "lines": [ "You're not the only one, Maya.", "Others found their way. Read their stories." ] },
       { "id": "rest", "lines": [ "Rest now. I'll be right here.", "I'm always right here." ] },
       { "id": "unmuted", "lines": [ "Junie is unmuted.", "Exposure risk: rising. Your progress: 61%.", "Let's get you back on track. Confirm your profile photo." ],
         "button": "Confirm profile", "filed": "contact unmuted — progress reset; profile confirmation requested" },
@@ -235,6 +238,24 @@
       "ring": "Becoming",
       "streak": "18 days on track",
       "stamp": "✓ recommended"
+    },
+    "stories": {
+      "_doc": "⚑ S350 / T54 — NOA IN 2026, option 3 (his choice, 10 Nov; docs/reinterp/DESIGN_NOA_2026_2026-11-09.md, UIB_JOB_9_2026-11-10.md). After the map beat and before Junie, the bot shows three curated cards: a first name, an age, one smoothed sentence in ITS voice. Noa's card carries a small 'as she wrote it' link: one press opens her own words, which are ordinary and say nothing of the kind. Optional; nothing waits on it; filed as the bot's offer, never a score. Satire lives only in the system's smoothing (the stamp, the identical cadence) and collapses when her own words open. Guards: Noa is a different person from Maya (guard 1) and nothing from her 2016 file travels with her; no deadname; the piece never says what she became and never speaks for her about transition or detransition; the clinical debate is not touched. The other two cards are invented and faceless, and are no one's testimony. Her card and her own sentence are his (the job's wording, verbatim — never paraphrased); the bot's two lines, the title, the stamp and the other two cards are Claude's under the 2026-08-17 norm; his edit wins.",
+      "title": "Stories like yours",
+      "stamp": "curated for you · lightly edited",
+      "cards": [
+        { "id": "noa", "name": "Noa, 34", "line": "I found my peace.", "_s": "his wording (UiB job 9), verbatim" },
+        { "id": "jess", "name": "Jess, 19", "line": "My family is whole again." },
+        { "id": "kai", "name": "Kai, 23", "line": "I stopped fighting myself." }
+      ],
+      "link": "as she wrote it ›",
+      "original": {
+        "label": "as she wrote it",
+        "text": "I wrote about my week. I was tired, and the bus was late.",
+        "_s": "his wording (UiB job 9), verbatim — ordinary on purpose; never about gender"
+      },
+      "holdSeconds": 9,
+      "readSeconds": 6
     },
     "map": {
       "title": "Your circle",
@@ -314,6 +335,8 @@
     "agent": "assistant: opened from a sponsored result — Second Thoughts",
     "junie": "contact: Junie unmuted — exposure risk rising",
     "keep": "profile: 'You, restored · 2027' — no match",
-    "reversal": "profile: original confirmed — verified, match: Maya"
+    "reversal": "profile: original confirmed — verified, match: Maya",
+    "stories": "assistant: 'Stories like yours' offered — three stories, lightly edited",
+    "noa": "story: opened as she wrote it — Noa, 34"
   }
 }

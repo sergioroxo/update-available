@@ -45,7 +45,7 @@ import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import { isSpeedrun, extraOn } from '../../state/cut';
 import script from '../../../data/dialog/s4_ball.json';
 
-interface Line { who: string; text: string }
+interface Line { who: string; text: string; gift?: boolean }
 const INV = script.invite;
 const FRAME = script.frame as unknown as { panel: string; rows: { k: string; v: string }[]; rowSeconds: number; holdSeconds: number; growSeconds: number; clearSeconds: number };
 const ST = script.stream as unknown as {
@@ -112,6 +112,8 @@ export class E4Ball {
   /** the chat so far, and the count */
   private chat: (Line & { sys?: boolean })[] = [];
   private count = ST.count;
+  /** ⚑ S350 — a viewer's gift has landed (noa's line, 'gift' in the data): the fund bar's small tick */
+  private gave = false;
   /** the timeline of the chat: when the next line is due, and which queue it comes from */
   private queue: (Line & { sys?: boolean; mark?: 'joined' | 'ask' })[] = [];
   private nextLineAt = 0;
@@ -226,6 +228,7 @@ export class E4Ball {
       const l = this.queue.shift()!;
       this.say(l);
       if (l.mark === 'joined') { this.count = ST.count + 1; greetCommonsFigures(true); }
+      if (l.gift) this.gave = true;
       if (l.mark === 'ask') { this.asking = true; this.publishChips(); }
       this.nextLineAt = this.streamT + ST.lineSeconds * (l.mark === 'joined' ? 1.4 : 1);
     }
@@ -567,8 +570,12 @@ export class E4Ball {
     setFont(ctx, 8); ctx.fillStyle = ERA4.textHi;
     ctx.fillText(V3.fundraiser.title, 7, 23);
     ctx.fillText(V3.fundraiser.fund, 7, 34);
-    px(ctx, 7, 46, W - 14, 4, ERA4.rule);
-    px(ctx, 7, 46, Math.round((W - 14) * V3.fundraiser.fraction), 4, PLACE.textileHi);
+    // ⚑ S350 — noa's gift: a small tick by the fund bar and the bar a hair longer; no total, no thanks
+    const tickW = this.gave ? Math.ceil(ctx.measureText(V3.fundraiser.tick).width) + 6 : 0;
+    const barW = W - 14 - tickW;
+    px(ctx, 7, 46, barW, 4, ERA4.rule);
+    px(ctx, 7, 46, Math.round(barW * (this.gave ? V3.fundraiser.tickFraction : V3.fundraiser.fraction)), 4, PLACE.textileHi);
+    if (this.gave) { ctx.fillStyle = PLACE.textileHi; ctx.fillText(V3.fundraiser.tick, W - 7 - tickW + 6, 43); }
     // the chat column
     const x0 = W - cw - 2;
     px(ctx, x0, TB, cw + 2, H - TB, ERA4.panel);
