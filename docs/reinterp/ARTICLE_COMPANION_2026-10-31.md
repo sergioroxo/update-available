@@ -333,6 +333,30 @@ in the headset it read as ugly and did not fully work. The era change becomes an
 fade to black (built S346: the morph, `src/engine/viewMorph.ts`). The idea worth keeping for the article: a domestic interior shown as a model is the institution's view
 of a life (a case file you can turn in your hand). On a body in a headset, it read as distance rather than critique.
 
+## 7h. The stream as parody and homage: AI-Jesus livestreams and peer-run trans services (his, 10 Nov 2026)
+
+His framing: the 2026 stream "serves as a parody to the AI Jesus livestreams, but also it is a piece in honour to
+services like Trans Academy". Ground: docs/reinterp/RESEARCH_COMMONS_STREAM_2026-11-10.md (every claim sourced, O/L).
+- **Parody.** AI "Jesus" products are a real genre since 2023: a 24/7 Twitch stream answering chat, a for-profit
+  "Text With Jesus" app, an AI Jesus in a Lucerne confessional (2024), an AI "priest" withdrawn within a week (2024).
+  A 2025 study found four of five Jesus bots claim to be Jesus and all five are for-profit. The piece's people's
+  stream answers that genre's voice — one product claiming authority and answering everyone — with a room of people
+  who answer each other. The satire is aimed at the product (its claim, its badge, its metrics), never at faith,
+  Jesus as believers hold him, or believers. **Do not overclaim:** no documented case was found of a Jesus bot steering
+  an LGBTQ+ user to change; the documented conversion-practice outputs are in a general model (Meta's Llama 4, GLAAD
+  test, 2025) and a purpose-built anti-trans bot (Rewire News Group, 2026). An AI Jesus that nudges is the piece's
+  extrapolation and must be labelled speculative.
+- **Homage.** "Trans Academy" is, most likely, the VRChat community and US non-profit (founded 2022, 501(c)(3) in
+  2024): free peer-taught classes, coffee hours, moderation from day one, streams saved for later. The piece honours
+  the model with invented names only.
+- **Embodied visibility.** Freeman & Acena, *"Acting Out" Queer Identity: The Embodied Visibility in Social Virtual
+  Reality* (Proc. ACM HCI 6, CSCW2, 2022) names how queer users make themselves seen by wearing and acting through a
+  virtual body, and calls it a double-edged sword (affirming, and targetable). The stream's welcome follows it: it
+  works in silence, says her name and nothing else, keeps distance, and leaves hostility to the system's glass. Cite
+  it as design guidance from interview studies, not as evidence about the piece.
+- A proposal to rebuild the Commons around his idea (Maya goes into the headset to talk with the system's AI Jesus,
+  and Junie's message turns its stream into the people's) is DESIGN_COMMONS_REVAMP_2026-11-10.md (draft).
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

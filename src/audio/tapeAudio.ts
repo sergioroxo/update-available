@@ -46,6 +46,7 @@ const REGISTRY: Record<string, string> = {
   'fellowship_loop_1997.mp3': `${AUDIO_BASE}fellowship_loop_1997.mp3`, // S343 · the Fellowship Network's autoplaying MIDI (tools/make_fellowship_loop.py; T34)
   'familyform_loop_1997.mp3': `${AUDIO_BASE}familyform_loop_1997.mp3`, // S343 · the Family Form's music-box loop (tools/make_familyform_loop.py; T34)
   'rootcause_loop_1997.mp3': `${AUDIO_BASE}rootcause_loop_1997.mp3`, // S343 · Root Cause Digger's shareware tune (tools/make_rootcause_sounds.py; T35)
+  'releasework_loop_1997.mp3': `${AUDIO_BASE}releasework_loop_1997.mp3`, // S351 · Release Work's guided-relaxation tape, no beat (tools/make_releasework_loop.py; T34)
   'rootcause_dig.mp3': `${AUDIO_BASE}rootcause_dig.mp3`, // S343 · Root Cause Digger (tools/make_rootcause_sounds.py; T35)
   'rootcause_pump.mp3': `${AUDIO_BASE}rootcause_pump.mp3`, // S343 · Root Cause Digger (tools/make_rootcause_sounds.py; T35)
   'rootcause_burst.mp3': `${AUDIO_BASE}rootcause_burst.mp3`, // S343 · Root Cause Digger (tools/make_rootcause_sounds.py; T35)
