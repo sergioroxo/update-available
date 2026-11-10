@@ -103,6 +103,9 @@ Lexicon and the rest. Music is missing now (said twice).
 
 ## 6. Decisions for him
 
+**His answers (10 Nov, after the session): D1 keep the seat; D2 yes, to the side; D3 bugs + comfort first. Part A is
+UIB_JOB_12_2026-11-10.md.**
+
 - **D1 (H20) the fades:** where 2026 must change his seat, (a) a plain instant cut, or (b) no seat change at all —
   everything comes to the desk seat. Recommendation: (b) where possible, (a) elsewhere; the particle veil retired in
   2026.
