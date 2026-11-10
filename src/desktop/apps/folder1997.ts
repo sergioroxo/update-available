@@ -38,6 +38,8 @@ export class Folder1997App {
   storyReady = false;
   private uploadT = -1;
   private uploadedDone = false;
+  /** the bar is running (between the press and the end) — the only time the story file has no way back */
+  private get uploading(): boolean { return this.uploadT >= 0 && !this.uploadedDone; }
   /** os.ts: the upload finished — his page is next */
   onUploaded?: () => void;
   private t = 0;
@@ -45,7 +47,10 @@ export class Folder1997App {
     this.t += dt;
     if (this.uploadT >= 0 && !this.uploadedDone) {
       this.uploadT += dt; this.dirty = true;
-      if (this.uploadT >= UPLOAD_SECONDS) { this.uploadedDone = true; this.onUploaded?.(); }
+      // ⚑ S358 / H05 (his headset, 10 Nov: the folder "stays locked" after the upload) — the upload done, the folder
+      //   is his again: back to its file list, the story file among the rest (it used to stay on the upload bar, with
+      //   no Back and an X that closed the folder, so nothing in it could be reached again)
+      if (this.uploadT >= UPLOAD_SECONDS) { this.uploadedDone = true; this.view = 'list'; this.onUploaded?.(); }
     }
   }
   /** the files the list shows — his story first, once there is one */
@@ -130,8 +135,13 @@ export class Folder1997App {
     ui.setFont(ctx, 11); ctx.fillStyle = ERA1.black;
     ctx.fillText(`${F.story.name}: ${F.story.caption}`, c.x + 10, iy + ih + 6);
     const by = c.y + c.h - 24;
-    if (this.uploadT < 0) {
+    if (!this.uploading) {
       this.button(ctx, c.x + 10, by, 64, F.back, 'f97-back');
+      if (this.uploadedDone) {   // H05: sent — the file says so, and he can put it down
+        ui.setFont(ctx, 10); ctx.fillStyle = ERA1.greyDark;
+        ctx.fillText(F.uploaded, c.x + 84, by + 4);
+        return;
+      }
       ui.setFont(ctx, 10);
       const uw = Math.ceil(ctx.measureText(F.upload).width) + 24;
       ui.button(ctx, c.x + c.w - uw - 10, by - 2, uw, 22, F.upload, { hover: this.hover === 'f97-upload', primary: true });
@@ -173,7 +183,7 @@ export class Folder1997App {
     // ⚑ S339 (his answer 8: "Closing a file in the 1997 folder returns to the folder's file list, not the preview") —
     //   the X on an open file puts the file down; on the list it closes the folder
     if (h.id === 'f97-close') {
-      if (this.view !== 'list' && this.uploadT < 0) { this.view = 'list'; this.back = false; return; }
+      if (this.view !== 'list' && !this.uploading) { this.view = 'list'; this.back = false; return; }
       this.open = false; this.onClose?.(); return;
     }
     if (h.id === 'f97-upload') { if (this.uploadT < 0) this.uploadT = 0; return; }

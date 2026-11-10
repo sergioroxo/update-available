@@ -695,8 +695,14 @@ export class E4Shell {
     //   `update`), and Junie's card breaks into its mirror.
     this.triedOn = false;
     // ⚑ S321 — the try-on begins unasked: the room's bed goes, the session breathes
-    roomBed.set(null, 3.0);
-    if (!this.breath && !(isSpeedrun() && !extraOn('session'))) this.breath = playLoop('session_breath.mp3');
+    // ⚑ S358 / H16 (his headset, 10 Nov: "How did I just jump to the headset? There's no sound") — in the short cut
+    //   (the default visit) the session is an extra and does not breathe, but the bed was cut all the same: from the
+    //   headset to Junie's link the room was SILENT. The bed now goes only when the breath replaces it.
+    const breathes = !(isSpeedrun() && !extraOn('session'));
+    if (breathes) {
+      roomBed.set(null, 3.0);
+      if (!this.breath) this.breath = playLoop('session_breath.mp3');
+    }
   }
 
 

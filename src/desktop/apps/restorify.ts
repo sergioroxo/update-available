@@ -44,6 +44,20 @@ export class RestorifyApp {
   private chips(): Chip[] { return this.evening ? [...(lamby.checkinChips as Chip[]), lamby.eveningChip as Chip] : lamby.checkinChips as Chip[]; }
   /** S275 — the button by the streak opens the pocket pet (os.ts owns it) */
   onOpenCompanion?: () => void;
+  /** ⚑ S358 / H03 — his story, while it has been asked for and is not yet out (os.ts owns both) */
+  storyPending?: () => boolean;
+  onOpenStory?: () => void;
+  /**
+   * ⚑ S358 / H03 (his headset, 10 Nov: the daily check-in button "stays… pressing it again repeats the check-in";
+   * after it is done "it should go to 'open your story' or to Lamby"). The Today card's one button is the day's NEXT
+   * thing: the check-in until it is filed, then his story while it is asked for, then the companion (Lamby). It never
+   * opens the daily check-in twice; the evening's is a separate beat that os.ts starts on its own.
+   */
+  private todayNext(): { label: string; id: 'today-checkin' | 'today-story' | 'today-companion' } {
+    if (!ledger.checkins.some(ch => !ch.id.startsWith('e3'))) return { label: decisions.restorify.checkin, id: 'today-checkin' };
+    if (this.storyPending?.()) return { label: decisions.restorify.openStory, id: 'today-story' };
+    return { label: companionCopy.open, id: 'today-companion' };
+  }
   private settings = false;
   private selectedDay = 'steady';
   private readonly panel = new LambyRigPanel();
@@ -128,10 +142,11 @@ export class RestorifyApp {
     this.hits = [];
     if (this.settings) { this.drawPersonalise(ctx); return; }
     if (this.today) {
-      this.todayPanel.footerAction = decisions.restorify.checkin;
+      const next = this.todayNext();
+      this.todayPanel.footerAction = next.label;
       this.hits.push(...this.todayPanel.draw(ctx, TODAY_X, 50, TODAY_W).map(r => ({ ...r, id: 'restorify-close' })));
       this.rect = { x: TODAY_X, y: 50, w: TODAY_W, h: this.todayPanel.height(ctx, TODAY_W) };
-      if (this.todayPanel.actionRect) this.hits.push({ ...this.todayPanel.actionRect, id: 'today-checkin' });
+      if (this.todayPanel.actionRect) this.hits.push({ ...this.todayPanel.actionRect, id: next.id });
       return;
     }
     const { dx, dy } = this.geom;
@@ -255,7 +270,12 @@ export class RestorifyApp {
       this.dirty = true; return;
     }
     if (hit.id === 'restorify-today') { this.showToday(); return; }
-    if (hit.id === 'today-checkin') { this.lastChip = null; this.today = false; this.dirty = true; return; }
+    if (hit.id === 'today-checkin') {
+      if (ledger.checkins.some(ch => !ch.id.startsWith('e3'))) return;   // H03: filed once, never asked again from here
+      this.lastChip = null; this.today = false; this.dirty = true; return;
+    }
+    if (hit.id === 'today-story') { this.open = false; this.dirty = true; this.onOpenStory?.(); return; }
+    if (hit.id === 'today-companion') { this.onOpenCompanion?.(); this.dirty = true; return; }
     if (hit.id === 'restorify-close') { this.open = false; this.dirty = true; if (this.evening) { this.evening = false; this.onEveningDone?.(); } return; }
     if (hit.id === 'checkin-continue' && this.evening) { this.evening = false; this.open = false; this.dirty = true; this.onEveningDone?.(); return; }
     if (hit.id === 'checkin-continue') {

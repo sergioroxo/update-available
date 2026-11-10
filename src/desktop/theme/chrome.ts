@@ -67,6 +67,21 @@ export interface ContentRect { x: number; y: number; w: number; h: number; close
 export interface FrameRec { key?: string; x: number; y: number; w: number; h: number; minBox?: Rect }
 let framesDrawn: FrameRec[] = [];
 export function resetFrames(): void { framesDrawn = []; }
+/** ⚑ S358 / H02 — a window that paints its frame into a cache (NetVision's 30 Hz tape picture) still has to say, on
+ *  every desktop draw, that its frame is there: without it the frame vanished from this list on two draws in three,
+ *  and its minimise box (and the window under it) answered for it. */
+export function registerFrame(f: FrameRec): void { framesDrawn.push(f); }
+/** ⚑ S358 / H01 — how many frames have been drawn so far this draw (a window's own frames are the ones between the
+ *  count before its draw and after it) */
+export function frameCount(): number { return framesDrawn.length; }
+/** ⚑ S358 / H01 — the index of the topmost frame under a point, or -1 */
+export function topFrameIndexAt(x: number, y: number): number {
+  for (let i = framesDrawn.length - 1; i >= 0; i--) {
+    const f = framesDrawn[i];
+    if (x >= f.x && x <= f.x + f.w && y >= f.y && y <= f.y + f.h) return i;
+  }
+  return -1;
+}
 /** the keyed frames whose minimise box is not under a later frame — the aimable ones */
 export function minBoxesVisible(): { key: string; x: number; y: number; w: number; h: number }[] {
   const out: { key: string; x: number; y: number; w: number; h: number }[] = [];

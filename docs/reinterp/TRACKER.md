@@ -99,6 +99,8 @@ closed by him, never raise it again.
 
 ## Done since the headset session (newest first)
 
+- ☑ **S358 UiB job 12 Part A1** — the 10 Nov headset session's bugs H01–H19 (phantom buttons, NetVision close, check-in, Caleb's teaser sound, the 1997 folder, the diary line, the Handset Window number, Soften the term, the sticker, the link that was not there, Live, the window that grew, phone scroll + the song, the search box, window sizes, the try-on's silence, the 2026 room's props, wake vs breathing, the Close's panels). BUILD_LOG S358.
+
 - ☑ His 8 Nov ruling: **no man's hands on the controllers in the headset** — not needed; the try-on stays on the glass only. Closed.
 - ☑ **S325 Codex's 2026 room merged** (CODEX_E4_V3_ROOM_REPORT_2026-11-08.md; his README untouched); **full walk reached the Close** (271 presses); **itch ZIP rebuilt**: release/your-update-has-failed_itch_2026-11-08.zip (48.7 MB, 265 files), loads clean in an itch-style iframe, no outside requests. ☐ upload it to itch.
 - ☑ **S324 full walk of the combined build** (2016 phone mirror + 2026 v3 screens + jingle + Focus cut): reached the Close, 277 presses, Restart card showing (WALK_2026-11-08_SPEEDRUN_GUIDED.md).

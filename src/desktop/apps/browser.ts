@@ -250,7 +250,11 @@ export class E4Browser {
     if (s === 'monitor' && this.mode === 'game') { this.floppy.closeGame(); this.mode = 'story'; this.version++; }
     if (s !== 'headset') {
       const f = s === 'laptop' ? 'kettle' : 'browser';
-      if (this.focus !== f || this.chosen) { this.focus = f; this.chosen = null; this.version++; }
+      // ⚑ S358 / H15 (his headset, 10 Nov: "window sizes keep changing… makes no sense"; "message sizes changed again
+      //   when a message arrived") — the story no longer resizes the windows: an arrival names the window it is on
+      //   (`focus`), but which window is the larger is the visitor's own choice, the browser by default (his: "the
+      //   browser widest", the messages smaller)
+      if (this.focus !== f) { this.focus = f; this.version++; }
       // ⚑ the system takes the screen: Kettle goes back to its list, so a felt thread is never left open beside the
       //   bot's voice (and L, silent over a felt thread, can be asked again)
       if (f === 'browser' && this.messenger.view !== 'list') { this.messenger.view = 'list'; this.version++; }
@@ -266,7 +270,7 @@ export class E4Browser {
   /** Lamby's "Show me": the one screen */
   guideSurface(): 'monitor' { return 'monitor'; }
   /** which window is the larger now */
-  private get enlarged(): 'browser' | 'kettle' { return this.chosen ?? this.focus; }
+  private get enlarged(): 'browser' | 'kettle' { return this.chosen ?? 'browser'; }
   /** the two windows exist once the session is open (nothing arrives during the restore), and while it fails */
   private get windowed(): boolean { return (this.phase === 'open' || this.phase === 'failed') && !this.idleOrb; }
   private layout(W: number, H: number): Layout {
@@ -831,12 +835,14 @@ export class E4Browser {
     const back = this.tabsBack();
     if (this.phase === 'dormant' || this.settleT > 0) { px(ctx, 0, 0, W, H, CHROME.page); return; }
     if (this.phase === 'saver') {
-      if (this.orb) this.orb.draw(ctx, W, H); else px(ctx, 0, 0, W, H, CHROME.page);
+      // ⚑ S358 / H18 (his headset, 10 Nov: "Press to wake the screen" covered the breathing) — the orb breathes in the
+      //   space above the button: its cue and phrase never reach the button's band
+      if (this.orb) { this.orb.footer = 48; this.orb.draw(ctx, W, H); } else px(ctx, 0, 0, W, H, CHROME.page);
       // ⚑ S328 — ONE OBVIOUS FIRST PRESS (his 8 Nov: "not totally sure where to press"): a button, not a whisper.
       //   The whole glass still wakes it; the button says that it does.
       setFont(ctx, 17);
       const label = V.oneScreen.wake, bw = Math.ceil(ctx.measureText(label).width) + 44, bh = 36;
-      const bx = Math.round((W - bw) / 2), by = H - 60;
+      const bx = Math.round((W - bw) / 2), by = H - 44;
       pill(ctx, bx, by, bw, bh, V3.primary);
       ctx.fillStyle = V3.primaryInk; ctx.fillText(label, bx + 22, by + 9);
       this.publish({ x: 0, y: 0, w: W, h: H, id: 'saver-wake' });
@@ -993,10 +999,17 @@ export class E4Browser {
     setFont(ctx, 30); ctx.fillStyle = V3.ink;
     ctx.fillText(SR.brand, lx, PAGE_TOP + 40);
     const bx = lx, by = PAGE_TOP + 92, bw = 380, bh = 36;
-    pill(ctx, bx, by, bw, bh, V3.edge); pill(ctx, bx + 1, by + 1, bw - 2, bh - 2, V3.card);
-    const typed = this.step === 'search' ? this.addressNow() : '';
-    if (typed) { setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(typed, bx + 18, by + 10); }
-    else { setFont(ctx, 14); ctx.fillStyle = V3.ink2; ctx.fillText(SR.placeholder, bx + 18, by + 11); }
+    // ⚑ S358 / H14 (his headset, 10 Nov: "Search or type a web address is not working", twice) — the box invited typing
+    //   on every new tab and took no press. It is offered only where the search happens (her sentence is typed for her
+    //   there), and once the sentence is done the box itself opens it, like the completions under it.
+    const offered = this.step === 'search' || this.step === 'typing';
+    if (offered) {
+      pill(ctx, bx, by, bw, bh, V3.edge); pill(ctx, bx + 1, by + 1, bw - 2, bh - 2, V3.card);
+      const typed = this.step === 'search' ? this.addressNow() : '';
+      if (typed) { setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(typed, bx + 18, by + 10); }
+      else { setFont(ctx, 14); ctx.fillStyle = V3.ink2; ctx.fillText(SR.placeholder, bx + 18, by + 11); }
+      if (this.typedDone) this.publish({ x: bx, y: by, w: bw, h: bh, id: 'search-open' });
+    }
     // the bookmark: the free game, one press away (S168)
     if (this.step !== 'typing') {
       const label = '☆ ' + FLOPPY_LABEL;

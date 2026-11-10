@@ -227,9 +227,9 @@
         "act": "focus:vera-kit-close"
       },
       "vote": {
-        "tip": "The group sent a link. Open it when you're ready.",
-        "here": "The link is on the phone.",
-        "again": "The link is waiting.",
+        "tip": "Bea's news from Malta is coming to the group.",
+        "here": "It comes to the phone, beside the platform.",
+        "again": "The news is on its way to the phone.",
         "target": [
           "link",
           "link2"

@@ -424,7 +424,7 @@
     {
      "id": "phone",
      "label": "The phone",
-     "done": "phoneAnswered",
+     "done": "phoneAfterKit",
      "hint": "Her phone is mirrored beside the platform. Each finished job brings a message there.",
      "where": "the mirrored phone beside the platform"
     },

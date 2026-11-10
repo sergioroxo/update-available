@@ -1,6 +1,6 @@
 import { runtimeQuery } from '../edition';
 import { GuideWait } from '../narrative/guideWait';
-import { xrRects, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
+import { xrRectsOwned, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
 import { pathTargets, drawGlow } from '../witness/pathGlow';
 /** S281 — the desktop's free things: they shimmer, they never ring (the glow logic's `may`) */
 /** ⚑ S339 — 2003's two icon columns (left of Restorify's window, which now sits on the right) */
@@ -1312,6 +1312,8 @@ export class DesktopOS {
       this.restorify.onCheckinFiled = () => { this.offerTestimony(); this.recommendForum(true); };
       this.restorify.onCheckinAcknowledged = () => this.maybeAnnounceMessage();
       this.restorify.onOpenCompanion = () => this.openCompanion();
+      this.restorify.storyPending = () => this.testimonyOffered && !ledger.records.includes('testimony-online');   // S358 / H03
+      this.restorify.onOpenStory = () => this.openTestimony();
       this.startProgram(lambyStrings.restorifyTitle);
     } else if (!this.restorify.open) this.restorify.showToday();
     this.restorify.open = true;
@@ -2327,6 +2329,7 @@ export class DesktopOS {
     this.flushTestimonyToast();   // S223 cloud / W1-B3 — the offer's line, once the check-in card has closed
     this.updateSaver(dt);
     if (this.testimony?.open) { this.testimony.update(dt); if (this.testimony.dirty) this.dirty = true; }   // S205
+    else this.testimony?.syncSound();   // S358 / H04 — shut, its sound stops with it
     if (this.folder1997?.open) { this.folder1997.update(dt); if (this.folder1997.dirty) { this.folder1997.dirty = false; this.dirty = true; } }   // S339: the upload bar
     this.deliverCaleb();
     this.maybePause();
@@ -2650,10 +2653,71 @@ export class DesktopOS {
     return Math.floor(this.t * 2.2) % 2 === 0;
   }
 
+  /**
+   * ⚑ S358 / H01 (his headset, 10 Nov, said four times: "I'm still seeing the buttons from the desktop… the phantom
+   * buttons" — through "Daniel, your story", at Next task, at the Harbor, behind the NetVision player). The ray's
+   * targets were every open window's rects plus the desktop's, with no notion of which window is on top, so a
+   * desktop icon or Restorify's buttons under the forum were outlined, and the press snapped to them. A rect is
+   * aimable now only if a press at its centre would reach the thing that published it (`pressOwnerAt`, which follows
+   * handleClick's order), and a desktop icon is never aimable under a window.
+   */
+  private xrAimable(): XrRect[] {
+    const owned = xrRectsOwned(this);
+    if (this.phase !== 'desktop') return owned.map(o => o.rect);
+    return owned.filter(({ rect, owner }) => {
+      const cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2;
+      const route = this.pressOwnerAt(cx, cy);
+      if (route === undefined) return true;   // a press not routed by position (the e4 shell, a forced form): as before
+      if (route !== owner) return false;
+      return !(owner === this && rect.id?.startsWith('icon-') && ui.topFrameAt(cx, cy));
+    }).map(o => o.rect);
+  }
+  /** the desktop's own hit under a point — a desktop icon under a window is covered, and takes no press (S358 / H01) */
+  private hitAt(x: number, y: number): Hit | undefined {
+    return this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h
+      && !(h.id.startsWith('icon-') && ui.topFrameAt(x, y)));
+  }
+  /** ⚑ S358 / H01 — who a press at (x, y) reaches: the desktop's own list (`this`), an open window, null (nothing), or
+   *  undefined where a press is not routed by position. It follows handleClick's order below; keep the two in step. */
+  private pressOwnerAt(x: number, y: number): object | null | undefined {
+    if (this.paused || this.saver || this.shutRefused || this.wotdOpen || this.phase !== 'desktop') return this;
+    const hit = this.hitAt(x, y);
+    if (hit?.id.startsWith('lg-')) return this;
+    if (this.updateApp?.open && this.updateApp.visible) return this.updateApp;
+    if (hit?.id === 'taskbar-whattodo') return this;
+    if ((this.startMap.active && !this.startOpen && !this.startMapSilent) || this.startOpen || hit?.id === 'start-menu') return this;
+    if (this.checkinForced || this.formForced) return undefined;
+    if (this.desktopEra === 'e4') return undefined;
+    if (this.desktopEra === 'e2' && this.e2Stage !== 'active') return this;
+    if (this.pauseOpen || this.yesOpen) return this;
+    if (hit && (hit.id === 'taskbar-guide' || hit.id === 'toast-act' || hit.id.startsWith('min-') || hit.id.startsWith('taskbar-'))) return this;
+    if (this.netvision?.open) return this.netvision;
+    if (this.messageNoticeOpen || this.netvisionOfferOpen) return this;
+    if (this.accountability?.modal) return this.accountability;
+    if (this.programSplash) return null;
+    if (this.mediaPlayer?.open && this.mediaPlayer.contains(x, y)) return this.mediaPlayer;
+    if (this.caleb?.open) return this.caleb;
+    if (this.provotype?.open) return this.provotype;
+    if (this.lambyRigFile?.open) return this.lambyRigFile;
+    if (this.rootCause?.open) return this.rootCause;
+    if (this.folder1997?.open) return this.folder1997;
+    if (this.companion.open && this.desktopEra === 'e2') return this.companion;
+    if (this.diary?.open) return this.diary;
+    if (this.packet?.open) return this.packet;
+    if (this.web?.open) return this.web;
+    if (this.testimony?.open) return this.testimony;
+    if (this.forum?.open) return this.forum;
+    if (this.restorify?.open && (this.restorify.contains(x, y) || !hit?.id.startsWith('icon-'))) return this.restorify;
+    if (hit) return this;
+    if (this.kit?.open) return this.kit;
+    if (this.irc?.open) return this.irc;
+    return this;
+  }
+
   private xrScale = false;
   private xrHover: XrRect | null = null;
   xrPoint(x: number, y: number): { x: number; y: number } {
-    const rect = xrTarget(xrRects(this), x, y, 56);   // S271 (his 31 Oct: "it feels like it needs a target") — a wider catch: ~4° from the seat
+    const rect = xrTarget(this.xrAimable(), x, y, 56);   // S271 (his 31 Oct: "it feels like it needs a target") — a wider catch: ~4° from the seat
     if (JSON.stringify(rect) !== JSON.stringify(this.xrHover)) { this.xrHover = rect; this.dirty = true; }
     return rect ? { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 } : { x, y };
   }
@@ -4395,7 +4459,7 @@ export class DesktopOS {
       if (hw?.id === 'wotd-ok') { this.wotdOpen = null; this.modalCalm = 1; this.dirty = true; }
       return;
     }
-    const hit = this.hits.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
+    const hit = this.hitAt(x, y);
     if (this.paused) {
       if (hit?.id === 'resume') this.paused = false;
       if (hit?.id === 'pleave') this.leave();

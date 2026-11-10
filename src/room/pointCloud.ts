@@ -53,6 +53,8 @@ import { px, setFont } from '../desktop/theme/chrome';
 import { setFaceEra, faceEra, type FaceEra } from '../desktop/theme/fonts';
 
 const P = clusterData.pointCloud;
+/** S358 / H19 — the seat's eye height (app.ts EYE.y): the Close's panels lean to face it */
+const PANEL_EYE_Y = 1.16;
 
 /** deterministic LCG so the constellation is the same on every run */
 function makeRng(seed: number): () => number {
@@ -139,6 +141,8 @@ export interface PointCloud {
   /** ⚑ S163 / R3-111 — which panel a world-space ray lands on (0..3), or null.
    *  A press on a panel is the way to its sources (the frame's menu). */
   panelAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }, tMax?: number): number | null;
+  /** S358 / H19 — the panel a ray meets and WHERE (world), so a headset's ray can end on it */
+  panelHit(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }, tMax?: number): { i: number; at: { x: number; y: number; z: number } } | null;
   /** ⚑ S283 — which panel's SOURCES BUTTON a world-space ray lands on (0..3), or null. Only on the story face (the
    *  button is drawn there). The button opens that era's website (sites/<year>/index.html); a press elsewhere
    *  on the panel still turns it to its in-room dossier. */
@@ -919,7 +923,11 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         const cx = P.panel.radius * Math.sin(bearing);
         const cz = -P.panel.radius * Math.cos(bearing);
         const cy = P.panel.y;
-        pN.set(-cx, 0, -cz).normalize(); // faces the seat, upright — never tilted
+        // ⚑ S358 / H19 (his headset, 10 Nov: "the text on the top is not facing down, so I cannot read it" — "2003 ·
+        //   AUDIT" tilted and cut off) — each card hangs ~0.75 m above the eye at 3 m and stood upright, so from the seat
+        //   it was seen from below, its title row foreshortened at the top of the view. It now faces the EYE (the seat,
+        //   app.ts EYE y 1.16, in the cloud's own space): leaned toward him by ~14°, still level left to right.
+        pN.set(-cx, PANEL_EYE_Y - (P.center as number[])[1] - cy, -cz).normalize();
         pR.cross(pUp, pN);
         if (pR.length() < 1e-3) pR.set(1, 0, 0); else pR.normalize();
         pU.cross(pN, pR).normalize();
@@ -1342,7 +1350,8 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       if (corridor) applySight();
       easePanels(dt);
     },
-    panelAt(p0, p1, tMax = 1): number | null {
+    panelAt(p0, p1, tMax = 1): number | null { return this.panelHit(p0, p1, tMax)?.i ?? null; },
+    panelHit(p0, p1, tMax = 1): { i: number; at: { x: number; y: number; z: number } } | null {
       if (!visible || panelFrames.length === 0) return null;
       invRoot.copy(root.getWorldTransform()).invert();
       invRoot.transformPoint(lp0.set(p0.x, p0.y, p0.z), lp0);
@@ -1359,7 +1368,10 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         const t = (f.c.dot(f.n) - lp0.dot(f.n)) / denom;
         if (t < 0 || t > tMax) continue;   // W1-G2: nothing past the glass answers for it
         lh.copy(ld).mulScalar(t).add(lp0).sub(f.c);
-        if (Math.abs(lh.dot(f.r)) <= f.hw && Math.abs(lh.dot(f.u)) <= f.hh) return i;
+        if (Math.abs(lh.dot(f.r)) <= f.hw && Math.abs(lh.dot(f.u)) <= f.hh) {
+          // the same t along the world ray (the root's transform is affine)
+          return { i, at: { x: p0.x + (p1.x - p0.x) * t, y: p0.y + (p1.y - p0.y) * t, z: p0.z + (p1.z - p0.z) * t } };
+        }
       }
       return null;
     },

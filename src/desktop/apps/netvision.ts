@@ -444,10 +444,14 @@ export class NetVisionPlayerApp {
       }
       const film = this.picture.getContext('2d')!;
       film.setTransform(scale, 0, 0, scale, 0, 0); film.clearRect(0, 0, ERA1_CANVAS.width, ERA1_CANVAS.height); film.imageSmoothingEnabled = false;
-      this.paint(film);
-    }
+      this.paint(film);   // paints the frame, and lists it (ui.windowFrame)
+    } else if (this.frameRec) ui.registerFrame(this.frameRec);
     ctx.drawImage(this.picture, 0, 0, ERA1_CANVAS.width, ERA1_CANVAS.height);
   }
+  /** ⚑ S358 / H02 (his headset, 10 Nov: the player "cannot be closed or minimised") — the frame is painted into the
+   *  30 Hz picture, so on the draws between two tape frames it was missing from the frames list: its minimise box
+   *  could not be found and Restorify's, under it, answered instead. The frame is re-registered on every draw. */
+  private frameRec: { key?: string; x: number; y: number; w: number; h: number; minBox?: { x: number; y: number; w: number; h: number } } | null = null;
 
   private noiseSeed = 1;
   private tapeRandom(): number {
@@ -463,6 +467,7 @@ export class NetVisionPlayerApp {
     const dx = Math.round((ERA1_CANVAS.width - DW) / 2);
     const dy = Math.round((ERA1_CANVAS.height - DH) / 2);
     const c = ui.windowFrame(ctx, dx, dy, DW, DH, M.windowTitle, true, 'netvision');
+    this.frameRec = { key: 'netvision', x: dx, y: dy, w: DW, h: DH, minBox: c.minBox };
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     this.hits.push({ ...c.closeBox, id: 'netvision-close' });
     const a: Rect = c;

@@ -3814,6 +3814,20 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function aimNameUnderRay(ray: Ray): string | null {
     const A = aimStrings as unknown as Record<string, string>;
     aimAt = null;
+    // ⚑ S358 / H19 (his headset, 10 Nov, in the Close: "there's still no way to point to stuff"; "he cannot see where he
+    //   is pressing") — the panels took a press but published nothing a ray could land on: the ray stayed a stub and
+    //   nothing named what it was on. The same tests as the press (resolveTapRay), in its order: a panel names itself,
+    //   and the ray ends on it (aimAt).
+    if (cloud?.visible && closeStage !== 'message') {
+      const g = closeMonitor?.on ? closeMonitor.hitTest(ray.p0, ray.p1) : null;
+      if (!(g && closeMonitor?.near)) {
+        const tG = g ? g.t : undefined;
+        const ph = cloud.panelHit(ray.p0, ray.p1, tG);
+        if (ph) { aimAt = ph.at; return cloud.panelSourcesAt(ray.p0, ray.p1, tG) !== null ? A.closeSources : A.closePanel; }
+        const lb = cloud.labelAt(ray.p0, ray.p1, tG);
+        if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
+      }
+    }
     if (os.isOff) return hitAt(ray, POWER_BTN, 0.08) ? A.power : null;
     if (!os.inDesktop) return null;
     const devName = (): string | null => {
@@ -4561,6 +4575,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cluster?.update(dt);
       timePassing?.tick(dt);
       ceiling?.update(dt);
+      // ⚑ S358 / H19 (his headset, 10 Nov: "the panels keep moving") — in the headset the sky holds still: he turns to
+      //   read a panel, the panel does not leave. (In the browser the drift still brings each panel to a visitor who
+      //   does not drag — the law that the piece takes the viewer there.)
+      if (xr?.active) cloud?.holdDrift(0.5);
       cloud?.update(dt);
       // ⚑ S101 — the room goes once the sky is on its way (see `enterClose`).
       if (closeRoomPending && cloud && cloud.open >= 0.45) {

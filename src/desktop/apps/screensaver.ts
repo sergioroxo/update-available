@@ -476,8 +476,12 @@ export class Screensaver {
   }
 
   // ── 2026 · GraceOS's breathing orb ────────────────────────────────────
-  private drawOrb(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    ui.px(ctx, 0, 0, W, H, ERA4.field);
+  /** ⚑ S358 / H18 — the height kept clear at the foot for a button drawn over the orb (2026's "Press to wake the
+   *  screen"): the orb, its cue and the phrase of the day all breathe above it. 0 = the screensaver's own layout. */
+  footer = 0;
+  private drawOrb(ctx: CanvasRenderingContext2D, W: number, H0: number): void {
+    ui.px(ctx, 0, 0, W, H0, ERA4.field);
+    const H = H0 - this.footer;
     const period = 8;
     const ph = (this.t % period) / period;   // 0..1: in for the first half, out for the second
     const breath = ph < 0.5 ? ph * 2 : 2 - ph * 2;
@@ -516,7 +520,7 @@ export class Screensaver {
       const ph = `${S.e4.phraseLabel}: \u201c${S.e4.phrase}\u201d`;
       ui.setFont(ctx, 10);
       const pw = ctx.measureText(ph).width;
-      ctx.fillStyle = ERA4.l; ctx.fillText(ph, Math.round(cx - pw / 2), H - 58);
+      ctx.fillStyle = ERA4.l; ctx.fillText(ph, Math.round(cx - pw / 2), this.footer > 0 ? H - 22 : H - 58);
     }
     if (this.line) {
       ui.setFont(ctx, 12);   // S208 / A20 (ERA26-11) — the one instruction, legible: 12 px in the era's text colour

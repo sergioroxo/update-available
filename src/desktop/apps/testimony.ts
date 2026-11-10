@@ -34,7 +34,7 @@ import * as ui from '../theme/chrome';
 import { FOOTAGE as F } from '../theme/calendar';
 import { entriesByEra } from '../../witness/record';
 import { ledger } from '../../state/ledger';
-import { playLoop, stopClip } from '../../audio/tapeAudio';
+import { playLoop, playOnce, stopClip } from '../../audio/tapeAudio';
 import T from '../../../data/dialog/s2_testimony.json';
 import guidedCopy from '../../../data/strings/extras.json';
 import { drawWebView } from './web2003';
@@ -118,6 +118,26 @@ export class TestimonyApp {
     }
   }
 
+  /**
+   * ⚑ S358 / H04 (his headset, 10 Nov: "probably needs a sound in the Caleb") — the teaser had none at all: a canvas
+   * picture with subtitles, no clip. Its campaign's own song (the "Discover the New You" infomercial — the teaser is
+   * DVD 3 of the same set) runs under it as a promo bed, with the hall's tone low behind Caleb; both stop dead on
+   * the cut, so the cut is heard. Caleb's words stay subtitled: the 2003 footage is silent by design (S205), and the
+   * piece's synthetic voice is for the apparatus only, never for a person.
+   */
+  /** os.ts calls this while the window is shut (closed or minimised), so no bed or tone outlives the picture */
+  syncSound(): void { this.syncHall(); this.syncTeaser(); }
+  private teaserSound: HTMLAudioElement[] | null = null;
+  private syncTeaser(): void {
+    const want = this.open && this.stage === 'online' && this.web === 'teaser' && this.webT < TEASER.cutSeconds;
+    if (!want) { for (const a of this.teaserSound ?? []) stopClip(a); this.teaserSound = null; return; }
+    if (this.teaserSound) return;
+    const bed = playOnce('discover_the_new_you_infomercial_tape03.mp3'), room = playLoop('testimony_hall_tone_2003.mp3');
+    if (bed) bed.volume = Math.min(1, bed.volume * 0.55);
+    if (room) room.volume = Math.min(1, room.volume * 0.35);
+    this.teaserSound = [bed, room].filter((a): a is HTMLAudioElement => !!a);
+  }
+
   update(dt: number): void {
     this.tick += dt;
     let moving = false;
@@ -133,7 +153,7 @@ export class TestimonyApp {
         this.dirty = true;
       }
     }
-    this.syncHall();
+    this.syncHall(); this.syncTeaser();
     if (this.stage === 'cut' && this.previewT >= 0) {
       this.previewT += dt; moving = true;
       if (this.previewT >= VERSIONS[this.version].length * BLOCK_SECONDS) { this.previewT = -1; this.dirty = true; }
@@ -165,7 +185,7 @@ export class TestimonyApp {
   /** every press inside the window is the window's */
   handleClick(x: number, y: number): boolean {
     const r = this.press(x, y);
-    this.syncHall();   // a press may start, stop or close a clip — the hall follows at once, not on the next frame
+    this.syncHall(); this.syncTeaser();   // a press may start, stop or close a clip — the hall follows at once, not on the next frame
     return r;
   }
   private press(x: number, y: number): boolean {

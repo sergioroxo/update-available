@@ -7,7 +7,7 @@ import { veraDay, resetVeraDay } from '../state/veraDay';
 import polish from '../../data/strings/playtestPolish.json';
 import { drawLambyGuide, drawGuidePointer, type GuidePaint } from '../desktop/apps/lambyGuideDraw';
 import type { LambyGuide } from '../narrative/lambyGuide';
-import { refuse, drawLambientNote, resetRefusals, type DeskNote } from '../desktop/apps/lambientDesk';
+import { refuse, drawLambientNote, measureLambientNote, resetRefusals, type DeskNote } from '../desktop/apps/lambientDesk';
 /**
  * THE CORRECTION LIST — the workstation, Era 3 (Session 64, E3-iii).
  * Spec: `docs/REINTERP_E3_THE_CORRECTION_LIST_2026-07-30.md` (revision 4).
@@ -119,7 +119,9 @@ import { meetWord } from './lexicon';
 import lexStrings from '../../data/strings/lexicon.json';
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
-import { PHONE } from '../desktop/theme/phone';   // S349: the Handset Window's bar is the phone's idiom
+import { PHONE } from '../desktop/theme/phone';
+/** S358 / H08 — the references' leading (10 px type): 11 read as lines laid on each other from the seat */
+const REFS_LEAD = 13;   // S349: the Handset Window's bar is the phone's idiom
 import {
   ERA3, drawLambMark, warmGrade, drawNoaFrame, honestLight, NOA_FRAME, NOA_SECONDS, drawMemberFigure, MEMBER_FIGURE
 } from '../desktop/theme/era3';
@@ -417,12 +419,21 @@ export class GraceQueueLite {
    *  work and stops for anything that is a person's (the Story Record, her phone brought forward or a thread being
    *  read), for the pause menu, the screensaver, the games, and from the moment the update starts installing. */
   private graceLoop: HTMLAudioElement | null = null;
+  /** ⚑ S358 / H13 (his headset, 10 Nov: "the song starts playing randomly"; and H44, "the song should keep playing in
+   *  the handset window") — every press on her phone stopped the loop and the next press on the board started it again
+   *  FROM THE TOP, so it seemed to start by itself. It now plays on while she reads her phone, stops only for the
+   *  Story Record, Bea's news, the game (its own song), the pause menu, the screensaver and the install — and when it
+   *  comes back it picks up where it stopped. */
+  private graceLoopAt = 0;
   private syncGraceLoop(): void {
     const signedIn = this.mode === 'board' || this.mode === 'list' || this.mode === 'done';
-    const want = signedIn && !this.pauseOpen && !this.saver && this.veraPage !== 'record' && !this.mirrorLarge
-      && !this.mirrorReading && !this.floppy.open && !this.mirrorDisconnected;
-    if (want && !this.graceLoop) { this.graceLoop = playLoop('grace_loop_2016.mp3'); if (this.graceLoop) this.graceLoop.volume = 0.35; }
-    else if (!want && this.graceLoop) { stopClip(this.graceLoop); this.graceLoop = null; }
+    const want = signedIn && !this.pauseOpen && !this.saver && this.veraPage !== 'record' && !this.cascadeConduct
+      && !this.floppy.open && !this.mirrorDisconnected;
+    if (want && !this.graceLoop) {
+      this.graceLoop = playLoop('grace_loop_2016.mp3');
+      if (this.graceLoop) { this.graceLoop.volume = 0.35; if (this.graceLoopAt > 0) this.graceLoop.currentTime = this.graceLoopAt; }
+    }
+    else if (!want && this.graceLoop) { this.graceLoopAt = this.graceLoop.currentTime || 0; stopClip(this.graceLoop); this.graceLoop = null; }
     else if (this.graceLoop && this.graceLoop.ended) this.graceLoop = null;
   }
   private kitWaitT = 0;
@@ -1575,14 +1586,23 @@ export class GraceQueueLite {
   private drawMirror(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.mirrorBox = null;
     if (!this.mirrorAvailable) return;
-    const tx = W - 184;
-    aero.button(ctx, tx, H - 24, 180, 21, `${mirrorCopy.title} · ${this.phone.unreadCount}`, { size: 10 });
-    this.rects.unshift({ x: tx, y: H - 24, w: 180, h: 21, id: 'mirror-restore' });
+    // ⚑ S358 / H07 (his headset, 10 Nov: "Handset Window · 7" read as Windows 7, then as a countdown, and counted
+    //   messages he could not see; and the name showed twice) — the taskbar keeps the program as a 2016 bar does: an
+    //   icon (a handset), no name and no number. The name is on the window's own title bar, once.
+    const tx = W - 36;
+    aero.button(ctx, tx, H - 24, 32, 21, '', { size: 10 });
+    const gx = tx + 11, gy = H - 21;
+    px(ctx, gx, gy, 10, 15, PHONE.ink); px(ctx, gx + 1, gy + 2, 8, 9, PHONE.surface); px(ctx, gx + 4, gy + 12, 2, 2, PHONE.surface);
+    this.rects.unshift({ x: tx, y: H - 24, w: 32, h: 21, id: 'mirror-restore' });
     if (this.mirrorMin) return;
     // S327: brought forward over the board (the cascade, or her own larger view), its usual place shows the desktop
-    if (this.mirrorLarge) { ctx.save(); ctx.beginPath(); ctx.rect(W - 192, 0, 192, H - 28); ctx.clip(); aero.wallpaper(ctx, W, H); ctx.restore(); }
-    const w = this.mirrorLarge ? 280 : 188, x = this.mirrorLarge ? Math.round((W - w) / 2) : W - w;
+    // ⚑ S358 / H12 (his headset, 10 Nov: the Maiden-to-be window "broke away from the screen") — the larger view used
+    //   to jump to the middle of the board and leave its own strip as bare wallpaper. It now grows IN PLACE: docked to
+    //   the right edge as always, wider to the left over the board, so it reads as the same window, larger.
+    const w = this.mirrorLarge ? 280 : 188, x = W - w;
     const h = H - 30;
+    // …and what it covers of the board takes no press and no ray (H01's law on this surface): the board's rects under it go
+    if (this.mirrorLarge) this.rects = this.rects.filter(r => r.id.startsWith('mirror') || !(r.x + r.w / 2 >= x && r.y + r.h / 2 < h));
     // ⚑ S349 / T44 — her phone's window wears the PHONE's idiom, not her employer's: the light bar and hairline of a 2016
     //   phone (iOS 7's flat grammar), dark title, the grouped grey ground — a different maker's software on the same desk
     px(ctx, x, 0, w, h, PHONE.bg); px(ctx, x, 0, w, 25, PHONE.bar); px(ctx, x, 24, w, 1, PHONE.hairline);
@@ -2174,7 +2194,10 @@ export class GraceQueueLite {
     // ⚑ S158 / R3-66 (Sérgio: 'Not now needs a sticker — "not yet available"'): the platform's
     //   own sticker on the option it would rather you did not take. The button still works
     //   — the dismissal law — and the sticker is the era telling on itself.
-    aero.tag(ctx, cx, by - 18, LAMBIENT.consentDeclineSticker, ERA3.ink, ERA3.amber);
+    // ⚑ S358 / H09 (his headset, 10 Nov: "lost in the middle… I don't understand why it is there") — it was anchored
+    //   at the card's left edge, floating over nothing near Allow; it is now stuck ON "Not now", across its top edge,
+    //   so it reads as what it is: the platform's label on the answer it would rather you did not give.
+    aero.tag(ctx, cx + cw - bw * 2 - 12 + 6, by - 9, LAMBIENT.consentDeclineSticker, ERA3.ink, ERA3.amber);
     aero.button(ctx, cx + cw - bw, by, bw, bh, LAMBIENT.consentAllow, { primary: true });
     this.rects.push({ x: cx + cw - bw * 2 - 12, y: by, w: bw, h: bh, id: 'consent-decline' });
     this.rects.push({ x: cx + cw - bw, y: by, w: bw, h: bh, id: 'consent-allow' });
@@ -2236,6 +2259,18 @@ export class GraceQueueLite {
    */
   /** A media workbench. The recording and complete testimony stay bare; the tool sits around them.
    * The current rule has one Apply / Skip pair. No dragging, extra grading controls or text input. */
+  /** H08 — what the rule's band carries, measured before anything is drawn: its note, its references wrapped, and the
+   *  height they need (the right-hand column, Apply/Skip and the provenance, needs ~80 and is the floor) */
+  private studioBand(ctx: CanvasRenderingContext2D, c: aero.AeroContent): { need: number; copyW: number; note: DeskNote | null; refs: string[] } {
+    const current = this.current(), copyW = c.w - 190;
+    if (!current) return { need: 80, copyW, note: null, refs: [] };
+    const note: DeskNote | null = this.deskNote ?? (current.teach ? { line: current.teach, voice: 'lambient' } : null);
+    studioFont(ctx, 11);
+    const noteH = note ? measureLambientNote(ctx, copyW, note) : wrapText(ctx, current.why, copyW).length * 14;
+    studioFont(ctx, 10);
+    const refs = wrapText(ctx, `${current.manual} · ${current.verse}`, copyW);
+    return { need: Math.max(80, 32 + noteH + refs.length * REFS_LEAD + 4), copyW, note, refs };
+  }
   private drawTestimonyStudio(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): void {
     const V = vera.visual, video = sub.video!;
     const back = { x: c.x, y: c.y, w: 106, h: 23 };
@@ -2249,11 +2284,16 @@ export class GraceQueueLite {
     ctx.fillText(sourceMeta, c.x + c.w - ctx.measureText(sourceMeta).width, c.y + 5);
     const top = c.y + 32, leftW = Math.floor(c.w * 0.48), rightX = c.x + leftW + 18, rightW = c.w - leftW - 18;
     const filmW = leftW - 12, filmH = Math.round(filmW * 9 / 16);
+    // ⚑ S358 / H08 (his headset, 10 Nov, "Soften the term": "a lot of text… a little bit on top of each other") — the
+    //   rule's band was a fixed 216 px down and its last lines ran out under the taskbar, at 11 px leading. The band
+    //   is now as tall as what it carries (the words untouched): it rises into the transcript's spare foot when needed.
+    const band = this.studioBand(ctx, c);
+    const by = Math.min(top + 216, c.y + c.h - 2 - band.need);
     // ⚑ S332 (his second answers: "Renata's edit is frontal, not subtle") — once "Name the dependency, not the person"
     //   has been applied to Renata (by anyone), the left column becomes Vera's OWN 2014 story with the same cut in the
     //   same red: "Your story was edited with this rule too (2014)". It stays for the rest of the job.
     const ownCut = sub.id === 1 && this.decisions.get(3) === 'applied';
-    if (ownCut) this.drawOwnCut(ctx, c.x, top, filmW, 212);
+    if (ownCut) this.drawOwnCut(ctx, c.x, top, filmW, Math.min(212, by - top - 4));
     else {
     px(ctx, c.x - 1, top - 1, filmW + 2, filmH + 2, ERA3.glassEdge);
     ctx.save(); ctx.beginPath(); ctx.rect(c.x, top, filmW, filmH); ctx.clip();
@@ -2282,7 +2322,7 @@ export class GraceQueueLite {
     }
     }
     // The whole testimony is readable in its own column. No fixed line slice or decoration over her words.
-    const transcriptH = 204;
+    const transcriptH = Math.min(204, by - top - 8);
     px(ctx, rightX, top, rightW, transcriptH, ERA3.white);
     px(ctx, rightX, top, 3, transcriptH, ERA3.memberSpine);
     studioFont(ctx, 17, true); ctx.fillStyle = ERA3.ink; ctx.fillText(sub.author, rightX + 13, top + 9);
@@ -2317,27 +2357,27 @@ export class GraceQueueLite {
         cy += lines.length * 12 + 4;
       }
     }
-    const by = top + 216, bh = c.y + c.h - by - 2;
+    const bh = c.y + c.h - by - 2;
     px(ctx, c.x, by, c.w, bh, ERA3.lambBand);
     px(ctx, c.x, by, c.w, 1, ERA3.glassEdge);
     const current = this.current();
     if (current) {
-      const copyW = c.w - 190;
+      const copyW = band.copyW;
       studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(current.rule, c.x + 10, by + 7);
       // ⚑ S332 — Lambient teaches the rule (its own kind voice), or answers her refusal; on the tool's band, never on her
-      const note: DeskNote | null = this.deskNote ?? (current.teach ? { line: current.teach, voice: 'lambient' } : null);
+      const note = band.note;
       studioFont(ctx, 11);
       let noteH = 0;
       if (note) noteH = drawLambientNote(ctx, c.x + 10, by + 26, copyW, note);
       else {   // a rule Lambient does not teach keeps the platform's own rationale, untagged
         ctx.fillStyle = ERA3.greyDk;
         const why = wrapText(ctx, current.why, copyW);
-        why.forEach((ln, i) => ctx.fillText(ln, c.x + 10, by + 26 + i * 13)); noteH = why.length * 13;
+        why.forEach((ln, i) => ctx.fillText(ln, c.x + 10, by + 26 + i * 14)); noteH = why.length * 14;
       }
-      const refsY = by + 30 + noteH, rw = copyW;
+      const refsY = by + 32 + noteH;
       // Manual and scripture keep exactly the same type, ink and treatment.
       studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
-      wrapText(ctx, `${current.manual} · ${current.verse}`, rw).forEach((ln, i) => ctx.fillText(ln, c.x + 10, refsY + i * 11));
+      band.refs.forEach((ln, i) => ctx.fillText(ln, c.x + 10, refsY + i * REFS_LEAD));
       const bx = c.x + c.w - 170;
       aero.button(ctx, bx, by + 12, 76, 29, q.verbs.apply, { primary: true, size: 12 });
       aero.button(ctx, bx + 84, by + 12, 76, 29, q.verbs.skip, { size: 12 });

@@ -141,6 +141,10 @@ const CONDITIONS: Record<string, Condition> = {
   voted: () => veraDay.voted,
   recordViewed: () => ledger.era3Arrival.some((a) => a.witness === RECORD_VIEWED_LINE),
   phoneAnswered: () => veraDay.phoneAnswered,
+  // ⚑ S358 / H10 (his headset, 10 Nov: "The group sent a link. Link is on the phone" — and there was no link) —
+  //   opening the group early ticked `phone`, which moved the cursor past the campaign kit to `vote` before Bea's link
+  //   existed. The phone beat counts once the kit is closed (the news, and its link, start there).
+  phoneAfterKit: () => veraDay.phoneAnswered && veraDay.kitClosed,
   cascadeSeen: () => veraDay.cascadeSeen,
   updatedTo4: () => updatedTo(4),
   // ── 2026 ──

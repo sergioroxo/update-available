@@ -398,6 +398,7 @@ export class PhoneE3 {
     return mirrored;
   }
   private openEvening(from: string): void {
+    this.scrollBack = 0;
     this.eveningFrom = from; this.screen = from === m.group.name ? 'group' : 'evening';
     if (this.banner?.from === from) this.banner = null;   // S327: opened, the notification has done its job
     for (const e of this.evening.filter(e => e.from === from)) this.readMessages.add('evening:' + e.id);
@@ -417,9 +418,10 @@ export class PhoneE3 {
     phoneFont(ctx, 11);
     const sized = items.map(it => ({ it, lines: phoneWrap(ctx, it.text, W - 42), h: 0 }));
     for (const s of sized) s.h = s.lines.length * 14 + 14 + (s.it.photo ? 104 : 0) + 14;
-    let y = H - 8;
-    const shown: typeof sized = [];
-    for (let i = sized.length - 1; i >= 0; i--) { if (y - sized[i].h < top + 6) break; y -= sized[i].h; shown.unshift(sized[i]); }
+    const win = this.scrollWindow(sized.map(s => s.h), top + 6, H - 8);
+    this.drawScrollPills(ctx, W, top, H - 8, win);
+    let y = win.y;
+    const shown = sized.slice(win.from, win.to);
     for (const s of shown) {
       const bh = s.lines.length * 14 + 10;
       bubble(ctx, 10, y, W - 22, bh, 'in');
@@ -632,7 +634,8 @@ export class PhoneE3 {
     appTile(ctx, col(3), rowY(0), s, PHONE.tileLive, 'live', HOME.shortStream, '');
     ctx.fillStyle = PHONE.badge;
     ctx.beginPath(); ctx.arc(col(3) + s - 5, rowY(0) + 5, 3, 0, Math.PI * 2); ctx.fill();
-    this.rects.push({ x: col(3), y: rowY(0), w: s, h: s + 12, id: 'stream' });
+    // ⚑ S358 / H11 (his headset, 10 Nov: "a 'live' button goes nowhere") — it is not a button any more: no press, no
+    //   ray outline, like the camera and the clock beside it. It runs; she never opens it; that is the observation.
 
     const furniture = [
       ['camera', HOME.fCamera], ['clock', HOME.fClock],
@@ -716,16 +719,12 @@ export class PhoneE3 {
 
     // ⚑ bottom-up fill, and the guard tests the PROSPECTIVE position so the
     //   topmost bubble can never slide under the bar above it.
-    let y = cy - 8;
+    const heights = msgs.map(msg => (this.removed.has(msg.key) ? 18 : this.msgHeight(ctx, msg, W)) + 6);
+    const win = this.scrollWindow(heights, top + 4, cy - 8);
+    this.drawScrollPills(ctx, W, top, cy - 8, win);
     const drawn: { y: number; h: number; msg: Live }[] = [];
-    for (let i = msgs.length - 1; i >= 0; i--) {
-      const msg = msgs[i];
-      const h = this.removed.has(msg.key) ? 18 : this.msgHeight(ctx, msg, W);
-      const ny = y - h - 6;
-      if (ny < top + 4) break;
-      y = ny;
-      drawn.unshift({ y, h, msg });
-    }
+    let y = win.y;
+    for (let i = win.from; i < win.to; i++) { drawn.push({ y, h: heights[i] - 6, msg: msgs[i] }); y += heights[i]; }
     let lastFrom = '';
     for (const { y: my, msg } of drawn) {
       if (this.removed.has(msg.key)) {
@@ -878,6 +877,8 @@ export class PhoneE3 {
         if (this.banner && this.evening.some(e => e.from === this.banner!.from && e.text === this.banner!.text)) { this.openEvening(this.banner.from); }
         else { this.screen = 'group'; this.openGroup(); }
         this.bump(); return true;
+      case 'scroll-up': this.scrollBack += this.pageStep; this.bump(); return true;   // S358 / H13
+      case 'scroll-down': this.scrollBack = 0; this.bump(); return true;
       case 'inbox-prev': this.inboxPage--; this.bump(); return true;
       case 'inbox-next': this.inboxPage++; this.bump(); return true;
       case 'personal-notification': this.openPersonalThread(); return true;
@@ -901,9 +902,6 @@ export class PhoneE3 {
       case 'reply-bea':
         if (!this.replyOffered) return true;
         this.replied = true; this.holdT = 0; this.storyClock = REPLY.time; playOnce('phone_msg_2016.mp3'); this.bump(); return true;
-      // ⚑ the stream has no verb. Pressing it is consumed and does nothing,
-      //   which is truer than making it play: nobody asked her to watch it.
-      case 'stream': return true;
       default:
         if (r.id.startsWith('evening:')) { this.openEvening(r.id.slice(8)); return true; }
         if (r.id.startsWith('photo-')) { this.photoIndex = Number(r.id.slice(6)); this.screen = 'photo'; this.bump(); return true; }
@@ -953,6 +951,44 @@ export class PhoneE3 {
    * and never published as a rect, so it could not be pressed (his 2026-09-26: "the back
    * button on it doesn't work"). Every screen with an app bar now publishes it.
    */
+  /**
+   * ⚑ S358 / H13 (his headset, 10 Nov: "no way to scroll the messages on the phone") — a thread showed its newest
+   * messages only, and the oldest fell off the top for good. `scrollBack` holds how many of the newest are set aside;
+   * "Earlier messages" (a pill under the bar) steps back a screenful, "Latest" (a pill at the foot) returns. Presses
+   * only: no drag, no wheel (a headset has neither). It resets when a thread is opened.
+   */
+  private scrollBack = 0;
+  private static readonly PILL = 20;
+  private scrollWindow(heights: number[], top: number, bottom: number): { from: number; to: number; y: number; earlier: boolean; latest: boolean } {
+    const fit = (end: number, t: number, b: number): number => {   // the first index that fits above `end`, filling up from b
+      let y = b, i = end;
+      while (i > 0 && y - heights[i - 1] >= t) { y -= heights[i - 1]; i--; }
+      return i;
+    };
+    const n = heights.length;
+    this.scrollBack = Math.max(0, Math.min(this.scrollBack, Math.max(0, n - 1)));
+    const latest = this.scrollBack > 0;
+    const b = latest ? bottom - PhoneE3.PILL - 2 : bottom;
+    const end = n - this.scrollBack;
+    let from = fit(end, top, b);
+    const earlier = from > 0;
+    if (earlier) from = fit(end, top + PhoneE3.PILL + 2, b);
+    let y = b; for (let i = from; i < end; i++) y -= heights[i];
+    return { from, to: end, y, earlier, latest };
+  }
+  private drawScrollPills(ctx: CanvasRenderingContext2D, W: number, top: number, bottom: number, win: { from: number; to: number; earlier: boolean; latest: boolean }): void {
+    const pill = (label: string, y: number, id: string): void => {
+      phoneFont(ctx, 9);
+      const pw = Math.ceil(ctx.measureText(label).width) + 20, px0 = Math.round((W - pw) / 2);
+      roundRect(ctx, px0, y, pw, PhoneE3.PILL - 4, 8, PHONE.hairline);
+      ctx.fillStyle = PHONE.ink; ctx.fillText(label, px0 + 10, y + 3);
+      this.rects.push({ x: 0, y: y - 2, w: W, h: PhoneE3.PILL, id });
+    };
+    this.pageStep = Math.max(1, win.to - win.from - 1);
+    if (win.earlier) pill(m.group.earlier, top + 3, 'scroll-up');
+    if (win.latest) pill(m.group.latest, bottom - PhoneE3.PILL + 2, 'scroll-down');
+  }
+  private pageStep = 1;
   private pushBack(barTop: number, barBottom: number): void {
     this.rects.push({ x: 0, y: barTop, w: 44, h: barBottom - barTop, id: 'back' });
   }
@@ -1032,6 +1068,7 @@ export class PhoneE3 {
   }
 
   private openGroup(): void {
+    this.scrollBack = 0;
     this.markGroupSeen();
     veraDay.phoneAnswered = true;
     this.bump();

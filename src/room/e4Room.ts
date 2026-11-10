@@ -79,8 +79,14 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   // ⚑ S328 (T46, his 8 Nov: "a shelf on top of the bed, which makes no sense") — the throw was a 4 cm slab hung along
   //   the wall side of the bed and read as a shelf. It lies folded across the FOOT of the bed now (bed spans x 3.21–5.26,
   //   z 1.33–2.38, top 0.50; its pillow is at x 3.35), 1.4 cm thick, on the blanket: a throw, seen in the conducted turn.
-  const throwProp = solid('maya-pink-throw', [4.95, .509, 1.85], [.42, .014, 1.08], PLACE.textileHi);
-  const frame = picture('maya-desk-photo', [5.02, .88, .30], .17, .22,
+  // ⚑ S358 / H17 (his headset, 10 Nov: "a shelf sits on top of the bed", again) — MEASURED this time: the pillow is at
+  //   x 4.71–5.08 (top 0.38), the blanket at x 3.23–4.71 (top 0.347); the frame's 0.50 is the headboard. The throw hung
+  //   12 cm over the PILLOW, a plank in the air. It lies on the blanket at the true foot (x ≈ 3.5), 1.4 cm thick.
+  const throwProp = solid('maya-pink-throw', [3.52, .355, 1.85], [.42, .014, 1.0], PLACE.textileHi);
+  // ⚑ S358 / H17 (his: "a photo of Maya just hanging around here in front of me") — it was a bare plane standing at the
+  //   desk's front edge, between him and the monitor. It hangs on the wall behind the desk, left of the monitor, above
+  //   the headset: on the wall, where a photograph is.
+  const frame = picture('maya-desk-photo', [5.665, 1.2, .14], .17, .22,
     c => photograph(c, 0, 0, 256, 256, false, 3));
   const goal = picture('system-default-portrait', [5.66, 1.45, 1.98], .65, .64,
     c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); drawGoalPicture(c, 8, 8, 240, 240); });
@@ -111,7 +117,9 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     if (wasActive !== active) { seen = ''; wasActive = active; }
     root.enabled = active;
     const streaming = e4Has('stream') && !e4Has('terminated');
-    ceiling.entity.enabled = active && e4Has('map') && !e4Has('terminated');
+    // ⚑ S358 / H17 (his headset, 10 Nov: "something on the ceiling should be removed… this is not for here") — the
+    //   network no longer hangs over her room; the same plane is still the stream's audience, out in the Commons
+    ceiling.entity.enabled = active && streaming;
     ceiling.entity.setLocalPosition(streaming ? 8 : 4.6, streaming ? 5 : 2.64, streaming ? .84 : .70);
     if (!active) {
       for (const [mat, color] of originalMats) if (!mat.diffuse.equals(color)) { mat.diffuse.copy(color); mat.update(); }
