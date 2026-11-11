@@ -56,6 +56,7 @@
   "next": "Next",
   "register": "felt",
   "_docS332": "⚑ S332 (DESIGN_2016_CONNECTIONS, his second answers): every job meets the phone. Each finished job EARNS its message (graceQueueLite `JOB_EVENTS`): Correct a testimony → `mentor`; The places list → `arrival` (Orla, with `stamp` in the same thread); Return the family calls → `decision` (Mam); Post to the group → `job` (the check-in she posted); her 2014 record closed → `nuala`; Malta → `after`. They arrive in the order she finishes the jobs, so the clock takes the next of `slots` at each delivery (the evening never runs backwards). The retired `send` line (the Mentor, \"I know Tuesday is that bar…\") is now an older message in the Mentor's thread (s3_maiden.json backlog).",
+  "_docS362": "⚑ S362 / H28 (his headset, 10 Nov: \"Orla's message needs more time\"; after \"the pastor's wife\" the scene \"jumped super fast\"): no text changed. How long each message of `events` is held now lives in phoneE3.ts (`HOLDS`: Orla's quiz 8 s, Mam's 9 s then her Notes draft typed in over 8 s, Orla's last 10 s; the rest 6 s — was 4 s for all).",
   "slots": [
     "18:04",
     "18:41",

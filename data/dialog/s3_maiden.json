@@ -160,7 +160,9 @@
    "from": "Orla",
    "time": "Sunday",
    "text": "Somebody sent me a photo of you at something. You looked well. That's all it is, I'm not starting anything.",
-   "register": "felt"
+   "register": "felt",
+   "opens": "photos",
+   "_docS362": "⚑ S362 / H45 (his headset, 10 Nov, 21:03: the photo message — \"opening Orla goes to the files with the photos created\"): `opens: photos` makes this bubble a press that opens the phone's Photos (the camera roll's pre-authored sprites), labelled `home.openPhotos`; Back returns to the thread. Text unchanged."
   },
   {
    "from": "Aunt Cliona",
@@ -238,7 +240,9 @@
   "groupQuiet": "No new messages",
   "_docS158": "S158 / R3-78: the home screen's first tile is the platform's app (a card: signed in on the workstation), Messages carries the group's thread at the top with its unread count, and the chat's back goes to Messages.",
   "previousPage": "‹",
-  "nextPage": "›"
+  "nextPage": "›",
+  "openPhotos": "Photos ›",
+  "_docS362openPhotos": "⚑ S362 / H45 — the small label under a message that is about a photo; it opens the Photos app."
  },
  "witness": {
   "groupOpened": "phone: group opened — Maiden-to-be",

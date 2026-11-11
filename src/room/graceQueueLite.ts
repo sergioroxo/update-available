@@ -229,6 +229,10 @@ const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c
  *  a story to its end and another (a story, or any job — Annette's family calls among them). 1 gave the era's
  *  lesbian story about a minute. */
 const MALTA_AFTER_TASKS = 2;
+/** ⚑ S362 / H41 — how long the kit's URGENT pop-in waits before the platform opens the kit itself (the story has to move on) */
+const KIT_POPIN_AUTO = 22;
+/** ⚑ S362 / H42b — characters a second at which Kindredraft's draft types itself in */
+const STORY_DRAFT_CPS = 28;
 /** ⚑ S227 — the Speedrun Version (src/state/cut.ts): Lambient sends her straight to Annette, and ONE finished job lights
  *  the phone (his 2026-10-10: "to speed up the narrative"). Read when asked, never at module load: the front door may
  *  choose the cut after this file is imported. */
@@ -382,7 +386,7 @@ export class GraceQueueLite {
   }
   lambyGuidePaint: GuidePaint = { rings: [], balloon: false };
 
-  get guideSilent(): boolean { return this.personalQuiet || this.veraPage === 'record' || this.veraPage === 'removals' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
+  get guideSilent(): boolean { return this.kitPopin || this.personalQuiet || this.veraPage === 'record' || this.veraPage === 'removals' || veraDay.quiet || this.startMap.active || this.phoneInHand || this.pauseOpen || !!this.saver
     || ['dark', 'boot', 'install'].includes(this.mode) || this.mode === 'list' || this.playing; }
   private lambPriority = false;
   private lambHoldT = 0;
@@ -425,6 +429,9 @@ export class GraceQueueLite {
    *  Story Record, Bea's news, the game (its own song), the pause menu, the screensaver and the install — and when it
    *  comes back it picks up where it stopped. */
   private graceLoopAt = 0;
+  // ⚑ S362 / H44 (his headset: "the song should keep playing while he is in the handset window") — checked, not changed: `want` below has no
+  //   phone, mirror or Handset Window term, so the platform's loop plays on while she reads her phone (it stops for the Story Record, Bea's
+  //   news, the game, the pause menu, the screensaver and the install, and resumes where it stopped).
   private syncGraceLoop(): void {
     const signedIn = this.mode === 'board' || this.mode === 'list' || this.mode === 'done';
     const want = signedIn && !this.pauseOpen && !this.saver && this.veraPage !== 'record' && !this.cascadeConduct
@@ -529,6 +536,11 @@ export class GraceQueueLite {
   private recordSent = false;
   private recordPage = 0;
   private storyOffer = false;
+  /** ⚑ S362 / H42b — seconds the Kindredraft pop-in has been up (its draft types in over this) */
+  private storyOfferT = 0;
+  /** ⚑ S362 / H41 — the campaign kit's URGENT pop-in is up (it opens the kit; if left, the platform opens it after KIT_POPIN_AUTO) */
+  private kitPopin = false;
+  private kitPopinT = 0;
   private recordAdmin = false;
   private kitApproved = false;
   private takenDown = false;
@@ -647,7 +659,7 @@ export class GraceQueueLite {
     this.playing = false; stopClip(this.roomTone); this.roomTone = null;
     this.openSurface = null; this.chipReturn = null; this.pauseOpen = false;
     this.saver = null; this.phoneInHand = false; this.minimised = false;
-    this.veraPage = null; veraDay.quiet = false; this.inboxLiftPending = false;
+    this.veraPage = null; veraDay.quiet = false; this.inboxLiftPending = false; this.kitPopin = false;
     if (this.mode === 'list' || this.mode === 'done') this.mode = 'board';
     this.bump();
   }
@@ -725,6 +737,7 @@ export class GraceQueueLite {
     if (this.startMap.update(dt)) this.bump();
     this.updateSaver(dt);
     this.updateGate();
+    this.updatePopins(dt);
     this.updateJobReturn(dt);
     if (this.startPanel.tick(dt, this.startPanelCalm())) this.bump();
     if (this.personalQuiet || this.veraPage || this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
@@ -851,6 +864,21 @@ export class GraceQueueLite {
   // ── the list ─────────────────────────────────────────────────────────────
   private bump(): void { this.ownVersion++; }
 
+  /** ⚑ S362 / H41 + H42b — the board's two pop-ins keep their own clocks: the kit's URGENT card (flashes twice a second; the
+   *  platform opens the kit itself if it is left) and Kindredraft's draft (types itself in). Both redraw only when they change. */
+  private updatePopins(dt: number): void {
+    const onBoard = this.mode === 'board' && !this.openSurface && !this.veraPage && !this.minimised;
+    if (this.kitPopin && onBoard) {
+      const b = Math.floor(this.kitPopinT * 2); this.kitPopinT += dt;
+      if (this.kitPopinT >= KIT_POPIN_AUTO) this.openKit(); else if (b !== Math.floor(this.kitPopinT * 2)) this.bump();
+    }
+    if (this.storyOffer && onBoard) {
+      const b = Math.floor(this.storyOfferT * 12); this.storyOfferT += dt;
+      if (b !== Math.floor(this.storyOfferT * 12) && this.storyOfferT * STORY_DRAFT_CPS < vera.offer.draft.length + 12) this.bump();
+    } else if (!this.storyOffer) this.storyOfferT = 0;
+  }
+  private openKit(): void { this.kitPopin = false; this.veraPage = 'kit'; this.bump(); }
+
   /** ⚑ S332 — the connections, watched each frame (cheap: four booleans): a finished job earns its message; the places
    *  list also arms the Wick card's BANNED stamp; all four finished open the offer of her own record (once the phone
    *  is quiet); Nuala's message read brings the campaign kit; Malta's takeover puts the platform's removals on screen. */
@@ -884,7 +912,9 @@ export class GraceQueueLite {
     if (this.kitPending) { this.kitWaitT += this.lastDt; if (this.kitWaitT > 10 && !this.kitWarned) { this.kitWarned = true;
       console.warn('[e3] kit waiting ' + JSON.stringify({ wickConducting: this.wickConducting, phone: this.phone.debugState() })); } }
     if (this.kitPending && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest && !this.wickConducting) {
-      this.kitPending = false; this.veraPage = 'kit'; this.mode = 'board'; this.bump();
+      // ⚑ S362 / H41 (his headset, 10 Nov, 21:11: the campaign kit "should arrive as a pop-in marked urgent") — it pops in, in the
+      //   platform's own voice, and opens from there; it no longer takes the whole screen by itself
+      this.kitPending = false; this.mode = 'board'; this.kitPopin = true; this.kitPopinT = 0; playOnce('lambient_chime.mp3'); this.bump();
     }
     // while Bea's news lands the window is brought forward over the board — but never over an open job
     if (this.cascadeConduct && !this.removalsShown) { const large = !this.jobOpen; if (large !== this.mirrorLarge) { this.mirrorLarge = large; this.bump(); } }
@@ -1541,6 +1571,7 @@ export class GraceQueueLite {
       if (this.mode === 'list' && !this.openSurface && this.current()) ids.delete('board-back');
       if (this.veraPage === 'send') ids.add(this.sendReceipt ? 'vera-send-close' : 'vera-send');
       if (this.storyOffer) ids.add('update-accept');
+      if (this.kitPopin) ids.add('kit-popin-open');
       if (this.veraPage === 'kit') ids.add(this.kitApproved ? 'vera-kit-close' : 'vera-kit-approve');   // S283: a finished job's one way on
       if (ids.size) for (const r of this.rects) if (ids.has(r.id)) drawGlow(ctx, r, 'path', aero.ERA3.amber, aero.ERA3.glassEdge);
     }
@@ -1612,13 +1643,20 @@ export class GraceQueueLite {
     this.rects.unshift({ x, y: 0, w, h: 25, id: 'mirror-enlarge' });
     this.mirrorCanvas ??= document.createElement('canvas');
     const phoneH = this.mirrorLarge && !this.floppy.open ? 240 : 360;
-    this.mirrorCanvas.width = 180; this.mirrorCanvas.height = phoneH;
+    // ⚑ S362 / H40 (his headset, 10 Nov: the phone's text "a little out of focus… very hard to read; the monitor is much
+    //   better") — the handset was drawn at 1× (180 px wide) and stretched ×1.3–1.5 with nearest-neighbour onto the
+    //   desktop: every letter a smear. It is now drawn at 2× (the phone's own device screen is 3×) and brought down with
+    //   smoothing, so the type is laid out for the size it is seen at. Hit rects are in the phone's logical pixels, as before.
+    const SS = 2;
+    this.mirrorCanvas.width = 180 * SS; this.mirrorCanvas.height = phoneH * SS;
+    const mctx = this.mirrorCanvas.getContext('2d')!;
+    mctx.setTransform(SS, 0, 0, SS, 0, 0);
     let phoneRects: Rect[];
-    if (this.floppy.open) { this.floppy.draw(this.mirrorCanvas.getContext('2d')!, 180, phoneH); phoneRects = this.floppy.rects; }
-    else phoneRects = this.phone.drawMirrored(this.mirrorCanvas.getContext('2d')!, 180, phoneH);
+    if (this.floppy.open) { this.floppy.draw(mctx, 180, phoneH); phoneRects = this.floppy.rects; }
+    else phoneRects = this.phone.drawMirrored(mctx, 180, phoneH);
     const scale = Math.min((w - 8) / 180, (h - 29) / phoneH);
     const px0 = Math.round(x + (w - 180 * scale) / 2), py = 27;
-    ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(this.mirrorCanvas, px0, py, Math.floor(180 * scale), Math.floor(phoneH * scale)); ctx.restore();
+    ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(this.mirrorCanvas, px0, py, Math.floor(180 * scale), Math.floor(phoneH * scale)); ctx.restore();
     this.mirrorBox = { x: px0, y: py, scale };
     // Phone-owned controls stay phone-owned. No guide/glow is drawn over this program.
     const hits = phoneRects.map(r => ({ ...r, x: px0 + r.x * scale, y: py + r.y * scale, w: r.w * scale, h: r.h * scale, id: `mirror:${r.id}` }));
@@ -1801,13 +1839,53 @@ export class GraceQueueLite {
     this.bump();
   }
 
+  /** ⚑ S362 / H42b (his headset, 10 Nov, 21:13: the "Kindred Heart" draft "should appear differently") — Kindredraft's offer was a
+   *  bare 36 px strip. It is now a pop-in over the board that shows the system's DRAFT of her 2014 story typing itself in, tagged
+   *  as a suggestion that has not been approved (operable register: the platform's own voice, a little proud of itself). The
+   *  whole card is the press (`update-accept`); it does not wait for the typing to finish. */
   private drawStoryOffer(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
-    const x = c.x + 120, y = c.y, w = c.w - 120;
-    px(ctx, x, y, w, 36, ERA3.white);
-    setFont(ctx, 12); ctx.fillStyle = ERA3.titleText; ctx.fillText(vera.offer.title, x + 8, y + 1);
-    setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(vera.offer.sub, x + 8, y + 19);
-    aero.button(ctx, x + w - 76, y + 4, 70, 26, vera.offer.install, { primary: true, size: 12 });
-    this.rects.push({ x: x + w - 76, y: y + 4, w: 70, h: 26, id: 'update-accept' });
+    const O = vera.offer;
+    const w = Math.min(380, c.w - 32), h = 138, x = c.x + Math.floor((c.w - w) / 2), y = c.y + 58;
+    px(ctx, x + 3, y + 4, w, h, ERA3.glassEdge); px(ctx, x, y, w, h, ERA3.white);
+    px(ctx, x, y, w, 26, ERA3.lambBand); px(ctx, x, y + 25, w, 1, ERA3.glassEdge);
+    studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(O.title, x + 10, y + 6);
+    const tag = O.draftTag; studioFont(ctx, 10, true); const tw = Math.ceil(ctx.measureText(tag).width) + 12;
+    px(ctx, x + w - tw - 8, y + 5, tw, 16, ERA3.amber); ctx.fillStyle = ERA3.white; ctx.fillText(tag, x + w - tw - 2, y + 8);
+    studioFont(ctx, 12); ctx.fillStyle = ERA3.ink; ctx.fillText(O.sub, x + 10, y + 32);
+    // the draft, typed in
+    px(ctx, x + 10, y + 52, w - 20, 46, ERA3.sysBand); px(ctx, x + 10, y + 52, 3, 46, ERA3.amber);
+    const chars = Math.max(0, Math.floor((this.storyOfferT - 0.6) * STORY_DRAFT_CPS));
+    studioFont(ctx, 12); ctx.fillStyle = ERA3.ink;
+    let left = chars, tail = '', ty = y + 58;
+    wrapText(ctx, O.draft, w - 40).forEach((ln, i) => {
+      const seg = ln.slice(0, Math.max(0, left)); left -= ln.length + 1;
+      if (seg) { ctx.fillText(seg, x + 20, y + 58 + i * 16); tail = seg; ty = y + 58 + i * 16; }
+    });
+    if (Math.floor(this.storyOfferT * 2) % 2 === 0 && chars < O.draft.length + 10) px(ctx, x + 21 + Math.ceil(ctx.measureText(tail).width), ty, 1, 13, ERA3.ink);
+    studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+    wrapText(ctx, O.draftBy, w - 108).slice(0, 3).forEach((ln, i) => ctx.fillText(ln, x + 10, y + 104 + i * 11));
+    aero.button(ctx, x + w - 88, y + h - 34, 78, 26, O.install, { primary: true, size: 12 });
+    this.rects.unshift({ x, y, w, h, id: 'update-accept' });
+  }
+
+  /** ⚑ S362 / H41 (his headset, 10 Nov, 21:11: the campaign kit "should arrive as a pop-in marked urgent") — the kit's arrival: a
+   *  window that pops in over the board, in the platform's own voice (operable register: it may be loud), with a red URGENT band
+   *  that flashes. Opening it is the press; if it is left the platform opens the kit itself (KIT_POPIN_AUTO). Never the frame. */
+  private drawKitPopin(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
+    const k = vera.kit;
+    const w = Math.min(380, c.w - 32), h = 156, x = c.x + Math.floor((c.w - w) / 2), y = c.y + 50;
+    const flash = Math.floor(this.kitPopinT * 2) % 2 === 0;
+    px(ctx, x + 4, y + 5, w, h, ERA3.greyDk); px(ctx, x, y, w, h, ERA3.white);
+    px(ctx, x - 2, y - 2, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y + h, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y - 2, 2, h + 4, ERA3.alarm); px(ctx, x + w, y - 2, 2, h + 4, ERA3.alarm);
+    px(ctx, x, y, w, 30, flash ? ERA3.alarm : ERA3.amber);
+    studioFont(ctx, 13, true);
+    const tagW = Math.ceil(ctx.measureText(k.urgentTag).width) + 14;
+    px(ctx, x + 8, y + 5, tagW, 20, ERA3.white); ctx.fillStyle = ERA3.alarm; ctx.fillText(k.urgentTag, x + 15, y + 8);
+    ctx.fillStyle = ERA3.white; ctx.fillText(k.urgentTitle, x + 8 + tagW + 8, y + 8);
+    studioFont(ctx, 13); ctx.fillStyle = ERA3.ink;
+    wrapText(ctx, k.urgentLine, w - 28).slice(0, 4).forEach((ln, i) => ctx.fillText(ln, x + 14, y + 42 + i * 18));
+    aero.button(ctx, x + w - 150, y + h - 36, 138, 28, k.urgentOpen, { primary: true, size: 13 });
+    this.rects.unshift({ x, y, w, h, id: 'kit-popin-open' });
   }
 
   /** All copy is data. Reading her record is felt: no guide, glow, audio, or witness entry. */
@@ -1887,7 +1965,23 @@ export class GraceQueueLite {
     const bw = 130, bx = c.x + c.w - bw - 14, by = c.y + c.h - 30;
     aero.button(ctx, bx, by, bw, 24, q.app.boardBack, { size: 11 });
     this.rects.push({ x: bx, y: by, w: bw, h: 24, id: 'removals-back' });
+    // ⚑ S362 / H43 (his headset, 10 Nov, 21:13: GracePlatform should "jump in more dramatically" with "we need to intervene
+    //   immediately") — the review opens on the platform's own alert, flashing, before its first removal (phoneE3 TAKEOVER_ALERT).
+    //   Operable register, its own voice; the group's words under it are felt and are not touched by it.
+    if (this.phone.takeoverAlert) {
+      if (!this.alertChimed) { this.alertChimed = true; playOnce('lambient_chime.mp3'); }
+      const flash = Math.floor(performance.now() / 450) % 2 === 0;
+      const ah = 92, ay = c.y + Math.floor((c.h - ah) / 2) - 10;
+      px(ctx, c.x + 6, ay + 5, c.w - 12, ah, ERA3.greyDk);
+      px(ctx, c.x + 6, ay, c.w - 12, ah, ERA3.white);
+      px(ctx, c.x + 6, ay, c.w - 12, 24, flash ? ERA3.alarm : ERA3.amber);
+      studioFont(ctx, 13, true); ctx.fillStyle = ERA3.white; ctx.fillText(R.alertTag, c.x + 18, ay + 5);
+      studioFont(ctx, 22, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(R.alertLine, c.x + 18, ay + 34);
+      studioFont(ctx, 12); ctx.fillStyle = ERA3.ink;
+      wrapText(ctx, R.alertSub, c.w - 36).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, c.x + 18, ay + 64 + i * 15));
+    } else this.alertChimed = false;
   }
+  private alertChimed = false;
 
   private drawBoard(ctx: CanvasRenderingContext2D, c: aero.AeroContent): void {
     setFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
@@ -1895,8 +1989,7 @@ export class GraceQueueLite {
     setFont(ctx, 11); ctx.fillStyle = ERA3.grey;
     ctx.fillText(q.app.boardSub, c.x, c.y + 18);
     px(ctx, c.x, c.y + 36, c.w, 1, ERA3.glassEdge);
-    if (this.storyOffer) this.drawStoryOffer(ctx, c);
-    else if (this.offer) this.drawOffer(ctx, c, this.offer);
+    if (!this.storyOffer && this.offer) this.drawOffer(ctx, c, this.offer);
 
     const tasks = this.tasks();
     const GAP = 14;
@@ -1968,6 +2061,9 @@ export class GraceQueueLite {
       }
     }
     if (this.pauseOpen) this.drawPauseCard(ctx, c);
+    // ⚑ S362 / H41 + H42b — the two pop-ins sit over the board, last, so nothing is drawn across them
+    if (this.storyOffer) this.drawStoryOffer(ctx, c);
+    if (this.kitPopin) this.drawKitPopin(ctx, c);
   }
 
   /** ⚑ S227 — THE OFFER, in the board's header, right of TODAY: the platform's one line, its version in small type, and
@@ -2849,6 +2945,7 @@ export class GraceQueueLite {
       this.recordPage = 0; this.recordSent = vh.id === 'vera-as-sent'; this.bump(); return;
     }
     if (vh?.id === 'vera-record-next' || vh?.id === 'vera-record-prev') { this.recordPage += vh.id === 'vera-record-next' ? 1 : -1; this.bump(); return; }
+    if (vh?.id === 'kit-popin-open') { this.openKit(); return; }
     if (vh?.id === 'removals-back') { if (this.veraPage === 'removals') this.veraPage = null; this.bump(); return; }
     if (vh?.id === 'vera-record-close') {
       // ⚑ S332 — Nuala's message arrives, at rest; once it is read the campaign kit is brought to her (updateConnections)

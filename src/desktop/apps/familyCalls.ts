@@ -64,7 +64,10 @@ export class FamilyCallsApp implements TaskSurface {
   readonly beats = ['open', 'quiet', 'replied', 'handled', 'done'] as const;
 
   private v = 0;
-  private sel = Math.max(0, PARENTS.findIndex(p => p.id === 'p_annette'));
+  // ⚑ S362 / H42a (his headset, 10 Nov, 21:07, and his answer to the question "should family calls open on Ruth or only on
+  //   Annette?": "open on Ruth", "so we can see the system") — the job opens on Ruth's thread, an ordinary message the four templates
+  //   do answer, so the system can be seen working before Annette's, the one it cannot answer, is met.
+  private sel = Math.max(0, PARENTS.findIndex(p => p.id === 'p_ruth'));
   private outcomes = new Map<string, Outcome>();
   /** which reply was sent, for the row's own "sent" line */
   private sent = new Map<string, string>();

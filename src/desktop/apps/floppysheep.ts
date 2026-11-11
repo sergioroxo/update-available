@@ -552,6 +552,19 @@ function makeGame(bump: () => void) {
   function rr(x: number, y: number, w: number, h: number, r: number, fill: string | null, stroke?: string, lw?: number): void { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); } }
   function tx(s: string, x: number, y: number, size: number, col: string, align: CanvasTextAlign = 'left', w = 600): void { ctx.font = `${w} ${size}px ${FONT}`; ctx.textAlign = align; ctx.textBaseline = 'middle'; ctx.fillStyle = col; ctx.fillText(s, x, y); }
   function wrap(s: string, maxW: number, size: number, w?: number): string[] { ctx.font = `${w || 600} ${size}px ${FONT}`; const words = s.split(' '), lines: string[] = []; let line = ''; for (const wd of words) { const t2 = line ? line + ' ' + wd : wd; if (ctx.measureText(t2).width > maxW && line) { lines.push(line); line = wd; } else line = t2; } if (line) lines.push(line); return lines; }
+  // ⚑ S362 / H40 (his headset, 10 Nov: Floppy Sheep is "very hard to read and play… the resolution is really poor") — the game is
+  //   drawn in a 300-unit space and shown on a 180 px screen (k = 0.6), so a 10-unit line was a 6 px line. The UI's own
+  //   lettering (header, footer, lyrics, intro, outro, bubbles, toast) now goes through `FS`/`tu`: small sizes are raised
+  //   (10 → 13, 12 → 15, 9 → 12 …), and a line that would run past the screen is shrunk to fit rather than cut. The
+  //   game's world lettering (signs, boards, banners) is untouched.
+  const FS = (n: number): number => n <= 7 ? 11 : n <= 9.5 ? 12 : n <= 10 ? 13 : n <= 11.5 ? 14 : n <= 12 ? 15 : n <= 13 ? 16 : n <= 15 ? 18 : n <= 17 ? 19 : n;
+  function tu(s: string, x: number, y: number, size: number, col: string, align: CanvasTextAlign = 'left', w = 600, lim = 0): void {
+    let z = FS(size); ctx.font = `${w} ${z}px ${FONT}`;
+    const room = lim || (align === 'center' ? Math.min(x, W - x) * 2 - 12 : align === 'right' ? x - 8 : W - x - 8);
+    const mw = ctx.measureText(s).width; if (mw > room) { z = Math.max(9, Math.floor(z * room / mw * 2) / 2); }
+    tx(s, x, y, z, col, align, w);
+  }
+  function wrapU(s: string, maxW: number, size: number, w?: number): string[] { return wrap(s, maxW, FS(size), w); }
   const A = (a: number, fn: () => void): void => { ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a)); fn(); ctx.restore(); };
   const ADD = (fn: () => void): void => { ctx.save(); ctx.globalCompositeOperation = 'lighter'; fn(); ctx.restore(); };
   function poly(pts: Array<[number, number]>, fill: string): void { ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); }
@@ -889,7 +902,7 @@ function makeGame(bump: () => void) {
     }
     if (litNow(z)) { const k = s.levelT - (z.lt as number); A(Math.min(1, k / 0.15) * Math.min(1, (2.4 - k) / 0.6) * 0.8, () => { rect(x, y1 - 3, w, 3, FLOPPY.sun); }); }
   }
-  function bubbleAt(x: number, y: number, s: string): void { ctx.font = `700 10px ${FONT}`; const w = ctx.measureText(s).width + 14; const bx = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x)); rr(bx - w / 2, y - 9, w, 18, 9, ERA3.white); rr(bx - w / 2 + 0.5, y - 8.5, w - 1, 17, 9, null, ERA3.grey, 1); poly([[x - 4, y + 8], [x + 4, y + 8], [x, y + 14]], ERA3.white); tx(s, bx, y, 10, FLOPPY.ink, 'center', 700); }
+  function bubbleAt(x: number, y: number, s: string): void { ctx.font = `700 ${FS(10)}px ${FONT}`; const w = ctx.measureText(s).width + 14; const bx = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x)); rr(bx - w / 2, y - 9, w, 18, 9, ERA3.white); rr(bx - w / 2 + 0.5, y - 8.5, w - 1, 17, 9, null, ERA3.grey, 1); poly([[x - 4, y + 8], [x + 4, y + 8], [x, y + 14]], ERA3.white); tu(s, bx, y, 10, FLOPPY.ink, 'center', 700); }
   function droneDraw(f: Foe): void {
     const s = S, x = f.x, y = f.y, ph = s.t * 30;
     const charging = !f.dead && f.x < W - 10 && f.cy > 0 && f.cy < 0.9;
@@ -1004,20 +1017,20 @@ function makeGame(bump: () => void) {
   function header(): void {
     const s = S; rect(0, 0, W, HEADER_H, ERA3.white); rect(0, HEADER_H - 1, W, 1, FLOPPY.hillDk);
     // ⚑ the host's Back (the prototype had none: it was the whole page) — at the left, before her count
-    tx(g.back, 11, 17, 24, FLOPPY.ink, 'center', 700);
+    tu(g.back, 11, 17, 24, FLOPPY.ink, 'center', 700);
     hitRects.push({ x: 0, y: 0, w: 26, h: HEADER_H, id: 'back' });
     // the clock is the song: time left, and how far through it you are
     const L = levelLen(), left = L - s.levelT;
-    tx(g.header.called, 30, 12, 10, ERA3.grey, 'left', 600); tx(String(s.called), 30, 26, 15, FLOPPY.ink, 'left', 800);
-    tx(mmss(left), W / 2, 18, 17, FLOPPY.ink, 'center', 800);
-    tx(g.header.withYou, W - 14, 12, 10, ERA3.grey, 'right', 600); tx(String(s.flock.length), W - 14, 26, 15, FLOPPY.ink, 'right', 800);
+    tu(g.header.called, 30, 10, 10, ERA3.grey, 'left', 600); tu(String(s.called), 30, 27, 15, FLOPPY.ink, 'left', 800);
+    tu(mmss(left), W / 2, 18, 17, FLOPPY.ink, 'center', 800);
+    tu(g.header.withYou, W - 14, 10, 10, ERA3.grey, 'right', 600); tu(String(s.flock.length), W - 14, 27, 15, FLOPPY.ink, 'right', 800);
     rect(0, HEADER_H, W, 4, FLOPPY.skyLow); rect(0, HEADER_H, W * Math.min(1, s.levelT / L), 4, ERA3.good);
     for (let i = 1; i < SECTIONS.length; i++) rect(Math.round(W * SECTIONS[i].t0 / L) - 0.5, HEADER_H, 1, 4, ERA3.white);
   }
   function footer(): void {
     const s = S; rect(0, GROUND_Y + GRASS_H, W, H - (GROUND_Y + GRASS_H), ERA3.white);
     let hint: string; if (s.mode === 'idle') hint = g.hint.start; else if (s.mode === 'done') hint = g.hint.done; else if (!s.onGround && s.flapCount < FLAPS.length && s.cloverT <= 0) hint = g.hint.air; else if (s.cloverT > 0) hint = g.hint.clover; else hint = g.push[Math.floor(s.levelT / 14) % g.push.length];
-    tx(hint, W / 2, FOOT_Y + 2, 12, FLOPPY.ink, 'center', 600); tx(g.publisher, W / 2, FOOT_Y + 15, 9, ERA3.grey, 'center', 500);
+    tu(hint, W / 2, FOOT_Y + 2, 12, FLOPPY.ink, 'center', 600); tu(g.publisher, W / 2, FOOT_Y + 15, 9, ERA3.grey, 'center', 500);
     const NX = 12, NY = FOOT_Y + 22, playing = songPlaying();
     rr(NX, NY, 34, 34, 17, playing ? FLOPPY.hillFar : ERA3.white, FLOPPY.hillDk, 1.5);
     rect(NX + 19, NY + 8, 2, 14, FLOPPY.ink); rect(NX + 19, NY + 8, 6, 2, FLOPPY.ink); circ(NX + 15, NY + 23, 4.4, FLOPPY.ink);
@@ -1028,12 +1041,12 @@ function makeGame(bump: () => void) {
     lyricsDraw(54, FOOT_Y + 24, W - 106);
     const bw = W - 60, bh = 38, bx = 30, by = H - bh - 16, down = s.held && !s.onGround;
     // ⚑ the calm switch (the prototype's F and its "spectacle" button, outside its canvas): here, in the footer's spare height
-    const cl = SPEC.full ? g.calm.full : g.calm.calm; ctx.font = `600 11px ${FONT}`; const cw = Math.ceil(ctx.measureText(cl).width) + 28, cx0 = Math.round(W / 2 - cw / 2), cy0 = Math.round((NY + 34 + by) / 2 - 11);
-    rr(cx0, cy0, cw, 22, 11, SPEC.full ? ERA3.white : FLOPPY.skyLow, FLOPPY.hillDk, 1.2); tx(cl, W / 2 + 6, cy0 + 11, 11, FLOPPY.ink, 'center', 600);
+    const cl = SPEC.full ? g.calm.full : g.calm.calm; ctx.font = `600 ${FS(11)}px ${FONT}`; const cw = Math.ceil(ctx.measureText(cl).width) + 28, cx0 = Math.round(W / 2 - cw / 2), cy0 = Math.round((NY + 34 + by) / 2 - 11);
+    rr(cx0, cy0, cw, 22, 11, SPEC.full ? ERA3.white : FLOPPY.skyLow, FLOPPY.hillDk, 1.2); tu(cl, W / 2 + 6, cy0 + 11, 11, FLOPPY.ink, 'center', 600);
     starburst(cx0 + 12, cy0 + 11, 5, 2.4, 5, 0, SPEC.full ? BOMB.gold : ERA3.grey, 1);
     hitRects.push({ x: cx0 - 4, y: cy0 - 4, w: cw + 8, h: 30, id: 'calm' });
     rr(bx, by + (down ? 3 : 0) + 3, bw, bh, 12, FLOPPY.hillDk); rr(bx, by + (down ? 3 : 0), bw, bh, 12, FLOPPY.hillFar); rect(bx + 10, by + 4 + (down ? 3 : 0), bw - 20, 2, ERA3.white);
-    tx(g.jump, W / 2, by + bh / 2 + (down ? 3 : 0), 15, FLOPPY.ink, 'center', 800);
+    tu(g.jump, W / 2, by + bh / 2 + (down ? 3 : 0), 15, FLOPPY.ink, 'center', 800);
   }
   // the introduction: the platform's cheerful voice, and one plain line on how to play
   function intro(): void {
@@ -1041,16 +1054,16 @@ function makeGame(bump: () => void) {
     ctx.save(); ctx.beginPath(); ctx.rect(0, HEADER_H + 4, W, GROUND_Y + GRASS_H - HEADER_H - 4); ctx.clip(); starburst(W / 2, 220, 330, 190, 18, S.t * 0.25, BOMB.gold, 0.2); starburst(W / 2, 220, 290, 170, 18, -S.t * 0.2, BOMB.hot, 0.16); ctx.restore();
     const X = 20, Y = 44, PW = W - 40, PH = 352; rr(X, Y + 4, PW, PH, 20, FLOPPY.hillDk); rr(X, Y, PW, PH, 20, ERA3.white); rect(X + 16, Y, PW - 32, 4, FLOPPY.hillFar);
     circ(X + 40, Y + 38, 27, FLOPPY.skyLow); lambSprite(X + 40, Y + 54, 1.5, { phase: S.t * 6 });
-    garish(g.intro.title, X + 156, Y + 34, 24, { maxW: 160, rot: -0.03 }); tx(g.publisher, X + 72, Y + 58, 11, ERA3.grey, 'left', 600);
-    const vl = wrap(g.intro.voice, PW - 40, 13, 600); vl.forEach((ln, i) => tx(ln, X + 20, Y + 88 + i * 16, 13, FLOPPY.ink, 'left', 600));
-    tx(g.intro.signed, X + 20, Y + 88 + vl.length * 16 + 3, 10, ERA3.grey, 'left', 700);
-    const hy = Y + 88 + vl.length * 16 + 16, hl = wrap(g.intro.how, PW - 52, 11.5, 700);
+    garish(g.intro.title, X + 156, Y + 34, 24, { maxW: 160, rot: -0.03 }); tu(g.publisher, X + 72, Y + 58, 11, ERA3.grey, 'left', 600);
+    const vl = wrapU(g.intro.voice, PW - 40, 13, 600); vl.forEach((ln, i) => tu(ln, X + 20, Y + 88 + i * 16, 13, FLOPPY.ink, 'left', 600));
+    tu(g.intro.signed, X + 20, Y + 88 + vl.length * 16 + 3, 10, ERA3.grey, 'left', 700);
+    const hy = Y + 88 + vl.length * 16 + 16, hl = wrapU(g.intro.how, PW - 52, 11.5, 700);
     rr(X + 14, hy, PW - 28, 28 + hl.length * 14, 12, FLOPPY.skyLow);
-    tx(g.intro.howTitle, X + 26, hy + 13, 10, ERA3.grey, 'left', 800);
-    hl.forEach((ln, i) => tx(ln, X + 26, hy + 29 + i * 14, 11.5, FLOPPY.ink, 'left', 700));
-    const by = Y + PH - 36; rr(X + 40, by, PW - 80, 26, 13, ERA3.good); tx(g.intro.go, W / 2, by + 14, 14, ERA3.white, 'center', 800);
+    tu(g.intro.howTitle, X + 26, hy + 13, 10, ERA3.grey, 'left', 800);
+    hl.forEach((ln, i) => tu(ln, X + 26, hy + 29 + i * 14, 11.5, FLOPPY.ink, 'left', 700));
+    const by = Y + PH - 36; rr(X + 40, by, PW - 80, 26, 13, ERA3.good); tu(g.intro.go, W / 2, by + 14, 14, ERA3.white, 'center', 800);
     bulbRing(X - 6, Y - 6, PW + 12, PH + 12, 16, 0, true);
-    tx(g.intro.length.replace('{t}', mmss(levelLen())), W / 2, Y + PH + 14, 10, ERA3.white, 'center', 600);
+    tu(g.intro.length.replace('{t}', mmss(levelLen())), W / 2, Y + PH + 14, 10, ERA3.white, 'center', 600);
   }
   // the end of the song: the cheerful count of the lambs called, and, plainly, how many are still here
   function outro(): void {
@@ -1060,18 +1073,18 @@ function makeGame(bump: () => void) {
       const X = 28, Y = 96, PW = W - 56, PH = 250; rr(X, Y + 4, PW, PH, 20, FLOPPY.hillDk); rr(X, Y, PW, PH, 20, ERA3.white); rect(X + 16, Y, PW - 32, 4, FLOPPY.hillFar);
       starburst(W / 2, Y + 100, 240, 150, 16, S.t * 0.2, BOMB.gold, 0.16); bulbRing(X - 6, Y - 6, PW + 12, PH + 12, 16, 1, true);
       garish(g.outro.title, W / 2, Y + 34, 22, { maxW: PW - 30, rot: -0.03 });
-      tx(g.outro.said, W / 2, Y + 70, 12, FLOPPY.ink, 'center', 600);
-      garish(String(s.called), W / 2, Y + 106, 44, { c1: BOMB.lime, c2: BOMB.cyan, rim: BOMB.violet, rot: 0.03 }); tx(g.outro.after, W / 2, Y + 140, 12, FLOPPY.ink, 'center', 600);
+      tu(g.outro.said, W / 2, Y + 70, 12, FLOPPY.ink, 'center', 600, PW - 30);
+      garish(String(s.called), W / 2, Y + 106, 44, { c1: BOMB.lime, c2: BOMB.cyan, rim: BOMB.violet, rot: 0.03 }); tu(g.outro.after, W / 2, Y + 140, 12, FLOPPY.ink, 'center', 600, PW - 30);
       rect(X + 30, Y + 160, PW - 60, 1, FLOPPY.skyLow);
-      tx(g.outro.still, W / 2, Y + 182, 11, ERA3.grey, 'center', 600); tx(String(s.flock.length), W / 2, Y + 208, 24, FLOPPY.ink, 'center', 800);
-      if (Math.floor(s.t * 2) % 2 === 0) tx(g.outro.again, W / 2, Y + 236, 12, FLOPPY.ink, 'center', 600);
+      tu(g.outro.still, W / 2, Y + 182, 11, ERA3.grey, 'center', 600); tu(String(s.flock.length), W / 2, Y + 208, 24, FLOPPY.ink, 'center', 800);
+      if (Math.floor(s.t * 2) % 2 === 0) tu(g.outro.again, W / 2, Y + 236, 12, FLOPPY.ink, 'center', 600);
     });
   }
   function lyricsDraw(x0: number, y0: number, w: number): void {   // his words, the line being sung, each word lit as it comes
-    if (!song || !songPlaying()) { if (songState === 'missing') tx(g.hint.songMissing, x0, y0 + 8, 10, ERA3.grey, 'left', 500); return; }
+    if (!song || !songPlaying()) { if (songState === 'missing') tu(g.hint.songMissing, x0, y0 + 8, 10, ERA3.grey, 'left', 500); return; }
     const now = song.currentTime; let li = -1; for (let i = 0; i < LYRICS.length; i++) if (LYRICS[i][0] <= now) li = i;
-    if (li < 0 || now - LYRICS[li][1][LYRICS[li][1].length - 1][0] >= 3) { tx('♪', x0 + 8, y0 + 8, 12, ERA3.grey, 'left', 500); return; }
-    ctx.font = `700 13px ${FONT}`; const words = LYRICS[li][1]; const rows: Array<Array<[number, string]>> = [[]]; let width = 0;
+    if (li < 0 || now - LYRICS[li][1][LYRICS[li][1].length - 1][0] >= 3) { tu('♪', x0 + 8, y0 + 8, 12, ERA3.grey, 'left', 500); return; }
+    ctx.font = `700 ${FS(13) - 2}px ${FONT}`; const words = LYRICS[li][1]; const rows: Array<Array<[number, string]>> = [[]]; let width = 0;
     for (const wd of words) { const ww = ctx.measureText(wd[1] + ' ').width; if (width + ww > w && rows[rows.length - 1].length) { rows.push([]); width = 0; } rows[rows.length - 1].push(wd); width += ww; }
     rows.slice(0, 3).forEach((row, ri) => { let x = x0; for (const [wt, word] of row) { ctx.fillStyle = wt <= now ? FLOPPY.ink : ERA3.grey; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(word, x, y0 + 8 + ri * 16); x += ctx.measureText(word + ' ').width; } });
   }
@@ -1113,12 +1126,12 @@ function makeGame(bump: () => void) {
     for (const d of s.dust) { const k = d.t / 0.35; circ(d.x + (d.x > SX ? 1 : -1) * k * 10, d.y - 2 - k * 4, 2.4 * (1 - k), FLOPPY.hillFar); }
     for (const h of s.hearts) { const k = h.t; A(1 - k, () => circ(h.x + Math.sin(k * 6 + h.k) * 4, h.y - k * 26, 2.4, FLOPPY.sun)); }
     for (const m of s.motes) A(Math.min(1, m.life) * (0.5 + 0.4 * Math.sin(m.ph)), () => { if (m.wool) { circ(m.x, m.y, 2.6, ERA3.white); circ(m.x + 1.6, m.y + 1, 1.8, FLOPPY.woolShade); } else circ(m.x, m.y, 2, FLOPPY.sun); });
-    for (const b of s.bubbles) { ctx.font = `700 11px ${FONT}`; const w = ctx.measureText(b.s).width + 12; A(1 - b.t / 0.8, () => { rr(b.x - w / 2, b.y - b.t * 18 - 9, w, 18, 9, ERA3.white); tx(b.s, b.x, b.y - b.t * 18, 11, FLOPPY.ink, 'center', 700); }); }
+    for (const b of s.bubbles) { ctx.font = `700 ${FS(11)}px ${FONT}`; const w = ctx.measureText(b.s).width + 12; A(1 - b.t / 0.8, () => { rr(b.x - w / 2, b.y - b.t * 18 - 9, w, 18, 9, ERA3.white); tu(b.s, b.x, b.y - b.t * 18, 11, FLOPPY.ink, 'center', 700); }); }
     ctx.restore();
     drawWeather(); specFront();
     ctx.restore();
     header(); footer();
-    if (s.toast) { const toast = s.toast; const k = Math.min(1, toast.t / 0.3) * Math.min(1, (3.2 - toast.t) / 0.5); A(k, () => { ctx.font = `700 12px ${FONT}`; const w = ctx.measureText(toast.s).width + 26; rr(W / 2 - w / 2, HEADER_H + 14, w, 22, 11, ERA3.white); tx(toast.s, W / 2, HEADER_H + 25, 12, FLOPPY.ink, 'center', 700); }); }
+    if (s.toast) { const toast = s.toast; const k = Math.min(1, toast.t / 0.3) * Math.min(1, (3.2 - toast.t) / 0.5); A(k, () => { ctx.font = `700 ${FS(12)}px ${FONT}`; const w = Math.min(W - 16, ctx.measureText(toast.s).width + 26); rr(W / 2 - w / 2, HEADER_H + 14, w, 26, 13, ERA3.white); tu(toast.s, W / 2, HEADER_H + 27, 12, FLOPPY.ink, 'center', 700); }); }
     if (s.mode === 'idle') intro();
     if (s.mode === 'done' && s.doneT > 0.6) outro();
     if (s.paused) { A(0.6, () => rect(0, 0, W, H, ERA3.ink)); tx(g.paused.title, W / 2, 250, 26, ERA3.white, 'center', 800); tx(g.paused.sub, W / 2, 282, 13, ERA3.white, 'center', 600); }

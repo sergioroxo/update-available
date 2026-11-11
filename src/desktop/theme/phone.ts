@@ -69,6 +69,9 @@ export const PHONE = {
  * so the no-runtime-network invariant is untouched. `weight` 600 is the only
  * bold used — a phone UI has two weights, not five.
  */
+// ⚑ S362 / H40 (his headset, 10 Nov: the phone's text is "out of focus… very hard to read; the monitor is much better") — every size on
+//   the phone's screens was raised about 2 px (messages 11 → 13, labels 8–9 → 10, bars 10 → 11) with the line steps and bubble heights
+//   to match, and the Handset Window now draws the phone at 2× (graceQueueLite `drawMirror`). Larger type first; no quad/compositor work.
 export function phoneFont(
   ctx: CanvasRenderingContext2D, size = 12, weight: 400 | 600 = 400
 ): void {
@@ -116,7 +119,7 @@ export function statusBar(ctx: CanvasRenderingContext2D, W: number, time: string
   const h = 18;
   ctx.fillStyle = PHONE.bar;
   ctx.fillRect(0, 0, W, h);
-  phoneFont(ctx, 10, 600);
+  phoneFont(ctx, 11, 600);
   ctx.fillStyle = PHONE.ink;
   ctx.fillText(time, 8, 4);
   // signal: three rising bars
@@ -141,7 +144,7 @@ export function statusBar(ctx: CanvasRenderingContext2D, W: number, time: string
 export function appBar(
   ctx: CanvasRenderingContext2D, W: number, y: number, title: string, sub = ''
 ): number {
-  const h = sub ? 38 : 30;
+  const h = sub ? 40 : 30;
   ctx.fillStyle = PHONE.bar;
   ctx.fillRect(0, y, W, h);
   ctx.fillStyle = PHONE.hairline;
@@ -152,15 +155,15 @@ export function appBar(
   ctx.beginPath();
   ctx.moveTo(14, y + 10); ctx.lineTo(9, y + 15); ctx.lineTo(14, y + 20);
   ctx.stroke();
-  phoneFont(ctx, 13, 600);
+  phoneFont(ctx, 14, 600);
   ctx.fillStyle = PHONE.ink;
   const tw = ctx.measureText(title).width;
   ctx.fillText(title, Math.round((W - tw) / 2), y + (sub ? 6 : 9));
   if (sub) {
-    phoneFont(ctx, 10);
+    phoneFont(ctx, 11);
     ctx.fillStyle = PHONE.dim;
     const sw = ctx.measureText(sub).width;
-    ctx.fillText(sub, Math.round((W - sw) / 2), y + 23);
+    ctx.fillText(sub, Math.round((W - sw) / 2), y + 24);
   }
   return y + h;
 }
@@ -242,12 +245,12 @@ export function appTile(
     ctx.moveTo(x + 12, y + 12); ctx.lineTo(x + s - 11, y + s / 2); ctx.lineTo(x + 12, y + s - 12);
     ctx.closePath(); ctx.fill();
   }
-  phoneFont(ctx, 9);
+  phoneFont(ctx, 10);
   ctx.fillStyle = PHONE.tintInk;
   const lw = ctx.measureText(label).width;
   ctx.fillText(label, x + (s - lw) / 2, y + s + 4);
   if (badge) {
-    phoneFont(ctx, 9, 600);
+    phoneFont(ctx, 10, 600);
     const bw = Math.max(14, ctx.measureText(badge).width + 8);
     roundRect(ctx, x + s - bw + 6, y - 5, bw, 14, 7, PHONE.badge);
     ctx.fillStyle = PHONE.tintInk;
@@ -353,7 +356,7 @@ export function furnitureTile(
       break;
   }
   if (label) {
-    phoneFont(ctx, 8);
+    phoneFont(ctx, 9);
     ctx.fillStyle = PHONE.surface;
     const lw = ctx.measureText(label).width;
     ctx.fillText(label, x + (s - lw) / 2, y + s + 3);
@@ -393,13 +396,13 @@ export function dateWidget(
   ctx.globalAlpha = 0.9;
   roundRect(ctx, x, y, w, 46, 6, PHONE.surface);
   ctx.restore();
-  phoneFont(ctx, 9, 600);
+  phoneFont(ctx, 10, 600);
   ctx.fillStyle = PHONE.dim;
   ctx.fillText(weekday.toUpperCase(), x + 10, y + 7);
   phoneFont(ctx, 19, 600);
   ctx.fillStyle = PHONE.ink;
   ctx.fillText(date, x + 10, y + 17);
-  phoneFont(ctx, 9);
+  phoneFont(ctx, 10);
   ctx.fillStyle = PHONE.dim;
   const nw = ctx.measureText(note).width;
   ctx.fillText(note, x + w - 10 - nw, y + 30);

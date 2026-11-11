@@ -30,7 +30,7 @@ const CASCADE = m.cascade as Msg[];
 const SLOTS = (mirrorCopy as unknown as { slots?: string[] }).slots ?? [];
 type Live = Msg & { key: string };
 const LINK_VOTE = m.linkVote as { masthead: string; headline: string };   // S227 / M1: the never-drawn standfirst and tapHint are gone
-const BACKLOG = m.backlog as { from: string; time: string; text: string; register?: string; stampCard?: string; thread?: { time: string; text: string }[] }[];
+const BACKLOG = m.backlog as { from: string; time: string; text: string; register?: string; stampCard?: string; opens?: string; thread?: { time: string; text: string }[] }[];
 const UNLOCK_HINT = (m.home as unknown as Record<string, string>).unlockHint;
 const HOME = m.home as unknown as Record<string, string>;
 
@@ -60,7 +60,20 @@ const CASCADE_SOUND_GAP = 1.5;
 /** ⚑ S327 / T06 (his 8 Nov: "a Maiden-to-be message popped in while I pressed the testimony editor") — a held message
  *  is delivered only while the platform is AT REST (no job, page or card open, no other voice speaking), and the next
  *  waits this long after the last, so each one is read before the next arrives. */
-const READ_HOLD = 4;
+const READ_HOLD = 6;
+/** ⚑ S362 / H28 (his headset, 10 Nov: "Orla's message needs more time"; after "the pastor's wife" the scene "jumped super fast and I lost
+ *  my place") — each message is held for as long as it takes to read it, not one length for all. Seconds the platform's other voices
+ *  (the next message, the Notes draft, Lambient) wait after it lands. Was 4 s for every one; Mam's (the pastor's wife) is 25 words
+ *  and Orla's last one carries a photo. */
+const HOLDS: Record<string, number> = { arrival: 8, decision: 9, after: 10 };
+/** ⚑ S362 / H28 — Bea's news, at a reading pace: seconds from the one before to each message landing (was a flat 1.7 s each, all five in
+ *  7.4 s). The article's card is followed by the article itself, shown by the piece for ARTICLE_HOLD (its entry is the 6.5 s). */
+const NEWS_HOLD = [0.6, 5, 6.5, 3.5, 3];
+/** ⚑ S362 / H28 + H42 — Mam's unfinished reply is TYPED in (it was a block that appeared), then held: seconds in all */
+const NOTES_TYPE_CPS = 9;
+const NOTES_SECONDS = 8;
+/** ⚑ S362 / H43 — the platform's "intervene immediately" alert holds this long before its first removal */
+const TAKEOVER_ALERT = 4.5;
 const CASCADE_REPEAT_VOLUME = 0.4;
 
 export class PhoneE3 {
@@ -100,14 +113,14 @@ export class PhoneE3 {
   drawThreadView(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
     const y = appBar(ctx, W, statusBar(ctx, W, this.clockText), m.personalMessage.from);
-    phoneFont(ctx, 12); ctx.fillStyle = PHONE.ink;
+    phoneFont(ctx, 13); ctx.fillStyle = PHONE.ink;
     let by = y + 18;
     for (const text of m.personalMessage.thread) {
       const lines = phoneWrap(ctx, text, W - 40);
-      bubble(ctx, 10, by, W - 20, lines.length * 17 + 20, 'in');
+      bubble(ctx, 10, by, W - 20, lines.length * 18 + 20, 'in');
       ctx.fillStyle = PHONE.ink;
-      lines.forEach((ln, i) => ctx.fillText(ln, 20, by + 10 + i * 17));
-      by += lines.length * 17 + 30;
+      lines.forEach((ln, i) => ctx.fillText(ln, 20, by + 10 + i * 18));
+      by += lines.length * 18 + 30;
     }
   }
 
@@ -118,6 +131,8 @@ export class PhoneE3 {
   private evening: typeof mirrorCopy.events = [];
   private eventQueue: typeof mirrorCopy.events = [];
   private bannerAge = READ_HOLD;
+  /** ⚑ S362 / H28 — how long the message now showing is held (HOLDS) */
+  private holdFor = READ_HOLD;
   /** ⚑ S327 — set every frame by the platform: nothing is open there and no other voice is speaking */
   atRest = false;
   /** ⚑ S327 — Mam's message has landed; her unfinished reply (Notes) is shown once it has been read */
@@ -128,11 +143,17 @@ export class PhoneE3 {
   startNews(): void {
     if (this.stage !== 'quiet' || this.disconnected) return;
     veraDay.phoneAnswered = true; veraDay.voted = true;
-    this.stage = 'news'; this.newsT = NEWS_STEP - 0.6; this.newsN = 0; this.banner = null;
+    this.stage = 'news'; this.newsT = 0; this.newsN = 0; this.articleConducted = false; this.articleShown = false; this.banner = null;
     this.bump();
   }
   private newsN = 0;
   private newsT = 0;
+  /** ⚑ S362 / H28 — the article is put on the glass by the piece when its card lands (he should see it before anything moves on) */
+  private articleConducted = false;
+  private articleShown = false;
+  private photosFrom: Screen | null = null;
+  /** ⚑ S362 / H43 — GracePlatform's alert is up and its removals have not begun */
+  get takeoverAlert(): boolean { return this.stage === 'takeover' && this.removeT < 0; }
   private replied = false;
   private replyWaitT = -1;
   private holdT = -1;
@@ -185,7 +206,7 @@ export class PhoneE3 {
     this.eventQueue.push(e); this.deliverEvent();
   }
   /** ⚑ S327 — a message is waiting, or the last one is still being read: the platform's other voices wait for it */
-  get voiceBusy(): boolean { return this.bannerAge < READ_HOLD || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes; }
+  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes; }
   get queued(): number { return this.eventQueue.length; }
   /** S336 — diagnosis only: why a queued message is not being delivered */
   debugState(): Record<string, unknown> {
@@ -195,11 +216,11 @@ export class PhoneE3 {
   }
   delivered(id: string): boolean { return this.evening.some(e => e.id === id); }
   private deliverEvent(): void {
-    if (!this.eventQueue.length || this.bannerAge < READ_HOLD || this.bannersHidden || !this.atRest || this.disconnected || this.notesPending || this.conductingNotes) return;
+    if (!this.eventQueue.length || this.bannerAge < this.holdFor || this.bannersHidden || !this.atRest || this.disconnected || this.notesPending || this.conductingNotes) return;
     const raw = this.eventQueue.shift()!;
     // ⚑ S332 — jobs finish in her order, so each message takes the evening's next slot (the clock never runs back)
     const e = { ...raw, time: raw.id === 'after' ? raw.time : SLOTS[this.slotN++] ?? raw.time };
-    this.evening.push(e); this.storyClock = e.time; this.banner = e; this.bannerAge = 0;
+    this.evening.push(e); this.storyClock = e.time; this.banner = e; this.bannerAge = 0; this.holdFor = HOLDS[e.id] ?? READ_HOLD;
     // ⚑ S327 / T04 (his 8 Nov: "two different messages from Orla, which doesn't make a lot of sense") — ONE banner for
     //   Orla's evening: the stamp line lands in the same thread, quietly, under the quiz message
     if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push({ ...st, time: e.time }); }
@@ -248,11 +269,12 @@ export class PhoneE3 {
   tick(dt: number, visible = true): void {
     if (!this.bannersHidden) { this.bannerAge += dt; this.deliverEvent(); }
     // Mam's message read, then — at rest — her unsent reply to it, once
-    if (this.notesPending && this.atRest && this.bannerAge >= READ_HOLD && !this.bannersHidden) { this.notesPending = false; this.conductNotes(); }
+    if (this.notesPending && this.atRest && this.bannerAge >= this.holdFor && !this.bannersHidden) { this.notesPending = false; this.conductNotes(); }
     if (this.notesT >= 0) {
-      const old = Math.floor(this.notesT * 2); this.notesT += dt;
-      if (this.notesT >= 3) { this.notesT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.bump(); }
-      else if (old !== Math.floor(this.notesT * 2)) this.bump();
+      // ⚑ S362 / H28 + H42 — the draft types itself in (NOTES_TYPE_CPS) and is then held; the hand-back waits a beat
+      const old = Math.floor(this.notesT * 10); this.notesT += dt;
+      if (this.notesT >= NOTES_SECONDS) { this.notesT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; this.bump(); }
+      else if (old !== Math.floor(this.notesT * 10)) this.bump();
     }
     // ⚑ S332 — MALTA, the era's own beat (conducted: the platform holds every other voice while it runs).
     //   news: Bea's messages land one at a time; then her one reply is offered (never required).
@@ -261,18 +283,27 @@ export class PhoneE3 {
     if (!visible) return;
     if (this.stage === 'news') {
       if (this.newsN < NEWS.length) {
+        // ⚑ S362 / H28 — if she opened the article herself, the news waits for her to come back from it
+        if (this.screen === 'article' && !this.articleConducted) return;
         this.newsT += dt;
-        if (this.newsT >= NEWS_STEP) {
-          this.newsT = 0; this.newsN++; this.storyClock = NEWS[this.newsN - 1].time; this.newsBanner(NEWS.slice(0, this.newsN));
+        if (this.newsT >= (NEWS_HOLD[this.newsN] ?? NEWS_STEP)) {
+          this.newsT = 0; this.newsN++; this.storyClock = NEWS[this.newsN - 1].time;
+          // the article's hold is over: back to the thread (if she is still on it), and the next message lands under her eyes
+          if (this.articleConducted) { this.articleConducted = false; if (this.screen === 'article') { this.screen = 'group'; } }
+          this.newsBanner(NEWS.slice(0, this.newsN));
+          // ⚑ S362 / H28 — the article is conducted: when its card lands the piece puts the page itself on the glass and holds it
+          if (NEWS[this.newsN - 1].kind === 'link2' && !this.articleShown && !this.disconnected) {
+            this.articleShown = true; this.articleConducted = true; this.articleVote = true; this.screen = 'article'; this.banner = null;
+          }
           if (this.screen === 'group') this.markGroupSeen();
           this.cascadeSound(); this.bump();
         }
         return;
       }
-      if (this.replied) { this.holdT += dt; if (this.holdT >= TAKEOVER_HOLD) { this.stage = 'takeover'; this.removeT = 0; this.bump(); } return; }
+      if (this.replied) { this.holdT += dt; if (this.holdT >= TAKEOVER_HOLD) { this.stage = 'takeover'; this.removeT = -TAKEOVER_ALERT; this.bump(); } return; }
       const before = this.replyOffered;
       this.replyWaitT = this.replyWaitT < 0 ? 0 : this.replyWaitT + dt;
-      if (before && !this.replyOffered) { this.stage = 'takeover'; this.removeT = 0; this.bump(); }
+      if (before && !this.replyOffered) { this.stage = 'takeover'; this.removeT = -TAKEOVER_ALERT; this.bump(); }
       return;
     }
     if (this.stage !== 'takeover') return;
@@ -355,8 +386,8 @@ export class PhoneE3 {
       const link = this.articleVote ? LINK_VOTE : m.link;
       const y0 = statusBar(ctx, W, this.clockText), top = appBar(ctx, W, y0, link.masthead);
       this.pushBack(y0, top);
-      phoneFont(ctx, 13, 600); ctx.fillStyle = PHONE.ink;
-      phoneWrap(ctx, link.headline, W - 20).forEach((line, i) => ctx.fillText(line, 10, top + 14 + i * 18));
+      phoneFont(ctx, 14, 600); ctx.fillStyle = PHONE.ink;
+      phoneWrap(ctx, link.headline, W - 20).forEach((line, i) => ctx.fillText(line, 10, top + 14 + i * 19));
     }
     else if (this.screen === 'evening') { this.drawEvening(ctx, W, bodyH); }
     else if (this.screen === 'personal') { this.drawThreadView(ctx, W, bodyH); this.pushBack(20, 62); }
@@ -400,6 +431,8 @@ export class PhoneE3 {
   private openEvening(from: string): void {
     this.scrollBack = 0;
     this.eveningFrom = from; this.screen = from === m.group.name ? 'group' : 'evening';
+    // ⚑ S362 / H28 — she opened Mam's message: the Notes draft waits the whole hold again from now (it took the screen at 4 s)
+    if (from === 'Mam' && this.notesPending) this.bannerAge = 0;
     if (this.banner?.from === from) this.banner = null;   // S327: opened, the notification has done its job
     for (const e of this.evening.filter(e => e.from === from)) this.readMessages.add('evening:' + e.id);
     if (from === m.personalMessage.from) { this.readMessages.add('personal'); veraDay.personalMessageSeen = true; }
@@ -412,24 +445,36 @@ export class PhoneE3 {
     const y0 = statusBar(ctx, W, this.clockText);
     const top = appBar(ctx, W, y0, this.eveningFrom);
     this.pushBack(y0, top);
-    const items: { text: string; time: string; photo?: boolean }[] = [];
-    for (const b of BACKLOG.filter(b => b.from === this.eveningFrom)) for (const t of b.thread ?? [{ time: b.time, text: b.text }]) items.push(t);
+    const items: { text: string; time: string; photo?: boolean; opens?: string }[] = [];
+    for (const b of BACKLOG.filter(b => b.from === this.eveningFrom)) for (const t of b.thread ?? [{ time: b.time, text: b.text }]) items.push({ ...t, opens: b.opens });
     for (const e of this.evening.filter(e => e.from === this.eveningFrom)) items.push({ text: e.text, time: e.time, photo: !!e.photo });
-    phoneFont(ctx, 11);
+    phoneFont(ctx, 13);
     const sized = items.map(it => ({ it, lines: phoneWrap(ctx, it.text, W - 42), h: 0 }));
-    for (const s of sized) s.h = s.lines.length * 14 + 14 + (s.it.photo ? 104 : 0) + 14;
+    for (const s of sized) s.h = s.lines.length * 17 + 14 + (s.it.photo ? 104 : 0) + 14;
     const win = this.scrollWindow(sized.map(s => s.h), top + 6, H - 8);
     this.drawScrollPills(ctx, W, top, H - 8, win);
     let y = win.y;
     const shown = sized.slice(win.from, win.to);
     for (const s of shown) {
-      const bh = s.lines.length * 14 + 10;
+      const bh = s.lines.length * 17 + 10;
       bubble(ctx, 10, y, W - 22, bh, 'in');
-      phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink;
-      s.lines.forEach((ln, i) => ctx.fillText(ln, 19, y + 5 + i * 14));
+      phoneFont(ctx, 13); ctx.fillStyle = PHONE.ink;
+      s.lines.forEach((ln, i) => ctx.fillText(ln, 19, y + 5 + i * 17));
       let yy = y + bh + 2;
-      if (s.it.photo) { this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 12, yy, 100, 100); yy += 104; }
-      phoneFont(ctx, 8); ctx.fillStyle = PHONE.dim; ctx.fillText(s.it.time, 14, yy);
+      if (s.it.photo) {
+        this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], 12, yy, 100, 100);
+        this.rects.push({ x: 12, y: yy, w: 100, h: 100, id: 'open-photo-4' });   // ⚑ S362 / H45 — the photo in the thread opens in Photos
+        yy += 104;
+      }
+      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(s.it.time, 14, yy);
+      // ⚑ S362 / H45 (his headset, 10 Nov: the photo message — "opening Orla goes to the files with the photos") — a message that
+      //   is about a photo opens the Photos app on the phone's own camera roll; the bubble is the press, "Photos ›" says so
+      if (s.it.opens === 'photos') {
+        phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.tint;
+        const lab = HOME.openPhotos, lw = ctx.measureText(lab).width;
+        ctx.fillText(lab, W - 14 - lw, yy - 1);
+        this.rects.push({ x: 10, y, w: W - 22, h: bh + 18, id: 'open-photos' });
+      }
       y += s.h;
     }
   }
@@ -437,17 +482,17 @@ export class PhoneE3 {
   private drawBanner(ctx: CanvasRenderingContext2D, W: number): void {
     if (!this.banner || this.bannersHidden) return;
     if (this.screen === 'lock') return;   // S330: the lock screen shows its messages as stacked cards (drawLock)
-    phoneFont(ctx, 11);
+    phoneFont(ctx, 12);
     const x = 6, y = 22, w = W - 12;
     const lines = phoneWrap(ctx, this.banner.text, w - 20).slice(0, 3);
-    const h = 30 + lines.length * 14 + (this.bannerPhoto ? 78 : 0);
+    const h = 32 + lines.length * 16 + (this.bannerPhoto ? 78 : 0);
     roundRect(ctx, x, y + 1, w, h, 10, PHONE.dim);   // a hairline shadow under the card
     roundRect(ctx, x, y, w, h, 10, PHONE.surface);
-    ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600); ctx.fillText(this.banner.from, x + 10, y + 8);
-    phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(this.storyClock, x + w - 34, y + 8);
-    phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, x + 10, y + 26 + i * 14));
+    ctx.fillStyle = PHONE.ink; phoneFont(ctx, 12, 600); ctx.fillText(this.banner.from, x + 10, y + 8);
+    phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(this.storyClock, x + w - 36, y + 8);
+    phoneFont(ctx, 12); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, x + 10, y + 28 + i * 16));
     if (this.bannerPhoto) {
-      this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], x + 10, y + 30 + lines.length * 14, 72, 72);
+      this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], x + 10, y + 32 + lines.length * 16, 72, 72);
     }
     this.rects.unshift({ x, y, w, h, id: 'evening-banner' });
   }
@@ -466,14 +511,14 @@ export class PhoneE3 {
     const cards = [...byFrom.values()].sort((a, b) => b.last - a.last).slice(0, 3);
     let y = top;
     for (const c of cards) {
-      phoneFont(ctx, 11); const lines = phoneWrap(ctx, c.text, W - 40).slice(0, 2);
-      const h = 28 + lines.length * 14;
+      phoneFont(ctx, 12); const lines = phoneWrap(ctx, c.text, W - 40).slice(0, 2);
+      const h = 30 + lines.length * 16;
       if (y + h > H - 48) break;
       roundRect(ctx, 10, y, W - 20, h, 8, PHONE.surface);
-      ctx.fillStyle = PHONE.ink; phoneFont(ctx, 11, 600); ctx.fillText(c.from, 20, y + 7);
-      phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(c.time, W - 46, y + 8);
-      phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, 20, y + 24 + i * 14));
-      if (c.more) { phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(`+${c.more}`, W - 34, y + h - 14); }
+      ctx.fillStyle = PHONE.ink; phoneFont(ctx, 12, 600); ctx.fillText(c.from, 20, y + 7);
+      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(c.time, W - 48, y + 8);
+      phoneFont(ctx, 12); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, 20, y + 26 + i * 16));
+      if (c.more) { phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(`+${c.more}`, W - 34, y + h - 16); }
       this.rects.push({ x: 10, y, w: W - 20, h, id: `lock-card:${c.from}` });
       y += h + 6;
     }
@@ -487,7 +532,7 @@ export class PhoneE3 {
     ctx.fillStyle = PHONE.surface;
     const cw = ctx.measureText(this.clockText).width;
     ctx.fillText(this.clockText, Math.round((W - cw) / 2), 52);
-    phoneFont(ctx, 11);
+    phoneFont(ctx, 12);
     const dw = ctx.measureText(d.phone.lockDate).width;
     ctx.fillText(d.phone.lockDate, Math.round((W - dw) / 2), 100);
 
@@ -496,7 +541,7 @@ export class PhoneE3 {
     //   pill at the bottom of the glass, the phone's own surface on its own
     //   wallpaper, with the hint inside it. Same rect, now a thing you can see.
     const unlockPill = (): void => {
-      phoneFont(ctx, 10, 600);
+      phoneFont(ctx, 12, 600);
       const uw = Math.ceil(ctx.measureText(UNLOCK_HINT).width) + 28;
       const ux = Math.round((W - uw) / 2), uy = H - 40;
       roundRect(ctx, ux, uy, uw, 26, 13, PHONE.surface);
@@ -523,7 +568,7 @@ export class PhoneE3 {
     if (this.screen === 'photo') {
       const size = Math.max(20, Math.min(144, H - top - 70)), x = Math.round((W - size) / 2), y = top + 20;
       ctx.drawImage(this.photoSprites[this.photoIndex], x, y, size, size);
-      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
+      phoneFont(ctx, 11); ctx.fillStyle = PHONE.dim;
       ctx.fillText(m.cameraRoll.dates[this.photoIndex], Math.max(52, x), y + size + 12);
     } else {
       const sprites = this.photoSprites.slice(0, this.evening.some(e => e.id === 'after') ? 5 : 4);
@@ -534,10 +579,10 @@ export class PhoneE3 {
         const size = Math.max(20, Math.min(H < 300 ? 56 : 72, H - top - 76));
         const x = 12 + (n % 2) * 84, y = top + 12 + Math.floor(n / 2) * (size + 18);
         ctx.drawImage(sprite, x, y, size, size);
-        phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim; ctx.fillText(m.cameraRoll.dates[i], x, y + size + 5);
+        phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(m.cameraRoll.dates[i], x, y + size + 5);
         this.rects.push({ x, y, w: size, h: size + 14, id: 'photo-' + i });
       });
-      phoneFont(ctx, 12); ctx.fillStyle = PHONE.tint;
+      phoneFont(ctx, 14); ctx.fillStyle = PHONE.tint;
       if (this.photoPage > 0) { ctx.fillText(m.home.previousPage, 62, H - 22); this.rects.push({ x: 50, y: H - 32, w: 50, h: 30, id: 'photos-prev' }); }
       if (this.photoPage < pages - 1) { ctx.fillText(m.home.nextPage, W - 24, H - 22); this.rects.push({ x: W - 50, y: H - 32, w: 50, h: 30, id: 'photos-next' }); }
     }
@@ -552,14 +597,21 @@ export class PhoneE3 {
     for (const entry of (this.conductingNotes ? m.notes.entries.slice(0, 1) : m.notes.entries)) {
       y += 12;
       if ('title' in entry) {
-        phoneFont(ctx, 12, 600); ctx.fillStyle = PHONE.ink;
+        phoneFont(ctx, 14, 600); ctx.fillStyle = PHONE.ink;
         ctx.fillText(entry.title ?? '', 12, y); y += 21;
       }
-      phoneFont(ctx, 11); ctx.fillStyle = PHONE.ink;
-      for (const line of phoneWrap(ctx, entry.text, W - 24)) { ctx.fillText(line, 12, y); y += 16; }
+      phoneFont(ctx, 13); ctx.fillStyle = PHONE.ink;
+      // ⚑ S362 / H42 (his headset: "it should appear differently", not as a sudden block) — while the piece shows this draft it
+      //   TYPES itself in, the way a note being written does (lines wrapped on the whole text, so words never jump), caret last
+      let left = this.conductingNotes ? Math.floor(this.notesT * NOTES_TYPE_CPS) : Infinity;
+      let tail = '', tailY = y;
+      for (const line of phoneWrap(ctx, entry.text, W - 24)) {
+        const seg = line.slice(0, Math.max(0, left)); left -= line.length + 1;
+        if (seg) { ctx.fillText(seg, 12, y); tail = seg; tailY = y; }
+        y += 18;
+      }
       if (this.conductingNotes && Math.floor(this.notesT * 2) % 2 === 0) {
-        const last = phoneWrap(ctx, entry.text, W - 24).slice(-1)[0];
-        ctx.fillStyle = PHONE.ink; ctx.fillRect(12 + Math.ceil(ctx.measureText(last).width), y - 16, 1, 13);
+        ctx.fillStyle = PHONE.ink; ctx.fillRect(12 + Math.ceil(ctx.measureText(tail).width) + 1, tailY, 1, 14);
       }
       y += 12; ctx.fillStyle = PHONE.hairline; ctx.fillRect(12, y, W - 24, 1);
     }
@@ -617,7 +669,7 @@ export class PhoneE3 {
     ctx.clip();
     drawFloppyIcon(ctx, fx, fy, s);
     ctx.restore();
-    phoneFont(ctx, 8);
+    phoneFont(ctx, 9);
     ctx.fillStyle = PHONE.surface;
     // ⚑ the SHORT label. "FloppySheep" at a 32 px column ran into Messages on
     //   one side and Live on the other — a home screen truncates, it does not
@@ -678,6 +730,8 @@ export class PhoneE3 {
     return m.group.meta.replace(/^\d+/, String(n));
   }
 
+  // ⚑ S362 / H40 — the thread's type is 13 px on 17 px lines (was 11 on 14), the names above bubbles and the time stamps 10 (was 8): fewer
+  //   words to a line, a taller thread, and the scroll pills (S358 / H13) carry the rest.
   private drawGroup(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     ctx.fillStyle = PHONE.bg; ctx.fillRect(0, 0, W, H);
     const y0 = statusBar(ctx, W, this.clockText);
@@ -692,7 +746,7 @@ export class PhoneE3 {
       ctx.fillRect(0, top, W, 18);
       ctx.fillStyle = PHONE.hairline;
       ctx.fillRect(0, top + 17, W, 1);
-      phoneFont(ctx, 9);
+      phoneFont(ctx, 10);
       ctx.fillStyle = PHONE.dim;
       ctx.fillText(label, 10, top + 4);
       top += 18;
@@ -707,13 +761,15 @@ export class PhoneE3 {
     // the composer's place: empty all era, except for the one reply she is offered (S332)
     const cy = H - 30;
     if (this.replyOffered) {
-      phoneFont(ctx, 11);
+      phoneFont(ctx, 12);
       const tw = Math.ceil(ctx.measureText(REPLY.text).width);
-      const cw = Math.min(W - 20, tw + 28), cx = W - 10 - cw;
+      const cw = Math.min(W - 20, tw + 24), cx = W - 10 - cw;
       ctx.fillStyle = PHONE.hairline; ctx.fillRect(0, cy - 6, W, 1);
-      phoneFont(ctx, 8); ctx.fillStyle = PHONE.dim; ctx.fillText(REPLY.hint, 10, cy + 5);
+      // ⚑ S362 / H40 — the larger type leaves no room for the word beside the bubble: it is drawn only where it fits
+      phoneFont(ctx, 10); const hw = ctx.measureText(REPLY.hint).width;
+      if (cx > 10 + hw + 8) { ctx.fillStyle = PHONE.dim; ctx.fillText(REPLY.hint, 10, cy + 6); }
       roundRect(ctx, cx, cy, cw, 24, 12, PHONE.bubbleOut);
-      phoneFont(ctx, 11); ctx.fillStyle = PHONE.surface; ctx.fillText(REPLY.text, cx + 14, cy + 6);
+      phoneFont(ctx, 12); ctx.fillStyle = PHONE.surface; ctx.fillText(REPLY.text, cx + 12, cy + 6);
       this.rects.push({ x: cx, y: cy, w: cw, h: 24, id: 'reply-bea' });
     }
 
@@ -729,7 +785,7 @@ export class PhoneE3 {
     for (const { y: my, msg } of drawn) {
       if (this.removed.has(msg.key)) {
         // ⚑ the platform reached into her phone: the bubble stays, emptied, in the system's grey
-        phoneFont(ctx, 9);
+        phoneFont(ctx, 10);
         const tw = Math.min(W - 44, ctx.measureText(REMOVED_LINE).width + 16);
         const rx = msg.from === VERA ? W - 10 - tw : 30;
         roundRect(ctx, rx, my, tw, 18, 9, PHONE.hairline);
@@ -744,21 +800,21 @@ export class PhoneE3 {
 
   /** ⚑ S332 — her one message in the era, on the right where her words would always have been */
   private drawMine(ctx: CanvasRenderingContext2D, msg: Msg, y: number, W: number): void {
-    phoneFont(ctx, 11);
-    const lines = phoneWrap(ctx, msg.text ?? '', W - 74);
+    phoneFont(ctx, 13);
+    const lines = phoneWrap(ctx, msg.text ?? '', W - 62);
     let widest = 0;
     for (const ln of lines) widest = Math.max(widest, ctx.measureText(ln).width);
-    const bw = Math.min(W - 44, widest + 18), h = 14 + lines.length * 14, bx = W - 10 - bw;
+    const bw = Math.min(W - 44, widest + 18), h = 15 + lines.length * 17, bx = W - 10 - bw;
     bubble(ctx, bx, y, bw, h, 'out');
     ctx.fillStyle = PHONE.surface;
-    lines.forEach((ln, i) => ctx.fillText(ln, bx + 9, y + 7 + i * 14));
+    lines.forEach((ln, i) => ctx.fillText(ln, bx + 9, y + 7 + i * 17));
   }
 
   private msgHeight(ctx: CanvasRenderingContext2D, msg: Msg, W: number): number {
-    if (msg.from === 'system') { phoneFont(ctx, 9); return 16; }
-    if (msg.kind === 'link' || msg.kind === 'link2') return 52;
-    phoneFont(ctx, 11);
-    return 14 + phoneWrap(ctx, msg.text ?? '', W - 74).length * 14;
+    if (msg.from === 'system') { phoneFont(ctx, 10); return 17; }
+    if (msg.kind === 'link' || msg.kind === 'link2') return 60;
+    phoneFont(ctx, 13);
+    return 15 + phoneWrap(ctx, msg.text ?? '', W - 62).length * 17;
   }
 
   private drawMsg(
@@ -766,7 +822,7 @@ export class PhoneE3 {
   ): void {
     if (msg.from === 'system') {
       // people being ADDED while it happens, in the platform's own grey note
-      phoneFont(ctx, 9);
+      phoneFont(ctx, 10);
       ctx.fillStyle = PHONE.dim;
       const tw = ctx.measureText(msg.text ?? '').width;
       ctx.fillText(msg.text ?? '', Math.round((W - tw) / 2), y + 3);
@@ -775,21 +831,21 @@ export class PhoneE3 {
     const bx = 30;
     if (showWho) avatar(ctx, 6, y + 2, 20, msg.from);
     if (msg.kind === 'link' || msg.kind === 'link2') { this.drawLinkCard(ctx, bx, y, W - bx - 14, msg); return; }
-    phoneFont(ctx, 11);
-    const lines = phoneWrap(ctx, msg.text ?? '', W - 74);
+    phoneFont(ctx, 13);
+    const lines = phoneWrap(ctx, msg.text ?? '', W - 62);
     let widest = 0;
     for (const ln of lines) widest = Math.max(widest, ctx.measureText(ln).width);
     const bw = Math.min(W - bx - 14, widest + 18);
-    const h = 14 + lines.length * 14;
+    const h = 15 + lines.length * 17;
     bubble(ctx, bx, y, bw, h, 'in');
     if (showWho) {
-      phoneFont(ctx, 8, 600);
+      phoneFont(ctx, 10, 600);
       ctx.fillStyle = PHONE.dim;
       ctx.fillText(msg.from, bx + 2, y - 10);
     }
-    phoneFont(ctx, 11);
+    phoneFont(ctx, 13);
     ctx.fillStyle = PHONE.ink;
-    lines.forEach((ln, i) => ctx.fillText(ln, bx + 9, y + 7 + i * 14));
+    lines.forEach((ln, i) => ctx.fillText(ln, bx + 9, y + 7 + i * 17));
   }
 
   /** ⚑ the pretend newspaper carrying the real law (§7.3): invented masthead,
@@ -803,16 +859,16 @@ export class PhoneE3 {
     const link = msg.kind === 'link2' ? LINK_VOTE : m.link;
     // ⚑ S219 / W1-E6 — a spent card is drawn spent (the headline goes quiet), and a press on it still answers (openLink)
     const spent = this.linkSpent(msg.kind);
-    roundRect(ctx, x, y, w, 48, 9, PHONE.surface);
-    roundRect(ctx, x + 6, y + 6, 36, 36, 5, spent ? PHONE.hairline : PHONE.tileLive);
-    phoneFont(ctx, 8);
+    roundRect(ctx, x, y, w, 56, 9, PHONE.surface);
+    roundRect(ctx, x + 6, y + 10, 36, 36, 5, spent ? PHONE.hairline : PHONE.tileLive);
+    phoneFont(ctx, 9);
     ctx.fillStyle = PHONE.dim;
     ctx.fillText(link.masthead, x + 48, y + 7);
-    phoneFont(ctx, 10, 600);
+    phoneFont(ctx, 11, 600);
     ctx.fillStyle = spent ? PHONE.dim : PHONE.ink;
-    phoneWrap(ctx, link.headline, w - 56).slice(0, 2)
-      .forEach((ln, i) => ctx.fillText(ln, x + 48, y + 19 + i * 12));
-    this.rects.push({ x, y, w, h: 48, id: msg.kind === 'link2' ? 'link2' : 'link' });
+    phoneWrap(ctx, link.headline, w - 54).slice(0, 2)
+      .forEach((ln, i) => ctx.fillText(ln, x + 48, y + 21 + i * 13));
+    this.rects.push({ x, y, w, h: 56, id: msg.kind === 'link2' ? 'link2' : 'link' });
   }
 
   /** ⚑ read-only, and it files NOTHING. §6's design law: the piece never makes
@@ -837,21 +893,21 @@ export class PhoneE3 {
     ];
     // The era's news stays reachable on every page; private threads can be paged independently.
     const group = rows.splice(rows.findIndex(r => r.id === 'group'), 1)[0];
-    const perPage = Math.max(1, Math.floor((H - y - 36) / 48) - 1);
+    const perPage = Math.max(1, Math.floor((H - y - 36) / 52) - 1);
     const pages = Math.max(1, rows.length);
     this.inboxPage = Math.min(this.inboxPage, pages - 1);
     for (const b of [group, ...rows.slice(this.inboxPage, this.inboxPage + perPage)]) {
-      const h = 48;
+      const h = 52;
       if (!b.read) { ctx.fillStyle = PHONE.tint; ctx.fillRect(5, y + 13, 4, 4); }
-      phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.ink; ctx.fillText(b.from, 14, y + 5);
-      phoneFont(ctx, 8); ctx.fillStyle = PHONE.dim;
+      phoneFont(ctx, 13, 600); ctx.fillStyle = PHONE.ink; ctx.fillText(b.from, 14, y + 5);
+      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
       ctx.fillText(b.time, W - 10 - ctx.measureText(b.time).width, y + 20);
-      phoneFont(ctx, 10);
-      ctx.fillText(phoneWrap(ctx, b.text, W - 28)[0], 14, y + 31);
+      phoneFont(ctx, 12);
+      ctx.fillText(phoneWrap(ctx, b.text, W - 28)[0], 14, y + 32);
       ctx.fillStyle = PHONE.hairline; ctx.fillRect(14, y + h - 1, W - 14, 1);
       if (b.id) this.rects.push({ x: 0, y, w: W, h, id: b.id }); y += h;
     }
-    phoneFont(ctx, 12); ctx.fillStyle = PHONE.dim;
+    phoneFont(ctx, 13); ctx.fillStyle = PHONE.dim;
     if (this.inboxPage > 0) { ctx.fillText(m.home.previousPage, 12, H - 26); this.rects.push({ x: 0, y: H - 36, w: 50, h: 36, id: 'inbox-prev' }); }
     if (this.inboxPage < pages - 1) { ctx.fillText(m.home.nextPage, W - 25, H - 26); this.rects.push({ x: W - 50, y: H - 36, w: 50, h: 36, id: 'inbox-next' }); }
   }
@@ -890,11 +946,14 @@ export class PhoneE3 {
         // The optional inbox never files a reading event.
         this.bump(); return true;
       // S158: the chat goes back to Messages; S177: so does an open message
-      case 'back': if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.screen === 'article' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
+      case 'back': if (this.screen === 'photo') { this.screen = 'photos'; this.bump(); return true; } if (this.screen === 'photos' && this.photosFrom) { this.screen = this.photosFrom; this.photosFrom = null; this.bump(); return true; } this.screen = this.screen === 'group' || this.screen === 'message' || this.screen === 'evening' || this.screen === 'article' || this.personalOpen ? 'inbox' : 'home'; this.openMessage = null; this.bump(); return true;
       case 'platform': this.screen = 'platform'; this.bump(); return true;
       case 'photos-prev': this.photoPage--; this.bump(); return true;
       case 'photos-next': this.photoPage++; this.bump(); return true;
-      case 'photos': this.photoPage = 0; this.screen = 'photos'; this.bump(); return true;
+      case 'photos': this.photosFrom = null; this.photoPage = 0; this.screen = 'photos'; this.bump(); return true;
+      // ⚑ S362 / H45 — from a message about a photo: the camera roll, and Back returns to the thread it came from
+      case 'open-photos': this.photosFrom = this.screen; this.photoPage = 0; this.screen = 'photos'; this.bump(); return true;
+      case 'open-photo-4': this.photosFrom = this.screen; this.photoIndex = 4; this.screen = 'photo'; this.bump(); return true;
       case 'notes': this.screen = 'notes'; this.bump(); return true;
       case 'walk': this.screen = 'walk'; this.bump(); return true;
       case 'link': case 'link2': this.openLink(r.id); return true;
@@ -1005,18 +1064,25 @@ export class PhoneE3 {
     const entries = b.thread ?? [{ time: b.time, text: b.text }];
     let by = top + 8;
     for (const entry of entries) {
-      phoneFont(ctx, 10);
+      phoneFont(ctx, 12);
       const lines = phoneWrap(ctx, entry.text, W - 42);
-      const bh = lines.length * 13 + 14;
+      const bh = lines.length * 15 + 14;
       bubble(ctx, 10, by, W - 22, bh, 'in');
       ctx.fillStyle = PHONE.ink;
-      lines.forEach((ln, i) => ctx.fillText(ln, 19, by + 7 + i * 13));
+      lines.forEach((ln, i) => ctx.fillText(ln, 19, by + 7 + i * 15));
       by += bh + 3;
-      phoneFont(ctx, 8); ctx.fillStyle = PHONE.dim;
-      ctx.fillText(entry.time, 14, by); by += 15;
+      phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
+      ctx.fillText(entry.time, 14, by);
+      if (b.opens === 'photos') {   // ⚑ S362 / H45 — same press as in the thread (drawEvening)
+        phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.tint;
+        const lab = HOME.openPhotos, lw = ctx.measureText(lab).width;
+        ctx.fillText(lab, W - 14 - lw, by - 1);
+        this.rects.push({ x: 10, y: by - bh - 3, w: W - 22, h: bh + 18, id: 'open-photos' });
+      }
+      by += 15;
     }
     if (b.stampCard) {
-      phoneFont(ctx, 12, 600); ctx.fillStyle = PHONE.ink;
+      phoneFont(ctx, 13, 600); ctx.fillStyle = PHONE.ink;
       const lines = phoneWrap(ctx, b.stampCard, W - 40);
       ctx.fillStyle = PHONE.surface; ctx.fillRect(12, by + 4, W - 24, 74);
       ctx.fillStyle = PHONE.ink;
@@ -1033,25 +1099,25 @@ export class PhoneE3 {
     this.pushBack(y0, top);
     // ⚑ S182 — WHO RECEIVES IT (his intake research: the documented 2016 form is a weekly report
     //   emailed to a named partner — spouse, parent, pastor, mentor; here Deirdre, the group's facilitator)
-    phoneFont(ctx, 9); ctx.fillStyle = PHONE.dim;
+    phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
     ctx.fillText(HOME.walkReport, 12, top + 6);
     ctx.fillStyle = PHONE.hairline; ctx.fillRect(12, top + 18, W - 24, 1);
     const rows = entriesByEra().e3.slice().reverse();
     let y = top + 26;
-    phoneFont(ctx, 10);
+    phoneFont(ctx, 11);
     if (!rows.length) { ctx.fillStyle = PHONE.dim; ctx.fillText(HOME.walkEmpty, 14, y + 4); }
     for (const r of rows) {
       const lines = phoneWrap(ctx, r.witness, W - 34);
-      const h = lines.length * 13 + 8;
+      const h = lines.length * 14 + 8;
       if (y + h > H - 22) break;
       ctx.fillStyle = r.flagged ? PHONE.badge : PHONE.tint;
       ctx.beginPath(); ctx.arc(14, y + 6, 3, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = PHONE.ink;
-      lines.forEach((ln, i) => ctx.fillText(ln, 24, y + i * 13));
+      lines.forEach((ln, i) => ctx.fillText(ln, 24, y + i * 14));
       ctx.fillStyle = PHONE.hairline; ctx.fillRect(24, y + h - 4, W - 34, 1);
       y += h;
     }
-    phoneFont(ctx, 9); ctx.fillStyle = PHONE.faint;
+    phoneFont(ctx, 10); ctx.fillStyle = PHONE.faint;
     ctx.fillText(HOME.walkFoot, 12, H - 16);
   }
 
@@ -1061,10 +1127,10 @@ export class PhoneE3 {
     const y0 = statusBar(ctx, W, this.clockText);
     const y = appBar(ctx, W, y0, m.home.platformLabel);
     this.pushBack(y0, y);
-    phoneFont(ctx, 11, 600); ctx.fillStyle = PHONE.ink;
+    phoneFont(ctx, 12, 600); ctx.fillStyle = PHONE.ink;
     ctx.fillText(m.home.platformHello, 14, y + 20);
-    phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim;
-    phoneWrap(ctx, m.home.platformNote, W - 28).forEach((ln, i) => ctx.fillText(ln, 14, y + 40 + i * 13));
+    phoneFont(ctx, 11); ctx.fillStyle = PHONE.dim;
+    phoneWrap(ctx, m.home.platformNote, W - 28).forEach((ln, i) => ctx.fillText(ln, 14, y + 40 + i * 14));
   }
 
   private openGroup(): void {

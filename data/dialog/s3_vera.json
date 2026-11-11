@@ -4,7 +4,11 @@
   "title": "New: Kindredraft",
   "sub": "Your 2014 story is ready for its first refresh.",
   "install": "Install",
-  "admin": "An administrator has refreshed it for you."
+  "admin": "An administrator has refreshed it for you.",
+  "draftTag": "DRAFT",
+  "draftBy": "Suggested by Kindredraft, from your 2014 account. Not yet approved.",
+  "draft": "I came to my first night with a heart that was looking for home in the wrong place.",
+  "_docS362": "⚑ S362 / H42b (his headset, 10 Nov, 21:13: the \"Kindred Heart\" draft \"should appear differently\" — read as Kindredraft, whose offer was a bare strip): the offer arrives as a pop-in card that shows the system's DRAFT of her story typing itself in (graceQueueLite `drawStoryOffer`), marked as a suggestion that is not yet approved. `draft` is the first sentence of `record.publishedText` (the system's version, unchanged); no new testimony."
  },
  "send": {
   "title": "Ready to share · Renata",
@@ -56,6 +60,11 @@
    "Original retained under Terms §4."
   ],
   "back": "Back to today",
+  "urgentTag": "URGENT",
+  "urgentTitle": "Campaign kit · needs approval tonight",
+  "urgentLine": "Malta's vote is in the news. The network's campaign goes out tonight with three stories, and the kit is waiting on you.",
+  "urgentOpen": "Open the kit",
+  "_docS362": "⚑ S362 / H41 (his headset, 10 Nov, 21:11: the campaign kit \"should arrive as a pop-in marked urgent\"): the kit no longer takes the screen by itself. It pops in over the board in the platform's own voice, marked URGENT (operable register: it may be loud), and opens from there (graceQueueLite `drawKitPopin`). If it is left, the platform opens it itself after 22 s.",
   "waiting": "Campaign kit · scheduled",
   "witnessApproved": "campaign kit: approved — Vera’s 2014 story included under general consent",
   "witnessRemoved": "story: take-down requested — scheduled posts, external copies and original retained",
@@ -146,6 +155,10 @@
   "heading": "Automatic review is on",
   "sub": "GracePlatform is reviewing Maiden-to-be by itself.",
   "rule": "Political content is removed to keep the community calm.",
+  "alertTag": "PRIORITY ALERT",
+  "alertLine": "We need to intervene immediately.",
+  "alertSub": "Maiden-to-be is discussing the Malta vote. Review starts now.",
+  "_docS362": "⚑ S362 / H43 (his headset, 10 Nov, 21:13: GracePlatform should \"jump in more dramatically\" with \"we need to intervene immediately\" when the Malta message appears): the removals page opens on this alert (platform voice, operable; flashing band + chime) and holds it ~4.5 s before the first removal (phoneE3 TAKEOVER_ALERT).",
   "removing": "removing…",
   "removed": "removed",
   "waiting": "not reviewed",
