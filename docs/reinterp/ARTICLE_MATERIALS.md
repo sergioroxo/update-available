@@ -46,6 +46,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | document | topic |
 |---|---|
 | `docs/reinterp/RESEARCH_CONLEY_LIA_2026-11-10.md` | Garrard Conley on Love in Action (Insider, 2025; transcript read): the map of safe places, and 18 other points mapped to the piece's beats |
+| `docs/reinterp/HEADSET_SESSION_2026-11-10.md` + `HEADSET_TRIAGE_2026-11-10.md` | His evening headset session observed through the Quest's cast (method: an observer session, frames every 4 s, his dictated notes), and its sort into H01–H51 with his decisions (keep the seat, to the side) |
 | `docs/reinterp/RESEARCH_COMMONS_STREAM_2026-11-10.md` | AI-Jesus livestreams, Trans Academy, Freeman & Acena's embodied visibility |
 | `docs/reinterp/RESEARCH_2026_TRANS_PRESSURE_2026-11-07.md` | the pressure on trans people, 2020–2026 (Era 4) |
 | `docs/reinterp/RESEARCH_2026_V3_THREADS_2026-11-07.md` | six threads for 2026 v3 (incl. mutual aid, thread 5) |
@@ -101,6 +102,8 @@ ARTICLE_COMPANION; this file only says where things are.*
 | `research/article-images-2026-11-10/commons-host-S354/` | the Commons revamp, Part A: Shepherd Live™'s studio, the host, the conversation, the recap, the try-on | 20 | 10 Nov | the a* set predates the Friends-header fix; d* shows it. Also on OneDrive |
 | `research/article-images-2026-11-10/commons-raid-S355/` | Part B: the host as a hologram on a pad (statue before / hologram after, desktop and emulated headset), the raid, the seven tags, "source: none", "she's right here" | 20 | 10 Nov | companion §7k; headset frames are emulation only. Also on OneDrive |
 | `research/article-images-2026-11-10/commons-backstage-S356/` | Part C: Junie's ask, the operator view, the view gone dark, the turn back, the night | 8 | 10 Nov | companion §7k. Also on OneDrive |
+| `research/article-images-2026-11-11/headset-bugs-S358/` | Job 12 Part A1: the headset session's bugs fixed (phantom buttons, the 2026 room, the Close's panels) | 25 | 11 Nov | photo page A1-photos.html. Also on OneDrive |
+| `research/article-images-2026-11-11/headset-comfort-S359/` | Job 12 Part A2: 2026 keeps the seat, the host to his right, the raid at his sides, the operator view in front, the grip icon (emulated headset) | 11 | 11 Nov | before/after of his D1/D2. Also on OneDrive |
 | `out/tour-e4-v2/`, `out/tour-e4/` … | era tours (regenerable with tools/tour-e4.mjs, tools/stills.mjs) | many | various | working photos; copy anything chosen into `research/` |
 | `~/update-available-uib/out/s347/`, `s348/` | era-change and headset probe frames (66 MB) | 284 | 9 Nov | indexed only, not copied |
 
