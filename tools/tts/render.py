@@ -94,6 +94,12 @@ def resolve_field(doc, dotted: str):
             continue
         if sel == "":
             return " ".join(str(x) for x in cur)
+        # ⚑ S360 / clip (his 11 Nov: "music and a narrator") — a bare integer picks a LIST ITEM BY POSITION
+        #   ('clip.frames[3]'), so one frame's own words can be voiced without a copy in the manifest. Ids that
+        #   are digits only never occur in this repo's keyed lists, so the older form is unchanged.
+        if sel.isdigit() and isinstance(cur, list):
+            cur = cur[int(sel)]
+            continue
         match = next((x for x in cur if isinstance(x, dict) and x.get("id") == sel), None)
         if match is None:
             raise KeyError(f"no item with id '{sel}' in '{key}' (field: {dotted})")

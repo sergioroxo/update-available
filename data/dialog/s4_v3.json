@@ -296,21 +296,25 @@
     }
   },
   "clip": {
-    "_doc": "THE CLIP (src/desktop/apps/contagionClip.ts; the room's ceiling reuses the painter). An invented AI-made anti-'gender ideology' video: the contagion frame, the 'who is talking to your child' frame, a line that only goes up (tropes as described in RESEARCH_2026_V3_THREADS thread 4, in my own words, never copied). Direct and brute, not violent. It says it is AI-made in its own corner. Invented title and channel; no real people, no faces.",
+    "_doc": "THE CLIP (src/desktop/apps/contagionClip.ts; the room's ceiling reuses the painter). An invented AI-made video in the anti-'gender ideology' genre's own overblown voice: contagion (one friend, a chat), a line that only goes up, 'who is talking to you'. Tropes as described in RESEARCH_2026_V3_THREADS thread 4, in my own words, never copied. Direct and brute, not violence, no faces. It says it is AI-made on every frame.",
+    "_docS360": "⚑ S360 (his 11 Nov: 'Is it the AI that makes the video of the social contagion to her?' — yes; and 'music and a narrator'): the clip is no longer a recommended video from a channel ('Concerned Futures · 1.2M views' is gone). Second Thoughts MAKES it for Maya out of her own week — the lot's five (Ola, Priya, Rae, Sam, Maya), her 18th, the clinic number 4,815, Meridian's no — in the genre's overblown, glossy voice (his rule for the system's new media), and the last frame turns the genre's alarm into the system's promise. `channel`/`recommended` keep their old keys only because browser.ts still prints them: `channel` is now the stamp line 'Made with AI', `recommended` is 'made for you'. NEVER a medical or diagnostic word in a frame; never a joke at Maya. THE NARRATOR is the SYSTEM's synthetic voice (apparatus register): one build-time TTS file per frame, tools/tts/render.py, entries clip_narr_0…6 in data/audio/tts_manifest.json, whose `source.fields` are `clip.frames[n]` below so the spoken words cannot drift from the subtitles. `frameHolds[n]` = that file's real duration (ffprobe: 3.692 2.438 3.622 3.204 3.762 3.831 3.065 s) + the narrator's 0.15 s entry + at least 0.6 s of air, rounded up to a half-second so every card starts on a beat of the music (120 BPM): 4.5 4 4.5 4 5 5 5 = 32 s; `frameSeconds` is kept as the fallback for a caller with no holds. The music (clip_music.mp3, tools/make_clip_music.py) is one loop of the same length.",
     "title": "THE GREAT BECOMING",
-    "channel": "Concerned Futures · 1.2M views",
+    "channel": "Made with AI",
     "aiTag": "Made with AI",
-    "length": "0:47",
-    "recommended": "Recommended for you",
+    "length": "0:32",
+    "recommended": "made for you",
     "frames": [
-      "IT STARTS WITH ONE FRIEND.",
+      "IT STARTED WITH ONE FRIEND.",
       "THEN A GROUP CHAT.",
-      "THEN A WHOLE CLASS.",
-      "WHO IS TALKING TO YOUR CHILD?",
-      "BY 2030: EVERYONE?",
-      "SHARE BEFORE IT'S TOO LATE."
+      "18 TODAY. AND IT HAD SPREAD.",
+      "4,815 AND RISING.",
+      "EVEN MERIDIAN SHUT THE DOOR.",
+      "WHO IS TALKING TO YOU, MAYA?",
+      "YOU CAN STILL COME BACK."
     ],
-    "frameSeconds": 2.4
+    "frameSeconds": 4.5,
+    "frameHolds": [4.5, 4, 4.5, 4, 5, 5, 5],
+    "narratorDelay": 0.15
   },
   "tryon": {
     "_doc": "TRY IT ON (beat 14; src/desktop/apps/mirror.ts). His second ruling: harsher, not softer; the system starts it without asking; the mirror, the reveal of a male body; Junie's link breaks in and ends it; the player cannot. The system's voice only, flat and pleased with itself; it says how natural it looks. Speculative (no documented use of such a tool, RESEARCH_2026_V3_THREADS thread 2).",

@@ -6,7 +6,7 @@
     "family_design_solutions_tape97.mp3", "fold_my_hands_tape97.mp3",
     "discover_the_new_you_tape97_radio.mp3", "discover_the_new_you_infomercial_tape03.mp3",
     "caleb_last_night_2003.mp3", "chase_the_clouds.mp3", "chase_the_clouds_broken.mp3",
-    "lambyos_2003_boot.mp3", "descent_score.mp3", "close_score.mp3", "close_song.mp3",
+    "lambyos_2003_boot.mp3", "descent_score.mp3", "close_score.mp3", "close_song.mp3", "clip_music.mp3",
     "restorify_media_theme_2003.mp3", "restorify_testimony_bed_2003.mp3",
     "ball_room_landing.mp3", "ball_room_bed.mp3", "passage_install.mp3",
     "passage_1997_2003.mp3", "passage_2003_2016.mp3", "passage_2016_2026.mp3"
@@ -19,7 +19,8 @@
     "morph_1997_2003.mp3", "morph_2003_2016.mp3", "morph_2016_2026.mp3"
   ],
   "voices": [
-    "tape-hiss.mp3", "tapeA_side_one_intro.mp3", "lamby_puremail_apology.mp3"
+    "tape-hiss.mp3", "tapeA_side_one_intro.mp3", "lamby_puremail_apology.mp3",
+    "clip_narr_0.mp3", "clip_narr_1.mp3", "clip_narr_2.mp3", "clip_narr_3.mp3", "clip_narr_4.mp3", "clip_narr_5.mp3", "clip_narr_6.mp3"
   ],
   "voicePattern": "^l_[a-z]\\d",
   "film": [

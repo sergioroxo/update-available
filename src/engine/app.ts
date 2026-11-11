@@ -3920,7 +3920,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   }
   let aimName: string | null = null;
   // S159 / W-G2 — every sound is named in the strip for a moment (his call: option b)
-  const CUES = captionsData as unknown as { holdSeconds: number; cues: Record<string, string> };
+  const CUES = captionsData as unknown as { holdSeconds: number; holds?: Record<string, number>; cues: Record<string, string> };
   let cueText: string | null = null;
   let cueT = 0;
   setCueListener((name) => {
@@ -3928,7 +3928,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const text = CUES.cues[name];
     if (!text) return;
     cueText = text;
-    cueT = CUES.holdSeconds;
+    cueT = CUES.holds?.[name] ?? CUES.holdSeconds;   // ⚑ S360 / clip: a long line (the narrator's) holds its real duration
   });
 
   // ⚑ the browser must not claim the gestures the room needs: without this a
