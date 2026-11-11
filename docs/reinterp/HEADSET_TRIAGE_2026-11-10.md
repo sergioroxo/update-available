@@ -126,6 +126,10 @@ UIB_JOB_12_2026-11-10.md.**
 - **D3 order of work:** recommendation: Part A = §1 bugs + §2 comfort (H01–H25); Part B = 2026's email flow + the
   Close order (H46–H50); Part C = the rest of §3–§4. Then the next headset session (with §0's carry-overs).
 
+**His answers (11 Nov), the builder's two questions:** Caleb's 2003 teaser — **no voice** (music, the hall, subtitles).
+"THE GREAT BECOMING" — **music and a narrator** (the clip's synthetic system voice; the host keeps none). Job 13 =
+UIB_JOB_13_2026-11-11.md (A 2026 by email, B the Close in his order, C the rest).
+
 ## 7. Things he liked (keep)
 
 The pointing line; the theme song; the era websites ("I need all of these images for the article"); MentorRob's
