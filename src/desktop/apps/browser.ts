@@ -698,6 +698,9 @@ export class E4Browser {
     if (id === 'stories') this.file('v3:stories', 'read', W3.stories);
     if (id === 'unmuted') this.ring = 61;
     if (BOT.beats[this.botBeat]?.lines.length) playOnce('agent_2026.mp3');
+    // ⚑ S360 — with the Mail and News tabs open beside it, each new beat brings the chat back to the front (no beat waits on
+    //   her finding it: the S360 test walk wandered the tabs while the bot spoke, and the chat stalled)
+    if ((this.step === 'bot' || this.step === 'confirm') && this.liveTab !== 'search') this.openTab('search');
     this.version++;
   }
   private nextBot(): void {
@@ -1827,6 +1830,7 @@ export class E4Browser {
       return true;
     }
     if (id === 'sponsor-chat' && (this.step === 'news' || this.step === 'mumMail')) { this.openBot(); return true; }
+    if (id === 'sponsor-chat' && this.botBeat >= 0) { this.openTab('search'); return true; }   // the ad, once more: back to the chat
     if (id.startsWith('tab-')) { this.idleNav = 0; this.openTab(id.slice(4)); return true; }
     if (id === 'news-prev' || id === 'news-next') {
       this.idleNav = 0;
