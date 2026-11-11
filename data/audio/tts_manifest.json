@@ -139,7 +139,7 @@
     },
     {
       "id": "clip_narr_7",
-      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 7 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[7]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364: this is S360's take of the same words, RENAMED from clip_narr_4 (the three 'signs' cards were inserted before it) — not re-rendered, because his verdict on the voice was 'brilliant'.",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 7 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[7]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364: this is S360's take of the same words, RENAMED from clip_narr_4 (the three 'signs' cards were inserted before it) — not re-rendered, because his verdict on the voice was 'brilliant'. ⚑ S370 (UiB job 16 Part C4; his 11 Nov: 'if it is clear the point of the conversion therapy targeting more of T now, even from LGB'): this frame's words changed to 'EVEN THE LGB CHARITY SAYS YOU'RE NOT ONE OF THEM.' and this file was re-rendered alone (5.991 s; 'LGB' reads as three syllables in the take's energy envelope, so it is spelled out — checked by measurement, not by ear), voice, speed and steps unchanged (M5, 0.85, 12). The card's hold grew from 5 to 7 s (s4_v3.json clip._docS370).",
       "register": "apparatus",
       "voice": "M5",
       "lang": "en",
@@ -169,6 +169,17 @@
       "steps": 12,
       "outFile": "public/assets/audio/clip_narr_9.wav",
       "source": { "file": "data/dialog/s4_v3.json", "fields": ["clip.frames[9]"] }
+    },
+    {
+      "id": "clip_narr_10",
+      "_doc": "⚑ S370 / clip (UiB job 16 Part C3; his 11 Nov: 'in the end it stops quite abruptly the sound and the message') — THE GREAT BECOMING's NARRATOR, frame 10 of 11: THE END SLATE. The same machine, the same voice, signing off its own video with its call to action, as an advert's last line does; the slate's button carries the same words. Apparatus register, unambiguously (the system's synthetic trailer voice, never a person). Voice, speed and steps copied unchanged from clip_narr_0 (M5, 0.85, 12) so the narrator does not change between frames; rendered alone with clip_narr_7 (S370's new Meridian line), clip_narr_0…6, 8, 9 untouched. Words: data/dialog/s4_v3.json `clip.frames[10]`, resolved at render time.",
+      "register": "apparatus",
+      "voice": "M5",
+      "lang": "en",
+      "speed": 0.85,
+      "steps": 12,
+      "outFile": "public/assets/audio/clip_narr_10.wav",
+      "source": { "file": "data/dialog/s4_v3.json", "fields": ["clip.frames[10]"] }
     }
   ]
 }

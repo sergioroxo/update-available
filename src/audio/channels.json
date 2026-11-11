@@ -21,7 +21,7 @@
   "voices": [
     "tape-hiss.mp3", "tapeA_side_one_intro.mp3", "lamby_puremail_apology.mp3",
     "clip_narr_0.mp3", "clip_narr_1.mp3", "clip_narr_2.mp3", "clip_narr_3.mp3", "clip_narr_4.mp3", "clip_narr_5.mp3", "clip_narr_6.mp3",
-    "clip_narr_7.mp3", "clip_narr_8.mp3", "clip_narr_9.mp3"
+    "clip_narr_7.mp3", "clip_narr_8.mp3", "clip_narr_9.mp3", "clip_narr_10.mp3"
   ],
   "voicePattern": "^l_[a-z]\\d",
   "film": [

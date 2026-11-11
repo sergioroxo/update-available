@@ -49,7 +49,7 @@ import { markE4, e4Has } from '../../narrative/e4Beats';
 import { E4Messenger, drawLoftPhoto, type ChatId } from './messenger';
 import { drawGoalPicture } from './goalPicture';
 import { drawSwapFilter } from './swapFilter';
-import { drawContagionClip, CLIP_LOOP_SECONDS, startClipSound, stopClipSound } from './contagionClip';
+import { drawContagionClip, CLIP_LOOP_SECONDS, CLIP_POSTER_SECONDS, startClipSound, stopClipSound } from './contagionClip';
 import { consoleSession } from '../../room/consoleSession';
 import updates from '../../../data/strings/updates.json';
 import script from '../../../data/dialog/s4_boot.json';
@@ -171,7 +171,7 @@ const ROOM_WAIT = { min: 5, max: 18 } as const;   // S360: the turn now follows 
 const HOUSE_FIRST = 2.2;
 const HOUSE_GAP = 2.4;
 /** the clip plays over the whole page for this long when the map beat begins (one loop of its six frames) */
-const CLIP_TAKEOVER_SECONDS = CLIP_LOOP_SECONDS;   // S360: the clip's own loop (its frames' holds)
+const CLIP_TAKEOVER_SECONDS = CLIP_LOOP_SECONDS;   // S360: the clip's own loop (its frames' holds); S370: 58 s, ending on its slate
 
 type Step = 'idle' | 'house' | 'newyou' | 'mum' | 'dad' | 'link' | 'news' | 'clinic' | 'meridian' | 'left' | 'pause'
   | 'mail' | 'mumMail'
@@ -341,7 +341,9 @@ export class E4Browser {
     return this.startMap.active || !this.pressable || this.phase !== 'open' || !!this.idleOrb || this.mode === 'game'
       || this.messenger.felt || this.enquiryOpen;
   }
-  get guideVoice(): boolean { return !!this.nowLine || this.waitNow; }
+  // ⚑ S370 — and while the clip owns the page (its narrator is the voice; one voice at a time): its 58 s now outlast the
+  //   guide's 50 s tip, which would otherwise pop over the end slate
+  get guideVoice(): boolean { return !!this.nowLine || this.waitNow || this.clipTakeover; }
   sayLine(line: string): void { this.nowLine = line; this.version++; }
   /** the laptop's line while the messenger is not up (the restore, the session worn) */
   get consoleLine(): string { return this.phase === 'open' ? '' : V.laptop.restoring; }
@@ -2371,7 +2373,7 @@ export class E4Browser {
   private drawCard(ctx: CanvasRenderingContext2D, kind: CardKind, x: number, y: number, w: number, ring: number): void {
     if (kind === 'clip') {
       const cw = 176, ch = 99;
-      drawContagionClip(ctx, CLIP_LOOP_SECONDS - 0.6, x, y, cw, ch);
+      drawContagionClip(ctx, CLIP_POSTER_SECONDS, x, y, cw, ch);   // S370: its last card, not the end slate
       roundRect(ctx, x + cw / 2 - 16, y + ch / 2 - 16, 32, 32, 16, V3.card);
       ctx.fillStyle = V3.ink; ctx.beginPath(); ctx.moveTo(x + cw / 2 - 5, y + ch / 2 - 8); ctx.lineTo(x + cw / 2 + 8, y + ch / 2); ctx.lineTo(x + cw / 2 - 5, y + ch / 2 + 8); ctx.closePath(); ctx.fill();
       ctx.font = monoFor(9); ctx.fillStyle = V3.ink2;

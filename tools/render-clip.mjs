@@ -16,6 +16,9 @@
  * the card's full state just after its last tick (or its 5 / 5 stamp), written as signs-<frame>.png beside --out.
  * `--logical WxH` draws the clip at another in-piece size before scaling (default 320x180, the video's; the chat's
  * full-page takeover is about 443x249 in the 2026 browser's logical page).
+ * ⚑ S370 — `--stills` also writes each sign's picture just before its tick (signs-<frame>-before-<n>.png: the AI's claim,
+ * before its own evidence undoes it), every card at the end of its hold (card-NN.png, the Meridian card and the end slate
+ * among them), and `--at 35.5,54` adds stills at given seconds. The video is one play of the clip (58 s since S370).
  */
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -49,7 +52,7 @@ export { default as V3 } from '../data/dialog/s4_v3.json';\n`);
 await esbuild.build({ entryPoints: [entry], bundle: true, outfile: bundle, format: 'esm', platform: 'neutral',
   target: 'es2022', loader: { '.json': 'json' }, logLevel: 'error',
   define: { __FESTIVAL__: 'false', __BUILD_TAG__: '"clip"', __APP_VERSION__: '"clip"', __BUILD_COMMIT__: '"clip"', __BUILD_DATE__: '""' } });
-const { drawContagionClip, CLIP_ONSETS, CLIP_LOOP_SECONDS, V3 } = await import(bundle);
+const { drawContagionClip, CLIP_ONSETS, CLIP_HOLDS, CLIP_LOOP_SECONDS, V3 } = await import(bundle);
 const DELAY = V3.clip.narratorDelay ?? 0.15;
 
 // the clip is drawn at its in-piece size (about 320×180 logical px in the 2026 browser) and scaled up, as the
@@ -69,15 +72,23 @@ ctx.scale(SCALE, SCALE);
 if (args.includes('--stills')) {
   // each signs card after its last beat has landed (and the quarter-second gold flash and the slam are over)
   mkdirSync(dirname(OUT), { recursive: true });
-  for (const card of V3.clip.signs.cards) {
-    const last = Math.max(...card.ticks, card.stampAt ?? 0);
-    const t = CLIP_ONSETS[card.frame] + last + 0.5;
+  const still = (t, name) => {
     ctx.clearRect(0, 0, LOGICAL_W, LOGICAL_H);
     drawContagionClip(ctx, t, 0, 0, LOGICAL_W, LOGICAL_H);
-    const file = join(dirname(OUT), `signs-${card.frame}.png`);
+    const file = join(dirname(OUT), `${name}.png`);
     writeFileSync(file, canvas.toBuffer('image/png'));
-    console.log(`still: card ${card.frame} at ${t.toFixed(2)} s → ${file}`);
+    console.log(`still: ${name} at ${t.toFixed(2)} s → ${file}`);
+  };
+  for (const card of V3.clip.signs.cards) {
+    const last = Math.max(...card.ticks, card.stampAt ?? 0);
+    still(CLIP_ONSETS[card.frame] + last + 0.5, `signs-${card.frame}`);
+    // ⚑ S370 — and each sign's picture just before its tick lands (the AI's claim, before its own evidence undoes it)
+    card.ticks.forEach((tk, i) => still(CLIP_ONSETS[card.frame] + tk - 0.375, `signs-${card.frame}-before-${i + 1}`));
   }
+  // ⚑ S370 — every card at the end of its hold (the Meridian card and the end slate among them)
+  CLIP_ONSETS.forEach((t0, i) => still(t0 + CLIP_HOLDS[i] - 0.3, `card-${String(i).padStart(2, '0')}`));
+  // `--at 35.5,37.25` adds stills at given seconds
+  for (const s of argOf('--at', '').split(',').filter(Boolean)) still(Number(s), `at-${Number(s).toFixed(2)}`);
   rmSync(WORK, { recursive: true, force: true });
   process.exit(0);
 }
