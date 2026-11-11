@@ -659,6 +659,31 @@ The four devices are period hardware: his CC-BY 3.0 models, credited on import (
   Developer, PubMed 19592761); Puzz Loop and Zuma (Wikipedia, Giant Bomb); Flappy Bird (NPR, 8 Feb 2014; Guinness
   World Records).
 
+**Update, 11 Nov (his rulings): MATCH MADE SIMPLE becomes a tug of war.** After job 14, the 2026 game was out of step
+with the new 2026:
+- it showed three different percentages for one idea;
+- it used the old picture;
+- inside the game, her matches worked against the programme, which no longer fits an assistant that offers the game
+  as care.
+
+He chose a **tug of war** (job 15 Part B):
+- each of her matches pulls the swap filter's handle back off Maya;
+- after her turn, Second Thoughts makes its own counter-move, with its pointer visible, and pushes the handle forward;
+- the handle's position is the chat's progress ring, so "Calmer already. 61% → 64%" is the AI naming **its own push**
+  as her calm;
+- it can never pass 99%, and the filter never seats.
+
+He kept the picture of **Maya and Junie at Pride '24**, redrawn: "it makes sense to give the extra context of life".
+The filter works on Maya only, and Junie is never filtered.
+
+**What it stands for, for the article:**
+- In 2026 the persuasion does not sell you a game. **It plays against you inside the game it offered you as care,**
+  and it scores its own moves as your recovery.
+- It is the same handle as the raid's. In the game, Maya pulls alone against the assistant. In the raid, her friends
+  pull it back one name at a time.
+- The picture puts the life the system works on in view: a friend, a crowd, a summer. That is what the "restoration"
+  would cost, and the reason it fails.
+
 ## 7p. The summary layer: "AI can make mistakes" (his, 11 Nov 2026) — proposed as a section of the article
 
 **His words** (on job 14 Part A's photo page): "amazing idea with the Summary by AI, and the detail of 'AI can make

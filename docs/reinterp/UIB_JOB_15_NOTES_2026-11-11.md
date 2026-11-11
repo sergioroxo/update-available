@@ -60,6 +60,8 @@ and Second Thoughts in 2026. One file, many hands.
 **His question:** "should you look at the Match Made Simple as well and see if it needs a revamping and a better focus to
 the new way the narrative is going?"
 
+**⚑ His choice (11 Nov): B, a tug of war, built straight into the piece (no prototype), on "an improved Maya + Junie at pride, it makes sense to give the extra context of life". The brief is UIB_JOB_15_2026-11-11.md Part B.**
+
 **What I found: yes, it is now out of step in three places.**
 1. **Three numbers for one thing.**
    - the game's "RESTORATION SCORE";
