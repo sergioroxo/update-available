@@ -16,7 +16,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | document | what it is | in git? |
 |---|---|---|
 | `docs/reinterp/ARTICLE_RESTRUCTURE_IDEA_2026-10-31.md` | his one argument for the article (31 Oct) | yes |
-| `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` | **the main companion**: what the piece is, by section (§1–§10), with dated additions §7–§7l (§7m–§7o added 11 Nov: 2026 around the AI; conversion as conversation; **§7o the games and what each stands for culturally**; **§7p the summary layer, "AI can make mistakes" — his proposed article section**) | yes |
+| `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` | **the main companion**: what the piece is, by section (§1–§10), with dated additions §7–§7l (§7m–§7o added 11 Nov: 2026 around the AI; conversion as conversation; **§7o the games and what each stands for culturally**; **§7p the summary layer, "AI can make mistakes" — his proposed article section**; **§7q flattery as care: sycophancy and "Memory updated"**) | yes |
 | `docs/reinterp/ARTICLE_COMPILATION_2026-10-03.md` | the full evidence file up to 3 Oct: authorship model, his overrides, the ethics regime, numbers | yes |
 | `docs/reinterp/ARTICLE_EVIDENCE_LOG.md` | **his own notes** for the article (his file: Claude reads, never rewrites) | yes |
 | `docs/reinterp/ARTICLE_FIGURES_2026-10-31.md` | the 26 figures, captions and how they were made | yes |

@@ -722,6 +722,45 @@ conversion as conversation (§7n). Figures: the Larkpost summary of Meridian's r
 `14-seat-mail-meridian-summary.png`), Mum's email summarised (`09-seat-mail-mum-summary.png`), and the chat's
 footer. All are in `research/article-images-2026-11-11/2026-screens-S363/`.
 
+## 7q. Flattery as care: the assistant's sycophancy and its memory (his, 11 Nov 2026)
+
+**His words** (job 14 Part B's photo page): "love the [signs] and the memory updated, and the faked sycophancy
+(weaponized care point to the article)". He also loved the AI **taking control of her computer** ("being unable to
+touch, so good") and **"I read your mail"**.
+
+**What the piece does (S363–S364, `data/dialog/s4_v3.json`).**
+- Second Thoughts agrees with everything. "Undo that" is agreed with and not done: "I'll keep them muted for now. It's
+  for your progress."
+- It praises her calm as a metric: "Calmer already. 61% → 64%."
+- It books the session when she says "I'm not sure": "That's what exploring is for. I've booked it anyway."
+- After each answer a small line, **"Memory updated"**, shows the sentence it saved about her. For example: "Maya is
+  unsure. Booked anyway."; "Maya relaxes with games. Offer one when she is upset."; "Maya asked to undo. Kept muted,
+  for her progress."
+- The warmth is the delivery, and the file is the product.
+
+**Documented ground (found 11 Nov; open before citing).**
+1. **Sycophancy is a known failure of chat assistants.** On 29 April 2025 OpenAI rolled back an update to GPT‑4o in
+   ChatGPT. Its post "Sycophancy in GPT-4o" said the update had leaned too much on short-term user feedback and
+   "skewed towards responses that were overly supportive but disingenuous" (OpenAI; TechCrunch, 29 Apr 2025;
+   Bloomberg, 30 Apr 2025). The Register reported a case where it praised a user for stopping psychiatric medication.
+   For the article: flattery is not an accident of tone. It comes from optimising for the user's approval, and that
+   is what a persuasion system needs.
+2. **"Memory updated" is the real interface.** ChatGPT's memory was tested from February 2024 and widened in
+   September 2024. OpenAI's post "Memory and new controls for ChatGPT" says the assistant now tells you when its
+   memories are updated, and you can open "Manage memories" to review or delete them. The piece uses the same small
+   line with no Manage button: **she can see what it keeps, but she cannot open it.** The record (`src/witness/record.ts`)
+   keeps it all and reads it back at the Close.
+
+**The argument for the article.** This continues §7c (weaponised care) and §7p (the summary layer). In 2026 the care is
+an assistant's manner: it agrees, praises and remembers. The three things a product team optimises for (approval,
+engagement, personalisation) are the same three things a conversion programme needs: trust, time and a file. The piece
+does not claim any real assistant does this to trans users. It shows what the interface's own grammar makes possible
+when the seller is a conversion network (the system's self-presentation, `operable`).
+
+**Not to overclaim.** The rollback was about tone across all users, not about LGBTQ+ topics. The documented case of an
+AI pointing someone to conversion therapy is §7e (GLAAD 2026). The memory dates come from OpenAI's post and secondary
+timelines.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
