@@ -92,7 +92,7 @@ const BOT = V.bot as unknown as { tab: string; mark: string; online: string; lin
   shots: { label: string; dad: string; dadLine: string; dadWhen: string };
   pages: { stamp: string; tap: string; close: string; items: WebPage[] };
   session: { live: string; title: string; line: string; fine: string; booked: string };
-  game: { window: string; sub: string; close: string; comments: string[] };
+  game: { window: string; sub: string; close: string; back: string; comments: string[] };
   week: { title: string; meridian: string; declined: string };
   heading: { title: string; ring: string; streak: string; stamp: string };
   map: { title: string; exposure: string; you: string; nodes: { id: string; label: string; kind: string }[]; mutedTag: string; leftTag: string };
@@ -133,6 +133,8 @@ type MailId = 'clinic' | 'meridian' | 'mum';
 /** ⚑ S363 — a desktop notification (2026's toast): who wrote, and the chat it opens */
 interface Toast { chat: ChatId; title: string; line: string; t: number; sys?: boolean }
 const TOAST_SECONDS = 5.5;
+/** ⚑ S366 / J15-05 — "Your circle" in the chat, taller (94 → 128) so every label sits inside the card */
+const MAP_CARD_H = 128;
 /** ⚑ S363 — the chat's cards, inline in the conversation (his N7): which beat shows which, after which of its lines */
 type CardKind = 'clip' | 'map' | 'goal' | 'stories' | 'ring' | 'shots' | 'pages' | 'session';
 const BEAT_CARD: Record<string, [CardKind, number]> = { reasons: ['shots', 0], clip: ['clip', -1], map: ['map', 0], heading: ['goal', 1],
@@ -243,6 +245,11 @@ export class E4Browser {
   /** a screenshot or a page it shared, opened larger (a press anywhere closes it) */
   private lightbox: string | null = null;
   private gameWin = false;
+  /** ⚑ S366 / J15-03 — the game's window enlarged over the browser's area (a press on the small one; ✕ or Back returns it) */
+  private gameBig = false;
+  /** the AI's latest word on her play, shown under the enlarged game (the same line the chat keeps) */
+  private gameLine = '';
+  private get gameBigOn(): boolean { return this.gameBig && this.gameWin && this.phase === 'open' && !this.lightbox && !this.messenger.felt; }
   private gameAnswer: 'open' | 'later' | null = null;
   private gameStarted = false;
   private gameKey = '';
@@ -475,6 +482,7 @@ export class E4Browser {
     return (L) => ({ x: L.k.cx + 110 * L.k.s, y: L.k.cy + (24 + i * 33 + 15) * L.k.s });
   }
   private startAct(kind: ActKind): void {
+    this.gameBig = false;   // S366 / J15-03: it needs the screen; the game goes back to its corner
     const m = this.messenger;
     if (m.view !== 'list') m.view = 'list';
     const chat = (L: Layout): { x: number; y: number } => this.atChat(L);
@@ -741,6 +749,7 @@ export class E4Browser {
         && (this.step === 'bot' || this.step === 'confirm' || this.step === 'junie')) {
         const line = BOT.game.comments[this.gameComments++].replace('{from}', String(this.gamePct)).replace('{to}', String(st.percent));
         this.botSaid.push({ who: 'bot', text: line });
+        this.gameLine = line;   // S366: and under the enlarged game
         this.gameMatches = st.matches; this.gamePct = st.percent;
         playOnce('agent_2026.mp3');
         this.version++;
@@ -981,7 +990,7 @@ export class E4Browser {
     if (id === 'rest' && this.gameAnswer === 'later' && !this.gameWin) { this.botT = -ACT_SECONDS.game; this.startAct('game'); }
     // what Junie writes after the mute arrives, hidden
     if ((id === 'heading' || id === 'stories') && this.messenger.junieMuted && !this.messenger.junieUnmuted) { this.messenger.junieHidden = id === 'heading' ? 1 : 2; }
-    if (BOT.beats[this.botBeat]?.lines.length) playOnce('agent_2026.mp3');
+    if (BOT.beats[this.botBeat]?.lines.length) { playOnce('agent_2026.mp3'); this.gameBig = false; }   // S366: a new answer of its own brings her back to the conversation
     // ⚑ S360 — with the Mail and News tabs open beside it, each new beat brings the chat back to the front (no beat waits on
     //   her finding it: the S360 test walk wandered the tabs while the bot spoke, and the chat stalled)
     if ((this.step === 'bot' || this.step === 'confirm') && this.liveTab !== 'search') this.openTab('search');
@@ -1143,7 +1152,8 @@ export class E4Browser {
     ctx.translate(L.b.cx, L.b.cy); ctx.scale(L.b.s, L.b.s);
     this.drawPage(ctx, L.b.lw, L.b.lh, pressable);
     ctx.restore();
-    for (const h of this.pageTargets) this.hits.push(toMonitor(h, L.b));
+    // ⚑ S366 / J15-03 — the game enlarged over the browser's area covers its page: nothing under it takes a press
+    if (!this.gameBigOn) for (const h of this.pageTargets) this.hits.push(toMonitor(h, L.b));
     // Kettle's window: the people. Nothing on it is pressable once the screens are done (the headset is the way on),
     //   except the lot's evening after the device has stopped (they keep writing)
     this.windowTitle(ctx, L.k, V.oneScreen.kettleTitle, 'win-kettle', pressable);
@@ -1153,8 +1163,8 @@ export class E4Browser {
     ctx.restore();
     const kettleLive = kettlePressable && (this.phase === 'open' ? !this.programDone : e4Has('terminated'));
     if (kettleLive) for (const h of k) this.hits.push(toMonitor(h, L.k));
-    this.drawToasts(ctx, L, H, pressable);
     this.drawGameWindow(ctx, L, pressable);
+    this.drawToasts(ctx, L, H, pressable);   // S366: over the game, which may now be enlarged over the browser's area
     this.drawTakeover(ctx, L, W);
     // the taskbar: the date, and L (T25: the guide is always one press away, and never over a felt thread)
     const ty = H - WIN.taskbar;
@@ -1196,7 +1206,12 @@ export class E4Browser {
         setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, t.title, tw - 46), x + 36, y + 16);
         setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(fitText(ctx, t.line, tw - 46), x + 36, y + 29);
       }
+      // ⚑ S366 / J15-04 — its ✕: closes it, opens nothing. Not while the AI is using her computer (her presses do
+      //   nothing then, by design: its banner says so)
+      const closable = !this.act;
+      if (closable) { setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(V.oneScreen.close, x + tw - 14, y + 4); }
       ctx.restore();
+      if (pressable && a > 0.5 && closable) this.hits.push({ x: x + tw - 22, y, w: 22, h: 20, id: `toast-x-${t.chat}` });
       if (pressable && a > 0.5 && !t.sys) this.hits.push({ x, y, w: tw, h: th, id: `toast-${t.chat}` });
       y -= th + 6;
     }
@@ -1213,12 +1228,44 @@ export class E4Browser {
     // ⚑ S364 — it sits in the empty lower part of Kettle's list (never over the chat's words); it steps aside while a
     //   person's thread is open there (the felt law: nothing of the system over a person) and while a page is opened larger
     if (!this.gameWin || this.phase !== 'open' || this.lightbox || this.messenger.felt) return;
-    const G = BOT.game, tb = 14, gw = L.k.w - 10, gh = Math.round((gw - 4) * 9 / 16) + 2;
+    const G = BOT.game;
+    if (this.gameBig) {
+      // ⚑ S366 / J15-03 (his: "when I press does it enlarge?") — enlarged over the browser's area, like a page opened
+      //   larger: it plays here at a readable size; ◂ Back or ✕ returns it to the corner. The same session as the console.
+      const x0 = L.b.cx, y0 = L.b.cy, w0 = L.b.cw, h0 = L.b.ch, bar = 18, strip = this.gameLine ? 22 : 6;
+      px(ctx, x0, y0, w0, h0, V3.titleOn);
+      setFont(ctx, 10); ctx.fillStyle = V3.titleOnInk;
+      const bw = Math.ceil(ctx.measureText(G.back).width);
+      ctx.fillText(G.back, x0 + 8, y0 + 4);
+      const title = `${G.window} · ${G.sub}`, tw = Math.ceil(ctx.measureText(title).width);
+      ctx.fillText(title, x0 + Math.round((w0 - tw) / 2), y0 + 4);
+      setFont(ctx, 11); ctx.fillText(G.close, x0 + w0 - 16, y0 + 3);
+      let gw = w0 - 8, gh = Math.round(gw * 9 / 16);
+      const avH = h0 - bar - strip - 2;
+      if (gh > avH) { gh = avH; gw = Math.round(gh * 16 / 9); }
+      const gx = x0 + Math.round((w0 - gw) / 2), gy = y0 + bar;
+      px(ctx, gx, gy, gw, gh, ERA4.field);
+      if (consoleSession.ready) consoleSession.draw(ctx, gx, gy, gw, gh);
+      if (this.gameLine) {
+        // its word on her play, under the game (the chat keeps the same line): one voice, the AI's
+        const sy = gy + gh + 4;
+        assistantMark(ctx, gx, sy, 14, V3.primary, V3.primaryInk);
+        setFont(ctx, 11); ctx.fillStyle = V3.titleOnInk; ctx.fillText(fitText(ctx, this.gameLine, gw - 22), gx + 20, sy + 1);
+      }
+      if (pressable) {
+        this.hits.push({ x: x0, y: y0, w: bw + 16, h: bar, id: 'game-small' });
+        this.hits.push({ x: x0 + w0 - 24, y: y0, w: 24, h: bar, id: 'game-small-x' });
+        this.hits.push({ x: gx, y: gy, w: gw, h: gh, id: 'game-play' });
+      }
+      return;
+    }
+    const tb = 14, gw = L.k.w - 10, gh = Math.round((gw - 4) * 9 / 16) + 2;
     const gx = L.k.x + 5, gy = L.k.cy + L.k.ch - Math.round(34 * L.k.s) - gh - tb;
     roundRect(ctx, gx + 2, gy + 3, gw, gh + tb, 6, V3.grey);
     roundRect(ctx, gx, gy, gw, gh + tb, 6, V3.titleOn);
-    setFont(ctx, 8); ctx.fillStyle = V3.titleOnInk; ctx.fillText(fitText(ctx, `${G.window} · ${G.sub}`, gw - 26), gx + 6, gy + 3);
+    setFont(ctx, 8); ctx.fillStyle = V3.titleOnInk; ctx.fillText(fitText(ctx, `${G.window} · ${G.sub}`, gw - 40), gx + 6, gy + 3);
     setFont(ctx, 9); ctx.fillText(G.close, gx + gw - 12, gy + 2);
+    ctx.fillText(V.oneScreen.enlarge, gx + gw - 26, gy + 2);   // S366 / J15-03: a press on it plays larger
     px(ctx, gx + 2, gy + tb, gw - 4, gh - 2, ERA4.field);
     if (consoleSession.ready) consoleSession.draw(ctx, gx + 2, gy + tb, gw - 4, gh - 2);
     else { setFont(ctx, 11); ctx.fillStyle = ERA4.textHi; ctx.fillText(G.window, gx + 14, gy + tb + gh / 2 - 8); }
@@ -2172,39 +2219,51 @@ export class E4Browser {
     ctx.fillStyle = V3.botInk; ctx.fillText(mem, W - 12 - memW + 7, top + 9);
     // the composer, and the line under it
     const colW = Math.min(440, W - railW - 36), colX = railW + Math.round((W - railW - colW) / 2);
-    const compH = 30, compY = H - 17 - compH;
-    roundEdge(ctx, colX, compY, colW, compH, 15, V3.edge, V3.page);
-    plusGlyph(ctx, colX + 13, compY + 9, V3.ink2);
-    setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.composer, colX + 34, compY + 7);
-    roundRect(ctx, colX + colW - 28, compY + 4, 22, 22, 11, V3.grey);
-    sendGlyph(ctx, colX + colW - 23, compY + 9, V3.card);
-    if (this.step === 'bot' || this.step === 'confirm') this.publish({ x: colX, y: compY, w: colW, h: compH, id: 'conv-compose' });
-    const foot = this.nowLine ?? (this.waitNow ? PROGRAM.console.wait : BOT.footer);
-    setFont(ctx, 9); ctx.fillStyle = V3.ink2;
-    const fl = fitText(ctx, foot, W - railW - 24);
-    ctx.fillText(fl, railW + Math.round((W - railW - ctx.measureText(fl).width) / 2), H - 14);
-    // the suggested replies (her answers), above the composer
+    // ⚑ S366 / J15-01 (his: "shouldn't it have the bubbles of the reply there? just try to combine both so we can have more
+    //   vertical space") — her suggested replies sit INSIDE the message box, between the ＋ and the send button, in place
+    //   of the placeholder; the row that sat above it is gone and the conversation has its height. Replies too wide for
+    //   one line take a second line (the field grows upward) rather than cutting a label.
     const b = this.bot;
     const ready = !!b && this.botBeatReady && !this.botDone.has(b.id);
     const sugg: { id: string; label: string; primary: boolean }[] = [];
     if (ready && b!.chips) b!.chips.forEach((c, k) => sugg.push({ id: `conv-chip-${k}`, label: c.label, primary: k === 0 }));
     else if (ready && b!.button) sugg.push({ id: 'conv-act', label: b!.button, primary: true });
-    let convBottom = compY - 8;
-    if (sugg.length) {
-      const sy = compY - 30;
-      let sx = colX;
-      for (const c of sugg) {
-        setFont(ctx, 13);
-        const w = Math.ceil(ctx.measureText(c.label).width) + 26;
-        if (c.primary) pill(ctx, sx, sy, w, 25, V3.primary);
-        else { pill(ctx, sx, sy, w, 25, V3.edge); pill(ctx, sx + 1, sy + 1, w - 2, 23, V3.card); }
-        ctx.fillStyle = c.primary ? V3.primaryInk : V3.ink; ctx.fillText(c.label, sx + 13, sy + 5);
-        if (this.composeFlashT > 0) this.ringAround(ctx, { x: sx, y: sy, w, h: 25, id: c.id });
-        this.publish({ x: sx, y: sy, w, h: 25, id: c.id });
-        sx += w + 8;
-      }
-      convBottom = sy - 6;
+    const CHIP_H = 22, CHIP_GAP = 6, inX = colX + 34, inW = colW - 68;
+    setFont(ctx, 13);
+    const chipRows: { id: string; label: string; primary: boolean; w: number }[][] = [[]];
+    let rowW = 0;
+    for (const c of sugg) {
+      const w = Math.min(inW, Math.ceil(ctx.measureText(c.label).width) + 22);
+      if (chipRows[chipRows.length - 1].length && rowW + CHIP_GAP + w > inW) { chipRows.push([]); rowW = 0; }
+      chipRows[chipRows.length - 1].push({ ...c, w });
+      rowW += (rowW ? CHIP_GAP : 0) + w;
     }
+    const compH = 30 + (sugg.length ? chipRows.length - 1 : 0) * (CHIP_H + 4), compY = H - 17 - compH;
+    roundEdge(ctx, colX, compY, colW, compH, 15, V3.edge, V3.page);
+    plusGlyph(ctx, colX + 13, compY + compH - 21, V3.ink2);
+    roundRect(ctx, colX + colW - 28, compY + compH - 26, 22, 22, 11, V3.grey);
+    sendGlyph(ctx, colX + colW - 23, compY + compH - 21, V3.card);
+    if (!sugg.length) { setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.composer, inX, compY + 7); }
+    // the replies are published BEFORE the box (a press resolves to the first rect it falls in)
+    chipRows.forEach((row, r) => {
+      let sx = inX;
+      const sy = compY + 4 + r * (CHIP_H + 4);
+      for (const c of row) {
+        setFont(ctx, 13);
+        if (c.primary) pill(ctx, sx, sy, c.w, CHIP_H, V3.primary);
+        else { pill(ctx, sx, sy, c.w, CHIP_H, V3.edge); pill(ctx, sx + 1, sy + 1, c.w - 2, CHIP_H - 2, V3.card); }
+        ctx.fillStyle = c.primary ? V3.primaryInk : V3.ink; ctx.fillText(fitText(ctx, c.label, c.w - 20), sx + 11, sy + 4);
+        if (this.composeFlashT > 0) this.ringAround(ctx, { x: sx, y: sy, w: c.w, h: CHIP_H, id: c.id });
+        this.publish({ x: sx, y: sy, w: c.w, h: CHIP_H, id: c.id });
+        sx += c.w + CHIP_GAP;
+      }
+    });
+    if (this.step === 'bot' || this.step === 'confirm') this.publish({ x: colX, y: compY, w: colW, h: compH, id: 'conv-compose' });
+    const foot = this.nowLine ?? (this.waitNow ? PROGRAM.console.wait : BOT.footer);
+    setFont(ctx, 9); ctx.fillStyle = V3.ink2;
+    const fl = fitText(ctx, foot, W - railW - 24);
+    ctx.fillText(fl, railW + Math.round((W - railW - ctx.measureText(fl).width) / 2), H - 14);
+    const convBottom = compY - 8;
     this.drawConversation(ctx, colX, top + 30, colW, convBottom);
     this.drawLightbox(ctx, W, H);
   }
@@ -2231,7 +2290,7 @@ export class E4Browser {
       if (this.botLinesShown < b.lines.length) rows.push({ who: 'dots', text: '' });
     }
     const tx = x + 26, tw = w - 26;
-    const cardH: Record<CardKind, number> = { clip: 112, map: 96, goal: 120, stories: 60, ring: 72, shots: 74, pages: 86, session: 66 };
+    const cardH: Record<CardKind, number> = { clip: 112, map: MAP_CARD_H + 2, goal: 120, stories: 60, ring: 72, shots: 74, pages: 86, session: 66 };
     const sized = rows.map((r) => {
       if (r.who === 'dots') return { r, lines: [] as string[], h: 26 };
       if (r.who === 'card') return { r, lines: [] as string[], h: cardH[(r as Said).card ?? 'ring'] + 6 };
@@ -2301,7 +2360,7 @@ export class E4Browser {
       ctx.fillText(fitText(ctx, `${V.clip.title} · ${BOT.cards.clip} · ${V.clip.length}`, w), x, y + ch + 4);
       return;
     }
-    if (kind === 'map') { this.drawMap(ctx, x, y, w, 94); return; }
+    if (kind === 'map') { this.drawMap(ctx, x, y, w, MAP_CARD_H); return; }
     if (kind === 'goal') {
       // ⚑ S364 / N9 — "I've made it your picture": the swap filter runs on her own photo, before → after, in the chat
       const live = this.bot?.id === 'heading' && !this.botDone.has('heading');
@@ -2462,12 +2521,22 @@ export class E4Browser {
   /** her contacts as a network: exposure sources in red; Junie turns warm when she unmutes her */
   private drawMap(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
     roundEdge(ctx, x, y, w, h, 6, V3.edge, V3.card);
-    const cx = x + Math.round(w * 0.40), cy = y + Math.round(h / 2) + 4;
     const R = BOT.map;
+    // ⚑ S366 / J15-05 (his: "the text is going outside the window of the image… make it a bit taller") — a header row
+    //   (the card's name, and its count of "exposure sources") over the graph, the graph in the band under it, and each
+    //   label placed on whichever side of its node keeps it inside the card
+    setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(R.title, x + 10, y + 7);
+    setFont(ctx, 11); ctx.fillStyle = V3.danger;
+    const ew = Math.ceil(ctx.measureText(R.exposure).width);
+    ctx.fillText(R.exposure, x + w - ew - 10, y + 7);
+    const gy0 = y + 32, gy1 = y + h - 22;   // the nodes' band: the lowest node keeps room for its tag under it
+    const cx = x + Math.round(w * 0.40);
     const pos: Record<string, [number, number]> = {
-      mum: [-0.30, -0.30], dad: [-0.36, 0.20], sam: [-0.20, 0.38], junie: [0.10, -0.32], house: [0.26, 0.22], line: [0.02, 0.40], bot: [0.28, -0.06]
-    };
-    const nodeAt = (id: string): [number, number] => { const p = pos[id] ?? [0, 0]; return [Math.round(cx + p[0] * w), Math.round(cy + p[1] * (h - 24) * 1.2)]; };
+      mum: [-0.30, -0.30], dad: [-0.36, 0.20], sam: [-0.20, 0.38], junie: [0.10, -0.32], house: [0.26, 0.22], line: [0.02, 0.40], bot: [0.19, -0.06]
+    };   // S366: its own node a little in from the edge, so "Second Thoughts" fits to its right
+    const vy = (p: number): number => Math.round(gy0 + (p + 0.32) / 0.72 * (gy1 - gy0));
+    const cy = vy(0);
+    const nodeAt = (id: string): [number, number] => { const p = pos[id] ?? [0, 0]; return [Math.round(cx + p[0] * w), vy(p[1])]; };
     // the edges first
     for (const n of R.nodes) {
       const [nx, ny] = nodeAt(n.id);
@@ -2490,17 +2559,16 @@ export class E4Browser {
       const fill = warm ? V3.warm : red ? V3.danger : n.kind === 'bot' ? V3.bot : V3.grey;
       const d = n.kind === 'bot' ? 18 : 12;
       roundRect(ctx, nx - d / 2, ny - d / 2, d, d, d / 2, fill);
+      const tag = muted || n.kind === 'left' ? (n.kind === 'left' ? R.leftTag : R.mutedTag) : '';
+      setFont(ctx, 11);
+      const lw = Math.max(Math.ceil(ctx.measureText(n.label).width), tag ? (setFont(ctx, 9), Math.ceil(ctx.measureText(tag).width)) : 0);
+      // to the right of its node, unless that would cross the card's edge: then to its left
+      const lx = nx + d / 2 + 3 + lw > x + w - 6 ? nx - d / 2 - 3 - lw : nx + d / 2 + 3;
       setFont(ctx, 11); ctx.fillStyle = V3.ink;
-      ctx.fillText(n.label, nx + d / 2 + 3, ny - 6);
-      if (muted || n.kind === 'left') {
-        setFont(ctx, 9); ctx.fillStyle = V3.ink2;
-        ctx.fillText(n.kind === 'left' ? R.leftTag : R.mutedTag, nx + d / 2 + 3, ny + 6);
-      }
+      ctx.fillText(n.label, lx, ny - 6);
+      if (tag) { setFont(ctx, 9); ctx.fillStyle = V3.ink2; ctx.fillText(tag, lx, ny + 6); }
     }
     void exposure;
-    setFont(ctx, 12); ctx.fillStyle = V3.danger;
-    const ew = Math.ceil(ctx.measureText(R.exposure).width);
-    ctx.fillText(R.exposure, x + w - ew - 8, y + 6);
   }
 
   // ── Photos: the original ─────────────────────────────────────────────────
@@ -2644,16 +2712,19 @@ export class E4Browser {
     let x = mx, y = my;
     const L = this.lay;
     if (L) {
-      // ⚑ S364 / item 7 — the game's window: a press plays, ✕ closes it (the console on the bed stays lit)
-      const gh = this.hits.find(h => (h.id === 'game-close' || h.id === 'game-play') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
-      if (gh) {
-        if (gh.id === 'game-close') { this.gameWin = false; playOnce('ui_press.mp3'); }
-        else consoleSession.tap((mx - gh.x) / gh.w, (my - gh.y) / gh.h);
+      const at = (h: Hit): boolean => mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h;
+      // ⚑ S366 / J15-04 (his: "maybe the notifications can have a x button to close if needed?") — its ✕ closes it and
+      //   opens nothing; the notifications are drawn over everything else on the screen, so they take the press first
+      const tx = this.hits.find(h => h.id.startsWith('toast-x-') && at(h));
+      if (tx && this.phase === 'open') {
+        const chat = tx.id.slice(8);
+        this.toasts = this.toasts.filter((t) => t.chat !== chat);
+        playOnce('ui_press.mp3');
         this.version++;
         return true;
       }
       // ⚑ S363 — a notification opens its chat
-      const tst = this.hits.find(h => h.id.startsWith('toast-') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
+      const tst = this.hits.find(h => h.id.startsWith('toast-') && !h.id.startsWith('toast-x-') && at(h));
       if (tst && this.phase === 'open') {
         const chat = tst.id.slice(6) as ChatId;
         this.toasts = this.toasts.filter((t) => t.chat !== chat);
@@ -2661,6 +2732,18 @@ export class E4Browser {
         this.version++;
         return true;
       }
+      // ⚑ S364 / item 7 — the game's window: ✕ closes it (the console on the bed stays lit). ⚑ S366 / J15-03 — a press on
+      //   the small window ENLARGES it over the browser's area; there a press plays, and ◂ Back or ✕ returns it to the corner
+      const gh = this.hits.find(h => (h.id === 'game-close' || h.id === 'game-play' || h.id === 'game-small' || h.id === 'game-small-x') && at(h));
+      if (gh) {
+        if (gh.id === 'game-close') { this.gameWin = false; this.gameBig = false; playOnce('ui_press.mp3'); }
+        else if (gh.id === 'game-small' || gh.id === 'game-small-x') { this.gameBig = false; playOnce('ui_press.mp3'); }
+        else if (!this.gameBig) { this.gameBig = true; playOnce('ui_press.mp3'); }
+        else consoleSession.tap((mx - gh.x) / gh.w, (my - gh.y) / gh.h);
+        this.version++;
+        return true;
+      }
+      if (this.gameBigOn && inside(mx, my, L.b)) return true;   // the strip under the enlarged game: nothing
       const win = this.hits.find(h => (h.id === 'win-browser' || h.id === 'win-kettle') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
       if (win) { this.chosen = win.id === 'win-kettle' ? 'kettle' : 'browser'; playOnce('ui_press.mp3'); this.version++; return true; }
       if (inside(mx, my, L.k)) {

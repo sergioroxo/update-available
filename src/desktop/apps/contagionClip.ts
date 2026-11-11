@@ -228,13 +228,23 @@ function sceneBirthday(ctx: CanvasRenderingContext2D, g: G): void {
   sparkle(ctx, midX + 12 * s, y + 5 * s, Math.max(1, Math.floor(s / 2)), (q % 2) === 1);
 }
 
-// ── 3–5 · THE SIGNS (S364; UiB job 14 Part B / N8) — SUDDEN. / ALWAYS ONLINE. / STRUGGLING BEFORE. The parent-reported
+// ── 3–5 · THE SIGNS (S364; UiB job 14 Part B / N8) — SUDDENLY. / ALWAYS ONLINE. / STRUGGLING BEFORE. The parent-reported
 //    "signs" of the 2018 paper turned into the AI's CHECKLIST APPLIED TO HER WEEK, in the genre's gloss: a panel whose rows
 //    accumulate across the three cards, each tick landing on a beat as the narrator finishes its sentence, each with its
 //    "evidence" from her own data in small mono type. The evidence never supports the tick ("came out suddenly": Mum, June
 //    2023, "so proud of you") — that is the collapse, built in. Then the stamp: 5 / 5. It never names the theory. ──
+//
+//    ⚑ S366 (UiB job 15, J15-02; his 11 Nov: "the signs are a bit not explored enough and a bit repetitive logic") — EACH
+//    SIGN FAILS IN ITS OWN WAY, and the card shows how. Every row's `evidence` is the machine's own data in its own
+//    confident voice, and its `tell` (a fragment of that line) is what the machine marks as its proof: on the beat the
+//    tick lands, the tell turns gold, the tick's own ink. What it marks is exactly what undoes the tick — a date three
+//    years back under SUDDENLY; friends met AFTER; hours spent on a clinic's waiting list; birthday messages counted as
+//    popularity; Dad's rule, two years after, filed as her struggle. And the 5 / 5 stamp lands clear of every word.
+interface SignRow { sign: string; evidence: string; tell?: string }
 interface SignCard { frame: number; ticks: number[]; stampAt?: number }
-const SIGNS = C.signs;
+const SIGNS = C.signs as { title: string; rows: SignRow[]; stamp: string; cards: SignCard[] };
+/** the tick's ink, and the tell's: the machine's gold, so the proof it marks reads as part of the tick */
+const TELL = GOLD;
 const SIGN_CARDS: readonly SignCard[] = SIGNS.cards;
 const SIGN_FRAMES = new Set(SIGN_CARDS.map((c) => c.frame));
 
@@ -299,15 +309,56 @@ function sceneSigns(ctx: CanvasRenderingContext2D, g: G): void {
   ctx.fillStyle = HOT; ctx.fillText(SIGNS.title, tx + 1, ty + 1);
   ctx.fillStyle = GOLD; ctx.fillText(SIGNS.title, tx, ty);
 
-  // where the 5 / 5 stamp will land: astride the panel's right edge, over the column of ticks, clear of the words
-  const textEnd = px0 + L.pad + L.signW + 2;
-  const stampAt = (c: number): { sw: number; sh: number; sx: number; sy: number } => {
-    const sw = 19 * c, sh = 9 * c;
-    return { sw, sh, sx: Math.max(textEnd, Math.min(px0 + pw - Math.floor(sw / 2), x + w - sw - 2)), sy: Math.max(rowsTop, rowsBottom - sh - 1) };
+  // the rows' places: a sign, and (unless folded) its evidence underneath
+  const fold = (i: number): boolean => !L.full && i < before;
+  const rowH = (i: number): number => L.signLine + L.gap + (fold(i) ? 0 : L.evLine);
+  const used = Array.from({ length: L.full ? rows.length : shown }, (_, i) => rowH(i)).reduce((a, b) => a + b, 0);
+  const spread = L.full ? Math.min(Math.round(L.size * 0.5), Math.floor((avail - used) / rows.length)) : 0;
+  const textX = px0 + L.pad, boxX = px0 + L.pad + L.contentW - L.box;
+  const rowY: number[] = [];
+  for (let i = 0, ry = rowsTop + Math.max(1, Math.floor(L.gap / 2)); i < shown; i++) { rowY.push(ry); ry += rowH(i) + spread; }
+  // how far right each row's words reach (its sign, and its evidence line when that is drawn)
+  const reach = rows.slice(0, shown).map((r, i) => {
+    ctx.font = fontFor(L.size, 'e4');
+    const signEnd = textX + Math.ceil(ctx.measureText(r.sign).width);
+    ctx.font = monoFor(L.ev);
+    const evEnd = fold(i) ? 0 : textX + L.indent + Math.ceil(ctx.measureText(r.evidence).width);
+    return { top: rowY[i], signBottom: rowY[i] + L.signLine, bottom: rowY[i] + rowH(i) - L.gap, signEnd, evEnd };
+  });
+
+  // where the 5 / 5 stamp lands: astride the panel's right edge, over the column of ticks, CLEAR OF THE WORDS. ⚑ S366: the
+  // evidence lines are longer now (each says how it fails), so the stamp looks for the lowest place, from the foot of the
+  // rows upward, where it covers no sign and no evidence; only if there is none does it take its old place regardless.
+  type Spot = { sw: number; sh: number; sx: number; sy: number };
+  const spotFor = (c: number): Spot | null => {
+    const sw = 19 * c, sh = 9 * c, right = x + w - 2;
+    const prefer = Math.min(px0 + pw - Math.floor(sw / 2), right - sw);
+    const tops = [rowsBottom - sh - 1, ...reach.map((r) => Math.round((r.top + r.bottom - sh) / 2)).reverse()];
+    for (const sy0 of tops) {
+      const sy = Math.max(rowsTop, sy0);
+      let clear = px0 + L.pad;
+      for (const r of reach) {
+        if (sy < r.signBottom && sy + sh > r.top) clear = Math.max(clear, r.signEnd + 2);
+        if (r.evEnd && sy < r.bottom && sy + sh > r.signBottom) clear = Math.max(clear, r.evEnd + 2);
+      }
+      const sx = Math.max(clear, prefer);
+      if (sx + sw <= right) return { sw, sh, sx, sy };
+    }
+    return null;
   };
-  let sCell = Math.max(1, Math.min(Math.floor(avail / 10), Math.floor((pw * 0.5) / 19)));
-  while (sCell > 1 && stampAt(sCell).sx + stampAt(sCell).sw > x + w - 2) sCell--;
-  const S = stampAt(sCell);
+  // (no taller than about a third of the rows, so it can find a place between them: the panel is wider now, and S364's
+  //  half-the-width rule would make it a slab)
+  const sMax = Math.max(1, Math.min(Math.floor(avail / 10), Math.floor((pw * 0.5) / 19), Math.floor((avail * 0.32) / 9)));
+  let S: Spot | null = null;
+  for (let c = sMax; c >= Math.max(1, sMax - 1) && !S; c--) S = spotFor(c);
+  if (!S) {                                              // nowhere clear: S364's place, over the column of ticks
+    const textEnd = px0 + L.pad + L.signW + 2;
+    let c = sMax;
+    const at = (cc: number): Spot => ({ sw: 19 * cc, sh: 9 * cc, sx: Math.max(textEnd, Math.min(px0 + pw - Math.floor(19 * cc / 2), x + w - 19 * cc - 2)), sy: Math.max(rowsTop, rowsBottom - 9 * cc - 1) });
+    while (c > 1 && at(c).sx + at(c).sw > x + w - 2) c--;
+    S = at(c);
+  }
+  const sCell = Math.round(S.sw / 19);
   const stamped = card.stampAt !== undefined && sec >= card.stampAt;
   // the score, kept in the header's right-hand end: a running count that turns gold on each beat a tick lands
   const done = before + card.ticks.filter((t) => sec >= t).length;
@@ -317,14 +368,9 @@ function sceneSigns(ctx: CanvasRenderingContext2D, g: G): void {
   if (tX > tx + titleW + 2) glyphs(ctx, `${done} / ${rows.length}`, tX, top + Math.max(2, Math.floor((headB - 2 - top - 5 * tCell) / 2)), tCell, landed || stamped ? GOLD : ERA4.meta);
 
   // the rows: a sign, its box, the tick that lands on the beat; the evidence underneath, typed in just before it
-  const fold = (i: number): boolean => !L.full && i < before;
-  const rowH = (i: number): number => L.signLine + L.gap + (fold(i) ? 0 : L.evLine);
-  const used = Array.from({ length: L.full ? rows.length : shown }, (_, i) => rowH(i)).reduce((a, b) => a + b, 0);
-  const spread = L.full ? Math.min(Math.round(L.size * 0.5), Math.floor((avail - used) / rows.length)) : 0;
-  const textX = px0 + L.pad, boxX = px0 + L.pad + L.contentW - L.box;
-  let ry = rowsTop + Math.max(1, Math.floor(L.gap / 2));
   for (let i = 0; i < shown; i++) {
     const r = rows[i];
+    const ry = rowY[i];
     const tickAt = i < before ? -1 : card.ticks[i - before];
     const appear = Math.max(0, tickAt - 1.25);
     if (sec < appear) break;
@@ -353,14 +399,27 @@ function sceneSigns(ctx: CanvasRenderingContext2D, g: G): void {
       const text = r.evidence.slice(0, typed);
       px(ctx, textX + 1, ey + 1, 1, L.ev, GOLD2);
       ctx.font = monoFor(L.ev);
-      ctx.fillStyle = ERA4.text;
-      ctx.fillText(text, textX + L.indent, ey);
+      const at = r.tell ? r.evidence.indexOf(r.tell) : -1;
+      if (ticked && r.tell && at >= 0) {
+        // ⚑ S366 — on the tick, the machine marks its proof: the tell in the tick's gold, underlined as a reader marks a
+        //   line (and what it marks is what undoes the tick)
+        const pre = r.evidence.slice(0, at), post = r.evidence.slice(at + r.tell.length);
+        const kx = textX + L.indent + Math.ceil(ctx.measureText(pre).width), kw = Math.ceil(ctx.measureText(r.tell).width);
+        ctx.fillStyle = ERA4.text;
+        ctx.fillText(pre, textX + L.indent, ey);
+        ctx.fillText(post, kx + kw, ey);
+        ctx.fillStyle = TELL;
+        ctx.fillText(r.tell, kx, ey);
+        px(ctx, kx, ey + L.ev + 1, kw, 1, GOLD2);
+      } else {
+        ctx.fillStyle = ERA4.text;
+        ctx.fillText(text, textX + L.indent, ey);
+      }
       if (!ticked && (q % 2) === 0) px(ctx, textX + L.indent + Math.ceil(ctx.measureText(text).width) + 1, ey + 1, Math.max(2, Math.round(L.ev / 2)), L.ev, GOLD);
     }
-    ry += rowH(i) + spread;
   }
 
-  // the stamp: 5 / 5, over the column of ticks, the moment the narrator says "ticked"
+  // the stamp: 5 / 5, at the place found above, the moment the narrator says the last "five" (S364: "ticked")
   if (stamped) {
     const slam = sec - (card.stampAt ?? 0) < 0.125;      // it lands a size bigger, round the same centre
     const cell = sCell + (slam ? 1 : 0);
