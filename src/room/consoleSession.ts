@@ -11,12 +11,36 @@
  * - TICKING. A game ticks while it is in hand (as before), and — new — while the console is lit (so the picture on the
  *   bed moves and the monitor's window is live), or for a second after the monitor last drew it. Only in 2026's era
  *   (the held device's own era gate).
- * - RESTART. buildDevices() calls `_reset()`: a fresh game, unlit, not ready.
- * - WHAT THE AI MAY SAY. `stats` (matches made, cumulative across the game's own restarts; the game's % — it never
- *   passes 99) and `playing` (a tap or key on either surface within ~6 s).
+ * - RESTART. buildDevices() calls `_reset()`: a fresh game, unlit, not ready, the handle back at its default.
+ *
+ * ⚑ S367 (UiB job 15 Part B — the game is a tug of war; its handle IS the chat's ring). THE API THE CHAT CODES AGAINST:
+ *
+ *     consoleSession.ready                  the 2026 console exists (the room is built)
+ *     consoleSession.lit / light()          as above
+ *     consoleSession.draw(ctx, x, y, w, h)  paint the current frame of the one game into a 2D canvas rect (16:9, letterboxed)
+ *     consoleSession.tap(u, v)              a press at normalised game coords (0..1) — the monitor window's taps
+ *     consoleSession.frameKey()             changes whenever the picture changes (re-upload only then)
+ *     consoleSession.playing                a tap or key on either surface within the last ~6 s
+ *
+ *     consoleSession.progress               the HANDLE, an integer 0..99 — what the chat shows as its ring ("Becoming").
+ *                                           Her matches pull it down; the AI's counter-moves push it up; it never passes 99.
+ *                                           Before the game exists it is DEFAULT_PROGRESS (94), or whatever was last set.
+ *     consoleSession.setProgress(n)         the chat sets the ring at its beats (e.g. 97, 98, 61): clamped to 0..99 and
+ *                                           rounded; the game's handle EASES there, tagged "Second Thoughts" when it rises
+ *                                           and untagged when it falls. The game opens wherever it is; a run leaves it where
+ *                                           the handle stopped. Safe to call at any time, lit or not, game or no game.
+ *     consoleSession.stats                  { matches, percent, pushes, lastPush }:
+ *                                             matches   her matches so far this session (cumulative across the game's own
+ *                                                       restarts);
+ *                                             percent   = progress (kept for the S364 callers);
+ *                                             pushes    how many times the AI's counter-moves have pushed the handle (a
+ *                                                       double counter-move counts two); the chat can comment on its own
+ *                                                       push when this grows, e.g. "Calmer already. {from}% → {to}%.";
+ *                                             lastPush  { from, to } of that latest push (integers), or null before one.
+ *
  * Memory only: nothing here is stored, nothing is sent.
  */
-import { MatchMade } from '../games/matchMade';
+import { MatchMade, DEFAULT_PROGRESS } from '../games/matchMade';
 import type { DeviceGame, GameKey } from '../games/types';
 import type { Painter } from './calendarArt';
 
@@ -33,8 +57,12 @@ export interface ConsoleSession {
   tap(u: number, v: number): void;
   /** changes whenever the picture changes (so the monitor re-uploads only then) */
   frameKey(): string;
-  /** for the AI's comments: matches made so far this session, and the game's own progress percent (whatever the game shows as its % — read matchMade.ts; it never passes 99) */
-  readonly stats: { matches: number; percent: number };
+  /** ⚑ S367 — the handle, integer 0..99: the chat's ring. Never passes 99. */
+  readonly progress: number;
+  /** ⚑ S367 — the chat sets the ring; the handle eases there (tagged "Second Thoughts" when it rises, untagged when it falls) */
+  setProgress(n: number): void;
+  /** for the AI's comments: her matches so far, the handle (= progress), and the AI's own pushes */
+  readonly stats: { matches: number; percent: number; pushes: number; lastPush: { from: number; to: number } | null };
   /** true while someone is actively playing (a tap within the last ~6 s on either surface) */
   readonly playing: boolean;
 }
@@ -62,10 +90,15 @@ function makeSession(): ConsoleSessionInternal {
   let built = false, lit = false;
   let lastAct = -1e9, lastDraw = -1e9;
   let earnedSeen = 0, matches = 0;
+  /** the ring before the game exists (the chat may set it first); handed to the game when it is made */
+  let pending = DEFAULT_PROGRESS;
   // the monitor's own copy of the picture: the game draws into a 960 × 540 canvas once per change, then it is scaled
   let cv: HTMLCanvasElement | null = null, cx: CanvasRenderingContext2D | null = null, drawnKey = '\0';
 
-  const g = (): MatchMade => { if (!game) { game = new MatchMade(); earnedSeen = 0; matches = 0; } return game; };
+  const g = (): MatchMade => {
+    if (!game) { game = new MatchMade(); game.setProgress(pending, true); earnedSeen = 0; matches = 0; }
+    return game;
+  };
   const sample = (): void => {
     if (!game) return;
     const e = game.probe.s.earned;
@@ -98,9 +131,16 @@ function makeSession(): ConsoleSessionInternal {
       act(); sample();
     },
     frameKey() { return `${lit ? 1 : 0}|${game ? game.frameKey() : '-'}`; },
+    get progress() { return game ? game.progress : pending; },
+    setProgress(n) {
+      const v = Math.max(0, Math.min(99, Math.round(Number.isFinite(n) ? n : pending)));
+      pending = v;
+      if (game) game.setProgress(v);
+    },
     get stats() {
       sample();
-      return { matches, percent: game ? Math.min(99, game.probe.s.score) : 0 };
+      const p = game ? game.progress : pending;
+      return { matches, percent: p, pushes: game ? game.pushes : 0, lastPush: game ? game.lastPush : null };
     },
     get playing() { return now() - lastAct < PLAYING_MS; },
     heldGame() {
@@ -122,7 +162,7 @@ function makeSession(): ConsoleSessionInternal {
     ticksUnheld() { return lit || now() - lastDraw < VIEWED_MS; },
     probe() { return game ? game.probe : null; },
     _built(on) { built = on; },
-    _reset() { game = null; wrapped = null; built = false; lit = false; lastAct = lastDraw = -1e9; earnedSeen = 0; matches = 0; drawnKey = '\0'; }
+    _reset() { game = null; wrapped = null; built = false; lit = false; lastAct = lastDraw = -1e9; earnedSeen = 0; matches = 0; pending = DEFAULT_PROGRESS; drawnKey = '\0'; }
   };
   return s;
 }
