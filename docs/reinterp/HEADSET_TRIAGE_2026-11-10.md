@@ -136,6 +136,10 @@ is trimmed to the birthday, Dad, and one message from Mum ("I sent you an email"
 its 2019 correction, and last a detransition AI (unnamed on screen) whose link opens Second Thoughts — two ways in,
 with the search ad; the bot "explains" her feelings as contagion and **makes the clip for her**; Junie, unmuted,
 names it. UIB_JOB_13 Part A rewritten; order B, C, then A.
+**Then (11 Nov) an independent review (REVIEW_2026_FLOW_2026-11-11.md) and his answers:** the chat AI sells the live
+programme; two ways in (Mum's sponsored box, then the search); **the host stays as built**; flow corrected (clinic →
+Meridian → Mum's email last; the bot: sign → diagnosis as agreement → clip → mute → the goal last; first-meeting lines
+fixed); Junie stays personal (no fact-check); the AI article is about the category. Part A rewritten again.
 
 ## 7. Things he liked (keep)
 
