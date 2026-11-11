@@ -41,6 +41,10 @@ export interface DeviceSpec {
   /** the screen before it is */
   idle: (g: Painter, w: number, h: number, clock: number) => void;
   game: () => DeviceGame;
+  /** ⚑ S364 — the game also ticks while the device lies unheld (the console, once lit: a second surface plays the same run) */
+  ticksUnheld?: () => boolean;
+  /** ⚑ S364 — called once, the frame the device is built (its prop exists) */
+  onBuilt?: () => void;
   /** the ledger line's id */
   gameId: string;
   /** in a headset: how far in front of the eyes it is held (metres) */
@@ -390,9 +394,9 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
         if (t >= 1 && !holding && rest) { wrap.setLocalPosition(rest.pos); wrap.setLocalRotation(rest.rot); }
       }
       if (!game && spec.available(has, fileSize)) game = spec.game();
-      if (holding && game && startOnReady) { game.key?.('start'); startOnReady = false; }
+      if (holding && game && startOnReady) { if (game.wake) game.wake(); else game.key?.('start'); startOnReady = false; }
       let filing: string | null = null;
-      if (game) { if (holding) game.tick(dt); filing = game.takeFiling(); }
+      if (game) { if (holding || spec.ticksUnheld?.()) game.tick(dt); filing = game.takeFiling(); }
       if (!ctx || !tex) return filing;
       const key = game ? `g|${game.frameKey()}` : `i|${Math.floor(clock * 2)}`;
       if (key !== drawn) {
