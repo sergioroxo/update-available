@@ -96,9 +96,14 @@ type Pose = 'lift' | 'exhale' | 'strike';
  * and the room show one movement: raised with the head back, held, down with the head on the pillow.
  */
 interface Posture { sx: number; sy: number; hx: number; hy: number; ang: number }
+// ⚑ S362 / H35 (his headset, 10 Nov, 20:37: 'the "Lift" figure should be turned from the other side… the handle should be
+//   turned to me') — the lift used to hold the racket with its HEAD back over the shoulder (ang 60) and the handle toward
+//   the wall: the opposite way round to the strike, so the racket flipped over the top between them. Now the grip stays on
+//   the room side in all three postures and only the head's angle changes: raised in front of the striker, head up and
+//   toward the wall (ang 120 / 116), then down onto the pillow (188). The same angles as app.ts RACKET_OVER (pitch = −ang).
 const POSTURE: Record<Pose, Posture> = {
-  lift:   { sx: 55, sy: 42, hx: 49, hy: 24, ang: 60 },
-  exhale: { sx: 55, sy: 43, hx: 49, hy: 26, ang: 64 },
+  lift:   { sx: 53, sy: 42, hx: 43, hy: 31, ang: 120 },
+  exhale: { sx: 53, sy: 43, hx: 43, hy: 33, ang: 116 },
   strike: { sx: 47, sy: 46, hx: 26, hy: 60, ang: 188 }
 };
 /** the intro's loop, as a manual would print it: hold, move, hold — never a rhythm to swing to.

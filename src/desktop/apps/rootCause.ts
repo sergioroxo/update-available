@@ -25,6 +25,15 @@
  *  · the authentic memory no longer ends the game: it is flagged, the programme
  *    tries to delete it, and it stays.
  *
+ * ⚑ S362 / H34 (his headset, 10 Nov, 20:36: "wants different designs and different questions for each level; at each level ask
+ * whether the person wants to continue. He reached the end and did not know how many levels there should be"; job 13
+ * decision 5: three levels at most): ONE LEVEL = ONE DESCENT, and there are three. Each has its own eight layers, findings,
+ * chapter-review questions and leaflets (rootcause.json: level 1 is the top-level arrays, levels 2–3 are `levels`) and its
+ * own LOOK (LOOKS, from the era-1 palette: level 2 a night house in navy/teal brick, level 3 the dark with a red glow far
+ * down). After a level's report the visitor chooses in plain words — stop, or go on to the next level; after level 3 the
+ * programme says there is nothing deeper and only Close is left. The KEPT shelf, the 99% ceiling, the leaflets, the
+ * bursting diagnoses and the memory that cannot be deleted are the same in every level.
+ *
  * ⚑ PRESS-ONLY, TURN-BASED. No WASD, ever (CLAUDE.md): every press digs one
  * cell beside Lamby and is one turn. Register: operable — the satire is the
  * programme's own words, and it collapses in play. ○ SANDBOX by the Progression
@@ -59,6 +68,26 @@ const CELL_W = 30; const CELL_H = 22;
 const WIN_X = 24; const WIN_Y = 8; const WIN_W = 464; const WIN_H = 346;
 const LABEL_W = 88;
 const APPLIED_TO_REPORT = 3;
+/** ⚑ S362 / H34 — three levels at most (his decision, 11 Nov); one level = one descent */
+const MAX_LEVEL = 3;
+interface LevelCopy { name: string; layers: string[]; findings: string[]; quiz: string[][]; leaflets: string[] }
+/** ⚑ S362 / H34 — each level's own look, every colour from ERA1: the sky, the three strata (base · light band · seam), the
+ *  tunnel's wall, the earth's pattern, the sky's decoration. Level 1 is the look the game has always had. */
+interface Look {
+  sky: string; hole: string; tunnelRim: string; root: string | null;
+  strata: [string, string, string][];   // [base, light, seam] for the shallow, middle and deep thirds
+  pattern: 'earth' | 'brick' | 'static'; decor: 'cloud-sun' | 'moon-stars' | 'static';
+}
+const LOOKS: Look[] = [
+  { sky: ERA1.teal, hole: ERA1.tealDark, tunnelRim: ERA1.greyDark, root: ERA1.beige, pattern: 'earth', decor: 'cloud-sun',
+    strata: [[ERA1.olive, ERA1.tooltip, ERA1.tealDark], [ERA1.warnDark, ERA1.warn, ERA1.greyDark], [ERA1.greyDark, ERA1.grey, ERA1.greyDark]] },
+  // level 2 — THE HOUSE: night, and the earth is the cellar's brick: deeper and darker than the first
+  { sky: ERA1.navy, hole: ERA1.black, tunnelRim: ERA1.teal, root: ERA1.silver, pattern: 'brick', decor: 'moon-stars',
+    strata: [[ERA1.tealDark, ERA1.teal, ERA1.black], [ERA1.navy, ERA1.titleBlue, ERA1.black], [ERA1.greyDark, ERA1.grey, ERA1.black]] },
+  // level 3 — THE FIRST YEARS: no sky at all, static for earth, and a red glow only in the last third
+  { sky: ERA1.black, hole: ERA1.greyDark, tunnelRim: ERA1.grey, root: null, pattern: 'static', decor: 'static',
+    strata: [[ERA1.greyDark, ERA1.grey, ERA1.black], [ERA1.greyDark, ERA1.silver, ERA1.black], [ERA1.warnDark, ERA1.warn, ERA1.black]] }
+];
 const PUMPS_BASE = 3;
 /** the progress ceiling — in the code, not an accident of the numbers */
 const CEILING = 99;
@@ -109,8 +138,16 @@ export class RootCauseApp {
 
   private rnd(): number { this.seed = (this.seed * 1103515245 + 12345) & 0x7fffffff; return this.seed / 0x7fffffff; }
 
+  /** ⚑ S362 / H34 — the level being dug (1…3): the descent's number */
+  private get level(): number { return Math.min(MAX_LEVEL, Math.max(1, ledger.rootCause.descents)); }
+  private get lv(): LevelCopy {
+    if (this.level === 1) return { name: copy.levelNames[0], layers: copy.layers, findings: copy.findings, quiz: copy.quiz, leaflets: copy.leaflets };
+    return copy.levels[this.level - 2] as LevelCopy;
+  }
+  private get look(): Look { return LOOKS[this.level - 1]; }
+
   private newDescent(): void {
-    ledger.rootCause.descents += 1;
+    ledger.rootCause.descents = Math.min(MAX_LEVEL, ledger.rootCause.descents + 1);   // S362 / H34: a descent is a level; three at most
     this.seed = 1997 + ledger.rootCause.descents * 31;
     this.dug = [];
     for (let r = 0; r < ROWS; r++) this.dug.push(new Array(COLS).fill(false));
@@ -159,7 +196,7 @@ export class RootCauseApp {
     const lf = this.leaflet[to.r];
     if (lf && !lf.taken && lf.c === to.c) {
       lf.taken = true; this.zeal += 1;
-      this.say(copy.powerUp.replace('{leaflet}', copy.leaflets[to.r] ?? ''), 5);
+      this.say(copy.powerUp.replace('{leaflet}', this.lv.leaflets[to.r] ?? ''), 5);
       this.sparkles.push({ t: 0, r: to.r, c: to.c, col: ERA1.tooltip });
     }
     // the memory: flagged, and it stays
@@ -290,7 +327,7 @@ export class RootCauseApp {
       this.progress = Math.min(CEILING, this.progress + add);
       m.answered = 'yes'; m.gain = add;
     } else {
-      this.keep({ kind: 'answer', text: copy.quiz[m.layer][1] });
+      this.keep({ kind: 'answer', text: this.lv.quiz[m.layer][1] });
       m.answered = 'no';
       if (!ledger.rootCause.keptFiled) { ledger.rootCause.keptFiled = true; ledger.records.push(`rootcause-kept:${copy.witness.kept}`); }
     }
@@ -317,10 +354,11 @@ export class RootCauseApp {
   // ── drawing ─────────────────────────────────────────────────────────────
   private drawEarth(ctx: CanvasRenderingContext2D, gx: number, gy: number, r: number, c: number): void {
     const x = gx + c * CELL_W; const y = gy + r * CELL_H;
+    const L = this.look;   // ⚑ S362 / H34 — the level's own earth
     if (this.dug[r][c]) {
       ui.px(ctx, x, y, CELL_W, CELL_H, ERA1.black);
       // the tunnel's walls: a rim where it meets undug earth
-      const rim = ERA1.greyDark;
+      const rim = L.tunnelRim;
       if (r > 0 && !this.dug[r - 1][c]) ui.px(ctx, x, y, CELL_W, 2, rim);
       if (r < ROWS - 1 && !this.dug[r + 1][c]) ui.px(ctx, x, y + CELL_H - 2, CELL_W, 2, rim);
       if (c > 0 && !this.dug[r][c - 1]) ui.px(ctx, x, y, 2, CELL_H, rim);
@@ -328,21 +366,36 @@ export class RootCauseApp {
       return;
     }
     const deep = r / ROWS;
-    const base = deep < 0.35 ? ERA1.olive : deep < 0.7 ? ERA1.warnDark : ERA1.greyDark;
-    const light = deep < 0.35 ? ERA1.tooltip : deep < 0.7 ? ERA1.warn : ERA1.grey;
+    const [base, light, seam] = L.strata[deep < 0.35 ? 0 : deep < 0.7 ? 1 : 2];
     ui.px(ctx, x, y, CELL_W, CELL_H, base);
-    // ⚑ S343 / T35 — the strata have depth now: a darker seam at each layer's foot, and roots threading the earth
-    ui.px(ctx, x, y + CELL_H - 3, CELL_W, 2, r % 2 ? ERA1.black : (deep < 0.35 ? ERA1.tealDark : ERA1.greyDark));
-    if ((r * 7 + c * 3) % 5 === 0) {
-      let rx = x + 6 + ((r + c * 5) % 16);
-      for (let j = 2; j < CELL_H - 4; j += 2) { ui.px(ctx, rx, y + j, 1, 2, ERA1.beige); rx += ((j + c) % 6 === 0 ? 1 : (j + r) % 6 === 2 ? -1 : 0); }
-      ui.px(ctx, rx - 2, y + CELL_H - 6, 2, 1, ERA1.beige); ui.px(ctx, rx + 1, y + CELL_H - 5, 2, 1, ERA1.beige);
+    if (L.pattern === 'earth') {
+      // ⚑ S343 / T35 — the strata have depth now: a darker seam at each layer's foot, and roots threading the earth
+      ui.px(ctx, x, y + CELL_H - 3, CELL_W, 2, r % 2 ? ERA1.black : seam);
+      if (L.root && (r * 7 + c * 3) % 5 === 0) {
+        let rx = x + 6 + ((r + c * 5) % 16);
+        for (let j = 2; j < CELL_H - 4; j += 2) { ui.px(ctx, rx, y + j, 1, 2, L.root); rx += ((j + c) % 6 === 0 ? 1 : (j + r) % 6 === 2 ? -1 : 0); }
+        ui.px(ctx, rx - 2, y + CELL_H - 6, 2, 1, L.root); ui.px(ctx, rx + 1, y + CELL_H - 5, 2, 1, L.root);
+      }
+      for (let i = 0; i < CELL_W; i += 2) ui.px(ctx, x + i, y + 1 + (i % 4 === 0 ? 0 : 1), 1, 1, light);   // the stratum's lighter band
+      const sx = 3 + ((r * 7 + c * 5) % 9); const sy = 5 + ((r * 3 + c * 11) % 11);
+      ui.px(ctx, x + sx, y + sy, 2, 2, ERA1.black);
+      ui.px(ctx, x + ((sx + 13) % 24) + 2, y + ((sy + 7) % 16) + 3, 2, 1, ERA1.black);
+      ui.px(ctx, x + ((sx * 3) % 22) + 3, y + ((sy * 2) % 14) + 5, 1, 1, light);
+    } else if (L.pattern === 'brick') {
+      // ⚑ S362 / H34 — level 2, the house's cellar: two courses of brick to a cell, every other row shifted half a brick,
+      //   a thread of light on each course's top edge, and a root only where the brick has failed
+      const half = r % 2 ? 0 : 7;
+      ui.px(ctx, x, y + 10, CELL_W, 1, seam); ui.px(ctx, x, y + CELL_H - 1, CELL_W, 1, seam);
+      for (let bx = half; bx < CELL_W; bx += 14) ui.px(ctx, x + bx, y, 1, 10, seam);
+      for (let bx = (half + 7) % 14; bx < CELL_W; bx += 14) ui.px(ctx, x + bx, y + 11, 1, 10, seam);
+      for (let i = 0; i < CELL_W; i += 2) ui.px(ctx, x + i, y + 1, 1, 1, light);
+      for (let i = 1; i < CELL_W; i += 4) ui.px(ctx, x + i, y + 12, 1, 1, light);
+      if (L.root && (r * 5 + c * 7) % 9 === 0) { ui.px(ctx, x + 8, y + 2, 1, 7, L.root); ui.px(ctx, x + 9, y + 8, 1, 6, L.root); ui.px(ctx, x + 7, y + 13, 2, 1, L.root); }
+    } else {
+      // ⚑ S362 / H34 — level 3, the first years: no layers to read, only static; a hard seam at each foot and grain between
+      ui.px(ctx, x, y + CELL_H - 2, CELL_W, 2, seam);
+      for (let j = 0; j < CELL_H - 2; j += 3) for (let i = (j + r + c) % 4; i < CELL_W; i += 5) ui.px(ctx, x + i, y + j, 1, 1, (i + j * 3 + r * 5 + c) % 7 < 2 ? light : seam);
     }
-    for (let i = 0; i < CELL_W; i += 2) ui.px(ctx, x + i, y + 1 + (i % 4 === 0 ? 0 : 1), 1, 1, light);   // the stratum's lighter band
-    const sx = 3 + ((r * 7 + c * 5) % 9); const sy = 5 + ((r * 3 + c * 11) % 11);
-    ui.px(ctx, x + sx, y + sy, 2, 2, ERA1.black);
-    ui.px(ctx, x + ((sx + 13) % 24) + 2, y + ((sy + 7) % 16) + 3, 2, 1, ERA1.black);
-    ui.px(ctx, x + ((sx * 3) % 22) + 3, y + ((sy * 2) % 14) + 5, 1, 1, light);
     ui.px(ctx, x, y, CELL_W, 1, ERA1.black);
     ui.px(ctx, x, y, 1, CELL_H, ERA1.black);
   }
@@ -444,15 +497,24 @@ export class RootCauseApp {
     }
 
     const gx = c.x + LABEL_W; const gy = c.y + 14;
-    // the sky, a cloud, the hole he came down
-    ui.px(ctx, gx, gy - 12, COLS * CELL_W, 12, ERA1.teal);
-    ui.px(ctx, gx + 150, gy - 12, 40, 4, ERA1.white); ui.px(ctx, gx + 158, gy - 12, 24, 4, ERA1.white);
-    ui.px(ctx, gx + COLS * CELL_W - 30, gy - 10, 10, 8, ERA1.tooltip); ui.px(ctx, gx + COLS * CELL_W - 32, gy - 8, 14, 4, ERA1.tooltip);   // S343: a sun
-    ui.px(ctx, gx + 5 * CELL_W + 8, gy - 8, 14, 8, ERA1.tealDark);
+    // the sky, a cloud, the hole he came down — ⚑ S362 / H34: each level's own sky (a day, a night, the dark)
+    const L = this.look;
+    ui.px(ctx, gx, gy - 12, COLS * CELL_W, 12, L.sky);
+    if (L.decor === 'cloud-sun') {
+      ui.px(ctx, gx + 150, gy - 12, 40, 4, ERA1.white); ui.px(ctx, gx + 158, gy - 12, 24, 4, ERA1.white);
+      ui.px(ctx, gx + COLS * CELL_W - 30, gy - 10, 10, 8, ERA1.tooltip); ui.px(ctx, gx + COLS * CELL_W - 32, gy - 8, 14, 4, ERA1.tooltip);   // S343: a sun
+    } else if (L.decor === 'moon-stars') {
+      for (let i = 0; i < 14; i++) ui.px(ctx, gx + 10 + ((i * 53) % (COLS * CELL_W - 60)), gy - 11 + ((i * 7) % 8), i % 4 === 0 ? 2 : 1, i % 4 === 0 ? 2 : 1, ERA1.white);
+      ui.px(ctx, gx + COLS * CELL_W - 30, gy - 10, 10, 8, ERA1.silver); ui.px(ctx, gx + COLS * CELL_W - 32, gy - 8, 14, 4, ERA1.silver);   // a moon, not a sun
+      ui.px(ctx, gx + COLS * CELL_W - 27, gy - 10, 5, 8, L.sky);   // …a crescent: the sky's own colour bites it
+    } else {
+      for (let i = 0; i < 40; i++) ui.px(ctx, gx + ((i * 37) % (COLS * CELL_W)), gy - 12 + ((i * 11) % 12), 2, 1, i % 3 === 0 ? ERA1.grey : ERA1.greyDark);   // static, no sky
+    }
+    ui.px(ctx, gx + 5 * CELL_W + 8, gy - 8, 14, 8, L.hole);
     for (let r = 0; r < ROWS; r++) {
       ui.setFont(ctx, 8);
       ctx.fillStyle = r === this.lamby.r ? ERA1.tooltip : ERA1.grey;
-      ctx.fillText(copy.layers[r].toUpperCase(), c.x + 6, gy + r * CELL_H + 8);
+      ctx.fillText(this.lv.layers[r].toUpperCase(), c.x + 6, gy + r * CELL_H + 8);
       for (let col = 0; col < COLS; col++) this.drawEarth(ctx, gx, gy, r, col);
       // a corner of a leaflet showing in the earth
       const lf = this.leaflet[r];
@@ -507,8 +569,11 @@ export class RootCauseApp {
     ctx.fillStyle = this.zeal ? ERA1.tooltip : ERA1.grey; ctx.fillText(B.strength.replace('{n}', String(this.zeal)), c.x + 290, by);
     ctx.fillStyle = ERA1.grey;
     ctx.fillText(B.applied.replace('{n}', String(this.applied.length)).replace('{of}', String(APPLIED_TO_REPORT)), c.x + 370, by);
-    ctx.fillText(B.descent.replace('{n}', String(ledger.rootCause.descents)), c.x + 6, by + 13);
-    ctx.fillText(B.leaflets.replace('{n}', String(this.leaflet.filter((l) => l.taken).length)).replace('{of}', String(ROWS)), c.x + 104, by + 13);
+    // ⚑ S362 / H34 — which level, of how many, and its name (it is the programme's own heading for the place)
+    ctx.fillStyle = this.level > 1 ? ERA1.tooltip : ERA1.grey;
+    ctx.fillText(B.descent.replace('{n}', String(this.level)).replace('{of}', String(MAX_LEVEL)).replace('{name}', this.lv.name), c.x + 6, by + 13);
+    ctx.fillStyle = ERA1.grey;
+    ctx.fillText(B.leaflets.replace('{n}', String(this.leaflet.filter((l) => l.taken).length)).replace('{of}', String(ROWS)), c.x + 290, by + 13);
 
     // the shelf the programme has no field for
     const ky = by + 27;
@@ -576,16 +641,16 @@ export class RootCauseApp {
   private drawModal(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
     const m = this.modal!;
     if (m.kind === 'quiz') {
-      const f = this.dialog(ctx, c, copy.quizTitle.replace('{layer}', copy.layers[m.layer].toUpperCase()), 380, 176);
+      const f = this.dialog(ctx, c, copy.quizTitle.replace('{layer}', this.lv.layers[m.layer].toUpperCase()), 380, 176);
       ui.setFont(ctx, 10);
       ctx.fillStyle = ERA1.black;
-      ui.wrapText(ctx, copy.findings[m.layer], f.w).forEach((l, i) => ctx.fillText(l, f.x, f.y + i * 12));
+      ui.wrapText(ctx, this.lv.findings[m.layer], f.w).forEach((l, i) => ctx.fillText(l, f.x, f.y + i * 12));
       ctx.fillStyle = ERA1.navy; ctx.fillText(copy.quizStem, f.x, f.y + 32);
       if (m.answered === null) {
         const order = m.flip ? [1, 0] : [0, 1];
         order.forEach((a, i) => {
           const by = f.y + 48 + i * 28;
-          ui.button(ctx, f.x, by, f.w, 22, `${i === 0 ? 'A.' : 'B.'}  ${copy.quiz[m.layer][a]}`, {});
+          ui.button(ctx, f.x, by, f.w, 22, `${i === 0 ? 'A.' : 'B.'}  ${this.lv.quiz[m.layer][a]}`, {});
           this.hits.push({ x: f.x, y: by, w: f.w, h: 22, id: `ans:${a}` });
         });
       } else {
@@ -610,17 +675,32 @@ export class RootCauseApp {
         ui.button(ctx, f.x + 80, f.y + 70, 70, 20, copy.ok, {}); this.hits.push({ x: f.x + 80, y: f.y + 70, w: 70, h: 20, id: 'flag-ok' });
       }
     } else {
+      // ⚑ S362 / H34 — the report ends the LEVEL: after levels 1 and 2 one plain question (stop, or go on to the next
+      //   level); after level 3 the programme says there is nothing deeper, and only Close is left
       const R = copy.report;
-      const f = this.dialog(ctx, c, R.title, 360, 168);
+      const last = this.level >= MAX_LEVEL;
+      const lines = last ? R.finalLines : R.lines;
+      const f = this.dialog(ctx, c, R.title, 360, last ? 196 : 190);
       ui.setFont(ctx, 10);
       let y = f.y;
-      for (const raw of R.lines) {
-        const l = raw.replace('{n}', String(ledger.rootCause.descents)).replace('{p}', String(this.progress))
+      for (const raw of lines) {
+        const l = raw.replace('{n}', String(this.level)).replace('{of}', String(MAX_LEVEL)).replace('{p}', String(this.progress))
           .replace('{list}', this.applied.length ? this.applied.join(', ') : R.none);
         for (const w of (l ? ui.wrapText(ctx, l, f.w) : [''])) { ctx.fillStyle = ERA1.black; ctx.fillText(w, f.x, y); y += 13; }
       }
-      ui.button(ctx, f.x + f.w - 110, f.y + f.h - 26, 108, 22, copy.again, {});
-      this.hits.push({ x: f.x + f.w - 110, y: f.y + f.h - 26, w: 108, h: 22, id: 'again' });
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.navy;
+      ui.wrapText(ctx, last ? R.finalNote : R.ask.replace('{next}', String(this.level + 1)).replace('{of}', String(MAX_LEVEL)), f.w)
+        .forEach((w) => { ctx.fillText(w, f.x, y + 4); y += 13; });
+      const by = f.y + f.h - 26;
+      if (last) {
+        ui.button(ctx, f.x + f.w - 110, by, 108, 22, R.close, {});
+        this.hits.push({ x: f.x + f.w - 110, y: by, w: 108, h: 22, id: 'stop' });
+      } else {
+        ui.button(ctx, f.x, by, 100, 22, R.stop, {});
+        this.hits.push({ x: f.x, y: by, w: 100, h: 22, id: 'stop' });
+        ui.button(ctx, f.x + f.w - 150, by, 148, 22, R.go.replace('{next}', String(this.level + 1)), {});
+        this.hits.push({ x: f.x + f.w - 150, y: by, w: 148, h: 22, id: 'again' });
+      }
     }
   }
 
@@ -653,7 +733,11 @@ export class RootCauseApp {
       return;
     }
     if (m && m.kind === 'report') {
-      if (id === 'again') { this.modal = null; this.newDescent(); this.phase = 'play'; this.message = ''; this.messageT = 0; }
+      // ⚑ S362 / H34 — 'again' now means the NEXT level (never past the third); 'stop' ends the visit to the game
+      if (id === 'again' && this.level < MAX_LEVEL) {
+        this.modal = null; this.newDescent(); this.phase = 'play';
+        this.say(copy.levelStart.replace('{n}', String(this.level)).replace('{of}', String(MAX_LEVEL)).replace('{name}', this.lv.name), 6);
+      } else if (id === 'stop') { this.open = false; this.onClose?.(); }
       return;
     }
     if (this.phase !== 'play') return;

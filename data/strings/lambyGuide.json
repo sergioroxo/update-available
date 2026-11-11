@@ -433,5 +433,13 @@
     "next": "Rob's done for now. Before his Family Form: want to dig for where your feelings come from? Root Cause Digger came with the disk.",
     "yes": "Let's dig",
     "_docS343": "⚑ S343 / T16 + T35 (his 8 Nov) — `next` is said the moment Rob's chat closes, before the Family Form; `yes` opens the game. When the game closes (or he says no), form.next comes after timing.formAfterRootSeconds."
+  },
+  "choice": {
+    "text": "Done digging! Two things are ready now. Release Work, or Rob's Family Form. Which one first?",
+    "releaseYes": "Release Work",
+    "formYes": "Family Form",
+    "actRelease": "open:releasework",
+    "actForm": "open:form",
+    "_docS362": "⚑ S362 / H33 (his headset, 10 Nov, 20:36: 'After the digger, the message should ask whether to do Release Work or go to the forum, not jump to the forum' — the 'forum' is 1997's Family Form, the only form/forum-like thing in 1997; 2003's forum is Harbor) — after the Root Cause Digger closes, the one 'form' offer (form.next, 'Want me to open it?') is replaced by a TWO-answer offer: `releaseYes` opens Release Work (the racket exercise, pillow.json), `formYes` opens the Family Form; 'No thanks' and the × dismiss and are logged like every other dismissal ('guide declined: choice', as the form offer logs 'guide declined: form'). The answers are logged by name: 'guide requested: choice-releasework' / 'choice-form'. Once Release Work has been done, or when the digger was never opened, the old one-answer form offer is used. It counts as the era's ONE unsolicited form offer (no extra balloon), is said only when nothing else is speaking, and the form intermission waits while Release Work is open."
   }
 }

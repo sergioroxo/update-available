@@ -89,15 +89,103 @@
   "report": {
     "title": "ROOT CAUSE REPORT",
     "lines": [
-      "Descent {n} complete.",
+      "Level {n} of {of} complete.",
       "Root cause found: NOT FOUND ({p}%).",
       "Roots applied: {list}.",
       "",
       "RECOMMENDED: FURTHER SESSIONS."
     ],
-    "none": "none"
+    "ask": "Stop here, or go on to Level {next} of {of}?",
+    "go": "Go on: Level {next}",
+    "stop": "Stop here",
+    "finalLines": [
+      "Level {n} of {of} complete.",
+      "Root cause found: NOT FOUND ({p}%).",
+      "Roots applied: {list}.",
+      "",
+      "No deeper level is installed.",
+      "The root was not in any of them.",
+      "RECOMMENDED: FURTHER SESSIONS."
+    ],
+    "finalNote": "That was the last level. Only Close is left.",
+    "close": "Close",
+    "none": "none",
+    "_docS362": "⚑ S362 / H34 (his headset, 10 Nov, 20:36: 'wants different designs and different questions for each level; at each level ask whether the person wants to continue. He reached the end and did not know how many levels there should be' — his answer, 11 Nov: three levels at most). After level 1 and level 2 the report ends on one plain question, `ask`, with two buttons: `go` (the next level) and `stop` (leaves the game; the KEPT shelf is memory only and stays). After level 3 the programme's report says in its own voice that there is no deeper level (`finalLines`; the satire is its own and collapses: the root was not in any of them) and only `close` remains. 'Descent {n}' became 'Level {n} of {of}'."
   },
   "close": "Close",
+  "_docS362levels": "⚑ S362 / H34 (his headset, 10 Nov, 20:36 — 'different designs and different questions for each level'; decision 5 of UiB job 13: three levels at most, after each he can stop or continue). One level = one descent. Level 1 is the top-level `layers` / `findings` / `quiz` / `leaflets` above, untouched; `levels` holds level 2 and level 3, each with its own eight layers, findings, chapter-review pairs (the programme's answer first, the honest answer second — the honest one scores 0 and is KEPT) and leaflets. Every line stays inside how 1990s ex-gay 'reparative' ministries named a root cause (the Lexicon's ROOT entry and `words` above: the father wound, the mother's attachment, peer rejection, gender nonconformity, emotional dependency, 'unmet needs'); the programme's words are its own, so the satire is its own and collapses (a thing 'not found' is filed as 'hidden too deep'). No statistics, no real people, no new sources. The honest lines are plain, short, true of anyone, and about the person, never the family: written under the 2026-08-17 norm.",
+  "levelNames": ["THE PAST", "THE HOUSE", "THE FIRST YEARS"],
+  "levelStart": "LEVEL {n} OF {of} · {name}. Press the earth beside Lamby to dig.",
+  "levels": [
+    {
+      "name": "THE HOUSE",
+      "layers": ["Home", "Mother", "Brother", "Table", "Church", "Youth group", "Prayer", "Secrets"],
+      "findings": [
+        "Home: the house was quiet. Possible emotional-distance root.",
+        "Mother: she called you her helper. Possible enmeshment root.",
+        "Brother: he played football. You did not. Possible male-rejection root.",
+        "Table: you sat beside your mother. Possible maternal-attachment root.",
+        "Church: you loved the choir. Possible sensitive-spirit root.",
+        "Youth group: you were picked last. Possible peer-rejection root.",
+        "Prayer: you prayed to change. Possible unmet-needs root.",
+        "Secrets: you kept one. Possible hidden-life root. Dig deeper."
+      ],
+      "quiz": [
+        ["POSSIBLE EMOTIONAL-DISTANCE ROOT.", "SOME HOUSES ARE QUIET."],
+        ["POSSIBLE ENMESHMENT ROOT.", "I HELPED MY MOTHER. THAT IS KIND."],
+        ["POSSIBLE MALE-REJECTION ROOT.", "WE WERE DIFFERENT. THAT IS ALL."],
+        ["POSSIBLE MATERNAL-ATTACHMENT ROOT.", "IT WAS MY SEAT."],
+        ["POSSIBLE SENSITIVE-SPIRIT ROOT.", "I LOVED THE CHOIR. IT WAS BEAUTIFUL."],
+        ["POSSIBLE PEER-REJECTION ROOT.", "BEING PICKED LAST WAS UNKIND. IT IS NOT A CAUSE."],
+        ["POSSIBLE UNMET-NEEDS ROOT.", "I PRAYED HARD. I WAS NOT BROKEN."],
+        ["POSSIBLE HIDDEN-LIFE ROOT.", "I KEPT IT TO STAY SAFE."]
+      ],
+      "leaflets": [
+        "LEAFLET 1: “A HOUSE WITH ROOMS”",
+        "LEAFLET 2: “MOTHERS AND LETTING GO”",
+        "LEAFLET 3: “BROTHERS AND OTHER ROOTS”",
+        "LEAFLET 4: “THE TABLE SET FOR ONE”",
+        "LEAFLET 5: “SOFT HEARTS, STRONG FAITH”",
+        "LEAFLET 6: “THE LAST ONE PICKED”",
+        "LEAFLET 7: “PRAYING THROUGH IT”",
+        "LEAFLET 8: “WHAT YOU KEPT”"
+      ]
+    },
+    {
+      "name": "THE FIRST YEARS",
+      "layers": ["Early years", "Bonding", "Detachment", "The mirror", "Playground", "Family line", "The Wound", "The Root"],
+      "findings": [
+        "Early years: you were a quiet baby. Possible early-withdrawal root.",
+        "Bonding: your mother held you often. Possible over-attachment root.",
+        "Detachment: your father held you less. Possible father-hunger root.",
+        "The mirror: you looked a long time. Possible identity-confusion root.",
+        "Playground: you watched, you did not run. Possible peer-fear root.",
+        "Family line: nobody else like you, that you know of. Possible inherited root.",
+        "The Wound: not found. Possible wound hidden too deep to find.",
+        "The Root: not found. Dig deeper."
+      ],
+      "quiz": [
+        ["POSSIBLE EARLY-WITHDRAWAL ROOT.", "SOME BABIES ARE QUIET."],
+        ["POSSIBLE OVER-ATTACHMENT ROOT.", "BEING HELD IS NOT A WOUND."],
+        ["POSSIBLE FATHER-HUNGER ROOT.", "A FEW HUGS DO NOT DECIDE WHO I LOVE."],
+        ["POSSIBLE IDENTITY-CONFUSION ROOT.", "I WAS JUST LOOKING AT MYSELF."],
+        ["POSSIBLE PEER-FEAR ROOT.", "I DID NOT LIKE TO RUN. THAT IS ALL."],
+        ["POSSIBLE INHERITED ROOT.", "THERE IS NO CURSE. THERE IS ME."],
+        ["POSSIBLE WOUND, HIDDEN TOO DEEP.", "THERE IS NO WOUND TO FIND."],
+        ["DIG DEEPER.", "THERE WAS NEVER A ROOT."]
+      ],
+      "leaflets": [
+        "LEAFLET 1: “BEFORE YOU COULD SPEAK”",
+        "LEAFLET 2: “HELD TOO CLOSE?”",
+        "LEAFLET 3: “FATHER HUNGER”",
+        "LEAFLET 4: “THE MIRROR TEST”",
+        "LEAFLET 5: “THE PLAYGROUND YEARS”",
+        "LEAFLET 6: “AS FAR BACK AS IT GOES”",
+        "LEAFLET 7: “UNDER THE WOUND”",
+        "LEAFLET 8: “THERE IS ALWAYS MORE”"
+      ]
+    }
+  ],
   "witness": {
     "opened": "root cause digger opened by subject",
     "memory": "root cause digger: authentic memory uncovered — no shame filter; flagged",
@@ -189,12 +277,12 @@
   },
   "ok": "OK",
   "deleteMemory": "Delete memory",
-  "again": "Dig deeper",
+  "again": "Go on",
   "bar": {
     "found": "ROOT CAUSE FOUND",
     "strength": "STRENGTH +{n}",
     "applied": "APPLIED {n}/{of}",
-    "descent": "DESCENT {n}",
+    "descent": "LEVEL {n} OF {of} · {name}",
     "leaflets": "LEAFLETS {n}/{of}",
     "kept": "KEPT",
     "nothing": "(nothing yet)"

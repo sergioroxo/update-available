@@ -4,14 +4,17 @@ import copy from '../../data/strings/lambyGuide.json';
 import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
-export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor';
+export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice';
 export interface GuideStep { tip: string; here?: string; again?: string; target: string[]; act?: string; noAgain?: boolean; once?: boolean }
 export interface GuideView {
   era: GuideEra; beat: string; rung: GuideRung; hidden: boolean; text: string | null;
-  targets: string[]; act?: string; frame: number; time: number;
+  targets: string[]; act?: string;
+  /** ⚑ S362 / H33 — the second answer of a two-answer offer (the 'choice' rung's Family Form) */
+  alt?: string;
+  frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; robDone?: boolean; harborDue?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -42,9 +45,11 @@ export class LambyGuide {
     if (!m) { m = { dismissed: 0, finished: false, offered: false }; this.memory.set(this.key, m); }
     return m;
   }
-  private set(rung: GuideRung, text: string | null = null, targets: string[] = [], act?: string): void {
-    Object.assign(this.view, { rung, text, targets, act }); this.version++;
+  private set(rung: GuideRung, text: string | null = null, targets: string[] = [], act?: string, alt?: string): void {
+    Object.assign(this.view, { rung, text, targets, act, alt }); this.version++;
   }
+  /** the offers that are said once, ignorable, and logged by their own name (not by the era's beat) */
+  private get isOffer(): boolean { const r = this.view.rung; return r === 'form' || r === 'root' || r === 'harbor' || r === 'choice'; }
   tick(dt: number, input: GuideInput): void {
     this.input = input;
     const alias: Record<string, string> = { l: 'browser', search: 'results' };   // ⚑ S293: 2026's other beats are their own ids
@@ -88,7 +93,14 @@ export class LambyGuide {
     if (input.era === 'e1' && input.formAvailable && !input.formOpened) this.formWait += dt;
     const formAfter = input.robDone && (this.rootOffered || input.rootOpened) ? copy.timing.formAfterRootSeconds : copy.timing.tipSeconds;
     if (input.era === 'e1' && input.formAvailable && !input.formOpened && !this.formOffered && this.formWait >= formAfter * (input.idleScale ?? 1) && !this.active && this.canOffer()) {
-      this.formOffered = true; this.counts.e1++; this.set('form', input.rootOpened ? copy.form.next : copy.form.text, [], copy.form.act); return;
+      this.formOffered = true; this.counts.e1++;
+      // ⚑ S362 / H33 (his headset, 10 Nov, 20:36: "After the digger, the message should ask whether to do Release Work or go
+      //   to the form, not jump to the form") — after the game Lamby offers TWO things, not one: Release Work (the racket
+      //   exercise, which the room has held all along) or Rob's Family Form. Both answers open their thing; "No thanks" and
+      //   the × work and are logged like every other dismissal. Once the racket has been done the offer is just the form.
+      if (input.rootOpened && !input.racketDone) this.set('choice', copy.choice.text, [], copy.choice.actRelease, copy.choice.actForm);
+      else this.set('form', input.rootOpened ? copy.form.next : copy.form.text, [], copy.form.act);
+      return;
     }
     // ⚑ S281 (his, 1 Nov: "a message from lamby … that it is time for you to go, and even you say no, it forces you
     //   to by always opening the file when you touch something") — said once, over anything else Lamby was saying
@@ -141,8 +153,12 @@ export class LambyGuide {
     const s = this.spec, m = this.mem();
     if (id === 'lg-tray') {
       this.idle = 0;
-      if (this.input.era === 'e1' && this.input.formAvailable && !this.input.formOpened) { this.set('form', copy.form.text, [], copy.form.act); return true; }
-      if (this.view.rung === 'form' || this.view.rung === 'root' || this.view.rung === 'harbor') return true;
+      if (this.input.era === 'e1' && this.input.formAvailable && !this.input.formOpened) {
+        if (this.input.rootOpened && !this.input.racketDone) this.set('choice', copy.choice.text, [], copy.choice.actRelease, copy.choice.actForm);   // S362 / H33
+        else this.set('form', copy.form.text, [], copy.form.act);
+        return true;
+      }
+      if (this.isOffer) return true;
       if (this.active) this.point();
       // ⚑ S271 (his 31 Oct: "You're doing fine, carry on. Thank you, Lamby. But it doesn't tell me where do I need
       //   to go") — with no beat of its own, Lamby reads the Start map's next step before it says "carry on"
@@ -151,12 +167,15 @@ export class LambyGuide {
     }
     if (!this.active) return false;
     if (id === 'lg-show') { this.effects.log('begun', this.view.beat, false, false); this.point(); }
-    else if (id === 'lg-take' && this.view.act) {
-      const act = this.view.act;
-      this.effects.log('begun', this.view.rung === 'form' || this.view.rung === 'root' || this.view.rung === 'harbor' ? this.view.rung : this.view.beat, false, false);
+    else if ((id === 'lg-take' && this.view.act) || (id === 'lg-alt' && this.view.alt && this.view.rung === 'choice')) {
+      const alt = id === 'lg-alt';
+      const act = (alt ? this.view.alt : this.view.act) as string;
+      // ⚑ S362 / H33 — the two answers are logged by name: "guide requested: choice-releasework" / "choice-form"
+      const beat = this.view.rung === 'choice' ? (alt ? 'choice-form' : 'choice-releasework') : this.isOffer ? this.view.rung : this.view.beat;
+      this.effects.log('begun', beat, false, false);
       m.finished = true; this.set('silent'); this.idle = 0; this.effects.act(act);
     } else if (id === 'lg-later' || id === 'lg-x' || id === 'lg-ok') {
-      const form = this.view.rung === 'form' || this.view.rung === 'root' || this.view.rung === 'harbor';
+      const form = this.isOffer;
       this.effects.log('dismissed', form ? this.view.rung : this.view.beat, id !== 'lg-ok', id === 'lg-ok');
       if (this.view.rung === 'root') this.formWait = 0;   // S343: "no" to the game → the form is offered after a breath
       if (!form) {

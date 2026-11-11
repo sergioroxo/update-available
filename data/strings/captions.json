@@ -1,6 +1,7 @@
 {
   "_doc": "CAPTIONS FOR EVERY SOUND (W-G2, his call 2026-09-20: option b — name every sound, always). One line per sound the piece makes that is not already words on screen (the tapes carry their own captions; L's, Lamby's and Lambient's lines are on screen; the members have no voice). Shown in the frame's caption strip for a moment when the sound starts — square brackets, frame voice, plain. Sounds not listed here show nothing; a sound listed here that is not registered plays nothing (tapeAudio.ts's registry law).",
   "_docS222": "⚑ S222 — two cues name LIVE sounds, not files: CLEAR on the 2003 phone plays its own Web Audio (src/games/clear.ts) and announces these two by name through tapeAudio.announceCue, only when they are heard (the one mute off). The rest of its sounds (a shot, a landing, a break) are what the screen already shows.",
+  "_docS362": "⚑ S362 / H36 (his headset, 10 Nov, 20:41: 'The Lamby song plays here in 1997 … a song from one of the tapes') — 1997's diary collapse no longer plays 2003's jingle (chase_the_clouds_broken stays 2003's, registered); it plays Daniel's tape B broadcast jingle, slowed as the screen splits. This cue names it (it is only announced where playOnce starts it; the tapes' own bus never announces it).",
   "holdSeconds": 1.8,
   "cues": {
     "ui_press.mp3": "[press]",
@@ -50,6 +51,7 @@
     "boot_2003.mp3": "[a beep, a hard drive seeking]",
     "chase_the_clouds.mp3": "[music: the Restorify jingle]",
     "chase_the_clouds_broken.mp3": "[music: the jingle, breaking]",
+    "discover_the_new_you_tape97_radio.mp3": "[music: the tape's jingle, slowing and breaking]",
     "lambyos_2003_boot.mp3": "[music: the jingle]",
     "chime_2003.mp3": "[a chime]",
     "lamby_pop.mp3": "[a pop: Lamby]",

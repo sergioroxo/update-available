@@ -59,7 +59,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   const multiple = state.beat === 'pledge' || state.beat === 'consent' || state.beat === 'steps';
   const selected = multiple ? targets : targets.slice(0, 1);
   const pointing = state.rung === 'show' || state.rung === 'start';
-  const w = Math.min(272, W - 8), x = W - w - 4;
+  const w = Math.min(state.rung === 'choice' ? 304 : 272, W - 8), x = W - w - 4;   // ⚑ S362 / H33: three buttons need a wider balloon
   ui.setFont(ctx, 11);
   const h = Math.max(112, 58 + ui.wrapText(ctx, state.text, w - (skin === 'e4' ? 66 : 36)).length * 15);
   let y = W < 300 ? 2 : H - 22 - h - 70;
@@ -90,6 +90,7 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   else if (state.rung === 'personalise') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'form') buttons = [['lg-take', copy.form.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'root') buttons = [['lg-take', copy.root.yes], ['lg-later', copy.form.no]];
+  else if (state.rung === 'choice') buttons = [['lg-take', copy.choice.releaseYes], ['lg-alt', copy.choice.formYes], ['lg-later', copy.form.no]];   // ⚑ S362 / H33: two answers + No thanks
   else if (state.rung === 'harbor') buttons = [['lg-take', copy.harbor.yes], ['lg-later', copy.form.no]];   // S345
   else if (pointing) buttons = [...(state.act && (!state.act.startsWith('press:') || hits.some(h => h.id === state.act?.slice(6)) || remoteActions.includes(state.act)) ? [['lg-take', copy.ui.take] as [string, string]] : []), ['lg-ok', copy.ui.ok]];
   else buttons = [...(state.targets.length || state.beat !== 'cut' ? [['lg-show', copy.ui.show] as [string, string]] : []), ['lg-later', copy.ui.later]];

@@ -598,6 +598,8 @@ export class DesktopOS {
     if (act === 'open:rootcause') { this.openRootCause(); return; }
     if (act === 'open:harbor') { this.recommendForum(true); this.openForum(); this.forum?.showThread(); return; }   // S345
     if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
+    // ⚑ S362 / H33 — the other answer of Lamby's "Release Work or the Family Form": the racket exercise, the way the room's racket opens it
+    if (act === 'open:releasework') { this.openProvotype(pillowProvotypeData as unknown as Provotype); return; }
     if (act.startsWith('focus:')) { this.onGuideFocus?.(act.slice(6)); return; }
     if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
     if (this.desktopEra === 'e3' || this.desktopEra === 'e4') { this.onGuidePress?.(act.slice(6)); return; }
@@ -638,6 +640,7 @@ export class DesktopOS {
       deferredUpdate: this.desktopEra === 'e1' && !!this.updateApp?.deferred,
       formAvailable: this.formAvailable, formForced: this.formForced, formOpened: !!this.provotype?.open || ledger.provotypes.some(p => p.id === 'origin_intake_e1'),
       formFiled: !this.provotype?.open && ledger.provotypes.some(p => p.id === 'origin_intake_e1'), rootOpened: ledger.records.includes('rootcause-opened'),
+      racketDone: ledger.provotypes.some(p => p.id === 'pillow'),   // S362 / H33
       robDone: this.desktopEra === 'e1' && this.formAvailable && !this.irc?.open,   // S343 / T16
       harborDue: this.desktopEra === 'e2' && ledger.records.includes('testimony-online') && !ledger.records.includes('forum-posted') && !this.forum?.open,   // S345
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
@@ -2422,7 +2425,8 @@ export class DesktopOS {
       if (this.irc && !this.provotype) { this.irc.open = false; this.dirty = true; }
     }
     // ⚑ S343 / T35 — Root Cause comes BEFORE the Family Form: while the game is open, the intermission does not run
-    if (this.formAutoAt !== Infinity && this.startMap.rootOpen) this.formAutoAt += dt;
+    // ⚑ S362 / H33 — and while Release Work (Lamby's other answer to "what now?") is open: the form waits for it too
+    if (this.formAutoAt !== Infinity && (this.startMap.rootOpen || (this.provotype?.open && this.provotype.id === 'pillow'))) this.formAutoAt += dt;
     if (this.formAutoAt !== Infinity && this.t >= this.formAutoAt && this.phase === 'desktop' && this.desktopEra === 'e1') {
       if (this.provotype || ledger.provotypes.some(p => p.id === 'origin_intake_e1')) this.formAutoAt = Infinity;
       else if (!this.packet?.open && !this.diary?.open && !this.kit?.open && !this.rootCause?.open && !this.provotypeBusy() && this.guideReady('form-forced')) {

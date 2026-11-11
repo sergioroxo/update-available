@@ -60,6 +60,8 @@ export class DiaryApp {
   private attempts = 0;           // how many times the player has held the truth
   private breakT = 0;
   private doneFired = false;
+  /** ⚑ S362 / H36 — the tape jingle under the collapse; it slows as the screen splits (see update) */
+  private breakSong: HTMLAudioElement | null = null;
 
   update(dt: number): void {
     if (this.phase === 'writing') {
@@ -96,6 +98,11 @@ export class DiaryApp {
       // it won for good: the words flood fully back (green), the split holds, then the update
       if (this.erase > 0) this.erase = Math.max(0, this.erase - dt / REASSERT_SECONDS);
       this.breakT += dt;
+      // ⚑ S362 / H36 — the tape dies slowly: 1.0 → 0.55 over the hold and the first moments of the update
+      if (this.breakSong) {
+        this.breakSong.playbackRate = Math.max(0.55, 1 - this.breakT * 0.12);
+        this.breakSong.volume = Math.max(0, Math.min(1, 1 - (this.breakT - 3) / 7));   // …and it fades out, as the old broken jingle died (relative level: the mixer keeps its baseline)
+      }
       this.dirty = true;
     }
     // 'resist' has no timer — it waits for the player's hand (press())
@@ -115,7 +122,12 @@ export class DiaryApp {
         // second hold: the deletion fails for good — the person's glitch
         this.phase = 'breakout'; this.breakT = 0;
         playOnce('glitch_e2.mp3');   // S141: the words flood back — the era's collapse, heard
-        playOnce('chase_the_clouds_broken.mp3');   // S324 (his 8 Nov: "fix"): the OS's own boot jingle breaks under the collapse (AUDIO_GAPS rank 3); the era shift stops it
+        // ⚑ S362 / H36 (his headset, 10 Nov, 20:41: "The Lamby song plays here in 1997 … the 2003 startup song"; "a song
+        //   from one of the tapes") — S324 put 2003's own jingle (chase_the_clouds_broken) under the 1997 collapse. 1997
+        //   owns no Lamby song: what breaks here is Daniel's tape B, the broadcast jingle (discover_the_new_you_tape97_radio),
+        //   dragged down in pitch and speed as the split holds (update(), below). 2003's own uses of the jingle stay.
+        this.breakSong = playOnce('discover_the_new_you_tape97_radio.mp3');
+        if (this.breakSong) this.breakSong.preservesPitch = false;
         if (!ledger.records.includes('deletion-failed')) ledger.records.push('deletion-failed');
         this.onBreakout?.();   // the screen split fires as the truth wins
       } else {

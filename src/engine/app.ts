@@ -1942,10 +1942,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  its own length. */
   const RACKET_WALL = { x: -2.07, y: 1.0, z: 0.86, pitch: -90, yaw: 90, roll: 0 };
   const RACKET_OVER: Record<string, { x: number; y: number; z: number; pitch: number; yaw: number; roll: number }> = {
-    // raised over the bed's near edge: the grip ~(−1.30, 1.25), the head up and back toward the room
-    lift:   { x: -1.18, y: 1.46, z: 0.52, pitch: -60, yaw: 90, roll: 0 },
+    // ⚑ S362 / H35 (his headset, 10 Nov: 'the "Lift" figure should be turned from the other side… the handle should be
+    //   turned to me') — the lift had the head back toward the room and the butt to the wall, the opposite way round to
+    //   the strike. Now the handle is on the room side (toward the seat) in every pose: raised over the bed's near edge,
+    //   the grip ~(−1.08, 1.17) facing him, the head up and tilted toward the wall (pitch −120 = head up-and-toward-wall),
+    //   and the strike only lowers that head onto the pillow. Measured with the mesh axes above: butt = root − 0.33·d,
+    //   head centre = root + 0.16·d, d = (cos −pitch, sin −pitch) in (room-x, y).
+    lift:   { x: -1.24, y: 1.46, z: 0.52, pitch: -120, yaw: 90, roll: 0 },
     // held there. the exhale is the person's, not the object's: it barely moves
-    exhale: { x: -1.19, y: 1.44, z: 0.52, pitch: -64, yaw: 90, roll: 0 },
+    exhale: { x: -1.25, y: 1.44, z: 0.52, pitch: -116, yaw: 90, roll: 0 },
     // down: the head's centre on the pillow (−1.53, 0.42), the butt back at the bed's edge (−1.04, 0.49)
     strike: { x: -1.37, y: 0.44, z: 0.52, pitch: -188, yaw: 90, roll: 0 }
   };
