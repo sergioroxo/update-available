@@ -542,6 +542,24 @@ are in the repo (REVIEW_2026_FLOW_2026-11-11.md, RESEARCH_ROGD_AND_FILTERS_2026-
 video offline from the piece's own drawing code, with its real music and narrator files (tools/render-clip.mjs), so
 the artist could review it as a file.
 
+## 7n. Conversion as conversation: a report, a bill and a ruling (his, 11 Nov 2026)
+
+**His find:** KFF's explainer on the US HHS report (1 May 2025), "the report of the new 'exploratory therapy'", to be
+integrated into 2026; he confirmed Maya is British ("good choice"). **The thread the three documents make in 2026:**
+conversion practice survives as *conversation*. (1) The HHS report, published after the executive order "Protecting
+Children From Chemical and Surgical Mutilation", recommends talk therapy first, including "exploratory therapy", and
+calls equating it with conversion therapy "misguided"; the American Academy of Pediatrics and others say it breaks with
+the major medical bodies, its authors were not disclosed, and its exploratory therapy can include conversion practices
+(KFF, 6 May 2025, opened). (2) The UK draft Conversion Practices Bill (25 June 2026) says it does not ban "explorative
+conversations" (in the KB, opened 7 Nov). (3) *Chiles v. Salazar* (US Supreme Court, 31 Mar 2026, 8–1; Jackson
+dissenting): Colorado's ban, as applied to a counsellor's talk therapy, regulates speech by viewpoint and faces strict
+scrutiny; remanded, not struck down on its face (opened 11 Nov; a search summary had the dissent wrong — Kagan
+concurred). **In the piece:** Mum forwards the report (two readings side by side); the AI takes up the word — "explore
+first" — and sells the live programme; the backstage shows where "exploring" leads. That is the system's
+self-presentation; the clinical debate itself is left unresolved on screen, as CLAUDE.md requires. **For the article:**
+the medium of 2026's conversion network is the medium of the chatbot — talk — and the law's newest line is drawn
+around talk. Word it carefully: the Court did not legalise conversion therapy; it changed the standard of review.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
