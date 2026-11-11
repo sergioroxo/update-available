@@ -48,6 +48,7 @@ import { FloppySheep } from './floppysheep';   // S363 / N1: its bookmark is off
 import { markE4, e4Has } from '../../narrative/e4Beats';
 import { E4Messenger, drawLoftPhoto, type ChatId } from './messenger';
 import { drawGoalPicture } from './goalPicture';
+import { drawSwapFilter } from './swapFilter';
 import { drawContagionClip, CLIP_LOOP_SECONDS, startClipSound, stopClipSound } from './contagionClip';
 import { consoleSession } from '../../room/consoleSession';
 import updates from '../../../data/strings/updates.json';
@@ -605,7 +606,7 @@ export class E4Browser {
     this.botBeat = ready; this.botT = 99;
     const m = this.messenger;
     m.houseShown = 3; m.houseHeart = true; m.houseOpenedBirthday = true; m.houseLeft = 2; m.houseOpenedLeft = true;
-    m.mumToday = 4; m.mumDraft = true; m.mumAtToday = true; m.mumOpened = true; m.dadIn = true; m.dadRead = true; m.linkOpened = true;
+    m.mumToday = 1; m.mumDraft = true; m.mumAtToday = true; m.mumOpened = true; m.dadIn = true; m.dadRead = true; m.linkOpened = true;
     m.junieOpenable = true; m.junieOpened = true; m.junieMuted = true; m.junieHidden = 2; m.junieUnmuted = true; m.junieReplied = true; m.junieX = true;
     m.want = null; m.view = 'list'; m.wallpaper = 'goal';
     this.junieWarm = true;
@@ -933,6 +934,7 @@ export class E4Browser {
     const before = this.botT;
     this.botT += dt;
     if (Math.floor(before / 0.3) !== Math.floor(this.botT / 0.3) && this.botT < 14) this.version++;
+    if (b.id === 'heading' && this.botT < 5 && Math.floor(before * 12) !== Math.floor(this.botT * 12)) this.version++;   // the filter's slide
     if (this.clipTakeover && Math.floor(before * 8) !== Math.floor(this.botT * 8)) this.version++;
     if (b.id === 'clip' && before < 0 && this.botT >= 0) stopClipSound();   // S360: the clip ends, its sound with it
     // ⚑ S360 — the clip's two lines ask nothing: after them, the bot moves on to the mute by itself (the tour stalled here)
@@ -2301,7 +2303,10 @@ export class E4Browser {
     }
     if (kind === 'map') { this.drawMap(ctx, x, y, w, 94); return; }
     if (kind === 'goal') {
-      drawGoalPicture(ctx, x, y, 88, 118, { t: this.t });
+      // ⚑ S364 / N9 — "I've made it your picture": the swap filter runs on her own photo, before → after, in the chat
+      const live = this.bot?.id === 'heading' && !this.botDone.has('heading');
+      const k = live ? Math.min(1, Math.max(0, (this.botT - BOT.lineSeconds) / 2.6)) : 1;
+      drawSwapFilter(ctx, x, y, 88, 118, k, this.t, { chrome: true });
       this.drawRing(ctx, x + 100, y + 14, 70, ring);
       setFont(ctx, 10); ctx.fillStyle = V3.botInk;
       ctx.fillText(BOT.heading.stamp, x + 100, y + 90);
