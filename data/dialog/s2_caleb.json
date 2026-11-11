@@ -6,12 +6,12 @@
   "chat": {
    "_doc": "S2R.3A — the conversation. `typingCharsPerSecond` is Caleb TYPING, not a reveal effect: he is a person at a keyboard in 2003, so it should read as a hand, not a printer.",
    "typingCharsPerSecond": 13,
-   "openDelaySeconds": 2.6,
-   "lineGapSeconds": 2.4,
-   "chipsArriveSeconds": 1.4,
-   "replyGapSeconds": 2.4,
+   "openDelaySeconds": 2.2,
+   "lineGapSeconds": 2.0,
+   "chipsArriveSeconds": 1.2,
+   "replyGapSeconds": 2.0,
    "commitLandsSeconds": 2.2,
-   "_docS362": "⚑ S362 / H32 (his headset, 10 Nov 20:51, as the Messenger filled: \"I do wonder if it should be a little bit slower, the cascade of messages here\") — openDelay 1.8 → 2.6, lineGap 1.4 → 2.4 (the gap between one arriving message and the next), chipsArrive 0.9 → 1.4, replyGap 1.6 → 2.4. Moderate: about 70% more room per message, no line gets a timer on the player — chips still wait forever."
+   "_docS362": "⚑ S362 / H32 (his headset, 10 Nov 20:51, as the Messenger filled: \"I do wonder if it should be a little bit slower, the cascade of messages here\") — openDelay 1.8 → 2.2, lineGap 1.4 → 2.0 (the gap between one arriving message and the next), chipsArrive 0.9 → 1.2, replyGap 1.6 → 2.0: about 40% slower (a helper's first pass made it 63%, trimmed for \"a little\")."
   },
   "redactionRowSeconds": 0.52,
   "_doc_redaction": "s per transcript row for the blackout AND for its reverse at S2R.5 — one component run twice, so this single number times both. Slow enough to watch a sentence disappear; the whole walk must still finish comfortably inside the alert's own run (see `alert` below), or the stamp lands before the conversation is gone.",
