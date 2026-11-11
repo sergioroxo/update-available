@@ -104,6 +104,9 @@ ARTICLE_COMPANION; this file only says where things are.*
 | `research/article-images-2026-11-10/commons-backstage-S356/` | Part C: Junie's ask, the operator view, the view gone dark, the turn back, the night | 8 | 10 Nov | companion §7k. Also on OneDrive |
 | `research/article-images-2026-11-11/headset-bugs-S358/` | Job 12 Part A1: the headset session's bugs fixed (phantom buttons, the 2026 room, the Close's panels) | 25 | 11 Nov | photo page A1-photos.html. Also on OneDrive |
 | `research/article-images-2026-11-11/headset-comfort-S359/` | Job 12 Part A2: 2026 keeps the seat, the host to his right, the raid at his sides, the operator view in front, the grip icon (emulated headset) | 11 | 11 Nov | before/after of his D1/D2. Also on OneDrive |
+| `research/article-images-2026-11-11/close-order-S361/` | Job 13 Part B: the Close in his order — flight with the glitch, Daniel's place, up, messages, panels, song | 64 | 11 Nov | Also on OneDrive |
+| `research/article-images-2026-11-11/fixes-1997-2016-S362/` | Job 13 Part C: 1997–2016 timing and design from his headset notes | 124 | 11 Nov | Also on OneDrive |
+| `research/article-images-2026-11-11/2026-ai-conversation-S360/` | Job 13 Part A: 2026 around the AI conversation — mailbox, Mum's articles, the diagnosis, the clip made for her, the raid rewriting the wall | 101 | 11 Nov | before/after of his 11 Nov direction and the independent review; also artifact 7Wp3A9z8MCuAMHdGteuhzp. Also on OneDrive |
 | `out/tour-e4-v2/`, `out/tour-e4/` … | era tours (regenerable with tools/tour-e4.mjs, tools/stills.mjs) | many | various | working photos; copy anything chosen into `research/` |
 | `~/update-available-uib/out/s347/`, `s348/` | era-change and headset probe frames (66 MB) | 284 | 9 Nov | indexed only, not copied |
 

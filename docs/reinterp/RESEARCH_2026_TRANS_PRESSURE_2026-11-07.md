@@ -138,6 +138,7 @@ Facts to keep accurate:
 
 ### 5.1 The claim and its origin
 - 2018: Littman (PLOS ONE) described "rapid-onset gender dysphoria" from parent reports. Recruitment was posted on sites mostly sceptical of transition (S10, O).
+  ⚑ 11 Nov (S357o, correction re-read): exact wording — parents "may have viewed the recruitment information from one of at least four sites with varied perspectives"; "three of the sites… expressed cautious or negative views" of the interventions, one "is perceived to be pro-gender-affirming"; where they first heard of it "were not collected".
 - 19 March 2019: the correction states ROGD is not a formal mental health diagnosis, the study does not validate the phenomenon, and it collected no data from the young people or clinicians. It also says selection bias may push results either way (S10, O).
 - Supporters say the results section was largely unchanged and the paper was kept (S10 context, L: WORLD, National Review, listing only). Critics say the design cannot support the claim (L: BuzzFeed). Report both.
 
