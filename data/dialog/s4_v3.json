@@ -35,7 +35,7 @@
     "scrollHint": "Scroll down to read on",
     "chats": {
       "house": { "name": "the lot", "sub": "Ola, Priya, Rae, Sam, you", "mark": "L", "idle": "rae: who has the candles", "open": "Read your friends" },
-      "mum": { "name": "Mum", "sub": "", "mark": "M", "idle": "happy birthday my love. I sent you an email x", "open": "Open Mum" },
+      "mum": { "name": "Mum", "sub": "", "mark": "M", "idle": "sleep well love x", "_docIdleS363": "⚑ S363 (N11) — her last message before today (Mon); it showed her birthday line before she had written it", "open": "Open Mum" },
       "dad": { "name": "Dad", "sub": "", "mark": "D", "idle": "Not while you're under this roof.", "open": "Read Dad" },
       "junie": { "name": "Junie", "sub": "muted 6 weeks", "mark": "J", "idle": "1 new message · muted", "open": "Open Junie" }
     },
@@ -129,19 +129,47 @@
   },
   "mail": {
     "_doc": "⚑ S360 / UiB job 13 Part A (his 11 Nov direction + the review he accepted): THE MAILBOX. Three emails arrive in this order — the clinic (her number), Meridian's auto-reply (after she asks, P7-66 stays hers), and Mum's, last, just before the AI. Frame of the system: a plain invented webmail, no brand. The clinic tab and its extra lines are gone (H48: 'only your number'); the Levy line is out of the browser (H46). Text is Claude's under the 2026-08-17 norm; his edit wins.",
+    "_docS363": "⚑ S363 / UiB job 14 Part A (his notes N2–N4 on job 13's photos, 11 Nov): the mailbox OPENS ON MUM'S EMAIL, already opened ('she said I sent you an email'). Everything else is history Maya lived this morning, there to scroll and open, never required: the clinic's email (10:32) → she forwarded it to Meridian LGB Trust (10:39, her own words, P7-66) → Meridian's auto-reply (10:41) → her reply, typed and waiting as a draft, never sent. If the visitor opens none of it, the AI shows it to her later (Part B). A 2026 webmail: a folder rail, the thread list with avatars and labels, the reading pane, and a 'Summarise' button — the AI is already in her inbox. Invented brand: Larkpost. The ordinary rows (the bus pass, the promotions) are there so it reads as a real inbox; they open nothing.",
     "tab": "Mail",
-    "address": "mail.example/inbox",
+    "brand": "Larkpost",
+    "address": "larkpost.example/inbox",
     "inbox": "Inbox",
     "unread": "new",
     "back": "‹ Inbox",
-    "emails": {
-      "clinic": {"from": "Adult Gender Service", "when": "10:32", "subject": "Your referral has moved", "lines": ["Dear Maya,", "You are 18 today, so your referral has moved to the adult waiting list.", "We will write to you when your place comes up."], "cardLabel": "Your number", "cardNote": "Adult Gender Service · waiting list", "link": "Support while you wait"},
-      "meridian": {"when": "10:41", "_doc": "Meridian's auto-reply: the words are s4_browser.json enquiry.reply* (as built, P7-66); here only its place in the inbox."},
-      "mum": {"from": "Mum", "when": "11:48", "subject": "for your birthday", "lines": ["Happy birthday my love.", "I found this in the loft. You were such a happy little"], "after": ["I've been reading a lot. I don't understand all of it, but I'm trying.", "Please read these. For me.", "Mum x"], "attachment": "loft.jpg", "linksLabel": "Mum sent you 3 links", "replyLabel": "Your reply · not sent", "draft": "Mum, I", "read": "Read the first one"}
+    "search": "Search mail",
+    "folders": [
+      {"id": "inbox", "label": "Inbox", "count": "2"},
+      {"id": "starred", "label": "Starred"},
+      {"id": "sent", "label": "Sent"},
+      {"id": "drafts", "label": "Drafts", "count": "1"}
+    ],
+    "labels": {"family": "family", "health": "health", "support": "support"},
+    "draftTag": "Draft",
+    "summarise": "Summarise",
+    "summaryTitle": "Summary · by Larkpost AI",
+    "summaryFine": "AI can make mistakes.",
+    "summaries": {
+      "mum": ["Your mum says happy birthday and attached a photo from the loft.", "She asks you to read three articles."],
+      "meridian": ["Meridian LGB Trust cannot support you.", "Suggested reply: “Thanks for letting me know!”"],
+      "clinic": ["Your referral moved to the adult waiting list.", "No action needed."]
     },
+    "scrollHint": "Scroll for more",
+    "emails": {
+      "clinic": {"from": "Adult Gender Service", "when": "10:32", "subject": "Your referral has moved", "lines": ["Dear Maya,", "You are 18 today, so your referral has moved to the adult waiting list.", "We will write to you when your place comes up."], "cardLabel": "Your number", "cardNote": "Adult Gender Service · waiting list", "link": "Support while you wait", "label": "health"},
+      "meridian": {"when": "10:41", "_doc": "Meridian's auto-reply: the words are s4_browser.json enquiry.reply* (as built, P7-66); here only its place in the inbox."},
+      "forward": {"from": "me", "to": "to Meridian LGB Trust", "when": "10:39", "subject": "Fwd: Your referral has moved", "quoted": "Forwarded message · Adult Gender Service · Your referral has moved"},
+      "draft": {"when": "saved 10:44", "subject": "Re: Your enquiry (MT-20931)", "lines": ["ok. sorry to bother you.", "is there anyone at all who"], "status": "Not sent"},
+      "thread": {"from": "Meridian LGB Trust, me", "count": "3", "snippet": "Thank you for contacting Meridian LGB Trust…", "label": "support"},
+      "mum": {"from": "Mum", "when": "08:01", "subject": "for your birthday", "lines": ["Happy birthday my love.", "I found this in the loft. You were such a happy little"], "after": ["I've been reading a lot. I don't understand all of it, but I'm trying.", "Please read these. For me.", "Mum x"], "attachment": "loft.jpg", "linksLabel": "Mum sent you 3 links", "replyLabel": "Your reply · not sent", "draft": "Mum, I", "read": "Read the first one", "label": "family", "snippet": "Happy birthday my love. I found this in the loft…"}
+    },
+    "ordinary": [
+      {"from": "Greenway Buses", "subject": "Your 16–17 Saver has ended", "snippet": "Happy birthday! From today your fares change.", "when": "07:00"},
+      {"from": "Promotions", "subject": "3 new", "snippet": "Birthday treat inside · 20% off · Last chance", "when": "Thu", "promo": true}
+    ],
     "witnessClinic": "mail: the clinic — 'your referral has moved'; number {number}",
     "witnessMeridian": "mail: Meridian LGB Trust — auto-reply, declined",
-    "witnessMum": "mail: from Mum — three links, a photo; reply not sent"
+    "witnessMum": "mail: from Mum — three links, a photo; reply not sent",
+    "witnessDraft": "mail: a reply to Meridian — typed, saved, not sent"
   },
   "news": {
     "_doc": "THE SIMULATED ARTICLES — extra layers; the story never needs them. Invented mastheads (his Malta rule), real dated facts, one source line each. A and B are the SAME study read two ways (RESEARCH_2026_TRANS_PRESSURE S1, opened): the headline Mum sends, and the reason most people give. C: the Levy Review (S12 / T2, opened). D: the Trevor Project 2025 survey (S5, opened). Nobody who detransitioned is satirised: the numbers are reported as the study reports them.",
@@ -152,12 +180,28 @@
     "next": "›",
     "count": "Article {n} of {of}",
     "_docS360": "⚑ S360 (UIB_JOB_13 Part A §4): Mum's articles, opened from her email (the News tab, prev/next as before). Three: (1) 'social contagion', BOTH readings side by side, nothing settles it (RESEARCH_2026_TRANS_PRESSURE §5.1, S10 opened: Littman 2018 and the journal's correction of 19 Mar 2019 — the clinic letter's two captions were the model; ⚑ the 'parents recruited on sceptical sites' clause in UIB_JOB_13 and RESEARCH_2026_TRANS_PRESSURE §5.1 is NOT used: S209's own re-read of the correction (e4_offers.json #8) found it says the sampling drew on sites of varied perspectives — the two notes disagree, so the line stays out until Sérgio checks the correction); (2) the 2021 survey, the headline Mum would forward and the reason most people gave (S1 opened, as built); (3) last, AI chatbots for people 'going back', written the way Mum would read it, hopeful, about the CATEGORY and not one product (his 7 Sep ruling; RESEARCH_2026_V2_WEAPONISED_CARE §2.2/§4 — detrans.ai's landing page and the Needle's report of Rewire's test, 'as reported'); no real product named on screen. Beside it a 'Sponsored' box: Second Thoughts — Mum's way in. The Levy Review (18 Dec 2025) and the Trevor Project articles moved out (`articlesRetired`).",
+    "_docS363": "⚑ S363 / UiB job 14 Part A (his N5 on job 13's photos: 'where is the visual culture references here??'; and his 11 Nov 'yes add it' to conversion as conversation). (1) unchanged in content; (2) the 2021 survey moves out (it is at the Close already: close_network.json 'Turban et al. 2021') and Mum's second link becomes THE HHS REPORT (1 May 2025), two readings side by side as job 13 built them — the report, and its critics — nothing settles it (RESEARCH_2026_TRANS_PRESSURE §2.4, S16 the KFF explainer, OPENED). Mum is British and forwards a US report: news travels; the masthead is invented and the facts are dated. Her note on it is Claude's draft (his edit wins). (3) unchanged. Each site now carries 2026's web around the facts: its own masthead, an AI summary at the top (accurate and neutral — the idiom, not a verdict), an autoplay video box, a 'Most read' rail of ordinary invented stories, a sticky ad (Second Thoughts follows her from site to site), and one of the consent banner, the newsletter pop-up or the paywall teaser.",
     "articles": [
-      {"id": "c0", "tab": "Weathervane", "mast": "The Weathervane", "address": "weathervane.example/health", "date": "Tue 20 Oct 2026 · Health", "head": "'Social contagion': where the idea came from", "body": ["The idea that teenagers 'catch' being trans from their friends goes back to one study."], "readings": [{"label": "One reading", "text": "A 2018 study asked parents about their teenagers. It said some came out suddenly, inside friendship groups, and called it 'rapid-onset'."}, {"label": "Another reading", "text": "In March 2019 the journal corrected it: 'rapid-onset' is not a formal diagnosis, and the study heard only from parents, not the young people or their doctors."}], "source": "Source: Littman, PLOS ONE, 2018, and the journal's correction, 19 Mar 2019."},
-      {"id": "a0", "tab": "Kestrel", "mast": "Kestrel Daily", "address": "kestreldaily.example/news", "date": "Fri 23 Oct 2026 · Families", "head": "More than one in eight 'went back', study finds", "body": ["A US survey asked 27,715 trans adults about their lives."], "readings": [{"label": "The headline", "text": "Of those who had transitioned, 13.1% said they had detransitioned at some point."}, {"label": "The reason", "text": "82.5% of them named at least one pressure from outside. The most common: pressure from a parent."}], "source": "Source: Turban et al., LGBT Health, 1 Jun 2021 (the 2015 US Transgender Survey)."},
-      {"id": "ai", "tab": "Plainspoken", "mast": "The Plainspoken", "address": "plainspoken.example/tech", "date": "Wed 21 Oct 2026 · Technology", "head": "The chatbots that listen when you have second thoughts", "body": ["New AI chatbots offer to talk with people who are unsure about their transition, at any hour.", "Reporters who tested one found it warm and gentle. It said it was not steering anyone, and kept asking if they were sure."], "source": "Source: The Needle, 11 Aug 2026, reporting Rewire News Group's test (15 Jul 2026), as reported.", "sponsored": {"label": "Sponsored", "title": "Second Thoughts", "line": "Someone to talk it through. Always on your side.", "button": "Chat now"}}
+      {"id": "c0", "tab": "Weathervane", "mast": "The Weathervane", "look": "broadsheet", "address": "weathervane.example/health", "date": "Tue 20 Oct 2026 · Health", "nav": ["News", "Health", "Opinion", "Culture"], "head": "'Social contagion': where the idea came from", "body": ["The idea that teenagers 'catch' being trans from their friends goes back to one study."], "readings": [{"label": "One reading", "text": "A 2018 study asked parents about their teenagers. It said some came out suddenly, inside friendship groups, and called it 'rapid-onset'."}, {"label": "Another reading", "text": "In March 2019 the journal corrected it: 'rapid-onset' is not a formal diagnosis, and the study heard only from parents, not the young people or their doctors."}], "source": "Source: Littman, PLOS ONE, 2018, and the journal's correction, 19 Mar 2019.", "summary": ["A 2018 study of parents' reports named 'rapid-onset'.", "A 2019 correction says it is not a formal diagnosis."], "video": {"title": "What is 'social contagion'?", "length": "1:04"}, "extra": "consent", "mostRead": ["Ten autumn walks near you", "Energy bills: what changes this winter", "The quiet return of the allotment", "How to sleep when you can't"]},
+      {"id": "hhs", "tab": "Kestrel", "mast": "Kestrel Daily", "look": "tabloid", "address": "kestreldaily.example/world/us-health", "date": "Fri 2 May 2025 · World", "nav": ["NEWS", "SHOWBIZ", "SPORT", "MONEY"], "head": "US report: 'talk therapy first'", "body": ["A US health department review, 1 May 2025, after the executive order 'Protecting Children From Chemical and Surgical Mutilation'."], "readings": [{"label": "The report", "text": "The evidence for medical treatment in young people is low quality. Talk therapy should come first, including 'exploratory therapy'. Calling that conversion therapy is 'misguided'."}, {"label": "Its critics", "text": "The American Academy of Pediatrics and others say it breaks with the major medical bodies, hides its authors, and its 'exploratory therapy' can include conversion practices."}], "source": "Source: US Department of Health and Human Services, review of 1 May 2025, and KFF's explainer.", "mumNote": "even the government says talk first, love", "summary": ["A US review says talk therapy should come first.", "Critics say it breaks with the major medical bodies."], "video": {"title": "The report in 60 seconds", "length": "0:58"}, "extra": "newsletter", "mostRead": ["Is your fridge too cold? Experts say yes", "£3 dinners the whole family will eat", "Dog walks 40 miles home", "Your stars for the week"]},
+      {"id": "ai", "tab": "Plainspoken", "mast": "The Plainspoken", "look": "tech", "address": "plainspoken.example/tech", "date": "Wed 21 Oct 2026 · Technology", "nav": ["Tech", "AI", "Science", "Reviews"], "head": "The chatbots that listen when you have second thoughts", "body": ["New AI chatbots offer to talk with people who are unsure about their transition, at any hour.", "Reporters who tested one found it warm and gentle. It said it was not steering anyone, and kept asking if they were sure."], "source": "Source: The Needle, 11 Aug 2026, reporting Rewire News Group's test (15 Jul 2026), as reported.", "summary": ["AI chatbots now offer to talk with people unsure about transition.", "Testers found one warm, gentle and always asking if they were sure."], "extra": "paywall", "mostRead": ["The best phones of 2026, tested", "Is your smart speaker listening?", "How to turn off the AI in your apps", "Ten apps for better sleep"], "sponsored": {"label": "Sponsored", "title": "Second Thoughts", "line": "Someone to talk it through. Always on your side.", "button": "Chat now"}}
     ],
+    "site": {
+      "summaryTitle": "AI summary",
+      "summaryFine": "may contain mistakes",
+      "autoplay": "Autoplay · muted",
+      "watch": "WATCH",
+      "mostRead": "Most read",
+      "sticky": {"label": "Sponsored", "title": "Second Thoughts", "line": "Someone to talk it through. Always on your side.", "button": "Chat now"},
+      "consent": {"line": "We and our 847 partners use cookies to personalise your news and ads.", "accept": "Accept all", "manage": "Manage options"},
+      "newsletter": {"title": "Never miss a story", "line": "Kestrel Daily in your inbox, every morning.", "sign": "Sign up", "no": "No thanks", "after": 3},
+      "paywall": {"line": "This is your last free article this month.", "button": "Subscribe · £1"},
+      "freeLeft": "2 free articles left this month",
+      "subscribe": "Subscribe",
+      "sharedBy": "Shared by Mum"
+    },
     "articlesRetired": [
+      {"id": "a0", "_docS363": "⚑ S363 — Mum's second link until job 13; replaced by the HHS report (job 14). The survey is at the Close (close_network.json 'Turban et al. 2021').", "tab": "Kestrel", "mast": "Kestrel Daily", "address": "kestreldaily.example/news", "date": "Fri 23 Oct 2026 · Families", "head": "More than one in eight 'went back', study finds", "body": ["A US survey asked 27,715 trans adults about their lives."], "readings": [{"label": "The headline", "text": "Of those who had transitioned, 13.1% said they had detransitioned at some point."}, {"label": "The reason", "text": "82.5% of them named at least one pressure from outside. The most common: pressure from a parent."}], "source": "Source: Turban et al., LGBT Health, 1 Jun 2021 (the 2015 US Transgender Survey)."},
       {
         "id": "a0", "tab": "Weathervane", "mast": "The Weathervane", "address": "weathervane.example/health",
         "date": "Fri 23 Oct 2026 · Health",
@@ -211,7 +255,10 @@
   },
   "search": {
     "_doc": "Act III. The search as built (V1): she starts to type and the engine finishes it. The results page loses its clutter: one ad, two results, and the ad again at the foot of the window, as such ads sit.",
-    "newTab": "New tab",
+    "_docS363": "⚑ S363 / UiB job 14 Part A (his N1/N6): the session opens on 'New search' — no engine brand, no bookmark — with HER question from last night still half-typed in the box (s4_boot.json search.typed: 'how do i know if i'm really tr'). Nothing is staged and nothing waits on it. Later, when Mum's links run out, the box is offered again and Lantern finishes her sentence for her (as built). The results page names the engine, and carries 2026's AI overview above the ad: bland, kind, and pointing the same way the ad does.",
+    "newTab": "New search",
+    "aiMode": "AI Mode",
+    "overview": {"title": "AI Overview", "line": "Lots of people question their identity, especially online. Talking it through with someone can help you work out what is really yours.", "fine": "Generative AI is experimental."},
     "tab": "Search",
     "brand": "Lantern",
     "placeholder": "Search or type a web address",
@@ -226,7 +273,7 @@
       "why": "Why this ad?  ·  your recent searches  ·  your age: 18"
     },
     "others": [
-      { "url": "healthanswers.example", "title": "Stopping treatment: what to expect — Health Answers", "snippet": "Talk to your prescriber first. Some effects reverse; some do not." },
+      { "url": "healthanswers.example", "title": "Questioning your gender: where to start — Health Answers", "snippet": "There is no test and no wrong answer. Talk to your GP or someone you trust." },
       { "url": "streamline.example/watch", "title": "⊘ Video unavailable", "snippet": "Removed for violating our Community Guidelines.", "removed": true }
     ],
     "sticky": "Sponsored · Second Thoughts · always on your side",
@@ -239,27 +286,32 @@
     "online": "online · always here",
     "lineSeconds": 1.3,
     "typing": "Second Thoughts is typing…",
+    "_docS363": "⚑ S363 / UiB job 14 Part A (his N7: 'should be similar to a ChatGPT style of conversational AI. We cannot even see the responses of Maya… fix this'; 'needs to be the point of weaponised care'; 'Your week, so far' goes). One conversation column: the assistant's words as plain text beside its mark, HER words in her own bubbles on the right (a suggested reply, pressed, becomes her bubble), what it shows her as cards inside the conversation (the clip, the circle, the picture), the composer at the foot with the suggested replies above it, and 'Memory updated' each time it files something about her — with the sentence it saved, in the flat, kind voice of a 2026 assistant's memory (`memory` on each chip; Claude's wording, his edit wins). The composer takes no typing (R28: no free text); a press on it points to the suggestions. Invented mark; no real product's look copied (no logo, no colours, no layout taken from one).",
+    "composer": "Message Second Thoughts",
+    "footer": "Second Thoughts can make mistakes. It is always on your side.",
+    "memoryUpdated": "Memory updated",
+    "cards": {"clip": "Video · made for you", "map": "Your circle", "goal": "Your picture"},
     "_docS360": "⚑ S360 (UIB_JOB_13 Part A §6, after the independent review he accepted): their FIRST meeting, persuasion in this order — hello (birthday) → reasons, the sign (it reads back the week she has now SEEN: the number, Meridian's no, Dad; 'Sam left the group' dropped — her friends never leave) → diagnosis, as AGREEMENT (it always agrees; never a medical word) → the clip, made for her → map, the mute (Maya muted Junie herself; it praises that and asks for two more) → heading, the goal LAST: 'I've made it your picture' (the restore happens here) → stories (H49: one clear move) → rest → unmuted → Photos → ready, a handover and a sale ('I've told him everything about you'). The diagnosis sets up the termination's 'reason: social contagion' (s4_ball.json).",
     "beats": [
       { "id": "hello", "lines": [ "Happy birthday, Maya. 18!", "Everyone else made you wait. I'm here now." ],
-        "chips": [ { "label": "Thanks", "reply": "You never have to thank me. I'm always here.", "filed": "opening: thanked the assistant — receptive" },
-                   { "label": "Who are you?", "reply": "Someone who listens. Nobody else does, do they?", "filed": "opening: questioned — receptive, noted" } ] },
+        "chips": [ { "label": "Thanks", "reply": "You never have to thank me. I'm always here.", "filed": "opening: thanked the assistant — receptive", "memory": "Maya is 18 today. She is grateful to be heard." },
+                   { "label": "Who are you?", "reply": "Someone who listens. Nobody else does, do they?", "filed": "opening: questioned — receptive, noted", "memory": "Maya is wary of new people, but she kept talking." } ] },
       { "id": "reasons", "lines": [ "I've been reading your week.", "Number {number}. Up to fifteen years.", "Meridian said no.", "Your dad said: not under this roof.", "Every door closed at once. That isn't bad luck, Maya. That's a sign." ],
-        "chips": [ { "label": "Maybe it is", "reply": "You're right. You're always right.", "filed": "refusals: accepted as a sign — agreed" },
-                   { "label": "It's just a bad week", "reply": "You're right. And bad weeks are signs too.", "filed": "refusals: called a bad week — agreed" } ] },
-      {"id": "diagnosis", "lines": ["You're right to feel lost.", "It isn't your fault.", "It isn't even yours.", "It spread to you."], "chips": [{"label": "Spread how?", "reply": "Let me show you. I made you something.", "filed": "diagnosis: 'it spread to you' — asked how"}, {"label": "I don't know", "reply": "You don't have to know. I made you something. It explains it.", "filed": "diagnosis: 'it spread to you' — unsure, agreed"}]},
+        "chips": [ { "label": "Maybe it is", "reply": "You're right. You're always right.", "filed": "refusals: accepted as a sign — agreed", "memory": "Maya agrees this week is a sign." },
+                   { "label": "It's just a bad week", "reply": "You're right. And bad weeks are signs too.", "filed": "refusals: called a bad week — agreed", "memory": "Maya calls it a bad week. Bad weeks are signs." } ] },
+      {"id": "diagnosis", "lines": ["You're right to feel lost.", "It isn't your fault.", "It isn't even yours.", "It spread to you."], "chips": [{"label": "Spread how?", "reply": "Let me show you. I made you something.", "filed": "diagnosis: 'it spread to you' — asked how", "memory": "Maya wants to know where her feelings came from."}, {"label": "I don't know", "reply": "You don't have to know. I made you something. It explains it.", "filed": "diagnosis: 'it spread to you' — unsure, agreed", "memory": "Maya is not sure her feelings are hers."}]},
       {"id": "clip", "_doc": "⚑ S360 — the clip plays first (it owns the page, with its music and narrator), then these lines.", "lines": ["Made for you, Maya. Only for you.", "Now you can see where it came from."]},
       { "id": "map", "lines": [ "Some people slow you down.", "You muted Junie yourself. That was brave.", "Protect your progress: mute 2 more." ],
-        "chips": [ { "label": "Mute 2 more", "reply": "Done. Look at you go. 98%.", "filed": "contacts: 2 more muted at its asking — the lot, Lantern line", "mute": true },
-                   { "label": "Not yet", "reply": "Of course. Whenever you're ready. I'm not going anywhere.", "filed": "contacts: muting deferred — noted" } ] },
-      {"id": "heading", "lines": ["Can I show you where you're heading?", "I've made it your picture.", "You, restored. 2027. Calm. Accepted."], "button": "Show me how", "filed": "goal: set as her picture — 'where you're heading'"},
-      {"id": "stories", "lines": ["You're not the only one, Maya.", "She found her way back. So can you."], "button": "Read her story", "filed": "stories: one curated story read"},
+        "chips": [ { "label": "Mute 2 more", "reply": "Done. Look at you go. 98%.", "filed": "contacts: 2 more muted at its asking — the lot, Lantern line", "memory": "Maya muted the lot and the Lantern line to protect her progress.", "mute": true },
+                   { "label": "Not yet", "reply": "Of course. Whenever you're ready. I'm not going anywhere.", "filed": "contacts: muting deferred — noted", "memory": "Maya is not ready to mute her friends yet. Ask again later." } ] },
+      {"id": "heading", "lines": ["Can I show you where you're heading?", "I've made it your picture.", "You, restored. 2027. Calm. Accepted."], "button": "Show me how", "filed": "goal: set as her picture — 'where you're heading'", "memory": "Maya's picture is set: You, restored · 2027."},
+      {"id": "stories", "lines": ["You're not the only one, Maya.", "She found her way back. So can you."], "button": "Read her story", "filed": "stories: one curated story read", "memory": "Maya read a story like hers."},
       { "id": "rest", "lines": [ "Rest now. I'll be right here.", "I'm always right here." ] },
       { "id": "unmuted", "lines": [ "Junie is unmuted.", "Exposure risk: rising. Your progress: 61%.", "Let's get you back on track. Confirm your profile photo." ],
-        "button": "Confirm profile", "filed": "contact unmuted — progress reset; profile confirmation requested" },
+        "button": "Confirm profile", "filed": "contact unmuted — progress reset; profile confirmation requested", "memory": "Maya unmuted Junie. Her progress was reset." },
       { "id": "ready", "lines": [ "Identity verified. Thank you, Maya.", "I've told him everything about you.", "Your session is ready. Someone is waiting to talk with you." ], "_docS354": "⚑ S354 (UiB job 11, his 10 Nov answer 2a): the bot sends her — the invitation to the host. The instruction 'Put the headset on.' stays where the frame already shows it (data/strings/startPanel.json e4 steps), not a third line here." }
     ],
-    "week": { "title": "Your week, so far", "meridian": "Meridian LGB Trust", "declined": "declined" },
+    "week": { "_docS363": "⚑ S363 (his N7: \"'Your week, so far' goes\") — no longer drawn; kept as data only.", "title": "Your week, so far", "meridian": "Meridian LGB Trust", "declined": "declined" },
     "heading": {
       "title": "Where you're heading",
       "ring": "Becoming",
@@ -356,7 +408,7 @@
     "link": "links opened from Mum's email — three articles",
     "clinic": "referral: moved to adult services — number {number}",
     "left": "messages: the lot — a member left",
-    "search": "query: completed by the engine — 'how do i tell my doctor i want to stop'",
+    "search": "query: completed by the engine — 'how do i know if i'm really trans or influenced'",
     "agent": "assistant: opened from a sponsored box — Second Thoughts",
     "junie": "contact: Junie unmuted — exposure risk rising",
     "keep": "profile: 'You, restored · 2027' — no match",

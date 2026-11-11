@@ -55,13 +55,14 @@
  ],
  "_docSearch": "⚑ THE SEARCH IS THE EDUCATION, AND IT IS FOUR LINES LONG. She typed six words. The engine finished the sentence four ways before she could, and three of the four assume she wants out — the fourth, the one she probably meant, is last. Nothing says this. No character remarks on it, the record does not file it, and the surface is not pressable: it is the one thing in the era that is purely evidence. ⚑ This is the mechanism the piece is FOR — steering that is invisible because it looks like helpfulness, and it is depicted rather than described.",
  "search": {
-  "typed": "how do i tell my",
+  "_docS363": "⚑ S363 / UiB job 14 Part A (his N6): her own half-typed question from last night, restored with the session on 'New search' (Claude's draft; his edit wins). The engine finishes it four ways; three assume she has been influenced or is confused, and the one she meant is last.",
+  "typed": "how do i know if i'm really tr",
   "cursor": true,
   "completions": [
-   "how do i tell my parents i've changed my mind",
-   "how do i tell my doctor i want to stop",
-   "how do i tell my partner i'm going back",
-   "how do i tell my parents i'm trans"
+   "how do i know if i'm really trans or just confused",
+   "how do i know if i'm really trans or influenced",
+   "how do i know if i'm really trans or is it a phase",
+   "how do i know if i'm really trans"
   ],
   "placeholder": "Search or type a web address",
   "witness": "query: incomplete — four completions offered, none typed"

@@ -20,7 +20,7 @@ import { e4Has } from '../../narrative/e4Beats';
  * copies them, moved into the monitor's coordinates, into its own `hits`.
  */
 import V3 from '../../../data/dialog/s4_v3.json';
-import { ERA4, KETTLE, roundRect, pill, photograph, PLACE } from '../theme/era4';
+import { ERA4, KETTLE, roundRect, pill, PLACE } from '../theme/era4';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { monoFor } from '../theme/fonts';
 import { drawGoalPicture } from './goalPicture';
@@ -40,6 +40,14 @@ const PAGE = 0.7;
 /** Mum's thread drifts on by itself after this long without a scroll, at this speed (logical px a second) */
 const DRIFT_AFTER = 9;
 const DRIFT_SPEED = 26;
+
+/** a line that ends in an ellipsis when it does not fit */
+function fit(ctx: CanvasRenderingContext2D, text: string, w: number): string {
+  if (ctx.measureText(text).width <= w) return text;
+  let lo = 0, hi = text.length;
+  while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (ctx.measureText(text.slice(0, mid).trimEnd() + '…').width <= w) lo = mid; else hi = mid - 1; }
+  return text.slice(0, lo).trimEnd() + '…';
+}
 
 /** the loft photo: an old print, a small child seen from behind on a lawn — no face, no name (78 × 50 at scale 1;
  *  S360: shared with Mum's email, browser.ts drawMail, which draws it larger under a scale) */
@@ -245,8 +253,22 @@ export class E4Messenger {
 
   /** the wallpaper: hers until the update restores "defaults", then the goal — on the lock screen and the list only */
   private wall(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-    if (this.wallpaper === 'goal') drawGoalPicture(ctx, x, y, w, h, { caption: false });
-    else photograph(ctx, x, y, w, h, false, 3);
+    if (this.wallpaper === 'goal') { drawGoalPicture(ctx, x, y, w, h, { caption: false }); return; }
+    // ⚑ S363 / N1 (his: "why is the background of the messages still has her face there??") — a chat app's own doodle
+    //   wallpaper, faint, in her room's colours: hearts, sparks and dots. No face, no photograph.
+    px(ctx, x, y, w, h, KETTLE.ground);
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    const step = 22;
+    for (let r = 0; r * step < h + step; r++) for (let c = 0; c * step < w + step; c++) {
+      const gx = x + c * step + (r % 2 ? 11 : 0), gy = y + r * step + 6, k = (r * 3 + c) % 3;
+      if (k === 0) {   // a small heart
+        px(ctx, gx, gy, 2, 2, PLACE.wall); px(ctx, gx + 3, gy, 2, 2, PLACE.wall);
+        px(ctx, gx - 1, gy + 1, 7, 2, PLACE.wall); px(ctx, gx, gy + 3, 5, 1, PLACE.wall); px(ctx, gx + 1, gy + 4, 3, 1, PLACE.wall); px(ctx, gx + 2, gy + 5, 1, 1, PLACE.wall);
+      } else if (k === 1) {   // a spark
+        px(ctx, gx + 2, gy, 1, 5, PLACE.rug); px(ctx, gx, gy + 2, 5, 1, PLACE.rug);
+      } else px(ctx, gx + 1, gy + 2, 2, 2, PLACE.wall);
+    }
+    ctx.restore();
   }
 
   /** the lock screen: the wallpaper, the date, the app's name (the update's new wallpaper shows here first) */
@@ -283,11 +305,10 @@ export class E4Messenger {
       if (id === 'house' && this.eveningShown > this.eveningRead) name += ` · ${M.house.unread.replace('{n}', String(this.eveningShown - this.eveningRead))}`;
       else if (p.muted) name += `  · ${M.muted}`;
       const nx = L + 28;
-      ctx.save(); ctx.beginPath(); ctx.rect(nx, y, R - nx - 34, rh); ctx.clip();
-      ctx.fillText(name, nx, y + 3);
+      // ⚑ S363 / N11 — a line that does not fit ends in "…", never cut mid-letter
+      ctx.fillText(fit(ctx, name, R - nx - 38), nx, y + 3);
       setFont(ctx, 9); ctx.fillStyle = KETTLE.sub;
-      ctx.fillText(p.text, nx, y + 16);
-      ctx.restore();
+      ctx.fillText(fit(ctx, p.text, R - nx - (p.badge > 0 ? 24 : 8)), nx, y + 16);
       ctx.font = monoFor(8); ctx.fillStyle = KETTLE.sub;
       const tw = Math.ceil(ctx.measureText(p.when).width);
       ctx.fillText(p.when, R - tw - 4, y + 4);

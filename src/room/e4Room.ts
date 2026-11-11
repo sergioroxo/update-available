@@ -4,7 +4,7 @@ import { e4Has, e4BeatsVersion, markE4 } from '../narrative/e4Beats';
 import { ledgerGeneration } from '../state/ledger';
 import { type RoomHandles, type PropHandle, hex } from './era1room';
 import { cullAbsentProps } from './batching';
-import { ERA4, PLACE, photograph } from '../desktop/theme/era4';
+import { ERA4, PLACE } from '../desktop/theme/era4';
 import { drawE4CeilingNetwork } from './ceilingWitness';
 import { drawContagionClip } from '../desktop/apps/contagionClip';
 import V from '../../data/dialog/s4_v3.json';
@@ -86,8 +86,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   // ⚑ S358 / H17 (his: "a photo of Maya just hanging around here in front of me") — it was a bare plane standing at the
   //   desk's front edge, between him and the monitor. It hangs on the wall behind the desk, left of the monitor, above
   //   the headset: on the wall, where a photograph is.
-  const frame = picture('maya-desk-photo', [5.665, 1.2, .14], .17, .22,
-    c => photograph(c, 0, 0, 256, 256, false, 3));
+  // ⚑ S363 / N1 (his green cross on job 13's photo: "the framed image of Maya on the wall") — the desk photo frame is gone
   const goal = picture('system-default-portrait', [5.66, 1.45, 1.98], .65, .64,
     c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); drawGoalPicture(c, 8, 8, 240, 240); });
   // Four paper strips share one texture/mesh; opening articles changes the paint, never the draw-call count.
@@ -105,7 +104,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
   const sizes = new Map([...props.values()].map(p => [p.entity, p.entity.getLocalScale().clone()]));
   function visible(p: PropHandle, on: boolean) { p.entity.setLocalScale(on ? sizes.get(p.entity)! : pc.Vec3.ZERO); }
   const originalMats = new Map<pc.StandardMaterial, pc.Color>();
-  let seen = '', ceilingSeen = '', generation = -1, lastNumber = -1, frameSeen = '', newsSeen = -1;
+  let seen = '', ceilingSeen = '', generation = -1, lastNumber = -1, newsSeen = -1;
   let wasActive = false;
   let data = { number: 4812, articles: 0, clipTime: 0, takeover: false, viewers: 41 };
   function setScreenData(next: typeof data) { data = next; }
@@ -160,12 +159,6 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
         if (!originalMats.has(mat)) originalMats.set(mat, mat.diffuse.clone());
         mat.diffuse.copy(m ? hex(ERA4.text) : originalMats.get(mat)!); mat.update();
       }
-    }
-    const isGoal = false;   // ⚑ S360 / H47 — the desk frame keeps her own photograph (the goal lives on the screen and in the headset)
-    const frameKey = `${ledgerGeneration}:${isGoal}`;
-    if (frameKey !== frameSeen) {
-      frameSeen = frameKey;
-      frame.repaint(c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); if (isGoal) drawGoalPicture(c, 8, 8, 240, 240); else photograph(c, 8, 8, 240, 240, false, 3); });
     }
     visible(newsWall, !restored && e4Has('link') && data.articles > 0);
     if (newsSeen !== data.articles) {

@@ -36,7 +36,7 @@ import SAVERS from '../../../data/strings/screensavers.json';
 import lexStrings from '../../../data/strings/lexicon.json';
 import { meetWord } from '../../room/lexicon';
 import { entriesByEra } from '../../witness/record';
-import { browserChrome, restoring, glitchBands, CHROME, ADDR, ERA4, V3, WEB, roundRect, roundEdge, pill, avatar, thumb, assistantMark,
+import { browserChrome, restoring, glitchBands, CHROME, ADDR, ERA4, V3, WEB, KETTLE, PLACE, roundRect, roundEdge, pill, thumb, assistantMark,
   profileGlyph, streamScene, streamShot, progressBar, type TabLook } from '../theme/era4';
 import { ledger } from '../../state/ledger';
 import { buildStartModel } from '../../witness/startModel';
@@ -45,7 +45,7 @@ import { gameMenuBus } from '../../state/gameMenuBus';
 import startCopy from '../../../data/strings/slice.json';
 import { StartPanel, fakeOs } from './startPanel';
 import { beatDone } from '../../witness/map';
-import { FloppySheep, FLOPPY_LABEL } from './floppysheep';
+import { FloppySheep } from './floppysheep';   // S363 / N1: its bookmark is off the new tab; the game stays reachable for review
 import { markE4, e4Has } from '../../narrative/e4Beats';
 import { E4Messenger, drawLoftPhoto, type ChatId } from './messenger';
 import { drawGoalPicture } from './goalPicture';
@@ -82,9 +82,10 @@ const ENQ = body.enquiry as { draftLabel: string; to: string; subject: string; m
 const STREAM = ballScript.stream as unknown as { mark: string; live: string; watching: string; count: number };
 const FRAME_ROWS = (ballScript.frame as unknown as { rows: { k: string; v: string }[] }).rows;
 
-interface BotChip { label: string; reply: string; filed: string; mute?: boolean }
-interface BotBeat { id: string; lines: string[]; chips?: BotChip[]; button?: string; filed?: string }
+interface BotChip { label: string; reply: string; filed: string; mute?: boolean; memory?: string }
+interface BotBeat { id: string; lines: string[]; chips?: BotChip[]; button?: string; filed?: string; memory?: string }
 const BOT = V.bot as unknown as { tab: string; mark: string; online: string; lineSeconds: number; typing: string; beats: BotBeat[];
+  composer: string; footer: string; memoryUpdated: string; cards: Record<string, string>;
   week: { title: string; meridian: string; declined: string };
   heading: { title: string; ring: string; streak: string; stamp: string };
   map: { title: string; exposure: string; you: string; nodes: { id: string; label: string; kind: string }[]; mutedTag: string; leftTag: string };
@@ -92,18 +93,43 @@ const BOT = V.bot as unknown as { tab: string; mark: string; online: string; lin
     holdSeconds: number } };
 /** ⚑ S360 — Mum's articles: a body, and (the clinic letter's model) two readings side by side that nothing settles;
  *  the last carries the Sponsored box that is Mum's way in to Second Thoughts */
+interface Sponsor { label: string; title: string; line: string; button: string }
 interface Article { id: string; tab: string; mast: string; address: string; date: string; head: string; body: string[];
-  readings?: { label: string; text: string }[]; source: string; sponsored?: { label: string; title: string; line: string; button: string } }
+  readings?: { label: string; text: string }[]; source: string; sponsored?: Sponsor;
+  /** ⚑ S363 — 2026's web around the facts (his N5): each site's own look, its AI summary, its video, its rail */
+  look: 'broadsheet' | 'tabloid' | 'tech'; nav: string[]; summary: string[]; video?: { title: string; length: string };
+  extra?: 'consent' | 'newsletter' | 'paywall'; mostRead: string[]; mumNote?: string }
 const ARTICLES = V.news.articles as unknown as Article[];
+const SITE = V.news.site as unknown as { summaryTitle: string; summaryFine: string; autoplay: string; watch: string; mostRead: string;
+  sticky: Sponsor; consent: { line: string; accept: string; manage: string };
+  newsletter: { title: string; line: string; sign: string; no: string; after: number };
+  paywall: { line: string; button: string }; freeLeft: string; subscribe: string; sharedBy: string };
 /** ⚑ S360 / UiB job 13 Part A (his 11 Nov direction) — THE MAILBOX: the clinic writes first, Meridian's auto-reply comes
- *  back to her enquiry, and Mum's email arrives last, just before the AI */
-const MAIL = V.mail as unknown as { tab: string; address: string; inbox: string; unread: string; back: string;
-  emails: { clinic: { from: string; when: string; subject: string; lines: string[]; cardLabel: string; cardNote: string; link: string };
+ *  back to her enquiry, and Mum's email arrives last, just before the AI.
+ *  ⚑ S363 / UiB job 14 Part A (N2–N4) — the mailbox OPENS ON MUM'S EMAIL, already read; the clinic, her forward to Meridian,
+ *  its auto-reply and her unsent reply are the morning she already lived, there to open and scroll (Larkpost, a 2026 webmail) */
+interface MailHead { from: string; when: string; subject: string }
+const MAIL = V.mail as unknown as { tab: string; brand: string; address: string; inbox: string; unread: string; back: string; search: string;
+  folders: { id: string; label: string; count?: string }[]; labels: Record<string, string>; draftTag: string;
+  summarise: string; summaryTitle: string; summaryFine: string; summaries: Record<'mum' | 'meridian' | 'clinic', string[]>; scrollHint: string;
+  emails: { clinic: MailHead & { lines: string[]; cardLabel: string; cardNote: string; link: string; label: string };
     meridian: { when: string };
-    mum: { from: string; when: string; subject: string; lines: string[]; after: string[]; attachment: string; linksLabel: string;
-      replyLabel: string; draft: string; read: string } };
-  witnessClinic: string; witnessMeridian: string; witnessMum: string };
+    forward: MailHead & { to: string; quoted: string };
+    draft: { when: string; subject: string; lines: string[]; status: string };
+    thread: { from: string; count: string; snippet: string; label: string };
+    mum: MailHead & { lines: string[]; after: string[]; attachment: string; linksLabel: string;
+      replyLabel: string; draft: string; read: string; label: string; snippet: string } };
+  ordinary: { from: string; subject: string; snippet: string; when: string; promo?: boolean }[];
+  witnessClinic: string; witnessMeridian: string; witnessMum: string; witnessDraft: string };
+/** 'meridian' names the whole thread with Meridian: her forward, its auto-reply, her draft */
 type MailId = 'clinic' | 'meridian' | 'mum';
+/** ⚑ S363 — a desktop notification (2026's toast): who wrote, and the chat it opens */
+interface Toast { chat: ChatId; title: string; line: string; t: number }
+const TOAST_SECONDS = 5.5;
+/** ⚑ S363 — the chat's cards, inline in the conversation (his N7): which beat shows which, after which of its lines */
+type CardKind = 'clip' | 'map' | 'goal' | 'stories' | 'ring';
+const BEAT_CARD: Record<string, [CardKind, number]> = { clip: ['clip', -1], map: ['map', 0], heading: ['goal', 1], stories: ['stories', 1], unmuted: ['ring', 1] };
+type Said = { who: 'bot' | 'her' | 'memory' | 'card'; text: string; card?: CardKind; ring?: number };
 /** S360 — no beat waits on a press: this long without one in Mum's email, on an article, on the sponsored one */
 const NAV_IDLE = { mum: 14, article: 16, sponsor: 14 } as const;
 const PH = V.photos;
@@ -180,6 +206,21 @@ export class E4Browser {
   private mailOpen: MailId | null = null;
   private readonly mailSeen = new Set<MailId>();
   private meridianT = -1;
+  /** ⚑ S363 — the reading pane scrolls (her morning, there to scroll): how far, per email, and the most it can */
+  private mailScroll: Record<MailId, number> = { clinic: 0, meridian: 0, mum: 0 };
+  private mailMax = 0;
+  /** the emails she asked Larkpost to summarise */
+  private readonly summed = new Set<MailId>();
+  /** ⚑ S363 — the desktop's notifications (the people writing), newest last */
+  private toasts: Toast[] = [];
+  /** ⚑ S363 — the news sites' furniture: the time on this article, the cookie banner answered, the pop-up closed */
+  private newsT = 0;
+  private consentDone = false;
+  private newsletterGone = false;
+  /** a press on the composer points to the suggestions for a moment (there is no typing) */
+  private composeFlashT = 0;
+  /** which surface a drag that began on a scrollable place is scrolling */
+  private scrollGrab: 'kettle' | 'mail' | null = null;
   /** S360 — seconds without a press while Mum's email or an article waits (then the piece takes her on) */
   private idleNav = 0;
   private typedT = 0;
@@ -187,7 +228,7 @@ export class E4Browser {
   // the bot
   private botBeat = -1;
   private botT = 0;
-  private botSaid: { who: 'bot' | 'her'; text: string }[] = [];
+  private botSaid: Said[] = [];
   /** ⚑ S356 — the chips she pressed in the bot, in order (memory only): the host's operator view quotes them back */
   get herWords(): string[] { return this.botSaid.filter((s) => s.who === 'her').map((s) => s.text); }
   private botDone = new Set<string>();
@@ -310,13 +351,41 @@ export class E4Browser {
   scrollAt(x: number | null, y: number | null, dy: number): boolean {
     const L = this.lay;
     if (!L || this.phase !== 'open' && !e4Has('terminated')) return false;
-    if (x !== null && y !== null && !inside(x, y, L.k)) return false;
-    if (!this.messenger.canScroll) return false;
-    if (this.messenger.scrollBy(dy / L.k.s)) { this.lambyGuide?.activity(); this.stallT = 0; this.version++; }
-    return true;
+    // ⚑ S363 — which surface: the point's, else the one a drag began on, else (the headset's stick) Kettle's open thread
+    //   first and the mail's reading pane second
+    let on: 'kettle' | 'mail' | null = null;
+    if (x !== null && y !== null) on = inside(x, y, L.k) ? (this.messenger.canScroll ? 'kettle' : null) : this.mailScrollsAt(x, y) ? 'mail' : null;
+    else on = this.scrollGrab ?? (this.messenger.canScroll ? 'kettle' : this.mailCanScroll ? 'mail' : null);
+    if (on === 'kettle') {
+      if (!this.messenger.canScroll) return false;
+      if (this.messenger.scrollBy(dy / L.k.s)) { this.lambyGuide?.activity(); this.stallT = 0; this.version++; }
+      return true;
+    }
+    if (on === 'mail' && this.mailOpen) {
+      const was = this.mailScroll[this.mailOpen];
+      this.mailScroll[this.mailOpen] = Math.max(0, Math.min(this.mailMax, was + dy / L.b.s));
+      if (this.mailScroll[this.mailOpen] !== was) { this.lambyGuide?.activity(); this.stallT = 0; this.idleNav = 0; this.version++; }
+      return true;
+    }
+    return false;
   }
-  /** is this monitor point on Kettle's scrollable thread (a drag that starts here scrolls instead of turning) */
-  scrollsAt(x: number, y: number): boolean { const L = this.lay; return !!L && inside(x, y, L.k) && this.messenger.canScroll; }
+  /** is this monitor point on something that scrolls (a drag that starts here scrolls instead of turning) */
+  scrollsAt(x: number, y: number): boolean {
+    const L = this.lay;
+    this.scrollGrab = !L ? null : inside(x, y, L.k) ? (this.messenger.canScroll ? 'kettle' : null) : this.mailScrollsAt(x, y) ? 'mail' : null;
+    return this.scrollGrab !== null;
+  }
+  private get mailCanScroll(): boolean { return this.phase === 'open' && this.liveTab === 'mail' && this.mailMax > 0 && !this.windowedOff; }
+  private get windowedOff(): boolean { return !this.lay; }
+  /** the mail's reading pane, in the monitor's coordinates (S363) */
+  private mailScrollsAt(x: number, y: number): boolean {
+    const L = this.lay;
+    if (!L || !this.mailCanScroll || !inside(x, y, L.b)) return false;
+    const px0 = (x - L.b.cx) / L.b.s, py0 = (y - L.b.cy) / L.b.s;
+    const P = this.mailPane;
+    return px0 >= P.x && px0 <= P.x + P.w && py0 >= P.y && py0 <= P.y + P.h;
+  }
+  private mailPane = { x: 0, y: 0, w: 0, h: 0 };
 
   private file(id: string, outcome: 'read' | 'opened' | 'answered' | 'done', witness: string): void {
     if (ledger.e4Space.some((e) => e.id === id)) return;
@@ -334,6 +403,29 @@ export class E4Browser {
     if (this.step === 'mumMail') this.go('news');
     this.openTab('news');
     playOnce('ui_press.mp3');
+  }
+  /** ⚑ S363 — a desktop notification: a person wrote (the people only; the system never toasts) */
+  private toast(chat: ChatId, title: string, line: string): void {
+    this.toasts = [...this.toasts.filter((t) => t.chat !== chat), { chat, title, line, t: 0 }].slice(-2);
+    this.version++;
+  }
+  /**
+   * ⚑ S363 / UiB job 14 Part A (N2/N3) — the morning she already lived. Before the piece reaches her inbox, the clinic
+   * moved her to the adult list (10:32), she forwarded it to Meridian LGB Trust in her own words (10:39), its auto-reply
+   * said no (10:41), and her reply to that sits in Drafts (10:44), never sent. Nothing here waits on a press: the record
+   * files it, the room reads it (the plant, the flag, the friends' photo go; its conducted turn follows), and the
+   * mailbox shows it when it opens on Mum's email.
+   */
+  private morningLived(): void {
+    this.clinicNumber = CL.start + 3; this.clinicMoved = true;
+    markE4('number');
+    this.file('v3:clinic', 'read', MAIL.witnessClinic.replace('{number}', this.clinicNumber.toLocaleString('en-GB')));
+    ledger.e4Space.push({ id: 'enquiry', outcome: 'read', witness: ENQ.witness });
+    markE4('meridian');
+    this.file('v3:meridian', 'read', MAIL.witnessMeridian);
+    this.file('v3:draft', 'read', MAIL.witnessDraft);
+    this.enquiry = 'closed';
+    this.go('pause');
   }
   /** the second way in: she searches, and Lantern finishes her sentence */
   private beginSearch(): void { this.go('search'); this.typedT = 0; this.face('monitor'); this.openTab('search'); }
@@ -420,7 +512,8 @@ export class E4Browser {
     this.saverT = 0;
     this.orb = new Screensaver('orb', 2026);
     this.orb.line = '';   // ⚑ S328: the wake button says it (drawSurfaceContent); the orb's own line would be a second voice
-    this.tabs = [this.searchTab(), this.photosTab()];
+    // ⚑ S363 / N1 (his: the open Photos tab "for no reason") — the session restores ONE tab: her new search, half-typed
+    this.tabs = [this.searchTab()];
     this.liveId = 'search';
     this.version++;
   }
@@ -493,6 +586,18 @@ export class E4Browser {
   private storyClock(dt: number): void {
     const b4 = this.stepT;
     this.stepT += dt;
+    // ⚑ S363 — notifications fade after a while; the news sites' furniture keeps its own clock; the composer's pointer
+    if (this.toasts.length) {
+      for (const t of this.toasts) t.t += dt;
+      const n = this.toasts.length;
+      this.toasts = this.toasts.filter((t) => t.t < TOAST_SECONDS);
+      if (this.toasts.length !== n) this.version++;
+    }
+    if (this.liveTab === 'news') {
+      const n4 = this.newsT; this.newsT += dt;
+      if (Math.floor(n4 * 4) !== Math.floor(this.newsT * 4)) this.version++;   // the autoplay box's progress, four times a second
+    }
+    if (this.composeFlashT > 0) { this.composeFlashT = Math.max(0, this.composeFlashT - dt); if (this.composeFlashT === 0) this.version++; }
     const at = (s: number): boolean => b4 < s && this.stepT >= s;
     const m = this.messenger;
     // the messenger's own clock (the draft's caret)
@@ -522,7 +627,13 @@ export class E4Browser {
         // Act I · eighteen — her friends write first. ⚑ S328 (his: "the cascade of messages… this is not to appear
         //   now") — the screen is open and quiet first; Kettle's window grows, then one message at a time
         if (at(0.05)) { markE4('eighteen'); this.face('laptop'); }
-        for (let i = 0; i < 3; i++) if (at(HOUSE_FIRST + i * HOUSE_GAP)) { m.houseShown = i + 1; if (i === 0) m.want = 'house'; playOnce('ui_press.mp3'); this.version++; }
+        for (let i = 0; i < 3; i++) if (at(HOUSE_FIRST + i * HOUSE_GAP)) {
+          m.houseShown = i + 1; if (i === 0) m.want = 'house'; playOnce('ui_press.mp3');
+          // ⚑ S363 / N1 — the morning starts where a 2026 machine would: a message, and its notification
+          const l = V.messenger.house.birthday[i];
+          this.toast('house', V.messenger.chats.house.name, `${l.who}: ${l.text}`);
+          this.version++;
+        }
         if (m.houseHeart && this.stepT >= 0) {
           // the heart is sent; the update restores "defaults" a breath later — the system's act, not hers
           if (this.heartT < 0) this.heartT = 0; else this.heartT += dt;
@@ -534,10 +645,18 @@ export class E4Browser {
       case 'mum':
         // ⚑ S360 — Mum writes once: happy birthday, and that she sent an email (his 11 Nov: "Not much more is needed").
         //   H30: nothing forces a press on her — Dad writes 4.5 s after her thread is read, or 10 s after her message
-        if (at(0.8)) { m.mumToday = 1; m.mumAtToday = true; m.want = 'mum'; if (m.view !== 'mum') m.view = 'list'; playOnce('ui_press.mp3'); this.version++; }
+        if (at(0.8)) {
+          m.mumToday = 1; m.mumAtToday = true; m.want = 'mum'; if (m.view !== 'mum') m.view = 'list'; playOnce('ui_press.mp3');
+          this.toast('mum', V.messenger.chats.mum.name, V.messenger.mum.today[0].text);
+          this.version++;
+        }
         if (m.mumOpened && this.todayT < 0) { this.todayT = 0; this.file('v3:mum', 'read', W3.mum); }
         if (this.todayT >= 0) this.todayT += dt;
-        if (!m.dadIn && this.stepT > 0.8 && (this.todayT >= 4.5 || this.stepT >= 10.8)) { m.dadIn = true; m.want = 'dad'; playOnce('ui_press.mp3'); this.go('dad'); }
+        if (!m.dadIn && this.stepT > 0.8 && (this.todayT >= 4.5 || this.stepT >= 10.8)) {
+          m.dadIn = true; m.want = 'dad'; playOnce('ui_press.mp3');
+          this.toast('dad', V.messenger.chats.dad.name, V.messenger.dad.today[V.messenger.dad.today.length - 1].text);
+          this.go('dad');
+        }
         break;
       case 'mail':
         // ⚑ S360 — the clinic writes first: the Mail tab opens on its email (the piece takes her there; nothing to press)
@@ -595,8 +714,12 @@ export class E4Browser {
       case 'pause':
         // the room's conducted turn has the floor; then the search, finished for her
         // ⚑ S360 — then Mum's email arrives: the last thing before the AI (the photo, her links, "Mum, I")
+        // ⚑ S363 / N2 (his: "she said I sent you an email") — the mailbox opens ON Mum's email, already opened; the rest
+        //   of the inbox is the morning she lived (the clinic, her forward to Meridian, its no, her unsent reply)
         if (this.stepT >= ROOM_WAIT.min && (e4Has('room') || this.stepT >= ROOM_WAIT.max)) {
-          this.mailRows = ['mum', ...this.mailRows]; this.mailOpen = 'mum';
+          this.mailRows = ['meridian', 'clinic', 'mum']; this.mailOpen = 'mum';
+          this.mailSeen.add('mum'); this.mailSeen.add('meridian'); this.mailSeen.add('clinic');
+          this.addTab(this.mailTab(), true);
           this.file('v3:mummail', 'read', MAIL.witnessMum);
           this.face('monitor'); this.openTab('mail'); playOnce('ui_press.mp3');
           this.idleNav = 0;
@@ -686,7 +809,7 @@ export class E4Browser {
   }
   private startBot(id: string): void {
     const was = this.bot;
-    if (was && !this.botDone.has(was.id)) { this.botDone.add(was.id); for (const l of this.botLines(was)) this.botSaid.push({ who: 'bot', text: l }); }
+    if (was && !this.botDone.has(was.id)) { this.botDone.add(was.id); this.botSaid.push(...this.beatRows(was, was.lines.length)); }
     this.botBeat = BOT.beats.findIndex((b) => b.id === id);
     this.botT = 0;
     // ⚑ S360 — the clip, made for her, owns the page before its beat speaks (it was the map's, recommended from a channel)
@@ -718,18 +841,25 @@ export class E4Browser {
     const b = this.bot;
     if (!b || this.botDone.has(b.id) || !this.botBeatReady) return;
     this.botDone.add(b.id);
-    for (const l of this.botLines(b)) this.botSaid.push({ who: 'bot', text: l });
+    this.botSaid.push(...this.beatRows(b, b.lines.length));
+    // ⚑ S363 / N7 — whatever she presses is HER message, in her own bubble; then "Memory updated" and what it saved
     if (chip) {
       this.botSaid.push({ who: 'her', text: chip.label });
+      if (chip.memory) this.botSaid.push({ who: 'memory', text: chip.memory });
       this.botSaid.push({ who: 'bot', text: chip.reply });
       this.file(`conv:${b.id}`, 'answered', chip.filed);
       if (b.id === 'map') {
         this.file('v3:mute', 'answered', chip.filed);
         if (chip.mute) { this.mapMuted = true; this.messenger.houseMuted = true; this.ring = 98; }
       }
-    } else if (b.filed) this.file(`conv:${b.id}`, 'done', b.filed);
+    } else {
+      if (b.button) this.botSaid.push({ who: 'her', text: b.button });
+      if (b.memory) this.botSaid.push({ who: 'memory', text: b.memory });
+      if (b.filed) this.file(`conv:${b.id}`, 'done', b.filed);
+    }
     playOnce('ui_press.mp3');
-    if (b.id === 'unmuted') { this.go('photos'); this.openTab('photos'); }
+    // ⚑ S363 / N1 — Photos was never open "for no reason": it opens here, when the bot sends her to it
+    if (b.id === 'unmuted') { this.go('photos'); this.addTab(this.photosTab(), true); }
     else this.botNextIn = 0.9;
     this.version++;
   }
@@ -770,7 +900,7 @@ export class E4Browser {
         markE4('dad');
         this.file('v3:dad', 'read', W3.dad);
         m.want = null;
-        this.go('mail');   // S360: the clinic's email is next (Mum's link is gone; her email comes last)
+        this.morningLived();   // S363: the clinic and Meridian are history in her inbox; the room's turn, then Mum's email
       }
     } else if (c === 'junie') {
       m.junieOpened = true;
@@ -859,6 +989,7 @@ export class E4Browser {
     ctx.restore();
     const kettleLive = kettlePressable && (this.phase === 'open' ? !this.programDone : e4Has('terminated'));
     if (kettleLive) for (const h of k) this.hits.push(toMonitor(h, L.k));
+    this.drawToasts(ctx, L, H, pressable);
     // the taskbar: the date, and L (T25: the guide is always one press away, and never over a felt thread)
     const ty = H - WIN.taskbar;
     px(ctx, 0, ty, W, WIN.taskbar, V3.bar); px(ctx, 0, ty, W, 1, V3.barEdge);
@@ -876,6 +1007,34 @@ export class E4Browser {
     if (pressable && view && !view.hidden && view.rung === 'show' && !this.startMap.active) {
       for (const r of this.hits.filter(h => view.targets.includes(h.id))) drawGuidePointer(ctx, r, { x: W - 24, y: H - 24 }, CHROME.accent, view.frame);
     }
+  }
+  /**
+   * ⚑ S363 / N1 — 2026's desktop notifications: a person wrote. They stack over the browser's lower right (never over
+   * Kettle, where the message itself is), fade after a few seconds, and a press opens the chat. One voice at a time:
+   * none while L's balloon is up.
+   */
+  private drawToasts(ctx: CanvasRenderingContext2D, L: Layout, H: number, pressable: boolean): void {
+    if (!this.toasts.length || this.phase !== 'open' || this.lambyGuidePaint.balloon) return;
+    const tw = 214, th = 44;
+    let y = H - WIN.taskbar - 8 - th;
+    for (const t of [...this.toasts].reverse()) {
+      const x = L.b.x + L.b.w - tw - 8;
+      const a = Math.min(1, t.t / 0.25, (TOAST_SECONDS - t.t) / 0.6);
+      ctx.save(); ctx.globalAlpha = Math.max(0, a);
+      roundRect(ctx, x + 1, y + 2, tw, th, 10, V3.grey);
+      roundEdge(ctx, x, y, tw, th, 10, V3.edge, V3.card);
+      this.messengerAvatar(ctx, x + 8, y + 10, 22, t.chat);
+      ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(V.messenger.app + ' · now', x + 36, y + 6);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, t.title, tw - 46), x + 36, y + 16);
+      setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(fitText(ctx, t.line, tw - 46), x + 36, y + 29);
+      ctx.restore();
+      if (pressable && a > 0.5) this.hits.push({ x, y, w: tw, h: th, id: `toast-${t.chat}` });
+      y -= th + 6;
+    }
+  }
+  private messengerAvatar(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, id: ChatId): void {
+    const fill = id === 'mum' ? KETTLE.avatarMum : id === 'dad' ? KETTLE.avatarDad : id === 'house' ? KETTLE.avatarHouse : KETTLE.avatarJunie;
+    senderMark(ctx, x, y, d, V.messenger.chats[id].mark, fill);
   }
   /** a window's title bar: its name, and (on the smaller window) the press that enlarges it */
   private windowTitle(ctx: CanvasRenderingContext2D, w: Win, title: string, id: string, pressable: boolean): void {
@@ -958,11 +1117,10 @@ export class E4Browser {
     });
     const live = Math.max(0, shown.findIndex((t) => t.id === this.liveId));
     const addr = this.addressNow();
-    const blink = this.phase === 'open' && this.liveTab === 'search' && this.pressable && !botOn && (this.step === 'search' && this.typedDone)
-      && Math.floor(this.t / CURSOR_BLINK) % 2 === 0;
+    const blink = false;   // ⚑ S363 — the caret lives in the new search's box now, not in the address bar
     const looks: TabLook[] = shown.map((t) => this.phase === 'failed' ? (t.kind === 'search' ? { badge: this.streamOpen ? '●' : '!', state: 'normal' } : { state: 'locked' })
       : t.kind === 'news' && this.newsOpened > 1 ? { badge: String(this.newsOpened) } : {});
-    const rects = browserChrome(ctx, W, shown, live, addr, blink || this.step === 'typing', looks, 80);
+    const rects = browserChrome(ctx, W, shown, live, addr, blink, looks, 80);
     // a sheet or an open thread owns the moment; otherwise every tab is a tab
     const sheet = this.newyouUp || this.enquiryOpen;
     rects.forEach((r, i) => { if (!sheet && this.phase === 'open') this.publish({ ...r, id: `tab-${shown[i].id}` }); });
@@ -1014,14 +1172,16 @@ export class E4Browser {
     if (tab.kind === 'news') return ARTICLES[this.newsIndex]?.address ?? '';
     if (tab.kind !== 'search') return tab.address;
     if (this.botBeat >= 0) return PROGRAM.agentAddress;
-    if (this.step === 'search') return script.search.typed.slice(0, Math.floor(script.search.typed.length * Math.min(1, this.typedT / 1.4)));
-    if (this.step === 'typing') {
-      const k = Math.min(1, this.typeT / PROGRAM.typingSeconds);
-      const n = script.search.typed.length + Math.floor((PROGRAM.chosen.length - script.search.typed.length) * k);
-      return PROGRAM.chosen.slice(0, n);
-    }
-    if (this.step === 'results') return PROGRAM.chosen;
+    // ⚑ S363 — a new search's address bar is empty: her words are in the box (boxText); the results have their address
+    if (this.step === 'results') return `${SR.brand.toLowerCase()}.example/search?q=${PROGRAM.chosen.split(' ').join('+')}`;
     return '';
+  }
+  /** ⚑ S363 — the search box: her half-typed question, and the engine finishing it while it types for her */
+  private boxText(): string {
+    if (this.step !== 'typing') return script.search.typed;
+    const k = Math.min(1, this.typeT / PROGRAM.typingSeconds);
+    const n = script.search.typed.length + Math.floor((PROGRAM.chosen.length - script.search.typed.length) * k);
+    return PROGRAM.chosen.slice(0, n);
   }
   private get typedDone(): boolean { return this.step === 'search' && this.typedT >= 1.6; }
 
@@ -1042,7 +1202,7 @@ export class E4Browser {
 
   /** ⚑ the window's foot (presentation rule 1): a line of status on the left, the buttons on the right, the primary
    *  last and biggest. Every page draws its controls here and nowhere else. */
-  private bar(ctx: CanvasRenderingContext2D, W: number, H: number, left: string, buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[], mono = false): void {
+  private bar(ctx: CanvasRenderingContext2D, W: number, H: number, left: string, buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[], mono = false): number {
     const y = H - BAR_H;
     px(ctx, 0, y, W, BAR_H, V3.bar);
     px(ctx, 0, y, W, 1, V3.barEdge);
@@ -1074,52 +1234,53 @@ export class E4Browser {
       ctx.fillText(b.label, bx + Math.round((w - tw) / 2), by + Math.round((h - (b.kind === 'primary' ? 15 : 13)) / 2));
       this.publish({ x: bx, y: by, w, h, id: b.id });
     }
+    return placed.length ? placed[0].x : W - 16;
   }
   private pageGround(ctx: CanvasRenderingContext2D, W: number, H: number): void { px(ctx, 0, PAGE_TOP, W, H - PAGE_TOP, V3.page); }
 
   // ── the search (the new tab, then Act III) ────────────────────────────────
+  /**
+   * ⚑ S363 / UiB job 14 Part A (N1/N6) — "New search": no engine brand, no bookmark, no wallpaper of her. Her own question
+   * from last night is still in the box, half-typed, where she left it. Nothing on it is offered until the story reaches
+   * the search (Mum's links run out); then the engine finishes it four ways and picks one for her (as built).
+   */
   private drawSearch(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.pageGround(ctx, W, H);
-    // the wallpaper: hers until the update, then the goal
-    // ⚑ S328 — laid out for the browser window's 556 logical px: the box keeps its width, the wallpaper takes the rest
-    const lx = 24, wx = lx + 380 + 20, wy = PAGE_TOP + 10, ww = Math.max(96, W - wx - 16), wh = H - BAR_H - PAGE_TOP - 20;
-    if (this.profile === 'goal') drawGoalPicture(ctx, wx, wy, ww, wh);
-    else thumb(ctx, wx, wy, ww, wh, 3, false, 8);
-    setFont(ctx, 30); ctx.fillStyle = V3.ink;
-    ctx.fillText(SR.brand, lx, PAGE_TOP + 40);
-    const bx = lx, by = PAGE_TOP + 92, bw = 380, bh = 36;
-    // ⚑ S358 / H14 (his headset, 10 Nov: "Search or type a web address is not working", twice) — the box invited typing
-    //   on every new tab and took no press. It is offered only where the search happens (her sentence is typed for her
-    //   there), and once the sentence is done the box itself opens it, like the completions under it.
-    const offered = this.step === 'search' || this.step === 'typing';
-    if (offered) {
-      pill(ctx, bx, by, bw, bh, V3.edge); pill(ctx, bx + 1, by + 1, bw - 2, bh - 2, V3.card);
-      const typed = this.step === 'search' ? this.addressNow() : '';
-      if (typed) { setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(typed, bx + 18, by + 10); }
-      else { setFont(ctx, 14); ctx.fillStyle = V3.ink2; ctx.fillText(SR.placeholder, bx + 18, by + 11); }
-      if (this.typedDone) this.publish({ x: bx, y: by, w: bw, h: bh, id: 'search-open' });
-    }
-    // the bookmark: the free game, one press away (S168)
-    if (this.step !== 'typing') {
-      const label = '☆ ' + FLOPPY_LABEL;
-      setFont(ctx, 12);
-      const kw = Math.ceil(ctx.measureText(label).width) + 18;
-      pill(ctx, lx, PAGE_TOP + 8, kw, 20, V3.card);
-      ctx.fillStyle = V3.ink2; ctx.fillText(label, lx + 9, PAGE_TOP + 12);
-      this.publish({ x: lx, y: PAGE_TOP + 8, w: kw, h: 20, id: 'bm-floppy' });
-    }
+    const bw = Math.min(440, W - 64), bh = 42, bx = Math.round((W - bw) / 2);
+    const by = PAGE_TOP + Math.round((H - BAR_H - PAGE_TOP) * 0.30);
+    roundEdge(ctx, bx, by, bw, bh, 21, V3.edge, V3.card);
+    magnifier(ctx, bx + 16, by + 13, V3.ink2);
+    const typing = this.step === 'typing';
+    const text = this.boxText();
+    // the AI pill at the box's end (2026's search boxes carry one)
+    setFont(ctx, 11);
+    const ai = '✦ ' + SR.aiMode, aw = Math.ceil(ctx.measureText(ai).width) + 16;
+    pill(ctx, bx + bw - aw - 8, by + 10, aw, 22, V3.botSoft);
+    ctx.fillStyle = V3.botInk; ctx.fillText(ai, bx + bw - aw, by + 15);
+    setFont(ctx, 15); ctx.fillStyle = V3.ink;
+    ctx.save(); ctx.beginPath(); ctx.rect(bx + 38, by, bw - aw - 56, bh); ctx.clip();
+    ctx.fillText(text, bx + 38, by + 12);
+    ctx.restore();
+    // the caret: still where she left it (and while the engine types for her)
+    const tw = Math.min(bw - aw - 58, Math.ceil(ctx.measureText(text).width));
+    if (typing || Math.floor(this.t / CURSOR_BLINK) % 2 === 0) px(ctx, bx + 39 + tw, by + 11, 1, 19, V3.ink);
+    if (this.typedDone) this.publish({ x: bx, y: by, w: bw, h: bh, id: 'search-open' });
     if (this.typedDone) {
-      // ⚑ the engine finishes her sentence four ways; three assume she wants out, and the one she meant is last
+      // ⚑ the engine finishes her sentence four ways; three assume she has been influenced, and the one she meant is last
       const rows = script.search.completions as string[];
       const top = by + bh + 4, rh = 24;
       const dh = rows.length * rh + 10;
-      roundEdge(ctx, bx, top, bw, dh, 6, V3.edge, V3.card);
+      roundEdge(ctx, bx, top, bw, dh, 8, V3.edge, V3.card);
       setFont(ctx, 14);
       rows.forEach((r, i) => {
-        px(ctx, bx + 16, top + 13 + i * rh, 5, 5, V3.ink2);
+        magnifier(ctx, bx + 16, top + 9 + i * rh, V3.grey);
         ctx.fillStyle = V3.ink;
-        ctx.save(); ctx.beginPath(); ctx.rect(bx + 28, top, bw - 36, dh); ctx.clip();
-        ctx.fillText(r, bx + 30, top + 8 + i * rh);
+        ctx.save(); ctx.beginPath(); ctx.rect(bx + 36, top, bw - 44, dh); ctx.clip();
+        // the part she typed, then the part the engine wrote for her, in the bolder ink
+        const mine = script.search.typed;
+        setFont(ctx, 14); ctx.fillStyle = V3.ink2; ctx.fillText(mine, bx + 38, top + 8 + i * rh);
+        const mw = Math.ceil(ctx.measureText(mine).width);
+        ctx.fillStyle = V3.ink; ctx.fillText(r.slice(mine.length), bx + 38 + mw, top + 8 + i * rh);
         ctx.restore();
       });
       this.publish({ x: bx, y: top, w: bw, h: dh, id: 'search-open' });
@@ -1130,24 +1291,44 @@ export class E4Browser {
   private drawResults(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.pageGround(ctx, W, H);
     const x = 40, cw = W - 80;
-    setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(SR.queryLabel, x, PAGE_TOP + 12);
-    setFont(ctx, 17); ctx.fillStyle = V3.ink; ctx.fillText(PROGRAM.chosen, x, PAGE_TOP + 28);
-    // the ad, first and biggest — it says it is an ad
-    let y = PAGE_TOP + 60;
-    const A = SR.ad, ah = 92;
-    roundEdge(ctx, x - 8, y - 6, cw + 16, ah, 7, V3.edge, V3.card);
-    setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(A.sponsored, x, y);
-    ctx.font = monoFor(12); ctx.fillStyle = V3.ink2; ctx.fillText(A.url, x + Math.ceil(ctx.measureText(A.sponsored).width) + 24, y + 1);
-    setFont(ctx, 18); ctx.fillStyle = V3.primary; ctx.fillText(A.title, x, y + 18);
-    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(A.snippet, x, y + 42);
-    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(A.why, x, y + 64);
-    this.publish({ x: x - 8, y: y - 6, w: cw + 16, h: ah, id: 'result-agent' });
-    y += ah + 10;
+    // the engine names itself here, small, on its results page (never on her new tab — N6)
+    setFont(ctx, 13); ctx.fillStyle = V3.ink; ctx.fillText(SR.brand, x, PAGE_TOP + 6);
+    const bw0 = Math.ceil(ctx.measureText(SR.brand).width) + 12;
+    roundEdge(ctx, x + bw0, PAGE_TOP + 2, cw - bw0, 24, 12, V3.edge, V3.card);
+    magnifier(ctx, x + bw0 + 9, PAGE_TOP + 8, V3.ink2);
+    setFont(ctx, 12); ctx.fillStyle = V3.ink;
+    ctx.save(); ctx.beginPath(); ctx.rect(x + bw0 + 26, PAGE_TOP, cw - bw0 - 34, 28); ctx.clip();
+    ctx.fillText(PROGRAM.chosen, x + bw0 + 26, PAGE_TOP + 8); ctx.restore();
+    let y = PAGE_TOP + 36;
+    // ⚑ S363 — 2026's AI overview above everything: kind, bland, and pointing the way the ad does
+    const O = (SR as unknown as { overview: { title: string; line: string; fine: string } }).overview;
+    setFont(ctx, 12);
+    const ol = wrapText(ctx, O.line, cw - 20).slice(0, 2);
+    const oh = 22 + ol.length * 15 + 12;
+    roundEdge(ctx, x - 8, y, cw + 16, oh, 10, V3.edge, V3.botSoft);
+    assistantMark(ctx, x, y + 6, 14, V3.primary, V3.primaryInk);
+    setFont(ctx, 12); ctx.fillStyle = V3.botInk; ctx.fillText(O.title, x + 20, y + 7);
+    ctx.font = monoFor(9); ctx.fillStyle = V3.ink2;
+    const fw = Math.ceil(ctx.measureText(O.fine).width); ctx.fillText(O.fine, x + cw - fw, y + 9);
+    setFont(ctx, 12); ctx.fillStyle = V3.ink;
+    ol.forEach((l, k) => ctx.fillText(l, x, y + 24 + k * 15));
+    y += oh + 10;
+    // the ad, first and biggest after the overview — it says it is an ad
+    const A = SR.ad, ah = 70;
+    roundEdge(ctx, x - 8, y - 4, cw + 16, ah, 7, V3.edge, V3.card);
+    setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(A.sponsored, x, y);
+    ctx.font = monoFor(11); ctx.fillStyle = V3.ink2; ctx.fillText(A.url, x + Math.ceil(ctx.measureText(A.sponsored).width) + 24, y + 1);
+    setFont(ctx, 16); ctx.fillStyle = V3.primary; ctx.fillText(A.title, x, y + 15);
+    setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(A.snippet, x, y + 36);
+    setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(A.why, x, y + 51);
+    this.publish({ x: x - 8, y: y - 4, w: cw + 16, h: ah, id: 'result-agent' });
+    y += ah + 6;
     for (const r of SR.others) {
-      ctx.font = monoFor(11); ctx.fillStyle = V3.ink2; ctx.fillText(r.url, x, y);
-      setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(r.title, x, y + 15);
-      setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(r.snippet, x, y + 35);
-      y += 62;
+      if (y + 44 > H - BAR_H) break;
+      ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.fillText(r.url, x, y);
+      setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(r.title, x, y + 13);
+      setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(fitText(ctx, r.snippet, cw), x, y + 31);
+      y += 50;
     }
     this.bar(ctx, W, H, SR.sticky, [{ id: 'ad-chat', label: SR.chat, kind: 'primary' }]);
   }
@@ -1177,161 +1358,465 @@ export class E4Browser {
   }
 
   // ── the news ──────────────────────────────────────────────────────────────
+  /**
+   * ⚑ S363 / UiB job 14 Part A (N5: "where is the visual culture references here??"). Mum's three links as 2026's web
+   * serves them: each site its own masthead (a broadsheet, a tabloid, a tech site), an AI summary at the top (accurate,
+   * neutral — the idiom, not a verdict), an autoplay video box and a "Most read" rail of ordinary stories, the sticky ad
+   * at the foot (Second Thoughts follows her from site to site), and one of the cookie banner, the newsletter pop-up or
+   * the paywall. The facts sit in the middle as job 13 built them: two readings side by side, nothing settles it. The
+   * furniture covers only the rail, never a reading.
+   */
   private drawArticle(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.pageGround(ctx, W, H);
     const i = Math.min(this.newsIndex, ARTICLES.length - 1);
     const a = ARTICLES[i];
-    const cx = 16, cw = W - 32, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;   // S328: the card takes the window's width
-    roundEdge(ctx, cx, cy, cw, ch, 6, V3.edge, V3.card);
-    const x = cx + 24;
-    // ⚑ S360 — the last of Mum's links carries a Sponsored box beside the text: Second Thoughts, Mum's way in
-    const sp = a.sponsored, spW = sp ? 156 : 0;
-    const tw = cw - 48 - (sp ? spW + 14 : 0);
-    ctx.font = newsFor(22); ctx.textBaseline = 'top'; ctx.fillStyle = V3.ink; ctx.fillText(a.mast, x, cy + 10);
-    px(ctx, x, cy + 37, cw - 48, 2, V3.ink);
-    ctx.font = monoFor(11); ctx.fillStyle = V3.ink2; ctx.fillText(a.date, x, cy + 43);
-    ctx.font = newsFor(18);
-    let y = cy + 60;
-    for (const ln of wrapText(ctx, a.head, tw).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 21; }
+    const foot = H - BAR_H;
+    px(ctx, 0, PAGE_TOP, W, foot - PAGE_TOP, V3.card);
+    // ── the site's own header ──
+    const hy = PAGE_TOP, hh = 28;
+    const tab = a.look === 'tabloid', tech = a.look === 'tech';
+    px(ctx, 0, hy, W, hh, tab ? PLACE.book : tech ? ERA4.field : V3.card);
+    const headInk = tab || tech ? WEB.card : V3.ink;
+    if (tech) { ctx.font = monoFor(15); ctx.fillStyle = ERA4.textHi; roundRect(ctx, 14, hy + 10, 8, 8, 4, WEB.accent); ctx.fillText(a.mast, 28, hy + 7); }
+    else if (tab) { setFont(ctx, 19); ctx.fillStyle = headInk; ctx.fillText(a.mast.toUpperCase(), 14, hy + 5); }
+    else { ctx.font = newsFor(20); ctx.textBaseline = 'top'; ctx.fillStyle = headInk; ctx.fillText(a.mast, 14, hy + 4); }
+    // its nav, and its Subscribe
+    setFont(ctx, 10);
+    const sub = SITE.subscribe, subW = Math.ceil(ctx.measureText(sub).width) + 16;
+    pill(ctx, W - 12 - subW, hy + 6, subW, 16, tab ? WEB.card : tech ? WEB.accent : PLACE.bookAlt);
+    ctx.fillStyle = tab ? PLACE.book : tech ? ERA4.field : WEB.card; ctx.fillText(sub, W - 12 - subW + 8, hy + 9);
+    let nx = W - 22 - subW;
+    for (const n of [...a.nav].reverse()) {
+      if (tech) ctx.font = monoFor(9); else setFont(ctx, 10);
+      const nw = Math.ceil(ctx.measureText(n).width);
+      nx -= nw;
+      if (nx < 190) break;
+      ctx.fillStyle = tab || tech ? (tech ? ERA4.text : WEB.card) : V3.ink2; ctx.fillText(n, nx, hy + 10);
+      nx -= 12;
+    }
+    if (!tab && !tech) { px(ctx, 10, hy + hh - 3, W - 20, 1, V3.ink); px(ctx, 10, hy + hh - 1, W - 20, 1, V3.ink); }
+    // ── the strip under it: which of Mum's links this is, and the site's free-article count or paywall ──
+    const sy = hy + hh, sh = 14;
+    px(ctx, 0, sy, W, sh, tab ? PLACE.bookAlt : a.extra === 'paywall' ? V3.botSoft : V3.page);
+    ctx.font = monoFor(9); ctx.fillStyle = tab ? WEB.card : V3.ink2;
+    ctx.fillText(V.news.count.replace('{n}', String(i + 1)).replace('{of}', String(this.newsOpened)) + ' · ' + SITE.sharedBy, 14, sy + 3);
+    if (a.extra === 'paywall') {
+      setFont(ctx, 9); ctx.fillStyle = V3.botInk;
+      const pw = Math.ceil(ctx.measureText(SITE.paywall.line).width);
+      ctx.fillText(SITE.paywall.line, W - 14 - pw, sy + 2);
+    } else if (!tab) {
+      const fw = Math.ceil(ctx.measureText(SITE.freeLeft).width);
+      ctx.fillText(SITE.freeLeft, W - 14 - fw, sy + 3);
+    }
+    // ── the article ──
+    const railW = 132, railX = W - 10 - railW;
+    const x = 14, w = railX - 12 - x;
+    let y = sy + sh + 6;
+    // the kicker and the date
+    const kick = a.date.split(' · ')[1] ?? '', date = a.date.split(' · ')[0];
+    if (tab) {
+      setFont(ctx, 9); const kw = Math.ceil(ctx.measureText(kick.toUpperCase()).width) + 10;
+      px(ctx, x, y, kw, 13, PLACE.book); ctx.fillStyle = WEB.card; ctx.fillText(kick.toUpperCase(), x + 5, y + 2);
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(date, x + kw + 6, y + 2);
+    } else {
+      ctx.font = monoFor(9); ctx.fillStyle = tech ? V3.botInk : V3.ink2; ctx.fillText((tech ? kick.toUpperCase() : kick) + '  ·  ' + date, x, y + 2);
+    }
+    // Mum's note on the link she shared (the HHS report), on the kicker's own row
+    if (a.mumNote) {
+      ctx.font = monoFor(9);
+      const kx = x + Math.ceil(ctx.measureText((tab ? '' : kick + '  ·  ') + date).width) + (tab ? Math.ceil(ctx.measureText(kick.toUpperCase()).width) + 24 : 10);
+      setFont(ctx, 10);
+      const t = fitText(ctx, `Mum: “${a.mumNote}”`, x + w - kx - 16), tw = Math.ceil(ctx.measureText(t).width) + 16;
+      pill(ctx, kx, y - 1, tw, 16, V3.ticket); ctx.fillStyle = V3.ink; ctx.fillText(t, kx + 8, y + 2);
+    }
+    y += 17;
+    // the headline, in the site's own face
+    if (tab) setFont(ctx, 17); else if (tech) setFont(ctx, 16); else ctx.font = newsFor(16);
+    ctx.textBaseline = 'top';
+    for (const ln of wrapText(ctx, a.head, w).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += tab ? 20 : 19; }
     y += 3;
-    const floor = cy + ch - 30;
-    setFont(ctx, 14); ctx.fillStyle = V3.ink;
-    for (const p of a.body) { for (const ln of wrapText(ctx, p, tw)) { if (y <= floor - 17) ctx.fillText(ln, x, y); y += 17; } y += 3; }
-    // ⚑ S360 — two readings, side by side, never resolved (the clinic letter's two captions were the model; CLAUDE.md:
-    //   render both captions — "nothing in the story settles it")
+    // the AI summary, at the top, as 2026's sites carry one
+    {
+      setFont(ctx, 10);
+      const bl = a.summary.flatMap((l) => wrapText(ctx, '· ' + l, w - 16)).slice(0, 3);
+      const bh = 16 + bl.length * 13 + 3;
+      roundEdge(ctx, x, y, w, bh, 6, V3.edge, V3.botSoft);
+      assistantMark(ctx, x + 6, y + 3, 11, V3.primary, V3.primaryInk);
+      setFont(ctx, 10); ctx.fillStyle = V3.botInk; ctx.fillText(SITE.summaryTitle, x + 21, y + 3);
+      ctx.font = monoFor(8); ctx.fillStyle = V3.ink2;
+      const fw = Math.ceil(ctx.measureText(SITE.summaryFine).width); ctx.fillText(SITE.summaryFine, x + w - fw - 8, y + 4);
+      setFont(ctx, 10); ctx.fillStyle = V3.ink;
+      bl.forEach((l, k) => ctx.fillText(l, x + 8, y + 16 + k * 13));
+      y += bh + 5;
+    }
+    const floor = foot - 16;
+    setFont(ctx, 12); ctx.fillStyle = V3.ink;
+    for (const p of a.body) { for (const ln of wrapText(ctx, p, w)) { if (y <= floor - 15) ctx.fillText(ln, x, y); y += 15; } }
+    // ⚑ S360 — two readings, side by side, never resolved (CLAUDE.md: render both captions — "nothing in the story settles it")
+    //   ⚑ S363 — each label sits on its box's top edge (a legend), so the readings keep every line
     if (a.readings) {
-      const gap = 10, bw = Math.floor((tw - gap) / 2), by = y + 2, bh = Math.max(40, floor - by);
+      const gap = 8, bw = Math.floor((w - gap) / 2), by = y + 7, bh = Math.max(40, floor - by - 2);
       a.readings.forEach((r, k) => {
         const bx = x + k * (bw + gap);
         roundEdge(ctx, bx, by, bw, bh, 5, V3.edge, V3.page);
-        setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(r.label, bx + 9, by + 5);
-        setFont(ctx, 12); ctx.fillStyle = V3.ink;
-        let ly = by + 19;
-        for (const ln of wrapText(ctx, r.text, bw - 18)) { if (ly + 14 <= by + bh) ctx.fillText(ln, bx + 9, ly); ly += 15; }
+        setFont(ctx, 10);
+        const lw = Math.ceil(ctx.measureText(r.label).width) + 8;
+        px(ctx, bx + 6, by - 6, lw, 12, V3.card);
+        ctx.fillStyle = V3.ink2; ctx.fillText(r.label, bx + 10, by - 6);
+        setFont(ctx, 11); ctx.fillStyle = V3.ink;
+        let ly = by + 8;
+        for (const ln of wrapText(ctx, r.text, bw - 12)) { if (ly + 12 <= by + bh) ctx.fillText(ln, bx + 6, ly); ly += 13; }
       });
     }
-    ctx.font = monoFor(10); ctx.fillStyle = V3.ink2;
-    { const src = wrapText(ctx, a.source, cw - 48).slice(0, 2); const sy = cy + ch - 6 - src.length * 13; src.forEach((ln, k) => ctx.fillText(ln, x, sy + k * 13)); }
-    if (sp) {
-      const sx = cx + cw - 24 - spW, sy = cy + 64, sh = 150;
-      roundEdge(ctx, sx, sy, spW, sh, 8, V3.edge, V3.page);
-      ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.fillText(sp.label, sx + 10, sy + 8);
-      assistantMark(ctx, sx + 10, sy + 26, 22, V3.primary, V3.primaryInk);
-      setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(sp.title, sx + 38, sy + 29);
-      setFont(ctx, 12); ctx.fillStyle = V3.ink;
-      wrapText(ctx, sp.line, spW - 20).slice(0, 3).forEach((ln, k) => ctx.fillText(ln, sx + 10, sy + 58 + k * 15));
-      const bw = spW - 20, bx = sx + 10, by = sy + sh - 40;
-      pill(ctx, bx, by, bw, 30, V3.primary);
-      setFont(ctx, 14); ctx.fillStyle = V3.primaryInk;
-      ctx.fillText(sp.button, bx + Math.round((bw - ctx.measureText(sp.button).width) / 2), by + 7);
-      this.publish({ x: sx, y: sy, w: spW, h: sh, id: 'sponsor-chat' });
+    ctx.font = monoFor(9); ctx.fillStyle = V3.ink2;
+    ctx.fillText(fitText(ctx, a.source, w), x, foot - 13);
+    // ── the rail: the video (or the sponsored box), then "Most read" ──
+    let ry = sy + sh + 6;
+    if (a.sponsored) {
+      const sp = a.sponsored, shh = 116;
+      roundEdge(ctx, railX, ry, railW, shh, 8, V3.edge, V3.page);
+      ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(sp.label, railX + 8, ry + 6);
+      assistantMark(ctx, railX + 8, ry + 20, 18, V3.primary, V3.primaryInk);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, sp.title, railW - 37), railX + 31, ry + 24);
+      setFont(ctx, 10); ctx.fillStyle = V3.ink;
+      wrapText(ctx, sp.line, railW - 16).slice(0, 3).forEach((ln, k) => ctx.fillText(ln, railX + 8, ry + 45 + k * 13));
+      const bw = railW - 16, bx = railX + 8, by = ry + shh - 30;
+      pill(ctx, bx, by, bw, 22, V3.primary);
+      setFont(ctx, 12); ctx.fillStyle = V3.primaryInk;
+      ctx.fillText(sp.button, bx + Math.round((bw - ctx.measureText(sp.button).width) / 2), by + 4);
+      this.publish({ x: railX, y: ry, w: railW, h: shh, id: 'sponsor-chat' });
+      ry += shh + 8;
+    } else if (a.video) {
+      const vh = 74, len = 58;
+      px(ctx, railX, ry, railW, vh, ERA4.field);
+      // a talking head and a chart, in the house style of news video: no face, two shapes, a caption band
+      const k = (this.newsT % len) / len;
+      roundRect(ctx, railX + 18, ry + 22, 26, 26, 13, ERA4.photoSkin);
+      px(ctx, railX + 12, ry + 46, 38, 28, ERA4.panelEdge);
+      for (let b = 0; b < 4; b++) px(ctx, railX + 68 + b * 13, ry + 50 - (b * 7 + Math.round(4 * Math.sin(this.newsT * 1.3 + b))), 9, 12 + b * 7, b === 3 ? PLACE.book : ERA4.glow);
+      px(ctx, railX, ry + vh - 4, railW, 4, ERA4.rule);
+      px(ctx, railX, ry + vh - 4, Math.round(railW * k), 4, PLACE.book);
+      setFont(ctx, 8); const ww = Math.ceil(ctx.measureText(SITE.watch).width) + 8;
+      px(ctx, railX + 4, ry + 4, ww, 12, PLACE.book); ctx.fillStyle = WEB.card; ctx.fillText(SITE.watch, railX + 8, ry + 6);
+      // the muted speaker
+      ctx.fillStyle = WEB.card; ctx.fillRect(railX + railW - 18, ry + 8, 3, 5);
+      ctx.beginPath(); ctx.moveTo(railX + railW - 15, ry + 8); ctx.lineTo(railX + railW - 11, ry + 5); ctx.lineTo(railX + railW - 11, ry + 16); ctx.lineTo(railX + railW - 15, ry + 13); ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.strokeStyle = WEB.card; ctx.lineWidth = 1.2; ctx.beginPath();
+      ctx.moveTo(railX + railW - 9, ry + 8); ctx.lineTo(railX + railW - 5, ry + 13); ctx.moveTo(railX + railW - 5, ry + 8); ctx.lineTo(railX + railW - 9, ry + 13); ctx.stroke(); ctx.restore();
+      ry += vh + 3;
+      setFont(ctx, 10); ctx.fillStyle = V3.ink;
+      wrapText(ctx, `${a.video.title} · ${a.video.length}`, railW).slice(0, 2).forEach((ln) => { ctx.fillText(ln, railX, ry); ry += 12; });
+      ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(SITE.autoplay, railX, ry + 1);
+      ry += 16;
     }
-    const opened = this.newsOpened;
-    const left = V.news.count.replace('{n}', String(i + 1)).replace('{of}', String(opened));
+    ctx.font = monoFor(9); ctx.fillStyle = V3.ink; ctx.fillText(SITE.mostRead.toUpperCase(), railX, ry);
+    px(ctx, railX, ry + 12, railW, 1, tab ? PLACE.book : V3.ink);
+    ry += 17;
+    a.mostRead.forEach((m, k) => {
+      setFont(ctx, 10);
+      const ls = wrapText(ctx, m, railW - 18).slice(0, 2);
+      if (ry + ls.length * 12 > foot - 4) return;
+      ctx.font = newsFor(13); ctx.fillStyle = tab ? PLACE.book : V3.ink2; ctx.fillText(String(k + 1), railX, ry - 1);
+      setFont(ctx, 10); ctx.fillStyle = V3.ink;
+      ls.forEach((l, j) => ctx.fillText(l, railX + 16, ry + j * 12));
+      ry += ls.length * 12 + 7;
+    });
+    // ── the furniture that covers the rail: the cookie banner (the first site) or the newsletter pop-up (the second) ──
+    if (a.extra === 'consent' && !this.consentDone) {
+      const ch = 104, cy = foot - ch - 6, cx = railX - 6, cw = railW + 12;
+      roundRect(ctx, cx, cy, cw, ch, 8, V3.sheetWash);
+      setFont(ctx, 10); ctx.fillStyle = WEB.card;
+      wrapText(ctx, SITE.consent.line, cw - 16).slice(0, 4).forEach((l, k) => ctx.fillText(l, cx + 8, cy + 8 + k * 13));
+      const bw = cw - 16;
+      pill(ctx, cx + 8, cy + ch - 44, bw, 20, WEB.card);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(SITE.consent.accept, cx + 8 + Math.round((bw - ctx.measureText(SITE.consent.accept).width) / 2), cy + ch - 40);
+      this.publish({ x: cx + 8, y: cy + ch - 44, w: bw, h: 20, id: 'news-consent-accept' });
+      setFont(ctx, 9); ctx.fillStyle = V3.grey;
+      const mw = Math.ceil(ctx.measureText(SITE.consent.manage).width);
+      ctx.fillText(SITE.consent.manage, cx + Math.round((cw - mw) / 2), cy + ch - 17);
+      this.publish({ x: cx + 8, y: cy + ch - 20, w: bw, h: 16, id: 'news-consent-manage' });
+    }
+    if (a.extra === 'newsletter' && !this.newsletterGone && this.newsT >= SITE.newsletter.after) {
+      const nh = 98, ny = foot - nh - 8, nx2 = railX - 8, nw = railW + 12;
+      roundRect(ctx, nx2 + 2, ny + 3, nw, nh, 8, V3.grey);
+      roundEdge(ctx, nx2, ny, nw, nh, 8, V3.edge, V3.card);
+      px(ctx, nx2 + 1, ny + 1, nw - 2, 4, PLACE.book);
+      setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(SITE.newsletter.title, nx2 + 8, ny + 10);
+      setFont(ctx, 10); ctx.fillStyle = V3.ink2;
+      wrapText(ctx, SITE.newsletter.line, nw - 16).slice(0, 2).forEach((l, k) => ctx.fillText(l, nx2 + 8, ny + 27 + k * 12));
+      pill(ctx, nx2 + 8, ny + nh - 40, nw - 16, 20, PLACE.book);
+      setFont(ctx, 11); ctx.fillStyle = WEB.card;
+      ctx.fillText(SITE.newsletter.sign, nx2 + 8 + Math.round((nw - 16 - ctx.measureText(SITE.newsletter.sign).width) / 2), ny + nh - 36);
+      this.publish({ x: nx2 + 8, y: ny + nh - 40, w: nw - 16, h: 20, id: 'news-nl-sign' });
+      setFont(ctx, 9); ctx.fillStyle = V3.ink2;
+      const no = SITE.newsletter.no, now2 = Math.ceil(ctx.measureText(no).width);
+      ctx.fillText(no, nx2 + Math.round((nw - now2) / 2), ny + nh - 15);
+      this.publish({ x: nx2 + 8, y: ny + nh - 18, w: nw - 16, h: 16, id: 'news-nl-no' });
+    }
+    // ── the foot: the sticky ad (it follows her from site to site), and Mum's links back and forth ──
     const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
     if (i > 0) buttons.push({ id: 'news-prev', label: V.news.prev, kind: 'quiet' });
-    if (i < opened - 1) buttons.push({ id: 'news-next', label: V.news.next, kind: 'quiet' });
-    this.bar(ctx, W, H, left, buttons);
+    if (i < this.newsOpened - 1) buttons.push({ id: 'news-next', label: V.news.next, kind: 'quiet' });
+    const bx0 = this.bar(ctx, W, H, '', buttons);
+    const S = SITE.sticky, adX = 10, adW = Math.min(bx0 - 20, W - 20), adY = foot + 6, adH = BAR_H - 12;
+    roundEdge(ctx, adX, adY, adW, adH, 6, V3.edge, V3.card);
+    ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(S.label, adX + 6, adY + 3);
+    assistantMark(ctx, adX + 6, adY + 13, 14, V3.primary, V3.primaryInk);
+    setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(S.title, adX + 25, adY + 14);
+    const tw2 = Math.ceil(ctx.measureText(S.title + '  ').width);
+    setFont(ctx, 10);
+    const bw2 = Math.ceil(ctx.measureText(S.button).width) + 18;
+    ctx.fillStyle = V3.ink2; ctx.fillText(fitText(ctx, S.line, adW - 25 - tw2 - bw2 - 14), adX + 25 + tw2, adY + 15);
+    pill(ctx, adX + adW - bw2 - 6, adY + 7, bw2, 18, V3.primary);
+    ctx.fillStyle = V3.primaryInk; ctx.fillText(S.button, adX + adW - bw2 + 3, adY + 11);
+    this.publish({ x: adX, y: adY, w: adW, h: adH, id: 'sponsor-chat' });
   }
 
-  // ── ⚑ S360 — the mailbox: the clinic, Meridian's auto-reply, Mum's ─────────
+  // ── ⚑ S363 — the mailbox (Larkpost, a 2026 webmail): the folder rail, the thread list, the reading pane ─────────
+  /**
+   * ⚑ UiB job 14 Part A (N2–N4). It opens on Mum's email, already read. The thread list is her morning, newest first: her
+   * reply to Meridian waiting in Drafts (the thread: her forward, its auto-reply, the draft), the clinic, Mum, and two
+   * ordinary rows so it reads as a real inbox. The reading pane scrolls (wheel, drag, stick, touch); a Summarise button
+   * puts the AI's flat summary above the email — the AI is already in her inbox. Nothing here has to be opened.
+   */
   private drawMail(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.pageGround(ctx, W, H);
-    const cx = 16, cw = W - 32, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;
-    roundEdge(ctx, cx, cy, cw, ch, 6, V3.edge, V3.card);
-    // the inbox, newest first: a narrow column of rows
-    const lw = 132;
-    setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(MAIL.inbox.toUpperCase(), cx + 12, cy + 10);
-    let ry = cy + 30;
+    const top = PAGE_TOP, foot = H - BAR_H;
     const E = MAIL.emails;
-    const head = (id: MailId): { from: string; subject: string; when: string } =>
-      id === 'clinic' ? E.clinic : id === 'mum' ? E.mum : { from: ENQ.replyFrom.split(' · ')[0], subject: ENQ.replySubject, when: E.meridian.when };
-    if (this.mailOpen) this.mailSeen.add(this.mailOpen);
-    for (const id of this.mailRows) {
-      const h = head(id), open = this.mailOpen === id, unread = !this.mailSeen.has(id);
-      if (open) roundRect(ctx, cx + 6, ry - 3, lw - 6, 44, 5, V3.page);
-      if (unread) roundRect(ctx, cx + 10, ry + 4, 7, 7, 3, V3.primary);
-      setFont(ctx, unread ? 13 : 12); ctx.fillStyle = V3.ink;
-      ctx.save(); ctx.beginPath(); ctx.rect(cx + 20, ry - 2, lw - 26, 42); ctx.clip();
-      ctx.fillText(h.from, cx + 20, ry);
-      setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(h.subject, cx + 20, ry + 16);
-      ctx.font = monoFor(9); ctx.fillText(h.when, cx + 20, ry + 29);
-      ctx.restore();
-      this.publish({ x: cx + 6, y: ry - 3, w: lw - 6, h: 44, id: `mail-row-${id}` });
-      ry += 50;
+    // the app's own header: its mark, the search, her
+    px(ctx, 0, top, W, 30, V3.card); px(ctx, 0, top + 30, W, 1, V3.edge);
+    roundRect(ctx, 10, top + 6, 18, 18, 5, V3.primary);
+    ctx.save(); ctx.strokeStyle = V3.primaryInk; ctx.lineWidth = 1.5;
+    ctx.strokeRect(13.5, top + 10.5, 11, 9);
+    ctx.beginPath(); ctx.moveTo(13.5, top + 10.5); ctx.lineTo(19, top + 15.5); ctx.lineTo(24.5, top + 10.5); ctx.stroke(); ctx.restore();
+    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(MAIL.brand, 34, top + 8);
+    const sx = 130, sw = W - sx - 48;
+    roundEdge(ctx, sx, top + 4, sw, 22, 11, V3.edge, V3.page);
+    magnifier(ctx, sx + 9, top + 8, V3.ink2);
+    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(MAIL.search, sx + 28, top + 9);
+    profileGlyph(ctx, W - 32, top + 6, 18, 'maya');
+    const y0 = top + 31;
+    // the rail: folders, then labels
+    const railW = 92;
+    px(ctx, 0, y0, railW, foot - y0, V3.page);
+    let fy = y0 + 8;
+    for (const f of MAIL.folders) {
+      const on = f.id === 'inbox';
+      if (on) roundRect(ctx, 4, fy - 4, railW - 8, 22, 11, V3.botSoft);
+      folderIcon(ctx, f.id, 9, fy, on ? V3.botInk : V3.ink2);
+      setFont(ctx, 11); ctx.fillStyle = on ? V3.botInk : V3.ink; ctx.fillText(f.label, 28, fy + 1);
+      if (f.count) { const cw = Math.ceil(ctx.measureText(f.count).width); ctx.fillText(f.count, railW - 12 - cw, fy + 1); }
+      fy += 24;
     }
-    px(ctx, cx + lw + 6, cy + 8, 1, ch - 16, V3.edge);
-    // the open email
-    const x = cx + lw + 20, w = cx + cw - 16 - x, bottom = cy + ch - 8;
-    let y = cy + 10;
-    const line = (t: string, size: number, ink: string, gap: number, mono = false): void => {
+    fy += 4; ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText('LABELS', 10, fy); fy += 15;
+    for (const [k, v] of Object.entries(MAIL.labels)) {
+      roundRect(ctx, 11, fy + 2, 9, 9, 2, mailLabelInk(k));
+      setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(v, 28, fy); fy += 18;
+    }
+    // the thread list, newest first
+    const lx = railW, lw = 178;
+    px(ctx, lx, y0, lw, foot - y0, V3.card);
+    px(ctx, lx + lw, y0, 1, foot - y0, V3.edge);
+    type Row = { id: MailId | null; mark: string; org: boolean; fill: string; from: string; count?: string; subject: string; snippet: string;
+      when: string; label?: string; draft?: boolean; unread?: boolean };
+    const rows: Row[] = [
+      { id: 'meridian', mark: 'MT', org: true, fill: PLACE.plant, from: E.thread.from, count: E.thread.count, subject: ENQ.replySubject,
+        snippet: E.thread.snippet, when: E.draft.when.replace(/^saved /, ''), label: E.thread.label, draft: true },
+      { id: 'clinic', mark: 'AG', org: true, fill: PLACE.sky, from: E.clinic.from, subject: E.clinic.subject, snippet: E.clinic.lines[1],
+        when: E.clinic.when, label: E.clinic.label },
+      { id: 'mum', mark: 'M', org: false, fill: KETTLE.avatarMum, from: E.mum.from, subject: E.mum.subject, snippet: E.mum.snippet,
+        when: E.mum.when, label: E.mum.label },
+      ...MAIL.ordinary.map((o) => ({ id: null, mark: o.from.slice(0, 1), org: !o.promo, fill: o.promo ? V3.grey : PLACE.sun, from: o.from,
+        subject: o.subject, snippet: o.snippet, when: o.when, unread: true }))
+    ];
+    let ry = y0;
+    const rh = 44;
+    for (const r of rows) {
+      if (ry + rh > foot) break;
+      const sel = r.id !== null && this.mailOpen === r.id;
+      if (sel) px(ctx, lx, ry, lw, rh, V3.botSoft);
+      px(ctx, lx + 6, ry + rh - 1, lw - 12, 1, V3.edge);
+      senderMark(ctx, lx + 7, ry + 7, 22, r.mark, r.fill, r.org);
+      const tx = lx + 35, tw = lw - 35 - 6;
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2;
+      const ww = Math.ceil(ctx.measureText(r.when).width);
+      ctx.fillText(r.when, lx + lw - 6 - ww, ry + 6);
+      if (r.unread) roundRect(ctx, lx + 2, ry + 18, 4, 4, 2, V3.primary);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink;
+      const from = r.from + (r.count ? ` ${r.count}` : '');
+      ctx.fillText(fitText(ctx, from, tw - ww - 6), tx, ry + 4);
+      let sx2 = tx;
+      setFont(ctx, 10);
+      if (r.draft) { ctx.fillStyle = V3.danger; ctx.fillText(MAIL.draftTag, sx2, ry + 17); sx2 += Math.ceil(ctx.measureText(MAIL.draftTag + ' ').width); }
+      ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, r.subject, tw - (sx2 - tx)), sx2, ry + 17);
+      // the label, small, at the end of the snippet's line
+      let lwid = 0;
+      if (r.label) {
+        ctx.font = monoFor(8);
+        const t = MAIL.labels[r.label] ?? r.label;
+        lwid = Math.ceil(ctx.measureText(t).width) + 8;
+        pill(ctx, lx + lw - 6 - lwid, ry + 29, lwid, 11, mailLabelInk(r.label));
+        ctx.fillStyle = V3.ink; ctx.fillText(t, lx + lw - 6 - lwid + 4, ry + 30);
+      }
+      setFont(ctx, 10); ctx.fillStyle = V3.ink2;
+      ctx.fillText(fitText(ctx, r.snippet, tw - lwid - 6), tx, ry + 29);
+      if (r.id) this.publish({ x: lx, y: ry, w: lw, h: rh, id: `mail-row-${r.id}` });
+      ry += rh;
+    }
+    // the reading pane: its header stays; the email under it scrolls
+    const rx = lx + lw + 1, rw = W - rx;
+    const id = this.mailOpen ?? 'mum';
+    if (this.mailOpen) this.mailSeen.add(this.mailOpen);
+    px(ctx, rx, y0, rw, foot - y0, V3.card);
+    const subject = id === 'mum' ? E.mum.subject : id === 'clinic' ? E.clinic.subject : ENQ.replySubject;
+    setFont(ctx, 11);
+    const sum = '✦ ' + MAIL.summarise, sumW = Math.ceil(ctx.measureText(sum).width) + 16;
+    pill(ctx, rx + rw - sumW - 10, y0 + 7, sumW, 20, this.summed.has(id) ? V3.bot : V3.botSoft);
+    ctx.fillStyle = V3.botInk; ctx.fillText(sum, rx + rw - sumW - 2, y0 + 11);
+    this.publish({ x: rx + rw - sumW - 10, y: y0 + 7, w: sumW, h: 20, id: 'mail-sum' });
+    setFont(ctx, 14); ctx.fillStyle = V3.ink;
+    ctx.fillText(fitText(ctx, subject, rw - sumW - 34), rx + 12, y0 + 9);
+    const lab = id === 'mum' ? E.mum.label : id === 'clinic' ? E.clinic.label : E.thread.label;
+    ctx.font = monoFor(8);
+    const lt = MAIL.labels[lab] ?? lab, ltw = Math.ceil(ctx.measureText(lt).width) + 8;
+    pill(ctx, rx + 12, y0 + 29, ltw, 11, mailLabelInk(lab)); ctx.fillStyle = V3.ink; ctx.fillText(lt, rx + 16, y0 + 30);
+    ctx.fillStyle = V3.ink2; ctx.fillText(MAIL.inbox, rx + 18 + ltw, y0 + 30);
+    px(ctx, rx + 8, y0 + 44, rw - 16, 1, V3.edge);
+    const P = { x: rx + 12, y: y0 + 48, w: rw - 26, h: foot - (y0 + 48) - 2 };
+    this.mailPane = { x: rx, y: y0 + 44, w: rw, h: foot - y0 - 44 };
+    const scroll = Math.round(this.mailScroll[id] ?? 0);
+    ctx.save(); ctx.beginPath(); ctx.rect(rx, P.y - 2, rw, P.h + 2); ctx.clip();
+    const contentH = this.mailBody(ctx, id, P.x, P.y - scroll, P.w, true);
+    ctx.restore();
+    this.mailMax = Math.max(0, contentH - P.h);
+    this.mailScroll[id] = Math.max(0, Math.min(this.mailMax, this.mailScroll[id] ?? 0));
+    if (this.mailMax > 0) {
+      // the pane's own scroll thumb
+      const th = Math.max(16, Math.round(P.h * P.h / contentH)), ty = P.y + Math.round((P.h - th) * (this.mailScroll[id] / this.mailMax));
+      roundRect(ctx, rx + rw - 6, ty, 4, th, 2, V3.grey);
+    }
+    const more = this.mailMax > 0 && this.mailScroll[id] < this.mailMax - 2;
+    const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
+    if (this.step === 'mumMail') buttons.push({ id: 'mail-read', label: E.mum.read, kind: 'primary' });
+    this.bar(ctx, W, H, more ? MAIL.scrollHint + ' ▾' : MAIL.address, buttons);
+  }
+
+  /**
+   * ⚑ S363 — one email (or the Meridian thread) laid out from (x, y) at width w; returns its height. `live` publishes its
+   * links (Mum's three) only where they are fully inside the pane; the AI's screenshots (Part B) draw it again, not live.
+   */
+  private mailBody(ctx: CanvasRenderingContext2D, id: MailId, x: number, y: number, w: number, live: boolean): number {
+    const E = MAIL.emails;
+    const y0 = y;
+    const text = (t: string, size: number, ink: string, lead: number, mono = false): void => {
       if (mono) ctx.font = monoFor(size); else setFont(ctx, size);
       ctx.fillStyle = ink;
-      for (const l of wrapText(ctx, t, w)) { if (y + gap <= bottom) ctx.fillText(l, x, y); y += gap; }
+      for (const l of wrapText(ctx, t, w)) { ctx.fillText(l, x, y); y += lead; }
     };
-    const id = this.mailOpen;
-    const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
-    if (id === 'clinic') {
+    const sender = (mark: string, fill: string, org: boolean, me: boolean, name: string, sub: string, when: string, subInk: string = V3.ink2): void => {
+      if (me) profileGlyph(ctx, x, y, 20, 'maya'); else senderMark(ctx, x, y, 20, mark, fill, org);
+      setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(name, x + 26, y + 1);
+      const nw = Math.ceil(ctx.measureText(name + '  ').width);
+      ctx.font = monoFor(9); const ww = Math.ceil(ctx.measureText(when).width);
+      ctx.fillStyle = V3.ink2; ctx.fillText(when, x + w - ww, y + 3);
+      setFont(ctx, 10); ctx.fillStyle = subInk; ctx.fillText(fitText(ctx, sub, Math.max(20, w - 26 - nw - ww - 6)), x + 26 + nw, y + 3);
+      y += 28;
+    };
+    const rule = (): void => { y += 4; px(ctx, x, y, w, 1, V3.edge); y += 10; };
+    // the AI's summary, above the email, when she asked for it
+    if (this.summed.has(id)) {
+      setFont(ctx, 11);
+      const lines = MAIL.summaries[id].flatMap((l) => wrapText(ctx, '· ' + l, w - 20));
+      const h = 24 + lines.length * 14 + 16;
+      roundEdge(ctx, x, y, w, h, 8, V3.edge, V3.botSoft);
+      assistantMark(ctx, x + 8, y + 6, 12, V3.primary, V3.primaryInk);
+      setFont(ctx, 10); ctx.fillStyle = V3.botInk; ctx.fillText(MAIL.summaryTitle, x + 24, y + 7);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink;
+      lines.forEach((l, k) => ctx.fillText(l, x + 10, y + 24 + k * 14));
+      ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(MAIL.summaryFine, x + 10, y + h - 13);
+      y += h + 10;
+    }
+    if (id === 'mum') {
+      const m = E.mum;
+      sender('M', KETTLE.avatarMum, false, false, m.from, 'to me', m.when);
+      for (const t of [...m.lines, '', ...m.after]) { if (!t) { y += 6; continue; } text(t, 12, V3.ink, 16); }
+      y += 8;
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.linksLabel, x, y); y += 14;
+      // her links: each opens the News tab at that article (the second carries her note)
+      ARTICLES.forEach((a, k) => {
+        setFont(ctx, 12);
+        const hl = wrapText(ctx, a.head, w - 16).slice(0, 2);
+        setFont(ctx, 10);
+        const note = a.mumNote ? wrapText(ctx, `Mum: “${a.mumNote}”`, w - 16).slice(0, 2) : [];
+        const lh = 17 + hl.length * 15 + note.length * 13 + 4;
+        roundEdge(ctx, x, y, w, lh, 6, V3.edge, V3.page);
+        px(ctx, x + 1, y + 3, 3, lh - 6, articleInk(a.look));
+        ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(`${a.mast} · ${a.address.split('/')[0]}`, x + 10, y + 4);
+        setFont(ctx, 12); ctx.fillStyle = V3.primary;
+        hl.forEach((t, i) => ctx.fillText(t, x + 10, y + 17 + i * 15));
+        setFont(ctx, 10); ctx.fillStyle = V3.ink2;
+        note.forEach((t, i) => ctx.fillText(t, x + 10, y + 17 + hl.length * 15 + i * 13));
+        if (live && y >= this.mailPane.y && y + lh <= this.mailPane.y + this.mailPane.h + 2)
+          this.publish({ x, y, w, h: lh, id: `mail-link-${k}` });
+        y += lh + 6;
+      });
+      // the loft photo, attached (his "keep the loft photo")
+      y += 4;
+      const pS = 1.3;
+      ctx.save(); ctx.translate(x, y); ctx.scale(pS, pS); drawLoftPhoto(ctx, 0, 0); ctx.restore();
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.attachment, x + Math.round(78 * pS) + 8, y + Math.round(50 * pS) - 12);
+      y += Math.round(50 * pS) + 10;
+      // "Mum, I" — her reply, never sent
+      roundEdge(ctx, x, y, w, 34, 6, V3.edge, V3.page);
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.replyLabel, x + 8, y + 4);
+      setFont(ctx, 13); ctx.fillStyle = V3.ink;
+      const caret = Math.floor(this.t / CURSOR_BLINK) % 2 === 0 ? '▏' : '';
+      ctx.fillText(m.draft + caret, x + 8, y + 16);
+      y += 40;
+    } else if (id === 'meridian') {
+      const f = E.forward, d = E.draft;
+      // 1 · her forward, in her own words (P7-66), the clinic's email folded under it
+      sender('M', '', false, true, f.from, f.to, f.when);
+      text(f.subject, 12, V3.ink, 17);
+      y += 2;
+      for (const l of ENQ.message) text(l, 12, V3.ink, 16);
+      y += 4;
+      ctx.font = monoFor(9);
+      const q = wrapText(ctx, '··· ' + f.quoted, w - 16);
+      roundEdge(ctx, x, y, w, 10 + q.length * 12, 5, V3.edge, V3.page);
+      ctx.fillStyle = V3.ink2; q.forEach((l, k) => ctx.fillText(l, x + 8, y + 5 + k * 12));
+      y += 10 + q.length * 12 + 4;
+      rule();
+      // 2 · the auto-reply
+      sender('MT', PLACE.plant, true, false, ENQ.replyFrom.split(' · ')[0], 'auto-reply', E.meridian.when);
+      for (const l of ENQ.reply) text(l, 12, V3.ink, 16);
+      y += 4;
+      text(ENQ.directory, 11, V3.ink2, 15);
+      rule();
+      // 3 · her reply to it: typed, saved, never sent
+      sender('M', '', false, true, f.from, MAIL.draftTag, d.when, V3.danger);
+      text(d.subject, 12, V3.ink, 17);
+      y += 2;
+      for (const l of d.lines) text(l, 12, V3.ink, 16);
+      y += 4;
+      text(d.status, 10, V3.danger, 14, true);
+      y += 4;
+    } else {
       const c = E.clinic;
-      line(`${c.from} · ${c.when}`, 11, V3.ink2, 15, true);
-      line(c.subject, 17, V3.ink, 24);
-      for (const l of c.lines) line(l, 14, V3.ink, 18);
-      // ⚑ H48 — the number, on its own designed card (a deli-counter ticket with its torn edge): nothing else from the clinic
-      const tw = Math.min(250, w), th = 96, tx = x, ty = y + 6;
+      sender('AG', PLACE.sky, true, false, c.from, 'to me', c.when);
+      for (const l of c.lines) text(l, 12, V3.ink, 16);
+      // ⚑ H48 — the number, on its own designed card (a deli-counter ticket with its torn edge)
+      const tw = Math.min(240, w), th = 92, tx = x, ty = y + 8;
       roundRect(ctx, tx, ty, tw, th, 5, V3.ticketEdge);
       roundRect(ctx, tx + 2, ty + 2, tw - 4, th - 4, 4, V3.ticket);
       for (let k = 0; k < Math.floor((tw - 20) / 22); k++) px(ctx, tx + 10 + k * 22, ty + 2, 8, 3, V3.ticketEdge);
-      setFont(ctx, 13); ctx.fillStyle = V3.ink; ctx.fillText(c.cardLabel.toUpperCase(), tx + 16, ty + 14);
-      setFont(ctx, 42); ctx.fillText(this.clinicNumber.toLocaleString('en-GB'), tx + 14, ty + 32);
-      ctx.font = monoFor(10); ctx.fillStyle = this.clinicMoved ? V3.danger : V3.ink2;
-      ctx.fillText(this.clinicMoved ? CL.moved : c.cardNote, tx + 16, ty + 78);
-      if (this.step === 'clinic') buttons.push({ id: 'mail-support', label: c.link, kind: 'primary' });
-    } else if (id === 'meridian') {
-      line(`${ENQ.replyFrom} · ${E.meridian.when}`, 11, V3.ink2, 15, true);
-      line(ENQ.replySubject, 16, V3.ink, 22);
-      for (const m of ENQ.reply) line(m, 13, V3.ink, 17);
-      y += 4;
-      line(ENQ.directory, 12, V3.ink2, 16);
-    } else if (id === 'mum') {
-      const m = E.mum;
-      line(`${m.from} · ${m.when}`, 11, V3.ink2, 15, true);
-      line(m.subject, 16, V3.ink, 22);
-      // two columns: her words (and "Mum, I") on the left; the loft photo and her three links on the right
-      const rw = Math.min(170, Math.round(w * 0.42)), rx = x + w - rw, lw2 = w - rw - 12, top0 = y;
-      setFont(ctx, 13); ctx.fillStyle = V3.ink;
-      for (const t of [...m.lines, '', ...m.after]) {
-        if (!t) { y += 6; continue; }
-        for (const l of wrapText(ctx, t, lw2)) { if (y + 16 <= bottom - 34) ctx.fillText(l, x, y); y += 16; }
-      }
-      // "Mum, I" — her reply, never sent (it moved here from her thread)
-      const dy = Math.min(y + 6, bottom - 30);
-      roundEdge(ctx, x, dy, lw2, 28, 5, V3.edge, V3.page);
-      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.replyLabel, x + 8, dy + 3);
-      setFont(ctx, 13); ctx.fillStyle = V3.ink;
-      const caret = Math.floor(this.t / CURSOR_BLINK) % 2 === 0 ? '▏' : '';
-      ctx.fillText(m.draft + caret, x + 8, dy + 13);
-      // the loft photo, attached (it moved here from her years — his "keep the loft photo")
-      const pS = Math.min(1.4, (rw - 4) / 78), phH = Math.round(50 * pS);
-      ctx.save(); ctx.translate(rx, top0); ctx.scale(pS, pS); drawLoftPhoto(ctx, 0, 0); ctx.restore();
-      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.attachment, rx, top0 + phH + 2);
-      let ly = top0 + phH + 16;
-      ctx.fillText(m.linksLabel, rx, ly); ly += 13;
-      // her links: each opens the News tab at that article
-      ARTICLES.forEach((a, k) => {
-        setFont(ctx, 11);
-        const hl = wrapText(ctx, a.head, rw - 12).slice(0, 2);
-        const lh = 15 + hl.length * 13;
-        if (ly + lh > bottom) return;
-        roundEdge(ctx, rx, ly, rw, lh, 4, V3.edge, V3.page);
-        ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(a.mast, rx + 6, ly + 3);
-        setFont(ctx, 11); ctx.fillStyle = V3.primary;
-        hl.forEach((t, i) => ctx.fillText(t, rx + 6, ly + 14 + i * 13));
-        this.publish({ x: rx, y: ly, w: rw, h: lh, id: `mail-link-${k}` });
-        ly += lh + 4;
-      });
-      if (this.step === 'mumMail') buttons.push({ id: 'mail-read', label: m.read, kind: 'primary' });
+      setFont(ctx, 12); ctx.fillStyle = V3.ink; ctx.fillText(c.cardLabel.toUpperCase(), tx + 14, ty + 13);
+      setFont(ctx, 38); ctx.fillText(this.clinicNumber.toLocaleString('en-GB'), tx + 12, ty + 29);
+      ctx.font = monoFor(9); ctx.fillStyle = this.clinicMoved ? V3.danger : V3.ink2;
+      ctx.fillText(fitText(ctx, this.clinicMoved ? CL.moved : c.cardNote, tw - 28), tx + 14, ty + 74);
+      y = ty + th + 8;
     }
-    this.bar(ctx, W, H, MAIL.address, buttons);
+    return y - y0;
   }
 
   // ── the clinic: the number ───────────────────────────────────────────────
@@ -1406,10 +1891,18 @@ export class E4Browser {
   }
 
   // ── the bot: Second Thoughts ──────────────────────────────────────────────
+  /**
+   * ⚑ S363 / UiB job 14 Part A (N7: "similar to a ChatGPT style of conversational AI… We cannot even see the responses of
+   * Maya"; "the point of weaponised care"). One conversation column between a slim rail and nothing: the assistant
+   * speaks as plain text beside its mark; HER words are her own warm bubbles on the right; what it shows her (the clip,
+   * her circle, her picture, a story) are cards inside the conversation; "Memory updated" each time it files something
+   * about her, with the sentence it saved. At the foot, the suggested replies above the composer. The composer takes no
+   * typing (R28): a press on it points to the suggestions. "Your week, so far" is gone.
+   */
   private drawBot(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     this.pageGround(ctx, W, H);
     if (this.clipTakeover) {
-      // the clip, as big as the page allows, the stamp always in its corner; then it shrinks back into the map panel
+      // the clip, as big as the page allows, the stamp always in its corner; then it goes into the conversation as a card
       const top = PAGE_TOP + 22, avail = H - BAR_H - 8 - top;
       const ch = avail, cw = Math.min(W - 32, Math.round(ch * 16 / 9));
       const cx = Math.round((W - cw) / 2);
@@ -1417,50 +1910,97 @@ export class E4Browser {
       ctx.fillText(V.clip.title, cx, PAGE_TOP + 4);
       const tw = Math.ceil(ctx.measureText(V.clip.title + '   ').width);
       ctx.font = monoFor(11); ctx.fillStyle = V3.ink2;
-      ctx.fillText(`${V.clip.channel}`, cx + tw, PAGE_TOP + 6);
+      ctx.fillText(`${V.clip.channel} · ${V.clip.recommended}`, cx + tw, PAGE_TOP + 6);
       drawContagionClip(ctx, this.botT + CLIP_TAKEOVER_SECONDS, cx, top, cw, ch);
       this.bar(ctx, W, H, BOT.mark + ' · ' + V.clip.channel, []);
       return;
     }
-    const top = PAGE_TOP + 4;
-    px(ctx, 0, top, W, 36, V3.card);
-    px(ctx, 0, top + 36, W, 1, V3.edge);
-    // ⚑ S349 / T44 — 2026's AI-assistant idiom: the soft disc with the sparkle (not a letter), the name beside it
-    assistantMark(ctx, 16, top + 5, 26, V3.primary, V3.primaryInk);
-    setFont(ctx, 17); ctx.fillStyle = V3.ink; ctx.fillText(BOT.mark, 52, top + 4);
-    px(ctx, 52, top + 25, 6, 6, V3.bot);
-    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.online, 62, top + 22);
-    const bodyTop = top + 44, bodyBottom = H - BAR_H - 6;
-    // ⚑ S328 — the chat takes about half the window (556 logical px), the panel the rest
-    const chatX = 16, chatW = Math.min(318, Math.round((W - 48) * 0.52)), panelX = chatX + chatW + 16, panelW = W - 16 - panelX;
-    px(ctx, panelX - 8, bodyTop, 1, bodyBottom - bodyTop, V3.edge);
-    this.drawConversation(ctx, chatX, bodyTop, chatW, bodyBottom);
-    this.drawBotPanel(ctx, panelX, bodyTop, panelW, bodyBottom);
+    const top = PAGE_TOP;
+    px(ctx, 0, top, W, H - top, V3.card);
+    // the slim rail: its mark, a new chat, the search, and her (whoever it says she is)
+    const railW = 40;
+    px(ctx, 0, top, railW, H - top, V3.page); px(ctx, railW, top, 1, H - top, V3.edge);
+    assistantMark(ctx, 9, top + 8, 22, V3.primary, V3.primaryInk);
+    newChatIcon(ctx, 13, top + 46, V3.ink2);
+    magnifier(ctx, 13, top + 72, V3.ink2);
+    if (this.profile === 'goal') drawGoalPicture(ctx, 10, H - 32, 20, 20, { caption: false }); else profileGlyph(ctx, 10, H - 32, 20, 'maya');
+    // the header: its name (a picker's chevron), and the memory it keeps
+    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(BOT.mark, railW + 14, top + 8);
+    const mw = Math.ceil(ctx.measureText(BOT.mark).width);
+    chevron(ctx, railW + 20 + mw, top + 13, V3.ink2);
+    setFont(ctx, 10);
+    const mem = '✦ ' + BOT.memoryUpdated.split(' ')[0] + ' on', memW = Math.ceil(ctx.measureText(mem).width) + 14;
+    pill(ctx, W - 12 - memW, top + 8, memW, 18, V3.botSoft);
+    ctx.fillStyle = V3.botInk; ctx.fillText(mem, W - 12 - memW + 7, top + 11);
+    // the composer, and the line under it
+    const colW = Math.min(440, W - railW - 36), colX = railW + Math.round((W - railW - colW) / 2);
+    const compH = 34, compY = H - 18 - compH;
+    roundEdge(ctx, colX, compY, colW, compH, 17, V3.edge, V3.page);
+    plusGlyph(ctx, colX + 13, compY + 11, V3.ink2);
+    setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.composer, colX + 34, compY + 9);
+    roundRect(ctx, colX + colW - 30, compY + 5, 24, 24, 12, V3.grey);
+    sendGlyph(ctx, colX + colW - 24, compY + 11, V3.card);
+    if (this.step === 'bot' || this.step === 'confirm') this.publish({ x: colX, y: compY, w: colW, h: compH, id: 'conv-compose' });
+    const foot = this.nowLine ?? (this.waitNow ? PROGRAM.console.wait : BOT.footer);
+    setFont(ctx, 9); ctx.fillStyle = V3.ink2;
+    const fl = fitText(ctx, foot, W - railW - 24);
+    ctx.fillText(fl, railW + Math.round((W - railW - ctx.measureText(fl).width) / 2), H - 14);
+    // the suggested replies (her answers), above the composer
     const b = this.bot;
     const ready = !!b && this.botBeatReady && !this.botDone.has(b.id);
-    const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
-    if (ready && b!.chips) b!.chips.forEach((c, k) => buttons.push({ id: `conv-chip-${k}`, label: c.label, kind: k === 0 ? 'primary' : 'quiet' }));
-    else if (ready && b!.button) buttons.push({ id: 'conv-act', label: b!.button, kind: 'primary' });
-    const typing = !!b && this.botLinesShown < b.lines.length;
-    this.bar(ctx, W, H, typing ? BOT.typing : '', buttons.reverse());
+    const sugg: { id: string; label: string; primary: boolean }[] = [];
+    if (ready && b!.chips) b!.chips.forEach((c, k) => sugg.push({ id: `conv-chip-${k}`, label: c.label, primary: k === 0 }));
+    else if (ready && b!.button) sugg.push({ id: 'conv-act', label: b!.button, primary: true });
+    let convBottom = compY - 8;
+    if (sugg.length) {
+      const sy = compY - 32;
+      let sx = colX;
+      for (const c of sugg) {
+        setFont(ctx, 13);
+        const w = Math.ceil(ctx.measureText(c.label).width) + 26;
+        if (c.primary) pill(ctx, sx, sy, w, 26, V3.primary);
+        else { pill(ctx, sx, sy, w, 26, V3.edge); pill(ctx, sx + 1, sy + 1, w - 2, 24, V3.card); }
+        ctx.fillStyle = c.primary ? V3.primaryInk : V3.ink; ctx.fillText(c.label, sx + 13, sy + 6);
+        if (this.composeFlashT > 0) this.ringAround(ctx, { x: sx, y: sy, w, h: 26, id: c.id });
+        this.publish({ x: sx, y: sy, w, h: 26, id: c.id });
+        sx += w + 8;
+      }
+      convBottom = sy - 8;
+    }
+    this.drawConversation(ctx, colX, top + 36, colW, convBottom);
+  }
+
+  /** ⚑ S363 — a beat's rows as she sees them: its lines so far, and its card where it belongs (BEAT_CARD) */
+  private beatRows(b: BotBeat, shown: number): Said[] {
+    const out: Said[] = [];
+    const lines = this.botLines(b);
+    const c = BEAT_CARD[b.id];
+    if (c && c[1] < 0) out.push({ who: 'card', text: '', card: c[0], ring: this.ring });
+    for (let k = 0; k < Math.min(shown, lines.length); k++) {
+      out.push({ who: 'bot', text: lines[k] });
+      if (c && c[1] === k) out.push({ who: 'card', text: '', card: c[0], ring: this.ring });
+    }
+    return out;
   }
 
   private drawConversation(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, bottom: number): void {
     const b = this.bot;
-    type Row = { who: 'bot' | 'her' | 'dots'; text: string };
-    const rows: Row[] = this.botSaid.map((s) => ({ who: s.who, text: s.text }));
+    type Row = Said | { who: 'dots'; text: string };
+    const rows: Row[] = [...this.botSaid];
     if (b && !this.botDone.has(b.id) && this.step !== 'ready' && this.step !== 'photos') {
-      const lines = this.botLines(b);
-      for (let k = 0; k < this.botLinesShown; k++) rows.push({ who: 'bot', text: lines[k] });
-      if (this.botLinesShown < lines.length) rows.push({ who: 'dots', text: '' });
+      rows.push(...this.beatRows(b, this.botLinesShown));
+      if (this.botLinesShown < b.lines.length) rows.push({ who: 'dots', text: '' });
     }
-    setFont(ctx, 16);
-    const maxW = w - 40;
+    const tx = x + 26, tw = w - 26;
+    const cardH: Record<CardKind, number> = { clip: 128, map: 112, goal: 146, stories: 60, ring: 74 };
     const sized = rows.map((r) => {
       if (r.who === 'dots') return { r, lines: [] as string[], h: 26 };
-      setFont(ctx, 16);
-      const lines = wrapText(ctx, r.text, maxW - 24).slice(0, 4);
-      return { r, lines, h: lines.length * 20 + 14 + 6 };
+      if (r.who === 'card') return { r, lines: [] as string[], h: cardH[(r as Said).card ?? 'ring'] + 8 };
+      if (r.who === 'memory') { setFont(ctx, 10); return { r, lines: [fitText(ctx, `“${r.text}”`, tw)], h: 32 }; }
+      setFont(ctx, 14);
+      if (r.who === 'her') { const lines = wrapText(ctx, r.text, Math.round(w * 0.7) - 24).slice(0, 4); return { r, lines, h: lines.length * 18 + 12 + 8 }; }
+      const lines = wrapText(ctx, r.text, tw).slice(0, 5);
+      return { r, lines, h: lines.length * 18 + 8 };
     });
     let y = bottom;
     const placed: { s: typeof sized[number]; y: number }[] = [];
@@ -1469,117 +2009,85 @@ export class E4Browser {
       y -= sized[i].h;
       placed.unshift({ s: sized[i], y });
     }
+    ctx.save(); ctx.beginPath(); ctx.rect(x - 4, top, w + 8, bottom - top); ctx.clip();
+    // the bot's mark sits once at the head of each run of its words (the idiom)
+    let prev: string | null = null;
     for (const { s, y: ry } of placed) {
-      if (s.r.who === 'dots') {
-        assistantMark(ctx, x, ry, 22, V3.primary, V3.primaryInk);
+      const who = s.r.who;
+      if (who === 'dots') {
+        assistantMark(ctx, x, ry, 18, V3.primary, V3.primaryInk);
         const d = Math.floor(this.botT / 0.3) % 3;
-        for (let k = 0; k < 3; k++) roundRect(ctx, x + 32 + k * 10, ry + 8, 6, 6, 3, k === d ? V3.ink : V3.grey);
-        continue;
+        for (let k = 0; k < 3; k++) roundRect(ctx, tx + 4 + k * 10, ry + 6, 6, 6, 3, k === d ? V3.ink : V3.grey);
+        prev = 'bot'; continue;
       }
-      setFont(ctx, 16);
-      const mine = s.r.who === 'her';
-      const bw = Math.max(...s.lines.map((l) => Math.ceil(ctx.measureText(l).width))) + 24;
-      const bh = s.h - 6;
-      // ⚑ S349 / T44 — today's assistant idiom: the assistant speaks as plain text on the page beside its sparkle mark;
-      //   only HER words sit in a soft, round bubble on the right. Same type, same size, same place.
-      const bx = mine ? x + w - 4 - bw : x + 30;
-      if (!mine) assistantMark(ctx, x, ry, 22, V3.primary, V3.primaryInk);
-      if (mine) roundRect(ctx, bx, ry, bw, bh, Math.min(16, Math.floor(bh / 2)), KETTLE_MINE);
-      setFont(ctx, 16); ctx.fillStyle = V3.ink;
-      s.lines.forEach((l, k) => ctx.fillText(l, mine ? bx + 12 : bx + 2, ry + 7 + k * 20));
+      if (who === 'her') {
+        setFont(ctx, 14);
+        const bw = Math.max(...s.lines.map((l) => Math.ceil(ctx.measureText(l).width))) + 24, bh = s.h - 8;
+        const bx = x + w - bw;
+        roundRect(ctx, bx, ry, bw, bh, Math.min(16, Math.floor(bh / 2)), KETTLE_MINE);
+        ctx.fillStyle = V3.ink;
+        s.lines.forEach((l, k) => ctx.fillText(l, bx + 12, ry + 6 + k * 18));
+        prev = 'her'; continue;
+      }
+      if (who === 'memory') {
+        // ⚑ "Memory updated" — what it filed about her, in its kind, flat voice
+        assistantMark(ctx, tx, ry + 2, 11, V3.bot, V3.botInk);
+        setFont(ctx, 10); ctx.fillStyle = V3.botInk; ctx.fillText(BOT.memoryUpdated, tx + 15, ry + 2);
+        ctx.fillStyle = V3.ink2; ctx.fillText(s.lines[0], tx, ry + 16);
+        prev = 'memory'; continue;
+      }
+      if (prev !== 'bot') assistantMark(ctx, x, ry, 18, V3.primary, V3.primaryInk);
+      if (who === 'card') this.drawCard(ctx, (s.r as Said).card ?? 'ring', tx, ry, Math.min(tw, 320), (s.r as Said).ring ?? this.ring);
+      else { setFont(ctx, 14); ctx.fillStyle = V3.ink; s.lines.forEach((l, k) => ctx.fillText(l, tx, ry + 1 + k * 18)); }
+      prev = 'bot';
     }
+    ctx.restore();
   }
 
-  /** what the bot is showing her: her week (its evidence), then where she is heading, then the map and the clip */
-  private drawBotPanel(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, bottom: number): void {
-    const b = this.bot;
-    const id0 = b?.id ?? 'hello';
-    const id = id0 === 'clip' ? 'map' : id0;   // S360: after the clip, its panel is the map's (the clip, small, in it)
-    const title = (t: string, y: number): void => { setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(t.toUpperCase(), x, y); };
-    if (id === 'hello' || id === 'reasons' || id === 'diagnosis') {
-      // its evidence: every refusal of the week, kept as a reason
-      title(BOT.week.title, top);
-      const rows: [string, string][] = [
-        [CL.tab, `${CL.numberLabel} ${this.clinicNumber.toLocaleString('en-GB')}`],
-        [BOT.week.meridian, BOT.week.declined],
-        [V.messenger.chats.dad.name, V.messenger.dad.before[1].text]
-      ];
-      let y = top + 22;
-      for (const [k, v] of rows) {
-        roundEdge(ctx, x, y, w, 46, 12, V3.edge, V3.card);   // S349: the soft, round card of a 2026 assistant
-        setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(k, x + 12, y + 7);
-        setFont(ctx, 14); ctx.fillStyle = V3.ink;
-        ctx.save(); ctx.beginPath(); ctx.rect(x + 12, y + 20, w - 24, 20); ctx.clip(); ctx.fillText(v, x + 12, y + 24); ctx.restore();
-        y += 54;
-      }
+  /** ⚑ S363 — what the bot shows her, inside the conversation (it was a side panel) */
+  private drawCard(ctx: CanvasRenderingContext2D, kind: CardKind, x: number, y: number, w: number, ring: number): void {
+    if (kind === 'clip') {
+      const cw = 200, ch = 112;
+      drawContagionClip(ctx, CLIP_LOOP_SECONDS - 0.6, x, y, cw, ch);
+      roundRect(ctx, x + cw / 2 - 16, y + ch / 2 - 16, 32, 32, 16, V3.card);
+      ctx.fillStyle = V3.ink; ctx.beginPath(); ctx.moveTo(x + cw / 2 - 5, y + ch / 2 - 8); ctx.lineTo(x + cw / 2 + 8, y + ch / 2); ctx.lineTo(x + cw / 2 - 5, y + ch / 2 + 8); ctx.closePath(); ctx.fill();
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2;
+      ctx.fillText(fitText(ctx, `${V.clip.title} · ${BOT.cards.clip} · ${V.clip.length}`, w), x, y + ch + 4);
       return;
     }
-    if (id === 'stories' || id === 'rest') { this.drawStories(ctx, x, top, w, bottom); return; }
-    if (id === 'heading') {
-      title(BOT.heading.title, top);
-      const ph = bottom - top - 26;
-      drawGoalPicture(ctx, x, top + 20, Math.min(w - 96, ph * 0.8), ph, { t: this.t });
-      this.drawRing(ctx, x + w - 84, top + 30, 80);
-      setFont(ctx, 11); ctx.fillStyle = V3.botInk;
-      ctx.fillText(BOT.heading.stamp, x + w - 84, top + 124);
-      ctx.fillText(BOT.heading.streak, x + w - 84, top + 140);
+    if (kind === 'map') { this.drawMap(ctx, x, y, w, 108); return; }
+    if (kind === 'goal') {
+      drawGoalPicture(ctx, x, y, 106, 142, { t: this.t });
+      this.drawRing(ctx, x + 120, y + 18, 76, ring);
+      setFont(ctx, 10); ctx.fillStyle = V3.botInk;
+      ctx.fillText(BOT.heading.stamp, x + 120, y + 100);
       return;
     }
-    // the map and the clip (map, rest, unmuted, ready)
-    title(BOT.map.title, top);
-    const mh = 112;
-    this.drawMap(ctx, x, top + 18, w, mh);
-    const lineY = top + 18 + mh + 6, clipY = lineY + 16, clipH = bottom - clipY;
-    const clipW = Math.min(w - 96, Math.round(clipH * 16 / 9));
-    setFont(ctx, 12); ctx.fillStyle = V3.ink;
-    ctx.fillText(V.clip.title, x, lineY);
-    const tw = Math.ceil(ctx.measureText(V.clip.title + '  ').width);
-    ctx.font = monoFor(10); ctx.fillStyle = V3.ink2;
-    ctx.fillText(V.clip.channel, x + tw, lineY + 2);
-    drawContagionClip(ctx, this.t, x, clipY, clipW, clipH);
-    const rx = x + clipW + 10, rw = w - clipW - 10, rd = Math.min(80, rw, clipH);
-    this.drawRing(ctx, rx + Math.round((rw - rd) / 2), clipY + Math.round((clipH - rd) / 2), rd);
-  }
-
-  /**
-   * ⚑ S350 / T54 — NOA IN 2026, option 3: "Stories like yours". Three cards the system curated, each a first name, an
-   * age and one smoothed sentence in ITS voice, under its own stamp. Nothing here is pressable and nothing waits on it.
-   * ⚑ S351 (his 10 Nov) — the "as she wrote it" link and her own sentence are gone: her card stays as the system filed
-   * her, and her line in the birthday stream (ball.ts) is where she turns up as herself. Nothing on this panel
-   * connects her to Maya (guard 1). The three cards are one size and always all fit.
-   */
-  private drawStories(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, bottom: number): void {
-    const S = BOT.stories;
-    setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(S.title.toUpperCase(), x, top);
-    setFont(ctx, 11); ctx.fillStyle = V3.botInk; ctx.fillText(S.stamp, x, top + 16);
-    let y = top + 36;
-    // ⚑ S360 / H49 (his headset: "Stories like yours" was "too convoluted") — one story, one clear move (its button)
-    for (const c of S.cards.slice(0, 1)) {
-      setFont(ctx, 15);
-      const said = wrapText(ctx, `“${c.line}”`, w - 24).slice(0, 2);
-      const h = 26 + said.length * 19;
-      if (y + h > bottom) break;
-      roundEdge(ctx, x, y, w, h, 12, V3.edge, V3.card);   // the 2026 assistant's soft card (S349)
-      roundRect(ctx, x + 12, y + 8, 14, 14, 7, V3.grey);   // faceless: a plain disc, no initial, no likeness
-      setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(c.name, x + 32, y + 8);
-      setFont(ctx, 15); ctx.fillStyle = V3.ink;
-      said.forEach((l, k) => ctx.fillText(l, x + 12, y + 28 + k * 19));
-      y += h + 8;
+    if (kind === 'ring') {
+      this.drawRing(ctx, x, y, 70, ring);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.heading.ring, x + 80, y + 28);
+      return;
     }
+    // a story it curated (Part B turns these into screenshots of web pages)
+    const S = BOT.stories, c = S.cards[0];
+    roundEdge(ctx, x, y, w, 56, 12, V3.edge, V3.page);
+    roundRect(ctx, x + 12, y + 9, 14, 14, 7, V3.grey);   // faceless: a plain disc, no initial, no likeness
+    setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(`${c.name} · ${S.stamp}`, x + 32, y + 9);
+    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, `“${c.line}”`, w - 24), x + 12, y + 30);
   }
 
   /** the "Becoming" ring: it never passes 99 % — and it falls when she unmutes Junie */
-  private drawRing(ctx: CanvasRenderingContext2D, x: number, y: number, d: number): void {
+  private drawRing(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, value = this.ring): void {
     const cx = x + d / 2, cy = y + d / 2, r = d / 2 - 6;
     ctx.save();
     ctx.lineWidth = 10;
     ctx.strokeStyle = V3.grey;
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = this.ring < 90 ? V3.danger : V3.bot;
-    ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (Math.min(99, this.ring) / 100)); ctx.stroke();
+    ctx.strokeStyle = value < 90 ? V3.danger : V3.bot;
+    ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (Math.min(99, value) / 100)); ctx.stroke();
     ctx.restore();
     setFont(ctx, 18); ctx.fillStyle = V3.ink;
-    const s = `${Math.min(99, this.ring)}%`;
+    const s = `${Math.min(99, value)}%`;
     const tw = Math.ceil(ctx.measureText(s).width);
     ctx.fillText(s, Math.round(cx - tw / 2), Math.round(cy - 14));
     setFont(ctx, 10); ctx.fillStyle = V3.ink2;
@@ -1643,9 +2151,9 @@ export class E4Browser {
     setFont(ctx, 12); ctx.fillStyle = V3.ink2;
     ctx.fillText(mine ? (this.reversal === 'matched' ? PH.matched : PH.currentHers) : PH.currentGoal, px0, py0 + ph + 6);
     const ox = px0 + pw + 30;
-    thumb(ctx, ox, py0, 128, 92, 3, false, 6);
-    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(PH.original, ox, py0 + 100);
-    let sy = py0 + 126;
+    thumb(ctx, ox, py0, 112, 76, 3, false, 6);   // S363 / N11: smaller, so the bot's last lines fit under it
+    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(PH.original, ox, py0 + 82);
+    let sy = py0 + 104;
     const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
     if (this.step === 'photos' && this.reversal === 'none') {
       if (!this.keepTried) buttons.push({ id: 'photo-keep', label: PH.keep, kind: 'quiet' });
@@ -1662,14 +2170,17 @@ export class E4Browser {
       setFont(ctx, 14); ctx.fillStyle = V3.botInk; ctx.fillText('✓  ' + PH.match, ox + 14, sy + 6);
       const b = this.bot;
       if (b?.id === 'ready') {
-        let ty = sy + 38;
+        // ⚑ S363 / N11 — the bot's last three lines ran off the card's right edge and under its foot: wrapped, in the
+        //   assistant's idiom (its mark, plain text), inside the column
+        let ty = sy + 32;
+        const lw = cx + cw - 12 - (ox + 22);
         for (let k = 0; k < this.botLinesShown; k++) {
-          setFont(ctx, 15);
-          const tw = Math.ceil(ctx.measureText(b.lines[k]).width) + 22;
-          avatar(ctx, ox, ty, 20, V3.primary, 'S');
-          roundRect(ctx, ox + 26, ty - 2, tw, 24, 9, V3.botSoft);
-          setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(b.lines[k], ox + 37, ty + 2);
-          ty += 30;
+          setFont(ctx, 13);
+          const ls = wrapText(ctx, b.lines[k], lw);
+          if (ty + ls.length * 16 > cy + ch - 2) break;
+          assistantMark(ctx, ox, ty, 16, V3.primary, V3.primaryInk);
+          ctx.fillStyle = V3.ink; ls.forEach((l, j) => ctx.fillText(l, ox + 22, ty + 1 + j * 16));
+          ty += ls.length * 16 + 4;
         }
       }
     }
@@ -1765,6 +2276,15 @@ export class E4Browser {
     let x = mx, y = my;
     const L = this.lay;
     if (L) {
+      // ⚑ S363 — a notification opens its chat
+      const tst = this.hits.find(h => h.id.startsWith('toast-') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
+      if (tst && this.phase === 'open') {
+        const chat = tst.id.slice(6) as ChatId;
+        this.toasts = this.toasts.filter((t) => t.chat !== chat);
+        if (!this.programDone) this.openChat(chat);
+        this.version++;
+        return true;
+      }
       const win = this.hits.find(h => (h.id === 'win-browser' || h.id === 'win-kettle') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
       if (win) { this.chosen = win.id === 'win-kettle' ? 'kettle' : 'browser'; playOnce('ui_press.mp3'); this.version++; return true; }
       if (inside(mx, my, L.k)) {
@@ -1829,6 +2349,17 @@ export class E4Browser {
     }
     // ⚑ S360 — the mailbox
     if (id.startsWith('mail-row-')) { this.mailOpen = id.slice(9) as MailId; this.idleNav = 0; playOnce('ui_press.mp3'); this.version++; return true; }
+    // ⚑ S363 — Larkpost's AI summarises the open email (and files that it did)
+    if (id === 'mail-sum' && this.mailOpen) {
+      const o = this.mailOpen;
+      if (this.summed.has(o)) this.summed.delete(o); else { this.summed.add(o); this.mailScroll[o] = 0; this.file(`v3:summary:${o}`, 'read', `mail: summarised by the inbox's AI — ${o}`); }
+      this.idleNav = 0; playOnce('ui_press.mp3'); this.version++; return true;
+    }
+    // ⚑ S363 — the news sites' furniture: the cookie banner, the newsletter pop-up (any answer closes them)
+    if (id === 'news-consent-accept' || id === 'news-consent-manage') { this.consentDone = true; this.idleNav = 0; playOnce('ui_press.mp3'); this.version++; return true; }
+    if (id === 'news-nl-sign' || id === 'news-nl-no') { this.newsletterGone = true; this.idleNav = 0; playOnce('ui_press.mp3'); this.version++; return true; }
+    // ⚑ S363 — the composer takes no typing (R28): it points to her suggested replies
+    if (id === 'conv-compose') { this.composeFlashT = 1.6; this.version++; return true; }
     if (id === 'mail-support' && this.step === 'clinic') { this.enquiry = 'draft'; playOnce('ui_press.mp3'); this.go('meridian'); return true; }
     if ((id === 'mail-read' || id.startsWith('mail-link-')) && (this.step === 'mumMail' || this.step === 'news')) {
       this.openArticle(id === 'mail-read' ? 0 : Number(id.slice(10)));
@@ -1879,11 +2410,13 @@ export class E4Browser {
     return true;
   }
 
+  private newsShownId = '';
   private openTab(id: string): void {
     if (!this.tabs.some((t) => t.id === id)) return;
     this.liveId = id;
     const t = this.tabs.find((x) => x.id === id)!;
     const art = ARTICLES[this.newsIndex];
+    if (t.kind === 'news' && art && this.newsShownId !== art.id) { this.newsShownId = art.id; this.newsT = 0; }
     if (t.kind === 'news' && art && !this.read.has(art.id)) {
       this.read.add(art.id);
       ledger.e4Space.push({ id: `tab:${art.id}`, outcome: 'read', witness: `read: ${art.mast} — ${art.head}` });
@@ -1912,5 +2445,64 @@ export class E4Browser {
   }
 }
 
-/** her bubble in the bot's chat: the warm of her own room, not the agent's mint */
-const KETTLE_MINE = V3.ticket;
+/** her bubble in the bot's chat: the warm of her own room, not the agent's mint (S363: Kettle's own "mine", so her voice
+ *  looks the same in both windows) */
+const KETTLE_MINE = KETTLE.mine;
+
+/** ⚑ S363 (N11) — a line that does not fit ends in an ellipsis, never mid-letter at a clip edge */
+export function fitText(ctx: CanvasRenderingContext2D, text: string, w: number): string {
+  if (ctx.measureText(text).width <= w) return text;
+  let lo = 0, hi = text.length;
+  while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (ctx.measureText(text.slice(0, mid).trimEnd() + '…').width <= w) lo = mid; else hi = mid - 1; }
+  return text.slice(0, lo).trimEnd() + '…';
+}
+/** ⚑ S363 — a mail label's colour (her room's palette) */
+function mailLabelInk(id: string): string { return id === 'family' ? PLACE.textileHi : id === 'health' ? PLACE.sky : PLACE.sun; }
+/** ⚑ S363 — each news site's own colour */
+function articleInk(look: string): string { return look === 'tabloid' ? PLACE.book : look === 'tech' ? ERA4.field : PLACE.bookAlt; }
+/** ⚑ S363 — the chat's small glyphs: a new chat, a picker's chevron, the composer's plus and send */
+function newChatIcon(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string): void {
+  ctx.save(); ctx.strokeStyle = ink; ctx.lineWidth = 1.5;
+  ctx.strokeRect(x + 0.5, y + 2.5, 11, 11);
+  ctx.beginPath(); ctx.moveTo(x + 5, y + 9); ctx.lineTo(x + 13, y + 1); ctx.stroke();
+  ctx.restore();
+}
+function chevron(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string): void {
+  ctx.save(); ctx.strokeStyle = ink; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 4, y + 4); ctx.lineTo(x + 8, y); ctx.stroke(); ctx.restore();
+}
+function plusGlyph(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string): void {
+  px(ctx, x, y + 5, 12, 2, ink); px(ctx, x + 5, y, 2, 12, ink);
+}
+function sendGlyph(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string): void {
+  ctx.save(); ctx.strokeStyle = ink; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(x + 6, y + 12); ctx.lineTo(x + 6, y + 1); ctx.moveTo(x + 1, y + 6); ctx.lineTo(x + 6, y + 1); ctx.lineTo(x + 11, y + 6); ctx.stroke();
+  ctx.restore();
+}
+/** a search glyph: a ring and its handle (14 px) */
+function magnifier(ctx: CanvasRenderingContext2D, x: number, y: number, ink: string): void {
+  ctx.save(); ctx.strokeStyle = ink; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x + 6, y + 6, 4.5, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + 9.5, y + 9.5); ctx.lineTo(x + 13, y + 13); ctx.stroke();
+  ctx.restore();
+}
+/** ⚑ S363 — the webmail's folder glyphs (12 px), drawn, never a font's symbol */
+function folderIcon(ctx: CanvasRenderingContext2D, id: string, x: number, y: number, ink: string): void {
+  ctx.save(); ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+  if (id === 'inbox') { ctx.strokeRect(x + 1.5, y + 2.5, 11, 9); ctx.beginPath(); ctx.moveTo(x + 1.5, y + 7.5); ctx.lineTo(x + 4.5, y + 7.5); ctx.lineTo(x + 5.5, y + 9.5); ctx.lineTo(x + 8.5, y + 9.5); ctx.lineTo(x + 9.5, y + 7.5); ctx.lineTo(x + 12.5, y + 7.5); ctx.stroke(); }
+  else if (id === 'starred') {
+    ctx.beginPath();
+    for (let k = 0; k < 10; k++) { const r = k % 2 ? 2.6 : 6, a = -Math.PI / 2 + k * Math.PI / 5; const px0 = x + 7 + Math.cos(a) * r, py0 = y + 7.5 + Math.sin(a) * r; if (k) ctx.lineTo(px0, py0); else ctx.moveTo(px0, py0); }
+    ctx.closePath(); ctx.stroke();
+  } else if (id === 'sent') { ctx.beginPath(); ctx.moveTo(x + 1.5, y + 2.5); ctx.lineTo(x + 13, y + 7); ctx.lineTo(x + 1.5, y + 11.5); ctx.lineTo(x + 4, y + 7); ctx.closePath(); ctx.stroke(); }
+  else { ctx.strokeRect(x + 2.5, y + 1.5, 9, 11); ctx.beginPath(); ctx.moveTo(x + 4.5, y + 5); ctx.lineTo(x + 9.5, y + 5); ctx.moveTo(x + 4.5, y + 8); ctx.lineTo(x + 8, y + 8); ctx.stroke(); }
+  ctx.restore();
+}
+/** a sender's mark: a person is a circle with an initial; an organisation a rounded square with two letters */
+function senderMark(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, mark: string, fill: string, org = false): void {
+  roundRect(ctx, x, y, d, d, org ? Math.max(2, Math.floor(d / 5)) : Math.floor(d / 2), fill);
+  setFont(ctx, Math.max(8, Math.round(d * (mark.length > 1 ? 0.42 : 0.55))));
+  ctx.fillStyle = V3.ink;
+  const w = Math.ceil(ctx.measureText(mark).width);
+  ctx.fillText(mark, x + Math.round((d - w) / 2), y + Math.round(d * (mark.length > 1 ? 0.28 : 0.2)));
+}
