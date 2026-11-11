@@ -16,7 +16,7 @@ It loops SEAMLESSLY (the hall's tail is folded onto the head).
   card 0  (0–4.5)    IT STARTED WITH ONE FRIEND.   a low drone and a heartbeat, one pair of thuds per bar
   card 1  (4.5–8.5)  THEN A GROUP CHAT.            the pulse: sixteenth-note saw on the root, ducking pad
   card 2  (8.5–13)   18 TODAY…                     kick on every beat, hats, the arpeggio bells; the first pump
-  card 3  (13–18)    SUDDEN. JUST LIKE HER…        THE SIGNS (S364): the pump goes on, the pad opens a notch per card,
+  card 3  (13–18)    SUDDENLY. JUST LIKE HER…      THE SIGNS (S364): the pump goes on, the pad opens a notch per card,
   card 4  (18–24)    ALWAYS ONLINE…                a two-note "ding" on every tick the picture lands (the checklist's
   card 5  (24–31)    STRUGGLING BEFORE…            own confirmation sound), a half snare from card 5, a stamp-hit on 5/5
   card 6  (31–35)    4,815 AND RISING.             a riser that only goes up (a chromatic climb), snare on 2 and 4
@@ -29,6 +29,11 @@ same piece, LONGER — not a new style. The three "signs" cards were inserted af
 on moved by exactly 18 s = 9 bars and keeps its place in the bar; nine bars were written into the progression where
 the cards went in (C, Dm Dm, Bb Bb, F F, Bb Bb — the opening's own shape, climbing into the C under "4,815"), and the
 only new sound is the tick, made of the bells already here. Every voice, level, seed and the lift are S360's.
+
+⚑ S366 (UiB job 15, J15-02): the signs' narrator lines were rewritten and re-rendered, and two ticks moved to where the
+new takes end their sentences (card 4's second 4 → 4.5 s, card 5's 2.5 → 3 s; data/dialog/s4_v3.json `clip.signs.cards`).
+Re-run unchanged: TICKS is read from the data, so only those two dings moved (the render, compared sample by sample with
+S364's, differs only between 22 and 30 s). The holds, the grid and everything else are as they were.
 
 ⚑ tools/make_tones.sh's law holds: no found sound, no sample, no imitation of any real piece — every partial is written
 out (the era change's own voices are imported from tools/make_era_change_audio.py). Deterministic (seeded).
