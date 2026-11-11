@@ -25,9 +25,13 @@ const GAME = gi >= 0 ? argv.splice(gi, 2)[1] : 'fitin';
 const TAG = argv[0] ?? 'now';
 const SCALE_ARG = argv[1];
 globalThis.window ??= globalThis;
+// ⚑ S367: MATCH MADE SIMPLE's picture reads era4's portrait, which touches a few browser globals at load
+globalThis.window.matchMedia ??= () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
+globalThis.window.addEventListener ??= () => {};
 /** a game module, bundled for node (the games import their JSON and the theme; nothing in them needs a DOM) */
 async function load(file) {
-  const out = await build({ entryPoints: [join(ROOT, file)], bundle: true, write: false, format: 'esm', platform: 'node', loader: { '.json': 'json' } });
+  const out = await build({ entryPoints: [join(ROOT, file)], bundle: true, write: false, format: 'esm', platform: 'node', loader: { '.json': 'json' },
+    define: { __FESTIVAL__: 'false', __BUILD_TAG__: '"preview"', __APP_VERSION__: '"preview"', __BUILD_COMMIT__: '"preview"', __BUILD_DATE__: '"preview"' } });
   return import('data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64'));
 }
 
@@ -106,9 +110,10 @@ async function clear() {
 /**
  * ⚑ S227 — MATCH MADE SIMPLE (960 × 540), PLAYED like CLEAR's: a seeded bot taps the first legal pair on the glass
  * whenever it is her turn (the prototype's check_v2.mjs player). Stills: the title (PLAY armed), mid-game (a match
- * of hers: the burst, the confetti, +n%), the counter-move (L's mint cursor choosing its swap), the 99% card, and the
- * intact original after the collapse. Compare with the prototype's stills
- * (Pc_Simulation/2026-screen-prototypes/v2_match_made_simple/stills/, also ×1).
+ * of hers: the burst, the confetti), the counter-move (its pointer coming for its swap), the end card, and the
+ * intact original after the collapse.
+ * ⚑ S367: the game is a tug of war over the handle now; tools/s367-game-stills.mjs photographs it in full (each frame
+ * at 960 × 540 and at the monitor window's 300 px). The file names below are kept.
  */
 async function matchMade() {
   const { MatchMade } = await load('src/games/matchMade.ts');
@@ -129,12 +134,12 @@ async function matchMade() {
   run(3); snap('title');
   g.tap(480, 410);
   run(120, () => P.s.earned >= 6 && P.s.actor === 'player' && P.s.phase === 'pop'); for (let i = 0; i < 6; i++) g.tick(DT); snap('play');
-  run(30, () => P.s.actor === 'system' && P.s.phase === 'think'); for (let i = 0; i < 50; i++) g.tick(DT); snap('counter');
+  run(30, () => P.s.actor === 'system' && P.s.phase === 'aim'); for (let i = 0; i < 25; i++) g.tick(DT); snap('counter');
   run(300, () => P.s.state === 'end'); for (let i = 0; i < 170; i++) g.tick(DT); snap('card99');
   const score = P.s.score;
   run(20, () => P.s.state === 'final'); for (let i = 0; i < 200; i++) g.tick(DT); snap('original');
   const s = P.s;
-  console.log('matchmade: state', s.state, 'earned', s.earned, 'score', score, 'recoats', s.recoats, 'counterTurns', s.counterTurns, 'record wiped', s.history === 0 && s.filed === 0 && s.cards === 0, 'original', JSON.stringify(s.original), 'filing', g.takeFiling(), 'again', g.takeFiling());
+  console.log('matchmade: state', s.state, 'earned', s.earned, 'handle at the end', score, 'pushes', s.pushes, 'counterTurns', s.counterTurns, 'record wiped', s.history === 0 && s.filed === 0, 'original', JSON.stringify(s.original), 'filing', g.takeFiling(), 'again', g.takeFiling());
 }
 
 if (GAME === 'fitin' || GAME === 'all') await fitIn();

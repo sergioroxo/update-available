@@ -2127,3 +2127,22 @@ export function paintPortrait(ctx: CanvasRenderingContext2D, x: number, y: numbe
 export function mayaPhoto(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
   paintPortrait(ctx, x, y, w, h, PORTRAIT_HERS, 0);
 }
+
+/**
+ * ⚑ S367 (UiB job 15 Part B) — the photograph's FIGURE, read-only, for a painter that draws Maya somewhere else with
+ * fillStyle + fillRect only: MATCH MADE SIMPLE's Pride '24 picture (src/games/pridePicture.ts). The same cells, the
+ * same keys, the same Bayer order and the same gloss, so the filter there works on her exactly as `paintPortrait`'s
+ * does here (hair cut from the ends, the jaw, the body wiped, the grin, the gloss last). Nothing here changes.
+ */
+export const PORTRAIT_FIGURE: {
+  readonly her: { readonly back: readonly string[]; readonly face: readonly string[]; readonly feat: readonly string[]; readonly mouth: readonly string[]; readonly body: readonly string[]; readonly front: readonly string[] };
+  readonly goal: { readonly hair: readonly string[]; readonly face: readonly string[]; readonly feat: readonly string[]; readonly mouth: readonly string[]; readonly body: readonly string[] };
+  readonly key: Readonly<Record<string, keyof typeof PORTRAIT>>;
+  readonly sparkles: readonly (readonly [number, number, number])[];
+  readonly bayer: (gx: number, gy: number) => number;
+  readonly gloss: (gx: number, gy: number) => string;
+} = {
+  her: { back: HER_BACK, face: HER_FACE, feat: HER_FEAT, mouth: HER_MOUTH, body: HER_BODY, front: HER_FRONT },
+  goal: { hair: GOAL_HAIR, face: GOAL_FACE, feat: GOAL_FEAT, mouth: GOAL_MOUTH, body: GOAL_BODY },
+  key: P_KEY, sparkles: P_SPARKLES, bayer, gloss: glossCell
+};

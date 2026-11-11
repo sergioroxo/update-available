@@ -5,6 +5,9 @@
  * Light the console, draw the session into an offscreen canvas, play legal moves through the SESSION'S tap (the
  * monitor window's path), and confirm the console's own glass (its screen texture canvas), frameKey and stats moved.
  * Shots: the session's draw (title, playing, after moves) and the lit console on the bed from a free camera.
+ * ⚑ S367 (UiB job 15 Part B): also the tug of war's API — `progress` (the handle = the chat's ring, default 94),
+ * `setProgress(n)` before and after the game exists, the game opening at the ring, and `stats.pushes` / `lastPush`
+ * growing with the AI's own counter-moves while the handle never passes 99.
  * `CAM='[x,y,z,pitch,yaw]'` overrides the bed shot.
  */
 import fs from 'node:fs';
@@ -46,6 +49,10 @@ const consoleCanvasHash = () => page.evaluate(() => {
 const s0 = await page.evaluate(() => { const c = window.__consoleSession; return { ready: c.ready, lit: c.lit, playing: c.playing, stats: c.stats, key: c.frameKey() }; });
 check('ready once the room is built', s0.ready === true, JSON.stringify(s0));
 check('not lit before light()', s0.lit === false);
+const p0 = await page.evaluate(() => { const c = window.__consoleSession; const before = c.progress; c.setProgress(97); return { before, after: c.progress, stats: c.stats }; });
+check('progress defaults to 94 and the chat can set it before the game exists', p0.before === 94 && p0.after === 97 && p0.stats.percent === 97 && p0.stats.pushes === 0 && p0.stats.lastPush === null, JSON.stringify(p0));
+const pClamp = await page.evaluate(() => { const c = window.__consoleSession; c.setProgress(140); const hi = c.progress; c.setProgress(-3); const lo = c.progress; c.setProgress(97); return { hi, lo }; });
+check('setProgress clamps to 0..99', pClamp.hi === 99 && pClamp.lo === 0, JSON.stringify(pClamp));
 const dark = await consoleCanvasHash();
 check('console shows its dark home screen first', dark !== null, String(dark));
 
@@ -67,6 +74,8 @@ await wait(600);
 const st1 = await page.evaluate(() => { const c = window.__consoleSession; return { playing: c.playing, key: c.frameKey(), state: window.__consoleProbe().s.state }; });
 check('a tap on the session starts the run and marks it playing', st1.playing === true && st1.state === 'play', JSON.stringify(st1));
 await png('02-session-playing.png');
+const opened = await page.evaluate(() => ({ progress: window.__consoleSession.progress, handle: window.__consoleProbe().s.handle }));
+check('the game opens at the ring the chat set', opened.progress === 97 && Math.round(opened.handle) === 97, JSON.stringify(opened));
 
 let moves = 0;
 for (let i = 0; i < 8 && moves < 4; i++) {
@@ -82,6 +91,14 @@ check('legal moves were made through the session', moves > 0, `moves ${moves}`);
 check('stats moved (matches)', st2.stats.matches > 0, JSON.stringify(st2));
 check('percent moved and never passes 99', st2.stats.percent > 0 && st2.stats.percent <= 99, JSON.stringify(st2.stats));
 check('frameKey changed', st2.key !== st1.key);
+const tug = await page.evaluate(() => { const c = window.__consoleSession; return { progress: c.progress, stats: c.stats }; });
+check('its counter-moves pushed (stats.pushes, lastPush from → to, never past 99)', tug.stats.pushes > 0 && tug.stats.lastPush && tug.stats.lastPush.to > tug.stats.lastPush.from && tug.stats.lastPush.to <= 99, JSON.stringify(tug.stats));
+check('one number: stats.percent is the handle, and her pulls drew it below where it opened', tug.stats.percent === tug.progress && tug.progress < 97, JSON.stringify(tug));
+await page.waitForFunction(() => window.__consoleProbe().s.canPlay, { timeout: 15000 }).catch(() => {});
+await page.evaluate(() => window.__consoleSession.setProgress(98));
+await wait(900);
+const set98 = await page.evaluate(() => ({ progress: window.__consoleSession.progress, handle: window.__consoleProbe().s.handle, tag: window.__consoleProbe().s.tag }));
+check('the chat sets 98 mid-run: the handle eases there, tagged as its', set98.progress === 98 && Math.abs(set98.handle - 98) < 1 && set98.tag === 'it', JSON.stringify(set98));
 const playHash = await consoleCanvasHash();
 check("the console's own glass shows the played game (changed again)", playHash !== litHash, `${litHash} -> ${playHash}`);
 await png('03-session-after-moves.png');
