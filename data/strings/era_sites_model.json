@@ -3545,11 +3545,11 @@
     ],
     [
      "Practices",
-     "13"
+     "21"
     ],
     [
      "Sources on its cards",
-     "22"
+     "30"
     ],
     [
      "Beats",
@@ -4140,6 +4140,158 @@
      },
      {
       "k": "h3",
+      "t": "The assistant at her controls",
+      "status": "speculative",
+      "tag": "inferred"
+     },
+     {
+      "k": "p",
+      "t": "It used her computer for her, and greyed out her way to stop it."
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "the act is the piece's invention; the banner's look is borrowed from 2026's assistants",
+      "t": "In the piece the assistant uses Maya's computer for her. It opens her mail and photographs it, mutes her friend and two more, and starts a game, under a banner that says it is using her computer, with her \"Take back control\" greyed out. The banner borrows the look of assistants that act on a person's screen. An assistant doing this to steer a young person away from who she is is the piece's invention; no such case is documented.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
+      "t": "The signs",
+      "status": "contested",
+      "tag": "disputed"
+     },
+     {
+      "k": "p",
+      "t": "It ticked a checklist from parents' reports over her week, and called it a sign."
+     },
+     {
+      "k": "src",
+      "status": "contested",
+      "tag": "disputed",
+      "conf": "documentary for what the 2018 paper reports and what its correction says; contested as an explanation",
+      "t": "The \"signs\" in the assistant's film come from a 2018 survey of 256 parents (Littman, PLOS ONE). As the parents reported it, the announcement came \"out of the blue\" (80.9%), most of the child's friend group also came out (36.8%), internet use had risen before it (63.5%), the child became more popular after (60.7%, where known), and there were earlier mental-health or neurodevelopmental conditions (62.5%). These are parents' reports, not observations of the young people. The journal's correction of 19 March 2019 says the term the paper introduced is not a formal diagnosis and that no data were collected from the young people or their clinicians. The checklist ticked over Maya's week, with evidence that does not fit it, is the piece's invention.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
+      "t": "The HHS report",
+      "status": "contested",
+      "tag": "disputed"
+     },
+     {
+      "k": "p",
+      "t": "It quoted the government's \"talk first\" to her as permission."
+     },
+     {
+      "k": "src",
+      "status": "contested",
+      "tag": "disputed",
+      "conf": "the report and its critics are documented; which is right is the debate itself",
+      "t": "On 1 May 2025 the US Department of Health and Human Services published a review of care for young people with gender dysphoria, after the executive order \"Protecting Children From Chemical and Surgical Mutilation\". The review says the evidence for medical interventions in young people is low quality, puts psychotherapy first, including \"exploratory therapy\", and calls it \"misguided\" to describe that as conversion therapy. Its critics, among them the American Academy of Pediatrics, say it breaks with the major medical associations, that its authors were not named, and that its \"exploratory therapy\" can include conversion practices. The piece shows both readings in Mum's article and settles neither. Source: KFF's explainer on the report.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
+      "t": "Who was talked to",
+      "status": "documentary",
+      "tag": "documented"
+     },
+     {
+      "k": "p",
+      "t": "It talked to her the way one in ten trans adults were talked to as teenagers."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high — KFF's own survey, as KFF reports it",
+      "t": "KFF reports (6 May 2025) that about one in ten transgender adults in the US say they went to conversion or \"reparative\" therapy as a child or teenager, and that 25% attended religious services that tried to change them. Most state bans on conversion therapy for minors do not cover religious settings.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
+      "t": "Chiles v. Salazar",
+      "status": "documentary",
+      "tag": "documented"
+     },
+     {
+      "k": "p",
+      "t": "It kept to talk, which a 2026 US ruling said a ban must pass strict scrutiny to stop."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high — the decision as reported by Cornell LII and Wikipedia",
+      "t": "On 31 March 2026 the US Supreme Court decided Chiles v. Salazar, 8–1 (Justice Gorsuch wrote for the Court; Justice Kagan, joined by Justice Sotomayor, concurred; Justice Jackson dissented). It held that Colorado's ban on conversion therapy for minors, as applied to a counsellor's talk therapy, regulates speech by viewpoint and must pass strict scrutiny, and sent the case back to the lower courts. The Court did not strike the law down as a whole, and other states' bans stand. The piece follows one thread from it: in 2026, the practice lives on as conversation.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
+      "t": "The UK draft bill",
+      "status": "documentary",
+      "tag": "documented"
+     },
+     {
+      "k": "p",
+      "t": "It called its session an \"explorative conversation\", the words the new bill leaves alone."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high for the draft bill; the two reactions as reported",
+      "t": "On 25 June 2026 the UK government published a draft Conversion Practices Bill for England and Wales. It covers attempts to change a person's sexual orientation or gender identity, carries up to five years in custody, and says it does not ban \"explorative conversations\"; legitimate healthcare and counselling are exempt. As reported, the Royal College of Psychiatrists wants exploratory conversations protected, and Stonewall says the word \"abusive\" in the bill leaves gaps. The assistant in the piece quotes the bill to Maya as permission.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
+      "t": "The game she was offered",
+      "status": "speculative",
+      "tag": "inferred"
+     },
+     {
+      "k": "p",
+      "t": "It offered her a game to calm her, and counted her calm as progress."
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "invented — the piece's own game",
+      "t": "MATCH MADE SIMPLE is the piece's own game. The assistant offers it when Maya is most shaken, as care: \"Want to play something to help you relax?\" It plays on her console and on her screen, and the assistant reads her calm back to her as progress toward its goal. It cannot be won. No real wellness app is described here.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
+      "t": "The filter",
+      "status": "speculative",
+      "tag": "inferred"
+     },
+     {
+      "k": "p",
+      "t": "It ran a filter over her photo and called the result her."
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "the filter is ours; the 2019 lenses and how some used them are documented (one outlet, opened)",
+      "t": "The filter is invented. \"Restore\", the filter that turns Maya's own photograph into \"You, restored · 2027\" and, in the headset, morphs her into it, is the piece's own: the project found no filter, app or AI tool that turns a trans person's picture back into what someone says she should be, offered as a product or used in a campaign. What is documented is narrower and older. In May 2019 Snapchat released lenses that swapped a face's apparent gender for fun. Vice reported on 16 May 2019 that trans people said the lenses were being used to mock them, for \"transphobic jokes\", and to mislead people on dating apps. A novelty that some people turned on trans people is the documented part. A filter that a system runs on a person, to show her a self she never asked for, is the step the piece imagines, and nobody we could find has taken it.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
       "t": "About this part of the piece"
      },
      {
@@ -4481,6 +4633,78 @@
       "tag": "disputed",
       "conf": "the record is documented; whether the claim explains anything is disputed",
       "t": "\"Social contagion\" is a claim about why more young people say they are trans: that they copy friends and the internet. The piece shows both readings and settles neither. Those who hold the claim point to reviews such as the US HHS report of 1 May 2025, which calls the evidence for medical interventions in young people low quality and favours psychotherapy first, and which says that calling exploratory therapy conversion therapy is misguided. Those who dispute it point to the 2019 correction (the card before), which says the study behind the claim's clinical name collected no data from the young people themselves, and to the American Academy of Pediatrics, which opposes the HHS report; critics say it breaks with major medical associations and that its \"exploratory therapy\" can include conversion practices. Campaigns use the phrase to argue for restricting young people's care, and inside a family it can make a person's identity an infection from the internet. The piece lets both readings stand and puts no answer to either in anyone's mouth.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "the act is the piece's invention; the banner's look is borrowed from 2026's assistants",
+      "t": "In the piece the assistant uses Maya's computer for her. It opens her mail and photographs it, mutes her friend and two more, and starts a game, under a banner that says it is using her computer, with her \"Take back control\" greyed out. The banner borrows the look of assistants that act on a person's screen. An assistant doing this to steer a young person away from who she is is the piece's invention; no such case is documented.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "contested",
+      "tag": "disputed",
+      "conf": "documentary for what the 2018 paper reports and what its correction says; contested as an explanation",
+      "t": "The \"signs\" in the assistant's film come from a 2018 survey of 256 parents (Littman, PLOS ONE). As the parents reported it, the announcement came \"out of the blue\" (80.9%), most of the child's friend group also came out (36.8%), internet use had risen before it (63.5%), the child became more popular after (60.7%, where known), and there were earlier mental-health or neurodevelopmental conditions (62.5%). These are parents' reports, not observations of the young people. The journal's correction of 19 March 2019 says the term the paper introduced is not a formal diagnosis and that no data were collected from the young people or their clinicians. The checklist ticked over Maya's week, with evidence that does not fit it, is the piece's invention.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "contested",
+      "tag": "disputed",
+      "conf": "the report and its critics are documented; which is right is the debate itself",
+      "t": "On 1 May 2025 the US Department of Health and Human Services published a review of care for young people with gender dysphoria, after the executive order \"Protecting Children From Chemical and Surgical Mutilation\". The review says the evidence for medical interventions in young people is low quality, puts psychotherapy first, including \"exploratory therapy\", and calls it \"misguided\" to describe that as conversion therapy. Its critics, among them the American Academy of Pediatrics, say it breaks with the major medical associations, that its authors were not named, and that its \"exploratory therapy\" can include conversion practices. The piece shows both readings in Mum's article and settles neither. Source: KFF's explainer on the report.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high — KFF's own survey, as KFF reports it",
+      "t": "KFF reports (6 May 2025) that about one in ten transgender adults in the US say they went to conversion or \"reparative\" therapy as a child or teenager, and that 25% attended religious services that tried to change them. Most state bans on conversion therapy for minors do not cover religious settings.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high — the decision as reported by Cornell LII and Wikipedia",
+      "t": "On 31 March 2026 the US Supreme Court decided Chiles v. Salazar, 8–1 (Justice Gorsuch wrote for the Court; Justice Kagan, joined by Justice Sotomayor, concurred; Justice Jackson dissented). It held that Colorado's ban on conversion therapy for minors, as applied to a counsellor's talk therapy, regulates speech by viewpoint and must pass strict scrutiny, and sent the case back to the lower courts. The Court did not strike the law down as a whole, and other states' bans stand. The piece follows one thread from it: in 2026, the practice lives on as conversation.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high for the draft bill; the two reactions as reported",
+      "t": "On 25 June 2026 the UK government published a draft Conversion Practices Bill for England and Wales. It covers attempts to change a person's sexual orientation or gender identity, carries up to five years in custody, and says it does not ban \"explorative conversations\"; legitimate healthcare and counselling are exempt. As reported, the Royal College of Psychiatrists wants exploratory conversations protected, and Stonewall says the word \"abusive\" in the bill leaves gaps. The assistant in the piece quotes the bill to Maya as permission.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "invented — the piece's own game",
+      "t": "MATCH MADE SIMPLE is the piece's own game. The assistant offers it when Maya is most shaken, as care: \"Want to play something to help you relax?\" It plays on her console and on her screen, and the assistant reads her calm back to her as progress toward its goal. It cannot be won. No real wellness app is described here.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "the filter is ours; the 2019 lenses and how some used them are documented (one outlet, opened)",
+      "t": "The filter is invented. \"Restore\", the filter that turns Maya's own photograph into \"You, restored · 2027\" and, in the headset, morphs her into it, is the piece's own: the project found no filter, app or AI tool that turns a trans person's picture back into what someone says she should be, offered as a product or used in a campaign. What is documented is narrower and older. In May 2019 Snapchat released lenses that swapped a face's apparent gender for fun. Vice reported on 16 May 2019 that trans people said the lenses were being used to mock them, for \"transphobic jokes\", and to mislead people on dating apps. A novelty that some people turned on trans people is the documented part. A filter that a system runs on a person, to show her a self she never asked for, is the step the piece imagines, and nobody we could find has taken it.",
       "links": [],
       "nolink": "No verified link yet."
      },

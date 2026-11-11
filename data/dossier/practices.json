@@ -355,6 +355,16 @@
         "file": "e4_offers",
         "index": 22
       }
+    },
+    "swapFilter": {
+      "_doc": "⚑ S364 (UiB job 14 Part B item 5) — DRAFT. DOSSIER PHRASING IS SÉRGIO'S: the `did` line is Claude's draft, ⚑ HIS TO WRITE OR REPLACE. Speculative: the 2019 swap lenses are the only documented context (the card's own _docS364).",
+      "title": "The filter",
+      "did": "ran a filter over her photo and called the result her",
+      "status": "speculative",
+      "source": {
+        "file": "e4_offers",
+        "index": 23
+      }
     }
   }
 }

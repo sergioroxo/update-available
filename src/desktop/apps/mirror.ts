@@ -4,51 +4,63 @@
  * Junie ends it; the player does not.").
  *
  * What the worn session shows from the moment the device goes on: nobody asks. "See how it feels. No pressure. Just
- * try it." A mirror fills the view; in it, her reflection is rewritten a region at a time — the hair, the jaw, the
- * shoulders, the smile — into the man of the shared goal picture (goalPicture.ts's figure, cell for cell), while the
- * system says how natural it looks. Then her hands come up in front of her, and they change too. It is head-locked
- * (the glass is on her face; turning does not stop it) and there is nothing on it to press. It ends only when
- * Junie's link breaks in (`E4Shell`), and the Esc menu always works.
+ * try it." A mirror fills the view; in it is HER PHOTOGRAPH, and the system's swap filter runs on it while it says how
+ * natural it looks. Then her hands come up in front of her, and they change too. It is head-locked (the glass is on her
+ * face; turning does not stop it) and there is nothing on it to press. It ends only when Junie's link breaks in
+ * (`E4Shell`), and the Esc menu always works.
+ *
+ * ⚑ S364 (UiB job 14 Part B, N12 — his: "in the try-on, her photo morphs back into 'what she should be'"). The mirror
+ * no longer rewrites a stick figure into a stock man: it shows `drawSwapMorph` (swapFilter.ts) — her own photo
+ * (`mayaPhoto`, "me, after.jpg") morphing into the goal picture, in the filter's own order and on this timeline: her
+ * hair cut from the ends upward (5–10 s), the jaw (10–15), the jacket wiping down over her pink top (15–20), the grin
+ * (20–23), her room draining to the system's sky under all of it, and the gloss — halo, rays, sparkles, the verified
+ * tick, "You, restored · 2027" — landing last (23–29). The filter's own chrome sits on the glass of the mirror
+ * ("✦ Restore", its intensity climbing; "Made with AI"). In the raid the people drag that intensity back
+ * (`ball.ts`); `tryOnAmount` and `mirrorRect` are exported so the raid starts from exactly this picture.
  *
  * ⚑ The piece's invention, `speculative` in the Dossier (RESEARCH_2026_V3_THREADS thread 2: no documented use of VR,
  * AR or "see yourself as" tools in conversion practice; the body-swap mechanism is real; a trans writer warns such
- * "gender swap" demos harm as much as help). So it is short, stylised and interrupted: pixel figures on a 24-cell grid,
- * no real face, no photograph, no skin detail beyond the grid. Harsh light, hard steps, a flash at each change.
+ * "gender swap" demos harm as much as help; RESEARCH_ROGD_AND_FILTERS §C: the 2019 gender-swap lenses were used by some
+ * to mock trans people — the filter that "restores" is ours, card "The filter" at the Close). So it is short, stylised
+ * and interrupted: a pixel photograph on a cell grid, a drawn face, no likeness. Harsh light, hard steps, a flash at
+ * each change.
  *
  * Signature (the room builder may reuse it, e.g. for 3D hands' timing): `drawTryOn(ctx, W, H, t)`, `t` = seconds
  * since the device went on; `TRYON` holds the timeline (`done` = the reveal complete → `markE4('tryon')`, `link` =
  * when Junie's link breaks in). Words: `data/dialog/s4_v3.json` `tryon`.
  */
 import V3 from '../../../data/dialog/s4_v3.json';
-import { GOAL, PLACE, ERA4, CLIP } from '../theme/era4';
+import { GOAL, ERA4, CLIP } from '../theme/era4';
 import { px } from '../theme/chrome';
 import { fontFor, monoFor } from '../theme/fonts';
-import { GOAL_REGIONS } from './goalPicture';
+import { drawSwapMorph } from './swapFilter';
 
 const T = V3.tryon;
 /** the timeline, in seconds since the device went on */
 export const TRYON = { hair: [5, 10], jaw: [10, 15], shoulders: [15, 20], smile: [20, 23], hands: [23, 30], done: 31, link: 34 } as const;
 
-type Run = [number, number, number, string];
-const HAIR = ERA4.photoHair, SKIN = ERA4.photoSkinHi, SKIN_LO = ERA4.photoSkin, TOP = PLACE.textileHi, INK = GOAL.ink;
-/** her reflection before it is rewritten: long hair to the shoulders, a softer jaw, a neutral mouth, a pink top */
-const MAYA = {
-  hair: [[2, 9, 14, HAIR], [3, 7, 16, HAIR], [4, 6, 17, HAIR], [5, 6, 8, HAIR], [5, 15, 17, HAIR],
-    ...[6, 7, 8, 9, 10, 11, 12, 13, 14, 15].flatMap((r) => [[r, 6, 7, HAIR], [r, 16, 17, HAIR]]),
-    [16, 5, 7, HAIR], [16, 16, 18, HAIR], [17, 5, 6, HAIR], [17, 17, 18, HAIR]] as Run[],
-  face: [[5, 9, 14, SKIN], [6, 8, 15, SKIN], [7, 8, 15, SKIN], [8, 8, 15, SKIN], [9, 8, 15, SKIN], [10, 8, 15, SKIN],
-    [11, 9, 14, SKIN], [12, 10, 13, SKIN], [13, 11, 12, SKIN_LO], [14, 11, 12, SKIN_LO], [15, 11, 12, SKIN_LO]] as Run[],
-  features: [[6, 9, 10, HAIR], [6, 13, 14, HAIR], [8, 10, 10, INK], [8, 13, 13, INK]] as Run[],
-  mouth: [[11, 11, 12, INK]] as Run[],
-  body: [[16, 8, 15, TOP], [17, 7, 16, TOP], [18, 6, 17, TOP], [19, 5, 18, TOP], [20, 5, 18, TOP], [21, 5, 18, TOP],
-    [22, 5, 18, TOP], [23, 5, 18, TOP]] as Run[]
-};
+const HAIR = ERA4.photoHair, SKIN = ERA4.photoSkinHi, SKIN_LO = ERA4.photoSkin;
 
 /** 0..1 through a [from, to] window */
 const k = (t: number, w: readonly [number, number]): number => Math.max(0, Math.min(1, (t - w[0]) / (w[1] - w[0])));
 
-function runs(ctx: CanvasRenderingContext2D, rs: Run[], ox: number, oy: number, c: number, cut = 99): void {
-  for (const [r, a, b, col] of rs) if (r <= cut) px(ctx, ox + a * c, oy + r * c, (b - a + 1) * c, c, col);
+/** ⚑ S364 — how far the filter has got at `t`: its stages (theme/era4.ts `portraitAt`) on the lines' timeline — the
+ *  hair by 10 s, the jaw by 15, the body by 20, the smile by 23, the gloss by 29 ("You, restored. It already fits.") */
+const KEYS: [number, number][] = [[TRYON.hair[0], 0], [TRYON.hair[1], 0.2], [TRYON.jaw[1], 0.4], [TRYON.shoulders[1], 0.6], [TRYON.smile[1], 0.72], [29, 1]];
+export function tryOnAmount(t: number): number {
+  if (t <= KEYS[0][0]) return 0;
+  for (let i = 1; i < KEYS.length; i++) {
+    const [t1, a1] = KEYS[i], [t0, a0] = KEYS[i - 1];
+    if (t <= t1) return a0 + ((a1 - a0) * (t - t0)) / (t1 - t0);
+  }
+  return 1;
+}
+
+/** ⚑ S364 — the mirror's glass on the visor at `t`: it grows in over the first three seconds, then fills the view */
+export function mirrorRect(W: number, _H: number, t: number): { x: number; y: number; w: number; h: number } {
+  const grow = Math.min(1, Math.max(0, t) / 3);
+  const w = Math.round(120 + 100 * grow), h = Math.round(180 + 120 * grow);
+  return { x: Math.round((W - w) / 2), y: Math.round(14 + (1 - grow) * 40), w, h };
 }
 
 /** a hand held up in front of her, 12 × 16 cells: hers (slim) or the one it is made into (broad, haired) */
@@ -78,28 +90,18 @@ export function drawTryOn(ctx: CanvasRenderingContext2D, W: number, H: number, t
   px(ctx, 0, 0, W, H, CLIP.field);
   for (let y = 0; y < H; y += 4) px(ctx, 0, y, W, 1, CLIP.band);            // scanlines: the picture says it is a picture
   // the mirror: it grows in over the first seconds, then fills the view
-  const grow = Math.min(1, t / 3);
-  const mw = Math.round(120 + 100 * grow), mh = Math.round(180 + 120 * grow);
-  const mx = Math.round((W - mw) / 2), my = Math.round(14 + (1 - grow) * 40);
+  const { x: mx, y: my, w: mw, h: mh } = mirrorRect(W, H, t);
   px(ctx, mx - 6, my - 6, mw + 12, mh + 12, ERA4.ruleHi);
-  px(ctx, mx, my, mw, mh, PLACE.sky);
-  px(ctx, mx, my, mw, Math.round(mh * 0.4), PLACE.skyLo);
-  // her reflection, rewritten region by region into the goal's figure
-  const c = Math.max(2, Math.floor(Math.min(mw, mh) / 24));
-  const ox = mx + Math.round((mw - 24 * c) / 2), oy = my + mh - 24 * c;
-  const kh = k(t, TRYON.hair), kj = k(t, TRYON.jaw), ks = k(t, TRYON.shoulders), km = k(t, TRYON.smile);
-  // the body first (it sits under everything)
-  if (ks < 0.5) runs(ctx, MAYA.body, ox, oy, c); else runs(ctx, GOAL_REGIONS.body, ox, oy, c);
-  if (kj < 0.5) runs(ctx, MAYA.face, ox, oy, c); else runs(ctx, GOAL_REGIONS.face, ox, oy, c);
-  runs(ctx, kj < 0.5 ? MAYA.features : GOAL_REGIONS.features, ox, oy, c);
-  runs(ctx, km < 0.5 ? MAYA.mouth : GOAL_REGIONS.mouth, ox, oy, c);
-  // the hair: cut from the ends upward, then the goal's
-  if (kh < 1) runs(ctx, MAYA.hair, ox, oy, c, Math.round(17 - kh * 13));
-  if (kh >= 0.6) runs(ctx, GOAL_REGIONS.hair, ox, oy, c);
-  // a hard white flash at each change (harsh, never soft)
+  // ⚑ S364 — in it, her photograph, and the filter working on it
+  drawSwapMorph(ctx, mx, my, mw, mh, tryOnAmount(t), t, { chrome: true });
+  // a hard white flash at each change (harsh, never soft): the filter's scan crossing the glass
   for (const w of [TRYON.hair, TRYON.jaw, TRYON.shoulders, TRYON.smile]) {
     const mid = (w[0] + w[1]) / 2;
-    if (Math.abs(t - mid) < 0.25) { const y = my + Math.round(((t - mid + 0.25) / 0.5) * mh); px(ctx, mx, y, mw, 3 * c, GOAL.sparkleHi); }
+    if (Math.abs(t - mid) < 0.25) {
+      const band = Math.max(6, Math.round(mh / 40));
+      const y = my + Math.round(((t - mid + 0.25) / 0.5) * (mh - band));
+      px(ctx, mx, y, mw, band, GOAL.sparkleHi);
+    }
   }
   // her hands come up in front of her, and they change too
   const kH = k(t, TRYON.hands);
