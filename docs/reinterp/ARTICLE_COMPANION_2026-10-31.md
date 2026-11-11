@@ -491,6 +491,57 @@ From RESEARCH_CONLEY_LIA_2026-11-10.md (S357):
   therapy for a child, and the same search in 2025 shows warnings: a first-person before/after of the search page,
   relevant to T63 and to the piece's argument that the web is the way in.
 
+## 7m. 2026 rebuilt around the AI: a diagnosis that is not real, and a life done *to* her (his notes, 11 Nov 2026)
+
+**What changed.** After his headset session he moved 2026's centre of gravity from messaging (too close to 2016's
+phone) to one conversation with an AI. His words: "the flow then becomes the AI conversation"; "Is it the AI that
+makes the video of the social contagion to her? as a diagnosis to her feelings?" The chat AI (the invented Second
+Thoughts) is the front door that sells her the live programme; Mum's email and a search ad are two routes to it; the AI
+"explains" her feelings as something that "spread to" her and generates a propaganda clip from her own week ("Made
+with AI · made for you"). An independent review (a fresh agent, not shown the orchestrator's view) corrected the order
+(she must have seen what the AI reads back to her) and the AI's rhetoric (it always agrees, so its diagnosis is phrased
+as agreement); he accepted those and kept the AI host as built (REVIEW_2026_FLOW_2026-11-11.md).
+
+**Autonomy as the theme of 2026 (his, 11 Nov).** "We aren't the ones that mute Junie, this is a continuation of the
+system taking over for us… the system controls your computer for you so it feels like you cannot do anything to help
+yourself, that was the deal with 2026, that you lost your autonomy to AI. Things happen to her, not her that does it."
+He ties this to the contagion frame: its grammar is passive ("it spread", "she was influenced", "it happened to her"),
+and nobody in those sentences is the person who knows her. The piece mirrors the frame formally by taking the verbs
+away from Maya: the AI mutes her friend, recalls her emails as "screenshots", morphs her photograph. A useful line for
+the article: *the harm is shown by who is left as the subject of the sentence* (RESEARCH_ROGD_AND_FILTERS §D1).
+
+**ROGD as a diagnosis that is not real.** The 2019 correction to the paper that coined "rapid-onset gender dysphoria"
+says it "is not a formal mental health diagnosis at this time" and that the study "did not collect data from" the young
+people or clinicians; parents came from "at least four sites with varied perspectives", three of which expressed
+"cautious or negative views" of medical interventions, and where each first heard of the study "were not collected"
+(opened twice on 11 Nov: by the orchestrator and by a separate research agent). The paper's parent-reported signs
+(sudden announcement, friend groups, more social media, popularity after coming out, prior conditions) are what a
+system can turn into a checklist; that it is *used* as a checklist on families is the artist's inference, not a
+documented practice. CAAPS (26 Jul 2021, opened): "There are no sound empirical studies of ROGD". Turban 2022, Bauer
+2022, WPATH 2018 and Cass §8.24–8.25 are second-hand in this round — [VERIFY SOURCE] before any line goes on screen.
+The clinical debate stays unresolved in the piece (two readings, side by side); the satire is only in the AI's use
+of the frame as a diagnosis.
+
+**Chatbots as the newest carrier.** The frame used to travel by book, parent forum and report; a chatbot carries it
+into a private chat at night. One public detransition chatbot describes itself as "the collective consciousness of
+detransitioners" and warns that its quotes may include "bot-generated or misleading content" (opened 11 Nov). Not
+documented: that it names or applies ROGD — so the piece's Second Thoughts, which does, is marked as invention, and the
+Close card names the real product only for what it documentably is. (The KB also holds a Rewire News Group
+investigation, read second-hand via a republication; the 11 Nov research agent's two searches did not find it, a
+reminder to search the KB first.)
+
+**Gender-swap filters (visual culture, narrow).** His note: the 2026 morph is "missing the narrative of the Gender
+Swap filters". Documented: Snapchat's gender-swap lenses (mid-May 2019) were used by some people to mock trans people
+and to deceive on dating apps, and trans people disagreed about the harm (Vice, 16 May 2019, opened; Time, Axios,
+Salon second-hand). FaceApp's gender filters belong to 2017 and 2020, not 2019. Not documented: filters or AI tools
+used to "restore" or "detransition" a person's photo — the piece's morph is invention and must say so.
+
+**Method note.** Two agents this round: an independent reviewer of a design (its value was that it had not seen my
+reading) and a research agent (Sonnet) whose report separated what it opened from what it read in search results. Both
+are in the repo (REVIEW_2026_FLOW_2026-11-11.md, RESEARCH_ROGD_AND_FILTERS_2026-11-11.md). The clip was rendered to
+video offline from the piece's own drawing code, with its real music and narrator files (tools/render-clip.mjs), so
+the artist could review it as a file.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
