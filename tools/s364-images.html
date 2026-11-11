@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>S364 images — review harness</title>
+<!-- ⚑ S364 review harness (dev server only): draws Maya's photo, the goal picture, the swap filter and the morph into
+     plain canvases at the sizes the piece uses, so the painters can be photographed without playing to them.
+     tools/s364-images.mjs opens it and saves one PNG per sheet. Not part of the build. -->
+<style>
+  body { margin: 0; background: #2C2C34; }
+  canvas { display: block; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1200" height="900"></canvas>
+<script type="module">
+import { mayaPhoto, thumb, ERA4 } from '/src/desktop/theme/era4.ts';
+import { drawGoalPicture } from '/src/desktop/apps/goalPicture.ts';
+import { drawSwapFilter, drawSwapMorph } from '/src/desktop/apps/swapFilter.ts';
+import { drawTryOn } from '/src/desktop/apps/mirror.ts';
+
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const label = (s, x, y) => { ctx.font = '12px Menlo, monospace'; ctx.textBaseline = 'top'; ctx.fillStyle = ERA4.textHi; ctx.fillText(s, x, y); };
+const clear = (w, h) => { cv.width = w; cv.height = h; ctx.imageSmoothingEnabled = false; ctx.fillStyle = ERA4.rule; ctx.fillRect(0, 0, w, h); };
+
+const sheets = {
+  // (a) her photo and the goal picture, side by side, at the sizes the piece uses
+  pair() {
+    clear(1240, 900);
+    let x = 16;
+    for (const [w, h, note] of [[100, 130, '100×130'], [190, 250, '190×250 (Photos)'], [300, 400, '300×400']]) {
+      label(note + ' — hers', x, 10); mayaPhoto(ctx, x, 30, w, h);
+      label('the goal', x, 40 + h); drawGoalPicture(ctx, x, 60 + h, w, h, { t: 0 });
+      x += w + 24;
+    }
+    // the odd sizes: the chat card, the landscape thumbnail, the room's square, the glyphs
+    label('106×142 card', x, 10); drawGoalPicture(ctx, x, 30, 106, 142, { t: 0.6 });
+    label('112×76 thumb', x, 190); mayaPhoto(ctx, x, 210, 112, 76);
+    label('glyphs 16/20', x, 300); drawGoalPicture(ctx, x, 320, 16, 16, { caption: false }); drawGoalPicture(ctx, x + 24, 318, 20, 20, { caption: false });
+    label('240×240 wall', x, 350); drawGoalPicture(ctx, x, 370, 240, 240, { t: 0 });
+    label('wallpaper', x, 620); drawGoalPicture(ctx, x, 640, 240, 160, { caption: false, alpha: 0.55 });
+  },
+  // (b) the swap filter at k = 0, 0.5, 1 — large with chrome, and small
+  filter() {
+    clear(1240, 760);
+    let x = 16;
+    for (const k of [0, 0.5, 1]) {
+      label(`k = ${k} · 300×400 · chrome`, x, 10); drawSwapFilter(ctx, x, 30, 300, 400, k, 0, { chrome: true });
+      label(`k = ${k} · 100×130`, x, 446); drawSwapFilter(ctx, x, 466, 100, 130, k, 0, { chrome: true });
+      label('200×260, no chrome', x + 120, 446); drawSwapFilter(ctx, x + 120, 466, 160, 208, k, 0);
+      x += 320;
+    }
+    label('k = 0.3 · 190×250', 976, 10); drawSwapFilter(ctx, 976, 30, 190, 250, 0.3, 0, { chrome: true });
+  },
+  // (c) the morph at 0, 0.25, 0.5, 0.75, 1 (the try-on's mirror size), and broken
+  morph() {
+    clear(1240, 900);
+    let x = 16;
+    for (const a of [0, 0.25, 0.5, 0.75, 1]) {
+      label(`amount ${a}`, x, 10); drawSwapMorph(ctx, x, 30, 220, 300, a, 0, { chrome: true });
+      x += 240;
+    }
+    x = 16;
+    label('the raid: broken 0.5 · 1 · then dragged back (amount 0.8, 0.5, 0.2, 0) — 124×156 card', x, 350);
+    const steps = [[1, 0.5, ''], [1, 1, ''], [0.8, 1, 'okra'], [0.5, 1, 'maya'], [0.2, 1, 'mira'], [0, 1, '']];
+    steps.forEach(([a, b, by], i) => { drawSwapMorph(ctx, x + i * 140, 372, 124, 156, a, 0, { chrome: a > 0, broken: b, by }); });
+    label('small morph 100×130 at 0 · 0.5 · 1', x, 548);
+    [0, 0.5, 1].forEach((a, i) => drawSwapMorph(ctx, x + i * 116, 568, 100, 130, a, 0, { chrome: true }));
+    label('300×400 at 0.5', 400, 548); drawSwapMorph(ctx, 400, 568, 240, 320, 0.5, 0, { chrome: true });
+  },
+  // the real entry points at the browser's own geometry (browser.ts drawPhotos / drawCard / the chip; 556-wide window):
+  //   `thumb(…, 3, false, 6)` for hers (→ photograph variant 3 → mayaPhoto), drawGoalPicture for the goal
+  callers() {
+    clear(1240, 520);
+    label('Photos, matched: thumb(…3…) 190×212 + 112×76', 16, 8);
+    thumb(ctx, 16, 30, 190, 212, 3, false, 6);
+    thumb(ctx, 236, 30, 112, 76, 3, false, 6);
+    label('before the reversal: goal 190×212 + original', 400, 8);
+    drawGoalPicture(ctx, 400, 30, 190, 212, { t: 0 });
+    thumb(ctx, 620, 30, 112, 76, 3, false, 6);
+    label('chip 16 · 20', 760, 30); drawGoalPicture(ctx, 760, 50, 16, 16, { caption: false }); drawGoalPicture(ctx, 784, 48, 20, 20, { caption: false });
+    label("the bot's card: drawGoalPicture 106×142", 16, 262); drawGoalPicture(ctx, 16, 284, 106, 142, { t: 0.5 });
+    label('the defaults sheet: 160×220', 400, 262); drawGoalPicture(ctx, 400, 284, 160, 220, { t: 0 });
+    label('the filter, 160×208 (for a page)', 760, 262); drawSwapFilter(ctx, 760, 284, 160, 208, 0.5, 0, { chrome: true });
+  },
+  // the mirror, as the glass draws it (512 × 384, shown ×2)
+  tryon(t) {
+    clear(1024, 768);
+    const off = document.createElement('canvas'); off.width = 512; off.height = 384;
+    const o = off.getContext('2d');
+    drawTryOn(o, 512, 384, t, 'Shepherd Live™');
+    ctx.drawImage(off, 0, 0, 1024, 768);
+  }
+};
+window.__sheet = (name, arg) => { sheets[name](arg); return true; };
+window.__ready = true;
+</script>
+</body>
+</html>

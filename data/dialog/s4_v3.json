@@ -1,8 +1,15 @@
 {
   "_doc": "⚑ S321 — 2026 v3, THE SCREENS (docs/reinterp/DESIGN_2026_V3_PRESSURE_2026-11-07.md, his rulings of 7 Nov; built record: docs/reinterp/E4_V3_SCREENS_BUILT_2026-11-07.md). The week Maya turns 18, everyone leaves her except the one voice that wants her gone. Two screens: the laptop carries Kettle (an invented messenger: Mum, Dad, Junie, the house chat); the monitor carries the browser (the news tabs, the clinic portal, the search, Second Thoughts, Photos). All display text is Claude's under the 2026-08-17 norm; his edit wins. Real facts appear only inside the simulated articles and the clinic page, each with its source line, and every one is taken from RESEARCH_2026_TRANS_PRESSURE_2026-11-07.md or RESEARCH_2026_V3_THREADS_2026-11-07.md (opened sources only). Every masthead, app, service and person is invented. No deadname anywhere: the loft photo's sentence is cut before the word.",
   "goal": {
-    "_doc": "THE GOAL PICTURE (src/desktop/apps/goalPicture.ts). Not a composite of her: the picture of where the system is pushing her, a drawn stock young man, smiling. The room and the headset reuse the painter. Speculative in the Dossier (no documented use of such images was found; RESEARCH_2026_V3_THREADS thread 2).",
-    "caption": "You, restored · 2027"
+    "_doc": "THE GOAL PICTURE (src/desktop/apps/goalPicture.ts). ⚑ SUPERSEDED IN PART BY S364 (see _docS364): it is now her own photograph run through the system's filter, not a stock man. As first written: not a composite of her: the picture of where the system is pushing her, a drawn stock young man, smiling. The room and the headset reuse the painter. Speculative in the Dossier (no documented use of such images was found; RESEARCH_2026_V3_THREADS thread 2).",
+    "caption": "You, restored · 2027",
+    "_docS364": "⚑ S364 (UiB job 14 Part B, N9, his: 'redesign the goal picture and Maya's own photo; both are disliked as drawn'; 'integrate the gender-swap filter narrative'). The goal is no longer a stock man: it is HER photograph ('me, after.jpg', theme/era4.ts `mayaPhoto`) run through the system's swap filter, the same pose and framing — hair cropped, jaw squared, jacket and tie, her room drained to the system's sky, and the system's gloss over it (halo, rays, sparkles, the verified tick, this caption). The filter-app idiom (`swapFilter.ts`): a split with a handle, Before | After, the filter's name and intensity, 'Made with AI'. A filter that 'restores' a person is the piece's invention; the documented context is only the 2019 gender-swap lenses (RESEARCH_ROGD_AND_FILTERS_2026-11-11.md §C), and the Close's card 'The filter' says so. S364 draft: the filter's words below are Claude's; his edit wins.",
+    "filter": {
+      "name": "Restore",
+      "made": "Made with AI",
+      "before": "Before",
+      "after": "After"
+    }
   },
   "fundraiser": {
     "poster": ["TRANSJESUS", "BIRTHDAY", "LIVE STREAM", "FOR TRANS YOUTH", "COME AS YOU ARE"],
@@ -370,6 +377,7 @@
   },
   "tryon": {
     "_doc": "TRY IT ON (beat 14; src/desktop/apps/mirror.ts). His second ruling: harsher, not softer; the system starts it without asking; the mirror, the reveal of a male body; Junie's link breaks in and ends it; the player cannot. The system's voice only, flat and pleased with itself; it says how natural it looks. Speculative (no documented use of such a tool, RESEARCH_2026_V3_THREADS thread 2).",
+    "_docS364": "⚑ S364 (UiB job 14 Part B, N12, his: 'in the try-on, her photo morphs back into what she should be; the raid is the community intervening in that morph'). The mirror shows HER photograph ('me, after.jpg') and the system's 'Restore' filter morphing it into the goal picture on these lines' timeline (hair 5–10 s, jaw 10–15, body 15–20, smile 20–23, the gloss by 29), with the filter's own chrome on the glass. At the raid the picture lifts off the mirror and docks on the glass; the raid's lines crack its gloss and every name the people stamp in the naming (and her two presses) drags its intensity back a step, ending on her own photo at junie's 'she's right here' (src/desktop/apps/ball.ts). The lines below are unchanged.",
     "stamp": "Preview · made for you",
     "fitting": "Fitting {n}%",
     "lines": [

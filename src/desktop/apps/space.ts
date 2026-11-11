@@ -267,6 +267,9 @@ export class E4Shell {
     //   chips she pressed this week: the bot's (the browser's memory), then the host's (the ball's) — never stored
     this.ball.onHost = () => { ledger.e4Space.push({ id: 'host', outcome: 'begun', witness: ballScript.host.witness }); };
     this.ball.wordsSource = () => [...this.browser.herWords, ...this.ball.hostPressed];
+    // ⚑ S364 — Junie's raid line answers Maya's "help" when she sent it from Junie's muted thread in Kettle (filed there
+    //   as `v3:help`); the ball reads only this yes/no, never the ledger
+    this.ball.helpAsked = () => ledger.e4Space.some((e) => e.id === 'v3:help');
     this.ball.onJoin = () => {
       ledger.e4Space.push({ id: 'commons', outcome: 'joined', witness: ballScript.commons.witness });
       markE4('stream');   // ⚑ S321 — the contract (src/narrative/e4Beats.ts): Junie's link opened, the birthday stream begins

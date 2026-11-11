@@ -44,7 +44,8 @@ import { turnTo } from '../../room/commonsWorld';
 import { setCommonsFigures, setCommonsDance, answerCommonsFigures, greetCommonsFigures } from '../../room/commonsFigures';
 import { setCommonsHost, freeCommonsHost, type HostSurface } from '../../room/commonsHost';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
-import { drawTryOn, TRYON } from './mirror';
+import { drawTryOn, TRYON, mirrorRect } from './mirror';
+import { drawSwapMorph } from './swapFilter';
 import script from '../../../data/dialog/s4_ball.json';
 
 interface Line { who: string; text: string; gift?: boolean }
@@ -71,7 +72,7 @@ const HOST = script.host as unknown as {
 };
 /** ⚑ S355 — the raid and the naming (s4_ball.json `raid`, `naming`) */
 interface Said { who: string; text: string }
-const RAID = script.raid as unknown as { notice: string; n: number; panel: string; climbSeconds: number; lineSeconds: number; lines: Said[]; settleSeconds: number };
+const RAID = script.raid as unknown as { notice: string; n: number; panel: string; climbSeconds: number; lineSeconds: number; lines: Said[]; settleSeconds: number; help?: Said };
 interface NameRow { host: string; tag: string; who: string; surface: HostSurface; answer?: string; move: string }
 interface NamePress { id: 'hi' | 'count'; before: number; label: string; she: string; notice?: string; you?: string; waitSeconds: number; lingerSeconds: number }
 const NAMING = script.naming as unknown as { rowSeconds: number; tagAt: number; answerAt: number; rows: NameRow[]; after: number; presses: NamePress[] };
@@ -99,6 +100,9 @@ const BAND_H = 34;
 const HOST_CHIP_H = 24;
 /** how many chat lines the screen and the subtitles carry */
 const CHAT_SHOWN = 9;
+/** ⚑ S364 — where the filter docks on the glass once the raid lifts it off the mirror (clear of the tags, the chips,
+ *  the raid's panel and the caption band) */
+const FILTER_CARD = { x: 14, y: 14, w: 124, h: 156 } as const;
 
 type Phase = 'idle' | 'host' | 'tryon' | 'invited' | 'raid' | 'naming' | 'turnAsk' | 'backstage' | 'stream' | 'after' | 'done';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -174,6 +178,22 @@ export class E4Ball {
   private countedIn = false;
   /** the Friends' wall: which of its lines the raid rewrites in place, oldest first */
   private raidSlots: number[] = [];
+  // ── ⚑ S364 (UiB job 14 Part B, N12 — his: "the raid is the community intervening in that morph") — THE FILTER ON
+  //   THE GLASS. At the raid the try-on's picture lifts off the mirror and docks as a card (FILTER_CARD); each raid line
+  //   cracks its gloss; then every name the people stamp in the naming, and each of her two presses, drags the filter's
+  //   intensity back one step (the handle moves, the name on it), until junie's "she's right here" lands it on her own
+  //   photograph. Picture only: no new line, no new press, no new wait.
+  /** what the card shows (0 hers … 1 the goal); it eases toward `filterTo` */
+  private filterK = 1;
+  private filterTo = 1;
+  private filterSteps = 0;
+  /** whose hand is on the handle, and for how long it has been */
+  private filterBy = '';
+  private filterByT = 99;
+  /** ⚑ S364 — Junie's answer to her "help": Kettle files `v3:help` when Maya sends it from Junie's muted thread; the
+   *  shell lends this check (THIS FILE STILL IMPORTS NO LEDGER) */
+  helpAsked?: () => boolean;
+  private raidHelp = false;
   /** the line (or lines) she pressed, for probes — never filed (respite) */
   namingPressed: string[] = [];
   // ── ⚑ S356 — the backstage (Part C) ──
@@ -214,6 +234,10 @@ export class E4Ball {
   get backstageVersion(): number { return this.backstageOn ? 1 + this.backRowsDark() : 0; }
   /** ⚑ S355 — the people are naming the script (probes read it; the tags are on the glass) */
   get naming(): boolean { return this.phase === 'naming'; }
+  /** ⚑ S364 — probes: how much of the filter is still on her picture (1 at the raid, 0 once the people are done) */
+  get filterAmount(): number { return this.filterK; }
+  /** ⚑ S364 — probes: the raid answered her "help" */
+  get helpAnswered(): boolean { return this.raidHelp; }
   /** the tags stamped so far (probes, the legibility check) */
   get tagsShown(): number { return this.tags.filter((t) => !t.sys).length; }
   get phaseId(): string { return this.phase; }
@@ -377,12 +401,16 @@ export class E4Ball {
     this.raidSlots = Array.from({ length: inView }, (_, i) => this.friendsChat.length - inView + i);
     this.pressDone = new Set(); this.pressWait = null; this.pressCur = null; this.pressLinger = -1;
     this.noticeNow = RAID.notice; this.countedIn = false; this.namingPressed = [];
+    // ⚑ S364 — the filter starts where the try-on left it; Junie answers "help" if Maya sent it
+    this.filterK = 1; this.filterTo = 1; this.filterSteps = 0; this.filterBy = ''; this.filterByT = 99;
+    this.raidHelp = !!RAID.help && this.helpAsked?.() === true;
     playOnce('ui_press.mp3');
     roomBed.set(script.room.bed, 2.0);
     this.version++; this.studioV++;
   }
 
   private updateRaid(dt: number): void {
+    this.stepFilter(dt);
     const r4 = this.raidT;
     this.raidT += dt;
     if (Math.floor(r4 * 8) !== Math.floor(this.raidT * 8)) { this.version++; this.studioV++; }
@@ -394,7 +422,9 @@ export class E4Ball {
       // ⚑ S360 / H49 — a line of the product's wall is overwritten by a person's own words (top to bottom);
       //   past the lines in view, the rest simply arrive underneath as before
       const slot = this.raidSlots[this.raidLines];
-      const said = RAID.lines[this.raidLines++];
+      // ⚑ S364 — junie's line is her answer, when Maya asked for help (the first line is junie's either way)
+      const said = this.raidLines === 0 && this.raidHelp && RAID.help ? RAID.help : RAID.lines[this.raidLines];
+      this.raidLines++;
       if (slot !== undefined && this.friendsChat[slot]) this.friendsChat[slot] = { ...said };
       else { this.friendsChat.push(said); if (this.friendsChat.length > 20) this.friendsChat.shift(); }
     }
@@ -415,6 +445,7 @@ export class E4Ball {
    * Friends' column, the key light, the safety banner, the numbers, the picture). Naming is the takeover.
    */
   private updateNaming(dt: number): void {
+    this.stepFilter(dt);
     // ⚑ S360 / H49 — her presses: the naming waits at the row named in `before`; a press (or 12 s of nothing, never
     //   a penalty) changes the host's screen, then the script runs on
     if (this.pressLinger >= 0) {
@@ -453,6 +484,7 @@ export class E4Ball {
       if ((row !== was || wasIn < NAMING.tagAt) && inRow >= NAMING.tagAt) {
         // the stamp: the tag on the glass, the same line in the chat, and the surface taken back
         this.tags.push({ who: R.who, text: R.tag });
+        this.dragFilter(R.who, row === NAMING.rows.length - 1);
         this.friendsChat.push({ who: R.who, text: R.tag });
         if (!R.answer) { this.freed.add(R.surface); freeCommonsHost(R.surface); }
         this.version++; this.studioV++;
@@ -489,7 +521,33 @@ export class E4Ball {
     }
     if (P.id === 'hi' && P.notice) this.noticeNow = P.notice;
     if (P.id === 'count') this.countedIn = true;
+    // ⚑ S364 — her press drags the filter back a step too (her hand on it); the 12 s default moves it with no name
+    this.dragFilter(auto ? '' : 'maya');
     this.version++; this.studioV++;
+  }
+
+  /**
+   * ⚑ S364 — one step of the people taking the filter back: the handle drags down by a share (the naming's rows plus
+   * her presses), with the name of whoever moved it; the last row (junie's) lands it on her own photograph.
+   */
+  private dragFilter(who: string, last = false): void {
+    const total = NAMING.rows.length + NAMING.presses.length;
+    this.filterSteps++;
+    this.filterTo = last ? 0 : Math.max(0, 1 - this.filterSteps / total);
+    this.filterBy = who; this.filterByT = 0;
+    this.version++;
+  }
+
+  /** the card's own clock: the handle eases to where it was dragged (about a second), the name lingers a little */
+  private stepFilter(dt: number): void {
+    const was = this.filterK;
+    if (this.filterK !== this.filterTo) {
+      const d = this.filterTo - this.filterK;
+      this.filterK = Math.abs(d) < 0.004 ? this.filterTo : this.filterK + d * Math.min(1, dt * 3.2);
+    }
+    const byWas = this.filterByT < 1.8;
+    this.filterByT += dt;
+    if (Math.floor(was * 60) !== Math.floor(this.filterK * 60) || byWas !== this.filterByT < 1.8) this.version++;
   }
 
   /** ⚑ S356 — junie: "maya. look what's behind the stage", and one chip, Show me (his Q8: a press, never a turn) */
@@ -597,7 +655,7 @@ export class E4Ball {
     }
     if (this.phase === 'raid') { this.updateRaid(dt); return; }
     if (this.phase === 'naming') { this.updateNaming(dt); return; }
-    if (this.phase === 'turnAsk') return;
+    if (this.phase === 'turnAsk') { this.stepFilter(dt); return; }
     if (this.phase === 'backstage') { this.updateBackstage(dt); return; }
     if (this.phase === 'idle' || this.phase === 'invited' || (this.phase === 'done' && !this.worldOn)) return;
     // ── inside the stream ──
@@ -756,9 +814,12 @@ export class E4Ball {
     }
     if (this.phase === 'tryon') return;
     if (this.phase === 'invited') { this.drawInvite(ctx); return; }
-    if (this.phase === 'raid') { this.drawRaidPanel(ctx, W, H); return; }
-    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
-    if (this.phase === 'turnAsk' || this.phase === 'backstage') { this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
+    if (this.phase === 'raid') { this.drawFilterCard(ctx, W, H); this.drawRaidPanel(ctx, W, H); this.drawHelpAnswer(ctx, W, H); return; }
+    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); this.drawFilterCard(ctx, W, H); this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
+    if (this.phase === 'turnAsk' || this.phase === 'backstage') {
+      if (this.phase === 'turnAsk') this.drawFilterCard(ctx, W, H);
+      this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return;
+    }
     if (this.phase === 'stream' && this.streamT < FRAME.clearSeconds) {
       // the picture lets go of the glass and the place is there
       const was = ctx.globalAlpha;
@@ -835,6 +896,44 @@ export class E4Ball {
     setFont(ctx, 10); ctx.fillStyle = PLACE.ink;
     const cw = Math.ceil(ctx.measureText(INV.chip).width);
     ctx.fillText(INV.chip, JOIN.x + Math.round((JOIN.w - cw) / 2), JOIN.y + 6);
+  }
+
+  /**
+   * ⚑ S364 — THE FILTER, ON THE GLASS (N12). In the raid's first second the try-on's picture lifts off the mirror and
+   * docks top-left (the studio stays in view; nothing here covers the tags, the chips or the caption band); the raid's
+   * lines crack its gloss; the naming drags it back to her. Its frame is the mirror's grey until the filter is off her,
+   * then her room's pink. Head-locked like everything on the glass, so no part of it depends on a look.
+   */
+  private drawFilterCard(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const m = mirrorRect(W, H, TRYON.link);
+    const f = this.phase === 'raid' ? Math.min(1, this.raidT / 1.0) : 1;
+    const e = f * f * (3 - 2 * f);
+    const x = Math.round(m.x + (FILTER_CARD.x - m.x) * e), y = Math.round(m.y + (FILTER_CARD.y - m.y) * e);
+    const w = Math.round(m.w + (FILTER_CARD.w - m.w) * e), h = Math.round(m.h + (FILTER_CARD.h - m.h) * e);
+    const hers = this.filterK <= 0.001;
+    const rim = Math.max(3, Math.round(6 - 3 * e));
+    px(ctx, x - rim, y - rim, w + 2 * rim, h + 2 * rim, hers ? PLACE.textileHi : ERA4.ruleHi);
+    const cracked = this.phase === 'raid' ? this.raidLines / Math.max(1, RAID.lines.length) : 1;
+    const by = this.filterByT < 1.8 ? this.filterBy : '';
+    drawSwapMorph(ctx, x, y, w, h, this.filterK, 0, {
+      chrome: !hers, broken: cracked, by, byInk: by === 'junie' ? BALL.whoFriend : BALL.whoMC
+    });
+  }
+
+  /** ⚑ S364 — junie's answer to her "help", stamped on the glass above the raid's panel while the raid comes in */
+  private drawHelpAnswer(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    if (!this.raidHelp || !RAID.help || this.raidLines < 1) return;
+    const said = RAID.help;
+    setFont(ctx, 16);
+    const tw = Math.ceil(ctx.measureText(said.text).width);
+    setFont(ctx, 12);
+    const hw = Math.ceil(ctx.measureText(said.who).width) + 10;
+    const w = tw + hw + 24, x = Math.round((W - w) / 2), y = H - 46 - 74 - 6 - 34;
+    roundRect(ctx, x, y, w, 26, 6, CLIP.band);
+    px(ctx, x, y, 3, 26, BALL.whoFriend);
+    ctx.fillStyle = BALL.whoFriend; ctx.fillText(said.who, x + 12, y + 8);
+    setFont(ctx, 16); ctx.fillStyle = CLIP.ink;
+    ctx.fillText(said.text, x + 12 + hw, y + 5);
   }
 
   /** ⚑ S355 — the host's own frame, trying to file the raid and failing, row by row: compact, low on the glass, so
