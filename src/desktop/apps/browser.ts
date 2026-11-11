@@ -2390,8 +2390,7 @@ export class E4Browser {
       return;
     }
     if (kind === 'ring') {
-      this.drawRing(ctx, x, y, 70, ring);
-      setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.heading.ring, x + 80, y + 28);
+      this.drawRing(ctx, x, y, 70, ring);   // S367: its word is inside the ring (it was printed twice)
       return;
     }
     if (kind === 'shots') {
