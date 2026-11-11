@@ -378,24 +378,45 @@
   },
   "clip": {
     "_doc": "THE CLIP (src/desktop/apps/contagionClip.ts; the room's ceiling reuses the painter). An invented AI-made video in the anti-'gender ideology' genre's own overblown voice: contagion (one friend, a chat), a line that only goes up, 'who is talking to you'. Tropes as described in RESEARCH_2026_V3_THREADS thread 4, in my own words, never copied. Direct and brute, not violence, no faces. It says it is AI-made on every frame.",
-    "_docS360": "⚑ S360 (his 11 Nov: 'Is it the AI that makes the video of the social contagion to her?' — yes; and 'music and a narrator'): the clip is no longer a recommended video from a channel ('Concerned Futures · 1.2M views' is gone). Second Thoughts MAKES it for Maya out of her own week — the lot's five (Ola, Priya, Rae, Sam, Maya), her 18th, the clinic number 4,815, Meridian's no — in the genre's overblown, glossy voice (his rule for the system's new media), and the last frame turns the genre's alarm into the system's promise. `channel`/`recommended` keep their old keys only because browser.ts still prints them: `channel` is now the stamp line 'Made with AI', `recommended` is 'made for you'. NEVER a medical or diagnostic word in a frame; never a joke at Maya. THE NARRATOR is the SYSTEM's synthetic voice (apparatus register): one build-time TTS file per frame, tools/tts/render.py, entries clip_narr_0…6 in data/audio/tts_manifest.json, whose `source.fields` are `clip.frames[n]` below so the spoken words cannot drift from the subtitles. `frameHolds[n]` = that file's real duration (ffprobe: 3.692 2.438 3.622 3.204 3.762 3.831 3.065 s) + the narrator's 0.15 s entry + at least 0.6 s of air, rounded up to a half-second so every card starts on a beat of the music (120 BPM): 4.5 4 4.5 4 5 5 5 = 32 s; `frameSeconds` is kept as the fallback for a caller with no holds. The music (clip_music.mp3, tools/make_clip_music.py) is one loop of the same length.",
+    "_docS360": "⚑ S360 (his 11 Nov: 'Is it the AI that makes the video of the social contagion to her?' — yes; and 'music and a narrator'): the clip is no longer a recommended video from a channel ('Concerned Futures · 1.2M views' is gone). Second Thoughts MAKES it for Maya out of her own week — the lot's five (Ola, Priya, Rae, Sam, Maya), her 18th, the clinic number 4,815, Meridian's no — in the genre's overblown, glossy voice (his rule for the system's new media), and the last frame turns the genre's alarm into the system's promise. `channel`/`recommended` keep their old keys only because browser.ts still prints them: `channel` is now the stamp line 'Made with AI', `recommended` is 'made for you'. NEVER a medical or diagnostic word in a frame; never a joke at Maya. THE NARRATOR is the SYSTEM's synthetic voice (apparatus register): one build-time TTS file per frame, tools/tts/render.py, entries clip_narr_0…6 in data/audio/tts_manifest.json, whose `source.fields` are `clip.frames[n]` below so the spoken words cannot drift from the subtitles. `frameHolds[n]` = that file's real duration (ffprobe: 3.692 2.438 3.622 3.204 3.762 3.831 3.065 s) + the narrator's 0.15 s entry + at least 0.6 s of air, rounded up to a half-second so every card starts on a beat of the music (120 BPM): 4.5 4 4.5 4 5 5 5 = 32 s; `frameSeconds` is kept as the fallback for a caller with no holds. The music (clip_music.mp3, tools/make_clip_music.py) is one loop of the same length. ⚑ S364: ten frames now, 50 s — the numbers here are S360's; `_docS364` has the current ones.",
+    "_docS364": "⚑ S364 (UiB job 14 Part B item 3 / N8; his verdict on the 32 s cut, 11 Nov: 'looking super good… needs a bit more of content, maybe we can push to 45 seconds? the music was great, and the voice it made was brilliant'). THREE CARDS INSERTED after '18 TODAY' (frames 3–5): THE SIGNS — the parent-reported 'signs' the 2018 paper lists (RESEARCH_ROGD_AND_FILTERS_2026-11-11 §B1: a sudden announcement, friends who also came out, more time online, popularity after coming out, earlier struggles) turned into the AI's CHECKLIST APPLIED TO HER WEEK, over the top: a panel titled THE SIGNS whose rows accumulate (card 3 rows 1–2, card 4 rows 1–4, card 5 all five, then a 5 / 5 stamp), each tick landing on a beat as the narrator finishes its sentence (`signs.cards[].ticks`, seconds into the card). THE COLLAPSE IS BUILT IN: every tick carries its 'evidence' from her own data in small mono type, and the evidence does not support it — 'came out suddenly' is proved by Mum's line from June 2023 (her own years thread: 'so proud of you love'), three years before this week; 'friends came out too' by the size of her group chat; 'more popular after' by the stream that comes for her later. The clip never names the theory and never says it is real; the correction stays readable in Mum's article; no medical or diagnostic word on a card ('struggles', not a condition). Frames 6–9 are S360's frames 3–6, unchanged, and their narrator files were RENAMED clip_narr_3…6 → clip_narr_6…9 (his 'brilliant' takes kept, not re-rendered); clip_narr_3…5 are new, same manifest voice and settings (M5, speed 0.85, 12 steps). `frameHolds[n]` = the file's real duration (ffprobe: 3.692 2.438 3.622 4.110 4.807 5.782 3.204 3.762 3.831 3.065 s) + 0.15 s entry + at least 0.6 s of air, rounded up to a half-second: 4.5 4 4.5 5 6 7 4 5 5 5 = 50 s = 25 bars at 120 BPM. ⚑ He asked for about 45: the narrator's own pace on the three new lines (two sentences each) needs 18 s by the rule; S360's holds were kept so every later card keeps its place in the bar (the only shorter honest total, 48.5 s, would take S360's spare half-second off card 1 and its spare second off the last card, and leave the loop half a bar short). The music (tools/make_clip_music.py) is the same piece, longer: 25 bars, the later cards moved by exactly 9 bars, a ding on every tick and a stamp-hit on 5 / 5.",
     "title": "THE GREAT BECOMING",
     "channel": "Made with AI",
     "aiTag": "Made with AI",
-    "length": "0:32",
+    "length": "0:50",
     "recommended": "made for you",
     "frames": [
       "IT STARTED WITH ONE FRIEND.",
       "THEN A GROUP CHAT.",
       "18 TODAY. AND IT HAD SPREAD.",
+      "SUDDEN. JUST LIKE HER FRIENDS.",
+      "ALWAYS ONLINE. MORE POPULAR AFTER.",
+      "STRUGGLING BEFORE. EVERY BOX TICKED.",
       "4,815 AND RISING.",
       "EVEN MERIDIAN SHUT THE DOOR.",
       "WHO IS TALKING TO YOU, MAYA?",
       "YOU CAN STILL COME BACK."
     ],
     "frameSeconds": 4.5,
-    "frameHolds": [4.5, 4, 4.5, 4, 5, 5, 5],
-    "narratorDelay": 0.15
+    "frameHolds": [4.5, 4, 4.5, 5, 6, 7, 4, 5, 5, 5],
+    "narratorDelay": 0.15,
+    "signs": {
+      "_doc": "⚑ S364 — THE SIGNS, the AI's checklist on frames 3–5 (see _docS364). `rows` accumulate across `cards`: each card shows every row ticked before it, plus one new row per entry in its `ticks` (seconds into the card, each on a half-second beat of the music, as the narrator finishes the sentence that names it). `stampAt` is when the 5 / 5 stamp lands. The tick is drawn in pixels after `sign`, never as a font glyph. `evidence` is her own data as the machine files it — and it never supports the tick: that is the collapse. tools/make_clip_music.py reads `cards` too, so the music's dings land on the same beats.",
+      "title": "THE SIGNS",
+      "rows": [
+        { "sign": "CAME OUT SUDDENLY", "evidence": "Mum, Jun 2023: 'so proud of you'" },
+        { "sign": "FRIENDS CAME OUT TOO", "evidence": "the lot: 5 members" },
+        { "sign": "MORE TIME ONLINE", "evidence": "screen time 6 h 12 m" },
+        { "sign": "MORE POPULAR AFTER", "evidence": "41 watching tonight" },
+        { "sign": "STRUGGLES BEFORE", "evidence": "awake at 03:12" }
+      ],
+      "stamp": "5 / 5",
+      "cards": [
+        { "frame": 3, "ticks": [1.5, 3.5] },
+        { "frame": 4, "ticks": [2, 4] },
+        { "frame": 5, "ticks": [2.5], "stampAt": 5 }
+      ]
+    }
   },
   "tryon": {
     "_doc": "TRY IT ON (beat 14; src/desktop/apps/mirror.ts). His second ruling: harsher, not softer; the system starts it without asking; the mirror, the reveal of a male body; Junie's link breaks in and ends it; the player cannot. The system's voice only, flat and pleased with itself; it says how natural it looks. Speculative (no documented use of such a tool, RESEARCH_2026_V3_THREADS thread 2).",
