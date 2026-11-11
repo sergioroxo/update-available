@@ -659,6 +659,69 @@ The four devices are period hardware: his CC-BY 3.0 models, credited on import (
   Developer, PubMed 19592761); Puzz Loop and Zuma (Wikipedia, Giant Bomb); Flappy Bird (NPR, 8 Feb 2014; Guinness
   World Records).
 
+## 7p. The summary layer: "AI can make mistakes" (his, 11 Nov 2026) — proposed as a section of the article
+
+**His words** (on job 14 Part A's photo page): "amazing idea with the Summary by AI, and the detail of 'AI can make
+mistakes' (should add this to the Research and point out as good idea for a section on the article)". He also loved
+the **AI Mode** button and the **Sponsored** link to Second Thoughts on Mum's sites.
+
+**What the piece does (S363, `data/dialog/s4_v3.json`).** In 2026 an AI sits between Maya and every message, and each
+layer carries its own small print:
+
+| layer | what it does to the message | its small print |
+|---|---|---|
+| **the inbox** (Larkpost's "✦ Summarise") | Mum's email becomes a task: "She asks you to read three articles." Meridian's refusal becomes manners: "Meridian LGB Trust cannot support you. Suggested reply: 'Thanks for letting me know!'" The clinic's waiting list becomes: "No action needed." | "Summary · by Larkpost AI" / "AI can make mistakes." |
+| **the news** (Mum's three sites) | an "AI summary" box at the top of each article, above both readings | "may contain mistakes" |
+| **the search** (Lantern) | the "AI Overview", kind and bland ("Talking it through with someone can help you work out what is really yours"), then the Second Thoughts ad, and an **AI Mode** button | "Generative AI is experimental." |
+| **the chat** (Second Thoughts) | the assistant itself | "Second Thoughts can make mistakes. It is always on your side." |
+
+Every layer is the system's own surface (`operable`), so it may be sharp. The last line is the piece's joke: **the
+disclaimer and the reassurance in one sentence.**
+
+**The argument for the article.**
+- In 2026 the network does not need to write to her. The layer that summarises her life already does the work.
+- It turns a refusal of care into politeness, a waiting list into "no action needed", and her mother's worry into a
+  reading list.
+- The small print, "AI can make mistakes", moves the duty to check onto the person least able to check: a young
+  trans woman, alone on her birthday, with her support refused.
+- **The disclaimer is the alibi.** This continues §7c, weaponised care: the care is automated, and so is the
+  disclaimer of responsibility for it.
+
+**Documented ground** (found 11 Nov through reports and official posts; open each before citing):
+1. **The summary in the inbox is real and arrives unasked.** Google announced Gemini summary cards in the Gmail app
+   (Workspace Updates blog, late May 2025). They appear by themselves at the top of long threads, where smart
+   features are on, alongside the manual "Summarize this email".
+2. **A summary can be written by someone else.** Mozilla's 0DIN bug-bounty programme (Marco Figueroa, 10 Jul 2025)
+   showed that hidden text in an email (zero-size, white) could make Gemini's "Summarize this email" show a fake
+   warning the sender wrote. The reader saw only the summary. For the article: whoever controls the input can steer
+   the summary. The piece does not show this; it is context.
+3. **Summaries get queer lives wrong.** Apple Intelligence's notification summaries produced a false BBC alert
+   about Luigi Mangione (December 2024). Another said, falsely, that Rafael Nadal had come out as gay. Apple paused
+   news summaries in the iOS 18.3 betas (January 2025), put summaries in italics and added a warning that they
+   "may contain errors" (TechCrunch, 16 Jan 2025; Engadget; Neowin).
+4. **The overview at the top of search is confident and fallible.** Google's AI Overviews launched in the US in May
+   2024, and within days one suggested glue to keep cheese on pizza, from an old joke on Reddit. Google said it would
+   limit user-generated content in such answers (Google's blog, May 2024; MIT Technology Review, 31 May 2024). In
+   January 2026 a Guardian investigation found false and misleading health information in AI Overviews. Google
+   removed them for some liver-test searches, but the same questions could still be asked in **AI Mode** (Guardian,
+   about 2 Jan 2026, through secondary reports).
+5. **The chat's footer.** ChatGPT shows "ChatGPT can make mistakes. Check important info." under its message box
+   (described by a PIRG guide; no OpenAI page found). Second Thoughts' footer quotes that genre, then adds the
+   reassurance.
+6. **The thread to the piece's own ground:** §7e (GLAAD 2026), where a major AI model built to give "both sides"
+   suggested conversion therapy, is the documented case of the chat layer pointing a queer person to the practice.
+
+**Not to overclaim.** Not every summary is wrong, and these are documented errors, not a measured error rate. The
+Guardian piece and the ChatGPT footer were seen only through secondary reports. The 0DIN flaw needed the reader to ask
+for a summary, and its fix status is not known. Larkpost, Lantern and Second Thoughts are invented. Their summaries
+are the piece's own writing, made to show what a summary can do, and no claim is made about any real product's output
+on these subjects.
+
+**Where it could go in the article:** a section "The summary layer", after the AI conversation (§7m) and before
+conversion as conversation (§7n). Figures: the Larkpost summary of Meridian's refusal (job 14 Part A, image
+`14-seat-mail-meridian-summary.png`), Mum's email summarised (`09-seat-mail-mum-summary.png`), and the chat's
+footer. All are in `research/article-images-2026-11-11/2026-screens-S363/`.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
