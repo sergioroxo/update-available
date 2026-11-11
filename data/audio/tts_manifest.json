@@ -62,7 +62,7 @@
     },
     {
       "id": "clip_narr_0",
-      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 0 of 7. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[0]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render all seven if any word changes, so the narrator never changes between frames).",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 0 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[0]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames).",
       "register": "apparatus",
       "voice": "M5",
       "lang": "en",
@@ -73,7 +73,7 @@
     },
     {
       "id": "clip_narr_1",
-      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 1 of 7. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[1]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render all seven if any word changes, so the narrator never changes between frames).",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 1 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[1]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames).",
       "register": "apparatus",
       "voice": "M5",
       "lang": "en",
@@ -84,7 +84,7 @@
     },
     {
       "id": "clip_narr_2",
-      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 2 of 7. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[2]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render all seven if any word changes, so the narrator never changes between frames).",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 2 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[2]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames).",
       "register": "apparatus",
       "voice": "M5",
       "lang": "en",
@@ -95,7 +95,7 @@
     },
     {
       "id": "clip_narr_3",
-      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 3 of 7. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[3]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render all seven if any word changes, so the narrator never changes between frames).",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 3 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[3]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364 (UiB job 14 Part B, his 11 Nov: 'push to 45 seconds… the voice it made was brilliant'): one of the three 'signs' cards (the AI's checklist applied to her), rendered in a second sitting with this entry's voice, speed and steps copied unchanged from clip_narr_0 so the narrator does not change between frames.",
       "register": "apparatus",
       "voice": "M5",
       "lang": "en",
@@ -106,7 +106,7 @@
     },
     {
       "id": "clip_narr_4",
-      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 4 of 7. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[4]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render all seven if any word changes, so the narrator never changes between frames).",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 4 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[4]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364 (UiB job 14 Part B, his 11 Nov: 'push to 45 seconds… the voice it made was brilliant'): one of the three 'signs' cards (the AI's checklist applied to her), rendered in a second sitting with this entry's voice, speed and steps copied unchanged from clip_narr_0 so the narrator does not change between frames.",
       "register": "apparatus",
       "voice": "M5",
       "lang": "en",
@@ -117,7 +117,7 @@
     },
     {
       "id": "clip_narr_5",
-      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 5 of 7. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[5]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render all seven if any word changes, so the narrator never changes between frames).",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 5 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[5]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364 (UiB job 14 Part B, his 11 Nov: 'push to 45 seconds… the voice it made was brilliant'): one of the three 'signs' cards (the AI's checklist applied to her), rendered in a second sitting with this entry's voice, speed and steps copied unchanged from clip_narr_0 so the narrator does not change between frames.",
       "register": "apparatus",
       "voice": "M5",
       "lang": "en",
@@ -128,7 +128,7 @@
     },
     {
       "id": "clip_narr_6",
-      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 6 of 7. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[6]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render all seven if any word changes, so the narrator never changes between frames).",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 6 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[6]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364: this is S360's take of the same words, RENAMED from clip_narr_3 (the three 'signs' cards were inserted before it) — not re-rendered, because his verdict on the voice was 'brilliant'.",
       "register": "apparatus",
       "voice": "M5",
       "lang": "en",
@@ -136,6 +136,39 @@
       "steps": 12,
       "outFile": "public/assets/audio/clip_narr_6.wav",
       "source": { "file": "data/dialog/s4_v3.json", "fields": ["clip.frames[6]"] }
+    },
+    {
+      "id": "clip_narr_7",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 7 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[7]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364: this is S360's take of the same words, RENAMED from clip_narr_4 (the three 'signs' cards were inserted before it) — not re-rendered, because his verdict on the voice was 'brilliant'.",
+      "register": "apparatus",
+      "voice": "M5",
+      "lang": "en",
+      "speed": 0.85,
+      "steps": 12,
+      "outFile": "public/assets/audio/clip_narr_7.wav",
+      "source": { "file": "data/dialog/s4_v3.json", "fields": ["clip.frames[7]"] }
+    },
+    {
+      "id": "clip_narr_8",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 8 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[8]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364: this is S360's take of the same words, RENAMED from clip_narr_5 (the three 'signs' cards were inserted before it) — not re-rendered, because his verdict on the voice was 'brilliant'.",
+      "register": "apparatus",
+      "voice": "M5",
+      "lang": "en",
+      "speed": 0.85,
+      "steps": 12,
+      "outFile": "public/assets/audio/clip_narr_8.wav",
+      "source": { "file": "data/dialog/s4_v3.json", "fields": ["clip.frames[8]"] }
+    },
+    {
+      "id": "clip_narr_9",
+      "_doc": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's NARRATOR, frame 9 of 10. The voice is the SYSTEM's own (Second Thoughts making a trailer of Maya's week), so it is apparatus register, unambiguously: the machine reading its own overblown video aloud, never a person. M5 is the lowest of Supertonic's stock male styles (measured ~100 Hz median f0 against 112-146 for the others), read at speed 0.85 with 12 steps so each frame is a slow, grave, trailer-announcer line; the pomp is the point (his rule: the system's new media must be over the top). The words are data/dialog/s4_v3.json `clip.frames[9]` — resolved at render time, never copied here, so the spoken line cannot drift from the subtitle. One file per frame; the frame's hold in `clip.frameHolds` = this file's real duration + 0.6 s. Voiced ONCE as a set (re-render the whole set if any word changes, so the narrator never changes between frames). ⚑ S364: this is S360's take of the same words, RENAMED from clip_narr_6 (the three 'signs' cards were inserted before it) — not re-rendered, because his verdict on the voice was 'brilliant'.",
+      "register": "apparatus",
+      "voice": "M5",
+      "lang": "en",
+      "speed": 0.85,
+      "steps": 12,
+      "outFile": "public/assets/audio/clip_narr_9.wav",
+      "source": { "file": "data/dialog/s4_v3.json", "fields": ["clip.frames[9]"] }
     }
   ]
 }

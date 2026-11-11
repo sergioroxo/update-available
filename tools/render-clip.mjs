@@ -53,6 +53,11 @@ const DELAY = V3.clip.narratorDelay ?? 0.15;
 const LOGICAL_W = 320, LOGICAL_H = 180, SCALE = WIDTH / LOGICAL_W;
 const canvas = createCanvas(WIDTH, HEIGHT);
 const ctx = canvas.getContext('2d');
+// ⚑ S364: node-canvas REJECTS a whole font string that names `-apple-system` and silently keeps the previous font, so
+// every `fontFor(…, 'e4')` the clip sets was ignored here (captions at the default 10 px, signs in the last mono size);
+// a browser just skips the name it doesn't know. Strip it on the way in, so the video shows what the piece shows.
+const FONT = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(ctx), 'font');
+Object.defineProperty(ctx, 'font', { get() { return FONT.get.call(this); }, set(v) { FONT.set.call(this, String(v).replace(/-apple-system,\s*/g, '')); } });
 ctx.imageSmoothingEnabled = false;
 ctx.scale(SCALE, SCALE);
 const total = Math.ceil(CLIP_LOOP_SECONDS * FPS);
