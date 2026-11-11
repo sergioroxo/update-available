@@ -26,6 +26,7 @@
     "browserTitle": "Browser",
     "kettleTitle": "Messages",
     "enlarge": "⤢",
+    "close": "✕",
     "taskbarDate": "Fri 23 Oct · 07:30",
     "wake": "Press to wake the screen",
     "askL": "Ask L for help"
@@ -120,14 +121,15 @@
         "when": "08:14",
         "text": "happy birthday. don't answer if it's too much."
       },
+      "_docHiddenS366": "⚑ S366 / J15-06 (his: \"what is the 'restored thing', two messages from Junie?\") — the two lines she wrote while muted, made plain: her tip for the step after the unmute, when the AI asks Maya to \"Confirm your profile photo\" — Photos still holds her real one (\"original kept\"), and the system believes whichever photo she confirms last, so: pick your real one (\"Use original\"). Felt register, Junie's voice (lower case, short); his edit wins.",
       "hidden": [
         {
           "when": "11:06",
-          "text": "the restore thing. 'original kept' means it keeps a copy."
+          "text": "that 'you, restored' pic isn't you. photos still has your real one, it says 'original kept'."
         },
         {
           "when": "11:07",
-          "text": "it believes whatever you confirmed last. so confirm the other one."
+          "text": "when it asks you to confirm, pick your real one. it believes whatever you confirm last."
         }
       ],
       "beforeRetired": [
@@ -346,7 +348,7 @@
     "shots": {"_docS364": "⚑ S364 / N3 — what it shows her of her own life: images of her mail and messages, labelled as screenshots it took.", "label": "Screenshots · from your devices", "dad": "Dad", "dadLine": "Not while you're under this roof.", "dadWhen": "Sep 2025"},
     "pages": {"_docS364": "⚑ S364 / N9 — three web pages it shares; the claims are its own fabrications, made visibly impossible (Claude's wording; his edit wins). No real site, person or study.", "stamp": "Made with AI", "tap": "Tap to see larger", "close": "Close", "items": [{"id": "jordan", "url": "homeagain.example/stories/jordan", "site": "HOME AGAIN", "head": "“One chat and I was me again.”", "lines": ["Jordan, 22 · ✓ verified", "Restored in 3 days. 100% guaranteed.", "★★★★★ 4.9 · 2,000,000 reviews"]}, {"id": "study", "url": "secondthoughts.help/research", "site": "Second Thoughts Research", "head": "147% of young people feel calmer after one chat", "lines": ["A new study of 12 users.", "Results may vary. Results do not vary."]}, {"id": "noa", "url": "secondthoughts.help/stories", "site": "Stories like yours", "head": "“I found my peace.”", "lines": ["Noa, 34 · curated for you", "lightly edited"]}]},
     "session": {"_docS364": "⚑ S364 — the live session it books for her (the headset's host is where it leads; the backstage shows the 'residential programme (partner)').", "live": "LIVE · this evening", "title": "Explore what's really yours", "line": "One to one with a host · free", "fine": "Not banned: 'explorative conversations' — draft Conversion Practices Bill, 25 Jun 2026", "booked": "Booked ✓"},
-    "game": {"_docS364": "⚑ S364 / item 7 — the game window on the monitor (the same session as the console on her bed), and the AI's comments while she plays: praise that is a metric, at most one line every few matches, three in all.", "window": "MATCH MADE SIMPLE", "sub": "on your console", "close": "✕", "comments": ["Calmer already. {from}% → {to}%.", "That's it. Breathe. {to}%.", "Look at you settling. {to}%."]},
+    "game": {"_docS364": "⚑ S364 / item 7 — the game window on the monitor (the same session as the console on her bed), and the AI's comments while she plays: praise that is a metric, at most one line every few matches, three in all.", "window": "MATCH MADE SIMPLE", "sub": "on your console", "close": "✕", "back": "◂ Back", "_docS366": "⚑ S366 / J15-03 — a press on the small window enlarges it over the browser's area; ◂ Back or ✕ returns it to the corner.", "comments": ["Calmer already. {from}% → {to}%.", "That's it. Breathe. {to}%.", "Look at you settling. {to}%."]},
     "week": { "_docS363": "⚑ S363 (his N7: \"'Your week, so far' goes\") — no longer drawn; kept as data only.", "title": "Your week, so far", "meridian": "Meridian LGB Trust", "declined": "declined" },
     "heading": {
       "title": "Where you're heading",
