@@ -560,6 +560,105 @@ self-presentation; the clinical debate itself is left unresolved on screen, as C
 the medium of 2026's conversion network is the medium of the chatbot — talk — and the law's newest line is drawn
 around talk. Word it carefully: the Court did not legalise conversion therapy; it changed the standard of review.
 
+## 7o. The games: why these, and what each one stands for (his ask, 10 Nov 2026; written 11 Nov)
+
+**His ask** (headset session, 10 Nov, 21:05): "explain the choice of games and what they represent culturally". **His
+law for all of them** (28 Sep): "They all have a rhetoric of failure, that unables you to win, aka the queer side
+always wins."
+
+**The idea that holds them together.** Each era has one small game, and each game is **the programme's own
+product**. It is made in the most popular small-game form of its year and played on that year's device. Each one turns
+the same thing into a game: **fitting a life into a shape.** The satire is always aimed at the seller: its brand, its
+cheer, its score. It is never aimed at the player or at anything queer. Each game's own rules stop it being won:
+- the score stops at 99;
+- the heap never clears;
+- the sentence always completes;
+- the original picture cannot be written to.
+
+What belongs to the person survives every run. None of the games is required to finish an era.
+
+| era · device | the game (file) | the real form it borrows | what the form meant then | what the programme uses it for | how it fails, and what survives |
+|---|---|---|---|---|---|
+| 1997 · the companion disk on Daniel's PC | **ROOTCAUSE.EXE**, the Root Cause Digger (`src/desktop/apps/rootCause.ts`) | the dig-and-chase arcade game (his reference: Dig Dug), sold as 1990s **shareware**: "fellowship shareware · 1997" | cheap software on a disk, posted with the rest of a kit | the programme's theory that a "root cause" is buried in a life (the father, school, the body). The things that chase you are **diagnoses**; a leaflet "power-up" makes them stronger | the ROOT CAUSE FOUND bar has a ceiling of 99 in the code, so the report says NOT FOUND. The honest answer to each chapter review scores 0 and is **kept** on a shelf that nothing can clear, not even the programme's Delete. Since S362: three levels at most, with a stop-or-continue choice after each |
+| 1997 · Daniel's handheld (four-green LCD) | **FIT IN** (`src/games/fitIn.ts`) | the Game Boy and its **falling-block** game: the 1990s picture of making pieces fit | a child's own device, played in bed | moulds the programme wants a life to fit (THE HOUSE, THE CHURCH, THE CAKE, THE GOWN, THE PORTRAIT). They narrow, and whatever sticks out is cut off | every mould narrows somewhere, so a tower with nothing cut off is impossible. What is cut off joins **one heap that never loses a pixel**, run after run. At the end the programme's blocks slide away and the heap stands. Period-true: greens only (his ruling, 28 Sep) |
+| 2003 · Daniel's flip phone | **CLEAR**, Restorify's game (`src/games/clear.ts`); it replaced REACH, a snake game (`reach.ts`, unhooked) | the **marble-chain shooter**: Puzz Loop (Mitchell, arcade, 1998) and Zuma (PopCap, Dec 2003), the emblem of the downloadable "casual" game. Also the phone game after Snake | small games for the broadband PC and the phone, played in the gaps of a day | the chain is **the programme's own words**, one letter to a ball. The CLEAR meter is the programme's progress | the meter is 99 × (1 − e^(−broken/36)) and the belt never runs out, so it can never read 100. Each ball that breaks frees its letter, and the freed letters spell **I KNOW WHO I AM** (his diary line). Every end screen shows the whole sentence |
+| 2016 · Vera's phone | **FloppySheep** (`src/desktop/apps/floppysheep.ts`), with his song "Out of Bounds" | the **one-tap mobile game** after Flappy Bird (Dong Nguyen, 2013; No. 1 on the US App Store's free chart in Jan 2014; withdrawn by its maker on 9–10 Feb 2014) | the platform's endless attention: a game one tap away while work waits | the platform's mascot game, "a Lamby game". The pressures (megaphones, the recruiter's crook, the quota inspectors) cost a lamb, never a life | the exception that proves the rule: it **never judges Vera** and never files to her record (S70). Lambs drift away, and that is people choosing, never a loss. The platform's bombast collapses on its own when the fuel runs out. It has to be really fun, because a deliberately bad game would sneer at her for playing |
+| 2026 · the console on Maya's bed, and since S364 a window on her screen | **MATCH MADE SIMPLE**, Second Thoughts' game (`src/games/matchMade.ts`); it replaced TIDY (`tidy.ts`, unhooked) | **match-three**: Bejeweled (PopCap, 2001) and Candy Crush Saga (King, 2012), in free-to-play dress (percentages, praise, confetti) | the casual puzzle sold as **relaxation** (see below) | each match clears the programme's filter coating from **its copy** of Maya and Junie's Pride '24 picture. Its counter-move coats a patch back, files what she matched under OLD FILE and puts more tiles on the board. In S364 **the AI offers it as care**: "Want to play something to help you relax? I've put it on your console." It then reads her calm back to her as a number ("Calmer already. 61% → 64%.") | the score is min(99, …), so it can never pass 99%. One patch can never be uncovered. STOP HERE breaks the frame at any time. **The original picture is never written to**: the end card says "THE ORIGINAL IS ALL WE FOUND." Filed: "MATCH MADE SIMPLE played — the original stayed" |
+
+**Why match-three for 2026 (the cultural fact under the offer).** The match-three puzzle was sold as calming.
+**Documented:**
+- PopCap, the maker of Bejeweled, underwrote a study at East Carolina University (Russoniello, O'Brien & Parks, *Journal
+  of CyberTherapy and Rehabilitation*, 2009; 134 participants; EEG and heart-rate measures).
+- The study reported that Bejeweled 2 and two other PopCap games improved mood and lowered stress. The university's
+  first press release on this work ran on 28 Apr 2008.
+- The lead author called it a first step, and **the maker paid for it**.
+
+So when the AI in 2026 says "to help you relax", it uses a real promise of the genre. That promise was made by the
+industry about its own product, and in the piece it is turned into compliance: calm becomes a percentage of the
+programme's goal. That is also why the Close card is "The game she was offered" (draft `did` line: "offered her a game
+to calm her, and counted her calm as progress"; **his to write**, status *speculative*, the game invented). The card
+claims nothing about any real wellness app, and none is sourced.
+
+**The documented channel: conversion programmes moved into the newest small screen.** The piece's games are invented.
+Every era's channel for them is real.
+
+1. **1990s, the console cartridge.** Wisdom Tree, the Christian label set up by Color Dreams (1990), sold **unlicensed**
+   NES cartridges such as *Bible Adventures* (1990/91), plus Game Boy titles. It sold them through **Christian
+   bookstores**, outside Nintendo's licensing (Wikipedia; MobyGames). These were Bible-story games, not ex-gay games.
+   The piece borrows the channel (a Christian product for a child's console, sold beside the books), not a title.
+2. **2011, the App Store.** Exodus International's iPhone app was approved and rated 4+, available from mid-February
+   2011. Apple removed it on 22 March 2011, after a Change.org petition started by Truth Wins Out gathered about
+   146,000 signatures. Apple said it was "offensive to large groups of people" (CBS News; PinkNews, 23 Mar 2011; Truth
+   Wins Out's press release on PR Newswire).
+3. **2018–19, the app stores again.** Living Hope Ministries' app was removed by Apple in December 2018, and by Amazon
+   and Microsoft. Google removed it from the Play Store at the end of March 2019, after a petition of more than 140,000
+   signatures and after the Human Rights Campaign suspended Google's Corporate Equality Index score over it (CNBC, 29
+   Mar 2019; PinkNews). Living Hope said the app did not promote conversion therapy.
+4. **2026, in the piece.** The AI does not sell an app. It puts the game on her console for her, and in the takeover
+   it starts a round itself ("I started a round for you").
+
+The article's line is that the delivery moves from the bookstore, to the app store, to the assistant that installs the
+game for you. Exodus is in the KB. Living Hope is named here for the article only, and goes on no screen unless the KB
+adds it.
+
+**The scholarship that frames it (found 11 Nov, through publishers' pages and reviews; open each before citing).**
+- **Procedural rhetoric:** Ian Bogost, *Persuasive Games: The Expressive Power of Videogames* (MIT Press, 2007). A
+  game argues through its rules. Each of these games argues the programme's case through its rules, and the same
+  rules make that case impossible. Bogost's "exploitationware" (2011) is already source S63 in
+  RESEARCH_CALEB_AND_TIME.
+- **Failure:** Jesper Juul, *The Art of Failure* (MIT Press, 2013).
+- **Queer failure:** Jack Halberstam, *The Queer Art of Failure* (Duke University Press, 2011). It reads failure as a
+  refusal of success as heteronormative, capitalist life defines it. Halberstam's "Queer Gaming: Gaming, Hacking, and
+  Going Turbo" is in Ruberg & Shaw (eds.), *Queer Game Studies* (University of Minnesota Press, 2017), followed by a
+  conversation with Juul on failure.
+- **Bo Ruberg**, *Video Games Have Always Been Queer* (NYU Press, 2019), combines Halberstam and Juul.
+- **The casual era:** Juul, *A Casual Revolution* (MIT Press, 2010). Critical play: Mary Flanagan, *Critical Play*
+  (MIT Press, 2009). These two are from memory, not opened: **[VERIFY SOURCE]**.
+
+**The reading, for the article.** His law turns Halberstam's argument into a design rule. The failure in these games is
+**not the player's but the programme's**, and it is built into the programme's own scoring. A programme that promises
+change ships a game whose code proves change cannot happen. The player learns that with their own hands, run after
+run, and no caption has to say it. This is the piece's position on conversion practice, reached through play. The
+games' history in the production is evidence for that method:
+- the first builds (S189) were rejected as too bare;
+- TIDY was rejected for quoting a named campaign on a game screen, and his ruling moved named claims to the dossier;
+- the approved versions came from rounds of prototypes he played (FIT IN v4 "fantastic", CLEAR v8 "Much better",
+  FloppySheep v7 "amazing and that's it", MATCH MADE SIMPLE v2 "very good indeed!").
+
+The four devices are period hardware: his CC-BY 3.0 models, credited on import (PLAN_PHASE4_GAMES, the models table).
+
+**Not to overclaim.**
+- We have not found a real conversion programme that made a video game; the search was not exhaustive. Every game
+  here is invented.
+- Wisdom Tree's games were Bible stories, not ex-gay games.
+- The 2009 study was industry-funded and preliminary.
+- Zuma came out on the PC in December 2003, and its phone ports came later, so CLEAR on a 2003 phone is the piece's
+  licence. The 1998 arcade original and Snake on the phone are period-true.
+- Sources opened 11 Nov, through search results and reports, not primary pages: Exodus's app (CBS News, PinkNews, PR
+  Newswire); Living Hope (CNBC, PinkNews); Wisdom Tree (Wikipedia, MobyGames); the ECU study (ECU News, Game
+  Developer, PubMed 19592761); Puzz Loop and Zuma (Wikipedia, Giant Bomb); Flappy Bird (NPR, 8 Feb 2014; Guinness
+  World Records).
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

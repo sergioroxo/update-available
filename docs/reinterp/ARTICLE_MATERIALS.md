@@ -16,7 +16,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | document | what it is | in git? |
 |---|---|---|
 | `docs/reinterp/ARTICLE_RESTRUCTURE_IDEA_2026-10-31.md` | his one argument for the article (31 Oct) | yes |
-| `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` | **the main companion**: what the piece is, by section (§1–§10), with dated additions §7–§7l | yes |
+| `docs/reinterp/ARTICLE_COMPANION_2026-10-31.md` | **the main companion**: what the piece is, by section (§1–§10), with dated additions §7–§7l (§7m–§7o added 11 Nov: 2026 around the AI; conversion as conversation; **§7o the games and what each stands for culturally**) | yes |
 | `docs/reinterp/ARTICLE_COMPILATION_2026-10-03.md` | the full evidence file up to 3 Oct: authorship model, his overrides, the ethics regime, numbers | yes |
 | `docs/reinterp/ARTICLE_EVIDENCE_LOG.md` | **his own notes** for the article (his file: Claude reads, never rewrites) | yes |
 | `docs/reinterp/ARTICLE_FIGURES_2026-10-31.md` | the 26 figures, captions and how they were made | yes |
@@ -107,6 +107,11 @@ ARTICLE_COMPANION; this file only says where things are.*
 | `research/article-images-2026-11-11/close-order-S361/` | Job 13 Part B: the Close in his order — flight with the glitch, Daniel's place, up, messages, panels, song | 64 | 11 Nov | Also on OneDrive |
 | `research/article-images-2026-11-11/fixes-1997-2016-S362/` | Job 13 Part C: 1997–2016 timing and design from his headset notes | 124 | 11 Nov | Also on OneDrive |
 | `research/article-images-2026-11-11/2026-ai-conversation-S360/` | Job 13 Part A: 2026 around the AI conversation — mailbox, Mum's articles, the diagnosis, the clip made for her, the raid rewriting the wall | 101 | 11 Nov | before/after of his 11 Nov direction and the independent review; also artifact 7Wp3A9z8MCuAMHdGteuhzp. Also on OneDrive |
+| `research/article-images-2026-11-11/2026-screens-S363/` | Job 14 Part A: 2026's screens designed — New search with her half-typed question, Larkpost opening on Mum's email, Mum's sites in 2026's web furniture, the HHS report with both readings, Second Thoughts as a ChatGPT-style conversation | 39 | 11 Nov | before/after of his N1–N7 notes. Also on OneDrive |
+| `research/article-images-2026-11-11/2026-ai-takeover-S364/` | Job 14 Part B: the AI uses her computer (banner, pointer, greyed Take back control), screenshots of her mail, Junie muted by the system, the signs in the clip, the game offered as care (console + window), the swap filter on her redrawn photo, the made-with-AI pages, explore and the UK bill | 174 | 11 Nov | companion §7m, §7n, §7o. Subfolders tour/, clip/, console/, images/. Also on OneDrive |
+| `research/article-images-2026-11-11/room-and-close-S365/` | Job 14 Part C: Maya's wall without the news strips and clinic ticket, the plain ceiling, the Close's panels opening the era websites | 36 | 11 Nov | before/after of his N11 notes. Also on OneDrive |
+| `research/article-images-2026-11-11/close-websites-headset-S365/` | Job 14 Part C, emulated headset: aim at a Close panel, its year's website opens, scroll, close (1997 and 2016), the Sources button, a label | 15 | 11 Nov | emulation only, not the Quest. Also on OneDrive |
+| `research/article-images-2026-11-11/clip-video/the-great-becoming-50s-S364.mp4` | THE GREAT BECOMING at 50 s (three "signs" cards added), rendered offline by tools/render-clip.mjs from the piece's own code and audio | 1 | 11 Nov | the 32 s version beside it. Also on OneDrive |
 | `out/tour-e4-v2/`, `out/tour-e4/` … | era tours (regenerable with tools/tour-e4.mjs, tools/stills.mjs) | many | various | working photos; copy anything chosen into `research/` |
 | `~/update-available-uib/out/s347/`, `s348/` | era-change and headset probe frames (66 MB) | 284 | 9 Nov | indexed only, not copied |
 
