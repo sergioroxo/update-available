@@ -35,7 +35,6 @@ import { Screensaver, SAVER_SECONDS } from './screensaver';
 import SAVERS from '../../../data/strings/screensavers.json';
 import lexStrings from '../../../data/strings/lexicon.json';
 import { meetWord } from '../../room/lexicon';
-import { entriesByEra } from '../../witness/record';
 import { browserChrome, restoring, glitchBands, CHROME, ADDR, ERA4, V3, WEB, KETTLE, PLACE, CLIP, roundRect, roundEdge, pill, thumb, assistantMark,
   profileGlyph, streamScene, streamShot, progressBar, type TabLook } from '../theme/era4';
 import { ledger } from '../../state/ledger';
@@ -766,7 +765,8 @@ export class E4Browser {
         const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
         if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.sayLine(`${app.title}: ${t.word}. ${t.line ?? ''}`); }
       }
-      if (!this.waitSaid && this.quietT > 25 && entriesByEra().e4.length >= 2 && !ledger.games.some((g) => g.id === 'matchmade')) {
+      // ⚑ S364 / item 7 — the console is lit by the AI's offer now: this quiet line only follows her "Not now"
+      if (!this.waitSaid && this.quietT > 25 && consoleSession.lit && this.gameAnswer === 'later' && !this.gameWin && !ledger.games.some((g) => g.id === 'matchmade')) {
         this.waitSaid = true; this.waitNow = true; this.version++;
       }
     }
@@ -1208,9 +1208,11 @@ export class E4Browser {
    * two surfaces — src/room/consoleSession.ts). A press on it plays; ✕ closes the window (the console stays lit).
    */
   private drawGameWindow(ctx: CanvasRenderingContext2D, L: Layout, pressable: boolean): void {
-    if (!this.gameWin || this.phase !== 'open' || this.lightbox) return;
-    const G = BOT.game, gw = 170, gh = 96, tb = 14;
-    const gx = L.b.x + L.b.w - gw - 6, gy = WIN.title + 30;
+    // ⚑ S364 — it sits in the empty lower part of Kettle's list (never over the chat's words); it steps aside while a
+    //   person's thread is open there (the felt law: nothing of the system over a person) and while a page is opened larger
+    if (!this.gameWin || this.phase !== 'open' || this.lightbox || this.messenger.felt) return;
+    const G = BOT.game, tb = 14, gw = L.k.w - 10, gh = Math.round((gw - 4) * 9 / 16) + 2;
+    const gx = L.k.x + 5, gy = L.k.cy + L.k.ch - Math.round(34 * L.k.s) - gh - tb;
     roundRect(ctx, gx + 2, gy + 3, gw, gh + tb, 6, V3.grey);
     roundRect(ctx, gx, gy, gw, gh + tb, 6, V3.titleOn);
     setFont(ctx, 8); ctx.fillStyle = V3.titleOnInk; ctx.fillText(fitText(ctx, `${G.window} · ${G.sub}`, gw - 26), gx + 6, gy + 3);
@@ -1262,9 +1264,10 @@ export class E4Browser {
       ctx.restore();
       setFont(ctx, 9);
       const lw = Math.ceil(ctx.measureText(A.pointer).width) + 22;
-      pill(ctx, x + 12, y + 14, lw, 14, V3.primary);
-      assistantMark(ctx, x + 14, y + 15, 12, V3.primaryInk, V3.primary);
-      ctx.fillStyle = V3.primaryInk; ctx.fillText(A.pointer, x + 29, y + 16);
+      const lx = x + 12 + lw > W - 2 ? x - lw - 4 : x + 12;   // near the right edge its name tag sits to the left
+      pill(ctx, lx, y + 14, lw, 14, V3.primary);
+      assistantMark(ctx, lx + 2, y + 15, 12, V3.primaryInk, V3.primary);
+      ctx.fillStyle = V3.primaryInk; ctx.fillText(A.pointer, lx + 17, y + 16);
     }
   }
   /** a window's title bar: its name, and (on the smaller window) the press that enlarges it */
