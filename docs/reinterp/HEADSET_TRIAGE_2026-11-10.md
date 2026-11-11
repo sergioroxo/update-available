@@ -130,6 +130,13 @@ UIB_JOB_12_2026-11-10.md.**
 "THE GREAT BECOMING" — **music and a narrator** (the clip's synthetic system voice; the host keeps none). Job 13 =
 UIB_JOB_13_2026-11-11.md (A 2026 by email, B the Close in his order, C the rest).
 
+**His new direction for 2026 (11 Nov), superseding H46's inbox:** 2026 centres on the AI conversation. The messenger
+is trimmed to the birthday, Dad, and one message from Mum ("I sent you an email"); a small mailbox holds three emails
+(Mum's with the articles, the clinic's number, Meridian's auto-reply); the articles are the "social contagion" claim,
+its 2019 correction, and last a detransition AI (unnamed on screen) whose link opens Second Thoughts — two ways in,
+with the search ad; the bot "explains" her feelings as contagion and **makes the clip for her**; Junie, unmuted,
+names it. UIB_JOB_13 Part A rewritten; order B, C, then A.
+
 ## 7. Things he liked (keep)
 
 The pointing line; the theme song; the era websites ("I need all of these images for the article"); MentorRob's
