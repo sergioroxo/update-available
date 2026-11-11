@@ -430,18 +430,11 @@
    },
    "media": [
     {
-     "file": "assets/audio/ball_room_landing.mp3",
+     "file": "assets/audio/transjesus_song.mp3",
      "type": "audio",
      "title": "transjesus.str — the stream",
-     "what": "The stream's music once Maya is inside it. No voice. About two minutes, made to loop.",
-     "credit": "Made by the project lead. Project-original."
-    },
-    {
-     "file": "assets/audio/ball_room_bed.mp3",
-     "type": "audio",
-     "title": "transjesus.str — through the wall",
-     "what": "The same music heard as if through a wall: while Junie's link waits, and after the update fails. About two minutes, made to loop.",
-     "credit": "Made by the project lead. Project-original."
+     "what": "The people's music. It arrives with the raid, when Maya's friends take the stage from the host, and plays on until the night ends. No voice: TransJesus dances and says nothing. About two minutes, made to loop.",
+     "credit": "Composed in code by Claude (Anthropic's AI) for the project, 11 Nov 2026, with tools/make_transjesus_song.py; chosen by the project lead. Project-original."
     }
    ]
   }

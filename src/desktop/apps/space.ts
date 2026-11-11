@@ -797,7 +797,7 @@ export class E4Shell {
      */
     this.stageNow = 'closed';
     this.ball.clearLamps();
-    roomBed.set(ballScript.room.bed, 2.0);   // ⚑ S293 — the stream, still on, through the monitor
+    roomBed.set(ballScript.room.landing, 2.0);   // ⚑ S293 — the stream, still on; ⚑ 11 Nov: the same track, no wall (his)
     this.laptopV++;
     this.version++;
     this.failT = 0;

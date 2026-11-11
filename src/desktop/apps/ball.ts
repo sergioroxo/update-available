@@ -399,7 +399,8 @@ export class E4Ball {
     this.hits = [{ ...JOIN, id: 'commons-join' }];
     this.version++;
     playOnce('card_junie.mp3');   // the room's register, not the system's
-    roomBed.set(script.room.bed, 4.0);
+    // ⚑ 11 Nov (his): no music through a wall any more; the link lands in silence and the music arrives with the raid
+    if (script.room.bed) roomBed.set(script.room.bed, 4.0);
   }
 
   /**
@@ -424,7 +425,7 @@ export class E4Ball {
     this.filterK = 1; this.filterTo = 1; this.filterSteps = 0; this.filterBy = ''; this.filterByT = 99;
     this.raidHelp = !!RAID.help && this.helpAsked?.() === true;
     playOnce('ui_press.mp3');
-    roomBed.set(script.room.bed, 2.0);
+    roomBed.set(script.room.landing, 2.0);   // ⚑ 11 Nov — the people's music arrives with the raid (was the wall)
     this.version++; this.studioV++;
   }
 
