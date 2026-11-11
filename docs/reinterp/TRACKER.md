@@ -99,6 +99,8 @@ closed by him, never raise it again.
 
 ## Done since the headset session (newest first)
 
+- ☑ **S362 UiB job 13 Part C** — 1997–2016 from his headset notes: Lamby's choice after the Digger, the Digger in three levels, the racket's handle, Daniel's tape in 1997; more time on the 404, PureMail and the cascade, Restorify Media's own songs and XP release form, one source for Next task, the phone's explainer; 2016's holds, the urgent kit, Ruth first, the drafted story, the Malta alert, Photos from the photo message, larger small-screen type. BUILD_LOG S362.
+
 - ☑ **S361 UiB job 13 Part B** — the Close in his order (H50): the flight from Maya's room with the glitch, Daniel's place, up to the stars, the eight messages alone (they had never shown in the headset), then the panels, a new song (close_song) under it all, then the Lexicon and the machine. BUILD_LOG S361.
 
 - ☑ **S359 UiB job 12 Part A2** — comfort: 2026 keeps the desk seat (no move to the stream, no turn for Show me/Back, plain cuts, no particles), the host's stream and the raid to the side, the Wick on the table, the turn on the way up to 2026, a flight into the Close, the grip icon. BUILD_LOG S359.
