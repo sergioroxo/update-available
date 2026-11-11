@@ -49,7 +49,7 @@ import { FloppySheep, FLOPPY_LABEL } from './floppysheep';
 import { markE4, e4Has } from '../../narrative/e4Beats';
 import { E4Messenger, drawLoftPhoto, type ChatId } from './messenger';
 import { drawGoalPicture } from './goalPicture';
-import { drawContagionClip, CLIP_LOOP_SECONDS } from './contagionClip';
+import { drawContagionClip, CLIP_LOOP_SECONDS, startClipSound, stopClipSound } from './contagionClip';
 import updates from '../../../data/strings/updates.json';
 import script from '../../../data/dialog/s4_boot.json';
 import body from '../../../data/dialog/s4_browser.json';
@@ -663,6 +663,7 @@ export class E4Browser {
     this.botT += dt;
     if (Math.floor(before / 0.3) !== Math.floor(this.botT / 0.3) && this.botT < 14) this.version++;
     if (this.clipTakeover && Math.floor(before * 8) !== Math.floor(this.botT * 8)) this.version++;
+    if (b.id === 'clip' && before < 0 && this.botT >= 0) stopClipSound();   // S360: the clip ends, its sound with it
     if (this.botNextIn >= 0) { this.botNextIn -= dt; if (this.botNextIn < 0) { this.botNextIn = -1; this.nextBot(); } }
     // ⚑ S350 — "Stories like yours" holds a while for reading, then the bot rests (nothing waits on a press here)
     if (b.id === 'stories' && !(b as { button?: string }).button && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + BOT.stories.holdSeconds) {
@@ -684,7 +685,7 @@ export class E4Browser {
     this.botBeat = BOT.beats.findIndex((b) => b.id === id);
     this.botT = 0;
     // ⚑ S360 — the clip, made for her, owns the page before its beat speaks (it was the map's, recommended from a channel)
-    if (id === 'clip') { markE4('map'); this.botT = -CLIP_TAKEOVER_SECONDS; }
+    if (id === 'clip') { markE4('map'); this.botT = -CLIP_TAKEOVER_SECONDS; startClipSound(); }   // its music + narrator, t = 0 with the picture
     if (id === 'heading') {
       // ⚑ S360 — the goal LAST, and the restore is the bot's act: "I've made it your picture" (the review he accepted;
       //   H47 "You, restored" no longer on the front from the start, nor on the table and the wall — e4Room)
@@ -1884,7 +1885,7 @@ export class E4Browser {
   /** the room's coordinate-less press, and the debug panel's own exit */
   handOverLid(): void { this.phase = 'handed'; this.version++; }
   /** the device has stopped: the agent's page cannot be reached any more */
-  fail(): void { if (this.phase !== 'failed') { this.phase = 'failed'; this.failT = 0; if (this.streamOpen) this.liveId = 'search'; this.version++; } }
+  fail(): void { stopClipSound(); if (this.phase !== 'failed') { this.phase = 'failed'; this.failT = 0; if (this.streamOpen) this.liveId = 'search'; this.version++; } }
   /** the link she opened in the headset is open on this machine too: when the device stops, the monitor shows the stream */
   openStream(): void { this.streamOpen = true; }
 
