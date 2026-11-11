@@ -32,8 +32,9 @@ import { gameMenuBus } from '../state/gameMenuBus';
 import type { MapState } from '../witness/map';
 import copy from '../../data/strings/gameMenu.json';
 import mapCopy from '../../data/strings/map.json';
-import { DIALOG } from '../desktop/theme/chrome';
+import { DIALOG, FRAME } from '../desktop/theme/chrome';
 import { ERA1 } from '../desktop/theme/era1';
+const FRAME_EDGE = FRAME.edge, FRAME_BRIGHT = FRAME.bright, FRAME_DIM = FRAME.dim, FRAME_FAINT = FRAME.faint;
 
 export interface Ray { p0: pc.Vec3; p1: pc.Vec3 }
 
@@ -84,6 +85,10 @@ export interface XrFrame {
   setGrip(at: pc.Vec3 | null, extent?: number): void;
   /** S270g — a line that wins over the helper's for `seconds` (the table match, its result) */
   notice(text: string | null, seconds?: number): void;
+  /** ⚑ S361 / H50 — the Close's message, one card at a time, on its own plate in front of the eyes (null: down). The
+   *  helper's plate holds two lines and was redrawn by the helper every frame, so in the headset the cards never
+   *  showed ("where are the message parts?"). */
+  setCard(card: { text: string; by?: string; foot?: string } | null): void;
   /** ⚑ S209 / A22 — a select on the ≡ Menu tab opens the menu (true if the tab took it) */
   pressTab(ray: Ray): boolean;
   /** S270f — does this fingertip segment touch the tab (menu closed) or the menu plane (open)? */
@@ -176,6 +181,54 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   overRoom(hintPlane);
   hintPlane.enabled = false;
   app.root.addChild(hintPlane);
+
+  // ── ⚑ S361 / H50 — the Close's message card: frame voice (the game menu's glass and greys), no sound ──
+  const CARD_CW = 1024, CARD_CH = 560, CARD_W = 0.84, CARD_H = CARD_W * CARD_CH / CARD_CW;
+  const CARD_DIST = 1.15, CARD_DROP = -0.02;   // ~40° wide at 1.15 m, its middle a little above the eyes (the stars are up there)
+  const cardCanvas = document.createElement('canvas');
+  cardCanvas.width = CARD_CW; cardCanvas.height = CARD_CH;
+  const cardCtx = cardCanvas.getContext('2d');
+  if (!cardCtx) throw new Error('2D context unavailable');
+  const cardTex = makeScreenTexture(app, cardCanvas);
+  const cardPlane = makeScreenEntity('xr-close-card', cardTex, CARD_W, CARD_H, true);
+  overRoom(cardPlane);
+  cardPlane.enabled = false;
+  app.root.addChild(cardPlane);
+  const drawCard = (c: { text: string; by?: string; foot?: string }): void => {
+    const g = cardCtx;
+    g.clearRect(0, 0, CARD_CW, CARD_CH);
+    g.fillStyle = FRAME.glass; g.fillRect(0, 0, CARD_CW, CARD_CH);
+    g.strokeStyle = FRAME_EDGE; g.lineWidth = 3; g.strokeRect(1.5, 1.5, CARD_CW - 3, CARD_CH - 3);
+    g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+    const wrap = (text: string, font: string, maxW: number): string[] => {
+      g.font = font;
+      const out: string[] = []; let line = '';
+      for (const w of text.split(' ')) {
+        const t = line ? `${line} ${w}` : w;
+        if (g.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t;
+      }
+      if (line) out.push(line);
+      return out;
+    };
+    // the largest type that fits: 40 px down to 30 px
+    let size = 40, lines: string[] = [];
+    for (; size >= 30; size -= 2) {
+      lines = wrap(c.text, `${size}px "Tahoma", "Verdana", sans-serif`, CARD_CW - 112);
+      if (lines.length * size * 1.42 + (c.by ? 50 : 0) + 70 <= CARD_CH - 60) break;
+    }
+    const lh = Math.round(size * 1.42);
+    const block = lines.length * lh + (c.by ? 50 : 0);
+    let y = Math.max(64, Math.round((CARD_CH - 64 - block) / 2) + size);
+    g.font = `${size}px "Tahoma", "Verdana", sans-serif`; g.fillStyle = FRAME_BRIGHT;
+    for (const l of lines) { g.fillText(l, 56, y); y += lh; }
+    if (c.by) { g.font = `28px "Tahoma", "Verdana", sans-serif`; g.fillStyle = FRAME_DIM; g.fillText(c.by, 56, y + 6); }
+    if (c.foot) {
+      g.font = `24px "Tahoma", "Verdana", sans-serif`; g.fillStyle = FRAME_FAINT; g.textAlign = 'center';
+      g.fillText(c.foot, CARD_CW / 2, CARD_CH - 30); g.textAlign = 'left';
+    }
+    cardTex.upload();
+  };
+  let cardKey: string | null = null;
 
   // ── S345 / T29 — the pointer's name tag ──
   const tagCanvas = document.createElement('canvas');
@@ -459,12 +512,14 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       hang(plane, PLANE_DIST, PLANE_DROP);
       plane.enabled = true;
       hintPlane.enabled = false;
+      cardPlane.enabled = false;   // S361: the Close's card waits under the menu
       dirty = true;
       draw();
     },
     close(): void {
       open = false; suspended = false;
       plane.enabled = false;
+      if (cardKey) { hang(cardPlane, CARD_DIST, CARD_DROP); cardPlane.enabled = true; }
       closedAt = performance.now();
     },
     touches(ray: Ray): boolean {
@@ -490,6 +545,15 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     notice(text: string | null, seconds = 6): void {
       noticeUntil = text ? performance.now() + seconds * 1000 : 0;
       noticeText = null; this.setHint(text); noticeText = text;
+    },
+    setCard(card: { text: string; by?: string; foot?: string } | null): void {
+      const key = card ? `${card.text}|${card.by ?? ''}|${card.foot ?? ''}` : null;
+      if (key === cardKey) return;
+      cardKey = key;
+      if (!card) { cardPlane.enabled = false; return; }
+      drawCard(card);
+      hang(cardPlane, CARD_DIST, CARD_DROP);   // each card hangs where the eyes are when it comes
+      cardPlane.enabled = true;
     },
     setHint(text: string | null): void {
       if (noticeText && performance.now() < noticeUntil) text = noticeText;

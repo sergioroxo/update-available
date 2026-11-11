@@ -115,7 +115,7 @@ try {
    return {score:roomBed.current,paused:roomBed.live?.paused,volume:roomBed.live?.volume,monitor:!!window.__closeMonitor?.on,card:window.__closeCard,phase:window.__os.phase,era:window.__os.era};
  });
  await page.screenshot({path:path.join(out,'close-score.png')});
- assert.equal(closeAudio.score,'close_score.mp3');assert.equal(closeAudio.paused,false);assert(closeAudio.volume>0);assert(closeAudio.monitor);
+ assert.equal(closeAudio.score,'close_song.mp3');assert.equal(closeAudio.paused,false);assert(closeAudio.volume>0);assert(closeAudio.monitor);
  results.push({name:'Close score at monitor',...closeAudio});
  await page.screenshot({path:path.join(out,'close-score.png')});
  // The preference must invalidate cached monitor and phone textures on the next frame.

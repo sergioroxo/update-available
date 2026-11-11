@@ -180,9 +180,87 @@ export class ClusterMorph {
    *  override, never touched unless the belongings beat sets it. */
   private keptIds = new Set<string>();
 
+  /**
+   * ⚑ S361 / H50 (his headset, 10 Nov, the Close: "flyover from Maya with the glitching") — THE GLITCH ON THE WAY OUT.
+   * The same glitch the era change's cascade uses (an emissive flicker + a scale jitter, no strobe), but nothing
+   * changes: every prop stays what it is and where it is, and the glitch rolls through the building along the flight
+   * (from Maya's seat to Daniel's), each prop glitching for a moment as the wave passes it. Box props AND models —
+   * every material the prop renders with (`materials`, private clones once the batch is torn down) — and each is put
+   * back exactly as it was (saved colour, saved scale) when its moment ends.
+   */
+  private sweep: { h: PropHandle; startT: number; dur: number; emissive: pc.Color[]; scale: pc.Vec3 }[] = [];
+  private sweepT = 0;
+
   constructor(private readonly room: RoomHandles) {}
 
-  get running(): boolean { return this.active; }
+  get running(): boolean { return this.active || this.sweep.length > 0; }
+
+  /** roll the glitch through the present props over `seconds`, ordered along from → to (world x/z) */
+  glitchSweep(from: { x: number; z: number }, to: { x: number; z: number }, seconds: number, propSeconds = 2.6): void {
+    this.endSweep();
+    const dx = to.x - from.x, dz = to.z - from.z;
+    const len2 = Math.max(1e-6, dx * dx + dz * dz);
+    const rows: { h: PropHandle; k: number }[] = [];
+    for (const h of this.room.props.values()) {
+      if (!h.entity.enabled) continue;
+      const s = h.entity.getLocalScale();
+      if (Math.min(Math.abs(s.x), Math.abs(s.y), Math.abs(s.z)) < 1e-4) continue;   // absent (scaled to 0)
+      const p = h.entity.getPosition();
+      rows.push({ h, k: Math.max(0, Math.min(1, ((p.x - from.x) * dx + (p.z - from.z) * dz) / len2)) });
+    }
+    const span = Math.max(0.5, seconds - propSeconds);
+    for (const r of rows) {
+      const mats = r.h.materials.length ? r.h.materials : [r.h.material];
+      this.sweep.push({ h: r.h, startT: r.k * span + Math.random() * 0.6, dur: propSeconds * (0.8 + Math.random() * 0.4),
+        emissive: mats.map((m) => m.emissive.clone()), scale: r.h.entity.getLocalScale().clone() });
+    }
+    this.sweepT = 0;
+  }
+
+  private endSweep(): void {
+    for (const s of this.sweep) this.restoreSweep(s);
+    this.sweep = [];
+  }
+
+  private restoreSweep(s: { h: PropHandle; emissive: pc.Color[]; scale: pc.Vec3 }): void {
+    const mats = s.h.materials.length ? s.h.materials : [s.h.material];
+    mats.forEach((m, i) => { if (s.emissive[i]) { m.emissive.copy(s.emissive[i]); m.update(); } });
+    s.h.entity.setLocalScale(s.scale);
+  }
+
+  private updateSweep(dt: number): void {
+    if (!this.sweep.length) return;
+    this.sweepT += dt;
+    let live = 0;
+    for (const s of this.sweep) {
+      const k = (this.sweepT - s.startT) / s.dur;
+      if (k >= 1) { if (s.dur > 0) { this.restoreSweep(s); s.dur = 0; } continue; }
+      live++;
+      if (k <= 0) continue;
+      const mats = s.h.materials.length ? s.h.materials : [s.h.material];
+      // a bell over the prop's moment: it comes up, flickers hardest in the middle, settles back
+      const w = Math.sin(Math.PI * k);
+      if (Math.random() < 0.6) {
+        // as the cascade, a wall-sized surface flickers at a third of the brightness — and here on the computer too: the
+        //   cascade's flash lasts half a second per prop, this sweep runs 26 s, and a whole wall flashing white for that
+        //   long is a photosensitivity risk (measured in the S361 burst: walls and the desk going white)
+        const sc = s.scale, wide = Math.max(Math.abs(sc.x), Math.abs(sc.z)) * Math.abs(sc.y) > 0.6;
+        const f = 0.95 * Math.min(1, w * 1.4) * (wide ? 0.3 : 1);
+        mats.forEach((m, i) => {
+          const base = s.emissive[i];
+          const d = m.diffuse;
+          m.emissive.set((base?.r ?? 0) + d.r * f + f * 0.5, (base?.g ?? 0) + d.g * f + f * 0.5, (base?.b ?? 0) + d.b * f + f * 0.5);
+          m.update();
+        });
+        const j = 1 + (Math.random() * 0.2 - 0.1) * w;
+        s.h.entity.setLocalScale(s.scale.x * j, s.scale.y * j, s.scale.z * j);
+      } else {
+        mats.forEach((m, i) => { if (s.emissive[i]) { m.emissive.copy(s.emissive[i]); m.update(); } });
+        s.h.entity.setLocalScale(s.scale);
+      }
+    }
+    if (!live) this.sweep = [];
+  }
   get stateName(): SpaceState { return SPACE_STATES[this.state]; }
 
   setKeptIds(ids: ReadonlySet<string>): void {
@@ -255,6 +333,7 @@ export class ClusterMorph {
 
   /** snap the whole space to a state (debug jumps; deterministic, reversible) */
   snapTo(idx: number): void {
+    this.endSweep();
     this.active = false; this.plans = [];
     this.state = idx;
     const targets = this.targetsFor(idx);
@@ -299,6 +378,7 @@ export class ClusterMorph {
    * state idx−1); otherwise SNAP. Deterministic and reversible either way.
    */
   goToState(idx: number, animate: boolean, pace = 1): void {
+    this.endSweep();
     this.active = false; this.plans = [];
     this.pace = Math.max(0.1, pace);
     // ⚑ S348 (his 9 Nov: under reduced motion "the flight becomes a slow drift, and the glob effect stays") — the
@@ -361,6 +441,7 @@ export class ClusterMorph {
   }
 
   update(dt: number): void {
+    this.updateSweep(dt);
     if (!this.active) return;
     this.t += dt;
     const propDur = PROP_DUR * this.pace;

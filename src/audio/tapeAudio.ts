@@ -73,6 +73,7 @@ const REGISTRY: Record<string, string> = {
   'lamby_pop.mp3': `${AUDIO_BASE}lamby_pop.mp3`,
   'descent_score.mp3': `${AUDIO_BASE}descent_score.mp3`,
   'close_score.mp3': `${AUDIO_BASE}close_score.mp3`,
+  'close_song.mp3': `${AUDIO_BASE}close_song.mp3`,   // S361 / H50 — the Close's song (tools/make_close_song.py)
   'startup_1997.mp3': `${AUDIO_BASE}startup_1997.mp3`,   // S156 · the 1997 OS's own chime (ours)
   // Tape B — SWAPPABLE CANDIDATE (Sérgio is producing alternate versions of
   // the broadcast jingle). Swap by generating a new degraded/wrapped file
@@ -498,6 +499,8 @@ class RoomBed {
     // S347: the era change's music sits UNDER the morph's own sounds (a one-shot at 1.0) — his "so the two balance"
     'passage_1997_2003.mp3': 0.42, 'passage_2003_2016.mp3': 0.42, 'passage_2016_2026.mp3': 0.42,
     'close_score.mp3': 0.55,
+    // S361 / H50 (his: "the music for the Close is missing") — the Close's song, ~4 dB over the era change's music: it is alone there
+    'close_song.mp3': 0.7,
     'ball_room_bed.mp3': 0.35, 'ball_room_landing.mp3': 0.35
   };
   private level = RoomBed.LEVEL;   // the level of the bed that is live now

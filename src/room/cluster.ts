@@ -437,6 +437,9 @@ export interface ClusterShell {
    *  the crossfade for the one place it must read as night falling, not as a
    *  rig change (the Close's `hold`). */
   applyRig(name: string, animate: boolean, seconds?: number): void;
+  /** ⚑ S361 / H50 — the Close's way out: the glitch rolls through the building along the flight (from → to, world
+   *  x/z) over `seconds`; nothing changes. The batch comes down for it and goes back up once it has passed. */
+  glitchSweep(from: { x: number; z: number }, to: { x: number; z: number }, seconds: number): void;
   /** S61: land the current transition NOW, wherever it had got to — the
    *  relocation's skip (any input, per the comfort law) needs the space
    *  finished as well as the camera seated, or the player is left in a
@@ -999,6 +1002,10 @@ export function buildClusterShell(
     get era(): EraKey { return era; },
     get homeYaw(): number { return era === 'e4' ? 270 : era === 'e3' ? 90 : 0; },
     get busy(): boolean { return morph.running || timeline.length > 0; },
+    glitchSweep(from: { x: number; z: number }, to: { x: number; z: number }, seconds: number): void {
+      beginMorphedStateBatch();   // private materials while it runs; rebaked when the morph is idle again
+      morph.glitchSweep(from, to, seconds);
+    },
 
     reveal(): void {
       if (state !== 'sealed') return;
