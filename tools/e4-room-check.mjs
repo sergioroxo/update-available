@@ -16,7 +16,7 @@ try {
  const wait = () => new Promise(r=>setTimeout(r,350));
  const snapshot=()=>page.evaluate(()=>{
   const root=window.__app.root;
-  const names=['maya-pot','maya-leaves','maya-pride','maya-friends','system-default-portrait','news-strips','clinic-ticket'];
+  const names=['maya-pot','maya-leaves','maya-pride','maya-friends','system-default-portrait'];
   return Object.fromEntries(names.map(n=>{const e=root.findByName(n);return [n,{scale:e.getLocalScale().toArray(),drawn:e.render.meshInstances.some(m=>m.visible)}]}));
  });
  const mark=async(id)=>{await page.evaluate(id=>window.roomChecks.beats.markE4(id),id);await wait();};
@@ -25,10 +25,9 @@ try {
  const materialBefore=await page.evaluate(()=>window.__app.root.findByName('maya-pink-throw').render.material.diffuse.toString());
  await mark('newyou'); await mark('link');
  await page.evaluate(()=>{window.__os.e4.browser.newsOpened=4;}); await wait();
- assert.equal((await snapshot())['news-strips'].drawn,true);
- await mark('number');let s=await snapshot();assert.equal(s['maya-pot'].drawn,false);assert.equal(s['maya-leaves'].drawn,false);assert.equal(s['clinic-ticket'].drawn,true);
- const before=s['clinic-ticket'].scale;
- await page.evaluate(()=>window.__os.e4.browser.clinicNumber+=3);await wait();s=await snapshot();assert.ok(s['clinic-ticket'].scale[0]>before[0]);
+ // S365 (job 14 C1): the news strips and the clinic ticket are gone from her wall
+ assert.equal(await page.evaluate(()=>['news-strips','clinic-ticket'].some(n=>!!window.__app.root.findByName(n))),false);
+ await mark('number');let s=await snapshot();assert.equal(s['maya-pot'].drawn,false);assert.equal(s['maya-leaves'].drawn,false);
  await mark('meridian');assert.equal((await snapshot())['maya-pride'].drawn,false);
  await mark('left');s=await snapshot();assert.equal(s['maya-friends'].drawn,false);assert.equal(s['system-default-portrait'].drawn,true);
  await page.evaluate(()=>window.__camFree(4.4,1.16,.84,0,215));await wait();
@@ -48,7 +47,7 @@ try {
  });
  assert.deepEqual(chat.counts,[1,2,3,4,5]);assert.equal(chat.hidden,false);assert.equal(chat.preview,'muted');assert.equal(chat.lines.length,5);assert.equal(chat.normalShown,5);assert.equal(chat.normalRead,5);
  await mark('terminated');s=await snapshot();
- assert.equal(s['maya-pot'].drawn,true);assert.equal(s['maya-pride'].drawn,true);assert.equal(s['maya-friends'].drawn,true);assert.equal(s['system-default-portrait'].drawn,false);assert.equal(s['news-strips'].drawn,false);assert.equal(s['clinic-ticket'].drawn,false);
+ assert.equal(s['maya-pot'].drawn,true);assert.equal(s['maya-pride'].drawn,true);assert.equal(s['maya-friends'].drawn,true);assert.equal(s['system-default-portrait'].drawn,false);
  assert.equal(await page.evaluate(()=>window.__app.root.findByName('maya-pink-throw').render.material.diffuse.toString()),materialBefore);
  // Exercise the stopped device's real press route; none of the waiting messages is filed.
  await page.evaluate(()=>{

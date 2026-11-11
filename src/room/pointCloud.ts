@@ -826,7 +826,9 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
           px(pc2, 1, 1, W - 2, H - 2, ERA4.chip);
           ink = ERA4.chipText;
         }
-        setFont(pc2, 11);
+        // ⚑ S365 (job 14 C2): 11 → 15 logical px (45 px in the cell): at 3 m in the headset the label was ~9 px high, under
+        //   the floor of legibility; the button's rect is unchanged (the paragraph's bottom edge sits just above it)
+        setFont(pc2, 15);
         pc2.fillStyle = ink;
         pc2.textBaseline = 'middle';
         const label = closeCard.source.panelButton;

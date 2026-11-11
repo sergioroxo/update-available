@@ -6,9 +6,6 @@ import { type RoomHandles, type PropHandle, hex } from './era1room';
 import { cullAbsentProps } from './batching';
 import { ERA4, PLACE, photograph } from '../desktop/theme/era4';
 import { drawE4CeilingNetwork } from './ceilingWitness';
-import { drawContagionClip } from '../desktop/apps/contagionClip';
-import V from '../../data/dialog/s4_v3.json';
-import { wrapText, setFont } from '../desktop/theme/chrome';
 import { drawGoalPicture } from '../desktop/apps/goalPicture';
 
 export function buildE4Room(app: pc.Application, building: RoomHandles) {
@@ -90,22 +87,18 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     c => photograph(c, 0, 0, 256, 256, false, 3));
   const goal = picture('system-default-portrait', [5.66, 1.45, 1.98], .65, .64,
     c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); drawGoalPicture(c, 8, 8, 240, 240); });
-  // Four paper strips share one texture/mesh; opening articles changes the paint, never the draw-call count.
-  const newsWall = picture('news-strips', [5.15, 1.38, 2.412], .88, .72, () => {}, [512, 512]);
-  newsWall.entity.setLocalEulerAngles(90, 180, 0);
-  newsWall.material.opacityMap = newsWall.material.emissiveMap;
-  newsWall.material.opacityMapChannel = 'a'; newsWall.material.blendType = pc.BLEND_NORMAL;
-  newsWall.material.update();
-  const ticket = picture('clinic-ticket', [5.4, .84, 2.412], .38, .3, () => {}, [256, 192]);
-  ticket.entity.setLocalEulerAngles(90, 180, 0);
-  const ceiling = picture('maya-ceiling-network', [4.6, 2.64, .70]   /* S328: over the seat (app.ts seatPose 270) */, 2.0, 2.0, () => {}, [512, 512]);
-  // It survives the room being hidden, changing from red sources into the stream's audience.
+  // ⚑ S365 (UiB job 14 Part C1, his 11 Nov) — the news strips and the clinic ticket are gone from her wall: the articles
+  //   and the number live on her screen (the News and Mail tabs), not on the room.
+  // ⚑ S365 (job 14 C1) — NO CONTAGION MAP OVER HER ROOM: this plane (the name is kept for the probes) is off while she is
+  //   in her room — never enabled, never painted — and exists ONLY as the stream's audience, hung out over the Commons
+  //   (see `update`). It survives the room being hidden, so the audience stays up while the stream runs.
+  const ceiling = picture('maya-ceiling-network', [8, 5, .84], 2.0, 2.0, () => {}, [512, 512]);
   app.root.addChild(ceiling.entity);
   ceiling.entity.setLocalEulerAngles(180, 270, 0);
   const sizes = new Map([...props.values()].map(p => [p.entity, p.entity.getLocalScale().clone()]));
   function visible(p: PropHandle, on: boolean) { p.entity.setLocalScale(on ? sizes.get(p.entity)! : pc.Vec3.ZERO); }
   const originalMats = new Map<pc.StandardMaterial, pc.Color>();
-  let seen = '', ceilingSeen = '', generation = -1, lastNumber = -1, frameSeen = '', newsSeen = -1;
+  let seen = '', ceilingSeen = '', generation = -1, frameSeen = '';
   let wasActive = false;
   let data = { number: 4812, articles: 0, clipTime: 0, takeover: false, viewers: 41 };
   function setScreenData(next: typeof data) { data = next; }
@@ -118,9 +111,9 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     root.enabled = active;
     const streaming = e4Has('stream') && !e4Has('terminated');
     // ⚑ S358 / H17 (his headset, 10 Nov: "something on the ceiling should be removed… this is not for here") — the
-    //   network no longer hangs over her room; the same plane is still the stream's audience, out in the Commons
+    //   network no longer hangs over her room; the same plane is the stream's audience, out in the Commons.
+    //   ⚑ S365 (job 14 C1): and nothing contagion-shaped is ever painted on it any more — only the audience.
     ceiling.entity.enabled = active && streaming;
-    ceiling.entity.setLocalPosition(streaming ? 8 : 4.6, streaming ? 5 : 2.64, streaming ? .84 : .70);
     if (!active) {
       for (const [mat, color] of originalMats) if (!mat.diffuse.equals(color)) { mat.diffuse.copy(color); mat.update(); }
       return;
@@ -133,18 +126,12 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
       if (leftT >= 6.5 && revealT < 0 && conduct?.()) revealT = 0;
       if (revealT >= 0) { revealT += dt; if (revealT >= 9.7 && revealed?.()) markE4('room'); }
     }
-    const ceilingKey = `${ledgerGeneration}:${e4BeatsVersion()}:${data.takeover}:${data.viewers}:${streaming ? 0 : Math.floor(data.clipTime * 8)}`;
+    const ceilingKey = `${ledgerGeneration}:${e4BeatsVersion()}:${data.viewers}`;
     if (ceiling.entity.enabled && ceilingKey !== ceilingSeen) {
       ceilingSeen = ceilingKey;
-      ceiling.repaint(c => {
-        if (data.takeover && !streaming) drawContagionClip(c, data.clipTime, 0, 0, 512, 512);
-        else {
-          drawE4CeilingNetwork(c, e4Has('junie'), streaming ? data.viewers : 0);
-          if (!streaming) drawContagionClip(c, data.clipTime, 16, 410, 200, 90);
-        }
-      });
+      ceiling.repaint(c => drawE4CeilingNetwork(c, e4Has('junie'), data.viewers));
     }
-    const key = `${ledgerGeneration}:${e4BeatsVersion()}:${data.number}:${data.articles}`;
+    const key = `${ledgerGeneration}:${e4BeatsVersion()}`;
     if (key === seen) return;
     seen = key;
     const restored = e4Has('terminated');
@@ -166,29 +153,6 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     if (frameKey !== frameSeen) {
       frameSeen = frameKey;
       frame.repaint(c => { c.fillStyle = ERA4.rule; c.fillRect(0, 0, 256, 256); if (isGoal) drawGoalPicture(c, 8, 8, 240, 240); else photograph(c, 8, 8, 240, 240, false, 3); });
-    }
-    visible(newsWall, !restored && e4Has('link') && data.articles > 0);
-    if (newsSeen !== data.articles) {
-      newsSeen = data.articles;
-      newsWall.repaint(c => V.news.articles.slice(0, data.articles).forEach((a, i) => {
-        c.fillStyle = PLACE.mug; c.fillRect(0, i * 128, 512, 120);
-        c.fillStyle = ERA4.field; setFont(c, 24);
-        wrapText(c, a.head, 490).forEach((line, j) => c.fillText(line, 10, i * 128 + 10 + j * 28));
-      }));
-    }
-    visible(ticket, n);
-    if (lastNumber !== data.number || generation !== ledgerGeneration) {
-      lastNumber = data.number;
-      ticket.repaint(c => {
-        c.fillStyle = PLACE.mug; c.fillRect(0, 0, 256, 192);
-        c.fillStyle = ERA4.field; setFont(c, 19); c.fillText(V.clinic.numberLabel, 12, 12);
-        setFont(c, 48); c.fillText(data.number.toLocaleString('en-GB'), 12, 55);
-        setFont(c, 18); wrapText(c, V.clinic.wait, 232).forEach((line, j) => c.fillText(line, 12, 116 + j * 22));
-      });
-    }
-    if (n) {
-      const growth = 1 + Math.max(0, data.number - V.clinic.start) * .045;
-      ticket.entity.setLocalScale(ticket.size.x * growth, 1, ticket.size.z * growth);
     }
     cullAbsentProps(handles, null);
   }
