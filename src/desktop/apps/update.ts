@@ -142,6 +142,8 @@ export class UpdateApp {
   //   on the notice exactly as before. Set in the constructor once `this.s` is
   //   bound — see below.
   private phase: UpdatePhase = 'notify';
+  /** ⚑ S368 / F06 — where u4's notice is centred (x, in this app's coordinates), set by the 2016 workstation; null = centred */
+  noticeCenterX: number | null = null;
   /** how many error windows have landed so far (drives the stack + the clock) */
   private cascadeShown = 0;
   private t = 0;
@@ -387,7 +389,10 @@ export class UpdateApp {
       // ⚑ S327 — u4's notice is read in a headset on 2016's glass: larger type, the same lines
       const lineH = this.key === 'u4' ? 15 : 12;
       const dh = bare ? 110 : toE3Early ? Math.max(150, this.s.notify.length * lineH + 64) : 150;
-      const dx = Math.round((W - dw) / 2); const dy = Math.round((H - dh) / 2);
+      // ⚑ S368 / F06 (UiB job 16) — on 2016's workstation u4's notice is centred on the PLATFORM's column, clear of the Handset
+      //   Window docked at the right (era3Devices sets `noticeCenterX`, in this app's own coordinates); everywhere else, centred
+      const cx = this.key === 'u4' && this.noticeCenterX !== null ? this.noticeCenterX : W / 2;
+      const dx = Math.round(cx - dw / 2); const dy = Math.round((H - dh) / 2);
       if (bare) {
         // felt register: no chrome cheer, one line, one button
         ui.px(ctx, dx, dy, dw, dh, ERA1.black);

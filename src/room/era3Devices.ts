@@ -50,7 +50,7 @@ import { GroupTask } from '../desktop/apps/groupTask';
 import { FamilyCallsApp } from '../desktop/apps/familyCalls';
 import { PlacesListApp } from '../desktop/apps/placesList';
 import { stampBanned } from './printArt';
-import { GraceQueueLite } from './graceQueueLite';
+import { GraceQueueLite, MIRROR_W } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { px } from '../desktop/theme/chrome';
@@ -1024,6 +1024,8 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   function drawWorkstation(ctx: CanvasRenderingContext2D, w: number, h: number): void {
     graceQueueLite.draw(ctx, w, h);
     const ritual = e4Bridge()?.update();
+    // ⚑ S368 / F06 — the update notice opens over the board, clear of the Handset Window's reserved column
+    if (ritual) ritual.noticeCenterX = Math.round((w - MIRROR_W - 4) / 2) - RITUAL_OFFSET.x;
     if (ritual?.open) {
       // ⚑ the ritual names its own ground — the install and restart are black,
       //   the arriving EULA is Era 4's field. Hardcoding black here left a

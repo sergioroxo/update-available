@@ -16,6 +16,8 @@ import { entriesByEra } from '../../witness/record';
 import m from '../../../data/dialog/s3_maiden.json';
 import d from '../../../data/strings/era3_devices.json';
 import { playOnce } from '../../audio/tapeAudio';
+import vera from '../../../data/dialog/s3_vera.json';
+import { readHold } from '../readHold';
 
 type Msg = { from: string; time: string; text?: string; kind?: string };
 type Rect = { x: number; y: number; w: number; h: number; id: string };
@@ -67,13 +69,41 @@ const READ_HOLD = 6;
  *  and Orla's last one carries a photo. */
 const HOLDS: Record<string, number> = { arrival: 8, decision: 9, after: 10 };
 /** ⚑ S362 / H28 — Bea's news, at a reading pace: seconds from the one before to each message landing (was a flat 1.7 s each, all five in
- *  7.4 s). The article's card is followed by the article itself, shown by the piece for ARTICLE_HOLD (its entry is the 6.5 s). */
-const NEWS_HOLD = [0.6, 5, 6.5, 3.5, 3];
-/** ⚑ S362 / H28 + H42 — Mam's unfinished reply is TYPED in (it was a block that appeared), then held: seconds in all */
+ *  7.4 s). The article's card is followed by the article itself, shown by the piece for ARTICLE_HOLD (its entry is the 6.5 s).
+ *  ⚑ S368 / F09 (UiB job 16, the reading rule) — S362's [0.6, 5, 6.5, 3.5, 3] still let the article take the glass 5 s after Bea's
+ *  23-word message (it needs 11.2 s) and her "i just read it four times" scroll on before it was read. Now each message waits
+ *  until the one before it has had its reading time (2 s + 0.4 s a word, never under NEWS_MIN), the article page its own.
+ *  The cascade after them stays fast, by design ("outnumbered"). */
+const NEWS_FIRST = 0.6;
+const NEWS_MIN = 4.5;
+function newsWait(i: number): number {
+  if (i <= 0) return NEWS_FIRST;
+  const prev = NEWS[i - 1];
+  if (!prev) return NEWS_STEP;
+  const text = prev.kind === 'link2' ? [LINK_VOTE.masthead, LINK_VOTE.headline] : prev.kind === 'link' ? [m.link.headline] : [prev.text ?? ''];
+  return Math.max(NEWS_MIN, readHold(text));
+}
+/** ⚑ S362 / H28 + H42 — Mam's unfinished reply is TYPED in (it was a block that appeared), then held: seconds in all
+ *  ⚑ S368 / F08 — the held part is the reading rule's, counted from the last letter (it was 8 s in all, 3 s after typing) */
 const NOTES_TYPE_CPS = 9;
-const NOTES_SECONDS = 8;
-/** ⚑ S362 / H43 — the platform's "intervene immediately" alert holds this long before its first removal */
-const TAKEOVER_ALERT = 4.5;
+function notesSeconds(): number {
+  const e = m.notes.entries[0] as { title?: string; text: string };
+  return e.text.length / NOTES_TYPE_CPS + readHold([e.title ?? '', e.text]);
+}
+/** ⚑ S362 / H43 — the platform's "intervene immediately" alert holds this long before its first removal.
+ *  ⚑ S368 / F04 — by the reading rule (was 4.5 s for 18 words), or until its OK (`endTakeoverAlert`) */
+const TAKEOVER_ALERT = Math.max(9, readHold([vera.removals.alertTag, vera.removals.takeoverLine, vera.removals.takeoverSub]));
+/** ⚑ S368 / F05·F10 (rule 4: "a clock jump is a visible passage of time, never a silent 21:49 → 22:51") — the one clock (the phone's,
+ *  read by the workstation's taskbar too) ROLLS forward when the story jumps more than CLOCK_SNAP minutes: its digits run up over
+ *  ROLL_MIN…ROLL_MAX seconds (about ROLL_PER_MIN a minute), redrawn at most every ROLL_STEP, and whatever carries the new time
+ *  (an evening message, Bea's news) lands only when it has arrived. A minute or two (the cascade) just changes. */
+const CLOCK_SNAP = 5;
+const ROLL_PER_MIN = 0.035;
+const ROLL_MIN = 1.5;
+const ROLL_MAX = 3.5;
+const ROLL_STEP = 0.1;
+function clockMinutes(t: string): number { const [h, mm] = t.split(':').map(Number); return (h || 0) * 60 + (mm || 0); }
+function clockOf(min: number): string { const h = Math.floor(min / 60) % 24, mm = min % 60; return `${h}:${String(mm).padStart(2, '0')}`; }
 const CASCADE_REPEAT_VOLUME = 0.4;
 
 export class PhoneE3 {
@@ -126,7 +156,7 @@ export class PhoneE3 {
 
   /** S158 / R3-66: the phone's clock is the workstation's — one clock for the room */
   constructor(private readonly opts: { onLift(): void; floppyOpen(): boolean; clock?: () => string }) {}
-  private get clockText(): string { return this.storyClock; }
+  private get clockText(): string { return this.clockShown; }
 
   private evening: typeof mirrorCopy.events = [];
   private eventQueue: typeof mirrorCopy.events = [];
@@ -201,7 +231,32 @@ export class PhoneE3 {
   }
   private eveningFrom = '';
   private slotN = 0;
+  /** the story's time (the target); `clockShown` is what the glass and the taskbar read — it rolls up to this (S368) */
   private storyClock = '18:04';
+  private clockShown = '18:04';
+  private roll: { from: number; to: number; t: number; dur: number; drawn: number } | null = null;
+  /** ⚑ S368 — the clock is still running up to the story's time; what carries the new time waits for it */
+  get rolling(): boolean { return this.clockShown !== this.storyClock; }
+  private tickClock(dt: number): void {
+    if (this.clockShown === this.storyClock) { this.roll = null; return; }
+    const a = clockMinutes(this.clockShown), b = clockMinutes(this.storyClock);
+    if (b <= a || b - a <= CLOCK_SNAP) { this.clockShown = this.storyClock; this.roll = null; this.bump(); return; }
+    if (!this.roll || this.roll.to !== b) this.roll = { from: a, to: b, t: 0, dur: Math.min(ROLL_MAX, Math.max(ROLL_MIN, (b - a) * ROLL_PER_MIN)), drawn: 0 };
+    const r = this.roll; r.t += dt;
+    if (r.t >= r.dur) { this.clockShown = this.storyClock; this.roll = null; this.bump(); return; }
+    if (r.t - r.drawn < ROLL_STEP) return;
+    r.drawn = r.t;
+    const k = r.t / r.dur, eased = k * k * (3 - 2 * k);
+    const shown = clockOf(Math.round(r.from + (r.to - r.from) * eased));
+    if (shown !== this.clockShown && clockMinutes(shown) < b) { this.clockShown = shown; this.bump(); }
+  }
+  /** ⚑ S368 / F05 — the phone goes to sleep: its lock screen, nothing over it (the evening passes there, then Orla writes) */
+  sleep(): void {
+    if (this.disconnected) return;
+    this.screen = 'lock'; this.banner = null; this.openMessage = null; this.bump();
+  }
+  /** ⚑ S368 / F04 — OK on the platform's "Intervening now" alert: the review begins (the alert's hold, ended early) */
+  endTakeoverAlert(): void { if (this.stage === 'takeover' && this.removeT < 0) { this.removeT = 0; this.bump(); } }
   private banner: { from: string; time: string; text: string } | null = null;
   bannersHidden = false;
   arrive(id: string): void {
@@ -210,7 +265,7 @@ export class PhoneE3 {
     this.eventQueue.push(e); this.deliverEvent();
   }
   /** ⚑ S327 — a message is waiting, or the last one is still being read: the platform's other voices wait for it */
-  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes; }
+  get voiceBusy(): boolean { return this.bannerAge < this.holdFor || (this.atRest && this.eventQueue.length > 0) || this.notesPending || this.conductingNotes || this.rolling; }
   get queued(): number { return this.eventQueue.length; }
   /** S336 — diagnosis only: why a queued message is not being delivered */
   debugState(): Record<string, unknown> {
@@ -221,10 +276,17 @@ export class PhoneE3 {
   delivered(id: string): boolean { return this.evening.some(e => e.id === id); }
   private deliverEvent(): void {
     if (!this.eventQueue.length || this.bannerAge < this.holdFor || this.bannersHidden || !this.atRest || this.disconnected || this.notesPending || this.conductingNotes) return;
-    const raw = this.eventQueue.shift()!;
+    const raw = this.eventQueue[0];
     // ⚑ S332 — jobs finish in her order, so each message takes the evening's next slot (the clock never runs back)
-    const e = { ...raw, time: raw.id === 'after' ? raw.time : SLOTS[this.slotN++] ?? raw.time };
-    this.evening.push(e); this.storyClock = e.time; this.banner = e; this.bannerAge = 0; this.holdFor = HOLDS[e.id] ?? READ_HOLD;
+    const time = raw.id === 'after' ? raw.time : SLOTS[this.slotN] ?? raw.time;
+    // ⚑ S368 / F05·F10 — the evening passes visibly first: the clock runs up to the message's time, and it lands when it gets there
+    if (clockMinutes(time) - clockMinutes(this.clockShown) > CLOCK_SNAP) { this.storyClock = time; return; }
+    if (this.rolling) return;
+    this.eventQueue.shift();
+    if (raw.id !== 'after') this.slotN++;
+    const e = { ...raw, time };
+    // ⚑ S368 / F08 — each message is held at least by the reading rule (2 s + 0.4 s a word), never less than S362's HOLDS
+    this.evening.push(e); this.storyClock = e.time; this.banner = e; this.bannerAge = 0; this.holdFor = Math.max(HOLDS[e.id] ?? READ_HOLD, readHold(e.text ?? ''));
     // ⚑ S327 / T04 (his 8 Nov: "two different messages from Orla, which doesn't make a lot of sense") — ONE banner for
     //   Orla's evening: the stamp line lands in the same thread, quietly, under the quiz message
     if (e.id === 'arrival') { const st = mirrorCopy.events.find(x => x.id === 'stamp'); if (st && !this.delivered('stamp')) this.evening.push({ ...st, time: e.time }); }
@@ -238,7 +300,7 @@ export class PhoneE3 {
     if (e) this.banner = { from: e.from, time: e.time, text: e.text ?? (e.kind === 'link2' ? LINK_VOTE.headline : e.kind === 'link' ? m.link.headline : '') };
     this.bump();
   }
-  get eveningClock(): string { return this.storyClock; }
+  get eveningClock(): string { return this.clockShown; }
   disconnected = false;
   disconnect(): void { this.disconnected = true; this.evening = []; this.eventQueue = []; this.readMessages.clear(); veraDay.personalMessageSeen = false; this.banner = null; this.openMessage = null; this.notesT = -1; this.screen = 'lock'; this.bump(); }
   get hitRects(): Rect[] { return this.rects; }
@@ -271,13 +333,14 @@ export class PhoneE3 {
   get broken(): boolean { return this.stage === 'after'; }
 
   tick(dt: number, visible = true): void {
+    this.tickClock(dt);
     if (!this.bannersHidden) { this.bannerAge += dt; this.deliverEvent(); }
     // Mam's message read, then — at rest — her unsent reply to it, once
     if (this.notesPending && this.atRest && this.bannerAge >= this.holdFor && !this.bannersHidden) { this.notesPending = false; this.conductNotes(); }
     if (this.notesT >= 0) {
       // ⚑ S362 / H28 + H42 — the draft types itself in (NOTES_TYPE_CPS) and is then held; the hand-back waits a beat
       const old = Math.floor(this.notesT * 10); this.notesT += dt;
-      if (this.notesT >= NOTES_SECONDS) { this.notesT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; this.bump(); }
+      if (this.notesT >= notesSeconds()) { this.notesT = -1; this.screen = this.notesReturn; this.bannerAge = 0; this.holdFor = 5; this.bump(); }
       else if (old !== Math.floor(this.notesT * 10)) this.bump();
     }
     // ⚑ S332 — MALTA, the era's own beat (conducted: the platform holds every other voice while it runs).
@@ -290,8 +353,11 @@ export class PhoneE3 {
         // ⚑ S362 / H28 — if she opened the article herself, the news waits for her to come back from it
         if (this.screen === 'article' && !this.articleConducted) return;
         if (this.newsPaused) return;
+        // ⚑ S368 / F10 — Bea's first message waits for the evening to reach her time (the clock rolls from the last slot to 21:41)
+        if (this.newsN === 0 && clockMinutes(NEWS[0].time) - clockMinutes(this.clockShown) > CLOCK_SNAP) { this.storyClock = NEWS[0].time; return; }
+        if (this.rolling) return;
         this.newsT += dt;
-        if (this.newsT >= (NEWS_HOLD[this.newsN] ?? NEWS_STEP)) {
+        if (this.newsT >= newsWait(this.newsN)) {
           this.newsT = 0; this.newsN++; this.storyClock = NEWS[this.newsN - 1].time;
           // the article's hold is over: back to the thread (if she is still on it), and the next message lands under her eyes
           if (this.articleConducted) { this.articleConducted = false; if (this.screen === 'article') { this.screen = 'group'; } }
@@ -494,7 +560,7 @@ export class PhoneE3 {
     roundRect(ctx, x, y + 1, w, h, 10, PHONE.dim);   // a hairline shadow under the card
     roundRect(ctx, x, y, w, h, 10, PHONE.surface);
     ctx.fillStyle = PHONE.ink; phoneFont(ctx, 12, 600); ctx.fillText(this.banner.from, x + 10, y + 8);
-    phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(this.storyClock, x + w - 36, y + 8);
+    phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(this.clockShown, x + w - 36, y + 8);
     phoneFont(ctx, 12); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, x + 10, y + 28 + i * 16));
     if (this.bannerPhoto) {
       this.photoSprites ??= makeE3PhotoSprites(m.cameraRoll.busText); ctx.drawImage(this.photoSprites[4], x + 10, y + 32 + lines.length * 16, 72, 72);
@@ -506,23 +572,27 @@ export class PhoneE3 {
   private drawLockCards(ctx: CanvasRenderingContext2D, W: number, H: number, top: number): number {
     // one card per person, newest person first; the card shows that person's FIRST line (Orla's quiz, not her
     // afterthought) and how many more wait, the way a lock screen groups a thread
-    const byFrom = new Map<string, { from: string; time: string; text: string; more: number; last: number }>();
+    const byFrom = new Map<string, { from: string; time: string; text: string; more: number; last: number; photo?: boolean }>();
     this.evening.forEach((ev, i) => {
-      const e = ev as { from: string; time: string; text?: string };
+      const e = ev as { id?: string; from: string; time: string; text?: string; photo?: boolean };
       const c = byFrom.get(e.from);
-      if (c) { c.more++; c.time = e.time; c.last = i; }
-      else byFrom.set(e.from, { from: e.from, time: e.time, text: e.text ?? '', more: 0, last: i });
+      // ⚑ S368 / F05 — a message hours later is news of its own: Orla's 22:51 "missed you tonight x" is what her card shows
+      //   (with "Photo" under it), not her 18:04 quiz; the earlier lines are counted (+N) as before
+      if (c && e.id === 'after') { c.more++; c.time = e.time; c.last = i; c.text = e.text ?? ''; c.photo = !!e.photo; }
+      else if (c) { c.more++; c.time = e.time; c.last = i; }
+      else byFrom.set(e.from, { from: e.from, time: e.time, text: e.text ?? '', more: 0, last: i, photo: !!e.photo });
     });
     const cards = [...byFrom.values()].sort((a, b) => b.last - a.last).slice(0, 3);
     let y = top;
     for (const c of cards) {
       phoneFont(ctx, 12); const lines = phoneWrap(ctx, c.text, W - 40).slice(0, 2);
+      if (c.photo) lines.push(HOME.photoLine ?? 'Photo');
       const h = 30 + lines.length * 16;
       if (y + h > H - 48) break;
       roundRect(ctx, 10, y, W - 20, h, 8, PHONE.surface);
       ctx.fillStyle = PHONE.ink; phoneFont(ctx, 12, 600); ctx.fillText(c.from, 20, y + 7);
       phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(c.time, W - 48, y + 8);
-      phoneFont(ctx, 12); ctx.fillStyle = PHONE.ink; lines.forEach((line, i) => ctx.fillText(line, 20, y + 26 + i * 16));
+      phoneFont(ctx, 12); lines.forEach((line, i) => { ctx.fillStyle = c.photo && i === lines.length - 1 ? PHONE.dim : PHONE.ink; ctx.fillText(line, 20, y + 26 + i * 16); });
       if (c.more) { phoneFont(ctx, 10); ctx.fillStyle = PHONE.dim; ctx.fillText(`+${c.more}`, W - 34, y + h - 16); }
       this.rects.push({ x: 10, y, w: W - 20, h, id: `lock-card:${c.from}` });
       y += h + 6;
