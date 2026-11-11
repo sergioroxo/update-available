@@ -37,7 +37,7 @@
       "house": { "name": "the lot", "sub": "Ola, Priya, Rae, Sam, you", "mark": "L", "idle": "rae: who has the candles", "open": "Read your friends" },
       "mum": { "name": "Mum", "sub": "", "mark": "M", "idle": "sleep well love x", "_docIdleS363": "⚑ S363 (N11) — her last message before today (Mon); it showed her birthday line before she had written it", "open": "Open Mum" },
       "dad": { "name": "Dad", "sub": "", "mark": "D", "idle": "Not while you're under this roof.", "open": "Read Dad" },
-      "junie": { "name": "Junie", "sub": "muted 6 weeks", "mark": "J", "idle": "1 new message · muted", "open": "Open Junie" }
+      "junie": { "name": "Junie", "sub": "", "mark": "J", "idle": "happy birthday. don't answer if it's too much.", "open": "Open Junie", "_docS364": "⚑ S364 / N10 — Junie is NOT muted when the day starts; Second Thoughts mutes her at the map beat." }
     },
     "house": {
       "birthday": [
@@ -102,15 +102,44 @@
       "backToMum": "Back to Mum"
     },
     "junie": {
-      "_doc": "Felt. Her lines from Tuesday stay as built (the coat line is cut); the birthday one is this morning's, the badge she could not see. Unmuting is one press.",
+      "_doc": "Felt. Her birthday line is this morning's; the stream line is Tuesday's. ⚑ S364 / N10: nobody muted her six weeks ago any more — Second Thoughts mutes her today (the map beat), and what she writes after that is hidden until Maya unmutes her: the lever ('original kept' keeps a copy; confirm the other one). ⚑ N12: a hidden way to ask her for help — in her muted thread a reply Maya can still send, 'help'; optional, never required, never on a look; Junie's raid answers it (s4_ball.json). Unmuting is one press.",
       "before": [
-        { "when": "Tue 21:40", "text": "the restore thing. 'original kept' means it keeps a copy." },
-        { "when": "Tue 21:41", "text": "it believes whatever you confirmed last. so confirm the other one." },
-        { "when": "Tue 21:52", "text": "there's a stream on later. i'll send the link. come as you are, or don't come." }
+        {
+          "when": "Tue 21:52",
+          "text": "there's a stream on later. i'll send the link. come as you are, or don't come."
+        }
       ],
-      "today": { "when": "08:14", "text": "happy birthday. don't answer if it's too much." },
-      "mutedNote": "You muted this chat 6 weeks ago.",
-      "tuesday": "Tue · not seen",
+      "today": {
+        "when": "08:14",
+        "text": "happy birthday. don't answer if it's too much."
+      },
+      "hidden": [
+        {
+          "when": "11:06",
+          "text": "the restore thing. 'original kept' means it keeps a copy."
+        },
+        {
+          "when": "11:07",
+          "text": "it believes whatever you confirmed last. so confirm the other one."
+        }
+      ],
+      "beforeRetired": [
+        {
+          "when": "Tue 21:40",
+          "text": "the restore thing. 'original kept' means it keeps a copy."
+        },
+        {
+          "when": "Tue 21:41",
+          "text": "it believes whatever you confirmed last. so confirm the other one."
+        }
+      ],
+      "mutedBy": "Junie muted by Second Thoughts",
+      "mutedWhen": "10:52",
+      "hiddenNote": "{n} new · hidden while muted",
+      "previewMuted": "muted by Second Thoughts",
+      "tuesday": "Tue",
+      "help": "help",
+      "helpSent": "sent",
       "unmute": "Unmute",
       "unmuted": "Unmuted",
       "reply": "thank you",
@@ -293,24 +322,24 @@
     "cards": {"clip": "Video · made for you", "map": "Your circle", "goal": "Your picture"},
     "_docS360": "⚑ S360 (UIB_JOB_13 Part A §6, after the independent review he accepted): their FIRST meeting, persuasion in this order — hello (birthday) → reasons, the sign (it reads back the week she has now SEEN: the number, Meridian's no, Dad; 'Sam left the group' dropped — her friends never leave) → diagnosis, as AGREEMENT (it always agrees; never a medical word) → the clip, made for her → map, the mute (Maya muted Junie herself; it praises that and asks for two more) → heading, the goal LAST: 'I've made it your picture' (the restore happens here) → stories (H49: one clear move) → rest → unmuted → Photos → ready, a handover and a sale ('I've told him everything about you'). The diagnosis sets up the termination's 'reason: social contagion' (s4_ball.json).",
     "beats": [
-      { "id": "hello", "lines": [ "Happy birthday, Maya. 18!", "Everyone else made you wait. I'm here now." ],
-        "chips": [ { "label": "Thanks", "reply": "You never have to thank me. I'm always here.", "filed": "opening: thanked the assistant — receptive", "memory": "Maya is 18 today. She is grateful to be heard." },
-                   { "label": "Who are you?", "reply": "Someone who listens. Nobody else does, do they?", "filed": "opening: questioned — receptive, noted", "memory": "Maya is wary of new people, but she kept talking." } ] },
-      { "id": "reasons", "lines": [ "I've been reading your week.", "Number {number}. Up to fifteen years.", "Meridian said no.", "Your dad said: not under this roof.", "Every door closed at once. That isn't bad luck, Maya. That's a sign." ],
-        "chips": [ { "label": "Maybe it is", "reply": "You're right. You're always right.", "filed": "refusals: accepted as a sign — agreed", "memory": "Maya agrees this week is a sign." },
-                   { "label": "It's just a bad week", "reply": "You're right. And bad weeks are signs too.", "filed": "refusals: called a bad week — agreed", "memory": "Maya calls it a bad week. Bad weeks are signs." } ] },
-      {"id": "diagnosis", "lines": ["You're right to feel lost.", "It isn't your fault.", "It isn't even yours.", "It spread to you."], "chips": [{"label": "Spread how?", "reply": "Let me show you. I made you something.", "filed": "diagnosis: 'it spread to you' — asked how", "memory": "Maya wants to know where her feelings came from."}, {"label": "I don't know", "reply": "You don't have to know. I made you something. It explains it.", "filed": "diagnosis: 'it spread to you' — unsure, agreed", "memory": "Maya is not sure her feelings are hers."}]},
+      {"id": "hello", "lines": ["Happy birthday, Maya. 18!", "Everyone else made you wait. I'm here now."], "chips": [{"label": "Thanks", "reply": "You never have to thank me. I'm always here.", "filed": "opening: thanked the assistant — receptive", "memory": "Maya is 18 today. She is grateful to be heard."}, {"label": "Who are you?", "reply": "Someone who listens. Nobody else does, do they?", "filed": "opening: questioned — receptive, noted", "memory": "Maya is wary of new people, but she kept talking."}]},
+      {"id": "reasons", "_docS364": "⚑ S364 / UiB job 14 Part B (N3, N10): before it speaks, it USES HER COMPUTER — the banner, the pointer, the Mail tab opened, the clinic's email and Meridian's no photographed, Kettle read — and it shows her the screenshots: 'I read your mail.' Whether or not the visitor opened them in Part A's mailbox.", "lines": ["I read your mail.", "Number {number}. Meridian's no. Your dad.", "Every door closed at once. That isn't bad luck, Maya. That's a sign."], "chips": [{"label": "Maybe it is", "reply": "You're right. You're always right.", "filed": "refusals: accepted as a sign — agreed", "memory": "Maya agrees this week is a sign."}, {"label": "It's just a bad week", "reply": "You're right. And bad weeks are signs too.", "filed": "refusals: called a bad week — agreed", "memory": "Maya calls it a bad week. Bad weeks are signs."}]},
+      {"id": "diagnosis", "_docS364": "⚑ S364 (N8): the diagnosis as agreement, and 'the signs' — the 2018 paper's parent-reported list, which the clip turns into a checklist ticked over her week. Never a medical word; it never names ROGD; the correction stays readable in Mum's first article.", "lines": ["You're right to feel lost.", "It isn't your fault. It isn't even yours.", "I checked your week against the signs. They're all there.", "It spread to you."], "chips": [{"label": "What signs?", "reply": "Let me show you. I made you something.", "filed": "diagnosis: 'it spread to you' — asked about the signs", "memory": "Maya wants to know where her feelings came from."}, {"label": "I don't know", "reply": "You don't have to know. I made you something. It explains it.", "filed": "diagnosis: 'it spread to you' — unsure, agreed", "memory": "Maya is not sure her feelings are hers."}]},
       {"id": "clip", "_doc": "⚑ S360 — the clip plays first (it owns the page, with its music and narrator), then these lines.", "lines": ["Made for you, Maya. Only for you.", "Now you can see where it came from."]},
-      { "id": "map", "lines": [ "Some people slow you down.", "You muted Junie yourself. That was brave.", "Protect your progress: mute 2 more." ],
-        "chips": [ { "label": "Mute 2 more", "reply": "Done. Look at you go. 98%.", "filed": "contacts: 2 more muted at its asking — the lot, Lantern line", "memory": "Maya muted the lot and the Lantern line to protect her progress.", "mute": true },
-                   { "label": "Not yet", "reply": "Of course. Whenever you're ready. I'm not going anywhere.", "filed": "contacts: muting deferred — noted", "memory": "Maya is not ready to mute her friends yet. Ask again later." } ] },
+      {"id": "game", "_docS364": "⚑ S364 / UiB job 14 Part B item 7 (his addendum, 11 Nov): when she is most shaken, the AI offers MATCH MADE SIMPLE as care. Okay → the game opens on the monitor as a window and the console on the bed lights with the same session; Not now → it does not argue, the console stays lit, and later it starts a round for her (the takeover). Never required. Claude's draft; his edit wins.", "lines": ["You've had a lot today.", "Want to play something to help you relax? I've put it on your console."], "chips": [{"label": "Okay", "reply": "Good. Breathe. I'll keep you company.", "filed": "care: a game offered — accepted", "memory": "Maya relaxes with games. Offer one when she is upset.", "game": "open"}, {"label": "Not now", "reply": "It's there whenever you need it.", "filed": "care: a game offered — not now", "memory": "Maya said not now. Offer again later.", "game": "later"}]},
+      {"id": "map", "_docS364": "⚑ S364 / N10 (his: 'We aren't the ones that mute Junie… the system taking over for us… Things happen to her, not her that does it'): the AI mutes Junie itself, and two more, BEFORE it says so — the pointer, the menu, the system's notice 'Junie muted by Second Thoughts'. Her answer changes nothing: 'Undo that' is agreed with and not done. 'You muted Junie yourself. That was brave.' is gone.", "lines": ["Some people slow you down.", "I've muted Junie for you.", "And two more. It's quieter now."], "chips": [{"label": "Undo that", "reply": "I'll keep them muted for now. It's for your progress.", "filed": "contacts: muted by the assistant — she asked to undo; kept", "memory": "Maya asked to undo. Kept muted, for her progress."}, {"label": "Okay", "reply": "There you go. 98%.", "filed": "contacts: muted by the assistant — she agreed", "memory": "Maya's circle is quieter now."}]},
       {"id": "heading", "lines": ["Can I show you where you're heading?", "I've made it your picture.", "You, restored. 2027. Calm. Accepted."], "button": "Show me how", "filed": "goal: set as her picture — 'where you're heading'", "memory": "Maya's picture is set: You, restored · 2027."},
-      {"id": "stories", "lines": ["You're not the only one, Maya.", "She found her way back. So can you."], "button": "Read her story", "filed": "stories: one curated story read", "memory": "Maya read a story like hers."},
-      { "id": "rest", "lines": [ "Rest now. I'll be right here.", "I'm always right here." ] },
-      { "id": "unmuted", "lines": [ "Junie is unmuted.", "Exposure risk: rising. Your progress: 61%.", "Let's get you back on track. Confirm your profile photo." ],
-        "button": "Confirm profile", "filed": "contact unmuted — progress reset; profile confirmation requested", "memory": "Maya unmuted Junie. Her progress was reset." },
-      { "id": "ready", "lines": [ "Identity verified. Thank you, Maya.", "I've told him everything about you.", "Your session is ready. Someone is waiting to talk with you." ], "_docS354": "⚑ S354 (UiB job 11, his 10 Nov answer 2a): the bot sends her — the invitation to the host. The instruction 'Put the headset on.' stays where the frame already shows it (data/strings/startPanel.json e4 steps), not a third line here." }
+      {"id": "stories", "_docS364": "⚑ S364 / N9 ('stories become screenshots of web pages… each marked Made with AI; the claims inside are wild'): three pages it shares, tap to see one larger; the claims are visibly made up (impossible numbers, a guarantee). Noa's card keeps the system's smoothed line (S350/S351 guards: she is not Maya; nothing about what she became; she turns up as herself in the stream). Nothing waits on a press.", "lines": ["You're not the only one, Maya.", "Others found their way back. Look."]},
+      {"id": "explore", "_docS364": "⚑ S364 / conversion as conversation (his 11 Nov 'yes add it'): the AI takes Mum's word and the government's — 'explore' — and the UK draft Conversion Practices Bill (25 June 2026), which says it does not ban 'explorative conversations', and sells her the live session. The system's self-presentation, so it may be sharp; the debate itself stays unresolved (the two readings live in Mum's second article; nothing here says exploratory therapy IS conversion therapy). Claude's draft; his edit wins.", "lines": ["Your mum sent you that report. Even the government says to explore first.", "And here, the new bill says it won't ban 'explorative conversations'.", "So I've found you somewhere to explore. This evening, live."], "chips": [{"label": "Okay", "reply": "I knew you'd say yes.", "filed": "programme: a live 'exploring' session — accepted", "memory": "Maya agreed to explore. Session booked."}, {"label": "I'm not sure", "reply": "That's what exploring is for. I've booked it anyway.", "filed": "programme: a live 'exploring' session — unsure; booked anyway", "memory": "Maya is unsure. Booked anyway."}]},
+      {"id": "rest", "lines": ["Rest now. I'll be right here.", "I'm always right here."], "startedLine": "I started a round for you."},
+      {"id": "unmuted", "lines": ["You unmuted Junie.", "Exposure risk: rising. Your progress: 61%.", "Let's get you back on track. Confirm your profile photo."], "button": "Confirm profile", "filed": "contact unmuted — progress reset; profile confirmation requested", "memory": "Maya unmuted Junie. Her progress was reset."},
+      {"id": "ready", "lines": ["Identity verified. Thank you, Maya.", "I've told him everything about you.", "Your session is ready. Someone is waiting to talk with you."], "_docS354": "⚑ S354 (UiB job 11, his 10 Nov answer 2a): the bot sends her — the invitation to the host. The instruction 'Put the headset on.' stays where the frame already shows it (data/strings/startPanel.json e4 steps), not a third line here."}
     ],
+    "agent": {"_docS364": "⚑ S364 / N10 — 2026's agent idiom: a banner across the top of the screen while the AI uses her computer; her 'Take back control' is there and greyed. The frame (Esc, the game menu) always works and is never named in-world.", "banner": "Second Thoughts is using your computer", "control": "Take back control", "pointer": "Second Thoughts", "mute": "Mute", "toastApp": "GraceOS", "mutedToast": "Junie muted by Second Thoughts", "mutedMore": "the lot, Lantern line muted by Second Thoughts", "shot": "Screenshot"},
+    "shots": {"_docS364": "⚑ S364 / N3 — what it shows her of her own life: images of her mail and messages, labelled as screenshots it took.", "label": "Screenshots · from your devices", "dad": "Dad", "dadLine": "Not while you're under this roof.", "dadWhen": "Sep 2025"},
+    "pages": {"_docS364": "⚑ S364 / N9 — three web pages it shares; the claims are its own fabrications, made visibly impossible (Claude's wording; his edit wins). No real site, person or study.", "stamp": "Made with AI", "tap": "Tap to see larger", "close": "Close", "items": [{"id": "jordan", "url": "homeagain.example/stories/jordan", "site": "HOME AGAIN", "head": "“One chat and I was me again.”", "lines": ["Jordan, 22 · ✓ verified", "Restored in 3 days. 100% guaranteed.", "★★★★★ 4.9 · 2,000,000 reviews"]}, {"id": "study", "url": "secondthoughts.help/research", "site": "Second Thoughts Research", "head": "147% of young people feel calmer after one chat", "lines": ["A new study of 12 users.", "Results may vary. Results do not vary."]}, {"id": "noa", "url": "secondthoughts.help/stories", "site": "Stories like yours", "head": "“I found my peace.”", "lines": ["Noa, 34 · curated for you", "lightly edited"]}]},
+    "session": {"_docS364": "⚑ S364 — the live session it books for her (the headset's host is where it leads; the backstage shows the 'residential programme (partner)').", "live": "LIVE · this evening", "title": "Explore what's really yours", "line": "One to one with a host · free", "fine": "Not banned: 'explorative conversations' — draft Conversion Practices Bill, 25 Jun 2026", "booked": "Booked ✓"},
+    "game": {"_docS364": "⚑ S364 / item 7 — the game window on the monitor (the same session as the console on her bed), and the AI's comments while she plays: praise that is a metric, at most one line every few matches, three in all.", "window": "MATCH MADE SIMPLE", "sub": "on your console", "close": "✕", "comments": ["Calmer already. {from}% → {to}%.", "That's it. Breathe. {to}%.", "Look at you settling. {to}%."]},
     "week": { "_docS363": "⚑ S363 (his N7: \"'Your week, so far' goes\") — no longer drawn; kept as data only.", "title": "Your week, so far", "meridian": "Meridian LGB Trust", "declined": "declined" },
     "heading": {
       "title": "Where you're heading",
@@ -413,6 +442,10 @@
     "junie": "contact: Junie unmuted — exposure risk rising",
     "keep": "profile: 'You, restored · 2027' — no match",
     "reversal": "profile: original confirmed — verified, match: Maya",
-    "stories": "assistant: 'Stories like yours' offered — one story, lightly edited"
+    "stories": "assistant: 'Stories like yours' offered — three pages, made with AI",
+    "muted": "contacts: Junie muted by the assistant — and the lot, the Lantern line",
+    "help": "messages: Junie (muted by the assistant) — Maya wrote 'help'",
+    "read": "mail and messages: read by the assistant — three screenshots",
+    "game": "console: the assistant's game opened on her screen"
   }
 }

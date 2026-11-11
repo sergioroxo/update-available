@@ -85,6 +85,12 @@ export class E4Messenger {
   linkOpened = false;
   junieOpenable = false;
   junieOpened = false;
+  /** ⚑ S364 / N10 — Second Thoughts muted her (the map beat); she was not muted when the day began */
+  junieMuted = false;
+  /** how many of the lines she wrote after the mute have arrived (hidden until Maya unmutes her) */
+  junieHidden = 0;
+  /** ⚑ S364 / N12 — the hidden way: Maya's "help", sent into the muted thread (optional; Junie's raid answers it) */
+  helpSent = false;
   junieUnmuted = false;
   junieReplied = false;
   junieX = false;
@@ -240,15 +246,20 @@ export class E4Messenger {
       if (this.dadIn) return { text: M.dad.today[M.dad.today.length - 1].text, badge: this.dadRead ? 0 : M.dad.today.length, muted: false, when: '10:21' };
       return { text: C.idle, badge: 0, muted: false, when: 'Sep 25' };
     }
-    if (this.junieUnmuted) return { text: this.junieReplied ? `${M.you}: ${M.junie.reply}` : M.junie.today.text, badge: 0, muted: false, when: M.junie.today.when };
-    return { text: C.idle, badge: this.junieOpened ? 0 : 1, muted: true, when: M.junie.today.when };
+    const J = M.junie;
+    if (this.junieUnmuted) {
+      const last = J.hidden[J.hidden.length - 1];
+      return { text: this.junieReplied ? `${M.you}: ${J.reply}` : last.text, badge: 0, muted: false, when: this.junieReplied ? last.when : last.when };
+    }
+    if (this.junieMuted) return { text: this.helpSent ? `${M.you}: ${J.help}` : J.previewMuted, badge: this.junieHidden, muted: true, when: J.mutedWhen };
+    return { text: C.idle, badge: this.junieOpened ? 0 : 1, muted: false, when: J.today.when };
   }
 
   private canOpen(id: ChatId): boolean {
     if (id === 'house') return this.houseShown > 0;
     if (id === 'mum') return this.mumToday > 0;
     if (id === 'dad') return this.dadIn;
-    return this.junieOpenable;
+    return true;   // ⚑ S364 — her thread is hers to open all day (N10: nobody muted her before the AI did)
   }
 
   /** the wallpaper: hers until the update restores "defaults", then the goal — on the lock screen and the list only */
@@ -389,18 +400,19 @@ export class E4Messenger {
         out.push({ sep: M.today, year: M.today });
         for (const m of M.dad.today) out.push({ text: m.text });
       }
-    } else if (!this.junieUnmuted) {
-      // muted: the one message of the morning, and the note that says why it was not seen
-      out.push({ sys: true, text: M.junie.mutedNote });
-      out.push({ text: M.junie.today.text });
     } else {
-      // ⚑ unmuting shows what the mute hid: her three lines from Tuesday (the lever, and the stream), then today
-      out.push({ sep: M.junie.tuesday, year: M.junie.tuesday });
-      for (const m of M.junie.before) out.push({ text: m.text });
+      // ⚑ S364 / N10 — Tuesday's stream line, this morning's birthday; then the AI's mute, and what the mute hid
+      const J = M.junie;
+      out.push({ sep: J.tuesday, year: J.tuesday });
+      for (const m of J.before) out.push({ text: m.text });
       out.push({ sep: M.today, year: M.today });
-      out.push({ text: M.junie.today.text });
-      if (this.junieReplied) out.push({ mine: true, text: M.junie.reply });
-      if (this.junieX) out.push({ text: M.junie.replied });
+      out.push({ text: J.today.text });
+      if (this.junieMuted) out.push({ sys: true, text: `${J.mutedBy} · ${J.mutedWhen}` });
+      if (this.helpSent) out.push({ mine: true, text: J.help });
+      if (this.junieMuted && !this.junieUnmuted && this.junieHidden > 0) out.push({ sys: true, text: J.hiddenNote.replace('{n}', String(this.junieHidden)) });
+      if (this.junieUnmuted) for (const m of J.hidden.slice(0, Math.max(1, this.junieHidden))) out.push({ text: m.text });
+      if (this.junieReplied) out.push({ mine: true, text: J.reply });
+      if (this.junieX) out.push({ text: J.replied });
     }
     return out;
   }
@@ -424,6 +436,7 @@ export class E4Messenger {
       return null;
     }
     if (id === 'dad') return this.want === 'link' ? { id: 'chat-mum', label: M.dad.backToMum } : null;
+    if (!this.junieMuted) return null;   // ⚑ S364 — before the AI's mute there is nothing to do here but read
     if (!this.junieUnmuted) return { id: 'junie-unmute', label: M.junie.unmute };
     if (!this.junieReplied) return { id: 'junie-reply', label: M.junie.reply };
     return null;
@@ -451,7 +464,7 @@ export class E4Messenger {
     setFont(ctx, 11); ctx.fillStyle = KETTLE.headInk;
     ctx.fillText(C.name, 25, 5);
     const nameEnd = 25 + Math.ceil(ctx.measureText(C.name).width) + 10;
-    const sub = id === 'junie' && !this.junieUnmuted ? C.sub : shown || C.sub;
+    const sub = id === 'junie' && this.junieMuted && !this.junieUnmuted ? M.junie.previewMuted : shown || C.sub;
     if (sub) {
       ctx.font = monoFor(9);
       const sw = Math.ceil(ctx.measureText(sub).width);
@@ -463,6 +476,15 @@ export class E4Messenger {
     const primary = this.threadPrimary(id);
     const hint = !primary && this.maxScroll > 0 && this.scrollOf[id] > 2 ? M.scrollHint : '';
     this.bar(ctx, W, H, true, primary, hint);
+    // ⚑ S364 / N12 — the hidden way: in Junie's muted thread, a reply she can still send. Quiet, never the primary, never
+    //   required; it sits at the foot's right end
+    if (id === 'junie' && this.junieMuted && !this.junieUnmuted && !this.helpSent) {
+      setFont(ctx, 10);
+      const label = M.junie.help, hw = Math.ceil(ctx.measureText(label).width) + 14, hx = W - hw - 5, hy = H - BAR_H + 6;
+      pill(ctx, hx, hy, hw, 18, KETTLE.quietEdge); pill(ctx, hx + 1, hy + 1, hw - 2, 16, KETTLE.row);
+      ctx.fillStyle = KETTLE.ink; ctx.fillText(label, hx + 7, hy + 3);
+      this.targets.push({ x: hx, y: hy, w: hw, h: 18, id: 'junie-help' });
+    }
   }
 
   private drawScrollBar(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, id: ChatId): void {

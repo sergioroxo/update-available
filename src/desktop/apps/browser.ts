@@ -36,7 +36,7 @@ import SAVERS from '../../../data/strings/screensavers.json';
 import lexStrings from '../../../data/strings/lexicon.json';
 import { meetWord } from '../../room/lexicon';
 import { entriesByEra } from '../../witness/record';
-import { browserChrome, restoring, glitchBands, CHROME, ADDR, ERA4, V3, WEB, KETTLE, PLACE, roundRect, roundEdge, pill, thumb, assistantMark,
+import { browserChrome, restoring, glitchBands, CHROME, ADDR, ERA4, V3, WEB, KETTLE, PLACE, CLIP, roundRect, roundEdge, pill, thumb, assistantMark,
   profileGlyph, streamScene, streamShot, progressBar, type TabLook } from '../theme/era4';
 import { ledger } from '../../state/ledger';
 import { buildStartModel } from '../../witness/startModel';
@@ -50,6 +50,7 @@ import { markE4, e4Has } from '../../narrative/e4Beats';
 import { E4Messenger, drawLoftPhoto, type ChatId } from './messenger';
 import { drawGoalPicture } from './goalPicture';
 import { drawContagionClip, CLIP_LOOP_SECONDS, startClipSound, stopClipSound } from './contagionClip';
+import { consoleSession } from '../../room/consoleSession';
 import updates from '../../../data/strings/updates.json';
 import script from '../../../data/dialog/s4_boot.json';
 import body from '../../../data/dialog/s4_browser.json';
@@ -82,10 +83,16 @@ const ENQ = body.enquiry as { draftLabel: string; to: string; subject: string; m
 const STREAM = ballScript.stream as unknown as { mark: string; live: string; watching: string; count: number };
 const FRAME_ROWS = (ballScript.frame as unknown as { rows: { k: string; v: string }[] }).rows;
 
-interface BotChip { label: string; reply: string; filed: string; mute?: boolean; memory?: string }
-interface BotBeat { id: string; lines: string[]; chips?: BotChip[]; button?: string; filed?: string; memory?: string }
+interface BotChip { label: string; reply: string; filed: string; mute?: boolean; memory?: string; game?: 'open' | 'later' }
+interface BotBeat { id: string; lines: string[]; chips?: BotChip[]; button?: string; filed?: string; memory?: string; startedLine?: string }
+interface WebPage { id: string; url: string; site: string; head: string; lines: string[] }
 const BOT = V.bot as unknown as { tab: string; mark: string; online: string; lineSeconds: number; typing: string; beats: BotBeat[];
   composer: string; footer: string; memoryUpdated: string; cards: Record<string, string>;
+  agent: { banner: string; control: string; pointer: string; mute: string; toastApp: string; mutedToast: string; mutedMore: string; shot: string };
+  shots: { label: string; dad: string; dadLine: string; dadWhen: string };
+  pages: { stamp: string; tap: string; close: string; items: WebPage[] };
+  session: { live: string; title: string; line: string; fine: string; booked: string };
+  game: { window: string; sub: string; close: string; comments: string[] };
   week: { title: string; meridian: string; declined: string };
   heading: { title: string; ring: string; streak: string; stamp: string };
   map: { title: string; exposure: string; you: string; nodes: { id: string; label: string; kind: string }[]; mutedTag: string; leftTag: string };
@@ -124,11 +131,16 @@ const MAIL = V.mail as unknown as { tab: string; brand: string; address: string;
 /** 'meridian' names the whole thread with Meridian: her forward, its auto-reply, her draft */
 type MailId = 'clinic' | 'meridian' | 'mum';
 /** ⚑ S363 — a desktop notification (2026's toast): who wrote, and the chat it opens */
-interface Toast { chat: ChatId; title: string; line: string; t: number }
+interface Toast { chat: ChatId; title: string; line: string; t: number; sys?: boolean }
 const TOAST_SECONDS = 5.5;
 /** ⚑ S363 — the chat's cards, inline in the conversation (his N7): which beat shows which, after which of its lines */
-type CardKind = 'clip' | 'map' | 'goal' | 'stories' | 'ring';
-const BEAT_CARD: Record<string, [CardKind, number]> = { clip: ['clip', -1], map: ['map', 0], heading: ['goal', 1], stories: ['stories', 1], unmuted: ['ring', 1] };
+type CardKind = 'clip' | 'map' | 'goal' | 'stories' | 'ring' | 'shots' | 'pages' | 'session';
+const BEAT_CARD: Record<string, [CardKind, number]> = { reasons: ['shots', 0], clip: ['clip', -1], map: ['map', 0], heading: ['goal', 1],
+  stories: ['pages', 1], explore: ['session', 2], unmuted: ['ring', 1] };
+/** ⚑ S364 / N10 — the AI using her computer: a pointer that moves between the two windows, presses, photographs */
+type ActKind = 'read' | 'mute' | 'game';
+interface ActStep { at: number; to: (L: Layout) => { x: number; y: number } | null; click?: () => void; flash?: 'browser' | 'kettle'; menu?: 'junie' | 'house' | null }
+const ACT_SECONDS: Record<ActKind, number> = { read: 4.2, mute: 3.5, game: 1.8 };
 type Said = { who: 'bot' | 'her' | 'memory' | 'card'; text: string; card?: CardKind; ring?: number };
 /** S360 — no beat waits on a press: this long without one in Mum's email, on an article, on the sponsored one */
 const NAV_IDLE = { mum: 14, article: 16, sponsor: 14 } as const;
@@ -221,6 +233,25 @@ export class E4Browser {
   private composeFlashT = 0;
   /** which surface a drag that began on a scrollable place is scrolling */
   private scrollGrab: 'kettle' | 'mail' | null = null;
+  // ── ⚑ S364 — the takeover (N10), the screenshots (N3), the pages (N9), the game (item 7) ──
+  private act: { kind: ActKind; t: number; steps: ActStep[]; done: Set<number> } | null = null;
+  private flashT = 0;
+  private flashOn: 'browser' | 'kettle' = 'browser';
+  private menuAt: 'junie' | 'house' | null = null;
+  private tabRects: Hit[] = [];
+  private mailRowRects: Hit[] = [];
+  /** a screenshot or a page it shared, opened larger (a press anywhere closes it) */
+  private lightbox: string | null = null;
+  private gameWin = false;
+  private gameAnswer: 'open' | 'later' | null = null;
+  private gameStarted = false;
+  private gameKey = '';
+  private gameMatches = 0;
+  private gameComments = 0;
+  private gamePct = 0;
+  private sessionBooked = false;
+  /** the conversation row where the newest answer begins (drawConversation keeps its first line in view) */
+  private anchorAt = 0;
   /** S360 — seconds without a press while Mum's email or an article waits (then the piece takes her on) */
   private idleNav = 0;
   private typedT = 0;
@@ -299,11 +330,14 @@ export class E4Browser {
   get consoleLineWorn(): string { return V.laptop.worn; }
 
   private get bot(): BotBeat | null { return this.botBeat >= 0 ? BOT.beats[this.botBeat] ?? null : null; }
-  private botLines(b: BotBeat): string[] { return b.lines.map((l) => l.replace('{number}', this.clinicNumber.toLocaleString('en-GB'))); }
-  private get botLinesShown(): number { const b = this.bot; return b && this.botT >= 0 ? Math.min(b.lines.length, 1 + Math.floor(this.botT / BOT.lineSeconds)) : 0; }
+  private botLines(b: BotBeat): string[] {
+    const lines = b.id === 'rest' && this.gameStarted && b.startedLine ? [b.startedLine, ...b.lines] : b.lines;
+    return lines.map((l) => l.replace('{number}', this.clinicNumber.toLocaleString('en-GB')));
+  }
+  private get botLinesShown(): number { const b = this.bot; return b && this.botT >= 0 ? Math.min(this.botLines(b).length, 1 + Math.floor(this.botT / BOT.lineSeconds)) : 0; }
   /** ⚑ the clip owns the page before the map beat speaks (the review: "the over-the-top moment, direct and brute") */
   private get clipTakeover(): boolean { return this.bot?.id === 'clip' && this.botT < 0; }
-  private get botBeatReady(): boolean { const b = this.bot; return !!b && this.botLinesShown >= b.lines.length && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 0.5; }
+  private get botBeatReady(): boolean { const b = this.bot; if (!b) return false; const n = this.botLines(b).length; return this.botLinesShown >= n && this.botT >= (n - 1) * BOT.lineSeconds + 0.5; }
   private get enquiryOpen(): boolean { return this.enquiry === 'draft' || this.enquiry === 'sending' || this.enquiry === 'replied'; }
 
   // ── conducted looks ──────────────────────────────────────────────────────
@@ -405,8 +439,8 @@ export class E4Browser {
     playOnce('ui_press.mp3');
   }
   /** ⚑ S363 — a desktop notification: a person wrote (the people only; the system never toasts) */
-  private toast(chat: ChatId, title: string, line: string): void {
-    this.toasts = [...this.toasts.filter((t) => t.chat !== chat), { chat, title, line, t: 0 }].slice(-2);
+  private toast(chat: ChatId, title: string, line: string, sys = false): void {
+    this.toasts = [...this.toasts.filter((t) => t.chat !== chat), { chat, title, line, t: 0, sys }].slice(-2);
     this.version++;
   }
   /**
@@ -426,6 +460,105 @@ export class E4Browser {
     this.file('v3:draft', 'read', MAIL.witnessDraft);
     this.enquiry = 'closed';
     this.go('pause');
+  }
+  // ── ⚑ S364 / N10 — THE AI USES HER COMPUTER ──────────────────────────────
+  /** where the AI's pointer goes: the chat, a tab, a mail row, one of Kettle's rows (monitor coordinates) */
+  private atChat(L: Layout): { x: number; y: number } { return { x: L.b.cx + L.b.cw * 0.5, y: L.b.cy + L.b.ch * 0.72 }; }
+  private atTab(id: string): (L: Layout) => { x: number; y: number } | null {
+    return (L) => { const r = this.tabRects.find((t) => t.id === id); return r ? { x: L.b.cx + (r.x + r.w / 2) * L.b.s, y: L.b.cy + (r.y + r.h / 2) * L.b.s } : null; };
+  }
+  private atMailRow(id: MailId): (L: Layout) => { x: number; y: number } | null {
+    return (L) => { const r = this.mailRowRects.find((t) => t.id === id); return r ? { x: L.b.cx + (r.x + r.w * 0.4) * L.b.s, y: L.b.cy + (r.y + r.h / 2) * L.b.s } : null; };
+  }
+  /** Kettle's list rows: the lot, Mum, Dad, Junie (messenger.ts drawList: 20 px head, rows of 30 every 33) */
+  private atKettleRow(i: number): (L: Layout) => { x: number; y: number } {
+    return (L) => ({ x: L.k.cx + 110 * L.k.s, y: L.k.cy + (24 + i * 33 + 15) * L.k.s });
+  }
+  private startAct(kind: ActKind): void {
+    const m = this.messenger;
+    if (m.view !== 'list') m.view = 'list';
+    const chat = (L: Layout): { x: number; y: number } => this.atChat(L);
+    let steps: ActStep[] = [];
+    if (kind === 'read') steps = [
+      { at: 0, to: chat },
+      { at: 0.7, to: this.atTab('mail'), click: () => { if (this.tabs.some((t) => t.id === 'mail')) { this.mailOpen = 'clinic'; this.openTab('mail'); } } },
+      { at: 1.2, to: this.atTab('mail'), flash: 'browser' },
+      { at: 1.7, to: this.atMailRow('meridian'), click: () => { this.mailOpen = 'meridian'; this.mailScroll.meridian = 230; this.version++; } },
+      { at: 2.2, to: this.atMailRow('meridian'), flash: 'browser' },
+      { at: 2.8, to: this.atKettleRow(2) },
+      { at: 3.1, to: this.atKettleRow(2), flash: 'kettle' },
+      { at: 3.7, to: this.atTab('search'), click: () => this.openTab('search') },
+      { at: ACT_SECONDS.read - 0.2, to: chat }
+    ];
+    else if (kind === 'mute') steps = [
+      { at: 0, to: chat },
+      { at: 0.7, to: this.atKettleRow(3), menu: 'junie' },
+      { at: 1.3, to: (L) => { const p = this.atKettleRow(3)(L); return { x: p.x + 14 * L.k.s, y: p.y + 14 * L.k.s }; }, click: () => this.aiMutes('junie'), menu: null },
+      { at: 1.8, to: this.atKettleRow(0), menu: 'house' },
+      { at: 2.4, to: (L) => { const p = this.atKettleRow(0)(L); return { x: p.x + 14 * L.k.s, y: p.y + 14 * L.k.s }; }, click: () => this.aiMutes('house'), menu: null },
+      { at: 3.0, to: chat }
+    ];
+    else steps = [
+      { at: 0, to: chat },
+      { at: 0.8, to: (L) => ({ x: L.b.x + L.b.w - 110, y: WIN.title + 70 }), click: () => { this.gameStarted = true; this.openGame(); } },
+      { at: 1.5, to: chat }
+    ];
+    this.act = { kind, t: 0, steps, done: new Set() };
+    this.version++;
+  }
+  /** its acts, as it does them (things happen to her) */
+  private aiMutes(who: 'junie' | 'house'): void {
+    const m = this.messenger, A = BOT.agent;
+    if (who === 'junie') {
+      m.junieMuted = true;
+      this.toast('junie', A.toastApp, A.mutedToast, true);
+      playOnce('ui_press.mp3');
+    } else {
+      this.mapMuted = true; m.houseMuted = true;
+      this.toast('house', A.toastApp, A.mutedMore, true);
+      this.file('v3:mute', 'answered', W3.muted);
+    }
+    this.version++;
+  }
+  private actClock(dt: number): void {
+    const a = this.act;
+    if (this.flashT > 0) this.flashT = Math.max(0, this.flashT - dt);
+    if (!a) return;
+    a.t += dt;
+    a.steps.forEach((st, k) => {
+      if (a.done.has(k) || a.t < st.at) return;
+      a.done.add(k);
+      st.click?.();
+      if (st.flash) { this.flashT = 0.22; this.flashOn = st.flash; playOnce('ui_press.mp3'); }
+      if (st.menu !== undefined) this.menuAt = st.menu;
+    });
+    if (a.t >= ACT_SECONDS[a.kind]) {
+      if (a.kind === 'read') this.file('v3:read', 'read', W3.read);
+      this.act = null; this.menuAt = null;
+    }
+    this.version++;
+  }
+  /** where the pointer is now: between the step it left and the step it is heading to */
+  private pointerAt(L: Layout): { x: number; y: number } | null {
+    const a = this.act;
+    if (!a) return null;
+    const pts = a.steps.map((st) => ({ at: st.at, p: st.to(L) })).filter((q): q is { at: number; p: { x: number; y: number } } => !!q.p);
+    if (!pts.length) return null;
+    let i = 0;
+    while (i < pts.length - 1 && pts[i + 1].at <= a.t) i++;
+    const A0 = pts[i], B0 = pts[Math.min(pts.length - 1, i + 1)];
+    if (B0 === A0 || B0.at <= A0.at) return A0.p;
+    const k = Math.min(1, Math.max(0, (a.t - A0.at) / Math.max(0.2, (B0.at - A0.at) * 0.7)));
+    const e = k * k * (3 - 2 * k);
+    return { x: Math.round(A0.p.x + (B0.p.x - A0.p.x) * e), y: Math.round(A0.p.y + (B0.p.y - A0.p.y) * e) };
+  }
+  /** ⚑ S364 / item 7 — the game on her screen: the same session as the console on her bed */
+  private openGame(): void {
+    consoleSession.light();
+    if (!this.gameWin) { this.gameWin = true; this.gameMatches = consoleSession.stats.matches; this.gamePct = consoleSession.stats.percent; }
+    this.file('v3:game', 'opened', W3.game);
+    playOnce('ui_press.mp3');
+    this.version++;
   }
   /** the second way in: she searches, and Lantern finishes her sentence */
   private beginSearch(): void { this.go('search'); this.typedT = 0; this.face('monitor'); this.openTab('search'); }
@@ -474,7 +607,7 @@ export class E4Browser {
     const m = this.messenger;
     m.houseShown = 3; m.houseHeart = true; m.houseOpenedBirthday = true; m.houseLeft = 2; m.houseOpenedLeft = true;
     m.mumToday = 4; m.mumDraft = true; m.mumAtToday = true; m.mumOpened = true; m.dadIn = true; m.dadRead = true; m.linkOpened = true;
-    m.junieOpenable = true; m.junieOpened = true; m.junieUnmuted = true; m.junieReplied = true; m.junieX = true;
+    m.junieOpenable = true; m.junieOpened = true; m.junieMuted = true; m.junieHidden = 2; m.junieUnmuted = true; m.junieReplied = true; m.junieX = true;
     m.want = null; m.view = 'list'; m.wallpaper = 'goal';
     this.junieWarm = true;
     this.go('ready');
@@ -598,6 +731,21 @@ export class E4Browser {
       if (Math.floor(n4 * 4) !== Math.floor(this.newsT * 4)) this.version++;   // the autoplay box's progress, four times a second
     }
     if (this.composeFlashT > 0) { this.composeFlashT = Math.max(0, this.composeFlashT - dt); if (this.composeFlashT === 0) this.version++; }
+    this.actClock(dt);
+    if (this.gameWin) {
+      const k = consoleSession.frameKey();
+      if (k !== this.gameKey) { this.gameKey = k; this.version++; }
+      // ⚑ item 7 — the AI comments while she plays: a metric dressed as praise, one line every few matches, three in all
+      const st = consoleSession.stats, b = this.bot;
+      if (st.matches >= this.gameMatches + 3 && this.gameComments < BOT.game.comments.length && !this.act && (!b || this.botBeatReady)
+        && (this.step === 'bot' || this.step === 'confirm' || this.step === 'junie')) {
+        const line = BOT.game.comments[this.gameComments++].replace('{from}', String(this.gamePct)).replace('{to}', String(st.percent));
+        this.botSaid.push({ who: 'bot', text: line });
+        this.gameMatches = st.matches; this.gamePct = st.percent;
+        playOnce('agent_2026.mp3');
+        this.version++;
+      }
+    }
     const at = (s: number): boolean => b4 < s && this.stepT >= s;
     const m = this.messenger;
     // the messenger's own clock (the draft's caret)
@@ -789,13 +937,13 @@ export class E4Browser {
     if (b.id === 'clip' && before < 0 && this.botT >= 0) stopClipSound();   // S360: the clip ends, its sound with it
     // ⚑ S360 — the clip's two lines ask nothing: after them, the bot moves on to the mute by itself (the tour stalled here)
     if (b.id === 'clip' && this.botBeatReady && this.step === 'bot' && this.botNextIn < 0 && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 2.2) {
-      this.startBot('map');
+      this.startBot('game');   // S364 / item 7: the offer, when she is most shaken
       return;
     }
     if (this.botNextIn >= 0) { this.botNextIn -= dt; if (this.botNextIn < 0) { this.botNextIn = -1; this.nextBot(); } }
     // ⚑ S350 — "Stories like yours" holds a while for reading, then the bot rests (nothing waits on a press here)
     if (b.id === 'stories' && !(b as { button?: string }).button && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + BOT.stories.holdSeconds) {
-      this.startBot('rest');
+      this.startBot('explore');   // S364: then it takes Mum's word — explore — and sells her the session
       return;
     }
     // the bot's "rest" ends the bot's act: the piece turns her to the laptop, where Junie's badge has waited all day
@@ -812,6 +960,7 @@ export class E4Browser {
     if (was && !this.botDone.has(was.id)) { this.botDone.add(was.id); this.botSaid.push(...this.beatRows(was, was.lines.length)); }
     this.botBeat = BOT.beats.findIndex((b) => b.id === id);
     this.botT = 0;
+    this.anchorAt = this.botSaid.length;   // S364: where this answer begins in the conversation
     // ⚑ S360 — the clip, made for her, owns the page before its beat speaks (it was the map's, recommended from a channel)
     if (id === 'clip') { markE4('map'); this.botT = -CLIP_TAKEOVER_SECONDS; startClipSound(); }   // its music + narrator, t = 0 with the picture
     if (id === 'heading') {
@@ -824,6 +973,12 @@ export class E4Browser {
     }
     if (id === 'stories') this.file('v3:stories', 'read', W3.stories);
     if (id === 'unmuted') this.ring = 61;
+    // ⚑ S364 / N10 — before it speaks, it uses her computer: it reads her mail; it mutes Junie and two more; it starts the game
+    if (id === 'reasons') { this.botT = -ACT_SECONDS.read; this.startAct('read'); }
+    if (id === 'map') { this.botT = -ACT_SECONDS.mute; this.startAct('mute'); }
+    if (id === 'rest' && this.gameAnswer === 'later' && !this.gameWin) { this.botT = -ACT_SECONDS.game; this.startAct('game'); }
+    // what Junie writes after the mute arrives, hidden
+    if ((id === 'heading' || id === 'stories') && this.messenger.junieMuted && !this.messenger.junieUnmuted) { this.messenger.junieHidden = id === 'heading' ? 1 : 2; }
     if (BOT.beats[this.botBeat]?.lines.length) playOnce('agent_2026.mp3');
     // ⚑ S360 — with the Mail and News tabs open beside it, each new beat brings the chat back to the front (no beat waits on
     //   her finding it: the S360 test walk wandered the tabs while the bot spoke, and the chat stalled)
@@ -831,7 +986,7 @@ export class E4Browser {
     this.version++;
   }
   private nextBot(): void {
-    const order = ['hello', 'reasons', 'diagnosis', 'clip', 'map', 'heading', 'stories', 'rest'];   // S360: the review's order
+    const order = ['hello', 'reasons', 'diagnosis', 'clip', 'game', 'map', 'heading', 'stories', 'explore', 'rest'];   // S364: + the game, explore
     const b = this.bot;
     const i = b ? order.indexOf(b.id) : -1;
     if (i >= 0 && i < order.length - 1) this.startBot(order[i + 1]);
@@ -848,10 +1003,9 @@ export class E4Browser {
       if (chip.memory) this.botSaid.push({ who: 'memory', text: chip.memory });
       this.botSaid.push({ who: 'bot', text: chip.reply });
       this.file(`conv:${b.id}`, 'answered', chip.filed);
-      if (b.id === 'map') {
-        this.file('v3:mute', 'answered', chip.filed);
-        if (chip.mute) { this.mapMuted = true; this.messenger.houseMuted = true; this.ring = 98; }
-      }
+      if (b.id === 'map') this.ring = 98;   // S364: the AI muted them before it asked; her answer changes nothing
+      if (chip.game) { this.gameAnswer = chip.game; if (chip.game === 'open') this.openGame(); else consoleSession.light(); }
+      if (b.id === 'explore') this.sessionBooked = true;
     } else {
       if (b.button) this.botSaid.push({ who: 'her', text: b.button });
       if (b.memory) this.botSaid.push({ who: 'memory', text: b.memory });
@@ -931,8 +1085,16 @@ export class E4Browser {
       this.go('news');
       return;
     }
-    if (id === 'junie-unmute' && !m.junieUnmuted) {
+    if (id === 'junie-help' && m.junieMuted && !m.helpSent) {
+      // ⚑ S364 / N12 — the hidden way: "help", into the thread the AI muted; Junie's raid answers it (s4_ball.json)
+      m.helpSent = true;
+      this.file('v3:help', 'answered', W3.help);
+      playOnce('ui_press.mp3'); this.version++;
+      return;
+    }
+    if (id === 'junie-unmute' && !m.junieUnmuted && m.junieMuted) {
       m.junieUnmuted = true; m.want = null;
+      m.junieHidden = V.messenger.junie.hidden.length;
       m.opened('junie', true);   // S328: what the mute hid reads from its first line (Tuesday), down to today
       this.junieWarm = true;
       markE4('junie');
@@ -990,6 +1152,8 @@ export class E4Browser {
     const kettleLive = kettlePressable && (this.phase === 'open' ? !this.programDone : e4Has('terminated'));
     if (kettleLive) for (const h of k) this.hits.push(toMonitor(h, L.k));
     this.drawToasts(ctx, L, H, pressable);
+    this.drawGameWindow(ctx, L, pressable);
+    this.drawTakeover(ctx, L, W);
     // the taskbar: the date, and L (T25: the guide is always one press away, and never over a felt thread)
     const ty = H - WIN.taskbar;
     px(ctx, 0, ty, W, WIN.taskbar, V3.bar); px(ctx, 0, ty, W, 1, V3.barEdge);
@@ -1023,18 +1187,85 @@ export class E4Browser {
       ctx.save(); ctx.globalAlpha = Math.max(0, a);
       roundRect(ctx, x + 1, y + 2, tw, th, 10, V3.grey);
       roundEdge(ctx, x, y, tw, th, 10, V3.edge, V3.card);
-      this.messengerAvatar(ctx, x + 8, y + 10, 22, t.chat);
-      ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(V.messenger.app + ' · now', x + 36, y + 6);
-      setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, t.title, tw - 46), x + 36, y + 16);
-      setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(fitText(ctx, t.line, tw - 46), x + 36, y + 29);
+      if (t.sys) assistantMark(ctx, x + 8, y + 10, 22, V3.primary, V3.primaryInk); else this.messengerAvatar(ctx, x + 8, y + 10, 22, t.chat);
+      ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText((t.sys ? t.title : V.messenger.app) + ' · now', x + 36, y + 6);
+      if (t.sys) { setFont(ctx, 11); ctx.fillStyle = V3.ink; wrapText(ctx, t.line, tw - 46).slice(0, 2).forEach((l, k) => ctx.fillText(l, x + 36, y + 16 + k * 13)); }
+      else {
+        setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, t.title, tw - 46), x + 36, y + 16);
+        setFont(ctx, 10); ctx.fillStyle = V3.ink2; ctx.fillText(fitText(ctx, t.line, tw - 46), x + 36, y + 29);
+      }
       ctx.restore();
-      if (pressable && a > 0.5) this.hits.push({ x, y, w: tw, h: th, id: `toast-${t.chat}` });
+      if (pressable && a > 0.5 && !t.sys) this.hits.push({ x, y, w: tw, h: th, id: `toast-${t.chat}` });
       y -= th + 6;
     }
   }
   private messengerAvatar(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, id: ChatId): void {
     const fill = id === 'mum' ? KETTLE.avatarMum : id === 'dad' ? KETTLE.avatarDad : id === 'house' ? KETTLE.avatarHouse : KETTLE.avatarJunie;
     senderMark(ctx, x, y, d, V.messenger.chats[id].mark, fill);
+  }
+  /**
+   * ⚑ S364 / item 7 — MATCH MADE SIMPLE in a window on her screen: the same session as the console on her bed (one game,
+   * two surfaces — src/room/consoleSession.ts). A press on it plays; ✕ closes the window (the console stays lit).
+   */
+  private drawGameWindow(ctx: CanvasRenderingContext2D, L: Layout, pressable: boolean): void {
+    if (!this.gameWin || this.phase !== 'open' || this.lightbox) return;
+    const G = BOT.game, gw = 170, gh = 96, tb = 14;
+    const gx = L.b.x + L.b.w - gw - 6, gy = WIN.title + 30;
+    roundRect(ctx, gx + 2, gy + 3, gw, gh + tb, 6, V3.grey);
+    roundRect(ctx, gx, gy, gw, gh + tb, 6, V3.titleOn);
+    setFont(ctx, 8); ctx.fillStyle = V3.titleOnInk; ctx.fillText(fitText(ctx, `${G.window} · ${G.sub}`, gw - 26), gx + 6, gy + 3);
+    setFont(ctx, 9); ctx.fillText(G.close, gx + gw - 12, gy + 2);
+    px(ctx, gx + 2, gy + tb, gw - 4, gh - 2, ERA4.field);
+    if (consoleSession.ready) consoleSession.draw(ctx, gx + 2, gy + tb, gw - 4, gh - 2);
+    else { setFont(ctx, 11); ctx.fillStyle = ERA4.textHi; ctx.fillText(G.window, gx + 14, gy + tb + gh / 2 - 8); }
+    if (pressable) {
+      this.hits.push({ x: gx + gw - 20, y: gy, w: 20, h: tb, id: 'game-close' });
+      this.hits.push({ x: gx + 2, y: gy + tb, w: gw - 4, h: gh - 2, id: 'game-play' });
+    }
+  }
+  /**
+   * ⚑ S364 / N10 — "Second Thoughts is using your computer": a banner across the top of the screen with her "Take back
+   * control" greyed; its pointer, labelled, moving between the windows; Kettle's row menu where it presses Mute; the
+   * white blink of a screenshot. Drawn over everything on the monitor; nothing here is pressable.
+   */
+  private drawTakeover(ctx: CanvasRenderingContext2D, L: Layout, W: number): void {
+    const A = BOT.agent;
+    if (this.flashT > 0) {
+      const r = this.flashOn === 'kettle' ? L.k : L.b;
+      ctx.save(); ctx.globalAlpha = Math.min(0.75, this.flashT / 0.22 * 0.75); px(ctx, r.cx, r.cy, r.cw, r.ch, WEB.shimmer); ctx.restore();
+    }
+    if (!this.act) return;
+    // the banner, over both title bars
+    px(ctx, 0, 0, W, WIN.title, V3.primary);
+    assistantMark(ctx, 6, 2, 14, V3.primaryInk, V3.primary);
+    setFont(ctx, 10); ctx.fillStyle = V3.primaryInk; ctx.fillText(A.banner, 26, 3);
+    const cw = Math.ceil(ctx.measureText(A.control).width) + 16;
+    pill(ctx, W - cw - 6, 2, cw, 14, V3.grey);
+    ctx.fillStyle = V3.ink2; ctx.fillText(A.control, W - cw + 2, 3);
+    // Kettle's row menu, where it presses Mute
+    if (this.menuAt) {
+      const p = this.atKettleRow(this.menuAt === 'junie' ? 3 : 0)(L);
+      const mx = Math.round(p.x - 10), my = Math.round(p.y + 6), mw = 74, mh = 22;
+      roundRect(ctx, mx + 2, my + 2, mw, mh, 5, V3.grey);
+      roundEdge(ctx, mx, my, mw, mh, 5, V3.edge, V3.card);
+      roundRect(ctx, mx + 3, my + 3, mw - 6, mh - 6, 4, V3.botSoft);
+      setFont(ctx, 10); ctx.fillStyle = V3.ink; ctx.fillText(A.mute, mx + 10, my + 5);
+    }
+    // its pointer, with its name on it
+    const p = this.pointerAt(L);
+    if (p) {
+      const x = p.x, y = p.y;
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 15); ctx.lineTo(x + 4, y + 11); ctx.lineTo(x + 7, y + 17); ctx.lineTo(x + 9, y + 16);
+      ctx.lineTo(x + 6, y + 10); ctx.lineTo(x + 11, y + 10); ctx.closePath();
+      ctx.fillStyle = V3.ink; ctx.fill(); ctx.strokeStyle = WEB.shimmer; ctx.lineWidth = 1; ctx.stroke();
+      ctx.restore();
+      setFont(ctx, 9);
+      const lw = Math.ceil(ctx.measureText(A.pointer).width) + 22;
+      pill(ctx, x + 12, y + 14, lw, 14, V3.primary);
+      assistantMark(ctx, x + 14, y + 15, 12, V3.primaryInk, V3.primary);
+      ctx.fillStyle = V3.primaryInk; ctx.fillText(A.pointer, x + 29, y + 16);
+    }
   }
   /** a window's title bar: its name, and (on the smaller window) the press that enlarges it */
   private windowTitle(ctx: CanvasRenderingContext2D, w: Win, title: string, id: string, pressable: boolean): void {
@@ -1121,6 +1352,7 @@ export class E4Browser {
     const looks: TabLook[] = shown.map((t) => this.phase === 'failed' ? (t.kind === 'search' ? { badge: this.streamOpen ? '●' : '!', state: 'normal' } : { state: 'locked' })
       : t.kind === 'news' && this.newsOpened > 1 ? { badge: String(this.newsOpened) } : {});
     const rects = browserChrome(ctx, W, shown, live, addr, blink, looks, 80);
+    this.tabRects = rects.map((r, i) => ({ ...r, id: shown[i].id }));
     // a sheet or an open thread owns the moment; otherwise every tab is a tab
     const sheet = this.newyouUp || this.enquiryOpen;
     rects.forEach((r, i) => { if (!sheet && this.phase === 'open') this.publish({ ...r, id: `tab-${shown[i].id}` }); });
@@ -1631,6 +1863,7 @@ export class E4Browser {
     ];
     let ry = y0;
     const rh = 44;
+    this.mailRowRects = [];
     for (const r of rows) {
       if (ry + rh > foot) break;
       const sel = r.id !== null && this.mailOpen === r.id;
@@ -1660,7 +1893,7 @@ export class E4Browser {
       }
       setFont(ctx, 10); ctx.fillStyle = V3.ink2;
       ctx.fillText(fitText(ctx, r.snippet, tw - lwid - 6), tx, ry + 29);
-      if (r.id) this.publish({ x: lx, y: ry, w: lw, h: rh, id: `mail-row-${r.id}` });
+      if (r.id) { this.publish({ x: lx, y: ry, w: lw, h: rh, id: `mail-row-${r.id}` }); this.mailRowRects.push({ x: lx, y: ry, w: lw, h: rh, id: r.id }); }
       ry += rh;
     }
     // the reading pane: its header stays; the email under it scrolls
@@ -1925,21 +2158,21 @@ export class E4Browser {
     magnifier(ctx, 13, top + 72, V3.ink2);
     if (this.profile === 'goal') drawGoalPicture(ctx, 10, H - 32, 20, 20, { caption: false }); else profileGlyph(ctx, 10, H - 32, 20, 'maya');
     // the header: its name (a picker's chevron), and the memory it keeps
-    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(BOT.mark, railW + 14, top + 8);
+    setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(BOT.mark, railW + 14, top + 6);
     const mw = Math.ceil(ctx.measureText(BOT.mark).width);
-    chevron(ctx, railW + 20 + mw, top + 13, V3.ink2);
+    chevron(ctx, railW + 20 + mw, top + 11, V3.ink2);
     setFont(ctx, 10);
     const mem = '✦ ' + BOT.memoryUpdated.split(' ')[0] + ' on', memW = Math.ceil(ctx.measureText(mem).width) + 14;
-    pill(ctx, W - 12 - memW, top + 8, memW, 18, V3.botSoft);
-    ctx.fillStyle = V3.botInk; ctx.fillText(mem, W - 12 - memW + 7, top + 11);
+    pill(ctx, W - 12 - memW, top + 6, memW, 18, V3.botSoft);
+    ctx.fillStyle = V3.botInk; ctx.fillText(mem, W - 12 - memW + 7, top + 9);
     // the composer, and the line under it
     const colW = Math.min(440, W - railW - 36), colX = railW + Math.round((W - railW - colW) / 2);
-    const compH = 34, compY = H - 18 - compH;
-    roundEdge(ctx, colX, compY, colW, compH, 17, V3.edge, V3.page);
-    plusGlyph(ctx, colX + 13, compY + 11, V3.ink2);
-    setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.composer, colX + 34, compY + 9);
-    roundRect(ctx, colX + colW - 30, compY + 5, 24, 24, 12, V3.grey);
-    sendGlyph(ctx, colX + colW - 24, compY + 11, V3.card);
+    const compH = 30, compY = H - 17 - compH;
+    roundEdge(ctx, colX, compY, colW, compH, 15, V3.edge, V3.page);
+    plusGlyph(ctx, colX + 13, compY + 9, V3.ink2);
+    setFont(ctx, 13); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.composer, colX + 34, compY + 7);
+    roundRect(ctx, colX + colW - 28, compY + 4, 22, 22, 11, V3.grey);
+    sendGlyph(ctx, colX + colW - 23, compY + 9, V3.card);
     if (this.step === 'bot' || this.step === 'confirm') this.publish({ x: colX, y: compY, w: colW, h: compH, id: 'conv-compose' });
     const foot = this.nowLine ?? (this.waitNow ? PROGRAM.console.wait : BOT.footer);
     setFont(ctx, 9); ctx.fillStyle = V3.ink2;
@@ -1953,21 +2186,22 @@ export class E4Browser {
     else if (ready && b!.button) sugg.push({ id: 'conv-act', label: b!.button, primary: true });
     let convBottom = compY - 8;
     if (sugg.length) {
-      const sy = compY - 32;
+      const sy = compY - 30;
       let sx = colX;
       for (const c of sugg) {
         setFont(ctx, 13);
         const w = Math.ceil(ctx.measureText(c.label).width) + 26;
-        if (c.primary) pill(ctx, sx, sy, w, 26, V3.primary);
-        else { pill(ctx, sx, sy, w, 26, V3.edge); pill(ctx, sx + 1, sy + 1, w - 2, 24, V3.card); }
-        ctx.fillStyle = c.primary ? V3.primaryInk : V3.ink; ctx.fillText(c.label, sx + 13, sy + 6);
-        if (this.composeFlashT > 0) this.ringAround(ctx, { x: sx, y: sy, w, h: 26, id: c.id });
-        this.publish({ x: sx, y: sy, w, h: 26, id: c.id });
+        if (c.primary) pill(ctx, sx, sy, w, 25, V3.primary);
+        else { pill(ctx, sx, sy, w, 25, V3.edge); pill(ctx, sx + 1, sy + 1, w - 2, 23, V3.card); }
+        ctx.fillStyle = c.primary ? V3.primaryInk : V3.ink; ctx.fillText(c.label, sx + 13, sy + 5);
+        if (this.composeFlashT > 0) this.ringAround(ctx, { x: sx, y: sy, w, h: 25, id: c.id });
+        this.publish({ x: sx, y: sy, w, h: 25, id: c.id });
         sx += w + 8;
       }
-      convBottom = sy - 8;
+      convBottom = sy - 6;
     }
-    this.drawConversation(ctx, colX, top + 36, colW, convBottom);
+    this.drawConversation(ctx, colX, top + 30, colW, convBottom);
+    this.drawLightbox(ctx, W, H);
   }
 
   /** ⚑ S363 — a beat's rows as she sees them: its lines so far, and its card where it belongs (BEAT_CARD) */
@@ -1992,19 +2226,26 @@ export class E4Browser {
       if (this.botLinesShown < b.lines.length) rows.push({ who: 'dots', text: '' });
     }
     const tx = x + 26, tw = w - 26;
-    const cardH: Record<CardKind, number> = { clip: 128, map: 112, goal: 146, stories: 60, ring: 74 };
+    const cardH: Record<CardKind, number> = { clip: 112, map: 96, goal: 120, stories: 60, ring: 72, shots: 74, pages: 86, session: 66 };
     const sized = rows.map((r) => {
       if (r.who === 'dots') return { r, lines: [] as string[], h: 26 };
-      if (r.who === 'card') return { r, lines: [] as string[], h: cardH[(r as Said).card ?? 'ring'] + 8 };
-      if (r.who === 'memory') { setFont(ctx, 10); return { r, lines: [fitText(ctx, `“${r.text}”`, tw)], h: 32 }; }
+      if (r.who === 'card') return { r, lines: [] as string[], h: cardH[(r as Said).card ?? 'ring'] + 6 };
+      if (r.who === 'memory') { setFont(ctx, 10); return { r, lines: [fitText(ctx, `“${r.text}”`, tw)], h: 30 }; }
       setFont(ctx, 14);
       if (r.who === 'her') { const lines = wrapText(ctx, r.text, Math.round(w * 0.7) - 24).slice(0, 4); return { r, lines, h: lines.length * 18 + 12 + 8 }; }
       const lines = wrapText(ctx, r.text, tw).slice(0, 5);
-      return { r, lines, h: lines.length * 18 + 8 };
+      return { r, lines, h: lines.length * 18 + 6 };
     });
     let y = bottom;
     const placed: { s: typeof sized[number]; y: number }[] = [];
-    for (let i = sized.length - 1; i >= 0; i--) {
+    // ⚑ S364 — the newest answer is read from its first line: if it does not fit with the rows before it, it is laid out
+    //   from the top (as a 2026 assistant stops scrolling at the start of a long answer); otherwise the latest sits at the foot
+    const anchor = Math.min(this.anchorAt, sized.length);
+    const tail = sized.slice(anchor).reduce((n, q) => n + q.h, 0);
+    if (tail > bottom - top) {
+      let yy = top;
+      for (const q of sized.slice(anchor)) { if (yy + q.h > bottom + 12) break; placed.push({ s: q, y: yy }); yy += q.h; }
+    } else for (let i = sized.length - 1; i >= 0; i--) {
       if (y - sized[i].h < top) break;
       y -= sized[i].h;
       placed.unshift({ s: sized[i], y });
@@ -2047,7 +2288,7 @@ export class E4Browser {
   /** ⚑ S363 — what the bot shows her, inside the conversation (it was a side panel) */
   private drawCard(ctx: CanvasRenderingContext2D, kind: CardKind, x: number, y: number, w: number, ring: number): void {
     if (kind === 'clip') {
-      const cw = 200, ch = 112;
+      const cw = 176, ch = 99;
       drawContagionClip(ctx, CLIP_LOOP_SECONDS - 0.6, x, y, cw, ch);
       roundRect(ctx, x + cw / 2 - 16, y + ch / 2 - 16, 32, 32, 16, V3.card);
       ctx.fillStyle = V3.ink; ctx.beginPath(); ctx.moveTo(x + cw / 2 - 5, y + ch / 2 - 8); ctx.lineTo(x + cw / 2 + 8, y + ch / 2); ctx.lineTo(x + cw / 2 - 5, y + ch / 2 + 8); ctx.closePath(); ctx.fill();
@@ -2055,12 +2296,12 @@ export class E4Browser {
       ctx.fillText(fitText(ctx, `${V.clip.title} · ${BOT.cards.clip} · ${V.clip.length}`, w), x, y + ch + 4);
       return;
     }
-    if (kind === 'map') { this.drawMap(ctx, x, y, w, 108); return; }
+    if (kind === 'map') { this.drawMap(ctx, x, y, w, 94); return; }
     if (kind === 'goal') {
-      drawGoalPicture(ctx, x, y, 106, 142, { t: this.t });
-      this.drawRing(ctx, x + 120, y + 18, 76, ring);
+      drawGoalPicture(ctx, x, y, 88, 118, { t: this.t });
+      this.drawRing(ctx, x + 100, y + 14, 70, ring);
       setFont(ctx, 10); ctx.fillStyle = V3.botInk;
-      ctx.fillText(BOT.heading.stamp, x + 120, y + 100);
+      ctx.fillText(BOT.heading.stamp, x + 100, y + 90);
       return;
     }
     if (kind === 'ring') {
@@ -2068,7 +2309,44 @@ export class E4Browser {
       setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.heading.ring, x + 80, y + 28);
       return;
     }
-    // a story it curated (Part B turns these into screenshots of web pages)
+    if (kind === 'shots') {
+      // ⚑ S364 / N3 — "I read your mail": images of her own mail and messages, whether or not she opened them
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.shots.label, x, y);
+      const tw = Math.floor((w - 12) / 3), th = 60;
+      for (let k = 0; k < 3; k++) {
+        const sx = x + k * (tw + 6), sy = y + 14;
+        this.drawShot(ctx, k, sx, sy, tw, th);
+        this.publish({ x: sx, y: sy, w: tw, h: th, id: `card-shot-${k}` });
+      }
+      return;
+    }
+    if (kind === 'pages') {
+      // ⚑ S364 / N9 — the pages it shares: made up, and marked so
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.pages.tap, x, y);
+      const tw = Math.floor((w - 12) / 3), th = 72;
+      BOT.pages.items.forEach((it, k) => {
+        const sx = x + k * (tw + 6), sy = y + 14;
+        this.drawWebPage(ctx, it, sx, sy, tw, th);
+        this.publish({ x: sx, y: sy, w: tw, h: th, id: `card-page-${k}` });
+      });
+      return;
+    }
+    if (kind === 'session') {
+      // ⚑ S364 — the live session it books: where "exploring" leads (the headset's host)
+      const S = BOT.session, h = 64;
+      roundEdge(ctx, x, y, w, h, 10, V3.edge, V3.page);
+      roundRect(ctx, x + 10, y + 9, 7, 7, 4, V3.danger);
+      ctx.font = monoFor(9); ctx.fillStyle = V3.danger; ctx.fillText(S.live, x + 22, y + 8);
+      setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, S.title, w - 100), x + 10, y + 22);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(S.line, x + 10, y + 38);
+      ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(fitText(ctx, S.fine, w - 20), x + 10, y + 52);
+      if (this.sessionBooked) {
+        setFont(ctx, 11); const bw = Math.ceil(ctx.measureText(S.booked).width) + 16;
+        pill(ctx, x + w - bw - 10, y + 22, bw, 20, V3.botSoft); ctx.fillStyle = V3.botInk; ctx.fillText(S.booked, x + w - bw - 2, y + 26);
+      }
+      return;
+    }
+    // a story it curated (S350; S364 shows its stories as pages instead)
     const S = BOT.stories, c = S.cards[0];
     roundEdge(ctx, x, y, w, 56, 12, V3.edge, V3.page);
     roundRect(ctx, x + 12, y + 9, 14, 14, 7, V3.grey);   // faceless: a plain disc, no initial, no likeness
@@ -2076,6 +2354,84 @@ export class E4Browser {
     setFont(ctx, 14); ctx.fillStyle = V3.ink; ctx.fillText(fitText(ctx, `“${c.line}”`, w - 24), x + 12, y + 30);
   }
 
+  /** ⚑ S364 — one screenshot it took: the clinic's email, Meridian's no (Larkpost, as she would see it), Dad's line (Kettle) */
+  private drawShot(ctx: CanvasRenderingContext2D, k: number, x: number, y: number, w: number, h: number): void {
+    const LW = 300, LH = 200, s = Math.min(w / LW, h / LH);
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    roundEdge(ctx, x, y, w, h, 4, V3.edge, V3.card);
+    ctx.translate(x, y); ctx.scale(s, s);
+    if (k < 2) {
+      px(ctx, 0, 0, LW, 20, V3.card); px(ctx, 0, 20, LW, 1, V3.edge);
+      roundRect(ctx, 6, 4, 12, 12, 3, V3.primary);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink; ctx.fillText(MAIL.brand, 22, 4);
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 21, LW, LH - 21); ctx.clip();
+      const id: MailId = k === 0 ? 'clinic' : 'meridian';
+      const had = this.summed.has(id); if (had) this.summed.delete(id);   // the email itself, not the AI's summary of it
+      this.mailBody(ctx, id, 10, k === 0 ? 28 : -150, LW - 20, false);
+      if (had) this.summed.add(id);
+      ctx.restore();
+    } else {
+      const S = BOT.shots, D = V.messenger.dad.before;
+      px(ctx, 0, 0, LW, LH, KETTLE.ground);
+      px(ctx, 0, 0, LW, 26, KETTLE.head);
+      setFont(ctx, 13); ctx.fillStyle = KETTLE.headInk; ctx.fillText(`${V.messenger.app} · ${S.dad}`, 10, 6);
+      ctx.font = monoFor(10);
+      const sw = Math.ceil(ctx.measureText(S.dadWhen).width) + 14;
+      pill(ctx, Math.round((LW - sw) / 2), 36, sw, 16, KETTLE.row); ctx.fillStyle = KETTLE.sub; ctx.fillText(S.dadWhen, Math.round((LW - sw) / 2) + 7, 39);
+      let by = 62;
+      for (const m of D) {
+        setFont(ctx, 14);
+        const ls = wrapText(ctx, m.text, LW - 60), bw = Math.max(...ls.map((l) => Math.ceil(ctx.measureText(l).width))) + 20, bh = ls.length * 18 + 10;
+        roundRect(ctx, 10, by, bw, bh, 12, KETTLE.theirs);
+        ctx.fillStyle = KETTLE.ink; ls.forEach((l, j) => ctx.fillText(l, 20, by + 5 + j * 18));
+        by += bh + 8;
+      }
+    }
+    ctx.restore();
+    // its stamp: a screenshot it took
+    ctx.font = monoFor(8);
+    const st = BOT.agent.shot, stw = Math.ceil(ctx.measureText(st).width) + 8;
+    px(ctx, x + w - stw - 3, y + h - 13, stw, 11, V3.ink); ctx.fillStyle = V3.card; ctx.fillText(st, x + w - stw + 1, y + h - 12);
+  }
+  /** ⚑ S364 / N9 — a web page it shares: an address, the site's own band, a headline, its made-up claims, "Made with AI" */
+  private drawWebPage(ctx: CanvasRenderingContext2D, it: WebPage, x: number, y: number, w: number, h: number): void {
+    const LW = 240, LH = 176, s = Math.min(w / LW, h / LH);
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    roundEdge(ctx, x, y, w, h, 5, V3.edge, V3.card);
+    ctx.translate(x, y); ctx.scale(s, s);
+    px(ctx, 0, 0, LW, 16, CHROME.toolbar);
+    ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(fitText(ctx, it.url, LW - 12), 6, 4);
+    const band = it.id === 'jordan' ? PLACE.textileHi : it.id === 'study' ? V3.primary : V3.botSoft;
+    px(ctx, 0, 16, LW, 22, band);
+    setFont(ctx, 11); ctx.fillStyle = it.id === 'study' ? V3.primaryInk : V3.ink; ctx.fillText(it.site, 8, 21);
+    let yy = 46;
+    setFont(ctx, 15); ctx.fillStyle = V3.ink;
+    for (const l of wrapText(ctx, it.head, LW - 16).slice(0, 3)) { ctx.fillText(l, 8, yy); yy += 18; }
+    yy += 4;
+    setFont(ctx, 11); ctx.fillStyle = V3.ink2;
+    for (const l of it.lines) for (const ll of wrapText(ctx, l, LW - 16)) { if (yy < LH - 26) ctx.fillText(ll, 8, yy); yy += 14; }
+    setFont(ctx, 10);
+    const st = BOT.pages.stamp, sw = Math.ceil(ctx.measureText(st).width) + 12;
+    px(ctx, LW - sw - 6, LH - 20, sw, 15, CLIP.stamp); ctx.fillStyle = CLIP.stampInk; ctx.fillText(st, LW - sw, LH - 18);
+    ctx.restore();
+  }
+  /** ⚑ S364 — the screenshot or page she tapped, larger; any press closes it */
+  private drawLightbox(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const id = this.lightbox;
+    if (!id) return;
+    ctx.save(); ctx.globalAlpha = 0.6; px(ctx, 0, PAGE_TOP, W, H - PAGE_TOP, V3.sheetWash); ctx.restore();
+    const shot = id.startsWith('shot-'), k = Number(id.split('-')[1]);
+    const LW = shot ? 300 : 240, LH = shot ? 200 : 176;
+    const s = Math.min((W - 80) / LW, (H - PAGE_TOP - 56) / LH);
+    const w = Math.round(LW * s), h = Math.round(LH * s), x = Math.round((W - w) / 2), y = PAGE_TOP + 14;
+    if (shot) this.drawShot(ctx, k, x, y, w, h); else this.drawWebPage(ctx, BOT.pages.items[k], x, y, w, h);
+    setFont(ctx, 13);
+    const c = '✕  ' + BOT.pages.close, cw = Math.ceil(ctx.measureText(c).width) + 24;
+    pill(ctx, Math.round((W - cw) / 2), y + h + 8, cw, 26, V3.card);
+    ctx.fillStyle = V3.ink; ctx.fillText(c, Math.round((W - cw) / 2) + 12, y + h + 14);
+    this.pageTargets = this.pageTargets.filter((t) => t.id === 'start-menu' || t.id.startsWith('lg-') || t.id.startsWith('sm-'));
+    this.publish({ x: 0, y: PAGE_TOP, w: W, h: H - PAGE_TOP, id: 'lightbox-close' });
+  }
   /** the "Becoming" ring: it never passes 99 % — and it falls when she unmutes Junie */
   private drawRing(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, value = this.ring): void {
     const cx = x + d / 2, cy = y + d / 2, r = d / 2 - 6;
@@ -2273,9 +2629,21 @@ export class E4Browser {
     if (this.waitNow) { this.waitNow = false; this.version++; }
     if (this.nowLine) { this.nowLine = null; this.version++; }
     if (this.phase === 'handed') return false;
+    // ⚑ S364 / N10 — while the AI uses her computer, her presses do nothing (its banner says so; the frame's Esc still works)
+    if (this.act) return true;
+    // ⚑ S364 — a page opened larger: any press closes it first (nothing else on the screen takes it)
+    if (this.lightbox) { this.lightbox = null; this.version++; return true; }
     let x = mx, y = my;
     const L = this.lay;
     if (L) {
+      // ⚑ S364 / item 7 — the game's window: a press plays, ✕ closes it (the console on the bed stays lit)
+      const gh = this.hits.find(h => (h.id === 'game-close' || h.id === 'game-play') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
+      if (gh) {
+        if (gh.id === 'game-close') { this.gameWin = false; playOnce('ui_press.mp3'); }
+        else consoleSession.tap((mx - gh.x) / gh.w, (my - gh.y) / gh.h);
+        this.version++;
+        return true;
+      }
       // ⚑ S363 — a notification opens its chat
       const tst = this.hits.find(h => h.id.startsWith('toast-') && mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
       if (tst && this.phase === 'open') {
@@ -2300,6 +2668,8 @@ export class E4Browser {
     if (this.phase === 'failed') return true;
     if (this.phase === 'saver') { this.wake(); return true; }
     if (this.phase !== 'open') return true;
+    // ⚑ S364 — a screenshot or a page opened larger: any press closes it
+    if (this.lightbox) { this.lightbox = null; this.version++; return true; }
     const hit = this.pageTargets.find(h => x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h);
     if (!hit && this.startMap.menu) { this.startMap.close(); this.version++; return true; }
     if (!hit) return true;
@@ -2358,6 +2728,8 @@ export class E4Browser {
     // ⚑ S363 — the news sites' furniture: the cookie banner, the newsletter pop-up (any answer closes them)
     if (id === 'news-consent-accept' || id === 'news-consent-manage') { this.consentDone = true; this.idleNav = 0; playOnce('ui_press.mp3'); this.version++; return true; }
     if (id === 'news-nl-sign' || id === 'news-nl-no') { this.newsletterGone = true; this.idleNav = 0; playOnce('ui_press.mp3'); this.version++; return true; }
+    // ⚑ S364 — tap a screenshot or a page it shared to see it larger (N9: "tap/touch to expand")
+    if (id.startsWith('card-shot-') || id.startsWith('card-page-')) { this.lightbox = id.slice(5); playOnce('ui_press.mp3'); this.version++; return true; }
     // ⚑ S363 — the composer takes no typing (R28): it points to her suggested replies
     if (id === 'conv-compose') { this.composeFlashT = 1.6; this.version++; return true; }
     if (id === 'mail-support' && this.step === 'clinic') { this.enquiry = 'draft'; playOnce('ui_press.mp3'); this.go('meridian'); return true; }
