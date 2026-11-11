@@ -143,7 +143,7 @@ export class PhoneE3 {
   startNews(): void {
     if (this.stage !== 'quiet' || this.disconnected) return;
     veraDay.phoneAnswered = true; veraDay.voted = true;
-    this.stage = 'news'; this.newsT = 0; this.newsN = 0; this.articleConducted = false; this.articleShown = false; this.banner = null;
+    this.stage = 'news'; this.newsT = 0; this.newsN = 0; this.articleConducted = false; this.articleShown = false; this.newsPaused = false; this.banner = null;
     this.bump();
   }
   private newsN = 0;
@@ -151,6 +151,10 @@ export class PhoneE3 {
   /** ⚑ S362 / H28 — the article is put on the glass by the piece when its card lands (he should see it before anything moves on) */
   private articleConducted = false;
   private articleShown = false;
+  /** ⚑ S362 / H43 — how many of Bea's Malta messages have landed (GracePlatform's alert fires on the first) */
+  get newsLanded(): number { return this.newsN; }
+  /** ⚑ S362 / H43 — set by the platform while its alert is up: the news waits (one voice at a time) */
+  newsPaused = false;
   private photosFrom: Screen | null = null;
   /** ⚑ S362 / H43 — GracePlatform's alert is up and its removals have not begun */
   get takeoverAlert(): boolean { return this.stage === 'takeover' && this.removeT < 0; }
@@ -285,6 +289,7 @@ export class PhoneE3 {
       if (this.newsN < NEWS.length) {
         // ⚑ S362 / H28 — if she opened the article herself, the news waits for her to come back from it
         if (this.screen === 'article' && !this.articleConducted) return;
+        if (this.newsPaused) return;
         this.newsT += dt;
         if (this.newsT >= (NEWS_HOLD[this.newsN] ?? NEWS_STEP)) {
           this.newsT = 0; this.newsN++; this.storyClock = NEWS[this.newsN - 1].time;
@@ -782,6 +787,7 @@ export class PhoneE3 {
     let y = win.y;
     for (let i = win.from; i < win.to; i++) { drawn.push({ y, h: heights[i] - 6, msg: msgs[i] }); y += heights[i]; }
     let lastFrom = '';
+    ctx.save(); ctx.beginPath(); ctx.rect(0, top, W, cy - 8 - top); ctx.clip();   // ⚑ S362 / H40 — a message taller than the window is clipped, not drawn over the bars
     for (const { y: my, msg } of drawn) {
       if (this.removed.has(msg.key)) {
         // ⚑ the platform reached into her phone: the bubble stays, emptied, in the system's grey
@@ -796,6 +802,7 @@ export class PhoneE3 {
       this.drawMsg(ctx, msg, my, W, msg.from !== lastFrom);
       lastFrom = msg.from;
     }
+    ctx.restore();
   }
 
   /** ⚑ S332 — her one message in the era, on the right where her words would always have been */
@@ -1032,6 +1039,9 @@ export class PhoneE3 {
     let from = fit(end, top, b);
     const earlier = from > 0;
     if (earlier) from = fit(end, top + PhoneE3.PILL + 2, b);
+    // ⚑ S362 / H40 — with the larger type one long message (Bea's first) can be taller than the window: the newest is always drawn
+    //   (its top clipped by the caller) rather than an empty thread
+    if (from >= end && end > 0) from = end - 1;
     let y = b; for (let i = from; i < end; i++) y -= heights[i];
     return { from, to: end, y, earlier, latest };
   }

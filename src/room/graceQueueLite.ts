@@ -231,6 +231,8 @@ const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c
 const MALTA_AFTER_TASKS = 2;
 /** ⚑ S362 / H41 — how long the kit's URGENT pop-in waits before the platform opens the kit itself (the story has to move on) */
 const KIT_POPIN_AUTO = 22;
+/** ⚑ S362 / H43 — how long GracePlatform's "intervene immediately" alert stays up over the desk when Bea's first Malta message lands */
+const MALTA_ALERT_HOLD = 4.5;
 /** ⚑ S362 / H42b — characters a second at which Kindredraft's draft types itself in */
 const STORY_DRAFT_CPS = 28;
 /** ⚑ S227 — the Speedrun Version (src/state/cut.ts): Lambient sends her straight to Annette, and ONE finished job lights
@@ -541,6 +543,9 @@ export class GraceQueueLite {
   /** ⚑ S362 / H41 — the campaign kit's URGENT pop-in is up (it opens the kit; if left, the platform opens it after KIT_POPIN_AUTO) */
   private kitPopin = false;
   private kitPopinT = 0;
+  /** ⚑ S362 / H43 — the Malta alert: seconds up (-1 = not showing), and whether it has had its one showing */
+  private maltaAlertT = -1;
+  private maltaAlertDone = false;
   private recordAdmin = false;
   private kitApproved = false;
   private takenDown = false;
@@ -659,7 +664,7 @@ export class GraceQueueLite {
     this.playing = false; stopClip(this.roomTone); this.roomTone = null;
     this.openSurface = null; this.chipReturn = null; this.pauseOpen = false;
     this.saver = null; this.phoneInHand = false; this.minimised = false;
-    this.veraPage = null; veraDay.quiet = false; this.inboxLiftPending = false; this.kitPopin = false;
+    this.veraPage = null; veraDay.quiet = false; this.inboxLiftPending = false; this.kitPopin = false; this.maltaAlertT = -1; this.phone.newsPaused = false;
     if (this.mode === 'list' || this.mode === 'done') this.mode = 'board';
     this.bump();
   }
@@ -738,6 +743,7 @@ export class GraceQueueLite {
     this.updateSaver(dt);
     this.updateGate();
     this.updatePopins(dt);
+    this.updateMaltaAlert(dt);
     this.updateJobReturn(dt);
     if (this.startPanel.tick(dt, this.startPanelCalm())) this.bump();
     if (this.personalQuiet || this.veraPage || this.phoneInHand || this.startMap.active) this.boardQuietT = 0;
@@ -876,6 +882,32 @@ export class GraceQueueLite {
       const b = Math.floor(this.storyOfferT * 12); this.storyOfferT += dt;
       if (b !== Math.floor(this.storyOfferT * 12) && this.storyOfferT * STORY_DRAFT_CPS < vera.offer.draft.length + 12) this.bump();
     } else if (!this.storyOffer) this.storyOfferT = 0;
+  }
+  /** ⚑ S362 / H43 (his headset, 10 Nov, 21:13: GracePlatform jumps in "when the Malta message appears") — the alert fires the moment
+   *  Bea's FIRST Malta message lands, as a pop-in over whatever is on the desk (the Handset Window included), with the platform's
+   *  chime. One voice: if another system pop-in is up it waits for it, and while it is up the phone's news waits too. */
+  private updateMaltaAlert(dt: number): void {
+    if (this.maltaAlertT < 0 && !this.maltaAlertDone && this.phone.newsLanded >= 1 && !this.kitPopin && !this.storyOffer && !this.pauseOpen) {
+      this.maltaAlertT = 0; this.phone.newsPaused = true; playOnce('lambient_chime.mp3'); this.bump();
+    }
+    if (this.maltaAlertT >= 0) {
+      const b = Math.floor(this.maltaAlertT * 4); this.maltaAlertT += dt;
+      if (this.maltaAlertT >= MALTA_ALERT_HOLD) { this.maltaAlertT = -1; this.maltaAlertDone = true; this.phone.newsPaused = false; this.bump(); }
+      else if (b !== Math.floor(this.maltaAlertT * 4)) this.bump();
+    }
+  }
+  private drawMaltaAlert(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    if (this.maltaAlertT < 0) return;
+    const R = vera.removals;
+    const w = Math.min(380, W - 280 - 24), h = 104, x = 12, y = Math.max(34, Math.floor((H - 28 - h) / 2) - 20);
+    const flash = Math.floor(this.maltaAlertT * 2.2) % 2 === 0;
+    px(ctx, x + 4, y + 5, w, h, ERA3.greyDk); px(ctx, x, y, w, h, ERA3.white);
+    px(ctx, x - 2, y - 2, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y + h, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y - 2, 2, h + 4, ERA3.alarm); px(ctx, x + w, y - 2, 2, h + 4, ERA3.alarm);
+    px(ctx, x, y, w, 26, flash ? ERA3.alarm : ERA3.amber);
+    studioFont(ctx, 13, true); ctx.fillStyle = ERA3.white; ctx.fillText('GracePlatform · ' + R.alertTag, x + 10, y + 6);
+    studioFont(ctx, 20, true); ctx.fillStyle = ERA3.alarm;
+    wrapText(ctx, R.alertLine, w - 20).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, x + 10, y + 36 + i * 24));
+    studioFont(ctx, 12); ctx.fillStyle = ERA3.ink; ctx.fillText(R.alertSub, x + 10, y + h - 20);
   }
   private openKit(): void { this.kitPopin = false; this.veraPage = 'kit'; this.bump(); }
 
@@ -1596,6 +1628,7 @@ export class GraceQueueLite {
     }
     ctx.restore();
     this.drawMirror(ctx, W, H);
+    this.drawMaltaAlert(ctx, W, H);
   }
   private mirrorMin = false;
   private mirrorLarge = false;
@@ -1642,7 +1675,8 @@ export class GraceQueueLite {
     //   still opens the larger reading view
     this.rects.unshift({ x, y: 0, w, h: 25, id: 'mirror-enlarge' });
     this.mirrorCanvas ??= document.createElement('canvas');
-    const phoneH = this.mirrorLarge && !this.floppy.open ? 240 : 360;
+    // ⚑ S362 / H40 — 300 (was 240): at the larger type Bea's first Malta message is taller than a 240 px thread
+    const phoneH = this.mirrorLarge && !this.floppy.open ? 300 : 360;
     // ⚑ S362 / H40 (his headset, 10 Nov: the phone's text "a little out of focus… very hard to read; the monitor is much
     //   better") — the handset was drawn at 1× (180 px wide) and stretched ×1.3–1.5 with nearest-neighbour onto the
     //   desktop: every letter a smear. It is now drawn at 2× (the phone's own device screen is 3×) and brought down with
@@ -1976,9 +2010,9 @@ export class GraceQueueLite {
       px(ctx, c.x + 6, ay, c.w - 12, ah, ERA3.white);
       px(ctx, c.x + 6, ay, c.w - 12, 24, flash ? ERA3.alarm : ERA3.amber);
       studioFont(ctx, 13, true); ctx.fillStyle = ERA3.white; ctx.fillText(R.alertTag, c.x + 18, ay + 5);
-      studioFont(ctx, 22, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(R.alertLine, c.x + 18, ay + 34);
+      studioFont(ctx, 22, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(R.takeoverLine, c.x + 18, ay + 34);
       studioFont(ctx, 12); ctx.fillStyle = ERA3.ink;
-      wrapText(ctx, R.alertSub, c.w - 36).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, c.x + 18, ay + 64 + i * 15));
+      wrapText(ctx, R.takeoverSub, c.w - 36).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, c.x + 18, ay + 64 + i * 15));
     } else this.alertChimed = false;
   }
   private alertChimed = false;

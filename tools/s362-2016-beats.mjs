@@ -20,7 +20,7 @@ async function scenario(name, fn, arg) {
     await p.waitForFunction(() => window.__graceQueue?.());
     await new Promise(r => setTimeout(r, 3500));
     const shots = await p.evaluate(fn, arg);
-    for (const [n, u] of Object.entries(shots || {})) save(n, u);
+    for (const [n, u] of Object.entries(shots || {})) { if (n === '__t') console.log(u); else save(n, u); }
   } catch (e) { console.log('SKIP', name, e.message.split('\n')[0]); } finally { await p.close(); }
 }
 const PRE = `
@@ -48,9 +48,15 @@ await scenario('kindredraft', S(`
   else out['kindredraft-draft-typing'] = mon();
 `));
 await scenario('malta', S(`
-  ph.debugBeat('news'); ph.pressControl('reply-bea'); tick(2.4);
-  q.mirrorLarge = false; q.veraPage = 'removals'; q.removalsShown = true;
-  out['malta-platform-alert'] = mon(); tick(5.2); out['malta-platform-removing'] = mon();
+  // H43: the alert fires the moment Bea's FIRST Malta message lands (over the Handset Window, which is brought forward)
+  const step = (sec) => { for (let i = 0; i < sec * 20; i++) q.update(0.05); };
+  ph.startNews(); q.mirrorLarge = true; q.mirrorMin = false; q.cascadeConduct = true; q.mirrorReading = true; ph.showGroup();
+  let t = 0, landed = -1, alert = -1;
+  while (t < 10 && alert < 0) { q.update(0.05); t += 0.05; if (landed < 0 && ph.newsLanded >= 1) landed = t; if (alert < 0 && q.maltaAlertT >= 0) alert = t; }
+  out['malta-platform-alert'] = mon(); out.__t = JSON.stringify({ maltaFirstMessageAt: +landed.toFixed(3), alertAt: +alert.toFixed(3), gapSeconds: +(alert - landed).toFixed(3) });
+  step(4.8); q.mirrorLarge = false; ph.pressControl('reply-bea');
+  ph.debugBeat('news'); ph.pressControl('reply-bea'); step(2.4);
+  q.veraPage = 'removals'; q.removalsShown = true; step(0.5); out['malta-platform-takeover-card'] = mon(); step(5.2); out['malta-platform-removing'] = mon();
 `));
 await scenario('news', S(`
   ph.startNews(); q.mirrorLarge = true; q.mirrorMin = false; q.cascadeConduct = true; q.mirrorReading = true; ph.showGroup();
