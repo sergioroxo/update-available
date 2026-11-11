@@ -90,7 +90,7 @@ type Person = [number, number, boolean, string, string, string, number];
 const CROWD: Person[] = [
   // the far row, all along the street
   [0, 14, false, M.sand, M.plum, M.violet, 0], [5, 13, false, M.wood, M.ink, M.orange, -1], [9, 15, false, P.skinLo, P.hair, M.tblue, 0],
-  [24, 14, false, P.skin, M.violet, M.gold, 0], [28, 15, false, M.sand, M.ink, M.green, 0], [31, 15, false, P.skin, M.plum, M.orange, 0],
+  [24, 14, false, P.skin, M.violet, M.gold, 0], [28, 15, false, M.sand, M.ink, M.green, 0], [31, 15, false, P.skin, M.plum, M.violet, 0],
   [36, 15, false, M.wood, M.ink, M.blue, 0], [43, 14, false, M.sand, M.orange, M.violet, 0], [49, 14, false, P.skinLo, P.hair, M.pink, 0], [54, 15, false, M.wood, M.ink, M.green, 1], [59, 13, false, P.skin, M.gold, M.blue, 0],
   // the near ones at the edges, half out of the frame
   [-2, 21, true, P.skin, P.hair, M.green, 0], [60, 20, true, M.wood, M.ink, M.violet, 0]
@@ -174,9 +174,9 @@ const J_MOUTH = lay({
   12: '.........e....e.........',
   13: '..........eeee..........'
 });
-const J_KEY: Record<string, string> = { H: M.ink, h: M.plum, S: M.wood, s: M.wood, e: M.ink, c: M.orange, g: M.gold, T: P.light, t: M.gold, W: P.light };
+const J_KEY: Record<string, string> = { H: M.ink, h: M.plum, S: M.wood, s: M.wood, e: M.ink, c: M.orange, g: M.gold, T: P.light, t: M.gold, W: P.light, u: M.orange };
 /** the greys she would be muted to (only if `junieMute` > 0) */
-const J_MUTE: Record<string, string> = { H: M.plum, h: M.dim, S: M.dim, s: M.plum, e: M.plum, c: M.dim, g: M.dim, T: P.frame, t: M.dim, W: P.frame };
+const J_MUTE: Record<string, string> = { H: M.plum, h: M.dim, S: M.dim, s: M.plum, e: M.plum, c: M.dim, g: M.dim, T: P.frame, t: M.dim, W: P.frame, u: M.dim };
 const isDither = (k: number, gx: number, gy: number): boolean => k > FIG.bayer(gx, gy);
 
 /** paint a layer at an origin with a key map; `skip(col,row)` leaves a cell out */
@@ -297,12 +297,20 @@ export function paintPride(p: Painter, x: number, y: number, w: number, h: numbe
   mayaLayer(FIG.her.front, EMPTY, 'cut', s.hair, true);
   // her earrings, gone with the hair
   if (s.hair < 0.5) { cell(MX + 7, MY + 12, 1, 1, P.gold); cell(MX + 16, MY + 12, 1, 1, P.gold); }
-  // ── JUNIE'S ARM across Maya's shoulders, in her own yellow sleeve: over Maya's hair (as an arm round long hair lies),
-  //    behind her neck, and her hand over Maya's far shoulder — over the top or over the jacket alike: nothing of
-  //    Junie is under the filter
-  cell(MX + 3, MY + 16, 5, 1, arm('T')); cell(MX + 3, MY + 17, 5, 1, arm('t'));
-  cell(MX + 16, MY + 16, 7, 1, arm('T')); cell(MX + 16, MY + 17, 7, 1, arm('t'));
-  cell(MX + 1, MY + 16, 2, 3, arm('S')); cell(MX + 1, MY + 19, 1, 1, arm('S'));
+  // ── JUNIE'S ARM round Maya — a hug, read from Junie to Maya (his review of the first cut: two yellow bars read as
+  //    shoulder pads). NEAR SIDE: one sleeve growing out of Junie's own top and rising toward Maya's neck, over Maya's
+  //    hair, until it passes behind her head. FAR SIDE: only Junie's hand — a yellow cuff where her arm comes out from
+  //    behind Maya's hair, her brown fingers draped over the top of Maya's shoulder onto her top. Drawn after the filter,
+  //    over the top or over the jacket alike: nothing of Junie is ever under it. (Maya's grid cells: `armCell`.)
+  const armCell = (c: number, r: number, w: number, k: string): void => cell(MX + c, MY + r, w, 1, arm(k));
+  // the sleeve: a band on a diagonal from the point of Junie's shoulder up to Maya's neck, its underside in a fold of
+  // shade so it parts from Junie's top as an arm (three of yellow and one of shade in each row)
+  for (let r = 15; r <= 19; r++) { const c = 17 + (r - 15); armCell(c, r, 3, 'T'); armCell(c + 3, r, 1, 'u'); }
+  // the hand on her far shoulder: the cuff where her arm comes out from behind Maya's hair, the palm over the shoulder,
+  // the fingers on the front of Maya's top
+  armCell(3, 16, 1, 'T'); armCell(3, 17, 1, 'T');
+  armCell(1, 17, 2, 'S'); armCell(1, 18, 3, 'S');
+  armCell(1, 19, 3, 'S'); armCell(1, 20, 1, 'S'); armCell(3, 20, 1, 'S');
   // ── JUNIE in front: her face, her laugh, her curls over her forehead
   layerAt(FIG.her.face, JX, JY, J_KEY, mute, J_MUTE);
   layerAt(J_FEAT, JX, JY, J_KEY, mute, J_MUTE);
