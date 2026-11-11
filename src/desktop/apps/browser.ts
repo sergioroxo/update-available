@@ -664,6 +664,11 @@ export class E4Browser {
     if (Math.floor(before / 0.3) !== Math.floor(this.botT / 0.3) && this.botT < 14) this.version++;
     if (this.clipTakeover && Math.floor(before * 8) !== Math.floor(this.botT * 8)) this.version++;
     if (b.id === 'clip' && before < 0 && this.botT >= 0) stopClipSound();   // S360: the clip ends, its sound with it
+    // ⚑ S360 — the clip's two lines ask nothing: after them, the bot moves on to the mute by itself (the tour stalled here)
+    if (b.id === 'clip' && this.botBeatReady && this.step === 'bot' && this.botNextIn < 0 && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 2.2) {
+      this.startBot('map');
+      return;
+    }
     if (this.botNextIn >= 0) { this.botNextIn -= dt; if (this.botNextIn < 0) { this.botNextIn = -1; this.nextBot(); } }
     // ⚑ S350 — "Stories like yours" holds a while for reading, then the bot rests (nothing waits on a press here)
     if (b.id === 'stories' && !(b as { button?: string }).button && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + BOT.stories.holdSeconds) {
