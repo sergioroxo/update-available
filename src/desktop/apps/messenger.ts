@@ -41,6 +41,20 @@ const PAGE = 0.7;
 const DRIFT_AFTER = 9;
 const DRIFT_SPEED = 26;
 
+/** the loft photo: an old print, a small child seen from behind on a lawn — no face, no name (78 × 50 at scale 1;
+ *  S360: shared with Mum's email, browser.ts drawMail, which draws it larger under a scale) */
+export function drawLoftPhoto(ctx: CanvasRenderingContext2D, ox: number, by: number): void {
+  const pw = 78, ph = 50;
+  px(ctx, ox, by, pw, ph, KETTLE.row);
+  px(ctx, ox + 3, by + 3, pw - 6, ph - 13, PLACE.sky);
+  px(ctx, ox + 3, by + 3 + 19, pw - 6, ph - 13 - 19, PLACE.land);
+  px(ctx, ox + 36, by + 10, 6, 6, PLACE.floorLo);           // the back of a head, hair
+  px(ctx, ox + 34, by + 16, 10, 10, PLACE.textileHi);       // a little dress, from behind
+  px(ctx, ox + 35, by + 26, 2, 5, PLACE.sill); px(ctx, ox + 41, by + 26, 2, 5, PLACE.sill);
+  ctx.font = monoFor(8); ctx.fillStyle = KETTLE.sub;
+  ctx.fillText(M.mum.loftCaption, ox + 4, by + ph - 9);
+}
+
 export class E4Messenger {
   view: 'list' | ChatId = 'list';
   /** the chat wallpaper: hers until the update restores "defaults", then the goal picture */
@@ -341,14 +355,11 @@ export class E4Messenger {
         for (const l of M.house.evening.slice(0, this.eveningShown)) out.push({ who: l.who, text: l.text });
       }
     } else if (id === 'mum') {
-      // ⚑ the years, oldest first, then today: she scrolls down through them (no "2024 ›")
-      for (const yr of M.mum.years) {
-        out.push({ sep: yr.when, year: yr.when });
-        for (const m of yr.msgs) out.push(m as Msg);
-      }
+      // ⚑ S360 / UiB job 13 Part A (his 11 Nov: "the birthday point and the message from dad. Not much more is needed")
+      //   — the years are retired as a thread: Mum writes once, today, that she sent an email (the photo and "Mum, I"
+      //   moved into that email, browser.ts drawMail)
       out.push({ sep: M.today, year: M.today });
-      for (const m of M.mum.today.slice(0, this.mumToday)) out.push(m.link ? { link: m.link } : { text: m.text });
-      if (this.mumDraft) out.push({ draft: true, mine: true, text: M.mum.draft });
+      for (const m of M.mum.today.slice(0, this.mumToday)) out.push({ text: m.text });
     } else if (id === 'dad') {
       // what he said in September, then what he said today: one thread, no "Today ›"
       out.push({ sep: M.dad.before[0].when, year: M.dad.before[0].when });
@@ -387,9 +398,8 @@ export class E4Messenger {
   private ownPrimary(id: ChatId): { id: string; label: string } | null {
     if (id === 'house') return this.houseShown >= M.house.birthday.length && !this.houseHeart ? { id: 'house-heart', label: M.house.heartButton } : null;
     if (id === 'mum') {
-      if (!this.mumAtToday) return null;   // the scroll is the way on (the bar says so)
+      // S360: one message, nothing to scroll to; Dad's banner is the only way on from here
       if (this.dadIn && !this.dadRead) return { id: 'chat-dad', label: M.chats.dad.open };
-      if (this.dadRead && !this.linkOpened && this.want === 'link') return { id: 'msg-link', label: M.mum.linkButton };
       return null;
     }
     if (id === 'dad') return this.want === 'link' ? { id: 'chat-mum', label: M.dad.backToMum } : null;
@@ -522,19 +532,7 @@ export class E4Messenger {
       if (m.link === 'a0' && !this.linkOpened && this.dadRead && this.want === 'link') this.targets.push({ x: 6, y: by, w: cw, h: ch, id: 'msg-link' });
       return;
     }
-    if (m.photo) {
-      // the loft photo: an old print, a small child seen from behind on a lawn — no face, no name
-      const pw = 78, ph = 50, ox = 6;
-      px(ctx, ox, by, pw, ph, KETTLE.row);
-      px(ctx, ox + 3, by + 3, pw - 6, ph - 13, PLACE.sky);
-      px(ctx, ox + 3, by + 3 + 19, pw - 6, ph - 13 - 19, PLACE.land);
-      px(ctx, ox + 36, by + 10, 6, 6, PLACE.floorLo);           // the back of a head, hair
-      px(ctx, ox + 34, by + 16, 10, 10, PLACE.textileHi);       // a little dress, from behind
-      px(ctx, ox + 35, by + 26, 2, 5, PLACE.sill); px(ctx, ox + 41, by + 26, 2, 5, PLACE.sill);
-      ctx.font = monoFor(8); ctx.fillStyle = KETTLE.sub;
-      ctx.fillText(M.mum.loftCaption, ox + 4, by + ph - 9);
-      return;
-    }
+    if (m.photo) { drawLoftPhoto(ctx, 6, by); return; }
     const mine = !!m.mine;
     setFont(ctx, 9);
     let textW = Math.max(...b.lines.map((l) => Math.ceil(ctx.measureText(l).width)));

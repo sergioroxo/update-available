@@ -126,9 +126,11 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
       return;
     }
     if (generation !== ledgerGeneration) { leftT = 0; revealT = -1; seen = ''; generation = ledgerGeneration; }
-    if (e4Has('left') && !e4Has('room') && !e4Has('terminated')) {
+    // ⚑ S360 (UiB job 13 Part A: "her friends never leave") — nobody leaves the house chat any more; the room's conducted
+    //   turn follows Meridian's refusal instead, once its email has been read (the screens wait for 'room': browser 'pause')
+    if (e4Has('meridian') && !e4Has('room') && !e4Has('terminated')) {
       leftT += dt;
-      if (leftT >= 1.5 && revealT < 0 && conduct?.()) revealT = 0;
+      if (leftT >= 6.5 && revealT < 0 && conduct?.()) revealT = 0;
       if (revealT >= 0) { revealT += dt; if (revealT >= 9.7 && revealed?.()) markE4('room'); }
     }
     const ceilingKey = `${ledgerGeneration}:${e4BeatsVersion()}:${data.takeover}:${data.viewers}:${streaming ? 0 : Math.floor(data.clipTime * 8)}`;
@@ -146,8 +148,11 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     if (key === seen) return;
     seen = key;
     const restored = e4Has('terminated');
-    const n = !restored && e4Has('number'), m = !restored && e4Has('meridian'), l = !restored && e4Has('left');
-    plant.forEach(p => visible(p, !n)); visible(flag, !m); visible(friends, !l); visible(goal, l);
+    // S360: the barer room (friends' photo down, the throw) comes with the refusal now; ⚑ H47 (his headset: "'You, restored'
+    //   is on the front, the table and the wall… the change to yourself should be in the headset only") — the goal
+    //   picture is never on the table or the wall
+    const n = !restored && e4Has('number'), m = !restored && e4Has('meridian'), l = m;
+    plant.forEach(p => visible(p, !n)); visible(flag, !m); visible(friends, !l); visible(goal, false);
     throwProp.material.diffuse = hex(l ? ERA4.text : PLACE.textileHi); throwProp.material.update();
     // The crude defaults spread to the bedding, curtains and rug; preserve the real per-model materials.
     for (const id of ['e_bed', 'e_rug', 'e_curtL', 'e_curtR']) {
@@ -156,7 +161,7 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
         mat.diffuse.copy(m ? hex(ERA4.text) : originalMats.get(mat)!); mat.update();
       }
     }
-    const isGoal = !restored && e4Has('newyou') && !e4Has('original');
+    const isGoal = false;   // ⚑ S360 / H47 — the desk frame keeps her own photograph (the goal lives on the screen and in the headset)
     const frameKey = `${ledgerGeneration}:${isGoal}`;
     if (frameKey !== frameSeen) {
       frameSeen = frameKey;

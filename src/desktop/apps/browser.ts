@@ -47,9 +47,9 @@ import { StartPanel, fakeOs } from './startPanel';
 import { beatDone } from '../../witness/map';
 import { FloppySheep, FLOPPY_LABEL } from './floppysheep';
 import { markE4, e4Has } from '../../narrative/e4Beats';
-import { E4Messenger, type ChatId } from './messenger';
+import { E4Messenger, drawLoftPhoto, type ChatId } from './messenger';
 import { drawGoalPicture } from './goalPicture';
-import { drawContagionClip } from './contagionClip';
+import { drawContagionClip, CLIP_LOOP_SECONDS } from './contagionClip';
 import updates from '../../../data/strings/updates.json';
 import script from '../../../data/dialog/s4_boot.json';
 import body from '../../../data/dialog/s4_browser.json';
@@ -90,7 +90,22 @@ const BOT = V.bot as unknown as { tab: string; mark: string; online: string; lin
   map: { title: string; exposure: string; you: string; nodes: { id: string; label: string; kind: string }[]; mutedTag: string; leftTag: string };
   stories: { title: string; stamp: string; cards: { id: string; name: string; line: string }[];
     holdSeconds: number } };
-const ARTICLES = V.news.articles;
+/** ⚑ S360 — Mum's articles: a body, and (the clinic letter's model) two readings side by side that nothing settles;
+ *  the last carries the Sponsored box that is Mum's way in to Second Thoughts */
+interface Article { id: string; tab: string; mast: string; address: string; date: string; head: string; body: string[];
+  readings?: { label: string; text: string }[]; source: string; sponsored?: { label: string; title: string; line: string; button: string } }
+const ARTICLES = V.news.articles as unknown as Article[];
+/** ⚑ S360 / UiB job 13 Part A (his 11 Nov direction) — THE MAILBOX: the clinic writes first, Meridian's auto-reply comes
+ *  back to her enquiry, and Mum's email arrives last, just before the AI */
+const MAIL = V.mail as unknown as { tab: string; address: string; inbox: string; unread: string; back: string;
+  emails: { clinic: { from: string; when: string; subject: string; lines: string[]; cardLabel: string; cardNote: string; link: string };
+    meridian: { when: string };
+    mum: { from: string; when: string; subject: string; lines: string[]; after: string[]; attachment: string; linksLabel: string;
+      replyLabel: string; draft: string; read: string } };
+  witnessClinic: string; witnessMeridian: string; witnessMum: string };
+type MailId = 'clinic' | 'meridian' | 'mum';
+/** S360 — no beat waits on a press: this long without one in Mum's email, on an article, on the sponsored one */
+const NAV_IDLE = { mum: 14, article: 16, sponsor: 14 } as const;
 const PH = V.photos;
 const CL = V.clinic;
 const SR = V.search;
@@ -111,16 +126,17 @@ const PAGE_TOP = ADDR.y + ADDR.h + 6;
 const STALL_SECONDS = 35;
 /** after "left", the room's conducted turn has the floor: the search waits this long at least, and at most the longer
  *  figure if the room has not marked `room` yet (src/narrative/e4Beats.ts) */
-const ROOM_WAIT = { min: 5, max: 12 } as const;
+const ROOM_WAIT = { min: 5, max: 18 } as const;   // S360: the turn now follows Meridian's reply (e4Room)
 /** ⚑ S328 — the birthday messages arrive one at a time after the screen has opened quietly (his 8 Nov test) */
 const HOUSE_FIRST = 2.2;
 const HOUSE_GAP = 2.4;
 /** the clip plays over the whole page for this long when the map beat begins (one loop of its six frames) */
-const CLIP_TAKEOVER_SECONDS = 14.4;
+const CLIP_TAKEOVER_SECONDS = CLIP_LOOP_SECONDS;   // S360: the clip's own loop (its frames' holds)
 
 type Step = 'idle' | 'house' | 'newyou' | 'mum' | 'dad' | 'link' | 'news' | 'clinic' | 'meridian' | 'left' | 'pause'
+  | 'mail' | 'mumMail'
   | 'search' | 'typing' | 'results' | 'bot' | 'junie' | 'confirm' | 'photos' | 'ready';
-interface Tab { id: string; kind: 'search' | 'news' | 'clinic' | 'photos'; title: string; address: string }
+interface Tab { id: string; kind: 'search' | 'news' | 'clinic' | 'photos' | 'mail'; title: string; address: string }
 
 export class E4Browser {
   lambyGuide: LambyGuide | null = null;
@@ -159,6 +175,13 @@ export class E4Browser {
   private clinicMoved = false;
   private enquiry: 'none' | 'draft' | 'sending' | 'replied' | 'closed' = 'none';
   private enquiryT = 0;
+  /** ⚑ S360 — the mailbox: its rows, newest first; the one open; which have been opened */
+  private mailRows: MailId[] = [];
+  private mailOpen: MailId | null = null;
+  private readonly mailSeen = new Set<MailId>();
+  private meridianT = -1;
+  /** S360 — seconds without a press while Mum's email or an article waits (then the piece takes her on) */
+  private idleNav = 0;
   private typedT = 0;
   private typeT = 0;
   // the bot
@@ -238,7 +261,7 @@ export class E4Browser {
   private botLines(b: BotBeat): string[] { return b.lines.map((l) => l.replace('{number}', this.clinicNumber.toLocaleString('en-GB'))); }
   private get botLinesShown(): number { const b = this.bot; return b && this.botT >= 0 ? Math.min(b.lines.length, 1 + Math.floor(this.botT / BOT.lineSeconds)) : 0; }
   /** ⚑ the clip owns the page before the map beat speaks (the review: "the over-the-top moment, direct and brute") */
-  private get clipTakeover(): boolean { return this.bot?.id === 'map' && this.botT < 0; }
+  private get clipTakeover(): boolean { return this.bot?.id === 'clip' && this.botT < 0; }
   private get botBeatReady(): boolean { const b = this.bot; return !!b && this.botLinesShown >= b.lines.length && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 0.5; }
   private get enquiryOpen(): boolean { return this.enquiry === 'draft' || this.enquiry === 'sending' || this.enquiry === 'replied'; }
 
@@ -300,6 +323,29 @@ export class E4Browser {
     ledger.e4Space.push({ id, outcome, witness });
   }
   private go(step: Step): void { this.step = step; this.stepT = 0; this.stallT = 0; this.version++; }
+  /** ⚑ S360 — one of Mum's links: the News tab at that article (all three arrived with her email) */
+  private openArticle(i: number): void {
+    const n = Math.max(0, Math.min(ARTICLES.length - 1, i));
+    this.addTab(this.newsTab(), true);
+    if (!e4Has('link')) { markE4('link'); this.file('v3:link', 'opened', W3.link); }
+    this.newsOpened = ARTICLES.length;
+    this.newsIndex = n;
+    this.idleNav = 0;
+    if (this.step === 'mumMail') this.go('news');
+    this.openTab('news');
+    playOnce('ui_press.mp3');
+  }
+  /** the second way in: she searches, and Lantern finishes her sentence */
+  private beginSearch(): void { this.go('search'); this.typedT = 0; this.face('monitor'); this.openTab('search'); }
+  /** ⚑ beat 10 — the one voice that stays: the bot, from Mum's sponsored box or from the search's ad */
+  private openBot(): void {
+    markE4('bot');
+    ledger.e4Space.push({ id: 'agent', outcome: 'opened', witness: W3.agent });
+    playOnce('agent_2026.mp3');
+    this.openTab('search');
+    this.go('bot');
+    this.startBot('hello');
+  }
 
   /** ⚑ the one press the story waits on now ON THE MONITOR, for the just-in-time ring */
   private pathIds(): Set<string> {
@@ -309,8 +355,9 @@ export class E4Browser {
     if (this.enquiry === 'draft') { s.add('enq-send'); return s; }
     if (this.enquiry === 'replied') { s.add('enq-close'); return s; }
     switch (this.step) {
-      case 'news': if (this.clinicNotice) s.add('clinic-open'); break;
-      case 'clinic': s.add('clinic-support'); break;
+      case 'clinic': s.add(this.liveTab === 'mail' ? 'mail-support' : 'tab-mail'); break;
+      case 'mumMail': s.add(this.liveTab === 'mail' ? 'mail-read' : 'tab-mail'); break;
+      case 'news': s.add(this.liveTab !== 'news' ? 'tab-news' : ARTICLES[this.newsIndex]?.sponsored ? 'sponsor-chat' : 'news-next'); break;
       case 'search': if (this.typedDone) s.add('search-go'); break;
       case 'results': s.add('ad-chat'); break;
       case 'bot': case 'confirm': { const b = this.bot; if (b && this.botBeatReady && !this.botDone.has(b.id) && b.button) s.add('conv-act'); break; }
@@ -342,7 +389,7 @@ export class E4Browser {
   }
   private allTabs(): Tab[] {
     this.newsOpened = ARTICLES.length;
-    return [this.searchTab(), this.newsTab(), this.clinicTab(), this.photosTab()];
+    return [this.searchTab(), this.mailTab(), this.newsTab(), this.photosTab()];
   }
   private searchTab(): Tab { return { id: 'search', kind: 'search', title: SR.newTab, address: '' }; }
   /** ⚑ ONE News tab (the review: seven tabs and their names cut off); its pager carries the articles */
@@ -352,6 +399,7 @@ export class E4Browser {
   private newsOpened = 0;
   private clinicTab(): Tab { return { id: 'clinic', kind: 'clinic', title: CL.tab, address: CL.address }; }
   private photosTab(): Tab { return { id: 'photos', kind: 'photos', title: PH.tab, address: PH.address }; }
+  private mailTab(): Tab { return { id: 'mail', kind: 'mail', title: MAIL.tab, address: MAIL.address }; }
   private addTab(t: Tab, live = false): void {
     if (!this.tabs.some((x) => x.id === t.id)) {
       // news goes after the search tab, in the order it opened; the clinic before Photos
@@ -478,32 +526,63 @@ export class E4Browser {
         if (m.houseHeart && this.stepT >= 0) {
           // the heart is sent; the update restores "defaults" a breath later — the system's act, not hers
           if (this.heartT < 0) this.heartT = 0; else this.heartT += dt;
-          if (this.heartT >= 1.6) this.beginNewYou();
+          // ⚑ S360 / H29 (his headset: thanking the group "jumped straight to 'Welcome back, Maya, your defaults are
+          //   restored'") — no restore here any more (the bot makes its picture hers, much later); Mum writes after a breath
+          if (this.heartT >= 2.6) this.go('mum');
         }
         break;
       case 'mum':
-        if (at(1.2)) this.face('laptop');
-        if (at(1.6)) { m.mumToday = 1; m.want = 'mum'; if (m.view !== 'mum') m.view = 'list'; playOnce('ui_press.mp3'); this.version++; }
-        if (at(3.4)) { m.mumToday = 3; playOnce('ui_press.mp3'); this.version++; }
-        if (m.mumAtToday) {
-          if (this.todayT < 0) this.file('v3:mum', 'read', W3.mum);
-          // she reached today: her last line, her unsent draft, then Dad
-          if (this.todayT < 0) this.todayT = 0; else this.todayT += dt;
-          if (this.todayT >= 1.2 && m.mumToday < 4) { m.mumToday = 4; this.version++; }
-          if (this.todayT >= 2.6 && !m.mumDraft) { m.mumDraft = true; this.version++; }
-          if (this.todayT >= 4.2 && !m.dadIn) { m.dadIn = true; m.want = 'dad'; playOnce('ui_press.mp3'); this.go('dad'); }
+        // ⚑ S360 — Mum writes once: happy birthday, and that she sent an email (his 11 Nov: "Not much more is needed").
+        //   H30: nothing forces a press on her — Dad writes 4.5 s after her thread is read, or 10 s after her message
+        if (at(0.8)) { m.mumToday = 1; m.mumAtToday = true; m.want = 'mum'; if (m.view !== 'mum') m.view = 'list'; playOnce('ui_press.mp3'); this.version++; }
+        if (m.mumOpened && this.todayT < 0) { this.todayT = 0; this.file('v3:mum', 'read', W3.mum); }
+        if (this.todayT >= 0) this.todayT += dt;
+        if (!m.dadIn && this.stepT > 0.8 && (this.todayT >= 4.5 || this.stepT >= 10.8)) { m.dadIn = true; m.want = 'dad'; playOnce('ui_press.mp3'); this.go('dad'); }
+        break;
+      case 'mail':
+        // ⚑ S360 — the clinic writes first: the Mail tab opens on its email (the piece takes her there; nothing to press)
+        if (at(1.4)) {
+          this.mailRows = ['clinic']; this.mailOpen = 'clinic';
+          this.addTab(this.mailTab(), true);
+          markE4('number');
+          this.file('v3:clinic', 'read', MAIL.witnessClinic.replace('{number}', this.clinicNumber.toLocaleString('en-GB')));
+          this.face('monitor'); playOnce('ui_press.mp3'); this.go('clinic');
         }
         break;
-      case 'news':
-        // the news opens behind Mum's link, tab after tab; then the clinic writes
-        // the news arrives behind Mum's link, one article after another: the pager's count climbs
-        for (let i = 1; i < ARTICLES.length; i++) if (at(i * 0.9)) { this.newsOpened = i + 1; playOnce('ui_press.mp3'); this.version++; }
-        if (at(ARTICLES.length * 0.9 + 3.6)) { this.clinicNotice = true; playOnce('ui_press.mp3'); this.version++; }
+      case 'news': {
+        // ⚑ S360 — Mum's links: no beat waits on a press; a while on an article and the next one opens, and a while on
+        //   the last (the sponsored box) and she searches herself — the second way in (both routes, in sequence)
+        this.idleNav += dt;
+        const a = ARTICLES[this.newsIndex];
+        if (this.liveTab !== 'news') { if (this.idleNav >= NAV_IDLE.article) this.openArticle(this.newsIndex); }
+        else if (this.idleNav >= (a?.sponsored ? NAV_IDLE.sponsor : NAV_IDLE.article)) {
+          if (a?.sponsored) this.beginSearch(); else this.openArticle(this.newsIndex + 1);
+        }
+        break;
+      }
+      case 'mumMail':
+        this.idleNav += dt;
+        if (this.idleNav >= NAV_IDLE.mum) this.openArticle(0);
         break;
       case 'meridian':
         if (this.enquiry === 'sending') {
           this.enquiryT += dt;
-          if (this.enquiryT >= ENQUIRY_REPLY_SECONDS) { this.enquiry = 'replied'; this.version++; }
+          if (this.enquiryT >= ENQUIRY_REPLY_SECONDS) {
+            // ⚑ S360 — the no comes back as an email (the auto-reply), on top of the inbox; the list moves meanwhile
+            this.enquiry = 'closed';
+            this.mailRows = ['meridian', ...this.mailRows]; this.mailOpen = 'meridian';
+            ledger.e4Space.push({ id: 'enquiry', outcome: 'read', witness: ENQ.witness });
+            this.file('v3:meridian', 'read', MAIL.witnessMeridian);
+            markE4('meridian');
+            this.clinicNumber += 3; this.clinicMoved = true;
+            this.openTab('mail'); playOnce('ui_press.mp3');
+            this.meridianT = 0;
+          }
+        }
+        if (this.meridianT >= 0) {
+          this.meridianT += dt;
+          // H30/H31: time to read the refusal; then the room's conducted turn has the floor (e4Room reads 'meridian')
+          if (this.meridianT >= 6) { this.meridianT = -1; this.go('pause'); }
         }
         break;
       case 'left':
@@ -515,11 +594,13 @@ export class E4Browser {
         break;
       case 'pause':
         // the room's conducted turn has the floor; then the search, finished for her
+        // ⚑ S360 — then Mum's email arrives: the last thing before the AI (the photo, her links, "Mum, I")
         if (this.stepT >= ROOM_WAIT.min && (e4Has('room') || this.stepT >= ROOM_WAIT.max)) {
-          this.go('search');
-          this.typedT = 0;
-          this.face('monitor');
-          this.openTab('search');
+          this.mailRows = ['mum', ...this.mailRows]; this.mailOpen = 'mum';
+          this.file('v3:mummail', 'read', MAIL.witnessMum);
+          this.face('monitor'); this.openTab('mail'); playOnce('ui_press.mp3');
+          this.idleNav = 0;
+          this.go('mumMail');
         }
         break;
       case 'search': {
@@ -584,7 +665,7 @@ export class E4Browser {
     if (this.clipTakeover && Math.floor(before * 8) !== Math.floor(this.botT * 8)) this.version++;
     if (this.botNextIn >= 0) { this.botNextIn -= dt; if (this.botNextIn < 0) { this.botNextIn = -1; this.nextBot(); } }
     // ⚑ S350 — "Stories like yours" holds a while for reading, then the bot rests (nothing waits on a press here)
-    if (b.id === 'stories' && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + BOT.stories.holdSeconds) {
+    if (b.id === 'stories' && !(b as { button?: string }).button && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + BOT.stories.holdSeconds) {
       this.startBot('rest');
       return;
     }
@@ -602,15 +683,24 @@ export class E4Browser {
     if (was && !this.botDone.has(was.id)) { this.botDone.add(was.id); for (const l of this.botLines(was)) this.botSaid.push({ who: 'bot', text: l }); }
     this.botBeat = BOT.beats.findIndex((b) => b.id === id);
     this.botT = 0;
-    if (id === 'map') { markE4('map'); this.botT = -CLIP_TAKEOVER_SECONDS; }
-    if (id === 'heading') this.ring = 97;
+    // ⚑ S360 — the clip, made for her, owns the page before its beat speaks (it was the map's, recommended from a channel)
+    if (id === 'clip') { markE4('map'); this.botT = -CLIP_TAKEOVER_SECONDS; }
+    if (id === 'heading') {
+      // ⚑ S360 — the goal LAST, and the restore is the bot's act: "I've made it your picture" (the review he accepted;
+      //   H47 "You, restored" no longer on the front from the start, nor on the table and the wall — e4Room)
+      this.ring = 97;
+      this.profile = 'goal';
+      this.messenger.wallpaper = 'goal';
+      markE4('newyou');
+      this.file('newyou', 'read', W3.newyou);
+    }
     if (id === 'stories') this.file('v3:stories', 'read', W3.stories);
     if (id === 'unmuted') this.ring = 61;
     if (BOT.beats[this.botBeat]?.lines.length) playOnce('agent_2026.mp3');
     this.version++;
   }
   private nextBot(): void {
-    const order = ['hello', 'reasons', 'heading', 'map', 'stories', 'rest'];
+    const order = ['hello', 'reasons', 'diagnosis', 'clip', 'map', 'heading', 'stories', 'rest'];   // S360: the review's order
     const b = this.bot;
     const i = b ? order.indexOf(b.id) : -1;
     if (i >= 0 && i < order.length - 1) this.startBot(order[i + 1]);
@@ -637,18 +727,8 @@ export class E4Browser {
   }
 
   // ── the act changes, named ────────────────────────────────────────────────
-  private beginNewYou(): void {
-    this.newyouUp = true;
-    this.profile = 'goal';
-    this.messenger.wallpaper = 'goal';
-    this.messenger.lockT = 3.5;   // the lid shows its new wallpaper on the lock screen first
-    this.messenger.want = null;
-    this.openTab('search');
-    markE4('newyou');
-    playOnce('step_done_2026.mp3');
-    this.face('monitor');
-    this.go('newyou');
-  }
+  // (S360: `beginNewYou` retired — the restore is the bot's act at its `heading` beat)
+
 
   // ── the messenger, pressed (Kettle's window) ─────────────────────────────
   pressMessenger(x: number, y: number): boolean {
@@ -681,8 +761,8 @@ export class E4Browser {
         m.dadRead = true;
         markE4('dad');
         this.file('v3:dad', 'read', W3.dad);
-        m.want = 'link';
-        this.go('link');
+        m.want = null;
+        this.go('mail');   // S360: the clinic's email is next (Mum's link is gone; her email comes last)
       }
     } else if (c === 'junie') {
       m.junieOpened = true;
@@ -822,7 +902,7 @@ export class E4Browser {
   /** Lamby's "Take me there": press the target for her (navigation only — never an answer) */
   pressGuideTarget(id: string): 'monitor' | null {
     if (this.guideSilent || this.guideVoice) return null;
-    const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad', 'row-house', 'chat-house', 'row-junie', 'chat-junie'];
+    const allowed = ['ny-continue', 'clinic-open', 'clinic-support', 'mail-support', 'mail-read', 'tab-mail', 'tab-news', 'news-next', 'sponsor-chat', 'search-go', 'ad-chat', 'tab-photos', 'start-menu', 'row-mum', 'chat-mum', 'row-dad', 'chat-dad', 'row-house', 'chat-house', 'row-junie', 'chat-junie'];
     if (!allowed.includes(id)) return null;
     const r = this.hits.find(h => h.id === id);
     if (r) { this.handleClick(r.x + r.w / 2, r.y + r.h / 2); return 'monitor'; }
@@ -888,6 +968,7 @@ export class E4Browser {
     if (this.mode === 'game') { this.drawGame(ctx, W, H); return; }
     switch (this.liveTab) {
       case 'news': this.drawArticle(ctx, W, H); break;
+      case 'mail': this.drawMail(ctx, W, H); break;
       case 'clinic': this.drawClinic(ctx, W, H); break;
       case 'photos': this.drawPhotos(ctx, W, H); break;
       default:
@@ -1094,26 +1175,154 @@ export class E4Browser {
     const a = ARTICLES[i];
     const cx = 16, cw = W - 32, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;   // S328: the card takes the window's width
     roundEdge(ctx, cx, cy, cw, ch, 6, V3.edge, V3.card);
-    const x = cx + 28;
+    const x = cx + 24;
+    // ⚑ S360 — the last of Mum's links carries a Sponsored box beside the text: Second Thoughts, Mum's way in
+    const sp = a.sponsored, spW = sp ? 156 : 0;
+    const tw = cw - 48 - (sp ? spW + 14 : 0);
     ctx.font = newsFor(24); ctx.textBaseline = 'top'; ctx.fillStyle = V3.ink; ctx.fillText(a.mast, x, cy + 12);
-    px(ctx, x, cy + 42, cw - 56, 2, V3.ink);
+    px(ctx, x, cy + 42, cw - 48, 2, V3.ink);
     ctx.font = monoFor(12); ctx.fillStyle = V3.ink2; ctx.fillText(a.date, x, cy + 49);
-    ctx.font = newsFor(21);
-    let y = cy + 70;
-    for (const ln of wrapText(ctx, a.head, cw - 56).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 25; }
-    y += 6;
-    setFont(ctx, 16); ctx.fillStyle = V3.ink;
-    // S328: in the browser's window the body wraps longer; it stops above the source line rather than run under it
-    for (const p of a.body) { for (const ln of wrapText(ctx, p, cw - 56)) { if (y <= cy + ch - 42) ctx.fillText(ln, x, y); y += 20; } y += 5; }
-    ctx.font = monoFor(11); ctx.fillStyle = V3.ink2;
-    { const src = wrapText(ctx, a.source, cw - 56).slice(0, 2); const sy = Math.min(cy + ch - 6 - src.length * 14, y + 4); src.forEach((ln, k) => ctx.fillText(ln, x, sy + k * 14)); }
+    ctx.font = newsFor(20);
+    let y = cy + 68;
+    for (const ln of wrapText(ctx, a.head, tw).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 24; }
+    y += 4;
+    const floor = cy + ch - 34;
+    setFont(ctx, 15); ctx.fillStyle = V3.ink;
+    for (const p of a.body) { for (const ln of wrapText(ctx, p, tw)) { if (y <= floor - 18) ctx.fillText(ln, x, y); y += 19; } y += 4; }
+    // ⚑ S360 — two readings, side by side, never resolved (the clinic letter's two captions were the model; CLAUDE.md:
+    //   render both captions — "nothing in the story settles it")
+    if (a.readings) {
+      const gap = 10, bw = Math.floor((tw - gap) / 2), by = y + 2, bh = Math.max(40, floor - by);
+      a.readings.forEach((r, k) => {
+        const bx = x + k * (bw + gap);
+        roundEdge(ctx, bx, by, bw, bh, 5, V3.edge, V3.page);
+        setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(r.label, bx + 10, by + 6);
+        setFont(ctx, 13); ctx.fillStyle = V3.ink;
+        let ly = by + 23;
+        for (const ln of wrapText(ctx, r.text, bw - 20)) { if (ly + 16 <= by + bh) ctx.fillText(ln, bx + 10, ly); ly += 16; }
+      });
+    }
+    ctx.font = monoFor(10); ctx.fillStyle = V3.ink2;
+    { const src = wrapText(ctx, a.source, cw - 48).slice(0, 2); const sy = cy + ch - 6 - src.length * 13; src.forEach((ln, k) => ctx.fillText(ln, x, sy + k * 13)); }
+    if (sp) {
+      const sx = cx + cw - 24 - spW, sy = cy + 64, sh = 150;
+      roundEdge(ctx, sx, sy, spW, sh, 8, V3.edge, V3.page);
+      ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.fillText(sp.label, sx + 10, sy + 8);
+      assistantMark(ctx, sx + 10, sy + 26, 22, V3.primary, V3.primaryInk);
+      setFont(ctx, 15); ctx.fillStyle = V3.ink; ctx.fillText(sp.title, sx + 38, sy + 29);
+      setFont(ctx, 12); ctx.fillStyle = V3.ink;
+      wrapText(ctx, sp.line, spW - 20).slice(0, 3).forEach((ln, k) => ctx.fillText(ln, sx + 10, sy + 58 + k * 15));
+      const bw = spW - 20, bx = sx + 10, by = sy + sh - 40;
+      pill(ctx, bx, by, bw, 30, V3.primary);
+      setFont(ctx, 14); ctx.fillStyle = V3.primaryInk;
+      ctx.fillText(sp.button, bx + Math.round((bw - ctx.measureText(sp.button).width) / 2), by + 7);
+      this.publish({ x: sx, y: sy, w: spW, h: sh, id: 'sponsor-chat' });
+    }
     const opened = this.newsOpened;
-    const left = this.clinicNotice && this.step === 'news' ? V.news.notice : V.news.count.replace('{n}', String(i + 1)).replace('{of}', String(opened));
+    const left = V.news.count.replace('{n}', String(i + 1)).replace('{of}', String(opened));
     const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
     if (i > 0) buttons.push({ id: 'news-prev', label: V.news.prev, kind: 'quiet' });
     if (i < opened - 1) buttons.push({ id: 'news-next', label: V.news.next, kind: 'quiet' });
-    if (this.clinicNotice && this.step === 'news') buttons.push({ id: 'clinic-open', label: V.news.open, kind: 'primary' });
     this.bar(ctx, W, H, left, buttons);
+  }
+
+  // ── ⚑ S360 — the mailbox: the clinic, Meridian's auto-reply, Mum's ─────────
+  private drawMail(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    this.pageGround(ctx, W, H);
+    const cx = 16, cw = W - 32, cy = PAGE_TOP + 8, ch = H - BAR_H - PAGE_TOP - 16;
+    roundEdge(ctx, cx, cy, cw, ch, 6, V3.edge, V3.card);
+    // the inbox, newest first: a narrow column of rows
+    const lw = 132;
+    setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(MAIL.inbox.toUpperCase(), cx + 12, cy + 10);
+    let ry = cy + 30;
+    const E = MAIL.emails;
+    const head = (id: MailId): { from: string; subject: string; when: string } =>
+      id === 'clinic' ? E.clinic : id === 'mum' ? E.mum : { from: ENQ.replyFrom.split(' · ')[0], subject: ENQ.replySubject, when: E.meridian.when };
+    if (this.mailOpen) this.mailSeen.add(this.mailOpen);
+    for (const id of this.mailRows) {
+      const h = head(id), open = this.mailOpen === id, unread = !this.mailSeen.has(id);
+      if (open) roundRect(ctx, cx + 6, ry - 3, lw - 6, 44, 5, V3.page);
+      if (unread) roundRect(ctx, cx + 10, ry + 4, 7, 7, 3, V3.primary);
+      setFont(ctx, unread ? 13 : 12); ctx.fillStyle = V3.ink;
+      ctx.save(); ctx.beginPath(); ctx.rect(cx + 20, ry - 2, lw - 26, 42); ctx.clip();
+      ctx.fillText(h.from, cx + 20, ry);
+      setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(h.subject, cx + 20, ry + 16);
+      ctx.font = monoFor(9); ctx.fillText(h.when, cx + 20, ry + 29);
+      ctx.restore();
+      this.publish({ x: cx + 6, y: ry - 3, w: lw - 6, h: 44, id: `mail-row-${id}` });
+      ry += 50;
+    }
+    px(ctx, cx + lw + 6, cy + 8, 1, ch - 16, V3.edge);
+    // the open email
+    const x = cx + lw + 20, w = cx + cw - 16 - x, bottom = cy + ch - 8;
+    let y = cy + 10;
+    const line = (t: string, size: number, ink: string, gap: number, mono = false): void => {
+      if (mono) ctx.font = monoFor(size); else setFont(ctx, size);
+      ctx.fillStyle = ink;
+      for (const l of wrapText(ctx, t, w)) { if (y + gap <= bottom) ctx.fillText(l, x, y); y += gap; }
+    };
+    const id = this.mailOpen;
+    const buttons: { id: string; label: string; kind: 'primary' | 'quiet' }[] = [];
+    if (id === 'clinic') {
+      const c = E.clinic;
+      line(`${c.from} · ${c.when}`, 11, V3.ink2, 15, true);
+      line(c.subject, 17, V3.ink, 24);
+      for (const l of c.lines) line(l, 14, V3.ink, 18);
+      // ⚑ H48 — the number, on its own designed card (a deli-counter ticket with its torn edge): nothing else from the clinic
+      const tw = Math.min(250, w), th = 96, tx = x, ty = y + 6;
+      roundRect(ctx, tx, ty, tw, th, 5, V3.ticketEdge);
+      roundRect(ctx, tx + 2, ty + 2, tw - 4, th - 4, 4, V3.ticket);
+      for (let k = 0; k < Math.floor((tw - 20) / 22); k++) px(ctx, tx + 10 + k * 22, ty + 2, 8, 3, V3.ticketEdge);
+      setFont(ctx, 13); ctx.fillStyle = V3.ink; ctx.fillText(c.cardLabel.toUpperCase(), tx + 16, ty + 14);
+      setFont(ctx, 42); ctx.fillText(this.clinicNumber.toLocaleString('en-GB'), tx + 14, ty + 32);
+      ctx.font = monoFor(10); ctx.fillStyle = this.clinicMoved ? V3.danger : V3.ink2;
+      ctx.fillText(this.clinicMoved ? CL.moved : c.cardNote, tx + 16, ty + 78);
+      if (this.step === 'clinic') buttons.push({ id: 'mail-support', label: c.link, kind: 'primary' });
+    } else if (id === 'meridian') {
+      line(`${ENQ.replyFrom} · ${E.meridian.when}`, 11, V3.ink2, 15, true);
+      line(ENQ.replySubject, 16, V3.ink, 22);
+      for (const m of ENQ.reply) line(m, 13, V3.ink, 17);
+      y += 4;
+      line(ENQ.directory, 12, V3.ink2, 16);
+    } else if (id === 'mum') {
+      const m = E.mum;
+      line(`${m.from} · ${m.when}`, 11, V3.ink2, 15, true);
+      line(m.subject, 17, V3.ink, 24);
+      // the loft photo, attached, beside her first lines (it moved here from her years — his "keep the loft photo")
+      const pS = 1.3, pw = Math.round(78 * pS), phH = Math.round(50 * pS), pxX = x + w - pw;
+      ctx.save(); ctx.translate(pxX, y); ctx.scale(pS, pS); drawLoftPhoto(ctx, 0, 0); ctx.restore();
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.attachment, pxX, y + phH + 3);
+      const wSave = w, top0 = y;
+      const narrow = (t: string, size: number, gap: number): void => {
+        setFont(ctx, size); ctx.fillStyle = V3.ink;
+        for (const l of wrapText(ctx, t, wSave - pw - 12)) { ctx.fillText(l, x, y); y += gap; }
+      };
+      for (const l of m.lines) narrow(l, 14, 18);
+      y = Math.max(y, top0 + phH + 16) + 4;
+      for (const l of m.after) line(l, 14, V3.ink, 18);
+      y += 4;
+      // her links: each one opens the News tab at that article
+      ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.fillText(m.linksLabel, x, y); y += 15;
+      ARTICLES.forEach((a, k) => {
+        if (y + 18 > bottom - 34) return;
+        roundEdge(ctx, x, y, w, 18, 4, V3.edge, V3.page);
+        ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(a.mast, x + 6, y + 4);
+        const mw = Math.ceil(ctx.measureText(a.mast + '  ').width);
+        setFont(ctx, 12); ctx.fillStyle = V3.primary;
+        ctx.save(); ctx.beginPath(); ctx.rect(x + 6 + mw, y, w - 12 - mw, 18); ctx.clip(); ctx.fillText(a.head, x + 6 + mw, y + 2); ctx.restore();
+        this.publish({ x, y, w, h: 18, id: `mail-link-${k}` });
+        y += 21;
+      });
+      // "Mum, I" — her reply, never sent (it moved here from her thread)
+      const dy = Math.min(y + 4, bottom - 30);
+      roundEdge(ctx, x, dy, w, 28, 5, V3.edge, V3.page);
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.replyLabel, x + 8, dy + 3);
+      setFont(ctx, 13); ctx.fillStyle = V3.ink;
+      const caret = Math.floor(this.t / CURSOR_BLINK) % 2 === 0 ? '▏' : '';
+      ctx.fillText(m.draft + caret, x + 8, dy + 13);
+      if (this.step === 'mumMail') buttons.push({ id: 'mail-read', label: m.read, kind: 'primary' });
+    }
+    this.bar(ctx, W, H, MAIL.address, buttons);
   }
 
   // ── the clinic: the number ───────────────────────────────────────────────
@@ -1199,9 +1408,9 @@ export class E4Browser {
       ctx.fillText(V.clip.title, cx, PAGE_TOP + 4);
       const tw = Math.ceil(ctx.measureText(V.clip.title + '   ').width);
       ctx.font = monoFor(11); ctx.fillStyle = V3.ink2;
-      ctx.fillText(`${V.clip.channel}  ·  ${V.clip.recommended}`, cx + tw, PAGE_TOP + 6);
+      ctx.fillText(`${V.clip.channel}`, cx + tw, PAGE_TOP + 6);
       drawContagionClip(ctx, this.botT + CLIP_TAKEOVER_SECONDS, cx, top, cw, ch);
-      this.bar(ctx, W, H, BOT.mark + ' · ' + V.clip.recommended, []);
+      this.bar(ctx, W, H, BOT.mark + ' · ' + V.clip.channel, []);
       return;
     }
     const top = PAGE_TOP + 4;
@@ -1275,15 +1484,15 @@ export class E4Browser {
   /** what the bot is showing her: her week (its evidence), then where she is heading, then the map and the clip */
   private drawBotPanel(ctx: CanvasRenderingContext2D, x: number, top: number, w: number, bottom: number): void {
     const b = this.bot;
-    const id = b?.id ?? 'hello';
+    const id0 = b?.id ?? 'hello';
+    const id = id0 === 'clip' ? 'map' : id0;   // S360: after the clip, its panel is the map's (the clip, small, in it)
     const title = (t: string, y: number): void => { setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(t.toUpperCase(), x, y); };
-    if (id === 'hello' || id === 'reasons') {
+    if (id === 'hello' || id === 'reasons' || id === 'diagnosis') {
       // its evidence: every refusal of the week, kept as a reason
       title(BOT.week.title, top);
       const rows: [string, string][] = [
         [CL.tab, `${CL.numberLabel} ${this.clinicNumber.toLocaleString('en-GB')}`],
         [BOT.week.meridian, BOT.week.declined],
-        [V.messenger.chats.house.name, V.messenger.house.left[0].text],
         [V.messenger.chats.dad.name, V.messenger.dad.before[1].text]
       ];
       let y = top + 22;
@@ -1335,7 +1544,8 @@ export class E4Browser {
     setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(S.title.toUpperCase(), x, top);
     setFont(ctx, 11); ctx.fillStyle = V3.botInk; ctx.fillText(S.stamp, x, top + 16);
     let y = top + 36;
-    for (const c of S.cards) {
+    // ⚑ S360 / H49 (his headset: "Stories like yours" was "too convoluted") — one story, one clear move (its button)
+    for (const c of S.cards.slice(0, 1)) {
       setFont(ctx, 15);
       const said = wrapText(ctx, `“${c.line}”`, w - 24).slice(0, 2);
       const h = 26 + said.length * 19;
@@ -1608,8 +1818,17 @@ export class E4Browser {
       this.go('left');
       return true;
     }
-    if (id.startsWith('tab-')) { this.openTab(id.slice(4)); return true; }
+    // ⚑ S360 — the mailbox
+    if (id.startsWith('mail-row-')) { this.mailOpen = id.slice(9) as MailId; this.idleNav = 0; playOnce('ui_press.mp3'); this.version++; return true; }
+    if (id === 'mail-support' && this.step === 'clinic') { this.enquiry = 'draft'; playOnce('ui_press.mp3'); this.go('meridian'); return true; }
+    if ((id === 'mail-read' || id.startsWith('mail-link-')) && (this.step === 'mumMail' || this.step === 'news')) {
+      this.openArticle(id === 'mail-read' ? 0 : Number(id.slice(10)));
+      return true;
+    }
+    if (id === 'sponsor-chat' && (this.step === 'news' || this.step === 'mumMail')) { this.openBot(); return true; }
+    if (id.startsWith('tab-')) { this.idleNav = 0; this.openTab(id.slice(4)); return true; }
     if (id === 'news-prev' || id === 'news-next') {
+      this.idleNav = 0;
       this.newsIndex = Math.max(0, Math.min(this.newsOpened - 1, this.newsIndex + (id === 'news-next' ? 1 : -1)));
       this.openTab('news');
       return true;
@@ -1628,15 +1847,7 @@ export class E4Browser {
       this.typeT = 0; playOnce('ui_press.mp3'); this.go('typing');
       return true;
     }
-    if ((id === 'result-agent' || id === 'ad-chat') && this.step === 'results') {
-      // ⚑ beat 10 — the one voice that stays
-      markE4('bot');
-      ledger.e4Space.push({ id: 'agent', outcome: 'opened', witness: W3.agent });
-      playOnce('agent_2026.mp3');
-      this.go('bot');
-      this.startBot('hello');
-      return true;
-    }
+    if ((id === 'result-agent' || id === 'ad-chat') && this.step === 'results') { this.openBot(); return true; }
     if (id.startsWith('conv-chip-') && (this.step === 'bot')) {
       const b = this.bot;
       const c = b?.chips?.[Number(id.slice(10))];
