@@ -34,9 +34,9 @@ import type { DesktopOS } from '../os';
 
 export type PanelEra = 'e1' | 'e2' | 'e3' | 'e4';
 export interface Rect { x: number; y: number; w: number; h: number }
-export interface PanelStep { text: string; done: boolean }
+export interface PanelStep { text: string; done: boolean; optional?: boolean }
 
-interface StepDef { text: string; done: string; speedrun?: boolean; textSpeedrun?: string; doneSpeedrun?: string; strip?: string; stripSpeedrun?: string }
+interface StepDef { text: string; done: string; optional?: boolean; speedrun?: boolean; textSpeedrun?: string; doneSpeedrun?: string; strip?: string; stripSpeedrun?: string }
 interface EraDef { title: string; lead: string; steps: StepDef[]; close: string }
 const DEFS = strings as unknown as Record<PanelEra, EraDef>;
 
@@ -61,7 +61,8 @@ export class StartPanel {
       .filter((s) => !(speed && s.speedrun === false && !extraOn('tapes')))
       .map((s) => { const speed = isSpeedrun() && !(this.era === 'e3' && extraOn('work')); return {
         text: strip && s.strip ? (speed && s.stripSpeedrun ? s.stripSpeedrun : s.strip) : speed && s.textSpeedrun ? s.textSpeedrun : s.text,
-        done: this.done(speed && s.doneSpeedrun ? s.doneSpeedrun : s.done)
+        done: this.done(speed && s.doneSpeedrun ? s.doneSpeedrun : s.done),
+        optional: s.optional
       }; });
   }
 
@@ -89,7 +90,7 @@ export class StartPanel {
   close(): void { this.open = false; this.seen = true; }
 
   /** the first step not yet done — the one the card leans on */
-  private currentIndex(steps: PanelStep[]): number { return steps.findIndex((s) => !s.done); }
+  private currentIndex(steps: PanelStep[]): number { return steps.findIndex((s) => !s.done && !s.optional); }
 
   // ── drawing — one look per era, all from the era's own palette and chrome ────────────────────────────────
 
@@ -143,10 +144,16 @@ export class StartPanel {
     const cur = this.currentIndex(steps);
     steps.forEach((s, i) => {
       const bx = c.x + m.pad, by = ty;
-      // a sunken box, and the tick the era would draw: hard pixels, one colour
-      ui.px(ctx, bx, by, m.box, m.box, ERA1.black);
-      ui.px(ctx, bx + 1, by + 1, m.box - 2, m.box - 2, ERA1.white);
-      if (s.done) for (const [gx, gy] of [[1, 3], [2, 4], [3, 5], [4, 4], [5, 3], [6, 2]]) ui.px(ctx, bx + gx, by + gy, 1, 2, ERA1.ok);
+      if (s.optional) {
+        // ⚑ S362 / H38 (his headset, 10 Nov 20:48: Restorify's "what you can do" "did not mention the companion or the phone")
+        //   — the things that are there to use but are not steps: a dot, not a box, and never the one the card leans on
+        ui.px(ctx, bx + 2, by + 2, m.box - 4, m.box - 4, s.done ? ERA1.grey : ERA1.navy);
+      } else {
+        // a sunken box, and the tick the era would draw: hard pixels, one colour
+        ui.px(ctx, bx, by, m.box, m.box, ERA1.black);
+        ui.px(ctx, bx + 1, by + 1, m.box - 2, m.box - 2, ERA1.white);
+        if (s.done) for (const [gx, gy] of [[1, 3], [2, 4], [3, 5], [4, 4], [5, 3], [6, 2]]) ui.px(ctx, bx + gx, by + gy, 1, 2, ERA1.ok);
+      }
       ui.setFont(ctx, m.size);
       ctx.fillStyle = s.done ? ERA1.grey : ERA1.black;
       L.rows[i].forEach((r, j) => ctx.fillText(r, bx + m.box + 6, by + j * m.lh));

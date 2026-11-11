@@ -21,7 +21,9 @@
    { "text": "Open Your Story and go through the topics.", "done": "testimonyPrep" },
    { "text": "Agree to the release.", "done": "testimonyRelease" },
    { "text": "Play your take, then send it to editing.", "done": "testimonyTapes", "speedrun": false },
-   { "text": "Upload your story from the \u201c1997\u201d folder, then watch it online.", "done": "testimonyOnline" }
+   { "text": "Upload your story from the \u201c1997\u201d folder, then watch it online.", "done": "testimonyOnline" },
+   { "_docS362": "⚑ S362 / H38 (his headset, 10 Nov 20:48: Restorify's \"what you can do\" \"did not mention the companion or the phone\") — two things that are there to use but are not steps: `optional` lines are drawn with a dot, never lean the card on them, and need no tick (the phone's greys once CLEAR has been played).", "text": "Your Companion is the button beside your streak. Open it any time.", "optional": true, "done": "none" },
+   { "text": "Your phone is on the desk, with a game on it, once you have checked in.", "optional": true, "done": "clearPlayed" }
   ],
   "close": "Close"
  },

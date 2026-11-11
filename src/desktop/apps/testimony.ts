@@ -126,7 +126,55 @@ export class TestimonyApp {
    * piece's synthetic voice is for the apparatus only, never for a person.
    */
   /** os.ts calls this while the window is shut (closed or minimised), so no bed or tone outlives the picture */
-  syncSound(): void { this.syncHall(); this.syncTeaser(); }
+  syncSound(): void { this.syncHall(); this.syncTeaser(); this.syncSongs(); }
+
+  /**
+   * ⚑ S362 / H37 (his headset, 10 Nov 20:45–20:46: "the opening song should belong to Restorify itself … the story
+   * media needs a new song … Testimony of Daniel needs a song") — Restorify Media's two songs
+   * (tools/make_restorify_media_songs.py). THE THEME is the media arm's own brand: it plays while he works in its
+   * window (the prep, the release, the tape folder, the editor) and never under the footage (the raw takes are the
+   * people's: bare). THE BED is the "uplifting testimony" song under the story it makes of him — the editor's
+   * preview and the final playback — swelling to the climax and resolving as the picture ends, then ringing out
+   * under the page for the rest of its 17 s. It is sincere-sounding on purpose; the manipulation is the swell.
+   */
+  private theme: HTMLAudioElement | null = null;
+  private bed: HTMLAudioElement | null = null;
+  private bedBase = 1;
+  /** s of the bed's ring-out still to run after the final playback has ended (17 s song − 13.3 s picture) */
+  private bedTail = 0;
+  private static readonly BED_SECONDS = 17;
+  private get bedWanted(): boolean {
+    if (!this.open) return false;
+    if (this.stage === 'cut') return this.previewT >= 0;
+    return this.stage === 'online' && (this.web === 'play' || (this.web === 'done' && this.bedTail > 0));
+  }
+  private get themeWanted(): boolean {
+    if (!this.open || this.bedWanted) return false;
+    switch (this.stage) {
+      case 'prep': case 'release': case 'tapes': return true;
+      case 'cut': return !(this.exportT >= 0 && !this.exported);
+      case 'online': return this.web === 'saved';
+      default: return false;   // 'player': a take of the footage — bare, nothing scored
+    }
+  }
+  private syncSongs(): void {
+    if (this.themeWanted) {
+      if (!this.theme) { this.theme = playLoop('restorify_media_theme_2003.mp3'); if (this.theme) this.theme.volume = Math.min(1, this.theme.volume * 0.8); }
+      else if (this.theme.ended) this.theme = null;
+    } else if (this.theme) { stopClip(this.theme); this.theme = null; }
+    if (this.bedWanted) {
+      if (!this.bed) {
+        this.bed = playOnce('restorify_testimony_bed_2003.mp3');
+        this.bedBase = this.bed ? this.bed.volume : 1;
+      }
+      if (this.bed) {
+        // the preview ends at its blocks' end: ease the bed out over the last 0.8 s so the cut is not a click
+        let fade = 1;
+        if (this.stage === 'cut') fade = Math.max(0, Math.min(1, (VERSIONS[this.version].length * BLOCK_SECONDS - this.previewT) / 0.8));
+        this.bed.volume = this.bedBase * fade;
+      }
+    } else if (this.bed) { stopClip(this.bed); this.bed = null; }
+  }
   private teaserSound: HTMLAudioElement[] | null = null;
   private syncTeaser(): void {
     const want = this.open && this.stage === 'online' && this.web === 'teaser' && this.webT < TEASER.cutSeconds;
@@ -154,6 +202,8 @@ export class TestimonyApp {
       }
     }
     this.syncHall(); this.syncTeaser();
+    if (this.stage === 'online' && this.web === 'done' && this.bedTail > 0) { this.bedTail = Math.max(0, this.bedTail - dt); }
+    this.syncSongs();
     if (this.stage === 'cut' && this.previewT >= 0) {
       this.previewT += dt; moving = true;
       if (this.previewT >= VERSIONS[this.version].length * BLOCK_SECONDS) { this.previewT = -1; this.dirty = true; }
@@ -165,7 +215,10 @@ export class TestimonyApp {
     if (this.stage === 'online' && (this.web === 'buffer' || this.web === 'play')) {
       this.webT += dt; moving = true;
       if (this.web === 'buffer' && this.webT >= BUFFER_SECONDS) { this.web = 'play'; this.webT = 0; }
-      else if (this.web === 'play' && this.webT >= VERSIONS[2].length * BLOCK_SECONDS) { this.web = 'done'; this.webT = 0; this.dirty = true; }
+      else if (this.web === 'play' && this.webT >= VERSIONS[2].length * BLOCK_SECONDS) {
+        this.web = 'done'; this.webT = 0; this.dirty = true;
+        this.bedTail = Math.max(0, TestimonyApp.BED_SECONDS - VERSIONS[2].length * BLOCK_SECONDS);   // ⚑ S362 / H37: the song rings out past the picture
+      }
     }
     if (this.stage === 'online' && this.web === 'teaser') {
       this.webT += dt; moving = true;
@@ -185,7 +238,7 @@ export class TestimonyApp {
   /** every press inside the window is the window's */
   handleClick(x: number, y: number): boolean {
     const r = this.press(x, y);
-    this.syncHall(); this.syncTeaser();   // a press may start, stop or close a clip — the hall follows at once, not on the next frame
+    this.syncHall(); this.syncTeaser(); this.syncSongs();   // a press may start, stop or close a clip — the hall follows at once, not on the next frame
     return r;
   }
   private press(x: number, y: number): boolean {
@@ -322,37 +375,90 @@ export class TestimonyApp {
     this.button(ctx, c.x + c.w - 10 - bw, c.y + c.h - 32, label, bid, bw);
   }
 
+  /**
+   * ⚑ S362 / H37 (his headset, 10 Nov 20:46: "Media release form needs a redesign"; "he likes the Decline being greyed
+   * out") — the release form as a 2003 setup wizard: a white header band with the form's name and a small mark, a
+   * navy side panel listing the steps (this is the second), the participant's facts and the permitted uses in grouped
+   * boxes with XP checkboxes, the approval as a green badge, and the footer's etched line over the buttons. Same
+   * words, same facts, same two buttons (`ts-agree` live; Decline drawn greyed and taking no press, S267). ERA1 only.
+   */
   private drawRelease(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {
-    this.heading(ctx, c, T.release.title, T.release.intro);
-    const bx = c.x + 12, by = c.y + 46, bw = c.w - 24;
-    ui.px(ctx, bx, by, bw, 88, ERA1.white);
-    ui.px(ctx, bx, by, bw, 1, ERA1.grey); ui.px(ctx, bx, by, 1, 88, ERA1.grey);
-    const name = ledger.name || 'Daniel';
-    T.release.fields.forEach(([k, v], i) => {
-      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(k, bx + 10, by + 10 + i * 19);
-      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(v.replace('{name}', name), bx + 120, by + 9 + i * 19);
+    const R = T.release;
+    const HEAD = 40, FOOT = 40, SIDE = 112;
+    // the header band: the form's name, what it is, and the media arm's mark
+    ui.px(ctx, c.x, c.y, c.w, HEAD, ERA1.white);
+    ui.px(ctx, c.x, c.y + HEAD, c.w, 2, ERA1.titleBlue);
+    ui.setFont(ctx, 12); ctx.fillStyle = ERA1.navy; ctx.fillText(R.title, c.x + 12, c.y + 8);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(R.intro, c.x + 12, c.y + 25);
+    const mx = c.x + c.w - 38, my = c.y + 6;
+    ui.px(ctx, mx, my, 28, 28, ERA1.navy); ui.px(ctx, mx + 1, my + 1, 26, 26, ERA1.titleBlue);
+    ui.px(ctx, mx + 6, my + 6, 16, 16, ERA1.white); ui.px(ctx, mx + 9, my + 9, 10, 10, ERA1.navy);
+    ui.px(ctx, mx + 12, my + 12, 4, 4, ERA1.tooltip);   // the Restorify Media mark: a lens in a frame
+    // the side panel: the wizard's steps, the second one lit
+    const sy = c.y + HEAD + 2, sh = c.h - HEAD - 2 - FOOT;
+    ui.px(ctx, c.x, sy, SIDE, sh, ERA1.navy);
+    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.white;
+    ui.wrapText(ctx, R.sideTitle, SIDE - 20).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, c.x + 10, sy + 8 + i * 12));
+    ui.px(ctx, c.x + 10, sy + 36, SIDE - 20, 1, ERA1.titleBlue);
+    (R.steps as string[]).forEach((label, i) => {
+      const y = sy + 50 + i * 26, now = i === R.stepNow, past = i < R.stepNow;
+      ui.px(ctx, c.x + 10, y - 2, 14, 14, now ? ERA1.tooltip : past ? ERA1.ok : ERA1.titleBlue);
+      ui.setFont(ctx, 9); ctx.fillStyle = now ? ERA1.black : ERA1.white;
+      ctx.fillText(past ? '+' : String(i + 1), c.x + 14, y + 1);
+      ctx.fillStyle = now ? ERA1.tooltip : ERA1.white;
+      ctx.fillText(label, c.x + 30, y + 1);
     });
-    const tick = (x: number, y: number, live: boolean): void => {
-      ui.bevel(ctx, x, y, 12, 12, false); ui.px(ctx, x + 2, y + 2, 8, 8, live ? ERA1.white : ERA1.silver);
-      ui.px(ctx, x + 3, y + 6, 2, 3, ERA1.black); ui.px(ctx, x + 5, y + 7, 2, 2, ERA1.black); ui.px(ctx, x + 7, y + 4, 2, 3, ERA1.black);
+    // the form's body
+    ui.px(ctx, c.x + SIDE, sy, c.w - SIDE, sh, ERA1.paper);
+    const fx = c.x + SIDE + 12, fw = c.w - SIDE - 24;
+    const group = (y: number, h: number, title: string): void => {
+      ui.px(ctx, fx, y + 5, fw, 1, ERA1.silver); ui.px(ctx, fx, y + h, fw, 1, ERA1.silver);
+      ui.px(ctx, fx, y + 5, 1, h - 5, ERA1.silver); ui.px(ctx, fx + fw - 1, y + 5, 1, h - 5, ERA1.silver);
+      ui.setFont(ctx, 9);
+      const tw = Math.ceil(ctx.measureText(title).width);
+      ui.px(ctx, fx + 8, y, tw + 8, 11, ERA1.paper);
+      ctx.fillStyle = ERA1.navy; ctx.fillText(title, fx + 12, y + 1);
     };
-    let y = by + 102;
-    for (const u of T.release.uses) { tick(bx + 4, y, true); ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(u, bx + 22, y + 1); y += 20; }
-    tick(bx + 24, y, false);
-    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.grey; ctx.fillText(T.release.web, bx + 42, y + 1);
-    ui.setFont(ctx, 8); ctx.fillText(T.release.webNote, bx + 50 + ctx.measureText(T.release.web).width + 10, y + 3);
-    y += 30;
-    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.ok; ctx.fillText(T.release.status, bx + 4, y);
-    this.rightButton(ctx, c, T.release.agree, 'ts-agree');
-    // ⚑ S267 (his (B), 2026-10-27) — the refusal is drawn, and drawn taken away: a greyed Decline that takes no press,
-    //   left of the one live button, with the programme's reason in the small print above them
+    const name = ledger.name || 'Daniel';
+    let y = sy + 10;
+    const gh = 16 + R.fields.length * 17;
+    group(y, gh, R.participantTitle);
+    R.fields.forEach(([k, v], i) => {
+      ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(k, fx + 12, y + 20 + i * 17);
+      ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(v.replace('{name}', name), fx + 104, y + 19 + i * 17);
+    });
+    y += gh + 10;
+    const uh = 18 + (R.uses.length + 1) * 18;
+    group(y, uh, R.usesTitle);
+    const tick = (x: number, ty: number, live: boolean): void => {
+      ui.px(ctx, x, ty, 13, 13, live ? ERA1.greyDark : ERA1.silver);
+      ui.px(ctx, x + 1, ty + 1, 11, 11, live ? ERA1.white : ERA1.beige);
+      if (live) { ui.px(ctx, x + 3, ty + 6, 2, 3, ERA1.ok); ui.px(ctx, x + 5, ty + 8, 2, 2, ERA1.ok); ui.px(ctx, x + 7, ty + 4, 2, 5, ERA1.ok); ui.px(ctx, x + 9, ty + 2, 1, 3, ERA1.ok); }
+    };
+    let uy = y + 18;
+    for (const u of R.uses) { tick(fx + 12, uy, true); ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(u, fx + 32, uy + 2); uy += 18; }
+    tick(fx + 32, uy, false);   // "website" sits inside "ministry communications": indented, unticked, and already included
+    ui.setFont(ctx, 10); ctx.fillStyle = ERA1.grey; ctx.fillText(R.web, fx + 52, uy + 2);
+    ui.setFont(ctx, 8); ctx.fillText(R.webNote, fx + 60 + Math.ceil(ctx.measureText(R.web).width) + 8, uy + 4);
+    y += uh + 10;
+    // the approval: a green badge, as the programme's confirmations are
     ui.setFont(ctx, 10);
-    const aw = Math.max(76, Math.ceil(ctx.measureText(T.release.agree).width) + 18);
-    const dw = Math.max(76, Math.ceil(ctx.measureText(T.release.decline).width) + 18);
-    this.button(ctx, c.x + c.w - 10 - aw - 8 - dw, c.y + c.h - 30, T.release.decline, null, dw);
+    const sw = Math.ceil(ctx.measureText(R.status).width) + 20;
+    ui.px(ctx, fx, y, sw, 17, ERA1.ok); ui.px(ctx, fx, y, sw, 1, ERA1.white);
+    ctx.fillStyle = ERA1.white; ctx.fillText(R.status, fx + 10, y + 4);
+    // the footer: an etched line, the reason in small print, the greyed Decline and the one live button
+    const fy = c.y + c.h - FOOT;
+    ui.px(ctx, c.x, fy, c.w, 1, ERA1.silver); ui.px(ctx, c.x, fy + 1, c.w, 1, ERA1.white);
+    ui.setFont(ctx, 10);
+    const aw = Math.max(76, Math.ceil(ctx.measureText(R.agree).width) + 18);
+    const dw = Math.max(76, Math.ceil(ctx.measureText(R.decline).width) + 18);
+    const by = c.y + c.h - 30;
+    const ax = c.x + c.w - 10 - aw;
+    ui.button(ctx, ax, by, aw, 20, R.agree, { hover: this.hover === 'ts-agree', primary: true });
+    this.hits.push({ x: ax, y: by, w: aw, h: 20, id: 'ts-agree' });
+    this.button(ctx, ax - 8 - dw, by, R.decline, null, dw);
     ui.setFont(ctx, 8); ctx.fillStyle = ERA1.greyDark;
-    const nw = ctx.measureText(T.release.declineNote).width;
-    ctx.fillText(T.release.declineNote, c.x + c.w - 10 - Math.ceil(nw), c.y + c.h - 42);
+    ui.wrapText(ctx, R.declineNote, ax - 8 - dw - 12 - (c.x + 10)).slice(0, 3).forEach((ln, i) => ctx.fillText(ln, c.x + 10, fy + 7 + i * 10));
   }
 
   private drawTapes(ctx: CanvasRenderingContext2D, c: ui.ContentRect): void {

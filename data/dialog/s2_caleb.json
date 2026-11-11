@@ -6,11 +6,12 @@
   "chat": {
    "_doc": "S2R.3A — the conversation. `typingCharsPerSecond` is Caleb TYPING, not a reveal effect: he is a person at a keyboard in 2003, so it should read as a hand, not a printer.",
    "typingCharsPerSecond": 13,
-   "openDelaySeconds": 1.8,
-   "lineGapSeconds": 1.4,
-   "chipsArriveSeconds": 0.9,
-   "replyGapSeconds": 1.6,
-   "commitLandsSeconds": 2.2
+   "openDelaySeconds": 2.6,
+   "lineGapSeconds": 2.4,
+   "chipsArriveSeconds": 1.4,
+   "replyGapSeconds": 2.4,
+   "commitLandsSeconds": 2.2,
+   "_docS362": "⚑ S362 / H32 (his headset, 10 Nov 20:51, as the Messenger filled: \"I do wonder if it should be a little bit slower, the cascade of messages here\") — openDelay 1.8 → 2.6, lineGap 1.4 → 2.4 (the gap between one arriving message and the next), chipsArrive 0.9 → 1.4, replyGap 1.6 → 2.4. Moderate: about 70% more room per message, no line gets a timer on the player — chips still wait forever."
   },
   "redactionRowSeconds": 0.52,
   "_doc_redaction": "s per transcript row for the blackout AND for its reverse at S2R.5 — one component run twice, so this single number times both. Slow enough to watch a sentence disappear; the whole walk must still finish comfortably inside the alert's own run (see `alert` below), or the stamp lands before the conversation is gone.",
@@ -256,6 +257,9 @@
   "subjectLabel": "Subject:",
   "subject": "We have to stop.",
   "unread": "1 new message",
+  "inLine": "The message is in this email. Read it when you are ready.",
+  "openHoldSeconds": 4.0,
+  "_docS362": "⚑ S362 / H27 (his headset, 10 Nov 20:56: \"PureMail no longer plays in Lamby's voice. He wants the text to say it is in the email, and to pause a little\") — `inLine` is the plain line on the envelope card; Open is greyed for `openHoldSeconds` after the card settles (was pressable at once, 0 s) so the line can be read before the letter opens. Operable surface, no joke, no Dossier text.",
   "openLabel": "Open",
   "continueLabel": "Continue",
   "readAloudLabel": "▶ read aloud",
@@ -350,7 +354,8 @@
     "Your accountability record could not be sent."
    ],
    "address": "http://care.restorify.net/accountability/escalate.asp",
-   "seconds": 5.5,
+   "_docS362": "⚑ S362 / H26 (his headset, 10 Nov 20:55: \"it's great… needs a little more time to read the 404 page\") — `seconds` 5.5 → 9.0 (+3.5 s). The tear still takes the last `tearSeconds`, so the page stands CLEAN for 3.3 s → 6.8 s (about 190 characters of text at a slow reader's pace).",
+   "seconds": 9.0,
    "tearSeconds": 2.2
   }
  },

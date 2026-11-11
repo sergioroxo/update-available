@@ -74,6 +74,11 @@ const SILENT_NEXT = (A as unknown as { silentNextSeconds: number }).silentNextSe
 const STREAK_FALL = A.streakFallSeconds;   // s for the counter to run 412 → 0
 const GLITCH_STEP = MAIL.streakGlitchStepSeconds; // s per state of the dying field (S2R.5)
 const MAIL_ARRIVE = MAIL.arriveGlitchSeconds;     // s of the envelope's glitch entrance
+/** ⚑ S362 / H27 (his headset, 10 Nov 20:56: "PureMail no longer plays in Lamby's voice… He wants the text to say it is in
+ *  the email, and to pause a little") — the envelope card now SAYS the message is in the email, and Open waits this
+ *  many seconds (drawn greyed, nothing pressable) so the line is read before the piece moves on to the letter */
+const OPEN_HOLD = (caleb.pureMail as unknown as { openHoldSeconds: number }).openHoldSeconds;
+const IN_LINE = (caleb.pureMail as unknown as { inLine: string }).inLine;
 /** where in the entrance the tear resolves into the actual envelope card */
 const MAIL_LOCK = 0.34;
 
@@ -251,6 +256,9 @@ export class AccountabilityApp {
     return this.mailT >= NET.lines.length * (NET.trySeconds + NET.failSeconds) + NET.resultSeconds;
   }
 
+  /** s the envelope card has been showing (H27: Open is held until OPEN_HOLD) */
+  private envT = 0;
+
   openMail(): void {
     if (this.mail !== 'none' && this.mail !== 'failing' && this.mail !== 'error') return;
     this.mail = 'arriving';
@@ -287,7 +295,11 @@ export class AccountabilityApp {
     }
     if (this.mail === 'arriving') {
       this.mailT += dt;
-      if (this.mailT >= MAIL_ARRIVE) this.mail = 'envelope';
+      if (this.mailT >= MAIL_ARRIVE) { this.mail = 'envelope'; this.envT = 0; }
+      this.dirty = true;
+    }
+    if (this.mail === 'envelope' && this.envT < OPEN_HOLD) {
+      this.envT = Math.min(OPEN_HOLD, this.envT + dt);
       this.dirty = true;
     }
     if (this.mail === 'letter') { this.glitchT += dt; this.dirty = true; }
@@ -649,9 +661,17 @@ export class AccountabilityApp {
     ctx.fillStyle = ERA1.black;
     ctx.fillText(caleb.pureMail.from, c.x + 60, c.y + 23);
     ctx.fillText(caleb.pureMail.subject, c.x + 60, c.y + 39);
+    // ⚑ S362 / H27 — plain words: the message IS in this email. Then a pause: Open is greyed until it has been readable
+    //   for OPEN_HOLD seconds (no timer to beat — it only waits, the player is never rushed).
+    ui.setFont(ctx, 10);
+    ctx.fillStyle = ERA1.black;
+    let ly = c.y + 58;
+    for (const row of ui.wrapText(ctx, IN_LINE, c.w - 104)) { ctx.fillText(row, c.x + 8, ly); ly += 12; }
     const bx = c.x + c.w - 84; const by = c.y + c.h - 26;
-    ui.button(ctx, bx, by, 76, 20, caleb.pureMail.openLabel, { hover: this.hover === 'mail-open' });
-    if (interactive) this.hits.push({ x: bx, y: by, w: 76, h: 20, id: 'mail-open' });
+    const held = this.mail === 'envelope' && this.envT < OPEN_HOLD;
+    const wait = this.mail === 'arriving' || held;
+    ui.button(ctx, bx, by, 76, 20, caleb.pureMail.openLabel, { hover: !wait && this.hover === 'mail-open', disabled: wait });
+    if (interactive && !held) this.hits.push({ x: bx, y: by, w: 76, h: 20, id: 'mail-open' });
   }
 
   private drawLetter(ctx: CanvasRenderingContext2D): void {

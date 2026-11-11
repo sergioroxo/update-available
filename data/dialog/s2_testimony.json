@@ -57,6 +57,12 @@
   "done": "Done"
  },
  "release": {
+  "_docS362": "⚑ S362 / H37 (his headset, 10 Nov 20:46: \"Media release form needs a redesign; he likes the Decline being greyed out\") — the form is redrawn as a 2003 setup wizard (the window's XP frame, a white header band with the form's name, a navy side panel with the steps, grouped boxes, XP checkboxes, the one live button as the primary). Same words and the same facts as before (the fields, the four ticked uses, the website ticked inside ministry communications, DISTRIBUTION: APPROVED, the greyed Decline and its note); `sideTitle`, `steps`, `stepNow`, `participantTitle`, `usesTitle` are the wizard's own labels. OPERABLE: the programme's form.",
+  "sideTitle": "Restorify Media",
+  "steps": ["Preparation", "Release form", "The tapes", "Your page"],
+  "stepNow": 1,
+  "participantTitle": "Participant",
+  "usesTitle": "Permitted uses",
   "title": "MEDIA PARTICIPATION & RELEASE",
   "intro": "Filled in from your Restorify profile. Please check and agree.",
   "fields": [["Name", "{name}"], ["Programme no.", "RF-1997-0412"], ["Fellowship", "TriedPath · New Morning"], ["Contact", "your mother (on file)"]],

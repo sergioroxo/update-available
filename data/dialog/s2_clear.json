@@ -25,7 +25,19 @@
     "promo": "PROMO COPY 0049/0099"
   },
   "hud": { "label": "CLEAR", "meter": "CLEAR", "file": "FILE", "next": "NEXT" },
-  "keys": { "pause": "PAUSE", "resume": "RESUME", "soundOn": "SOUND ON", "soundOff": "SOUND OFF" },
+  "keys": { "pause": "PAUSE", "resume": "RESUME", "soundOn": "SOUND", "soundOff": "MUTED", "swap": "SWAP" },
+  "_docS362": "⚑ S362 / H39 (his headset, 10 Nov 20:49: \"the phone is much better, but its screen is small; he can't tell how to play; wants an explainer and the phone's buttons to help\") — `how` is the explainer shown once (the first press on the title opens it, the next starts the game): four steps in 2× type, each with its picture (src/games/clear.ts drawHow), and one line for a keyboard. `keys` are the soft keys' words at 2×: SOUND / MUTED say what the key is and the state it is in; SWAP is the middle key (it was an unlabelled ball under a 1× NEXT). Operable, the programme's own phone game; plain words, nothing scored.",
+  "how": {
+    "title": "HOW TO PLAY",
+    "steps": [
+      ["TAP THE BOARD", "TO AIM AND FIRE"],
+      ["MATCH THREE OF", "ONE COLOUR"],
+      ["GOLD RING = A", "LETTER YOU NEED"],
+      ["FILL THE TRAY:", "I KNOW WHO I AM"]
+    ],
+    "keys": "KEYS: LEFT RIGHT AIM, SPACE FIRES, X SWAPS",
+    "start": "TAP TO START"
+  },
   "paused": "PAUSED",
   "float": { "chain": "CHAIN X", "combo": "COMBO X" },
   "partner": {

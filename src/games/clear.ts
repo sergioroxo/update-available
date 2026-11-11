@@ -91,6 +91,13 @@ class Clip implements Painter {
 }
 const T = (g: Painter, s: string, x: number, y: number, col: string, sc = 1): void => { text57(g, s, Math.round(x), Math.round(y), col, sc); };
 const CT = (g: Painter, s: string, y: number, col: string, sc = 1, x0 = 0, w = W): void => T(g, s, x0 + Math.round((w - textW(s, sc)) / 2), y, col, sc);
+/** ⚑ S362 / H39 — a small "tap" mark for the explainer: a finger-tip dot with two arcs */
+function tapMark(g: Painter, x: number, y: number): void {
+  g.fillStyle = R.lcdDark;
+  for (const [dx, dy] of ringPts(3, 4)) g.fillRect(Math.round(x) + dx, Math.round(y) + dy, 1, 1);
+  for (const [dx, dy] of ringPts(6, 7)) g.fillRect(Math.round(x) + dx, Math.round(y) + dy, 1, 1);
+  g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3);
+}
 function glyph(g: Painter, ch: string, cx: number, cy: number, col: string, sc = 1): void {
   T(g, ch, cx - Math.round(textW(ch, sc) / 2), cy - Math.round((TH * sc) / 2), col, sc);
 }
@@ -361,13 +368,17 @@ interface Bit { x: number; y: number; vx: number; vy: number; life: number; col:
 interface Float { x: number; y: number; t: number; s: string; col: string; big?: boolean }
 interface Ring { x: number; y: number; t: number }
 interface Slot { ch: string; st: number; flash: number }   // st: 0 empty, 1 a letter on its way, 2 in place, 3 a gap
-type Mode = 'title' | 'play' | 'wave' | 'finish' | 'end';
+type Mode = 'title' | 'how' | 'play' | 'wave' | 'finish' | 'end';
 const SLOT_P = 13, SLOT_W = 10, SLOT_H = 14;   // v8: a slot holds one 5×7 letter at 2×
 const slotX = (i: number): number => { const tw = SENTENCE.length * SLOT_P - (SLOT_P - SLOT_W); return BX + Math.round((BW - tw) / 2) + i * SLOT_P; };
 const slotText = (g: Painter, ch: string, x: number, y: number, col: string): void => T(g, ch, x + Math.round((SLOT_W - textW(ch, 2)) / 2), y, col, 2);
 const mmss = (s: number): string => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 /** the soft keys on the glass (the prototype's hit rects) */
-const KEY_PAUSE = { x: 8, y: 292, w: 70, h: 26 }, KEY_SWAP = { x: 90, y: 292, w: 60, h: 26 }, KEY_SOUND = { x: 162, y: 292, w: 70, h: 26 };
+// ⚑ S362 / H39 (his headset, 10 Nov 20:49: "the phone is much better, but its screen is small; he can't tell how to play;
+//   wants an explainer and the phone's buttons to help") — the three soft keys are drawn as KEYS now, their words at 2×
+//   (they were 1×: five pixels tall on a glass the size of a thumb), and the middle one is a key too: SWAP, with the ball
+//   it will put in the gun. Same three presses as before (pause, swap, sound); only their size and their words moved.
+const KEY_PAUSE = { x: 4, y: 292, w: 74, h: 26 }, KEY_SWAP = { x: 82, y: 292, w: 76, h: 26 }, KEY_SOUND = { x: 162, y: 292, w: 76, h: 26 };
 const inside = (r: { x: number; y: number; w: number; h: number }, x: number, y: number): boolean => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
 
 export class Clear implements DeviceGame {
@@ -664,10 +675,16 @@ export class Clear implements DeviceGame {
   takeFiling(): string | null { const f = this.filing; this.filing = null; return f; }
 
   // ── input ─────────────────────────────────────────────────────────────────────────────────────────────────
-  private press(): void { if (this.mode === 'title') this.start(); else if (this.mode === 'end' && this.endT > 0.8) this.start(); }
+  /** ⚑ S362 / H39 — the explainer has been shown (once: the first press on the title opens it; the next one plays) */
+  private howSeen = false;
+  private press(): void {
+    if (this.mode === 'title') { if (!this.howSeen) { this.howSeen = true; this.mode = 'how'; this.clock = 0; } else this.start(); }
+    else if (this.mode === 'how') this.start();
+    else if (this.mode === 'end' && this.endT > 0.8) this.start();
+  }
   key(k: GameKey): void {
     SND.unlock();
-    if (this.mode === 'title' || this.mode === 'end') { this.press(); return; }
+    if (this.mode === 'title' || this.mode === 'how' || this.mode === 'end') { this.press(); return; }
     if (this.mode !== 'play') return;
     if (k === 'start') { this.togglePause(); return; }
     if (this.paused) return;
@@ -679,7 +696,7 @@ export class Clear implements DeviceGame {
    *  the board aims at the tap and fires; paused, a tap on the board resumes */
   tap(x: number, y: number): void {
     SND.unlock();
-    if (this.mode !== 'title') {
+    if (this.mode !== 'title' && this.mode !== 'how') {
       if (inside(KEY_PAUSE, x, y)) { this.togglePause(); return; }
       if (inside(KEY_SOUND, x, y)) { phoneQuiet = !phoneQuiet; return; }
       if (inside(KEY_SWAP, x, y)) { this.swap(); return; }
@@ -693,7 +710,7 @@ export class Clear implements DeviceGame {
   /** what the screen shows now: while anything moves, the clock (30 a second); at rest, exactly what is visible */
   frameKey(): string {
     const m = SND.muted() ? 1 : 0;
-    const busy = this.mode === 'title' || this.mode === 'wave' || this.mode === 'finish' || (this.mode === 'play' && !this.paused)
+    const busy = this.mode === 'title' || this.mode === 'how' || this.mode === 'wave' || this.mode === 'finish' || (this.mode === 'play' && !this.paused)
       || this.flights.length > 0 || this.fallers.length > 0 || this.bits.length > 0 || this.rings.length > 0 || this.floats.length > 0
       || this.flashFx > 0 || this.msg.t < 0.4 || this.msg.ring > 0 || this.slots.some((s) => s.flash > 0);
     if (busy) return `${this.mode}|${Math.floor(this.clock * 30)}|${m}`;
@@ -706,6 +723,7 @@ export class Clear implements DeviceGame {
     P(g, 0, 0, R.lcd, W, H);
     const blink = Math.floor(this.clock * 2) % 2 === 0;
     if (this.mode === 'title') { this.drawTitle(g, blink); return; }
+    if (this.mode === 'how') { this.drawHow(g, blink); return; }
     this.header(g); this.board(g); this.footer(g);
     if (this.paused) { P(g, BX, BY + 80, R.lcdDark, BW, 40); CT(g, D.paused, BY + 90, R.lcd, 3, BX, BW); }
     if (this.flashFx > 0) {                                     // the white flash (alpha ≤ 0.35): a scanline dither
@@ -863,11 +881,54 @@ export class Clear implements DeviceGame {
   }
   private footer(g: Painter): void {
     this.partner(g);
-    const sk = (x: number, label: string): void => { rrect(g, x, 294, 70, 22, 6, R.frame); rrect(g, x + 1, 295, 68, 20, 5, R.lcdDark); CT(g, label, 302, R.lcd, 1, x, 70); };
-    sk(KEY_PAUSE.x, this.paused ? D.keys.resume : D.keys.pause);
-    sk(KEY_SOUND.x, SND.muted() ? D.keys.soundOff : D.keys.soundOn);
-    CT(g, D.hud.next, 294, R.lcdMid, 1, 78, 84);
-    if (this.mode === 'play') this.ballAt(g, 120, 308, this.nxt, 1);
+    // ⚑ S362 / H39 — three KEYS, their words at 2× (the glass is small): what each press does, said on the key
+    const key = (r: { x: number; y: number; w: number; h: number }, on = true): void => {
+      rrect(g, r.x, r.y + 2, r.w, r.h - 4, 7, R.frame); rrect(g, r.x + 2, r.y + 4, r.w - 4, r.h - 8, 5, on ? R.lcdDark : R.lcdMid);
+    };
+    const word = (label: string, col: string, x0: number, w0: number): void => CT(g, label, 299, col, 2, x0, w0);
+    const muted = SND.muted();
+    key(KEY_PAUSE); word(this.paused ? D.keys.resume : D.keys.pause, R.lcd, KEY_PAUSE.x, KEY_PAUSE.w);
+    key(KEY_SOUND, !muted); word(muted ? D.keys.soundOff : D.keys.soundOn, R.lcd, KEY_SOUND.x, KEY_SOUND.w);
+    key(KEY_SWAP); word(D.keys.swap, R.lcd, KEY_SWAP.x + 22, KEY_SWAP.w - 22);
+    if (this.mode === 'play') this.ballAt(g, KEY_SWAP.x + 14, 305, this.nxt, 1);   // the ball the key will put in the gun
+  }
+
+  /**
+   * ⚑ S362 / H39 (his headset, 10 Nov 20:49: "he can't tell how to play; wants an explainer") — HOW TO PLAY, shown once,
+   * the first time the title is pressed: four steps in 2× type (the title's how-to is 1×, five pixels tall on a glass the
+   * size of a thumb), each with the picture of what it means; a tap or a key then starts the game. Words: s2_clear.json
+   * `how`. Press-only, no timer: it waits as long as he likes.
+   */
+  private drawHow(g: Painter, blink: boolean): void {
+    P(g, 0, 0, R.lcdDark, W, 22); lamb(g, 6, 6); T(g, D.title.brand, 30, 4, R.lcd, 2);
+    CT(g, D.how.title, 28, R.lcdDark, 3);
+    const steps = D.how.steps as string[][];
+    const rowH = 54, y0 = 56;
+    steps.forEach((lines, i) => {
+      const y = y0 + i * rowH;
+      P(g, 8, y, R.lcdDark, W - 16, rowH - 6); P(g, 10, y + 2, R.lcd, W - 20, rowH - 10);
+      const cx = 27, cy = y + (rowH - 6) / 2;
+      if (i === 0) {          // tap the board: a ball and the tap's ring
+        this.ballAt(g, cx - 4, cy - 4, 1, 1.4);
+        tapMark(g, cx + 9, cy + 9);
+      } else if (i === 1) {   // three of a colour
+        for (let k = 0; k < 3; k++) this.ballAt(g, cx - 12 + k * 12, cy, 3, 1);
+      } else if (i === 2) {   // a gold ring: a letter the sentence needs
+        this.ballAt(g, cx, cy, 2, 1.3);
+        g.fillStyle = R.halo; for (const [dx, dy] of ringPts(BR + 4, BR + 5.4)) g.fillRect(Math.round(cx) + dx, Math.round(cy) + dy, 1, 1);
+        glyph(g, 'K', cx + 0.5, cy + 0.5, R.lcdDark, 2);
+      } else {                // the tray: the sentence filling
+        for (let k = 0; k < 3; k++) {
+          const sx = cx - 19 + k * 13;
+          P(g, sx, cy - 7, R.lcdDark, SLOT_W, SLOT_H);
+          if (k < 2) slotText(g, 'IK'[k], sx, cy - 7, R.halo); else P(g, sx, cy + 5, R.lcdMid, SLOT_W, 2);
+        }
+      }
+      lines.forEach((ln, j) => T(g, ln, 50, y + 9 + j * 18, R.lcdDark, 2));
+    });
+    const fy = y0 + steps.length * rowH + 2;
+    CT(g, D.how.keys, fy, R.lcdDark, 1);
+    if (blink) CT(g, D.how.start, fy + 16, R.lcdDark, 2);
   }
 
   /** the title: one how-to line, and a loop that shows it — [B][R][O][K][E][N]: a green ball is put in beside the

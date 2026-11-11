@@ -14,7 +14,7 @@ export interface GuideView {
   frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; fillText?: (text: string) => string; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -46,6 +46,8 @@ export class LambyGuide {
     return m;
   }
   private set(rung: GuideRung, text: string | null = null, targets: string[] = [], act?: string, alt?: string): void {
+    // ⚑ S362 / H38 — a line may say `{send}` / `{icon}`: the words of the task's own window (data/sends.json), one source
+    if (text && this.input?.fillText) text = this.input.fillText(text);
     Object.assign(this.view, { rung, text, targets, act, alt }); this.version++;
   }
   /** the offers that are said once, ignorable, and logged by their own name (not by the era's beat) */

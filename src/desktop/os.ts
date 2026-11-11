@@ -81,6 +81,7 @@ import { StartPanel } from './apps/startPanel';   // S229 / W1-A6
 import { anythingPlaying, stopOneShots, releaseBus, playLoop, stopClip } from '../audio/tapeAudio';
 import { BelongingsSystem } from '../narrative/belongings';
 import sendsData from '../../data/sends.json';
+import { sendSummary, fillSendText } from '../narrative/sendText';
 import { ledger, wipeLedger, ledgerGeneration } from '../state/ledger';
 import strings from '../../data/strings/slice.json';
 import reinterpStrings from '../../data/strings/reinterp.json';
@@ -642,6 +643,7 @@ export class DesktopOS {
       formFiled: !this.provotype?.open && ledger.provotypes.some(p => p.id === 'origin_intake_e1'), rootOpened: ledger.records.includes('rootcause-opened'),
       racketDone: ledger.provotypes.some(p => p.id === 'pillow'),   // S362 / H33
       robDone: this.desktopEra === 'e1' && this.formAvailable && !this.irc?.open,   // S343 / T16
+      fillText: (t) => fillSendText(t, this.sendOffer?.id),
       harborDue: this.desktopEra === 'e2' && ledger.records.includes('testimony-online') && !ledger.records.includes('forum-posted') && !this.forum?.open,   // S345
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
@@ -1632,7 +1634,9 @@ export class DesktopOS {
   private syncRestorifyLoop(): void {
     const want = this.phase === 'desktop' && this.desktopEra === 'e2' && !!this.restorify?.open && !this.caleb?.open
       && !this.mediaPlayer?.open && !this.netvision?.open && !this.accountability && !this.pauseOpen && !this.saver
-      && !this.updateApp && !this.testimony?.playbackActive && !this.releaseWorkUp;
+      && !this.updateApp && !this.testimony?.playbackActive && !this.releaseWorkUp
+      // ⚑ S362 / H37 — Restorify Media (the story window) has its own theme (testimony.ts); the programme's menu loop yields to it
+      && !this.testimony?.open;
     if (want && !this.restorifyLoop) { this.restorifyLoop = playLoop('restorify_loop_2003.mp3'); if (this.restorifyLoop) this.restorifyLoop.volume = 0.35; }
     else if (!want && this.restorifyLoop) { stopClip(this.restorifyLoop); this.restorifyLoop = null; }
     else if (this.restorifyLoop && this.restorifyLoop.ended) this.restorifyLoop = null;
@@ -2039,7 +2043,9 @@ export class DesktopOS {
       .sends.find(s => s.id === id);
     if (!def) return;
     this.sendOffer = { id, open: false };
-    this.afterGuide('send-toast', () => { this.toast = { text: def.offer.icon, t: 6 }; this.dirty = true; });
+    // ⚑ S362 / H38 (his headset, 10 Nov 20:48: "'Next task' … confusing next to the information sent by Lamby") — the
+    //   toast that announces the icon says what the task's window and Lamby say (src/narrative/sendText.ts), not just its label
+    this.afterGuide('send-toast', () => { this.toast = { text: sendSummary(id) || def.offer.icon, t: 9 }; this.dirty = true; });
     this.dirty = true;
     this.sendOfferVersion++;
   }

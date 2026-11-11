@@ -74,6 +74,9 @@ const REGISTRY: Record<string, string> = {
   'descent_score.mp3': `${AUDIO_BASE}descent_score.mp3`,
   'close_score.mp3': `${AUDIO_BASE}close_score.mp3`,
   'close_song.mp3': `${AUDIO_BASE}close_song.mp3`,   // S361 / H50 — the Close's song (tools/make_close_song.py)
+  // ⚑ S362 / H37 — Restorify Media's two songs (tools/make_restorify_media_songs.py): the brand's opening theme, and the bed under Daniel's story
+  'restorify_media_theme_2003.mp3': `${AUDIO_BASE}restorify_media_theme_2003.mp3`,
+  'restorify_testimony_bed_2003.mp3': `${AUDIO_BASE}restorify_testimony_bed_2003.mp3`,
   'startup_1997.mp3': `${AUDIO_BASE}startup_1997.mp3`,   // S156 · the 1997 OS's own chime (ours)
   // Tape B — SWAPPABLE CANDIDATE (Sérgio is producing alternate versions of
   // the broadcast jingle). Swap by generating a new degraded/wrapped file
