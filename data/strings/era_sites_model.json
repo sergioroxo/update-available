@@ -3545,11 +3545,11 @@
     ],
     [
      "Practices",
-     "9"
+     "13"
     ],
     [
      "Sources on its cards",
-     "18"
+     "22"
     ],
     [
      "Beats",
@@ -4041,6 +4041,105 @@
      },
      {
       "k": "h3",
+      "t": "The detransition chatbots",
+      "status": "documentary",
+      "tag": "documented"
+     },
+     {
+      "k": "p",
+      "t": "It greeted you warmly, and pressed on whether you were sure."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high for what the site's own pages say; the reporter's test as reported (one test, Rewire's original unread); the second bot observed, not reported",
+      "t": "Chatbots built to talk people out of transition exist, and one is named in the press. Detrans.ai is an open-source project whose own site names its one builder. It answers from posts by people who describe detransitioning, taken from one subreddit and from YouTube videos; its pages say its \"60,000+ detransitioners\" is the subreddit's subscriber count, not a count of the people in its data (the project read the site on 1 November 2026). On 11 August 2026 The Needle republished a Rewire News Group investigation. The project read the Needle's version, not Rewire's original (15 July 2026), so what follows is the reporter's test, as reported: the bot opened warmly, said it was not there to push either way while questioning the user's identity, offered a crisis line while the framing continued, and pointed to \"gender exploratory\" therapists. A second bot, made by a user on Character.AI, was seen on the platform in August 2026 (51.5k recorded interactions, described by its maker as encouraging people to detransition); no link to Detrans.ai is documented and no outlet has reported on it. No conversion-practice organisation is documented as building either. Second Thoughts, the chat in the piece, is invented; it borrows their form. People do detransition, and what they say deserves care. This card is about the tool.",
+      "links": [
+       {
+        "label": "Detrans.ai (the site itself)",
+        "url": "https://detrans.ai/en"
+       },
+       {
+        "label": "The Needle, 11 August 2026 — the test of the chatbot, republishing Rewire News Group (read second-hand)",
+        "url": "https://theneedlenews.com/2026/08/this-ai-chatbot-pushes-conversion-therapy-on-trans-users/"
+       }
+      ],
+      "nolink": ""
+     },
+     {
+      "k": "h3",
+      "t": "The film made for you",
+      "status": "speculative",
+      "tag": "inferred"
+     },
+     {
+      "k": "p",
+      "t": "It made a film about you, from what you told it."
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "the film is ours; the three cases it assembles are documented separately",
+      "t": "The film is invented. \"THE GREAT BECOMING\" is the piece's own title, made by the piece's own Second Thoughts, and the project found no documented case of an AI making a personalised film about a trans or questioning person for a conversion-practice network, and no tool that returns a trans woman's photograph as a male-presenting one on request. The parts it assembles are documented separately. Chatbots argue against transition (see the card before). An account called DignifAI used AI to edit women's photographs into \"modest\" versions without their consent and sent them to the women pictured, captioned \"keep your dignity\" (reported by AOL, page updated 6 February 2024). Chat tools removed a hijab from a photograph on request (Siasat, 3 October 2026, citing the Guardian). What the film tells Maya, that it spread to her, is a claim and not a finding: see the two cards that follow.",
+      "links": [
+       {
+        "label": "AOL, DignifAI and AI-edited photographs of women (page updated 6 February 2024)",
+        "url": "https://www.aol.com/news/conservative-influencers-using-ai-cover-203549801.html"
+       },
+       {
+        "label": "Siasat, 3 October 2026 — AI tools removing hijabs (citing the Guardian)",
+        "url": "https://www.siasat.com/ai-can-strip-off-hijabs-with-a-prompt-raising-safety-concerns-3551787/"
+       }
+      ],
+      "nolink": ""
+     },
+     {
+      "k": "h3",
+      "t": "The correction",
+      "status": "documentary",
+      "tag": "documented"
+     },
+     {
+      "k": "p",
+      "t": "It named it contagion, on a study its own journal had corrected."
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high — the journal's own correction (opened); the supporters' and critics' readings are attributed",
+      "t": "On 19 March 2019 the journal PLOS ONE published a correction to a 2018 paper (Littman) that introduced \"rapid-onset gender dysphoria\" from parents' reports of young people. The correction states that the term is not a formal mental-health diagnosis, that the study does not validate it as a phenomenon, and that no data were collected from the young people themselves or from clinicians, only from parents. It adds that selection bias in who took part could push the results in either direction. The paper's supporters say the results section was largely unchanged and the paper was kept; its critics say the design cannot support the claim. The phrase \"social contagion\" travelled on this paper into campaigns about young people's care. The next card holds the wider debate.",
+      "links": [
+       {
+        "label": "PLOS ONE, Correction (Littman), 19 March 2019",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6424391"
+       }
+      ],
+      "nolink": ""
+     },
+     {
+      "k": "h3",
+      "t": "The contagion debate",
+      "status": "contested",
+      "tag": "disputed"
+     },
+     {
+      "k": "p",
+      "t": "It told you it spread to you, as if the question was closed."
+     },
+     {
+      "k": "src",
+      "status": "contested",
+      "tag": "disputed",
+      "conf": "the record is documented; whether the claim explains anything is disputed",
+      "t": "\"Social contagion\" is a claim about why more young people say they are trans: that they copy friends and the internet. The piece shows both readings and settles neither. Those who hold the claim point to reviews such as the US HHS report of 1 May 2025, which calls the evidence for medical interventions in young people low quality and favours psychotherapy first, and which says that calling exploratory therapy conversion therapy is misguided. Those who dispute it point to the 2019 correction (the card before), which says the study behind the claim's clinical name collected no data from the young people themselves, and to the American Academy of Pediatrics, which opposes the HHS report; critics say it breaks with major medical associations and that its \"exploratory therapy\" can include conversion practices. Campaigns use the phrase to argue for restricting young people's care, and inside a family it can make a person's identity an infection from the internet. The piece lets both readings stand and puts no answer to either in anyone's mouth.",
+      "links": [],
+      "nolink": "No verified link yet."
+     },
+     {
+      "k": "h3",
       "t": "About this part of the piece"
      },
      {
@@ -4325,6 +4424,65 @@
        }
       ],
       "nolink": ""
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high for what the site's own pages say; the reporter's test as reported (one test, Rewire's original unread); the second bot observed, not reported",
+      "t": "Chatbots built to talk people out of transition exist, and one is named in the press. Detrans.ai is an open-source project whose own site names its one builder. It answers from posts by people who describe detransitioning, taken from one subreddit and from YouTube videos; its pages say its \"60,000+ detransitioners\" is the subreddit's subscriber count, not a count of the people in its data (the project read the site on 1 November 2026). On 11 August 2026 The Needle republished a Rewire News Group investigation. The project read the Needle's version, not Rewire's original (15 July 2026), so what follows is the reporter's test, as reported: the bot opened warmly, said it was not there to push either way while questioning the user's identity, offered a crisis line while the framing continued, and pointed to \"gender exploratory\" therapists. A second bot, made by a user on Character.AI, was seen on the platform in August 2026 (51.5k recorded interactions, described by its maker as encouraging people to detransition); no link to Detrans.ai is documented and no outlet has reported on it. No conversion-practice organisation is documented as building either. Second Thoughts, the chat in the piece, is invented; it borrows their form. People do detransition, and what they say deserves care. This card is about the tool.",
+      "links": [
+       {
+        "label": "Detrans.ai (the site itself)",
+        "url": "https://detrans.ai/en"
+       },
+       {
+        "label": "The Needle, 11 August 2026 — the test of the chatbot, republishing Rewire News Group (read second-hand)",
+        "url": "https://theneedlenews.com/2026/08/this-ai-chatbot-pushes-conversion-therapy-on-trans-users/"
+       }
+      ],
+      "nolink": ""
+     },
+     {
+      "k": "src",
+      "status": "speculative",
+      "tag": "inferred",
+      "conf": "the film is ours; the three cases it assembles are documented separately",
+      "t": "The film is invented. \"THE GREAT BECOMING\" is the piece's own title, made by the piece's own Second Thoughts, and the project found no documented case of an AI making a personalised film about a trans or questioning person for a conversion-practice network, and no tool that returns a trans woman's photograph as a male-presenting one on request. The parts it assembles are documented separately. Chatbots argue against transition (see the card before). An account called DignifAI used AI to edit women's photographs into \"modest\" versions without their consent and sent them to the women pictured, captioned \"keep your dignity\" (reported by AOL, page updated 6 February 2024). Chat tools removed a hijab from a photograph on request (Siasat, 3 October 2026, citing the Guardian). What the film tells Maya, that it spread to her, is a claim and not a finding: see the two cards that follow.",
+      "links": [
+       {
+        "label": "AOL, DignifAI and AI-edited photographs of women (page updated 6 February 2024)",
+        "url": "https://www.aol.com/news/conservative-influencers-using-ai-cover-203549801.html"
+       },
+       {
+        "label": "Siasat, 3 October 2026 — AI tools removing hijabs (citing the Guardian)",
+        "url": "https://www.siasat.com/ai-can-strip-off-hijabs-with-a-prompt-raising-safety-concerns-3551787/"
+       }
+      ],
+      "nolink": ""
+     },
+     {
+      "k": "src",
+      "status": "documentary",
+      "tag": "documented",
+      "conf": "high — the journal's own correction (opened); the supporters' and critics' readings are attributed",
+      "t": "On 19 March 2019 the journal PLOS ONE published a correction to a 2018 paper (Littman) that introduced \"rapid-onset gender dysphoria\" from parents' reports of young people. The correction states that the term is not a formal mental-health diagnosis, that the study does not validate it as a phenomenon, and that no data were collected from the young people themselves or from clinicians, only from parents. It adds that selection bias in who took part could push the results in either direction. The paper's supporters say the results section was largely unchanged and the paper was kept; its critics say the design cannot support the claim. The phrase \"social contagion\" travelled on this paper into campaigns about young people's care. The next card holds the wider debate.",
+      "links": [
+       {
+        "label": "PLOS ONE, Correction (Littman), 19 March 2019",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6424391"
+       }
+      ],
+      "nolink": ""
+     },
+     {
+      "k": "src",
+      "status": "contested",
+      "tag": "disputed",
+      "conf": "the record is documented; whether the claim explains anything is disputed",
+      "t": "\"Social contagion\" is a claim about why more young people say they are trans: that they copy friends and the internet. The piece shows both readings and settles neither. Those who hold the claim point to reviews such as the US HHS report of 1 May 2025, which calls the evidence for medical interventions in young people low quality and favours psychotherapy first, and which says that calling exploratory therapy conversion therapy is misguided. Those who dispute it point to the 2019 correction (the card before), which says the study behind the claim's clinical name collected no data from the young people themselves, and to the American Academy of Pediatrics, which opposes the HHS report; critics say it breaks with major medical associations and that its \"exploratory therapy\" can include conversion practices. Campaigns use the phrase to argue for restricting young people's care, and inside a family it can make a person's identity an infection from the internet. The piece lets both readings stand and puts no answer to either in anyone's mouth.",
+      "links": [],
+      "nolink": "No verified link yet."
      },
      {
       "k": "h4",

@@ -245,6 +245,46 @@
         "file": "e4_offers",
         "index": 11
       }
+    },
+    "detransAI": {
+      "_doc": "⚑ S360 (UiB job 13 Part A item 11) — DRAFT. DOSSIER PHRASING IS SÉRGIO'S: the `did` line below is Claude's draft, ⚑ HIS TO WRITE OR REPLACE (his edit wins; compare S356b, where he chose from four). The source text is a draft for his review too. The detransition-AI category, the real product named (Detrans.ai), documentary; the Rewire investigation is cited AS REPORTED (read second-hand through The Needle, 11 Aug 2026). Not yet filed by the shell: the 2026 flow's new ledger ids are job 13 Part A's, so this card shows on the Close's 2026 panel and the 2026 site, not under a ledger entry in 'Your file', until a kind maps to it (src/witness/record.ts).",
+      "title": "The detransition chatbots",
+      "did": "greeted you warmly, and pressed on whether you were sure",
+      "status": "documentary",
+      "source": {
+        "file": "e4_offers",
+        "index": 12
+      }
+    },
+    "greatBecoming": {
+      "_doc": "⚑ S360 (UiB job 13 Part A item 11) — DRAFT. DOSSIER PHRASING IS SÉRGIO'S: the `did` line below is Claude's draft, ⚑ HIS TO WRITE OR REPLACE (his edit wins; compare S356b, where he chose from four). The source text is a draft for his review too. The personalised clip ('THE GREAT BECOMING', made by Second Thoughts from her week): SPECULATIVE, the piece's own invention. Same filing note as `detransAI`.",
+      "title": "The film made for you",
+      "did": "made a film about you, from what you told it",
+      "status": "speculative",
+      "source": {
+        "file": "e4_offers",
+        "index": 13
+      }
+    },
+    "correction2019": {
+      "_doc": "⚑ S360 (UiB job 13 Part A item 11) — DRAFT. DOSSIER PHRASING IS SÉRGIO'S: the `did` line below is Claude's draft, ⚑ HIS TO WRITE OR REPLACE (his edit wins; compare S356b, where he chose from four). The source text is a draft for his review too. The 19 March 2019 correction to the 2018 'rapid-onset gender dysphoria' paper: documentary (RESEARCH_2026_TRANS_PRESSURE §5.1, S10, opened). How the parents were recruited is left out on purpose (the research file and an earlier card disagree). Same filing note as `detransAI`.",
+      "title": "The correction",
+      "did": "named it contagion, on a study its own journal had corrected",
+      "status": "documentary",
+      "source": {
+        "file": "e4_offers",
+        "index": 14
+      }
+    },
+    "contagion": {
+      "_doc": "⚑ S360 (UiB job 13 Part A item 11) — DRAFT. DOSSIER PHRASING IS SÉRGIO'S: the `did` line below is Claude's draft, ⚑ HIS TO WRITE OR REPLACE (his edit wins; compare S356b, where he chose from four). The source text is a draft for his review too. The 'social contagion' debate itself: CONTESTED, both captions, unresolved, never satirised. Turban 2022 and the Cass Review stay out of the text ([VERIFY SOURCE] in the research file). Same filing note as `detransAI`.",
+      "title": "The contagion debate",
+      "did": "told you it spread to you, as if the question was closed",
+      "status": "contested",
+      "source": {
+        "file": "e4_offers",
+        "index": 15
+      }
     }
   }
 }

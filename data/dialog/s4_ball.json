@@ -137,6 +137,7 @@
  },
  "raid": {
   "_doc": "⚑ S355 — THE RAID (UiB job 11 Part B; DESIGN_COMMONS_REVAMP §2b beat 4). A raid is ordinary streaming practice — one stream sends its viewers to another, and they arrive in its chat together; the word is generic, the notice and its look are invented, no platform is named. The host's screen says it; the host's frame tries to file it and fails with the four rows the frame always failed with, now under the host's mark; the count climbs 1 → 42; the handles arrive in the host's chat and the Friends' 🙏 is buried. No narration. Register: operable (the system's surface), collapsing.",
+  "_docS360": "\u2691 S360 / H49 (his headset, 10 Nov 21:33: \"Where are the messages on the wall, changing the text, all of that idea, where did it go?\"; and 'the raid needs way more interactions'). THE WALL'S CHANGING TEXT IS BACK, in the one place it fits now: the host's own wall of messages (the Friends' column on its screen). The raiders no longer scroll in underneath the product's lines: each of the eight lines on the wall is REWRITTEN IN PLACE, top to bottom, from the product's one-account \ud83d\ude4f into a person's own words. (The older, ballroom-era version of the idea \u2014 the system's labels on the glass failing one by one while the stream's words and hearts bleed through them, 's4_ball.json arrival.labels' before S293 \u2014 went with the ballroom and is not restored: BUILD_LOG S293.) Nothing is rebutted; no fact is put on the wall; the floor out-numbers the product with life.",
   "notice": "transjesus.str is raiding  ·  {n} viewers",
   "n": 41,
   "panel": "Shepherd Live™  ·  about this raid",
@@ -180,6 +181,27 @@
  },
  "naming": {
   "_doc": "⚑ S355 — THE NAMING (UiB job 11 Part B, the core; DESIGN_COMMONS_REVAMP §2b beat 5 and its table; his 10 Nov answers 7–9). The host keeps talking — a stream has no stop button — and runs its script again on its caption strip; under each line one of the people STAMPS a tag (3–5 words, lowercase, in the handle's colour), and the tag takes one of the host's surfaces from its pale light to the stream's warm one. Naming IS the takeover. ⚑ RULES: recognition, not explanation (half are names, half are 'I know this one'); no tag mentions God, Jesus or prayer (the 'sign' is answered with the waiting list, a material fact); no tag argues, explains, or is addressed to Maya as a lesson; ALL the naming is the people's (Maya does not tag; the last tag is junie's); no numbers but the panel's own 'source: none' (his ruling: only 'source?' in the stream; the evidence is at the Close). This is the FIRST of two refusals: the people answer the script once, while it is on the stage, and never again (his answer 9). Every handle and line is invented.",
+  "_docS360": "\u2691 S360 / H49 (his headset, 10 Nov: 'the raid needs way more influence \u2026 way more interactions'). TWO PRESSES that change what the host's screen shows, both Maya's, both small and hers (no tag, no lesson, no fact; she speaks as the viewers speak, in a few words). The naming PAUSES before the row named in `before` until she presses the chip on the glass (or, if she does nothing for `waitSeconds`, the change simply happens, so nobody is ever stranded and nothing is punished). `hi` (before row 2): her line lands in the wall, and the platform's raid notice across the host's picture is REWRITTEN from the product's word ('is raiding') into the people's ('{n} here \u00b7 hi maya'). `count` (before row 5): her own metric on the host's foot \u2014 'you: 61% restored', the system's reading of her \u2014 is REWRITTEN into 'you: 1 of {n} here'; the number the product kept about her becomes a head count of the room. Text on the host's own surfaces only: never on a dancer, a chat line or the people's side. Register: operable (the system's surface), collapsing. Wording is Claude's; his edit wins.",
+  "presses": [
+    {
+      "id": "hi",
+      "before": 2,
+      "label": "Say hi",
+      "she": "hi. it's my birthday",
+      "notice": "transjesus.str  \u00b7  {n} here  \u00b7  hi maya",
+      "waitSeconds": 12,
+      "lingerSeconds": 2.4
+    },
+    {
+      "id": "count",
+      "before": 5,
+      "label": "Count me in",
+      "she": "count me in",
+      "you": "you: 1 of {n} here",
+      "waitSeconds": 12,
+      "lingerSeconds": 2.4
+    }
+  ],
   "rowSeconds": 4.2,
   "tagAt": 1.7,
   "answerAt": 3.0,

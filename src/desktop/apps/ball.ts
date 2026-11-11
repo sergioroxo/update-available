@@ -73,7 +73,8 @@ const HOST = script.host as unknown as {
 interface Said { who: string; text: string }
 const RAID = script.raid as unknown as { notice: string; n: number; panel: string; climbSeconds: number; lineSeconds: number; lines: Said[]; settleSeconds: number };
 interface NameRow { host: string; tag: string; who: string; surface: HostSurface; answer?: string; move: string }
-const NAMING = script.naming as unknown as { rowSeconds: number; tagAt: number; answerAt: number; rows: NameRow[]; after: number };
+interface NamePress { id: 'hi' | 'count'; before: number; label: string; she: string; notice?: string; you?: string; waitSeconds: number; lingerSeconds: number }
+const NAMING = script.naming as unknown as { rowSeconds: number; tagAt: number; answerAt: number; rows: NameRow[]; after: number; presses: NamePress[] };
 /** ⚑ S356 — the backstage (s4_ball.json `backstage`) */
 const BACK = script.backstage as unknown as {
   ask: Said; show: string; back: string; title: string; rec: string; rows: { k: string; v: string }[]; wordsTitle: string;
@@ -162,6 +163,19 @@ export class E4Ball {
   private tags: { who: string; text: string; sys?: boolean }[] = [];
   /** the metrics panel has answered its own question */
   private noSource = false;
+  // ⚑ S360 / H49 (his headset, 10 Nov: "the raid needs way more interactions") — her presses inside the naming, and
+  //   what they changed on the host's own screen (text on its surfaces only)
+  private pressDone = new Set<string>();
+  private pressWait: NamePress | null = null;
+  private pressT = 0;
+  private pressCur: NamePress | null = null;
+  private pressLinger = -1;
+  private noticeNow = '';
+  private countedIn = false;
+  /** the Friends' wall: which of its lines the raid rewrites in place, oldest first */
+  private raidSlots: number[] = [];
+  /** the line (or lines) she pressed, for probes — never filed (respite) */
+  namingPressed: string[] = [];
   // ── ⚑ S356 — the backstage (Part C) ──
   private backT = -1;
   /** the moment the dashboard went fully dark (−1: not yet), and whether she has turned back */
@@ -357,6 +371,12 @@ export class E4Ball {
     this.phase = 'raid';
     this.raidT = 0; this.raidLines = 0;
     this.rowsShown = 0;
+    // ⚑ S360 / H49 (his: "where are the messages on the wall, changing the text") — the host's wall of messages is
+    //   REWRITTEN IN PLACE by the raid: the last lines on it (the ones in view) are the slots the people's lines take
+    const inView = Math.min(RAID.lines.length, this.friendsChat.length);
+    this.raidSlots = Array.from({ length: inView }, (_, i) => this.friendsChat.length - inView + i);
+    this.pressDone = new Set(); this.pressWait = null; this.pressCur = null; this.pressLinger = -1;
+    this.noticeNow = RAID.notice; this.countedIn = false; this.namingPressed = [];
     playOnce('ui_press.mp3');
     roomBed.set(script.room.bed, 2.0);
     this.version++; this.studioV++;
@@ -371,8 +391,12 @@ export class E4Ball {
     this.count = 1 + Math.round(RAID.n * k * k * (3 - 2 * k));
     // the handles arrive in the host's chat
     while (this.raidLines < RAID.lines.length && this.raidT >= 1.0 + this.raidLines * RAID.lineSeconds) {
-      this.friendsChat.push(RAID.lines[this.raidLines++]);
-      if (this.friendsChat.length > 20) this.friendsChat.shift();
+      // ⚑ S360 / H49 — a line of the product's wall is overwritten by a person's own words (top to bottom);
+      //   past the lines in view, the rest simply arrive underneath as before
+      const slot = this.raidSlots[this.raidLines];
+      const said = RAID.lines[this.raidLines++];
+      if (slot !== undefined && this.friendsChat[slot]) this.friendsChat[slot] = { ...said };
+      else { this.friendsChat.push(said); if (this.friendsChat.length > 20) this.friendsChat.shift(); }
     }
     // the host's frame fails to file it, one row at a time
     const due = Math.min(FRAME.rows.length, Math.floor(Math.max(0, this.raidT - 1.0) / FRAME.rowSeconds));
@@ -391,6 +415,32 @@ export class E4Ball {
    * Friends' column, the key light, the safety banner, the numbers, the picture). Naming is the takeover.
    */
   private updateNaming(dt: number): void {
+    // ⚑ S360 / H49 — her presses: the naming waits at the row named in `before`; a press (or 12 s of nothing, never
+    //   a penalty) changes the host's screen, then the script runs on
+    if (this.pressLinger >= 0) {
+      this.pressLinger += dt;
+      if (this.pressCur && this.pressLinger >= this.pressCur.lingerSeconds) { this.pressLinger = -1; this.pressCur = null; }
+      return;
+    }
+    if (this.pressWait) {
+      this.pressT += dt;
+      if (this.pressT >= this.pressWait.waitSeconds) this.pressNaming(true);
+      return;
+    }
+    const nextRow = Math.floor((this.nameT + dt) / NAMING.rowSeconds);
+    const due = NAMING.presses.find((q) => q.before === nextRow && !this.pressDone.has(q.id));
+    if (due && nextRow > Math.floor(this.nameT / NAMING.rowSeconds)) {
+      // hold just short of the row's start; the caption band is quiet while the chip waits
+      this.nameT = nextRow * NAMING.rowSeconds - 0.001;
+      this.pressWait = due; this.pressT = 0;
+      this.hostLine = '';
+      const ctx = typeof document !== 'undefined' ? document.createElement('canvas').getContext('2d') : null;
+      if (ctx) setFont(ctx, 11);
+      const w = Math.max(96, Math.ceil(ctx ? ctx.measureText(due.label).width : 60) + 30);
+      this.hits = [{ x: Math.round(256 - w / 2), y: 384 - 46 - 2 - HOST_CHIP_H, w, h: HOST_CHIP_H, id: `naming-press-${due.id}` }];
+      this.version++;
+      return;
+    }
     const n4 = this.nameT;
     this.nameT += dt;
     if (this.freed.has('picture') && Math.floor(n4 * 8) !== Math.floor(this.nameT * 8)) this.studioV++;
@@ -418,6 +468,28 @@ export class E4Ball {
     }
     if (this.hostLine) { this.hostLine = ''; this.version++; }
     if (this.nameT >= NAMING.rows.length * NAMING.rowSeconds + NAMING.after) this.askBackstage();
+  }
+
+  /**
+   * ⚑ S360 / H49 — her press inside the naming (or its 12 s default). It changes TEXT ON THE HOST'S OWN SCREEN and
+   * nothing else: `hi` rewrites the platform's raid notice into the people's words, `count` rewrites the number the
+   * product kept about her ("you: 61% restored") into a head count. Her few words land on the wall like anyone's.
+   */
+  private pressNaming(auto = false): void {
+    const P = this.pressWait;
+    if (!P) return;
+    this.pressWait = null; this.hits = [];
+    this.pressDone.add(P.id); this.pressCur = P; this.pressLinger = 0;
+    if (!auto) {
+      playOnce('ui_press.mp3');
+      this.namingPressed.push(P.id);
+      this.friendsChat.push({ who: 'maya', text: P.she });
+      if (this.friendsChat.length > 20) this.friendsChat.shift();
+      this.tags.push({ who: 'maya', text: P.she });
+    }
+    if (P.id === 'hi' && P.notice) this.noticeNow = P.notice;
+    if (P.id === 'count') this.countedIn = true;
+    this.version++; this.studioV++;
   }
 
   /** ⚑ S356 — junie: "maya. look what's behind the stage", and one chip, Show me (his Q8: a press, never a turn) */
@@ -639,6 +711,13 @@ export class E4Ball {
       if (h) this.answerHost(Number(h.id.replace('host-chip-', '')));
       return true;
     }
+    if (this.phase === 'naming') {
+      // ⚑ S360 / H49 — the naming's two presses (a press with no coordinates is not one)
+      if (x === undefined || y === undefined) return true;
+      const h = this.hits.find((r) => x >= r.x - 6 && x <= r.x + r.w + 6 && y >= r.y - 6 && y <= r.y + r.h + 6);
+      if (h?.id.startsWith('naming-press-')) this.pressNaming();
+      return true;
+    }
     if (this.phase === 'turnAsk' || this.phase === 'backstage') {
       if (x === undefined || y === undefined) return true;
       const h = this.hits.find((r) => x >= r.x - 6 && x <= r.x + r.w + 6 && y >= r.y - 6 && y <= r.y + r.h + 6);
@@ -678,7 +757,7 @@ export class E4Ball {
     if (this.phase === 'tryon') return;
     if (this.phase === 'invited') { this.drawInvite(ctx); return; }
     if (this.phase === 'raid') { this.drawRaidPanel(ctx, W, H); return; }
-    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); this.drawTags(ctx, W, H); return; }
+    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
     if (this.phase === 'turnAsk' || this.phase === 'backstage') { this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
     if (this.phase === 'stream' && this.streamT < FRAME.clearSeconds) {
       // the picture lets go of the glass and the place is there
@@ -697,7 +776,7 @@ export class E4Ball {
     for (const h of this.hits) {
       pill(ctx, h.x, h.y, h.w, h.h, PLACE.textileHi);
       setFont(ctx, 11); ctx.fillStyle = PLACE.ink;
-      const label = h.id === 'backstage-show' ? BACK.show : BACK.back, lw = Math.ceil(ctx.measureText(label).width);
+      const label = h.id === 'backstage-show' ? BACK.show : h.id === 'backstage-back' ? BACK.back : (this.pressWait?.label ?? ''), lw = Math.ceil(ctx.measureText(label).width);
       ctx.fillText(label, h.x + Math.round((h.w - lw) / 2), h.y + 7);
     }
   }
@@ -960,7 +1039,9 @@ export class E4Ball {
     px(ctx, 0, fy, W, 1, WEB.cardEdge);
     if (!F.has('metrics')) {
       const m = HOST.metrics;
-      const row = `${m.restored}   ·   ${m.peace}   ·   ${m.you.replace('{p}', String(m.p))}`;
+      // ⚑ S360 / H49 — once she has counted herself in, the number the product kept about her is a head count
+      const you = this.countedIn ? (NAMING.presses.find((q) => q.id === 'count')?.you ?? m.you).replace('{n}', String(this.count)) : m.you.replace('{p}', String(m.p));
+      const row = `${m.restored}   ·   ${m.peace}   ·   ${you}`;
       setFont(ctx, 9); ctx.fillStyle = WEB.ink;
       ctx.fillText(row, Math.round((W - ctx.measureText(row).width) / 2), fy + 6);
     } else if (this.noSource) {
@@ -971,7 +1052,7 @@ export class E4Ball {
     }
     // ⚑ S355 — the raid's notice, across the top of the picture, until the picture is theirs
     if ((this.phase === 'raid' || this.phase === 'naming') && !F.has('picture')) {
-      const t = RAID.notice.replace('{n}', String(RAID.n));
+      const t = (this.noticeNow || RAID.notice).replace('{n}', String(this.noticeNow && this.noticeNow !== RAID.notice ? this.count : RAID.n));
       setFont(ctx, 9);
       const tw = Math.ceil(ctx.measureText(t).width) + 16;
       px(ctx, 4, top, Math.min(pw, tw), 15, PLACE.textileHi);
@@ -1165,7 +1246,7 @@ export class E4Ball {
     if (where === 'raid') return;
     this.raidT = 60; this.update(0.01);
     if (where === 'naming') return;
-    for (let i = 0; i < 2000 && this.phaseId === 'naming'; i++) this.update(0.05);
+    for (let i = 0; i < 2000 && this.phaseId === 'naming'; i++) { if (this.pressWait) this.pressNaming(); this.update(0.05); }
     this.showBackstage();
     if (where === 'backstage') return;
     this.backT = 120; this.darkAt = 0; this.update(0.01);
