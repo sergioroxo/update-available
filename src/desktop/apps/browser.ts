@@ -695,8 +695,7 @@ export class E4Browser {
       // ⚑ S360 — the goal LAST, and the restore is the bot's act: "I've made it your picture" (the review he accepted;
       //   H47 "You, restored" no longer on the front from the start, nor on the table and the wall — e4Room)
       this.ring = 97;
-      this.profile = 'goal';
-      this.messenger.wallpaper = 'goal';
+      this.profile = 'goal';   // the small profile chip only (what Photos reverses); ⚑ H47 — Kettle's wallpaper stays hers
       markE4('newyou');
       this.file('newyou', 'read', W3.newyou);
     }
@@ -1188,16 +1187,16 @@ export class E4Browser {
     // ⚑ S360 — the last of Mum's links carries a Sponsored box beside the text: Second Thoughts, Mum's way in
     const sp = a.sponsored, spW = sp ? 156 : 0;
     const tw = cw - 48 - (sp ? spW + 14 : 0);
-    ctx.font = newsFor(24); ctx.textBaseline = 'top'; ctx.fillStyle = V3.ink; ctx.fillText(a.mast, x, cy + 12);
-    px(ctx, x, cy + 42, cw - 48, 2, V3.ink);
-    ctx.font = monoFor(12); ctx.fillStyle = V3.ink2; ctx.fillText(a.date, x, cy + 49);
-    ctx.font = newsFor(20);
-    let y = cy + 68;
-    for (const ln of wrapText(ctx, a.head, tw).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 24; }
-    y += 4;
-    const floor = cy + ch - 34;
-    setFont(ctx, 15); ctx.fillStyle = V3.ink;
-    for (const p of a.body) { for (const ln of wrapText(ctx, p, tw)) { if (y <= floor - 18) ctx.fillText(ln, x, y); y += 19; } y += 4; }
+    ctx.font = newsFor(22); ctx.textBaseline = 'top'; ctx.fillStyle = V3.ink; ctx.fillText(a.mast, x, cy + 10);
+    px(ctx, x, cy + 37, cw - 48, 2, V3.ink);
+    ctx.font = monoFor(11); ctx.fillStyle = V3.ink2; ctx.fillText(a.date, x, cy + 43);
+    ctx.font = newsFor(18);
+    let y = cy + 60;
+    for (const ln of wrapText(ctx, a.head, tw).slice(0, 2)) { ctx.fillStyle = V3.ink; ctx.fillText(ln, x, y); y += 21; }
+    y += 3;
+    const floor = cy + ch - 30;
+    setFont(ctx, 14); ctx.fillStyle = V3.ink;
+    for (const p of a.body) { for (const ln of wrapText(ctx, p, tw)) { if (y <= floor - 17) ctx.fillText(ln, x, y); y += 17; } y += 3; }
     // ⚑ S360 — two readings, side by side, never resolved (the clinic letter's two captions were the model; CLAUDE.md:
     //   render both captions — "nothing in the story settles it")
     if (a.readings) {
@@ -1205,10 +1204,10 @@ export class E4Browser {
       a.readings.forEach((r, k) => {
         const bx = x + k * (bw + gap);
         roundEdge(ctx, bx, by, bw, bh, 5, V3.edge, V3.page);
-        setFont(ctx, 12); ctx.fillStyle = V3.ink2; ctx.fillText(r.label, bx + 10, by + 6);
-        setFont(ctx, 13); ctx.fillStyle = V3.ink;
-        let ly = by + 23;
-        for (const ln of wrapText(ctx, r.text, bw - 20)) { if (ly + 16 <= by + bh) ctx.fillText(ln, bx + 10, ly); ly += 16; }
+        setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(r.label, bx + 9, by + 5);
+        setFont(ctx, 12); ctx.fillStyle = V3.ink;
+        let ly = by + 19;
+        for (const ln of wrapText(ctx, r.text, bw - 18)) { if (ly + 14 <= by + bh) ctx.fillText(ln, bx + 9, ly); ly += 15; }
       });
     }
     ctx.font = monoFor(10); ctx.fillStyle = V3.ink2;
@@ -1296,39 +1295,40 @@ export class E4Browser {
     } else if (id === 'mum') {
       const m = E.mum;
       line(`${m.from} · ${m.when}`, 11, V3.ink2, 15, true);
-      line(m.subject, 17, V3.ink, 24);
-      // the loft photo, attached, beside her first lines (it moved here from her years — his "keep the loft photo")
-      const pS = 1.3, pw = Math.round(78 * pS), phH = Math.round(50 * pS), pxX = x + w - pw;
-      ctx.save(); ctx.translate(pxX, y); ctx.scale(pS, pS); drawLoftPhoto(ctx, 0, 0); ctx.restore();
-      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.attachment, pxX, y + phH + 3);
-      const wSave = w, top0 = y;
-      const narrow = (t: string, size: number, gap: number): void => {
-        setFont(ctx, size); ctx.fillStyle = V3.ink;
-        for (const l of wrapText(ctx, t, wSave - pw - 12)) { ctx.fillText(l, x, y); y += gap; }
-      };
-      for (const l of m.lines) narrow(l, 14, 18);
-      y = Math.max(y, top0 + phH + 16) + 4;
-      for (const l of m.after) line(l, 14, V3.ink, 18);
-      y += 4;
-      // her links: each one opens the News tab at that article
-      ctx.font = monoFor(10); ctx.fillStyle = V3.ink2; ctx.fillText(m.linksLabel, x, y); y += 15;
-      ARTICLES.forEach((a, k) => {
-        if (y + 18 > bottom - 34) return;
-        roundEdge(ctx, x, y, w, 18, 4, V3.edge, V3.page);
-        ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(a.mast, x + 6, y + 4);
-        const mw = Math.ceil(ctx.measureText(a.mast + '  ').width);
-        setFont(ctx, 12); ctx.fillStyle = V3.primary;
-        ctx.save(); ctx.beginPath(); ctx.rect(x + 6 + mw, y, w - 12 - mw, 18); ctx.clip(); ctx.fillText(a.head, x + 6 + mw, y + 2); ctx.restore();
-        this.publish({ x, y, w, h: 18, id: `mail-link-${k}` });
-        y += 21;
-      });
+      line(m.subject, 16, V3.ink, 22);
+      // two columns: her words (and "Mum, I") on the left; the loft photo and her three links on the right
+      const rw = Math.min(170, Math.round(w * 0.42)), rx = x + w - rw, lw2 = w - rw - 12, top0 = y;
+      setFont(ctx, 13); ctx.fillStyle = V3.ink;
+      for (const t of [...m.lines, '', ...m.after]) {
+        if (!t) { y += 6; continue; }
+        for (const l of wrapText(ctx, t, lw2)) { if (y + 16 <= bottom - 34) ctx.fillText(l, x, y); y += 16; }
+      }
       // "Mum, I" — her reply, never sent (it moved here from her thread)
-      const dy = Math.min(y + 4, bottom - 30);
-      roundEdge(ctx, x, dy, w, 28, 5, V3.edge, V3.page);
+      const dy = Math.min(y + 6, bottom - 30);
+      roundEdge(ctx, x, dy, lw2, 28, 5, V3.edge, V3.page);
       ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.replyLabel, x + 8, dy + 3);
       setFont(ctx, 13); ctx.fillStyle = V3.ink;
       const caret = Math.floor(this.t / CURSOR_BLINK) % 2 === 0 ? '▏' : '';
       ctx.fillText(m.draft + caret, x + 8, dy + 13);
+      // the loft photo, attached (it moved here from her years — his "keep the loft photo")
+      const pS = Math.min(1.4, (rw - 4) / 78), phH = Math.round(50 * pS);
+      ctx.save(); ctx.translate(rx, top0); ctx.scale(pS, pS); drawLoftPhoto(ctx, 0, 0); ctx.restore();
+      ctx.font = monoFor(9); ctx.fillStyle = V3.ink2; ctx.fillText(m.attachment, rx, top0 + phH + 2);
+      let ly = top0 + phH + 16;
+      ctx.fillText(m.linksLabel, rx, ly); ly += 13;
+      // her links: each opens the News tab at that article
+      ARTICLES.forEach((a, k) => {
+        setFont(ctx, 11);
+        const hl = wrapText(ctx, a.head, rw - 12).slice(0, 2);
+        const lh = 15 + hl.length * 13;
+        if (ly + lh > bottom) return;
+        roundEdge(ctx, rx, ly, rw, lh, 4, V3.edge, V3.page);
+        ctx.font = monoFor(8); ctx.fillStyle = V3.ink2; ctx.fillText(a.mast, rx + 6, ly + 3);
+        setFont(ctx, 11); ctx.fillStyle = V3.primary;
+        hl.forEach((t, i) => ctx.fillText(t, rx + 6, ly + 14 + i * 13));
+        this.publish({ x: rx, y: ly, w: rw, h: lh, id: `mail-link-${k}` });
+        ly += lh + 4;
+      });
       if (this.step === 'mumMail') buttons.push({ id: 'mail-read', label: m.read, kind: 'primary' });
     }
     this.bar(ctx, W, H, MAIL.address, buttons);
