@@ -255,7 +255,6 @@ export class E4Browser {
   private gameKey = '';
   private gameMatches = 0;
   private gameComments = 0;
-  private gamePct = 0;
   private sessionBooked = false;
   /** the conversation row where the newest answer begins (drawConversation keeps its first line in view) */
   private anchorAt = 0;
@@ -271,7 +270,20 @@ export class E4Browser {
   get herWords(): string[] { return this.botSaid.filter((s) => s.who === 'her').map((s) => s.text); }
   private botDone = new Set<string>();
   private botNextIn = -1;
-  private ring = 94;
+  /**
+   * ⚑ S367 (UiB job 15 Part B, his B "a tug of war") — ONE NUMBER. The chat's ring ("Becoming") IS the handle of
+   * MATCH MADE SIMPLE's filter (src/room/consoleSession.ts `progress`): her matches pull it down, the AI's counter-moves
+   * push it up, and the chat's own beats set it (94 at the start, 98 when it mutes them, 97 when it makes the goal her
+   * picture, 61 or lower when she unmutes Junie). The game opens at it; a run leaves it where the handle stopped.
+   */
+  private get ring(): number { return consoleSession.progress; }
+  private set ring(v: number) { consoleSession.setProgress(v); }
+  /** the ring when the current beat began (the beat's own words quote it, so they do not tick while she plays) */
+  private beatRing = 94;
+  /** the last ring drawn (a run on the console moves it with no window open: the chat's cards follow) */
+  private ringSeen = -1;
+  /** the AI's pushes already commented on */
+  private gamePushes = 0;
   private mapMuted = false;
   private junieWarm = false;
   // Junie's x, and the turn back to the monitor after it
@@ -339,7 +351,7 @@ export class E4Browser {
   private get bot(): BotBeat | null { return this.botBeat >= 0 ? BOT.beats[this.botBeat] ?? null : null; }
   private botLines(b: BotBeat): string[] {
     const lines = b.id === 'rest' && this.gameStarted && b.startedLine ? [b.startedLine, ...b.lines] : b.lines;
-    return lines.map((l) => l.replace('{number}', this.clinicNumber.toLocaleString('en-GB')));
+    return lines.map((l) => l.replace('{number}', this.clinicNumber.toLocaleString('en-GB')).replace('{ring}', String(this.beatRing)));
   }
   private get botLinesShown(): number { const b = this.bot; return b && this.botT >= 0 ? Math.min(this.botLines(b).length, 1 + Math.floor(this.botT / BOT.lineSeconds)) : 0; }
   /** ⚑ the clip owns the page before the map beat speaks (the review: "the over-the-top moment, direct and brute") */
@@ -563,7 +575,7 @@ export class E4Browser {
   /** ⚑ S364 / item 7 — the game on her screen: the same session as the console on her bed */
   private openGame(): void {
     consoleSession.light();
-    if (!this.gameWin) { this.gameWin = true; this.gameMatches = consoleSession.stats.matches; this.gamePct = consoleSession.stats.percent; }
+    if (!this.gameWin) { this.gameWin = true; const st = consoleSession.stats; this.gameMatches = st.matches; this.gamePushes = st.pushes; }
     this.file('v3:game', 'opened', W3.game);
     playOnce('ui_press.mp3');
     this.version++;
@@ -739,18 +751,23 @@ export class E4Browser {
       if (Math.floor(n4 * 4) !== Math.floor(this.newsT * 4)) this.version++;   // the autoplay box's progress, four times a second
     }
     if (this.composeFlashT > 0) { this.composeFlashT = Math.max(0, this.composeFlashT - dt); if (this.composeFlashT === 0) this.version++; }
+    if (this.ring !== this.ringSeen) { this.ringSeen = this.ring; this.version++; }   // S367: the ring is the game's handle
     this.actClock(dt);
     if (this.gameWin) {
       const k = consoleSession.frameKey();
       if (k !== this.gameKey) { this.gameKey = k; this.version++; }
-      // ⚑ item 7 — the AI comments while she plays: a metric dressed as praise, one line every few matches, three in all
+      // ⚑ item 7 — the AI comments while she plays: a metric dressed as praise, one line every few matches, three in all.
+      //   ⚑ S367 — on ITS OWN push (the tug of war): "Calmer already. 61% → 64%." names the AI's counter-move as her calm
       const st = consoleSession.stats, b = this.bot;
-      if (st.matches >= this.gameMatches + 3 && this.gameComments < BOT.game.comments.length && !this.act && (!b || this.botBeatReady)
+      const lp = st.lastPush;
+      if (st.pushes > this.gamePushes && lp && lp.to > lp.from && st.matches >= this.gameMatches + 3
+        && this.gameComments < BOT.game.comments.length && !this.act && (!b || this.botBeatReady)
         && (this.step === 'bot' || this.step === 'confirm' || this.step === 'junie')) {
-        const line = BOT.game.comments[this.gameComments++].replace('{from}', String(this.gamePct)).replace('{to}', String(st.percent));
+        this.gamePushes = st.pushes;
+        const line = BOT.game.comments[this.gameComments++].replace('{from}', String(lp.from)).replace('{to}', String(lp.to));
         this.botSaid.push({ who: 'bot', text: line });
         this.gameLine = line;   // S366: and under the enlarged game
-        this.gameMatches = st.matches; this.gamePct = st.percent;
+        this.gameMatches = st.matches;
         playOnce('agent_2026.mp3');
         this.version++;
       }
@@ -977,13 +994,14 @@ export class E4Browser {
     if (id === 'heading') {
       // ⚑ S360 — the goal LAST, and the restore is the bot's act: "I've made it your picture" (the review he accepted;
       //   H47 "You, restored" no longer on the front from the start, nor on the table and the wall — e4Room)
-      this.ring = 97;
+      this.ring = Math.max(this.ring, 97);   // S367: the AI's push (never a fall: a pull of hers is undone, not rewarded)
       this.profile = 'goal';   // the small profile chip only (what Photos reverses); ⚑ H47 — Kettle's wallpaper stays hers
       markE4('newyou');
       this.file('newyou', 'read', W3.newyou);
     }
     if (id === 'stories') this.file('v3:stories', 'read', W3.stories);
-    if (id === 'unmuted') this.ring = 61;
+    if (id === 'unmuted') this.ring = Math.min(this.ring, 61);   // S367: her act pulls it; it never rises for it
+    this.beatRing = this.ring;
     // ⚑ S364 / N10 — before it speaks, it uses her computer: it reads her mail; it mutes Junie and two more; it starts the game
     if (id === 'reasons') { this.botT = -ACT_SECONDS.read; this.startAct('read'); }
     if (id === 'map') { this.botT = -ACT_SECONDS.mute; this.startAct('mute'); }
@@ -1014,7 +1032,7 @@ export class E4Browser {
       if (chip.memory) this.botSaid.push({ who: 'memory', text: chip.memory });
       this.botSaid.push({ who: 'bot', text: chip.reply });
       this.file(`conv:${b.id}`, 'answered', chip.filed);
-      if (b.id === 'map') this.ring = 98;   // S364: the AI muted them before it asked; her answer changes nothing
+      if (b.id === 'map') this.ring = Math.max(this.ring, 98);   // S364: the AI muted them before it asked; her answer changes nothing
       if (chip.game) { this.gameAnswer = chip.game; if (chip.game === 'open') this.openGame(); else consoleSession.light(); }
       if (b.id === 'explore') this.sessionBooked = true;
     } else {
@@ -2372,8 +2390,7 @@ export class E4Browser {
       return;
     }
     if (kind === 'ring') {
-      this.drawRing(ctx, x, y, 70, ring);
-      setFont(ctx, 11); ctx.fillStyle = V3.ink2; ctx.fillText(BOT.heading.ring, x + 80, y + 28);
+      this.drawRing(ctx, x, y, 70, ring);   // S367: its word is inside the ring (it was printed twice)
       return;
     }
     if (kind === 'shots') {
