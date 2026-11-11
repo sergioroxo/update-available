@@ -684,6 +684,11 @@ The filter works on Maya only, and Junie is never filtered.
 - The picture puts the life the system works on in view: a friend, a crowd, a summer. That is what the "restoration"
   would cost, and the reason it fails.
 
+**Built (S367, 11 Nov) and his reaction.** The handle is labelled "BECOMING", the chat ring's own word. The AI's
+pointer comes onto the board to make its swap, and in the chat it calls its push her calm ("Calmer already. 83% →
+88%."). A strand of her hair and her trans pin always stay hers. The end card reads "WE KEPT YOUR ORIGINAL. JUST IN
+CASE." His words on seeing it: "amazing idea to put the second thoughts to be the AI that plays against you, so smart".
+
 ## 7p. The summary layer: "AI can make mistakes" (his, 11 Nov 2026) — proposed as a section of the article
 
 **His words** (on job 14 Part A's photo page): "amazing idea with the Summary by AI, and the detail of 'AI can make

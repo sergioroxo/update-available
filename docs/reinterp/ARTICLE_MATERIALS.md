@@ -115,11 +115,33 @@ ARTICLE_COMPANION; this file only says where things are.*
 | `research/article-images-2026-11-11/job15-partA-S366/` | Job 15 Part A: her replies inside the message box, the signs each failing in its own way (the clip), the game window enlarged, ✕ on notifications, "Your circle" taller, Junie's lines, the try-on and raid moved to his left (headset frames simulated) | 83 | 11 Nov | Also on OneDrive |
 | `research/article-images-2026-11-11/clip-video/the-great-becoming-50s-S366-signs.mp4` | THE GREAT BECOMING after J15-02: the five signs, each failing in its own way | 1 | 11 Nov | Also on OneDrive |
 | `research/article-images-2026-11-11/flow-playtest-sonnet/` + `docs/reinterp/FLOW_PLAYTEST_2026-11-11.md` | **An AI agent play-tests the piece for flow** (his ask, 11 Nov): a Sonnet agent played the live build with a passive sampler, 22 findings (too fast, overlap, order), checked by the orchestrator; fixes = UIB_JOB_16 | 12 | 11 Nov | method evidence for §6 (critical making with a declared human–AI production): a machine reads the work as a slow human reader would. Also on OneDrive |
+| `research/article-images-2026-11-11/job15-partB-S367/` | Job 15 Part B: MATCH MADE SIMPLE as a tug of war — the redrawn Pride '24 picture, the filter on Maya, her pulls and the AI's pointer pushing, BECOMING = the chat's ring, the end page (tour, console, game) | 107 | 11 Nov | companion §7o update. Also on OneDrive |
 | `out/tour-e4-v2/`, `out/tour-e4/` … | era tours (regenerable with tools/tour-e4.mjs, tools/stills.mjs) | many | various | working photos; copy anything chosen into `research/` |
 | `~/update-available-uib/out/s347/`, `s348/` | era-change and headset probe frames (66 MB) | 284 | 9 Nov | indexed only, not copied |
 
 **Rule:** photos made in a builder's worktree (`~/update-available-uib`, `-uib2`, agents' worktrees) are copied into
 `research/article-images-<date>/` by the orchestrator when they matter to the article, because worktrees get cleaned.
+
+## 5b. Photo pages (claude.ai artifacts; his ask, 11 Nov: "add all of the artifact links made to the research document")
+
+Each builder part ends with a photo page: his review surface, where he judges from the frames. They are private to
+his account (he shares them from each page's menu), so the links open for him only. The share keys he pasted are not
+copied here. The photos themselves are in `research/article-images-<date>/` and on OneDrive.
+
+| page | what it shows | job · part · session | date | photos in |
+|---|---|---|---|---|
+| [SurvivingSOGICE — Project Redesign](https://claude.ai/artifact/Birwc68ZN83XGaFgzuVaqV) | the project's redesign overview | — | 9 Nov | — |
+| [The Close, Step by Step](https://claude.ai/artifact/R2Q1PUBQ6Ct1YWbU3ZBo8G) | the Close in his order: the flight with the glitch, Daniel's place, up, the messages, the panels, the song | job 13 · B · S361 | 11 Nov | `article-images-2026-11-11/close-order-S361/` |
+| [1997 to 2016, Fixed](https://claude.ai/artifact/V7FJmjCFs9d3nnVYBztmKn) | his headset notes on 1997–2016: timing and design | job 13 · C · S362 | 11 Nov | `article-images-2026-11-11/fixes-1997-2016-S362/` |
+| [2026, Around the AI](https://claude.ai/artifact/7Wp3A9z8MCuAMHdGteuhzp) | 2026 rebuilt around the AI conversation: the mailbox, Mum's articles, the diagnosis, the clip made for her | job 13 · A · S360 | 11 Nov | `article-images-2026-11-11/2026-ai-conversation-S360/` |
+| [2026 Screens, Part A](https://claude.ai/artifact/XBuT7sGX89ci5hoyJyiw6g) | 2026's screens designed: New search, Larkpost and its AI summary, Mum's three sites, the HHS report, Second Thoughts as a chat | job 14 · A · S363 | 11 Nov | `article-images-2026-11-11/2026-screens-S363/` |
+| [2026 Takeover, Part B](https://claude.ai/artifact/Bw7KKm9miDDVAUecYR1YCP) | the AI takes over her computer, reads her mail, mutes Junie, the signs, the game as care, the swap filter, explore | job 14 · B · S364 | 11 Nov | `article-images-2026-11-11/2026-ai-takeover-S364/` |
+| [The Room and the Close, Part C](https://claude.ai/artifact/4MRBwjH53A3RVA4YS938gn) | her wall cleared; the Close's panels open the era websites, in the headset too | job 14 · C · S365 | 11 Nov | `article-images-2026-11-11/room-and-close-S365/`, `close-websites-headset-S365/` |
+| [2026 Notes, Part A](https://claude.ai/artifact/5MZmy1hAakDjY98ffg42bJ) | his notes on job 14 built: replies in the box, the signs, the bigger game, ✕ on notices, "Your circle", Junie's lines, the try-on to his left | job 15 · A · S366 | 11 Nov | `article-images-2026-11-11/job15-partA-S366/` |
+| [Match Made Simple, Tug of War](https://claude.ai/artifact/CngSzSRUySbVuUu28n21Dr) | the 2026 game rebuilt: Maya + Junie at Pride '24, the filter on Maya, her pulls and the AI's pushes, one number | job 15 · B · S367 | 11 Nov | `article-images-2026-11-11/job15-partB-S367/` |
+
+Job 12's two pages were HTML files in the photo folders (`headset-bugs-S358/`, `headset-comfort-S359/A2-photos.html`),
+not artifacts. **Rule from now on:** every new photo page gets a row here when its part is merged.
 
 ## 6. Sources and archives outside the repo
 
