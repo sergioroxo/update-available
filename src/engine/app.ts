@@ -3708,11 +3708,17 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         // ⚑ S283/S291 — a press on a panel's SOURCES BUTTON opens that era's website. S291: IN THE PIECE — the site viewer
         //   (frame/siteViewer/): a window over the 3D view in the browser, a plane that comes to the visitor in the headset.
         //   (S283 opened a new tab, which a headset cannot do; the window has its own "Open as a web page" for that.)
-        //   A press elsewhere on the panel still turns it to the in-room dossier, as before.
+        //   (S365: a press elsewhere on the panel opens the same website — see below.)
         const si = cloud.panelSourcesAt(ray.p0, ray.p1, tGlass);
         if (si !== null) { siteViewerBus.open(ERA_TARGET[cloud.panelEraOf(si)] ?? '1997'); return; }
-        if (lb && lb.text !== lexStrings.star) { cloud.openDossierFor(lb.era, lb.text); return; }
-        if (pi !== null) { cloud.pressPanel(pi); return; }
+        // ⚑ S365 / job 14 C2 (his headset, 10 Nov: "at the close it didn't open the websites with all the information like the
+        //   desktop version… the sources become a button that open a browser window of the Era and you can scroll and touch
+        //   the website") — the in-room dossier cards RETIRE in the Close: a press ANYWHERE on a panel, or on a label, opens
+        //   that year's website in the site viewer (a plane over the room in the headset: thumbstick and touch scroll it;
+        //   the window in the browser). Same in every look-mode; the Sources button stays the labelled target. A label of
+        //   no room (the process labels) opens the hub. (The Lexicon star and the glass keep their precedence above.)
+        if (lb && lb.text !== lexStrings.star) { siteViewerBus.open(ERA_TARGET[lb.era] ?? 'hub'); return; }
+        if (pi !== null) { siteViewerBus.open(ERA_TARGET[cloud.panelEraOf(pi)] ?? '1997'); return; }
       }
       // ⚑ S163: in the Close the machine stands back in the sky (C-02) — its own glass is the press (far: come to
       //   it; near: the card); any press holds the drift (R3-112)
