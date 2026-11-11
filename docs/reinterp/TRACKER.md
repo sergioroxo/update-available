@@ -109,6 +109,8 @@ closed by him, never raise it again.
 
 - ☑ **S364 UiB job 14 Part B** — the AI takes over: it uses her computer (banner, pointer, her "Take back control" greyed), reads her mail into screenshots, mutes Junie and two more itself (a hidden "help" to Junie, answered in the raid), the "signs" ticked over her week in a 50 s clip, the game offered as care (one session on screen and on the bed's console), the swap filter on her redrawn photo, the stories as made-up pages, "explore" and the UK bill, the try-on morph the raid drags back; eight Close card drafts. BUILD_LOG S364.
 
+- ☑ **S365 UiB job 14 Part C** — her room and the Close: the news strips, the clinic ticket and the ceiling's contagion map gone from her room (the plane lives on only as the stream's audience); the Close's panels and labels open each year's website in the site viewer, headset included (the dossier cards retire in every mode); 2026 measured. BUILD_LOG S365.
+
 - ☑ **S359 UiB job 12 Part A2** — comfort: 2026 keeps the desk seat (no move to the stream, no turn for Show me/Back, plain cuts, no particles), the host's stream and the raid to the side, the Wick on the table, the turn on the way up to 2026, a flight into the Close, the grip icon. BUILD_LOG S359.
 
 - ☑ **S358 UiB job 12 Part A1** — the 10 Nov headset session's bugs H01–H19 (phantom buttons, NetVision close, check-in, Caleb's teaser sound, the 1997 folder, the diary line, the Handset Window number, Soften the term, the sticker, the link that was not there, Live, the window that grew, phone scroll + the song, the search box, window sizes, the try-on's silence, the 2026 room's props, wake vs breathing, the Close's panels). BUILD_LOG S358.
