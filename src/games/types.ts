@@ -22,6 +22,8 @@ export interface DeviceGame {
   key?(k: GameKey): void;
   /** a tap on the glass, in screen pixels */
   tap?(x: number, y: number): void;
+  /** ⚑ S364 — the device was picked up: what the game does on being woken (default: the START key). Optional. */
+  wake?(): void;
   /** the line to file when a run ends — returned once, then null */
   takeFiling(): string | null;
 }

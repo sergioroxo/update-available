@@ -65,6 +65,7 @@ import { mapState, nextHint } from '../witness/map';
 import { pulse as witnessPulse } from '../witness/pulse';
 import { createInstitution, INSTITUTION_IDS } from '../room/institution';
 import { buildDevices, DEVICE_PROP_IDS } from '../room/handheld';
+import { consoleSession, consoleSessionInternal } from '../room/consoleSession';
 import { practiceOf } from '../witness/record';
 import { mountHelper, type Helper } from '../frame/helper';
 import { mountCall } from '../frame/call';
@@ -946,6 +947,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // projection dance — mirrors __os's own established convention exactly.
     (window as { __graceQueue?: () => unknown }).__graceQueue = () =>
       era3Devices ? era3Devices.debugQueue() : null;
+    // ⚑ S364 (job 14 B7) the console session, for review (?debug=1 only): light(), draw(), tap(u,v), stats
+    (window as { __consoleSession?: unknown }).__consoleSession = consoleSession;
+    (window as { __consoleProbe?: unknown }).__consoleProbe = () => consoleSessionInternal.probe();
     (window as { __deviceDraws?: () => unknown }).__deviceDraws = () => era3Devices ? era3Devices.debugDraws() : null;
     // S61 FREE-CAMERA probe (?debug=1 only, write-only review aid — the
     // companion to __camProbe, which can only land on the three SEAT poses).
