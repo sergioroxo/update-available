@@ -96,6 +96,9 @@ const LOGICAL = {
   stream: { w: 352, h: 198, scale: 2 },   // scale 2: it repaints 12x a second now
   /** ⚑ S356 — the host's operator view, behind her in the Commons (drawn by `E4Ball.drawBackstage`) */
   backstage: { w: 352, h: 198, scale: 2 },
+  /** ⚑ S366 / J15-07 — the headset's SIDE PLANE: the try-on's mirror and the raid's filter card, off to his left (drawn by
+   *  `E4Ball.drawSide`). 512 × 384 like the glass, so every number on the mirror is the one it was drawn for. */
+  sidecard: { w: 512, h: 384, scale: 2 },
   /** ⚑ the laptop (2026-09-01): a small screen carrying two short lines and a
    *  hint, so it needs pixels for text and nothing else. */
   /** ⚑ S123 tried 320x200 and reverted the same hour — see `space.ts`'s
@@ -241,6 +244,12 @@ const PLACEMENT = {
   backstage: {
     pos: { x: 7.0, y: 1.12, z: 0.70 },
     size: { w: 1.7, h: 0.96 },
+    euler: { x: 90, y: 270, z: 0 }
+  },
+  /** ⚑ S366 / J15-07 — placed from the head each frame (`SIDE_CARD`); these are only its size and a resting value */
+  sidecard: {
+    pos: { x: 5.0, y: 1.16, z: 0.0 },
+    size: { w: 0.56, h: 0.42 },
     euler: { x: 90, y: 270, z: 0 }
   },
   stream: {
@@ -664,6 +673,18 @@ const WORN = { distance: 0.55, w: 0.56, h: 0.42 } as const;
 /** the touch is not a movement (Sérgio, 2026-08-06) — no donning animation.
  *  This is only the picture arriving, and it is short enough not to be one. */
 const WEAR_SECONDS = 0.55;
+/**
+ * ⚑ S366 / J15-07 (his, 11 Nov, in the headset: "the N12 moment should be a bit more on the side instead of being in
+ * front of you. It is not so harsh.") — THE SIDE PLANE, headset only. The try-on's mirror (the morph of her photograph) and
+ * the raid's filter card (the handle dragged back, each name on it) hang to his LEFT, `yaw` degrees off the desk seat's
+ * line of sight (the host's screen is ~33° to his right and its hologram ~52°, so the two moments never share a side),
+ * at the glass's own distance and size and a hand's breadth above his eye height (`rise`: when he does turn to it, the
+ * glass that is always in front of his face, with the tags and the chips low on it, does not cover the card), facing him.
+ * It follows his body (where he sits), never his head: turning is how he reaches it, and nothing waits for that. The browser look-modes never show it — there
+ * the mirror and the card stay on the glass, in the frame as before.
+ *   `seatYaw`: the desk seat's yaw (the room faces +x; PlayCanvas yaw 270). A larger yaw turns left.
+ */
+const SIDE_CARD = { seatYaw: 270, yaw: 52, distance: 0.55, rise: 0.10, w: 0.56, h: 0.42 } as const;
 /** how far in front of the eye each device sits when held, in metres. A phone
  *  is held closer than a tablet because it is smaller, not because it matters
  *  more — both end up subtending roughly the same angle. */
@@ -879,7 +900,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   graceQueueLite.mountTask(new GroupTask());       // S200: Post to the group — the platform's own frame
   graceQueueLite.mountTask(new PlacesListApp());   // S332: the places list — The Wick, added to the places to avoid
 
-  function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number } = {}): void {
+  function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number; transparent?: boolean } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);
     draw(ctx, logical.w, logical.h);
     // S177: the phone is a dense 2016 display, not pixel art. W1-F1: the monitor and the lid are pixel art SEEN SMALL —
@@ -887,7 +908,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     // S346: every device screen samples as a screen now (mips + max anisotropy + linear) — straight lines at any angle
     const tex = makeScreenTexture(app, canvas, 'screen');
     const place = PLACEMENT[name];
-    const entity = makeScreenEntity(`era3-device-${name}`, tex, place.size.w, place.size.h);
+    const entity = makeScreenEntity(`era3-device-${name}`, tex, place.size.w, place.size.h, opts.transparent === true);
     entity.setLocalPosition(place.pos.x, place.pos.y, place.pos.z);
     entity.setLocalEulerAngles(place.euler.x, place.euler.y, place.euler.z);
     entity.enabled = false; // setEra() decides visibility
@@ -1149,6 +1170,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     const sh = e4Bridge()?.shell();
     if (sh) sh.ball.drawBackstage(ctx, w, h);
   }, { versionOf: () => e4Bridge()?.shell()?.ball.backstageVersion ?? 0 });
+  // ⚑ S366 / J15-07 — the headset's side plane (transparent: in the raid only the card is on it)
+  add('sidecard', LOGICAL.sidecard, (ctx, w, h) => {
+    const sh = e4Bridge()?.shell();
+    if (sh) sh.ball.drawSide(ctx, w, h);
+  }, { versionOf: () => e4Bridge()?.shell()?.ball.sideVersion ?? 0, transparent: true });
 
   let arrived = false;
   let eraNow: EraKey = 'e1';
@@ -1300,6 +1326,31 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     if (worn) shell.setLook(((bearing() - wornYaw + 540) % 360) - 180);
   }
 
+  /**
+   * ⚑ S366 / J15-07 — the headset's side plane, each frame: told whether a headset is on (the ball then paints the mirror
+   * and the filter card here and not on the glass), and, while it has something to show, hung `SIDE_CARD.yaw`° to the left
+   * of the desk seat's line of sight, at the glass's distance, `rise` above the eye, facing him. Body-locked: it is placed
+   * from where his head IS (x, z, height) and from the seat's fixed heading, never from where he is looking.
+   */
+  const sideDir = new pc.Vec3();
+  const sideQuat = new pc.Quat();
+  function placeSideCard(s: Screen): void {
+    const sh = e4Bridge()?.shell();
+    const cam = camera();
+    const xrOn = !!app.xr?.active && !!cam;
+    sh?.ball.setXrSide(eraNow === 'e4' && xrOn);
+    s.entity.enabled = eraNow === 'e4' && xrOn && !!sh && sh.ball.sideCardOn;
+    if (!s.entity.enabled || !cam) return;
+    const yaw = SIDE_CARD.seatYaw + SIDE_CARD.yaw, r = yaw * Math.PI / 180;
+    sideDir.set(-Math.sin(r), 0, -Math.cos(r));          // the plane's bearing from the eye, level
+    const p = cam.getPosition();
+    s.entity.setPosition(p.x + sideDir.x * SIDE_CARD.distance, p.y + SIDE_CARD.rise, p.z + sideDir.z * SIDE_CARD.distance);
+    // facing him: the orientation of an eye looking along `sideDir`, tipped upright as the worn glass is (TIP)
+    sideQuat.setFromEulerAngles(0, Math.atan2(-sideDir.x, -sideDir.z) * 180 / Math.PI, 0).mul(TIP);
+    s.entity.setRotation(sideQuat);
+    s.entity.setLocalScale(SIDE_CARD.w, 1, SIDE_CARD.h);
+  }
+
   function xrRoot(name: string): unknown {
     // ⚑ S327 / T07 (his 8 Nov: the update "is showing the highlight boxes from the previous panel") — while the update
     //   notice owns Vera's screen the ray aims at ITS buttons, not at the board's rects underneath it (which it outlined
@@ -1398,7 +1449,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
             s.draw(s.ctx, s.logical.w, s.logical.h); s.dirty = true;
           }
         }
-        if (immersive && s.draw && s.entity.enabled) {
+        if (immersive && s.draw && s.entity.enabled && s.name !== 'sidecard') {   // S366: nothing on the side plane is pressed
           const place = PLACEMENT[s.name];
           const p = xrRay && hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, xrRay);
           const hover = p ? xrTarget(xrRects(xrRoot(s.name)), p.x, p.y, s.logical.w * 0.04 / place.size.w) : null;
@@ -1510,6 +1561,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
             s.entity.setLocalScale(B.w, 1, B.h);
           }
         }
+        if (s.name === 'sidecard') placeSideCard(s);
         if (s.name === 'stream') {
           const sh = e4Bridge()?.shell();
           s.entity.enabled = eraNow === 'e4' && !!sh && sh.ball.streaming;
@@ -1571,7 +1623,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         // ⚑ S328 — AND THE LAPTOP IS NEVER ON (T03, his 8 Nov headset test: "remove the laptop"): 2026 has one screen,
         //   the monitor, with Kettle as a window on it. Its prop is gone from r4; its plane stays registered and dark.
         //   S327 — and 2016's handset screen stays off too (the Handset Window is her phone).
-        s.entity.enabled = s.name === 'stream' || s.name === 'backstage' || s.name === 'phone' || s.name === 'laptop' ? false : roomThreeScreen ? era === 'e4'
+        s.entity.enabled = s.name === 'stream' || s.name === 'backstage' || s.name === 'sidecard' || s.name === 'phone' || s.name === 'laptop' ? false : roomThreeScreen ? era === 'e4'
           : roomTwoScreen ? era === 'e3'
           : visible;
       }

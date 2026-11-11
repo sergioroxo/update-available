@@ -103,6 +103,10 @@ const CHAT_SHOWN = 9;
 /** ⚑ S364 — where the filter docks on the glass once the raid lifts it off the mirror (clear of the tags, the chips,
  *  the raid's panel and the caption band) */
 const FILTER_CARD = { x: 14, y: 14, w: 124, h: 156 } as const;
+/** ⚑ S366 / J15-07 — in a HEADSET the filter card is not on the glass at all: it is its own plane, off to his side
+ *  (era3Devices.ts `SIDE_CARD`), 512 × 384 like the glass, and it docks here (a little larger than on the glass: it is
+ *  the one thing on that plane, and its handle's name is read from the edge of the view) */
+const SIDE_DOCK = { x: 168, y: 76, w: 176, h: 224 } as const;
 
 type Phase = 'idle' | 'host' | 'tryon' | 'invited' | 'raid' | 'naming' | 'turnAsk' | 'backstage' | 'stream' | 'after' | 'done';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -120,6 +124,9 @@ export class E4Ball {
   hits: Hit[] = [];
 
   private phase: Phase = 'idle';
+  /** ⚑ S366 / J15-07 — a headset is on: the try-on's mirror and the raid's filter card are drawn by `drawSide` onto their
+   *  own plane, off to his side (era3Devices.ts), and the glass in front of his face does not carry them */
+  private xrSide = false;
   /** the stream's own clock, from the moment the glass starts to clear */
   private streamT = 0;
   /** the frame's rows that have failed so far */
@@ -219,6 +226,17 @@ export class E4Ball {
   get choice(): string | null { return this.answered; }
 
   get live(): boolean { return this.phase !== 'idle' && this.phase !== 'done'; }
+  /** ⚑ S366 / J15-07 — the room tells the ball a headset is on (every frame; a change repaints the glass) */
+  setXrSide(on: boolean): void { if (on !== this.xrSide) { this.xrSide = on; this.version++; } }
+  /** the side plane has something to show: the mirror (try-on, the link), then the filter card (the raid, the naming) */
+  get sideCardOn(): boolean {
+    return this.xrSide && (this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'raid' || this.phase === 'naming' || this.phase === 'turnAsk');
+  }
+  /** what the side plane repaints on: the glass's own version while it has something, folded with the phase */
+  get sideVersion(): number {
+    if (!this.sideCardOn) return 0;
+    return 1 + this.version * 8 + ['tryon', 'invited', 'raid', 'naming', 'turnAsk'].indexOf(this.phase);
+  }
   get invited(): boolean { return this.phase === 'invited'; }
   /** ⚑ S354 — the host's studio is up (its conversation, its recap) */
   get hosting(): boolean { return this.phase === 'host'; }
@@ -244,6 +262,7 @@ export class E4Ball {
   /** her chips are on the glass, waiting (a probe reads it; the walker reads `hits`) */
   get callUp(): boolean { return this.asking; }
   /** how much of the agent's environment is still on the glass: all of it until the stream fills the glass */
+  get glassEnvironmentK(): number { return this.xrSide ? 0 : this.environmentK; }
   get environmentK(): number {
     // ⚑ S354 — in the studio the glass is clear (the world is the host's); the try-on fills it again
     if (this.phase === 'host' || this.phase === 'naming' || this.phase === 'turnAsk' || this.phase === 'backstage') return 0;
@@ -805,7 +824,8 @@ export class E4Ball {
   draw(ctx: CanvasRenderingContext2D, W: number, H: number, _x: number, _y: number, _w: number): void {
     if (this.phase === 'host') { this.drawHostGlass(ctx, W, H); return; }
     // ⚑ S354 — the try-on is the host's mirror now: it fills the glass from "who you could be" until the stream does
-    const k = this.environmentK;
+    // ⚑ S366 / J15-07 — in a headset the mirror and the filter card are on their own plane, to his side (`drawSide`)
+    const k = this.glassEnvironmentK, onGlass = !this.xrSide;
     if (k > 0 && (this.phase === 'tryon' || this.phase === 'invited' || this.phase === 'raid')) {
       const was = ctx.globalAlpha;
       ctx.globalAlpha = was * k;
@@ -814,10 +834,10 @@ export class E4Ball {
     }
     if (this.phase === 'tryon') return;
     if (this.phase === 'invited') { this.drawInvite(ctx); return; }
-    if (this.phase === 'raid') { this.drawFilterCard(ctx, W, H); this.drawRaidPanel(ctx, W, H); this.drawHelpAnswer(ctx, W, H); return; }
-    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); this.drawFilterCard(ctx, W, H); this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
+    if (this.phase === 'raid') { if (onGlass) this.drawFilterCard(ctx, W, H); this.drawRaidPanel(ctx, W, H); this.drawHelpAnswer(ctx, W, H); return; }
+    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); if (onGlass) this.drawFilterCard(ctx, W, H); this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
     if (this.phase === 'turnAsk' || this.phase === 'backstage') {
-      if (this.phase === 'turnAsk') this.drawFilterCard(ctx, W, H);
+      if (this.phase === 'turnAsk' && onGlass) this.drawFilterCard(ctx, W, H);
       this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return;
     }
     if (this.phase === 'stream' && this.streamT < FRAME.clearSeconds) {
@@ -904,12 +924,12 @@ export class E4Ball {
    * lines crack its gloss; the naming drags it back to her. Its frame is the mirror's grey until the filter is off her,
    * then her room's pink. Head-locked like everything on the glass, so no part of it depends on a look.
    */
-  private drawFilterCard(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+  private drawFilterCard(ctx: CanvasRenderingContext2D, W: number, H: number, dock: { x: number; y: number; w: number; h: number } = FILTER_CARD): void {
     const m = mirrorRect(W, H, TRYON.link);
     const f = this.phase === 'raid' ? Math.min(1, this.raidT / 1.0) : 1;
     const e = f * f * (3 - 2 * f);
-    const x = Math.round(m.x + (FILTER_CARD.x - m.x) * e), y = Math.round(m.y + (FILTER_CARD.y - m.y) * e);
-    const w = Math.round(m.w + (FILTER_CARD.w - m.w) * e), h = Math.round(m.h + (FILTER_CARD.h - m.h) * e);
+    const x = Math.round(m.x + (dock.x - m.x) * e), y = Math.round(m.y + (dock.y - m.y) * e);
+    const w = Math.round(m.w + (dock.w - m.w) * e), h = Math.round(m.h + (dock.h - m.h) * e);
     const hers = this.filterK <= 0.001;
     const rim = Math.max(3, Math.round(6 - 3 * e));
     px(ctx, x - rim, y - rim, w + 2 * rim, h + 2 * rim, hers ? PLACE.textileHi : ERA4.ruleHi);
@@ -918,6 +938,34 @@ export class E4Ball {
     drawSwapMorph(ctx, x, y, w, h, this.filterK, 0, {
       chrome: !hers, broken: cracked, by, byInk: by === 'junie' ? BALL.whoFriend : BALL.whoMC
     });
+  }
+
+  /**
+   * ⚑ S366 / J15-07 (his, 11 Nov, in the headset: "the N12 moment should be a bit more on the side instead of being in
+   * front of you. It is not so harsh.") — THE SIDE PLANE. In a headset the try-on's mirror (try-on, then under Junie's
+   * link) and the raid's filter card (the raid, the naming, Show me) are painted here, onto a plane hung to his LEFT
+   * (era3Devices.ts `SIDE_CARD`), where the host's screen and hologram are to his right; the glass in front of his face
+   * keeps everything that is read or pressed (the host's caption, the tags, the chips, Junie's link, her help). Nothing
+   * on this plane is pressed, and nothing advances because he looked at it: the mirror ends on its clock (Junie's link
+   * breaks in), and the card's handle is dragged by the people.
+   */
+  drawSide(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    if (!this.sideCardOn) return;
+    if (this.phase === 'tryon' || this.phase === 'invited') {
+      drawTryOn(ctx, W, H, Math.min(this.tryT, TRYON.link), HOST.speaker);
+      return;
+    }
+    if (this.phase === 'raid') {
+      // the mirror's field lets go in the raid's first second, as it does on the glass; the card stays
+      const k = this.environmentK;
+      if (k > 0) {
+        const was = ctx.globalAlpha;
+        ctx.globalAlpha = was * k;
+        drawTryOn(ctx, W, H, Math.min(this.tryT, TRYON.link), HOST.speaker);
+        ctx.globalAlpha = was;
+      }
+    }
+    this.drawFilterCard(ctx, W, H, SIDE_DOCK);
   }
 
   /** ⚑ S364 — junie's answer to her "help", stamped on the glass above the raid's panel while the raid comes in */

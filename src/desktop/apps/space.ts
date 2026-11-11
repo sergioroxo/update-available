@@ -957,7 +957,7 @@ export class E4Shell {
     // ⚑ and it DISSOLVES as the filter fails: each label the overlay cannot
     //   make stick takes a share of the environment with it, and the room she
     //   was not supposed to see comes through the glass a step at a time
-    const k = this.ball.environmentK;
+    const k = this.ball.glassEnvironmentK;   // ⚑ S366 / J15-07: 0 in a headset, where the mirror is off to the side
     ctx.clearRect(0, 0, W, H);
     // ⚑ S354 — the ball draws the try-on itself now (the host's mirror, on its own clock)
     this.ball.draw(ctx, W, H, LABEL.x, LABEL.y, LABEL.w);
