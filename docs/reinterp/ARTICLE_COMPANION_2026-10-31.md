@@ -81,6 +81,7 @@ knowledge base documents them. File names are where it is drawn.*
 | Recommendation, podcasts, courses | the recommend task, the podcast order, the course builder |
 | Mobile games | **FloppySheep** on Vera's phone (S221) |
 | The assistant | **Lambient** |
+| Accountability software (added 11 Nov, his) | GracePlatform's review and reports are modelled on **Covenant Eyes** (see §7r) |
 
 ### 2026 — AI, visors, the feed
 | interface form | in the piece |
@@ -790,6 +791,37 @@ when the seller is a conversion network (the system's self-presentation, `operab
 **Not to overclaim.** The rollback was about tone across all users, not about LGBTQ+ topics. The documented case of an
 AI pointing someone to conversion therapy is §7e (GLAAD 2026). The memory dates come from OpenAI's post and secondary
 timelines.
+
+## 7r. GracePlatform and Covenant Eyes (his, 11 Nov 2026)
+
+**His words:** "add to the references that 2016 GracePlatform is also inspired on Covenant Eyes, a tool used by SOGICE
+orgs a lot."
+
+**What is documented (KB: `e3_theday` cards 6 and 7; SOURCE_VERIFICATION_RESULTS C7/C8; RESEARCH_2016_VERA_APPARATUS
+row 12):**
+- Covenant Eyes was founded in 2000 and says it "pioneered the concept of Internet Accountability". Its iPhone app
+  came in December 2009 and its Android app in April 2012.
+- Activity reports go to chosen "accountability partners" ("unlimited partners", its own 2015 guide).
+- It sells monitoring in the language of care: trust, support, help.
+
+**Found 11 Nov, through reports of it** (WIRED's site blocks fetching; seen through Christian Post, Malay Mail and
+Futurism):
+- In September 2022 WIRED investigated accountability apps (Covenant Eyes, Accountable2You) used by churches. At one
+  church, staff were required to install them, with a church leader as the accountability partner.
+- A member was asked to install Covenant Eyes after he told his church leader he was gay. He received accusatory
+  emails, one over a search for "#Gay".
+- A former member called it "shameware".
+- After WIRED contacted Google, both apps left the Play Store. Covenant Eyes answered that users choose who sees their
+  activity, and warned churches against "spying".
+
+**In the piece:** 2003's accountability alert (`accountability.ts`) is the desktop form. 2016's GracePlatform is the
+platform form: the group's messages reviewed, the review reported, and all of it presented as care. The 2016 era site
+now names Covenant Eyes under "the interfaces this year rebuilds".
+
+**Not to overclaim.** That conversion programmes used Covenant Eyes "a lot" is **not documented** in the KB. The KB
+calls it adjacent evidence: evangelical sexual-purity accountability, not SOGICE technology as such. What is documented
+is churches requiring it, and one reported case of it being used on a gay member. Say "churches and ministries used
+accountability software as care", and cite the WIRED case as a case, not a rate.
 
 ## 8. What the article must not overclaim
 
