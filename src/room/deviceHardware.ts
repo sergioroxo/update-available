@@ -3,8 +3,10 @@
 import * as pc from 'playcanvas';
 type V3 = [number, number, number];
 export type HardwareBox = (name: string, pos: V3, size: V3, color: string) => void;
-export function dressDeviceHardware(node: pc.Entity, dress: (box: HardwareBox) => void): void {
-  const app = pc.Application.getApplication(); if (!app) return;
+/** ⚑ S377 — `glow` (0…1): the boxes also light themselves by that share of their own colour, so a device the system
+ *  carries reads in any light (the 'system' tier's self-light, era1room.ts styleMaterial). 0 keeps them lit only. */
+export function dressDeviceHardware(node: pc.Entity, dress: (box: HardwareBox) => void, glow = 0): pc.StandardMaterial | null {
+  const app = pc.Application.getApplication(); if (!app) return null;
   const box = pc.createBox(app.graphicsDevice, {});
   const bp: number[] = [], bn: number[] = [], bi: number[] = [];
   box.getPositions(bp); box.getNormals(bn); box.getIndices(bi);
@@ -17,9 +19,12 @@ export function dressDeviceHardware(node: pc.Entity, dress: (box: HardwareBox) =
     }
     indices.push(...bi.map(i => i + offset));
   });
-  box.destroy(); if (!positions.length) return;
+  box.destroy(); if (!positions.length) return null;
   const mesh = new pc.Mesh(app.graphicsDevice); mesh.setPositions(positions); mesh.setNormals(normals); mesh.setColors(colors); mesh.setIndices(indices); mesh.update(pc.PRIMITIVE_TRIANGLES);
-  const m = new pc.StandardMaterial(); m.diffuse.set(1, 1, 1); m.diffuseVertexColor = true; m.update();
+  const m = new pc.StandardMaterial(); m.diffuse.set(1, 1, 1); m.diffuseVertexColor = true;
+  if (glow > 0) { m.emissive.set(glow, glow, glow); m.emissiveVertexColor = true; }
+  m.update();
   const e = new pc.Entity('device-hardware'); node.addChild(e);
   e.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, m, e)] });
+  return m;
 }

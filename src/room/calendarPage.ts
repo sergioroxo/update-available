@@ -5,7 +5,7 @@
  */
 import * as pc from 'playcanvas';
 import { drawCalendarPage, PAGE_W, PAGE_H, type PageEra } from './calendarArt';
-import { drawPrint, PRINT_SIZE, type PrintId } from './printArt';
+import { drawPrint, PRINT_SIZE, PRINT_SELF_LIT, type PrintId } from './printArt';
 
 export type { PageEra };
 /** the model's printed face in its own native units: x0, y0, x1, y1, z */
@@ -44,8 +44,9 @@ export function attachCalendarPage(wrapper: pc.Entity, face: Face, era: PageEra)
   model.addChild(plane);
 }
 
-/** a pixel-art canvas as a nearest-filtered texture on a lit material */
-function printMaterial(app: pc.AppBase, w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void): pc.StandardMaterial | null {
+/** a pixel-art canvas as a nearest-filtered texture on a lit material — or, ⚑ S377, on an UNLIT one (`selfLit`: a view
+ *  lit from behind, the 1997 night, which is the room's only light before the switch) */
+function printMaterial(app: pc.AppBase, w: number, h: number, draw: (ctx: CanvasRenderingContext2D) => void, selfLit = false): pc.StandardMaterial | null {
   const canvas = document.createElement('canvas');
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
@@ -58,7 +59,12 @@ function printMaterial(app: pc.AppBase, w: number, h: number, draw: (ctx: Canvas
   });
   tex.setSource(canvas);
   const mat = new pc.StandardMaterial();
-  mat.diffuseMap = tex;
+  if (selfLit) {
+    mat.useLighting = false;
+    mat.diffuse = new pc.Color(0, 0, 0);
+    mat.emissive = new pc.Color(1, 1, 1);
+    mat.emissiveMap = tex;
+  } else mat.diffuseMap = tex;
   mat.update();
   return mat;
 }
@@ -91,7 +97,7 @@ export function attachPrintToBox(box: pc.Entity, id: PrintId): void {
   const app = pc.Application.getApplication();
   if (!app) return;
   const [w, h] = PRINT_SIZE[id];
-  const mat = printMaterial(app, w, h, (ctx) => drawPrint(ctx, id));
+  const mat = printMaterial(app, w, h, (ctx) => drawPrint(ctx, id), PRINT_SELF_LIT.has(id));
   if (!mat) return;
   const plane = new pc.Entity(`${box.name}-print`);
   plane.addComponent('render', { type: 'plane' });
