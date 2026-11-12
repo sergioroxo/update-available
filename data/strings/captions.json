@@ -3,6 +3,7 @@
   "_docS222": "⚑ S222 — two cues name LIVE sounds, not files: CLEAR on the 2003 phone plays its own Web Audio (src/games/clear.ts) and announces these two by name through tapeAudio.announceCue, only when they are heard (the one mute off). The rest of its sounds (a shot, a landing, a break) are what the screen already shows.",
   "_docS362": "⚑ S362 / H36 (his headset, 10 Nov, 20:41: 'The Lamby song plays here in 1997 … a song from one of the tapes') — 1997's diary collapse no longer plays 2003's jingle (chase_the_clouds_broken stays 2003's, registered); it plays Daniel's tape B broadcast jingle, slowed as the screen splits. This cue names it (it is only announced where playOnce starts it; the tapes' own bus never announces it).",
   "_docS360": "⚑ S360 / clip (his 11 Nov: 'music and a narrator') — THE GREAT BECOMING's sound (src/desktop/apps/contagionClip.ts startClipSound). The narrator cues carry the SPOKEN WORDS, which are data/dialog/s4_v3.json clip.frames[n] (also the picture's subtitle band) — if a frame changes, change its cue here and re-render the file (tools/tts/render.py --id clip_narr_n). `holds` is new: a per-cue hold in seconds that overrides holdSeconds, read in src/engine/app.ts; each narrator cue holds its clip's real duration, rounded up to 0.1 s (ffprobe: 3.692 2.438 3.622 3.204 3.762 3.831 3.065). ⚑ S364: ten cues now — the three \"signs\" lines are clip_narr_3…5 (4.110 4.807 5.782 s) and S360's lines 3…6 were renamed clip_narr_6…9 (same files, same holds). The music cue is replaced 0.15 s after it starts, when the first narrator line begins (one strip, one voice at a time). ⚑ S366 (UiB job 15, J15-02): the three signs lines were rewritten and re-rendered (clip_narr_3…5, now 4.040 4.807 5.991 s); their cues and holds below follow. ⚑ S370 (UiB job 16 Part C3/C4): clip_narr_7 is the new Meridian line (EVEN THE LGB CHARITY SAYS YOU'RE NOT ONE OF THEM., 5.991 s, hold 6.0) and clip_narr_10 the end slate's call to action (TALK TO SECOND THOUGHTS., 3.344 s, hold 3.4); eleven cues now.",
+  "_docS370raid": "⚑ S370 / C1 (UiB job 16 Part C1) — commons_lamps_rise.mp3 (S214, a cloud of bells; unused since the lamps went in S293) is the RAID'S ARRIVAL now: it plays as the people walk in from the sides (ball.ts updateRaid), over the stream's music. Its caption names what it is for now; there are no lamps.",
   "holds": { "clip_narr_0.mp3": 3.7, "clip_narr_1.mp3": 2.5, "clip_narr_2.mp3": 3.7, "clip_narr_3.mp3": 4.1, "clip_narr_4.mp3": 4.9, "clip_narr_5.mp3": 6.0, "clip_narr_6.mp3": 3.3, "clip_narr_7.mp3": 6.0, "clip_narr_8.mp3": 3.9, "clip_narr_9.mp3": 3.1, "clip_narr_10.mp3": 3.4 },
   "holdSeconds": 1.8,
   "cues": {
@@ -86,7 +87,7 @@
     "static_2026.mp3": "[static]",
     "power_down_2026.mp3": "[power down]",
     "glitch_e4_end.mp3": "[a glitch, ending]",
-    "commons_lamps_rise.mp3": "[lamps rising, like bells]",
+    "commons_lamps_rise.mp3": "[bells, gathering: people arriving]",
     "commons_her_lantern.mp3": "[her lamp; the hall answers]",
     "lamby_dispersal_2003.mp3": "[a music box, coming apart]",
     "noa_video_room_tone_2016.mp3": "[a quiet room]",
