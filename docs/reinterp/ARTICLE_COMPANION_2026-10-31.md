@@ -1023,6 +1023,53 @@ Claude Code deletes logs after `cleanupPeriodDays` (30 days by default), so a fi
 **Not to overclaim.** API-equivalent is not money spent. The older models' cache prices are estimated. The tool runs
 about 8% under Claude Code's own counter. The folder names say where the work happened, not always what it was for.
 
+
+**Added 12 Nov: Codex (OpenAI), counted by Codex from its own logs.** The full report, with every folder, model and
+price, is in `research/usage-cost-2026-11-12/codex.md` (private). Codex read only its own session logs, from March to
+12 Nov 2026. It priced them at OpenAI's API list prices of 12 Nov 2026, applied to the past (standard, short-context
+rates; no subscription fees).
+
+| Codex work | folders | API-equivalent |
+|---|---|---|
+| **the simulator itself** | update-available, update-available-reinterp | ≈ $312–325 |
+| **the knowledge base:** ingesting and reading the sources | surviving-sogice-ingest (and one worktree of it) | ≈ $7,455–7,471 |
+| other SurvivingSOGICE folders | Tagger, URL_Archive, Web_Word | ≈ $10 |
+| **project total** | | **≈ $7,777–7,806** |
+
+Codex's figures leave out:
+- the 149 project sessions that ran on `codex-auto-review`, which has no public price, so they are counted as $0;
+- the Whispering folders and the other research folders, about $2,750 more.
+
+**Both tools together, by what the work was for:**
+
+| | Claude Code | Codex | together |
+|---|---|---|---|
+| the simulator (this piece) | ≈ $7,950 (including the UiB builder) | ≈ $320 | **≈ $8,270** |
+| the knowledge base | ≈ $380 | ≈ $7,460 | **≈ $7,840** |
+| **SurvivingSOGICE in all** | ≈ $8,330 | ≈ $7,790 | **≈ $16,100** |
+
+**For the article:**
+- **The division of labour shows in the bill.** Claude built the piece and Codex built the knowledge base it stands
+  on. The sources cost as much machine work as the piece itself: every claim on a Close card or a Lexicon page comes
+  out of that work.
+- **Both tools show the same shape.** In both, almost all of the cost is the model re-reading what it already holds.
+  96% of Codex's input tokens on this project were cached input, as Claude's 15.6 billion re-read tokens were 59% of
+  its cost. Continuity costs more than generation, in both tools.
+
+**Not to overclaim:**
+- The two counts are not built the same way. Claude's tool is a floor, about 8% under Claude Code's own counter.
+  Codex's figure is partial: unpriced sessions are missing, the short-context rates are a baseline (if every request
+  had been long-context, the project figure would be ≈ $15,100), and a few sub-sessions may carry usage they
+  inherited from another session.
+- Both use today's list prices for work done months ago.
+- None of this is money paid: both ran on subscription plans.
+- **Still not counted:**
+  - the Claude account that made the versions before 16 May (T72);
+  - the claude.ai chats;
+  - the JEV runs on OpenRouter;
+  - Suno;
+  - the ArenaAI trials.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop

@@ -15,7 +15,8 @@ import { reducedMotion } from '../state/motion';
  * is invented (no real site's name, mark or logo), the article is true and dull
  * (`data/strings/leavePage.json`: a screensaver), and the way back is discreet
  * but findable three ways: the last entry under See also, the small link in the
- * corner, and Esc. While it is up the piece is HELD (the menu's own freeze) and
+ * corner, and Esc — and, since S357bc (his festival feedback), a plain site notice under the top bar with a button
+ * back, which still does not name the piece. While it is up the piece is HELD (the menu's own freeze) and
  * every sound is muted; the page title is the article's, so a tab list shows
  * nothing else. "Leave for good" is the old Leave — the ledger wiped, the inert
  * "You left." screen.
@@ -109,6 +110,23 @@ function createLeavePage(): LeavePage {
     corner.addEventListener('click', hide);
     top.appendChild(corner);
     page.appendChild(top);
+
+    // ⚑ S357bc — the site notice: a clear way back for anyone who came here by accident (his festival feedback). It
+    //   reads as the reference site's own notice and never names the piece, so the page still hides it.
+    const notice = el('div', {
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', flexWrap: 'wrap',
+      padding: '10px 18px', background: REFERENCE.panelHead, borderBottom: `1px solid ${RULE}`,
+      font: '14px Arial, Helvetica, sans-serif', color: INK
+    });
+    notice.setAttribute('role', 'note');
+    notice.appendChild(el('span', {}, copy.noticeLine));
+    const goBack = el('button', {
+      font: '14px Arial, Helvetica, sans-serif', color: LINK, background: PAPER, border: `1px solid ${LINK}`,
+      borderRadius: '2px', padding: '6px 14px', cursor: 'pointer'
+    }, copy.noticeButton);
+    goBack.addEventListener('click', hide);
+    notice.appendChild(goBack);
+    page.appendChild(notice);
 
     // ── the article ──
     const body = el('div', { maxWidth: '980px', margin: '0 auto', padding: '18px 22px 40px' });

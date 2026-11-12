@@ -70,6 +70,9 @@
   "Energy saving (computing)"
  ],
  "resumeLink": "Your update has failed (resume where you were)",
+ "_docNoticeS357bc": "⚑ S357bc (his, 12 Nov: \"the Leave page needs a more clear way to go back to the experience if someone goes there by accident, this was one of the things I got feedback as\"). A site notice under the top bar, in the reference site's own notice style, with a plain button back. It never names the piece, so the page still works as a place to hide it; the three discreet ways back (See also, the corner, Esc) stay.",
+ "noticeLine": "Opened this page by mistake?",
+ "noticeButton": "↩ Go back to where you were",
  "cornerResume": "↩ resume",
  "leaveForGood": "leave for good — nothing is kept",
  "footer": "Text is available under a free licence; this page is part of a work of fiction and stores nothing about you.",

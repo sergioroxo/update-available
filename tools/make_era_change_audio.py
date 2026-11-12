@@ -61,7 +61,13 @@ TAU = 2 * np.pi
 PLANS = {
     '1997_2003': dict(R=8.3, T=0.0, B=7.0, C=7.0, D=13.0, walls=False, idx=1),
     '2003_2016': dict(R=8.3, T=0.0, B=11.0, C=11.0, D=11.5, walls=True, idx=2),
-    '2016_2026': dict(R=7.0, T=6.0, B=25.0, C=11.0, D=11.5, walls=False, idx=3),
+    # ⚑ S357bf/bg (his, 12 Nov: the camera turns "before the rooms start morphing so we can see it happen"): M the
+    #   seconds after the rise before the room starts changing (= the turn now), W a hold at the top watching it, before
+    #   the crossing. The computer's turn is 6 s; a headset's (and reduced motion's) slow facing turn runs to 24 s, so
+    #   that flight gets its own piece, `_xr` (app.ts plays it there). The morph layer is the same for both: it starts
+    #   with the room's change, and from there to the landing is W + B + D on both (42.5 s), as T + B + D was before.
+    '2016_2026': dict(R=7.0, T=6.0, M=6.0, W=6.0, B=25.0, C=11.0, D=11.5, walls=False, idx=3),
+    '2016_2026_xr': dict(R=7.0, T=17.0, M=17.0, W=6.0, B=25.0, C=11.0, D=11.5, walls=False, idx=3),
 }
 CASCADE, PROP_DUR, GLITCH_FRAC = 5.2, 1.3, 0.42      # src/room/clusterMorph.ts
 MUSIC_TAIL, MORPH_TAIL = 7.0, 4.5
@@ -186,9 +192,10 @@ def saw(freq_fn, n, rng):
     return out
 
 
-def music(name, R, T, B, C, D, **_):
+def music(name, R, T, B, C, D, M=0.0, W=0.0, **_):
     rng = np.random.default_rng(1997 + int(B * 10))
-    L0 = R + T + B                   # the descent starts
+    F0 = R + M                       # the room starts to change (S357bf: after the turn on 2016 → 2026)
+    L0 = R + T + W + B               # the descent starts
     LE = L0 + D                      # you land in the seat
     LC = LE - 0.8                    # the lead's ♯11 just before the landing, resolving on it
     total = LE + MUSIC_TAIL
@@ -200,7 +207,7 @@ def music(name, R, T, B, C, D, **_):
     seq = [(0.0, 'Gmaj9')]
     fold = ['Em9', 'Cmaj7#11', 'D69']
     for i, c in enumerate(fold):
-        seq.append((R + (L0 - R) * (i + 1) / (len(fold) + 1), c))
+        seq.append((F0 + (L0 - F0) * (i + 1) / (len(fold) + 1), c))
     seq.append((L0 + 0.4, 'Gmaj9#11'))
 
     def chord_at(time):
@@ -212,7 +219,7 @@ def music(name, R, T, B, C, D, **_):
 
     # the fold's progress 0…1 (0 through the rise, 1 once the room has changed, through the travel and the descent)
     def fold_k(time):
-        return float(np.clip((time - R) / max(0.1, C), 0, 1))
+        return float(np.clip((time - F0) / max(0.1, C), 0, 1))
 
     # ── the PAD, through the resonant sweep ──
     pad = np.zeros(n)
@@ -232,8 +239,8 @@ def music(name, R, T, B, C, D, **_):
 
     def cutoff(time):
         k = fold_k(time)
-        if time < R:
-            return 420 + 380 * smooth(time / R)                     # the install: closed, opening a crack
+        if time < F0:
+            return 420 + 380 * smooth(time / F0)                    # the install: closed, opening a crack
         if time < L0:
             return 800 + 3600 * smooth(k) ** 1.4                    # the fold: the sweep opens
         if time < LE:
@@ -247,7 +254,7 @@ def music(name, R, T, B, C, D, **_):
 
     # ── the PULSE: rate in beats-per-beat (1 → 4 → 1), phase integrated so it never jumps ──
     def rate(time):
-        if time < R:
+        if time < F0:
             return 1.0
         if time < L0:
             return 1.0 + 3.0 * smooth(fold_k(time)) ** 1.25
@@ -501,13 +508,13 @@ def glob_events(idx, C):
     return sorted(events, key=lambda e: e['t'])
 
 
-def morph_layer(name, R, T, B, C, D, walls, idx, **_):
+def morph_layer(name, R, T, B, C, D, walls, idx, W=0.0, **_):
     """⚑ S348 — the same sounds he loved (job 6), now ON the glob events: a creak where things vanish (bending down),
     appear (bending up) or change; a glass tick where they only glitch; a bigger, lower whoosh where a wall moves; the
     rising shimmer following how much is changing; a long soft fall of air through the descent; the bloom on the
     landing. Starts with the cascade (app.ts: cluster.onSpaceChange)."""
     rng = np.random.default_rng(2026 + int(B * 10) + (7 if walls else 0))
-    land = T + B + D                          # the landing, from the cascade's start (the cascade starts as the rise ends)
+    land = (W if W else T) + B + D           # the landing, from the cascade's start (S357bf: W + B + D once it waits for the turn)
     total = land + MORPH_TAIL
     n = int(total * SR)
     t = np.arange(n) / SR
@@ -590,9 +597,14 @@ def write(stem, y, peak):
 
 
 def main():
+    import sys
+    only = set(sys.argv[1:])   # e.g. `2016_2026 2016_2026_xr`: render just those (the rest are deterministic anyway)
     for name, plan in PLANS.items():
+        if only and name not in only:
+            continue
         write(f'passage_{name}', music(name, **plan), 0.85)
-        write(f'morph_{name}', morph_layer(name, **plan), 0.85)
+        if not name.endswith('_xr'):   # one morph layer serves both 2016 → 2026 flights
+            write(f'morph_{name}', morph_layer(name, **plan), 0.85)
 
 
 if __name__ == '__main__':
