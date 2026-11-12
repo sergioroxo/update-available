@@ -223,7 +223,9 @@ async function main() {
     if (h) window.__os.handleClick(h.x + h.w / 2, h.y + h.h / 2);
   });
   await wait(1500);
-  await beat('studio · the raid + the naming', 'the count 1 → 42, the host\'s frame failing, seven tags taking the stage');
+  // ⚑ S370 / C1 — the raid is one thing at a time now (ball.ts planRaid): the banner plane, the crowd walking in,
+  //   TransJesus stepping on, the host's panel; then the naming with the picture's plane in front (headset only)
+  await beat('studio · the raid + the naming', 'the host\'s screen glitch, the people\'s banner, the crowd walking in, TransJesus on, the host\'s frame failing, seven tags taking the stage');
   // ⚑ S356 — then junie's "look what's behind the stage": Show me (a blink to the backstage), the operator view going
   //   dark while the stage behind her becomes the people's, and Back (a blink to the stage)
   const pressBall = (id) => page.evaluate((id) => { const b = window.__os.e4.ball; const h = b.hits.find((r) => r.id === id); if (h) window.__os.handleClick(h.x + h.w / 2, h.y + h.h / 2); return !!h; }, id);
@@ -266,6 +268,11 @@ async function main() {
 
   // ── 4 · the termination, the glitch, the Close ──
   await page.evaluate(() => window.__os.e4.ball.debugJumpTo('after'));
+  await beat('termination · SESSION TERMINATED on the glass');
+  // ⚑ S370 / C2 — then the people's card (ball.ts `startGather`, ~11 s by the reading rule) before the update fails
+  await wait(6000);
+  await beat("after · the people's card (S370 C2)");
+  await page.waitForFunction(() => window.__os.e4.ball.phaseId === 'done', { timeout: 30000 }).catch(() => {});
   await beat('termination · both screens fail + the conducted look');
   await wait(20000);
   await beat('close · travel');

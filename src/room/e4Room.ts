@@ -112,7 +112,13 @@ export function buildE4Room(app: pc.Application, building: RoomHandles) {
     // ⚑ S358 / H17 (his headset, 10 Nov: "something on the ceiling should be removed… this is not for here") — the
     //   network no longer hangs over her room; the same plane is the stream's audience, out in the Commons.
     //   ⚑ S365 (job 14 C1): and nothing contagion-shaped is ever painted on it any more — only the audience.
-    ceiling.entity.enabled = active && streaming;
+    // ⚑ S370 / C1 (his, 11 Nov, of the raid in the headset: "there is still something on the top") — THE DARK SHAPE ABOVE
+    //   HIM WAS THIS PLANE: the audience board ("41 watching" and 41 small people), 2 × 2 m, 5 m up, ~48° above the desk
+    //   seat's line of sight, from 'stream' (her "Let them in") to 'terminated'. From the seat it was only its dark
+    //   underside at the top of a Quest eye's frame, and nobody could read it. It is never on now: the 41 people come to
+    //   the front of him on the raid's banner instead (ball.ts `drawBanner`), and arrive in the world (commonsFigures.ts).
+    ceiling.entity.enabled = false;
+    void streaming;
     if (!active) {
       for (const [mat, color] of originalMats) if (!mat.diffuse.equals(color)) { mat.diffuse.copy(color); mat.update(); }
       return;

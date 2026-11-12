@@ -59,11 +59,40 @@ function makeRng(seed: number): () => number {
   };
 }
 
-interface Figure { x: number; z: number; h: number; w: number; phase: number; body: pc.Color; onStage: boolean; beside?: boolean; lower?: pc.Color; hair?: pc.Color; style?: number; build?: number }
+interface Figure { x: number; z: number; h: number; w: number; phase: number; body: pc.Color; onStage: boolean; beside?: boolean; lower?: pc.Color; hair?: pc.Color; style?: number; build?: number; from?: { x: number; z: number }; delay?: number; walk?: number }
+
+/**
+ * ⚑ S370 / C1 (his, 11 Nov: "the raid still doesn't make sense visually… How is the transition to the raid? How is it
+ * explained visually?"; UIB_JOB_16 Part C1 step 3) — THE PEOPLE ARRIVE, VISIBLY, FROM THE SIDES. The crowd no longer
+ * rises out of the floor where it will stand (nobody saw it: half of it stood outside a Quest eye's frame, and a rise
+ * in place reads as nothing arriving). Each person WALKS IN to their place: the left half from beyond the stage's far
+ * left, the right half from the foot of the host's screen (the raid came out of that stream), each at a walk, a little
+ * out of step with the next. The first half of every path is inside the seat's view (≈30–45° off his line of sight),
+ * so the arrival is seen without a turn; nobody comes from behind him (his D2). One mesh, one draw call, as before.
+ */
+const ARRIVE_SPEED = 1.25;    // m/s — a walk
+const ARRIVE_STAGGER = 1.6;   // s — the last one sets off this long after the first
+/** the longest walk-in (from the farthest entry), in seconds: the presence clock `k` runs over this */
+const ARRIVE_SECONDS = 6.2;
+
+/**
+ * ⚑ S370 / C1 — TRANSJESUS STEPS ON. At the raid, once the crowd is in, the people's dancing one walks on from the
+ * stage's far left, across the front of the stage (through the middle of his view), to TJ_SPOT, ≈14° right of the seat's
+ * line of sight — just left of the host's screen, where a presenter would stand beside the broadcast (the host's own
+ * hologram stands at the screen's other side, and is pushed off its pad: commonsHost.ts `shoveCommonsHost`). There it
+ * dances, wordless, for the rest of the night. 14° and not dead ahead: the picture comes to the front for the naming
+ * (ball.ts, `CARD_NAMING`) and would hide them.
+ */
+export const TJ_WALK_SECONDS = 3.0;
+const TJ_FROM = { x: WORLD.stage.x - 0.3, z: WORLD.stage.z - 2.3 };
+const TJ_SPOT = { x: WORLD.stage.x - 0.4, z: 1.75 };
 
 let hook: ((on: boolean) => void) | null = null;
-/** the crowd is present, or it is not. It rises over RISE_SECONDS. */
+/** the crowd is present, or it is not. ⚑ S370 / C1: it WALKS IN from the sides over ARRIVE_SECONDS (it used to rise). */
 export function setCommonsFigures(on: boolean): void { hook?.(on); }
+let tjHook: ((on: boolean) => void) | null = null;
+/** ⚑ S370 / C1 — TransJesus steps onto the stage (a walk, TJ_WALK_SECONDS) and dances there; off: gone */
+export function setCommonsTransJesus(on: boolean): void { tjHook?.(on); }
 let greetHook: ((on: boolean) => void) | null = null;
 /** ⚑ S161 / R3-106 — the two beside her turn to her: they lean in a step and
  *  their sway lifts, for as long as the greeting is on the glass. Faceless
@@ -162,6 +191,19 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     f.style = Math.floor(rng() * 4);
     f.build = rng();
   }
+  // ⚑ S370 / C1 — where each one walks in from (seeded apart from the layout above, so the places are unchanged): the
+  //   left half from beyond the stage's far left corner, the right half from the foot of the host's screen, in front of
+  //   its trusses (x < 9.6, so nobody walks through the frame); and when, and for how long
+  const arrive = makeRng(20261112);
+  for (const f of figures) {
+    if (f.onStage) continue;
+    const right = f.z > SEAT.z;
+    f.from = right
+      ? { x: 9.0 + arrive() * 0.3, z: 2.9 + arrive() * 2.0 }
+      : { x: 10.3 + arrive() * 0.6, z: STAGE.z - STAGE.w / 2 - 0.8 - arrive() * 1.2 };
+    f.delay = arrive() * ARRIVE_STAGGER;
+    f.walk = Math.hypot(f.from.x - f.x, f.from.z - f.z) / ARRIVE_SPEED;
+  }
   // ── geometry: every person is six pieces (legs, torso, head, hair, two arms) ──
   const C = [
     [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
@@ -209,6 +251,10 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   // ⚑ S293 — the stream's dance (setCommonsDance): declared before the first build, which reads it
   let danceWant = false;
   let danceK = 0;
+  // ⚑ S370 / C1 — TransJesus on the stage (setCommonsTransJesus): present, and how far through the walk on
+  let tjWant = false;
+  let tjK = 0;
+  let tjT = 0;
   // Phase 7 — the show's state: who is walking (and since when), how high the arms are
   let show: CommonsShow = { performers: 0, category: -1, cheer: false };
   let walkT = 0;
@@ -287,16 +333,29 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     figures.forEach((f, n) => {
       if (sunk) { sinkPerson(f.x, f.z); return; }
       // ⚑ S293 — while the stream dances, the floor is TransJesus's (drawn below, lit from within)
-      if (f.onStage && danceK > 0) { sinkPerson(f.x, f.z); return; }
-      // rising from the floor, then the dance — ⚑ S209g / M1 (his tick): a bounce on the beat (two a
-      //   second, each a little out of step with the next), a side-to-side sway on the bar, a lean; it was
-      //   a 2 cm sway nobody could see, and the crowd read as boxes
-      const rise = (k - 1) * (f.h + 0.4);
-      const beat = t * Math.PI * 2 + f.phase * 0.35;
-      let bob = 0.045 * Math.abs(Math.sin(beat));
-      let lean = 0.035 * Math.sin(t * 0.8 + f.phase * 1.7);
+      // ⚑ S370 / C1 — and from the moment they step on at the raid
+      if (f.onStage && (danceK > 0 || tjK > 0)) { sinkPerson(f.x, f.z); return; }
+      // ⚑ S370 / C1 — the walk in from the side: not yet set off → not here; on the way → a walking step, arms down
+      let walking = 0;
       let x = f.x, z = f.z;
-      if (!f.onStage) z += 0.06 * Math.sin(beat / 2);
+      if (f.from && f.walk) {
+        const p = Math.max(0, Math.min(1, (k * ARRIVE_SECONDS - (f.delay ?? 0)) / f.walk));
+        if (p <= 0) { sinkPerson(f.x, f.z); return; }
+        if (p < 1) {
+          const e = p < 0.8 ? p * 0.9 / 0.8 : 0.9 + 0.1 * Math.sin(((p - 0.8) / 0.2) * Math.PI / 2);   // even pace, then settling
+          x = f.from.x + (f.x - f.from.x) * e;
+          z = f.from.z + (f.z - f.from.z) * e;
+          walking = 1;
+        }
+      }
+      // ⚑ S209g / M1 (his tick): a bounce on the beat (two a second, each a little out of step with the next), a
+      //   side-to-side sway on the bar, a lean; it was a 2 cm sway nobody could see, and the crowd read as boxes
+      // ⚑ S370 / C1: the stage's one (figure 0, only ever seen in old review routes) still rises; nobody else does
+      const rise = f.from ? 0 : (k - 1) * (f.h + 0.4);
+      const beat = t * Math.PI * 2 + f.phase * 0.35;
+      let bob = walking ? 0.03 * Math.abs(Math.sin(t * 7.5 + f.phase)) : 0.045 * Math.abs(Math.sin(beat));
+      let lean = walking ? 0.03 : 0.035 * Math.sin(t * 0.8 + f.phase * 1.7);
+      if (!f.onStage && !walking) z += 0.06 * Math.sin(beat / 2);
       // ⚑ S209g / I3 — make room: step out from the ring, and turn the body toward her
       let inviteArms = 0;
       if (inviteK > 0 && !f.onStage) {
@@ -327,12 +386,12 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       const answer = f.beside ? answerK : 0;
       // ⚑ S293 — dancing: arms rise and fall on the bar, each a little out of step; some keep them low
       const danceArms = danceK * (Math.sin(f.phase * 3.1) > -0.2 ? Math.max(0, Math.sin(t * Math.PI * 1.0 + f.phase)) * 0.9 : 0.15);
-      const up = f.onStage || (f.beside && greetK > 0) ? 0 : Math.max(armK * (0.75 + 0.25 * Math.sin(f.phase)), inviteArms, answer, danceArms);
+      const up = f.onStage || walking || (f.beside && greetK > 0) ? 0 : Math.max(armK * (0.75 + 0.25 * Math.sin(f.phase)), inviteArms, answer, danceArms);
       person(x, base, z, f.w, f.h, bob, lean, up, f.style ?? 0, f.build ?? 0.5);
       void n;
     });
     // ⚑ Phase 7 — the performers: down the runway and back, abreast, for as long as their category is called
-    const nWalk = sunk || danceK > 0 ? 0 : Math.min(PERFORMERS, show.performers);
+    const nWalk = sunk || danceK > 0 || tjK > 0 ? 0 : Math.min(PERFORMERS, show.performers);
     const cycle = WALK_OUT * 2 + WALK_HOLD * 2;
     const ph = walkT % cycle;
     const leg = ph < WALK_OUT ? ph / WALK_OUT : ph < WALK_OUT + WALK_HOLD ? 1
@@ -344,13 +403,22 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     // ⚑ S293 — TRANSJESUS, dancing on the floor: a step side to side, a sway, the arms rising and opening on the
     //   beat, a gown and a crown in the stream's own colours. Faceless like everyone; the brightest thing in the place.
     const tjBeat = t * Math.PI * 2 * (122 / 60) / 2;
-    const tjX = STAGE.x - 0.35 + 0.18 * Math.sin(t * 0.7), tjZ = STAGE.z - 0.65 + 0.35 * Math.sin(t * 0.45);   // under the picture, clear of the chat
+    // ⚑ S370 / C1 — at TJ_SPOT now (≈14° right of the seat, beside the host's screen), walked on at the raid
+    //   (`setCommonsTransJesus`): from TJ_FROM across the stage for TJ_WALK_SECONDS, then the dance, its sway easing in
+    //   over a second. A route that only asks for the dance (old reviews) has them rise in place, as before.
+    const tjOn = tjK > 0 || danceK > 0;
+    const walkP = tjWant ? Math.min(1, tjT / TJ_WALK_SECONDS) : 1;
+    const walkE = walkP * walkP * (3 - 2 * walkP);
+    const swayK = tjWant ? Math.max(0, Math.min(1, (tjT - TJ_WALK_SECONDS) / 1.0)) : 1;
+    const tjX = TJ_FROM.x + (TJ_SPOT.x - TJ_FROM.x) * walkE + swayK * 0.18 * Math.sin(t * 0.7);
+    const tjZ = TJ_FROM.z + (TJ_SPOT.z - TJ_FROM.z) * walkE + swayK * 0.3 * Math.sin(t * 0.45);
     for (let i = 0; i < PERFORMERS; i++) {
-      if (i === 0 && danceK > 0 && !sunk) {
-        const h = 1.72, w = 0.31, base = STAGE.y + STAGE.h + 0.01 + (danceK - 1) * 2.2;
-        const bob = 0.05 * Math.abs(Math.sin(tjBeat));
-        const lean = 0.06 * Math.sin(tjBeat / 2);
-        const arms = 0.55 + 0.45 * Math.sin(tjBeat / 2 + 0.6) + answerK * 0.4;
+      if (i === 0 && tjOn) {
+        const h = 1.72, w = 0.31, base = STAGE.y + STAGE.h + 0.01 + (tjWant ? 0 : (danceK - 1) * 2.2);
+        const stepping = walkP < 1;
+        const bob = stepping ? 0.035 * Math.abs(Math.sin(t * 7.5)) : 0.05 * Math.abs(Math.sin(tjBeat));
+        const lean = stepping ? 0.03 : 0.06 * Math.sin(tjBeat / 2) * swayK;
+        const arms = stepping ? 0.3 : 0.55 + 0.45 * Math.sin(tjBeat / 2 + 0.6) * swayK + answerK * 0.4;
         person(tjX, base, tjZ, w, h, bob, lean, Math.min(1, arms), 1, 0.5);
         costume('gown', tjX, base, tjZ, w, h, bob);
         const [ca, cb] = COSTUME_COLOURS.gown;
@@ -376,7 +444,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
     }
     // the light under them — a flat pale patch, on the floor, where they are
     if (nWalk > 0) box(px, pBase - 0.008, RUNWAY.z, 0.55, 0.004, 0.35 + nWalk * 0.28);
-    else if (danceK > 0 && !sunk) box(tjX, STAGE.y + STAGE.h + 0.006, tjZ, 0.42, 0.004, 0.46);
+    else if (tjOn) box(tjX, STAGE.y + STAGE.h + 0.006, tjZ, 0.42, 0.004, 0.46);
     else sinkBox(px, RUNWAY.z);
     // (the stage itself is the hall's — commonsWorld.ts; this box is spare and sunk)
     box(STAGE.x, SUNK_Y, STAGE.z, 0.1, 0.1, 0.1); void stageK;
@@ -435,17 +503,22 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   greetHook = (on) => { greetWant = on; };
   inviteHook = (on) => { inviteWant = on; };
   answerHook = () => { answerT = 0; };
-  danceHook = (on) => { danceWant = on; };
+  danceHook = (on) => { danceWant = on; if (on) ent.enabled = true; };
+  // ⚑ S370 / C1 — TransJesus steps on (the walk starts from the far left of the stage each time)
+  tjHook = (on) => { if (on && !tjWant) tjT = 0; tjWant = on; if (on) ent.enabled = true; };
   showHook = (s) => { if (s.category !== show.category) walkT = 0; show = s; };
   return {
     update(dt: number): void {
       if (!ent.enabled) return;
       t += dt;
       const before = k;
-      k = want ? Math.min(1, k + dt / RISE_SECONDS) : Math.max(0, k - dt / RISE_SECONDS);
+      // ⚑ S370 / C1 — the presence clock runs over the longest walk-in now (it was a 2.2 s rise)
+      k = want ? Math.min(1, k + dt / ARRIVE_SECONDS) : Math.max(0, k - dt / ARRIVE_SECONDS);
       greetK = greetWant ? Math.min(1, greetK + dt / GREET_SECONDS) : Math.max(0, greetK - dt / GREET_SECONDS);
       inviteK = inviteWant ? Math.min(1, inviteK + dt / INVITE_SECONDS) : Math.max(0, inviteK - dt / INVITE_SECONDS);
       danceK = danceWant ? Math.min(1, danceK + dt / RISE_SECONDS) : Math.max(0, danceK - dt / RISE_SECONDS);
+      tjK = tjWant ? Math.min(1, tjK + dt / RISE_SECONDS) : Math.max(0, tjK - dt / RISE_SECONDS);
+      if (tjWant) tjT += dt;
       if (answerT >= 0) { answerT += dt; answerK = answerT < 0.4 ? answerT / 0.4 : answerT > 2.2 ? Math.max(0, 1 - (answerT - 2.2) / 0.5) : 1; if (answerT > 2.7) { answerT = -1; answerK = 0; } }
       if (show.performers > 0) walkT += dt;
       armK = show.cheer ? Math.min(1, armK + dt / ARM_EASE) : Math.max(0, armK - dt / (ARM_EASE * 3));
@@ -453,7 +526,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
       if (acc < 1 / REBUILD_HZ && k === before) return;
       acc = 0;
       build(k, k);
-      if (k <= 0 && !want) ent.enabled = false;
+      if (k <= 0 && !want && tjK <= 0 && danceK <= 0) ent.enabled = false;
     }
   };
 }

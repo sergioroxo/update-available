@@ -41,11 +41,12 @@ import { ERA4, PLACE, WEB, BALL, CLIP, roundRect, pill, avatar, streamScene, str
 import { px, setFont, wrapText } from '../theme/chrome';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
 import { turnTo } from '../../room/commonsWorld';
-import { setCommonsFigures, setCommonsDance, answerCommonsFigures, greetCommonsFigures } from '../../room/commonsFigures';
-import { setCommonsHost, freeCommonsHost, type HostSurface } from '../../room/commonsHost';
+import { setCommonsFigures, setCommonsDance, answerCommonsFigures, greetCommonsFigures, setCommonsTransJesus, TJ_WALK_SECONDS } from '../../room/commonsFigures';
+import { setCommonsHost, freeCommonsHost, shoveCommonsHost, type HostSurface } from '../../room/commonsHost';
 import { playOnce, playLoop, stopClip, roomBed } from '../../audio/tapeAudio';
 import { drawTryOn, TRYON, mirrorRect } from './mirror';
 import { drawSwapMorph } from './swapFilter';
+import { readHold } from '../readHold';
 import script from '../../../data/dialog/s4_ball.json';
 
 interface Line { who: string; text: string; gift?: boolean }
@@ -72,7 +73,16 @@ const HOST = script.host as unknown as {
 };
 /** ⚑ S355 — the raid and the naming (s4_ball.json `raid`, `naming`) */
 interface Said { who: string; text: string }
-const RAID = script.raid as unknown as { notice: string; n: number; panel: string; climbSeconds: number; lineSeconds: number; lines: Said[]; settleSeconds: number; help?: Said };
+const RAID = script.raid as unknown as {
+  notice: string; n: number; panel: string; climbSeconds: number; lineSeconds: number; lines: Said[]; settleSeconds: number; help?: Said;
+  /** ⚑ S370 / C1 — the people's banner, and the raid's beats (s4_ball.json `raid._docS370`) */
+  banner: string;
+  beats: { glitch: number; bannerAt: number; fly: number; back: number; tjAfter: number; panelAfter: number };
+};
+/** ⚑ S370 / C2 — the people's lines gathered into one card before the Close (s4_ball.json `gather`) */
+const GATHER = script.gather as unknown as { lines: Said[]; lineSeconds: number; fadeSeconds: number };
+/** ⚑ S370 / C1 — the raid, in order: one thing in front of him at a time (see `planRaid`) */
+interface RaidPlan { bannerHere: number; bannerOut: number; bannerGone: number; arrive: number; tj: number; tjLand: number; panel: number; panelEnd: number; end: number }
 interface NameRow { host: string; tag: string; who: string; surface: HostSurface; answer?: string; move: string }
 interface NamePress { id: 'hi' | 'count'; before: number; label: string; she: string; notice?: string; you?: string; waitSeconds: number; lingerSeconds: number }
 const NAMING = script.naming as unknown as { rowSeconds: number; tagAt: number; answerAt: number; rows: NameRow[]; after: number; presses: NamePress[] };
@@ -103,10 +113,48 @@ const CHAT_SHOWN = 9;
 /** ⚑ S364 — where the filter docks on the glass once the raid lifts it off the mirror (clear of the tags, the chips,
  *  the raid's panel and the caption band) */
 const FILTER_CARD = { x: 14, y: 14, w: 124, h: 156 } as const;
-/** ⚑ S366 / J15-07 — in a HEADSET the filter card is not on the glass at all: it is its own plane, off to his side
- *  (era3Devices.ts `SIDE_CARD`), 512 × 384 like the glass, and it docks here (a little larger than on the glass: it is
- *  the one thing on that plane, and its handle's name is read from the edge of the view) */
-const SIDE_DOCK = { x: 168, y: 76, w: 176, h: 224 } as const;
+/** ⚑ S366 / J15-07 — in a HEADSET the filter card is not on the glass at all: it is its own plane (era3Devices.ts
+ *  `placeSideCard`), 512 × 384 like the glass. ⚑ S370: on that plane the card keeps the mirror's own rect
+ *  (`mirrorRect(…, TRYON.link)`) — the plane flies and shrinks, the card on it does not move (S366's SIDE_DOCK is gone) */
+/**
+ * ⚑ S370 / C1 (his, 11 Nov, after the S366 headset frames: "Since the image can fly the panel can come in front, and
+ * then the trans jesus etc. So it can flow better."; UIB_JOB_16 Part C1 steps 1, 5, 6) — THE PICTURE FLIES, in a headset.
+ * The side plane (era3Devices.ts `placeSideCard`) is placed each frame from `cardPose`: a bearing off the desk seat's line
+ * of sight (+ = his left), a distance, a height against the eye, and a width (the plane is 4:3). It is body-locked (the
+ * seat's heading, never the head's), so nothing waits for a look and nothing follows his gaze:
+ *   · the try-on: it flies in from his far left to the front (CARD_FRONT, 1.4 m, a little below the eye, ≈38° × 29° —
+ *     never filling a Quest eye's ≈104°: "not so harsh"), and the morph runs there, with the host's lines on it;
+ *   · Junie's link: it flies back to his left and stays there, small (CARD_SIDE, ≈12° × 16° of card), while the link,
+ *     the raid's banner, the arrival and the host's panel each take the front in turn;
+ *   · the naming: it comes to the front again, above the tags (CARD_NAMING), each name dragging its handle back, until
+ *     it is her own photograph ("she's right here"); then it goes back to the side.
+ * Each flight is CARD_FLY seconds, eased; it moves a picture in the world, never the view.
+ * The browser look-modes keep the glass (the frame is the camera): the mirror fills it, the card docks top-left, and —
+ * the same sequence — comes to the top centre for the naming (FILTER_FRONT).
+ */
+interface CardPose { yaw: number; dist: number; rise: number; w: number }
+const CARD_ENTRY: CardPose = { yaw: 80, dist: 1.6, rise: -0.12, w: 0.5 };
+const CARD_FRONT: CardPose = { yaw: 0, dist: 1.4, rise: -0.12, w: 0.96 };
+const CARD_SIDE: CardPose = { yaw: 40, dist: 1.25, rise: -0.04, w: 0.6 };
+/** the card's centre ≈9° above the eye and its foot just above the oldest tag on the glass (≈ −3°) */
+const CARD_NAMING: CardPose = { yaw: 0, dist: 1.4, rise: 0.18, w: 0.9 };
+const CARD_FLY = 1.6;
+/** ⚑ S370 / C1 — on the browser's glass, the naming's card: top centre, clear of the three tags and the caption band */
+const FILTER_FRONT = { x: 181, y: 14, w: 150, h: 192 } as const;
+/** ⚑ S370 / C1 — …and during the raid it steps back, smaller, into the corner: the people's banner, the arrival and the
+ *  host's panel each have the front in turn (in the browser frame the S364 card covered the banner's first words) */
+const FILTER_RAID = { x: 10, y: 10, w: 96, h: 122 } as const;
+const GLASS_GLIDE = 1.2;
+const ease01 = (k: number): number => { const c = Math.max(0, Math.min(1, k)); return c * c * (3 - 2 * c); };
+const mixPose = (a: CardPose, b: CardPose, k: number): CardPose => {
+  const e = ease01(k);
+  return { yaw: a.yaw + (b.yaw - a.yaw) * e, dist: a.dist + (b.dist - a.dist) * e, rise: a.rise + (b.rise - a.rise) * e, w: a.w + (b.w - a.w) * e };
+};
+type Rect = { x: number; y: number; w: number; h: number };
+const mixRect = (a: Rect, b: Rect, k: number): Rect => {
+  const e = ease01(k);
+  return { x: Math.round(a.x + (b.x - a.x) * e), y: Math.round(a.y + (b.y - a.y) * e), w: Math.round(a.w + (b.w - a.w) * e), h: Math.round(a.h + (b.h - a.h) * e) };
+};
 
 type Phase = 'idle' | 'host' | 'tryon' | 'invited' | 'raid' | 'naming' | 'turnAsk' | 'backstage' | 'stream' | 'after' | 'done';
 interface Hit { x: number; y: number; w: number; h: number; id: string }
@@ -222,6 +270,19 @@ export class E4Ball {
   private freed = new Set<HostSurface>();
   /** the studio's screen repaints only when something on it changes */
   private studioV = 0;
+  // ── ⚑ S370 / C1 — the raid in order, and the picture's flights ──
+  /** seconds since Junie's link landed (the picture flies to the side under it) */
+  private inviteT = 0;
+  /** the naming's own clock: it runs while a press waits too (the picture's flight to the front reads it) */
+  private nameClock = 0;
+  private raidPlan: RaidPlan = this.planRaid(false);
+  /** what of the raid's arrival has happened (each fires once, so a review jump fires them all) */
+  private arrived = false;
+  private tjOn = false;
+  private shoved = false;
+  // ── ⚑ S370 / C2 — the people's card before the Close ──
+  /** seconds since the people's card began (<0: not yet) */
+  private gatherT = -1;
   /** probes only: what she pressed (never filed — respite) */
   get choice(): string | null { return this.answered; }
 
@@ -237,6 +298,36 @@ export class E4Ball {
     if (!this.sideCardOn) return 0;
     return 1 + this.version * 8 + ['tryon', 'invited', 'raid', 'naming', 'turnAsk'].indexOf(this.phase);
   }
+  /** ⚑ S370 / C1 — where the picture's plane is now (headset only; see CARD_FRONT): era3Devices places it from this */
+  get cardPose(): CardPose | null {
+    if (!this.sideCardOn) return null;
+    if (this.phase === 'tryon') return mixPose(CARD_ENTRY, CARD_FRONT, this.tryT / 2.0);
+    if (this.phase === 'invited') return mixPose(CARD_FRONT, CARD_SIDE, this.inviteT / CARD_FLY);
+    if (this.phase === 'naming') {
+      const end = NAMING.rows.length * NAMING.rowSeconds;
+      if (this.nameT >= end) return mixPose(CARD_NAMING, CARD_SIDE, (this.nameT - end) / CARD_FLY);
+      return mixPose(CARD_SIDE, CARD_NAMING, this.nameClock / CARD_FLY);
+    }
+    return CARD_SIDE;
+  }
+  /**
+   * ⚑ S370 / C1 — THE PEOPLE'S RAID BANNER (UIB_JOB_16 Part C1 step 3: "the people's raid banner, in their own style,
+   * flies to the front large enough to read"). Its own plane (era3Devices.ts 'raidbanner', both look-modes): it lifts off
+   * the host's screen where the platform's notice sits, flies to the front of him, holds while 41 small people fill it,
+   * and flies back into the notice. `bannerFly`: 0 = on the host's screen, 1 = in front of him.
+   */
+  get bannerOn(): boolean {
+    return this.phase === 'raid' && this.raidT >= RAID.beats.bannerAt && this.raidT < this.raidPlan.bannerGone;
+  }
+  get bannerFly(): number {
+    if (!this.bannerOn) return 0;
+    const P = this.raidPlan;
+    if (this.raidT < P.bannerHere) return ease01((this.raidT - RAID.beats.bannerAt) / RAID.beats.fly);
+    if (this.raidT < P.bannerOut) return 1;
+    return 1 - ease01((this.raidT - P.bannerOut) / RAID.beats.back);
+  }
+  /** the banner repaints when a person lands on it (the count) or junie's answer appears */
+  get bannerVersion(): number { return this.bannerOn ? 1 + this.count * 2 + (this.raidLines > 0 ? 1 : 0) : 0; }
   get invited(): boolean { return this.phase === 'invited'; }
   /** ⚑ S354 — the host's studio is up (its conversation, its recap) */
   get hosting(): boolean { return this.phase === 'host'; }
@@ -319,6 +410,8 @@ export class E4Ball {
     setCommonsHost(true);
     setCommonsFigures(false);
     setCommonsDance(false);
+    setCommonsTransJesus(false);   // ⚑ S370 / C1 — they step on at the raid, never before
+    this.arrived = false; this.tjOn = false; this.shoved = false; this.gatherT = -1;
     this.onHost?.();
     this.version++; this.studioV++;
   }
@@ -396,6 +489,7 @@ export class E4Ball {
     if (this.phase !== 'idle' && this.phase !== 'tryon') return;
 
     this.phase = 'invited';
+    this.inviteT = 0;   // ⚑ S370 / C1 — in a headset the picture flies to his left under the link (`cardPose`)
     this.hits = [{ ...JOIN, id: 'commons-join' }];
     this.version++;
     playOnce('card_junie.mp3');   // the room's register, not the system's
@@ -403,6 +497,7 @@ export class E4Ball {
   }
 
   /**
+   * ⚑ S370 / C1 — re-ordered, one thing in front at a time: see `planRaid`.
    * ⚑ S355 — her press, "Let them in": THE RAID. The mirror lets go of the glass; the host's screen says
    * "transjesus.str is raiding · 41 viewers"; the host's own frame tries to file it and fails, row by row (the four
    * rows the frame always failed with, now under the host's mark); the count climbs 1 → 42; the handles arrive in
@@ -423,6 +518,9 @@ export class E4Ball {
     // ⚑ S364 — the filter starts where the try-on left it; Junie answers "help" if Maya sent it
     this.filterK = 1; this.filterTo = 1; this.filterSteps = 0; this.filterBy = ''; this.filterByT = 99;
     this.raidHelp = !!RAID.help && this.helpAsked?.() === true;
+    // ⚑ S370 / C1 — the raid's order, with junie's answer held for reading when she brings it
+    this.raidPlan = this.planRaid(this.raidHelp);
+    this.arrived = false; this.tjOn = false; this.shoved = false;
     playOnce('ui_press.mp3');
     roomBed.set(script.room.bed, 2.0);
     this.version++; this.studioV++;
@@ -447,15 +545,53 @@ export class E4Ball {
       if (slot !== undefined && this.friendsChat[slot]) this.friendsChat[slot] = { ...said };
       else { this.friendsChat.push(said); if (this.friendsChat.length > 20) this.friendsChat.shift(); }
     }
-    // the host's frame fails to file it, one row at a time
-    const due = Math.min(FRAME.rows.length, Math.floor(Math.max(0, this.raidT - 1.0) / FRAME.rowSeconds));
+    // ⚑ S370 / C1 — then THE PEOPLE ARRIVE in the world, from the sides (the banner on its way back into the screen):
+    //   the crowd walks in, with a cloud of bells over the stream's music (the old Commons' "lamps rising", S214, his
+    //   ear: "mostly okay" — unused since the lamps went in S293; on top of the bed, never instead of it)
+    const P = this.raidPlan;
+    if (!this.arrived && this.raidT >= P.arrive) {
+      this.arrived = true;
+      setCommonsFigures(true);
+      playOnce('commons_lamps_rise.mp3');
+    }
+    // …and TransJesus walks onto the stage; as they land beside the host's screen, the host's hologram is pushed off its pad
+    if (!this.tjOn && this.raidT >= P.tj) { this.tjOn = true; setCommonsTransJesus(true); }
+    if (!this.shoved && this.raidT >= P.tjLand) { this.shoved = true; shoveCommonsHost(); }
+    // the host's frame tries to file what is standing in its studio, and fails, one row at a time — its own beat now,
+    //   after the people are there (it used to fail under the banner, the arrival and the count at once)
+    const due = this.raidT < P.panel + 0.6 ? 0 : Math.min(FRAME.rows.length, 1 + Math.floor((this.raidT - P.panel - 0.6) / FRAME.rowSeconds));
     if (due > this.rowsShown) { this.rowsShown = due; this.sys('filter_deny.mp3', 0.6); this.version++; }
-    const end = Math.max(1.0 + FRAME.rows.length * FRAME.rowSeconds + FRAME.holdSeconds * 0.5, 0.8 + RAID.climbSeconds) + RAID.settleSeconds;
-    if (this.raidT >= end) {
+    if (this.raidT >= P.end) {
       this.phase = 'naming';
-      this.nameT = 0; this.nameRow = -1; this.tags = []; this.noSource = false;
+      this.nameT = 0; this.nameClock = 0; this.nameRow = -1; this.tags = []; this.noSource = false;
       this.version++; this.studioV++;
     }
+  }
+
+  /**
+   * ⚑ S370 / C1 (his: "the raid still doesn't make sense visually as there are things confusing… How is the transition to
+   * the raid? How is it explained visually?") — THE RAID, ONE THING IN FRONT OF HIM AT A TIME. Her press "Let them in":
+   *   0      the host's screen glitches (`drawStudio`), for `beats.glitch`;
+   *   0.6    the people's banner lifts off the host's screen and flies to the front of him ("transjesus.str is raiding · 41
+   *          here"), and holds while the count climbs and 41 small people fill it — junie's "you said help. we came." on it
+   *          too, if she asked; it holds by the reading rule (src/desktop/readHold.ts), then flies back into the screen;
+   *   +0.3   the crowd walks in from the sides (commonsFigures.ts), with the bells;
+   *   +2.4   TransJesus walks onto the stage; landing beside the host's screen, they push its hologram off its pad;
+   *   +0.6   only then the host's own panel, "about this raid", tries to file it and fails, row by row, held to be read;
+   *   then the naming. Nothing in the middle of his view while it is not the one speaking.
+   */
+  private planRaid(help: boolean): RaidPlan {
+    const B = RAID.beats;
+    const bannerHere = B.bannerAt + B.fly;
+    const said = [RAID.banner.replace('{n}', String(RAID.n)), ...(help && RAID.help ? [RAID.help.text] : [])];
+    const bannerOut = Math.max(0.8 + RAID.climbSeconds + 0.6, bannerHere + readHold(said));
+    const arrive = bannerOut + 0.3;
+    const tj = arrive + B.tjAfter;
+    const tjLand = tj + TJ_WALK_SECONDS;
+    const panel = tjLand + B.panelAfter;
+    const rowsEnd = panel + 0.6 + FRAME.rows.length * FRAME.rowSeconds;
+    const panelEnd = Math.max(rowsEnd, panel + 0.6 + readHold([RAID.panel, ...FRAME.rows.map((r) => `${r.k} ${r.v}`)]));
+    return { bannerHere, bannerOut, bannerGone: bannerOut + B.back, arrive, tj, tjLand, panel, panelEnd, end: panelEnd + RAID.settleSeconds };
   }
 
   /**
@@ -465,6 +601,13 @@ export class E4Ball {
    */
   private updateNaming(dt: number): void {
     this.stepFilter(dt);
+    // ⚑ S370 / C1 — the naming's own clock: the picture's flight to the front (headset) and its glide to the top centre
+    //   (the browser's glass) read it, and the glass repaints while the card is gliding there or back
+    const c4 = this.nameClock;
+    this.nameClock += dt;
+    const rowsEnd = NAMING.rows.length * NAMING.rowSeconds, glide = Math.max(CARD_FLY, GLASS_GLIDE) + 0.1;
+    const gliding = this.nameClock < glide || (this.nameT >= rowsEnd && this.nameT < rowsEnd + glide);
+    if (gliding && Math.floor(c4 * 12) !== Math.floor(this.nameClock * 12)) this.version++;
     // ⚑ S360 / H49 — her presses: the naming waits at the row named in `before`; a press (or 12 s of nothing, never
     //   a penalty) changes the host's screen, then the script runs on
     if (this.pressLinger >= 0) {
@@ -635,6 +778,8 @@ export class E4Ball {
     setCommonsHost(false);
     setCommonsWorld(true);
     setCommonsFigures(true);
+    // ⚑ S370 / C1 — TransJesus has been on the stage since the raid (a review route that skipped it: they step on now)
+    setCommonsTransJesus(true);
     setCommonsDance(true);
     roomBed.set(script.room.landing, 1.5);
     setBallLight({ level: 1, station: 2.5, flare: 0 });
@@ -676,7 +821,14 @@ export class E4Ball {
     if (this.phase === 'naming') { this.updateNaming(dt); return; }
     if (this.phase === 'turnAsk') { this.stepFilter(dt); return; }
     if (this.phase === 'backstage') { this.updateBackstage(dt); return; }
-    if (this.phase === 'idle' || this.phase === 'invited' || (this.phase === 'done' && !this.worldOn)) return;
+    if (this.phase === 'invited') {
+      // ⚑ S370 / C1 — the link's own clock: the picture flies aside under it, and the link fades in as it goes
+      const i4 = this.inviteT;
+      this.inviteT += dt;
+      if (this.inviteT < CARD_FLY + 0.2 && Math.floor(i4 * 12) !== Math.floor(this.inviteT * 12)) this.version++;
+      return;
+    }
+    if (this.phase === 'idle' || (this.phase === 'done' && !this.worldOn)) return;
     // ── inside the stream ──
     const s4 = this.streamT;
     this.streamT += dt;
@@ -724,9 +876,46 @@ export class E4Ball {
       const a4 = this.afterT;
       this.afterT += dt;
       if (Math.floor(a4 * 8) !== Math.floor(this.afterT * 8)) this.version++;
-      if (this.afterT >= SYS.terminateSeconds) this.close();
+      // ⚑ S370 / C2 — the session is terminated; the people are not. Their card, held to be read, and only then the
+      //   update fails (close() → E4Shell's glitch → the Close). The Close's song starts after all of it, uncut.
+      if (this.afterT >= SYS.terminateSeconds && this.gatherT < 0) this.startGather();
+      if (this.gatherT >= 0) {
+        this.gatherT += dt;
+        if (this.gatherT >= this.gatherEnd()) this.close();
+      }
     }
   }
+
+  /**
+   * ⚑ S370 / C2 (his, 11 Nov: "is the message from the community supporting queer people seen in the message before the
+   * close? that is important too.") — THE PEOPLE'S CARD. The chat's warm lines ("hi maya", "we're here", the waiting list
+   * that is not a sign, "same time next week") were small lines on the stream's screen, at his side, in the seconds the
+   * system was terminating her session; in a headset he may never have read one before the Close's flyover. So once
+   * SESSION TERMINATED has been read, the termination steps back and the chat GATHERS INTO ONE CARD on the glass, in front
+   * of him, in both look-modes: their lines, their handles, their stream's own colours, lowercase — the people's voice,
+   * never the frame's. If she asked junie for help, junie's answer comes first. It holds by the reading rule
+   * (src/desktop/readHold.ts: 2 s + 0.4 s a word, counted from its last line) and asks for no press; then the update
+   * fails. Respite: nothing on it is the system's, and nothing about it is revealed as anything but what it is.
+   */
+  private startGather(): void {
+    this.gatherT = 0;
+    playOnce('card_junie.mp3');   // the room's register — the sound Junie's link arrived with
+    if (this.caption) this.caption.style.opacity = '0';   // the browser's chat strip steps back: the card is the chat
+    this.version++;
+  }
+  private gatherLines(): Said[] {
+    return [...(this.raidHelp && RAID.help ? [RAID.help] : []), ...GATHER.lines];
+  }
+  /** when the termination has stepped back and the card's first line lands */
+  private static readonly GATHER_IN = 0.8;
+  private gatherEnd(): number {
+    const lines = this.gatherLines();
+    const last = E4Ball.GATHER_IN + (lines.length - 1) * GATHER.lineSeconds;
+    return last + readHold(lines.map((l) => l.text)) + GATHER.fadeSeconds;
+  }
+  /** probes: the people's card is up (and how long it will hold) */
+  get gathering(): boolean { return this.phase === 'after' && this.gatherT >= 0; }
+  get gatherSeconds(): number { return this.gatherEnd(); }
 
   private publishChips(): void {
     this.hits = ST.chips.map((c, k) => ({ x: Math.round(256 - CHIP_W - 6 + k * (CHIP_W + 12)), y: CHIPS_Y, w: CHIP_W, h: 24, id: `stream-${c}` }));
@@ -773,7 +962,7 @@ export class E4Ball {
   leaveWorld(): void {
     this.worldOn = false;
     setCommonsHost(false);
-    setCommonsWorld(false); setCommonsFigures(false); setCommonsDance(false); greetCommonsFigures(false);
+    setCommonsWorld(false); setCommonsFigures(false); setCommonsDance(false); setCommonsTransJesus(false); greetCommonsFigures(false);
     setBallLight(null);
     this.removeCaption();
   }
@@ -833,11 +1022,20 @@ export class E4Ball {
       ctx.globalAlpha = was;
     }
     if (this.phase === 'tryon') return;
-    if (this.phase === 'invited') { this.drawInvite(ctx); return; }
-    if (this.phase === 'raid') { if (onGlass) this.drawFilterCard(ctx, W, H); this.drawRaidPanel(ctx, W, H); this.drawHelpAnswer(ctx, W, H); return; }
-    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); if (onGlass) this.drawFilterCard(ctx, W, H); this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
+    if (this.phase === 'invited') {
+      // ⚑ S370 / C1 — in a headset the link fades in as the picture flies off to his left, so the two never share the front
+      const was = ctx.globalAlpha;
+      if (this.xrSide) ctx.globalAlpha = was * ease01((this.inviteT - 0.5) / 0.6);
+      this.drawInvite(ctx);
+      ctx.globalAlpha = was;
+      return;
+    }
+    // ⚑ S370 / C1 — junie's answer to "help" is on the people's banner now (`drawBanner`), not stamped on the glass, and
+    //   the host's panel is only on the glass in its own beat (`drawRaidPanel`)
+    if (this.phase === 'raid') { if (onGlass) this.drawFilterCard(ctx, W, H, this.glassCardRect(W, H)); this.drawRaidPanel(ctx, W, H); return; }
+    if (this.phase === 'naming') { this.drawHostGlass(ctx, W, H); if (onGlass) this.drawFilterCard(ctx, W, H, this.glassCardRect(W, H)); this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return; }
     if (this.phase === 'turnAsk' || this.phase === 'backstage') {
-      if (this.phase === 'turnAsk' && onGlass) this.drawFilterCard(ctx, W, H);
+      if (this.phase === 'turnAsk' && onGlass) this.drawFilterCard(ctx, W, H, FILTER_CARD);
       this.drawTags(ctx, W, H); this.drawGlassChips(ctx); return;
     }
     if (this.phase === 'stream' && this.streamT < FRAME.clearSeconds) {
@@ -850,6 +1048,49 @@ export class E4Ball {
     if (this.asking) this.drawChips(ctx);
     if (this.intrusionT >= 0) this.drawIntrusion(ctx, W, H, this.intrusionT);
     if (this.phase === 'after') this.drawTermination(ctx, W, H, this.afterT);
+    if (this.phase === 'after' && this.gatherT >= 0) this.drawGather(ctx, W);
+  }
+
+  /** ⚑ S370 / C2 — the people's card (see `startGather`): the stream's dark, its pink edge, LIVE and the count, then
+   *  their lines one by one, each handle in its colour (a handle is said once for consecutive lines, as a chat does) */
+  private drawGather(ctx: CanvasRenderingContext2D, W: number): void {
+    const t = this.gatherT, lines = this.gatherLines(), end = this.gatherEnd();
+    const fade = Math.min(1, Math.max(0, (t - 0.5) / 0.4), Math.max(0, (end - t) / GATHER.fadeSeconds));
+    if (fade <= 0) return;
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = was * fade;
+    setFont(ctx, 12);
+    const whoW = Math.max(...lines.map((l) => Math.ceil(ctx.measureText(l.who).width))) + 12;
+    setFont(ctx, 16);
+    const textW = Math.max(...lines.map((l) => Math.ceil(ctx.measureText(l.text).width)));
+    const rowH = 30, headH = 24;
+    const cw = Math.max(300, whoW + textW + 40), ch = headH + 12 + lines.length * rowH + 8;
+    const cx = Math.round((W - cw) / 2), cy = 58;
+    roundRect(ctx, cx, cy + 2, cw, ch, 10, ERA4.panelEdge);
+    roundRect(ctx, cx, cy, cw, ch, 10, ERA4.panel);
+    px(ctx, cx + 10, cy, cw - 20, 3, PLACE.textileHi);
+    // the stream's own head: LIVE, its mark, the room's count
+    if (Math.floor(t * 1.5) % 2 === 0) px(ctx, cx + 14, cy + 11, 6, 6, WEB.danger);
+    setFont(ctx, 9); ctx.fillStyle = ERA4.textHi; ctx.fillText(ST.live, cx + 25, cy + 9);
+    ctx.fillStyle = ERA4.text; ctx.fillText(ST.mark, cx + 25 + Math.ceil(ctx.measureText(ST.live + '  ').width), cy + 9);
+    const watching = ST.watching.replace('{n}', String(this.count));
+    ctx.fillStyle = PLACE.textileHi; ctx.fillText(watching, cx + cw - 14 - Math.ceil(ctx.measureText(watching).width), cy + 9);
+    px(ctx, cx + 14, cy + headH, cw - 28, 1, ERA4.rule);
+    lines.forEach((l, i) => {
+      const at = E4Ball.GATHER_IN + i * GATHER.lineSeconds;
+      if (t < at) return;
+      const k = Math.min(1, (t - at) / 0.3);
+      const y = cy + headH + 12 + i * rowH + Math.round((1 - k) * 6);
+      ctx.globalAlpha = was * fade * k;
+      const x0 = cx + 20;
+      if (l.who !== lines[i - 1]?.who) {
+        setFont(ctx, 12); ctx.fillStyle = l.who === 'junie' ? BALL.whoFriend : BALL.whoMC;
+        ctx.fillText(l.who, x0, y + 3);
+      }
+      setFont(ctx, 16); ctx.fillStyle = ERA4.textHi;
+      ctx.fillText(l.text, x0 + whoW, y);
+    });
+    ctx.globalAlpha = was;
   }
 
   /** ⚑ S356 — the backstage's chips (Show me, Back), in the room's pink, above where the caption band sits */
@@ -924,16 +1165,13 @@ export class E4Ball {
    * lines crack its gloss; the naming drags it back to her. Its frame is the mirror's grey until the filter is off her,
    * then her room's pink. Head-locked like everything on the glass, so no part of it depends on a look.
    */
-  private drawFilterCard(ctx: CanvasRenderingContext2D, W: number, H: number, dock: { x: number; y: number; w: number; h: number } = FILTER_CARD): void {
-    const m = mirrorRect(W, H, TRYON.link);
-    const f = this.phase === 'raid' ? Math.min(1, this.raidT / 1.0) : 1;
-    const e = f * f * (3 - 2 * f);
-    const x = Math.round(m.x + (dock.x - m.x) * e), y = Math.round(m.y + (dock.y - m.y) * e);
-    const w = Math.round(m.w + (dock.w - m.w) * e), h = Math.round(m.h + (dock.h - m.h) * e);
+  private drawFilterCard(ctx: CanvasRenderingContext2D, _W: number, _H: number, at: Rect): void {
+    const { x, y, w, h } = at;
     const hers = this.filterK <= 0.001;
-    const rim = Math.max(3, Math.round(6 - 3 * e));
+    const rim = Math.max(3, Math.round(w / 38));
     px(ctx, x - rim, y - rim, w + 2 * rim, h + 2 * rim, hers ? PLACE.textileHi : ERA4.ruleHi);
-    const cracked = this.phase === 'raid' ? this.raidLines / Math.max(1, RAID.lines.length) : 1;
+    // ⚑ S370: under the link it is still whole (the raid's lines crack it)
+    const cracked = this.phase === 'invited' ? 0 : this.phase === 'raid' ? this.raidLines / Math.max(1, RAID.lines.length) : 1;
     const by = this.filterByT < 1.8 ? this.filterBy : '';
     drawSwapMorph(ctx, x, y, w, h, this.filterK, 0, {
       chrome: !hers, broken: cracked, by, byInk: by === 'junie' ? BALL.whoFriend : BALL.whoMC
@@ -951,13 +1189,15 @@ export class E4Ball {
    */
   drawSide(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     if (!this.sideCardOn) return;
-    if (this.phase === 'tryon' || this.phase === 'invited') {
+    if (this.phase === 'tryon') {
       drawTryOn(ctx, W, H, Math.min(this.tryT, TRYON.link), HOST.speaker);
       return;
     }
-    if (this.phase === 'raid') {
-      // the mirror's field lets go in the raid's first second, as it does on the glass; the card stays
-      const k = this.environmentK;
+    // ⚑ S370 / C1 — under Junie's link the mirror's field (its dark, its scanlines, the hands, the caption band) lets go
+    //   while the plane flies to his left, and what stays is the picture itself, which IS the card from here on (same
+    //   rect: the plane shrinks and flies, the card on it does not move)
+    if (this.phase === 'invited') {
+      const k = 1 - ease01(this.inviteT / 0.8);
       if (k > 0) {
         const was = ctx.globalAlpha;
         ctx.globalAlpha = was * k;
@@ -965,28 +1205,77 @@ export class E4Ball {
         ctx.globalAlpha = was;
       }
     }
-    this.drawFilterCard(ctx, W, H, SIDE_DOCK);
+    this.drawFilterCard(ctx, W, H, mirrorRect(W, H, TRYON.link));
   }
 
-  /** ⚑ S364 — junie's answer to her "help", stamped on the glass above the raid's panel while the raid comes in */
-  private drawHelpAnswer(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    if (!this.raidHelp || !RAID.help || this.raidLines < 1) return;
-    const said = RAID.help;
-    setFont(ctx, 16);
-    const tw = Math.ceil(ctx.measureText(said.text).width);
-    setFont(ctx, 12);
-    const hw = Math.ceil(ctx.measureText(said.who).width) + 10;
-    const w = tw + hw + 24, x = Math.round((W - w) / 2), y = H - 46 - 74 - 6 - 34;
-    roundRect(ctx, x, y, w, 26, 6, CLIP.band);
-    px(ctx, x, y, 3, 26, BALL.whoFriend);
-    ctx.fillStyle = BALL.whoFriend; ctx.fillText(said.who, x + 12, y + 8);
-    setFont(ctx, 16); ctx.fillStyle = CLIP.ink;
-    ctx.fillText(said.text, x + 12 + hw, y + 5);
+  /**
+   * ⚑ S370 / C1 — where the filter card sits on the BROWSER's glass: lifting off the mirror to the top-left corner in the
+   * raid's first second (S364; smaller now, FILTER_RAID, while the raid has the front), coming to the top centre for the naming (FILTER_FRONT: the same move the headset's
+   * plane makes to the front), and back to the top-left once "she's right here" has landed
+   */
+  private glassCardRect(W: number, H: number): Rect {
+    if (this.phase === 'raid') return mixRect(mirrorRect(W, H, TRYON.link), FILTER_RAID, this.raidT / 1.0);
+    if (this.phase === 'naming') {
+      const end = NAMING.rows.length * NAMING.rowSeconds;
+      if (this.nameT >= end) return mixRect(FILTER_FRONT, FILTER_CARD, (this.nameT - end) / GLASS_GLIDE);
+      return mixRect(FILTER_RAID, FILTER_FRONT, this.nameClock / GLASS_GLIDE);
+    }
+    return FILTER_CARD;
   }
 
-  /** ⚑ S355 — the host's own frame, trying to file the raid and failing, row by row: compact, low on the glass, so
-   *  the screen — the count climbing, the chat filling — stays in view above it */
+  /**
+   * ⚑ S370 / C1 — THE PEOPLE'S RAID BANNER, on its own plane (era3Devices.ts 'raidbanner', 512 × 160, see `bannerOn`):
+   * the stream's dark, a pink head in the people's own style with the LIVE dot — "transjesus.str is raiding · 41 here",
+   * where the platform's notice says "viewers" — junie's answer under it when Maya asked for help, and the 41 who came,
+   * as small faceless people in the crowd's own colours, one landing for every viewer the count climbs.
+   */
+  drawBanner(ctx: CanvasRenderingContext2D, W: number, _H: number): void {
+    if (!this.bannerOn) return;
+    const help = this.raidHelp && !!RAID.help;
+    const rowsTop = help ? 104 : 72, rowH = 34, bottom = rowsTop + 3 * rowH + 6;
+    roundRect(ctx, 4, 6, W - 8, bottom, 14, ERA4.panelEdge);
+    roundRect(ctx, 4, 4, W - 8, bottom, 14, ERA4.panel);
+    // the head: the people's pink, LIVE, the line
+    const text = RAID.banner.replace('{n}', String(RAID.n));
+    setFont(ctx, 22);
+    const tw = Math.ceil(ctx.measureText(text).width);
+    const hw = Math.min(W - 32, tw + 58), hx = Math.round((W - hw) / 2);
+    pill(ctx, hx, 14, hw, 44, PLACE.textileHi);
+    px(ctx, hx + 20, 32, 9, 9, WEB.danger);
+    ctx.fillStyle = PLACE.ink; ctx.fillText(text, hx + 40, 25);
+    const y = 68;
+    if (help && RAID.help && this.raidLines > 0) {
+      const said = RAID.help;
+      setFont(ctx, 12);
+      const ww = Math.ceil(ctx.measureText(said.who).width) + 10;
+      setFont(ctx, 16);
+      const lw = ww + Math.ceil(ctx.measureText(said.text).width), lx = Math.round((W - lw) / 2);
+      setFont(ctx, 14); ctx.fillStyle = BALL.whoFriend; ctx.fillText(said.who, lx, y + 4);
+      setFont(ctx, 18); ctx.fillStyle = ERA4.textHi; ctx.fillText(said.text, lx + ww, y + 1);
+    }
+    // the people who came: three rows of 14, filling as the count climbs (hair, head, shoulders; never a face)
+    const cloth = [PLACE.textileHi, PLACE.sunHi, ERA4.l, PLACE.book, PLACE.bookAlt, PLACE.textile, PLACE.sky, PLACE.sun];
+    const hair = [PLACE.ink, PLACE.floorLo, PLACE.book, PLACE.sunHi];
+    const here = Math.max(0, Math.min(RAID.n, this.count - 1)), perRow = 14, step = 32;
+    for (let i = 0; i < here; i++) {
+      const row = i % 3, col = Math.floor(i / 3);
+      const x = Math.round(W / 2 - ((perRow - 1) * step) / 2 + col * step) - 10;
+      const ay = rowsTop + 4 + row * rowH;
+      px(ctx, x + 4, ay + 2, 12, 11, ERA4.photoSkin);
+      px(ctx, x + 3, ay - 1, 14, 5, hair[(i * 3) % hair.length]);
+      px(ctx, x, ay + 15, 20, 14, cloth[(i * 5 + 2) % cloth.length]);
+    }
+  }
+
+  /** ⚑ S355 — the host's own frame, trying to file the raid and failing, row by row: compact, low on the glass.
+   *  ⚑ S370 / C1 — only in its own beat (after the people have arrived, `planRaid`), fading in and out; in a headset it
+   *  is the one thing in front of him while it speaks */
   private drawRaidPanel(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const P = this.raidPlan;
+    const a = Math.min(ease01((this.raidT - P.panel) / 0.4), 1 - ease01((this.raidT - P.panelEnd) / 0.5));
+    if (a <= 0) return;
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = was * a;
     const pw = 320, ph = 74, px0 = Math.round((W - pw) / 2), y0 = H - 46 - ph - 6;
     roundRect(ctx, px0, y0 + 2, pw, ph, 8, ERA4.panelEdge);
     roundRect(ctx, px0, y0, pw, ph, 8, ERA4.panel);
@@ -998,6 +1287,7 @@ export class E4Ball {
       const kw = Math.ceil(ctx.measureText(r.k + '  ').width);
       setFont(ctx, 12); ctx.fillStyle = ERA4.textHi; ctx.fillText(r.v, cx + kw, ry - 2);
     });
+    ctx.globalAlpha = was;
   }
 
   /**
@@ -1070,7 +1360,9 @@ export class E4Ball {
 
   /** the shutdown, named in the system's own ideology — the beat before the glitch */
   private drawTermination(ctx: CanvasRenderingContext2D, W: number, H: number, t: number): void {
-    const k = Math.min(1, t / 0.5);
+    // ⚑ S370 / C2 — and it steps back for the people's card (one voice at a time)
+    const k = Math.min(1, t / 0.5) * (this.gatherT >= 0 ? Math.max(0, 1 - this.gatherT / 0.5) : 1);
+    if (k <= 0) return;
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * k;
     const cw = 300, ch = 92, cx = Math.round((W - cw) / 2), cy = Math.round(H * 0.30);
@@ -1205,6 +1497,24 @@ export class E4Ball {
       px(ctx, 4, top, Math.min(pw, tw), 15, PLACE.textileHi);
       ctx.fillStyle = PLACE.ink; ctx.fillText(t, 12, top + 3);
     }
+    if (this.phase === 'raid' && this.raidT < RAID.beats.glitch) this.glitchStudio(ctx, W, H);
+  }
+
+  /**
+   * ⚑ S370 / C1 — THE HOST'S SCREEN GLITCHES as the raid hits it (UIB_JOB_16 Part C1 step 3): for `beats.glitch` seconds,
+   * bands of its own picture slip sideways and the stream's pink tears through — on the system's own surface, never on a
+   * person. Seeded by the frame, so it is the same glitch every time.
+   */
+  private glitchStudio(ctx: CanvasRenderingContext2D, W: number, H: number): void {
+    const s = ctx.canvas.width / W;
+    let seed = 1 + Math.floor(this.raidT * 8) * 7919;
+    const rnd = (): number => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const fade = 1 - this.raidT / RAID.beats.glitch;
+    for (let i = 0; i < 7; i++) {
+      const y = Math.floor(rnd() * (H - 12)), h = 3 + Math.floor(rnd() * 12), shift = Math.round((rnd() - 0.5) * 40 * fade);
+      ctx.drawImage(ctx.canvas, 0, y * s, W * s, h * s, shift, y, W, h);
+    }
+    for (let i = 0; i < 3; i++) px(ctx, 0, Math.floor(rnd() * H), W, 1 + Math.floor(rnd() * 2), i % 2 ? PLACE.textileHi : ERA4.l);
   }
 
   /** the host on its pale set: a faceless robed figure, the halo (warm once the people take it), the lower third */
@@ -1342,7 +1652,7 @@ export class E4Ball {
       b.appendChild(tx);
       el.appendChild(b);
     });
-    el.style.opacity = '1';
+    el.style.opacity = this.gatherT >= 0 ? '0' : '1';   // ⚑ S370 / C2: not under the people's card
   }
   private mountCaption(): void {
     if (typeof document === 'undefined') return;
