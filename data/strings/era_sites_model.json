@@ -2369,6 +2369,10 @@
         "GracePlatform: APPLY or SKIP, both captions kept, unresolved"
        ],
        [
+        "Accountability software",
+        "GracePlatform's review of the group and its reports are modelled on Covenant Eyes, the accountability software churches sold as care (iPhone 2009, Android 2012). In 2022 WIRED reported a church that had a member install it after he told his church leader he was gay. How widely conversion programmes used it is not documented."
+       ],
+       [
         "The group chat",
         "Vera's phone, and the way a link spreads in the group"
        ],
@@ -4970,20 +4974,10 @@
      {
       "k": "media",
       "title": "transjesus.str — the stream",
-      "what": "The stream's music once Maya is inside it. No voice. About two minutes, made to loop.",
-      "file": "assets/audio/ball_room_landing.mp3",
+      "what": "The people's music. It arrives with the raid, when Maya's friends take the stage from the host, and plays on until the night ends. No voice: TransJesus dances and says nothing. About two minutes, made to loop.",
+      "file": "assets/audio/transjesus_song.mp3",
       "type": "audio",
-      "credit": "Credit: Made by the project lead. Project-original.",
-      "lyrics": [],
-      "lyricsTitle": "The words of the song"
-     },
-     {
-      "k": "media",
-      "title": "transjesus.str — through the wall",
-      "what": "The same music heard as if through a wall: while Junie's link waits, and after the update fails. About two minutes, made to loop.",
-      "file": "assets/audio/ball_room_bed.mp3",
-      "type": "audio",
-      "credit": "Credit: Made by the project lead. Project-original.",
+      "credit": "Credit: Composed in code by Claude (Anthropic's AI) for the project, 11 Nov 2026, with tools/make_transjesus_song.py; chosen by the project lead. Project-original.",
       "lyrics": [],
       "lyricsTitle": "The words of the song"
      }

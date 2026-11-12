@@ -251,6 +251,7 @@ const REGISTRY: Record<string, string> = {
    */
   'ball_room_landing.mp3': `${AUDIO_BASE}ball_room_landing.mp3`,
   'ball_room_bed.mp3': `${AUDIO_BASE}ball_room_bed.mp3`,
+  'transjesus_song.mp3': `${AUDIO_BASE}transjesus_song.mp3`,   // 11 Nov — the stream's music (tools/make_transjesus_song.py; his choice over the old pair)
   'passage_building.mp3': `${AUDIO_BASE}passage_building.mp3`,
   /**
    * ⚑ SÉRGIO'S OWN SOURCING PASS (2026-09-02) — first tranche, 13 of 60.
@@ -516,7 +517,7 @@ class RoomBed {
     'close_score.mp3': 0.55,
     // S361 / H50 (his: "the music for the Close is missing") — the Close's song, ~4 dB over the era change's music: it is alone there
     'close_song.mp3': 0.7,
-    'ball_room_bed.mp3': 0.35, 'ball_room_landing.mp3': 0.35
+    'ball_room_bed.mp3': 0.35, 'ball_room_landing.mp3': 0.35, 'transjesus_song.mp3': 0.35
   };
   private level = RoomBed.LEVEL;   // the level of the bed that is live now
   private dyingLevel = RoomBed.LEVEL;   // and of the one fading out

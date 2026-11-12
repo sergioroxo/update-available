@@ -81,6 +81,7 @@ knowledge base documents them. File names are where it is drawn.*
 | Recommendation, podcasts, courses | the recommend task, the podcast order, the course builder |
 | Mobile games | **FloppySheep** on Vera's phone (S221) |
 | The assistant | **Lambient** |
+| Accountability software (added 11 Nov, his) | GracePlatform's review and reports are modelled on **Covenant Eyes** (see §7r) |
 
 ### 2026 — AI, visors, the feed
 | interface form | in the piece |
@@ -790,6 +791,86 @@ when the seller is a conversion network (the system's self-presentation, `operab
 **Not to overclaim.** The rollback was about tone across all users, not about LGBTQ+ topics. The documented case of an
 AI pointing someone to conversion therapy is §7e (GLAAD 2026). The memory dates come from OpenAI's post and secondary
 timelines.
+
+## 7r. GracePlatform and Covenant Eyes (his, 11 Nov 2026)
+
+**His words:** "add to the references that 2016 GracePlatform is also inspired on Covenant Eyes, a tool used by SOGICE
+orgs a lot."
+
+**What is documented (KB: `e3_theday` cards 6 and 7; SOURCE_VERIFICATION_RESULTS C7/C8; RESEARCH_2016_VERA_APPARATUS
+row 12):**
+- Covenant Eyes was founded in 2000 and says it "pioneered the concept of Internet Accountability". Its iPhone app
+  came in December 2009 and its Android app in April 2012.
+- Activity reports go to chosen "accountability partners" ("unlimited partners", its own 2015 guide).
+- It sells monitoring in the language of care: trust, support, help.
+
+**Found 11 Nov, through reports of it** (WIRED's site blocks fetching; seen through Christian Post, Malay Mail and
+Futurism):
+- In September 2022 WIRED investigated accountability apps (Covenant Eyes, Accountable2You) used by churches. At one
+  church, staff were required to install them, with a church leader as the accountability partner.
+- A member was asked to install Covenant Eyes after he told his church leader he was gay. He received accusatory
+  emails, one over a search for "#Gay".
+- A former member called it "shameware".
+- After WIRED contacted Google, both apps left the Play Store. Covenant Eyes answered that users choose who sees their
+  activity, and warned churches against "spying".
+
+**In the piece:** 2003's accountability alert (`accountability.ts`) is the desktop form. 2016's GracePlatform is the
+platform form: the group's messages reviewed, the review reported, and all of it presented as care. The 2016 era site
+now names Covenant Eyes under "the interfaces this year rebuilds".
+
+**Not to overclaim.** That conversion programmes used Covenant Eyes "a lot" is **not documented** in the KB. The KB
+calls it adjacent evidence: evangelical sexual-purity accountability, not SOGICE technology as such. What is documented
+is churches requiring it, and one reported case of it being used on a gay member. Say "churches and ministries used
+accountability software as care", and cite the WIRED case as a case, not a rate.
+
+## 7s. TransJesus: the trials, from an idea to the stream (his ask, 12 Nov 2026)
+
+**His ask:** "Have you seen this TransJesus? … to be added to the research document as one of the trials for
+TransJesus." The trial is `~/Pc_Simulation/ArenaAI_TransJesus/V1/` (outside the repo). Its stills and README are copied
+to `research/article-images-2026-11-12/transjesus-trials/arenaai-v1-2026-09-12/`.
+
+**The chain of trials:**
+
+| date | trial | what it was | what carried into the piece |
+|---|---|---|---|
+| 26 Jan 2026 | **The idea**: "The Trans-Jesus Livestream" (`~/Pc_Simulation/Sources/Random Ideas/Trans-Jesus.md`, his idea in an AI chat's expanded wording) | A fictional livestream channel that takes back the look and logic of evangelical livestreams for care, embodiment and survival | The livestream as the form; reclaiming the ministry's own media grammar |
+| 12 Sep 2026 (the V1 zip's file date) | **ArenaAI V1, "TransJesus — a respite"**: an outside model's build in an Arena workspace (which model is not recorded), a WebXR module in three.js and PlayCanvas with a README, tests and 14 stills | An androgynous low-poly figure with "no eyes, no gendered garment, no doctrinal props". It notices you, offers a blessing and asks nothing back. It dances (sway, hands up, ballroom), in a VRChat-like room with an audience and a livestream panel ("transjesus — respite cam", a LIVE badge, viewers, hearts) | The figure that dances and **asks nothing**; the stream; the trans flag carried by **light**, not costume (the halo's gems, pink and blue rim lights); the room that cannot command it ("by default an audience cannot make the figure dance") |
+| Sep–Oct 2026 | **The Ball / TRANSCENDANCE**: a ballroom homage in the Commons (houses, lamps, categories) | His words: an homage to ballroom culture, "the Queer culture that breaks the system", without "laughter" at the community | Dance as the people's answer; the respite law |
+| 2 Nov 2026 | **The ending is the TransJesus stream** (`ENDING_TRANSJESUS_2026-11-02.md`): the hall, the categories and the lamps go; "the stream is the place" | The affirming dance-stream the algorithm cannot rank and the system cannot caption | Wordless; respite, never a trap |
+| 10 Nov 2026 | **The raid** (§7i, §7k): the for-profit AI "Jesus" host (a halo, captions, a dashboard, no body) against the people's TransJesus, who dances and says nothing | Two Jesuses: the product and the people's | The naming, and the stage changing hands |
+| 11 Nov 2026 | **Its own music** (`transjesus_song.mp3`, composed in code), chosen over his own track; the through-the-wall version dropped | The music arrives with the raid | — |
+| job 16 C1 (pending) | **The raid in the headset as a sequence**: the crowd arrives, TransJesus takes the pad | — | — |
+
+**What the Arena trial adds to the argument (its own README, paraphrased):**
+- **It is "non-interrogative".** It reacts to presence, never to a button, and "does not chase" when you leave. This
+  is the opposite of every system in the piece, which asks, files and follows.
+- **A blessing cannot be buried under a performance:** when both would happen, the blessing wins.
+- **Its most exposed dial is the chat's tone:** wholesome, mixed, or "extractive", an audience consuming a trans
+  figure with demands to perform. The README calls the chat "the conversion practice", while the figure stays
+  unchanged.
+- The piece did **not** take the extractive chat. The Commons is respite and never a trap. In the piece the extraction
+  belongs to the host's product, and the people's chat is warm.
+
+**What did not carry, and why:**
+- **The blessing gesture** (a raised palm with light). The piece's TransJesus only dances. Faith is not touched, and
+  the target is the for-profit machine wearing faith (§7i).
+- **A sound drone loaded from a CDN** (Tone.js). The piece makes no network calls at runtime.
+- **The social layer's cost:** about 90 extra draw calls, against the Quest budget of 75 for the whole scene.
+
+**For the article (method):** TransJesus went through at least five trials over ten months:
+1. an idea refined in an AI chat;
+2. an outside model's prototype;
+3. a ballroom homage;
+4. a stream;
+5. a raid.
+
+Each kept the core (a figure that dances, says nothing and asks nothing) and changed the world around it. This is the
+critical-making loop of §6, visible in one character. Do not attribute the V1 code to this project's own builders: it
+came from an outside model through Arena, and its MIT licence names only "TransJesus / a respite".
+
+**A correction to the evidence log:** ARTICLE_EVIDENCE_LOG places `ArenaAI_TransJesus/V1` with the January origin. The V1
+zip's file date is 12 Sep 2026 (during Era 4's overhaul), so it belongs in September, not before June. The "ArenaAI
+Trial, before Claude" of 10 June is a different, earlier trial (`~/Pc_Simulation/Proposals_2026-06-10/`).
 
 ## 8. What the article must not overclaim
 

@@ -139,9 +139,23 @@ copied here. The photos themselves are in `research/article-images-<date>/` and 
 | [The Room and the Close, Part C](https://claude.ai/artifact/4MRBwjH53A3RVA4YS938gn) | her wall cleared; the Close's panels open the era websites, in the headset too | job 14 · C · S365 | 11 Nov | `article-images-2026-11-11/room-and-close-S365/`, `close-websites-headset-S365/` |
 | [2026 Notes, Part A](https://claude.ai/artifact/5MZmy1hAakDjY98ffg42bJ) | his notes on job 14 built: replies in the box, the signs, the bigger game, ✕ on notices, "Your circle", Junie's lines, the try-on to his left | job 15 · A · S366 | 11 Nov | `article-images-2026-11-11/job15-partA-S366/` |
 | [Match Made Simple, Tug of War](https://claude.ai/artifact/CngSzSRUySbVuUu28n21Dr) | the 2026 game rebuilt: Maya + Junie at Pride '24, the filter on Maya, her pulls and the AI's pushes, one number | job 15 · B · S367 | 11 Nov | `article-images-2026-11-11/job15-partB-S367/` |
+| [Job 16 · Part A photos](https://claude.ai/artifact/X3ybyhdkRD3UeN6KAcvXHi) | 2016's flow fixed: the Handset Window one width in its own column, Malta waits for a clear board, the alerts held long enough to read, Orla's photo as its own beat | job 16 · A · S368 | 11 Nov | `article-images-2026-11-12/job16-partA-S368/` |
 
 Job 12's two pages were HTML files in the photo folders (`headset-bugs-S358/`, `headset-comfort-S359/A2-photos.html`),
 not artifacts. **Rule from now on:** every new photo page gets a row here when its part is merged.
+
+## 5c. TransJesus: the trials (his ask, 12 Nov: "to be added to the research document as one of the trials for TransJesus")
+
+The full chain, with what carried, is ARTICLE_COMPANION §7s.
+
+| trial | date | where | in git |
+|---|---|---|---|
+| The idea, "The Trans-Jesus Livestream" | 26 Jan 2026 | `~/Pc_Simulation/Sources/Random Ideas/Trans-Jesus.md` | no (his) |
+| **ArenaAI V1, "TransJesus — a respite"**: an outside model's WebXR module (three.js + PlayCanvas), README, tests, 14 stills | 12 Sep 2026 (the zip's file date) | `~/Pc_Simulation/ArenaAI_TransJesus/V1/` (code + zip); stills and README copied to `research/article-images-2026-11-12/transjesus-trials/arenaai-v1-2026-09-12/` | no (outside; research/ is untracked) |
+| The Ball / TRANSCENDANCE (the ballroom homage) | Sep–Oct 2026 | `COMMONS_STREAMLINE_2026-10-10.md`, `REVIEW_B26_AND_COMMONS_2026-10-03.md` | yes |
+| The ending is the TransJesus stream | 2 Nov 2026 | `ENDING_TRANSJESUS_2026-11-02.md` | yes |
+| The raid: the host versus the people's TransJesus | 10 Nov 2026 | `DESIGN_COMMONS_REVAMP_2026-11-10.md`, `RESEARCH_COMMONS_STREAM_2026-11-10.md`; photos `research/article-images-2026-11-10/commons-*` | yes / no |
+| Its own music, `transjesus_song.mp3` | 11 Nov 2026 | `tools/make_transjesus_song.py`; `public/assets/audio/transjesus_song.mp3` | yes |
 
 ## 6. Sources and archives outside the repo
 
