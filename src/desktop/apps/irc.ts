@@ -411,7 +411,11 @@ export class IrcApp {
 
   draw(ctx: CanvasRenderingContext2D, caretOn: boolean): void {
     // the channel is lurk-only — no input field; the chat fills the window
-    const c = ui.windowFrame(ctx, 14, 30, 400, 290, `${dialog.channel} — IRC`, this.focus === 'channel', 'irc');
+    // ⚑ S369 (UiB job 16 rule 2, the flow audit: Rob's private window covered seven of the channel's lines for 67 s) — while the
+    //   private window is open the two are TILED: the channel keeps the top (its newest lines), Rob's window the bottom, and
+    //   neither covers the other. Closed, the channel has the whole height again.
+    const chanH = this.dmOpen ? 150 : 290;
+    const c = ui.windowFrame(ctx, 14, 30, 400, chanH, `${dialog.channel} — IRC`, this.focus === 'channel', 'irc');
     this.closeRect = [{ ...c.closeBox, id: 'irc-close' }];
     ui.px(ctx, c.x, c.y, c.w, c.h, ERA1.black);
     const listW = 78;
@@ -428,8 +432,9 @@ export class IrcApp {
 
     ui.setFont(ctx, 9);
     ctx.font = '9px monospace';
+    const chFit = Math.max(1, Math.floor((c.h - 24 - 34) / 12));   // S369: 17 at full height, fewer while tiled
     const chRows = this.rows(ctx, this.channel, c.w - listW - 12,
-      (f) => (f === ledger.name ? ERA1.tooltip : ERA1.ok), ERA1.silver, caretOn).slice(-17);
+      (f) => (f === ledger.name ? ERA1.tooltip : ERA1.ok), ERA1.silver, caretOn).slice(-Math.min(17, chFit));
     this.renderRows(ctx, chRows, c.x + 4, c.y + 24);
     // ⚑ a tray that is not live publishes NOTHING — the first cut left the
     //   channel's rect standing after his line was said, and the walk pressed
@@ -448,7 +453,7 @@ export class IrcApp {
     if (this.dmOpen) {
       // Park the conversation without losing its pending reply.
       // ⚑ P8 B3 (headset B: "we still don't have a minimizing button on the mentor Rob message") — the DM minimises with the channel
-      const d = ui.windowFrame(ctx, 170, 140, 300, 170, dialog.dmTitle, this.focus === 'dm', 'irc');
+      const d = ui.windowFrame(ctx, 14, 30 + chanH + 6, 400, 170, dialog.dmTitle, this.focus === 'dm', 'irc');   // S369: tiled under the channel
       this.closeRect.push({ ...d.closeBox, id: 'irc-dm-close' });
       ui.px(ctx, d.x, d.y, d.w, d.h - 22, ERA1.paper);
       ui.setFont(ctx, 9);

@@ -246,6 +246,8 @@ const MALTA_ALERT_AFTER = 4;
 export const MIRROR_W = 200;
 const MIRROR_GAP = 4;
 const MIRROR_PHONE_H = 310;
+/** ⚑ S369 — the disconnected notice on the Handset Window's place holds its reading time */
+const DISCONNECT_SECONDS = Math.max(3, readHold(mirrorCopy.disconnected) + 0.6);
 /** ⚑ S368 / F01·F11 — Malta's conducted thread waits for a clear board: this long with no card, job, pop-in or Lambient line up */
 const MALTA_CLEAR_SECONDS = 1.5;
 /** ⚑ S368 / F05 — after the cascade, the group thread holds this long before the phone goes to sleep (the block settles, readable) */
@@ -327,10 +329,13 @@ const LAMBIENT_AFTER1 = (maiden as { after: { lambientLine1: string; lambientLin
 const LAMBIENT_AFTER2 = (maiden as { after: { lambientLine1: string; lambientLine2: string } }).after.lambientLine2;
 
 const DARK_SECONDS = 1.6;      // a dead screen, long enough to read as dead
-const BOOT_LINE_SECONDS = 1.1; // each service line
-const BOOT_TAIL_SECONDS = 1.8; // "1 update found — installing"
-const INSTALL_LINE_SECONDS = 1.0;
-const INSTALL_TAIL_SECONDS = 2.6; // the bar finishing + the installed line
+// ⚑ S369 / F14 (UiB job 16, the reading rule) — the arrival's lines type on 1.5 s apart (were 1.1 and 1.0), and "Installed. A file
+//   was opened for you." holds its reading time (4.8 s) before the sign-in replaces it (it had 1.6 s)
+const BOOT_LINE_SECONDS = 1.5; // each service line
+const BOOT_TAIL_SECONDS = 3.6; // "1 update found — installing" (2 s + 0.4 s a word, and the line's own arrival)
+const INSTALL_LINE_SECONDS = 1.5;
+const INSTALLED_AFTER = 1.0;  // the installed line, a beat after the changelog's last
+function installTail(): number { return INSTALLED_AFTER + Math.max(4, readHold(ARRIVAL.installedLine)) + 0.6; }
 const TICK = 0.25;             // the quantum the redraw clock moves in
 /** the beat holds before the light moves: you read the two lines first, and the
  *  room answers after. Felt before it is understood. */
@@ -660,7 +665,7 @@ export class GraceQueueLite {
     return DARK_SECONDS + ARRIVAL.bootLines.length * BOOT_LINE_SECONDS + BOOT_TAIL_SECONDS;
   }
   private get installSeconds(): number {
-    return ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + INSTALL_TAIL_SECONDS;
+    return ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + installTail();
   }
 
   /** the relocation has landed: start the machine (app.ts → era3Devices) */
@@ -733,7 +738,8 @@ export class GraceQueueLite {
   private floppyOpened = false;
 
   update(dt: number): void {
-    if (this.disconnectT >= 0 && this.disconnectT <= 3) { this.disconnectT += dt; if (this.disconnectT > 3) this.bump(); }
+    // ⚑ S369 — "This device is no longer supported. Phone disconnected." holds its reading time (was 3 s for 8 words)
+    if (this.disconnectT >= 0 && this.disconnectT <= DISCONNECT_SECONDS) { this.disconnectT += dt; if (this.disconnectT > DISCONNECT_SECONDS) this.bump(); }
     if (this.guideFocus) { this.guideFocus.t += dt; if (this.guideFocus.t >= 6) { this.guideFocus = null; this.bump(); } }
     const highlights = ledger.view.highlights === true;
     if (highlights !== this.highlightPreference) {
@@ -815,7 +821,9 @@ export class GraceQueueLite {
     //   put away first (read by then), so nothing can hold the era forever and nothing opens on top of it.
     if (this.maltaPending) {
       const cardUp = this.pauseOpen || this.lambPriority || this.kitPopin || this.storyOffer || this.startPanel.open || this.startMap.active || this.focusOpen;
-      const clear = (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.saver && !cardUp;
+      // S369 (the after-run: a lock-screen message replaced by the thread 2.3 s after it landed) — and the phone's own last
+      //   message has had its reading time
+      const clear = (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.saver && !cardUp && !this.phone.voiceBusy;
       this.maltaClearT = clear ? this.maltaClearT + dt : 0;
       this.maltaWaitT += dt;
       if (this.maltaWaitT > 40 && cardUp && !this.veraPage && !this.openSurface) { this.pauseOpen = false; this.lambPriority = false; this.lambLines = null; this.startPanel.close(); this.startMap.close(); this.focusOpen = false; this.bump(); }
@@ -1108,7 +1116,11 @@ export class GraceQueueLite {
       }
       return;
     }
-    if (!quiet) { this.saver = null; this.bump(); return; }
+    // ⚑ S369 / F21 (UiB job 16) — once asleep it stays asleep until something real happens on the board (a press wakes it, a
+    //   page or job opens). It used to wake whenever any sound played or the guide stirred, so in 2026 — every one of 2026's
+    //   sounds — Vera's old workstation flickered between "Today" and "Every heart can be restored." every 0.5–4.7 s.
+    const settled = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised;
+    if (!settled) { this.saver = null; this.bump(); return; }
     this.saver.clock = this.clockText();
     if (this.saver.update(dt)) this.bump();
   }
@@ -1702,7 +1714,7 @@ export class GraceQueueLite {
   get mirrorAvailable(): boolean { return !this.mirrorDisconnected && !['dark', 'boot', 'install'].includes(this.mode); }
   disconnectPhone(): void { if (this.mirrorDisconnected) return; this.disconnectT = 0; this.mirrorDisconnected = true; this.mirrorReading = false; this.phone.disconnect(); if (this.floppy.open) this.floppy.closeGame(); this.bump(); }
   drawDisconnected(ctx: CanvasRenderingContext2D, W: number): void {
-    if (this.disconnectT < 0 || this.disconnectT > 3) return;
+    if (this.disconnectT < 0 || this.disconnectT > DISCONNECT_SECONDS) return;
     const x = W - MIRROR_W;
     px(ctx, x, 0, MIRROR_W, 150, ERA3.sysBand); px(ctx, x, 0, MIRROR_W, 25, ERA3.grey);
     setFont(ctx, 12); ctx.fillStyle = ERA3.white; ctx.fillText(mirrorCopy.title, x + 9, 7);
@@ -1872,7 +1884,7 @@ export class GraceQueueLite {
       ctx.fillStyle = line.startsWith('-') ? ERA3.amber : line.startsWith('=') ? ERA3.grey : ERA3.accentHi;
       ctx.fillText(line, Math.round(W * 0.14), Math.round(H * 0.30) + i * 22);
     }
-    if (age >= ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + 1.0) {
+    if (age >= ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + INSTALLED_AFTER) {
       setFont(ctx, 13);
       ctx.fillStyle = ERA3.grey;
       ctx.fillText(ARRIVAL.installedLine, Math.round(W * 0.14),

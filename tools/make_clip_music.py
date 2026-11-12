@@ -8,10 +8,11 @@ every card, the hush before "WHO IS TALKING TO YOU, MAYA?", and then the last ca
 from D minor to a huge, glossy D major: the genre's alarm turned into the system's promise. It should sound like a
 parody of inspirational-trailer music — grandiose, and wrong for what it is selling.
 
-THE GRID IS THE CLIP'S: 120 BPM, 25 bars of four = 50 s = CLIP_LOOP_SECONDS (frameHolds 4.5 4 4.5 5 6 7 4 5 5 5,
-read from data/dialog/s4_v3.json and checked against CARDS below). Each card starts on a beat (0, 4.5, 8.5, 13, 18, 24,
-31, 35, 40, 45 s) and gets its boom there; the narrator's file starts 0.15 s later.
-It loops SEAMLESSLY (the hall's tail is folded onto the head).
+THE GRID IS THE CLIP'S: 120 BPM, 29 bars of four = 58 s = CLIP_LOOP_SECONDS since S370 (frameHolds 4.5 4 4.5 5 6 7 4
+7 5 6 5, read from data/dialog/s4_v3.json and checked against CARDS below). Each card starts on a beat (0, 4.5, 8.5, 13,
+18, 24, 31, 35, 42, 47, 53 s) and gets its boom there; the narrator's file starts 0.15 s later.
+(S360–S366 looped SEAMLESSLY, the hall's tail folded onto the head; since S370 it ends — see below. The table is S366's
+timing; S370's moves cards 8 and 9 by one bar and adds the slate.)
 
   card 0  (0–4.5)    IT STARTED WITH ONE FRIEND.   a low drone and a heartbeat, one pair of thuds per bar
   card 1  (4.5–8.5)  THEN A GROUP CHAT.            the pulse: sixteenth-note saw on the root, ducking pad
@@ -35,6 +36,26 @@ new takes end their sentences (card 4's second 4 → 4.5 s, card 5's 2.5 → 3 s
 Re-run unchanged: TICKS is read from the data, so only those two dings moved (the render, compared sample by sample with
 S364's, differs only between 22 and 30 s). The holds, the grid and everything else are as they were.
 
+⚑ S370 (UiB job 16 Part C3; his 11 Nov: "the sound is fantastic… but in the end it stops quite abruptly the sound and
+the message") — AN ENDING, NOT A STOP, and nothing before it touched. 58 s = 29 bars, played ONCE (the chat's takeover
+stops it at its end; it no longer loops seamlessly, so nothing is folded onto the head any more):
+
+  card 7  (35–42)    EVEN THE LGB CHARITY SAYS…    the door, ONE BAR LONGER (its new narrator line is 6 s): the
+                                                   progression's F is held a second bar (Dm Bb F F), the drone alone
+  card 8  (42–47)    WHO IS TALKING TO YOU…        the hush, as it was, a bar later
+  card 9  (47–53)    YOU CAN STILL COME BACK.      the lift as it was (D three seconds, G two), then ONE NEW SECOND on
+                                                   A — the dominant, a snare fill — so the last card holds and asks
+  card 10 (53–58)    THE END SLATE                 THE RESOLUTION: D major lands with a boom, a kick and the bells'
+                                                   shimmer; the drums, pulse and pump stop; a slow falling arpeggio,
+                                                   the chord ringing as its filter closes; a fade to silence by 58 s
+
+EVERY S366 EVENT IS DRAWN FROM THE SAME RANDOM STREAM IN THE SAME ORDER (`rng`, seed 2611): the inserted bar, the A, the
+outro, the slate's boom and the riser into it draw from a second stream (`rng2`), so every saw's phase and every noise
+burst of S366's piece is the one it was — the render is sample-identical to S366's from 3 s to 35 s (the first seconds
+differ only by the old ending's reverb, which the loop used to fold onto the head; that is gone with the loop), and from
+35 s on it is S366's piece moved by exactly one bar. The level is S366's too: normalised by S366's own raw peak
+(S366_PEAK), not by this render's, so nothing gets quieter because the ending was added.
+
 ⚑ tools/make_tones.sh's law holds: no found sound, no sample, no imitation of any real piece — every partial is written
 out (the era change's own voices are imported from tools/make_era_change_audio.py). Deterministic (seeded).
 
@@ -56,13 +77,16 @@ from make_era_change_audio import (  # noqa: E402  (the era change's own voices)
 BPM = 120.0
 BEAT = 60.0 / BPM
 BAR = 4 * BEAT
-BARS = 25
-L = BARS * BAR           # 50 s: the clip's loop
-TAIL = 6.0               # rendered past the loop, then folded onto its head
-OFF = 2.0                # a pre-roll: what starts before 0 is folded onto the end
-CARDS = [0.0, 4.5, 8.5, 13.0, 18.0, 24.0, 31.0, 35.0, 40.0, 45.0]      # the cards' onsets (== cumulative frameHolds)
+BARS = 29
+L = BARS * BAR           # 58 s since S370 (50 s, 25 bars, S364–S366): the clip, once
+TAIL = 6.0               # rendered past the end (S370: then dropped — the outro has faded by then)
+OFF = 2.0                # a pre-roll (S370: dropped too; kept so S366's reverb sees the same start)
+CARDS = [0.0, 4.5, 8.5, 13.0, 18.0, 24.0, 31.0, 35.0, 42.0, 47.0, 53.0]   # the cards' onsets (== cumulative frameHolds)
 SIGNS = (3, 4, 5)        # S364: the checklist's three cards
 RISE, DOOR, HUSH, BACK = 6, 7, 8, 9                                    # S360's last four cards, by name
+SLATE = 10               # S370: the end slate — the resolution and the fade
+S366_PEAK = 1.2067783575101503   # S366's raw peak (in the lift, 45.35 s): the level this render is normalised by
+NEW_BAR = 20             # S370: the bar inserted at the door's end (40–42 s); S366's bars 20… are this one's 21…
 
 # the clip's own data: the holds must still add up to this grid, and the ticks land where the picture lands them
 _V3 = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'dialog', 's4_v3.json'),
@@ -86,18 +110,24 @@ CH = {
 PROG = ['Dm', 'Dm', 'Bb', 'Bb',  'F', 'F',
         'C', 'Dm', 'Dm', 'Bb', 'Bb', 'F', 'F', 'Bb', 'Bb',      # S364: the nine bars under THE SIGNS (12–30 s)
         'C', 'C',
-        'Dm', 'Bb', 'F', 'A',    'Dm', 'Dm', 'D', 'D']
-assert len(PROG) == BARS
-# the last bars are written out in clip(): Dm to the lift, D major for three seconds, then G (IV, which falls back onto
-# the loop's Dm)
+        'Dm', 'Bb', 'F', 'F',    'A',    'Dm', 'Dm']            # S370: the door's F held a second bar (bar 20, 40–42 s)
+assert PROG[NEW_BAR] == 'F' and len(PROG) == 24                 # bars 0–23 (to 48 s); the lift's bars are written out
+PAD_BARS = 23            # the pad plays PROG's bars 0–22 (to 46 s), then the lift's segments below
+# the last bars are written out in clip(): Dm to the lift, D major for three seconds, G (IV) for two — as S360 wrote
+# them — then S370's new second on A (V) and the resolution on D under the end slate
 LIFT = CARDS[BACK]
+ON_A = LIFT + 5.0        # 52 s: the dominant
+assert ON_A + 1.0 == CARDS[SLATE]
 
 
 def chord_at(t):
-    t = t % L
+    if t >= CARDS[SLATE]:
+        return CH['D']
+    if t >= ON_A:
+        return CH['A']
     if t >= LIFT:
         return CH['G'] if t >= LIFT + 3.0 else CH['D']
-    return CH[PROG[int(t // BAR)]]
+    return CH[PROG[int(max(0.0, t) // BAR)]]
 
 
 def noise_burst(n, rng):
@@ -170,14 +200,17 @@ def duck(t, a=0.78, tau=0.16):
 
 
 def clip():
-    rng = np.random.default_rng(2611)
+    rng = np.random.default_rng(2611)       # S360–S366's stream: every event of S366's piece draws from it, in its order
+    rng2 = np.random.default_rng(3700)      # S370's stream: the inserted bar, the A, the outro (so `rng` is untouched)
     total = OFF + L + TAIL
     n = int(total * SR)
     bus = np.zeros((2, n))
     tt = np.arange(n) / SR - OFF            # clip time of each sample
+    OLD_END = CARDS[BACK] + 5.0             # 52 s: where S366's piece ended (its 50 s, moved by the inserted bar)
 
     def ev(t):                              # the intensity (0 … 1) the bed has reached at clip time t
-        t = t % L
+        if t < 0:
+            return 1.0                      # the pre-roll, as S366's loop had it (its lift), so the head is unchanged
         if t < CARDS[1]:
             return 0.15
         if t < CARDS[2]:
@@ -196,27 +229,36 @@ def clip():
             return 0.12                     # the door: everything cut
         if t < CARDS[BACK]:
             return 0.25                     # the hush
-        return 1.0                          # the lift
+        if t < CARDS[SLATE]:
+            return 1.0                      # the lift
+        return 1.0 - 0.6 * smooth((t - CARDS[SLATE]) / (L - CARDS[SLATE]))   # S370: the last chord closes as it fades
 
     # ── the PAD (a supersaw: detuned saws, cutoff following the intensity), one chord per half-bar region ──
+    #    (s0, s1, chord, stream): S366's 25 segments in S366's order on `rng`; S370's three on `rng2`
     pad = np.zeros(n)
-    segs = [(b * BAR, (b + 1) * BAR, CH[PROG[b]]) for b in range(BARS - 3)]       # bars 0–21 (to 44 s)
-    segs += [(LIFT - 1.0, LIFT, CH['Dm']), (LIFT, LIFT + 3.0, CH['D']), (LIFT + 3.0, L, CH['G'])]  # then the lift
-    for s0, s1, ch in segs:
-        a0, a1 = OFF + s0 - 0.35, min(total, OFF + s1 + 0.9)
+    segs = [(b * BAR, (b + 1) * BAR, CH[PROG[b]], rng2 if b == NEW_BAR else rng) for b in range(PAD_BARS)]   # to 46 s
+    segs += [(LIFT - 1.0, LIFT, CH['Dm'], rng), (LIFT, LIFT + 3.0, CH['D'], rng), (LIFT + 3.0, ON_A, CH['G'], rng),
+             (ON_A, CARDS[SLATE], CH['A'], rng2), (CARDS[SLATE], L, CH['D'], rng2)]                          # then the lift
+    for s0, s1, ch, r in segs:
+        last = s0 == CARDS[SLATE]
+        a0, a1 = OFF + s0 - 0.35, min(total, OFF + s1 + (0.0 if last else 0.9))
         i0, i1 = int(a0 * SR), int(a1 * SR)
         m = i1 - i0
         t2 = np.arange(m) / SR
-        env = smooth(t2 / 0.5) * (1 - smooth((t2 - (m / SR - 1.0)) / 1.0))
+        if last:                            # S370: the resolution rings: a quick swell, then a long decay into the fade
+            env = smooth(t2 / 0.4) * (0.3 + 0.7 * np.exp(-np.maximum(0.0, t2 - 0.4) / 1.4))
+        else:
+            env = smooth(t2 / 0.5) * (1 - smooth((t2 - (m / SR - 1.0)) / 1.0))
         for note in ch[1]:
             for det in (-0.14, -0.05, 0.05, 0.14):
                 f = np.full(m, hz(note) * 2 ** (det / 12))
-                pad[i0:i1] += env * saw(f, m, rng) * 0.0155
+                pad[i0:i1] += env * saw(f, m, r) * 0.0155
     pad = resonant_lowpass(pad, lambda t: 380 + 4200 * ev(t - OFF) ** 1.6, q=1.5)
     hb, ha = butter(2, 120 / (SR / 2), btype='high')
     pad = lfilter(hb, ha, pad)
-    pump = np.where((tt % L >= CARDS[1]) & ((tt % L < CARDS[DOOR]) | (tt % L >= CARDS[BACK])), duck(np.maximum(tt, 0)), 1.0)
-    pump = np.where((tt % L >= CARDS[HUSH]) & (tt % L < CARDS[BACK]), 1.0, pump)
+    pump = np.where((tt >= CARDS[1]) & ((tt < CARDS[DOOR]) | ((tt >= CARDS[BACK]) & (tt < CARDS[SLATE]))),
+                    duck(np.maximum(tt, 0)), 1.0)
+    pump = np.where(tt < 0, duck(0.0), pump)      # the pre-roll as S366 pumped it (its loop wrapped onto the lift)
     bus[0] += pad * pump * 0.95
     bus[1] += pad * pump
 
@@ -229,12 +271,13 @@ def clip():
     bus[0] += drone
     bus[1] += drone
 
-    # ── the PULSE: sixteenth-note saw on the root, from card 1, through to the door, and again for the lift ──
+    # ── the PULSE: sixteenth-note saw on the root, from card 1, through to the door, and again for the lift (S370: it
+    #    stops at the slate; its sixteenths past S366's end draw from `rng2`) ──
     t = 0.0
     k = 0
     while t < L:
         sixteenth = BEAT / 4
-        on = (CARDS[1] <= t < CARDS[DOOR]) or t >= CARDS[BACK]
+        on = (CARDS[1] <= t < CARDS[DOOR]) or (CARDS[BACK] <= t < CARDS[SLATE])
         if on:
             root = chord_at(t)[0] + 12
             vel = 0.05 + 0.05 * ev(t)
@@ -244,7 +287,7 @@ def clip():
                 root_n = root
             nn = int(0.13 * SR)
             tq = np.arange(nn) / SR
-            wave = saw(np.full(nn, hz(root_n)), nn, rng) * np.exp(-tq / 0.07) * (1 - np.exp(-tq / 0.002))
+            wave = saw(np.full(nn, hz(root_n)), nn, rng if t < OLD_END else rng2) * np.exp(-tq / 0.07) * (1 - np.exp(-tq / 0.002))
             wave = resonant_lowpass(wave, lambda x: 500 + 2500 * ev(t), q=2.0, block=64)
             place(bus, wave * vel, OFF + t, -0.1 if k % 2 else 0.1)
         k += 1
@@ -253,7 +296,7 @@ def clip():
     # ── the BELLS: eighth-note arpeggio from card 2 (bright, glossy — the "inspirational" part), and the lift ──
     t = CARDS[2]
     j = 0
-    while t < L:
+    while t < CARDS[SLATE]:
         if t >= CARDS[DOOR] and t < CARDS[HUSH]:
             t = CARDS[HUSH]
             j = 0
@@ -283,27 +326,29 @@ def clip():
         place(bus, kick(0.34, 90, 38, 0.3), OFF + s0 + 0.3, 0.0)
 
     # ── the DRUMS: kick on every beat from card 2 (to the door), again for the lift; snare on 2 and 4 from "4,815" (a
-    #    half one under the last sign); hats ──
+    #    half one under the last sign); hats (S370: to the slate; the beats past S366's end draw from `rng2`) ──
     t = 0.0
     bi = 0
     while t < L:
         in_a = CARDS[2] <= t < CARDS[DOOR]
-        in_b = t >= CARDS[BACK]
+        in_b = CARDS[BACK] <= t < CARDS[SLATE]
+        r = rng if t < OLD_END else rng2
         if in_a or in_b:
             place(bus, kick(0.62 if in_b else 0.5), OFF + t, 0.0)
             if (CARDS[SIGNS[2]] <= t < CARDS[DOOR] or in_b) and (round(t / BEAT) % 2 == 1):
-                place(bus, snare(0.33 if in_b else (0.26 if t >= CARDS[RISE] else 0.18), rng), OFF + t, 0.05)
+                place(bus, snare(0.33 if in_b else (0.26 if t >= CARDS[RISE] else 0.18), r), OFF + t, 0.05)
             # hats on the offbeat eighth, and a doubled-up roll in the lift
-            place(bus, hat(0.07, rng), OFF + t + BEAT / 2, 0.3)
+            place(bus, hat(0.07, r), OFF + t + BEAT / 2, 0.3)
             if in_b:
-                place(bus, hat(0.04, rng), OFF + t + BEAT / 4, -0.3)
-                place(bus, hat(0.04, rng), OFF + t + 3 * BEAT / 4, 0.3)
+                place(bus, hat(0.04, r), OFF + t + BEAT / 4, -0.3)
+                place(bus, hat(0.04, r), OFF + t + 3 * BEAT / 4, 0.3)
         t += BEAT
 
-    # ── the BOOMS: a title-card impact on every card; the door's and the lift's are the biggest ──
+    # ── the BOOMS: a title-card impact on every card; the door's and the lift's are the biggest (S370: and the slate's,
+    #    the resolution's, on `rng2`) ──
     for ci, t0 in enumerate(CARDS):
-        vel = {0: 0.9, 1: 0.55, 2: 0.6, 3: 0.6, 4: 0.62, 5: 0.66, RISE: 0.7, DOOR: 1.0, HUSH: 0.5, BACK: 1.15}[ci]
-        place(bus, boom(vel, rng), OFF + t0, 0.0)
+        vel = {0: 0.9, 1: 0.55, 2: 0.6, 3: 0.6, 4: 0.62, 5: 0.66, RISE: 0.7, DOOR: 1.0, HUSH: 0.5, BACK: 1.15, SLATE: 0.95}[ci]
+        place(bus, boom(vel, rng if ci < SLATE else rng2), OFF + t0, 0.0)
     # the lift also gets a bright crash: a long shimmer of high bloops
     for q in range(14):
         place(bus, bloop(hz(CH['D'][2][q % 6] + 12), 0.05, dur=1.6), OFF + LIFT + 0.04 * q, -0.8 + 1.6 * (q % 7) / 6)
@@ -331,27 +376,54 @@ def clip():
 
     # ── the SUB, on the roots (not under the door) ──
     sub = np.zeros(n)
-    for s0, s1, ch in segs:
+    for s0, s1, ch, _ in segs:
         if CARDS[DOOR] <= s0 < CARDS[BACK]:
             continue
-        j0, j1 = int((OFF + s0) * SR), int(min(total, OFF + s1 + 0.25) * SR)
+        last = s0 == CARDS[SLATE]
+        j0, j1 = int((OFF + s0) * SR), int(min(total, OFF + s1 + (0.0 if last else 0.25)) * SR)
         mm = j1 - j0
         t2 = np.arange(mm) / SR
-        e = smooth(t2 / 0.15) * (1 - smooth((t2 - (mm / SR - 0.25)) / 0.25))
+        if last:                            # S370: the last root rings out under the slate
+            e = smooth(t2 / 0.15) * np.exp(-t2 / 1.8)
+        else:
+            e = smooth(t2 / 0.15) * (1 - smooth((t2 - (mm / SR - 0.25)) / 0.25))
         sub[j0:j1] += e * np.sin(TAU * hz(ch[0]) * t2) * 0.07
     bus[0] += sub
     bus[1] += sub
 
+    # ── ⚑ S370: THE OUTRO. Into the slate: a riser and a snare fill on the A (the dominant asks); on the slate, D major
+    #    lands — the kick's last hit, the boom above, the lift's own shimmer — and then only the bells, falling slowly
+    #    down the chord, a little slower each time, the last one left to ring. Every voice is one this piece already has. ──
+    riser(OFF + CARDS[SLATE] - 1.0, OFF + CARDS[SLATE], bus, rng2, 0.16, pitch=(220.0, 440.0))
+    for i, d in enumerate((0.5, 0.625, 0.75, 0.875)):
+        place(bus, snare(0.16 + 0.05 * i, rng2), OFF + ON_A + d, 0.05)
+    place(bus, kick(0.7), OFF + CARDS[SLATE], 0.0)
+    for q in range(14):
+        place(bus, bloop(hz(CH['D'][2][q % 6] + 12), 0.05, dur=1.6), OFF + CARDS[SLATE] + 0.04 * q, -0.8 + 1.6 * (q % 7) / 6)
+    up = CH['D'][2]
+    at = CARDS[SLATE] + 0.5
+    for i, gap in enumerate((0.25, 0.28, 0.32, 0.38, 0.46, 0.6)):
+        note = up[5 - i] + 12
+        place(bus, bloop(hz(note), 0.085 - 0.007 * i, dur=0.6 if i < 5 else 2.4), OFF + at, 0.5 if i % 2 else -0.5)
+        at += gap
+    place(bus, bloop(hz(up[3]), 0.06, dur=2.4), OFF + at + 0.2, 0.0)        # the D an octave above the root, last
+
     bus = hall(bus, 2.9, 0.3, seed=29)
 
-    # ── the seam: fold the tail onto the head and the pre-roll onto the end ──
+    # ── the end (S370): no seam any more — the clip plays once and its outro fades to silence by L. What was rendered
+    #    past it (the hall's last tail) and before it (the pre-roll) is dropped, not folded. ──
     o, nl = int(OFF * SR), int(L * SR)
     out = bus[:, o:o + nl].copy()
-    tail = bus[:, o + nl:]
-    out[:, :tail.shape[1]] += tail
-    out[:, nl - o:] += bus[:, :o]
+    t_end = np.arange(nl) / SR
+    out *= 1.0 - smooth((t_end - (L - 2.5)) / 2.5)
     return out
 
 
 if __name__ == '__main__':
-    write('clip_music', clip(), 0.9)
+    y = clip()
+    raw = float(np.max(np.abs(y)))
+    # ⚑ S370: S366's level, not this render's own peak (write() normalises to the peak it is given: pass the peak that
+    #   puts S366's loudest sample where it was, so the 35 s nobody touched come out exactly as loud as they were)
+    level = 0.9 * raw / S366_PEAK
+    assert level < 0.99, f'the ending peaks above S366 by too much ({raw:.4f} raw against {S366_PEAK:.4f}); turn it down'
+    write('clip_music', y, level)

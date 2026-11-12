@@ -196,12 +196,13 @@ export class ClusterMorph {
   get running(): boolean { return this.active || this.sweep.length > 0; }
 
   /** roll the glitch through the present props over `seconds`, ordered along from → to (world x/z) */
-  glitchSweep(from: { x: number; z: number }, to: { x: number; z: number }, seconds: number, propSeconds = 2.6): void {
+  glitchSweep(from: { x: number; z: number }, to: { x: number; z: number }, seconds: number, propSeconds = 2.6, skip?: ReadonlySet<string>): void {
     this.endSweep();
     const dx = to.x - from.x, dz = to.z - from.z;
     const len2 = Math.max(1e-6, dx * dx + dz * dz);
     const rows: { h: PropHandle; k: number }[] = [];
-    for (const h of this.room.props.values()) {
+    for (const [id, h] of this.room.props) {
+      if (skip?.has(id)) continue;   // S369: the room's fixed trim keeps its batch through the sweep (cluster.ts)
       if (!h.entity.enabled) continue;
       const s = h.entity.getLocalScale();
       if (Math.min(Math.abs(s.x), Math.abs(s.y), Math.abs(s.z)) < 1e-4) continue;   // absent (scaled to 0)

@@ -5225,6 +5225,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       else e.enabled = roomEntitiesWere.get(id) ?? true;
     }
     if (!hidden) roomEntitiesWere.clear();
+    // ⚑ S369 (UiB job 16 Part B — "draw calls: 79 at one stream moment") — the room's batch is baked from what is visible, and the
+    //   room's entities are off while the Commons world is up: a rebake in that time (a guide emphasis changing, a morph settling)
+    //   left every prop of Maya's room unbatched, so the ball's intrusions, which bring her back to her room, drew it prop by prop
+    //   (77–79 draw calls against the desk's 34). Coming back, the room is baked again.
+    if (!hidden) cluster?.rebake();
     // ⚑ the hall's markers on, the rooms' off — and leaving the world puts her
     //   back in Maya's seat, wherever in the hall she had blinked to
     movementNodes?.setCommons(hidden);

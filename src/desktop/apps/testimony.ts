@@ -35,6 +35,7 @@ import { FOOTAGE as F } from '../theme/calendar';
 import { entriesByEra } from '../../witness/record';
 import { ledger } from '../../state/ledger';
 import { playLoop, playOnce, stopClip } from '../../audio/tapeAudio';
+import { readHold } from '../readHold';
 import T from '../../../data/dialog/s2_testimony.json';
 import guidedCopy from '../../../data/strings/extras.json';
 import { drawWebView } from './web2003';
@@ -55,6 +56,17 @@ const VERSIONS: Array<Array<['S' | 'C' | 'F', number]>> = [
   [['C', 0], ['S', 0], ['C', 1], ['S', 1], ['C', 2], ['S', 2], ['C', 3]]
 ];
 const BLOCK_SECONDS = 1.9;
+/** ⚑ S369 (UiB job 16 Part B, the flow audit: "I used to think I would always be this way." held 2.0 s, needing 6.0) — each block of
+ *  the cut holds its own reading time (2 s + 0.4 s a word), never under BLOCK_SECONDS: a chapter card stays short, a sentence long */
+function blockText(b: ['S' | 'C' | 'F', number]): string { return b[0] === 'S' ? T.cut.sentences[b[1]] : b[0] === 'C' ? T.cut.chapters[b[1]] : T.cut.fragments[b[1]]; }
+function blockDur(b: ['S' | 'C' | 'F', number]): number { return Math.max(BLOCK_SECONDS, readHold(blockText(b))); }
+function versionDur(v: number): number { return VERSIONS[v].reduce((n, b) => n + blockDur(b), 0); }
+/** the block playing `t` seconds into version `v`, and how far into it */
+function blockAt(v: number, t: number): { bi: number; into: number } {
+  let start = 0;
+  for (let i = 0; i < VERSIONS[v].length; i++) { const d = blockDur(VERSIONS[v][i]); if (t < start + d || i === VERSIONS[v].length - 1) return { bi: i, into: t - start }; start += d; }
+  return { bi: 0, into: t };
+}
 const EXPORT_SECONDS = 4;
 /** ⚑ W1-D12 — the cross-fade between the cuts of the final playback */
 const FADE_SECONDS = 0.35;
@@ -170,7 +182,7 @@ export class TestimonyApp {
       if (this.bed) {
         // the preview ends at its blocks' end: ease the bed out over the last 0.8 s so the cut is not a click
         let fade = 1;
-        if (this.stage === 'cut') fade = Math.max(0, Math.min(1, (VERSIONS[this.version].length * BLOCK_SECONDS - this.previewT) / 0.8));
+        if (this.stage === 'cut') fade = Math.max(0, Math.min(1, (versionDur(this.version) - this.previewT) / 0.8));
         this.bed.volume = this.bedBase * fade;
       }
     } else if (this.bed) { stopClip(this.bed); this.bed = null; }
@@ -206,7 +218,7 @@ export class TestimonyApp {
     this.syncSongs();
     if (this.stage === 'cut' && this.previewT >= 0) {
       this.previewT += dt; moving = true;
-      if (this.previewT >= VERSIONS[this.version].length * BLOCK_SECONDS) { this.previewT = -1; this.dirty = true; }
+      if (this.previewT >= versionDur(this.version)) { this.previewT = -1; this.dirty = true; }
     }
     if (this.stage === 'cut' && this.exportT >= 0 && !this.exported) {
       this.exportT += dt; moving = true;
@@ -215,9 +227,9 @@ export class TestimonyApp {
     if (this.stage === 'online' && (this.web === 'buffer' || this.web === 'play')) {
       this.webT += dt; moving = true;
       if (this.web === 'buffer' && this.webT >= BUFFER_SECONDS) { this.web = 'play'; this.webT = 0; }
-      else if (this.web === 'play' && this.webT >= VERSIONS[2].length * BLOCK_SECONDS) {
+      else if (this.web === 'play' && this.webT >= versionDur(2)) {
         this.web = 'done'; this.webT = 0; this.dirty = true;
-        this.bedTail = Math.max(0, TestimonyApp.BED_SECONDS - VERSIONS[2].length * BLOCK_SECONDS);   // ⚑ S362 / H37: the song rings out past the picture
+        this.bedTail = Math.max(0, TestimonyApp.BED_SECONDS - versionDur(2));   // ⚑ S362 / H37: the song rings out past the picture
       }
     }
     if (this.stage === 'online' && this.web === 'teaser') {
@@ -525,9 +537,7 @@ export class TestimonyApp {
     ui.px(ctx, 0, 0, W, H, ERA1.black);
     const vh = Math.round(W * 9 / 16), vy = Math.round((H - vh) / 2);
     const blocks = VERSIONS[2];
-    const k = this.webT / BLOCK_SECONDS;
-    const bi = Math.min(blocks.length - 1, Math.floor(k));
-    const into = this.webT - bi * BLOCK_SECONDS;
+    const { bi, into } = blockAt(2, this.webT);
     ctx.save();
     ctx.beginPath(); ctx.rect(0, vy, W, vh); ctx.clip();
     if (bi > 0 && into < FADE_SECONDS) {
@@ -540,7 +550,7 @@ export class TestimonyApp {
     //   as every window's (the corner above the picture is the desktop's own tray mark)
     const bw = W - 32 - 26, by = vy + vh + Math.round((H - vy - vh) / 2) - 2;
     ui.px(ctx, 16, by, bw, 4, ERA1.greyDark);
-    ui.px(ctx, 16, by, Math.round(bw * Math.min(1, this.webT / (blocks.length * BLOCK_SECONDS))), 4, ERA1.silver);
+    ui.px(ctx, 16, by, Math.round(bw * Math.min(1, this.webT / versionDur(2))), 4, ERA1.silver);
     const cb = { x: W - 30, y: by - 5, w: 14, h: 14 };
     ui.bevel(ctx, cb.x, cb.y, cb.w, cb.h, true);
     ui.setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText('x', cb.x + 4, cb.y + 2);
@@ -554,7 +564,7 @@ export class TestimonyApp {
     const px0 = c.x + 12, py0 = c.y + 30, pw = 252, ph = 150;
     ui.px(ctx, px0 - 1, py0 - 1, pw + 2, ph + 2, ERA1.greyDark);
     const playing = this.previewT >= 0;
-    const bi = playing ? Math.min(blocks.length - 1, Math.floor(this.previewT / BLOCK_SECONDS)) : -1;
+    const bi = playing ? blockAt(this.version, this.previewT).bi : -1;
     drawBlock(ctx, bi >= 0 ? blocks[bi] : ['S', 0], px0, py0, pw, ph, this.tick, !playing);
     // the unused bin
     const ux = px0 + pw + 12, uw = c.x + c.w - 12 - ux;
@@ -649,7 +659,7 @@ export class TestimonyApp {
       ui.setFont(ctx, 9); ctx.fillStyle = ERA1.silver;
       ctx.fillText(O.buffering.replace('{p}', String(Math.min(100, Math.floor(this.webT / BUFFER_SECONDS * 100)))), vx + 34, vy + 60);
     } else {
-      const bi = Math.min(VERSIONS[2].length - 1, Math.floor(this.webT / BLOCK_SECONDS));
+      const bi = blockAt(2, this.webT).bi;
       drawBlock(ctx, VERSIONS[2][bi], vx, vy, vw, vh, this.tick, false, true);
     }
     // the words beside it

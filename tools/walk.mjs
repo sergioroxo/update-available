@@ -163,6 +163,13 @@ const MAX_STEPS = Number(flag('max', 320));
 /** ⚑ S332 — `--refuse`: in 2016 the walker refuses every job (Skip, Leave it off, Don't send a script, Not this week,
  *  the kit left unapproved) and never presses a comply control, to prove the system carries the day without her. */
 const REFUSE = process.argv.includes('--refuse');
+/** ⚑ S369 — `--flow <dir>`: a PASSIVE flow sampler beside the walk (tools/harness/flow-sampler.mjs, read by tools/flow-audit.mjs):
+ *  every 250 ms each canvas's text with its bounding boxes and what was drawn over it, the guide/phone hooks, and every
+ *  press this walker makes. It changes nothing the piece or the walker reads or chooses. `--flow-shots <s>` adds a JPEG
+ *  every <s> seconds into <dir>/shots. */
+const FLOW_DIR = flag('flow', '') ? join(ROOT, flag('flow', '')) : '';
+const FLOW_SHOTS = Number(flag('flow-shots', '0')) || 0;
+let FLOW = null;
 const VIEW = { width: 1280, height: 900 };
 const OUT_DIR = flag('out') ? join(ROOT, flag('out')) : join(ROOT, SETUP || FROM_ERA > 1 || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp');
 // S223: inside the project (a cloud machine has no /private/tmp of ours), one folder per era so side-by-side walks do not overwrite
@@ -316,6 +323,7 @@ async function main() {
     defaultViewport: { ...VIEW, deviceScaleFactor: 1 }
   });
   const page = await browser.newPage();
+  if (FLOW_DIR) FLOW = await (await import('./harness/flow-sampler.mjs')).installFlowSampler(page, { dir: FLOW_DIR, shotEvery: FLOW_SHOTS });
 
   /**
    * ⚑ SOUND IS ACTIVITY, AND THE WALKER WAS DEAF (review round 1, A-5).
@@ -444,6 +452,7 @@ async function main() {
   const log = [];
   const note = (kind, detail) => {
     log.push({ step: log.length, kind, t: Date.now(), ...detail });
+    if (FLOW) FLOW.note(kind, detail);
     const d = detail.target ?? detail.what ?? '';
     console.log(
       `${String(log.length).padStart(3)} ${kind.padEnd(10)} ${String(d).slice(0, 40).padEnd(40)} ` +
@@ -571,6 +580,24 @@ async function main() {
   const pulseOf = (st) =>
     st.screenHash + ' \u241F ' + st.domText + ' \u241F ' +
     st.audio.started + ' \u241F ' + (st.audio.playing > 0 ? 'A' : '-');
+
+  /**
+   * ⚑ S369 (UiB job 16 Part B) — A BLINK IS NOT THE PIECE SPEAKING. The hold below waited out its full 40 × 0.9 s after nearly
+   * every 2026 press because a canvas kept changing: a caret going on and off, a corner window cycling. Each canvas keeps its
+   * last few hashes; a change that only returns a canvas to a picture it showed a moment ago (an A/B/A blink, a short loop) is
+   * not activity. New words, a new sound, the DOM captions, or any canvas reaching a picture it has not just shown still are.
+   */
+  const recentParts = new Map();
+  const partsOf = (st) => String(st.screenHash || '').split('/').map((p, i) => { const c = p.indexOf(':'); return [c > 0 ? p.slice(0, c) : '#' + i, p]; });
+  const rememberParts = (st) => {
+    for (const [k, v] of partsOf(st)) { const h = recentParts.get(k) || []; if (h[h.length - 1] !== v) h.push(v); if (h.length > 4) h.shift(); recentParts.set(k, h); }
+  };
+  const onlyBlinked = (was, now) => {
+    if (was.domText !== now.domText || was.audio.started !== now.audio.started || (was.audio.playing > 0) !== (now.audio.playing > 0)) return false;
+    const old = new Map(partsOf(was));
+    for (const [k, v] of partsOf(now)) { if (old.get(k) === v) continue; if (!(recentParts.get(k) || []).includes(v)) return false; }
+    return true;
+  };
 
   /** what arrived in the ledger between two probes, by name */
   const ledgerNew = (before, after) => {
@@ -1474,9 +1501,12 @@ async function main() {
      */
     if (!justWoke && talkWaits < TALK_WAIT_MAX) {
       const before = pulseOf(s);
+      rememberParts(s);
       await wait(900);
       const now = await probe();
-      if (pulseOf(now) !== before) {
+      const blinkOnly = onlyBlinked(s, now);
+      rememberParts(now);
+      if (pulseOf(now) !== before && !blinkOnly) {
         s = now;
         talkWaits += 1;
         if (talkWaits === 1 || talkWaits % 6 === 0) {
@@ -1932,6 +1962,7 @@ async function main() {
   ].join('\n');
   writeFileSync(join(OUT_DIR, 'WALK_' + stamp + '.md'), md + '\n');
 
+  if (FLOW) { await FLOW.flush(); await FLOW.close(); console.log('flow samples written to ' + FLOW_DIR); }
   console.log('\nwrote ' + (SETUP || FROM_ERA > 1 || HOME_DOOR || ONE_ERA ? 'out/walks' : 'docs/reinterp') + '/WALK_' + stamp + '.{json,md} — ' +
     presses.length + ' presses, reached ' + final.era);
   await browser.close();

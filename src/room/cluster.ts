@@ -203,6 +203,8 @@ let roomHook: ((hidden: boolean) => void) | null = null;
 /** app.ts registers this: it switches the building off and on around the world */
 export function onCommonsRoom(fn: (hidden: boolean) => void): void { roomHook = fn; }
 /** the Commons world on: the room goes, the hall arrives. Off: the room returns. */
+/** ⚑ S369 — the room's fixed trim, by entity name: batched through the Close's glitch sweep (see `glitchSweep`) */
+const SWEEP_KEEP = /^(e1door(Front|Back|Lintel|Cap)|e_lintel|e_win(Top|Bot|L|R|Mullion[VH])|e_curtRod|e_shelfPlank|e_crtBezel|e_doorPanel)$/;
 export function setCommonsWorld(on: boolean): void {
   if (!worldRef || worldRef.on === on) return;
   worldRef.setOn(on);
@@ -420,6 +422,8 @@ export interface ClusterShell {
   setNeverBatch(ids: Iterable<string>): void;
   /** Only the active guidance lift needs private materials; the rest may share. */
   setEmphasisBatch(ids: Iterable<string>): void;
+  /** ⚑ S369 — bake the room's batch again from what is visible now (the room coming back from the Commons world) */
+  rebake(): void;
   readonly state: ClusterState;
   readonly era: EraKey;
   /** the home facing: 0° (Room 1) until E4, then 270° — Room 3, Maya's room
@@ -998,13 +1002,25 @@ export function buildClusterShell(
       for (const id of ids) excluded.add(id);
       rebuildSettled();
     },
+    rebake(): void { if (!morph.running) rebuildSettled(); else pendingSettledRebatch = true; },
     get state(): ClusterState { return state; },
     get era(): EraKey { return era; },
     get homeYaw(): number { return era === 'e4' ? 270 : era === 'e3' ? 90 : 0; },
     get busy(): boolean { return morph.running || timeline.length > 0; },
     glitchSweep(from: { x: number; z: number }, to: { x: number; z: number }, seconds: number): void {
-      beginMorphedStateBatch();   // private materials while it runs; rebaked when the morph is idle again
-      morph.glitchSweep(from, to, seconds);
+      // ⚑ S369 (UiB job 16 Part B — "draw calls: 79 at one stream moment"; it is the Close's flight, measured 80) — the sweep
+      //   touched every prop, so the whole of Maya's room was unbatched for its ~14 s and drew prop by prop from her seat.
+      //   His glitch is kept (H50: "the flyover from Maya's room, WITH THE GLITCH"): the walls, floor, ceiling, window,
+      //   curtains and every object still flicker and jitter along the flight; only the room's small FIXED TRIM (the window's
+      //   frame bars, door lintels and caps, the curtain rod, the shelf plank, the monitor's bezel) keeps one batch through it.
+      if (!batch) { morph.glitchSweep(from, to, seconds); return; }
+      clearSettled();
+      const swept = [...room.props.entries()].filter(([, h]) => !SWEEP_KEEP.test(h.entity.name)).map(([id]) => id);
+      roomBatch = bakeBatch(app, room, new Set([...excluded, ...emphasisBatch, ...swept]));
+      settledJoined = roomBatch?.joined ?? 0;
+      publishBatchStats();
+      pendingSettledRebatch = true;   // the whole room is rebaked when the sweep is over
+      morph.glitchSweep(from, to, seconds, 2.6, roomBatch?.idSet);
     },
 
     reveal(): void {

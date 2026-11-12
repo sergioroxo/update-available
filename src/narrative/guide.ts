@@ -25,6 +25,13 @@
 import { ledger, ledgerGeneration } from '../state/ledger';
 import type { DesktopOS } from '../desktop/os';
 import guideData from '../../data/dialog/s1_guide.json';
+import { readHold } from '../desktop/readHold';
+
+/** ⚑ S369 / F15 (UiB job 16, the reading rule) — a soft line, once up, stays at least this long (or its reading time, if longer)
+ *  unless a press comes or its ask is done: "while you wait, browse the fellowship's pages in NetPilot." left after 3.5 s when its
+ *  trigger flickered. It may still be talked over by a line that is due — but only once it has been read. */
+const SOFT_MIN_SECONDS = 6;
+const nowSeconds = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
 
 export interface SideMessage {
   id: string;
@@ -131,6 +138,14 @@ export class GuideThread {
   private readonly messages: SideMessage[];
   private active: SideMessage | null = null;
   private readonly retired = new Set<string>();
+  /** S369 — when the active line came up, and the OS's idle clock then (a press resets it) */
+  private shownAt = 0;
+  private setActive(m: SideMessage | null): void { if (m !== this.active) { this.active = m; this.shownAt = nowSeconds(); } }
+  /** S369 — the active soft line may leave: it has been read, or a press has come since it came up */
+  private mayLeave(m: SideMessage): boolean {
+    const held = nowSeconds() - this.shownAt;
+    return held >= Math.max(SOFT_MIN_SECONDS, readHold(m.text)) || this.os.idleSeconds < held - 0.05;
+  }
 
   constructor(os: DesktopOS) {
     this.os = os;
@@ -164,15 +179,15 @@ export class GuideThread {
         // declined, it was talked over, and it will come back
         const due = this.messages.find((m) => m !== this.active && !this.retired.has(m.id)
           && !this.cond(m.done) && this.cond(m.trigger));
-        if (due) this.active = due;
-        else if (!this.cond(this.active.trigger)) this.active = null;
+        if (due && this.mayLeave(this.active)) this.setActive(due);
+        else if (!due && !this.cond(this.active.trigger) && this.mayLeave(this.active)) this.setActive(null);
       }
     }
     if (!this.active) {
       for (const m of this.messages) {
         if (this.retired.has(m.id)) continue;
         if (this.cond(m.done)) { this.retired.add(m.id); continue; } // never surfaced — no filing
-        if (this.cond(m.trigger)) { this.active = m; break; }
+        if (this.cond(m.trigger)) { this.setActive(m); break; }
       }
     }
   }
