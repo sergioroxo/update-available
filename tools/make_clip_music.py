@@ -40,7 +40,7 @@ S364's, differs only between 22 and 30 s). The holds, the grid and everything el
 the message") — AN ENDING, NOT A STOP, and nothing before it touched. 58 s = 29 bars, played ONCE (the chat's takeover
 stops it at its end; it no longer loops seamlessly, so nothing is folded onto the head any more):
 
-  card 7  (35–42)    EVEN THE LGB CHARITY SAYS…    the door, ONE BAR LONGER (its new narrator line is 6 s): the
+  card 7  (35–42)    EVEN THE LGB GROUP SAYS…    the door, ONE BAR LONGER (its new narrator line is 6 s): the
                                                    progression's F is held a second bar (Dm Bb F F), the drone alone
   card 8  (42–47)    WHO IS TALKING TO YOU…        the hush, as it was, a bar later
   card 9  (47–53)    YOU CAN STILL COME BACK.      the lift as it was (D three seconds, G two), then ONE NEW SECOND on

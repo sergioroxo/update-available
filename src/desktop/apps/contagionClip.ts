@@ -38,7 +38,7 @@
  *      flipping to 18 TODAY; her friends lighting up on a spreading map; screen-time bars; hearts; a rain cloud over her
  *      house), with its tick, its beat and its gold tell exactly where S364–S366 put them — and its own evidence, typed
  *      into the picture, undoing it on the beat. Card 5's second panel is the whole checklist, where 5 / 5 lands.
- *   2. MERIDIAN SAYS WHY (`sceneMeridian`, frame 7: "EVEN THE LGB CHARITY SAYS YOU'RE NOT ONE OF THEM."): L G B T, the T
+ *   2. MERIDIAN SAYS WHY (`sceneMeridian`, frame 7: "EVEN THE LGB GROUP SAYS YOU'RE NOT ONE OF THEM."): L G B T, the T
  *      falling out of the row; then the AI's screenshot of the email, "as recorded at birth" marked as its proof.
  *   3. AN ENDING (`sceneSlate`, frame 10): the last card holds a second longer, and an end slate in Second Thoughts' own
  *      grammar follows — its mark, its name, "Always on your side.", and "Talk to Second Thoughts" as its one button —
@@ -825,7 +825,7 @@ function sceneLine(ctx: CanvasRenderingContext2D, g: G): void {
   ctx.fillStyle = GOLD; ctx.fillText(text, nx, ny);
 }
 
-// ── 7 · EVEN THE LGB CHARITY SAYS YOU'RE NOT ONE OF THEM. — ⚑ S370 (UiB job 16 Part C4; his 11 Nov: "the part of the
+// ── 7 · EVEN THE LGB GROUP SAYS YOU'RE NOT ONE OF THEM. — ⚑ S370 (UiB job 16 Part C4; his 11 Nov: "the part of the
 //    Meridian, if it is clear the point of the conversion therapy targeting more of T now, even from LGB"). It was a door
 //    and a plate ("EVEN MERIDIAN SHUT THE DOOR."): the point — that the refusal was about her being trans — was nowhere
 //    on it. Now the AI's own picture says it, sharply, in its spin: L G B T in the genre's gold, the T glitches and falls
@@ -833,7 +833,7 @@ function sceneLine(ctx: CanvasRenderingContext2D, g: G): void {
 //    the screenshot it took of her mail (S364's "I read your mail"), slides up — Meridian's eligibility line, from the
 //    email itself (s4_browser.json `enquiry`, never copied) — and the machine marks "as recorded at birth" as its proof,
 //    in the tick's gold, on the beat ("NOT ONE OF THEM"). The AI uses the refusal against her: that is the satire, and it
-//    collapses on its own evidence (a charity's rule, not a fact about her). Meridian is invented; no figure is stated. ──
+//    collapses on its own evidence (a group's rule, not a fact about her). Meridian is invented; no figure is stated. ──
 const MER = C.meridian as { letters: string; gone: string; tell: string; dropAt: number; markAt: number };
 const MER_FROM: string = B4.enquiry.replyFrom;
 const MER_LINE: string = B4.enquiry.reply.find((l: string) => l.includes(MER.tell)) ?? MER.tell;
