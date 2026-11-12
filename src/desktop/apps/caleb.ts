@@ -232,6 +232,9 @@ export class CalebThreadApp {
   /** ⚑ S369 / F07 — set by the OS each frame: the canvas y below which the Accountability band covers this window (null = none).
    *  The transcript then ends above it and follows its newest line there: the strip docks BELOW the thread, never over it. */
   coverFromY: number | null = null;
+  /** ⚑ S369 — set by the OS: the canvas y above which the media player (his song, opened from the thread) covers this window
+   *  (null = none). The transcript then starts below it, the newest line at its foot as always. */
+  coverTopY: number | null = null;
 
   private file(
     id: string,
@@ -415,10 +418,13 @@ export class CalebThreadApp {
     this.drawSide(ctx, c.x + c.w - SIDE_W, c.y + 2, SIDE_W - 4, c.h - 4);
 
     // the transcript
-    const tx = c.x + 4, ty = c.y + 22;
+    const tx = c.x + 4; let ty = c.y + 22;
     const tw = c.w - SIDE_W - 8 - SB_W;
     const full = c.h - 22 - TRAY_H - 4;
-    const th = this.coverFromY !== null ? Math.max(40, Math.min(full, this.coverFromY - 4 - ty)) : full;
+    let th = this.coverFromY !== null ? Math.max(40, Math.min(full, this.coverFromY - 4 - ty)) : full;
+    // ⚑ S369 (the after-run: Caleb's "i still have the tape…" under the media player for 35 s) — while the player is up over the
+    //   top of the window, the transcript is drawn below it
+    if (this.coverTopY !== null && this.coverTopY > ty) { const cut = Math.min(th - 40, this.coverTopY + 4 - ty); if (cut > 0) { ty += cut; th -= cut; } }
     ui.px(ctx, tx - 1, ty - 1, tw + SB_W + 2, th + 2, ERA1.grey);
     ui.px(ctx, tx, ty, tw, th, ERA1.white);
     this.drawTranscript(ctx, tx, ty, tw, th);

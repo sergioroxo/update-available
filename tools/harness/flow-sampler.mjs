@@ -276,13 +276,15 @@ function pageSampler(opts) {
       if (q && os && os.desktopEra === 'e3') {
         const ph = q.phoneView ? q.phoneView() : null;
         g.q = { mode: q.mode, stage: q.phone && q.phone.stage, screen: q.phone && q.phone.screen, large: !!q.mirrorLarge, min: !!q.mirrorMin,
-          arrived: ph && ph.arrived, open: ph && ph.open, page: q.veraPage ?? null };
+          arrived: ph && ph.arrived, open: ph && ph.open, page: q.veraPage ?? null,
+          popin: !!(q.kitPopin || q.storyOffer || q.maltaAlertT >= 0 || q.pauseOpen || (q.phone && q.phone.takeoverAlert)) };
       }
     } catch (e) { /* */ }
-    try { if (os && os.e4) g.e4 = { stage: os.e4.stage, ball: !!(os.e4.ball && os.e4.ball.live), clip: !!(os.e4.browser && os.e4.browser.roomClipTakeover), act: !!(os.e4.browser && os.e4.browser.act) }; } catch (e) { /* */ }
+    try { if (os && os.e4) g.e4 = { stage: os.e4.stage, ball: !!(os.e4.ball && os.e4.ball.live), clip: !!(os.e4.browser && os.e4.browser.roomClipTakeover), act: !!(os.e4.browser && os.e4.browser.act), lightbox: !!(os.e4.browser && os.e4.browser.lightbox) }; } catch (e) { /* */ }
     // ⚑ S369 — for the named exceptions: the update ritual's phase, and Caleb's thread being blacked out or given back
     try { if (os && os.updateApp) g.upd = { key: os.updateApp.key, phase: os.updateApp.phase }; } catch (e) { /* */ }
-    try { if (os && os.caleb) g.caleb = { blacking: !!os.caleb.blackingOut, phase: os.caleb.phase ?? null }; } catch (e) { /* */ }
+    try { if (os && os.caleb) g.caleb = { blacking: !!os.caleb.blackingOut, phase: os.caleb.phase ?? null, strip: !!(os.accountability && os.accountability.alertRunning), song: !!(os.mediaPlayer && os.mediaPlayer.open) }; } catch (e) { /* */ }
+    try { if (os && os.irc) g.irc = { modal: !!(os.irc.requestPending || os.irc.sendPending) }; } catch (e) { /* */ }
     return g;
   };
 

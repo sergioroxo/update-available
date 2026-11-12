@@ -24,6 +24,8 @@ const PX = 512 - DW - 14; const PY = 40;
 
 export class MediaPlayerApp {
   open = true;
+  /** ⚑ S369 — the canvas y of the player's lower edge (the Messenger's transcript starts below it while it is up) */
+  get bottomY(): number { return PY + DH; }
   dirty = true;
   onClose?: () => void;
   private hits: Hit[] = [];

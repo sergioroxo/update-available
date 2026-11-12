@@ -1580,6 +1580,12 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         //   cost the headset uploads and fed the walker and the flow audit changes on a dark plane. Skipped, its version is left
         //   stale, so it redraws the moment it is switched on.
         if (s.name === 'workstation' && !s.entity.enabled) continue;
+        // …and so is 2016's physical handset while its screen is off (S327: the Handset Window is her phone): its version is
+        //   still followed (the buzz), its canvas is not drawn
+        if (s.name === 'phone' && !s.entity.enabled) {
+          if (s.versionOf && s.lastVersion !== s.versionOf()) { if (s.lastVersion !== undefined) phoneBuzz++; s.lastVersion = s.versionOf(); }
+          continue;
+        }
         if (s.versionOf && s.name !== 'laptop' && s.lastVersion !== s.versionOf()) {   // S328: the laptop is never drawn
           if (s.name === 'phone' && s.lastVersion !== undefined) phoneBuzz++;
           s.lastVersion = s.versionOf();

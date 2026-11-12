@@ -148,14 +148,15 @@ const JINGLE_LINES = (jingleLyrics as unknown as { lines: LyricLine[] }).lines;
 /** ⚑ Phase 7 — how long a new guide line stands in full above the taskbar before it folds into its well */
 const GUIDE_TIP_SECONDS = 7;
 /** S157 / R3-50: how long a 2003 program's loading box holds before its window */
-// ⚑ S369 (UiB job 16, the reading rule) — "Loading, please wait…" under the program's name: 3.2 s (2 s + 0.4 s a word; was 1.6)
-const PROGRAM_SPLASH_SECONDS = 3.2;
+// ⚑ S369 (UiB job 16, the reading rule) — "Loading, please wait…" under the program's name: 3.6 s (2 s + 0.4 s a word, and the
+//   window's own arrival; was 1.6)
+const PROGRAM_SPLASH_SECONDS = 3.6;
 const MEDIA_PLAYER_TITLE = 'Media Player';
 const E2_LAMBY_BLACK = 0.9;
 // ⚑ S369 (UiB job 16 Part B, the flow audit: "RESTORIFY IS NOW PART OF THIS COMPUTER." left 2.3 s after it was typed; it needs 4.8) —
 //   the completed crawl holds the reading time of its last two lines (never under the old 2.2 s) before the installer line
-const E2_BOOT_HOLD = Math.max(2.2, readHold((lambyStrings.osBootLines as string[]).slice(-3)));
-const LAMBY_BOOT_HOLD = 3.6; // s — black (S156), then the "finishing installation…" line's hold (S369: 2.4 → the line's reading time + its black)
+const E2_BOOT_HOLD = Math.max(2.2, readHold((lambyStrings.osBootLines as string[]).slice(-6)));   // the after-run: 8.2 s of 10 — the block is read whole
+const LAMBY_BOOT_HOLD = 4.4; // s — black (S156), then the "finishing installation…" line's hold (S369: 2.4 → the line's reading time + its black)
 /** S2R.5: s of ordinary desktop between the video beat ending and the
  *  PureMail envelope. The collapse is triggered by the apparatus's own
  *  documented failure, never by the player — the delay is only pacing.
@@ -181,7 +182,7 @@ const BOOT_CPS = 0.030;            // seconds per char — slower BIOS crawl
 const BOOT_HOLD = 4.8;             // hold completed BIOS so the install lines read
 // ⚑ S369 — the hold now runs from the crawl's END (it ran from the boot's start, so with a 6.6 s crawl the splash came the moment
 //   "You don't need to do anything." was typed: 1.0 s on screen, 6.4 s needed). Never under the old 3.2 s.
-const R_BOOT_HOLD = Math.max(3.2, readHold((opening.o2_boot_lines as string[]).slice(-2)));
+const R_BOOT_HOLD = Math.max(3.2, readHold((opening.o2_boot_lines as string[]).slice(-6)));   // the after-run: 7.5 s of 9.6 — the block is read whole
 /** S156 (Sérgio: "we are missing the chime of the boot-up… it jumps to the profile setup"): the
  *  OS splash between the crawl and the profile, with the era's own startup chime */
 const R_SPLASH_SECONDS = 4.2;
@@ -3218,7 +3219,11 @@ export class DesktopOS {
     // S2R.3: the person's window FIRST (felt), then every intrusion on it
     // (operable) drawn over it. Lamby lives only in the second of these two
     // calls — he is never drawn inside the chat's frame, in any beat.
-    if (this.caleb?.open) { this.caleb.coverFromY = this.accountability?.bandTop ?? null; this.caleb.draw(ctx); }   // S369 / F07
+    if (this.caleb?.open) {
+      this.caleb.coverFromY = this.accountability?.bandTop ?? null;   // S369 / F07
+      this.caleb.coverTopY = this.mediaPlayer?.open ? this.mediaPlayer.bottomY : null;   // S369: his song's player
+      this.caleb.draw(ctx);
+    }
     if (this.accountability) this.accountability.draw(ctx);
     if (this.mediaPlayer?.open) this.mediaPlayer.draw(ctx);
     // finding B8: Lamby's message notice — over the desktop, never over the

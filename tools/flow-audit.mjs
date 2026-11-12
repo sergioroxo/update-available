@@ -88,13 +88,43 @@ const EXCEPTIONS = [
   },
   {
     id: '2003-redaction',
-    why: 'Restorify blacks out Caleb\'s thread line by line, and later gives it back line by line (src/desktop/apps/caleb.ts, the redaction walk). The words were on screen and read before it began; the line-by-line removal and return is the system\'s act on them, and the transcript follows the walk.',
-    test: (f) => f.era === 'e2' && (f.g?.caleb?.blacking || f.g?.caleb?.phase === 'restoring' || f.g?.caleb?.phase === 'redacting')
+    why: 'Restorify blacks out Caleb\'s thread line by line, and later gives it back line by line (src/desktop/apps/caleb.ts, the redaction walk). The words were on screen and read before it began; the line-by-line removal and return is the system\'s act on them, and the transcript follows the walk. While it is sealed there is nothing under a window to read; when the words return, the restored history scrolls up under Caleb\'s new lines (its old lines only — his new ones are held by the rule).',
+    test: (f) => f.era === 'e2' && (f.g?.caleb?.blacking || ['restoring', 'redacting', 'sealed'].includes(f.g?.caleb?.phase) || (f.g?.caleb?.phase === 'returning' && textInSet(f.text, CALEB_HISTORY)))
   },
   {
     id: '2026-ai-acting',
-    why: 'His brief (UIB_JOB_16 Part B): "The banner itself may be brief: it is the AI acting." The green "Second Thoughts is using your computer" bar comes and goes with the AI\'s act on her computer (browser.ts `act`). Only the bar itself, nothing the AI says in the chat.',
-    test: (f) => f.era === 'e4' && /second thoughts is using your computer|take back control/i.test(String(f.text)) && String(f.text).split(' ⏎ ').length <= 2
+    why: 'His brief (UIB_JOB_16 Part B): "The banner itself may be brief: it is the AI acting." The green "Second Thoughts is using your computer" bar comes and goes with the AI\'s act on her computer (browser.ts `act`); and WHILE it acts (N10: it reads her mail, mutes Junie, starts the game) the pages it flips through are its hands moving at a machine\'s speed — each was hers to read before (the mailbox she lived that morning), and the chat says what it took. Only during the act; the AI\'s chat lines after it are held by the rule.',
+    test: (f) => f.era === 'e4' && ((/second thoughts is using your computer|take back control/i.test(String(f.text)) && String(f.text).split(' ⏎ ').length <= 2) || !!f.g?.e4?.act)
+  },
+  {
+    id: '2016-board-popin',
+    why: 'GracePlatform\'s own pop-in card over its own board — the kit\'s URGENT card, Kindredraft\'s offer, "This week", the Malta alert (F03, now after two members and ~9 s or OK): a modal card is the one voice, and the board under it takes no press while it is up. The Handset Window has its own column and is never under one (F01/F02).',
+    test: (f) => f.cat === 'overlap' && f.era === 'e3' && !!f.g?.q?.popin && f.canvas?.n === 'workstation'
+  },
+  {
+    id: '1997-irc-modal',
+    why: 'Rob\'s two one-answer dialogs in the channel (his request to talk, his file) are modal ("you have to accept", S186): the conversation under them waits for the answer, nothing new lands in it while they are up.',
+    test: (f) => f.cat === 'overlap' && f.era === 'e1' && !!f.g?.irc?.modal
+  },
+  {
+    id: '2003-ending',
+    why: 'Restorify\'s ending (u3: "Service Transition") opens once Daniel\'s last line to Caleb has been read (spine RESIDUE_GAP 4.4 s, S369): the conversation is over and nothing more arrives in it; the system takes the screen.',
+    test: (f) => f.era === 'e2' && f.g?.upd?.key === 'u3'
+  },
+  {
+    id: '2003-strip-foot',
+    why: 'While the Accountability strip is up it docks over the Messenger\'s FOOT — its tray and the two pictures\' captions ("daniel") — and the transcript is drawn above it, its newest line always in view (F07, S369). Likewise his song\'s player over the top of the window: the transcript starts below it; only Caleb\'s picture caption ("caleb / my eyes and my") is under it.',
+    test: (f) => f.cat === 'overlap' && f.era === 'e2' && (f.g?.caleb?.strip || f.g?.caleb?.song) && /^(daniel|caleb|caleb ⏎ my eyes and my|my eyes and my)$/i.test(String(f.text).trim())
+  },
+  {
+    id: '2026-lightbox',
+    why: 'A screenshot or page SHE opened larger (browser.ts `lightbox`: a press opens it, any press closes it, S364): a viewer over the chat that her own press put there and takes away.',
+    test: (f) => f.cat === 'overlap' && f.era === 'e4' && !!f.g?.e4?.lightbox
+  },
+  {
+    id: '2026-site-popup',
+    why: 'The news site\'s own newsletter box ("Never miss a story") over its MOST READ rail — the 2026 web\'s furniture (S363, his N5 "2026\'s web furniture"); the story itself is never under it.',
+    test: (f) => f.cat === 'overlap' && f.era === 'e4' && /^most read/i.test(String(f.text).trim())
   },
   {
     id: '2026-ball',
@@ -102,6 +132,13 @@ const EXCEPTIONS = [
     test: (f) => f.era === 'e4' && f.g?.e4?.ball
   }
 ];
+// Caleb's conversation before the block (s2_caleb.json `thread`), for the 2003-redaction exception
+let CALEB_HISTORY = new Set();
+try {
+  const cj = JSON.parse(readFileSync(join(ROOT, 'data/dialog/s2_caleb.json'), 'utf8'));
+  const walkC = (o) => { if (typeof o === 'string') { const k = norm(o); if (k.length >= 4) CALEB_HISTORY.add(k); } else if (Array.isArray(o)) o.forEach(walkC); else if (o && typeof o === 'object') for (const k in o) if (!k.startsWith('_')) walkC(o[k]); };
+  walkC(cj.thread);
+} catch { /* the exception then matches by phase only */ }
 function isPhoneCanvas(c) { return !!c && (c.n === 'phone' || (c.w === 360 && c.h >= 600)); }
 
 // the clip's own words (for the clip exception), read from the data
@@ -326,6 +363,15 @@ function isBlink(it) {
   return arr.some((o) => o !== it && o.key === it.key && o.first >= it.leave && o.first - it.leave <= BLINK_GAP);
 }
 const blinks = new Map();
+/** ⚑ S369 — when the same words went off and came back (a flicker between samples, a window closed and reopened) within
+ *  BLINK_GAP, they were on screen since the FIRST of those appearances: the stay is measured from there, not from the last
+ *  blink (the after-run counted a film subtitle on screen for 7 s as "1.0 s", from its final flicker) */
+function chainFirst(it) {
+  const arr = (allItemsByCanvas.get(it.canvasId) || []).filter((o) => o !== it && o.key === it.key && o.leave != null);
+  let first = it.first, moved = true;
+  while (moved) { moved = false; for (const o of arr) if (o.first < first && o.leave >= first - BLINK_GAP) { first = o.first; moved = true; } }
+  return first;
+}
 /** a text that is continuing (typed longer, re-wrapped, a counter ticking) rather than gone */
 function continued(it) {
   const arr = allItemsByCanvas.get(it.canvasId) || [];
@@ -379,7 +425,7 @@ for (const it of items) {
   if (it.leave == null || it.initial) continue;
   const b = it.block;
   if (!isReading(it.text)) continue;
-  const dwell = it.leave - it.first;
+  const dwell = it.leave - chainFirst(it);
   const n = need(b.words);
   if (dwell >= n) continue;
   const key = tally.measured; key.set('lines', (key.get('lines') || 0) + 1);

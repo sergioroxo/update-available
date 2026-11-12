@@ -179,7 +179,7 @@ const HOUSE_FIRST = 4;   // S369: the chat list's own lines ("rae: who has the c
 const HOUSE_GAP = 2.4;
 function houseAt(i: number): number {
   let t = HOUSE_FIRST;
-  for (let k = 0; k < i; k++) { const l = V.messenger.house.birthday[k]; t += Math.max(HOUSE_GAP, readHold([l.who, l.text])); }
+  for (let k = 0; k < i; k++) { const l = V.messenger.house.birthday[k]; t += Math.max(HOUSE_GAP, readHold([l.who, l.text]) + 0.6); }
   return t;
 }
 /** the clip plays over the whole page for this long when the map beat begins (one loop of its six frames) */

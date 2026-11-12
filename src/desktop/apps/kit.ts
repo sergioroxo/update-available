@@ -57,7 +57,7 @@ const AUTORUN_SECONDS = (kit.autorun.length - 1) * AUTORUN_LINE_EVERY + readHold
 /** the connecting page: the dial-up recording is 7.4 s; the channel opens after it
  *  ⚑ S369 — and after "Connected at 28800 bps" has been read (it had 2.3 s of the 3.2 it needs) */
 const DIAL_LINE_EVERY = 1.9;
-const DIAL_SECONDS = Math.max(8.0, (kit.setup.connecting.lines.length - 1) * DIAL_LINE_EVERY + readHold(kit.setup.connecting.lines.slice(-1)));
+const DIAL_SECONDS = Math.max(8.0, (kit.setup.connecting.lines.length - 1) * DIAL_LINE_EVERY + readHold([...kit.setup.connecting.lines.slice(-1), kit.setup.connecting.welcome]) + 0.6);
 /** tape-time second at which the prayer's recording begins on Tape A */
 export const PRAYER_AT = (tapesData as unknown as { tapes: { id: string; segments: { id: string; at: number }[] }[] })
   .tapes.find((t) => t.id === 'tapeA')!.segments.find((s) => s.id === 'a-prayer-01')!.at;
