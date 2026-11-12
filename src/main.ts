@@ -1,5 +1,6 @@
 import { runtimeQuery, festivalEdition } from './edition';
 import { REFERENCE } from './desktop/theme/chrome';
+import { fontsReady } from './desktop/theme/fonts';
 /**
  * YOUR UPDATE HAS FAILED — entry point.
  * PC Simulator · SurvivingSOGICE · University of Bergen, CDN.
@@ -75,7 +76,7 @@ function launch(): Promise<unknown> {
   // docs/REINTERP_THE_LOOK_MODES_2026-08-06.md). The fallback when VR is not
   // possible is the browser 3D ROOM, which is a first-class build with two
   // look-modes of its own: drag (desktop) and gyro (phone/tablet, S80).
-  if (query.get('flat') === '1') return import('./flat/flat').then(({ startFlat }) => startFlat(canvas as HTMLCanvasElement, { reinterp }));
+  if (query.get('flat') === '1') return fontsReady().then(() => import('./flat/flat')).then(({ startFlat }) => startFlat(canvas as HTMLCanvasElement, { reinterp }));
   const engine = readyEngine();
   // XR preparation caches the module before enabling Enter: preserve that gesture.
   if (!engine) return loadEngine().then(() => launch());

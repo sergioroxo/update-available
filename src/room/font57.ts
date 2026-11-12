@@ -61,8 +61,13 @@ const gOf = (ch: string): Glyph => GLY[ch] ?? GLY[' '];
 /** the type's height in pixels at scale 1 */
 export const TH = 7;
 
+/** ⚑ S373 — a review hook (tools/text-angle.mjs installs it; nothing else does): told each line's painter and dot scale, so the
+ *  type's size in degrees can be measured like any fillText. A property read and a no-op call otherwise. */
+const seen = (c: Painter, s: number, str: string): void => (globalThis as { __f57?: (c: Painter, s: number, str: string) => void }).__f57?.(c, s, str);
+
 /** one line of 5×7 text; `s` scales every dot. Returns the width drawn. */
 export function text(c: Painter, str: string, x: number, y: number, col: string, s = 1): number {
+  seen(c, s, str);
   let cx = x;
   for (const ch of str.toUpperCase()) {
     const g = gOf(ch);
@@ -81,6 +86,7 @@ export const textW = (str: string, s = 1): number => {
 /** ⚑ S367 — the same type with its case kept (lower case from the LCD set above; a letter it lacks falls back to upper
  *  case). g j p q y drop one row below the line. Returns the width drawn. */
 export function textCased(c: Painter, str: string, x: number, y: number, col: string, s = 1): number {
+  seen(c, s, str);
   let cx = x;
   for (const ch0 of str) {
     const g = GLY[ch0] ?? gOf(ch0.toUpperCase());

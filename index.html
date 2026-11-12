@@ -47,6 +47,14 @@
     <link rel="icon" type="image/svg+xml" href="./app-icon.svg" />
     <title>YOUR UPDATE HAS FAILED</title>
     <style>
+      /* ⚑ S373 — THE VENDORED FACES (src/desktop/theme/fonts.ts names them; assets/LICENSES.md credits them). Local
+         files, never a runtime fetch from elsewhere. The headset has none of these installed and the Mac does: that is
+         why 1997's text was a heavy mono on the computer and Cutive Mono (a thin typewriter face) on the Quest. */
+      @font-face { font-family: "Fixedsys Excelsior"; src: url("./assets/fonts/fixedsys-excelsior-3.022-latin.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: block; }
+      @font-face { font-family: "Roboto"; src: url("./assets/fonts/roboto-5.3.0-latin-400.woff2") format("woff2"); font-weight: 400 500; font-style: normal; font-display: block; }
+      @font-face { font-family: "Roboto"; src: url("./assets/fonts/roboto-5.3.0-latin-700.woff2") format("woff2"); font-weight: 600 700; font-style: normal; font-display: block; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-5.3.0-latin-400.woff2") format("woff2"); font-weight: 400 500; font-style: normal; font-display: block; }
+      @font-face { font-family: "Inter"; src: url("./assets/fonts/inter-5.3.0-latin-600.woff2") format("woff2"); font-weight: 600 700; font-style: normal; font-display: block; }
       /* ⚑ S86 — THE FALSE "HOVER GLOW". Sérgio, playing with a mouse: "A glow
          that appears just in some areas... maybe it is selecting the screen."
          He had it right the first time: it IS selection. The orienting card
