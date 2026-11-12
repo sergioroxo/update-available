@@ -37,8 +37,12 @@
  * beige monitor with a big tick on it, RESTORIFY, PURITY STREAK, 412 days. The timeline (`E2_CARTOON`, the jingle's
  * phrase onsets) and his own drawing (`drawLambyChar`) are kept; the lyric band (os.ts) is unchanged. The scenes
  * are painted once into pixel grids (theme/pixelGrid.ts), so no edge is anti-aliased into an invented colour.
- * ⚑ TASTE (his eye, T71): how loud the light is — the mock's (rays turning) is the default; `CARTOON_RAYS_TURN`
- * false holds them still. Reduced motion holds them still too.
+ * ⚑ HIS RULING ON PART A (12 Nov, T71): "as loud as it can be". So it goes all the way: the thought-cloud turns to a
+ * storm that shakes as the static thickens; the light's rays turn; the cloud is blown apart into confetti; flowers pop
+ * up out of the hill one by one; two birds cross; Lamby wakes with a halo; RESTORIFY drops in as extruded word-art
+ * and a starburst stamps the streak. Every colour is still the palette's (ERA1, CAL_2003, PRINT), and nothing flashes:
+ * the rays turn (each point changes about once a second), the sparkles and the static step at 3 per second at most
+ * over small areas, and there is no full-screen alternation anywhere. Reduced motion holds the rays still.
  */
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import { CAL_2003, PRINT } from '../theme/calendar';
@@ -190,7 +194,12 @@ function paintLit(step: number): PixelGrid {
   g.disc(BEAM.x, BEAM.y, 92, C.skyHorizon);                             // the glow round the screen…
   g.checker(BEAM.x - 92, BEAM.y - 92, 184, 184, C.ray, 0, C.skyHorizon);
   g.disc(BEAM.x, BEAM.y, 76, C.sunCore);                                // …and its core
-  // the floor is a hill now: the programme's green, its shade dithered
+  // a far hill on the horizon, then the floor, which is a hill now: the programme's green, its shade dithered
+  for (let x = 0; x < W; x++) {
+    const top = Math.round(FLOOR_Y - 22 - 14 * Math.sin((x + 30) / 70) - 6 * Math.sin(x / 23));
+    g.rect(x, top, 1, FLOOR_Y - top, C.hillBack);
+    if (x % 3 === 0) g.rect(x, top + 3, 1, 2, C.hillBackShade);
+  }
   g.rect(0, FLOOR_Y, W, H - FLOOR_Y, C.hillFront);
   g.checker(0, FLOOR_Y + 6, W, H - FLOOR_Y - 6, C.hillFrontShade);
   g.rect(0, FLOOR_Y, W, 2, C.hillFrontShade);
@@ -200,23 +209,80 @@ function paintLit(step: number): PixelGrid {
   return g;
 }
 
-function paintCloud(): PixelGrid {
-  // the thought-cloud: puffs with one black outline round all of them, a dithered shade along the bottom
+function paintCloud(storm: boolean): PixelGrid {
+  // the thought-cloud: puffs with one black outline round all of them, a dithered shade along the bottom; once the
+  //   static is in it, a storm cloud (the programme's idea of a thought, darkening)
   const g = new PixelGrid(160, 100);
   const ox = CLOUD.x - 80, oy = CLOUD.y - 50;
+  const fill = storm ? ERA1.grey : ERA1.white, shade = storm ? ERA1.greyDark : ERA1.silver;
   const m = g.emptyMask();
   for (const [dx, dy, r] of PUFFS) g.discMask(m, CLOUD.x + dx - ox, CLOUD.y + dy - oy, r);
-  g.paintMask(m, ERA1.white, ERA1.black);
+  g.paintMask(m, fill, ERA1.black);
   for (const [dx, dy, r] of PUFFS) {
-    if (dy >= 0) g.checker(CLOUD.x + dx - ox - r + 3, CLOUD.y + dy - oy + Math.floor(r / 2), 2 * r - 6, Math.max(1, Math.floor(r / 2) - 2), ERA1.silver, 0, ERA1.white);
+    if (dy >= 0) g.checker(CLOUD.x + dx - ox - r + 3, CLOUD.y + dy - oy + Math.floor(r / 2), 2 * r - 6, Math.max(1, Math.floor(r / 2) - 2), shade, 0, fill);
   }
+  if (storm) for (const [dx, dy, r] of PUFFS) if (dy < 0) g.checker(CLOUD.x + dx - ox - 6, CLOUD.y + dy - oy - r + 4, 10, 3, ERA1.silver, 0, fill);
   return g;
 }
 
-function cached(): { night: HTMLCanvasElement; cloud: HTMLCanvasElement } {
+let stormCv: HTMLCanvasElement | null = null;
+let burstCv: HTMLCanvasElement | null = null;
+function cached(): { night: HTMLCanvasElement; cloud: HTMLCanvasElement; storm: HTMLCanvasElement } {
   night ??= paintNight().toCanvas();
-  cloudCv ??= paintCloud().toCanvas();
-  return { night, cloud: cloudCv };
+  cloudCv ??= paintCloud(false).toCanvas();
+  stormCv ??= paintCloud(true).toCanvas();
+  return { night, cloud: cloudCv, storm: stormCv };
+}
+
+/** the streak's starburst: fourteen points, the calendar's sun inside a red rim, a white ring — the stamp it gives you */
+function burst(): HTMLCanvasElement {
+  if (burstCv) return burstCv;
+  const g = new PixelGrid(84, 84);
+  const pts: [number, number][] = [];
+  for (let i = 0; i < 28; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 14, r = i % 2 === 0 ? 41 : 32;
+    pts.push([42 + r * Math.cos(a), 42 + r * Math.sin(a)]);
+  }
+  g.poly(pts, CAL_2003.sun, ERA1.warn);
+  const inner = pts.map(([x, y]) => [42 + (x - 42) * 0.86, 42 + (y - 42) * 0.86] as [number, number]);
+  g.poly(inner, CAL_2003.sun, ERA1.warnDark);
+  g.disc(42, 42, 25, ERA1.white);
+  g.disc(42, 42, 23, CAL_2003.sunCore);
+  g.checker(30, 50, 26, 12, CAL_2003.sun, 0, CAL_2003.sunCore);
+  return (burstCv = g.toCanvas());
+}
+
+/** a flower popping out of the hill (period clip-art): a stem, four petals, a centre */
+function flower(ctx: CanvasRenderingContext2D, x: number, y: number, petal: string): void {
+  px(ctx, x, y, 3, 16, ERA1.ok);
+  px(ctx, x + 3, y + 7, 5, 3, ERA1.ok);                       // a leaf
+  px(ctx, x - 5, y + 10, 5, 3, ERA1.ok);
+  const P: [number, number][] = [[-5, -5], [5, -5], [-5, 5], [5, 5], [0, -7], [0, 7], [-7, 0], [7, 0]];
+  for (const [dx, dy] of P) px(ctx, x + dx - 3, y - 6 + dy - 3, 9, 9, ERA1.black);
+  for (const [dx, dy] of P) px(ctx, x + dx - 2, y - 6 + dy - 2, 7, 7, petal);
+  px(ctx, x - 3, y - 9, 9, 7, ERA1.black);
+  px(ctx, x - 2, y - 8, 7, 5, CAL_2003.sun);
+}
+
+/** a bird: a V, its wings up or down */
+function bird(ctx: CanvasRenderingContext2D, x: number, y: number, up: boolean): void {
+  for (let i = 0; i < 12; i++) {
+    const dy = up ? -Math.round((11 - i) * 0.8) : Math.round((i < 6 ? i - 5 : 0) * 0.8);
+    px(ctx, x - 12 + i, y + dy, 1, 3, ERA1.black);
+    px(ctx, x + 12 - i, y + dy, 1, 3, ERA1.black);
+  }
+  px(ctx, x - 2, y - 1, 5, 4, ERA1.black);
+}
+
+/** word-art: the mark, extruded and outlined, the way a 2003 Flash intro set its logo */
+function wordArt(ctx: CanvasRenderingContext2D, text: string, cx: number, y: number, size: number): void {
+  setFont(ctx, size);
+  const w = Math.ceil(ctx.measureText(text).width), x = Math.round(cx - w / 2);
+  ctx.fillStyle = ERA1.navy;
+  for (let k = 6; k >= 1; k--) ctx.fillText(text, x + k, y + k);                     // the extrusion
+  for (const [dx, dy] of [[-2, 0], [2, 0], [0, -2], [0, 2], [-2, -2], [2, -2], [-2, 2], [2, 2]]) ctx.fillText(text, x + dx, y + dy);   // the outline
+  ctx.fillStyle = ERA1.titleBlue; ctx.fillText(text, x + 1, y + 1);
+  ctx.fillStyle = ERA1.white; ctx.fillText(text, x, y);
 }
 function litFrame(step: number): HTMLCanvasElement {
   return (lit[step] ??= paintLit(step).toCanvas());
@@ -257,7 +323,7 @@ function clipCircle(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: nu
 }
 
 export function drawLambyCartoon(ctx: CanvasRenderingContext2D, t: number): void {
-  const { night: nightCv, cloud } = cached();
+  const { night: nightCv, cloud, storm } = cached();
   const k = ramp(t, E2_CARTOON.light, E2_CARTOON.light + 1.4);
   const still = reducedMotion() || !CARTOON_RAYS_TURN;
   const step = still ? 0 : Math.floor(Math.max(0, t - E2_CARTOON.light) * 4) % RAY_STEPS;
@@ -271,9 +337,10 @@ export function drawLambyCartoon(ctx: CanvasRenderingContext2D, t: number): void
     ctx.restore();
     // sparkles: four-point stars that come and go in hard steps (never a fade)
     if (k >= 1) {
-      const SP: [number, number, number][] = [[60, 54, 5], [236, 40, 4], [300, 148, 6], [44, 176, 3], [196, 70, 3], [296, 58, 5], [262, 214, 4]];
+      const SP: [number, number, number][] = [[60, 54, 7], [236, 40, 5], [300, 148, 8], [44, 176, 4], [196, 70, 4], [296, 58, 6], [262, 214, 5],
+        [340, 24, 6], [470, 40, 5], [24, 110, 5], [150, 30, 6], [500, 120, 4]];
       SP.forEach(([sx, sy, r], i) => {
-        if (Math.floor(t * 3 + i * 1.7) % 3 === 0) return;
+        if (Math.floor(t * 1.5 + i * 0.7) % 3 === 0) return;   // each one on two beats in three, at 1.5 steps a second
         px(ctx, sx - r, sy, 2 * r + 1, 1, CAL_2003.sunCore);
         px(ctx, sx, sy - r, 1, 2 * r + 1, CAL_2003.sunCore);
         px(ctx, sx - 1, sy - 1, 3, 3, ERA1.white);
@@ -321,17 +388,20 @@ export function drawLambyCartoon(ctx: CanvasRenderingContext2D, t: number): void
     // the bubbles pop up one by one from his head, then the cloud, all at once (a Flash cartoon's pop, not a fade)
     BUBBLES.forEach(([bx, by, r], i) => { if (cloudIn > i * 0.22) bubble(ctx, bx, by, r); });
     if (cloudIn >= 0.66) {
-      blitGrid(ctx, cloud, CLOUD.x - 80, CLOUD.y - 50);
-      // the scribble: static, thickening with the phrase — never a picture of anything
+      // the scribble: static, thickening with the phrase — never a picture of anything; once it is thick the cloud
+      //   goes dark and shakes (a pixel each way, three times a second: a jolt, not a flash)
       const sk = ramp(t, E2_CARTOON.scribble, E2_CARTOON.scribble + 3.0);
+      const jolt = sk > 0.35 && !reducedMotion() ? (Math.floor(t * 3) % 2 ? 1 : -1) : 0;
+      blitGrid(ctx, sk > 0.35 ? storm : cloud, CLOUD.x - 80 + jolt, CLOUD.y - 50);
       if (t >= E2_CARTOON.scribble - 0.6) {
-        const r = rng(7 + Math.floor(t * 6));
-        const n = Math.round(10 + sk * 60);
+        const r = rng(7 + Math.floor(t * 3));
+        const n = Math.round(10 + sk * 80);
         let x = 112, y = 108;
         for (let i = 0; i < n; i++) {
-          const nx = Math.max(104, Math.min(196, x + Math.round((r() - 0.5) * 28)));
-          const ny = Math.max(92, Math.min(128, y + Math.round((r() - 0.5) * 14)));
-          stroke(ctx, x, y, nx, ny, i % 3 ? ERA1.greyDark : ERA1.black);
+          const nx = Math.max(100, Math.min(200, x + Math.round((r() - 0.5) * 30)));
+          const ny = Math.max(90, Math.min(130, y + Math.round((r() - 0.5) * 16)));
+          stroke(ctx, x + jolt, y, nx + jolt, ny, i % 3 ? ERA1.black : (sk > 0.35 ? ERA1.white : ERA1.greyDark));
+          if (sk > 0.6 && i % 2 === 0) stroke(ctx, x + jolt, y + 1, nx + jolt, ny + 1, ERA1.black);
           x = nx; y = ny;
         }
       }
@@ -348,7 +418,8 @@ export function drawLambyCartoon(ctx: CanvasRenderingContext2D, t: number): void
       const gone = r() < g * 1.1;   // fewer as it goes
       const ddx = bx - BEAM.x, ddy = by - BEAM.y, len = Math.hypot(ddx, ddy) || 1;
       const sp = 40 + r() * 70;
-      if (!gone) px(ctx, Math.round(bx + (ddx / len) * sp * g), Math.round(by + (ddy / len) * sp * g - 24 * g), 3, 3, ERA1.white);
+      const CONF = [ERA1.white, CAL_2003.sunCore, ERA1.titleBlue, CAL_2003.sun, ERA1.tooltip, ERA1.warn];
+      if (!gone) px(ctx, Math.round(bx + (ddx / len) * sp * g), Math.round(by + (ddy / len) * sp * g - 24 * g), 3, 3, CONF[i % CONF.length]);
     }
   }
 
@@ -378,6 +449,44 @@ export function drawLambyCartoon(ctx: CanvasRenderingContext2D, t: number): void
         ctx.fillStyle = ERA1.white;
         ctx.fillText(S.streakDays, GLASS.x + 44, GLASS.y + 48);
       }
+    }
+  }
+
+  // ── and everything else the programme can think of ──
+  if (t >= E2_CARTOON.cloudGone) {
+    // flowers pop up out of the hill, one after another
+    const FL: [number, string][] = [[24, ERA1.warn], [66, CAL_2003.sun], [252, ERA1.white], [292, ERA1.warn], [318, CAL_2003.sun], [500, ERA1.warn],
+      [18, ERA1.white], [276, CAL_2003.sun]];
+    FL.forEach(([fx, col], i) => { if (t >= E2_CARTOON.cloudGone + 0.3 + i * 0.35) flower(ctx, fx, FLOOR_Y + 14 + (i % 3) * 10, col); });
+    // two birds crossing the sky
+    const bt = t - E2_CARTOON.cloudGone, flap = Math.floor(t * 2) % 2 === 0;
+    bird(ctx, Math.round(-20 + bt * 34) % (W + 40), 96, flap);
+    bird(ctx, Math.round(-60 + bt * 34) % (W + 40), 116, !flap);
+  }
+  if (t >= E2_CARTOON.wake + 0.5) {
+    // the halo: he wakes pure
+    const hy = LAMBY.y - 74 + (Math.floor(t * 1.5) % 2);
+    for (let dx = -22; dx <= 22; dx++) {
+      const e = Math.round(5 * Math.sqrt(Math.max(0, 1 - (dx * dx) / (22 * 22))));
+      px(ctx, LAMBY.x + dx, hy - e - 1, 1, 3, CAL_2003.sun);
+      px(ctx, LAMBY.x + dx, hy + e - 1, 1, 3, CAL_2003.sun);
+      if (dx % 4 === 0) { px(ctx, LAMBY.x + dx, hy - e - 1, 1, 1, CAL_2003.sunCore); }
+    }
+  }
+  if (t >= E2_CARTOON.screen) {
+    // RESTORIFY drops in from the top and lands with a bounce (steps, no tween)
+    const s = t - E2_CARTOON.screen;
+    const y = s < 0.15 ? -40 : s < 0.3 ? 30 : s < 0.45 ? 14 : 22;
+    wordArt(ctx, S.mark, 172, y, 48);
+    // …and the streak is stamped on, big
+    if (s > 2.2) {
+      const b = burst(), sc = s < 2.32 ? 1.3 : s < 2.44 ? 0.9 : 1;
+      const bw = Math.round(b.width * sc), cx = 296, cy = 112;
+      blitGrid(ctx, b, cx - bw / 2, cy - bw / 2, bw, bw);
+      setFont(ctx, 11);
+      ctx.fillStyle = ERA1.navy;
+      const tw = Math.ceil(ctx.measureText(S.streakDays).width);
+      ctx.fillText(S.streakDays, Math.round(cx - tw / 2), cy - 7);
     }
   }
 }

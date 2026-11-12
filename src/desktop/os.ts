@@ -3479,15 +3479,18 @@ export class DesktopOS {
     if (this.desktopEra === 'e2') {
       // ⚑ S376 (job 19 B, VISUAL_REVIEW #3) — no slab: the brand is the wallpaper's OEM mark, bottom right, the way a
       //   branded machine shipped; its status is said once in the tray balloon (see `eraBalloonSaid`)
+      //   (his ruling, 12 Nov: the wallpaper darker so the icons read — so the mark is white on the far hill's dark green,
+      //   with a navy drop shadow, under the setting sun)
       const tag = (skin as { tagline?: string }).tagline ?? '';
       ui.setFont(ctx, 22);
       const bw = Math.ceil(ctx.measureText(skin.brand).width);
-      ctx.fillStyle = CAL_2003.brandShadow; ctx.fillText(skin.brand, W - 18 - bw + 1, 214 + 1);
-      ctx.fillStyle = CAL_2003.brand; ctx.fillText(skin.brand, W - 18 - bw, 214);
+      ctx.fillStyle = ERA1.navy; ctx.fillText(skin.brand, W - 18 - bw + 1, 258 + 1);
+      ctx.fillStyle = CAL_2003.brandShadow; ctx.fillText(skin.brand, W - 18 - bw, 258);
       if (tag) {
         ui.setFont(ctx, 10);
         const tw = Math.ceil(ctx.measureText(tag).width);
-        ctx.fillStyle = CAL_2003.tagline; ctx.fillText(tag, W - 18 - tw, 240);
+        ctx.fillStyle = ERA1.navy; ctx.fillText(tag, W - 18 - tw + 1, 284 + 1);
+        ctx.fillStyle = CAL_2003.sunCore; ctx.fillText(tag, W - 18 - tw, 284);
       }
     } else {
       ui.px(ctx, 26, 24, W - 52, 44, colors.panel);

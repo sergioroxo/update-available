@@ -50,7 +50,7 @@ import { ERA1 } from '../desktop/theme/era1';
 import { ERA3 } from '../desktop/theme/era3';
 import { ERA4 } from '../desktop/theme/era4';
 import { px, setFont } from '../desktop/theme/chrome';
-import { setFaceEra, faceEra, type FaceEra, FACES, sansFor, fontsReady } from '../desktop/theme/fonts';
+import { setFaceEra, faceEra, type FaceEra, FACES, fontsReady } from '../desktop/theme/fonts';
 
 const P = clusterData.pointCloud;
 /** S358 / H19 — the seat's eye height (app.ts EYE.y): the Close's panels lean to face it */
@@ -661,11 +661,12 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   const SRC_BTN = { x: CELL_W - 40 - 300, y: CELL_H - 48 - 39, w: 300, h: 78 };
   const TEXT_W = CELL_W - TEXT_X - 44;
   // ⚑ S376 (UiB job 19 Part B, VISUAL_REVIEW_2026-11-12 #4) — the piece's own faces (job 18), not the machine's: the
-  //   paragraph in the vendored reading sans (Inter), the title and the frame's small lines in the Close's own face
-  //   (FACES.close, Fixedsys Excelsior). "Helvetica Neue / monospace" resolved differently on every machine.
-  //   ⚑ TASTE (his eye, T71): Inter (the legible default) or Fixedsys throughout.
-  const READING_FACE = sansFor('e4');
+  //   Close's own face (FACES.close, Fixedsys Excelsior) for the title, the paragraph and the small lines.
+  //   "Helvetica Neue / monospace" resolved differently on every machine. His ruling on Part A (12 Nov, T71): "the
+  //   Close panels' paragraphs in Fixedsys" — so the reading face IS the Close's face; S146's 28 px floor still holds
+  //   (the fit below steps the size down only while it stays above it).
   const CLOSE_FACE = FACES.close.family;
+  const READING_FACE = CLOSE_FACE;
   const wrap = (c: CanvasRenderingContext2D, text: string, maxW: number): string[] => {
     const out: string[] = [];
     let line = '';

@@ -185,8 +185,10 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   app.root.addChild(hintPlane);
 
   // ── ⚑ S361 / H50 — the Close's message card: frame voice (the game menu's glass and greys), no sound ──
-  const CARD_CW = 1024, CARD_CH = 560, CARD_W = 0.84, CARD_H = CARD_W * CARD_CH / CARD_CW;
-  const CARD_DIST = 1.15, CARD_DROP = -0.02;   // ~40° wide at 1.15 m, its middle a little above the eyes (the stars are up there)
+  // ⚑ S376 (UiB job 19 B; his ruling on Part A, 12 Nov: "the Close's cards bigger") — 0.84 → 1.06 m wide (~49° at
+  //   1.15 m) on a sharper canvas, and the type 1.6–2.1° tall instead of 1.0–1.3°
+  const CARD_CW = 1280, CARD_CH = 760, CARD_W = 1.06, CARD_H = CARD_W * CARD_CH / CARD_CW;
+  const CARD_DIST = 1.15, CARD_DROP = -0.02;   // ~49° wide at 1.15 m, its middle a little above the eyes (the stars are up there)
   const cardCanvas = document.createElement('canvas');
   cardCanvas.width = CARD_CW; cardCanvas.height = CARD_CH;
   const cardCtx = cardCanvas.getContext('2d');
@@ -212,20 +214,20 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       if (line) out.push(line);
       return out;
     };
-    // the largest type that fits: 40 px down to 30 px
-    let size = 40, lines: string[] = [];
-    for (; size >= 30; size -= 2) {
+    // the largest type that fits: 64 px down to 40 px (S376: was 40 → 30 on a smaller card)
+    let size = 64, lines: string[] = [];
+    for (; size >= 40; size -= 2) {
       lines = wrap(c.text, `${size}px "Tahoma", "Verdana", sans-serif`, CARD_CW - 112);
-      if (lines.length * size * 1.42 + (c.by ? 50 : 0) + 70 <= CARD_CH - 60) break;
+      if (lines.length * size * 1.42 + (c.by ? 60 : 0) + 80 <= CARD_CH - 60) break;
     }
     const lh = Math.round(size * 1.42);
-    const block = lines.length * lh + (c.by ? 50 : 0);
+    const block = lines.length * lh + (c.by ? 60 : 0);
     let y = Math.max(64, Math.round((CARD_CH - 64 - block) / 2) + size);
     g.font = `${size}px "Tahoma", "Verdana", sans-serif`; g.fillStyle = FRAME_BRIGHT;
     for (const l of lines) { g.fillText(l, 56, y); y += lh; }
-    if (c.by) { g.font = `28px "Tahoma", "Verdana", sans-serif`; g.fillStyle = FRAME_DIM; g.fillText(c.by, 56, y + 6); }
+    if (c.by) { g.font = `40px "Tahoma", "Verdana", sans-serif`; g.fillStyle = FRAME_DIM; g.fillText(c.by, 56, y + 8); }
     if (c.foot) {
-      g.font = `24px "Tahoma", "Verdana", sans-serif`; g.fillStyle = FRAME_FAINT; g.textAlign = 'center';
+      g.font = `32px "Tahoma", "Verdana", sans-serif`; g.fillStyle = FRAME_FAINT; g.textAlign = 'center';
       g.fillText(c.foot, CARD_CW / 2, CARD_CH - 30); g.textAlign = 'left';
     }
     cardTex.upload();
