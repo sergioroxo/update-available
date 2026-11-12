@@ -61,7 +61,8 @@ function measure(path) {
 }
 
 const files = readdirSync(join(ROOT, 'public/assets/audio')).filter((f) => f.endsWith('.mp3')).map((f) => ({ file: f, path: join(ROOT, 'public/assets/audio', f) }));
-files.push({ file: 'lambyos_welcome_home.mp4', path: join(ROOT, 'public/assets/video/lambyos_welcome_home.mp4') });
+// the films (the setup's advert; S371: 2026's clip as a film, on the era site and in the site viewer)
+for (const f of ['lambyos_welcome_home.mp4', 'the_great_becoming.mp4']) files.push({ file: f, path: join(ROOT, 'public/assets/video', f) });
 
 const rows = [];
 const levels = {};

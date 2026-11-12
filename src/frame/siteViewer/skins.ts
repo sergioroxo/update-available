@@ -100,6 +100,10 @@ export const DOORS: Record<Year, [string, string]> = {
   '2026': [ERA4.field, ERA4.textHi]
 };
 
+/** ⚑ S371 — a film's screen in the window, the same in every year (a player is black whatever the page around it):
+ *  the picture's surround, its words and controls, the progress line's track */
+export const FILM = { screen: ERA1.black, ink: ERA1.white, track: ERA1.greyDark } as const;
+
 /** extra tokens the site headers use (all from the themes) */
 export const HEAD = {
   y1997: { tile: WEB97.counterBg, shade: WEB97.headingShade, stripe: WEB97.construction, stripeInk: ERA1.black, ring: WEB97.ringBar, ringInk: WEB97.ringInk, engine: WEB97.engine, black: ERA1.black, white: ERA1.white },

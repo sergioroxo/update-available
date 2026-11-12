@@ -14,7 +14,13 @@ import * as pc from 'playcanvas';
  * 2026-09-26: "the quality of the phone screen is terrible, super pixelated"). Smooth
  * = mipmaps + trilinear; the upload stays on-dirty-only, the mip chain rides with it.
  */
-export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, smooth: boolean | 'minify' | 'screen' = false): pc.Texture {
+export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, smooth: boolean | 'minify' | 'screen' | 'film' = false): pc.Texture {
+  /**
+   * ⚑ S371 — `'film'`: A FILM'S OWN SMALL RECT, uploaded on every new frame of the film while it plays (the site viewer's
+   * film plane, frame/siteViewer/xrMount.ts). Seen head-on at about 1:1, so linear both ways and NO mip chain: a chain
+   * would be rebuilt on each of those uploads. Never switched to mips in a headset either. Counted like every screen.
+   */
+  const film = smooth === 'film';
   /**
    * ⚑ S346 / T-desk (a) — `'screen'`: STRAIGHT LINES FROM ANY ANGLE, for the SCREENS only (his approval, 9 Nov 2026).
    * "When I move and see a screen at an angle, lines and letters break into stair-steps" ("Welcome back, Daniel" in
@@ -43,8 +49,8 @@ export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, sm
     height: source.height,
     format: pc.PIXELFORMAT_RGBA8,
     mipmaps: mips,
-    minFilter: mips ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST,
-    magFilter: smooth === true || screen ? pc.FILTER_LINEAR : pc.FILTER_NEAREST,
+    minFilter: mips ? pc.FILTER_LINEAR_MIPMAP_LINEAR : film ? pc.FILTER_LINEAR : pc.FILTER_NEAREST,
+    magFilter: smooth === true || screen || film ? pc.FILTER_LINEAR : pc.FILTER_NEAREST,
     anisotropy: screen ? maxAniso : minify ? 8 : 1,
     addressU: pc.ADDRESS_CLAMP_TO_EDGE,
     addressV: pc.ADDRESS_CLAMP_TO_EDGE
@@ -52,6 +58,7 @@ export function makeScreenTexture(app: pc.AppBase, source: HTMLCanvasElement, sm
   tex.setSource(source);
   // Session-only quality; restore the exact browser sampler on exit.
   const xrQuality = (immersive: boolean): void => {
+    if (film) return;   // the film's rect keeps its sampler: no chain to rebuild on every frame of the film
     tex.mipmaps = immersive || mips;
     tex.minFilter = immersive || mips ? pc.FILTER_LINEAR_MIPMAP_LINEAR : pc.FILTER_NEAREST;
     tex.magFilter = immersive || smooth === true || screen ? pc.FILTER_LINEAR : pc.FILTER_NEAREST;

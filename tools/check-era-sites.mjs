@@ -15,6 +15,7 @@
  *   5. an era page lacks one of its seven tabs, its h1, or its panels; the hub lacks its four doors;
  *   6. a picture, sound or film is not credited on the page, or its file is not claimed in assets/LICENSES.md or
  *      docs/reinterp/ATTRIBUTIONS.md (check-licences.mjs also fails any shipped file with no claim, and any NC);
+ *      and (S371) a sound or film whose LICENSES.md row does not claim it as the project's own;
  *   7. the docs these pages stand on (every verification doc + docs/reinterp/ERA_SITES_2026-11-01.md) carry STATUS.
  */
 import { readFileSync, existsSync } from 'node:fs';
@@ -52,6 +53,19 @@ const PAGES = ['public/sites/index.html', ...['1997', '2003', '2016', '2026'].ma
 const TABS = ['story', 'practices', 'sources', 'images', 'media', 'words', 'missed'];
 const licenceText = text('assets/LICENSES.md') + '\n' + text('docs/reinterp/ATTRIBUTIONS.md');
 const decode = (s) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+/**
+ * ⚑ S371 (UiB job 17 Part A) — a sound or film on a public page must be the PROJECT'S OWN, not merely claimed somewhere:
+ * some table row of assets/LICENSES.md names the file in its first cell (with or without its extension, as a whole
+ * name) and states project ownership. A CC-BY or CC0 file is credited in the piece, but it does not go on the websites
+ * without his yes.
+ */
+const OWNED = /project-original|project-owned|ours outright|\|\s*ours\b|the project's own|derivative of (his own|the above)/i;
+const licenceRows = text('assets/LICENSES.md').split('\n').filter((l) => l.trim().startsWith('|'));
+const ownedRow = (name) => {
+  const stem = name.replace(/\.[a-z0-9]+$/, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(^|[^a-z0-9_])${stem}($|[^a-z0-9_])`, 'i');
+  return licenceRows.some((row) => { const cells = row.split('|'); return re.test(cells[1] ?? '') && OWNED.test(cells.slice(2).join('|')); });
+};
 
 let nExt = 0, nMedia = 0;
 for (const page of PAGES) {
@@ -116,6 +130,7 @@ for (const page of PAGES) {
   for (const [, , src] of media) {
     const name = src.split('/').pop();
     if (!licenceText.includes(name) && !licenceText.includes(name.replace(/\.[a-z0-9]+$/, ''))) fail(`${page}: ${name} is in no licence ledger`);
+    else if (!ownedRow(name)) fail(`${page}: ${name} has no row in assets/LICENSES.md that claims it as the project's own (a sound or film on a public page must be project-owned; anything third-party waits for his yes)`);
   }
   if (/CC[- ]?BY[- ]?NC|non-?commercial licence/i.test(html)) fail(`${page}: mentions a non-commercial licence`);
 }

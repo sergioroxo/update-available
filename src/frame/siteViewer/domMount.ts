@@ -10,7 +10,7 @@ import { DIALOG, domBevel } from '../../desktop/theme/chrome';
 import { ViewerCore, type ViewerHost } from './core';
 import { MODEL } from './model';
 import { siteViewerBus, type ViewerTarget } from './bus';
-import { viewerAudio } from './audio';
+import { viewerAudio, viewerFilm } from './audio';
 import { gameMenuBus } from '../../state/gameMenuBus';
 
 const Z = 1150;   // over the game menu (1000) and the orienting card (900); under the Leave page (1200)
@@ -45,10 +45,13 @@ export function mountSiteViewerDom(): ViewerCore {
     openUrl: (url) => openTab(url),
     openPage: (path) => openTab(path),
     audio: viewerAudio,
+    film: viewerFilm,
     changed: () => request()
   };
   const core = new ViewerCore(host);
   viewerAudio.setListener(() => request());
+  /** ⚑ S371 — the film's last picture painted: while a film plays, each new picture repaints ONLY the film's rect */
+  let filmSerial = -1;
 
   /** a plain link followed in a new tab: a navigation the visitor chose, never a request the piece makes */
   function openTab(href: string): void {
@@ -62,8 +65,18 @@ export function mountSiteViewerDom(): ViewerCore {
   function paint(): void {
     if (!canvas || !isOpen) return;
     if (core.tickToast(performance.now())) dirty = true;
-    if (!dirty) return;
+    const serial = viewerFilm.file() ? viewerFilm.serial() : filmSerial;
+    if (!dirty) {
+      if (serial === filmSerial) return;
+      filmSerial = serial;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.setTransform(canvas.width / size.W, 0, 0, canvas.height / size.H, 0, 0);
+      core.paintFilmOnly(ctx);
+      return;
+    }
     dirty = false;
+    filmSerial = serial;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -185,7 +198,8 @@ export function mountSiteViewerDom(): ViewerCore {
     cancelAnimationFrame(raf);
     root.style.display = 'none';
     window.removeEventListener('keydown', onKey, { capture: true });
-    if (closing) { viewerAudio.stop(); chip?.remove(); chip = null; }
+    if (closing) { viewerAudio.stop(); viewerFilm.stop(); chip?.remove(); chip = null; }
+    else viewerFilm.pause();   // minimised: a film waits where it was (a track plays on, as a page's would)
   }
 
   function minimise(): void {
