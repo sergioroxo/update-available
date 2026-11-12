@@ -74,7 +74,7 @@ const REGISTRY: Record<string, string> = {
   'descent_score.mp3': `${AUDIO_BASE}descent_score.mp3`,
   'close_score.mp3': `${AUDIO_BASE}close_score.mp3`,
   'close_song.mp3': `${AUDIO_BASE}close_song.mp3`,   // S361 / H50 — the Close's song (tools/make_close_song.py)
-  'clip_music.mp3': `${AUDIO_BASE}clip_music.mp3`,   // ⚑ S360 / clip (his 11 Nov: "music and a narrator") — THE GREAT BECOMING's bed, a 50 s loop since S364 (tools/make_clip_music.py)
+  'clip_music.mp3': `${AUDIO_BASE}clip_music.mp3`,   // ⚑ S360 / clip (his 11 Nov: "music and a narrator") — THE GREAT BECOMING's bed, 50 s since S364; S370: 58 s, played once, an outro that resolves and fades (tools/make_clip_music.py)
   'clip_narr_0.mp3': `${AUDIO_BASE}clip_narr_0.mp3`,   // ⚑ S360 / clip — the system's narrator, card 0 (tools/tts/render.py, manifest clip_narr_0)
   'clip_narr_1.mp3': `${AUDIO_BASE}clip_narr_1.mp3`,   // ⚑ S360 / clip — the system's narrator, card 1 (tools/tts/render.py, manifest clip_narr_1)
   'clip_narr_2.mp3': `${AUDIO_BASE}clip_narr_2.mp3`,   // ⚑ S360 / clip — the system's narrator, card 2 (tools/tts/render.py, manifest clip_narr_2)
@@ -85,6 +85,7 @@ const REGISTRY: Record<string, string> = {
   'clip_narr_7.mp3': `${AUDIO_BASE}clip_narr_7.mp3`,   // ⚑ S360 / clip — the system's narrator, card 7 (S360's clip_narr_4, renamed by S364; manifest clip_narr_7)
   'clip_narr_8.mp3': `${AUDIO_BASE}clip_narr_8.mp3`,   // ⚑ S360 / clip — the system's narrator, card 8 (S360's clip_narr_5, renamed by S364; manifest clip_narr_8)
   'clip_narr_9.mp3': `${AUDIO_BASE}clip_narr_9.mp3`,   // ⚑ S360 / clip — the system's narrator, card 9 (S360's clip_narr_6, renamed by S364; manifest clip_narr_9)
+  'clip_narr_10.mp3': `${AUDIO_BASE}clip_narr_10.mp3`,   // ⚑ S370 / clip — the system's narrator, card 10: THE END SLATE, its call to action (manifest clip_narr_10)
   // ⚑ S362 / H37 — Restorify Media's two songs (tools/make_restorify_media_songs.py): the brand's opening theme, and the bed under Daniel's story
   'restorify_media_theme_2003.mp3': `${AUDIO_BASE}restorify_media_theme_2003.mp3`,
   'restorify_testimony_bed_2003.mp3': `${AUDIO_BASE}restorify_testimony_bed_2003.mp3`,
