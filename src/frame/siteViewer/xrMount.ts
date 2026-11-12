@@ -19,7 +19,7 @@ import { reducedMotion } from '../../state/motion';
 import { DIALOG } from '../../desktop/theme/chrome';
 import { ViewerCore, type ViewerHost } from './core';
 import { siteViewerBus, type ViewerTarget } from './bus';
-import { viewerAudio } from './audio';
+import { viewerAudio, viewerFilm } from './audio';
 
 /** logical px of the window; the canvas is drawn at ×1.5 (1536 × 1152) so a 22 px line is crisp at arm's length */
 const LW = 1024, LH = 768, SCALE = 1.5;
@@ -29,6 +29,10 @@ const DIST = 0.8, DROP = 0.03, FROM_DIST = 1.5, APPROACH_MS = 420;
 const TAB_W = 0.16, TAB_H = TAB_W * 64 / 256, WRIST_SCALE = 0.4;
 /** thumbstick scroll: logical px per second at full deflection */
 const STICK_SPEED = 900, STICK_DEAD = 0.18;
+/** ⚑ S371 — the film's own canvas: the film's rect (picture + progress line, 720 × 447 logical) at about ×1.07. While a
+ *  film plays, THIS is what is uploaded on each new picture (768 × 477 ≈ 1.5 MB, a fifth of the window's 1536 × 1152),
+ *  never the window; the window is uploaded only when it changes, as before */
+const FILM_CW = 768, FILM_CH = 477;
 
 export interface XrViewer {
   readonly core: ViewerCore;
@@ -44,6 +48,8 @@ export interface XrViewer {
   tick(ray: Ray | null, wrist: { at: pc.Vec3; palm: pc.Vec3 | null } | null): void;
   /** the menu closed from elsewhere (the grip): a viewer that came from it goes too */
   onMenuClosed(): void;
+  /** ⚑ S371 review: how many times the window and the film's own rect were uploaded, and their sizes */
+  filmStats(): { windowUploads: number; filmUploads: number; filmPlane: boolean; filmTexture: [number, number]; windowTexture: [number, number] };
 }
 
 export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
@@ -65,6 +71,35 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
     if (m instanceof pc.StandardMaterial) { m.depthTest = false; m.update(); }
   };
   overRoom(plane); plane.enabled = false; app.root.addChild(plane);
+
+  // ⚑ S371 — THE FILM'S PLANE: a child of the window, laid exactly over the film's rect (the part of it the page shows),
+  //   opaque, so it is drawn BEFORE the window in the frame layer; the window leaves that rect clear (core.ts `filmLayer`).
+  //   One more draw call while a film is loaded and on screen; its texture has no mip chain and is uploaded only when the
+  //   film has a new picture, or the shown part changes.
+  const filmCanvas = document.createElement('canvas');
+  filmCanvas.width = FILM_CW; filmCanvas.height = FILM_CH;
+  const fctx = filmCanvas.getContext('2d');
+  const filmTex = makeScreenTexture(app, filmCanvas, 'film');
+  const filmPlane = makeScreenEntity('xr-frame-site-film', filmTex, 1, 1, false);
+  overRoom(filmPlane); filmPlane.enabled = false; plane.addChild(filmPlane);
+  let filmKey = '', filmSerial = -1, filmUploads = 0, windowUploads = 0;
+  const syncFilm = (): void => {
+    const fv = core.filmView();
+    const st = fv ? viewerFilm.state(fv.file) : 'idle';
+    if (!fv || st === 'idle' || !fctx) { if (filmPlane.enabled) filmPlane.enabled = false; filmKey = ''; return; }
+    const key = `${fv.x}|${fv.y}|${fv.w}|${fv.h}|${st}`;
+    const serial = viewerFilm.serial();
+    if (key !== filmKey) {
+      filmPlane.setLocalPosition((fv.x + fv.w / 2) / LW - 0.5, 0.002, (fv.y + fv.h / 2) / LH - 0.5);
+      filmPlane.setLocalScale(fv.w / LW, 1, fv.h / LH);
+    }
+    if (key !== filmKey || serial !== filmSerial) {
+      core.drawFilmInto(fctx, FILM_CW, FILM_CH);
+      filmTex.upload(); filmUploads++;
+      filmKey = key; filmSerial = serial;
+    }
+    filmPlane.enabled = true;
+  };
 
   // the small tab (minimised): "▲ Sources", on the wrist, like the menu tab
   const tabCanvas = document.createElement('canvas');
@@ -97,6 +132,8 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
     openUrl: (url) => core.note(`Open this address on a phone or a computer: ${url}`, 12),
     openPage: (path) => core.note(`This is the web page version of the same site: ${path.replace(/index\.html$/, '')} (open it outside the headset).`, 12),
     audio: viewerAudio,
+    film: viewerFilm,
+    filmLayer: true,
     changed: () => { dirty = true; }
   };
   const core = new ViewerCore(host);
@@ -105,8 +142,9 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   const draw = (): void => {
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
     core.render(ctx, LW, LH);
-    tex.upload();
+    tex.upload(); windowUploads++;
     dirty = false;
+    filmKey = '';   // the page moved or changed: lay the film's plane again
   };
 
   /** where the window hangs: re-hung at each open, then it stays where it was put (a window you can walk around) */
@@ -126,13 +164,14 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   function close(): void {
     if (!open && !minimised) return;
     open = false; minimised = false; plane.enabled = false; tab.enabled = false; wristed = false;
-    viewerAudio.stop();
+    viewerAudio.stop(); viewerFilm.stop(); filmPlane.enabled = false;
     closedAt = performance.now();
     if (fromMenu && gameMenuBus.isOpen) opts.suspendMenu(false);
     fromMenu = false;
   }
   function minimise(): void {
     open = false; minimised = true; plane.enabled = false;
+    viewerFilm.pause();   // a film waits where it was while the window is a tab
     if (fromMenu && gameMenuBus.isOpen) { fromMenu = false; opts.suspendMenu(false); gameMenuBus.close(); }
     fromMenu = false;
     opts.note(opts.minimisedNote, 10);
@@ -200,6 +239,10 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
       const changed = p ? core.move(p.x, p.y) : core.leave();
       if (changed || moved) dirty = true;
       if (dirty) draw();
+      syncFilm();
+    },
+    filmStats(): { windowUploads: number; filmUploads: number; filmPlane: boolean; filmTexture: [number, number]; windowTexture: [number, number] } {
+      return { windowUploads, filmUploads, filmPlane: filmPlane.enabled, filmTexture: [FILM_CW, FILM_CH], windowTexture: [canvas.width, canvas.height] };
     }
   };
 }

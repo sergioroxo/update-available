@@ -25,12 +25,16 @@ export type Block =
   /** the hub's four doors (built in the viewer from HubModel, not in the generated file) */
   | { k: 'doors'; items: { year: Year; who: string; text: string }[] };
 
+export type MediaBlock = Extract<Block, { k: 'media' }>;
+
 export type TabId = 'story' | 'practices' | 'sources' | 'images' | 'media' | 'words' | 'missed';
 
 export interface EraModel { heading: string; tagline: string; who: string; glance: [string, string][]; tabs: Record<TabId, Block[]> }
 export interface HubModel {
   title: string; lede: string; choose: string; doors: { year: Year; who: string; text: string }[];
-  alsoTitle: string; oldSources: string; oldSourcesNote: string; filmTitle: string; filmWhat: string; filmCredit: string;
+  alsoTitle: string; oldSources: string; oldSourcesNote: string;
+  /** ⚑ S371 — the sound and film of the whole piece: the opening film, then the music that belongs to no one year */
+  soundTitle: string; soundLead: string; film: MediaBlock; sound: MediaBlock[];
   lexiconTitle: string; lexiconLead: string; lexiconLinks: { label: string; url: string }[];
   aboutTitle: string; about: string[]; howTitle: string; how: string[];
 }

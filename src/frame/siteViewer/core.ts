@@ -10,8 +10,9 @@
  * It draws only when something changed (scroll, tab, hover, an image arriving); the mount uploads the texture then.
  */
 import { MODEL, YEARS, type Block, type TabId } from './model';
-import { SKINS, type View, type Year } from './skins';
-import { layoutDoc, type Doc, type DocHit, type Op, type Rect, wrap } from './layout';
+import { FILM, SKINS, type View, type Year } from './skins';
+import { FILM_BAR, FILM_INSET, layoutDoc, type Doc, type DocHit, type Op, type Rect, wrap } from './layout';
+import type { FilmState } from './audio';
 import { drawScrollbar, drawSiteHeader, drawStatus, drawWindow, roundRect, SCROLL_W, type DrawEnv, type Hit } from './frame';
 
 export interface ViewerHost {
@@ -24,9 +25,28 @@ export interface ViewerHost {
   /** a press on a page of this site's own (relative path from the app root) */
   openPage(path: string): void;
   audio: { toggle(file: string): void; playing(): string | null };
+  /** ⚑ S371 — the one film (audio.ts `viewerFilm`): its pictures are drawn by the window itself */
+  film: FilmApi;
+  /** ⚑ S371 — the headset: the mount draws a loaded film's rect on a plane of its own (so only that rect is uploaded
+   *  while it plays), and the window leaves that rect clear for it */
+  filmLayer?: boolean;
   /** something changed that the mount must redraw (an image arrived, audio ended) */
   changed(): void;
 }
+
+export interface FilmApi {
+  file(): string | null;
+  state(file?: string): FilmState;
+  video(): HTMLVideoElement | null;
+  hasFrame(): boolean;
+  time(): { t: number; dur: number };
+  toggle(file: string): void;
+  seek(file: string, frac: number): void;
+  stop(): void;
+}
+type FilmOp = Extract<Op, { t: 'film' }>;
+/** m:ss */
+const clock = (s: number): string => { const n = Math.max(0, Math.floor(s)); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`; };
 
 export type Target = View;
 
@@ -44,6 +64,8 @@ export class ViewerCore {
   private docKey = '';
   private images = new Map<string, HTMLImageElement>();
   private toast: { text: string; until: number } | null = null;
+  /** ⚑ S371 — the film on screen at the last paint (its op, and where it sat in the window), for the partial repaint */
+  private filmAt: { op: FilmOp; sx: number; sy: number } | null = null;
   /** debug/review: the last painted size */
   lastSize = { w: 0, h: 0 };
 
@@ -52,8 +74,11 @@ export class ViewerCore {
   // ── state ──
   open(target: View): void {
     this.view = target; this.tab = 'story'; this.scroll = 0; this.hover = ''; this.doc = null;
+    this.leaveFilm();
   }
-  setTab(t: TabId): void { if (t === this.tab) return; this.tab = t; this.scroll = 0; this.doc = null; }
+  setTab(t: TabId): void { if (t === this.tab) return; this.tab = t; this.scroll = 0; this.doc = null; this.leaveFilm(); }
+  /** ⚑ S371 — a film belongs to the page it is on: leaving the page (another tab, another year) stops it; a track plays on */
+  private leaveFilm(): void { this.filmAt = null; if (this.host.film.file()) this.host.film.stop(); }
   setView(v: View): void { if (v === this.view) return; this.open(v); }
   note(text: string, seconds = 9): void { this.toast = { text, until: performance.now() + seconds * 1000 }; }
   /** the page version of what is showing, as a path from the app root */
@@ -73,7 +98,8 @@ export class ViewerCore {
         { k: 'h2', t: H.title }, { k: 'lede', t: H.lede }, { k: 'h3', t: H.choose }, { k: 'doors', items: H.doors },
         { k: 'h3', t: H.alsoTitle },
         { k: 'pagelink', label: H.oldSources, note: H.oldSourcesNote, href: 'sources/index.html' },
-        { k: 'media', title: H.filmTitle, what: H.filmWhat, file: 'assets/video/lambyos_welcome_home.mp4', type: 'video', credit: H.filmCredit, lyrics: [], lyricsTitle: '' },
+        // ⚑ S371 — the sound and film that belong to the whole piece: the opening film, then the music of no one year
+        { k: 'h3', t: H.soundTitle }, { k: 'p', t: H.soundLead }, H.film, ...H.sound,
         { k: 'h3', t: H.lexiconTitle }, { k: 'p', t: H.lexiconLead }, { k: 'links', items: H.lexiconLinks },
         { k: 'h3', t: H.aboutTitle }, ...H.about.map((t) => ({ k: 'p' as const, t })),
         { k: 'h3', t: H.howTitle }, { k: 'ul', items: H.how.map((t) => ({ t })) },
@@ -114,7 +140,7 @@ export class ViewerCore {
     this.vp = vp0;
     const textW = vp0.w - SCROLL_W;
     const key = `${this.view}|${this.tab}|${Math.round(textW)}`;
-    if (!this.doc || key !== this.docKey) { this.doc = layoutDoc(ctx, this.blocks(), textW, skin, this.host.canOpenPage); this.docKey = key; }
+    if (!this.doc || key !== this.docKey) { this.doc = layoutDoc(ctx, this.blocks(), textW, skin, this.host.canOpenPage, true); this.docKey = key; }
     const doc = this.doc;
     this.maxScroll = Math.max(0, doc.h - vp0.h);
     this.scroll = Math.max(0, Math.min(this.maxScroll, Math.round(this.scroll)));
@@ -127,9 +153,11 @@ export class ViewerCore {
     const hovered = this.hover.startsWith('d') ? doc.hits.find((h) => h.id === this.hover) : undefined;
     if (hovered) { ctx.fillStyle = skin.link; ctx.globalAlpha = 0.14; ctx.fillRect(hovered.x, hovered.y, hovered.w, hovered.h); ctx.globalAlpha = 1; }
     const top = this.scroll - 80, bottom = this.scroll + vp0.h + 80;
+    this.filmAt = null;
     for (const op of doc.ops) {
-      const oh = op.t === 'text' ? op.lh : op.t === 'rect' || op.t === 'chip' || op.t === 'img' || op.t === 'play' ? op.h : 0;
+      const oh = op.t === 'text' ? op.lh : op.t === 'rect' || op.t === 'chip' || op.t === 'img' || op.t === 'play' || op.t === 'film' ? op.h : 0;
       if (op.y + oh < top || op.y > bottom) continue;
+      if (op.t === 'film' && op.y + op.h > this.scroll && op.y < this.scroll + vp0.h) this.filmAt = { op, sx: vp0.x + op.x, sy: vp0.y + op.y - this.scroll };
       this.drawOp(ctx, op, skin.font);
     }
     ctx.restore();
@@ -191,18 +219,104 @@ export class ViewerCore {
       }
       case 'play': {
         const skin = SKINS[this.view];
-        const playing = this.host.audio.playing() === op.file;
-        const hv = this.hover !== '' && this.docHits.some((h) => h.id === this.hover && h.act.type === 'audio' && h.act.file === op.file);
+        // a track: Play / Stop; a film (S371): Play the film / Pause / Play / Play again
+        const fs = op.kind === 'film' ? this.host.film.state(op.file) : 'idle';
+        const playing = op.kind === 'film' ? fs === 'playing' || fs === 'loading' : this.host.audio.playing() === op.file;
+        const hv = this.hover !== '' && this.docHits.some((h) => h.id === this.hover && (h.act.type === 'audio' || h.act.type === 'film') && h.act.file === op.file);
         roundRect(ctx, op.x, op.y, op.w, op.h, skin.os === 'w95' || skin.os === 'xp' ? 4 : 8);
         ctx.fillStyle = playing || hv ? skin.link : skin.card; ctx.fill(); ctx.strokeStyle = skin.link; ctx.lineWidth = 3; ctx.stroke();
         const ink = playing || hv ? skin.contentBg : skin.link;
         ctx.fillStyle = ink;
-        if (playing) ctx.fillRect(op.x + 22, op.y + 14, 18, 20);
-        else { ctx.beginPath(); ctx.moveTo(op.x + 22, op.y + 12); ctx.lineTo(op.x + 40, op.y + 24); ctx.lineTo(op.x + 22, op.y + 36); ctx.closePath(); ctx.fill(); }
+        if (playing && op.kind === 'film') { ctx.fillRect(op.x + 22, op.y + 13, 7, 22); ctx.fillRect(op.x + 34, op.y + 13, 7, 22); }
+        else if (playing) ctx.fillRect(op.x + 22, op.y + 14, 18, 20);
+        else if (fs !== 'error') { ctx.beginPath(); ctx.moveTo(op.x + 22, op.y + 12); ctx.lineTo(op.x + 40, op.y + 24); ctx.lineTo(op.x + 22, op.y + 36); ctx.closePath(); ctx.fill(); }
         ctx.font = op.font; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.fillText(playing ? 'Stop' : op.label, op.x + 56, op.y + 25);
+        const label = op.kind === 'film'
+          ? (playing ? 'Pause' : fs === 'paused' ? 'Play' : fs === 'ended' ? 'Play again' : fs === 'error' ? 'Cannot play here' : op.label)
+          : (playing ? 'Stop' : op.label);
+        ctx.fillText(label, op.x + (fs === 'error' ? 22 : 56), op.y + 25);
+        return;
+      }
+      case 'film': {
+        // in the headset, a film that is loaded is drawn by the mount on its own plane, under this clear rect
+        if (this.host.filmLayer && this.host.film.state(op.file) !== 'idle') { ctx.clearRect(op.x, op.y, op.w, op.h); return; }
+        this.paintFilm(ctx, op.x, op.y, op);
       }
     }
+  }
+
+  /**
+   * ⚑ S371 — A FILM'S SCREEN: the picture (the film's current frame, drawn from the hidden video element), and under it
+   * the progress line with the time gone and the length. Before the first press it is a poster (a round play button and
+   * "Play the film"): nothing loads until the press. Paused, the picture stays with the button over it; at the end,
+   * "Play again". Drawn at (x, y) in the context's own units, so the window, the browser's per-frame repaint and the
+   * headset's film plane all draw the same thing.
+   */
+  private paintFilm(ctx: CanvasRenderingContext2D, x: number, y: number, op: FilmOp): void {
+    const F = this.host.film;
+    const st = F.state(op.file);
+    const face = SKINS[this.view].font;
+    const { w, h, pic } = op;
+    ctx.fillStyle = FILM.screen; ctx.fillRect(x, y, w, h);
+    const v = st !== 'idle' && F.hasFrame() ? F.video() : null;
+    if (v) ctx.drawImage(v, x, y, w, pic);
+    const cx = x + w / 2, cy = y + pic / 2;
+    const word = st === 'idle' ? 'Play the film' : st === 'loading' && !v ? 'Loading the film…' : st === 'paused' ? 'Paused' : st === 'ended' ? 'Play again'
+      : st === 'error' ? 'This film cannot play here. It plays on the web page version.' : '';
+    if (word) {
+      if (v) { ctx.globalAlpha = 0.5; ctx.fillStyle = FILM.screen; ctx.fillRect(x, y, w, pic); ctx.globalAlpha = 1; }
+      const icon = st === 'idle' || st === 'paused' || st === 'ended';
+      const r = Math.round(pic * 0.13);
+      if (icon) {
+        ctx.beginPath(); ctx.arc(cx, cy - 18, r, 0, Math.PI * 2); ctx.lineWidth = 4; ctx.strokeStyle = FILM.ink; ctx.stroke();
+        ctx.fillStyle = FILM.ink; ctx.beginPath();
+        ctx.moveTo(cx - r * 0.32, cy - 18 - r * 0.45); ctx.lineTo(cx + r * 0.5, cy - 18); ctx.lineTo(cx - r * 0.32, cy - 18 + r * 0.45); ctx.closePath(); ctx.fill();
+      }
+      const font = `700 22px ${face}`;
+      ctx.font = font; ctx.fillStyle = FILM.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      wrap(ctx, word, font, w - 60).forEach((l, i) => ctx.fillText(l, cx, (icon ? cy + r + 4 : cy) + i * 30));
+      ctx.textAlign = 'left';
+    }
+    // the progress line: the time gone, the line (filled as far as the film has played, a knob at the head), the length
+    const { t, dur } = st === 'idle' ? { t: 0, dur: 0 } : F.time();
+    const by = y + pic + FILM_BAR / 2, x0 = x + FILM_INSET, x1 = x + w - FILM_INSET;
+    const k = dur > 0 ? Math.max(0, Math.min(1, t / dur)) : 0;
+    ctx.fillStyle = FILM.track; ctx.fillRect(x0, by - 3, x1 - x0, 6);
+    ctx.fillStyle = FILM.ink; ctx.fillRect(x0, by - 3, Math.round((x1 - x0) * k), 6);
+    ctx.beginPath(); ctx.arc(x0 + (x1 - x0) * k, by, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.font = `18px ${SKINS[this.view].mono}`; ctx.textBaseline = 'middle';
+    ctx.textAlign = 'right'; ctx.fillText(clock(t), x0 - 14, by);
+    ctx.textAlign = 'left'; ctx.fillText(dur > 0 ? clock(dur) : '-:--', x1 + 14, by);
+  }
+
+  /** ⚑ S371 — the browser's repaint while a film plays: only the film's rect (clipped to the page), never the window */
+  paintFilmOnly(ctx: CanvasRenderingContext2D): boolean {
+    const f = this.filmAt;
+    if (!f) return false;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(this.vp.x, this.vp.y, this.vp.w - SCROLL_W, this.vp.h); ctx.clip();
+    this.paintFilm(ctx, f.sx, f.sy, f.op);
+    ctx.restore();
+    return true;
+  }
+  /** ⚑ S371 — the headset's film plane: which film is on screen, and the part of its rect the page shows (logical px
+   *  of the window; `top`/`bottom` are the shown span inside the film's own rect), or null */
+  filmView(): { file: string; x: number; y: number; w: number; h: number; top: number; bottom: number } | null {
+    const f = this.filmAt;
+    if (!f) return null;
+    const top = Math.max(0, this.vp.y - f.sy), bottom = Math.min(f.op.h, this.vp.y + this.vp.h - f.sy);
+    if (bottom - top < 2) return null;
+    return { file: f.op.file, x: f.sx, y: f.sy + top, w: f.op.w, h: bottom - top, top, bottom };
+  }
+  /** ⚑ S371 — draw the shown part of the film's rect onto the headset's film canvas (cw × ch device px) */
+  drawFilmInto(ctx: CanvasRenderingContext2D, cw: number, ch: number): boolean {
+    const fv = this.filmView();
+    if (!fv || !this.filmAt) return false;
+    const kx = cw / fv.w, ky = ch / fv.h;
+    ctx.setTransform(kx, 0, 0, ky, 0, -fv.top * ky);
+    this.paintFilm(ctx, 0, 0, this.filmAt.op);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    return true;
   }
 
   // ── input (logical px of the painted window) ──
@@ -231,10 +345,10 @@ export class ViewerCore {
   press(x: number, y: number): boolean {
     const id = this.idAt(x, y);
     if (!id) return false;
-    this.act(id, y);
+    this.act(id, x, y);
     return true;
   }
-  private act(id: string, y: number): void {
+  private act(id: string, x: number, y: number): void {
     if (id === 'min') { this.host.minimise(); return; }
     if (id === 'close') { this.host.close(); return; }
     if (id === 'openpage') { this.host.openPage(this.pagePath()); return; }
@@ -249,6 +363,11 @@ export class ViewerCore {
     if (a.type === 'url') this.host.openUrl(a.url);
     else if (a.type === 'page') this.host.openPage(a.href);
     else if (a.type === 'audio') this.host.audio.toggle(a.file);
+    else if (a.type === 'film') this.host.film.toggle(a.file);
+    else if (a.type === 'seek') {
+      if (this.host.film.state(a.file) === 'idle') this.host.film.toggle(a.file);
+      else this.host.film.seek(a.file, (x - (this.vp.x + a.x0)) / a.w);
+    }
     else if (a.type === 'door') this.setView(a.year as Year);
   }
   /** returns true if the offset moved */
@@ -279,7 +398,13 @@ export class ViewerCore {
   /** review tools: the toast showing now, or '' */
   toastText(): string { return this.toast && performance.now() <= this.toast.until ? this.toast.text : ''; }
   /** for review tools */
-  info(): { view: View; tab: TabId; scroll: number; maxScroll: number; docH: number; vp: Rect } {
-    return { view: this.view, tab: this.tab, scroll: this.scroll, maxScroll: this.maxScroll, docH: this.doc?.h ?? 0, vp: this.vp };
+  info(): { view: View; tab: TabId; scroll: number; maxScroll: number; docH: number; vp: Rect; film: { file: string | null; state: FilmState; t: number; dur: number; onScreen: boolean } } {
+    const F = this.host.film;
+    return { view: this.view, tab: this.tab, scroll: this.scroll, maxScroll: this.maxScroll, docH: this.doc?.h ?? 0, vp: this.vp,
+      film: { file: F.file(), state: F.state(), ...F.time(), onScreen: !!this.filmAt } };
+  }
+  /** review tools: every document hit that plays something (a track, a film, a film's progress line), in page order */
+  mediaHits(): { id: string; type: string; file: string; sx: number; sy: number; w: number; h: number }[] {
+    return this.docHits.flatMap((h) => (h.act.type === 'audio' || h.act.type === 'film' || h.act.type === 'seek' ? [{ id: h.id, type: h.act.type, file: h.act.file, sx: h.sx, sy: h.sy, w: h.w, h: h.h }] : []));
   }
 }

@@ -25,6 +25,6 @@
   ],
   "voicePattern": "^l_[a-z]\\d",
   "film": [
-    "lambyos_welcome_home.mp4"
+    "lambyos_welcome_home.mp4", "the_great_becoming.mp4"
   ]
 }
