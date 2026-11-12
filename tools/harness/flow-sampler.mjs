@@ -279,7 +279,10 @@ function pageSampler(opts) {
           arrived: ph && ph.arrived, open: ph && ph.open, page: q.veraPage ?? null };
       }
     } catch (e) { /* */ }
-    try { if (os && os.e4) g.e4 = { stage: os.e4.stage, ball: !!(os.e4.ball && os.e4.ball.live), clip: !!(os.e4.browser && os.e4.browser.roomClipTakeover) }; } catch (e) { /* */ }
+    try { if (os && os.e4) g.e4 = { stage: os.e4.stage, ball: !!(os.e4.ball && os.e4.ball.live), clip: !!(os.e4.browser && os.e4.browser.roomClipTakeover), act: !!(os.e4.browser && os.e4.browser.act) }; } catch (e) { /* */ }
+    // ⚑ S369 — for the named exceptions: the update ritual's phase, and Caleb's thread being blacked out or given back
+    try { if (os && os.updateApp) g.upd = { key: os.updateApp.key, phase: os.updateApp.phase }; } catch (e) { /* */ }
+    try { if (os && os.caleb) g.caleb = { blacking: !!os.caleb.blackingOut, phase: os.caleb.phase ?? null }; } catch (e) { /* */ }
     return g;
   };
 

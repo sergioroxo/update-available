@@ -52,7 +52,10 @@ const E4_HOLD = 22;     // s in E4 before the bare final restart
 /** ⚑ S164 / R3-61: the monitor stays DARK after the residue now (os.ts
  *  `residueDark`); measured, the notice rises out of the black ~6 s after the
  *  hold ends at this value (the update's own notice delay is on top of it). */
-const RESIDUE_GAP = 0.8;   // ⚑ S339 (his answer 14): Daniel says it to Caleb and the update pops in at once (was 6)
+// ⚑ S339 (his answer 14): Daniel says it to Caleb and the update pops in at once (was 6).
+// ⚑ S369 (UiB job 16 rule 2, his 11 Nov: "nothing opens on top of something being read") — "at once" now means once Daniel's
+//   answer ("it never was, d. not once.") has had its reading time: 0.8 s let the notice open over Caleb's last lines.
+const RESIDUE_GAP = 4.4;
 
 type SpineStep =
   | 'e1' | 'e1_armed'

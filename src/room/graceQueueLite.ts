@@ -327,10 +327,13 @@ const LAMBIENT_AFTER1 = (maiden as { after: { lambientLine1: string; lambientLin
 const LAMBIENT_AFTER2 = (maiden as { after: { lambientLine1: string; lambientLine2: string } }).after.lambientLine2;
 
 const DARK_SECONDS = 1.6;      // a dead screen, long enough to read as dead
-const BOOT_LINE_SECONDS = 1.1; // each service line
-const BOOT_TAIL_SECONDS = 1.8; // "1 update found — installing"
-const INSTALL_LINE_SECONDS = 1.0;
-const INSTALL_TAIL_SECONDS = 2.6; // the bar finishing + the installed line
+// ⚑ S369 / F14 (UiB job 16, the reading rule) — the arrival's lines type on 1.5 s apart (were 1.1 and 1.0), and "Installed. A file
+//   was opened for you." holds its reading time (4.8 s) before the sign-in replaces it (it had 1.6 s)
+const BOOT_LINE_SECONDS = 1.5; // each service line
+const BOOT_TAIL_SECONDS = 2.8; // "1 update found — installing" (2 s + 0.4 s a word)
+const INSTALL_LINE_SECONDS = 1.5;
+const INSTALLED_AFTER = 1.0;  // the installed line, a beat after the changelog's last
+function installTail(): number { return INSTALLED_AFTER + Math.max(4, readHold(ARRIVAL.installedLine)); }
 const TICK = 0.25;             // the quantum the redraw clock moves in
 /** the beat holds before the light moves: you read the two lines first, and the
  *  room answers after. Felt before it is understood. */
@@ -660,7 +663,7 @@ export class GraceQueueLite {
     return DARK_SECONDS + ARRIVAL.bootLines.length * BOOT_LINE_SECONDS + BOOT_TAIL_SECONDS;
   }
   private get installSeconds(): number {
-    return ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + INSTALL_TAIL_SECONDS;
+    return ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + installTail();
   }
 
   /** the relocation has landed: start the machine (app.ts → era3Devices) */
@@ -1108,7 +1111,11 @@ export class GraceQueueLite {
       }
       return;
     }
-    if (!quiet) { this.saver = null; this.bump(); return; }
+    // ⚑ S369 / F21 (UiB job 16) — once asleep it stays asleep until something real happens on the board (a press wakes it, a
+    //   page or job opens). It used to wake whenever any sound played or the guide stirred, so in 2026 — every one of 2026's
+    //   sounds — Vera's old workstation flickered between "Today" and "Every heart can be restored." every 0.5–4.7 s.
+    const settled = this.mode === 'board' && !this.veraPage && !this.openSurface && !this.pauseOpen && !this.minimised;
+    if (!settled) { this.saver = null; this.bump(); return; }
     this.saver.clock = this.clockText();
     if (this.saver.update(dt)) this.bump();
   }
@@ -1872,7 +1879,7 @@ export class GraceQueueLite {
       ctx.fillStyle = line.startsWith('-') ? ERA3.amber : line.startsWith('=') ? ERA3.grey : ERA3.accentHi;
       ctx.fillText(line, Math.round(W * 0.14), Math.round(H * 0.30) + i * 22);
     }
-    if (age >= ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + 1.0) {
+    if (age >= ARRIVAL.changelog.length * INSTALL_LINE_SECONDS + INSTALLED_AFTER) {
       setFont(ctx, 13);
       ctx.fillStyle = ERA3.grey;
       ctx.fillText(ARRIVAL.installedLine, Math.round(W * 0.14),

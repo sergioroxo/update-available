@@ -1575,6 +1575,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
             s.entity.setLocalScale(W.w, 1, W.h);   // the plane's scale IS its size (makeScreenEntity)
           }
         }
+        // ⚑ S369 (UiB job 16 Part B) — and Vera's workstation is drawn only while its screen is on (2016): in 1997, 2003 and 2026
+        //   it went on redrawing and uploading a screen nobody could see (the update rituals, the 2016 lock screen's ticker), which
+        //   cost the headset uploads and fed the walker and the flow audit changes on a dark plane. Skipped, its version is left
+        //   stale, so it redraws the moment it is switched on.
+        if (s.name === 'workstation' && !s.entity.enabled) continue;
         if (s.versionOf && s.name !== 'laptop' && s.lastVersion !== s.versionOf()) {   // S328: the laptop is never drawn
           if (s.name === 'phone' && s.lastVersion !== undefined) phoneBuzz++;
           s.lastVersion = s.versionOf();

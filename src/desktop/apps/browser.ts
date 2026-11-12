@@ -1,3 +1,4 @@
+import { readHold } from '../readHold';
 import { drawLambyGuide, drawGuidePointer, type GuidePaint } from './lambyGuideDraw';
 import type { LambyGuide } from '../../narrative/lambyGuide';
 /**
@@ -131,8 +132,10 @@ const MAIL = V.mail as unknown as { tab: string; brand: string; address: string;
 /** 'meridian' names the whole thread with Meridian: her forward, its auto-reply, her draft */
 type MailId = 'clinic' | 'meridian' | 'mum';
 /** ⚑ S363 — a desktop notification (2026's toast): who wrote, and the chat it opens */
-interface Toast { chat: ChatId; title: string; line: string; t: number; sys?: boolean }
+interface Toast { chat: ChatId; title: string; line: string; t: number; sys?: boolean; hold: number }
 const TOAST_SECONDS = 5.5;
+/** ⚑ S369 (UiB job 16, the reading rule) — a notification stays its reading time when that is longer than TOAST_SECONDS */
+function toastHold(title: string, line: string): number { return Math.max(TOAST_SECONDS, readHold([title, line]) + 0.6); }
 /** ⚑ S366 / J15-05 — "Your circle" in the chat, taller (94 → 128) so every label sits inside the card */
 const MAP_CARD_H = 128;
 /** ⚑ S363 — the chat's cards, inline in the conversation (his N7): which beat shows which, after which of its lines */
@@ -153,8 +156,10 @@ const W3 = V.witness;
 
 /** ⚑ the failure on the desk's two screens, in seconds from the device stopping (app.ts CLOSE_LEAD_SECONDS matches) */
 export const FAIL = { bands: 6.5, off: 14.5 } as const;
-const RESTORE_SECONDS = 2.4;
-const BOOT_SECONDS = 2.6;
+// ⚑ S369 / F19 — the boot line and "Opening your things where you left them" each hold their reading time (they had 2.6 and
+//   2.4 s: 4.4 and 4.8 s are needed)
+const RESTORE_SECONDS = Math.max(2.4, readHold(script.boot.restoring));
+const BOOT_SECONDS = Math.max(2.6, readHold(script.boot.bootLine));
 const TAB_GAP = 0.22;
 const CURSOR_BLINK = 0.53;
 const ENQUIRY_REPLY_SECONDS = 3.2;
@@ -167,9 +172,16 @@ const STALL_SECONDS = 35;
 /** after "left", the room's conducted turn has the floor: the search waits this long at least, and at most the longer
  *  figure if the room has not marked `room` yet (src/narrative/e4Beats.ts) */
 const ROOM_WAIT = { min: 5, max: 18 } as const;   // S360: the turn now follows Meridian's reply (e4Room)
-/** ⚑ S328 — the birthday messages arrive one at a time after the screen has opened quietly (his 8 Nov test) */
-const HOUSE_FIRST = 2.2;
+/** ⚑ S328 — the birthday messages arrive one at a time after the screen has opened quietly (his 8 Nov test)
+ *  ⚑ S369 / F19 (UiB job 16) — each one waits for the one before to be read (its notification replaces the last): 2 s + 0.4 s a
+ *  word, never under HOUSE_GAP. They were 2.4 s apart ("Ola: HAPPY BIRTHDAY MAYA" needs 3.6 s). */
+const HOUSE_FIRST = 4;   // S369: the chat list's own lines ("rae: who has the candles") are read first (was 2.2)
 const HOUSE_GAP = 2.4;
+function houseAt(i: number): number {
+  let t = HOUSE_FIRST;
+  for (let k = 0; k < i; k++) { const l = V.messenger.house.birthday[k]; t += Math.max(HOUSE_GAP, readHold([l.who, l.text])); }
+  return t;
+}
 /** the clip plays over the whole page for this long when the map beat begins (one loop of its six frames) */
 const CLIP_TAKEOVER_SECONDS = CLIP_LOOP_SECONDS;   // S360: the clip's own loop (its frames' holds)
 
@@ -353,10 +365,24 @@ export class E4Browser {
     const lines = b.id === 'rest' && this.gameStarted && b.startedLine ? [b.startedLine, ...b.lines] : b.lines;
     return lines.map((l) => l.replace('{number}', this.clinicNumber.toLocaleString('en-GB')).replace('{ring}', String(this.beatRing)));
   }
-  private get botLinesShown(): number { const b = this.bot; return b && this.botT >= 0 ? Math.min(this.botLines(b).length, 1 + Math.floor(this.botT / BOT.lineSeconds)) : 0; }
+  /** ⚑ S369 / F17·F18 (UiB job 16, the reading rule) — when each line of a beat lands, seconds into the beat: the one before it has had
+   *  its reading time first (2 s + 0.4 s a word, never under BOT.lineSeconds). Lines came a flat 1.3 s apart, so a two-sentence answer
+   *  scrolled up under the next before it was read. */
+  private botOnsets(b: BotBeat): number[] {
+    const lines = this.botLines(b), out: number[] = [];
+    let t = 0;
+    for (let k = 0; k < lines.length; k++) { out.push(t); t += Math.max(BOT.lineSeconds, readHold(lines[k])); }
+    return out;
+  }
+  /** S369 — seconds into the beat at which its last line has been read */
+  private botReadEnd(b: BotBeat): number {
+    const lines = this.botLines(b), on = this.botOnsets(b);
+    return lines.length ? on[lines.length - 1] + readHold(lines[lines.length - 1]) : 0;
+  }
+  private get botLinesShown(): number { const b = this.bot; return b && this.botT >= 0 ? this.botOnsets(b).filter((o) => o <= this.botT).length : 0; }
   /** ⚑ the clip owns the page before the map beat speaks (the review: "the over-the-top moment, direct and brute") */
   private get clipTakeover(): boolean { return this.bot?.id === 'clip' && this.botT < 0; }
-  private get botBeatReady(): boolean { const b = this.bot; if (!b) return false; const n = this.botLines(b).length; return this.botLinesShown >= n && this.botT >= (n - 1) * BOT.lineSeconds + 0.5; }
+  private get botBeatReady(): boolean { const b = this.bot; if (!b) return false; const n = this.botLines(b).length; return this.botLinesShown >= n && this.botT >= (n ? this.botOnsets(b)[n - 1] : 0) + 0.5; }
   private get enquiryOpen(): boolean { return this.enquiry === 'draft' || this.enquiry === 'sending' || this.enquiry === 'replied'; }
 
   // ── conducted looks ──────────────────────────────────────────────────────
@@ -459,7 +485,7 @@ export class E4Browser {
   }
   /** ⚑ S363 — a desktop notification: a person wrote (the people only; the system never toasts) */
   private toast(chat: ChatId, title: string, line: string, sys = false): void {
-    this.toasts = [...this.toasts.filter((t) => t.chat !== chat), { chat, title, line, t: 0, sys }].slice(-2);
+    this.toasts = [...this.toasts.filter((t) => t.chat !== chat), { chat, title, line, t: 0, sys, hold: toastHold(title, line) }].slice(-2);
     this.version++;
   }
   /**
@@ -743,7 +769,7 @@ export class E4Browser {
     if (this.toasts.length) {
       for (const t of this.toasts) t.t += dt;
       const n = this.toasts.length;
-      this.toasts = this.toasts.filter((t) => t.t < TOAST_SECONDS);
+      this.toasts = this.toasts.filter((t) => t.t < t.hold);
       if (this.toasts.length !== n) this.version++;
     }
     if (this.liveTab === 'news') {
@@ -754,7 +780,13 @@ export class E4Browser {
     if (this.ring !== this.ringSeen) { this.ringSeen = this.ring; this.version++; }   // S367: the ring is the game's handle
     this.actClock(dt);
     if (this.gameWin) {
-      const k = consoleSession.frameKey();
+      // ⚑ S369 (UiB job 16 Part B — "the 2026 walk grew 12.9 → 17.8 min") — the game's window in its corner no longer redraws its
+      //   idle animation (L's bob, the sparkles: ~10 frames a second, for the whole rest of 2026, re-uploading the 2130 px monitor
+      //   each time — and every press after the offer waited out the walker's 36 s "still drawing" hold). Small and at rest it is a
+      //   still picture; anything that moves in it (a match, its pointer's push, the handle) still redraws at once, and enlarged
+      //   it animates as before. A player was never waiting on this; the headset was paying for it.
+      const raw = consoleSession.frameKey();
+      const k = this.gameBigOn ? raw : raw.replace(/\|i\d+\|/, '|i|');
       if (k !== this.gameKey) { this.gameKey = k; this.version++; }
       // ⚑ item 7 — the AI comments while she plays: a metric dressed as praise, one line every few matches, three in all.
       //   ⚑ S367 — on ITS OWN push (the tug of war): "Calmer already. 61% → 64%." names the AI's counter-move as her calm
@@ -802,7 +834,7 @@ export class E4Browser {
         // Act I · eighteen — her friends write first. ⚑ S328 (his: "the cascade of messages… this is not to appear
         //   now") — the screen is open and quiet first; Kettle's window grows, then one message at a time
         if (at(0.05)) { markE4('eighteen'); this.face('laptop'); }
-        for (let i = 0; i < 3; i++) if (at(HOUSE_FIRST + i * HOUSE_GAP)) {
+        for (let i = 0; i < 3; i++) if (at(houseAt(i))) {
           m.houseShown = i + 1; if (i === 0) m.want = 'house'; playOnce('ui_press.mp3');
           // ⚑ S363 / N1 — the morning starts where a 2026 machine would: a message, and its notification
           const l = V.messenger.house.birthday[i];
@@ -964,18 +996,19 @@ export class E4Browser {
     if (this.clipTakeover && Math.floor(before * 8) !== Math.floor(this.botT * 8)) this.version++;
     if (b.id === 'clip' && before < 0 && this.botT >= 0) stopClipSound();   // S360: the clip ends, its sound with it
     // ⚑ S360 — the clip's two lines ask nothing: after them, the bot moves on to the mute by itself (the tour stalled here)
-    if (b.id === 'clip' && this.botBeatReady && this.step === 'bot' && this.botNextIn < 0 && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 2.2) {
+    // ⚑ S369 — every beat that moves on by itself waits for its last line to have been read (botReadEnd), as well as its own breath
+    if (b.id === 'clip' && this.botBeatReady && this.step === 'bot' && this.botNextIn < 0 && this.botT >= Math.max(this.botOnsets(b)[b.lines.length - 1] + 2.2, this.botReadEnd(b))) {
       this.startBot('game');   // S364 / item 7: the offer, when she is most shaken
       return;
     }
     if (this.botNextIn >= 0) { this.botNextIn -= dt; if (this.botNextIn < 0) { this.botNextIn = -1; this.nextBot(); } }
     // ⚑ S350 — "Stories like yours" holds a while for reading, then the bot rests (nothing waits on a press here)
-    if (b.id === 'stories' && !(b as { button?: string }).button && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + BOT.stories.holdSeconds) {
+    if (b.id === 'stories' && !(b as { button?: string }).button && this.botBeatReady && this.step === 'bot' && this.botT >= Math.max(this.botOnsets(b)[b.lines.length - 1] + BOT.stories.holdSeconds, this.botReadEnd(b))) {
       this.startBot('explore');   // S364: then it takes Mum's word — explore — and sells her the session
       return;
     }
     // the bot's "rest" ends the bot's act: the piece turns her to the laptop, where Junie's badge has waited all day
-    if (b.id === 'rest' && this.botBeatReady && this.step === 'bot' && this.botT >= (b.lines.length - 1) * BOT.lineSeconds + 2.4) {
+    if (b.id === 'rest' && this.botBeatReady && this.step === 'bot' && this.botT >= Math.max(this.botOnsets(b)[this.botLines(b).length - 1] + 2.4, this.botReadEnd(b))) {
       const m = this.messenger;
       m.junieOpenable = true; m.want = 'junie'; m.view = 'list';
       this.go('junie');
@@ -1043,7 +1076,9 @@ export class E4Browser {
     playOnce('ui_press.mp3');
     // ⚑ S363 / N1 — Photos was never open "for no reason": it opens here, when the bot sends her to it
     if (b.id === 'unmuted') { this.go('photos'); this.addTab(this.photosTab(), true); }
-    else this.botNextIn = 0.9;
+    // ⚑ S369 / F18 — the next beat waits until what was just said has been read: her bubble, what it filed ("Memory updated"),
+    //   and its reply (it was 0.9 s, and the next answer is laid out from its own first line, so the reply went up out of view)
+    else this.botNextIn = Math.max(0.9, chip ? readHold([chip.memory ?? '', chip.reply]) : readHold([b.memory ?? '']));
     this.version++;
   }
 
@@ -1213,7 +1248,7 @@ export class E4Browser {
     let y = H - WIN.taskbar - 8 - th;
     for (const t of [...this.toasts].reverse()) {
       const x = L.b.x + L.b.w - tw - 8;
-      const a = Math.min(1, t.t / 0.25, (TOAST_SECONDS - t.t) / 0.6);
+      const a = Math.min(1, t.t / 0.25, (t.hold - t.t) / 0.6);
       ctx.save(); ctx.globalAlpha = Math.max(0, a);
       roundRect(ctx, x + 1, y + 2, tw, th, 10, V3.grey);
       roundEdge(ctx, x, y, tw, th, 10, V3.edge, V3.card);

@@ -455,7 +455,7 @@
     "keep": "Keep current",
     "noMatch": "No match found for 'You, restored · 2027'.",
     "verifying": "Verifying…",
-    "verifySeconds": 1.8,
+    "verifySeconds": 2.6, "_docS369verify": "⚑ S369 (UiB job 16, the reading rule): \"Verifying…\" holds 2.6 s (was 1.8)",
     "match": "Match: Maya",
     "matched": "Profile photo: your original"
   },

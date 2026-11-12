@@ -1,3 +1,4 @@
+import { readHold } from './readHold';
 import { runtimeQuery } from '../edition';
 import { GuideWait } from '../narrative/guideWait';
 import { xrRectsOwned, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
@@ -147,11 +148,14 @@ const JINGLE_LINES = (jingleLyrics as unknown as { lines: LyricLine[] }).lines;
 /** ⚑ Phase 7 — how long a new guide line stands in full above the taskbar before it folds into its well */
 const GUIDE_TIP_SECONDS = 7;
 /** S157 / R3-50: how long a 2003 program's loading box holds before its window */
-const PROGRAM_SPLASH_SECONDS = 1.6;
+// ⚑ S369 (UiB job 16, the reading rule) — "Loading, please wait…" under the program's name: 3.2 s (2 s + 0.4 s a word; was 1.6)
+const PROGRAM_SPLASH_SECONDS = 3.2;
 const MEDIA_PLAYER_TITLE = 'Media Player';
 const E2_LAMBY_BLACK = 0.9;
-const E2_BOOT_HOLD = 2.2;   // s — hold the completed LambyOS 2003 crawl before the installer line
-const LAMBY_BOOT_HOLD = 2.4; // s — black (S156), then the "finishing installation…" line's hold
+// ⚑ S369 (UiB job 16 Part B, the flow audit: "RESTORIFY IS NOW PART OF THIS COMPUTER." left 2.3 s after it was typed; it needs 4.8) —
+//   the completed crawl holds the reading time of its last two lines (never under the old 2.2 s) before the installer line
+const E2_BOOT_HOLD = Math.max(2.2, readHold((lambyStrings.osBootLines as string[]).slice(-3)));
+const LAMBY_BOOT_HOLD = 3.6; // s — black (S156), then the "finishing installation…" line's hold (S369: 2.4 → the line's reading time + its black)
 /** S2R.5: s of ordinary desktop between the video beat ending and the
  *  PureMail envelope. The collapse is triggered by the apparatus's own
  *  documented failure, never by the player — the delay is only pacing.
@@ -175,7 +179,9 @@ type DesktopEra = 'e1' | 'e2' | 'e3' | 'e4';
 const SPLASH_SECONDS = 4.6;        // hold the loading screen long enough to read
 const BOOT_CPS = 0.030;            // seconds per char — slower BIOS crawl
 const BOOT_HOLD = 4.8;             // hold completed BIOS so the install lines read
-const R_BOOT_HOLD = 3.2;           // hold the LambyOS boot after the crawl completes
+// ⚑ S369 — the hold now runs from the crawl's END (it ran from the boot's start, so with a 6.6 s crawl the splash came the moment
+//   "You don't need to do anything." was typed: 1.0 s on screen, 6.4 s needed). Never under the old 3.2 s.
+const R_BOOT_HOLD = Math.max(3.2, readHold((opening.o2_boot_lines as string[]).slice(-2)));
 /** S156 (Sérgio: "we are missing the chime of the boot-up… it jumps to the profile setup"): the
  *  OS splash between the crawl and the profile, with the era's own startup chime */
 const R_SPLASH_SECONDS = 4.2;
@@ -626,9 +632,14 @@ export class DesktopOS {
         || !!this.updateApp?.visible || !!this.sendOffer?.open || !!this.saver || this.startOpen || !!this.wotdOpen
         || this.shutRefused || this.startMap.active || !!this.netvision?.open || !!this.mediaPlayer?.open
         || (this.desktopEra === 'e2' && this.e2Stage !== 'active') || !!external?.silent,
-      voice: !!this.restorify?.open || !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!external?.voice
+      voice: this.otherVoices
         || (this.desktopEra === 'e1' && !this.lambyGuide.hasStep && !!this.guide?.activeText && (this.guideTipAt >= 0 || this.guideTipPinned))
     };
+  }
+  /** ⚑ S369 / F15 — every voice but the 1997 side-line's own: the taskbar line was silenced by its OWN tooltip (it counts itself as a
+   *  voice so Lamby waits for it), so it was never drawn while new — the flow audit found all six 1997 side-lines active and unseen */
+  private get otherVoices(): boolean {
+    return !!this.restorify?.open || !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!this.guideExternal?.()?.voice;
   }
   private updateLambyGuide(dt: number): void {
     if (!this.reinterp) return;
@@ -2375,7 +2386,7 @@ export class DesktopOS {
     if (this.phase === 'r_boot') {
       const next = Math.min(Math.floor(this.phaseT / BOOT_CPS), this.rBootTotal);
       if (next !== this.rBootChars) { this.rBootChars = next; this.dirty = true; }
-      if (this.rBootChars >= this.rBootTotal && this.phaseT > R_BOOT_HOLD) this.startReinterpSplash();
+      if (this.rBootChars >= this.rBootTotal && this.phaseT > this.rBootTotal * BOOT_CPS + R_BOOT_HOLD) this.startReinterpSplash();
     }
     if (this.phase === 'r_splash') {
       this.dirty = true;   // the loading bands travel
@@ -2496,7 +2507,8 @@ export class DesktopOS {
     }
     // ⚑ Phase 7 — a new line rises in full above the bar for a moment (see the taskbar's tooltip)
     if ((this.guide?.activeText ?? null) !== guideTextBefore) { this.guideTipAt = this.t; this.guideTipPinned = false; }
-    if (this.guideTipAt >= 0 && this.t - this.guideTipAt > GUIDE_TIP_SECONDS && !this.guideTipPinned) { this.guideTipAt = -1; this.dirty = true; }
+    // ⚑ S369 — the tooltip holds its line's reading time when that is longer than GUIDE_TIP_SECONDS
+    if (this.guideTipAt >= 0 && this.t - this.guideTipAt > Math.max(GUIDE_TIP_SECONDS, readHold(this.guide?.activeText ?? '')) && !this.guideTipPinned) { this.guideTipAt = -1; this.dirty = true; }
     // S2R.0/S2R.1: the E2 arrival's own transient beats. 'silence' holds until
     // pressed (no timer — click-only, rail); 'lambyBoot' is a brief system
     // beat ("Restorify — finishing installation…") that resolves on its own,
@@ -3206,7 +3218,7 @@ export class DesktopOS {
     // S2R.3: the person's window FIRST (felt), then every intrusion on it
     // (operable) drawn over it. Lamby lives only in the second of these two
     // calls — he is never drawn inside the chat's frame, in any beat.
-    if (this.caleb?.open) this.caleb.draw(ctx);
+    if (this.caleb?.open) { this.caleb.coverFromY = this.accountability?.bandTop ?? null; this.caleb.draw(ctx); }   // S369 / F07
     if (this.accountability) this.accountability.draw(ctx);
     if (this.mediaPlayer?.open) this.mediaPlayer.draw(ctx);
     // finding B8: Lamby's message notice — over the desktop, never over the
@@ -3286,7 +3298,7 @@ export class DesktopOS {
     if (this.reinterp && this.desktopEra === 'e1') {
       const wellW = Math.max(0, W - 116 - wellX);
       ui.bevel(ctx, wellX, H - 19, wellW, 16, false);
-      const guideLine = this.lambyGuide.active || this.lambyGuide.hasStep || this.guideSilence.silent || this.guideSilence.voice ? null : this.guide?.activeText;
+      const guideLine = this.lambyGuide.active || this.lambyGuide.hasStep || this.guideSilence.silent || this.otherVoices ? null : this.guide?.activeText;
       if (guideLine) {
         // ⚑ Phase 7 (his: "the suggestion flows over in the menu bar") — the line is kept inside its
         //   well; when it does not fit, the well shows its start and the whole line rises above the bar

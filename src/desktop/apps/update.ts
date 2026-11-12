@@ -96,7 +96,15 @@ const INSTALL_SECONDS = 7.5; // changelog types on + the glitch window
 const NOTIFY_CHIME: Record<UpdateKey, string | null> = {
   u2: 'err_ding_1997.mp3', u3: 'chime_2003.mp3', u4: 'ting_2016.mp3', close: null
 };
-const RESTART_SECONDS = 2.2; // dark beat before the world changes
+// ⚑ S369 / F12–F14, F20 (UiB job 16, the reading rule) — the restart's one line ("Restarting…", and at the Close "Your update has
+//   failed.") holds 4 s (it was 2.2: 2 s + 0.4 s a word asks 3.6 for the Close's title)
+const RESTART_SECONDS = 4; // dark beat before the world changes
+/** ⚑ S369 / F12–F14 — the changelog types on a line every LINE_SECONDS (was 0.8 s: u4's eighteen lines came 0.7 s apart and its
+ *  last ones never showed inside its 13.5 s); the report under it the same; then the whole screen holds LAST_HOLD_SECONDS after
+ *  its last line before Restarting. The install's length is computed from its own lines (`installTotal`), never shorter than the
+ *  data's `installSeconds`; every era change's flight is longer (28–50 s), so the morph and the flyover are untouched. */
+const LINE_SECONDS = 1.5;
+const LAST_HOLD_SECONDS = 4;
 
 /**
  * THE DISPERSAL's seven marks (D31, struck by Sérgio 2026-07-25 after the
@@ -264,7 +272,7 @@ export class UpdateApp {
       playOnce(NOTIFY_CHIME[this.key]);   // S141: the same chime, again — there is no later
       this.onWindowClosed?.(); // R28-2c: the gathering window closes here
     }
-    if (this.phase === 'install' && this.t >= (this.s.installSeconds ?? INSTALL_SECONDS)) {
+    if (this.phase === 'install' && this.t >= this.installTotal) {
       this.phase = 'restart';
       this.t = 0;
       stopClip(this.churn); this.churn = null;
@@ -295,6 +303,15 @@ export class UpdateApp {
     if (this.phase === 'notify') this.beginInstall();
   }
 
+  /** ⚑ S369 — seconds the changelog (and its report) needs on screen: its last line's arrival + LAST_HOLD_SECONDS */
+  private get installTotal(): number {
+    const cl = this.s.changelog?.length ?? 0;
+    const trailer = this.s.uninstall ?? this.s.report;
+    let end = cl * LINE_SECONDS;
+    if (trailer?.length) end = cl * LINE_SECONDS + 0.9 + trailer.length * LINE_SECONDS;
+    if (trailer?.length && this.key === 'u3') end += DISPERSAL_HOLD + DISPERSAL_SECONDS;   // Lamby comes apart under the quiet line
+    return Math.max(this.s.installSeconds ?? INSTALL_SECONDS, end + LAST_HOLD_SECONDS);
+  }
   private churn: HTMLAudioElement | null = null;
   /** ⚑ S214 — the 2003 dispersal's sound plays once per install */
   private dispersalHeard = false;
@@ -518,7 +535,7 @@ export class UpdateApp {
       ctx.fillText(this.s.installTitle ?? '', 40, 30);
       // the changelog is the thesis — it types on, line by line
       ui.setFont(ctx, 10);
-      const shown = Math.min(this.s.changelog.length, Math.floor(this.t / 0.8));
+      const shown = Math.min(this.s.changelog.length, Math.floor(this.t / LINE_SECONDS));
       for (let i = 0; i < shown; i++) {
         const line = this.s.changelog[i];
         ctx.fillStyle = line.startsWith('-') ? ERA1.warn : line.startsWith('=') ? ERA1.grey : ERA1.silver;
@@ -533,9 +550,9 @@ export class UpdateApp {
       // argument (session brief item 6c).
       const trailer = this.s.uninstall ?? this.s.report;
       if (trailer) {
-        const clDone = this.s.changelog.length * 0.8 + 0.9;
+        const clDone = this.s.changelog.length * LINE_SECONDS + 0.9;
         const baseY = 62 + this.s.changelog.length * 16 + 14;
-        const shownU = Math.min(trailer.length, Math.floor(Math.max(0, this.t - clDone) / 1.1));
+        const shownU = Math.min(trailer.length, Math.floor(Math.max(0, this.t - clDone) / LINE_SECONDS));
         let quietAt = -1;
         for (let i = 0; i < shownU; i++) {
           const raw = trailer[i];
@@ -543,7 +560,7 @@ export class UpdateApp {
           ui.setFont(ctx, quiet ? 8 : 10);
           ctx.fillStyle = quiet ? ERA1.greyDark : ERA1.silver;
           ctx.fillText(quiet ? raw.slice(1).trim() : raw, quiet ? 52 : 40, baseY + i * 15);
-          if (quiet && quietAt < 0) quietAt = clDone + (i + 1) * 1.1;
+          if (quiet && quietAt < 0) quietAt = clDone + (i + 1) * LINE_SECONDS;
         }
         ui.setFont(ctx, 10);
         // ⚑ u3 ONLY. The dispersal is the beat of one update — Lamby coming
@@ -560,7 +577,7 @@ export class UpdateApp {
       const bw = 220; const bx = Math.round((W - bw) / 2); const by = H - 70;
       ui.px(ctx, bx - 1, by - 1, bw + 2, 12, ERA1.greyDark);
       ui.px(ctx, bx, by, bw, 10, ERA1.black);
-      let k = Math.min(1, this.t / (this.s.installSeconds ?? INSTALL_SECONDS));
+      let k = Math.min(1, this.t / this.installTotal);
       if (k > 0.72 && k < 0.96 && Math.random() < 0.3) k -= 0.05 * Math.random(); // the stutter
       ui.px(ctx, bx, by + 1, Math.round(bw * k), 8, ERA1.titleBlue);
       return;
@@ -584,7 +601,7 @@ export class UpdateApp {
    */
   private drawSetup2003(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     const S = this.s.setup!;
-    const total = this.s.installSeconds ?? INSTALL_SECONDS;
+    const total = this.installTotal;
     const k = Math.min(1, this.t / total);
     ui.px(ctx, 0, 0, W, H, ERA1.titleBlue);
     ui.px(ctx, 0, 0, W, 40, ERA1.navy);
@@ -612,7 +629,7 @@ export class UpdateApp {
     ui.px(ctx, px0 + 3, py0 + 3, pw, ph, ERA1.navy);
     ui.px(ctx, px0, py0, pw, ph, ERA1.paper);
     ui.px(ctx, px0, py0, pw, 3, ERA1.tooltip);
-    const shown = Math.min(this.s.changelog!.length, Math.floor(this.t / 0.8));
+    const shown = Math.min(this.s.changelog!.length, Math.floor(this.t / LINE_SECONDS));
     let y = py0 + 14;
     for (let i = 0; i < shown; i++) {
       const line = this.s.changelog![i];

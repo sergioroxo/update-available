@@ -581,6 +581,24 @@ async function main() {
     st.screenHash + ' \u241F ' + st.domText + ' \u241F ' +
     st.audio.started + ' \u241F ' + (st.audio.playing > 0 ? 'A' : '-');
 
+  /**
+   * ⚑ S369 (UiB job 16 Part B) — A BLINK IS NOT THE PIECE SPEAKING. The hold below waited out its full 40 × 0.9 s after nearly
+   * every 2026 press because a canvas kept changing: a caret going on and off, a corner window cycling. Each canvas keeps its
+   * last few hashes; a change that only returns a canvas to a picture it showed a moment ago (an A/B/A blink, a short loop) is
+   * not activity. New words, a new sound, the DOM captions, or any canvas reaching a picture it has not just shown still are.
+   */
+  const recentParts = new Map();
+  const partsOf = (st) => String(st.screenHash || '').split('/').map((p, i) => { const c = p.indexOf(':'); return [c > 0 ? p.slice(0, c) : '#' + i, p]; });
+  const rememberParts = (st) => {
+    for (const [k, v] of partsOf(st)) { const h = recentParts.get(k) || []; if (h[h.length - 1] !== v) h.push(v); if (h.length > 4) h.shift(); recentParts.set(k, h); }
+  };
+  const onlyBlinked = (was, now) => {
+    if (was.domText !== now.domText || was.audio.started !== now.audio.started || (was.audio.playing > 0) !== (now.audio.playing > 0)) return false;
+    const old = new Map(partsOf(was));
+    for (const [k, v] of partsOf(now)) { if (old.get(k) === v) continue; if (!(recentParts.get(k) || []).includes(v)) return false; }
+    return true;
+  };
+
   /** what arrived in the ledger between two probes, by name */
   const ledgerNew = (before, after) => {
     const had = new Map();
@@ -1483,9 +1501,12 @@ async function main() {
      */
     if (!justWoke && talkWaits < TALK_WAIT_MAX) {
       const before = pulseOf(s);
+      rememberParts(s);
       await wait(900);
       const now = await probe();
-      if (pulseOf(now) !== before) {
+      const blinkOnly = onlyBlinked(s, now);
+      rememberParts(now);
+      if (pulseOf(now) !== before && !blinkOnly) {
         s = now;
         talkWaits += 1;
         if (talkWaits === 1 || talkWaits % 6 === 0) {

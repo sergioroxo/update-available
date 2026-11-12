@@ -77,6 +77,26 @@ const EXCEPTIONS = [
     test: (f) => f.era === 'e4' && (f.g?.e4?.clip || textInSet(f.text, CLIP_TEXT))
   },
   {
+    id: '1997-update-cascade',
+    why: 'The 1997 update arrives as a CASCADE of error windows that pile on one another and on the desk ("the beat is that there is nothing to fight", src/desktop/apps/update.ts `cascade`; SCRIPT_UPDATE v0.5). Windows covering windows is the picture. Only while the u2 ritual is in its `cascade` phase.',
+    test: (f) => f.cat === 'overlap' && f.g?.upd?.key === 'u2' && f.g?.upd?.phase === 'cascade'
+  },
+  {
+    id: 'desktop-icons',
+    why: 'A desktop icon\'s label under an open window is how a desktop works (1997 / 2003: "Session", "rootcause.", "Family Form", "Care Log"); an icon is not a reading surface, and the window over it is the one in use.',
+    test: (f) => f.cat === 'overlap' && (f.era === 'e1' || f.era === 'e2') && (f.covered ?? 9) <= 2 && /^(session|rootcause\.?|family form|care log|session ⏎ rootcause\.)$/i.test(String(f.text).trim())
+  },
+  {
+    id: '2003-redaction',
+    why: 'Restorify blacks out Caleb\'s thread line by line, and later gives it back line by line (src/desktop/apps/caleb.ts, the redaction walk). The words were on screen and read before it began; the line-by-line removal and return is the system\'s act on them, and the transcript follows the walk.',
+    test: (f) => f.era === 'e2' && (f.g?.caleb?.blacking || f.g?.caleb?.phase === 'restoring' || f.g?.caleb?.phase === 'redacting')
+  },
+  {
+    id: '2026-ai-acting',
+    why: 'His brief (UIB_JOB_16 Part B): "The banner itself may be brief: it is the AI acting." The green "Second Thoughts is using your computer" bar comes and goes with the AI\'s act on her computer (browser.ts `act`). Only the bar itself, nothing the AI says in the chat.',
+    test: (f) => f.era === 'e4' && /second thoughts is using your computer|take back control/i.test(String(f.text)) && String(f.text).split(' ⏎ ').length <= 2
+  },
+  {
     id: '2026-ball',
     why: 'The ball is deliberate stillness, about 3½ minutes with no controls, its lines timed to the audio (memory: stillness-is-not-a-dead-end; src/desktop/apps/ball.ts). Anything drawn while the ball is live is timed by the recording, not by a reader.',
     test: (f) => f.era === 'e4' && f.g?.e4?.ball

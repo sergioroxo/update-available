@@ -355,7 +355,8 @@
    ],
    "address": "http://care.restorify.net/accountability/escalate.asp",
    "_docS362": "⚑ S362 / H26 (his headset, 10 Nov 20:55: \"it's great… needs a little more time to read the 404 page\") — `seconds` 5.5 → 9.0 (+3.5 s). The tear still takes the last `tearSeconds`, so the page stands CLEAN for 3.3 s → 6.8 s (about 190 characters of text at a slow reader's pace).",
-   "seconds": 9.0,
+   "seconds": 12.2,
+   "_docS369": "⚑ S369 (UiB job 16, the flow audit: the page left after 9.0 s; its 26-word lines need 10 at the audit's cap) — `seconds` 9.0 → 12.2, so the page stands clean for 10 s before the tear.",
    "tearSeconds": 2.2
   }
  },
@@ -368,7 +369,8 @@
   "unavailable": "the file could not be opened",
   "loop": "Loop",
   "opening": "Opening file…",
-  "openingSeconds": 1.2,
+  "openingSeconds": 2.8,
+  "_docS369openingSeconds": "⚑ S369 (UiB job 16, the reading rule): \"Opening file…\" holds 2.8 s (2 s + 0.4 s a word; it was 1.2 s) before the song starts.",
   "_docS339": "⚑ S339 (his 8 Nov) — the player opens with its own short 'Opening file…' line and then plays by itself (the press on the attachment was the press to play); `loop` labels the Loop toggle. The OS's loading box no longer covers it."
  },
  "attachment": {

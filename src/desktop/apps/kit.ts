@@ -33,6 +33,7 @@ import { isSpeedrun, extraOn, markExtraPassed } from '../../state/cut';
 import { ERA1, ERA1_CANVAS } from '../theme/era1';
 import * as ui from '../theme/chrome';
 import { ledger } from '../../state/ledger';
+import { readHold } from '../readHold';
 import kit from '../../../data/dialog/s1_kit.json';
 import prayer from '../../../data/dialog/s1_prayer.json';
 import tapesData from '../../../data/dialog/s1_tapes.json';
@@ -49,10 +50,14 @@ interface Hit { x: number; y: number; w: number; h: number; id: string }
 /** what the boombox is doing, read each frame (src/narrative/tapes.ts snapshot) */
 export interface TapeProbe { inserted: string | null; playing: boolean; elapsed: number }
 
-const AUTORUN_SECONDS = 2.6;
-/** the connecting page: the dial-up recording is 7.4 s; the channel opens after it */
-const DIAL_SECONDS = 8.0;
+// ⚑ S369 (UiB job 16 Part B, the flow audit: "(c) 1996 TriedPath Fellowship / loading companion ..." left after 1.2 s, needing 4.0) —
+//   the autorun's lines come 0.8 s apart (were 0.5) and its screen holds the last two lines' reading time before the wizard
+const AUTORUN_LINE_EVERY = 0.8;
+const AUTORUN_SECONDS = (kit.autorun.length - 1) * AUTORUN_LINE_EVERY + readHold(kit.autorun.slice(-2));
+/** the connecting page: the dial-up recording is 7.4 s; the channel opens after it
+ *  ⚑ S369 — and after "Connected at 28800 bps" has been read (it had 2.3 s of the 3.2 it needs) */
 const DIAL_LINE_EVERY = 1.9;
+const DIAL_SECONDS = Math.max(8.0, (kit.setup.connecting.lines.length - 1) * DIAL_LINE_EVERY + readHold(kit.setup.connecting.lines.slice(-1)));
 /** tape-time second at which the prayer's recording begins on Tape A */
 export const PRAYER_AT = (tapesData as unknown as { tapes: { id: string; segments: { id: string; at: number }[] }[] })
   .tapes.find((t) => t.id === 'tapeA')!.segments.find((s) => s.id === 'a-prayer-01')!.at;
@@ -226,7 +231,7 @@ export class KitApp {
       ui.px(ctx, c.x + 8, c.y + 8, c.w - 16, c.h - 16, ERA1.black);
       ui.setFont(ctx, 10);
       ctx.fillStyle = ERA1.silver;
-      const shown = Math.min(kit.autorun.length, 1 + Math.floor(this.t / 0.5));
+      const shown = Math.min(kit.autorun.length, 1 + Math.floor(this.t / AUTORUN_LINE_EVERY));
       for (let i = 0; i < shown; i++) ctx.fillText(kit.autorun[i], c.x + 16, c.y + 16 + i * 14);
       return;
     }
