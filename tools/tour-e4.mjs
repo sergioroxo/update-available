@@ -24,8 +24,9 @@ const flag = (n, d) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv
 const PORT = Number(flag('port', 3000));
 const HOST = flag('host', 'localhost');
 const OUT = path.resolve(flag('out', 'out/tour-e4'));
+const XR = argv.includes('--xr');   // S375: the same tour through the emulated headset (tools/harness/xr-mock.mjs)
 const CUT = flag('cut', '');
-const VIEWPORT = { width: 1280, height: 860 };
+const VIEWPORT = { width: 1280, height: 860, deviceScaleFactor: Number(flag('dsf', 1)) || 1 };   // S375: --dsf 2 for the photography run
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function resolveChrome() {
@@ -58,6 +59,7 @@ async function main() {
     .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Log in')); if (b) b.click(); });
   await page.waitForFunction(() => window.__os && window.__os.e4 && window.__camFree, { timeout: 30000 });
+  if (XR) { const { installXrMock } = await import('./harness/xr-mock.mjs'); await installXrMock(page, 4); }
   await page.addStyleTag({ content: 'body > *:not(canvas):not(#reinterp-ball-caption) { display: none !important; }' });
 
   let n = 0;

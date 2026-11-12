@@ -31,7 +31,8 @@ const flag = (n, d) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv
 const ERA = Number(flag('era', 1));
 const PORT = Number(flag('port', 3000));
 const OUT = path.resolve(flag('out', `out/tour-e${ERA}`));
-const VIEWPORT = { width: 1280, height: 860 };
+const XR = argv.includes('--xr');   // S375: the same tour through the emulated headset (tools/harness/xr-mock.mjs)
+const VIEWPORT = { width: 1280, height: 860, deviceScaleFactor: Number(flag('dsf', 1)) || 1 };   // S375: --dsf 2 for the photography run
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function resolveChrome() {
@@ -81,7 +82,7 @@ async function main() {
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
   page.on('console', (m) => { const t = m.text(); if (m.type() === 'error' && !/Failed to load resource/.test(t)) errors.push(t.slice(0, 200)); });
   page.on('response', (r) => { if (r.status() >= 400 && !/favicon/.test(r.url())) errors.push(`${r.status()} ${r.url()}`); });
-  const query = ERA === 1 ? '?reinterp=1&kiosk=0&debug=1&home=0' : `?reinterp=1&kiosk=0&era=${ERA}&debug=1&descent=0`;
+  const query = (ERA === 1 && !XR) ? '?reinterp=1&kiosk=0&debug=1&home=0' : `?reinterp=1&kiosk=0&era=${ERA}&debug=1&descent=0`;
   await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: 'networkidle2', timeout: 60000 });
   await page.waitForFunction(() => [...document.querySelectorAll('button')]
     .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
@@ -89,6 +90,7 @@ async function main() {
   if (ERA === 1) { await page.screenshot({ path: path.join(OUT, '00-door.png'), fullPage: true }); console.log('00-door.png  the front door'); }
   await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Log in')); if (b) b.click(); });
   await page.waitForFunction(() => window.__os && window.__camFree && window.__poses, { timeout: 40000 });
+  if (XR) { const { installXrMock } = await import('./harness/xr-mock.mjs'); await installXrMock(page, ERA); }
   // the frame's chrome is hidden for the fiction's frames and shown for the frame's own
   const hideChrome = await page.addStyleTag({ content: 'body > *:not(canvas):not(#reinterp-game-menu):not(#reinterp-helper):not(#reinterp-leave-page) { display: none !important; } #reinterp-menu-glyph { display: none !important; }' });
   void hideChrome;

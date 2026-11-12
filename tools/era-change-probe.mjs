@@ -58,7 +58,7 @@ async function open(c, xr) {
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 200)));
   if (REDUCED) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
   // home=0: no entrance (1997 would open on the stars); the era change's own legs stay on (descent=0 would turn them off)
-  await page.goto(`http://127.0.0.1:${PORT}/?reinterp=1&kiosk=0&era=${c.era}&debug=1&home=0`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.goto(`http://${flag('host', '127.0.0.1')}:${PORT}/?reinterp=1&kiosk=0&era=${c.era}&debug=1&home=0`, { waitUntil: 'domcontentloaded', timeout: 90000 });
   await page.waitForFunction(() => window.__os && window.__camPose && window.__app, { timeout: 90000 });
   await page.addStyleTag({ content: 'body > *:not(canvas) { display: none !important; }' });
   if (xr) {
