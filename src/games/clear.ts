@@ -49,6 +49,7 @@ import { gameMenuBus } from '../state/gameMenuBus';
 import { scaleFor, subscribeMix } from '../audio/mix';
 import { announceCue } from '../audio/tapeAudio';
 import D from '../../data/dialog/s2_clear.json';
+import { largeText } from '../desktop/theme/fonts';
 import type { DeviceGame, GameKey } from './types';
 
 const SENTENCE: string = D.sentence;
@@ -91,6 +92,28 @@ class Clip implements Painter {
 }
 const T = (g: Painter, s: string, x: number, y: number, col: string, sc = 1): void => { text57(g, s, Math.round(x), Math.round(y), col, sc); };
 const CT = (g: Painter, s: string, y: number, col: string, sc = 1, x0 = 0, w = W): void => T(g, s, x0 + Math.round((w - textW(s, sc)) / 2), y, col, sc);
+/**
+ * ⚑ S374 / J18-B1 — THE PHONE'S LARGER TEXT, IN A HEADSET ONLY (UiB job 18 Part B). Held in a headset a 1× line on this
+ * 240 × 320 glass was 0.35° from the eye, against a reading floor of 0.8° (tools/text-angle.mjs): grey, soft, unreadable.
+ * So while `largeText()` is on (a headset) nothing here is drawn at 1×: every 1× line is drawn at 2× — the HUD's label and
+ * meter, the chain's letters, the scores that float up, the Partner's line, the end card, the title and the explainer —
+ * laid out again where 2× does not fit (s2_clear.json `large`). The computer draws exactly what it drew before.
+ */
+const S1 = (): number => largeText() ? 2 : 1;
+/** the line `s` at scale `sc` in lines no wider than `maxW`: whole if it fits, else a sentence to a line, else word-wrapped */
+function wrap57(s: string, sc: number, maxW: number): string[] {
+  if (textW(s, sc) <= maxW) return [s];
+  const out: string[] = [];
+  for (const sent of s.match(/[^.!?]+[.!?]*/g)?.map((x) => x.trim()).filter(Boolean) ?? [s]) {
+    if (textW(sent, sc) <= maxW) { out.push(sent); continue; }
+    let cur = '';
+    for (const w of sent.split(' ')) { const t = cur ? `${cur} ${w}` : w; if (cur && textW(t, sc) > maxW) { out.push(cur); cur = w; } else cur = t; }
+    if (cur) out.push(cur);
+  }
+  return out;
+}
+/** the headset's shorter wording for a Partner line, by the line it stands in for (s2_clear.json `large.partner`) */
+const PARTNER_LARGE = new Map<string, string>(Object.entries(D.large.partner).map(([k, v]) => [(D.partner as Record<string, string>)[k], v]));
 /** ⚑ S362 / H39 — a small "tap" mark for the explainer: a finger-tip dot with two arcs */
 function tapMark(g: Painter, x: number, y: number): void {
   g.fillStyle = R.lcdDark;
@@ -730,7 +753,8 @@ export class Clear implements DeviceGame {
       const every = this.flashFx > 0.2 ? 2 : 4;
       for (let y = BY; y < BY + BH; y += every) P(g, BX, y, R.white, BW, 1);
     }
-    if (this.mode === 'end') {
+    if (this.mode === 'end' && largeText()) this.endLarge(g, blink);
+    else if (this.mode === 'end') {
       P(g, BX + 8, BY + 24, R.lcdDark, BW - 16, 100); P(g, BX + 10, BY + 26, R.frame, BW - 20, 96); P(g, BX + 12, BY + 28, R.lcdDark, BW - 24, 92);
       CT(g, this.endWhy || D.end.session, BY + 32, R.lcd, 2, BX, BW);
       const row = (label: string, val: string, y: number, col: string): void => { T(g, label, BX + 24, y + 4, R.lcdMid); T(g, val, BX + BW - 24 - textW(val, 2), y, col, 2); };
@@ -742,7 +766,21 @@ export class Clear implements DeviceGame {
     }
   }
 
+  /** S374 — the end card at 2×: taller, the labels at 2× beside their counts, the last line a sentence to a line */
+  private endLarge(g: Painter, blink: boolean): void {
+    const inner = BW - 24, lines = wrap57(D.end.line, 2, inner - 4), h = 132 + (lines.length - 1) * 16;
+    P(g, BX + 8, BY + 24, R.lcdDark, BW - 16, h + 8); P(g, BX + 10, BY + 26, R.frame, BW - 20, h + 4); P(g, BX + 12, BY + 28, R.lcdDark, inner, h);
+    CT(g, this.endWhy || D.end.session, BY + 32, R.lcd, 2, BX, BW);
+    const row = (label: string, val: string, y: number, col: string): void => { T(g, label, BX + 20, y, R.lcdMid, 2); T(g, val, BX + BW - 20 - textW(val, 2), y, col, 2); };
+    row(D.end.score, String(this.score).padStart(5, '0'), BY + 52, R.halo);
+    row(D.end.clear, this.pct() + '%', BY + 70, R.green);
+    row(D.end.broken, String(this.cleared).padStart(3, '0'), BY + 88, R.white);
+    lines.forEach((ln, i) => CT(g, ln, BY + 110 + i * 16, R.lcd, 2, BX, BW));
+    if (blink && this.endT > 0.8) CT(g, D.end.again, BY + 112 + lines.length * 16 + 2, R.lcdMid, 2, BX, BW);
+  }
+
   private header(g: Painter): void {
+    if (largeText()) { this.headerLarge(g); return; }
     P(g, 0, 0, R.lcdDark, W, 17); lamb(g, 5, 3);
     T(g, D.hud.label, 24, 5, R.lcd);
     T(g, String(this.score).padStart(5, '0'), 76, 2, R.halo, 2);
@@ -751,6 +789,22 @@ export class Clear implements DeviceGame {
     const p = this.pct();
     T(g, D.hud.meter, 8, 48, R.lcdMid); T(g, String(p).padStart(2, '0') + '%', 41, 48, R.green);
     const bx = 60, bw = W - 8 - bx;
+    P(g, bx - 1, 47, R.lcdMid, bw + 2, 9); P(g, bx, 48, R.frame, bw, 7); P(g, bx, 48, R.green, Math.round(bw * p / 100), 7); P(g, bx + Math.round(bw * 0.99), 45, R.halo, 1, 12);
+    if (p >= 99 && Math.floor(this.pclock * 3) % 2 === 0) P(g, bx + Math.round(bw * 0.99) - 2, 48, R.white, 2, 7);
+  }
+  /** S374 — the header at 2×: the meter's count moves up beside the score (2× has no room under the tray), and the meter
+   *  row under the tray is the bar alone, the full width of the glass */
+  private headerLarge(g: Painter): void {
+    P(g, 0, 0, R.lcdDark, W, 17); lamb(g, 5, 3);
+    // the meter's count, the score, the clock — at 2× there is no room for the game's name as well (the title, the end card
+    //   and the meter's own green say CLEAR); spaced so the three numbers do not run together
+    const p = this.pct(), pc = String(p).padStart(2, '0') + '%', sc = String(this.score).padStart(5, '0'), tt = mmss(this.tLeft);
+    T(g, pc, 26, 2, R.green, 2);
+    const tx = W - 8 - textW(tt, 2), l = 26 + textW(pc, 2);
+    T(g, sc, Math.round((l + tx - textW(sc, 2)) / 2), 2, R.halo, 2);
+    T(g, tt, tx, 2, R.lcdMid, 2);
+    this.tray(g);
+    const bx = 8, bw = W - 8 - bx;
     P(g, bx - 1, 47, R.lcdMid, bw + 2, 9); P(g, bx, 48, R.frame, bw, 7); P(g, bx, 48, R.green, Math.round(bw * p / 100), 7); P(g, bx + Math.round(bw * 0.99), 45, R.halo, 1, 12);
     if (p >= 99 && Math.floor(this.pclock * 3) % 2 === 0) P(g, bx + Math.round(bw * 0.99) - 2, 48, R.white, 2, 7);
   }
@@ -791,7 +845,7 @@ export class Clear implements DeviceGame {
       for (const [x, y, w] of stainBand(i)) c.fillRect(x, y, w, 1);
     }
     const e = G.tab[G.tab.length - 1];
-    P(c, e.x - 10, e.y - 2, R.lcdDark, 20, 4); T(c, D.hud.file, e.x - Math.round(textW(D.hud.file) / 2), e.y + 4, R.lcd);
+    P(c, e.x - 10, e.y - 2, R.lcdDark, 20, 4); T(c, D.hud.file, e.x - Math.round(textW(D.hud.file, S1()) / 2), e.y + 4, R.lcd, S1());
   }
   private drawBead(c: Painter, b: Bead): void {
     const p = posAt(b.s); if (b.s < -9) return;
@@ -800,15 +854,22 @@ export class Clear implements DeviceGame {
     let sc = 1; if (b.born > 0) sc = 1 + 0.14 * Math.sin(Math.min(1, b.born / 0.5) * Math.PI);
     const w = Math.round(SPR_S * sc), ox = Math.round(x - w / 2), oy = Math.round(y - w / 2);
     paintRuns(c, sprite(b.k, bk, w), ox, oy);
-    if (b.ch) glyph(c, b.ch, x + 0.5, y + 0.5, R.lcdDark, 1); else if (b.sep) P(c, x - 1, y - 1, R.lcdDark, 2, 2);
+    if (b.ch && largeText()) {
+      // S374 — at 2× the letter fills the ball and its strokes ran into the ball's dark rim: a one-pixel light edge keeps it
+      //   a letter (in the ball's own colour, lightened, which still shows through its counters and round it)
+      const edge = mix(COL[b.k], R.white, 0.6);                  // the ball's own colour, lightened: the letter's edge keeps the colour readable
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) glyph(c, b.ch, x + 0.5 + dx, y + 0.5 + dy, edge, 2);
+      glyph(c, b.ch, x + 0.5, y + 0.5, R.lcdDark, 2);
+    } else if (b.ch) glyph(c, b.ch, x + 0.5, y + 0.5, R.lcdDark, 1); else if (b.sep) P(c, x - 1, y - 1, R.lcdDark, 2, 2);
     if (b.lum > 0.55 && Math.floor((this.pclock * 3 + b.id) % 4) === 0) P(c, x - 5, y - 5, R.white, 2, 2);
     if (b.ch && this.mode === 'play' && this.needCount(b.ch) > 0) {   // the gold ring: this letter is still wanted (it pulses: two steps)
       const a = 0.55 + 0.45 * Math.sin(this.pclock * 6 + b.id), col = a > 0.6 ? R.halo : mix(R.lcdMid, R.halo, 0.55);
       const cx = ox + w / 2, cy = oy + w / 2;
       c.fillStyle = col; for (const [dx, dy] of ringPts(BR + 1, BR + 1.8)) c.fillRect(Math.round(cx) + dx, Math.round(cy) + dy, 1, 1);
     }
-    if (b.peel > 0.5) P(c, x - 6, y - 3, R.lcd, 12, 6);       // the label peeling (alpha 1 → 0): solid, then a checker
-    else if (b.peel > 0.2) { const X = Math.round(x - 6), Y = Math.round(y - 3); c.fillStyle = R.lcd; for (let j = 0; j < 6; j++) for (let i = (j & 1); i < 12; i += 2) c.fillRect(X + i, Y + j, 1, 1); }
+    const ph = largeText() ? 14 : 6;                             // S374: the label is a 2× letter's height in a headset
+    if (b.peel > 0.5) P(c, x - 6, y - ph / 2, R.lcd, 12, ph);   // the label peeling (alpha 1 → 0): solid, then a checker
+    else if (b.peel > 0.2) { const X = Math.round(x - 6), Y = Math.round(y - ph / 2); c.fillStyle = R.lcd; for (let j = 0; j < ph; j++) for (let i = (j & 1); i < 12; i += 2) c.fillRect(X + i, Y + j, 1, 1); }
   }
   private ballAt(c: Painter, x: number, y: number, k: number, sc = 1): void {
     const w = Math.round(SPR_S * sc); paintRuns(c, sprite(k, Math.round(this.bright() * 4), w), Math.round(x - w / 2), Math.round(y - w / 2));
@@ -846,7 +907,7 @@ export class Clear implements DeviceGame {
     this.barrel(c);
     if (this.mode === 'play' || this.mode === 'wave') { this.ballAt(c, CX + ax * 22, CY + ay * 22, this.cur, 1); this.ballAt(c, CX - ax * 3, CY - ay * 3, this.nxt, 0.55); }
     for (const sh of this.shots) this.ballAt(c, sh.x, sh.y, sh.k, 1);
-    for (const f of this.fallers) glyph(c, f.ch, f.x, f.y, mix(R.lcdDark, R.lcd, q(f.t / 1.3, 4)), 1);   // fading toward the board
+    for (const f of this.fallers) glyph(c, f.ch, f.x, f.y, mix(R.lcdDark, R.lcd, q(f.t / 1.3, 4)), S1());   // fading toward the board
     for (const b of this.bits) { if (b.life * 2.2 < 0.4) continue; P(c, b.x, b.y, b.col, 3, 3); P(c, b.x, b.y, R.white, 1, 1); }
     for (const r of this.rings) {                               // a ring opening where a ball broke: solid, then a checker, then sparse
       const a = 1 - r.t / 0.7, rad = Math.round(6 + r.t * 30), X = Math.round(r.x), Y = Math.round(r.y);
@@ -862,12 +923,13 @@ export class Clear implements DeviceGame {
       if (fade >= 1) continue;
       const col = mix(f.col, R.lcd, fade), sh = mix(R.lcdDark, R.lcd, fade);
       if (f.big) { const sx = Math.round((W - textW(f.s, 2)) / 2); T(g, f.s, sx + 1, y + 1, sh, 2); T(g, f.s, sx, y, col, 2); }
-      else { const sx = Math.round(f.x - textW(f.s, 1) / 2); T(g, f.s, sx + 1, y + 1, sh, 1); T(g, f.s, sx, y, col, 1); }
+      else { const k1 = S1(), sx = Math.round(Math.max(BX, Math.min(BX + BW - textW(f.s, k1), f.x - textW(f.s, k1) / 2))); T(g, f.s, sx + 1, y + 1, sh, k1); T(g, f.s, sx, y, col, k1); }
     }
     for (const [cx, cy] of [[BX - 3, BY - 3], [BX + BW + 1, BY - 3], [BX - 3, BY + BH + 1], [BX + BW + 1, BY + BH + 1]]) P(g, cx, cy, R.halo, 2, 2);
   }
   private partner(g: Painter): void {
-    P(g, 8, 272, R.lcdDark, W - 16, 16); P(g, 9, 273, R.lcd, W - 18, 14);
+    const tall = largeText() ? 4 : 0;                            // S374: a 2× line needs the box 4 px taller (the gap above the keys)
+    P(g, 8, 272, R.lcdDark, W - 16, 16 + tall); P(g, 9, 273, R.lcd, W - 18, 14 + tall);
     paintRuns(g, geom().head, 0, 0);
     g.fillStyle = R.halo;                                        // its halo (an ellipse, 3.2 × 1.2)
     const seen = new Set<string>();
@@ -877,7 +939,11 @@ export class Clear implements DeviceGame {
       g.fillStyle = mix(R.lcd, R.halo, a);
       for (const [dx, dy] of ringPts(7.6 + i * 3, 8.4 + i * 3, -0.9, 0.9)) g.fillRect(18 + dx, 280 + dy, 1, 1);
     }
-    T(g, this.msg.text, 35, 277, mix(R.lcd, R.lcdDark, q(this.msg.t / 0.4, 4)));
+    const ink = mix(R.lcd, R.lcdDark, q(this.msg.t / 0.4, 4));
+    if (!largeText()) { T(g, this.msg.text, 35, 277, ink); return; }
+    // S374 — at 2× the Partner's line is its headset wording, or shown a sentence (or a line) at a time, 1.6 s each
+    const pages = wrap57(PARTNER_LARGE.get(this.msg.text) ?? this.msg.text, 2, W - 9 - 35);
+    T(g, pages[Math.floor(this.msg.t / 1.6) % pages.length], 35, 275, ink, 2);
   }
   private footer(g: Painter): void {
     this.partner(g);
@@ -927,6 +993,12 @@ export class Clear implements DeviceGame {
       lines.forEach((ln, j) => T(g, ln, 50, y + 9 + j * 18, R.lcdDark, 2));
     });
     const fy = y0 + steps.length * rowH + 2;
+    if (largeText()) {                                           // S374: the keys at 2×, in two lines, and the start under them
+      const keys = wrap57(D.how.keys, 2, W - 12);
+      keys.forEach((ln, i) => CT(g, ln, fy - 4 + i * 16, R.lcdDark, 2));
+      if (blink) CT(g, D.how.start, fy - 4 + keys.length * 16 + 2, R.lcdDark, 2);
+      return;
+    }
     CT(g, D.how.keys, fy, R.lcdDark, 1);
     if (blink) CT(g, D.how.start, fy + 16, R.lcdDark, 2);
   }
@@ -974,15 +1046,24 @@ export class Clear implements DeviceGame {
         else { const sx = tx + slot * SLOT_P; P(g, sx, 82, R.lcdMid, SLOT_W, SLOT_H); slotText(g, ch, sx, 82, R.halo); }
       }
     });
-    CT(g, D.title.howTo1, 156, R.lcdDark); CT(g, D.title.howTo2, 166, R.lcdDark);
-    CT(g, D.title.aim, 192, R.lcdMid);
-    if (blink) CT(g, D.title.start, 208, R.lcdDark, 2);
-    CT(g, D.title.keys1, 232, R.lcdMid); CT(g, D.title.keys2, 242, R.lcdMid);
+    const big = largeText();
+    if (big) {                                                   // S374: at 2×, in its headset wording (s2_clear.json large.title)
+      const L2 = D.large.title;
+      CT(g, L2.howTo1, 152, R.lcdDark, 2); CT(g, L2.howTo2, 168, R.lcdDark, 2);
+      CT(g, L2.aim, 190, R.lcdMid, 2);
+      if (blink) CT(g, D.title.start, 210, R.lcdDark, 2);
+      CT(g, L2.keys, 230, R.lcdMid, 2);
+    } else {
+      CT(g, D.title.howTo1, 156, R.lcdDark); CT(g, D.title.howTo2, 166, R.lcdDark);
+      CT(g, D.title.aim, 192, R.lcdMid);
+      if (blink) CT(g, D.title.start, 208, R.lcdDark, 2);
+      CT(g, D.title.keys1, 232, R.lcdMid); CT(g, D.title.keys2, 242, R.lcdMid);
+    }
     // what the groove has kept so far, as a strip
-    const sw = 6, sx = Math.round((W - sw * 30) / 2), sy = 262;
+    const sw = 6, sx = Math.round((W - sw * 30) / 2), sy = big ? 254 : 262;
     P(g, sx - 2, sy - 2, R.lcdDark, sw * 30 + 4, sw + 4); P(g, sx, sy, R.lcd, sw * 30, sw);
     for (let i = 0; i < 30; i++) { const s = this.stainS[Math.floor(i * this.stainS.length / 30)]; if (s) P(g, sx + i * sw, sy, mix(R.lcd, COL[s.k], Math.min(0.95, 0.2 + s.n * 0.08)), sw, sw); }
-    if (this.clearedAll) CT(g, D.title.brokenSoFar + this.clearedAll, 282, R.lcdMid);
-    CT(g, D.title.promo, 306, R.lcdMid);
+    if (this.clearedAll) CT(g, D.title.brokenSoFar + this.clearedAll, big ? 270 : 282, R.lcdMid, S1());
+    CT(g, D.title.promo, big ? 300 : 306, R.lcdMid, S1());
   }
 }

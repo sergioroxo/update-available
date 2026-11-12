@@ -75,18 +75,52 @@ let current: FaceEra = 'e1';
 export function setFaceEra(era: FaceEra): void { current = era; }
 export function faceEra(): FaceEra { return current; }
 
-/** the CSS font string for `size` px in the current era */
+/**
+ * ⚑ S374 / J18-B1 — LARGE TEXT, IN THE HEADSET ONLY (UIB_JOB_18 Part B; IDEAS_XR_TEXT_2026-11-12 ★1). Read from the
+ * headset seat, the monitors' smallest lines were 0.65–0.72° against a reading floor of 0.8° (tools/text-angle.mjs), and
+ * the browser look-modes read them fine. So in a headset each era turns on ITS OWN large-text setting, the way a reader
+ * of the time would have: Windows 95/98's "Large Fonts" and XP's "Large" font size (1997, 2003), iOS "Larger Text"
+ * (2016's phone and desk), 2026's zoom. Nothing shrinks; anything under the era's minimum is drawn at the minimum.
+ *
+ * The minimums are the smallest size that clears 0.8° on that era's glass from its seat, WITH the headset's bigger
+ * glass (S374 ★3: every monitor ×1.2 about its glass centre): 1997/2003 0.48 m at 0.56 m → 0.096° a pixel, so 9 px;
+ * 2016 0.77 m at 0.79 m (676 px across) → 0.083°, so 10 px; 2026 0.64 m at 0.66 m (710 px) → 0.078°, so 11 px. Body
+ * text (10–12 px) lands at 0.86–1.05°. ⚑ If the glass goes back to its browser size these must rise by 1–2 px.
+ * The browser keeps today's sizes: `largeText()` is false there, so nothing on the computer moves.
+ */
+let headsetNow: () => boolean = () => false;
+/** app.ts says how to ask whether a headset is on (fonts.ts itself stays free of the engine) */
+export function setLargeTextProbe(probe: () => boolean): void { headsetNow = probe; }
+/** is the era's large-text setting on — in a headset, yes; anywhere else, no */
+export function largeText(): boolean { return headsetNow(); }
+/** the smallest size each era draws in the headset (see above) */
+export const LARGE_TEXT_MIN: Record<FaceEra, number> = { e1: 9, e2: 9, e3: 10, e4: 11, close: 0 };
+/** the scale the current drawing is under, against the glass (`withTextScale`) */
+let textScale = 1;
+/** ⚑ S374 — a window drawn under a scale (2026's browser and Kettle are each drawn at their own logical size and scaled
+ *  into the monitor, ×0.75–1.5): the minimum is in the GLASS's pixels, so inside such a window it is divided by the scale */
+export function withTextScale<T>(scale: number, draw: () => T): T {
+  const was = textScale; textScale = was * (scale > 0 ? scale : 1);
+  try { return draw(); } finally { textScale = was; }
+}
+/** `size`, raised to the era's minimum when the large-text setting is on */
+export function textPx(size: number, era: FaceEra = current): number {
+  return largeText() ? Math.max(size, Math.round(LARGE_TEXT_MIN[era] / textScale * 100) / 100) : size;
+}
+
+/** the CSS font string for `size` px in the current era (raised to the headset's minimum when large text is on) */
 export function fontFor(size: number, era: FaceEra = current): string {
   const f = FACES[era];
-  const weight = size <= f.boldBelow ? `${f.weight ?? 'bold'} ` : '';
-  return `${weight}${size}px ${f.family}`;
+  const s = textPx(size, era);
+  const weight = s <= f.boldBelow ? `${f.weight ?? 'bold'} ` : '';
+  return `${weight}${s}px ${f.family}`;
 }
 
 /** the reading sans for prose surfaces (the Close's panels, Era 4 pages that want one) */
 export function sansFor(era: FaceEra): string { return era === 'e4' ? SANS_2026 : SANS_2016; }
 
 /** ⚑ S321 — the system's own lines in 2026 (addresses, filings, timestamps, the clinic's reference): monospace, kept
- *  so the machine still sounds like a machine beside the bolder UI face */
-export function monoFor(size: number): string { return `${size}px ${MONO_2016}`; }
-/** ⚑ S321 — a newspaper's masthead and headline (the simulated articles): the platform's serif */
-export function newsFor(size: number, bold = true): string { return `${bold ? '700 ' : ''}${size}px Georgia, "Times New Roman", serif`; }
+ *  so the machine still sounds like a machine beside the bolder UI face. S374: 2026's floor in the headset. */
+export function monoFor(size: number): string { return `${textPx(size, 'e4')}px ${MONO_2016}`; }
+/** ⚑ S321 — a newspaper's masthead and headline (the simulated articles): the platform's serif. S374: 2026's floor. */
+export function newsFor(size: number, bold = true): string { return `${bold ? '700 ' : ''}${textPx(size, 'e4')}px Georgia, "Times New Roman", serif`; }

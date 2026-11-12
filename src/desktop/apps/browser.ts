@@ -30,7 +30,7 @@ import type { LambyGuide } from '../../narrative/lambyGuide';
  * chip; her one reply to Mum is a draft she never sent.
  */
 import { setFont, px, wrapText } from '../theme/chrome';
-import { monoFor, newsFor } from '../theme/fonts';
+import { monoFor, newsFor, withTextScale } from '../theme/fonts';
 import { playOnce, anythingPlaying } from '../../audio/tapeAudio';
 import { Screensaver, SAVER_SECONDS } from './screensaver';
 import SAVERS from '../../../data/strings/screensavers.json';
@@ -1211,7 +1211,7 @@ export class E4Browser {
     this.windowTitle(ctx, L.b, V.oneScreen.browserTitle, 'win-browser', pressable);
     ctx.save(); ctx.beginPath(); ctx.rect(L.b.cx, L.b.cy, L.b.cw, L.b.ch); ctx.clip();
     ctx.translate(L.b.cx, L.b.cy); ctx.scale(L.b.s, L.b.s);
-    this.drawPage(ctx, L.b.lw, L.b.lh, pressable);
+    withTextScale(L.b.s, () => this.drawPage(ctx, L.b.lw, L.b.lh, pressable));   // S374: the headset's minimum, in the glass's pixels
     ctx.restore();
     // ⚑ S366 / J15-03 — the game enlarged over the browser's area covers its page: nothing under it takes a press
     if (!this.gameBigOn) for (const h of this.pageTargets) this.hits.push(toMonitor(h, L.b));
@@ -1220,7 +1220,7 @@ export class E4Browser {
     this.windowTitle(ctx, L.k, V.oneScreen.kettleTitle, 'win-kettle', pressable);
     ctx.save(); ctx.beginPath(); ctx.rect(L.k.cx, L.k.cy, L.k.cw, L.k.ch); ctx.clip();
     ctx.translate(L.k.cx, L.k.cy); ctx.scale(L.k.s, L.k.s);
-    const k = this.messenger.draw(ctx, L.k.lw, L.k.lh);
+    const k = withTextScale(L.k.s, () => this.messenger.draw(ctx, L.k.lw, L.k.lh));
     ctx.restore();
     const kettleLive = kettlePressable && (this.phase === 'open' ? !this.programDone : e4Has('terminated'));
     if (kettleLive) for (const h of k) this.hits.push(toMonitor(h, L.k));

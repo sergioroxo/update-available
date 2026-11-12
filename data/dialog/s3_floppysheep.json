@@ -33,9 +33,12 @@
   "intro": {
     "title": "FloppySheep!",
     "voice": "Hello, shepherd! The meadow is full of little lambs who haven't heard the good news yet. Call every one you meet and keep them close until the song is over.",
+    "voiceLarge": "Hello, shepherd! Little lambs out there haven't heard the good news yet. Call every one you meet and keep them close!",
+    "_docLarge": "⚑ S374 — voiceLarge/howLarge: the same welcome and the same three moves, shorter, for the headset's large-text card (floppysheep.ts introLarge); the browser keeps voice/how.",
     "signed": "- Lamby",
     "howTitle": "HOW TO PLAY",
     "how": "Tap or click to hop. Touch a lamb to call it. Call them in a row for OUTREACH!",
+    "howLarge": "Tap to hop. Touch a lamb to call it. Call a row of them for OUTREACH!",
     "go": "let's go!",
     "length": "the level lasts as long as the song · {t}"
   },

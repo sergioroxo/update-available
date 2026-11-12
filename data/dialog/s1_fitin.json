@@ -21,5 +21,13 @@
   "cheer": { "clean": "CLEAN!", "top": "TO THE TOP!" },
   "pause": { "title": "PAUSE", "resume": "START" },
   "end": { "title": "GAME OVER", "next": "NEXT ", "press": "PRESS A" },
-  "filing": "FIT IN played — the odd pieces stayed"
+  "filing": "FIT IN played — the odd pieces stayed",
+  "large": {
+    "_doc": "⚑ S374 / J18-B1 — the headset's large-text screens (src/games/fitIn.ts, `largeText()`): every 5×7 line at double size, so the long lines above are broken into pairs that fit the 160-pixel glass. The title card pages its middle band every two seconds (the publisher, then the two rules), as a cartridge's attract mode did, and its footer pages the counts and the licence. The browser keeps the single-size screens and the strings above.",
+    "start": "PRESS A",
+    "band": [["TAP DROPS", "THE BLOCK."], ["ONLY WHAT", "FITS STAYS."], ["A FELLOWSHIP", "GAME"]],
+    "footer": ["UNLICENSED", "NOT FOR RESALE"],
+    "hint": [["TAP DROPS", "THE BLOCK"], ["ONLY WHAT", "FITS STAYS"]],
+    "next": "NEXT"
+  }
 }

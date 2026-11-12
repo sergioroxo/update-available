@@ -1,14 +1,14 @@
 import mirrorCopy from '../../../data/strings/e3_mirror.json';
 /** 2016 documents and publication previews. Drawing only; the owner handles every press and ledger event. */
 import { px, wrapText } from '../theme/chrome';
-import { sansFor } from '../theme/fonts';
+import { sansFor, textPx } from '../theme/fonts';
 import { ERA3 as P, button } from '../theme/era3';
 import { drawTestimonyFilm } from '../theme/renataFilm';
 import D from '../../../data/dialog/s3_vera.json';
 export type SurfaceRect = { x: number; y: number; w: number; h: number };
 export type SurfaceHit = SurfaceRect & { id: string };
 export function studioFont(ctx: CanvasRenderingContext2D, size: number, bold = false): void {
-  ctx.font = `${bold ? '600 ' : ''}${size}px ${sansFor('e3')}`; ctx.textBaseline = 'top';
+  ctx.font = `${bold ? '600 ' : ''}${textPx(size, 'e3')}px ${sansFor('e3')}`; ctx.textBaseline = 'top';   // S374: 2016's floor in a headset
 }
 function text(ctx: CanvasRenderingContext2D, value: string, x: number, y: number, width: number, size = 12, lead = size + 4, color: string = P.ink): number {
   studioFont(ctx, size); ctx.fillStyle = color;

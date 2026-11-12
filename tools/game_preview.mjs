@@ -6,6 +6,7 @@
  *     node tools/game_preview.mjs [tag] [scale] --game clear  # → out/games/clear-<tag>-{title,play,pause,end}.png (S222; default ×3)
  *     node tools/game_preview.mjs [tag] [scale] --game matchmade  # → out/games/matchmade-<tag>-{title,play,counter,card99,original}.png (S227; default ×1 — it is 960 × 540)
  *     node tools/game_preview.mjs [tag] [scale] --game all    # all three
+ *     … --large                                               # S374: as in a headset (the large-text setting on) → <id>-<tag>-large-<screen>.png
  *
  * ⚑ WHY (S221). The games draw only with fillStyle + fillRect (src/games/types.ts), so they paint into a buffer
  * exactly as calendar_preview.mjs paints the calendar pages. A look at every screen of a 160 × 144 game costs a
@@ -20,6 +21,9 @@ import { join } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const argv = process.argv.slice(2);
+// ⚑ S374: `--large` draws each game as it is in a headset — the era's large-text setting on (fonts.ts `largeText`)
+const LARGE = argv.includes('--large');
+if (LARGE) argv.splice(argv.indexOf('--large'), 1);
 const gi = argv.indexOf('--game');
 const GAME = gi >= 0 ? argv.splice(gi, 2)[1] : 'fitin';
 const TAG = argv[0] ?? 'now';
@@ -30,9 +34,13 @@ globalThis.window.matchMedia ??= () => ({ matches: false, addEventListener() {},
 globalThis.window.addEventListener ??= () => {};
 /** a game module, bundled for node (the games import their JSON and the theme; nothing in them needs a DOM) */
 async function load(file) {
-  const out = await build({ entryPoints: [join(ROOT, file)], bundle: true, write: false, format: 'esm', platform: 'node', loader: { '.json': 'json' },
+  // the game and the fonts module it reads `largeText` from, in ONE bundle, so the probe set here is the one it reads
+  const entry = `export * from ${JSON.stringify(join(ROOT, file))}; export { setLargeTextProbe } from ${JSON.stringify(join(ROOT, 'src/desktop/theme/fonts.ts'))};`;
+  const out = await build({ stdin: { contents: entry, resolveDir: ROOT, loader: 'ts' }, bundle: true, write: false, format: 'esm', platform: 'node', loader: { '.json': 'json' },
     define: { __FESTIVAL__: 'false', __BUILD_TAG__: '"preview"', __APP_VERSION__: '"preview"', __BUILD_COMMIT__: '"preview"', __BUILD_DATE__: '"preview"' } });
-  return import('data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64'));
+  const mod = await import('data:text/javascript;base64,' + Buffer.from(out.outputFiles[0].text).toString('base64'));
+  mod.setLargeTextProbe(() => LARGE);
+  return mod;
 }
 
 function painter(w, h) {
@@ -58,7 +66,7 @@ function png(buf, w, h, s) {
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ih), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
 const dir = join(ROOT, 'out/games'); mkdirSync(dir, { recursive: true });
-const snapper = (g, id, scale) => (name) => { const p = painter(g.w, g.h); g.draw(p); writeFileSync(join(dir, `${id}-${TAG}-${name}.png`), png(p.buf, g.w, g.h, scale)); };
+const snapper = (g, id, scale) => (name) => { const p = painter(g.w, g.h); g.draw(p); writeFileSync(join(dir, `${id}-${TAG}${LARGE ? '-large' : ''}-${name}.png`), png(p.buf, g.w, g.h, scale)); };
 
 async function fitIn() {
   const { FitIn } = await load('src/games/fitIn.ts');

@@ -45,7 +45,7 @@ import { reducedMotion } from '../../state/motion';
  */
 import { px } from '../theme/chrome';
 import { ERA3, FLOPPY, FLOPPY_BOMB as BOMB, FLOPPY_SPEC as SPC } from '../theme/era3';
-import { sansFor } from '../theme/fonts';
+import { sansFor, largeText } from '../theme/fonts';
 import g from '../../../data/dialog/s3_floppysheep.json';
 import { playOnce, stopClip } from '../../audio/tapeAudio';
 import { gameMenuBus } from '../../state/gameMenuBus';
@@ -557,13 +557,21 @@ function makeGame(bump: () => void) {
   //   lettering (header, footer, lyrics, intro, outro, bubbles, toast) now goes through `FS`/`tu`: small sizes are raised
   //   (10 → 13, 12 → 15, 9 → 12 …), and a line that would run past the screen is shrunk to fit rather than cut. The
   //   game's world lettering (signs, boards, banners) is untouched.
-  const FS = (n: number): number => n <= 7 ? 11 : n <= 9.5 ? 12 : n <= 10 ? 13 : n <= 11.5 ? 14 : n <= 12 ? 15 : n <= 13 ? 16 : n <= 15 ? 18 : n <= 17 ? 19 : n;
+  // ⚑ S374 / J18-B1 (UIB_JOB_18 Part B; IDEAS_XR_TEXT ★1) — and in a HEADSET, 2016's "Larger Text": the game is seen at 0.55
+  //   workstation px a unit (×0.6 into the phone, ×0.92 into the Handset Window), 0.046° a unit from the seat, so the S362
+  //   sizes (11–19) were 0.5–0.87°. With large text on, the UI's lettering is never under XL (19 units, 0.87°) and a line
+  //   that must shrink to fit stops at XL_FIT (18, 0.82°); the footer and the introduction make room for it (`big` below).
+  //   The game's WORLD lettering (signs, sashes, the spectacle's shouts) is scenery at game scale and stays as drawn.
+  const XL = 19, XL_FIT = 18;
+  const FS = (n: number): number => { const z = n <= 7 ? 11 : n <= 9.5 ? 12 : n <= 10 ? 13 : n <= 11.5 ? 14 : n <= 12 ? 15 : n <= 13 ? 16 : n <= 15 ? 18 : n <= 17 ? 19 : n; return largeText() ? Math.max(z, XL) : z; };
   function tu(s: string, x: number, y: number, size: number, col: string, align: CanvasTextAlign = 'left', w = 600, lim = 0): void {
     let z = FS(size); ctx.font = `${w} ${z}px ${FONT}`;
     const room = lim || (align === 'center' ? Math.min(x, W - x) * 2 - 12 : align === 'right' ? x - 8 : W - x - 8);
-    const mw = ctx.measureText(s).width; if (mw > room) { z = Math.max(9, Math.floor(z * room / mw * 2) / 2); }
+    const mw = ctx.measureText(s).width; if (mw > room) { z = Math.max(largeText() ? XL_FIT : 9, Math.floor(z * room / mw * 2) / 2); }
     tx(s, x, y, z, col, align, w);
   }
+  /** ⚑ S374 — a review hook (tools/text-angle.mjs installs it; nothing else does): which lines are the WORLD's lettering */
+  const scenery = (on: boolean): void => { (globalThis as { __txtScenery?: (on: boolean) => void }).__txtScenery?.(on); };
   function wrapU(s: string, maxW: number, size: number, w?: number): string[] { return wrap(s, maxW, FS(size), w); }
   const A = (a: number, fn: () => void): void => { ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a)); fn(); ctx.restore(); };
   const ADD = (fn: () => void): void => { ctx.save(); ctx.globalCompositeOperation = 'lighter'; fn(); ctx.restore(); };
@@ -902,7 +910,7 @@ function makeGame(bump: () => void) {
     }
     if (litNow(z)) { const k = s.levelT - (z.lt as number); A(Math.min(1, k / 0.15) * Math.min(1, (2.4 - k) / 0.6) * 0.8, () => { rect(x, y1 - 3, w, 3, FLOPPY.sun); }); }
   }
-  function bubbleAt(x: number, y: number, s: string): void { ctx.font = `700 ${FS(10)}px ${FONT}`; const w = ctx.measureText(s).width + 14; const bx = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x)); rr(bx - w / 2, y - 9, w, 18, 9, ERA3.white); rr(bx - w / 2 + 0.5, y - 8.5, w - 1, 17, 9, null, ERA3.grey, 1); poly([[x - 4, y + 8], [x + 4, y + 8], [x, y + 14]], ERA3.white); tu(s, bx, y, 10, FLOPPY.ink, 'center', 700); }
+  function bubbleAt(x: number, y: number, s: string): void { ctx.font = `700 ${FS(10)}px ${FONT}`; const w = ctx.measureText(s).width + 14; const bx = Math.max(w / 2 + 4, Math.min(W - w / 2 - 4, x)); const bh = largeText() ? 12 : 9; rr(bx - w / 2, y - bh, w, bh * 2, bh, ERA3.white); rr(bx - w / 2 + 0.5, y - bh + 0.5, w - 1, bh * 2 - 1, bh, null, ERA3.grey, 1); poly([[x - 4, y + 8], [x + 4, y + 8], [x, y + 14]], ERA3.white); tu(s, bx, y, 10, FLOPPY.ink, 'center', 700); }
   function droneDraw(f: Foe): void {
     const s = S, x = f.x, y = f.y, ph = s.t * 30;
     const charging = !f.dead && f.x < W - 10 && f.cy > 0 && f.cy < 0.9;
@@ -1021,27 +1029,40 @@ function makeGame(bump: () => void) {
     hitRects.push({ x: 0, y: 0, w: 26, h: HEADER_H, id: 'back' });
     // the clock is the song: time left, and how far through it you are
     const L = levelLen(), left = L - s.levelT;
-    tu(g.header.called, 30, 10, 10, ERA3.grey, 'left', 600); tu(String(s.called), 30, 27, 15, FLOPPY.ink, 'left', 800);
-    tu(mmss(left), W / 2, 18, 17, FLOPPY.ink, 'center', 800);
-    tu(g.header.withYou, W - 14, 10, 10, ERA3.grey, 'right', 600); tu(String(s.flock.length), W - 14, 27, 15, FLOPPY.ink, 'right', 800);
+    if (largeText()) {
+      // S374 — with large text the label and its count share one line ("called 3 · 4:35 · with you 2"): two 19-unit rows do
+      //   not fit the 36-unit bar
+      ctx.font = `600 ${XL}px ${FONT}`; const lw = ctx.measureText(g.header.called + ' ').width;
+      const n = String(s.flock.length); ctx.font = `800 ${XL}px ${FONT}`; const nw = ctx.measureText(' ' + n).width;
+      tu(g.header.called, 30, 19, 10, ERA3.grey, 'left', 600); tu(String(s.called), 30 + lw, 19, 15, FLOPPY.ink, 'left', 800);
+      tu(mmss(left), W / 2, 19, 17, FLOPPY.ink, 'center', 800);
+      tu(g.header.withYou, W - 14 - nw, 19, 10, ERA3.grey, 'right', 600); tu(n, W - 14, 19, 15, FLOPPY.ink, 'right', 800);
+    } else {
+      tu(g.header.called, 30, 10, 10, ERA3.grey, 'left', 600); tu(String(s.called), 30, 27, 15, FLOPPY.ink, 'left', 800);
+      tu(mmss(left), W / 2, 18, 17, FLOPPY.ink, 'center', 800);
+      tu(g.header.withYou, W - 14, 10, 10, ERA3.grey, 'right', 600); tu(String(s.flock.length), W - 14, 27, 15, FLOPPY.ink, 'right', 800);
+    }
     rect(0, HEADER_H, W, 4, FLOPPY.skyLow); rect(0, HEADER_H, W * Math.min(1, s.levelT / L), 4, ERA3.good);
     for (let i = 1; i < SECTIONS.length; i++) rect(Math.round(W * SECTIONS[i].t0 / L) - 0.5, HEADER_H, 1, 4, ERA3.white);
   }
   function footer(): void {
     const s = S; rect(0, GROUND_Y + GRASS_H, W, H - (GROUND_Y + GRASS_H), ERA3.white);
     let hint: string; if (s.mode === 'idle') hint = g.hint.start; else if (s.mode === 'done') hint = g.hint.done; else if (!s.onGround && s.flapCount < FLAPS.length && s.cloverT <= 0) hint = g.hint.air; else if (s.cloverT > 0) hint = g.hint.clover; else hint = g.push[Math.floor(s.levelT / 14) % g.push.length];
-    tu(hint, W / 2, FOOT_Y + 2, 12, FLOPPY.ink, 'center', 600); tu(g.publisher, W / 2, FOOT_Y + 15, 9, ERA3.grey, 'center', 500);
-    const NX = 12, NY = FOOT_Y + 22, playing = songPlaying();
+    // S374: with large text the footer's rows are spaced for 19-unit letters (hint, the publisher, then the controls and the
+    //   song's words); in the introduction the card covers the first two, and says both itself
+    const big = largeText();
+    if (!(big && s.mode === 'idle')) { tu(hint, W / 2, big ? FOOT_Y - 2 : FOOT_Y + 2, 12, FLOPPY.ink, 'center', 600); tu(g.publisher, W / 2, big ? FOOT_Y + 16 : FOOT_Y + 15, 9, ERA3.grey, 'center', 500); }
+    const NX = 12, NY = big ? FOOT_Y + 28 : FOOT_Y + 22, playing = songPlaying();
     rr(NX, NY, 34, 34, 17, playing ? FLOPPY.hillFar : ERA3.white, FLOPPY.hillDk, 1.5);
     rect(NX + 19, NY + 8, 2, 14, FLOPPY.ink); rect(NX + 19, NY + 8, 6, 2, FLOPPY.ink); circ(NX + 15, NY + 23, 4.4, FLOPPY.ink);
     if (songOff || songState === 'missing') { ctx.strokeStyle = FLOPPY.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(NX + 5, NY + 29); ctx.lineTo(NX + 29, NY + 5); ctx.stroke(); }
     hitRects.push({ x: NX - 4, y: NY - 4, w: 42, h: 42, id: 'song' });
     const PX = W - 46; rr(PX, NY, 34, 34, 17, ERA3.white, FLOPPY.hillDk, 1.5); if (s.paused) poly([[PX + 13, NY + 9], [PX + 13, NY + 25], [PX + 26, NY + 17]], FLOPPY.ink); else { rect(PX + 11, NY + 10, 4, 14, FLOPPY.ink); rect(PX + 19, NY + 10, 4, 14, FLOPPY.ink); }
     hitRects.push({ x: PX - 4, y: NY - 4, w: 42, h: 42, id: 'pause' });
-    lyricsDraw(54, FOOT_Y + 24, W - 106);
+    lyricsDraw(54, big ? NY + 2 : FOOT_Y + 24, W - 106);
     const bw = W - 60, bh = 38, bx = 30, by = H - bh - 16, down = s.held && !s.onGround;
     // ⚑ the calm switch (the prototype's F and its "spectacle" button, outside its canvas): here, in the footer's spare height
-    const cl = SPEC.full ? g.calm.full : g.calm.calm; ctx.font = `600 ${FS(11)}px ${FONT}`; const cw = Math.ceil(ctx.measureText(cl).width) + 28, cx0 = Math.round(W / 2 - cw / 2), cy0 = Math.round((NY + 34 + by) / 2 - 11);
+    const cl = SPEC.full ? g.calm.full : g.calm.calm; ctx.font = `600 ${FS(11)}px ${FONT}`; const cw = Math.ceil(ctx.measureText(cl).width) + 28, cx0 = Math.round(W / 2 - cw / 2), cy0 = big ? by - 30 : Math.round((NY + 34 + by) / 2 - 11);
     rr(cx0, cy0, cw, 22, 11, SPEC.full ? ERA3.white : FLOPPY.skyLow, FLOPPY.hillDk, 1.2); tu(cl, W / 2 + 6, cy0 + 11, 11, FLOPPY.ink, 'center', 600);
     starburst(cx0 + 12, cy0 + 11, 5, 2.4, 5, 0, SPEC.full ? BOMB.gold : ERA3.grey, 1);
     hitRects.push({ x: cx0 - 4, y: cy0 - 4, w: cw + 8, h: 30, id: 'calm' });
@@ -1050,6 +1071,7 @@ function makeGame(bump: () => void) {
   }
   // the introduction: the platform's cheerful voice, and one plain line on how to play
   function intro(): void {
+    if (largeText()) { introLarge(); return; }
     A(0.45, () => rect(0, HEADER_H + 4, W, GROUND_Y + GRASS_H - HEADER_H - 4, ERA3.ink));
     ctx.save(); ctx.beginPath(); ctx.rect(0, HEADER_H + 4, W, GROUND_Y + GRASS_H - HEADER_H - 4); ctx.clip(); starburst(W / 2, 220, 330, 190, 18, S.t * 0.25, BOMB.gold, 0.2); starburst(W / 2, 220, 290, 170, 18, -S.t * 0.2, BOMB.hot, 0.16); ctx.restore();
     const X = 20, Y = 44, PW = W - 40, PH = 352; rr(X, Y + 4, PW, PH, 20, FLOPPY.hillDk); rr(X, Y, PW, PH, 20, ERA3.white); rect(X + 16, Y, PW - 32, 4, FLOPPY.hillFar);
@@ -1065,8 +1087,36 @@ function makeGame(bump: () => void) {
     bulbRing(X - 6, Y - 6, PW + 12, PH + 12, 16, 0, true);
     tu(g.intro.length.replace('{t}', mmss(levelLen())), W / 2, Y + PH + 14, 10, ERA3.white, 'center', 600);
   }
+  /**
+   * ⚑ S374 / J18-B1 — the introduction with large text on (a headset): the same card, the same order, spaced for 19-unit
+   * letters. At that size the S362 lines run to ~10 rows, so the card says it shorter (`intro.voiceLarge`, `intro.howLarge`:
+   * the same welcome and the same three moves), grows to fit them, and comes down over the footer's hint and publisher,
+   * whose words it carries itself; the song and pause buttons and the calm switch stay clear below it.
+   */
+  function introLarge(): void {
+    const X = 20, Y = 44, PW = W - 40, bottom = FOOT_Y + 22;   // never past the footer's controls (they start at FOOT_Y + 28)
+    const vl = wrapU(g.intro.voiceLarge, PW - 36, 13, 600), hl = wrapU(g.intro.howLarge, PW - 48, 11.5, 700);
+    const vStep = XL + 2, hStep = XL + 1;
+    const vy = Y + 80, sy = vy + vl.length * vStep + 2, hy = sy + 14, hh = 30 + hl.length * hStep;
+    const ll = wrapU(g.intro.length.replace('{t}', mmss(levelLen())), PW - 28, 10, 600);
+    const ly = hy + hh + 14, by = ly + ll.length * XL + 4, PH = Math.min(bottom - Y, by + 30 - Y);
+    A(0.45, () => rect(0, HEADER_H + 4, W, Y + PH + 8 - HEADER_H - 4, ERA3.ink));
+    ctx.save(); ctx.beginPath(); ctx.rect(0, HEADER_H + 4, W, Y + PH + 8 - HEADER_H - 4); ctx.clip(); starburst(W / 2, 220, 330, 190, 18, S.t * 0.25, BOMB.gold, 0.2); starburst(W / 2, 220, 290, 170, 18, -S.t * 0.2, BOMB.hot, 0.16); ctx.restore();
+    rr(X, Y + 4, PW, PH, 20, FLOPPY.hillDk); rr(X, Y, PW, PH, 20, ERA3.white); rect(X + 16, Y, PW - 32, 4, FLOPPY.hillFar);
+    circ(X + 40, Y + 38, 27, FLOPPY.skyLow); lambSprite(X + 40, Y + 54, 1.5, { phase: S.t * 6 });
+    garish(g.intro.title, X + 156, Y + 32, 24, { maxW: 160, rot: -0.03 }); tu(g.publisher, X + 76, Y + 60, 11, ERA3.grey, 'left', 600);
+    vl.forEach((ln, i) => tu(ln, X + 18, vy + i * vStep, 13, FLOPPY.ink, 'left', 600));
+    tu(g.intro.signed, X + 18, sy + 2, 10, ERA3.grey, 'left', 700);
+    rr(X + 12, hy, PW - 24, hh, 12, FLOPPY.skyLow);
+    tu(g.intro.howTitle, X + 24, hy + 15, 10, ERA3.grey, 'left', 800);
+    hl.forEach((ln, i) => tu(ln, X + 24, hy + 15 + hStep + i * hStep, 11.5, FLOPPY.ink, 'left', 700));
+    ll.forEach((ln, i) => tu(ln, W / 2, ly + i * XL, 10, ERA3.grey, 'center', 600, PW - 24));
+    rr(X + 40, by, PW - 80, 28, 14, ERA3.good); tu(g.intro.go, W / 2, by + 15, 14, ERA3.white, 'center', 800);
+    bulbRing(X - 6, Y - 6, PW + 12, PH + 12, 16, 0, true);
+  }
   // the end of the song: the cheerful count of the lambs called, and, plainly, how many are still here
   function outro(): void {
+    if (largeText()) { outroLarge(); return; }
     const s = S, k = Math.min(1, (s.doneT - 0.6) / 0.5);
     A(k, () => {
       A(0.4, () => rect(0, HEADER_H + 4, W, GROUND_Y + GRASS_H - HEADER_H - 4, ERA3.ink));
@@ -1080,13 +1130,34 @@ function makeGame(bump: () => void) {
       if (Math.floor(s.t * 2) % 2 === 0) tu(g.outro.again, W / 2, Y + 236, 12, FLOPPY.ink, 'center', 600);
     });
   }
+  /** ⚑ S374 — the end card with large text on: the two sentences wrap instead of shrinking, and the card is taller */
+  function outroLarge(): void {
+    const s = S, k = Math.min(1, (s.doneT - 0.6) / 0.5);
+    A(k, () => {
+      A(0.4, () => rect(0, HEADER_H + 4, W, GROUND_Y + GRASS_H - HEADER_H - 4, ERA3.ink));
+      const X = 24, Y = 58, PW = W - 48, PH = 318, step = XL + 2;
+      rr(X, Y + 4, PW, PH, 20, FLOPPY.hillDk); rr(X, Y, PW, PH, 20, ERA3.white); rect(X + 16, Y, PW - 32, 4, FLOPPY.hillFar);
+      starburst(W / 2, Y + 118, 240, 150, 16, S.t * 0.2, BOMB.gold, 0.16); bulbRing(X - 6, Y - 6, PW + 12, PH + 12, 16, 1, true);
+      garish(g.outro.title, W / 2, Y + 32, 22, { maxW: PW - 30, rot: -0.03 });
+      const said = wrapU(g.outro.said, PW - 30, 12, 600).slice(0, 2), after = wrapU(g.outro.after, PW - 30, 12, 600).slice(0, 2);
+      said.forEach((ln, i) => tu(ln, W / 2, Y + 64 + i * step, 12, FLOPPY.ink, 'center', 600, PW - 30));
+      const ny = Y + 64 + said.length * step + 26;
+      garish(String(s.called), W / 2, ny, 44, { c1: BOMB.lime, c2: BOMB.cyan, rim: BOMB.violet, rot: 0.03 });
+      after.forEach((ln, i) => tu(ln, W / 2, ny + 34 + i * step, 12, FLOPPY.ink, 'center', 600, PW - 30));
+      const ry = ny + 34 + after.length * step + 2;
+      rect(X + 30, ry, PW - 60, 1, FLOPPY.skyLow);
+      tu(g.outro.still, W / 2, ry + 16, 11, ERA3.grey, 'center', 600); tu(String(s.flock.length), W / 2, ry + 42, 24, FLOPPY.ink, 'center', 800);
+      if (Math.floor(s.t * 2) % 2 === 0) tu(g.outro.again, W / 2, ry + 70, 12, FLOPPY.ink, 'center', 600);
+    });
+  }
   function lyricsDraw(x0: number, y0: number, w: number): void {   // his words, the line being sung, each word lit as it comes
     if (!song || !songPlaying()) { if (songState === 'missing') tu(g.hint.songMissing, x0, y0 + 8, 10, ERA3.grey, 'left', 500); return; }
     const now = song.currentTime; let li = -1; for (let i = 0; i < LYRICS.length; i++) if (LYRICS[i][0] <= now) li = i;
     if (li < 0 || now - LYRICS[li][1][LYRICS[li][1].length - 1][0] >= 3) { tu('♪', x0 + 8, y0 + 8, 12, ERA3.grey, 'left', 500); return; }
-    ctx.font = `700 ${FS(13) - 2}px ${FONT}`; const words = LYRICS[li][1]; const rows: Array<Array<[number, string]>> = [[]]; let width = 0;
+    const step = largeText() ? XL : 16;   // S374
+    ctx.font = `700 ${largeText() ? XL : FS(13) - 2}px ${FONT}`; const words = LYRICS[li][1]; const rows: Array<Array<[number, string]>> = [[]]; let width = 0;
     for (const wd of words) { const ww = ctx.measureText(wd[1] + ' ').width; if (width + ww > w && rows[rows.length - 1].length) { rows.push([]); width = 0; } rows[rows.length - 1].push(wd); width += ww; }
-    rows.slice(0, 3).forEach((row, ri) => { let x = x0; for (const [wt, word] of row) { ctx.fillStyle = wt <= now ? FLOPPY.ink : ERA3.grey; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(word, x, y0 + 8 + ri * 16); x += ctx.measureText(word + ' ').width; } });
+    rows.slice(0, 3).forEach((row, ri) => { let x = x0; for (const [wt, word] of row) { ctx.fillStyle = wt <= now ? FLOPPY.ink : ERA3.grey; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(word, x, y0 + 8 + ri * step); x += ctx.measureText(word + ' ').width; } });
   }
 
   function draw(c: CanvasRenderingContext2D, h: number): void {
@@ -1094,6 +1165,7 @@ function makeGame(bump: () => void) {
     const s = S, e = (s.mode === 'idle') ? envAt(0) : s.lastEnv, cam = s.camY;
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, PLAY_BOT); ctx.clip();
     const shk = SPEC.full && SPEC.shake > 0.05 && !s.paused ? SPEC.shake : 0; if (shk) { rect(0, 0, W, PLAY_BOT, FLOPPY.sky); ctx.translate((Math.random() - 0.5) * 2 * shk, (Math.random() - 0.5) * 2 * shk); }
+    scenery(true);   // S374: the world's own lettering, from here to the weather (the lambs' bubbles excepted)
     drawSky(e, cam); specSkyBack(e, cam); drawFar(e, cam); specSkyFront(cam);
     ctx.save(); ctx.translate(0, cam);
     drawGround(); for (const z of s.zones) zoneDraw(z);
@@ -1126,15 +1198,18 @@ function makeGame(bump: () => void) {
     for (const d of s.dust) { const k = d.t / 0.35; circ(d.x + (d.x > SX ? 1 : -1) * k * 10, d.y - 2 - k * 4, 2.4 * (1 - k), FLOPPY.hillFar); }
     for (const h of s.hearts) { const k = h.t; A(1 - k, () => circ(h.x + Math.sin(k * 6 + h.k) * 4, h.y - k * 26, 2.4, FLOPPY.sun)); }
     for (const m of s.motes) A(Math.min(1, m.life) * (0.5 + 0.4 * Math.sin(m.ph)), () => { if (m.wool) { circ(m.x, m.y, 2.6, ERA3.white); circ(m.x + 1.6, m.y + 1, 1.8, FLOPPY.woolShade); } else circ(m.x, m.y, 2, FLOPPY.sun); });
-    for (const b of s.bubbles) { ctx.font = `700 ${FS(11)}px ${FONT}`; const w = ctx.measureText(b.s).width + 12; A(1 - b.t / 0.8, () => { rr(b.x - w / 2, b.y - b.t * 18 - 9, w, 18, 9, ERA3.white); tu(b.s, b.x, b.y - b.t * 18, 11, FLOPPY.ink, 'center', 700); }); }
+    scenery(false);
+    for (const b of s.bubbles) { ctx.font = `700 ${FS(11)}px ${FONT}`; const w = ctx.measureText(b.s).width + 12, bh = largeText() ? 12 : 9; A(1 - b.t / 0.8, () => { rr(b.x - w / 2, b.y - b.t * 18 - bh, w, bh * 2, bh, ERA3.white); tu(b.s, b.x, b.y - b.t * 18, 11, FLOPPY.ink, 'center', 700); }); }
+    scenery(true);
     ctx.restore();
     drawWeather(); specFront();
+    scenery(false);
     ctx.restore();
     header(); footer();
-    if (s.toast) { const toast = s.toast; const k = Math.min(1, toast.t / 0.3) * Math.min(1, (3.2 - toast.t) / 0.5); A(k, () => { ctx.font = `700 ${FS(12)}px ${FONT}`; const w = Math.min(W - 16, ctx.measureText(toast.s).width + 26); rr(W / 2 - w / 2, HEADER_H + 14, w, 26, 13, ERA3.white); tu(toast.s, W / 2, HEADER_H + 27, 12, FLOPPY.ink, 'center', 700); }); }
+    if (s.toast) { const toast = s.toast; const k = Math.min(1, toast.t / 0.3) * Math.min(1, (3.2 - toast.t) / 0.5); A(k, () => { ctx.font = `700 ${FS(12)}px ${FONT}`; const w = Math.min(W - 16, ctx.measureText(toast.s).width + 26); const th = largeText() ? 30 : 26; rr(W / 2 - w / 2, HEADER_H + 14, w, th, th / 2, ERA3.white); tu(toast.s, W / 2, HEADER_H + 14 + th / 2, 12, FLOPPY.ink, 'center', 700); }); }
     if (s.mode === 'idle') intro();
     if (s.mode === 'done' && s.doneT > 0.6) outro();
-    if (s.paused) { A(0.6, () => rect(0, 0, W, H, ERA3.ink)); tx(g.paused.title, W / 2, 250, 26, ERA3.white, 'center', 800); tx(g.paused.sub, W / 2, 282, 13, ERA3.white, 'center', 600); }
+    if (s.paused) { A(0.6, () => rect(0, 0, W, H, ERA3.ink)); tx(g.paused.title, W / 2, 250, 26, ERA3.white, 'center', 800); tx(g.paused.sub, W / 2, 284, largeText() ? XL : 13, ERA3.white, 'center', 600); }
   }
 
   /** a press at a point of the game's own space. Returns the id of what was pressed ('tap' = the screen itself). */

@@ -63,5 +63,18 @@
     "line": "SO CLOSE! TRY AGAIN.",
     "again": "TAP TO PLAY"
   },
-  "filing": "CLEAR played — the sentence was whole"
+  "filing": "CLEAR played — the sentence was whole",
+  "_docS374": "⚑ S374 / J18-B1 (UiB job 18 Part B: large text in the headset only) — in a headset no line on the phone is drawn at 1× (it was 0.35° from the seat, against a 0.8° reading floor): every 1× line is drawn at 2×, the period's own 'Larger Text'. Most lines fit as they are (or wrap, or show sentence by sentence on the Partner's one line). These are the few that cannot fit 240 px at 2×: the title's how-to, said shorter (the HOW TO PLAY screen right after it says it in full), the Partner's two longest one-sentence lines, and one line for the gun in place of the title's two keyboard lines (a headset has no keyboard; a tap on the gun is the swap there). The computer keeps every line above, at 1×.",
+  "large": {
+    "title": {
+      "howTo1": "MATCH 3 OF A COLOUR",
+      "howTo2": "TO BREAK THEM OUT.",
+      "aim": "TAP TO AIM AND FIRE",
+      "keys": "TAP THE GUN TO SWAP"
+    },
+    "partner": {
+      "first": "MATCH 3 TO CLEAR!",
+      "cap": "99%! ONE MORE!"
+    }
+  }
 }
