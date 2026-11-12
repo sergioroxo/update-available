@@ -413,7 +413,8 @@ const LAP = { w: 224, h: 140 };
       }
     }
     const sv = window.__siteViewer;
-    if (sv && sv.bus && sv.bus.domOpen() && /^(machine|receipt|lexicon)$/.test(String(sv.bus.view))) {
+    // (S379: only at the Close — the Lexicon opened from the menu or the setup is a detour the walk never takes)
+    if (sv && sv.bus && sv.bus.domOpen() && mach && mach.ended && /^(machine|receipt|lexicon)$/.test(String(sv.bus.view))) {
       const core = sv.dom, cv = document.querySelector('#reinterp-site-viewer canvas');
       if (core && cv && Array.isArray(core.hits)) {
         const r = cv.getBoundingClientRect(), z = core.lastSize;

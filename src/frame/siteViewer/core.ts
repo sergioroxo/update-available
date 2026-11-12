@@ -252,8 +252,11 @@ export class ViewerCore {
       ? (['machine', 'receipt', 'lexicon'] as const).map((v) => ({ id: `view:${v}`, label: M.tabs[v], active: this.view === v, tip: M.tips[v === 'machine' ? 'machine' : v] }))
       : [];
     const title = this.machineMode || this.view !== 'lexicon' ? M.windowTitle : (lexStrings as { star: string }).star;
-    const reg = drawWindow(env, title, [...back, ...tabs], false, '');
-    const site = reg.site;
+    const items = [...back, ...tabs];
+    const reg = drawWindow(env, title, items, false, '');
+    // ⚑ S379 — opened on its own (the menu, the setup, its star) the Lexicon has no Back and no tabs: the empty toolbar
+    //   strip is given to the page instead of standing there grey
+    const site = items.length ? reg.site : { x: reg.site.x, y: reg.toolbar.y, w: reg.site.w, h: reg.site.h + reg.toolbar.h };
     this.docHits = [];
     this.thumb = { x: 0, y: 0, w: 0, h: 0 };
     if (this.view === 'machine') {

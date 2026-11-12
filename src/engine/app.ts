@@ -1189,7 +1189,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRestart: () => restartPiece(),
       onRecentre: () => xrComfort.calibrate(),
       onDesk: () => xrLayer?.matchTable(),
-      onSources: () => siteViewerBus.open('hub')
+      onSources: () => siteViewerBus.open('hub'),
+      onLexicon: () => siteViewerBus.open('lexicon')   // S379
     });
     // ⚑ S291 — the era websites, in the headset: a window that comes to the visitor (frame/siteViewer/xrMount.ts)
     siteViewerXr = mountSiteViewerXr(app, camera, {
