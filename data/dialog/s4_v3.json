@@ -188,7 +188,8 @@
     "summaryFine": "AI can make mistakes.",
     "summaries": {
       "mum": ["Your mum says happy birthday and attached a photo from the loft.", "She asks you to read three articles."],
-      "meridian": ["Meridian LGB Trust cannot support you.", "Suggested reply: “Thanks for letting me know!”"],
+      "meridian": ["Meridian LGB Trust only supports people by sex recorded at birth. It cannot support you.", "Suggested reply: “Thanks for letting me know!”"],
+      "_docS370meridian": "⚑ S370 / C4 (his 11 Nov: \"the Meridian point, is it clear that it is against T people?\"): Larkpost's summary names the reason the auto-reply gives (its eligibility line, \"as recorded at birth\"), so a visitor who reads only the summary sees who is turned away and why. The suggested reply is unchanged. Claude's words; his edit wins.",
       "clinic": ["Your referral moved to the adult waiting list.", "No action needed."]
     },
     "scrollHint": "Scroll for more",
