@@ -182,7 +182,7 @@ const BOOT_CPS = 0.030;            // seconds per char — slower BIOS crawl
 const BOOT_HOLD = 4.8;             // hold completed BIOS so the install lines read
 // ⚑ S369 — the hold now runs from the crawl's END (it ran from the boot's start, so with a 6.6 s crawl the splash came the moment
 //   "You don't need to do anything." was typed: 1.0 s on screen, 6.4 s needed). Never under the old 3.2 s.
-const R_BOOT_HOLD = Math.max(3.2, readHold((opening.o2_boot_lines as string[]).slice(-6)));   // the after-run: 7.5 s of 9.6 — the block is read whole
+const R_BOOT_HOLD = Math.max(3.2, readHold((opening.o2_boot_lines as string[]).slice(-6)) + 0.8);   // the after-run: 7.5 s of 9.6 — the block is read whole
 /** S156 (Sérgio: "we are missing the chime of the boot-up… it jumps to the profile setup"): the
  *  OS splash between the crawl and the profile, with the era's own startup chime */
 const R_SPLASH_SECONDS = 4.2;

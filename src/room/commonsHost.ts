@@ -28,6 +28,14 @@ let freeHook: ((s: HostSurface) => void) | null = null;
 export function setCommonsHost(on: boolean): void { hook?.(on); }
 /** one of the host's surfaces is taken back by the people (only the 3D ones act here: halo, key) */
 export function freeCommonsHost(s: HostSurface): void { freeHook?.(s); }
+let shoveHook: (() => void) | null = null;
+/**
+ * ⚑ S370 / C1 (UIB_JOB_16 Part C1 step 3: "TransJesus steps on and the host's hologram is pushed aside") — the moment
+ * TransJesus lands beside the host's screen, the hologram is pushed OFF ITS PAD: it stutters (three short dips of its
+ * light, the system's own failure, never the people's), slides back and further right (0.5 m, 0.8 m) and stays there,
+ * faint, while its pad glows empty. It still talks (the caption band is the glass's); it no longer has the floor.
+ */
+export function shoveCommonsHost(): void { shoveHook?.(); }
 
 /** the host's cold light and pale things; the people's warm light (all era-4 tokens) */
 const PALE = { floor: ERA4.photoSkyHi, halo: ERA4.glow, key: ERA4.glow };
@@ -159,6 +167,9 @@ export function mountCommonsHost(app: pc.Application, parent: pc.Entity): { upda
   let on = false;
   let keyFreed = false;
   let t = 0;
+  /** ⚑ S370 / C1 — the shove's clock (<0: not shoved) */
+  let shoveT = -1;
+  const SHOVE_SECONDS = 0.9, SHOVE = { x: 0.5, z: 0.8 }, SHOVED_OPACITY = 0.42;
   const relight = (): void => {
     if (stage?.light) stage.light.color = on && !keyFreed ? C(PALE.key) : on ? C(WARM.key) : (was.stage ?? C(BALL.attention));
     if (warm?.light) {
@@ -172,8 +183,11 @@ export function mountCommonsHost(app: pc.Application, parent: pc.Entity): { upda
     on = v;
     root.enabled = v;
     if (v) { keyFreed = false; haloMat.emissive = C(PALE.halo); haloMat.update(); }
+    // ⚑ S370 — a new studio stands its host back on the pad
+    shoveT = -1; body.setLocalPosition(0, 0, 0); halo.setLocalPosition(0, 0, 0);
     relight();
   };
+  shoveHook = (): void => { if (on && shoveT < 0) shoveT = 0; };
   freeHook = (s: HostSurface): void => {
     if (!on) return;
     if (s === 'halo') { haloMat.emissive = C(WARM.halo); haloMat.update(); }
@@ -187,7 +201,17 @@ export function mountCommonsHost(app: pc.Application, parent: pc.Entity): { upda
       const k = 0.9 + 0.1 * Math.sin(t * 0.8);
       haloMat.emissiveIntensity = k;
       haloMat.update();
-      holoMat.opacity = 0.54 + 0.06 * Math.sin(t * 0.55);
+      let opacity = 0.54 + 0.06 * Math.sin(t * 0.55);
+      // ⚑ S370 / C1 — pushed off the pad: the slide, the three dips, then faint where it was pushed to
+      if (shoveT >= 0) {
+        shoveT += dt;
+        const p = Math.min(1, shoveT / SHOVE_SECONDS), e = p * p * (3 - 2 * p);
+        body.setLocalPosition(SHOVE.x * e, 0, SHOVE.z * e);
+        halo.setLocalPosition(SHOVE.x * e, 0, SHOVE.z * e);
+        const dip = shoveT < 0.6 && Math.floor(shoveT * 10) % 2 === 0 ? 0.35 : 1;
+        opacity = (opacity + (SHOVED_OPACITY - opacity) * e) * dip;
+      }
+      holoMat.opacity = opacity;
       holoMat.update();
     }
   };

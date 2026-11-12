@@ -334,7 +334,7 @@ const DARK_SECONDS = 1.6;      // a dead screen, long enough to read as dead
 const BOOT_LINE_SECONDS = 1.5; // each service line
 const BOOT_TAIL_SECONDS = 3.6; // "1 update found — installing" (2 s + 0.4 s a word, and the line's own arrival)
 const INSTALL_LINE_SECONDS = 1.5;
-const INSTALLED_AFTER = 1.0;  // the installed line, a beat after the changelog's last
+const INSTALLED_AFTER = 1.5;  // the installed line, a line's beat after the changelog's last (S369: was 1.0)
 function installTail(): number { return INSTALLED_AFTER + Math.max(4, readHold(ARRIVAL.installedLine)) + 0.6; }
 const TICK = 0.25;             // the quantum the redraw clock moves in
 /** the beat holds before the light moves: you read the two lines first, and the

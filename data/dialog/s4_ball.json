@@ -140,6 +140,16 @@
   "_doc": "⚑ S355 — THE RAID (UiB job 11 Part B; DESIGN_COMMONS_REVAMP §2b beat 4). A raid is ordinary streaming practice — one stream sends its viewers to another, and they arrive in its chat together; the word is generic, the notice and its look are invented, no platform is named. The host's screen says it; the host's frame tries to file it and fails with the four rows the frame always failed with, now under the host's mark; the count climbs 1 → 42; the handles arrive in the host's chat and the Friends' 🙏 is buried. No narration. Register: operable (the system's surface), collapsing.",
   "_docS360": "\u2691 S360 / H49 (his headset, 10 Nov 21:33: \"Where are the messages on the wall, changing the text, all of that idea, where did it go?\"; and 'the raid needs way more interactions'). THE WALL'S CHANGING TEXT IS BACK, in the one place it fits now: the host's own wall of messages (the Friends' column on its screen). The raiders no longer scroll in underneath the product's lines: each of the eight lines on the wall is REWRITTEN IN PLACE, top to bottom, from the product's one-account \ud83d\ude4f into a person's own words. (The older, ballroom-era version of the idea \u2014 the system's labels on the glass failing one by one while the stream's words and hearts bleed through them, 's4_ball.json arrival.labels' before S293 \u2014 went with the ballroom and is not restored: BUILD_LOG S293.) Nothing is rebutted; no fact is put on the wall; the floor out-numbers the product with life.",
   "notice": "transjesus.str is raiding  ·  {n} viewers",
+  "_docS370": "⚑ S370 / C1 (UiB job 16 Part C1; his, 11 Nov, after the S366 headset frames: 'the raid still doesn't make sense visually as there are things confusing. Since the image can fly the panel can come in front, and then the trans jesus etc. So it can flow better. How is the transition to the raid? How is it explained visually?'). THE RAID, ONE THING IN FRONT OF HIM AT A TIME (ball.ts `planRaid`): her press → the host's screen glitches (`beats.glitch` s) → THE PEOPLE'S BANNER (`banner`, their own words: 'here', where the platform's `notice` says 'viewers') lifts off the host's screen at `beats.bannerAt`, flies to the front of him in `beats.fly`, holds while the count climbs and 41 small people fill it (junie's `help` answer on it too, when Maya asked), held by the reading rule, and flies back into the screen in `beats.back` → the crowd walks in from the sides with a cloud of bells → `beats.tjAfter` s later TransJesus walks onto the stage and, landing beside the host's screen, pushes the host's hologram off its pad → `beats.panelAfter` s later the host's `panel` tries to file it and fails row by row, held by the reading rule → the naming. In a headset the try-on's picture flies to the front for the morph and for the naming, and waits small at his left in between (ball.ts CARD_FRONT). The 'audience board' over the hall (e4Room.ts maya-ceiling-network, the dark shape above him) is retired. Words: Claude's; his edit wins.",
+  "banner": "transjesus.str is raiding  ·  {n} here",
+  "beats": {
+   "glitch": 1.0,
+   "bannerAt": 0.6,
+   "fly": 1.4,
+   "back": 1.2,
+   "tjAfter": 2.4,
+   "panelAfter": 0.6
+  },
   "n": 41,
   "panel": "Shepherd Live™  ·  about this raid",
   "climbSeconds": 5.0,
@@ -530,6 +540,29 @@
     "text": "❤❤"
    }
   ]
+ },
+ "gather": {
+  "_docS370": "⚑ S370 / C2 (UiB job 16 Part C2; his, 11 Nov: 'is the message from the community supporting queer people seen in the message before the close? that is important too.'). THE PEOPLE'S CARD (ball.ts `startGather`): once SESSION TERMINATED has been read it steps back, and the chat's warm lines — until now small lines on the stream's screen at his side, read or not before the Close's flyover — GATHER INTO ONE CARD on the glass in front of him, in both look-modes, in the stream's own colours with each handle, lowercase: the people's voice, never the frame's. If Maya asked Junie for help (`raid.help`, Kettle's `v3:help`), junie's 'you said help. we came.' comes first. Lines land `lineSeconds` apart; the card holds by the reading rule (src/desktop/readHold.ts, counted from its last line), asks for no press, and fades in `fadeSeconds`; then the update fails and the Close begins (its song, close_song.mp3, after all of it and uncut). Each line is one the chat already said, or nearly: 'hi maya' (junie, the welcome), 'we're here' (the raid's first line), 'that's a waiting list. not a sign.' (sib's tag on the host's 'That's a sign.', with the half the tag left unsaid), 'same time next week' (pip, the night). Respite: nothing on it is the system's. Claude's draft, after the job's; his edit wins.",
+  "lines": [
+   {
+    "who": "junie",
+    "text": "hi maya"
+   },
+   {
+    "who": "okra",
+    "text": "we're here"
+   },
+   {
+    "who": "sib",
+    "text": "that's a waiting list. not a sign."
+   },
+   {
+    "who": "pip",
+    "text": "same time next week"
+   }
+  ],
+  "lineSeconds": 0.6,
+  "fadeSeconds": 0.6
  },
  "system": {
   "_doc": "⚑ THE SYSTEM COMES BACK FOR HER (step 6), and only on its own surface — the glass. A card: reconnecting, restoring her session, a bar that climbs; the room's count holds and goes up; the card cannot rank or caption what it is looking at; the connection is refused because the room is full. Nobody in the chat answers it — they answer it by being there. Then it ends itself in its own ideology. Never a word against the people; never a glitch on the floor.",

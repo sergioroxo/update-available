@@ -99,6 +99,9 @@ const LOGICAL = {
   /** ⚑ S366 / J15-07 — the headset's SIDE PLANE: the try-on's mirror and the raid's filter card, off to his left (drawn by
    *  `E4Ball.drawSide`). 512 × 384 like the glass, so every number on the mirror is the one it was drawn for. */
   sidecard: { w: 512, h: 384, scale: 2 },
+  /** ⚑ S370 / C1 — the people's raid banner (drawn by `E4Ball.drawBanner`): lifts off the host's screen and flies to the
+   *  front of him, both look-modes. 512 × 216, the plane's own aspect (`BANNER.aspect`). */
+  raidbanner: { w: 512, h: 216, scale: 2 },
   /** ⚑ the laptop (2026-09-01): a small screen carrying two short lines and a
    *  hint, so it needs pixels for text and nothing else. */
   /** ⚑ S123 tried 320x200 and reverted the same hour — see `space.ts`'s
@@ -250,6 +253,12 @@ const PLACEMENT = {
   sidecard: {
     pos: { x: 5.0, y: 1.16, z: 0.0 },
     size: { w: 0.56, h: 0.42 },
+    euler: { x: 90, y: 270, z: 0 }
+  },
+  /** ⚑ S370 / C1 — placed each frame between the host's screen and the front of him (`placeBanner`); a resting value */
+  raidbanner: {
+    pos: { x: 6.2, y: 1.2, z: 0.7 },
+    size: { w: 1.3, h: 0.5484 },
     euler: { x: 90, y: 270, z: 0 }
   },
   stream: {
@@ -684,7 +693,20 @@ const WEAR_SECONDS = 0.55;
  * the mirror and the card stay on the glass, in the frame as before.
  *   `seatYaw`: the desk seat's yaw (the room faces +x; PlayCanvas yaw 270). A larger yaw turns left.
  */
-const SIDE_CARD = { seatYaw: 270, yaw: 52, distance: 0.55, rise: 0.10, w: 0.56, h: 0.42 } as const;
+// ⚑ S370 / C1 (his, 11 Nov: "Since the image can fly the panel can come in front") — the plane no longer hangs at one
+//   place: the ball says where it is each frame (`E4Ball.cardPose`: in front for the try-on and the naming, small at his
+//   left between them, flying between the two), as a bearing off this seat's line of sight, a distance, a height against
+//   the eye and a width. What stays here is the seat's heading the bearing is taken from.
+const SIDE_CARD = { seatYaw: 270 } as const;
+/**
+ * ⚑ S370 / C1 — THE PEOPLE'S RAID BANNER'S FLIGHT (UIB_JOB_16 Part C1 step 3): from the platform's notice on the host's
+ * screen (the top-left of its picture, `COMMONS.screen`, where it reads "is raiding · 41 viewers", `fromW` wide like the
+ * notice) to `distance` in front of the seat, along the seat's heading (never his gaze), `rise` above the eye, `w` wide
+ * (≈44° — large enough to read "transjesus.str is raiding · 41 here" from the seat), and back. Facing him all the way
+ * (−x, as the screen does): it never turns, it only comes nearer. Both look-modes. At the front it is ≈44° × 19°.
+ */
+//   `riseFlat`: in the browser look-modes it hangs a little lower, under the corner where the glass keeps the picture
+const BANNER = { distance: 1.6, rise: 0.05, riseFlat: -0.09, w: 1.3, fromW: 1.9, aspect: 216 / 512, notice: { u: 0.26, v: 0.23 } } as const;
 /** how far in front of the eye each device sits when held, in metres. A phone
  *  is held closer than a tablet because it is smaller, not because it matters
  *  more — both end up subtending roughly the same angle. */
@@ -1177,6 +1199,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     const sh = e4Bridge()?.shell();
     if (sh) sh.ball.drawSide(ctx, w, h);
   }, { versionOf: () => e4Bridge()?.shell()?.ball.sideVersion ?? 0, transparent: true });
+  // ⚑ S370 / C1 — the people's raid banner (transparent round its card)
+  add('raidbanner', LOGICAL.raidbanner, (ctx, w, h) => {
+    const sh = e4Bridge()?.shell();
+    if (sh) sh.ball.drawBanner(ctx, w, h);
+  }, { versionOf: () => e4Bridge()?.shell()?.ball.bannerVersion ?? 0, transparent: true });
 
   let arrived = false;
   let eraNow: EraKey = 'e1';
@@ -1341,16 +1368,38 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     const cam = camera();
     const xrOn = !!app.xr?.active && !!cam;
     sh?.ball.setXrSide(eraNow === 'e4' && xrOn);
-    s.entity.enabled = eraNow === 'e4' && xrOn && !!sh && sh.ball.sideCardOn;
-    if (!s.entity.enabled || !cam) return;
-    const yaw = SIDE_CARD.seatYaw + SIDE_CARD.yaw, r = yaw * Math.PI / 180;
+    // ⚑ S370 / C1 — where the picture is this frame (in front, flying, or small at his left)
+    const pose = sh?.ball.cardPose ?? null;
+    s.entity.enabled = eraNow === 'e4' && xrOn && !!sh && sh.ball.sideCardOn && !!pose;
+    if (!s.entity.enabled || !cam || !pose) return;
+    const yaw = SIDE_CARD.seatYaw + pose.yaw, r = yaw * Math.PI / 180;
     sideDir.set(-Math.sin(r), 0, -Math.cos(r));          // the plane's bearing from the eye, level
     const p = cam.getPosition();
-    s.entity.setPosition(p.x + sideDir.x * SIDE_CARD.distance, p.y + SIDE_CARD.rise, p.z + sideDir.z * SIDE_CARD.distance);
+    s.entity.setPosition(p.x + sideDir.x * pose.dist, p.y + pose.rise, p.z + sideDir.z * pose.dist);
     // facing him: the orientation of an eye looking along `sideDir`, tipped upright as the worn glass is (TIP)
     sideQuat.setFromEulerAngles(0, Math.atan2(-sideDir.x, -sideDir.z) * 180 / Math.PI, 0).mul(TIP);
     s.entity.setRotation(sideQuat);
-    s.entity.setLocalScale(SIDE_CARD.w, 1, SIDE_CARD.h);
+    s.entity.setLocalScale(pose.w, 1, pose.w * 0.75);   // 4:3, like its canvas
+  }
+
+  /** ⚑ S370 / C1 — the people's banner, each frame: on while the ball says so, between the host's notice and the front */
+  const bannerFrom = new pc.Vec3(), bannerTo = new pc.Vec3();
+  function placeBanner(s: Screen): void {
+    const sh = e4Bridge()?.shell();
+    const cam = camera();
+    s.entity.enabled = eraNow === 'e4' && !!sh && !!cam && sh.ball.bannerOn;
+    if (!s.entity.enabled || !cam || !sh) return;
+    const SC = COMMONS.screen;
+    // the notice: u across the screen from its left edge as seen from the seat (−z), v down from its top; just in front
+    bannerFrom.set(SC.x - 0.08, SC.y + SC.h / 2 - BANNER.notice.v * SC.h, SC.z - SC.w / 2 + BANNER.notice.u * SC.w);
+    const r = SIDE_CARD.seatYaw * Math.PI / 180, p = cam.getPosition();
+    const rise = app.xr?.active ? BANNER.rise : BANNER.riseFlat;
+    bannerTo.set(p.x - Math.sin(r) * BANNER.distance, p.y + rise, p.z - Math.cos(r) * BANNER.distance);
+    const k = sh.ball.bannerFly;
+    s.entity.setLocalPosition(bannerFrom.x + (bannerTo.x - bannerFrom.x) * k, bannerFrom.y + (bannerTo.y - bannerFrom.y) * k, bannerFrom.z + (bannerTo.z - bannerFrom.z) * k);
+    s.entity.setLocalEulerAngles(90, SIDE_CARD.seatYaw, 0);
+    const w = BANNER.fromW + (BANNER.w - BANNER.fromW) * k;
+    s.entity.setLocalScale(w, 1, w * BANNER.aspect);
   }
 
   function xrRoot(name: string): unknown {
@@ -1451,7 +1500,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
             s.draw(s.ctx, s.logical.w, s.logical.h); s.dirty = true;
           }
         }
-        if (immersive && s.draw && s.entity.enabled && s.name !== 'sidecard') {   // S366: nothing on the side plane is pressed
+        if (immersive && s.draw && s.entity.enabled && s.name !== 'sidecard' && s.name !== 'raidbanner') {   // S366/S370: nothing on the flying planes is pressed
           const place = PLACEMENT[s.name];
           const p = xrRay && hitPlane(s.entity, place.size.w, place.size.h, s.logical.w, s.logical.h, xrRay);
           const hover = p ? xrTarget(xrRects(xrRoot(s.name)), p.x, p.y, s.logical.w * 0.04 / place.size.w) : null;
@@ -1564,6 +1613,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           }
         }
         if (s.name === 'sidecard') placeSideCard(s);
+        if (s.name === 'raidbanner') placeBanner(s);
         if (s.name === 'stream') {
           const sh = e4Bridge()?.shell();
           s.entity.enabled = eraNow === 'e4' && !!sh && sh.ball.streaming;
@@ -1636,7 +1686,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
         // ⚑ S328 — AND THE LAPTOP IS NEVER ON (T03, his 8 Nov headset test: "remove the laptop"): 2026 has one screen,
         //   the monitor, with Kettle as a window on it. Its prop is gone from r4; its plane stays registered and dark.
         //   S327 — and 2016's handset screen stays off too (the Handset Window is her phone).
-        s.entity.enabled = s.name === 'stream' || s.name === 'backstage' || s.name === 'sidecard' || s.name === 'phone' || s.name === 'laptop' ? false : roomThreeScreen ? era === 'e4'
+        s.entity.enabled = s.name === 'stream' || s.name === 'backstage' || s.name === 'sidecard' || s.name === 'raidbanner' || s.name === 'phone' || s.name === 'laptop' ? false : roomThreeScreen ? era === 'e4'
           : roomTwoScreen ? era === 'e3'
           : visible;
       }
