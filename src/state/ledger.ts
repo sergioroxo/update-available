@@ -133,6 +133,9 @@ export interface Ledger {
   /** ⚑ S192 — 2016's newer board jobs that file their own line (Tag the video) */
   /** ⚑ S209 / P7-47 — the Lexicon's words the player met, in order (src/room/lexicon.ts meetWord); never a record line */
   lexicon: string[];
+  /** ⚑ S372 — where each word was first met: a key of data/strings/lexicon.json `places` (the Lexicon's "You met it")
+   *  and so which era's website its page links to. Memory only, like everything here. */
+  lexiconWhere: Record<string, string>;
   era3Jobs: { id: string; witness: string }[];
   caleb: {
     id: string;
@@ -371,6 +374,7 @@ const fresh = (): Ledger => ({
   caleb: [],
   games: [],
   lexicon: [],
+  lexiconWhere: {},
   era3Jobs: [],
   era3Arrival: [],
   graceQueue: [],

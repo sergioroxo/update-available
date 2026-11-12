@@ -799,7 +799,7 @@ export class GraceQueueLite {
       if (!this.wotdSaid && !this.pauseOpen && !this.phone.voiceBusy && !this.maltaArrived && this.boardQuietT > 12 && this.guideReady('wotd')) {
         const app = lexStrings.wotdApps.e3;
         const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
-        if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? ''], 'wotd'); this.bump(); }
+        if (t?.word) { this.wotdSaid = true; meetWord(t.id, 'e3-wotd'); this.lambSay([`${app.title}: ${t.word}.`, t.line ?? ''], 'wotd'); this.bump(); }
       }
       if (!this.waitSaid && !this.phone.voiceBusy && !this.maltaArrived && this.boardQuietT > 25 && this.guideReady('waiting')) {
         // ⚑ S227 (VERA_OPTIONS §4c.2) — only a job that is ON the board and unfinished is named: mounted is not enough
@@ -1409,7 +1409,7 @@ export class GraceQueueLite {
     const mounted = this.surfaces.get(t.id);
     this.chipReturn = null;
     if (mounted) {
-      if (t.id === 'recommend') meetWord('brokenness');   // S209 / P7-47 — the house keywords
+      if (t.id === 'recommend') meetWord('brokenness', 'e3-keywords');   // S209 / P7-47 — the house keywords
       this.openSurface = mounted;
       this.mode = 'list';
       if (!this.seenTask) { this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2]); }
@@ -1417,7 +1417,7 @@ export class GraceQueueLite {
       return;
     }
     if (t.surface !== 'testimony') return;
-    meetWord('ssa');   // S209 / P7-47 — her house rules begin by taking the word away
+    meetWord('ssa', 'e3-house');   // S209 / P7-47 — her house rules begin by taking the word away
     this.openSurface = null;
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
     this.subIdx = next < 0 ? 0 : next; this.submissionPage = 0;

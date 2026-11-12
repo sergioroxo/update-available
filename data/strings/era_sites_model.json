@@ -285,6 +285,50 @@
    {
     "label": "Jenkins & Panozzo, “Ethical Care in Secret”: Qualitative Data from an International Survey of Exploratory Therapists Working with Gender-Questioning Clients (2024)",
     "url": "https://pubmed.ncbi.nlm.nih.gov/38587926/"
+   },
+   {
+    "label": "KFF, HHS Report on Pediatric Gender Dysphoria and Gender Conversion Efforts (explainer, 6 May 2025)",
+    "url": "https://www.kff.org/mental-health/issue-brief/u-s-department-of-health-and-human-services-report-on-pediatric-gender-dysphoria-and-gender-conversion-efforts/"
+   },
+   {
+    "label": "GOV.UK, Government pushes forward with conversion practices ban (25 June 2026)",
+    "url": "https://www.gov.uk/government/news/government-pushes-forward-with-conversion-practices-ban-to-protect-lgbt-people-from-abuse"
+   },
+   {
+    "label": "Galop, on the scrutiny of the draft Conversion Practices Bill (20 October 2026)",
+    "url": "https://www.galop.org.uk/news/scrutiny-begins-on-the-draft-conversion-practices-bill"
+   },
+   {
+    "label": "Littman / PLOS ONE, Correction: Parent reports of adolescents and young adults perceived to show signs of a rapid onset of gender dysphoria (19 March 2019; PMC copy)",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6424391"
+   },
+   {
+    "label": "CAAPS, position statement on ROGD (26 July 2021)",
+    "url": "https://www.caaps.co/rogd-statement"
+   },
+   {
+    "label": "LGB Alliance, About page (undated)",
+    "url": "https://lgballiance.org.uk/about/"
+   },
+   {
+    "label": "PinkNews, on the launch of LGB Alliance's helpline (18 October 2024)",
+    "url": "https://www.thepinknews.com/2024/10/18/lgb-alliance-helpline/"
+   },
+   {
+    "label": "ABC News, on Girlguiding's and the Women's Institute's membership decisions (4 December 2025)",
+    "url": "https://www.abc.net.au/news/2025-12-04/girl-guiding-women-institute-to-stop-membership-trans-women/106100184"
+   },
+   {
+    "label": "Lewis Silkin, on the new EHRC code of practice for service providers (5 August 2026)",
+    "url": "https://www.lewissilkin.com/insights/2026/08/05/the-new-ehrc-code-of-practice-for-service-providers-what-does-it-mean-for-single-sex-services"
+   },
+   {
+    "label": "Xtra Magazine, on UK lesbian and queer organisers after the Supreme Court ruling (11 June 2025)",
+    "url": "https://xtramagazine.com/power/activism/uk-lesbians-supreme-court-transphobia-274301"
+   },
+   {
+    "label": "The Needle (republishing Rewire News Group), on a detransition chatbot (11 August 2026)",
+    "url": "https://theneedlenews.com/2026/08/this-ai-chatbot-pushes-conversion-therapy-on-trans-users/"
    }
   ],
   "aboutTitle": "About the project",
@@ -5224,7 +5268,7 @@
      },
      {
       "k": "note",
-      "t": "2026 — for trans people: confusion, trauma, peer influence, ‘gender ideology’, in the softer language of many factors."
+      "t": "2026 — for trans people: confusion, trauma, ‘gender ideology’, and peer influence or ‘social contagion’, with the ‘signs’ parents reported in a 2018 survey. The method offered: exploring first."
      },
      {
       "k": "terms",
@@ -5295,6 +5339,11 @@
         "def": "The claim that gender identity spreads among friends or online. It began as parents' reports; no validated clinical entity exists. Reviews call the topic contested and caution against simple explanations."
        },
        {
+        "term": "rapid-onset gender dysphoria",
+        "status": "What it claims: disputed",
+        "def": "A label from a 2018 survey that asked only parents. They reported the “signs”: a sudden announcement, friends coming out too, more time online. Its 2019 correction says it is “not a formal mental health diagnosis”."
+       },
+       {
         "term": "desistance",
         "status": "What it claims: disputed",
         "def": "“Desistance” means a child's gender-variant feelings fading. Studies from the 1980s onward are disputed over how they counted children and what the numbers mean for care today."
@@ -5308,6 +5357,21 @@
         "term": "just exploring",
         "status": "What it claims: disputed",
         "def": "“Exploratory” therapy says it only helps people think. Supporters deny it is conversion therapy; critics say it steers people away from transition. The question is disputed."
+       },
+       {
+        "term": "exploratory therapy",
+        "status": "What it claims: disputed",
+        "def": "A US government report (May 2025) puts talk therapy first, “exploratory therapy” among it, and calls equating it with conversion therapy “misguided”. The American Academy of Pediatrics and others say it can include conversion practices."
+       },
+       {
+        "term": "explorative conversations",
+        "status": "Documented",
+        "def": "The UK government's draft ban on conversion practices in England and Wales (June 2026) covers sexual orientation and gender identity. It says it does not ban “explorative conversations”. A joint committee is scrutinising it."
+       },
+       {
+        "term": "same-sex attracted, biological sex",
+        "status": "A political frame, not a finding",
+        "def": "Words of eligibility. A UK helpline for young people says it is run “for and by same-sex attracted people”. After a 2025 court ruling on “biological sex”, some groups closed membership to trans women. Others chose to stay open."
        },
        {
         "term": "chosen family",
@@ -5371,6 +5435,10 @@
        {
         "t": "Homophobia or difficulty accepting being lesbian, gay or bi as a driver of trans identity",
         "sub": "CONTESTED · 2018-2026"
+       },
+       {
+        "t": "The “signs”: a sudden announcement, friends coming out too, more time online, more popular after, earlier mental-health conditions (parents' reports)",
+        "sub": "CONTESTED: parents' reports only; “not a formal mental health diagnosis” (2019 correction) · 2018-2026"
        }
       ]
      }

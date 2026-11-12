@@ -20,6 +20,13 @@ class SiteViewerBus {
     if (this.xrActive() && this.openXr) this.openXr(target);
     else this.openDom?.(target);
   }
+  /** ⚑ S372 — the tab a window opens on, for the one `openAt` call that asks (core.ts `open` reads it); null = 'story' */
+  nextTab: string | null = null;
+  /** open a year's website on one of its tabs (the Lexicon's word pages link to that year's "The words") */
+  openAt(target: ViewerTarget, tab: string): void {
+    this.nextTab = tab;
+    try { this.open(target); } finally { this.nextTab = null; }
+  }
   close(): void { this.closeDom?.(); this.closeXr?.(); }
   get isOpen(): boolean { return this.domOpen() || this.xrOpen(); }
 }

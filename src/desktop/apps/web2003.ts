@@ -65,9 +65,9 @@ export class Web2003App {
       // S357e — the programme's house rules, read on the approved connection
       if (h.id === 'forum-page:parents' && !ledger.records.includes('harbor-parents')) ledger.records.push('harbor-parents');
       // S209 / P7-47 — the words met where the board uses them
-      if (h.id === 'forum-page:partner') meetWord('accountability');
-      if (h.id === 'forum-page:process') { meetWord('ssa'); meetWord('struggle'); }
-      if (h.id === 'forum-page:wound') meetWord('wound');
+      if (h.id === 'forum-page:partner') meetWord('accountability', 'e2-forum');
+      if (h.id === 'forum-page:process') { meetWord('ssa', 'e2-forum'); meetWord('struggle', 'e2-forum'); }
+      if (h.id === 'forum-page:wound') meetWord('wound', 'e2-forum');
       return;
     }
     if (h.id === 'forum-post' && !this.posted && this.storyReady) { this.posted = true; this.onPost?.(); }

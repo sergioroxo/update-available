@@ -516,7 +516,7 @@ export class Screensaver {
     const ww2 = ctx.measureText(S.e4.waiting).width;
     ctx.fillStyle = ERA4.meta; ctx.fillText(S.e4.waiting, Math.round(cx - ww2 / 2), 40);
     if (Math.floor(this.t / 12) % 2 === 1) {   // every other twelve seconds, the phrase of the day
-      meetWord('bornthatway');   // S209 / P7-47
+      meetWord('bornthatway', 'e4-saver');   // S209 / P7-47
       const ph = `${S.e4.phraseLabel}: \u201c${S.e4.phrase}\u201d`;
       ui.setFont(ctx, 10);
       const pw = ctx.measureText(ph).width;

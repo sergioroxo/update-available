@@ -37,7 +37,7 @@
   "1997 — father, mother, abuse, unmet needs, choice. Said with confidence.",
   "2003 — the same, with testimonies as proof.",
   "2016 — for lesbian women: the mother wound, emotional dependency, abuse, a ‘spiritual fallacy’.",
-  "2026 — for trans people: confusion, trauma, peer influence, ‘gender ideology’, in the softer language of many factors."
+  "2026 — for trans people: confusion, trauma, ‘gender ideology’, and peer influence or ‘social contagion’, with the ‘signs’ parents reported in a 2018 survey. The method offered: exploring first."
  ],
  "yoursNone": "You met none of them by name. They were there anyway.",
  "yoursIntro": "The words that reached you, in the order they did:",
@@ -76,7 +76,8 @@
    "status": "notsupported",
    "close": "A phrase ministries prefer to “gay” or “lesbian”. It frames attraction as a feeling to be reduced, not part of who someone is. Mainstream health bodies reject that framing.",
    "word": "ATTRACTION",
-   "line": "Just a feeling you have, like a cold. Not who you are. Feeling lighter already?"
+   "line": "Just a feeling you have, like a cold. Not who you are. Feeling lighter already?",
+   "emblem": "booklet"
   },
   {
    "id": "unwanted",
@@ -89,7 +90,10 @@
    "status": "contested",
    "close": "“Unwanted” suggests a free choice. Research finds the wish to change usually comes from religious or family pressure, and many people exposed to change efforts were minors.",
    "word": "UNWANTED",
-   "line": "Nobody made you want this to stop. You just… noticed that everyone around you does."
+   "line": "Nobody made you want this to stop. You just… noticed that everyone around you does.",
+   "emblem": "form",
+   "sound": "familyform_loop_1997.mp3",
+   "soundTitle": "The Family Form's music box (1997, this piece's own)"
   },
   {
    "id": "struggle",
@@ -102,7 +106,10 @@
    "status": "moral",
    "close": "A word that casts being gay as a battle to be fought. The people who use it describe their own desires as a temptation; major health bodies do not.",
    "word": "STRUGGLE",
-   "line": "Struggling means you're trying. Good for you! (We'll tell you what you're trying to do.)"
+   "line": "Struggling means you're trying. Good for you! (We'll tell you what you're trying to do.)",
+   "emblem": "tape",
+   "sound": "fold_my_hands_tape97.mp3",
+   "soundTitle": "“Fold My Hands”, the prayer tape (1997, this piece's own)"
   },
   {
    "id": "struggler",
@@ -115,7 +122,8 @@
    "status": "moral",
    "close": "What ministries call a gay person who resists their own desire. It makes the fight the person’s name, so the fight never ends. Members of these groups used it of themselves; the research records the word, it does not endorse it.",
    "word": "STRUGGLER",
-   "line": "You fight it. That makes you one of us!"
+   "line": "You fight it. That makes you one of us!",
+   "emblem": "board"
   },
   {
    "id": "lifestyle",
@@ -128,7 +136,8 @@
    "status": "notsupported",
    "close": "A word that treats being gay as a habit or a choice. Attraction is not chosen, and health bodies describe it as a normal variation of human sexuality.",
    "word": "LIFESTYLE",
-   "line": "Like a gym membership, but with a view on eternity. You can cancel any time!"
+   "line": "Like a gym membership, but with a view on eternity. You can cancel any time!",
+   "emblem": "booklet"
   },
   {
    "id": "exgay",
@@ -141,7 +150,10 @@
    "status": "notsupported",
    "close": "“Ex-gay” claims that orientation can be left behind. Research finds change efforts rarely change attraction and often harm. Many people who tried now call themselves ex-ex-gay.",
    "word": "FORMER",
-   "line": "Everything you were before today is former. Isn't that nice? Say it again, softly."
+   "line": "Everything you were before today is former. Isn't that nice? Say it again, softly.",
+   "emblem": "tv",
+   "sound": "discover_the_new_you_tape97_radio.mp3",
+   "soundTitle": "“Discover the New You”, the broadcast jingle (1997, this piece's own)"
   },
   {
    "id": "overcomer",
@@ -155,7 +167,10 @@
    "status": "notsupported",
    "close": "A word that treats attraction as an enemy. The “overcome, don't eliminate” version is a retreat from earlier promises of change, not a finding that it works.",
    "word": "OVERCOMER",
-   "line": "Today you overcame a thought. Tomorrow: another thought! Overcoming never stops. Neither do we."
+   "line": "Today you overcame a thought. Tomorrow: another thought! Overcoming never stops. Neither do we.",
+   "emblem": "web",
+   "sound": "restorify_testimony_bed_2003.mp3",
+   "soundTitle": "Restorify Media's testimony bed (2003, this piece's own)"
   },
   {
    "id": "brokenness",
@@ -168,7 +183,8 @@
    "status": "notsupported",
    "close": "A word that treats sexuality as damage. No orientation is a disorder; the damage described in research comes from stigma and from change efforts themselves.",
    "word": "BROKENNESS",
-   "line": "Good news! If you're broken, you're fixable. (Terms and conditions apply to the fixing.)"
+   "line": "Good news! If you're broken, you're fixable. (Terms and conditions apply to the fixing.)",
+   "emblem": "book"
   },
   {
    "id": "roots",
@@ -181,7 +197,10 @@
    "status": "notsupported",
    "close": "The idea that being gay is a symptom of a hidden hurt. Researchers reviewing the evidence found no such root; theories blaming family patterns have been discredited.",
    "word": "ROOT",
-   "line": "Every flower has one. Let's dig yours up and look at it together. Don't worry; it'll hurt a little."
+   "line": "Every flower has one. Let's dig yours up and look at it together. Don't worry; it'll hurt a little.",
+   "emblem": "disk",
+   "sound": "rootcause_loop_1997.mp3",
+   "soundTitle": "ROOTCAUSE's tune (1997, this piece's own)"
   },
   {
    "id": "wound",
@@ -194,7 +213,10 @@
    "status": "notsupported",
    "close": "The claim that a distant father or smothering mother makes a child gay. Studies do not support it; a painful childhood is real for some, but does not decide orientation.",
    "word": "WOUND",
-   "line": "It's not your fault. It's your father's. (Or your mother's. We'll find out together.)"
+   "line": "It's not your fault. It's your father's. (Or your mother's. We'll find out together.)",
+   "emblem": "tape",
+   "sound": "releasework_loop_1997.mp3",
+   "soundTitle": "Release Work's tape (1997, this piece's own)"
   },
   {
    "id": "dependency",
@@ -206,7 +228,10 @@
    "status": "notsupported",
    "close": "A term for treating lesbian love as a disorder of “needing too much”. Researchers who studied the movement describe it as a euphemism, not a clinical finding.",
    "word": "DEPENDENCY",
-   "line": "Loving someone too much is a symptom. Don't worry, we have a worksheet for love."
+   "line": "Loving someone too much is a symptom. Don't worry, we have a worksheet for love.",
+   "emblem": "phone",
+   "sound": "grace_loop_2016.mp3",
+   "soundTitle": "GracePlatform's calm loop (2016, this piece's own)"
   },
   {
    "id": "confusion",
@@ -220,7 +245,9 @@
    "status": "notsupported",
    "close": "“Gender confusion” is not a medical term. Current diagnostic manuals use “gender dysphoria” or “gender incongruence”. The word has been used to read ordinary gender nonconformity as a problem.",
    "word": "CONFUSION",
-   "line": "Feeling confused? Wonderful. That means we can start by clarifying you."
+   "line": "Feeling confused? Wonderful. That means we can start by clarifying you.",
+   "emblem": "chart",
+   "chain": "gender"
   },
   {
    "id": "reparative",
@@ -233,7 +260,9 @@
    "status": "notsupported",
    "close": "A trademarked name for therapy aimed at reducing same-sex attraction. Mainstream associations oppose it; studies find it does not work and can harm.",
    "word": "REPARATIVE",
-   "line": "Tiny repairs, every week. Like a hotel, but for your insides."
+   "line": "Tiny repairs, every week. Like a hotel, but for your insides.",
+   "emblem": "book",
+   "chain": "talk"
   },
   {
    "id": "reintegrative",
@@ -245,7 +274,9 @@
    "status": "contested",
    "close": "A newer name for therapy linked to reparative therapy. Its providers deny it aims to change orientation; researchers and forensic experts classify it with change efforts.",
    "word": "REINTEGRATIVE",
-   "line": "Same cure, bigger word. Please don't call it a cure."
+   "line": "Same cure, bigger word. Please don't call it a cure.",
+   "emblem": "web",
+   "chain": "talk"
   },
   {
    "id": "sogice",
@@ -256,7 +287,8 @@
    "status": "documented",
    "close": "Short for efforts to change or suppress sexual orientation, gender identity or expression. Used by researchers and survivors; practitioners usually call it something gentler.",
    "word": null,
-   "line": null
+   "line": null,
+   "emblem": "book"
   },
   {
    "id": "conversion",
@@ -267,7 +299,8 @@
    "status": "documented",
    "close": "An umbrella term for efforts to change or suppress who someone is. Major health bodies reject it. It is banned in a growing number of places and rebrands when banned.",
    "word": "COUNSELLING",
-   "line": "We don't do the other thing. We just talk. About changing."
+   "line": "We don't do the other thing. We just talk. About changing.",
+   "emblem": "law"
   },
   {
    "id": "accountability",
@@ -280,7 +313,10 @@
    "status": "contested",
    "close": "A peer asked to monitor and report someone's behaviour. Support in itself is not harmful; here it was used to police a person's identity and treat lapses as failure.",
    "word": "ACCOUNTABILITY",
-   "line": "Someone who loves you will always want to know where you were."
+   "line": "Someone who loves you will always want to know where you were.",
+   "emblem": "board",
+   "sound": "fellowship_loop_1997.mp3",
+   "soundTitle": "The Fellowship Network's page music (1997, this piece's own)"
   },
   {
    "id": "freedom",
@@ -294,7 +330,15 @@
    "status": "notsupported",
    "close": "Words that present being gay as a captivity or injury. The research on these programmes finds the “freedom” was rarely delivered, and the harm that followed was real.",
    "word": "FREEDOM",
-   "line": "The door is open. (Please use the door we pointed at.)"
+   "line": "The door is open. (Please use the door we pointed at.)",
+   "emblem": "key",
+   "sound": "chase_the_clouds.mp3",
+   "soundTitle": "“Chase the Clouds”, Restorify's jingle (2003, this piece's own)",
+   "forms": {
+    "2026": "“restored” (this piece)"
+   },
+   "later": "In this piece's 2026 the word moves into software: a session, a profile “restored”. That use is invented; no real tool that “restores” a person's photo was found.",
+   "laterDraft": true
   },
   {
    "id": "affirmation",
@@ -308,7 +352,8 @@
    "status": "contested",
    "close": "“Affirming” has two meanings. Therapists use it for acceptance without a set outcome. Change programmes used it for affirming “masculinity” or “femininity” as defined by them.",
    "word": "AFFIRMATION",
-   "line": "We affirm everything about you! (Except the part you came in with.)"
+   "line": "We affirm everything about you! (Except the part you came in with.)",
+   "emblem": "web"
   },
   {
    "id": "ideology",
@@ -320,7 +365,8 @@
    "status": "political",
    "close": "A label used since the 2010s for gender studies, trans rights and sex education as one hidden agenda. Researchers describe it as a political frame, not a scientific claim.",
    "word": "IDEOLOGY",
-   "line": "Everyone else has one. We just have the truth."
+   "line": "Everyone else has one. We just have the truth.",
+   "emblem": "news"
   },
   {
    "id": "contagion",
@@ -331,7 +377,31 @@
    "status": "contested",
    "close": "The claim that gender identity spreads among friends or online. It began as parents' reports; no validated clinical entity exists. Reviews call the topic contested and caution against simple explanations.",
    "word": "ENVIRONMENT",
-   "line": "Protect yours! (We've already tidied it for you.)"
+   "line": "Protect yours! (We've already tidied it for you.)",
+   "emblem": "chat",
+   "sound": "clip_narr_2.mp3",
+   "soundTitle": "THE GREAT BECOMING, the AI's video of her week (2026, invented): “18 today. And it had spread.”",
+   "chain": "spread",
+   "later": "In this piece's 2026 the frame is said to one person: “it spread to you”, ticked off the 2018 paper's parent-reported “signs”. The AI, and its use of them as a checklist, are this piece's invention.",
+   "laterDraft": true
+  },
+  {
+   "id": "rogd",
+   "term": "rapid-onset gender dysphoria",
+   "eras": [
+    2026
+   ],
+   "status": "contested",
+   "close": "A label from a 2018 survey that asked only parents. They reported the “signs”: a sudden announcement, friends coming out too, more time online. Its 2019 correction says it is “not a formal mental health diagnosis”.",
+   "word": null,
+   "line": null,
+   "draft": true,
+   "emblem": "form",
+   "chain": "spread",
+   "sold": "“I checked your week against the signs. They're all there.”",
+   "soldFrom": "Second Thoughts, the AI in this piece (invented; it never names the label)",
+   "sound": "clip_narr_3.mp3",
+   "soundTitle": "THE GREAT BECOMING, the AI's video of her week (2026, invented): “Suddenly. Just like her friends.”"
   },
   {
    "id": "desistance",
@@ -342,7 +412,8 @@
    "status": "contested",
    "close": "“Desistance” means a child's gender-variant feelings fading. Studies from the 1980s onward are disputed over how they counted children and what the numbers mean for care today.",
    "word": "PHASE",
-   "line": "Children grow out of things. You did. We saw you grow."
+   "line": "Children grow out of things. You did. We saw you grow.",
+   "emblem": "chart"
   },
   {
    "id": "detransition",
@@ -353,7 +424,8 @@
    "status": "contested",
    "close": "Some people stop or reverse a gender transition, for many reasons, including regret, stigma, family pressure and changed understanding. Both their care and the way campaigns use their stories matter.",
    "word": null,
-   "line": null
+   "line": null,
+   "emblem": "news"
   },
   {
    "id": "exploring",
@@ -365,7 +437,59 @@
    "status": "contested",
    "close": "“Exploratory” therapy says it only helps people think. Supporters deny it is conversion therapy; critics say it steers people away from transition. The question is disputed.",
    "word": "EXPLORING",
-   "line": "No pressure. No conclusions. Only a gentle, endless not yet."
+   "line": "No pressure. No conclusions. Only a gentle, endless not yet.",
+   "emblem": "chat",
+   "chain": "talk",
+   "later": "In 2025–26 the word reached policy. A US report put “exploratory therapy” first; critics say it can include conversion practices. The draft ban for England and Wales says it does not ban “explorative conversations”.",
+   "laterDraft": true
+  },
+  {
+   "id": "exploratory",
+   "term": "exploratory therapy",
+   "eras": [
+    2026
+   ],
+   "status": "contested",
+   "close": "A US government report (May 2025) puts talk therapy first, “exploratory therapy” among it, and calls equating it with conversion therapy “misguided”. The American Academy of Pediatrics and others say it can include conversion practices.",
+   "word": null,
+   "line": null,
+   "draft": true,
+   "emblem": "news",
+   "chain": "talk"
+  },
+  {
+   "id": "explorative",
+   "term": "explorative conversations",
+   "eras": [
+    2026
+   ],
+   "status": "documented",
+   "close": "The UK government's draft ban on conversion practices in England and Wales (June 2026) covers sexual orientation and gender identity. It says it does not ban “explorative conversations”. A joint committee is scrutinising it.",
+   "word": null,
+   "line": null,
+   "draft": true,
+   "emblem": "law",
+   "chain": "talk",
+   "sold": "“And here, the new bill says it won't ban ‘explorative conversations’.”",
+   "soldFrom": "Second Thoughts, the AI in this piece (invented)"
+  },
+  {
+   "id": "eligibility",
+   "term": "same-sex attracted, biological sex",
+   "short": "“same-sex attracted”",
+   "eras": [
+    2026
+   ],
+   "status": "political",
+   "close": "Words of eligibility. A UK helpline for young people says it is run “for and by same-sex attracted people”. After a 2025 court ruling on “biological sex”, some groups closed membership to trans women. Others chose to stay open.",
+   "word": null,
+   "line": null,
+   "draft": true,
+   "emblem": "mail",
+   "sold": "“Even the LGB charity says you're not one of them.”",
+   "soldFrom": "THE GREAT BECOMING, the AI's video (invented): the refusal turned against her",
+   "sound": "clip_narr_7.mp3",
+   "soundTitle": "THE GREAT BECOMING, the AI's video of her week (2026, invented)"
   },
   {
    "id": "chosenfamily",
@@ -377,7 +501,10 @@
    "status": "community",
    "close": "Family made by choice and care, not blood. For people rejected by their families, it can be a source of safety and support.",
    "word": null,
-   "line": null
+   "line": null,
+   "emblem": "house",
+   "sound": "transjesus_song.mp3",
+   "soundTitle": "transjesus.str, the people's music (2026, this piece's own)"
   },
   {
    "id": "bornthatway",
@@ -390,7 +517,8 @@
    "status": "half",
    "close": "Scientists do not know exactly why orientation varies, and no single cause has been found. That does not show it can be changed; research finds attempts do not work. A church agency trained its counsellors (module captured 2005) to call ‘born that way’ a lie.",
    "word": "GENE",
-   "line": "Nobody's found one! (That settles everything. Don't read the rest.)"
+   "line": "Nobody's found one! (That settles everything. Don't read the rest.)",
+   "emblem": "booklet"
   },
   {
    "id": "needs",
@@ -402,7 +530,8 @@
    "status": "notsupported",
    "close": "The idea that same-sex attraction is really an unmet need for love in disguise. It is a theory from the 1980s; researchers have not found it to be true.",
    "word": "NEEDS",
-   "line": "You have needs! Wonderful. We'll tell you which ones are legitimate."
+   "line": "You have needs! Wonderful. We'll tell you which ones are legitimate.",
+   "emblem": "web"
   },
   {
    "id": "symptoms",
@@ -414,7 +543,9 @@
    "status": "notsupported",
    "close": "A church agency's counsellor module (captured 2005) called being gay an ‘orientation problem’ and graded people by ‘symptoms’ — mild, moderate, severe — counting how often they had loved men. Being gay is not an illness.",
    "word": "SYMPTOMS",
-   "line": "Mild, moderate or severe? Take our two-minute quiz! (There is no fourth option.)"
+   "line": "Mild, moderate or severe? Take our two-minute quiz! (There is no fourth option.)",
+   "emblem": "chart",
+   "short": "symptoms"
   }
  ],
  "reasons": {
@@ -577,8 +708,152 @@
     "reason": "Availability of puberty blockers as an explanation for rising referrals",
     "era": "2024",
     "status": "CONTESTED"
+   },
+   {
+    "reason": "The “signs”: a sudden announcement, friends coming out too, more time online, more popular after, earlier mental-health conditions (parents' reports)",
+    "era": "2018-2026",
+    "status": "CONTESTED: parents' reports only; “not a formal mental health diagnosis” (2019 correction)",
+    "draft": true
    }
   ]
  },
- "_docS349": "⚑ S349 / T58 (his 9 Nov: the terms of 1997's Root Cause glossary all go to the Lexicon at the end) — 'struggler' added after 'the struggle', from RESEARCH_LEXICON §3 (Love in Action 2005, Erzen 2006: members call themselves 'strugglers'); its line is the glossary's own 'says', its close the glossary's 'does' made plain."
+ "_docS349": "⚑ S349 / T58 (his 9 Nov: the terms of 1997's Root Cause glossary all go to the Lexicon at the end) — 'struggler' added after 'the struggle', from RESEARCH_LEXICON §3 (Love in Action 2005, Erzen 2006: members call themselves 'strugglers'); its line is the glossary's own 'says', its close the glossary's 'does' made plain.",
+ "ui": {
+  "_doc": "⚑ S372 — the redesign's own labels (src/room/lexicon.ts). Frame-of-the-disc words, not the piece's claims.",
+  "metIn": "★ You met it: {place}",
+  "notMet": "You did not meet it by name.",
+  "site": "↗ {year} website",
+  "sold": "▶ As it was sold",
+  "hear": "♪ Their song",
+  "play": "▶ Play",
+  "stop": "■ Stop",
+  "wotdFrom": "the programme's Word of the Day, in the seller's voice (written for this piece)",
+  "tabs": {
+   "words": "Words",
+   "reasons": "Reasons",
+   "yours": "Your Words",
+   "sources": "Sources",
+   "close": "Close"
+  },
+  "back": "✕ Close",
+  "soldTitle": "AS IT WAS SOLD",
+  "playing": "♪ playing",
+  "silent": "(no sound for this word)",
+  "in2026": "IN 2026",
+  "held": "still used",
+  "contentsTitle": "CONTENTS",
+  "yoursGo": "Press one to open its page.",
+  "reasonsEra": "WHEN",
+  "reasonsStatus": "WHAT THE EVIDENCE SAYS",
+  "hearTitle": "THE PEOPLE'S MUSIC",
+  "siteLabel": "Open the website of the year you met it (or where it first appears), on its words"
+ },
+ "statusBadge": {
+  "_doc": "⚑ S372 — DRAFT (his, like the statuses): the status as a two-line plate; the long labels above stay on the era sites.",
+  "notsupported": [
+   "WHAT IT CLAIMS",
+   "NOT SUPPORTED"
+  ],
+  "contested": [
+   "WHAT IT CLAIMS",
+   "DISPUTED"
+  ],
+  "moral": [
+   "A MORAL FRAME",
+   "NOT A FINDING"
+  ],
+  "political": [
+   "A POLITICAL FRAME",
+   "NOT A FINDING"
+  ],
+  "documented": [
+   "ITS USE",
+   "DOCUMENTED"
+  ],
+  "community": [
+   "THE COMMUNITY'S",
+   "OWN WORD"
+  ],
+  "half": [
+   "HALF RIGHT",
+   "THE HALF THAT MATTERS, WRONG"
+  ]
+ },
+ "contents": [
+  {
+   "id": "lex-words",
+   "label": "The Words",
+   "line": "{m} words from 1997 to 2026"
+  },
+  {
+   "id": "lex-reasons",
+   "label": "The Reasons",
+   "line": "what they said caused it"
+  },
+  {
+   "id": "lex-yours",
+   "label": "Your Words",
+   "line": "the ones that reached you"
+  },
+  {
+   "id": "lex-sources",
+   "label": "Sources",
+   "line": "the research behind every page"
+  }
+ ],
+ "places": {
+  "_doc": "⚑ S372 — meetWord(id, place): the first place each word was met (ledger.lexiconWhere, memory only). The year links the page to that era's website ('The words' tab).",
+  "e1-wotd": "1997 · Un-Walk's Word for the Walk",
+  "e1-rootcause": "1997 · ROOTCAUSE, the game on the companion disk",
+  "e2-wotd": "2003 · Restorify's Truth of the Day",
+  "e2-forum": "2003 · the forum's pages",
+  "e3-wotd": "2016 · GracePlatform's Today's language",
+  "e3-house": "2016 · the house rules on Vera's board",
+  "e3-keywords": "2016 · the house keywords on Vera's board",
+  "e4-wotd": "2026 · L's phrase of the day",
+  "e4-saver": "2026 · L's phrase of the day, on the screensaver",
+  "e4-session": "2026 · the reason the session gave",
+  "e4-meridian": "2026 · Meridian's reply, in Maya's mail",
+  "e4-news": "2026 · the report Mum sent",
+  "e4-signs": "2026 · the AI's checklist of “signs”",
+  "e4-spread": "2026 · the AI: “it spread to you”",
+  "e4-explore": "2026 · the AI, booking her a session",
+  "e4-restored": "2026 · “You, restored”, the AI's picture of her"
+ },
+ "chains": {
+  "_doc": "⚑ S372 — what a word turns into, by decade (RESEARCH_LEXICON §7.7, each name sourced there). `note` is DRAFT (his): the caption that keeps both readings (ETHICS #7) where a later name's providers deny the earlier one's aims.",
+  "talk": {
+   "forms": {
+    "1997": "reparative therapy",
+    "2003": "reparative therapy",
+    "2016": "reintegrative · SAFE-T",
+    "2026": "“exploratory”, “explorative”"
+   },
+   "note": "What the talk was called, by decade. The later providers say theirs is not conversion therapy; critics say it is, or can include it.",
+   "draft": true
+  },
+  "gender": {
+   "forms": {
+    "1997": "“gender deficit”",
+    "2003": "“gender esteem”",
+    "2016": "“gender-confused”",
+    "2026": "“gender confusion”"
+   },
+   "note": "Said first of gay boys and men; later of trans people.",
+   "draft": true
+  },
+  "spread": {
+   "forms": {
+    "2016": "ROGD (a 2018 survey)",
+    "2026": "“social contagion”"
+   }
+  }
+ },
+ "arcDraft": [
+  false,
+  false,
+  false,
+  true
+ ],
+ "_docS372": "⚑ S372 / UiB job 17 Part B (his 11 Nov: 'is the Lexicon updated? maybe it needs a revamp in the design department') — FOUR NEW WORDS from the knowledge base only (docs/reinterp/RESEARCH_LEXICON_2026-10-02.md §7: exploratory therapy, explorative conversations, rapid-onset gender dysphoria and its 'signs', same-sex attracted / biological sex as eligibility), 'restored' folded into 'freedom, healing, restoration', 2026's change written on 'just exploring' and 'social contagion' (`later`), a reasons row and the arc's 2026 line. ⚑ EVERY `close`, `later`, `status`, statusBadge and chain `note` marked `draft: true` / `laterDraft` / `arcDraft` is CLAUDE'S DRAFT AND HIS TO RULE (like dossier phrasing): shown until he edits it. No Word of the Day for the new words (ETHICS #7; the eligibility page names no group and jokes at no one); their 'as it was sold' is the piece's own invented line, said to be invented. Each word also has a picture (`emblem`, src/room/lexiconArt.ts), the piece's own sound where one exists (`sound`, a file in tapeAudio.ts's REGISTRY), and a timeline (`chain`/`forms`, §7.7). Left out [VERIFY SOURCE]: the 2025 US executive order's 'Restoring Biological Truth' (listing only), Turban 2022, Bauer 2022, WPATH 2018, Cass §8.24–8.25, RCPsych and Stonewall on the bill."
 }

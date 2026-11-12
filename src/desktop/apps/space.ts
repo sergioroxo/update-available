@@ -817,7 +817,7 @@ export class E4Shell {
      * Nobody presses anything; the journey to Daniel's room starts by itself.
      */
     ledger.e4Space.push({ id: 'laptop', outcome: 'read', witness: space.corrupt.witness });
-    meetWord('contagion');   // S209 / P7-47 — the reason the session gave for ending her
+    meetWord('contagion', 'e4-session');   // S209 / P7-47 — the reason the session gave for ending her
     this.onCloseRequest?.();
   }
 
