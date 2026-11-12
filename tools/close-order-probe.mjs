@@ -29,7 +29,7 @@ const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/M
 const puppeteer = (await import('puppeteer-core')).default;
 const browser = await puppeteer.launch({ executablePath: CHROME, headless: true,
   args: ['--enable-unsafe-swiftshader', '--use-gl=angle', '--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
-  defaultViewport: { width: 960, height: 540, deviceScaleFactor: 1 } });
+  defaultViewport: { width: Number(flag('width', 960)), height: Number(flag('height', 540)), deviceScaleFactor: Number(flag('dsf', 1)) } });   // S375: --width 1280 --height 720 --dsf 2 for the photography run
 fs.mkdirSync(OUT, { recursive: true });
 
 async function run(mode) {
