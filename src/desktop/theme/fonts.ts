@@ -29,7 +29,7 @@ export type FaceEra = 'e1' | 'e2' | 'e3' | 'e4' | 'close';
 
 /** the vendored family names — present in the stacks now, resolved only once the files are */
 export const VENDORED = {
-  bitmap: 'Fixedsys Excelsior',   // Era 1/2: the machine's own bitmap face, public domain
+  bitmap: 'Fixedsys Excelsior',   // Era 1/2: the machine's own bitmap face, public domain (shipped S373)
   ui2016: 'Roboto',               // Era 3: the 2016 platform sans (Apache 2.0)
   ui2026: 'Inter'                 // Era 4: the 2026 product sans (OFL)
 } as const;
@@ -54,6 +54,21 @@ export const FACES: Record<FaceEra, Face> = {
   e4: { family: SANS_2026, boldBelow: 99, weight: '600' },
   close: { family: MONO_HEAVY, boldBelow: 13 }
 };
+
+/** ⚑ S373 — THE FIRST PAINT WAITS FOR THE FACES. A canvas draws once and keeps its pixels: text drawn before a face has
+ *  loaded is drawn in the fallback and stays that way until something repaints it. So nothing draws until every weight the
+ *  stacks use has loaded from `public/assets/fonts/` (an asset load like the models; no remote fetch). A face that cannot
+ *  load must not hold the piece shut, so the wait gives up after `timeoutMs` and the fallback stack takes over. */
+export function fontsReady(timeoutMs = 6000): Promise<void> {
+  const fonts = (typeof document !== 'undefined' ? document.fonts : undefined);
+  if (!fonts?.load) return Promise.resolve();
+  const sample = 'AaBbQq 0123 — …';
+  const wants = [`16px "${VENDORED.bitmap}"`, `bold 12px "${VENDORED.bitmap}"`,
+    `400 12px "${VENDORED.ui2016}"`, `700 12px "${VENDORED.ui2016}"`,
+    `400 12px "${VENDORED.ui2026}"`, `600 12px "${VENDORED.ui2026}"`];
+  const loads = Promise.all(wants.map((w) => fonts.load(w, sample).catch(() => []))).then(() => fonts.ready).then(() => undefined);
+  return Promise.race([loads, new Promise<void>((r) => setTimeout(r, timeoutMs))]);
+}
 
 /** the era whose face `setFont` uses; `os.setDesktopEra` sets it, the Close sets `close` */
 let current: FaceEra = 'e1';

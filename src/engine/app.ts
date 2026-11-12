@@ -75,7 +75,7 @@ import callStrings from '../../data/strings/calls.json';
 import { mountXrFrame, type XrFrame } from '../frame/xrFrame';
 import { siteViewerBus, ERA_TARGET, mountSiteViewerDom, mountSiteViewerXr, type XrViewer } from '../frame/siteViewer';
 import { mountXrComfort } from '../frame/xrComfort';
-import { mountXrDebug } from '../frame/xrDebug';
+import { mountXrDebug, sceneDrawCalls } from '../frame/xrDebug';
 import { mountXrMonitorQuad, quadSessionOptions } from '../frame/xrMonitorQuad';
 import { mountXrTextures } from '../frame/xrTextures';
 import { guideBody } from '../desktop/apps/lambyGuideDraw';
@@ -1307,7 +1307,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           `head ${f(h.x)} ${f(h.y)} ${f(h.z)} · yaw ${Math.round(camera.getLocalEulerAngles().y)}`,
           `room shift ${c.shift.map(f).join(' ')} · ${Math.round(c.shiftYaw)}°`,
           `batches ${c.batchesOnStage}/${c.batches} follow · menu ${gameMenuBus.isOpen ? 'open' : 'shut'}`,
-          `${Math.round(app.stats.frame.fps)} fps · ${app.stats.drawCalls.total} draws · screen ${(window as { __uploads?: number }).__uploads ?? '-'} uploads`];
+          (() => { const d = sceneDrawCalls(app);   // S373: per scene, not per eye (the raw count is both eyes' draws)
+            return `${Math.round(app.stats.frame.fps)} fps · ${d.scene} draws${d.views > 1 ? ` [${d.views} eyes, raw ${d.raw}]` : ''} · ${(window as { __uploads?: number }).__uploads ?? '-'} up`; })()];
       } });
       // ⚑ S291 review hooks: open the site viewer (browser or mocked headset), read its state, press at a logical px
       (window as { __siteViewer?: unknown }).__siteViewer = { open: (t: string) => siteViewerBus.open(t as 'hub'), close: () => siteViewerBus.close(), dom: mountSiteViewerDom(), xr: siteViewerXr, bus: siteViewerBus };
@@ -1778,7 +1779,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (s !== lastNow) { lastNow = s; (window as { __reinterpNow?: string }).__reinterpNow = s; }
     // the Quest budget, live (WEBXR_PERFORMANCE_NOTES: ~50–100): last frame's
     // draw-call total, for the panel readout + batching A/B (?nobatch=1)
-    (window as { __drawCalls?: number }).__drawCalls = app.stats.drawCalls.total;
+    (window as { __drawCalls?: number; __drawCallsRaw?: number }).__drawCalls = sceneDrawCalls(app).scene;   // S373: per scene (both eyes' draws counted once)
+    (window as { __drawCallsRaw?: number }).__drawCallsRaw = app.stats.drawCalls.total;
     // ⚑ S105 — the companion number, and the one CLAUDE.md's law is actually
     //   about: how often a screen is re-sent to the GPU. See screenTexture.ts.
     (window as { __uploads?: number }).__uploads = screenUploads;

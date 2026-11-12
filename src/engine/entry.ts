@@ -1,11 +1,13 @@
 /** Small entry bridge: engine code loads behind Home, never ahead of its art.
  * Keep cached synchronous calls for WebXR's original button gesture. */
 import type { AppShell } from './app';
+import { fontsReady } from '../desktop/theme/fonts';
 type Engine = typeof import('./app');
 let engine: Engine | null = null;
 let loading: Promise<Engine> | null = null;
 export function loadEngine(): Promise<Engine> {
-  return loading ??= import('./app').then((module) => (engine = module));
+  // ⚑ S373: the engine is not "ready" until the faces are — no canvas draws before them (fonts.ts `fontsReady`)
+  return loading ??= Promise.all([import('./app'), fontsReady()]).then(([module]) => (engine = module));
 }
 export function readyEngine(): Engine | null { return engine; }
 export async function prepareImmersiveVrEntry(canvas: HTMLCanvasElement): Promise<boolean> {

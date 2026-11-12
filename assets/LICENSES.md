@@ -296,3 +296,17 @@ No `.scr` executable was run.
 | File | Source | License | Attribution needed | Notes |
 |---|---|---|---|---|
 | the_great_becoming.mp4 | made for the project by Claude (Anthropic's AI), at the project lead's direction: the picture drawn in code by `src/desktop/apps/contagionClip.ts` (the piece's own pixel art and palette; no image, footage or likeness of anyone), rendered by `tools/render-clip.mjs`; the music is `clip_music` (`tools/make_clip_music.py`, row above); the narrator is `clip_narr_*` (build-time TTS, Supertonic, row above) | project-original | no | Type baked into the picture: Inter (SIL Open Font License 1.1, installed on the rendering machine; the OFL sets no condition on rendered images). Invented propaganda inside the fiction, labelled "Made with AI" on every frame. Credited on the 2026 era website (`data/strings/era_sites.json`). |
+
+## VENDORED FONTS — 2026-11-12 (S373)
+
+The three faces `src/desktop/theme/fonts.ts` names, shipped in `public/assets/fonts/` with an `@font-face` in
+`index.html` (the Quest has none of them installed; the Mac does, which is why the computer and the headset drew
+different letters). Local files only — loaded as assets, never fetched from anywhere else at runtime. Font software is
+unmodified except as noted; the OFL texts ship beside the files.
+
+| File | Face / version | Source | License | Attribution needed | Notes |
+|---|---|---|---|---|---|
+| `fixedsys-excelsior-3.022-latin.woff2` | Fixedsys Excelsior 3.022 (Darien Valentine, 2017); the 1997/2003 bitmap-style mono | the release asset `FSEX302.ttf` of tag v3.09.10 on the GitHub repository kika/fixedsys (the maintained copy of the original fixedsysexcelsior.com, now defunct) | Public domain; CC0 1.0 where public domain is not recognised (stated in that repository's README, "Distribution terms") | no (credited by choice in ATTRIBUTIONS.md) | Subset to Latin + punctuation + arrows + box drawing (pyftsubset, fontTools 4.68), ligature tables and embedded bitmap strikes dropped so every platform draws the same outlines; WOFF2. An 8×16 face built from 10×10-unit squares: sharpest at 16 px, soft below. |
+| `inter-5.3.0-latin-400.woff2`, `inter-5.3.0-latin-600.woff2` | Inter 4.x as packaged by `@fontsource/inter` 5.3.0, latin subset, weights 400 and 600; 2026's UI sans | https://github.com/rsms/inter via https://www.npmjs.com/package/@fontsource/inter (jsDelivr file `inter-latin-{400,600}-normal.woff2`) | SIL OFL 1.1 (`OFL-Inter.txt`) | credited by choice in ATTRIBUTIONS.md | unmodified |
+| `roboto-5.3.0-latin-400.woff2`, `roboto-5.3.0-latin-700.woff2` | Roboto as packaged by `@fontsource/roboto` 5.3.0, latin subset, weights 400 and 700; 2016's UI sans | https://github.com/googlefonts/roboto-classic via https://www.npmjs.com/package/@fontsource/roboto | SIL OFL 1.1 (`OFL-Roboto.txt`) | credited by choice in ATTRIBUTIONS.md | unmodified |
+| `OFL-Inter.txt`, `OFL-Roboto.txt` | the licence texts, copied from the two npm packages' `LICENSE` files | as above | SIL OFL 1.1 | – | |
