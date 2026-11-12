@@ -120,6 +120,7 @@ import lexStrings from '../../data/strings/lexicon.json';
 import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
 import { PHONE } from '../desktop/theme/phone';
+import { readHold } from '../desktop/readHold';
 /** S358 / H08 — the references' leading (10 px type): 11 read as lines laid on each other from the seat */
 const REFS_LEAD = 13;   // S349: the Handset Window's bar is the phone's idiom
 import {
@@ -231,8 +232,24 @@ const CORRECTIONS = new Map((q.corrections as CorrectionDef[]).map(c => [c.id, c
 const MALTA_AFTER_TASKS = 2;
 /** ⚑ S362 / H41 — how long the kit's URGENT pop-in waits before the platform opens the kit itself (the story has to move on) */
 const KIT_POPIN_AUTO = 22;
-/** ⚑ S362 / H43 — how long GracePlatform's "intervene immediately" alert stays up over the desk when Bea's first Malta message lands */
-const MALTA_ALERT_HOLD = 4.5;
+/** ⚑ S362 / H43 — how long GracePlatform's "intervene immediately" alert stays up over the desk when Bea's first Malta message lands.
+ *  ⚑ S368 / F03 (UiB job 16, the reading rule): it was 4.5 s for 18 words; it holds by the rule now (2 s + 0.4 s a word, about
+ *  9 s), or until its OK is pressed. Computed in `maltaAlertHold()` from the lines it carries. */
+function maltaAlertHold(): number { const R = vera.removals; return Math.max(9, readHold(['GracePlatform', R.alertTag, R.alertLine, R.alertSub])); }
+/** ⚑ S368 / F03 — the alert fires once this many of the group's Malta messages have landed: it says the group "is discussing",
+ *  so two members (Bea, then Susan) have spoken first. Was 1 (Bea alone). */
+const MALTA_ALERT_AFTER = 4;
+/** ⚑ S368 / F01·F02 (his screenshot: "Return the fa…" under the phone) — THE HANDSET WINDOW IS ONE FIXED WIDTH, docked at the
+ *  right, and the board's layout RESERVES its column: nothing of the board is drawn under it. It used to be 188 px and grow to
+ *  280 over the board (the cascade's "brought forward", and its title bar's own press). 200 × the 310 px phone draws it at
+ *  ×1.07, a touch larger than the old wide view's type, at one width. */
+export const MIRROR_W = 200;
+const MIRROR_GAP = 4;
+const MIRROR_PHONE_H = 310;
+/** ⚑ S368 / F01·F11 — Malta's conducted thread waits for a clear board: this long with no card, job, pop-in or Lambient line up */
+const MALTA_CLEAR_SECONDS = 1.5;
+/** ⚑ S368 / F05 — after the cascade, the group thread holds this long before the phone goes to sleep (the block settles, readable) */
+const TAIL_HOLD_SECONDS = 8;
 /** ⚑ S362 / H42b — characters a second at which Kindredraft's draft types itself in */
 const STORY_DRAFT_CPS = 28;
 /** ⚑ S227 — the Speedrun Version (src/state/cut.ts): Lambient sends her straight to Annette, and ONE finished job lights
@@ -484,7 +501,9 @@ export class GraceQueueLite {
    *  seen), Orla's last message has been delivered, and Lambient has said the board is still there. Then, and only
    *  then, with nothing open and no other voice speaking (era3Devices adds its six quiet seconds). */
   get updateReady(): boolean {
-    return !this.veraPage && this.afterSaid && this.afterT >= 5 && !this.cascadeConduct && !this.pauseOpen && !this.phone.voiceBusy && this.phone.queued === 0;
+    // ⚑ S368 / F06 — and Lambient's closing line has GONE: the notice came 1 s after it (afterT counted from when it was said,
+    //   and the line holds 10 s). era3Devices' FINAL_GAP (6 s of clear) now runs from the line's going, so ≥ 5 s apart.
+    return !this.veraPage && this.afterSaid && this.afterT >= 5 && !this.lambPriority && !this.cascadeConduct && !this.pauseOpen && !this.phone.voiceBusy && this.phone.queued === 0;
   }
   private clearPersonalNotice(): void {
     this.personalNotice = false; this.personalDesktop = false;
@@ -546,6 +565,10 @@ export class GraceQueueLite {
   /** ⚑ S362 / H43 — the Malta alert: seconds up (-1 = not showing), and whether it has had its one showing */
   private maltaAlertT = -1;
   private maltaAlertDone = false;
+  /** ⚑ S368 / F01·F11 — the kit is closed and Malta's conducted thread waits for a clear board (see update()) */
+  private maltaPending = false;
+  private maltaClearT = 0;
+  private maltaWaitT = 0;
   private recordAdmin = false;
   private kitApproved = false;
   private takenDown = false;
@@ -717,7 +740,8 @@ export class GraceQueueLite {
       this.highlightPreference = highlights; this.bump(); this.phoneV++;
     }
     if (this.lambPriority && !this.personalQuiet && this.mode === 'board' && !this.veraPage) {
-      this.lambHoldT += dt; if (this.lambHoldT >= 10) { this.lambPriority = false; this.lambLines = null; this.bump(); }
+      // ⚑ S368 — never shorter than the reading rule (2 s + 0.4 s a word); 10 s stays the floor
+      this.lambHoldT += dt; if (this.lambHoldT >= Math.max(10, readHold(this.lambLines ?? []))) { this.lambPriority = false; this.lambLines = null; this.bump(); }
     }
     this.guideWait.tick(dt, !!this.lambyGuide?.active);
     // ⚑ S327 / T06 — ONE VOICE AT A TIME. The phone may deliver only while the platform is at rest: nothing open on it,
@@ -757,7 +781,9 @@ export class GraceQueueLite {
       if (!this.seenTask && this.consent && !this.lambPriority && this.guideReady('first-task')) {
         this.seenTask = true; this.lambSay([LAMBIENT.firstTask1, LAMBIENT.firstTask2], 'first-task');
       }
-      if (!this.pauseShown && !this.minimised && !this.phone.voiceBusy && !this.maltaArrived && ledger.records.includes('e3-job-done') && this.boardQuietT > 6 && this.guideReady('pause')) {
+      // ⚑ S368 / F11 — and never over one of the platform's pop-ins (the kit's URGENT card, Kindredraft's offer): one card at a time
+      if (!this.pauseShown && !this.minimised && !this.phone.voiceBusy && !this.maltaArrived && !this.kitPopin && !this.storyOffer && !this.maltaPending
+        && ledger.records.includes('e3-job-done') && this.boardQuietT > 6 && this.guideReady('pause')) {
         this.pauseShown = true;
         this.pauseLines = pauseItems('e3', this.floppyOpened ? ['floppy'] : []);
         if (this.pauseLines.length) { this.pauseOpen = true; this.waitSaid = true; this.bump(); }
@@ -783,6 +809,18 @@ export class GraceQueueLite {
       this.idleT += dt;
       if (e3SpinnerStep(this.idleT) !== e3SpinnerStep(before)) this.bump();
     }
+    // ⚑ S368 / F01·F11 — MALTA WAITS FOR A CLEAR BOARD. Leaving the kit used to open the group thread on the Handset Window
+    //   the same frame, over whatever card was up ("This week" with its Close half hidden: F01). Now the thread is conducted
+    //   only once no card, job, pop-in or Lambient line has been up for MALTA_CLEAR_SECONDS. A card left open for 40 s is
+    //   put away first (read by then), so nothing can hold the era forever and nothing opens on top of it.
+    if (this.maltaPending) {
+      const cardUp = this.pauseOpen || this.lambPriority || this.kitPopin || this.storyOffer || this.startPanel.open || this.startMap.active || this.focusOpen;
+      const clear = (this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface && !this.saver && !cardUp;
+      this.maltaClearT = clear ? this.maltaClearT + dt : 0;
+      this.maltaWaitT += dt;
+      if (this.maltaWaitT > 40 && cardUp && !this.veraPage && !this.openSurface) { this.pauseOpen = false; this.lambPriority = false; this.lambLines = null; this.startPanel.close(); this.startMap.close(); this.focusOpen = false; this.bump(); }
+      if (this.maltaClearT >= MALTA_CLEAR_SECONDS) { this.maltaPending = false; this.beginMaltaConduct(); }
+    }
     // ⚑ S332 (the S329 entrance walk: kit → another job → Malta never came, 0 rects) — MALTA WAITS FOR THE BOARD. Its
     //   conducted clock (Bea's news, the takeover, the cascade) only runs while no job is open; a job opened during it
     //   pauses it, and it resumes the moment she is back on the board. The board's tiles stay pressable throughout.
@@ -791,11 +829,18 @@ export class GraceQueueLite {
     //   Handset Window goes back to its place; Orla's last message arrives (felt); then Lambient says the board is still
     //   there; then — `updateReady` — the update. Nothing here waits on a press, and nothing here is on a timer the
     //   visitor must beat: each step waits for the one before it to be read.
+    // ⚑ S368 / F05 (UiB job 16 — his example: "the system blocking the message and then Orla sends the photo… the flow is
+    //   off here") — ORLA'S MESSAGE IS A BEAT OF ITS OWN. It used to land as a banner over the thread one frame after the
+    //   block, over the "could not be reviewed" bar, with the clock jumping 21:49 → 22:51. Now: (1) the block settles and
+    //   the thread stays on the glass, readable, for TAIL_HOLD_SECONDS; (2) the phone sleeps — its lock screen — and the
+    //   evening visibly passes (phoneE3 rolls the clock to her time before it delivers); (3) her message arrives as an
+    //   ordinary lock-screen notification; (4) a press on it opens her thread with the photo (H45: the photo opens Photos).
+    //   Life outside goes on: a friend's warmth after the system's block. Pressing is offered, never required.
     if (this.phone.broken) {
       if (this.cascadeConduct) {
         this.tailT = this.tailT < 0 ? 0 : this.tailT + dt;
-        if (this.tailT >= 5) { this.cascadeConduct = false; this.mirrorLarge = false; this.mirrorReading = false; if (this.veraPage === 'removals') this.veraPage = null; this.bump(); }
-      } else if (!this.afterQueued) { this.afterQueued = true; this.phone.arrive('after'); }
+        if (this.tailT >= TAIL_HOLD_SECONDS) { this.cascadeConduct = false; this.mirrorReading = false; if (this.veraPage === 'removals') this.veraPage = null; this.bump(); }
+      } else if (!this.afterQueued) { this.afterQueued = true; this.phone.sleep(); this.phone.arrive('after'); }
       if (this.afterQueued && !this.afterSaid && this.phone.delivered('after') && this.phone.queued === 0 && !this.phone.voiceBusy
         && this.phone.atRest && this.guideReady('after-phone')) {
         this.afterSaid = true; this.afterT = 0;
@@ -887,27 +932,46 @@ export class GraceQueueLite {
    *  Bea's FIRST Malta message lands, as a pop-in over whatever is on the desk (the Handset Window included), with the platform's
    *  chime. One voice: if another system pop-in is up it waits for it, and while it is up the phone's news waits too. */
   private updateMaltaAlert(dt: number): void {
-    if (this.maltaAlertT < 0 && !this.maltaAlertDone && this.phone.newsLanded >= 1 && !this.kitPopin && !this.storyOffer && !this.pauseOpen) {
+    if (this.maltaAlertT < 0 && !this.maltaAlertDone && this.phone.newsLanded >= MALTA_ALERT_AFTER && !this.kitPopin && !this.storyOffer && !this.pauseOpen) {
       this.maltaAlertT = 0; this.phone.newsPaused = true; playOnce('lambient_chime.mp3'); this.bump();
     }
     if (this.maltaAlertT >= 0) {
       const b = Math.floor(this.maltaAlertT * 4); this.maltaAlertT += dt;
-      if (this.maltaAlertT >= MALTA_ALERT_HOLD) { this.maltaAlertT = -1; this.maltaAlertDone = true; this.phone.newsPaused = false; this.bump(); }
+      if (this.maltaAlertT >= maltaAlertHold()) this.closeMaltaAlert();
       else if (b !== Math.floor(this.maltaAlertT * 4)) this.bump();
     }
+  }
+  private closeMaltaAlert(): void { this.maltaAlertT = -1; this.maltaAlertDone = true; this.phone.newsPaused = false; this.bump(); }
+  /** ⚑ S368 / F01·F11 — the conducted thread itself (was inline in the kit's Close): the news begins on her phone, the Handset
+   *  Window shows the group, Lambient says nothing while it runs (the group is felt). Called once the board is clear. */
+  private beginMaltaConduct(): void {
+    this.phone.startNews();
+    if (this.floppy.open) this.floppy.closeGame();
+    this.cascadeConduct = true; this.tailT = -1; this.mirrorMin = false; this.mirrorReading = true;
+    this.phone.showGroup(); this.lambPriority = false; this.lambLines = null;
+    this.bump();
   }
   private drawMaltaAlert(ctx: CanvasRenderingContext2D, W: number, H: number): void {
     if (this.maltaAlertT < 0) return;
     const R = vera.removals;
-    const w = Math.min(380, W - 280 - 24), h = 104, x = 12, y = Math.max(34, Math.floor((H - 28 - h) / 2) - 20);
+    // ⚑ S368 / F01·F03 — over the board only (clear of the Handset Window's column), and it holds by the reading rule or
+    //   until OK: its sub-line is wrapped (it used to run under the edge), and OK is the press that ends it early
+    const w = Math.min(380, W - MIRROR_W - MIRROR_GAP - 24), x = 12;
+    studioFont(ctx, 12); const sub = wrapText(ctx, R.alertSub, w - 20).slice(0, 2);
+    const h = 26 + 40 + sub.length * 16 + 40, y = Math.max(34, Math.floor((H - 28 - h) / 2) - 20);
     const flash = Math.floor(this.maltaAlertT * 2.2) % 2 === 0;
     px(ctx, x + 4, y + 5, w, h, ERA3.greyDk); px(ctx, x, y, w, h, ERA3.white);
     px(ctx, x - 2, y - 2, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y + h, w + 4, 2, ERA3.alarm); px(ctx, x - 2, y - 2, 2, h + 4, ERA3.alarm); px(ctx, x + w, y - 2, 2, h + 4, ERA3.alarm);
     px(ctx, x, y, w, 26, flash ? ERA3.alarm : ERA3.amber);
     studioFont(ctx, 13, true); ctx.fillStyle = ERA3.white; ctx.fillText('GracePlatform · ' + R.alertTag, x + 10, y + 6);
     studioFont(ctx, 20, true); ctx.fillStyle = ERA3.alarm;
-    wrapText(ctx, R.alertLine, w - 20).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, x + 10, y + 36 + i * 24));
-    studioFont(ctx, 12); ctx.fillStyle = ERA3.ink; ctx.fillText(R.alertSub, x + 10, y + h - 20);
+    wrapText(ctx, R.alertLine, w - 20).slice(0, 1).forEach((ln, i) => ctx.fillText(ln, x + 10, y + 36 + i * 24));
+    studioFont(ctx, 12); ctx.fillStyle = ERA3.ink; sub.forEach((ln, i) => ctx.fillText(ln, x + 10, y + 66 + i * 16));
+    // what it covers of the board takes no press (H01's law), and its own OK is the first rect
+    this.rects = this.rects.filter(r => r.id.startsWith('mirror') || !(r.x + r.w / 2 >= x && r.x + r.w / 2 <= x + w && r.y + r.h / 2 >= y && r.y + r.h / 2 <= y + h));
+    const bw = 70, bh = 24, bx = x + w - bw - 10, by = y + h - bh - 10;
+    aero.button(ctx, bx, by, bw, bh, R.alertOk, { primary: true, size: 11 });
+    this.rects.unshift({ x: bx, y: by, w: bw, h: bh, id: 'malta-alert-ok' });
   }
   private openKit(): void { this.kitPopin = false; this.veraPage = 'kit'; this.bump(); }
 
@@ -948,11 +1012,10 @@ export class GraceQueueLite {
       //   platform's own voice, and opens from there; it no longer takes the whole screen by itself
       this.kitPending = false; this.mode = 'board'; this.kitPopin = true; this.kitPopinT = 0; playOnce('lambient_chime.mp3'); this.bump();
     }
-    // while Bea's news lands the window is brought forward over the board — but never over an open job
-    if (this.cascadeConduct && !this.removalsShown) { const large = !this.jobOpen; if (large !== this.mirrorLarge) { this.mirrorLarge = large; this.bump(); } }
+    // (S327's "brought forward over the board" while Bea's news lands is gone with S368's fixed Handset Window: F01·F02)
     if (!this.removalsShown && this.phone.inTakeover && !this.jobOpen) {
       // the system takes over GracePlatform: the window goes back to its place, the platform shows what it removes
-      this.removalsShown = true; this.mirrorLarge = false; this.veraPage = 'removals'; this.bump();
+      this.removalsShown = true; this.veraPage = 'removals'; this.bump();
     }
     if (this.veraPage === 'removals') this.bump();   // the queue moves with the phone's own clock (its version)
   }
@@ -1593,7 +1656,7 @@ export class GraceQueueLite {
 
   // ── draw ─────────────────────────────────────────────────────────────────
   draw(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-    const platformW = this.mirrorAvailable ? W - 192 : W;
+    const platformW = this.mirrorAvailable ? W - MIRROR_W - MIRROR_GAP : W;   // S368 / F02: the Handset Window's column is reserved
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, platformW, H); ctx.clip();
     this.drawSurfaceContent(ctx, platformW, H);
     // ⚑ S281 — the glow logic (src/witness/pathGlow.ts): the warm ring on what the story waits on at the workstation
@@ -1631,7 +1694,6 @@ export class GraceQueueLite {
     this.drawMaltaAlert(ctx, W, H);
   }
   private mirrorMin = false;
-  private mirrorLarge = false;
   private mirrorReading = false;
   private mirrorDisconnected = false;
   private disconnectT = -1;
@@ -1641,8 +1703,8 @@ export class GraceQueueLite {
   disconnectPhone(): void { if (this.mirrorDisconnected) return; this.disconnectT = 0; this.mirrorDisconnected = true; this.mirrorReading = false; this.phone.disconnect(); if (this.floppy.open) this.floppy.closeGame(); this.bump(); }
   drawDisconnected(ctx: CanvasRenderingContext2D, W: number): void {
     if (this.disconnectT < 0 || this.disconnectT > 3) return;
-    const x = W - 188;
-    px(ctx, x, 0, 188, 150, ERA3.sysBand); px(ctx, x, 0, 188, 25, ERA3.grey);
+    const x = W - MIRROR_W;
+    px(ctx, x, 0, MIRROR_W, 150, ERA3.sysBand); px(ctx, x, 0, MIRROR_W, 25, ERA3.grey);
     setFont(ctx, 12); ctx.fillStyle = ERA3.white; ctx.fillText(mirrorCopy.title, x + 9, 7);
     setFont(ctx, 13); ctx.fillStyle = ERA3.ink;
     wrapText(ctx, mirrorCopy.disconnected, 164).forEach((line, i) => ctx.fillText(line, x + 12, 45 + i * 20));
@@ -1663,10 +1725,9 @@ export class GraceQueueLite {
     // ⚑ S358 / H12 (his headset, 10 Nov: the Maiden-to-be window "broke away from the screen") — the larger view used
     //   to jump to the middle of the board and leave its own strip as bare wallpaper. It now grows IN PLACE: docked to
     //   the right edge as always, wider to the left over the board, so it reads as the same window, larger.
-    const w = this.mirrorLarge ? 280 : 188, x = W - w;
+    // ⚑ S368 / F01·F02 — and since job 16 it never grows at all: ONE fixed width in its own reserved column (MIRROR_W)
+    const w = MIRROR_W, x = W - w;
     const h = H - 30;
-    // …and what it covers of the board takes no press and no ray (H01's law on this surface): the board's rects under it go
-    if (this.mirrorLarge) this.rects = this.rects.filter(r => r.id.startsWith('mirror') || !(r.x + r.w / 2 >= x && r.y + r.h / 2 < h));
     // ⚑ S349 / T44 — her phone's window wears the PHONE's idiom, not her employer's: the light bar and hairline of a 2016
     //   phone (iOS 7's flat grammar), dark title, the grouped grey ground — a different maker's software on the same desk
     px(ctx, x, 0, w, h, PHONE.bg); px(ctx, x, 0, w, 25, PHONE.bar); px(ctx, x, 24, w, 1, PHONE.hairline);
@@ -1676,7 +1737,8 @@ export class GraceQueueLite {
     this.rects.unshift({ x, y: 0, w, h: 25, id: 'mirror-enlarge' });
     this.mirrorCanvas ??= document.createElement('canvas');
     // ⚑ S362 / H40 — 300 (was 240): at the larger type Bea's first Malta message is taller than a 240 px thread
-    const phoneH = this.mirrorLarge && !this.floppy.open ? 300 : 360;
+    // ⚑ S368 — one height too (MIRROR_PHONE_H, 310): the phone fills the fixed column at ×1.07; the game keeps its 360
+    const phoneH = this.floppy.open ? 360 : MIRROR_PHONE_H;
     // ⚑ S362 / H40 (his headset, 10 Nov: the phone's text "a little out of focus… very hard to read; the monitor is much
     //   better") — the handset was drawn at 1× (180 px wide) and stretched ×1.3–1.5 with nearest-neighbour onto the
     //   desktop: every letter a smear. It is now drawn at 2× (the phone's own device screen is 3×) and brought down with
@@ -1975,8 +2037,14 @@ export class GraceQueueLite {
     studioFont(ctx, 12); ctx.fillStyle = ERA3.greyDk; ctx.fillText(R.sub, x, c.y + 34);
     studioFont(ctx, 11); ctx.fillStyle = ERA3.alarm; ctx.fillText(R.rule, x, c.y + 52);
     const rows = this.phone.takeoverRows();
-    const top = c.y + 74, rh = 22, room = Math.max(1, Math.floor((c.h - (top - c.y) - 30) / (rh + 3)));
-    const shown = rows.slice(Math.max(0, rows.length - room));
+    // ⚑ S368 / F04 — the takeover's alert sits ABOVE the rows it describes (it used to be drawn over them, saying they were being
+    //   removed while hiding them); while it is up the rows start under it
+    studioFont(ctx, 12); const alertSub = this.phone.takeoverAlert ? wrapText(ctx, R.takeoverSub, c.w - 36).slice(0, 2) : [];
+    const ah = this.phone.takeoverAlert ? 24 + 34 + alertSub.length * 15 + 36 : 0, ay = c.y + 68;
+    const top = c.y + 74 + (ah ? ah + 6 : 0), rh = 22, room = Math.max(1, Math.floor((c.h - (top - c.y) - 30) / (rh + 3)));
+    // ⚑ S368 / F04 — while the alert is up the rows it is about to remove are the ones in view (the oldest first); after it, the
+    //   newest, as before (the forwards arriving faster than it can remove them)
+    const shown = this.phone.takeoverAlert ? rows.slice(0, room) : rows.slice(Math.max(0, rows.length - room));
     shown.forEach((r, i) => {
       const y = top + i * (rh + 3);
       px(ctx, x, y, w, rh, r.state === 'removed' ? ERA3.sysBand : ERA3.white);
@@ -2005,14 +2073,17 @@ export class GraceQueueLite {
     if (this.phone.takeoverAlert) {
       if (!this.alertChimed) { this.alertChimed = true; playOnce('lambient_chime.mp3'); }
       const flash = Math.floor(performance.now() / 450) % 2 === 0;
-      const ah = 92, ay = c.y + Math.floor((c.h - ah) / 2) - 10;
-      px(ctx, c.x + 6, ay + 5, c.w - 12, ah, ERA3.greyDk);
+      px(ctx, c.x + 6, ay + 4, c.w - 12, ah, ERA3.greyDk);
       px(ctx, c.x + 6, ay, c.w - 12, ah, ERA3.white);
       px(ctx, c.x + 6, ay, c.w - 12, 24, flash ? ERA3.alarm : ERA3.amber);
       studioFont(ctx, 13, true); ctx.fillStyle = ERA3.white; ctx.fillText(R.alertTag, c.x + 18, ay + 5);
-      studioFont(ctx, 22, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(R.takeoverLine, c.x + 18, ay + 34);
+      studioFont(ctx, 22, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(R.takeoverLine, c.x + 18, ay + 32);
       studioFont(ctx, 12); ctx.fillStyle = ERA3.ink;
-      wrapText(ctx, R.takeoverSub, c.w - 36).slice(0, 2).forEach((ln, i) => ctx.fillText(ln, c.x + 18, ay + 64 + i * 15));
+      alertSub.forEach((ln, i) => ctx.fillText(ln, c.x + 18, ay + 60 + i * 15));
+      // ⚑ S368 / F04 — it holds by the reading rule (phoneE3 TAKEOVER_ALERT), or OK ends it and the review begins
+      const bw = 70, bh = 24, bx = c.x + c.w - 6 - bw - 10, by = ay + ah - bh - 8;
+      aero.button(ctx, bx, by, bw, bh, R.alertOk, { primary: true, size: 11 });
+      this.rects.unshift({ x: bx, y: by, w: bw, h: bh, id: 'takeover-alert-ok' });
     } else this.alertChimed = false;
   }
   private alertChimed = false;
@@ -2222,8 +2293,11 @@ export class GraceQueueLite {
 
     ctx.save();
     ctx.beginPath(); ctx.rect(x + padX, y + thumbH, w - padX * 2, LABELS); ctx.clip();
+    // ⚑ S368 / F02 (his screenshot: "Return the fa…") — a finished job's name wraps short of its "done" tag instead of running
+    //   under it, so the name reads whole beside the tag
+    setFont(ctx, 9); const doneW = done ? Math.ceil(ctx.measureText(q.app.boardDoneTag).width) + 6 : 0;
     setFont(ctx, 11); ctx.fillStyle = ERA3.titleText;
-    wrapText(ctx, t.label, w - padX * 2).forEach((line, i) => ctx.fillText(line, x + padX, y + thumbH + 3 + i * 12));
+    wrapText(ctx, t.label, w - padX * 2 - doneW).slice(0, 2).forEach((line, i) => ctx.fillText(line, x + padX, y + thumbH + 3 + i * 12));
     setFont(ctx, 10); ctx.fillStyle = ERA3.grey;
     ctx.fillText(t.id === 'testimony' ? polish.queueWaiting.replace('{n}', String(SUBMISSIONS.filter(sb => !this.subComplete(sb)).length)) : t.note, x + padX, y + thumbH + 29);
     ctx.restore();
@@ -2957,9 +3031,12 @@ export class GraceQueueLite {
   // ── input ────────────────────────────────────────────────────────────────
   handleClick(x: number, y: number): void {
     const mh = this.rects.find(r => hit(r, x, y));
+    if (mh?.id === 'malta-alert-ok') { this.closeMaltaAlert(); return; }
+    if (mh?.id === 'takeover-alert-ok') { this.phone.endTakeoverAlert(); this.bump(); return; }
     if (mh?.id === 'mirror-min') { this.mirrorMin = true; this.mirrorReading = false; this.bump(); return; }
     if (mh?.id === 'mirror-restore') { this.mirrorMin = false; this.mirrorReading = true; this.bump(); return; }
-    if (mh?.id === 'mirror-enlarge') { this.mirrorLarge = !this.mirrorLarge; this.mirrorReading = true; this.bump(); return; }
+    // ⚑ S368 / F01 — the title bar focuses the window (her phone takes the quiet); it no longer widens it over the board
+    if (mh?.id === 'mirror-enlarge') { this.mirrorReading = true; this.bump(); return; }
     if (mh?.id.startsWith('mirror:') && this.mirrorBox) {
       const id = mh.id.slice(7);
       if (this.floppy.open) { const b = this.mirrorBox; this.floppy.tap((x - b.x) / b.scale, (y - b.y) / b.scale); }
@@ -3005,10 +3082,8 @@ export class GraceQueueLite {
       //   her phone and the piece TAKES HER THERE: the Handset Window comes forward over the board on the group's
       //   thread, and the group fills faster than any review can. Lambient says nothing while it runs (the group is
       //   felt). The window goes back to its place when the cascade has ended (see the tail in update()).
-      this.armMalta(); this.phone.startNews();
-      if (this.floppy.open) this.floppy.closeGame();
-      this.cascadeConduct = true; this.tailT = -1; this.mirrorMin = false; this.mirrorLarge = true; this.mirrorReading = true;
-      this.phone.showGroup(); this.lambPriority = false; this.lambLines = null;
+      // ⚑ S368 / F01·F11 — …but no longer in the same frame: the thread waits for a clear board (update(), beginMaltaConduct)
+      this.armMalta(); this.maltaPending = true; this.maltaClearT = 0; this.maltaWaitT = 0;
       this.bump(); return;
     }
     this.boardQuietT = 0;

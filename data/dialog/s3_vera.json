@@ -160,6 +160,8 @@
   "alertSub": "Maiden-to-be is discussing the Malta vote. Review starts now.",
   "takeoverLine": "Intervening now.",
   "takeoverSub": "Political content in Maiden-to-be is being removed. You do not need to do anything.",
+  "alertOk": "OK",
+  "_docS368": "⚑ S368 / F03·F04 (UiB job 16, the reading rule): both alerts hold by the rule (2 s + 0.4 s a word, about 9 s; they were 4.5 s) or until `alertOk` is pressed. The first now fires when the second member has spoken (Susan, after Bea), since it says the group is discussing; the takeover's sits above the review rows it describes, no longer over them. Text unchanged.",
   "_docS362b": "⚑ S362 / H43 (his 21:13 words, \"when the Malta message appears\"): `alertTag`/`alertLine`/`alertSub` are the pop-in that fires the moment Bea's FIRST Malta message lands (graceQueueLite `drawMaltaAlert`, over whatever is on the desk, with the chime; the phone's news waits while it is up). The takeover's own card, when the review opens, now says `takeoverLine`/`takeoverSub` so the same sentence is not said twice.",
   "_docS362": "⚑ S362 / H43 (his headset, 10 Nov, 21:13: GracePlatform should \"jump in more dramatically\" with \"we need to intervene immediately\" when the Malta message appears): the removals page opens on this alert (platform voice, operable; flashing band + chime) and holds it ~4.5 s before the first removal (phoneE3 TAKEOVER_ALERT).",
   "removing": "removing…",
