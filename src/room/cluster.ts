@@ -296,6 +296,10 @@ export interface RelocationPlan {
   /** ⚑ S348 — the smooth turn at the top of the flight (E3→E4 only; it replaced a blink), between the rise and the
    *  crossing. Read by app.ts's turn leg, by this file's light timing, and by tools/make_era_change_audio.py. */
   turnSeconds?: number;
+  /** ⚑ S357bf — a hold at the top after the turn, watching the space change, before the crossing (E3→E4). With
+   *  `morphDelaySeconds` = `turnSeconds` the space starts changing as the turn ends, in front of you, and the crossing
+   *  still starts this long after it began (the gap the fold needs to open Room 1's east wall out of the path). */
+  watchSeconds?: number;
 }
 
 /** keyed `${from}-${to}`; a transition absent here takes the plain morph path */
@@ -335,6 +339,12 @@ export const RELOCATIONS: Record<string, RelocationPlan | undefined> = {
     rigDelaySeconds: 23.0,
     /** ⚑ S348: the turn at the top, smooth now (was a 0.35 s blink); the crossing starts after it */
     turnSeconds: 6.0,
+    /** ⚑ S357bf (his, 12 Nov: the camera should turn "before the rooms start morphing so we can see it happen"):
+     *  the space waited only for the rise, so it began changing at the turn's first second. Now it begins as the
+     *  turn ends (app.ts keeps this equal to the turn, also when a headset lengthens it), and the crossing waits
+     *  6 s more — the same 6 s the fold always had before the crossing, so the east wall is open in time. */
+    morphDelaySeconds: 6.0,
+    watchSeconds: 6.0,
     opensWalls: false, seat: 270
   }
 };
@@ -1065,7 +1075,7 @@ export function buildClusterShell(
         const cascade = reloc.cascadeSeconds ?? reloc.buildSeconds;
         const pace = cascade / CASCADE_BASE_SECONDS;
         // ⚑ S348: an authored delay is counted from the crossing's start, so the turn before it shifts it
-        const rigAt = reloc.rigDelaySeconds !== undefined ? reloc.rigDelaySeconds + (reloc.turnSeconds ?? 0)
+        const rigAt = reloc.rigDelaySeconds !== undefined ? reloc.rigDelaySeconds + (reloc.turnSeconds ?? 0) + (reloc.watchSeconds ?? 0)
           : (reloc.opensWalls ? cascade - 3.0 : Math.min(2.5, cascade * 0.35));
         state = toIdx >= 1 ? 'open' : 'sealed';
         const events: { t: number; fn: () => void }[] = [
