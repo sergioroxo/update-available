@@ -926,6 +926,29 @@ system's argument, not weighed as a clinical position (§7j, §7n).
 games and media of 2026 (§7o). Figures: the five sign pictures before and after their ticks, and the Meridian card,
 in `research/article-images-2026-11-12/job16-partC-S370/clip/` (`signs-3/4/5*.png`, `card-07.png`).
 
+**Added 12 Nov (his, on §7t: "and also the fact the words of the text was altered to make the narration fail").**
+The second half of the device is in the words, and it is older than the pictures (S366, his 11 Nov note that the signs
+were "a bit repetitive logic"). The narrator states each sign at full confidence. Under it, the clip types the AI's own
+evidence into the picture, and the AI marks one phrase of it in gold, on the beat, as its proof (`clip.signs.rows[].tell`
+in `data/dialog/s4_v3.json`). That marked phrase is exactly what makes the narrated claim fail. Each sign fails in a
+different way:
+
+| the narrated claim | the AI's own evidence (the gold tell in bold) | how its words undo it |
+|---|---|---|
+| she came out suddenly | Mum, **Jun 2023**: "so proud of you" | **time**: three years before her 18th, and the one who heard it was proud |
+| her friends came out too | the lot: all 4 met **after Jun 2023** | **order**: it reads the effect as the cause |
+| more time online | 6 h 12 m, mostly **the clinic's waiting list** | **purpose**: she is online because care is not |
+| more popular after | 5 **birthday messages** this morning | **category**: love counted as a symptom |
+| struggles before | **Dad, Sep 2025**: "Not while you're under this roof." | **source**: his rule filed as her struggle, two years after, not before |
+
+So the clip fails twice, on two channels: **its pictures are wrong in their objects**, and **its own words, marked as
+proof, contradict what its voice says.** The narration never notices. It finishes on "FIVE OUT OF FIVE." with the stamp.
+For the article, this is the clip's whole argument in one device: the machine's confidence is never touched by its own
+evidence, and the viewer reads both at once.
+
+*Checked against the code: the clip has no deliberate misspellings. The impossible dates are in the calendar picture,
+and every evidence line is the machine's data in its own voice.*
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
