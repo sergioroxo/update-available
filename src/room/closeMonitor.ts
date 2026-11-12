@@ -426,7 +426,8 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
   let near = false;
   let face: 'card' | 'receipt' | 'lexicon' = 'card';
   let focus = -1;
-  const lexicon = new Lexicon();
+  // ⚑ S372 — a word's sound ending redraws its media window (the glass still uploads only on a change)
+  const lexicon = new Lexicon({ onChange: () => { if (on && near && face === 'lexicon') drawLexicon(); } });
   function drawLexicon(): void { lexicon.draw(ctx, W, H, hits); tex.upload(); }
   const api: CloseMonitor = {
     entity,
@@ -464,6 +465,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     setNear(n: boolean): void {
       if (near === n) return;
       near = n;
+      if (!near) lexicon.stopSound();
       if (on) { if (!near) drawFar(); else if (face === 'receipt') drawReceipt(); else if (face === 'lexicon') drawLexicon(); else drawCard(); }
     },
     hitTest(p0, p1): { x: number; y: number; t: number } | null {
@@ -481,7 +483,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       return { x: u * W, y: v * H, t };   // W1-G2: how far along the ray the glass is, so a nearer panel can win
     },
     openLexicon(): void {
-      face = 'lexicon'; api.onFace?.(face); lexicon.face = 'title';
+      face = 'lexicon'; api.onFace?.(face); lexicon.press('lex-title');
       if (on && near) drawLexicon();
     },
     show(): void {
@@ -494,6 +496,7 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
       entity.enabled = true;
     },
     hide(): void {
+      lexicon.stopSound();
       on = false;
       near = false;
       face = 'card';
@@ -525,8 +528,8 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
         if (h.id === 'close-again') { api.onAgain?.(); return true; }
         if (h.id === 'close-receipt') { face = 'receipt'; api.onFace?.(face); printLines = []; printT = 0; drawReceipt(); return true; }
         // ⚑ S209 / P7-47 — the Lexicon: its own presses, and its Close back to the card
-        if (h.id === 'close-lexicon') { face = 'lexicon'; api.onFace?.(face); lexicon.face = 'title'; drawLexicon(); return true; }
-        if (h.id === 'lex-close') { face = 'card'; drawCard(); return true; }
+        if (h.id === 'close-lexicon') { face = 'lexicon'; api.onFace?.(face); lexicon.press('lex-title'); drawLexicon(); return true; }
+        if (h.id === 'lex-close') { lexicon.stopSound(); face = 'card'; drawCard(); return true; }
         if (lexicon.press(h.id)) { drawLexicon(); return true; }
         if (h.id === 'close-back') { face = 'card'; receiptScroll = 0; drawCard(); return true; }
         if (h.id === 'receipt-up') { receiptScroll += 6; drawReceipt(); return true; }

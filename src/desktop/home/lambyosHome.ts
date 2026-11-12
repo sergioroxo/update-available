@@ -665,12 +665,16 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
    *  canvas exactly as the machine draws them, with a real button laid over each of its published hit rects so it is
    *  reachable by keyboard and by touch. Reading only: Your Words comes from this visit's memory, nothing is filed. */
   function openLexicon(): void {
-    const book = new Lexicon();
+    let redrawRef: (() => void) | null = null;   // S372: a word's sound ending redraws its media window
+    const book = new Lexicon({ onChange: () => redrawRef?.() });
     const LW = ERA1_CANVAS.width, LH = ERA1_CANVAS.height;
     const labels: Record<string, string> = {
       'lex-words': lex.tabs.words, 'lex-reasons': lex.tabs.reasons, 'lex-yours': lex.tabs.yours, 'lex-sources': lex.tabs.sources, 'lex-close': lex.tabs.close,
-      'lex-prev': lex.prev, 'lex-next': lex.next, 'lex-title': lex.title
+      'lex-prev': lex.prev, 'lex-next': lex.next, 'lex-title': lex.title,
+      // ⚑ S372 — the Multimedia Edition's own controls
+      'lex-sold': lex.ui.sold, 'lex-play': `${lex.ui.play} / ${lex.ui.stop}`, 'lex-panel-close': lex.ui.back, 'lex-site': lex.ui.siteLabel
     };
+    const labelOf = (id: string): string => labels[id] ?? (id.startsWith('lex-go-') ? (lex.terms.find((t) => t.id === id.slice(7))?.term ?? id) : id);
     openCard('lexicon', `${lex.title} — ${lex.edition}`, (body) => {
       const wrap = document.createElement('div');
       Object.assign(wrap.style, { position: 'relative', width: '100%', maxWidth: `${LW}px`, aspectRatio: `${LW} / ${LH}`, margin: '0 auto 12px' } as CSSStyleDeclaration);
@@ -712,7 +716,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
           const b = document.createElement('button');
           b.type = 'button';
           b.dataset.lex = h.id;
-          b.setAttribute('aria-label', labels[h.id] ?? h.id);
+          b.setAttribute('aria-label', labelOf(h.id));
           Object.assign(b.style, {
             position: 'absolute', left: `${(h.x / LW) * 100}%`, top: `${(h.y / LH) * 100}%`,
             width: `${(h.w / LW) * 100}%`, height: `${(h.h / LH) * 100}%`,
@@ -721,7 +725,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
           b.addEventListener('focus', () => { b.style.outline = `2px dashed ${HOME.accent}`; b.style.outlineOffset = '-2px'; });
           b.addEventListener('blur', () => { b.style.outline = 'none'; });
           b.addEventListener('click', () => {
-            if (h.id === 'lex-close') { closeCard(); return; }
+            if (h.id === 'lex-close') { book.stopSound(); closeCard(); return; }
             if (book.press(h.id)) redraw(h.id);
           });
           overlay.appendChild(b);
@@ -729,6 +733,7 @@ export function mountLambyosHome(onContinue: (choice: DoorChoice) => void, opts:
         if (focusId) (overlay.querySelector(`[data-lex="${focusId}"]`) as HTMLElement | null)?.focus();
       };
       redraw();
+      redrawRef = () => redraw();
       // its sources, in the Lexicon's own plain sentence, and the way to them (the menu's Credits, as the plaque has)
       body.insertBefore(srcList, wrap.nextSibling);
       body.insertBefore(para(lex.sources, { fontSize: '12px', color: DIALOG.dim, margin: '0 0 10px' }), srcList.nextSibling);

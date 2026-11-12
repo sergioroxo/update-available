@@ -1015,7 +1015,7 @@ export class DesktopOS {
     if (!this.reinterp || this.startMapSilent || mapState(this).quiet) return;
     this.minimiseWindow('web'); this.minimiseWindow('kit'); this.minimiseWindow('irc');
     this.startOpen = false; this.startMap.openRoot(this.desktopEra);
-    meetWord('roots');
+    meetWord('roots', 'e1-rootcause');
     this.dirty = true;
   }
 
@@ -1402,7 +1402,7 @@ export class DesktopOS {
     if (!this.guideReady('wotd')) return;   // Lamby owns the current step; vocabulary waits.
     this.wotdShown.add(era);
     this.wotdOpen = era;
-    meetWord((lexStrings.wotdApps as Record<string, { word: string }>)[era].word);
+    meetWord((lexStrings.wotdApps as Record<string, { word: string }>)[era].word, `${era}-wotd`);   // S372: where
     this.dirty = true;
   }
 

@@ -480,6 +480,7 @@ export class E4Browser {
     if (!e4Has('link')) { markE4('link'); this.file('v3:link', 'opened', W3.link); }
     this.newsOpened = ARTICLES.length;
     this.newsIndex = n;
+    if (ARTICLES[n]?.id === 'hhs') meetWord('exploratory', 'e4-news');   // ⚑ S372 — the report Mum sent
     this.idleNav = 0;
     if (this.step === 'mumMail') this.go('news');
     this.openTab('news');
@@ -504,6 +505,7 @@ export class E4Browser {
     ledger.e4Space.push({ id: 'enquiry', outcome: 'read', witness: ENQ.witness });
     markE4('meridian');
     this.file('v3:meridian', 'read', MAIL.witnessMeridian);
+    meetWord('eligibility', 'e4-meridian');   // ⚑ S372 — the Lexicon's eligibility words, where she met them
     this.file('v3:draft', 'read', MAIL.witnessDraft);
     this.enquiry = 'closed';
     this.go('pause');
@@ -824,7 +826,7 @@ export class E4Browser {
       if (!this.wotdSaid && this.step === 'news' && this.quietT > 12 && !this.nowLine) {
         const app = lexStrings.wotdApps.e4;
         const t = (lexStrings.terms as { id: string; word: string | null; line: string | null }[]).find((x) => x.id === app.word);
-        if (t?.word) { this.wotdSaid = true; meetWord(t.id); this.sayLine(`${app.title}: ${t.word}. ${t.line ?? ''}`); }
+        if (t?.word) { this.wotdSaid = true; meetWord(t.id, 'e4-wotd'); this.sayLine(`${app.title}: ${t.word}. ${t.line ?? ''}`); }
       }
       // ⚑ S364 / item 7 — the console is lit by the AI's offer now: this quiet line only follows her "Not now"
       if (!this.waitSaid && this.quietT > 25 && consoleSession.lit && this.gameAnswer === 'later' && !this.gameWin && !ledger.games.some((g) => g.id === 'matchmade')) {
@@ -1035,6 +1037,10 @@ export class E4Browser {
       this.file('newyou', 'read', W3.newyou);
     }
     if (id === 'stories') this.file('v3:stories', 'read', W3.stories);
+    // ⚑ S372 — the Lexicon's 2026 words, met where the AI says them (Your Words; "You met it" on each page)
+    if (id === 'diagnosis') { meetWord('rogd', 'e4-signs'); meetWord('contagion', 'e4-spread'); }
+    if (id === 'explore') { meetWord('exploring', 'e4-explore'); meetWord('explorative', 'e4-explore'); }
+    if (id === 'heading') meetWord('freedom', 'e4-restored');
     if (id === 'unmuted') this.ring = Math.min(this.ring, 61);   // S367: her act pulls it; it never rises for it
     this.beatRing = this.ring;
     // ⚑ S364 / N10 — before it speaks, it uses her computer: it reads her mail; it mutes Junie and two more; it starts the game

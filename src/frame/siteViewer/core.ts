@@ -13,6 +13,7 @@ import { MODEL, YEARS, type Block, type TabId } from './model';
 import { SKINS, type View, type Year } from './skins';
 import { layoutDoc, type Doc, type DocHit, type Op, type Rect, wrap } from './layout';
 import { drawScrollbar, drawSiteHeader, drawStatus, drawWindow, roundRect, SCROLL_W, type DrawEnv, type Hit } from './frame';
+import { siteViewerBus } from './bus';
 
 export interface ViewerHost {
   /** a browser can open a new tab with the page version; a headset cannot */
@@ -51,7 +52,10 @@ export class ViewerCore {
 
   // ── state ──
   open(target: View): void {
-    this.view = target; this.tab = 'story'; this.scroll = 0; this.hover = ''; this.doc = null;
+    // ⚑ S372 — a caller may ask for a tab (siteViewerBus.openAt: the Lexicon's link to a year's "The words")
+    const want = siteViewerBus.nextTab as TabId | null;
+    this.view = target; this.tab = want && target !== 'hub' && MODEL.tabIds.includes(want) ? want : 'story';
+    this.scroll = 0; this.hover = ''; this.doc = null;
   }
   setTab(t: TabId): void { if (t === this.tab) return; this.tab = t; this.scroll = 0; this.doc = null; }
   setView(v: View): void { if (v === this.view) return; this.open(v); }
