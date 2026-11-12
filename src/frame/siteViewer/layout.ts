@@ -11,6 +11,10 @@ export type Action =
   | { type: 'url'; url: string }
   | { type: 'page'; href: string }
   | { type: 'audio'; file: string }
+  /** ⚑ S371 — a press on a film (its picture or its Play / Pause button) */
+  | { type: 'film'; file: string }
+  /** ⚑ S371 — a press on a film's progress line: `x0`/`w` are the line's own span, in document px */
+  | { type: 'seek'; file: string; x0: number; w: number }
   | { type: 'door'; year: Year };
 export interface DocHit extends Rect { id: string; act: Action; tip: string }
 
@@ -19,7 +23,12 @@ export type Op =
   | { t: 'text'; x: number; y: number; s: string; font: string; color: string; lh: number; u?: boolean }
   | { t: 'chip'; x: number; y: number; w: number; h: number; s: string; bg: string; ink: string; font: string }
   | { t: 'img'; x: number; y: number; w: number; h: number; src: string; alt: string }
-  | { t: 'play'; x: number; y: number; w: number; h: number; file: string; label: string; font: string };
+  | { t: 'play'; x: number; y: number; w: number; h: number; file: string; label: string; font: string; kind: 'audio' | 'film' }
+  /** ⚑ S371 — a film's screen: its picture (16:9) and, under it, its progress line (FILM_BAR px), one rect */
+  | { t: 'film'; x: number; y: number; w: number; h: number; file: string; pic: number };
+
+/** ⚑ S371 — a film's progress strip under its picture, and the inset of the line from either side (the times sit there) */
+export const FILM_BAR = 42, FILM_INSET = 84, FILM_MAX_W = 720;
 
 export interface Doc { h: number; ops: Op[]; hits: DocHit[] }
 
@@ -51,7 +60,9 @@ export function wrap(ctx: CanvasRenderingContext2D, text: string, font: string, 
 
 export interface ImageLookup { (src: string): { ok: boolean } }
 
-export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width: number, skin: Skin, canPage: boolean): Doc {
+/** `films`: the window draws a film's pictures itself (S371: true in the browser and in the headset); when false, a film
+ *  shows only the note that it plays on the web page version */
+export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width: number, skin: Skin, canPage: boolean, films = true): Doc {
   const ops: Op[] = [];
   const hits: DocHit[] = [];
   const pad = width > 700 ? 28 : 18;
@@ -244,8 +255,10 @@ export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width:
         const lyr = b.lyrics.flatMap((l) => wrap(ctx, l, F(SIZE.small), cw - 56));
         const lyrH = lyr.length ? 34 + lyr.length * sl + 6 : 0;
         const playable = !!b.file && b.type === 'audio';
-        const filmNote = !!b.file && b.type !== 'audio';
-        const extra = playable ? 62 : filmNote ? sl + 8 : 0;
+        const film = !!b.file && b.type !== 'audio' && films;
+        const filmNote = !!b.file && b.type !== 'audio' && !films;
+        const fw = Math.min(cw - 36, FILM_MAX_W), pic = Math.round(fw * 9 / 16), fh = pic + FILM_BAR;
+        const extra = playable ? 62 : film ? fh + 14 + 62 : filmNote ? sl + 8 : 0;
         const h = 14 + title.length * Math.round(SIZE.h4 * LH) + what.length * lh + 8 + extra + lyrH + cred.length * sl + 16;
         box(pad, y, cw, h, skin.card, skin.cardEdge, 2);
         let yy = y + 14;
@@ -254,8 +267,19 @@ export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width:
         what.forEach((l, i) => ops.push({ t: 'text', x: pad + 18, y: yy + i * lh, s: l, font: F(SIZE.body), color: skin.ink, lh }));
         yy += what.length * lh + 8;
         if (playable) {
-          ops.push({ t: 'play', x: pad + 18, y: yy, w: 210, h: 48, file: b.file, label: 'Play', font: F(SIZE.body, true) });
+          ops.push({ t: 'play', x: pad + 18, y: yy, w: 210, h: 48, file: b.file, label: 'Play', font: F(SIZE.body, true), kind: 'audio' });
           addHit({ x: pad + 18, y: yy, w: 210, h: 48 }, { type: 'audio', file: b.file }, b.title);
+          yy += 62;
+        } else if (film) {
+          // ⚑ S371 — the film plays IN the window: its picture (a press plays or pauses it), its progress line (a press
+          //   goes to that point), then a Play / Pause button under it, the size of a track's
+          const fx = pad + 18;
+          ops.push({ t: 'film', x: fx, y: yy, w: fw, h: fh, file: b.file, pic });
+          addHit({ x: fx, y: yy, w: fw, h: pic }, { type: 'film', file: b.file }, b.title);
+          addHit({ x: fx + FILM_INSET - 10, y: yy + pic, w: fw - 2 * FILM_INSET + 20, h: FILM_BAR }, { type: 'seek', file: b.file, x0: fx + FILM_INSET, w: fw - 2 * FILM_INSET }, `${b.title}: go to a point in the film`);
+          yy += fh + 14;
+          ops.push({ t: 'play', x: fx, y: yy, w: 250, h: 48, file: b.file, label: 'Play the film', font: F(SIZE.body, true), kind: 'film' });
+          addHit({ x: fx, y: yy, w: 250, h: 48 }, { type: 'film', file: b.file }, b.title);
           yy += 62;
         } else if (filmNote) {
           ops.push({ t: 'text', x: pad + 18, y: yy, s: canPage ? 'Plays on the web page version (open it from the bar above).' : 'Plays on the web page version, outside the headset.', font: F(SIZE.small), color: skin.dim, lh: sl });

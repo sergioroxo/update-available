@@ -47,7 +47,7 @@ for a headset: body 22 px on a 1024 px-wide window that hangs 0.9 m wide.
 Links to outside sources are **shown with their address**. In the browser a press opens the source in a new tab (a navigation the
 visitor chose). In the headset a press shows the address in a note ("Open this address on a phone or a computer: …"). Nothing
 leaves the piece. Audio tracks on the Media tab have a Play / Stop button (project-owned files, through the mixer, so the menu's
-volume and mute apply). The opening film plays on the web page version only.
+volume and mute apply). ⚑ S371: films play IN the window too, in the browser and in the headset (below).
 
 In the headset the window opens 1.5 m away and eases to 0.8 m in under half a second (no ease under reduced motion). The
 helper's yellow plate stays down while it is up. A press that misses the window is swallowed: the room behind takes none.
@@ -93,4 +93,16 @@ that repaints only when dirty.
 - Hand-tracking users with no thumbstick scroll with the buttons only.
 - The window is a fixed 1024 × 768 canvas in the headset (×1.5 resolution); long pages are long scrolls (the Sources tab of 2016 and 2026 is
   ~9 000 px).
-- The film on the hub plays on the web page version only.
+- ⚑ S371 (UiB job 17 Part A): ~~The film on the hub plays on the web page version only.~~ Films play inside the window. A hidden
+  video element (`audio.ts` `viewerFilm`, under the mixer's FILM channel) is drawn onto the window's canvas: a poster before the
+  first press (nothing loads until then), the picture with a progress line under it (time gone, length; a press on the line goes
+  there), a press on the picture plays or pauses, and a Play / Pause button under it. One thing plays at a time (a track stops the
+  film and the other way round); leaving the page or closing the window stops the film; minimising pauses it. In the browser each new
+  picture repaints only the film's rect. In the headset the film's rect is a plane of its own (`xr-frame-site-film`, a child of the
+  window, opaque, drawn before the window, which leaves that rect clear): its 768 × 477 texture, with no mip chain, is uploaded on
+  each new picture, and the window's 1536 × 1152 texture is uploaded only when the window itself changes (a press, a hover, a
+  scroll), never per picture. One more draw call while a
+  film is loaded and on screen. Measured in the emulated headset by `tools/viewer-media-probe.mjs`: ≤ 51 draw calls, the window 0
+  uploads/s, the film's rect 20–30/s. Never seen on a Quest: the in-headset pass is Sérgio's.
+- ⚑ S371: every Play on the hub and the four sites is pressed by `node tools/viewer-media-probe.mjs --port <p>` (browser: the real
+  mouse; emulated headset: world rays through `pressRay`), which reports the HTTP status, `playing` and a moving clock for each.

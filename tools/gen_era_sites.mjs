@@ -178,6 +178,26 @@ function scriptModel(X) {
   ];
 }
 
+/**
+ * ⚑ S371 (UiB job 17 Part A; his 11 Nov: "make sure all the audios are playable in the close source websites") — one
+ * media card, the same on every page and on the hub: a title, what it is and where it plays in the piece, the player
+ * (preload none: nothing loads before a press), the words where there are some, and the credit. A row with no file is
+ * described, not played. Every file must be one the licence ledger claims as the project's own (check-era-sites §6).
+ */
+function mediaHtml(m, up, tag = 'article') {
+  const C = S.common;
+  const credit = `<p class="credit">${esc(C.creditLabel)}: ${esc(m.credit)}</p>`;
+  if (!m.file) return `<${tag} class="media nofile"><h3>${esc(m.title)}</h3><p>${esc(m.what)}</p>${credit}</${tag}>`;
+  const el = m.type === 'video'
+    ? `<video controls preload="none" src="${up}${m.file}">`
+    : `<audio controls preload="none" src="${up}${m.file}">`;
+  const close = m.type === 'video' ? '</video>' : '</audio>';
+  const lyr = m.lyrics ? `<details><summary>${esc(C.lyricsTitle)}</summary><p class="lyrics">${lyricsOf(m.lyrics).map(esc).join('<br>')}</p></details>` : '';
+  return `<${tag} class="media"><h3>${esc(m.title)}</h3><p>${esc(m.what)}</p>${el}<a href="${up}${m.file}">${esc(m.title)}</a>${close}${lyr}${credit}</${tag}>`;
+}
+/** the same card as the in-piece site viewer reads it (data/strings/era_sites_model.json) */
+const mediaModel = (m) => ({ k: 'media', title: m.title, what: m.what, file: m.file || '', type: m.type || 'audio', credit: `${S.common.creditLabel}: ${m.credit}`, lyrics: m.lyrics ? lyricsOf(m.lyrics) : [], lyricsTitle: S.common.lyricsTitle });
+
 // ── the seven tab panels (the same content, whatever the skin) ──────────────────────────────────────────────
 function panelsFor(year, up) {
   const E = S.eras[year];
@@ -262,15 +282,7 @@ ${src}
 ${period.length ? `<p>${esc(C.periodLead)}</p><ul class="period">${period.map((l) => `<li>${ext(l)}<br><span class="refnote">${esc(l.note)}</span></li>`).join('')}</ul>` : `<p>${esc(C.periodNone)}</p>`}`;
 
   // MEDIA
-  const items = E.media.map((m) => {
-    if (!m.file) return `<article class="media nofile"><h3>${esc(m.title)}</h3><p>${esc(m.what)}</p><p class="credit">${esc(C.creditLabel)}: ${esc(m.credit)}</p></article>`;
-    const el = m.type === 'video'
-      ? `<video controls preload="none" src="${up}${m.file}">`
-      : `<audio controls preload="none" src="${up}${m.file}">`;
-    const close = m.type === 'video' ? '</video>' : '</audio>';
-    const lyr = m.lyrics ? `<details><summary>${esc(C.lyricsTitle)}</summary><p class="lyrics">${lyricsOf(m.lyrics).map(esc).join('<br>')}</p></details>` : '';
-    return `<article class="media"><h3>${esc(m.title)}</h3><p>${esc(m.what)}</p>${el}<a href="${up}${m.file}">${esc(m.title)}</a>${close}${lyr}<p class="credit">${esc(C.creditLabel)}: ${esc(m.credit)}</p></article>`;
-  }).join('\n');
+  const items = E.media.map((m) => mediaHtml(m, up)).join('\n');
   out.media = `<h2 id="h-media">${esc(S.tabs.media)}</h2><p class="lede">${esc(C.mediaLead)}</p>${items}`;
 
   // WORDS
@@ -626,7 +638,8 @@ h1{font-size:clamp(1.7rem,6vw,2.6rem);line-height:1.15;margin:0 0 8px}
 section{margin:36px 0}
 h2{font-size:1.3rem;margin:0 0 8px}
 .card{background:${c.card};border:1px solid ${c.rule};border-radius:8px;padding:14px 18px;margin:12px 0}
-.media video{width:100%;display:block;margin:10px 0}
+.media video,.media audio{width:100%;display:block;margin:10px 0}
+.media h3{margin:0 0 4px}
 .credit,.nolink{font-size:.88rem}
 ul.l{padding-left:20px}ul.l li{margin:4px 0}
 details summary{cursor:pointer;font-weight:700}
@@ -647,8 +660,10 @@ a{color:${c.price}}
 <section aria-labelledby="also"><h2 id="also">${esc(H.alsoTitle)}</h2>
 <div class="card"><p><a href="../sources/index.html">${esc(H.oldSources)}</a><br>${esc(H.oldSourcesNote)}</p></div>
 <div class="card"><p><a href="../index.html?reinterp=1">${esc(S.playLabel)}</a><br>${esc(H.playNote)}</p></div>
-<div class="card media"><h3>${esc(H.filmTitle)}</h3><p>${esc(H.filmWhat)}</p><video controls preload="none" src="../assets/video/lambyos_welcome_home.mp4"><a href="../assets/video/lambyos_welcome_home.mp4">${esc(H.filmTitle)}</a></video><p class="credit">${esc(S.common.creditLabel)}: ${esc(H.filmCredit)}</p></div>
 <div class="card"><details><summary>${esc(H.lexiconTitle)}</summary><p>${esc(H.lexiconLead)}</p><ul class="l">${lexLinks}</ul></details></div>
+</section>
+<section aria-labelledby="sound"><h2 id="sound">${esc(H.soundTitle)}</h2><p>${esc(H.soundLead)}</p>
+${[H.film, ...H.sound].map((m) => mediaHtml(m, '../', 'div').replace('<div class="media', '<div class="card media')).join('\n')}
 </section>
 <section aria-labelledby="about"><h2 id="about">${esc(H.aboutTitle)}</h2>${about.paragraphs.map((p) => `<p>${esc(p)}</p>`).join('')}</section>
 <section aria-labelledby="how"><h2 id="how">${esc(H.howTitle)}</h2><ul class="l">${H.how.map((p) => `<li>${esc(p)}</li>`).join('')}</ul></section>
@@ -738,7 +753,7 @@ function panelsModel(year) {
   ];
   out.media = [
     { k: 'h2', t: S.tabs.media }, { k: 'lede', t: C.mediaLead },
-    ...E.media.map((m) => ({ k: 'media', title: m.title, what: m.what, file: m.file || '', type: m.type || 'audio', credit: `${C.creditLabel}: ${m.credit}`, lyrics: m.lyrics ? lyricsOf(m.lyrics) : [], lyricsTitle: C.lyricsTitle }))
+    ...E.media.map(mediaModel)
   ];
   const terms = wordsOf(year);
   const reasons = reasonsOf(year);
@@ -769,7 +784,7 @@ function viewerModel() {
     hub: {
       title: H.title, lede: H.lede, choose: H.choose, doors: YEARS.map((y) => ({ year: y, who: people[y], text: H.doors[y] })),
       alsoTitle: H.alsoTitle, oldSources: H.oldSources, oldSourcesNote: H.oldSourcesNote,
-      filmTitle: H.filmTitle, filmWhat: H.filmWhat, filmCredit: `${S.common.creditLabel}: ${H.filmCredit}`,
+      soundTitle: H.soundTitle, soundLead: H.soundLead, film: mediaModel(H.film), sound: H.sound.map(mediaModel),
       lexiconTitle: H.lexiconTitle, lexiconLead: H.lexiconLead, lexiconLinks: (links['lexicon#sources'] ?? []).map((l) => ({ label: l.label, url: l.url })),
       aboutTitle: H.aboutTitle, about: about.paragraphs, howTitle: H.howTitle, how: H.how
     },
