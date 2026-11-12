@@ -283,7 +283,7 @@ async function main() {
   await wait(21000);
   await beat('close · open + the panels');
   await wait(30000);
-  await beat("close · Daniel's monitor + the Restart card");
+  await beat("close · the computer's panel (S378: the Restart page is a press on it)");
   await wait(14000);
   await beat('end');
 

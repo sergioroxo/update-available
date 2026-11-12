@@ -67,6 +67,29 @@
   "notChanged": "NOT CHANGED",
   "couldNot": "four updates, thirty years: none of them changed who they were."
  },
+ "machine": {
+  "_doc": "⚑ S378 (UiB job 20 Part A; his 12 Nov: 'should we make one of the panels the computer… we can open fake html pages like the other panels') — THE COMPUTER AS A FIFTH PANEL, and its own page in the site viewer. The panel hangs in the Close's row beside the four rooms' panels (pointCloud.ts, the machine panel); a press anywhere on it opens the machine's page (src/frame/siteViewer/machine.ts), which holds everything the Restart card on the far glass held: the title, the file's size and the sentence that answers it, the four rooms, Start again, the Receipt, the dossier and the Lexicon. Frame voice: functional, plain, never playing. Every key below is NEW — a draft for his eye (T76); the card's own words above are reused unchanged. ⚑ 'Return to LambyOS Home' (`home`, above) is NOT on the page: the card has had no Home button since Home was dropped (his 27 Oct ruling: no Bob version) — T76 asks.",
+  "panelHint": "Press anywhere on this screen to open the machine's page.",
+  "panelButton": "Open",
+  "windowTitle": "LambyOS · 1997 — 2026",
+  "tabs": { "machine": "Restart", "receipt": "Receipt", "lexicon": "The Lexicon" },
+  "back": "Back",
+  "roomsLabel": "The four rooms",
+  "moreLabel": "Read again",
+  "status": "Go back to a room, or start the machine again.",
+  "tips": {
+   "era": "Go back to {label}",
+   "again": "Start again from the beginning. Nothing is kept.",
+   "receipt": "Every update, printed: what it promised, what it filed, who it did not change",
+   "dossier": "The four years as websites: story, practices, sources",
+   "lexicon": "The words the networks used, and what the evidence says",
+   "back": "Back to the page before",
+   "machine": "The machine's page: restart",
+   "printing": "Printing…",
+   "printed": "Printed. Scroll to read it again from the top."
+  },
+  "chip": "LambyOS"
+ },
  "_docCome": "⚑ S163 / C-02 — the FAR face's one line (the machine stands three metres back in the sky now; the full card is drawn once the eye has come to it). Frame voice.",
  "witness": "the machine offered its restart; nothing was kept",
  "makers": "Made at the University of Bergen (SurvivingSOGICE) with Claude. Credits & sources: the menu.",

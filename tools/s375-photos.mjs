@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * ⚑ S378 (UiB job 20 Part A): its Restart-card step presses `__closeMonitor.hits`, which are always empty now (the card moved to the computer panel's page in the site viewer); that step logs 'did not reach the Restart card' by design. tools/s378-machine-probe.mjs and tools/stills.mjs photograph the new end.
  * S375 (UiB job 19 Part A) — THE SWEEP. Every surface in tools/harness/s375-surfaces.mjs, from the seat, 2560 × 1440,
  * in the browser (drag-to-look) or through the emulated headset (tools/harness/xr-mock.mjs). Photography only: it changes
  * nothing the player sees and judges nothing.

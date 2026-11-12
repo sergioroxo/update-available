@@ -39,6 +39,7 @@ import V3 from '../../../data/dialog/s4_v3.json';
  */
 import { ERA4, PLACE, WEB, BALL, CLIP, roundRect, pill, avatar, streamScene, streamShot } from '../theme/era4';
 import { px, setFont, wrapText } from '../theme/chrome';
+import { CAL_2026 as C26 } from '../theme/calendar';
 import { setBallLight, setCommonsWorld } from '../../room/cluster';
 import { turnTo } from '../../room/commonsWorld';
 import { setCommonsFigures, setCommonsDance, answerCommonsFigures, greetCommonsFigures, setCommonsTransJesus, TJ_WALK_SECONDS } from '../../room/commonsFigures';
@@ -1257,12 +1258,17 @@ export class E4Ball {
     // the people who came: three rows of 14, filling as the count climbs (hair, head, shoulders; never a face)
     const cloth = [PLACE.textileHi, PLACE.sunHi, ERA4.l, PLACE.book, PLACE.bookAlt, PLACE.textile, PLACE.sky, PLACE.sun];
     const hair = [PLACE.ink, PLACE.floorLo, PLACE.book, PLACE.sunHi];
+    // ⚑ S378 (UiB job 20 A7, carried from job 19's list, T71: "the 2D raid banner still draws everyone in one skin
+    //   tone") — the people who came are many people: the skins of the 3D crowd they walk in as (job 19 C,
+    //   commonsFigures.ts — the calendar party's four, CAL_2026, and the photograph's own), stepped by a stride of its
+    //   own so a skin never travels with a jumper or a hair colour
+    const skins = [C26.skinA, C26.skinC, ERA4.photoSkin, C26.skinB, C26.skinD];
     const here = Math.max(0, Math.min(RAID.n, this.count - 1)), perRow = 14, step = 32;
     for (let i = 0; i < here; i++) {
       const row = i % 3, col = Math.floor(i / 3);
       const x = Math.round(W / 2 - ((perRow - 1) * step) / 2 + col * step) - 10;
       const ay = rowsTop + 4 + row * rowH;
-      px(ctx, x + 4, ay + 2, 12, 11, ERA4.photoSkin);
+      px(ctx, x + 4, ay + 2, 12, 11, skins[(i * 2 + Math.floor(i / 5)) % skins.length]);
       px(ctx, x + 3, ay - 1, 14, 5, hair[(i * 3) % hair.length]);
       px(ctx, x, ay + 15, 20, 14, cloth[(i * 5 + 2) % cloth.length]);
     }

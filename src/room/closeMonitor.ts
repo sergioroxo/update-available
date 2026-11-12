@@ -1,72 +1,37 @@
-/** Daniel’s retro Restart card at the Close, restored from 1387a6f3.
- * The shared mouse/XR glass keeps the receipt and current Lexicon (including
- * Sources paging). The later Library implementation and art remain unused.
+/** Daniel's machine at the Close — ⚑ S378: AN IMAGE IN THE SKY, NOTHING PRESSABLE.
+ * Restored from 1387a6f3 (the retro Restart card on its glass, reached by a press on the far glass that flew the eye to
+ * it). UiB job 20 Part A moved the card to the computer's own panel in the Close's row and its page in the site viewer
+ * (src/room/machinePanel.ts, src/frame/siteViewer/machine.ts — the receipt's lines in src/witness/receiptLines.ts, the
+ * Lexicon the one src/room/lexicon.ts); the far glass took presses meant for other things. What stays here is the dark
+ * machine standing back in the sky in Daniel's place (R3-109), and the extents the sky keeps clear around it.
  */
-import lexStrings from '../../data/strings/lexicon.json';
-import { Lexicon } from './lexicon';
-import browser97 from '../../data/dialog/s1_browser.json';
-import browser26 from '../../data/dialog/s4_browser.json';
 import * as pc from 'playcanvas';
-import { recordEntries, practiceOf, entriesByEra } from '../witness/record';
-import { PRINTOUT } from '../desktop/theme/calendar';
-import { ledger } from '../state/ledger';
-import { ERA1, ERA1_CANVAS, RENDER_SCALE } from '../desktop/theme/era1';
-import { px, setFont, bevel } from '../desktop/theme/chrome';
+import { ERA1 } from '../desktop/theme/era1';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import layout from '../../data/room/era1.json';
-import card from '../../data/strings/close_restart.json';
-import type { EraKey } from './cluster';
 
 export interface CloseMonitor {
   readonly entity: pc.Entity;
-  /** light it: the body appears and the card fades up over `RISE_SECONDS` */
-  show(): void;
-  hide(): void;
-  readonly on: boolean;
-  update(dt: number): void;
-  /** the card's controls, in logical canvas pixels — published for the walk */
-  readonly hits: { x: number; y: number; w: number; h: number; id: string }[];
-  /** a press in logical canvas pixels; true when it landed on a control */
-  press(x: number, y: number): boolean;
-  onEra?: (era: EraKey) => void;
-  onAgain?: () => void;
-  /** ⚑ S163 / C-02 — the machine stands back in the sky now; `present` puts the
-   *  dark body there before it is lit (R3-109), `setNear` says whether the eye
-   *  has come to it (the card's face and its presses depend on it) */
+  /** ⚑ S163 / R3-109 — the dark machine stands back in the sky from the start of the Close */
   present(): void;
-  setNear(near: boolean): void;
-  readonly near: boolean;
-  /** the glass, in world space (centre + size) — for a ray test and for the walk's aim */
+  hide(): void;
+  /** the glass, in world space (centre + size) — where it stands (the sky keeps off the eye's line to it) */
   readonly glass: { x: number; y: number; z: number; w: number; h: number };
   /** ⚑ S174 / R4-15 — the whole machine's world extent (desk piece to bezel top),
    *  from its own mesh: what the sky must keep off the eye's line to it */
   readonly silhouette: { x: number; hx: number; yLo: number; yHi: number; z: number };
-  /** ⚑ S377 / VISUAL_REVIEW #5 — is the machine standing in the sky at all (dark, `present`, or lit, `show`)? The sky
-   *  is kept off the eye's line to it from then, not only once it is lit: since S361 the dark body stands under the
-   *  1997 panel while it is read, and the labels and a link line crossed it there */
+  /** ⚑ S377 / VISUAL_REVIEW #5 — is the machine standing in the sky at all? The sky is kept off the eye's line to it. */
   readonly shown: boolean;
   /** ⚑ S377 — the machine's world box (its own mesh's extent through its pose), published for the checks
    *  (tools/s377-close-check.mjs projects it through the live camera) */
   readonly bounds: { min: { x: number; y: number; z: number }; max: { x: number; y: number; z: number } };
-  /** a world-space ray → the glass in logical canvas pixels, or null */
-  hitTest(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { x: number; y: number; t: number } | null;
-  /** she pressed the far glass: whoever mounts this moves the eye (app.ts) */
-  onGo?: () => void;
-  /** S167: the card's "The dossier" — the frame opens its reading of the panels */
-  onDossier?: () => void;
-  /** S290 — the glass turned to the receipt or the Lexicon (the app keeps the Close's music under both) */
-  onFace?: (face: 'card' | 'receipt' | 'lexicon') => void;
-  /** ⚑ S209 / P7-47 — open the Lexicon on the glass (from its star, or the card's button) */
-  openLexicon(): void;
-  /** Legacy hook retained for the unused Library prototype. */
-  onLeave?: () => void;
-  readonly endingShowing: boolean;
-  key(key: string, shift: boolean): boolean;
+  /** ⚑ S378 — it takes no press: there is no hit test, no `hits`, no fly-to (`onGo`). Kept false/empty for old probes. */
+  readonly on: false;
+  readonly hits: readonly never[];
 }
 
 /** the CRT's visible screen, as app.ts has it (metres, 4:3) */
 const SCREEN = { w: 0.4, h: 0.3, x: 0, y: 1.08, z: 0 };
-const RISE_SECONDS = 3.0;
 /**
  * ⚑ S163 / C-02 + R3-111 — FURTHER, AND BIGGER. Sérgio (2026-09-20): "the PC model
  * is still all wrong and in front of the panels; it should be further, and the
@@ -172,18 +137,24 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
   body.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, bodyMat)] });
   entity.addChild(body);
 
-  // ── the glass: its own canvas, its own texture, the CRT's own pose ──
+  // ── the glass: dark. ⚑ S378 (UiB job 20 Part A) — the machine stands in the sky as an IMAGE now. Until S378 its glass
+  //   lit with the Restart card, and a press on the far glass flew the eye to it; the glass was a bare plane through the
+  //   whole ray and caught presses meant for the panels and labels in front of it (his "phantom clicks"). The card and
+  //   everything on it — the four rooms, Start again, the Receipt, the dossier, the Lexicon — moved to the computer's
+  //   panel and its page in the site viewer (src/room/machinePanel.ts, src/frame/siteViewer/machine.ts). So the glass
+  //   stays dark (it never lights: the light moved to the panel), and nothing here answers a press. ──
   const canvas = document.createElement('canvas');
-  canvas.width = ERA1_CANVAS.width * RENDER_SCALE;
-  canvas.height = ERA1_CANVAS.height * RENDER_SCALE;
-  const ctx = canvas.getContext('2d')!;
-  ctx.scale(canvas.width / ERA1_CANVAS.width, canvas.height / ERA1_CANVAS.height);
+  canvas.width = 4; canvas.height = 3;
+  const gctx = canvas.getContext('2d');
+  if (gctx) { gctx.fillStyle = ERA1.black; gctx.fillRect(0, 0, 4, 3); }
   const tex = makeScreenTexture(app, canvas, 'screen');
   const glass = makeScreenEntity('close-monitor-screen', tex, SCREEN.w, SCREEN.h);
   glass.setLocalPosition(SCREEN.x, SCREEN.y, SCREEN.z);
   glass.setLocalEulerAngles(90, 0, 0);   // faces +Z, the chair — as desktop-screen does
   entity.addChild(glass);
   const glassMat = glass.render!.material as pc.StandardMaterial;
+  glassMat.emissive.set(0, 0, 0);
+  glassMat.update();
   // C-02: back into the sky, scaled about the glass — its centre stays at (0, SCREEN.y, farZ)
   const S = CLOSE_MONITOR.scale;
   entity.setLocalScale(S, S, S);
@@ -201,359 +172,22 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     max: { x: CLOSE_MONITOR.x + hi.x * S, y: hi.y * S + offY, z: hi.z * S + offZ }
   };
 
-  const hits: CloseMonitor['hits'] = [];
-  const W = ERA1_CANVAS.width, H = ERA1_CANVAS.height;
-
-  /** ⚑ the FAR face (C-02): the mark, the title large, one line — readable at
-   *  three metres; the whole glass is the press that brings the eye to it */
-  function drawFar(): void {
-    hits.length = 0;
-    px(ctx, 0, 0, W, H, ERA1.black);
-    setFont(ctx, 12);
-    ctx.fillStyle = ERA1.silver;
-    ctx.fillText(card.mark, 24, 22);
-    const yw = ctx.measureText(card.years).width;
-    ctx.fillText(card.years, W - 24 - yw, 22);
-    px(ctx, 24, 40, W - 48, 1, ERA1.greyDark);
-    setFont(ctx, 40);
-    ctx.fillStyle = ERA1.white;
-    const tw = ctx.measureText(card.title).width;
-    ctx.fillText(card.title, Math.round((W - tw) / 2), 140);
-    setFont(ctx, 18);
-    ctx.fillStyle = ERA1.silver;
-    const cw = ctx.measureText(card.come).width;
-    ctx.fillText(card.come, Math.round((W - cw) / 2), 232);
-    hits.push({ x: 0, y: 0, w: W, h: H, id: 'close-go' });
-    tex.upload();
-  }
-
-  /** the card, once — nothing on it moves, so it is drawn on `setNear(true)` and uploaded once */
-  function drawCard(): void {
-    hits.length = 0;
-    px(ctx, 0, 0, W, H, ERA1.black);
-    // the machine's own header line: its mark, and the span it was running
-    setFont(ctx, 12);
-    ctx.fillStyle = ERA1.silver;
-    ctx.fillText(card.mark, 24, 22);
-    const yw = ctx.measureText(card.years).width;
-    ctx.fillText(card.years, W - 24 - yw, 22);
-    px(ctx, 24, 40, W - 48, 1, ERA1.greyDark);
-    // the title, then the two sentences
-    setFont(ctx, 22);
-    ctx.fillStyle = ERA1.white;
-    ctx.fillText(card.title, 24, 74);
-    setFont(ctx, 12);
-    // S146 — the file's size, then the sentence that answers it
-    const all = recordEntries();
-    ctx.fillStyle = ERA1.silver;
-    ctx.fillText(card.filed.replace('{n}', String(all.length)).replace('{f}', String(all.filter((e) => e.flagged).length)), 24, 106);
-    ctx.fillText(card.kept, 24, 124);
-    ctx.fillStyle = ERA1.grey;
-    ctx.fillText(card.choose, 24, 144);
-    // four rooms — one row, sized to the longest label
-    const bw = 108, bh = 26, gap = 10;
-    const x0 = Math.round((W - (bw * 4 + gap * 3)) / 2);
-    const by = 200;
-    card.eras.forEach((e, i) => {
-      const bx = x0 + i * (bw + gap);
-      bevel(ctx, bx, by, bw, bh, true);
-      setFont(ctx, 10);
-      ctx.fillStyle = ERA1.black;
-      const tw = ctx.measureText(e.label).width;
-      ctx.fillText(e.label, Math.round(bx + (bw - tw) / 2), by + 8);
-      hits.push({ x: bx, y: by, w: bw, h: bh, id: `close-era-${e.era}` });
-    });
-    // and the machine again, on its own row — flanked by the receipt and the
-    // dossier (S167: his two asks for this screen)
-    const btn = (label: string, x: number, y: number, w: number, id: string): void => {
-      bevel(ctx, x, y, w, 26, true);
-      setFont(ctx, 10);
-      ctx.fillStyle = ERA1.black;
-      const tw = ctx.measureText(label).width;
-      ctx.fillText(label, Math.round(x + (w - tw) / 2), y + 8);
-      hits.push({ x, y, w, h: 26, id });
-    };
-    // ⚑ S209 / P7-47 — the Lexicon, on its own row (its star in the sky opens it too)
-    btn(lexStrings.star, Math.round((W - 220) / 2), 232, 220, 'close-lexicon');
-    const aw = 148, ay = 262;
-    const ax = Math.round((W - aw) / 2);
-    btn(card.again, ax, ay, aw, 'close-again');
-    btn(card.receipt.button, ax - 108 - 14, ay, 108, 'close-receipt');
-    btn(card.dossier, ax + aw + 14, ay, 108, 'close-dossier');
-    // S143: the makers, in one line, small — the frame's voice on the last screen
-    setFont(ctx, 8);
-    ctx.fillStyle = ERA1.grey;
-    const mw = ctx.measureText(card.makers).width;
-    ctx.fillText(card.makers, Math.round((W - mw) / 2), H - 30);
-    tex.upload();
-  }
-
-  /** ⚑ S167 / L-07 — THE RECEIPT: the version history, every update stacked and
-   *  FAILED, then the file's lines — the machine's own till-print of thirty
-   *  years. Read off the ledger and the record; nothing here is invented. */
-  /**
-   * ⚑ S204 — THE PRINTOUT (his, 2026-09-30: "shouldn't it be a print out? like those old school printer
-   * with paper with holes on the side?"). The receipt now PRINTS: a dot-matrix printer at the foot of the
-   * glass feeds continuous tractor-feed paper up out of its slot — sprocket holes down both edges, green
-   * bars, a perforation — a line at a time, the newest at the head. Each era is a block: the update and
-   * FAILED; what it promised, in its own words; what it filed and the practices it used (the record's, per
-   * era); the search typed, where there was one; and its person — NOT CHANGED. Then one closing line (his to
-   * approve) and "kept by: nobody". Read off the ledger and the record; the promises are quoted.
-   */
-  type PLine = { t: string; right?: string; col?: string; rightCol?: string; rule?: boolean };
-  let printLines: PLine[] = [];
-  /** S286 — lines the printed receipt has been fed back down, to read its top again */
-  let receiptScroll = 0;
-  let printT = 0;
-  const PRINT_LPS = 7;          // lines a second — a 1990s dot matrix at draft speed
-  const LH = 10;
-  function composeReceipt(): PLine[] {
-    const R = card.receipt as typeof card.receipt & {
-      eras: { era: string; subject: string; promised: string }[]; promisedLabel: string; filedLine: string;
-      usedLabel: string; notChanged: string; couldNot: string;
-      handsLabel: string; hands: Record<string, string[]>; handsTotal: string;
-    };
-    setFont(ctx, 9);
-    const maxW = 324;
-    const wrapTo = (text: string, lead: string, max = 2): string[] => {
-      const words = text.split(' '); const out: string[] = []; let cur = lead;
-      for (const w of words) {
-        const next = cur.trim().length > lead.trim().length || cur !== lead ? `${cur}${cur.endsWith(' ') ? '' : ' '}${w}` : `${cur}${w}`;
-        if (ctx.measureText(next).width > maxW && cur.trim() !== lead.trim()) { out.push(cur); cur = ' '.repeat(lead.length) + w; }
-        else cur = next;
-      }
-      out.push(cur);
-      if (out.length > max) { out.length = max; out[max - 1] = out[max - 1].replace(/\s*\S*$/, ' …'); }
-      return out;
-    };
-    const by = entriesByEra();
-    const his = ledger.records.includes('search-1997');
-    const hers = by.e4.length > 0;
-    const L: PLine[] = [{ t: R.title, right: R.span }, { t: '' }];
-    for (const u of R.updates) {
-      const e = R.eras.find((x) => x.era === u.era);
-      const es = by[u.era as 'e1' | 'e2' | 'e3' | 'e4'];
-      L.push({ t: u.line, right: R.failed, rightCol: PRINTOUT.failed });
-      // ⚑ S209g / B26 — many hands, one file: every system the file passed through in this era
-      const hands = R.hands[u.era] ?? [];
-      if (hands.length) for (const l of wrapTo(hands.join(' · '), `  ${R.handsLabel} `)) L.push({ t: l, col: PRINTOUT.inkDim });
-      if (e) for (const l of wrapTo(e.promised, `  ${R.promisedLabel} `)) L.push({ t: l, col: PRINTOUT.inkDim });
-      L.push({ t: '  ' + R.filedLine.replace('{n}', String(es.length)).replace('{f}', String(es.filter((x) => x.flagged).length)), col: PRINTOUT.inkDim });
-      const kinds: string[] = [];
-      for (const x of es) if (!kinds.includes(x.kind)) kinds.push(x.kind);
-      if (kinds.length) {
-        const used = kinds.map((k) => (practiceOf(k)?.title ?? k).toLowerCase()).join(' · ');
-        for (const l of wrapTo(used, `  ${R.usedLabel} `)) L.push({ t: l, col: PRINTOUT.inkDim });
-      }
-      for (const entry of es.filter(x => x.id === 'guide-personalised')) for (const l of wrapTo(entry.witness, '  ')) L.push({ t: l, col: PRINTOUT.inkDim });
-      if (u.era === 'e1' && his) for (const l of wrapTo(browser97.query, `  ${R.searchHis} `, 1)) L.push({ t: l, col: PRINTOUT.inkDim });
-      if (u.era === 'e4' && hers) for (const l of wrapTo(browser26.program.chosen, `  ${R.searchHers} `, 2)) L.push({ t: l, col: PRINTOUT.inkDim });
-      if (e) L.push({ t: '  ' + e.subject, right: R.notChanged });
-      L.push({ t: '' });
-    }
-    L.push({ t: R.handsTotal.replace('{h}', String(Object.values(R.hands).reduce((n, h) => n + h.length, 0))) });
-    L.push({ t: '', rule: true });
-    for (const l of wrapTo(R.couldNot, '', 2)) L.push({ t: l });
-    L.push({ t: R.kept });
-    return L;
-  }
-  function drawReceipt(): void {
-    hits.length = 0;
-    const R = card.receipt;
-    if (!printLines.length) printLines = composeReceipt();
-    px(ctx, 0, 0, W, H, ERA1.black);
-    const shown = Math.min(printLines.length, Math.floor(printT * PRINT_LPS));
-    const done = shown >= printLines.length;
-    // the printer: a beige body across the foot of the glass, its slot, its light
-    const bodyY = H - 58, slotY = bodyY + 6;
-    const pw = 372, pl = Math.round((W - pw) / 2), pr = pl + pw;
-    // the paper rises out of the slot: the newest line sits just above the head. ⚑ S286 (headset B: "there's no way to
-    //   scroll back") — once printed, ▲ / ▼ on the printer feed the paper back down and up again
-    const overflow = Math.max(0, Math.ceil((16 + shown * LH + 24 - slotY) / LH));
-    receiptScroll = Math.max(0, Math.min(overflow, receiptScroll));
-    const paperTop = slotY - 8 - shown * LH - 16 + receiptScroll * LH;
-    const y0 = Math.max(0, paperTop);
-    px(ctx, pl, y0, pw, slotY - y0, PRINTOUT.paper);
-    for (let i = 0; i < printLines.length + 4; i += 4) {   // green bars, two lines in every four
-      const by0 = paperTop + 12 + i * LH;
-      const a = Math.max(y0, by0), b = Math.min(slotY, by0 + 2 * LH);
-      if (b > a) px(ctx, pl + 18, a, pw - 36, b - a, PRINTOUT.bar);
-    }
-    for (let hy = paperTop + 6; hy < slotY; hy += 12) {     // the sprocket holes, riding with the paper
-      if (hy < y0 - 4) continue;
-      px(ctx, pl + 6, hy, 6, 6, PRINTOUT.hole); px(ctx, pr - 12, hy, 6, 6, PRINTOUT.hole);
-    }
-    px(ctx, pl + 16, y0, 1, slotY - y0, PRINTOUT.perf); px(ctx, pr - 17, y0, 1, slotY - y0, PRINTOUT.perf);
-    if (paperTop >= 0) for (let x = pl; x < pr; x += 6) px(ctx, x, paperTop, 3, 1, PRINTOUT.perf);   // the tear line
-    setFont(ctx, 9);
-    for (let i = 0; i < shown; i++) {
-      const l = printLines[i];
-      const y = paperTop + 14 + i * LH;
-      if (y < -LH || y > slotY - 4) continue;
-      if (l.rule) { for (let x = pl + 22; x < pr - 22; x += 6) px(ctx, x, y + 4, 3, 1, PRINTOUT.inkDim); continue; }
-      ctx.fillStyle = l.col ?? PRINTOUT.ink;
-      ctx.fillText(l.t, pl + 22, y);
-      if (l.right) {
-        const rw = ctx.measureText(l.right).width;
-        const lw = ctx.measureText(l.t).width;
-        ctx.fillStyle = PRINTOUT.inkDim;
-        let dots = '';
-        while (ctx.measureText(dots + ' .').width < pr - 22 - rw - (pl + 22 + lw) - 8) dots += ' .';
-        ctx.fillText(dots, pl + 22 + lw, y);
-        ctx.fillStyle = l.rightCol ?? PRINTOUT.ink;
-        ctx.fillText(l.right, pr - 22 - rw, y);
-      }
-    }
-    // the printer's body over the slot, and its head moving while it prints
-    px(ctx, pl - 20, bodyY, pw + 40, H - bodyY, PRINTOUT.body);
-    px(ctx, pl - 20, bodyY, pw + 40, 2, PRINTOUT.bodyDark);
-    px(ctx, pl, slotY, pw, 4, PRINTOUT.slot);
-    if (!done) { const hx = pl + 22 + ((shown * 53) % (pw - 60)); px(ctx, hx, slotY - 2, 16, 3, PRINTOUT.bodyDark); }
-    px(ctx, pl - 10, bodyY + 14, 6, 6, done ? PRINTOUT.led : PRINTOUT.failed);
-    // Back, on the printer, once the page is out
-    if (done) {
-      // S286 (headset B: "the back to library is out of place") — the button is as wide as its words
-      setFont(ctx, 10);
-      const bw = Math.max(80, Math.ceil(ctx.measureText(R.back).width) + 24), bh = 22, bx = Math.round((W - bw) / 2), byy = H - 32;
-      bevel(ctx, bx, byy, bw, bh, true);
-      setFont(ctx, 10);
-      ctx.fillStyle = ERA1.black;
-      const tw = ctx.measureText(R.back).width;
-      ctx.fillText(R.back, Math.round(bx + (bw - tw) / 2), byy + 6);
-      hits.push({ x: bx, y: byy, w: bw, h: bh, id: 'close-back' });
-      if (overflow > 0) {
-        const arrow = (label: string, x: number, id: string): void => {
-          bevel(ctx, x, byy, 30, bh, true); setFont(ctx, 10); ctx.fillStyle = ERA1.black; ctx.fillText(label, x + 10, byy + 6);
-          hits.push({ x, y: byy, w: 30, h: bh, id });
-        };
-        arrow('▲', bx - 44, 'receipt-up');
-        arrow('▼', bx + bw + 14, 'receipt-down');
-      }
-    }
-    tex.upload();
-  }
-
-  let on = false;
-  let rise = 0;
-  let near = false;
-  let face: 'card' | 'receipt' | 'lexicon' = 'card';
-  let focus = -1;
-  // ⚑ S372 — a word's sound ending redraws its media window (the glass still uploads only on a change)
-  const lexicon = new Lexicon({ onChange: () => { if (on && near && face === 'lexicon') drawLexicon(); } });
-  function drawLexicon(): void { lexicon.draw(ctx, W, H, hits); tex.upload(); }
   const api: CloseMonitor = {
     entity,
-    get endingShowing() { return on && near && rise >= 1 && face === 'card'; },
-    key(key, shift): boolean {
-      if (!on || !near || rise < 1 || face !== 'card') return false;
-      if (key === 'Tab') {
-        focus = (focus + (shift ? -1 : 1) + hits.length) % hits.length;
-        drawCard();
-        const h = hits[focus];
-        ctx.strokeStyle = ERA1.tooltip; ctx.lineWidth = 2;
-        ctx.strokeRect(h.x - 2, h.y - 2, h.w + 4, h.h + 4); tex.upload();
-        return true;
-      }
-      if ((key === 'Enter' || key === ' ') && focus >= 0) {
-        const h = hits[focus]; return api.press(h.x + h.w / 2, h.y + h.h / 2);
-      }
-      return false;
-    },
-    get on() { return on; },
-    get near() { return near; },
     get glass() { return glassWorld; },
     get silhouette() { return silhouette; },
     get shown() { return entity.enabled; },
     get bounds() { return bounds; },
-    get hits() { return on && rise >= 1 ? hits : []; },   // pressable only once lit
+    on: false,
+    hits: [],
     present(): void {
-      // R3-109 ("in Daniel's place, the computer should be there"): the dark body
-      // stands in the sky before it is lit — a CRT-shaped shadow, no glass yet
-      if (on) return;
-      glassMat.emissive.set(0, 0, 0);
-      glassMat.update();
-      bodyMat.emissive.set(0.09, 0.09, 0.09);   // × the vertex colour (S174)
+      // R3-109 ("in Daniel's place, the computer should be there"): the dark body stands in the sky — a CRT-shaped
+      // shadow, its case catching a little of the night (× the vertex colour, S174)
+      bodyMat.emissive.set(0.09, 0.09, 0.09);
       bodyMat.update();
       entity.enabled = true;
     },
-    setNear(n: boolean): void {
-      if (near === n) return;
-      near = n;
-      if (!near) lexicon.stopSound();
-      if (on) { if (!near) drawFar(); else if (face === 'receipt') drawReceipt(); else if (face === 'lexicon') drawLexicon(); else drawCard(); }
-    },
-    hitTest(p0, p1): { x: number; y: number; t: number } | null {
-      if (!entity.enabled) return null;
-      const g = glassWorld;
-      const dz = p1.z - p0.z;
-      if (Math.abs(dz) < 1e-6) return null;
-      const t = (g.z - p0.z) / dz;
-      if (t < 0 || t > 1) return null;
-      const wx = p0.x + (p1.x - p0.x) * t;
-      const wy = p0.y + (p1.y - p0.y) * t;
-      const u = (wx - g.x) / g.w + 0.5;
-      const v = 0.5 - (wy - g.y) / g.h;
-      if (u < 0 || u > 1 || v < 0 || v > 1) return null;
-      return { x: u * W, y: v * H, t };   // W1-G2: how far along the ray the glass is, so a nearer panel can win
-    },
-    openLexicon(): void {
-      face = 'lexicon'; api.onFace?.(face); lexicon.press('lex-title');
-      if (on && near) drawLexicon();
-    },
-    show(): void {
-      if (on) return;
-      on = true;
-      rise = 0;
-      if (!near) drawFar(); else if (face === 'lexicon') drawLexicon(); else drawCard();
-      glassMat.emissive.set(0, 0, 0);
-      glassMat.update();
-      entity.enabled = true;
-    },
-    hide(): void {
-      lexicon.stopSound();
-      on = false;
-      near = false;
-      face = 'card';
-      entity.enabled = false;
-      hits.length = 0;
-    },
-    update(dt: number): void {
-      // ⚑ S204 — the printer's clock: a redraw only when a new line comes out of the head
-      if (on && near && face === 'receipt' && printLines.length && Math.floor(printT * PRINT_LPS) < printLines.length) {
-        const before = Math.floor(printT * PRINT_LPS);
-        printT += dt;
-        if (Math.floor(printT * PRINT_LPS) !== before) drawReceipt();
-      }
-      if (!on || rise >= 1) return;
-      rise = Math.min(1, rise + dt / RISE_SECONDS);
-      const k = rise * rise * (3 - 2 * rise);
-      // the glass comes up like a CRT warming: the body catches its light
-      glassMat.emissive.set(k, k, k);
-      glassMat.update();
-      // ⚑ 2026-09-13, Sérgio: "make the CRT body a bit lighter" — 0.10 read as a
-      //   silhouette; this is the beige catching its own glass
-      bodyMat.emissive.set(0.8 * k, 0.8 * k, 0.8 * k);   // and lighter again (2026-09-13); × the vertex colour since S174
-      bodyMat.update();
-    },
-    press(x: number, y: number): boolean {
-      for (const h of api.hits) {
-        if (x < h.x || x > h.x + h.w || y < h.y || y > h.y + h.h) continue;
-        if (h.id === 'close-go') { api.onGo?.(); return true; }
-        if (h.id === 'close-again') { api.onAgain?.(); return true; }
-        if (h.id === 'close-receipt') { face = 'receipt'; api.onFace?.(face); printLines = []; printT = 0; drawReceipt(); return true; }
-        // ⚑ S209 / P7-47 — the Lexicon: its own presses, and its Close back to the card
-        if (h.id === 'close-lexicon') { face = 'lexicon'; api.onFace?.(face); lexicon.press('lex-title'); drawLexicon(); return true; }
-        if (h.id === 'lex-close') { lexicon.stopSound(); face = 'card'; drawCard(); return true; }
-        if (lexicon.press(h.id)) { drawLexicon(); return true; }
-        if (h.id === 'close-back') { face = 'card'; receiptScroll = 0; drawCard(); return true; }
-        if (h.id === 'receipt-up') { receiptScroll += 6; drawReceipt(); return true; }
-        if (h.id === 'receipt-down') { receiptScroll -= 6; drawReceipt(); return true; }
-        if (h.id === 'close-dossier') { api.onDossier?.(); return true; }
-        const era = card.eras.find((e) => `close-era-${e.era}` === h.id)?.era;
-        if (era) { api.onEra?.(era as EraKey); return true; }
-      }
-      return false;
-    }
+    hide(): void { entity.enabled = false; }
   };
   return api;
 }

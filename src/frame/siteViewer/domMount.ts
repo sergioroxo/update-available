@@ -12,6 +12,8 @@ import { MODEL } from './model';
 import { siteViewerBus, type ViewerTarget } from './bus';
 import { viewerAudio, viewerFilm } from './audio';
 import { gameMenuBus } from '../../state/gameMenuBus';
+import { isMachineView } from './skins';
+import { MACHINE_COPY } from './machine';
 
 const Z = 1150;   // over the game menu (1000) and the orienting card (900); under the Leave page (1200)
 let mounted = false;
@@ -86,7 +88,14 @@ export function mountSiteViewerDom(): ViewerCore {
     ctx.setTransform(pw / size.W, 0, 0, ph / size.H, 0, 0);
     core.render(ctx, size.W, size.H);
   }
-  function loop(): void { paint(); raf = requestAnimationFrame(loop); }
+  // ⚑ S378 — the machine's receipt prints a line at a time: its clock runs here, a repaint only when a line comes out
+  let lastT = 0;
+  function loop(): void {
+    const now = performance.now();
+    if (core.tick(lastT ? Math.min(0.1, (now - lastT) / 1000) : 0)) dirty = true;
+    lastT = now;
+    paint(); raf = requestAnimationFrame(loop);
+  }
 
   const toLogical = (e: { clientX: number; clientY: number }): { x: number; y: number } => {
     const r = canvas!.getBoundingClientRect();
@@ -182,6 +191,8 @@ export function mountSiteViewerDom(): ViewerCore {
 
   function show(target: ViewerTarget): void {
     if (!root) build();
+    // ⚑ S378 — asked for while the window is up (a Lexicon word's year link): the page before stays behind "Back"
+    if (isOpen) { core.go(target); dirty = true; return; }
     cameFromMenu = gameMenuBus.isOpen;
     core.open(target);
     size = logicalSize(window.innerWidth, window.innerHeight);
@@ -198,8 +209,8 @@ export function mountSiteViewerDom(): ViewerCore {
     cancelAnimationFrame(raf);
     root.style.display = 'none';
     window.removeEventListener('keydown', onKey, { capture: true });
-    if (closing) { viewerAudio.stop(); viewerFilm.stop(); chip?.remove(); chip = null; }
-    else viewerFilm.pause();   // minimised: a film waits where it was (a track plays on, as a page's would)
+    if (closing) { viewerAudio.stop(); viewerFilm.stop(); core.closed(); chip?.remove(); chip = null; }
+    else { viewerFilm.pause(); core.closed(); }   // minimised: a film waits where it was (a track plays on, as a page's would); S378: a Lexicon word's sound stops
   }
 
   function minimise(): void {
@@ -209,7 +220,7 @@ export function mountSiteViewerDom(): ViewerCore {
     chip?.remove();
     chip = document.createElement('button');
     chip.id = 'reinterp-site-chip';
-    chip.textContent = `▲ ${core.view === 'hub' ? 'Sources' : `Sources · ${core.view}`}`;
+    chip.textContent = `▲ ${isMachineView(core.view) ? MACHINE_COPY.chip : core.view === 'hub' ? 'Sources' : `Sources · ${core.view}`}`;
     chip.setAttribute('aria-label', 'Show the website window again');
     Object.assign(chip.style, {
       position: 'fixed', left: '58px', bottom: '14px', zIndex: '998', height: '34px', padding: '0 14px',
@@ -223,6 +234,7 @@ export function mountSiteViewerDom(): ViewerCore {
   siteViewerBus.openDom = (t) => show(t);
   siteViewerBus.closeDom = () => { if (isOpen || chip) hide(true); };
   siteViewerBus.domOpen = () => isOpen;
+  siteViewerBus.viewDom = () => (isOpen ? core.view : null);
   shared = core;
   return core;
 }

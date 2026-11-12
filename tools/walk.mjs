@@ -239,7 +239,7 @@ const PREFER = [
  * difference between quitting the piece and playing it.
  */
 // Guide controls are optional assistance. Never spend a narrative press on them.
-const FORBIDDEN = /^irc-(?:dm|request|dcc)-close$|^caleb-close$|^netvision-close$|^profile-back$|^sm-extra:|^(sm-jump.*|jump-.*|go-here.*|steps-close|sm-allsteps|sm-whattodo|sm-programs|taskbar-whattodo|whattodo)$|^lg-|^setup-vol-(down|up|thumb|track)$|^setup-dismiss$|^setup-device$|^setup-test$|^setup-choice-[12]$|^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
+const FORBIDDEN = /^irc-(?:dm|request|dcc)-close$|^caleb-close$|^netvision-close$|^profile-back$|^sm-extra:|^(sm-jump.*|jump-.*|go-here.*|steps-close|sm-allsteps|sm-whattodo|sm-programs|taskbar-whattodo|whattodo)$|^lg-|^setup-vol-(down|up|thumb|track)$|^setup-dismiss$|^setup-device$|^setup-test$|^setup-choice-[12]$|^library-(bell|door|era-.*)$|^r-leave$|^pleave$|quit|^exit$|^restart$|decline|^pause$|^mute$|^close-again$|^close-era-|^close-dossier$|^sm-leave$|^close-home$|^home-again$|^m:again$|^m:era:/i;   // Library bell/door/era controls restart, leave, or travel back. Legacy close-home is the Restart card's way back to LambyOS Home (the piece's end) and home-again is Home's Start again (data-home-again on its DOM button) — never pressed. S167: close-dossier opens the FRAME's menu, which holds the piece; S219/S220: so does the Start menu's Leave… (with the menu up the look keys are gated, the walk read that as 'turning is broken' and never turned again). Shut Down… is only refused now, so the walk presses it
 
 /** ⚑ see the launch below — order: --chrome, the environment, the platform */
 function resolveChrome() {
@@ -842,8 +842,10 @@ async function main() {
      * own green. The card publishes every control it has, so there is nothing
      * hidden there to find.
      */
-    const closeOn = await page.evaluate(() => !!(window.__closeMonitor && window.__closeMonitor.on));
-    if (closeOn) { note('sweep-skip', { what: 'the Close: the glass is the Restart card, every control published, nothing to sweep' }); return before; }
+    // ⚑ S378 — the glass takes no press now and the Restart page is in the site viewer, but the rule stands: never sweep
+    //   in the Close (its panels and the machine's page publish every control they have)
+    const closeOn = await page.evaluate(() => !!(window.__closeMachine && window.__closeMachine.ended) || !!(window.__closeMonitor && window.__closeMonitor.on));
+    if (closeOn) { note('sweep-skip', { what: 'the Close: the computer\'s panel and its page publish every control, nothing to sweep' }); return before; }
     const pts = await page.evaluate(({ VW, VH }) => {
       const root = window.__app.root;
       let cam = null; root.forEach((e) => { if (e.camera && e.enabled) cam = e; });
@@ -1300,10 +1302,11 @@ async function main() {
     }
     if (ONE_ERA && s.era !== startEraSeen) { note('era-done', { era: s.era, phase: s.phase, what: 'arrived in ' + s.era + ' from ' + startEraSeen + ' — one era walked' }); break; }
     // S227 — from 2026 there is no next era: the Close's own end (spine done) is the finish line, not the step cap
-    // The Close ends on the retro Restart card, on Daniel's monitor. Wait for the scripted approach, then stop.
-    // Its bell, door and era computers are forbidden above so the walk never restarts, leaves or returns to a room.
+    // ⚑ S378 (UiB job 20 Part A) — the Close ends on the computer's panel's page: the piece takes the eye to the panel,
+    // the walk presses it (`close-machine`), and the machine's page opens in the site viewer — the Restart page. Its
+    // room returns and Start again (`m:era:*`, `m:again`) are forbidden above, so the walk never restarts or leaves.
     if (s.endingShowing) {
-      note('era-done', { era: s.era, phase: s.phase, what: 'the Close reached the retro Restart card on Daniel’s monitor; the walk stops here' }); break;
+      note('era-done', { era: s.era, phase: s.phase, what: 'the Close reached the Restart page (the computer panel’s page in the site viewer); the walk stops here' }); break;
     }
     if (ONE_ERA && s.spine === 'done') { note('era-done', { era: s.era, phase: s.phase, what: 'the Close reached (spine done) — one era walked' }); break; }
     await takeCensus(s, i);
@@ -1992,7 +1995,7 @@ async function main() {
     }
   } else if (flag('require-close') !== undefined || process.argv.includes('--require-close')) {
     if (final.spine === 'done' && final.endingShowing) {
-      console.log('✓ reachability: the walk reached the Close (spine: done), Restart card showing on Daniel’s monitor.');
+      console.log('✓ reachability: the walk reached the Close (spine: done), the Restart page showing (the computer panel’s page in the site viewer).');
     } else {
       console.error(
         '\n⚑ REACHABILITY REGRESSION: the walk did NOT reach the Close.\n' +

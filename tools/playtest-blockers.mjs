@@ -1,5 +1,9 @@
 /** Focused mouse-only browser probes. Run with --case <name> --port 3214.
  * Review state is read only; setup via an era URL is declared in the result.
+ * ⚑ S378 — its Close cases ('close-end', 'ending-controls') press the OLD Restart card on Daniel's far glass
+ * (close-lexicon, close-receipt, close-era-e2…), which UiB job 20 Part A moved to the computer panel's page in the site
+ * viewer; they will fail by design. The ending is probed by tools/s378-machine-probe.mjs now. The finish line below
+ * reads `__closeMachine` (the page open) so the waits still end.
  */
 import puppeteer from 'puppeteer-core';
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
@@ -49,7 +53,7 @@ try {
   });
   const pressPoint=async pt=>{await page.mouse.move(...pt);await page.mouse.down();await wait(70);await page.mouse.up();await wait(160);};
   const end=Date.now()+240000;
-  while(!await page.evaluate(()=>window.__closeMonitor?.endingShowing)) {
+  while(!await page.evaluate(()=>(window.__closeMachine?.endingShowing ?? window.__closeMonitor?.endingShowing))) {
     if(Date.now()>end)throw Error('Close did not present its Restart card');
     if(!panelChecked&&await page.evaluate(()=>window.__app.root.findByName('point-cloud')?.enabled&&!window.__camPose().driven&&!window.__closeMonitor?.on)) {
       let p=await panelPoint();
@@ -86,7 +90,7 @@ try {
  } else if(name==='ending-controls') {
   const waitForCard=async()=>{
    const end=Date.now()+240000;
-   while(!await page.evaluate(()=>window.__closeMonitor?.endingShowing)) {
+   while(!await page.evaluate(()=>(window.__closeMachine?.endingShowing ?? window.__closeMonitor?.endingShowing))) {
     if(Date.now()>end)throw Error('Restart card did not arrive');
     if(await page.evaluate(()=>window.__closeCard?.on))await page.mouse.click(640,630);
     await wait(900);

@@ -112,7 +112,7 @@ try {
  await new Promise(r=>setTimeout(r,700));
  const closeAudio=await page.evaluate(async()=>{
    const {roomBed}=await import('/src/audio/tapeAudio.ts');
-   return {score:roomBed.current,paused:roomBed.live?.paused,volume:roomBed.live?.volume,monitor:!!window.__closeMonitor?.on,card:window.__closeCard,phase:window.__os.phase,era:window.__os.era};
+   return {score:roomBed.current,paused:roomBed.live?.paused,volume:roomBed.live?.volume,monitor:!!window.__closeMonitor?.on,page:window.__closeMachine?.view??null,card:window.__closeCard,phase:window.__os.phase,era:window.__os.era};
  });
  await page.screenshot({path:path.join(out,'close-score.png')});
  assert.equal(closeAudio.score,'close_song.mp3');assert.equal(closeAudio.paused,false);assert(closeAudio.volume>0);assert(closeAudio.monitor);

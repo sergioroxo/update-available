@@ -329,47 +329,52 @@ async function main() {
     await wait(26000);
     await shot('07-the-panels', 'the panels: the four rooms, and what was true in each');
     await wait(22000);
-    let go = false;
-    for (let i = 0; i < 60 && !go; i++) {
-      go = await page.evaluate(() => !!(window.__closeMonitor?.hits || []).find((r) => r.id === 'close-go'));
-      if (!go) await wait(2000);
+    // ⚑ S378 (UiB job 20 Part A) — the end of the Close is the computer's panel and its page in the site viewer (the
+    //   card on Daniel's far glass is gone): wait for the turn to the panel, photograph it, press its Open button with
+    //   the real mouse, photograph the Restart page, then its Receipt (pressed inside the window, at the core's own hit)
+    let ended = false;
+    for (let i = 0; i < 60 && !ended; i++) {
+      ended = await page.evaluate(() => !!window.__closeMachine?.ended);
+      if (!ended) await wait(2000);
     }
-    if (go) {
+    const viewerPress = (id) => page.evaluate((id) => {
+      const core = window.__siteViewer.dom, cv = document.querySelector('#reinterp-site-viewer canvas');
+      const px = core.centerOf(id); if (!px || !cv) return null;
+      const r = cv.getBoundingClientRect(), z = core.lastSize;
+      return [r.left + (px.x / z.w) * r.width, r.top + (px.y / z.h) * r.height];
+    }, id);
+    if (ended) {
       await wait(1500);
-      await shot('07b-the-machine', "Daniel's machine, three metres back in the sky: \"Restart as you are.\"");
-      await settled();
-      const goPress = () => page.evaluate(() => { const cm = window.__closeMonitor; const h = (cm.hits || []).find((r) => r.id === 'close-go'); if (h) cm.press(h.x + h.w / 2, h.y + h.h / 2); });
-      await goPress();
-      let near = false;
-      for (let i = 0; i < 40 && !near; i++) {
-        near = await page.evaluate(() => !!(window.__closeMonitor?.hits || []).find((r) => r.id === 'close-receipt'));
-        if (!near) { await wait(1500); if (i === 12 || i === 24) await goPress(); }
-      }
-      if (near) {
-        await shot('08-restart-as-you-are', 'the card, come to: the four rooms · Receipt · Start again · The dossier');
-        await page.evaluate(() => { const cm = window.__closeMonitor; const h = cm.hits.find((r) => r.id === 'close-receipt'); cm.press(h.x + h.w / 2, h.y + h.h / 2); });
-        await wait(1500);
-        await shot('09-the-receipt', 'the receipt: every update stacked, each FAILED — kept by nobody');
-        // S175: each room's dossier, ON ITS PANEL (a press turns it), shot from the seat —
-        //   aimed with the review probe __closePanels, pressed with the REAL mouse
+      await shot('07b-the-machine', "the computer's panel, in the row: \"Restart as you are.\" — Daniel's machine stands dark in the sky");
+      const pt = await page.evaluate(() => {
+        const app = window.__app, cam = app.root.findByName('camera'), V = cam.getPosition().constructor;
+        const mp = window.__closePanels().find((p) => p.machine); if (!mp) return null;
+        const b = mp.button || mp; const q = cam.camera.worldToScreen(new V(b.x, b.y, b.z)); return q.z > 0 ? [q.x, q.y] : null;
+      });
+      if (pt) { await page.mouse.move(pt[0], pt[1]); await page.mouse.down(); await wait(70); await page.mouse.up(); }
+      await wait(1500);
+      const onPage = await page.evaluate(() => window.__closeMachine?.view === 'machine');
+      if (onPage) {
+        await shot('08-restart-as-you-are', "the machine's page: the four rooms · Start again · Receipt · The dossier · The Lexicon");
+        const r = await viewerPress('m:receipt');
+        if (r) { await page.mouse.move(r[0], r[1]); await page.mouse.down(); await wait(70); await page.mouse.up(); }
+        await wait(14000);
+        await shot('09-the-receipt', 'the receipt, printed: every update stacked, each FAILED — kept by nobody');
+        const c = await viewerPress('close');
+        if (c) { await page.mouse.move(c[0], c[1]); await page.mouse.down(); await wait(70); await page.mouse.up(); }
+        await wait(800);
+        // the four rooms' panels, each from the seat (S175/S177; since S365 a press opens its year's website)
         for (const [era, tag] of [[1, '1997'], [2, '2003'], [3, '2016'], [4, '2026']]) {
           const q = (await page.evaluate(() => window.__closePanels())).find((x) => x.era === era);
-          if (!q || q.hidden) { console.log(`  ⚠ the ${tag} panel is folded behind the machine right now — no frame`); continue; }
+          if (!q || q.hidden) { console.log(`  ⚠ the ${tag} panel is folded right now — no frame`); continue; }
           const E = { x: 0, y: 1.16, z: 0.7 };
           const aim = (t) => { const dx = t.x - E.x, dy = t.y - E.y, dz = t.z - E.z; return free(E.x, E.y, E.z, Math.atan2(dy, Math.hypot(dx, dz)) * 180 / Math.PI, Math.atan2(-dx, -dz) * 180 / Math.PI); };
           await aim(q);
           await wait(600);
-          // S177 / R4-30: the story face first, with its era's Sources button …
           await shot(`10a-panel-${tag}`, `the ${tag} panel: its room, and its Sources button in that room's OS`);
-          // … then the press lands ON the button (its published point), with the real mouse
-          await aim(q);   // S283: the button now opens the era's website; the in-room dossier is a press elsewhere on the panel
-          await page.mouse.move(640, 360); await page.mouse.down(); await wait(70); await page.mouse.up();
-          await aim(q);
-          await wait(1200);
-          await shot(`10-dossier-${tag}`, `the ${tag} room's dossier, on its own panel, in its own OS`);
         }
-      } else console.log('  ⚠ the card never came near — no receipt still');
-    } else console.log('  ⚠ close-go not published — no receipt still');
+      } else console.log("  ⚠ the computer's panel did not open the Restart page — no page or receipt still");
+    } else console.log('  ⚠ the Close never ended (the turn to the computer panel) — no Restart page still');
   });
 
   for (const f of Object.keys(sheet)) if (!fs.existsSync(path.join(OUT, f))) delete sheet[f];

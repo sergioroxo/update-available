@@ -10,9 +10,14 @@ import { WEB97, WEB2003 } from '../../desktop/theme/web1997';
 import { ERA3 } from '../../desktop/theme/era3';
 import { ERA4, PLACE, WALL } from '../../desktop/theme/era4';
 import { DIALOG } from '../../desktop/theme/chrome';
+import { FACES } from '../../desktop/theme/fonts';
 
 export type Year = '1997' | '2003' | '2016' | '2026';
-export type View = Year | 'hub';
+/** ⚑ S378 — the machine's own pages (the Close's computer panel, machine.ts): its restart page, the receipt, the Lexicon */
+export type MachineView = 'machine' | 'receipt' | 'lexicon';
+export type View = Year | 'hub' | MachineView;
+export const MACHINE_VIEWS: readonly MachineView[] = ['machine', 'receipt', 'lexicon'];
+export const isMachineView = (v: View): v is MachineView => (MACHINE_VIEWS as readonly string[]).includes(v);
 export type Os = 'w95' | 'xp' | 'aero' | 'app';
 export type Status = 'documentary' | 'contested' | 'speculative';
 
@@ -89,8 +94,22 @@ export const SKINS: Record<View, Skin> = {
     card: WALL.cardHi, cardEdge: PLACE.wallLo, noteBg: WALL.cardHi, noteBar: WALL.accent,
     tag: { documentary: [ERA1.ok, ERA1.white], contested: [ERA1.olive, ERA1.black], speculative: [ERA1.navy, ERA1.white] },
     chrome: w95, accent: WALL.accent
-  }
+  },
+  // ⚑ S378 — LambyOS's own window (the machine's page, the receipt, the Lexicon): the 1997 machine's Windows-95 chrome and
+  //   its black glass inside it; the face is the machine's bitmap face (vendored, never fetched)
+  machine: machineSkin('machine', ERA1.black),
+  receipt: machineSkin('receipt', ERA1.black),
+  lexicon: machineSkin('lexicon', ERA1.navy)
 };
+function machineSkin(view: MachineView, bg: string): Skin {
+  return {
+    view, os: 'w95', font: FACES.e1.family, mono: MONO, headFont: FACES.e1.family,
+    pageBg: bg, contentBg: bg, ink: ERA1.silver, dim: ERA1.grey, link: ERA1.tooltip, h: ERA1.white, rule: ERA1.greyDark,
+    card: bg, cardEdge: ERA1.greyDark, noteBg: bg, noteBar: ERA1.titleBlue,
+    tag: { documentary: [ERA1.ok, ERA1.white], contested: [ERA1.olive, ERA1.black], speculative: [ERA1.navy, ERA1.white] },
+    chrome: w95, accent: ERA1.navy
+  };
+}
 
 /** the four doors on the hub, each in its year's own colour (the same four the hub page uses) */
 export const DOORS: Record<Year, [string, string]> = {

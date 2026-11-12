@@ -14,6 +14,8 @@
 import * as pc from 'playcanvas';
 import { makeScreenEntity, makeScreenTexture } from '../../engine/screenTexture';
 import { hangAhead, rayOnPlane, wristWatched, type Ray } from '../xrFrame';
+import { isMachineView } from './skins';
+import { MACHINE_COPY } from './machine';
 import { gameMenuBus } from '../../state/gameMenuBus';
 import { reducedMotion } from '../../state/motion';
 import { DIALOG } from '../../desktop/theme/chrome';
@@ -110,14 +112,19 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   const tabTex = makeScreenTexture(app, tabCanvas);
   const tab = makeScreenEntity('xr-frame-site-tab', tabTex, TAB_W, TAB_H, true);
   overRoom(tab); tab.enabled = false; app.root.addChild(tab);
-  if (tctx) {
+  // ⚑ S378 — the tab names what it holds: the four websites ("Sources") or the machine's page ("LambyOS")
+  let tabLabel = '';
+  const drawTab = (label: string): void => {
+    if (!tctx || label === tabLabel) return;
+    tabLabel = label;
     tctx.fillStyle = DIALOG.panel; tctx.fillRect(0, 0, 256, 64);
     tctx.fillStyle = DIALOG.light; tctx.fillRect(0, 0, 256, 4); tctx.fillRect(0, 0, 4, 64);
     tctx.fillStyle = DIALOG.darker; tctx.fillRect(0, 60, 256, 4); tctx.fillRect(252, 0, 4, 64);
     tctx.fillStyle = DIALOG.ink; tctx.font = '700 26px "Tahoma", "Verdana", sans-serif'; tctx.textBaseline = 'middle';
-    tctx.fillText('▲ Sources', 24, 33);
+    tctx.fillText(`▲ ${label}`, 24, 33);
     tabTex.upload();
-  }
+  };
+  drawTab('Sources');
 
   let open = false, minimised = false, dirty = false, fromMenu = false;
   let startedAt = 0;
@@ -154,6 +161,8 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   const place = (dist: number): void => { hangAhead(head, plane, dist, DROP); };
 
   function show(target: ViewerTarget): void {
+    // ⚑ S378 — asked for while the window is up (a Lexicon word's year link): the page before stays behind "Back"
+    if (open) { core.go(target); dirty = true; return; }
     fromMenu = gameMenuBus.isOpen;
     if (fromMenu) opts.suspendMenu(true);
     core.open(target);
@@ -169,7 +178,7 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   function close(): void {
     if (!open && !minimised) return;
     open = false; minimised = false; plane.enabled = false; tab.enabled = false; wristed = false;
-    viewerAudio.stop(); viewerFilm.stop(); filmPlane.enabled = false;
+    viewerAudio.stop(); viewerFilm.stop(); filmPlane.enabled = false; core.closed();
     closedAt = performance.now();
     if (fromMenu && gameMenuBus.isOpen) opts.suspendMenu(false);
     fromMenu = false;
@@ -177,6 +186,8 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   function minimise(): void {
     open = false; minimised = true; plane.enabled = false;
     viewerFilm.pause();   // a film waits where it was while the window is a tab
+    core.closed();        // S378: and a Lexicon word's sound stops
+    drawTab(isMachineView(core.view) ? MACHINE_COPY.chip : 'Sources');
     if (fromMenu && gameMenuBus.isOpen) { fromMenu = false; opts.suspendMenu(false); gameMenuBus.close(); }
     fromMenu = false;
     opts.note(opts.minimisedNote, 10);
@@ -192,6 +203,8 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   siteViewerBus.openXr = (t) => show(t);
   siteViewerBus.closeXr = () => close();
   siteViewerBus.xrOpen = () => open;
+  siteViewerBus.viewXr = () => (open ? core.view : null);
+  let lastTick = 0;
 
   return {
     core,
@@ -234,6 +247,10 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
         return;
       }
       if (!open) return;
+      // ⚑ S378 — the receipt's printer clock (a repaint only when a line comes out)
+      const now = performance.now();
+      if (core.tick(lastTick ? Math.min(0.1, (now - lastTick) / 1000) : 0)) dirty = true;
+      lastTick = now;
       // it comes closer: from arm's length out to reading distance, in a short ease (none under reduced motion)
       if (startedAt) {
         const k = reducedMotion() ? 1 : Math.min(1, (performance.now() - startedAt) / APPROACH_MS);
