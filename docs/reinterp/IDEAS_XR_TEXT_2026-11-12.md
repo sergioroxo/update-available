@@ -16,6 +16,12 @@ Measured on build `1a84b6cb` with a mocked headset in desktop Chrome (scratch sc
 
 **⚑ His test (12 Nov), corrected:** his two photos ("it is looking better"; then FPS 120) were taken **on the computer, not in the headset**. `xrscale` only sets the headset's eye buffer (`framebufferScaleFactor` in the XR session), so on the computer it changes nothing, and 120 fps there says nothing about the Quest. The test still has to be done in the headset: the same address, press Enter VR, read the debug plate's fps in 1997.
 
+**⚑ His headset test, done (12 Nov, ~02:57, build dc1fab8, `xrscale=1.6`, 1997; three Quest captures in `~/Pc_Simulation/Testing/Xrscale1.6/`, copied to `research/article-images-2026-11-12/headset-xrscale-1.6-test/`). His verdict: "It didn't work."**
+- **Frame rate:** 66, 78 and 75 fps across the three moments (the Fellowship page, a webring page, Profile setup). The 66 is under the 72 floor, so 1.6 is not safe as 1997's default. Idea 4 is set aside.
+- **Sharpness:** no clear gain. This matches §1: the letters are too small in angle, and a 1.6 eye buffer adds only about 2 pixels per degree.
+- **The font finding is confirmed.** On the Quest the 1997 text is drawn in a thin typewriter face. Compare his computer photo of the same page, where the mono is heavy. Idea 2 (check, then ship the fonts) moves to first.
+- **New to check:** the debug plate reads **88–102 draws** in 1997 in the headset, against the 75 budget. This may be counted per eye in XR, so compare with `tools/quest-numbers` before calling it a regression.
+
 ## 2. How to read the numbers
 
 - **Text size (°)** = the font size as seen from the seat, in degrees. Bigger is easier.
