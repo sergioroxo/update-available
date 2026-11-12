@@ -451,3 +451,192 @@ Wayback captures: the timestamp shown is the one served.
   a four-stage "etiological framework" (confusion, filling the void, sexual identity crisis, resolution); and grades
   clients by "mild, moderate, severe symptoms" by the frequency of their homosexual experience. → the new term
   "symptoms", a note on "born that way", and a reason row for men. Status: NOT SUPPORTED (APA 2009, S09).
+
+---
+
+## 7. ADDITIONS (S372, 12 Nov 2026 — the words of 2026, from the knowledge base only)
+
+UiB job 17 Part B (docs/reinterp/UIB_JOB_17_2026-11-11.md). Everything after job 12 that the piece says about 2026 had not
+reached the Lexicon. These rows were written **only from documents already in the knowledge base**, each claim with the
+document and the source id it carries there:
+`[K: RESEARCH_ROGD_AND_FILTERS_2026-11-11 §…]`, `[K: RESEARCH_2026_TRANS_PRESSURE_2026-11-07 §…, S…]`,
+`[K: RESEARCH_2026_PRESSURES_2026-11-01 §…]`, `[K: RESEARCH_LGB_REFUSAL_2026-10-31 §…]`, `[K: ARTICLE_COMPANION_2026-10-31 §7m/§7n]`.
+Only sources those documents mark as **opened** are used for a claim on screen; anything they hold only as a search
+listing is marked `[VERIFY SOURCE]` and kept off the Lexicon's glass. Nothing new was fetched for this section. A second,
+independent read of every claim against its KB source was made by a separate agent (see 7.8).
+
+**⚑ The Close lines, the "In 2026" lines and the statuses below are Sérgio's to rule (like dossier phrasing):** they are
+DRAFTS, marked `draft: true` in data/strings/lexicon.json, shown in the piece until he edits them. The URLs are copied
+verbatim from the KB rows so data/dossier/links.json can cite this file.
+
+### 7.1 (entry 27) "exploratory therapy" (2025)
+- **Era:** 2026
+- **Claims:** that talk therapy, "exploratory therapy" among it, should come first for young people with gender
+  dysphoria, and that equating it with conversion therapy is "misguided".
+- **Source and users:** the US Department of Health and Human Services' report on pediatric gender dysphoria, dated
+  1 May 2025, published after the executive order "Protecting Children From Chemical and Surgical Mutilation": it
+  recommends psychotherapy, including "exploratory therapy", as first line and calls equating it with conversion therapy
+  "misguided" (KFF explainer, 6 May 2025, opened:
+  https://www.kff.org/mental-health/issue-brief/u-s-department-of-health-and-human-services-report-on-pediatric-gender-dysphoria-and-gender-conversion-efforts/ ;
+  `[K: RESEARCH_2026_TRANS_PRESSURE §2.4, S16]`; `[K: ARTICLE_COMPANION §7n]`). The older name is entry 23's "gender
+  exploratory therapy" (GETA, 2021; later Therapy First). In 2026 a detransition chatbot's resources page promotes
+  therapists offering "gender exploratory therapy" (Rewire News Group via The Needle, 11 Aug 2026, opened as a
+  republication: https://theneedlenews.com/2026/08/this-ai-chatbot-pushes-conversion-therapy-on-trans-users/ ;
+  `[K: RESEARCH_2026_PRESSURES §2.5]`).
+- **Evidence:** CONTESTED, both readings documented in the same opened source: the report says the evidence for medical
+  interventions is low quality and favours psychotherapy first; the American Academy of Pediatrics and others say it
+  breaks with the major medical associations, did not disclose its authors, and that its "exploratory therapy" can
+  include conversion practices (S16). The KB holds no trial of the therapy. A later peer-reviewed version (19 Nov 2025) is
+  known only second-hand `[VERIFY SOURCE]` (`[K: RESEARCH_ROGD_AND_FILTERS §B2]`) and is not used.
+- **Word of the Day:** none (ETHICS #7: the clinical debate is never satirised).
+- **Close (DRAFT, his):** A US government report (May 2025) puts talk therapy first, "exploratory therapy" among it, and
+  calls equating it with conversion therapy "misguided". The American Academy of Pediatrics and others say it can include
+  conversion practices.
+- **Status (DRAFT, his):** contested.
+- **In the piece:** Mum's forwarded article ("US report: 'talk therapy first'", data/dialog/s4_v3.json `news`), the
+  clinic's letter ("Exploratory therapy is offered before any referral").
+
+### 7.2 (entry 28) "explorative conversations" (2026)
+- **Era:** 2026
+- **Claims:** (the UK draft bill's own carve-out) that a ban on conversion practices does not ban "explorative
+  conversations".
+- **Source and users:** the UK government's draft Conversion Practices Bill, 25 June 2026: England and Wales,
+  trans-inclusive, up to five years in custody; it says it does not ban "explorative conversations" and exempts
+  legitimate healthcare and counsellors (gov.uk, 25 Jun 2026, opened:
+  https://www.gov.uk/government/news/government-pushes-forward-with-conversion-practices-ban-to-protect-lgbt-people-from-abuse ;
+  `[K: RESEARCH_2026_TRANS_PRESSURE §2.4, S25]`; `[K: ARTICLE_COMPANION §7n]`). Galop (20 Oct 2026, opened): the draft
+  covers gender identity as well as sexual orientation and goes to a joint committee that reports by 22 Jan 2027
+  (https://www.galop.org.uk/news/scrutiny-begins-on-the-draft-conversion-practices-bill ;
+  `[K: RESEARCH_2026_PRESSURES §2.2]`; `[K: RESEARCH_LGB_REFUSAL §8]`).
+- **Evidence:** DOCUMENTED (the phrase is the bill's). What it will mean in practice is not settled: the bill is a draft
+  under scrutiny. The Royal College of Psychiatrists' wish to protect exploratory conversations and Stonewall's
+  criticism of the title are held in the KB without a clear opened source `[VERIFY SOURCE]` and are not used.
+- **Word of the Day:** none (a law's words, not a seller's).
+- **Close (DRAFT, his):** The UK government's draft ban on conversion practices in England and Wales (June 2026) covers
+  sexual orientation and gender identity. It says it does not ban "explorative conversations". A joint committee is
+  scrutinising it.
+- **Status (DRAFT, his):** documented.
+- **In the piece:** the AI quotes it to Maya ("the new bill says it won't ban 'explorative conversations'",
+  data/dialog/s4_v3.json `bot.beats` id `explore`).
+
+### 7.3 (entry 29) "rapid-onset gender dysphoria" (ROGD) and its "signs" (2018; corrected 2019)
+- **Era:** 2026 (the label is from 2018)
+- **Claims:** that some young people's gender dysphoria arrives suddenly, in friend groups and after more time online,
+  and that these "signs" show a pattern.
+- **Source and users:** Littman (2018), *PLOS ONE*, a survey of 256 parents (opened:
+  https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0202330 ; `[K: RESEARCH_ROGD_AND_FILTERS §B1]`). The
+  signs, as parents reported them: a sudden announcement ("out of the blue", 80.9%); most of the friend group becoming
+  trans-identified (36.8%); more internet or social media use before (63.5%); more popular after coming out (60.7%);
+  prior mental-health or neurodevelopmental conditions (62.5%). The 2019 correction (opened twice on 11 Nov:
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC6424391 ; `[K: RESEARCH_ROGD_AND_FILTERS §A]`;
+  `[K: RESEARCH_2026_TRANS_PRESSURE §5.1, S10]`; `[K: ARTICLE_COMPANION §7m]`): ROGD "is not a formal mental health
+  diagnosis at this time"; "This report did not collect data from the adolescents and young adults (AYAs) or clinicians";
+  parents "may have viewed the recruitment information from one of at least four sites with varied perspectives", three
+  of which "expressed cautious or negative views" of "medical and surgical interventions for gender dysphoric
+  adolescents"; the study is framed as generating "hypotheses". CAAPS (26 Jul 2021, 62 signatories, opened:
+  https://www.caaps.co/rogd-statement): "There are no sound empirical studies of ROGD".
+- **Evidence:** as a diagnosis, NOT SUPPORTED (the correction itself). As one possible influence among several,
+  CONTESTED (entry 20). Supporters' reading (the results largely unchanged, the paper kept) is listing-only
+  `[VERIFY SOURCE]`; Turban 2022, Bauer 2022, WPATH 2018 and Cass §8.24–8.25 are second-hand in the KB this round
+  `[VERIFY SOURCE]`; none of them is on the glass. That the signs are *used as a checklist on families* is the artist's
+  inference, not a documented practice (`[K: ARTICLE_COMPANION §7m]`): the Lexicon says so wherever it shows the piece's
+  checklist.
+- **Word of the Day:** none. "As it was sold" is the piece's own invented line (the AI's video), marked as invention.
+- **Close (DRAFT, his):** A label from a 2018 survey that asked only parents. They reported the "signs": a sudden
+  announcement, friends coming out too, more time online. Its 2019 correction says it is "not a formal mental health
+  diagnosis".
+- **Status (DRAFT, his):** contested.
+- **In the piece:** Second Thoughts' "I checked your week against the signs" and THE GREAT BECOMING's checklist
+  (data/dialog/s4_v3.json `bot.beats` id `diagnosis`, `clip.signs`); it never names ROGD.
+
+### 7.4 (entry 30) "same-sex attracted" / "biological sex" as eligibility (2024–2026)
+- **Era:** 2026
+- **Claims:** that a service for lesbian, gay and bisexual people may define who it serves by same-sex attraction, read
+  by sex at birth; that organisations must or may exclude trans people after the 2025 UK ruling.
+- **Source and users:** a UK helpline for 13–24 year olds launched in October 2024, which its organisation calls the only
+  one "run for and by same-sex attracted people" (about page, opened, undated: https://lgballiance.org.uk/about/ ;
+  PinkNews, 18 Oct 2024, opened: https://www.thepinknews.com/2024/10/18/lgb-alliance-helpline/ — the launch used
+  "same-sex attracted"; its volunteers believe biological sex is real and immutable) (`[K: RESEARCH_LGB_REFUSAL §1, §3]`).
+  *For Women Scotland* [2025] UKSC 16, 16 Apr 2025: "sex" in the Equality Act 2010 means biological sex (judgment page,
+  opened: https://supremecourt.uk/cases/judgments/uksc-2024-0042 ; `[K: RESEARCH_LGB_REFUSAL §2.3]`). After it, the
+  Women's Institute (formal membership from April 2026) and Girlguiding (2 Dec 2025) closed membership to trans women and
+  girls, both citing the judgment (ABC News, 4 Dec 2025, opened:
+  https://www.abc.net.au/news/2025-12-04/girl-guiding-women-institute-to-stop-membership-trans-women/106100184 ;
+  `[K: RESEARCH_LGB_REFUSAL §2.2]`). The EHRC code in force 5 Aug 2026 asks single-sex services to rely on "biological
+  sex" and lets an LGBT+ support group define itself as gay, bi and/or trans (Lewis Silkin, 5 Aug 2026, opened:
+  https://www.lewissilkin.com/insights/2026/08/05/the-new-ehrc-code-of-practice-for-service-providers-what-does-it-mean-for-single-sex-services ;
+  `[K: RESEARCH_LGB_REFUSAL §2.3]`).
+- **Evidence:** A POLITICAL AND LEGAL FRAME, not a finding. Whether the law requires exclusion is disputed (the Good Law
+  Project disputes it, ABC above). Counter-examples, opened: London lesbian and queer organisers pledged to keep events
+  open to trans people (Xtra, 11 Jun 2025: https://xtramagazine.com/power/activism/uk-lesbians-supreme-court-transphobia-274301);
+  LGBT Foundation, London Friend, Switchboard and Stonewall's joint statement (18 Jul 2025). No survey counts trans
+  people refused by LGB services (`[K: RESEARCH_LGB_REFUSAL §4]`); none is implied.
+- **Cautions (from `[K: RESEARCH_LGB_REFUSAL §7]`):** the critique lands on the mechanism, never on lesbians or LGB
+  people as a class; no group is shown as a conversion network; no clinical vocabulary; mild enough that a supporter of
+  the policy would not object to its accuracy. No Word of the Day.
+- **Close (DRAFT, his):** Words of eligibility. A UK helpline for young people says it is run "for and by same-sex
+  attracted people". After a 2025 court ruling on "biological sex", some groups closed membership to trans women. Others
+  chose to stay open.
+- **Status (DRAFT, his):** political.
+- **In the piece:** Meridian LGB Trust (invented): "Our services are provided on the basis of sex recorded at birth"
+  (Maya's mail); the AI's video then uses the refusal against her.
+
+### 7.5 "restored" (2026), folded into entry 17 (freedom / healing / restoration)
+- **What the KB documents for 2026:** "healing" persists (Brothers Road's "Healing Work", entry 17). **No tool or app that
+  "restores" a trans person to a male-presenting image was found** (`[K: RESEARCH_2026_PRESSURES §1 item 6, §2.5]`;
+  `[K: RESEARCH_ROGD_AND_FILTERS §C]`): the piece's "You, restored" and its Restore filter are invention and are marked so.
+  The 2025 US executive order whose title speaks of "Restoring Biological Truth" appears in the KB only as a listing's
+  address `[VERIFY SOURCE]` (`[K: RESEARCH_2026_TRANS_PRESSURE S29, L]`) and is **left out** of the Lexicon.
+- **In 2026 (DRAFT, his), added to entry 17's page:** In this piece's 2026 the word moves into software: a session, a
+  profile "restored". That use is invented; no real tool that "restores" a person's photo was found.
+
+### 7.6 Changes to existing pages (2026)
+- **Entry 23, "just exploring" — In 2026 (DRAFT, his):** In 2025–26 the word reached policy. A US report put
+  "exploratory therapy" first; critics say it can include conversion practices. The draft ban for England and Wales says
+  it does not ban "explorative conversations". (Sources: 7.1 and 7.2.)
+- **Entry 20, "social contagion" — In 2026 (DRAFT, his):** In this piece's 2026 the frame is said to one person: "it
+  spread to you", ticked off the 2018 paper's parent-reported "signs". The AI, and its use of them as a checklist, are this
+  piece's invention. (Sources: 7.3; `[K: ARTICLE_COMPANION §7m]` for "the artist's inference".) CAAPS's 2021 statement is
+  kept in this file but **off the glass**: it is one side, and the other side's reading of the correction is listing-only.
+- **The Reasons, trans people — a new row (DRAFT, his):** The "signs": a sudden announcement, friends coming out too, more
+  time online, more popular after, earlier mental-health conditions (parents' reports) · 2018–2026 · CONTESTED: parents'
+  reports only; "not a formal mental health diagnosis" (2019 correction). (Sources: 7.3: 80.9%, 36.8%, 63.5%, 60.7% where
+  known, 62.5%.)
+- **The Reasons, the arc — 2026 (DRAFT, his):** for trans people: confusion, trauma, "gender ideology", and peer influence
+  or "social contagion", with the "signs" parents reported in a 2018 survey. The method offered: exploring first.
+
+### 7.7 The timeline strip's names (what a word turns into)
+The design's strip (1997 · 2003 · 2016 · 2026) shows, for a few words, the name the record gives each decade. Each name is
+sourced above: "reparative therapy" (entry 12, 1991 on) → "reintegrative therapy" (entry 13, c. 2017–18) and SAFE-T
+("sexual attraction fluidity exploration in therapy", entry 23, GPAHE's rebrand list) → "exploratory therapy" (7.1, 2025)
+and "explorative conversations" (7.2, 2026). "Gender deficit" (Nicolosi 1991, entry 11) → "gender esteem" (People Can
+Change 2005) → "gender-confused" (Nicolosi 2017) → "gender confusion" (2026, Ashley). ROGD (2018, 7.3) → "social
+contagion" and "the signs" (2026, entries 20 and 7.3). **The strip's own caption carries both readings** wherever a later
+name's providers deny the earlier name's aims (entries 13, 23, 7.1): sequence in the record, not a ruling that they are
+one practice (ETHICS #7).
+
+The strip's captions (DRAFT, his): the talk chain — "What the talk was called, by decade. The later providers say theirs
+is not conversion therapy; critics say it is, or can include it." (no "unresolved" for reintegrative: APA 2009 found
+change efforts "unlikely to be successful", entry 12, so a both-sides caption there would be false balance); the gender
+chain — "Said first of gay boys and men; later of trans people." (headline finding 4). The 2026 "gender confusion" is the
+Lexicon's era placement (entry 11, Ashley), not a dated 2026 source; the HHS mandate's "identity-based confusion" wording is
+second-hand and is not used. The spread chain shows ROGD (2018) → "social contagion" (2026) only.
+
+### 7.8 The second read (S372, an independent agent, KB only)
+A separate agent (Sonnet), given only the visible texts and the KB files, not this section, checked every claim. Its
+verdicts and what changed:
+- MATCH: the exploratory-therapy close (via KFF's opened explainer; the report's own wording is second-hand), the ROGD
+  close, the eligibility close, "no restore tool found", the EO title being listing-only, the [VERIFY SOURCE] list, and all
+  13 URLs verbatim and opened (the Supreme Court judgment page was read only in part: it is **not** cited for the holding,
+  and is not added to the Sources).
+- PARTIAL → fixed: "UK's draft ban … a committee of Parliament" → "in England and Wales … a joint committee"; the
+  "just exploring" 2026 line now states the critics' reading instead of asserting "both readings stand"; "a coalition of
+  psychologists (CAAPS)" removed from the glass (one side only, see above); "struggles before" → "earlier mental-health
+  conditions" (struggle is a network word); the arc no longer says the signs are "read off a checklist" (the artist's
+  inference, `[K: ARTICLE_COMPANION §7m]`; `[K: RESEARCH_ROGD_AND_FILTERS §B4]`: "Do not state it on screen") nor ranks
+  "softest"; the talk caption says "can include" (the AAP's wording); the gender chain says who the early words were about;
+  "the signs" dropped from the spread chain's 2026 name.
+- Left off the glass, as the check advised: Cass §8.24–8.25 wording (the KB contradicts itself on whether it was opened),
+  Turban 2022 and its ratios, Bauer 2022, WPATH 2018 wording, RCPsych and Stonewall on the bill, the HHS version of
+  19 Nov 2025, the EO title, the supporters' reading of the correction, the chatbot's builder, survey percentages not
+  separately cleared.

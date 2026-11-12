@@ -14,6 +14,7 @@ import { FILM, SKINS, type View, type Year } from './skins';
 import { FILM_BAR, FILM_INSET, layoutDoc, type Doc, type DocHit, type Op, type Rect, wrap } from './layout';
 import type { FilmState } from './audio';
 import { drawScrollbar, drawSiteHeader, drawStatus, drawWindow, roundRect, SCROLL_W, type DrawEnv, type Hit } from './frame';
+import { siteViewerBus } from './bus';
 
 export interface ViewerHost {
   /** a browser can open a new tab with the page version; a headset cannot */
@@ -73,8 +74,11 @@ export class ViewerCore {
 
   // ── state ──
   open(target: View): void {
-    this.view = target; this.tab = 'story'; this.scroll = 0; this.hover = ''; this.doc = null;
-    this.leaveFilm();
+    // ⚑ S372 — a caller may ask for a tab (siteViewerBus.openAt: the Lexicon's link to a year's "The words")
+    const want = siteViewerBus.nextTab as TabId | null;
+    this.view = target; this.tab = want && target !== 'hub' && MODEL.tabIds.includes(want) ? want : 'story';
+    this.scroll = 0; this.hover = ''; this.doc = null;
+    this.leaveFilm();   // S371
   }
   setTab(t: TabId): void { if (t === this.tab) return; this.tab = t; this.scroll = 0; this.doc = null; this.leaveFilm(); }
   /** ⚑ S371 — a film belongs to the page it is on: leaving the page (another tab, another year) stops it; a track plays on */

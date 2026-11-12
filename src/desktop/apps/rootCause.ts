@@ -600,7 +600,7 @@ export class RootCauseApp {
    *  Lexicon research documents (docs/reinterp/RESEARCH_LEXICON_2026-10-02.md entries 1, 3, 7, 8, 9, 17). */
   private drawWords(ctx: CanvasRenderingContext2D, c: ui.ContentRect, tx: number): void {
     const W = copy.words as { label: string; plainLabel: string; note: string; next: string; terms: { term: string; says: string; does: string }[] };
-    if (!this.wordsMet) { this.wordsMet = true; for (const id of ['ssa', 'struggler', 'brokenness', 'roots', 'wound', 'freedom']) meetWord(id); }
+    if (!this.wordsMet) { this.wordsMet = true; for (const id of ['ssa', 'struggler', 'brokenness', 'roots', 'wound', 'freedom']) meetWord(id, 'e1-rootcause'); }
     ui.setFont(ctx, 20);
     ctx.fillStyle = ERA1.warnDark; ctx.fillText(copy.titleBig, tx + 2, c.y + 14);
     ctx.fillStyle = ERA1.tooltip; ctx.fillText(copy.titleBig, tx, c.y + 12);
