@@ -28,7 +28,7 @@ import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { setLargeTextProbe } from '../desktop/theme/fonts';
-import { mountXrGlass } from '../room/xrGlass';
+import { mountXrGlass, deskTop } from '../room/xrGlass';
 import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
@@ -924,11 +924,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     era3Devices.setLookProvider(() => ({ pitch: camPitch + lookOffPitch, yaw: camYaw + lookOffYaw }));
     // ⚑ S374 / J18-B2 — in a headset 2016's flat panel and 2026's monitor grow ×1.2 about their glass (src/room/xrGlass.ts);
     //   the planes' hit tests read their own world size (era3Devices `hitPlane`)
-    for (const [screen, prop] of [['era3-device-workstation', 'w_flatPanelBody'], ['era3-device-monitor', 'e_monitor']] as const) {
+    //   ⚑ S357az: about the foot of their stand on the desk, not the glass centre (his: "it lost the stand for the screen")
+    for (const [screen, prop, desk] of [['era3-device-workstation', 'w_flatPanelBody', 'w_desk'], ['era3-device-monitor', 'e_monitor', 'e_desk']] as const) {
       const glass = app.root.findByName(screen) as pc.Entity | null;
       if (!glass) continue;
       const sc = glass.getLocalScale();
-      mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp);
+      mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp, { footY: deskTop(desk) });
     }
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
