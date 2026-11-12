@@ -24,7 +24,7 @@ import closeMessage from '../../data/strings/close_message.json';
 import * as pc from 'playcanvas';
 import { DesktopOS } from '../desktop/os';
 import { WitnessCanvas } from '../witness/intake';
-import { ledger, wipeLedger } from '../state/ledger';
+import { ledger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { setLargeTextProbe } from '../desktop/theme/fonts';
@@ -39,7 +39,6 @@ const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
-import { mountLeavePage } from '../frame/leavePage';
 import { mountCloseMonitor, type CloseMonitor } from '../room/closeMonitor';
 import { entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
@@ -868,7 +867,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let e4RoomTurnSeq = -1;
   let cloud: PointCloud | null = null;
   let closeMonitor: CloseMonitor | null = null;
-  let closeMonitorDistance = 0.95;
   let sendRt: SendRuntime | null = null;
   let movementNodes: MovementNodes | null = null;
   // R28-2b: the tape system's pure logic (src/narrative/tapes.ts, mirrors
@@ -1191,7 +1189,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       onRestart: () => restartPiece(),
       onRecentre: () => xrComfort.calibrate(),
       onDesk: () => xrLayer?.matchTable(),
-      onSources: () => siteViewerBus.open('hub')
+      onSources: () => siteViewerBus.open('hub'),
+      onLexicon: () => siteViewerBus.open('lexicon')   // S379
     });
     // ⚑ S291 — the era websites, in the headset: a window that comes to the visitor (frame/siteViewer/xrMount.ts)
     siteViewerXr = mountSiteViewerXr(app, camera, {
@@ -3737,36 +3736,29 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   behind (and brought the eye to it). The sky's own things are asked first now; the glass is the answer only
       //   when nothing nearer took the press. (A panel folded off the machine's sight-line is not hittable — see
       //   `panelAt` — so the machine stays pressable through the gap the corridor opens.)
-      const glassHit = closeMonitor?.on ? closeMonitor.hitTest(ray.p0, ray.p1) : null;
-      // At the reading seat the glass owns its visible controls, including XR rays.
-      // A drifting sky panel must not steal a monitor press while the visitor reads it.
-      if (glassHit && closeMonitor?.near) {
-        closeMonitor.press(glassHit.x, glassHit.y); cloud?.holdDrift(3); return;
-      }
-      const tGlass = glassHit ? glassHit.t : undefined;   // a panel or label BEHIND the glass does not answer for it
+      // ⚑ S378 (UiB job 20 Part A, his "phantom clicks") — THE FAR GLASS TAKES NO PRESS. Daniel's machine still stands
+      //   in the sky as an image, but its glass is no longer asked anything: no hit plane, no fly-to. The computer is the
+      //   fifth panel now, and a press on it opens the machine's page in the site viewer (below), like the rooms' panels.
       if (cloud?.visible) {
         cloud.holdDrift(3);
         // ⚑ S175 — a label, then a panel: each turns ITS ROOM's panel to the room's
         //   dossier, in that room's own OS, right where it hangs (Sérgio: "the sources open need to be on the 4 panels
         //   … it is nuisance to go back and forth. Instead of the computer."). A panel's press turns its pages and,
         //   after the last, turns it back to the room.
-        const lb = cloud.labelAt(ray.p0, ray.p1, tGlass);
-        const pi = cloud.panelAt(ray.p0, ray.p1, tGlass);
-        // ⚑ S209 / P7-47 — the Lexicon's star opens the encyclopedia on Daniel's machine, and the eye goes to it.
-        //   ⚑ W1-G2 — but a star hung over a panel's face must not take the press meant for the panel: that was the
-        //   other way a panel "activated the computer" (the star's quad is generous and was asked first). On a
-        //   panel, the panel answers; the star answers only in the open sky.
-        if (lb && lb.text === lexStrings.star && closeMonitor && pi === null) {
-          closeMonitor.openLexicon();
-          if (!closeMonitor.on) { closeMonitor.setNear(false); closeMonitor.show(); }
-          goToCloseMonitor();
-          return;
-        }
+        const lb = cloud.labelAt(ray.p0, ray.p1);
+        const pi = cloud.panelAt(ray.p0, ray.p1);
+        // ⚑ S378 — the computer's panel: the machine's page (its restart, the rooms, the receipt, the dossier, the Lexicon)
+        if (pi !== null && pi === cloud.machinePanel) { siteViewerBus.open('machine'); return; }
+        // ⚑ S209 / P7-47 — the Lexicon's star opens the encyclopedia. ⚑ W1-G2 — but a star hung over a panel's face
+        //   must not take the press meant for the panel; the star answers only in the open sky.
+        //   ⚑ S378 — it opens in the site viewer now (the one Lexicon, as from the machine's page and the menu), where
+        //   it is; the eye is no longer flown to Daniel's machine.
+        if (lb && lb.text === lexStrings.star && pi === null) { siteViewerBus.open('lexicon'); return; }
         // ⚑ S283/S291 — a press on a panel's SOURCES BUTTON opens that era's website. S291: IN THE PIECE — the site viewer
         //   (frame/siteViewer/): a window over the 3D view in the browser, a plane that comes to the visitor in the headset.
         //   (S283 opened a new tab, which a headset cannot do; the window has its own "Open as a web page" for that.)
         //   (S365: a press elsewhere on the panel opens the same website — see below.)
-        const si = cloud.panelSourcesAt(ray.p0, ray.p1, tGlass);
+        const si = cloud.panelSourcesAt(ray.p0, ray.p1);
         if (si !== null) { siteViewerBus.open(ERA_TARGET[cloud.panelEraOf(si)] ?? '1997'); return; }
         // ⚑ S365 / job 14 C2 (his headset, 10 Nov: "at the close it didn't open the websites with all the information like the
         //   desktop version… the sources become a button that open a browser window of the Era and you can scroll and touch
@@ -3776,12 +3768,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         //   no room (the process labels) opens the hub. (The Lexicon star and the glass keep their precedence above.)
         if (lb && lb.text !== lexStrings.star) { siteViewerBus.open(ERA_TARGET[lb.era] ?? 'hub'); return; }
         if (pi !== null) { siteViewerBus.open(ERA_TARGET[cloud.panelEraOf(pi)] ?? '1997'); return; }
-      }
-      // ⚑ S163: in the Close the machine stands back in the sky (C-02) — its own glass is the press (far: come to
-      //   it; near: the card); any press holds the drift (R3-112)
-      if (closeMonitor?.on) {
-        const cp = glassHit;
-        if (cp) { closeMonitor.press(cp.x, cp.y); cloud?.holdDrift(3); return; }
       }
       const p = toDesktopR(ray);
       if (p) { // the monitor is the UI; everywhere else is the room
@@ -3907,14 +3893,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   nothing named what it was on. The same tests as the press (resolveTapRay), in its order: a panel names itself,
     //   and the ray ends on it (aimAt).
     if (cloud?.visible && closeStage !== 'message') {
-      const g = closeMonitor?.on ? closeMonitor.hitTest(ray.p0, ray.p1) : null;
-      if (!(g && closeMonitor?.near)) {
-        const tG = g ? g.t : undefined;
-        const ph = cloud.panelHit(ray.p0, ray.p1, tG);
-        if (ph) { aimAt = ph.at; return cloud.panelSourcesAt(ray.p0, ray.p1, tG) !== null ? A.closeSources : A.closePanel; }
-        const lb = cloud.labelAt(ray.p0, ray.p1, tG);
-        if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
+      // ⚑ S378 — the far glass is no longer asked (it takes no press); the computer's panel names itself
+      const ph = cloud.panelHit(ray.p0, ray.p1);
+      if (ph) {
+        aimAt = ph.at;
+        if (ph.i === cloud.machinePanel) return A.closeMachine;
+        return cloud.panelSourcesAt(ray.p0, ray.p1) !== null ? A.closeSources : A.closePanel;
       }
+      const lb = cloud.labelAt(ray.p0, ray.p1);
+      if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
     }
     if (os.isOff) return hitAt(ray, POWER_BTN, 0.08) ? A.power : null;
     if (!os.inDesktop) return null;
@@ -4337,7 +4324,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         return;
       }
     }
-    if (!camMove && !gameMenuBus.isOpen && !os.paused && closeMonitor?.key(e.key,e.shiftKey)) { e.preventDefault(); return; }
     // S48: any key skips the descent too (Escape excepted — the game menu
     // intercepts that in the capture phase and never reaches here)
     if (descentActive) { endDescent(); return; }
@@ -4595,12 +4581,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         if (closeHoldT >= cap) advanceClose();
       } else if (closeStage && !camMove) advanceClose();
       // (C-01's night and constellation during the flight are gone — S361 / H50: the panels come after the messages)
-      // C-02 / R3-112: has the eye come to the machine; is it resting on a panel
-      if (closeMonitor?.on) {
-        const g = closeMonitor.glass;
-        const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + closeMonitorDistance)) < 0.25;
-        closeMonitor.setNear(near);
-      }
       // S167: while the card is read, nothing of the sky sits between the eye and the glass.
       // ⚑ S174 / R4-15: and while it is FAR too — the sight-line from the eye to the
       //   whole machine is kept clear of stars, labels and panels from the moment it
@@ -4611,13 +4591,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   once it is lit, as before (the one being read stays). The eye is the LOGICAL head in a headset — the head
       //   moves and the room is shifted under it (xrComfort); the rig's pose is not where the eyes are. And at the
       //   Restart card (`near`) the constellation recedes: labels fade, links go, the stars stay, dimmed.
+      //   ⚑ S378 — the machine is an image now and never lit: no panel folds off it, nothing recedes for it (the card
+      //   it carried is the computer's panel's page, in the site viewer); its sight-line keeps the labels and stars off it.
       if (closeMonitor?.shown) {
-        const near = closeMonitor.on && closeMonitor.near;
         const sil = closeMonitor.silhouette;
         const eye = xr?.active ? logicalHead().getPosition() : camPos;
         cloud?.setClearCorridor({ eye: { x: eye.x, y: eye.y, z: eye.z },
-          x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: near ? 0.12 : 1,
-          recede: near, panels: closeMonitor.on });
+          x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: 1, recede: false, panels: false });
       }
       if (cloud?.visible && !camMove) {
         const view = xr?.active ? logicalHead() : camera;
@@ -4636,7 +4616,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         );
         if (skyLerp.t >= 1) skyLerp = null;
       }
-      closeMonitor?.update(dt);
       // ⚑ S85: a driven leg has ended and nothing took it over, so a look taken
       // during it becomes simply the look you are holding. (A landing never
       // reaches here with an offset — endDescent/seatCut clear it — and a
@@ -5467,9 +5446,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   const CLOSE_MONITOR_AFTER_SECONDS = 20;
   const CLOSE_STARS_PITCH = 72;
   const CLOSE_SKY_PITCH = 10;
-  const CLOSE_LIBRARY_APPROACH_SECONDS = 12;
-  /** C-02: the eye comes to the machine — S174: 1.45 m now (near 1.55), 8 s peaks at 0.34 m/s, under 0.43 */
-  const CLOSE_GO_SECONDS = 8;
   let skyLerp: { from: pc.Color; to: pc.Color; t: number; seconds: number } | null = null;
 
   /**
@@ -5560,36 +5536,34 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (closeStage === 'open') { closeStage = 'settled'; closeHoldT = 0; return; }
     if (closeStage === 'settled') {
       closeStage = null;
-      // The Restart card lights on Daniel's glass and the piece brings the eye to it.
-      // Its destination is authored; no look or press is needed to reach the ending.
-      closeMonitor?.setNear(false);
-      closeMonitor?.show();
-      // (S159: the POST beep that played here is gone — Sérgio: "the beep on the computer at the end is unnecessary")
-      const g = closeMonitor!.glass;
-      closeMonitorDistance = monitorDistance();
-      startCamMove({ x:g.x, y:g.y, z:g.z+closeMonitorDistance, pitch:0, yaw:0 },
-        CLOSE_LIBRARY_APPROACH_SECONDS, true);
+      // ⚑ S378 (UiB job 20 Part A) — the piece takes the eye to the COMPUTER'S PANEL, the fifth in the row: its face
+      //   carries "Restart as you are." and the one sentence, and a press anywhere on it opens the machine's page
+      //   (the four rooms, Start again, the Receipt, the dossier, the Lexicon) in the site viewer. Until S378 the eye was
+      //   flown to the card on Daniel's far glass. The destination is authored; no look is needed to reach it
+      //   (CLAUDE.md R28-1, his 2026-10-10 rule).
+      conductToMachinePanel();
       roomBed.set(CLOSE_SONG, 2.5);
     }
   }
 
-  /** C-02: "if we need to, we can press and go there" — the eye comes to the
-   *  machine's glass, the room's own distance at the machine's scale; the full
-   *  card is drawn on arrival (`setNear`, per frame below) */
-  function goToCloseMonitor(): void {
-    if (!closeMonitor?.on || closeMonitor.near || camMove) return;
-    const g = closeMonitor.glass;
-    closeMonitorDistance = monitorDistance();
-    startCamMove({ x: g.x, y: g.y, z: g.z + closeMonitorDistance, pitch: 0, yaw: 0 },
-      CLOSE_GO_SECONDS, true);
-  }
-
-  /** Fit the whole 4:3 glass in portrait too; the Restart card stays within its glass. */
-  function monitorDistance(): number {
-    const aspect=app.graphicsDevice.width / app.graphicsDevice.height;
-    const fov=(camera.camera?.fov ?? 42)*Math.PI/180;
-    const g=closeMonitor!.glass;
-    return Math.max(0.95,g.w/(2*Math.tan(fov/2)*aspect)*1.12);
+  /**
+   * ⚑ S378 — THE GAZE TO THE COMPUTER'S PANEL: a conducted turn from wherever the eye is to the panel's centre, at the
+   * comfort law's pace (≤ 9.1 °/s at the crest of the ease: 1.875 × Δ / T, so T ≥ 0.21 s a degree), the sky's drift held
+   * for the turn (it drifts, so the target would move away) and held after it by the gaze resting on the panel. From
+   * the seat (the eye never moves); in a headset it is the usual cut under the dissolve.
+   */
+  function conductToMachinePanel(): void {
+    if (!cloud) return;
+    const i = cloud.machinePanel;
+    const c = i >= 0 ? cloud.panelCentre(i) : null;
+    if (!c) return;
+    const dx = c.x - EYE.x, dy = c.y - EYE.y, dz = c.z - EYE.z;
+    const yaw = Math.atan2(-dx, -dz) * 180 / Math.PI;
+    const pitch = Math.atan2(dy, Math.hypot(dx, dz)) * 180 / Math.PI;
+    const dyaw = Math.abs(((yaw - camYaw + 540) % 360) - 180);
+    const dur = Math.max(6, Math.min(30, 0.21 * Math.max(dyaw, Math.abs(pitch - camPitch))));
+    cloud.holdDrift(dur + 3);
+    startCamMove({ x: EYE.x, y: EYE.y, z: EYE.z, pitch, yaw }, dur, true);
   }
 
   /**
@@ -5747,22 +5721,33 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
   }
 
+  /**
+   * ⚑ S378 (UiB job 20 Part A) — THE MACHINE'S PAGE ASKS THE PIECE: a room (the Close's era return) or Start again
+   * (as the headset menu's Restart: in a headset, said first). The page itself (src/frame/siteViewer/machine.ts) is the
+   * site viewer's, on both screens; the Receipt, the dossier (the four years, in the same window) and the Lexicon are its
+   * own pages. The Close's song keeps playing under all of them (S290: the receipt and the Lexicon "need a song").
+   */
   if (closeMonitor) {
-    closeMonitor.onEra = (era) => leaveClose(era);
-    closeMonitor.onAgain = () => {   // S209 / A24 — as the headset menu's Restart: in a headset, say so first
-      if (!xr?.active) { restartVisit({ armed: true }); return; }
-      xrFrame?.close();
-      xrFrame?.setHint(menuStrings.xrRestartNote);
-      window.setTimeout(() => restartVisit({ armed: true }), 3200);
+    siteViewerBus.machine = {
+      era: (era) => { siteViewerBus.close(); leaveClose(era); },
+      again: () => {
+        siteViewerBus.close();
+        if (!xr?.active) { restartVisit({ armed: true }); return; }
+        xrFrame?.close();
+        xrFrame?.setHint(menuStrings.xrRestartNote);
+        window.setTimeout(() => restartVisit({ armed: true }), 3200);
+      }
     };
-    closeMonitor.onGo = () => goToCloseMonitor();
-    closeMonitor.onLeave = () => mountLeavePage().show(() => { wipeLedger(); os.leaveNow(); gameMenuBus.close(); });
-    closeMonitor.onDossier = () => gameMenuBus.openCloseSources?.(0);
-    // ⚑ S290 (his, 1 Nov: "The music for the Lexicon and the Receipt … could be the music you make for the Close") — the
-    //   Close's score stays under the receipt and the Lexicon (headset B: "This needs a song"; "the receipt has no sound")
-    closeMonitor.onFace = (f) => { if (f !== 'card') roomBed.set(CLOSE_SONG, 2.5); };
-    // read-only probe, like __os: the walk aims at the card's rects through it
+    // read-only probes, like __os: the machine in the sky (its extents), and the end of the Close — the machine's page
+    // showing in the site viewer, after the Close has played (tools/walk.mjs stops on it; harness/visitor-state.mjs)
     (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;
+    (window as { __closeMachine?: unknown }).__closeMachine = {
+      get endingShowing(): boolean { return !!cloud?.visible && closeStage === null && siteViewerBus.view === 'machine'; },
+      /** the Close has played and the eye has been taken to the computer's panel (the turn done) */
+      get ended(): boolean { return !!cloud?.visible && closeMorphBegun && closeStage === null && !camMove; },
+      get view(): string | null { return siteViewerBus.view; },
+      get panel(): number { return cloud?.machinePanel ?? -1; }
+    };
   }
 
   if (options.reinterp) {
@@ -5887,7 +5872,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // S361 — ?debug=1 only: the Close from wherever the visitor is (tools/close-order-probe.mjs), and where it has got to
     if (debugOn) (window as { __enterClose?: () => void }).__enterClose = () => enterClose();
     if (debugOn) (window as { __closeState?: () => unknown }).__closeState = () => ({ stage: closeStage, card: closeCard,
-      panels: !!cloud?.visible, open: cloud?.open ?? 0, monitor: !!closeMonitor?.on, bed: roomBed.current,
+      panels: !!cloud?.visible, open: cloud?.open ?? 0,
+      // ⚑ S378 — the end of the Close: the gaze taken to the computer's panel (`ended`), and the page open (`page`)
+      ended: !!cloud?.visible && closeMorphBegun && closeStage === null && !camMove, page: siteViewerBus.view, bed: roomBed.current,
       rig: closeMorphBegun, glitching: !!cluster?.busy });
     mountDebugPanel(os, {
       app,

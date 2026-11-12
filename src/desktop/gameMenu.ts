@@ -614,6 +614,10 @@ export function mountGameMenu(): GameMenu {
       // ⚑ S291 — SOURCES: the four era websites as a window over the room (and in the headset), not a page that takes you away
       row(copy.sitesRow, () => siteViewerBus.open('hub'));
       note(copy.sitesNote);
+      // ⚑ S379 (UiB job 20 Part B) — THE LEXICON from the menu: the one Lexicon, in the same window the Close's computer
+      //   panel opens it in (src/frame/siteViewer/machine.ts); its own Close, or the window's, comes back here
+      row(copy.lexiconRow, () => siteViewerBus.open('lexicon'));
+      note(copy.lexiconNote);
       row(copy.leave, () => doLeave());
       // ⚑ S220 (his, 2026-10-08: "leave needs a small message saying that it will [go to] a different space") — said
       //   UNDER the row, not asked after it: this Leave is the quick way out of a shared room, and a confirm would

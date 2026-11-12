@@ -2,6 +2,7 @@ import { runtimeQuery } from '../../edition';
 import { reducedMotion, setReducedMotion } from '../../state/motion';
 import { setOneShotsMuted, roomBed } from '../../audio/tapeAudio';
 import { gameMenuBus } from '../../state/gameMenuBus';
+import { siteViewerBus } from '../../frame/siteViewer/bus';
 import { getMaster, setMaster } from '../../audio/mix';
 /** Pre-story setup, on the same desktop canvas and hit rectangles as the OS.
  * The restore entrance calls startSetup() in the stars, before restoring the seat.
@@ -198,6 +199,7 @@ export class LambySetup {
       return;
     }
     if (id === 'setup-close') { this.closeWindow(); return; }
+    if (id === 'setup-lexicon') { siteViewerBus.open('lexicon'); return; }   // S379: optional; the note stays where it is
     if (id === 'setup-skip-film' && this.film && runtimeQuery().get('debug') === '1') { this.endFilm(); return; }
     if (id === 'setup-device') { this.requestDeviceLook?.(); return; }
     if (id === 'setup-reduce-motion') { setReducedMotion(!reducedMotion()); this.dirty = true; return; }
@@ -398,6 +400,9 @@ export class LambySetup {
       if (reducedMotion()) { ui.px(ctx, c.x + 25, ry + 5, 3, 5, P.black); ui.px(ctx, c.x + 28, ry + 3, 5, 3, P.black); }
       this.text(ctx, copy.note.reduceMotion, c.x + 44, ry, c.w - 66, this.mobile ? 14 : 11);
       this.hits.push({ id: 'setup-reduce-motion', x: c.x + 20, y: ry - 4, w: c.w - 40, h: 22 });
+      // ⚑ S379 (UiB job 20 Part B) — the Lexicon, offered once and optionally, on the button row left of Close: the one
+      //   Lexicon in the site viewer, over the setup; nothing here waits on it (Close stays the way on)
+      this.button(ctx, 'setup-lexicon', copy.note.lexicon, c.x + 22, c.y + c.h - 43, this.mobile ? 210 : 190);
     }
     this.button(ctx, 'setup-close', copy.close, c.x + c.w - 95, c.y + c.h - 43, 81);
   }

@@ -152,6 +152,8 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
   onDesk?: () => void;
   /** S291 — the menu's Sources row: open the site viewer */
   onSources?: () => void;
+  /** ⚑ S379 — the menu's "The Lexicon": the one Lexicon in the site window */
+  onLexicon?: () => void;
 }): XrFrame {
   const layer = new pc.Layer({ name: 'XR Frame', clearDepthBuffer: true });
   app.scene.layers.pushOpaque(layer); app.scene.layers.pushTransparent(layer);
@@ -361,6 +363,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       y = drawRow(copy.recentre, 'recentre', y);
       y = drawRow(copy.xrDesk, 'desk', y);   // S270g / VR-04
       y = drawRow(copy.sitesRow, 'sources', y);   // S291
+      y = drawRow(copy.lexiconRow, 'lexicon', y);   // S379: the one Lexicon, in the site window (nine rows clear the footer)
       y = drawRow(copy.controls, 'controls', y);
       y = drawRow(copy.restart, 'restart', y);
       y = drawRow(copy.leave, 'leave', y);
@@ -494,6 +497,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       case 'recentre': opts.onRecentre(); gameMenuBus.close(); return;
       case 'desk': gameMenuBus.close(); opts.onDesk?.(); return;
       case 'sources': opts.onSources?.(); return;
+      case 'lexicon': opts.onLexicon?.(); return;
       case 'resume': gameMenuBus.close(); gameMenuBus.showHint?.(); return;
       case 'map': view = 'map'; break;
       case 'controls': view = 'controls'; break;

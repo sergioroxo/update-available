@@ -10,7 +10,9 @@
  * It draws only when something changed (scroll, tab, hover, an image arriving); the mount uploads the texture then.
  */
 import { MODEL, YEARS, type Block, type TabId } from './model';
-import { FILM, SKINS, type View, type Year } from './skins';
+import { FILM, SKINS, isMachineView, type View, type Year } from './skins';
+import { drawMachinePage, ReceiptPrint, LexiconPage, MACHINE_COPY } from './machine';
+import lexStrings from '../../../data/strings/lexicon.json';
 import { FILM_BAR, FILM_INSET, layoutDoc, type Doc, type DocHit, type Op, type Rect, wrap } from './layout';
 import type { FilmState } from './audio';
 import { drawScrollbar, drawSiteHeader, drawStatus, drawWindow, roundRect, SCROLL_W, type DrawEnv, type Hit } from './frame';
@@ -69,24 +71,79 @@ export class ViewerCore {
   private filmAt: { op: FilmOp; sx: number; sy: number } | null = null;
   /** debug/review: the last painted size */
   lastSize = { w: 0, h: 0 };
+  /** ⚑ S378 — the pages before this one (the machine's page → its Receipt, the Lexicon, the four years; the Lexicon → a
+   *  year's words): "Back" in the toolbar returns to them. A fresh open empties it. */
+  private history: { view: View; tab: TabId; scroll: number }[] = [];
+  /** ⚑ S378 — opened from the Close's computer panel: the window is LambyOS's, its toolbar the machine's three pages */
+  private machineMode = false;
+  /** ⚑ S378 — the machine's pages' own state: the printout, and the one Lexicon */
+  private receipt = new ReceiptPrint();
+  readonly lexicon: LexiconPage;
+  /** ⚑ S378 — the machine's page's height at the last paint (it scrolls on a short window) */
+  private machineH = 0;
 
-  constructor(private host: ViewerHost) {}
+  constructor(private host: ViewerHost) {
+    this.lexicon = new LexiconPage(() => this.host.changed());
+  }
 
   // ── state ──
   open(target: View): void {
     // ⚑ S372 — a caller may ask for a tab (siteViewerBus.openAt: the Lexicon's link to a year's "The words")
     const want = siteViewerBus.nextTab as TabId | null;
-    this.view = target; this.tab = want && target !== 'hub' && MODEL.tabIds.includes(want) ? want : 'story';
+    if (this.view === 'lexicon' && target !== 'lexicon') this.lexicon.stop();
+    this.view = target; this.tab = want && target !== 'hub' && !isMachineView(target) && MODEL.tabIds.includes(want) ? want : 'story';
     this.scroll = 0; this.hover = ''; this.doc = null;
     this.leaveFilm();   // S371
+    // ⚑ S378 — a fresh open: no pages behind it; the machine's family opens on its first face
+    this.history = [];
+    this.machineMode = target === 'machine';
+    this.enterMachineView(target);
   }
+  /** ⚑ S378 — move to another page and keep this one behind "Back" (a page's own button, a Lexicon word's year link) */
+  go(target: View): void {
+    if (target === this.view) return;
+    this.history.push({ view: this.view, tab: this.tab, scroll: this.scroll });
+    if (this.history.length > 12) this.history.shift();
+    this.switchTo(target);
+  }
+  /** ⚑ S378 — back to the page before; false when there is none */
+  back(): boolean {
+    const h = this.history.pop();
+    if (!h) return false;
+    this.switchTo(h.view, h.tab);
+    this.scroll = h.view === 'receipt' ? this.scroll : h.scroll;
+    return true;
+  }
+  get canGoBack(): boolean { return this.history.length > 0; }
+  private switchTo(target: View, tab?: TabId): void {
+    if (this.view === 'lexicon' && target !== 'lexicon') this.lexicon.stop();
+    const want = (tab ?? siteViewerBus.nextTab) as TabId | null;
+    this.view = target; this.tab = want && target !== 'hub' && !isMachineView(target) && MODEL.tabIds.includes(want) ? want : 'story';
+    this.scroll = 0; this.hover = ''; this.doc = null;
+    this.leaveFilm();
+    this.enterMachineView(target, tab !== undefined);
+  }
+  private enterMachineView(target: View, returning = false): void {
+    if (target === 'receipt' && !returning) this.receipt.reset();
+    if (target === 'lexicon' && !returning) this.lexicon.reset();
+  }
+  /** ⚑ S378 — the window closed: a word's sound stops with it */
+  closed(): void { this.lexicon.stop(); }
+  /** ⚑ S378 — per frame: the printer's clock; true when the window must repaint */
+  tick(dt: number): boolean { return this.view === 'receipt' && this.receipt.tick(dt); }
   setTab(t: TabId): void { if (t === this.tab) return; this.tab = t; this.scroll = 0; this.doc = null; this.leaveFilm(); }
   /** ⚑ S371 — a film belongs to the page it is on: leaving the page (another tab, another year) stops it; a track plays on */
   private leaveFilm(): void { this.filmAt = null; if (this.host.film.file()) this.host.film.stop(); }
-  setView(v: View): void { if (v === this.view) return; this.open(v); }
+  setView(v: View): void {
+    if (v === this.view) return;
+    // ⚑ S378 — a tab within the machine's window, or a year within the four sites, keeps the pages behind it
+    const keep = this.history, mm = this.machineMode;
+    this.open(v);
+    this.history = keep; this.machineMode = mm || v === 'machine';
+  }
   note(text: string, seconds = 9): void { this.toast = { text, until: performance.now() + seconds * 1000 }; }
   /** the page version of what is showing, as a path from the app root */
-  pagePath(): string { return this.view === 'hub' ? 'sites/index.html' : `sites/${this.view}/index.html`; }
+  pagePath(): string { return this.view === 'hub' || isMachineView(this.view) ? 'sites/index.html' : `sites/${this.view}/index.html`; }
   /** true when a toast has just expired and the mount should repaint once */
   tickToast(now: number): boolean {
     if (this.toast && now > this.toast.until) { this.toast = null; return true; }
@@ -110,6 +167,7 @@ export class ViewerCore {
         ...foot
       ];
     }
+    if (isMachineView(this.view)) return foot;   // S378: the machine's pages are drawn by machine.ts, never laid out as a doc
     return [...MODEL.eras[this.view].tabs[this.tab], ...foot];
   }
   private image(src: string): HTMLImageElement {
@@ -130,9 +188,13 @@ export class ViewerCore {
     const hits: Hit[] = [];
     this.hits = hits;
     const env: DrawEnv = { ctx, skin, W, H, hits, hover: this.hover };
+    // ⚑ S378 — "Back", first in the toolbar, whenever there is a page behind this one
+    const back = this.history.length ? [{ id: 'back', label: `◄ ${MACHINE_COPY.back}`, active: false, tip: MACHINE_COPY.tips.back }] : [];
+    if (isMachineView(this.view)) { this.renderMachine(env, back); return; }
     const era = this.view === 'hub' ? null : MODEL.eras[this.view];
     const title = era ? `${era.heading} — ${MODEL.siteName}` : MODEL.hub.title;
     const years = [
+      ...back,
       { id: 'view:hub', label: 'Four years', active: this.view === 'hub', tip: 'The four websites' },
       ...YEARS.map((y) => ({ id: `view:${y}`, label: y, active: this.view === y, tip: `Open the ${y} website` }))
     ];
@@ -176,6 +238,53 @@ export class ViewerCore {
     if (live) this.drawToast(ctx, live, reg.status, skin);
     const pct = this.maxScroll <= 0 ? 'all shown' : `${Math.round((this.scroll / this.maxScroll) * 100)}%`;
     drawStatus(env, reg.status, left, pct);
+  }
+
+  /**
+   * ⚑ S378 — THE MACHINE'S WINDOW: LambyOS's own (machine.ts). Its toolbar is Back (when a page is behind) and, opened
+   * from the Close's computer panel, the machine's three pages; the Lexicon opened on its own (the menu, the setup, its
+   * star) has only Back. No "open as a web page": these pages exist only inside the piece.
+   */
+  private renderMachine(env: DrawEnv, back: { id: string; label: string; active: boolean; tip: string }[]): void {
+    const { ctx } = env;
+    const M = MACHINE_COPY;
+    const tabs = this.machineMode
+      ? (['machine', 'receipt', 'lexicon'] as const).map((v) => ({ id: `view:${v}`, label: M.tabs[v], active: this.view === v, tip: M.tips[v === 'machine' ? 'machine' : v] }))
+      : [];
+    const title = this.machineMode || this.view !== 'lexicon' ? M.windowTitle : (lexStrings as { star: string }).star;
+    const items = [...back, ...tabs];
+    const reg = drawWindow(env, title, items, false, '');
+    // ⚑ S379 — opened on its own (the menu, the setup, its star) the Lexicon has no Back and no tabs: the empty toolbar
+    //   strip is given to the page instead of standing there grey
+    const site = items.length ? reg.site : { x: reg.site.x, y: reg.toolbar.y, w: reg.site.w, h: reg.site.h + reg.toolbar.h };
+    this.docHits = [];
+    this.thumb = { x: 0, y: 0, w: 0, h: 0 };
+    if (this.view === 'machine') {
+      const vp = { x: site.x, y: site.y, w: site.w, h: site.h };
+      this.vp = vp;
+      this.maxScroll = Math.max(0, this.machineH - vp.h);
+      this.scroll = Math.max(0, Math.min(this.maxScroll, Math.round(this.scroll)));
+      const inner = this.maxScroll > 0 ? { ...vp, w: vp.w - SCROLL_W } : vp;
+      this.machineH = drawMachinePage(env, inner, this.scroll);
+      this.maxScroll = Math.max(0, this.machineH - vp.h);
+      if (this.maxScroll > 0) this.thumb = drawScrollbar(env, vp, this.scroll, this.maxScroll).thumb;
+    } else if (this.view === 'receipt') {
+      this.vp = { ...site };
+      const r = this.receipt.draw(env, site, this.scroll, SCROLL_W);
+      this.maxScroll = this.receipt.maxScroll;
+      if (r.wantScroll !== null) this.scroll = r.wantScroll;
+      this.scroll = Math.max(0, Math.min(this.maxScroll, Math.round(this.scroll)));
+      this.thumb = drawScrollbar(env, { x: site.x, y: site.y, w: site.w, h: site.h }, this.scroll, this.maxScroll).thumb;
+    } else {
+      this.vp = { ...site };
+      this.maxScroll = 0; this.scroll = 0;
+      this.lexicon.draw(env, site);
+    }
+    const hit = this.hover ? this.hits.find((h) => h.id === this.hover) : undefined;
+    const live = this.toast && performance.now() <= this.toast.until ? this.toast.text : '';
+    if (live) this.drawToast(ctx, live, reg.status, SKINS[this.view]);
+    const left = live ? '' : hit?.tip || (this.view === 'machine' ? M.status : this.view === 'receipt' ? (this.receipt.printing ? M.tips.printing : M.tips.printed) : M.tips.lexicon);
+    drawStatus(env, reg.status, left, this.view === 'receipt' && this.maxScroll > 0 ? `${Math.round((this.scroll / this.maxScroll) * 100)}%` : '');
   }
 
   /** a note (an address to open later, a page that opens outside the headset): wrapped, large, over the foot of the window */
@@ -342,9 +451,12 @@ export class ViewerCore {
     }
     return '';
   }
-  private inDoc(x: number, y: number): boolean { return x >= this.vp.x && x < this.vp.x + this.vp.w - SCROLL_W && y >= this.vp.y && y <= this.vp.y + this.vp.h; }
-  /** is this point over the document (for wheel/drag-scroll)? */
-  overDoc(x: number, y: number): boolean { return this.inDoc(x, y); }
+  private inDoc(x: number, y: number): boolean { return !isMachineView(this.view) && x >= this.vp.x && x < this.vp.x + this.vp.w - SCROLL_W && y >= this.vp.y && y <= this.vp.y + this.vp.h; }
+  /** is this point over the document (for wheel/drag-scroll)? ⚑ S378: the receipt's paper and a scrolling machine page too */
+  overDoc(x: number, y: number): boolean {
+    if ((this.view === 'receipt' || (this.view === 'machine' && this.maxScroll > 0)) && x >= this.vp.x && x < this.vp.x + this.vp.w - SCROLL_W && y >= this.vp.y && y <= this.vp.y + this.vp.h) return true;
+    return this.inDoc(x, y);
+  }
   /** a press; returns whether the window took it (so a headset ray that lands on it never falls through) */
   press(x: number, y: number): boolean {
     const id = this.idAt(x, y);
@@ -355,6 +467,18 @@ export class ViewerCore {
   private act(id: string, x: number, y: number): void {
     if (id === 'min') { this.host.minimise(); return; }
     if (id === 'close') { this.host.close(); return; }
+    // ⚑ S378 — Back; the machine's page's own buttons; the Lexicon's (its Close is Back, or closes a window it opened)
+    if (id === 'back') { this.back(); return; }
+    if (id.startsWith('m:era:')) { siteViewerBus.machine?.era(id.slice(6) as 'e1' | 'e2' | 'e3' | 'e4'); return; }
+    if (id === 'm:again') { siteViewerBus.machine?.again(); return; }
+    if (id === 'm:receipt') { this.go('receipt'); return; }
+    if (id === 'm:lexicon') { this.go('lexicon'); return; }
+    if (id === 'm:dossier') { this.go('hub'); return; }
+    if (id.startsWith('lx:')) {
+      const lid = id.slice(3);
+      if (!this.lexicon.press(lid) && lid === 'lex-close') { if (!this.back()) this.host.close(); }
+      return;
+    }
     if (id === 'openpage') { this.host.openPage(this.pagePath()); return; }
     if (id.startsWith('view:')) { this.setView(id.slice(5) as View); return; }
     if (id.startsWith('tab:')) { this.setTab(id.slice(4) as TabId); return; }
@@ -379,8 +503,10 @@ export class ViewerCore {
     const next = Math.max(0, Math.min(this.maxScroll, Math.round(this.scroll + dy)));
     if (next === this.scroll) return false;
     this.scroll = next;
+    if (this.view === 'receipt') this.receipt.scrolled();   // S378: the visitor took the paper; stop following the head
     return true;
   }
+
   scrollTo(y: number): boolean { return this.scrollBy(y - this.scroll); }
   get pageStep(): number { return Math.max(120, this.vp.h - 90); }
   /** review tools: scroll so the first line containing `s` sits near the top; true if found */

@@ -51,6 +51,8 @@ import { ERA3 } from '../desktop/theme/era3';
 import { ERA4 } from '../desktop/theme/era4';
 import { px, setFont } from '../desktop/theme/chrome';
 import { setFaceEra, faceEra, type FaceEra, FACES, fontsReady } from '../desktop/theme/fonts';
+import { drawMachineCrtCell, drawMachinePlateCell, CRT_CELL_W, type CellRect, type MachineFace } from './machinePanel';
+import { runtimeQuery } from '../edition';
 
 const P = clusterData.pointCloud;
 /** S358 / H19 — the seat's eye height (app.ts EYE.y): the Close's panels lean to face it */
@@ -149,6 +151,10 @@ export interface PointCloud {
   panelSourcesAt(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }, tMax?: number): number | null;
   /** the era (1..4) of panel `i`, for the site that its Sources button opens */
   panelEraOf(i: number): number;
+  /** ⚑ S378 — the index of the computer's panel (Daniel's machine, the fifth in the row), or -1 */
+  readonly machinePanel: number;
+  /** ⚑ S378 — where panel `i`'s centre hangs in the world now (the sky drifts), for the gaze conducted to it */
+  panelCentre(i: number): { x: number; y: number; z: number } | null;
   /** ⚑ S163 / R3-112 — the drift pauses while the gaze rests on a panel
    *  ("the constellation should travel only when I am not moving… hard to
    *  read"): the caller says each frame whether the eye line is on one. */
@@ -213,6 +219,11 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
    */
   const panelBearings = ((network as { panels?: { era: number }[] }).panels ?? [])
     .map((pn) => ((P.eraBearingDeg as number[])[pn.era - 1] ?? 0) * Math.PI / 180);
+  // ⚑ S378 — and the computer's panel's (machinePanel below): its sight-line is kept as clear as the rooms'
+  {
+    const mpb = (P as { machinePanel?: { bearingDeg: number } }).machinePanel?.bearingDeg;
+    if (typeof mpb === 'number') panelBearings.push(mpb * Math.PI / 180);
+  }
   /** ⚑ 2026-09-13: the test is ANGULAR now — what the seat sees, not where the
    *  node is. A card is a rectangle of azimuth × elevation from the origin
    *  (its half-width and its top and bottom edges at `radius`), and anything
@@ -669,6 +680,25 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   /** S177 / R4-30 — the Sources button's rect in the cell (px), bottom right, on the hint's line */
   const SRC_BTN = { x: CELL_W - 40 - 300, y: CELL_H - 48 - 39, w: 300, h: 78 };
   const TEXT_W = CELL_W - TEXT_X - 44;
+  /**
+   * ⚑ S378 (UiB job 20 Part A) — THE COMPUTER'S PANEL: Daniel's machine as a fifth panel in the row, between 2026 and
+   * 1997 (cluster.json `machinePanel`; src/room/machinePanel.ts draws it). Its own cell in the same atlas and its own quad
+   * in the same mesh — no new draw call. A press on it is the app's (it opens the machine's page in the site viewer);
+   * it never turns to a dossier.
+   */
+  type MachineGeo = { bearingDeg: number; face: MachineFace; crt: { w: number; h: number }; plate: { w: number; h: number } };
+  const MP = (P as unknown as { machinePanel?: MachineGeo }).machinePanel;
+  const mpq = runtimeQuery().get('machinePanel');
+  const machineFace: MachineFace = mpq === 'plate' || mpq === 'crt' ? mpq : MP?.face ?? 'crt';
+  const machineIdx = MP && panels.length > 0 ? panels.length : -1;
+  const nCells = panels.length + (machineIdx >= 0 ? 1 : 0);
+  const machineSize = MP ? MP[machineFace] : { w: 1.5, h: 1.125 };
+  /** the machine's cell width in the atlas (the `crt` face is 4:3, narrower than a room's 2:1) */
+  const machineCellW = machineFace === 'crt' ? CRT_CELL_W : CELL_W;
+  /** its Open button's rect in its cell (px), set by its drawing */
+  let machineBtn: CellRect = { ...SRC_BTN };
+  /** a panel's button rect and its cell's width — the rooms' Sources buttons, the machine's Open */
+  const btnOf = (i: number): { b: CellRect; cw: number } => (i === machineIdx ? { b: machineBtn, cw: machineCellW } : { b: SRC_BTN, cw: CELL_W });
   // ⚑ S376 (UiB job 19 Part B, VISUAL_REVIEW_2026-11-12 #4) — the piece's own faces (job 18), not the machine's: the
   //   Close's own face (FACES.close, Fixedsys Excelsior) for the title, the paragraph and the small lines.
   //   "Helvetica Neue / monospace" resolved differently on every machine. His ruling on Part A (12 Nov, T71): "the
@@ -690,7 +720,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     let ptexRef: pc.Texture | null = null;
     const pcan = document.createElement('canvas');
     pcan.width = CELL_W;
-    pcan.height = CELL_H * panels.length;
+    pcan.height = CELL_H * nCells;   // S378: the computer's panel has the last cell
     const pc2 = pcan.getContext('2d');
     if (pc2) {
       pc2.clearRect(0, 0, pcan.width, pcan.height);
@@ -890,19 +920,36 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       panelLabel = panels.map(() => null);
       panelEra = panels.map((pn) => pn.era);
       panelShowEra = panels.map((pn) => pn.era);
+      // ⚑ S378 — the computer's panel: its own face, never a dossier; era -1 (it is no room)
+      const drawMachineCell = (): void => {
+        if (machineIdx < 0) return;
+        const y0 = machineIdx * CELL_H;
+        if (machineFace === 'crt') machineBtn = drawMachineCrtCell(pc2, y0, CRT_CELL_W, CELL_H);
+        else {
+          drawMachinePlateCell(pc2, y0, CELL_W, CELL_H, { backdrop: P.backdrop, link: P.link, label: P.labelColor,
+            warm: (P.warm as string[])[2], readingFace: READING_FACE, closeFace: CLOSE_FACE }, PLATE, SRC_BTN);
+          machineBtn = { ...SRC_BTN };
+        }
+        pc2.textBaseline = 'middle';
+      };
+      if (machineIdx >= 0) { dossierPages.push(1); panelFace.push(-1); panelLabel.push(null); panelEra.push(-1); panelShowEra.push(-1); }
       panels.forEach((panel, i) => drawStoryCell(panel, i));
+      drawMachineCell();
       // ⚑ S376 — the faces are vendored files: if the cloud is built before they have loaded, the cells are drawn
       //   again once they have (the S373 law: a canvas keeps the pixels of the face it first drew)
       void fontsReady().then(() => {
         panels.forEach((panel, i) => { if (panelFace[i] < 0) drawStoryCell(panel, i); });
+        drawMachineCell();
         ptexRef?.upload();
       });
       showPanel = (i: number): void => {
+        if (i === machineIdx) { drawMachineCell(); ptex.upload(); return; }
         if (panelFace[i] < 0) drawStoryCell(panels[i], i);
         else drawDossierCell(i);
         ptex.upload();
       };
       pressPanelImpl = (i: number): void => {
+        if (i === machineIdx) return;   // S378: the machine's panel is the app's (its page), never a dossier
         if (panelFace[i] < 0) { panelFace[i] = 0; panelLabel[i] = null; panelShowEra[i] = panelEra[i]; }
         else if (panelFace[i] + 1 >= dossierPages[i]) { panelFace[i] = -1; panelShowEra[i] = panelEra[i]; panelLabel[i] = null; }
         else panelFace[i] += 1;
@@ -975,11 +1022,32 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         puv.push(0, v0, 1, v0, 1, v1, 0, v1);
         pidx.push(base, base + 1, base + 2, base, base + 2, base + 3);
       });
+      // ⚑ S378 — the computer's panel: the same row (radius, height, the lean to the eye), its own bearing and size
+      if (machineIdx >= 0 && MP) {
+        const i = machineIdx;
+        const bearing = MP.bearingDeg * Math.PI / 180;
+        const cx = P.panel.radius * Math.sin(bearing);
+        const cz = -P.panel.radius * Math.cos(bearing);
+        const cy = P.panel.y;
+        pN.set(-cx, PANEL_EYE_Y - (P.center as number[])[1] - cy, -cz).normalize();
+        pR.cross(pUp, pN);
+        if (pR.length() < 1e-3) pR.set(1, 0, 0); else pR.normalize();
+        pU.cross(pN, pR).normalize();
+        const hw = machineSize.w / 2, hh = machineSize.h / 2;
+        panelFrames[i] = { c: new pc.Vec3(cx, cy, cz), n: pN.clone(), r: pR.clone(), u: pU.clone(), hw, hh };
+        const base = i * 4;
+        for (const [ux, uy] of [[-hw, hh], [hw, hh], [hw, -hh], [-hw, -hh]]) {
+          pp.push(cx + pR.x * ux + pU.x * uy, cy + pR.y * ux + pU.y * uy, cz + pR.z * ux + pU.z * uy);
+        }
+        const v0 = (i * CELL_H) / pcan.height, v1 = ((i + 1) * CELL_H) / pcan.height, u1 = machineCellW / CELL_W;
+        puv.push(0, v0, u1, v0, u1, v1, 0, v1);
+        pidx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+      }
       const pmesh = new pc.Mesh(app.graphicsDevice);
       panelMesh = pmesh;
       panelFull = pp.slice();
-      panelHidden = new Uint8Array(panels.length);
-      panelK = new Float32Array(panels.length);
+      panelHidden = new Uint8Array(nCells);
+      panelK = new Float32Array(nCells);
       pmesh.setPositions(pp);
       pmesh.setUvs(0, puv);
       pmesh.setIndices(pidx);
@@ -1011,11 +1079,13 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     const M = root.getWorldTransform();
     return panelFrames.map((f, i) => {
       const w = M.transformPoint(new pc.Vec3(f.c.x, f.c.y, f.c.z));
-      // S177: and where its Sources button is, on the story face — a real press can aim at it
-      const bx = ((SRC_BTN.x + SRC_BTN.w / 2) / CELL_W - 0.5) * 2 * f.hw;
-      const by = (0.5 - (SRC_BTN.y + SRC_BTN.h / 2) / CELL_H) * 2 * f.hh;
+      // S177: and where its Sources button is, on the story face — a real press can aim at it (S378: the machine's Open)
+      const { b: B, cw } = btnOf(i);
+      const bx = ((B.x + B.w / 2) / cw - 0.5) * 2 * f.hw;
+      const by = (0.5 - (B.y + B.h / 2) / CELL_H) * 2 * f.hh;
       const b = M.transformPoint(new pc.Vec3(f.c.x + f.r.x * bx + f.u.x * by, f.c.y + f.r.y * bx + f.u.y * by, f.c.z + f.r.z * bx + f.u.z * by));
-      return { i, era: panelEra[i], face: panelFace[i], hidden: panelHidden[i] === 1, x: w.x, y: w.y, z: w.z,
+      return { i, era: panelEra[i], machine: i === machineIdx, face: panelFace[i], hidden: panelHidden[i] === 1, x: w.x, y: w.y, z: w.z,
+        hw: f.hw * root.getLocalScale().x, hh: f.hh * root.getLocalScale().x,
         button: panelFace[i] < 0 ? { x: b.x, y: b.y, z: b.z } : null };
     });
   };
@@ -1487,14 +1557,22 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         const hx = lh.dot(f.r), hy = lh.dot(f.u);
         if (Math.abs(hx) > f.hw || Math.abs(hy) > f.hh) continue;
         // the button's rect in the cell (px) → panel-local metres, with a little give for a thumb or a wand
-        const bx = ((SRC_BTN.x + SRC_BTN.w / 2) / CELL_W - 0.5) * 2 * f.hw;
-        const by = (0.5 - (SRC_BTN.y + SRC_BTN.h / 2) / CELL_H) * 2 * f.hh;
-        const bw = (SRC_BTN.w / CELL_W) * f.hw * 1.15, bh = (SRC_BTN.h / CELL_H) * f.hh * 1.3;
+        const { b: B, cw } = btnOf(i);   // S378: the machine's Open, in its own (narrower) cell
+        const bx = ((B.x + B.w / 2) / cw - 0.5) * 2 * f.hw;
+        const by = (0.5 - (B.y + B.h / 2) / CELL_H) * 2 * f.hh;
+        const bw = (B.w / cw) * f.hw * 1.15, bh = (B.h / CELL_H) * f.hh * 1.3;
         return Math.abs(hx - bx) <= bw && Math.abs(hy - by) <= bh ? i : null;
       }
       return null;
     },
     panelEraOf(i: number): number { return panelEra[i] ?? i + 1; },
+    get machinePanel(): number { return machineIdx; },
+    panelCentre(i: number): { x: number; y: number; z: number } | null {
+      const f = panelFrames[i];
+      if (!f) return null;
+      const w = root.getWorldTransform().transformPoint(new pc.Vec3(f.c.x, f.c.y, f.c.z));
+      return { x: w.x, y: w.y, z: w.z };
+    },
     labelAt(p0, p1, tMax = Infinity): { era: number; text: string } | null {
       const camera = viewCamera?.() ?? app.systems.camera?.cameras[0]?.entity;
       if (!visible || !camera || fadeLevel < 0.5 || recedeK > 0.5 || labels.length === 0) return null;   // S377: not once receded
@@ -1532,6 +1610,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         const th = Math.atan2(lp0.x, -lp0.z);
         let best = 0, bestD = Infinity;
         panelFrames.forEach((pf, k) => {
+          if (k === machineIdx) return;   // S378: the machine's panel carries no dossier
           let d = Math.atan2(pf.c.x, -pf.c.z) - th;
           while (d > Math.PI) d -= Math.PI * 2;
           while (d < -Math.PI) d += Math.PI * 2;

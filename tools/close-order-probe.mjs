@@ -6,12 +6,14 @@
  *     node tools/close-order-probe.mjs --port 3191 --out out/s361/close --mode xr
  *
  * Opens 2026 at Maya's desk (`?era=4`), fires the Close through the debug hook (`__enterClose`, the same function the
- * glitch's hand-off calls), and photographs it to the Restart card, pressing each message card as a visitor would
+ * glitch's hand-off calls), and photographs it to the Restart page, pressing each message card as a visitor would
  * (one tap in the middle of the view). Each row: the Close's stage, the card, whether the panels are up, the bed, the
  * camera, whether the room is glitching, and which <audio> are really playing (Chrome runs with
  * --autoplay-policy=no-user-gesture-required and window.Audio is wrapped — memory: headless sound).
  * His order, checked in the report: flight (with the glitch) → Daniel's seat → up → messages with NO panels → the
- * panels → (the song under all of it) → the Restart card.
+ * panels → (the song under all of it) → the gaze taken to the computer's panel → a press on it → the Restart page.
+ * ⚑ S378 (UiB job 20 Part A): the Restart card on Daniel's far glass is gone; the computer is the fifth panel, and its
+ * page in the site viewer is the end (`ended` = the turn to the panel done; then one real press on its Open button).
  * Writes report.json and sheet-<mode>.png (one tile per step).
  */
 import fs from 'node:fs';
@@ -81,7 +83,28 @@ async function run(mode) {
       await wait(900);
       continue;
     }
-    if (!st.stage && st.monitor && frames.filter((f) => !f.stage && f.monitor).length > 6) break;
+    if (st.ended && frames.filter((f) => f.ended).length > 2) {
+      // ⚑ S378 — the end: press the computer's panel (its Open button, projected through the live camera), as a visitor
+      if (xr) {
+        await page.evaluate(() => {
+          const app = window.__app, head = app.root.findByName('camera'), c = window.__xrComfort;
+          const mp = window.__closePanels().find((p) => p.machine); if (!mp) return;
+          const origin = head.getPosition().clone(), target = c.physicalPoint(head.getPosition().clone().set(mp.x, mp.y, mp.z));
+          const src = { targetRayMode: 'tracked-pointer', getOrigin: () => origin, getDirection: () => target.clone().sub(origin).normalize(), hand: null, gamepad: { buttons: [], axes: [0, 0, 0, 0] } };
+          app.xr.input.fire('add', src); app.xr.input.fire('select', src); app.xr.input.fire('select', src);
+        });
+      } else {
+        const pt = await page.evaluate(() => {
+          const app = window.__app, cam = app.root.findByName('camera'), V = cam.getPosition().constructor;
+          const mp = window.__closePanels().find((p) => p.machine); if (!mp) return null;
+          const b = mp.button || mp; const q = cam.camera.worldToScreen(new V(b.x, b.y, b.z)); return q.z > 0 ? [q.x, q.y] : null;
+        });
+        if (pt) await page.mouse.click(pt[0], pt[1]);
+      }
+      await wait(1800);
+      await shot('the Restart page');
+      break;
+    }
     await wait(1400);
   }
   // in the headset, one look up at the top of the rise (what the stars look like from the risen seat) is not needed by
@@ -98,7 +121,8 @@ async function run(mode) {
     songFrames: frames.filter((f) => f.bed === 'close_song.mp3').length, frames: frames.length,
     songPlayingFrom: (frames.find((f) => f.playing.includes('close_song.mp3')) || {}).t ?? null,
     songAudibleAtEnd: frames[frames.length - 1]?.playing.includes('close_song.mp3') ?? false,
-    reachedRestartCard: frames.some((f) => f.monitor && !f.stage),
+    reachedEnd: frames.some((f) => f.ended),
+    reachedRestartPage: frames.some((f) => f.page === 'machine'),
     errors: errors.slice(0, 6),
     rows: frames.map(({ file, ...r }) => ({ ...r, file: path.basename(file) }))
   };
@@ -142,7 +166,7 @@ try {
     if (MODE && MODE !== mode) continue;
     const r = await run(mode);
     report.results.push(r);
-    console.log(`${mode}: stages ${r.stages.join(' → ')}; panels before the messages ${r.panelsBeforeMessages}; first panels ${JSON.stringify(r.firstPanelsAt)} (last card at ${r.lastCardAt} s); glitch frames in the flight ${r.glitchFrames}; song bed ${r.songFrames}/${r.frames} frames, playing from ${r.songPlayingFrom} s, at the end ${r.songAudibleAtEnd}; Restart card ${r.reachedRestartCard}; errors ${r.errors.length}`);
+    console.log(`${mode}: stages ${r.stages.join(' → ')}; panels before the messages ${r.panelsBeforeMessages}; first panels ${JSON.stringify(r.firstPanelsAt)} (last card at ${r.lastCardAt} s); glitch frames in the flight ${r.glitchFrames}; song bed ${r.songFrames}/${r.frames} frames, playing from ${r.songPlayingFrom} s, at the end ${r.songAudibleAtEnd}; the end ${r.reachedEnd}; the Restart page ${r.reachedRestartPage}; errors ${r.errors.length}`);
   }
 } finally {
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));

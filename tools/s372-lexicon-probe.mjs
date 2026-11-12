@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /**
+ * ⚑ S378 (UiB job 20 Part A): SUPERSEDED — the Lexicon no longer opens on Daniel's glass (the glass takes no press); it opens in the site viewer from the computer panel's page, its star, and (S379) the menu and the setup. tools/s378-machine-probe.mjs photographs it there. This probe is kept as the record of S372 and will fail on the new build.
  * ⚑ S372 / UiB job 17 Part B — THE LEXICON, PHOTOGRAPHED: every face, flat and in place, in the browser and in the
  * emulated headset.
  *

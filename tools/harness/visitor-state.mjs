@@ -394,6 +394,38 @@ const LAP = { w: 224, h: 140 };
       else dropped.push({ id: 'close-src-e' + p.era, surface: 'panel', logical: null, why: lastWhy || 'unprojectable', turn: turnTo(lastWorld) });
     }
 
+    /**
+     * ⚑ S378 (UiB job 20 Part A) — THE COMPUTER'S PANEL. Daniel's machine is the fifth panel in the Close's row now, and
+     * the far glass in the sky takes no press (its card and rects are gone: `__closeMonitor.hits` is always empty). Once
+     * the Close has played and taken the eye to the panel (`__closeMachine.ended`), its Open button is published as
+     * `close-machine` — the last press the walk makes: it opens the machine's page, which is the walk's finish line.
+     * And while that page is up, its own controls are published from the window (`surface: site-viewer`), so the map
+     * shows them; the ones that leave the Close or restart the piece are FORBIDDEN (walk.mjs).
+     */
+    const mach = window.__closeMachine;
+    if (mach && mach.ended && typeof window.__closePanels === 'function' && !(window.__siteViewer && window.__siteViewer.bus.isOpen)) {
+      const mp = window.__closePanels().find((p) => p.machine);
+      if (mp && !mp.hidden) {
+        const b = mp.button || mp;
+        const pt = toPage(b.x, b.y, b.z);
+        if (pt) targets.push({ id: 'close-machine', surface: 'panel', logical: null, pt });
+        else dropped.push({ id: 'close-machine', surface: 'panel', logical: null, why: lastWhy || 'unprojectable', turn: turnTo(lastWorld) });
+      }
+    }
+    const sv = window.__siteViewer;
+    // (S379: only at the Close — the Lexicon opened from the menu or the setup is a detour the walk never takes)
+    if (sv && sv.bus && sv.bus.domOpen() && mach && mach.ended && /^(machine|receipt|lexicon)$/.test(String(sv.bus.view))) {
+      const core = sv.dom, cv = document.querySelector('#reinterp-site-viewer canvas');
+      if (core && cv && Array.isArray(core.hits)) {
+        const r = cv.getBoundingClientRect(), z = core.lastSize;
+        for (const h of core.hits) {
+          if (!h || !h.id) continue;
+          targets.push({ id: h.id, surface: 'site-viewer', logical: { x: h.x, y: h.y, w: h.w, h: h.h },
+            pt: { x: r.left + ((h.x + h.w / 2) / z.w) * r.width, y: r.top + ((h.y + h.h / 2) / z.h) * r.height } });
+        }
+      }
+    }
+
     const surfaced = new Set(targets.map((t) => t.surface));
     root.forEach((e) => {
       const n = e.name || '';
@@ -544,7 +576,8 @@ const LAP = { w: 224, h: 140 };
     return {
       phase: os.setup?.open ? 'setup:' + os.setup.stage : os.phase, era: os.desktopEra,
       spine: window.__spine ? window.__spine().step : null,
-      endingShowing: !!window.__closeMonitor?.endingShowing,
+      // ⚑ S378 — the end of the Close is the machine's page open in the site viewer (the computer's panel pressed)
+      endingShowing: !!(window.__closeMachine ? window.__closeMachine.endingShowing : window.__closeMonitor?.endingShowing),
       // A relocation owns the view through the blink between its camera curves too.
       driven: !!(pose && (pose.driven || pose.reloc)),
       qMode: q ? q.mode : null,

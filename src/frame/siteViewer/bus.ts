@@ -3,7 +3,15 @@
  * the Close's Sources button and the Esc handler can ask for the viewer without importing a renderer or the engine.
  * The DOM mount (browser) and the XR mount (headset) each register themselves here; `open` picks the one in use.
  */
-export type ViewerTarget = 'hub' | '1997' | '2003' | '2016' | '2026';
+export type ViewerTarget = 'hub' | '1997' | '2003' | '2016' | '2026' | 'machine' | 'lexicon';
+
+/** ⚑ S378 — what the machine's page asks of the piece (app.ts sets these once the Close exists) */
+export interface MachineHooks {
+  /** go back to a room (the Close's era return, `leaveClose`) */
+  era(era: 'e1' | 'e2' | 'e3' | 'e4'): void;
+  /** start again (the headset says so first, as the menu's Restart does) */
+  again(): void;
+}
 
 class SiteViewerBus {
   /** set by app.ts once the engine exists: is an immersive session running? */
@@ -12,6 +20,12 @@ class SiteViewerBus {
   openXr: ((t: ViewerTarget) => void) | null = null;
   closeDom: (() => void) | null = null;
   closeXr: (() => void) | null = null;
+  /** ⚑ S378 — the Close's computer panel's page: its room returns and Start again (null outside the piece) */
+  machine: MachineHooks | null = null;
+  /** ⚑ S378 — what the open window shows ('machine', 'receipt', 'lexicon', a year, 'hub'), or null when none is up */
+  viewDom: () => string | null = () => null;
+  viewXr: () => string | null = () => null;
+  get view(): string | null { return this.viewXr() ?? this.viewDom(); }
   /** true while a window is up (not while only its minimised tab is) */
   domOpen: () => boolean = () => false;
   xrOpen: () => boolean = () => false;

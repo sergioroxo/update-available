@@ -359,6 +359,13 @@
    "w": 2.2,
    "h": 1.1
   },
+  "machinePanel": {
+   "_doc": "⚑ S378 (UiB job 20 Part A, his 12 Nov: 'should we make one of the panels the computer') — the fifth panel: Daniel's machine, in the same row as the four rooms (same radius, same height, leaning to the eye like them), at the bearing between 2026 (270°) and 1997 (0°/360°), so the ring of the four years closes on the machine that carried them. `crt` (default) is the machine's front, 4:3, 1.5 × 1.1 m; `plate` (?machinePanel=plate) is the rooms' own grammar at their size. A press anywhere on it opens the machine's page in the site viewer (src/frame/siteViewer/machine.ts). One atlas, one mesh, one draw call with the other four.",
+   "bearingDeg": 315,
+   "face": "crt",
+   "crt": { "w": 1.5, "h": 1.125 },
+   "plate": { "w": 2.2, "h": 1.1 }
+  },
   "panelMineLabel": "IN THIS ROOM, YOU",
   "_docPanelMine": "⚑ S144: the label over the player's own lines on each era's panel at the Close (THE_RECORD_PLAN §3E) — two or three of the entries the record holds for that era, in the web's blue. Every player reads a different Close.",
   "driftDegPerSec": 0.9,
