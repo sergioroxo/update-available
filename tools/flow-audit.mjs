@@ -78,8 +78,8 @@ const EXCEPTIONS = [
   },
   {
     id: '1997-update-cascade',
-    why: 'The 1997 update arrives as a CASCADE of error windows that pile on one another and on the desk ("the beat is that there is nothing to fight", src/desktop/apps/update.ts `cascade`; SCRIPT_UPDATE v0.5). Windows covering windows is the picture. Only while the u2 ritual is in its `cascade` phase.',
-    test: (f) => f.cat === 'overlap' && f.g?.upd?.key === 'u2' && f.g?.upd?.phase === 'cascade'
+    why: 'The 1997 update arrives as a CASCADE of error windows (and Un-Walk\'s own notice) that pile on one another and on the desk ("the beat is that there is nothing to fight", src/desktop/apps/update.ts `cascade`; SCRIPT_UPDATE v0.5): windows covering windows is the picture. And 2016\'s update notice ("Important Changes") over the board, once Lambient\'s last line has gone and clear of the Handset Window (F06): the era is over, the board is not being read. Only while those updates are up.',
+    test: (f) => f.cat === 'overlap' && ((f.g?.upd?.key === 'u2' && f.era === 'e1') || (f.g?.upd?.key === 'u4' && f.era === 'e3'))
   },
   {
     id: 'desktop-icons',
