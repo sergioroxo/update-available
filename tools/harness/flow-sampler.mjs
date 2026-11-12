@@ -386,7 +386,7 @@ export async function installFlowSampler(page, { dir, interval = 250, shotEvery 
     shots = setInterval(async () => {
       try {
         const t = Date.now();
-        await page.screenshot({ path: join(dir, 'shots', `${t}.jpg`), type: 'jpeg', quality: 45 });
+        await page.screenshot({ path: join(dir, 'shots', `${t}.jpg`), type: 'jpeg', quality: Number(process.env.FLOW_SHOT_QUALITY) || 45 });
         shotN++;
       } catch (e) { /* the page may be navigating */ }
     }, shotEvery * 1000);
