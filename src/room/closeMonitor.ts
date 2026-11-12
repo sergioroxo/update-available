@@ -41,6 +41,13 @@ export interface CloseMonitor {
   /** ⚑ S174 / R4-15 — the whole machine's world extent (desk piece to bezel top),
    *  from its own mesh: what the sky must keep off the eye's line to it */
   readonly silhouette: { x: number; hx: number; yLo: number; yHi: number; z: number };
+  /** ⚑ S377 / VISUAL_REVIEW #5 — is the machine standing in the sky at all (dark, `present`, or lit, `show`)? The sky
+   *  is kept off the eye's line to it from then, not only once it is lit: since S361 the dark body stands under the
+   *  1997 panel while it is read, and the labels and a link line crossed it there */
+  readonly shown: boolean;
+  /** ⚑ S377 — the machine's world box (its own mesh's extent through its pose), published for the checks
+   *  (tools/s377-close-check.mjs projects it through the live camera) */
+  readonly bounds: { min: { x: number; y: number; z: number }; max: { x: number; y: number; z: number } };
   /** a world-space ray → the glass in logical canvas pixels, or null */
   hitTest(p0: { x: number; y: number; z: number }, p1: { x: number; y: number; z: number }): { x: number; y: number; t: number } | null;
   /** she pressed the far glass: whoever mounts this moves the eye (app.ts) */
@@ -187,6 +194,11 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
   const silhouette = {
     x: CLOSE_MONITOR.x + ((lo.x + hi.x) / 2) * S, hx: ((hi.x - lo.x) / 2) * S,
     yLo: lo.y * S + offY, yHi: hi.y * S + offY, z: CLOSE_MONITOR.farZ
+  };
+  const offZ = CLOSE_MONITOR.farZ - SCREEN.z * S;
+  const bounds = {
+    min: { x: CLOSE_MONITOR.x + lo.x * S, y: lo.y * S + offY, z: lo.z * S + offZ },
+    max: { x: CLOSE_MONITOR.x + hi.x * S, y: hi.y * S + offY, z: hi.z * S + offZ }
   };
 
   const hits: CloseMonitor['hits'] = [];
@@ -451,6 +463,8 @@ export function mountCloseMonitor(app: pc.Application): CloseMonitor {
     get near() { return near; },
     get glass() { return glassWorld; },
     get silhouette() { return silhouette; },
+    get shown() { return entity.enabled; },
+    get bounds() { return bounds; },
     get hits() { return on && rise >= 1 ? hits : []; },   // pressable only once lit
     present(): void {
       // R3-109 ("in Daniel's place, the computer should be there"): the dark body

@@ -4600,13 +4600,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const g = closeMonitor.glass;
         const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + closeMonitorDistance)) < 0.25;
         closeMonitor.setNear(near);
-        // S167: while the card is read, nothing of the sky sits between the eye and the glass.
-        // ⚑ S174 / R4-15: and while it is FAR too — the sight-line from the eye to the
-        //   whole machine is kept clear of stars, labels and panels from the moment it
-        //   stands in the sky; only the dimming waits for the card to be read.
+      }
+      // S167: while the card is read, nothing of the sky sits between the eye and the glass.
+      // ⚑ S174 / R4-15: and while it is FAR too — the sight-line from the eye to the
+      //   whole machine is kept clear of stars, labels and panels from the moment it
+      //   stands in the sky; only the dimming waits for the card to be read.
+      // ⚑ S377 / VISUAL_REVIEW #5 — "from the moment it stands in the sky" was not what this did: it waited for
+      //   `on`, and since S361 the DARK machine (`present`) stands under the 1997 panel while it is read, with two
+      //   source labels and a link line across it. So the sight-line holds from `shown`; the panels fold off it only
+      //   once it is lit, as before (the one being read stays). The eye is the LOGICAL head in a headset — the head
+      //   moves and the room is shifted under it (xrComfort); the rig's pose is not where the eyes are. And at the
+      //   Restart card (`near`) the constellation recedes: labels fade, links go, the stars stay, dimmed.
+      if (closeMonitor?.shown) {
+        const near = closeMonitor.on && closeMonitor.near;
         const sil = closeMonitor.silhouette;
-        cloud?.setClearCorridor({ eye: { x: camPos.x, y: camPos.y, z: camPos.z },
-          x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: near ? 0.12 : 1 });
+        const eye = xr?.active ? logicalHead().getPosition() : camPos;
+        cloud?.setClearCorridor({ eye: { x: eye.x, y: eye.y, z: eye.z },
+          x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: near ? 0.12 : 1,
+          recede: near, panels: closeMonitor.on });
       }
       if (cloud?.visible && !camMove) {
         const view = xr?.active ? logicalHead() : camera;
