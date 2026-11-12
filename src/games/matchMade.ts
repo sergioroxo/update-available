@@ -54,6 +54,7 @@
  */
 import type { Painter } from '../room/calendarArt';
 import { text as text57, textW, textCased, textCasedW } from '../room/font57';
+import { largeText } from '../desktop/theme/fonts';
 import { MATCHMADE as M } from '../desktop/theme/calendar';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { scaleFor, subscribeMix } from '../audio/mix';
@@ -130,6 +131,13 @@ function textGloss(str: string, x: number, y: number, s: number, oo?: number): v
   clipped(-BIG, y + 5 * s, BIG, y + 7 * s, () => text(str, x, y, C.ORANGE, s));
 }
 const ctextX = (str: string, s: number, x0 = 0, w = W): number => x0 + Math.round((w - textW(str, s)) / 2);
+/**
+ * ⚑ S374 / J18-B1 — 2026's LARGE TEXT on the console (UIB_JOB_18 Part B). Held at 0.5 m in a headset (heldDevice.ts), a ×2
+ * line of the 5×7 type is 0.78° from the eye, under the 0.8° reading floor; ×3 is 1.17°. So with the era's large-text setting
+ * on (fonts.ts `largeText`: in a headset) every ×2 line is drawn at ×3, and the few rows that then meet are given room
+ * (the header's file row, the end card's word over the number, the plain page's bottom line). Off the headset nothing moves.
+ */
+const small = (): number => largeText() ? 3 : 2;
 function ctext(str: string, y: number, col: string, s = 1, x0 = 0, w = W): void { text(str, ctextX(str, s, x0, w), y, col, s); }
 function ctextO(str: string, y: number, col: string, ol: string, s = 1, x0 = 0, w = W): void { textO(str, ctextX(str, s, x0, w), y, col, ol, s); }
 
@@ -750,8 +758,8 @@ function makeGame(): Game {
   const drawBg = (): void => drawBgRows(0, H);
   function pauseButton(): void { rrect(894, 8, 50, 40, 10, C.PLUM); rrect(896, 9, 46, 36, 9, C.CREAM); R(909, 17, 7, 21, C.PLUM); R(922, 17, 7, 21, C.PLUM); }
   /** where a filed icon rests in the header's OLD FILE row */
-  const OLD_X = 418 + textW(D.oldFile, 2) + 26;
-  const fileX = (k: number): number => OLD_X + k * 38;
+  const oldX = (): number => 418 + textW(D.oldFile, small()) + 26;   // S374: after the label, at its headset size too
+  const fileX = (k: number): number => oldX() + k * (largeText() ? 34 : 38);   // S374: six still clear MUTED at ×3
   function drawHeader(): void {
     R(0, 0, W, 56, C.VIOLET); gloss(0, 2, W, 20, C.PINK, 2); R(0, 0, W, 2, C.WHITE); R(0, 54, W, 3, C.PLUM);
     textO(D.brand, 18, 17, C.WHITE, C.PLUM, 3);
@@ -759,13 +767,13 @@ function makeGame(): Game {
     flame(300, 50 - fs * 1.4, fs, age);
     textO(String(earned), 300 + fs + 6, 17, C.GOLD, C.PLUM, 3);
     // its record: OLD FILE, what she matched, filed by its counter-move
-    textO(D.oldFile, 418, 21, C.CREAM, C.PLUM, 2);
+    textO(D.oldFile, 418, largeText() ? 17 : 21, C.CREAM, C.PLUM, small());
     filed.forEach((f, k) => {
       const tx = fileX(k), ty = 28, m = ease(f.t / 0.5);
       const x = f.x0 + (tx - f.x0) * m, y = f.y0 + (ty - f.y0) * m - Math.sin(m * Math.PI) * 60;
       icon(f.k, x + 2, y + 2, 13, KIND[f.k].dark); icon(f.k, x, y, 13, KIND[f.k].base);
     });
-    if (SND.muted()) textO(D.muted, 790, 21, C.CREAM, C.PLUM, 2);
+    if (SND.muted()) textO(D.muted, 790, largeText() ? 17 : 21, C.CREAM, C.PLUM, small());
     pauseButton();
   }
   function drawBoardFrame(): void {
@@ -823,7 +831,7 @@ function makeGame(): Game {
     for (const [dx, dy] of ARROW_O) poly(pts(dx * 3, dy * 3), C.WHITE);
     poly(pts(0, 0), C.INK);
     // its pill: below the arrow on the board; on the handle it hangs where the handle's own tag would be
-    const onBar = y > PIC.y + PIC.h - 10, s = onBar ? 3 : 2;
+    const onBar = y > PIC.y + PIC.h - 10, s = onBar ? 3 : small();
     const pw = textCasedW(ITS_NAME, s) + 8 * s + 3 * s + 14;
     const px0 = Math.max(4, Math.min(W - pw - 4, onBar ? x - Math.round(pw / 2) : x + 22));
     itsPill(px0, onBar ? TY - 46 : y + 44, s);
@@ -952,12 +960,14 @@ function makeGame(): Game {
     rrect(66, cy + 6, 828, 368, 22, C.CREAM);
     rrect(300, cy - 20, 360, 44, 14, C.VIOLET); gloss(316, cy - 16, 328, 10, C.PINK, 2);
     ctext(D.endRibbon, cy - 9, C.WHITE, 3, 300, 360);
-    ctext(D.end1, cy + 142, C.PLUM, 3, 60, 840);
-    ctext(D.end2, cy + 172, C.PLUM, 3, 60, 840);
+    // S374: with the ring's word at ×3 (large text) the three lines and the number are spaced a little apart
+    const lg = largeText();
+    ctext(D.end1, cy + (lg ? 136 : 142), C.PLUM, 3, 60, 840);
+    ctext(D.end2, cy + (lg ? 164 : 172), C.PLUM, 3, 60, 840);
     // his answer (5): the number drawn by hand — ⚑ S367: where the handle stopped (one number), the ring's word over it
     const u = 0.82, nw = bigNumberW(endValue, u);
-    ctext(RING_WORD, cy + 204, C.PLUM, 2, 60, 840);
-    bigNumber(endValue, 480 - Math.round(nw / 2), cy + 222, u);
+    ctext(RING_WORD, cy + (lg ? 194 : 204), C.PLUM, small(), 60, 840);
+    bigNumber(endValue, 480 - Math.round(nw / 2), cy + (lg ? 228 : 222), u);
     // the bar fills to the number and stops; its last 1 % is hers and can never be reached
     const bx = 160, by = cy + 324, bw = 640;
     rrect(bx - 4, by - 4, bw + 8, 30, 12, C.PLUM); R(bx, by, bw, 22, C.PINK);
@@ -989,7 +999,7 @@ function makeGame(): Game {
     R(0, 0, W, H, C.CREAM);
     paintPride(PEN, 56, 6, 848, 488, { filter: 0, t: 0 });
     ctext(D.caption, 506, C.PLUM, 3);
-    textC(D.originalKept, 60, 510, C.DIM, 2);
+    textC(D.originalKept, 60, largeText() ? 506 : 510, C.DIM, small());
   }
   function drawCollapse(): void {
     drawFinalLayer();
@@ -1004,14 +1014,14 @@ function makeGame(): Game {
   }
   function drawFinal(): void {
     drawFinalLayer();
-    if (st > 2.5) text(D.again, W - 16 - textW(D.again, 2), 512, C.DIM, 2);
+    if (st > 2.5) text(D.again, W - 16 - textW(D.again, small()), largeText() ? 506 : 512, C.DIM, small());
   }
   function drawMenu(): void {
     R(0, 0, W, H, C.INK);
     ctext(D.paused, 60, C.CREAM, 6);
     const items = [D.resume, D.restart, D.sound.replace('{v}', SND.muted() ? D.off : D.on), D.stop];
     items.forEach((s, k) => { const y = 150 + k * 66; R(300, y, 360, 52, k === menuSel ? C.CREAM : C.PLUM); ctext(s, y + 15, k === menuSel ? C.INK : C.CREAM, 3, 300, 360); });
-    ctext(D.menuHelp, 450, C.DIM, 2);
+    ctext(D.menuHelp, 450, C.DIM, small());
   }
 
   function tick(dt: number): void {
@@ -1045,7 +1055,8 @@ function makeGame(): Game {
     return phase !== 'idle' || endPending || parts.length > 0 || bursts.length > 0 || flights.length > 0 || glows.length > 0 || glints.length > 0
       || Math.abs(hTo - hv) > 0.05 || tagT < 0.35 || (wallT >= 0 && wallT < WALL_T) || filed.some((f) => f.t < 0.55);
   }
-  function frameKey(): string {
+  function frameKey(): string { return frameKeyOf() + (largeText() ? '|L' : ''); }   // S374: a window that caches by key redraws on the switch
+  function frameKeyOf(): string {
     const m = SND.muted() ? 1 : 0;
     if (state === 'menu') return `menu|${menuSel}|${m}`;
     if (state === 'final') return `final|${st > 2.5 ? 1 : 0}`;

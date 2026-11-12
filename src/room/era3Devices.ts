@@ -36,7 +36,7 @@ import { xrRects, xrTarget, xrOutline, type XrRect } from '../frame/xrTargets';
  * fragments have already migrated and arrived, per u3's own line).
  */
 import * as pc from 'playcanvas';
-import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
+import { makeScreenTexture, makeScreenEntity, xrCanvasScale } from '../engine/screenTexture';
 import { ledger } from '../state/ledger';
 import { setEra3Lift, type EraKey } from './cluster';
 import { WORLD as COMMONS } from './commonsWorld';
@@ -816,6 +816,10 @@ function hitPlane(entity: pc.Entity, wWorld: number, hWorld: number, logicalW: n
   const lx = (ddx * rightX + ddy * rightY + ddz * rightZ) / rightLen;   // world-length along local X, in [-w/2, w/2]
   const lz = (ddx * heightX + ddy * heightY + ddz * heightZ) / heightLen; // world-length along local Z, in [-h/2, h/2]
 
+  // ⚑ S374 / J18-B2 — the plane's OWN world size (its X and Z columns: a unit plane scaled to the glass), so a hit follows
+  //   the headset's bigger glass (src/room/xrGlass.ts) without being told; `wWorld`/`hWorld` are the authored size, kept
+  //   for a plane that is not (yet) scaled
+  wWorld = rightLen; hWorld = heightLen;
   const u = lx / wWorld + 0.5;
   // v: empirically calibrated in-browser (Session 38) against the workstation's
   // real screen — a real click on the visually-lower "Sign in" button
@@ -1494,7 +1498,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
           s.xrScale = immersive;
           const base = LOGICAL[s.name as keyof typeof LOGICAL];
           if (base) {
-            const scale = immersive ? Math.max(4, base.scale) : base.scale;
+            const scale = immersive ? Math.max(xrCanvasScale(), base.scale) : base.scale;   // S374: ?xrcanvas=3
             s.canvas.width = s.logical.w * scale; s.canvas.height = s.logical.h * scale;
             s.ctx.setTransform(scale, 0, 0, scale, 0, 0); s.lastVersion = undefined;
             s.draw(s.ctx, s.logical.w, s.logical.h); s.dirty = true;

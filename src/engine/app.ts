@@ -27,6 +27,8 @@ import { WitnessCanvas } from '../witness/intake';
 import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
+import { setLargeTextProbe } from '../desktop/theme/fonts';
+import { mountXrGlass } from '../room/xrGlass';
 import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
@@ -655,6 +657,8 @@ function createAppShell(canvasEl: HTMLCanvasElement): AppShell {
     nearClip: 0.05
   });
   cameraRig.addChild(camera);
+  // ⚑ S374 / J18-B1 — each era's large-text setting is on exactly while a headset is (fonts.ts `largeText`)
+  setLargeTextProbe(() => !!app.xr?.active);
   app.xr?.on('start', () => {
     const xr = app.xr;
     if (!xr?.session || !(app.graphicsDevice instanceof pc.WebglGraphicsDevice)) return;
@@ -842,6 +846,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let restoreEntrance: RestoreEntrance | null = null;
   let restoreSeatDone: (() => void) | null = null;
   const room = buildEra1Room(app, options.reinterp === true);
+  /** ⚑ S374 / J18-B2 — Daniel's glass in a headset is ×1.2 about its centre (src/room/xrGlass.ts); every desk-monitor hit
+   *  test and pointer reads its size through this, so a press lands where the bigger picture shows it */
+  let deskGlassK = (): number => 1;
+  /** the room is in front of the eye (not under the entrance's stars): the headset's glass may grow (xrGlass.ts) */
+  const roomUp = (): boolean => !restoreEntrance?.blocking || !!restoreEntrance.flying;
 
   // ── the fluid trans niche + the cluster shell (reinterp only) ──
   // The niche is one lateral-arc alcove of facet-states (?facet= forces one
@@ -913,6 +922,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     era3Devices.setHeadProvider(() => xr?.active ? logicalHead() : null);   // S270h: place things at the eyes in room coordinates
     // S149 — the held phone comes to where she is looking (R3-76): the seat's pose plus the drag
     era3Devices.setLookProvider(() => ({ pitch: camPitch + lookOffPitch, yaw: camYaw + lookOffYaw }));
+    // ⚑ S374 / J18-B2 — in a headset 2016's flat panel and 2026's monitor grow ×1.2 about their glass (src/room/xrGlass.ts);
+    //   the planes' hit tests read their own world size (era3Devices `hitPlane`)
+    for (const [screen, prop] of [['era3-device-workstation', 'w_flatPanelBody'], ['era3-device-monitor', 'e_monitor']] as const) {
+      const glass = app.root.findByName(screen) as pc.Entity | null;
+      if (!glass) continue;
+      const sc = glass.getLocalScale();
+      mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp);
+    }
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
   // doc §1, Sérgio: "I would've liked the cork board to actually work, but
@@ -1287,7 +1304,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         prop: () => room.props.get('mouse')?.entity ?? null,
         move: (x, y) => { const t = os.xrPoint(x, y); os.handleMove(t.x, t.y); },
         click: (x, y) => { noteHumanInput(); os.lambyGuide.activity(); os.handleClick(x, y); },
-        screenPoint: (x, y) => new pc.Vec3(SCREEN.x + (x / ERA1_CANVAS.width - 0.5) * SCREEN.w, SCREEN.y + (0.5 - y / ERA1_CANVAS.height) * SCREEN.h, SCREEN.z + 0.012)
+        screenPoint: (x, y) => new pc.Vec3(SCREEN.x + (x / ERA1_CANVAS.width - 0.5) * SCREEN.w * deskGlassK(), SCREEN.y + (0.5 - y / ERA1_CANVAS.height) * SCREEN.h * deskGlassK(), SCREEN.z + 0.012)
       }
     });
     // ⚑ S232 — the exhibition's idle clock (frame/attract.ts): a headset has no DOM events, so the select/squeeze above
@@ -1401,6 +1418,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   front.setLocalPosition(SCREEN.x, SCREEN.y, SCREEN.z);
   front.setLocalEulerAngles(90, 0, 0); // faces +Z (the chair)
   app.root.addChild(front);
+  // ⚑ S374 / J18-B2 — in a headset the tube (1997) and the LCD (2003) grow ×1.2 about the glass centre, on their own stands
+  if (options.reinterp === true) {
+    const deskGlass = mountXrGlass(app, front, SCREEN, () => ['crtBody', 'crtBezelTop', 'crtBezelBottom', 'crtBezelLeft', 'crtBezelRight',
+      'crtPowerButton', 'crtPowerLed', 'crtLcdPanel', 'crtLcdBezel', 'crtLcdLed'].map((id) => room.props.get(id)?.entity), roomUp);
+    deskGlassK = () => deskGlass.k;
+  }
   const monitorQuad = mountXrMonitorQuad(app, front, os.canvas, () => os.era, xrComfort.physicalPoint);
   if (runtimeQuery().get('debug') === '1') (window as unknown as { __monitorQuad: unknown }).__monitorQuad = monitorQuad;
   // ⚑ P8 F1 (headset B, 1 Nov: "I can still see the screen from Daniel. They're just in the air") — Daniel's monitor
@@ -3326,8 +3349,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     if (t < 0 || t > 1) return null;
     const wx = ray.p0.x + (ray.p1.x - ray.p0.x) * t;
     const wy = ray.p0.y + (ray.p1.y - ray.p0.y) * t;
-    const u = (wx - SCREEN.x) / SCREEN.w + 0.5;
-    const v = 0.5 - (wy - SCREEN.y) / SCREEN.h;
+    const u = (wx - SCREEN.x) / (SCREEN.w * deskGlassK()) + 0.5;   // S374: the glass's headset size
+    const v = 0.5 - (wy - SCREEN.y) / (SCREEN.h * deskGlassK());
     if (u < 0 || u > 1 || v < 0 || v > 1) return null;
     // hit-testing speaks logical pixels; the backing store is ×RENDER_SCALE
     return { x: u * ERA1_CANVAS.width, y: v * ERA1_CANVAS.height };

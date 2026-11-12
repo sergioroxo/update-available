@@ -38,6 +38,7 @@ import { px as pxc, type Painter } from '../room/calendarArt';
 import { text, textW } from '../room/font57';
 import { HANDHELD as H } from '../desktop/theme/calendar';
 import { gameMenuBus } from '../state/gameMenuBus';
+import { largeText } from '../desktop/theme/fonts';
 import { scaleFor, subscribeMix } from '../audio/mix';
 import D from '../../data/dialog/s1_fitin.json';
 import type { DeviceGame, GameKey } from './types';
@@ -219,6 +220,8 @@ export class FitIn implements DeviceGame {
   private pops: Pop[] = [];
   private clock = 0;
   private camH = 0; private camTarget = 0;
+  /** S374: the clock when the end card came up (the headset's end card pages its counts from there) */
+  private endAt = 0;
   private placedCount = 0;
   private hiBy = MOULDS.map(() => 0);
   private runKept = 0;
@@ -403,7 +406,7 @@ export class FitIn implements DeviceGame {
         const f = this.floors.pop();
         if (f) { this.leavers.push({ x0: f.x0, x1: f.x1, h: this.floorBottom(this.floors.length), vx: 160 }); sfx.leave(this.floors.length); }
         else if (this.leavers.length === 0) {
-          this.mode = 'end'; this.countShown = 0; this.countT = 0; sfx.bloom();
+          this.mode = 'end'; this.countShown = 0; this.countT = 0; this.endAt = this.clock; sfx.bloom();
           if (this.completed) this.lvl = (this.lvl + 1) % MOULDS.length;
           if (!this.filed) { this.filed = true; this.filing = D.filing; }
         }
@@ -428,7 +431,7 @@ export class FitIn implements DeviceGame {
       this.syncTitleCam();
       const ph = (Math.sin(this.clock * 1.7) + 1) / 2;
       const bw0 = Math.round(this.CM.w0 * 0.55);
-      return `t|${Math.floor(this.clock * 2) % 2}|${Math.floor(this.clock * 2.5) % 2}|${this.lvl}|${Math.round(40 + ph * 80 - bw0 / 2)}|${this.keptCells}|${this.hiBy[this.lvl]}|${this.heapVer}|${Math.round(this.camH)}`;
+      return `t|${Math.floor(this.clock * 2) % 2}|${Math.floor(this.clock * 2.5) % 2}|${this.lvl}|${Math.round(40 + ph * 80 - bw0 / 2)}|${this.keptCells}|${this.hiBy[this.lvl]}|${this.heapVer}|${Math.round(this.camH)}${largeText() ? `|L${Math.floor(this.clock / 2) % 12}` : ''}`;
     }
     const f = this.floors[this.floors.length - 1];
     const sh = this.shake > 0 ? Math.round(Math.sin(this.clock * 90)) : 0;
@@ -439,15 +442,17 @@ export class FitIn implements DeviceGame {
     const lv = this.leavers.map((l) => `${Math.round(l.x0)}-${Math.round(l.x1)}`).join(',');
     const pp = this.pops.map((p) => `${Math.round(p.t * 40)}.${Math.round(p.t * 6)}`).join(',');
     const bxk = m === 'play' ? `${Math.round(this.bx)}-${Math.round(this.bx + this.topWidth())}` : 0;
-    return `${m}|${blink}|${pulse}|${dither}|${sh}|${Math.round(this.camH)}|${Math.round(this.camH * 0.4)}|${bxk}|${this.floors.length}|${f ? `${Math.round(f.x0)},${Math.round(f.x1)}` : ''}|${ch}|${lv}|${pp}|${this.cheer?.s ?? ''}|${this.hintT < 4 && this.placedCount === 0 ? 1 : 0}|${this.countShown}|${this.keptCells}|${this.placedCount}|${this.lvl}|${this.ranLvl}|${this.completed ? 1 : 0}|${this.heapVer}`;
+    return `${m}|${blink}|${pulse}|${dither}|${sh}|${Math.round(this.camH)}|${Math.round(this.camH * 0.4)}|${bxk}|${this.floors.length}|${f ? `${Math.round(f.x0)},${Math.round(f.x1)}` : ''}|${ch}|${lv}|${pp}|${this.cheer?.s ?? ''}|${this.hintT < 4 && this.placedCount === 0 ? 1 : 0}|${this.countShown}|${this.keptCells}|${this.placedCount}|${this.lvl}|${this.ranLvl}|${this.completed ? 1 : 0}|${this.heapVer}${largeText() ? `|L${this.hintT < 2 ? 1 : 0}|${this.endPage()}|${Math.floor(this.clock * 2) % 2}` : ''}`;
   }
 
   // ── drawing ──────────────────────────────────────────────────────────────────────────────────────────────
   draw(g: Painter): void {
     pxc(g, 0, 0, G.L, W, H_);
-    if (this.mode === 'title') { this.drawTitle(g); return; }
+    const big = largeText();   // ⚑ S374: the headset's large-text screens (no single-size line anywhere)
+    if (this.mode === 'title') { if (big) this.drawTitleLarge(g); else this.drawTitle(g); return; }
     const ox = this.shake > 0 ? Math.round(Math.sin(this.clock * 90)) : 0;
     this.drawWorld(g, ox);
+    if (big) { this.hudLarge(g); this.overLarge(g); return; }
     this.hud(g);
     const blink = Math.floor(this.clock * 2) % 2 === 0;
     const ctext = (s: string, y: number, col: string, k = 1, x0 = 0, w = W): void => { text(g, s, x0 + Math.round((w - textW(s, k)) / 2), y, col, k); };
@@ -477,12 +482,97 @@ export class FitIn implements DeviceGame {
     }
   }
 
-  /** a small solid triangle, 4 wide, 7 tall */
-  private arrow(g: Painter, x: number, y: number, dir: number, col: string): void {
-    for (let i = 0; i < 4; i++) pxc(g, dir < 0 ? x + 3 - i : x + i, y + i, col, 1, 7 - i * 2);
+  /** a small solid triangle, 4 wide, 7 tall (`s`: every pixel s × s — S374, the headset's double size) */
+  private arrow(g: Painter, x: number, y: number, dir: number, col: string, s = 1): void {
+    for (let i = 0; i < 4; i++) pxc(g, dir < 0 ? x + (3 - i) * s : x + i * s, y + i * s, col, s, (7 - i * 2) * s);
   }
-  private oddIcon(g: Painter, x: number, y: number): void {
-    STAMPS[0].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === 'X') pxc(g, x + i, y + j, G.L); }));
+  private oddIcon(g: Painter, x: number, y: number, s = 1): void {
+    STAMPS[0].forEach((row, j) => [...row].forEach((ch, i) => { if (ch === 'X') pxc(g, x + i * s, y + j * s, G.L, s, s); }));
+  }
+
+  // ── ⚑ S374 / J18-B1 — THE HEADSET'S LARGE TEXT (IDEAS_XR_TEXT ★1) ──────────────────────────────────────────────
+  // Held in a headset the glass is ~0.11 m at 0.5 m, so a single-size 5×7 line is 0.77°, under the 0.8° reading floor,
+  // and its strokes are thinner than one pixel of the eye buffer. With `largeText()` on, every line is drawn at double
+  // size (×3 stays ×3): the HUD keeps its two counts, the hint breaks its rules into pairs, the end card pages its counts,
+  // the title card pages its middle band and its footer (an attract mode). The browser draws the screens above, unchanged.
+  /** the end card's count page: what was kept first (it counts up), then the floors */
+  private endPage(): number { return Math.floor(Math.max(0, this.clock - this.endAt) / 2.5) % 2; }
+  private ct2(g: Painter, s: string, y: number, col: string, k = 2, x0 = 0, w = W): void { text(g, s, x0 + Math.round((w - textW(s, k)) / 2), y, col, k); }
+  private hudLarge(g: Painter): void {
+    pxc(g, 0, 0, G.D, W, 18);
+    text(g, D.hud.fit, 3, 2, G.M, 2); text(g, String(this.placedCount).padStart(2, '0'), 3 + textW(D.hud.fit, 2) + 8, 2, G.L, 2);
+    // the heap's count with its mark (the KEPT label and the mould's name have no room at double size: the hint, the
+    //   chooser and the end card spell them)
+    const n = String(this.keptCells).padStart(4, '0'), nx = W - 3 - textW(n, 2);
+    this.oddIcon(g, nx - 14, 4, 2); text(g, n, nx, 2, G.L, 2);
+    pxc(g, 0, 18, G.DD, W, 1);
+  }
+  private overLarge(g: Painter): void {
+    const blink = Math.floor(this.clock * 2) % 2 === 0;
+    // the first drop's hint, above the sliding block (it starts at row 93): the mould, then each rule in two lines
+    if (this.mode === 'play' && this.hintT < 4 && this.placedCount === 0) {
+      const lines = D.large.hint[this.hintT < 2 ? 0 : 1];
+      [this.RM.name, lines[0], lines[1]].forEach((s, i) => { pxc(g, 6, 26 + i * 18, G.D, 148, 17); this.ct2(g, s, 28 + i * 18, i === 0 ? G.LM : G.L); });
+    }
+    if (this.cheer && (this.mode === 'play' || this.mode === 'dying')) {
+      const wd = textW(this.cheer.s, 2) + 8;
+      pxc(g, Math.round((W - wd) / 2), 21, G.D, wd, 18); this.ct2(g, this.cheer.s, 23, G.L);
+    }
+    if (this.mode === 'pause') { pxc(g, 36, 46, G.D, 88, 40); this.ct2(g, D.pause.title, 50, G.L); this.ct2(g, D.pause.resume, 67, G.M); }
+    if (this.mode === 'end') {
+      // the card ends at row 114, so the heap still breathes under it
+      pxc(g, 4, 19, G.D, 152, 96); pxc(g, 6, 21, G.L, 148, 92); pxc(g, 7, 22, G.D, 146, 90); pxc(g, 8, 23, G.L, 144, 88);
+      this.ct2(g, D.end.title, 26, G.D); pxc(g, 16, 42, G.MD, 128, 1);
+      // the counts as a two-line table, two pages: KEPT +n / ALL n, then FIT n/top / TOP n
+      const row = (label: string, val: string, y: number, lc: string): void => { text(g, label, 74 - textW(label, 2), y, lc, 2); text(g, val, 82, y, G.D, 2); };
+      if (this.endPage() === 0) { row(D.hud.kept, `+${this.countShown}`, 45, G.D); row(D.hud.all, String(this.keptCells), 61, G.D); }
+      else {
+        row(D.hud.fit, `${String(this.placedCount).padStart(2, '0')}/${MOULDS[this.ranLvl].top}`, 45, G.MD);
+        row(D.hud.top, String(this.hiBy[this.ranLvl]).padStart(2, '0'), 61, G.MD);
+      }
+      // the mould A plays, between the chooser's arrows; after a finished tower NEXT goes in front of it when that fits,
+      //   and otherwise takes turns with PRESS A on the line below
+      this.arrow(g, 10, 77, -1, G.D, 2); this.arrow(g, 142, 77, 1, G.D, 2);
+      const zone = 121, pre = this.completed ? `${D.large.next} ` : '';
+      const fit = [`${pre}${this.CM.name}`, `${pre}${this.CM.short}`].find((s) => textW(s, 2) <= zone);
+      this.ct2(g, fit ?? this.CM.short, 77, G.D);
+      if (blink) this.ct2(g, D.end.press, 94, G.MD);
+      else if (this.completed && !fit) this.ct2(g, D.large.next, 94, G.MD);
+    }
+  }
+  private drawTitleLarge(g: Painter): void {
+    this.syncTitleCam();
+    const ph = (Math.sin(this.clock * 1.7) + 1) / 2;
+    const page = Math.floor(this.clock / 2);
+    // cartridge label: the title, then a band that pages (the rules, the publisher), the start line, the chooser
+    for (let x = 0; x < W; x += 4) { pxc(g, x, 0, G.D, 2, 2); pxc(g, x + 2, 2, G.D, 2, 2); }
+    pxc(g, 8, 5, G.D, W - 16, 1);
+    this.ct2(g, D.title, 8, G.D, 3);
+    pxc(g, 8, 30, G.D, W - 16, 1);
+    const band = D.large.band[page % D.large.band.length], bc = band === D.large.band[2] ? G.M : G.D;
+    this.ct2(g, band[0], 33, bc); this.ct2(g, band[1], 49, bc);
+    if (Math.floor(this.clock * 2) % 2 === 0) this.ct2(g, D.large.start, 65, G.D);
+    this.arrow(g, 1, 81, -1, G.D, 2); this.arrow(g, 151, 81, 1, G.D, 2);
+    this.ct2(g, `${this.lvl + 1}/${MOULDS.length} ${this.CM.short}`, 81, G.D);
+    // the miniature, shorter (19 rows, from 98)
+    const m = this.CM, oc = m === MOULDS[0] ? G.MD : G.DD, top = m.top * BH, ky = 19 / Math.max(top, 60), kx = 0.55, baseY = 117;
+    for (let yy = 98; yy < baseY; yy++) {
+      const h = (baseY - yy) / ky; if (h > top + 3) continue;
+      const half = m.w(h) * kx / 2, up = m.w(h + 1 / ky) * kx / 2;
+      if (half >= 1 && yy % 2 === 0) { pxc(g, Math.round(CX - half), yy, oc); pxc(g, Math.round(CX + half - 1), yy, oc); }
+      if (half - up > 1.5 && half >= 1) for (let x = CX - half; x < CX + half; x += 2) pxc(g, Math.round(x), yy, oc);
+      else if (up >= 1 && half < 1) for (let x = CX - up; x < CX + up; x += 2) pxc(g, Math.round(x), yy, oc);
+    }
+    const bw0 = Math.round(m.w0 * kx), bxd = Math.round(40 + ph * 80 - bw0 / 2);
+    pxc(g, bxd, 108, G.D, bw0, 6); pxc(g, bxd + 1, 109, G.M, bw0 - 2, 4); pxc(g, bxd + 1, 109, G.L, bw0 - 2, 1);
+    this.drawHeap(g, Math.floor(this.clock * 2.5) % 2, 0, 118);
+    const gy = this.sy(0);
+    if (gy < H_) { const y0 = Math.max(gy, 118); pxc(g, 0, y0, G.MD, W, H_ - y0); if (gy >= 118) pxc(g, 0, gy, G.D, W, 1); }
+    pxc(g, 0, 118, G.D, W, 1);
+    pxc(g, 0, 126, G.D, W, 1); pxc(g, 0, 127, G.L, W, 17);
+    // the cartridge's footer pages: its two counts, then its licence
+    const foot = [`${D.hud.kept} ${this.keptCells}`, `${D.hud.top} ${this.hiBy[this.lvl]}`, D.large.footer[0], D.large.footer[1]][page % 4];
+    this.ct2(g, foot, 129, page % 4 < 2 ? G.D : G.MD);
   }
   private hud(g: Painter): void {
     pxc(g, 0, 0, G.D, W, 11);

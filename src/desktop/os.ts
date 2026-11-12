@@ -33,6 +33,7 @@ import { gameMenuBus as startMenuBus } from '../state/gameMenuBus';
 import { meetWord } from '../room/lexicon';
 import lexStrings from '../../data/strings/lexicon.json';
 import { ERA1, ERA1_CANVAS, RENDER_SCALE } from './theme/era1';
+import { xrCanvasScale } from '../engine/screenTexture';
 import * as ui from './theme/chrome';
 import institutionStrings from '../../data/strings/institution.json';
 import { entriesByEra, practiceOf } from '../witness/record';
@@ -2748,7 +2749,7 @@ export class DesktopOS {
     const immersive = !!pc.Application.getApplication()?.xr?.active;
     if (immersive !== this.xrScale) {
       this.xrScale = immersive;
-      const scale = immersive ? Math.max(4, RENDER_SCALE) : RENDER_SCALE;
+      const scale = immersive ? Math.max(xrCanvasScale(), RENDER_SCALE) : RENDER_SCALE;   // S374: ?xrcanvas=3
       this.canvas.width = ERA1_CANVAS.width * scale; this.canvas.height = ERA1_CANVAS.height * scale;
       this.ctx.setTransform(scale, 0, 0, scale, 0, 0); this.ctx.imageSmoothingEnabled = false;
       this.dirty = true;

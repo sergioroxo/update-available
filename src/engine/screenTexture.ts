@@ -6,6 +6,16 @@
  * closures over app state — safe to import from any room/device module.
  */
 import * as pc from 'playcanvas';
+import { runtimeQuery } from '../edition';
+
+/**
+ * ⚑ S374 / J18-B3 (IDEAS_XR_TEXT idea 6b) — THE HEADSET'S CANVAS SCALE. The screens are redrawn at ×4 in a headset
+ * (S270d), and every redraw re-sends the whole canvas: 2016's workstation is 16.9 MB a time, up to 30 times a second
+ * while Floppy Sheep plays. With job 18's ×1.2 glass a ×3 canvas still carries 31–39 texels per degree from the seat, about
+ * twice the eye buffer's ~17, for 44 % fewer bytes. ×4 stays the default; `?xrcanvas=3` tries ×3 in the headset without a
+ * build, so his fps readout and his eye can compare the two.
+ */
+export function xrCanvasScale(): number { return Number(runtimeQuery().get('xrcanvas')) === 3 ? 3 : 4; }
 
 /**
  * `smooth` (S177) is for a screen that is NOT pixel art: Era 3's phone, a 2016 handset
