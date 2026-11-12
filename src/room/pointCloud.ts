@@ -50,7 +50,7 @@ import { ERA1 } from '../desktop/theme/era1';
 import { ERA3 } from '../desktop/theme/era3';
 import { ERA4 } from '../desktop/theme/era4';
 import { px, setFont } from '../desktop/theme/chrome';
-import { setFaceEra, faceEra, type FaceEra } from '../desktop/theme/fonts';
+import { setFaceEra, faceEra, type FaceEra, FACES, sansFor, fontsReady } from '../desktop/theme/fonts';
 
 const P = clusterData.pointCloud;
 /** S358 / H19 — the seat's eye height (app.ts EYE.y): the Close's panels lean to face it */
@@ -660,7 +660,12 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   /** S177 / R4-30 — the Sources button's rect in the cell (px), bottom right, on the hint's line */
   const SRC_BTN = { x: CELL_W - 40 - 300, y: CELL_H - 48 - 39, w: 300, h: 78 };
   const TEXT_W = CELL_W - TEXT_X - 44;
-  const READING_FACE = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  // ⚑ S376 (UiB job 19 Part B, VISUAL_REVIEW_2026-11-12 #4) — the piece's own faces (job 18), not the machine's: the
+  //   paragraph in the vendored reading sans (Inter), the title and the frame's small lines in the Close's own face
+  //   (FACES.close, Fixedsys Excelsior). "Helvetica Neue / monospace" resolved differently on every machine.
+  //   ⚑ TASTE (his eye, T71): Inter (the legible default) or Fixedsys throughout.
+  const READING_FACE = sansFor('e4');
+  const CLOSE_FACE = FACES.close.family;
   const wrap = (c: CanvasRenderingContext2D, text: string, maxW: number): string[] => {
     const out: string[] = [];
     let line = '';
@@ -672,6 +677,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     return out;
   };
   if (panels.length > 0) {
+    let ptexRef: pc.Texture | null = null;
     const pcan = document.createElement('canvas');
     pcan.width = CELL_W;
     pcan.height = CELL_H * panels.length;
@@ -694,7 +700,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         pc2.fillStyle = P.backdrop;
         pc2.fillRect(TEXT_X - 24, y0 + 14, CELL_W - (TEXT_X - 24), CELL_H - 22);
         pc2.globalAlpha = 1;
-        pc2.font = 'bold 54px monospace';
+        pc2.font = `54px ${CLOSE_FACE}`;
         pc2.fillStyle = P.labelColor;
         pc2.fillText(`${panel.years}  ·  ${panel.title}`, TEXT_X, y0 + 96);
         // ⚑ the paragraph FITS its column (2026-09-13, Sérgio: "the text on top of
@@ -732,7 +738,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
           //   cell, so the 1997 panel carried 2026's lines twice over and the
           //   others carried none (Sérgio's Close frame, 09-17; OPEN_ITEMS R3-114)
           let my = y0 + TOP + rows.length * lineH + 30;
-          pc2.font = '22px monospace';
+          pc2.font = `22px ${CLOSE_FACE}`;
           pc2.fillStyle = P.link;
           pc2.fillText(P.panelMineLabel, TEXT_X, my);
           my += 30;
@@ -779,10 +785,17 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         drawPlate(i);
         drawText(panel, i, lastLines[i]);
         // ⚑ S175: the way in to its sources, said once, small, in the web's blue
-        pc2.font = '24px monospace';
+        // ⚑ S376 (job 19 B, VISUAL_REVIEW #4) — wrapped into the space LEFT of the Sources button, beside it on its
+        //   centre line: drawn on one line it ran under the button and every panel read "…on this panel to ope"
+        pc2.font = `24px ${CLOSE_FACE}`;
         pc2.fillStyle = P.link;
         pc2.textBaseline = 'middle';
-        pc2.fillText(closeCard.source.panelHint, TEXT_X, y0 + CELL_H - 48);
+        {
+          const hintW = SRC_BTN.x - TEXT_X - 28;
+          const rows = wrap(pc2, closeCard.source.panelHint, hintW);
+          const lh = 30, mid = y0 + SRC_BTN.y + SRC_BTN.h / 2;
+          rows.forEach((row, li) => pc2.fillText(row, TEXT_X, Math.round(mid + (li - (rows.length - 1) / 2) * lh)));
+        }
         drawSourcesButton(panel.era, y0);
       };
       /**
@@ -868,6 +881,12 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       panelEra = panels.map((pn) => pn.era);
       panelShowEra = panels.map((pn) => pn.era);
       panels.forEach((panel, i) => drawStoryCell(panel, i));
+      // ⚑ S376 — the faces are vendored files: if the cloud is built before they have loaded, the cells are drawn
+      //   again once they have (the S373 law: a canvas keeps the pixels of the face it first drew)
+      void fontsReady().then(() => {
+        panels.forEach((panel, i) => { if (panelFace[i] < 0) drawStoryCell(panel, i); });
+        ptexRef?.upload();
+      });
       showPanel = (i: number): void => {
         if (panelFace[i] < 0) drawStoryCell(panels[i], i);
         else drawDossierCell(i);
@@ -892,6 +911,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         addressU: pc.ADDRESS_CLAMP_TO_EDGE, addressV: pc.ADDRESS_CLAMP_TO_EDGE
       });
       ptex.setSource(pcan);
+      ptexRef = ptex;
       // the room plates, composited in as they load — one re-upload each
       panels.forEach((panel, i) => {
         if (!panel.image) return;
