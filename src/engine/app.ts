@@ -2526,7 +2526,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function beginRelocation(key: string, plan: RelocationPlan): void {
     // ⚑ the building, for the length of the flight. `onEraShift` brings the
     //   destination's own bed up when the era actually lands.
-    roomBed.set(PASSAGE_MUSIC[key] ?? PASSAGE_BED, 2.0);
+    // ⚑ S357bg (his: "try and remake the music for the headset") — where the facing turns slowly the flight is 11 s longer
+    //   (withSlowFacing), so it gets its own rendering of the same piece, its landing on the landing
+    const passage = key === 'e3-e4' && (xr?.active || reducedMotion()) ? 'passage_2016_2026_xr.mp3' : PASSAGE_MUSIC[key];
+    roomBed.set(passage ?? PASSAGE_BED, 2.0);
     stopMorphLayer(0);
     flightT = 0;
     flightTotal = Math.max(1, plan.riseSeconds + (plan.turnSeconds ?? 0) + (plan.watchSeconds ?? 0) + plan.buildSeconds + plan.descendSeconds);
