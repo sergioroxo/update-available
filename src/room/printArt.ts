@@ -21,17 +21,25 @@ import vera from '../../data/dialog/s3_vera.json';
  * own tools; colours in src/desktop/theme/calendar.ts (PRINT). Previews: tools/calendar_preview.mjs.
  */
 import { px, text, textW, disc, line, sprite, gradient, hand, type Ctx } from './calendarArt';
-import { PRINT as P } from '../desktop/theme/calendar';
+import { PRINT as P, CAL_1997, CAL_2026, FOOTAGE } from '../desktop/theme/calendar';
 
-export type PrintId = 'release1997' | 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard' | 'dusk2003' | 'evening2016' | 'night2026' | 'wickCard' | 'mugN';
+export type PrintId = 'release1997' | 'rally1997' | 'band1997' | 'film2003' | 'conf2003' | 'tour2016' | 'retreat2016' | 'march2016' | 'ball2026' | 'drawer12' | 'campTag' | 'referral1997' | 'rules2003' | 'indexCard' | 'dusk2003' | 'evening2016' | 'night2026' | 'wickCard' | 'mugN' | 'night1997';
 
 /** each print's pixel size, ~2 px per centimetre of the prop it hangs on */
 export const PRINT_SIZE: Record<PrintId, [number, number]> = {
   wickCard: [96, 64], mugN: [24, 32], release1997: [60, 90], rally1997: [80, 110], band1997: [50, 70], film2003: [80, 110], conf2003: [50, 70],
   tour2016: [100, 120], retreat2016: [80, 52], march2016: [42, 60], ball2026: [70, 100],
   drawer12: [24, 12], campTag: [36, 22], referral1997: [60, 80], rules2003: [42, 56], indexCard: [26, 16],
-  dusk2003: [72, 82], evening2016: [70, 62], night2026: [70, 62]
+  dusk2003: [72, 82], evening2016: [70, 62], night2026: [70, 62],
+  night1997: [72, 82]
 };
+
+/**
+ * ⚑ S377 — prints that are LIT FROM BEHIND: drawn unlit, at their own colours, whatever the room's lights are doing.
+ * The 1997 night is the room's only light before the switch (app.ts applyRoomLight(0)); a lit print there would be a
+ * black square at the wake. The other windows keep their S299 lit plates (unchanged).
+ */
+export const PRINT_SELF_LIT: ReadonlySet<PrintId> = new Set<PrintId>(['night1997']);
 
 const centre = (c: Ctx, s: string, y: number, col: string, W: number, sc = 1): void => {
   text(c, s, Math.round((W - textW(s, sc)) / 2), y, col, sc);
@@ -72,6 +80,65 @@ function evening2016(c: Ctx, W: number, H: number): void {
     const x = (i * 29 + 7) % W, y = (i * 23) % (H - 4);
     px(c, x, y, P.tourHaze, 1, 3);
   }
+}
+/** a row of a checker: every other pixel in `col` (the 1997 way of hiding a step between two bands) */
+function checker(c: Ctx, x: number, y: number, w: number, h: number, col: string, phase = 0): void {
+  for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) if ((xx + yy + phase) % 2 === 0) px(c, xx, yy, col);
+}
+/**
+ * ⚑ S377 / VISUAL_REVIEW_2026-11-12 #1 — 1997, THE NIGHT IN DANIEL'S WINDOW. It was a flat navy slab with a 12 cm
+ * cube for a moon: the only placeholder left in the room the piece opens on, beside three drawn windows (S299). Now the
+ * view of its year, drawn like the other three from the prints' palette: the moonlit sky in bands dithered at the
+ * seams; a full moon with a halo and its craters (the cold light the July direction promised — the system's — now a
+ * thing you can see); a few stars; a suburban street in silhouette (gables, chimneys, the near garden's tree, a
+ * telephone pole and its sagging wire); one window still lit across the street, and a streetlamp's pool. Quiet and
+ * cold against the lamp's warmth. Nothing moves. The moon sits high, left of centre (the mock's place — his taste call).
+ * Drawn from tools/s375-mocks.py `night1997` (the review's m01), pixel for pixel.
+ */
+function night1997(c: Ctx, W: number, H: number): void {
+  const stops: [string, number][] = [[P.rallyNight, 0.34], [CAL_2026.night, 0.18], [CAL_2026.evening, 0.16], [CAL_2026.warm, 0.32]];
+  bands(c, H, W, stops);
+  let yy = 0;
+  for (let i = 0; i < stops.length - 1; i++) {                                   // each seam dithered one row each way
+    yy += Math.round(H * stops[i][1]);
+    checker(c, 0, yy - 1, W, 1, stops[i + 1][0]);
+    checker(c, 0, yy, W, 1, stops[i][0], 1);
+  }
+  for (const [sx, sy] of [[6, 5], [31, 3], [44, 11], [59, 6], [66, 19], [38, 22], [12, 27], [53, 28]]) px(c, sx, sy, CAL_1997.spark);
+  for (const [sx, sy] of [[48, 4], [8, 16]]) {                                    // two of them a cross of light
+    px(c, sx, sy, CAL_1997.spark);
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) px(c, sx + dx, sy + dy, FOOTAGE.cool);
+  }
+  const mx = 22, my = 17;                                                          // the moon: a dithered halo, two rings …
+  for (const rad of [12, 11]) for (let a = 0; a < 360; a += 3) {
+    const x = mx + Math.round(rad * Math.cos(a * Math.PI / 180)), y = my + Math.round(rad * Math.sin(a * Math.PI / 180));
+    if ((x + y) % 2 === 0) px(c, x, y, rad === 12 ? CAL_2026.warm : FOOTAGE.cool);
+  }
+  disc(c, mx, my, 8, P.rallyCross);                                                // … the full disc, and its craters
+  for (const [cx, cy, cr] of [[19, 14, 2], [25, 20, 1], [24, 13, 1]]) disc(c, cx, cy, cr, CAL_1997.rule);
+  px(c, 27, 15, CAL_1997.rule);
+  const base = 62;                                                                 // the street across: four gabled houses
+  for (const [x0, w, peak] of [[-3, 20, 6], [19, 22, 7], [43, 18, 5], [60, 16, 6]]) {
+    px(c, x0, base, P.filmMan, w, H - base);
+    const mid = Math.floor((w + 2) / 2);
+    for (let i = 0; i < w + 2; i++) {                                              // the roof, an eave each side
+      const hgt = peak - Math.floor(Math.abs(i - mid) * peak / Math.max(1, mid));
+      if (hgt > 0) px(c, x0 - 1 + i, base - hgt, P.filmMan, 1, hgt);
+    }
+    px(c, x0 + Math.floor(w / 2) + 3, base - peak - 1, P.filmMan, 2, 3);           // a chimney
+  }
+  for (const [tx, ty, tr] of [[64, 47, 7], [69, 42, 6], [60, 41, 5], [67, 36, 4]]) disc(c, tx, ty, tr, P.rallyHill);   // the near tree
+  px(c, 65, 50, P.rallyHill, 2, H - 50);
+  px(c, 49, 30, P.filmMan, 1, H - 30);                                             // a telephone pole …
+  px(c, 46, 32, P.filmMan, 7, 1);
+  for (let x = 0; x < 49; x++) px(c, x, 34 + Math.round(3 * Math.sin(Math.PI * x / 49)), P.filmMan);          // … its wire, sagging
+  for (let x = 50; x < W; x++) px(c, x, 33 + Math.round(2 * Math.sin(Math.PI * (x - 50) / (W - 50))), P.filmMan);
+  px(c, 25, 66, P.filmRoadLit, 3, 3);                                              // a window still lit across the street
+  px(c, 46, 67, P.rallyGlow, 2, 3);
+  px(c, 14, 58, P.filmMan, 1, H - 58);                                             // a streetlamp, its lamp, its pool
+  px(c, 13, 57, P.rallyGlow, 4, 1);
+  checker(c, 11, 76, 9, 2, P.filmRoadLit);
+  px(c, 0, H - 6, CAL_2026.night, W, 1);                                           // the pavement's edge
 }
 function night2026(c: Ctx, W: number, H: number): void {
   bands(c, H, W, [[P.ballBg, 0.6], [P.ballGlow, 0.4]]);
@@ -378,7 +445,7 @@ export function stampBanned(c: Ctx, W: number, H: number): void {
 
 const DRAW: Record<PrintId, (c: Ctx, W: number, H: number) => void> = {
   wickCard, mugN, release1997, rally1997, band1997, film2003, conf2003, tour2016, retreat2016, march2016, ball2026, drawer12, campTag, referral1997, rules2003, indexCard,
-  dusk2003, evening2016, night2026
+  dusk2003, evening2016, night2026, night1997
 };
 
 export function drawPrint(c: Ctx, id: PrintId): void {

@@ -48,6 +48,52 @@ const gbHardware = (box: Box): void => {
 };
 const at = (x: number, y: number): [number, number, number] => [x, y, FACE_Z + 0.18];
 
+/**
+ * ⚑ S377 / VISUAL_REVIEW_2026-11-12 #9 — THE 2003 FLIP PHONE, HELD TO THE EYE, IS A CLAMSHELL. On the computer the glass
+ * takes 75 % of the frame (S222's `view.fill`, kept: no change moves or shrinks the glass), so all you saw of the phone
+ * was its top half's face around the LCD, turned away from the lamp: a dark slab, a 2016 phone. The model ('Flip Phone',
+ * Timmy Turner) IS an open clamshell — in a headset the hinge and the keypad half fall away below the glass — but its
+ * earpiece sits 0.47 above the glass and its hinge 0.97 below, both outside that frame. So the face carries what a 2003
+ * inner face carried, inside the frame: the display's black mask round the glass, an earpiece grille above it, the
+ * carrier's printed mark under it (RESTORIFY — the phone is the programme's carrier — in the slate of its own LCD's frame,
+ * not Restorify's blue: his ruling on 2003's accent, 12 Nov, "Leave it"), and on the hinge
+ * a charging light. Measured from the mesh, in the screen half's node ('Cube.001'): the face is the +Y plane at
+ * y 0.9559 (the glass sits in it at y 0.8273, x ±0.7712, z −0.029…1.9892), top toward −Z, the hinge knuckle at
+ * z 2.79–2.96 rising to y 2.89; the node scales Y by 11.4 against X/Z's 65.6, so thicknesses here are 5.7× thinner than
+ * they read. One merged mesh, one draw (deviceHardware.ts), self-lit like the body (`glow`). The model's own speaker
+ * slot (Material.007, z −0.47) is coloured into the shell (reinterp_deltas.json), so the earpiece is one.
+ */
+const FLIP_FACE = 0.9559, FLIP_T = 0.06;
+const flipHardware = (box: Box): void => {
+  const y = FLIP_FACE + FLIP_T / 2 + 0.005, d = (n: string, x: number, z: number, w: number, l: number, hex: string, lift = 0) =>
+    box(n, [x, y + lift, z], [w, FLIP_T, l], hex);
+  // the display's black mask round the glass
+  d('fp-mask-top', 0, -0.0645, 1.68, 0.071, RC.lcdDark);
+  d('fp-mask-bottom', 0, 2.0296, 1.68, 0.0808, RC.lcdDark);
+  d('fp-mask-left', -0.8056, 0.9801, 0.0688, 2.0182, RC.lcdDark);
+  d('fp-mask-right', 0.8056, 0.9801, 0.0688, 2.0182, RC.lcdDark);
+  // the earpiece: a dark slot, its grille
+  d('fp-ear', 0, -0.19, 0.5, 0.075, H.dpad);
+  for (let i = 0; i < 6; i++) d(`fp-ear-${i}`, -0.175 + i * 0.07, -0.19, 0.036, 0.03, RC.frame, 0.02);
+  // the carrier's mark under the glass, in the 5×7 the phone's own screen speaks (one box per run of lit dots)
+  const word = 'RESTORIFY', k = 0.0135, w = textW57(word, 1), z0 = 2.165 - (7 * k) / 2;
+  const runs = new Map<number, number[]>();   // row → lit columns
+  text57({ fillStyle: '', fillRect: (x: number, yy: number, rw: number, rh: number) => {
+    for (let j = 0; j < rh; j++) for (let i = 0; i < rw; i++) { const r = runs.get(yy + j) ?? []; r.push(x + i); runs.set(yy + j, r); }
+  } }, word, 0, 0, RC.frame, 1);
+  for (const [row, cols] of runs) {
+    cols.sort((a, b) => a - b);
+    for (let i = 0; i < cols.length;) {
+      let j = i; while (j + 1 < cols.length && cols[j + 1] === cols[j] + 1) j++;
+      const x0 = cols[i], x1 = cols[j] + 1;
+      d(`fp-mark-${row}-${x0}`, ((x0 + x1) / 2 - w / 2) * k, z0 + (row + 0.5) * k, (x1 - x0) * k, k, RC.frame);
+      i = j + 1;
+    }
+  }
+  // the charging light, on the hinge's knuckle
+  box('fp-led', [0.28, 2.9, 2.84], [0.07, 0.1, 0.06], RC.halo);
+};
+
 export const DEVICE_SPECS: DeviceSpec[] = [
   {
     propId: 'danielHandheld', modelKey: 'handheld1997', era: 'e1', gameId: 'fitin',
@@ -82,6 +128,9 @@ export const DEVICE_SPECS: DeviceSpec[] = [
       text57(g, 'RESTORIFY', Math.round((w - textW57('RESTORIFY', 2)) / 2), 220, RC.lcdMid, 2);
     },
     game: () => new Clear(),
+    // ⚑ S377 / VISUAL_REVIEW #9 — the clamshell's face (flipHardware above), and the instrument self-lit
+    dress: (_face, box) => flipHardware(box),
+    glow: 0.34, glowHeld: 0.62,
     holdDist: 0.19,
     // ⚑ S270h / VR-02 (his: "the flip phone opens when you pick it up") — the screen half ('Cube.001') swings
     //   shut over the keypad about the hinge where the two halves meet (measured from the GLB's node matrices)

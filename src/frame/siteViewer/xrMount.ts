@@ -58,6 +58,8 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   suspendMenu: (on: boolean) => void;
   note: (text: string | null, seconds?: number) => void;
   minimisedNote: string;
+  /** ⚑ S376 — said once as the window comes: how to close it (the red button, B / Y, a press outside) */
+  closeNote?: string;
 }): XrViewer {
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(LW * SCALE); canvas.height = Math.round(LH * SCALE);
@@ -123,6 +125,7 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   let lastStick = 0;
   let wristed = false;
   let closedAt = 0;
+  let openedAt = 0;
 
   const host: ViewerHost = {
     canOpenPage: false,
@@ -155,11 +158,13 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
     if (fromMenu) opts.suspendMenu(true);
     core.open(target);
     open = true; minimised = false; tab.enabled = false;
+    openedAt = performance.now();
     startedAt = performance.now();
     place(reducedMotion() ? DIST : FROM_DIST);
     plane.setLocalScale(PLANE_W, 1, PLANE_H);
     plane.enabled = true;
     dirty = true; draw();
+    if (opts.closeNote) opts.note(opts.closeNote, 7);
   }
   function close(): void {
     if (!open && !minimised) return;
@@ -198,8 +203,12 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
       if (minimised) { if (performance.now() - closedAt > 300 && hitTab(ray)) { restore(); return true; } return false; }
       if (!open) return false;
       const p = hitWindow(ray);
-      if (p) { core.move(p.x, p.y); core.press(p.x, p.y); dirty = true; }
-      return true;   // a miss is swallowed while the window is up: the room behind it takes no presses
+      if (p) { core.move(p.x, p.y); core.press(p.x, p.y); dirty = true; return true; }
+      // ⚑ S376 (his ruling on Part A, 12 Nov: the website "easy to close") — a press OUTSIDE the window closes it, the
+      //   headset's Esc (a miss was already swallowed: the room behind it never took one); not in its first moment, while
+      //   it is still coming towards the visitor
+      if (performance.now() - openedAt > 600) close();
+      return true;
     },
     touches(ray: Ray): boolean { return !!hitWindow(ray) || hitTab(ray); },
     stick(y: number): void {

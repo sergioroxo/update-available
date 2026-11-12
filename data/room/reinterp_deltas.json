@@ -72,10 +72,12 @@
    "boomboxSpeakerL",
    "boomboxSpeakerR",
    "boomboxDeck",
-   "sodaCan"
+   "sodaCan",
+   "moon"
   ],
   "_docT51": "⚑ S343 / T51 (his 8 Nov, answer 1: 'what is this red box on top of the table?… remove it. The black plate on the computer stays.') — the red box beside the mouse was sodaCan, a bare era1.json cube S86 kept only as 'the one judgement call… flagged for Sérgio'. He has judged: gone from 1997 too (r2 already retired it).",
   "add": [
+   {"id": "winView1997", "pos": [-0.95, 1.55, -0.672], "size": [0.72, 0.82, 0.004], "color": "#2C3A5C", "emissive": true, "print": "night1997", "_docS377": "⚑ S377 / VISUAL_REVIEW_2026-11-12 #1 — 1997's view, the last window left a placeholder: the pane was a flat emissive #2C3A5C slab and the moon a 12 cm cube in front of it (era1.json, kept there for the shipped build and its screensaver's colours). Now the night of its year, drawn (printArt.ts night1997: the moon in its halo, the stars, the street across in silhouette, one window still lit), on a thin plate in front of the pane exactly where S299 hangs 2003's dusk, which replaces it at r2. Lit from behind (PRINT_SELF_LIT), as the pane was: it is the room's only light before the switch. The moon cube goes at r1 — the moon is in the picture. The moon's place in the frame (high, left of centre: the mock's) is his taste call."},
    {
     "id": "spineWall",
     "pos": [
@@ -214,7 +216,7 @@
      1.5904
     ]
    },
-   {"id": "bedModel", "pos": [-1.53, 0, 1.15], "size": [0.78, 0.5, 1.95], "color": "#A07B52", "model": "bed", "modelScale": [1.3659, 1.3342, 1.7337], "partColors": {"carpet": "#2F3F66", "carpetWhite": "#E6DFD0", "wood": "#8A5A3B", "metal": "#7A7A80"}, "_docS179": "⚑ S179 / R5-01 (his 2026-09-27: 'You can also change the color of the beddings, reflect on that'): the bedding, one per life, by part (the Kenney bed: carpet = the blanket, carpetWhite = the sheets and pillow, wood = the frame, metal = the legs). Muted with the other personal things (his 'I love that detail of the personal stuff to be muted'). 1997, Daniel at sixteen: a navy blanket on cream sheets — bought by his mother."},
+   {"id": "bedModel", "pos": [-1.53, 0, 1.15], "size": [0.78, 0.5, 1.95], "color": "#A07B52", "model": "bed", "modelScale": [1.3659, 1.3342, 1.7337], "partColors": {"carpet": "#2446A8", "carpetWhite": "#E6DFD0", "wood": "#8A5A3B", "metal": "#7A7A80"}, "_docS179": "⚑ S179 / R5-01 (his 2026-09-27: 'You can also change the color of the beddings, reflect on that'): the bedding, one per life, by part (the Kenney bed: carpet = the blanket, carpetWhite = the sheets and pillow, wood = the frame, metal = the legs). Muted with the other personal things (his 'I love that detail of the personal stuff to be muted'). 1997, Daniel at sixteen: a navy blanket on cream sheets — bought by his mother.", "_docS377": "⚑ S377 / VISUAL_REVIEW_2026-11-12 #7 — his ruling (12 Nov): PLAIN NAVY, not the plaid PLAN_ROUND5 had proposed (\"not the aesthetics of the experience\"), and it must read as navy from the seat. S179's #2F3F66 did not: muted with the personal things (0.32) it became #343C56, whose blue the lamp (#F7C775, blue 0.46) barely lights, so the blanket rendered as a near-black slab, the heaviest mass in the warm room. The navy is now his mother's biro (CAL_1997.mother, #2446A8 — the hand that wrote \"camp\" on his calendar, src/desktop/theme/calendar.ts): muted it is #2D4388, with enough blue in it for the lamp to show navy. Same model, same part, same muting; no pattern, no texture."},
    {
     "id": "bookcaseModel",
     "pos": [
@@ -448,7 +450,7 @@
   },
   "_docS86": "⚑ Session 86 — E2 WAS STILL WEARING E1'S CLOTHES. Sérgio, playing the deployed build: \"The pamphlet is still on the desk; the tape is still on the shelf. Era 2 should not be wearing Era 1's props.\" He was right on both counts, and the r2 fold was the thinnest in the file: it retired the boombox, tapeA/tapeB and their docked twins, and the moon, and nothing else — six years of this room's life were one recoloured window pane. Everything added below is an object that dates itself to 1997 and that a returning adult would not still have out. THE KIT (kitBrochure + its two folds, the cover band/title/motif, the three text blocks, the pocket flap and the floppy with its shutter and label) is the Family Design Solutions sales packet: its floppy has already been put into a machine that has since been updated twice, and the brochure lying open on the desk in 2003 reads as a set-dressing oversight rather than as a life. homeworkPile is a teenager's homework. sodaCan is the one judgement call in the list and is flagged for Sérgio — a can on a desk is not era-specific, and it is kept ONLY because removing it costs nothing to re-add if he disagrees. ⚑ NOT REMOVED, deliberately: mixtape (Tape C). It is belongings-eligible and the r3 fold relocates it onto bookcaseMoved with the duck and the teddy, so it is the one Era-1 object the piece has already decided survives — retiring it here would silently kill that payoff. FOR SÉRGIO: if the mixtape should also go, the honest place is the belongings beat (kept → frozen on the shelf; not kept → gone at r2), which would finally give that choice a visible consequence; it currently has none.",
   "remove": [
-   "moon",
+   "winView1997",
    "tapeA",
    "tapeB",
    "tapeAInSlot",
@@ -665,7 +667,8 @@
     "color": "#2A2A2E",
     "model": "flipPhone",
     "_docS175": "⚑ S175 (2026-09-24) — BACK, as a phone: 'Flip Phone' by Timmy Turner (CC-BY 4.0), open on the desk right of the mouse — no longer standing inside it.",
-    "partColors": {"Material.001": "#A9ADB4", "Material.003": "#2E3036", "Material.006": "#5E7A86", "Material.007": "#15151A"},
+    "partColors": {"Material.001": "#A9ADB4", "Material.003": "#2E3036", "Material.006": "#5E7A86", "Material.007": "#A9ADB4"},
+    "_docS377": "⚑ S377 / VISUAL_REVIEW #9 — Material.007 (the model's speaker slot, 0.47 above the glass, outside the held view on a computer) takes the shell's silver: the earpiece is now the grille src/room/handheld.ts flipHardware lays just above the glass, inside the frame, with the display's mask, the carrier's mark and the hinge's charging light.",
     "_docS177": "⚑ S177 / R4-29 (his D2, 2026-09-26: 'yes do the separate colors') — a silver 2003 flip phone: silver shell, dark keypad and bezel, the screen's grey-blue, the speaker slot."
    },
    {"id": "companionKeychain", "pos": [0.57, 0.752, 0.06], "size": [0.05, 0.024, 0.06], "color": "#F5F4ED", "_docS275": "⚑ S275 — Restorify's keychain companion (his 31 Oct: 'keychain in the room and screen'): a cream egg on the desk beside the flip phone, its LCD the same live pet as the Companion window (src/desktop/apps/companion.ts; the screen plane is added in engine/app.ts). Pressing it opens the window on the monitor — a room object as a second door. 2003 only."},

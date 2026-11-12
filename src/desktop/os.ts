@@ -46,6 +46,9 @@ import testimonyStrings from '../../data/dialog/s2_testimony.json';
 import forumStrings from '../../data/dialog/s2_forum.json';
 import ircDialog from '../../data/dialog/s1_irc.json';
 import { drawPixelIcon, hasPixelIcon } from './theme/icons';
+import { drawProfilePicture } from './theme/profileIcons';
+import { drawRestorifyWallpaper } from './theme/restorifyWallpaper';
+import { CAL_2003 } from './theme/calendar';
 import { setFaceEra } from './theme/fonts';
 import { IrcApp } from './apps/irc';
 import { KitApp } from './apps/kit';
@@ -451,12 +454,12 @@ export class DesktopOS {
   onMessageReady?: () => void;
   onSendResolve?: (id: string, outcome: 'visited' | 'declined') => void;
   /** `act`: a toast that is also a door (W1-D17 — Caleb's message): a press on it does the thing it names */
-  private _toast: { text: string; t: number; act?: 'message-open' } | null = null;
+  private _toast: { text: string; t: number; act?: 'message-open'; title?: string } | null = null;
   /** ⚑ W1-D17 — a door-toast is not talked over: the send offer's, the forum's and the era's own ambient toasts all
    *  wrote this one slot, and Caleb's message was gone within a second of landing (the Route sheet arrived with it —
    *  his W1-D16). Anything that clears it (null) or replaces it with another door still works. */
-  private get toast(): { text: string; t: number; act?: 'message-open' } | null { return this._toast; }
-  private set toast(v: { text: string; t: number; act?: 'message-open' } | null) {
+  private get toast(): { text: string; t: number; act?: 'message-open'; title?: string } | null { return this._toast; }
+  private set toast(v: { text: string; t: number; act?: 'message-open'; title?: string } | null) {
     if (this._toast?.act && v && !v.act && this._toast.t > 0) return;
     this._toast = v;
   }
@@ -476,6 +479,9 @@ export class DesktopOS {
   private hitsUnderStart: Hit[] = [];
   private kitToastShown = false;
   private behindToastShown = false;
+  /** ⚑ S376 (job 19 B, VISUAL_REVIEW #3) — 2003's status ("journey file migrated") is said ONCE, in an XP tray balloon
+   *  above the clock, on the first calm desktop of the era (it used to be printed on a navy slab across the top) */
+  private eraBalloonSaid = false;
   private behindToastAt = Infinity;
   private escalationFallbackAt = Infinity; // Rob escalates on this deadline if the player never flips
   /** ⚑ S226 / W1-C8 (cadence study 1.12, his "sounds okay") — the fallback's 24 s are counted only while the player is
@@ -1152,7 +1158,8 @@ export class DesktopOS {
       this.e2StageT = 0;
       if (!settled) { this.dirty = true; return; } // no toast, no chrome — the silence holds
     }
-    this.toast = { text: this.eraSkin().status, t: 6 };
+    this.toast = era === 'e2' ? { title: this.eraSkin().brand, text: this.eraSkin().status, t: 8 } : { text: this.eraSkin().status, t: 6 };
+    if (era === 'e2') this.eraBalloonSaid = true;
     this.dirty = true;
   }
 
@@ -2583,6 +2590,14 @@ export class DesktopOS {
     // Lamby's own clock — his appear-pop and idle fidget run whenever he is on
     // screen, in any of his windows (the debut, the notice, the video offer).
     if (this.phase === 'desktop' && this.lambyOnScreen) this.lambyPoseT += dt;
+    // ⚑ S376 — 2003's tray balloon: once, when the era's desktop is first calm (Restorify closed, nothing speaking)
+    if (this.reinterp && !this.eraBalloonSaid && this.phase === 'desktop' && this.desktopEra === 'e2' && this.e2Stage === 'active'
+        && !this.toast && this.idleSeconds > 2 && this.desktopIdle() && !this.startOpen && !this.saver && this.guideReady('era-balloon')) {
+      this.eraBalloonSaid = true;
+      const sk = this.eraSkin();
+      this.toast = { title: sk.brand, text: sk.status, t: 8 };
+      this.dirty = true;
+    }
     // ⚑ S226 (cadence study 1.11) — "look behind you" waits for the player to be quiet, not on Rob's last line or the picture
     if (!this.behindToastShown && this.t >= this.behindToastAt && this.idleSeconds > 6 && !this.yesOpen && this.guideReady('behind-toast')) {
       this.behindToastShown = true;
@@ -3070,7 +3085,10 @@ export class DesktopOS {
       ui.px(ctx, 0, 0, W, H, ERA1.black);
       return;
     }
-    ui.px(ctx, 0, 0, W, H, colors.bg);
+    // ⚑ S376 (job 19 B, VISUAL_REVIEW #3) — 2003 stands on Restorify's own OEM wallpaper (theme/restorifyWallpaper.ts),
+    //   not a flat titleBlue field
+    if (this.desktopEra === 'e2') drawRestorifyWallpaper(ctx, W, H);
+    else ui.px(ctx, 0, 0, W, H, colors.bg);
 
     if (this.desktopEra === 'e1') {
       // icons — the channel only exists once the kit has routed you there
@@ -3367,7 +3385,9 @@ export class DesktopOS {
     // that row is load-bearing by its own law (Leave and Pause live from frame
     // one, at a fixed position, every phase) — so an ambient system remark
     // yields to it and comes back when the card closes.
-    if (this.toast && !this.provotype?.open && !this.testimony?.playbackActive && !this.calebHoldsToasts) {   // W1-D7: never over his story's picture; W1-D14: nor over Caleb
+    if (this.toast?.title && xp && !this.provotype?.open && !this.testimony?.playbackActive && !this.calebHoldsToasts) {
+      this.drawTrayBalloon(W, H, this.toast.title, this.toast.text);
+    } else if (this.toast && !this.provotype?.open && !this.testimony?.playbackActive && !this.calebHoldsToasts) {   // W1-D7: never over his story's picture; W1-D14: nor over Caleb
       ui.setFont(ctx, 9);
       const tw = this.reinterp ? Math.min(W - 16, Math.ceil(ctx.measureText(this.toast.text).width) + 12)
         : ctx.measureText(this.toast.text).width + 12;
@@ -3418,19 +3438,69 @@ export class DesktopOS {
 
   }
 
+  /** ⚑ S376 (job 19 B, VISUAL_REVIEW #3) — XP's notification balloon over the tray clock: a cream bubble, a black rule,
+   *  corners stepped round, the tail pointing down at the clock, the blue (i), a bold heading and one line. Nothing to
+   *  press: it says its line and goes (the toast's own clock). */
+  private drawTrayBalloon(W: number, H: number, title: string, body: string): void {
+    const { ctx } = this;
+    ui.setFont(ctx, 10);
+    const t1 = Math.ceil(ctx.measureText(title).width);
+    ui.setFont(ctx, 9);
+    const t2 = Math.ceil(ctx.measureText(body).width);
+    const bw = Math.min(W - 16, Math.max(t1, t2) + 40), bh = 36;
+    const bx = W - bw - 6, by = H - 22 - 12 - bh;
+    const K = ERA1.black, F = ERA1.tooltip;
+    // the body, its corners cut two steps
+    ui.px(ctx, bx + 2, by, bw - 4, bh, K); ui.px(ctx, bx + 1, by + 1, bw - 2, bh - 2, K); ui.px(ctx, bx, by + 2, bw, bh - 4, K);
+    ui.px(ctx, bx + 2, by + 1, bw - 4, bh - 2, F); ui.px(ctx, bx + 1, by + 2, bw - 2, bh - 4, F);
+    // the tail: down and to the right, at the clock
+    const tx = W - 30;
+    for (let i = 0; i < 10; i++) {
+      const w = Math.max(1, 10 - i);
+      ui.px(ctx, tx - w + Math.floor(i / 2), by + bh - 1 + i, w + 2, 1, K);
+      if (w > 2) ui.px(ctx, tx - w + Math.floor(i / 2) + 1, by + bh - 1 + i, w, 1, F);
+    }
+    // the (i): a blue disc, a white letter
+    const gx = bx + 7, gy = by + 6;
+    for (const [dy, x0, w] of [[0, 3, 4], [1, 1, 8], [2, 1, 8], [3, 0, 10], [4, 0, 10], [5, 0, 10], [6, 0, 10], [7, 1, 8], [8, 1, 8], [9, 3, 4]]) {
+      ui.px(ctx, gx + x0, gy + dy, w, 1, ERA1.titleBlue);
+    }
+    ui.px(ctx, gx + 4, gy + 2, 2, 1, ERA1.white); ui.px(ctx, gx + 4, gy + 4, 2, 4, ERA1.white);
+    ui.setFont(ctx, 10); ctx.fillStyle = K; ctx.fillText(title, bx + 23, by + 6);
+    ui.setFont(ctx, 9); ctx.fillStyle = ERA1.greyDark; ctx.fillText(body, bx + 23, by + 20);
+  }
+
   private drawEraDesktopChrome(
     W: number,
     skin: { brand: string; status: string; icons: string[] },
     colors: { panel: string; text: string }
   ): void {
     const { ctx } = this;
-    ui.px(ctx, 26, 24, W - 52, 44, colors.panel);
-    ui.setFont(ctx, 16);
-    ctx.fillStyle = colors.text;
-    ctx.fillText(skin.brand, 42, 34);
-    ui.setFont(ctx, 9);
-    ctx.fillStyle = this.desktopEra === 'e4' ? ERA1.grey : ERA1.paper;
-    ctx.fillText(skin.status, 42, 56);
+    if (this.desktopEra === 'e2') {
+      // ⚑ S376 (job 19 B, VISUAL_REVIEW #3) — no slab: the brand is the wallpaper's OEM mark, bottom right, the way a
+      //   branded machine shipped; its status is said once in the tray balloon (see `eraBalloonSaid`)
+      //   (his ruling, 12 Nov: the wallpaper darker so the icons read — so the mark is white on the far hill's dark green,
+      //   with a navy drop shadow, under the setting sun)
+      const tag = (skin as { tagline?: string }).tagline ?? '';
+      ui.setFont(ctx, 22);
+      const bw = Math.ceil(ctx.measureText(skin.brand).width);
+      ctx.fillStyle = ERA1.navy; ctx.fillText(skin.brand, W - 18 - bw + 1, 258 + 1);
+      ctx.fillStyle = CAL_2003.brandShadow; ctx.fillText(skin.brand, W - 18 - bw, 258);
+      if (tag) {
+        ui.setFont(ctx, 10);
+        const tw = Math.ceil(ctx.measureText(tag).width);
+        ctx.fillStyle = ERA1.navy; ctx.fillText(tag, W - 18 - tw + 1, 284 + 1);
+        ctx.fillStyle = CAL_2003.sunCore; ctx.fillText(tag, W - 18 - tw, 284);
+      }
+    } else {
+      ui.px(ctx, 26, 24, W - 52, 44, colors.panel);
+      ui.setFont(ctx, 16);
+      ctx.fillStyle = colors.text;
+      ctx.fillText(skin.brand, 42, 34);
+      ui.setFont(ctx, 9);
+      ctx.fillStyle = this.desktopEra === 'e4' ? ERA1.grey : ERA1.paper;
+      ctx.fillText(skin.status, 42, 56);
+    }
     skin.icons.forEach((label, i) => {
       // S2R.1 dismissal law: Lamby does not return until the player opens
       // Restorify themselves — E2's own first icon IS already named
@@ -3563,8 +3633,12 @@ export class DesktopOS {
     // ⚑ S339 (his 8 Nov: "you cannot see the full name of the file… referral…") — a long name wraps onto a second
     //   line under the icon, as the period's desktop did, instead of being cut; only a third line's worth is clipped
     const rows = this.wrapIconLabel(label, this.desktopEra === 'e2' ? 50 : 70);
+    // ⚑ S376 — on 2003's wallpaper a label wears XP's dark drop shadow, so white type reads on sky and on grass
+    const shadow = enabled && this.desktopEra === 'e2';
+    const ink = ctx.fillStyle;
     rows.forEach((row, i) => {
       const tw = ctx.measureText(row).width;
+      if (shadow) { ctx.fillStyle = ERA1.black; ctx.fillText(row, Math.round(x + 18 - tw / 2) + 1, y + 20 + i * 10 + 1); ctx.fillStyle = ink; }
       ctx.fillText(row, Math.round(x + 18 - tw / 2), y + 20 + i * 10);
     });
     if (enabled) hits.push({ x, y, w: 38, h: rows.length > 1 ? 42 : 32, id });
@@ -3787,35 +3861,10 @@ export class DesktopOS {
     this.drawOpeningLeave(W, H);
   }
 
-  /** small pixel objects for the profile grid — era-true, none are people */
+  /** the profile grid's pictures — era-true, none are people. ⚑ S376 (job 19 B, VISUAL_REVIEW #2): six 32 × 32 icons in
+   *  the Win95 manner (theme/profileIcons.ts); the star and the moon used to be cream on cream, about 1.05 : 1 */
   private drawProfileIcon(x: number, y: number, id: string): void {
-    const p = (dx: number, dy: number, w: number, h: number, c: string): void =>
-      ui.px(this.ctx, x + dx, y + dy, w, h, c);
-    switch (id) {
-      case 'star':
-        p(10, 2, 4, 20, ERA1.tooltip); p(2, 10, 20, 4, ERA1.tooltip);
-        p(5, 5, 3, 3, ERA1.tooltip); p(16, 5, 3, 3, ERA1.tooltip);
-        p(5, 16, 3, 3, ERA1.tooltip); p(16, 16, 3, 3, ERA1.tooltip); break;
-      case 'tape':
-        p(2, 6, 20, 12, ERA1.beige); p(2, 6, 20, 2, ERA1.navy);
-        p(6, 11, 4, 4, ERA1.black); p(14, 11, 4, 4, ERA1.black); break;
-      case 'flower':
-        p(10, 4, 4, 4, ERA1.warn); p(10, 16, 4, 4, ERA1.warn);
-        p(4, 10, 4, 4, ERA1.warn); p(16, 10, 4, 4, ERA1.warn);
-        p(10, 10, 4, 4, ERA1.tooltip); p(11, 16, 2, 6, ERA1.olive); break;
-      case 'bird':
-        p(6, 9, 12, 6, ERA1.titleBlue); p(13, 6, 6, 5, ERA1.titleBlue);
-        p(18, 8, 4, 2, ERA1.warn); p(8, 10, 6, 3, ERA1.navy); p(2, 10, 5, 3, ERA1.titleBlue); break;
-      case 'heart':
-        p(5, 6, 6, 6, ERA1.warn); p(13, 6, 6, 6, ERA1.warn);
-        p(6, 10, 12, 4, ERA1.warn); p(8, 13, 8, 3, ERA1.warn); p(10, 16, 4, 2, ERA1.warn); break;
-      case 'moon': // a C-shaped crescent (open to the right)
-        p(9, 2, 7, 3, ERA1.tooltip); p(6, 4, 4, 4, ERA1.tooltip);
-        p(5, 8, 4, 6, ERA1.tooltip); p(6, 14, 4, 4, ERA1.tooltip);
-        p(9, 17, 7, 3, ERA1.tooltip); break;
-      default:
-        p(4, 4, 16, 16, ERA1.silver);
-    }
+    drawProfilePicture(this.ctx, x, y, id);
   }
 
   /** O3 — profile creation: name pre-filled, pick icon + 3 chips + 1 goal */
@@ -3847,7 +3896,7 @@ export class DesktopOS {
       const boxX = cellX + 12, boxY = iconRowY, boxS = 40;
       ui.bevel(ctx, boxX, boxY, boxS, boxS, true);
       ui.px(ctx, boxX + 2, boxY + 2, boxS - 4, boxS - 4, ERA1.paper);
-      this.drawProfileIcon(boxX + 8, boxY + 6, ic.id);
+      this.drawProfileIcon(boxX + 4, boxY + 4, ic.id);   // S376: a 32 px picture in the 36 px well
       if (this.profileIcon === ic.id) { // selection ring
         ui.px(ctx, boxX - 1, boxY - 1, boxS + 2, 2, ERA1.navy);
         ui.px(ctx, boxX - 1, boxY + boxS - 1, boxS + 2, 2, ERA1.navy);

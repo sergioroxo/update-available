@@ -6,11 +6,16 @@
  */
 import { HEAD, type Os, type Skin, type View } from './skins';
 import type { Rect } from './layout';
+import { ERA1 } from '../../desktop/theme/era1';
+import menuStrings from '../../../data/strings/gameMenu.json';
 
 export interface Hit extends Rect { id: string; tip: string }
 export interface DrawEnv { ctx: CanvasRenderingContext2D; skin: Skin; W: number; H: number; hits: Hit[]; hover: string }
 
 const D = HEAD.dialog;
+/** ⚑ S376 — the close button, the same in every year's skin so it is never hunted for: red, a white ✕, the word */
+const CLOSE_RED = ERA1.warn, CLOSE_INK = ERA1.white, CLOSE_EDGE = ERA1.warnDark;
+const CLOSE_LABEL = (menuStrings as { sitesCloseLabel?: string }).sitesCloseLabel ?? '';
 
 export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
   ctx.beginPath();
@@ -119,14 +124,30 @@ export function drawWindow(e: DrawEnv, title: string, years: { id: string; label
     tt = { x: 44, y: TITLE_H / 2, font: `600 20px ${skin.font}`, color: c.titleInk };
   }
   // ── minimise and close ──
+  // ⚑ S376 (UiB job 19 B; his ruling on Part A, 12 Nov: the website a Close panel opens "well visible and easy to
+  //   close") — the close is an obvious button now: wider, red in every year's skin, a big ✕ and the word Close
+  //   (gameMenu.json `sitesCloseLabel`); Esc closes it on a computer, B / Y or a press outside it in the headset
   const bw = 46, bh = skin.os === 'w95' ? 32 : 34, by = skin.os === 'w95' ? B + 1 : (TITLE_H - bh) / 2, rx = W - B - 6;
-  const closeR = { x: rx - bw, y: by, w: bw, h: bh }, minR = { x: rx - bw * 2 - 8, y: by, w: bw, h: bh };
+  const cw = compact ? 64 : 124;
+  const closeR = { x: rx - cw, y: by, w: cw, h: bh }, minR = { x: rx - cw - bw - 8, y: by, w: bw, h: bh };
   // the title is cut to the room before the buttons, never under them
   ctx.font = tt.font;
   text(ctx, ellipsis(ctx, title, minR.x - tt.x - 12), tt.x, tt.y, tt.font, tt.color);
   const wbtn = (r: Rect, kind: 'min' | 'close', id: string, tip: string): void => {
     const hover = e.hover === id;
     const isClose = kind === 'close';
+    if (isClose) {
+      roundRect(ctx, r.x, r.y, r.w, r.h, skin.os === 'w95' ? 2 : 6); ctx.fillStyle = CLOSE_RED; ctx.fill();
+      ctx.strokeStyle = hover ? CLOSE_INK : CLOSE_EDGE; ctx.lineWidth = hover ? 4 : 2; ctx.stroke();
+      const lab = compact ? '' : CLOSE_LABEL;
+      ctx.font = `700 19px ${skin.font}`;
+      const lw = lab ? ctx.measureText(lab).width + 10 : 0;
+      const gx = r.x + (r.w - lw - 20) / 2 + 10;
+      glyph(ctx, 'close', gx, r.y + r.h / 2, CLOSE_INK, 9);
+      if (lab) text(ctx, lab, gx + 20, r.y + r.h / 2 + 1, `700 19px ${skin.font}`, CLOSE_INK);
+      e.hits.push({ ...r, id, tip });
+      return;
+    }
     if (skin.os === 'w95') {
       ctx.fillStyle = D.panel; ctx.fillRect(r.x, r.y, r.w, r.h); bevel(ctx, r.x, r.y, r.w, r.h, hover, 3);
       glyph(ctx, kind, r.x + r.w / 2 + (hover ? 2 : 0), r.y + r.h / 2 + (hover ? 2 : 0), D.ink);

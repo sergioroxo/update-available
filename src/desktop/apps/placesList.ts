@@ -30,15 +30,39 @@ export class PlacesListApp implements TaskSurface {
   version(): number { return this.v; }
   complete(): boolean { return this.by !== null; }
 
+  /** ⚑ S376 (job 19 B, VISUAL_REVIEW #10) — the tile's picture is what the job does: a street map of the town with
+   *  places flagged on it, one of them red (the place she is asked to list). Once listed, the red pin is struck
+   *  through. A flat 2016 picture in ERA3's colours; it used to be grey bars. */
   thumb(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    ctx.save();
     px(ctx, x, y, w, h, ERA3.sysBand);
-    const rows = Math.max(2, Math.min(5, Math.floor((h - 6) / 11)));
-    for (let i = 0; i < rows; i++) {
-      const ry = y + 4 + i * 11;
-      px(ctx, x + 4, ry, w - 8, 8, ERA3.white);
-      px(ctx, x + 4, ry, 2, 8, i === rows - 1 ? (this.by ? ERA3.alarm : ERA3.amber) : ERA3.alarm);
-      px(ctx, x + 10, ry + 3, Math.min(w - 20, 30 + ((i * 17) % 28)), 2, ERA3.grey);
-    }
+    // the water along the bottom, a quay's edge
+    ctx.fillStyle = ERA3.glassEdge;
+    ctx.beginPath(); ctx.moveTo(x, y + h * 0.78); ctx.quadraticCurveTo(x + w * 0.45, y + h * 0.62, x + w, y + h * 0.84);
+    ctx.lineTo(x + w, y + h); ctx.lineTo(x, y + h); ctx.closePath(); ctx.fill();
+    // a park, the streets (two avenues, a cross street, one on the diagonal)
+    px(ctx, x + Math.round(w * 0.56), y, Math.round(w * 0.2), Math.round(h * 0.26), ERA3.good);
+    const sw = Math.max(2, Math.round(h * 0.09));
+    ctx.fillStyle = ERA3.white;
+    for (const fx of [0.2, 0.5, 0.8]) ctx.fillRect(x + Math.round(w * fx), y, sw, Math.round(h * 0.8));
+    ctx.fillRect(x, y + Math.round(h * 0.3), w, sw);
+    ctx.strokeStyle = ERA3.white; ctx.lineWidth = sw;
+    ctx.beginPath(); ctx.moveTo(x + w * 0.02, y + h * 0.05); ctx.lineTo(x + w * 0.42, y + h * 0.7); ctx.stroke();
+    // the pins: two places already on the list, and the one in her member's post
+    const r = Math.max(2.5, h * 0.13);
+    const pin = (cx: number, cy: number, col: string, struck = false): void => {
+      ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(cx, cy - r * 1.7, r, Math.PI * 0.85, Math.PI * 2.15); ctx.lineTo(cx, cy); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = ERA3.white; ctx.beginPath(); ctx.arc(cx, cy - r * 1.7, r * 0.42, 0, Math.PI * 2); ctx.fill();
+      if (struck) {
+        ctx.strokeStyle = ERA3.ink; ctx.lineWidth = Math.max(1, r * 0.35);
+        ctx.beginPath(); ctx.moveTo(cx - r * 1.4, cy - r * 3.1); ctx.lineTo(cx + r * 1.4, cy - r * 0.3); ctx.stroke();
+      }
+    };
+    pin(x + w * 0.3, y + h * 0.62, ERA3.amber);
+    pin(x + w * 0.88, y + h * 0.5, ERA3.amber);
+    pin(x + w * 0.64, y + h * 0.74, this.by ? ERA3.grey : ERA3.alarm, !!this.by);
+    ctx.restore();
   }
 
   draw(ctx: CanvasRenderingContext2D, a: TaskArea, hit: (r: TaskHit) => void): void {

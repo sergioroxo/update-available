@@ -273,15 +273,23 @@ export function clearBatch(
  */
 export function cullAbsentProps(room: RoomHandles, joined: ReadonlySet<string> | null): number {
   let hidden = 0;
+  const apply = (mis: pc.MeshInstance[], absent: boolean): void => {
+    for (const mi of mis) {
+      if (absent) { if (mi.visible) { mi.visible = false; hiddenAbsent.add(mi); } hidden++; }
+      else if (hiddenAbsent.delete(mi)) mi.visible = true;
+    }
+  };
   for (const [id, h] of room.props) {
     if (h.model || h.composite || joined?.has(id)) continue;
     const mis = h.entity.render?.meshInstances;
     if (!mis) continue;
     const absent = !hasDrawableScale(h.entity);
-    for (const mi of mis) {
-      if (absent) { if (mi.visible) { mi.visible = false; hiddenAbsent.add(mi); } hidden++; }
-      else if (hiddenAbsent.delete(mi)) mi.visible = true;
-    }
+    apply(mis, absent);
+    // ⚑ S377 — and a box prop's CHILDREN: its print (calendarPage.ts attachPrintToBox — a poster, a window's view)
+    //   is a plane parented to the box, so a removed poster's print stayed a culled-in zero-area draw in every later
+    //   era (measured: 1997's night view, removed at r2, was one more draw in 2003). No allocation: a box prop's
+    //   children are only ever its print.
+    for (const c of h.entity.children) { const r = (c as pc.Entity).render; if (r) apply(r.meshInstances, absent); }
   }
   return hidden;
 }

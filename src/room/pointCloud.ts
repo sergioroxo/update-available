@@ -50,7 +50,7 @@ import { ERA1 } from '../desktop/theme/era1';
 import { ERA3 } from '../desktop/theme/era3';
 import { ERA4 } from '../desktop/theme/era4';
 import { px, setFont } from '../desktop/theme/chrome';
-import { setFaceEra, faceEra, type FaceEra } from '../desktop/theme/fonts';
+import { setFaceEra, faceEra, type FaceEra, FACES, fontsReady } from '../desktop/theme/fonts';
 
 const P = clusterData.pointCloud;
 /** S358 / H19 — the seat's eye height (app.ts EYE.y): the Close's panels lean to face it */
@@ -184,6 +184,13 @@ export interface SightCorridor {
   /** the glass plane's z, the silhouette's centre x and half-width, its y range */
   z: number; x: number; hx: number; yLo: number; yHi: number;
   dim: number;
+  /** ⚑ S377 / VISUAL_REVIEW #5 — the Restart card is up: the constellation RECEDES — its labels fade, its link lines
+   *  go, the stars stay (dimmed by `dim`). The end card is the piece's last image. */
+  recede?: boolean;
+  /** ⚑ S377 — fold the PANELS off the sight-line too (default true). False while the machine only stands dark in the
+   *  sky under the 1997 panel being read: labels, links and stars keep off it, the panel being read stays (unchanged
+   *  from before: panels only ever folded once the machine was lit). */
+  panels?: boolean;
 }
 
 export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entity): PointCloud {
@@ -414,7 +421,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   /** ⚑ S174 / R4-15 — each star mesh keeps its centres and its full vertex list,
    *  so a star on the sight-line to the machine can be folded to a point and
    *  given back when the line moves off it. One rewrite per CHANGE, not per frame. */
-  const starTiers: { mesh: pc.Mesh; centers: number[][]; full: number[]; hidden: Uint8Array }[] = [];
+  const starTiers: { mesh: pc.Mesh; centers: number[][]; full: number[]; hidden: Uint8Array; half: number; aspect: number }[] = [];
   /** …and the apparatus's link lines, two vertices a segment (the receipt had one
    *  running diagonally through its text) */
   let linkMeshRef: pc.Mesh | null = null;
@@ -440,7 +447,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     warmMats.push(mat);
     const full: number[] = [];
     const mesh = cubesMesh(app.graphicsDevice, byTone[t], personHalf, P.personSlotAspect, full);
-    starTiers.push({ mesh, centers: byTone[t], full, hidden: new Uint8Array(byTone[t].length) });
+    starTiers.push({ mesh, centers: byTone[t], full, hidden: new Uint8Array(byTone[t].length), half: personHalf, aspect: P.personSlotAspect });
     const e = new pc.Entity(`cloud-person-${t}`);
     e.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, mat)] });
     root.addChild(e);
@@ -458,7 +465,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   const apparatusEnt = new pc.Entity('cloud-apparatus');
   const apparatusFull: number[] = [];
   const apparatusMesh = cubesMesh(app.graphicsDevice, apparatusNodes, apparatusHalf, 1, apparatusFull);
-  starTiers.push({ mesh: apparatusMesh, centers: apparatusNodes, full: apparatusFull, hidden: new Uint8Array(apparatusNodes.length) });
+  starTiers.push({ mesh: apparatusMesh, centers: apparatusNodes, full: apparatusFull, hidden: new Uint8Array(apparatusNodes.length), half: apparatusHalf, aspect: 1 });
   apparatusEnt.addComponent('render', { meshInstances: [new pc.MeshInstance(apparatusMesh, apparatusMat)] });
   root.addChild(apparatusEnt);
 
@@ -488,6 +495,8 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   // (close_network.json). ──
   const labelCenters = new Float32Array(labels.length * 3);
   const labelWidths = new Float32Array(labels.length);
+  /** ⚑ S377 — which labels the sight-line has folded this frame (published by __closeLabels for the checks) */
+  const labelFolded = new Uint8Array(labels.length);
   let labelMesh: pc.Mesh | null = null;
   let labelVertexData: Float32Array | null = null;
   let labelPositionOffset = 0;
@@ -660,7 +669,13 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   /** S177 / R4-30 — the Sources button's rect in the cell (px), bottom right, on the hint's line */
   const SRC_BTN = { x: CELL_W - 40 - 300, y: CELL_H - 48 - 39, w: 300, h: 78 };
   const TEXT_W = CELL_W - TEXT_X - 44;
-  const READING_FACE = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+  // ⚑ S376 (UiB job 19 Part B, VISUAL_REVIEW_2026-11-12 #4) — the piece's own faces (job 18), not the machine's: the
+  //   Close's own face (FACES.close, Fixedsys Excelsior) for the title, the paragraph and the small lines.
+  //   "Helvetica Neue / monospace" resolved differently on every machine. His ruling on Part A (12 Nov, T71): "the
+  //   Close panels' paragraphs in Fixedsys" — so the reading face IS the Close's face; S146's 28 px floor still holds
+  //   (the fit below steps the size down only while it stays above it).
+  const CLOSE_FACE = FACES.close.family;
+  const READING_FACE = CLOSE_FACE;
   const wrap = (c: CanvasRenderingContext2D, text: string, maxW: number): string[] => {
     const out: string[] = [];
     let line = '';
@@ -672,6 +687,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     return out;
   };
   if (panels.length > 0) {
+    let ptexRef: pc.Texture | null = null;
     const pcan = document.createElement('canvas');
     pcan.width = CELL_W;
     pcan.height = CELL_H * panels.length;
@@ -694,7 +710,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         pc2.fillStyle = P.backdrop;
         pc2.fillRect(TEXT_X - 24, y0 + 14, CELL_W - (TEXT_X - 24), CELL_H - 22);
         pc2.globalAlpha = 1;
-        pc2.font = 'bold 54px monospace';
+        pc2.font = `54px ${CLOSE_FACE}`;
         pc2.fillStyle = P.labelColor;
         pc2.fillText(`${panel.years}  ·  ${panel.title}`, TEXT_X, y0 + 96);
         // ⚑ the paragraph FITS its column (2026-09-13, Sérgio: "the text on top of
@@ -732,7 +748,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
           //   cell, so the 1997 panel carried 2026's lines twice over and the
           //   others carried none (Sérgio's Close frame, 09-17; OPEN_ITEMS R3-114)
           let my = y0 + TOP + rows.length * lineH + 30;
-          pc2.font = '22px monospace';
+          pc2.font = `22px ${CLOSE_FACE}`;
           pc2.fillStyle = P.link;
           pc2.fillText(P.panelMineLabel, TEXT_X, my);
           my += 30;
@@ -779,10 +795,17 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         drawPlate(i);
         drawText(panel, i, lastLines[i]);
         // ⚑ S175: the way in to its sources, said once, small, in the web's blue
-        pc2.font = '24px monospace';
+        // ⚑ S376 (job 19 B, VISUAL_REVIEW #4) — wrapped into the space LEFT of the Sources button, beside it on its
+        //   centre line: drawn on one line it ran under the button and every panel read "…on this panel to ope"
+        pc2.font = `24px ${CLOSE_FACE}`;
         pc2.fillStyle = P.link;
         pc2.textBaseline = 'middle';
-        pc2.fillText(closeCard.source.panelHint, TEXT_X, y0 + CELL_H - 48);
+        {
+          const hintW = SRC_BTN.x - TEXT_X - 28;
+          const rows = wrap(pc2, closeCard.source.panelHint, hintW);
+          const lh = 30, mid = y0 + SRC_BTN.y + SRC_BTN.h / 2;
+          rows.forEach((row, li) => pc2.fillText(row, TEXT_X, Math.round(mid + (li - (rows.length - 1) / 2) * lh)));
+        }
         drawSourcesButton(panel.era, y0);
       };
       /**
@@ -868,6 +891,12 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       panelEra = panels.map((pn) => pn.era);
       panelShowEra = panels.map((pn) => pn.era);
       panels.forEach((panel, i) => drawStoryCell(panel, i));
+      // ⚑ S376 — the faces are vendored files: if the cloud is built before they have loaded, the cells are drawn
+      //   again once they have (the S373 law: a canvas keeps the pixels of the face it first drew)
+      void fontsReady().then(() => {
+        panels.forEach((panel, i) => { if (panelFace[i] < 0) drawStoryCell(panel, i); });
+        ptexRef?.upload();
+      });
       showPanel = (i: number): void => {
         if (panelFace[i] < 0) drawStoryCell(panels[i], i);
         else drawDossierCell(i);
@@ -892,6 +921,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         addressU: pc.ADDRESS_CLAMP_TO_EDGE, addressV: pc.ADDRESS_CLAMP_TO_EDGE
       });
       ptex.setSource(pcan);
+      ptexRef = ptex;
       // the room plates, composited in as they load — one re-upload each
       panels.forEach((panel, i) => {
         if (!panel.image) return;
@@ -969,7 +999,10 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     const M = root.getWorldTransform();
     return labels.map((_, i) => {
       const w = M.transformPoint(new pc.Vec3(labelCenters[i * 3], labelCenters[i * 3 + 1], labelCenters[i * 3 + 2]));
-      return { i, era: entries[i].era, text: entries[i].text, x: w.x, y: w.y, z: w.z, w: labelWidths[i] };
+      const sc = root.getLocalScale().x;
+      // S377: its world half-size, and whether the sight-line folded it this frame (tools/s377-close-check.mjs)
+      return { i, era: entries[i].era, text: entries[i].text, x: w.x, y: w.y, z: w.z, w: labelWidths[i],
+        hw: (labelWidths[i] / 2) * sc, hh: (P.labelHeight / 2) * sc, folded: labelFolded[i] === 1, receded: recedeK };
     });
   };
   // ⚑ S175 review aid (read-only, like __closePanelSizes): where each panel hangs
@@ -1046,6 +1079,9 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   const invRoot = new pc.Mat4();
   const lp0 = new pc.Vec3(), lp1 = new pc.Vec3(), ld = new pc.Vec3(), lh = new pc.Vec3();
   let corridor: SightCorridor | null = null;
+  /** ⚑ S377 — how far the labels and links have receded for the Restart card, 0…1 (eased in `update`) */
+  let recedeK = 0;
+  const RECEDE_SECONDS = 1.2;
   const lw = new pc.Vec3();
   const sw = new pc.Vec3();
 
@@ -1062,6 +1098,56 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     const hx = e.x + (x - e.x) * s;
     const hy = e.y + (y - e.y) * s;
     return Math.abs(hx - c.x) <= c.hx + margin && hy >= c.yLo - margin && hy <= c.yHi + margin;
+  }
+
+  /**
+   * ⚑ S377 / VISUAL_REVIEW #5 — R4-15 REGRESSED, and this is half of why. `onSight` asks whether a thing's CENTRE lands
+   * on the machine, give or take a fixed margin; but a label 30 cm from the eye covers five times its own width of the
+   * machine, and at the Restart card one did — "van den Aardweg", blown up across the bezel, the piece's last image. So:
+   * the thing's own half-size (`hw` × `hh`, world metres) is projected with it into the glass plane, from the eye, and
+   * its RECTANGLE there is tested against the silhouette (± `pad`). Near things are judged by what they cover.
+   */
+  function quadOnSight(x: number, y: number, z: number, hw: number, hh: number, pad: number, behind = 0.05): boolean {
+    const c = corridor;
+    if (!c) return false;
+    const e = c.eye;
+    if (z >= e.z - 0.02 || z < c.z - behind) return false;
+    const s = (c.z - e.z) / (z - e.z);
+    const px = e.x + (x - e.x) * s, py = e.y + (y - e.y) * s;
+    const ex = hw * s + pad, ey = hh * s + pad;
+    return px + ex >= c.x - c.hx && px - ex <= c.x + c.hx && py + ey >= c.yLo && py - ey <= c.yHi;
+  }
+  /**
+   * ⚑ S377 — …and a LINK is a segment, not five sample points (a near link could pass between two samples): clipped to
+   * the slab between the eye and just past the glass, both ends projected into the glass plane from the eye (a line
+   * stays a line), and that 2D segment clipped against the padded silhouette (Liang–Barsky). Exact, and allocation-free.
+   */
+  function segOnSight(ax: number, ay: number, az: number, bx: number, by: number, bz: number, pad: number, behind = 0.05): boolean {
+    const c = corridor;
+    if (!c) return false;
+    const e = c.eye, zNear = e.z - 0.02, zFar = c.z - behind, dz = bz - az;
+    let t0 = 0, t1 = 1;
+    if (Math.abs(dz) < 1e-9) { if (az > zNear || az < zFar) return false; }
+    else {
+      let ta = (zFar - az) / dz, tb = (zNear - az) / dz;
+      if (ta > tb) { const q = ta; ta = tb; tb = q; }
+      t0 = Math.max(t0, ta); t1 = Math.min(t1, tb);
+      if (t0 > t1) return false;
+    }
+    const z0 = az + dz * t0, z1 = az + dz * t1;
+    const s0 = (c.z - e.z) / (z0 - e.z), s1 = (c.z - e.z) / (z1 - e.z);
+    const x0 = e.x + (ax + (bx - ax) * t0 - e.x) * s0, y0 = e.y + (ay + (by - ay) * t0 - e.y) * s0;
+    const x1 = e.x + (ax + (bx - ax) * t1 - e.x) * s1, y1 = e.y + (ay + (by - ay) * t1 - e.y) * s1;
+    const dx = x1 - x0, dy = y1 - y0;
+    let u0 = 0, u1 = 1;
+    const clip = (p: number, q: number): boolean => {
+      if (Math.abs(p) < 1e-12) return q >= 0;
+      const r = q / p;
+      if (p < 0) { if (r > u1) return false; if (r > u0) u0 = r; } else { if (r < u0) return false; if (r < u1) u1 = r; }
+      return true;
+    };
+    return clip(-dx, x0 - (c.x - c.hx - pad)) && clip(dx, c.x + c.hx + pad - x0)
+      && clip(-dy, y0 - (c.yLo - pad)) && clip(dy, c.yHi + pad - y0);
   }
 
   /** fold every vertex of a hidden group onto that group's centre (a point
@@ -1092,6 +1178,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
    *  rewritten only when it CHANGES (a star crossing in or out), not per frame. */
   function applySight(): void {
     const M = root.getWorldTransform();
+    const rs = root.getLocalScale().x;   // the root's own (uniform) scale: sizes in its space are this much bigger in the world
     for (const tier of starTiers) {
       let changed = false;
       for (let i = 0; i < tier.centers.length; i++) {
@@ -1099,7 +1186,8 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         if (corridor) {
           const c = tier.centers[i];
           M.transformPoint(sw.set(c[0], c[1], c[2]), sw);
-          h = onSight(sw.x, sw.y, sw.z, 0.06) ? 1 : 0;
+          const hs = tier.half * (c[3] ?? 1) * rs;   // S377: the star's own size, projected with it
+          h = quadOnSight(sw.x, sw.y, sw.z, hs, hs * tier.aspect, 0.03) ? 1 : 0;
         }
         if (h !== tier.hidden[i]) { tier.hidden[i] = h; changed = true; }
       }
@@ -1110,15 +1198,11 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       for (let i = 0; i < linkHidden.length; i++) {
         let h = 0;
         if (corridor) {
+          // S377: the whole segment, projected (it was both ends and three points between)
           const a = i * 6;
-          for (let k = 0; k <= 4 && !h; k++) {   // both ends and three points between
-            const t = k / 4;
-            M.transformPoint(sw.set(
-              linkFull[a] + (linkFull[a + 3] - linkFull[a]) * t,
-              linkFull[a + 1] + (linkFull[a + 4] - linkFull[a + 1]) * t,
-              linkFull[a + 2] + (linkFull[a + 5] - linkFull[a + 2]) * t), sw);
-            if (onSight(sw.x, sw.y, sw.z, 0.04)) h = 1;
-          }
+          M.transformPoint(sw.set(linkFull[a], linkFull[a + 1], linkFull[a + 2]), sw);
+          M.transformPoint(lw.set(linkFull[a + 3], linkFull[a + 4], linkFull[a + 5]), lw);
+          h = segOnSight(sw.x, sw.y, sw.z, lw.x, lw.y, lw.z, 0.03) ? 1 : 0;
         }
         if (h !== linkHidden[i]) { linkHidden[i] = h; changed = true; }
       }
@@ -1127,7 +1211,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     if (panelMesh) {
       for (let i = 0; i < panelFrames.length; i++) {
         let h = 0;
-        if (corridor) {
+        if (corridor && corridor.panels !== false) {   // S377: not while the machine only stands dark in the sky
           // a panel is big: sample it on a 3 × 3 grid; one sitting just past
           // the glass still hangs across the machine's top, so it counts too
           const f = panelFrames[i];
@@ -1228,17 +1312,20 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     const halfHeight = P.labelHeight / 2;
 
     const rootM = corridor ? root.getWorldTransform() : null;
+    const rs = root.getLocalScale().x;
     for (let li = 0; li < labels.length; li++) {
       const centerAt = li * 3;
       const centerX = labelCenters[centerAt];
       const centerY = labelCenters[centerAt + 1];
       const centerZ = labelCenters[centerAt + 2];
       let halfWidth = labelWidths[li] / 2;
+      labelFolded[li] = 0;
       if (rootM && corridor) {
         // S167: a label on the sight-line to the machine collapses to nothing
         //   (S174: the sight-line, not a box — see SightCorridor)
+        // S377: by the rectangle it covers there, its own size projected with it (quadOnSight)
         rootM.transformPoint(lw.set(centerX, centerY, centerZ), lw);
-        if (onSight(lw.x, lw.y, lw.z, labelWidths[li] / 2)) halfWidth = 0;
+        if (quadOnSight(lw.x, lw.y, lw.z, (labelWidths[li] / 2) * rs, halfHeight * rs, 0.03)) { halfWidth = 0; labelFolded[li] = 1; }
       }
 
       for (let corner = 0; corner < 4; corner++) {
@@ -1271,12 +1358,14 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     apparatusMat.opacity = level;
     apparatusMat.update();
     // the apparatus's own link web — crisp, traceable
-    linkMat.emissive.set(linkColor.r * level, linkColor.g * level, linkColor.b * level);
-    linkMat.opacity = level * P.linkOpacity;
+    // S377: and both it and the labels recede while the Restart card is up (the stars stay)
+    const rk = recedeK * recedeK * (3 - 2 * recedeK), keep = 1 - rk;
+    linkMat.emissive.set(linkColor.r * level * keep, linkColor.g * level * keep, linkColor.b * level * keep);
+    linkMat.opacity = level * P.linkOpacity * keep;
     linkMat.update();
-    const ll = level * 1.25; // a touch over 1 so the text holds against the sky
+    const ll = level * 1.25 * keep; // a touch over 1 so the text holds against the sky
     labelMat.emissive.set(ll, ll, ll);
-    labelMat.opacity = level;
+    labelMat.opacity = level * keep;
     labelMat.update();
     // the four panels, on the same ramp — they arrive with the sky, not after it
     // (and never dim for the corridor: they are the reading, not the weather)
@@ -1322,6 +1411,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       openK = 0;
       fadeLevel = 0;
       corridor = null;
+      recedeK = 0;
       applySight();   // S174: every folded star and panel back, for the next Close
       // S175: and every panel back to its room's face
       panelFace.forEach((f, i) => { if (f >= 0) { panelFace[i] = -1; panelShowEra[i] = panelEra[i]; panelLabel[i] = null; showPanel?.(i); } });
@@ -1335,7 +1425,10 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     get visible(): boolean { return visible; },
     update(dt: number): void {
       if (!visible) return;
-      if (fadeLevel < 1) {
+      const recedeTo = corridor?.recede ? 1 : 0;
+      const receding = recedeK !== recedeTo;
+      if (receding) recedeK = recedeTo > recedeK ? Math.min(1, recedeK + dt / RECEDE_SECONDS) : Math.max(0, recedeK - dt / RECEDE_SECONDS);
+      if (fadeLevel < 1 || receding) {
         fadeLevel = Math.min(1, fadeLevel + dt / P.fadeSeconds);
         applyFade();
       }
@@ -1404,7 +1497,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     panelEraOf(i: number): number { return panelEra[i] ?? i + 1; },
     labelAt(p0, p1, tMax = Infinity): { era: number; text: string } | null {
       const camera = viewCamera?.() ?? app.systems.camera?.cameras[0]?.entity;
-      if (!visible || !camera || fadeLevel < 0.5 || labels.length === 0) return null;
+      if (!visible || !camera || fadeLevel < 0.5 || recedeK > 0.5 || labels.length === 0) return null;   // S377: not once receded
       const M = root.getWorldTransform();
       const sc = root.getLocalScale().x;
       const dx = p1.x - p0.x, dy = p1.y - p0.y, dz = p1.z - p0.z;
@@ -1414,7 +1507,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       let best = -1, bestT = Infinity;
       for (let i = 0; i < labels.length; i++) {
         M.transformPoint(sw.set(labelCenters[i * 3], labelCenters[i * 3 + 1], labelCenters[i * 3 + 2]), sw);
-        if (corridor && onSight(sw.x, sw.y, sw.z, labelWidths[i] / 2)) continue;   // folded away
+        if (labelFolded[i]) continue;   // folded away (S377: as the billboard pass last folded it)
         const t = ((sw.x - p0.x) * dx + (sw.y - p0.y) * dy + (sw.z - p0.z) * dz) / dd;
         if (t <= 0 || t >= bestT || t > tMax) continue;   // W1-G2: nothing past the glass answers for it
         const ox = sw.x - (p0.x + dx * t), oy = sw.y - (p0.y + dy * t), oz = sw.z - (p0.z + dz * t);
@@ -1455,6 +1548,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     holdDrift(seconds: number): void { holdT = Math.max(holdT, seconds); },
     setClearCorridor(c): void {
       const same = (c === null && corridor === null) || (!!c && !!corridor && c.dim === corridor.dim && c.hx === corridor.hx
+        && !!c.recede === !!corridor.recede && (c.panels !== false) === (corridor.panels !== false)
         && c.yLo === corridor.yLo && c.yHi === corridor.yHi && c.z === corridor.z
         && Math.abs(c.eye.x - corridor.eye.x) < 1e-3 && Math.abs(c.eye.y - corridor.eye.y) < 1e-3 && Math.abs(c.eye.z - corridor.eye.z) < 1e-3);
       if (same) return;

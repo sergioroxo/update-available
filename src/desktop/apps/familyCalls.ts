@@ -143,26 +143,56 @@ export class FamilyCallsApp implements TaskSurface {
     //   a line of her message at +17 regardless, so the names sat on top of the
     //   words. Below 22 px a row it draws the name alone; the picture degrades
     //   instead of colliding.
+    // ⚑ S376 (job 19 B, VISUAL_REVIEW #10) — and a phone with its count of calls still waiting, so the picture says
+    //   "people are waiting" at a glance: the handset in a blue disc, a red badge, the messages beside it with the rose
+    //   spine of a person speaking (it used to be the stack alone, grey bars with a coloured tick)
     px(ctx, x, y, w, h, ERA3.sysBand);
+    const waiting = PARENTS.filter((p) => !this.outcomes.has(p.id)).length;
+    const d = Math.min(h - 6, Math.round(w * 0.28));
+    const dcx = x + 4 + d / 2, dcy = y + h / 2;
+    ctx.save();
+    ctx.fillStyle = waiting ? ERA3.accent : ERA3.grey;
+    ctx.beginPath(); ctx.arc(dcx, dcy, d / 2, 0, Math.PI * 2); ctx.fill();
+    // the handset, tilted: earpiece up-left, mouthpiece down-right, the grip between them (drawn as a "[" and turned)
+    ctx.save();
+    ctx.translate(dcx, dcy); ctx.rotate(-Math.PI / 4); ctx.scale(d / 24, d / 24);
+    ctx.fillStyle = ERA3.white; ctx.strokeStyle = ERA3.white; ctx.lineCap = 'butt';
+    ctx.lineWidth = 3.6;
+    ctx.beginPath(); ctx.arc(5, 0, 8.5, Math.PI * 0.7, Math.PI * 1.3); ctx.stroke();      // the grip, curved
+    ctx.beginPath(); ctx.roundRect(-3.2, -10, 9, 5.2, 2.4); ctx.fill();                  // the earpiece
+    ctx.beginPath(); ctx.roundRect(-3.2, 4.8, 9, 5.2, 2.4); ctx.fill();                  // the mouthpiece
+    ctx.restore();
+    if (waiting) {
+      const br = Math.max(4, d * 0.2);
+      ctx.fillStyle = ERA3.alarm;
+      ctx.beginPath(); ctx.arc(dcx + d * 0.36, dcy - d * 0.36, br, 0, Math.PI * 2); ctx.fill();
+      setFont(ctx, Math.max(7, Math.round(br * 1.3)));
+      ctx.fillStyle = ERA3.white;
+      const n = String(waiting), nw = ctx.measureText(n).width;
+      ctx.textBaseline = 'middle'; ctx.fillText(n, Math.round(dcx + d * 0.36 - nw / 2), Math.round(dcy - d * 0.36) + 1); ctx.textBaseline = 'top';
+    }
+    ctx.restore();
+    const bx = x + d + 6, bw = w - d - 6;   // the messages, beside the phone
     const rowH = Math.floor((h - 6) / PARENTS.length);
     const roomy = rowH >= 22;
     PARENTS.forEach((p, i) => {
       const ry = y + 3 + i * rowH;
       const done = this.outcomes.has(p.id);
-      px(ctx, x + 4, ry, w - 8, rowH - 3, ERA3.white);
-      px(ctx, x + 4, ry, 3, rowH - 3, done ? ERA3.grey : ERA3.accent);
+      px(ctx, bx + 4, ry, bw - 8, rowH - 3, done ? ERA3.sysBand : ERA3.memberBand);
+      px(ctx, bx + 4, ry, bw - 8, 1, ERA3.fieldEdge);
+      px(ctx, bx + 4, ry, 3, rowH - 3, done ? ERA3.grey : ERA3.memberSpine);
       // ⚑ Phase 7 (the Codex pass: on the board the names ran into each other) — under 12 px a row the
       //   name is a line of ink, not letters: the tile's picture stays a stack of waiting messages
-      if (rowH < 12) { px(ctx, x + 12, ry + Math.max(0, Math.floor((rowH - 4) / 2)), Math.min(w - 24, 16 + p.from.length * 3), 1, done ? ERA3.grey : ERA3.titleText); return; }
+      if (rowH < 12) { px(ctx, bx + 12, ry + Math.max(0, Math.floor((rowH - 4) / 2)), Math.min(bw - 24, 16 + p.from.length * 3), 1, done ? ERA3.grey : ERA3.titleText); return; }
       setFont(ctx, roomy ? 10 : 9);
       ctx.fillStyle = done ? ERA3.grey : ERA3.titleText;
-      ctx.fillText(p.from, x + 12, ry + 2);
+      ctx.fillText(p.from, bx + 12, ry + 2);
       if (!roomy) return;
       setFont(ctx, 8);
       ctx.fillStyle = ERA3.grey;
       ctx.save();
-      ctx.beginPath(); ctx.rect(x + 12, ry, w - 20, rowH - 3); ctx.clip();
-      ctx.fillText(wrapText(ctx, p.body, w - 24)[0] ?? '', x + 12, ry + 14);
+      ctx.beginPath(); ctx.rect(bx + 12, ry, bw - 20, rowH - 3); ctx.clip();
+      ctx.fillText(wrapText(ctx, p.body, bw - 24)[0] ?? '', bx + 12, ry + 14);
       ctx.restore();
     });
   }

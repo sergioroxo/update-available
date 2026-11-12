@@ -30,11 +30,41 @@ export class GroupTask implements TaskSurface {
   version(): number { return this.v; }
   complete(): boolean { return this.by !== null; }
 
+  /** ⚑ S376 (job 19 B, VISUAL_REVIEW #10) — the tile's picture is the group itself: the network's blue bar with
+   *  the group's name, its five members as round pictures with no faces (no likeness, as every body in the piece),
+   *  and the composer waiting for this week's check-in (it used to be two blue bars). */
   thumb(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    ctx.save();
     px(ctx, x, y, w, h, G.page);
-    px(ctx, x, y, w, 6, G.blue);
-    px(ctx, x + 4, y + 9, w - 8, Math.min(14, h / 4), G.cover);
-    for (let i = 0; i < 3 && y + 28 + i * 10 < y + h - 4; i++) px(ctx, x + 4, y + 28 + i * 10, w - 8, 7, G.card);
+    const bar = h >= 30 ? Math.max(10, Math.round(h * 0.26)) : Math.max(5, Math.round(h * 0.24));
+    px(ctx, x, y, w, bar, G.blue);
+    if (bar >= 10) {
+      const fs = Math.min(10, bar - 2);
+      setFont(ctx, fs); ctx.fillStyle = G.white;
+      ctx.fillText(D.group.name, x + 5, y + Math.max(1, Math.round((bar - fs) / 2)));
+    }
+    const MEMBERS = [ERA3.rose, ERA3.amber, ERA3.good, ERA3.accentHi, ERA3.bury];
+    const comp = h >= 34 ? Math.max(8, Math.round(h * 0.22)) : 0;
+    const r = Math.max(3, Math.min((h - bar - comp - 6) / 2, (w - 12) / (MEMBERS.length * 2.6)));
+    const cy = y + bar + 3 + r;
+    MEMBERS.forEach((col, i) => {
+      const cx = x + 6 + r + i * r * 2.6;
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+      // a person with no face: a head and shoulders in white, the picture's own crop
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.clip();
+      ctx.fillStyle = G.white;
+      ctx.beginPath(); ctx.arc(cx, cy - r * 0.18, r * 0.36, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy + r * 0.95, r * 0.66, Math.PI, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    });
+    if (comp) {
+      const cy2 = y + h - comp - 2;
+      ctx.fillStyle = G.card; ctx.strokeStyle = ERA3.fieldEdge; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(x + 5, cy2, w - 10, comp, comp / 2); ctx.fill(); ctx.stroke();
+      setFont(ctx, Math.min(9, comp - 2)); ctx.fillStyle = ERA3.grey;
+      ctx.fillText(D.composerEmpty, x + 5 + comp / 2, cy2 + Math.max(0, Math.round((comp - Math.min(9, comp - 2)) / 2) - 1));
+    }
+    ctx.restore();
   }
 
   private badge(ctx: CanvasRenderingContext2D, x: number, y: number): number {

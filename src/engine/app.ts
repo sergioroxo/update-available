@@ -1195,7 +1195,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     });
     // ⚑ S291 — the era websites, in the headset: a window that comes to the visitor (frame/siteViewer/xrMount.ts)
     siteViewerXr = mountSiteViewerXr(app, camera, {
-      layerId: xrFrame.layerId, suspendMenu: (on) => xrFrame?.suspend(on), note: (t, sec) => xrFrame?.notice(t, sec), minimisedNote: menuStrings.xrSitesMinimised
+      layerId: xrFrame.layerId, suspendMenu: (on) => xrFrame?.suspend(on), note: (t, sec) => xrFrame?.notice(t, sec), minimisedNote: menuStrings.xrSitesMinimised,
+      closeNote: (menuStrings as { xrSitesClose?: string }).xrSitesClose
     });
     siteViewerBus.xrActive = () => !!xr?.active;
     let teamSkipPresses: number[] = [];   // S339: the team skip (debug builds only)
@@ -1268,6 +1269,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         return !!target && !target.endsWith(':pick') && !target.endsWith(':drop');
       },
       onKey: key => {
+        // ⚑ S376 (his ruling on Part A, 12 Nov: the website a Close panel opens "easy to close") — B / Y is the headset's
+        //   back: it closes the website window first, before anything else hears it
+        if (key === 'b' && siteViewerXr?.isOpen) { siteViewerXr.close(); return; }
         // ⚑ S340 — THE TEAM'S SKIP (his 8 Nov headset note, T48): in the test build only (`?debug=1`), pressing the
         //   controller's upper face button (B/Y) ten times within five seconds jumps to the start of the NEXT era
         //   (1997 → 2003 → 2016 → 2026), seated. A visitor's build never has it.
@@ -4596,13 +4600,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         const g = closeMonitor.glass;
         const near = Math.hypot(camPos.x - g.x, camPos.z - (g.z + closeMonitorDistance)) < 0.25;
         closeMonitor.setNear(near);
-        // S167: while the card is read, nothing of the sky sits between the eye and the glass.
-        // ⚑ S174 / R4-15: and while it is FAR too — the sight-line from the eye to the
-        //   whole machine is kept clear of stars, labels and panels from the moment it
-        //   stands in the sky; only the dimming waits for the card to be read.
+      }
+      // S167: while the card is read, nothing of the sky sits between the eye and the glass.
+      // ⚑ S174 / R4-15: and while it is FAR too — the sight-line from the eye to the
+      //   whole machine is kept clear of stars, labels and panels from the moment it
+      //   stands in the sky; only the dimming waits for the card to be read.
+      // ⚑ S377 / VISUAL_REVIEW #5 — "from the moment it stands in the sky" was not what this did: it waited for
+      //   `on`, and since S361 the DARK machine (`present`) stands under the 1997 panel while it is read, with two
+      //   source labels and a link line across it. So the sight-line holds from `shown`; the panels fold off it only
+      //   once it is lit, as before (the one being read stays). The eye is the LOGICAL head in a headset — the head
+      //   moves and the room is shifted under it (xrComfort); the rig's pose is not where the eyes are. And at the
+      //   Restart card (`near`) the constellation recedes: labels fade, links go, the stars stay, dimmed.
+      if (closeMonitor?.shown) {
+        const near = closeMonitor.on && closeMonitor.near;
         const sil = closeMonitor.silhouette;
-        cloud?.setClearCorridor({ eye: { x: camPos.x, y: camPos.y, z: camPos.z },
-          x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: near ? 0.12 : 1 });
+        const eye = xr?.active ? logicalHead().getPosition() : camPos;
+        cloud?.setClearCorridor({ eye: { x: eye.x, y: eye.y, z: eye.z },
+          x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: near ? 0.12 : 1,
+          recede: near, panels: closeMonitor.on });
       }
       if (cloud?.visible && !camMove) {
         const view = xr?.active ? logicalHead() : camera;
@@ -5388,11 +5403,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let closeCard = -1;
   const CLOSE_CARD_SECONDS = 9;
   const closeMsgEl = document.createElement('div');
+  // ⚑ S376 (UiB job 19 B; his ruling on Part A, 12 Nov: "the Close's cards bigger") — a third of the frame wide and
+  //   11 px glyphs at 1280 × 720 was a footnote in a big black sky: the card is now about two thirds of the frame and its
+  //   type 30 px on a computer (scaled down with the window, never under 20 px on a phone). Same voice, same words.
   Object.assign(closeMsgEl.style, {
     position: 'fixed', left: '50%', top: '42%', transform: 'translate(-50%, -50%)', zIndex: '12',
     background: FRAME.glass, color: FRAME.bright, border: `1px solid ${FRAME.edge}`,
-    font: '16px/1.55 monospace', padding: '18px 22px', borderRadius: '4px',
-    maxWidth: 'min(560px, 86vw)', textAlign: 'left',
+    font: 'clamp(20px, 2.4vw, 30px)/1.5 monospace', padding: '0.9em 1.15em', borderRadius: '4px',
+    width: 'min(880px, 88vw)', boxSizing: 'border-box', textAlign: 'left',
     opacity: '0', pointerEvents: 'none', transition: 'opacity 0.6s'
   } as CSSStyleDeclaration);
   document.body.appendChild(closeMsgEl);
@@ -5401,11 +5419,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const c = closeMessage.cards[i] as { text: string; by?: string };
     closeMsgEl.replaceChildren();
     const p = document.createElement('div'); p.textContent = c.text; closeMsgEl.appendChild(p);
-    if (c.by) { const b = document.createElement('div'); b.textContent = c.by; b.style.color = FRAME.dim; b.style.marginTop = '6px'; b.style.fontSize = '13px'; closeMsgEl.appendChild(b); }
+    if (c.by) { const b = document.createElement('div'); b.textContent = c.by; b.style.color = FRAME.dim; b.style.marginTop = '0.4em'; b.style.fontSize = '0.8em'; closeMsgEl.appendChild(b); }
     const last = i === closeMessage.cards.length - 1;
     const f = document.createElement('div');
     f.textContent = last ? closeMessage.sourcesNote : closeMessage.continue;
-    Object.assign(f.style, { color: FRAME.faint, marginTop: '12px', fontSize: '11px' });
+    Object.assign(f.style, { color: FRAME.faint, marginTop: '0.8em', fontSize: 'max(14px, 0.62em)' });
     closeMsgEl.appendChild(f);
     closeMsgEl.style.opacity = xr?.active ? '0' : '1';   // the headset has its own card (below); the page's is for the computer
     // ⚑ S361 / H50 — the headset reads it on its own card in front of the eyes (the helper's plate held two lines and

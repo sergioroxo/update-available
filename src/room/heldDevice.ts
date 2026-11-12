@@ -34,6 +34,15 @@ export interface DeviceSpec {
   screen: { pos: V3; euler: V3; scale: V3; w: number; h: number; flipU?: boolean; flipV?: boolean };
   /** extra hardware on the face, in the same node's frame (the Game Boy's buttons) */
   dress?: (face: pc.Entity, box: (name: string, pos: V3, size: V3, hex: string) => void) => void;
+  /** ⚑ S377 / VISUAL_REVIEW #9 — the system's instrument, defined in any light: the body's own materials (and its
+   *  dress) light themselves by this share of their colour, the 'system' tier's self-light (era1room.ts styleMaterial:
+   *  the tower, the keyboard, the modem). Held to the eye its face looks away from the lamp, and lit only by the fill
+   *  it read as a dark slab. Written at build and when it is taken or put down (the device is never batched:
+   *  DEVICE_PROP_IDS; the guide's emphasis lift saves and restores emissive round it). */
+  glow?: number;
+  /** …and while it is in the hand (the face is turned to the eyes, away from the lamp: the hand brings it into the
+   *  light). Default `glow`. */
+  glowHeld?: number;
   buttons?: Array<{ key: GameKey; at: V3; r: number }>;
   /** FIT IN: direct hand touches on the glass provide left/right and upper-third A. */
   handGlassKeys?: boolean;
@@ -122,9 +131,20 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   const baseScale = wrap.getLocalScale().clone();
   const XR_HOLD = 0.5;
   const XR_GROW = 1.3 * XR_HOLD / 0.42;
+  /** ⚑ S377 — the body's own materials (private clones: tintModel) and its dress, for `glow` */
+  const glowMats: pc.StandardMaterial[] = [];
+  let dressMat: pc.StandardMaterial | null = null;
+  const applyGlow = (k: number): void => {
+    for (const m of glowMats) {
+      m.emissive.set(Math.max(m.diffuse.r, 0.16) * k, Math.max(m.diffuse.g, 0.16) * k, Math.max(m.diffuse.b, 0.2) * k);
+      m.update();
+    }
+    if (dressMat) { dressMat.emissive.set(k, k, k); dressMat.update(); }
+  };
   const bigInHand = (on: boolean): void => {
     const k = on && app?.xr?.active ? Math.max(1.3, (0.42 / (spec.holdDist ?? 0.37)) * 0.8) * XR_GROW : 1;
     wrap.setLocalScale(baseScale.x * k, baseScale.y * k, baseScale.z * k);
+    if (spec.glow) applyGlow(on ? spec.glowHeld ?? spec.glow : spec.glow);
   };
   const meshRoot = (wrap.findByName(`model-${spec.modelKey}-tilt`) as pc.Entity | null)?.children[0] as pc.Entity | undefined
     ?? (wrap.children[0] as pc.Entity | undefined);
@@ -137,7 +157,15 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     });
   }
 
-  if (spec.dress) dressDeviceHardware(node, box => spec.dress!(node, box));
+  if (spec.glow) {
+    meshRoot.forEach((n) => {
+      for (const mi of (n as pc.Entity).render?.meshInstances ?? []) {
+        if (mi.material instanceof pc.StandardMaterial && !glowMats.includes(mi.material)) glowMats.push(mi.material);
+      }
+    });
+  }
+  if (spec.dress) dressMat = dressDeviceHardware(node, box => spec.dress!(node, box), spec.glow ?? 0);
+  if (spec.glow) applyGlow(spec.glow);
 
   // the screen
   const { w, h } = spec.screen;
