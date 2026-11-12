@@ -29,7 +29,7 @@
  * ⚑ S376 (UiB job 19 Part B, VISUAL_REVIEW_2026-11-12 #6) — REDRAWN AS A 2003 FLASH CARTOON OF ITSELF. It was grey
  * blocks on a black void: the least finished picture in 2003, and the programme's own media, which his rule says
  * must be over the top ("new versions must be over the top"). Now: *asleep*, his room at night (a dithered navy
- * wall, the window with a crescent, the bed with a teal-and-navy quilt, the monitor dark on its desk), "z z Z", and
+ * wall, the window with a crescent, the bed with its plain navy quilt (his ruling on the room's bed: no plaid), the monitor dark on its desk), "z z Z", and
  * a puffed white cloud with a black outline that fills with a scribble of static; *the light*, the screen switches
  * on and its glow spreads out of the glass across the room in a stepped circle, and behind it the room is gone: the
  * programme's sky (CAL_2003, the calendar's own sunrise colours) in hard sunburst rays turning slowly from the
@@ -160,7 +160,7 @@ function paintNight(): PixelGrid {
   return g;
 }
 
-/** the bed: headboard, frame and legs, the quilt (teal and navy, his mother's), the pillow — in both rooms, so he
+/** the bed: headboard, frame and legs, the quilt (plain navy, as in the room: his 12 Nov ruling, no plaid), the pillow — in both rooms, so he
  *  never lies on nothing when the light takes the night */
 function paintBed(g: PixelGrid): void {
   g.rect(28, 196, 12, 104, ERA1.black);
@@ -168,13 +168,10 @@ function paintBed(g: PixelGrid): void {
   g.rect(36, 254, 206, 36, ERA1.black);
   g.rect(37, 255, 204, 34, ERA1.greyDark);
   g.rect(40, 290, 6, 10, ERA1.greyDark); g.rect(232, 290, 6, 10, ERA1.greyDark);
-  g.rect(40, 226, 200, 30, ERA1.teal);
-  g.checker(40, 226, 200, 30, ERA1.tealDark);
-  for (let x = 48; x < 240; x += 22) g.rect(x, 226, 3, 30, ERA1.navy);
-  g.rect(40, 236, 200, 2, ERA1.navy);
-  g.rect(40, 248, 200, 2, ERA1.navy);
+  g.rect(40, 226, 200, 30, ERA1.navy);
   g.rect(40, 226, 200, 1, ERA1.black);
-  g.rect(232, 226, 8, 40, ERA1.tealDark);                               // the quilt falling over the end
+  g.rect(232, 226, 8, 40, ERA1.navy);                                   // the quilt falling over the end
+  g.rect(231, 226, 1, 40, ERA1.black);
   g.rect(44, 216, 46, 12, ERA1.black);
   g.rect(45, 217, 44, 10, ERA1.paper);
   g.checker(45, 223, 44, 4, ERA1.silver, 0, ERA1.paper);
