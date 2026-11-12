@@ -14,7 +14,7 @@ Measured on build `1a84b6cb` with a mocked headset in desktop Chrome (scratch sc
 5. T57 went black in a way the code cannot catch: nothing throws, so the fallback never runs. The code also has four definite bugs. A staged re-test can find the cause in about five minutes of headset time.
 6. **First batch:** (1) a headset type floor on the small screens, (2) check the fonts, then ship them, (3) bigger glass in the headset. Free test tonight, no build: `?reinterp=1&xrscale=1.6&debug=1`.
 
-**⚑ His test (12 Nov), the free one from the summary (`?reinterp=1&xrscale=1.6&debug=1`), 1997's monitor in the headset: "it is looking better"** (his photo: the Seekr page and the taskbar's "Lamby 1997" read clean). The frame rate at 1.6 is not yet reported. It decides whether 1.6 can be 1997's default (idea 4: a per-era scale, 72 Hz floor).
+**⚑ His test (12 Nov), corrected:** his two photos ("it is looking better"; then FPS 120) were taken **on the computer, not in the headset**. `xrscale` only sets the headset's eye buffer (`framebufferScaleFactor` in the XR session), so on the computer it changes nothing, and 120 fps there says nothing about the Quest. The test still has to be done in the headset: the same address, press Enter VR, read the debug plate's fps in 1997.
 
 ## 2. How to read the numbers
 
