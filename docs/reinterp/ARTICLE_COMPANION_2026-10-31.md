@@ -949,6 +949,80 @@ evidence, and the viewer reads both at once.
 *Checked against the code: the clip has no deliberate misspellings. The impossible dates are in the calendar picture,
 and every evidence line is the machine's data in its own voice.*
 
+## 7u. What it cost: the making of, in Claude tokens (his ask, 12 Nov 2026)
+
+**His words:** "is there a way since I got the UiB Claude, to know the cost of all the works? just as a reference";
+then "add the cost figures to the article companion, and add a task on the research so the other Claude account can
+also run that value on the earlier versions of the project" (that task is TODO T72).
+
+**Method.** Claude Code keeps a local log of every session, with each reply's tokens and model.
+`tools/usage-cost.py` adds them up, counting each reply once, and prices them at Anthropic's first-party API list
+prices of November 2026:
+- Opus 5.5: $4 per million input tokens and $20 per million output tokens; reading cached input $0.20.
+- Sonnet 5.5: $2 and $10; reading cached input $0.10.
+- Writing to the cache: 1.25× the input price for 5 minutes, 2× for an hour.
+- Older models: their list input and output prices. Their price for reading cached input is assumed at 0.1× input,
+  so their figures are approximate.
+
+These are **API-equivalent** figures: what the same tokens would cost on the API. On a subscription plan (the UiB
+account's, from 9 Nov) there is no per-token charge. Checked once against Claude Code's own counter
+for one session: the tool gave $183 where Claude Code said $199, about 8% under. **Read every figure as a floor.**
+
+**What the Claude Code logs on this computer show (16 May to 12 Nov 2026):**
+
+| work | folder | dates | API-equivalent |
+|---|---|---|---|
+| the reinterpretation, all sessions before the UiB account and the orchestrator after it | update-available-reinterp | 6 Jul – 12 Nov | ≈ $6,885 |
+| the UiB account's builder (jobs 12–18) | update-available-uib, -uib2 (UiB account) | 9 – 12 Nov | ≈ $516 |
+| the first build, before the reinterpretation | update-available | 2 – 5 Jul | ≈ $435 |
+| the knowledge base: ingesting and reading the sources | surviving-sogice-ingest | 31 May – 3 Sep | ≈ $379 |
+| the PC Simulation proposals | SurvivingSOGICE PC-Simulation (OneDrive), Pc_Simulation | 7 Jun – 3 Jul | ≈ $115 |
+| the "Whispering" folders (Lambie, TapTapChange, Slip ideas, Anita): **his call whether they belong to this project** | Desktop/Whispering | 16 May – 1 Jul | ≈ $64 |
+| **total** | | **16 May – 12 Nov** | **≈ $8,394** |
+
+- **By month (both accounts):**
+
+  | May | Jun | Jul | Aug | Sep | Oct | Nov (to the 12th) |
+  |---|---|---|---|---|---|---|
+  | $70 | $411 | $2,138 | $1,562 | $2,129 | $975 | $1,108 |
+
+- **By model:**
+  - Opus (4.8, 5 and 5.5): 77%, about $6,500;
+  - Fable (5 and 5.1): 11%, about $950;
+  - Sonnet (4.6, 5 and 5.5): 11%, about $940;
+  - Haiku: under $5.
+
+  47,253 replies in all.
+- **Where the money went:**
+  - **re-reading** the project's context: cached input, 15.6 billion tokens, 59%;
+  - **writing that context into the cache:** 337 million tokens, 33%;
+  - **writing,** that is the model's output (code, text, briefs): 32 million tokens, only 8%.
+
+**For the article.**
+- **An honest making-of figure.** It belongs with the disclosure of AI and human co-authorship (the Close's makers
+  cluster, and the IDN special issue's interest in it): roughly $8,400 of API-equivalent machine work over six months,
+  directed by one researcher who did not write code.
+- **The cost of keeping a whole world in mind.** 92% of the cost is the model re-reading the project before each step.
+  Only 8% is the writing itself. The piece is large (four eras, the Close, the knowledge base, the rules in CLAUDE.md
+  and the memory), and every reply re-reads it. That is a material fact about authoring an interactive digital
+  narrative with an AI collaborator: continuity, not generation, is what costs.
+- **The rhythm of the work:**
+  - **July** is the reinterpretation's start and the most expensive month;
+  - **September** is Era 4's overhaul and the review rounds;
+  - **November** is the UiB jobs, run back to back and unattended.
+
+**Not counted (yet):**
+- **work before 16 May**, the earlier versions of the project (the January origin and the first trials), made with
+  another Claude account or computer whose logs are not on this one: **TODO T72**;
+- **claude.ai chats:** the chat apps keep no token log here. Count their conversations from the conversation archive
+  instead;
+- **other tools:** Codex (OpenAI), the JEV runs on OpenRouter, Suno's songs and the ArenaAI trials.
+
+Claude Code deletes logs after `cleanupPeriodDays` (30 days by default), so a figure not taken soon may be lost.
+
+**Not to overclaim.** API-equivalent is not money spent. The older models' cache prices are estimated. The tool runs
+about 8% under Claude Code's own counter. The folder names say where the work happened, not always what it was for.
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
