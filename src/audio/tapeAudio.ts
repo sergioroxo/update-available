@@ -64,6 +64,7 @@ const REGISTRY: Record<string, string> = {
   'passage_1997_2003.mp3': `${AUDIO_BASE}passage_1997_2003.mp3`,
   'passage_2003_2016.mp3': `${AUDIO_BASE}passage_2003_2016.mp3`,
   'passage_2016_2026.mp3': `${AUDIO_BASE}passage_2016_2026.mp3`,
+  'passage_2016_2026_xr.mp3': `${AUDIO_BASE}passage_2016_2026_xr.mp3`,   // S357bg · the headset's longer flight
   'morph_1997_2003.mp3': `${AUDIO_BASE}morph_1997_2003.mp3`,
   'morph_2003_2016.mp3': `${AUDIO_BASE}morph_2003_2016.mp3`,
   'morph_2016_2026.mp3': `${AUDIO_BASE}morph_2016_2026.mp3`,
@@ -513,7 +514,7 @@ class RoomBed {
     'bed_1997.mp3': 0.5, 'bed_2003.mp3': 0.22, 'bed_2016.mp3': 0.5, 'bed_2026.mp3': 0.5,
     'passage_wind.mp3': 0.5, 'passage_building.mp3': 0.5, 'passage_install.mp3': 0.5,
     // S347: the era change's music sits UNDER the morph's own sounds (a one-shot at 1.0) — his "so the two balance"
-    'passage_1997_2003.mp3': 0.42, 'passage_2003_2016.mp3': 0.42, 'passage_2016_2026.mp3': 0.42,
+    'passage_1997_2003.mp3': 0.42, 'passage_2003_2016.mp3': 0.42, 'passage_2016_2026.mp3': 0.42, 'passage_2016_2026_xr.mp3': 0.42,
     'close_score.mp3': 0.55,
     // S361 / H50 (his: "the music for the Close is missing") — the Close's song, ~4 dB over the era change's music: it is alone there
     'close_song.mp3': 0.7,

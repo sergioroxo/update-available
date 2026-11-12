@@ -28,7 +28,7 @@ import { ledger, wipeLedger } from '../state/ledger';
 import { gameMenuBus } from '../state/gameMenuBus';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
 import { setLargeTextProbe } from '../desktop/theme/fonts';
-import { mountXrGlass } from '../room/xrGlass';
+import { mountXrGlass, deskTop } from '../room/xrGlass';
 import { buildEra1Room } from '../room/era1room';
 import { preloadModels } from '../room/assets';
 import { buildFluidNiche, type FacetState, type FluidNiche } from '../room/fluidNiche';
@@ -924,11 +924,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     era3Devices.setLookProvider(() => ({ pitch: camPitch + lookOffPitch, yaw: camYaw + lookOffYaw }));
     // ⚑ S374 / J18-B2 — in a headset 2016's flat panel and 2026's monitor grow ×1.2 about their glass (src/room/xrGlass.ts);
     //   the planes' hit tests read their own world size (era3Devices `hitPlane`)
-    for (const [screen, prop] of [['era3-device-workstation', 'w_flatPanelBody'], ['era3-device-monitor', 'e_monitor']] as const) {
+    //   ⚑ S357az: about the foot of their stand on the desk, not the glass centre (his: "it lost the stand for the screen")
+    for (const [screen, prop, desk] of [['era3-device-workstation', 'w_flatPanelBody', 'w_desk'], ['era3-device-monitor', 'e_monitor', 'e_desk']] as const) {
       const glass = app.root.findByName(screen) as pc.Entity | null;
       if (!glass) continue;
       const sc = glass.getLocalScale();
-      mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp);
+      mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp, { footY: deskTop(desk) });
     }
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
@@ -1851,7 +1852,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   // arithmetic; beginRelocation/advanceRelocation/endRelocation drive it.
   // S67: plus WHICH relocation — the key into RELOC_POSES / cluster.ts's
   // RELOCATIONS, and the plan itself, so a leg never has to ask what era it is.
-  let relocLeg: 'rise' | 'turn' | 'build' | 'descend' | null = null;
+  let relocLeg: 'rise' | 'turn' | 'watch' | 'build' | 'descend' | null = null;
   /** ⚑ S347/S348 — the morph's own sound layer (see MORPH_LAYER) */
   let morphLayer: HTMLAudioElement | null = null;
   let morphLayerName: string | null = null;
@@ -2474,6 +2475,24 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  the whole 49.5 s flight (12° by the top of the rise): 177° × 1.22 / 24 s ≈ 9.0 °/s at the trapezoid's peak, inside
    *  the comfort law's 9.1. The other era changes keep the whole-flight turn. */
   let flightTurnTotal = 1;
+  /** S359 / H22: how long 2016 → 2026's slow facing turn takes (a headset, reduced motion) */
+  const E3E4_FACING_TURN_SECONDS = 24;
+  /**
+   * ⚑ S357bf (his, 12 Nov: "is the fly from 2016 to 2026 fixed, that it rotates the camera before the rooms start
+   * morphing so we can see it happen?" → "Yes, make it wait"). On the computer the turn leg (7–13 s) already ends
+   * before Maya's room builds (13 s on). Where the facing turns slowly instead (a headset, reduced motion: `fly` in
+   * the camera update), that turn ran to 24 s while the room started building at 13 s, so the first ~10 s of the
+   * build happened while you were still turning. There the turn leg now holds at the top until the facing has
+   * turned, and only then does the room build: the space reads the same plan (cluster.morphToEra), so its build,
+   * its light change (rigDelaySeconds counts from the end of the turn) and its morph sounds (cluster.onSpaceChange)
+   * all move with it. About 11 s longer, in those modes only; the turn is no faster.
+   */
+  function withSlowFacing(key: string, plan: RelocationPlan): RelocationPlan {
+    if (key !== 'e3-e4' || !(xr?.active || reducedMotion())) return plan;
+    const turnSeconds = Math.max(plan.turnSeconds ?? 0, E3E4_FACING_TURN_SECONDS - plan.riseSeconds);
+    // the space starts changing as the (longer) turn ends, as it does on the computer (cluster.ts 'e3-e4')
+    return { ...plan, turnSeconds, morphDelaySeconds: plan.morphDelaySeconds !== undefined ? turnSeconds : undefined };
+  }
   function flightYaw(): number { return flightYaw0 + (flightYaw1 - flightYaw0) * flyEase(Math.min(1, flightT / flightTurnTotal)); }
   /** set when an era lands mid-flight; consumed by `endRelocation` */
   let pendingBed: string | null | undefined;
@@ -2507,11 +2526,14 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function beginRelocation(key: string, plan: RelocationPlan): void {
     // ⚑ the building, for the length of the flight. `onEraShift` brings the
     //   destination's own bed up when the era actually lands.
-    roomBed.set(PASSAGE_MUSIC[key] ?? PASSAGE_BED, 2.0);
+    // ⚑ S357bg (his: "try and remake the music for the headset") — where the facing turns slowly the flight is 11 s longer
+    //   (withSlowFacing), so it gets its own rendering of the same piece, its landing on the landing
+    const passage = key === 'e3-e4' && (xr?.active || reducedMotion()) ? 'passage_2016_2026_xr.mp3' : PASSAGE_MUSIC[key];
+    roomBed.set(passage ?? PASSAGE_BED, 2.0);
     stopMorphLayer(0);
     flightT = 0;
-    flightTotal = Math.max(1, plan.riseSeconds + (plan.turnSeconds ?? 0) + plan.buildSeconds + plan.descendSeconds);
-    flightTurnTotal = key === 'e3-e4' ? Math.min(flightTotal, 24) : flightTotal;   // S359 / H22
+    flightTotal = Math.max(1, plan.riseSeconds + (plan.turnSeconds ?? 0) + (plan.watchSeconds ?? 0) + plan.buildSeconds + plan.descendSeconds);
+    flightTurnTotal = key === 'e3-e4' ? Math.min(flightTotal, E3E4_FACING_TURN_SECONDS) : flightTotal;   // S359 / H22
     flightYaw0 = camYaw;
     flightYaw1 = camYaw + ((((seatPose(plan.seat).yaw - camYaw) % 360) + 540) % 360 - 180);
     const poses = RELOC_POSES[key];
@@ -2551,7 +2573,13 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: RELOC_OVERLOOK_C.yaw }, relocPlan.turnSeconds ?? 6.0, true);
       return;
     }
-    if (relocLeg === 'turn') {
+    if (relocLeg === 'turn' && relocPlan.watchSeconds) {
+      // ⚑ S357bf — turned, now hold and watch Maya's room take shape before crossing to it
+      relocLeg = 'watch';
+      startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: camPitch, yaw: camYaw }, relocPlan.watchSeconds, true);
+      return;
+    }
+    if (relocLeg === 'turn' || relocLeg === 'watch') {
       relocLeg = 'build';
       startCamMove(poses.hold, relocPlan.buildSeconds, true);
       return;
@@ -5116,7 +5144,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     // SAME morph beat as the room aging — see the note above applyLightsOn().
     const key = `${fromEra}-${era}`;
     const basePlan = drivenMoves ? relocationFor(fromEra, era) : undefined;
-    const plan = basePlan ? relocationPlanFromHere(key, basePlan) : undefined;
+    const plan = basePlan ? withSlowFacing(key, relocationPlanFromHere(key, basePlan)) : undefined;   // S357bf
     // the space's half is scheduled around the camera's legs; passing the plan
     // (or an explicit null) keeps the two halves reading the SAME numbers.
     cluster.morphToEra(era, true, plan ?? null);
@@ -5824,8 +5852,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     /** S67's relocation replay (the debug panel's button), and S347's `__relocate` under ?debug=1 for the probe */
     const replayRelocation = (from: EraKey, to: EraKey): void => {
       if (!cluster) return;
-      const plan = relocationFor(from, to);
-      if (!plan) return;
+      const base = relocationFor(from, to);
+      if (!base) return;
+      const plan = withSlowFacing(`${from}-${to}`, base);   // S357bf
       const start = from === 'e3' ? 90 : 0; // where that era is actually seated
       os.setDesktopEra(from, true);
       era3Devices?.setEra(from, true);
