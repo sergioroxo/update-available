@@ -1,4 +1,6 @@
 import { largeText } from './fonts';
+import { ERA3 } from './era3';
+import { PRINT } from './calendar';
 /**
  * ⚑ THE PHONE'S OWN LOOK — and it is deliberately NOT GracePlatform's.
  *
@@ -413,18 +415,116 @@ export function dateWidget(
   ctx.fillText(note, x + w - 10 - nw, y + 30);
 }
 
-/** the home screen's wallpaper: three soft bands and a low glow, so the icons
- *  sit on something rather than on a flat plate. */
+/**
+ * ⚑ S376 (UiB job 19 Part B, VISUAL_REVIEW_2026-11-12 #8) — HER WALLPAPER IS A PHOTOGRAPH SHE TOOK. It was three
+ * slate bands and white rings at 10 % (a radar, a placeholder), on the surface met all evening in 2016: the Handset
+ * Window's lock screen and home screen. Nothing on the phone was hers. Now it is a photograph: the harbour wall at
+ * dusk, the sea, the last light low on the right and its road on the water, two masts out in the bay, a bollard and a
+ * lamp on the wall — nobody in it (no likeness; the piece draws no faces). A place, the kind the system's "places to
+ * avoid" list flags, kept quietly on her lock screen. Felt side: no satire, no mechanics, no mark.
+ * Drawn soft, because this is the 2016 phone, a smooth mipmapped display (R4-37): gradients between palette stops,
+ * as FloppySheep's sky already is. Colours from PHONE, ERA3 and PRINT. The lock screen's own dim keeps the clock and
+ * the home screen's white labels readable. ⚑ TASTE (his eye, T71): the subject (harbour, two mugs on a sill, the
+ * Wick's window) — the harbour is the default.
+ */
 export function wallpaper(ctx: CanvasRenderingContext2D, W: number, H: number): void {
-  ctx.fillStyle = PHONE.wallTop; ctx.fillRect(0, 0, W, Math.round(H * 0.42));
-  ctx.fillStyle = PHONE.wallMid; ctx.fillRect(0, Math.round(H * 0.42), W, Math.round(H * 0.3));
-  ctx.fillStyle = PHONE.wallBot; ctx.fillRect(0, Math.round(H * 0.72), W, H - Math.round(H * 0.72));
+  const hz = Math.round(H * 0.6);                    // the horizon
+  const sunX = Math.round(W * 0.7);
   ctx.save();
-  ctx.globalAlpha = 0.10;
-  ctx.fillStyle = PHONE.surface;
-  for (let r = Math.round(W * 0.7); r > 0; r -= Math.round(W * 0.12)) {
-    ctx.beginPath(); ctx.arc(W * 0.72, H * 0.62, r, 0, Math.PI * 2); ctx.fill();
+  // the sky at dusk: the evening's slate, lightening to the last light at the sea
+  const sky = ctx.createLinearGradient(0, 0, 0, hz);
+  sky.addColorStop(0, PHONE.wallTop);
+  sky.addColorStop(0.5, PHONE.wallMid);
+  sky.addColorStop(0.86, PHONE.wallBot);
+  sky.addColorStop(1, PRINT.retreatRose);
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, hz);
+  // the sun, gone behind the cloud bank: only its glow, low on the right
+  const glow = ctx.createRadialGradient(sunX, hz, 2, sunX, hz, W * 0.55);
+  glow.addColorStop(0, PRINT.rallyGlow);
+  glow.addColorStop(0.35, PRINT.rallyDawn);
+  glow.addColorStop(1, PRINT.rallyDawn + '00');
+  ctx.globalAlpha = 0.55; ctx.fillStyle = glow; ctx.fillRect(0, 0, W, hz); ctx.globalAlpha = 1;
+  // the cloud bank across it, in long soft strokes
+  ctx.fillStyle = PHONE.wallMid;
+  for (const [y, x0, x1, h, a] of [[0.47, 0.18, 1.1, 0.014, 0.4], [0.478, 0.4, 0.9, 0.006, 0.3], [0.505, -0.1, 0.62, 0.01, 0.38],
+    [0.535, 0.36, 1.1, 0.007, 0.32], [0.56, 0.0, 0.48, 0.005, 0.28], [0.565, 0.55, 0.8, 0.004, 0.22]]) {
+    ctx.globalAlpha = a;
+    roundRect(ctx, W * x0, H * y, W * (x1 - x0), Math.max(2, H * h), Math.max(1, H * h / 2), PHONE.wallMid);
   }
+  ctx.globalAlpha = 1;
+  // the sea: darkening toward her
+  const sea = ctx.createLinearGradient(0, hz, 0, H);
+  sea.addColorStop(0, ERA3.deskLow);
+  sea.addColorStop(0.35, ERA3.deskMid);
+  sea.addColorStop(1, ERA3.deskTop);
+  ctx.fillStyle = sea; ctx.fillRect(0, hz, W, H - hz);
+  ctx.fillStyle = PRINT.retreatRose; ctx.globalAlpha = 0.6; ctx.fillRect(0, hz, W, 1); ctx.globalAlpha = 1;
+  // the sun's road on the water, broken into strokes, widening toward the wall
+  for (let i = 0; i < 14; i++) {
+    const y = hz + 3 + i * (H * 0.018) + i * i * 0.18;
+    if (y > H * 0.86) break;
+    const w = W * (0.05 + i * 0.022) * (i % 2 ? 0.7 : 1);
+    ctx.globalAlpha = Math.max(0.12, 0.8 - i * 0.05);
+    ctx.fillStyle = i < 4 ? PRINT.rallyGlow : PRINT.tourSpot;
+    ctx.fillRect(Math.round(sunX - w / 2 + ((i * 7) % 5) - 2), Math.round(y), Math.round(w), Math.max(1, Math.round(H * 0.004)));
+  }
+  // small waves, the light catching them
+  ctx.fillStyle = PHONE.wallBot;
+  for (let i = 0; i < 12; i++) {
+    const y = hz + 8 + ((i * 37) % Math.round(H * 0.2));
+    const x = (i * 53) % Math.round(W * 0.6);
+    ctx.globalAlpha = 0.35; ctx.fillRect(x, y, Math.round(W * (0.06 + (i % 3) * 0.03)), 1);
+  }
+  ctx.globalAlpha = 1;
+  // two boats out in the bay, their masts against the last light
+  ctx.fillStyle = ERA3.ink;
+  for (const [bx, mh] of [[0.22, 0.17], [0.34, 0.13]]) {
+    const x = Math.round(W * bx), hb = Math.max(3, Math.round(H * 0.012));
+    ctx.beginPath();
+    ctx.moveTo(x - W * 0.07, hz + 1); ctx.lineTo(x + W * 0.06, hz + 1); ctx.lineTo(x + W * 0.04, hz + 1 + hb); ctx.lineTo(x - W * 0.05, hz + 1 + hb);
+    ctx.closePath(); ctx.fill();
+    ctx.fillRect(x - 1, Math.round(hz - H * mh), Math.max(1, Math.round(W * 0.008)), Math.round(H * mh) + 2);
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.moveTo(x, hz - H * mh); ctx.lineTo(x + W * 0.05, hz - 1); ctx.lineTo(x - W * 0.06, hz - 1); ctx.closePath();
+    ctx.lineWidth = 1; ctx.strokeStyle = ERA3.ink; ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  // the harbour wall in front, running away to the right; its coping catching the light
+  const w0 = Math.round(H * 0.8), w1 = Math.round(H * 0.86);
+  ctx.fillStyle = ERA3.ink;
+  ctx.beginPath(); ctx.moveTo(0, w0); ctx.lineTo(W, w1); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = ERA3.greyDk; ctx.lineWidth = Math.max(1, H * 0.005);
+  ctx.beginPath(); ctx.moveTo(0, w0 + 0.5); ctx.lineTo(W, w1 + 0.5); ctx.stroke();
+  ctx.globalAlpha = 0.35; ctx.strokeStyle = ERA3.greyDk; ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i++) {   // the stone courses
+    const d = i * H * 0.035;
+    ctx.beginPath(); ctx.moveTo(0, w0 + d); ctx.lineTo(W, w1 + d); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  // a bollard on the wall, a rope to it
+  const bx = Math.round(W * 0.14), by = Math.round(w0 + (w1 - w0) * 0.14);
+  ctx.fillStyle = ERA3.ink;
+  roundRect(ctx, bx - W * 0.035, by - H * 0.05, W * 0.07, H * 0.055, 2, ERA3.ink);
+  roundRect(ctx, bx - W * 0.05, by - H * 0.062, W * 0.1, H * 0.018, 3, ERA3.ink);
+  ctx.strokeStyle = ERA3.greyDk; ctx.lineWidth = 1; ctx.globalAlpha = 0.8;
+  ctx.beginPath(); ctx.moveTo(bx - W * 0.05, by - H * 0.055); ctx.quadraticCurveTo(bx - W * 0.1, by - H * 0.02, bx - W * 0.16, by); ctx.stroke();
+  ctx.globalAlpha = 1;
+  // the lamp on the wall, lit
+  const lx = Math.round(W * 0.84), ly = Math.round(w0 + (w1 - w0) * 0.84);
+  const lampTop = Math.round(ly - H * 0.3);
+  const halo = ctx.createRadialGradient(lx, lampTop + 2, 1, lx, lampTop + 2, W * 0.16);
+  halo.addColorStop(0, PRINT.rallyGlow); halo.addColorStop(1, PRINT.rallyGlow + '00');
+  ctx.globalAlpha = 0.75; ctx.fillStyle = halo; ctx.fillRect(lx - W * 0.2, lampTop - W * 0.2, W * 0.4, W * 0.4); ctx.globalAlpha = 1;
+  ctx.fillStyle = ERA3.ink;
+  ctx.fillRect(lx - 1, lampTop, Math.max(2, Math.round(W * 0.014)), ly - lampTop);
+  ctx.fillRect(lx - Math.round(W * 0.035), lampTop - 2, Math.round(W * 0.075), Math.max(2, Math.round(H * 0.008)));
+  ctx.fillStyle = PRINT.tourSpot;
+  ctx.fillRect(lx - Math.round(W * 0.018), lampTop + 2, Math.round(W * 0.04), Math.max(2, Math.round(H * 0.01)));
+  // the lock screen's own dim, so the clock and the labels read on it
+  ctx.globalAlpha = 0.18; ctx.fillStyle = ERA3.ink; ctx.fillRect(0, 0, W, H);
+  const top = ctx.createLinearGradient(0, 0, 0, H * 0.4);
+  top.addColorStop(0, ERA3.ink); top.addColorStop(1, ERA3.ink + '00');
+  ctx.globalAlpha = 0.35; ctx.fillStyle = top; ctx.fillRect(0, 0, W, H * 0.4);
   ctx.restore();
 }
 

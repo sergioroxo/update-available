@@ -14,6 +14,14 @@
  * system Chrome, swiftshader).
  *
  * Re-run it whenever a room changes enough to show in a 640-wide plate.
+ *
+ * ⚑ S376 (UiB job 19 Part B, VISUAL_REVIEW_2026-11-12 #4) — re-run on 12 Nov: the plates had been baked on 26 Sep
+ * (S177c), so 2003's window was blank and 2026 still showed the laptop removed on 8 Nov. Two fixes so a re-bake is
+ * one command again: 1997 is opened the way a visitor opens it (no `?era=`: a 1997 jump now lands in the entrance's
+ * stars), and every era waits until the camera is nobody else's (the entrance and the descent drive it) before the
+ * pose is set. `--eras 1,2` re-bakes some of them; `--out <dir>` writes somewhere other than public/assets/close.
+ *
+ *     node tools/bake-close-plates.mjs --port 5298 [--eras 1,2,3,4] [--out public/assets/close]
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,7 +29,8 @@ import path from 'node:path';
 const argv = process.argv.slice(2);
 const flag = (n, d) => { const i = argv.indexOf(`--${n}`); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 const PORT = Number(flag('port', 3000));
-const OUT = path.resolve('public/assets/close');
+const OUT = path.resolve(flag('out', 'public/assets/close'));
+const ERAS = String(flag('eras', '1,2,3,4')).split(',').map(Number).filter((n) => n >= 1 && n <= 4);
 const VIEWPORT = { width: 1280, height: 860 };
 
 /** one pose per era: a step behind the era's seat, a little above it, looking
@@ -61,15 +70,23 @@ async function main() {
     defaultViewport: VIEWPORT
   });
   fs.mkdirSync(OUT, { recursive: true });
-  for (const era of [1, 2, 3, 4]) {
+  for (const era of ERAS) {
     const page = await browser.newPage();
-    await page.goto(`http://localhost:${PORT}/?reinterp=1&kiosk=0&era=${era}&debug=1&descent=0`, { waitUntil: 'networkidle2', timeout: 60000 });
+    // 1997 the way a visitor arrives (tools/stills.mjs does the same): `?era=1` lands in the entrance's stars
+    const query = era === 1 ? '?reinterp=1&kiosk=0&debug=1&home=0' : `?reinterp=1&kiosk=0&era=${era}&debug=1&descent=0&home=0`;
+    await page.goto(`http://localhost:${PORT}/${query}`, { waitUntil: 'networkidle2', timeout: 120000 });
     // the front door (shots.mjs's own lesson): the button arms after a delay
     await page.waitForFunction(() => [...document.querySelectorAll('button')]
       .some((b) => (b.textContent || '').includes('Log in') && !b.disabled), { timeout: 30000 }).catch(() => {});
     await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Log in')); if (b) b.click(); });
-    await page.waitForFunction(() => window.__camFree !== undefined && window.__poses !== undefined, { timeout: 30000 });
+    await page.waitForFunction(() => window.__camFree !== undefined && window.__poses !== undefined, { timeout: 60000 });
     await wait(6000); // models, batching, the first settled frames
+    // the camera must be nobody else's: a pose set under the entrance or the descent is simply erased
+    for (const t0 = Date.now(); Date.now() - t0 < 60000;) {
+      const p = await page.evaluate(() => window.__camPose());
+      if (!p.driven && !p.descent) break;
+      await wait(500);
+    }
     // the piece's own overlays (look button, pause, the debug readouts) are DOM;
     // the plate is the canvas alone
     await page.addStyleTag({ content: 'body > *:not(canvas) { display: none !important; }' });
