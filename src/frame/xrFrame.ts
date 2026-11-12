@@ -50,7 +50,9 @@ const PLANE_W = 0.62, PLANE_H = PLANE_W * H / W;
 const PLANE_DIST = 0.62, PLANE_DROP = 0.04;
 const HINT_W = 0.5, HINT_H = HINT_W * 136 / 1024;
 // S270h: lower, at keyboard height — at 0.2 the (now yellow) plate hid the monitor's bottom edge
-const HINT_DIST = 0.6, HINT_DROP = 0.3;
+// ⚑ S374 / J18-B2: and lower again, 0.3 → 0.34, under the headset's bigger glass (src/room/xrGlass.ts ×1.2): at 0.3 its top
+//   edge (24° down) covered the bottom 1–2° of every monitor, the 1997 Start button and 2026's date line among them
+const HINT_DIST = 0.6, HINT_DROP = 0.34;
 /** ⚑ S209 / A22 — the menu tab: small, low, a little to the side; the headset's second way to the menu */
 // ⚑ S270c (his: "the menu button is running away from me") — it re-hung itself past ~52° off the gaze while it sits
 //   ~34° to the right, so a small turn moved it; now it stays until it is well out of view (~75°), and is a third bigger

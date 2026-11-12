@@ -17,6 +17,7 @@ import { dressDeviceHardware } from './deviceHardware';
  */
 import * as pc from 'playcanvas';
 import { makeScreenTexture } from '../engine/screenTexture';
+import { largeText } from '../desktop/theme/fonts';
 import type { RoomHandles } from './era1room';
 import type { Painter } from './calendarArt';
 import type { DeviceGame, GameKey } from '../games/types';
@@ -114,10 +115,15 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   // ⚑ S282 (headset B, 1 Nov: "the phone is too close to my face"; the game "should be bigger"; "too close to my eyes")
   //   — in a headset a held device comes no nearer than XR_HOLD (an easy focus for a seated reader) and grows to make up
   //   for it, and a little more: the glass ends up larger in the view and further from the eye. Restored on release.
+  // ⚑ S374 / J18-B2 (IDEAS_XR_TEXT ★3) — and since job 18: held at 0.5 m, Meta's floor for anything looked at for long (it
+  //   was 0.42), and grown so the letters are still about 30 % bigger in the view than at 0.42: S282's in-hand factor ×
+  //   1.3 × 0.5/0.42 (the flip phone ×1.77 → ×2.74, the handheld and the console ×1.3 → ×2.01). A phone bigger than life,
+  //   brought to the eye; the final size is his eye's call in the headset.
   const baseScale = wrap.getLocalScale().clone();
-  const XR_HOLD = 0.42;
+  const XR_HOLD = 0.5;
+  const XR_GROW = 1.3 * XR_HOLD / 0.42;
   const bigInHand = (on: boolean): void => {
-    const k = on && app?.xr?.active ? Math.max(1.3, (XR_HOLD / (spec.holdDist ?? 0.37)) * 0.8) : 1;
+    const k = on && app?.xr?.active ? Math.max(1.3, (0.42 / (spec.holdDist ?? 0.37)) * 0.8) * XR_GROW : 1;
     wrap.setLocalScale(baseScale.x * k, baseScale.y * k, baseScale.z * k);
   };
   const meshRoot = (wrap.findByName(`model-${spec.modelKey}-tilt`) as pc.Entity | null)?.children[0] as pc.Entity | undefined
@@ -217,7 +223,15 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
   /** the glass's offset from the prop's origin in world metres, in the `to` pose — at the prop's CURRENT scale (S345: the
    *  in-hand enlargement was left out, so the glass sat 30% of its offset away from where it was meant to be) */
   const screenOffset = (): pc.Vec3 => {
+    // ⚑ S374 — a clamshell is measured OPEN: it is taken shut and opens in the hand over 0.35 s (`fold`), so measured shut
+    //   its glass ended a hinge's length above the eye (0.2 m once job 18 grew it ×2.74 in hand: out of the view)
+    let shut: { p: pc.Vec3; q: pc.Quat } | null = null;
+    if (hinge && hingeP && hingeQ && foldK < 1) {
+      shut = { p: hinge.getLocalPosition().clone(), q: hinge.getLocalRotation().clone() };
+      hinge.setLocalPosition(hingeP); hinge.setLocalRotation(hingeQ);
+    }
     const off = wrap.getWorldTransform().clone().invert().transformPoint(plane.getPosition());
+    if (shut && hinge) { hinge.setLocalPosition(shut.p); hinge.setLocalRotation(shut.q); }
     const sc = wrap.getLocalScale();
     return to.rot.transformVector(new pc.Vec3(off.x * sc.x, off.y * sc.y, off.z * sc.z));
   };
@@ -253,7 +267,7 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
     return [u * w, v * h];
   };
   const bodyHit = (ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean =>
-    wrap.enabled && rayDist(ray.p0, ray.p1, plane.getPosition()) < (holding ? (app?.xr?.active ? XR_SAFE : 0.13) : 0.12);
+    wrap.enabled && rayDist(ray.p0, ray.p1, plane.getPosition()) < (holding ? (app?.xr?.active ? XR_SAFE * XR_GROW : 0.13) : 0.12);   // S374: the margin grows with the device
 
   // ⚑ S270h / VR-02 — the hinge: kept at its authored (open) pose and swung about the hinge from there
   const hinge = spec.fold ? wrap.findByName(spec.fold.node) as pc.Entity | null : null;
@@ -398,7 +412,8 @@ export function buildHeldDevice(room: RoomHandles, spec: DeviceSpec): HeldDevice
       let filing: string | null = null;
       if (game) { if (holding || spec.ticksUnheld?.()) game.tick(dt); filing = game.takeFiling(); }
       if (!ctx || !tex) return filing;
-      const key = game ? `g|${game.frameKey()}` : `i|${Math.floor(clock * 2)}`;
+      // S374: the large-text setting (a headset) redraws the glass the moment it changes
+      const key = `${largeText() ? 'L' : ''}${game ? `g|${game.frameKey()}` : `i|${Math.floor(clock * 2)}`}`;
       if (key !== drawn) {
         drawn = key;
         if (game) game.draw(painter); else spec.idle(painter, w, h, clock);

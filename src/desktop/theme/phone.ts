@@ -1,3 +1,4 @@
+import { largeText } from './fonts';
 /**
  * ⚑ THE PHONE'S OWN LOOK — and it is deliberately NOT GracePlatform's.
  *
@@ -72,10 +73,14 @@ export const PHONE = {
 // ⚑ S362 / H40 (his headset, 10 Nov: the phone's text is "out of focus… very hard to read; the monitor is much better") — every size on
 //   the phone's screens was raised about 2 px (messages 11 → 13, labels 8–9 → 10, bars 10 → 11) with the line steps and bubble heights
 //   to match, and the Handset Window now draws the phone at 2× (graceQueueLite `drawMirror`). Larger type first; no quad/compositor work.
+// ⚑ S374 / J18-B1 — iOS "Larger Text" in a headset: nothing on the phone under 10 px (shown ×1.07 in the Handset Window,
+//   that is 10.7 px of 2016's desk: 0.88° from the seat). The browser keeps its sizes (fonts.ts `largeText`).
+export const PHONE_LARGE_MIN = 10;
 export function phoneFont(
   ctx: CanvasRenderingContext2D, size = 12, weight: 400 | 600 = 400
 ): void {
-  ctx.font = `${weight} ${size}px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif`;
+  const s = largeText() ? Math.max(size, PHONE_LARGE_MIN) : size;
+  ctx.font = `${weight} ${s}px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif`;
   ctx.textBaseline = 'top';
 }
 

@@ -38,7 +38,7 @@ import { reducedMotion } from '../../state/motion';
  * label field, the counter — exactly as the selective-fidelity law requires.
  */
 import { px, setFont, wrapText } from './chrome';
-import { monoFor } from './fonts';
+import { monoFor, largeText } from './fonts';
 import { RENDER_SCALE } from './era1';
 import { TIDY } from './calendar';
 
@@ -784,7 +784,8 @@ export function browserChrome(
   px(ctx, 0, stripH, W, barH - stripH, CHROME.toolbar);
   px(ctx, 0, barH - 1, W, 1, CHROME.fieldEdge);
   const rects: Rect[] = [];
-  const tw = Math.min(TAB.w, Math.floor((W - rightSpace - TAB.x * 2 - 28 - (tabs.length - 1) * TAB.gap) / Math.max(1, tabs.length)));
+  // ⚑ S374 — with the headset's large text a tab is 10 px wider, so its name clears the close cross
+  const tw = Math.min(TAB.w + (largeText() ? 10 : 0), Math.floor((W - rightSpace - TAB.x * 2 - 28 - (tabs.length - 1) * TAB.gap) / Math.max(1, tabs.length)));
   for (let i = 0; i < tabs.length; i++) {
     const x = TAB.x + i * (tw + TAB.gap);
     const look = looks[i] ?? {};
@@ -806,16 +807,17 @@ export function browserChrome(
     }
     setFont(ctx, 11);   // ⚑ S321 — tab names that fit, at a size that reads from the seat (presentation rules 4, 6)
     ctx.fillStyle = ink;
-    ctx.save(); ctx.beginPath(); ctx.rect(x + 19, TAB.y, tw - (look.badge ? 42 : 26), TAB.h); ctx.clip();   // the title stops a breath before the badge
+    ctx.save(); ctx.beginPath(); ctx.rect(x + 19, TAB.y, tw - (look.badge ? 42 : on && largeText() ? 32 : 26), TAB.h); ctx.clip();   // the title stops a breath before the badge (S374: and the cross)
     ctx.fillText(tabs[i].title, x + 19, TAB.y + 6);
     ctx.restore();
     if (look.badge) {
       // the step number, right-aligned in the tab, the size of a badge
       setFont(ctx, 8);
       const bw = Math.ceil(ctx.measureText(look.badge).width) + 6;
-      px(ctx, x + tw - bw - 5, TAB.y + 7, bw, 11, look.state === 'done' ? CHROME.accent : locked ? CHROME.barLo : CHROME.tabInkLive);
+      const big = largeText();   // S374: the badge holds the headset's larger figure
+      px(ctx, x + tw - bw - 5, TAB.y + (big ? 5 : 7), bw, big ? 15 : 11, look.state === 'done' ? CHROME.accent : locked ? CHROME.barLo : CHROME.tabInkLive);
       ctx.fillStyle = look.state === 'locked' ? CHROME.locked : CHROME.buttonInk;
-      ctx.fillText(look.badge, x + tw - bw - 2, TAB.y + 8);
+      ctx.fillText(look.badge, x + tw - bw - 2, TAB.y + (big ? 6 : 8));
     } else if (on) {
       // the close cross every live tab has
       setFont(ctx, 8);
