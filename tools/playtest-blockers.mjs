@@ -97,13 +97,13 @@ try {
    }
   };
   await waitForCard();await click('close-era-e2');await wait(4000);
-  const back=await page.evaluate(()=>({era:window.__os.desktopEra,close:window.__closeMonitor.on,pose:window.__camPose()}));
+  const back=await page.evaluate(()=>({era:window.__os.desktopEra,close:!!window.__closeMonitor?.on,pose:window.__camPose()}));
   if(back.era!=='e2'||back.close)throw Error('Go back to a room failed: '+JSON.stringify(back));
   await shot('returned-to-2003');events.push({pass:'Restart card returns to the selected room',...back});
   await page.goto(`http://localhost:${port}/?reinterp=1&debug=1&close=1&descent=0&kiosk=0&cut=speedrun`,{waitUntil:'load',timeout:180000});
   await page.waitForFunction(()=>window.__os&&window.__app,{timeout:120000});
   await waitForCard();await click('close-again');await wait(4000);
-  const again=await page.evaluate(()=>({era:window.__os.desktopEra,close:window.__closeMonitor.on,records:window.__ledger().records,reached:window.__ledger().reachedEras}));
+  const again=await page.evaluate(()=>({era:window.__os.desktopEra,close:!!window.__closeMonitor?.on,records:window.__ledger().records,reached:window.__ledger().reachedEras}));
   if(again.close||again.era!=='e1'||again.records.length||again.reached.join()!=='e1')throw Error('Start again failed to reset: '+JSON.stringify(again));
   await shot('start-again');events.push({pass:'Start again resets to 1997 with a fresh memory ledger',...again});
  } else if(name==='debug') {

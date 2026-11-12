@@ -250,7 +250,7 @@ export function mountCommonsFigures(app: pc.Application, parent: pc.Entity): { u
   }
 
   // ── geometry: flat-shaded boxes, four vertices a face (S377) ──
-  /** a box's six faces: their normals and corners (the Close monitor's own table, closeMonitor.ts) */
+  /** a box's six faces: their normals and corners (the Close monitor's own table, closeMonitor.ts; S380: now src/room/closeCrt.ts) */
   const FACES: { n: number[]; v: number[][] }[] = [
     { n: [0, 0, 1], v: [[-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]] },
     { n: [0, 0, -1], v: [[1, -1, -1], [-1, -1, -1], [-1, 1, -1], [1, 1, -1]] },

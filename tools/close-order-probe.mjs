@@ -14,6 +14,8 @@
  * panels → (the song under all of it) → the gaze taken to the computer's panel → a press on it → the Restart page.
  * ⚑ S378 (UiB job 20 Part A): the Restart card on Daniel's far glass is gone; the computer is the fifth panel, and its
  * page in the site viewer is the end (`ended` = the turn to the panel done; then one real press on its Open button).
+ * ⚑ S380 (UiB job 21 Part A): the computer panel is Daniel's low-poly CRT now (src/room/closeCrt.ts); it is published
+ * the same way (`__closePanels()` machine, its Open button on the glass), so nothing here changed.
  * Writes report.json and sheet-<mode>.png (one tile per step).
  */
 import fs from 'node:fs';
