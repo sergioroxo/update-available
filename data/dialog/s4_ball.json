@@ -543,6 +543,7 @@
  },
  "gather": {
   "_docS370": "⚑ S370 / C2 (UiB job 16 Part C2; his, 11 Nov: 'is the message from the community supporting queer people seen in the message before the close? that is important too.'). THE PEOPLE'S CARD (ball.ts `startGather`): once SESSION TERMINATED has been read it steps back, and the chat's warm lines — until now small lines on the stream's screen at his side, read or not before the Close's flyover — GATHER INTO ONE CARD on the glass in front of him, in both look-modes, in the stream's own colours with each handle, lowercase: the people's voice, never the frame's. If Maya asked Junie for help (`raid.help`, Kettle's `v3:help`), junie's 'you said help. we came.' comes first. Lines land `lineSeconds` apart; the card holds by the reading rule (src/desktop/readHold.ts, counted from its last line), asks for no press, and fades in `fadeSeconds`; then the update fails and the Close begins (its song, close_song.mp3, after all of it and uncut). Each line is one the chat already said, or nearly: 'hi maya' (junie, the welcome), 'we're here' (the raid's first line), 'that's a waiting list. not a sign.' (sib's tag on the host's 'That's a sign.', with the half the tag left unsaid), 'same time next week' (pip, the night). Respite: nothing on it is the system's. Claude's draft, after the job's; his edit wins.",
+  "_docS357am": "⚑ S357am (his, 12 Nov, on the Part C page: 'I dont understand Sib \"that a waiting list\"'). sib's line now says what the tag left unsaid: the AI's 'sign' (ALWAYS ONLINE, whose biggest bar is the clinic's waiting list; her referral moved to the adult list at 18, s4_v3.json `clinic`) is the years she has waited for a clinic. The naming tag 'that's a waiting list' (`naming`) is unchanged; the card's hold follows the reading rule, so the longer line holds longer. Claude's line; his edit wins.",
   "lines": [
    {
     "who": "junie",
@@ -554,7 +555,7 @@
    },
    {
     "who": "sib",
-    "text": "that's a waiting list. not a sign."
+    "text": "waiting years for a clinic isn't a sign. it's a waiting list."
    },
    {
     "who": "pip",

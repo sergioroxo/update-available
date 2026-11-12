@@ -872,6 +872,60 @@ came from an outside model through Arena, and its MIT licence names only "TransJ
 zip's file date is 12 Sep 2026 (during Era 4's overhaul), so it belongs in September, not before June. The "ArenaAI
 Trial, before Claude" of 10 June is a different, earlier trial (`~/Pc_Simulation/Proposals_2026-06-10/`).
 
+## 7t. The machine's mistakes: what is wrong in the clip is the AI's, never hers (his, 12 Nov 2026)
+
+**His words** (on job 16 Part C's photo page, where the builder asked him to check that "the clip's 'a little wrong'
+details … read as the machine's mistakes, never as jokes at her"): "amazing — add this to the research doc".
+
+**What the piece does (S370, `src/desktop/apps/contagionClip.ts`).** THE GREAT BECOMING is the 58-second clip Second
+Thoughts makes from Maya's own week, labelled "Made with AI". From S370 each of the AI's "signs" has a picture. Each
+picture "generates" (a shimmer, then the image diffusing out of noise), glossy, and **a little wrong**:
+
+| sign (the AI's claim) | the picture | what is wrong in it (the machine's) | what undoes the claim (her life) |
+|---|---|---|---|
+| it spread on her 18th birthday | a calendar flipping to 18 TODAY | some of its flipping dates cannot exist (00, 32, 45) | the date is Mum's message, Jun 2023 |
+| "just like her friends" | her friends lighting up on a map | a spoke to nowhere: a ghost node, a friend who does not exist | she met them after Jun 2023 |
+| always online | screen-time bars | the top bar runs off the phone's edge | the biggest bar is the clinic's waiting list |
+| "so popular" | notification hearts | one heart is upside down | the hearts are birthday cakes |
+| struggling before, five out of five | a rain cloud over her house | the chimney leans | the cloud holds Dad's line, Sep 2025 |
+
+The code says the rule in one line: "what is wrong in each picture is the machine's … and what undoes it is her own
+life" (contagionClip.ts, the S370 header). No faces are drawn, no medical or diagnostic word is used, and the errors sit
+in the objects (dates, a map, a phone, an icon, a roof), never in her.
+
+**The argument for the article.**
+- **Two layers of failure, kept apart.** Each sign already fails on its own evidence (S366: the waiting list, the
+  cakes, Dad's line). The pictures add a second failure that belongs to the medium: the small impossibilities by which
+  people have learned to recognise generated imagery (garbled text, impossible clocks, extra limbs) [VERIFY SOURCE].
+  The piece uses that grammar on purpose, so the viewer's doubt is aimed at the machine's picture of her, and never at
+  her.
+- **§7p, made visible.** §7p's small print says "AI can make mistakes". Here the mistakes are on screen, and the clip
+  still plays at full confidence, with the music, the narrator and the check marks landing on the beat. The
+  disclaimer and the error coexist, and neither slows the persuasion.
+- **The register law, applied to images.** The clip is an `operable` surface: the system's own media may glitter, be
+  over the top (his rule, "new versions must be over the top") and fail. The person is `felt` and is never the joke.
+  The errors are the satire of the perpetrator's self-presentation that CLAUDE.md allows, and it collapses on its own
+  evidence. This is the same line as "machine imagined, script real" (his 10 Nov limit on the stream's education).
+- **A design rule other makers can use:** when a system's false account of a person is shown, put the error in the
+  system's instrument (its picture, its count, its date), and put the correction in the person's own record.
+
+**Documented ground** (open each before citing):
+1. "Made with AI" is a real platform label: Meta announced it for AI-generated images in April 2024 and renamed it
+   "AI info" in July 2024, after photographers objected that light edits were labelled too [VERIFY SOURCE: Meta
+   newsroom posts, 5 Apr 2024 and its 1 Jul 2024 update]. The clip wears the label as a badge, not a warning.
+2. That small visual errors are how viewers spot generated images is widely reported, and also contested: newer
+   models make fewer of them, so "look for the mistakes" is an unreliable test [VERIFY SOURCE]. The piece does not
+   claim that viewers can detect AI imagery. Its errors are a design choice, drawn by hand in the project's palette,
+   not output from an image model.
+
+**Not to overclaim.** The clip, Second Thoughts and its signs are invented. The pictures are the project's own pixel
+drawings: no image model made them, and no real platform's output is shown. "Rapid-onset" reasoning is shown as the
+system's argument, not weighed as a clinical position (§7j, §7n).
+
+**Where it could go in the article:** with §7p ("The summary layer"), as its visual half; or in the section on the
+games and media of 2026 (§7o). Figures: the five sign pictures before and after their ticks, and the Meridian card,
+in `research/article-images-2026-11-12/job16-partC-S370/clip/` (`signs-3/4/5*.png`, `card-07.png`).
+
 ## 8. What the article must not overclaim
 
 - **Headset and phone timing are not verified by instruments.** Every VR check here is an emulated headset in a desktop
