@@ -85,6 +85,14 @@ import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
 
+/** ⚑ S381 (UiB job 21 Part B; his headset: "To close the website…" with the Lexicon open) — the headset's note for the
+ *  window that is open: the Lexicon, the machine's page (or its Receipt), or a website (gameMenu.json xr*Close / xr*Minimised) */
+function xrWindowNote(view: string, kind: 'Close' | 'Minimised'): string {
+  const M = menuStrings as unknown as Record<string, string>;
+  const which = view === 'lexicon' ? 'Lexicon' : view === 'machine' || view === 'receipt' ? 'Window' : 'Sites';
+  return M[`xr${which}${kind}`] ?? M[`xrSites${kind}`];
+}
+
 
 // ⚑ S227 / W1-C8 (walkthrough 1: "the flip should zoom out, and more slowly") — 0.9 s was a 200 °/s whip
 const FLIP_SECONDS = 1.8;
@@ -1191,8 +1199,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     });
     // ⚑ S291 — the era websites, in the headset: a window that comes to the visitor (frame/siteViewer/xrMount.ts)
     siteViewerXr = mountSiteViewerXr(app, camera, {
-      layerId: xrFrame.layerId, suspendMenu: (on) => xrFrame?.suspend(on), note: (t, sec) => xrFrame?.notice(t, sec), minimisedNote: menuStrings.xrSitesMinimised,
-      closeNote: (menuStrings as { xrSitesClose?: string }).xrSitesClose
+      layerId: xrFrame.layerId, suspendMenu: (on) => xrFrame?.suspend(on), note: (t, sec) => xrFrame?.notice(t, sec), minimisedNote: (v) => xrWindowNote(v, 'Minimised'),
+      closeNote: (v) => xrWindowNote(v, 'Close')
     });
     siteViewerBus.xrActive = () => !!xr?.active;
     let teamSkipPresses: number[] = [];   // S339: the team skip (debug builds only)
@@ -1339,6 +1347,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         press: (p0: number[], p1: number[]) => xrFrame?.press({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) }),
         point: (p0: number[], p1: number[]) => xrFrame?.tick({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) }),
         hint: (t: string | null) => xrFrame?.setHint(t),
+        hintText: () => xrFrame?.hintNow() ?? null,   // S381: read-only, for the probes
         hit: (p0: number[], p1: number[]) => xrFrame?.debugHit({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) })
       };
     }

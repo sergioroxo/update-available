@@ -729,6 +729,7 @@
   "stop": "■ Stop",
   "wotdFrom": "the programme's Word of the Day, in the seller's voice (written for this piece)",
   "tabs": {
+   "first": "First Words",
    "words": "Words",
    "reasons": "Reasons",
    "yours": "Your Words",
@@ -780,6 +781,11 @@
   ]
  },
  "contents": [
+  {
+   "id": "lex-first",
+   "label": "First Words",
+   "line": "the plain words, before theirs"
+  },
   {
    "id": "lex-words",
    "label": "The Words",
@@ -855,5 +861,96 @@
   false,
   true
  ],
- "_docS372": "⚑ S372 / UiB job 17 Part B (his 11 Nov: 'is the Lexicon updated? maybe it needs a revamp in the design department') — FOUR NEW WORDS from the knowledge base only (docs/reinterp/RESEARCH_LEXICON_2026-10-02.md §7: exploratory therapy, explorative conversations, rapid-onset gender dysphoria and its 'signs', same-sex attracted / biological sex as eligibility), 'restored' folded into 'freedom, healing, restoration', 2026's change written on 'just exploring' and 'social contagion' (`later`), a reasons row and the arc's 2026 line. ⚑ EVERY `close`, `later`, `status`, statusBadge and chain `note` marked `draft: true` / `laterDraft` / `arcDraft` is CLAUDE'S DRAFT AND HIS TO RULE (like dossier phrasing): shown until he edits it. No Word of the Day for the new words (ETHICS #7; the eligibility page names no group and jokes at no one); their 'as it was sold' is the piece's own invented line, said to be invented. Each word also has a picture (`emblem`, src/room/lexiconArt.ts), the piece's own sound where one exists (`sound`, a file in tapeAudio.ts's REGISTRY), and a timeline (`chain`/`forms`, §7.7). Left out [VERIFY SOURCE]: the 2025 US executive order's 'Restoring Biological Truth' (listing only), Turban 2022, Bauer 2022, WPATH 2018, Cass §8.24–8.25, RCPsych and Stonewall on the bill."
+ "_docS372": "⚑ S372 / UiB job 17 Part B (his 11 Nov: 'is the Lexicon updated? maybe it needs a revamp in the design department') — FOUR NEW WORDS from the knowledge base only (docs/reinterp/RESEARCH_LEXICON_2026-10-02.md §7: exploratory therapy, explorative conversations, rapid-onset gender dysphoria and its 'signs', same-sex attracted / biological sex as eligibility), 'restored' folded into 'freedom, healing, restoration', 2026's change written on 'just exploring' and 'social contagion' (`later`), a reasons row and the arc's 2026 line. ⚑ EVERY `close`, `later`, `status`, statusBadge and chain `note` marked `draft: true` / `laterDraft` / `arcDraft` is CLAUDE'S DRAFT AND HIS TO RULE (like dossier phrasing): shown until he edits it. No Word of the Day for the new words (ETHICS #7; the eligibility page names no group and jokes at no one); their 'as it was sold' is the piece's own invented line, said to be invented. Each word also has a picture (`emblem`, src/room/lexiconArt.ts), the piece's own sound where one exists (`sound`, a file in tapeAudio.ts's REGISTRY), and a timeline (`chain`/`forms`, §7.7). Left out [VERIFY SOURCE]: the 2025 US executive order's 'Restoring Biological Truth' (listing only), Turban 2022, Bauer 2022, WPATH 2018, Cass §8.24–8.25, RCPsych and Stonewall on the bill.",
+ "first": {
+  "_doc": "⚑ S381 (UiB job 21 Part B; his 12 Nov: 'also needs to include in the lexicon what conversion therapy/SOGICE/conversion practices; Gay, TGD; etc') — FIRST WORDS: the section the Lexicon opens with, beside The Words. The Words are THEIRS (the networks' vocabulary, each with a verdict); these are the plain, respectful terms a visitor needs to follow the piece. Each entry is one or two plain sentences and its sources (keys of `src`, printed short under the entry and in full on the Lexicon's Sources page: data/dossier/links.json 'lexicon#first' and the Lexicon's research rows; `unlinked` has no address in the knowledge base). `see` points at their word's page in The Words. EVERY entry is CLAUDE'S DRAFT, for his eye (T77). Grounding: the UN Independent Expert's report A/HRC/44/53 (2020) para. 17 ('an umbrella term… aimed at effecting a change from non-heterosexual to heterosexual and from trans or gender diverse to cisgender') and para. 20 ('The term “therapy”… denotes “healing”… the contrary, relying on the medically false pathologization'), read in the project's local copy and verified in docs/reinterp/LEXICON_SOURCES_VERIFIED_2026-10-11.md S18; FRA's EU LGBTIQ Survey III (2024; RESEARCH_CLOSE_MESSAGE_2026-10-02.md S14); PACE (2026; SOURCE_VERIFICATION_RESULTS_2026-09-27.md); The Equality Project's SOGICE Statement (S11); WHO's ICD-11 FAQ (S21: 'moved out of the chapter on mental and behavioural disorders'); WPATH SOC-8 (S34, cited as the route to the standard: its title is 'Standards of Care for the Health of Transgender and Gender Diverse People'); Forbidden Colours, The Hate Review (2026; RESEARCH_CLOSE_MESSAGE §1, the Close's `hate`).",
+  "title": "FIRST WORDS",
+  "intro": "The Words are theirs. These are the plain words, for the practices and for the people they target.",
+  "see": "Their word: {term} ►",
+  "srcLabel": "Sources:",
+  "entries": [
+   {
+    "id": "practices",
+    "term": "conversion practices",
+    "aka": "also “conversion therapy”, or SOGICE: sexual orientation and gender identity change efforts",
+    "text": "Any attempt to change or suppress who someone loves, or who they are: by talk, prayer, “therapy” or pressure. This piece says practices, not therapy: as the UN's independent expert wrote, “therapy” means healing, and these do the opposite: they treat being gay or trans as an illness, which it is not.",
+    "see": [
+     "conversion",
+     "sogice"
+    ],
+    "src": [
+     "un",
+     "fra",
+     "pace",
+     "sogice"
+    ]
+   },
+   {
+    "id": "sogi",
+    "term": "sexual orientation · gender identity",
+    "text": "Sexual orientation is who someone is drawn to, or loves. Gender identity is who someone knows themself to be: a woman, a man, both or neither, whether or not it matches the sex they were assigned at birth. Neither is an illness.",
+    "src": [
+     "un",
+     "who"
+    ]
+   },
+   {
+    "id": "lgbt",
+    "term": "LGBT+ · LGBTQIA+",
+    "text": "Initials for lesbian, gay, bisexual and trans people, with Q for queer or questioning, I for intersex, A for asexual or aromantic, and the + for everyone the letters leave out. The EU's own survey writes LGBTIQ.",
+    "src": [
+     "fra"
+    ]
+   },
+   {
+    "id": "glbq",
+    "term": "gay · lesbian · bisexual · queer",
+    "text": "Gay: drawn to people of the same gender; said most of men, and by many women too. Lesbian: a woman drawn to women. Bisexual: drawn to more than one gender. Queer: once an insult, now taken back by many as a wide word of their own.",
+    "src": [
+     "fra"
+    ]
+   },
+   {
+    "id": "trans",
+    "term": "trans · non-binary · TGD",
+    "text": "Trans: someone whose gender is not the one they were assigned at birth. Non-binary: someone whose gender is not only man or only woman. TGD, trans and gender diverse, is the wider term the UN's expert and the clinical standards use. The WHO no longer lists being trans among mental disorders.",
+    "src": [
+     "un",
+     "wpath",
+     "who"
+    ]
+   },
+   {
+    "id": "cis",
+    "term": "cisgender",
+    "text": "Someone whose gender is the one they were assigned at birth. The UN's expert names the practices' aim plainly: to turn people from gay to straight, and from trans or gender diverse to cisgender.",
+    "src": [
+     "un"
+    ]
+   },
+   {
+    "id": "antigender",
+    "term": "the “anti-gender” movement · “gender ideology”",
+    "text": "An organised campaign, across Europe and beyond, against what it calls “gender ideology”: its own name for trans rights, gender studies and sex education, cast as one hidden plan. The cards at the end of this piece follow it.",
+    "see": [
+     "ideology"
+    ],
+    "src": [
+     "hate"
+    ]
+   }
+  ],
+  "src": {
+   "un": "UN Independent Expert on SOGI, A/HRC/44/53 (2020)",
+   "fra": "EU Agency for Fundamental Rights, LGBTIQ Survey III (2024)",
+   "pace": "Council of Europe (PACE), on conversion practices (2026)",
+   "sogice": "The Equality Project, the SOGICE Statement",
+   "who": "WHO, gender incongruence in ICD-11 (FAQ)",
+   "wpath": "WPATH, Standards of Care, version 8 (2022)",
+   "hate": "Forbidden Colours, The Hate Review (2026)"
+  },
+  "unlinked": [
+   "Forbidden Colours, The Hate Review: How the Anti-Gender Movement Spread Across Europe, 2000–2025 (September 2026) — read from the project's copy; no web address"
+  ]
+ }
 }

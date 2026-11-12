@@ -291,8 +291,9 @@ export class LexiconPage {
   private hits: { x: number; y: number; w: number; h: number; id: string }[] = [];
   private at = { x: 0, y: 0, s: 1 };
   constructor(onChange: () => void) { this.lex = new Lexicon({ onChange }); }
-  /** open on its contents (each time it is opened afresh) */
-  reset(): void { this.lex.stopSound(); this.lex.press('lex-title'); }
+  /** open on its contents (each time it is opened afresh) — ⚑ S381: or on its First Words, for the setup's "Read the
+   *  Lexicon first" (siteViewerBus.openAt('lexicon', 'first')) */
+  reset(face: 'title' | 'first' = 'title'): void { this.lex.stopSound(); this.lex.press(face === 'first' ? 'lex-first' : 'lex-title'); }
   draw(e: DrawEnv, r: Rect): void {
     const { ctx } = e;
     ctx.fillStyle = ERA1.navy; ctx.fillRect(r.x, r.y, r.w, r.h);
@@ -322,6 +323,7 @@ export class LexiconPage {
 }
 function tipFor(id: string): string {
   const T = (lexStrings as { ui: { tabs: Record<string, string> } }).ui.tabs;
+  if (id === 'lex-first') return T.first ?? '';
   if (id === 'lex-words') return T.words;
   if (id === 'lex-reasons') return T.reasons;
   if (id === 'lex-yours') return T.yours;

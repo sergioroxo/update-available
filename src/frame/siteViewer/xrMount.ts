@@ -59,9 +59,10 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   layerId: number;
   suspendMenu: (on: boolean) => void;
   note: (text: string | null, seconds?: number) => void;
-  minimisedNote: string;
+  /** ⚑ S381 — per page: the Lexicon and the machine's page are not "the website" */
+  minimisedNote: string | ((view: string) => string);
   /** ⚑ S376 — said once as the window comes: how to close it (the red button, B / Y, a press outside) */
-  closeNote?: string;
+  closeNote?: string | ((view: string) => string);
 }): XrViewer {
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(LW * SCALE); canvas.height = Math.round(LH * SCALE);
@@ -173,7 +174,8 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
     plane.setLocalScale(PLANE_W, 1, PLANE_H);
     plane.enabled = true;
     dirty = true; draw();
-    if (opts.closeNote) opts.note(opts.closeNote, 7);
+    // ⚑ S381 (his headset: "To close the website…" while the Lexicon was open) — the note names the window that is open
+    if (opts.closeNote) opts.note(typeof opts.closeNote === 'function' ? opts.closeNote(String(core.view)) : opts.closeNote, 7);
   }
   function close(): void {
     if (!open && !minimised) return;
@@ -190,7 +192,7 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
     drawTab(isMachineView(core.view) ? MACHINE_COPY.chip : 'Sources');
     if (fromMenu && gameMenuBus.isOpen) { fromMenu = false; opts.suspendMenu(false); gameMenuBus.close(); }
     fromMenu = false;
-    opts.note(opts.minimisedNote, 10);
+    opts.note(typeof opts.minimisedNote === 'function' ? opts.minimisedNote(String(core.view)) : opts.minimisedNote, 10);
   }
   function restore(): void {
     open = true; minimised = false; tab.enabled = false; wristed = false;

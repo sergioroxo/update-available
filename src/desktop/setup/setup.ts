@@ -199,7 +199,7 @@ export class LambySetup {
       return;
     }
     if (id === 'setup-close') { this.closeWindow(); return; }
-    if (id === 'setup-lexicon') { siteViewerBus.open('lexicon'); return; }   // S379: optional; the note stays where it is
+    if (id === 'setup-lexicon') { siteViewerBus.openAt('lexicon', 'first'); return; }   // S379: optional; the note stays where it is. S381: on its First Words
     if (id === 'setup-skip-film' && this.film && runtimeQuery().get('debug') === '1') { this.endFilm(); return; }
     if (id === 'setup-device') { this.requestDeviceLook?.(); return; }
     if (id === 'setup-reduce-motion') { setReducedMotion(!reducedMotion()); this.dirty = true; return; }
@@ -378,7 +378,8 @@ export class LambySetup {
       this.button(ctx, 'setup-close', copy.close, c.x + c.w - 93, c.y + c.h - 37, 81);
       return;
     }
-    const c = ui.windowFrame(ctx, 20, 19, 472, 321, copy[kind].title);
+    // ⚑ S381 — the CONTENT NOTE's window is taller, for its two halves (it ends above the taskbar on every screen)
+    const c = kind === 'note' ? ui.windowFrame(ctx, 20, 8, 472, 340, copy[kind].title) : ui.windowFrame(ctx, 20, 19, 472, 321, copy[kind].title);
     this.hits.push({ ...c.closeBox, id: 'setup-close' });
     if (kind === 'session') {
       this.text(ctx, copy.session.body, c.x + 22, c.y + 26, c.w - 44, this.mobile ? 14 : 12);
@@ -392,19 +393,68 @@ export class LambySetup {
       if (this.deviceLookAvailable) this.button(ctx, 'setup-device', copy.look.permission, c.x + 113, c.y + 204, 240);
       if (this.deviceStatus) this.text(ctx, this.deviceStatus, c.x + 20, c.y + 241, c.w - 40, 9);
     } else if (kind === 'note') {
-      ui.px(ctx, c.x + 10, c.y + 12, c.w - 20, 206, P.paper);
-      const y = this.text(ctx, copy.note.body, c.x + 22, c.y + 26, c.w - 44, this.mobile ? 14 : 12);
-      this.text(ctx, copy.note.menu, c.x + 22, y + (this.mobile ? 8 : 12), c.w - 44, this.mobile ? 12 : 10);
-      const ry = c.y + c.h - 77;
-      ui.bevel(ctx, c.x + 22, ry, 14, 14, false);
-      if (reducedMotion()) { ui.px(ctx, c.x + 25, ry + 5, 3, 5, P.black); ui.px(ctx, c.x + 28, ry + 3, 5, 3, P.black); }
-      this.text(ctx, copy.note.reduceMotion, c.x + 44, ry, c.w - 66, this.mobile ? 14 : 11);
-      this.hits.push({ id: 'setup-reduce-motion', x: c.x + 20, y: ry - 4, w: c.w - 40, h: 22 });
-      // ⚑ S379 (UiB job 20 Part B) — the Lexicon, offered once and optionally, on the button row left of Close: the one
-      //   Lexicon in the site viewer, over the setup; nothing here waits on it (Close stays the way on)
-      this.button(ctx, 'setup-lexicon', copy.note.lexicon, c.x + 22, c.y + c.h - 43, this.mobile ? 210 : 190);
+      this.drawNote(ctx, c);
     }
     this.button(ctx, 'setup-close', copy.close, c.x + c.w - 95, c.y + c.h - 43, 81);
+  }
+  /**
+   * ⚑ S381 (UiB job 21 Part B; his 12 Nov, on job 20's photographs: "the panel has the reduced motion and it can be
+   * devided. First half is the depection fo the topic with a button for the lexicon if it needs help") — THE CONTENT NOTE
+   * IN TWO HALVES, in the frame's plain voice:
+   *   · WHAT IT IS ABOUT — the subject (the note's own first sentence, unchanged), one line saying the Lexicon explains
+   *     the words, and "Read the Lexicon first" (`setup-lexicon`): help for whoever wants the words before starting;
+   *   · BEFORE YOU START — the practical things: the flashing, the moves (Reduce motion makes them cuts) and its box, leave
+   *     at any time and nothing kept, Esc / the corner button for the menu.
+   * Close (drawn by the caller, bottom right) stays the note's way on; the setup never waits on the Lexicon. Laid out by
+   * MEASURING: if the two halves do not fit the window at their sizes, every size steps down together, never under the
+   * 1997 canvases' headset floor (9 px, job 18) — on the computer and in the headset it is 12 / 11 / 10 px, on a phone 14 /
+   * 12 / 12. The words are data/strings/setup.json `note` (the subject's sentence and the practical lines are the note's
+   * existing words, split; the heads and the Lexicon line are new — drafts for his eye, T77).
+   */
+  private drawNote(ctx: CanvasRenderingContext2D, c: { x: number; y: number; w: number; h: number }): void {
+    const N = copy.note as unknown as { aboutHead: string; about: string; lexiconHelp: string; lexicon: string;
+      practicalHead: string; practical: string; reduceMotion: string; leave: string; menu: string };
+    const m = this.mobile;
+    const x = c.x + 12, w = c.w - 24, tx = x + 10, tw = w - 20;
+    const top = c.y + 6, bottom = c.y + c.h - 43 - 8;   // the Close row starts at c.y + c.h - 43
+    const btnH = m ? 36 : 27, boxH = m ? 22 : 18, gap = m ? 6 : 8;
+    const lines = (text: string, size: number): number => { ui.setFont(ctx, size); return ui.wrapText(ctx, text, tw).length; };
+    const lh = (size: number): number => size + (m ? 3 : 5);
+    // the sizes: the subject's sentence, the help and practical lines, the heads
+    let body = m ? 14 : 12, small = m ? 12 : 11, tiny = m ? 12 : 10;
+    const heights = (): [number, number] => [
+      6 + lh(tiny) + lines(N.about, body) * lh(body) + 2 + lines(N.lexiconHelp, small) * lh(small) + 4 + btnH + 6,
+      6 + lh(tiny) + lines(N.practical, small) * lh(small) + 2 + boxH + 4 + lines(N.leave, small) * lh(small) + lines(N.menu, tiny) * lh(tiny) + 4
+    ];
+    let [h1, h2] = heights();
+    while (h1 + gap + h2 > bottom - top && body > 9) { body--; if (small > 9) small--; if (tiny > 9) tiny--; [h1, h2] = heights(); }
+    const head = (text: string, y: number): number => {
+      ui.setFont(ctx, tiny); ctx.fillStyle = P.navy; ctx.fillText(text, tx, y);
+      ui.px(ctx, tx, y + tiny + 1, Math.ceil(ctx.measureText(text).width), 1, P.navy);
+      return y + lh(tiny);
+    };
+    // ── the first half: the subject ──
+    ui.px(ctx, x, top, w, h1, P.paper);
+    ui.px(ctx, x, top, w, 1, P.grey); ui.px(ctx, x, top, 1, h1, P.grey);
+    let y = head(N.aboutHead, top + 6);
+    y = this.text(ctx, N.about, tx, y, tw, body) + 2;
+    y = this.text(ctx, N.lexiconHelp, tx, y, tw, small) + 4;
+    const lw = Math.min(tw, m ? 230 : 190);
+    this.button(ctx, 'setup-lexicon', N.lexicon, tx, y, lw);
+    // ── the second half: the practical things ──
+    const y2 = top + h1 + gap;
+    ui.px(ctx, x, y2, w, h2, P.paper);
+    ui.px(ctx, x, y2, w, 1, P.grey); ui.px(ctx, x, y2, 1, h2, P.grey);
+    y = head(N.practicalHead, y2 + 6);
+    y = this.text(ctx, N.practical, tx, y, tw, small) + 2;
+    // the Reduce motion box, under the line that says what it does
+    ui.bevel(ctx, tx, y + 1, 14, 14, false);
+    if (reducedMotion()) { ui.px(ctx, tx + 3, y + 6, 3, 5, P.black); ui.px(ctx, tx + 6, y + 4, 5, 3, P.black); }
+    this.text(ctx, N.reduceMotion, tx + 22, y + (m ? 1 : 2), tw - 22, small);
+    this.hits.push({ id: 'setup-reduce-motion', x: tx - 2, y: y - 2, w: tw + 4, h: boxH + 2 });
+    y += boxH + 4;
+    y = this.text(ctx, N.leave, tx, y, tw, small);
+    this.text(ctx, N.menu, tx, y, tw, tiny);
   }
   /** Three small authored pixel pictures: hand + laptop, turning phone, turning head + visor. */
   private picture(ctx: CanvasRenderingContext2D, kind: number, x: number, y: number): void {
