@@ -21,3 +21,4 @@ docs/reinterp/review-*/img/
 # Local festival distribution
 dist-itch/
 release/
+/output/orientation-tape/
