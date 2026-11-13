@@ -11,6 +11,8 @@ The detail behind each line lives in the file named on it.*
 - **The last headset session, point by point**: [TRIAGE_HEADSET_B_2026-11-01.md](TRIAGE_HEADSET_B_2026-11-01.md)
 - **Live link**: https://sergioroxo.github.io/update-available/?reinterp=1 (debug: add `&debug=1`)
 
+> **13 Nov 2026: this list is no longer the live one.** Every open line below was checked against BUILD_LOG, TODO and the job briefs (S357by). Each now carries a "⟶ 13 Nov check" note. What is still real moved to **[TODO.md](TODO.md) T79**, and TODO.md is the one live list from here.
+
 Marks: ☐ to do · ◐ started · ☑ done (session) · ❓ waits for Sérgio · 🥽 done in code, needs the headset
 
 ---
@@ -22,7 +24,7 @@ One table, ids T01…, owner (Claude / Codex / Sérgio), size and priority. This
 ## Waiting for Sérgio (cleaned 8 Nov)
 
 - 🥽 **A headset session**: the 2016 mirror read from the seat, try-on (length), the clip, the ceiling map, the stream.
-- ☐ **Codex Prompt C** (sharper headset text: the quad patch behind `?quad=1` + the cheap wins) — paste after Prompt B.
+- ☐ **Codex Prompt C** (sharper headset text: the quad patch behind `?quad=1` + the cheap wins) — paste after Prompt B. · **⟶ 13 Nov check:** DONE (Codex XR text, 8 Nov, BUILD_LOG:2111); its quad-layer result is parked, see the next line → TODO T79
 
 His answers, 8 Nov: **the red thread is DROPPED**; **the "bring stuff" idea is dropped** (the 1997 packet stays a
 generic programme rule); **the 2003 broken jingle FIXED** (S324: it plays under the diary's collapse); **text quality
@@ -35,39 +37,39 @@ closed by him, never raise it again.
 
 - 📋 **Codex briefs ready** (quota): CODEX_BRIEFS_2026-11-02.md — 1 quad layers (sharp text), 2 hand play for the games, 3 one voice everywhere, 4 the dollhouse builds the next room + a menu Dollhouse, 5 the full walk after the 2026 merge. Paste one per Codex run.
 
-- ☑ S293 **2026 v2 + the TransJesus ending** — merged 2 Nov (its own walk reached the Close; 7 draws in the stream). ERA4_V2_BUILT_2026-11-02.md; frames in out/tour-e4-v2/. ❓ his three: keep Junie's coat line? open Mum's thread? Ethics 16 (user test before TransJesus content). Note: the stream grows from the headset glass; the music now plays on under the glitch (overrides S227 Q5). ☐ a full walk of the merged build (Codex brief 5).
+- ☑ S293 **2026 v2 + the TransJesus ending** — merged 2 Nov (its own walk reached the Close; 7 draws in the stream). ERA4_V2_BUILT_2026-11-02.md; frames in out/tour-e4-v2/. ❓ his three: keep Junie's coat line? open Mum's thread? Ethics 16 (user test before TransJesus content). Note: the stream grows from the headset glass; the music now plays on under the glitch (overrides S227 Q5). ☐ a full walk of the merged build (Codex brief 5). · **⟶ 13 Nov check:** the open points: DONE (coat cut S319; Mum's thread scrollable S328; gate 16 closed; walks S310, S325)
 
-- ☑ S294 **Websites inside the experience**: the four era sites drawn into a period window (Win95 / XP / Aero / dark app) with minimise, close, ▲▼, scroll track, wheel, touch and thumbstick; in the browser over the view, in the headset a panel at 0.8 m; from the menu ("Sources — the four websites"), Credits and the Close's Sources; outside links show their address (new tab in the browser); Truth in Love's archived pages on the 1997 Sources tab. SITE_VIEWER_2026-11-01.md 🥽 · ☐ the film plays only on the web page; pinch-drag scroll not built
+- ☑ S294 **Websites inside the experience**: the four era sites drawn into a period window (Win95 / XP / Aero / dark app) with minimise, close, ▲▼, scroll track, wheel, touch and thumbstick; in the browser over the view, in the headset a panel at 0.8 m; from the menu ("Sources — the four websites"), Credits and the Close's Sources; outside links show their address (new tab in the browser); Truth in Love's archived pages on the 1997 Sources tab. SITE_VIEWER_2026-11-01.md 🥽 · ☐ the film plays only on the web page; pinch-drag scroll not built · **⟶ 13 Nov check:** film in the viewer DONE (S371); pinch-drag scroll in the headset still OPEN → T79
 - ☑ S291 **The dollhouse turntable**: stick turns and zooms; a hand turns it; it stays while handled 🥽
 - ☑ S291 **The Close's score under the receipt and the Lexicon**
 - ☑ S291 **Frame 27 redrawn in perspective** after his Gemini reference
-- ☑ **Meta WebXR notes**: FFR stays at 0; Space Warp not feasible; quad layers are the way to sharp text (META_WEBXR_NOTES_2026-11-01.md) · ☐ try quad layers after the next headset session
+- ☑ **Meta WebXR notes**: FFR stays at 0; Space Warp not feasible; quad layers are the way to sharp text (META_WEBXR_NOTES_2026-11-01.md) · ☐ try quad layers after the next headset session · **⟶ 13 Nov check:** quad layers: OPEN, needs his headset (T57, parked black 10 Nov) → T79
 
 - ☑ S280–S281 **Lamby's intermission after Rob**: the room is free 60 s; then "Time's up. It's time for Rob's form."; even after "no", any press opens it 🥽
 - ☑ S281 **One glow logic** — the path (warm ring, the next thing) and "you may" (cooler shimmer, optional things); first on
   the 1997/2003 desktop and Vera's phone (FloppySheep, the messages). DESIGN_S280 §1.
-- ☑ S290 **Era websites**: public/sites/ — a hub and four sites of their time (1997 GeoCities, 2003 portal, 2016 platform, 2026 app), tabs: story, practices (every former "About this"), sources (verified only), images, media, the words, missed it?; the menu's Sources opens the hub; a Close panel's Sources opens its year's site (in a headset: the in-room dossier); the "About this" window is gone from the experience. ERA_SITES_2026-11-01.md · ☐ not yet checked at phone width (1997, 2003); the 2016 video and Truth in Love spots are described only
-- ☑ S282 **Particle transitions** in the headset (the circle grid is gone) 🥽 · ☐ the Close's fades still to do
-- ☐ **The dollhouse shows the next room build**, slowly, as the space does (2003 → 2016). Waits on the draw-call
+- ☑ S290 **Era websites**: public/sites/ — a hub and four sites of their time (1997 GeoCities, 2003 portal, 2016 platform, 2026 app), tabs: story, practices (every former "About this"), sources (verified only), images, media, the words, missed it?; the menu's Sources opens the hub; a Close panel's Sources opens its year's site (in a headset: the in-room dossier); the "About this" window is gone from the experience. ERA_SITES_2026-11-01.md · ☐ not yet checked at phone width (1997, 2003); the 2016 video and Truth in Love spots are described only · **⟶ 13 Nov check:** phone-width check of 1997/2003 still OPEN → T79; the third-party spots described only: by design
+- ☑ S282 **Particle transitions** in the headset (the circle grid is gone) 🥽 · ☐ the Close's fades still to do · **⟶ 13 Nov check:** the Close's fades: UNCLEAR, for his eye → T79
+- ☐ **The dollhouse shows the next room build**, slowly, as the space does (2003 → 2016). Waits on the draw-call · **⟶ 13 Nov check:** SUPERSEDED: the dollhouse was removed (T08, S346)
   agent's answer about batching per room.
-- ☑ S288 **Draw calls** — 2026 west view 144 → 66 (removed props were still drawn at scale 0); closing walls would not help. ☐ if the headset is still over: one vertex-coloured batch (≈ 25). DRAWCALLS_ROOMS_EVAL_2026-11-01.md
+- ☑ S288 **Draw calls** — 2026 west view 144 → 66 (removed props were still drawn at scale 0); closing walls would not help. ☐ if the headset is still over: one vertex-coloured batch (≈ 25). DRAWCALLS_ROOMS_EVAL_2026-11-01.md · **⟶ 13 Nov check:** SUPERSEDED: worst honest count 70 ≤ 75 (S373, S377); only if the Quest's fps says otherwise (T69)
 
 ## To build (from the headset session; detail in the triage file)
 
 **Everywhere**
-- ◐ S283 distances: held devices ≥ 0.42 m and larger; the visor screen 0.55 m; Close labels upright 🥽 · ☐ Recentre after a jump; the sources too far
-- ☐ Hands on the games: bigger touch targets (the controller already plays)
-- ◐ S304 the placement letter waits for Lamby's balloon (≤ 20 s) · ☐ the same rule for other pop-ups
+- ◐ S283 distances: held devices ≥ 0.42 m and larger; the visor screen 0.55 m; Close labels upright 🥽 · ☐ Recentre after a jump; the sources too far · **⟶ 13 Nov check:** sources: SUPERSEDED (S365); Recentre after a jump: OPEN, needs his headset → T79
+- ☐ Hands on the games: bigger touch targets (the controller already plays) · **⟶ 13 Nov check:** DONE in code (S317, S345); a headset check only → T79
+- ◐ S304 the placement letter waits for Lamby's balloon (≤ 20 s) · ☐ the same rule for other pop-ups · **⟶ 13 Nov check:** DONE: timed surfaces wait while Lamby speaks (S306, merged S313/S317)
 - ☑ S285 A skip-the-film button (debug only)
-- ☐ Jagged text in the headset: needs a headset check of the current build first
+- ☐ Jagged text in the headset: needs a headset check of the current build first · **⟶ 13 Nov check:** done in code (S346, S373, S374); needs his Quest (T69)
 
 **1997**
 - ☑ S284 "Show me" opens NetPilot / the chat when it is shut, then points 🥽
-- ☐ "Press here to play FIT IN" in the game's own style
-- ☐ The three-dots button on the desktop (identify)
+- ☐ "Press here to play FIT IN" in the game's own style · **⟶ 13 Nov check:** DONE (T38, S343)
+- ☐ The three-dots button on the desktop (identify) · **⟶ 13 Nov check:** UNCLEAR: never identified → T79
 - ☑ S285 Lamby over Rob's picture says to close it first
-- ☐ Release Work / the racket explained better; the racket on his side (DESIGN)
-- ☐ The drawer does more (DESIGN)
+- ☐ Release Work / the racket explained better; the racket on his side (DESIGN) · **⟶ 13 Nov check:** DONE (T36 S339; the handle toward the visitor S362)
+- ☐ The drawer does more (DESIGN) · **⟶ 13 Nov check:** OPEN, a design call → T79
 
 **2003**
 - ☑ S284 The daily check-in comes first: a grace while, then whatever is pressed opens Restorify 🥽
@@ -75,7 +77,7 @@ closed by him, never raise it again.
 - ☑ S286 Lamby's eyes: taller, two catchlights
 - ☑ S285 Frame 27 redrawn (two beds, the door, "room 3, the last night"); circled in red on the roll
 - ☑ S287 The pet closes back into Restorify
-- ☑ S302 Your Story without the "Your file says" lines · ☑ S303 "Start here" opens the ministry's application (his story recruits the next family) · ☐ the testimony's sound
+- ☑ S302 Your Story without the "Your file says" lines · ☑ S303 "Start here" opens the ministry's application (his story recruits the next family) · ☐ the testimony's sound · **⟶ 13 Nov check:** the testimony's sound DONE (S362)
 - ☑ S295–S296 The task has one name ("Next task"), its button "Go there"; 2003's windows and buttons in XP style
 - ☑ S297 the evening check-in titled and announced as the evening's · ☑ S298 the 1997 charge no longer covers the classification · ☑ S299 a view in every window
 - ☑ S300 the messenger pings when it lands
@@ -83,19 +85,19 @@ closed by him, never raise it again.
 
 **2016**
 - ☑ S284 "Back to today" as a button at the end of each finished job 🥽
-- ◐ S281 FloppySheep and the messages glow · ☐ the messages open in sequence
-- ☐ The GracePlatform button that cannot be pressed; the "Your record" button always there; Lambient working
-- ☐ The vote link too fast; "Nuala, I still have your jumper" not reading as the update (with Vera's rebuild)
-- ☐ Vera's desk redesign (DESIGN): the pen and the paper as an emotional link; the one-colour pen cup → Nuala's mug / the key on red thread; stars visible behind (check)
-- ☐ The video ("two hands") (DESIGN)
+- ◐ S281 FloppySheep and the messages glow · ☐ the messages open in sequence · **⟶ 13 Nov check:** messages in sequence DONE (T05, S327, S330)
+- ☐ The GracePlatform button that cannot be pressed; the "Your record" button always there; Lambient working · **⟶ 13 Nov check:** Lambient DONE (S321); Your record moved to the Start menu (the pause text fixed S357by); the dead button: UNCLEAR, for his eye → T79
+- ☐ The vote link too fast; "Nuala, I still have your jumper" not reading as the update (with Vera's rebuild) · **⟶ 13 Nov check:** vote DONE (S327, S368); the jumper line SUPERSEDED (the update now names its failure after Orla, T07)
+- ☐ Vera's desk redesign (DESIGN): the pen and the paper as an emotional link; the one-colour pen cup → Nuala's mug / the key on red thread; stars visible behind (check) · **⟶ 13 Nov check:** OPEN, a design call (the red thread dropped 8 Nov; pen, paper, cup, stars not done) → T79
+- ☐ The video ("two hands") (DESIGN) · **⟶ 13 Nov check:** UNCLEAR: does the video still exist? → T79
 
 **2026**
-- ☐ Confirm "resets the image" / pop-ins
+- ☐ Confirm "resets the image" / pop-ins · **⟶ 13 Nov check:** SUPERSEDED: 2026 rebuilt (S309, S322, S328, S365)
 - ☑ S283 The session screen at 0.55 m and larger 🥽
 
 **The Close**
-- ☑ S283 the terminated card at 0.55 m; labels upright · ☐ sources hard to point at
-- ☑ S287 The receipt scrolls back; "Back to Library" fits · ❓ sound for the receipt and the Lexicon (his music choice)
+- ☑ S283 the terminated card at 0.55 m; labels upright · ☐ sources hard to point at · **⟶ 13 Nov check:** sources hard to point at: SUPERSEDED (S365, S377)
+- ☑ S287 The receipt scrolls back; "Back to Library" fits · ❓ sound for the receipt and the Lexicon (his music choice) · **⟶ 13 Nov check:** DONE (S291; close_song S361)
 
 ## Done since the headset session (newest first)
 
@@ -116,12 +118,12 @@ closed by him, never raise it again.
 - ☑ **S358 UiB job 12 Part A1** — the 10 Nov headset session's bugs H01–H19 (phantom buttons, NetVision close, check-in, Caleb's teaser sound, the 1997 folder, the diary line, the Handset Window number, Soften the term, the sticker, the link that was not there, Live, the window that grew, phone scroll + the song, the search box, window sizes, the try-on's silence, the 2026 room's props, wake vs breathing, the Close's panels). BUILD_LOG S358.
 
 - ☑ His 8 Nov ruling: **no man's hands on the controllers in the headset** — not needed; the try-on stays on the glass only. Closed.
-- ☑ **S325 Codex's 2026 room merged** (CODEX_E4_V3_ROOM_REPORT_2026-11-08.md; his README untouched); **full walk reached the Close** (271 presses); **itch ZIP rebuilt**: release/your-update-has-failed_itch_2026-11-08.zip (48.7 MB, 265 files), loads clean in an itch-style iframe, no outside requests. ☐ upload it to itch.
+- ☑ **S325 Codex's 2026 room merged** (CODEX_E4_V3_ROOM_REPORT_2026-11-08.md; his README untouched); **full walk reached the Close** (271 presses); **itch ZIP rebuilt**: release/your-update-has-failed_itch_2026-11-08.zip (48.7 MB, 265 files), loads clean in an itch-style iframe, no outside requests. ☐ upload it to itch. · **⟶ 13 Nov check:** the 8 Nov ZIP: SUPERSEDED (13 Nov ZIP live, T78)
 - ☑ **S324 full walk of the combined build** (2016 phone mirror + 2026 v3 screens + jingle + Focus cut): reached the Close, 277 presses, Restart card showing (WALK_2026-11-08_SPEEDRUN_GUIDED.md).
-- ☑ **S322 2026 v3 screens merged** (E4_V3_SCREENS_BUILT_2026-11-07.md): Kettle (laptop) + browser (monitor), Mum by year, Dad's rules, the clinic number, the bot, the contagion map + the clip takeover, Junie, the original, TRY IT ON (the mirror; Junie ends it). Walk reached the Close. ☐ Codex Prompt B (the room) is next. ☐ his open questions in the built doc.
-- ◐ **S320 split build:** Codex's 2016 notice/groups/Notes/photos merged (base for the mirror); Codex Prompt A = the phone mirror on top (CODEX_NEXT_2026-11-07.md); a Claude build agent is building the 2026 v3 SCREENS on `claude/e4-v3-screens` (worktree); Codex Prompt B = the 2026 ROOM after the screens merge; contract `src/narrative/e4Beats.ts`.
-- ❓ **2026 v3, the pressure** (DESIGN_2026_V3_PRESSURE_2026-11-07.md, from RESEARCH_2026_TRANS_PRESSURE_2026-11-07.md): everyone leaves her except the voice that wants her gone — the goal picture ("a guy") everywhere, the news on the walls, Mum's thread opened, the waiting number, the room empties, the contagion map that becomes the crowd; presentation rules for every 2026 screen. He picks hybrid or chat-only. ☑ S319 coat cut.
-- ☐ Brief 8 rewritten as THE PHONE MIRROR (CODEX_BRIEF8_PHONE_MIRROR_2026-11-07.md): Vera's phone mirrored beside the platform all evening; the hurdles a lesbian meets (mentor names the bar, friendship as "dependency", the forum check-in, Mam's "no pressure"); the Mam draft conducted once; "missed you tonight x"; phone disconnected at the update; Lambient fixed first; "Your record" moved to the Start menu. Ready to paste into Codex.
+- ☑ **S322 2026 v3 screens merged** (E4_V3_SCREENS_BUILT_2026-11-07.md): Kettle (laptop) + browser (monitor), Mum by year, Dad's rules, the clinic number, the bot, the contagion map + the clip takeover, Junie, the original, TRY IT ON (the mirror; Junie ends it). Walk reached the Close. ☐ Codex Prompt B (the room) is next. ☐ his open questions in the built doc. · **⟶ 13 Nov check:** DONE / SUPERSEDED (S325; his questions overtaken by S328 and jobs 13–15)
+- ◐ **S320 split build:** Codex's 2016 notice/groups/Notes/photos merged (base for the mirror); Codex Prompt A = the phone mirror on top (CODEX_NEXT_2026-11-07.md); a Claude build agent is building the 2026 v3 SCREENS on `claude/e4-v3-screens` (worktree); Codex Prompt B = the 2026 ROOM after the screens merge; contract `src/narrative/e4Beats.ts`. · **⟶ 13 Nov check:** DONE (BUILD_LOG 2101–2105)
+- ❓ **2026 v3, the pressure** (DESIGN_2026_V3_PRESSURE_2026-11-07.md, from RESEARCH_2026_TRANS_PRESSURE_2026-11-07.md): everyone leaves her except the voice that wants her gone — the goal picture ("a guy") everywhere, the news on the walls, Mum's thread opened, the waiting number, the room empties, the contagion map that becomes the crowd; presentation rules for every 2026 screen. He picks hybrid or chat-only. ☑ S319 coat cut. · **⟶ 13 Nov check:** DONE (his "Hybrid")
+- ☐ Brief 8 rewritten as THE PHONE MIRROR (CODEX_BRIEF8_PHONE_MIRROR_2026-11-07.md): Vera's phone mirrored beside the platform all evening; the hurdles a lesbian meets (mentor names the bar, friendship as "dependency", the forum check-in, Mam's "no pressure"); the Mam draft conducted once; "missed you tonight x"; phone disconnected at the update; Lambient fixed first; "Your record" moved to the Start menu. Ready to paste into Codex. · **⟶ 13 Nov check:** DONE (S321, merged S324)
 - ☑ S318 — guard 1: the transition lines no longer carry one file from Daniel to Vera to Maya ("Your file stays with us."; "A file was opened for you."; "Records kept since 1997… inform your care today."). Itch ZIP checked: loads in an itch-style iframe, no errors, no outside requests.
 - ☑ S317 — the itch festival trial merged into reinterp: 2026 v2, Vera's 2016 v2 (testimony pipeline, take-down, Malta), hand play, Lamby opener waits, the dollhouse build + menu row, the playtest repairs, build:itch (zip in the trial worktree). Its walk reached the Close; not re-walked after the merge.
 - ☑ S316 — his 7 Nov archive finds on the 1997/2003 sites; the own-thing handoff and Codex's documents merged
