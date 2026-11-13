@@ -451,6 +451,27 @@ Wayback captures: the timestamp shown is the one served.
   a four-stage "etiological framework" (confusion, filling the void, sexual identity crisis, resolution); and grades
   clients by "mild, moderate, severe symptoms" by the frequency of their homosexual experience. → the new term
   "symptoms", a note on "born that way", and a reason row for men. Status: NOT SUPPORTED (APA 2009, S09).
+- **S384 addendum (13 Nov 2026, UiB job 22 Part C item 2): both read in full.** Reading note, with page and section
+  references, what changed in the Lexicon and what was left out: `docs/reinterp/LEXICON_SOURCES_P7-49_P7-50_2026-11-13.md`.
+  - **S40, a primary web copy found and checked:** People Can Change's own PDF of the survey, as its site served it,
+    Wayback capture of 10 Jun 2005:
+    https://web.archive.org/web/20050610202501/http://peoplecanchange.com/Surveyoncauses.pdf
+    (HTTP 200 on 13 Nov 2026; title "Perceptions Among Men With Unwanted Same-Sex Attractions (SSA) of the Factors
+    Contributing to the Development of Their Homosexual Feelings", dated June 2004; its text matches the local copy:
+    205 surveys, a 34% response, "not a measurement of actual causes", 95% disagreeing they were "born to be gay").
+    The same file (same Wayback digest) was later served at /pdfs/Surveyoncauses.pdf (2007) and
+    /change/causesurvey.pdf (2011). The IFTCC Archives record on the Lexicon's Sources is NARTH's reprint of it
+    (vol. 13 no. 3, December 2004, pp. 36–42) and carries no text, which is why the S241 Deep Research could not
+    reproduce its figures.
+  - **S41, the capture re-checked:** HTTP 200 on 13 Nov 2026; the passages quoted in the Lexicon are on it. The module is
+    undated, but it requires the Church's 1981 *Homosexuality* booklet (2nd ed.) and cites nothing after 1980: it was
+    written in the 1980s and was still online, on a third-party library site, in 2005.
+  - **The gap in "pornography, masturbation, fantasy" (§2.1, and LEXICON_SOURCES_VERIFIED #35) is closed:** both sources
+    give it as a cause. S41's "filling the void" stage has the boy discover masturbation and build "an association
+    between warm acceptance, sexual performance, and homoerotic behavior"; S40 lists "sexual experience (other than
+    sexual abuse) including pornography or masturbation" among its 25 "possible causes". Status: NOT SUPPORTED (APA 2009,
+    S09, report p. 82: the theories behind current change efforts "have been directly discredited through evidence or
+    rendered obsolete").
 
 ---
 

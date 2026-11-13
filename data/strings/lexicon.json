@@ -586,9 +586,15 @@
     "status": "NOT AN EMPIRICAL CLAIM for the moral half"
    },
    {
-    "reason": "Pornography, masturbation, fantasy as a trap",
+    "reason": "Masturbation, pornography and fantasy, said to tie ‘warm acceptance’ to sex with men",
     "era": "1997-2012",
-    "status": "no source gives it as a cause"
+    "status": "NOT SUPPORTED as a cause of orientation",
+    "src": "NOT SUPPORTED as a cause of orientation. USE: the LDS Social Services module's ‘filling the void’ (Wayback, 15 Feb 2005); People Can Change's June 2004 survey lists ‘sexual experience (other than sexual abuse) including pornography or masturbation’ among its 25 ‘possible causes’. CLAIM: APA 2009 p. 82 (such theories ‘directly discredited through evidence or rendered obsolete’); LEXICON_SOURCES_VERIFIED #35",
+    "draft": true,
+    "_was": {
+     "reason": "Pornography, masturbation, fantasy as a trap",
+     "status": "no source gives it as a cause"
+    }
    },
    {
     "reason": "Media, schools, “gay activists”, culture",
@@ -612,13 +618,37 @@
    },
    {
     "reason": "Four stages — ‘confusion’, ‘filling the void’, ‘sexual identity crisis’, ‘resolution’ — and being born this way denied as doctrine",
-    "era": "c. 1990s–2005",
-    "status": "NOT SUPPORTED"
+    "era": "1980s-2005",
+    "status": "NOT SUPPORTED",
+    "_was": {
+     "era": "c. 1990s–2005"
+    },
+    "draft": true
    },
    {
-    "reason": "The programme's own members, asked in 2004, named the programme's causes: father 97%, male peers 97%, mother 91%; 95% rejected ‘born this way’",
+    "reason": "‘A process of learning’: a boy who never learned ‘how a masculine male is supposed to think and act’, to be retrained by ‘stop-thought’ and ‘female interaction assignments’",
+    "era": "1980s-2005",
+    "status": "NOT SUPPORTED",
+    "src": "NOT SUPPORTED. USE: the LDS Social Services module, ‘Learning Theories’ and Chart 3 (Wayback, 15 Feb 2005). CLAIM: APA 2009 p. 82 (approaches resting on gender-norm ‘deficits’ use ideas ‘directly discredited through evidence or rendered obsolete’); p. 73 (family-pattern theories ‘discredited’)",
+    "draft": true
+   },
+   {
+    "reason": "A child's ways of coping with hurt from parents and peers, said to harden into ‘self-serving’, ‘narcissistic’ habits; the cure: ‘service to others’",
+    "era": "1980s-2005",
+    "status": "NOT SUPPORTED",
+    "src": "NOT SUPPORTED. USE: the LDS Social Services module, ‘Filling the void’ and Chart 3 ‘Service to Others’ (Wayback, 15 Feb 2005). CLAIM: being gay is not a disorder or a deficit (APA 2009 p. 82; RCPsych 2014)",
+    "draft": true
+   },
+   {
+    "reason": "A programme's own members, surveyed in 2004 (205 men who had joined to change: a self-selected sample), rated 25 ‘possible causes’: father 97%, male peers 97%, mother 91%; 95% rejected ‘born to be gay’",
     "era": "2004",
-    "status": "perceptions, not causes"
+    "status": "PERCEPTIONS of a self-selected sample, not causes (the survey says so itself)",
+    "src": "PERCEPTIONS of a self-selected sample, not causes: 205 of about 600 members of People Can Change's online groups (admitted only on affirming a wish to change; 34% replied). The survey itself says it is ‘not a measurement of actual causes’ and not representative of ‘the gay community’; APA 2009 p. 3: such studies rely ‘entirely on convenience samples’",
+    "draft": true,
+    "_was": {
+     "reason": "The programme's own members, asked in 2004, named the programme's causes: father 97%, male peers 97%, mother 91%; 95% rejected ‘born this way’",
+     "status": "perceptions, not causes"
+    }
    }
   ],
   "women": [
@@ -862,6 +892,7 @@
   true
  ],
  "_docS372": "⚑ S372 / UiB job 17 Part B (his 11 Nov: 'is the Lexicon updated? maybe it needs a revamp in the design department') — FOUR NEW WORDS from the knowledge base only (docs/reinterp/RESEARCH_LEXICON_2026-10-02.md §7: exploratory therapy, explorative conversations, rapid-onset gender dysphoria and its 'signs', same-sex attracted / biological sex as eligibility), 'restored' folded into 'freedom, healing, restoration', 2026's change written on 'just exploring' and 'social contagion' (`later`), a reasons row and the arc's 2026 line. ⚑ EVERY `close`, `later`, `status`, statusBadge and chain `note` marked `draft: true` / `laterDraft` / `arcDraft` is CLAUDE'S DRAFT AND HIS TO RULE (like dossier phrasing): shown until he edits it. No Word of the Day for the new words (ETHICS #7; the eligibility page names no group and jokes at no one); their 'as it was sold' is the piece's own invented line, said to be invented. Each word also has a picture (`emblem`, src/room/lexiconArt.ts), the piece's own sound where one exists (`sound`, a file in tapeAudio.ts's REGISTRY), and a timeline (`chain`/`forms`, §7.7). Left out [VERIFY SOURCE]: the 2025 US executive order's 'Restoring Biological Truth' (listing only), Turban 2022, Bauer 2022, WPATH 2018, Cass §8.24–8.25, RCPsych and Stonewall on the bill.",
+ "_docS384": "⚑ S384 / UiB job 22 Part C item 2 (his: 'Do read them') — P7-49 (People Can Change's own June 2004 survey, 'Perceptions Among Men With Unwanted Same-Sex Attractions (SSA) of the Factors Contributing to the Development of Their Homosexual Feelings', read in full from his copy ~/Pc_Simulation/PDF/MD/Surveyoncauses.md and its own PDF, Wayback 10 Jun 2005) and P7-50 (the LDS Social Services practitioner module 'Understanding / Changing Homosexual Orientation Problems', Wayback 15 Feb 2005, read in full) — read into reasons.men. Every row marked `draft: true` here is CLAUDE'S DRAFT AND HIS TO RULE; `_was` keeps what it replaced; `src` holds each row's USE and CLAIM sources (drawn nowhere: `status` is drawn, in full on the 1997/2003 era sites for rows whose WHEN is a year range, so it stays a plain verdict). Changed: the pornography row (the research had found 'no source gives it as a cause'; both sources do); the four-stages row's WHEN (the module cites the Church's 1981 booklet and nothing after 1980, so it was written in the 1980s and was still online in 2005 — not 'c. 1990s'); the members' survey row (now says plainly it is a self-selected sample of the programme's own members, and that the 25 causes were the survey's list). Added: the module's 'process of learning' with its retraining, and its 'self-serving', 'narcissistic' coping with its cure. Reading note: docs/reinterp/LEXICON_SOURCES_P7-49_P7-50_2026-11-13.md. No `close`, `arc`, `line` or First Words entry was touched.",
  "first": {
   "_doc": "⚑ S381 (UiB job 21 Part B; his 12 Nov: 'also needs to include in the lexicon what conversion therapy/SOGICE/conversion practices; Gay, TGD; etc') — FIRST WORDS: the section the Lexicon opens with, beside The Words. The Words are THEIRS (the networks' vocabulary, each with a verdict); these are the plain, respectful terms a visitor needs to follow the piece. Each entry is one or two plain sentences and its sources (keys of `src`, printed short under the entry and in full on the Lexicon's Sources page: data/dossier/links.json 'lexicon#first' and the Lexicon's research rows; `unlinked` has no address in the knowledge base). `see` points at their word's page in The Words. EVERY entry is CLAUDE'S DRAFT, for his eye (T77). Grounding: the UN Independent Expert's report A/HRC/44/53 (2020) para. 17 ('an umbrella term… aimed at effecting a change from non-heterosexual to heterosexual and from trans or gender diverse to cisgender') and para. 20 ('The term “therapy”… denotes “healing”… the contrary, relying on the medically false pathologization'), read in the project's local copy and verified in docs/reinterp/LEXICON_SOURCES_VERIFIED_2026-10-11.md S18; FRA's EU LGBTIQ Survey III (2024; RESEARCH_CLOSE_MESSAGE_2026-10-02.md S14); PACE (2026; SOURCE_VERIFICATION_RESULTS_2026-09-27.md); The Equality Project's SOGICE Statement (S11); WHO's ICD-11 FAQ (S21: 'moved out of the chapter on mental and behavioural disorders'); WPATH SOC-8 (S34, cited as the route to the standard: its title is 'Standards of Care for the Health of Transgender and Gender Diverse People'); Forbidden Colours, The Hate Review (2026; RESEARCH_CLOSE_MESSAGE §1, the Close's `hate`).",
   "title": "FIRST WORDS",
