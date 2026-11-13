@@ -78,7 +78,8 @@ const BELONGINGS_IDS = new Set(
  * draw call. ROLLBACK: delete this set and its two uses below.
  */
 // Maya's bedding, rug and curtains are tinted by the v3 room; keep their materials private too.
-const UNBATCHED_IDS = new Set(['terminalFrame', 'w_wickCard', 'e_bed', 'e_rug', 'e_curtL', 'e_curtR']);
+// ⚑ S382 — Vera's notebook and Nuala's mug (and its painted N) move now (src/room/veraDesk.ts): a batched prop cannot.
+const UNBATCHED_IDS = new Set(['terminalFrame', 'w_wickCard', 'e_bed', 'e_rug', 'e_curtL', 'e_curtR', 'w_notepad', 'w_mug', 'w_mugN']);
 
 const RIG_FADE_SECONDS = 2.5;
 /**
@@ -471,6 +472,8 @@ export interface ClusterShell {
    *  timeline OR a morph cascade) — R28-1: movement markers hide for this,
    *  same "scripted moves always win" rule the camera dolly already honors. */
   readonly busy: boolean;
+  /** ⚑ S382 — the morph's glitch is running (an era's cascade, or the Close's sweep): the room's motes jump with it */
+  readonly glitching: boolean;
   /** W1-B11: fade only a closed partition approached by a scripted camera
    * path. Distance uses the live mesh bounds, so cancellation inside it stays clear. */
   updateTravelClearance(eye: { x: number; y: number; z: number }, moving: boolean): void;
@@ -1017,6 +1020,7 @@ export function buildClusterShell(
     get era(): EraKey { return era; },
     get homeYaw(): number { return era === 'e4' ? 270 : era === 'e3' ? 90 : 0; },
     get busy(): boolean { return morph.running || timeline.length > 0; },
+    get glitching(): boolean { return morph.running; },
     glitchSweep(from: { x: number; z: number }, to: { x: number; z: number }, seconds: number): void {
       // ⚑ S369 (UiB job 16 Part B — "draw calls: 79 at one stream moment"; it is the Close's flight, measured 80) — the sweep
       //   touched every prop, so the whole of Maya's room was unbatched for its ~14 s and drew prop by prop from her seat.

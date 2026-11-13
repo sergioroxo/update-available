@@ -45,5 +45,9 @@
   "instPacket": "the application — twenty-six pages and a liability release",
   "instScanner": "the scanner — your paper file becoming a digital one",
   "instRouter": "the router — the file travels on a network now",
-  "instStatus": "a status light — synced: 1997, 2003, 2016, and now you. Kept somewhere you cannot point to."
+  "instStatus": "a status light — synced: 1997, 2003, 2016, and now you. Kept somewhere you cannot point to.",
+  "veraNotebook": "her notebook — press to pick it up",
+  "veraMug": "a mug, an N painted on it",
+  "veraMugNuala": "Nuala's mug",
+  "_docVeraDesk": "⚑ S382 (job 22 A2/A3) — Vera's notebook and the mug on her desk (src/room/veraDesk.ts). The mug is named for Nuala only once her message has come; before that it is a mug with an N on it (nothing earned early). Drafts for his eye."
 }

@@ -50,6 +50,7 @@ import { GroupTask } from '../desktop/apps/groupTask';
 import { FamilyCallsApp } from '../desktop/apps/familyCalls';
 import { PlacesListApp } from '../desktop/apps/placesList';
 import { stampBanned } from './printArt';
+import { buildVeraDesk } from './veraDesk';
 import { GraceQueueLite, MIRROR_W } from './graceQueueLite';
 import { e4Bridge, claimRoomMount } from '../desktop/apps/space';
 import { ERA1_CANVAS } from '../desktop/theme/era1';
@@ -782,6 +783,10 @@ export interface Era3Devices {
   debugQueue(): GraceQueueLite;
   /** S149 — redraw counts per screen, for the review */
   debugDraws(): Record<string, number>;
+  /** ⚑ S382 — Vera's notebook and Nuala's mug (src/room/veraDesk.ts): the sentence line, the walker's map, a probe */
+  deskAim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): { key: string; at: { x: number; y: number; z: number } } | null;
+  deskTargets(): { id: string; x: number; y: number; z: number; r: number }[];
+  deskDebug(): Record<string, unknown>;
 }
 
 /** general ray↔plane hit test for a `makeScreenEntity` plane (which spans
@@ -925,6 +930,11 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
   graceQueueLite.mountTask(new RecommendTask());   // S192: Tag the video — the recommendation event, 2016
   graceQueueLite.mountTask(new GroupTask());       // S200: Post to the group — the platform's own frame
   graceQueueLite.mountTask(new PlacesListApp());   // S332: the places list — The Wick, added to the places to avoid
+  /** ⚑ S382 (job 22 A2/A3) — the notebook that comes to her hand, and Nuala's mug, made perceptible */
+  const desk = buildVeraDesk(app, graceQueueLite, {
+    head: () => camera(),
+    blocked: () => graceQueueLite.wickConducting || !!e4Bridge()?.update()?.installing
+  });
 
   function add(name: keyof typeof PLACEMENT, logical: { w: number; h: number; scale: number }, draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void, opts: { versionOf?: () => number; transparent?: boolean } = {}): void {
     const { canvas, ctx } = makeCanvas(logical.w, logical.h, logical.scale);
@@ -1016,7 +1026,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       card.setPosition(WICK_TABLE.x, WICK_TABLE.y, WICK_TABLE.z);
       card.lookAt(new pc.Vec3(WICK_TABLE.x, WICK_TABLE.y - 1, WICK_TABLE.z), WICK_UP);
     }
-    if (!wickDone && graceQueueLite.wickCue && era === 'e3') {
+    if (!wickDone && graceQueueLite.wickCue && era === 'e3' && !graceQueueLite.deskConducting) {
       wickDone = true; wickT = 0;
       // T32: rest flat beside the notepad, rather than upright above it.
       wickRest = { p: new pc.Vec3(-4.95, 0.752, 1.25), q: new pc.Quat().setFromEulerAngles(-90, 90, 0) };
@@ -1468,7 +1478,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       graceQueueLite.updateDeferred = !!rit?.deferred;
       if (eraNow === 'e3' && !finalArmed) {
         const gate = graceQueueLite.updateReady;   // S327: the cascade seen, Orla's last message, Lambient's line
-        const clear = !phoneHeld && !graceQueueLite.busy;
+        const clear = !phoneHeld && !graceQueueLite.busy && !desk.notebookOpen;
         if (gate && clear) {
           finalT = finalT < 0 ? 0 : finalT + dt;
           if (finalT >= FINAL_GAP) { finalArmed = true; e4Bridge()?.armFinal(); }
@@ -1485,6 +1495,7 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       graceQueueLite.phoneInHand = phoneHeld;   // S226 — Lambient waits while the phone (and Bea) is in her hand
       graceQueueLite.update(dt);
       tickWick(dt, eraNow);
+      desk.tick(dt, eraNow);
       if (eraNow === 'e3' && graceQueueLite.inboxLiftPending) {
         graceQueueLite.inboxLiftPending = false;
         if (!phoneHeld && lastSeat) this.holdDevice('phone', lastSeat);
@@ -1888,6 +1899,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       //   consumed, so setting it down can never also press something else.
       //   Putting it down is always available and never announced — the same law
       //   the assistant's dismissal follows.
+      // ⚑ S382 — the notebook in her hand is in front of everything too: a press on its page puts it down; a press past
+      //   it puts it down AND goes on to what it was meant for (the phone's S149 law, below)
+      if (desk.notebookOpen && desk.pressHeld(ray)) return true;
       if (phoneHeld && lastSeat) {
         const held = test('phone');
         if (held) return graceQueueLite.handlePhoneClick(held.x, held.y);
@@ -1942,6 +1956,8 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
       //  flat in the room, so it went after the others to avoid eating rays on
       //  their way elsewhere. With it gone there is nothing left to fall through
       //  to but the floor markers, which is what `false` does.)
+      // ⚑ S382 — the notebook and the mug where they lie, last: every screen wins over a small thing on the desk
+      if (desk.pressRest(ray)) return true;
       return false;
     },
     debugCanvases(): Record<string, HTMLCanvasElement> {
@@ -1955,6 +1971,9 @@ export function buildEra3Devices(app: pc.Application): Era3Devices {
     debugQueue(): GraceQueueLite {
       return graceQueueLite;
     },
-    debugDraws(): Record<string, number> { return { ...drawCounts }; }
+    debugDraws(): Record<string, number> { return { ...drawCounts }; },
+    deskAim(ray) { return desk.aim(ray); },
+    deskTargets() { return desk.targets(); },
+    deskDebug() { return desk.debug(); }
   };
 }

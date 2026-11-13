@@ -426,12 +426,20 @@ export class GraceQueueLite {
   private personalDesktop = false;
   private personalArmed = false;
   wickConducting = false;
+  /** ⚑ S382 — Vera's notebook is in her hand, or Nuala's mug is having its moment (src/room/veraDesk.ts): a felt object
+   *  is up, so the platform is quiet (personalQuiet), the phone holds its next message and the pop-ins wait */
+  deskConducting = false;
+  /** ⚑ S382 — Nuala's message has been read: veraDesk takes the cue and brings the mug up; the campaign kit waits for
+   *  `mugDone` (set when the moment has played, or at once if there is no mug to bring) */
+  mugCue = false;
+  mugDone = false;
+  private mugCueT = 0;
   get wickCue(): boolean { return this.personalArmed; }
   private personalWasQuiet = false;
   /** ⚑ S327 — a press on the Handset Window keeps the platform quiet only while that window is showing a person's
    *  words (a thread, the inbox, the group). It used to stay quiet after ANY press there until the next press on the
    *  platform, which is most of why "where is our guide?" (T25) had no answer: the tray was simply not drawn. */
-  get personalQuiet(): boolean { return this.wickConducting || this.phone.conductingNotes || (this.mirrorReading && this.phone.quietReading) || this.phone.personalOpen || this.phoneInHand || this.cascadeConduct; }
+  get personalQuiet(): boolean { return this.wickConducting || this.deskConducting || this.phone.conductingNotes || (this.mirrorReading && this.phone.quietReading) || this.phone.personalOpen || this.phoneInHand || this.cascadeConduct; }
   private armPersonalNotice(): void {
     if (this.personalArmed) return;
     // ⚑ S327 / T32 — the Wick card rises once at sign-in (era3Devices, four seconds). ⚑ S332: Orla's message no longer
@@ -756,7 +764,7 @@ export class GraceQueueLite {
     this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface
       && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed)))
       && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this.focusOpen
-      && !this.wickConducting && !this.cascadeConduct && !this._systemModal;
+      && !this.wickConducting && !this.deskConducting && !this.cascadeConduct && !this._systemModal;
     // ⚑ S336 — the guide no longer holds the phone back. The full entrance walk deadlocked here: the guide balloon came
     //   up because nothing was happening, and while it was up the phone was 'not at rest', so the message that would
     //   have moved the day on never came. One voice at a time still holds: the balloon now waits while the phone
@@ -998,13 +1006,13 @@ export class GraceQueueLite {
     }
     if (this.fourJobsDone && !ledger.records.includes('e3-jobs-done')) ledger.records.push('e3-jobs-done');
     if (this.fourJobsDone && !veraDay.recordOpened && !this.storyOffer && this.phone.queued === 0 && !this.phone.voiceBusy
-      && !this.wickBanPending && !this.wickConducting) { this.storyOffer = true; this.bump(); }
+      && !this.wickBanPending && !this.wickConducting && !this.deskConducting) { this.storyOffer = true; this.bump(); }
     // ⚑ S336 — A FAILSAFE, because the full entrance walk stalled here twice (four jobs done, the board in 'done', the
     //   offer of her own record never armed): if the day has been sitting still with every job done for 8 s, the offer
     //   comes anyway. Whatever was holding it (a queued message that never got its quiet moment, a ban that never got its
     //   cue) must not be able to end the era. The blockers are written to the console once, for diagnosis.
     if (this.fourJobsDone && !veraDay.recordOpened && !this.storyOffer && !this.jobOpen && !this.veraPage
-      && !this.phone.voiceBusy && this.phone.queued === 0 && !this.wickConducting) {
+      && !this.phone.voiceBusy && this.phone.queued === 0 && !this.wickConducting && !this.deskConducting) {
       // only truly idle time counts: messages still arriving, or the card still rising, are the day moving on
       this.offerWaitT += this.lastDt;
       if (this.offerWaitT > 12) {
@@ -1015,7 +1023,11 @@ export class GraceQueueLite {
     } else this.offerWaitT = 0;
     if (this.kitPending) { this.kitWaitT += this.lastDt; if (this.kitWaitT > 10 && !this.kitWarned) { this.kitWarned = true;
       console.warn('[e3] kit waiting ' + JSON.stringify({ wickConducting: this.wickConducting, phone: this.phone.debugState() })); } }
-    if (this.kitPending && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest && !this.wickConducting) {
+    // ⚑ S382 (job 22 A3, his "the mug is fine… but it is not perceptible") — her message read, the mug comes up first
+    if (this.kitPending && !this.mugDone && !this.mugCue && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest
+      && !this.wickConducting && !this.deskConducting) { this.mugCue = true; this.mugCueT = 0; }
+    if (this.mugCue) { this.mugCueT += this.lastDt; if (this.mugCueT > 3) { this.mugCue = false; this.mugDone = true; } }   // nothing took it
+    if (this.kitPending && this.mugDone && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest && !this.wickConducting && !this.deskConducting) {
       // ⚑ S362 / H41 (his headset, 10 Nov, 21:11: the campaign kit "should arrive as a pop-in marked urgent") — it pops in, in the
       //   platform's own voice, and opens from there; it no longer takes the whole screen by itself
       this.kitPending = false; this.mode = 'board'; this.kitPopin = true; this.kitPopinT = 0; playOnce('lambient_chime.mp3'); this.bump();
