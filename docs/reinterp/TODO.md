@@ -66,7 +66,7 @@ line each, with an id, an owner and a size. Sources: the two headset reports of 
 | T39 ☑ S339 | Caleb's messenger: bigger, wider, MSN-style bubbles, scroll; the media player's loading error sits on top; add a loop button | 2003 | C | M |
 | T40 ☑ S339 (on Caleb's song, his answer 13) | The conducted beat (NetVision Player): a "wait" button and two-step timing | 2003 | C | S |
 | T41 ☑ S339 | The 1997 folder and the Harbor board are hard to read; closing the folder should return to the menu | 2003 | C | S |
-| T42 ◐ S339 (2003 restore mark done; "Agree greyed on page 1" is the one-live-Agree law — asked) | Restorify's "Terms of Continued Care": "Agree" looks greyed on page 1; the restore symbol should look more 2003 | 2003 | X | S |
+| T42 ☑ S339 (2003 restore mark done; "Agree greyed on page 1" is the one-live-Agree law; **his ruling 13 Nov: "Keep Agree greyed on page 1"**) | Restorify's "Terms of Continued Care": "Agree" looks greyed on page 1; the restore symbol should look more 2003 | 2003 | X | S |
 | T43 ☑ S331 | 2026 fonts: some too big, some unreadable; one consistent size per screen | 2026 | C | (with T03) |
 | T44 ☑ S349 (S339: 2003; S349: 2016 GracePlatform flat 'material' + the Handset Window in the phone's iOS 7 bar; 2026 the bot in today's assistant idiom, Kettle and cards rounder; before/after out/s349/vc-*; the inventory docs/reinterp/VISUAL_CULTURE_INVENTORY_2026-11-09.md) | Visual culture: each era and OS should look more like its time (for his article too) | all | C | L |
 | T45 ☑ S339 | The 1997 video of Caleb's submission → the platform → the site where the DVDs/testimonies live (his idea: connect the folder, the upload and the era website) | 2003, sites | S then C | M |
