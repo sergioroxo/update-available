@@ -972,6 +972,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     (window as { __consoleSession?: unknown }).__consoleSession = consoleSession;
     (window as { __consoleProbe?: unknown }).__consoleProbe = () => consoleSessionInternal.probe();
     (window as { __deviceDraws?: () => unknown }).__deviceDraws = () => era3Devices ? era3Devices.debugDraws() : null;
+    // ⚑ S382 — Vera's notebook and Nuala's mug: what can be pressed now (the walker's map) and their state (a probe)
+    (window as { __veraDesk?: () => unknown }).__veraDesk = () => era3Devices ? era3Devices.deskTargets() : [];
+    (window as { __veraDeskDebug?: () => unknown }).__veraDeskDebug = () => era3Devices ? era3Devices.deskDebug() : null;
+    Object.defineProperty(window, '__specks', { configurable: true, get: () => specks });   // .debug(), .glitch(s)
     // S61 FREE-CAMERA probe (?debug=1 only, write-only review aid — the
     // companion to __camProbe, which can only land on the three SEAT poses).
     // Room 2's seat sits 0.57 m from the workstation, so every prop-dressing review
@@ -1505,6 +1509,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let glitchDur = 0;
   os.onGlitch = (kind) => {
     if (options.reinterp && reducedMotion()) return;
+    specks?.glitch(kind === 'person' ? 2.8 : 2.0);   // ⚑ S382 — the room's motes jump with the wash
     glitch.style.background = kind === 'person'
       ? 'radial-gradient(ellipse at center, rgba(255,220,140,0.18) 0%, rgba(180,80,60,0.24) 58%, rgba(70,120,180,0.35) 100%)'
       : 'radial-gradient(ellipse at center, rgba(130,180,255,0.18) 0%, rgba(60,90,150,0.34) 68%, rgba(0,0,0,0.48) 100%)';
@@ -3951,6 +3956,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     }
     const dev = devName();
     if (dev) return dev;
+    // ⚑ S382 — Vera's notebook and the mug on her desk name themselves (src/room/veraDesk.ts)
+    const deskAim = era3Devices?.deskAim(ray);
+    if (deskAim) { aimAt = deskAim.at; return A[deskAim.key] ?? null; }
     const inst = institutionUnderRay(ray);
     if (inst) aimAt = (inst as { at?: { x: number; y: number; z: number } }).at ?? null;
     return inst ? A[inst.key] ?? null : null;
@@ -4480,7 +4488,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (machineBootDue < 0) playOnce('boot_1997_machine.mp3');
     }
     xrComfort.setWorldReady(!restoreEntrance?.blocking || !!restoreEntrance.flying);
-    specks?.update(dt, cluster?.era ?? 'e1', cloud?.visible || closeStage ? 0 : restoreEntrance?.blocking ? restoreEntrance.roomVisibility : 1);
+    specks?.update(dt, cluster?.era ?? 'e1', cloud?.visible || closeStage ? 0 : restoreEntrance?.blocking ? restoreEntrance.roomVisibility : 1,
+      !!cluster?.glitching || !!os.updateApp?.glitching);   // ⚑ S382 — the motes jump with the piece's glitches
     if (restoreEntrance?.blocking && !restoreEntrance.flying) {
       publishNow();
       authoredRig.setLocalEulerAngles(camPitch + lookOffPitch, camYaw + lookOffYaw, 0);

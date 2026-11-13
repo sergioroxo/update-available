@@ -30,7 +30,7 @@ try {
    const e=await open(q,view.width,view.height);await e.waitForFunction(()=>window.__camFree && window.__app.root.findByName('room-specks'),{timeout:180000});await wait(1000);
    const pose=era<3?[0,1.2,0.7,4,115]:era===3?[-4.3,1.2,0.7,4,65]:[4.3,1.2,0.7,4,245];await e.evaluate(a=>window.__camFree(...a),pose);await wait(500);await shot(e,`era-${era}-corner-specks`);
    const a=await vertices(e);await wait(1000);const b=await vertices(e);assert.notDeepEqual(a,b,'Specks drift under ordinary motion');
-   const stat=await e.evaluate(()=>{const r=window.__app.root.findByName('room-specks');return {calls:window.__app.stats.drawCalls.total,meshInstances:r.render.meshInstances.length,vertices:r.render.meshInstances[0].mesh.vertexBuffer.numVertices}});assert.equal(stat.meshInstances,1);assert.equal(stat.vertices,160);metrics.push({view,era,...stat});checks.push(`${view.width}/era${era}: 40 quads in one mesh, slow drift`);await e.close();
+   const stat=await e.evaluate(()=>{const r=window.__app.root.findByName('room-specks');return {calls:window.__app.stats.drawCalls.total,meshInstances:r.render.meshInstances.length,vertices:r.render.meshInstances[0].mesh.vertexBuffer.numVertices}});assert.equal(stat.meshInstances,1);assert.equal(stat.vertices,408);metrics.push({view,era,...stat});checks.push(`${view.width}/era${era}: 102 motes (S382: 34 a room) in one mesh, slow drift`);await e.close();
   }
  }
  assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,'MOTION_AND_SPECKS.json'),JSON.stringify({checks,metrics,errors},null,2));console.log('PASS',checks);

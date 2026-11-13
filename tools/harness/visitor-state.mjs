@@ -426,6 +426,18 @@ const LAP = { w: 224, h: 140 };
       }
     }
 
+    /**
+     * ⚑ S382 (UiB job 22 Part A) — VERA'S NOTEBOOK AND NUALA'S MUG, published as `prop`: optional presses in the room
+     * (the notebook comes to her hand, the mug has its moment), so they are on the map and aimable, and the walk never
+     * spends a press on them (`pick` leaves `prop` out). `__veraDesk()` lists only what can be pressed right now.
+     */
+    const desk = typeof window.__veraDesk === 'function' ? window.__veraDesk() : [];
+    for (const t of desk) {
+      const pt = toPage(t.x, t.y, t.z);
+      if (pt) targets.push({ id: t.id, surface: 'prop', logical: null, pt });
+      else dropped.push({ id: t.id, surface: 'prop', logical: null, why: lastWhy || 'unprojectable', turn: turnTo(lastWorld) });
+    }
+
     const surfaced = new Set(targets.map((t) => t.surface));
     root.forEach((e) => {
       const n = e.name || '';
