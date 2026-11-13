@@ -16,6 +16,9 @@
  * it. That is a different calculation from the cloud's own (which works in the glass plane from the eye), so it can
  * catch the cloud being wrong. It also photographs both moments.
  * Exit 1 when any drawn label crosses the machine. Links and stars are judged on the photographs.
+ * ⚑ S380 (UiB job 21 Part A) — the machine in the sky is retired; Daniel's CRT stands in the row (src/room/closeCrt.ts,
+ * entity `close-crt`). The box measured is now the CRT's (its two mesh instances' world boxes), and "in front of it" is
+ * nearer than its nearest corner. (`__closeMonitor.bounds` is still read on a build from before S380.)
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -49,14 +52,26 @@ try {
   const measure = () => page.evaluate(() => {
     const app = window.__app, cam = app.root.findByName('camera'), c = cam.camera, cm = window.__closeMonitor;
     const V = cam.getPosition().constructor;
-    const b = cm.bounds; if (!b) return { error: 'no __closeMonitor.bounds' };
+    let b = cm?.bounds ?? null;
+    const crt = app.root.findByName('close-crt');
+    if (crt && crt.enabled) {
+      const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+      for (const mi of crt.findComponents('render').flatMap((r) => r.meshInstances)) {
+        const mn = mi.aabb.getMin(), mx = mi.aabb.getMax();
+        [mn.x, mn.y, mn.z].forEach((v, k) => { lo[k] = Math.min(lo[k], v); }); [mx.x, mx.y, mx.z].forEach((v, k) => { hi[k] = Math.max(hi[k], v); });
+      }
+      b = { min: { x: lo[0], y: lo[1], z: lo[2] }, max: { x: hi[0], y: hi[1], z: hi[2] } };
+    }
+    if (!b) return { error: 'no CRT (close-crt) and no __closeMonitor.bounds' };
     const scr = (x, y, z) => c.worldToScreen(new V(x, y, z));
     const rect = (pts) => { const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y); return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) }; };
     const corners = []; for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) corners.push(scr(x, y, z));
     const m = rect(corners);
     const eye = cam.getPosition(), fwd = cam.forward;
     const depth = (x, y, z) => (x - eye.x) * fwd.x + (y - eye.y) * fwd.y + (z - eye.z) * fwd.z;
-    const glassDepth = depth((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z);
+    const glassDepth = crt && crt.enabled
+      ? Math.min(...[b.min.x, b.max.x].flatMap((x) => [b.min.y, b.max.y].flatMap((y) => [b.min.z, b.max.z].map((z) => depth(x, y, z)))))
+      : depth((b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, b.max.z);
     const right = cam.right, up = cam.up;
     const labels = window.__closeLabels();
     const hits = [], fadedHits = [];
@@ -70,7 +85,7 @@ try {
       // a label faded out with the sky (the Restart card) is not drawn; it is counted apart, so the fold is still judged on its own
       if (r.x1 >= m.x0 && r.x0 <= m.x1 && r.y1 >= m.y0 && r.y0 <= m.y1) (L.receded >= 0.99 ? fadedHits : hits).push({ text: L.text, d: +d.toFixed(2), rect: [r.x0, r.y0, r.x1, r.y1].map(Math.round) });
     }
-    return { machine: [m.x0, m.y0, m.x1, m.y1].map(Math.round), glassDepth: +glassDepth.toFixed(2), drawn: labels.filter((l) => !l.folded).length, folded: labels.filter((l) => l.folded).length, receded: labels[0]?.receded ?? 0, near: !!cm.near, hits, fadedHits, state: window.__closeState() };
+    return { machine: [m.x0, m.y0, m.x1, m.y1].map(Math.round), glassDepth: +glassDepth.toFixed(2), drawn: labels.filter((l) => !l.folded).length, folded: labels.filter((l) => l.folded).length, receded: labels[0]?.receded ?? 0, near: !!cm?.near, hits, fadedHits, state: window.__closeState() };
   });
   await page.evaluate(() => window.__enterClose());
   const t0 = Date.now();

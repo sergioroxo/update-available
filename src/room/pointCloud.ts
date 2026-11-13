@@ -51,8 +51,7 @@ import { ERA3 } from '../desktop/theme/era3';
 import { ERA4 } from '../desktop/theme/era4';
 import { px, setFont } from '../desktop/theme/chrome';
 import { setFaceEra, faceEra, type FaceEra, FACES, fontsReady } from '../desktop/theme/fonts';
-import { drawMachineCrtCell, drawMachinePlateCell, CRT_CELL_W, type CellRect, type MachineFace } from './machinePanel';
-import { runtimeQuery } from '../edition';
+import { buildCloseCrt, type CloseCrt } from './closeCrt';
 
 const P = clusterData.pointCloud;
 /** S358 / H19 — the seat's eye height (app.ts EYE.y): the Close's panels lean to face it */
@@ -197,7 +196,11 @@ export interface SightCorridor {
    *  sky under the 1997 panel being read: labels, links and stars keep off it, the panel being read stays (unchanged
    *  from before: panels only ever folded once the machine was lit). */
   panels?: boolean;
+  /** ⚑ S380 — the silhouette's own frame (world): its centre, right, up and normal (toward the eye). `x`, `hx`, `yLo`,
+   *  `yHi` are then measured along right and up from `c`, and `z` along the normal (0 = the glass's plane). */
+  frame?: { c: V3; r: V3; u: V3; n: V3 };
 }
+type V3 = { x: number; y: number; z: number };
 
 export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entity): PointCloud {
   const rng = makeRng(19970704);
@@ -682,23 +685,29 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
   const TEXT_W = CELL_W - TEXT_X - 44;
   /**
    * ⚑ S378 (UiB job 20 Part A) — THE COMPUTER'S PANEL: Daniel's machine as a fifth panel in the row, between 2026 and
-   * 1997 (cluster.json `machinePanel`; src/room/machinePanel.ts draws it). Its own cell in the same atlas and its own quad
-   * in the same mesh — no new draw call. A press on it is the app's (it opens the machine's page in the site viewer);
-   * it never turns to a dossier.
+   * 1997 (cluster.json `machinePanel`). A press on it is the app's (it opens the machine's page in the site viewer); it
+   * never turns to a dossier.
+   * ⚑ S380 (UiB job 21 Part A, his "more retro and Low-poly … just the CRT no desk") — it is no longer a card in the
+   * atlas: it is Daniel's CRT itself, a low-poly object standing in the row (src/room/closeCrt.ts), its glass the
+   * machine's face. It keeps a FRAME here (index `machineIdx`, the front of its case) so the press, the aim, the gaze
+   * conducted to it and the probes ask it exactly as they ask the rooms' panels; it has no cell and no quad.
    */
-  type MachineGeo = { bearingDeg: number; face: MachineFace; crt: { w: number; h: number }; plate: { w: number; h: number } };
+  type MachineGeo = { bearingDeg: number; scale: number; yawDeg?: number };
   const MP = (P as unknown as { machinePanel?: MachineGeo }).machinePanel;
-  const mpq = runtimeQuery().get('machinePanel');
-  const machineFace: MachineFace = mpq === 'plate' || mpq === 'crt' ? mpq : MP?.face ?? 'crt';
   const machineIdx = MP && panels.length > 0 ? panels.length : -1;
   const nCells = panels.length + (machineIdx >= 0 ? 1 : 0);
-  const machineSize = MP ? MP[machineFace] : { w: 1.5, h: 1.125 };
-  /** the machine's cell width in the atlas (the `crt` face is 4:3, narrower than a room's 2:1) */
-  const machineCellW = machineFace === 'crt' ? CRT_CELL_W : CELL_W;
-  /** its Open button's rect in its cell (px), set by its drawing */
-  let machineBtn: CellRect = { ...SRC_BTN };
-  /** a panel's button rect and its cell's width — the rooms' Sources buttons, the machine's Open */
-  const btnOf = (i: number): { b: CellRect; cw: number } => (i === machineIdx ? { b: machineBtn, cw: machineCellW } : { b: SRC_BTN, cw: CELL_W });
+  let crt: CloseCrt | null = null;
+  /** a panel's button in its frame's own metres (centre, half-sizes): the rooms' Sources buttons, the machine's Open */
+  const btnLocal = (i: number, f: { hw: number; hh: number }): { x: number; y: number; hw: number; hh: number } => {
+    if (i === machineIdx && crt) {
+      const S = MP?.scale ?? 1, b = crt.button;
+      return { x: b.x * S, y: b.y * S, hw: b.hw * S, hh: b.hh * S };
+    }
+    return {
+      x: ((SRC_BTN.x + SRC_BTN.w / 2) / CELL_W - 0.5) * 2 * f.hw, y: (0.5 - (SRC_BTN.y + SRC_BTN.h / 2) / CELL_H) * 2 * f.hh,
+      hw: (SRC_BTN.w / CELL_W) * f.hw, hh: (SRC_BTN.h / CELL_H) * f.hh
+    };
+  };
   // ⚑ S376 (UiB job 19 Part B, VISUAL_REVIEW_2026-11-12 #4) — the piece's own faces (job 18), not the machine's: the
   //   Close's own face (FACES.close, Fixedsys Excelsior) for the title, the paragraph and the small lines.
   //   "Helvetica Neue / monospace" resolved differently on every machine. His ruling on Part A (12 Nov, T71): "the
@@ -720,7 +729,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     let ptexRef: pc.Texture | null = null;
     const pcan = document.createElement('canvas');
     pcan.width = CELL_W;
-    pcan.height = CELL_H * nCells;   // S378: the computer's panel has the last cell
+    pcan.height = CELL_H * panels.length;   // S380: the computer is a CRT now, not a cell (S378 gave it the last one)
     const pc2 = pcan.getContext('2d');
     if (pc2) {
       pc2.clearRect(0, 0, pcan.width, pcan.height);
@@ -920,30 +929,18 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       panelLabel = panels.map(() => null);
       panelEra = panels.map((pn) => pn.era);
       panelShowEra = panels.map((pn) => pn.era);
-      // ⚑ S378 — the computer's panel: its own face, never a dossier; era -1 (it is no room)
-      const drawMachineCell = (): void => {
-        if (machineIdx < 0) return;
-        const y0 = machineIdx * CELL_H;
-        if (machineFace === 'crt') machineBtn = drawMachineCrtCell(pc2, y0, CRT_CELL_W, CELL_H);
-        else {
-          drawMachinePlateCell(pc2, y0, CELL_W, CELL_H, { backdrop: P.backdrop, link: P.link, label: P.labelColor,
-            warm: (P.warm as string[])[2], readingFace: READING_FACE, closeFace: CLOSE_FACE }, PLATE, SRC_BTN);
-          machineBtn = { ...SRC_BTN };
-        }
-        pc2.textBaseline = 'middle';
-      };
+      // ⚑ S378 — the computer's panel: never a dossier; era -1 (it is no room). S380: its face is the CRT's glass
       if (machineIdx >= 0) { dossierPages.push(1); panelFace.push(-1); panelLabel.push(null); panelEra.push(-1); panelShowEra.push(-1); }
       panels.forEach((panel, i) => drawStoryCell(panel, i));
-      drawMachineCell();
       // ⚑ S376 — the faces are vendored files: if the cloud is built before they have loaded, the cells are drawn
       //   again once they have (the S373 law: a canvas keeps the pixels of the face it first drew)
       void fontsReady().then(() => {
         panels.forEach((panel, i) => { if (panelFace[i] < 0) drawStoryCell(panel, i); });
-        drawMachineCell();
+        crt?.redraw();
         ptexRef?.upload();
       });
       showPanel = (i: number): void => {
-        if (i === machineIdx) { drawMachineCell(); ptex.upload(); return; }
+        if (i === machineIdx) return;   // S380: the CRT's glass is drawn by the CRT
         if (panelFace[i] < 0) drawStoryCell(panels[i], i);
         else drawDossierCell(i);
         ptex.upload();
@@ -1022,7 +1019,10 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         puv.push(0, v0, 1, v0, 1, v1, 0, v1);
         pidx.push(base, base + 1, base + 2, base, base + 2, base + 3);
       });
-      // ⚑ S378 — the computer's panel: the same row (radius, height, the lean to the eye), its own bearing and size
+      // ⚑ S378 — the computer's panel: the same row (radius, height, the lean to the eye), its own bearing.
+      // ⚑ S380 — Daniel's CRT stands there, its glass's centre on the row's centre line, leaning to the eye like the
+      //   panels (its +Z is the panel's normal), at ×scale (cluster.json): its case's front is as tall as a panel.
+      //   Its frame is the case's front, so a press anywhere on the machine's face is a press on it.
       if (machineIdx >= 0 && MP) {
         const i = machineIdx;
         const bearing = MP.bearingDeg * Math.PI / 180;
@@ -1033,15 +1033,31 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         pR.cross(pUp, pN);
         if (pR.length() < 1e-3) pR.set(1, 0, 0); else pR.normalize();
         pU.cross(pN, pR).normalize();
-        const hw = machineSize.w / 2, hh = machineSize.h / 2;
-        panelFrames[i] = { c: new pc.Vec3(cx, cy, cz), n: pN.clone(), r: pR.clone(), u: pU.clone(), hw, hh };
-        const base = i * 4;
-        for (const [ux, uy] of [[-hw, hh], [hw, hh], [hw, -hh], [-hw, -hh]]) {
-          pp.push(cx + pR.x * ux + pU.x * uy, cy + pR.y * ux + pU.y * uy, cz + pR.z * ux + pU.z * uy);
+        // ⚑ turned a little on its own upright (cluster.json `yawDeg`): dead ahead the eye only ever meets a CRT's front,
+        //   and a front alone reads as a cut-out (S174 / R4-14's lesson, when the far machine was moved off the axis);
+        //   turned, one side shows, and with it the tube's depth. The frame turns with it (the press is its face's).
+        const yaw = (MP.yawDeg ?? 0) * Math.PI / 180;
+        if (yaw) {
+          const cs = Math.cos(yaw), sn = Math.sin(yaw);
+          const nx = pN.x * cs + pR.x * sn, ny = pN.y * cs + pR.y * sn, nz = pN.z * cs + pR.z * sn;
+          pR.set(pR.x * cs - pN.x * sn, pR.y * cs - pN.y * sn, pR.z * cs - pN.z * sn).normalize();
+          pN.set(nx, ny, nz).normalize();
         }
-        const v0 = (i * CELL_H) / pcan.height, v1 = ((i + 1) * CELL_H) / pcan.height, u1 = machineCellW / CELL_W;
-        puv.push(0, v0, u1, v0, u1, v1, 0, v1);
-        pidx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+        crt = buildCloseCrt(app);
+        const S = MP.scale;
+        const basis = new pc.Mat4();
+        const d = basis.data;
+        d[0] = pR.x; d[1] = pR.y; d[2] = pR.z;
+        d[4] = pU.x; d[5] = pU.y; d[6] = pU.z;
+        d[8] = pN.x; d[9] = pN.y; d[10] = pN.z;
+        crt.entity.setLocalPosition(cx, cy, cz);
+        crt.entity.setLocalRotation(new pc.Quat().setFromMat4(basis));
+        crt.entity.setLocalScale(S, S, S);
+        crt.setFade(0);
+        root.addChild(crt.entity);
+        const fz = crt.front.z * S;
+        panelFrames[i] = { c: new pc.Vec3(cx + pN.x * fz, cy + pN.y * fz, cz + pN.z * fz), n: pN.clone(), r: pR.clone(), u: pU.clone(),
+          hw: crt.front.hw * S, hh: crt.front.hh * S };
       }
       const pmesh = new pc.Mesh(app.graphicsDevice);
       panelMesh = pmesh;
@@ -1080,9 +1096,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     return panelFrames.map((f, i) => {
       const w = M.transformPoint(new pc.Vec3(f.c.x, f.c.y, f.c.z));
       // S177: and where its Sources button is, on the story face — a real press can aim at it (S378: the machine's Open)
-      const { b: B, cw } = btnOf(i);
-      const bx = ((B.x + B.w / 2) / cw - 0.5) * 2 * f.hw;
-      const by = (0.5 - (B.y + B.h / 2) / CELL_H) * 2 * f.hh;
+      const { x: bx, y: by } = btnLocal(i, f);   // S380: the machine's Open on its CRT's glass
       const b = M.transformPoint(new pc.Vec3(f.c.x + f.r.x * bx + f.u.x * by, f.c.y + f.r.y * bx + f.u.y * by, f.c.z + f.r.z * bx + f.u.z * by));
       return { i, era: panelEra[i], machine: i === machineIdx, face: panelFace[i], hidden: panelHidden[i] === 1, x: w.x, y: w.y, z: w.z,
         hw: f.hw * root.getLocalScale().x, hh: f.hh * root.getLocalScale().x,
@@ -1159,10 +1173,37 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
    *  machine's silhouette (± margin) in the plane of its glass? Only what stands
    *  between the eye and the machine counts — or no more than `behind` past its
    *  glass, which the body would otherwise hide on its own. */
-  function onSight(x: number, y: number, z: number, margin: number, behind = 0.05): boolean {
+  /**
+   * ⚑ S380 (UiB job 21 Part A) — THE SIGHT-LINE, IN THE MACHINE'S OWN FRAME. Until S380 the machine stood back in the sky
+   * facing the seat along world z, and every test below was written in world x/y/z with its glass in a z-plane. Daniel's
+   * CRT stands in the row now, at 315° and leaning to the eye, drifting with the sky: so a corridor may carry a `frame`
+   * (the CRT's front: centre, right, up, normal toward the eye) and every point is first written in it — right, up, and
+   * the distance in front of the glass — which is exactly the old world x, y, z with the glass at 0. Without a frame the
+   * point is the world's, as before.
+   */
+  let mx = 0, my = 0, mz = 0;
+  const ce = { x: 0, y: 0, z: 0 };
+  function mapC(x: number, y: number, z: number): void {
+    const f = corridor?.frame;
+    if (!f) { mx = x; my = y; mz = z; return; }
+    const dx = x - f.c.x, dy = y - f.c.y, dz = z - f.c.z;
+    mx = dx * f.r.x + dy * f.r.y + dz * f.r.z;
+    my = dx * f.u.x + dy * f.u.y + dz * f.u.z;
+    mz = dx * f.n.x + dy * f.n.y + dz * f.n.z;
+  }
+  /** the corridor's eye in its own frame (`ce`), once each time the corridor changes */
+  function mapEye(): void {
+    if (!corridor) return;
+    mapC(corridor.eye.x, corridor.eye.y, corridor.eye.z);
+    ce.x = mx; ce.y = my; ce.z = mz;
+  }
+
+  function onSight(x0: number, y0: number, z0: number, margin: number, behind = 0.05): boolean {
     const c = corridor;
     if (!c) return false;
-    const e = c.eye;
+    const e = ce;
+    mapC(x0, y0, z0);
+    const x = mx, y = my, z = mz;
     if (z >= e.z - 0.05 || z < c.z - behind) return false;
     const s = (c.z - e.z) / (z - e.z);
     const hx = e.x + (x - e.x) * s;
@@ -1177,10 +1218,12 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
    * the thing's own half-size (`hw` × `hh`, world metres) is projected with it into the glass plane, from the eye, and
    * its RECTANGLE there is tested against the silhouette (± `pad`). Near things are judged by what they cover.
    */
-  function quadOnSight(x: number, y: number, z: number, hw: number, hh: number, pad: number, behind = 0.05): boolean {
+  function quadOnSight(x0: number, y0: number, z0: number, hw: number, hh: number, pad: number, behind = 0.05): boolean {
     const c = corridor;
     if (!c) return false;
-    const e = c.eye;
+    const e = ce;
+    mapC(x0, y0, z0);
+    const x = mx, y = my, z = mz;
     if (z >= e.z - 0.02 || z < c.z - behind) return false;
     const s = (c.z - e.z) / (z - e.z);
     const px = e.x + (x - e.x) * s, py = e.y + (y - e.y) * s;
@@ -1192,10 +1235,14 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
    * the slab between the eye and just past the glass, both ends projected into the glass plane from the eye (a line
    * stays a line), and that 2D segment clipped against the padded silhouette (Liang–Barsky). Exact, and allocation-free.
    */
-  function segOnSight(ax: number, ay: number, az: number, bx: number, by: number, bz: number, pad: number, behind = 0.05): boolean {
+  function segOnSight(ax0: number, ay0: number, az0: number, bx0: number, by0: number, bz0: number, pad: number, behind = 0.05): boolean {
     const c = corridor;
     if (!c) return false;
-    const e = c.eye, zNear = e.z - 0.02, zFar = c.z - behind, dz = bz - az;
+    mapC(ax0, ay0, az0);
+    const ax = mx, ay = my, az = mz;
+    mapC(bx0, by0, bz0);
+    const bx = mx, by = my, bz = mz;
+    const e = ce, zNear = e.z - 0.02, zFar = c.z - behind, dz = bz - az;
     let t0 = 0, t1 = 1;
     if (Math.abs(dz) < 1e-9) { if (az > zNear || az < zFar) return false; }
     else {
@@ -1326,6 +1373,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     const off = el.offset / Float32Array.BYTES_PER_ELEMENT;
     const stride = el.stride / Float32Array.BYTES_PER_ELEMENT;
     for (let g = 0; g < panelK.length; g++) {
+      if (g === machineIdx) continue;   // S380: the CRT has no quad in the panels' mesh
       const t = panelK[g], e = t * t * (3 - 2 * t);
       const c = panelFrames[g].c;
       for (let k = 0; k < 4; k++) {
@@ -1410,6 +1458,41 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     vertexBuffer.unlock();
   }
 
+  /**
+   * ⚑ S380 (UiB job 21 Part A) — DANIEL'S CRT KEEPS ITS SIGHT-LINE (R4-15's law, moved from the far machine to the CRT):
+   * from the eye, whatever of the sky stands in front of the CRT — a label, a link, a star — folds away while it is
+   * there, so the machine's face and its foot are never written over ("Genspect parents' survey" across its neck, the
+   * first photographs). The panels never fold for it (`panels: false`; none of them reaches it), nothing dims, nothing
+   * recedes; behind it, its own body hides the sky. Its frame follows the drift: written every frame, no allocation.
+   */
+  const shield: SightCorridor & { frame: { c: V3; r: V3; u: V3; n: V3 } } = {
+    eye: { x: 0, y: 0, z: 0 }, z: 0, x: 0, hx: 0, yLo: 0, yHi: 0, dim: 1, recede: false, panels: false,
+    frame: { c: { x: 0, y: 0, z: 0 }, r: { x: 1, y: 0, z: 0 }, u: { x: 0, y: 1, z: 0 }, n: { x: 0, y: 0, z: 1 } }
+  };
+  const sv = new pc.Vec3();
+  function shieldCrt(): void {
+    if (!crt || machineIdx < 0 || !MP || fadeLevel <= 0) return;
+    const cam = viewCamera?.() ?? app.systems.camera?.cameras[0]?.entity;
+    const f = panelFrames[machineIdx];
+    if (!cam || !f) return;
+    const M = root.getWorldTransform();
+    const k = root.getLocalScale().x * MP.scale;
+    const put = (o: V3, v: pc.Vec3): void => { o.x = v.x; o.y = v.y; o.z = v.z; };
+    put(shield.frame.c, M.transformPoint(f.c, sv));
+    put(shield.frame.r, M.transformVector(f.r, sv).normalize());
+    put(shield.frame.u, M.transformVector(f.u, sv).normalize());
+    put(shield.frame.n, M.transformVector(f.n, sv).normalize());
+    put(shield.eye, cam.getPosition());
+    // the whole machine as the eye meets it: the case's width, from the foot's underside to the case's top
+    shield.x = 0;
+    shield.hx = crt.front.hw * k;
+    shield.yLo = crt.extent.min[1] * k;
+    shield.yHi = crt.extent.max[1] * k;
+    shield.z = 0;
+    corridor = shield;
+    mapEye();
+  }
+
   function applyFade(): void {
     const level = fadeLevel * (corridor ? corridor.dim : 1);   // S167: dimmed while the card is read
     // PERSON tier: soft — opacity never reaches 1, even at full fade. This is
@@ -1443,6 +1526,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
     panelMat.emissive.set(pl, pl, pl);
     panelMat.opacity = fadeLevel;
     panelMat.update();
+    crt?.setFade(fadeLevel);   // S380: Daniel's CRT arrives with them
   }
 
   /**
@@ -1511,6 +1595,7 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       driftK += (want - driftK) * Math.min(1, dt / DRIFT_EASE_SECONDS);
       yaw += P.driftDegPerSec * dt * driftK; // the slow drift — alive, not surveilled; still while read (R3-112)
       root.setLocalEulerAngles(0, yaw, 0);
+      shieldCrt();
       updateBillboards();
       if (corridor) applySight();
       easePanels(dt);
@@ -1557,10 +1642,8 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
         const hx = lh.dot(f.r), hy = lh.dot(f.u);
         if (Math.abs(hx) > f.hw || Math.abs(hy) > f.hh) continue;
         // the button's rect in the cell (px) → panel-local metres, with a little give for a thumb or a wand
-        const { b: B, cw } = btnOf(i);   // S378: the machine's Open, in its own (narrower) cell
-        const bx = ((B.x + B.w / 2) / cw - 0.5) * 2 * f.hw;
-        const by = (0.5 - (B.y + B.h / 2) / CELL_H) * 2 * f.hh;
-        const bw = (B.w / cw) * f.hw * 1.15, bh = (B.h / CELL_H) * f.hh * 1.3;
+        const B = btnLocal(i, f);   // S378: the machine's Open (S380: on its CRT's glass)
+        const bx = B.x, by = B.y, bw = B.hw * 1.15, bh = B.hh * 1.3;
         return Math.abs(hx - bx) <= bw && Math.abs(hy - by) <= bh ? i : null;
       }
       return null;
@@ -1629,10 +1712,12 @@ export function buildPointCloud(app: pc.Application, viewCamera?: () => pc.Entit
       const same = (c === null && corridor === null) || (!!c && !!corridor && c.dim === corridor.dim && c.hx === corridor.hx
         && !!c.recede === !!corridor.recede && (c.panels !== false) === (corridor.panels !== false)
         && c.yLo === corridor.yLo && c.yHi === corridor.yHi && c.z === corridor.z
-        && Math.abs(c.eye.x - corridor.eye.x) < 1e-3 && Math.abs(c.eye.y - corridor.eye.y) < 1e-3 && Math.abs(c.eye.z - corridor.eye.z) < 1e-3);
+        && Math.abs(c.eye.x - corridor.eye.x) < 1e-3 && Math.abs(c.eye.y - corridor.eye.y) < 1e-3 && Math.abs(c.eye.z - corridor.eye.z) < 1e-3
+        && !c.frame && !corridor.frame);
       if (same) return;
       const dimChanged = (c?.dim ?? 1) !== (corridor?.dim ?? 1);
       corridor = c;
+      mapEye();
       if (dimChanged) applyFade();
       updateBillboards();
       applySight();   // S174: clearing it gives every star and panel back

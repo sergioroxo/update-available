@@ -345,7 +345,7 @@ async function main() {
     }, id);
     if (ended) {
       await wait(1500);
-      await shot('07b-the-machine', "the computer's panel, in the row: \"Restart as you are.\" — Daniel's machine stands dark in the sky");
+      await shot('07b-the-machine', "Daniel's CRT in the row (S380): \"Restart as you are.\" on its glass — nothing in the sky behind");
       const pt = await page.evaluate(() => {
         const app = window.__app, cam = app.root.findByName('camera'), V = cam.getPosition().constructor;
         const mp = window.__closePanels().find((p) => p.machine); if (!mp) return null;

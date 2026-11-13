@@ -39,7 +39,6 @@ const WORLD_SKY = COMMONS_WORLD.sky;
 import { buildClusterShell, relocationFor, RELOCATIONS, type ClusterShell, type EraKey,
   type RelocationPlan } from '../room/cluster';
 import { buildPointCloud, closeBackdropColor, type PointCloud } from '../room/pointCloud';
-import { mountCloseMonitor, type CloseMonitor } from '../room/closeMonitor';
 import { entriesByEra } from '../witness/record';
 import { createSendRuntime, type SendRuntime } from '../room/sends';
 import { buildMovementNodes, type MovementNodes } from '../room/movementNodes';
@@ -866,7 +865,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   let e4Room: ReturnType<typeof buildE4Room> | null = null;
   let e4RoomTurnSeq = -1;
   let cloud: PointCloud | null = null;
-  let closeMonitor: CloseMonitor | null = null;
   let sendRt: SendRuntime | null = null;
   let movementNodes: MovementNodes | null = null;
   // R28-2b: the tape system's pure logic (src/narrative/tapes.ts, mirrors
@@ -898,9 +896,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   EMPHASIS_PROPS is in scope (`applyNeverBatch()`).
 
     cloud = buildPointCloud(app, () => xr?.active ? logicalHead() : camera);
-    // ⚑ 2026-09-12: Daniel's monitor, lit in the Close — wired below, once
-    //   `jumpToEraSettled` and the room lists exist (`leaveClose`)
-    closeMonitor = mountCloseMonitor(app);
+    // ⚑ S380 (UiB job 21 Part A) — Daniel's machine no longer stands back in the sky (closeMonitor.ts, retired): his
+    //   CRT itself is the fifth place in the Close's row (src/room/closeCrt.ts, mounted by the point cloud)
     // the SEND seam (master script §4). HISTORICAL WRONG CLAIM: "no beat fires
     // it". S82 corrected that by inspection: the spine offers s1/s2 on E2's
     // ordinary path; s3/s4 remain inaccessible on Daniel's black E3 CRT. The
@@ -3309,7 +3306,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       cluster?.setNeverBatch(['tennisRacketModel']);
     }
     flipBtn.style.display = 'none';
-    closeMonitor?.hide();
     if (xr?.active) xr.end();
   };
 
@@ -4593,12 +4589,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       //   Restart card (`near`) the constellation recedes: labels fade, links go, the stars stay, dimmed.
       //   ⚑ S378 — the machine is an image now and never lit: no panel folds off it, nothing recedes for it (the card
       //   it carried is the computer's panel's page, in the site viewer); its sight-line keeps the labels and stars off it.
-      if (closeMonitor?.shown) {
-        const sil = closeMonitor.silhouette;
-        const eye = xr?.active ? logicalHead().getPosition() : camPos;
-        cloud?.setClearCorridor({ eye: { x: eye.x, y: eye.y, z: eye.z },
-          x: sil.x, hx: sil.hx, yLo: sil.yLo, yHi: sil.yHi, z: sil.z, dim: 1, recede: false, panels: false });
-      }
+      //   ⚑ S380 (UiB job 21 Part A) — and there is no machine in the sky any more (his "I dont think we can have the
+      //   older computer there"): Daniel's CRT stands in the row with the panels, so no sight-line is kept to the sky.
       if (cloud?.visible && !camMove) {
         const view = xr?.active ? logicalHead() : camera;
         const cp = view.getPosition(), cf = view.forward;
@@ -4677,7 +4669,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
           if (e instanceof pc.Entity) e.enabled = false;
         }
         closeRoomPending = null;
-        closeMonitor?.present();   // R3-109: Daniel's machine is there from the start of the Close, dark until it lights
+        // (S380: R3-109's dark machine in the sky is retired; Daniel's CRT arrives in the row with the panels)
       }
       if (!os.setup?.open) spine?.update(dt);
       // ⚑ S204 — a held look key turns the view smoothly, after the tap's own step (0.22 s in)
@@ -5343,9 +5335,9 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *   open    · the sky LERPS from the room's dark to the constellation's
    *             night-blue over the whole opening (see `skyLerp`), and the
    *             cloud's own `openSeconds` is 14 to match.
-   *   settled · the gaze is down, the panels are round her; after
-   *             CLOSE_MONITOR_AFTER_SECONDS Daniel's monitor lights in front
-   *             of her with the Restart card (`closeMonitor.ts`).
+   *   settled · the gaze is down, the panels are round her; then the eye
+   *             is taken to Daniel's CRT in the row (S378 the computer panel;
+   *             S380 the CRT itself, `closeCrt.ts`) and a press opens its page.
    * The Close is entered from the glitch now (`E4Shell.finishHandOff`), not
    * from a press on the laptop.
    */
@@ -5576,7 +5568,6 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
   function leaveClose(era: EraKey, navigation = false): void {
     if (!cluster || !cloud) return;
     cloud.hide();
-    closeMonitor?.hide();
     if (closeStage === 'message') { closeMsgEl.style.opacity = '0'; xrFrame?.setCard(null); closeCard = -1; }
     closeStage = null;
     closeMorphBegun = false;
@@ -5727,7 +5718,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    * site viewer's, on both screens; the Receipt, the dossier (the four years, in the same window) and the Lexicon are its
    * own pages. The Close's song keeps playing under all of them (S290: the receipt and the Lexicon "need a song").
    */
-  if (closeMonitor) {
+  if (cloud) {
     siteViewerBus.machine = {
       era: (era) => { siteViewerBus.close(); leaveClose(era); },
       again: () => {
@@ -5738,9 +5729,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         window.setTimeout(() => restartVisit({ armed: true }), 3200);
       }
     };
-    // read-only probes, like __os: the machine in the sky (its extents), and the end of the Close — the machine's page
+    // read-only probe, like __os: the end of the Close — the machine's page (S380: Daniel's CRT in the row, pressed)
     // showing in the site viewer, after the Close has played (tools/walk.mjs stops on it; harness/visitor-state.mjs)
-    (window as { __closeMonitor?: CloseMonitor }).__closeMonitor = closeMonitor;
     (window as { __closeMachine?: unknown }).__closeMachine = {
       get endingShowing(): boolean { return !!cloud?.visible && closeStage === null && siteViewerBus.view === 'machine'; },
       /** the Close has played and the eye has been taken to the computer's panel (the turn done) */

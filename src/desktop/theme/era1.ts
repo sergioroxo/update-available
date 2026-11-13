@@ -33,7 +33,7 @@ export const RENDER_SCALE = 3;
 
 /**
  * ⚑ S378 — DANIEL'S MACHINE'S OWN PLASTIC, for drawing the machine in 2D (the Close's computer panel,
- * src/room/machinePanel.ts). Not new colours: the CRT's case, its recess and its power button exactly as the room
+ * src/room/machinePanel.ts, retired S380; the CRT itself is src/room/closeCrt.ts). Not new colours: the CRT's case, its recess and its power button exactly as the room
  * builds them (data/room/era1.json crtBody / crtNeck / crtPowerButton / keyboard), so the panel and the 3D machine are
  * the same beige. The green light is the palette's own `ok`.
  */
