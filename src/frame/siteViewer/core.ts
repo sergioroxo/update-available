@@ -125,7 +125,7 @@ export class ViewerCore {
   }
   private enterMachineView(target: View, returning = false): void {
     if (target === 'receipt' && !returning) this.receipt.reset();
-    if (target === 'lexicon' && !returning) this.lexicon.reset();
+    if (target === 'lexicon' && !returning) this.lexicon.reset(siteViewerBus.nextTab === 'first' ? 'first' : 'title');   // S381
   }
   /** ⚑ S378 — the window closed: a word's sound stops with it */
   closed(): void { this.lexicon.stop(); }

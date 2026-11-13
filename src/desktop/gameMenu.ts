@@ -58,6 +58,7 @@ import { statusShort, statusLong, publicText } from '../witness/dossier';
 import mapCopy from '../../data/strings/map.json';
 import closeNetwork from '../../data/strings/close_network.json';
 import { DIALOG, domBevel } from './theme/chrome';
+import { drawEmblem } from '../room/lexiconArt';
 import { mountLeavePage } from '../frame/leavePage';
 import { siteViewerBus, mountSiteViewerDom } from '../frame/siteViewer';
 import { CHANNELS, getMaster, setMaster, getChannel, setChannel, type Channel } from '../audio/mix';
@@ -315,6 +316,42 @@ export function mountGameMenu(): GameMenu {
     panel.appendChild(b);
   }
 
+  /**
+   * ⚑ S381 — THE LEXICON, AS ITS OWN THING in the menu: a sunken group box holding the Lexicon's own picture (the book,
+   * src/room/lexiconArt.ts, ERA1's sixteen, drawn pixel for pixel) beside its row and its one-line note. The frame's
+   * voice: functional, never playing (no glow, no motion). The row opens the one Lexicon in the site viewer (S379); its
+   * own Close, or the window's, comes back here.
+   */
+  function lexiconGroup(): void {
+    const box = document.createElement('div');
+    Object.assign(box.style, { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 8px 6px', margin: '2px 0 10px',
+      background: DIALOG.panel } as CSSStyleDeclaration);
+    domBevel(box, true);
+    const icon = document.createElement('canvas');
+    icon.width = 52; icon.height = 52;
+    const g = icon.getContext('2d');
+    if (g) drawEmblem(g, 'book', 2, 2, 2);
+    Object.assign(icon.style, { flex: '0 0 44px', width: '44px', height: '44px', imageRendering: 'pixelated' } as CSSStyleDeclaration);
+    icon.setAttribute('aria-hidden', 'true');
+    const col = document.createElement('div');
+    Object.assign(col.style, { flex: '1 1 auto', minWidth: '0' } as CSSStyleDeclaration);
+    const b = document.createElement('button');
+    b.textContent = copy.lexiconRow;
+    Object.assign(b.style, {
+      display: 'block', width: '100%', textAlign: 'left', font: 'inherit', fontWeight: '700', color: DIALOG.ink,
+      background: DIALOG.panel, borderRadius: '0', padding: '8px 12px', margin: '0 0 4px', cursor: 'pointer'
+    } as CSSStyleDeclaration);
+    domBevel(b);
+    b.dataset.menuRow = 'lexicon';
+    b.addEventListener('click', () => siteViewerBus.open('lexicon'));
+    const n = document.createElement('p');
+    n.textContent = copy.lexiconNote;
+    Object.assign(n.style, { fontSize: '11px', lineHeight: '1.4', color: DIALOG.dim, margin: '0 2px' } as CSSStyleDeclaration);
+    col.append(b, n);
+    box.append(icon, col);
+    panel.appendChild(box);
+  }
+
   function backRow(target: View = 'main'): void {
     row(target === 'credits' ? copy.backCredits : copy.back, () => { view = target; render(); });
   }
@@ -544,6 +581,9 @@ export function mountGameMenu(): GameMenu {
       // ⚑ S145 — the map is the first thing after Resume: it is the row a lost
       //   player opened the menu for (THE_WITNESS_SYSTEM_PLAN §3B)
       if (gameMenuBus.mapSource) row(mapCopy.row, () => { view = 'map'; render(); });
+      // ⚑ S381 (UiB job 21 Part B; his on job 20's menu: "Barely had any changes the menu") — THE LEXICON as its own small
+      //   group, high in the menu where it is seen without scrolling (S379 put it among the last rows, under the fold)
+      lexiconGroup();
       // ⚑ S80 — RECENTRE, and it belongs here rather than in the fiction for
       // the same reason the caption chrome does: it is the frame telling the
       // player where the room's front is. Only drawn when an engine with a
@@ -614,10 +654,7 @@ export function mountGameMenu(): GameMenu {
       // ⚑ S291 — SOURCES: the four era websites as a window over the room (and in the headset), not a page that takes you away
       row(copy.sitesRow, () => siteViewerBus.open('hub'));
       note(copy.sitesNote);
-      // ⚑ S379 (UiB job 20 Part B) — THE LEXICON from the menu: the one Lexicon, in the same window the Close's computer
-      //   panel opens it in (src/frame/siteViewer/machine.ts); its own Close, or the window's, comes back here
-      row(copy.lexiconRow, () => siteViewerBus.open('lexicon'));
-      note(copy.lexiconNote);
+      // (⚑ S379's Lexicon row moved up, S381: `lexiconGroup`, under Resume and the map)
       row(copy.leave, () => doLeave());
       // ⚑ S220 (his, 2026-10-08: "leave needs a small message saying that it will [go to] a different space") — said
       //   UNDER the row, not asked after it: this Leave is the quick way out of a shared room, and a confirm would

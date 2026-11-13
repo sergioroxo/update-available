@@ -90,7 +90,8 @@ async function run(mode) {
     return true;
   };
   /** the menu's "The Lexicon" row: a real press (the DOM button by its words; the headset's row on the menu plane) */
-  let menuIdx = 4;   // resume, recentre, desk, sources, lexicon — one lower (5) when the map row is there
+  // ⚑ S381: the Lexicon row moved up under the map — resume, map, LEXICON (2); one higher (1) when there is no map row
+  let menuIdx = 2;
   const pressMenuRow = async () => {
     if (xr) {
       const ok = await page.evaluate(([label, i]) => {
@@ -133,16 +134,17 @@ async function run(mode) {
   if (!xr) check(mode, 'the game menu opens', await menuOpen());
   if (!xr) check(mode, 'the menu has a row "' + menuCopy.lexiconRow + '"', await page.evaluate((label) => [...document.querySelectorAll('#reinterp-game-menu button')].some((e) => (e.textContent || '').trim() === label), menuCopy.lexiconRow));
   await shot('menu-with-lexicon-row');
-  // in the headset, if the map row is there the Lexicon row is one lower: try both, keep the one that opens it
+  // in the headset, if the map row is not there the Lexicon row is one higher: try both, keep the one that opens it
   let pressed = await pressMenuRow();
   await wait(1500);
   let v = await viewer();
   if (xr && !(v.open && v.view === 'lexicon')) {
-    // the map row was there: that press opened Sources; close it, and press one row lower
+    // no map row: that press was Recentre (it closes the menu); open it again and press one row higher
     if (v.open) { await page.evaluate(() => window.__siteViewer.close()); await wait(800); }
-    menuIdx = 5;
+    await openMenu();
+    menuIdx = 1;
     await page.evaluate(() => { const app = window.__app, head = app.root.findByName('camera'), plane = app.root.findByName('xr-frame-menu');
-      const y = 84 + 64 * 5 + 26; const local = head.getPosition().clone().set(0, 0, (y / 768 - 0.5));
+      const y = 84 + 64 * 1 + 26; const local = head.getPosition().clone().set(0, 0, (y / 768 - 0.5));
       const target = plane.getWorldTransform().transformPoint(local, local.clone()); const origin = head.getPosition().clone();
       window.__controller.getOrigin = () => origin; window.__controller.getDirection = () => target.clone().sub(origin).normalize(); });
     await wait(300); await page.evaluate(() => window.__app.xr.input.fire('select', window.__controller)); await wait(1500);

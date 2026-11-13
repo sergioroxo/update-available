@@ -36,7 +36,7 @@ import { drawEmblem, drawEmblemSmall } from './lexiconArt';
 import L from '../../data/strings/lexicon.json';
 import linkData from '../../data/dossier/links.json';
 
-type Face = 'title' | 'words' | 'reasons' | 'yours' | 'sources';
+type Face = 'title' | 'first' | 'words' | 'reasons' | 'yours' | 'sources';
 type Hit = { x: number; y: number; w: number; h: number; id: string };
 type Year = '1997' | '2003' | '2016' | '2026';
 interface Term {
@@ -52,6 +52,10 @@ const CHAINS = L.chains as unknown as Record<string, { forms: Partial<Record<Yea
 const PLACES = L.places as Record<string, string>;
 const BADGE = L.statusBadge as unknown as Record<string, [string, string]>;
 const YEARS: Year[] = ['1997', '2003', '2016', '2026'];
+/** ⚑ S381 (UiB job 21 Part B) — FIRST WORDS: the plain words the piece needs (lexicon.json `first`), before theirs */
+interface FirstEntry { id: string; term: string; aka?: string; text: string; see?: string[]; src: string[] }
+const FIRST = (L as unknown as { first: { title: string; intro: string; see: string; srcLabel: string; entries: FirstEntry[];
+  src: Record<string, string>; unlinked: string[] } }).first;
 
 /** ⚑ S233 — THE LEXICON'S OWN SOURCES (his 2026-10-11): every link in data/dossier/links.json whose verification is the
  *  Lexicon's research document, label and address exactly as stored there. Text only — the piece makes no network
@@ -59,17 +63,21 @@ const YEARS: Year[] = ['1997', '2003', '2016', '2026'];
 export const LEXICON_RESEARCH_DOC = 'docs/reinterp/RESEARCH_LEXICON_2026-10-02.md';
 /** ⚑ S241 — and the word-by-word source map (his Deep Research, 2026-10-11): USE and CLAIM sources per entry */
 export const LEXICON_SOURCES_DOC = 'docs/reinterp/LEXICON_SOURCES_VERIFIED_2026-10-11.md';
+/** `url` is '' for a source the knowledge base holds with no web address (First Words' `unlinked`) */
 export interface LexiconSource { label: string; url: string }
 export const LEXICON_SOURCES: LexiconSource[] = (() => {
   const out: LexiconSource[] = [];
   const seen = new Set<string>();
-  for (const arr of Object.values(linkData.links as Record<string, Array<LexiconSource & { verifiedIn: string }>>)) {
+  for (const [key, arr] of Object.entries(linkData.links as Record<string, Array<LexiconSource & { verifiedIn: string }>>)) {
     for (const l of arr) {
-      if ((l.verifiedIn !== LEXICON_RESEARCH_DOC && l.verifiedIn !== LEXICON_SOURCES_DOC) || seen.has(l.url)) continue;
+      // ⚑ S381 — and First Words' own rows ('lexicon#first': FRA, PACE), each verified in its own document
+      const ours = l.verifiedIn === LEXICON_RESEARCH_DOC || l.verifiedIn === LEXICON_SOURCES_DOC || key === 'lexicon#first';
+      if (!ours || seen.has(l.url)) continue;
       seen.add(l.url);
       out.push({ label: l.label, url: l.url });
     }
   }
+  for (const label of FIRST.unlinked) out.push({ label, url: '' });
   return out;
 })();
 const GROUPS: Array<'men' | 'women' | 'trans'> = ['women', 'men', 'trans'];   // the 2016 era's women first
@@ -141,7 +149,8 @@ export class Lexicon {
   press(id: string): boolean {
     if (!id.startsWith('lex-')) return false;
     const to = (f: Face, page = 0): void => { this.closePanel(); this.face = f; this.page = page; };
-    if (id === 'lex-words') to('words');
+    if (id === 'lex-first') to('first');
+    else if (id === 'lex-words') to('words');
     else if (id === 'lex-reasons') to('reasons');
     else if (id === 'lex-yours') to('yours');
     else if (id === 'lex-sources') to('sources');
@@ -198,6 +207,7 @@ export class Lexicon {
     // the disc's own ground: navy, and a band of the lighter blue under the header, as the period's titles had
     px(ctx, 0, 0, W, H, ERA1.navy);
     if (this.face === 'title') this.drawTitle(ctx, W, H, hits);
+    else if (this.face === 'first') this.drawFirst(ctx, W, H, hits);
     else if (this.face === 'words') this.drawWord(ctx, W, H, hits);
     else if (this.face === 'reasons') this.drawReasons(ctx, W, H, hits);
     else if (this.face === 'sources') this.drawSources(ctx, W, H, hits);
@@ -249,16 +259,19 @@ export class Lexicon {
     setFont(ctx, T_SMALL); ctx.fillStyle = ERA1.tooltip;
     ctx.fillText(YEARS.join(' · '), 22, 270);
     // contents: each chapter a button with its one line
-    setFont(ctx, T_TINY); ctx.fillStyle = ERA1.silver; ctx.fillText(UI.contentsTitle, 262, 94);
+    setFont(ctx, T_TINY); ctx.fillStyle = ERA1.silver; ctx.fillText(UI.contentsTitle, 262, (L.contents as unknown[]).length > 4 ? 90 : 94);
     const n = ledger.lexicon.length;
-    (L.contents as Array<{ id: string; label: string; line: string }>).forEach((c, i) => {
-      const y = 112 + i * 52;
-      bevel(ctx, 262, y, W - 262 - 14, 46, true);
-      setFont(ctx, 15); ctx.fillStyle = ERA1.navy; ctx.fillText(c.label, 272, y + 6);
+    // ⚑ S381 — five chapters now (First Words leads): rows 46 apart, 42 high, so the fifth clears the chapter bar (346)
+    const contents = L.contents as Array<{ id: string; label: string; line: string }>;
+    const step = contents.length > 4 ? 46 : 52, rowH = step - 4, y0 = contents.length > 4 ? 106 : 112;
+    contents.forEach((c, i) => {
+      const y = y0 + i * step;
+      bevel(ctx, 262, y, W - 262 - 14, rowH, true);
+      setFont(ctx, 15); ctx.fillStyle = ERA1.navy; ctx.fillText(c.label, 272, y + 5);
       serif(ctx, T_TINY); ctx.fillStyle = ERA1.greyDark;
       const line = c.line.replace('{m}', String(TERMS.length)).replace('{n}', String(n));
-      wrapText(ctx, line, W - 262 - 34).slice(0, 1).forEach((l) => ctx.fillText(l, 272, y + 26));
-      hits.push({ x: 262, y, w: W - 262 - 14, h: 46, id: c.id });
+      wrapText(ctx, line, W - 262 - 34).slice(0, 1).forEach((l) => ctx.fillText(l, 272, y + 24));
+      hits.push({ x: 262, y, w: W - 262 - 14, h: rowH, id: c.id });
     });
     // what reached the visitor
     serif(ctx, T_SMALL); ctx.fillStyle = ERA1.tooltip;
@@ -552,6 +565,73 @@ export class Lexicon {
     void H;
   }
 
+  /**
+   * ⚑ S381 (UiB job 21 Part B) — FIRST WORDS: the plain words for the practices and the people they target, one entry
+   * after another, PAGED BY MEASURING (as the Sources are): the term in the chrome's bold face and gold, a short `aka`
+   * line, one or two plain sentences in the reading face at the headset's body size, a door to their word in The Words
+   * where there is one (`lex-go-<id>`), and the entry's sources, short (in full on the Sources page). The intro leads
+   * the first page. Words: lexicon.json `first` (drafts for his eye).
+   */
+  private drawFirst(ctx: CanvasRenderingContext2D, W: number, H: number, hits: Hit[]): void {
+    const TOP = 54, LIMIT = 338, X = 14, CW = W - 28, BODY = 16, BODY_LH = 20, SEE_H = 22, GAP = 12;
+    type M = { e: FirstEntry; term: string[]; aka: string[]; text: string[]; src: string[]; see: Term[]; h: number };
+    const measure = (e: FirstEntry): M => {
+      setFont(ctx, 15); const term = wrapText(ctx, e.term, CW);
+      serif(ctx, T_TINY); const aka = e.aka ? wrapText(ctx, e.aka, CW) : [];
+      serif(ctx, BODY); const text = wrapText(ctx, e.text, CW);
+      const srcLine = `${FIRST.srcLabel} ${e.src.map((k) => FIRST.src[k] ?? k).join(' · ')}`;
+      serif(ctx, T_TINY); const src = wrapText(ctx, srcLine, CW);
+      const see = (e.see ?? []).map((id) => TERMS.find((t) => t.id === id)).filter((t): t is Term => !!t);
+      const h = term.length * 18 + aka.length * 15 + 4 + text.length * BODY_LH + (see.length ? 4 + SEE_H : 0) + 4 + src.length * 15 + GAP;
+      return { e, term, aka, text, src, see, h };
+    };
+    serif(ctx, T_SMALL);
+    const intro = wrapText(ctx, FIRST.intro, CW);
+    const pages: M[][] = [];
+    let cur: M[] = [], y = TOP + intro.length * 18 + 8;
+    for (const e of FIRST.entries) {
+      const m = measure(e);
+      if (cur.length && y + m.h > LIMIT) { pages.push(cur); cur = []; y = TOP; }
+      cur.push(m); y += m.h;
+    }
+    if (cur.length) pages.push(cur);
+    this.measured.first = Math.max(1, pages.length);
+    this.page = Math.min(this.page, this.measured.first - 1);
+    y = this.header(ctx, W, FIRST.title, `${this.page + 1} / ${this.measured.first}`);
+    if (this.page === 0) {
+      serif(ctx, T_SMALL); ctx.fillStyle = ERA1.silver;
+      for (const l of intro) { ctx.fillText(l, X, y); y += 18; }
+      y += 8;
+    }
+    for (const m of pages[this.page] ?? []) {
+      setFont(ctx, 15); ctx.fillStyle = ERA1.tooltip;
+      for (const l of m.term) { ctx.fillText(l, X, y); y += 18; }
+      serif(ctx, T_TINY); ctx.fillStyle = ERA1.silver;
+      for (const l of m.aka) { ctx.fillText(l, X, y); y += 15; }
+      y += 4;
+      serif(ctx, BODY); ctx.fillStyle = ERA1.white;
+      for (const l of m.text) { ctx.fillText(l, X, y); y += BODY_LH; }
+      if (m.see.length) {
+        y += 4;
+        let bx = X;
+        for (const t of m.see) {
+          const label = FIRST.see.replace('{term}', t.term);
+          setFont(ctx, T_TINY);
+          const bw = Math.min(CW, Math.ceil(ctx.measureText(label).width) + 16);
+          this.button(ctx, hits, label, bx, y, bw, SEE_H, `lex-go-${t.id}`);
+          bx += bw + 6;
+        }
+        y += SEE_H;
+      }
+      y += 4;
+      serif(ctx, T_TINY); ctx.fillStyle = ERA1.grey;
+      for (const l of m.src) { ctx.fillText(l, X, y); y += 15; }
+      y += GAP;
+    }
+    this.pager(hits);
+    void H;
+  }
+
   /** ⚑ S233 — the Lexicon's Sources: what its research points to, printed (label, then the address in full, broken
    *  anywhere it must be, since an address has no spaces). ⚑ S242 — PAGED by measuring. ⚑ S372: at the headset's sizes. */
   private drawSources(ctx: CanvasRenderingContext2D, W: number, H: number, hits: Hit[]): void {
@@ -607,13 +687,19 @@ export class Lexicon {
     arrow('◄', 6, 'lex-prev', this.face !== 'title' && this.page > 0);
     arrow('►', W - 6 - AW, 'lex-next', this.face !== 'title' && this.page < n - 1);
     const S = UI.tabs;
-    const tabs: Array<[string, string]> = [[S.words, 'lex-words'], [S.reasons, 'lex-reasons'], [S.yours, 'lex-yours'], [S.sources, 'lex-sources'], [S.close, 'lex-close']];
+    const tabs: Array<[string, string]> = [[(S as { first?: string }).first ?? 'First Words', 'lex-first'], [S.words, 'lex-words'],
+      [S.reasons, 'lex-reasons'], [S.yours, 'lex-yours'], [S.sources, 'lex-sources'], [S.close, 'lex-close']];
     const x0 = 6 + AW + 4, span = W - 2 * (6 + AW + 4);
-    const w = Math.floor((span - 4 * (tabs.length - 1)) / tabs.length);
+    // ⚑ S381 — six chapters: each tab as wide as its label needs, the rest shared out (equal widths cut "First Words")
+    setFont(ctx, T_TINY);
+    const need = tabs.map(([label]) => Math.ceil(ctx.measureText(label).width) + 10);
+    const spare = Math.max(0, span - 4 * (tabs.length - 1) - need.reduce((a, b) => a + b, 0));
+    let x = x0;
     tabs.forEach(([label, id], i) => {
-      const x = x0 + i * (w + 4);
+      const w = need[i] + Math.floor(spare / tabs.length) + (i === tabs.length - 1 ? spare % tabs.length : 0);
       const on = id === `lex-${this.face}`;
       this.button(ctx, hits, label, x, y, w, h, id, on);
+      x += w + 4;
     });
   }
 }

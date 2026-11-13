@@ -27,6 +27,7 @@
  * headset. The in-headset pass is still Sérgio's.
  */
 import * as pc from 'playcanvas';
+import { drawEmblem } from '../room/lexiconArt';
 import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { gameMenuBus } from '../state/gameMenuBus';
 import type { MapState } from '../witness/map';
@@ -87,6 +88,8 @@ export interface XrFrame {
   setGrip(at: pc.Vec3 | null, extent?: number): void;
   /** S270g — a line that wins over the helper's for `seconds` (the table match, its result) */
   notice(text: string | null, seconds?: number): void;
+  /** ⚑ S381 — the hint line as it stands (the probes read it; nothing acts on it) */
+  hintNow(): string | null;
   /** ⚑ S361 / H50 — the Close's message, one card at a time, on its own plate in front of the eyes (null: down). The
    *  helper's plate holds two lines and was redrawn by the helper every frame, so in the headset the cards never
    *  showed ("where are the message parts?"). */
@@ -324,14 +327,17 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     g.fillStyle = sunk ? DIALOG.light : DIALOG.darker; g.fillRect(x, y + h - t, w, t); g.fillRect(x + w - t, y, t, h);
   };
   const rowH = 64;   // nine rows clear the footer; each target is 52 px high (~3 cm at 0.62 m)
-  const drawRow = (label: string, id: string, y: number, emphasis = false): number => {
+  const drawRow = (label: string, id: string, y: number, emphasis = false, emblem?: string): number => {
     const x = 64, w = W - 128, h = rowH - 12;
     const on = hover === id;
     ctx.fillStyle = DIALOG.panel; ctx.fillRect(x, y, w, h);
     bevel(ctx, x, y, w, h, on);
     if (emphasis) { ctx.strokeStyle = DIALOG.ink; ctx.lineWidth = 2; ctx.strokeRect(x - 3, y - 3, w + 6, h + 6); }
-    uiFont(30, emphasis); ctx.fillStyle = DIALOG.ink;
-    ctx.fillText(label, x + 24 + (on ? 2 : 0), y + 16 + (on ? 2 : 0));
+    // ⚑ S381 — a row that is its own thing (the Lexicon) carries its picture at its left, pixel for pixel, and a bold label
+    let lx = x + 24;
+    if (emblem) { drawEmblem(ctx, emblem, x + 8, y + 2, 2); lx = x + 72; }
+    uiFont(30, emphasis || !!emblem); ctx.fillStyle = DIALOG.ink;
+    ctx.fillText(label, lx + (on ? 2 : 0), y + 16 + (on ? 2 : 0));
     hits.push({ x, y, w, h, id });
     return y + rowH;
   };
@@ -360,10 +366,12 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
     if (view === 'main') {
       y = drawRow(copy.resume, 'resume', y, true);
       if (gameMenuBus.mapSource) y = drawRow(mapCopy.row, 'map', y);
+      // S379: the one Lexicon, in the site window (nine rows clear the footer). ⚑ S381 (his: "Barely had any changes the
+      //   menu") — up under the map, with the Lexicon's own picture, as in the computer's menu
+      y = drawRow(copy.lexiconRow, 'lexicon', y, false, 'book');
       y = drawRow(copy.recentre, 'recentre', y);
       y = drawRow(copy.xrDesk, 'desk', y);   // S270g / VR-04
       y = drawRow(copy.sitesRow, 'sources', y);   // S291
-      y = drawRow(copy.lexiconRow, 'lexicon', y);   // S379: the one Lexicon, in the site window (nine rows clear the footer)
       y = drawRow(copy.controls, 'controls', y);
       y = drawRow(copy.restart, 'restart', y);
       y = drawRow(copy.leave, 'leave', y);
@@ -550,6 +558,7 @@ export function mountXrFrame(app: pc.Application, head: pc.Entity, opts: {
       if (h) act(h.id);
       return true;
     },
+    hintNow(): string | null { return noticeText && performance.now() < noticeUntil ? noticeText : hint; },
     notice(text: string | null, seconds = 6): void {
       noticeUntil = text ? performance.now() + seconds * 1000 : 0;
       noticeText = null; this.setHint(text); noticeText = text;
