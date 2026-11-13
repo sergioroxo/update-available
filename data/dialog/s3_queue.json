@@ -139,7 +139,26 @@
     "duration": "0:40",
     "beforeLabel": "as sent",
     "play": "Play",
-    "pause": "Pause"
+    "pause": "Pause",
+    "sentLabel": "As Renata sent it",
+    "publishedLabel": "As GracePlatform publishes it",
+    "caption": "My roommate sat with me while I recorded this.",
+    "publishedCaption": "Free from dependency",
+    "cutLog": [
+     [
+      "second person",
+      "cropped out"
+     ],
+     [
+      "second cup",
+      "removed"
+     ],
+     [
+      "shelf photo",
+      "blurred"
+     ]
+    ],
+    "_docS382": "⚑ S382 (UiB job 22 A4, his 13 Nov: \"is it supposed to be a confessional video? a montage? what is supposed for Vera to fix in it? Should we see the real and the version the system made on top of it to edit out the lesbian content?\" — yes, both). DRAFTS FOR HIS EYE. Her film is a recorded account: her hands at her kitchen table, and across the table a second arm whose hand rests on hers; two cups; a photograph of two people, seen from behind, on the shelf (src/desktop/theme/renataFilm.ts). `caption` is HER caption, in her own word for the person (felt): the text calls her \"my roommate\" too, and the picture shows what the word carries. Correction 3 (\"Name the dependency, not the person\") is the act that makes the cut: once it is applied, by Vera or for her, the editor shows both films, labelled `sentLabel` / `publishedLabel` (the laptop's tracked changes, for a picture): the platform's version cropped in, the other hand gone, the second cup gone, the photograph blurred, and its own caption over it (`publishedCaption`, operable: the person renamed as the dependency). `cutLog` is the platform's own list of what it took, in its own cold words, beside its version. When the story is done, Vera's own 2014 story with the same rule (s3_vera.json `ownCut`) takes the transcript's place beside the two films. The forty-second 'tap where it starts' job (`story` below) was retired as a tile in S332 and is not revived: Vera's Apply on correction 3 IS the cut. Hands and objects only; no faces; no voice is ever synthesised for a member."
    }
   },
   {

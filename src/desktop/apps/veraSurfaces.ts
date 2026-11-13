@@ -79,7 +79,7 @@ export function publicationPreview(ctx: CanvasRenderingContext2D, a: SurfaceRect
     const fw = kind === 2 ? 90 : 30, fh = kind === 2 ? 51 : 54;
     ctx.save(); ctx.beginPath(); ctx.rect(x, top, fw, fh); ctx.clip();
     const imageW = Math.round(fh * 16 / 9);
-    drawTestimonyFilm(ctx, x + Math.round((fw - imageW) / 2), top, imageW, fh, 8);
+    drawTestimonyFilm(ctx, x + Math.round((fw - imageW) / 2), top, imageW, fh, 8, false, 'published');   // S382: what is sent is the platform's version
     ctx.restore();
     studioFont(ctx, 11, true); ctx.fillStyle = P.ink; ctx.fillText(D.visual.storyBy, x + fw + 9, top + 5);
     text(ctx, kind === 2 ? D.visual.videoNote : D.visual.clipNote, x + fw + 9, top + 23, innerW - fw - 9, 10, 13, P.greyDk);

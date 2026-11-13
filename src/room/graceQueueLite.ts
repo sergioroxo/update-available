@@ -121,6 +121,7 @@ import { px, setFont, wrapText } from '../desktop/theme/chrome';
 import * as aero from '../desktop/theme/era3';
 import { PHONE } from '../desktop/theme/phone';
 import { readHold } from '../desktop/readHold';
+import { textPx } from '../desktop/theme/fonts';
 /** S358 / H08 — the references' leading (10 px type): 11 read as lines laid on each other from the seat */
 const REFS_LEAD = 13;   // S349: the Handset Window's bar is the phone's idiom
 import {
@@ -194,7 +195,11 @@ interface SubmissionDef {
   text: string;
   /** a submission that came in as a recording rather than as writing. Noa's
    *  is the only one, and her own first line has always said so. */
-  video?: { label: string; duration: string; beforeLabel: string; play?: string; pause?: string };
+  video?: {
+    label: string; duration: string; beforeLabel: string; play?: string; pause?: string;
+    /** ⚑ S382 — Renata's two films: the labels, her caption, the platform's caption and its list of what it took */
+    sentLabel?: string; publishedLabel?: string; caption?: string; publishedCaption?: string; cutLog?: string[][];
+  };
   /** S154 — a submission that came in as a DIAGRAM: her four lines on one body */
   diagram?: { label: string; beforeLabel: string; lines: string[]; houseLine: string };
   corrections: number[];
@@ -245,6 +250,8 @@ const MALTA_ALERT_AFTER = 4;
  *  ×1.07, a touch larger than the old wide view's type, at one width. */
 export const MIRROR_W = 200;
 const MIRROR_GAP = 4;
+/** ⚑ S382 — how long the platform stays down on the bare desktop before it comes back by itself */
+const MINIMISED_RETURN_SECONDS = 30;
 const MIRROR_PHONE_H = 310;
 /** ⚑ S369 — the disconnected notice on the Handset Window's place holds its reading time */
 const DISCONNECT_SECONDS = Math.max(3, readHold(mirrorCopy.disconnected) + 0.6);
@@ -762,6 +769,15 @@ export class GraceQueueLite {
     //   have moved the day on never came. One voice at a time still holds: the balloon now waits while the phone
     //   speaks (see the guide's draw gate below), instead of the phone waiting for the balloon forever.
     this.lastDt = dt; this.updateConnections(); this.syncGraceLoop();
+    // ⚑ S382 (UiB job 22 A5) — A MINIMISED WINDOW CAN NEVER STRAND HER. The taskbar button now puts the window down as
+    //   readily as it brings it back, and while it is down nothing on the platform can reach her (the phone waits for a
+    //   platform at rest). So the window comes back by itself the moment the platform brings something forward — a page,
+    //   a card, the send, Malta — or after MINIMISED_RETURN_SECONDS on the bare desktop: the shift's software keeps the
+    //   room. The button and the title bar's minimise work exactly as before; this only ends a wait nobody chose.
+    if (this.minimised) {
+      this.minimisedT += dt;
+      if (this.platformWants() !== this.minimisedWant || this.minimisedT >= MINIMISED_RETURN_SECONDS) { this.minimised = false; this.bump(); }
+    }
     if (this.personalDesktop && !this.phone.personalOpen) { this.personalDesktop = false; this.bump(); }
     if (this.phoneInHand || this.phone.personalSeen) {
       if (this.personalNotice) { this.personalNotice = false; this.bump(); }
@@ -1461,7 +1477,17 @@ export class GraceQueueLite {
   }
 
   /** the window goes to the taskbar, and comes back from it. */
-  toggleMinimised(): void { this.clearPersonalNotice(); this.phone.closePersonalThread(); this.minimised = !this.minimised; this.bump(); }
+  toggleMinimised(): void {
+    this.clearPersonalNotice(); this.phone.closePersonalThread(); this.minimised = !this.minimised;
+    if (this.minimised) { this.minimisedT = 0; this.minimisedWant = this.platformWants(); }
+    this.bump();
+  }
+  /** ⚑ S382 — what the platform has up or is about to bring forward; a change while minimised brings the window back */
+  private platformWants(): string {
+    return [this.mode, this.veraPage ?? '', this.kitPopin, this.storyOffer, this.maltaPending, this.cascadeConduct, this.pauseOpen, this.focusOpen, this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed].join('|');
+  }
+  private minimisedT = 0;
+  private minimisedWant = '';
 
   /** APPLY / SKIP — the only two verbs this era has. Both file; neither is
    *  weighted, tinted or answered. The counter only ever counts `applied`,
@@ -2346,7 +2372,9 @@ export class GraceQueueLite {
     if (front.video) {
       const fs = Math.min(fw / NOA_FRAME.w, fh / NOA_FRAME.h);
       const vx = Math.round(x + (fw - NOA_FRAME.w * fs) / 2), vy = Math.round(y + (fh - NOA_FRAME.h * fs) / 2);
-      drawTestimonyFilm(ctx, vx, vy, Math.round(NOA_FRAME.w * fs), Math.round(NOA_FRAME.h * fs), 0, front.id === 2);
+      // ⚑ S382 — Renata's tile shows the platform's current version of her film: as sent, then as it publishes it
+      const renata = front.id === 1 && front.video.sentLabel ? (this.decisions.get(3) === 'applied' ? 'published' : 'sent') : undefined;
+      drawTestimonyFilm(ctx, vx, vy, Math.round(NOA_FRAME.w * fs), Math.round(NOA_FRAME.h * fs), 0, front.id === 2, renata);
       if (this.graded(front)) honestLight(ctx, vx, vy, Math.round(NOA_FRAME.w * fs), Math.round(NOA_FRAME.h * fs));
     } else {
       this.drawPageThumb(ctx, x, y, fw, fh, front);
@@ -2436,19 +2464,21 @@ export class GraceQueueLite {
     ctx.restore();
   }
 
-  /** the taskbar's one button. Present whether the window is up or down, and
-   *  pressing it is the only thing that brings a minimised window back. */
+  /** the taskbar's GracePlatform button. Present whether the window is up or down.
+   *  ⚑ S382 (UiB job 22 A5, his 13 Nov: "the grace platform button on the status bar" does not respond) — it works
+   *  BOTH WAYS now, as a 2016 taskbar button does: pressed while the window is up it puts the window down, pressed
+   *  while it is down it brings it back. Both states are drawn as a button (a running program's underline; the open
+   *  one lighter) — minimised, it used to be bare white text on the bar. */
   private drawTaskButton(
     ctx: CanvasRenderingContext2D, H: number, active: boolean
   ): void {
     const bh = 28; const ty = H - bh;
     const bx = 88; const bw = 150;
-    px(ctx, bx, ty + 4, bw, bh - 8, active ? ERA3.tray : ERA3.taskBot);
-    px(ctx, bx, ty + 4, bw, 1, active ? ERA3.glassEdge : ERA3.tray);
+    px(ctx, bx, ty + 4, bw, bh - 8, active ? ERA3.taskTop : ERA3.taskMid);
+    px(ctx, bx, ty + bh - 6, bw, 2, active ? ERA3.accentHi : ERA3.accent);
     setFont(ctx, 11); ctx.fillStyle = ERA3.white;
-    ctx.fillText(q.app.taskbarLabel, bx + 10, ty + 9);
+    ctx.fillText(q.app.taskbarLabel, bx + 10, ty + 8);
     this.rects.push({ x: bx, y: ty + 4, w: bw, h: bh - 8, id: 'task-restore' });
-
   }
 
   /** ⚑ S145 — the chip pressed: the record opens over whatever is up, and
@@ -2506,11 +2536,21 @@ export class GraceQueueLite {
     const band = this.studioBand(ctx, c);
     const by = Math.min(top + 216, c.y + c.h - 2 - band.need);
     // ⚑ S332 (his second answers: "Renata's edit is frontal, not subtle") — once "Name the dependency, not the person"
-    //   has been applied to Renata (by anyone), the left column becomes Vera's OWN 2014 story with the same cut in the
-    //   same red: "Your story was edited with this rule too (2014)". It stays for the rest of the job.
-    const ownCut = sub.id === 1 && this.decisions.get(3) === 'applied';
-    if (ownCut) this.drawOwnCut(ctx, c.x, top, filmW, Math.min(212, by - top - 4));
-    else {
+    //   has been applied to Renata (by anyone), the platform shows Vera's OWN 2014 story with the same cut in the same red:
+    //   "Your story was edited with this rule too (2014)".
+    // ⚑ S382 (UiB job 22 A4, his 13 Nov: "Should we see the real and the version the system made on top of it to edit
+    //   out the lesbian content?" — yes) — Renata's column is now HER FILM. Before the rule, the film as she sent it,
+    //   labelled, bare, her caption under it. The rule is the act that makes the cut: once it is applied the column holds
+    //   BOTH films, "As Renata sent it" and "As GracePlatform publishes it" (the other hand cropped out, the second cup
+    //   gone, the photograph blurred, the platform's caption over it), with the platform's own list of what it took —
+    //   while her words beside them show the same rule's cut in red. Vera's own 2014 cut follows when the story is done,
+    //   in the transcript's place, so all three are on the screen she leaves the job from.
+    const renataCut = sub.id === 1 && this.decisions.get(3) === 'applied';
+    const ownCut = renataCut && this.subComplete(sub);
+    if (sub.id === 1 && video.sentLabel) {
+      if (renataCut) this.drawRenataCompare(ctx, c.x, top, filmW, by - top - 4, video);
+      else this.drawRenataSent(ctx, c.x, top, filmW, by - top - 4, video);
+    } else {
     px(ctx, c.x - 1, top - 1, filmW + 2, filmH + 2, ERA3.glassEdge);
     ctx.save(); ctx.beginPath(); ctx.rect(c.x, top, filmW, filmH); ctx.clip();
     if (this.graded(sub)) drawTestimonyFilm(ctx, c.x - 31, top - 25, 318, 179, this.playT, sub.id === 2);
@@ -2539,6 +2579,8 @@ export class GraceQueueLite {
     }
     // The whole testimony is readable in its own column. No fixed line slice or decoration over her words.
     const transcriptH = Math.min(204, by - top - 8);
+    if (ownCut) this.drawOwnCut(ctx, rightX, top, rightW, transcriptH);
+    else {
     px(ctx, rightX, top, rightW, transcriptH, ERA3.white);
     px(ctx, rightX, top, 3, transcriptH, ERA3.memberSpine);
     studioFont(ctx, 17, true); ctx.fillStyle = ERA3.ink; ctx.fillText(sub.author, rightX + 13, top + 9);
@@ -2572,6 +2614,7 @@ export class GraceQueueLite {
         lines.forEach((line, i) => ctx.fillText(line, rightX + 13, cy + i * 12));
         cy += lines.length * 12 + 4;
       }
+    }
     }
     const bh = c.y + c.h - by - 2;
     px(ctx, c.x, by, c.w, bh, ERA3.lambBand);
@@ -2610,6 +2653,88 @@ export class GraceQueueLite {
         aero.button(ctx, bx, by + 46, bw, 25, q.app.nextStory, { size: 11 });
         this.rects.push({ x: bx, y: by + 46, w: bw, h: 25, id: 'next-story' });
       }
+    }
+  }
+
+  /** ⚑ S382 — which of Renata's film views the editor shows (read by tools/s382-film-probe.mjs): her film as sent; both
+   *  films once correction 3 has made the cut; and both with Vera's own 2014 cut once the story is done */
+  get filmView(): 'sent' | 'compare' | 'compare+own' | null {
+    const sub = this.submission();
+    if (this.mode !== 'list' || this.openSurface || this.veraPage || !sub || sub.id !== 1) return null;
+    if (this.decisions.get(3) !== 'applied') return 'sent';
+    return this.subComplete(sub) ? 'compare+own' : 'compare';
+  }
+
+  /** ⚑ S382 — Renata's film AS SHE SENT IT (before "Name the dependency, not the person"): the label, the film bare
+   *  (felt: nothing drawn over it), Play, and her caption under it in her own words, on the rose spine of a person
+   *  speaking. The film shrinks before her caption is ever cut short. */
+  private drawRenataSent(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, video: NonNullable<SubmissionDef['video']>): void {
+    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.memberSpine; ctx.fillText(video.sentLabel ?? '', x, y);
+    studioFont(ctx, 10);
+    const capLines = wrapText(ctx, video.caption ?? '', w - 10), lead = 13;
+    const fh = Math.max(40, Math.min(Math.round(w * 9 / 16), h - 14 - 33 - capLines.length * lead));
+    const fw = Math.round(fh * 16 / 9), fy = y + 14;
+    px(ctx, x - 1, fy - 1, fw + 2, fh + 2, ERA3.glassEdge);
+    drawTestimonyFilm(ctx, x, fy, fw, fh, this.playT, false, 'sent');
+    this.rects.push({ x, y: fy, w: fw, h: fh, id: 'video' });
+    const ty = fy + fh + 5;
+    aero.button(ctx, x, ty, 63, 22, this.playing ? (video.pause ?? 'Pause') : (video.play ?? 'Play'), { size: 10 });
+    this.rects.push({ x, y: ty, w: 63, h: 22, id: 'video' });
+    const trackX = x + 73, trackW = w - 73;
+    px(ctx, trackX, ty + 9, trackW, 4, ERA3.glassEdge);
+    px(ctx, trackX, ty + 9, Math.round(trackW * this.playT / this.filmSeconds()), 4, ERA3.accent);
+    const cy = ty + 29, n = Math.max(0, Math.min(capLines.length, Math.floor((y + h - cy + 3) / lead)));
+    if (!n) return;
+    px(ctx, x, cy - 2, 2, n * lead, ERA3.memberSpine);
+    studioFont(ctx, 10); ctx.fillStyle = ERA3.ink;
+    capLines.slice(0, n).forEach((ln, i) => ctx.fillText(ln, x + 8, cy + i * lead));
+  }
+
+  /** ⚑ S382 — THE CUT, MADE: both films, one above the other, the same size. "As Renata sent it" stays bare, her caption
+   *  beside it. "As GracePlatform publishes it" is the platform's crop of the same footage (the other hand out of it,
+   *  the second cup gone, the photograph blurred), its caption laid over it in the house's blue (operable), and beside
+   *  it the platform's own list of what it took, in the red that marks a cut in her words. Pressing either film plays
+   *  both, in step. Nothing here comments on her. */
+  private drawRenataCompare(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, video: NonNullable<SubmissionDef['video']>): void {
+    const LABEL = 13, GAP = 6;
+    const fh = Math.max(40, Math.min(Math.round(w * 0.64 * 9 / 16), Math.floor((h - LABEL * 2 - GAP) / 2)));
+    const fw = Math.round(fh * 16 / 9), sideX = x + fw + 7, sideW = x + w + 8 - sideX;   // into the column's gutter, never the transcript's
+    const film = (fy: number, version: 'sent' | 'published'): void => {
+      px(ctx, x - 1, fy - 1, fw + 2, fh + 2, version === 'sent' ? ERA3.glassEdge : ERA3.frame);
+      drawTestimonyFilm(ctx, x, fy, fw, fh, this.playT, false, version);
+      this.rects.push({ x, y: fy, w: fw, h: fh, id: 'video' });
+    };
+    // as she sent it — felt, bare; her caption beside it on the rose spine
+    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.memberSpine; ctx.fillText(video.sentLabel ?? '', x, y);
+    const f1 = y + LABEL;
+    film(f1, 'sent');
+    studioFont(ctx, 9);
+    const lead = Math.max(11, Math.round(textPx(9, 'e3')) + 2);
+    const cap = wrapText(ctx, video.caption ?? '', sideW - 6).slice(0, Math.floor(fh / lead));
+    if (cap.length) {
+      px(ctx, sideX, f1, 2, cap.length * lead, ERA3.memberSpine);
+      ctx.fillStyle = ERA3.ink; cap.forEach((ln, i) => ctx.fillText(ln, sideX + 6, f1 + 1 + i * lead));
+    }
+    // as the platform publishes it — operable: its crop, its caption, its list
+    const y2 = f1 + fh + GAP;
+    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(video.publishedLabel ?? '', x, y2);
+    const f2 = y2 + LABEL;
+    film(f2, 'published');
+    if (video.publishedCaption) {
+      studioFont(ctx, 9, true);
+      const lh = Math.max(13, Math.round(textPx(9, 'e3')) + 4);
+      ctx.save(); ctx.beginPath(); ctx.rect(x, f2, fw, fh); ctx.clip();
+      px(ctx, x, f2 + fh - lh, fw, lh, ERA3.accent);
+      ctx.fillStyle = ERA3.white; ctx.fillText(video.publishedCaption, x + 4, f2 + fh - lh + 2);
+      ctx.restore();
+    }
+    let ly = f2;
+    for (const [what, how] of video.cutLog ?? []) {
+      studioFont(ctx, 9, true); ctx.fillStyle = ERA3.alarm;
+      for (const ln of wrapText(ctx, what, sideW)) { ctx.fillText(ln, sideX, ly); ly += lead; }
+      studioFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
+      for (const ln of wrapText(ctx, how, sideW)) { ctx.fillText(ln, sideX, ly); ly += lead; }
+      ly += 2;
     }
   }
 
@@ -3117,7 +3242,8 @@ export class GraceQueueLite {
     if (this.startMap.active && !this.startMapSilent && !this.pauseOpen) { this.startMap.close(); this.bump(); return; }
     // ⚑ the taskbar button is tested FIRST and is the only live control while
     //   the window is down — a minimised window can never be a dead end.
-    if (r.id === 'task-restore') { if (this.minimised) this.toggleMinimised(); return; }
+    // ⚑ S382 — and it answers while the window is up too: it puts it down (it used to do nothing: "doesn't respond")
+    if (r.id === 'task-restore') { this.toggleMinimised(); return; }
     if (this.minimised) return;
     if (this.pauseOpen) { this.pauseOpen = false; this.bump(); if (r.id === 'pause-close') return; }   // S207
     if (r.id === 'startpanel-close') { this.startPanel.close(); this.bump(); return; }   // S229 / W1-A6
@@ -3219,7 +3345,7 @@ export class GraceQueueLite {
         break;
       case 'list': this.debugBeat('board'); this.openTask(0); break;
       case 'backToBoard': this.debugBeat('list'); this.backToBoard(); break;
-      case 'minimise': this.debugBeat('board'); this.minimised = true; this.bump(); break;
+      case 'minimise': this.debugBeat('board'); if (!this.minimised) this.toggleMinimised(); break;   // S382: through the one path, so the guard knows
       case 'boardDone': // every tile grey — the day finished, and still there
         this.debugBeat('board');
         for (const u of this.pendingTools()) this.unlockedIds().push(u.id);   // S227: every update installed first
