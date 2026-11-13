@@ -63,6 +63,9 @@ export class ViewerCore {
   private vp: Rect = { x: 0, y: 0, w: 0, h: 0 };
   private maxScroll = 0;
   private thumb: Rect = { x: 0, y: 0, w: 0, h: 0 };
+  /** ⚑ S383 — the scroll track at the last paint (the thumb's range), and a grab in progress: where on the thumb it was taken */
+  private track: Rect = { x: 0, y: 0, w: 0, h: 0 };
+  private grab: { dy: number } | null = null;
   private doc: Doc | null = null;
   private docKey = '';
   private images = new Map<string, HTMLImageElement>();
@@ -230,7 +233,7 @@ export class ViewerCore {
     this.docHits = doc.hits.map((h) => ({ ...h, sx: vp0.x + h.x, sy: vp0.y + h.y - this.scroll }));
 
     const sb = drawScrollbar(env, vp0, this.scroll, this.maxScroll);
-    this.thumb = sb.thumb;
+    this.thumb = sb.thumb; this.track = sb.track;
 
     const hit = this.hover ? [...hits.map((h) => ({ id: h.id, tip: h.tip })), ...doc.hits.map((h) => ({ id: h.id, tip: h.tip }))].find((h) => h.id === this.hover) : undefined;
     const live = this.toast && performance.now() <= this.toast.until ? this.toast.text : '';
@@ -258,7 +261,7 @@ export class ViewerCore {
     //   strip is given to the page instead of standing there grey
     const site = items.length ? reg.site : { x: reg.site.x, y: reg.toolbar.y, w: reg.site.w, h: reg.site.h + reg.toolbar.h };
     this.docHits = [];
-    this.thumb = { x: 0, y: 0, w: 0, h: 0 };
+    this.thumb = { x: 0, y: 0, w: 0, h: 0 }; this.track = { x: 0, y: 0, w: 0, h: 0 };
     if (this.view === 'machine') {
       const vp = { x: site.x, y: site.y, w: site.w, h: site.h };
       this.vp = vp;
@@ -267,14 +270,14 @@ export class ViewerCore {
       const inner = this.maxScroll > 0 ? { ...vp, w: vp.w - SCROLL_W } : vp;
       this.machineH = drawMachinePage(env, inner, this.scroll);
       this.maxScroll = Math.max(0, this.machineH - vp.h);
-      if (this.maxScroll > 0) this.thumb = drawScrollbar(env, vp, this.scroll, this.maxScroll).thumb;
+      if (this.maxScroll > 0) { const sb = drawScrollbar(env, vp, this.scroll, this.maxScroll); this.thumb = sb.thumb; this.track = sb.track; }
     } else if (this.view === 'receipt') {
       this.vp = { ...site };
       const r = this.receipt.draw(env, site, this.scroll, SCROLL_W);
       this.maxScroll = this.receipt.maxScroll;
       if (r.wantScroll !== null) this.scroll = r.wantScroll;
       this.scroll = Math.max(0, Math.min(this.maxScroll, Math.round(this.scroll)));
-      this.thumb = drawScrollbar(env, { x: site.x, y: site.y, w: site.w, h: site.h }, this.scroll, this.maxScroll).thumb;
+      { const sb = drawScrollbar(env, { x: site.x, y: site.y, w: site.w, h: site.h }, this.scroll, this.maxScroll); this.thumb = sb.thumb; this.track = sb.track; }
     } else {
       this.vp = { ...site };
       this.maxScroll = 0; this.scroll = 0;
@@ -508,6 +511,35 @@ export class ViewerCore {
   }
 
   scrollTo(y: number): boolean { return this.scrollBy(y - this.scroll); }
+
+  // ── ⚑ S383 — THE SCROLL MARKER, GRABBED (his: "grabbing the scroll marker and pull it up and down to scroll") ──
+  //   The ray (or a pinch) closes on the thumb, the thumb is carried up and down the track, the page follows in the same
+  //   proportion (thumb position ↔ scroll offset, clamped), and it lets go. The press that grabbed it is never a click
+  //   (xrInput swallows the select that ends a grab). The thumbstick and ▲ ▼ are untouched.
+  /** is this point on the scroll thumb (a little forgiving at arm's length)? false when the page has nothing to scroll */
+  onThumb(x: number, y: number): boolean {
+    const t = this.thumb; if (t.w <= 0 || this.maxScroll <= 0) return false;
+    const padX = 10, padY = 6;
+    return x >= t.x - padX && x <= t.x + t.w + padX && y >= t.y - padY && y <= t.y + t.h + padY;
+  }
+  /** take the thumb at logical (x, y); true when it was taken */
+  grabAt(x: number, y: number): boolean {
+    if (!this.onThumb(x, y)) return false;
+    this.grab = { dy: Math.max(0, Math.min(this.thumb.h, y - this.thumb.y)) };
+    return true;
+  }
+  /** carry it to logical y; true when the page moved */
+  grabTo(y: number): boolean {
+    if (!this.grab) return false;
+    const span = this.track.h - this.thumb.h;
+    if (span <= 0 || this.maxScroll <= 0) return false;
+    const k = Math.max(0, Math.min(1, (y - this.grab.dy - this.track.y) / span));
+    return this.scrollTo(k * this.maxScroll);
+  }
+  get grabbing(): boolean { return this.grab !== null; }
+  release(): void { this.grab = null; }
+  /** review tools: the thumb and its track, logical px */
+  scrollbar(): { thumb: Rect; track: Rect; max: number } { return { thumb: { ...this.thumb }, track: { ...this.track }, max: this.maxScroll }; }
   get pageStep(): number { return Math.max(120, this.vp.h - 90); }
   /** review tools: scroll so the first line containing `s` sits near the top; true if found */
   scrollToText(s: string): boolean {
