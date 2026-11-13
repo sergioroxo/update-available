@@ -79,6 +79,14 @@ export function mountXrInput(app: pc.Application, opts: {
   onKey?: (key: 'a' | 'b' | 'start' | 'left' | 'right' | 'up' | 'down') => void;
   /** S291 — the thumbstick, continuous (x right, y down, −1…1), once a frame per tracked source that has one; the site viewer scrolls with it */
   onStick?: (x: number, y: number) => void;
+  /** ⚑ S383 (his: "grabbing the scroll marker and pull it up and down to scroll") — a trigger that BEGINS (selectstart) or a
+   *  pinch that CLOSES on something that is dragged rather than pressed (the site window's scroll thumb): true when this
+   *  ray took it. A grab is never a press: the select that ends it is swallowed, wherever the ray is by then. */
+  onDragStart?: (source: pc.XrInputSource, ray: Ray) => boolean;
+  /** …once a frame while it is held (the ray's present pose) */
+  onDragMove?: (source: pc.XrInputSource, ray: Ray) => void;
+  /** …and when the trigger / pinch lets go, or the source is lost */
+  onDragEnd?: (source: pc.XrInputSource) => void;
 }): XrInput {
   const xr = app.xr;
   const meshes = new Map<pc.XrInputSource, pc.Mesh>();
@@ -95,7 +103,7 @@ export function mountXrInput(app: pc.Application, opts: {
   const TIP = { rest: { color: new pc.Color().fromString(FRAME.dim), size: 0.006 },
     touch: { color: new pc.Color().fromString(ERA1.titleBlue), size: 0.013 },
     press: { color: new pc.Color().fromString(FRAME.bright), size: 0.022 } };
-  const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[]; aim: Ray | null }>();
+  const gestures = new Map<pc.XrInputSource, { pinch: boolean; since: number; held: boolean; near: boolean; buttons: boolean[]; aim: Ray | null; drag: boolean }>();
   const wands = new Map<pc.XrInputSource, pc.Entity>();
   const mat = new pc.StandardMaterial();
   mat.useLighting = false;
@@ -125,7 +133,7 @@ export function mountXrInput(app: pc.Application, opts: {
     app.root.addChild(e);
     wands.set(src, e);
     const dot = new pc.Entity('xr-cursor'); dot.setLocalScale(DOT, DOT, DOT); app.root.addChild(dot); dot.enabled = false; dots.set(src, dot);
-    gestures.set(src, { pinch: false, since: 0, held: false, near: false, buttons: [], aim: null });
+    gestures.set(src, { pinch: false, since: 0, held: false, near: false, buttons: [], aim: null, drag: false });
     if (src.hand) {
       const entity = new pc.Entity('xr-hand');
       app.root.addChild(entity); entity.enabled = false; hands.set(src, { entity, mesh });
@@ -141,19 +149,29 @@ export function mountXrInput(app: pc.Application, opts: {
   };
   const onRemove = (src: pc.XrInputSource): void => {
     opts.onTouch?.(src, null);
-    opts.onRelease?.(src); selectStart.delete(src); ends.delete(src); dots.get(src)?.destroy(); dots.delete(src); hands.get(src)?.entity.destroy(); tips.get(src)?.entity.destroy(); tips.delete(src); meshes.get(src)?.destroy(); meshes.delete(src); hands.delete(src); gestures.delete(src);
+    endDrag(src); dragEndedAt.delete(src); opts.onRelease?.(src); selectStart.delete(src); ends.delete(src); dots.get(src)?.destroy(); dots.delete(src); hands.get(src)?.entity.destroy(); tips.get(src)?.entity.destroy(); tips.delete(src); meshes.get(src)?.destroy(); meshes.delete(src); hands.delete(src); gestures.delete(src);
     wands.get(src)?.destroy();
     wands.delete(src);
     if (primary === src) primary = wands.keys().next().value ?? null;
   };
   const selectStart = new Map<pc.XrInputSource, Ray>();
+  // ⚑ S383 — a controller's grab: begun at selectstart on the scroll thumb, over at selectend. The runtime sends `select`
+  //   and `selectend` in either order, so a select that is IN a grab or arrives within DRAG_TAIL_MS of one ending is its
+  //   tail and presses nothing (S80's rule: a press that travels is a look; a grab never ends as a click).
+  const DRAG_TAIL_MS = 200;
+  const dragging = new Set<pc.XrInputSource>();
+  const dragEndedAt = new Map<pc.XrInputSource, number>();
+  const endDrag = (src: pc.XrInputSource): void => { if (dragging.delete(src)) { dragEndedAt.set(src, performance.now()); opts.onDragEnd?.(src); } };
+  const onSelectEnd = (src: pc.XrInputSource): void => { if (!src.hand) endDrag(src); };
   const onSelectStart = (src: pc.XrInputSource): void => {
     if (src.hand) return;
     const r = rayOf(src);
+    if (r && opts.onDragStart?.(src, r)) { primary = src; dragging.add(src); selectStart.delete(src); return; }
     if (r) selectStart.set(src, r); else selectStart.delete(src);
   };
   const onSelect = (src: pc.XrInputSource): void => {
     if (src.hand) return; // pinch hysteresis below owns hand selects, never double-fire native select
+    if (dragging.has(src) || performance.now() - (dragEndedAt.get(src) ?? -1e9) < DRAG_TAIL_MS) return;   // S383: the tail of a grab
     primary = src;
     const now = rayOf(src);
     const start = selectStart.get(src) ?? null;
@@ -186,13 +204,14 @@ export function mountXrInput(app: pc.Application, opts: {
     opts.onSqueeze();
   };
   const release = (src: pc.XrInputSource): void => { const state = gestures.get(src); if (state?.held) opts.onRelease?.(src); if (state) state.held = false; };
-  const onEnd = (): void => { selectStart.clear(); for (const src of wands.keys()) { opts.onTouch?.(src, null); release(src); const state = gestures.get(src); if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
+  const onEnd = (): void => { selectStart.clear(); for (const src of wands.keys()) { opts.onTouch?.(src, null); release(src); endDrag(src); const state = gestures.get(src); if (state?.drag) { state.drag = false; opts.onDragEnd?.(src); } if (state) state.pinch = false; } for (const e of [...wands.values(), ...dots.values()]) e.enabled = false; for (const h of hands.values()) h.entity.enabled = false; for (const t of tips.values()) t.entity.enabled = false; };
 
   if (xr) {
     xr.input.on('add', onAdd);
     xr.input.on('remove', onRemove);
     xr.input.on('selectstart', onSelectStart);
     xr.input.on('select', onSelect);
+    xr.input.on('selectend', onSelectEnd);
     xr.input.on('squeezestart', onSqueeze);
     xr.input.on('squeezeend', release);
     xr.on('end', onEnd);
@@ -374,7 +393,7 @@ export function mountXrInput(app: pc.Application, opts: {
           e.enabled = false; if (hands.has(src)) hands.get(src)!.entity.enabled = false;
           const t = tips.get(src); if (t) t.entity.enabled = false;
           opts.onTouch?.(src, null);
-          release(src); const state = gestures.get(src); if (state) { state.pinch = false; state.near = false; }
+          release(src); endDrag(src); const state = gestures.get(src); if (state) { if (state.drag) { state.drag = false; opts.onDragEnd?.(src); } state.pinch = false; state.near = false; }
           continue;
         }
         e.enabled = true;
@@ -406,9 +425,12 @@ export function mountXrInput(app: pc.Application, opts: {
             const separation = thumb.getPosition().distance(index.getPosition());
             // ⚑ S268 (his: "the pinch to press is not always working") — the press goes where the hand was AIMING when
             //   the pinch closed: closing and opening the fingers swings the hand's ray, and the release-time ray missed
-            if (!contact && !state.pinch && separation < 0.022) { state.pinch = true; state.since = now; primary = src; state.aim = { p0: r.p0.clone(), p1: r.p1.clone() }; }
-            if (state.pinch && !state.held && now - state.since > 350 && !opts.menuOpen()) state.held = opts.onGrab?.(src, r) ?? false;
-            if (state.pinch && separation > 0.032) { if (state.held) release(src); else choose(state.aim ?? r, src); state.pinch = false; state.aim = null; }
+            if (!contact && !state.pinch && separation < 0.022) {
+              state.pinch = true; state.since = now; primary = src; state.aim = { p0: r.p0.clone(), p1: r.p1.clone() };
+              state.drag = opts.onDragStart?.(src, r) ?? false;   // ⚑ S383: a pinch that closes on the scroll thumb takes it
+            }
+            if (state.pinch && !state.held && !state.drag && now - state.since > 350 && !opts.menuOpen()) state.held = opts.onGrab?.(src, r) ?? false;
+            if (state.pinch && separation > 0.032) { if (state.drag) { state.drag = false; opts.onDragEnd?.(src); } else if (state.held) release(src); else choose(state.aim ?? r, src); state.pinch = false; state.aim = null; }
             // Poke is a short fingertip segment along the pointing direction. Latch until withdrawn.
             const tip = index.getPosition();
             const direction = r.p1.clone().sub(r.p0).normalize();
@@ -429,6 +451,7 @@ export function mountXrInput(app: pc.Application, opts: {
           }
         }
         if (state.held) opts.onHold?.(src, r);
+        if (state.drag || dragging.has(src)) opts.onDragMove?.(src, r);   // S383: the scroll thumb follows the ray
         const buttons = src.gamepad?.buttons ?? [];
         buttons.forEach((b, i) => { if (b.pressed && !state.buttons[i] && i >= 4) opts.onKey?.(i === 4 ? 'a' : 'b'); state.buttons[i] = b.pressed; });
         const axes = src.gamepad?.axes ?? [];
@@ -448,6 +471,7 @@ export function mountXrInput(app: pc.Application, opts: {
         xr.input.off('remove', onRemove);
         xr.input.off('selectstart', onSelectStart);
         xr.input.off('select', onSelect);
+        xr.input.off('selectend', onSelectEnd);
         xr.input.off('squeezestart', onSqueeze);
         xr.input.off('squeezeend', release);
         xr.off('end', onEnd);

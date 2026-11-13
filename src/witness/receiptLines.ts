@@ -55,7 +55,8 @@ export function composeReceipt(measure: (s: string) => number, maxW: number): PL
     for (const x of es) if (!kinds.includes(x.kind)) kinds.push(x.kind);
     if (kinds.length) {
       const used = kinds.map((k) => (practiceOf(k)?.title ?? k).toLowerCase()).join(' · ');
-      for (const l of wrapTo(used, `  ${R.usedLabel} `)) L.push({ t: l, col: PRINTOUT.inkDim });
+      // ⚑ S383 (his: "We could correct this") — every practice the visitor met is printed: the line wraps as far as it needs
+      for (const l of wrapTo(used, `  ${R.usedLabel} `, Infinity)) L.push({ t: l, col: PRINTOUT.inkDim });
     }
     for (const entry of es.filter((x) => x.id === 'guide-personalised')) for (const l of wrapTo(entry.witness, '  ')) L.push({ t: l, col: PRINTOUT.inkDim });
     if (u.era === 'e1' && his) for (const l of wrapTo(browser97.query, `  ${R.searchHis} `, 1)) L.push({ t: l, col: PRINTOUT.inkDim });

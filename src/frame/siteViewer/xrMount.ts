@@ -47,6 +47,13 @@ export interface XrViewer {
   /** does this fingertip segment touch the window or the tab? */
   touches(ray: Ray): boolean;
   stick(y: number): void;
+  /** ⚑ S383 — the scroll marker, grabbed: the ray (trigger held) or a pinch closes on the thumb → true when it was taken */
+  grabStart(ray: Ray): boolean;
+  /** …carried (once a frame while held; the ray may leave the window, the thumb stops at the ends of its track) */
+  grabMove(ray: Ray): void;
+  /** …and let go */
+  grabEnd(): void;
+  readonly grabbing: boolean;
   tick(ray: Ray | null, wrist: { at: pc.Vec3; palm: pc.Vec3 | null } | null): void;
   /** the menu closed from elsewhere (the grip): a viewer that came from it goes too */
   onMenuClosed(): void;
@@ -179,7 +186,7 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
   }
   function close(): void {
     if (!open && !minimised) return;
-    open = false; minimised = false; plane.enabled = false; tab.enabled = false; wristed = false;
+    open = false; minimised = false; plane.enabled = false; tab.enabled = false; wristed = false; core.release();
     viewerAudio.stop(); viewerFilm.stop(); filmPlane.enabled = false; core.closed();
     closedAt = performance.now();
     if (fromMenu && gameMenuBus.isOpen) opts.suspendMenu(false);
@@ -226,6 +233,20 @@ export function mountSiteViewerXr(app: pc.Application, head: pc.Entity, opts: {
       return true;
     },
     touches(ray: Ray): boolean { return !!hitWindow(ray) || hitTab(ray); },
+    get grabbing(): boolean { return core.grabbing; },
+    grabStart(ray: Ray): boolean {
+      if (!open || minimised) return false;
+      const p = hitWindow(ray);
+      if (!p || !core.grabAt(p.x, p.y)) return false;
+      core.move(p.x, p.y); dirty = true;
+      return true;
+    },
+    grabMove(ray: Ray): void {
+      if (!open || !core.grabbing) return;
+      const p = rayOnPlane(plane, ray, LW, LH, true);
+      if (p && core.grabTo(p.y)) dirty = true;
+    },
+    grabEnd(): void { core.release(); dirty = true; },
     stick(y: number): void {
       if (!open || Math.abs(y) < STICK_DEAD) return;
       const now = performance.now(), dt = lastStick ? Math.min(0.05, (now - lastStick) / 1000) : 0.016;

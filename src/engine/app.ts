@@ -1296,6 +1296,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         }
         if (cluster && !gameMenuBus.isOpen && !siteViewerXr?.isOpen) devices?.key(key, cluster.era);
       },
+      // ⚑ S383 (his: "grabbing the scroll marker and pull it up and down to scroll") — the site window's scroll thumb, taken by
+      //   the ray with the trigger held (or a pinch) and carried; the thumbstick and ▲ ▼ stay as they were
+      onDragStart: (_source, ray) => !!siteViewerXr?.isOpen && siteViewerXr.grabStart(ray),
+      onDragMove: (_source, ray) => { if (siteViewerXr?.grabbing) siteViewerXr.grabMove(ray); },
+      onDragEnd: () => { siteViewerXr?.grabEnd(); },
       // ⚑ S328 — and in 2026 the stick scrolls Kettle's open thread (time by scroll, his ruling) when the sites are shut
       onStick: (_x, y) => { if (siteViewerXr?.isOpen) siteViewerXr.stick(y); else if (os.era === 'e4' && Math.abs(y) > 0.2) os.e4?.browser.scrollAt(null, null, y * 4); },
       // S271 (his 31 Oct: the hands are "a bit too white… a little bit too garish for your headset") — the frame's
