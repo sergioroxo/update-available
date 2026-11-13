@@ -388,6 +388,8 @@ async function phone() {
       check(G, `${view}: the window is on screen and Close is on screen at the top of the page`, !!cv && cv.x > 0 && cv.x < cv.vw && cv.y > 0 && cv.y < cv.vh, cv ? `close at ${Math.round(cv.x)},${Math.round(cv.y)} of ${cv.vw}×${cv.vh}` : 'no close hit');
       const sz = await page.evaluate((ids) => { const c = window.__siteViewer.dom, cv = document.querySelector('#reinterp-site-viewer canvas').getBoundingClientRect(), k = cv.width / c.lastSize.w; return ids.map((id) => { const h = c.hits.find((x) => x.id === id); return h ? [id, Math.round(h.w * k), Math.round(h.h * k)] : [id, 0, 0]; }); }, ['close', 'min']);
       check(G, `${view}: Close is a target a finger can hit (≥ 20 css px each way; landscape is the small one)`, sz[0][1] >= 20 && sz[0][2] >= 20, `close ${sz[0][1]}×${sz[0][2]} css px`);
+      const overlap = await page.evaluate(() => { const c = window.__siteViewer.dom; const hs = c.hits.filter((h) => h.id === 'openpage' || h.id.startsWith('view:')); const o = []; for (const a of hs) for (const b of hs) if (a.id < b.id && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h) o.push(`${a.id}/${b.id}`); return o; });
+      check(G, `${view}: the toolbar's buttons (years, Web page) do not lie over one another`, overlap.length === 0, overlap.join(', '));
       let swipes = 0, last = -1;
       while (swipes < 220) {
         const i = await page.evaluate(() => window.__siteViewer.dom.info());
