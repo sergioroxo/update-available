@@ -34,13 +34,23 @@ piece anywhere in this file. Organisations are named only as the source of a doc
 6. **The archive fills four Lexicon gaps.** Media and schools as a cause for men; pornography as a cause; the "attachment"
    formula; school and university curricula as a cause for women (§3D).
 7. **The genogram symbol chart puts "H Homosexuality" beside Drugs, Gambling, Alcoholism, Abortion and Criminal/Jail.** It is
-   page 64 of the Radical Living manual. It corroborates Conley's "H".
+   page 64 of the Radical Living manual (now confirmed in the binder itself, §8). It corroborates Conley's "H".
 8. **The trans teaching in the archive is narrow and old.** The 1988 telephone manual's two tabs, a 1994 class manual, a 2001
    group manual and a 2004 workbook. Nothing after 2013. The archive cannot support a 2026 tape on its own (§2C, §6C).
 9. **The marketplace is rich and priced.** Booklets at $3, videos at $20, a $40 clinical book "WARNING: graphic content", a
    35-cent leaflet for parents of a "pre-homosexual" child, a $29 CD-ROM, a 20-week group at $200 to $300 (§4).
 10. **The collection holds the real thing the piece imitates.** Love in Action teaching cassettes ("Child Development #2")
     and VHS tapes. They are not digitized (§7).
+
+**Added 14 Nov, from seven more folders (§8).**
+1. **The LIA founder's handbook** (*Steps Out of Homosexuality*, 1984; revised 1995) is the source text of the triangle and
+   of Fear, Isolation, Envy. A 1997 tape can now cite it instead of the 2001 booklets.
+2. **A typed lecture outline from January 1989** is the best date fit for 1997. Its first point admits science does not
+   agree.
+3. **Rentzel's *Emotional Dependency*** calls dependency idolatry: sin, even without sex. Its 1990 edition says the same
+   gestures are fine in marriage. That sentence is the 2016 tape's collapse (§8C).
+4. **The programme's own pictures:** a 1998 family-roles chart, feeling faces, blue-framed overhead cartoons. Most cartoons
+   belong to others: describe, never copy (§8F).
 
 ---
 
@@ -673,16 +683,16 @@ identity?". (2) **Raising Real Boys**. (3) **Early Signs leaflet (35¢)**. None 
 
 | Box/Folder | Title | Date | mads id |
 |---|---|---|---|
-| **B3 F3** | **What Can Lead to Homosexuality** | 1989 | NMAH-AC1428-B003-F003 |
+| **B3 F3** | **What Can Lead to Homosexuality** — **fetched 14 Nov, read in full** (§8) | 1989 | NMAH-AC1428-B003-F003 |
 | B1 F1 | Love in Action, newsletters, articles, other resources (*Lifelines*; Smid's roots series ran there) | 1978–2006 | NMAH-AC1428-B001-F001 |
-| B1 F4 | Teaching aids | 1998 | NMAH-AC1428-B001-F004 |
-| B1 F10 | Cartoons for copying (probably the transparencies in B1 F14) | undated | NMAH-AC1428-B001-F010-000001 |
+| B1 F4 | Teaching aids — **fetched 14 Nov, read in full** (§8) | 1998 | NMAH-AC1428-B001-F004 |
+| B1 F10 | Cartoons for copying (same blue frames as B1 F14, but a different set) — **fetched 14 Nov, read in full** (§8) | undated | NMAH-AC1428-B001-F010-000001 |
 | B1 F17 | Teachings, moral inventory, introduction template | undated | NMAH-AC1428-B001-F017 |
-| B1 F21 | **Radical Living, program binder** (the genogram chart is its p. 64) | undated | NMAH-AC1428-B001-F021 |
+| B1 F21 | **Radical Living, program binder** (the genogram chart is its p. 64) — **fetched 14 Nov, read in full** (§8) | undated | NMAH-AC1428-B001-F021 |
 | B1 F23 | Unnamed collection of chapels and teachings | undated | NMAH-AC1428-B001-F023 |
 | B2 F3 | Focus on the Family | 1999 | NMAH-AC1428-B002-F003-000001 |
 | B2 F5 | Family and Friends | 2005 | NMAH-AC1428-B002-F005 |
-| B2 F13 | Helping People Step out of Homosexuality | 1995 | NMAH-AC1428-B002-F013 |
+| B2 F13 | Helping People Step out of Homosexuality (190 pp.) — **fetched 14 Nov, read in full** (§8) | 1995 | NMAH-AC1428-B002-F013 |
 | B2 F15 | Leadership | 2001 | NMAH-AC1428-B002-F015 |
 | B2 F16, F17 | New Hope Ministries, booklets | undated | NMAH-AC1428-B002-F016, -B002-F017 |
 | B3 F1 | Biblical Perspectives on Homosexuality | 1983 | NMAH-AC1428-B003-F001 |
@@ -696,8 +706,8 @@ identity?". (2) **Raising Real Boys**. (3) **Early Signs leaflet (35¢)**. None 
 
 | Box/Folder | Title | Date | mads id |
 |---|---|---|---|
-| **B2 F9** | **Emotional Dependency, Rentzel, Lori** | 1987–1990 | NMAH-AC1428-B002-F009 |
-| **B1 F3** | **Women Only** | 1992 | NMAH-AC1428-B001-F003 |
+| **B2 F9** | **Emotional Dependency, Rentzel, Lori** — **fetched 14 Nov, read in full** (§8) | 1987–1990 | NMAH-AC1428-B002-F009 |
+| **B1 F3** | **Women Only** — **fetched 14 Nov, read in full** (§8; not lesbian teaching) | 1992 | NMAH-AC1428-B001-F003 |
 
 ### 7C. Trans strand
 
@@ -727,6 +737,434 @@ identity?". (2) **Raising Real Boys**. (3) **Early Signs leaflet (35¢)**. None 
 
 1. B1 F9 *Feeling Words* (handout). 2. B1 F18 *Program study manual* (the local PDF is only 3 pages; check it is complete).
 3. B2 F14 *Establishing Group Meetings* (only searched).
+
+---
+
+## 8. The November additions (read 14 Nov)
+
+*Seven folders. §7 asked for four; Sérgio added three more the same day. All seven were read in full. OCR used his own
+`Boy Erased/ocr/pdfocr.swift` (macOS PDFKit + Vision). This time the text is kept: `~/Pc_Simulation/Sources/Boy Erased/Nov
+additions/ocr/`, one .txt per PDF, named as the PDF. Handwriting, charts, drawings and any thin or scrambled page were read
+from the page image. Nothing was downloaded. B2 F13 was still arriving on the first try; on the second it opened complete.*
+
+*Published authors are named only to identify a document, as in §1. Nobody is proposed for the piece.*
+
+### 8A. The seven documents
+
+| # | Folder | Title | Date | PDF pp. | Words (OCR) | OCR quality | What it actually is |
+|---|---|---|---|---|---|---|---|
+| 1 | **B3 F3** | *What Can Lead to Homosexuality* | 23 Jan 1989, dated by hand on each page | 4 | 843 | good; label by eye | A typed lecture outline, numerals I to XIV, three pages. The folder is labelled by hand with a man's first name and "outlines". The speaker's own memories are typed in italics as asides. |
+| 2 | **B2 F9** | Rentzel, *Emotional Dependency* | © 1984, 1987, 1990 | 54 | 17,013 | good | Three copies of one booklet. The 1987 Exodus edition (PDF pp. 1–15). Two identical copies of the 1990 InterVarsity Press edition (pp. 17–34, 36–53). A handwritten note on p. 16. |
+| 3 | **B1 F3** | *Women Only* | June 1992 | 19 | 4,291 | typed: good; handwriting garbled, read by eye | A church class for women on how to treat ex-gay **men**. A flyer, four versions of the director and his wife's outline, and a volunteer's article. |
+| 4 | **B1 F21** | *Radical Living*, program binder | handouts © 1999 and © 2001; a sample dated May 2001 | 129 | 34,059 | good; 4 blank pages; Vision dropped lines at one column edge (p. 30, read by eye) | A 17-session group for the **families** of a gay person ("Helping Families in Crisis"), plus a Leader's Supplement. The genogram chart is here (PDF p. 73, printed p. 64). |
+| 5 | **B1 F4** | *Teaching aids* | two items © 1998; a 2005 liturgy; the rest undated | 31 | 7,322 | fair; text around pictures jumbled; charts by eye | A mixed folder. Feeling charts, a family-roles chart and handout (1998), a class outline of Rentzel's booklet, group rules, an LIA brochure, a women's brochure (later), a 2005 building dedication. |
+| 6 | **B1 F10** | *Cartoons for copying* | undated; one page faxed 3 June 1993 | 22 | 2,205 (captions) | drawings by eye | 19 pictures. A few are the ministry's own drawings; most are newspaper cartoons. Many sit in blue frames like B1 F14's, but they are a **different set** (checked against B1 F14). |
+| 7 | **B2 F13** | *Helping People Step out of Homosexuality* | revised © 1995; first © 1984 as *Steps Out of Homosexuality* | **190** (not 39) | 52,059 | good; the question column runs into the text | The LIA founder's handbook "for pastors, counselors, lay workers". A workbook. **Chapter One is the fullest causal teaching in the whole archive.** |
+
+**Not what the title suggests.**
+
+1. **B3 F3** is notes for a talk, not a printed leaflet.
+2. **B2 F9** is not only about women. Its 1990 edition is written for anyone (§8C).
+3. **B1 F3** is not about lesbians. It teaches church women how to treat ex-gay men.
+4. **B1 F21** is not for gay people. It is for their parents, spouses and children. It names a separate beginners' group that
+   taught "the root causes", but those notes are not in the binder.
+5. **B1 F4** holds little teaching about causes. Only two items are dated 1998. One item is from 2005.
+6. **B1 F10** is mostly other people's cartoons, collected for overheads.
+7. **B2 F13** has 190 pages. It is the source text of the Steps Out class titles Fear, Envy, Isolation (§2A, A9).
+
+**Handwriting found in four folders (read by eye).**
+
+1. B3 F3, PDF p. 1: a man's first name and "outlines". The first name matches the LIA founder's. The outline is unsigned
+   [VERIFY].
+2. B2 F9, PDF p. 16: a note. Roughly: the booklet "has wounded more people"; it was "the ammunition we used" against men
+   and women in same-sex relationships [VERIFY the reading].
+3. B1 F3, PDF p. 19: the tab reads "Women Only 5-11-92". The flyer says 11 June, so the tab may read 6-11.
+4. B2 F13, PDF p. 1: "1973–1994 classic LIA".
+5. These look like one hand. The "we" in note 2 suggests an insider, looking back. The finding aid says parts of the
+   collection reached the donor from a former LIA director and from the author of *Boy Erased*. Who wrote the notes is not
+   established here.
+
+### 8B. What they add to the causal model (§2)
+
+#### 8B1. Gay men (1997, Daniel)
+
+**1. The earliest outline: a needs model (1989).**
+1. *Claim.* Being gay comes from many responses to a lifelong search for love. A baby has needs. When they go unmet, he
+   adapts: he squirms, then cries, then soon learns the ropes. Parents give or withhold: wanted or unwanted, loved or
+   unloved, acceptance without performance. Then peers and teachers mirror his self-image back.
+2. *The link, in three causes.* (a) loss of the same-sex parent's love; (b) an identity struggle with labels; (c) real or
+   perceived rejection, for school, sport, body, masculinity or femininity.
+3. *Where.* B3 F3, PDF pp. 2–3.
+4. *Quote.* "This is an outside freedom, but an inside bondage." (p. 3, in bold)
+5. *How it is told.* Numerals, one idea a line. A turn in capitals with two question marks: HOW DOES ALL THIS RELATE TO
+   HOMOSEXUALITY??. Then a heading for a young listener: what if I think I might be gay? Then three questions: do you want
+   a family; will society accept you; will it hurt your family? Then the claim that a celibate gay life will not satisfy.
+   It ends on a house with no foundation: paint it, plant flowers, it still falls (p. 4).
+6. *What it grants.* Its first point: there is a lack of agreement in science, in religion and among gay people. It also
+   puts temperament in the womb.
+7. *Also.* A mother who wants to do everything for the child; an abusive, oppressive or absent father; a gym teacher's
+   mockery (the speaker's own asides).
+
+**2. The broken triangle, by age three (1984; 1995).**
+1. *Claim.* The deepest root is a break in family bonds. A child's security rests on three bonds: mother to child, father
+   to child, father to mother. A real break and a perceived one have the same result. A child knows if he was wanted by six
+   months. "Gender identity" forms between 18 and 36 months.
+2. *Where.* B2 F13, PDF pp. 20–21 (printed 12–13).
+3. *Quote.* A heading: "Homosexual by Three?" The answer given: no, but the roots may be in place.
+4. *Note.* This is §2A's triangle (A2), seventeen years before the 2001 FOF booklet.
+
+**3. The identity transfer.**
+1. *Claim.* A boy needs three things from his father: STRENGTH, POWER and PROTECTION. Men INITIATE; women RESPOND. A boy must
+   be ACTIVE, not PASSIVE, a RISK-TAKER. Much gay desire is a FATHER REPLACEMENT search. A man is ready to marry when the
+   wish to be protected becomes a wish to protect. A present but indifferent father harms more than an absent one.
+2. *Where.* B2 F13, PDF pp. 21–24.
+3. *How it is told.* Key words in capitals inside the text. Beside each paragraph, a numbered question with space to write:
+   "12. Were you a wanted child?" "15. … active or passive?"
+
+**4. Withdrawal, then Fear, Isolation, Envy.**
+1. *Claim.* A boy with an absent father withdraws. Three results. FEAR, of abandonment. ISOLATION: boys mock his
+   "effeminacy"; BELONGING DENIED, INTIMACY DENIED; then he CHOOSES to be alone. ENVY: COMPARISON, then ADMIRATION, then
+   ENVY and a wish to possess, usually one boy. At puberty the envy "becomes eroticized".
+2. *Where.* B2 F13, PDF pp. 23–26.
+3. *Note.* These are the Steps Out class titles in §2A (A9), here in their own text, first published 1984.
+
+**5. The mother: "selection".**
+1. *Claim.* The handbook says mothers have been blamed unfairly. Then it says a mother with a distant husband chooses one son
+   as her confidant ("selection"). She may put him off girls so she is not left alone ("heterosexual extinction").
+2. *Where.* B2 F13, PDF pp. 85–86.
+3. *Note.* Blame is denied, then put back, on the same page.
+4. *Also.* The 1992 women's class: men fear women because of a confusing transfer from "significant women" (B1 F3 p. 2,
+   under "Mother may I?").
+
+**6. A habit, a computer, a tape.**
+1. *Claim.* The orientation was learned early, so it can be unlearned. Change works by "displacement": new material pushes
+   the old out of the mind. We forget about 80 % of what we learn in 30 days, and that helps. The mind files information
+   like a computer, in stacks. Garbage in, garbage out. New material goes onto your memory tapes.
+2. *Where.* B2 F13, PDF pp. 88, 137–143.
+3. *Quote.* The orientation is "nothing more than a deeply ingrained habit" (p. 88).
+4. *Note.* A 1995 computer metaphor, two years after the 1993 floppy disc (§2B, B9). It fits the piece's own machines.
+
+**7. Shame as a tape.**
+1. *Claim.* Shaming words play "like a tape that we hear over and over" until they come true. Unhealthy shame can start in
+   the womb: an unwanted child senses it.
+2. *Where.* B1 F21, PDF p. 30. The handout says it is based on a 1991 audio-tape series (p. 33) [not in the archive;
+   VERIFY SOURCE].
+3. *Note.* Written for parents, about 2001. The idea is dated 1991.
+
+**8. Homosexuality as addiction; the family as a system.**
+1. *Claim.* Homosexuality is an "addictive, life-dominating sin" (B2 F13 p. 9). Alcoholics Anonymous's first step applies
+   (p. 43). The residential year has a class on sexual addiction (p. 185). The family binder calls the loved one's sexual
+   behaviour compulsive (B1 F21 p. 45).
+2. *The 1998 chart.* B1 F4, PDF p. 20. ADDICT at the top. Below: ENABLER, HERO, SCAPEGOAT, MASCOT, LOST CHILD. Each box has
+   outer traits, a circle of inner feelings, and what the role "Provides": Responsibility, Self-Worth, Focus, Distraction,
+   Relief. A handout gives each role and a "Healthy" version (pp. 21–25).
+3. *Faithful note.* Neither page names homosexuality. That the gay family member sits in the ADDICT box is an inference
+   from the other documents.
+4. *Origin.* B1 F10 p. 16 holds a secular alcoholism-treatment poster with the same roles. LIA's 1998 chart adapts
+   addiction-recovery material. Box 11's cassette on "the games families play" (1999, §7E) is the same subject.
+
+**9. Generational sin.**
+1. *Claim.* The genogram maps three generations. The leader's guide: butcher paper, scented felt markers, a letter inside a
+   symbol (a "D" for a husband who uses drugs).
+2. *Where.* B1 F21, PDF pp. 117–118; the chart, p. 73.
+3. *Quote.* "The Genogram is particularly powerful on revealing generational sin." (p. 118)
+4. *Note.* The chart also has "Death - Murder", "Abuse - arrow towards abused", adopted girl and boy, divorce,
+   cohabitation (adds to §2A, A11). It does not say the family causes H. It says the map reveals sin, and H is a letter.
+
+**10. Abuse.** The handbook says one molestation did not "make me gay"; the roots go deeper. But parents of an abused child
+should ask if their neglect set up the child (B2 F13 pp. 98–99). **Harm: §8G.**
+
+**11. Pressure on the young man.**
+1. Young people bullied at school find acceptance in the gay world (B2 F13 p. 43).
+2. Close the option: burn the bridges (p. 44). Throw out keepsakes, clothes, music (pp. 47, 146).
+3. Learn about sport so you can talk to straight men (p. 92).
+
+**12. Women as instruments of men's cure (1992).**
+1. Women help ex-gay men "see their masculinity" through their own dress, make-up, cleanliness, fingernails (B1 F3 p. 1).
+2. Male homosexuality "frequently rises out of a lack of masculine affirmation" (p. 8).
+3. "Misogyny" is listed as "a common factor" in ex-gay men (p. 7). Marriage to an ex-gay man is a good prospect (p. 3).
+4. A volunteer answers letters, with eye contact "almost exclusively with my computer" (p. 10). A 1992 computer.
+
+#### 8B2. Lesbian women (2016, Vera)
+
+1. **Rentzel's dependency.** The main addition. Exactly how it is framed: §8C.
+2. **LIA taught it as a class.** B1 F4 pp. 26–29, headed "Love In Action – Sojourners". A 12-point outline of the 1990
+   booklet. It keeps the checklist and the manipulations, including suicide threats. It adds "imitating the other person's
+   body language". It **leaves out** the 1990 marriage sentence (§8C, item 8). Undated.
+3. **"Should have been a boy" (1989).** A girl in a cowboy outfit, told by her parents she should have been a boy, is an
+   example of labels (B3 F3 p. 3). This is the "Words to Fear" line in §2B (B6), twelve years earlier.
+4. **The girl's identity transfer (1984; 1995).** A girl should want protection, trust men through her father, find
+   motherhood rewarding, "find dignity in serving", thank God she is female (B2 F13 p. 22). A girl who identifies with her
+   father resents girls' ways and cuts herself off (pp. 24–25). A lesbian needs straight male friends (p. 91). A lesbian
+   "flashback" of a father's or step-father's abuse (p. 97). Thin: the handbook is written about men.
+5. **The cure (1992).** Straight women can give women leaving lesbianism friendship and "feminine affirmation" (B1 F3
+   p. 10). This matches §2B (B11).
+6. **Nothing lesbian-specific** in B1 F21 or B1 F10. One cartoon is captioned with a girl's name and "had difficulty
+   relating to Dad"; the same drawing appears again with a boy's name (B1 F10 pp. 5, 7). One joke about the father, used for
+   both.
+
+#### 8B3. Trans, in the programmes' terms (2026, Maya)
+
+1. **Almost nothing.** The gap for 2026 (§2C, §6C) stands.
+2. B2 F13 p. 37: one rival reading of 1 Corinthians 6 says *malakoi* means a man who sees himself as a woman. The handbook
+   presents this as "gay theology" in confusion. It is not the handbook's own teaching.
+3. B2 F13 pp. 144–145: "effeminacy" comes from having only female role models and changes slowly; "affectations" are
+   learned and can stop at once. This is about gay men's mannerisms, not trans people.
+4. B1 F3 p. 3 (1992): "gender identity" means keeping men's and women's roles apart in courtship.
+5. B1 F21 p. 33: God's "maleness" and "femaleness" (the shame handout).
+
+### 8C. Rentzel's "dependency", exactly (B2 F9; B1 F4)
+
+*Why it matters. The piece's platform files Vera's 2014 story as "emotional dependency" and publishes her as saying a
+dependency "had taken the place of God" (`data/dialog/s3_vera.json`). This is the source's own frame.*
+
+1. **Definition.** Dependency is when another person's ongoing presence and care is "believed necessary for personal
+   security" (1987 PDF p. 4; 1990 p. 21). The care listed: attention, listening, admiration, counsel, affirmation, time.
+2. **It is sin, with or without sex.** A friendship becomes sin when it becomes dependent, whether or not there is physical
+   involvement (1987 p. 4; 1990 p. 22).
+3. **The sin is idolatry.** A relationship is "made central to existence instead of God" (1987 p. 4). Vera's published
+   line is a paraphrase of this sentence.
+4. **The roots are spiritual first.** Four: covetousness, idolatry, rebellion, mistrust of God. Then hurts: low
+   self-esteem, rejection, bitterness (1987 p. 6; 1990 p. 24). The 1990 edition adds families with alcoholism or abuse
+   (p. 23). **There is no mother wound and no infancy story.** That frame (dependency "planted" by puberty, §2B B7) is the
+   2001 FOF booklet's later layer.
+5. **Officially not about lesbians.** It can happen in any friendship, in marriage, between parent and child (1987 p. 7).
+   The 1990 edition opens with three cases: two men at a church camp, a man and a woman, two married women (pp. 19–21). The
+   word "lesbian" never appears.
+6. **But it is pictured as two women.** The 1987 cover is a line drawing of two women, one resting her head on the other,
+   eyes closed. Subtitle: "A Threat to Close Friendships" (p. 1). The 1987 text's only case is two married women who become
+   "emotionally and physically involved" (p. 3). The 1988 phone manual already called dependency the base of most lesbian
+   relationships (§2B, B7).
+7. **The signs: 12 (11 in 1990).** Jealousy and wanting her to yourself; wanting time alone together; anger or depression
+   if she pulls back slightly; losing other friends; romantic or sexual fantasy; thinking about her all the time; no plans
+   without her; not seeing her faults; being defensive about it (1987 only); too much physical affection; speaking for her;
+   a closeness that makes others uneasy (1987 pp. 4–5; 1990 p. 22).
+   **The manipulations: 16.** Sharing money and moving in together; gifts and cards; wearing each other's clothes; poetry
+   and music; hugs, back rubs, tickling; looks; flattery; pet names and private jokes; hiding disagreement; needing help;
+   guilt; threats of suicide or of leaving the faith; sulking; turning her from other friends; making her insecure; filling
+   her time (1987 pp. 7–8; 1990 pp. 25–26).
+8. **The marriage exception (1990 only).** After the list, romantic gestures and exclusivity are called "completely
+   appropriate in marriage and engagement" (1990 PDF p. 26). Twice more, marriage is exempt from the cure: bonds must be
+   broken, except in marriage (p. 28); separate, but not in marriage (p. 30).
+   - So the same acts are love between husband and wife, and "manipulation" between two women.
+   - The booklet has three boxes: healthy friendship, dependency, marriage. Two women who love each other fit only the
+     middle one.
+   - **This is the 2016 tape's collapse, in the source's own words.** Vera's sent line ("I don't have a word for the part
+     that wasn't") names the missing box.
+9. **Why it is hard to break.** It gives security, intimacy, self-worth, relief from boredom; its ups and downs can become
+   addictive. The culture has turned "God is love" into "Love is God". The 1987 and 1990 texts call for spiritual warfare,
+   "prayer, fasting and deliverance", and ask that ties be broken with every past partner (1987 pp. 9–10; 1990 pp. 27–28).
+10. **The way out.** Confess to a third person, not to her. Separate slowly; meet only in groups. Throw out the albums or
+    tapes with "our song" on them (1990 p. 30). Grieve; it can hurt like a divorce. Make new friends. Prepare for a long
+    war (pp. 29–32).
+11. **The promise.** It is "one of the most curable ailments known to man" (1987 p. 13; 1990 says "humanity").
+12. **Editions.** First a series in LIA's newsletter, © 1984. Exodus booklet, 1987, priced $1.00 (back cover, p. 15).
+    InterVarsity Press, 1990. Both 1990 copies have a print line ending "11 / 02": by the usual convention, the 11th printing,
+    in 2002 [VERIFY the convention]. The 1990 text softens a little: "our dependency as sin" becomes "the sinful aspects"; a
+    quoted phrase about "homosexual desirability" is dropped; a 1987 codependency self-help book is added to the sources.
+13. **The note in the folder.** See §8A, handwriting item 2. Unattributed. Not proposed for the piece.
+
+**In one line.** Rentzel frames dependency as idolatry: to need a person in place of God is sin, even without sex. Its signs
+are the ordinary signs of love. The 1990 edition blesses the same signs inside a marriage.
+
+### 8D. What they add to the evidence map (§3)
+
+| Step | Lexicon row | New USE source (date) | CLAIM side |
+|---|---|---|---|
+| A1 not born | word #25; men[6] (#34) | B2 F13 pp. 18–19 (1995) leans on 1970s sources. p. 40 says the American Psychiatric Association now calls people who seek change "disordered", citing the 1981 manual's "ego-dystonic homosexuality" as its "latest" | S16, S19. That diagnosis was later dropped [VERIFY SOURCE: date of removal] |
+| A2 the triangle | men[0], men[1] (#28, #29) | B2 F13 p. 21, © 1984/1995. **A pre-1997 source for the triangle** | S16 |
+| A3 wanted, attachment | men[11] (#39) | B3 F3 p. 2 (1989); B2 F13 p. 20 (six months); B1 F21 p. 30 (shame from the womb, c. 2001) | S16, S19. The "six months" claim has no source in the handbook [VERIFY SOURCE] |
+| A4 the father | men[0] (#28) | B3 F3 (1989); B2 F13 pp. 21–24 (1984/1995); B1 F3 p. 8 (1992) | S16 |
+| A5 the mother | men[1] (#29) | B3 F3 p. 2 (1989); B2 F13 pp. 85–86 ("selection") | S16 |
+| A6 peers, labels | men[2] (#30) | B3 F3 p. 3 (1989); B2 F13 pp. 24–25, 57–58, 92 | S16 |
+| A9 fear, envy, isolation | men[5] (#33); envy and isolation still no row | B2 F13 pp. 23–26, © 1984: **the earliest dated text of all three** | [VERIFY SOURCE] for envy as a cause; S16 covers relational theories |
+| A10 learned habit | men[6] (#34); men[13] "learning" (P7-50) | B2 F13 p. 88 (≤1998) | S19, S16 |
+| addiction framing | no row | B2 F13 pp. 9, 43, 185; B1 F4 p. 20 (1998); B1 F21 p. 45 | [VERIFY SOURCE] |
+| genogram, generational sin | men[12] (#40), men[14] | B1 F21 pp. 73, 118 (c. 1999–2001) | S16, S19 |
+| B6 girls' labels | women[4] (#46) | B3 F3 p. 3 (1989) | S16 |
+| B7–B8 dependency | women[2] (#44); word #10 | Rentzel: newsletter © 1984; booklet 1987 (in hand); 1990; reprinted 2002 [print line]; LIA class outline (B1 F4 pp. 26–29). **Earliest USE moves from 1988 to 1984** | S16 |
+| B11 straight friends, femininity | (a practice) | B1 F3 p. 10 (1992); B2 F13 pp. 22, 91 | S18 |
+| trans rows | trans[0] (#52) | nothing new | — |
+
+*For the Lexicon keepers (no change made):* the "dependency" row says it treats lesbian love as "needing too much". That is
+right in substance (the definition: another person "believed necessary"). The source itself calls it first a sin
+(idolatry), then an ailment.
+
+### 8E. What they add to the marketplace (§4)
+
+| # | What (fact) | Source | Strand | Suggested invented name |
+|---|---|---|---|---|
+| 1 | Rentzel booklet, $1.00 on the 1987 Exodus edition; the 1990 IVP edition, 11th printing 2002 [print line]. Matches FOF's $1 listing (§4B) | B2 F9 pp. 15, 19 | 2016 | **Too Close? A $1 booklet, with a checklist** |
+| 2 | The handbook: spiral-bound, a lighthouse on the cover, "for pastors, counselors, lay workers". 1984 (LIA), Manila 1991, revised 1995. No price. Five more titles by the author advertised | B2 F13 pp. 2–7 | 1997 | **The Un-Walk Workbook (write your answers in the space provided)** |
+| 3 | The residential year: 14 men in a shared house; 31 Dec to 15 Dec; $20 non-refundable fee for an application pack; applications June to August only; a full-time job required; 92 teaching sessions, including "Roots and Causes" and "Sexual Addiction"; a second year and a leaders' year | B2 F13 pp. 184–185 | 1997 | **Un-Walk House: one year, fourteen beds, $20 to apply** |
+| 4 | Newcomers are presented to the whole church, which promises to pray for them all year | B2 F13 p. 62 | 1997 | (a practice; dossier only) |
+| 5 | The Exodus referral line now with an AOL e-mail address (1995) | B2 F13 p. 184 | 1997 | **TriedPath HopeLine, now on e-mail** |
+| 6 | A free church class "For All Married and Single Women", Thursday 11 June 1992, 7:30 pm. The hook: you may not want to come; don't end up wishing you had | B1 F3 pp. 17–18 | 1997 | **Un-Walk Thursdays: for the women of the church** |
+| 7 | The family group: $175 a person (registration, workbook, a "love language" test, two books). 17 sessions plus a 3½-hour training. At most two excused absences. A certificate at the end. Root-beer floats to celebrate session 13 | B1 F21 pp. 10, 84, 90, 123 | 2003 or 2016 | **GracePlatform Family Circle, 17 weeks** (compare B1 F19: $200–$300, 20 weeks) |
+| 8 | A beginners' group for families that taught "the root causes" (named only) | B1 F21 p. 8 | any | **Roots for Parents (first-night group)** |
+| 9 | Women's 4-Day Intensive (one to one) and 5-Day Group Intensive (four women). Memphis office, a 1-800 line. The cover asks if you need a "radical spiritual makeover". No price. A later address than the 1998 handouts [date VERIFY] | B1 F4 pp. 1–2 | 2016 | **GracePlatform Intensive for Women (4 days)** |
+| 10 | The 1998 family-roles chart and handout; the 1999 cassette on the same subject (§7E) | B1 F4 pp. 20–25 | 1997 | **Roots Talks: Who Plays Whom at Home? (cassette and chart)** |
+| 11 | A 1991 shame tape series turned into a handout | B1 F21 p. 33 | 1997 | (a tape about tapes; §8F, NEW 6A13) |
+
+### 8F. Changes to the segments (§6)
+
+#### 8F1. Gay, 1997 (Daniel)
+
+**Which documents give a tape its *look*, not only its claims.**
+
+1. **B3 F3 (1989): the typed outline.** Numerals, one line each. A date written in the corner. Capitals for the turn. The
+   look: an overhead or flip chart, revealed line by line.
+2. **B2 F13 (1984; 1995): the workbook page.** Two columns: teaching on the left, numbered questions on the right, blank
+   space to write. Key words in capitals. Three stacked words for wrong and right priorities (Knowledge, God, Works;
+   pp. 13–14). A prayer with a SIGNATURE and DATE line (p. 175). Blank forms: a "diary" of spiritual warfare (p. 181). The
+   look: the tape asks a numbered question, then leaves a pause to write.
+3. **B1 F4 (1998): the family-system chart.** Six boxes, a circle of feelings in each, "Provides…" under each. Undated, same
+   folder: feeling-faces charts (cartoon heads labelled Frazzled, Two-Faced, In-The-Dark), and a tangled ball of yarn whose
+   strands are feelings, with DENIAL at the knot.
+4. **B1 F10 (from c. 1993): the blue-framed overheads.**
+   - The ministry's own drawings: a wife in an armchair reading a book titled *Steps Out of Homosexuality*, her husband
+     asking why (p. 1); a man with arms folded under a WORRY cloud, "why worry when you can pray?" (pp. 2–3); a young man
+     leaving home with a suitcase, his mother weeping in the doorway, his father beside her (p. 4).
+   - Clip art: four faces and HOW DO YOU FEEL? (pp. 8–10); an X-ray of a rib cage with the five books of Moses written on
+     the bones, then an open Bible inside the chest (pp. 20–21).
+   - Newspaper cartoons: a girl on her knees on a kitchen floor looking at a tiny father, captioned once with a girl's name,
+     once with a boy's (pp. 5, 7); "Morality… then / …and now": a black sheep among white sheep, then the reverse (p. 19).
+   - **Copyright:** describe, never reproduce (§5E). The piece can draw its own pictures in this grammar.
+5. **B1 F21 (1999–2001), later than 1997:** fill-in worksheets ("I feel… About… Because…"), grief drawn as ocean waves, a
+   "Recovery Plan" staircase with road signs and a STOP sign over a cloud labelled "Corruption", and the Lie Chair (a swivel
+   chair in a ring of chairs). Better for 2003.
+
+**NEW segments.**
+
+1. **NEW 6A8. "What Can Lead To…?"** The 1989 outline as a lecture. The baby who squirms, then cries, then learns the ropes.
+   Needs unmet. The turn in capitals. Three causes. *Collapse:* point one says science does not agree. *Source:* B3 F3
+   pp. 2–3. The best date fit in the archive.
+2. **NEW 6A9. "The Spilled Milk Response."** A glass tips over, twice: one parent forgives, one scolds. "Acceptance without
+   performance." *Source:* B3 F3 p. 2 (the phrase only; the staging is ours). Do not use the same page's image of an
+   abandoned baby.
+3. **NEW 6A10. "Outside Freedom, Inside Bondage."** The pitch to a teenager, then the house: painted, planted, falling.
+   *Source:* B3 F3 pp. 3–4.
+4. **NEW 6A11. "Homosexual by Three?"** A ruler from birth to age three. The three bonds drawn as a triangle; the
+   father–mother side breaks. "Real or perceived, the results are the same." *Source:* B2 F13 pp. 20–21.
+5. **NEW 6A12. "Strength, Power, Protection."** The three words. INITIATE / RESPOND. ACTIVE / PASSIVE. A numbered question,
+   then a pause to write. *Source:* B2 F13 pp. 21–22.
+6. **NEW 6A13. "Your Memory Tapes."** The mind as a computer; garbage in, garbage out; 80 % forgotten in 30 days; fill the
+   tapes with new material; the orientation is "a habit". Pair it with the "negative tapes" handout (B1 F21 p. 30; idea
+   1991). A tape that tells its viewer to record over himself. *Source:* B2 F13 pp. 88, 137–143.
+7. **NEW 6A14. "Who Plays Whom at Home?"** The 1998 roles chart, box by box. Say on screen that the handout never names
+   homosexuality: it is the programme's addiction frame, laid on a family. *Source:* B1 F4 pp. 20–25.
+8. **NEW 6A15. "The Chosen Child."** The mother who confides in one son and keeps girls away. *Collapse inside the text:* it
+   first says mothers are blamed unfairly. *Source:* B2 F13 pp. 85–86.
+
+**REVISED segments.**
+
+1. **REVISED 6A1 ("Act One").** Add B2 F13 p. 21 (1984; 1995) as the triangle's pre-1997 source. FOF (2001) becomes the
+   later, glossier form.
+2. **REVISED 6A2 and 6A3.** Add B3 F3 p. 3 (1989): the gym teacher, the teasing for being small, the labels. Add B1 F3 p. 8
+   (1992): a "lack of masculine affirmation". Invented lines only; no slurs.
+3. **REVISED 6A4 ("Comparison = Admiration = Envy").** Source B2 F13 pp. 23–26 first (© 1984), the Steps Out manual second.
+   Add BELONGING DENIED and INTIMACY DENIED.
+4. **REVISED 6A5 ("Your Family, Mapped").** Add the leader's instructions and the stated aim, "generational sin" (B1 F21
+   pp. 73, 117–118). **Date caution:** c. 1999–2001. Keep only if a two-to-four-year gap is fine; otherwise move it to 2003.
+5. **REVISED 6A6 ("A Series of Decisions").** Add "closing the option": burn the bridges (B2 F13 p. 44).
+6. **Commercial breaks, added:** **Un-Walk Thursdays** (the 1992 flyer's form); **Un-Walk House** ($20 to apply); **Roots
+   Talks: Who Plays Whom at Home?**; **The Un-Walk Workbook**.
+
+#### 8F2. Lesbian, 2016 (Vera)
+
+1. **REVISED 6B6, renamed "A Threat to Close Friendships."** Rentzel becomes the main source; PR-09's "death grip" stays as
+   an image. The signs as tick boxes; the manipulations as a list. Then the booklet's own sentence: in marriage these are
+   "completely appropriate". The collapse is the source's sentence; no satire is added. It is aimed at the booklet, never
+   at Vera. *Source:* B2 F9, 1990 pp. 22–26; 1987 pp. 4–8.
+2. **NEW 6B7. "Taken the Place of God."** Dependency as idolatry; sin with or without sex; the four roots. A circle with
+   "God" at the centre; another name slides in; the word TRANSGRESSION (the diagram is ours; the text gives it in words).
+   *Source:* 1987 pp. 4, 6; 1990 pp. 21–24. This is the frame of Vera's published 2014 line.
+3. **NEW 6B8. "When You Are Most Vulnerable."** A year planner with danger days: a break-up, a move, starting college,
+   exams, Christmas, camp, a conference, becoming a Christian. *Source:* 1987 p. 6; 1990 p. 24.
+4. **NEW 6B9. "The Path Out."** Tell a third person, not her. Meet only in groups. The tapes with "our song" go in the bin.
+   Grieve. "One of the most curable ailments." A tape that tells you to throw tapes away. *Source:* 1990 pp. 29–32.
+   *Care:* this sits close to Vera's felt material. The tape shows the instruction; Vera is never the punchline.
+5. **NEW 6B10 (optional). "Dignity in Serving."** The girl's identity transfer: to be protected, to mother, to serve.
+   *Source:* B2 F13 pp. 22–23 (1984; 1995). Shown as an old tape.
+6. **REVISED 6B4 ("Words to Fear, for girls").** Add the 1989 source: "should have been a boy" (B3 F3 p. 3).
+7. **REVISED (the framing).** The "old tape still in use" option is stronger. The 1990 booklet was in its 11th printing in
+   2002 [print line]; LIA taught it as a class (B1 F4); FOF sold it for $1 in 2001. Still nothing in the archive from
+   2014–2017 [VERIFY SOURCE].
+8. **Commercial breaks, added:** **Too Close? ($1, with a checklist)**, its box drawn by us in the manner of the 1987 cover
+   (two women, eyes closed; describe the original, never copy it); **GracePlatform Intensive for Women (4 days)**;
+   **GracePlatform Family Circle, 17 weeks**.
+
+#### 8F3. Trans, 2026 (Maya)
+
+No change. Nothing in these seven folders supports a 2026 tape.
+
+### 8G. Ethics flags (as §5)
+
+#### 8G1. Documented harm. Never a joke. Most are dossier only.
+
+1. **Suicide threats as "manipulation"** (Rentzel 1987 p. 8; the 1990 edition adds that threats must be taken seriously;
+   the LIA class outline keeps the item). Never voiced.
+2. **Deliverance and "satanic oppression."** Rentzel (1987 p. 9; 1990 p. 28). The handbook says the ministry uses
+   deliverance "whenever necessary" and asks the reader if he has had it (B2 F13 pp. 16, 18). Dossier only.
+3. **Cutting off a partner:** break ties with every past partner; separate; discard "our song" (Rentzel). Show it as a
+   claim. Never mock it.
+4. **Depression and loneliness as selfishness** (B2 F13 pp. 66–67). Dossier only.
+5. **Suicide:** self-pity drives some to suicide (B2 F13 p. 27); a quoted book calls suicide "the ultimate act of God
+   playing" (p. 125). Never voiced. (Your rule: no death figures.)
+6. **Abuse:** a workbook question asks whether being molested was a positive or negative experience; parents are asked to
+   look for their own neglect (B2 F13 pp. 98–99). Never voiced.
+7. **Case stories of severe harm:** a man who paid to be beaten; a young man in sex work, his early death called likely
+   (B2 F13 pp. 107, 110–111). Testimony and harm. Never.
+8. **Politics and slurs in the handbook:** a claim that gay people control hiring (p. 90); a call to oppose "special rights"
+   (p. 134); "emotional cripples" (p. 91). Dossier only, as its own words.
+9. **An outdated psychiatric citation** used against people seeking help (B2 F13 p. 40). Dossier, with the correction
+   [VERIFY SOURCE].
+10. **The prayer article** (© 1981, in B1 F21 pp. 23–24): don't pray the consequences away; don't send money; her health
+    "may suffer". Same family as §5A10. Dossier only.
+11. **Parents' grief recoded as sin** (B1 F21): "Suicidal Thoughts", "Depression", "Eating Disorder" and "Idolatry (My
+    Vision for My Child)" on a list of sins to confess (p. 46). The leader answers grief with "Why not you?" (p. 86).
+    Introductions must be about "a choice that can be repented of", not about being hurt (p. 108). The ideal mentor makes
+    you feel intimidated (pp. 112, 114). Coercive practice; dossier.
+12. **Group rules** (B1 F21 pp. 94–95; B1 F4 p. 30): you may not defend yourself; stand to speak; ask to leave; no short
+    skirts (leader's copy); sit apart from your own loved one. Dossier.
+13. **HIV in a marriage checklist** (B1 F3 p. 7): can it pass by closeness, food, children? AIDS stigma. Never voiced.
+14. **B3 F3:** an image of an abandoned baby (p. 2); a slur as a label example (p. 3). Never voiced.
+15. **B1 F10 p. 14:** a cartoon joking about a woman shooting a man, used in a feelings class. Never reproduced.
+
+#### 8G2. Real names of staff, clients and families
+
+1. **B3 F3:** a first name on the folder; a girl's first name in a case line.
+2. **B2 F9:** the author, her husband and daughters (author notes); a named ministry leader; the Exodus director (1990
+   p. 34); about a dozen first names in case stories.
+3. **B1 F3:** the director and his wife on every version; a volunteer's full name on her first-person article; first names
+   in handwriting.
+4. **B1 F21:** a staff mother's full name, her testimony and an "introduction" naming her son and a private episode
+   (pp. 8, 47); a young man's full name on a moral inventory about his father coming out (pp. 38–39; the family already
+   flagged in §5C4); the director as a past group leader; the prayer article's author; the tape series' author.
+5. **B1 F4:** the founder, a bishop and a donor in the 2005 liturgy; a named counsellor, with phone and e-mail, on the
+   women's brochure; a named designer on the faces chart.
+6. **B2 F13:** the author; the pastor in the dedication; the editor (Rentzel); about fifteen first names in case stories.
+   The copyright page says these were changed (p. 4). Still treat them as testimony.
+7. **B1 F10:** syndicated cartoonists; a magazine writer.
+8. **None of these goes into the piece.** Organisations may be named on the dossier as the source of a document.
+
+#### 8G3. Testimony. Never voiced.
+
+1. **B2 F13:** the author's own story (pp. 26–27, 116; the 1984 letter, pp. 171–172) and every case history.
+2. **B1 F21:** the mother's testimony; the son's moral inventory.
+3. **B1 F3:** the volunteer's first-person account.
+4. **B3 F3:** the speaker's italic memories and his closing story.
+5. **Rentzel:** the "one woman told us" lines.
+6. **Forms that can be used with no real content (his call):** the numbered-question workbook page; a signature line under
+   a prayer; the moral-inventory template (Challenge, Consequences, Changes, Strengths, 48-hour goal, Blessing, Scripture);
+   the "Introduction" script; the testimony template.
+
+#### 8G4. Copyright and smaller cautions
+
+1. Most of B1 F10, and the poster in it, belongs to others. Describe, never reproduce. The same for the 1987 Rentzel cover.
+2. The handwritten notes (§8A) are anonymous. If the dossier ever mentions "a note in the folder", it says no more than the
+   note says, and names nobody. His call.
+3. §5E3 still applies: no real support group is named.
 
 ---
 
