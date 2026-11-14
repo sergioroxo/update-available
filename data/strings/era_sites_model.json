@@ -215,6 +215,10 @@
     "url": "https://archive.iftcc.org/perceptions-among-men-with-unwanted-same-sex-attractions-ssa-of-the-factors-contributing-to-the-development-of-their-homosexual-feelings-13-3-december-2004-7pp-36-42/"
    },
    {
+    "label": "People Can Change, Perceptions Among Men With Unwanted SSA… (June 2004; 2005-06-10 capture of its own PDF)",
+    "url": "https://web.archive.org/web/20050610202501/http://peoplecanchange.com/Surveyoncauses.pdf"
+   },
+   {
     "label": "APA Task Force / AGLP mirror, APA Task Force Report on Appropriate Therapeutic Responses (2009)",
     "url": "https://www.aglp.org/Documents/APsycholA%20on%20Orientation.pdf"
    },
@@ -698,8 +702,13 @@
       "tag": "documented",
       "conf": "medium — one survivor's account of one programme (2004)",
       "t": "Searching what a person brings is documented. Garrard Conley, who entered Love in Action's two-week programme The Source in 2004, recalls being patted down while staff went through every belonging, pulled cards from his wallet and asked about the phone numbers he carried. His phone was kept in an office, returned only in an emergency (Insider, 2025). Asking Daniel what he will keep, and filing the choice, is the piece's form of it.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Insider, “How Gay Conversion Therapy Camps Actually Work” (Garrard Conley, video)",
+        "url": "https://www.youtube.com/watch?v=056h0p-q7Vo"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -856,8 +865,13 @@
       "tag": "documented",
       "conf": "medium — from the lead's research report; the cited study not yet re-read for this line",
       "t": "The signed abstinence pledge card of the 1990s youth movements turned a private intention into a public object and an identity marker; Bearman and Brückner's national longitudinal analysis (American Journal of Sociology 106(4), 2001, doi:10.1086/320295) found its effects conditional and identity-bound rather than protective. This programme's card is an invented form of that documented practice.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Bearman & Brückner (2001), “Promising the Future: Virginity Pledges and First Intercourse”, American Journal of Sociology 106(4)",
+        "url": "https://doi.org/10.1086/320295"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -916,8 +930,13 @@
       "tag": "documented",
       "conf": "medium — one survivor's account of one programme (2004)",
       "t": "Searching what a person brings is documented. Garrard Conley, who entered Love in Action's two-week programme The Source in 2004, recalls being patted down while staff went through every belonging, pulled cards from his wallet and asked about the phone numbers he carried. His phone was kept in an office, returned only in an emergency (Insider, 2025). Asking Daniel what he will keep, and filing the choice, is the piece's form of it.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Insider, “How Gay Conversion Therapy Camps Actually Work” (Garrard Conley, video)",
+        "url": "https://www.youtube.com/watch?v=056h0p-q7Vo"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -934,8 +953,13 @@
       "tag": "documented",
       "conf": "medium — one survivor's account of one programme (2004)",
       "t": "Reading a young person's private writing is documented. When Garrard Conley entered Love in Action in 2004, staff read his notebook of short stories, called them a 'false image' and tore the pages out unread. They said he identified too strongly with a female character (Insider, 2025). The software that reads Daniel's diary and tries to delete it is the piece's form of it.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Insider, “How Gay Conversion Therapy Camps Actually Work” (Garrard Conley, video)",
+        "url": "https://www.youtube.com/watch?v=056h0p-q7Vo"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h4",
@@ -1405,8 +1429,8 @@
         "sub": "NOT AN EMPIRICAL CLAIM for the moral half · 1997-2012"
        },
        {
-        "t": "Pornography, masturbation, fantasy as a trap",
-        "sub": "no source gives it as a cause · 1997-2012"
+        "t": "Masturbation, pornography and fantasy, said to tie ‘warm acceptance’ to sex with men",
+        "sub": "NOT SUPPORTED as a cause of orientation · 1997-2012"
        },
        {
         "t": "Spiritual: demons, “negative spiritual influences”, sin",
@@ -1780,8 +1804,13 @@
       "tag": "documented",
       "conf": "medium — one survivor's account of one programme (2004)",
       "t": "Reading a young person's private writing is documented. When Garrard Conley entered Love in Action in 2004, staff read his notebook of short stories, called them a 'false image' and tore the pages out unread. They said he identified too strongly with a female character (Insider, 2025). The software that reads Daniel's diary and tries to delete it is the piece's form of it.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Insider, “How Gay Conversion Therapy Camps Actually Work” (Garrard Conley, video)",
+        "url": "https://www.youtube.com/watch?v=056h0p-q7Vo"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -1896,8 +1925,13 @@
       "tag": "documented",
       "conf": "medium — one survivor's account of one programme (2004)",
       "t": "Reading a young person's private writing is documented. When Garrard Conley entered Love in Action in 2004, staff read his notebook of short stories, called them a 'false image' and tore the pages out unread. They said he identified too strongly with a female character (Insider, 2025). The software that reads Daniel's diary and tries to delete it is the piece's form of it.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Insider, “How Gay Conversion Therapy Camps Actually Work” (Garrard Conley, video)",
+        "url": "https://www.youtube.com/watch?v=056h0p-q7Vo"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -2373,8 +2407,8 @@
         "sub": "NOT AN EMPIRICAL CLAIM for the moral half · 1997-2012"
        },
        {
-        "t": "Pornography, masturbation, fantasy as a trap",
-        "sub": "no source gives it as a cause · 1997-2012"
+        "t": "Masturbation, pornography and fantasy, said to tie ‘warm acceptance’ to sex with men",
+        "sub": "NOT SUPPORTED as a cause of orientation · 1997-2012"
        },
        {
         "t": "Media, schools, “gay activists”, culture",
@@ -2764,8 +2798,17 @@
       "tag": "documented",
       "conf": "medium — one survivor's spoken account in a published video; the 2018 report corroborates the advice, not the map",
       "t": "The places list has a documented ancestor. Garrard Conley, sent to Love in Action in 2004, describes a map of the city that new members were shown: some zones and places were marked safe, and everything else counted as evil. Members were barred from certain restaurants and from anywhere secular (Insider, 'How Gay Conversion Therapy Camps Actually Work'). In 2018 a reporter who joined a women's ministry forum under a pseudonym was advised to avoid lesbian venues (Sydney Morning Herald, 9 March 2018). A network keeping that list online, and a moderator adding a bar to it, is the piece's inference.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Insider, “How Gay Conversion Therapy Camps Actually Work” (Garrard Conley, video)",
+        "url": "https://www.youtube.com/watch?v=056h0p-q7Vo"
+       },
+       {
+        "label": "Sydney Morning Herald, 9 March 2018 — “‘I am profoundly unsettled’: inside the hidden world of gay conversion therapy”",
+        "url": "https://www.smh.com.au/national/i-am-profoundly-unsettled-inside-the-hidden-world-of-gay-conversion-therapy-20180227-p4z1xn.html"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -3174,8 +3217,37 @@
       "tag": "documented",
       "conf": "high",
       "t": "Testimony became media. Ex-gay ministries turned personal stories of change into repeatable objects: Love in Action's own history begins with its founder's \"testimony and a newspaper ad\"; Focus on the Family's Love Won Out conferences (from 1998) put former-gay speakers on stage as evidence; the \"Truth in Love\" campaign ran such stories from 1998 as newspaper advertisements and, from 1999, as television commercials ending in a contact number; and the 2004 documentary I Do Exist gathered five stories with expert framing and was sold on VHS and DVD as a discussion starter for churches, schools and universities. By 2008 its producer had disowned the film as evidence of change and was offering it only on limited terms; one of its participants later wrote publicly about leaving the movement. Era 2's Your Story is that life cycle: his record, his words, the ministry's story, its media object, and a doorway for somebody else.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Smithsonian, Love in Action Collection (1978–2013) — the history note quotes the ministry: “With his testimony and a newspaper ad”",
+        "url": "https://sova.si.edu/record/nmah.ac.1428"
+       },
+       {
+        "label": "Crosswalk, 4 Nov 2002 — Love Won Out conference report (“since 1998”)",
+        "url": "https://www.crosswalk.com/faith/spiritual-life/love-won-out-in-washington-1169753.html"
+       },
+       {
+        "label": "Fetner (2005), Journal of Homosexuality — the 1998 “truth in love” newspaper ads",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/16368665/"
+       },
+       {
+        "label": "Christianity Today, 6 Sept 1999 — TV stations turn down the Exodus ads",
+        "url": "https://www.christianitytoday.com/1999/09/tv-stations-turn-down-exodus-ads/"
+       },
+       {
+        "label": "Baptist Press, 2 Dec 2004 — “I Do Exist” (Wayback capture, 19 May 2024)",
+        "url": "https://web.archive.org/web/20240519152409/https://www.baptistpress.com/resource-library/news/documentary-features-stories-of-those-who-left-homosexuality/"
+       },
+       {
+        "label": "AFA Journal, Sept 2004 — “I Do Exist”",
+        "url": "https://afajournal.org/past-issues/2004/september/i-do-exist/"
+       },
+       {
+        "label": "“I Do Exist FAQs”, from the producer, 2008 (Wayback capture, 9 Aug 2011)",
+        "url": "https://web.archive.org/web/20110809060211/http://www.drthrockmorton.com/idoexist.asp"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -3224,8 +3296,17 @@
       "tag": "documented",
       "conf": "medium — one survivor's spoken account in a published video; the 2018 report corroborates the advice, not the map",
       "t": "The places list has a documented ancestor. Garrard Conley, sent to Love in Action in 2004, describes a map of the city that new members were shown: some zones and places were marked safe, and everything else counted as evil. Members were barred from certain restaurants and from anywhere secular (Insider, 'How Gay Conversion Therapy Camps Actually Work'). In 2018 a reporter who joined a women's ministry forum under a pseudonym was advised to avoid lesbian venues (Sydney Morning Herald, 9 March 2018). A network keeping that list online, and a moderator adding a bar to it, is the piece's inference.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Insider, “How Gay Conversion Therapy Camps Actually Work” (Garrard Conley, video)",
+        "url": "https://www.youtube.com/watch?v=056h0p-q7Vo"
+       },
+       {
+        "label": "Sydney Morning Herald, 9 March 2018 — “‘I am profoundly unsettled’: inside the hidden world of gay conversion therapy”",
+        "url": "https://www.smh.com.au/national/i-am-profoundly-unsettled-inside-the-hidden-world-of-gay-conversion-therapy-20180227-p4z1xn.html"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -3233,8 +3314,21 @@
       "tag": "documented",
       "conf": "high for the rules; the date is 2005, two years after the thread",
       "t": "The house rules are documented. In June 2005 a teenager posted on MySpace the rules Love in Action's teen programme, Refuge, gave his family: no computer of his own, no mobile phone, email or internet unless approved, Christian music only (even classical counted as secular), no television. It became national news (New York Times, 17 July 2005), people protested outside, and Tennessee investigated the programme in 2005–06. The parents' thread is invented; its rules come from that sheet, two years after 2003.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Box Turtle Bulletin, “The Rules from Love In Action’s Refuge Program” (as posted by the teenager, 2005)",
+        "url": "http://www.boxturtlebulletin.com/Articles/000,022.htm"
+       },
+       {
+        "label": "The New York Times, 17 July 2005 — “Gay Teenager Stirs a Storm”",
+        "url": "https://www.nytimes.com/2005/07/17/fashion/sundaystyles/gay-teenager-stirs-a-storm.html"
+       },
+       {
+        "label": "ABC News, 28 June 2005 — “Ex-Gay Camp Investigation Called Off”",
+        "url": "https://abcnews.com/US/story?id=878912&page=1"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -4125,8 +4219,17 @@
       "tag": "documented",
       "conf": "medium — one journalist's observation for the comments; an audit for the renamed accounts",
       "t": "The assistant is not the only way in. Ex-gay influencers reach younger users with short videos; young people ask for help in the comments, and replies move them into private messages and groups (reported by the Daily Beast, July 2024). When platforms remove such accounts, providers have come back under new names (GPAHE, 2023). The renamed account on Maya's results page is that pattern.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "The Daily Beast, 29 July 2024 — “TikTok Is Flooding Gen Z With Conversion Therapy Propaganda”",
+        "url": "https://www.thedailybeast.com/ex-gay-influencers-turn-to-tiktok-to-push-rebranded-conversion-therapy"
+       },
+       {
+        "label": "GPAHE, Conversion Therapy Online: The Ecosystem in 2023",
+        "url": "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -4394,8 +4497,25 @@
       "tag": "disputed",
       "conf": "the record is documented; whether the claim explains anything is disputed",
       "t": "\"Social contagion\" is a claim about why more young people say they are trans: that they copy friends and the internet. The piece shows both readings and settles neither. Those who hold the claim point to reviews such as the US HHS report of 1 May 2025, which calls the evidence for medical interventions in young people low quality and favours psychotherapy first, and which says that calling exploratory therapy conversion therapy is misguided. Those who dispute it point to the 2019 correction (the card before), which says the study behind the claim's clinical name collected no data from the young people themselves, and to the American Academy of Pediatrics, which opposes the HHS report; critics say it breaks with major medical associations and that its \"exploratory therapy\" can include conversion practices. Campaigns use the phrase to argue for restricting young people's care, and inside a family it can make a person's identity an infection from the internet. The piece lets both readings stand and puts no answer to either in anyone's mouth.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "HHS, Treatment for Pediatric Gender Dysphoria: Review of Evidence and Best Practices (1 May 2025 edition, Wayback capture of the same day)",
+        "url": "https://web.archive.org/web/20250501124219/https://opa.hhs.gov/sites/default/files/2025-05/gender-dysphoria-report.pdf"
+       },
+       {
+        "label": "KFF, HHS Report on Pediatric Gender Dysphoria and Gender Conversion Efforts (6 May 2025)",
+        "url": "https://www.kff.org/mental-health/issue-brief/u-s-department-of-health-and-human-services-report-on-pediatric-gender-dysphoria-and-gender-conversion-efforts/"
+       },
+       {
+        "label": "American Academy of Pediatrics, statement on the HHS report (1 May 2025)",
+        "url": "https://www.aap.org/en/news-room/news-releases/aap/2025/aap-statement-on-hhs-report-treatment-for-pediatric-gender-dysphoria/"
+       },
+       {
+        "label": "PLOS ONE, Correction (Littman), 19 March 2019",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6424391"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -4432,8 +4552,17 @@
       "tag": "disputed",
       "conf": "documentary for what the 2018 paper reports and what its correction says; contested as an explanation",
       "t": "The \"signs\" in the assistant's film come from a 2018 survey of 256 parents (Littman, PLOS ONE). As the parents reported it, the announcement came \"out of the blue\" (80.9%), most of the child's friend group also came out (36.8%), internet use had risen before it (63.5%), the child became more popular after (60.7%, where known), and there were earlier mental-health or neurodevelopmental conditions (62.5%). These are parents' reports, not observations of the young people. The journal's correction of 19 March 2019 says the term the paper introduced is not a formal diagnosis and that no data were collected from the young people or their clinicians. The checklist ticked over Maya's week, with evidence that does not fit it, is the piece's invention.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Littman (2018), PLOS ONE — Parent reports of adolescents and young adults perceived to show signs of a rapid onset of gender dysphoria",
+        "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0202330"
+       },
+       {
+        "label": "PLOS ONE, Correction (Littman), 19 March 2019",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6424391"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -4451,8 +4580,21 @@
       "tag": "disputed",
       "conf": "the report and its critics are documented; which is right is the debate itself",
       "t": "On 1 May 2025 the US Department of Health and Human Services published a review of care for young people with gender dysphoria, after the executive order \"Protecting Children From Chemical and Surgical Mutilation\". The review says the evidence for medical interventions in young people is low quality, puts psychotherapy first, including \"exploratory therapy\", and calls it \"misguided\" to describe that as conversion therapy. Its critics, among them the American Academy of Pediatrics, say it breaks with the major medical associations, that its authors were not named, and that its \"exploratory therapy\" can include conversion practices. The piece shows both readings in Mum's article and settles neither. Source: KFF's explainer on the report.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "KFF, HHS Report on Pediatric Gender Dysphoria and Gender Conversion Efforts (6 May 2025)",
+        "url": "https://www.kff.org/mental-health/issue-brief/u-s-department-of-health-and-human-services-report-on-pediatric-gender-dysphoria-and-gender-conversion-efforts/"
+       },
+       {
+        "label": "HHS, Treatment for Pediatric Gender Dysphoria: Review of Evidence and Best Practices (1 May 2025 edition, Wayback capture of the same day)",
+        "url": "https://web.archive.org/web/20250501124219/https://opa.hhs.gov/sites/default/files/2025-05/gender-dysphoria-report.pdf"
+       },
+       {
+        "label": "American Academy of Pediatrics, statement on the HHS report (1 May 2025)",
+        "url": "https://www.aap.org/en/news-room/news-releases/aap/2025/aap-statement-on-hhs-report-treatment-for-pediatric-gender-dysphoria/"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -4470,8 +4612,13 @@
       "tag": "documented",
       "conf": "high — KFF's own survey, as KFF reports it",
       "t": "KFF reports (6 May 2025) that about one in ten transgender adults in the US say they went to conversion or \"reparative\" therapy as a child or teenager, and that 25% attended religious services that tried to change them. Most state bans on conversion therapy for minors do not cover religious settings.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "KFF, HHS Report on Pediatric Gender Dysphoria and Gender Conversion Efforts (6 May 2025) — the polling on conversion therapy",
+        "url": "https://www.kff.org/mental-health/issue-brief/u-s-department-of-health-and-human-services-report-on-pediatric-gender-dysphoria-and-gender-conversion-efforts/"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -4489,8 +4636,17 @@
       "tag": "documented",
       "conf": "high — the decision as reported by Cornell LII and Wikipedia",
       "t": "On 31 March 2026 the US Supreme Court decided Chiles v. Salazar, 8–1 (Justice Gorsuch wrote for the Court; Justice Kagan, joined by Justice Sotomayor, concurred; Justice Jackson dissented). It held that Colorado's ban on conversion therapy for minors, as applied to a counsellor's talk therapy, regulates speech by viewpoint and must pass strict scrutiny, and sent the case back to the lower courts. The Court did not strike the law down as a whole, and other states' bans stand. The piece follows one thread from it: in 2026, the practice lives on as conversation.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Cornell Legal Information Institute, Chiles v. Salazar (Supreme Court, 31 March 2026)",
+        "url": "https://www.law.cornell.edu/supremecourt/text/24-539"
+       },
+       {
+        "label": "Wikipedia, Chiles v. Salazar",
+        "url": "https://en.wikipedia.org/wiki/Chiles_v._Salazar"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -4508,8 +4664,21 @@
       "tag": "documented",
       "conf": "high for the draft bill; the two reactions as reported",
       "t": "On 25 June 2026 the UK government published a draft Conversion Practices Bill for England and Wales. It covers attempts to change a person's sexual orientation or gender identity, carries up to five years in custody, and says it does not ban \"explorative conversations\"; legitimate healthcare and counselling are exempt. As reported, the Royal College of Psychiatrists wants exploratory conversations protected, and Stonewall says the word \"abusive\" in the bill leaves gaps. The assistant in the piece quotes the bill to Maya as permission.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "GOV.UK, Government pushes forward with conversion practices ban (25 June 2026)",
+        "url": "https://www.gov.uk/government/news/government-pushes-forward-with-conversion-practices-ban-to-protect-lgbt-people-from-abuse"
+       },
+       {
+        "label": "GOV.UK, Draft Conversion Practices Bill (published 25 June 2026)",
+        "url": "https://www.gov.uk/government/publications/draft-conversion-practices-bill"
+       },
+       {
+        "label": "Stonewall, Ban conversion practices — response to the draft Bill",
+        "url": "https://stonewall.org.uk/get-involved/campaign-with-us/ban-conversion-practices"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "h3",
@@ -4790,8 +4959,17 @@
       "tag": "documented",
       "conf": "medium — one journalist's observation for the comments; an audit for the renamed accounts",
       "t": "The assistant is not the only way in. Ex-gay influencers reach younger users with short videos; young people ask for help in the comments, and replies move them into private messages and groups (reported by the Daily Beast, July 2024). When platforms remove such accounts, providers have come back under new names (GPAHE, 2023). The renamed account on Maya's results page is that pattern.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "The Daily Beast, 29 July 2024 — “TikTok Is Flooding Gen Z With Conversion Therapy Propaganda”",
+        "url": "https://www.thedailybeast.com/ex-gay-influencers-turn-to-tiktok-to-push-rebranded-conversion-therapy"
+       },
+       {
+        "label": "GPAHE, Conversion Therapy Online: The Ecosystem in 2023",
+        "url": "https://globalextremism.org/reports/conversion-therapy-online-the-ecosystem-in-2023/"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -4892,8 +5070,25 @@
       "tag": "disputed",
       "conf": "the record is documented; whether the claim explains anything is disputed",
       "t": "\"Social contagion\" is a claim about why more young people say they are trans: that they copy friends and the internet. The piece shows both readings and settles neither. Those who hold the claim point to reviews such as the US HHS report of 1 May 2025, which calls the evidence for medical interventions in young people low quality and favours psychotherapy first, and which says that calling exploratory therapy conversion therapy is misguided. Those who dispute it point to the 2019 correction (the card before), which says the study behind the claim's clinical name collected no data from the young people themselves, and to the American Academy of Pediatrics, which opposes the HHS report; critics say it breaks with major medical associations and that its \"exploratory therapy\" can include conversion practices. Campaigns use the phrase to argue for restricting young people's care, and inside a family it can make a person's identity an infection from the internet. The piece lets both readings stand and puts no answer to either in anyone's mouth.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "HHS, Treatment for Pediatric Gender Dysphoria: Review of Evidence and Best Practices (1 May 2025 edition, Wayback capture of the same day)",
+        "url": "https://web.archive.org/web/20250501124219/https://opa.hhs.gov/sites/default/files/2025-05/gender-dysphoria-report.pdf"
+       },
+       {
+        "label": "KFF, HHS Report on Pediatric Gender Dysphoria and Gender Conversion Efforts (6 May 2025)",
+        "url": "https://www.kff.org/mental-health/issue-brief/u-s-department-of-health-and-human-services-report-on-pediatric-gender-dysphoria-and-gender-conversion-efforts/"
+       },
+       {
+        "label": "American Academy of Pediatrics, statement on the HHS report (1 May 2025)",
+        "url": "https://www.aap.org/en/news-room/news-releases/aap/2025/aap-statement-on-hhs-report-treatment-for-pediatric-gender-dysphoria/"
+       },
+       {
+        "label": "PLOS ONE, Correction (Littman), 19 March 2019",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6424391"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -4910,8 +5105,17 @@
       "tag": "disputed",
       "conf": "documentary for what the 2018 paper reports and what its correction says; contested as an explanation",
       "t": "The \"signs\" in the assistant's film come from a 2018 survey of 256 parents (Littman, PLOS ONE). As the parents reported it, the announcement came \"out of the blue\" (80.9%), most of the child's friend group also came out (36.8%), internet use had risen before it (63.5%), the child became more popular after (60.7%, where known), and there were earlier mental-health or neurodevelopmental conditions (62.5%). These are parents' reports, not observations of the young people. The journal's correction of 19 March 2019 says the term the paper introduced is not a formal diagnosis and that no data were collected from the young people or their clinicians. The checklist ticked over Maya's week, with evidence that does not fit it, is the piece's invention.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Littman (2018), PLOS ONE — Parent reports of adolescents and young adults perceived to show signs of a rapid onset of gender dysphoria",
+        "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0202330"
+       },
+       {
+        "label": "PLOS ONE, Correction (Littman), 19 March 2019",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6424391"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -4919,8 +5123,21 @@
       "tag": "disputed",
       "conf": "the report and its critics are documented; which is right is the debate itself",
       "t": "On 1 May 2025 the US Department of Health and Human Services published a review of care for young people with gender dysphoria, after the executive order \"Protecting Children From Chemical and Surgical Mutilation\". The review says the evidence for medical interventions in young people is low quality, puts psychotherapy first, including \"exploratory therapy\", and calls it \"misguided\" to describe that as conversion therapy. Its critics, among them the American Academy of Pediatrics, say it breaks with the major medical associations, that its authors were not named, and that its \"exploratory therapy\" can include conversion practices. The piece shows both readings in Mum's article and settles neither. Source: KFF's explainer on the report.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "KFF, HHS Report on Pediatric Gender Dysphoria and Gender Conversion Efforts (6 May 2025)",
+        "url": "https://www.kff.org/mental-health/issue-brief/u-s-department-of-health-and-human-services-report-on-pediatric-gender-dysphoria-and-gender-conversion-efforts/"
+       },
+       {
+        "label": "HHS, Treatment for Pediatric Gender Dysphoria: Review of Evidence and Best Practices (1 May 2025 edition, Wayback capture of the same day)",
+        "url": "https://web.archive.org/web/20250501124219/https://opa.hhs.gov/sites/default/files/2025-05/gender-dysphoria-report.pdf"
+       },
+       {
+        "label": "American Academy of Pediatrics, statement on the HHS report (1 May 2025)",
+        "url": "https://www.aap.org/en/news-room/news-releases/aap/2025/aap-statement-on-hhs-report-treatment-for-pediatric-gender-dysphoria/"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -4928,8 +5145,13 @@
       "tag": "documented",
       "conf": "high — KFF's own survey, as KFF reports it",
       "t": "KFF reports (6 May 2025) that about one in ten transgender adults in the US say they went to conversion or \"reparative\" therapy as a child or teenager, and that 25% attended religious services that tried to change them. Most state bans on conversion therapy for minors do not cover religious settings.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "KFF, HHS Report on Pediatric Gender Dysphoria and Gender Conversion Efforts (6 May 2025) — the polling on conversion therapy",
+        "url": "https://www.kff.org/mental-health/issue-brief/u-s-department-of-health-and-human-services-report-on-pediatric-gender-dysphoria-and-gender-conversion-efforts/"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -4937,8 +5159,17 @@
       "tag": "documented",
       "conf": "high — the decision as reported by Cornell LII and Wikipedia",
       "t": "On 31 March 2026 the US Supreme Court decided Chiles v. Salazar, 8–1 (Justice Gorsuch wrote for the Court; Justice Kagan, joined by Justice Sotomayor, concurred; Justice Jackson dissented). It held that Colorado's ban on conversion therapy for minors, as applied to a counsellor's talk therapy, regulates speech by viewpoint and must pass strict scrutiny, and sent the case back to the lower courts. The Court did not strike the law down as a whole, and other states' bans stand. The piece follows one thread from it: in 2026, the practice lives on as conversation.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "Cornell Legal Information Institute, Chiles v. Salazar (Supreme Court, 31 March 2026)",
+        "url": "https://www.law.cornell.edu/supremecourt/text/24-539"
+       },
+       {
+        "label": "Wikipedia, Chiles v. Salazar",
+        "url": "https://en.wikipedia.org/wiki/Chiles_v._Salazar"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",
@@ -4946,8 +5177,21 @@
       "tag": "documented",
       "conf": "high for the draft bill; the two reactions as reported",
       "t": "On 25 June 2026 the UK government published a draft Conversion Practices Bill for England and Wales. It covers attempts to change a person's sexual orientation or gender identity, carries up to five years in custody, and says it does not ban \"explorative conversations\"; legitimate healthcare and counselling are exempt. As reported, the Royal College of Psychiatrists wants exploratory conversations protected, and Stonewall says the word \"abusive\" in the bill leaves gaps. The assistant in the piece quotes the bill to Maya as permission.",
-      "links": [],
-      "nolink": "No verified link yet."
+      "links": [
+       {
+        "label": "GOV.UK, Government pushes forward with conversion practices ban (25 June 2026)",
+        "url": "https://www.gov.uk/government/news/government-pushes-forward-with-conversion-practices-ban-to-protect-lgbt-people-from-abuse"
+       },
+       {
+        "label": "GOV.UK, Draft Conversion Practices Bill (published 25 June 2026)",
+        "url": "https://www.gov.uk/government/publications/draft-conversion-practices-bill"
+       },
+       {
+        "label": "Stonewall, Ban conversion practices — response to the draft Bill",
+        "url": "https://stonewall.org.uk/get-involved/campaign-with-us/ban-conversion-practices"
+       }
+      ],
+      "nolink": ""
      },
      {
       "k": "src",

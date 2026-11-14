@@ -119,7 +119,8 @@ export function hangAhead(head: pc.Entity, e: pc.Entity, dist: number, drop: num
 }
 
 /** where a ray meets a stood-up plane, as canvas px — or null */
-export function rayOnPlane(e: pc.Entity, ray: Ray, cw: number, ch: number): { x: number; y: number } | null {
+/** `loose`: the ray may leave the plane's edge — the point is clamped to it (a grab that is dragged past the window) */
+export function rayOnPlane(e: pc.Entity, ray: Ray, cw: number, ch: number, loose = false): { x: number; y: number } | null {
   const n = e.up;            // the plane's normal (local +Y)
   const P = e.getPosition();
   const d = new pc.Vec3().sub2(ray.p1, ray.p0);
@@ -130,8 +131,9 @@ export function rayOnPlane(e: pc.Entity, ray: Ray, cw: number, ch: number): { x:
   const hit = new pc.Vec3().copy(d).mulScalar(t).add(ray.p0);
   const local = new pc.Vec3();
   e.getWorldTransform().clone().invert().transformPoint(hit, local);
-  const u = local.x + 0.5, v = local.z + 0.5;
-  if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+  let u = local.x + 0.5, v = local.z + 0.5;
+  if (loose) { u = Math.max(0, Math.min(1, u)); v = Math.max(0, Math.min(1, v)); }
+  else if (u < 0 || u > 1 || v < 0 || v > 1) return null;
   return { x: u * cw, y: v * ch };
 }
 

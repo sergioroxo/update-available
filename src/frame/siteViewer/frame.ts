@@ -171,7 +171,17 @@ export function drawWindow(e: DrawEnv, title: string, years: { id: string; label
   // ── the toolbar: back to the four years, the years, "open as a web page" ──
   const top = TITLE_H + (skin.os === 'w95' ? 0 : 2) + (skin.os === 'xp' ? 0 : 0);
   const inset = skin.os === 'w95' || skin.os === 'xp' || skin.os === 'aero' ? B : 3;
-  const barH = compact && canPage ? BAR_H * 2 - 6 : BAR_H;
+  // ⚑ S383 — on a landscape phone (W = 640, not 'compact') the year tabs and even the short "Web page ↗" cannot share a row:
+  //   the button lay over the 2026 tab. When they do not fit, the page button takes a second row, as it does on a portrait phone.
+  let twoRow = compact && canPage;
+  if (canPage && !compact) {
+    ctx.font = `700 18px ${skin.font}`;
+    let xe = inset + 10;
+    for (const yb of years) { ctx.font = `700 18px ${skin.font}`; xe += Math.max(yb.id === 'view:hub' ? 0 : 74, Math.ceil(ctx.measureText(yb.label).width) + 28) + 8; }
+    ctx.font = `700 18px ${skin.font}`;
+    if (xe + Math.ceil(ctx.measureText('Web page ↗').width) + 28 + 10 > W - inset) twoRow = true;
+  }
+  const barH = twoRow ? BAR_H * 2 - 6 : BAR_H;
   const bar: Rect = { x: inset, y: top, w: W - inset * 2, h: barH };
   ctx.fillStyle = c.bar; ctx.fillRect(bar.x, bar.y, bar.w, bar.h);
   ctx.fillStyle = skin.os === 'w95' ? D.dark : skin.rule; ctx.fillRect(bar.x, bar.y + bar.h - 2, bar.w, 2);
@@ -190,7 +200,7 @@ export function drawWindow(e: DrawEnv, title: string, years: { id: string; label
     ctx.font = f;
     const label = 'Open as a web page ↗';
     const w = Math.ceil(ctx.measureText(label).width) + 28;
-    if (compact) drawButton(e, { x: bar.x + 10, y: by2 + BAR_H - 6, w: Math.min(w, bar.w - 20), h: bh2 }, label, 'openpage', pageTip, { font: f, style: skin.os });
+    if (twoRow) drawButton(e, { x: bar.x + 10, y: by2 + BAR_H - 6, w: Math.min(w, bar.w - 20), h: bh2 }, label, 'openpage', pageTip, { font: f, style: skin.os });
     else if (x + w < bar.x + bar.w) drawButton(e, { x: bar.x + bar.w - w - 10, y: by2, w, h: bh2 }, label, 'openpage', pageTip, { font: f, style: skin.os });
     else {
       const short = 'Web page ↗';

@@ -2114,10 +2114,11 @@
    {
     "id": "w_notepad",
     "pos": [
-     -4.95,
+     -5.17,
      0.756,
-     1.05
+     1.09
     ],
+    "_docS382": "⚑ S382 (job 22 A2) — 22 cm further back and 4 cm left, between the monitor and the lamp's foot, so the notebook is in the frame from the seat (it lay just under the frame's bottom edge on the computer): it can be pressed now and comes to her hand (src/room/veraDesk.ts), and its top sheet carries her handwriting. The Wick card stays where T32 put it, beside it.",
     "size": [
      0.22,
      0.012,

@@ -77,7 +77,9 @@
   "stamps": "7 OF 8",
   "free": "THE EIGHTH IS FREE",
   "expiry": "NO EXPIRY. D.",
-  "mug": "N"
+  "mug": "N",
+  "notebookDate": "2014",
+  "_docNotebook": "⚑ S382 (job 22 A2, his 13 Nov: 'the notebook doesn't give me much because there is no interaction with it') — the page her notebook opens on, in her hand (src/room/veraDesk.ts, src/room/handPage.ts): `notebookDate` in the corner, and under it `record.sentText` exactly — her 2014 story as she wrote it, the words the platform keeps 'as sent' and later cuts beside Renata's (ownCut). No new words are written for her; edit `record.sentText` and the page follows. A draft for his eye: the date only."
  },
  "visual": {
   "archiveBrand": "Kindredraft",

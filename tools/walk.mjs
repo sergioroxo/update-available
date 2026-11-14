@@ -709,7 +709,8 @@ async function main() {
   //   the monitor 90°+ behind, which is exactly when a person turns right round.
   //   The 80° cap still holds whenever something is in front of the walker.
   const turnable = (st, sig) => (st.dropped || [])
-    .filter((d) => d.turn && !FORBIDDEN.test(d.id) && guidedAllows(d, st, seen) &&
+    // S382: an optional room prop (Vera's notebook, the mug) is on the map but never pressed, so never turned to either
+    .filter((d) => d.turn && d.surface !== 'prop' && !FORBIDDEN.test(d.id) && guidedAllows(d, st, seen) &&
       Math.abs(d.turn.yaw) <= ((st.targets || []).length ? TURN_YAW_MAX : 180) &&
       Math.abs(d.turn.pitch) <= TURN_PITCH_MAX &&
       (pressed.get(keyOf(sig, d)) || 0) < PRESS_CAP &&
