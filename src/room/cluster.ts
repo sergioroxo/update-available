@@ -78,8 +78,9 @@ const BELONGINGS_IDS = new Set(
  * draw call. ROLLBACK: delete this set and its two uses below.
  */
 // Maya's bedding, rug and curtains are tinted by the v3 room; keep their materials private too.
-// ⚑ S382 — Vera's notebook and Nuala's mug (and its painted N) move now (src/room/veraDesk.ts): a batched prop cannot.
-const UNBATCHED_IDS = new Set(['terminalFrame', 'w_wickCard', 'e_bed', 'e_rug', 'e_curtL', 'e_curtR', 'w_notepad', 'w_mug', 'w_mugN']);
+// ⚑ S382 — Vera's notebook moves now (src/room/veraDesk.ts): a batched prop cannot. ⚑ S386 (job 24 A1): Nuala's mug and its
+//   painted N no longer move (his "it is just a mug"), so they are batched with the room again.
+const UNBATCHED_IDS = new Set(['terminalFrame', 'w_wickCard', 'e_bed', 'e_rug', 'e_curtL', 'e_curtR', 'w_notepad']);
 
 const RIG_FADE_SECONDS = 2.5;
 /**

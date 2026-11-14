@@ -204,7 +204,7 @@ piece anywhere in this file. Organisations are named only as the source of a doc
 1. *Claim.* Away from home and church, the young man is offered bars, gyms, beaches "even the Internet" (FOF male, printed
    25). He decides to "come out" or "act out". The whole thing is a chain of choices, so new choices can undo it.
 2. *Where.* FOF male PDF p. 15. Smid PR-02 PDF p. 3. Steps Out p. 272 and p. 286 ("learned behavior").
-3. *Quote.* "homosexuality develops out of a series of decisions" (Smid, PR-02, printed p. 3).
+3. *Quote.* "homosexuality develops out of a series of decisions" (Smid, PR-02, printed p. 2 = PDF p. 3; corrected S387 from the page image, was "printed p. 3").
 4. *How it is told.* Steps Out tells the class to own its desire in capitals: "WE ASKED FOR IT, WE GOT IT!" (p. 272). And a
    slogan: "WHAT WE FEED WILL GROW; WHAT WE STARVE WILL DIE." The PR-06 booklet: the mind as a walled city with its wall
    knocked down; rebuild it one brick at a time.

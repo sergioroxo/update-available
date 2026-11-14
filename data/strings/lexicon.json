@@ -581,6 +581,22 @@
     "status": "NOT SUPPORTED"
    },
    {
+    "reason": "Envy: ‘comparison’, then ‘admiration’, then ‘envy’ of another boy, said to become ‘eroticized’ at puberty",
+    "era": "1993-2001",
+    "status": "NOT SUPPORTED",
+    "src": "NOT SUPPORTED. USE: Exodus booklet PR-06, ‘Holding on to Sexual Purity’ (© 1993; B2 F12), PDF p. 43: ‘Much same-sex lust is rooted in envy’; the founding handbook of Love in Action (‘Helping People Step Out of Homosexuality’, revised edition © 1995, first published as ‘Steps Out of Homosexuality’ © 1984; LIA Collection B2 F13), PDF pp. 23 and 25–26 (printed pp. 15, 17–18): a boy's withdrawal brings ‘FEAR, ISOLATION and ENVY’, and envy runs from ‘COMPARISON’ to ‘ADMIRATION’ to ‘ENVY’ and, at puberty, ‘becomes eroticized’; the Steps Out class manual (undated; its latest dated item is June 1994; B13 F1), ‘Root Causes of Homosexuality: Envy’, PDF pp. 308–309 (printed pp. 285–286): ‘Comparison = Admiration = Envy’, and ‘admiration and envy become eroticized’; ‘Establishing Group Meetings’ (New Hope Ministries, revised edition © 2001, first published 1990; B2 F14), PDF p. 41: a ‘gay orientation’ called ‘little more than envy of others’. The 1984 edition's own contents were not seen, so whether it carried this teaching is open; if it did, the start moves to 1984. CLAIM: APA 2009 (S16) on relational and family-pattern theories (p. 80, ‘discredited’); no claim-side source on this cause itself (open)",
+    "draft": true,
+    "_verify": "[VERIFY SOURCE] (a) whether the 1984 first edition of the founding handbook carried the envy/isolation teaching (only the 1995 revision was seen); (b) a claim-side source on this cause itself (APA 2009 covers relational theories generally)."
+   },
+   {
+    "reason": "Isolation: mocked by other boys, ‘belonging denied, intimacy denied’, a boy then ‘chooses’ to be alone",
+    "era": "1994-2001",
+    "status": "NOT SUPPORTED",
+    "src": "NOT SUPPORTED. USE: the founding handbook of Love in Action (‘Helping People Step Out of Homosexuality’, revised edition © 1995, first published as ‘Steps Out of Homosexuality’ © 1984; LIA Collection B2 F13), PDF pp. 24–25 (printed pp. 16–17): a boy with only his mother's influence is ridiculed by his peers and ‘isolation is forced on him’; the child met with ‘BELONGING DENIED’ and ‘INTIMACY DENIED’ ‘will purposely CHOOSE isolation’; the Steps Out class manual (undated; its latest dated item is June 1994; B13 F1), ‘Root Causes of Homosexuality: Isolation’, PDF p. 318 (printed p. 295): ‘INTIMACY DENIED’, ‘BELONGING DENIED’, ‘Chosen Isolation’; ‘Establishing Group Meetings’ (New Hope Ministries, revised edition © 2001, first published 1990; B2 F14), PDF pp. 15 and 41: isolation called ‘a key factor’ and one of three roots (‘fear, envy, and isolation’), there as the isolation of the gay life rather than a boy's. The 1984 edition's own contents were not seen, so whether it carried this teaching is open; if it did, the start moves to 1984. CLAIM: APA 2009 (S16) on relational and family-pattern theories (p. 80, ‘discredited’); no claim-side source on this cause itself (open)",
+    "draft": true,
+    "_verify": "[VERIFY SOURCE] (a) whether the 1984 first edition of the founding handbook carried the envy/isolation teaching (only the 1995 revision was seen); (b) a claim-side source on this cause itself (APA 2009 covers relational theories generally)."
+   },
+   {
     "reason": "A series of decisions / habit / sin (“agency”)",
     "era": "1997-2012",
     "status": "NOT AN EMPIRICAL CLAIM for the moral half"
@@ -589,7 +605,7 @@
     "reason": "Masturbation, pornography and fantasy, said to tie ‘warm acceptance’ to sex with men",
     "era": "1997-2012",
     "status": "NOT SUPPORTED as a cause of orientation",
-    "src": "NOT SUPPORTED as a cause of orientation. USE: the LDS Social Services module's ‘filling the void’ (Wayback, 15 Feb 2005); People Can Change's June 2004 survey lists ‘sexual experience (other than sexual abuse) including pornography or masturbation’ among its 25 ‘possible causes’. CLAIM: APA 2009 p. 82 (such theories ‘directly discredited through evidence or rendered obsolete’); LEXICON_SOURCES_VERIFIED #35",
+    "src": "NOT SUPPORTED as a cause of orientation. USE: the LDS Social Services module's ‘filling the void’ (Wayback, 15 Feb 2005); People Can Change's June 2004 survey lists ‘sexual experience (other than sexual abuse) including pornography or masturbation’ among its 25 ‘possible causes’.; Focus on the Family's men's booklet ‘the truth comes out: The Roots and Causes of Male Homosexuality’ (finding aid: 2001; LIA Collection B6 F5), PDF p. 8 (printed p. 10), lists ‘Exposure to pornography’ among the factors said to have ‘extreme implications’ for a boy's ‘sense of gender identity’. CLAIM: APA 2009 p. 82 (such theories ‘directly discredited through evidence or rendered obsolete’); LEXICON_SOURCES_VERIFIED #35",
     "draft": true,
     "_was": {
      "reason": "Pornography, masturbation, fantasy as a trap",
@@ -599,7 +615,9 @@
    {
     "reason": "Media, schools, “gay activists”, culture",
     "era": "2003-2012",
-    "status": "NOT SUPPORTED"
+    "status": "NOT SUPPORTED",
+    "src": "NOT SUPPORTED. USE: Focus on the Family's men's booklet ‘the truth comes out: The Roots and Causes of Male Homosexuality’ (finding aid: 2001; LIA Collection B6 F5): PDF p. 8 (printed p. 11) lists ‘Media influences’ among the same factors; PDF p. 14 (printed p. 22) says a ‘deluge of gay-affirmative messages’ is ‘being forced upon teens in public education’ and warns a boy against taking a ‘gay’ label. “Gay activists” is not in these pages. CLAIM: APA 2009 (S16) and UN 2020 (S18), as LEXICON_SOURCES_VERIFIED #36 (no source treats exposure to LGBTQ people or ideas as a cause of orientation)",
+    "draft": true
    },
    {
     "reason": "Spiritual: demons, “negative spiritual influences”, sin",
@@ -614,7 +632,9 @@
    {
     "reason": "Trauma and “attachment loss” in a clinical dress (“symbolic defense against attachment loss”; “signal”)",
     "era": "2016-2026",
-    "status": "NOT SUPPORTED as a cause of orientation"
+    "status": "NOT SUPPORTED as a cause of orientation",
+    "src": "NOT SUPPORTED as a cause of orientation. USE (earlier in the form the row dresses): Focus on the Family's men's booklet ‘the truth comes out: The Roots and Causes of Male Homosexuality’ (finding aid: 2001; LIA Collection B6 F5), PDF p. 8 (printed p. 10), quotes a 1983 book, ‘Homosexuality: A New Christian Ethic’ (its p. 3; the booklet's note 27), on ‘the disruption in attachment that underlies the homosexual condition’: attachment loss as the cause, in the booklet's own words, with no clinical dress. The row's two quoted phrases are not from this booklet. CLAIM: APA 2009 (S16) and RCPsych 2014 (S19), as LEXICON_SOURCES_VERIFIED #39",
+    "draft": true
    },
    {
     "reason": "Four stages — ‘confusion’, ‘filling the void’, ‘sexual identity crisis’, ‘resolution’ — and being born this way denied as doctrine",
@@ -685,7 +705,9 @@
    {
     "reason": "Feminism, women's colleges, “older lesbians” as influence",
     "era": "2001-2017",
-    "status": "NOT SUPPORTED"
+    "status": "NOT SUPPORTED",
+    "src": "NOT SUPPORTED. USE (partial): Focus on the Family's women's booklet ‘the heart of the matter: The Roots and Causes of Female Homosexuality’ (© 2001; LIA Collection B6 F4, the original), PDF p. 9 (printed p. 12), lists ‘Media influences’ and ‘Public school and university curricula’ among its ‘preconditioning factors’; a web page saved in June 2016 repeats the list (‘Lesbian Roots’, a ministry site, reprinting the 2001 article). NOT FOUND in any document read: ‘feminism’ as a cause, and ‘older lesbians’ as an influence. The row stays open for those two. CLAIM: APA 2009 (S16), as LEXICON_SOURCES_VERIFIED #48 (cultural exposure is not supported as a cause of orientation)",
+    "draft": true
    },
    {
     "reason": "A “narcissistic family system”",
@@ -694,17 +716,23 @@
     "_was": {
      "era": "2017",
      "_why": "S357cj, his 14 Nov ('change #49 to 2012'): the earliest dated use found is a reparative-therapy interview on lesbianism archived 10 Jan 2012 (SOURCES_TO_FETCH_2016_2026 §7F); its USE source goes in with UIB_JOB_24 Part C"
-    }
+    },
+    "src": "NOT SUPPORTED. USE: an interview on a reparative-therapy clinic's website (‘Clinical Issues: Grief Work’; page archived 10 Jan 2012), asked whether this also happens with lesbianism, describes girls whose mothers' ‘narcissistic need’ required ‘a caricatured “girlish” femininity’, then says other pathways to lesbianism ‘don't involve the narcissistic family system’: the exact phrase, in a passage on lesbianism. Support: ‘Origins of Lesbianism’, a 2013 interview with a psychoanalyst in a professional association's bulletin (the NARTH Bulletin; the page archived since Dec 2024), says her patients were ‘raised by narcissistic mothers’. CLAIM: APA 2009 p. 80 (S16): family-pattern theories of orientation ‘discredited’; as LEXICON_SOURCES_VERIFIED #49",
+    "draft": true
    },
    {
     "reason": "Lesbianism as “an identity crisis, not a sexual orientation problem”",
     "era": "2001",
-    "status": "NOT SUPPORTED"
+    "status": "NOT SUPPORTED",
+    "src": "NOT SUPPORTED. USE: Focus on the Family's women's booklet ‘the heart of the matter: The Roots and Causes of Female Homosexuality’ (© 2001; LIA Collection B6 F4, the original): PDF p. 8 (printed p. 10), ‘THE BIG THREE’: ‘Lesbianism results from three primary conditions’ (relationship issues, an identity struggle, a spiritual fallacy); PDF p. 10 (printed pp. 14–15): ‘The lesbian struggle is not a sexual orientation problem; it is an identity crisis.’ The later web reprint (S08) is the copy LEXICON_SOURCES_VERIFIED #50 cites; it matches the original. CLAIM: APA 2009 (S16) and RCPsych 2014 (S19), as LEXICON_SOURCES_VERIFIED #50",
+    "draft": true
    },
    {
     "reason": "“Spiritual fallacy”: a cold, distant, uncaring picture of God learned at home or church",
     "era": "2001",
-    "status": "NOT AN EMPIRICAL CLAIM"
+    "status": "NOT AN EMPIRICAL CLAIM",
+    "src": "NOT AN EMPIRICAL CLAIM. USE: Focus on the Family's women's booklet ‘the heart of the matter: The Roots and Causes of Female Homosexuality’ (© 2001; LIA Collection B6 F4, the original): PDF p. 8 (printed p. 10) names ‘a spiritual fallacy’ the third of ‘The Big Three’; PDF p. 10 (printed pp. 14–15), ‘A SPIRITUAL FALLACY’: ‘Rarely do homosexuals have a positive concept of God’, said to be learned as ‘cold, distant and uncaring’ at home or church. The later web reprint (S08) is the copy LEXICON_SOURCES_VERIFIED #51 cites. CLAIM: UN 2020 (S18), as LEXICON_SOURCES_VERIFIED #51 (it documents religious conversion practices and does not validate spiritual causation)",
+    "draft": true
    }
   ],
   "trans": [
@@ -741,7 +769,10 @@
    {
     "reason": "Availability of puberty blockers as an explanation for rising referrals",
     "era": "2024",
-    "status": "CONTESTED"
+    "status": "CONTESTED",
+    "src": "CONTESTED. USE (unchanged): no conversion-practice organisation is documented offering blocker availability as the reason; the sources remain the advocacy briefings in LEXICON_SOURCES_VERIFIED #58 (S12, S14). CLAIM, BOTH READINGS: a UK clinicians' network's summary of the Cass Review's final report (10 Apr 2024; CAN-SG, 28 Apr 2024) states, in its own words, that ‘the availability of puberty blockers’ may have ‘stoked demand’, and quotes the report: ‘It is not possible to attribute causality in either direction to this association’, though ‘a lower threshold for medicalisation’ may have had an influence. The line and its page in the final report itself: not yet found (the report PDF could not be fetched from its publisher on 14 Nov 2026). MedPage Today (10 Apr 2024, updated 16 Apr) reports the review's findings and the responses (WPATH, the Endocrine Society, a US paediatrician); it does not itself discuss blocker availability as a driver of referrals, so it is a both-readings source for the clinical debate, not for this claim. Earlier CLAIM sources unchanged (S31, S33, S35)",
+    "draft": true,
+    "_verify": "[VERIFY SOURCE] the Cass Review final report's own page for ‘It is not possible to attribute causality in either direction to this association’ and ‘a lower threshold for medicalisation’ (only CAN-SG's summary seen); the ‘stoked demand’ sentence is the summary's own wording."
    },
    {
     "reason": "The “signs”: a sudden announcement, friends coming out too, more time online, more popular after, earlier mental-health conditions (parents' reports)",
@@ -897,6 +928,7 @@
  ],
  "_docS372": "⚑ S372 / UiB job 17 Part B (his 11 Nov: 'is the Lexicon updated? maybe it needs a revamp in the design department') — FOUR NEW WORDS from the knowledge base only (docs/reinterp/RESEARCH_LEXICON_2026-10-02.md §7: exploratory therapy, explorative conversations, rapid-onset gender dysphoria and its 'signs', same-sex attracted / biological sex as eligibility), 'restored' folded into 'freedom, healing, restoration', 2026's change written on 'just exploring' and 'social contagion' (`later`), a reasons row and the arc's 2026 line. ⚑ EVERY `close`, `later`, `status`, statusBadge and chain `note` marked `draft: true` / `laterDraft` / `arcDraft` is CLAUDE'S DRAFT AND HIS TO RULE (like dossier phrasing): shown until he edits it. No Word of the Day for the new words (ETHICS #7; the eligibility page names no group and jokes at no one); their 'as it was sold' is the piece's own invented line, said to be invented. Each word also has a picture (`emblem`, src/room/lexiconArt.ts), the piece's own sound where one exists (`sound`, a file in tapeAudio.ts's REGISTRY), and a timeline (`chain`/`forms`, §7.7). Left out [VERIFY SOURCE]: the 2025 US executive order's 'Restoring Biological Truth' (listing only), Turban 2022, Bauer 2022, WPATH 2018, Cass §8.24–8.25, RCPsych and Stonewall on the bill.",
  "_docS384": "⚑ S384 / UiB job 22 Part C item 2 (his: 'Do read them') — P7-49 (People Can Change's own June 2004 survey, 'Perceptions Among Men With Unwanted Same-Sex Attractions (SSA) of the Factors Contributing to the Development of Their Homosexual Feelings', read in full from his copy ~/Pc_Simulation/PDF/MD/Surveyoncauses.md and its own PDF, Wayback 10 Jun 2005) and P7-50 (the LDS Social Services practitioner module 'Understanding / Changing Homosexual Orientation Problems', Wayback 15 Feb 2005, read in full) — read into reasons.men. Every row marked `draft: true` here is CLAUDE'S DRAFT AND HIS TO RULE; `_was` keeps what it replaced; `src` holds each row's USE and CLAIM sources (drawn nowhere: `status` is drawn, in full on the 1997/2003 era sites for rows whose WHEN is a year range, so it stays a plain verdict). Changed: the pornography row (the research had found 'no source gives it as a cause'; both sources do); the four-stages row's WHEN (the module cites the Church's 1981 booklet and nothing after 1980, so it was written in the 1980s and was still online in 2005 — not 'c. 1990s'); the members' survey row (now says plainly it is a self-selected sample of the programme's own members, and that the 25 causes were the survey's list). Added: the module's 'process of learning' with its retraining, and its 'self-serving', 'narcissistic' coping with its cure. Reading note: docs/reinterp/LEXICON_SOURCES_P7-49_P7-50_2026-11-13.md. No `close`, `arc`, `line` or First Words entry was touched.",
+ "_docS388": "⚑ S388 / UiB job 24 Part C (his 14 Nov: 'yes add the AI chatbots', his Lexicon links, and the archive documents read the same day) — the Love in Action Collection's causal teaching read into the Reasons table as SOURCE LINES. Every row touched is marked `draft: true` and is HIS TO RULE; no existing `status`, `reason` or `era` was changed, and no `close`, `arc`, `line` or First Words entry was touched. `src` is drawn nowhere (the table draws `reason`, `era` and `status`). Sources added to existing rows: #35 pornography and #36 media/schools and #39 attachment (the men's booklet, B6 F5, PDF pp. 8 and 14; #39's 1983 book is named by title only, its author left out on purpose); #48 curricula/media (the women's booklet, B6 F4, PDF p. 9; ‘feminism’ and ‘older lesbians’ NOT found, the row stays open, and ‘Origins of Lesbianism’ is NOT stretched to it); #50 and #51 the Big Three, cited from the ORIGINAL 2001 booklet (PDF pp. 8 and 10) as well as the S08 reprint; #49 his 14 Nov links (a reparative-therapy clinic's interview archived 10 Jan 2012 uses the exact phrase, in a passage on lesbianism; no person is named here on purpose; SOURCES_TO_FETCH_2016_2026 §7F names them for the lead; plus the NARTH Bulletin interview of a psychoanalyst who died in 2013); #58 CLAIM side (CAN-SG's summary and MedPage Today). FACT CHECKS that differ from the job's wording: (1) in CAN-SG's summary the sentence ‘It is possible that the availability of puberty blockers has stoked demand’ is the SUMMARY'S OWN wording, not in quotation marks; the quoted Cass words are ‘It is not possible to attribute causality in either direction to this association’ and ‘a lower threshold for medicalisation’; the line was NOT found in the final report itself (the PDF is behind a bot wall and its archive copy refused the request), so #58's src carries [VERIFY SOURCE]; (2) in the interview the exact phrase ‘the narcissistic family system’ sits in the sentence ‘other pathways to lesbianism which don't involve the narcissistic family system’, right after the narcissistic-mother pathway, which the same page describes; (3) ‘Establishing Group Meetings’ (B2 F14) is a New Hope Ministries booklet (Love in Action's founder, revised 2001, first published 1990), filed in the Exodus series, and it carries no slide panel: its isolation passage is the text on PDF p. 15, and its roots line (‘fear, envy, and isolation’) is on PDF p. 41; (4) the Steps Out class manual's pages are printed pp. 285–286 (Envy) and 295 (Isolation) = PDF pp. 308–309 and 318, not 284–286. Two NEW men rows, drafts for his eye, beside the existing ‘Fear of heterosexual men’ row (the third of the manual's three class titles, Fear / Envy / Isolation); they follow it, so the men rows after it move down by two. ENVY: era 1993-2001, not the guessed 1984-1998, because the earliest copyright on a text whose envy passage was SEEN is 1993 (Exodus PR-06) and the manual's latest dated item is June 1994; the handbook is a 1995 revision of a 1984 book, and whether the 1984 text carried envy is not known. ISOLATION: era 1994-2001, not 1984-2001, on the same ground (the handbook's revision, the manual, the 2001 booklet). Isolation sits close to the existing ‘Peer rejection…’ row (the handbook ties it to peer ridicule); whether to MERGE the two is his call. Both rows are NOT SUPPORTED: no claim-side source on envy or isolation as a cause was found. Dates before a row's `era`: #36's source is 2001 (row era 2003-2012) and #39's is 2001 (row era 2016-2026): the sources are older than the rows' stated start; the `era` is his and was not changed. Reading note: docs/reinterp/LEXICON_SOURCES_S388_2026-11-14.md.",
  "first": {
   "_doc": "⚑ S381 (UiB job 21 Part B; his 12 Nov: 'also needs to include in the lexicon what conversion therapy/SOGICE/conversion practices; Gay, TGD; etc') — FIRST WORDS: the section the Lexicon opens with, beside The Words. The Words are THEIRS (the networks' vocabulary, each with a verdict); these are the plain, respectful terms a visitor needs to follow the piece. Each entry is one or two plain sentences and its sources (keys of `src`, printed short under the entry and in full on the Lexicon's Sources page: data/dossier/links.json 'lexicon#first' and the Lexicon's research rows; `unlinked` has no address in the knowledge base). `see` points at their word's page in The Words. EVERY entry is CLAUDE'S DRAFT, for his eye (T77). Grounding: the UN Independent Expert's report A/HRC/44/53 (2020) para. 17 ('an umbrella term… aimed at effecting a change from non-heterosexual to heterosexual and from trans or gender diverse to cisgender') and para. 20 ('The term “therapy”… denotes “healing”… the contrary, relying on the medically false pathologization'), read in the project's local copy and verified in docs/reinterp/LEXICON_SOURCES_VERIFIED_2026-10-11.md S18; FRA's EU LGBTIQ Survey III (2024; RESEARCH_CLOSE_MESSAGE_2026-10-02.md S14); PACE (2026; SOURCE_VERIFICATION_RESULTS_2026-09-27.md); The Equality Project's SOGICE Statement (S11); WHO's ICD-11 FAQ (S21: 'moved out of the chapter on mental and behavioural disorders'); WPATH SOC-8 (S34, cited as the route to the standard: its title is 'Standards of Care for the Health of Transgender and Gender Diverse People'); Forbidden Colours, The Hate Review (2026; RESEARCH_CLOSE_MESSAGE §1, the Close's `hate`).",
   "title": "FIRST WORDS",

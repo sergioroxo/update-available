@@ -256,6 +256,16 @@
         "index": 12
       }
     },
+    "chatDoors": {
+      "_doc": "⚑ S388 (UiB job 24 Part C item 5; his yes 14 Nov: 'yes add the AI chatbots'). DOSSIER PHRASING IS SÉRGIO'S: the `did` line is HIS CHOICE (14 Nov 2026, option 2 of four), not a draft. The TITLE is Claude's draft (he did not object): ⚑ HIS TO REPLACE. The source text (e4_offers debrief.sources[24]) is Claude's draft for his review. Three dated 2026 chat front doors, SOURCES_TO_FETCH_2016_2026 §7A1, §7C(a), §7E. The `host` card stays speculative and untouched. Same filing note as `detransAI` (shows on the Close's 2026 panel and the 2026 era site, not under a ledger entry).",
+      "title": "The chat front doors",
+      "did": "remembered what you told it, and held you to it",
+      "status": "documentary",
+      "source": {
+        "file": "e4_offers",
+        "index": 24
+      }
+    },
     "greatBecoming": {
       "_doc": "⚑ S360 (UiB job 13 Part A item 11) — DRAFT. DOSSIER PHRASING IS SÉRGIO'S: the `did` line below is Claude's draft, ⚑ HIS TO WRITE OR REPLACE (his edit wins; compare S356b, where he chose from four). The source text is a draft for his review too. The personalised clip ('THE GREAT BECOMING', made by Second Thoughts from her week): SPECULATIVE, the piece's own invention. Same filing note as `detransAI`.",
       "title": "The film made for you",
