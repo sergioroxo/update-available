@@ -127,8 +127,9 @@ there is no drawer in the tape.
 
 - **Script, storyboard, animation, sound design and edit:** Claude (Anthropic, Opus 5.5), UiB job 23, for *YOUR UPDATE
   HAS FAILED* (SurvivingSOGICE, University of Bergen, Center for Digital Narrative).
-- **Music:** Sérgio Galvão Roxo, "Morning Joy Loop – Summer Camp Radiance – Treblo.mp3" (his own jingle), from
-  `Pc_Simulation/Sources/Jingle_Brand New/`. Mono, cut to 120 Hz–3.2 kHz like a VHS linear track, looped once 16 bars
+- **Music:** "Morning Joy Loop – Summer Camp Radiance – Treblo.mp3", made with Treblo (an AI music tool), from the
+  project's `Pc_Simulation/Sources/Jingle_Brand New/` folder. ⚑ Corrected 14 Nov (S357cl): this line first said "Sérgio
+  Galvão Roxo … (his own jingle)"; his words, "I didn't do it". Mono, cut to 120 Hz–3.2 kHz like a VHS linear track, looped once 16 bars
   back at 37.1 s, about 13 dB under the voice. It stops when the form waits.
 - **Narrator:** build-time Supertonic 3, stock voice F1, speed 0.94, `register: apparatus`, through
   `tools/tts/render.py`. This is the same voice and speed as 1997's tape A, the fellowship's own voice

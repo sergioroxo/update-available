@@ -283,8 +283,10 @@ to know nothing except what the tape has just said.
 - **Script, storyboard, animation, sound design and edit:** Claude (Anthropic, Opus 5.5), UiB job 24 (S387), for *YOUR
   UPDATE HAS FAILED* (SurvivingSOGICE, University of Bergen, Center for Digital Narrative). The felt Lamby, the
   renderer's base and the VHS layer are v1's (job 23, S385).
-- **Music:** Sérgio Galvão Roxo's own loops, from `Pc_Simulation/Sources/Jingle_Brand New/`: "Morning Joy Loop – Hope
-  Path Loops" under the lessons; "– Guided Future Jingle" (C1); "– Better Version Jingle" (C2, with wow and flutter);
+- **Music:** ⚑ **Corrected 14 Nov (S357cl).** The first credit here said "Sérgio Galvão Roxo's own loops". That was wrong:
+  his words, "I didn't do it". The loops were made with Treblo, an AI music tool, and are kept in the project's
+  `Pc_Simulation/Sources/Jingle_Brand New/` folder. He also said "it wasn't that great", so job 25 replaces them with music
+  made in code. Until then: "Morning Joy Loop – Hope Path Loops" under the lessons; "– Guided Future Jingle" (C1); "– Better Version Jingle" (C2, with wow and flutter);
   "– Optimized Transitions" (C3); "– Rainbow Valley Loop" (C4). Mono and band-limited like a VHS linear track. The close
   has no music.
 - **Narrator:** build-time Supertonic 3, stock voice F1, speed 0.94, `register: apparatus`, through
