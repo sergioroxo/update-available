@@ -689,8 +689,12 @@
    },
    {
     "reason": "A “narcissistic family system”",
-    "era": "2017",
-    "status": "NOT SUPPORTED"
+    "era": "2012",
+    "status": "NOT SUPPORTED",
+    "_was": {
+     "era": "2017",
+     "_why": "S357cj, his 14 Nov ('change #49 to 2012'): the earliest dated use found is a reparative-therapy interview on lesbianism archived 10 Jan 2012 (SOURCES_TO_FETCH_2016_2026 §7F); its USE source goes in with UIB_JOB_24 Part C"
+    }
    },
    {
     "reason": "Lesbianism as “an identity crisis, not a sexual orientation problem”",
