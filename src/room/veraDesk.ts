@@ -1,5 +1,5 @@
 /**
- * ⚑ S382 (UiB job 22 Part A, items 2 and 3) — TWO THINGS ON VERA'S DESK THAT ANSWER.
+ * ⚑ S382 (UiB job 22 Part A, items 2 and 3) — VERA'S NOTEBOOK, AND HER MUG (a prop again since S386).
  *
  * THE NOTEBOOK. Sérgio, 13 Nov: "The notebook doesn't give me much because there is no interaction with it." Its top
  * sheet now carries her handwriting (src/room/handPage.ts) — at rest, from the chair, only lines of blue biro, which is
@@ -11,16 +11,14 @@
  *   and the platform later cuts beside Renata's (S332, `ownCut`). Read here first, the cut lands on words the visitor
  *   has held; read here after, it is the one copy the platform does not hold. Same words: nothing new is said for her.
  *
- * THE MUG. "The mug is fine, I know the connection with the text, but it is not perceptible." Once Nuala's message
- * ("The second mug's still on the hook…") has been read — delivered and held for its reading time — the piece takes
- * the eye there: the mug lifts off the back of the desk, comes forward into the frame beside the monitor, turns its
- * painted N to her and holds it for a few seconds, then goes back. GracePlatform's campaign kit waits for it (one
- * voice at a time). A press on the mug does the same at any time in 2016; its sentence line names it "Nuala's mug"
- * once her message has come (before that, "a mug, painted N" — nothing earned early).
+ * THE MUG. S382 made it rise into frame after Nuala's message ("not perceptible", 13 Nov). ⚑ S386 (UiB job 24 A1, his
+ * 14 Nov: "It is just a mug and I don't see an emotional attachment to the mug itself") — that moment is removed. The mug
+ * stands where it always stood, batched with the room, and only names itself to the ray: "a mug, an N painted on it",
+ * then "Nuala's mug" once her message has come (nothing earned early). A press on it does nothing.
  *
- * Felt register, both: no Lambient (the platform is quiet while either is up: `deskConducting` → personalQuiet), no
+ * Felt register: no Lambient (the platform is quiet while the notebook is up: `deskConducting` → personalQuiet), no
  * system voice, nothing filed, nothing scored, never required. ⚑ No beat is triggered by a look: the notebook only by
- * a press, the mug by the message having been read (or a press).
+ * a press.
  */
 import * as pc from 'playcanvas';
 import { drawHandPage, type HandPageLayout } from './handPage';
@@ -39,8 +37,6 @@ export const PAGE: HandPageLayout = { w: 120, h: 160, left: 16, right: 114, firs
 const PAGE_M = { w: 0.15, h: 0.2, inset: 0.008 };
 /** in her hand: how far from the eye, how far below the look, how much larger */
 export const HELD = { distance: 0.48, below: 3, scale: 1.3, up: 0.9, down: 0.7, maxHold: 60 };
-/** ⚑ the mug's moment: where it comes to on the desk (its foot, room coordinates), how large, and the timing */
-export const MUG = { to: { x: -5.08, y: 0.88, z: 0.47 }, scale: 1.35, up: 0.8, hold: 3.6, down: 0.7, lift: 0.04 };
 const NOTE_R = 0.12, MUG_R = 0.085;
 
 function rayNear(ray: Ray, at: { x: number; y: number; z: number }, radius: number): boolean {
@@ -60,7 +56,7 @@ export interface VeraDesk {
   /** a press while the notebook is in her hand: on the page it is put down and the press is spent (true); anywhere
    *  else it is put down and the press goes on to what it was meant for (false) */
   pressHeld(ray: Ray): boolean;
-  /** a press on the notebook or the mug where they lie; true if it took the press */
+  /** a press on the notebook where it lies; true if it took the press (the mug takes none: S386) */
   pressRest(ray: Ray): boolean;
   /** the sentence line: what the ray rests on here (a key in data/strings/aim.json) and where */
   aim(ray: Ray): { key: string; at: { x: number; y: number; z: number } } | null;
@@ -210,93 +206,12 @@ export function buildVeraDesk(app: pc.Application, gq: GraceQueueLite, env: {
   }
 
   // ── the mug ───────────────────────────────────────────────────────────────
-  type MugPhase = 'rest' | 'up' | 'hold' | 'down';
-  const mug = { phase: 'rest' as MugPhase, t: 0, fromCue: false, rest: null as Pose | null, to: null as Pose | null,
-    nRest: null as Pose | null, nLocal: null as { p: pc.Vec3; q: pc.Quat } | null, played: 0 };
-  let nRestScale: pc.Vec3 | null = null;
+  /** ⚑ S386 (UiB job 24 A1, his 14 Nov: "The mug I don't think it is needed to come to my face with it. What does it bring
+   *  here? It is just a mug and I don't see an emotional attachment to the mug itself.") — THE MUG IS A QUIET PROP AGAIN.
+   *  S382's moment is gone: it no longer rises after Nuala's message, a press on it does nothing, the campaign kit no
+   *  longer waits for it, and it is batched with the room again (cluster.ts UNBATCHED_IDS). Only its sentence line
+   *  stays — "a mug, an N painted on it", "Nuala's mug" once her message has come. */
   const mugEnt = (): pc.Entity | null => app.root.findByName('w_mug') as pc.Entity | null;
-  const mugN = (): pc.Entity | null => app.root.findByName('w_mugN') as pc.Entity | null;
-  /** ⚑ the mug is unbatched now that it moves (cluster.ts UNBATCHED_IDS): its eight boxes become one mesh — one draw, not
-   *  eight — and the painted N keeps only its print (its 2 mm backing box would be a draw of its own; the Wick card's
-   *  same saving). Done once, the first time 2016 is ticked. */
-  let mugSlim = false;
-  function slimMug(): void {
-    const m = mugEnt();
-    if (mugSlim || !m) return;
-    mugSlim = true;
-    const n = mugN();
-    if (n?.render) n.render.enabled = false;
-    const parts = m.children.filter((c) => (c as pc.Entity).render?.meshInstances?.length) as pc.Entity[];
-    if (parts.length < 2) return;
-    const unit = pc.createBox(app.graphicsDevice, { halfExtents: new pc.Vec3(0.5, 0.5, 0.5) });
-    const up: number[] = [], un: number[] = [], uu: number[] = [], ui: number[] = [];
-    unit.getPositions(up); unit.getNormals(un); unit.getUvs(0, uu); unit.getIndices(ui);
-    const P: number[] = [], Nr: number[] = [], U: number[] = [], I: number[] = [];
-    for (const pe of parts) {
-      const lp = pe.getLocalPosition(), ls = pe.getLocalScale(), base = P.length / 3;
-      for (let i = 0; i < up.length; i += 3) P.push(lp.x + up[i] * ls.x, lp.y + up[i + 1] * ls.y, lp.z + up[i + 2] * ls.z);
-      Nr.push(...un); U.push(...uu);
-      for (const k of ui) I.push(base + k);
-    }
-    const mesh = new pc.Mesh(app.graphicsDevice);
-    mesh.setPositions(P); mesh.setNormals(Nr); mesh.setUvs(0, U); mesh.setIndices(I); mesh.update();
-    const one = new pc.Entity('w_mug-one');
-    m.addChild(one);
-    one.addComponent('render', { meshInstances: [new pc.MeshInstance(mesh, parts[0].render!.meshInstances[0].material, one)] });
-    for (const pe of parts) pe.render!.enabled = false;
-  }
-  function startMug(fromCue: boolean): boolean {
-    const m = mugEnt(), n = mugN(), head = env.head();
-    if (!m || !m.enabled || mug.phase !== 'rest' || !head) return false;
-    mug.rest = poseOf(m);
-    if (n) {
-      mug.nRest = { p: n.getPosition().clone(), q: n.getRotation().clone(), s: 1 };
-      const inv = mug.rest.q.clone().invert();
-      mug.nLocal = { p: inv.transformVector(n.getPosition().clone().sub(mug.rest.p)), q: inv.clone().mul(n.getRotation()) };
-      nRestScale = n.getLocalScale().clone();
-    }
-    const eye = head.getPosition();
-    const yaw = Math.atan2(eye.x - MUG.to.x, eye.z - MUG.to.z) * 180 / Math.PI;   // its painted face (local +Z) to her
-    mug.to = { p: new pc.Vec3(MUG.to.x, MUG.to.y, MUG.to.z), q: new pc.Quat().setFromEulerAngles(0, yaw, 0), s: MUG.scale };
-    mug.phase = 'up'; mug.t = 0; mug.fromCue = fromCue;
-    return true;
-  }
-  function placeN(m: pc.Entity): void {
-    const n = mugN();
-    if (!n || !mug.nLocal || !mug.rest) return;
-    const q = m.getRotation(), k = m.getLocalScale().x / mug.rest.s;
-    n.setPosition(m.getPosition().clone().add(q.transformVector(mug.nLocal.p.clone().mulScalar(k))));
-    n.setRotation(q.clone().mul(mug.nLocal.q));
-    if (nRestScale) n.setLocalScale(nRestScale.x * k, nRestScale.y * k, nRestScale.z * k);
-  }
-  function endMug(): void {
-    const m = mugEnt(), n = mugN();
-    if (m && mug.rest) { m.setPosition(mug.rest.p); m.setRotation(mug.rest.q); m.setLocalScale(mug.rest.s, mug.rest.s, mug.rest.s); }
-    if (n && mug.nRest) { n.setPosition(mug.nRest.p); n.setRotation(mug.nRest.q); if (nRestScale) n.setLocalScale(nRestScale); }
-    if (mug.fromCue) gq.mugDone = true;
-    if (mug.phase !== 'rest') mug.played++;
-    mug.phase = 'rest'; mug.t = 0; mug.fromCue = false;
-  }
-  function tickMug(dt: number): void {
-    const m = mugEnt();
-    if (!m || mug.phase === 'rest' || !mug.rest || !mug.to) return;
-    mug.t += dt;
-    const rm = reducedMotion();
-    if (mug.phase === 'up') {
-      const k = rm ? 1 : smooth(mug.t / MUG.up);
-      setPose(m, mug.rest, mug.to, k, MUG.lift);
-      if (k >= 1) { mug.phase = 'hold'; mug.t = 0; }
-    } else if (mug.phase === 'hold') {
-      setPose(m, mug.rest, mug.to, 1, 0);
-      if (mug.t >= MUG.hold) { mug.phase = 'down'; mug.t = 0; }
-    } else {
-      const k = rm ? 1 : smooth(mug.t / MUG.down);
-      setPose(m, mug.to, mug.rest, k, MUG.lift * 0.6);
-      if (k >= 1) { placeN(m); endMug(); return; }
-    }
-    placeN(m);
-  }
-
   const notebookAt = (): { x: number; y: number; z: number } | null => {
     const p = pad();
     if (!p || !p.enabled) return null;
@@ -310,27 +225,19 @@ export function buildVeraDesk(app: pc.Application, gq: GraceQueueLite, env: {
     return { x: p.x, y: p.y + 0.05 * m.getLocalScale().x, z: p.z };
   };
   let era = '';
-  const free = (): boolean => era === 'e3' && !env.blocked() && nb.phase === 'rest' && mug.phase === 'rest';
+  const free = (): boolean => era === 'e3' && !env.blocked() && nb.phase === 'rest';
 
   return {
     tick(dt, eraNow) {
       era = eraNow;
       if (eraNow !== 'e3') {
         if (nb.phase !== 'rest') snapNotebook();
-        if (mug.phase !== 'rest') endMug();
         gq.deskConducting = false;
         return;
       }
       layPage();
-      slimMug();
-      // Nuala's message has been read: the piece takes the eye to her mug (graceQueueLite raises the cue; the kit waits)
-      if (gq.mugCue && nb.phase === 'rest' && mug.phase === 'rest') {
-        gq.mugCue = false;
-        if (!startMug(true)) gq.mugDone = true;   // no mug to bring: the kit must never wait on it
-      }
       tickNotebook(dt);
-      tickMug(dt);
-      gq.deskConducting = nb.phase !== 'rest' || mug.phase !== 'rest';
+      gq.deskConducting = nb.phase !== 'rest';
     },
     get notebookOpen() { return nb.phase !== 'rest'; },
     pressHeld(ray) {
@@ -344,12 +251,10 @@ export function buildVeraDesk(app: pc.Application, gq: GraceQueueLite, env: {
       if (!free()) return false;
       const n = notebookAt();
       if (n && rayNear(ray, n, NOTE_R)) return openNotebook();
-      const m = mugAt();
-      if (m && rayNear(ray, m, MUG_R)) return startMug(false);
-      return false;
+      return false;   // ⚑ S386 — a press on the mug does nothing (it is a prop again)
     },
     aim(ray) {
-      if (era !== 'e3' || nb.phase !== 'rest' || mug.phase !== 'rest') return null;
+      if (era !== 'e3' || nb.phase !== 'rest') return null;
       const n = notebookAt();
       if (n && rayNear(ray, n, NOTE_R)) return { key: 'veraNotebook', at: n };
       const m = mugAt();
@@ -360,8 +265,7 @@ export function buildVeraDesk(app: pc.Application, gq: GraceQueueLite, env: {
       if (!free()) return [];
       const out: { id: string; x: number; y: number; z: number; r: number }[] = [];
       const n = notebookAt(); if (n) out.push({ id: 'desk-notebook', ...n, r: NOTE_R });
-      const m = mugAt(); if (m) out.push({ id: 'desk-mug', ...m, r: MUG_R });
-      return out;
+      return out;   // ⚑ S386 — the mug is not pressable, so it is not published as a press
     },
     debug() {
       const corners: number[][] = [];
@@ -369,7 +273,7 @@ export function buildVeraDesk(app: pc.Application, gq: GraceQueueLite, env: {
         const w = page.getWorldTransform().transformPoint(new pc.Vec3(u, 0, v));
         corners.push([w.x, w.y, w.z]);
       }
-      return { notebook: nb.phase, mug: mug.phase, mugPlayed: mug.played, pageLines: lines, pageCorners: corners, page: PAGE, held: HELD,
+      return { notebook: nb.phase, pageLines: lines, pageCorners: corners, page: PAGE, held: HELD,
         mugAt: mugAt(), notebookAt: notebookAt(), deskConducting: gq.deskConducting };
     }
   };

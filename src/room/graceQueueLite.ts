@@ -1,7 +1,7 @@
 import mirrorCopy from '../../data/strings/e3_mirror.json';
 import { GuideWait } from '../narrative/guideWait';
 import { drawVeraArchive, drawVeraDistribution, drawRetainedCopies, studioFont } from '../desktop/apps/veraSurfaces';
-import { drawTestimonyFilm } from '../desktop/theme/renataFilm';
+import { drawRenataFilm, filmToCanvas, FILM_TARGETS, PUBLISHED_FRAME, SENT_FRAME, type FilmFrame } from '../desktop/theme/renataFilm';
 import vera from '../../data/dialog/s3_vera.json';
 import { veraDay, resetVeraDay } from '../state/veraDay';
 import polish from '../../data/strings/playtestPolish.json';
@@ -185,6 +185,8 @@ interface CorrectionDef {
   /** ⚑ S154, correction 14 only: the correction that redraws a member's PICTURE
    *  — her four-line figure becomes the house's one-line one (I-01). */
   figure?: { preset: string; note: string };
+  /** ⚑ S386 — what this correction cuts in Renata's FILM, in order, in front of the visitor (s3_queue video `_docS386`) */
+  film?: CutKind[];
   witnessApplied: string;
   witnessSkipped: string;
 }
@@ -197,8 +199,10 @@ interface SubmissionDef {
    *  is the only one, and her own first line has always said so. */
   video?: {
     label: string; duration: string; beforeLabel: string; play?: string; pause?: string;
-    /** ⚑ S382 — Renata's two films: the labels, her caption, the platform's caption and its list of what it took */
-    sentLabel?: string; publishedLabel?: string; caption?: string; publishedCaption?: string; cutLog?: string[][];
+    /** ⚑ S386 — Renata's film (made new): the system's line, the three labels, the platform's caption, its word while it
+     *  cuts, her words as subtitles (`cues`, film seconds as sent) and its own list of what it took */
+    systemLine?: string; sentLabel?: string; editLabel?: string; publishedLabel?: string; publishedCaption?: string; cutting?: string;
+    cues?: { from: number; to: number; text: string }[]; cutLog?: Record<CutKind, [string, string]>;
   };
   /** S154 — a submission that came in as a DIAGRAM: her four lines on one body */
   diagram?: { label: string; beforeLabel: string; lines: string[]; houseLine: string };
@@ -273,6 +277,26 @@ const JOB_EVENTS: [string, string][] = [['places', 'arrival'], ['family', 'decis
 const FOUR_JOBS = ['testimony', 'places', 'family', 'group'];
 
 type Outcome = 'applied' | 'skipped';
+/** ⚑ S386 — the five cuts Renata's film takes: the subtitle's word, the other hand, the second cup, the photograph, the
+ *  minute they laughed */
+type CutKind = 'term' | 'hand' | 'mug' | 'photo' | 'minute';
+/** ⚑ S386 — how long each cut takes in front of the visitor: the platform selects it (`mark`, its red box and name), makes
+ *  it (`change`), and lets it be seen made (`hold`) before the next. Correction 3's four run one after another (~9 s). */
+const CUT_STEP: Record<CutKind, { mark: number; change: number; hold: number }> = {
+  term: { mark: 0.8, change: 1.0, hold: 1.2 },
+  hand: { mark: 0.9, change: 1.6, hold: 0.6 },
+  mug: { mark: 0.8, change: 0.8, hold: 0.5 },
+  photo: { mark: 0.8, change: 0.9, hold: 0.5 },
+  minute: { mark: 0.9, change: 2.8, hold: 0.8 }
+};
+/** ⚑ S386 — her subtitles' size on the workstation canvas: the largest type on the platform's screen, measured from the
+ *  seat (tools/s386-film-probe.mjs): x-height 8 CSS px on the computer, 0.69° in a headset, 4.3 px on a phone (6.2 at
+ *  the narrowest pinch) */
+export const SUBTITLE_PX = 16;
+/** the redraw quantum while a cut is being made (twice the film's, for the few seconds it runs) */
+const CUT_TICK = 0.125;
+/** m:ss */
+const clockOf = (sec: number): string => { const s = Math.max(0, Math.floor(sec + 1e-6)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 
 /**
  * ⚑ SESSION 61 — THE ARRIVAL (`dark` → `boot` → `install`), in front of the
@@ -433,14 +457,10 @@ export class GraceQueueLite {
   private personalDesktop = false;
   private personalArmed = false;
   wickConducting = false;
-  /** ⚑ S382 — Vera's notebook is in her hand, or Nuala's mug is having its moment (src/room/veraDesk.ts): a felt object
-   *  is up, so the platform is quiet (personalQuiet), the phone holds its next message and the pop-ins wait */
+  /** ⚑ S382 — Vera's notebook is in her hand (src/room/veraDesk.ts): a felt object is up, so the platform is quiet
+   *  (personalQuiet), the phone holds its next message and the pop-ins wait. (⚑ S386: Nuala's mug no longer has a
+   *  moment — his 14 Nov "it is just a mug" — so the kit no longer waits on it: `mugCue`/`mugDone` are gone.) */
   deskConducting = false;
-  /** ⚑ S382 — Nuala's message has been read: veraDesk takes the cue and brings the mug up; the campaign kit waits for
-   *  `mugDone` (set when the moment has played, or at once if there is no mug to bring) */
-  mugCue = false;
-  mugDone = false;
-  private mugCueT = 0;
   get wickCue(): boolean { return this.personalArmed; }
   private personalWasQuiet = false;
   /** ⚑ S327 — a press on the Handset Window keeps the platform quiet only while that window is showing a person's
@@ -657,6 +677,13 @@ export class GraceQueueLite {
   // Nobody is asked to press this and nothing files when they do.
   private playT = 0;
   private playing = false;
+  /** ⚑ S386 — Renata's film: the cuts still to be made in front of the visitor (the first is being made, `cutT` into it),
+   *  and whether Vera's own 2014 cut has been shown on its own screen (after the published version) */
+  private cutQueue: { kind: CutKind; item: CorrectionDef }[] = [];
+  private cutT = 0;
+  private ownCutShown = false;
+  /** where her film was last drawn on the workstation canvas (for the probes and the measurements) */
+  private filmRect: { x: number; y: number; w: number; h: number } | null = null;
   /** ⚑ S216 — the room the video was sent from, heard while it plays (his ear, 2026-10-04: 'the flat room tone works') */
   private roomTone: HTMLAudioElement | null = null;
 
@@ -704,7 +731,7 @@ export class GraceQueueLite {
   closeForEraJump(): void {
     this.clearPersonalNotice(); this.phone.closePersonalThread();
     this.startMap.close(); this.startPanel.close(); this.rects = [];
-    this.playing = false; stopClip(this.roomTone); this.roomTone = null;
+    this.playing = false; stopClip(this.roomTone); this.roomTone = null; this.snapCuts();
     this.openSurface = null; this.chipReturn = null; this.pauseOpen = false;
     this.saver = null; this.phoneInHand = false; this.minimised = false;
     this.veraPage = null; veraDay.quiet = false; this.inboxLiftPending = false; this.kitPopin = false; this.maltaAlertT = -1; this.phone.newsPaused = false;
@@ -906,9 +933,16 @@ export class GraceQueueLite {
     if (this.playing) {
       const before = Math.floor(this.playT / TICK);
       this.playT += dt;
-      if (this.playT >= this.filmSeconds()) { this.playT = this.filmSeconds(); this.playing = false; stopClip(this.roomTone); this.roomTone = null; this.bump(); }
+      if (this.playT >= this.filmSeconds()) {
+        this.playT = this.filmSeconds(); this.playing = false; stopClip(this.roomTone); this.roomTone = null;
+        // ⚑ S386 — the published version has played to its end: Vera's own 2014 cut comes, on its own screen
+        if (this.renataOpen() && this.storyDone && this.mode === 'list' && !this.openSurface) this.ownCutShown = true;
+        this.bump();
+      }
       else if (Math.floor(this.playT / TICK) !== before) this.bump();
     }
+    // ⚑ S386 — a cut being made in Renata's film, in front of the visitor (only while her editor is up)
+    if (this.cutQueue.length) { if (this.mode === 'list' && !this.openSurface && !this.veraPage) this.tickCuts(dt); else this.snapCuts(); }
 
     // ⚑ the break's two clocks. The caret is the phone's; the lift is the
     // room's and the workstation's. Both stop of their own accord.
@@ -1039,11 +1073,8 @@ export class GraceQueueLite {
     } else this.offerWaitT = 0;
     if (this.kitPending) { this.kitWaitT += this.lastDt; if (this.kitWaitT > 10 && !this.kitWarned) { this.kitWarned = true;
       console.warn('[e3] kit waiting ' + JSON.stringify({ wickConducting: this.wickConducting, phone: this.phone.debugState() })); } }
-    // ⚑ S382 (job 22 A3, his "the mug is fine… but it is not perceptible") — her message read, the mug comes up first
-    if (this.kitPending && !this.mugDone && !this.mugCue && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest
-      && !this.wickConducting && !this.deskConducting) { this.mugCue = true; this.mugCueT = 0; }
-    if (this.mugCue) { this.mugCueT += this.lastDt; if (this.mugCueT > 3) { this.mugCue = false; this.mugDone = true; } }   // nothing took it
-    if (this.kitPending && this.mugDone && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest && !this.wickConducting && !this.deskConducting) {
+    // ⚑ S386 (job 24 A1) — S382's mug moment removed: her message read, the kit comes (the notebook in her hand still holds it)
+    if (this.kitPending && this.phone.delivered('nuala') && !this.phone.voiceBusy && this.phone.atRest && !this.wickConducting && !this.deskConducting) {
       // ⚑ S362 / H41 (his headset, 10 Nov, 21:11: the campaign kit "should arrive as a pop-in marked urgent") — it pops in, in the
       //   platform's own voice, and opens from there; it no longer takes the whole screen by itself
       this.kitPending = false; this.mode = 'board'; this.kitPopin = true; this.kitPopinT = 0; playOnce('lambient_chime.mp3'); this.bump();
@@ -1266,11 +1297,126 @@ export class GraceQueueLite {
    *  ⚑ NOTHING IS FILED — the apparatus did not ask you to watch her. */
   private filmSeconds(): number {
     const [m, sec] = (this.submission()?.video?.duration ?? '0:24').split(':').map(Number);
-    return m * 60 + sec;
+    const whole = m * 60 + sec;
+    // ⚑ S386 — Renata's film is shorter once the minute is cut from it (0:40 → 0:20)
+    if (this.renataOpen() && this.cutValue('minute') >= 1) { const [a, b] = this.minuteSpan(); return whole - (b - a); }
+    return whole;
+  }
+
+  // ── ⚑ S386: Renata's film, cut in front of the visitor ─────────────────────
+  /** Renata's story, when it is the one open in the editor and carries the new film */
+  private renataOpen(): boolean { const sub = this.submission(); return !!sub && sub.id === 1 && !!sub.video?.cues; }
+  private renataVideo(): NonNullable<SubmissionDef['video']> { return SUBMISSIONS[0].video!; }
+  /** has a correction that makes this cut been applied (by Vera, by Lambient or by an administrator)? */
+  private cutApplied(kind: CutKind): boolean {
+    return this.items(SUBMISSIONS[0]).some(c => c.film?.includes(kind) && this.decisions.get(c.id) === 'applied');
+  }
+  /** 0 (not made) → 1 (made): a cut waiting in the queue is 0, the one being made is its progress */
+  private cutValue(kind: CutKind): number {
+    if (!this.cutApplied(kind)) return 0;
+    const i = this.cutQueue.findIndex(q => q.kind === kind);
+    if (i < 0) return 1;
+    if (i > 0) return 0;
+    const S = CUT_STEP[kind];
+    return Math.max(0, Math.min(1, (this.cutT - S.mark) / S.change));
+  }
+  /** the cut being made now, and where in it: 'mark' (selected, named), 'change' (being made), 'hold' (made, seen) */
+  private cutNow(): { kind: CutKind; phase: 'mark' | 'change' | 'hold'; p: number; item: CorrectionDef } | null {
+    const q = this.cutQueue[0];
+    if (!q) return null;
+    const S = CUT_STEP[q.kind];
+    const phase = this.cutT < S.mark ? 'mark' : this.cutT < S.mark + S.change ? 'change' : 'hold';
+    return { kind: q.kind, phase, p: this.cutValue(q.kind), item: q.item };
+  }
+  /** the minute they laughed, in film seconds as sent: the subtitles that make up the sentence the 'minute' cut takes */
+  private minuteSpan(): [number, number] {
+    const v = this.renataVideo(), find = this.items(SUBMISSIONS[0]).find(c => c.film?.includes('minute'))?.edit?.find ?? '';
+    const cues = (v.cues ?? []).filter(c => find.includes(c.text));
+    return cues.length ? [Math.min(...cues.map(c => c.from)), Math.max(...cues.map(c => c.to))] : [0, 0];
+  }
+  /** the current timeline (0:40, then 0:20 once the minute is gone) → film seconds as sent, and back */
+  private curToSent(t: number): number { if (this.cutValue('minute') < 1) return t; const [a, b] = this.minuteSpan(); return t < a ? t : t + (b - a); }
+  private sentToCur(t: number): number { if (this.cutValue('minute') < 1) return t; const [a, b] = this.minuteSpan(); return t < a ? t : t >= b ? t - (b - a) : a; }
+  /** where the film is, in film seconds as sent — held on the moment each cut needs while it is being made */
+  private filmSentT(): number {
+    const now = this.cutNow();
+    if (!now) return this.curToSent(this.playT);
+    if (now.kind === 'term') { const cue = this.termCue(); return cue ? cue.from + 1.25 : 1.25; }
+    if (now.kind === 'minute') {
+      const [a, b] = this.minuteSpan();
+      if (now.phase === 'mark') return a - 1;
+      const k = this.minuteChange();
+      return k < 0.35 ? a - 1 + k / 0.35 : b;   // it plays up to the cut, and jumps it
+    }
+    return 6;   // the other hand on hers, both mugs, the photograph: all in the picture
+  }
+  /** the minute's change, 0 → 1 (approach 0–.35, the jump at .35, the timeline closing .6–1) */
+  private minuteChange(): number { const now = this.cutNow(); return now?.kind === 'minute' ? now.p : 1; }
+  /** the subtitle that holds the word the 'term' cut softens */
+  private termCue(): { from: number; to: number; text: string } | undefined {
+    const find = this.items(SUBMISSIONS[0]).find(c => c.film?.includes('term'))?.edit?.find ?? '';
+    return (this.renataVideo().cues ?? []).find(c => find && c.text.includes(find));
+  }
+  /** the frame the film shows now */
+  private filmFrame(): FilmFrame {
+    const hp = this.cutValue('hand');
+    return { t: this.filmSentT(), hand: Math.min(1, hp / 0.6), crop: Math.max(0, (hp - 0.6) / 0.4), mug: this.cutValue('mug'), photo: this.cutValue('photo') };
+  }
+  /** the corrections an Apply has just made: their cuts are queued and made one by one; the film waits for them */
+  private startCuts(item: CorrectionDef): void {
+    if (!item.film?.length) return;
+    for (const kind of item.film) this.cutQueue.push({ kind, item });
+    this.cutT = 0; this.playing = false;
+    this.bump();
+  }
+  /** finish every queued cut at once (Back pressed, another decision, a jump) */
+  private snapCuts(): void {
+    if (!this.cutQueue.length) return;
+    const last = this.cutQueue[this.cutQueue.length - 1].kind;
+    this.cutQueue = []; this.cutT = 0;
+    this.playT = this.resumeAfter(last);
+    this.bump();
+  }
+  /** where the film picks up after a cut: on from the softened line; on from the jump over the minute */
+  private resumeAfter(kind: CutKind): number {
+    if (this.storyDone) return 0;
+    if (kind === 'term') { const cue = this.termCue(); return this.sentToCur(cue ? cue.from + 1.25 : 0); }
+    if (kind === 'minute') return this.minuteSpan()[0];
+    return this.sentToCur(6);
+  }
+  /** the clock of the cuts: each moves through its three phases; when the last is done the film plays on */
+  private tickCuts(dt: number): void {
+    if (!this.cutQueue.length) return;
+    const before = Math.floor(this.cutT / CUT_TICK);
+    this.cutT += dt;
+    const S = CUT_STEP[this.cutQueue[0].kind];
+    if (this.cutT >= S.mark + S.change + S.hold) {
+      const done = this.cutQueue.shift()!;
+      this.cutT = 0;
+      if (!this.cutQueue.length) {
+        this.playT = this.resumeAfter(done.kind);
+        if (this.renataOpen() && this.mode === 'list' && !this.openSurface) this.playing = true;
+      }
+      this.bump();
+    } else if (Math.floor(this.cutT / CUT_TICK) !== before) this.bump();
+  }
+  /** ⚑ S386 — the film's state, for tools/s386-film-probe.mjs (read-only) */
+  get filmState(): Record<string, unknown> | null {
+    if (!this.renataOpen() || this.mode !== 'list' || this.openSurface || this.veraPage) return null;
+    const now = this.cutNow(), sentT = this.filmSentT();
+    const cue = (this.renataVideo().cues ?? []).find(c => sentT >= c.from && sentT < c.to) ?? null;
+    const view = this.storyDone ? (this.ownCutShown ? 'own' : 'published') : now ? 'cutting' : (['term', 'hand', 'mug', 'photo', 'minute'] as CutKind[]).some(k => this.cutValue(k) > 0) ? 'edited' : 'sent';
+    return {
+      view, cutting: now ? { kind: now.kind, phase: now.phase, p: now.p } : null, queue: this.cutQueue.map(q => q.kind),
+      cuts: Object.fromEntries((['term', 'hand', 'mug', 'photo', 'minute'] as CutKind[]).map(k => [k, this.cutValue(k)])),
+      playT: this.playT, sentT, seconds: this.filmSeconds(), playing: this.playing, minute: this.minuteSpan(), cue: cue?.text ?? null,
+      timeline: this.timelineNow(), subtitle: this.subtitleRuns().map(r => r.text).join(''), subtitleRuns: this.subtitleRuns(), frame: this.filmFrame(), rect: this.filmRect
+    };
   }
 
   togglePlay(): void {
     if (!this.submission()?.video) return;
+    if (this.cutQueue.length) return;   // ⚑ S386 — a cut is being made: the film waits for it
     if (this.playT >= this.filmSeconds()) this.playT = 0; // finished: pressing plays it again
     this.playing = !this.playing;
     // the room tone follows the picture: starts where it is, stops when she is paused
@@ -1450,6 +1596,8 @@ export class GraceQueueLite {
     const next = SUBMISSIONS.findIndex(sb => !this.subComplete(sb));
     this.subIdx = next < 0 ? 0 : next; this.submissionPage = 0;
     this.mode = 'list';
+    // ⚑ S386 — her film plays as her job opens (it is what the job is: the piece takes her there, on the screen she pressed)
+    if (this.renataOpen()) { if (this.playT >= this.filmSeconds()) this.playT = 0; this.playing = true; }
     // ⚑ the second conduction beat, once only: what the two verbs are, and
     //   what happens either way. "Either way it's recorded, so you can't get
     //   it wrong" is meant as reassurance and is the surveillance clause.
@@ -1464,6 +1612,7 @@ export class GraceQueueLite {
    *  leave half-done is the only honest version of "any order". */
   backToBoard(): void {
     if (this.mode !== 'list') return;
+    this.snapCuts(); this.playing = false;   // ⚑ S386 — a cut being made is finished; her film stops when the job is put down
     // ⚑ the job is told it was put down BEFORE it is dropped, so it can file a
     //   leaving the way it files a finishing. See TaskSurface.onLeave.
     this.openSurface?.onLeave?.();
@@ -1507,8 +1656,10 @@ export class GraceQueueLite {
   private decide(choice: Outcome): void {
     let outcome = choice;
     const sub = this.submission();
+    if (this.mode !== 'list' || !sub || !this.current()) return;
+    this.snapCuts();   // ⚑ S386 — a cut still being made is finished before another decision (the verbs are hidden meanwhile)
     const item = this.current();
-    if (this.mode !== 'list' || !sub || !item) return;
+    if (!item) return;
     playOnce('tick_task.mp3');   // S141: APPLY and SKIP share ONE tick — the record files both
     let forcedBy: string | null = null;
     // ⚑ S332 — REFUSING RENATA'S RULES (his second answers): Skip is a refusal, and the shift's one ladder answers it
@@ -1524,6 +1675,7 @@ export class GraceQueueLite {
       this.deskNote = { line: `${item.rule}: ${ans.line}`, voice: ans.voice };
     } else this.deskNote = null;
     this.decisions.set(item.id, outcome);
+    if (outcome === 'applied' && sub.id === 1) this.startCuts(item);   // ⚑ S386 — the film is cut in front of her
     this.lambLines = null; // the beat is over the moment she uses either verb
     ledger.graceQueue.push({
       cardId: item.id,
@@ -1536,6 +1688,8 @@ export class GraceQueueLite {
       // — nothing loads by itself. The break arms here, as before.
       if (sub.id === 1) this.earn('mentor');   // S332: the testimony's answer, held until the send is done and she is at rest
       this.storyDone = true;
+      // ⚑ S386 — the story done, the published version plays (after any cut still being made)
+      if (this.renataOpen()) { this.ownCutShown = false; if (!this.cutQueue.length) { this.playT = 0; this.playing = true; } }
       if (!ledger.records.includes('e3-job-done')) ledger.records.push('e3-job-done');
       if (this.workDone() >= maltaAfter()) this.armMalta();
       if (this.rosterComplete() && !ledger.records.includes('e3-day-done')) ledger.records.push('e3-day-done');
@@ -2384,9 +2538,9 @@ export class GraceQueueLite {
     if (front.video) {
       const fs = Math.min(fw / NOA_FRAME.w, fh / NOA_FRAME.h);
       const vx = Math.round(x + (fw - NOA_FRAME.w * fs) / 2), vy = Math.round(y + (fh - NOA_FRAME.h * fs) / 2);
-      // ⚑ S382 — Renata's tile shows the platform's current version of her film: as sent, then as it publishes it
-      const renata = front.id === 1 && front.video.sentLabel ? (this.decisions.get(3) === 'applied' ? 'published' : 'sent') : undefined;
-      drawTestimonyFilm(ctx, vx, vy, Math.round(NOA_FRAME.w * fs), Math.round(NOA_FRAME.h * fs), 0, front.id === 2, renata);
+      // ⚑ S386 — Renata's tile shows the platform's current version of her film: as sent, then as it publishes it
+      if (front.id === 1 && front.video.cues) drawRenataFilm(ctx, vx, vy, Math.round(NOA_FRAME.w * fs), Math.round(NOA_FRAME.h * fs), this.cutApplied('hand') ? PUBLISHED_FRAME : SENT_FRAME);
+      else drawNoaFrame(ctx, vx, vy, fs, { graded: false });
       if (this.graded(front)) honestLight(ctx, vx, vy, Math.round(NOA_FRAME.w * fs), Math.round(NOA_FRAME.h * fs));
     } else {
       this.drawPageThumb(ctx, x, y, fw, fh, front);
@@ -2520,7 +2674,7 @@ export class GraceQueueLite {
   /** H08 — what the rule's band carries, measured before anything is drawn: its note, its references wrapped, and the
    *  height they need (the right-hand column, Apply/Skip and the provenance, needs ~80 and is the floor) */
   private studioBand(ctx: CanvasRenderingContext2D, c: aero.AeroContent): { need: number; copyW: number; note: DeskNote | null; refs: string[] } {
-    const current = this.current(), copyW = c.w - 190;
+    const current = this.bandItem(), copyW = c.w - 190;
     if (!current) return { need: 80, copyW, note: null, refs: [] };
     const note: DeskNote | null = this.deskNote ?? (current.teach ? { line: current.teach, voice: 'lambient' } : null);
     studioFont(ctx, 11);
@@ -2530,6 +2684,7 @@ export class GraceQueueLite {
     return { need: Math.max(80, 32 + noteH + refs.length * REFS_LEAD + 4), copyW, note, refs };
   }
   private drawTestimonyStudio(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): void {
+    if (sub.id === 1 && sub.video?.cues) { this.drawRenataStudio(ctx, c, sub); return; }   // ⚑ S386
     const V = vera.visual, video = sub.video!;
     const back = { x: c.x, y: c.y, w: 106, h: 23 };
     if (!this.storyDone) {
@@ -2547,26 +2702,10 @@ export class GraceQueueLite {
     //   is now as tall as what it carries (the words untouched): it rises into the transcript's spare foot when needed.
     const band = this.studioBand(ctx, c);
     const by = Math.min(top + 216, c.y + c.h - 2 - band.need);
-    // ⚑ S332 (his second answers: "Renata's edit is frontal, not subtle") — once "Name the dependency, not the person"
-    //   has been applied to Renata (by anyone), the platform shows Vera's OWN 2014 story with the same cut in the same red:
-    //   "Your story was edited with this rule too (2014)".
-    // ⚑ S382 (UiB job 22 A4, his 13 Nov: "Should we see the real and the version the system made on top of it to edit
-    //   out the lesbian content?" — yes) — Renata's column is now HER FILM. Before the rule, the film as she sent it,
-    //   labelled, bare, her caption under it. The rule is the act that makes the cut: once it is applied the column holds
-    //   BOTH films, "As Renata sent it" and "As GracePlatform publishes it" (the other hand cropped out, the second cup
-    //   gone, the photograph blurred, the platform's caption over it), with the platform's own list of what it took —
-    //   while her words beside them show the same rule's cut in red. Vera's own 2014 cut follows when the story is done,
-    //   in the transcript's place, so all three are on the screen she leaves the job from.
-    const renataCut = sub.id === 1 && this.decisions.get(3) === 'applied';
-    const ownCut = renataCut && this.subComplete(sub);
-    if (sub.id === 1 && video.sentLabel) {
-      if (renataCut) this.drawRenataCompare(ctx, c.x, top, filmW, by - top - 4, video);
-      else this.drawRenataSent(ctx, c.x, top, filmW, by - top - 4, video);
-    } else {
     px(ctx, c.x - 1, top - 1, filmW + 2, filmH + 2, ERA3.glassEdge);
     ctx.save(); ctx.beginPath(); ctx.rect(c.x, top, filmW, filmH); ctx.clip();
-    if (this.graded(sub)) drawTestimonyFilm(ctx, c.x - 31, top - 25, 318, 179, this.playT, sub.id === 2);
-    else drawTestimonyFilm(ctx, c.x, top, filmW, filmH, this.playT, sub.id === 2);
+    // ⚑ S386 — the old shared footage is gone with S382's Renata; a recording other than hers draws Noa's own frame
+    drawNoaFrame(ctx, c.x, top, filmW / NOA_FRAME.w, { t: this.playT, graded: this.graded(sub) });
     ctx.restore();
     if (this.graded(sub)) honestLight(ctx, c.x, top, filmW, filmH);
     this.rects.push({ x: c.x, y: top, w: filmW, h: filmH, id: 'video' });
@@ -2586,13 +2725,10 @@ export class GraceQueueLite {
         px(ctx, xx, sy, tw, th, ERA3.sysBand);
         studioFont(ctx, 9, true); ctx.fillStyle = ERA3.greyDk;
         const cw = ctx.measureText(V.cutFrame).width; ctx.fillText(V.cutFrame, xx + Math.max(1, Math.round((tw - cw) / 2)), sy + Math.round(th / 2) - 5);
-      } else drawTestimonyFilm(ctx, xx, sy, tw, th, i * 8, sub.id === 2);
-    }
+      } else drawNoaFrame(ctx, xx, sy, tw / NOA_FRAME.w, { t: i * 8 });
     }
     // The whole testimony is readable in its own column. No fixed line slice or decoration over her words.
     const transcriptH = Math.min(204, by - top - 8);
-    if (ownCut) this.drawOwnCut(ctx, rightX, top, rightW, transcriptH);
-    else {
     px(ctx, rightX, top, rightW, transcriptH, ERA3.white);
     px(ctx, rightX, top, 3, transcriptH, ERA3.memberSpine);
     studioFont(ctx, 17, true); ctx.fillStyle = ERA3.ink; ctx.fillText(sub.author, rightX + 13, top + 9);
@@ -2627,11 +2763,17 @@ export class GraceQueueLite {
         cy += lines.length * 12 + 4;
       }
     }
-    }
+    this.drawStudioBand(ctx, c, by, band);
+  }
+
+  /** the rule's band under the editor: the rule, Lambient's teaching line (or its answer to a refusal), the manual and
+   *  the verse in one treatment, Apply / Skip — or, the story finished, the way back. ⚑ S386: while a cut is being made
+   *  in Renata's film the band keeps the rule that is making it, and says so where Apply / Skip were. */
+  private drawStudioBand(ctx: CanvasRenderingContext2D, c: aero.AeroContent, by: number, band: ReturnType<GraceQueueLite['studioBand']>): void {
     const bh = c.y + c.h - by - 2;
     px(ctx, c.x, by, c.w, bh, ERA3.lambBand);
     px(ctx, c.x, by, c.w, 1, ERA3.glassEdge);
-    const current = this.current();
+    const current = this.bandItem(), cutting = !!this.cutNow();
     if (current) {
       const copyW = band.copyW;
       studioFont(ctx, 13, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(current.rule, c.x + 10, by + 7);
@@ -2650,9 +2792,15 @@ export class GraceQueueLite {
       studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
       band.refs.forEach((ln, i) => ctx.fillText(ln, c.x + 10, refsY + i * REFS_LEAD));
       const bx = c.x + c.w - 170;
-      aero.button(ctx, bx, by + 12, 76, 29, q.verbs.apply, { primary: true, size: 12 });
-      aero.button(ctx, bx + 84, by + 12, 76, 29, q.verbs.skip, { size: 12 });
-      this.rects.push({ x: bx, y: by + 12, w: 76, h: 29, id: 'apply' }, { x: bx + 84, y: by + 12, w: 76, h: 29, id: 'skip' });
+      if (cutting) {
+        // the platform at work: no verb to press until the cut has been made and seen
+        px(ctx, bx, by + 12, 160, 29, ERA3.sysBand); px(ctx, bx, by + 12, 3, 29, ERA3.alarm);
+        studioFont(ctx, 12, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(this.renataVideo().cutting ?? '', bx + 12, by + 19);
+      } else {
+        aero.button(ctx, bx, by + 12, 76, 29, q.verbs.apply, { primary: true, size: 12 });
+        aero.button(ctx, bx + 84, by + 12, 76, 29, q.verbs.skip, { size: 12 });
+        this.rects.push({ x: bx, y: by + 12, w: 76, h: 29, id: 'apply' }, { x: bx + 84, y: by + 12, w: 76, h: 29, id: 'skip' });
+      }
       studioFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
       wrapText(ctx, vera.provenance, 158).forEach((ln, i) => ctx.fillText(ln, bx, by + 52 + i * 11));
     } else {
@@ -2668,101 +2816,210 @@ export class GraceQueueLite {
     }
   }
 
-  /** ⚑ S382 — which of Renata's film views the editor shows (read by tools/s382-film-probe.mjs): her film as sent; both
-   *  films once correction 3 has made the cut; and both with Vera's own 2014 cut once the story is done */
-  get filmView(): 'sent' | 'compare' | 'compare+own' | null {
-    const sub = this.submission();
-    if (this.mode !== 'list' || this.openSurface || this.veraPage || !sub || sub.id !== 1) return null;
-    if (this.decisions.get(3) !== 'applied') return 'sent';
-    return this.subComplete(sub) ? 'compare+own' : 'compare';
+  /** ⚑ S386 — the correction the band shows: the one whose cut is being made, else the next undecided */
+  private bandItem(): CorrectionDef | undefined { return this.cutNow()?.item ?? this.current(); }
+
+  /** ⚑ S386 — the subtitle on screen now: her words, word for word, as the cue holds them — with the 'term' cut made
+   *  in front of the visitor (the word selected, struck, the platform's word typed in), and clean once it is made */
+  private subtitleRuns(): TextRun[] {
+    const cues = this.renataVideo().cues ?? [];
+    if (!cues.length) return [];
+    const t = this.filmSentT();
+    const cue = cues.find(c => t >= c.from && t < c.to) ?? (t >= cues[cues.length - 1].to ? cues[cues.length - 1] : undefined);
+    if (!cue) return [];
+    const term = this.items(SUBMISSIONS[0]).find(c => c.film?.includes('term'))?.edit;
+    const now = this.cutNow(), v = this.cutValue('term');
+    if (!term?.find || !cue.text.includes(term.find) || (v <= 0 && now?.kind !== 'term')) return [{ text: cue.text, state: 'kept' }];
+    const at = cue.text.indexOf(term.find), before = cue.text.slice(0, at), after = cue.text.slice(at + term.find.length), w = term.with ?? '';
+    if (now?.kind === 'term') {
+      const typed = w.slice(0, Math.round(w.length * v));
+      const runs: TextRun[] = [{ text: before, state: 'kept' }, { text: term.find, state: now.phase === 'mark' ? 'marked' : 'cut' }];
+      if (typed) runs.push({ text: ' ' + typed, state: 'added' });
+      runs.push({ text: after, state: 'kept' });
+      return runs.filter(r => r.text);
+    }
+    return [{ text: before + w + after, state: 'kept' }];
   }
 
-  /** ⚑ S382 — Renata's film AS SHE SENT IT (before "Name the dependency, not the person"): the label, the film bare
-   *  (felt: nothing drawn over it), Play, and her caption under it in her own words, on the rose spine of a person
-   *  speaking. The film shrinks before her caption is ever cut short. */
-  private drawRenataSent(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, video: NonNullable<SubmissionDef['video']>): void {
-    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.memberSpine; ctx.fillText(video.sentLabel ?? '', x, y);
-    studioFont(ctx, 10);
-    const capLines = wrapText(ctx, video.caption ?? '', w - 10), lead = 13;
-    const fh = Math.max(40, Math.min(Math.round(w * 9 / 16), h - 14 - 33 - capLines.length * lead));
-    const fw = Math.round(fh * 16 / 9), fy = y + 14;
-    px(ctx, x - 1, fy - 1, fw + 2, fh + 2, ERA3.glassEdge);
-    drawTestimonyFilm(ctx, x, fy, fw, fh, this.playT, false, 'sent');
-    this.rects.push({ x, y: fy, w: fw, h: fh, id: 'video' });
-    const ty = fy + fh + 5;
-    aero.button(ctx, x, ty, 63, 22, this.playing ? (video.pause ?? 'Pause') : (video.play ?? 'Play'), { size: 10 });
-    this.rects.push({ x, y: ty, w: 63, h: 22, id: 'video' });
-    const trackX = x + 73, trackW = w - 73;
-    px(ctx, trackX, ty + 9, trackW, 4, ERA3.glassEdge);
-    px(ctx, trackX, ty + 9, Math.round(trackW * this.playT / this.filmSeconds()), 4, ERA3.accent);
-    const cy = ty + 29, n = Math.max(0, Math.min(capLines.length, Math.floor((y + h - cy + 3) / lead)));
-    if (!n) return;
-    px(ctx, x, cy - 2, 2, n * lead, ERA3.memberSpine);
-    studioFont(ctx, 10); ctx.fillStyle = ERA3.ink;
-    capLines.slice(0, n).forEach((ln, i) => ctx.fillText(ln, x + 8, cy + i * lead));
+  /**
+   * ⚑ S386 (UiB job 24 A2) — RENATA'S FILM IN THE EDITOR, MADE NEW. His 14 Nov: "still don't understand what the video is
+   * about." So the screen now says it plainly and shows it large: the system's one line on top (what the platform wants:
+   * her story in twenty seconds); her film filling the window and playing, her words burned into it as subtitles (felt:
+   * the platform draws nothing on her film but its own red selections while it cuts); a timeline under it; beside it the
+   * film's label and the platform's own list of what it took; the rule's band under all of it. Each Apply cuts the film
+   * in front of the visitor (`startCuts`), one cut at a time. Story done, the published version plays — "As GracePlatform
+   * publishes it · 0:20", one mug, one pair of hands, "Free from dependency" on it — and when it ends, Vera's own 2014 cut
+   * comes on its own screen (his: "after, on its own screen, not beside the film"). Every moment of it follows a press on
+   * this same screen, so the visitor is already facing it: nothing here waits on, or is set off by, a look.
+   */
+  private drawRenataStudio(ctx: CanvasRenderingContext2D, c: aero.AeroContent, sub: SubmissionDef): void {
+    const video = sub.video!;
+    if (this.storyDone && this.ownCutShown) {
+      // Vera's own 2014 cut, on its own screen, and the one way on
+      const bh = 34;
+      this.drawOwnCut(ctx, c.x + 1, c.y + 1, c.w - 2, c.h - bh - 10, true);
+      const bw = 143, bx = c.x + c.w - bw - 2, by = c.y + c.h - bh;
+      aero.button(ctx, bx, by, bw, 28, this.boardBackLabel(), { primary: true, size: 11 });
+      this.rects.push({ x: bx, y: by, w: bw, h: 28, id: 'board-back' });
+      return;
+    }
+    // the way back, and the system's one line
+    let sysX = c.x;
+    if (!this.storyDone) {
+      aero.button(ctx, c.x, c.y, 106, 23, this.boardBackLabel(), { size: 10 });
+      this.rects.push({ x: c.x, y: c.y, w: 106, h: 23, id: 'board-back' });
+      sysX = c.x + 116;
+    }
+    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.titleText;
+    const lead = Math.round(textPx(10, 'e3')) + 2;
+    const sys = wrapText(ctx, video.systemLine ?? '', c.x + c.w - sysX).slice(0, 2);
+    sys.forEach((ln, i) => ctx.fillText(ln, sysX, c.y + (sys.length === 1 ? 6 : 0) + i * lead));
+    const top = c.y + Math.max(28, sys.length * lead + 5);
+    const band = this.studioBand(ctx, c);
+    const by = c.y + c.h - 2 - band.need;
+    const rowH = Math.max(16, Math.round(textPx(10, 'e3')) + 6), colW = 124;
+    const fh = Math.max(60, Math.min(by - 8 - rowH - 4 - top, Math.floor((c.w - colW - 10) * 9 / 16))), fw = Math.round(fh * 16 / 9);
+    const fx = c.x, fy = top, frame = this.filmFrame();
+    this.filmRect = { x: fx, y: fy, w: fw, h: fh };
+    px(ctx, fx - 1, fy - 1, fw + 2, fh + 2, this.storyDone ? ERA3.frame : ERA3.glassEdge);
+    drawRenataFilm(ctx, fx, fy, fw, fh, frame);
+    this.drawCutMark(ctx, fx, fy, fw, fh, frame.crop);
+    this.drawSubtitle(ctx, fx, fy, fw, fh);
+    if (this.storyDone && video.publishedCaption) {
+      // the platform's caption on its version (operable): the person renamed as the dependency
+      studioFont(ctx, 11, true);
+      const tw = Math.ceil(ctx.measureText(video.publishedCaption).width), th = Math.round(textPx(11, 'e3')) + 6;
+      px(ctx, fx + 6, fy + 6, tw + 12, th, ERA3.accent);
+      ctx.fillStyle = ERA3.white; ctx.fillText(video.publishedCaption, fx + 12, fy + 9);
+    }
+    if (!this.cutQueue.length) this.rects.push({ x: fx, y: fy, w: fw, h: fh, id: 'video' });
+    this.drawFilmTimeline(ctx, fx, fy + fh + 4, fw, rowH, video);
+    this.drawCutLog(ctx, fx + fw + 10, fy, c.x + c.w - (fx + fw + 10), by - 6 - fy, video);
+    this.drawStudioBand(ctx, c, by, band);
   }
 
-  /** ⚑ S382 — THE CUT, MADE: both films, one above the other, the same size. "As Renata sent it" stays bare, her caption
-   *  beside it. "As GracePlatform publishes it" is the platform's crop of the same footage (the other hand out of it,
-   *  the second cup gone, the photograph blurred), its caption laid over it in the house's blue (operable), and beside
-   *  it the platform's own list of what it took, in the red that marks a cut in her words. Pressing either film plays
-   *  both, in step. Nothing here comments on her. */
-  private drawRenataCompare(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, video: NonNullable<SubmissionDef['video']>): void {
-    const LABEL = 13, GAP = 6;
-    const fh = Math.max(40, Math.min(Math.round(w * 0.64 * 9 / 16), Math.floor((h - LABEL * 2 - GAP) / 2)));
-    const fw = Math.round(fh * 16 / 9), sideX = x + fw + 7, sideW = x + w + 8 - sideX;   // into the column's gutter, never the transcript's
-    const film = (fy: number, version: 'sent' | 'published'): void => {
-      px(ctx, x - 1, fy - 1, fw + 2, fh + 2, version === 'sent' ? ERA3.glassEdge : ERA3.frame);
-      drawTestimonyFilm(ctx, x, fy, fw, fh, this.playT, false, version);
-      this.rects.push({ x, y: fy, w: fw, h: fh, id: 'video' });
-    };
-    // as she sent it — felt, bare; her caption beside it on the rose spine
-    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.memberSpine; ctx.fillText(video.sentLabel ?? '', x, y);
-    const f1 = y + LABEL;
-    film(f1, 'sent');
-    studioFont(ctx, 9);
-    const lead = Math.max(11, Math.round(textPx(9, 'e3')) + 2);
-    const cap = wrapText(ctx, video.caption ?? '', sideW - 6).slice(0, Math.floor(fh / lead));
-    if (cap.length) {
-      px(ctx, sideX, f1, 2, cap.length * lead, ERA3.memberSpine);
-      ctx.fillStyle = ERA3.ink; cap.forEach((ln, i) => ctx.fillText(ln, sideX + 6, f1 + 1 + i * lead));
+  /** ⚑ S386 — the platform's selection on the film while it cuts: a red box round what it takes, and its name */
+  private drawCutMark(ctx: CanvasRenderingContext2D, fx: number, fy: number, fw: number, fh: number, crop: number): void {
+    const now = this.cutNow();
+    if (!now || now.kind === 'term' || now.kind === 'minute') return;
+    const raw = filmToCanvas(FILM_TARGETS[now.kind], fx, fy, fw, fh, crop);
+    const x0 = Math.max(fx + 1, raw.x), y0 = Math.max(fy + 1, raw.y), x1 = Math.min(fx + fw - 1, raw.x + raw.w), y1 = Math.min(fy + fh - 1, raw.y + raw.h);
+    if (x1 - x0 < 4 || y1 - y0 < 4) return;
+    px(ctx, x0, y0, x1 - x0, 2, ERA3.alarm); px(ctx, x0, y1 - 2, x1 - x0, 2, ERA3.alarm);
+    px(ctx, x0, y0, 2, y1 - y0, ERA3.alarm); px(ctx, x1 - 2, y0, 2, y1 - y0, ERA3.alarm);
+    const [what, how] = this.renataVideo().cutLog?.[now.kind] ?? ['', ''];
+    const label = now.phase === 'hold' ? `${what} · ${how}` : what;
+    studioFont(ctx, 10, true);
+    const tw = Math.ceil(ctx.measureText(label).width), th = Math.round(textPx(10, 'e3')) + 5;
+    const tx = Math.max(fx + 2, Math.min(fx + fw - tw - 10, x0)), ty = y0 - th >= fy + 2 ? y0 - th : y0 + 3;
+    px(ctx, tx, ty, tw + 8, th, ERA3.alarm);
+    ctx.fillStyle = ERA3.white; ctx.fillText(label, tx + 4, ty + 3);
+  }
+
+  /** ⚑ S386 — her words burned into her film, centred at its foot, a line at a time (white on the night-blue ink) */
+  private drawSubtitle(ctx: CanvasRenderingContext2D, fx: number, fy: number, fw: number, fh: number): void {
+    const runs = this.subtitleRuns();
+    if (!runs.length) return;
+    const size = SUBTITLE_PX;
+    studioFont(ctx, size, true);
+    const lines = this.wrapRuns(ctx, runs, fw - 24).slice(0, 3);
+    const lh = Math.round(textPx(size, 'e3')) + 5;
+    let ly = fy + fh - 6 - lines.length * lh;
+    for (const line of lines) {
+      const lw = Math.ceil(line.reduce((n, r) => n + ctx.measureText(r.text).width, 0));
+      let lx = fx + Math.round((fw - lw) / 2);
+      ctx.save(); ctx.globalAlpha = 0.84; px(ctx, lx - 5, ly - 2, lw + 10, lh, ERA3.ink); ctx.restore();
+      for (const part of line) {
+        const ww = Math.ceil(ctx.measureText(part.text).width);
+        ctx.fillStyle = part.state === 'added' ? ERA3.accentHi : ERA3.white;
+        ctx.fillText(part.text, lx, ly + 1);
+        if (part.state === 'marked' || part.state === 'cut') {
+          const lead = part.text.length - part.text.trimStart().length, wx = lx + Math.round(ctx.measureText(part.text.slice(0, lead)).width), wl = ww - (wx - lx);
+          px(ctx, wx - 2, ly - 2, wl + 4, 2, ERA3.alarm); px(ctx, wx - 2, ly + lh - 4, wl + 4, 2, ERA3.alarm);
+          px(ctx, wx - 2, ly - 2, 2, lh - 2, ERA3.alarm); px(ctx, wx + wl, ly - 2, 2, lh - 2, ERA3.alarm);
+          if (part.state === 'cut') px(ctx, wx, ly + Math.round(lh / 2) - 2, wl, 2, ERA3.alarm);
+        }
+        if (part.state === 'added') px(ctx, lx, ly + lh - 4, ww, 1, ERA3.accentHi);
+        lx += ww;
+      }
+      ly += lh;
     }
-    // as the platform publishes it — operable: its crop, its caption, its list
-    const y2 = f1 + fh + GAP;
-    studioFont(ctx, 10, true); ctx.fillStyle = ERA3.titleText; ctx.fillText(video.publishedLabel ?? '', x, y2);
-    const f2 = y2 + LABEL;
-    film(f2, 'published');
-    if (video.publishedCaption) {
-      studioFont(ctx, 9, true);
-      const lh = Math.max(13, Math.round(textPx(9, 'e3')) + 4);
-      ctx.save(); ctx.beginPath(); ctx.rect(x, f2, fw, fh); ctx.clip();
-      px(ctx, x, f2 + fh - lh, fw, lh, ERA3.accent);
-      ctx.fillStyle = ERA3.white; ctx.fillText(video.publishedCaption, x + 4, f2 + fh - lh + 2);
-      ctx.restore();
-    }
-    let ly = f2;
-    for (const [what, how] of video.cutLog ?? []) {
-      studioFont(ctx, 9, true); ctx.fillStyle = ERA3.alarm;
-      for (const ln of wrapText(ctx, what, sideW)) { ctx.fillText(ln, sideX, ly); ly += lead; }
-      studioFont(ctx, 9); ctx.fillStyle = ERA3.greyDk;
-      for (const ln of wrapText(ctx, how, sideW)) { ctx.fillText(ln, sideX, ly); ly += lead; }
-      ly += 2;
+  }
+
+  /** ⚑ S386 — the film's timeline: Play, the track and the playhead, the time. The minute's cut is made HERE: the platform
+   *  selects 0:12–0:32 in red, the film plays up to it, the playhead jumps it, and the track closes to 0:20. */
+  private drawFilmTimeline(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, video: NonNullable<SubmissionDef['video']>): void {
+    const now = this.cutNow(), bw = 44;
+    if (now) { px(ctx, x, y, bw, h, ERA3.sysBand); px(ctx, x, y + h - 1, bw, 1, ERA3.glassEdge); }
+    else { aero.button(ctx, x, y, bw, h, this.playing ? (video.pause ?? 'Pause') : (video.play ?? 'Play'), { size: 9 }); this.rects.push({ x, y, w: bw, h, id: 'video' }); }
+    const [a, b] = this.minuteSpan(), gap = b - a;
+    const m = now?.kind === 'minute' ? now : null, k = this.minuteChange();
+    const { shown: shownT, total, closing } = this.timelineNow();
+    studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
+    const time = `${clockOf(shownT)} / ${clockOf(total)}`, timeW = Math.ceil(ctx.measureText(time).width);
+    ctx.fillText(time, x + w - timeW, y + Math.round((h - textPx(10, 'e3')) / 2));
+    const tx = x + bw + 8, tw = w - bw - 8 - timeW - 10, ty = y + Math.round(h / 2) - 2;
+    const at = (s: number): number => tx + Math.round(tw * s / total);
+    px(ctx, tx, ty, tw, 4, ERA3.glassEdge);
+    px(ctx, tx, ty, at(shownT) - tx, 4, ERA3.accent);
+    if (m || closing < 1) {
+      if (m) {
+        // the minute, selected; once jumped, struck through in stripes; then it closes up
+        const sx = at(a), ex = at(a + gap * (1 - closing));
+        if (k >= 0.35 || m.phase === 'hold') { for (let xx = sx; xx < ex; xx += 4) px(ctx, xx, ty - 2, 2, 8, ERA3.alarm); }
+        else px(ctx, sx, ty, ex - sx, 4, ERA3.alarm);
+        px(ctx, sx - 1, y + 1, 2, h - 2, ERA3.alarm); px(ctx, ex - 1, y + 1, 2, h - 2, ERA3.alarm);
+      }
+    } else px(ctx, at(a) - 1, ty - 2, 2, 8, ERA3.alarm);   // the join, where the minute was
+    px(ctx, at(shownT) - 1, y + 1, 3, h - 2, ERA3.titleText);   // the playhead
+  }
+  /** ⚑ S386 — the timeline as drawn: where the playhead is and how long the track is (0:40, closing to 0:20 as the
+   *  minute's cut is made). Inside the minute only while it is still uncut. */
+  private timelineNow(): { shown: number; total: number; closing: number } {
+    const now = this.cutNow(), [, b] = this.minuteSpan(), gap = b - this.minuteSpan()[0];
+    const closing = now?.kind === 'minute' && now.phase !== 'mark' ? Math.max(0, Math.min(1, (this.minuteChange() - 0.6) / 0.4)) : (this.cutValue('minute') >= 1 ? 1 : 0);
+    const sentT = this.filmSentT();
+    return { shown: sentT >= b ? sentT - gap * closing : sentT, total: this.minuteGoneSeconds() + gap * (1 - closing), closing };
+  }
+  /** the film's length once the minute is gone, in seconds (0:20) */
+  private minuteGoneSeconds(): number { const [a, b] = this.minuteSpan(); const [mm, ss] = (this.renataVideo().duration ?? '0:40').split(':').map(Number); return mm * 60 + ss - (b - a); }
+
+  /** ⚑ S386 — beside the film: its label (as she sent it; the campaign cut and its length; as the platform publishes it)
+   *  and the platform's own list of what it took, a row named the moment it selects each thing, in the house's red */
+  private drawCutLog(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, video: NonNullable<SubmissionDef['video']>): void {
+    const kinds: CutKind[] = [];
+    for (const c of this.items(SUBMISSIONS[0])) for (const k of c.film ?? []) if (this.cutValue(k) > 0 || this.cutNow()?.kind === k) kinds.push(k);
+    const label = this.storyDone ? video.publishedLabel ?? '' : kinds.length ? (video.editLabel ?? '').replace('{d}', clockOf(this.filmSeconds())) : video.sentLabel ?? '';
+    studioFont(ctx, 11, true); ctx.fillStyle = !this.storyDone && !kinds.length ? ERA3.memberSpine : ERA3.titleText;
+    const lead = Math.round(textPx(11, 'e3')) + 3;
+    let yy = y;
+    for (const ln of wrapText(ctx, label, w)) { ctx.fillText(ln, x, yy); yy += lead; }
+    yy += 6;
+    const small = Math.round(textPx(10, 'e3')) + 2, now = this.cutNow();
+    for (const k of kinds) {
+      const [what0, how] = video.cutLog?.[k] ?? ['', ''];
+      const what = what0.replace('{from}', clockOf(this.minuteSpan()[0])).replace('{to}', clockOf(this.minuteSpan()[1]));
+      const live = now?.kind === k, made = !live || now.phase === 'hold';
+      if (yy + small * 2 > y + h) break;
+      if (live) px(ctx, x - 4, yy - 2, w + 4, small * 2 + 3, ERA3.alarmBand);
+      studioFont(ctx, 10, true); ctx.fillStyle = ERA3.alarm; ctx.fillText(what, x, yy); yy += small;
+      studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; if (made) ctx.fillText(how, x, yy); yy += small + 4;
     }
   }
 
   /** ⚑ S332 — Vera's own 2014 sentence, as sent, with the cut her mentor's rule made in it, in the same red as Renata's */
-  private drawOwnCut(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
-    const O = vera.ownCut;
+  private drawOwnCut(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, big = false): void {
+    const O = vera.ownCut, head = big ? 17 : 13, top = big ? 18 : 13;   // ⚑ S386: on its own screen it reads larger
     px(ctx, x - 1, y - 1, w + 2, h + 2, ERA3.alarm);
     px(ctx, x, y, w, h, ERA3.white);
     px(ctx, x, y, w, 4, ERA3.alarm);
-    studioFont(ctx, 13, true); ctx.fillStyle = ERA3.alarm;
+    studioFont(ctx, head, true); ctx.fillStyle = ERA3.alarm;
     let yy = y + 12;
-    for (const ln of wrapText(ctx, O.heading, w - 20)) { ctx.fillText(ln, x + 10, yy); yy += 17; }
+    for (const ln of wrapText(ctx, O.heading, w - 20)) { ctx.fillText(ln, x + 10, yy); yy += head + 4; }
     studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk; ctx.fillText(O.meta, x + 10, yy + 2); yy += 20;
     px(ctx, x + 10, yy, 3, h - (yy - y) - 32, ERA3.memberSpine);
     const runs: TextRun[] = O.runs.map(r => ({ text: r.t, state: r.cut ? 'cut' : 'kept' }));
-    let size = 13, lines: TextRun[][] = [];
+    let size = top, lines: TextRun[][] = [];
     for (; size >= 10; size--) { studioFont(ctx, size); lines = this.wrapRuns(ctx, runs, w - 34); if (lines.length * (size + 5) <= h - (yy - y) - 36) break; }
     lines.forEach((line, i) => {
       let lx = x + 22; const ly = yy + 2 + i * (size + 5);
@@ -3266,6 +3523,10 @@ export class GraceQueueLite {
     if (r.id === 'consent-decline') { this.decideConsent(false); return; }
     // R4-04 (S171): Back FROM THE RECORD returns to the job she had open — a finished story
     // keeps its "done" row; only Back to today from the story itself clears it
+    // ⚑ S386 — Renata's story done: the first Back shows Vera's own 2014 cut, on its own screen, before the day goes on
+    if (r.id === 'board-back' && !this.chipReturn && this.storyDone && this.renataOpen() && !this.ownCutShown && this.mode === 'list' && !this.openSurface) {
+      this.ownCutShown = true; this.playing = false; this.bump(); return;
+    }
     if (r.id === 'board-back') { if (!this.chipReturn) this.storyDone = false; this.backToBoard(); return; }
     if (r.id === 'next-story') { this.nextSubmission(); this.bump(); return; }
     if (r.id === 'update-accept') { this.installOffer(); return; }   // S227 — she confirms the platform's update
