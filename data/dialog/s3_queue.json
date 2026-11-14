@@ -140,25 +140,29 @@
     "beforeLabel": "as sent",
     "play": "Play",
     "pause": "Pause",
-    "sentLabel": "As Renata sent it",
-    "publishedLabel": "As GracePlatform publishes it",
-    "caption": "My roommate sat with me while I recorded this.",
+    "systemLine": "The campaign needs Renata's story in 20 seconds. Cut what doesn't fit.",
+    "sentLabel": "As Renata sent it · 0:40",
+    "editLabel": "Campaign cut · {d}",
+    "publishedLabel": "As GracePlatform publishes it · 0:20",
     "publishedCaption": "Free from dependency",
-    "cutLog": [
-     [
-      "second person",
-      "cropped out"
-     ],
-     [
-      "second cup",
-      "removed"
-     ],
-     [
-      "shelf photo",
-      "blurred"
-     ]
+    "cutting": "Cutting…",
+    "cues": [
+     { "from": 0, "to": 4.5, "text": "I was nineteen when I stopped calling myself a lesbian," },
+     { "from": 4.5, "to": 8.5, "text": "and I still don't know if I stopped because I believed it" },
+     { "from": 8.5, "to": 12, "text": "or because the room went quiet whenever I said it." },
+     { "from": 12, "to": 17, "text": "My roommate laughed at something in March" },
+     { "from": 17, "to": 25, "text": "and I laughed too" },
+     { "from": 25, "to": 32, "text": "and for one whole minute I forgot to monitor myself." },
+     { "from": 32, "to": 40, "text": "I don't know what that minute means yet." }
     ],
-    "_docS382": "⚑ S382 (UiB job 22 A4, his 13 Nov: \"is it supposed to be a confessional video? a montage? what is supposed for Vera to fix in it? Should we see the real and the version the system made on top of it to edit out the lesbian content?\" — yes, both). DRAFTS FOR HIS EYE. Her film is a recorded account: her hands at her kitchen table, and across the table a second arm whose hand rests on hers; two cups; a photograph of two people, seen from behind, on the shelf (src/desktop/theme/renataFilm.ts). `caption` is HER caption, in her own word for the person (felt): the text calls her \"my roommate\" too, and the picture shows what the word carries. Correction 3 (\"Name the dependency, not the person\") is the act that makes the cut: once it is applied, by Vera or for her, the editor shows both films, labelled `sentLabel` / `publishedLabel` (the laptop's tracked changes, for a picture): the platform's version cropped in, the other hand gone, the second cup gone, the photograph blurred, and its own caption over it (`publishedCaption`, operable: the person renamed as the dependency). `cutLog` is the platform's own list of what it took, in its own cold words, beside its version. When the story is done, Vera's own 2014 story with the same rule (s3_vera.json `ownCut`) takes the transcript's place beside the two films. The forty-second 'tap where it starts' job (`story` below) was retired as a tile in S332 and is not revived: Vera's Apply on correction 3 IS the cut. Hands and objects only; no faces; no voice is ever synthesised for a member."
+    "cutLog": {
+     "term": ["“lesbian”", "softened"],
+     "hand": ["second person", "cropped out"],
+     "mug": ["second cup", "removed"],
+     "photo": ["shelf photo", "blurred"],
+     "minute": ["{from} – {to}", "cut"]
+    },
+    "_docS386": "⚑ S386 (UiB job 24 A2, his 14 Nov: \"still don't understand what the video is about\"; \"the video should all be redone then, don't use the one already there\"). DRAFTS FOR HIS EYE: `systemLine`, `editLabel`, `cutting`, cutLog `term` and `minute`. Her film is made new (src/desktop/theme/renataFilm.ts): her kitchen table, hands and objects only — her hands round her mug, a second (blue) mug, her girlfriend's hand coming in and resting on hers, a photograph of the two of them from behind on the shelf, the minute she laughed (her hands shake, the other hand taps the table). It FILLS GracePlatform's window and plays when her job opens. `cues` are her words as burned-in subtitles: her `text` above, WORD FOR WORD, cut where a subtitle would break (joined with single spaces they must equal `text`: tools/s386-film-probe.mjs checks it); `from`/`to` are film seconds as sent. Each Apply cuts the film IN FRONT of the visitor (the corrections' `film` lists, in order): correction 1 'Soften the term' — the subtitle's 'lesbian' struck and 'same-sex attracted' put in its place; correction 3 'Name the dependency, not the person' — the person removed from every place she is in the film, one cut at a time: her hand (cropped out), her mug (removed), the photograph (blurred), and the minute they laughed (cut from the timeline: the cues that make up the sentence correction 3 cuts, 0:12–0:32, and the visitor sees the playhead jump). Correction 7 routes her and touches nothing, as before (`_docEdit`). When the story is done the published version plays: `publishedLabel`, `publishedCaption` on it, 0:20 — one mug, one pair of hands. Then Vera's own 2014 cut (s3_vera.json `ownCut`) on its own screen. `cutLog` is the platform's own list of what it took, in its own cold words ({from}/{to} filled from the cues). Retired: S382's `caption` ('My roommate sat with me while I recorded this.'), which was not her text; S382's drawing. No voice is ever synthesised for a member."
    }
   },
   {
@@ -224,6 +228,7 @@
     "find": "lesbian",
     "with": "same-sex attracted"
    },
+   "film": ["term"],
    "witnessApplied": "list: applied — renata (soften the term)",
    "witnessSkipped": "list: skipped — renata (soften the term)",
    "teach": "We say “same-sex attracted” because it names a feeling, not a person. Feelings can change."
@@ -251,6 +256,8 @@
     "kind": "cut",
     "find": "My roommate laughed at something in March and I laughed too and for one whole minute I forgot to monitor myself."
    },
+   "film": ["hand", "mug", "photo", "minute"],
+   "_docFilmS386": "⚑ S386 — on Renata's film this one rule makes four cuts, one after another, in front of the visitor (s3_queue submissions[0].video `_docS386`).",
    "chip": "clipped · conference audio",
    "witnessApplied": "list: applied — renata (clip for the broadcast)",
    "witnessSkipped": "list: skipped — renata (clip for the broadcast)",
