@@ -66,6 +66,7 @@ ARTICLE_COMPANION; this file only says where things are.*
 | `research/love-in-action-resource-booklet_smithsonian-scan.pdf` | the Love in Action booklet scan (Smithsonian) |
 | `docs/reinterp/LINK_PASS_2026-11-13.md` | S384: the link pass — 13 of 14 unlinked sources given checked links, each with its matching passage; the eight places a dossier card says more than its source (for his check) |
 | `docs/reinterp/LEXICON_SOURCES_P7-49_P7-50_2026-11-13.md` | S384: People Can Change's 2004 members' survey (own PDF, 2005 capture) and the LDS Social Services module (2005 capture) read in full; what changed in the Lexicon's Reasons and why |
+| `docs/reinterp/RESEARCH_ROOTS_CAUSES_LIA_2026-11-14.md` | S357cd: the Love in Action Collection's "roots and causes" teaching read properly for the first time (the male booklet re-OCR'd from 1,847 to ~9,000 words): the causal model as taught for gay men, lesbian women and trans people, what the evidence says, the priced marketplace, ethics flags, candidate tape segments, folders still to fetch |
 
 ## 3. Design documents the article cites (the reasoning behind a scene)
 
