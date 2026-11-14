@@ -8,6 +8,17 @@ changed. Every line of display text is a draft for his eye. Brief: `UIB_JOB_24_2
 §8G the ethics flags, §6 and §8F the segments) and `SOURCES_TO_FETCH_2016_2026_2026-11-14.md` (§7, his 14 Nov downloads,
 which serve 2016 and 2026).*
 
+## 0. States
+
+*Added by UiB job 25 (S389). Every version is kept as a research state: nothing listed here is overwritten or deleted
+(his 14 Nov words: "Don't delete the earlier versions, they serve as research states").*
+
+| state | date, job | what | folder (git-ignored) | page | doc | his note on it |
+|---|---|---|---|---|---|---|
+| **v1**, the orientation tape | 13 Nov, job 23 (S385) | "TriedPath Fellowship · Orientation · Tape 1 of 3: Your First Steps", 74 s: the programme's procedure on a felt board | `output/orientation-tape/` | https://claude.ai/artifact/6yjAXiFHXLietqp38MFfuK | `ORIENTATION_TAPE_2026-11-13.md` | the content was good, "minus the abusive use of static and noise", but its message was "very similar to the initiation video from the start" |
+| **v2** and **the scripts** | 14 Nov, job 24 (S387) | 1997 "Understanding Your Roots", 3:42.9, a video; 2016 "Heartwood" and 2026 "HEDGE™", scripts and six storyboard frames each | `output/teaching-tapes/1997/`, `2016/storyboard/`, `2026/storyboard/`, `storyboard-src/` | https://claude.ai/artifact/MCXWDErFNWx51FMvzbeSyy | this file, §1–§3 | 1997: "I did like very much the education aspect of the 1997 video … really great job in creating the content based on the documents", but "I do wonder if they need to have some more clear dissonances, and like a contradicting element that helps understand that these theories aren't actually truthful." 2016 and 2026: "they both looked really good, would love to see them". 2003: "it has the new you, so it makes sense to not have a video". The music: "You can make new music, like it wasn't that great" |
+| **v3** and **the two videos** | 14 Nov, job 25 (S389) | 1997 v3 (v2 + the record's cards + music made in code), 2016 "Heartwood" and 2026 "HEDGE™" as videos, each with a short tape for the room's TV | `output/teaching-tapes/1997-v3/`, `2016/video/`, `2026/video/` | PAGE: (orchestrator adds) | this file, §4–§8 | — (waits on his eye) |
+
 ## The three tapes
 
 One tape for each room, each a teaching tape of its period that explains "why you are like this" the way the
@@ -855,3 +866,425 @@ shows or names Maya.
 8. The parent's typed line "She says this is who she is", and the course calling Maya "her" and "daughter" throughout.
 9. Whether this tape should play in Maya's room at all (the room already holds both halves of the collapse, in Dad's two
    messages), or only on the Close's dossier.
+
+## 4. 1997 v3: "Understanding Your Roots", with the record's cards and music made in code
+
+*UiB job 25 (S389), helper A1. It grew from §1 (v2) and keeps everything v2 had: the script (§1.4, unchanged, every
+line and source), the felt board, the four cheap commercials, the line-21 captions, the little static, the collapse
+(§1.6). What is new: one silent card per lesson from the piece's own record (§7), and new music made in code (§8). v2's
+folder is untouched.*
+
+### 4.1 Files
+
+In `output/teaching-tapes/1997-v3/` (git-ignored):
+
+- `teaching_tape_1997_v3.mp4`: **4:08.5** (248.5 s; v2 was 3:42.9), 1920×1080 with the 4:3 picture pillarboxed, 30 fps,
+  H.264 high, AAC stereo 160k, 100.3 MB, **−19.0 LUFS** integrated, true peak −1.4 dBTP.
+- `teaching_tape_1997_v3_light.mp4` = `web/full.mp4`: 720×540 (the 4:3 picture alone; captions and cards inside it),
+  H.264 main, yuv420p, a keyframe every 2 s, +faststart, AAC mono 96k, **13.5 MB**, −19.1 LUFS.
+- `short/teaching_tape_1997_v3_short.mp4` (1920×1080) and `web/short.mp4` (720×540, **3.7 MB**, −19.2 LUFS): the short
+  tape, **59.5 s** (§4.4), with `short/short.srt|.vtt`.
+- `segments/` (and `segments/light/`): one file per lesson, per commercial, the title and the close, each lesson with its
+  card inside it, each with its `.srt` and `.vtt`; `segments.json` lists them with each card's times inside its file.
+- `cards/` (and `cards/light/`): one file per card stretch (the 4.1 s hold: pause, card, pause).
+- `captions.srt`, `captions.vtt` (real time; no caption line during a hold); `contact_sheet.jpg` and `frames/` (twelve
+  frames decoded from the delivered MP4, four of them cards).
+- `web/`: `full.mp4`, `short.mp4`, `chapters.json`, `sources.json` (the interface for the TVs, Part B); `READY`.
+- `music/`: the two 30 s candidates (`1997_candidate1_30s`, `…candidate2…`, WAV and MP3) and the four jingles.
+- `tts/`: v2's 42 narrator and announcer masters, copied (not re-rendered); `source/`: the build (§4.5).
+
+### 4.2 What changed from v2
+
+1. **Six cards** (§7): Parts 1–5 each hold at their central claim; the collapse holds after its line. Part 6 has no card:
+   its thesis ("a series of decisions") is answered twenty seconds later by the collapse and the collapse's card, and a
+   card just before the collapse would take its place.
+2. **The hold is a VHS pause** (`source/tape.js`, `vhsPause`): the frozen field (every other line doubled), a slight
+   vertical jitter, two noise bars that crawl and flicker. Silent: the mix is built in tape time and each hold is spliced
+   in as silence (`source/audio.py`). The captions clear for the pause. The card is drawn on the output frame, after the
+   tape's softness, so it stays sharp: the record is not on the tape.
+3. **Three of Lamby's bubbles move 0.25–0.3 s later** (Parts 2, 3, 5), so no bubble is arriving at the moment the tape
+   pauses (a frozen frame with "Go play with the boys!" half-placed beside the record's card read as Lamby speaking for
+   the record). Those three blocks are 0.3–0.35 s longer.
+4. **The music** is made in code (§8): the lesson bed, candidate 1 "Fellowship Hall", and one local-TV jingle per
+   commercial. No loop from the earlier tapes is used anywhere in v3.
+5. Nothing else: the script, the pictures, the voices (v2's masters), the static and the eject are v2's.
+
+### 4.3 The running order (real time, the holds included)
+
+| file | time | length | kind | chapter | card inside |
+|---|---|---|---|---|---|
+| `segments/00_intro.mp4` | 0:00.0–0:17.4 | 17.4 s | title | Understanding Your Roots | — |
+| `segments/01_p1.mp4` | 0:17.4–0:45.5 | 28.1 s | lesson | Part 1 · Homosexual by Three? | hold 0:40.5, WHAT WAS FOUND |
+| `segments/02_c1.mp4` | 0:45.5–0:55.8 | 10.3 s | commercial | Ad · TriedPath Pocket Library | — |
+| `segments/03_p2.mp4` | 0:55.8–1:21.4 | 25.7 s | lesson | Part 2 · The Power of Words | hold 1:14.4, THE SAME SOURCE SAYS |
+| `segments/04_p3.mp4` | 1:21.4–1:48.5 | 27.0 s | lesson | Part 3 · The Safe Years | hold 1:41.3, THE SAME SOURCE SAYS |
+| `segments/05_c2.mp4` | 1:48.5–1:58.8 | 10.3 s | commercial | Ad · Roots & Recovery | — |
+| `segments/06_p4.mp4` | 1:58.8–2:32.5 | 33.7 s | lesson | Part 4 · Comparison = Admiration = Envy | hold 2:18.3, THE SAME SOURCE SAYS |
+| `segments/07_c3.mp4` | 2:32.5–2:43.0 | 10.5 s | commercial | Ad · Un-Walk Steps | — |
+| `segments/08_p5.mp4` | 2:43.0–3:14.3 | 31.3 s | lesson | Part 5 · Your Memory Tapes | hold 3:07.2, WHAT WAS FOUND |
+| `segments/09_c4.mp4` | 3:14.3–3:26.9 | 12.6 s | commercial | Ad · Women Relating to Men | — |
+| `segments/10_p6.mp4` | 3:26.9–3:47.0 | 20.0 s | lesson | Part 6 · A Series of Decisions | — |
+| `segments/11_x.mp4` | 3:47.0–4:08.5 | 21.5 s | collapse | For Further Study | hold 3:59.6, WHAT WAS FOUND |
+
+### 4.4 The short tape (59.5 s, for the room's TV)
+
+The brief's order (A7): the title (2.4 s) → Part 1 "Homosexual by Three?" with its card → C1, the TriedPath Pocket Library
+→ the collapse with its card. Cut from the master (`source/cut_short.py`):
+
+1. **The title, 2.4 s**: the CG title as the deck starts, rendered again **without captions** and laid over the voiceless
+   mix (`work/mix_novoice.wav`), because the narrator's title line (7 s) would not fit.
+2. **Part 1, whole**, with its card; only the last 0.5 s after the card is trimmed.
+3. **C1, the Pocket Library**, its last 0.57 s trimmed.
+4. **The collapse**, with its card; 1.6 s of the still page before the eject and 0.4 s of the deck's blue are trimmed.
+
+Why this commercial: the collapse reads booklet one of that same library ("For further study: the Pocket Library,
+booklet one"), so the short tape sells the booklet and then reads it. In the short, the collapse opens on Part 6's board
+(the stage cards stamped DECISION) for about 2 s before the camera goes to the booklet, and the part card A SERIES OF
+DECISIONS returns over the page, as in the full tape: the short's viewer meets the thesis only as that title (for his eye).
+
+### 4.5 How to rebuild
+
+From `output/teaching-tapes/1997-v3/source/` (Chrome, ffmpeg, the repo's `node_modules`, the project `.venv`; nothing
+touches the network):
+
+```sh
+.venv/bin/python music.py                    # ../music/: the two candidates and the four jingles (seed 1997)
+python3 build_timeline.py                    # timeline.js/.json with the holds; captions (real time); per-segment captions
+python3 check_captions.py                    # captions vs. the real TTS lengths; nothing into a hold
+.venv/bin/python audio.py                    # ../work/mix.wav and mix_novoice.wav (tape time + the holds as silence), −19 LUFS
+node render.mjs --preview 42.5,103,240.5     # stills in ../work/preview/ (real time)
+node render.mjs --full                       # ../work/master.mkv (~9 min)
+node render.mjs --full --to 2.4 --nocaps --out title_nocaps.mkv   # the short tape's title
+sh encode.sh                                 # the full MP4, the light MP4 = ../web/full.mp4
+python3 cut_segments.py                      # ../segments/ (+ light/) and ../cards/ (+ light/)
+python3 cut_short.py                         # ../short/ and ../web/short.mp4
+python3 contact_sheet.py                     # ../frames/, ../contact_sheet.jpg
+python3 make_web.py                          # ../web/chapters.json, ../web/sources.json
+```
+
+(`.venv` is the project venv, `/Users/sergiogalvaoroxo/update-available-uib/.venv`.) v2's `make_doc.py` and
+`make_page.py` are kept in the copy with the music credit corrected; they now write to `work/` only and must never be
+pointed at this file again: §1–§3 are research states.
+
+### 4.6 For his eye (1997 v3)
+
+1. **The cards' lines and heads** (§7.2): two WHAT WAS FOUND from the APA report on family theories and on change, three
+   THE SAME SOURCE SAYS from the programme's own booklet and class manual, and the collapse's card on choice.
+2. **Part 3's head.** THE SAME SOURCE SAYS ("squeeze every person into that particular box", the same booklet that
+   pins the labels on the boy). WHAT WAS FOUND would be stronger (APA p. 73: "no research evidence that childhood gender
+   nonconformity and adult homosexuality are … necessarily sequential"), but it does not fit two lines without changing
+   its meaning, so it is not a card.
+3. **Part 6 has no card** (the collapse answers it); **the collapse's card** follows "Something they never chose" with
+   "beyond conscious choice". Too much, or the right seal?
+4. **"NOT A FINDING" under WHAT WAS FOUND** (Part 5 and the collapse): the status word is the Lexicon's for the claim (a
+   series of decisions / habit: "NOT AN EMPIRICAL CLAIM for the moral half"). Does a first-time viewer read it as the
+   verdict on the claim, as intended?
+5. **The VHS pause**: the frozen field, the jitter and the two noise bars. Too much static after his v1 note, or right?
+6. **Length 4:08.5** (under 4:15). *Could cut:* one card (Part 2's is the weakest), or 4 s of the title block.
+7. **The short tape**: Part 1 and C1 as proposed; the collapse opens on Part 6's board, which the short's viewer has not
+   seen (§4.4).
+8. **The music** (§8): I could not listen. Please check the bed sits well below the voice, the jingles sound like cheap
+   local spots, and the C2 wow and flutter.
+9. **The bubbles moved** 0.25–0.3 s (§4.2, 3).
+
+
+## 5. 2016 "Heartwood" as a video — see the 2016 section (folded in by the orchestrator)
+
+## 6. 2026 "HEDGE™" as a video
+
+*UiB job 25 (S389), helper A1. It grew from §3 (the script and storyboard he liked: "they both looked really good, would
+love to see them"). Every line of §3.4 is in it, with its source; every frame of §3.5 (G1–G6) is in it, animated; the
+shots §3.5 lists but did not frame are drawn. New: the record's cards (§7), the music (§8), the spoken lesson titles, and
+the house shot that opens each lesson. `2026/storyboard/` is untouched.*
+
+### 6.1 Files
+
+In `output/teaching-tapes/2026/video/` (git-ignored):
+
+- `teaching_tape_2026_hedge.mp4`: **3:37.2** (217.2 s), 1920×1080, 30 fps, H.264 high, AAC stereo 160k, 179.9 MB,
+  **−19.0 LUFS** integrated.
+- `teaching_tape_2026_hedge_light.mp4` = `web/full.mp4`: 1280×720, H.264 main, yuv420p, a keyframe every 2 s, +faststart,
+  AAC mono 96k, **14.2 MB**, −19.1 LUFS. (A light denoise before the encode keeps the film grain from eating
+  the bits.)
+- `short/teaching_tape_2026_hedge_short.mp4` (1920×1080) and `web/short.mp4` (1280×720, **3.5 MB**,
+  −18.0 LUFS): the short tape, **59.4 s** (§6.5), with `short/short.srt|.vtt`.
+- `segments/` (+ `light/`), `cards/` (+ `light/`), `captions.srt|.vtt`, `contact_sheet.jpg` + `frames/` (twelve frames
+  decoded from the MP4, three of them cards), `web/` (`full.mp4`, `short.mp4`, `chapters.json`, `sources.json`), `music/`
+  (the two candidates), `tts/` (the 27 masters, the manifest and the measured speech extents), `source/` (§6.7).
+
+### 6.2 What was built, and where it departs from §3
+
+**The look, as §3.2:** 2.39:1 letterbox; night, rain, the teal-and-amber grade, film grain; AI-gloss "stock footage" drawn
+in the piece's palette, never real stock and never a face (an empty swing, the house with one lit window, a hand peeling a
+label, a hand on a deadbolt, a router's lights going out, a phone lifted away and a flip phone set down, a kitchen at night);
+huge condensed capitals burned in word by word, one word boxed in red; the FREE WEBINAR · LIVE IN countdown in the corner of
+every course frame; "Dramatisation. Voices are actors." and each lesson's fine print in the bottom bar; the 2016 tree
+re-painted from the same code, scanned, tilted on black glass and stickered; the vertical clip with its blurred copy; the
+UNDER 18 / 18 AND OVER slide; Ask Hedge over the dark kitchen with the 60-minute card and the 40-minute booking.
+
+**Drawn here for the first time** (§3.5 listed them as shots, unframed): the sting (a hedge grows into the letters HEDGE™);
+the swing; Lesson 3's shelf of identical jars, one label peeled away (it is blank, as §3.4's care row asks: no name, no
+"Hello, my name is", no deadname); Lesson 4's lock, router, phones and a tally of texts on a notepad, then the porch with the
+hedge; The Prayer Wall (lit tiles with a candle and an invented girl's first name each, never Maya, scrolling; "Add her
+name"; TAKE THE PLEDGE); GateKeep™ (a glossy router, a chrome padlock slams on, a phone goes grey "Blocked by GateKeep",
+a hand closes on a key tagged PASSWORD: YOU, the end slate "from $121 a year · billed yearly"); the course's card after
+"seven to ten years" (MONTHLY GROUP · FREE CALL · ASK HEDGE 24/7, §3.4 at 3:10); the end card (the countdown reaches zero:
+LIVE NOW · JOIN; the hedge has covered the house; one window still lit).
+
+**Departures from §3, each a taste call (§6.8):**
+1. **The house shot opens every lesson** (3 s), the hedge a little higher each time, over the host reading the lesson's
+   title ("Lesson one. The same tree."): §3.2's "a glossy hedge that grows a little in every lesson", made a recurring shot.
+2. **Six new spoken lines**: the host's title for the sting ("Hedge. A course for parents, in a confused age.") and for each
+   lesson. Invented (the course's form); everything else spoken is §3.4's, word for word.
+3. **The countdown ticks in real seconds** and jumps between lessons (minutes vanish at every cut), reaching 00:00:00 three
+   seconds into the end card. §3.5's storyboard values were stills.
+4. **The parent's message, Ask Hedge's reply and the memory chip type themselves** in real time; "Book my free call" is
+   pressed, and the 60-minute card is followed by the 40-minute booking.
+5. **Length 3:37.2**, not the brief's "about 3:50–4:10": the measured speech is 82 s, and the rest is pictures, captions,
+   the three ads and the three cards. Stretching it further would mean silence for its own sake (§6.8, 6).
+
+### 6.3 The running order (real time, the holds included)
+
+| file | time | length | kind | chapter | card inside |
+|---|---|---|---|---|---|
+| `segments/00_intro.mp4` | 0:00.0–0:25.6 | 25.6 s | title | HEDGE™ · Cold Open | — |
+| `segments/01_l1.mp4` | 0:25.6–0:52.4 | 26.8 s | lesson | Lesson 1 · The Same Tree | hold 0:44.2, THE SAME SOURCE SAYS |
+| `segments/02_a1.mp4` | 0:52.4–1:05.4 | 13.0 s | commercial | Ad · LAST LINE LIVE | — |
+| `segments/03_l2.mp4` | 1:05.4–1:29.1 | 23.8 s | lesson | Lesson 2 · Contagion | hold 1:12.4, WHAT WAS FOUND |
+| `segments/04_l3.mp4` | 1:29.1–1:49.7 | 20.5 s | lesson | Lesson 3 · Don't Say the Word | — |
+| `segments/05_a2.mp4` | 1:49.7–2:01.7 | 12.0 s | commercial | Ad · The Prayer Wall | — |
+| `segments/06_l4.mp4` | 2:01.7–2:21.7 | 20.1 s | lesson | Lesson 4 · Close the Gates | — |
+| `segments/07_a3.mp4` | 2:21.7–2:32.7 | 11.0 s | commercial | Ad · GateKeep™ | — |
+| `segments/08_l5.mp4` | 2:32.7–3:03.3 | 30.5 s | collapse | Lesson 5 · When She Is 18 | hold 2:48.5, WHAT WAS FOUND |
+| `segments/09_l6.mp4` | 3:03.3–3:27.8 | 24.5 s | lesson | Lesson 6 · Ask Anytime | — |
+| `segments/10_end.mp4` | 3:27.8–3:37.2 | 9.4 s | credits | LIVE NOW | — |
+
+### 6.4 The words added to §3.4 (each a draft for his eye; sources as §3.4 unless marked)
+
+| where | who / what | line | source |
+|---|---|---|---|
+| the sting | HOST | Hedge. A course for parents, in a confused age. | the course's title (§3.4 0:00); invented reading |
+| each lesson's house shot | HOST | Lesson one. The same tree. · Lesson two. Contagion. · Lesson three. Don't say the word. · Lesson four. Close the gates. · Lesson five. When she is eighteen. · Lesson six. Ask anytime. | the lesson titles of §3.3; invented reading |
+| Lesson 2 | SCREEN | ✓ SHARED · 125 FAMILIES | invented, after §3.4's 5 → 25 → 125 |
+| Lesson 4 | SCREEN | a notepad headed TEXTS, tally marks | ERLC14 pp. 127–128 (counting texts, SRC §7A5), as §3.4 2:19 |
+| The Prayer Wall | SCREEN | THE PRAYER WALL · every name, prayed for by every member, every day · ✓ prayed for today · Add her name · TAKE THE PLEDGE · invented first names (girls' names only; never Maya, never a deadname) | SH-P (prayed for by all the members at least once a day; Take the Pledge), as §3.6 |
+| GateKeep™ | SCREEN | Lock the gates. · reports to you, not to them · Blocked by GateKeep · PASSWORD: YOU · from $121 a year · billed yearly | IDS25 pp. 21–22, as §3.6 |
+| Lesson 5 | SCREEN | HEDGE™ · WHAT NOW: MONTHLY GROUP (parents only · free) · FREE CALL (with a real coach) · ASK HEDGE 24/7 (here all night) | LT§7A1, as §3.4 3:10 |
+| the end card | SCREEN | LIVE NOW · JOIN · HEDGE™ · Free. Donor-supported. | as §3.4 3:42 |
+| the ads | SCREEN | Ad · 0:12 · Sponsored · HEDGE WILL CONTINUE AFTER THIS MESSAGE | platform chrome, invented |
+
+The spoken captions are burned in in the 2020s auto-caption style (short chunks, the word being spoken lit in the 2016
+note's yellow, `CAL_2016.note`); for the two lines a big caption says at the same moment (Lesson 2's "Share this lesson
+with five families", Lesson 5's "The liberty to make their own choices") the small caption gives way. The `.srt`/`.vtt`
+carry every spoken line.
+
+### 6.5 The short tape (59.4 s, for Maya's room)
+
+The brief's order (A7): the title → Lesson 1 "The Same Tree" with its card → GateKeep™ → the collapse with its card.
+Cut from the master (`source/cut_short.py`):
+
+1. **The title, 2.8 s**: the sting (the hedge grows into HEDGE™) over the voiceless mix; the host's title line would not fit.
+2. **Lesson 1** from the scanned tree on: the stickers, the host's two lines, the card, SAME ROOTS. NEW NAME. (22.8 s). The
+   house shot and the spoken lesson title are left out; the on-screen tag names the lesson.
+3. **GateKeep™** (from $121 a year), its last 0.9 s trimmed (10.1 s).
+4. **Lesson 5** from the slide on: UNDER 18 fills, the collapse, the card, "She's eighteen now", "seven to ten years" and the
+   start of 7–10 YEARS (23.7 s). The house shot, the spoken title and the course's closing card are left out.
+
+Why GateKeep: it sells a minors' tool to a parent; the collapse's own sentence ("young adults will have the liberty to make
+their own choices") makes it useless for Maya at 18. The short tape loses the hedge-over-the-house motif and the front door
+(for his eye).
+
+### 6.6 The laws, checked
+
+- **No real names, no faces, no testimony, no slurs:** none. Every hand is a silhouette; no face is drawn anywhere; the
+  parent's voice is a dramatisation ("Voices are actors"); no ministry, person or vendor is named on screen (sources only in
+  the script table and `web/sources.json`).
+- **Invented marks only:** HEDGE™, Ask Hedge, LAST LINE LIVE, The Prayer Wall, GateKeep™.
+- **The clinical debate is never satirised:** the course never touches a clinic (his 7 Nov ruling); the one card that touches
+  the debate (Lesson 2) shows DISPUTED and the study's own correction, no verdict. Fear of medical transition does not appear
+  (it may return only as the campaign's tactic, at the Close, his 10 Nov framing). The swinging hospital door (§3.10, 7)
+  stays out.
+- **No death or suicide figures, no named country, no map of bans:** none.
+- **Satire only inside the programme's self-presentation, and it collapses:** the course's own grammar is the over-the-top
+  (the countdown, the red word, the share counter, the prayer wall, the padlock), and its own source collapses it (§3.7).
+- **Every line cites a document and a page:** §3.4, §6.4, §7.2.
+
+### 6.7 How to rebuild
+
+From `output/teaching-tapes/2026/video/source/` (Chrome, ffmpeg, the repo's `node_modules`, the project `.venv`):
+
+```sh
+python3 make_manifest.py                     # tts_manifest.json (27 lines, apparatus only)
+.venv/bin/python tools/tts/render.py --manifest output/teaching-tapes/2026/video/source/tts_manifest.json --all   # from the repo root
+.venv/bin/python measure.py                  # timing_raw.json
+.venv/bin/python music.py                    # ../music/ (seed 2026)
+python3 build_timeline.py                    # timeline.js/.json (tape time + the holds), captions (real time)
+.venv/bin/python audio.py                    # ../work/mix.wav, mix_novoice.wav, −19 LUFS
+node render.mjs --preview 44.5,75,170        # stills (real time)
+node render.mjs --full                       # ../work/master.mkv (~7 min)
+sh encode.sh                                 # the full MP4; the light MP4 = ../web/full.mp4
+python3 cut_segments.py && python3 cut_short.py && python3 contact_sheet.py && python3 make_web.py
+```
+
+The drawing code is the job 24 storyboard's (`common.js`, `set2016.js`, and `f2026.html`'s functions, copied into
+`hedge.js` and animated); the 2016 tree is re-painted from the same code each render and scanned.
+
+### 6.8 For his eye (2026)
+
+1. **The look in motion:** campaign film, letterbox, night, the red word, the countdown, the growing hedge. Over the top
+   enough, or too much?
+2. **The three cards** (§7.2): Lesson 1 THE SAME SOURCE SAYS ("…no one is certain what causes gender confusion", DISPUTED);
+   Lesson 2 WHAT WAS FOUND (the 2019 correction, DISPUTED, the clinical debate unresolved); the collapse WHAT WAS FOUND (the UN
+   report on "gender ideology", NOT A FINDING). *Option for Lesson 2:* "…to determine if what is described here as
+   rapid-onset gender dysphoria (ROGD) will become a formal diagnosis" (the same page), if he wants both readings inside the
+   quote itself.
+3. **No card in Lessons 3, 4 and 6** (§7.2).
+4. **The house shot at every lesson** and **the spoken lesson titles** (§6.2, 1–2).
+5. **The voices:** host F4, parent M4, the ads M2. I checked them by length and level only. Listen for "Hedge", "full-court",
+   "Gate Keep" and whether the parent sounds like a dramatisation.
+6. **Length 3:37** against the brief's 3:50–4:10. *Could add,* if he wants it longer: a held beat on each house shot, a longer
+   outbreak, the ads at the storyboard's lengths. *Could cut,* if long: the Prayer Wall.
+7. **The Prayer Wall's names** (invented girls' names) and the "Add her name" field.
+8. **The jar scene** (the label peeled is blank; the jar goes back among the labelled ones).
+9. **The short tape** (§6.5): Lesson 1 and GateKeep as proposed; the hedge motif and the front door are not in it.
+10. **The music** (§8): I could not listen. The hard cuts to silence on the big captions; the clock alone after the collapse.
+11. **Fonts:** macOS system fonts in a draft video (§8.5).
+
+
+## 7. "The record answers": every card of 1997 and 2026
+
+*His ask (14 Nov): "some more clear dissonances, and like a contradicting element that helps understand that these
+theories aren't actually truthful." One device, the same in all three tapes (the 2016 cards are in §5).*
+
+### 7.1 The card, once
+
+The piece's own record style, the Close's, never the tape's: the RECORD palette (`src/desktop/theme/witness.ts`) and
+Fixedsys Excelsior, drawn only at 32 px and 48 px. One panel, 1440 px wide, left edge x = 240, bottom at y = 900 on the
+1920×1080 frame (inside the 2026 letterbox's picture too), fill `#0d0d1a`, 2 px border `#333344`, padding 40. The head in
+`#556677` capitals; the status in a 2 px `#aabbcc` box, the Lexicon's word as the Lexicon shows it (`shortStatus` in
+`src/room/lexicon.ts`: NOT SUPPORTED → NOT SUPPORTED, CONTESTED → DISPUTED, NOT AN EMPIRICAL CLAIM → NOT A FINDING); the
+quote at 48 px, at most two lines, in curly quotes; the source at 32 px. No animation, no voice, no sting, no Lamby, no
+caption line. The tape holds in its own way (1997: a VHS pause; 2026: a hard freeze), silent; the card cuts in 0.3 s
+after the end of the claim's spoken sentence, holds 3.5 s, cuts out; the tape resumes 0.3 s later. One renderer for both
+of my tapes: `source/record_card.js` (it refuses a quote that needs three lines). At most one card per lesson.
+
+### 7.2 The cards
+
+Every quote below was read on the page image itself (rendered from the PDF and read, not only the OCR), and the page is
+given as printed, with the PDF page beside it.
+
+| tape | time (hold) | lesson | head | status shown (data) | the Lexicon row | the line | source on the card · page checked | why that head |
+|---|---|---|---|---|---|---|---|---|
+| 1997 | 0:40.5 | Part 1 · Homosexual by Three? (after "But the roots may all be in place.") | WHAT WAS FOUND | NOT SUPPORTED (NOT SUPPORTED) | `reasons.men[0]` a distant father; `men[1]` an enmeshed mother | “Theories that certain patterns of family relationships cause same-sex sexual orientation have been discredited” | APA Task Force report (2009), p. 73 · printed p. 73 = PDF p. 81 of the report | The triangle is a family-pattern theory, and this is the Lexicon row's CLAIM side word for word. The handbook's own crack ("real or only perceived") is already spoken in the lesson and given to Lamby, so the outside record is the stronger answer. |
+| 1997 | 1:14.4 | Part 2 · The Power of Words (after "Words to fear close it.") | THE SAME SOURCE SAYS | NOT SUPPORTED (NOT SUPPORTED) | `men[0]` a distant father | “There is a tremendous lack of agreement on what exactly causes homosexuality.” | Exodus booklet PR-02 (1993), p. 1 · printed p. 1 = PDF p. 2 (B2 F12) | Part 2 is taught from PR-02 itself; its first page admits there is no agreement on causes, then the booklet teaches one. The APA line is used in Part 1. |
+| 1997 | 1:41.3 | Part 3 · The Safe Years (after "That must be who I am.") | THE SAME SOURCE SAYS | NOT SUPPORTED (not supported as a cause) | `men[2]` peer rejection, childhood gender nonconformity | “It is wrong to draw up one pattern and then try to squeeze every person into that particular box.” | Exodus booklet PR-02 (1993), p. 2 · printed p. 2 = PDF p. 3 (B2 F12), printed beside the booklet's thesis | The labels have just been pinned on the boy; the same booklet says not to box people. WHAT WAS FOUND would be stronger (APA p. 73 on childhood gender nonconformity), but it does not fit two lines honestly (§4.6, 2). |
+| 1997 | 2:18.3 | Part 4 · Comparison = Admiration = Envy (after "At puberty, the envy becomes eroticized.") | THE SAME SOURCE SAYS | NOT SUPPORTED (NOT SUPPORTED) | `men[6]` envy | “The included factors and the point at which it develops is open to speculation.” | Steps Out class manual (Love in Action, c. 1994), p. 285 · printed p. 285 = PDF p. 308 (B13 F1), the same page as the equation on the board | The class's own manual hedges its equation on the page it prints it. The Lexicon row has no claim-side source on envy itself ("open"), so the programme's own words are the stronger head. |
+| 1997 | 3:07.2 | Part 5 · Your Memory Tapes (after "…until the bulk of it ejects the old.") | WHAT WAS FOUND | NOT A FINDING (NOT AN EMPIRICAL CLAIM for the moral half) | `men[8]` a series of decisions / habit / sin | “…enduring change to an individual’s sexual orientation is uncommon.” | APA Task Force report (2009), p. 3 · printed p. 3 = PDF p. 11 (the executive summary: "These studies show that enduring change…") | The lesson promises that new material will eject the old; this is what the studies of change found. The handbook offers no clean hedge here (its "they can't just stop", PDF p. 141, argues for its own method). |
+| 1997 | 3:59.6 | For Further Study, the collapse (after "Something they never chose.") | WHAT WAS FOUND | NOT A FINDING (NOT AN EMPIRICAL CLAIM for the moral half) | `men[8]` a series of decisions | “Sexual orientation is tied to physiological drives and biological systems that are beyond conscious choice” | APA Task Force report (2009), p. 30 · printed p. 30 = PDF p. 38 | The collapse is already the programme contradicting itself ("something they never chose"); the card adds what was found, in the same word. |
+| 2026 | 0:44.2 | Lesson 1 · The Same Tree (after "Only the fruit has a new name.") | THE SAME SOURCE SAYS | DISPUTED (CONTESTED in the clinical literature) | `reasons.trans[0]` "gender confusion" from family dynamics | “…no one is certain what causes gender confusion.” | The Building Blocks of Gender Confusion (2019), p. 1 · PDF p. 1 (the sentence begins "Aside from living in a fallen world, no one is certain…") | The brief's own example: the lesson's source admits its roots are uncertain, two pages before it lists them. The cold open's fine print carries the same sentence too small to read; the card makes it legible. The row touches the clinical debate, so the status is DISPUTED and the line gives no verdict. |
+| 2026 | 1:12.4 | Lesson 2 · Contagion (after "Then your daughter.") | WHAT WAS FOUND | DISPUTED (CONTESTED; and `trans[7]`: "CONTESTED: parents' reports only; 'not a formal mental health diagnosis' (2019 correction)") | `trans[2]` peer influence, social media, "social contagion"/ROGD; `trans[7]` the "signs" | “Rapid-onset gender dysphoria (ROGD) is not a formal mental health diagnosis at this time.” | Correction (2019) to a study of parents’ reports, PLOS ONE, p. 1 · p. 1 of 7 of the correction notice (PLOS ONE 14(3): e0214157; printable PDF fetched read-only on 14 Nov 2026 and read; not saved in his folder) | The Lexicon row's own CLAIM source and its own words. Both readings in one card: the source line says what the study was (parents' reports, the reading the course leans on), the line what its author corrected ("at this time": no verdict either way). Never "false"; nothing satirised. |
+| 2026 | 2:48.5 | Lesson 5 · When She Is 18, the collapse (after the host reads it twice: "The liberty to make their own choices.") | WHAT WAS FOUND | NOT A FINDING (NOT AN EMPIRICAL CLAIM; the term "gender ideology": political) | `trans[4]` "gender ideology" in schools, media, law | “…so-called ‘gender ideology’, a linguistic formula used symbolically to refer in an accusatory manner…” | UN Independent Expert on SOGI, report A/76/152 (2021), p. 4, para. 9 · printed p. 4/24 | The course's cause, from the cold open on ("a culture swept up by gender ideology"), is the one claim the collapse leaves standing; its own source has just granted the adult her liberty, and the record names the cause a slogan. It touches no clinical claim. The big caption "…THE LIBERTY TO MAKE THEIR OWN CHOICES." stays in the frozen frame, in the letterbox bar below the card. |
+
+**Lessons without a card, and why.** 1997 Part 6 (answered by the collapse twenty seconds later). 2026 Lesson 3, "Don't
+Say the Word" (its claim, "a feeling is not an identity", has no Lexicon row to stamp; its fine-print crack, GiST p. 13
+"…a change in sexual identity with no, or little, change in orientation", is about orientation and would blur a lesson
+about a trans daughter); Lesson 4, "Close the Gates" (a practice, not a causal claim; no Lexicon status); Lesson 6, "Ask
+Anytime" (the front door after the collapse; its give-way, 60 minutes becoming 40, is shown, and a card after the
+collapse would weaken it).
+
+### 7.3 Considered and not used
+
+1. **A second narrator answering back**: the frame never plays, and a voice would sound like the programme.
+2. **Survivor voices**: no testimony.
+3. **A switch to turn the notes off**: the notes are the point, so they always show.
+4. **A sting or a sound under the card**: the hold is silent in all three tapes.
+
+### 7.4 Small corrections found while checking the pages (for whoever keeps the Lexicon sources)
+
+1. **APA 2009's family-pattern sentence is on printed p. 73** (PDF p. 81 of the report). `LEXICON_SOURCES_VERIFIED`
+   S16 and `lexicon.json` `reasons.men[6]` and `men[7]` cite it as "p. 80"; `men[15]` has p. 73. Not changed here (Part A
+   touches no data); flagged for the orchestrator.
+2. **The Steps Out manual prints its equation with dashes** ("Comparison - Admiration - Envy - Inappropriate Response",
+   printed p. 285, PDF p. 308); the "=" signs in the text copy come from the OCR reading the highlighter over the heading. v2's part title uses "=";
+   left as it is (it is the lesson's title on a 1997 board) and noted.
+3. **Building Blocks' sentence begins "Aside from living in a fallen world, no one is certain…"** (p. 1); the 2026
+   storyboard's fine print gives it as a sentence of its own. The card quotes it with the leading ellipsis.
+
+
+## 8. The music and the credits
+
+### 8.1 The credit
+
+**"Music: made in code for this tape by Claude (Anthropic, Opus 5.5)"** — on 1997 v3 and on 2026 (in each `web/chapters.json`
+and `web/sources.json`, in the MP4s' metadata, and on the page). The loops made with Treblo (an AI music tool; §1.9's
+corrected credit) are **not used anywhere** in v3 or in the 2026 video: not in the mix, the sources or the credits
+(checked by `grep -ri treblo` over both `source/` folders: no match). v2's own folder still holds its version, as a
+research state. In the v3 copy of v2's sources, `audio.py`, `make_doc.py`, `make_page.py` and `encode.sh` no longer
+mention "his own loops".
+
+Each tape's music is a small seeded synth in its own `source/music.py` (numpy only): no samples, no outside tracks, no
+vocals, no melody from a real song or hymn. Chords, voice-leading and the short jingle motifs were written for these files.
+**I could not listen to any of it.** I checked it by measurement only: each bar's pitch content against the chord it should
+be (a chroma check), the levels under the voice, clipping and clicks. Measured voice over music and sound, line by line:
+1997, 15–18 dB in the lessons and 10–13 dB in the commercials (breaks are louder); 2026, a median of 16 dB (9 dB under the
+host's title line in the sting, by design; the music ducks a further 5–7 dB while a voice speaks).
+
+### 8.2 1997 (`1997-v3/source/music.py`, seed 1997)
+
+A cheap church-video bed, mono and band-limited like a VHS linear track (about 70 Hz to 7 kHz, a little tape saturation,
+a slow wow; no hiss, after his v1 note), with a small hall.
+
+- **Candidate 1, "Fellowship Hall"** (the tape uses it, under the title and every lesson): F major, 76 bpm. A soft
+  two-operator FM electric piano playing the church pianist's broken chord (1-5-8-10-8-5-8-5 in eighths), a warm detuned pad,
+  a soft bass. Four chords: F | B♭/F | Dm7 | Csus4–C (every second cycle Gm7–C).
+- **Candidate 2, "Morning Study"**: D major, 66 bpm. Pad forward; rolled e-piano chords on beat one; a small FM bell on chord
+  tones. D | Bm7 | Gmaj7 | Asus4–A.
+- **The four jingles** (one per commercial: an intro hit with a 4–5 note motif, a two-bar loop I | IV V under the
+  announcer, a button at the end): C1 Pocket Library, C major, 116 bpm, glockenspiel and a cheap drum box; C2 Roots &
+  Recovery, B♭ major, 104 bpm, FM brass stabs (with the dub-of-a-dub wow and flutter added in the mix, as in v2); C3 Un-Walk
+  Steps, G major, 120 bpm, marimba and claps; C4 Women Relating to Men, A major, 96 bpm, a soft flute line over strings.
+- In the mix: the bed at v2's level (13 dB below the narrator before ducking, about 18 dB below while a voice speaks), the
+  jingles 6 dB louder than the bed, as cheap breaks are; the close has no music.
+
+### 8.3 2026 (`2026/video/source/music.py`, seed 2026)
+
+The campaign film's grammar.
+
+- **Candidate 1, "Last Line"** (the tape uses it): D minor. A drone on D, a heartbeat sub at 62 bpm, string-like swells
+  (seven detuned voices a note, the filter opening with each crescendo) Dm–B♭–F–C over the pedal, rising over each 16 s cycle.
+- **Candidate 2, "Guard"**: C minor, slower and darker: a heartbeat at 54 bpm, a low FM "braam" every 8 s, a glassy high
+  shimmer, swells Cm–Fm–A♭–G.
+- **The clock**: a dry tick each second under the whole course. It keeps going when everything else stops.
+- **The cuts** (in `audio.py`): hard cuts to silence for every big caption (each word lands with a soft low thud, the red
+  word a little harder); in Lesson 5 the strings stop at the collapse and only the clock goes on; the bed returns, lower and
+  without the heartbeat, for the front door (Lesson 6).
+- **The sting** (a low braam, a rising swell into the logo); **LAST LINE LIVE** (a beep each second over a sub pulse and a
+  noise riser: the countdown pulse); **The Prayer Wall** (a soft choir-like pad in F with a small bell); **GateKeep™** (a glossy
+  FM pluck arpeggio in E at 118 bpm, claps, the padlock's metal slam); **the end card** (three countdown beeps, a riser, the
+  LIVE NOW hit).
+
+### 8.4 The candidates (for his ear; each 30 s, at −20 LUFS)
+
+| tape | candidate | file | used |
+|---|---|---|---|
+| 1997 | 1 "Fellowship Hall" | `1997-v3/music/1997_candidate1_30s.wav` / `.mp3` | yes |
+| 1997 | 2 "Morning Study" | `1997-v3/music/1997_candidate2_30s.wav` / `.mp3` | — |
+| 2026 | 1 "Last Line" | `2026/video/music/2026_candidate1_30s.wav` / `.mp3` | yes |
+| 2026 | 2 "Guard" | `2026/video/music/2026_candidate2_30s.wav` / `.mp3` | — |
+
+To swap: in `audio.py`, `variant=1` → `variant=2` (1997: `M.lesson_bed(...)`; 2026: `M.bed(...)`), then rerun `audio.py`,
+`encode.sh`, `cut_segments.py`, `cut_short.py`, `make_web.py` (no re-render of the picture is needed).
+
+### 8.5 The other credits (v3 and the 2026 video)
+
+- **Script, storyboard, animation, sound design, music and edit:** Claude (Anthropic, Opus 5.5), UiB job 25 (S389), for *YOUR
+  UPDATE HAS FAILED* (SurvivingSOGICE, University of Bergen, Center for Digital Narrative). 1997 v3 keeps v2's script,
+  pictures and voices (job 24, S387) and v1's felt Lamby, renderer base and VHS layer (job 23, S385). 2026 reuses the job 24
+  storyboard's drawing code (`storyboard-src/`, S387).
+- **Voices:** build-time Supertonic 3 through `tools/tts/render.py`, `register: apparatus` only. 1997: narrator F1 (0.94),
+  announcer M1 (1.0), v2's masters. 2026: host F4 (0.96), parent M4 (0.92), the ads' announcer M2 (1.02); no other line in the
+  piece uses F4, M4 or M2. Lamby has no voice; Maya and her family have no voice.
+- **The record's face:** Fixedsys Excelsior 3.022 (public domain / CC0; `assets/LICENSES.md`).
+- **Fonts on the 2026 tape** are macOS system fonts rendered into the frames (DIN Condensed, Inter, SignPainter, Neucha,
+  Lato, Playfair Display), as the storyboard; fine for a draft video, a built-in version would use the piece's fonts.
+- **Sources:** §1.4 (1997), §3.4 (2026), §7.2 (the cards).
