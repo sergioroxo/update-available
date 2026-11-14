@@ -1410,7 +1410,7 @@ export class GraceQueueLite {
       view, cutting: now ? { kind: now.kind, phase: now.phase, p: now.p } : null, queue: this.cutQueue.map(q => q.kind),
       cuts: Object.fromEntries((['term', 'hand', 'mug', 'photo', 'minute'] as CutKind[]).map(k => [k, this.cutValue(k)])),
       playT: this.playT, sentT, seconds: this.filmSeconds(), playing: this.playing, minute: this.minuteSpan(), cue: cue?.text ?? null,
-      subtitle: this.subtitleRuns().map(r => r.text).join(''), subtitleRuns: this.subtitleRuns(), frame: this.filmFrame(), rect: this.filmRect
+      timeline: this.timelineNow(), subtitle: this.subtitleRuns().map(r => r.text).join(''), subtitleRuns: this.subtitleRuns(), frame: this.filmFrame(), rect: this.filmRect
     };
   }
 
@@ -2952,13 +2952,9 @@ export class GraceQueueLite {
     const now = this.cutNow(), bw = 44;
     if (now) { px(ctx, x, y, bw, h, ERA3.sysBand); px(ctx, x, y + h - 1, bw, 1, ERA3.glassEdge); }
     else { aero.button(ctx, x, y, bw, h, this.playing ? (video.pause ?? 'Pause') : (video.play ?? 'Play'), { size: 9 }); this.rects.push({ x, y, w: bw, h, id: 'video' }); }
-    const [a, b] = this.minuteSpan(), whole = this.minuteGoneSeconds(), gap = b - a;
+    const [a, b] = this.minuteSpan(), gap = b - a;
     const m = now?.kind === 'minute' ? now : null, k = this.minuteChange();
-    // the track's length now, in sent seconds shown: 40 until the gap closes, then 20
-    const closing = m && m.phase !== 'mark' ? Math.max(0, Math.min(1, (k - 0.6) / 0.4)) : (this.cutValue('minute') >= 1 ? 1 : 0);
-    const total = whole + gap * (1 - closing);
-    const sentT = this.filmSentT();
-    const shownT = sentT < a ? sentT : sentT >= b ? sentT - gap * closing : a;
+    const { shown: shownT, total, closing } = this.timelineNow();
     studioFont(ctx, 10); ctx.fillStyle = ERA3.greyDk;
     const time = `${clockOf(shownT)} / ${clockOf(total)}`, timeW = Math.ceil(ctx.measureText(time).width);
     ctx.fillText(time, x + w - timeW, y + Math.round((h - textPx(10, 'e3')) / 2));
@@ -2976,6 +2972,14 @@ export class GraceQueueLite {
       }
     } else px(ctx, at(a) - 1, ty - 2, 2, 8, ERA3.alarm);   // the join, where the minute was
     px(ctx, at(shownT) - 1, y + 1, 3, h - 2, ERA3.titleText);   // the playhead
+  }
+  /** ⚑ S386 — the timeline as drawn: where the playhead is and how long the track is (0:40, closing to 0:20 as the
+   *  minute's cut is made). Inside the minute only while it is still uncut. */
+  private timelineNow(): { shown: number; total: number; closing: number } {
+    const now = this.cutNow(), [, b] = this.minuteSpan(), gap = b - this.minuteSpan()[0];
+    const closing = now?.kind === 'minute' && now.phase !== 'mark' ? Math.max(0, Math.min(1, (this.minuteChange() - 0.6) / 0.4)) : (this.cutValue('minute') >= 1 ? 1 : 0);
+    const sentT = this.filmSentT();
+    return { shown: sentT >= b ? sentT - gap * closing : sentT, total: this.minuteGoneSeconds() + gap * (1 - closing), closing };
   }
   /** the film's length once the minute is gone, in seconds (0:20) */
   private minuteGoneSeconds(): number { const [a, b] = this.minuteSpan(); const [mm, ss] = (this.renataVideo().duration ?? '0:40').split(':').map(Number); return mm * 60 + ss - (b - a); }

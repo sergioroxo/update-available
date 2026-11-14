@@ -195,6 +195,8 @@ async function run(mode) {
   const h0 = await filmHash(); await wait(1300); const h1 = await filmHash(); f = await film();
   check(mode, 'it moves: the film\'s pixels change as it plays, and the subtitle is the cue at the playhead', h0 !== h1 && !!f.cue && f.subtitle === f.cue, `t ${f.playT?.toFixed(1)} · "${f.subtitle}"`);
   report.drawsPlaying = await draws();
+  await q(() => { const g = window.__graceQueue(); g.playT = 20.3; g.bump(); }); await wait(300); f = await film();
+  check(mode, 'inside the minute, as sent, the timeline follows the film (playhead and time at 0:20 of 0:40)', Math.abs(f.timeline.shown - f.sentT) < 0.01 && f.sentT > 19 && f.timeline.total === 40, JSON.stringify(f.timeline));
   await q(() => { const g = window.__graceQueue(); g.playT = 6; g.bump(); }); await wait(400);   // the other hand on hers (shown, not pressed)
   await shot('film-as-sent');
   const sleeveRect = await targetRect('sleeve'), mugRect = await targetRect('mug'), photoRect = await targetRect('photo');
@@ -251,7 +253,7 @@ async function run(mode) {
   const sleeveR2 = await targetRect('sleeve'), mugR2 = await targetRect('mug'), photoR2 = await targetRect('photo');
   const after = { rose: await count(sleeveR2, '#d4a0a0'), blue: await count(mugR2, '#7fbef0'), photo: await count(photoR2, '#d2607e') };
   check(mode, 'after: no rose sleeve where it lay, no blue cup where it stood, no one in the photograph', after.rose === 0 && after.blue === 0 && after.photo === 0, JSON.stringify(after));
-  check(mode, 'the film is 0:20 now, cropped in, every cut made', f.seconds === 20 && f.frame.crop === 1 && Object.values(f.cuts).every((v) => v === 1), `seconds ${f.seconds} crop ${f.frame.crop}`);
+  check(mode, 'the film is 0:20 now, cropped in, every cut made; the timeline reads 0:06 of 0:20', f.seconds === 20 && f.frame.crop === 1 && Object.values(f.cuts).every((v) => v === 1) && f.timeline.total === 20 && f.timeline.shown >= 6 && f.timeline.shown < 7.5 && Math.abs(f.timeline.shown - f.playT) < 0.01, `seconds ${f.seconds} crop ${f.frame.crop} ${JSON.stringify(f.timeline)}`);
   await shot('c3-made');
 
   // ── correction 7, the story done: the published version, then Vera's own cut on its own screen ──
