@@ -256,3 +256,60 @@ What it teaches, in its words (short quotes; each page checked in the OCR, to be
   2. his answers to §6;
   3. UIB_JOB_26, with A the v4 tapes (video) and B the TVs re-pointed and walked;
   4. v3's page and folders stay untouched, as a research state.
+
+## 8. The TV itself: his notes on job 26 Part B (15 Nov), and the proposal
+
+*Job 26 B (S392, uib/work 34cd6d3a, walked f86a8855; page https://claude.ai/artifact/9gCsG4qd6DbNcBFFPJPZ8c) put the 1997
+TV behind the seat at 122° with Lamby's "The TV is behind you. I'll take you there."; a wall TV with a DVD player for
+Vera; a slim cream 2026 screen on an arm beside the shelf, with the old CRT restored; the margin and captions drawn live
+under each TV. **Held, not merged.***
+
+**His notes, as he wrote them:**
+- "Lamby can take you there on the desktop, but on the headset there are no FADES!!! so no it is not a fade, if needed we
+  need to find a way for the line to appear in the 360º environment."
+- "I specifically talked about this — since the space has a lot of distance we need to find a way to create proximity.
+  So we as a user press on the TV and the frame of the TV with the controllers and the video appears in front of us,
+  like the Gameboy, so we can interact and watch it."
+- "Same with the TV on Vera's room so we don't have a subtitles text 3 times bigger than the video."
+- "So you left the old CRT? and just added screen next to it? that doesn't make any sense — should we just make a Lamby
+  Branded TV from old time and just use that with all the Rooms? maybe that is a good research objective and
+  application, that way it is clear that it is separate from the main narrative … that way we keep Maya's object of the
+  CRT but we just transform it into an object of the time and we add it to the Vera."
+- "At least that, I still need to check the videos."
+
+**The proposal (the orchestrator's view, for his yes):**
+1. **One Lamby TV, the same old-time set in all three rooms:** a programme-branded TV and VCR in one box, in the LambyOS
+   colours, with the lamb on the front.
+   - It makes his own principle visible: the TV is the system's labelling screen, the programme's apparatus, not one of
+     the characters' things.
+   - The same set for thirty years is also the research's finding: the reasons never rotate, they pile up. Same set,
+     same teaching, new tapes.
+   - Maya's shelf CRT becomes the Lamby set. Her object is kept and transformed into an object of the time.
+   - Vera gets the same set, not a wall TV; Daniel the same.
+2. **Proximity, with the Game Boy's grammar (`src/room/heldDevice.ts`, S188/S189: "it comes closer to you to let you
+   play"):**
+   - Press the set, and its frame comes in front of you: the picture big, the controls on the frame.
+   - The margin and captions sit under the picture inside the same frame, sized to the picture (not a panel three
+     times bigger).
+   - Press its body to put it back.
+3. **No turns and no fades.** At each room's moment, Lamby's line appears in front of the visitor wherever they are
+   looking (in the headset too: placed in view, in the 360° room). Then the set comes to them and plays from its start to
+   End of Part 1.
+   - This removes 1997's two 22 s turns (most of job 26's extra time).
+   - It fits the law: the piece takes them there, here by bringing the device to the eye.
+4. **Job 26 B's other work is kept:**
+   - the live margin and captions;
+   - option A's start-to-End-of-Part-1;
+   - the era sites with the whole tape, the break and the sources as text;
+   - the headset fix for facings beyond ±90° (xrComfort), older than job 26: Vera's seat was ~6° off in the headset all
+     along.
+5. **Job 26 B's four open calls,** with the orchestrator's recommendation:
+   - (a) Dismissing Lamby closes the balloon, but the set still comes. *Keep: the system forces, and Lamby only speaks.*
+   - (b) The 2026 margin quotes an opinion piece's title with the word "Craze". *Keep as TAUGHT IN provenance: it is their
+     word, shown as theirs.*
+   - (c) One 2026 break sentence rests on a think-tank analysis. *Keep if it is one the research lists (TNI, RESIST,
+     Forbidden Colours) and is named in the sources.*
+   - (d) The 2022 "TRAUMA" sticker's year comes from contested (B) material. *Change: research §9 keeps B material off
+     the tape. Date it from the programme's own document (Building Blocks 2019, p. 3), so "2019 · TRAUMA".*
+6. Next: his notes on the three videos, then UIB_JOB_27 (the Lamby TV, its proximity and the moments, on top of job 26 B;
+   walked; then job 26 B and job 27 merged together).
