@@ -127,7 +127,7 @@ triggered by a look. The rest is always on the room's TV and on the era's HTML s
 | **C** | **The TV is on, like a TV left on** | the tape runs in the room from the era's start, sound low; the piece turns the visitor to it once for one lesson and one ad | the room feels lived in; the system is always talking | constant texture uploads and draw cost on the Quest; it competes with "one voice at a time" |
 | **D** | **Offered, not taken** | the TV waits, paused, with the label; Lamby offers once to play it | the freest | breaks his rule that everyone sees some part |
 
-**Recommended: A.** It is the honest version of what a tape is, it costs no extra time in the room, and the HTML holds
+**⚑ His choice, 15 Nov: "choose option A".** (Was: recommended A.) It is the honest version of what a tape is, it costs no extra time in the room, and the HTML holds
 the rest and the break. B is the richer choice if the visit can grow by a minute or two per era.
 
 ## 5. Each tape
@@ -234,9 +234,9 @@ What it teaches, in its words (short quotes; each page checked in the OCR, to be
 
 1. **The 2009 APA report.** Is it out of the tapes only, or also out of the Lexicon and the Close? It is a source on 11
    Lexicon rows (S16 in LEXICON_SOURCES_VERIFIED) and in the era sites' data.
-   *Open; until he answers, the Lexicon is left as it is and only the tapes drop it.*
+   *Answered 15 Nov: "you can leave in the lexicon yes". The Lexicon and the Close keep it; only the tapes drop it.*
 2. **What everyone sees.** The tape from its start to the end of Part 1 (one lesson, one ad), then it stops: yes?
-   *He asked "What other options do we have?" → §4a (A, B, C, D; A recommended). Open.*
+   *He asked "What other options do we have?" → §4a. Answered 15 Nov: "choose option A".*
 3. **The break.** The hardness at each tape's end, and the three breaks again at the Close for everyone: yes?
    *Answered 15 Nov: "They should all be at the html." The tapes, their breaks and sources go on each era's HTML site
    (§4).*
