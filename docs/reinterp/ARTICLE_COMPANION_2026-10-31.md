@@ -1118,6 +1118,10 @@ So the piece's "update" re-performs the programmes' own picture of the person. I
 memory tapes" (Part 5). The 2016 tape re-uses the 1993 floppy in a 2016 course, drawn as a Save dialog with no folder
 for "woman" (TEACHING_TAPES §2.4, §5.6). That shows the network re-issuing its old literature under a new look.
 
+**On the 1997 tape v4 (15 Nov), his note:** "Amazing content, bringing in the examples that use computers — so good
+for the article research." The v4 tape opens on the handbook's "Our mind works like a computer" and builds its second
+half on "Displacement" (TEACHING_TAPES §9.1).
+
 **Do not overclaim.** These are three documents from one network, 1993–1995. They are not evidence that the analogy was
 widespread. The piece's metaphor came first, so the article should call this a convergence found after the fact, not
 a source the piece was built from.
