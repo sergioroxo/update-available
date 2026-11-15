@@ -1,80 +1,116 @@
 {
  "tape": "1997",
  "title": "Understanding Your Roots",
- "version": "v4",
- "music": "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)",
- "duration": 269.692,
- "partOneEnd": 72.496,
+ "version": "v5",
+ "music": "Music: made in code for these tapes by Claude (Anthropic, Opus 5.5) — the bed “Open Door” (1997-B); the commercials' jingles are v3's (made in code for this tape, S389)",
+ "duration": 331.542,
+ "partOneEnd": 91.864,
  "chapters": [
   {
    "id": "label",
    "kind": "label",
    "title": "Before you watch",
    "start": 0.0,
-   "end": 8.2
+   "end": 22.867
   },
   {
    "id": "title",
    "kind": "title",
    "title": "Understanding Your Roots",
-   "start": 8.2,
-   "end": 13.657
+   "start": 22.867,
+   "end": 28.666
   },
   {
    "id": "p1",
    "kind": "lesson",
    "title": "Part 1 · How Your Mind Works",
-   "start": 13.657,
-   "end": 45.19
+   "start": 28.666,
+   "end": 62.989
   },
   {
-   "id": "c1",
+   "id": "c0",
    "kind": "commercial",
    "title": "Ad · Mountains of Material",
-   "start": 45.19,
-   "end": 60.145
+   "start": 62.989,
+   "end": 78.543
   },
   {
    "id": "end1",
    "kind": "endcard",
    "title": "End of Part 1",
-   "start": 60.145,
-   "end": 75.796
+   "start": 78.543,
+   "end": 95.164
   },
   {
    "id": "p2",
    "kind": "lesson",
-   "title": "Part 2 · Your Roots",
-   "start": 75.796,
-   "end": 130.787
+   "title": "Part 2 · Your Roots · Birth to Three",
+   "start": 95.164,
+   "end": 123.645
+  },
+  {
+   "id": "c1",
+   "kind": "commercial",
+   "title": "Ad · TriedPath Pocket Library",
+   "start": 123.645,
+   "end": 134.264
+  },
+  {
+   "id": "p2b",
+   "kind": "lesson",
+   "title": "Part 2 · Your Roots · Two to Twelve",
+   "start": 134.264,
+   "end": 152.825
+  },
+  {
+   "id": "c2",
+   "kind": "commercial",
+   "title": "Ad · Roots & Recovery",
+   "start": 152.825,
+   "end": 163.412
+  },
+  {
+   "id": "p2c",
+   "kind": "lesson",
+   "title": "Part 2 · Your Roots · Puberty",
+   "start": 163.412,
+   "end": 176.073
+  },
+  {
+   "id": "c3",
+   "kind": "commercial",
+   "title": "Ad · Un-Walk Steps",
+   "start": 176.073,
+   "end": 187.181
   },
   {
    "id": "p3",
    "kind": "lesson",
    "title": "Part 3 · Displacement",
-   "start": 130.787,
-   "end": 211.445
+   "start": 187.181,
+   "end": 273.585
+  },
+  {
+   "id": "c4",
+   "kind": "commercial",
+   "title": "Ad · Women Relating to Men",
+   "start": 273.585,
+   "end": 286.433
   },
   {
    "id": "x",
    "kind": "collapse",
    "title": "For Further Study",
-   "start": 211.445,
-   "end": 227.142
+   "start": 286.433,
+   "end": 303.172
   },
   {
    "id": "break",
    "kind": "break",
    "title": "What this asked of people",
-   "start": 227.142,
-   "end": 258.092
-  },
-  {
-   "id": "credits",
-   "kind": "credits",
-   "title": "Sources",
-   "start": 258.092,
-   "end": 269.692
+   "start": 303.172,
+   "end": 331.542
   }
- ]
+ ],
+ "fileDuration": 331.533
 }

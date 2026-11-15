@@ -1,12 +1,13 @@
 /**
  * ⚑ S392 (UiB job 26 Part B; S390 before it) — THE THREE TEACHING TAPES: what is on them, and where the visitor stopped.
  *
- * The tapes are Part A's v4 videos (S391): 1997 "Understanding Your Roots", 2016 "Heartwood", 2026 "HEDGE™". Each is ONE
- * tape in two copies on the same timeline: `room` (for the room's TV: no margin and no captions burned in — the piece draws
- * both live, src/room/teachingTv.ts) and `web` (for the era's website at the Close: the margin burned in as a lower strip
- * and the captions burned in). Their chapters, the second where Part 1 ends (`partOneEnd`), the margin's lines, the
- * captions, the sources and the break's words come from data/room/teaching_tapes.json, which tools/teaching-tapes-import.mjs
- * generates from each tape's web/ folder (the piece requests nothing at run time).
+ * The tapes are Part A's videos (v4 S391, v5 S393): 1997 "Understanding Your Roots", 2016 "Heartwood", 2026 "HEDGE™". ⚑ S394
+ * (job 27 B6): ONE copy is shipped, `room` — no margin and no captions burned in. The Lamby set draws both live in the bar
+ * under its picture (src/room/teachingTv.ts), and the era's website at the Close plays the same file with the margin as page
+ * text (the web copy, with the margin burned in, is for the pages and OneDrive only). The chapters, the second where Part 1
+ * ends (`partOneEnd`), the margin's lines (v5: `head` + `text`, the full `source` never on screen), the captions, the
+ * sources, the short break and the long break (`breakLong`, for the site) come from data/room/teaching_tapes.json, which
+ * tools/teaching-tapes-import.mjs generates from each tape's web/ folder (the piece requests nothing at run time).
  *
  * ⚑ OPTION A (his 15 Nov: "choose option A"): once per room the piece takes the visitor to the TV and the tape plays FROM
  * ITS START — the label, the title, Part 1 and the first commercial — and stops by itself at "End of Part 1". The rest is
@@ -25,20 +26,29 @@ export type TapeId = '1997' | '2016' | '2026';
 export type ChapterKind = 'label' | 'title' | 'lesson' | 'commercial' | 'trailer' | 'menu' | 'endcard' | 'collapse' | 'break' | 'credits';
 export interface Chapter { id: string; kind: ChapterKind; title: string; start: number; end: number }
 export type MarginKind = 'TAUGHT_IN' | 'WHAT_IS_KNOWN';
-export interface MarginLine { start: number; end: number; kind: MarginKind; text: string; source: string }
+/** ⚑ S394 — v5's slim margin: `head` (the kind and the short source: "TAUGHT IN — Exodus booklet PR-02 (1993)"), `text` (the
+ *  content line, may be ""), `source` (the full citation: the era site prints it, the screen never does). A v4 line's head is
+ *  its kind's tag ("TAUGHT IN" / "KNOWN"). */
+export interface MarginLine { start: number; end: number; kind: MarginKind; head: string; text: string; source: string }
 export interface Cue { start: number; end: number; text: string }
 export interface FileData { file: string; duration: number; bytes: number; width: number; height: number }
-export interface BreakText { label: string[]; admission: { text: string; source: string }[]; sentences: { text: string; source: string }[] }
+/** the SHORT break as in the tape (v4: label + admission + sentences; v5: label + admission + the bar's one plain line) */
+export interface BreakText { label: string[]; admission: { text: string; source: string }[]; sentences?: { text: string; source: string }[];
+  /** ⚑ S394 — v5: the bar under the admission (the picture carries the quote, the set's bar carries these, during `on`) */
+  barHead?: string; bar?: string; barSource?: string; on?: [number, number] }
+/** ⚑ S394 — the LONG break, for the era site: what the teaching asked of people, pastors and families, every item sourced, and
+ *  every source of the tape (v5's break_long.json; for a v4 tape the import tool makes it from break.json and the sources) */
+export interface BreakLong { title: string; intro: string; sections: { heading: string; items: { text: string; source: string }[] }[]; sources: string[]; synthesised?: boolean }
 export interface TapeSources { line?: string; documents?: { title: string; organisation?: string | null; year?: string | number; archive?: string; pages?: string }[];
   facts?: { id?: string; text: string; source: string; url?: string }[]; music?: string; voices?: string; made?: string }
 export interface TapeData {
   tape: TapeId; title: string; version: string; music: string; placeholder: boolean;
   duration: number; partOneEnd: number;
-  room: FileData; web: FileData;
+  room: FileData;
   chapters: Chapter[]; margin: MarginLine[]; cues: Cue[];
   /** ⚑ the tape's large in-video type — the label, the End of Part 1 card, the break — as timed text (screen_text.vtt) */
   screen?: Cue[];
-  sources: TapeSources | null; break: BreakText | null;
+  sources: TapeSources | null; break: BreakText | null; breakLong: BreakLong | null;
 }
 
 export const TAPE_IDS: readonly TapeId[] = ['1997', '2016', '2026'];
@@ -99,9 +109,9 @@ export function partsAfterOne(tape: TapeId): Chapter[] {
 /** the tape's place, for the Close's website: where the TV left it (the same timeline) */
 export function tapePlace(tape: TapeId): number { return placeOf(tape).t; }
 
-/** the tape whose file this is (the site viewer passes its own path): its web copy or its room copy */
+/** the tape whose file this is (the site viewer passes its own path): its room copy, the one shipped (S394) */
 export function tapeOfFile(file: string): TapeId | null {
-  for (const id of TAPE_IDS) if (file.endsWith(TAPES[id].web.file) || file.endsWith(TAPES[id].room.file)) return id;
+  for (const id of TAPE_IDS) if (file.endsWith(TAPES[id].room.file)) return id;
   return null;
 }
 

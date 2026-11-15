@@ -1,6 +1,7 @@
 {
  "tape": "2026",
- "title": "HEDGE™ — a course for parents in a confused age (v4)",
+ "version": "v5",
+ "title": "HEDGE™ — a course for parents in a confused age (v5)",
  "line": "An invented parents' course whose every reason comes from real ministry teaching about why someone is trans, 1988–2026 (quoted or paraphrased, each cited to its page), with dated facts beside it.",
  "documents": [
   {
@@ -49,7 +50,7 @@
    "year": "2019",
    "archive": "Reconciliation Ministries of Michigan newsletter (recmin.org)",
    "pages": "pp. 1–4 (page images read)",
-   "used": "Lesson 1 \"only deeper\" (p. 2); Lesson 4 social contagion (p. 4); the trauma sticker (p. 3, no words); the break's admission (p. 1)."
+   "used": "Lesson 1 \"only deeper\" (p. 2); Lesson 4 social contagion and \"rapid-onset gender dysphoria\" (p. 4); the TRAUMA sticker's year, 2019 (p. 3: \"a trauma victim seeks out a different identity\", no words on the tape); the break's admission, word for word (p. 1: \"Aside from living in a fallen world, no one is certain what causes gender confusion.\")."
   },
   {
    "title": "Sexual Brokenness and Gender Issues (Human Sexuality Addendum 1)",
@@ -57,7 +58,7 @@
    "year": "2021",
    "archive": "published by the ICCEC U.S. Theological Commission",
    "pages": "pp. 1, 4",
-   "used": "Lesson 3: \"public education, popular culture, and social media\"; the trauma sticker (p. 1, no words)."
+   "used": "Lesson 3: \"public education, popular culture, and social media\" (p. 4)."
   },
   {
    "title": "18 - Responding to Family Members Who Have Embraced Gender Ideology (family post)",
@@ -105,7 +106,7 @@
    "year": "2026",
    "archive": "Transnational Institute, State of Power 2026 (tni.org)",
    "pages": "printed p. 83 (PDF p. 4)",
-   "used": "The break: parenthood \"as a political identity\", the child \"a sacred figure around which coalitions can be built\"."
+   "used": "Not on the tape in v5: the era site's long break (parenthood \"as a political identity\", the child \"a sacred figure around which coalitions can be built\"; printed p. 83, read on the page image)."
   }
  ],
  "facts": [
@@ -147,8 +148,8 @@
    "url": "https://www.who.int/standards/classifications/frequently-asked-questions/gender-incongruence-and-transgender-health-in-the-icd"
   }
  ],
- "music": "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)",
- "voices": "Host, parent, the Prayer Wall's announcer and the faceless \"expert\": build-time speech synthesis (Supertonic 3, stock voices F4, M4, M2, M3) — the course's and its sellers' self-presentation (\"Dramatisation. Voices are actors.\" on screen). Maya and her family have no voice.",
+ "music": "Music: made in code for these tapes by Claude (Anthropic, Opus 5.5)",
+ "voices": "Host, parent, the Prayer Wall's announcer and the faceless \"expert\": build-time speech synthesis (Supertonic 3, stock voices; v5: host F2, parent M4, announcer M2, expert M3, 14–16 steps) — the course's and its sellers' self-presentation (\"Dramatisation. Voices are actors.\" on screen). Maya and her family have no voice.",
  "marks": "HEDGE™, Ask Hedge, LAST LINE LIVE, The Prayer Wall, the news outlets (NATIONAL 24, THE MORNING DESK, FAMILY NEWS NOW, METRO 7, THE EVENING HOUR, NEWSLINE) and the \"phone-line counsellor\" are invented. No person is named or shown.",
- "not_used": "No 2009 APA report; no death or suicide figures; no country, flag or map; the 1988 manual's conditions on name and clothes; 1977's \"recruit\" campaign; the research's B material (clinical debate) as tape text."
+ "not_used": "No 2009 APA report; no death or suicide figures; no country, flag or map; the 1988 manual's conditions on name and clothes; 1977's \"recruit\" campaign; the research's B material (clinical debate) as tape text. v5: the IFTCC 2022 declaration (contested B material) no longer dates the TRAUMA sticker; it is dated from the programme's own 2019 newsletter (p. 3)."
 }

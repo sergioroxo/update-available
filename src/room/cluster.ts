@@ -206,7 +206,7 @@ let roomHook: ((hidden: boolean) => void) | null = null;
 export function onCommonsRoom(fn: (hidden: boolean) => void): void { roomHook = fn; }
 /** the Commons world on: the room goes, the hall arrives. Off: the room returns. */
 /** ⚑ S369 — the room's fixed trim, by entity name: batched through the Close's glitch sweep (see `glitchSweep`) */
-const SWEEP_KEEP = /^(e1door(Front|Back|Lintel|Cap)|e_lintel|e_win(Top|Bot|L|R|Mullion[VH])|e_curtRod|e_shelfPlank|e_crtBezel|e_doorPanel)$/;
+const SWEEP_KEEP = /^(e1door(Front|Back|Lintel|Cap)|e_lintel|e_win(Top|Bot|L|R|Mullion[VH])|e_curtRod|e_shelfPlank|e_doorPanel)$/;   // S394: e_crtBezel retired (the CRT became the Lamby set)
 export function setCommonsWorld(on: boolean): void {
   if (!worldRef || worldRef.on === on) return;
   worldRef.setOn(on);

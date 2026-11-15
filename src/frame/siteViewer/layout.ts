@@ -3,6 +3,7 @@
  * once, so scrolling is only a translate and a cull — the texture is re-uploaded when the VIEWER changes (scroll, tab,
  * hover), never per frame. Type is sized for a headset: body 22 px on a 1024 px-wide window that hangs 0.9 m wide.
  */
+import { tapeOfFile } from '../../narrative/teachingTapes';
 import type { Block } from './model';
 import { DOORS, type Skin, type Year } from './skins';
 
@@ -25,9 +26,11 @@ export type Op =
   | { t: 'img'; x: number; y: number; w: number; h: number; src: string; alt: string }
   | { t: 'play'; x: number; y: number; w: number; h: number; file: string; label: string; font: string; kind: 'audio' | 'film' }
   /** ⚑ S371 — a film's screen: its picture (16:9) and, under it, its progress line (FILM_BAR px), one rect */
-  | { t: 'film'; x: number; y: number; w: number; h: number; file: string; pic: number };
+  | { t: 'film'; x: number; y: number; w: number; h: number; file: string; pic: number; band: number };
 
 /** ⚑ S371 — a film's progress strip under its picture, and the inset of the line from either side (the times sit there) */
+/** ⚑ S394 — a teaching tape's live text band (caption + margin line) under the picture, as a share of the picture's height */
+export const FILM_BAND_K = 0.4;
 export const FILM_BAR = 42, FILM_INSET = 84, FILM_MAX_W = 720;
 
 export interface Doc { h: number; ops: Op[]; hits: DocHit[] }
@@ -255,12 +258,13 @@ export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width:
         const lyr = b.lyrics.flatMap((l) => wrap(ctx, l, F(SIZE.small), cw - 56));
         const lyrH = lyr.length ? 34 + lyr.length * sl + 6 : 0;
         // ⚑ S392 (UiB job 26 B4) — a teaching tape's break, as text, and its sources, under the film (the same words as the tape)
-        const notes = (b.notes ?? []).map((n) => ({ title: n.title, lines: n.lines.flatMap((l) => l === '' ? [''] : wrap(ctx, l, F(SIZE.small), cw - 56)) }));
+        // (a line starting "# " is a section heading: drawn bold)
+        const notes = (b.notes ?? []).map((n) => ({ title: n.title, lines: n.lines.flatMap((l) => l === '' ? [''] : l.startsWith('# ') ? ['# ' + l.slice(2)] : wrap(ctx, l, F(SIZE.small), cw - 56)) }));
         const notesH = notes.reduce((a, n) => a + 34 + n.lines.length * sl + 10, 0);
         const playable = !!b.file && b.type === 'audio';
         const film = !!b.file && b.type !== 'audio' && films;
         const filmNote = !!b.file && b.type !== 'audio' && !films;
-        const fw = Math.min(cw - 36, FILM_MAX_W), pic = Math.round(fw * 9 / 16), fh = pic + FILM_BAR;
+        const fw = Math.min(cw - 36, FILM_MAX_W), pic = Math.round(fw * 9 / 16), band = film && tapeOfFile(b.file) ? Math.round(pic * FILM_BAND_K) : 0, fh = pic + band + FILM_BAR;
         const extra = playable ? 62 : film ? fh + 14 + 62 : filmNote ? sl + 8 : 0;
         const h = 14 + title.length * Math.round(SIZE.h4 * LH) + what.length * lh + 8 + extra + lyrH + notesH + cred.length * sl + 16;
         box(pad, y, cw, h, skin.card, skin.cardEdge, 2);
@@ -277,9 +281,9 @@ export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width:
           // ⚑ S371 — the film plays IN the window: its picture (a press plays or pauses it), its progress line (a press
           //   goes to that point), then a Play / Pause button under it, the size of a track's
           const fx = pad + 18;
-          ops.push({ t: 'film', x: fx, y: yy, w: fw, h: fh, file: b.file, pic });
+          ops.push({ t: 'film', x: fx, y: yy, w: fw, h: fh, file: b.file, pic, band });
           addHit({ x: fx, y: yy, w: fw, h: pic }, { type: 'film', file: b.file }, b.title);
-          addHit({ x: fx + FILM_INSET - 10, y: yy + pic, w: fw - 2 * FILM_INSET + 20, h: FILM_BAR }, { type: 'seek', file: b.file, x0: fx + FILM_INSET, w: fw - 2 * FILM_INSET }, `${b.title}: go to a point in the film`);
+          addHit({ x: fx + FILM_INSET - 10, y: yy + pic + band, w: fw - 2 * FILM_INSET + 20, h: FILM_BAR }, { type: 'seek', file: b.file, x0: fx + FILM_INSET, w: fw - 2 * FILM_INSET }, `${b.title}: go to a point in the film`);
           yy += fh + 14;
           ops.push({ t: 'play', x: fx, y: yy, w: 250, h: 48, file: b.file, label: 'Play the film', font: F(SIZE.body, true), kind: 'film' });
           addHit({ x: fx, y: yy, w: 250, h: 48 }, { type: 'film', file: b.file }, b.title);
@@ -297,7 +301,7 @@ export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width:
         for (const n of notes) {
           ops.push({ t: 'text', x: pad + 18, y: yy, s: n.title, font: F(SIZE.body, true), color: skin.h, lh });
           yy += 34;
-          n.lines.forEach((l, i) => { if (l) ops.push({ t: 'text', x: pad + 38, y: yy + i * sl, s: l, font: F(SIZE.small), color: skin.ink, lh: sl }); });
+          n.lines.forEach((l, i) => { if (l) ops.push({ t: 'text', x: pad + 38, y: yy + i * sl, s: l.startsWith('# ') ? l.slice(2) : l, font: F(SIZE.small, l.startsWith('# ')), color: l.startsWith('# ') ? skin.h : skin.ink, lh: sl }); });
           yy += n.lines.length * sl + 10;
         }
         cred.forEach((l, i) => ops.push({ t: 'text', x: pad + 18, y: yy + i * sl, s: l, font: F(SIZE.small), color: skin.dim, lh: sl }));

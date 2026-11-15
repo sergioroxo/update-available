@@ -370,6 +370,32 @@ const LAP = { w: 224, h: 140 };
       for (const r of tv.hits || []) add(r.id + '@' + tv.tape, 'tv', r, onPlane(tv.entity, r.x + r.w / 2, r.y + r.h / 2, tv.LW, tv.LH));
     }
     /**
+     * ⚑ S394 — THE LAMBY SET IN THE HAND AND LAMBY'S LINE IN VIEW. Held, the set is in front of everything (a press lands on
+     * it first), so its own parts are published — each key, and its body (the press that puts it back) — on surface
+     * `tvset`; Lamby's card in view publishes its yes and its × on `tvcall`. walk.mjs answers these first (tv.card: the yes;
+     * a held set that is playing: it watches; one that has stopped: it puts it back), as a visitor would.
+     */
+    let tvSet = { card: false, held: false, playing: false, lifting: false, tape: null };
+    if (tvState) {
+      if (tvState.call && tvState.call.shown) {
+        tvSet.card = true;
+        for (const r of tvState.call.hits || []) add(r.id + '@call', 'tvcall', r, onPlane(tvState.call.entity, r.x + r.w / 2, r.y + r.h / 2, tvState.call.cw, tvState.call.ch));
+      }
+      // between Lamby's yes and the set setting off there is a frame with neither the card nor the travel: the moment's own
+      //   stage says the set is on its way (the walk's first run pressed the kit in that gap)
+      const coming = Object.values(tvState.moments || {}).some((m) => m.stage === 'call' || m.stage === 'bring');
+      if (coming && !tvSet.card) tvSet.lifting = true;
+      const held = (tvState.tvs || []).find((t) => t.held || t.pose === 'returning');
+      if (held) {
+        tvSet = { ...tvSet, held: held.held, playing: held.state === 'playing' || held.state === 'loading', lifting: tvSet.lifting || held.pose === 'lifting' || held.pose === 'returning', tape: held.tape };
+        if (held.pose === 'held') {
+          const tg = held.targets;
+          for (const k of tg.keys) add('tv-' + k.id + '@' + held.tape, 'tvset', { x: 0, y: 0, w: 0, h: 0 }, toPage(k.at[0], k.at[1], k.at[2]));
+          add('tv-body@' + held.tape, 'tvset', { x: 0, y: 0, w: 0, h: 0 }, toPage(tg.body[0], tg.body[1], tg.body[2]));
+        }
+      }
+    }
+    /**
      * ⚑ DANIEL'S MONITOR IN THE CLOSE (2026-09-12, Phase D). The Restart card
      * on the 1997 CRT, lit after the constellation settles: its rects are
      * published on `__closeMonitor.hits` and the glass is Room 1's own screen
@@ -612,6 +638,8 @@ const LAP = { w: 224, h: 140 };
       screenHash, domText, audio, surfaces, silent, quiet, roomDesync, pose, program, bstate,
       targets, dropped, moves, ledCount, ledList, ledger: led,
       // S178: the phone is in her hand (app.ts carries a copy of its body while it is)
-      phoneHeld: !!(window.__app && window.__app.root.findByName('w_phoneDevice-held')?.enabled)
+      phoneHeld: !!(window.__app && window.__app.root.findByName('w_phoneDevice-held')?.enabled),
+      // S394: the Lamby set in the hand, and Lamby's line in view
+      tvSet
     };
   }, { VW: VIEW.width, VH: VIEW.height });

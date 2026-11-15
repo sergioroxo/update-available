@@ -1,29 +1,33 @@
 {
- "_doc": "⚑ S392 (UiB job 26 Part B0–B2; S390 before it) — THE THREE TVs: where each glass is, how big its canvas is, which era owns it, where the piece's margin panel hangs, and the conducted moment's pacing. The bodies are room props (data/room/reinterp_deltas.json: tvDresser… in r1, wallTv… in r3, e26Display… in r4) so they age and glob with their rooms; only the glass is src/room/teachingTv.ts's own screen (makeScreenTexture 'screen', the S80 exception). `facing` is the glass normal: south = +z, north = −z, east = +x, west = −x. `pos` is the glass centre in world metres, 3 mm proud of its tube prop. `seat` is the seat's eye (the probes' seat poses). Measured from the seat (tools/s392-tv-probe.mjs): 1997 122° right of the desk at 2.0 m (behind and to one side, clear of the flip's 180°), 2016 90° left of the desk at 1.66 m (the south wall, square on), 2026 59° left of the desk at 1.6 m (on a wall arm beside the shelf, forward of the old monitor's face).",
+ "_doc": "⚑ S394 (UiB job 27 Part B1–B3; S392, S390 before it) — THE LAMBY SET (LambyVision, src/room/lambyVision.ts) in its three places, how it is brought close, the bar under its picture, Lamby's line in view, and the moment's clock. One set, the same in all three rooms: the tapes change, the set does not. `place.pos` is the floor point under its hooves (world metres), `place.yaw` the turn about Y (0 = its glass faces +z/south; 180 north; −90 west). `seat` is the seat's eye (the probes' seat poses). Measured from the seat (tools/s394-lamby-tv-probe.mjs): 1997 on the chest of drawers behind Daniel's seat, ~120° right of the desk, ~2 m; 2016 on the low white unit by Vera's door (the south wall), ~90° left of the desk, ~1.4 m; 2026 on Maya's shelf plank where her old CRT stood, ahead and a little up, ~1.4 m.",
  "tvs": {
   "1997": {
-   "era": "e1", "tube": "tvTube", "glass": { "pos": [1.691, 0.92, 1.75], "w": 0.42, "h": 0.315, "facing": "west" },
-   "canvas": [960, 720], "picture": "fill", "style": "vcr", "seat": [0, 1.16, 0.7],
-   "_docPicture": "a 4:3 tape on a 4:3 set: the picture fills the glass; the VCR's own on-screen display draws over it only while it is paused or stopped"
+   "era": "e1", "place": { "pos": [1.87, 0.58, 1.75], "yaw": -90 }, "style": "vcr", "seat": [0, 1.16, 0.7],
+   "_docPlace": "on tvDresser (top y 0.58), facing into the room (west), where job 26 B put the TV; the VCR, the CRT, its panel and the VHS sleeve are gone from r1 (the set is all of them now)"
   },
   "2016": {
-   "era": "e3", "tube": "wallTvTube", "glass": { "pos": [-4.45, 1.31, 2.355], "w": 0.7, "h": 0.394, "facing": "north" },
-   "canvas": [960, 540], "picture": "fill", "style": "dvd", "seat": [-4.4, 1.16, 0.7],
-   "_docPicture": "a 16:9 disc on a 16:9 wall TV: the DVD player's own on-screen display when paused (his \"this was a DVD\": no skip button anywhere; during the disc's trailers the only control is pause)"
+   "era": "e3", "place": { "pos": [-4.45, 0.45, 2.23], "yaw": 180 }, "style": "dvd", "seat": [-4.4, 1.16, 0.7],
+   "_docPlace": "on wallTvUnit (top y 0.45), facing the seat (north); the wall TV, its DVD player, tray, light and the course's case are gone from r3"
   },
   "2026": {
-   "era": "e4", "tube": "e26DisplayTube", "glass": { "pos": [5.345, 1.52, -0.605], "w": 0.434, "h": 0.244, "facing": "south" },
-   "canvas": [960, 540], "picture": "fill", "style": "hedge", "seat": [4.6, 1.16, 0.7], "panelScale": 0.6,
-   "_docPanel": "⚑ S392 — the margin panel hangs 0.72 m from the eye here, not 1.2 m, and is 0.6× the size (its letters keep their 1.45°): at 1.2 m the old monitor on the plank and her headset on its stand stood between the seat and the panel (the probe's photos).",
-   "_docPicture": "a 16:9 film on a 2026 display in a retro body: the share line Dad's link arrives under, and the display's own overlay controls when paused"
+   "era": "e4", "place": { "pos": [4.85, 1.14, -0.81], "yaw": 0 }, "style": "hedge", "seat": [4.6, 1.16, 0.7],
+   "_docPlace": "on e_shelfPlank (top y 1.14), facing the seat (south): Maya's shelf CRT (e_crtBody/e_crtBezel/e_crtScreen) is transformed into the set — her object kept, made an object of the time; the cream 2026 display on its arm (e26Display…) is gone from r4"
   }
  },
- "panel": {
-  "_doc": "⚑ S392 (UiB job 26 B2) — THE MARGIN AND THE CAPTIONS, DRAWN LIVE, in the record's style (RECORD palette, the Fixedsys Excelsior face), as the piece's voice and clearly not the tape's. Job 25 measured the tapes' burned-in text from the seat at 0.4–0.8° in the headset and 3–6 px on a phone; text that reads needs a capital height of at least 1.0° in the headset, 12 px on a phone and 14 px on the computer. A 42° vertical field of view makes the phone (390 CSS px tall, landscape) the hardest: 12 px is 1.29° on paper, and the probe measured 1.32° at 11.4 px on the emulated phone, so every capital is drawn at `capDeg` = 1.45° from the seat (12.5 px on the phone). The panel is 0.9 m wide (34 characters a line at that size) and holds nine lines; a cue whose own line breaks would take more than seven is flowed as one paragraph (the probe found 2026's first label frame at 11 lines). At the TVs' own distances (1.7–2.1 m) that is 4–5 cm per capital, which no glass can carry with a picture above it (B2's first option measured worse), so the text hangs on its own panel in front of the TV, `dist` metres from the seat's eye, just under the TV in the view (`gapDeg` below the glass's lower edge), facing the seat. The panel's background is drawn only behind the lines that are up, so it is sized to what it says. It is shown only while the tape is in play or paused and a caption or a margin line belongs to that second, and its canvas uploads only when its words change.",
-  "dist": 1.2, "w": 0.9, "h": 0.6, "canvas": [1125, 750], "capDeg": 1.45, "gapDeg": 2.2
+ "held": {
+  "_doc": "BROUGHT CLOSE (heldDevice's grammar). In a headset the glass comes `xrDist` m before the eyes (Meta's 0.5 m floor for anything looked at for long; ⚑ the headset seat's own monitor is 0.56 m from the eye — S374 — so at 0.6 the 1997 CRT stood in front of the set's glass in the probe's photographs: at 0.5 the set's face is the nearest thing), and the set grows until its PICTURE is `pictureDeg` tall (the brief: 25–30°). On a computer or a phone the set keeps its size and comes to the distance where its face — the glass's top to the keys' foot, 0.374 m — fills `flatFill` of the view's height, never more than `flatMaxW` of its width (a portrait phone). The travel keeps `clearance` m from the eye and takes liftBase + liftPerMetre × the distance, at most liftMax s (smoothstep). `glowRest`/`glowHeld`: the body's self-light share (the 'system' tier's 0.34 in the room; more in the hand, its face turned from the lamp). `xrKey`: a key catches a headset's ray within this many metres (heldDevice's XR_BUTTON, wider for a larger key).",
+  "xrDist": 0.5, "pictureDeg": 28, "flatFill": 0.92, "flatMaxW": 0.94, "liftBase": 0.45, "liftPerMetre": 0.22, "liftMax": 1.15, "clearance": 0.55, "glowRest": 0.3, "glowHeld": 0.55, "xrKey": 0.03
+ },
+ "bar": {
+  "_doc": "THE BAR UNDER THE PICTURE (B2; Part A's A1): the glass is 960 × 720, the picture its upper 540 px, the bar the lower 180 px (a third of the picture). Capital heights in canvas px of that 540-px picture: the caption `captionCap` (≈ 1/22 of the picture), the margin `marginCap` (≈ 1/27); a full bar steps both down, never under `floorCap` — 1.0° at the headset's 28° picture (540 / 28 = 19.3 px a degree).",
+  "captionCap": 25, "marginCap": 20.5, "floorCap": 19.4
+ },
+ "call": {
+  "_doc": "LAMBY'S LINE IN VIEW (B3): a card `w` m wide, `drop` degrees under the line of sight, `flatDist` m from the camera / `xrDist` m from the eyes (drawn over the room: nothing cuts it); turned more than `followDeg` away, it glides back into view over `follow` s.",
+  "w": 0.4, "xrDist": 0.68, "flatDist": 0.62, "drop": 10, "followDeg": 30, "follow": 0.5
  },
  "moment": {
-  "_doc": "The conducted moment's clock. A turn runs at the room turn's own pace (e4Room: 52° in 9.2 s, smoothstep, peak 8.5°/s, inside the comfort law's 9.1°/s), clamped; ⚑ S392: `turnMax` 16 → 22, because 1997's TV is now 122° behind the seat and 16 s would have peaked at 11.4°/s (a smoothstep peaks at 1.5× its average): 122° × 0.177 = 21.6 s peaks at 8.5°/s; in a headset every conducted move is one cut under the dissolve (app.ts startCamMove). `arriveHold` = the TV is on, its leader on the glass, before the turn (2026: Dad's link); `callHold` = the longest Lamby's call (1997, 2016) is given to be read before the piece turns the visitor anyway (its Take me there turns at once); `afterHold` = the end card held, paused, before the return to the desk. `afterDad` = the seconds Dad's two lines are given before his link (readHold of the pair is 3.9 s).",
-  "turnSecondsPerDegree": 0.177, "turnMin": 3, "turnMax": 22, "arriveHold": 1.6, "callHold": 8, "afterHold": 4, "afterDad": 4.5, "noPlayRelease": 8
+  "_doc": "The moment's clock (no turns, no fades): `callHold` = the longest Lamby's line is given to be read before the set comes anyway (its yes sends it at once); `dismissBreath` = after × the set comes this long after; `noCall` = a call that never showed (the era's cap) lets the set come after this; `afterHold` = the end card held, the set in the hand, before the floor is free again; `afterDad` = the seconds Dad's two lines are given before his link; `noPlayRelease` = a tape that will not start lets the moment go after this.",
+  "callHold": 7, "dismissBreath": 1.2, "noCall": 2.5, "afterHold": 6, "afterDad": 4.5, "noPlayRelease": 8
  }
 }

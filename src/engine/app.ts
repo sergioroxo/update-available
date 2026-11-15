@@ -85,6 +85,7 @@ import { mountXrInput, type XrInput } from '../frame/xrInput';
 import { buildRestoreEntrance, type RestoreEntrance } from '../room/restoreEntrance';
 import { FRAME } from '../desktop/theme/chrome';
 import { TeachingTvs, TV_MOMENT } from '../room/teachingTv';
+import { TAPES } from '../narrative/teachingTapes';
 import { viewerFilm, viewerAudio } from '../frame/siteViewer/audio';
 import { voiceHeld, voiceWanted, setFilmAudible } from '../state/voiceHold';
 
@@ -950,9 +951,11 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       mountXrGlass(app, glass, { w: sc.x, h: sc.z }, () => [room.props.get(prop)?.entity], roomUp, { footY: deskTop(desk) });
     }
     /**
-     * ⚑ S390 (UiB job 25 Part B) — THE THREE TEACHING TVs. The engine's half: when each era's moment is due and the floor
-     * is free (`due` / `quiet`), and the camera that takes the visitor to the TV and back (a conducted turn at the room
-     * turn's pace; in a headset one cut under the dissolve, startCamMove). The TV's own half is src/room/teachingTv.ts.
+     * ⚑ S394 (UiB job 27 Part B; S392, S390 before it) — THE LAMBY SET. The engine's half: when each era's moment is due and the
+     * floor is free (`due` / `quiet`), and the eye a brought set faces (`eye`: the logical head in a headset, the camera
+     * otherwise). NOTHING HERE MOVES THE CAMERA: job 26's conducted turn to the TV and back (and the headset's cut under the
+     * dissolve) are gone — the set comes to the visitor (his 15 Nov: "on the headset there are no FADES"). The set's own half is
+     * src/room/teachingTv.ts.
      *  · 1997: the fellowship's tape comes with the Un-Walk programme — due once Daniel has read its first step (kit-read),
      *    when no tape, prayer, chat, form, letter or journal is up and no voice is speaking (the programme's wizard may be
      *    open: it waits for him);
@@ -971,7 +974,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       },
       quiet: (tape, dueFor) => {
         // (not os.sendOfferPending: in 2026 it reads true for the whole era — e4HoldsTheSpine — and there is no send in 1997 or 2016)
-        if (scriptedBusy() || os.paused || gameMenuBus.isOpen || os.updateArmed || voiceHeld()) return false;
+        if (scriptedBusy() || os.paused || gameMenuBus.isOpen || os.updateArmed || voiceHeld() || camMove) return false;
+        if (devices && cluster && devices.held(cluster.era)) return false;   // a game in the hand is played out first
         if (os.lambyGuide.active && dueFor < TV_GUIDE_PATIENCE) return false;   // a balloon is read first; then it waits for the TV
         if (tape === '1997') {
           return os.inDesktop && !os.toastUp && !(tapes?.isPlaying) && !(pcPrayer && !pcPrayer.paused && !pcPrayer.ended)
@@ -981,32 +985,15 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         return !!os.e4 && os.e4.stage === 'closed';   // Dad's own notification may still be up: his link replaces it
       },
       held: () => os.paused || gameMenuBus.isOpen,
-      conduct: (target, seconds) => {
-        commitLookOffset();
-        const dx = target.x - camPos.x, dy = target.y - camPos.y, dz = target.z - camPos.z;
-        startCamMove({ x: camPos.x, y: camPos.y, z: camPos.z, pitch: Math.atan2(dy, Math.hypot(dx, dz)) * pc.math.RAD_TO_DEG,
-          yaw: Math.atan2(-dx, -dz) * pc.math.RAD_TO_DEG }, seconds, true);
-      },
-      returnToSeat: (seconds) => {
-        commitLookOffset();
-        const node = seatNodeId ? movementNodes?.find(seatNodeId) : null;
-        startCamMove(node?.pose ?? seatPose(seatYaw), seconds, true);
-      },
-      angleTo: (target) => {
-        let yaw = camYaw + lookOffYaw, pitch = camPitch + lookOffPitch;
-        if (xr?.active) { const f = logicalHead().forward; yaw = Math.atan2(-f.x, -f.z) * pc.math.RAD_TO_DEG; pitch = Math.asin(Math.max(-1, Math.min(1, f.y))) * pc.math.RAD_TO_DEG; }
-        let ty: number, tp: number;
-        if (target) {
-          const dx = target.x - camPos.x, dy = target.y - camPos.y, dz = target.z - camPos.z;
-          ty = Math.atan2(-dx, -dz) * pc.math.RAD_TO_DEG; tp = Math.atan2(dy, Math.hypot(dx, dz)) * pc.math.RAD_TO_DEG;
-        } else { const node = seatNodeId ? movementNodes?.find(seatNodeId) : null; const sp = node?.pose ?? seatPose(seatYaw); ty = sp.yaw; tp = sp.pitch; }
-        return Math.max(Math.abs(((ty - yaw + 540) % 360) - 180), Math.abs(tp - pitch));
-      },
-      cameraBusy: () => !!camMove,
+      eye: () => (xr?.active ? logicalHead() : camera),
+      camera: () => (xr?.active ? null : camera.camera ?? null),
+      xr: () => !!xr?.active,
       announce: (tape) => { if (tape === '2026') os.e4?.browser.dadSharesTape(); },
-      // ⚑ S392 — Lamby's call (1997, 2016): os.tvCall feeds the guide's input; the balloon is up while its rung is the call's
+      // ⚑ S392 — Lamby's call: os.tvCall feeds the guide's input; the balloon is up while its rung is the call's. ⚑ S394: the
+      //   guide's balloon for the call (and the later offer) is drawn IN VIEW by the set's card, not on the glass
       call: (_tape, text) => { tvCallText = text ?? undefined; os.dirty = true; },
-      callOpen: () => os.lambyGuide.view.rung === 'tvcall' && os.lambyGuide.active
+      callOpen: () => os.lambyGuide.view.rung === 'tvcall' && os.lambyGuide.active,
+      guidePress: (id) => { os.lambyGuide.press(id); os.dirty = true; }
     });
   }
   // (the in-room cork board that used to be built here is RETIRED — decision
@@ -1048,7 +1035,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     //   review aids for photographs and probes (a probe that proves a control presses it in the room, not through these)
     (window as { __teachingTv?: unknown }).__teachingTv = Object.assign(() => teachingTvs?.debug() ?? null, {
       play: (tape: '1997' | '2016' | '2026', t = 0) => teachingTvs?.tvs[tape].play(t),
-      press: (tape: '1997' | '2016' | '2026', id: string) => teachingTvs?.tvs[tape].press(id),
+      press: (tape: '1997' | '2016' | '2026', id: string) => teachingTvs?.tvs[tape].pressId(id),
+      // ⚑ S394 — bring the set close / put it back (review aids for photographs; a probe that proves the press presses it)
+      take: (tape: '1997' | '2016' | '2026') => { const tv = teachingTvs?.tvs[tape]; if (!tv) return; tv.wake(); tv.take(xr?.active ? logicalHead() : camera, !!xr?.active, xr?.active ? null : camera.camera); },
+      putBack: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape].putBack(null, 'visitor'),
       canvases: () => teachingTvs?.canvases() ?? {},
       uploads: () => (window as { __uploads?: number }).__uploads ?? 0,
       arm: (tape: string) => { tvArmed.add(tape); }
@@ -1299,7 +1289,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     let teamSkipPresses: number[] = [];   // S339: the team skip (debug builds only)
     xrInput = mountXrInput(app, {
       // ⚑ S343 / T11 — a ray that lands on the monitor presses where it lands, even with a hand on the desk mouse
-      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (!toDesktopR(ray) && xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
+      onSelect: (physicalRay) => { if (!xrComfort.calibrated) { xrComfort.calibrate(); xrFrame?.setHint(null); return; } if (xrComfort.busy) return; if (siteViewerXr?.pressRay(physicalRay)) return; const ray = xrComfort.logicalRay(physicalRay); if (xrFrame?.pressTab(physicalRay)) return; if (restoreEntrance?.blocking) { noteHumanInput(); startFirstBed(); restoreEntrance.press(physicalRay); return; } if (document.getElementById('lambyos-home')) return; noteHumanInput(); os.lambyGuide.activity(); if (descentActive || scriptedBusy() || os.paused) return; if (teachingTvs?.pressCard(ray) || (teachingTvs?.holding && teachingTvs.pressHeld(ray))) return; if (!toDesktopR(ray) && xrLayer?.mouseClick()) return; if (xrLayer?.pressLamby(physicalRay, (r) => xrComfort.logicalRay(r))) return; resolveTapRay(ray); },   // A22: the tab first
       // ⚑ S271 (his 31 Oct: "I entered the menu, but I cannot get out") — a press that misses the menu closes it, as
       //   Resume does; the menu is never a room you have to find the door of
       onMenuSelect: (ray) => { if (document.getElementById('lambyos-home')) return; if (siteViewerXr?.pressRay(ray)) return; noteHumanInput(); if (xrFrame && !xrFrame.press(ray)) gameMenuBus.close(); },
@@ -3738,6 +3728,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
    *  controller's select (xrInput.ts) both arrive here as a ray. */
   function resolveTapRay(ray: Ray): void {
     if (closeStage === 'message') { nextCloseCard(); return; }   // S209 / P7-48 — a press turns the card
+    // ⚑ S394 — Lamby's line in view (its card is over everything), then a Lamby set in the hand (in front of everything; a
+    //   press that misses it passes on to the room)
+    if (teachingTvs?.pressCard(ray)) return;
+    if (teachingTvs?.holding && teachingTvs.pressHeld(ray)) return;
     // Foreground games own the press before every room prop and monitor behind them.
     if (devices && cluster && devices.held(cluster.era)) {
       devices.press(ray, cluster.era, xr?.active ? logicalHead() : camera);
@@ -3890,8 +3884,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // plane or the screen isn't visible this era, so this never steals a
       // click meant for a movement marker on the floor.
       if (era3Devices && era3Devices.handleWorkstationPointer(ray)) return;
-      // ⚑ S390 — a lit teaching TV takes a press on its glass (its own controls; src/room/teachingTv.ts), before the markers
-      if (teachingTvs?.pressRay(ray)) return;
+      // ⚑ S394 — a lit Lamby set at rest comes close at a press (src/room/teachingTv.ts), before the markers
+      if (teachingTvs?.pressRest(ray)) return;
       // R28-1: click-to-move, NEVER gaze-to-move — this pointerdown ray/hit
       // test is the ONLY thing that can arm a marker; looking at one (however
       // long) never does. Only test markers actually being offered right now
@@ -4011,8 +4005,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       if (lb) return lb.text === lexStrings.star ? A.closeLexicon : A.closeLabel.replace('{label}', lb.text);
     }
     if (os.isOff) return hitAt(ray, POWER_BTN, 0.08) ? A.power : null;
-    // ⚑ S390 — a lit teaching TV names itself, and the ray ends on its glass (the press resolver asks it the same way)
-    { const tv = teachingTvs?.aimPoint(ray); if (tv) { aimAt = tv.at; return A[`tv${tv.tape}`] ?? null; } }
+    // ⚑ S394 — the Lamby set names itself and what a press on it does (the press resolver asks it the same way)
+    { const tv = teachingTvs?.aimPoint(ray); if (tv) { aimAt = tv.at; return (A[`tv_${tv.what}`] ?? '').replace('{tape}', TAPES[tv.tape]?.title ?? '') || null; } }
     if (!os.inDesktop) return null;
     const devName = (): string | null => {
       const dev = devices && cluster ? devices.aim(ray, cluster.era) : null;
@@ -4554,7 +4548,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     tickKeychain();
     // ⚑ P8 A10 (headset B: "the message appears in front of the console"; "impossible to play") — the hint plate hangs
     //   exactly where a held device is held, so while a device is in the hand the plate stays down
-    const deviceInHand = !!(devices && cluster && devices.held(cluster.era));
+    const deviceInHand = !!(devices && cluster && devices.held(cluster.era)) || !!teachingTvs?.holding;   // S394: and a Lamby set in the hand
     // S291: while the site window is up, the helper's plate stays down (it would hang over the window's foot)
     // ⚑ S345 / T29 — what the ray is on is named at the ray's end (a small tag pinned to the mark, xrFrame.setAim), not
     //   on the helper's plate; the plate keeps the helper's own lines, and stays down while a device is in the hand
@@ -5078,6 +5072,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         viewer: viewerFilm.state() === 'playing' ? `film:${viewerFilm.file()}` : viewerAudio.playing() ?? ''
       };
       teachingTvs.update(dt, closeStage ? 'close' : os.era, voices, os.updateArmed);
+      // ⚑ S394 — Lamby's call and his later offer, in view (the card), from the guide's own view
+      teachingTvs.guide(os.lambyGuide.view, os.lambyGuide.active);
       setFilmAudible(teachingTvs.audible);
     }
 

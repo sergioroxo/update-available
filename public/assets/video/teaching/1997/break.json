@@ -1,5 +1,6 @@
 {
  "tape": "1997",
+ "version": "v5",
  "label": [
   "This tape is a reconstruction.",
   "Its teaching comes from real ministries' handbooks and booklets, 1993–1996.",
@@ -8,34 +9,17 @@
  ],
  "admission": [
   {
-   "text": "The more we fight against homosexual thoughts, the more intense they become.",
-   "source": "Love in Action, Helping People Step Out of Homosexuality, rev. © 1995, printed p. 133 (PDF p. 141); NMAH.AC.1428 B2 F13"
-  },
-  {
-   "text": "They can't “just stop”. … the most difficult task of your entire life.",
-   "source": "Love in Action, Helping People Step Out of Homosexuality, rev. © 1995, printed p. 133 (PDF p. 141): 'leaving the gay lifestyle and the gay orientation may be the most difficult task of your entire life'"
+   "text": "“The more we fight against homosexual thoughts, the more intense they become.”",
+   "source": "Love in Action, Helping People Step Out of Homosexuality (a handbook for pastors, counselors and lay workers), revised edition © 1995 (first published © 1984), printed p. 133 (PDF p. 141), under the heading “Remember Half The Process Won't Work”; Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington “Love in Action” Collection), Box 2 Folder 13; read on the page image, 15 Nov 2026"
   }
  ],
- "sentences": [
-  {
-   "text": "This teaching asked people to forget their music, their friends, their places.",
-   "source": "Handbook rev. 1995: 'What Do We Lose?' (music, clothing, bars, the scene), printed p. 132; 'cut off relationships', p. 133; 'returning to old haunts … the old associations that music brings forth', p. 135"
-  },
-  {
-   "text": "To guard every thought that went in, keep a journal, and report each week.",
-   "source": "Handbook rev. 1995, printed pp. 130–131 ('It is our responsibility…'; workbook question 4, 'protecting your mind'); Steps Out class manual (Love in Action, c. 1994), p. iii ('KEEP A JOURNAL!', 'TAKE NOTES at each session', 'Spend time each week reflecting on last week's session. Share at the next meeting')"
-  },
-  {
-   "text": "It made their families the cause.",
-   "source": "Handbook rev. 1995, printed p. 13: 'the deepest root of homosexuality is a break in the relational bonds within the family'; Exodus booklet PR-02 (1993), printed pp. 7, 9, 13"
-  },
-  {
-   "text": "When it did not work, it told them the failure was theirs.",
-   "source": "Handbook rev. 1995, printed p. 130 ('This places the burden directly on us'), pp. 132–133 (the ambivalent: 'no permanent home in our minds'), p. 135 ('when an ex-gay person stumbles'; 'a feeling of failure')"
-  },
-  {
-   "text": "It was written for pastors, counselors and lay workers.",
-   "source": "Handbook rev. 1995, cover (PDF p. 2): 'A handbook for pastors, counselors, lay workers'"
-  }
- ]
+ "barHead": "TAUGHT IN — Love in Action handbook (1995), printed p. 133",
+ "bar": "It is in the same chapter as Part 3 of this tape.",
+ "barSource": "Love in Action, Helping People Step Out of Homosexuality, rev. © 1995: Chapter Thirteen, “Displacement: Putting Off/Putting On”, runs from printed p. 128 (PDF p. 136) to printed p. 140 (PDF p. 148); Chapter Fourteen begins on printed p. 141 (PDF p. 149). NMAH.AC.1428 Box 2 Folder 13; read on the page images and the OCR, 15 Nov 2026",
+ "on": [
+  306.672,
+  330.542
+ ],
+ "held": 22.67,
+ "note": "In the tape the admission is the picture; the bar under it carries barHead and bar (the web copy burns them in; the room's set and the era site draw them from here). No sources roll: the long version is break_long.json."
 }

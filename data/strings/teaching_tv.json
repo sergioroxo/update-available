@@ -1,21 +1,46 @@
 {
- "_doc": "⚑ S392 (UiB job 26 Part B; S390 before it) — THE TVs' OWN WORDS: the three players (a 1997 VCR's on-screen display, a 2016 DVD player's, the 2026 display's), the leader each tape is brought in with, Dad's link in 2026, Lamby's call that takes the visitor to the TV (1997, 2016) and Lamby's one later offer per era. The tapes' own words are in the videos (Part A, S391) and the margin and the captions come from Part A's files; none of them is here. Drafts by Claude under the 2026-08-17 norm (the writing is Claude's; his edit wins); every line is listed for his eye in T85. Nothing here is a reward, a count or a badge for watching (the frame never plays): the players say what a player says.",
+ "_doc": "⚑ S394 (UiB job 27 Part B; S392, S390 before it) — THE LAMBY SET's OWN WORDS: the three players on its glass (a 1997 VCR's on-screen display, a 2016 DVD player's, the 2026 course's), the leader each tape is brought in with, Dad's link in 2026, Lamby's line that brings the set to the visitor (shown IN VIEW, every era) and Lamby's one later offer per era. The tapes' own words are in the videos (Part A) and the margin and the captions come from Part A's files; none of them is here. Drafts by Claude under the 2026-08-17 norm (the writing is Claude's; his edit wins); every line is listed for his eye in T87. Nothing here is a reward, a count or a badge for watching (the frame never plays): the players say what a player says.",
  "tapes": {
   "1997": {
    "_doc": "Brought in after Daniel has read the Un-Walk programme's first step (kit-read): the fellowship's video came in the same package as the disk, and the kit says to watch it. The leader is the VCR showing the tape's own label before it rolls.",
-   "leader": ["TRIEDPATH FELLOWSHIP", "UNDERSTANDING YOUR ROOTS", "WATCH BEFORE STEP 2"],
+   "leader": [
+    "TRIEDPATH FELLOWSHIP",
+    "UNDERSTANDING YOUR ROOTS",
+    "WATCH BEFORE STEP 2"
+   ],
    "listHead": "ON THIS TAPE",
-   "osd": { "play": "PLAY", "pause": "PAUSE", "stop": "STOP", "eject": "STOP", "loading": "TRACKING", "ended": "END OF TAPE" }
+   "osd": {
+    "play": "PLAY",
+    "pause": "PAUSE",
+    "stop": "STOP",
+    "eject": "STOP",
+    "loading": "TRACKING",
+    "ended": "END OF TAPE"
+   }
   },
   "2016": {
-   "_doc": "Brought in when Vera is back at the board after Renata's testimony job is sent: the platform assigns her the session that teaches the category it has just filed Renata under; the disc is in the player under the TV on her wall. The leader is the TV's own input card with the assignment.",
-   "leader": ["GracePlatform · caretender training", "Assigned to you", "Heartwood · Session Two: The Roots"],
+   "_doc": "Brought in when Vera is back at the board after Renata's testimony job is sent: the platform assigns her the session that teaches the category it has just filed Renata under; the disc is in the Lamby set's player. The leader is the set's own input card with the assignment.",
+   "leader": [
+    "GracePlatform · caretender training",
+    "Assigned to you",
+    "Heartwood · Session Two: The Roots"
+   ],
    "listHead": "Chapters",
-   "osd": { "play": "Play", "pause": "Pause", "stop": "Stop", "eject": "Stop", "loading": "Reading disc", "ended": "Disc menu" }
+   "osd": {
+    "play": "Play",
+    "pause": "Pause",
+    "stop": "Stop",
+    "eject": "Stop",
+    "loading": "Reading disc",
+    "ended": "Disc menu"
+   }
   },
   "2026": {
-   "_doc": "Brought in after Maya has read Dad's message (his 7 Nov ruling: the pressure and the shame are her family's): Dad's next message is the link, and it plays on the 2026 screen beside her shelf. The leader is the share line the film opens under.",
-   "leader": ["Dad shared a video to this screen", "“Watch this.”"],
+   "_doc": "Brought in after Maya has read Dad's message (his 7 Nov ruling: the pressure and the shame are her family's): Dad's next message is the link, and it plays on the Lamby set on her shelf. The leader is the share line with his words (\"Watch this. All of it.\" stays on the set's screen, B1).",
+   "leader": [
+    "Dad shared a video to this screen",
+    "“Watch this. All of it.”"
+   ],
    "dadLine": "Watch this. All of it.",
    "dadLink": "HEDGE™ · a course for parents",
    "dadToast": "Watch this. All of it.",
@@ -35,20 +60,17 @@
   "cannot": "This tape will not play here.",
   "part": "Part"
  },
- "panel": {
-  "_doc": "⚑ S392 (UiB job 26 B2) — the piece's margin beside the tape: the two kinds of line (Part A's margin.json), in the record's own words.",
-  "TAUGHT_IN": "TAUGHT IN",
-  "WHAT_IS_KNOWN": "WHAT IS KNOWN"
- },
  "lamby": {
-  "_doc": "⚑ S392 (UiB job 26 B0; G2, his 15 Oct: \"reinstate Lamby as the connection point of the correction and forcing you to do stuff\") — `call`: Lamby, in the era's skin, says where the TV is and that it will take the visitor there; Take me there turns them at once, and if the visitor closes the balloon (logged, like every dismissal) the piece still turns them when the call's time is up: it is the programme's assignment, and Lamby is its voice. One balloon, inside the era's cap of eight. `e1`/`e3`/`e4` + `yes`: the ONE later offer per era, ignorable, only while the tape has more to play and the visitor has stalled; Yes takes them to the TV; ▶ stays theirs.",
+  "_doc": "⚑ S394 (UiB job 27 B3; G2, his 15 Oct: \"reinstate Lamby as the connection point of the correction and forcing you to do stuff\"; his 15 Nov: no fades, the line in the 360° room, the set brought close) — `call`: Lamby, in the era's skin, says the tape is due and that he will bring the set; the line appears IN VIEW wherever the visitor looks (src/room/teachingTv.ts TvCall), its yes sends the set at once, and if the visitor closes the balloon (logged, like every dismissal) the set still comes: it is the programme's assignment, and Lamby is its voice. One balloon, inside the era's cap of eight. `e1`/`e3`/`e4` + `yes`/`no`: the ONE later offer per era, ignorable, only while the tape has more to play and the visitor has stalled; yes brings the set (▶ stays theirs).",
   "call": {
-   "e1": "Your Un-Walk kit says: watch the fellowship's tape before step 2. The TV is behind you. I'll take you there.",
-   "e3": "GracePlatform has assigned you Heartwood, Session Two. The disc is in the player under the TV on your wall. I'll take you there."
+   "e1": "Your Un-Walk kit says: watch the fellowship's tape before step 2. I'll bring the TV to you.",
+   "e3": "GracePlatform has assigned you Heartwood, Session Two. I'll bring the disc to you.",
+   "e4": "Your dad has sent you a course. I'll bring it to you."
   },
-  "e1": "The fellowship's tape has more on it, on the TV behind you. Shall I take you there?",
-  "e3": "Your Heartwood session has more chapters on the TV on your wall. Shall I take you there?",
-  "e4": "Your dad's course is still on the screen beside your shelf. Shall I take you there?",
-  "yes": "Take me there"
+  "e1": "The fellowship's tape has more on it. Shall I bring the TV to you?",
+  "e3": "Your Heartwood session has more chapters. Shall I bring the disc to you?",
+  "e4": "Your dad's course has more on it. Shall I bring it to you?",
+  "yes": "Bring it here",
+  "no": "No thanks"
  }
 }

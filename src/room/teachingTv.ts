@@ -1,31 +1,32 @@
 /**
- * ⚑ S392 (UiB job 26 Part B; S390 before it) — THE THREE TVs: where the piece takes everyone, and what they can go on watching.
+ * ⚑ S394 (UiB job 27 Part B; S392, S390 before it) — THE LAMBY SET, BROUGHT CLOSE: where the piece shows everyone the
+ * programme's tape, and what they can go on watching.
  *
- * His 15 Nov answers on the v3 tapes and on job 25 B's page, built here (UIB_JOB_26 B0–B3; TEACHING_TAPES_V4_PLAN §4):
+ * His 15 Nov notes on job 26 B (TEACHING_TAPES_V4_PLAN §8; UIB_JOB_27 B1–B5), built here:
+ *  · ONE SET IN ALL THREE ROOMS (`LambyVision`, src/room/lambyVision.ts): "a Lamby Branded TV from old time … that way it is
+ *    clear that it is separate from the main narrative". 1997 on the chest of drawers behind Daniel's seat; 2016 on the low
+ *    unit by Vera's door (the wall TV and its DVD player are gone); 2026 on Maya's shelf, where her old CRT stood — the
+ *    object kept, made "an object of the time" (the cream 2026 screen on its arm is gone). Places: data/room/teaching_tvs.json.
+ *  · BROUGHT CLOSE, THE GAME BOY'S GRAMMAR (heldDevice.ts: "it comes closer to you to let you play"): a press on the lit set and
+ *    it comes before the eye, face on, top up — in a headset at `held.xrDist`, grown until the PICTURE is `held.pictureDeg`
+ *    tall; on a computer or a phone at the distance where its face (the glass and the keys) fills `held.flatFill` of the view.
+ *    Held, a press lands on its keys (⏮ ▶ ❚❚ ⏭ ⏏, and ⏻ which puts it back), on its glass (play / pause), or on its body
+ *    (puts it back where it stands, paused where it was). A press that misses it passes on to the room.
+ *  · THE MARGIN AND THE CAPTIONS ARE INSIDE THE SET'S FRAME: the glass is 4:3, the picture its upper three quarters (a 4:3
+ *    tape pillarboxed, a 16:9 disc full width), and the bar under it carries the caption (the spoken line, or the large type
+ *    on the picture) and the piece's margin (v5: `head`, then `text`) — sized to the picture, never a panel larger than it.
+ *    The record's panel of S392 is gone (his: "a subtitles text 3 times bigger than the video").
+ *  · THE MOMENT, NO TURNS AND NO FADES (B3): once per room, at the era's beat, Lamby's line appears IN VIEW wherever the
+ *    visitor is looking (`TvCall`, a card placed in the current view, in the headset too — never behind them); then the set
+ *    comes to them and plays from its start to End of Part 1, and waits there, held, ▶ ready. Nothing turns the visitor:
+ *    job 26's conducted turns (1997's two of 22 s) and the headset's cut under the dissolve are gone. Lamby's × closes the
+ *    balloon and the set still comes (the system forces; Lamby only speaks). After a breath on the end card the floor is
+ *    free again; the next voice of the story sends the set back to its place, paused where it was.
+ *  · KEPT FROM JOB 26: option A (start → End of Part 1), the live margin and captions, the era sites' tape resuming from the
+ *    set's place (one timeline, memory only), the self-pause when the story speaks, the stop at the update, the uploads only
+ *    while a new picture exists or a line changes.
  *
- *  · OPTION A ("choose option A"). ONCE PER ROOM THE PIECE TAKES THE VISITOR TO THE TV (`TvMoment`), at one beat of the
- *    era's story, never a look, never during a felt or respite scene, never while another voice speaks: the TV turns on with
- *    its leader, the programme's call is said (1997 and 2016: Lamby, in the era's skin — "the TV is behind you. I'll take
- *    you there"; 2026: Dad's link), the view is conducted to it (in a headset one cut), and the tape plays FROM ITS START —
- *    the label, the title, Part 1 and the first commercial — and STOPS BY ITSELF at "End of Part 1" (Part A's
- *    `partOneEnd`), on the programme's own end card. After a breath the view is taken back to the desk, unless the visitor
- *    has pressed ▶ to play on. The 59 s montage of S390 is gone.
- *  · THE WHOLE TAPE WAITS ON THE SAME TV (`TeachingTv`): its controls drawn on its glass in its era's player — a 1997 VCR's
- *    on-screen display, a 2016 DVD player's (his "this was a DVD": no skip button; during the disc's trailers only pause),
- *    the 2026 display's — ▶/❚❚, ⏮ ⏭ (the chapters), ⏏ (stop, the place kept). If the visitor stops, it stays where they
- *    stopped; ▶ goes on from there, in the room and on the era's website. It never jumps to the end. A press is resolved on
- *    release (app.ts's one input seam, S80). Nothing counts down. When the story speaks the TV pauses itself; at the era's
- *    update it stops.
- *  · THE MARGIN AND THE CAPTIONS ARE DRAWN LIVE (`RecordPanel`, B2): Part A's margin.json and captions.vtt, in the record's
- *    style, on a panel that hangs just under the TV in the view, its capitals at 1.32° from the seat (data/room/teaching_tvs.json
- *    `panel`). It pauses and resumes with the tape (it is the tape's second that chooses the line) and uploads only when its
- *    words change.
- *  · THE GLASS UPLOADS ONLY WHILE A NEW PICTURE EXISTS: playing, one upload per new video frame; paused, stopped or off,
- *    nothing (counted by makeScreenTexture's own counter, `window.__uploads`).
- *
- * The bodies are room props (data/room/reinterp_deltas.json); placements in data/room/teaching_tvs.json; words in
- * data/strings/teaching_tv.json. The tape's own words are Part A's, in its picture and its files; Lamby never voices,
- * reads or delivers them.
+ * The tape's own words are Part A's, in its picture and its files; Lamby never voices, reads or delivers them.
  */
 import * as pc from 'playcanvas';
 import tvData from '../../data/room/teaching_tvs.json';
@@ -36,32 +37,44 @@ import { makeScreenTexture, makeScreenEntity } from '../engine/screenTexture';
 import { adoptOneShot, roomBed } from '../audio/tapeAudio';
 import { ERA1 } from '../desktop/theme/era1';
 import { ERA3 } from '../desktop/theme/era3';
-import { ERA4 } from '../desktop/theme/era4';
+import { ERA4, CHROME } from '../desktop/theme/era4';
 import { RECORD } from '../desktop/theme/witness';
 import { FACES, VENDORED } from '../desktop/theme/fonts';
-import { holdVoice, releaseVoice, setVoiceWanted } from '../state/voiceHold';
+import * as ui from '../desktop/theme/chrome';
+import * as aero from '../desktop/theme/era3';
+import { drawLambyChar } from '../desktop/apps/lambyChar';
+import decisions from '../../data/strings/cx3b.json';
+import { holdVoice, releaseVoice, voiceHolder, setVoiceWanted } from '../state/voiceHold';
+import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, SET_NAME, type LambySet, type SetKey } from './lambyVision';
 
 type Style = 'vcr' | 'dvd' | 'hedge';
-type Facing = 'south' | 'north' | 'east' | 'west';
-interface TvSpec { era: string; tube: string; glass: { pos: number[]; w: number; h: number; facing: Facing }; canvas: number[]; picture: 'fill' | 'letterbox'; style: Style; seat: number[];
-  /** the margin panel nearer the eye and smaller by the same factor (its letters keep their angle): 2026's room has the old
-   *  monitor and her headset on its stand between the seat and where the panel would hang */
-  panelScale?: number }
+interface TvSpec { era: string; place: { pos: number[]; yaw: number }; style: Style; seat: number[] }
 const SPECS = (tvData as unknown as { tvs: Record<TapeId, TvSpec> }).tvs;
-const PANEL = (tvData as unknown as { panel: { dist: number; w: number; h: number; canvas: number[]; capDeg: number; gapDeg: number } }).panel;
-const MOMENT = (tvData as unknown as { moment: { turnSecondsPerDegree: number; turnMin: number; turnMax: number; arriveHold: number; callHold: number; afterHold: number; afterDad: number; noPlayRelease: number } }).moment;
-/** the conducted moment's clock (data/room/teaching_tvs.json `moment`), for the engine's triggers */
+const HELD = (tvData as unknown as { held: { xrDist: number; pictureDeg: number; flatFill: number; flatMaxW: number; liftBase: number; liftPerMetre: number; liftMax: number; clearance: number; glowRest: number; glowHeld: number; xrKey: number } }).held;
+const BAR = (tvData as unknown as { bar: { captionCap: number; marginCap: number; floorCap: number } }).bar;
+const CALL = (tvData as unknown as { call: { w: number; xrDist: number; flatDist: number; drop: number; followDeg: number; follow: number } }).call;
+const MOMENT = (tvData as unknown as { moment: { callHold: number; dismissBreath: number; noCall: number; afterHold: number; afterDad: number; noPlayRelease: number } }).moment;
+/** the moment's clock (data/room/teaching_tvs.json `moment`), for the engine's triggers */
 export const TV_MOMENT = MOMENT;
 const W = words as unknown as {
   tapes: Record<TapeId, { leader: string[]; listHead: string; osd?: Record<string, string>; dadLine?: string; dadLink?: string; dadToast?: string }>;
-  player: Record<string, string>; panel: Record<string, string>; lamby: Record<string, string> & { call: Record<string, string> } };
+  player: Record<string, string>; lamby: Record<string, string> & { call: Record<string, string> } };
 const P = W.player;
-const FACING_YAW: Record<Facing, number> = { south: 0, east: 90, north: 180, west: -90 };
 const D2R = Math.PI / 180;
+
+/** the glass's canvas: 4:3; the picture in the upper three quarters, the bar (captions, the margin) in the lower quarter */
+const LW = 960, LH = 720, PIC = { x: 0, y: 0, w: 960, h: 540 }, BARY = 540;
+/** the margin's face: the piece's own sans in every room (the margin is the piece's voice, not the era's) */
+const MARGIN_FACE = `"${VENDORED.ui2026}", ${FACES.e4.family}`;
 
 export interface Hit { id: string; x: number; y: number; w: number; h: number }
 /** `partOne` = stopped by itself on the end card of Part 1 (option A); `ended` = at the tape's own end */
 export type TvState = 'off' | 'leader' | 'loading' | 'playing' | 'paused' | 'partOne' | 'ended' | 'stopped' | 'error';
+/** where the set is: in its place, coming to the eye, held, or going back */
+export type Pose = 'rest' | 'lifting' | 'held' | 'returning';
+/** what a ray is on: the resting set ('pick'), or, held, a key, the glass, the body */
+export type SetAim = 'pick' | SetKey | 'glass' | 'body';
+type Ray = { p0: pc.Vec3; p1: pc.Vec3 };
 
 /** a palette colour at an alpha (the colour is the palette's own; only its opacity is set) */
 function hexA(hex: string, a: number): string {
@@ -70,14 +83,14 @@ function hexA(hex: string, a: number): string {
 }
 
 /** each era's player in its own colours and face (palettes from src/desktop/theme/ only) */
-const LOOK: Record<Style, { face: string; bg: string; ink: string; dim: string; accent: string; panel: string; edge: string; blue: string; weight: string }> = {
-  vcr: { face: FACES.e1.family, bg: ERA1.black, ink: ERA1.white, dim: ERA1.silver, accent: ERA1.ok, panel: ERA1.navy, edge: ERA1.grey, blue: ERA1.navy, weight: '' },
-  dvd: { face: FACES.e3.family, bg: ERA3.ink, ink: ERA3.white, dim: ERA3.glassEdge, accent: ERA3.accent, panel: ERA3.taskBot, edge: ERA3.greyDk, blue: ERA3.deskTop, weight: '600 ' },
-  hedge: { face: FACES.e4.family, bg: ERA4.field, ink: ERA4.textHi, dim: ERA4.dim, accent: ERA4.text, panel: ERA4.panel, edge: ERA4.ruleHi, blue: ERA4.field, weight: '600 ' }
+const LOOK: Record<Style, { face: string; bg: string; ink: string; dim: string; accent: string; panel: string; blue: string; weight: string }> = {
+  vcr: { face: FACES.e1.family, bg: ERA1.black, ink: ERA1.white, dim: ERA1.silver, accent: ERA1.ok, panel: ERA1.navy, blue: ERA1.navy, weight: '' },
+  dvd: { face: FACES.e3.family, bg: ERA3.ink, ink: ERA3.white, dim: ERA3.glassEdge, accent: ERA3.accent, panel: ERA3.taskBot, blue: ERA3.deskTop, weight: '600 ' },
+  hedge: { face: FACES.e4.family, bg: ERA4.field, ink: ERA4.textHi, dim: ERA4.dim, accent: ERA4.text, panel: ERA4.panel, blue: ERA4.field, weight: '600 ' }
 };
 
-/** the glass, in world terms, for the press resolver and the walker (same columns convention as era3Devices' hitPlane) */
-function hitPlane(entity: pc.Entity, LW: number, LH: number, ray: { p0: pc.Vec3; p1: pc.Vec3 }): { x: number; y: number } | null {
+/** a plane's canvas point under a ray (the same columns convention as era3Devices' hitPlane) */
+function hitPlane(entity: pc.Entity, cw: number, ch: number, ray: Ray): { x: number; y: number } | null {
   const m = entity.getWorldTransform().data;
   const cx = m[12], cy = m[13], cz = m[14];
   const nX = m[4], nY = m[5], nZ = m[6];
@@ -91,142 +104,44 @@ function hitPlane(entity: pc.Entity, LW: number, LH: number, ray: { p0: pc.Vec3;
   const lx = (px * m[0] + py * m[1] + pz * m[2]) / rl, lz = (px * m[8] + py * m[9] + pz * m[10]) / hl;
   const u = lx / rl + 0.5, v = 0.5 + lz / hl;
   if (u < 0 || u > 1 || v < 0 || v > 1) return null;
-  return { x: u * LW, y: v * LH };
+  return { x: u * cw, y: v * ch };
 }
 
-/** a bearing from the seat's eye: yaw (the camera's convention: atan2(−dx, −dz)), pitch, and the horizontal distance */
-function bearing(seat: number[], p: number[]): { yaw: number; pitch: number; dist: number } {
-  const dx = p[0] - seat[0], dy = p[1] - seat[1], dz = p[2] - seat[2], h = Math.hypot(dx, dz);
-  return { yaw: Math.atan2(-dx, -dz) / D2R, pitch: Math.atan2(dy, h) / D2R, dist: Math.hypot(h, dy) };
+/** the eye's frame for a brought object: in a headset the head's heading with its pitch held between 30° down and level
+ *  (heldDevice S345: a look at the floor must not put it in the lap); on a flat screen the camera's own */
+function eyeFrame(eye: pc.Entity, xr: boolean): { fwd: pc.Vec3; up: pc.Vec3 } {
+  let fwd = eye.forward.clone(), up = eye.up.clone();
+  if (xr) {
+    const h = new pc.Vec3(fwd.x, 0, fwd.z);
+    if (h.lengthSq() < 1e-6) h.set(-up.x, 0, -up.z);
+    h.normalize();
+    const pitch = Math.max(-30, Math.min(0, Math.asin(Math.max(-1, Math.min(1, fwd.y))) / D2R)) * D2R;
+    fwd = new pc.Vec3(h.x * Math.cos(pitch), Math.sin(pitch), h.z * Math.cos(pitch));
+    up = new pc.Vec3(0, 1, 0).sub(fwd.clone().mulScalar(fwd.y)).normalize();
+  }
+  return { fwd: fwd.normalize(), up: up.normalize() };
 }
-/** the point `d` metres from the eye at a yaw and pitch (degrees) */
-function along(seat: number[], yaw: number, pitch: number, d: number): pc.Vec3 {
-  const c = Math.cos(pitch * D2R);
-  return new pc.Vec3(seat[0] - Math.sin(yaw * D2R) * c * d, seat[1] + Math.sin(pitch * D2R) * d, seat[2] - Math.cos(yaw * D2R) * c * d);
+/** a rotation whose +Z faces the eye (−fwd) and whose +Y is `up` */
+function faceRot(fwd: pc.Vec3, up: pc.Vec3): pc.Quat {
+  const z = fwd.clone().mulScalar(-1), x = new pc.Vec3().cross(up, z).normalize();
+  const y = new pc.Vec3().cross(z, x).normalize();
+  const m = new pc.Mat4();
+  m.data.set([x.x, x.y, x.z, 0, y.x, y.y, y.z, 0, z.x, z.y, z.z, 0, 0, 0, 0, 1]);
+  return new pc.Quat().setFromMat4(m);
 }
-
-/**
- * ⚑ S392 (B2) — THE PIECE'S MARGIN BESIDE THE TAPE: what is being said (the captions) and where it was taught or what is
- * known (the margin), in the record's palette and face, on a panel that hangs under the TV in the view and faces the seat.
- * Its capitals are `capDeg` tall from the seat's eye, whatever the panel's distance (measured: tools/s392-tv-probe.mjs).
- */
-class RecordPanel {
-  readonly entity: pc.Entity;
-  readonly canvas: HTMLCanvasElement;
-  private readonly ctx: CanvasRenderingContext2D | null;
-  private readonly tex: pc.Texture;
-  private readonly plane: pc.Entity;
-  private key = '\u0000';
-  /** what the last draw put up, for the probe: the capital height in canvas px, the lines, the font px */
-  shown: { cue: string | null; margin: string | null; capPx: number; fontPx: number; lines: number; contentH: number } = { cue: null, margin: null, capPx: 0, fontPx: 0, lines: 0, contentH: 0 };
-  draws = 0;
-  /** the last words it drew (the probe reads why it uploaded) */
-  readonly recent: string[] = [];
-  constructor(app: pc.AppBase, name: string, private readonly center: pc.Vec3, eye: pc.Vec3, private readonly k = 1) {
-    const [cw, ch] = PANEL.canvas;
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = cw; this.canvas.height = ch;
-    this.ctx = this.canvas.getContext('2d');
-    this.tex = makeScreenTexture(app, this.canvas, 'screen');
-    this.entity = new pc.Entity(`${name}-anchor`);
-    this.entity.setPosition(center);
-    this.plane = makeScreenEntity(name, this.tex, PANEL.w * k, PANEL.h * k, true);
-    this.plane.setLocalEulerAngles(90, 180, 0);   // the plane's normal on the anchor's −Z, which looks at the seat's eye
-    this.entity.addChild(this.plane);
-    app.root.addChild(this.entity);
-    this.entity.lookAt(eye);
-    this.entity.enabled = false;
-  }
-  /** the canvas px per metre, and the capital height asked for, in px, at this panel's distance */
-  private capPx(): number {
-    const pxPerM = PANEL.canvas[1] / (PANEL.h * this.k);
-    return PANEL.dist * this.k * Math.tan(PANEL.capDeg * D2R) * pxPerM;
-  }
-  set(cue: string | null, margin: { kind: string; text: string } | null, on: boolean): void {
-    const show = on && (!!cue || !!margin);
-    if (this.entity.enabled !== show) this.entity.enabled = show;
-    if (!show) return;
-    const key = `${cue ?? ''}\u0001${margin ? `${margin.kind}:${margin.text}` : ''}`;
-    if (key === this.key) return;
-    this.key = key;
-    this.recent.push(key.replace('\u0001', ' || ').slice(0, 60)); if (this.recent.length > 12) this.recent.shift();
-    this.draw(cue, margin);
-    this.tex.upload();
-  }
-  hide(): void { if (this.entity.enabled) this.entity.enabled = false; }
-  redraw(): void { this.key = '\u0000'; }
-  private draw(cue: string | null, margin: { kind: string; text: string } | null): void {
-    const c = this.ctx; if (!c) return;
-    this.draws++;
-    const [cw, ch] = PANEL.canvas;
-    c.clearRect(0, 0, cw, ch);
-    const face = `"${VENDORED.bitmap}", ${FACES.e1.family}`;
-    // the capital height asked for → the font size, from the face's own capital (measured on 'H' at 100 px)
-    c.font = `100px ${face}`;
-    const m = c.measureText('H');
-    const capRatio = m.actualBoundingBoxAscent > 0 ? m.actualBoundingBoxAscent / 100 : 0.62;
-    const cap = this.capPx();
-    const fontPx = Math.ceil(cap / capRatio);
-    const lh = Math.round(fontPx * 1.24);
-    const pad = Math.round(fontPx * 0.42);
-    const inner = cw - pad * 2;
-    c.font = `${fontPx}px ${face}`;
-    const wrap = (text: string): string[] => {
-      const out: string[] = [];
-      for (const para of text.split('\n')) {
-        let line = '';
-        for (const w of para.split(/\s+/).filter(Boolean)) {
-          const t = line ? `${line} ${w}` : w;
-          if (c.measureText(t).width <= inner || !line) line = t; else { out.push(line); line = w; }
-        }
-        if (line) out.push(line);
-      }
-      return out;
-    };
-    const tag = margin ? (W.panel[margin.kind] ?? margin.kind) : '';
-    const marLines = margin ? wrap(`${tag} · ${margin.text}`) : [];
-    // a cue's own line breaks are the film's layout (≤ 42 characters a line); kept while they fit, and flowed as one
-    //   paragraph when they would not (the probe found 2026's first label frame at 11 lines, out of the frame)
-    let capLines = cue ? wrap(cue) : [];
-    if (cue && capLines.length + marLines.length > 7) capLines = wrap(cue.replace(/\s*\n\s*/g, ' '));
-    const rule = capLines.length && marLines.length ? Math.round(lh * 0.45) : 0;
-    const contentH = pad * 2 + (capLines.length + marLines.length) * lh + rule;
-    const h = Math.min(ch, contentH);
-    // the record's panel, only as tall as what it says, anchored at the top (just under the TV in the view)
-    c.fillStyle = hexA(RECORD.panel, 0.9); c.fillRect(0, 0, cw, h);
-    c.fillStyle = RECORD.line; c.fillRect(0, 0, cw, 3); c.fillRect(0, h - 3, cw, 3); c.fillRect(0, 0, 3, h); c.fillRect(cw - 3, 0, 3, h);
-    c.textBaseline = 'alphabetic'; c.textAlign = 'left';
-    const base = (i: number): number => pad + i * lh + Math.round((lh + cap) / 2) - Math.round(lh * 0.08);
-    let y = 0;
-    c.fillStyle = RECORD.ink;
-    capLines.forEach((l, i) => { if (base(i) < ch) c.fillText(l, pad, base(i)); });
-    y = capLines.length;
-    if (rule) { c.fillStyle = RECORD.line; c.fillRect(pad, pad + y * lh + Math.round(rule / 2) - 2, inner, 3); }
-    marLines.forEach((l, i) => {
-      const yy = base(y + i) + rule;
-      if (yy >= ch) return;
-      if (i === 0 && l.startsWith(tag)) {
-        c.fillStyle = RECORD.dim; c.fillText(`${tag} ·`, pad, yy);
-        const tw = c.measureText(`${tag} · `).width;
-        c.fillStyle = RECORD.ink; c.fillText(l.slice(tag.length + 3), pad + tw, yy);
-      } else { c.fillStyle = RECORD.ink; c.fillText(l, pad, yy); }
-    });
-    this.shown = { cue, margin: margin ? `${tag} · ${margin.text}` : null, capPx: cap, fontPx, lines: capLines.length + marLines.length, contentH };
-  }
-  /** the panel's top edge, centre (world), for the conducted view and the probe */
-  get worldCenter(): pc.Vec3 { return this.center.clone(); }
-}
+const smooth = (t: number): number => t * t * (3 - 2 * t);
 
 /**
- * ONE TV: its glass, its video, its player, its margin. The video element is never put on the page; its pictures are drawn
- * on the glass's canvas (as the setup's opening film and the site viewer's film are), under the mixer's FILM channel and in
- * the one-shot set, so the frame's mute, the menu's hold and the idle cycle's mute reach its sound (adoptOneShot).
+ * ONE TAPE ON ITS SET: the set in its room, the glass laid on it, the video drawn on the glass (never on the page), the bar,
+ * and the bringing close. The video plays under the mixer's FILM channel and in the one-shot set, so the frame's mute, the
+ * menu's hold and the idle cycle's mute reach its sound (adoptOneShot).
  */
 export class TeachingTv {
   readonly spec: TvSpec;
+  readonly set: LambySet;
+  /** the glass (the screen plane laid on the set) — named `teaching-tv-<tape>` for the walker's map and the probes */
   readonly entity: pc.Entity;
   readonly canvas: HTMLCanvasElement;
-  readonly panel: RecordPanel;
   private readonly ctx: CanvasRenderingContext2D | null;
   private readonly tex: pc.Texture;
   private readonly look: (typeof LOOK)[Style];
@@ -238,73 +153,88 @@ export class TeachingTv {
   private wantPlay = false;
   private lastFrame = -1;
   private dirty = true;
+  private barKey = '';
   /** the tape's second last frame, to see it CROSS the end of Part 1 while playing (a seek past it does not stop it) */
   private prevT = -1;
   /** the visitor paused it themselves (not the menu, not the story) */
   userPaused = false;
-  /** play() was refused with sound and it plays muted: a press on the chip gives the sound (a gesture) */
+  /** play() was refused with sound and it plays muted: a press on the glass gives the sound (a gesture) */
   needsSound = false;
-  /** the era's update stopped it, or the visitor's ⏏: what the stopped screen says */
   private stopNote: string | null = null;
-  /** the visible era says this TV is in the room */
   private inEra = false;
-  /** draws and uploads, for the probe (uploads are also counted globally by makeScreenTexture) */
+  /** draws (each is one upload of the glass), for the probe */
   draws = 0;
-  /** seconds the tape has been "playing" with its clock standing still (an audio output that never opens holds a playing
-   *  element at 0:00 — measured on this machine's headless Chrome after the device slept); see `update` */
   stalledFor = 0;
   private stallT = -1;
-  private readonly LW: number;
-  private readonly LH: number;
-  /** where the conducted view looks: the TV and the margin under it, together */
-  readonly viewPoint: pc.Vec3;
+  /** what the bar last drew, for the probe: each block's capital height in canvas px (of the 540-px picture), its lines */
+  bar: { caption: string | null; margin: string | null; capCaption: number; capMargin: number; lines: number; height: number; recent: string[] } = { caption: null, margin: null, capCaption: 0, capMargin: 0, lines: 0, height: 0, recent: [] };
+  // ── the bringing close ──
+  pose: Pose = 'rest';
+  private liftT = 1;
+  private liftDur = 0.8;
+  private readonly restPos: pc.Vec3;
+  private readonly restRot: pc.Quat;
+  private readonly from = { pos: new pc.Vec3(), rot: new pc.Quat(), k: 1 };
+  private readonly to = { pos: new pc.Vec3(), rot: new pc.Quat(), k: 1 };
+  private readonly via = new pc.Vec3();
+  /** the scale it is held at (a headset grows it until the picture is `pictureDeg` tall; a flat screen keeps it) */
+  heldScale = 1;
+  /** the eye's distance to the glass when held (metres), for the probe */
+  heldDist = 0;
+  /** where the eye was when it was taken: a seat change (a marker, a scripted send) leaves it behind, so it goes back */
+  readonly takenAt = new pc.Vec3();
+  private litFor = 0;
+  /** the last press on it (for the probes: what it did) */
+  lastPress: string | null = null;
+  /** the visitor set it down themselves (the moment lets go) */
+  setDown = false;
 
   constructor(app: pc.AppBase, readonly tape: TapeId) {
     this.spec = SPECS[tape];
     this.look = LOOK[this.spec.style];
-    [this.LW, this.LH] = this.spec.canvas;
+    this.set = buildLambySet(app, `lamby-set-${tape}`);
+    const pl = this.spec.place;
+    this.restPos = new pc.Vec3(pl.pos[0], pl.pos[1], pl.pos[2]);
+    this.restRot = new pc.Quat().setFromEulerAngles(0, pl.yaw, 0);
+    this.set.root.setPosition(this.restPos);
+    this.set.root.setRotation(this.restRot);
+    this.set.root.enabled = false;
+    this.set.glow(HELD.glowRest);
+    app.root.addChild(this.set.root);
     this.canvas = document.createElement('canvas');
-    this.canvas.width = this.LW; this.canvas.height = this.LH;
+    this.canvas.width = LW; this.canvas.height = LH;
     this.ctx = this.canvas.getContext('2d');
     this.tex = makeScreenTexture(app, this.canvas, 'screen');
-    const g = this.spec.glass;
-    this.entity = makeScreenEntity(`teaching-tv-${tape}`, this.tex, g.w, g.h);
-    this.entity.setLocalPosition(g.pos[0], g.pos[1], g.pos[2]);
-    this.entity.setLocalEulerAngles(90, FACING_YAW[g.facing], 0);
+    this.entity = makeScreenEntity(`teaching-tv-${tape}`, this.tex, GLASS.w, GLASS.h);
+    this.entity.setLocalPosition(GLASS.cx, GLASS.cy, GLASS.z);
+    this.entity.setLocalEulerAngles(90, 0, 0);
+    if (this.entity.render) this.entity.render.batchGroupId = -1;
     this.entity.enabled = false;
-    app.root.addChild(this.entity);
-    // the margin panel: under the glass in the view, `gapDeg` below its lower edge, `dist` from the eye, facing it
-    const seat = this.spec.seat, b = bearing(seat, g.pos);
-    const half = Math.atan2(g.h / 2, b.dist) / D2R;
-    const panelHalf = Math.atan2(PANEL.h / 2, PANEL.dist) / D2R;
-    const top = b.pitch - half - PANEL.gapDeg;
-    const eye = new pc.Vec3(seat[0], seat[1], seat[2]);
-    const k = this.spec.panelScale ?? 1;
-    this.panel = new RecordPanel(app, `teaching-margin-${tape}`, along(seat, b.yaw, top - panelHalf, PANEL.dist * k), eye, k);
-    // the conducted view: the TV's top and about six lines of the margin, centred (the six lines are 6 × 1.24 × capDeg/0.62)
-    const marginDeg = 6 * 1.24 * PANEL.capDeg / 0.62 + 2;
-    this.viewPoint = along(seat, b.yaw, ((b.pitch + half) + (top - marginDeg)) / 2, b.dist);
+    this.set.root.addChild(this.entity);
   }
 
   get data(): TapeData { return TAPES[this.tape]; }
-  get size(): { w: number; h: number } { return { w: this.LW, h: this.LH }; }
+  get size(): { w: number; h: number } { return { w: LW, h: LH }; }
   get playing(): boolean { return this.state === 'playing' || (this.state === 'loading' && this.wantPlay); }
-  /** heard right now (the kit's and the platform's own loops yield to it) */
   get audible(): boolean { return this.state === 'playing' && !!this.video && !this.video.muted && !this.video.paused; }
   get time(): number { return this.video && this.loaded ? this.video.currentTime : placeOf(this.tape).t; }
   get chapterIndex(): number { return chapterAt(this.data, this.time); }
   get chapter(): Chapter | undefined { return this.data.chapters[this.chapterIndex]; }
-  get glassCentre(): pc.Vec3 { const p = this.spec.glass.pos; return new pc.Vec3(p[0], p[1], p[2]); }
-  /** the disc's trailers (2016): the controls show only pause, as a DVD's did */
+  get held(): boolean { return this.pose === 'held' || this.pose === 'lifting'; }
+  get glassCentre(): pc.Vec3 { return this.entity.getPosition().clone(); }
   private get inTrailer(): boolean { return this.chapter?.kind === 'trailer'; }
 
   setInEra(on: boolean): void {
     if (on === this.inEra) return;
     this.inEra = on;
-    if (!on && this.state !== 'off') this.stop(null);
+    if (!on) {
+      if (this.state !== 'off') this.stop(null);
+      this.snapHome();
+    }
+    this.set.root.enabled = on;
     this.sync();
   }
-  private sync(): void { this.entity.enabled = this.inEra && this.state !== 'off'; if (!this.entity.enabled) this.panel.hide(); }
+  private sync(): void { this.entity.enabled = this.inEra && this.state !== 'off'; }
 
   // ── the video ─────────────────────────────────────────────────────────────
   private element(): HTMLVideoElement {
@@ -353,11 +283,9 @@ export class TeachingTv {
       if (v.readyState >= 1) v.currentTime = t; else this.pendingSeek = t;
     }
     this.prevT = t;
-    // a seek that lands past the end of Part 1 means it is behind the visitor now: it never stops there
     if (t >= this.data.partOneEnd) placeOf(this.tape).partOneSeen = true;
     this.lastFrame = -1; this.dirty = true;
   }
-  /** play from `t` (the visitor's ▶, a chapter, or the conducted tape from its start) */
   play(t: number): void {
     this.load(t);
     const v = this.element();
@@ -369,8 +297,8 @@ export class TeachingTv {
     const attempt = v.play();
     attempt?.catch((err: { name?: string }) => {
       if (this.video !== v) return;
-      // ⚑ iOS / a browser without the entrance's gesture: the sound needs a press. Play it muted (the captions are drawn
-      //   beside it) and put a "Press for sound" chip on the glass; that press is the gesture.
+      // iOS / a browser without the entrance's gesture: the sound needs a press. Play it muted (the captions are in the bar)
+      //   with a "Press for sound" chip on the glass; that press is the gesture.
       if (err?.name === 'NotAllowedError' && !v.muted) {
         v.muted = true; this.needsSound = true; this.dirty = true;
         v.play().catch(() => { if (this.video === v && v.paused) { this.state = 'paused'; this.wantPlay = false; this.dirty = true; } });
@@ -397,8 +325,14 @@ export class TeachingTv {
     if (this.state !== 'off') this.state = 'stopped';
     this.dirty = true;
   }
-  /** the leader: the TV is on, the tape's label on the glass, before it rolls */
+  /** the leader: the set is on, the tape's label on the glass, before it rolls */
   showLeader(): void { this.state = 'leader'; this.dirty = true; this.sync(); this.preload(); }
+  /** lit at its place in the tape, paused (Lamby's later offer brings a set that was let go of) */
+  wake(): void {
+    if (this.state !== 'off') return;
+    this.load(placeOf(this.tape).t);
+    this.state = 'paused'; this.sync(); this.dirty = true;
+  }
   private ended(): void {
     const p = placeOf(this.tape);
     p.t = this.data.duration; p.partOneSeen = true;
@@ -414,29 +348,134 @@ export class TeachingTv {
     this.wantPlay = false; this.userPaused = false;
     this.state = 'partOne'; this.dirty = true;
   }
-  /** the conducted moment is let go of before Part 1 ended (paused, stopped, or it would not play): it never stops there */
   markPartOneSeen(): void { placeOf(this.tape).partOneSeen = true; }
 
-  // ── the visitor's presses ────────────────────────────────────────────────
-  pressAt(x: number, y: number): boolean {
-    if (this.state === 'off') return false;
-    const h = [...this.hits].reverse().find((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
-    if (!h) return true;   // a press on a lit glass is the TV's, even between its controls
-    this.press(h.id);
+  // ── the bringing close (heldDevice's grammar) ───────────────────────────────
+  /** the set comes before the eye (the pose fixed at the press, as the phone and the Game Boy do) */
+  take(eye: pc.Entity, xr: boolean, cam?: pc.CameraComponent | null): void {
+    if (this.pose === 'held' || this.pose === 'lifting' || !this.inEra) return;
+    const { fwd, up } = eyeFrame(eye, xr);
+    const rot = faceRot(fwd, up);
+    let d: number, k: number, anchor: pc.Vec3;
+    if (xr) {
+      // the PICTURE `pictureDeg` tall at `xrDist` (Meta's 0.5 m floor for anything looked at for long; nearer than the desk)
+      d = Math.max(0.5, HELD.xrDist);
+      k = (2 * d * Math.tan((HELD.pictureDeg / 2) * D2R)) / (GLASS.h * (PIC.h / LH));
+      // the picture's centre on the line of sight (the bar under it, the keys under that)
+      anchor = new pc.Vec3(GLASS.cx, GLASS.cy + GLASS.h * (1 - PIC.h / LH) / 2, GLASS.z);
+    } else {
+      // the FACE (the glass's top to the keys' foot) fills `flatFill` of the view's height, never more than `flatMaxW` of its width
+      const fov = cam?.fov ?? 42;
+      const tanV = Math.tan((fov / 2) * D2R);
+      const gd = pc.Application.getApplication()?.graphicsDevice;
+      const aspect = gd && gd.height > 0 ? gd.width / gd.height : 16 / 9;
+      const faceH = FACE.top - FACE.bottom;
+      d = Math.max(faceH / (2 * tanV * HELD.flatFill), FACE.width / (2 * tanV * aspect * HELD.flatMaxW));
+      k = 1;
+      anchor = new pc.Vec3(FACE.cx, (FACE.top + FACE.bottom) / 2, GLASS.z);
+    }
+    const eyeP = eye.getPosition().clone();
+    this.takenAt.copy(eyeP);
+    const target = eyeP.clone().add(fwd.clone().mulScalar(d));
+    const off = rot.transformVector(anchor.clone().mulScalar(k));
+    this.to.pos.copy(target).sub(off); this.to.rot.copy(rot); this.to.k = k;
+    this.from.pos.copy(this.set.root.getPosition()); this.from.rot.copy(this.set.root.getRotation()); this.from.k = this.set.root.getLocalScale().x;
+    this.path(eyeP);
+    this.heldScale = k; this.heldDist = d;
+    this.pose = 'lifting'; this.liftT = 0; this.setDown = false;
+    this.set.glow(HELD.glowHeld);
+  }
+  /** back to its place, paused where it was (the visitor's body press or ⏻; or the story moving on) */
+  putBack(eye: pc.Vec3 | null, by: 'visitor' | 'story'): void {
+    if (this.pose === 'rest' || this.pose === 'returning') return;
+    if (this.playing) this.pause(by);
+    if (by === 'visitor') this.setDown = true;
+    this.from.pos.copy(this.set.root.getPosition()); this.from.rot.copy(this.set.root.getRotation()); this.from.k = this.set.root.getLocalScale().x;
+    this.to.pos.copy(this.restPos); this.to.rot.copy(this.restRot); this.to.k = 1;
+    this.path(eye ?? this.from.pos.clone().add(new pc.Vec3(0, 0.3, 0)));
+    this.pose = 'returning'; this.liftT = 0;
+  }
+  /** at once, no travel (the era left, a wipe) */
+  snapHome(): void {
+    this.pose = 'rest'; this.liftT = 1;
+    this.set.root.setPosition(this.restPos); this.set.root.setRotation(this.restRot); this.set.root.setLocalScale(1, 1, 1);
+    this.set.glow(HELD.glowRest);
+  }
+  /** the travel: a curve that keeps `clearance` from the eye (from behind the seat it swings round, never through the head) */
+  private path(eye: pc.Vec3): void {
+    const half = new pc.Vec3().lerp(this.from.pos, this.to.pos, 0.5);
+    const mid = half.clone();
+    const away = mid.clone().sub(eye);
+    if (away.length() < HELD.clearance) {
+      if (away.lengthSq() < 1e-6) away.set(1, 0, 0);
+      mid.copy(eye).add(away.normalize().mulScalar(HELD.clearance));
+    }
+    // a quadratic through `mid` at its half: the control point is 2·mid − (a+b)/2
+    this.via.copy(mid).mulScalar(2).sub(half);
+    const dist = this.from.pos.distance(this.to.pos);
+    this.liftDur = Math.min(HELD.liftMax, HELD.liftBase + dist * HELD.liftPerMetre);
+  }
+  private tickLift(dt: number): void {
+    if (this.pose !== 'lifting' && this.pose !== 'returning') return;
+    this.liftT = Math.min(1, this.liftT + dt / this.liftDur);
+    const k = smooth(this.liftT), a = this.from.pos, b = this.to.pos, c = this.via;
+    const u = 1 - k;
+    this.set.root.setPosition(u * u * a.x + 2 * u * k * c.x + k * k * b.x, u * u * a.y + 2 * u * k * c.y + k * k * b.y, u * u * a.z + 2 * u * k * c.z + k * k * b.z);
+    this.set.root.setRotation(new pc.Quat().slerp(this.from.rot, this.to.rot, k));
+    const s = this.from.k + (this.to.k - this.from.k) * k;
+    this.set.root.setLocalScale(s, s, s);
+    if (this.liftT >= 1) {
+      if (this.pose === 'lifting') this.pose = 'held';
+      else this.snapHome();
+    }
+  }
+
+  // ── a press ─────────────────────────────────────────────────────────────────
+  /** what a ray is on (null: it misses the set). At rest any part of the lit set brings it; held, its keys, glass, body. */
+  aim(ray: Ray, xr: boolean): SetAim | null {
+    if (!this.set.root.enabled || this.pose === 'returning') return null;
+    const { a, b } = toLocal(this.set.root, ray);
+    const enter = hitBounds(a, b);
+    // before its moment the set is dark and nothing (the tape is not there yet, in the story's order)
+    if (this.pose === 'rest') return enter !== null && this.state !== 'off' ? 'pick' : null;
+    const key = keyAt(a, b, xr ? HELD.xrKey / Math.max(1e-3, this.heldScale) : 0);
+    if (key) return key.id;
+    if (glassAt(a, b)) return 'glass';
+    return enter !== null ? 'body' : null;
+  }
+  /** a press: true when the set took it */
+  press(ray: Ray, eye: pc.Entity, xr: boolean, cam?: pc.CameraComponent | null): boolean {
+    const what = this.aim(ray, xr);
+    if (!what) return false;
+    this.lastPress = what;
+    if (what === 'pick') { this.take(eye, xr, cam); return true; }
+    if (this.pose === 'lifting') return true;   // on its way: the press is its, nothing else happens
+    if (what === 'body' || what === 'power') { this.light(what === 'power' ? 'power' : null); this.putBack(eye.getPosition(), 'visitor'); return true; }
+    if (what === 'glass') {
+      if (this.needsSound && this.playing) { this.pressId('tv-sound'); return true; }
+      this.pressId(this.playing ? 'tv-pause' : 'tv-play');
+      return true;
+    }
+    this.light(what);
+    this.pressId(what === 'play' ? 'tv-play' : what === 'pause' ? 'tv-pause' : what === 'prev' ? 'tv-prev' : what === 'next' ? 'tv-next' : 'tv-eject');
     return true;
   }
-  press(id: string): void {
+  private light(key: SetKey | null): void { if (key) { this.set.light(key); this.litFor = 0.22; } }
+  /** a control by its id (the keys and the glass resolve here; the review aids call it too) */
+  pressId(id: string): void {
     const v = this.video, p = placeOf(this.tape), d = this.data;
-    if (id === 'tv-sound') { if (v) { v.muted = false; } this.needsSound = false; this.dirty = true; return; }
-    if (id === 'tv-pause') { this.pause('visitor'); return; }
+    if (id === 'tv-sound') { if (v) v.muted = false; this.needsSound = false; this.dirty = true; return; }
+    if (id === 'tv-pause') { if (this.playing) this.pause('visitor'); return; }
     if (id === 'tv-play') {
-      if (this.state === 'ended') { this.play(0); return; }   // the tape's own end: from the start again
-      if (this.state === 'leader') { this.play(0); return; }
-      this.play(v && this.loaded ? v.currentTime : p.t);     // from where it stopped — never a jump
+      if (this.state === 'ended' || this.state === 'leader') { this.play(0); return; }
+      if (this.playing) return;
+      this.play(v && this.loaded ? v.currentTime : p.t);   // from where it stopped — never a jump
       return;
     }
     if (id === 'tv-eject') { this.stop(P.ejected); return; }
     if (id === 'tv-prev' || id === 'tv-next') {
+      // ⚑ his "this was a DVD": during the disc's trailers only pause is offered (no skip)
+      if (this.inTrailer) return;
       const t = v && this.loaded ? v.currentTime : p.t, i = chapterAt(d, t), ch = d.chapters;
       let to: number;
       if (id === 'tv-next') to = i + 1 < ch.length ? ch[i + 1].start : d.duration;
@@ -444,352 +483,508 @@ export class TeachingTv {
       if (to >= d.duration - 0.05) { if (v) v.currentTime = d.duration; this.ended(); return; }
       const resume = this.state === 'playing' || this.state === 'loading';
       if (resume) this.play(to);
-      else { this.load(to); if (this.state === 'ended' || this.state === 'stopped' || this.state === 'partOne') this.state = 'paused'; p.t = to; }
-      return;
-    }
-    if (id.startsWith('tv-ch-')) {
-      const cid = id.slice(6), c = d.chapters.find((k) => k.id === cid);
-      if (c) this.play(c.start);
+      else { this.load(to); if (this.state === 'ended' || this.state === 'stopped' || this.state === 'partOne' || this.state === 'leader') this.state = 'paused'; p.t = to; this.sync(); }
     }
   }
 
-  // ── the frame loop ───────────────────────────────────────────────────────
+  // ── the frame loop ─────────────────────────────────────────────────────────
   update(dt = 1 / 60): void {
-    if (this.state === 'off' || !this.entity.enabled) { this.panel.hide(); return; }
+    this.tickLift(dt);
+    if (this.litFor > 0) { this.litFor -= dt; if (this.litFor <= 0) this.set.light(null); }
+    if (this.state === 'off' || !this.entity.enabled) return;
     const v = this.video;
-    // OPTION A — the tape crosses the end of Part 1 while it plays (a frame's step, not a seek): it stops there, once
     if (v && this.loaded && this.state === 'playing' && !v.paused) {
       const t = v.currentTime, P1 = this.data.partOneEnd;
       if (!placeOf(this.tape).partOneSeen && this.prevT >= 0 && this.prevT < P1 && t >= P1 && t - this.prevT < 1.5) this.stopAtPartOne();
       this.prevT = t;
     }
-    // a new picture: the clock counted in thirtieths of a second (the tapes are 30 frames a second), so the glass is drawn and
-    //   uploaded once per frame of the tape, not once per frame of the room (the site viewer's film counts the same way)
+    // a new picture: counted in thirtieths of a second (the tapes are 30 frames a second), so the glass is drawn and uploaded
+    //   once per frame of the tape, not once per frame of the room
     const tick = v ? Math.floor(v.currentTime * 30) : -1;
-    if (v && (this.state === 'playing' || this.state === 'loading') && v.readyState >= 2 && tick !== this.lastFrame) {
-      this.lastFrame = tick; this.dirty = true;
-    }
-    // ⚑ A PLAYING TAPE WHOSE CLOCK STANDS STILL is a sound device that will not open (the element says playing, the picture
-    //   does not move). After 4 s it plays on muted — its captions are drawn beside it — with the "Press for sound" chip, so
-    //   neither the visitor nor the conducted moment waits on a speaker that is not there.
+    if (v && (this.state === 'playing' || this.state === 'loading') && v.readyState >= 2 && tick !== this.lastFrame) { this.lastFrame = tick; this.dirty = true; }
+    // a playing tape whose clock stands still is a sound device that will not open: after 4 s it plays on muted
     if (v && this.state === 'playing' && !v.paused) {
       if (Math.abs(v.currentTime - this.stallT) < 0.01) this.stalledFor += dt; else { this.stalledFor = 0; this.stallT = v.currentTime; }
       if (this.stalledFor >= 4 && !v.muted) { v.muted = true; this.needsSound = true; this.stalledFor = 0; this.dirty = true; }
     } else this.stalledFor = 0;
-    if (this.audible) roomBed.duck(-12, 0.3);   // the room's music steps down under the tape; it never stops
-    // the margin and the captions: the tape's own second chooses the line, so they pause and resume with it
-    const t = this.time, live = this.state === 'playing' || this.state === 'loading' || this.state === 'paused' || this.state === 'partOne';
-    // the large type on the picture (the label, the end card, the break) first, the spoken caption otherwise; stopped at End of
-    //   Part 1 the end card's words stay up (the second is inside it), a caption does not
-    const big = live ? screenAt(this.data, Math.min(t, this.data.duration - 0.01)) : null;
-    const cue = big ?? (live && this.state !== 'partOne' ? cueAt(this.data, t) : null);
-    const mar = live ? marginAt(this.data, t) : null;
-    this.panel.set(cue?.text ?? null, mar ? { kind: mar.kind, text: mar.text } : null, live && this.loaded);
+    if (this.audible) roomBed.duck(-12, 0.3);
+    // the bar's words: the tape's own second chooses them, so they pause and resume with it; a change of words is a redraw
+    const lines = this.barLines();
+    const key = `${lines.caption ?? ''}\u0001${lines.margin ? `${lines.margin.head}|${lines.margin.text}` : ''}`;
+    if (key !== this.barKey) { this.barKey = key; this.dirty = true; }
     if (!this.dirty) return;
     this.dirty = false;
-    this.draw();
+    this.draw(lines);
     this.tex.upload();
   }
-  /** a repaint from outside (the faces loaded) */
-  redraw(): void { this.dirty = true; this.panel.redraw(); }
+  redraw(): void { this.dirty = true; this.barKey = '\u0000'; }
 
-  // ── the glass ────────────────────────────────────────────────────────────
-  private picture(): { x: number; y: number; w: number; h: number } {
-    if (this.spec.picture === 'letterbox') { const h = Math.round(this.LW * 9 / 16); return { x: 0, y: Math.round((this.LH - h) / 2), w: this.LW, h }; }
-    return { x: 0, y: 0, w: this.LW, h: this.LH };
+  /**
+   * the bar's two blocks for this second: the caption (the spoken line) and the margin. ⚑ S394: the tape's large type (the
+   * label, the end card, the break's quote — screen_text.vtt) is no longer repeated in the bar: S392 drew it there because the
+   * TV was 2 m away and its picture 8.5° tall; brought close, the picture is 28° tall in the headset and its own type reads (a
+   * second copy also crowded the bar and lost its last lines: the probe's first 2016 v5 frame).
+   */
+  private barLines(): { caption: string | null; margin: { head: string; text: string } | null } {
+    const live = this.loaded && (this.state === 'playing' || this.state === 'loading' || this.state === 'paused' || this.state === 'partOne');
+    if (!live) return { caption: null, margin: null };
+    const t = this.time;
+    // a spoken line that only reads out the type on the picture is not said twice; one that says something else is captioned
+    const big = screenAt(this.data, Math.min(t, this.data.duration - 0.01));
+    const said = this.state !== 'partOne' ? cueAt(this.data, t) : null;
+    const norm = (x: string): string => x.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const cue = said && big && norm(big.text).includes(norm(said.text)) ? null : said;
+    const m = marginAt(this.data, t);
+    // ⚑ S394 — v5's short break: the admission is the picture; its bar (barHead, then bar) is the set's to draw, during `on`
+    const b = this.data.break;
+    if (!m && b?.barHead && b.on && t >= b.on[0] && t < b.on[1]) return { caption: cue?.text ?? null, margin: { head: b.barHead, text: b.bar ?? '' } };
+    return { caption: cue?.text ?? null, margin: m ? { head: m.head, text: m.text } : null };
   }
+
+  // ── the glass ──────────────────────────────────────────────────────────────
   private font(px: number): string { return `${this.look.weight}${px}px ${this.look.face}`; }
-  private draw(): void {
+  private draw(lines: { caption: string | null; margin: { head: string; text: string } | null }): void {
     const c = this.ctx; if (!c) return;
     this.draws++;
-    const L = this.look, Wd = this.LW, Ht = this.LH, pic = this.picture();
+    const L = this.look;
     this.hits = [];
     c.save();
-    c.fillStyle = L.bg; c.fillRect(0, 0, Wd, Ht);
+    c.fillStyle = ERA1.black; c.fillRect(0, 0, LW, LH);
     const v = this.video;
     const hasFrame = !!v && this.loaded && v.readyState >= 2 && v.videoWidth > 0 && this.state !== 'leader';
     if (hasFrame && v) {
-      // the picture, scaled to fit inside its rect (a 4:3 tape stays 4:3, a 16:9 disc stays 16:9)
-      const s = Math.min(pic.w / v.videoWidth, pic.h / v.videoHeight);
+      // the picture at its own shape inside the upper three quarters (a 4:3 tape pillarboxed, a 16:9 disc full width)
+      const s = Math.min(PIC.w / v.videoWidth, PIC.h / v.videoHeight);
       const w = Math.round(v.videoWidth * s), h = Math.round(v.videoHeight * s);
-      c.drawImage(v, pic.x + Math.round((pic.w - w) / 2), pic.y + Math.round((pic.h - h) / 2), w, h);
+      c.drawImage(v, PIC.x + Math.round((PIC.w - w) / 2), PIC.y + Math.round((PIC.h - h) / 2), w, h);
     }
     if (this.state === 'leader' || (!hasFrame && (this.state === 'loading' || this.state === 'playing'))) this.drawLeader();
     switch (this.state) {
       case 'playing': case 'loading': this.drawPlaying(); break;
       case 'paused': this.drawPaused(false); break;
       case 'partOne': this.drawPaused(true); break;
-      case 'ended': this.drawList(); break;
+      case 'ended': this.drawEnded(); break;
       case 'stopped': this.drawStopped(); break;
       case 'error': this.drawError(); break;
       default: break;
     }
     if (this.needsSound && (this.state === 'playing' || this.state === 'loading')) {
       c.font = this.font(30); const tw = Math.ceil(c.measureText(P.sound).width) + 36;
-      const r = { id: 'tv-sound', x: Wd - tw - 24, y: 24, w: tw, h: 56 };
+      const r = { x: LW - tw - 24, y: 24, w: tw, h: 56 };
       c.fillStyle = hexA(L.bg, 0.85); c.fillRect(r.x, r.y, r.w, r.h);
       c.strokeStyle = L.ink; c.lineWidth = 3; c.strokeRect(r.x + 1.5, r.y + 1.5, r.w - 3, r.h - 3);
       c.fillStyle = L.ink; c.textBaseline = 'middle'; c.textAlign = 'center'; c.fillText(P.sound, r.x + r.w / 2, r.y + r.h / 2 + 1);
-      this.hits.push(r);
+      c.textAlign = 'left';
     }
+    this.drawBar(lines);
+    // the glass is one control (play / pause; the sound, when asked for), published whole for the walker's map
+    this.hits.push({ id: this.playing ? (this.needsSound ? 'tv-sound' : 'tv-pause') : 'tv-play', x: 0, y: 0, w: LW, h: LH });
     c.restore();
   }
 
-  /** the tape's label before it rolls: a VCR's blue, the TV's input card with the assignment, the share line */
+  /** words wrapped to a width at a font */
+  private wrap(text: string, font: string, width: number): string[] {
+    const c = this.ctx!; c.font = font;
+    const out: string[] = [];
+    for (const para of text.split('\n')) {
+      let line = '';
+      for (const w of para.split(/\s+/).filter(Boolean)) {
+        const tt = line ? `${line} ${w}` : w;
+        if (c.measureText(tt).width <= width || !line) line = tt; else { out.push(line); line = w; }
+      }
+      if (line) out.push(line);
+    }
+    return out;
+  }
+  private capRatio(face: string, weight = ''): number {
+    const c = this.ctx!; c.font = `${weight}100px ${face}`;
+    const m = c.measureText('H');
+    return m.actualBoundingBoxAscent > 0 ? m.actualBoundingBoxAscent / 100 : 0.7;
+  }
+
+  /**
+   * ⚑ S394 (B2) — THE BAR UNDER THE PICTURE: the caption in the player's own face and ink, and under it the piece's margin
+   * (the record's colours, the piece's sans: its head, then its text). Each block's capital height is asked for in canvas px of
+   * the 540-px picture (`bar.captionCap`, `bar.marginCap`); a bar that will not hold both steps both down together, never
+   * under `bar.floorCap` (the 1.0° a headset needs at the picture's 28°). The margin is one line where it can be
+   * ("HEAD — text"), else the head and the text on two (v5's rule), else wrapped.
+   */
+  private drawBar(lines: { caption: string | null; margin: { head: string; text: string } | null }): void {
+    const c = this.ctx!; const H = LH - BARY, pad = 10, inner = LW - 2 * 22;
+    const capW = this.look.weight, capFam = this.look.face;
+    const rc = this.capRatio(capFam, capW), rm = this.capRatio(MARGIN_FACE);
+    const lhK = 1.2;
+    type Block = { lines: string[]; px: number; cap: number };
+    const layout = (cc: number, mc: number): { cap: Block | null; mar: (Block & { head: string }) | null; h: number } => {
+      let mar: (Block & { head: string }) | null = null;
+      if (lines.margin) {
+        const { head, text } = lines.margin, px = Math.ceil(mc / rm), f = `${px}px ${MARGIN_FACE}`;
+        const one = text ? `${head} — ${text}` : head;
+        let ls = this.wrap(one, f, inner);
+        if (ls.length > 1 && text) {
+          const hs = this.wrap(head, f, inner), ts = this.wrap(text, f, inner);
+          if (hs.length === 1 && ts.length === 1) ls = [hs[0], ts[0]];
+        }
+        mar = { lines: ls, px, cap: mc, head };
+      }
+      let cap: Block | null = null;
+      if (lines.caption) { const px = Math.ceil(cc / rc); cap = { lines: this.wrap(lines.caption, `${capW}${px}px ${capFam}`, inner), px, cap: cc }; }
+      const h = (cap ? cap.lines.length * cap.px * lhK : 0) + (mar ? mar.lines.length * mar.px * lhK : 0) + (cap && mar ? 8 : 0);
+      return { cap, mar, h };
+    };
+    let L = layout(BAR.captionCap, BAR.marginCap);
+    for (let s = 1; L.h > H - pad && s <= 12; s++) {
+      L = layout(Math.max(BAR.floorCap, BAR.captionCap - s), Math.max(BAR.floorCap, BAR.marginCap - s * 0.5));
+    }
+    // still too tall at the floor: the caption gives up its last lines (the margin keeps its own)
+    while (L.h > H - pad / 2 && L.cap && L.cap.lines.length > 1) { L.cap.lines.pop(); L.h -= L.cap.px * lhK; }
+    let y = BARY + Math.max(pad / 2, Math.round((H - L.h) / 2));
+    c.textBaseline = 'alphabetic';
+    if (L.cap) {
+      const cb = L.cap;
+      c.font = `${capW}${cb.px}px ${capFam}`; c.fillStyle = this.look.ink; c.textAlign = 'center';
+      cb.lines.forEach((l, i) => c.fillText(l, LW / 2, y + Math.round((i + 0.5) * cb.px * lhK + cb.cap / 2)));
+      y += Math.round(cb.lines.length * cb.px * lhK) + (L.mar ? 8 : 0);
+    }
+    if (L.mar) {
+      const mb = L.mar;
+      c.font = `${mb.px}px ${MARGIN_FACE}`; c.textAlign = 'left';
+      mb.lines.forEach((l, i) => {
+        const yy = y + Math.round((i + 0.5) * mb.px * lhK + mb.cap / 2);
+        const w = c.measureText(l).width, x = Math.round((LW - w) / 2);
+        if (l.startsWith(mb.head)) {
+          c.fillStyle = RECORD.ink; c.fillText(mb.head, x, yy);
+          c.fillStyle = ERA1.silver; c.fillText(l.slice(mb.head.length), x + c.measureText(mb.head).width, yy);
+        } else { c.fillStyle = ERA1.silver; c.fillText(l, x, yy); }
+      });
+    }
+    c.textAlign = 'left';
+    const recentKey = `${lines.caption ?? ''} || ${lines.margin ? `${lines.margin.head} — ${lines.margin.text}` : ''}`.slice(0, 80);
+    if (this.bar.recent[this.bar.recent.length - 1] !== recentKey) { this.bar.recent.push(recentKey); if (this.bar.recent.length > 12) this.bar.recent.shift(); }
+    this.bar = { caption: L.cap ? L.cap.lines.join(' / ') : null, margin: L.mar ? L.mar.lines.join(' / ') : null,
+      capCaption: L.cap?.cap ?? 0, capMargin: L.mar?.cap ?? 0, lines: (L.cap?.lines.length ?? 0) + (L.mar?.lines.length ?? 0), height: Math.round(L.h), recent: this.bar.recent };
+  }
+
+  /** the tape's label before it rolls: a VCR's blue, the disc's input card with the assignment, Dad's share line */
   private drawLeader(): void {
     const c = this.ctx!, L = this.look, lines = W.tapes[this.tape].leader;
-    const pic = this.picture(), k = this.LH / 720;
+    const pic = PIC, k = pic.h / 540;
     c.fillStyle = this.spec.style === 'vcr' ? L.blue : L.panel; c.fillRect(pic.x, pic.y, pic.w, pic.h);
     c.textAlign = 'center'; c.textBaseline = 'middle';
     const cx = pic.x + pic.w / 2, cy = pic.y + pic.h / 2;
     if (this.spec.style === 'vcr') {
-      c.font = this.font(32); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 110);
-      c.font = this.font(48); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy - 30);
-      c.font = this.font(32); c.fillStyle = L.accent; c.fillText(lines[2], cx, cy + 40);
-      c.font = this.font(48); c.fillStyle = L.accent; c.textAlign = 'left'; c.fillText(`${W.tapes['1997'].osd?.play ?? 'PLAY'} ▶`, 48, 64);
+      c.font = this.font(30); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 90);
+      c.font = this.font(46); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy - 20);
+      c.font = this.font(30); c.fillStyle = L.accent; c.fillText(lines[2], cx, cy + 46);
+      c.font = this.font(42); c.fillStyle = L.accent; c.textAlign = 'left'; c.fillText(`${W.tapes['1997'].osd?.play ?? 'PLAY'} ▶`, 44, 54);
     } else if (this.spec.style === 'dvd') {
-      c.fillStyle = ERA3.glass; const bw = Math.round(560 * k * 1.33), bh = Math.round(230 * k * 1.33); c.fillRect(cx - bw / 2, cy - bh / 2, bw, bh);
+      c.fillStyle = ERA3.glass; const bw = Math.round(700 * k), bh = Math.round(290 * k); c.fillRect(cx - bw / 2, cy - bh / 2, bw, bh);
       c.fillStyle = ERA3.accent; c.fillRect(cx - bw / 2, cy - bh / 2, bw, 8);
-      c.font = this.font(Math.round(26 * k * 1.33)); c.fillStyle = ERA3.greyDk; c.fillText(lines[0], cx, cy - 64 * k * 1.33);
-      c.font = this.font(Math.round(32 * k * 1.33)); c.fillStyle = ERA3.accent; c.fillText(lines[1], cx, cy - 14 * k * 1.33);
-      c.font = this.font(Math.round(34 * k * 1.33)); c.fillStyle = ERA3.ink; c.fillText(lines[2], cx, cy + 44 * k * 1.33);
+      c.font = this.font(Math.round(32 * k)); c.fillStyle = ERA3.greyDk; c.fillText(lines[0], cx, cy - 80 * k);
+      c.font = this.font(Math.round(40 * k)); c.fillStyle = ERA3.accent; c.fillText(lines[1], cx, cy - 18 * k);
+      c.font = this.font(Math.round(42 * k)); c.fillStyle = ERA3.ink; c.fillText(lines[2], cx, cy + 56 * k);
     } else {
-      c.font = this.font(Math.round(30 * k * 1.33)); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 36 * k * 1.33);
-      c.font = this.font(Math.round(52 * k * 1.33)); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy + 34 * k * 1.33);
+      // 2026: Dad's share line, and his words ("Watch this. All of it." stays, on the set's screen)
+      c.font = this.font(Math.round(36 * k)); c.fillStyle = L.dim; c.fillText(lines[0], cx, cy - 46 * k);
+      c.font = this.font(Math.round(60 * k)); c.fillStyle = L.ink; c.fillText(lines[1], cx, cy + 40 * k);
     }
     c.textAlign = 'left';
   }
 
-  /** the row of controls (⏮ ▶/❚❚ ⏭ ⏏; during a disc's trailer only ▶/❚❚), the part and the time, over the picture's foot */
-  private controls(h: number): void {
-    const c = this.ctx!, L = this.look, Wd = this.LW, y = this.LH - h;
-    const g = c.createLinearGradient(0, y - 40, 0, y + h);
-    g.addColorStop(0, hexA(L.bg, 0)); g.addColorStop(0.35, hexA(L.bg, 0.78)); g.addColorStop(1, hexA(L.bg, 0.92));
-    c.fillStyle = g; c.fillRect(0, y - 40, Wd, h + 40);
-    const playing = this.state === 'playing' || this.state === 'loading';
-    const bh = Math.min(h - 16, 84), bw = Math.round(bh * 1.35), gap = 14, top = Math.round(y + (h - bh) / 2);
-    const toggle: [string, string] = [playing ? 'tv-pause' : 'tv-play', playing ? '❚❚' : '▶'];
-    const items: [string, string][] = this.inTrailer ? [toggle] : [['tv-prev', '⏮'], toggle, ['tv-next', '⏭'], ['tv-eject', '⏏']];
-    let x = 28;
-    for (const [id, glyph] of items) {
-      const r = { id, x, y: top, w: bw, h: bh };
-      this.button(r, glyph);
-      this.hits.push(r);
-      x += bw + gap;
-    }
-    // the part and the time, right of the buttons; a DVD's and a 2026 display's progress line along the top edge of the row
-    const d = this.data, t = this.time, ch = this.chapter;
-    c.font = this.font(Math.round(bh * 0.4)); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.textAlign = 'right';
-    c.fillText(`${clock(t)} / ${clock(d.duration)}`, Wd - 28, top + Math.round(bh * 0.3));
-    c.font = this.font(Math.round(bh * 0.32)); c.fillStyle = L.dim;
-    let title = ch?.title ?? '';
-    const room = Wd - 28 - x - 12;
-    while (title.length > 4 && c.measureText(title).width > room) title = title.slice(0, -2);
-    if (title !== (ch?.title ?? '')) title = title.trimEnd() + '…';
-    c.fillText(title, Wd - 28, top + Math.round(bh * 0.76));
-    c.textAlign = 'left';
-    if (this.spec.style !== 'vcr') {
-      const sy = y - 6, k = d.duration > 0 ? Math.min(1, t / d.duration) : 0;
-      c.fillStyle = hexA(L.ink, 0.35); c.fillRect(28, sy, Wd - 56, 6);
-      c.fillStyle = L.accent; c.fillRect(28, sy, Math.round((Wd - 56) * k), 6);
-      for (const k2 of d.chapters) { const xx = 28 + Math.round((Wd - 56) * k2.start / Math.max(1, d.duration)); c.fillStyle = L.bg; c.fillRect(xx, sy, 3, 6); }
-    }
-  }
-
-  private button(r: Hit, glyph: string): void {
+  /** while it plays: the reading-the-tape note while it loads */
+  private drawPlaying(): void {
     const c = this.ctx!, L = this.look;
+    if (this.state === 'loading') {
+      const osd = W.tapes[this.tape].osd?.loading;
+      if (osd) { c.font = this.font(this.spec.style === 'vcr' ? 38 : 30); c.fillStyle = L.accent; c.textBaseline = 'middle'; c.fillText(osd, 44, 54); }
+    }
+  }
+  /** the part and the time, the player's own on-screen display (top right of the picture), while it is paused or stopped */
+  private drawClock(): void {
+    const c = this.ctx!, L = this.look, d = this.data, t = this.time;
+    c.font = this.font(30); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.textAlign = 'right';
+    c.fillText(`${clock(t)} / ${clock(d.duration)}`, LW - 36, 54);
+    let title = this.chapter?.title ?? '';
+    c.font = this.font(24); c.fillStyle = L.dim;
+    while (title.length > 4 && c.measureText(title).width > LW * 0.5) title = title.slice(0, -2);
+    if (title !== (this.chapter?.title ?? '')) title = title.trimEnd() + '…';
+    c.fillText(title, LW - 36, 90);
+    c.textAlign = 'left';
+  }
+  /** paused (by the visitor, the story or the menu), or stopped by itself at the end of Part 1 — the picture stays (the end card
+   *  is the programme's own), the player's pause sign; at Part 1's end a "▶ Play on" chip (the glass and ▶ both play on) */
+  private drawPaused(partOne: boolean): void {
+    const c = this.ctx!, L = this.look, osd = W.tapes[this.tape].osd;
     if (this.spec.style === 'vcr') {
-      // the remote's own blocky key: a bevel in the 1997 chrome
+      c.font = this.font(44); c.fillStyle = L.accent; c.textBaseline = 'middle'; c.fillText(`${osd?.pause ?? 'PAUSE'} ❚❚`, 44, 54);
+    } else {
+      c.fillStyle = hexA(L.bg, partOne ? 0.12 : 0.35); c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
+      c.font = this.font(34); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.fillText(`❚❚ ${osd?.pause ?? ''}`.trim(), 36, 54);
+    }
+    this.drawClock();
+    if (partOne) this.chip(`▶  ${P.playOn}`);
+  }
+  /** a chip at the picture's foot, right (the player's own offer: Play on, From the start) */
+  private chip(label: string): void {
+    const c = this.ctx!, L = this.look;
+    c.font = this.font(40); const bw = Math.ceil(c.measureText(label).width) + 56, bh = 74;
+    const r = { x: LW - bw - 30, y: PIC.y + PIC.h - bh - 26, w: bw, h: bh };
+    if (this.spec.style === 'vcr') {
       c.fillStyle = ERA1.black; c.fillRect(r.x, r.y, r.w, r.h);
       c.fillStyle = ERA1.white; c.fillRect(r.x, r.y, r.w - 3, r.h - 3);
       c.fillStyle = ERA1.greyDark; c.fillRect(r.x + 3, r.y + 3, r.w - 6, r.h - 6);
       c.fillStyle = ERA1.silver; c.fillRect(r.x + 3, r.y + 3, r.w - 9, r.h - 9);
       c.fillStyle = ERA1.black;
-    } else if (this.spec.style === 'dvd') {
-      c.fillStyle = hexA(L.ink, 0.16); c.fillRect(r.x, r.y, r.w, r.h);
-      c.fillStyle = L.ink;
     } else {
-      c.fillStyle = L.panel; c.fillRect(r.x, r.y, r.w, r.h);
-      c.strokeStyle = L.edge; c.lineWidth = 2; c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+      c.fillStyle = this.spec.style === 'dvd' ? ERA3.accent : L.panel; c.fillRect(r.x, r.y, r.w, r.h);
+      c.strokeStyle = L.ink; c.lineWidth = 2; c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
       c.fillStyle = L.ink;
     }
-    c.font = this.font(Math.round(r.h * 0.5)); c.textAlign = 'center'; c.textBaseline = 'middle';
-    c.fillText(glyph, r.x + r.w / 2, r.y + r.h / 2 + 2);
-    c.textAlign = 'left';
-  }
-
-  /** while it plays: the whole picture is the pause control (a DVD's trailers too: pause is the one control they allow) */
-  private drawPlaying(): void {
-    const c = this.ctx!, L = this.look, pic = this.picture();
-    this.hits.push({ id: 'tv-pause', x: pic.x, y: pic.y, w: pic.w, h: pic.h });
-    if (this.state === 'loading') {
-      const osd = W.tapes[this.tape].osd?.loading;
-      if (osd) { c.font = this.font(this.spec.style === 'vcr' ? 40 : 30); c.fillStyle = L.accent; c.textBaseline = 'middle'; c.fillText(osd, 48, 64); }
-    }
-  }
-
-  /** paused (by the visitor, the story or the menu), or stopped by itself at the end of Part 1 — the picture stays (the end
-   *  card is the programme's own), the player's own pause sign, and the controls; at Part 1's end the ▶ says "Play on" */
-  private drawPaused(partOne: boolean): void {
-    const c = this.ctx!, L = this.look, pic = this.picture(), osd = W.tapes[this.tape].osd;
-    const k = this.LH / 720;
-    if (this.spec.style === 'vcr') {
-      c.font = this.font(48); c.fillStyle = L.accent; c.textBaseline = 'middle'; c.fillText(`${osd?.pause ?? 'PAUSE'} ❚❚`, 48, 64);
-    } else {
-      c.fillStyle = hexA(L.bg, partOne ? 0.12 : 0.35); c.fillRect(pic.x, pic.y, pic.w, pic.h);
-      c.font = this.font(Math.round(30 * k * 1.33)); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.fillText(`❚❚ ${osd?.pause ?? ''}`.trim(), 32, 44 * k * 1.33);
-    }
-    if (partOne) {
-      // the visitor's ▶: "Play on" — Part 2 onward, from this second (never a jump)
-      const label = `▶  ${P.playOn}`;
-      c.font = this.font(Math.round(44 * k)); const bw = Math.ceil(c.measureText(label).width) + Math.round(64 * k), bh = Math.round(84 * k);
-      const r = { id: 'tv-play', x: Math.round(this.LW - bw - 32 * k), y: Math.round(this.LH - bh - 140 * k), w: bw, h: bh };
-      if (this.spec.style === 'vcr') this.button(r, '');
-      else { c.fillStyle = this.spec.style === 'dvd' ? ERA3.accent : L.panel; c.fillRect(r.x, r.y, r.w, r.h); c.strokeStyle = L.ink; c.lineWidth = 2; c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2); }
-      c.font = this.font(Math.round(44 * k)); c.fillStyle = this.spec.style === 'vcr' ? ERA1.black : L.ink; c.textBaseline = 'middle'; c.textAlign = 'left';
-      c.fillText(label, r.x + Math.round(32 * k), r.y + bh / 2 + 2);
-      this.hits.push(r);
-    }
-    this.controls(Math.round(120 * k));
-  }
-
-  /** the tape's own end: its chapter list, each pressable, and "From the start" */
-  private drawList(): void {
-    const c = this.ctx!, L = this.look, pic = this.picture(), k = this.LH / 720;
-    c.fillStyle = hexA(this.spec.style === 'vcr' ? L.blue : L.bg, this.spec.style === 'vcr' ? 0.92 : 0.82);
-    c.fillRect(pic.x, pic.y, pic.w, pic.h);
-    const rows = this.data.chapters.filter((ch) => ch.kind === 'lesson' || ch.kind === 'commercial' || ch.kind === 'collapse' || ch.kind === 'break');
-    const x0 = pic.x + 40;
-    let y = pic.y + 34 * k;
-    c.textBaseline = 'top'; c.textAlign = 'left';
-    if (this.spec.style === 'vcr') { c.font = this.font(40); c.fillStyle = L.accent; c.fillText(W.tapes['1997'].osd?.ended ?? '', x0, y); }
-    else { c.font = this.font(Math.round(32 * k * 1.2)); c.fillStyle = L.dim; c.fillText(W.tapes[this.tape].listHead, x0, y); }
-    y += 56 * k;
-    const avail = pic.h - 220 * k;
-    const rowH = Math.max(26 * k, Math.min(50 * k, Math.floor(avail / Math.max(1, rows.length))));
-    const maxRows = Math.floor(avail / rowH);
-    c.font = this.font(Math.round(rowH * 0.62));
-    for (const ch of rows.slice(0, maxRows)) {
-      const r = { id: `tv-ch-${ch.id}`, x: x0 - 8, y, w: pic.w - 80, h: rowH - 4 };
-      c.fillStyle = hexA(L.ink, 0.08); c.fillRect(r.x, r.y, r.w, r.h);
-      c.fillStyle = ch.kind === 'commercial' ? L.dim : L.ink;
-      c.fillText(`▶  ${ch.title}`, x0 + 8, y + Math.round((rowH - 4) * 0.18));
-      c.textAlign = 'right'; c.fillStyle = L.dim; c.fillText(clock(ch.end - ch.start), r.x + r.w - 12, y + Math.round((rowH - 4) * 0.18)); c.textAlign = 'left';
-      this.hits.push(r);
-      y += rowH;
-    }
-    const bh = Math.round(84 * k), by = pic.y + pic.h - bh - 26 * k;
-    const label = `▶  ${P.playAgain}`;
-    c.font = this.font(Math.round(44 * k)); const bw = Math.ceil(c.measureText(label).width) + Math.round(64 * k);
-    const r = { id: 'tv-play', x: x0 - 8, y: by, w: bw, h: bh };
-    if (this.spec.style === 'vcr') this.button(r, '');
-    else { c.fillStyle = this.spec.style === 'dvd' ? ERA3.accent : L.panel; c.fillRect(r.x, r.y, r.w, r.h); c.strokeStyle = L.ink; c.lineWidth = 2; c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2); }
-    c.font = this.font(Math.round(44 * k)); c.fillStyle = this.spec.style === 'vcr' ? ERA1.black : L.ink; c.textBaseline = 'middle';
-    c.fillText(label, r.x + Math.round(32 * k), r.y + bh / 2 + 2);
-    this.hits.push(r);
-  }
-
-  private drawStopped(): void {
-    const c = this.ctx!, L = this.look, pic = this.picture(), k = this.LH / 720;
-    c.fillStyle = this.spec.style === 'vcr' ? L.blue : hexA(L.bg, 0.9); c.fillRect(pic.x, pic.y, pic.w, pic.h);
     c.textBaseline = 'middle'; c.textAlign = 'left';
-    if (this.spec.style === 'vcr') { c.font = this.font(48); c.fillStyle = L.accent; c.fillText(W.tapes['1997'].osd?.stop ?? '', 48, 64); }
+    c.fillText(label, r.x + 28, r.y + r.h / 2 + 2);
+  }
+  /** the tape's own end: what was on it, and "From the start" (the glass or ▶ plays it again) */
+  private drawEnded(): void {
+    const c = this.ctx!, L = this.look;
+    c.fillStyle = hexA(this.spec.style === 'vcr' ? L.blue : L.bg, this.spec.style === 'vcr' ? 0.92 : 0.82);
+    c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
+    c.textBaseline = 'middle'; c.textAlign = 'left';
+    if (this.spec.style === 'vcr') { c.font = this.font(40); c.fillStyle = L.accent; c.fillText(W.tapes['1997'].osd?.ended ?? '', 44, 54); }
+    else { c.font = this.font(34); c.fillStyle = L.dim; c.fillText(W.tapes[this.tape].listHead, 44, 54); }
+    const rows = this.data.chapters.filter((ch) => ch.kind === 'lesson' || ch.kind === 'commercial' || ch.kind === 'collapse' || ch.kind === 'break');
+    c.font = this.font(28);
+    rows.slice(0, 8).forEach((ch, i) => { c.fillStyle = ch.kind === 'commercial' ? L.dim : L.ink; c.fillText(ch.title, 60, 112 + i * 40); });
+    this.chip(`▶  ${P.playAgain}`);
+  }
+  private drawStopped(): void {
+    const c = this.ctx!, L = this.look;
+    c.fillStyle = this.spec.style === 'vcr' ? L.blue : hexA(L.bg, 0.9); c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
+    c.textBaseline = 'middle'; c.textAlign = 'left';
+    if (this.spec.style === 'vcr') { c.font = this.font(44); c.fillStyle = L.accent; c.fillText(W.tapes['1997'].osd?.stop ?? '', 44, 54); }
     const p = placeOf(this.tape), ch = this.data.chapters[chapterAt(this.data, p.t)];
-    c.font = this.font(Math.round(40 * k * 1.15)); c.fillStyle = L.ink; c.fillText(this.data.title, 48, pic.y + pic.h * 0.3);
-    c.font = this.font(Math.round(32 * k * 1.15)); c.fillStyle = L.dim; c.fillText(`${ch?.title ?? ''} · ${clock(p.t)}`, 48, pic.y + pic.h * 0.3 + 56 * k * 1.15);
-    c.fillText(this.stopNote ?? P.stopped, 48, pic.y + pic.h * 0.3 + 104 * k * 1.15);
-    this.controls(Math.round(120 * k));
+    c.font = this.font(42); c.fillStyle = L.ink; c.fillText(this.data.title, 48, PIC.h * 0.36);
+    c.font = this.font(32); c.fillStyle = L.dim; c.fillText(`${ch?.title ?? ''} · ${clock(p.t)}`, 48, PIC.h * 0.36 + 60);
+    c.fillText(this.stopNote ?? P.stopped, 48, PIC.h * 0.36 + 112);
   }
-
   private drawError(): void {
-    const c = this.ctx!, L = this.look, pic = this.picture();
-    c.fillStyle = this.spec.style === 'vcr' ? L.blue : L.panel; c.fillRect(pic.x, pic.y, pic.w, pic.h);
+    const c = this.ctx!, L = this.look;
+    c.fillStyle = this.spec.style === 'vcr' ? L.blue : L.panel; c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
     c.font = this.font(36); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.textAlign = 'center';
-    c.fillText(P.cannot, pic.x + pic.w / 2, pic.y + pic.h / 2); c.textAlign = 'left';
+    c.fillText(P.cannot, PIC.x + PIC.w / 2, PIC.y + PIC.h / 2); c.textAlign = 'left';
   }
 
-  pressRay(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
-    if (!this.entity.enabled) return false;
-    const at = hitPlane(this.entity, this.LW, this.LH, ray);
-    return at ? this.pressAt(at.x, at.y) : false;
+  /** where the walker and the probes aim: each key, a point on the bezel (the body), the glass's centre, in world metres */
+  targets(): { keys: { id: SetKey; at: number[] }[]; body: number[]; glass: number[]; picTop: number[]; picBottom: number[] } {
+    const m = this.set.root.getWorldTransform();
+    const w = (x: number, y: number, z: number): number[] => { const p = m.transformPoint(new pc.Vec3(x, y, z)); return [p.x, p.y, p.z]; };
+    const top = GLASS.cy + GLASS.h / 2, picBot = top - GLASS.h * (PIC.h / LH);
+    return { keys: KEY_POINTS.map((k) => ({ id: k.id, at: w(k.at[0], k.at[1], k.at[2]) })),
+      body: w(-0.236, GLASS.cy + 0.06, GLASS.z - 0.004), glass: w(GLASS.cx, GLASS.cy, GLASS.z), picTop: w(GLASS.cx, top, GLASS.z), picBottom: w(GLASS.cx, picBot, GLASS.z) };
   }
-  /** is a ray on this glass (the pointer's "what is this" and the cursor) */
-  aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean { return this.entity.enabled && !!hitPlane(this.entity, this.LW, this.LH, ray); }
 
   debug() {
     const v = this.video;
-    return { tape: this.tape, entity: this.entity.name, enabled: this.entity.enabled, LW: this.LW, LH: this.LH, state: this.state,
+    return { tape: this.tape, entity: this.entity.name, enabled: this.entity.enabled, setEnabled: this.set.root.enabled, LW, LH, state: this.state,
       t: v?.currentTime ?? null, paused: v?.paused ?? null, muted: v?.muted ?? null, volume: v?.volume ?? null, src: v?.src ?? null,
       chapter: this.chapter?.id ?? null, chapterKind: this.chapter?.kind ?? null, hits: this.hits.map((h) => ({ ...h })), needsSound: this.needsSound, userPaused: this.userPaused,
       draws: this.draws, place: { ...placeOf(this.tape) }, partOneEnd: this.data.partOneEnd, duration: this.data.duration,
-      glass: { pos: this.spec.glass.pos, w: this.spec.glass.w, h: this.spec.glass.h },
-      panel: { enabled: this.panel.entity.enabled, draws: this.panel.draws, center: [this.panel.worldCenter.x, this.panel.worldCenter.y, this.panel.worldCenter.z],
-        w: PANEL.w, h: PANEL.h, canvas: PANEL.canvas, ...this.panel.shown, recent: [...this.panel.recent] },
-      viewPoint: [this.viewPoint.x, this.viewPoint.y, this.viewPoint.z] };
+      pose: this.pose, held: this.held, heldScale: this.heldScale, heldDist: this.heldDist, lastPress: this.lastPress, setDown: this.setDown,
+      glass: { w: GLASS.w, h: GLASS.h, picFrac: PIC.h / LH, barPx: LH - BARY }, bar: { ...this.bar, recent: [...this.bar.recent] }, targets: this.targets() };
   }
 }
 
-/** what the conducted moment needs from the engine (app.ts implements it; nothing here moves the camera itself) */
+/**
+ * ⚑ S394 (B3) — LAMBY'S LINE, IN VIEW. His: "on the headset there are no FADES … if needed we need to find a way for the line
+ * to appear in the 360º environment." The guide's call (the set's moment) and its one later offer are drawn here, on a card
+ * placed in the current view — on every device, the headset included — never on a monitor the visitor may have turned away
+ * from. It sits a little under the line of sight at `call.flatDist` / `call.xrDist`, faces the eye, is drawn over the room
+ * (no depth test: the desk or the monitor never cuts it), and if the visitor turns more than `call.followDeg` away it glides
+ * back into view (`call.follow` s; it never fades). Its words, its buttons and its × are the guide's own (the balloon on the
+ * glass is not drawn while this card shows it: said once). The era's balloon grammar (lambyGuideDraw.ts).
+ */
+class TvCall {
+  readonly entity: pc.Entity;
+  readonly canvas: HTMLCanvasElement;
+  private readonly ctx: CanvasRenderingContext2D | null;
+  private readonly tex: pc.Texture;
+  /** logical px (the desktop's grammar), drawn ×3 */
+  private readonly S = 3;
+  readonly CW = 300;
+  readonly CH = 120;
+  hits: Hit[] = [];
+  private key = '';
+  shown = false;
+  private glide = 1;
+  private readonly gFrom = new pc.Vec3();
+  private readonly gTo = new pc.Vec3();
+  /** the text it shows (the probe reads it) */
+  text: string | null = null;
+  constructor(app: pc.AppBase) {
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = this.CW * this.S; this.canvas.height = this.CH * this.S;
+    this.ctx = this.canvas.getContext('2d');
+    this.tex = makeScreenTexture(app, this.canvas, 'screen');
+    this.entity = makeScreenEntity('teaching-tv-call', this.tex, CALL.w, CALL.w * this.CH / this.CW, true);
+    const mi = this.entity.render?.meshInstances[0];
+    if (mi?.material instanceof pc.StandardMaterial) { mi.material.depthTest = false; mi.material.update(); }
+    if (this.entity.render) { this.entity.render.batchGroupId = -1; this.entity.render.castShadows = false; }
+    if (mi) mi.drawOrder = 1000;
+    this.entity.enabled = false;
+    app.root.addChild(this.entity);
+  }
+  /** the card for a guide view, or hidden (`text` null) */
+  show(skin: string, text: string | null, buttons: [string, string][], eye: pc.Entity | null, xr: boolean): void {
+    if (!text || !eye) { if (this.shown) { this.shown = false; this.entity.enabled = false; this.text = null; } return; }
+    const key = `${skin}|${text}|${buttons.map((b) => b[0]).join(',')}`;
+    if (key !== this.key) { this.key = key; this.paint(skin, text, buttons); }
+    if (!this.shown) { this.shown = true; this.text = text; this.place(eye, xr, true); this.entity.enabled = true; }
+  }
+  /** where it belongs now: a little under the line of sight, facing the eye */
+  private spot(eye: pc.Entity, xr: boolean): pc.Vec3 {
+    const { fwd, up } = eyeFrame(eye, xr);
+    const d = xr ? CALL.xrDist : CALL.flatDist;
+    const right = new pc.Vec3().cross(fwd, up).normalize();
+    const q = new pc.Quat().setFromAxisAngle(right, -CALL.drop);
+    return eye.getPosition().clone().add(q.transformVector(fwd.clone()).mulScalar(d));
+  }
+  private place(eye: pc.Entity, xr: boolean, now: boolean): void {
+    const at = this.spot(eye, xr);
+    if (now) { this.entity.setPosition(at); this.glide = 1; } else { this.gFrom.copy(this.entity.getPosition()); this.gTo.copy(at); this.glide = 0; }
+    this.face(eye);
+  }
+  /** the plane's face (+Y) to the eye, its top up: look at the eye (−Z to it), turn about Y, tip up about X */
+  private face(eye: pc.Entity): void {
+    this.entity.lookAt(eye.getPosition(), pc.Vec3.UP);
+    this.entity.rotateLocal(0, 180, 0);
+    this.entity.rotateLocal(90, 0, 0);
+  }
+  update(dt: number, eye: pc.Entity, xr: boolean): void {
+    if (!this.shown) return;
+    if (this.glide < 1) {
+      this.glide = Math.min(1, this.glide + dt / CALL.follow);
+      this.entity.setPosition(new pc.Vec3().lerp(this.gFrom, this.gTo, smooth(this.glide)));
+      this.face(eye);
+      return;
+    }
+    // turned away: it comes back into view (a glide, never a fade)
+    const to = this.entity.getPosition().clone().sub(eye.getPosition()).normalize();
+    const ang = Math.acos(Math.max(-1, Math.min(1, to.dot(eye.forward)))) / D2R;
+    if (ang > CALL.followDeg) this.place(eye, xr, false);
+  }
+  /** a press: the button's id, 'card' (on the card, on no button: consumed), or null */
+  press(ray: Ray): string | null {
+    if (!this.shown) return null;
+    const at = hitPlane(this.entity, this.CW, this.CH, ray);
+    if (!at) return null;
+    const h = this.hits.find((r) => at.x >= r.x && at.x <= r.x + r.w && at.y >= r.y && at.y <= r.y + r.h);
+    return h ? h.id : at.y <= this.used ? 'card' : null;
+  }
+  /** the height the balloon uses (logical px; below it the card is clear and lets a press through) */
+  private used = 0;
+  /** the balloon, in the era's grammar */
+  private paint(skin: string, text: string, buttons: [string, string][]): void {
+    const c = this.ctx; if (!c) return;
+    const S = this.S;
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    c.setTransform(S, 0, 0, S, 0, 0);
+    this.hits = [];
+    const e1 = skin === 'e1' || skin === 'e2', e3 = skin === 'e3';
+    const ground = skin === 'e4' ? CHROME.field : e3 ? ERA3.glass : skin === 'e2' ? ERA1.paper : ERA1.tooltip;
+    const ink = skin === 'e4' ? CHROME.ink : e3 ? ERA3.ink : ERA1.black;
+    const accent = e3 ? ERA3.accent : skin === 'e4' ? CHROME.accent : ERA1.navy;
+    const x = 2, w = this.CW - 4;
+    ui.setFont(c, 14);
+    const textX = x + 58, textW = w - 58 - 26;
+    const lines = ui.wrapText(c, text, textW);
+    const h = Math.min(this.CH - 4, 16 + lines.length * 19 + 36);
+    const y = 2;
+    this.used = y + h;
+    if (e1) { ui.px(c, x, y, w, h, ERA1.black); ui.px(c, x + 1, y + 1, w - 2, h - 2, ground); }
+    else {
+      const edge = e3 ? ERA3.glassEdge : CHROME.fieldEdge;
+      ui.px(c, x, y, w, h, edge); ui.px(c, x + 1, y + 1, w - 2, h - 2, ground); ui.px(c, x + 1, y + 1, w - 2, 3, accent);
+    }
+    // Lamby, the era's own face of him
+    c.save(); c.beginPath(); c.rect(x + 4, y + 4, 50, h - 8); c.clip();
+    if (skin === 'e4') { ui.setFont(c, 22); c.fillStyle = accent; c.fillText(decisions.helper.e4, x + 12, y + 14); }
+    else if (e3) aero.drawLambMark(c, x + 29, y + 32, 1.4);
+    else drawLambyChar(c, x + 29, y + 46, { mood: 'cheerful', action: 'idle', t: 0, moodStart: 0, scale: 0.36, headOnly: true });
+    c.restore();
+    ui.setFont(c, 14); c.fillStyle = ink;
+    lines.forEach((l, i) => c.fillText(l, textX, y + 10 + i * 19));
+    // × closes it (logged by the guide, like every dismissal)
+    ui.setFont(c, 14); c.fillStyle = ink; c.fillText('×', x + w - 17, y + 6);
+    this.hits.push({ id: 'lg-x', x: x + w - 26, y: y + 1, w: 25, h: 24 });
+    let bx = textX;
+    buttons.forEach(([id, label], i) => {
+      ui.setFont(c, 12); const bw = Math.ceil(c.measureText(label).width) + 22, by = y + h - 31, bh = 24;
+      if (e3) aero.button(c, bx, by, bw, bh, label, { primary: i === 0, size: 12 });
+      else if (skin === 'e4') {
+        ui.px(c, bx, by, bw, bh, i === 0 ? CHROME.button : CHROME.fieldEdge);
+        if (i !== 0) ui.px(c, bx + 1, by + 1, bw - 2, bh - 2, CHROME.field);
+        ui.setFont(c, 12); c.fillStyle = i === 0 ? CHROME.buttonInk : CHROME.ink; c.fillText(label, bx + 11, by + 6);
+      } else {
+        ui.px(c, bx, by, bw, bh, ERA1.black); ui.px(c, bx, by, bw - 1, bh - 1, ERA1.white);
+        ui.px(c, bx + 1, by + 1, bw - 2, bh - 2, ERA1.grey); ui.px(c, bx + 1, by + 1, bw - 3, bh - 3, ERA1.beige);
+        ui.setFont(c, 12); c.fillStyle = ERA1.black; c.fillText(label, bx + 11, by + 6);
+      }
+      this.hits.push({ id, x: bx, y: by, w: bw, h: bh }); bx += bw + 8;
+    });
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    this.tex.upload();
+  }
+  hide(): void { this.show('', null, [], null, false); }
+}
+
+/** what the moment needs from the engine (app.ts implements it; nothing here moves the camera) */
 export interface TvHost {
-  /** the era the visitor is in now (the room's) */
   era(): string;
   /** the era's beat has been reached: the story may bring this tape now */
   due(tape: TapeId): boolean;
-  /** no other voice, no felt scene, no update, nothing scripted, the menu shut: the floor is free. `dueFor` = seconds the
-   *  moment has been due and waiting (a guide balloon is waited for only so long: it hides while the TV has the floor) */
+  /** no other voice, no felt scene, no update, nothing scripted, the menu shut: the floor is free */
   quiet(tape: TapeId, dueFor: number): boolean;
   /** the game menu (or the idle cycle) holds the piece: the moment's clock stops */
   held(): boolean;
-  /** a conducted turn to look at a world point over `seconds` (in a headset: one cut under the dissolve) */
-  conduct(target: pc.Vec3, seconds: number): void;
-  /** a conducted return to the seat's own pose */
-  returnToSeat(seconds: number): void;
-  /** degrees between where the visitor looks now and a world point (or the seat, with no point) */
-  angleTo(target: pc.Vec3 | null): number;
-  /** a scripted camera move is in flight */
-  cameraBusy(): boolean;
-  /** the era's own arrival line (2026: Dad's message and link); 1997/2016 bring theirs on the glass */
+  /** the eye a brought set faces: the logical head in a headset, the camera otherwise */
+  eye(): pc.Entity;
+  /** the flat camera (its field of view sizes the set in the hand), or null in a headset */
+  camera(): pc.CameraComponent | null;
+  xr(): boolean;
+  /** the era's own arrival (2026: Dad's message and link) */
   announce(tape: TapeId): void;
-  /** ⚑ S392 — Lamby's call (1997, 2016): `text` while the call is up, null to take it down */
+  /** Lamby's call: `text` while the call is up, null to take it down */
   call(tape: TapeId, text: string | null): void;
   /** Lamby's call balloon is still up (not yet answered or closed) */
   callOpen(): boolean;
+  /** a press on the in-view card's button, handed to the guide ('lg-take', 'lg-later', 'lg-x') */
+  guidePress(id: string): void;
 }
 
-export type MomentStage = 'idle' | 'arrive' | 'turn' | 'play' | 'after' | 'return' | 'done';
+export type MomentStage = 'idle' | 'call' | 'bring' | 'play' | 'after' | 'done';
 
-/** ONCE PER ROOM: the TV turns on, the call, the visitor is taken to it, the tape plays from its start to the end of Part 1, a
- *  breath on the end card, and back to the desk */
+/** ONCE PER ROOM: the set lights with its leader, Lamby's line in view, the set comes to the visitor, the tape plays from its
+ *  start to the end of Part 1, a breath on the end card, and the floor is free (the set waits, held, ▶ ready) */
 class TvMoment {
   stage: MomentStage = 'idle';
   private t = 0;
   private started = 0;
-  /** Lamby's Take me there was pressed: the turn comes now */
   private go = false;
-  /** the call balloon was seen up (so its closing means the visitor answered it) */
   private callSeen = false;
-  /** seconds the moment has been due and waiting for the floor */
+  private callClosedAt = -1;
   dueFor = 0;
-  /** seconds the moment took, from the TV turning on to the visitor back at the desk (the probe reports the cost) */
+  /** seconds from the set lighting to the floor being free (the probe reports the cost) */
   seconds = 0;
-  /** seconds from the TV turning on to the turn (the call's share of the cost) */
+  /** seconds from the set lighting to the set setting off (the call's share) */
   callSeconds = 0;
   constructor(private readonly tv: TeachingTv, private readonly host: TvHost) {}
   get running(): boolean { return this.stage !== 'idle' && this.stage !== 'done'; }
-  get calling(): boolean { return this.stage === 'arrive'; }
-  private turnSeconds(target: pc.Vec3 | null): number {
-    const a = this.host.angleTo(target);
-    return Math.max(MOMENT.turnMin, Math.min(MOMENT.turnMax, a * MOMENT.turnSecondsPerDegree));
-  }
-  /** Lamby's Take me there, during the call */
-  takeNow(): void { if (this.stage === 'arrive') this.go = true; }
-  /** the era's update, a Leave or a wipe: let go of everything at once (the TV keeps its place) */
+  get calling(): boolean { return this.stage === 'call'; }
+  takeNow(): void { if (this.stage === 'call') this.go = true; }
   abort(note: string | null): void {
     if (!this.running) return;
     this.tv.stop(note);
     this.tv.markPartOneSeen();
     this.host.call(this.tv.tape, null);
-    releaseVoice('teaching-tv');
     this.stage = 'done';
   }
   update(dt: number): void {
@@ -799,40 +994,43 @@ class TvMoment {
       const due = this.host.due(tape);
       this.dueFor = due ? this.dueFor + dt : 0;
       if (due && this.host.quiet(tape, this.dueFor)) {
-        holdVoice('teaching-tv');
         this.tv.showLeader();
         this.host.announce(tape);
         const call = W.lamby.call[TAPE_ERA[tape]];
         if (call) this.host.call(tape, call);
-        this.stage = 'arrive'; this.t = 0; this.go = false; this.callSeen = false; this.started = performance.now();
+        this.stage = 'call'; this.t = 0; this.go = false; this.callSeen = false; this.callClosedAt = -1; this.started = performance.now();
       }
       return;
     }
     if (this.host.held()) return;
     this.t += dt;
     switch (this.stage) {
-      case 'arrive': {
-        const hasCall = !!W.lamby.call[TAPE_ERA[tape]];
+      case 'call': {
+        // Lamby's line is in view: its yes sends the set at once; × closes the balloon and the set comes after a breath (the
+        //   system forces, Lamby only speaks); otherwise the line is given `callHold` to be read. A call that never showed (the
+        //   era's cap) lets the set come after `noCall`.
         if (this.host.callOpen()) this.callSeen = true;
-        // 2026: Dad's link, a breath, the turn. 1997/2016: Lamby's call — Take me there turns at once; closing it (or a call that
-        //   never showed) lets the turn come after a breath; otherwise it is read for up to `callHold`
-        const ready = !hasCall ? this.t >= MOMENT.arriveHold
-          : this.go || this.t >= MOMENT.callHold || (this.t >= MOMENT.arriveHold && !this.host.callOpen() && (this.callSeen || this.t >= 2.5));
-        if (ready && !this.host.cameraBusy()) {
+        else if (this.callSeen && this.callClosedAt < 0) this.callClosedAt = this.t;
+        const ready = this.go || this.t >= MOMENT.callHold
+          || (this.callClosedAt >= 0 && this.t - this.callClosedAt >= MOMENT.dismissBreath)
+          || (!this.callSeen && this.t >= MOMENT.noCall);
+        if (ready) {
           this.host.call(tape, null);
           this.callSeconds = (performance.now() - this.started) / 1000;
-          this.host.conduct(this.tv.viewPoint, this.turnSeconds(this.tv.viewPoint));
-          this.stage = 'turn'; this.t = 0;
+          this.tv.take(this.host.eye(), this.host.xr(), this.host.camera());
+          this.stage = 'bring'; this.t = 0;
         }
         break;
       }
-      case 'turn':
-        if (this.t > 0.2 && !this.host.cameraBusy()) { this.tv.play(0); this.stage = 'play'; this.t = 0; }
+      case 'bring':
+        if (this.tv.pose === 'held') { this.tv.play(0); this.stage = 'play'; this.t = 0; }
+        else if (this.tv.pose === 'rest' && this.t > 0.5) { this.tv.markPartOneSeen(); this.finish(); }   // it never set off (the era left)
         break;
       case 'play': {
         const s = this.tv.state;
         const refused = ((s === 'paused' || s === 'loading') && !this.tv.userPaused && this.t >= MOMENT.noPlayRelease && this.tv.time < 0.2)
-          || this.tv.stalledFor >= MOMENT.noPlayRelease;   // still standing even muted: let the visitor go (▶ stays theirs)
+          || this.tv.stalledFor >= MOMENT.noPlayRelease;
+        if (!this.tv.held) { this.tv.markPartOneSeen(); this.finish(); break; }   // set down by the visitor: the moment lets go
         if (s === 'partOne' || s === 'ended' || s === 'error' || this.tv.userPaused || s === 'stopped' || refused) {
           this.tv.markPartOneSeen();
           this.stage = 'after'; this.t = 0;
@@ -840,54 +1038,48 @@ class TvMoment {
         break;
       }
       case 'after':
-        // the visitor pressed ▶ to play on: they are watching; the moment lets go where they are (no return)
-        if (this.tv.playing) { this.finish(); break; }
-        if (this.t >= MOMENT.afterHold && !this.host.cameraBusy()) {
-          this.host.returnToSeat(this.turnSeconds(null));
-          this.stage = 'return'; this.t = 0;
-        }
-        break;
-      case 'return':
-        if (this.t > 0.2 && !this.host.cameraBusy()) this.finish();
+        // the end card, a breath: then the floor is free. ▶ (playing on) or setting it down ends the breath at once.
+        if (this.tv.playing || !this.tv.held || this.t >= MOMENT.afterHold) this.finish();
         break;
       default: break;
     }
   }
   private finish(): void {
-    releaseVoice('teaching-tv');
     this.seconds = (performance.now() - this.started) / 1000;
     this.stage = 'done';
   }
 }
 
-/** THE THREE, and the rules they share: one era's TV in the room at a time, one moment per room, one voice at a time */
+/** THE THREE, and the rules they share: one era's set in the room at a time, one moment per room, one voice at a time */
 export class TeachingTvs {
   readonly tvs: Record<TapeId, TeachingTv>;
   private readonly moments: Record<TapeId, TvMoment>;
+  private readonly card: TvCall;
   private era = '';
-  /** the voices as they were last frame (a voice that ARRIVES pauses a playing TV) */
   private voicesWas: Record<string, string> = {};
   constructor(app: pc.AppBase, private readonly host: TvHost) {
     this.tvs = { '1997': new TeachingTv(app, '1997'), '2016': new TeachingTv(app, '2016'), '2026': new TeachingTv(app, '2026') };
     this.moments = { '1997': new TvMoment(this.tvs['1997'], host), '2016': new TvMoment(this.tvs['2016'], host), '2026': new TvMoment(this.tvs['2026'], host) };
+    this.card = new TvCall(app);
   }
-  /** a conducted moment holds the floor */
   get momentRunning(): boolean { return TAPE_IDS.some((t) => this.moments[t].running); }
   moment(tape: TapeId): TvMoment { return this.moments[tape]; }
-  /** any TV is heard (the kit's and the platform's own loops yield to it) */
   get audible(): boolean { return TAPE_IDS.some((t) => this.tvs[t].audible); }
-  /** the TV of the era the visitor is in */
   current(): TeachingTv | null { const id = TAPE_IDS.find((t) => TAPE_ERA[t] === this.era); return id ? this.tvs[id] : null; }
+  /** a set is in the hand (or on its way): it is in front of everything for a press */
+  get holding(): boolean { return TAPE_IDS.some((t) => this.tvs[t].held); }
+  /** a held set is playing: the visitor is watching (the story waits: one voice at a time) */
+  get watching(): boolean { return TAPE_IDS.some((t) => this.tvs[t].held && this.tvs[t].playing); }
+  /** Lamby's line is on the card in view */
+  get carding(): boolean { return this.card.shown; }
 
   /**
-   * every frame. `voices` = each of the story's voices by name, as a short signature ('' when silent): Lamby, a toast, a
-   * side-message (its text), the conduction, a felt scene, a camera move not ours. A voice that ARRIVES — a name whose
-   * signature turns non-empty or changes — pauses a TV the visitor set playing. `updateArmed` = the era's update ritual has
-   * begun.
+   * every frame. `voices` = each of the story's voices by name, as a short signature ('' when silent). A voice that ARRIVES
+   * (a name whose signature turns non-empty or changes) pauses a set the visitor set playing — and, held, sends it back to
+   * its place, paused where it was (the story moving on). `updateArmed` = the era's update ritual has begun.
    */
   update(dt: number, era: string, voices: Record<string, string>, updateArmed: boolean): void {
     if (era !== this.era) {
-      // the era changed: the old room's TV stops (its place kept for the Close), the new room's TV fetches its tape
       for (const id of TAPE_IDS) {
         const mine = TAPE_ERA[id] === era;
         if (!mine) this.moments[id].abort(P.stopped);
@@ -896,64 +1088,104 @@ export class TeachingTvs {
       }
       this.era = era;
     }
-    // the update stops the TV, and holds it stopped for as long as the update ritual is up
-    if (updateArmed) for (const id of TAPE_IDS) { if (this.moments[id].running) this.moments[id].abort(P.stopped); if (this.tvs[id].playing) this.tvs[id].stop(P.stopped); }
+    if (updateArmed) for (const id of TAPE_IDS) {
+      if (this.moments[id].running) this.moments[id].abort(P.stopped);
+      if (this.tvs[id].playing) this.tvs[id].stop(P.stopped);
+      if (this.tvs[id].held) this.tvs[id].putBack(this.host.eye().getPosition(), 'story');
+    }
     for (const id of TAPE_IDS) this.moments[id].update(dt);
+    // ONE VOICE AT A TIME: the moment holds the floor, and so does a held set that is playing (the visitor is watching)
+    const floor = this.momentRunning || this.watching;
+    if (floor && !voiceHolder()) holdVoice('teaching-tv');
+    else if (!floor) releaseVoice('teaching-tv');
     setVoiceWanted(TAPE_IDS.some((id) => this.moments[id].stage === 'idle' && this.moments[id].dueFor > 0) ? 'teaching-tv' : null);
-    // the story speaks: a TV the visitor set playing pauses itself and keeps its place (on the voice's first moment; pressing
-    //   ▶ while a voice is on is the visitor's own choice and is let be)
+    // the story speaks: a set the visitor set playing pauses itself and keeps its place; a held set goes back to its place
     const arrived = Object.keys(voices).some((k) => voices[k] !== '' && voices[k] !== (this.voicesWas[k] ?? ''));
-    if (arrived && !this.momentRunning) for (const id of TAPE_IDS) if (this.tvs[id].playing) this.tvs[id].pause('story');
+    if (arrived && !this.momentRunning) {
+      for (const id of TAPE_IDS) {
+        const tv = this.tvs[id];
+        if (tv.playing) tv.pause('story');
+        if (tv.held) tv.putBack(this.host.eye().getPosition(), 'story');
+      }
+    }
     this.voicesWas = { ...voices };
+    // the visitor's seat changed under a held set (a marker, a scripted send): the story moved on, the set goes back
+    const eyeNow = this.host.eye().getPosition();
+    for (const id of TAPE_IDS) {
+      const tv = this.tvs[id];
+      if (tv.pose === 'held' && tv.takenAt.distance(eyeNow) > 0.45) tv.putBack(eyeNow, 'story');
+    }
     for (const id of TAPE_IDS) this.tvs[id].update(dt);
+    this.card.update(dt, this.host.eye(), this.host.xr());
   }
 
-  /** the press resolver (app.ts resolveTapRay): true when a lit glass took the press */
-  pressRay(ray: { p0: pc.Vec3; p1: pc.Vec3 }): boolean {
-    for (const id of TAPE_IDS) if (this.tvs[id].pressRay(ray)) return true;
+  /** ⚑ S394 — the guide's call and its one later offer, drawn IN VIEW (the card), from the guide's own view. Each frame. */
+  guide(view: { era: string; rung: string; text: string | null; hidden: boolean }, active: boolean): void {
+    const up = active && !view.hidden && (view.rung === 'tvcall' || view.rung === 'tv') && !!view.text;
+    const buttons: [string, string][] = view.rung === 'tv' ? [['lg-take', W.lamby.yes], ['lg-later', W.lamby.no]] : [['lg-take', W.lamby.yes]];
+    this.card.show(view.era, up ? view.text : null, buttons, this.host.eye(), this.host.xr());
+  }
+  /** a press on the card (true: it took it) */
+  pressCard(ray: Ray): boolean {
+    const id = this.card.press(ray);
+    if (!id) return false;
+    if (id !== 'card') this.host.guidePress(id);
+    return true;
+  }
+  /** a press on a held set (true: it took it); a press that misses it passes on to the room */
+  pressHeld(ray: Ray): boolean {
+    for (const id of TAPE_IDS) if (this.tvs[id].held && this.tvs[id].press(ray, this.host.eye(), this.host.xr(), this.host.camera())) return true;
     return false;
   }
-  aim(ray: { p0: pc.Vec3; p1: pc.Vec3 }): TapeId | null {
-    for (const id of TAPE_IDS) if (this.tvs[id].aim(ray)) return id;
-    return null;
-  }
-  /** the lit glass a ray lands on, and where (the sentence line names it; in a headset the ray ends there) */
-  aimPoint(ray: { p0: pc.Vec3; p1: pc.Vec3 }): { tape: TapeId; at: { x: number; y: number; z: number } } | null {
+  /** a press on a resting, lit set brings it (true: it took it) */
+  pressRest(ray: Ray): boolean {
     for (const id of TAPE_IDS) {
-      const e = this.tvs[id].entity;
-      if (!e.enabled || !this.tvs[id].aim(ray)) continue;
-      const m = e.getWorldTransform().data, n = new pc.Vec3(m[4], m[5], m[6]);
-      const d = ray.p1.clone().sub(ray.p0), denom = d.dot(n);
-      if (Math.abs(denom) < 1e-9) continue;
-      const t = new pc.Vec3(m[12], m[13], m[14]).sub(ray.p0).dot(n) / denom;
-      const at = ray.p0.clone().add(d.mulScalar(t));
-      return { tape: id, at: { x: at.x, y: at.y, z: at.z } };
+      const tv = this.tvs[id];
+      if (tv.pose === 'rest' && tv.press(ray, this.host.eye(), this.host.xr(), this.host.camera())) return true;
+    }
+    return false;
+  }
+  /** what a ray is on, and where (the sentence line names it; in a headset the ray ends there) */
+  aimPoint(ray: Ray): { tape: TapeId; what: SetAim | 'card'; at: { x: number; y: number; z: number } } | null {
+    if (this.card.press(ray)) {
+      const p = this.card.entity.getPosition();
+      return { tape: TAPE_IDS.find((t) => TAPE_ERA[t] === this.era) ?? '1997', what: 'card', at: { x: p.x, y: p.y, z: p.z } };
+    }
+    const order = [...TAPE_IDS].sort((a, b) => Number(this.tvs[b].held) - Number(this.tvs[a].held));
+    for (const id of order) {
+      const tv = this.tvs[id];
+      const what = tv.aim(ray, this.host.xr());
+      if (!what) continue;
+      const { a, b } = toLocal(tv.set.root, ray);
+      const t = hitBounds(a, b) ?? 0;
+      const at = new pc.Vec3().lerp(ray.p0, ray.p1, t);
+      return { tape: id, what, at: { x: at.x, y: at.y, z: at.z } };
     }
     return null;
   }
 
-  /** Lamby may offer to take a stalled visitor back: the era's tape has more to play, it is not playing, the moment is over
-   *  (the once-per-era is Lamby's own, src/narrative/lambyGuide.ts) */
+  /** Lamby may offer to bring the set to a stalled visitor: the era's tape has more to play, it is not playing or held, the
+   *  moment is over (the once-per-era is Lamby's own, src/narrative/lambyGuide.ts) */
   offerDue(era: string): boolean {
     const tv = this.current(); if (!tv || TAPE_ERA[tv.tape] !== era) return false;
     const p = placeOf(tv.tape);
-    return this.moments[tv.tape].stage === 'done' && p.partOneSeen && !tv.playing && p.t < TAPES[tv.tape].duration - 1;
+    return this.moments[tv.tape].stage === 'done' && p.partOneSeen && !tv.playing && tv.pose === 'rest' && p.t < TAPES[tv.tape].duration - 1;
   }
   lambyLine(era: string): string { return W.lamby[era] ?? ''; }
-  /** Lamby's Yes: during the call, the conducted moment turns now; afterwards, the visitor is taken to the TV (it does not
-   *  start itself: ▶ is theirs to press) */
+  /** Lamby's yes: during the call, the set comes now; afterwards, the set is brought to the visitor (▶ is theirs to press) */
   takeTo(): void {
     const tv = this.current(); if (!tv) return;
     const m = this.moments[tv.tape];
     if (m.calling) { m.takeNow(); return; }
-    if (this.host.cameraBusy()) return;
-    this.host.conduct(tv.viewPoint, Math.max(MOMENT.turnMin, Math.min(MOMENT.turnMax, this.host.angleTo(tv.viewPoint) * MOMENT.turnSecondsPerDegree)));
+    tv.wake();
+    tv.take(this.host.eye(), this.host.xr(), this.host.camera());
   }
 
-  /** the Close and a Leave: every TV stops and goes dark; the places stay in memory for the era websites */
+  /** the Close and a Leave: every set stops and goes; the places stay in memory for the era websites */
   stopAll(): void {
     for (const id of TAPE_IDS) { this.moments[id].abort(P.stopped); this.tvs[id].stop(P.stopped); this.tvs[id].setInEra(false); }
     this.era = 'close';
+    this.card.hide();
     releaseVoice('teaching-tv');
   }
 
@@ -961,8 +1193,13 @@ export class TeachingTvs {
 
   // ── review aids (?debug=1): the walker, the probes ───────────────────────
   debug() {
-    return { era: this.era, moments: Object.fromEntries(TAPE_IDS.map((t) => [t, { stage: this.moments[t].stage, seconds: this.moments[t].seconds, callSeconds: this.moments[t].callSeconds }])),
+    const p = this.card.entity.getPosition();
+    return { era: this.era, name: SET_NAME, holding: this.holding, watching: this.watching,
+      moments: Object.fromEntries(TAPE_IDS.map((t) => [t, { stage: this.moments[t].stage, seconds: this.moments[t].seconds, callSeconds: this.moments[t].callSeconds }])),
+      call: { shown: this.card.shown, text: this.card.text, hits: this.card.hits.map((h) => ({ ...h })), entity: this.card.entity.name, cw: this.card.CW, ch: this.card.CH, at: [p.x, p.y, p.z] },
       tvs: TAPE_IDS.map((t) => this.tvs[t].debug()) };
   }
-  canvases(): Record<string, HTMLCanvasElement> { return Object.fromEntries(TAPE_IDS.flatMap((t) => [[`tv${t}`, this.tvs[t].canvas], [`margin${t}`, this.tvs[t].panel.canvas]])); }
+  canvases(): Record<string, HTMLCanvasElement> {
+    return Object.fromEntries([...TAPE_IDS.flatMap((t) => [[`tv${t}`, this.tvs[t].canvas], [`set${t}`, this.tvs[t].set.decal]] as [string, HTMLCanvasElement][]), ['call', this.card.canvas] as [string, HTMLCanvasElement]]);
+  }
 }

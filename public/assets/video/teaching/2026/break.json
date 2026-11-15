@@ -1,51 +1,21 @@
 {
  "tape": "2026",
+ "version": "v5",
  "label": [
-  "Before you watch.",
-  "This tape is made from real teaching, 1988–2026.",
-  "From manuals, booklets, books, newsletters, posts and news reports. The name HEDGE™ is invented. The reasons are theirs.",
-  "Every reason in it was taught to real people. Some were first taught about gay people.",
-  "You can stop it at any time."
+  "Made from real teaching materials, 1988–2026. You can stop at any time."
  ],
  "admission": [
   {
-   "text": "No one is certain what causes gender confusion.",
-   "source": "The Building Blocks of Gender Confusion (Reconciliation Ministries of Michigan, © 2019), p. 1 — the sentence begins \"Aside from living in a fallen world, …\"; the article then lists causes for three pages"
+   "text": "“Aside from living in a fallen world, no one is certain what causes gender confusion.”",
+   "source": "Reconciliation Ministries of Michigan, \"The Building Blocks of Gender Confusion\" (newsletter article), © 2019, p. 1 (the admission) and pp. 2–4 (the causes it then lists), recmin.org newsletter, read on the page images"
   }
  ],
- "sentences": [
-  {
-   "text": "In their own words, 2019: \"No one is certain what causes gender confusion.\" Then they listed causes.",
-   "source": "Reconciliation Ministries of Michigan, The Building Blocks of Gender Confusion, © 2019, p. 1 (the admission), pp. 2–4 (the causes it then lists) — page images read"
-  },
-  {
-   "text": "First the family. Then her friends. Then the whole culture.",
-   "source": "Exodus Telephone Counseling Manual, © 1988, printed p. 47 (\"usually family members\"); Building Blocks 2019, p. 4 (\"one person in a social group\"); ICCEC 2021, p. 4 and Love & Truth family post 2025 (\"swept up by gender ideology\")"
-  },
-  {
-   "text": "Nothing was dropped. Each reason was added to the ones before.",
-   "source": "Exodus manual 1988, p. 46 (\"a false identity\") and the Love & Truth family post 2025 (\"a new, false gender identity\"); Building Blocks 2019 keeps the family roots (p. 3) beside \"social contagion\" (p. 4)"
-  },
-  {
-   "text": "Parents were told to find the wound, to watch for signs, to monitor her phone.",
-   "source": "The wound: Focus on the Family 2002, p. 43 (\"takes responsibility for one's parental contributions to the child's pain\") and the 2019 newsletter, p. 4 (a caregiver to \"explore the roots\"); the signs: Focus on the Family 2002, p. 43 (\"afraid your child may be struggling with gender identity\", \"defuse problems early on\"); the phone: ERLC 2014, p. 108 (\"If your children have unmonitored access to the Internet, you are a negligent parent\")"
-  },
-  {
-   "text": "Parenthood was made a political identity; the child, a figure to build coalitions around.",
-   "source": "Transnational Institute, State of Power 2026, ch. 9, printed p. 83: movements \"elevated parenthood as a political identity and the child as a sacred figure around which coalitions can be built\""
-  },
-  {
-   "text": "At 18, their own post says, she is free to choose.",
-   "source": "Love & Truth Network family post, 2025: \"young adults will have the liberty to make their own choices\" (paraphrased)"
-  },
-  {
-   "text": "Her parents were told: it can take seven to ten years.",
-   "source": "The same post: \"It can take 7-10 years for individuals to work through the implications…\""
-  },
-  {
-   "text": "The WHO: trans-related identities are not conditions of mental ill-health.",
-   "source": "WHO, FAQ on gender incongruence in the ICD: \"trans-related and gender diverse identities are not conditions of mental ill-health\" (paraphrased into four lines; \"trans-related … identities\" kept)"
-  }
+ "barHead": "TAUGHT IN — a ministry newsletter (2019), p. 1",
+ "bar": "Its next three pages list the causes.",
+ "barSource": "Reconciliation Ministries of Michigan, \"The Building Blocks of Gender Confusion\" (newsletter article), © 2019, p. 1 (the admission) and pp. 2–4 (the causes it then lists), recmin.org newsletter, read on the page images",
+ "on": [
+  242.169,
+  257.439
  ],
- "_doc": "The same words as the tape's silent break, in its order (sentence 1 holds the admission, quoted). No testimony, no names, no death or suicide figures."
+ "note": "In the tape the admission is the picture; the bar under it carries barHead and bar (the web copy burns them in; the room's set and the era site draw them from here). No sources roll: the long version is break_long.json."
 }

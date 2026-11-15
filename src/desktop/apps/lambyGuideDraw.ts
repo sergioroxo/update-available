@@ -1,5 +1,4 @@
 /** Shared balloon grammar with setup; palette and chrome follow the surface. */
-import tvWords from '../../../data/strings/teaching_tv.json';
 import * as ui from '../theme/chrome';
 import * as aero from '../theme/era3';
 import { ERA1 } from '../theme/era1';
@@ -55,6 +54,9 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   ui.setFont(ctx, skin === 'e3' ? 12 : 9); ctx.fillStyle = skin === 'e3' || skin === 'e2' ? ERA3.white : ink; if (skin !== 'e4') ctx.fillText(decisions.helper[skin], tx + 22, skin === 'e3' ? ty + 1 : ty + 5);   // S272: 2003's bar is blue
   hits.push({ id: 'lg-tray', label: decisions.helper[skin], tip: state.hidden ? undefined : copy.ui.trayTip, x: tx, y: skin === 'e3' ? ty - 5 : ty - 3, w: skin === 'e3' ? 82 : 60, h: skin === 'e3' ? 24 : 21 });
   if (state.hidden || !state.text) return out;
+  // ⚑ S394 (UiB job 27 B3) — the Lamby set's call and its later offer are drawn IN VIEW by the set's own card
+  //   (src/room/teachingTv.ts TvCall), wherever the visitor is looking; the glass does not say them a second time
+  if (state.rung === 'tv' || state.rung === 'tvcall') return out;
   out.balloon = true;
   const targets = state.targets.flatMap(id => hits.filter(h => h.id === id));
   const multiple = state.beat === 'pledge' || state.beat === 'consent' || state.beat === 'steps';
@@ -93,8 +95,6 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   else if (state.rung === 'root') buttons = [['lg-take', copy.root.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'choice') buttons = [['lg-take', copy.choice.releaseYes], ['lg-alt', copy.choice.formYes], ['lg-later', copy.form.no]];   // ⚑ S362 / H33: two answers + No thanks
   else if (state.rung === 'harbor') buttons = [['lg-take', copy.harbor.yes], ['lg-later', copy.form.no]];   // S345
-  else if (state.rung === 'tv') buttons = [['lg-take', tvWords.lamby.yes], ['lg-later', copy.form.no]];   // S390: take me to the TV
-  else if (state.rung === 'tvcall') buttons = [['lg-take', tvWords.lamby.yes]];   // S392: the TV's call — the piece takes them there (× still closes it)
   else if (pointing) buttons = [...(state.act && (!state.act.startsWith('press:') || hits.some(h => h.id === state.act?.slice(6)) || remoteActions.includes(state.act)) ? [['lg-take', copy.ui.take] as [string, string]] : []), ['lg-ok', copy.ui.ok]];
   else buttons = [...(state.targets.length || state.beat !== 'cut' ? [['lg-show', copy.ui.show] as [string, string]] : []), ['lg-later', copy.ui.later]];
   let bx = x + 12;

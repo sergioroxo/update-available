@@ -1,57 +1,21 @@
 {
  "tape": "2016",
+ "version": "v5",
  "label": [
-  "This DVD is invented. Its teaching is not.",
-  "It comes from real ministries' booklets and courses, 1987–2016.",
-  "Every reason in it was taught to real women.",
-  "You can stop it at any time."
+  "Made from real teaching materials, 1987–2016. You can stop at any time."
  ],
  "admission": [
   {
-   "text": "“Prepare for grief and depression.”",
-   "source": "Emotional Dependency (IVP edition, 1990; first published by Exodus, 1987), printed p. 25 (NMAH.AC.1428 B2 F9, PDF p. 30)"
-  },
-  {
-   "text": "“…as painful as going through a divorce.”",
-   "source": "Emotional Dependency (1990), printed p. 25: \"Letting go of a dependent relationship can be as painful as going through a divorce.\""
+   "text": "“Prepare for grief and depression. Letting go of a dependent relationship can be as painful as going through a divorce.”",
+   "source": "Emotional Dependency: A Threat to Close Friendships (InterVarsity Press, 1990; first published by Love in Action, 1984, and Exodus International–North America, 1987), printed p. 25 (Smithsonian NMAH.AC.1428, Box 2 Folder 9, PDF p. 30), read on the page image"
   }
  ],
- "sentences": [
-  {
-   "text": "It asked women to end their closest friendships.",
-   "source": "Emotional Dependency (1990), printed p. 24 (\"A parting of the ways must take place\"); p. 20 (\"ties need to be broken with all past partners as well\")"
-  },
-  {
-   "text": "To throw away the songs they shared.",
-   "source": "Emotional Dependency (1990), printed p. 25: \"get rid of certain record albums or tapes (the ones containing 'our song')\""
-  },
-  {
-   "text": "To confess their feelings, and be asked about them again and again.",
-   "source": "Emotional Dependency (1990), printed p. 23: \"hold us accountable, especially if we give him or her the freedom to periodically ask how things are going\""
-  },
-  {
-   "text": "To look for the cause in their mothers and fathers.",
-   "source": "Focus on the Family, The Heart of the Matter (2001), printed p. 14 (\"the breakdown in a girl's initial relationship with her family—mother and father\"); Exodus PR-02, Are People Born Gay? (1993), printed p. 8 (the father's \"score card\")"
-  },
-  {
-   "text": "When the feelings stayed, it said they had not truly wanted to change.",
-   "source": "Emotional Dependency (1990), printed p. 20: \"this individual has no true interest in changing\""
-  },
-  {
-   "text": "In June 2016 it was still sold in packs of five.",
-   "source": "Exodus Global Alliance, \"Women\" resources page, archived 11 June 2016 (web.archive.org/web/20160611170337/http://www.exodusglobalalliance.org/forwomenp521.php), read 15 Nov 2026"
-  }
+ "barHead": "TAUGHT IN — Emotional Dependency (1990), printed p. 25",
+ "bar": "In June 2016 it was still sold in packs of five.",
+ "barSource": "Exodus Global Alliance, \"Women\" resources page (\"Emotional Dependency, 5 Pack … Package of 5\"), archived 11 June 2016, web.archive.org/web/20160611170337/http://www.exodusglobalalliance.org/forwomenp521.php, read 15 Nov 2026",
+ "on": [
+  205.717,
+  226.984
  ],
- "endOfPartOne": {
-  "text": [
-   "HEARTWOOD · MEMBER WORKBOOK · p. 31",
-   "Session Two · The Roots",
-   "Pause the DVD here.",
-   "TALK IT THROUGH · 10 minutes",
-   "1. Look at the tree on page 22. What is in your soil?",
-   "2. Which of the Big Three do you recognise in your own story?",
-   "3. Pray for one another before you press play."
-  ],
-  "source": "invented, in the grammar of a small-group DVD course's member workbook (Harvest USA, Sexual Sanity for Women, 2012: sessions with timed discussion blocks and questions; a DVD 'Leader's Edition with a discussion guide', Dove review of a 2014 video curriculum)"
- }
+ "note": "In the tape the admission is the picture; the bar under it carries barHead and bar (the web copy burns them in; the room's set and the era site draw them from here)."
 }

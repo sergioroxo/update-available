@@ -1,5 +1,6 @@
 {
  "tape": "2016",
+ "version": "v5",
  "line": "Heartwood is an invented 2016 small-group DVD course (Leader's Edition); every lesson in it is taken from real ministries' booklets and courses, 1987–2016, and the 1993 Exodus floppy-disc analogy is read word for word.",
  "documents": [
   {
@@ -75,55 +76,71 @@
  "margin": [
   {
    "kind": "TAUGHT_IN",
-   "text": "a ministry booklet, 1987 — sold in five-packs by an Exodus network, June 2016",
-   "source": "Emotional Dependency (Exodus International–North America, © 1984, 1987; NMAH.AC.1428 B2 F9, PDF p. 3); Exodus Global Alliance, \"Women\" page (\"Emotional Dependency, 5 Pack … Package of 5\"), archived 11 June 2016, web.archive.org/web/20160611170337/http://www.exodusglobalalliance.org/forwomenp521.php, read 15 Nov 2026"
+   "head": "TAUGHT IN — Emotional Dependency, Exodus booklet (1987)",
+   "text": "sold in five-packs by an Exodus network, June 2016",
+   "source": "Emotional Dependency (Exodus International–North America, © 1984, 1987; Smithsonian NMAH.AC.1428 B2 F9, PDF p. 3); Exodus Global Alliance, \"Women\" resources page (\"Emotional Dependency, 5 Pack … Package of 5\"), archived 11 June 2016, web.archive.org/web/20160611170337/http://www.exodusglobalalliance.org/forwomenp521.php, read 15 Nov 2026"
   },
   {
    "kind": "TAUGHT_IN",
-   "text": "a Focus on the Family booklet for women, 2001: “it is an identity crisis”",
-   "source": "Focus on the Family, The Heart of the Matter: The Roots and Causes of Female Homosexuality (© 2001), printed p. 14 (PDF p. 10): \"The lesbian struggle is not a sexual orientation problem; it is an identity crisis.\" NMAH.AC.1428 B6 F4"
+   "head": "TAUGHT IN — Focus on the Family booklet (2001), pp. 10, 14",
+   "text": "",
+   "source": "Focus on the Family, The Heart of the Matter: The Roots and Causes of Female Homosexuality (© 2001), printed p. 10 (PDF p. 8): \"Lesbianism results from three primary conditions: Relationship issues, An identity struggle, A spiritual fallacy\"; printed p. 14 (PDF p. 10): \"The lesbian struggle is not a sexual orientation problem; it is an identity crisis.\" Smithsonian NMAH.AC.1428 B6 F4"
   },
   {
    "kind": "WHAT_IS_KNOWN",
-   "text": "May 2012, the WHO's office for the Americas: homosexuality “requires no cure”",
-   "source": "Pan American Health Organization (Regional Office of the WHO), \"'Cures' for an illness that does not exist\" (position statement, May 2012), p. 1: \"…does homosexuality constitute a disorder or an illness, and therefore it requires no cure\"; news release 17 May 2012, paho.org/en/news/17-5-2012-therapies-change-sexual-orientation-lack-medical-justification-and-threaten-health; read 15 Nov 2026"
+   "head": "KNOWN — the WHO's office for the Americas, May 2012",
+   "text": "homosexuality is not an illness and “requires no cure”",
+   "source": "Pan American Health Organization (Regional Office of the WHO for the Americas), \"'Cures' for an illness that does not exist\" (position statement, May 2012), p. 1: \"…does homosexuality constitute a disorder or an illness, and therefore it requires no cure\"; news release 17 May 2012, paho.org/en/news/17-5-2012-therapies-change-sexual-orientation-lack-medical-justification-and-threaten-health, read 15 Nov 2026"
   },
   {
    "kind": "TAUGHT_IN",
-   "text": "the same 2001 booklet: a mother “perceived as distant”; “defensive detachment”",
-   "source": "Focus on the Family, The Heart of the Matter (© 2001), printed p. 17 (PDF p. 11): \"If mother is perceived as distant, bitter, critical, overbearing and unloving … defensive detachment\""
+   "head": "TAUGHT IN — Focus on the Family booklet (2001), p. 17",
+   "text": "",
+   "source": "Focus on the Family, The Heart of the Matter (© 2001), printed p. 17 (PDF p. 11): \"If mother is perceived as distant, bitter, critical, overbearing and unloving … defensive detachment\". Smithsonian NMAH.AC.1428 B6 F4"
   },
   {
    "kind": "TAUGHT_IN",
-   "text": "an Exodus booklet, 1993: the father's responses as “the score card”",
-   "source": "Exodus International–North America, booklet #PR-02 Are People Born Gay? (© 1993), printed p. 8 (PDF p. 6): \"The responses from her father produce the score card of passing or failing as a little girl.\" NMAH.AC.1428 B2 F12"
+   "head": "TAUGHT IN — Exodus booklet PR-02 (1993), p. 8",
+   "text": "",
+   "source": "Exodus International–North America, booklet #PR-02 Are People Born Gay? (© 1993), printed p. 8 (PDF p. 6): \"The responses from her father produce the score card of passing or failing as a little girl.\" Smithsonian NMAH.AC.1428 B2 F12"
   },
   {
    "kind": "TAUGHT_IN",
-   "text": "a church's Living Waters group, 2016: 20 Monday evenings, $150, payment plans",
+   "head": "TAUGHT IN — a church's Living Waters group, March 2016",
+   "text": "",
    "source": "A church counselling centre's \"Living Waters\" group page, posted 29 March 2016 (\"Monday evenings at 7 p.m. for 20 weeks\"; \"The cost is $150 (payment plans are available)\"; \"Groups fill up in a matter of days\"), a public Squarespace page, read 15 Nov 2026 (its address carries a person's name, so it is not printed here)"
   },
   {
    "kind": "TAUGHT_IN",
-   "text": "an Exodus booklet, 1993 — re-issued here, word for word, 2016",
-   "source": "Exodus International–North America, booklet #PR-02 Are People Born Gay? (© 1993), printed p. 19 (PDF p. 11): \"To use a computer analogy … she has no file to put it in.\" NMAH.AC.1428 B2 F12 (read on the page image)"
+   "head": "TAUGHT IN — Exodus booklet PR-02 (1993), p. 19",
+   "text": "re-issued here, word for word, 2016",
+   "source": "Exodus International–North America, booklet #PR-02 Are People Born Gay? (© 1993), printed p. 19 (PDF p. 11): \"To use a computer analogy … she has no file to put it in.\" Smithsonian NMAH.AC.1428 B2 F12 (read on the page image)"
   },
   {
    "kind": "WHAT_IS_KNOWN",
-   "text": "19 June 2013: Exodus closed at its own conference, and its president apologised",
+   "head": "KNOWN — Exodus International closed, 19 June 2013",
+   "text": "announced at its own conference; its president apologised",
    "source": "Religion News Service in The Christian Century (24 July 2013 issue), \"'Ex-gay' group closes as its president apologizes\": closure announced June 19 at the ministry's 38th annual conference; christiancentury.org/article/2013-06/ex-gay-group-exodus-international-shuts-down-president-apologizes, read 15 Nov 2026"
   },
   {
    "kind": "TAUGHT_IN",
-   "text": "an Exodus booklet on “emotional dependency”, 1987; reprinted 1990",
-   "source": "Emotional Dependency (© 1984, 1987, Exodus International–North America; IVP edition 1990), printed pp. 7–8, 13, 15 (NMAH.AC.1428 B2 F9, PDF pp. 3, 21–25)"
+   "head": "TAUGHT IN — Emotional Dependency (Exodus 1987; IVP 1990)",
+   "text": "“believed to be necessary for personal security”, p. 7",
+   "source": "Emotional Dependency (© 1984, 1987, Exodus International–North America; InterVarsity Press edition 1990), printed p. 7 (PDF p. 21): \"Emotional dependency occurs when the ongoing presence and nurturing of another is believed to be necessary for personal security\"; pp. 8, 13, 15 (Smithsonian NMAH.AC.1428 B2 F9)"
   },
   {
    "kind": "WHAT_IS_KNOWN",
-   "text": "2014, Royal College of Psychiatrists: no sound evidence that orientation can change",
+   "head": "KNOWN — Royal College of Psychiatrists, 2014, p. 2",
+   "text": "“no sound scientific evidence” that orientation can change",
    "source": "Royal College of Psychiatrists, Position Statement PS02/2014 (April 2014), p. 2: \"There is no sound scientific evidence that sexual orientation can be changed.\" rcpsych.ac.uk (ps02_2014.pdf), read 15 Nov 2026"
   }
  ],
+ "break": {
+  "admission": "“Prepare for grief and depression. Letting go of a dependent relationship can be as painful as going through a divorce.”",
+  "source": "Emotional Dependency: A Threat to Close Friendships (InterVarsity Press, 1990; first published by Love in Action, 1984, and Exodus International–North America, 1987), printed p. 25 (Smithsonian NMAH.AC.1428, Box 2 Folder 9, PDF p. 30), read on the page image",
+  "bar": "In June 2016 it was still sold in packs of five.",
+  "barSource": "Exodus Global Alliance, \"Women\" resources page (\"Emotional Dependency, 5 Pack … Package of 5\"), archived 11 June 2016, web.archive.org/web/20160611170337/http://www.exodusglobalalliance.org/forwomenp521.php, read 15 Nov 2026"
+ },
  "invented": [
   "Heartwood",
   "Heartwood Ministries",
@@ -132,6 +149,6 @@
   "the menu, the copyright card, the workbook page, the chapter titles",
   "every spoken line the documents do not give word for word (the course's own framing)"
  ],
- "music": "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)",
- "voices": "Build-time Supertonic (register apparatus): presenter F5 at 0.95, trailer announcer F4 at 1.05. No real person is voiced, shown or named."
+ "music": "Music: made in code for these tapes by Claude (Anthropic, Opus 5.5) — \"Heartwood course bed (v4)\" (2016-V4)",
+ "voices": "Build-time Supertonic (register apparatus): presenter F5 at 0.95 (16 steps), trailer announcer F2 at 1.04 (14 steps). No real person is voiced, shown or named."
 }
