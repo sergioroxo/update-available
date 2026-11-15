@@ -1,0 +1,102 @@
+{
+ "tape": "2026",
+ "title": "HEDGE™ — a course for parents in a confused age",
+ "version": "v4",
+ "music": "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)",
+ "duration": 273.867,
+ "partOneEnd": 73.406,
+ "chapters": [
+  {
+   "id": "label",
+   "kind": "label",
+   "title": "Before you watch",
+   "start": 0.0,
+   "end": 9.0
+  },
+  {
+   "id": "intro",
+   "kind": "title",
+   "title": "HEDGE™ · We Saw It Coming",
+   "start": 9.0,
+   "end": 28.248
+  },
+  {
+   "id": "l1",
+   "kind": "lesson",
+   "title": "Lesson 1 · The Old Wound",
+   "start": 28.248,
+   "end": 54.936
+  },
+  {
+   "id": "a1",
+   "kind": "commercial",
+   "title": "Ad · LAST LINE LIVE",
+   "start": 54.936,
+   "end": 67.936
+  },
+  {
+   "id": "end1",
+   "kind": "endcard",
+   "title": "End of Part 1",
+   "start": 67.936,
+   "end": 77.006
+  },
+  {
+   "id": "l2",
+   "kind": "lesson",
+   "title": "Lesson 2 · Catch It Early",
+   "start": 77.006,
+   "end": 100.261
+  },
+  {
+   "id": "l3",
+   "kind": "lesson",
+   "title": "Lesson 3 · The Culture Moved In",
+   "start": 100.261,
+   "end": 123.116
+  },
+  {
+   "id": "a2",
+   "kind": "commercial",
+   "title": "Ad · The Prayer Wall",
+   "start": 123.116,
+   "end": 135.116
+  },
+  {
+   "id": "l4",
+   "kind": "lesson",
+   "title": "Lesson 4 · It Spreads",
+   "start": 135.116,
+   "end": 156.788
+  },
+  {
+   "id": "l5",
+   "kind": "lesson",
+   "title": "Lesson 5 · It Has a Name",
+   "start": 156.788,
+   "end": 177.965
+  },
+  {
+   "id": "l6",
+   "kind": "collapse",
+   "title": "Lesson 6 · When She Is 18",
+   "start": 177.965,
+   "end": 224.795
+  },
+  {
+   "id": "brk",
+   "kind": "break",
+   "title": "What this asked of people",
+   "start": 224.795,
+   "end": 259.895
+  },
+  {
+   "id": "cred",
+   "kind": "credits",
+   "title": "Sources",
+   "start": 259.895,
+   "end": 273.867
+  }
+ ],
+ "_doc": "room.mp4 and web.mp4 share this timeline. partOneEnd sits inside the endcard chapter (End of Part 1, the course's MODULE 1 COMPLETE card), ≥ 1.5 s after the card is fully drawn; the card holds still from partOneEnd − 1.5 s to the chapter's end. Lesson 6 (kind \"collapse\") carries the collapse, the chat door and LIVE NOW."
+}

@@ -1,4 +1,5 @@
 import mirrorCopy from '../../data/strings/e3_mirror.json';
+import { voiceHeld, filmAudible } from '../state/voiceHold';
 import { GuideWait } from '../narrative/guideWait';
 import { drawVeraArchive, drawVeraDistribution, drawRetainedCopies, studioFont } from '../desktop/apps/veraSurfaces';
 import { drawRenataFilm, filmToCanvas, FILM_TARGETS, PUBLISHED_FRAME, SENT_FRAME, type FilmFrame } from '../desktop/theme/renataFilm';
@@ -447,6 +448,13 @@ export class GraceQueueLite {
   private lambHoldT = 0;
   private lambSequence = 0;
   get guideVoice(): boolean { return this.lambPriority; }
+  /** ⚑ S390 (UiB job 25 Part B) — the board is at rest and nothing of the platform or the phone is speaking or waiting to:
+   *  the teaching TV's conducted moment may take the floor (app.ts). The phone delivers anything it holds first. */
+  get tvMomentFree(): boolean {
+    return this.mode === 'board' && !this.veraPage && !this.openSurface && !this.lambPriority && !this.personalQuiet
+      && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this.focusOpen && !this._systemModal
+      && !this.kitPopin && !this.phone.voiceBusy && this.phone.queued === 0 && !this.floppy.open && !this.lambyGuide?.active;
+  }
   private _callPending = false;
   set callPending(value: boolean) { if (value !== this._callPending) { this._callPending = value; this.bump(); } }
   /** bumped on every state-changing action — era3Devices compares this to
@@ -494,7 +502,8 @@ export class GraceQueueLite {
   private syncGraceLoop(): void {
     const signedIn = this.mode === 'board' || this.mode === 'list' || this.mode === 'done';
     const want = signedIn && !this.pauseOpen && !this.saver && this.veraPage !== 'record' && !this.cascadeConduct
-      && !this.floppy.open && !this.mirrorDisconnected;
+      && !this.floppy.open && !this.mirrorDisconnected
+      && !filmAudible();   // ⚑ S390 — and it yields to the course on the laptop (one music at a time); it resumes where it stopped
     if (want && !this.graceLoop) {
       this.graceLoop = playLoop('grace_loop_2016.mp3');
       if (this.graceLoop) { this.graceLoop.volume = 0.35; if (this.graceLoopAt > 0) this.graceLoop.currentTime = this.graceLoopAt; }
@@ -798,7 +807,8 @@ export class GraceQueueLite {
     this.phone.atRest = (this.mode === 'signin' || ((this.mode === 'board' || this.mode === 'done') && !this.veraPage && !this.openSurface
       && !(this.subComplete(SUBMISSIONS[0]) && !veraDay.distributed)))
       && !this.lambPriority && !this.pauseOpen && !this.saver && !this.startMap.active && !this.minimised && !this.focusOpen
-      && !this.wickConducting && !this.deskConducting && !this.cascadeConduct && !this._systemModal;
+      && !this.wickConducting && !this.deskConducting && !this.cascadeConduct && !this._systemModal
+      && !voiceHeld();   // ⚑ S390 — and not while the teaching TV's conducted tape holds the floor (the phone waits, then delivers)
     // ⚑ S336 — the guide no longer holds the phone back. The full entrance walk deadlocked here: the guide balloon came
     //   up because nothing was happening, and while it was up the phone was 'not at rest', so the message that would
     //   have moved the day on never came. One voice at a time still holds: the balloon now waits while the phone

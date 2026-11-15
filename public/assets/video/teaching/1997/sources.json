@@ -1,0 +1,57 @@
+{
+ "tape": "1997",
+ "line": "A reconstruction: an invented fellowship's teaching tape whose every lesson is quoted or closely paraphrased from a ministry handbook, two Exodus booklets and a class manual, 1993–1996, held in the Smithsonian's Love in Action Collection.",
+ "documents": [
+  {
+   "title": "Helping People Step Out of Homosexuality (a handbook for pastors, counselors, lay workers)",
+   "organisation": "Love in Action (first published as Steps Out of Homosexuality, © 1984, by Love in Action, Inc.; the revised edition is published by New Hope Ministries)",
+   "year": "1995",
+   "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington \"Love in Action\" Collection), Box 2 Folder 13",
+   "pages": "printed pp. 11, 12, 13, 17, 18, 80, 128–135 and the cover (PDF pp. 2, 19, 20, 21, 25, 26, 88, 136–143)"
+  },
+  {
+   "title": "Are People Born Gay? (resource booklet #PR-02)",
+   "organisation": "Exodus International",
+   "year": "1993",
+   "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington \"Love in Action\" Collection), Box 2 Folder 12",
+   "pages": "printed pp. 7, 9, 13 (PDF pp. 5, 6, 8)"
+  },
+  {
+   "title": "Is Homosexuality Inborn? (resource booklet #PR-01)",
+   "organisation": "Exodus International",
+   "year": "1996",
+   "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington \"Love in Action\" Collection), Box 2 Folder 12",
+   "pages": "printed p. 17 (PDF p. 34)"
+  },
+  {
+   "title": "Steps Out Program Class Manual",
+   "organisation": "Love in Action",
+   "year": "c. 1994 (its latest dated item is June 1994)",
+   "archive": "Smithsonian National Museum of American History, Archives Center, NMAH.AC.1428 (the Mattachine Society of Washington \"Love in Action\" Collection), Box 13 Folder 1",
+   "pages": "p. iii (PDF p. 6)"
+  }
+ ],
+ "facts": [
+  {
+   "id": "F15",
+   "text": "December 1973: the American Psychiatric Association's Board of Trustees voted to remove homosexuality from the DSM (upheld by a 58% majority of voting members).",
+   "source": "Behavioral Sciences 5(4):565–575 (2015), 'Out of DSM: Depathologizing Homosexuality', read 15 Nov 2026",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4695779/"
+  },
+  {
+   "id": "F16",
+   "text": "1987: 'ego-dystonic homosexuality' was removed from the next revision, DSM-III-R.",
+   "source": "Behavioral Sciences 5(4) (2015), 'Out of DSM', read 15 Nov 2026",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4695779/"
+  },
+  {
+   "id": "F17",
+   "text": "May 1990: the World Health Assembly adopted ICD-10 (WHA43.24; into effect 1 January 1993). ICD-10, block F66, Note: 'Sexual orientation by itself is not to be regarded as a disorder.'",
+   "source": "WHO, ICD revisions table (adoption and effect dates) and the ICD-10 browser (2019 version), F66 Note, both read 15 Nov 2026",
+   "url": "https://icd.who.int/browse10/2019/en/GetConcept?ConceptId=F66 ; https://www.who.int/standards/classifications/classification-of-diseases"
+  }
+ ],
+ "invented": "TriedPath Fellowship, its Pocket Library, the 'Mountains of Material' cassette set, the phone numbers (fictional 555-01xx), Lamby's bubbles and the felt board are the piece's. No real person is shown or named.",
+ "music": "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)",
+ "voices": "Build-time Supertonic 3 through tools/tts/render.py, register 'apparatus' only: narrator stock voice F1 (0.94), announcer M1 (1.0). Lamby has no voice."
+}

@@ -101,6 +101,7 @@ import originIntakeProvotypeData from '../../data/provotypes/origin_intake_e1.js
 import { Folder1997App } from './apps/folder1997';
 import { CompanionApp, type CompanionStage } from './apps/companion';
 import folderStrings from '../../data/strings/folder1997.json';
+import { voiceHeld, filmAudible } from '../state/voiceHold';
 
 /**
  * S2R.0/S2R.1 (R28-2d-i/ii): the E2 arrival sub-state machine, only
@@ -458,6 +459,10 @@ export class DesktopOS {
   /** ⚑ W1-D17 — a door-toast is not talked over: the send offer's, the forum's and the era's own ambient toasts all
    *  wrote this one slot, and Caleb's message was gone within a second of landing (the Route sheet arrived with it —
    *  his W1-D16). Anything that clears it (null) or replaces it with another door still works. */
+  /** ⚑ S390 — a toast is up (one voice at a time: the teaching TV waits for it, and a playing TV pauses for a new one) */
+  get toastUp(): boolean { return !!this._toast; }
+  /** ⚑ S390 — which toast is up ('' none): a NEW one is a voice arriving, even while another was showing */
+  get toastKey(): string { return this._toast ? `${this._toast.title ?? ''}:${this._toast.text}` : ''; }
   private get toast(): { text: string; t: number; act?: 'message-open'; title?: string } | null { return this._toast; }
   private set toast(v: { text: string; t: number; act?: 'message-open'; title?: string } | null) {
     if (this._toast?.act && v && !v.act && this._toast.t > 0) return;
@@ -595,6 +600,12 @@ export class DesktopOS {
   onGuidePress: ((id: string) => void) | null = null;
   onGuideFocus: ((id: string) => void) | null = null;
   onGuideMove: ((target: string) => void) | null = null;
+  /** ⚑ S390 — Lamby's offer to take a stalled visitor back to the teaching TV: the engine says when and in what words
+   *  (`tvOffer`, undefined when there is nothing to offer) and performs the Yes (`onGuideTv`: the conducted turn) */
+  tvOffer: (() => string | undefined) | null = null;
+  /** ⚑ S392 — Lamby's call while the piece takes the visitor to the teaching TV (src/room/teachingTv.ts TvHost.call) */
+  tvCall: (() => string | undefined) | null = null;
+  onGuideTv: (() => void) | null = null;
   private makeLambyGuide(): LambyGuide {
     return new LambyGuide({
       log: (outcome, beat, countDismissal, acknowledged) => {
@@ -615,6 +626,7 @@ export class DesktopOS {
     if (act === 'open:form') { this.openProvotype(originIntakeProvotypeData as unknown as Provotype); return; }
     // ⚑ S362 / H33 — the other answer of Lamby's "Release Work or the Family Form": the racket exercise, the way the room's racket opens it
     if (act === 'open:releasework') { this.openProvotype(pillowProvotypeData as unknown as Provotype); return; }
+    if (act === 'open:tv') { this.onGuideTv?.(); return; }   // S390: take me to the TV (it does not start itself)
     if (act.startsWith('focus:')) { this.onGuideFocus?.(act.slice(6)); return; }
     if (act.startsWith('move:')) { this.onGuideMove?.(act.slice(5)); return; }
     if (this.desktopEra === 'e3' || this.desktopEra === 'e4') { this.onGuidePress?.(act.slice(6)); return; }
@@ -647,7 +659,8 @@ export class DesktopOS {
   /** ⚑ S369 / F15 — every voice but the 1997 side-line's own: the taskbar line was silenced by its OWN tooltip (it counts itself as a
    *  voice so Lamby waits for it), so it was never drawn while new — the flow audit found all six 1997 side-lines active and unseen */
   private get otherVoices(): boolean {
-    return !!this.restorify?.open || !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!this.guideExternal?.()?.voice;
+    return !!this.restorify?.open || !!this.toast || this.lambyOnScreen || this.readAloudPlaying || !!this.guideExternal?.()?.voice
+      || voiceHeld();   // S390: the teaching TV's conducted tape holds the floor
   }
   private updateLambyGuide(dt: number): void {
     if (!this.reinterp) return;
@@ -664,6 +677,8 @@ export class DesktopOS {
       robDone: this.desktopEra === 'e1' && this.formAvailable && !this.irc?.open,   // S343 / T16
       fillText: (t) => fillSendText(t, this.sendOffer?.id),
       harborDue: this.desktopEra === 'e2' && ledger.records.includes('testimony-online') && !ledger.records.includes('forum-posted') && !this.forum?.open,   // S345
+      tvOffer: this.tvOffer?.() ?? undefined,   // S390
+      tvCall: this.tvCall?.() ?? undefined,   // S392: the TV's call (the moment is taking the visitor there)
       idleScale: this.guideIdleScale(), reducedMotion: reducedMotion(), startTarget: 'start-menu' };
     this.lambyGuide.tick(dt, input);
     // ⚑ S283 (headset B: "I pressed show me, and it didn't show me because the NetPilot window is closed, so it needs to
@@ -1673,7 +1688,8 @@ export class DesktopOS {
   private get releaseWorkUp(): boolean { return !!this.provotype?.open && this.provotype.id === 'pillow' && this.provotype.programmeVoice; }
   private sync1997Loop(): void {
     let want: string | null = null;
-    const quiet = this.phase === 'desktop' && !this.paused && !this.pauseOpen && !this.saver && !this.updateApp?.visible;
+    const quiet = this.phase === 'desktop' && !this.paused && !this.pauseOpen && !this.saver && !this.updateApp?.visible
+      && !filmAudible();   // S390: the programme's own music yields to the fellowship's video on the TV
     // ⚑ S351 / T34 — Release Work's own tape (tools/make_releasework_loop.py), in 1997 and in 2003 where "Release Work
     //   '97" came with him; it owns this channel while it is up, and Restorify's loop yields to it
     if (quiet && this.releaseWorkUp && (this.desktopEra === 'e1'
@@ -2505,7 +2521,7 @@ export class DesktopOS {
     // S105: its one taskbar line is compared before/after, so a guide that
     // evaluates every frame but says nothing new costs no upload.
     const guideTextBefore = this.guide?.activeText ?? null;
-    if (this.phase === 'desktop' && this.desktopEra === 'e1' && this.guide) this.guide.update();
+    if (this.phase === 'desktop' && this.desktopEra === 'e1' && this.guide && !voiceHeld()) this.guide.update();   // S390: side-messages wait while the TV holds the floor
     // ⚑ Phase 7 — the jingle: its tail fades; the drawn words change only when a word does
     if (this.e2Jingle) {
       const a = this.e2Jingle;

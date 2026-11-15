@@ -1,4 +1,5 @@
 /** Shared balloon grammar with setup; palette and chrome follow the surface. */
+import tvWords from '../../../data/strings/teaching_tv.json';
 import * as ui from '../theme/chrome';
 import * as aero from '../theme/era3';
 import { ERA1 } from '../theme/era1';
@@ -92,6 +93,8 @@ export function drawLambyGuide(ctx: CanvasRenderingContext2D, skin: GuideEra, st
   else if (state.rung === 'root') buttons = [['lg-take', copy.root.yes], ['lg-later', copy.form.no]];
   else if (state.rung === 'choice') buttons = [['lg-take', copy.choice.releaseYes], ['lg-alt', copy.choice.formYes], ['lg-later', copy.form.no]];   // ⚑ S362 / H33: two answers + No thanks
   else if (state.rung === 'harbor') buttons = [['lg-take', copy.harbor.yes], ['lg-later', copy.form.no]];   // S345
+  else if (state.rung === 'tv') buttons = [['lg-take', tvWords.lamby.yes], ['lg-later', copy.form.no]];   // S390: take me to the TV
+  else if (state.rung === 'tvcall') buttons = [['lg-take', tvWords.lamby.yes]];   // S392: the TV's call — the piece takes them there (× still closes it)
   else if (pointing) buttons = [...(state.act && (!state.act.startsWith('press:') || hits.some(h => h.id === state.act?.slice(6)) || remoteActions.includes(state.act)) ? [['lg-take', copy.ui.take] as [string, string]] : []), ['lg-ok', copy.ui.ok]];
   else buttons = [...(state.targets.length || state.beat !== 'cut' ? [['lg-show', copy.ui.show] as [string, string]] : []), ['lg-later', copy.ui.later]];
   let bx = x + 12;

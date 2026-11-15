@@ -58,6 +58,8 @@ import body from '../../../data/dialog/s4_browser.json';
 import ballScript from '../../../data/dialog/s4_ball.json';
 import V from '../../../data/dialog/s4_v3.json';
 import closeMessage from '../../../data/strings/close_message.json';
+import tvWords from '../../../data/strings/teaching_tv.json';
+import { voiceHeld, voiceWanted } from '../../state/voiceHold';
 
 export interface Hit { x: number; y: number; w: number; h: number; id: string }
 type Surface = 'monitor' | 'laptop' | 'headset';
@@ -485,6 +487,26 @@ export class E4Browser {
     if (this.step === 'mumMail') this.go('news');
     this.openTab('news');
     playOnce('ui_press.mp3');
+  }
+  /** ⚑ S390 — a person's notification is up (the teaching TV waits for it, and a playing TV pauses for a new one) */
+  get toastUp(): boolean { return this.toasts.length > 0; }
+  /** ⚑ S390 — which notifications are up ('' none): a new one arriving is a new voice, even beside another */
+  get toastKey(): string { return this.toasts.map((t) => `${t.chat}:${t.line}`).join('|'); }
+  /**
+   * ⚑ S390 (UiB job 25 Part B1; his 7 Nov ruling: the pressure and the shame are her family's) — DAD'S LINK. Called by the
+   * teaching TV's moment (src/room/teachingTv.ts, app.ts `announce`) once his message has been read: his next message is
+   * "Watch this. All of it." with the course's link, and the course plays on the shelf monitor. A person writes, so it comes
+   * as his notification. The system is about to take the floor, so Kettle goes back to its list, as it does for every beat
+   * of the system's own (a felt thread is never left open beside a programme's voice).
+   */
+  dadSharesTape(): void {
+    const m = this.messenger;
+    if (m.dadLink) return;
+    m.dadLink = true;
+    if (m.view !== 'list') m.view = 'list';
+    this.toast('dad', V.messenger.chats.dad.name, tvWords.tapes['2026'].dadToast);
+    playOnce('ui_press.mp3');
+    this.version++;
   }
   /** ⚑ S363 — a desktop notification: a person wrote (the people only; the system never toasts) */
   private toast(chat: ChatId, title: string, line: string, sys = false): void {
@@ -923,6 +945,9 @@ export class E4Browser {
         if (m.view === 'house' && m.houseLeft >= 2 && !m.houseOpenedLeft) this.openChat('house');
         break;
       case 'pause':
+        // ⚑ S390 — while the teaching TV's conducted tape holds the floor (Dad's link, before the room's turn), the step's clock
+        //   waits with it, so the room's turn and then Mum's email follow the tape instead of landing on it
+        if (voiceHeld() || voiceWanted()) { this.stepT = Math.min(this.stepT, ROOM_WAIT.min); break; }
         // the room's conducted turn has the floor; then the search, finished for her
         // ⚑ S360 — then Mum's email arrives: the last thing before the AI (the photo, her links, "Mum, I")
         // ⚑ S363 / N2 (his: "she said I sent you an email") — the mailbox opens ON Mum's email, already opened; the rest

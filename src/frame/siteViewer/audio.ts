@@ -10,6 +10,7 @@
  * is put under the mixer by its own name, so it plays at the level the piece measured for it (src/audio/levels.json).
  */
 import { track } from '../../audio/mix';
+import { tapeOfFile, tapePlace, notePlace } from '../../narrative/teachingTapes';
 
 type Listener = () => void;
 const listeners = new Set<Listener>();
@@ -106,6 +107,25 @@ export const viewerFilm = {
     v.addEventListener('error', () => set('error'));
     v.addEventListener('seeked', () => { if (mine()) { serial++; notify(); } });
     v.addEventListener('loadeddata', () => { if (mine()) { serial++; notify(); } });
+    // ⚑ S390 / S392 (UiB jobs 25 B3, 26 B4) — A TEACHING TAPE RESUMES WHERE THE VISITOR LEFT IT: on the room's TV (End of Part 1,
+    //   or the second it was stopped at) or here, earlier — the web copy and the TV's copy share one timeline. The place is memory
+    //   only (src/narrative/teachingTapes.ts); it is written back on every pause, seek and end, and every few seconds while it
+    //   plays, so the TV and the site agree.
+    const tape = tapeOfFile(file);
+    if (tape) {
+      let resumed = false;
+      const at = tapePlace(tape);
+      v.addEventListener('loadedmetadata', () => {
+        if (!mine()) return;
+        const d = v.duration;
+        if (at > 0.5 && Number.isFinite(d) && at < d - 1) v.currentTime = at;
+        resumed = true;
+      });
+      const keep = (): void => { if (mine() && resumed) notePlace(tape, v.ended ? v.duration : v.currentTime); };
+      v.addEventListener('pause', keep); v.addEventListener('seeked', keep); v.addEventListener('ended', keep);
+      let lastKept = 0;
+      v.addEventListener('timeupdate', () => { if (Math.abs(v.currentTime - lastKept) >= 2) { lastKept = v.currentTime; keep(); } });
+    }
     v.src = file;   // the project's own static file, relative to the page; nothing loads before this press
     void v.play().catch(() => { if (mine() && v.paused) set(v.error ? 'error' : 'paused'); });
     notify();
@@ -113,6 +133,8 @@ export const viewerFilm = {
   stop(): void {
     const v = video;
     if (!v) return;
+    const tape = filmFile ? tapeOfFile(filmFile) : null;   // S390: a teaching tape keeps the second it was closed at
+    if (tape && v.readyState >= 1 && v.currentTime > 0.5) notePlace(tape, v.currentTime);
     video = null; filmFile = null; filmState = 'idle'; serial++;
     v.pause(); v.removeAttribute('src'); v.load();
     notify();

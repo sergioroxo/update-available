@@ -1,0 +1,102 @@
+{
+ "tape": "2016",
+ "title": "Heartwood · Session Two: The Roots",
+ "version": "v4",
+ "medium": "DVD, Leader's Edition",
+ "music": "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)",
+ "duration": 251.407,
+ "partOneEnd": 73.89,
+ "chapters": [
+  {
+   "id": "label",
+   "kind": "label",
+   "title": "Before you watch",
+   "start": 0.0,
+   "end": 9.85
+  },
+  {
+   "id": "disc",
+   "kind": "title",
+   "title": "Heartwood Ministries · Leader's Edition",
+   "start": 9.85,
+   "end": 16.25
+  },
+  {
+   "id": "t1",
+   "kind": "trailer",
+   "title": "Trailer · Too Close? five-pack",
+   "start": 16.25,
+   "end": 28.85
+  },
+  {
+   "id": "menu",
+   "kind": "menu",
+   "title": "Main menu · Leader's Edition",
+   "start": 28.85,
+   "end": 37.45
+  },
+  {
+   "id": "ch1",
+   "kind": "lesson",
+   "title": "Chapter 1 · Welcome · The Big Three",
+   "start": 37.45,
+   "end": 66.292
+  },
+  {
+   "id": "end1",
+   "kind": "endcard",
+   "title": "End of Part 1 · Pause the DVD here",
+   "start": 66.292,
+   "end": 77.49
+  },
+  {
+   "id": "ch2",
+   "kind": "lesson",
+   "title": "Chapter 2 · Mothers & Fathers",
+   "start": 77.49,
+   "end": 104.921
+  },
+  {
+   "id": "t2",
+   "kind": "trailer",
+   "title": "Trailer · Deep Roots, 20 weeks",
+   "start": 104.921,
+   "end": 117.521
+  },
+  {
+   "id": "ch3",
+   "kind": "lesson",
+   "title": "Chapter 3 · No File to Put It In",
+   "start": 117.521,
+   "end": 151.359
+  },
+  {
+   "id": "ch4",
+   "kind": "lesson",
+   "title": "Chapter 4 · When Friendship Becomes Everything",
+   "start": 151.359,
+   "end": 172.049
+  },
+  {
+   "id": "x",
+   "kind": "collapse",
+   "title": "The three boxes (the collapse)",
+   "start": 172.049,
+   "end": 190.759
+  },
+  {
+   "id": "break",
+   "kind": "break",
+   "title": "What this asked of women",
+   "start": 190.759,
+   "end": 227.807
+  },
+  {
+   "id": "credits",
+   "kind": "credits",
+   "title": "Sources",
+   "start": 227.807,
+   "end": 251.407
+  }
+ ]
+}

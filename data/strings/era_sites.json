@@ -17,6 +17,7 @@
   "missed": "Missed it?"
  },
  "common": {
+  "tape": {"_docS392": "⚑ S392 (UiB job 26 B4) — the teaching tapes' text blocks under the player on each era site (tools/gen_era_sites.mjs). Drafts for his eye.", "breakTitle": "The break, as text", "breakSource": "The break", "sourcesTitle": "Sources: each line of the margin, the break, and the documents"},
   "contentNote": "This site is about conversion practices — efforts to change a person's sexual orientation or gender identity. It describes what they did and says plainly that they harm. Nobody in the piece is real. Every organisation and product in it is invented. The practices they perform are documented.",
   "records": "This page has no scripts. It records nothing and asks nothing of you.",
   "statusKey": "How well each thing is documented",
@@ -232,6 +233,7 @@
     "plate": "Daniel's room, as the Close shows it."
    },
    "media": [
+    {"tape": "1997", "type": "video", "title": "“Understanding Your Roots” — the fellowship’s tape", "_docS392": "⚑ S392 (UiB job 26 B4) — the v4 tape: the label, the tape played straight, the margin beside it (burned into this web copy as a lower strip), the break. Drafts for his eye (T85).", "what": "The video that came with Daniel’s Un-Walk kit, on the TV behind his seat: the programme’s own teaching on why a boy becomes gay, and its procedure for overwriting him — “our mind works like a computer” — cut by its own commercials. The tape is the programme’s screen and never corrects itself. The strip under it is the piece’s margin: where each teaching was printed, and what was already known. After the tape stops selling, the break says plainly what it asked of the people it was taught to; it is below as text, with the sources. {length}. In the piece it starts where you left it on the TV."},
     {
      "file": "assets/audio/fold_my_hands_tape97.mp3",
      "type": "audio",
@@ -452,6 +454,7 @@
     "plate": "Vera's room, as the Close shows it."
    },
    "media": [
+    {"tape": "2016", "type": "video", "title": "“Heartwood” — Session Two: The Roots", "_docS392": "⚑ S392 (UiB job 26 B4) — the v4 tape (a DVD course, his \"this was a DVD\"). Drafts for his eye (T85).", "what": "The course GracePlatform assigned to Vera, played from the DVD under the TV on her wall: a women’s small-group course on a Leader’s Edition disc, on why a woman loves a woman. At its centre is a 1993 booklet’s computer, re-issued word for word under a 2016 look. The strip under the picture is the piece’s margin: where each teaching was printed, and what was known by then. The break, after it, is below as text, with the sources. {length}. In the piece it starts where you left it on the TV."},
     {
      "file": "assets/audio/floppysheep_song.mp3",
      "type": "audio",
@@ -581,6 +584,7 @@
     "plate": "Maya's room, as the Close shows it."
    },
    "media": [
+    {"tape": "2026", "type": "video", "title": "“HEDGE™” — a course for parents", "_docS392": "⚑ S392 (UiB job 26 B4) — the v4 tape (the course tells its own history, 1988 to today, from the research). Drafts for his eye (T85).", "what": "The link Maya’s father sent her on her eighteenth birthday, “watch this”, played on the screen beside her shelf: a campaign course for parents that tells its own story of “how it happens”, from 1988 to today, as escalation and fear. The strip under the picture is the piece’s margin: where each reason was taught, and the dated facts about the manuals and the professional bodies. The break, after it, is below as text, with the sources. {length}. In the piece it starts where you left it on the screen."},
     {
      "file": "assets/video/the_great_becoming.mp4",
      "type": "video",

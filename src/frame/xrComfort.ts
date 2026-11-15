@@ -41,14 +41,20 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   const key = () => [...authored.getLocalPosition().toArray(), ...authored.getLocalRotation().toArray()].map(n => n.toFixed(4)).join(',');
   /** a change worth re-forming the room for: ≥ 0.35 m of place, or ≥ 20° of facing (pitch and roll never count) */
   const meaningful = (): boolean => {
-    const p = authored.getLocalPosition(), yaw = authored.getLocalRotation().getEulerAngles().y;
-    const dy = Math.abs(((yaw - level(rot).getEulerAngles().y) % 360 + 540) % 360 - 180);
+    const p = authored.getLocalPosition(), yaw = yawOf(authored.getLocalRotation());
+    const dy = Math.abs(((yaw - yawOf(rot)) % 360 + 540) % 360 - 180);
     return p.distance(pos) >= 0.35 || dy >= 20 || calibrationPending;
   };
   const identity = () => { stage.setLocalPosition(0, 0, 0); stage.setLocalEulerAngles(0, 0, 0); };
+  // ⚑ S392 (UiB job 26 B; found by the TV probe in the emulated headset) — A FACING'S YAW, READ FROM WHERE IT POINTS.
+  //   PlayCanvas's getEulerAngles() returns y only in −90…+90: a facing of 93° comes back as (180, 87, 180), 122° as
+  //   (180, 58, 180), 178° as (180, 2, 180). Everything here kept only `.y`, so every facing beyond ±90° was MIRRORED about
+  //   the 90° line: Vera's seat (93°) has been mapped at 87° in the headset, a conducted cut to 1997's TV (−122°) landed
+  //   at −58° and one to 2016's TV (178°) at 2°, facing the bed. The yaw is now read from the facing's own forward vector.
+  const yawOf = (q: pc.Quat): number => { const f = q.transformVector(new pc.Vec3(0, 0, -1)); return Math.atan2(-f.x, -f.z) * pc.math.RAD_TO_DEG; };
   // ⚑ S268 — the world is only ever TURNED for the viewer, never tilted: an authored pitch (a lean to the desk, a
   //   look down) is the browser camera's, and in a headset it tipped the whole room ("lopsided"). Yaw only.
-  const level = (q: pc.Quat): pc.Quat => new pc.Quat().setFromEulerAngles(0, q.getEulerAngles().y, 0);
+  const level = (q: pc.Quat): pc.Quat => new pc.Quat().setFromEulerAngles(0, yawOf(q), 0);
   // ⚑ S270b (his: "I'm on top of the backrest of the armchair… I want to put my elbows on the table") — the authored
   //   eye is the BROWSER camera's, set back 0.45 m from the desk edge so a flat screen frames the monitor. A seated
   //   head in the headset leans in: the eye the head is mapped to sits 0.15 m further forward, over the seat.
@@ -72,12 +78,12 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   //   Recentre uses the head as it was when the menu OPENED, before the visitor turned to the panel
   const menuHead = { p: new pc.Vec3(), yaw: 0, held: false };
   gameMenuBus.onChange((open) => {
-    if (open && app.xr?.active) { menuHead.p.copy(head.getPosition()); menuHead.yaw = head.getEulerAngles().y; menuHead.held = true; }
+    if (open && app.xr?.active) { menuHead.p.copy(head.getPosition()); menuHead.yaw = yawOf(head.getRotation()); menuHead.held = true; }
     if (!open) menuHead.held = false;
   });
   function calibrate() {
     // Physical head pose is untouched. Map the seated head to the authored eye.
-    const p = menuHead.held ? menuHead.p : head.getPosition(), yaw = menuHead.held ? menuHead.yaw : head.getEulerAngles().y;
+    const p = menuHead.held ? menuHead.p : head.getPosition(), yaw = menuHead.held ? menuHead.yaw : yawOf(head.getRotation());
     calibration.setTRS(p.clone(), new pc.Quat().setFromEulerAngles(0, yaw, 0), pc.Vec3.ONE);
     calibrationPending = true; calibrated = true; elapsed = 0; committed = false;
     for (const f of xrRecentred) f(p.clone(), yaw);
@@ -91,7 +97,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
   //   reset, once the pose has caught up; the same happens on entering VR, so nothing waits for a press.
   let seatIn = -1, offFor = 0;
   const seatFromHead = (): void => {
-    fixed.setTRS(head.getPosition().clone(), new pc.Quat().setFromEulerAngles(0, head.getEulerAngles().y, 0), pc.Vec3.ONE);
+    fixed.setTRS(head.getPosition().clone(), new pc.Quat().setFromEulerAngles(0, yawOf(head.getRotation()), 0), pc.Vec3.ONE);
     calibrated = true; calibrationPending = false; updateMapping();
   };
   const onSpaceReset = (): void => {
@@ -149,7 +155,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     if (elapsed === 0 && !committed) {
       // the start of a re-form: decide where the head will be mapped, and photograph the room from there
       if (calibrationPending) pendingFixed.copy(calibration);
-      else pendingFixed.setTRS(fixed.getTranslation(), new pc.Quat().setFromEulerAngles(0, head.getEulerAngles().y, 0), pc.Vec3.ONE);
+      else pendingFixed.setTRS(fixed.getTranslation(), new pc.Quat().setFromEulerAngles(0, yawOf(head.getRotation()), 0), pc.Vec3.ONE);
       captureDestination();
     }
     if (elapsed >= 0) {
@@ -234,7 +240,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     lift = Math.max(-0.3, Math.min(0.3, lift + tableY - desk)); updateMapping();
     return lift;
   };
-  const stageYaw = (): number => new pc.Quat().setFromMat4(physicalMap).getEulerAngles().y;
+  const stageYaw = (): number => yawOf(new pc.Quat().setFromMat4(physicalMap));
   return { authored, calibrate, logicalRay, physicalPoint, logicalPoint, matchDesk, stageYaw,
     get deskLift() { return lift; },
     setWorldReady(ready: boolean) { worldReady = ready; },
@@ -244,7 +250,7 @@ export function mountXrComfort(app: pc.Application, rig: pc.Entity, head: pc.Ent
     /** S348 — follow the authored seat every frame (an era change's flight), or stop following */
     setFollow(on: boolean) { following = on; },
     get following() { return following; },
-    status: () => ({ active, calibrated, elapsed, cuts, worldReady, shift: physicalMap.getTranslation().toArray(), shiftYaw: new pc.Quat().setFromMat4(physicalMap).getEulerAngles().y,
+    status: () => ({ active, calibrated, elapsed, cuts, worldReady, shift: physicalMap.getTranslation().toArray(), shiftYaw: yawOf(new pc.Quat().setFromMat4(physicalMap)),
       batchesOnStage: ((app.batcher as unknown as { _batchList?: { meshInstance: { node: pc.GraphNode } | null }[] } | null)?._batchList ?? []).filter(b => b.meshInstance?.node === stage).length,
       batches: ((app.batcher as unknown as { _batchList?: unknown[] } | null)?._batchList ?? []).length, authored: authored.getLocalPosition().toArray(), head: head.getLocalPosition().toArray(), rig: rig.getPosition().toArray() }) };
 }

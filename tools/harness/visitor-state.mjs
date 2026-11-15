@@ -360,6 +360,16 @@ const LAP = { w: 224, h: 140 };
       add(r.id, 'laptop', r, onPlane('era3-device-laptop', r.x + r.w / 2, r.y + r.h / 2, LAP.w, LAP.h));
     }
     /**
+     * ⚑ S390 / S392 — THE TEACHING TVs publish their controls (▶/❚❚ ⏮ ⏭ ⏏, Play on, the chapter rows) on their own glass,
+     * each a plane of its own (`teaching-tv-<tape>`). Listed so the map shows them as aimable (surface `tv`); walk.mjs leaves
+     * them unpressed, like the room's props: nothing in the piece waits on the tape, and its start-to-Part-1 is conducted.
+     */
+    const tvState = typeof window.__teachingTv === 'function' ? window.__teachingTv() : null;
+    for (const tv of (tvState && tvState.tvs) || []) {
+      if (!tv.enabled) continue;
+      for (const r of tv.hits || []) add(r.id + '@' + tv.tape, 'tv', r, onPlane(tv.entity, r.x + r.w / 2, r.y + r.h / 2, tv.LW, tv.LH));
+    }
+    /**
      * ⚑ DANIEL'S MONITOR IN THE CLOSE (2026-09-12, Phase D). The Restart card
      * on the 1997 CRT, lit after the constellation settles: its rects are
      * published on `__closeMonitor.hits` and the glass is Room 1's own screen
@@ -543,7 +553,8 @@ const LAP = { w: 224, h: 140 };
      * screen the room owns, keyed by name; hash all of them, in a stable order,
      * and the next surface somebody adds is hashed the day it appears.
      */
-    const canvases = window.__era3Devices ? window.__era3Devices() : {};
+    const canvases = Object.assign({}, window.__era3Devices ? window.__era3Devices() : {},
+      window.__teachingTv && window.__teachingTv.canvases ? window.__teachingTv.canvases() : {});   // S390: the TVs' glass moves while a tape plays
     // ⚑ S177: and the Close's four panels — a Sources press turns a panel to its dossier
     //   on the panel atlas, which no canvas above holds; its face index is the change
     const panelFaces = typeof window.__closePanels === 'function'

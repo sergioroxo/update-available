@@ -1,4 +1,5 @@
 import { ledger, ledgerGeneration } from '../../state/ledger';
+import tvWords from '../../../data/strings/teaching_tv.json';
 import { e4Has } from '../../narrative/e4Beats';
 /**
  * ⚑ S328 — KETTLE, A WINDOW ON HER MONITOR (T03, his headset test of 8 Nov: "I think we're just gonna have to remove
@@ -24,6 +25,8 @@ import { ERA4, KETTLE, roundRect, pill, PLACE } from '../theme/era4';
 import { px, setFont, wrapText } from '../theme/chrome';
 import { monoFor } from '../theme/fonts';
 import { drawGoalPicture } from './goalPicture';
+/** ⚑ S390 — Dad's link (data/strings/teaching_tv.json): his line and the course's name */
+const TV2026 = tvWords.tapes['2026'];
 
 export type ChatId = 'house' | 'mum' | 'dad' | 'junie';
 export interface MRect { x: number; y: number; w: number; h: number; id: string }
@@ -82,6 +85,8 @@ export class E4Messenger {
   mumOpened = false;
   dadIn = false;
   dadRead = false;
+  /** ⚑ S390 — Dad's link has come ("Watch this. All of it.", the course; browser.ts dadSharesTape) */
+  dadLink = false;
   linkOpened = false;
   junieOpenable = false;
   junieOpened = false;
@@ -243,6 +248,7 @@ export class E4Messenger {
       return { text: C.idle, badge: 0, muted: false, when: 'Mon' };
     }
     if (id === 'dad') {
+      if (this.dadLink) return { text: TV2026.dadLine, badge: 0, muted: false, when: '10:24' };   // S390
       if (this.dadIn) return { text: M.dad.today[M.dad.today.length - 1].text, badge: this.dadRead ? 0 : M.dad.today.length, muted: false, when: '10:21' };
       return { text: C.idle, badge: 0, muted: false, when: 'Sep 25' };
     }
@@ -399,6 +405,7 @@ export class E4Messenger {
       if (this.dadIn) {
         out.push({ sep: M.today, year: M.today });
         for (const m of M.dad.today) out.push({ text: m.text });
+        if (this.dadLink) { out.push({ text: TV2026.dadLine }); out.push({ text: `▶ ${TV2026.dadLink}` }); }   // S390: his link
       }
     } else {
       // ⚑ S364 / N10 — Tuesday's stream line, this morning's birthday; then the AI's mute, and what the mute hid

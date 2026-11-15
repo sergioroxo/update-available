@@ -254,12 +254,15 @@ export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width:
         const cred = wrap(ctx, b.credit, F(SIZE.small), cw - 36);
         const lyr = b.lyrics.flatMap((l) => wrap(ctx, l, F(SIZE.small), cw - 56));
         const lyrH = lyr.length ? 34 + lyr.length * sl + 6 : 0;
+        // ⚑ S392 (UiB job 26 B4) — a teaching tape's break, as text, and its sources, under the film (the same words as the tape)
+        const notes = (b.notes ?? []).map((n) => ({ title: n.title, lines: n.lines.flatMap((l) => l === '' ? [''] : wrap(ctx, l, F(SIZE.small), cw - 56)) }));
+        const notesH = notes.reduce((a, n) => a + 34 + n.lines.length * sl + 10, 0);
         const playable = !!b.file && b.type === 'audio';
         const film = !!b.file && b.type !== 'audio' && films;
         const filmNote = !!b.file && b.type !== 'audio' && !films;
         const fw = Math.min(cw - 36, FILM_MAX_W), pic = Math.round(fw * 9 / 16), fh = pic + FILM_BAR;
         const extra = playable ? 62 : film ? fh + 14 + 62 : filmNote ? sl + 8 : 0;
-        const h = 14 + title.length * Math.round(SIZE.h4 * LH) + what.length * lh + 8 + extra + lyrH + cred.length * sl + 16;
+        const h = 14 + title.length * Math.round(SIZE.h4 * LH) + what.length * lh + 8 + extra + lyrH + notesH + cred.length * sl + 16;
         box(pad, y, cw, h, skin.card, skin.cardEdge, 2);
         let yy = y + 14;
         title.forEach((l, i) => ops.push({ t: 'text', x: pad + 18, y: yy + i * Math.round(SIZE.h4 * LH), s: l, font: F(SIZE.h4, true, skin.headFont), color: skin.h, lh: Math.round(SIZE.h4 * LH) }));
@@ -290,6 +293,12 @@ export function layoutDoc(ctx: CanvasRenderingContext2D, blocks: Block[], width:
           yy += 34;
           lyr.forEach((l, i) => ops.push({ t: 'text', x: pad + 38, y: yy + i * sl, s: l, font: F(SIZE.small), color: skin.ink, lh: sl }));
           yy += lyr.length * sl + 6;
+        }
+        for (const n of notes) {
+          ops.push({ t: 'text', x: pad + 18, y: yy, s: n.title, font: F(SIZE.body, true), color: skin.h, lh });
+          yy += 34;
+          n.lines.forEach((l, i) => { if (l) ops.push({ t: 'text', x: pad + 38, y: yy + i * sl, s: l, font: F(SIZE.small), color: skin.ink, lh: sl }); });
+          yy += n.lines.length * sl + 10;
         }
         cred.forEach((l, i) => ops.push({ t: 'text', x: pad + 18, y: yy + i * sl, s: l, font: F(SIZE.small), color: skin.dim, lh: sl }));
         y += h + 14;

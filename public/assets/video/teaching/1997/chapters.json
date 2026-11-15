@@ -1,0 +1,80 @@
+{
+ "tape": "1997",
+ "title": "Understanding Your Roots",
+ "version": "v4",
+ "music": "Music: made in code for this tape by Claude (Anthropic, Opus 5.5)",
+ "duration": 269.692,
+ "partOneEnd": 72.496,
+ "chapters": [
+  {
+   "id": "label",
+   "kind": "label",
+   "title": "Before you watch",
+   "start": 0.0,
+   "end": 8.2
+  },
+  {
+   "id": "title",
+   "kind": "title",
+   "title": "Understanding Your Roots",
+   "start": 8.2,
+   "end": 13.657
+  },
+  {
+   "id": "p1",
+   "kind": "lesson",
+   "title": "Part 1 · How Your Mind Works",
+   "start": 13.657,
+   "end": 45.19
+  },
+  {
+   "id": "c1",
+   "kind": "commercial",
+   "title": "Ad · Mountains of Material",
+   "start": 45.19,
+   "end": 60.145
+  },
+  {
+   "id": "end1",
+   "kind": "endcard",
+   "title": "End of Part 1",
+   "start": 60.145,
+   "end": 75.796
+  },
+  {
+   "id": "p2",
+   "kind": "lesson",
+   "title": "Part 2 · Your Roots",
+   "start": 75.796,
+   "end": 130.787
+  },
+  {
+   "id": "p3",
+   "kind": "lesson",
+   "title": "Part 3 · Displacement",
+   "start": 130.787,
+   "end": 211.445
+  },
+  {
+   "id": "x",
+   "kind": "collapse",
+   "title": "For Further Study",
+   "start": 211.445,
+   "end": 227.142
+  },
+  {
+   "id": "break",
+   "kind": "break",
+   "title": "What this asked of people",
+   "start": 227.142,
+   "end": 258.092
+  },
+  {
+   "id": "credits",
+   "kind": "credits",
+   "title": "Sources",
+   "start": 258.092,
+   "end": 269.692
+  }
+ ]
+}

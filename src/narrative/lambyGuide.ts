@@ -4,7 +4,7 @@ import copy from '../../data/strings/lambyGuide.json';
 import decisions from '../../data/strings/cx3b.json';
 import type { MapState } from '../witness/map';
 export type GuideEra = 'e1' | 'e2' | 'e3' | 'e4';
-export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice';
+export type GuideRung = 'silent' | 'cue' | 'tip' | 'show' | 'again' | 'start' | 'form' | 'personalise' | 'root' | 'harbor' | 'choice' | 'tv' | 'tvcall';
 export interface GuideStep { tip: string; here?: string; again?: string; target: string[]; act?: string; noAgain?: boolean; once?: boolean }
 export interface GuideView {
   era: GuideEra; beat: string; rung: GuideRung; hidden: boolean; text: string | null;
@@ -14,7 +14,7 @@ export interface GuideView {
   frame: number; time: number;
 }
 export interface GuideInput { era: GuideEra; map: Pick<MapState, 'current' | 'quiet'>; silent: boolean; voice: boolean;
-  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; fillText?: (text: string) => string; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
+  personaliseOffer?: string; deferredUpdate?: boolean; formAvailable?: boolean; formOpened?: boolean; formForced?: boolean; formFiled?: boolean; rootOpened?: boolean; racketDone?: boolean; robDone?: boolean; harborDue?: boolean; tvOffer?: string; tvCall?: string; fillText?: (text: string) => string; idleScale?: number; startTarget?: string; reducedMotion?: boolean }
 interface StepMemory { dismissed: number; finished: boolean; offered: boolean }
 export class LambyGuide {
   readonly view: GuideView = { era: 'e1', beat: '', rung: 'silent', hidden: true, text: null, targets: [], frame: 0, time: 0 };
@@ -29,6 +29,11 @@ export class LambyGuide {
   private rootOffered = false;
   /** ⚑ S345 — 2003: Lamby has said to share the story on Harbor */
   private harborOffered = false;
+  /** ⚑ S390 — the eras in which Lamby has offered to take the visitor back to the teaching TV (once each) */
+  private readonly tvOffered = new Set<GuideEra>();
+  /** ⚑ S392 — the eras in which Lamby has made the teaching TV's call (once each), and whether that call is up now */
+  private readonly tvCalled = new Set<GuideEra>();
+  private calling = false;
   private formWait = 0;
   private requested = false;
   private input: GuideInput | null = null;
@@ -51,7 +56,7 @@ export class LambyGuide {
     Object.assign(this.view, { rung, text, targets, act, alt }); this.version++;
   }
   /** the offers that are said once, ignorable, and logged by their own name (not by the era's beat) */
-  private get isOffer(): boolean { const r = this.view.rung; return r === 'form' || r === 'root' || r === 'harbor' || r === 'choice'; }
+  private get isOffer(): boolean { const r = this.view.rung; return r === 'form' || r === 'root' || r === 'harbor' || r === 'choice' || r === 'tv' || r === 'tvcall'; }
   tick(dt: number, input: GuideInput): void {
     this.input = input;
     const alias: Record<string, string> = { l: 'browser', search: 'results' };   // ⚑ S293: 2026's other beats are their own ids
@@ -64,7 +69,15 @@ export class LambyGuide {
       this.spec = step === 'personalise' ? { tip: input.personaliseOffer!, target: [], act: 'open:personalise', once: true } : (copy.eras[input.era] as Record<string, GuideStep>)[step];
       this.set('silent');
     }
-    const hidden = input.silent || input.map.quiet || input.map.current?.era === 'close' || input.voice;
+    // ⚑ S392 (UiB job 26 B0; G2, his 15 Oct: "reinstate Lamby as … forcing you to do stuff") — THE TEACHING TV'S CALL: when the
+    //   piece takes the visitor to the TV (1997 the kit's tape, 2016 the assigned session), Lamby says where it is and that it
+    //   will take them there. The TV's moment holds the floor (one voice at a time), so this one balloon is said OVER that hold;
+    //   Take me there turns them at once; × closes it and is logged like every dismissal. Once per era, inside the cap.
+    if (input.tvCall && !this.tvCalled.has(input.era) && this.canOffer()) {
+      this.tvCalled.add(input.era); this.counts[input.era]++; this.idle = 0; this.calling = true; this.set('tvcall', input.tvCall, [], 'open:tv');
+    }
+    if (this.calling && (!input.tvCall || this.view.rung !== 'tvcall')) { if (this.view.rung === 'tvcall') this.set('silent'); this.calling = false; }
+    const hidden = !this.calling && (input.silent || input.map.quiet || input.map.current?.era === 'close' || input.voice);
     if (hidden !== this.view.hidden) { this.view.hidden = hidden; this.version++; }
     if (hidden) {
       if (input.silent || input.map.quiet) this.requested = false;
@@ -89,6 +102,13 @@ export class LambyGuide {
     //   next press is Post your story. Once, ignorable, inside the era's cap.
     if (input.era === 'e2' && input.harborDue && !this.harborOffered && !this.active && this.canOffer()) {
       this.harborOffered = true; this.counts.e2++; this.set('harbor', copy.harbor.text, [], 'open:harbor'); return;
+    }
+    // ⚑ S390 (UiB job 25 B2.5) — THE TEACHING TV: once per era, ignorable, inside the era's cap. Only when the visitor has
+    //   stalled with nothing better to hear from Lamby (no beat tip due: one and a half tip-waits of quiet), and only while the
+    //   era's tape still has parts unseen (the engine sends the line only then). Yes takes them to the TV; ▶ stays theirs.
+    if (input.tvOffer && !this.tvOffered.has(input.era) && !this.active && this.canOffer()
+      && this.idle >= copy.timing.tipSeconds * (input.idleScale ?? 1) * 1.5) {
+      this.tvOffered.add(input.era); this.counts[input.era]++; this.idle = 0; this.set('tv', input.tvOffer, [], 'open:tv'); return;
     }
     // Available form waits through free exploration; only one unsolicited offer. ⚑ S343: once the game has been
     //   played (or offered) and closed, the form is offered after a breath, not after the full tip wait.
