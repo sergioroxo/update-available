@@ -45,13 +45,13 @@ import * as aero from '../desktop/theme/era3';
 import { drawLambyChar } from '../desktop/apps/lambyChar';
 import decisions from '../../data/strings/cx3b.json';
 import { holdVoice, releaseVoice, voiceHolder, setVoiceWanted } from '../state/voiceHold';
-import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, SET_NAME, type LambySet, type SetKey } from './lambyVision';
+import { buildLambySet, toLocal, hitBounds, keyAt, glassAt, GLASS, FACE, KEY_POINTS, KEY_ROW, SET_NAME, type LambySet, type SetKey } from './lambyVision';
 
 type Style = 'vcr' | 'dvd' | 'hedge';
 interface TvSpec { era: string; place: { pos: number[]; yaw: number }; style: Style; seat: number[] }
 const SPECS = (tvData as unknown as { tvs: Record<TapeId, TvSpec> }).tvs;
-const HELD = (tvData as unknown as { held: { xrDist: number; pictureDeg: number; flatFill: number; flatMaxW: number; liftBase: number; liftPerMetre: number; liftMax: number; clearance: number; glowRest: number; glowHeld: number; xrKey: number } }).held;
-const BAR = (tvData as unknown as { bar: { captionCap: number; marginCap: number; floorCap: number } }).bar;
+const HELD = (tvData as unknown as { held: { xrDist: number; pictureDeg: number; flatFill: number; phoneFill: number; flatMaxW: number; liftBase: number; liftPerMetre: number; liftMax: number; clearance: number; glowRest: number; glowHeld: number; xrKey: number } }).held;
+const BAR = (tvData as unknown as { bar: { captionCap: number; marginCap: number; floorDeg: number; floorPxComputer: number; floorPxPhone: number; baseH: number; maxH: number; pad: number; gap: number; lineK: number } }).bar;
 const CALL = (tvData as unknown as { call: { w: number; xrDist: number; flatDist: number; drop: number; followDeg: number; follow: number } }).call;
 const MOMENT = (tvData as unknown as { moment: { callHold: number; dismissBreath: number; noCall: number; afterHold: number; afterDad: number; noPlayRelease: number } }).moment;
 /** the moment's clock (data/room/teaching_tvs.json `moment`), for the engine's triggers */
@@ -62,8 +62,43 @@ const W = words as unknown as {
 const P = W.player;
 const D2R = Math.PI / 180;
 
-/** the glass's canvas: 4:3; the picture in the upper three quarters, the bar (captions, the margin) in the lower quarter */
-const LW = 960, LH = 720, PIC = { x: 0, y: 0, w: 960, h: 540 }, BARY = 540;
+/** the glass's canvas: 4:3; the picture above, the bar (captions, the margin) under it — at least a quarter of the glass
+ *  (`bar.baseH`), taller where a tape's lines need it in this look-mode (⚑ S394 fix: never cut off, never below the floor) */
+const LW = 960, LH = 720, PIC_BASE = 540;
+/** a phone (the touch device): its own capital floor and its own hold (the glass, the bar and the keys fill the height) */
+export const isPhone = (): boolean => (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)
+  || (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)')?.matches === true);
+/** the distance a flat screen holds the set at: its face (the glass's top to the keys' foot) fills `fill` of the view's
+ *  height, never more than `flatMaxW` of its width */
+function flatDistance(cam: pc.CameraComponent | null | undefined, phone: boolean): number {
+  const fov = cam?.fov ?? 42, tanV = Math.tan((fov / 2) * D2R);
+  const gd = pc.Application.getApplication()?.graphicsDevice;
+  const aspect = gd && gd.height > 0 ? gd.width / gd.height : 16 / 9;
+  return Math.max((FACE.top - FACE.bottom) / (2 * tanV * (phone ? HELD.phoneFill : HELD.flatFill)), FACE.width / (2 * tanV * aspect * HELD.flatMaxW));
+}
+/** the headset's growth: the picture (540 canvas px) `pictureDeg` tall at `xrDist` */
+const xrScale = (): { d: number; k: number } => { const d = Math.max(0.5, HELD.xrDist); return { d, k: (2 * d * Math.tan((HELD.pictureDeg / 2) * D2R)) / (GLASS.h * (PIC_BASE / LH)) }; };
+/**
+ * ⚑ S394 fix — HOW BIG A CANVAS PIXEL IS, HELD, IN THIS LOOK-MODE, and so the bar's capital floor in canvas px: 1.0° in a
+ * headset (degrees per canvas px across the grown glass at `xrDist`), 14 CSS px on a computer and 12 on a phone (CSS px per
+ * canvas px of the glass at the flat hold's distance and the camera's field of view).
+ */
+export function readingScale(xr: boolean, cam: pc.CameraComponent | null): { unit: 'deg' | 'px'; perCanvas: number; floor: number; phone: boolean } {
+  if (xr) {
+    const { d, k } = xrScale();
+    const per = (2 * Math.atan((GLASS.h * k / 2) / d) / D2R) / LH;
+    return { unit: 'deg', perCanvas: per, floor: BAR.floorDeg / per, phone: false };
+  }
+  const phone = isPhone(), d = flatDistance(cam, phone);
+  const tanV = Math.tan(((cam?.fov ?? 42) / 2) * D2R);
+  const el = pc.Application.getApplication()?.graphicsDevice.canvas as HTMLCanvasElement | undefined;
+  const cssH = el?.clientHeight || 720;
+  const per = (cssH * GLASS.h / (2 * d * tanV)) / LH;
+  return { unit: 'px', perCanvas: per, floor: (phone ? BAR.floorPxPhone : BAR.floorPxComputer) / per, phone };
+}
+type BarLines = { caption: string | null; margin: { head: string; text: string } | null };
+type BarBlock = { lines: string[]; px: number; cap: number };
+type BarLayout = { cap: BarBlock | null; mar: (BarBlock & { head: string }) | null; h: number };
 /** the margin's face: the piece's own sans in every room (the margin is the piece's voice, not the era's) */
 const MARGIN_FACE = `"${VENDORED.ui2026}", ${FACES.e4.family}`;
 
@@ -167,7 +202,8 @@ export class TeachingTv {
   stalledFor = 0;
   private stallT = -1;
   /** what the bar last drew, for the probe: each block's capital height in canvas px (of the 540-px picture), its lines */
-  bar: { caption: string | null; margin: string | null; capCaption: number; capMargin: number; lines: number; height: number; recent: string[] } = { caption: null, margin: null, capCaption: 0, capMargin: 0, lines: 0, height: 0, recent: [] };
+  bar: { caption: string | null; margin: string | null; capCaption: number; capMargin: number; lines: number; height: number; top: number; barH: number;
+    ink: { x0: number; x1: number; y0: number; y1: number } | null; recent: string[] } = { caption: null, margin: null, capCaption: 0, capMargin: 0, lines: 0, height: 0, top: 0, barH: 0, ink: null, recent: [] };
   // ── the bringing close ──
   pose: Pose = 'rest';
   private liftT = 1;
@@ -188,6 +224,13 @@ export class TeachingTv {
   lastPress: string | null = null;
   /** the visitor set it down themselves (the moment lets go) */
   setDown = false;
+  /** ⚑ S394 fix — the bar's capital floor (canvas px) in this look-mode, and the bar's height (canvas px) for this tape at it */
+  floorCap = 19.4;
+  barH = 180;
+  /** the tape's tallest moment at the floor (for the probe): its lines, the height it needs, whether it fits the bar */
+  barWorst: { key: string; need: number; fits: boolean } = { key: '', need: 0, fits: true };
+  /** the picture's rect on the glass's canvas: everything above the bar */
+  get pic(): { x: number; y: number; w: number; h: number } { return { x: 0, y: 0, w: LW, h: LH - this.barH }; }
 
   constructor(app: pc.AppBase, readonly tape: TapeId) {
     this.spec = SPECS[tape];
@@ -211,6 +254,11 @@ export class TeachingTv {
     if (this.entity.render) this.entity.render.batchGroupId = -1;
     this.entity.enabled = false;
     this.set.root.addChild(this.entity);
+    // ⚑ S394 fix — the bar is measured in the faces it is drawn in: when a face finishes loading, it is sized and drawn again
+    //   (a bar sized in a fallback face ran its last lines off the glass: the 2026 margin line in the photographs)
+    const fonts = typeof document !== 'undefined' ? document.fonts : undefined;
+    fonts?.addEventListener?.('loadingdone', () => this.redraw());
+    void fonts?.ready.then(() => this.redraw());
   }
 
   get data(): TapeData { return TAPES[this.tape]; }
@@ -222,6 +270,43 @@ export class TeachingTv {
   get chapter(): Chapter | undefined { return this.data.chapters[this.chapterIndex]; }
   get held(): boolean { return this.pose === 'held' || this.pose === 'lifting'; }
   get glassCentre(): pc.Vec3 { return this.entity.getPosition().clone(); }
+  /** ⚑ S394 fix — the look-mode's floor arrives (app.ts, each frame through TeachingTvs): a change sizes the bar again */
+  setFloor(floor: number): void {
+    if (Math.abs(floor - this.floorCap) < 0.05) return;
+    this.floorCap = floor;
+    this.sizeBar();
+    this.redraw();
+  }
+  /** every moment of the tape that puts words in the bar: each caption, each margin line, each pair shown together, and the
+   *  break's bar with its captions */
+  barMoments(): BarLines[] {
+    const d = this.data, out: BarLines[] = [];
+    const over = (a: { start: number; end: number }, b: { start: number; end: number }): boolean => a.start < b.end - 0.01 && a.end > b.start + 0.01;
+    for (const c of d.cues) out.push({ caption: c.text, margin: null });
+    for (const m of d.margin) {
+      out.push({ caption: null, margin: { head: m.head, text: m.text } });
+      for (const c of d.cues) if (over(c, m)) out.push({ caption: c.text, margin: { head: m.head, text: m.text } });
+    }
+    const b = d.break;
+    if (b?.barHead && b.on) {
+      const span = { start: b.on[0], end: b.on[1] };
+      out.push({ caption: null, margin: { head: b.barHead, text: b.bar ?? '' } });
+      for (const c of d.cues) if (over(c, span)) out.push({ caption: c.text, margin: { head: b.barHead, text: b.bar ?? '' } });
+    }
+    return out;
+  }
+  /** the bar's height for this tape: the tallest moment at its sizes (wrapped first), within `bar.baseH`…`bar.maxH` */
+  private sizeBar(): void {
+    if (!this.ctx) return;
+    let need = 0, key = '';
+    for (const m of this.barMoments()) {
+      const L = this.fitBar(m, BAR.maxH);
+      if (L.h > need) { need = L.h; key = `${m.caption ?? ''} || ${m.margin ? `${m.margin.head} — ${m.margin.text}` : ''}`; }
+    }
+    const h = Math.ceil(need + BAR.pad * 2);
+    this.barH = Math.max(BAR.baseH, Math.min(BAR.maxH, h));
+    this.barWorst = { key: key.slice(0, 120), need: Math.round(need), fits: h <= BAR.maxH };
+  }
   private get inTrailer(): boolean { return this.chapter?.kind === 'trailer'; }
 
   setInEra(on: boolean): void {
@@ -359,18 +444,13 @@ export class TeachingTv {
     let d: number, k: number, anchor: pc.Vec3;
     if (xr) {
       // the PICTURE `pictureDeg` tall at `xrDist` (Meta's 0.5 m floor for anything looked at for long; nearer than the desk)
-      d = Math.max(0.5, HELD.xrDist);
-      k = (2 * d * Math.tan((HELD.pictureDeg / 2) * D2R)) / (GLASS.h * (PIC.h / LH));
+      ({ d, k } = xrScale());
       // the picture's centre on the line of sight (the bar under it, the keys under that)
-      anchor = new pc.Vec3(GLASS.cx, GLASS.cy + GLASS.h * (1 - PIC.h / LH) / 2, GLASS.z);
+      anchor = new pc.Vec3(GLASS.cx, GLASS.cy + GLASS.h * (1 - PIC_BASE / LH) / 2, GLASS.z);
     } else {
-      // the FACE (the glass's top to the keys' foot) fills `flatFill` of the view's height, never more than `flatMaxW` of its width
-      const fov = cam?.fov ?? 42;
-      const tanV = Math.tan((fov / 2) * D2R);
-      const gd = pc.Application.getApplication()?.graphicsDevice;
-      const aspect = gd && gd.height > 0 ? gd.width / gd.height : 16 / 9;
-      const faceH = FACE.top - FACE.bottom;
-      d = Math.max(faceH / (2 * tanV * HELD.flatFill), FACE.width / (2 * tanV * aspect * HELD.flatMaxW));
+      // the FACE (the glass's top to the keys' foot) fills `flatFill` of the view's height (a phone: `phoneFill`, the glass, the
+      //   bar and the keys filling it — ⚑ S394 fix: its capitals at ≥ 12 px), never more than `flatMaxW` of its width
+      d = flatDistance(cam, isPhone());
       k = 1;
       anchor = new pc.Vec3(FACE.cx, (FACE.top + FACE.bottom) / 2, GLASS.z);
     }
@@ -517,7 +597,7 @@ export class TeachingTv {
     this.draw(lines);
     this.tex.upload();
   }
-  redraw(): void { this.dirty = true; this.barKey = '\u0000'; }
+  redraw(): void { this.dirty = true; this.barKey = '\u0000'; this.sizeBar(); }
 
   /**
    * the bar's two blocks for this second: the caption (the spoken line) and the margin. ⚑ S394: the tape's large type (the
@@ -525,7 +605,7 @@ export class TeachingTv {
    * TV was 2 m away and its picture 8.5° tall; brought close, the picture is 28° tall in the headset and its own type reads (a
    * second copy also crowded the bar and lost its last lines: the probe's first 2016 v5 frame).
    */
-  private barLines(): { caption: string | null; margin: { head: string; text: string } | null } {
+  private barLines(): BarLines {
     const live = this.loaded && (this.state === 'playing' || this.state === 'loading' || this.state === 'paused' || this.state === 'partOne');
     if (!live) return { caption: null, margin: null };
     const t = this.time;
@@ -543,7 +623,7 @@ export class TeachingTv {
 
   // ── the glass ──────────────────────────────────────────────────────────────
   private font(px: number): string { return `${this.look.weight}${px}px ${this.look.face}`; }
-  private draw(lines: { caption: string | null; margin: { head: string; text: string } | null }): void {
+  private draw(lines: BarLines): void {
     const c = this.ctx; if (!c) return;
     this.draws++;
     const L = this.look;
@@ -554,7 +634,7 @@ export class TeachingTv {
     const hasFrame = !!v && this.loaded && v.readyState >= 2 && v.videoWidth > 0 && this.state !== 'leader';
     if (hasFrame && v) {
       // the picture at its own shape inside the upper three quarters (a 4:3 tape pillarboxed, a 16:9 disc full width)
-      const s = Math.min(PIC.w / v.videoWidth, PIC.h / v.videoHeight);
+      const PIC = this.pic, s = Math.min(PIC.w / v.videoWidth, PIC.h / v.videoHeight);
       const w = Math.round(v.videoWidth * s), h = Math.round(v.videoHeight * s);
       c.drawImage(v, PIC.x + Math.round((PIC.w - w) / 2), PIC.y + Math.round((PIC.h - h) / 2), w, h);
     }
@@ -597,54 +677,71 @@ export class TeachingTv {
     return out;
   }
   private capRatio(face: string, weight = ''): number {
-    const c = this.ctx!; c.font = `${weight}100px ${face}`;
+    // ⚑ S394 fix — measured on the alphabetic baseline whatever the last drawing left set: under 'middle' (the paused and
+    //   leader screens) the capital measured 0.44 of the size instead of 0.73, every line was laid out ~1.65× too big, and the
+    //   2026 margin line ran off the foot of the glass
+    const c = this.ctx!; c.font = `${weight}100px ${face}`; c.textBaseline = 'alphabetic';
     const m = c.measureText('H');
     return m.actualBoundingBoxAscent > 0 ? m.actualBoundingBoxAscent / 100 : 0.7;
   }
 
   /**
-   * ⚑ S394 (B2) — THE BAR UNDER THE PICTURE: the caption in the player's own face and ink, and under it the piece's margin
-   * (the record's colours, the piece's sans: its head, then its text). Each block's capital height is asked for in canvas px of
-   * the 540-px picture (`bar.captionCap`, `bar.marginCap`); a bar that will not hold both steps both down together, never
-   * under `bar.floorCap` (the 1.0° a headset needs at the picture's 28°). The margin is one line where it can be
-   * ("HEAD — text"), else the head and the text on two (v5's rule), else wrapped.
+   * ⚑ S394 (B2; S394 fix) — THE BAR UNDER THE PICTURE: the caption in the player's own face and ink, and under it the piece's
+   * margin (the record's colours, the piece's sans: its head, then its text). Each block's capitals are asked for at
+   * `bar.captionCap` / `bar.marginCap` canvas px, never under the look-mode's floor (`floorCap`: 1.0° in a headset, 14 px on a
+   * computer, 12 px on a phone). WRAP FIRST: every line is wrapped, never cut — the bar is as tall as the tape's tallest moment
+   * needs (`sizeBar`, within the set's frame: `bar.maxH`), and only a moment that will not fit it then steps its type down, never
+   * under the floor. The margin is one line where it can be ("HEAD — text"), else the head and the text on two (v5's rule),
+   * else wrapped.
    */
-  private drawBar(lines: { caption: string | null; margin: { head: string; text: string } | null }): void {
-    const c = this.ctx!; const H = LH - BARY, pad = 10, inner = LW - 2 * 22;
-    const capW = this.look.weight, capFam = this.look.face;
+  private barLayout(lines: BarLines, cc: number, mc: number): BarLayout {
+    const inner = LW - 2 * 22, capW = this.look.weight, capFam = this.look.face, lhK = BAR.lineK;
     const rc = this.capRatio(capFam, capW), rm = this.capRatio(MARGIN_FACE);
-    const lhK = 1.2;
-    type Block = { lines: string[]; px: number; cap: number };
-    const layout = (cc: number, mc: number): { cap: Block | null; mar: (Block & { head: string }) | null; h: number } => {
-      let mar: (Block & { head: string }) | null = null;
-      if (lines.margin) {
-        const { head, text } = lines.margin, px = Math.ceil(mc / rm), f = `${px}px ${MARGIN_FACE}`;
-        const one = text ? `${head} — ${text}` : head;
-        let ls = this.wrap(one, f, inner);
-        if (ls.length > 1 && text) {
-          const hs = this.wrap(head, f, inner), ts = this.wrap(text, f, inner);
-          if (hs.length === 1 && ts.length === 1) ls = [hs[0], ts[0]];
-        }
-        mar = { lines: ls, px, cap: mc, head };
+    let mar: (BarBlock & { head: string }) | null = null;
+    if (lines.margin) {
+      const { head, text } = lines.margin, px = Math.ceil(mc / rm), f = `${px}px ${MARGIN_FACE}`;
+      const one = text ? `${head} — ${text}` : head;
+      let ls = this.wrap(one, f, inner);
+      if (ls.length > 1 && text) {
+        const hs = this.wrap(head, f, inner), ts = this.wrap(text, f, inner);
+        if (hs.length === 1 && ts.length === 1) ls = [hs[0], ts[0]];
       }
-      let cap: Block | null = null;
-      if (lines.caption) { const px = Math.ceil(cc / rc); cap = { lines: this.wrap(lines.caption, `${capW}${px}px ${capFam}`, inner), px, cap: cc }; }
-      const h = (cap ? cap.lines.length * cap.px * lhK : 0) + (mar ? mar.lines.length * mar.px * lhK : 0) + (cap && mar ? 8 : 0);
-      return { cap, mar, h };
-    };
-    let L = layout(BAR.captionCap, BAR.marginCap);
-    for (let s = 1; L.h > H - pad && s <= 12; s++) {
-      L = layout(Math.max(BAR.floorCap, BAR.captionCap - s), Math.max(BAR.floorCap, BAR.marginCap - s * 0.5));
+      mar = { lines: ls, px, cap: mc, head };
     }
-    // still too tall at the floor: the caption gives up its last lines (the margin keeps its own)
-    while (L.h > H - pad / 2 && L.cap && L.cap.lines.length > 1) { L.cap.lines.pop(); L.h -= L.cap.px * lhK; }
-    let y = BARY + Math.max(pad / 2, Math.round((H - L.h) / 2));
+    let cap: BarBlock | null = null;
+    if (lines.caption) { const px = Math.ceil(cc / rc); cap = { lines: this.wrap(lines.caption, `${capW}${px}px ${capFam}`, inner), px, cap: cc }; }
+    const h = (cap ? cap.lines.length * cap.px * lhK : 0) + (mar ? mar.lines.length * mar.px * lhK : 0) + (cap && mar ? BAR.gap : 0);
+    return { cap, mar, h };
+  }
+  /** the layout for a moment in a bar `room` px tall: at the asked sizes (never under the floor), stepping down toward the floor
+   *  only if it will not fit */
+  private fitBar(lines: BarLines, room: number): BarLayout {
+    const fl = this.floorCap, cc0 = Math.max(BAR.captionCap, fl), mc0 = Math.max(BAR.marginCap, fl), avail = room - BAR.pad * 2;
+    let L = this.barLayout(lines, cc0, mc0);
+    for (let s = 1; L.h > avail && s <= 16; s++) {
+      const cc = Math.max(fl, cc0 - s), mc = Math.max(fl, mc0 - s * 0.5);
+      L = this.barLayout(lines, cc, mc);
+      if (cc === fl && mc === fl) break;
+    }
+    return L;
+  }
+  private drawBar(lines: BarLines): void {
+    const c = this.ctx!; const H = this.barH, top0 = LH - H, lhK = BAR.lineK;
+    const capW = this.look.weight, capFam = this.look.face;
+    const L = this.fitBar(lines, H);
+    let y = top0 + Math.max(BAR.pad, Math.round((H - L.h) / 2));
     c.textBaseline = 'alphabetic';
+    /** each drawn line's ink box (canvas px), for the probe: nothing may leave the bar */
+    const ink: { x0: number; x1: number; y0: number; y1: number }[] = [];
+    const put = (t: string, x: number, yy: number, align: 'center' | 'left'): void => {
+      const m = c.measureText(t), w = m.width, x0 = align === 'center' ? x - w / 2 : x;
+      ink.push({ x0, x1: x0 + w, y0: yy - (m.actualBoundingBoxAscent || 0), y1: yy + (m.actualBoundingBoxDescent || 0) });
+    };
     if (L.cap) {
       const cb = L.cap;
       c.font = `${capW}${cb.px}px ${capFam}`; c.fillStyle = this.look.ink; c.textAlign = 'center';
-      cb.lines.forEach((l, i) => c.fillText(l, LW / 2, y + Math.round((i + 0.5) * cb.px * lhK + cb.cap / 2)));
-      y += Math.round(cb.lines.length * cb.px * lhK) + (L.mar ? 8 : 0);
+      cb.lines.forEach((l, i) => { const yy = y + Math.round((i + 0.5) * cb.px * lhK + cb.cap / 2); c.fillText(l, LW / 2, yy); put(l, LW / 2, yy, 'center'); });
+      y += Math.round(cb.lines.length * cb.px * lhK) + (L.mar ? BAR.gap : 0);
     }
     if (L.mar) {
       const mb = L.mar;
@@ -656,19 +753,54 @@ export class TeachingTv {
           c.fillStyle = RECORD.ink; c.fillText(mb.head, x, yy);
           c.fillStyle = ERA1.silver; c.fillText(l.slice(mb.head.length), x + c.measureText(mb.head).width, yy);
         } else { c.fillStyle = ERA1.silver; c.fillText(l, x, yy); }
+        put(l, x, yy, 'left');
       });
     }
     c.textAlign = 'left';
     const recentKey = `${lines.caption ?? ''} || ${lines.margin ? `${lines.margin.head} — ${lines.margin.text}` : ''}`.slice(0, 80);
     if (this.bar.recent[this.bar.recent.length - 1] !== recentKey) { this.bar.recent.push(recentKey); if (this.bar.recent.length > 12) this.bar.recent.shift(); }
+    const inkBox = ink.length ? { x0: Math.min(...ink.map((b) => b.x0)), x1: Math.max(...ink.map((b) => b.x1)), y0: Math.min(...ink.map((b) => b.y0)), y1: Math.max(...ink.map((b) => b.y1)) } : null;
+    // never cut off: a moment the bar was not sized for (a face that loaded since, a line that wraps once more) grows it, within
+    //   the glass, and the glass is drawn again on the next frame
+    if ((L.h + BAR.pad * 2 > H || (inkBox && inkBox.y1 > LH)) && H < BAR.maxH) { this.barH = Math.min(BAR.maxH, Math.ceil(L.h + BAR.pad * 2)); this.dirty = true; }
     this.bar = { caption: L.cap ? L.cap.lines.join(' / ') : null, margin: L.mar ? L.mar.lines.join(' / ') : null,
-      capCaption: L.cap?.cap ?? 0, capMargin: L.mar?.cap ?? 0, lines: (L.cap?.lines.length ?? 0) + (L.mar?.lines.length ?? 0), height: Math.round(L.h), recent: this.bar.recent };
+      capCaption: L.cap?.cap ?? 0, capMargin: L.mar?.cap ?? 0, lines: (L.cap?.lines.length ?? 0) + (L.mar?.lines.length ?? 0), height: Math.round(L.h),
+      top: top0, barH: H, ink: inkBox, recent: this.bar.recent };
+  }
+  /**
+   * ⚑ S394 fix (review aid, ?debug=1) — EVERY MOMENT OF THE TAPE DRAWN INTO THE BAR, one after another, in this look-mode: for
+   * each, the capitals (canvas px), the lines, the space left, and whether any ink left the bar (or the bar the glass). The glass
+   * is drawn back as it was afterwards.
+   */
+  fitAll(): { floor: number; barH: number; moments: { key: string; capCaption: number; capMargin: number; lines: number; need: number; left: number; inside: boolean }[] } {
+    const out: { key: string; capCaption: number; capMargin: number; lines: number; need: number; left: number; inside: boolean }[] = [];
+    const c = this.ctx; if (!c) return { floor: this.floorCap, barH: this.barH, moments: out };
+    this.sizeBar();
+    const was = this.state;
+    for (const m of this.barMoments()) {
+      // the whole glass, as the frame loop draws it, in each state the bar is up in (playing; paused and at End of Part 1 the
+      //   player's own display draws first and leaves its own text state behind: the measurement must not depend on it)
+      let worst: (typeof out)[number] | null = null;
+      for (const st of ['playing', 'paused', 'partOne'] as TvState[]) {
+        this.state = st;
+        this.draw(m);
+        const b = this.bar, ink = b.ink;
+        const inside = !!ink && ink.x0 >= 0 && ink.x1 <= LW && ink.y0 >= b.top && ink.y1 <= LH && b.top >= 0 && b.barH <= BAR.maxH;
+        const row = { key: `${m.caption ?? ''} || ${m.margin ? `${m.margin.head} — ${m.margin.text}` : ''}`.slice(0, 140), capCaption: b.capCaption, capMargin: b.capMargin,
+          lines: b.lines, need: b.height, left: Math.round(b.barH - BAR.pad * 2 - b.height), inside };
+        if (!worst || !row.inside || row.left < worst.left) worst = row;
+      }
+      if (worst) out.push(worst);
+    }
+    this.state = was;
+    this.redraw();
+    return { floor: this.floorCap, barH: this.barH, moments: out };
   }
 
   /** the tape's label before it rolls: a VCR's blue, the disc's input card with the assignment, Dad's share line */
   private drawLeader(): void {
     const c = this.ctx!, L = this.look, lines = W.tapes[this.tape].leader;
-    const pic = PIC, k = pic.h / 540;
+    const pic = this.pic, k = pic.h / 540;
     c.fillStyle = this.spec.style === 'vcr' ? L.blue : L.panel; c.fillRect(pic.x, pic.y, pic.w, pic.h);
     c.textAlign = 'center'; c.textBaseline = 'middle';
     const cx = pic.x + pic.w / 2, cy = pic.y + pic.h / 2;
@@ -718,7 +850,7 @@ export class TeachingTv {
     if (this.spec.style === 'vcr') {
       c.font = this.font(44); c.fillStyle = L.accent; c.textBaseline = 'middle'; c.fillText(`${osd?.pause ?? 'PAUSE'} ❚❚`, 44, 54);
     } else {
-      c.fillStyle = hexA(L.bg, partOne ? 0.12 : 0.35); c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
+      const PIC = this.pic; c.fillStyle = hexA(L.bg, partOne ? 0.12 : 0.35); c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
       c.font = this.font(34); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.fillText(`❚❚ ${osd?.pause ?? ''}`.trim(), 36, 54);
     }
     this.drawClock();
@@ -728,7 +860,7 @@ export class TeachingTv {
   private chip(label: string): void {
     const c = this.ctx!, L = this.look;
     c.font = this.font(40); const bw = Math.ceil(c.measureText(label).width) + 56, bh = 74;
-    const r = { x: LW - bw - 30, y: PIC.y + PIC.h - bh - 26, w: bw, h: bh };
+    const PIC = this.pic, r = { x: LW - bw - 30, y: PIC.y + PIC.h - bh - 26, w: bw, h: bh };
     if (this.spec.style === 'vcr') {
       c.fillStyle = ERA1.black; c.fillRect(r.x, r.y, r.w, r.h);
       c.fillStyle = ERA1.white; c.fillRect(r.x, r.y, r.w - 3, r.h - 3);
@@ -746,6 +878,7 @@ export class TeachingTv {
   /** the tape's own end: what was on it, and "From the start" (the glass or ▶ plays it again) */
   private drawEnded(): void {
     const c = this.ctx!, L = this.look;
+    const PIC = this.pic;
     c.fillStyle = hexA(this.spec.style === 'vcr' ? L.blue : L.bg, this.spec.style === 'vcr' ? 0.92 : 0.82);
     c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
     c.textBaseline = 'middle'; c.textAlign = 'left';
@@ -758,7 +891,7 @@ export class TeachingTv {
   }
   private drawStopped(): void {
     const c = this.ctx!, L = this.look;
-    c.fillStyle = this.spec.style === 'vcr' ? L.blue : hexA(L.bg, 0.9); c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
+    const PIC = this.pic; c.fillStyle = this.spec.style === 'vcr' ? L.blue : hexA(L.bg, 0.9); c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
     c.textBaseline = 'middle'; c.textAlign = 'left';
     if (this.spec.style === 'vcr') { c.font = this.font(44); c.fillStyle = L.accent; c.fillText(W.tapes['1997'].osd?.stop ?? '', 44, 54); }
     const p = placeOf(this.tape), ch = this.data.chapters[chapterAt(this.data, p.t)];
@@ -768,18 +901,19 @@ export class TeachingTv {
   }
   private drawError(): void {
     const c = this.ctx!, L = this.look;
-    c.fillStyle = this.spec.style === 'vcr' ? L.blue : L.panel; c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
+    const PIC = this.pic; c.fillStyle = this.spec.style === 'vcr' ? L.blue : L.panel; c.fillRect(PIC.x, PIC.y, PIC.w, PIC.h);
     c.font = this.font(36); c.fillStyle = L.ink; c.textBaseline = 'middle'; c.textAlign = 'center';
     c.fillText(P.cannot, PIC.x + PIC.w / 2, PIC.y + PIC.h / 2); c.textAlign = 'left';
   }
 
   /** where the walker and the probes aim: each key, a point on the bezel (the body), the glass's centre, in world metres */
-  targets(): { keys: { id: SetKey; at: number[] }[]; body: number[]; glass: number[]; picTop: number[]; picBottom: number[] } {
+  targets(): { keys: { id: SetKey; at: number[] }[]; body: number[]; glass: number[]; picTop: number[]; picBottom: number[]; keyRow: number[][] } {
     const m = this.set.root.getWorldTransform();
     const w = (x: number, y: number, z: number): number[] => { const p = m.transformPoint(new pc.Vec3(x, y, z)); return [p.x, p.y, p.z]; };
-    const top = GLASS.cy + GLASS.h / 2, picBot = top - GLASS.h * (PIC.h / LH);
+    const top = GLASS.cy + GLASS.h / 2, picBot = top - GLASS.h * (this.pic.h / LH);
     return { keys: KEY_POINTS.map((k) => ({ id: k.id, at: w(k.at[0], k.at[1], k.at[2]) })),
-      body: w(-0.236, GLASS.cy + 0.06, GLASS.z - 0.004), glass: w(GLASS.cx, GLASS.cy, GLASS.z), picTop: w(GLASS.cx, top, GLASS.z), picBottom: w(GLASS.cx, picBot, GLASS.z) };
+      body: w(-0.236, GLASS.cy + 0.06, GLASS.z - 0.004), glass: w(GLASS.cx, GLASS.cy, GLASS.z), picTop: w(GLASS.cx, top, GLASS.z), picBottom: w(GLASS.cx, picBot, GLASS.z),
+      keyRow: [w(KEY_ROW.x0, KEY_ROW.y0, KEY_ROW.z), w(KEY_ROW.x1, KEY_ROW.y0, KEY_ROW.z), w(KEY_ROW.x0, KEY_ROW.y1, KEY_ROW.z), w(KEY_ROW.x1, KEY_ROW.y1, KEY_ROW.z)] };
   }
 
   debug() {
@@ -789,7 +923,7 @@ export class TeachingTv {
       chapter: this.chapter?.id ?? null, chapterKind: this.chapter?.kind ?? null, hits: this.hits.map((h) => ({ ...h })), needsSound: this.needsSound, userPaused: this.userPaused,
       draws: this.draws, place: { ...placeOf(this.tape) }, partOneEnd: this.data.partOneEnd, duration: this.data.duration,
       pose: this.pose, held: this.held, heldScale: this.heldScale, heldDist: this.heldDist, lastPress: this.lastPress, setDown: this.setDown,
-      glass: { w: GLASS.w, h: GLASS.h, picFrac: PIC.h / LH, barPx: LH - BARY }, bar: { ...this.bar, recent: [...this.bar.recent] }, targets: this.targets() };
+      glass: { w: GLASS.w, h: GLASS.h, picFrac: this.pic.h / LH, barPx: this.barH }, floorCap: this.floorCap, barWorst: { ...this.barWorst }, bar: { ...this.bar, recent: [...this.bar.recent] }, targets: this.targets() };
   }
 }
 
@@ -1057,6 +1191,8 @@ export class TeachingTvs {
   private readonly card: TvCall;
   private era = '';
   private voicesWas: Record<string, string> = {};
+  /** the look-mode's reading scale (degrees or CSS px per canvas px, held) and the bar's floor */
+  reading: ReturnType<typeof readingScale> = { unit: 'px', perCanvas: 1, floor: 19.4, phone: false };
   constructor(app: pc.AppBase, private readonly host: TvHost) {
     this.tvs = { '1997': new TeachingTv(app, '1997'), '2016': new TeachingTv(app, '2016'), '2026': new TeachingTv(app, '2026') };
     this.moments = { '1997': new TvMoment(this.tvs['1997'], host), '2016': new TvMoment(this.tvs['2016'], host), '2026': new TvMoment(this.tvs['2026'], host) };
@@ -1090,7 +1226,9 @@ export class TeachingTvs {
     }
     if (updateArmed) for (const id of TAPE_IDS) {
       if (this.moments[id].running) this.moments[id].abort(P.stopped);
-      if (this.tvs[id].playing) this.tvs[id].stop(P.stopped);
+      // ⚑ S394 fix — stopped at the update even if a voice paused it a moment before (the update's own notice arrives first)
+      const st = this.tvs[id].state;
+      if (st === 'playing' || st === 'loading' || st === 'paused' || st === 'partOne' || st === 'leader') this.tvs[id].stop(P.stopped);
       if (this.tvs[id].held) this.tvs[id].putBack(this.host.eye().getPosition(), 'story');
     }
     for (const id of TAPE_IDS) this.moments[id].update(dt);
@@ -1109,6 +1247,9 @@ export class TeachingTvs {
       }
     }
     this.voicesWas = { ...voices };
+    // ⚑ S394 fix — the bar's capital floor for this look-mode (1.0° / 14 px / 12 px), in canvas px: each tape sizes its bar to it
+    this.reading = readingScale(this.host.xr(), this.host.camera());
+    for (const id of TAPE_IDS) this.tvs[id].setFloor(this.reading.floor);
     // the visitor's seat changed under a held set (a marker, a scripted send): the story moved on, the set goes back
     const eyeNow = this.host.eye().getPosition();
     for (const id of TAPE_IDS) {
@@ -1198,6 +1339,11 @@ export class TeachingTvs {
       moments: Object.fromEntries(TAPE_IDS.map((t) => [t, { stage: this.moments[t].stage, seconds: this.moments[t].seconds, callSeconds: this.moments[t].callSeconds }])),
       call: { shown: this.card.shown, text: this.card.text, hits: this.card.hits.map((h) => ({ ...h })), entity: this.card.entity.name, cw: this.card.CW, ch: this.card.CH, at: [p.x, p.y, p.z] },
       tvs: TAPE_IDS.map((t) => this.tvs[t].debug()) };
+  }
+  /** ⚑ S394 fix (review aid) — every moment of every tape drawn into its bar in this look-mode, in its units */
+  fitAll() {
+    const r = this.reading;
+    return { reading: r, tapes: Object.fromEntries(TAPE_IDS.map((t) => [t, this.tvs[t].fitAll()])) };
   }
   canvases(): Record<string, HTMLCanvasElement> {
     return Object.fromEntries([...TAPE_IDS.flatMap((t) => [[`tv${t}`, this.tvs[t].canvas], [`set${t}`, this.tvs[t].set.decal]] as [string, HTMLCanvasElement][]), ['call', this.card.canvas] as [string, HTMLCanvasElement]]);

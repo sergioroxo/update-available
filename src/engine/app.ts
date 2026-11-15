@@ -804,6 +804,12 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     const upRay = xrComfort.logicalRay({ p0: p, p1: p.clone().add(camera.up) });
     sceneHead.setPosition(ray.p0); sceneHead.lookAt(ray.p1, upRay.p1.sub(upRay.p0).normalize()); return sceneHead;
   }
+  /** ⚑ S394 fix — something is held before the eyes: a game (the Game Boy, the flip phone, the console), a Lamby set, Vera's
+   *  phone, the visor on its way to the face. The frame's plate and notices stay down while it is (called only from frame
+   *  ticks, after every one of these exists) */
+  function anythingHeld(): boolean {
+    return !!(devices && cluster && devices.held(cluster.era)) || !!teachingTvs?.holding || !!era3Devices?.phoneInHand || carryingPhone || carryingVisor;
+  }
   const grabHand = new pc.Entity('logical-grip');
   function poseGrabHand(ray: { p0: pc.Vec3; p1: pc.Vec3 }): void {
     grabHand.setPosition(ray.p0); grabHand.lookAt(ray.p1);
@@ -1039,6 +1045,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       // ⚑ S394 — bring the set close / put it back (review aids for photographs; a probe that proves the press presses it)
       take: (tape: '1997' | '2016' | '2026') => { const tv = teachingTvs?.tvs[tape]; if (!tv) return; tv.wake(); tv.take(xr?.active ? logicalHead() : camera, !!xr?.active, xr?.active ? null : camera.camera); },
       putBack: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape].putBack(null, 'visitor'),
+      fitAll: () => teachingTvs?.fitAll() ?? null,   // S394 fix: every caption and margin line drawn into the bar, measured
+      inst: (tape: '1997' | '2016' | '2026') => teachingTvs?.tvs[tape] ?? null,   // S394 fix: the set itself (review aid)
       canvases: () => teachingTvs?.canvases() ?? {},
       uploads: () => (window as { __uploads?: number }).__uploads ?? 0,
       arm: (tape: string) => { tvArmed.add(tape); }
@@ -1396,6 +1404,7 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
       guideYes: () => { os.lambyGuide.press(os.lambyGuide.view.act ? 'lg-take' : 'lg-show'); os.dirty = true; },
       visorWorn: () => (cluster?.era ?? os.era) === 'e4' && !!e4Bridge()?.shell()?.pinned,
       inRoom: () => !restoreEntrance?.blocking && !os.setup?.open && !document.getElementById('lambyos-home'),
+      held: () => anythingHeld(),   // S394 fix: the table offer waits while something is held before the eyes
       mouse: {
         active: () => !!cluster && (cluster.era === 'e1' || cluster.era === 'e2') && os.inDesktop && !gameMenuBus.isOpen && !scriptedBusy(),
         prop: () => room.props.get('mouse')?.entity ?? null,
@@ -1436,6 +1445,8 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
         point: (p0: number[], p1: number[]) => xrFrame?.tick({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) }),
         hint: (t: string | null) => xrFrame?.setHint(t),
         hintText: () => xrFrame?.hintNow() ?? null,   // S381: read-only, for the probes
+        hintShown: () => xrFrame?.hintShown() ?? null,   // S394 fix: the plate's corners while it is up
+        notice: (t: string, sec = 9) => xrFrame?.notice(t, sec),   // S394 fix: a notice, for the probes
         hit: (p0: number[], p1: number[]) => xrFrame?.debugHit({ p0: new pc.Vec3(p0[0], p0[1], p0[2]), p1: new pc.Vec3(p1[0], p1[1], p1[2]) })
       };
     }
@@ -4548,7 +4559,10 @@ export async function startApp(canvasEl: HTMLCanvasElement, options: AppOptions 
     tickKeychain();
     // ⚑ P8 A10 (headset B: "the message appears in front of the console"; "impossible to play") — the hint plate hangs
     //   exactly where a held device is held, so while a device is in the hand the plate stays down
-    const deviceInHand = !!(devices && cluster && devices.held(cluster.era)) || !!teachingTvs?.holding;   // S394: and a Lamby set in the hand
+    const deviceInHand = anythingHeld();   // S394: a game, a Lamby set, Vera's phone, the visor
+    // ⚑ S394 fix (his: "in Headset the white bar is in front of the buttons") — while anything is held before the eyes, the
+    //   frame's plate and every notice stay down (a notice keeps its time; the table offer waits until it is put down)
+    if (xr?.active) xrFrame?.setHeld(deviceInHand);
     // S291: while the site window is up, the helper's plate stays down (it would hang over the window's foot)
     // ⚑ S345 / T29 — what the ray is on is named at the ray's end (a small tag pinned to the mark, xrFrame.setAim), not
     //   on the helper's plate; the plate keeps the helper's own lines, and stays down while a device is in the hand

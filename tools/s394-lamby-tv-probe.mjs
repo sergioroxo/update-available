@@ -161,7 +161,8 @@ async function room(r, mode) {
     const d = await tvd(), tg = d.targets;
     const [top, bot, ...keys] = await view([tg.picTop, tg.picBottom, ...tg.keys.map((k) => k.at)]);
     const picPx = Math.abs(bot.y - top.y), picDeg = await angle(tg.picTop, tg.picBottom);
-    const perCanvas = picPx / 540, perDeg = picDeg / 540;
+    // ⚑ S394 fix — the picture is the glass above the bar (720 − the bar's height canvas px): the bar grows in a look-mode that needs it
+    const picCanvas = 720 - (d.bar.barH || d.glass.barPx || 180), perCanvas = picPx / picCanvas, perDeg = picDeg / picCanvas;
     return { picPx: +picPx.toFixed(1), picDeg: +picDeg.toFixed(2), picInView: top.inView && bot.inView, keysInView: keys.every((k) => k.inView),
       capCaptionPx: +(d.bar.capCaption * perCanvas).toFixed(1), capMarginPx: +(d.bar.capMargin * perCanvas).toFixed(1),
       capCaptionDeg: +(d.bar.capCaption * perDeg).toFixed(2), capMarginDeg: +(d.bar.capMargin * perDeg).toFixed(2), bar: d.bar, scale: +d.heldScale.toFixed(3), dist: +d.heldDist.toFixed(3) };
@@ -249,8 +250,12 @@ async function room(r, mode) {
           sound = { paused: d.paused, muted: d.muted };
           await shot('playing-bar');
           if (xr) C('the bar: capitals ≥ 1.0° in the headset (caption and margin)', rs.capCaptionDeg >= 1.0 && rs.capMarginDeg >= 0.995, `caption ${rs.capCaptionDeg}° margin ${rs.capMarginDeg}°`);
-          else C(`the bar: capitals measured on the ${phone ? 'phone' : 'computer'} (CSS px)`, rs.capCaptionPx > 0, `caption ${rs.capCaptionPx} px margin ${rs.capMarginPx} px`);
-          C('the bar is inside the set\'s frame and no taller than a third of the picture', rs.bar.height <= 180, `${rs.bar.height} px of the 540-px picture`);
+          else C(`the bar: capitals ≥ ${phone ? 12 : 14} px on the ${phone ? 'phone' : 'computer'} (caption and margin, measured from the projected glass)`,
+            rs.capCaptionPx >= (phone ? 12 : 14) - 0.15 && rs.capMarginPx >= (phone ? 12 : 14) - 0.15, `caption ${rs.capCaptionPx} px margin ${rs.capMarginPx} px`);
+          // ⚑ S394 fix — the bar grows within the glass where a look-mode's floor needs it (the phone): its words inside it, it inside the glass
+          const TVB = JSON.parse(fs.readFileSync('data/room/teaching_tvs.json', 'utf8')).bar, ink = rs.bar.ink;
+          C('the bar and its words are inside the set\'s frame (the bar ≤ maxH of the 720-px glass, nothing below the glass)',
+            rs.bar.barH <= TVB.maxH && rs.bar.top >= 0 && !!ink && ink.y0 >= rs.bar.top && ink.y1 <= 720 && ink.x0 >= 0 && ink.x1 <= 960, `bar ${rs.bar.barH} px from ${rs.bar.top}; ink ${JSON.stringify(ink)}`);
           const d0 = (await tvd()).draws; await wait(3000); const d1 = (await tvd()).draws;
           M.uploadsPlaying = +((d1 - d0) / 3).toFixed(1);
           C('while it plays the glass is redrawn about once per frame of the tape (≤ 31 a second)', (d1 - d0) / 3 > 5 && (d1 - d0) / 3 <= 31, `${M.uploadsPlaying}/s`);
@@ -272,6 +277,37 @@ async function room(r, mode) {
     C('NO TURN: the view\'s yaw and pitch are unchanged by the moment', Math.abs(f1.head.yaw - f0.head.yaw) < 0.5 && Math.abs(f1.head.pitch - f0.head.pitch) < 0.5 && Math.abs(f1.pose.yaw - f0.pose.yaw) < 0.5, `${JSON.stringify(f0)} → ${JSON.stringify(f1)}`);
     if (xr) C('NO TURN: the headset rig\'s yaw is unchanged by the moment', Math.abs(f1.rig.yaw - f0.rig.yaw) < 0.5, `${f0.rig.yaw} → ${f1.rig.yaw}`);
     C('after End of Part 1 the set waits in the hand, ▶ ready', dEnd.held && dEnd.state === 'partOne');
+    if (xr) {
+      // ⚑ S394 fix (his: "in Headset the white bar is in front of the buttons") — the frame's plate never over a held set: the
+      //   one-time table offer forced due while it is held (and a notice), then the set put down — the offer comes then
+      const OFFER = JSON.parse(fs.readFileSync('data/strings/gameMenu.json', 'utf8')).xrDeskOffer;
+      await page.evaluate((t) => { window.__xrLayer.review({ offer: true }); window.__xrFrame.notice(t, 9); }, 'A frame notice, sent while the set is held');
+      await wait(1600);
+      const over = await page.evaluate((keyRow) => {
+        const app = window.__app, c = window.__xrComfort, V = app.root.getPosition().constructor;
+        let cam = null; app.root.forEach((e) => { if (e.camera && e.enabled) cam = e; });
+        const box = (pts) => { const s = pts.map((p) => cam.camera.worldToScreen(p)); return { x0: Math.min(...s.map((q) => q.x)), x1: Math.max(...s.map((q) => q.x)), y0: Math.min(...s.map((q) => q.y)), y1: Math.max(...s.map((q) => q.y)) }; };
+        const row = box(keyRow.map((p) => c.physicalPoint(new V(p[0], p[1], p[2]))));
+        const shown = window.__xrFrame.hintShown();
+        const plate = shown ? box(shown.corners.map((p) => new V(p[0], p[1], p[2]))) : null;
+        const hit = !!plate && plate.x0 < row.x1 && plate.x1 > row.x0 && plate.y0 < row.y1 && plate.y1 > row.y0;
+        return { row, plate, text: shown?.text ?? null, hit, hintText: window.__xrFrame.hintText() };
+      }, dEnd.targets.keyRow);
+      M.heldPlate = over;
+      await shot('held-no-plate');
+      C('held: no frame notice or hint is up (the table offer forced due and a notice sent while it is held)', !over.plate, JSON.stringify({ text: over.text, waiting: over.hintText }));
+      C('held: nothing overlaps the set\'s button row (projected rects)', !over.hit, JSON.stringify({ row: over.row, plate: over.plate }));
+      M.heldKeysInView = (await view(dEnd.targets.keys.map((k) => k.at))).every((v) => v.inView);
+      C('held: its buttons are fully in view', M.heldKeysInView);
+      // put down: the offer that waited comes now (it is never lost)
+      await pressWorld(dEnd.targets.body, 1800);
+      const after = await page.evaluate(() => window.__xrFrame.hintShown());
+      C('put down, the table offer that waited is shown then', !!after && (after.text === OFFER || after.text.includes('notice')), after?.text ?? 'nothing');
+      await shot('put-down-offer');
+      // bring it back for the presses below (the review aid: the same take the moment makes)
+      await page.evaluate((t) => window.__teachingTv.take(t), r.tape); await wait(1800);
+      await page.evaluate((t) => { const tv = window.__teachingTv().tvs.find((x) => x.tape === t); if (tv.state !== 'partOne') window.__teachingTv.press(t, 'tv-pause'); }, r.tape);
+    }
     { const d0 = dEnd.draws; await wait(2500); const d1 = (await tvd()).draws; M.uploadsAtPartOne = d1 - d0; C('stopped at Part 1, the glass uploads nothing', d1 - d0 === 0, `${d1 - d0} in 2.5 s`); }
     if (xr) {
       // with the set in the hand, where it was brought (in front of the turned head); the same look without it gives its share

@@ -47,6 +47,8 @@ const KEYS: { id: SetKey; x: number }[] = [
 ];
 /** the printed strip over the keys, and the badge over the glass (both on the decal canvas) */
 const STRIP = { x0: -0.228, x1: 0.188, y0: KEY_Y - 0.026, y1: KEY_Y + 0.026, z: FRONT + 0.0105 };
+/** the keys' row (the printed strip), for the probes: nothing may hang over it while the set is held */
+export const KEY_ROW = STRIP;
 const BADGE = { cx: 0, cy: 0.553, w: 0.17, h: 0.05, z: FRONT + 0.0062 };
 /** the glass's top to the keys' foot: what a flat screen fills when the set is held (the keys must be pressable) */
 export const FACE = { top: GLASS.cy + GLASS.h / 2, bottom: KEY_Y - KEY_H / 2, cx: 0, width: 0.46 } as const;
